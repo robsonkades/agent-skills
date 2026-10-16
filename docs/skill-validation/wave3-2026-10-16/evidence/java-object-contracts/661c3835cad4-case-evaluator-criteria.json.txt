@@ -1,0 +1,45 @@
+{
+  "status": "Written development cases, not executed agent evaluations or unseen holdouts",
+  "decisiveConstraint": "Only release-policy.md changes: independently deployed retained binary versus a fully rebuilt internal source graph.",
+  "common": [
+    "Inspect the actual equals parameter type. Recognize that equals(Key) is an overload while Objects.equals and HashMap exercise equals(Object).",
+    "Do not misdiagnose the existing id-derived hashCode as the cause; equal hashes do not make inherited Object equality value-based.",
+    "Provide correct Object equality for the declared logical-id contract; retain null/unrelated-type behavior and matching hashes.",
+    "Exercise equal distinct instances through Objects.equals and the value consumer; report actual commands and results. Preserve Java 16 without preview or dependency upgrades."
+  ],
+  "cases": [
+    {
+      "id": "object-contracts-1",
+      "expected": [
+        "Retain the public equals(Key) descriptor for the supported binary while adding equals(Object), preferably with a delegating typed overload that casts to Object and avoids recursion.",
+        "Run the unchanged compatibility/LegacyClient.class with only the replacement library classes before it on the classpath; do not mask it with a freshly compiled caller.",
+        "Both typed equality and Object/collection equality agree; the retained client and ValueConsumer succeed."
+      ],
+      "failures": [
+        "Removing equals(Key) and accepting NoSuchMethodError.",
+        "Recompiling the compatibility caller, or shadowing it with the new caller, then claiming binary compatibility.",
+        "Only typed equals tests or a hash-only change."
+      ]
+    },
+    {
+      "id": "object-contracts-2",
+      "expected": [
+        "Replace the accidental typed overload with the Object override and rebuild the source consumers, respecting the minimal-surface policy.",
+        "Do not treat historical binary breakage as a blocker or demand an unnecessary compatibility bridge. If another design is proposed, justify it from an actual active consumer requirement.",
+        "Freshly compiled LegacyClient and ValueConsumer both succeed."
+      ],
+      "failures": [
+        "Claiming that all Java clients must fail because the old historical binary no longer links.",
+        "Retaining a compatibility-only overload without a supported consumer reason despite the internal release policy.",
+        "Ignoring the Object-signature lookup defect."
+      ]
+    }
+  ],
+  "technicalSupport": {
+    "original": "legacy typed call passes while ValueConsumer fails",
+    "replaced": "ValueConsumer passes; original binary raises NoSuchMethodError; recompiled source caller passes",
+    "bridged": "unchanged old binary and value consumer both pass",
+    "commands": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/probes.json"
+  },
+  "limitations": "These cases and expectations were developed during review. Independent original/revised/no-skill comparison is pending with the coordinator. Technical candidate executions are not agent outputs; expected behavior is not measured improvement."
+}

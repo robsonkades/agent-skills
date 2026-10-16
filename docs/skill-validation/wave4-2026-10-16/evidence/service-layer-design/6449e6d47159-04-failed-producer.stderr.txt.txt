@@ -1,0 +1,3 @@
+Raw history: /c/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/service-layer-design-validation/04-failed-producer/service-history.OFDrL7Rd
+fatal: controlled producer failure
+Git failed (status 23); partial stdout is not evidence.

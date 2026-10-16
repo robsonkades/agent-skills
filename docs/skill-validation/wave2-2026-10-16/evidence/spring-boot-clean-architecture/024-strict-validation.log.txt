@@ -1,0 +1,25 @@
+{
+  "name": "spring-boot-clean-architecture",
+  "version": "1.0.1",
+  "files": [
+    "SKILL.md",
+    "assets/boundary-fixture/README.md",
+    "assets/boundary-fixture/pom.xml",
+    "assets/boundary-fixture/src/main/java/example/clean/application/PlaceOrder.java",
+    "assets/boundary-fixture/src/main/java/example/clean/domain/Purchase.java",
+    "assets/boundary-fixture/src/main/java/example/clean/outer/JdbcLedger.java",
+    "assets/boundary-fixture/src/main/java/example/clean/outer/OrderConfiguration.java",
+    "assets/boundary-fixture/src/main/java/example/clean/outer/ReceiptViews.java",
+    "assets/boundary-fixture/src/main/java/example/clean/outer/TransactionalOrders.java",
+    "assets/boundary-fixture/src/test/java/example/clean/BoundaryTest.java",
+    "assets/boundary-fixture/src/test/java/example/clean/PolicyTest.java",
+    "assets/boundary-fixture/src/test/java/example/clean/WiringTest.java",
+    "references/composition-and-migration.md",
+    "references/ddd-reference-alignment.md",
+    "references/policies-and-boundaries.md",
+    "references/results-and-presentation.md",
+    "references/verification.md",
+    "skill.yaml"
+  ],
+  "issues": []
+}

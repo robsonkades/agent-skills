@@ -1,0 +1,2 @@
+Exception in thread "main" java.lang.AssertionError: receipt violates requested traversal: expected COMPLETE
+	at CaseProbe.main(CaseProbe.java:18)

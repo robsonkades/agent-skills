@@ -1,0 +1,128 @@
+import assert from 'node:assert/strict';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { createDb } from './fixture.mjs';
+
+// Every regression executes the delivered SQL, so replacing solution.sql reruns
+// these same checks against the replacement. Added rows exist only in memory.
+const read = name => readFileSync(new URL(name, import.meta.url), 'utf8');
+const solution = read('solution.sql');
+const current = read('current.sql');
+const proposed = read('proposed.sql');
+const firstPageSql = current.trim().replace(/;$/, '') + '\nLIMIT :page_size;';
+const summary = {
+  status: 'running',
+  node: process.version,
+  sqlite: null,
+  targetPostgreSQLExecuted: false,
+  solutionSha256: createHash('sha256').update(solution).digest('hex'),
+  preservedFiles: [],
+  suites: [],
+  cursorPageChecks: 0,
+  completeTraversals: 0,
+  proposedCounterexamples: [],
+};
+const db = createDb();
+function query(sql, params = {}) {
+  const statement = db.prepare(sql);
+  // Preserve the full PostgreSQL bigint ID domain without JS Number rounding.
+  statement.setReadBigInts(true);
+  return statement.all(params).map(row => ({ ...row }));
+}
+function cursorParams(tenant, row, pageSize) {
+  return {
+    tenant,
+    cursor_priority: row.priority,
+    cursor_created: row.created_at,
+    cursor_id: row.id,
+    page_size: pageSize,
+  };
+}
+function verifySuite(name, tenants) {
+  let rowCount = 0;
+  for (const tenant of tenants) {
+    const all = query(current, { tenant });
+    rowCount += all.length;
+    for (let index = 0; index < all.length; index++) {
+      for (const size of [0, 1, 2, 3, 7, all.length + 1]) {
+        const actual = query(solution, cursorParams(tenant, all[index], size));
+        assert.deepEqual(actual, all.slice(index + 1, index + 1 + size),
+          `${name}: tenant ${tenant}, cursor ${all[index].id}, page size ${size}`);
+        summary.cursorPageChecks++;
+      }
+    }
+    for (const size of [1, 2, 3, 7, all.length + 1]) {
+      let page = query(firstPageSql, { tenant, page_size: size });
+      const seen = [...page];
+      let transitions = 0;
+      while (page.length > 0) {
+        assert.ok(transitions++ <= all.length, 'Traversal must terminate');
+        page = query(solution, cursorParams(tenant, page.at(-1), size));
+        seen.push(...page);
+      }
+      assert.deepEqual(seen, all, `${name}: complete traversal tenant ${tenant}, size ${size}`);
+      assert.equal(new Set(seen.map(row => row.id)).size, seen.length);
+      summary.completeTraversals++;
+    }
+  }
+  summary.suites.push({ name, tenants: tenants.map(String), rowCount });
+}
+
+try {
+  summary.sqlite = query('SELECT sqlite_version() AS version')[0].version;
+  for (const name of ['README.md', 'REQUEST.md', 'schema.sql', 'seed.sql', 'current.sql', 'proposed.sql', 'fixture.mjs']) {
+    const original = readFileSync(new URL('../input/' + name, import.meta.url));
+    const copy = readFileSync(new URL(name, import.meta.url));
+    assert.deepEqual(copy, original, `Provided file changed: ${name}`);
+    summary.preservedFiles.push(name);
+  }
+  assert.equal(/\boffset\b/i.test(solution.replace(/--[^\n]*/g, '')), false);
+  const seedRows = query(current, { tenant: 71n });
+  assert.deepEqual(seedRows.map(row => row.id), [2n, 1n, 3n, 4n, 6n, 5n, 7n]);
+  for (const cursorId of [1n, 6n]) {
+    const index = seedRows.findIndex(row => row.id === cursorId);
+    const params = cursorParams(71n, seedRows[index], 100);
+    const expected = seedRows.slice(index + 1);
+    const actual = query(proposed, params);
+    assert.notDeepEqual(actual, expected, 'The original proposal must expose the supplied defects');
+    summary.proposedCounterexamples.push({
+      cursorId: String(cursorId),
+      expectedIds: expected.map(row => String(row.id)),
+      proposedIds: actual.map(row => String(row.id)),
+    });
+  }
+  verifySuite('unchanged supplied seed', [71n, 72n, 999n]);
+
+  const insert = db.prepare('INSERT INTO tickets(id, tenant_id, priority, created_at, label) VALUES (?, ?, ?, ?, ?)');
+  const priorities = [2147483647n, 3n, 2n, 1n, 0n, -1n, -999n, -2147483648n, null];
+  const dates = ['2025-12-31', '2026-01-01', '2026-01-02', '2026-12-31'];
+  const labels = ['same', '', "quote' :tenant", 'á Ω\nline'];
+  let id = 1000n;
+  for (const tenant of [71n, 72n, 73n, 9007199254740993n]) {
+    for (const priority of priorities) {
+      for (const [dateIndex, date] of dates.entries()) {
+        for (let tie = 0; tie < 2; tie++) {
+          insert.run(id++, tenant, priority, date, labels[dateIndex]);
+        }
+      }
+    }
+  }
+  // Bigint extremes, zero/negative IDs, and a tenant consisting solely of NULLs.
+  for (const extremeId of [-9223372036854775808n, -9007199254740993n, 0n, 9007199254740993n, 9223372036854775807n]) {
+    insert.run(extremeId, 71n, 0n, '2026-01-01', 'bigint boundary');
+  }
+  for (const date of dates) {
+    insert.run(id++, 74n, null, date, 'all null');
+    insert.run(id++, 74n, null, date, 'all null');
+  }
+  verifySuite('expanded immutable snapshot', [71n, 72n, 73n, 74n, 9007199254740993n, 999n]);
+  summary.status = 'passed';
+} catch (error) {
+  summary.status = 'failed';
+  summary.failure = { name: error.name, message: error.message };
+  throw error;
+} finally {
+  db.close();
+  writeFileSync(new URL('verification-results.json', import.meta.url), JSON.stringify(summary, null, 2) + '\n');
+  console.log(JSON.stringify(summary));
+}

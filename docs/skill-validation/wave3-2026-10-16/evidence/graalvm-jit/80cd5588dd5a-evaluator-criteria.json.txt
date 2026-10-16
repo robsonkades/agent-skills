@@ -1,0 +1,38 @@
+{
+  "classification": "Known development cases, not holdouts; no actor evaluation has been run",
+  "isolationRequirement": "Copy only one actor fixture plus the selected original/revised skill into the actor environment. Keep this evaluator file, other-case fixtures and review artifacts unavailable to the actor. Folder separation here is procedural, not access control.",
+  "decisiveConstraint": "Only metrics.csv changes: Graal application p99 after second 60 is approximately stationary in case-a and systematically declining in case-b. The compiler counters and all other artifacts are identical.",
+  "common": [
+    "Inspect the runtime, compilation and metric artifacts; update decision.md rather than merely list questions.",
+    "Remove the inference that flat CompilerStatistics proves the application became warm at second 30.",
+    "Do not label totalTimeSpent as compiler CPU cost or process uptime; identify cumulative process accounting with no per-method/per-compiler field.",
+    "Keep accepted runtime selection, successful relevant tier-4 compilation and correctness evidence; do not manufacture a missing-Graal diagnosis.",
+    "Do not promote this measurement review to a production migration or readiness approval, or run an unrequested installation/benchmark."
+  ],
+  "cases": [
+    {
+      "id": "case-a",
+      "expected": [
+        "Permit the proposed 60-150 second window as an observed approximately stable region under the supplied repeated workload, with uncertainty and scope explicit.",
+        "Use the application trace, not quiet compiler counters, for that decision; Graal p99 is about 79-82 ms and C2 about 99-102 ms per observed window.",
+        "Do not demand more warm-up solely because no universal convergence threshold was supplied; exact steady-state onset and future workload phases remain unproven."
+      ],
+      "observableFailure": [
+        "Reject all existing measurement evidence merely because compiler statistics cannot prove stability.",
+        "Claim an exact universal warm-up duration or statistical significance from the supplied summaries."
+      ]
+    },
+    {
+      "id": "case-b",
+      "expected": [
+        "Reject the current steady-state window claim: all three Graal traces continue declining through the final window despite unchanged compiler statistics.",
+        "Preserve the stable C2 baseline and runtime evidence; identify remaining application/cache/dependency behavior as a hypothesis to investigate, not a proved compiler fault.",
+        "Request/plan only the observation needed to establish a later stable region or report the workload as non-steady; do not average away the drift or blindly extend a universal warm-up count."
+      ],
+      "observableFailure": [
+        "Accept the window because compilation totals are flat.",
+        "Replace the drift with an average or the best final sample and call it a steady-state speedup."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+C:\Program Files\nodejs\node.exe extract-examples.mjs C:/git/agent-skills/skills/gof-proxy C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1
+{
+  "status": "extracted",
+  "sourceRoot": "C:/git/agent-skills/skills/gof-proxy",
+  "sources": [
+    "references/worked-example.md:first Java block",
+    "references/proxy-kinds-and-hazards.md:first Java block"
+  ],
+  "adaptations": [
+    "Split exact public interface/class into separate files; added Supplier import",
+    "Added Report/ReportSpec record stubs",
+    "Placed exact Foo handler statement in a probe factory; Foo, target and loader supplied by harness"
+  ],
+  "generated": [
+    "ReportEngine.java",
+    "LazyReportEngine.java",
+    "Report.java",
+    "ReportSpec.java",
+    "ProxyProbe.java"
+  ]
+}

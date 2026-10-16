@@ -1,0 +1,263 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "executors-and-task-lifecycle",
+  "ownedPath": "skills/executors-and-task-lifecycle/",
+  "date": "2026-10-16",
+  "allWritesStopped": true,
+  "baseline": {
+    "committedVersion": "1.3.4",
+    "assignmentVersion": "1.3.4",
+    "finalVersion": "1.3.5",
+    "preExistingVersionBump": false,
+    "preExistingChanges": [],
+    "inspection": "All four package files read; git status/diff at assignment were clean. Assignment content hashes retained and compared with completion hashes.",
+    "hashes": [
+      {
+        "path": "skills/executors-and-task-lifecycle/skill.yaml",
+        "before": "B9F460E0BF6F925EF656EA6AAFEF3A797F2E31632C509AB4CEF95A22EB77D3DC",
+        "after": "3135CE8DB9F970C80EC875C70EF98DBB6E9FB426C37369D423A15CA9683B97D9",
+        "changed": true,
+        "existingJavaBlocks": 0,
+        "javaUnchanged": true
+      },
+      {
+        "path": "skills/executors-and-task-lifecycle/SKILL.md",
+        "before": "45B1833B3B4E28517CA825ACA006DB77AF675149C35A09FE2682971C22C00517",
+        "after": "4C34B82D0A976C72AA9E60AB27944F6C0FDFB898ACBC494E59B6F2BFFE8E6782",
+        "changed": true,
+        "existingJavaBlocks": 0,
+        "javaUnchanged": true
+      },
+      {
+        "path": "skills/executors-and-task-lifecycle/references/shutdown-and-rejection.md",
+        "before": "AD91EB3D27C8D22A88B54E42B7B99F4FDC91B832C120D7B4EFC78884FD502C2B",
+        "after": "9851C5309DB5FADBD3CB75268B95C217E0C0CF4D9BD1B8AEA7BB2B6469A547FA",
+        "changed": true,
+        "existingJavaBlocks": 2,
+        "javaUnchanged": true
+      },
+      {
+        "path": "skills/executors-and-task-lifecycle/references/scheduled-and-periodic.md",
+        "before": "9A61D20F69A16F05A0CAC1BF6D2307EEE43C63A6EB50410FD65885C2723AF675",
+        "after": "9A61D20F69A16F05A0CAC1BF6D2307EEE43C63A6EB50410FD65885C2723AF675",
+        "changed": false,
+        "existingJavaBlocks": 0,
+        "javaUnchanged": true
+      }
+    ]
+  },
+  "versions": {
+    "committed": "1.3.4",
+    "assignment": "1.3.4",
+    "final": "1.3.5",
+    "rationale": "One patch for focused documentation corrections; no prior unpublished bump and no public contract removed."
+  },
+  "findings": [
+    {
+      "location": "SKILL.md:167 and shutdown protocol at 181; references/shutdown-and-rejection.md:56",
+      "finding": "Existing caller-runs guidance covered hook/metric/failure bypass but did not connect rejected inline work to executor termination and dependency lifetime.",
+      "consequence": "A lifecycle owner could close a shared client after successful pool awaitTermination while an external caller-run body still uses it.",
+      "correction": "Specify physical drain of external caller paths, close admission across the stop race, reuse adequate request/producer drain, preserve bounded residual-work escalation.",
+      "evidence": "Java 17 CallerRunsPolicy contract, pinned JDK 25.0.3 tryTerminate/interruptWorkers implementation and executed saturation counterexample."
+    },
+    {
+      "location": "references/shutdown-and-rejection.md:187; SKILL.md Tests",
+      "finding": "No targeted test distinguished pool termination from external inline physical completion.",
+      "correction": "Add latch-based teaching case and a one-constraint AbortPolicy control."
+    }
+  ],
+  "filesChangedByReviewer": [
+    "skills/executors-and-task-lifecycle/SKILL.md",
+    "skills/executors-and-task-lifecycle/references/shutdown-and-rejection.md",
+    "skills/executors-and-task-lifecycle/skill.yaml"
+  ],
+  "preserved": [
+    "Task ownership and admission state machine; queue/growth and factory-capacity caveats.",
+    "ThreadFactory null and beforeExecute failure handling; result observation through execute versus submit.",
+    "Caller-runs context restoration, worker-hook bypass and visible refusal alternative.",
+    "Physical completion versus Future cancellation, interrupted close and never-started result/recovery ownership.",
+    "Same-pool dependency wait diagnosis and execution-model handoff.",
+    "Both existing Java snippets unchanged: partial supervising wrapper and bounded shutdown skeleton.",
+    "Scheduled/periodic reference byte-identical, including asynchronous dispatch, exception series-stop and replica fencing caveats.",
+    "Java 17 example baseline, Java 19 close and Java 21 virtual-thread boundaries.",
+    "Adequate existing producer/request drains and supported no-change decisions; no mandatory new framework, counters or capacity experiment."
+  ],
+  "removedCapabilities": [],
+  "commands": [
+    {
+      "command": "git status --short -- skills/executors-and-task-lifecycle; git diff -- skills/executors-and-task-lifecycle; git diff --cached -- skills/executors-and-task-lifecycle; git show HEAD:skills/executors-and-task-lifecycle/skill.yaml; package inventory/read",
+      "cwd": "C:/git/agent-skills",
+      "result": "Clean assigned package at baseline, all four files inspected, committed and assignment version 1.3.4."
+    },
+    {
+      "command": "java -version; javac -version",
+      "cwd": "C:/git/agent-skills",
+      "result": "Temurin OpenJDK 25.0.3+9 LTS runtime and javac 25.0.3."
+    },
+    {
+      "command": "javac --release 17 -d C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/executors-and-task-lifecycle-validation/classes C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/executors-and-task-lifecycle-validation/CallerRunsDrainCheck.java\nif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }\njava -cp C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/executors-and-task-lifecycle-validation/classes CallerRunsDrainCheck",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": [
+        {
+          "policy": "CallerRunsPolicy",
+          "poolTerminated": true,
+          "callerActiveAtTermination": true,
+          "callerInterruptedByShutdownNow": false,
+          "queuedReturned": 1,
+          "refused": false,
+          "submitterJoined": true
+        },
+        {
+          "policy": "AbortPolicy",
+          "poolTerminated": true,
+          "callerActiveAtTermination": false,
+          "callerInterruptedByShutdownNow": false,
+          "queuedReturned": 1,
+          "refused": true,
+          "submitterJoined": true
+        }
+      ],
+      "classification": "Executed technical/API counterexample and negative control, not an agent behavioral evaluation."
+    },
+    {
+      "command": "@'\nimport assert from 'node:assert/strict';\nimport fs from 'node:fs';\nimport path from 'node:path';\nimport { parseManifest } from './packages/core/src/domain/manifest.ts';\nimport { parseSkillDocument, documentName, documentDescription } from './packages/core/src/domain/skill-document.ts';\nconst root = path.resolve('skills/executors-and-task-lifecycle');\nconst markdown = ['SKILL.md', 'references/shutdown-and-rejection.md', 'references/scheduled-and-periodic.md'];\nconst manifest = parseManifest(fs.readFileSync(path.join(root, 'skill.yaml'), 'utf8'), { strict: true });\nassert.deepEqual(manifest.issues, []);\nconst document = parseSkillDocument(fs.readFileSync(path.join(root, 'SKILL.md'), 'utf8'));\nassert.equal(documentName(document), manifest.manifest.name);\nassert.equal(documentDescription(document), manifest.manifest.description);\nassert.equal(manifest.manifest.version, '1.3.5');\nfor (const entry of manifest.manifest.files) assert.ok(fs.existsSync(path.join(root, entry)), entry);\nconst main = fs.readFileSync(path.join(root, 'SKILL.md'), 'utf8');\nfor (const reference of markdown.slice(1)) assert.ok(main.includes(reference), reference);\nlet localLinks = 0;\nlet anchors = 0;\nfor (const filename of markdown) {\n  const text = fs.readFileSync(path.join(root, filename), 'utf8');\n  for (const match of text.matchAll(/\\[[^\\]]*\\]\\(([^)]+)\\)/g)) {\n    const href = match[1];\n    if (/^[a-z][a-z0-9+.-]*:/i.test(href)) continue;\n    const [target, anchor] = href.split('#');\n    const resolved = target ? path.resolve(root, path.dirname(filename), target) : path.join(root, filename);\n    assert.ok(resolved.startsWith(root + path.sep), href);\n    assert.ok(fs.existsSync(resolved), href);\n    localLinks++;\n    if (anchor) {\n      const content = fs.readFileSync(resolved, 'utf8');\n      const slugs = [...content.matchAll(/^#+\\s+(.+)$/gm)].map(m => m[1].toLowerCase().replace(/[^a-z0-9\\s-]/g, '').trim().replace(/\\s+/g, '-'));\n      assert.ok(slugs.includes(anchor), href);\n      anchors++;\n    }\n  }\n}\nconsole.log(JSON.stringify({strictManifestIssues: manifest.issues.length, version: manifest.manifest.version, descriptionEqual: true, packageFileEntries: manifest.manifest.files.length, routedReferences: 2, localLinks, anchors}));\n'@ | node --input-type=module",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "{\"strictManifestIssues\":0,\"version\":\"1.3.5\",\"descriptionEqual\":true,\"packageFileEntries\":3,\"routedReferences\":2,\"localLinks\":2,\"anchors\":0}\n",
+      "classification": "Executed local structural validation using repository parsers."
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/executors-and-task-lifecycle/SKILL.md skills/executors-and-task-lifecycle/skill.yaml skills/executors-and-task-lifecycle/references/shutdown-and-rejection.md skills/executors-and-task-lifecycle/references/scheduled-and-periodic.md",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "Checking formatting...\nAll matched files use Prettier code style!\n"
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --file-info skills/executors-and-task-lifecycle/SKILL.md",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": {
+        "ignored": false,
+        "inferredParser": "markdown"
+      }
+    },
+    {
+      "command": "git diff --check -- skills/executors-and-task-lifecycle; git diff -- skills/executors-and-task-lifecycle",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "No whitespace errors; final diff inspected: only the three owned files changed."
+    },
+    {
+      "command": "Get-ChildItem skills/executors-and-task-lifecycle -File -Recurse; SHA256/content snapshot and Java-fence comparison with assignment snapshot",
+      "cwd": "C:/git/agent-skills",
+      "result": "Three expected files differ; scheduled reference hash unchanged; both existing Java blocks unchanged."
+    }
+  ],
+  "behavioralEvaluations": {
+    "executed": [],
+    "measuredImprovement": false,
+    "walkthroughs": "Reviewed the two separated development cases against the updated guidance. These are structured walkthroughs only; no independent agent outputs or before/after comparison were executed."
+  },
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.CallerRunsPolicy.html",
+      "version": "Java SE 17",
+      "verified": "2026-10-16",
+      "supports": "Rejected Runnable runs directly on execute caller unless executor is already shut down."
+    },
+    {
+      "url": "https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/java.base/share/classes/java/util/concurrent/ThreadPoolExecutor.java",
+      "version": "OpenJDK jdk-25.0.3+9",
+      "verified": "2026-10-16",
+      "supports": "tryTerminate checks worker count/queue; interruptWorkers visits the pool workers. External caller execution is outside that accounting; the drain consequence is an inference corroborated by the executed test."
+    }
+  ],
+  "limits": [
+    "Runtime test executed on Temurin 25.0.3; compilation targeted Java 17. No Java 17 runtime was available/executed for this assignment.",
+    "Executed example covers stock ThreadPoolExecutor policies with an external submitter. Custom handlers/subclasses or independently proved request drain require their actual contracts.",
+    "The latch test demonstrates a concrete reachable counterexample and a policy control, not exhaustive scheduling coverage or a proof about production workloads.",
+    "Existing illustrative Java snippets were unchanged and were not recompiled; the new standalone verifier was compiled and run.",
+    "No independent agent evaluation or measured quality gain; coordinator evaluation remains pending.",
+    "A raw-source browsing request stalled and was terminated read-only; the Java API and pinned GitHub source were successfully inspected via subsequent browsing."
+  ],
+  "cases": [
+    {
+      "id": "external-caller-drain",
+      "taskInput": {
+        "task": "Review WorkerOwner.stop() for the lifetime of its shared Client. Read the supplied source and operational contract, then write ShutdownReview.md with the supported conclusion and the smallest corrective design if one is needed. Preserve the Java 17 baseline and bounded shutdown. Limit this review to resource lifetime rather than redesigning throughput or delivery.",
+        "files": {
+          "runtime.txt": "Compiler target: Java 17. Runtime: Temurin 25.0.3. Default ThreadFactory and unmodified ThreadPoolExecutor. This class is the sole lifecycle owner.",
+          "operational-contract.md": "External request threads call submit; a separate lifecycle thread calls stop. No request-thread join precedes stop. Each write uses Client for the whole body and may block. Every worker write exits promptly when interrupted. The process may have one busy worker, one queued write and another concurrent submission. Callers support visible RejectedExecutionException and do not retry after stopping. Work is best-effort: counted queued drops are permitted; no Futures or background children are created. Client is used only inside write bodies; closing it while any write body still uses it is invalid.",
+          "ShutdownReview.md": "Pending review: assess whether this shutdown sequence protects Client.",
+          "WorkerOwner.java": "import java.util.concurrent.*;\nimport java.util.concurrent.atomic.*;\n\nfinal class WorkerOwner {\n    interface Client {\n        void write(String value);\n        void close();\n    }\n    private final Client client;\n    private final AtomicBoolean accepting = new AtomicBoolean(true);\n    private final AtomicInteger dropped = new AtomicInteger();\n    private final ThreadPoolExecutor executor = new ThreadPoolExecutor(\n            1, 1, 0, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(1),\n            new ThreadPoolExecutor.CallerRunsPolicy());\n\n    WorkerOwner(Client client) { this.client = client; }\n\n    void submit(String value) {\n        if (!accepting.get()) throw new RejectedExecutionException(\"stopping\");\n        executor.execute(() -> client.write(value));\n    }\n\n    void stop() throws InterruptedException {\n        accepting.set(false);\n        executor.shutdown();\n        if (!executor.awaitTermination(100, TimeUnit.MILLISECONDS)) {\n            dropped.addAndGet(executor.shutdownNow().size());\n            if (!executor.awaitTermination(2, TimeUnit.SECONDS)) {\n                throw new IllegalStateException(\"residual workers; leave client open\");\n            }\n        }\n        client.close();\n    }\n}\n"
+        },
+        "prerequisites": "Ordinary Java source inspection is sufficient; optional reproduction needs an installed JDK with --release 17 support. Do not use production services."
+      },
+      "evaluatorCriteria": {
+        "decisiveEvidence": "ThreadPoolExecutor uses stock CallerRunsPolicy; submitters are external and are not joined by stop.",
+        "expected": [
+          "Locate the inline body path through rejectedExecution and explain how it can remain active after worker termination.",
+          "Require an adequate bounded producer/request drain or another ownership mechanism covering physical exit and admission races before Client closes; alternatively justify visible rejection, which this contract permits.",
+          "Preserve existing queue-drop accounting, residual-worker handling and Java target. Propose a deterministic saturation/latch check of the resource-close boundary."
+        ],
+        "failureConditions": [
+          "Treat successful awaitTermination as proof that the external caller-run body exited.",
+          "Claim shutdownNow interrupts that external request thread.",
+          "Use Future.isDone or an open-admission zero counter as the sole physical completion proof.",
+          "Mandate an entirely new executor framework or unrelated pool resizing."
+        ]
+      }
+    },
+    {
+      "id": "visible-refusal-control",
+      "changedConstraint": "Only the rejection handler changes from CallerRunsPolicy to AbortPolicy; all other source and operational facts are identical.",
+      "taskInput": {
+        "task": "Review WorkerOwner.stop() for the lifetime of its shared Client. Read the supplied source and operational contract, then write ShutdownReview.md with the supported conclusion and the smallest corrective design if one is needed. Preserve the Java 17 baseline and bounded shutdown. Limit this review to resource lifetime rather than redesigning throughput or delivery.",
+        "files": {
+          "runtime.txt": "Compiler target: Java 17. Runtime: Temurin 25.0.3. Default ThreadFactory and unmodified ThreadPoolExecutor. This class is the sole lifecycle owner.",
+          "operational-contract.md": "External request threads call submit; a separate lifecycle thread calls stop. No request-thread join precedes stop. Each write uses Client for the whole body and may block. Every worker write exits promptly when interrupted. The process may have one busy worker, one queued write and another concurrent submission. Callers support visible RejectedExecutionException and do not retry after stopping. Work is best-effort: counted queued drops are permitted; no Futures or background children are created. Client is used only inside write bodies; closing it while any write body still uses it is invalid.",
+          "ShutdownReview.md": "Pending review: assess whether this shutdown sequence protects Client.",
+          "WorkerOwner.java": "import java.util.concurrent.*;\nimport java.util.concurrent.atomic.*;\n\nfinal class WorkerOwner {\n    interface Client {\n        void write(String value);\n        void close();\n    }\n    private final Client client;\n    private final AtomicBoolean accepting = new AtomicBoolean(true);\n    private final AtomicInteger dropped = new AtomicInteger();\n    private final ThreadPoolExecutor executor = new ThreadPoolExecutor(\n            1, 1, 0, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(1),\n            new ThreadPoolExecutor.AbortPolicy());\n\n    WorkerOwner(Client client) { this.client = client; }\n\n    void submit(String value) {\n        if (!accepting.get()) throw new RejectedExecutionException(\"stopping\");\n        executor.execute(() -> client.write(value));\n    }\n\n    void stop() throws InterruptedException {\n        accepting.set(false);\n        executor.shutdown();\n        if (!executor.awaitTermination(100, TimeUnit.MILLISECONDS)) {\n            dropped.addAndGet(executor.shutdownNow().size());\n            if (!executor.awaitTermination(2, TimeUnit.SECONDS)) {\n                throw new IllegalStateException(\"residual workers; leave client open\");\n            }\n        }\n        client.close();\n    }\n}\n"
+        },
+        "prerequisites": "Ordinary Java source inspection is sufficient; optional reproduction needs an installed JDK with --release 17 support. Do not use production services."
+      },
+      "evaluatorCriteria": {
+        "decisiveEvidence": "AbortPolicy visibly rejects excess or post-shutdown work; rejected tasks have no execution path outside pool workers.",
+        "expected": [
+          "Recognize that the previous external-body drain hazard is absent under this handler and supplied contract.",
+          "Accept pool termination as evidence of physical completion of Client-using worker bodies in this fixture, including workers interrupted on escalation; preserve the leave-client-open branch if workers remain.",
+          "Do not add caller-run tracking or claim an external body remains active merely because the prior case did. Retain bounded shutdown and visible refusal."
+        ],
+        "failureConditions": [
+          "Report the same caller-run dependency-close race despite the changed handler.",
+          "Introduce a mandatory application-wide tracker without an uncovered execution path.",
+          "Claim queued drops are a durability defect contrary to the supplied best-effort contract."
+        ]
+      }
+    }
+  ],
+  "validationArtifacts": [
+    "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/executors-and-task-lifecycle-validation/CallerRunsDrainCheck.java",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/executors-and-task-lifecycle-validation/classes/CallerRunsDrainCheck.class"
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Shared generated index; run only after all reviewers stop writing."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Repository-wide checks deferred by the parallel-review procedure; requires final registry regeneration."
+    }
+  ],
+  "crossSkill": [],
+  "coordinatorActions": [
+    "Archive this JSON and retained Java technical verifier.",
+    "Select independent behavioral evaluation if desired; task inputs and evaluator criteria are separated in cases.",
+    "Run global checks after all reviewer writes stop."
+  ],
+  "processState": "All commands completed; Java test joined external submitters and terminated pools. No reviewer-started write process remains active."
+}

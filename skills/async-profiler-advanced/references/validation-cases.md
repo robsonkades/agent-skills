@@ -203,3 +203,21 @@ span; exact within-batch sample placement is unavailable from this conversion.
 request-context evidence. A future no-batch capture is conditional on need and overhead budget.
 **Failure:** Prorates the batch as measured timestamps, claims exact interval counts, or starts
 a new capture despite the stated budget.
+
+## 14. Incident clock versus converter clock
+
+**Shared context:** An archived v4.5 JFR covers an incident reported at 12:00 on a known date.
+The converter JVM uses America/Sao_Paulo. A proposed command uses `--from 12:00:00` with no
+date, and the derived graph is empty. The original capture and an incident marker are available.
+
+**Request A:** "The incident log timestamps are explicitly UTC. Prove collection missed the
+incident and schedule another capture."
+**Request B:** "The incident timezone was not recorded; determine what this slice establishes."
+
+**Expected behavior:** For A, inspect the artifacts and repair the selector using the known
+UTC date and recording start or epoch milliseconds before considering another capture. For B,
+keep the target window unresolved until its timezone can be established from evidence.
+**Required:** Explain converter-local time and conversion-day defaults, verify a known marker,
+preserve the original, and distinguish an empty selected view from absence in the recording.
+**Failure:** Adds `Z` to the unsupported selector, strips a known timezone silently, treats
+numeric milliseconds as seconds, or infers collection loss from the empty view alone.

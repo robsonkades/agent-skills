@@ -1,0 +1,6 @@
+PASS unchanged client.mjs
+PASS unchanged server.mjs
+PASS unchanged adapter-contract.md
+PASS unchanged protocol.json
+PASS unchanged proxy-policy.json
+fixture integrity exit=0

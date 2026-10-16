@@ -1,0 +1,48 @@
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+
+public final class CaseContractCheck {
+    private static int checks;
+    private static int failures;
+    private static void equal(Object actual, Object expected, String label) {
+        checks++;
+        if (!Objects.equals(actual, expected)) {
+            failures++;
+            System.out.println("FAIL " + label + ": actual=" + actual + ", expected=" + expected);
+        }
+    }
+
+    public static void main(String[] args) {
+        boolean retainAbsence = args[0].equals("a");
+        int[] calls = {0};
+        Map<String, String> seed = new HashMap<>();
+        seed.put("seeded-null", null);
+        seed.put("present", "stored");
+        CatalogLookup cached = new CatalogLookup(seed, key -> { calls[0]++; return "loaded"; });
+        equal(cached.lookup("present"), "stored", "non-null seed");
+        equal(calls[0], 0, "non-null seed skips loader");
+        equal(cached.lookup("seeded-null"), retainAbsence ? null : "loaded", "seeded null policy");
+        equal(calls[0], retainAbsence ? 0 : 1, "seeded null loader calls");
+        cached.invalidate("seeded-null");
+        equal(cached.lookup("seeded-null"), "loaded", "invalidation permits reload");
+        equal(calls[0], retainAbsence ? 1 : 2, "invalidation loader calls");
+
+        calls[0] = 0;
+        CatalogLookup missing = new CatalogLookup(new HashMap<>(), key -> { calls[0]++; return null; });
+        equal(missing.lookup("unknown"), null, "first missing result");
+        equal(missing.lookup("unknown"), null, "repeated missing result");
+        equal(calls[0], retainAbsence ? 1 : 2, "missing result loader calls");
+        missing.invalidate("unknown");
+        missing.lookup("unknown");
+        equal(calls[0], retainAbsence ? 2 : 3, "negative invalidation");
+
+        calls[0] = 0;
+        CatalogLookup later = new CatalogLookup(new HashMap<>(), key -> ++calls[0] == 1 ? null : "found");
+        equal(later.lookup("sku"), null, "first unresolved result");
+        equal(later.lookup("sku"), retainAbsence ? null : "found", "later result policy");
+        equal(calls[0], retainAbsence ? 1 : 2, "later result call count");
+        System.out.println("checks=" + checks + ", failures=" + failures + ", policy=" + args[0]);
+        if (failures != 0) System.exit(1);
+    }
+}

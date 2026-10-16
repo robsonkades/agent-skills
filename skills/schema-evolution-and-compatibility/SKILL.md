@@ -131,6 +131,12 @@ written without the old field; old readers need tested meaningful defaults/adapt
   decoding still fails on corrupt data, missing schemas or conversions; successful decoding does not
   prove application compatibility. Use SpecificRecords, an explicit reader, or deliberate
   writer-aware generic handling and test the actual configured path.
+- **Changing a logical type can change values without changing the wire type.** Avro
+  `timestamp-millis` → `timestamp-micros` still encodes a `long`; the recorded Java 1.12.2 checker
+  accepts both directions and the parsing fingerprints match, yet a reader using the new unit
+  reinterprets old values. Inspect the selected reader schema and conversions, then assert instants
+  across historical and rollback pairs. Writer-aware decoding can preserve each unit; a default or
+  alias does not rescale a present value. See the Avro reference before choosing deployment order.
 - **Unexpected registrations may bypass schema review.** `auto.register.schemas` defaults to `true`
   and overrides `use.latest.version`
   and `latest.compatibility.strict`. Bind runtime schemas to reviewed source or generated artifacts;
@@ -198,7 +204,8 @@ written without the old field; old readers need tested meaningful defaults/adapt
   topic, so it complements `test-compatibility` rather than replacing it.
 - **Test the actual rollout matrix.** Serialize with deployed, candidate and retained writer schemas,
   decode with supported/rollback readers, and **assert values, not merely absence of exceptions** — that is
-  what exposes a changed default or same-wire-type reinterpretation in the exercised cases.
+  what exposes a changed default or same-wire-type reinterpretation in the exercised cases. Include
+  nonzero logical values: epoch zero alone cannot detect a milliseconds/microseconds mismatch.
   Structural/default-change rules can also detect these edits. `DynamicMessage` over two descriptors
   tests Protobuf runtime resolution; use actual generated clients when their API behavior is the claim.
 - **Signals guide investigation, not proof of completion.** Unknown Protobuf field counts can show
@@ -211,8 +218,8 @@ written without the old field; old readers need tested meaningful defaults/adapt
 
 - [Avro](references/avro.md) — resolution rules verbatim, the verified reader/writer matrix, aliases,
   the enum `default` symbol, the union-default divergence across five releases, the fingerprint trap,
-  what a changed default does to old records, `SpecificRecord` versus `GenericRecord`. Read when the
-  change is to an `.avsc`, or when an Avro reader throws.
+  what changed defaults or logical units do to old records, `SpecificRecord` versus `GenericRecord`.
+  Read when the change is to an `.avsc`, or when Avro values change or a reader throws.
 - [Protobuf](references/protobuf.md) — the wire-safe, unsafe and lossy lists, presence and generated
   accessors, the eleven verified type-change outcomes, reused numbers, packed repeated and unknown
   fields, the `UNRECOGNIZED` codegen source, `oneof`, proto2 `required`. Read when the change is to a

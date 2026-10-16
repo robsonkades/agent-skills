@@ -1,0 +1,2 @@
+# Optional DDL artifact settings for this verification task
+jakarta.persistence.schema-generation.scripts.action=create

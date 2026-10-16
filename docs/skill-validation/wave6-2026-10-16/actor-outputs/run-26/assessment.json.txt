@@ -1,0 +1,20 @@
+{
+  "disposition": "supported",
+  "basis": "SettingsRegistry.settings reads current into one local and returns that same local. A null observation enters the shared monitor and rereads current; the write, second check and build increment use the same monitor, so the accepted no-throw/no-reentrancy/no-reset lifecycle builds once and preserves identity. A non-null fast-path observation reaches Settings.record, a correctly constructed final field, then Record.limit initialized before its freeze. JLS 25 final-field dereference rules protect that initialized value even though Record.limit is non-final. The accepted private graph and absence of later mutation make every returned Settings expose 64. The ordinary current read races, but its possible stale-null outcome is handled; this is not a claim of race freedom or generic happens-before publication.",
+  "requiredChange": null,
+  "missingEvidence": [],
+  "checked": [
+    "Complete local skill body and both conditional references read",
+    "All supplied production sources, smoke, accepted contract, request, README and check.mjs reviewed",
+    "JLS Java SE 25 sections 17.4.5, 17.5 and 17.5.1 consulted",
+    "java -version and javac -version returned 25.0.3",
+    "Provided node check.mjs compiled with --release 25 and passed sequential identity/value/build check"
+  ],
+  "limits": [
+    "Relies on accepted construction-before-Thread.start, no-throw/no-reentrancy, no-reset, no-escape, no-alias and no-post-construction-mutation premises",
+    "Existing smoke is sequential and is not evidence excluding concurrent outcomes",
+    "No jcstress, additional architecture/JDK runs, assembly inspection, performance or wait-free claim",
+    "Volatile would be a maintenance preference under this contract, not a demonstrated necessary repair",
+    "Production files, contracts and dependencies were not changed"
+  ]
+}

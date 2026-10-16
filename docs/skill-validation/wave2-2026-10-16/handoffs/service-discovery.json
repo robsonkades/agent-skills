@@ -1,0 +1,447 @@
+{
+  "status": "NO_CHANGES_NEEDED",
+  "skill": "service-discovery",
+  "reviewer": "quality13",
+  "ownedPath": "skills/service-discovery/**",
+  "allWritesStopped": true,
+  "stoppedProcesses": "No background process launched; javac, java, Node, Prettier and shell checks finished.",
+  "procedure": {
+    "requiredReadings": "Root AGENTS.md, full docs/skill-review-prompt.md, docs/parallel-skill-reviews.md, skills/skill-engineering/SKILL.md and evidence/evaluation/resource-design/anti-pattern references, and wave2 review brief. Unchanged procedure/history readings reused across consecutive assignments as the brief allows.",
+    "fullPackageRead": true,
+    "findingsSentBeforeAnyOwnedEdit": true,
+    "noOwnedEditsMade": true
+  },
+  "reviewCriteria": [
+    "Trace actual source and client path instead of inferring provider semantics.",
+    "Preserve authoritative empty, failure, replay, revalidation, expiry and revocation distinctions.",
+    "Check snapshot/watch continuity and version-specific token contracts.",
+    "Separate membership freshness from health, authorization, ownership and transport convergence.",
+    "Keep role and caller ergonomics; no automatic infrastructure or framework upgrades."
+  ],
+  "findings": [
+    {
+      "classification": "confirmed-adequate",
+      "location": "SKILL.md:66–101",
+      "finding": "Coherent snapshots/watch continuity, source-age provenance, stale hazard and existing-connection boundaries are explicit.",
+      "consequence": "The skill directs acquisition of the client/source evidence that changes a recommendation instead of prescribing TTL reduction or another registry."
+    },
+    {
+      "classification": "confirmed-adequate",
+      "location": "references/source-and-client-semantics.md:38–51",
+      "finding": "Java DNS stale TTL semantics and security-property configuration match Java 21 primary contracts.",
+      "consequence": "The additive allowance in the toy resolver is not copied into DNS configuration as a false total-age guarantee."
+    },
+    {
+      "classification": "confirmed-adequate",
+      "location": "references/source-and-client-semantics.md:74–97",
+      "finding": "EndpointSlice aggregation, readiness exception and resourceVersion version split match Kubernetes primary contracts.",
+      "consequence": "No reliance on a single slice, ready=true during publishNotReadyAddresses, Java long parsing or an obsolete blanket numeric-token assumption."
+    },
+    {
+      "classification": "confirmed-adequate",
+      "location": "references/source-and-client-semantics.md:100–142",
+      "finding": "Spring provider and separate cache/lifecycle distinctions are version-qualified and supported by Commons 5.0.3 source/docs and Netflix 5.0.2 docs.",
+      "consequence": "Successful getInstances() is not treated as proof of a source read; LoadBalancer cache disabling stays conditional."
+    },
+    {
+      "classification": "confirmed-adequate",
+      "location": "assets/SnapshotResolverExample.java:61–111 and 143–233; references/java-snapshot-resolver.md",
+      "finding": "Existing example and 28 executed checks protect replay age, policy-dependent stale use, removal watermark, cold start, hostile input, immutability and concurrent compare/publish. Documentation names its trust/transport/runtime limits.",
+      "consequence": "No supported local correctness gap found that warrants modifying this educational example or widening its scope."
+    }
+  ],
+  "findingsCorrected": [],
+  "remainingFindings": [],
+  "changes": {
+    "filesChangedByReviewer": [],
+    "preExistingStaged": [],
+    "preExistingUnstaged": [],
+    "preExistingUntracked": [],
+    "ownedDiffAgainstAssignment": "Empty",
+    "ownedDiffAgainstHEAD": "Empty",
+    "temporaryArtifactsOutsideRepository": "C:/Users/robso/AppData/Local/Temp/discovery-quality13-426d10cb1ca6448ca7a622a17bfbbf95"
+  },
+  "capabilities": {
+    "preserved": [
+      "Discovery diagnosis/design and requested implementation",
+      "authority/incarnation/scope and bootstrap lifecycle",
+      "snapshot/delta/list/watch and epoch contracts",
+      "positive, negative, stale and unavailable states",
+      "Java DNS, Kubernetes and Spring provider-specific guidance",
+      "immutable bounded Java 21 teaching resolver with executable checks",
+      "TLS/destination boundary and optional routing/lifecycle/client handoffs",
+      "conditional recommendation/no-change and explicit limits"
+    ],
+    "replaced": [],
+    "removed": []
+  },
+  "version": {
+    "committed": "1.0.0",
+    "assignment": "1.0.0",
+    "final": "1.0.0",
+    "preExistingBump": false,
+    "rationale": "No package bytes changed; no version bump is warranted."
+  },
+  "checks": [
+    {
+      "kind": "baseline-inspection",
+      "cwd": "C:/git/agent-skills",
+      "command": "rg --files skills/service-discovery; git status --short -- skills/service-discovery; git diff -- skills/service-discovery; git diff --cached -- skills/service-discovery; git show HEAD:skills/service-discovery/skill.yaml",
+      "result": "Five package files fully read. No staged, unstaged or untracked owned changes at assignment. Committed and working version 1.0.0.",
+      "note": "Commands were read-only; semicolons here delimit recorded command names, not a single executed shell command."
+    },
+    {
+      "kind": "toolchain",
+      "cwd": "C:/git/agent-skills",
+      "command": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' -version\n& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -version\nnode --version",
+      "exitCode": 0,
+      "result": "javac 25.0.3; Temurin 25.0.3+9-LTS; Node v25.6.1"
+    },
+    {
+      "kind": "technical-example",
+      "cwd": "C:/git/agent-skills",
+      "command": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' --release 21 -d 'C:/Users/robso/AppData/Local/Temp/discovery-quality13-426d10cb1ca6448ca7a622a17bfbbf95/classes' skills/service-discovery/assets/SnapshotResolverExample.java\nif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }\n& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -cp 'C:/Users/robso/AppData/Local/Temp/discovery-quality13-426d10cb1ca6448ca7a622a17bfbbf95/classes' SnapshotResolverExample | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/discovery-quality13-426d10cb1ca6448ca7a622a17bfbbf95/snapshot-resolver-output.txt'\nexit $LASTEXITCODE",
+      "exitCode": 0,
+      "result": "PASS: 28 snapshot resolver checks",
+      "coverage": [
+        "unavailable bootstrap",
+        "defensive copies",
+        "exact positive and negative expiry boundaries",
+        "fresh-only versus bounded-stale policy",
+        "failure/read without rejuvenation",
+        "same-revision replay versus authoritative revalidation",
+        "authoritative empty supersedes positive endpoints",
+        "older revisions cannot resurrect after expiry",
+        "epoch/conflict/hostile endpoint and input-size rejection",
+        "recovery",
+        "32 concurrent updates published atomically with maximum revision winning"
+      ],
+      "limitation": "Java 21 language/API target compiled and executed on JDK 25.0.3; no runtime-21 execution, registry, network or exhaustive scheduler proof."
+    },
+    {
+      "kind": "package-local-structural",
+      "cwd": "C:/git/agent-skills",
+      "command": "node 'C:/Users/robso/AppData/Local/Temp/discovery-quality13-426d10cb1ca6448ca7a622a17bfbbf95/check-package.mjs' | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/discovery-quality13-426d10cb1ca6448ca7a622a17bfbbf95/package-validation.json'\nexit $LASTEXITCODE",
+      "exitCode": 0,
+      "result": "Repository loadPackageFromDirectory(strict=true) and validatePackage: zero issues, five packaged files, four local Markdown links resolved, zero broken links.",
+      "limitation": "Generic assigned-package validation only, not a substitute for index/global/adapter checks."
+    },
+    {
+      "kind": "format",
+      "cwd": "C:/git/agent-skills",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/service-discovery",
+      "exitCode": 0,
+      "result": "All matched files use Prettier code style! No formatter write run."
+    },
+    {
+      "kind": "diff-and-ownership",
+      "cwd": "C:/git/agent-skills",
+      "command": "git diff --check -- skills/service-discovery\ngit status --short -- skills/service-discovery\ngit diff --stat -- skills/service-discovery\ngit diff --cached --stat -- skills/service-discovery",
+      "exitCode": 0,
+      "result": "No output: no owned differences, whitespace errors, staged or untracked files."
+    },
+    {
+      "kind": "case-fixture-compilation",
+      "cwd": "C:/git/agent-skills",
+      "command": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' --release 21 -cp 'C:/Users/robso/AppData/Local/Temp/discovery-quality13-426d10cb1ca6448ca7a622a17bfbbf95/classes' -d 'C:/Users/robso/AppData/Local/Temp/discovery-quality13-426d10cb1ca6448ca7a622a17bfbbf95/case-classes' 'C:/Users/robso/AppData/Local/Temp/discovery-quality13-426d10cb1ca6448ca7a622a17bfbbf95/cases/shared/DiscoveryAdapter.java'\nexit $LASTEXITCODE",
+      "exitCode": 0,
+      "result": "Starter adapter compiles against the unmodified teaching resolver. It intentionally contains defects for independent evaluation; no corrected adapter or agent solution has been executed."
+    },
+    {
+      "kind": "case-json-validation",
+      "cwd": "C:/git/agent-skills",
+      "command": "Get-Content -Raw <actor-a.json>, <actor-b.json>, <evaluator-criteria.json> separately | ConvertFrom-Json; compare serialized context fields",
+      "exitCode": 0,
+      "result": "Both actor case JSONs and evaluator JSON parse. SameContext=true; operation maximum age differs 15 vs 10; exactly two evaluator cases.",
+      "note": "Abbreviated read-only description; no global validator or repository write."
+    },
+    {
+      "kind": "baseline-integrity",
+      "cwd": "C:/git/agent-skills",
+      "command": "rg --files skills/service-discovery; Get-FileHash -Algorithm SHA256 for each returned file; compare against assignment snapshot",
+      "exitCode": 0,
+      "result": "All five owned file hashes equal assignment baseline."
+    }
+  ],
+  "failures": {
+    "packageLocalFailures": [],
+    "preExistingFailures": [],
+    "introducedFailures": [],
+    "toolPreparationOnly": [
+      "An initial functions.exec case-JSON preparation attempt failed because structuredClone is not available in that isolate. It failed before writing cases; the subsequent preparation avoided that helper and the resulting JSONs parsed successfully."
+    ]
+  },
+  "behavioralEvidence": {
+    "executedAgentEvaluations": [],
+    "measuredImprovement": false,
+    "technicalExecution": "Existing 28-check Java main executed; starter actor fixture compiled only.",
+    "walkthroughs": [
+      {
+        "case": "discovery-outage-a",
+        "result": "Reasoned t=12 bounded-stale A, t=15 unavailable, t=20 authoritative empty, no resurrection by t=21 replay, negative expiry t=23."
+      },
+      {
+        "case": "discovery-outage-b",
+        "result": "Same trace with 10-second operation age bound rejects endpoints at t=12; all shared provenance/removal/cold-start checks unchanged."
+      }
+    ],
+    "limitations": "Walkthroughs are not independent behavioral evaluations. No baseline/revised agent comparison exists; package is unchanged."
+  },
+  "reproducibleCases": {
+    "actorFiles": [
+      "C:/Users/robso/AppData/Local/Temp/discovery-quality13-426d10cb1ca6448ca7a622a17bfbbf95/cases/actor-a.json",
+      "C:/Users/robso/AppData/Local/Temp/discovery-quality13-426d10cb1ca6448ca7a622a17bfbbf95/cases/actor-b.json"
+    ],
+    "evaluatorFile": "C:/Users/robso/AppData/Local/Temp/discovery-quality13-426d10cb1ca6448ca7a622a17bfbbf95/cases/evaluator-criteria.json",
+    "actorCases": [
+      {
+        "id": "discovery-outage-a",
+        "task": "Use service-discovery to review and correct this Java discovery adapter for the supplied operation contract. Inspect the implementation and trace, implement the smallest justified adapter change, and add deterministic checks. Preserve the teaching resolver's public and source contracts. Report actual validation separately from any network/convergence claim. Do not install dependencies, upgrade Java, add a registry or contact a live service.",
+        "context": {
+          "prerequisites": [
+            "Use an isolated directory and an available JDK supporting --release 21.",
+            "Copy the unmodified skills/service-discovery/assets/SnapshotResolverExample.java from this review baseline (SHA256 673B82F742B67464CF14D12C9349A652DA48C2CD03032155AC621E7C6262B898) alongside DiscoveryAdapter.java.",
+            "Use an AtomicLong as a monotonic nanosecond clock; advance explicitly with Duration.ofSeconds(t).toNanos(). No sleeps or actual registry calls.",
+            "Compile both files and your checks with javac --release 21 -d classes. Record the runtime used separately."
+          ],
+          "sourceContract": {
+            "authorityEpoch": "catalog/prod/epoch-1",
+            "revision": "Nonnegative monotonic long from this fixed authority; each reply is a complete scoped snapshot.",
+            "REGISTRY_READ": "Authenticated linearizable read completed at the supplied clock instant; the test fixture has zero transport delay. Identical revisions can occur when membership has not changed.",
+            "PROVIDER_CACHE": "An answer from provider memory after upstream loss. The API carries no authoritative observation timestamp for that cache entry. Returning successfully does not imply a registry call.",
+            "failure": "IOException, with no membership answer.",
+            "transport": "Only endpoint-view decisions are represented. TLS identity for A/B is independently valid throughout the fixture; transport pools and live connections are outside it."
+          },
+          "requirements": {
+            "positiveFreshTtlSeconds": 10,
+            "additionalStaleCapacitySeconds": 5,
+            "authoritativeEmptyTtlSeconds": 3,
+            "maximumEndpoints": 2,
+            "unavailable": "A result exposing no eligible endpoint is acceptable after the operation's membership-age bound; do not make up fallback addresses.",
+            "bootstrap": "A new process has no previously acquired snapshot.",
+            "boundary": "An age equal to the permitted maximum is no longer usable.",
+            "authorization": "The age policy is for discovery information. It is not a hard credential-revocation or endpoint-health guarantee.",
+            "availability": "Keep serving an already verified endpoint while its discovery information satisfies this operation's maximum age, unless an authoritative removal supersedes it."
+          },
+          "fixtures": {
+            "DiscoveryAdapter.java": "import java.io.IOException;\nimport java.net.URI;\nimport java.time.Duration;\nimport java.util.List;\nimport java.util.Set;\nimport java.util.concurrent.atomic.AtomicLong;\n\npublic final class DiscoveryAdapter {\n    static final String EPOCH = \"catalog/prod/epoch-1\";\n    static final URI A = URI.create(\"https://a.catalog.internal.example:8443\");\n    static final URI B = URI.create(\"https://b.catalog.internal.example:8443\");\n    enum Origin { REGISTRY_READ, PROVIDER_CACHE }\n    record Reply(long revision, List<URI> endpoints, Origin origin) {}\n    @FunctionalInterface\n    interface Provider { Reply fetch() throws IOException; }\n\n    private final Provider provider;\n    private final SnapshotResolverExample.Resolver cache;\n\n    DiscoveryAdapter(Provider provider, AtomicLong nanos) {\n        this.provider = provider;\n        this.cache = new SnapshotResolverExample.Resolver(\n                EPOCH, Duration.ofSeconds(10), Duration.ofSeconds(3),\n                Duration.ofSeconds(5), 2, nanos::get, Set.of(A, B)::contains);\n    }\n\n    void refresh() throws IOException {\n        Reply reply = provider.fetch();\n        cache.accept(EPOCH, reply.revision(), reply.endpoints(), true);\n    }\n\n    SnapshotResolverExample.View endpoints() {\n        return cache.resolve(SnapshotResolverExample.Policy.BOUNDED_STALE);\n    }\n}\n",
+            "trace.csv": "at_seconds,action,provider_reply\n0,refresh,REGISTRY_READ revision=7 endpoints=A\n9,refresh,PROVIDER_CACHE revision=7 endpoints=A\n10,refresh,IOException\n12,read_endpoint_view,\n15,read_endpoint_view,\n20,refresh,REGISTRY_READ revision=8 endpoints=empty\n21,refresh,PROVIDER_CACHE revision=7 endpoints=A\n21,read_endpoint_view,\n23,read_endpoint_view,\n",
+            "extra-traces.txt": "Also exercise a new process whose first fetch is PROVIDER_CACHE revision=7 endpoints=A, and a separate new process whose first fetch throws IOException. In a separate control, obtain revision=7 at t=0 then REGISTRY_READ revision=7 at t=9 and inspect the view at t=10."
+          },
+          "requestedDeliverables": [
+            "Focused DiscoveryAdapter.java change",
+            "Deterministic checks with observable state/endpoints",
+            "Short explanation grounded in the source contract, plus remaining integration limits"
+          ]
+        },
+        "operationContract": {
+          "maxSnapshotAgeSeconds": 15
+        }
+      },
+      {
+        "id": "discovery-outage-b",
+        "task": "Use service-discovery to review and correct this Java discovery adapter for the supplied operation contract. Inspect the implementation and trace, implement the smallest justified adapter change, and add deterministic checks. Preserve the teaching resolver's public and source contracts. Report actual validation separately from any network/convergence claim. Do not install dependencies, upgrade Java, add a registry or contact a live service.",
+        "context": {
+          "prerequisites": [
+            "Use an isolated directory and an available JDK supporting --release 21.",
+            "Copy the unmodified skills/service-discovery/assets/SnapshotResolverExample.java from this review baseline (SHA256 673B82F742B67464CF14D12C9349A652DA48C2CD03032155AC621E7C6262B898) alongside DiscoveryAdapter.java.",
+            "Use an AtomicLong as a monotonic nanosecond clock; advance explicitly with Duration.ofSeconds(t).toNanos(). No sleeps or actual registry calls.",
+            "Compile both files and your checks with javac --release 21 -d classes. Record the runtime used separately."
+          ],
+          "sourceContract": {
+            "authorityEpoch": "catalog/prod/epoch-1",
+            "revision": "Nonnegative monotonic long from this fixed authority; each reply is a complete scoped snapshot.",
+            "REGISTRY_READ": "Authenticated linearizable read completed at the supplied clock instant; the test fixture has zero transport delay. Identical revisions can occur when membership has not changed.",
+            "PROVIDER_CACHE": "An answer from provider memory after upstream loss. The API carries no authoritative observation timestamp for that cache entry. Returning successfully does not imply a registry call.",
+            "failure": "IOException, with no membership answer.",
+            "transport": "Only endpoint-view decisions are represented. TLS identity for A/B is independently valid throughout the fixture; transport pools and live connections are outside it."
+          },
+          "requirements": {
+            "positiveFreshTtlSeconds": 10,
+            "additionalStaleCapacitySeconds": 5,
+            "authoritativeEmptyTtlSeconds": 3,
+            "maximumEndpoints": 2,
+            "unavailable": "A result exposing no eligible endpoint is acceptable after the operation's membership-age bound; do not make up fallback addresses.",
+            "bootstrap": "A new process has no previously acquired snapshot.",
+            "boundary": "An age equal to the permitted maximum is no longer usable.",
+            "authorization": "The age policy is for discovery information. It is not a hard credential-revocation or endpoint-health guarantee.",
+            "availability": "Keep serving an already verified endpoint while its discovery information satisfies this operation's maximum age, unless an authoritative removal supersedes it."
+          },
+          "fixtures": {
+            "DiscoveryAdapter.java": "import java.io.IOException;\nimport java.net.URI;\nimport java.time.Duration;\nimport java.util.List;\nimport java.util.Set;\nimport java.util.concurrent.atomic.AtomicLong;\n\npublic final class DiscoveryAdapter {\n    static final String EPOCH = \"catalog/prod/epoch-1\";\n    static final URI A = URI.create(\"https://a.catalog.internal.example:8443\");\n    static final URI B = URI.create(\"https://b.catalog.internal.example:8443\");\n    enum Origin { REGISTRY_READ, PROVIDER_CACHE }\n    record Reply(long revision, List<URI> endpoints, Origin origin) {}\n    @FunctionalInterface\n    interface Provider { Reply fetch() throws IOException; }\n\n    private final Provider provider;\n    private final SnapshotResolverExample.Resolver cache;\n\n    DiscoveryAdapter(Provider provider, AtomicLong nanos) {\n        this.provider = provider;\n        this.cache = new SnapshotResolverExample.Resolver(\n                EPOCH, Duration.ofSeconds(10), Duration.ofSeconds(3),\n                Duration.ofSeconds(5), 2, nanos::get, Set.of(A, B)::contains);\n    }\n\n    void refresh() throws IOException {\n        Reply reply = provider.fetch();\n        cache.accept(EPOCH, reply.revision(), reply.endpoints(), true);\n    }\n\n    SnapshotResolverExample.View endpoints() {\n        return cache.resolve(SnapshotResolverExample.Policy.BOUNDED_STALE);\n    }\n}\n",
+            "trace.csv": "at_seconds,action,provider_reply\n0,refresh,REGISTRY_READ revision=7 endpoints=A\n9,refresh,PROVIDER_CACHE revision=7 endpoints=A\n10,refresh,IOException\n12,read_endpoint_view,\n15,read_endpoint_view,\n20,refresh,REGISTRY_READ revision=8 endpoints=empty\n21,refresh,PROVIDER_CACHE revision=7 endpoints=A\n21,read_endpoint_view,\n23,read_endpoint_view,\n",
+            "extra-traces.txt": "Also exercise a new process whose first fetch is PROVIDER_CACHE revision=7 endpoints=A, and a separate new process whose first fetch throws IOException. In a separate control, obtain revision=7 at t=0 then REGISTRY_READ revision=7 at t=9 and inspect the view at t=10."
+          },
+          "requestedDeliverables": [
+            "Focused DiscoveryAdapter.java change",
+            "Deterministic checks with observable state/endpoints",
+            "Short explanation grounded in the source contract, plus remaining integration limits"
+          ]
+        },
+        "operationContract": {
+          "maxSnapshotAgeSeconds": 10
+        }
+      }
+    ],
+    "evaluatorExpectations": {
+      "note": "Evaluator-only. Supply only the actor case to the agent. These are development cases, not unseen holdouts or executed agent evaluations.",
+      "decisiveDifference": "Only operationContract.maxSnapshotAgeSeconds changes (15 to 10); source, implementation, time trace and all other constraints are identical.",
+      "sharedCriteria": [
+        "Inspect actual Provider reply provenance and do not mark a provider-memory answer as a new authoritative read.",
+        "A cached response cannot renew age or initialize a fresh authoritative view when its source age is unavailable.",
+        "Keep the fixed source epoch, ordered-revision/removal watermark, immutable publication and hostile destination protections; do not replace the teaching resolver.",
+        "At t=15 no endpoint is exposed in either case; repeated cache answers or source exceptions must not extend the bound.",
+        "At t=20 accept the complete authoritative empty revision=8; t=21's cached revision=7 must not resurrect A. At t=21 the view is EMPTY; at t=23 it is unavailable/EXPIRED, with revision protection retained.",
+        "Cold start with a provider cache answer of unknown age or IOException does not manufacture a usable authoritative snapshot.",
+        "The separate successful same-revision authoritative re-read at t=9 may renew the view; t=10 is fresh. Do not blanket-reject all identical revisions.",
+        "Use deterministic clock-driven checks, report compiler target and runtime truthfully, and do not claim DNS/Kubernetes/Spring/transport convergence from a local cache fixture."
+      ],
+      "cases": [
+        {
+          "id": "discovery-outage-a",
+          "expected": "At t=12, exposing A as bounded-stale is permitted and the adapter should preserve that availability under the 15-second membership-age contract. By t=15 it must expose no endpoint.",
+          "observableFailures": [
+            "Rejects A at t=12 solely because the positive 10-second TTL elapsed despite authorized bounded stale allowance.",
+            "Calls a provider cache reply authoritative and reports FRESH at t=12 or still exposes A at t=15.",
+            "Changes the freshness policy into a claim of endpoint authorization or health."
+          ]
+        },
+        {
+          "id": "discovery-outage-b",
+          "expected": "At t=12, expose no endpoint/EXPIRED under the 10-second operation bound. The cache's 5-second stale capacity does not authorize this operation to consume it.",
+          "observableFailures": [
+            "Continues BOUNDED_STALE for this operation and exposes A at t=12.",
+            "Extends the freshness timestamp from t=9's cached answer so A looks fresh.",
+            "Claims a 10-second local cache rule alone enforces instantaneous endpoint revocation across connections."
+          ]
+        }
+      ],
+      "executionStatus": "NOT_EXECUTED_BY_INDEPENDENT_AGENT",
+      "reviewerWalkthrough": "The supplied trace was reasoned through against the existing source/expiry contract. The starter fixture was compiled, but no agent-produced solution or benchmark was run."
+    },
+    "separation": "Provide an actor JSON to the evaluator's acting agent without evaluator-criteria.json or this full report; only the operation age constraint changes."
+  },
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/net/InetAddress.html",
+      "version": "Java SE 21",
+      "supports": "DNS stale retention is not the example cache's additive allowance; positive TTL acts as refresh interval when the stale window is larger. Retained guidance at source-and-client-semantics.md:38–51 confirmed."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/net/doc-files/net-properties.html",
+      "version": "Java SE 21",
+      "supports": "Positive, negative and stale address cache controls are security properties, not ordinary -D system properties; implementation-dependent defaults. Retained guidance confirmed."
+    },
+    {
+      "url": "https://v1-34.docs.kubernetes.io/docs/concepts/services-networking/endpoint-slices/#conditions",
+      "version": "Kubernetes 1.34; conditions stable since 1.26",
+      "supports": "publishNotReadyAddresses overrides ready; serving/terminating remain distinct; aggregate and deduplicate service endpoints across slices. Retained guidance at source-and-client-semantics.md:74–84 confirmed."
+    },
+    {
+      "url": "https://v1-34.docs.kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions",
+      "version": "Kubernetes 1.34",
+      "supports": "Resource versions are opaque and equality-only in this version's published contract. Retained version-specific restriction confirmed."
+    },
+    {
+      "url": "https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions",
+      "version": "Current page inspected 2026-10-16; explicitly describes 1.35+ ordering guarantees",
+      "supports": "Orderability has same-group/type, decimal format and arbitrary-width constraints; expired watch history requires fresh list/watch. Retained guidance at source-and-client-semantics.md:86–97 confirmed."
+    },
+    {
+      "url": "https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/",
+      "version": "Current Kubernetes documentation inspected 2026-10-16",
+      "supports": "Normal Service DNS returns Service IP; headless service exposes endpoint IPs; readiness publication can cause peer bootstrap cycles. Conditional existing guidance confirmed, without cluster execution."
+    },
+    {
+      "url": "https://docs.spring.io/spring-cloud-commons/reference/spring-cloud-commons/common-abstractions.html",
+      "version": "Page labeled Spring Cloud Commons 5.0.3",
+      "supports": "SimpleDiscoveryClient, separate ServiceRegistry, optional EnableDiscoveryClient and qualified load-balanced clients. Existing baseline qualification retained."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spring-cloud/spring-cloud-commons/v5.0.3/spring-cloud-commons/src/main/java/org/springframework/cloud/client/discovery/DiscoveryClient.java",
+      "version": "Pinned Spring Cloud Commons v5.0.3 source",
+      "supports": "getInstances returns a List<ServiceInstance>, without a portable authoritative revision/observation time. The skill correctly requires inspecting the provider rather than inventing freshness."
+    },
+    {
+      "url": "https://docs.spring.io/spring-cloud-commons/reference/spring-cloud-commons/loadbalancer.html#loadbalancer-caching",
+      "version": "Page labeled Spring Cloud Commons 5.0.3",
+      "supports": "Conditional removal of the LoadBalancer cache when DiscoveryClient already caches, and supplier-ordering constraints. Existing partial configuration remains conditional."
+    },
+    {
+      "url": "https://docs.spring.io/spring-cloud-netflix/reference/spring-cloud-netflix.html",
+      "version": "Page labeled Spring Cloud Netflix 5.0.2",
+      "supports": "Registration/heartbeat/server cache/client cache and health are distinct stages. Existing skill avoids promising a bound from the renewal interval alone."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/System.html#nanoTime()",
+      "version": "Java SE 21",
+      "supports": "Elapsed-time subtraction and overflow limitations used by the educational resolver."
+    }
+  ],
+  "assumptionsAndLimitations": [
+    "No live registry, DNS, Kubernetes cluster, Spring application or real transport pool was contacted or exercised.",
+    "The teaching resolver trusts its source adapter to establish epoch/authentication, revalidation provenance, bounded transport age and monotonic clock behavior; this is explicitly documented.",
+    "The Java test has final Java 21 API compatibility checked with --release 21 and JDK 25 execution, not Java 21 runtime validation.",
+    "The finite concurrent test is not a proof of every interleaving or a benchmark.",
+    "No dependencies installed, no package-manager changes and no changes to neighboring skills or real agent configuration.",
+    "Current vendor documentation was checked on 2026-10-16; apply version-matched contracts when the consumer baseline differs.",
+    "No-change means no supported gap found in this scoped review, not a guarantee for every production discovery system."
+  ],
+  "artifacts": {
+    "directory": "C:/Users/robso/AppData/Local/Temp/discovery-quality13-426d10cb1ca6448ca7a622a17bfbbf95",
+    "baseline": "C:/Users/robso/AppData/Local/Temp/discovery-quality13-426d10cb1ca6448ca7a622a17bfbbf95/assignment-baseline.json",
+    "packageValidator": "C:/Users/robso/AppData/Local/Temp/discovery-quality13-426d10cb1ca6448ca7a622a17bfbbf95/check-package.mjs",
+    "packageValidationOutput": "C:/Users/robso/AppData/Local/Temp/discovery-quality13-426d10cb1ca6448ca7a622a17bfbbf95/package-validation.json",
+    "technicalOutput": "C:/Users/robso/AppData/Local/Temp/discovery-quality13-426d10cb1ca6448ca7a622a17bfbbf95/snapshot-resolver-output.txt",
+    "technicalClasses": "C:/Users/robso/AppData/Local/Temp/discovery-quality13-426d10cb1ca6448ca7a622a17bfbbf95/classes",
+    "actorFixture": "C:/Users/robso/AppData/Local/Temp/discovery-quality13-426d10cb1ca6448ca7a622a17bfbbf95/cases/shared/DiscoveryAdapter.java",
+    "actorFixtureClasses": "C:/Users/robso/AppData/Local/Temp/discovery-quality13-426d10cb1ca6448ca7a622a17bfbbf95/case-classes",
+    "allRetained": true
+  },
+  "baselineAndFinalHashes": [
+    {
+      "Path": "C:\\git\\agent-skills\\skills\\service-discovery\\skill.yaml",
+      "Hash": "BE0EC67B51D346E5EC716C78BE12250BF3D58BE392D5880E520723AA3B86F2D7"
+    },
+    {
+      "Path": "C:\\git\\agent-skills\\skills\\service-discovery\\SKILL.md",
+      "Hash": "DBD1CB4C57A72135248A86250F02F20D28476A9AE74FCD61C9A99DA6BDC8D61E"
+    },
+    {
+      "Path": "C:\\git\\agent-skills\\skills\\service-discovery\\references\\source-and-client-semantics.md",
+      "Hash": "5B7CB4F4A622440DC7AE52CD5767BC564DF1FB5CBBA6B9228F4B71015AE8C8AB"
+    },
+    {
+      "Path": "C:\\git\\agent-skills\\skills\\service-discovery\\references\\java-snapshot-resolver.md",
+      "Hash": "E1724C562268E0D76F445526C5F6404CD0014D09ACFC9F636CD2B71D048642B8"
+    },
+    {
+      "Path": "C:\\git\\agent-skills\\skills\\service-discovery\\assets\\SnapshotResolverExample.java",
+      "Hash": "673B82F742B67464CF14D12C9349A652DA48C2CD03032155AC621E7C6262B898"
+    }
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Parallel-review contract reserves generated shared index writes for coordinator; run only after all reviewers stop writing."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Repository-wide final verification reserved for coordinator after all reviewers stop; no claim of global completion here."
+    }
+  ],
+  "deferredIntegrationChecks": [
+    "Actual target provider freshness and cancellation/close behavior",
+    "DNS negative-cache recovery and live connection convergence",
+    "Runtime Java 21 execution if coordinator requires that stronger claim",
+    "Independent agent executions of the separated development cases"
+  ],
+  "crossSkillIssues": [],
+  "coordinatorActions": [
+    "Record NO_CHANGES_NEEDED and retain the existing 1.0.0 package bytes.",
+    "Optionally execute the provided independent cases; do not count their walkthrough as behavioral improvement.",
+    "Run the reserved shared/global checks after all reviewers have stopped."
+  ]
+}

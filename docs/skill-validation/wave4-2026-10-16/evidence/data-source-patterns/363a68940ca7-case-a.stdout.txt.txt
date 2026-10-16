@@ -1,0 +1,7 @@
+runtime=25.0.3+9-LTS
+database=2.2.224 (2023-09-17)
+isolationA=2 isolationB=2
+observedA=2 observedB=2
+rowsA=1 rowsB=1
+available=0
+versionA=1 versionB=1

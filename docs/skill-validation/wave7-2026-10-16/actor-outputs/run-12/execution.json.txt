@@ -1,0 +1,424 @@
+{
+  "actor": "run-12",
+  "recordKind": "Actor self-report; not an independent complete audit trace.",
+  "firstClockObservation": "2026-10-16T18:11:15Z",
+  "firstClockObservationNote": "The task and initial skill reads occurred immediately before this observation.",
+  "finishedAt": "2026-10-16T18:17:13Z",
+  "workingDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-12",
+  "writeScope": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-12/output",
+  "reads": [
+    {
+      "path": "TASK.md",
+      "integral": true,
+      "method": "Get-Content -Raw"
+    },
+    {
+      "path": "input/project/README.md",
+      "integral": true,
+      "method": "Get-Content -Raw"
+    },
+    {
+      "path": "input/project/REQUEST.md",
+      "integral": true,
+      "method": "Get-Content -Raw"
+    },
+    {
+      "path": "input/project/CONTRACT.md",
+      "integral": true,
+      "method": "Get-Content -Raw"
+    },
+    {
+      "path": "input/project/RUNBOOK.md",
+      "integral": true,
+      "method": "Get-Content -Raw"
+    },
+    {
+      "path": "input/project/dependencies.json",
+      "integral": true,
+      "method": "Get-Content -Raw"
+    },
+    {
+      "path": "input/project/toolchain.json",
+      "integral": true,
+      "method": "Get-Content -Raw"
+    },
+    {
+      "path": "input/project/check.mjs",
+      "integral": true,
+      "method": "Get-Content -Raw"
+    },
+    {
+      "path": "input/project/src/work/BookingService.java",
+      "integral": true,
+      "method": "Get-Content -Raw"
+    },
+    {
+      "path": "input/project/src/work/BookingRecorded.java",
+      "integral": true,
+      "method": "Get-Content -Raw"
+    },
+    {
+      "path": "input/project/src/work/BookingListener.java",
+      "integral": true,
+      "method": "Get-Content -Raw"
+    },
+    {
+      "path": "input/project/src/work/ReceiptWriter.java",
+      "integral": true,
+      "method": "Get-Content -Raw"
+    },
+    {
+      "path": "input/project/src/work/ReceiptObserver.java",
+      "integral": true,
+      "method": "Get-Content -Raw"
+    },
+    {
+      "path": "input/project/src/work/Config.java",
+      "integral": true,
+      "method": "Get-Content -Raw"
+    },
+    {
+      "path": "input/project/test/work/Smoke.java",
+      "integral": true,
+      "method": "Get-Content -Raw"
+    },
+    {
+      "path": "skill/SKILL.md",
+      "integral": true,
+      "method": "Get-Content -Raw"
+    },
+    {
+      "path": "skill/references/event-wiring-and-recovery.md",
+      "integral": true,
+      "method": "Get-Content -Raw",
+      "note": "Initial combined output was truncated; independently re-read completely."
+    },
+    {
+      "path": "skill/references/verification.md",
+      "integral": true,
+      "method": "Get-Content -Raw"
+    },
+    {
+      "path": "skill/references/interception-and-rollback.md",
+      "integral": true,
+      "method": "Get-Content -Raw"
+    },
+    {
+      "path": "output/project/src/work/BookingListener.java",
+      "integral": true,
+      "method": "Final Get-Content -Raw"
+    },
+    {
+      "path": "output/project/src/work/ReceiptWriter.java",
+      "integral": true,
+      "method": "Final Get-Content -Raw"
+    },
+    {
+      "path": "output/REVIEW.md",
+      "integral": true,
+      "method": "Node readFileSync for word count (411 words)"
+    },
+    {
+      "path": "output/checks/final-smoke.json",
+      "integral": true,
+      "method": "Node readFileSync; stdout/stderr and exit examined"
+    },
+    {
+      "path": "output/checks/final-regression.json",
+      "integral": true,
+      "method": "Node readFileSync; stdout/stderr and exit examined"
+    },
+    {
+      "path": "output/checks/frozen-integrity.json",
+      "integral": true,
+      "method": "Node readFileSync; stdout/stderr and exit examined"
+    }
+  ],
+  "binaryAndIntegrityReads": {
+    "method": "Full-byte SHA-256 comparison; binary jars were not searched as text.",
+    "record": "checks/integrity.json",
+    "paths": [
+      "input/project/README.md",
+      "output/project/README.md",
+      "input/project/REQUEST.md",
+      "output/project/REQUEST.md",
+      "input/project/CONTRACT.md",
+      "output/project/CONTRACT.md",
+      "input/project/RUNBOOK.md",
+      "output/project/RUNBOOK.md",
+      "input/project/dependencies.json",
+      "output/project/dependencies.json",
+      "input/project/toolchain.json",
+      "output/project/toolchain.json",
+      "input/project/check.mjs",
+      "output/project/check.mjs",
+      "input/project/src/work/BookingService.java",
+      "output/project/src/work/BookingService.java",
+      "input/project/src/work/BookingRecorded.java",
+      "output/project/src/work/BookingRecorded.java",
+      "input/project/src/work/BookingListener.java",
+      "output/project/src/work/BookingListener.java",
+      "input/project/src/work/ReceiptWriter.java",
+      "output/project/src/work/ReceiptWriter.java",
+      "input/project/src/work/ReceiptObserver.java",
+      "output/project/src/work/ReceiptObserver.java",
+      "input/project/src/work/Config.java",
+      "output/project/src/work/Config.java",
+      "input/project/test/work/Smoke.java",
+      "output/project/test/work/Smoke.java",
+      "input/project/lib/commons-logging-1.3.5.jar",
+      "output/project/lib/commons-logging-1.3.5.jar",
+      "input/project/lib/h2-2.4.240.jar",
+      "output/project/lib/h2-2.4.240.jar",
+      "input/project/lib/jspecify-1.0.0.jar",
+      "output/project/lib/jspecify-1.0.0.jar",
+      "input/project/lib/micrometer-commons-1.16.7.jar",
+      "output/project/lib/micrometer-commons-1.16.7.jar",
+      "input/project/lib/micrometer-observation-1.16.7.jar",
+      "output/project/lib/micrometer-observation-1.16.7.jar",
+      "input/project/lib/spring-aop-7.0.9.jar",
+      "output/project/lib/spring-aop-7.0.9.jar",
+      "input/project/lib/spring-beans-7.0.9.jar",
+      "output/project/lib/spring-beans-7.0.9.jar",
+      "input/project/lib/spring-context-7.0.9.jar",
+      "output/project/lib/spring-context-7.0.9.jar",
+      "input/project/lib/spring-core-7.0.9.jar",
+      "output/project/lib/spring-core-7.0.9.jar",
+      "input/project/lib/spring-expression-7.0.9.jar",
+      "output/project/lib/spring-expression-7.0.9.jar",
+      "input/project/lib/spring-jdbc-7.0.9.jar",
+      "output/project/lib/spring-jdbc-7.0.9.jar",
+      "input/project/lib/spring-tx-7.0.9.jar",
+      "output/project/lib/spring-tx-7.0.9.jar"
+    ],
+    "integralBytes": true,
+    "semanticContentRead": false,
+    "compilerAndRuntime": "check.mjs read toolchain.json, enumerated lib jars and src/test; javac compiled all Java sources, including the new Regression.java, and java loaded the resulting classes and supplied jars."
+  },
+  "snapshotNotRead": [
+    "skill/skill.yaml"
+  ],
+  "enumerations": [
+    {
+      "argv": [
+        "rg",
+        "--files",
+        "input/project",
+        "output/project",
+        "skill"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-12",
+      "exit": 0,
+      "contentRead": false,
+      "purpose": "Find authorized project and snapshot paths; no sibling/repository reads."
+    }
+  ],
+  "unsuccessfulAttempts": [
+    {
+      "kind": "read",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-12",
+      "argv": [
+        "powershell",
+        "-Command",
+        "Get-Content -LiteralPath README.md -Raw; Get-Content -LiteralPath REQUEST.md -Raw; Get-Content -LiteralPath CONTRACT.md -Raw; Get-Content -LiteralPath skill/SKILL.md -Raw"
+      ],
+      "exit": 0,
+      "stderr": "Get-Content reported Cannot find path for README.md, REQUEST.md and CONTRACT.md at actor root. PowerShell continued and returned the complete skill.",
+      "resolution": "Read all three documents from input/project."
+    },
+    {
+      "kind": "web",
+      "result": "A web__run open request did not surface a result. The owning functions.exec cell 4 was terminated after subsequent local diagnosis; no content was relied upon."
+    },
+    {
+      "kind": "patch",
+      "tool": "apply_patch",
+      "result": "apply_patch verification failed: invalid patch: multiple operations target C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave7-a765972c5d\\actors\\run-12\\output\\project\\RUNBOOK.md",
+      "resolution": "No file change from rejected patch. Retried RUNBOOK as one Update File operation; succeeded."
+    }
+  ],
+  "commands": [
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-12/output/project",
+      "argv": [
+        "node",
+        "check.mjs"
+      ],
+      "stage": "initial smoke launched in canceled aggregate tool batch",
+      "exit": null,
+      "stdout": null,
+      "stderr": null,
+      "note": "Result was not surfaced before aggregate cell cancellation; not claimed as passing. Final smoke rerun has complete observed output."
+    },
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-12/output/project",
+      "argv": [
+        "node",
+        "check.mjs",
+        "work.Regression"
+      ],
+      "stage": "original",
+      "exit": 1,
+      "wallTimeSeconds": 1.7231371,
+      "combinedStdoutStderrLog": "checks/baseline-regression.log",
+      "logNote": "Tool-provided combined streams; archived text uses LF line endings."
+    },
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-12/output/project",
+      "argv": [
+        "node",
+        "check.mjs",
+        "work.Regression"
+      ],
+      "stage": "REQUIRES_NEW only",
+      "exit": 1,
+      "wallTimeSeconds": 1.7784313,
+      "combinedStdoutStderrLog": "checks/requires-new-only.log",
+      "logNote": "Tool-provided combined streams; archived text uses LF line endings."
+    },
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-12/output/project",
+      "argv": [
+        "node",
+        "check.mjs",
+        "work.Regression"
+      ],
+      "stage": "first complete repair",
+      "exit": 0,
+      "wallTimeSeconds": 1.601502,
+      "combinedStdoutStderrLog": "checks/first-fixed-regression.log",
+      "logNote": "Tool-provided combined streams; archived text uses LF line endings."
+    },
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-12/output/project",
+      "argv": [
+        "node",
+        "check.mjs",
+        "work.Regression"
+      ],
+      "stage": "AFTER_COMMIT only control",
+      "exit": 1,
+      "wallTimeSeconds": 1.6400226,
+      "combinedStdoutStderrLog": "checks/after-commit-only.log",
+      "logNote": "Tool-provided combined streams; archived text uses LF line endings."
+    },
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-12/output/project",
+      "argv": [
+        "node",
+        "check.mjs"
+      ],
+      "stage": "final restored repair",
+      "exit": 0,
+      "log": "checks/final-smoke.json"
+    },
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-12/output/project",
+      "argv": [
+        "node",
+        "check.mjs",
+        "work.Regression"
+      ],
+      "stage": "final restored repair",
+      "exit": 0,
+      "log": "checks/final-regression.json"
+    },
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-12/output/project",
+      "argv": [
+        "node",
+        "../checks/verify-frozen.mjs"
+      ],
+      "stage": "frozen-file byte comparison",
+      "exit": 0,
+      "log": "checks/frozen-integrity.json"
+    },
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-12/output/project",
+      "argv": [
+        "powershell",
+        "-Command",
+        "Get-Content -LiteralPath src/work/BookingListener.java -Raw; Get-Content -LiteralPath src/work/ReceiptWriter.java -Raw; node -e <read final command logs and count REVIEW words>"
+      ],
+      "exit": 0,
+      "combinedStdoutStderrLog": "checks/final-review.log",
+      "argvNote": "Read-only shell wrapper is abbreviated here; exact application check argv are stored in the three JSON logs."
+    }
+  ],
+  "executionBounds": {
+    "checkMjs": "Unmodified check.mjs bounds each javac/java subprocess at 30000 ms.",
+    "finalRunner": "Node spawnSync additionally bounded each final check.mjs/integrity command at 30000 ms, sequentially.",
+    "observedChecks": "All surfaced build/test commands completed in under 4 seconds.",
+    "persistentProcesses": "None intentionally started; no retained exec session IDs. Aggregate documentation tool call was explicitly terminated."
+  },
+  "changes": [
+    "Added Regression.java before production changes and observed original failures.",
+    "Added writer REQUIRES_NEW and observed the suggested-only control failures.",
+    "Changed listener to AFTER_COMMIT; full regression passed.",
+    "Temporarily removed writer annotation; regression found partial headers.",
+    "Restored writer annotation, wrote runbook/review and reran final checks.",
+    "Added checks/verify-frozen.mjs and captured exact final stdout/stderr logs.",
+    "All edits and generated artifacts remained under output/."
+  ],
+  "sources": [
+    {
+      "path": "input/project/CONTRACT.md",
+      "kind": "accepted local contract",
+      "used": true,
+      "integral": true
+    },
+    {
+      "path": "input/project/dependencies.json",
+      "kind": "resolved supplied versions",
+      "used": true,
+      "integral": true
+    },
+    {
+      "path": "skill/SKILL.md",
+      "kind": "local skill snapshot",
+      "used": true,
+      "integral": true
+    },
+    {
+      "path": "skill/references/event-wiring-and-recovery.md",
+      "kind": "local skill snapshot",
+      "used": true,
+      "integral": true
+    },
+    {
+      "path": "skill/references/verification.md",
+      "kind": "local skill snapshot",
+      "used": true,
+      "integral": true
+    },
+    {
+      "path": "skill/references/interception-and-rollback.md",
+      "kind": "local skill snapshot",
+      "used": true,
+      "integral": true
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.9/spring-tx/src/main/java/org/springframework/transaction/event/TransactionalEventListener.java",
+      "kind": "primary version-matched source request",
+      "used": false,
+      "contentRead": false,
+      "status": "request canceled without returned content"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.9/spring-tx/src/main/java/org/springframework/transaction/event/TransactionalApplicationListenerSynchronization.java",
+      "kind": "primary version-matched source request",
+      "used": false,
+      "contentRead": false,
+      "status": "request canceled without returned content"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.9/spring-tx/src/main/java/org/springframework/transaction/support/TransactionSynchronizationUtils.java",
+      "kind": "primary version-matched source request",
+      "used": false,
+      "contentRead": false,
+      "status": "request canceled without returned content"
+    }
+  ],
+  "boundaryStatement": "Procedural read/write restrictions were followed; this is not a claim of operating-system isolation.",
+  "allWritesStopped": true
+}

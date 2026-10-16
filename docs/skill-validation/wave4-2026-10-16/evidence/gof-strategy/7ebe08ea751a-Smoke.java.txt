@@ -1,0 +1,18 @@
+import java.io.Reader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Properties;
+
+class Smoke {
+    public static void main(String[] args) throws Exception {
+        Properties properties = new Properties();
+        try (Reader reader = Files.newBufferedReader(Path.of(args[0]))) {
+            properties.load(reader);
+        }
+        String result = Wiring.service(properties).export("TEXT", List.of("alpha", "beta"));
+        if (!"alpha\nbeta\n".equals(result)) throw new AssertionError(result);
+        System.out.println("PASS one TEXT export");
+    }
+}
+

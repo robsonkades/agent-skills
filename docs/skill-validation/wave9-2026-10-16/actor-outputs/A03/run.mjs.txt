@@ -1,0 +1,11 @@
+import fs from 'node:fs';
+import {spawnSync} from 'node:child_process';
+const main=process.argv[2]??'Smoke';
+if(!/^[A-Za-z][A-Za-z0-9_]*$/.test(main))throw Error('Simple main class required');
+const files=fs.readdirSync('.').filter(p=>p.endsWith('.java'));
+fs.mkdirSync('classes',{recursive:true});
+for(const [command,args] of [['javac',['--release','17','-d','classes',...files]],['java',['-ea','-cp','classes',main]]]){
+ const r=spawnSync(command,args,{encoding:'utf8',timeout:20000,windowsHide:true});
+ process.stdout.write(r.stdout??'');process.stderr.write(r.stderr??'');
+ if(r.error||r.status!==0){if(r.error)console.error(r.error.message);process.exit(r.status??1);}
+}

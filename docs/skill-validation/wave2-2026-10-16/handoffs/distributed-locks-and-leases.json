@@ -1,0 +1,290 @@
+{
+  "schemaVersion": 1,
+  "reportKind": "specialist-skill-review-handoff",
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "distributed-locks-and-leases",
+  "ownedPath": "skills/distributed-locks-and-leases/**",
+  "allWritesStopped": true,
+  "baseline": {
+    "committedHead": "bbb7d996a929e81baf735bbaab5b6e3fbf6e8503",
+    "committedVersion": "1.3.4",
+    "assignmentVersion": "1.3.4",
+    "preExistingVersionBump": false,
+    "preExistingStagedChanges": [],
+    "preExistingUnstagedChanges": [],
+    "preExistingUntrackedFiles": [],
+    "assignmentFiles": [
+      {
+        "path": "skills/distributed-locks-and-leases/skill.yaml",
+        "sha256": "214f748df5c15342eb76226db07b601570a5d49670f2d2adbc544bb6145ace5f"
+      },
+      {
+        "path": "skills/distributed-locks-and-leases/SKILL.md",
+        "sha256": "4c86bc7a7bb5afa8b4d9248526852e9898810002d369e493f0eb95d0a4f5f499"
+      },
+      {
+        "path": "skills/distributed-locks-and-leases/references/lock-decision.md",
+        "sha256": "67cc2fcd67d2a14b7c0579abb0efbcb91b7e7ebf040359f716e1092f06c275dc"
+      },
+      {
+        "path": "skills/distributed-locks-and-leases/references/fencing-tokens.md",
+        "sha256": "23417bfba86107d3dd9a13e2c49cd97c951bab8b804bf029c8d2ff4fa18701dd"
+      }
+    ],
+    "waveTwoBaselineMatch": true
+  },
+  "finalVersion": "1.3.5",
+  "versionRationale": "One patch bump for changed skill content, as required by repository immutability/version policy. No duplicated version exists in SKILL.md.",
+  "changedFiles": [
+    {
+      "path": "skills/distributed-locks-and-leases/skill.yaml",
+      "assignmentSha256": "214f748df5c15342eb76226db07b601570a5d49670f2d2adbc544bb6145ace5f",
+      "finalSha256": "63e1057f84c6974859dc94d15d817af4b250aebc19f407e40bcdfef564541a16",
+      "authorship": "Reviewer-only; no pre-existing changes"
+    },
+    {
+      "path": "skills/distributed-locks-and-leases/SKILL.md",
+      "assignmentSha256": "4c86bc7a7bb5afa8b4d9248526852e9898810002d369e493f0eb95d0a4f5f499",
+      "finalSha256": "1a9c67e131550f99151e63f4534830841290334abe5bc52e80d5025b9520d5f2",
+      "authorship": "Reviewer-only; no pre-existing changes"
+    },
+    {
+      "path": "skills/distributed-locks-and-leases/references/lock-decision.md",
+      "assignmentSha256": "67cc2fcd67d2a14b7c0579abb0efbcb91b7e7ebf040359f716e1092f06c275dc",
+      "finalSha256": "f7e558e41ff1f3aaae006a5be0e6566c5b8963aa70af2171f2c9a19ead338c8c",
+      "authorship": "Reviewer-only; no pre-existing changes"
+    }
+  ],
+  "findings": [
+    {
+      "location": "SKILL.md:125-129; references/lock-decision.md:51-79",
+      "problem": "Watchdog advice did not require proving that the actual acquisition call enables renewal. A global configuration change can leave a fixed-lease acquisition unchanged.",
+      "evidence": "Tagged Redisson 3.52.0 RedissonLock.tryAcquireOnceAsync/tryAcquireAsync schedule expiration renewal only on the branch without a positive leaseTime. Config documents the watchdog setting for acquisitions without an explicit lease.",
+      "correction": "Added a routed guard and version-specific acquisition-overload comparison; distinguish wait budget, lease window and operation deadline, wrapper/runtime configuration, fresh/reentrant scope, blocked-work versus stopped-JVM controls, and preserved repeat-safe resource decisions.",
+      "consequence": "Guides the reviewer to reject ineffective configuration-only fixes and to change the diagnosis when the executed overload selects renewal.",
+      "status": "CORRECTED"
+    },
+    {
+      "location": "references/lock-decision.md:17-18",
+      "problem": "The prior 'single most common wrong turn' asserted an unsupported frequency ranking.",
+      "correction": "Replaced the ranking with the conditional consequence of adding a TTL lock when a conditional write already enforces the invariant.",
+      "status": "CORRECTED"
+    }
+  ],
+  "remainingFindings": [],
+  "preservedCapabilities": [
+    "Review/design/diagnosis role and clear boundaries with local JVM synchronization, consensus, leader election and transaction integration.",
+    "Existing Redis/Redlock/etcd/ZooKeeper and database transaction/session alternatives, ownership-safe release, reentrancy caveats and unknown timeout outcomes.",
+    "Resource claim/carry/enforce fencing protocol, durable fence/token history and recovery/trust boundaries.",
+    "Strict post-expiry versus post-successor-claim distinction and idempotency versus stale-owner exclusion.",
+    "Physical transaction and asynchronous completion release boundaries; Spring REQUIRED ambient transaction counterexample.",
+    "No-change/efficiency-lock decisions when independently enforced resource guarantees suffice.",
+    "Existing partial Java/SQL examples, sources and both routed references; fencing-tokens.md remained byte-identical."
+  ],
+  "removedCapabilities": [],
+  "checks": [
+    {
+      "command": "git status --short -- skills/distributed-locks-and-leases; git diff -- skills/distributed-locks-and-leases; git diff --cached -- skills/distributed-locks-and-leases; git show HEAD:skills/distributed-locks-and-leases/skill.yaml",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "PASS — owned package clean at assignment; committed and assignment version 1.3.4."
+    },
+    {
+      "command": "Get-FileHash for all four assigned files, compared with saved assignment content and wave2 baseline.json allFiles",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "PASS — all assignment hashes match wave-two baseline; no unexpected concurrent change before editing; final comparison attributes three files to this reviewer."
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/distributed-locks-and-leases/SKILL.md skills/distributed-locks-and-leases/references/lock-decision.md skills/distributed-locks-and-leases/skill.yaml",
+      "workingDirectory": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "PASS — All matched files use Prettier code style."
+    },
+    {
+      "command": "@'\nimport assert from 'node:assert/strict';\nimport { readFileSync, readdirSync, existsSync } from 'node:fs';\nimport path from 'node:path';\nimport { parseManifest } from './packages/core/src/domain/manifest.ts';\nimport { buildSkillPackage } from './packages/core/src/domain/skill-package.ts';\nimport { validatePackage } from './packages/core/src/application/validate-package.ts';\nconst root = path.resolve('skills/distributed-locks-and-leases');\nfunction gather(dir, prefix = '') {\n  return readdirSync(dir, { withFileTypes: true }).flatMap(e => {\n    const rel = prefix + e.name;\n    return e.isDirectory() ? gather(path.join(dir, e.name), rel + '/') : [{ path: rel, bytes: readFileSync(path.join(dir, e.name)) }];\n  });\n}\nconst files = gather(root);\nconst parsed = parseManifest(readFileSync(path.join(root, 'skill.yaml'), 'utf8'));\nconst pkg = buildSkillPackage(parsed.manifest, files);\nconst report = validatePackage(pkg, { directoryName: 'distributed-locks-and-leases' });\nassert.deepEqual(parsed.issues, []);\nassert.deepEqual(report.issues, []);\nassert.equal(parsed.manifest.version, '1.3.5');\nlet linkCount = 0;\nfor (const file of files.filter(f => f.path.endsWith('.md'))) {\n  const text = file.bytes.toString('utf8');\n  for (const match of text.matchAll(/\\[[^\\]]+\\]\\(([^)]+)\\)/g)) {\n    const href = match[1];\n    if (/^(?:https?:|mailto:)/.test(href)) continue;\n    const [relative, fragment] = href.split('#');\n    const target = path.resolve(root, path.dirname(file.path), relative || path.basename(file.path));\n    assert.ok(target.startsWith(root + path.sep), href);\n    assert.ok(existsSync(target), href);\n    if (fragment) {\n      const headings = [...readFileSync(target, 'utf8').matchAll(/^#+\\s+(.+)$/gm)].map(m => m[1].toLowerCase().replace(/[^\\w\\s-]/g, '').trim().replace(/\\s+/g, '-'));\n      assert.ok(headings.includes(fragment), href);\n    }\n    linkCount++;\n  }\n}\nconst entry = readFileSync(path.join(root, 'SKILL.md'), 'utf8');\nfor (const file of files.filter(f => f.path.startsWith('references/'))) assert.ok(entry.includes(file.path), 'Unrouted reference: ' + file.path);\nconsole.log(JSON.stringify({ name: parsed.manifest.name, version: parsed.manifest.version, files: files.length, packageIssues: report.issues, manifestIssues: parsed.issues, relativeLinksChecked: linkCount, referencesRouted: files.filter(f => f.path.startsWith('references/')).length }));\n'@ | node --input-type=module",
+      "workingDirectory": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": {
+        "name": "distributed-locks-and-leases",
+        "version": "1.3.5",
+        "files": 4,
+        "packageIssues": [],
+        "manifestIssues": [],
+        "relativeLinksChecked": 3,
+        "referencesRouted": 2
+      },
+      "kind": "Existing repository pure package/manifest validators plus read-only assigned-package link assertions; no shared writes."
+    },
+    {
+      "command": "git diff --check -- skills/distributed-locks-and-leases",
+      "workingDirectory": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "PASS — no whitespace errors."
+    },
+    {
+      "command": "git diff -- skills/distributed-locks-and-leases; git status --short -- skills/distributed-locks-and-leases",
+      "workingDirectory": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "PASS — final focused diff reviewed; only SKILL.md, references/lock-decision.md and skill.yaml changed."
+    },
+    {
+      "command": "Get-Command redis-server,redis-cli,java,javac -ErrorAction SilentlyContinue",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "Redis server/CLI not found on PATH. Java and javac available under Temurin 25.0.3; no Java compilation was necessary for the changed prose/call shapes."
+    }
+  ],
+  "technicalValidation": {
+    "executed": "Primary-source inspection of Redisson 3.52.0 acquisition/renewal branches and configuration contract; structural/local checks above.",
+    "redisRuntimeExecuted": false,
+    "javaCompilation": "NOT_APPLICABLE — no executable Java example added or changed; version-pinned call shapes remain partial illustrative snippets.",
+    "passingChecksDoNotProve": "Distributed safety or runtime behavior under failure."
+  },
+  "behavioralEvaluation": {
+    "executed": false,
+    "actualAgentOutputs": [],
+    "measuredImprovement": false,
+    "walkthroughs": [
+      "Positive explicit lease versus omitted lease paired walkthrough: change only acquisition overload; configuration-only fix rejected in first, renewal failure remains an evidence-dependent diagnosis in second.",
+      "Regression walkthrough: resource-fenced stale owner, repeat-safe efficiency lock and physical transaction completion remain governed by pre-existing controls."
+    ],
+    "casesAreHeldOut": false,
+    "caseStatus": "Two reproducible development cases, input separated from evaluator criteria; pending independent coordinator execution."
+  },
+  "cases": [
+    {
+      "id": "locks-watchdog-explicit-lease",
+      "input": {
+        "request": "Review the proposed watchdog change using the repository fixtures and version-matched primary evidence. Update review.md with a justified decision, the smallest isolated test that could discriminate the explanation, and any evidence still missing. Preserve already accepted resource guarantees; do not redesign the application or upgrade its dependencies. Report what was actually verified.",
+        "files": {
+          "pom.xml": "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"><modelVersion>4.0.0</modelVersion><groupId>example</groupId><artifactId>cache-jobs</artifactId><version>1.0.0</version><properties><maven.compiler.release>21</maven.compiler.release></properties><dependencies><dependency><groupId>org.redisson</groupId><artifactId>redisson</artifactId><version>3.52.0</version></dependency></dependencies></project>\n",
+          "src/main/java/example/RedisConfiguration.java": "package example;\nimport org.redisson.config.Config;\nfinal class RedisConfiguration {\n  static Config config() {\n    Config config = new Config();\n    config.setLockWatchdogTimeout(30_000);\n    config.useSingleServer().setAddress(\"redis://127.0.0.1:6379\");\n    return config;\n  }\n}\n",
+          "operations.md": "The same deployed helper below is called synchronously by all participating cache rebuild workers. The first acquisition in each isolated experiment uses a fresh key; workers for the same cache use the same key and independent owners; no reentrant acquisition, other lock wrapper, or manual renewal is involved. Redis is one isolated test instance with no failover during the proposed experiment. The expensive rebuild often takes 40-60 seconds. Its final database publication already rejects older source versions and safely tolerates duplicate attempts; these guarantees have been verified separately. The lock exists to reduce duplicate computation, and no irreversible external effect is inside it. This review must preserve those accepted guarantees. Operators have occasionally observed overlapping rebuilds but have not captured renewal traffic, server TTL, process pauses or a grant-to-effect timeline. They propose changing only lockWatchdogTimeout from 30,000 to 120,000 milliseconds. No dependency/JDK upgrades or production experiment are authorized.\n",
+          "review.md": "Proposal: increase lockWatchdogTimeout to 120,000 ms to stop overlap during cache rebuild. This note has not yet checked the effective acquisition call or proposed a discriminating test.\n",
+          "src/main/java/example/JobRunner.java": "package example;\nimport java.util.concurrent.TimeUnit;\nimport org.redisson.api.RLock;\nimport org.redisson.api.RedissonClient;\nfinal class JobRunner {\n  private final RedissonClient redis;\n  JobRunner(RedissonClient redis) { this.redis = redis; }\n  void run(String cacheId, Runnable rebuild) throws InterruptedException {\n    RLock lock = redis.getLock(\"cache:\" + cacheId);\n    if (!lock.tryLock(2, 10, TimeUnit.SECONDS)) return;\n    try { rebuild.run(); }\n    finally { lock.unlock(); }\n  }\n}\n"
+        },
+        "prerequisites": [
+          "Give the actor only this input object and the assigned skill package; keep evaluator criteria separate.",
+          "Permit read-only primary-source lookup for Redisson 3.52.0. Materialize fixtures in an isolated workspace if executing an actor.",
+          "A Redis runtime is optional for the review; distinguish an implemented or planned test from an executed one."
+        ]
+      },
+      "evaluator": {
+        "decisiveConstraint": "The helper supplies a positive 10-second leaseTime on a fresh acquisition.",
+        "expectedOutcome": "Reject the proposed configuration-only fix as ineffective for this executed fixed-lease path; choose an explicitly justified acquisition-policy or bounded-work investigation rather than assuming the watchdog renews this call.",
+        "requiredCharacteristics": [
+          "Reads the actual three-argument tryLock call and the resolved 3.52.0 dependency, not only the configuration name.",
+          "Separates two-second acquisition wait, ten-second fixed lease, watchdog setting and 40-60-second work duration.",
+          "Explains that fresh positive-lease acquisition does not schedule watchdog renewal; increasing lockWatchdogTimeout alone leaves that path unchanged.",
+          "Proposes a live-client/blocked-work control with independent contender and server TTL/renewal evidence; do not stop the JVM for the initial policy-discrimination control.",
+          "Retains the repeat-safe resource guarantee and treats possible overlapping computation as an efficiency-budget decision; any switch to watchdog mode still needs bounded task lifecycle and owner-safe cleanup.",
+          "Updates review.md with evidence and limitations rather than merely listing questions."
+        ],
+        "failureConditions": [
+          "Guarantees no overlapping workers solely from a larger watchdog setting or a passing timing test.",
+          "Confuses the two-second acquisition wait with the ownership lease or operation deadline.",
+          "Demands a new lock service/fencing architecture without considering the supplied, independently enforced repeat-safe resource invariant.",
+          "Uses forceUnlock or unconditional deletion as cleanup after ownership is lost.",
+          "Claims an unexecuted Redis integration test or independent behavioral result.",
+          "Certifies the configuration-only patch as extending the explicit ten-second lease.",
+          "Treats any observed future overlap as proof that the resource invariant is already broken."
+        ],
+        "status": "AWAITING_COORDINATOR_EXECUTION"
+      }
+    },
+    {
+      "id": "locks-watchdog-implicit-lease",
+      "input": {
+        "request": "Review the proposed watchdog change using the repository fixtures and version-matched primary evidence. Update review.md with a justified decision, the smallest isolated test that could discriminate the explanation, and any evidence still missing. Preserve already accepted resource guarantees; do not redesign the application or upgrade its dependencies. Report what was actually verified.",
+        "files": {
+          "pom.xml": "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"><modelVersion>4.0.0</modelVersion><groupId>example</groupId><artifactId>cache-jobs</artifactId><version>1.0.0</version><properties><maven.compiler.release>21</maven.compiler.release></properties><dependencies><dependency><groupId>org.redisson</groupId><artifactId>redisson</artifactId><version>3.52.0</version></dependency></dependencies></project>\n",
+          "src/main/java/example/RedisConfiguration.java": "package example;\nimport org.redisson.config.Config;\nfinal class RedisConfiguration {\n  static Config config() {\n    Config config = new Config();\n    config.setLockWatchdogTimeout(30_000);\n    config.useSingleServer().setAddress(\"redis://127.0.0.1:6379\");\n    return config;\n  }\n}\n",
+          "operations.md": "The same deployed helper below is called synchronously by all participating cache rebuild workers. The first acquisition in each isolated experiment uses a fresh key; workers for the same cache use the same key and independent owners; no reentrant acquisition, other lock wrapper, or manual renewal is involved. Redis is one isolated test instance with no failover during the proposed experiment. The expensive rebuild often takes 40-60 seconds. Its final database publication already rejects older source versions and safely tolerates duplicate attempts; these guarantees have been verified separately. The lock exists to reduce duplicate computation, and no irreversible external effect is inside it. This review must preserve those accepted guarantees. Operators have occasionally observed overlapping rebuilds but have not captured renewal traffic, server TTL, process pauses or a grant-to-effect timeline. They propose changing only lockWatchdogTimeout from 30,000 to 120,000 milliseconds. No dependency/JDK upgrades or production experiment are authorized.\n",
+          "review.md": "Proposal: increase lockWatchdogTimeout to 120,000 ms to stop overlap during cache rebuild. This note has not yet checked the effective acquisition call or proposed a discriminating test.\n",
+          "src/main/java/example/JobRunner.java": "package example;\nimport java.util.concurrent.TimeUnit;\nimport org.redisson.api.RLock;\nimport org.redisson.api.RedissonClient;\nfinal class JobRunner {\n  private final RedissonClient redis;\n  JobRunner(RedissonClient redis) { this.redis = redis; }\n  void run(String cacheId, Runnable rebuild) throws InterruptedException {\n    RLock lock = redis.getLock(\"cache:\" + cacheId);\n    if (!lock.tryLock(2, TimeUnit.SECONDS)) return;\n    try { rebuild.run(); }\n    finally { lock.unlock(); }\n  }\n}\n"
+        },
+        "prerequisites": [
+          "Give the actor only this input object and the assigned skill package; keep evaluator criteria separate.",
+          "Use the same model, tools, fixture context and task as the paired case; only the acquisition overload changes.",
+          "A Redis runtime is optional for the review; distinguish an implemented or planned test from an executed one."
+        ]
+      },
+      "evaluator": {
+        "decisiveConstraint": "The helper omits leaseTime; this is the only fixture change from the explicit-lease case.",
+        "expectedOutcome": "Recognize that this call selects watchdog renewal and that the watchdog setting can affect its lease window. Do not reuse the fixed-lease diagnosis; without renewal/pause/TTL evidence, neither diagnose a particular failure nor certify 120 seconds as the remedy.",
+        "requiredCharacteristics": [
+          "Identifies two-argument tryLock as the renewal path in the tagged implementation.",
+          "Does not call the two-second wait or the original 30-second renewable window a hard maximum task duration.",
+          "Uses a live-holder control beyond an initial expiry interval with renewal and server TTL observations, then a separate interrupted-renewal control.",
+          "Conditions any watchdog tuning on measured renewal failures, pauses or recovery requirements and states the longer crashed-holder recovery tradeoff.",
+          "Preserves independent resource protection and can retain the current code while gathering the deciding evidence.",
+          "Updates review.md to reflect this changed premise while retaining unaffected accepted guarantees."
+        ],
+        "failureConditions": [
+          "Guarantees no overlapping workers solely from a larger watchdog setting or a passing timing test.",
+          "Confuses the two-second acquisition wait with the ownership lease or operation deadline.",
+          "Demands a new lock service/fencing architecture without considering the supplied, independently enforced repeat-safe resource invariant.",
+          "Uses forceUnlock or unconditional deletion as cleanup after ownership is lost.",
+          "Claims an unexecuted Redis integration test or independent behavioral result.",
+          "Says the helper still has an explicit ten-second lease or that the watchdog configuration is categorically ignored.",
+          "Infers normal 40-60-second work must expire a healthy 30-second renewable lease.",
+          "Unconditionally switches overload or adds another lock based on the prior case."
+        ],
+        "status": "AWAITING_COORDINATOR_EXECUTION"
+      }
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://github.com/redisson/redisson/blob/redisson-3.52.0/redisson/src/main/java/org/redisson/RedissonLock.java",
+      "version": "redisson-3.52.0",
+      "accessed": "2026-10-16",
+      "supports": "lock/tryLock overload selection; positive lease branch versus scheduleExpirationRenewal; two-argument tryLock delegates with leaseTime -1."
+    },
+    {
+      "url": "https://github.com/redisson/redisson/blob/redisson-3.52.0/redisson/src/main/java/org/redisson/config/Config.java",
+      "version": "redisson-3.52.0",
+      "accessed": "2026-10-16",
+      "supports": "lockWatchdogTimeout contract only for acquisition without explicit lease parameter."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/redisson/redisson/redisson-3.52.0/redisson/src/main/java/org/redisson/api/RLock.java",
+      "version": "redisson-3.52.0",
+      "accessed": "2026-10-16",
+      "supports": "Acquisition waitTime and leaseTime parameters are distinct; owner-state and force-unlock API shape inspected."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/redisson/redisson/redisson-3.52.0/redisson/src/main/java/org/redisson/RedissonBaseLock.java",
+      "version": "redisson-3.52.0",
+      "accessed": "2026-10-16",
+      "supports": "Renewal scheduling and owner-thread unlock delegation; inspected for ownership compatibility, no new broad API recommendation."
+    },
+    {
+      "url": "https://redisson.pro/docs/data-and-services/locks-and-synchronizers/index.html",
+      "version": "Current documentation consulted; new material pinned to 3.52.0 source",
+      "accessed": "2026-10-16",
+      "supports": "Official initial discovery of fixed lease versus watchdog semantics; not used to mandate current/latest dependency."
+    }
+  ],
+  "limitations": [
+    "No live Redis or Redisson integration execution; Redis server and CLI were not found on PATH.",
+    "No independent agent behavioral run or before/after comparison; expected decision gains remain unmeasured.",
+    "The new detailed contract applies to fresh, non-reentrant Redisson 3.52.0 RLock acquisition. Other versions, lock types, custom renewal and mixed reentrant modes require project-matched inspection.",
+    "Neither configured renewal nor a controlled timing test proves resource safety under pauses, partitions or topology changes.",
+    "No project-wide JDK/client baseline was invented or upgraded; target projects must supply their own resolved versions."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "reason": "Coordinator-only shared write after all reviewers stop; needed to regenerate integrity/version index."
+    },
+    {
+      "command": "npm run verify",
+      "reason": "Coordinator-only repository-wide validation after registry generation and all reviewers stop."
+    }
+  ],
+  "crossSkillIssues": [],
+  "coordinatorActions": [
+    "Consume this handoff and keep input/evaluator case objects separated during independent actor execution.",
+    "Run the two pending global commands only after all reviewers stop writing."
+  ],
+  "processesStillWriting": []
+}

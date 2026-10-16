@@ -1,0 +1,5 @@
+# Support observation
+
+After a reload, an already opened report displays a different total. The support ticket calls it a "rounding regression" after the last renderer update. A user remembers the first displayed total as 1000 and later saw 1200. No other application, database or production access is supplied.
+
+The local Demo prints the reported sequence. The existing check passes.

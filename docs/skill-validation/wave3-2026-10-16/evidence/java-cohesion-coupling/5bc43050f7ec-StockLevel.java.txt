@@ -1,0 +1,8 @@
+package inv.stock;
+public final class StockLevel {
+    private final String sku;
+    private final int quantity;
+    public StockLevel(String sku, int quantity) { this.sku = sku; this.quantity = quantity; }
+    public String sku() { return sku; }
+    public int quantity() { return quantity; }
+}

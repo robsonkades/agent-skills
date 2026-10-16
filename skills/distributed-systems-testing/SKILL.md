@@ -168,9 +168,10 @@ The fault or its invariant cannot be observed
   outcomes after timeouts. Do not impose linearizability on an eventual-consistency contract.
   Check required progress separately: rejecting every operation can preserve safety while failing
   availability. A checker timeout or missing coverage is not a pass (`references/techniques.md`).
-- Kill the process at the awkward moment — between the database write and the acknowledgement,
-  between two writes, mid-batch. This is where at-least-once semantics stop being theoretical
-  and where the outbox either works or does not.
+- **Prove the crash boundary was reached.** Follow the actual commit and acknowledgement wiring;
+  hold the consumer at the chosen boundary before killing it. A row surviving a restart does
+  not prove redelivery or deduplication. Verify both the interrupted protocol and its protected
+  effect (`references/fault-injection.md#death-mid-flight`).
 - **Fault injection needs a controllable boundary.** A gateway interface, controlled server,
   proxy or platform hook can provide one. A static call may still be intercepted at its network
   boundary; introduce an application seam when it materially improves focused tests

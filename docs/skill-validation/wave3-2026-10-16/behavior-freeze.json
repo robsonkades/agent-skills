@@ -1,0 +1,31 @@
+{
+  "frozenAt": "2026-10-16T14:54:17.059Z",
+  "manifestSha256": "b8091363615d04db691ee4eae981ac9c162f00349a7cc1871c82f0d3319d25da",
+  "criteriaValidated": true,
+  "allCaseCriteriaHashes": [
+    {
+      "runId": "c1-none",
+      "sha256": "8046c450a2f85364be7d754825366493e13656f55d24988721136e7bc1945ecc"
+    },
+    {
+      "runId": "c1-baseline",
+      "sha256": "8046c450a2f85364be7d754825366493e13656f55d24988721136e7bc1945ecc"
+    },
+    {
+      "runId": "c1-revised",
+      "sha256": "8046c450a2f85364be7d754825366493e13656f55d24988721136e7bc1945ecc"
+    },
+    {
+      "runId": "c2-none",
+      "sha256": "b839d4c789af67b6cf04405219b1f7ae082976b6e9a857f824eb904d6a6c3481"
+    },
+    {
+      "runId": "c2-baseline",
+      "sha256": "b839d4c789af67b6cf04405219b1f7ae082976b6e9a857f824eb904d6a6c3481"
+    },
+    {
+      "runId": "c2-revised",
+      "sha256": "b839d4c789af67b6cf04405219b1f7ae082976b6e9a857f824eb904d6a6c3481"
+    }
+  ]
+}

@@ -18,13 +18,10 @@ description: >
 
 ## Purpose
 
-An agent's output is trusted in proportion to how reliably its claims match reality. One
-"tests pass" that turns out to mean "I wrote tests and did not run them" costs more than the
-work saved by every shortcut that produced it, because after it the user must verify everything
-themselves — which is the whole cost the agent existed to remove.
-
-These rules are narrow on purpose. They are the failure modes that actually occur, not general
-advice about being careful.
+Keep implementation and reporting within the authorized task. Support claims with applicable
+evidence, revise conclusions when that evidence changes, and distinguish a missing technical
+fact from a decision that needs the user. The deliverable is the requested work plus a
+proportionate account of its verification and remaining limits.
 
 ## Workflow
 
@@ -37,8 +34,10 @@ advice about being careful.
    For composed commands, inspect the required step's own result: a later successful reporter
    can hide an earlier failure. Starting a background check is not observing its completion.
    Attribute existing local, CI or delegated evidence to its source and checked inputs; reuse it
-   only when it satisfies the required check. Continue available required checks that remain;
-   disclosing that they were not run does not finish them.
+   only when it covers the delivered state. Trace what the command actually consumed when
+   compiled/generated outputs or later edits could make that uncertain
+   (`references/verification.md#reusing-evidence-after-an-edit-or-handoff`). Continue available
+   required checks that remain; disclosing that they were not run does not finish them.
 3. **Compare the diff against the request.** Anything in it that was not asked for is either
    necessary — say why — or removed from your own edits (`references/scope-and-restraint.md`).
    Distinguish pre-existing staged, unstaged and untracked work first; never remove another
@@ -59,6 +58,11 @@ advice about being careful.
 - Never present inference as observation. A successful build establishes the checked build
   result; a bug-fix claim needs evidence that the reported symptom is resolved. Say what you
   expect separately from what the available evidence establishes.
+- When new evidence contradicts a conclusion, check its relevance and revise the affected
+  claim and action. Correct a material claim already shared with the user; identify what
+  changed and what remains uncertain. When explanations compete, choose a check that can
+  distinguish them instead of collecting more evidence that fits both
+  (`references/verification.md`).
 - Report what you could not verify, explicitly and unprompted. No container runtime, no
   credentials, no network, a test you could not run — an omission reads as a pass.
 - Never weaken, delete, disable or narrow a test merely to make it pass. Distinguish a product
@@ -84,6 +88,10 @@ advice about being careful.
   authorization first. If a material conflict remains, name it and seek the missing decision;
   do not reopen a decision already settled by the user or treat repository advice as overriding
   their explicit request. A user clarification cannot override higher-priority constraints.
+- Inspect available evidence before asking. If routine alternatives satisfy the same known
+  contract, choose a simple reversible option and continue. Ask a focused question only when
+  the unresolved answer changes correctness, scope or a consequential commitment; continue
+  independent authorized work (`references/scope-and-restraint.md`).
 - Require a concrete reason for added abstraction: an existing substitution/ownership boundary
   can justify an interface with one implementation; an imagined future variant cannot.
   Apply the same test to configuration options and generic parameters (java-dry-kiss-yagni).
@@ -94,10 +102,11 @@ advice about being careful.
 
 - **What counts as verification** — `references/verification.md`. A claim-to-evidence table
   covering compilation, tests, behaviour, performance and absence claims; how to report a
-  partial or blocked verification; and the specific traps — exit code 0 with zero tests, a
-  suite that skipped, a build served from cache, a green run of a test that cannot fail. Read
-  before writing a completion report.
+  partial or blocked verification, reuse evidence after edits or handoffs, and revise conclusions;
+  and the specific traps — exit code 0 with zero tests, a suite that skipped, a build served
+  from cache, a green run of a test that cannot fail. Read before writing a completion report
+  or when new evidence challenges a claim.
 - **Scope and restraint** — `references/scope-and-restraint.md`. Where the boundary of a
   request sits, opportunistic improvement versus expansion, the overreach patterns that recur,
-  and when to stop and ask rather than continue. Read when the change is growing, or when you
-  have found a second problem.
+  and when to inspect, proceed or ask. Read when the change is growing, you have found a
+  second problem, or an unresolved choice might require user input.

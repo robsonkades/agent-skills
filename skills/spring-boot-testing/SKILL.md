@@ -42,6 +42,9 @@ Trace the named assertion to its real collaborators, request transport, thread,
 transaction, database and cleanup owner. Inspect fresh test reports: an undiscovered,
 disabled or environmentally skipped test provides no behavioral evidence. Keep test
 services and configuration isolated from real application environments.
+If startup customization is part of the claim, inspect the selected application class,
+its `main` method and the test's `useMainMethod` policy. A full context or live server
+does not by itself establish that the application's launch customization ran.
 Recover the expected behavior from consumer contracts, acceptance criteria and relevant
 ADRs; inspect the test contribution guide, fixtures and CI infrastructure before choosing
 a new harness. An incidental existing test is not a testing policy, and current output

@@ -1,0 +1,21 @@
+{
+  "status": "PASS",
+  "kind": "Fixture integrity and separation only",
+  "cases": 2,
+  "filesPerCase": 7,
+  "verifiedFileHashes": 14,
+  "differentFiles": [
+    "product-contract.json"
+  ],
+  "differentFields": [
+    "unknownStatusVisible"
+  ],
+  "values": [
+    false,
+    true
+  ],
+  "databaseRuns": 0,
+  "jdbcRuns": 0,
+  "ormRuns": 0,
+  "independentActorRuns": 0
+}

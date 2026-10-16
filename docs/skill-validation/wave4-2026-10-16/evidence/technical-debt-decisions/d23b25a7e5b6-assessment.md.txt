@@ -1,0 +1,21 @@
+# Engineering assessment, 2026-10-15
+
+Maintainers reviewed the six changes and separated duplicate table work from the
+other implementation and review activities. These are self-reported observations,
+not a controlled causal productivity measurement. The current prospective estimate
+is 1.5–2.5 engineer-hours of avoidable work per future relevant change. This range is
+an assumption supported by inspection, not a guaranteed saving.
+
+A local repair can consolidate the transformation table behind the current boundary.
+The replacement prototype also removes that duplication. Neither option has an
+approved capability benefit beyond avoiding this same work in the selected horizon.
+Future aspirations for a plugin marketplace are unapproved and not forecast demand.
+
+The option estimates include required characterization updates, compatibility checks,
+release preparation and recovery work. They were re-estimated from remaining work;
+they are not the original budget minus time already spent. Prototype artifacts and
+tests useful to either path were considered. Archiving abandoned spike artifacts is
+2 hours whichever path is selected, so it is common to all options. Existing normal
+feature effort is likewise common. No production deployment of either candidate has
+occurred; a proposed check is not evidence that the repair is already released.
+

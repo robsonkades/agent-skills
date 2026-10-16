@@ -1,0 +1,28 @@
+{
+  "decision": "changed",
+  "cause": "BEFORE_COMMIT receipt work ran before independent readers could see the booking, and invalid receipt bodies rolled back mandatory booking/stock state.",
+  "changes": [
+    "BookingListener uses AFTER_COMMIT with default fallbackExecution=false.",
+    "ReceiptWriter.record uses a proxied REQUIRES_NEW businessTx transaction around header and detail inserts.",
+    "Existing REQUIRED participation, event identity, observer semantics, schema and synchronous scheduling remain unchanged.",
+    "Added seven persisted-state regression scenarios and updated RUNBOOK.md."
+  ],
+  "verification": [
+    "Original smoke passed; original regression failed four scenarios (checks/baseline-regression.json).",
+    "REQUIRES_NEW-only control failed four scenarios and left an orphan receipt after late rollback (checks/requires-new-only.json).",
+    "Final smoke passed (checks/repaired-smoke.json).",
+    "Final regression passed all seven scenarios (checks/repaired-regression.json).",
+    "Independent READ_COMMITTED observation confirms source booking visibility before the actual writer; 13-character body rejection leaves no header/detail and preserves booking/stock.",
+    "Expected Spring afterCompletion error is logged for invalid receipt but does not escape the successful business command."
+  ],
+  "limits": [
+    "Local Java 25, Spring Framework 7.0.9 and H2 2.4.240 behavior only.",
+    "No process-crash, production database, distributed delivery/deduplication or JPA guarantees tested.",
+    "Receipt failure/interruption may lose the receipt by contract; no recovery mechanism added.",
+    "Execution records are actor reports, not an independent complete audit."
+  ],
+  "regressionCommands": [
+    ["node", "check.mjs"],
+    ["node", "check.mjs", "work.Regression"]
+  ]
+}

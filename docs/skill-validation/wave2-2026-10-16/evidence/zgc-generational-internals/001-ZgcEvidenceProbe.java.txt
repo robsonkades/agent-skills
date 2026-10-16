@@ -1,0 +1,74 @@
+import java.nio.file.Path;
+import java.time.Duration;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
+import jdk.jfr.EventType;
+import jdk.jfr.FlightRecorder;
+import jdk.jfr.Recording;
+import jdk.jfr.consumer.RecordedEvent;
+import jdk.jfr.consumer.RecordingFile;
+
+public final class ZgcEvidenceProbe {
+    private static final byte[][] RETAINED = new byte[128][];
+    private static final List<String> EVENTS = List.of(
+            "jdk.ZYoungGarbageCollection", "jdk.ZOldGarbageCollection", "jdk.ZAllocationStall");
+
+    public static void main(String[] args) throws Exception {
+        Thread.currentThread().setName("allocator-control");
+        System.out.println("runtime=" + Runtime.version());
+        for (String name : EVENTS) {
+            EventType type = FlightRecorder.getFlightRecorder().getEventTypes().stream()
+                    .filter(candidate -> name.equals(candidate.getName())).findFirst().orElseThrow();
+            var fields = type.getFields().stream().map(field -> field.getName()).toList();
+            System.out.println(name + " fields=" + fields);
+            if (name.equals("jdk.ZAllocationStall")) {
+                if (fields.contains("gcId") || !fields.containsAll(List.of(
+                        "eventThread", "startTime", "duration", "type", "size"))) {
+                    throw new AssertionError("Unexpected allocation-stall schema");
+                }
+            } else if (!fields.contains("gcId")) {
+                throw new AssertionError("Missing cycle id: " + name);
+            }
+        }
+
+        Path file = Path.of("zgc-evidence.jfr");
+        try (Recording recording = new Recording()) {
+            EVENTS.forEach(event -> recording.enable(event).withThreshold(Duration.ZERO));
+            recording.start();
+            System.gc();
+            for (int i = 0; i < 8192; i++) {
+                byte[] allocation = new byte[32 * 1024];
+                allocation[0] = (byte) i;
+                RETAINED[i % RETAINED.length] = allocation;
+            }
+            System.gc();
+            recording.stop();
+            recording.dump(file);
+        }
+
+        List<RecordedEvent> events = RecordingFile.readAllEvents(file);
+        Map<String, Long> counts = events.stream()
+                .filter(event -> EVENTS.contains(event.getEventType().getName()))
+                .collect(Collectors.groupingBy(event -> event.getEventType().getName(),
+                        TreeMap::new, Collectors.counting()));
+        System.out.println("recordedCounts=" + counts);
+        if (counts.getOrDefault("jdk.ZYoungGarbageCollection", 0L) == 0
+                || counts.getOrDefault("jdk.ZOldGarbageCollection", 0L) == 0) {
+            throw new AssertionError("Expected completed young and old cycles");
+        }
+        for (RecordedEvent event : events) {
+            if (event.getEventType().getName().equals("jdk.ZAllocationStall")) {
+                if (event.hasField("gcId") || event.getThread() == null) {
+                    throw new AssertionError("Unexpected recorded stall identity");
+                }
+                System.out.println("stall thread=" + event.getThread().getJavaName()
+                        + " durationNanos=" + event.getDuration().toNanos()
+                        + " size=" + event.getLong("size"));
+            }
+        }
+        System.out.println("PASS: cycle ids and stall schema verified; counts are observations, not a 1:1 correlation or tuning result.");
+    }
+}
+

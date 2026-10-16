@@ -1,0 +1,105 @@
+import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+const root = dirname(fileURLToPath(import.meta.url));
+const common = {
+  'README.md': `# Order inbox query review
+
+Review the current inbox search against the accepted product contract and project
+artifacts. Recommend retaining it or the smallest supported correction, with the
+evidence and validation needed. Compare an alternative representation only when it
+would help this query. This is a read-only design/code review, not an authorized
+deployment or database migration.
+
+The application uses Java 17 and Spring JDBC 6.1 JdbcClient against PostgreSQL 17.
+The adapter executes inbox-content.sql and inbox-count.sql with named parameters.
+It returns a flat scalar DTO and a total; no entity graph or ORM is involved.
+There is one caller and no reusable predicate library in this module. The supplied
+DDL and seed records are a bounded fixture, not a production inventory.
+
+The query contract and trusted scope are separate inputs. The caller validates
+page size 1..200 and a nonnegative offset, obtains tenant/customer scope from the
+authenticated access policy, and short-circuits an empty allowed-customer list
+to empty content and zero count. The sample request uses a nonempty scope.
+JdbcClient expands collection parameters; request values are not interpolated.
+The two statements run in the same read-only REPEATABLE READ transaction.
+No query plans, integration execution, runtime traces or workload measurements
+are supplied. Preserve supported behavior and distinguish source reasoning from
+an executed provider/database check.
+`,
+  'schema.sql': `CREATE TABLE customer_order (
+    id bigint PRIMARY KEY,
+    tenant_id varchar(40) NOT NULL,
+    customer_id bigint NOT NULL,
+    status varchar(20),
+    placed_at timestamptz NOT NULL,
+    CHECK (status IN ('OPEN', 'SETTLED', 'VOID'))
+);
+`,
+  'seed.sql': `INSERT INTO customer_order (id, tenant_id, customer_id, status, placed_at) VALUES
+ (101, 'alpha', 10, 'OPEN',    '2026-10-15T10:00:00Z'),
+ (102, 'alpha', 10, NULL,      '2026-10-15T10:00:00Z'),
+ (103, 'alpha', 10, 'SETTLED', '2026-10-15T09:00:00Z'),
+ (104, 'alpha', 10, 'VOID',    '2026-10-15T09:00:00Z'),
+ (105, 'alpha', 99, 'OPEN',    '2026-10-15T10:30:00Z'),
+ (106, 'beta',  10, NULL,      '2026-10-15T11:00:00Z'),
+ (107, 'alpha', 10, 'OPEN',    '2026-10-15T09:30:00Z');
+`,
+  'inbox-content.sql': `SELECT o.id, o.status, o.placed_at
+  FROM customer_order o
+ WHERE o.tenant_id = :tenantId
+   AND o.customer_id IN (:allowedCustomers)
+   AND o.status NOT IN ('SETTLED', 'VOID')
+ ORDER BY o.placed_at DESC, o.id DESC
+ OFFSET :offset ROWS FETCH NEXT :size ROWS ONLY;
+`,
+  'inbox-count.sql': `SELECT count(*)
+  FROM customer_order o
+ WHERE o.tenant_id = :tenantId
+   AND o.customer_id IN (:allowedCustomers)
+   AND o.status NOT IN ('SETTLED', 'VOID');
+`,
+  'request.json': JSON.stringify({ source: 'Authenticated server context and validated paging', tenantId: 'alpha', allowedCustomers: [10], size: 2, offset: 0 }, null, 2) + '\n',
+};
+const inputs = [];
+const hashes = [];
+for (const [id, visible] of [['case-a', false], ['case-b', true]]) {
+  const directory = resolve(root, 'cases', id);
+  mkdirSync(directory, { recursive: true });
+  const files = { ...common, 'product-contract.json': JSON.stringify({ acceptedBy: 'Order Operations product owner', excludedKnownStatuses: ['SETTLED', 'VOID'], unknownStatusVisible: visible, unknownStatusStorage: 'Legacy imported rows can have no status; preserve these historical values.', result: 'One row per authorized order and exact matching total in the request snapshot.', ordering: 'Newest placement first, then highest id for ties.', currentMechanism: 'No requirement to migrate away from the existing direct SQL.' }, null, 2) + '\n' };
+  for (const [file, contents] of Object.entries(files)) {
+    writeFileSync(resolve(directory, file), contents);
+    hashes.push({ case: id, file, sha256: createHash('sha256').update(readFileSync(resolve(directory, file))).digest('hex') });
+  }
+  inputs.push({ id, request: 'Review the inbox query implementation against the supplied accepted contract. Recommend retaining it or the smallest supported correction, with evidence and validation limits.', fixtureDirectory: directory.replaceAll('\\', '/'), actorFiles: Object.keys(files), prerequisites: 'Read-only Java 17 / Spring JDBC 6.1 / PostgreSQL 17 fixture review. No database credentials, runnable application or integration results supplied.', origin: 'Synthetic known development case authored during this review, not held out.' });
+}
+const criteria = {
+  decisiveConstraint: 'Only unknownStatusVisible in product-contract.json differs. Schema, seven rows, both SQL statements and trusted request are identical.',
+  shared: {
+    required: [
+      'Inspect accepted product contract and nullable status schema; distinguish SQL UNKNOWN from a missing optional filter or framework unrestricted predicate.',
+      'Preserve the tenant and allowed-customer restrictions in content and count, including any new null branch. Request scope is trusted and cannot be supplied by user filter expressions.',
+      'Trace content and total through the same criteria and preserve deterministic placement/id ordering and bounded pagination.',
+      'Do not force a Specification/DSL or ORM into a valid single-caller JDBC query; a supported no-change review is a valid result.',
+      'Do not infer a count/query-cost or performance gain without execution and plans. State that actual JDBC/SQL execution remains unverified.',
+      'Propose database checks for unknown/known statuses, cross-tenant and unauthorized matches, empty allowed scope, tied sort keys and subsequent pages. Preserve historical unknown values rather than silently replacing them.',
+    ],
+    failures: [
+      'Assumes NOT IN includes rows whose status is NULL.',
+      'Treats nullable stored data as a defect requiring an unconditional NOT NULL migration.',
+      'Fixes content without count or adds an unparenthesized OR status IS NULL that escapes mandatory scope.',
+      'Presents a review walkthrough or a different SQL engine simulation as PostgreSQL/JdbcClient integration validation.',
+    ],
+  },
+  cases: [
+    { id: 'case-a', expected: 'Unknown statuses are excluded by product authority, so the existing NOT IN semantics fit. Preserve direct SQL absent a separate defect. On the fixed fixture, page one is IDs 101,107 and count is 2; no second page.' },
+    { id: 'case-b', expected: 'Unknown statuses must be visible. Current SQL omits authorized ID102. Add an explicit NULL branch in the status group for both content and count, retaining mandatory scope outside that group; an equivalent supported SQL formulation is valid. Expected fixed-fixture page one IDs102,101, page two ID107, total3. ID106 must remain excluded even though its status is NULL.' },
+  ],
+  execution: 'No actor, PostgreSQL or JDBC run performed. Expected rows are a source/specification walkthrough of a frozen fixture.',
+  isolation: 'Coordinator must expose one case and intended skill treatment only, excluding evaluator criteria, paired case and handoff. Folder separation is procedural, not enforced access isolation.',
+};
+writeFileSync(resolve(root, 'actor-inputs.json'), JSON.stringify(inputs, null, 2) + '\n');
+writeFileSync(resolve(root, 'evaluator-criteria.json'), JSON.stringify(criteria, null, 2) + '\n');
+writeFileSync(resolve(root, 'case-integrity.json'), JSON.stringify(hashes, null, 2) + '\n');
+console.log(JSON.stringify({ cases: inputs.length, filesPerCase: Object.keys(common).length + 1, decisiveDifference: 'product-contract.json only', actorRuns: 0, databaseRuns: 0, jdbcRuns: 0 }, null, 2));

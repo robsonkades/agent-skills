@@ -1,0 +1,61 @@
+{
+  "scope": "skill-local structural/source inspection; not R execution or agent evaluation",
+  "strictManifestIssues": 0,
+  "nameAndDescriptionMatch": true,
+  "version": "1.2.5",
+  "shippedFiles": 5,
+  "localLinks": [
+    {
+      "source": "C:\\git\\agent-skills\\skills\\universal-scalability-law\\SKILL.md",
+      "href": "references/data-collection-and-fitting.md",
+      "target": "C:\\git\\agent-skills\\skills\\universal-scalability-law\\references\\data-collection-and-fitting.md"
+    },
+    {
+      "source": "C:\\git\\agent-skills\\skills\\universal-scalability-law\\SKILL.md",
+      "href": "references/coefficient-diagnosis.md",
+      "target": "C:\\git\\agent-skills\\skills\\universal-scalability-law\\references\\coefficient-diagnosis.md"
+    },
+    {
+      "source": "C:\\git\\agent-skills\\skills\\universal-scalability-law\\SKILL.md",
+      "href": "references/limits-and-troubleshooting.md",
+      "target": "C:\\git\\agent-skills\\skills\\universal-scalability-law\\references\\limits-and-troubleshooting.md"
+    }
+  ],
+  "allReferencesRouted": true,
+  "sourceEvidence": {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\universal-scalability-law-validation\\usl-3.0.4.R",
+    "line": 242,
+    "text": "frame$na.action <- \"na.omit\""
+  },
+  "changedFilesSinceAssignment": [
+    "C:\\git\\agent-skills\\skills\\universal-scalability-law\\skill.yaml",
+    "C:\\git\\agent-skills\\skills\\universal-scalability-law\\references\\data-collection-and-fitting.md"
+  ],
+  "finalFiles": [
+    {
+      "path": "C:\\git\\agent-skills\\skills\\universal-scalability-law\\SKILL.md",
+      "bytes": 10221,
+      "sha256": "E4AD41C582CCA400ACEE5582D3E4B3B6C3333755A23A5C233216B47F43D244CA"
+    },
+    {
+      "path": "C:\\git\\agent-skills\\skills\\universal-scalability-law\\skill.yaml",
+      "bytes": 1676,
+      "sha256": "1305EE9B2111B3DAD927FDC716B95FADFB45A1D14E941E7ACDEF66BA7582F5B8"
+    },
+    {
+      "path": "C:\\git\\agent-skills\\skills\\universal-scalability-law\\references\\coefficient-diagnosis.md",
+      "bytes": 8884,
+      "sha256": "58F6C51D8FA78A4B30D48F7268EB6A830B77B8DC4DE150A740BC8D6CD00675DF"
+    },
+    {
+      "path": "C:\\git\\agent-skills\\skills\\universal-scalability-law\\references\\data-collection-and-fitting.md",
+      "bytes": 15018,
+      "sha256": "F47103EDEE224F9737A4B6D8C078F6B8C1AA27D6BFF5DF366E8106630B395192"
+    },
+    {
+      "path": "C:\\git\\agent-skills\\skills\\universal-scalability-law\\references\\limits-and-troubleshooting.md",
+      "bytes": 9970,
+      "sha256": "778D4A947024759431FA24CBDE6D96CD16C7BAC19AFD770575131A62A82DD92A"
+    }
+  ]
+}

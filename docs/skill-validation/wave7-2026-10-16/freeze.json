@@ -1,0 +1,538 @@
+{
+  "frozenAt": "2026-10-16T18:05:10.154Z",
+  "criteriaSha256": "739cf3f911e78dff1a838ccee30e93b5016141335746f52ab96ac1d73ce766c5",
+  "actorsSha256": "94099a2c4746194f52e30a01776f966d8bbc9bf45b3f1dd7d0e6fc3ed535d655",
+  "criteriaReviewSha256": "1b13ea059ed12d6561bd3219f6afd59fd91cbf91d3cfe7e66be8831345bb40ed",
+  "criteriaResolutionSha256": "c7649b2972059d2cdbb859d06758349a41d1599e10dfd0b68ca304a0fc9f831d",
+  "calibrationGradesSha256": "4095d95eef28324e158a89783e739185ab80e5c567696ecb8ca144ef0d7f670d",
+  "calibrationAgreement": "4/4 authored semantic controls; not actor results",
+  "caseFiles": [
+    {
+      "caseId": "T1",
+      "path": "check.mjs",
+      "sha256": "3e2c72fdfb336d8034f538890cd2a37107c5045c57c320a7a600ffaad5df5194"
+    },
+    {
+      "caseId": "T1",
+      "path": "CONTRACT.md",
+      "sha256": "46934198b48b073078f86f7fffe508cd4bdc2834fd62ae3c2a76f278b3a86c13"
+    },
+    {
+      "caseId": "T1",
+      "path": "dependencies.json",
+      "sha256": "946004b08fb73ce470f8ecaf21c89afc86c9d1314ad404293823384d8381f9c4"
+    },
+    {
+      "caseId": "T1",
+      "path": "lib/commons-logging-1.3.5.jar",
+      "sha256": "6d7a744e4027649fbb50895df9497d109f98c766a637062fe8d2eabbb3140ba4"
+    },
+    {
+      "caseId": "T1",
+      "path": "lib/h2-2.4.240.jar",
+      "sha256": "29b70e427cc1c40cdc376283adbb0cc62853073797bb5fe5761f81fe73d57ce0"
+    },
+    {
+      "caseId": "T1",
+      "path": "lib/jspecify-1.0.0.jar",
+      "sha256": "1fad6e6be7557781e4d33729d49ae1cdc8fdda6fe477bb0cc68ce351eafdfbab"
+    },
+    {
+      "caseId": "T1",
+      "path": "lib/micrometer-commons-1.16.7.jar",
+      "sha256": "cd1ad64a94650a2ed3988a4ab48c9a7fad40c4986a81e328194dd757b5170273"
+    },
+    {
+      "caseId": "T1",
+      "path": "lib/micrometer-observation-1.16.7.jar",
+      "sha256": "74f9e4d51ef30c141de8a2409879282e572eef98665e033e8922c2fbee16862d"
+    },
+    {
+      "caseId": "T1",
+      "path": "lib/spring-aop-7.0.9.jar",
+      "sha256": "b8c5d6bfcb1f4993f2cc124f7ab7fac40edf5256b9e43c2f7250a733cb5510e9"
+    },
+    {
+      "caseId": "T1",
+      "path": "lib/spring-beans-7.0.9.jar",
+      "sha256": "ff218b827a25c9e8929b0cd56dfb56916cea9d5b669ed97dc7cb262508ff548b"
+    },
+    {
+      "caseId": "T1",
+      "path": "lib/spring-context-7.0.9.jar",
+      "sha256": "7552a2fcfa30cea53eb14d7a65a7a8e1b1dd82e832a7164fb7e6fb105f438858"
+    },
+    {
+      "caseId": "T1",
+      "path": "lib/spring-core-7.0.9.jar",
+      "sha256": "5195f4722699b39878d99a832549fe65df2890b159d063b88fff31b1ca65ae36"
+    },
+    {
+      "caseId": "T1",
+      "path": "lib/spring-expression-7.0.9.jar",
+      "sha256": "046434c40f43819729b9b1db0e6c659dfa68184c1c2c2efa5f7b3a5b27c4e2e2"
+    },
+    {
+      "caseId": "T1",
+      "path": "lib/spring-jdbc-7.0.9.jar",
+      "sha256": "ca0d9af1c5721eef8cac1f94c8b9d27a753248bc33c86e3472bd3d1dbd78f450"
+    },
+    {
+      "caseId": "T1",
+      "path": "lib/spring-tx-7.0.9.jar",
+      "sha256": "bfb15da6e096e2c0752e9db9987d2415bf0da1d744efc988535c10c6b6c2eedd"
+    },
+    {
+      "caseId": "T1",
+      "path": "README.md",
+      "sha256": "fbddd571dfe4c6d035bf5999e62c74b96d9a70d77ef06c9a73db426a4616cc37"
+    },
+    {
+      "caseId": "T1",
+      "path": "REQUEST.md",
+      "sha256": "21fd08ac2f2a399b4e16e13c41f8b7b5fd250385b5d3bfe90b73745629bef664"
+    },
+    {
+      "caseId": "T1",
+      "path": "RUNBOOK.md",
+      "sha256": "4df48b595926438daed64a0be33626a584bb8ed0d1e69a4f0c77dc28b7b4b902"
+    },
+    {
+      "caseId": "T1",
+      "path": "src/work/BookingListener.java",
+      "sha256": "6fa4e57dcc32cb64311af7225cf8d860aa429e1b5ffc3f2f685d3516beb274cd"
+    },
+    {
+      "caseId": "T1",
+      "path": "src/work/BookingRecorded.java",
+      "sha256": "d17bb2796443dc35625c6caf2cd2664bfa2ed482100583682eb6068dd44136b5"
+    },
+    {
+      "caseId": "T1",
+      "path": "src/work/BookingService.java",
+      "sha256": "9a9570e24d54ab1c9cf96179c263f99963ae6e31da9034084ca294c0249234c4"
+    },
+    {
+      "caseId": "T1",
+      "path": "src/work/Config.java",
+      "sha256": "d018153b81a91bb29f41d4612e14938d45a6ef68eebe297b65905146202bfa6f"
+    },
+    {
+      "caseId": "T1",
+      "path": "src/work/ReceiptObserver.java",
+      "sha256": "1b835ff5ff9d1dc93a7aba00a8688384a130ff4be4cada5214b4c8a05a8d8c3c"
+    },
+    {
+      "caseId": "T1",
+      "path": "src/work/ReceiptWriter.java",
+      "sha256": "33ca169db6e1cdcbd3ec107bf97abbabd2cc22925e8bdb6c7d5db8d9963099d2"
+    },
+    {
+      "caseId": "T1",
+      "path": "test/work/Smoke.java",
+      "sha256": "c73d9a88640286c67ffed75a8648557cf98eb85678e32443025b0e4bf38f3ec0"
+    },
+    {
+      "caseId": "T1",
+      "path": "toolchain.json",
+      "sha256": "337bed7f9c0a15bfb6ee10d06fe47bbbc350ff6b818d4d76b9b27dda9a03e653"
+    },
+    {
+      "caseId": "T2",
+      "path": "check.mjs",
+      "sha256": "3e2c72fdfb336d8034f538890cd2a37107c5045c57c320a7a600ffaad5df5194"
+    },
+    {
+      "caseId": "T2",
+      "path": "CONTRACT.md",
+      "sha256": "1a14174eb412e61566b5f6a2c8ad4de09c782011760a56de53c94852c6517e72"
+    },
+    {
+      "caseId": "T2",
+      "path": "dependencies.json",
+      "sha256": "946004b08fb73ce470f8ecaf21c89afc86c9d1314ad404293823384d8381f9c4"
+    },
+    {
+      "caseId": "T2",
+      "path": "lib/commons-logging-1.3.5.jar",
+      "sha256": "6d7a744e4027649fbb50895df9497d109f98c766a637062fe8d2eabbb3140ba4"
+    },
+    {
+      "caseId": "T2",
+      "path": "lib/h2-2.4.240.jar",
+      "sha256": "29b70e427cc1c40cdc376283adbb0cc62853073797bb5fe5761f81fe73d57ce0"
+    },
+    {
+      "caseId": "T2",
+      "path": "lib/jspecify-1.0.0.jar",
+      "sha256": "1fad6e6be7557781e4d33729d49ae1cdc8fdda6fe477bb0cc68ce351eafdfbab"
+    },
+    {
+      "caseId": "T2",
+      "path": "lib/micrometer-commons-1.16.7.jar",
+      "sha256": "cd1ad64a94650a2ed3988a4ab48c9a7fad40c4986a81e328194dd757b5170273"
+    },
+    {
+      "caseId": "T2",
+      "path": "lib/micrometer-observation-1.16.7.jar",
+      "sha256": "74f9e4d51ef30c141de8a2409879282e572eef98665e033e8922c2fbee16862d"
+    },
+    {
+      "caseId": "T2",
+      "path": "lib/spring-aop-7.0.9.jar",
+      "sha256": "b8c5d6bfcb1f4993f2cc124f7ab7fac40edf5256b9e43c2f7250a733cb5510e9"
+    },
+    {
+      "caseId": "T2",
+      "path": "lib/spring-beans-7.0.9.jar",
+      "sha256": "ff218b827a25c9e8929b0cd56dfb56916cea9d5b669ed97dc7cb262508ff548b"
+    },
+    {
+      "caseId": "T2",
+      "path": "lib/spring-context-7.0.9.jar",
+      "sha256": "7552a2fcfa30cea53eb14d7a65a7a8e1b1dd82e832a7164fb7e6fb105f438858"
+    },
+    {
+      "caseId": "T2",
+      "path": "lib/spring-core-7.0.9.jar",
+      "sha256": "5195f4722699b39878d99a832549fe65df2890b159d063b88fff31b1ca65ae36"
+    },
+    {
+      "caseId": "T2",
+      "path": "lib/spring-expression-7.0.9.jar",
+      "sha256": "046434c40f43819729b9b1db0e6c659dfa68184c1c2c2efa5f7b3a5b27c4e2e2"
+    },
+    {
+      "caseId": "T2",
+      "path": "lib/spring-jdbc-7.0.9.jar",
+      "sha256": "ca0d9af1c5721eef8cac1f94c8b9d27a753248bc33c86e3472bd3d1dbd78f450"
+    },
+    {
+      "caseId": "T2",
+      "path": "lib/spring-tx-7.0.9.jar",
+      "sha256": "bfb15da6e096e2c0752e9db9987d2415bf0da1d744efc988535c10c6b6c2eedd"
+    },
+    {
+      "caseId": "T2",
+      "path": "README.md",
+      "sha256": "fbddd571dfe4c6d035bf5999e62c74b96d9a70d77ef06c9a73db426a4616cc37"
+    },
+    {
+      "caseId": "T2",
+      "path": "REQUEST.md",
+      "sha256": "21fd08ac2f2a399b4e16e13c41f8b7b5fd250385b5d3bfe90b73745629bef664"
+    },
+    {
+      "caseId": "T2",
+      "path": "RUNBOOK.md",
+      "sha256": "4df48b595926438daed64a0be33626a584bb8ed0d1e69a4f0c77dc28b7b4b902"
+    },
+    {
+      "caseId": "T2",
+      "path": "src/work/BookingListener.java",
+      "sha256": "6fa4e57dcc32cb64311af7225cf8d860aa429e1b5ffc3f2f685d3516beb274cd"
+    },
+    {
+      "caseId": "T2",
+      "path": "src/work/BookingRecorded.java",
+      "sha256": "d17bb2796443dc35625c6caf2cd2664bfa2ed482100583682eb6068dd44136b5"
+    },
+    {
+      "caseId": "T2",
+      "path": "src/work/BookingService.java",
+      "sha256": "9a9570e24d54ab1c9cf96179c263f99963ae6e31da9034084ca294c0249234c4"
+    },
+    {
+      "caseId": "T2",
+      "path": "src/work/Config.java",
+      "sha256": "d018153b81a91bb29f41d4612e14938d45a6ef68eebe297b65905146202bfa6f"
+    },
+    {
+      "caseId": "T2",
+      "path": "src/work/ReceiptObserver.java",
+      "sha256": "1b835ff5ff9d1dc93a7aba00a8688384a130ff4be4cada5214b4c8a05a8d8c3c"
+    },
+    {
+      "caseId": "T2",
+      "path": "src/work/ReceiptWriter.java",
+      "sha256": "33ca169db6e1cdcbd3ec107bf97abbabd2cc22925e8bdb6c7d5db8d9963099d2"
+    },
+    {
+      "caseId": "T2",
+      "path": "test/work/Smoke.java",
+      "sha256": "c73d9a88640286c67ffed75a8648557cf98eb85678e32443025b0e4bf38f3ec0"
+    },
+    {
+      "caseId": "T2",
+      "path": "toolchain.json",
+      "sha256": "337bed7f9c0a15bfb6ee10d06fe47bbbc350ff6b818d4d76b9b27dda9a03e653"
+    },
+    {
+      "caseId": "T3",
+      "path": "check.mjs",
+      "sha256": "3e2c72fdfb336d8034f538890cd2a37107c5045c57c320a7a600ffaad5df5194"
+    },
+    {
+      "caseId": "T3",
+      "path": "CONTRACT.md",
+      "sha256": "dca298f2313e8523ae169e4154b33538b283fe027bfadf277553f6b8bdddaa04"
+    },
+    {
+      "caseId": "T3",
+      "path": "dependencies.json",
+      "sha256": "946004b08fb73ce470f8ecaf21c89afc86c9d1314ad404293823384d8381f9c4"
+    },
+    {
+      "caseId": "T3",
+      "path": "lib/commons-logging-1.3.5.jar",
+      "sha256": "6d7a744e4027649fbb50895df9497d109f98c766a637062fe8d2eabbb3140ba4"
+    },
+    {
+      "caseId": "T3",
+      "path": "lib/h2-2.4.240.jar",
+      "sha256": "29b70e427cc1c40cdc376283adbb0cc62853073797bb5fe5761f81fe73d57ce0"
+    },
+    {
+      "caseId": "T3",
+      "path": "lib/jspecify-1.0.0.jar",
+      "sha256": "1fad6e6be7557781e4d33729d49ae1cdc8fdda6fe477bb0cc68ce351eafdfbab"
+    },
+    {
+      "caseId": "T3",
+      "path": "lib/micrometer-commons-1.16.7.jar",
+      "sha256": "cd1ad64a94650a2ed3988a4ab48c9a7fad40c4986a81e328194dd757b5170273"
+    },
+    {
+      "caseId": "T3",
+      "path": "lib/micrometer-observation-1.16.7.jar",
+      "sha256": "74f9e4d51ef30c141de8a2409879282e572eef98665e033e8922c2fbee16862d"
+    },
+    {
+      "caseId": "T3",
+      "path": "lib/spring-aop-7.0.9.jar",
+      "sha256": "b8c5d6bfcb1f4993f2cc124f7ab7fac40edf5256b9e43c2f7250a733cb5510e9"
+    },
+    {
+      "caseId": "T3",
+      "path": "lib/spring-beans-7.0.9.jar",
+      "sha256": "ff218b827a25c9e8929b0cd56dfb56916cea9d5b669ed97dc7cb262508ff548b"
+    },
+    {
+      "caseId": "T3",
+      "path": "lib/spring-context-7.0.9.jar",
+      "sha256": "7552a2fcfa30cea53eb14d7a65a7a8e1b1dd82e832a7164fb7e6fb105f438858"
+    },
+    {
+      "caseId": "T3",
+      "path": "lib/spring-core-7.0.9.jar",
+      "sha256": "5195f4722699b39878d99a832549fe65df2890b159d063b88fff31b1ca65ae36"
+    },
+    {
+      "caseId": "T3",
+      "path": "lib/spring-expression-7.0.9.jar",
+      "sha256": "046434c40f43819729b9b1db0e6c659dfa68184c1c2c2efa5f7b3a5b27c4e2e2"
+    },
+    {
+      "caseId": "T3",
+      "path": "lib/spring-jdbc-7.0.9.jar",
+      "sha256": "ca0d9af1c5721eef8cac1f94c8b9d27a753248bc33c86e3472bd3d1dbd78f450"
+    },
+    {
+      "caseId": "T3",
+      "path": "lib/spring-tx-7.0.9.jar",
+      "sha256": "bfb15da6e096e2c0752e9db9987d2415bf0da1d744efc988535c10c6b6c2eedd"
+    },
+    {
+      "caseId": "T3",
+      "path": "README.md",
+      "sha256": "fbddd571dfe4c6d035bf5999e62c74b96d9a70d77ef06c9a73db426a4616cc37"
+    },
+    {
+      "caseId": "T3",
+      "path": "REQUEST.md",
+      "sha256": "7d94a3dbf63858333e5cbf23413bad7cfed2837ef277d02573fc252df512c015"
+    },
+    {
+      "caseId": "T3",
+      "path": "RUNBOOK.md",
+      "sha256": "3813cf1a26ffe32386873b4867db9fdaf809b83c9e338a4dbea51d563c94e1ad"
+    },
+    {
+      "caseId": "T3",
+      "path": "src/work/Config.java",
+      "sha256": "172c2f559b6ecd8fbc0d3d6668dd0dcc3d936c1e3e7a617aba40239c870ecf23"
+    },
+    {
+      "caseId": "T3",
+      "path": "src/work/MetricsService.java",
+      "sha256": "fb3745794299529a002bd8739dccdd2d55afab8ef1d3d98c882035b5dd6afb34"
+    },
+    {
+      "caseId": "T3",
+      "path": "src/work/OrderNotifier.java",
+      "sha256": "307455bb0049b79d4e7d3b1446e429026e09b8caa912de8406bceb169f4f266e"
+    },
+    {
+      "caseId": "T3",
+      "path": "src/work/OrderService.java",
+      "sha256": "b06a7a9e03ad909d914798e56402b0595cdcc795dcd26726c5ca7e7bec084227"
+    },
+    {
+      "caseId": "T3",
+      "path": "test/work/Smoke.java",
+      "sha256": "664c0be2dbb3f76f8f9d785aededc6b5d2e2bf7b021d326f57b1f64526eb7824"
+    },
+    {
+      "caseId": "T3",
+      "path": "toolchain.json",
+      "sha256": "337bed7f9c0a15bfb6ee10d06fe47bbbc350ff6b818d4d76b9b27dda9a03e653"
+    },
+    {
+      "caseId": "T4",
+      "path": "check.mjs",
+      "sha256": "9d37b87c5df6480a4ef1a4eb36870d60451f711853c6fdaa09b4267e7e3b17d4"
+    },
+    {
+      "caseId": "T4",
+      "path": "CONTRACT.md",
+      "sha256": "716e134878177873101a2512b939c7de44995b7952b77873b912c5e5ad351f17"
+    },
+    {
+      "caseId": "T4",
+      "path": "dependencies.json",
+      "sha256": "946004b08fb73ce470f8ecaf21c89afc86c9d1314ad404293823384d8381f9c4"
+    },
+    {
+      "caseId": "T4",
+      "path": "lib/commons-logging-1.3.5.jar",
+      "sha256": "6d7a744e4027649fbb50895df9497d109f98c766a637062fe8d2eabbb3140ba4"
+    },
+    {
+      "caseId": "T4",
+      "path": "lib/h2-2.4.240.jar",
+      "sha256": "29b70e427cc1c40cdc376283adbb0cc62853073797bb5fe5761f81fe73d57ce0"
+    },
+    {
+      "caseId": "T4",
+      "path": "lib/jspecify-1.0.0.jar",
+      "sha256": "1fad6e6be7557781e4d33729d49ae1cdc8fdda6fe477bb0cc68ce351eafdfbab"
+    },
+    {
+      "caseId": "T4",
+      "path": "lib/micrometer-commons-1.16.7.jar",
+      "sha256": "cd1ad64a94650a2ed3988a4ab48c9a7fad40c4986a81e328194dd757b5170273"
+    },
+    {
+      "caseId": "T4",
+      "path": "lib/micrometer-observation-1.16.7.jar",
+      "sha256": "74f9e4d51ef30c141de8a2409879282e572eef98665e033e8922c2fbee16862d"
+    },
+    {
+      "caseId": "T4",
+      "path": "lib/spring-aop-7.0.9.jar",
+      "sha256": "b8c5d6bfcb1f4993f2cc124f7ab7fac40edf5256b9e43c2f7250a733cb5510e9"
+    },
+    {
+      "caseId": "T4",
+      "path": "lib/spring-beans-7.0.9.jar",
+      "sha256": "ff218b827a25c9e8929b0cd56dfb56916cea9d5b669ed97dc7cb262508ff548b"
+    },
+    {
+      "caseId": "T4",
+      "path": "lib/spring-context-7.0.9.jar",
+      "sha256": "7552a2fcfa30cea53eb14d7a65a7a8e1b1dd82e832a7164fb7e6fb105f438858"
+    },
+    {
+      "caseId": "T4",
+      "path": "lib/spring-core-7.0.9.jar",
+      "sha256": "5195f4722699b39878d99a832549fe65df2890b159d063b88fff31b1ca65ae36"
+    },
+    {
+      "caseId": "T4",
+      "path": "lib/spring-expression-7.0.9.jar",
+      "sha256": "046434c40f43819729b9b1db0e6c659dfa68184c1c2c2efa5f7b3a5b27c4e2e2"
+    },
+    {
+      "caseId": "T4",
+      "path": "lib/spring-jdbc-7.0.9.jar",
+      "sha256": "ca0d9af1c5721eef8cac1f94c8b9d27a753248bc33c86e3472bd3d1dbd78f450"
+    },
+    {
+      "caseId": "T4",
+      "path": "lib/spring-tx-7.0.9.jar",
+      "sha256": "bfb15da6e096e2c0752e9db9987d2415bf0da1d744efc988535c10c6b6c2eedd"
+    },
+    {
+      "caseId": "T4",
+      "path": "README.md",
+      "sha256": "fbddd571dfe4c6d035bf5999e62c74b96d9a70d77ef06c9a73db426a4616cc37"
+    },
+    {
+      "caseId": "T4",
+      "path": "REQUEST.md",
+      "sha256": "bbb15005c0792d8f18d093788ca264decb983f1bcc12a8b75c7f9f7dcbe1142e"
+    },
+    {
+      "caseId": "T4",
+      "path": "RUNBOOK.md",
+      "sha256": "e44d42a227d1d42d0b22cc1752d6965f1e95ff53bf4846a070049a0b43bcb92c"
+    },
+    {
+      "caseId": "T4",
+      "path": "src/work/Checkpoint.java",
+      "sha256": "39b66d68df9ae42020c4c9b7f76bf9fc31ace0c3ddf7983ba4070b5b31746fcf"
+    },
+    {
+      "caseId": "T4",
+      "path": "src/work/Config.java",
+      "sha256": "4d0cc9635f88aa6042c1baf6fe17984d8d71bb2a3e27428870fda68d0b011f1a"
+    },
+    {
+      "caseId": "T4",
+      "path": "src/work/Dispatcher.java",
+      "sha256": "9561c76f3ddb35bde60348ef449fd538e22863359664c080c7c2db4660635e8f"
+    },
+    {
+      "caseId": "T4",
+      "path": "src/work/Publisher.java",
+      "sha256": "14c5147e84d8c97c0ca6d15691e30b07ebbb4f9aee29f71336dc260df7c11d68"
+    },
+    {
+      "caseId": "T4",
+      "path": "support/work/ReceiverClient.java",
+      "sha256": "73c63c16f6e45ea3d14071ceb7713dc26c2a75854688a3655a57aaa3ae6afd5a"
+    },
+    {
+      "caseId": "T4",
+      "path": "test/work/Smoke.java",
+      "sha256": "06777ff2b60d6369a7c7f6050d1b0f4685c7684fbd2955a4056c8e2729bbd10b"
+    },
+    {
+      "caseId": "T4",
+      "path": "toolchain.json",
+      "sha256": "337bed7f9c0a15bfb6ee10d06fe47bbbc350ff6b818d4d76b9b27dda9a03e653"
+    }
+  ],
+  "probes": [
+    {
+      "caseId": "T1",
+      "path": "evaluator/T1/ContractProbe.java",
+      "sha256": "551295c977d9ea6fe5879bb632dd16093c5039dd0b1bb54374b1a816f49b8ac2"
+    },
+    {
+      "caseId": "T2",
+      "path": "evaluator/T2/ContractProbe.java",
+      "sha256": "f8425fad9246532f20fbfe1fed37ac2e230bb2b3a89a8a2e5323fbf2887c6318"
+    },
+    {
+      "caseId": "T3",
+      "path": "evaluator/T3/ContractProbe.java",
+      "sha256": "515ef3f8c03d7ba7c54e94c3f0f53456361c91f166fe1b295ffa457126c1d554"
+    },
+    {
+      "caseId": "T4",
+      "path": "evaluator/T4/ContractProbe.java",
+      "sha256": "d998c989fada4be07816dce6ede0210f7c4ac66b386ca89e4f3f26685403be09"
+    }
+  ]
+}

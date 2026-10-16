@@ -1,0 +1,15 @@
+{
+  "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave7-a765972c5d\\actors\\run-08\\output\\project",
+  "argv": [
+    "node",
+    "check.mjs",
+    "work.RecoveryRegression",
+    "failure"
+  ],
+  "startedAt": "2026-10-16T18:07:25.662Z",
+  "finishedAt": "2026-10-16T18:07:27.947Z",
+  "exit": 0,
+  "stdout": "PASS acknowledgment survives checkpoint failure; original order and pending event retained\r\n",
+  "stderr": "",
+  "error": null
+}

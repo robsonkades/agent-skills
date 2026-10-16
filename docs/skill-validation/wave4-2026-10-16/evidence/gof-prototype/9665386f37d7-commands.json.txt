@@ -1,0 +1,224 @@
+[
+  {
+    "label": "case-a-compile",
+    "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+    "args": [
+      "--release",
+      "17",
+      "-d",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\classes\\case-a",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-a\\GraphCopier.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-a\\DraftEditor.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evaluator\\CopyProbe.java"
+    ],
+    "workingDirectory": "C:/git/agent-skills",
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\case-a-compile.stdout.txt",
+    "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\case-a-compile.stderr.txt"
+  },
+  {
+    "label": "case-a-probe",
+    "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+    "args": [
+      "-cp",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\classes\\case-a",
+      "CopyProbe",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-a"
+    ],
+    "workingDirectory": "C:/git/agent-skills",
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\case-a-probe.stdout.txt",
+    "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\case-a-probe.stderr.txt"
+  },
+  {
+    "label": "case-b-compile",
+    "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+    "args": [
+      "--release",
+      "17",
+      "-d",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\classes\\case-b",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-b\\GraphCopier.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-b\\DraftEditor.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evaluator\\CopyProbe.java"
+    ],
+    "workingDirectory": "C:/git/agent-skills",
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\case-b-compile.stdout.txt",
+    "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\case-b-compile.stderr.txt"
+  },
+  {
+    "label": "case-b-probe",
+    "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+    "args": [
+      "-cp",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\classes\\case-b",
+      "CopyProbe",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-b"
+    ],
+    "workingDirectory": "C:/git/agent-skills",
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\case-b-probe.stdout.txt",
+    "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\case-b-probe.stderr.txt"
+  },
+  {
+    "label": "structural",
+    "executable": "C:\\Program Files\\nodejs\\node.exe",
+    "args": [
+      "--input-type=module",
+      "--eval",
+      "import assert from 'node:assert/strict';\nimport {readFileSync, readdirSync, existsSync} from 'node:fs';\nimport path from 'node:path';\nimport {loadPackageFromDirectory} from './packages/core/src/application/package-loader.ts';\nimport {validatePackage} from './packages/core/src/application/validate-package.ts';\nimport {NodeFileSystem} from './packages/node/src/file-system.ts';\nimport {ClaudeCodeAdapter} from './packages/adapter-claude/src/index.ts';\nimport {CodexAdapter} from './packages/adapter-codex/src/index.ts';\nconst root='skills/gof-prototype';\nconst loaded=await loadPackageFromDirectory(new NodeFileSystem(),root,{strict:true});\nconst report=validatePackage(loaded.pkg,{directoryName:'gof-prototype',adapters:[new ClaudeCodeAdapter(),new CodexAdapter()]});\nconst issues=[...loaded.issues,...report.issues];\nassert.equal(issues.length,0,JSON.stringify(issues));\nconst entry=readFileSync(path.join(root,'SKILL.md'),'utf8');\nconst refs=readdirSync(path.join(root,'references'));\nfor(const ref of refs) assert.ok(entry.includes('references/'+ref),'unrouted '+ref);\nlet links=0;\nfor(const file of ['SKILL.md',...refs.map(f=>'references/'+f)]) {\n const body=readFileSync(path.join(root,file),'utf8');\n for(const m of body.matchAll(/\\]\\(([^)]+)\\)/g)) {\n  const href=m[1];\n  if(/^(?:<)?[a-z]+:\\/\\//i.test(href)) continue;\n  const [target,anchor]=href.split('#');\n  const resolved=target?path.resolve(root,path.dirname(file),target):path.resolve(root,file);\n  assert.ok(existsSync(resolved),file+': '+href);\n  if(anchor) {\n   const targetText=readFileSync(resolved,'utf8');\n   const anchors=[...targetText.matchAll(/^#+ (.+)$/gm)].map(m=>m[1].toLowerCase().replace(/[^a-z0-9\\s-]/g,'').trim().replace(/\\s+/g,'-'));\n   assert.ok(anchors.includes(anchor),file+': '+href);\n  }\n  links++;\n }\n}\nconsole.log(JSON.stringify({skill:'gof-prototype',version:loaded.pkg.manifest.version,issues,referenceFilesRouted:refs.length,localLinksAndAnchorsChecked:links},null,2));\n"
+    ],
+    "workingDirectory": "C:/git/agent-skills",
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\structural.stdout.txt",
+    "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\structural.stderr.txt"
+  },
+  {
+    "label": "format",
+    "executable": "C:\\Program Files\\nodejs\\node.exe",
+    "args": [
+      "node_modules/prettier/bin/prettier.cjs",
+      "--check",
+      "skills/gof-prototype/SKILL.md",
+      "skills/gof-prototype/skill.yaml",
+      "skills/gof-prototype/references/copying-in-java.md",
+      "skills/gof-prototype/references/worked-example.md"
+    ],
+    "workingDirectory": "C:/git/agent-skills",
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\format.stdout.txt",
+    "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\format.stderr.txt"
+  },
+  {
+    "label": "diff-check",
+    "executable": "git",
+    "args": [
+      "diff",
+      "--check",
+      "--",
+      "skills/gof-prototype"
+    ],
+    "workingDirectory": "C:/git/agent-skills",
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\diff-check.stdout.txt",
+    "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\diff-check.stderr.txt"
+  },
+  {
+    "label": "final-diff",
+    "executable": "git",
+    "args": [
+      "diff",
+      "--",
+      "skills/gof-prototype"
+    ],
+    "workingDirectory": "C:/git/agent-skills",
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\final-diff.stdout.txt",
+    "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\final-diff.stderr.txt"
+  },
+  {
+    "label": "final-status",
+    "executable": "git",
+    "args": [
+      "status",
+      "--short",
+      "--",
+      "skills/gof-prototype"
+    ],
+    "workingDirectory": "C:/git/agent-skills",
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\final-status.stdout.txt",
+    "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\final-status.stderr.txt"
+  },
+  {
+    "label": "staged-diff",
+    "executable": "git",
+    "args": [
+      "diff",
+      "--cached",
+      "--",
+      "skills/gof-prototype"
+    ],
+    "workingDirectory": "C:/git/agent-skills",
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\staged-diff.stdout.txt",
+    "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\staged-diff.stderr.txt"
+  },
+  {
+    "label": "committed-SKILL.md",
+    "executable": "git",
+    "args": [
+      "show",
+      "HEAD:skills/gof-prototype/SKILL.md"
+    ],
+    "workingDirectory": "C:/git/agent-skills",
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed-SKILL.md.stdout.txt",
+    "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed-SKILL.md.stderr.txt"
+  },
+  {
+    "label": "committed-skill.yaml",
+    "executable": "git",
+    "args": [
+      "show",
+      "HEAD:skills/gof-prototype/skill.yaml"
+    ],
+    "workingDirectory": "C:/git/agent-skills",
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed-skill.yaml.stdout.txt",
+    "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed-skill.yaml.stderr.txt"
+  },
+  {
+    "label": "committed-references_copying-in-java.md",
+    "executable": "git",
+    "args": [
+      "show",
+      "HEAD:skills/gof-prototype/references/copying-in-java.md"
+    ],
+    "workingDirectory": "C:/git/agent-skills",
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed-references_copying-in-java.md.stdout.txt",
+    "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed-references_copying-in-java.md.stderr.txt"
+  },
+  {
+    "label": "committed-references_worked-example.md",
+    "executable": "git",
+    "args": [
+      "show",
+      "HEAD:skills/gof-prototype/references/worked-example.md"
+    ],
+    "workingDirectory": "C:/git/agent-skills",
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed-references_worked-example.md.stdout.txt",
+    "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed-references_worked-example.md.stderr.txt"
+  }
+]

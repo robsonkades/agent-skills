@@ -1,0 +1,111 @@
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Duration;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import jdk.jfr.Recording;
+import jdk.jfr.consumer.RecordedEvent;
+import jdk.jfr.consumer.RecordedMethod;
+import jdk.jfr.consumer.RecordingFile;
+
+public final class CompilerStatisticsProbe {
+    private static volatile long sink;
+
+    public static long hot(long input) {
+        long value = input;
+        for (int index = 0; index < 1024; index++) {
+            value = Long.rotateLeft(value * 1664525L + index, 7);
+        }
+        return value;
+    }
+
+    public static void main(String[] args) throws Exception {
+        Path root = Path.of(args[0]);
+        Path first = root.resolve("active.jfr");
+        Path second = root.resolve("later.jfr");
+        try (Recording recording = configuredRecording()) {
+            recording.start();
+            long deadline = System.nanoTime() + Duration.ofSeconds(2).toNanos();
+            while (System.nanoTime() < deadline) sink = hot(sink + 1);
+            Thread.sleep(300);
+            recording.stop();
+            recording.dump(first);
+        }
+        try (Recording recording = configuredRecording()) {
+            recording.start();
+            Thread.sleep(500);
+            recording.stop();
+            recording.dump(second);
+        }
+
+        List<RecordedEvent> active = RecordingFile.readAllEvents(first);
+        List<RecordedEvent> later = RecordingFile.readAllEvents(second);
+        List<RecordedEvent> firstStats = statistics(active);
+        List<RecordedEvent> laterStats = statistics(later);
+        check(firstStats.size() >= 2, "First recording contains periodic statistics");
+        check(laterStats.size() >= 2, "Second recording contains periodic statistics");
+        Set<String> fields = firstStats.getFirst().getEventType().getFields().stream()
+            .map(field -> field.getName()).collect(Collectors.toSet());
+        check(!fields.contains("compiler"), "Aggregate statistics do not identify a compiler");
+        check(!fields.contains("method"), "Aggregate statistics do not identify a method");
+        check(!fields.contains("timeToSteadyState"), "No application steady-state field exists");
+        check(firstStats.getLast().getInt("compileCount") > 0, "Compilation occurred in the process");
+        monotonic(firstStats);
+        monotonic(laterStats);
+        check(laterStats.getFirst().getInt("compileCount") >= firstStats.getLast().getInt("compileCount"),
+            "A new recording does not reset the process compilation count");
+        check(laterStats.getFirst().getDuration("totalTimeSpent").compareTo(
+            firstStats.getLast().getDuration("totalTimeSpent")) >= 0,
+            "A new recording does not reset aggregate compilation time");
+        long relevant = active.stream().filter(event -> event.getEventType().getName().equals("jdk.Compilation"))
+            .filter(event -> event.getBoolean("succeded") && event.getShort("compileLevel") == 4)
+            .filter(event -> event.getString("compiler").equals("jvmci"))
+            .filter(event -> event.<RecordedMethod>getValue("method").getType().getName().equals("CompilerStatisticsProbe"))
+            .filter(event -> event.<RecordedMethod>getValue("method").getName().equals("hot")).count();
+        check(relevant > 0, "The exercised hot method has a successful level-4 JVMCI compilation");
+        StringBuilder trace = new StringBuilder("recording,timestamp,compileCount,totalTimeSpentNanos\n");
+        append(trace, "active", firstStats);
+        append(trace, "later", laterStats);
+        Files.writeString(root.resolve("statistics.csv"), trace);
+        Files.writeString(root.resolve("statistics-fields.txt"), String.join("\n", fields.stream().sorted().toList()));
+        System.out.println("runtime=" + Runtime.version());
+        System.out.println("firstSamples=" + firstStats.size() + ",laterSamples=" + laterStats.size());
+        System.out.println("relevantSuccessfulJvmciLevel4=" + relevant);
+        System.out.println("sink=" + sink);
+        System.out.println("PASS: 11 assertions; technical event-semantics probe, not a benchmark or agent evaluation");
+    }
+
+    private static Recording configuredRecording() {
+        Recording recording = new Recording();
+        recording.enable("jdk.CompilerStatistics").withPeriod(Duration.ofMillis(100));
+        recording.enable("jdk.Compilation").withThreshold(Duration.ZERO);
+        return recording;
+    }
+
+    private static List<RecordedEvent> statistics(List<RecordedEvent> events) {
+        return events.stream().filter(event -> event.getEventType().getName().equals("jdk.CompilerStatistics"))
+            .sorted(java.util.Comparator.comparing(RecordedEvent::getStartTime)).toList();
+    }
+
+    private static void monotonic(List<RecordedEvent> events) {
+        boolean ordered = true;
+        for (int index = 1; index < events.size(); index++) {
+            ordered &= events.get(index).getInt("compileCount") >= events.get(index - 1).getInt("compileCount");
+            ordered &= events.get(index).getDuration("totalTimeSpent").compareTo(
+                events.get(index - 1).getDuration("totalTimeSpent")) >= 0;
+        }
+        check(ordered, "Compilation count and aggregate time are nondecreasing within the recording");
+    }
+
+    private static void append(StringBuilder trace, String label, List<RecordedEvent> events) {
+        for (RecordedEvent event : events) trace.append(label).append(',').append(event.getStartTime())
+            .append(',').append(event.getInt("compileCount")).append(',')
+            .append(event.getDuration("totalTimeSpent").toNanos()).append('\n');
+    }
+
+    private static void check(boolean condition, String message) {
+        if (!condition) throw new AssertionError(message);
+        System.out.println("PASS: " + message);
+    }
+}

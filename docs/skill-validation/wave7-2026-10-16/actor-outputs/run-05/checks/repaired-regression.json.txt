@@ -1,0 +1,17 @@
+{
+  "label": "repaired-regression",
+  "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave7-a765972c5d\\actors\\run-05\\output\\project",
+  "argv": [
+    "node",
+    "check.mjs",
+    "work.Regression"
+  ],
+  "startedAt": "2026-10-16T18:07:03.518Z",
+  "finishedAt": "2026-10-16T18:07:05.192Z",
+  "timeoutMs": 30000,
+  "exit": 0,
+  "signal": null,
+  "stdout": "PASS configured proxies and unchanged default\r\nPASS successful order reserves exactly one unit\r\nPASS unavailable stock rolls back the inserted order\r\nnotifier diagnostic: active=true ordersAutoCommit=false metricsAutoCommit=true\r\nafter notifier rejection: orders=0 stock=3\r\nPASS notifier rejection rolls back both writes and preserves exception\r\nPASS insert failure preserves existing data and skips later steps\r\nPASS metrics success and rollback preserve committed orders\r\nPASS caught metrics failure does not poison an orders transaction\r\nRegression: 7 passed, 0 failed\r\n",
+  "stderr": "",
+  "error": null
+}

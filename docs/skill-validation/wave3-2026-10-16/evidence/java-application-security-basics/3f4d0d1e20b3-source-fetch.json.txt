@@ -1,0 +1,26 @@
+[
+  {
+    "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/javax/crypto/CipherOutputStream.html",
+    "file": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\jdk21-cipheroutputstream.html",
+    "status": 200,
+    "sha256": "4E9BB414C3466AD2BE953F0385D362178235C1BF3AF488C9192886FD85DDEE0E"
+  },
+  {
+    "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/javax/crypto/CipherInputStream.html",
+    "file": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\jdk21-cipherinputstream.html",
+    "status": 200,
+    "sha256": "7FBAA9253DA73940F74230308CAE8F317E1ACD992AF5990417FBA2958A9A261B"
+  },
+  {
+    "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/javax/crypto/Cipher.html",
+    "file": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\jdk21-cipher.html",
+    "status": 200,
+    "sha256": "C5BC766C357BE433EB2F0791791FE34F1B2153B918D0017394E228C451E80F26"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/openjdk/jdk/jdk-25%2B36/src/java.base/share/classes/javax/crypto/CipherOutputStream.java",
+    "file": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\openjdk25-CipherOutputStream.java.txt",
+    "status": 200,
+    "sha256": "476BE0C18E1BD443E6FEB012547A635D94E02497E98F87029B934D996AFDB687"
+  }
+]

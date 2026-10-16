@@ -1,0 +1,175 @@
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+
+const repo = 'C:/git/agent-skills';
+const skill = 'mvc-and-request-handling';
+const evidence = dirname(fileURLToPath(import.meta.url));
+const load = (name) => JSON.parse(readFileSync(join(evidence, name), 'utf8'));
+const baseline = load('baseline.json');
+const investigation = load('investigation-results.json');
+const local = load('local-results.json');
+const hash = (path) => createHash('sha256').update(readFileSync(path)).digest('hex');
+for (const file of local.finalHashes) assert.equal(hash(join(repo, file.path)), file.sha256, file.path);
+const processCommand = "$mvcProcesses = @(Get-CimInstance Win32_Process -Filter \"Name = 'node.exe' OR Name = 'java.exe' OR Name = 'javac.exe'\" | Where-Object { $_.ProcessId -ne " + process.pid + " -and $_.CommandLine -and $_.CommandLine.Contains('skills-wave4-validation-Ceekn9') -and $_.CommandLine.Contains('mvc-and-request-handling') } | Select-Object ProcessId, Name, CommandLine); ConvertTo-Json -InputObject $mvcProcesses -Compress";
+const processResult = spawnSync('powershell.exe', ['-NoProfile', '-Command', processCommand], {
+  cwd: repo, encoding: 'utf8', timeout: 30000, windowsHide: true,
+});
+assert.equal(processResult.status, 0, processResult.stderr);
+const activeOtherWriters = JSON.parse(processResult.stdout);
+assert.deepEqual(activeOtherWriters, []);
+const processAudit = { checkedAt: new Date().toISOString(), command: 'powershell.exe',
+  args: ['-NoProfile', '-Command', processCommand], cwd: repo, exitCode: processResult.status,
+  stdout: processResult.stdout, stderr: processResult.stderr, activeOtherWriters,
+  excludesOnlyCurrentHandoffWriterPid: process.pid,
+  note: 'All child processes were synchronous and completed. This handoff writer exits after read-back.' };
+writeFileSync(join(evidence, 'process-audit.json'), JSON.stringify(processAudit, null, 2) + '\n');
+const sources = investigation.sources.map((source) => {
+  const file = source.artifact.replaceAll('\\', '/').split('/').at(-1);
+  const details = {
+    'HandlerInterceptor.java': ['Spring Framework 6.2.7', 'preHandle; afterCompletion',
+      'A false return owns the response and stops the chain; this interceptor must return true before its ordinary completion callback is eligible.'],
+    'HandlerExecutionChain.java': ['Spring Framework 6.2.7', 'applyPreHandle; triggerAfterCompletion; applyAfterConcurrentHandlingStarted',
+      'The completed index advances only after true, and previous accepted interceptors are unwound in reverse.'],
+    'AsyncHandlerInterceptor.java': ['Spring Framework 6.2.7', 'class contract; afterConcurrentHandlingStarted',
+      'Initial concurrent dispatch release uses a separate callback; ordinary completion callbacks do not cover every async ending.'],
+    'DispatcherServlet.java': ['Spring Framework 6.2.7', 'doDispatch; processDispatchResult; triggerAfterCompletion',
+      'Actual dispatch invokes chain pre-handling, the selected adapter, post-handling and eligible completion; exception and concurrent paths differ.'],
+    'mvc-ann-async.adoc': ['Spring Framework 6.2.7', 'Processing; Interception; Context Propagation; Servlet Container',
+      'Servlet threads may return with the response open; async callbacks, dispatch coverage and context propagation have distinct roles.'],
+    'handlermapping-interceptor.adoc': ['Spring Framework 6.2.7', 'Interception',
+      'Existing guidance correctly separates response writing before postHandle and warns that MVC interception alone is not the security boundary.'],
+    'AsyncListener.html': ['Jakarta Servlet 6.0', 'onComplete; onError; onTimeout; onStartAsync',
+      'The Servlet async lifecycle supplies distinct callbacks; a new async cycle requires listener registration for that cycle.'],
+  }[file];
+  return { ...source, version: details[0], sections: details[1], supports: details[2],
+    limitations: 'Version-specific source/API evidence. It does not prove an arbitrary target deployment, container, or agent behavior.' };
+});
+sources.push({ url: 'https://martinfowler.com/eaaCatalog/applicationController.html',
+  consultedAt: '2026-10-16', version: 'Author catalog entry dated 2003-03-05', sections: 'Application Controller',
+  supports: 'Shared or complex screen-navigation decisions justify a flow owner; the preserved skill distinguishes these from universal business legality.',
+  limitations: 'Pattern description, not runtime evidence, performance evidence, or a mandate to extract every redirect.' });
+writeFileSync(join(evidence, 'sources.json'), JSON.stringify(sources, null, 2) + '\n');
+const cases = ['a', 'b'].map((id) => ({ id: 'mvc-lifecycle-' + id,
+  inputPath: join(evidence, 'cases/case-' + id + '.input.json'),
+  evaluatorCriteriaPath: join(evidence, 'cases/case-' + id + '.criteria.json'),
+  input: load('cases/case-' + id + '.input.json'),
+  evaluatorOnlyCriteria: load('cases/case-' + id + '.criteria.json'),
+  technicalRun: local.commands.find((command) => command.label === 'execute-case-' + id),
+  independentActorExecuted: false }));
+const handoff = {
+  status: 'READY_FOR_GLOBAL_VALIDATION', skill, ownedPath: 'skills/' + skill + '/**',
+  completedAt: new Date().toISOString(), allWritesStopped: true,
+  noActiveBackgroundProcesses: true, processAudit,
+  versions: { committed: '1.3.5', assignment: '1.3.5', final: '1.3.6', preExistingBump: false,
+    rationale: 'One patch for the documentation correction; no dependency, description, framework or Java baseline change.' },
+  assignmentBaseline: baseline,
+  preExistingChanges: [],
+  changedFilesByReviewer: local.changedSinceAssignment,
+  finalHashes: local.finalHashes,
+  unchangedOwnedFiles: ['skills/mvc-and-request-handling/references/application-controller.md'],
+  promiseAndCriteria: {
+    role: 'Review, design and bounded implementation of web request responsibilities and shared flow decisions.',
+    activation: 'Handlers, filters, interceptors, argument binding, response/error handling, navigation flow and misplaced application concerns.',
+    evidenceNeeded: 'Actual mappings, configured chain, return types, bean/state lifetime, application invariants and transaction/caller boundaries; resolved target versions.',
+    minimumResult: 'Evidence-backed local issue or no-change verdict; when implementing, complete the requested boundary and state the checks actually run.',
+    outOfScope: 'Package-manager changes; a new routing/security/tracing framework; neighboring rendering, remote payload, service-layer or state-storage design.',
+    authoringBaseline: 'Partial Servlet Spring MVC examples, Spring 6+/Java 17+ where ProblemDetail is used; primary contracts pinned to Spring 6.2.7 and Servlet 6.0.',
+    targetBaseline: 'Inspect the applying project; no upgrade authorized by this review.' },
+  findingsCorrected: [
+    { id: 'MVC-1', severity: 'Material lifecycle omission',
+      locations: ['SKILL.md:97', 'references/page-vs-front-controller.md:53', 'references/page-vs-front-controller.md:236'],
+      finding: 'The existing placement guidance did not expose that afterCompletion is conditional on the same interceptor completing preHandle with true.',
+      consequence: 'State or resources acquired before a short-circuit or thrown readiness failure can remain retained; a correct handler failure cleanup test does not cover this path.',
+      change: 'Trace acquisition and cleanup paths. Release acquired state on the stopping/failing path or acquire only after the fallible decision when the contract permits. Preserve response ownership on false.',
+      evidence: ['Spring 6.2.7 HandlerInterceptor and HandlerExecutionChain contracts', '8 executed dispatcher/chain control cases', 'Case A and B use the exact compiled input interceptor source'] },
+    { id: 'MVC-2', severity: 'Material callback distinction',
+      locations: ['references/page-vs-front-controller.md:61', 'references/page-vs-front-controller.md:237'],
+      finding: 'Generic async completion guidance did not distinguish interceptor cleanup when the initial thread is released from the final request outcome.',
+      consequence: 'Treating ordinary completion callbacks as unconditional can retain thread context or miscount completed responses on async paths.',
+      change: 'Name afterConcurrentHandlingStarted for initial interceptor thread cleanup, preserve redispatch awareness, and route final outcomes to the applicable async lifecycle.',
+      evidence: ['Spring 6.2.7 AsyncHandlerInterceptor', 'Spring 6.2.7 async reference', 'Servlet 6.0 AsyncListener'],
+      limit: 'Confirmed source/API contract; no real asynchronous Servlet-container execution.' },
+  ],
+  remainingFindings: [],
+  preservedCapabilities: [
+    'Simple repository reads, adequate handlers, local redirects and small base helpers can remain without new abstraction.',
+    'Page and Front Controller coexist; MVC responsibilities do not imply a package maturity ladder.',
+    'Method/request security, filter prerequisites, route/dispatch coverage and tenant authority remain explicit.',
+    'Form property binding and JSON conversion use different controls; validation does not authorize fields.',
+    'Singleton/request scope, response-commit constraints, message-converted response timing and validation status distinctions remain.',
+    'Application Controller owns presentation navigation, not authoritative mutation legality; existing non-HTTP callers remain protected.',
+    'Transaction, serialization, security and database guarantees still require the actual wired path; doubles or outer test transactions are insufficient.',
+    'All pre-existing Java snippets and the complete Application Controller reference are unchanged; no new shipped script or framework.'
+  ],
+  capabilitiesRemoved: [],
+  commands: {
+    baseline: baseline.commands,
+    investigation: investigation.commands,
+    localChecks: local.commands,
+    wrapperInvocations: [
+      { command: 'node', args: [join(evidence, 'capture-baseline.mjs')], cwd: repo, exitCode: 0 },
+      { command: 'node', args: [join(evidence, 'investigate.mjs')], cwd: repo, exitCode: 1,
+        reason: 'Initial probe harness called destroy without servlet initialization; not a skill or framework defect. See retained failure below.' },
+      { command: 'node', args: [join(evidence, 'investigate.mjs')], cwd: repo, exitCode: 0,
+        reason: 'Removed unnecessary destroy for an uninitialized dispatcher with no opened context/resources; all 8 cases then passed.' },
+      { command: 'node', args: [join(evidence, 'create-cases.mjs')], cwd: repo, exitCode: 0 },
+      { command: 'node', args: [join(evidence, 'local-check.mjs')], cwd: repo, exitCode: 0 },
+    ],
+    initialHarnessFailure: load('logs/dispatcher-lifecycle-probe-initial-harness-failure.json'),
+  },
+  executedChecks: {
+    strictPackageValidation: local.strictValidation,
+    internalLinks: local.internalLinks,
+    declaredOptionalReferrals: local.optionalReferrals,
+    declaredDependencies: local.dependencies,
+    explicitTextReferrals: local.explicitTextReferrals,
+    formatter: 'Explicit 4 owned files checked with existing Prettier; all matched files passed. No formatter write.',
+    git: 'Scoped diff --check passed; staged diff empty; final owned diff inspected and hashes matched.',
+    technical: '8 framework callback paths in LifecycleProbe plus 4 paths for each exact case interceptor; expected case-A assertion failure and case-B success.',
+    environment: 'Windows; Node 25.6.1; Temurin 25.0.3+9-LTS; javac --release 17; existing Spring 6.2.7 and Servlet 6.0.0 jars only.',
+    cachedJars: investigation.cachedJars,
+  },
+  behavioralEvaluation: { executed: false, actualAgentOutputs: [], measuredImprovement: false,
+    walkthroughs: [
+      'Before readiness acquisition: accepted handler executes with context and completes cleanup; short-circuit and readiness exception retain it unless locally released.',
+      'After readiness acquisition: rejected/failed readiness installs no context, while accepted synchronous dispatch retains it during the handler and clears it afterwards.',
+      'Async initial release: static source walkthrough distinguishes thread cleanup from final completion and redispatch; no async runtime observation claimed.',
+      'Existing simple redirect/read alternatives, binding/authorization, committed-response and navigation/domain ownership guidance retained after review.'
+    ],
+    independentEvaluationPending: 'Coordinator may run fresh actors on case input files only; keep criteria, technical harness, source findings and this handoff out of actor context.',
+    casesClassification: 'Known development cases, not held out. They may be solved without the skill; no discrimination or incremental gain is assumed.' },
+  reproducibleCases: cases,
+  sources,
+  limitations: [...investigation.limits,
+    'ApplicationController reference and existing Java snippets were reviewed and preserved, not newly executed as a whole application.',
+    'The case Gradle/WebMvcConfigurer/controller artifacts provide source context; only the interceptor fixture and private callback harness were compiled and executed, not a Gradle app or real handler mapping.',
+    'GitHub HTML for DispatcherServlet omitted source and the web provider could not open Servlet AsyncListener; versioned raw source and direct primary fetches succeeded with HTTP 200 and retained hashes.',
+    'Local referral existence/manifest consistency is not catalog-wide registry/dependency-range validation.' ],
+  pendingGlobalChecks: [
+    { command: 'npm run registry:build', cwd: repo, owner: 'coordinator', status: 'DEFERRED', reason: 'Parallel review rule; run after every writer stops to regenerate the shared index.' },
+    { command: 'npm run verify', cwd: repo, owner: 'coordinator', status: 'DEFERRED', reason: 'Global final validation is coordinator-owned after registry generation and all writers stop.' },
+  ],
+  crossSkillIssues: [],
+  coordinatorActions: ['Archive the JSON and evidence directory before temp cleanup.', 'Inspect the owned diff, run global checks after all writers stop, and keep independent evaluation inputs isolated from criteria.'],
+  evidencePaths: { root: evidence, baseline: join(evidence, 'baseline.json'),
+    investigation: join(evidence, 'investigation-results.json'), localResults: join(evidence, 'local-results.json'),
+    sourceInventory: join(evidence, 'sources.json'), rawPrimarySources: join(evidence, 'primary-sources'),
+    technicalFixture: join(evidence, 'fixtures/LifecycleProbe.java'), evaluatorHarness: join(evidence, 'evaluator-private/CaseProbe.java'),
+    cases: join(evidence, 'cases'), logs: join(evidence, 'logs'), processAudit: join(evidence, 'process-audit.json') },
+};
+const output = join(dirname(evidence), skill + '.json');
+writeFileSync(output, JSON.stringify(handoff, null, 2) + '\n');
+const readback = JSON.parse(readFileSync(output, 'utf8'));
+assert.equal(readback.status, 'READY_FOR_GLOBAL_VALIDATION');
+assert.equal(readback.allWritesStopped, true);
+assert.equal(readback.reproducibleCases.length, 2);
+assert.equal(readback.sources.length, 8);
+assert.equal(readback.versions.final, '1.3.6');
+process.stdout.write(JSON.stringify({ path: output, sha256: hash(output), status: readback.status,
+  version: readback.versions.final, filesChanged: readback.changedFilesByReviewer,
+  sources: readback.sources.length, cases: readback.reproducibleCases.length,
+  activeOtherWriters: activeOtherWriters.length, allWritesStopped: true }, null, 2) + '\n');

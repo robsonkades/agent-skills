@@ -112,6 +112,11 @@ should produce bounded instructions and pending drills, not execute incident act
 - whether OOM/fatal hooks wrote a complete file;
 - whether node loss or rescheduling removes the destination.
 
+For container logs, preserve the actual returned window and container incarnation, not just
+the requested time range. Selector defaults, rotation and prior-instance retention can omit
+incident records; use the [log coverage protocol](references/what-a-restart-destroys.md#container-log-coverage-before-restart)
+before treating an export as complete.
+
 For an active rolling JFR recording, a bounded `JFR.dump` may preserve the incident window
 without stopping the recording, subject to target-JDK support and storage. A configured
 destination/dump-on-exit may behave differently; inspect `JFR.check` and effective settings.

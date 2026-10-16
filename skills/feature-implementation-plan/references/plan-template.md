@@ -89,8 +89,10 @@ work or an explicitly accepted gap; do not invent an alert or imply coverage is 
 | -------- | ----- | ------- | ----------------------- | -------------- |
 
 <Name the command/working context or manual procedure, required fixtures/environment, and expected
-observable result. A planned test or fixture links the resource that creates it; planned EV-* is
-not a claim that the check ran. Reuse the project's existing check entrypoint where adequate.>
+observable result at the accepted boundary. Identify relevant negative/failure cases from the
+criteria and risks, plus shared checks no individual resource proves. A planned test or fixture
+links the resource that creates it; planned EV-* is not a claim that the check ran. Reuse the
+project's existing check entrypoint where adequate.>
 
 ## Migration strategy
 
@@ -121,9 +123,9 @@ the checks that establish the resulting data/application state before traffic or
 
 ## Acceptance criteria
 
-| ID       | Type               | Criterion    | Trace          | Verified by |
-| -------- | ------------------ | ------------ | -------------- | ----------- |
-| BAC/TC-* | business/technical | <observable> | <OBJ/BR/ED/CT> | EV-*        |
+| ID       | Type               | Criterion    | Source/trace              | Resources | Planned verification |
+| -------- | ------------------ | ------------ | ------------------------- | --------- | -------------------- |
+| BAC/TC-* | business/technical | <observable> | <OBJ/BR/ED/CT + revision> | RES-*     | EV-*                 |
 
 ## Amendments
 
@@ -132,7 +134,43 @@ handling; RES-02 depends on it. Update the current resource graph and risk recor
 reference the applicable decision/readiness evidence rather than leaving only this note.
 ```
 
-## Notes on three sections that are usually wrong
+## From repository evidence to an executable step
+
+Illustrative evidence: `schema/events.yaml` generates `DispatchEvent.java`; `Dispatcher` consumes
+it; `DispatchContractIT` checks the serialized boundary. The inspected build binds Failsafe's
+integration-test and verify goals only in the `contract-it` profile, with an isolated broker as
+a prerequisite. A plan to edit only `DispatchEvent.java` and run `mvn test` would target generated
+output and omit the contract check.
+
+Keep the accepted resource ID and scope, but name the schema source, generation before compilation,
+the affected consumer and the existing contract check. In this hypothetical project, plan
+`./mvnw -Pcontract-it verify` from its documented root with the broker fixture and accepted payload
+assertions; expect a report showing `DispatchContractIT` actually ran. Failsafe's
+[documented lifecycle usage](https://maven.apache.org/surefire/maven-failsafe-plugin/usage.html)
+supports the phase distinction, not the example's project-specific profile or fixture. Inspect the
+target project's configured plugin version and bindings rather than copying this command.
+
+If that fixture is unavailable, integration validation remains blocked; schema/consumer work may
+still be implementable against the accepted contract. The plan names who supplies the fixture,
+which contract revision it must model and what check releases the validation gate. Do not replace
+that gate with an unrelated green unit suite or declare every resource blocked.
+
+## Dependency milestones
+
+Two resources can need each other's implemented output for integration without either needing
+the other's completed implementation to start. Given an accepted contract and fixtures covering
+the required interactions, plan `RES-01 implemented + RES-02 implemented -> integration check`.
+Do not turn that join into `RES-01 complete -> RES-02 complete -> RES-01 complete`. If the
+contract or necessary fixture is missing, the affected implementation input remains unresolved;
+independent preparation can still proceed. If the work cannot be separated even with an agreed
+contract, return the breakdown for revision.
+
+Consumer tests against a fixture do not alone establish that the real producer conforms or that
+the feature's business outcome holds. This distinction follows the separate consumer/provider
+verification in [Pact's provider guidance](https://docs.pact.io/provider) and the limits described
+in [Pact's consumer guidance](https://docs.pact.io/consumer); it does not require adopting Pact.
+
+## Compatibility, rollback and acceptance
 
 **Compatibility window.** The question is not whether the migration works. It is what the
 currently deployed code does against the new schema, and what the new code does against rows
@@ -157,6 +195,17 @@ Good   Given a duplicate dispatch request with the same idempotency key, when it
 
 Each one names its verification: a test identifier, a manual step, or a metric.
 These are illustrative criteria to trace to an accepted contract, not new requirements to insert.
+For the duplicate-request example, the check must observe the durable intent and returned ID;
+an HTTP success assertion alone cannot establish the criterion. The consumer-effect check needs
+its own observable state and duplicate-delivery setup. For a latency criterion, carry the accepted
+operation boundary, workload, percentile/window and limit; missing values are not permission to
+choose convenient thresholds. A metric name alone is not a pass/fail check.
+
+Check coverage from acceptance to resources/checks as well as from resources back to acceptance;
+a plan with tests for every resource can still omit a feature-wide obligation. This also exposes
+which checks need reconsideration after a baseline change, consistent with
+[NASA's requirements-management guidance](https://www.nasa.gov/reference/6-2-requirements-management/).
+
 Define the durability/latency boundary, relay recovery and eventual completion separately when
 needed; one logical intent does not imply one broker delivery. The outbox relay can republish after
 a crash ([Transactional Outbox](https://microservices.io/patterns/data/transactional-outbox.html)).

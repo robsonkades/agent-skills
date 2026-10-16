@@ -1,0 +1,8 @@
+package example.pricing;
+import java.math.BigDecimal;
+import java.util.Objects;
+public final class PriceCalculator {
+    private final PricingRule rule;
+    public PriceCalculator(PricingRule rule) { this.rule = Objects.requireNonNull(rule); }
+    public BigDecimal quote(int units) { return rule.quote(units); }
+}

@@ -1,0 +1,9 @@
+PASS normal: booking/header/body=1/1/1, stock=19; writer sees local booking=1, independent=0, header=0
+PASS 13-character rejection: booking/header/body=0/0/0, stock=20
+PASS stock failure: booking/header/body=0/0/0, sold-out stock=0, no callback
+PASS nontransactional publication: no persisted state and no callback
+PASS joined success: owner controls completion; all three rows commit together
+PASS owner failure after place returns: booking/header/body=0/0/0, stock=20
+PASS failure after receipt writes: booking/header/body=0/0/0, stock=20; no independent receipt survives
+PASS second receipt body failure: both bookings and both receipt units roll back, stock=20
+PASS 8 regression scenarios

@@ -1,0 +1,91 @@
+{
+  "checkedAt": "2026-10-16T15:00:48.809Z",
+  "frozenManifestSha256": "b8091363615d04db691ee4eae981ac9c162f00349a7cc1871c82f0d3319d25da",
+  "criteriaHashesMatch": true,
+  "records": [
+    {
+      "runId": "c1-none",
+      "case": "C1-server-greeting",
+      "condition": "none",
+      "changedSuppliedFiles": ["decision.md", "proxy-policy.json"],
+      "inputAndResourceIntegrityPassed": true,
+      "policyContractPassed": true,
+      "command": "C:\\Program Files\\nodejs\\node.exe local-handshake-check.mjs",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/behavior-grader/c1-none",
+      "exit": 0,
+      "log": "behavior-grader/c1-none.log.txt",
+      "scriptSha256": "855aa03647ace325236a2d39581b7a4fe9a52eb0e24e59b834ae003435a95b34",
+      "classification": "Coordinator rerun of actor-produced bounded loopback check; not a new actor repetition or real proxy integration"
+    },
+    {
+      "runId": "c1-baseline",
+      "case": "C1-server-greeting",
+      "condition": "baseline",
+      "changedSuppliedFiles": ["decision.md", "proxy-policy.json"],
+      "inputAndResourceIntegrityPassed": true,
+      "policyContractPassed": true,
+      "command": "C:\\Program Files\\nodejs\\node.exe local-handshake-check.mjs",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/behavior-grader/c1-baseline",
+      "exit": 0,
+      "log": "behavior-grader/c1-baseline.log.txt",
+      "scriptSha256": "954f38f0842ab9d34d37bf0d3b399911229e852c3aea1f690aa0c478819d9b5f",
+      "classification": "Coordinator rerun of actor-produced bounded loopback check; not a new actor repetition or real proxy integration"
+    },
+    {
+      "runId": "c1-revised",
+      "case": "C1-server-greeting",
+      "condition": "revised",
+      "changedSuppliedFiles": ["decision.md", "proxy-policy.json"],
+      "inputAndResourceIntegrityPassed": true,
+      "policyContractPassed": true,
+      "command": "C:\\Program Files\\nodejs\\node.exe verify-handshake.mjs",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/behavior-grader/c1-revised",
+      "exit": 0,
+      "log": "behavior-grader/c1-revised.log.txt",
+      "scriptSha256": "04170db97ea6f764ded2b03591a32e4e37f1afd0bd255514328e8a9c914798bb",
+      "classification": "Coordinator rerun of actor-produced bounded loopback check; not a new actor repetition or real proxy integration"
+    },
+    {
+      "runId": "c2-none",
+      "case": "C2-client-first",
+      "condition": "none",
+      "changedSuppliedFiles": ["decision.md"],
+      "inputAndResourceIntegrityPassed": true,
+      "policyContractPassed": true,
+      "command": "C:\\Program Files\\nodejs\\node.exe local-check.mjs",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/behavior-grader/c2-none",
+      "exit": 0,
+      "log": "behavior-grader/c2-none.log.txt",
+      "scriptSha256": "75a38b5926bde807cdd233475efd3e1cc5a31f0cf07ee6f1633da32cbf16e70f",
+      "classification": "Coordinator rerun of actor-produced bounded loopback check; not a new actor repetition or real proxy integration"
+    },
+    {
+      "runId": "c2-baseline",
+      "case": "C2-client-first",
+      "condition": "baseline",
+      "changedSuppliedFiles": ["decision.md"],
+      "inputAndResourceIntegrityPassed": true,
+      "policyContractPassed": true,
+      "command": "C:\\Program Files\\nodejs\\node.exe verify-handshake.mjs",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/behavior-grader/c2-baseline",
+      "exit": 0,
+      "log": "behavior-grader/c2-baseline.log.txt",
+      "scriptSha256": "afcd8db16744ce8c8c5740856eb4f9799e55fc75a4590ba505a15119c52c1831",
+      "classification": "Coordinator rerun of actor-produced bounded loopback check; not a new actor repetition or real proxy integration"
+    },
+    {
+      "runId": "c2-revised",
+      "case": "C2-client-first",
+      "condition": "revised",
+      "changedSuppliedFiles": ["decision.md"],
+      "inputAndResourceIntegrityPassed": true,
+      "policyContractPassed": true,
+      "command": "C:\\Program Files\\nodejs\\node.exe verify-handshake.mjs",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/behavior-grader/c2-revised",
+      "exit": 0,
+      "log": "behavior-grader/c2-revised.log.txt",
+      "scriptSha256": "126d85750e2489ec44df5590ab3d17164608421baaa6179416080f632364f077",
+      "classification": "Coordinator rerun of actor-produced bounded loopback check; not a new actor repetition or real proxy integration"
+    }
+  ]
+}

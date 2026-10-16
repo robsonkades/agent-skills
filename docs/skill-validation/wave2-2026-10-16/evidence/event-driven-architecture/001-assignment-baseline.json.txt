@@ -1,0 +1,23 @@
+{
+  "skill": "event-driven-architecture",
+  "version": "1.3.4",
+  "preExistingChanges": [],
+  "files": [
+    {
+      "Path": "C:\\git\\agent-skills\\skills\\event-driven-architecture\\skill.yaml",
+      "Hash": "74DE5088A1A9BF4BF26FBB5D52A3CF835545A36C2C20E82EFA043D5758A87780"
+    },
+    {
+      "Path": "C:\\git\\agent-skills\\skills\\event-driven-architecture\\SKILL.md",
+      "Hash": "87F19A3C1E25144044D2C6EC24FA656E47727724443AD90E5575A2CC4031181F"
+    },
+    {
+      "Path": "C:\\git\\agent-skills\\skills\\event-driven-architecture\\references\\event-design.md",
+      "Hash": "4E08F1921EBA9FE00059C282F98FBED2D7456D824CDE1E9592D897E6D32BBD45"
+    },
+    {
+      "Path": "C:\\git\\agent-skills\\skills\\event-driven-architecture\\references\\choosing-the-style.md",
+      "Hash": "7E640885B7DC67C801FDB0B5A6816F21C641D8B43031A6AA538C21FC5DA4FA07"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+
+[INFO] Started opening dump C:\Users\robso\AppData\Local\Temp\codex-heap-dump-analysis-20261016-6f12719aaecf4c57b1883b270accc0d3\complete.hprof at 2026-10-16T09:20:29.3588532-03:00[America/Sao_Paulo]
+[Task: Reopening parsed heap dump file
+[.........]
+
+Subtask: Single Query
+[
+Subtask: Test 'Query Command' of section 'Single Query'
+[
+Subtask: Test 'Query Command' of section 'Single Query'
+[

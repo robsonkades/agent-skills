@@ -1,0 +1,12 @@
+package work;
+public final class Demo {
+    public static void main(String[] args) {
+        Catalog c = new Catalog();
+        c.load(new Entry("A", 450), new Entry("B", 550));
+        Report first = c.open();
+        System.out.println("first=" + first.total());
+        c.load(new Entry("C", 1200));
+        System.out.println("first-after-reload=" + first.total());
+        System.out.println("latest=" + c.open().total());
+    }
+}

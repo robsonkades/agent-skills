@@ -101,6 +101,11 @@ Prefer instead when:
   replica or release elects multiple independent owners. Identity-based clients also need distinct
   contender incarnations. Scope, owner identity, ordered fence and work identity serve different
   purposes; see `references/election-mechanisms.md` before changing any of them.
+- **Candidacy is not acquired authority.** Start leader work and activate its sink fence only
+  after accepted acquisition for the current participation. A candidate key, positive revision
+  or observation of another leader is insufficient. Bind the fence to that acquired term;
+  a newer store response must not let an unelected candidate or stale holder advance authority.
+  See `references/election-mechanisms.md` for the etcd acquisition boundary.
 - **One leader does not guarantee one execution per work item or schedule interval.** A successor
   with a valid new term can replay an already committed effect after a crash before checkpointing.
   When replay needs deduplication, keep work identity stable across terms. Define replay and

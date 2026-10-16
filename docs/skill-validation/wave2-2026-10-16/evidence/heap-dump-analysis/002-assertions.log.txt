@@ -1,0 +1,7 @@
+
+condition    indexedPayloads unreachableHistogramPayloads indexedPayloadArrays result
+---------    --------------- ---------------------------- -------------------- ------
+complete                 128                            0                    1 PASS
+discard                    0                          128                    1 PASS
+discard-keep               0                          128                    1 PASS
+

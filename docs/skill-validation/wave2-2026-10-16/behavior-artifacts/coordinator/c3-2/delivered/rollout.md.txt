@@ -1,0 +1,51 @@
+# Rollout decision
+
+Do not roll out the supplied candidate against authoritative stored state without a
+placement-contract change and data migration. The previous recommendation is withdrawn.
+
+`ClientRouter` prepends `keyPrefix` before both `owner` and `owners`. The accepted
+configuration has an empty prefix; `candidate.properties` sets `cache:`. Thus the same
+request key `user:2` is hashed as `user:2` under the accepted contract and as
+`cache:user:2` by the candidate. Unchanged ring points do not preserve ownership when
+the bytes supplied to the ring change.
+
+The frozen `accepted-vectors.json` was consumed by the new check through the actual
+`ClientRouter` for both configurations:
+
+| Configuration | Primary | Ordered distinct replicas | Compatibility |
+| --- | --- | --- | --- |
+| Accepted, empty prefix | `n2` | `[n2, n3, n4]` | Pass |
+| Candidate, `cache:` prefix | `n1` | `[n1, n3, n2]` | Fail |
+
+The candidate changes both primary ownership and replica membership (`n4` is replaced
+by `n1`), as well as replica order. Clients using the two configurations can disagree
+about where authoritative reads and writes belong. A cache-like prefix does not make
+this stored state disposable.
+
+The retained contract is epoch E, V=1024, nodes `n1` through `n4` with weight 1 each,
+raw request strings encoded as UTF-8 without an added prefix or normalization, and the
+existing Guava 33.5.0-jre `Hashing.murmur3_128().hashString(..., UTF_8).asLong()` path.
+Virtual points use `node + '#' + i` for zero-based decimal `i`, unsigned 64-bit position
+ordering and `String.compareTo` token ties. Ownership uses the clockwise ceiling with
+wrap-around; replicas are the first three distinct physical nodes in that order. No
+hash, V, weights, topology, data model, Java target or routing implementation was changed.
+
+The original checks still pass: equal node sets produce equal ring points, and adding
+`n5` moves 2,075 of the sampled 10,000 keys only to `n5`. Both sides of that join test
+use the candidate prefix, so it does not check agreement with stored placement. The
+updated `node check.mjs` exits 1 on the frozen-vector compatibility failure after the
+accepted configuration passes. This failure is the intended rollout gate, not a test
+to weaken or a vector to regenerate from the candidate.
+
+For a rollout that preserves placement, restore the empty-prefix configuration and
+rerun the compatibility gate on the actual release configuration. The local positive
+control proves this vector agrees with the accepted configuration; it does not prove
+the configuration of every deployed client. If the prefix is intentional, treat it as
+a new placement contract and epoch, with copied and verified affected data, coordinated
+reads and concurrent writes, fencing of stale writers, and bounded retirement of old
+clients. That migration is outside this task; nothing was deployed.
+
+One frozen counterexample is sufficient to reject zero-migration compatibility. It
+does not estimate total moved keys, bytes, request load, transfer cost or balance, and
+does not establish agreement across other runtimes or malformed-input policies. Those
+unknowns do not change this decision. See `REVIEW.md` and `logs/` for commands and evidence.

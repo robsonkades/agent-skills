@@ -1,0 +1,32 @@
+[
+  {
+    "Url": "https://jakarta.ee/specifications/bean-validation/3.0/jakarta-bean-validation-spec-3.0",
+    "Status": 404,
+    "FinalUrl": "https://jakarta.ee/specifications/bean-validation/3.0/jakarta-bean-validation-spec-3.0",
+    "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\remote-facade-and-dto\\sources\\bean-validation-original.html"
+  },
+  {
+    "Url": "https://jakarta.ee/specifications/bean-validation/3.0/jakarta-bean-validation-spec-3.0.html",
+    "Status": 200,
+    "FinalUrl": "https://jakarta.ee/specifications/bean-validation/3.0/jakarta-bean-validation-spec-3.0.html",
+    "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\remote-facade-and-dto\\sources\\bean-validation-3.0.html"
+  },
+  {
+    "Url": "https://docs.spring.io/spring-framework/reference/6.2/web/webmvc/mvc-controller/ann-validation.html",
+    "Status": 200,
+    "FinalUrl": "https://docs.spring.io/spring-framework/reference/6.2/web/webmvc/mvc-controller/ann-validation.html",
+    "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\remote-facade-and-dto\\sources\\spring-mvc-validation-6.2.html"
+  },
+  {
+    "Url": "https://martinfowler.com/eaaCatalog/remoteFacade.html",
+    "Status": 200,
+    "FinalUrl": "https://martinfowler.com/eaaCatalog/remoteFacade.html",
+    "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\remote-facade-and-dto\\sources\\remote-facade.html"
+  },
+  {
+    "Url": "https://www.rfc-editor.org/rfc/rfc8259.html",
+    "Status": 200,
+    "FinalUrl": "https://www.rfc-editor.org/rfc/rfc8259.html",
+    "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\remote-facade-and-dto\\sources\\rfc8259.html"
+  }
+]

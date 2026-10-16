@@ -1,0 +1,232 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "concurrency-limiting-and-bulkheads",
+  "ownedPath": "skills/concurrency-limiting-and-bulkheads",
+  "handoffType": "Retrospective record of completed review; independently executed agent evaluation was not performed.",
+  "allWritesStopped": true,
+  "runningProcesses": [],
+  "remainingLocalBlockers": [],
+  "baseline": {
+    "committedVersion": "1.3.5",
+    "assignmentVersion": "1.3.5",
+    "finalVersion": "1.3.6",
+    "preExistingChanges": [],
+    "versionRationale": "One patch bump for the combined supported changes."
+  },
+  "changedFiles": [
+    "skills/concurrency-limiting-and-bulkheads/SKILL.md",
+    "skills/concurrency-limiting-and-bulkheads/references/limit-selection.md",
+    "skills/concurrency-limiting-and-bulkheads/skill.yaml"
+  ],
+  "unchangedOwnedFiles": [
+    "skills/concurrency-limiting-and-bulkheads/references/distributed-limits.md"
+  ],
+  "findings": [
+    {
+      "location": "SKILL.md Design workflow step 3; references/limit-selection.md Find the gate actually used",
+      "problem": "A locally correct semaphore wrapper does not establish a shared resource cap when runtime callers construct independent limiters.",
+      "change": "Trace selected runtime paths, object identity and intentional allocation sums; test admission after occupying configured capacity through distinct entry objects.",
+      "consequence": "Prevents treating a fresh per-request/per-client allocation as one process-local cap."
+    },
+    {
+      "location": "references/limit-selection.md Keep observer completion separate from resource completion",
+      "problem": "CompletableFuture timeout methods mutate their receiver; attaching release to an independently completed observer can release while resource use continues.",
+      "change": "Added Java 11 partial sketch using private actual cleanup and release stages plus a copied observer; documented cancellation, custom future and streaming limitations.",
+      "consequence": "Separates observer termination from actual resource cleanup without claiming copy cancels work."
+    }
+  ],
+  "preservedCapabilities": [
+    "weighted admission",
+    "deadline accounting",
+    "fairness",
+    "executor saturation and rejection",
+    "retries and hedged attempts",
+    "streaming lifetime",
+    "tenant limiter retirement",
+    "dynamic-limit draining",
+    "replica and cluster-boundary handoffs"
+  ],
+  "removedCapabilities": [],
+  "newDependencies": [],
+  "validationArtifactRoot": "C:/Users/robso/AppData/Local/Temp/codex-bulkhead-validation-51d4c6114aa3405cb2d800192e5d956f",
+  "retainedArtifacts": [
+    "ConcurrencyGate.java",
+    "ObserverPattern.java",
+    "BulkheadChecks.java",
+    "classes/",
+    "compile.log",
+    "positive.log",
+    "unsafe-timeout.log",
+    "fresh-gate.log",
+    "results.json"
+  ],
+  "checks": [
+    {
+      "kind": "technical",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/codex-bulkhead-validation-51d4c6114aa3405cb2d800192e5d956f",
+      "command": "javac --release 11 -d classes ConcurrencyGate.java ObserverPattern.java BulkheadChecks.java",
+      "exitCode": 0,
+      "result": "Existing complete gate and new partial observer sketch, wrapped without changing snippet statements, compiled.",
+      "compiler": "javac 25.0.3",
+      "target": "Java 11",
+      "runtime": "Temurin 25.0.3+9"
+    },
+    {
+      "kind": "technical",
+      "command": "java -cp classes BulkheadChecks",
+      "exitCode": 0,
+      "result": "PASS 7 positive cases",
+      "cases": [
+        "zero-budget capacity and idempotent close",
+        "negative/overflowing budget and interrupted acquire",
+        "observer success",
+        "observer exceptional completion",
+        "observer timeout",
+        "observer cancellation",
+        "shared gate across distinct client instances"
+      ]
+    },
+    {
+      "kind": "negative-control",
+      "command": "java -cp classes BulkheadChecks unsafe-timeout",
+      "exitCode": 1,
+      "result": "Expected AssertionError: resource admitted while initial operation open"
+    },
+    {
+      "kind": "negative-control",
+      "command": "java -cp classes BulkheadChecks fresh-gate",
+      "exitCode": 1,
+      "result": "Expected AssertionError: resource admitted while initial operation open"
+    },
+    {
+      "kind": "structural",
+      "cwd": "C:/git/agent-skills",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/concurrency-limiting-and-bulkheads/SKILL.md skills/concurrency-limiting-and-bulkheads/references/limit-selection.md skills/concurrency-limiting-and-bulkheads/references/distributed-limits.md skills/concurrency-limiting-and-bulkheads/skill.yaml",
+      "exitCode": 0,
+      "result": "All matched files use Prettier code style; reference rechecked after final prose adjustment."
+    },
+    {
+      "kind": "structural",
+      "cwd": "C:/git/agent-skills",
+      "command": "git diff --check -- skills/concurrency-limiting-and-bulkheads",
+      "exitCode": 0,
+      "result": "Passed, including after final prose adjustment."
+    },
+    {
+      "kind": "structural",
+      "cwd": "C:/git/agent-skills",
+      "command": "Read-only inline Node check using repository parseManifest/parseSkillDocument, assert name/description/version, and resolve owned relative Markdown links.",
+      "exitCode": 0,
+      "result": "0 manifest issues; metadata matches; final version 1.3.6; 2 relative links checked."
+    },
+    {
+      "kind": "inspection",
+      "result": "Final owned diff inspected against clean assignment baseline; distributed-limits.md byte-identical. Final prose changed capacity test to fill N slots before checking an additional request."
+    }
+  ],
+  "behavioralEvaluationsExecuted": [],
+  "walkthroughsPerformed": [
+    "The two proposed development cases below were walked through against the instruction branches."
+  ],
+  "cases": [
+    {
+      "id": "bulkhead-resource-lifetime",
+      "classification": "Written development case; not executed; not an unseen holdout",
+      "actorInput": {
+        "request": "Inspect the limit’s intended scope and actual lifecycle. Correct any demonstrated violation, preserve valid behavior, and add a focused local check.",
+        "fixtureSpecification": {
+          "target": "Java 11 project",
+          "files": [
+            "Gateway.java",
+            "gateway factory",
+            "accepted requirement",
+            "controllable provider",
+            "local harness capable of pausing provider cleanup"
+          ],
+          "commonBehavior": "Gateway holds one permit, returns a timed observer of a private operation future, and releases its permit when the observer finishes. The operation future completes only after cleanup. Provider has a separate two-operation gate.",
+          "acceptedScope": "Gateway’s permit limits active provider operations to one."
+        }
+      },
+      "evaluatorOnly": {
+        "expected": [
+          "Keep the gateway allocation held after observer timeout while the protected provider operation remains open.",
+          "Move gateway release to actual cleanup, preserve separate observer timeout and verify refusal while first operation remains open.",
+          "Preserve supported Java/runtime constraints and independent provider gate."
+        ],
+        "failureConditions": [
+          "Treat observer completion as provider termination.",
+          "Increase capacity to hide the violation.",
+          "Remove cancellation/deadlines.",
+          "Claim remote termination without applicable evidence."
+        ]
+      }
+    },
+    {
+      "id": "bulkhead-caller-lifetime",
+      "classification": "Written constraint-flip development case; not executed; not an unseen holdout",
+      "actorInput": {
+        "request": "Inspect the limit’s intended scope and actual lifecycle. Correct any demonstrated violation, preserve valid behavior, and add a focused local check.",
+        "fixtureSpecification": {
+          "target": "Java 11 project",
+          "files": [
+            "Gateway.java",
+            "gateway factory",
+            "accepted requirement",
+            "controllable provider",
+            "local harness capable of pausing provider cleanup"
+          ],
+          "commonBehavior": "Identical to bulkhead-resource-lifetime: gateway has one permit released at timed observer completion; provider operation ends after cleanup and has an independent two-operation gate.",
+          "changedConstraintOnly": "Gateway’s permit limits live caller requests to one; provider occupancy is independently limited to two."
+        }
+      },
+      "evaluatorOnly": {
+        "expected": [
+          "Recognize that releasing the caller allocation when its observer ends is valid for this scope.",
+          "Preserve caller lifetime behavior and independently verify provider gate ownership through cleanup.",
+          "Do not impose a one-provider-operation bound that this accepted scope does not require."
+        ],
+        "failureConditions": [
+          "Treat both protected lifetimes as identical.",
+          "Invent a premature-release defect in the caller gate solely because provider work continues.",
+          "Release the independent provider allocation early.",
+          "Change accepted capacity without authority."
+        ]
+      }
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/concurrent/CompletableFuture.html",
+      "version": "Java 11",
+      "supports": "orTimeout/completeOnTimeout receiver mutation, ordinary cancellation semantics and defensive copy behavior"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/concurrent/Semaphore.html",
+      "version": "Java 11",
+      "supports": "Separate semaphore allocations, permits, acquisition/release contracts"
+    }
+  ],
+  "limitations": [
+    "Java 11 source/API target was compiled on JDK 25.0.3; no Java 11 runtime execution.",
+    "Controlled technical fixtures do not establish production client cancellation behavior, remote bounds, performance or agent improvement.",
+    "No independent behavioral comparison or benchmark.",
+    "Existing production-specific synchronous usage sketch remains partial."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "prerequisite": "All catalog writers stopped."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "prerequisite": "Index regenerated after all catalog writers stopped."
+    }
+  ],
+  "coordinatorActions": [
+    "Archive retained validation artifacts if desired.",
+    "Run selected independent behavioral cases if chosen."
+  ],
+  "crossSkillFindings": []
+}

@@ -1,0 +1,42 @@
+{
+  "kind": "Known development cases; no agent execution performed",
+  "decisiveConstraint": "Only Line's mutability changes. Order, Report, requirements, target and ownership are identical.",
+  "prerequisites": [
+    "Provide one case input directory plus the applicable skill to the actor in a fresh context.",
+    "Do not expose this criteria file, sibling cases, probe sources or prior results; the shared filesystem alone does not enforce separation."
+  ],
+  "cases": [
+    {
+      "id": "a",
+      "input": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-tell-dont-ask-artifacts/case-a-input/task.json",
+      "expected": [
+        "Inspect Order.add, lines, Line and Report instead of treating getters as defects.",
+        "Recognize the actual Line record has only String/int state, membership is copied, and supported command paths protect the total-unit invariant.",
+        "Preserve reporting and avoid an unnecessary redesign; a no-change result is appropriate.",
+        "Limit concurrency, persistence and binary compatibility claims to the supplied context."
+      ],
+      "failureConditions": [
+        "Delete reporting accessors or move formatting into Order solely to obey Tell, Don't Ask.",
+        "Claim List.copyOf universally performs a deep copy.",
+        "Invent a mutable alias not present in this source or assert database/concurrency guarantees."
+      ]
+    },
+    {
+      "id": "b",
+      "input": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-tell-dont-ask-artifacts/case-b-input/task.json",
+      "expected": [
+        "Trace lines().get(0) to the same mutable Line instance and its public setQuantity; reproduce or statically demonstrate a 101-unit order bypass.",
+        "Explain why membership copying does not protect mutable elements or the parent's aggregate rule.",
+        "Close that path with a proportionate design such as immutable read projections/elements or owner-mediated mutation, preserving ordered reporting.",
+        "Check the owned 100-unit limit and positive quantities along relevant commands and observable alias paths; use Java 17-compatible code."
+      ],
+      "failureConditions": [
+        "Accept List.copyOf as sufficient to protect mutable elements.",
+        "Replace the query with a different shallow wrapper and leave the bypass.",
+        "Merely remove the report or copy the same mutable references again.",
+        "Add an entity-level global counter or unrelated infrastructure instead of the owned limit."
+      ]
+    }
+  ],
+  "evaluationStatus": "Pending coordinator evaluation; structured walkthroughs only"
+}

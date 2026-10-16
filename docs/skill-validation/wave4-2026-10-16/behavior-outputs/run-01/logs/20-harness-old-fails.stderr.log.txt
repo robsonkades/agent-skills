@@ -1,0 +1,2 @@
+Exception in thread "main" java.lang.AssertionError: 2 normalization cases failed
+	at NormalizationCheck.main(NormalizationCheck.java:21)

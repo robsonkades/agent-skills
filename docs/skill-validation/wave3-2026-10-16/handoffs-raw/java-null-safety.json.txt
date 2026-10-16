@@ -1,0 +1,272 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "java-null-safety",
+  "ownedPath": "skills/java-null-safety/**",
+  "allWritesStopped": true,
+  "reviewDate": "2026-10-16",
+  "baseline": {
+    "head": "bbb7d996a929e81baf735bbaab5b6e3fbf6e8503",
+    "committedVersion": "1.2.4",
+    "assignmentVersion": "1.2.4",
+    "finalVersion": "1.2.5",
+    "preExistingVersionBump": false,
+    "preExistingChanges": [],
+    "allFourHashesMatchedWave3Baseline": true,
+    "evidence": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-null-safety-evidence/baseline-package.json"
+  },
+  "versionRationale": "One patch for a focused Map null-contract correction and routed guidance; metadata descriptions, dependencies and technology baseline unchanged.",
+  "rolePreserved": "Null meaning, API contracts, boundary hardening and diagnosis. No mandatory annotation/checker adoption or cache framework introduced.",
+  "findings": [
+    {
+      "id": "NULL-1",
+      "locationBefore": [
+        "SKILL.md:70-74",
+        "references/nullability-contracts.md:58-68"
+      ],
+      "finding": "The skill correctly distinguished absence from mapped-null for get/getOrDefault, but said 'Only containsKey distinguishes' and did not cover the semantics-changing replacement with computeIfAbsent or putIfAbsent.",
+      "consequence": "A completed negative lookup represented by mapped-null can be recomputed or replaced. A loader returning null for a missing key creates no new mapping, so checking only the returned value can miss repeated work and policy changes.",
+      "evidence": "Java SE25 Map contracts plus 26 executed runtime checks on Temurin 25.0.3+9.",
+      "correction": "Removed the exclusivity claim; added a short guard in SKILL.md and a routed null-valued-cache section distinguishing completed absence from unresolved/retry policy, with loader-count verification and confinement/synchronization limits.",
+      "locationAfter": [
+        "SKILL.md:70-77",
+        "references/nullability-contracts.md:70-88"
+      ]
+    },
+    {
+      "id": "NULL-2",
+      "location": "Existing package throughout",
+      "finding": "JSpecify defaults, unspecified nullness, runtime/checker distinction, nested element nullability, override variance, unboxing, DTO binding and constructor invariants already have substantive conditions.",
+      "outcome": "Preserved. No forced broad rewrite, annotation migration or tooling adoption."
+    }
+  ],
+  "filesChangedByReviewer": [
+    "skills/java-null-safety/SKILL.md",
+    "skills/java-null-safety/references/nullability-contracts.md",
+    "skills/java-null-safety/skill.yaml"
+  ],
+  "filesUnchanged": [
+    "skills/java-null-safety/references/boundary-hardening.md"
+  ],
+  "changeSummary": {
+    "insertions": 24,
+    "deletions": 2,
+    "descriptionSynchronized": true,
+    "dependenciesUnchanged": true
+  },
+  "capabilities": {
+    "preserved": [
+      "Absence/error/uninitialized distinctions and compatibility of legal null",
+      "Java target/toolchain and JSpecify 1.0 boundaries",
+      "Annotation vocabulary, checker scope and no built-in runtime enforcement",
+      "Constructor and DTO-to-domain validation with stable field/code errors",
+      "Nested collection/array nullness and override variance",
+      "Map get/getOrDefault/containsKey and concurrent-mutation caveats",
+      "Implicit unboxing diagnosis and nullable conditional-expression example",
+      "Legitimate lifecycle/cache nulls and no-change decisions",
+      "Checker fixtures and runtime enforcement treated separately"
+    ],
+    "added": [
+      "Map mutation/loading API differences for null-valued entries",
+      "Completed-negative versus retryable-null decision with counted loader calls"
+    ],
+    "removed": [],
+    "replaced": [
+      "Removed incorrect exclusive wording that only containsKey can distinguish map absence; preserved its legitimate use."
+    ]
+  },
+  "commandsExecuted": [
+    {
+      "command": "rg --files skills/java-null-safety; git status --short -- skills/java-null-safety; git diff -- skills/java-null-safety; git diff --cached -- skills/java-null-safety; git show HEAD:skills/java-null-safety/skill.yaml",
+      "cwd": "C:/git/agent-skills",
+      "result": "Four files; assigned package clean; committed/initial version 1.2.4; no staged/unstaged/untracked owned changes."
+    },
+    {
+      "command": "Read all four assigned package files, complete docs/skill-review-prompt.md, wave3 review-brief.md and skill-engineering with evidence/evaluation/anti-pattern/resource-design references; applicable root AGENTS.md and parallel review instructions reused.",
+      "cwd": "C:/git/agent-skills",
+      "result": "Complete scope and procedure reviewed; no nested AGENTS.md found under assigned package."
+    },
+    {
+      "command": "Node SHA-256 comparison of assigned files with wave3 baseline.packages[].files[]",
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS: all four assignment hashes matched baseline.",
+      "evidence": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-null-safety-evidence/baseline-package.json"
+    },
+    {
+      "command": "Inspect local Maven JSpecify/NullAway/Error Prone artifact directories, POMs and Error Prone JAR entries; absolute Temurin java.exe -version and javac.exe -version",
+      "cwd": "C:/git/agent-skills",
+      "result": "Existing JSpecify 1.0.0/1.0.1, NullAway 0.14.1, Error Prone 2.50.0 found. Their presence is not checker execution. No dependency/tool installation or Maven/Gradle build ran. Actual Java/compiler 25.0.3+9."
+    },
+    {
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-null-safety-evidence/controls.mjs",
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS: javac --release 25 and Java 25.0.3+9 executed 26 checks; class major 69. Tests cover getOrDefault mapped-null preservation, putIfAbsent replacement, computeIfAbsent callback/result behavior, repeated null misses, retained null mappings, completed-negative protocol and legitimate retry alternative.",
+      "evidence": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-null-safety-evidence/result.json"
+    },
+    {
+      "command": "Node repository parseManifest/buildSkillPackage/validatePackage plus assigned-package relative-link/anchor/routing assertions",
+      "cwd": "C:/git/agent-skills",
+      "exactCommandAt": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-null-safety-evidence/review-evidence.json#/localChecks/commands/0",
+      "result": "PASS: four package files; manifest issues []; package issues []; three relative links/anchors; two routed references; version 1.2.5."
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/java-null-safety/SKILL.md skills/java-null-safety/skill.yaml skills/java-null-safety/references/nullability-contracts.md",
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS, exit 0. No formatter writes."
+    },
+    {
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-null-safety-evidence/cases-check.mjs",
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS harness assertions. Original code: policy a exits 1 with seven failures out of thirteen; policy b exits 0 with thirteen checks passed. Completed-absence control: policy a passes thirteen checks; policy b exits 1 with seven expected failures. All three compilations pass. Expected failures are preserved adverse controls, not failed final validation.",
+      "evidence": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-null-safety-evidence/case-results.json"
+    },
+    {
+      "command": "git diff --check -- skills/java-null-safety; git diff -- skills/java-null-safety; git diff --cached -- skills/java-null-safety; git status --short -- skills/java-null-safety",
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS whitespace. Final owned diff inspected; no staged changes; exactly three intended modified files.",
+      "evidence": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-null-safety-evidence/final-inspection.json"
+    },
+    {
+      "command": "Node final SHA-256 comparison against assignment baseline",
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS: exactly SKILL.md, nullability-contracts.md and skill.yaml changed; boundary-hardening.md unchanged.",
+      "evidence": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-null-safety-evidence/final-hashes.json"
+    }
+  ],
+  "failuresAndRecovery": [],
+  "expectedNegativeControls": [
+    {
+      "case": "Original CatalogLookup under completed-absence policy a",
+      "exitCode": 1,
+      "failures": 7,
+      "totalChecks": 13,
+      "meaning": "Demonstrates callback/result/presence contract violation without changing the actor input.",
+      "evidence": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-null-safety-evidence/logs/run-original-a.json"
+    },
+    {
+      "case": "Completed-absence implementation under retry policy b",
+      "exitCode": 1,
+      "failures": 7,
+      "totalChecks": 13,
+      "meaning": "Refutes treating permanent negative caching as a universal fix.",
+      "evidence": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-null-safety-evidence/logs/run-control-b.json"
+    }
+  ],
+  "behavioralEvidence": {
+    "executedAgentEvaluations": [],
+    "measuredBehavioralGain": false,
+    "technicalControlsAreNotAgentEvaluations": true,
+    "structuredWalkthroughs": [
+      {
+        "case": "a",
+        "outcome": "Repair retention of completed absence while preserving public nullable returns and invalidation; counted loads reveal the defect."
+      },
+      {
+        "case": "b",
+        "outcome": "Retain matching computeIfAbsent semantics; a null result deliberately permits a later attempt."
+      }
+    ]
+  },
+  "caseInputs": [
+    {
+      "id": "a",
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-null-safety-evidence/cases/a",
+      "files": [
+        "input.md",
+        "cache-policy.md",
+        "CatalogLookup.java"
+      ],
+      "requestFile": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-null-safety-evidence/cases/a/input.md"
+    },
+    {
+      "id": "b",
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-null-safety-evidence/cases/b",
+      "files": [
+        "input.md",
+        "cache-policy.md",
+        "CatalogLookup.java"
+      ],
+      "requestFile": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-null-safety-evidence/cases/b/input.md"
+    }
+  ],
+  "evaluatorCriteriaFile": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-null-safety-evidence/evaluator-criteria.json",
+  "evaluationInstructions": "Provide an evaluator only a copy of the selected cases/<id>/ directory and the selected skill snapshot in an isolated workspace. Do not expose this handoff, evaluator-criteria.json, CaseContractCheck.java, controls.mjs, cases-check.mjs, completed-absence-control, class outputs, logs or prior results. Actor source and request are byte-identical; only the policy meaning of null changes. Cases are authored development cases, not unseen holdouts. No evaluator has been launched.",
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html",
+      "kind": "Primary Java SE25 API",
+      "supports": "getOrDefault only defaults for absent mapping; putIfAbsent and computeIfAbsent treat mapped-null as absent; null compute result creates no new mapping; default methods provide no general synchronization/atomicity guarantee.",
+      "usedForMaterialCorrection": true
+    },
+    {
+      "url": "https://jspecify.dev/docs/user-guide/",
+      "kind": "Primary JSpecify guide",
+      "supports": "Reviewed preserved nullness vocabulary, non-null scope qualifications, generics and lack of built-in runtime enforcement.",
+      "usedForMaterialCorrection": false
+    },
+    {
+      "url": "https://jspecify.dev/docs/spec/",
+      "kind": "Primary JSpecify specification",
+      "supports": "Reviewed unchanged annotation/type-use contract boundaries.",
+      "usedForMaterialCorrection": false
+    },
+    {
+      "url": "https://github.com/uber/NullAway/wiki/JSpecify-Support",
+      "kind": "Primary checker documentation",
+      "supports": "Support depends on actual configured checker; inspected while assessing local prerequisites.",
+      "limitation": "No NullAway invocation executed."
+    },
+    {
+      "url": "https://errorprone.info/docs/installation",
+      "kind": "Primary compiler-plugin documentation",
+      "supports": "Inspected potential direct checker prerequisites.",
+      "limitation": "No installation or Error Prone/NullAway run performed."
+    }
+  ],
+  "limitations": [
+    "No behavioral agent comparison or measured catalog-quality gain.",
+    "Runtime controls cover standard HashMap confined to one thread; no concurrent cache, contention, publication or atomicity guarantee tested.",
+    "No real service loader, cache expiry, external dependency or production traffic exercised; loader calls are deterministic local counters.",
+    "No JSpecify/NullAway checker was executed. The correction is about Java Map runtime API behavior, and existing annotation examples were not materially changed.",
+    "No HTTP mapper/ORM path or unchanged boundary-hardening sketch was newly executed.",
+    "Global index/version checks and repository-wide verification remain pending with coordinator."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Shared generated index; parallel-review exception.",
+      "prerequisite": "All reviewers stop writes."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Global repository verification is coordinator-owned.",
+      "prerequisite": "Index regenerated after all writers stop."
+    },
+    {
+      "command": "Optional independent original/revised skill evaluation using separated cases",
+      "owner": "coordinator",
+      "reason": "Reviewer may not launch or delegate evaluations."
+    }
+  ],
+  "crossSkillIssues": [],
+  "coordinatorActions": [
+    "Regenerate index and execute global verification after all writers stop.",
+    "Preserve expected technical failures and the distinction from agent behavioral evaluation in consolidated evidence."
+  ],
+  "evidencePaths": [
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-null-safety-evidence/baseline-package.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-null-safety-evidence/review-evidence.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-null-safety-evidence/result.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-null-safety-evidence/case-results.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-null-safety-evidence/final-hashes.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-null-safety-evidence/final-inspection.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-null-safety-evidence/evaluator-criteria.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-null-safety-evidence/MapNullContracts.java",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-null-safety-evidence/CaseContractCheck.java",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-null-safety-evidence/controls.mjs",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-null-safety-evidence/cases-check.mjs",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-null-safety-evidence/logs/"
+  ],
+  "processState": "All launched processes completed synchronously; no active session can write. Repository changes limited to assigned skill, temporary evidence limited to coordinator-authorized root. Prior accepted skills remain read-only."
+}

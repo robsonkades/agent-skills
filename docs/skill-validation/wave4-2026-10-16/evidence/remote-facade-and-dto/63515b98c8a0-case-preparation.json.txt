@@ -1,0 +1,6 @@
+{
+  "inputsParsed": 2,
+  "soleDifference": "contract.json.id.maximumInclusiveDecimal",
+  "criteriaSeparated": true,
+  "agentRuns": 0
+}

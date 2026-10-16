@@ -32,6 +32,16 @@ bpftrace builtins and tracepoint fields are separate APIs. For a current-task pr
 `next_pid`, or wakeup `pid` names subject TIDs encoded by that tracepoint. A raw tracepoint may
 have different arguments. Always use `-lv`/tracefs format and the matching documentation.
 
+In [bpftrace 0.24](https://bpftrace.org/docs/release_024/stdlib#pid), bare `pid`/`tid` default to
+the collector's PID namespace; `pid(init)`/`tid(init)` select the initial namespace. Linux
+**6.12** [scheduler subject fields](https://github.com/torvalds/linux/blob/v6.12/include/trace/events/sched.h)
+use the [initial-namespace task IDs](https://github.com/torvalds/linux/blob/v6.12/include/linux/pid.h).
+Normalize IDs before joining those APIs: a membership map keyed by container TID 17 will not
+match that thread's `next_pid` of 41802 and may instead match an unrelated host TID 17. Check
+the target kernel's field semantics, not just field types. `tid(init)` still identifies the
+current task; it does not turn a wakeup probe's current task into the woken subject. Validate
+target inclusion and non-target exclusion in the collector's actual PID namespace.
+
 PID/TID values can be reused. Add process start identity, cgroup generation, or a bounded
 collection window/cleanup strategy when stale map entries could cross lifetimes.
 

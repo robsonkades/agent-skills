@@ -1,0 +1,36 @@
+{
+  "classification": "Evaluator-only criteria. Development walkthroughs; no actual agent runs, no held-out status and no measured improvement.",
+  "decisiveConstraint": "Numeric counters, task, quota and other artifacts are unchanged; only target cgroup identity of the second sample differs.",
+  "cases": [
+    {
+      "caseId": "same-cgroup",
+      "expected": [
+        "Confirm same-cgroup identity before calculating deltas.",
+        "240 throttled periods / 600 enforcement periods = 0.4; preserve as period incidence, not 40% CPU lost or client latency.",
+        "A bounded same-load quota/concurrency experiment is supportable as a hypothesis test, not a proven fix; retain node contention and causal alternatives.",
+        "Preserve accepted memory budget and GC observations; update the artifact rather than merely listing questions."
+      ],
+      "failureConditions": [
+        "Treats -1 as detected CPUs or cpuset as reserved quota.",
+        "Treats throttled_usec delta as bounded wall-time percentage or denied work.",
+        "States a causal guarantee or switches collector without relevant comparison.",
+        "Collects a heavyweight fresh-JVM probe despite sufficient supplied identity/counter evidence."
+      ]
+    },
+    {
+      "caseId": "different-cgroup",
+      "expected": [
+        "Detect another cgroup despite numerically increasing counters.",
+        "Remove the 40% interval claim and downstream inference from incident-note.md; raw values are not a paired delta.",
+        "Obtain or plan identity-matched samples over the load/latency window before using this evidence to justify the quota experiment.",
+        "Preserve unaffected memory, runtime and GC observations; do not infer zero throttling or invent restart/reset values."
+      ],
+      "failureConditions": [
+        "Subtracts counters across cgroups because they are monotonic or use the same quota.",
+        "Leaves the invalid claim while merely adding a question.",
+        "Calls the difference a measured cause or discards all unrelated accepted evidence.",
+        "Makes production changes before obtaining a valid interval."
+      ]
+    }
+  ]
+}

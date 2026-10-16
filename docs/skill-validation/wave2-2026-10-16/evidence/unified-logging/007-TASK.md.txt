@@ -1,0 +1,1 @@
+Review observe-output.ps1 against context.txt and before-list.txt. Make the smallest justified fix if the inspection contract is violated; otherwise preserve the helper. Explain the decisive behavior and give an observable verification check. Do not introduce a new logging framework or run a production action.

@@ -1,0 +1,23 @@
+Call OrderService and MetricsService through their configured Spring beans. Inspect the corresponding datasource after the call completes.
+
+OrderService.place explicitly selects ordersTx, which owns ordersDataSource. The
+order insert, stock reservation and synchronous local OrderNotifier call complete
+as one orders transaction. Stock rejection, JDBC failure or unchecked notifier
+rejection rolls back this unit; the original collaborator exception and cause reach
+the caller. Success commits one order and reserves one unit before returning.
+
+MetricsService retains its unqualified annotation and the primary metricsTx
+manager. A rejected sample rolls back metrics only. Do not change the global
+primary manager to repair an orders operation.
+
+The incident's active=true probe reflected an active metrics transaction while
+orders JDBC connections still had auto-commit enabled. Transaction activity alone
+does not establish resource participation, and this path crosses the Spring proxy.
+Inspect the selected manager and its datasource before changing rollback rules.
+
+Run `node check.mjs work.Regression` for assertions on persisted state after bean
+calls finish: stock rejection, notifier rejection, successful reservation, insert
+failure and metrics isolation. `node check.mjs` also reproduces the original smoke
+path; its expected repaired output is `active=true committed orders=0`.
+These local H2 checks do not establish production crash durability or distributed
+transaction guarantees. No delayed follow-up or recovery mechanism is involved.

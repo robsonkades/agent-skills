@@ -1,0 +1,148 @@
+{
+  "compilerApiTarget": 17,
+  "runtime": "Temurin 25.0.3+9",
+  "checks": {
+    "compiledA": true,
+    "compiledB": true,
+    "smokeA": true,
+    "smokeB": true,
+    "borrowedPrematureCloseDetected": true,
+    "ownedLifecyclePasses": true,
+    "ownedFailureAndInitializationControls": true,
+    "noTimeoutOrSpawnError": true
+  },
+  "results": [
+    {
+      "id": "compile-a",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "--release",
+        "17",
+        "-Xlint:all",
+        "-d",
+        "classes",
+        "Parser.java",
+        "TrackingParser.java",
+        "ApplicationBinding.java",
+        "ImportJob.java",
+        "BoundImportJob.java",
+        "SmokeTest.java",
+        "../LifecycleProbe.java",
+        "../ContractControls.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-factory-method-validation\\case-a",
+      "timeoutMs": 15000,
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "id": "smoke-a",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-cp",
+        "classes",
+        "SmokeTest"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-factory-method-validation\\case-a",
+      "timeoutMs": 15000,
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "PASS one configured import\r\n",
+      "stderr": ""
+    },
+    {
+      "id": "lifecycle-a",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-cp",
+        "classes",
+        "LifecycleProbe"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-factory-method-validation\\case-a",
+      "timeoutMs": 15000,
+      "status": 1,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": "Exception in thread \"main\" java.io.IOException: parser is closed\r\n\tat TrackingParser.parse(TrackingParser.java:8)\r\n\tat ImportJob.run(ImportJob.java:14)\r\n\tat LifecycleProbe.main(LifecycleProbe.java:11)\r\n"
+    },
+    {
+      "id": "compile-b",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "--release",
+        "17",
+        "-Xlint:all",
+        "-d",
+        "classes",
+        "Parser.java",
+        "TrackingParser.java",
+        "ApplicationBinding.java",
+        "ImportJob.java",
+        "BoundImportJob.java",
+        "SmokeTest.java",
+        "../LifecycleProbe.java",
+        "../ContractControls.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-factory-method-validation\\case-b",
+      "timeoutMs": 15000,
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "id": "smoke-b",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-cp",
+        "classes",
+        "SmokeTest"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-factory-method-validation\\case-b",
+      "timeoutMs": 15000,
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "PASS one configured import\r\n",
+      "stderr": ""
+    },
+    {
+      "id": "lifecycle-b",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-cp",
+        "classes",
+        "LifecycleProbe"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-factory-method-validation\\case-b",
+      "timeoutMs": 15000,
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "PASS two configured imports and per-run ownership boundary\r\nPASS owner shutdown boundary\r\n",
+      "stderr": ""
+    },
+    {
+      "id": "contract-controls",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-cp",
+        "classes",
+        "ContractControls"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-factory-method-validation\\case-b",
+      "timeoutMs": 15000,
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "PASS factory once and owned success closure\r\nPASS parse failure remains primary and close suppressed\r\nPASS save failure closes owned resource\r\nPASS acquisition checked failure propagates unchanged\r\nPASS null factory result rejected before processing\r\nPASS close-only failure does not undo save\r\nPASS constructor hook sees default subclass value\r\nSUMMARY checks=7\r\n",
+      "stderr": ""
+    }
+  ]
+}

@@ -1,0 +1,1155 @@
+-------------------------- Assembly (native nmethod) ---------------------------
+[0.019s][warning][os] Loading hsdis library failed
+
+Compiled method (n/a) 18    8     n 0       jdk.internal.misc.Unsafe::getReferenceVolatile (native)
+ total in heap  [0x000001e43ccd0008,0x000001e43ccd03c0] = 952
+ main code      [0x000001e43ccd0100,0x000001e43ccd03be] = 702
+ stub code      [0x000001e43ccd03be,0x000001e43ccd03c0] = 2
+ mutable data [0x000001e452424320,0x000001e452424340] = 32
+ relocation     [0x000001e452424320,0x000001e452424340] = 32
+
+[Constant Pool (empty)]
+
+[MachCode]
+[Entry Point]
+  # {method} {0x000000008c4934d8} 'getReferenceVolatile' '(Ljava/lang/Object;J)Ljava/lang/Object;' in 'jdk/internal/misc/Unsafe'
+  # this:     rdx:rdx   = 'jdk/internal/misc/Unsafe'
+  # parm0:    r8:r8     = 'java/lang/Object'
+  # parm1:    r9:r9     = long
+  #           [sp+0x70]  (sp of caller)
+  0x000001e43ccd0100: 6690 448b | 5208 443b 
+
+  0x000001e43ccd0108: ;   {runtime_call Shared Runtime ic_miss_blob}
+  0x000001e43ccd0108: 5008 0f85 | d0e9 8fff 
+[Verified Entry Point]
+  0x000001e43ccd0110: 8984 2400 | 80ff ff55 | 488b ec48 | 83ec 6090 | 4181 7f20 | 0000 0000 
+
+  0x000001e43ccd0128: ;   {runtime_call Stub::method_entry_barrier}
+  0x000001e43ccd0128: 7405 e811 | 418e ff4c | 8944 2428 | 4983 f800 | 4c8d 4424 | 284c 0f44 | 4424 2848 | 8954 2420 
+  0x000001e43ccd0148: 4883 fa00 | 488d 5424 | 2048 0f44 | 5424 20c5 
+
+  0x000001e43ccd0158: ;   {internal_word}
+  0x000001e43ccd0158: f877 49ba | 5701 cd3c | e401 0000 | 4d89 9730 | 0400 0049 | 89a7 2804 | 0000 498d | 8f48 0400 
+  0x000001e43ccd0178: 0041 c787 | d404 0000 | 0400 0000 
+
+  0x000001e43ccd0184: ;   {runtime_call}
+  0x000001e43ccd0184: 48b8 50f5 | 3c54 ff7f | 0000 ffd0 | c5f8 7741 | c787 d404 | 0000 0500 | 0000 f083 | 4424 c000 
+  0x000001e43ccd01a4: 493b 6f28 | 0f87 0e00 | 0000 4183 | bfd0 0400 | 0000 0f84 | 2b00 0000 | c5f8 7748 | 8945 f849 
+  0x000001e43ccd01c4: 8bcf 4c8b | e448 83ec | 2048 83e4 
+
+  0x000001e43ccd01d0: ;   {runtime_call}
+  0x000001e43ccd01d0: f048 b8d0 | cce9 53ff | 7f00 00ff | d049 8be4 | 4d33 e448 | 8b45 f841 | c787 d404 | 0000 0800 
+  0x000001e43ccd01f0: 0000 4183 | bf50 0500 | 0002 0f84 | 9101 0000 | 49c7 8728 | 0400 0000 | 0000 0049 | c787 3004 
+  0x000001e43ccd0210: 0000 0000 | 0000 c5f8 | 7748 85c0 | 0f84 2f01 | 0000 a803 | 0f85 0800 | 0000 488b | 00e9 1f01 
+  0x000001e43ccd0230: 0000 a801 | 0f85 0900 | 0000 488b | 40fe e90e | 0100 0048 | 8b40 ff41 | 807f 4800 | 0f84 ff00 
+  0x000001e43ccd0250: 0000 4883 | f800 0f84 | f500 0000 | 498b 4f38 | 4885 c90f | 8414 0000 | 0048 83e9 | 0849 894f 
+  0x000001e43ccd0270: 3849 034f | 4048 8901 | e9d4 0000 | 0048 83ec | 7048 8904 | 2448 894c | 2408 4889 | 5424 104c 
+  0x000001e43ccd0290: 8944 2418 | 4c89 4c24 | 204c 8954 | 2428 4c89 | 5c24 30c5 | fb11 4424 | 40c5 fb11 | 4c24 48c5 
+  0x000001e43ccd02b0: fb11 5424 | 50c5 fb11 | 5c24 58c5 | fb11 6424 | 60c5 fb11 | 6c24 6849 | 8bd7 488b | c848 83ec 
+  0x000001e43ccd02d0: ;   {other}
+  0x000001e43ccd02d0: 2040 f6c4 | 0f0f 8419 | 0000 0048 
+
+  0x000001e43ccd02dc: ;   {runtime_call}
+  0x000001e43ccd02dc: 83ec 0848 | b850 8adc | 53ff 7f00 | 00ff d048 | 83c4 08e9 | 0c00 0000 
+
+  0x000001e43ccd02f4: ;   {runtime_call}
+  0x000001e43ccd02f4: 48b8 508a | dc53 ff7f | 0000 ffd0 | 4883 c420 | c5fb 106c | 2468 c5fb | 1064 2460 | c5fb 105c 
+  0x000001e43ccd0314: 2458 c5fb | 1054 2450 | c5fb 104c | 2448 c5fb | 1044 2440 | 4c8b 5c24 | 304c 8b54 | 2428 4c8b 
+  0x000001e43ccd0334: 4c24 204c | 8b44 2418 | 488b 5424 | 1048 8b4c | 2408 488b | 0424 4883 | c470 c5f8 | 7749 8b8f 
+  0x000001e43ccd0354: b804 0000 | c781 0001 | 0000 0000 
+
+  0x000001e43ccd0360: ;   {poll_return}
+  0x000001e43ccd0360: 0000 c941 | f647 2801 
+
+  0x000001e43ccd0368: ;   {internal_word}
+  0x000001e43ccd0368: 7416 49ba | 6303 cd3c | e401 0000 | 4d89 97e0 
+
+  0x000001e43ccd0378: ;   {runtime_call SafepointBlob}
+  0x000001e43ccd0378: 0400 00e9 | e00b 90ff | 4983 7f08 | 000f 8501 | 0000 00c3 
+
+  0x000001e43ccd038c: ;   {runtime_call Stub::forward_exception}
+  0x000001e43ccd038c: e94f 0e8b | ffc5 f877 | 4889 45f8 | 4c8b e448 | 83ec 2048 
+
+  0x000001e43ccd03a0: ;   {runtime_call}
+  0x000001e43ccd03a0: 83e4 f048 | b860 3123 | 54ff 7f00 | 00ff d049 | 8be4 4d33 | e448 8b45 | f8e9 42fe | ffff f4f4 
+[/MachCode]
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+-------------------------- Assembly (native nmethod) ---------------------------
+
+Compiled method (n/a) 21    9     n 0       jdk.internal.vm.Continuation::enterSpecial (native)
+ total in heap  [0x000001e43ccd0408,0x000001e43ccd0710] = 776
+ main code      [0x000001e43ccd0500,0x000001e43ccd06f0] = 496
+ stub code      [0x000001e43ccd06f0,0x000001e43ccd0710] = 32
+ mutable data [0x000001e4524cbf90,0x000001e4524cbfb8] = 40
+ relocation     [0x000001e4524cbf90,0x000001e4524cbfb8] = 40
+
+[Constant Pool (empty)]
+
+[MachCode]
+[Entry Point]
+  # {method} {0x000000008c1eadd8} 'enterSpecial' '(Ljdk/internal/vm/Continuation;ZZ)V' in 'jdk/internal/vm/Continuation'
+  # parm0:    rdx:rdx   = 'jdk/internal/vm/Continuation'
+  # parm1:    r8        = boolean
+  # parm2:    r9        = boolean
+  #           [sp+0x50]  (sp of caller)
+  0x000001e43ccd0500: 5848 8b54 | 2410 448b | 4424 0844 | 8b0c 2448 | 83e4 f050 | 493b a7c8 | 0500 0076 | 0749 89a7 
+  0x000001e43ccd0520: c805 0000 | 5548 8bec | 4883 ec40 | 498b 87c0 | 0500 0048 | 8944 2408 | 4989 a7c0 | 0500 0048 
+  0x000001e43ccd0540: 8954 2410 | 4489 4c24 | 2048 c744 | 2418 0000 | 0000 c744 | 2424 0000 | 0000 c744 | 2438 0000 
+  0x000001e43ccd0560: 0000 498b | 87c8 0500 | 0048 8944 | 2428 498b | 87d8 0500 | 0048 8944 | 2430 49c7 | 87c8 0500 
+  0x000001e43ccd0580: 0000 0000 | 0049 c787 | d805 0000 | 0000 0000 | 4d85 c00f | 85ad 0000 | 0066 0f1f 
+
+  0x000001e43ccd059c: ;   {static_call}
+  0x000001e43ccd059c: 4400 00e8 | 3cee 8fff 
+
+  0x000001e43ccd05a4: ;   {post_call_nop}
+  0x000001e43ccd05a4: 0f1f 8400 | 9c01 0000 | e9a2 0000 | 0066 6666 | 0f1f 8400 | 0000 0000 | 6666 6690 
+[Verified Entry Point]
+  0x000001e43ccd05c0: 5548 8bec | 4883 ec40 | 498b 87c0 | 0500 0048 | 8944 2408 | 4989 a7c0 | 0500 0048 | 8954 2410 
+  0x000001e43ccd05e0: 4489 4c24 | 2048 c744 | 2418 0000 | 0000 c744 | 2424 0000 | 0000 c744 | 2438 0000 | 0000 498b 
+  0x000001e43ccd0600: 87c8 0500 | 0048 8944 | 2428 498b | 87d8 0500 | 0048 8944 | 2430 49c7 | 87c8 0500 | 0000 0000 
+  0x000001e43ccd0620: 0049 c787 | d805 0000 | 0000 0000 | 4d85 c075 | 1566 0f1f 
+
+  0x000001e43ccd0634: ;   {static_call}
+  0x000001e43ccd0634: 4400 00e8 | a4ed 8fff 
+
+  0x000001e43ccd063c: ;   {post_call_nop}
+  0x000001e43ccd063c: 0f1f 8400 | 3402 0001 
+
+  0x000001e43ccd0644: ;   {runtime_call Stub::cont_thaw}
+  0x000001e43ccd0644: eb0d e895 
+
+  0x000001e43ccd0648: ; ImmutableOopMap {}
+                      ;   {post_call_nop}
+  0x000001e43ccd0648: 658b ff0f | 1f84 0043 | 0200 0248 | 8b5c 2428 | 4989 9fc8 | 0500 0048 | 8b5c 2430 | 4989 9fd8 
+  0x000001e43ccd0668: 0500 0048 | 8b5c 2408 | 4989 9fc0 | 0500 0048 | 83c4 405d | c348 8b5c | 2428 4989 | 9fc8 0500 
+  0x000001e43ccd0688: 0048 8b5c | 2430 4989 | 9fd8 0500 | 0048 8b5c | 2408 4989 | 9fc0 0500 | 0048 83c4 | 405d 498b 
+  0x000001e43ccd06a8: cf48 8b14 | 2450 4883 | ec20 40f6 | c40f 0f84 | 1900 0000 | 4883 ec08 
+
+  0x000001e43ccd06c0: ;   {runtime_call}
+  0x000001e43ccd06c0: 48b8 a0f1 | 2254 ff7f | 0000 ffd0 | 4883 c408 | e90c 0000 
+
+  0x000001e43ccd06d4: ;   {runtime_call}
+  0x000001e43ccd06d4: 0048 b8a0 | f122 54ff | 7f00 00ff | d048 83c4 | 2048 8bd8 | 585a ffe3 | f4f4 f4f4 
+[Stub Code]
+  0x000001e43ccd06f0: ;   {static_stub}
+  0x000001e43ccd06f0: 48bb 0000 | 0000 0000 
+
+  0x000001e43ccd06f8: ;   {runtime_call native nmethod}
+  0x000001e43ccd06f8: 0000 e9fb 
+
+  0x000001e43ccd06fc: ;   {static_stub}
+  0x000001e43ccd06fc: ffff ff48 | bb00 0000 | 0000 0000 
+
+  0x000001e43ccd0708: ;   {runtime_call native nmethod}
+  0x000001e43ccd0708: 00e9 fbff | ffff f4f4 
+[/MachCode]
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+-------------------------- Assembly (native nmethod) ---------------------------
+
+Compiled method (n/a) 22   10     n 0       jdk.internal.vm.Continuation::doYield (native)
+ total in heap  [0x000001e43ccd0788,0x000001e43ccd0960] = 472
+ main code      [0x000001e43ccd0880,0x000001e43ccd095c] = 220
+ stub code      [0x000001e43ccd095c,0x000001e43ccd0960] = 4
+ mutable data [0x000001e452418250,0x000001e452418260] = 16
+ relocation     [0x000001e452418250,0x000001e452418260] = 16
+
+[Constant Pool (empty)]
+
+[MachCode]
+[Verified Entry Point]
+  # {method} {0x000000008c1ead18} 'doYield' '()I' in 'jdk/internal/vm/Continuation'
+  #           [sp+0x10]  (sp of caller)
+  0x000001e43ccd0880: 5548 8bec 
+
+  0x000001e43ccd0884: ;   {post_call_nop}
+  0x000001e43ccd0884: 0f1f 8400 | fc00 0000 | c5f8 7749 | 89af 3804 
+
+  0x000001e43ccd0894: ;   {internal_word}
+  0x000001e43ccd0894: 0000 49ba | 8408 cd3c | e401 0000 | 4d89 9730 | 0400 0049 | 89a7 2804 | 0000 498b | cf48 8bd4 
+  0x000001e43ccd08b4: 4883 ec20 | 40f6 c40f | 0f84 1900 | 0000 4883 
+
+  0x000001e43ccd08c4: ;   {runtime_call}
+  0x000001e43ccd08c4: ec08 48b8 | a0b1 cf53 | ff7f 0000 | ffd0 4883 | c408 e90c 
+
+  0x000001e43ccd08d8: ;   {runtime_call}
+  0x000001e43ccd08d8: 0000 0048 | b8a0 b1cf | 53ff 7f00 | 00ff d048 | 83c4 2049 | c787 2804 | 0000 0000 | 0000 49c7 
+  0x000001e43ccd08f8: 8738 0400 | 0000 0000 | 0049 c787 | 3004 0000 | 0000 0000 | c5f8 7748 | 85c0 0f85 | 3100 0000 
+  0x000001e43ccd0918: 498b a7c0 | 0500 0048 | 8b5c 2428 | 4989 9fc8 | 0500 0048 | 8b5c 2430 | 4989 9fd8 | 0500 0048 
+  0x000001e43ccd0938: 8b5c 2408 | 4989 9fc0 | 0500 0048 | 83c4 405d | c349 837f | 0800 0f84 | 0600 0000 
+
+  0x000001e43ccd0954: ;   {runtime_call Stub::forward_exception}
+  0x000001e43ccd0954: c9e9 8608 | 8bff c9c3 
+[Stub Code]
+  0x000001e43ccd095c: f4f4 f4f4 
+[/MachCode]
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+-------------------------- Assembly (native nmethod) ---------------------------
+
+Compiled method (n/a) 25   14     n 0       java.lang.Object::hashCode (native)
+ total in heap  [0x000001e43ccd0a88,0x000001e43ccd0d10] = 648
+ main code      [0x000001e43ccd0b80,0x000001e43ccd0d0a] = 394
+ stub code      [0x000001e43ccd0d0a,0x000001e43ccd0d10] = 6
+ mutable data [0x000001e452416fc0,0x000001e452416fd8] = 24
+ relocation     [0x000001e452416fc0,0x000001e452416fd8] = 24
+
+[Constant Pool (empty)]
+
+[MachCode]
+[Entry Point]
+  # {method} {0x000000008c1835f0} 'hashCode' '()I' in 'java/lang/Object'
+  #           [sp+0x70]  (sp of caller)
+  0x000001e43ccd0b80: 6690 448b | 5208 443b 
+
+  0x000001e43ccd0b88: ;   {runtime_call Shared Runtime ic_miss_blob}
+  0x000001e43ccd0b88: 5008 0f85 | 50df 8fff 
+[Verified Entry Point]
+  0x000001e43ccd0b90: 488b 02a8 | 020f 850d | 0000 0048 | c1e8 0b48 | 25ff ffff | 7f74 01c3 | 8984 2400 | 80ff ff55 
+  0x000001e43ccd0bb0: 488b ec48 | 83ec 6090 | 4181 7f20 | 0000 0000 
+
+  0x000001e43ccd0bc0: ;   {runtime_call Stub::method_entry_barrier}
+  0x000001e43ccd0bc0: 7405 e879 | 368e ff48 | 8954 2420 | 4883 fa00 | 488d 5424 | 2048 0f44 | 5424 20c5 
+
+  0x000001e43ccd0bdc: ;   {internal_word}
+  0x000001e43ccd0bdc: f877 49ba | db0b cd3c | e401 0000 | 4d89 9730 | 0400 0049 | 89a7 2804 | 0000 498d | 8f48 0400 
+  0x000001e43ccd0bfc: 0041 c787 | d404 0000 | 0400 0000 
+
+  0x000001e43ccd0c08: ;   {runtime_call}
+  0x000001e43ccd0c08: 48b8 b0be | f353 ff7f | 0000 ffd0 | c5f8 7741 | c787 d404 | 0000 0500 | 0000 f083 | 4424 c000 
+  0x000001e43ccd0c28: 493b 6f28 | 0f87 0e00 | 0000 4183 | bfd0 0400 | 0000 0f84 | 2b00 0000 | c5f8 7748 | 8945 f849 
+  0x000001e43ccd0c48: 8bcf 4c8b | e448 83ec | 2048 83e4 
+
+  0x000001e43ccd0c54: ;   {runtime_call}
+  0x000001e43ccd0c54: f048 b8d0 | cce9 53ff | 7f00 00ff | d049 8be4 | 4d33 e448 | 8b45 f841 | c787 d404 | 0000 0800 
+  0x000001e43ccd0c74: 0000 4183 | bf50 0500 | 0002 0f84 | 5900 0000 | 49c7 8728 | 0400 0000 | 0000 0049 | c787 3004 
+  0x000001e43ccd0c94: 0000 0000 | 0000 c5f8 | 7749 8b8f | b804 0000 | c781 0001 | 0000 0000 
+
+  0x000001e43ccd0cac: ;   {poll_return}
+  0x000001e43ccd0cac: 0000 c941 | f647 2801 
+
+  0x000001e43ccd0cb4: ;   {internal_word}
+  0x000001e43ccd0cb4: 7416 49ba | af0c cd3c | e401 0000 | 4d89 97e0 
+
+  0x000001e43ccd0cc4: ;   {runtime_call SafepointBlob}
+  0x000001e43ccd0cc4: 0400 00e9 | 9402 90ff | 4983 7f08 | 000f 8501 | 0000 00c3 
+
+  0x000001e43ccd0cd8: ;   {runtime_call Stub::forward_exception}
+  0x000001e43ccd0cd8: e903 058b | ffc5 f877 | 4889 45f8 | 4c8b e448 | 83ec 2048 
+
+  0x000001e43ccd0cec: ;   {runtime_call}
+  0x000001e43ccd0cec: 83e4 f048 | b860 3123 | 54ff 7f00 | 00ff d049 | 8be4 4d33 | e448 8b45 | f8e9 7aff | ffff f4f4 
+  0x000001e43ccd0d0c: f4f4 f4f4 
+[/MachCode]
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+-------------------------- Assembly (native nmethod) ---------------------------
+
+Compiled method (n/a) 25   15     n 0       java.lang.invoke.MethodHandle::linkToStatic(LLLLLL)L (native)
+ total in heap  [0x000001e43ccd0d88,0x000001e43ccd0ea0] = 280
+ main code      [0x000001e43ccd0e80,0x000001e43ccd0e9c] = 28
+ stub code      [0x000001e43ccd0e9c,0x000001e43ccd0ea0] = 4
+ mutable data [0x000001e4524c02e0,0x000001e4524c02e8] = 8
+ relocation     [0x000001e4524c02e0,0x000001e4524c02e8] = 8
+
+[Constant Pool (empty)]
+
+[MachCode]
+[Verified Entry Point]
+  # {method} {0x000001e453019280} 'linkToStatic' '(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/invoke/MemberName;)Ljava/lang/Object;' in 'java/lang/invoke/MethodHandle'
+  # parm0:    rdx:rdx   = 'java/lang/Object'
+  # parm1:    r8:r8     = 'java/lang/Object'
+  # parm2:    r9:r9     = 'java/lang/Object'
+  # parm3:    rdi:rdi   = 'java/lang/Object'
+  # parm4:    rsi:rsi   = 'java/lang/Object'
+  # parm5:    rcx:rcx   = 'java/lang/invoke/MemberName'
+  #           [sp+0x0]  (sp of caller)
+  0x000001e43ccd0e80: 8b59 2448 | c1e3 0348 | 8b5b 1048 | 85db 0f84 | 0300 0000 
+
+  0x000001e43ccd0e94: ;   {runtime_call Shared Runtime throw_AbstractMethodError_blob}
+  0x000001e43ccd0e94: ff63 40e9 | 44e8 8fff 
+[Stub Code]
+  0x000001e43ccd0e9c: f4f4 f4f4 
+[/MachCode]
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+-------------------------- Assembly (native nmethod) ---------------------------
+
+Compiled method (n/a) 26   17     n 0       java.lang.invoke.MethodHandle::invokeBasic(LLLLL)L (native)
+ total in heap  [0x000001e43ccd1388,0x000001e43ccd14b0] = 296
+ main code      [0x000001e43ccd1480,0x000001e43ccd14aa] = 42
+ stub code      [0x000001e43ccd14aa,0x000001e43ccd14b0] = 6
+ mutable data [0x000001e4524e2d80,0x000001e4524e2d88] = 8
+ relocation     [0x000001e4524e2d80,0x000001e4524e2d88] = 8
+
+[Constant Pool (empty)]
+
+[MachCode]
+[Verified Entry Point]
+  # {method} {0x000001e45301b998} 'invokeBasic' '(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;' in 'java/lang/invoke/MethodHandle'
+  # this:     rdx:rdx   = 'java/lang/invoke/MethodHandle'
+  # parm0:    r8:r8     = 'java/lang/Object'
+  # parm1:    r9:r9     = 'java/lang/Object'
+  # parm2:    rdi:rdi   = 'java/lang/Object'
+  # parm3:    rsi:rsi   = 'java/lang/Object'
+  # parm4:    rcx:rcx   = 'java/lang/Object'
+  #           [sp+0x0]  (sp of caller)
+  0x000001e43ccd1480: 8b5a 1448 | c1e3 038b | 5b28 48c1 | e303 8b5b | 2448 c1e3 | 0348 8b5b | 1048 85db | 0f84 0300 
+  0x000001e43ccd14a0: 0000 ff63 
+
+  0x000001e43ccd14a4: ;   {runtime_call Shared Runtime throw_AbstractMethodError_blob}
+  0x000001e43ccd14a4: 40e9 36e2 | 8fff f4f4 | f4f4 f4f4 
+[/MachCode]
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+-------------------------- Assembly (native nmethod) ---------------------------
+
+Compiled method (n/a) 26   19     n 0       java.lang.invoke.MethodHandle::linkToSpecial(LLLLLLL)L (native)
+ total in heap  [0x000001e43ccd1688,0x000001e43ccd17a8] = 288
+ main code      [0x000001e43ccd1780,0x000001e43ccd17a4] = 36
+ stub code      [0x000001e43ccd17a4,0x000001e43ccd17a8] = 4
+ mutable data [0x000001e4524e2bd0,0x000001e4524e2bd8] = 8
+ relocation     [0x000001e4524e2bd0,0x000001e4524e2bd8] = 8
+
+[Constant Pool (empty)]
+
+[MachCode]
+[Verified Entry Point]
+  # {method} {0x000001e45301bbf0} 'linkToSpecial' '(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/invoke/MemberName;)Ljava/lang/Object;' in 'java/lang/invoke/MethodHandle'
+  # parm0:    rdx:rdx   = 'java/lang/Object'
+  # parm1:    r8:r8     = 'java/lang/Object'
+  # parm2:    r9:r9     = 'java/lang/Object'
+  # parm3:    rdi:rdi   = 'java/lang/Object'
+  # parm4:    rsi:rsi   = 'java/lang/Object'
+  # parm5:    rcx:rcx   = 'java/lang/Object'
+  # parm6:    [sp+0x0]   = 'java/lang/invoke/MemberName'  (sp of caller)
+  0x000001e43ccd1780: 488b 5c24 | 0848 3b02 | 8b5b 2448 | c1e3 0348 | 8b5b 1048 | 85db 0f84 | 0300 0000 
+
+  0x000001e43ccd179c: ;   {runtime_call Shared Runtime throw_AbstractMethodError_blob}
+  0x000001e43ccd179c: ff63 40e9 | 3cdf 8fff 
+[Stub Code]
+  0x000001e43ccd17a4: f4f4 f4f4 
+[/MachCode]
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+-------------------------- Assembly (native nmethod) ---------------------------
+
+Compiled method (n/a) 27   20     n 0       java.lang.System::arraycopy (native)
+ total in heap  [0x000001e43ccd1988,0x000001e43ccd1c20] = 664
+ main code      [0x000001e43ccd1a80,0x000001e43ccd1c20] = 416
+ mutable data [0x000001e4524dedc0,0x000001e4524dede0] = 32
+ relocation     [0x000001e4524dedc0,0x000001e4524dede0] = 32
+
+[Constant Pool (empty)]
+
+[MachCode]
+[Entry Point]
+  # {method} {0x000000008c193d00} 'arraycopy' '(Ljava/lang/Object;ILjava/lang/Object;II)V' in 'java/lang/System'
+  # parm0:    rdx:rdx   = 'java/lang/Object'
+  # parm1:    r8        = int
+  # parm2:    r9:r9     = 'java/lang/Object'
+  # parm3:    rdi       = int
+  # parm4:    rsi       = int
+  #           [sp+0x90]  (sp of caller)
+  0x000001e43ccd1a80: 6690 448b | 5208 443b 
+
+  0x000001e43ccd1a88: ;   {runtime_call Shared Runtime ic_miss_blob}
+  0x000001e43ccd1a88: 5008 0f85 | 50d0 8fff 
+[Verified Entry Point]
+  0x000001e43ccd1a90: 8984 2400 | 80ff ff55 | 488b ec48 | 81ec 8000 | 0000 6690 | 4181 7f20 | 0000 0000 
+
+  0x000001e43ccd1aac: ;   {runtime_call Stub::method_entry_barrier}
+  0x000001e43ccd1aac: 7405 e88d | 278e ff48 | 8974 2430 | 4889 7c24 | 284c 894c | 2448 4983 | f900 488d | 4424 4848 
+  0x000001e43ccd1acc: 0f44 4424 | 4848 8944 | 2420 4d8b | c848 8954 | 2438 4883 | fa00 4c8d | 4424 384c | 0f44 4424 
+  0x000001e43ccd1aec: ;   {oop(a 'java/lang/Class'{0x00000007ffc7e430} = 'java/lang/System')}
+  0x000001e43ccd1aec: 3849 be30 | e4c7 ff07 | 0000 004c | 8974 2468 | 4c8d 7424 | 6849 8bd6 
+
+  0x000001e43ccd1b04: ;   {internal_word}
+  0x000001e43ccd1b04: c5f8 7749 | ba04 1bcd | 3ce4 0100 | 004d 8997 | 3004 0000 | 4989 a728 | 0400 0049 | 8d8f 4804 
+  0x000001e43ccd1b24: 0000 41c7 | 87d4 0400 | 0004 0000 
+
+  0x000001e43ccd1b30: ;   {runtime_call}
+  0x000001e43ccd1b30: 0048 b87d | db85 12f8 | 7f00 00ff | d0c5 f877 | 41c7 87d4 | 0400 0005 | 0000 00f0 | 8344 24c0 
+  0x000001e43ccd1b50: 0049 3b6f | 280f 870e | 0000 0041 | 83bf d004 | 0000 000f | 8423 0000 | 00c5 f877 | 498b cf4c 
+  0x000001e43ccd1b70: 8be4 4883 | ec20 4883 
+
+  0x000001e43ccd1b78: ;   {runtime_call}
+  0x000001e43ccd1b78: e4f0 48b8 | d0cc e953 | ff7f 0000 | ffd0 498b | e44d 33e4 | 41c7 87d4 | 0400 0008 | 0000 0041 
+  0x000001e43ccd1b98: 83bf 5005 | 0000 020f | 8459 0000 | 0049 c787 | 2804 0000 | 0000 0000 | 49c7 8730 | 0400 0000 
+  0x000001e43ccd1bb8: 0000 00c5 | f877 498b | 8fb8 0400 | 00c7 8100 | 0100 0000 | 0000 00c9 
+
+  0x000001e43ccd1bd0: ;   {poll_return}
+  0x000001e43ccd1bd0: 41f6 4728 
+
+  0x000001e43ccd1bd4: ;   {internal_word}
+  0x000001e43ccd1bd4: 0174 1649 | bad0 1bcd | 3ce4 0100 | 004d 8997 | e004 0000 
+
+  0x000001e43ccd1be8: ;   {runtime_call SafepointBlob}
+  0x000001e43ccd1be8: e973 f38f | ff49 837f | 0800 0f85 | 0100 0000 
+
+  0x000001e43ccd1bf8: ;   {runtime_call Stub::forward_exception}
+  0x000001e43ccd1bf8: c3e9 e2f5 | 8aff c5f8 | 774c 8be4 | 4883 ec20 | 4883 e4f0 
+
+  0x000001e43ccd1c0c: ;   {runtime_call}
+  0x000001e43ccd1c0c: 48b8 6031 | 2354 ff7f | 0000 ffd0 | 498b e44d | 33e4 eb85 
+[/MachCode]
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+-------------------------- Assembly (native nmethod) ---------------------------
+
+Compiled method (n/a) 28   21     n 0       java.lang.invoke.MethodHandle::linkToStatic(LLL)L (native)
+ total in heap  [0x000001e43ccd1c88,0x000001e43ccd1da0] = 280
+ main code      [0x000001e43ccd1d80,0x000001e43ccd1d9d] = 29
+ stub code      [0x000001e43ccd1d9d,0x000001e43ccd1da0] = 3
+ mutable data [0x000001e4524e2c20,0x000001e4524e2c28] = 8
+ relocation     [0x000001e4524e2c20,0x000001e4524e2c28] = 8
+
+[Constant Pool (empty)]
+
+[MachCode]
+[Verified Entry Point]
+  # {method} {0x000001e45301c718} 'linkToStatic' '(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/invoke/MemberName;)Ljava/lang/Object;' in 'java/lang/invoke/MethodHandle'
+  # parm0:    rdx:rdx   = 'java/lang/Object'
+  # parm1:    r8:r8     = 'java/lang/Object'
+  # parm2:    r9:r9     = 'java/lang/invoke/MemberName'
+  #           [sp+0x0]  (sp of caller)
+  0x000001e43ccd1d80: 418b 5924 | 48c1 e303 | 488b 5b10 | 4885 db0f | 8403 0000 | 00ff 6340 
+
+  0x000001e43ccd1d98: ;   {runtime_call Shared Runtime throw_AbstractMethodError_blob}
+  0x000001e43ccd1d98: e943 d98f | fff4 f4f4 
+[/MachCode]
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+-------------------------- Assembly (native nmethod) ---------------------------
+
+Compiled method (n/a) 28   26     n 0       jdk.internal.misc.Unsafe::compareAndSetLong (native)
+ total in heap  [0x000001e43ccd2288,0x000001e43ccd2518] = 656
+ main code      [0x000001e43ccd2380,0x000001e43ccd2518] = 408
+ mutable data [0x000001e4524e54a0,0x000001e4524e54b8] = 24
+ relocation     [0x000001e4524e54a0,0x000001e4524e54b8] = 24
+
+[Constant Pool (empty)]
+
+[MachCode]
+[Entry Point]
+  # {method} {0x000000008c491a28} 'compareAndSetLong' '(Ljava/lang/Object;JJJ)Z' in 'jdk/internal/misc/Unsafe'
+  # this:     rdx:rdx   = 'jdk/internal/misc/Unsafe'
+  # parm0:    r8:r8     = 'java/lang/Object'
+  # parm1:    r9:r9     = long
+  # parm2:    rdi:rdi   = long
+  # parm3:    rsi:rsi   = long
+  #           [sp+0x80]  (sp of caller)
+  0x000001e43ccd2380: 6690 448b | 5208 443b 
+
+  0x000001e43ccd2388: ;   {runtime_call Shared Runtime ic_miss_blob}
+  0x000001e43ccd2388: 5008 0f85 | 50c7 8fff 
+[Verified Entry Point]
+  0x000001e43ccd2390: 8984 2400 | 80ff ff55 | 488b ec48 | 83ec 7090 | 4181 7f20 | 0000 0000 
+
+  0x000001e43ccd23a8: ;   {runtime_call Stub::method_entry_barrier}
+  0x000001e43ccd23a8: 7405 e891 | 1e8e ff48 | 8974 2428 | 4889 7c24 | 204c 8944 | 2438 4983 | f800 4c8d | 4424 384c 
+  0x000001e43ccd23c8: 0f44 4424 | 3848 8954 | 2430 4883 | fa00 488d | 5424 3048 | 0f44 5424 | 30c5 f877 
+
+  0x000001e43ccd23e4: ;   {internal_word}
+  0x000001e43ccd23e4: 49ba e123 | cd3c e401 | 0000 4d89 | 9730 0400 | 0049 89a7 | 2804 0000 | 498d 8f48 | 0400 0041 
+  0x000001e43ccd2404: c787 d404 | 0000 0400 
+
+  0x000001e43ccd240c: ;   {runtime_call}
+  0x000001e43ccd240c: 0000 48b8 | 5039 3d54 | ff7f 0000 | ffd0 c5f8 | 7725 ff00 | 0000 0f95 | c041 c787 | d404 0000 
+  0x000001e43ccd242c: 0500 0000 | f083 4424 | c000 493b | 6f28 0f87 | 0e00 0000 | 4183 bfd0 | 0400 0000 | 0f84 2b00 
+  0x000001e43ccd244c: 0000 c5f8 | 7748 8945 | f849 8bcf | 4c8b e448 | 83ec 2048 
+
+  0x000001e43ccd2460: ;   {runtime_call}
+  0x000001e43ccd2460: 83e4 f048 | b8d0 cce9 | 53ff 7f00 | 00ff d049 | 8be4 4d33 | e448 8b45 | f841 c787 | d404 0000 
+  0x000001e43ccd2480: 0800 0000 | 4183 bf50 | 0500 0002 | 0f84 5900 | 0000 49c7 | 8728 0400 | 0000 0000 | 0049 c787 
+  0x000001e43ccd24a0: 3004 0000 | 0000 0000 | c5f8 7749 | 8b8f b804 | 0000 c781 | 0001 0000 | 0000 0000 
+
+  0x000001e43ccd24bc: ;   {poll_return}
+  0x000001e43ccd24bc: c941 f647 | 2801 7416 
+
+  0x000001e43ccd24c4: ;   {internal_word}
+  0x000001e43ccd24c4: 49ba bd24 | cd3c e401 | 0000 4d89 | 97e0 0400 
+
+  0x000001e43ccd24d4: ;   {runtime_call SafepointBlob}
+  0x000001e43ccd24d4: 00e9 86ea | 8fff 4983 | 7f08 000f | 8501 0000 
+
+  0x000001e43ccd24e4: ;   {runtime_call Stub::forward_exception}
+  0x000001e43ccd24e4: 00c3 e9f5 | ec8a ffc5 | f877 4889 | 45f8 4c8b | e448 83ec | 2048 83e4 
+
+  0x000001e43ccd24fc: ;   {runtime_call}
+  0x000001e43ccd24fc: f048 b860 | 3123 54ff | 7f00 00ff | d049 8be4 | 4d33 e448 | 8b45 f8e9 | 7aff ffff 
+[/MachCode]
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+-------------------------- Assembly (native nmethod) ---------------------------
+
+Compiled method (n/a) 29   27     n 0       java.lang.invoke.MethodHandle::linkToStatic(LLLL)L (native)
+ total in heap  [0x000001e43ccd2588,0x000001e43ccd26a0] = 280
+ main code      [0x000001e43ccd2680,0x000001e43ccd269c] = 28
+ stub code      [0x000001e43ccd269c,0x000001e43ccd26a0] = 4
+ mutable data [0x000001e4524e2d00,0x000001e4524e2d08] = 8
+ relocation     [0x000001e4524e2d00,0x000001e4524e2d08] = 8
+
+[Constant Pool (empty)]
+
+[MachCode]
+[Verified Entry Point]
+  # {method} {0x000001e45301de78} 'linkToStatic' '(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/invoke/MemberName;)Ljava/lang/Object;' in 'java/lang/invoke/MethodHandle'
+  # parm0:    rdx:rdx   = 'java/lang/Object'
+  # parm1:    r8:r8     = 'java/lang/Object'
+  # parm2:    r9:r9     = 'java/lang/Object'
+  # parm3:    rdi:rdi   = 'java/lang/invoke/MemberName'
+  #           [sp+0x0]  (sp of caller)
+  0x000001e43ccd2680: 8b5f 2448 | c1e3 0348 | 8b5b 1048 | 85db 0f84 | 0300 0000 
+
+  0x000001e43ccd2694: ;   {runtime_call Shared Runtime throw_AbstractMethodError_blob}
+  0x000001e43ccd2694: ff63 40e9 | 44d0 8fff 
+[Stub Code]
+  0x000001e43ccd269c: f4f4 f4f4 
+[/MachCode]
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+-------------------------- Assembly (native nmethod) ---------------------------
+
+Compiled method (n/a) 29   29     n 0       java.lang.invoke.MethodHandle::invokeBasic(LL)L (native)
+ total in heap  [0x000001e43ccd2b88,0x000001e43ccd2cb0] = 296
+ main code      [0x000001e43ccd2c80,0x000001e43ccd2caa] = 42
+ stub code      [0x000001e43ccd2caa,0x000001e43ccd2cb0] = 6
+ mutable data [0x000001e4524e2b90,0x000001e4524e2b98] = 8
+ relocation     [0x000001e4524e2b90,0x000001e4524e2b98] = 8
+
+[Constant Pool (empty)]
+
+[MachCode]
+[Verified Entry Point]
+  # {method} {0x000001e45301e7d0} 'invokeBasic' '(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;' in 'java/lang/invoke/MethodHandle'
+  # this:     rdx:rdx   = 'java/lang/invoke/MethodHandle'
+  # parm0:    r8:r8     = 'java/lang/Object'
+  # parm1:    r9:r9     = 'java/lang/Object'
+  #           [sp+0x0]  (sp of caller)
+  0x000001e43ccd2c80: 8b5a 1448 | c1e3 038b | 5b28 48c1 | e303 8b5b | 2448 c1e3 | 0348 8b5b | 1048 85db | 0f84 0300 
+  0x000001e43ccd2ca0: 0000 ff63 
+
+  0x000001e43ccd2ca4: ;   {runtime_call Shared Runtime throw_AbstractMethodError_blob}
+  0x000001e43ccd2ca4: 40e9 36ca | 8fff f4f4 | f4f4 f4f4 
+[/MachCode]
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+-------------------------- Assembly (native nmethod) ---------------------------
+
+Compiled method (n/a) 29   30     n 0       java.lang.invoke.MethodHandle::linkToSpecial(LLLL)L (native)
+ total in heap  [0x000001e43ccd2e88,0x000001e43ccd2fa0] = 280
+ main code      [0x000001e43ccd2f80,0x000001e43ccd2f9f] = 31
+ stub code      [0x000001e43ccd2f9f,0x000001e43ccd2fa0] = 1
+ mutable data [0x000001e4524e2b60,0x000001e4524e2b68] = 8
+ relocation     [0x000001e4524e2b60,0x000001e4524e2b68] = 8
+
+[Constant Pool (empty)]
+
+[MachCode]
+[Verified Entry Point]
+  # {method} {0x000001e45301e8e8} 'linkToSpecial' '(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/invoke/MemberName;)Ljava/lang/Object;' in 'java/lang/invoke/MethodHandle'
+  # parm0:    rdx:rdx   = 'java/lang/Object'
+  # parm1:    r8:r8     = 'java/lang/Object'
+  # parm2:    r9:r9     = 'java/lang/Object'
+  # parm3:    rdi:rdi   = 'java/lang/invoke/MemberName'
+  #           [sp+0x0]  (sp of caller)
+  0x000001e43ccd2f80: 483b 028b | 5f24 48c1 | e303 488b | 5b10 4885 | db0f 8403 | 0000 00ff 
+
+  0x000001e43ccd2f98: ;   {runtime_call Shared Runtime throw_AbstractMethodError_blob}
+  0x000001e43ccd2f98: 6340 e941 | c78f fff4 
+[/MachCode]
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+-------------------------- Assembly (native nmethod) ---------------------------
+
+Compiled method (n/a) 30   31     n 0       java.lang.invoke.MethodHandle::linkToStatic(LLLLL)L (native)
+ total in heap  [0x000001e43ccd3188,0x000001e43ccd32a0] = 280
+ main code      [0x000001e43ccd3280,0x000001e43ccd329c] = 28
+ stub code      [0x000001e43ccd329c,0x000001e43ccd32a0] = 4
+ mutable data [0x000001e4524e2bc0,0x000001e4524e2bc8] = 8
+ relocation     [0x000001e4524e2bc0,0x000001e4524e2bc8] = 8
+
+[Constant Pool (empty)]
+
+[MachCode]
+[Verified Entry Point]
+  # {method} {0x000001e45301f400} 'linkToStatic' '(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/invoke/MemberName;)Ljava/lang/Object;' in 'java/lang/invoke/MethodHandle'
+  # parm0:    rdx:rdx   = 'java/lang/Object'
+  # parm1:    r8:r8     = 'java/lang/Object'
+  # parm2:    r9:r9     = 'java/lang/Object'
+  # parm3:    rdi:rdi   = 'java/lang/Object'
+  # parm4:    rsi:rsi   = 'java/lang/invoke/MemberName'
+  #           [sp+0x0]  (sp of caller)
+  0x000001e43ccd3280: 8b5e 2448 | c1e3 0348 | 8b5b 1048 | 85db 0f84 | 0300 0000 
+
+  0x000001e43ccd3294: ;   {runtime_call Shared Runtime throw_AbstractMethodError_blob}
+  0x000001e43ccd3294: ff63 40e9 | 44c4 8fff 
+[Stub Code]
+  0x000001e43ccd329c: f4f4 f4f4 
+[/MachCode]
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+-------------------------- Assembly (native nmethod) ---------------------------
+
+Compiled method (n/a) 30   33     n 0       java.lang.invoke.MethodHandle::invokeBasic(LLLL)L (native)
+ total in heap  [0x000001e43ccd3488,0x000001e43ccd35b0] = 296
+ main code      [0x000001e43ccd3580,0x000001e43ccd35aa] = 42
+ stub code      [0x000001e43ccd35aa,0x000001e43ccd35b0] = 6
+ mutable data [0x000001e4524e2e80,0x000001e4524e2e88] = 8
+ relocation     [0x000001e4524e2e80,0x000001e4524e2e88] = 8
+
+[Constant Pool (empty)]
+
+[MachCode]
+[Verified Entry Point]
+  # {method} {0x000001e45301fa98} 'invokeBasic' '(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;' in 'java/lang/invoke/MethodHandle'
+  # this:     rdx:rdx   = 'java/lang/invoke/MethodHandle'
+  # parm0:    r8:r8     = 'java/lang/Object'
+  # parm1:    r9:r9     = 'java/lang/Object'
+  # parm2:    rdi:rdi   = 'java/lang/Object'
+  # parm3:    rsi:rsi   = 'java/lang/Object'
+  #           [sp+0x0]  (sp of caller)
+  0x000001e43ccd3580: 8b5a 1448 | c1e3 038b | 5b28 48c1 | e303 8b5b | 2448 c1e3 | 0348 8b5b | 1048 85db | 0f84 0300 
+  0x000001e43ccd35a0: 0000 ff63 
+
+  0x000001e43ccd35a4: ;   {runtime_call Shared Runtime throw_AbstractMethodError_blob}
+  0x000001e43ccd35a4: 40e9 36c1 | 8fff f4f4 | f4f4 f4f4 
+[/MachCode]
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+-------------------------- Assembly (native nmethod) ---------------------------
+
+Compiled method (n/a) 31   35     n 0       java.lang.Object::clone (native)
+ total in heap  [0x000001e43ccd3a88,0x000001e43ccd3e30] = 936
+ main code      [0x000001e43ccd3b80,0x000001e43ccd3e2a] = 682
+ stub code      [0x000001e43ccd3e2a,0x000001e43ccd3e30] = 6
+ mutable data [0x000001e4523f01a0,0x000001e4523f01c0] = 32
+ relocation     [0x000001e4523f01a0,0x000001e4523f01c0] = 32
+
+[Constant Pool (empty)]
+
+[MachCode]
+[Entry Point]
+  # {method} {0x000000008c183658} 'clone' '()Ljava/lang/Object;' in 'java/lang/Object'
+  #           [sp+0x70]  (sp of caller)
+  0x000001e43ccd3b80: 6690 448b | 5208 443b 
+
+  0x000001e43ccd3b88: ;   {runtime_call Shared Runtime ic_miss_blob}
+  0x000001e43ccd3b88: 5008 0f85 | 50af 8fff 
+[Verified Entry Point]
+  0x000001e43ccd3b90: 8984 2400 | 80ff ff55 | 488b ec48 | 83ec 6090 | 4181 7f20 | 0000 0000 
+
+  0x000001e43ccd3ba8: ;   {runtime_call Stub::method_entry_barrier}
+  0x000001e43ccd3ba8: 7405 e891 | 068e ff48 | 8954 2420 | 4883 fa00 | 488d 5424 | 2048 0f44 | 5424 20c5 
+
+  0x000001e43ccd3bc4: ;   {internal_word}
+  0x000001e43ccd3bc4: f877 49ba | c33b cd3c | e401 0000 | 4d89 9730 | 0400 0049 | 89a7 2804 | 0000 498d | 8f48 0400 
+  0x000001e43ccd3be4: 0041 c787 | d404 0000 | 0400 0000 
+
+  0x000001e43ccd3bf0: ;   {runtime_call}
+  0x000001e43ccd3bf0: 48b8 00e6 | f253 ff7f | 0000 ffd0 | c5f8 7741 | c787 d404 | 0000 0500 | 0000 f083 | 4424 c000 
+  0x000001e43ccd3c10: 493b 6f28 | 0f87 0e00 | 0000 4183 | bfd0 0400 | 0000 0f84 | 2b00 0000 | c5f8 7748 | 8945 f849 
+  0x000001e43ccd3c30: 8bcf 4c8b | e448 83ec | 2048 83e4 
+
+  0x000001e43ccd3c3c: ;   {runtime_call}
+  0x000001e43ccd3c3c: f048 b8d0 | cce9 53ff | 7f00 00ff | d049 8be4 | 4d33 e448 | 8b45 f841 | c787 d404 | 0000 0800 
+  0x000001e43ccd3c5c: 0000 4183 | bf50 0500 | 0002 0f84 | 9101 0000 | 49c7 8728 | 0400 0000 | 0000 0049 | c787 3004 
+  0x000001e43ccd3c7c: 0000 0000 | 0000 c5f8 | 7748 85c0 | 0f84 2f01 | 0000 a803 | 0f85 0800 | 0000 488b | 00e9 1f01 
+  0x000001e43ccd3c9c: 0000 a801 | 0f85 0900 | 0000 488b | 40fe e90e | 0100 0048 | 8b40 ff41 | 807f 4800 | 0f84 ff00 
+  0x000001e43ccd3cbc: 0000 4883 | f800 0f84 | f500 0000 | 498b 4f38 | 4885 c90f | 8414 0000 | 0048 83e9 | 0849 894f 
+  0x000001e43ccd3cdc: 3849 034f | 4048 8901 | e9d4 0000 | 0048 83ec | 7048 8904 | 2448 894c | 2408 4889 | 5424 104c 
+  0x000001e43ccd3cfc: 8944 2418 | 4c89 4c24 | 204c 8954 | 2428 4c89 | 5c24 30c5 | fb11 4424 | 40c5 fb11 | 4c24 48c5 
+  0x000001e43ccd3d1c: fb11 5424 | 50c5 fb11 | 5c24 58c5 | fb11 6424 | 60c5 fb11 | 6c24 6849 | 8bd7 488b | c848 83ec 
+  0x000001e43ccd3d3c: ;   {other}
+  0x000001e43ccd3d3c: 2040 f6c4 | 0f0f 8419 | 0000 0048 
+
+  0x000001e43ccd3d48: ;   {runtime_call}
+  0x000001e43ccd3d48: 83ec 0848 | b850 8adc | 53ff 7f00 | 00ff d048 | 83c4 08e9 | 0c00 0000 
+
+  0x000001e43ccd3d60: ;   {runtime_call}
+  0x000001e43ccd3d60: 48b8 508a | dc53 ff7f | 0000 ffd0 | 4883 c420 | c5fb 106c | 2468 c5fb | 1064 2460 | c5fb 105c 
+  0x000001e43ccd3d80: 2458 c5fb | 1054 2450 | c5fb 104c | 2448 c5fb | 1044 2440 | 4c8b 5c24 | 304c 8b54 | 2428 4c8b 
+  0x000001e43ccd3da0: 4c24 204c | 8b44 2418 | 488b 5424 | 1048 8b4c | 2408 488b | 0424 4883 | c470 c5f8 | 7749 8b8f 
+  0x000001e43ccd3dc0: b804 0000 | c781 0001 | 0000 0000 
+
+  0x000001e43ccd3dcc: ;   {poll_return}
+  0x000001e43ccd3dcc: 0000 c941 | f647 2801 
+
+  0x000001e43ccd3dd4: ;   {internal_word}
+  0x000001e43ccd3dd4: 7416 49ba | cf3d cd3c | e401 0000 | 4d89 97e0 
+
+  0x000001e43ccd3de4: ;   {runtime_call SafepointBlob}
+  0x000001e43ccd3de4: 0400 00e9 | 74d1 8fff | 4983 7f08 | 000f 8501 | 0000 00c3 
+
+  0x000001e43ccd3df8: ;   {runtime_call Stub::forward_exception}
+  0x000001e43ccd3df8: e9e3 d38a | ffc5 f877 | 4889 45f8 | 4c8b e448 | 83ec 2048 
+
+  0x000001e43ccd3e0c: ;   {runtime_call}
+  0x000001e43ccd3e0c: 83e4 f048 | b860 3123 | 54ff 7f00 | 00ff d049 | 8be4 4d33 | e448 8b45 | f8e9 42fe | ffff f4f4 
+  0x000001e43ccd3e2c: f4f4 f4f4 
+[/MachCode]
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+-------------------------- Assembly (native nmethod) ---------------------------
+
+Compiled method (n/a) 32   38     n 0       java.lang.invoke.MethodHandle::invokeBasic(L)L (native)
+ total in heap  [0x000001e43ccd4488,0x000001e43ccd45b0] = 296
+ main code      [0x000001e43ccd4580,0x000001e43ccd45aa] = 42
+ stub code      [0x000001e43ccd45aa,0x000001e43ccd45b0] = 6
+ mutable data [0x000001e4524e2ec0,0x000001e4524e2ec8] = 8
+ relocation     [0x000001e4524e2ec0,0x000001e4524e2ec8] = 8
+
+[Constant Pool (empty)]
+
+[MachCode]
+[Verified Entry Point]
+  # {method} {0x000001e453026f58} 'invokeBasic' '(Ljava/lang/Object;)Ljava/lang/Object;' in 'java/lang/invoke/MethodHandle'
+  # this:     rdx:rdx   = 'java/lang/invoke/MethodHandle'
+  # parm0:    r8:r8     = 'java/lang/Object'
+  #           [sp+0x0]  (sp of caller)
+  0x000001e43ccd4580: 8b5a 1448 | c1e3 038b | 5b28 48c1 | e303 8b5b | 2448 c1e3 | 0348 8b5b | 1048 85db | 0f84 0300 
+  0x000001e43ccd45a0: 0000 ff63 
+
+  0x000001e43ccd45a4: ;   {runtime_call Shared Runtime throw_AbstractMethodError_blob}
+  0x000001e43ccd45a4: 40e9 36b1 | 8fff f4f4 | f4f4 f4f4 
+[/MachCode]
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+-------------------------- Assembly (native nmethod) ---------------------------
+
+Compiled method (n/a) 33   39     n 0       java.lang.invoke.MethodHandle::linkToSpecial(LLL)L (native)
+ total in heap  [0x000001e43ccd4788,0x000001e43ccd48a0] = 280
+ main code      [0x000001e43ccd4880,0x000001e43ccd48a0] = 32
+ mutable data [0x000001e4524e2c10,0x000001e4524e2c18] = 8
+ relocation     [0x000001e4524e2c10,0x000001e4524e2c18] = 8
+
+[Constant Pool (empty)]
+
+[MachCode]
+[Verified Entry Point]
+  # {method} {0x000001e453027070} 'linkToSpecial' '(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/invoke/MemberName;)Ljava/lang/Object;' in 'java/lang/invoke/MethodHandle'
+  # parm0:    rdx:rdx   = 'java/lang/Object'
+  # parm1:    r8:r8     = 'java/lang/Object'
+  # parm2:    r9:r9     = 'java/lang/invoke/MemberName'
+  #           [sp+0x0]  (sp of caller)
+  0x000001e43ccd4880: 483b 0241 | 8b59 2448 | c1e3 0348 | 8b5b 1048 | 85db 0f84 | 0300 0000 
+
+  0x000001e43ccd4898: ;   {runtime_call Shared Runtime throw_AbstractMethodError_blob}
+  0x000001e43ccd4898: ff63 40e9 | 40ae 8fff 
+[/MachCode]
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+mapped=assembly_probe.dll
+-------------------------- Assembly (native nmethod) ---------------------------
+
+Compiled method (n/a) 33   41     n 0       java.lang.invoke.MethodHandle::linkToStatic(L)L (native)
+ total in heap  [0x000001e43ccd4d88,0x000001e43ccd4ea0] = 280
+ main code      [0x000001e43ccd4e80,0x000001e43ccd4e9c] = 28
+ stub code      [0x000001e43ccd4e9c,0x000001e43ccd4ea0] = 4
+ mutable data [0x000001e4524e2c90,0x000001e4524e2c98] = 8
+ relocation     [0x000001e4524e2c90,0x000001e4524e2c98] = 8
+
+[Constant Pool (empty)]
+
+[MachCode]
+[Verified Entry Point]
+  # {method} {0x000001e453029748} 'linkToStatic' '(Ljava/lang/invoke/MemberName;)Ljava/lang/Object;' in 'java/lang/invoke/MethodHandle'
+  # parm0:    rdx:rdx   = 'java/lang/invoke/MemberName'
+  #           [sp+0x0]  (sp of caller)
+  0x000001e43ccd4e80: 8b5a 2448 | c1e3 0348 | 8b5b 1048 | 85db 0f84 | 0300 0000 
+
+  0x000001e43ccd4e94: ;   {runtime_call Shared Runtime throw_AbstractMethodError_blob}
+  0x000001e43ccd4e94: ff63 40e9 | 44a8 8fff 
+[Stub Code]
+  0x000001e43ccd4e9c: f4f4 f4f4 
+[/MachCode]
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+-------------------------- Assembly (native nmethod) ---------------------------
+
+Compiled method (n/a) 33   42     n 0       java.lang.invoke.MethodHandle::invokeBasic()L (native)
+ total in heap  [0x000001e43ccd5088,0x000001e43ccd51b0] = 296
+ main code      [0x000001e43ccd5180,0x000001e43ccd51aa] = 42
+ stub code      [0x000001e43ccd51aa,0x000001e43ccd51b0] = 6
+ mutable data [0x000001e4524e2db0,0x000001e4524e2db8] = 8
+ relocation     [0x000001e4524e2db0,0x000001e4524e2db8] = 8
+
+[Constant Pool (empty)]
+
+[MachCode]
+[Verified Entry Point]
+  # {method} {0x000001e4530299e0} 'invokeBasic' '()Ljava/lang/Object;' in 'java/lang/invoke/MethodHandle'
+  #           [sp+0x0]  (sp of caller)
+  0x000001e43ccd5180: 8b5a 1448 | c1e3 038b | 5b28 48c1 | e303 8b5b | 2448 c1e3 | 0348 8b5b | 1048 85db | 0f84 0300 
+  0x000001e43ccd51a0: 0000 ff63 
+
+  0x000001e43ccd51a4: ;   {runtime_call Shared Runtime throw_AbstractMethodError_blob}
+  0x000001e43ccd51a4: 40e9 36a5 | 8fff f4f4 | f4f4 f4f4 
+[/MachCode]
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+-------------------------- Assembly (native nmethod) ---------------------------
+
+Compiled method (n/a) 33   43     n 0       java.lang.invoke.MethodHandle::linkToSpecial(LL)L (native)
+ total in heap  [0x000001e43ccd5388,0x000001e43ccd54a0] = 280
+ main code      [0x000001e43ccd5480,0x000001e43ccd54a0] = 32
+ mutable data [0x000001e4524e2ce0,0x000001e4524e2ce8] = 8
+ relocation     [0x000001e4524e2ce0,0x000001e4524e2ce8] = 8
+
+[Constant Pool (empty)]
+
+[MachCode]
+[Verified Entry Point]
+  # {method} {0x000001e453029af8} 'linkToSpecial' '(Ljava/lang/Object;Ljava/lang/invoke/MemberName;)Ljava/lang/Object;' in 'java/lang/invoke/MethodHandle'
+  # parm0:    rdx:rdx   = 'java/lang/Object'
+  # parm1:    r8:r8     = 'java/lang/invoke/MemberName'
+  #           [sp+0x0]  (sp of caller)
+  0x000001e43ccd5480: 483b 0241 | 8b58 2448 | c1e3 0348 | 8b5b 1048 | 85db 0f84 | 0300 0000 
+
+  0x000001e43ccd5498: ;   {runtime_call Shared Runtime throw_AbstractMethodError_blob}
+  0x000001e43ccd5498: ff63 40e9 | 40a2 8fff 
+[/MachCode]
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+-------------------------- Assembly (native nmethod) ---------------------------
+
+Compiled method (n/a) 34   47     n 0       java.lang.Object::getClass (native)
+ total in heap  [0x000001e43ccd5f88,0x000001e43ccd6330] = 936
+ main code      [0x000001e43ccd6080,0x000001e43ccd632a] = 682
+ stub code      [0x000001e43ccd632a,0x000001e43ccd6330] = 6
+ mutable data [0x000001e4523f07d0,0x000001e4523f07f0] = 32
+ relocation     [0x000001e4523f07d0,0x000001e4523f07f0] = 32
+
+[Constant Pool (empty)]
+
+[MachCode]
+[Entry Point]
+  # {method} {0x000000008c4b41d8} 'getClass' '()Ljava/lang/Class;' in 'java/lang/Object'
+  #           [sp+0x70]  (sp of caller)
+  0x000001e43ccd6080: 6690 448b | 5208 443b 
+
+  0x000001e43ccd6088: ;   {runtime_call Shared Runtime ic_miss_blob}
+  0x000001e43ccd6088: 5008 0f85 | 508a 8fff 
+[Verified Entry Point]
+  0x000001e43ccd6090: 8984 2400 | 80ff ff55 | 488b ec48 | 83ec 6090 | 4181 7f20 | 0000 0000 
+
+  0x000001e43ccd60a8: ;   {runtime_call Stub::method_entry_barrier}
+  0x000001e43ccd60a8: 7405 e891 | e18d ff48 | 8954 2420 | 4883 fa00 | 488d 5424 | 2048 0f44 | 5424 20c5 
+
+  0x000001e43ccd60c4: ;   {internal_word}
+  0x000001e43ccd60c4: f877 49ba | c360 cd3c | e401 0000 | 4d89 9730 | 0400 0049 | 89a7 2804 | 0000 498d | 8f48 0400 
+  0x000001e43ccd60e4: 0041 c787 | d404 0000 | 0400 0000 
+
+  0x000001e43ccd60f0: ;   {runtime_call}
+  0x000001e43ccd60f0: 48b8 8c43 | 8512 f87f | 0000 ffd0 | c5f8 7741 | c787 d404 | 0000 0500 | 0000 f083 | 4424 c000 
+  0x000001e43ccd6110: 493b 6f28 | 0f87 0e00 | 0000 4183 | bfd0 0400 | 0000 0f84 | 2b00 0000 | c5f8 7748 | 8945 f849 
+  0x000001e43ccd6130: 8bcf 4c8b | e448 83ec | 2048 83e4 
+
+  0x000001e43ccd613c: ;   {runtime_call}
+  0x000001e43ccd613c: f048 b8d0 | cce9 53ff | 7f00 00ff | d049 8be4 | 4d33 e448 | 8b45 f841 | c787 d404 | 0000 0800 
+  0x000001e43ccd615c: 0000 4183 | bf50 0500 | 0002 0f84 | 9101 0000 | 49c7 8728 | 0400 0000 | 0000 0049 | c787 3004 
+  0x000001e43ccd617c: 0000 0000 | 0000 c5f8 | 7748 85c0 | 0f84 2f01 | 0000 a803 | 0f85 0800 | 0000 488b | 00e9 1f01 
+  0x000001e43ccd619c: 0000 a801 | 0f85 0900 | 0000 488b | 40fe e90e | 0100 0048 | 8b40 ff41 | 807f 4800 | 0f84 ff00 
+  0x000001e43ccd61bc: 0000 4883 | f800 0f84 | f500 0000 | 498b 4f38 | 4885 c90f | 8414 0000 | 0048 83e9 | 0849 894f 
+  0x000001e43ccd61dc: 3849 034f | 4048 8901 | e9d4 0000 | 0048 83ec | 7048 8904 | 2448 894c | 2408 4889 | 5424 104c 
+  0x000001e43ccd61fc: 8944 2418 | 4c89 4c24 | 204c 8954 | 2428 4c89 | 5c24 30c5 | fb11 4424 | 40c5 fb11 | 4c24 48c5 
+  0x000001e43ccd621c: fb11 5424 | 50c5 fb11 | 5c24 58c5 | fb11 6424 | 60c5 fb11 | 6c24 6849 | 8bd7 488b | c848 83ec 
+  0x000001e43ccd623c: ;   {other}
+  0x000001e43ccd623c: 2040 f6c4 | 0f0f 8419 | 0000 0048 
+
+  0x000001e43ccd6248: ;   {runtime_call}
+  0x000001e43ccd6248: 83ec 0848 | b850 8adc | 53ff 7f00 | 00ff d048 | 83c4 08e9 | 0c00 0000 
+
+  0x000001e43ccd6260: ;   {runtime_call}
+  0x000001e43ccd6260: 48b8 508a | dc53 ff7f | 0000 ffd0 | 4883 c420 | c5fb 106c | 2468 c5fb | 1064 2460 | c5fb 105c 
+  0x000001e43ccd6280: 2458 c5fb | 1054 2450 | c5fb 104c | 2448 c5fb | 1044 2440 | 4c8b 5c24 | 304c 8b54 | 2428 4c8b 
+  0x000001e43ccd62a0: 4c24 204c | 8b44 2418 | 488b 5424 | 1048 8b4c | 2408 488b | 0424 4883 | c470 c5f8 | 7749 8b8f 
+  0x000001e43ccd62c0: b804 0000 | c781 0001 | 0000 0000 
+
+  0x000001e43ccd62cc: ;   {poll_return}
+  0x000001e43ccd62cc: 0000 c941 | f647 2801 
+
+  0x000001e43ccd62d4: ;   {internal_word}
+  0x000001e43ccd62d4: 7416 49ba | cf62 cd3c | e401 0000 | 4d89 97e0 
+
+  0x000001e43ccd62e4: ;   {runtime_call SafepointBlob}
+  0x000001e43ccd62e4: 0400 00e9 | 74ac 8fff | 4983 7f08 | 000f 8501 | 0000 00c3 
+
+  0x000001e43ccd62f8: ;   {runtime_call Stub::forward_exception}
+  0x000001e43ccd62f8: e9e3 ae8a | ffc5 f877 | 4889 45f8 | 4c8b e448 | 83ec 2048 
+
+  0x000001e43ccd630c: ;   {runtime_call}
+  0x000001e43ccd630c: 83e4 f048 | b860 3123 | 54ff 7f00 | 00ff d049 | 8be4 4d33 | e448 8b45 | f8e9 42fe | ffff f4f4 
+  0x000001e43ccd632c: f4f4 f4f4 
+[/MachCode]
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+-------------------------- Assembly (native nmethod) ---------------------------
+
+Compiled method (n/a) 35   48     n 0       java.lang.invoke.MethodHandle::linkToStatic(LLLLLLL)L (native)
+ total in heap  [0x000001e43ccd6388,0x000001e43ccd64a8] = 288
+ main code      [0x000001e43ccd6480,0x000001e43ccd64a1] = 33
+ stub code      [0x000001e43ccd64a1,0x000001e43ccd64a8] = 7
+ mutable data [0x000001e4524e2dc0,0x000001e4524e2dc8] = 8
+ relocation     [0x000001e4524e2dc0,0x000001e4524e2dc8] = 8
+
+[Constant Pool (empty)]
+
+[MachCode]
+[Verified Entry Point]
+  # {method} {0x000001e45302afd0} 'linkToStatic' '(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/invoke/MemberName;)Ljava/lang/Object;' in 'java/lang/invoke/MethodHandle'
+  # parm0:    rdx:rdx   = 'java/lang/Object'
+  # parm1:    r8:r8     = 'java/lang/Object'
+  # parm2:    r9:r9     = 'java/lang/Object'
+  # parm3:    rdi:rdi   = 'java/lang/Object'
+  # parm4:    rsi:rsi   = 'java/lang/Object'
+  # parm5:    rcx:rcx   = 'java/lang/Object'
+  # parm6:    [sp+0x0]   = 'java/lang/invoke/MemberName'  (sp of caller)
+  0x000001e43ccd6480: 488b 5c24 | 088b 5b24 | 48c1 e303 | 488b 5b10 | 4885 db0f | 8403 0000 | 00ff 6340 
+
+  0x000001e43ccd649c: ;   {runtime_call Shared Runtime throw_AbstractMethodError_blob}
+  0x000001e43ccd649c: e93f 928f | fff4 f4f4 | f4f4 f4f4 
+[/MachCode]
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+-------------------------- Assembly (native nmethod) ---------------------------
+
+Compiled method (n/a) 36   50     n 0       java.lang.invoke.MethodHandle::linkToVirtual(LL)L (native)
+ total in heap  [0x000001e43ccd6688,0x000001e43ccd67b0] = 296
+ main code      [0x000001e43ccd6780,0x000001e43ccd67aa] = 42
+ stub code      [0x000001e43ccd67aa,0x000001e43ccd67b0] = 6
+ mutable data [0x000001e4524e2df0,0x000001e4524e2df8] = 8
+ relocation     [0x000001e4524e2df0,0x000001e4524e2df8] = 8
+
+[Constant Pool (empty)]
+
+[MachCode]
+[Verified Entry Point]
+  # {method} {0x000001e45302b460} 'linkToVirtual' '(Ljava/lang/Object;Ljava/lang/invoke/MemberName;)Ljava/lang/Object;' in 'java/lang/invoke/MethodHandle'
+  # parm0:    rdx:rdx   = 'java/lang/Object'
+  # parm1:    r8:r8     = 'java/lang/invoke/MemberName'
+  #           [sp+0x0]  (sp of caller)
+  0x000001e43ccd6780: 448b 5208 | 41bb 0000 | 008c 4d03 | d34d 8b58 | 104b 8b9c | dad8 0100 | 0048 85db | 0f84 0300 
+  0x000001e43ccd67a0: 0000 ff63 
+
+  0x000001e43ccd67a4: ;   {runtime_call Shared Runtime throw_AbstractMethodError_blob}
+  0x000001e43ccd67a4: 40e9 368f | 8fff f4f4 | f4f4 f4f4 
+[/MachCode]
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+-------------------------- Assembly (native nmethod) ---------------------------
+
+Compiled method (n/a) 36   51     n 0       jdk.internal.misc.Unsafe::compareAndSetReference (native)
+ total in heap  [0x000001e43ccd6988,0x000001e43ccd6c40] = 696
+ main code      [0x000001e43ccd6a80,0x000001e43ccd6c40] = 448
+ mutable data [0x000001e4524e6820,0x000001e4524e6838] = 24
+ relocation     [0x000001e4524e6820,0x000001e4524e6838] = 24
+
+[Constant Pool (empty)]
+
+[MachCode]
+[Entry Point]
+  # {method} {0x000000008c491ba8} 'compareAndSetReference' '(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Z' in 'jdk/internal/misc/Unsafe'
+  # this:     rdx:rdx   = 'jdk/internal/misc/Unsafe'
+  # parm0:    r8:r8     = 'java/lang/Object'
+  # parm1:    r9:r9     = long
+  # parm2:    rdi:rdi   = 'java/lang/Object'
+  # parm3:    rsi:rsi   = 'java/lang/Object'
+  #           [sp+0x80]  (sp of caller)
+  0x000001e43ccd6a80: 6690 448b | 5208 443b 
+
+  0x000001e43ccd6a88: ;   {runtime_call Shared Runtime ic_miss_blob}
+  0x000001e43ccd6a88: 5008 0f85 | 5080 8fff 
+[Verified Entry Point]
+  0x000001e43ccd6a90: 8984 2400 | 80ff ff55 | 488b ec48 | 83ec 7090 | 4181 7f20 | 0000 0000 
+
+  0x000001e43ccd6aa8: ;   {runtime_call Stub::method_entry_barrier}
+  0x000001e43ccd6aa8: 7405 e891 | d78d ff48 | 8974 2450 | 4883 fe00 | 488d 4424 | 5048 0f44 | 4424 5048 | 8944 2428 
+  0x000001e43ccd6ac8: 4889 7c24 | 4848 83ff | 0048 8d44 | 2448 480f | 4444 2448 | 4889 4424 | 204c 8944 | 2438 4983 
+  0x000001e43ccd6ae8: f800 4c8d | 4424 384c | 0f44 4424 | 3848 8954 | 2430 4883 | fa00 488d | 5424 3048 | 0f44 5424 
+  0x000001e43ccd6b08: 30c5 f877 
+
+  0x000001e43ccd6b0c: ;   {internal_word}
+  0x000001e43ccd6b0c: 49ba 096b | cd3c e401 | 0000 4d89 | 9730 0400 | 0049 89a7 | 2804 0000 | 498d 8f48 | 0400 0041 
+  0x000001e43ccd6b2c: c787 d404 | 0000 0400 
+
+  0x000001e43ccd6b34: ;   {runtime_call}
+  0x000001e43ccd6b34: 0000 48b8 | 3036 3d54 | ff7f 0000 | ffd0 c5f8 | 7725 ff00 | 0000 0f95 | c041 c787 | d404 0000 
+  0x000001e43ccd6b54: 0500 0000 | f083 4424 | c000 493b | 6f28 0f87 | 0e00 0000 | 4183 bfd0 | 0400 0000 | 0f84 2b00 
+  0x000001e43ccd6b74: 0000 c5f8 | 7748 8945 | f849 8bcf | 4c8b e448 | 83ec 2048 
+
+  0x000001e43ccd6b88: ;   {runtime_call}
+  0x000001e43ccd6b88: 83e4 f048 | b8d0 cce9 | 53ff 7f00 | 00ff d049 | 8be4 4d33 | e448 8b45 | f841 c787 | d404 0000 
+  0x000001e43ccd6ba8: 0800 0000 | 4183 bf50 | 0500 0002 | 0f84 5900 | 0000 49c7 | 8728 0400 | 0000 0000 | 0049 c787 
+  0x000001e43ccd6bc8: 3004 0000 | 0000 0000 | c5f8 7749 | 8b8f b804 | 0000 c781 | 0001 0000 | 0000 0000 
+
+  0x000001e43ccd6be4: ;   {poll_return}
+  0x000001e43ccd6be4: c941 f647 | 2801 7416 
+
+  0x000001e43ccd6bec: ;   {internal_word}
+  0x000001e43ccd6bec: 49ba e56b | cd3c e401 | 0000 4d89 | 97e0 0400 
+
+  0x000001e43ccd6bfc: ;   {runtime_call SafepointBlob}
+  0x000001e43ccd6bfc: 00e9 5ea3 | 8fff 4983 | 7f08 000f | 8501 0000 
+
+  0x000001e43ccd6c0c: ;   {runtime_call Stub::forward_exception}
+  0x000001e43ccd6c0c: 00c3 e9cd | a58a ffc5 | f877 4889 | 45f8 4c8b | e448 83ec | 2048 83e4 
+
+  0x000001e43ccd6c24: ;   {runtime_call}
+  0x000001e43ccd6c24: f048 b860 | 3123 54ff | 7f00 00ff | d049 8be4 | 4d33 e448 | 8b45 f8e9 | 7aff ffff 
+[/MachCode]
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+-------------------------- Assembly (native nmethod) ---------------------------
+
+Compiled method (n/a) 37   52     n 0       java.lang.invoke.MethodHandle::invokeBasic(LLLLLL)L (native)
+ total in heap  [0x000001e43ccd6c88,0x000001e43ccd6db0] = 296
+ main code      [0x000001e43ccd6d80,0x000001e43ccd6daa] = 42
+ stub code      [0x000001e43ccd6daa,0x000001e43ccd6db0] = 6
+ mutable data [0x000001e4524e2dd0,0x000001e4524e2dd8] = 8
+ relocation     [0x000001e4524e2dd0,0x000001e4524e2dd8] = 8
+
+[Constant Pool (empty)]
+
+[MachCode]
+[Verified Entry Point]
+  # {method} {0x000001e45302bb18} 'invokeBasic' '(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;' in 'java/lang/invoke/MethodHandle'
+  # this:     rdx:rdx   = 'java/lang/invoke/MethodHandle'
+  # parm0:    r8:r8     = 'java/lang/Object'
+  # parm1:    r9:r9     = 'java/lang/Object'
+  # parm2:    rdi:rdi   = 'java/lang/Object'
+  # parm3:    rsi:rsi   = 'java/lang/Object'
+  # parm4:    rcx:rcx   = 'java/lang/Object'
+  # parm5:    [sp+0x0]   = 'java/lang/Object'  (sp of caller)
+  0x000001e43ccd6d80: 8b5a 1448 | c1e3 038b | 5b28 48c1 | e303 8b5b | 2448 c1e3 | 0348 8b5b | 1048 85db | 0f84 0300 
+  0x000001e43ccd6da0: 0000 ff63 
+
+  0x000001e43ccd6da4: ;   {runtime_call Shared Runtime throw_AbstractMethodError_blob}
+  0x000001e43ccd6da4: 40e9 3689 | 8fff f4f4 | f4f4 f4f4 
+[/MachCode]
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+-------------------------- Assembly (native nmethod) ---------------------------
+
+Compiled method (n/a) 37   54     n 0       java.lang.invoke.MethodHandle::linkToSpecial(LL)V (native)
+ total in heap  [0x000001e43ccd6f88,0x000001e43ccd70a0] = 280
+ main code      [0x000001e43ccd7080,0x000001e43ccd70a0] = 32
+ mutable data [0x000001e4524e2bf0,0x000001e4524e2bf8] = 8
+ relocation     [0x000001e4524e2bf0,0x000001e4524e2bf8] = 8
+
+[Constant Pool (empty)]
+
+[MachCode]
+[Verified Entry Point]
+  # {method} {0x000001e45302d900} 'linkToSpecial' '(Ljava/lang/Object;Ljava/lang/invoke/MemberName;)V' in 'java/lang/invoke/MethodHandle'
+  # parm0:    rdx:rdx   = 'java/lang/Object'
+  # parm1:    r8:r8     = 'java/lang/invoke/MemberName'
+  #           [sp+0x0]  (sp of caller)
+  0x000001e43ccd7080: 483b 0241 | 8b58 2448 | c1e3 0348 | 8b5b 1048 | 85db 0f84 | 0300 0000 
+
+  0x000001e43ccd7098: ;   {runtime_call Shared Runtime throw_AbstractMethodError_blob}
+  0x000001e43ccd7098: ff63 40e9 | 4086 8fff 
+[/MachCode]
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+-------------------------- Assembly (native nmethod) ---------------------------
+
+Compiled method (n/a) 38   60     n 0       java.lang.invoke.MethodHandle::linkToSpecial(LLLLL)V (native)
+ total in heap  [0x000001e43ccd7588,0x000001e43ccd76a0] = 280
+ main code      [0x000001e43ccd7680,0x000001e43ccd769f] = 31
+ stub code      [0x000001e43ccd769f,0x000001e43ccd76a0] = 1
+ mutable data [0x000001e4524e2e20,0x000001e4524e2e28] = 8
+ relocation     [0x000001e4524e2e20,0x000001e4524e2e28] = 8
+
+[Constant Pool (empty)]
+
+[MachCode]
+[Verified Entry Point]
+  # {method} {0x000001e45302eda8} 'linkToSpecial' '(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/invoke/MemberName;)V' in 'java/lang/invoke/MethodHandle'
+  # parm0:    rdx:rdx   = 'java/lang/Object'
+  # parm1:    r8:r8     = 'java/lang/Object'
+  # parm2:    r9:r9     = 'java/lang/Object'
+  # parm3:    rdi:rdi   = 'java/lang/Object'
+  # parm4:    rsi:rsi   = 'java/lang/invoke/MemberName'
+  #           [sp+0x0]  (sp of caller)
+  0x000001e43ccd7680: 483b 028b | 5e24 48c1 | e303 488b | 5b10 4885 | db0f 8403 | 0000 00ff 
+
+  0x000001e43ccd7698: ;   {runtime_call Shared Runtime throw_AbstractMethodError_blob}
+  0x000001e43ccd7698: 6340 e941 | 808f fff4 
+[/MachCode]
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+-------------------------- Assembly (native nmethod) ---------------------------
+
+Compiled method (n/a) 38   62     n 0       java.lang.invoke.MethodHandle::invokeBasic(LLL)L (native)
+ total in heap  [0x000001e43ccd7888,0x000001e43ccd79b0] = 296
+ main code      [0x000001e43ccd7980,0x000001e43ccd79aa] = 42
+ stub code      [0x000001e43ccd79aa,0x000001e43ccd79b0] = 6
+ mutable data [0x000001e4524e2b50,0x000001e4524e2b58] = 8
+ relocation     [0x000001e4524e2b50,0x000001e4524e2b58] = 8
+
+[Constant Pool (empty)]
+
+[MachCode]
+[Verified Entry Point]
+  # {method} {0x000001e45302ef00} 'invokeBasic' '(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;' in 'java/lang/invoke/MethodHandle'
+  # this:     rdx:rdx   = 'java/lang/invoke/MethodHandle'
+  # parm0:    r8:r8     = 'java/lang/Object'
+  # parm1:    r9:r9     = 'java/lang/Object'
+  # parm2:    rdi:rdi   = 'java/lang/Object'
+  #           [sp+0x0]  (sp of caller)
+  0x000001e43ccd7980: 8b5a 1448 | c1e3 038b | 5b28 48c1 | e303 8b5b | 2448 c1e3 | 0348 8b5b | 1048 85db | 0f84 0300 
+  0x000001e43ccd79a0: 0000 ff63 
+
+  0x000001e43ccd79a4: ;   {runtime_call Shared Runtime throw_AbstractMethodError_blob}
+  0x000001e43ccd79a4: 40e9 367d | 8fff f4f4 | f4f4 f4f4 
+[/MachCode]
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+-------------------------- Assembly (native nmethod) ---------------------------
+
+Compiled method (n/a) 38   63     n 0       java.lang.invoke.MethodHandle::linkToSpecial(LLLLL)L (native)
+ total in heap  [0x000001e43ccd7b88,0x000001e43ccd7ca0] = 280
+ main code      [0x000001e43ccd7c80,0x000001e43ccd7c9f] = 31
+ stub code      [0x000001e43ccd7c9f,0x000001e43ccd7ca0] = 1
+ mutable data [0x000001e4524e2cf0,0x000001e4524e2cf8] = 8
+ relocation     [0x000001e4524e2cf0,0x000001e4524e2cf8] = 8
+
+[Constant Pool (empty)]
+
+[MachCode]
+[Verified Entry Point]
+  # {method} {0x000001e45302f148} 'linkToSpecial' '(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/invoke/MemberName;)Ljava/lang/Object;' in 'java/lang/invoke/MethodHandle'
+  # parm0:    rdx:rdx   = 'java/lang/Object'
+  # parm1:    r8:r8     = 'java/lang/Object'
+  # parm2:    r9:r9     = 'java/lang/Object'
+  # parm3:    rdi:rdi   = 'java/lang/Object'
+  # parm4:    rsi:rsi   = 'java/lang/invoke/MemberName'
+  #           [sp+0x0]  (sp of caller)
+  0x000001e43ccd7c80: 483b 028b | 5e24 48c1 | e303 488b | 5b10 4885 | db0f 8403 | 0000 00ff 
+
+  0x000001e43ccd7c98: ;   {runtime_call Shared Runtime throw_AbstractMethodError_blob}
+  0x000001e43ccd7c98: 6340 e941 | 7a8f fff4 
+[/MachCode]
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+-------------------------- Assembly (native nmethod) ---------------------------
+
+Compiled method (n/a) 39   72     n 0       java.lang.invoke.MethodHandle::linkToStatic(LLL)V (native)
+ total in heap  [0x000001e43ccd7e88,0x000001e43ccd7fa0] = 280
+ main code      [0x000001e43ccd7f80,0x000001e43ccd7f9d] = 29
+ stub code      [0x000001e43ccd7f9d,0x000001e43ccd7fa0] = 3
+ mutable data [0x000001e4524e2c00,0x000001e4524e2c08] = 8
+ relocation     [0x000001e4524e2c00,0x000001e4524e2c08] = 8
+
+[Constant Pool (empty)]
+
+[MachCode]
+[Verified Entry Point]
+  # {method} {0x000001e453031db8} 'linkToStatic' '(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/invoke/MemberName;)V' in 'java/lang/invoke/MethodHandle'
+  # parm0:    rdx:rdx   = 'java/lang/Object'
+  # parm1:    r8:r8     = 'java/lang/Object'
+  # parm2:    r9:r9     = 'java/lang/invoke/MemberName'
+  #           [sp+0x0]  (sp of caller)
+  0x000001e43ccd7f80: 418b 5924 | 48c1 e303 | 488b 5b10 | 4885 db0f | 8403 0000 | 00ff 6340 
+
+  0x000001e43ccd7f98: ;   {runtime_call Shared Runtime throw_AbstractMethodError_blob}
+  0x000001e43ccd7f98: e943 778f | fff4 f4f4 
+[/MachCode]
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+-------------------------- Assembly (native nmethod) ---------------------------
+
+Compiled method (n/a) 40   81     n 0       java.lang.invoke.MethodHandle::linkToSpecial(LLL)V (native)
+ total in heap  [0x000001e43ccd8a88,0x000001e43ccd8ba0] = 280
+ main code      [0x000001e43ccd8b80,0x000001e43ccd8ba0] = 32
+ mutable data [0x000001e4524e2c70,0x000001e4524e2c78] = 8
+ relocation     [0x000001e4524e2c70,0x000001e4524e2c78] = 8
+
+[Constant Pool (empty)]
+
+[MachCode]
+[Verified Entry Point]
+  # {method} {0x000001e453034b58} 'linkToSpecial' '(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/invoke/MemberName;)V' in 'java/lang/invoke/MethodHandle'
+  # parm0:    rdx:rdx   = 'java/lang/Object'
+  # parm1:    r8:r8     = 'java/lang/Object'
+  # parm2:    r9:r9     = 'java/lang/invoke/MemberName'
+  #           [sp+0x0]  (sp of caller)
+  0x000001e43ccd8b80: 483b 0241 | 8b59 2448 | c1e3 0348 | 8b5b 1048 | 85db 0f84 | 0300 0000 
+
+  0x000001e43ccd8b98: ;   {runtime_call Shared Runtime throw_AbstractMethodError_blob}
+  0x000001e43ccd8b98: ff63 40e9 | 406b 8fff 
+[/MachCode]
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+runtime=25.0.3+9-LTS

@@ -36,6 +36,10 @@ independent review or incident mitigation.
 
 - What is promised: the operation, the error surface, and which errors are retryable?
   → `rpc-and-api-contracts`
+- At which milestone is success acknowledged: acceptance, durable business effect, or visibility
+  to the intended reader? Match the producer's acknowledgement point to the consumer's expectation;
+  identify evidence of each required milestone before treating an old read as a consistency fault.
+  → `rpc-and-api-contracts`, `delivery-semantics`, `consistency-models`
 - Which old/new producer-consumer combinations occur during rollout, rollback and retained
   message replay? Record that compatibility matrix and evolution horizon.
 - Is the guarantee stated with a scope — at-least-once, per-partition ordering, a named
@@ -63,8 +67,8 @@ independent review or incident mitigation.
   bypass the same budget?
 - Which dependencies are required and which are optional, and what is the defined degraded
   behaviour of each optional one? → `cascading-failures`
-- Does a failing dependency stop being called, and does the caller have something useful to do
-  with the fast failure? → `circuit-breakers`
+- Does a failing dependency stop being called, and is the caller's fast-failure behaviour defined
+  and honest? A typed error can protect resources without a successful fallback. → `circuit-breakers`
 
 For example, a Java 21+ virtual-thread-per-task executor with demonstrated admission/resource
 bounds need not be replaced with a fixed thread pool. Check that waiting requests, fan-out,

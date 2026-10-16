@@ -1,0 +1,3 @@
+# Support observation
+
+The source normalization change was accepted. `node run.mjs check` is green. A fresh export still contains carriage returns; the ticket proposes adding the same replacement again or changing the runtime charset. Investigate the effective local export and repair the violation. No production deployment is requested.

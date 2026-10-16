@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-16T16:13:25.328Z",
+  "command": "C:\\Program Files\\nodejs\\node.exe",
+  "args": [
+    "node_modules/prettier/bin/prettier.cjs",
+    "--write",
+    "docs/skill-validation/wave4-2026-10-16/**/*.{json,md,yaml,yml}"
+  ],
+  "exit": 0,
+  "log": "format-final-repair.log.txt",
+  "scope": "Wave4 report only; raw .txt evidence and .patch diffs untouched"
+}

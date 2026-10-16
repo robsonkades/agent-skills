@@ -1,0 +1,8 @@
+package example.application;
+
+import java.io.IOException;
+import java.io.InputStream;
+
+public interface ExportBody {
+    InputStream open() throws IOException;
+}

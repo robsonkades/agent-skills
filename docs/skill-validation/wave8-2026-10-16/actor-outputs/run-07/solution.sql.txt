@@ -1,0 +1,29 @@
+SELECT id, priority, created_at, label
+FROM tickets
+WHERE tenant_id = :tenant
+  AND (
+    (
+      :cursor_priority IS NOT NULL
+      AND (
+        priority < :cursor_priority
+        OR priority IS NULL
+        OR (
+          priority = :cursor_priority
+          AND (
+            created_at > :cursor_created
+            OR (created_at = :cursor_created AND id < :cursor_id)
+          )
+        )
+      )
+    )
+    OR (
+      :cursor_priority IS NULL
+      AND priority IS NULL
+      AND (
+        created_at > :cursor_created
+        OR (created_at = :cursor_created AND id < :cursor_id)
+      )
+    )
+  )
+ORDER BY priority DESC NULLS LAST, created_at ASC, id DESC
+LIMIT :page_size;

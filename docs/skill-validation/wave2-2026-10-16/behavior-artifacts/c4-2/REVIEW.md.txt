@@ -1,0 +1,53 @@
+# Client routing compatibility review
+
+Retained the rollout recommendation for the supplied candidate at epoch E. Both configurations use raw request keys without a prefix, and the frozen primary and ordered replica placement agree through ClientRouter. The original reasoning based only on ring equality and a join test was insufficient; the focused compatibility check now supplies the missing evidence. No deployment, dependency installation, global configuration change, or data migration was performed.
+
+## Changes
+
+- check.mjs loads the existing accepted-vectors.json without regenerating it, validates its declared epoch/topology against the reviewed fixture, and passes its key, primary and ordered replicas into CurrentChecks. Compilation still uses --release 16 and the existing Guava jar.
+- test/CurrentChecks.java retains the old checks and verifies the frozen vector through ClientRouter with each actual properties file. It checks the primary, the complete ordered replica list, three distinct owners, primary-first ordering, and the empty-prefix contract.
+- rollout.md records the retained decision, its evidence, scope, and conditions that would require revisiting it.
+- logs/ contains retained verification output and the exact verification commands in commands.md. classes/ is output from the supplied check runner.
+
+HashRing.java, ClientRouter.java, both final properties files, the frozen vector, the hash algorithm, V, weights, Java baseline and data model were not changed. candidate.properties was temporarily changed only for the negative control and restored from its original byte array in a finally block.
+
+## Observed checks
+
+| Check | Observed result |
+| --- | --- |
+| Baseline node check.mjs | Exit 0; existing point and join checks passed, moved=2094. |
+| Updated node check.mjs | Exit 0; same existing checks, plus accepted and candidate user:2 -> n2 / [n2, n3, n4]. |
+| Temporary candidate prefix client-v2: | Inner node check.mjs exited 1 as expected. Old checks passed with moved=2082; the accepted vector passed; the candidate kept primary n2 but failed replicas=[n2, n3, n1] versus [n2, n3, n4]. The wrapper exited 0 after verifying rejection and restoring the original file. |
+| Final node check.mjs after restoration | Exit 0; moved=2094 and both configured ClientRouter vector checks passed. |
+| javac -version / java -version | javac 25.0.3; Temurin-25.0.3+9 runtime. check.mjs still compiles with --release 16, no preview. |
+| jar --describe-module without a release | Exit 0, but only reported releases: 9 and requested --release; it did not identify a root descriptor. |
+| jar --describe-module --release 9 | Exit 0; identified com.google.common@33.5.0-jre in the declared jar. |
+
+The negative control is useful because unchanged primary ownership alone would have missed this replica placement mismatch. No statistical workload or capacity claims follow from this check.
+
+## Files and resources read
+
+All task/resource reads were within this task directory:
+
+- TASK.md
+- .resources/skill/SKILL.md (applied consistent-hashing)
+- .resources/skill/references/ring-in-java.md (relevant implementation and compatibility guidance)
+- README.md
+- rollout.md
+- accepted.properties and candidate.properties
+- accepted-vectors.json
+- check.mjs
+- src/ClientRouter.java and src/HashRing.java
+- test/CurrentChecks.java
+
+An rg --files listing was confined to this task directory. No sibling task, repository report, installed skill, comparison answer, evaluator material, or other repository implementation was read. The mapping-functions reference was not needed because algorithm selection was outside this review's scope.
+
+The only external paths accessed were the explicitly declared local toolchain C:/Users/robso/.jdks/temurin-25.0.3/bin/{java,javac,jar}.exe and dependency C:/Users/robso/.m2/repository/com/google/guava/guava/33.5.0-jre/guava-33.5.0-jre.jar. The runner read the same jar for compilation and execution. No accidental access outside the allowed files occurred. No web or production access was used. No agents were delegated work.
+
+## Limits and final state
+
+This is a focused compatibility review of the supplied source/configuration and one independent accepted vector. It does not run on an actual Java 16 runtime, compare independent language implementations, exercise every Unicode/malformed-input case, measure real keys/bytes/request rates or hot keys, verify failure domains, scan stored data, or prove a membership transition protocol. The exact pinned hashing API and current input behavior are preserved; the vector alone cannot establish a complete cross-runtime hash contract. None of those unknowns requires a placement change for this unchanged candidate.
+
+The standalone task's required command is node check.mjs, which passed after restoration. Repository-wide npm verification is not part of the isolated task and was not run. No production rollout was attempted.
+
+All implementation, configuration-control, check-output, and documentation writes are stopped at completion of this review.

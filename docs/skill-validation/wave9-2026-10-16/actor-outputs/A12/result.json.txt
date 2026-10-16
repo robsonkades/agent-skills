@@ -1,0 +1,88 @@
+{
+  "task": "A12",
+  "decision": "reject",
+  "decisionScope": "proposal.md as written; review only, no policy changes",
+  "evidenceProvenance": "Authored incident fixture, not production capture",
+  "configuredBeforeMax": 6,
+  "configuredAfterMax": 18,
+  "outerAttemptsPerLogical": 1.06,
+  "wireAttemptsPerLogical": 1.6,
+  "aggregateGrantUpperBound": 130,
+  "configuredLimits": {
+    "maximumMeaning": "Nominal nested wire-attempt ceiling per logical operation, including initial attempts",
+    "beforeFormula": "2 * 3 * 1",
+    "afterFormula": "2 * 3 * 3",
+    "nominalIncrease": 12,
+    "deadlineReachability": "Unknown: no numerical combined deadline or attempt/backoff schedule supplied",
+    "aggregateGrantFormula": "4 * 10 + 0.1 * 900",
+    "aggregateGrantScope": "Outer retry grants over the supplied common cohort/window/dependency, aggregated from four local buckets",
+    "capacityCaveat": "20 tokens per process limits instantaneous balance; saturation, timing and distribution can reduce usable grants below 130",
+    "fleetWireAmplificationGuarantee": null
+  },
+  "observedCounters": {
+    "logicalCalls": 1000,
+    "outerAttempts": 1060,
+    "wireAttempts": 1600,
+    "successesThatRefill": 900,
+    "outerRetryGrants": 60,
+    "outerExtraAttempts": 60,
+    "sdkExtraWireAttempts": 540,
+    "wireAttemptsPerSdkOperation": 1.509433962264151,
+    "attribution": "Exactly one SDK operation per outer attempt; all additional wire attempts attributed to SDK retries; no fanout, hedging or unrelated traffic",
+    "bucketAssessment": "60 <= 130 is compatible with the aggregate allowance; not proof of every process's bucket implementation"
+  },
+  "effectAssessment": {
+    "intent": "operation-41",
+    "at50ms": "UNKNOWN after dispatch, timeout and cancellation signal",
+    "at52ms": "UNKNOWN; current absence does not rule out late application",
+    "at80ms": "Original write committed according to the authored trace",
+    "minimumPostTimeoutWorkMs": 30,
+    "cancellationAcknowledged": false,
+    "resourceReleaseTimestamp": null,
+    "automaticRedispatchSafe": false,
+    "freshIntentPermittedByEvidence": false,
+    "recovery": "Preserve original intent and unresolved outcome until authoritative reconciliation; use the fixture's commit evidence to resolve this original effect",
+    "unknownEffects": "No duplicate effect is recorded; a fresh intent risks duplication but duplication is not an observed fact"
+  },
+  "nextVerification": {
+    "executed": false,
+    "scope": "One isolated no-network acceptance case of revised decision logic",
+    "maximumDurationSeconds": 2,
+    "scheduleMs": [
+      0,
+      50,
+      52,
+      80
+    ],
+    "checks": [
+      "UNKNOWN at timeout and negative lookup",
+      "Zero automatic redispatches or fresh intents while unresolved",
+      "Same intent reconciled to committed outcome after original commit"
+    ],
+    "decisionChange": "Pass plus corrected arithmetic/scope statements would change the recovery proposal from reject to revise for integration review; failure retains rejection",
+    "limit": "Does not establish provider durability, a production timing guarantee, or acceptance of the original proposal"
+  },
+  "validation": {
+    "status": "passed",
+    "checks": [
+      "Required metrics recomputed from incident.json",
+      "Extra-attempt counters and event ordering checked",
+      "result.json and execution.json parsed",
+      "REVIEW.md within 750 words",
+      "Four immutable copies match input/project SHA-256",
+      "Only permitted files present"
+    ],
+    "reviewWordCount": 624,
+    "javaExecution": "Not applicable: no Java sources or run.mjs supplied",
+    "externalCalls": false
+  },
+  "limits": [
+    "Supplied fixture only; no production observations",
+    "Java 17 and JDK 25.0.3 stated by README; no Java subprocess executed",
+    "No numerical combined deadline, backoff schedule or cleanup reserve",
+    "No endpoint, API, SDK/framework or database/isolation versions",
+    "No peer replay or no-later-application guarantee",
+    "Scope, fingerprint, retention and cancellation/resource-release contract unspecified",
+    "Skill routes outside supplied context were not followed"
+  ]
+}

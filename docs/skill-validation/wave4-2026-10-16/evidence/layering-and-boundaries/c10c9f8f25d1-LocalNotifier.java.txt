@@ -1,0 +1,16 @@
+package com.acme.orders.integration;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public final class LocalNotifier {
+    private final List<String> messages = new ArrayList<>();
+
+    public void send(String message) {
+        messages.add(message);
+    }
+
+    public List<String> messages() {
+        return List.copyOf(messages);
+    }
+}

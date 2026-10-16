@@ -1,5 +1,28 @@
 # Deviation and blockers
 
+## Reconcile a planned target before changing it
+
+Use the accepted behavior to locate the implementation, not just the plan's filenames.
+Trace the caller, registration or configuration that selects it under the relevant supported
+conditions. If a planned symbol is absent, check the owning module, renames and generated
+sources or registration where applicable; a failed or narrowly scoped search does not establish
+that a replacement is needed. Keep a consequential unresolved selection explicit.
+
+- **The target moved or the plan names an unused implementation:** amend the resource's
+  file/dependency map to the actual path while preserving its acceptance contract. Do not
+  change the unused implementation merely to match the plan.
+- **The existing path already meets the obligation:** verify it and record the evidence;
+  remove redundant planned edits while preserving acceptance coverage and resource history.
+- **The current path contradicts an accepted contract:** its existence does not supersede
+  that contract. Classify the discrepancy below before changing scope or copying its behavior.
+
+For example, a plan assigns CSV escaping to `LegacyExporter`, but the command registry routes
+the supported `export` command to `StreamingExporter`. Tests constructing `LegacyExporter`
+directly would miss this mismatch. Inspect the selected export path, reuse any escaping it
+already provides, and amend the planned target. If selection intentionally awaits a separately
+authorized rollout, keep that boundary: validate the prepared component under its own contract
+and leave activation/integration as the named remaining work, rather than enabling it silently.
+
 ## Deviation
 
 Implementation can reveal a mistaken premise or an omission in the plan. That does not make every
@@ -35,6 +58,26 @@ ED-04 superseded by accepted ED-09. A traced customer-region change moves events
 partitions; the old design had no cross-partition ordering mechanism for CT-02. See the
 reproduction and revised publication/consumer migration in ADR-004.
 ```
+
+## Carrying an execution finding forward
+
+When a resolved deviation affects remaining work, retain the useful decision in the existing
+resource notes or decision record: the observed failure, evidence distinguishing its cause,
+the correction and validation, and the conditions under which it applies. Link affected
+resource/acceptance IDs; do not create a separate lessons artifact for every fix. A successful
+workaround is not automatically a project standard or permission to broaden the change.
+
+For example, suppose concurrent tests fail because one test's cleanup deletes another's
+fixture rows. Record the conflicting operations and the check after separating their fixture
+ownership. Reuse that isolation for resources with the same accidental interference; preserve
+the concurrent operations that acceptance requires. If two application requests instead
+violate the accepted invariant while using the intended shared data, fixture separation would
+hide the defect: correct the implementation and retain that contention in validation.
+
+Until evidence distinguishes those causes, keep the explanation conditional. A passing serial
+run can guide investigation; it does not establish either explanation or justify making all
+tests serial. Revisit the recorded choice when ownership, required concurrency or target
+environment changes, rather than copying the earlier workaround unconditionally.
 
 ## Blockers
 

@@ -75,10 +75,17 @@ Things this shows that are easy to get wrong:
   Linux the same method receives `rsi`/`rdx`. HotSpot's Java-to-Java convention
   (`SharedRuntime::java_calling_convention`) draws on the platform's integer argument
   registers but is neither System V nor the Win64 ABI, and it differs between the two OSes.
-  Read the `# parmN:` comments rather than memorising a mapping. System V — `rdi`, `rsi`,
-  `rdx`, `rcx`, `r8`, `r9`; return in `rax`; FP in `xmm0`–`xmm7` — applies when the listing
-  calls a C++ runtime routine or a JNI stub on Linux; Win64 (`rcx`, `rdx`, `r8`, `r9`) when it
-  does so on Windows.
+  Read the `# parmN:` comments rather than memorising a mapping. Identify which side of an
+  adapter the PC belongs to: a compiled call into an ordinary JNI native wrapper still uses
+  the Java convention. Inside, the wrapper converts object references to JNI handles and
+  prepares `JNIEnv*`, the receiver or declaring-class handle, and the declared arguments for
+  the native function call. That outgoing call uses the platform C ABI: System V integer/pointer
+  arguments in `rdi`, `rsi`, `rdx`, `rcx`, `r8`, `r9` (FP in `xmm0`–`xmm7`), or Win64
+  integer/pointer arguments in `rcx`, `rdx`, `r8`, `r9`; JNI integer results use `rax`.
+  Do not assign those registers to the Java arguments at wrapper entry, or treat a JNI
+  object handle as the original oop. A runtime-blob or stub label alone does not select an
+  ABI: follow the target and its adapter/generated-code source. The pinned
+  `SharedRuntime::generate_native_wrapper` shows this Java-to-native boundary explicitly.
 - **Address scope.** Instructions within one contiguous code range are normally decoded in
   address order, but the complete log interleaves compilations and stubs, and code-cache
   space can be reused. Duplicate addresses are therefore a capture-correlation hazard, not
@@ -233,6 +240,8 @@ does not need a new profile or a source change:
 - [JDK 25 disassembler implementation](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/compiler/disassembler.cpp)
 - [JDK 25 nmethod comments and implicit-exception metadata](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/code/nmethod.cpp)
 - [JDK 25 x86 assembler sources](https://github.com/openjdk/jdk/tree/jdk-25-ga/src/hotspot/cpu/x86)
+- [JDK 25 x86 calling conventions and native wrappers](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/cpu/x86/sharedRuntime_x86_64.cpp) — `java_calling_convention`, `c_calling_convention` and argument conversion in `generate_native_wrapper`.
+- [JNI 25 native method arguments](https://docs.oracle.com/en/java/javase/25/docs/specs/jni/design.html#native-method-arguments) — hidden interface pointer, receiver/class argument and object handles.
 - [JDK 25 x86 C2 memory-barrier encodings](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/cpu/x86/x86_64.ad) — acquire/release empty encodings and conditional volatile barriers.
 - [JDK 25 C2 predicted-call generation](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/opto/callGenerator.cpp) — separate receiver hit and miss paths.
 - [JLS 25 happens-before contract](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.4.5) — source-level synchronization semantics are not an opcode pattern.

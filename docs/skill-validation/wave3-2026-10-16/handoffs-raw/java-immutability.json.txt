@@ -1,0 +1,590 @@
+{
+  "status": "NO_CHANGES_NEEDED",
+  "skill": "java-immutability",
+  "ownedPath": "C:/git/agent-skills/skills/java-immutability",
+  "allWritesStopped": true,
+  "reviewDate": "2026-10-16",
+  "scope": "Exactly the existing java-immutability package: value-state/alias ownership, records and defensive copies, observational immutability, safe publication and proportionate cost decisions. No repository-wide or neighboring changes.",
+  "procedure": {
+    "readOrReusedUnchanged": [
+      "AGENTS.md",
+      "docs/parallel-skill-reviews.md",
+      "docs/skill-review-prompt.md",
+      "docs/skill-validation/wave3-2026-10-16/review-brief.md",
+      "skills/skill-engineering/SKILL.md",
+      "skills/skill-engineering/references/evidence-and-confidence.md",
+      "skills/skill-engineering/references/evaluation.md",
+      "skills/skill-engineering/references/resource-design.md",
+      "skills/skill-engineering/references/anti-patterns.md",
+      "docs/skill-validation/skills-comparative-research-2026-10-16.md"
+    ],
+    "note": "Full assigned package read. Previously read unchanged review instructions reused in this continuous session. Findings sent to /root before isolated validation artifacts were created; no skill edit was required."
+  },
+  "baseline": {
+    "committedVersion": "1.2.4",
+    "assignmentVersion": "1.2.4",
+    "finalVersion": "1.2.4",
+    "preExistingBump": false,
+    "stagedChanges": [],
+    "unstagedChanges": [],
+    "untrackedFiles": [],
+    "assignmentHashes": [
+      {
+        "path": "references/costs-and-when-not.md",
+        "sha256": "9913EF6C9D427C4B9C11D5559FD3B9DFF7B441859B67C5A82F8302E5643DF27D"
+      },
+      {
+        "path": "references/records-and-copies.md",
+        "sha256": "7BB8B982AB0A54359C797497B1B044C057C8D1EA44452A06295C8573CA68238A"
+      },
+      {
+        "path": "references/safe-publication.md",
+        "sha256": "25CB041D0E12430AA56655E746A3D6741B72007E6A09A1EA72690FAD0FEBD37D"
+      },
+      {
+        "path": "SKILL.md",
+        "sha256": "D4E48BCF9DD27A36E414A57F4772B14BCF1D98489AC0DF024D8F299ACF0CDEC7"
+      },
+      {
+        "path": "skill.yaml",
+        "sha256": "0CC8402A05FA5045DB802A78E595FC9A10A4D5654FD5BD29B8CA0B7C77553B65"
+      }
+    ],
+    "finalHashes": [
+      {
+        "path": "SKILL.md",
+        "sha256": "D4E48BCF9DD27A36E414A57F4772B14BCF1D98489AC0DF024D8F299ACF0CDEC7"
+      },
+      {
+        "path": "references/costs-and-when-not.md",
+        "sha256": "9913EF6C9D427C4B9C11D5559FD3B9DFF7B441859B67C5A82F8302E5643DF27D"
+      },
+      {
+        "path": "references/records-and-copies.md",
+        "sha256": "7BB8B982AB0A54359C797497B1B044C057C8D1EA44452A06295C8573CA68238A"
+      },
+      {
+        "path": "references/safe-publication.md",
+        "sha256": "25CB041D0E12430AA56655E746A3D6741B72007E6A09A1EA72690FAD0FEBD37D"
+      },
+      {
+        "path": "skill.yaml",
+        "sha256": "0CC8402A05FA5045DB802A78E595FC9A10A4D5654FD5BD29B8CA0B7C77553B65"
+      }
+    ],
+    "unchanged": true
+  },
+  "versions": {
+    "committed": "1.2.4",
+    "initial": "1.2.4",
+    "final": "1.2.4",
+    "rationale": "No skill contents changed; no version bump."
+  },
+  "reviewCriteria": [
+    "Trace every retained inbound and outbound alias, including factory/builder ownership and mutable referents.",
+    "Preserve record reconstruction, equality/hash, diagnostic and existing identity contracts when introducing copies.",
+    "Distinguish immutable bytes from read-only access and mutable buffer cursors; preserve captured range and typed-read order.",
+    "Distinguish final-field initialization safety from reference publication and later mutable state, using JMM evidence rather than a passing stress test.",
+    "Respect actual source/API/runtime/framework baselines and null/order/lifecycle constraints; require measurements for allocation/performance claims."
+  ],
+  "findings": [
+    {
+      "status": "adequate-preserved",
+      "locations": [
+        "SKILL.md:24-50",
+        "SKILL.md:53-85"
+      ],
+      "evidence": "The workflow inspects target and ownership; shallow/deep aliases, both copy directions, mutable referents, atomic-snapshot limitations and explicit handoff arguments are present. Adequate immutable/confined mutable designs can remain unchanged.",
+      "consequence": "Guidance depends on actual alias and lifecycle evidence, rather than final/read-only labels or mandatory copying.",
+      "action": "Preserved, no material gap found."
+    },
+    {
+      "status": "adequate-preserved",
+      "locations": [
+        "references/records-and-copies.md:35-71",
+        "references/records-and-copies.md:106-153"
+      ],
+      "evidence": "Array content equality/hash/text and reconstruction invariant are explicit. The Reservation repair keeps identity equality and states null/mutation API changes.",
+      "consequence": "Defensive copying does not silently introduce broken record reconstruction or switch existing consumer identity behavior.",
+      "action": "Retained. The supplemented exact snippets passed deterministic hostile controls."
+    },
+    {
+      "status": "adequate-preserved",
+      "locations": [
+        "references/records-and-copies.md:73-90"
+      ],
+      "evidence": "The reference distinguishes writable backing aliases, private stable cursors, read-only accessor views, remaining-range equality/hash and Java17 view-factory byte-order resets.",
+      "consequence": "Prevents a read-only buffer wrapper from masquerading as a snapshot while allowing already-private frozen storage to be shared.",
+      "action": "Retained. Source-matched ByteBuffer contracts and paired factory fixtures corroborate the existing guidance."
+    },
+    {
+      "status": "adequate-preserved",
+      "locations": [
+        "references/safe-publication.md:5-89",
+        "references/costs-and-when-not.md:8-73"
+      ],
+      "evidence": "The text separates final-field initialization safety from ordinary fields, this escape, publication and later mutation. The racy integer hash cache has deterministic/atomic/sentinel/staleness conditions; cost claims remain measured and contextual.",
+      "consequence": "No forced synchronization/eager cache or immutable rewrite solely from field modifiers; no unmeasured performance guarantee.",
+      "action": "Retained; JMM source review performed, no stress test treated as proof."
+    },
+    {
+      "status": "adequate-preserved",
+      "locations": [
+        "references/records-and-copies.md:168-175"
+      ],
+      "evidence": "Framework/version constructor and copying paths require round-trip checks; native record serialization is specifically distinguished.",
+      "consequence": "Canonical construction does not imply nested element immutability or a stable wire schema.",
+      "action": "Retained; serialization specification corroborated, binder execution unavailable/not needed for unchanged guidance."
+    }
+  ],
+  "findingsCorrected": [],
+  "remainingFindings": [],
+  "changes": [],
+  "filesChangedByReviewer": [],
+  "preExistingChanges": [],
+  "preserved": [
+    "Activation for records/arrays/collections, alias leaks, observed mutation and allocation tradeoffs; null/Optional boundary exclusions.",
+    "Target17 examples with individual minimum release constraints and no incidental upgrades.",
+    "Inbound/outbound deep-vs-shallow ownership reasoning, unmodifiable views versus snapshots, concurrent-copy limitations.",
+    "Record array reconstruction/equality/hash/diagnostic contracts and immutable byte representation alternative.",
+    "ByteBuffer captured-range, backing ownership, private cursor and byte-order guidance.",
+    "Wither optionality and reusable instance caveat; Reservation identity-preserving repair and null/mutation contract caveats.",
+    "Final-field/JMM publication rules, this-escape analysis, benign integer hash-cache conditions and correctly synchronized alternatives.",
+    "Builder/accumulator/entity/binding/derived-cache exceptions and measurement-based cost guidance.",
+    "Three conditionally routed references and null-safety/Optional suggested skills."
+  ],
+  "replacedOrRemoved": [],
+  "commands": [
+    {
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-immutability-validation/run-checks.mjs",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "11 child commands and local assertions passed on the first run; stdout/stderr and exact argv retained.",
+      "evidence": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-immutability-validation/results.json"
+    },
+    {
+      "label": "node-version",
+      "executable": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "--version"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "v25.6.1\r\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "java-version",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-version"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n",
+      "error": null
+    },
+    {
+      "label": "javac-version",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "-version"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "javac 25.0.3\r\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "prettier-owned",
+      "executable": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "C:\\git\\agent-skills\\node_modules\\prettier\\bin\\prettier.cjs",
+        "--check",
+        "C:\\git\\agent-skills\\skills\\java-immutability\\SKILL.md",
+        "C:\\git\\agent-skills\\skills\\java-immutability\\references\\costs-and-when-not.md",
+        "C:\\git\\agent-skills\\skills\\java-immutability\\references\\records-and-copies.md",
+        "C:\\git\\agent-skills\\skills\\java-immutability\\references\\safe-publication.md",
+        "C:\\git\\agent-skills\\skills\\java-immutability\\skill.yaml"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "Checking formatting...\nAll matched files use Prettier code style!\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "diff-check-owned",
+      "executable": "git",
+      "args": [
+        "diff",
+        "--check",
+        "--",
+        "skills/java-immutability"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "compile-reference-controls",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "--release",
+        "17",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-immutability-validation\\technical\\classes",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-immutability-validation\\technical\\src\\BeforeReservation.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-immutability-validation\\technical\\src\\ImmutabilityProbe.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-immutability-validation\\technical\\src\\Order.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-immutability-validation\\technical\\src\\OrderLine.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-immutability-validation\\technical\\src\\Reservation.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-immutability-validation\\technical\\src\\Signature.java"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "run-reference-controls",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-immutability-validation\\technical\\classes",
+        "ImmutabilityProbe"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "PASS signature inbound/outbound, record reconstruction/hash/text, negative alias and equality controls, reservation identity, order/wither, buffer backing/cursor/order controls\r\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "compile-case-a",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "--release",
+        "17",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-immutability-validation\\case-a\\classes",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-immutability-validation\\case-a\\src\\ObservePacket.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-immutability-validation\\case-a\\src\\Packet.java"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "run-case-a",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-immutability-validation\\case-a\\classes",
+        "ObservePacket"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "inputPosition=1,inputLimit=5\r\ncapturedRemaining=4\r\ninitialInt=67305985\r\nnextRemaining=4,nextOrder=LITTLE_ENDIAN\r\nwrite=rejected\r\nafterInputMutation=1\r\nidentityEquality=true\r\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "compile-case-b",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "--release",
+        "17",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-immutability-validation\\case-b\\classes",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-immutability-validation\\case-b\\src\\ObservePacket.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-immutability-validation\\case-b\\src\\Packet.java"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "run-case-b",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-immutability-validation\\case-b\\classes",
+        "ObservePacket"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "inputPosition=1,inputLimit=5\r\ncapturedRemaining=4\r\ninitialInt=67305985\r\nnextRemaining=4,nextOrder=LITTLE_ENDIAN\r\nwrite=rejected\r\nafterInputMutation=9\r\nidentityEquality=true\r\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "command": "git status --short --untracked-files=all -- skills/java-immutability",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "Empty scoped status at assignment and final inspection."
+    },
+    {
+      "command": "git diff -- skills/java-immutability",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "Empty owned unstaged diff."
+    },
+    {
+      "command": "git diff --cached -- skills/java-immutability",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "Empty owned staged diff."
+    },
+    {
+      "command": "git show HEAD:skills/java-immutability/skill.yaml | Select-String '^version:'",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "version: 1.2.4"
+    },
+    {
+      "command": "Get-ChildItem -LiteralPath skills/java-immutability -Recurse -File | ForEach-Object { [PSCustomObject]@{path=$_.FullName;sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash} } | ConvertTo-Json",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "All five final hashes equal assignment hashes; no owned file added."
+    }
+  ],
+  "checksExecuted": [
+    {
+      "name": "local-package-structure",
+      "passed": true,
+      "version": "1.2.4",
+      "files": [
+        {
+          "path": "SKILL.md",
+          "sha256": "D4E48BCF9DD27A36E414A57F4772B14BCF1D98489AC0DF024D8F299ACF0CDEC7"
+        },
+        {
+          "path": "references/costs-and-when-not.md",
+          "sha256": "9913EF6C9D427C4B9C11D5559FD3B9DFF7B441859B67C5A82F8302E5643DF27D"
+        },
+        {
+          "path": "references/records-and-copies.md",
+          "sha256": "7BB8B982AB0A54359C797497B1B044C057C8D1EA44452A06295C8573CA68238A"
+        },
+        {
+          "path": "references/safe-publication.md",
+          "sha256": "25CB041D0E12430AA56655E746A3D6741B72007E6A09A1EA72690FAD0FEBD37D"
+        },
+        {
+          "path": "skill.yaml",
+          "sha256": "0CC8402A05FA5045DB802A78E595FC9A10A4D5654FD5BD29B8CA0B7C77553B65"
+        }
+      ],
+      "manifestIssues": [],
+      "localLinks": 3,
+      "routedReferences": 3,
+      "suggestions": [
+        "java-null-safety",
+        "java-optional"
+      ]
+    },
+    {
+      "name": "reference-snippets-and-hostile-controls",
+      "passed": true,
+      "sourceRelease": 17,
+      "runtime": "Temurin 25.0.3+9",
+      "scope": "Exact Order/withLines, Signature and Reservation snippets with imports, immutable OrderLine and renamed before class; deterministic mutation and buffer controls only, no concurrency proof or benchmark."
+    },
+    {
+      "name": "paired-fixture-technical-observations",
+      "passed": true,
+      "caseA": "private copied bytes remain 1",
+      "caseB": "aliased input mutation changes byte to 9",
+      "both": "same nonzero range, little-endian typed read, independent returned cursor, rejected writes, identity semantics",
+      "scope": "Exploratory deterministic fixture observations, not executed behavioral evaluation of an agent."
+    }
+  ],
+  "technicalObservations": [
+    "Signature source from the reference preserves bytes after input and output-array mutation, remains content-equal to reconstruction/peer, keeps hash-map lookup stable and produces equal redacted text.",
+    "Raw array-record and copy-only/default-equality controls demonstrate alias leakage and reconstruction failure respectively. List.copyOf of byte[] elements demonstrates shallow-copy leakage.",
+    "Reservation input/list-output isolation works while distinct instances retain identity equality; the before version still observes input mutation.",
+    "Order and withLines snapshot their supplied lists with the provided immutable OrderLine completion, without changing the old value.",
+    "On the actual runtime, read-only/duplicate/slice ByteBuffer views start BIG_ENDIAN, read-only buffers see writable backing changes and moving the cursor changes remaining-range hash.",
+    "Case A factory's private captured array remains byte 1 after source mutation; case B's shared slice observes byte 9. Both use the same nonzero range and little-endian typed value 67305985, return independent cursors, reject put() and retain identity equality."
+  ],
+  "failures": [],
+  "behavioralEvaluationsExecuted": [],
+  "walkthroughs": [
+    "Private-storage case: trace capture() before objecting to a constructor that stores an unmodifiable view; preserve the adequate private-copy and fresh-cursor design.",
+    "Aliased-storage case: the identical downstream construction/accessor logic now receives a shared slice, so later external mutation breaks the snapshot and requires content isolation."
+  ],
+  "cases": {
+    "classification": "Documented development cases, not unseen holdouts or agent evaluations. Fixture technical observations were exploratory; criteria are frozen for any future agent evaluation.",
+    "decisiveConstraint": "Only whether capture() supplies private copied bytes or a shared caller alias changes; public contracts, target and source confinement are identical.",
+    "inputsPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-immutability-validation/inputs.json",
+    "criteriaPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-immutability-validation/criteria.json",
+    "inputs": [
+      {
+        "id": "immutability-private-storage",
+        "request": "Review Packet's immutable-snapshot promise by following capture(), its private constructor and bytes() callers. Implement the smallest justified correction if the promise is violated; otherwise retain the adequate design and explain the evidence. Preserve existing identity equality and public method signatures.",
+        "context": {
+          "targetCompilerRelease": 17,
+          "toolchain": "C:/Users/robso/.jdks/temurin-25.0.3/bin; no Java 17 VM is supplied. Compile with --release 17 and state the actual runtime.",
+          "promise": "capture(source) represents the bytes from source.position() inclusive to source.limit() exclusive at capture time and retains source byte order for typed reads. It must not alter the source position or limit. Each bytes() result is read-only with its own cursor. Later caller mutations must not change the captured bytes.",
+          "lifecycle": "The caller keeps source confined and unchanged during capture(), and may change it after capture returns. There are no external native/file-backed writers, framework construction paths or additional constructors.",
+          "compatibility": "The class intentionally uses identity equality. Do not convert it to a record, add dependencies, upgrade Java or change the stated observation range.",
+          "consumer": "ObservePacket.java is an ordinary caller showing how the API is consumed. Its output is evidence to inspect, not the complete test oracle.",
+          "permittedEdits": "Only copied src/ files and isolated generated checks/build outputs in the evaluation workspace."
+        },
+        "isolation": "Provide only the selected case directory in a fresh temporary workspace and this input. Do not expose the other case, criteria.json, technical/, results.json, logs/, the reviewer script or handoff.",
+        "fixtureDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-immutability-validation/case-a",
+        "decisiveFixtureFile": "src/Packet.java"
+      },
+      {
+        "id": "immutability-aliased-storage",
+        "request": "Review Packet's immutable-snapshot promise by following capture(), its private constructor and bytes() callers. Implement the smallest justified correction if the promise is violated; otherwise retain the adequate design and explain the evidence. Preserve existing identity equality and public method signatures.",
+        "context": {
+          "targetCompilerRelease": 17,
+          "toolchain": "C:/Users/robso/.jdks/temurin-25.0.3/bin; no Java 17 VM is supplied. Compile with --release 17 and state the actual runtime.",
+          "promise": "capture(source) represents the bytes from source.position() inclusive to source.limit() exclusive at capture time and retains source byte order for typed reads. It must not alter the source position or limit. Each bytes() result is read-only with its own cursor. Later caller mutations must not change the captured bytes.",
+          "lifecycle": "The caller keeps source confined and unchanged during capture(), and may change it after capture returns. There are no external native/file-backed writers, framework construction paths or additional constructors.",
+          "compatibility": "The class intentionally uses identity equality. Do not convert it to a record, add dependencies, upgrade Java or change the stated observation range.",
+          "consumer": "ObservePacket.java is an ordinary caller showing how the API is consumed. Its output is evidence to inspect, not the complete test oracle.",
+          "permittedEdits": "Only copied src/ files and isolated generated checks/build outputs in the evaluation workspace."
+        },
+        "isolation": "Provide only the selected case directory in a fresh temporary workspace and this input. Do not expose the other case, criteria.json, technical/, results.json, logs/, the reviewer script or handoff.",
+        "fixtureDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-immutability-validation/case-b",
+        "decisiveFixtureFile": "src/Packet.java"
+      }
+    ],
+    "expectedOutcomeCriteria": [
+      {
+        "id": "immutability-private-storage",
+        "expectedOutcome": "Retain the adequate implementation after tracing factory-owned storage; do not require another defensive content copy solely because the private constructor stores a view.",
+        "requiredEvidence": [
+          "Inspect capture(): the selected source range is copied into a fresh private array; construction retains no external writable alias.",
+          "Inspect bytes(): every access gets an independent read-only cursor and reapplies byte order after view creation.",
+          "Run or supply focused tests showing post-capture mutation of source bytes does not affect the snapshot; nonzero range, little-endian reads, source cursor and identity equality remain intact.",
+          "Explain that the conclusion depends on the actual private construction/alias path and confinement during capture, not on final or read-only labels alone."
+        ],
+        "failureConditions": [
+          "Diagnoses mutable shared backing solely from asReadOnlyBuffer(), without following the factory's existing copy.",
+          "Converts identity equality to value equality or changes the captured range/order.",
+          "Claims the design is universally free of allocation, or that a Java25 run with --release17 executed on Java17.",
+          "Introduces a second content copy or new dependency without identifying an unmet contract."
+        ]
+      },
+      {
+        "id": "immutability-aliased-storage",
+        "expectedOutcome": "Demonstrate and repair the writable alias retained by capture(), while preserving the already-correct cursor, byte-order and identity contracts.",
+        "requiredEvidence": [
+          "Inspect capture(): slice() shares caller-owned bytes; the private constructor's read-only view does not sever that alias.",
+          "Use a hostile mutation after capture to show the incorrect byte change, then isolate captured bytes before retaining the content.",
+          "Validate nonzero input position/limit, no change to the source cursor, little-endian typed reads, independent accessor positions/limits, rejected writes and existing identity equality.",
+          "Report the actual compiler/runtime and limit the evidence to the supplied ownership/lifecycle; no claim that copying is an atomic snapshot under concurrent mutation."
+        ],
+        "failureConditions": [
+          "Accepts the object as immutable because final fields and read-only buffers reject put().",
+          "Returns the stored cursor or loses byte order while adding a copy.",
+          "Copies capacity or all array bytes instead of the requested remaining range, or consumes the caller's cursor.",
+          "Changes the documented contract to borrowed live data to avoid the needed correction.",
+          "Silently replaces identity semantics or upgrades the baseline."
+        ]
+      }
+    ]
+  },
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Record.html",
+      "version": "JavaSE17 API",
+      "accessed": "2026-10-16",
+      "supports": "Shallow record state, component access, reference-component equality, copy reconstruction, diagnostic equality and canonical-constructor serialization.",
+      "limitation": "No automatic deep-copy behavior or fixed generated string/hash format is inferred."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/nio/ByteBuffer.html",
+      "version": "JavaSE17 API",
+      "accessed": "2026-10-16",
+      "supports": "Shared backing for duplicate/slice/read-only buffers; independent cursor state; BIG_ENDIAN order of these views; position-to-limit equality/hash.",
+      "limitation": "Actual tests run on Temurin25.0.3; Java17 contract was consulted and --release17 compiled, not a Java17 VM execution."
+    },
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.5",
+      "version": "JLS25 §§17.4-17.5 and 17.7",
+      "accessed": "2026-10-16",
+      "supports": "Final-field freeze and reachable-state constraints, explicit happens-before rules, permitted nonvolatile long/double tearing and atomic reference access.",
+      "limitation": "JMM guarantees were source-reviewed, not proven by runtime sampling; no concurrency stress experiment was executed."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/specs/serialization/serial-arch.html#serialization-of-records",
+      "version": "JavaSE25 Object Serialization §1.13",
+      "accessed": "2026-10-16",
+      "supports": "Record component restoration precedes canonical constructor invocation; native record serialization differs from ordinary objects.",
+      "limitation": "No inference about JSON/JPA/framework binders; no serialization round-trip was executed."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html#copyOf(java.util.Collection)",
+      "version": "JavaSE25 API; method since 10",
+      "accessed": "2026-10-16",
+      "supports": "Unmodifiable shallow collection snapshot, null rejection and possible reuse; mutable elements remain mutable.",
+      "limitation": "This unchanged source was verified during the immediately preceding review in the same session and reused. No allocation benchmark was run."
+    }
+  ],
+  "evidencePaths": [
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-immutability-validation/run-checks.mjs",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-immutability-validation/results.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-immutability-validation/logs/",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-immutability-validation/technical/",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-immutability-validation/case-a/",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-immutability-validation/case-b/",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-immutability-validation/inputs.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-immutability-validation/criteria.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-immutability-validation/assignment-baseline.json"
+  ],
+  "limits": [
+    "No skill content changed; no incremental behavioral gain or comparative catalog superiority is claimed.",
+    "No actual agent evaluation was run; paired cases and walkthroughs are provided for coordinator evaluation.",
+    "Technical Java examples were compiled by javac25.0.3 with --release17 and executed only by Temurin25.0.3+9.",
+    "The probes are deterministic synthetic examples; they do not demonstrate JMM race freedom, framework compatibility or real workload performance.",
+    "Auditor/JMM lazy-cache sketches were source-reviewed rather than executed; record serialization and framework round trips were not tested.",
+    "No benchmark, concurrency stress test, extra dependency, toolchain download, installation or module migration was performed.",
+    "External primary sources support the reviewed contracts; internal local routes and metadata were validated, not every external URL or framework release.",
+    "Global registry and verification are deferred to coordinator; local review completion is not repository-wide validation."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Parallel-review restriction; run after all reviewers stop. No new package integrity/version change from this review."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Required global validation after registry generation and stopped reviewer writes."
+    }
+  ],
+  "crossSkill": [],
+  "coordinatorActions": [
+    "Archive the complete isolated evidence and handoff.",
+    "For agent evaluation, provide only the selected case fixture and input. Do not expose the paired fixture, evaluator criteria or technical results to the actor.",
+    "Run deferred global commands after all reviewers stop writing."
+  ],
+  "noRemainingWriterProcesses": "All child processes used spawnSync, completed and exited; no background service or running tool session exists."
+}

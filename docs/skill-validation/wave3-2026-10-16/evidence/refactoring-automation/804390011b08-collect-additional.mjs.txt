@@ -1,0 +1,22 @@
+import fs from 'node:fs/promises';
+import crypto from 'node:crypto';
+const out = 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/refactoring-automation';
+const index = JSON.parse(await fs.readFile(`${out}/source-index.json`, 'utf8'));
+const raw = 'https://raw.githubusercontent.com/openrewrite/rewrite-maven-plugin/v6.24.0/src/main/java/org/openrewrite/maven';
+const files = ['ConfigurableRewriteMojo.java', 'AbstractRewriteBaseRunMojo.java', 'ResultsContainer.java'];
+const results = await Promise.allSettled(files.map(async file => {
+  const url = `${raw}/${file}`;
+  const response = await fetch(url, { signal: AbortSignal.timeout(30000) });
+  const bytes = Buffer.from(await response.arrayBuffer());
+  const path = `${out}/sources/${file}`;
+  await fs.writeFile(path, bytes);
+  return { file, url, status: response.status, path, bytes: bytes.length,
+    sha256: crypto.createHash('sha256').update(bytes).digest('hex'),
+    supports: 'Follow pinned superclass/result handling; correct source filenames after initial ConfigBase.java 404' };
+}));
+for (let i = 0; i < results.length; i++) {
+  const result = results[i];
+  index.push(result.status === 'fulfilled' ? result.value : { file: files[i], error: String(result.reason) });
+}
+await fs.writeFile(`${out}/source-index.json`, JSON.stringify(index, null, 2) + '\n');
+console.log(JSON.stringify(index.slice(-3).map(({ file, status, error }) => ({ file, status, error })), null, 2));

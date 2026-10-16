@@ -51,8 +51,11 @@ external synchronization, if any, and stable lock identity:
 
 Request scope is not automatically thread confinement: asynchronous callbacks, reactive execution,
 parallel fan-out and virtual threads can move or multiply execution. Name the actual owner.
-If stability depends on callers not mutating an aliased object, document that ownership protocol
-as a condition rather than claiming the abstraction is unconditionally immutable.
+Trace accepted/returned mutable values through actual callers and configured implementations:
+who retains an alias, and what reads, writes or recycling continue after handoff? Safe publication
+does not freeze a payload or transfer exclusive ownership. If stability depends on callers not
+mutating an alias, document that protocol as a condition, not unconditional immutability. The
+documentation reference distinguishes queue acceptance, consumer access and completion of use.
 
 ## Design hierarchy
 
@@ -206,7 +209,7 @@ Apply these checks to the supported operations and lifecycle, not hypothetical f
 
 ## References
 
-- [Documenting thread safety](references/documenting-thread-safety.md) — when writing caller guarantees, views or ownership rules.
+- [Documenting thread safety](references/documenting-thread-safety.md) — when writing caller guarantees, views or ownership rules, especially mutable payloads crossing a queue/task boundary.
 - [Lock scope, callbacks and deadlock](references/lock-scope-and-alien-calls.md) — when moving work across a lock or reviewing a wait-for graph.
 - [Lazy initialization state machines](references/lazy-initialisation.md) — when choosing initialization, retry or close-race semantics.
 - [Java concurrency API memory effects](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/package-summary.html#MemoryVisibility)

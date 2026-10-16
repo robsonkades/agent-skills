@@ -1,0 +1,58 @@
+import example.RequestTagInterceptor;
+import java.util.ArrayList;
+import java.util.List;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.web.servlet.HandlerAdapter;
+import org.springframework.web.servlet.ModelAndView;
+
+public class CaseProbe {
+    static void check(boolean ok, String message) {
+        if (!ok) throw new AssertionError(message);
+    }
+
+    public static void main(String[] args) throws Exception {
+        List<String> violations = new ArrayList<>();
+        for (String path : new String[] {"allow", "stop", "readiness-failure", "handler-failure"}) {
+            List<String> events = new ArrayList<>();
+            var tag = new RequestTagInterceptor(() -> {
+                if (path.equals("readiness-failure")) throw new IllegalStateException("readiness failed");
+                return !path.equals("stop");
+            });
+            var servlet = new LifecycleProbe.ProbeServlet(tag, events, path.equals("handler-failure")) {
+                protected HandlerAdapter getHandlerAdapter(Object handler) {
+                    HandlerAdapter delegate = super.getHandlerAdapter(handler);
+                    return new HandlerAdapter() {
+                        public boolean supports(Object candidate) { return delegate.supports(candidate); }
+                        public ModelAndView handle(HttpServletRequest request, HttpServletResponse response,
+                                                   Object candidate) throws Exception {
+                            check(request.getRequestURI().equals(RequestTagInterceptor.currentTag()),
+                                  "request tag must remain available during handler execution");
+                            return delegate.handle(request, response, candidate);
+                        }
+                        public long getLastModified(HttpServletRequest request, Object candidate) { return -1; }
+                    };
+                }
+            };
+            var response = new MockHttpServletResponse();
+            var request = new MockHttpServletRequest("GET", "/reports/status");
+            Exception caught = null;
+            try { servlet.dispatch(request, response); }
+            catch (Exception failure) { caught = failure; }
+            boolean invoked = path.equals("allow") || path.equals("handler-failure");
+            check(events.contains("handler") == invoked, path + " handler invocation");
+            check(events.contains("prior.after"), path + " prior interceptor completion");
+            if (path.equals("stop")) check(response.getStatus() == 503 && caught == null, "maintenance response");
+            if (path.equals("allow")) check(response.getStatus() == 200 && caught == null, "success response");
+            check((caught != null) == path.endsWith("failure"), path + " exception outcome");
+            if (RequestTagInterceptor.currentTag() != null) violations.add(path);
+            System.out.println(path + " tagAfterDispatch=" + RequestTagInterceptor.currentTag() + " events=" + events);
+            tag.afterCompletion(request, response, null, null); // isolate observations after recording the result
+        }
+        System.out.println("Completed 4 framework dispatch paths; response and handler controls passed");
+        if (!violations.isEmpty()) throw new AssertionError("Request tag retained after dispatch: " + violations);
+        System.out.println("PASS request-tag lifecycle contract");
+    }
+}

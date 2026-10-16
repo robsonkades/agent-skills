@@ -1,0 +1,19 @@
+{
+  "status": "PASS",
+  "kind": "Fixture integrity and separation only",
+  "cases": 2,
+  "filesPerCase": 6,
+  "verifiedFileHashes": 12,
+  "differentFiles": [
+    "business-contract.json"
+  ],
+  "differentFields": [
+    "providerReferenceUniqueWithin"
+  ],
+  "values": [
+    "tenant-and-payment-method",
+    "tenant-across-all-payment-methods"
+  ],
+  "databaseOrOrmRuns": 0,
+  "independentActorRuns": 0
+}

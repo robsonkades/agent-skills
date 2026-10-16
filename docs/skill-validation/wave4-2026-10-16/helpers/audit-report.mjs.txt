@@ -1,0 +1,46 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+const report='C:/git/agent-skills/docs/skill-validation/wave4-2026-10-16';
+const read=p=>JSON.parse(fs.readFileSync(report+'/'+p,'utf8'));
+const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
+const queue=read('queue.json'),names=queue.tasks.map(t=>t.name).sort();
+assert.equal(names.length,68);assert.equal(new Set(names).size,68);
+assert.ok(queue.tasks.every(t=>['implemented','validated'].includes(t.status)&&t.diffReviewed));
+assert.deepEqual(Object.keys(read('review-notes.json')).sort(),names);
+const evidence=read('evidence-manifest.json');
+assert.deepEqual(evidence.records.map(r=>r.skill).sort(),names);
+let evidenceFiles=0,behaviorFiles=0,bytes=0;
+for(const r of evidence.records){
+ const e=r.embeddedEvidence,raw=fs.readFileSync(report+'/'+e.rawHandoff);
+ assert.equal(sha(raw),e.sha256);assert.deepEqual(JSON.parse(raw),read('handoffs/'+r.skill+'.json'));
+ for(const a of r.entries.filter(a=>a.archived)){const b=fs.readFileSync(report+'/'+a.target);assert.equal(sha(b),a.sha256);assert.equal(b.length,a.bytes);evidenceFiles++;bytes+=b.length;}
+}
+const artifacts=read('behavior-artifact-manifest.json');
+for(const a of artifacts.artifacts){const b=fs.readFileSync(report+'/'+a.path);assert.equal(sha(b),a.sha256);assert.equal(b.length,a.bytes);behaviorFiles++;bytes+=b.length;}
+const provenance=read('review-provenance.json');
+assert.deepEqual(provenance.handoffs.map(h=>h.skill).sort(),names);
+for(const h of provenance.handoffs){
+ const b=fs.readFileSync(report+'/'+h.raw),t=queue.tasks.find(t=>t.name===h.skill);
+ assert.equal(sha(b),h.sha256);assert.equal(h.sha256,t.capturedHandoffSha);
+ assert.deepEqual(JSON.parse(b),read('handoffs/'+h.skill+'.json'));
+ assert.equal(sha(fs.readFileSync(report+'/'+h.diff)),h.reviewedDiffSha256);
+ assert.equal(h.reviewedDiffSha256,t.reviewedDiffSha256);
+}
+for(const h of provenance.helpers){const b=fs.readFileSync(report+'/'+h.target);assert.equal(sha(b),h.sha256);assert.equal(b.length,h.bytes);}
+const freeze=read('behavior-freeze.json'),raw=fs.readFileSync(report+'/behavior-manifest.frozen.json.txt');
+assert.equal(sha(raw),freeze.manifestSha256);assert.deepEqual(JSON.parse(raw),read('behavior-manifest.json'));
+const manifest=JSON.parse(raw),behavior=read('behavior-results.json');
+assert.equal(behavior.runs.length,6);assert.equal(manifest.runs.length,6);
+for(const r of manifest.runs){
+ assert.ok(r.criteria.expected.length&&r.criteria.failureConditions.length);
+ assert.equal(sha(JSON.stringify(r.criteria)),r.criteriaSha256);
+ const result=behavior.runs.find(x=>x.runId===r.runId);
+ assert.equal(result.criteriaSha256,r.criteriaSha256);assert.equal(result.allWritesStopped,true);
+ assert.equal(result.criteria.length,r.criteria.expected.length);assert.equal(result.failureConditions.length,r.criteria.failureConditions.length);
+}
+const checks=read('behavior-technical-checks.json');
+assert.equal(checks.records.length,30);assert.ok(checks.records.every(r=>r.passed===true&&r.exit===r.expectedExit));
+for(const t of queue.tasks){const h=read('handoffs/'+t.name+'.json');assert.equal(h.allWritesStopped,true);assert.ok(['READY_FOR_GLOBAL_VALIDATION','NO_CHANGES_NEEDED'].includes(h.status));}
+const result={checkedAt:new Date().toISOString(),passed:true,scope:'Report completeness and byte/hash integrity, not new technical or behavioral execution',skills:68,evidenceFiles,embeddedHandoffs:68,behaviorFiles,archivedBytes:bytes,helpers:provenance.helpers.length,frozenBehaviorManifestSha256:sha(raw),behaviorCriteriaHashesVerified:true,allHandoffsStopped:true,allDiffHashesVerified:true,notesComplete:true};
+fs.writeFileSync(report+'/report-integrity.json',JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify(result,null,2));

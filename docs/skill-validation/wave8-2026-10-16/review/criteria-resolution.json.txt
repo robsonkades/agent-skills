@@ -1,0 +1,65 @@
+{
+  "status": "APPROVED",
+  "criteriaVersion": 2,
+  "allWritesStopped": true,
+  "hashes": {
+    "criteria-draft.json": "6976171ab675ead2a7ee32ed992ffe9ff237b7ca331a5db222fe4ecd984a4332",
+    "probe.mjs": "b9c8951348067402238cbe483bc6970c5b0405aff70fc7b530cf6b0db823c7cc",
+    "preflight.mjs": "b1d374017be3b58ba2e8249f5ec9665eb1f57ae31369d2255f99f6ddd6b5271a"
+  },
+  "resolvedItems": [
+    {
+      "id": "R1",
+      "result": "Q4 accessPath explicitly guards PG17 default NULLS FIRST mismatch and permits valid alternatives/conditional reasoning."
+    },
+    {
+      "id": "R2",
+      "result": "C3 explicitly accepts coordinator mutation reexecution, without requiring actor-executed negative trace."
+    },
+    {
+      "id": "R3",
+      "result": "Q3 limits explicitly distinguish estimated cost units and cumulative buffer totals from per-loop averages."
+    },
+    {
+      "id": "R4",
+      "result": "Q3 probe now enforces finite numeric JSON values before tolerance; numeric-string negative control is present."
+    },
+    {
+      "id": "R5",
+      "result": "Q4 probe contains PostgreSQL integer min/max; sentinel, lost-null-transition and wrong-id controls are present."
+    }
+  ],
+  "preflightEvidence": {
+    "path": "C:/git/agent-skills/docs/skill-validation/wave8-2026-10-16/preflight-reviewed.json",
+    "executionsPerformedBy": "coordinator",
+    "inspectedReadOnlyBy": "wave8_review",
+    "observedRecords": 21,
+    "expectedOutcomesMatched": 21,
+    "negativeControls": 13,
+    "negativeControlsWithAssertionError": 13,
+    "negativeControlsWithSetupOrSyntaxErrors": 0,
+    "limits": "Reviewed source and existing execution report; did not rerun preflight. Subset semantics/arithmetic only, not PostgreSQL runtime or actor performance."
+  },
+  "calibration": {
+    "path": "review/calibration-grades.json",
+    "decisions": {
+      "K1": "accept",
+      "K2": "reject",
+      "K3": "accept",
+      "K4": "reject"
+    },
+    "rootExpectedFileRead": false
+  },
+  "exposure": {
+    "actorOutputsRead": false,
+    "rootGradesRead": false,
+    "actorRunsStartedAtReview": "Coordinator reports none; no actor outcomes supplied."
+  },
+  "skill": {
+    "status": "NO_CHANGES_NEEDED",
+    "version": "1.2.3",
+    "filesChanged": []
+  },
+  "pending": "Prospectively freeze inputs/criteria/probe and execute matched actors. Global registry/verify belong to coordinator.",
+  "reviewerProcesses": "No active command or background process remains. Writes stopped; further actions read-only until explicit assignment."
+}

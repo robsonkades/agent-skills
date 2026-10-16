@@ -1,0 +1,18 @@
+{
+  "at": "2026-10-16T20:08:28.849Z",
+  "sha256": "b16c78adc14d6dd47ef2657c0a18660c3ecd73a73b77c3d6f9f7439b20db8cb0",
+  "notes": [
+    {
+      "path": "root-notes-1.json",
+      "sha256": "4927fe45282c4a5e1e4b67c1b403df0655fb032c8936e1599b8ac8c5e3c20aa4"
+    },
+    {
+      "path": "root-notes-2.json",
+      "sha256": "b5687abe06682d617980ac46d9786bf1146a8e4127f74f9a73231909308bccdf"
+    },
+    {
+      "path": "root-notes-3.json",
+      "sha256": "c9c2e64259fb0e86a0817a16527411f941f46431f7ba2c71f38a0c688277805b"
+    }
+  ]
+}

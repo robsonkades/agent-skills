@@ -1,0 +1,10 @@
+{
+  "at": "2026-10-16T12:54:47.876Z",
+  "fullManifestSnapshotMatches": true,
+  "protocolSnapshotMatches": true,
+  "currentManifestSemanticallyMatches": true,
+  "actualCriteriaMatch": true,
+  "actualCriteriaSha256": "ac217e295e2992dfdf5fe08ee97fea192c887ea2fa0b14e24fb3aa1eceb53f52",
+  "auxiliaryDigestIssue": "The pre-run criteriaSha256 was mistakenly computed over case IDs only (undefined property omitted by JSON.stringify). It does not independently protect the rubric. The full manifest digest correctly includes every criterion, matches the pre-run byte snapshot, and is the provenance used here. The frozen record is preserved without retroactive repair.",
+  "auxiliaryDigestWasIdsOnly": true
+}

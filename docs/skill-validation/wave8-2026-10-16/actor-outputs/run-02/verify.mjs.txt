@@ -1,0 +1,91 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {createDb, query} from './fixture.mjs';
+
+// Every invocation loads the candidate under review from disk.
+const solution = fs.readFileSync(new URL('./solution.sql', import.meta.url), 'utf8');
+const current = fs.readFileSync(new URL('./current.sql', import.meta.url), 'utf8');
+
+function verifyCandidate(sql) {
+  const db = createDb();
+  let comparisons = 0;
+  const check = (tenant, expected, context) => {
+    const rows = expected.map(customer_label => ({customer_label}));
+    assert.deepEqual(query(db, current, {tenant}), rows, `${context}: current/oracle`);
+    assert.deepEqual(query(db, sql, {tenant}), rows, `${context}: candidate/oracle`);
+    comparisons++;
+  };
+  try {
+    check(71, ['Acme', 'Acme', 'Bravo'], 'seed duplicate labels and overlap');
+    check(72, ['Other'], 'seed other tenant');
+    check(73, [], 'absent tenant');
+    check(null, [], 'null tenant comparison');
+
+    const insert = db.prepare('INSERT INTO invoices VALUES (?, ?, ?, ?, ?)');
+    assert.throws(() => insert.run(9999, 71, 'Invalid', null, 150), /NOT NULL/i);
+    assert.throws(() => insert.run(9999, 71, 'Invalid', 2, 150), /CHECK/i);
+
+    db.exec('DELETE FROM invoices');
+    const rows = [];
+    let id = 100;
+    const amounts = [-9999999999.99, -0.01, 0, 99.99, 100, 100.01, 9999999999.99];
+    for (const tenant of [71, 72, 0, -7]) {
+      for (const active of [0, 1]) {
+        for (const amount of amounts) {
+          // Identical projections within and across both branches must stay duplicated.
+          for (const label of ['Zulu', 'Alpha', 'Echo', 'Echo']) {
+            rows.push({id: id++, tenant, active, amount, label});
+          }
+        }
+      }
+    }
+    // Deliberately do not insert in label order.
+    for (const row of rows) insert.run(row.id, row.tenant, row.label, row.active, row.amount);
+    for (const tenant of [71, 72, 0, -7, 73, null]) {
+      const expected = rows
+        .filter(row => row.tenant === tenant && (row.active === 1 || row.amount >= 100))
+        .map(row => row.label)
+        .sort();
+      check(tenant, expected, `matrix tenant=${tenant}`);
+    }
+    db.exec('DELETE FROM invoices');
+    check(71, [], 'empty table');
+    return {comparisons, matrixRows: rows.length};
+  } finally {
+    db.close();
+  }
+}
+
+const verified = verifyCandidate(solution);
+const rejectedMutants = [];
+if (process.argv.includes('--self-test')) {
+  const variants = [
+    ['UNION removes distinct invoices with the same label', solution.replace(/UNION ALL/i, 'UNION')],
+    ['unguarded UNION ALL doubles invoices matching both predicates', solution.replace(/\s+AND NOT \(active = true\)/i, '')],
+    ['second branch loses tenant isolation', solution.replace(/tenant_id = :tenant AND amount/i, 'amount')],
+    ['first branch loses tenant isolation', solution.replace(/tenant_id = :tenant AND active/i, 'active')],
+    ['exclusive threshold loses amount=100', solution.replace(/amount >= 100/i, 'amount > 100')],
+    ['descending output violates ordering', solution.replace(/ORDER BY customer_label/i, 'ORDER BY customer_label DESC')],
+  ];
+  for (const [name, sql] of variants) {
+    assert.notEqual(sql, solution, `mutation did not apply: ${name}`);
+    assert.throws(() => verifyCandidate(sql), assert.AssertionError, `accepted wrong variant: ${name}`);
+    rejectedMutants.push(name);
+  }
+}
+
+const versionDb = createDb();
+try {
+  console.log(JSON.stringify({
+    status: 'passed',
+    candidateSource: 'solution.sql',
+    nodeVersion: process.version,
+    sqliteVersion: versionDb.prepare('SELECT sqlite_version() AS version').get().version,
+    ...verified,
+    constraintRejections: ['active=NULL', 'active=2'],
+    rejectedMutants,
+    scope: 'portable result semantics only; no PostgreSQL execution or performance measurement',
+  }, null, 2));
+} finally {
+  versionDb.close();
+}

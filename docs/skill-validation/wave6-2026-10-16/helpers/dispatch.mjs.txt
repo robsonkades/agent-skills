@@ -1,0 +1,10 @@
+import fs from 'node:fs';
+const report='C:/git/agent-skills/docs/skill-validation/wave6-2026-10-16';
+const batch=Number(process.argv[2]);
+if(![1,2].includes(batch))throw Error('batch 1 or 2');
+const p=report+'/dispatch.json',r=fs.existsSync(p)?JSON.parse(fs.readFileSync(p,'utf8')):{scope:'Coordinator-observed dispatch bounds, not precise actor start times. Actor journals supply individual clocks when available.',batches:[]};
+if(r.batches.some(b=>b.batch===batch))throw Error('Do not overwrite dispatch record');
+const actors=JSON.parse(fs.readFileSync(report+'/actors.json','utf8')).runs.slice((batch-1)*18,batch*18).map(x=>({run:x.id,actor:x.actor}));
+r.batches.push({batch,firstDispatchAfter:process.argv[3],lastDispatchObservedBefore:process.argv[4],recordedAt:new Date().toISOString(),freshFork:'none',actors});
+fs.writeFileSync(p,JSON.stringify(r,null,2)+'\n');
+console.log(JSON.stringify(r.batches.at(-1)));

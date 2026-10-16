@@ -1,0 +1,92 @@
+{
+  "workingDirectory": "C:/git/agent-skills",
+  "structural": {
+    "commands": [
+      "@'\nimport assert from 'node:assert/strict';\nimport { readFileSync, readdirSync, existsSync } from 'node:fs';\nimport path from 'node:path';\nimport { parseManifest } from './packages/core/src/domain/manifest.ts';\nimport { buildSkillPackage } from './packages/core/src/domain/skill-package.ts';\nimport { validatePackage } from './packages/core/src/application/validate-package.ts';\nconst root = path.resolve('skills/enterprise-application-architecture');\nfunction gather(dir, prefix = '') {\n  return readdirSync(dir, { withFileTypes: true }).flatMap(e => {\n    const rel = prefix + e.name;\n    return e.isDirectory() ? gather(path.join(dir, e.name), rel + '/') : [{ path: rel, bytes: readFileSync(path.join(dir, e.name)) }];\n  });\n}\nconst files = gather(root);\nconst parsed = parseManifest(readFileSync(path.join(root, 'skill.yaml'), 'utf8'));\nconst pkg = buildSkillPackage(parsed.manifest, files);\nconst report = validatePackage(pkg, { directoryName: 'enterprise-application-architecture' });\nassert.deepEqual(parsed.issues, []);\nassert.deepEqual(report.issues, []);\nassert.equal(parsed.manifest.version, '1.2.6');\nlet linkCount = 0;\nfor (const file of files.filter(f => f.path.endsWith('.md'))) {\n  const text = file.bytes.toString('utf8');\n  for (const match of text.matchAll(/\\[[^\\]]+\\]\\(([^)]+)\\)/g)) {\n    const href = match[1];\n    if (/^(?:https?:|mailto:)/.test(href)) continue;\n    const [relative, fragment] = href.split('#');\n    const target = path.resolve(root, path.dirname(file.path), relative || path.basename(file.path));\n    assert.ok(target.startsWith(root + path.sep), href);\n    assert.ok(existsSync(target), href);\n    if (fragment) {\n      const headings = [...readFileSync(target, 'utf8').matchAll(/^#+\\s+(.+)$/gm)].map(m => m[1].toLowerCase().replace(/[^\\w\\s-]/g, '').trim().replace(/\\s+/g, '-'));\n      assert.ok(headings.includes(fragment), href);\n    }\n    linkCount++;\n  }\n}\nconst entry = readFileSync(path.join(root, 'SKILL.md'), 'utf8');\nfor (const file of files.filter(f => f.path.startsWith('references/'))) assert.ok(entry.includes(file.path), 'Unrouted reference: ' + file.path);\nconsole.log(JSON.stringify({ name: parsed.manifest.name, version: parsed.manifest.version, files: files.length, packageIssues: report.issues, manifestIssues: parsed.issues, relativeLinksChecked: linkCount, referencesRouted: files.filter(f => f.path.startsWith('references/')).length }));\n'@ | node --input-type=module",
+      "@'\nimport assert from 'node:assert/strict';\nimport { readFileSync, readdirSync, existsSync } from 'node:fs';\nimport path from 'node:path';\nimport { parseManifest } from './packages/core/src/domain/manifest.ts';\nconst root='skills/enterprise-application-architecture';\nconst {manifest}=parseManifest(readFileSync(root+'/skill.yaml','utf8'));\nconst declared=new Set([...(manifest.dependencies??[]).map(x=>x.name),...(manifest.suggests??[])]);\nconst files=[root+'/SKILL.md',...readdirSync(root+'/references').map(n=>root+'/references/'+n)];\nconst terms=new Set(files.flatMap(f=>[...readFileSync(f,'utf8').matchAll(/\\b[a-z][a-z0-9]+(?:-[a-z0-9]+)+\\b/g)].map(m=>m[0])));\nconst actualReferrals=[...terms].filter(n=>n!==manifest.name&&existsSync(path.join('skills',n,'SKILL.md'))).sort();\nconst undeclared=actualReferrals.filter(n=>!declared.has(n));\nassert.deepEqual(undeclared,[]);\nfor(const name of declared) assert.ok(existsSync(path.join('skills',name,'SKILL.md')),name);\nconsole.log(JSON.stringify({skill:manifest.name,actualReferralsChecked:actualReferrals,undeclared,declaredTargetsPresent:declared.size,scope:'owned markdown and explicitly named target entrypoint existence only; not catalog-wide routing/resolution'}));\n'@ | node --input-type=module",
+      "node node_modules/prettier/bin/prettier.cjs --check skills/enterprise-application-architecture/SKILL.md skills/enterprise-application-architecture/skill.yaml skills/enterprise-application-architecture/references/application-types.md skills/enterprise-application-architecture/references/navigating-the-family.md",
+      "git diff --check -- skills/enterprise-application-architecture"
+    ],
+    "results": [
+      {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "44f832",
+          "wall_time_seconds": 0.3085423,
+          "exit_code": 0,
+          "original_token_count": 40,
+          "output": "{\"name\":\"enterprise-application-architecture\",\"version\":\"1.2.6\",\"files\":4,\"packageIssues\":[],\"manifestIssues\":[],\"relativeLinksChecked\":2,\"referencesRouted\":2}\n"
+        }
+      },
+      {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "ddfd12",
+          "wall_time_seconds": 0.2673058,
+          "exit_code": 0,
+          "original_token_count": 380,
+          "output": "{\"skill\":\"enterprise-application-architecture\",\"actualReferralsChecked\":[\"architecture-and-performance\",\"architecture-characteristics\",\"architecture-decision-making\",\"architecture-refactoring-paths\",\"architecture-testing\",\"caching-strategies\",\"concurrency-limiting-and-bulkheads\",\"connection-pool-sizing\",\"consistency-models\",\"data-source-patterns\",\"delivery-semantics\",\"distributed-transactions-and-sagas\",\"distribution-boundaries\",\"domain-logic-organization\",\"enterprise-architecture-smells\",\"enterprise-base-patterns\",\"enterprise-transactions\",\"failure-models\",\"inheritance-mapping-strategies\",\"java-application-security-basics\",\"java-concurrency\",\"java-performance\",\"jvm-gc-tuning\",\"latency-statistics\",\"layering-and-boundaries\",\"legacy-enterprise-modernization\",\"littles-law-and-queueing\",\"metadata-mapping\",\"mvc-and-request-handling\",\"offline-concurrency-control\",\"orm-behavioral-patterns\",\"orm-structural-mapping\",\"pattern-selection-and-composition\",\"patterns-and-modern-frameworks\",\"performance-methodology\",\"query-objects-and-specifications\",\"remote-facade-and-dto\",\"repository-pattern\",\"retries-and-backoff\",\"rpc-and-api-contracts\",\"service-layer-design\",\"session-state-strategies\",\"sharding-and-partitioning\",\"skill-engineering\",\"stateless-service-design\",\"timeouts-and-deadlines\",\"universal-scalability-law\",\"view-and-representation-patterns\"],\"undeclared\":[],\"declaredTargetsPresent\":49,\"scope\":\"owned markdown and explicitly named target entrypoint existence only; not catalog-wide routing/resolution\"}\n"
+        }
+      },
+      {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "cc1ded",
+          "wall_time_seconds": 0.3543409,
+          "exit_code": 0,
+          "original_token_count": 17,
+          "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+        }
+      },
+      {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "6b03b8",
+          "wall_time_seconds": 0.1490023,
+          "exit_code": 0,
+          "original_token_count": 0,
+          "output": ""
+        }
+      }
+    ]
+  },
+  "final": {
+    "commands": [
+      "@'\nimport assert from 'node:assert/strict';\nimport { readFileSync } from 'node:fs';\nconst root='C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/enterprise-application-architecture-evidence/';\nconst first=JSON.parse(readFileSync(root+'case-01.input.json','utf8'));\nconst second=JSON.parse(readFileSync(root+'case-02.input.json','utf8'));\nconst criteria=JSON.parse(readFileSync(root+'evaluator-criteria.json','utf8'));\nassert.equal(first.files['deployment.properties'],'inventory.mode=local\\n');\nassert.equal(second.files['deployment.properties'],'inventory.mode=partner\\n');\nassert.equal(criteria.cases.length,2);\nassert.equal(first.prompt,second.prompt);\nfor(const input of [first,second]) {\n  assert.equal(Object.keys(input.files).length,11);\n  assert.ok(!Object.hasOwn(input,'required'));\n  assert.ok(!Object.hasOwn(input,'criteria'));\n  for(const file of Object.keys(input.files)) {\n    assert.ok(!file.startsWith('/')&&!file.includes('..'));\n  }\n}\nsecond.id=first.id;\nsecond.files['deployment.properties']=first.files['deployment.properties'];\nassert.deepEqual(first,second);\nconsole.log(JSON.stringify({cases:2,filesPerCase:11,onlyDecisiveDifference:'inventory.mode',criteriaSeparate:true,validation:'fixture consistency only; no Spring/database/HTTP runtime or actor evaluation'}));\n'@ | node --input-type=module",
+      "@'\nimport assert from 'node:assert/strict';\nimport { readFileSync, readdirSync } from 'node:fs';\nimport { createHash } from 'node:crypto';\nimport path from 'node:path';\nconst baseline=JSON.parse(readFileSync('docs/skill-validation/wave4-2026-10-16/baseline.json','utf8'));\nconst pkg=baseline.packages.find(p=>p.name==='enterprise-application-architecture');\nfunction gather(dir) {return readdirSync(dir,{withFileTypes:true}).flatMap(e=>e.isDirectory()?gather(path.join(dir,e.name)):[path.join(dir,e.name).replaceAll('\\\\','/')]);}\nconst paths=gather('skills/enterprise-application-architecture');\nassert.equal(paths.length,pkg.files.length);\nconst files=paths.map(p=>({path:p,sha256:createHash('sha256').update(readFileSync(p)).digest('hex')}));\nfor(const file of files) assert.equal(file.sha256,pkg.files.find(f=>f.path===file.path).sha256,file.path);\nconsole.log(JSON.stringify({allAssignmentHashesUnchanged:true,files,platform:process.platform,node:process.version,execPath:process.execPath}));\n'@ | node --input-type=module",
+      "git status --short -- skills/enterprise-application-architecture\n git diff -- skills/enterprise-application-architecture\n git diff --cached -- skills/enterprise-application-architecture"
+    ],
+    "results": [
+      {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "26b549",
+          "wall_time_seconds": 0.1554407,
+          "exit_code": 0,
+          "original_token_count": 48,
+          "output": "{\"cases\":2,\"filesPerCase\":11,\"onlyDecisiveDifference\":\"inventory.mode\",\"criteriaSeparate\":true,\"validation\":\"fixture consistency only; no Spring/database/HTTP runtime or actor evaluation\"}\n"
+        }
+      },
+      {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "e0a55c",
+          "wall_time_seconds": 0.1509036,
+          "exit_code": 0,
+          "original_token_count": 186,
+          "output": "{\"allAssignmentHashesUnchanged\":true,\"files\":[{\"path\":\"skills/enterprise-application-architecture/references/application-types.md\",\"sha256\":\"107d95d3f6fab13356b1ee881d5cdc88cf4828baf30ef704fa8c3e6a294b7c6c\"},{\"path\":\"skills/enterprise-application-architecture/references/navigating-the-family.md\",\"sha256\":\"09e9f7442b1e3ea76185dedd28d9b3e768229ad5cc7991c004e3d0471a5aff87\"},{\"path\":\"skills/enterprise-application-architecture/SKILL.md\",\"sha256\":\"10ae6bbacda7cb40cef507f73f5c9e823f8476dc878c245b849b3602c9eafddb\"},{\"path\":\"skills/enterprise-application-architecture/skill.yaml\",\"sha256\":\"bfdb9e96125bfeaf11111dcc1bee85f78b04ba4b1de297b8d8a8f8e2f02e7c11\"}],\"platform\":\"win32\",\"node\":\"v25.6.1\",\"execPath\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\"}\n"
+        }
+      },
+      {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "068569",
+          "wall_time_seconds": 0.1913142,
+          "exit_code": 0,
+          "original_token_count": 0,
+          "output": ""
+        }
+      }
+    ]
+  }
+}

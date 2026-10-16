@@ -26,11 +26,12 @@ two of them, where adding workers changes nothing at all.
 
 ## Workflow
 
-Reuse the existing aggregate definition, input snapshot, engine commit protocol and measured
-task profile before asking for missing context. Retain an adequate exact representation and
-required barrier; introduce a sketch, repartitioning or speculation only for a demonstrated
-constraint. Scale investigation and testing to whether the request is an explanation, design
-review or implementation change.
+Start with the affected job's registration or execution plan: locate the selected accumulator,
+combiner/finalizer, intermediate-state codec and output consumer. Reuse its aggregate definition,
+input snapshot, commit protocol and measured task profile before asking for missing context.
+Retain an adequate exact representation and required barrier; introduce a sketch, repartitioning
+or speculation only for a demonstrated constraint. Scale investigation and testing to whether
+the request is an explanation, design review or implementation change.
 
 1. **Write the aggregate contract.** Define identity, accumulator, merge, finish, input
    domain, units/window/population, overflow/error policy and whether encounter order matters.
@@ -60,6 +61,9 @@ review or implementation change.
    completeness record.
 8. **Check algebra and recovery.** Property-test regrouping/reordering allowed by the
    contract, including accumulator/merge compatibility and serialized-state round trips.
+   Verify that tests exercise the selected merge/codec hooks, not only a sequential helper.
+   If precombination is optional or repeatable, test those invocation shapes too; correctness
+   must not depend on an optional hook running exactly once.
    Test equivalent and distinct keys across workers. Inject duplicate attempts and crashes
    at commit boundaries, and compare against
    a trusted sequential oracle. Report the schedules and faults actually tested; finite trials
@@ -179,7 +183,7 @@ Speculatively re-execute a straggler only when attempts satisfy the same result 
 - [HyperLogLog original analysis](https://algo.inria.fr/flajolet/Publications/FlFuGaMe07.pdf)
 
 - [Aggregation correctness](references/aggregation-correctness.md) — identity,
-  associativity, accumulator/merge compatibility, grouping-key semantics, conditional
+  associativity, accumulator/merge compatibility, engine hook invocation, grouping-key semantics, conditional
   commutativity and duplicate-attempt separation, with the
   safe/unsafe operation table and floating-point
   non-associativity problem and its three fixes, non-reducible aggregates rewritten with

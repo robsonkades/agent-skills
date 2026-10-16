@@ -99,8 +99,11 @@ which protocol guarantees can support the architecture and which remain deployme
 - **Authenticate the evidence before trusting its claims.** Select issuers, key sources,
   token profiles and CA bundles from trusted configuration. For JWTs, verify the agreed
   signature/algorithm, issuer, intended audience and time/profile rules; for opaque tokens,
-  use the trusted introspection contract and applicable claim checks. For certificates,
-  validate the chain and expected peer identity. An incoming `iss`, `jku`, certificate header or
+  use the trusted introspection contract and applicable claim checks. For certificate
+  authentication, enforce the selected profile's proof-of-possession and trust checks.
+  PKI identities require a valid chain and expected peer; an explicitly supported profile of
+  registered certificates uses trusted client binding instead. Do not relax PKI checks on
+  other paths. An incoming `iss`, `jku`, certificate header or
   discovery result does not grant itself authority. An ID token is not an API access token.
 - **Make proxy trust explicit.** A gateway assertion is acceptable only over a protected
   route from an authenticated, authorized assertion producer, with client-supplied identity

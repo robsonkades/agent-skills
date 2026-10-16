@@ -1,0 +1,25 @@
+package org.openrewrite.maven;
+import java.nio.file.*; import java.time.Duration; import java.util.*; import org.openrewrite.*; import org.apache.maven.plugin.*;
+public abstract class AbstractRewriteBaseRunMojo {
+  protected boolean rewriteSkip, exportDatatables; protected boolean runPerSubmodule = true;
+  protected String recipeChangeLogLevel = "WARN"; protected FakeProject project = new FakeProject(); protected FakeSession mavenSession = new FakeSession();
+  protected ResultsContainer supplied; protected final FakeLog logger = new FakeLog(); protected State state;
+  public abstract void execute() throws MojoExecutionException, MojoFailureException;
+  protected enum State { SKIPPED, TO_BE_PROCESSED, PROCESSED }
+  protected void putState(State value){state=value;} protected boolean allProjectsMarked(){return true;}
+  protected FakeLog getLog(){return logger;} protected void log(String level,String message){logger.lines.add(level+" "+message);}
+  protected void logRecipesThatMadeChanges(Result result){} protected String formatDuration(Duration value){return value.toString();}
+  protected Duration estimateTimeSavedSum(Result result,Duration value){return value;}
+  protected ExecutionContext executionContext(List<Throwable> throwables){return new ExecutionContext(){};}
+  protected ResultsContainer listResults(ExecutionContext ctx){return supplied;}
+  protected static class SanitizedMarkerPrinter {}
+  public static class FakeProject { public String directory; public String getGroupId(){return "fixture";} public String getArtifactId(){return "fixture";} public String getVersion(){return "1";} public FakeProject getBuild(){return this;} public String getDirectory(){return directory;} }
+  public static class FakeSession { public FakeProject getTopLevelProject(){return new FakeProject();} }
+  public static class FakeLog { public final List<String> lines = new ArrayList<>(); public void info(String s){lines.add("INFO "+s);} public void warn(String s){lines.add("WARN "+s);} public void warn(String s,Throwable t){warn(s+" "+t);} public void error(String s){lines.add("ERROR "+s);} public boolean isDebugEnabled(){return false;} }
+  public static class ResultsContainer {
+    final List<Result> generated=new ArrayList<>(),deleted=new ArrayList<>(),moved=new ArrayList<>(),refactoredInPlace=new ArrayList<>();
+    final Path root; RuntimeException firstException; ResultsContainer(Path root){this.root=root;}
+    RuntimeException getFirstException(){return firstException;} boolean isNotEmpty(){return !(generated.isEmpty()&&deleted.isEmpty()&&moved.isEmpty()&&refactoredInPlace.isEmpty());}
+    Path getProjectRoot(){return root;} List<Path> newlyEmptyDirectories(){return Collections.emptyList();}
+  }
+}

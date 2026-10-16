@@ -28,7 +28,10 @@ memory and failure/fallback semantics. For a focused correction, collect the sub
 establish its contract; missing unrelated measurements need not block it.
 
 Inspect build toolchains, compiler release, runtime image, resolved Java/native artifacts and
-provider/device support. This skill prescribes no universal JDK baseline; engine requirements
+provider/device support. Follow the caller through the selected model/session factory and
+confirm which model generation and creation options serve the request; a configured options
+object or provider-availability log does not establish that path. This skill prescribes no
+universal JDK baseline; engine requirements
 and virtual-thread guidance are version-specific (virtual threads are final in JDK 21).
 Do not upgrade Java or the engine merely to apply an example from current documentation.
 

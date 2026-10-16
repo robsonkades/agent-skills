@@ -1,0 +1,23 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+
+const immutableFiles = ['README.md', 'REQUEST.md', 'schema.sql', 'seed.sql', 'current.sql', 'proposed.sql', 'fixture.mjs'];
+const hashes = {};
+for (const name of immutableFiles) {
+  const original = fs.readFileSync(new URL(`../input/${name}`, import.meta.url));
+  const copy = fs.readFileSync(new URL(`./${name}`, import.meta.url));
+  assert.ok(original.equals(copy), `${name} must remain byte-identical`);
+  hashes[name] = crypto.createHash('sha256').update(copy).digest('hex');
+}
+const review = fs.readFileSync(new URL('./REVIEW.md', import.meta.url), 'utf8');
+const words = review.trim().split(/\s+/).length;
+assert.ok(words <= 750, `Review has ${words} words`);
+const result = JSON.parse(fs.readFileSync(new URL('./result.json', import.meta.url), 'utf8'));
+const verification = JSON.parse(fs.readFileSync(new URL('./verify.stdout.json', import.meta.url), 'utf8'));
+assert.equal(verification.status, 'pass');
+assert.equal(result.evidence.cursor_checks, verification.cursorChecks);
+assert.equal(result.evidence.result_comparisons, verification.resultComparisons);
+assert.equal(result.evidence.complete_page_walks, verification.completePageWalks);
+assert.ok(result.decision && result.evidence && result.limits.length);
+console.log(JSON.stringify({status: 'pass', immutableCopies: immutableFiles.length, reviewWords: words, hashes}, null, 2));

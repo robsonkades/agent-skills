@@ -1,0 +1,100 @@
+{
+  "status": "PASS",
+  "node": "v25.6.1",
+  "cwd": "C:\\git\\agent-skills",
+  "versions": {
+    "committed": "1.1.5",
+    "assignment": "1.1.5",
+    "final": "1.1.6"
+  },
+  "metadata": {
+    "strictIssues": [],
+    "nameAndDescriptionMatch": true
+  },
+  "baselineClean": true,
+  "waveBaselineMatches": true,
+  "files": [
+    {
+      "path": "skills/refactoring-automation/SKILL.md",
+      "assignmentSha256": "746b474067447a544d9b9d7ac1d3b1164c285d3c9ad932e6077220997bb8a761",
+      "finalSha256": "42859998723b9050c06b265c6c3e153092316d83374551abd43b470ab4c8bcef",
+      "changedByReviewer": true
+    },
+    {
+      "path": "skills/refactoring-automation/references/large-scale-change.md",
+      "assignmentSha256": "a523258d7a8bab518e68d0b6a2ab2c17bab98afe7b89a03a0dfa4dc2a59329c6",
+      "finalSha256": "a523258d7a8bab518e68d0b6a2ab2c17bab98afe7b89a03a0dfa4dc2a59329c6",
+      "changedByReviewer": false
+    },
+    {
+      "path": "skills/refactoring-automation/references/openrewrite-recipes.md",
+      "assignmentSha256": "7837fd4e7d18dbb7530b46516bb71194ad8781172af666f16bec8cdf6876bf76",
+      "finalSha256": "bf5e8f43e352e5ef95b811a4fb51a9f0def1c8dbb74ba42ec06b6b000c733cca",
+      "changedByReviewer": true
+    },
+    {
+      "path": "skills/refactoring-automation/references/tool-capabilities.md",
+      "assignmentSha256": "a2ac57a455f27985bf30c3404ed098a8ac24ae05109cf89a6b02ee060aa5110a",
+      "finalSha256": "a2ac57a455f27985bf30c3404ed098a8ac24ae05109cf89a6b02ee060aa5110a",
+      "changedByReviewer": false
+    },
+    {
+      "path": "skills/refactoring-automation/skill.yaml",
+      "assignmentSha256": "1b5ef43eba3ae045d31af1cd77a62c4241bbdf6f3f86c79d64593906235c7fa1",
+      "finalSha256": "adcc0fc6cfca3a6d8b16b6462c1c15c57b4d5b8edc4ddee8dfd48d5f7aa7f8e6",
+      "changedByReviewer": true
+    }
+  ],
+  "localLinks": [
+    {
+      "from": "skills/refactoring-automation/SKILL.md",
+      "target": "references/tool-capabilities.md",
+      "exists": true
+    },
+    {
+      "from": "skills/refactoring-automation/SKILL.md",
+      "target": "references/openrewrite-recipes.md",
+      "exists": true
+    },
+    {
+      "from": "skills/refactoring-automation/SKILL.md",
+      "target": "references/large-scale-change.md",
+      "exists": true
+    }
+  ],
+  "git": {
+    "staged": "",
+    "untracked": "",
+    "diffCheck": "pass"
+  },
+  "sources": {
+    "retained": 15,
+    "available": 13,
+    "unavailableInitialPaths": [
+      "ConfigBase.java",
+      "ResultsContainer.java"
+    ],
+    "hashesMatch": true,
+    "resolution": "ConfigurableRewriteMojo.java is the actual parameter owner; ResultsContainer is nested in AbstractRewriteBaseRunMojo.java. Both actual paths are retained."
+  },
+  "technical": {
+    "checks": 18,
+    "independentProcesses": 4,
+    "compileRelease": 8,
+    "classMajor": 52,
+    "classMinor": 0,
+    "runtime": "Temurin 25.0.3+9",
+    "actualPinnedMojoSourcesUnmodified": true,
+    "controls": [
+      "success",
+      "early-error",
+      "write-error",
+      "preview-changes",
+      "preview-clean",
+      "preview-stale"
+    ],
+    "successfulGeneratedFixtureCompiles": true,
+    "scope": "Source-level controls of unchanged pinned mojo methods with supplied Result objects and stubbed collaborators. No Maven integration, parser, recipe execution or semantic Java transformation validated.",
+    "limitation": "Source-level method controls with stubbed collaborators; no end-to-end Maven, parser or recipe run. No Java 8 VM execution."
+  }
+}

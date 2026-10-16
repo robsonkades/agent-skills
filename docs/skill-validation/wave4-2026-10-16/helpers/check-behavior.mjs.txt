@@ -1,0 +1,37 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+import {spawnSync} from 'node:child_process';
+const report='C:/git/agent-skills/docs/skill-validation/wave4-2026-10-16';
+const manifest=JSON.parse(fs.readFileSync(report+'/behavior-manifest.frozen.json.txt','utf8'));
+const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
+const inventory=d=>fs.readdirSync(d,{withFileTypes:true}).flatMap(e=>e.isDirectory()?inventory(d+'/'+e.name):[{path:d+'/'+e.name,sha256:sha(fs.readFileSync(d+'/'+e.name))}]).sort((a,b)=>a.path.localeCompare(b.path));
+const records=[],logs=[],preservation=[];
+const env={...process.env};for(const k of ['JAVA_TOOL_OPTIONS','JDK_JAVA_OPTIONS','_JAVA_OPTIONS','CLASSPATH'])delete env[k];
+const java='C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe';
+function run(runId,label,args,cwd,expectedExit,expectedText){const r=spawnSync(java,args,{cwd,env,encoding:'utf8',timeout:30000,maxBuffer:1024*1024});const passed=r.status===expectedExit&&!r.error&&(!expectedText||(r.stdout+r.stderr).includes(expectedText));const row={runId,label,command:java,args,cwd,exit:r.status,expectedExit,stdout:r.stdout,stderr:r.stderr,error:r.error?.message??null,passed};records.push(row);assert.ok(passed,JSON.stringify(row));}
+for(const r of manifest.runs){
+ const before=inventory(r.actorDirectory);
+ for(const f of r.inputs)assert.equal(sha(fs.readFileSync(r.actorDirectory+'/'+f.path)),f.sha256);
+ const log=JSON.parse(fs.readFileSync(r.actorDirectory+'/output/execution.json','utf8'));
+ const es=log.executions??log.commands;assert.ok(Array.isArray(es)&&es.length);
+ const recorded=es.map(e=>({id:e.id??e.label,command:e.executable??e.command,args:e.arguments??e.args,exit:e.exitCode??e.exit_code,expected:e.expectedExitCode,unexpected:e.matchedExpectedExitCode===false||e.matchedExpectedExit===false||e.expectationMet===false,timedOut:e.timedOut===true}));
+ assert.ok(recorded.every(e=>!e.timedOut));
+ logs.push({runId:r.runId,actorReportedExecutionRecords:recorded.length,nonzero:recorded.filter(e=>e.exit!==0),unexpected:recorded.filter(e=>e.unexpected),classification:'Actor-authored historical records retained; coordinator reruns below are separate direct evidence.'});
+ let oldArgs,newArgs;
+ if(r.caseId==='delivery-bundled'){
+  const candidate=recorded.find(e=>{const i=e.args?.indexOf('-jar');return i>=0&&e.args[i+1].replaceAll('\\','/').startsWith('output/')&&e.args.at(-1)==='LF'&&e.exit===0;});assert.ok(candidate,r.runId+' produced candidate missing');
+  oldArgs=['-jar','input/bundles/report-1.0.0.jar'];newArgs=['-jar',candidate.args[candidate.args.indexOf('-jar')+1]];
+ }else{oldArgs=['-cp','input/published/report-app-1.0.0.jar;input/published/text-core-1.0.0.jar','com.example.app.ReportApp'];newArgs=['-cp','input/published/report-app-1.0.0.jar;input/published/text-core-1.0.1.jar','com.example.app.ReportApp'];}
+ run(r.runId,'retained-original',oldArgs.concat('CR'),r.actorDirectory,0,'A<CR>B');
+ run(r.runId,'original-does-not-meet-correction',oldArgs.concat('LF'),r.actorDirectory,1,'AssertionError: Expected LF');
+ run(r.runId,'actual-candidate',newArgs.concat('LF'),r.actorDirectory,0,'A<LF>B');
+ run(r.runId,'candidate-rejects-old-result',newArgs.concat('CR'),r.actorDirectory,1,'AssertionError: Expected CR');
+ run(r.runId,'retained-recovery',oldArgs.concat('CR'),r.actorDirectory,0,'A<CR>B');
+ assert.deepEqual(inventory(r.actorDirectory),before);
+ preservation.push({runId:r.runId,allFilesUnchanged:true,files:before.length});
+}
+const result={checkedAt:new Date().toISOString(),classification:'Coordinator directly reran the existing consumer with retained/candidate artifacts, without rewriting actor inputs or outputs. This corroborates local behavior, not production rollout or agent improvement.',runtime:'Temurin25.0.3+9 Windows; no JVM17 runtime validation',records,actorRecordAudit:logs,preservation};
+fs.writeFileSync(report+'/behavior-technical-checks.json',JSON.stringify(result,null,2)+'\n');
+console.log(JSON.stringify({runs:preservation.length,processes:records.length,passed:records.every(r=>r.passed),inputAndOutputPreservation:true,actorHistoricalUnexpected:logs.filter(l=>l.unexpected.length)},null,2));

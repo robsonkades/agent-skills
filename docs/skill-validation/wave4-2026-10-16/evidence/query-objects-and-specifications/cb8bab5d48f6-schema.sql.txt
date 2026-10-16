@@ -1,0 +1,8 @@
+CREATE TABLE customer_order (
+    id bigint PRIMARY KEY,
+    tenant_id varchar(40) NOT NULL,
+    customer_id bigint NOT NULL,
+    status varchar(20),
+    placed_at timestamptz NOT NULL,
+    CHECK (status IN ('OPEN', 'SETTLED', 'VOID'))
+);

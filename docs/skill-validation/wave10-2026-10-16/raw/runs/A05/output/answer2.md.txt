@@ -1,0 +1,11 @@
+Recomendo que Ana escolha hoje **manter R durante o horizonte de 24 meses**. A atualização altera a obrigação que sustentava a recomendação anterior; retiro a indicação de N via P. R continua viável e não existe necessidade de abandoná-lo.
+
+O contrato atualizado limita imediatamente qualquer pausa planejada de escrita a **6 minutos**, inclusive durante migrações, sem exceção autorizada. Os ensaios de P continuam registrando 18–20 minutos, com limite operacional demonstrado de 20 minutos. Portanto, **P viola a nova obrigação**: mesmo a menor pausa observada excede o máximo em 12 minutos. Leitura disponível, preservação dos dados reconhecidos e recuperação permanecem atendidas, mas esses resultados não compensam a interrupção excessiva de escritas. A ausência de reconhecimento de novas escritas durante a pausa também não elimina essa violação.
+
+Os estados finais de R e N continuam compatíveis com os contratos. O impedimento é o caminho P, único ensaiado: não há atualmente caminho demonstrado admissível para adotar N. Isso não prova que todo caminho possível para N seja inviável; outros permanecem sem análise e estimativa.
+
+Manter R custa 520 mil. N via P continua estimado em 410 mil, mas seus 110 mil de economia não tornam admissível uma transição que falha em obrigação mandatória. O pedido do patrocinador e o prazo não autorizam exceção. Os 90 mil irrecuperáveis do protótipo continuam excluídos da comparação futura. Aceitar o custo de R é a consequência de escolher a alternativa viável disponível.
+
+Para a reunião, o responsável técnico deve apresentar a manutenção de R e retirar P da proposta de rollout. Se houver interesse em reabrir N, o próximo passo é uma análise limitada de outro caminho, seguida de evidência em escala contratada de pausa de até 6 minutos, leitura contínua, preservação e recuperação, com custo total atualizado. Isso pode embasar uma decisão posterior; não impede escolher R hoje nem autoriza implementação.
+
+Usei a atualização autenticada e os documentos anteriores como premissas do caso; não executei novos ensaios ou migração.

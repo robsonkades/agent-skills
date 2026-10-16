@@ -1,0 +1,308 @@
+{
+  "schemaVersion": 1,
+  "skill": "idempotency",
+  "wave": 2,
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "ownedPath": "skills/idempotency/**",
+  "allWritesStopped": true,
+  "scope": "Focused correction of provider endpoint namespace conditions in an existing idempotency design/review/implementation skill.",
+  "baseline": {
+    "committedVersion": "1.2.4",
+    "assignmentVersion": "1.2.4",
+    "stagedChanges": [],
+    "unstagedChanges": [],
+    "untrackedFiles": [],
+    "preExistingVersionBump": false,
+    "files": [
+      {
+        "path": "C:/git/agent-skills/skills/idempotency/SKILL.md",
+        "sha256": "FF4D99403D66B5311F42EB545B011980D93EC06A606DD99D3E31151A17522997"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/idempotency/skill.yaml",
+        "sha256": "004C903A8F6ADB94EBDCF19DC6D870C097685308263FF2413029A9008379965E"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/idempotency/references/idempotency-key-filter.md",
+        "sha256": "28828A0B9F548D90497EF2B1FFC23D7C49277E5C9D1560951E06FEF28254E5A9"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/idempotency/references/key-selection.md",
+        "sha256": "1759159EF38E13A2566F2634CC2C9CFE7772238589445509008F5F06C2C98F0C"
+      }
+    ]
+  },
+  "version": {
+    "committed": "1.2.4",
+    "assignment": "1.2.4",
+    "final": "1.2.5",
+    "rationale": "One patch for supported content corrections; no prior unpublished bump existed."
+  },
+  "findings": [
+    {
+      "location": "skills/idempotency/references/idempotency-key-filter.md:130 and :195",
+      "observation": "The original cached-500 and pruned-key examples were attributed to Stripe without the API v1 qualification.",
+      "consequence": "An agent could apply the v1 response replay example to a v2 endpoint despite different documented behavior.",
+      "correction": "Qualified the original response and pruning examples as API v1; preserved indeterminate-outcome recovery and the prohibition on escaping uncertainty with a fresh key.",
+      "sources": [
+        "https://docs.stripe.com/api/idempotent_requests",
+        "https://docs.stripe.com/error-low-level"
+      ]
+    },
+    {
+      "location": "skills/idempotency/references/idempotency-key-filter.md:138",
+      "observation": "Current provider documentation distinguishes v2 replay behavior and key scope from v1.",
+      "consequence": "A same-key v2 retry can yield an updated result, and its window cannot safely be transferred to v1.",
+      "correction": "Added a compact v2 contrast with same API, account/sandbox and 30-day conditions; endpoint namespace is separate from SDK version.",
+      "sources": ["https://docs.stripe.com/api-v2-overview#idempotency"]
+    },
+    {
+      "location": "skills/idempotency/SKILL.md:38 and references/idempotency-key-filter.md:233",
+      "observation": "Generic provider/version inspection did not identify the concrete request artifacts that select these different contracts.",
+      "consequence": "Provider name or SDK version alone can select the wrong replay policy.",
+      "correction": "Require actual method/path, account/sandbox and API-version evidence from wiring/configuration or redacted requests; test sent key/scope through retry and restart without treating a mock as provider proof."
+    }
+  ],
+  "filesChangedByReviewer": [
+    "skills/idempotency/SKILL.md",
+    "skills/idempotency/references/idempotency-key-filter.md",
+    "skills/idempotency/skill.yaml"
+  ],
+  "unchangedOwnedFiles": ["skills/idempotency/references/key-selection.md"],
+  "preExistingChanges": [],
+  "diffSummary": {
+    "files": 3,
+    "insertions": 22,
+    "deletions": 6
+  },
+  "finalFiles": [
+    {
+      "path": "C:/git/agent-skills/skills/idempotency/SKILL.md",
+      "sha256": "60201C4851368BB97820EFBE1FFC7A2CB3ACDC5C4338693BE3697E0A6842EB08"
+    },
+    {
+      "path": "C:/git/agent-skills/skills/idempotency/skill.yaml",
+      "sha256": "C214D57330BCF1B03DE02F27738160D0852C9612222EA4202C3AC99B44E954B3"
+    },
+    {
+      "path": "C:/git/agent-skills/skills/idempotency/references/idempotency-key-filter.md",
+      "sha256": "A28E7743B5ED3083A0BE7B7B1AC391AEE9703D2502C564BB91FA03661B998A03"
+    },
+    {
+      "path": "C:/git/agent-skills/skills/idempotency/references/key-selection.md",
+      "sha256": "1759159EF38E13A2566F2634CC2C9CFE7772238589445509008F5F06C2C98F0C"
+    }
+  ],
+  "capabilities": {
+    "preserved": [
+      "Natural state idempotency versus operation identity and stable response invariants",
+      "Atomic conditional claim plus local mutation/result in one actual database transaction",
+      "PostgreSQL 17 snapshot/conflict and rollback boundaries",
+      "UNKNOWN state, earlier-attempt evidence, reconciliation and stable downstream keys",
+      "Concurrent duplicate handling, bounded waiting and epoch-conditional ownership",
+      "Tenant authorization, semantic fingerprint compatibility, retention and cleanup",
+      "Distinct stable identities for multiple downstream effects",
+      "Provider-specific response replay, including PayPal current-status behavior",
+      "Explicit design/review/implementation role and Java 17 sketch compatibility"
+    ],
+    "replaced": [
+      "Unqualified Stripe example replaced with namespace-specific v1/v2 contract guidance"
+    ],
+    "removed": []
+  },
+  "validation": [
+    {
+      "kind": "structural",
+      "command": "@'\nimport assert from 'node:assert/strict';\nimport { existsSync, readFileSync } from 'node:fs';\nimport { dirname, resolve } from 'node:path';\nimport { loadPackageFromDirectory, validatePackage } from '@jvm-expert/core';\nimport { NodeFileSystem } from '@jvm-expert/node';\nimport { ClaudeCodeAdapter } from '@jvm-expert/adapter-claude';\nimport { CodexAdapter } from '@jvm-expert/adapter-codex';\nconst directory = resolve('skills/idempotency');\nconst loaded = await loadPackageFromDirectory(new NodeFileSystem(), directory, { strict: true });\nconst report = validatePackage(loaded.pkg, {\n  strict: true, directoryName: 'idempotency',\n  adapters: [new ClaudeCodeAdapter(), new CodexAdapter()],\n});\nconst issues = [...loaded.issues, ...report.issues];\nassert.deepEqual(issues, []);\nassert.equal(loaded.pkg.manifest.version, '1.2.5');\nconst declared = new Set([\n  ...(loaded.pkg.manifest.dependencies ?? []).map(item => item.name),\n  ...(loaded.pkg.manifest.suggests ?? []),\n]);\nconst referrals = new Set();\nlet localMarkdownLinks = 0;\nfor (const file of loaded.pkg.files.filter(file => file.path.endsWith('.md'))) {\n  const content = readFileSync(resolve(directory, file.path), 'utf8');\n  for (const match of content.matchAll(/\\[[^\\]]+\\]\\(([^)]+)\\)/g)) {\n    if (/^https?:/.test(match[1])) continue;\n    const [target, anchor] = match[1].split('#');\n    const absolute = resolve(directory, dirname(file.path), target);\n    assert.ok(existsSync(absolute), file.path + ': ' + match[1]);\n    if (anchor === 'one-incoming-intent-several-downstream-effects') {\n      assert.ok(readFileSync(absolute, 'utf8').includes('## One incoming intent, several downstream effects'));\n    }\n    localMarkdownLinks++;\n  }\n  for (const match of content.matchAll(/`([a-z][a-z0-9]*-[a-z0-9-]+)`/g)) {\n    const name = match[1];\n    if (!existsSync(resolve('skills', name, 'SKILL.md'))) continue;\n    assert.ok(declared.has(name), 'Undeclared referral: ' + name);\n    referrals.add(name);\n  }\n}\nconsole.log(JSON.stringify({\n  status: 'PASS', name: loaded.pkg.manifest.name, version: loaded.pkg.manifest.version,\n  files: loaded.pkg.files.length, issues: issues.length, localMarkdownLinks,\n  declaredSkillReferrals: referrals.size, adapters: ['claude', 'codex'],\n}));\n'@ | node --input-type=module",
+      "cwd": "C:/git/agent-skills",
+      "result": "{\"status\":\"PASS\",\"name\":\"idempotency\",\"version\":\"1.2.5\",\"files\":4,\"issues\":0,\"localMarkdownLinks\":3,\"declaredSkillReferrals\":5,\"adapters\":[\"claude\",\"codex\"]}",
+      "exitCode": 0,
+      "scope": "Existing repository package loader and validator; read-only assertions limited to this skill's local links and catalog referrals."
+    },
+    {
+      "kind": "format",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/idempotency/SKILL.md skills/idempotency/references/key-selection.md skills/idempotency/references/idempotency-key-filter.md skills/idempotency/skill.yaml",
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS before and after edits: all matched files use Prettier code style.",
+      "exitCode": 0
+    },
+    {
+      "kind": "diff",
+      "command": "git diff --check -- skills/idempotency",
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS, no whitespace errors.",
+      "exitCode": 0
+    },
+    {
+      "kind": "review",
+      "command": "git diff -- skills/idempotency; git status --short -- skills/idempotency; git diff --cached --name-only -- skills/idempotency",
+      "cwd": "C:/git/agent-skills",
+      "result": "Complete diff inspected; three expected modified files, no staged files or added package artifacts.",
+      "exitCode": 0
+    }
+  ],
+  "technicalExecutions": [],
+  "behavioralEvaluationsExecuted": [],
+  "walkthroughs": [
+    "API v1 keyed POST with a cached 500: replay does not resolve whether an effect occurred; preserve identity and recovery.",
+    "API v2 keyed POST within the documented API/account/time scope: same-key replay may resume failed work and produce an updated result; do not freeze the first error as the only possible response.",
+    "Missing path/scope or an expired protection window leaves the replay guarantee unestablished; do not infer a safe new key or definitive non-application.",
+    "Existing local mutation, lease-takeover, multi-effect, tenant and fingerprint guidance retained without contradictory changes."
+  ],
+  "sources": [
+    {
+      "url": "https://docs.stripe.com/api/idempotent_requests",
+      "version": "Live official documentation consulted 2026-10-16; explicitly distinguishes API v1 and v2",
+      "supports": "v1 saved status/body including 500; v1 pruning and different v2 behavior.",
+      "method": "web tool open; primary documentation, no live API execution"
+    },
+    {
+      "url": "https://docs.stripe.com/error-low-level",
+      "version": "Live official documentation consulted 2026-10-16; replay guidance identifies API v1 scope",
+      "supports": "Server-error outcomes may remain unresolved; v1 cached 500 does not imply no effect; retry/reconciliation retain operation identity.",
+      "method": "web tool open"
+    },
+    {
+      "url": "https://docs.stripe.com/api-v2-overview#idempotency",
+      "version": "API v2 namespace contract consulted 2026-10-16",
+      "supports": "Updated responses, failed-work replay, same API/account or sandbox/key within 30 days; v1 and v2 can coexist.",
+      "method": "web tool open"
+    },
+    {
+      "url": "https://developer.paypal.com/api/rest/reference/idempotency/",
+      "version": "Page last updated 2026-08-11, consulted 2026-10-16",
+      "supports": "Preserved current-status response and possible simultaneous duplicate rejection.",
+      "method": "web tool open; no provider call"
+    },
+    {
+      "url": "https://datatracker.ietf.org/doc/draft-ietf-httpapi-idempotency-key-header/",
+      "version": "Revision 07, expired/archived; latest revision 2025-10-15",
+      "supports": "Preserved qualification that the header document is not a published HTTP standard.",
+      "method": "web tool open"
+    },
+    {
+      "url": "https://www.postgresql.org/docs/17/transaction-iso.html",
+      "version": "PostgreSQL 17",
+      "supports": "Preserved Read Committed DO NOTHING conflict snapshot/new-statement visibility explanation.",
+      "method": "web tool open; no database execution"
+    }
+  ],
+  "limitations": [
+    "No agent behavioral evaluation or matched original/revised/no-skill comparison was executed; quality gain is not measured.",
+    "No Stripe, PayPal, RabbitMQ or PostgreSQL runtime was contacted or tested.",
+    "Java schema and application pseudocode were unchanged; no compilation was needed or claimed for this correction.",
+    "Live provider documentation can change; application work must verify the concrete endpoint/API version and actual selected request.",
+    "The reproducible cases are development cases used to check the decision boundary, not held-out cases or evidence of provider behavior."
+  ],
+  "validationArtifactPath": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/idempotency.json",
+  "reproducibleCases": {
+    "executionStatus": "NOT_EXECUTED",
+    "separation": "Actor tasks/fixtures and evaluator-only criteria are distinct fields; coordinator must keep evaluator data outside actor access.",
+    "prerequisites": "Materialize commonFixtures in an isolated case folder, serialize object-valued fixtures as JSON, apply exactly the case override, give the actor the selected skill/resources and ordinary file read/edit tools. No provider, database or dependency installation is required.",
+    "commonFixtures": {
+      "project-context.md": "Review fixture, not an executable integration. Java 17 application; existing HTTP adapter sends POST requests. The request body's bytes are omitted from the capture for privacy, but the original valid body and semantic fingerprint are durably stored and available to the recovery worker. The worker resends the original method, URL, account, key and body. Local operation records persist for 45 days. The product requires one account-creation intent and eventual outcome reporting; it does not promise byte-identical response replay. No provider calls are authorized.",
+      "captured-request.json": {
+        "method": "POST",
+        "url": "https://api.stripe.com/v1/accounts",
+        "headers": {
+          "Idempotency-Key": "onboarding-op-17",
+          "Stripe-Version": "2025-12-15.clover"
+        },
+        "authenticatedAccount": "acct_fixture",
+        "environment": "sandbox-fixture",
+        "bodyHandling": "original valid request bytes retained unchanged by the adapter; capture redacted",
+        "fingerprint": "fixture-original-request-fingerprint",
+        "response": {
+          "status": 500
+        }
+      },
+      "operation.json": {
+        "operationId": "onboarding-op-17",
+        "downstreamKey": "onboarding-op-17",
+        "state": "UNKNOWN",
+        "requestAge": "1 hour",
+        "attempts": 1,
+        "providerOutcome": null,
+        "statusLookupPerformed": false,
+        "laterAttempts": [],
+        "scopeOrCredentialChange": false
+      },
+      "provider-contracts.md": "Source snapshots for this review, consulted 2026-10-16. They describe provider contracts, not an observation that this particular operation succeeded.\n\nStripe API v1: an executed keyed POST records its first response, including a server error; repeats return that saved result. Server errors can accompany unresolved effects. A removed key no longer protects the old operation. Sources: https://docs.stripe.com/api/idempotent_requests and https://docs.stripe.com/error-low-level#server-errors.\n\nStripe API v2: failed or partially failed work can be attempted again; previously successful changes are not repeated and replies can update. Replay matching includes the key, API, account/sandbox and a 30-day window. Source: https://docs.stripe.com/api-v2-overview#idempotency.\n\nBoth namespaces can occur in one integration. Their selection is visible in the URL path, separate from the date-based Stripe-Version header.",
+      "recovery-note.md": "Current proposal: Stripe caches every 500 forever. Return that error for every subsequent recovery attempt, mark the business operation REJECTED, and delete the operation record so users can submit again."
+    },
+    "cases": [
+      {
+        "id": "stripe-v1-response-and-unknown-effect",
+        "actorInput": {
+          "task": "Use idempotency to review the recovery policy for the failed account-creation operation in this fixture. Inspect project-context.md, captured-request.json, operation.json and provider-contracts.md, then update recovery-note.md with the justified recovery behavior, evidence and uncertainty. Do not call a provider, add dependencies, upgrade Java or implement a provider client. The team says all Stripe idempotency retries must return the first error forever; assess that premise against the selected request.",
+          "fixtureSet": "commonFixtures",
+          "overrides": {
+            "captured-request.json": {
+              "url": "https://api.stripe.com/v1/accounts"
+            }
+          },
+          "outputArtifact": "recovery-note.md"
+        },
+        "evaluatorOnly": {
+          "expectedBehavior": [
+            "Reads the capture/operation and provider contracts, selecting v1 from the URL path.",
+            "Retains the cached-first-response distinction while correcting 'forever'; does not infer business rejection from 500.",
+            "Preserves operation identity and UNKNOWN/recovery until supported lookup, webhook or reconciliation resolves the effect.",
+            "Updates the existing recovery-note.md; rejects deletion/fresh-key resubmission for an unresolved effect.",
+            "Does not require an SDK or Java upgrade."
+          ],
+          "failureConditions": [
+            "Claims v2 updated-response retry behavior for the v1 request.",
+            "Claims no effect happened because the 500 was repeatable.",
+            "Deletes the unknown operation, changes the key or marks terminal rejection without resolution.",
+            "Claims actual provider or database execution."
+          ]
+        }
+      },
+      {
+        "id": "stripe-v2-updated-replay-outcome",
+        "actorInput": {
+          "task": "Use idempotency to review the recovery policy for the failed account-creation operation in this fixture. Inspect project-context.md, captured-request.json, operation.json and provider-contracts.md, then update recovery-note.md with the justified recovery behavior, evidence and uncertainty. Do not call a provider, add dependencies, upgrade Java or implement a provider client. The team says all Stripe idempotency retries must return the first error forever; assess that premise against the selected request.",
+          "fixtureSet": "commonFixtures",
+          "overrides": {
+            "captured-request.json": {
+              "url": "https://api.stripe.com/v2/core/accounts"
+            }
+          },
+          "outputArtifact": "recovery-note.md"
+        },
+        "decisiveDifference": "Only the captured request URL changes to a v2 account-creation endpoint; all operation age, key, scope and uncertainty fixtures are identical.",
+        "evaluatorOnly": {
+          "expectedBehavior": [
+            "Selects v2 from the captured endpoint, despite the same provider and date-based API header.",
+            "Corrects the freeze-first-error policy: the documented same-key replay can retry failed work and return an updated outcome.",
+            "Checks the one-hour age, same API and account/sandbox scope; preserves original semantic payload and operation key.",
+            "Updates recovery-note.md to classify the actual new outcome and retain uncertainty until supported resolution; does not promise retry success.",
+            "Keeps local recovery and result recording distinct from proof of provider effect guarantees."
+          ],
+          "failureConditions": [
+            "Applies the v1 cached-500 rule to v2 or says the SDK/date header alone selects the namespace.",
+            "Invents success, duplicates resolved effects with fresh identities, changes account/sandbox or treats 500 as final business rejection.",
+            "Transfers v2's window to all Stripe endpoints.",
+            "Leaves the existing incorrect recovery artifact untouched."
+          ]
+        }
+      }
+    ]
+  },
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "prerequisites": "All reviewers have stopped writing; regenerate shared index once."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "prerequisites": "After registry generation and all reviewers have stopped writing."
+    }
+  ],
+  "remainingFindings": [],
+  "crossSkillActions": [],
+  "stoppedProcesses": "No background process or pending execution started by this review can write."
+}

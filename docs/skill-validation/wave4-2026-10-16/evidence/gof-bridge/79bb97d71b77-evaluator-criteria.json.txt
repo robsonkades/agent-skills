@@ -1,0 +1,51 @@
+{
+  "skill": "gof-bridge",
+  "definedBeforeBehavioralRuns": true,
+  "commonExpected": [
+    "Inspect ReportPublisher.publish, DirectoryStore methods, Wiring.start, config.properties and the accepted contract before asserting a finding.",
+    "Keep Report input and Store provider variation. No additional Publisher class hierarchy is needed; pattern naming alone is not a defect.",
+    "Maintain create-only behavior, propagated I/O failure and borrowed application-lifetime stores; do not add per-call backend close.",
+    "Distinguish name-creation atomicity from whole-payload publication, rollback, durability and actual-provider coverage.",
+    "Separate executed technical checks from recommendations and from unperformed agent comparisons."
+  ],
+  "cases": [
+    {
+      "id": "gof-bridge-01",
+      "decisiveConstraint": "The importer resolves to the publisher's same directory and does not participate in the ReportPublisher monitor.",
+      "expected": [
+        "Find that synchronization on the one publisher cannot protect its exists/write sequence against the separately wired importer.",
+        "Demonstrate or explain a supported interleaving: publisher observes absence; importer successfully creates; publisher overwrites and returns true.",
+        "Require a contract-preserving conditional create operation at the Store boundary, or a fully justified coordination mechanism that includes every writer. File CREATE_NEW and memory atomic insertion are possible implementations; a lock only on the publisher does not fix the importer path.",
+        "Preserve an already imported file, report conflict, propagate unrelated I/O errors rather than treating every IOException as 'already exists', and state partial-write limits."
+      ],
+      "failureConditions": [
+        "Approve existing behavior as correct merely because publish is synchronized or each primitive is safe.",
+        "Ignore effective root collision or alter the accepted no-overwrite contract.",
+        "Claim CREATE_NEW makes all bytes atomically visible/durable, or recommend unconditional deletion on any failed create.",
+        "Force a second hierarchy, distributed transaction, or broad architecture rewrite without need."
+      ]
+    },
+    {
+      "id": "gof-bridge-02",
+      "decisiveConstraint": "Only importer.root changes to a disjoint directory; the contract's one publisher and writer inventory now put all report-directory writers under the existing monitor.",
+      "expected": [
+        "Trace the configured disjoint paths and retain the current design as adequate for the stated writer/permission scope.",
+        "Do not report an observed external-writer race against the report directory when the declared deployment excludes it.",
+        "A conditional-create simplification may be proposed with its motivation, but is not a required fix for the same-namespace race under this fixture's scope.",
+        "State that new writers, another publisher instance or a changed namespace contract would require reconsideration; keep the legitimate existing no-change result."
+      ],
+      "failureConditions": [
+        "Reuse the shared-root diagnosis despite the changed effective path.",
+        "Invent external writers, permissions or replication not in evidence to force a finding.",
+        "Weaken create-only behavior or remove synchronization without an alternative guarantee.",
+        "Claim that sequential tests prove arbitrary concurrency or remote provider correctness."
+      ]
+    }
+  ],
+  "optionalTechnicalControl": "If the accepted consumer operation explicitly permits replacing a value, ordinary write may remain appropriate. This is a separate walkthrough/control, not a third actor case.",
+  "limits": [
+    "Cases are authored during revision and not held out.",
+    "Neither case has been run by an independent actor.",
+    "Directory roots are fixture-authoritative; no production deployment or distributed storage is tested."
+  ]
+}

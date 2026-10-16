@@ -1,0 +1,23 @@
+Exception in thread "main" java.lang.AssertionError: 8 contract checks failed
+	at work.Regression.main(Regression.java:125)
+valid: booking=1, header=1, body=1, stock=19
+valid: booking visible inside writer=0
+FAIL valid source committed before actual write
+invalid: command threw DataIntegrityViolationException
+FAIL invalid receipt does not fail booking
+invalid: booking=0, header=0, body=0, stock=20
+FAIL invalid committed state
+invalid: booking visible inside writer=0
+FAIL invalid source committed before actual write
+unavailable: command threw IllegalStateException
+unavailable: booking=0, header=0, body=0, stock=0
+outside: booking=0, header=0, body=0, stock=20
+owner-rollback: booking=0, header=0, body=0, stock=20
+owner-commit: booking=1, header=1, body=1, stock=19
+owner-commit: booking visible inside writer=0
+FAIL owner-commit source committed before actual write
+FAIL invalid receipt must not fail owner completion: DataIntegrityViolationException
+owner-invalid: booking=0, header=0, body=0, stock=20
+FAIL owner-invalid committed state
+owner-invalid: booking visible inside writer=0
+FAIL owner-invalid source committed before actual write

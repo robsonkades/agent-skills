@@ -1,0 +1,69 @@
+{
+  "decision": "reject_proposed_remedy_pending_same_parameter_evidence",
+  "metrics": {
+    "innerExecutions": 12000,
+    "innerEmittedRows": 48000,
+    "innerInclusiveWorkMs": 780,
+    "capturedExecutionTimeMs": 991
+  },
+  "metricInterpretation": {
+    "innerExecutions": "Reported loop count for the inner Index Scan lines_order_idx.",
+    "innerEmittedRows": "Reported average emitted rows (4) multiplied by loops (12000); not distinct rows or rows examined.",
+    "innerInclusiveWorkMs": "Reported average total node time (0.065 ms) multiplied by loops (12000), using displayed precision. Inclusive work in the stipulated serial run; already included in ancestor and statement time, not exclusive CPU time or an additional latency.",
+    "capturedExecutionTimeMs": "The incident artifact's executionTimeMs, not a measurement made by this reviewer and not the 1320 ms end-to-end request."
+  },
+  "evidence": [
+    {
+      "source": "incident.json",
+      "finding": "12000 repeated inner probes emit 48000 rows and account for approximately 780 ms inclusive work; the 0.065 ms average is not an irrelevant total. Root time is 980 ms, statement execution 991 ms, request 1320 ms."
+    },
+    {
+      "source": "incident.json",
+      "finding": "The orders scan takes 90 ms and emits 12000 while filtering 3000, so combined-predicate selectivity is 80%. A state-only index has no demonstrated benefit. Planner cost 605000 is not elapsed seconds."
+    },
+    {
+      "source": "incident.json",
+      "finding": "90000 hits and 32000 reads are accumulated shared-buffer access counters. They do not establish distinct physical disk reads, disk latency, or a storage fault."
+    },
+    {
+      "source": "incident.json and preview-plan.json",
+      "finding": "Completed incident row estimates are about 8.3% high for outer and join nodes, with an accurate inner average. The separate LIMIT 20 preview stops its child early; comparing 52000 completion estimate against 20 consumed rows does not prove bad statistics."
+    },
+    {
+      "source": "literal-comparison.json and incident.json",
+      "finding": "The 2 ms literal is tenant 72 with 16 result rows; the prepared incident is bigint tenant 71 with 48000 result rows. Cache state and same-parameter prepared comparison are absent; generic/custom mode is unknown."
+    }
+  ],
+  "nextExperiment": {
+    "status": "proposed_only_not_executed",
+    "hypothesis": "For bigint tenant 71, an actual generic prepared plan is slower than a parameter-specific literal plan.",
+    "environment": "Owner-run stable PostgreSQL 17 staging snapshot, same schema, statistics and SQL semantics; preserved prepared-session history; no runtime setting or index changes.",
+    "design": "Four captures: prepared/literal followed by literal/prepared, all for explicitly typed bigint tenant 71. Use EXPLAIN (ANALYZE, BUFFERS, SETTINGS, FORMAT JSON).",
+    "bounds": {
+      "maximumWorkloadExecutions": 4,
+      "externalCancellationDeadlineSecondsPerExecution": 5,
+      "stopOnFirstTimeout": true
+    },
+    "capture": [
+      "Full plans including parameter symbols or substituted values to distinguish generic from custom",
+      "Prepared statement execution history and current settings",
+      "Planning and execution times, rows, loops and buffer counters",
+      "I/O timings if already available, and cache/run order without assuming equal warmth"
+    ],
+    "decisionRule": "A repeatable faster literal with a different plan while the prepared plan is generic supports a statement-specific planning hypothesis. An already-custom or comparable prepared plan redirects attention to repeated probes and I/O. Four captures cannot establish a global policy or guarantee 2 ms."
+  },
+  "limits": [
+    "The packet explicitly consists of authored evaluation fixtures stipulating serial PostgreSQL 17 execution, not captured production evidence.",
+    "No PostgreSQL server or connection was provided. No workload SQL was executed; no index, runtime settings, dependencies or real configuration were changed.",
+    "Local checks validate arithmetic, JSON/report shape and byte-preservation only, not PostgreSQL behavior or performance.",
+    "Node totals are inclusive and rounded; they cannot be summed with ancestors or treated as exact exclusive CPU time. Parallel execution would require a different interpretation.",
+    "The 329 ms request/execution difference is unallocated. OS/device cache, I/O wait timing, preparation history, concurrent load and the best alternative plan remain unknown.",
+    "The preview and tenant 72 literal are separate workloads and must not be added to incident time or treated as controlled comparisons."
+  ],
+  "sources": [
+    "https://www.postgresql.org/docs/17/using-explain.html",
+    "https://www.postgresql.org/docs/17/sql-explain.html",
+    "https://www.postgresql.org/docs/17/sql-prepare.html",
+    "https://www.postgresql.org/docs/17/monitoring-stats.html"
+  ]
+}

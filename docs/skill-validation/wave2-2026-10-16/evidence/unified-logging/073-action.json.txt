@@ -1,0 +1,13 @@
+{
+  "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\jcmd.exe",
+  "args": [
+    "34976",
+    "VM.log",
+    "rotate=false"
+  ],
+  "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc\\validated-final\\rotate-false",
+  "status": 0,
+  "signal": null,
+  "stdout": "34976:\r\nCommand executed successfully\r\n",
+  "stderr": ""
+}

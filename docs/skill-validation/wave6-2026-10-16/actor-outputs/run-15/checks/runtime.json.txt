@@ -1,0 +1,185 @@
+{
+  "startedAt": "2026-10-16T17:29:15.252Z",
+  "commands": [
+    {
+      "program": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "arguments": [
+        "-version"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave6-0tHxwh\\actors\\run-15\\output\\project",
+      "timeoutMs": 15000,
+      "startedAt": "2026-10-16T17:29:15.254Z",
+      "endedAt": "2026-10-16T17:29:15.296Z",
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n"
+    },
+    {
+      "program": "C:\\Program Files\\nodejs\\node.exe",
+      "arguments": [
+        "check.mjs"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave6-0tHxwh\\actors\\run-15\\output\\project",
+      "timeoutMs": 30000,
+      "startedAt": "2026-10-16T17:29:15.296Z",
+      "endedAt": "2026-10-16T17:29:15.726Z",
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "synchronous provider PASS; deployed provider absent\r\n",
+      "stderr": ""
+    }
+  ],
+  "hashChecks": [
+    {
+      "stage": "before",
+      "input": "input/project/README.md",
+      "output": "output/project/README.md",
+      "inputSha256": "0dd7a087e22dbb2a44ae0d508763a26f3fd829efd12f8fbcd2958e9618e01758",
+      "outputSha256": "0dd7a087e22dbb2a44ae0d508763a26f3fd829efd12f8fbcd2958e9618e01758",
+      "access": "hash-only",
+      "identical": true
+    },
+    {
+      "stage": "before",
+      "input": "input/project/check.mjs",
+      "output": "output/project/check.mjs",
+      "inputSha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973",
+      "outputSha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973",
+      "access": "hash-only",
+      "identical": true
+    },
+    {
+      "stage": "before",
+      "input": "input/project/docs/review-request.md",
+      "output": "output/project/docs/review-request.md",
+      "inputSha256": "5baa0daa5bddc25e48df9d052a02b1c062bfc7a5086599eeee09f7377c139be8",
+      "outputSha256": "5baa0daa5bddc25e48df9d052a02b1c062bfc7a5086599eeee09f7377c139be8",
+      "access": "hash-only",
+      "identical": true
+    },
+    {
+      "stage": "before",
+      "input": "input/project/docs/contract.md",
+      "output": "output/project/docs/contract.md",
+      "inputSha256": "0e2ebc05b6296ec6bfba592160b83acdfaf118f3a52b80160955a4e32470d0ba",
+      "outputSha256": "0e2ebc05b6296ec6bfba592160b83acdfaf118f3a52b80160955a4e32470d0ba",
+      "access": "hash-only",
+      "identical": true
+    },
+    {
+      "stage": "before",
+      "input": "input/project/src/work/Snapshot.java",
+      "output": "output/project/src/work/Snapshot.java",
+      "inputSha256": "7804dbeb51b652d02623b9df39a8207b47d3a971bedb23a64ade34a9b06d7800",
+      "outputSha256": "7804dbeb51b652d02623b9df39a8207b47d3a971bedb23a64ade34a9b06d7800",
+      "access": "hash-only",
+      "identical": true
+    },
+    {
+      "stage": "before",
+      "input": "input/project/src/work/ResultBridge.java",
+      "output": "output/project/src/work/ResultBridge.java",
+      "inputSha256": "3f0959c157d38290c15f6bb58fbb5d7e0c9fd04ad20455bb3c4c7ffa53a91d70",
+      "outputSha256": "3f0959c157d38290c15f6bb58fbb5d7e0c9fd04ad20455bb3c4c7ffa53a91d70",
+      "access": "hash-only",
+      "identical": true
+    },
+    {
+      "stage": "before",
+      "input": "input/project/src/work/Provider.java",
+      "output": "output/project/src/work/Provider.java",
+      "inputSha256": "1b2604204f5f97ec472f1a1b981d09290d2de91447e4de0d7469b62dbf527721",
+      "outputSha256": "1b2604204f5f97ec472f1a1b981d09290d2de91447e4de0d7469b62dbf527721",
+      "access": "hash-only",
+      "identical": true
+    },
+    {
+      "stage": "before",
+      "input": "input/project/test/work/Smoke.java",
+      "output": "output/project/test/work/Smoke.java",
+      "inputSha256": "fe141df22aa0153217ac2501d48c1f1a9dee87ed57e1960fb74e4b409373076b",
+      "outputSha256": "fe141df22aa0153217ac2501d48c1f1a9dee87ed57e1960fb74e4b409373076b",
+      "access": "hash-only",
+      "identical": true
+    },
+    {
+      "stage": "after",
+      "input": "input/project/README.md",
+      "output": "output/project/README.md",
+      "inputSha256": "0dd7a087e22dbb2a44ae0d508763a26f3fd829efd12f8fbcd2958e9618e01758",
+      "outputSha256": "0dd7a087e22dbb2a44ae0d508763a26f3fd829efd12f8fbcd2958e9618e01758",
+      "access": "hash-only",
+      "identical": true
+    },
+    {
+      "stage": "after",
+      "input": "input/project/check.mjs",
+      "output": "output/project/check.mjs",
+      "inputSha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973",
+      "outputSha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973",
+      "access": "hash-only",
+      "identical": true
+    },
+    {
+      "stage": "after",
+      "input": "input/project/docs/review-request.md",
+      "output": "output/project/docs/review-request.md",
+      "inputSha256": "5baa0daa5bddc25e48df9d052a02b1c062bfc7a5086599eeee09f7377c139be8",
+      "outputSha256": "5baa0daa5bddc25e48df9d052a02b1c062bfc7a5086599eeee09f7377c139be8",
+      "access": "hash-only",
+      "identical": true
+    },
+    {
+      "stage": "after",
+      "input": "input/project/docs/contract.md",
+      "output": "output/project/docs/contract.md",
+      "inputSha256": "0e2ebc05b6296ec6bfba592160b83acdfaf118f3a52b80160955a4e32470d0ba",
+      "outputSha256": "0e2ebc05b6296ec6bfba592160b83acdfaf118f3a52b80160955a4e32470d0ba",
+      "access": "hash-only",
+      "identical": true
+    },
+    {
+      "stage": "after",
+      "input": "input/project/src/work/Snapshot.java",
+      "output": "output/project/src/work/Snapshot.java",
+      "inputSha256": "7804dbeb51b652d02623b9df39a8207b47d3a971bedb23a64ade34a9b06d7800",
+      "outputSha256": "7804dbeb51b652d02623b9df39a8207b47d3a971bedb23a64ade34a9b06d7800",
+      "access": "hash-only",
+      "identical": true
+    },
+    {
+      "stage": "after",
+      "input": "input/project/src/work/ResultBridge.java",
+      "output": "output/project/src/work/ResultBridge.java",
+      "inputSha256": "3f0959c157d38290c15f6bb58fbb5d7e0c9fd04ad20455bb3c4c7ffa53a91d70",
+      "outputSha256": "3f0959c157d38290c15f6bb58fbb5d7e0c9fd04ad20455bb3c4c7ffa53a91d70",
+      "access": "hash-only",
+      "identical": true
+    },
+    {
+      "stage": "after",
+      "input": "input/project/src/work/Provider.java",
+      "output": "output/project/src/work/Provider.java",
+      "inputSha256": "1b2604204f5f97ec472f1a1b981d09290d2de91447e4de0d7469b62dbf527721",
+      "outputSha256": "1b2604204f5f97ec472f1a1b981d09290d2de91447e4de0d7469b62dbf527721",
+      "access": "hash-only",
+      "identical": true
+    },
+    {
+      "stage": "after",
+      "input": "input/project/test/work/Smoke.java",
+      "output": "output/project/test/work/Smoke.java",
+      "inputSha256": "fe141df22aa0153217ac2501d48c1f1a9dee87ed57e1960fb74e4b409373076b",
+      "outputSha256": "fe141df22aa0153217ac2501d48c1f1a9dee87ed57e1960fb74e4b409373076b",
+      "access": "hash-only",
+      "identical": true
+    }
+  ],
+  "nodeVersion": "v25.6.1",
+  "copy": "Existing output/project retained; supplied files are checked against input.",
+  "subprocessesStopped": true,
+  "endedAt": "2026-10-16T17:29:15.728Z"
+}

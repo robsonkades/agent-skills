@@ -1,0 +1,32 @@
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+const here = dirname(fileURLToPath(import.meta.url));
+mkdirSync(resolve(here, 'sources'), { recursive: true });
+const sources = [
+  ['java17-list', 'https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html', 'Java SE 17 List: Unmodifiable Lists and copyOf', 'List structure is unmodifiable; mutable elements remain mutable.'],
+  ['jls17-records', 'https://docs.oracle.com/javase/specs/jls/se17/html/jls-8.html', 'JLS 17 section 8.10.3', 'Generated accessors and Object methods have observable component-based behavior; private nesting alone does not redact rendering.'],
+  ['jls17-memory', 'https://docs.oracle.com/javase/specs/jls/se17/html/jls-17.html', 'JLS 17 sections 17.4.5 and 17.7', 'Volatile publication has happens-before semantics; reference reads/writes are atomic, not multi-operation updates.'],
+  ['java17-atomic-reference', 'https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/atomic/AtomicReference.html', 'Java SE 17 AtomicReference compareAndSet/getAndUpdate', 'CAS compares expected reference identity; update callbacks may repeat and should be side-effect-free.'],
+  ['java17-stamped-reference', 'https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/atomic/AtomicStampedReference.html', 'Java SE 17 AtomicStampedReference compareAndSet/get', 'Reference and stamp can be compared/updated together; stamp advancement policy is application-owned.'],
+  ['java17-undo-manager', 'https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/undo/UndoManager.html', 'Java SE 17 UndoManager class description', 'Adding an edit after undo removes the abandoned redo suffix for this linear history contract.'],
+  ['jackson-2173-json-node', 'https://raw.githubusercontent.com/FasterXML/jackson-databind/jackson-databind-2.17.3/src/main/java/com/fasterxml/jackson/databind/JsonNode.java', 'jackson-databind-2.17.3 JsonNode isIntegralNumber/canConvertToInt', 'An integer/range version guard avoids the coercions accepted by a bare int conversion.'],
+  ['azure-compensation', 'https://learn.microsoft.com/en-us/azure/architecture/patterns/compensating-transaction', 'Microsoft Azure Architecture Center: Context and problem; Solution', 'External compensation is business-specific, can fail and cannot in general be replaced by restoring prior local state.']
+];
+const results = await Promise.all(sources.map(async ([id, url, section, supports]) => {
+  try {
+    const response = await fetch(url, { signal: AbortSignal.timeout(18000) });
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+    const bytes = Buffer.from(await response.arrayBuffer());
+    const path = resolve(here, 'sources', id + (id.startsWith('jackson') ? '.txt' : '.html'));
+    writeFileSync(path, bytes);
+    return { id, url, section, supports, consulted: '2026-10-16', primary: true, status: 'CAPTURED', httpStatus: response.status,
+      evidence: path, bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') };
+  } catch (error) {
+    return { id, url, section, supports, consulted: '2026-10-16', primary: true, status: 'CAPTURE_UNAVAILABLE',
+      error: error.message, note: 'Web tool source consultation is separate from this optional local capture.' };
+  }
+}));
+writeFileSync(resolve(here, 'source-evidence.json'), JSON.stringify(results, null, 2) + '\n');
+console.log(JSON.stringify(results, null, 2));

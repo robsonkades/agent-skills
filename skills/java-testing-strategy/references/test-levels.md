@@ -18,15 +18,16 @@ actual collaborators, configuration, inputs and assertions exercised.
 
 ## Unit
 
-A unit test is a test with no external I/O, no uncontrolled clock or random source, and no
+Here, a unit test is a test with no external I/O, no uncontrolled clock or random source, and no
 framework container. Injected `Clock`, seeded randomness, and deterministic in-memory collaborators
-remain compatible with a unit test.
-That definition — not "one class" — is what makes it fast and deterministic.
+remain compatible with a unit test. This boundary supports fast, repeatable tests; it does not
+guarantee them. Shared static state, concurrent work and costly algorithms can still matter.
 
-Prefer a **sociable** unit test: instantiate the real collaborators you own, and substitute
-only at the edges you do not own (see java-test-doubles). Isolating every class behind a
-mock produces tests that pass individually and a system that does not work, because the only
-thing verified is that each class calls the mock the way the test author imagined.
+Prefer a **sociable** unit test when real owned collaborators are deterministic and keep the
+failure understandable. Substitute a collaborator when isolating a failure mode or avoiding
+unrelated setup earns its cost; ownership alone does not choose the double. An isolated test
+can establish the caller's behavior under those assumptions, but not agreement with the real
+collaborator. Avoid a mock for every class by default (see java-test-doubles).
 
 Blind to: Hibernate lazy loading, the SQL actually generated, `@Value`
 resolution, bean scoping, transaction propagation, and every default the framework applies.
@@ -81,6 +82,17 @@ Keep it to the tests whose risk is genuinely in the database. It is not a substi
 tests of the logic that sits above it; broad integration assertions can obscure where a fault
 is. Reuse adequate existing coverage and keep new assertions focused on the named risk.
 
+Sharing a container within a test class or an explicitly managed suite can amortize startup;
+it does not isolate mutable data. Choose separate databases/schemas or reliable fixture reset
+and cleanup for the relevant workers and transaction boundaries. Keep the resource alive for
+all its consumers, then clean it up. Check the runner/extension's parallel-execution support
+before sharing it across concurrent tests; JUnit's ability to run in parallel does not prove
+the container extension supports that lifecycle.
+
+This is distinct from Testcontainers' experimental **Reusable Containers**, which persist
+across test executions via `withReuse(true)` and environment opt-in. Its documentation says
+it is not suited to CI. Do not introduce that feature as a routine CI speed fix.
+
 ## Contract
 
 A contract test checks specified interactions between producer and consumer: request/response
@@ -125,8 +137,8 @@ independently specified fields and values. Recorded stubs only reflect their cap
 
 Trace the test from source set and discovery to the command used by the intended CI/release gate.
 Inspect plugin/task bindings, module selection, profiles, filename patterns, tags, engines,
-disabled tests and environmental assumptions. Read fresh per-test reports, not only aggregate
-success: the intended case may be absent or skipped while unrelated tests pass. Also check
+disabled tests and environmental assumptions. Read per-test reports tied to that run, not only
+aggregate success: the intended case may be absent or skipped while unrelated tests pass. Also check
 whether failures are ignored, retried away or merely reported without failing the gate.
 
 For Maven with Failsafe bound to `integration-test` and `verify`, `mvn test` stops before those
@@ -136,10 +148,52 @@ Failsafe defers that decision to `verify`, allowing post-test cleanup first. Use
 or a class named `*IT` alone does not schedule it. Retain the project's wrapper, versions and
 profile choices rather than adopting these names as a universal build recipe.
 
+For Gradle JVM Test Suite builds, declaring an additional suite does not automatically attach
+it to `check`; inspect whether CI selects it directly or a task dependency includes it.
+`shouldRunAfter` and `mustRunAfter` order already scheduled tasks, not select them. A task-graph
+dry run can reveal missing inclusion, but does not execute assertions. Use the project's
+wrapper and task paths; do not introduce another suite plugin merely to follow this example.
+
+Inspect task outcomes alongside report provenance. Gradle `UP-TO-DATE` or `FROM-CACHE` may
+reuse valid results for unchanged, correctly modeled inputs; neither means tests executed
+again. `NO-SOURCE` or `SKIPPED` does not establish a passing test. When the claim needs a new
+observation, such as checking a changed external service not modeled as an input or confirming
+defect detection, rerun the relevant test task with the option supported by the project's
+Gradle version (for example, `--rerun` in 8.14.3). Preserve normal caching for other work;
+deleting caches or rerunning every suite is not necessary merely to describe reused evidence.
+
 When selection is wrong, repair that path within the requested scope; do not duplicate the same
 test at a broader level to make it visible. A missing environment is an explicit coverage gap,
 not a passing integration check. If no-tests failure options are appropriate, scope them to the
 suite/module expected to contain tests; aggregator or deliberately test-free modules differ.
+
+## Diagnose instability before changing the level
+
+Preserve the first failing assertion, logs, fixture state, test order/seed, runner settings
+and retry history needed to reproduce it. Classify the signal: a business assertion, setup
+failure, timeout, skipped case and undiscovered case do not establish the same problem.
+With Surefire reruns enabled, a later pass can produce a successful build with a reported
+flake, depending on failure policy. Inspect per-attempt results; rerunning is evidence
+collection or temporary mitigation, not evidence that the cause was repaired.
+
+Compare the failing case alone with the relevant suite/order, and serial with parallel
+execution, changing one condition at a time when practical. Look for shared database rows,
+cleanup racing another test, static caches, JVM properties or global locale/time-zone changes.
+A failure disappearing under isolation supports a shared-state hypothesis; a few passing
+runs do not prove that hypothesis or rule out an application race.
+
+- If tests interfere through fixtures or global test configuration, repair that ownership,
+  reset or narrowly synchronize the conflicting tests. Runner-level resource locks coordinate
+  cooperating tests, not other JVMs or database clients. Keep legitimate application
+  concurrency inside its test; serializing unrelated tests need not remove that exercise.
+- If the failure persists with isolated fixtures during concurrent application operations,
+  preserve the real concurrency/transaction boundary and route the mechanism investigation to
+  `concurrency-testing` or `distributed-systems-testing`. Do not replace that boundary with
+  a mock, a sleep, or serial application calls merely to obtain green results.
+
+After a targeted repair, rerun the original failure conditions and intended gate. Report the
+observed runs and remaining uncertainty; retries, quarantine or reduced parallelism alone
+do not establish restored coverage or a product fix.
 
 ## Sources
 
@@ -149,6 +203,11 @@ suite/module expected to contain tests; aggregator or deliberately test-free mod
 - [Surefire discovery filters](https://maven.apache.org/surefire/maven-surefire-plugin/examples/inclusion-exclusion.html)
   and [Failsafe verification options](https://maven.apache.org/surefire/maven-failsafe-plugin/verify-mojo.html):
   inspect the project's configured selection and no-tests/failure policy.
+- Gradle 8.14.3 upstream documentation: [JVM test suites](https://github.com/gradle/gradle/blob/v8.14.3/platforms/documentation/docs/src/docs/userguide/platforms/jvm/jvm_test_suite_plugin.adoc),
+  [task ordering](https://github.com/gradle/gradle/blob/v8.14.3/platforms/documentation/docs/src/docs/userguide/authoring-builds/tasks/controlling_task_execution.adoc),
+  [task outcomes](https://github.com/gradle/gradle/blob/v8.14.3/platforms/documentation/docs/src/docs/userguide/authoring-builds/tasks/more_about_tasks.adoc)
+  and [forcing test execution](https://github.com/gradle/gradle/blob/v8.14.3/platforms/documentation/docs/src/docs/userguide/platforms/jvm/java_testing.adoc).
+  Check the project's version and convention plugins; the JVM Test Suite API is incubating in this version.
 - [Boot 3.4 database replacement API](https://docs.spring.io/spring-boot/3.4/api/java/org/springframework/boot/test/autoconfigure/jdbc/AutoConfigureTestDatabase.html)
   and [replacement modes](https://docs.spring.io/spring-boot/3.4/api/java/org/springframework/boot/test/autoconfigure/jdbc/AutoConfigureTestDatabase.Replace.html).
 - [Boot 3.4 application testing](https://docs.spring.io/spring-boot/3.4/reference/testing/spring-boot-applications.html):
@@ -164,3 +223,10 @@ suite/module expected to contain tests; aggregator or deliberately test-free mod
   a private `readObject` is a defined callback, illustrating why visibility is not reachability.
 - [Pact consumer guidance](https://docs.pact.io/consumer): contract versus functional checks
   and matching only interactions the consumer relies on.
+- [Testcontainers JUnit 5 lifecycle](https://java.testcontainers.org/test_framework_integration/junit_5/)
+  and [experimental reuse](https://java.testcontainers.org/features/reuse/): distinguish
+  shared fixture lifetime from persistence across runs; inspect integration limitations.
+- [JUnit 5.12 synchronization](https://docs.junit.org/5.12.0/user-guide/#writing-tests-parallel-execution-synchronization):
+  shared JVM resources can cause test interference; coordination requires declared access.
+- [Surefire rerun reports](https://maven.apache.org/surefire/maven-surefire-plugin/examples/rerun-failing-tests.html):
+  retain failed attempts and inspect the configured flake policy; use the project's plugin version.

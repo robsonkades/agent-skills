@@ -129,6 +129,9 @@ Nested use cases where the inner must survive the outer's rollback
   extend lock/connection occupancy. Where correctness requires validation under a lock and no
   non-atomic redesign is acceptable, bound the call, model pool/lock capacity and test failure;
   document the deliberate coupling.
+- A transaction timeout is not a portable deadline for the whole method. Verify which manager,
+  resource and actual access path enforce it; joining the transaction does not by itself
+  apply a JDBC statement timeout. See the timeout section in `references/boundaries-and-propagation.md`.
 - Rollback rules are a contract you must inspect. Spring's ordinary default rolls back on
   unchecked exceptions and `Error`, not checked exceptions. Explicit rules and configured
   defaults can override this; Spring 6.2+ supports an all-exceptions default. A checked
@@ -165,8 +168,8 @@ Nested use cases where the inner must survive the outer's rollback
 - [Boundaries and propagation](references/boundaries-and-propagation.md) — the propagation
   modes with what each actually does to connections and rollback, self-invocation and the
   other silent no-ops, post-commit listeners, batch chunking, the outbox at a network edge, and how to verify at
-  runtime which transaction a piece of code ran in. Read when demarcating, or when a
-  rollback did not happen.
+  runtime which transaction a piece of code ran in. Read when demarcating, when a
+  rollback did not happen, or when a configured timeout appears ineffective.
 - [Isolation, anomalies and recovery](references/isolation-and-recovery.md) — the anomaly
   ladder stated as what a client can observe, what each level costs in blocking or in retry,
   engine differences that break portable assumptions, deadlock and serialisation-failure

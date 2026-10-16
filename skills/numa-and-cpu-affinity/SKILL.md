@@ -69,9 +69,11 @@ Return the supported change or no-change, evidence limits, and checks run versus
   for node IDs or `--physcpubind` for CPU IDs; check the installed version rather than
   declaring the old spelling nonexistent.
 - Evaluate CPU and memory policies together, but one-sided changes can be deliberate:
-  interleaving memory while CPUs roam, or binding CPUs while allowing memory fallback. For
-  strict single-node confinement, `--cpunodebind=0 --membind=0` is the pair; it also creates
-  an allocation-failure risk when node 0 cannot satisfy demand.
+  interleaving memory while CPUs roam, or binding CPUs while allowing memory fallback.
+  `--cpunodebind=0 --membind=0` requests CPU-node affinity plus a task memory policy;
+  it does not set an administrative memory-node boundary. Check more-specific mapping
+  policies and actual residence before claiming confinement. Allocations governed by that
+  binding can fail when node 0 cannot satisfy demand.
 - `UseNUMA` is collector/build-specific. Linux ZGC in JDK 25 consumes this flag and its
   initialization enables it by default when not explicitly configured (subject to later
   platform/topology checks). Parallel/G1 behavior is different; verify effective settings.

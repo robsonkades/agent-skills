@@ -1,0 +1,26 @@
+public final class Smoke {
+    public static void main(String[] args) throws Exception {
+        Ports.Store store = new Ports.Store() {
+            Ports.Snapshot s = new Ports.Snapshot(Ports.State.PENDING, null);
+            public Ports.Snapshot snapshot() { return s; }
+            public void unknown() { s = new Ports.Snapshot(Ports.State.UNKNOWN, null); }
+            public void applied(String r) { s = new Ports.Snapshot(Ports.State.APPLIED, r); }
+            public void rejected() { s = new Ports.Snapshot(Ports.State.REJECTED, null); }
+        };
+        Ports.Runtime rt = new Ports.Runtime() {
+            public long remainingNanos() { return 1000; }
+            public boolean cancelled() { return false; }
+            public boolean acquireRetry() { return true; }
+            public void sleep(long n) {}
+        };
+        Ports.Operation op = (intent, timeout) -> new Ports.Reply() {
+            public Ports.Kind kind() { return Ports.Kind.OK; }
+            public String receipt() { return "receipt-1"; }
+            public long serverMinimumNanos() { return 0; }
+            public void close() {}
+        };
+        Ports.Result r = RetryEngine.execute(new Ports.Intent("intent-1", "payload"), new Ports.Policy(3, 10, 5, 4), store, op, rt);
+        if (r.snapshot().state() != Ports.State.APPLIED || r.attempts() != 1) throw new AssertionError(r);
+        System.out.println("Smoke passed");
+    }
+}

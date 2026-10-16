@@ -1,0 +1,22 @@
+{
+  "label": "v1-compile",
+  "command": [
+    "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+    "--release",
+    "21",
+    "-Xlint:all",
+    "-Werror",
+    "-d",
+    "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v1\\classes",
+    "Model.java",
+    "OldOp.java",
+    "OldMain.java"
+  ],
+  "workingDirectory": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v1",
+  "exitCode": 0,
+  "stdout": "",
+  "stderr": "",
+  "signal": null,
+  "error": null,
+  "expectedExitCode": 0
+}

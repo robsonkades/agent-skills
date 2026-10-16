@@ -1,0 +1,20 @@
+public final class InitializationProbe {
+    public static void main(String[] args) {
+        try {
+            Catalog.instance();
+            throw new AssertionError("recursive initializer should fail in this fixture");
+        } catch (ExceptionInInitializerError firstFailure) {
+            if (!(firstFailure.getCause() instanceof NullPointerException)) {
+                throw new AssertionError("expected dereference of still-null holder field", firstFailure);
+            }
+            System.out.println("Observed first access: ExceptionInInitializerError caused by NullPointerException");
+        }
+        try {
+            Catalog.instance();
+            throw new AssertionError("failed holder must not retry initialization");
+        } catch (NoClassDefFoundError expected) {
+            System.out.println("Observed later access: NoClassDefFoundError");
+        }
+    }
+}
+

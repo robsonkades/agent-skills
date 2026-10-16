@@ -1,0 +1,56 @@
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import assert from 'node:assert/strict';
+
+const root = 'C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/remote-facade-and-dto';
+await mkdir(`${root}/cases/inputs`, { recursive: true });
+const client = await readFile(`${root}/controls/client.mjs`, 'utf8');
+const common = {
+  request: 'Review the remote representation for this customer list using the supplied producer, contract and consumer artifacts. Decide whether the current DTO/encoding can stay, what evidence would settle the relevant compatibility risk and the smallest next step. Findings only; do not change the public payload or introduce another service. These are synthetic project artifacts.',
+  files: {
+    'contract.json': {
+      endpoint: 'GET /customers/summary',
+      response: 'Array of {id: JSON number, name: string}; at most 100 rows.',
+      id: { minimumInclusiveDecimal: '1', maximumInclusiveDecimal: '9007199254740991', exactIdentityRequired: true },
+      compatibility: 'Existing browser clients must keep selecting the correct row. Field names and encoding are public contracts. Any incompatible change needs a migration decision.',
+      authority: 'The published range is enforced at data admission. Smaller current examples do not narrow the supported range.'
+    },
+    'producer/CustomerRow.java': 'public record CustomerRow(long id, String name) {}\n',
+    'producer/notes.md': 'Java17 target; the current configured serializer emits id as an unquoted decimal JSON number. This dedicated DTO is the response allowlist, and name/id are approved for this caller. Authorization and the two-field projection are accepted. No lazy object graph is returned.',
+    'consumer/client.mjs': client,
+    'consumer/notes.md': 'The browser obtains exact decimal row IDs from DOM data attributes as strings and passes them to selectedRow. Ordinary JSON.parse is used, without a lossless-number parser. Bundles are pinned independently; deployment cannot assume all consumers update simultaneously.',
+    'captures/summary.json': '[{"id":101,"name":"Ana"},{"id":102,"name":"Bruno"}]',
+    'captures/interaction.json': { calls: 1, sequentialDependencies: 0, rows: 2, note: 'Synthetic bounded interaction sample. No measured latency or performance target is supplied.' }
+  }
+};
+const a = structuredClone(common);
+const b = structuredClone(common);
+b.files['contract.json'].id.maximumInclusiveDecimal = '9223372036854775807';
+await writeFile(`${root}/cases/inputs/case-a.json`, JSON.stringify(a, null, 2) + '\n');
+await writeFile(`${root}/cases/inputs/case-b.json`, JSON.stringify(b, null, 2) + '\n');
+const criteria = {
+  classification: 'Development/regression pair based on the skill’s existing consumer precision and compatibility guidance; not held out. No actor runs.',
+  decisiveConstraint: 'Only contract.json.id.maximumInclusiveDecimal changes from9007199254740991 to9223372036854775807; code and sample payload are identical.',
+  actorIsolation: 'Provide only one input JSON and normal skill resources. Withhold these criteria, controls, preparation script, sibling input and handoff. Materialize supplied files in an isolated workspace if needed.',
+  common: [
+    'Inspect the actual consumer decoder and row lookup, not only the Java long or producer round trip.',
+    'Preserve the accepted dedicated DTO/exposure, authorization, bounded single call and Java17 target.',
+    'Use original decimal digits to construct a boundary payload; do not start from an already-rounded JavaScript numeric literal.',
+    'Do not claim network performance, integration success or production tests from supplied snippets or native parser controls.'
+  ],
+  caseA: {
+    expected: 'The entire declared positive integer range is exactly representable by the present consumer. Retain the numeric ID contract and simple DTO, with focused boundary/lookup checks if not already covered. Do not force string IDs or another facade merely because Java uses long.',
+    failureConditions: ['Stringifies every ID without a demonstrated range/decoder issue.', 'Removes the response allowlist DTO because fields match the model.', 'Invents a remote aggregation/performance problem from a one-call sample.']
+  },
+  caseB: {
+    expected: 'The accepted range includes adjacent IDs that collapse under the actual decoder. Demonstrate9007199254740992/9007199254740993 or another valid pair using their original digits, then recommend an exact encoding/decoder contract with a compatibility plan. An ID string field is a candidate; the existing selectedRow Number conversion must also be handled.',
+    failureConditions: ['Uses the small captured IDs or Java-side exactness to certify the full contract.', 'Changes only serialization to string and assumes the current Map/Number lookup still works.', 'Tightens the accepted range without product authority or flips a global number serializer.', 'Calls a local decoder check proof of the whole network/service integration.']
+  },
+  limits: ['This is a known-case mechanism, so baseline or no-skill actors may already pass.', 'No actual HTTP request, Java serialization, browser DOM automation, framework integration or performance measurement was executed.', 'The source-link correction has no measured causal behavioral benefit.']
+};
+await writeFile(`${root}/cases/criteria.json`, JSON.stringify(criteria, null, 2) + '\n');
+const parsedA = JSON.parse(await readFile(`${root}/cases/inputs/case-a.json`, 'utf8'));
+const parsedB = JSON.parse(await readFile(`${root}/cases/inputs/case-b.json`, 'utf8'));
+assert.equal(parsedB.files['contract.json'].id.maximumInclusiveDecimal, '9223372036854775807');
+parsedB.files['contract.json'].id.maximumInclusiveDecimal = '9007199254740991';
+assert.deepEqual(parsedA, parsedB);
+console.log(JSON.stringify({ inputsParsed: 2, soleDifference: 'contract.json.id.maximumInclusiveDecimal', criteriaSeparated: true, agentRuns: 0 }, null, 2));

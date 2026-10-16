@@ -1,0 +1,5 @@
+NEGATIVE CONTROL: signal-before-wait; await-after-ready=1
+PASS: signal-before-wait; await-after-ready=0
+PASS: wait-before-signal; await-after-ready=0
+PASS: unrelated-lock signal rejected
+PASS: existing bounded-buffer example compiles and transfers

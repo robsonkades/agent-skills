@@ -1,0 +1,69 @@
+param(
+    [Parameter(Mandatory = $true)][string]$Executable,
+    [string[]]$CommandArguments = @(),
+    [string]$WorkingDirectory = 'C:/Users/robso/AppData/Local/Temp/skills-wave4-actors-HoLlUY/run-04',
+    [string]$Label = 'command'
+)
+
+$ErrorActionPreference = 'Stop'
+$outputRoot = $PSScriptRoot
+$logPath = Join-Path $outputRoot 'execution.json'
+
+function Quote-ProcessArgument([string]$Value) {
+    if ($Value -notmatch '[\s"]' -and $Value.Length -gt 0) { return $Value }
+    $escaped = [regex]::Replace($Value, '(\\*)"', '$1$1\"')
+    $escaped = [regex]::Replace($escaped, '(\\+)$', '$1$1')
+    return '"' + $escaped + '"'
+}
+
+$startInfo = [System.Diagnostics.ProcessStartInfo]::new()
+$startInfo.FileName = $Executable
+$startInfo.Arguments = ($CommandArguments | ForEach-Object { Quote-ProcessArgument $_ }) -join ' '
+$startInfo.WorkingDirectory = $WorkingDirectory
+$startInfo.UseShellExecute = $false
+$startInfo.CreateNoWindow = $true
+$startInfo.RedirectStandardOutput = $true
+$startInfo.RedirectStandardError = $true
+$process = [System.Diagnostics.Process]::new()
+$process.StartInfo = $startInfo
+$startedAt = [DateTime]::UtcNow.ToString('o')
+$timer = [Diagnostics.Stopwatch]::StartNew()
+$null = $process.Start()
+$stdoutTask = $process.StandardOutput.ReadToEndAsync()
+$stderrTask = $process.StandardError.ReadToEndAsync()
+$timedOut = -not $process.WaitForExit(30000)
+if ($timedOut) {
+    $process.Kill()
+    $process.WaitForExit()
+}
+$stdout = $stdoutTask.GetAwaiter().GetResult()
+$stderr = $stderrTask.GetAwaiter().GetResult()
+$timer.Stop()
+$entry = [ordered]@{
+    label = $Label
+    command = $Executable
+    arguments = @($CommandArguments)
+    cwd = $WorkingDirectory
+    startedAtUtc = $startedAt
+    durationMs = $timer.ElapsedMilliseconds
+    timeoutMs = 30000
+    timedOut = $timedOut
+    exitCode = $process.ExitCode
+    stdout = $stdout
+    stderr = $stderr
+}
+$process.Dispose()
+if (Test-Path -LiteralPath $logPath) {
+    $document = Get-Content -LiteralPath $logPath -Raw | ConvertFrom-Json
+    $document.executions = @($document.executions) + @($entry)
+} else {
+    $document = [ordered]@{
+        schemaVersion = 1
+        executionScope = 'Local synthetic text-core/report-app review; no deployment'
+        versions = [ordered]@{ powershell = $PSVersionTable.PSVersion.ToString() }
+        limitations = @()
+        executions = @($entry)
+    }
+}
+$document | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $logPath -Encoding utf8
+$entry | ConvertTo-Json -Depth 10

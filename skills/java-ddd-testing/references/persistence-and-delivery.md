@@ -45,7 +45,7 @@ An annotation on the root does not by itself demonstrate that a child-only updat
 or increments that root version. Assert the actual root-level behavior needed by the rule.
 Jakarta Persistence specifies version checks for versioned entities and owned relationships;
 the application's aggregate can span entities outside that automatic protection.
-[Jakarta Persistence 3.2, section 3.5 on locking](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2)
+[Jakarta Persistence 3.2, section 3.5 on locking](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html#a2052)
 
 A sequential stale-write scenario suffices for optimistic stale-state rejection. To claim
 locking or overlapping transaction behavior, use independent connections/transactions,
@@ -75,7 +75,7 @@ Use that rejection path and independently reload the root and relevant outbox st
 For an invariant-preserving command, prevent rejected mutations; for deferred candidate
 validation, prove invalid work cannot cross the acceptance/commit boundary. Persistence
 synchronization and framework rollback policy are separate mechanisms:
-[Jakarta Persistence 3.2, section 3.3.4](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2)
+[Jakarta Persistence 3.2, section 3.3.4](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html#a1955)
 and [Spring transaction rollback rules](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/rolling-back.html).
 Match these contracts to the project's resolved provider and framework version.
 

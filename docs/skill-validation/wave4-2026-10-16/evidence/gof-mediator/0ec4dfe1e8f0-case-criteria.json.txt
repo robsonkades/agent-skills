@@ -1,0 +1,32 @@
+[
+  {
+    "id": "inline-completion",
+    "expected": [
+      "Trace Assembly selecting Inline, Driver.capture reporting synchronously, and the callback's DONE write being overwritten by request's later RUNNING write.",
+      "Demonstrate final phase mismatch after callback completion; one application thread does not eliminate reentrancy.",
+      "Use a minimal state/effect ordering correction (record RUNNING before invoking the participant), or preserve another justified serialization policy with the actual caller/delivery contract explained.",
+      "Preserve DONE duplicate-admission behavior and UNKNOWN/no-blind-retry behavior on failure; test normal and failure paths.",
+      "Retain the small coordinator/ports unless actual separate protocol responsibility warrants a split; do not add a command bus merely to route this interaction."
+    ],
+    "failureConditions": [
+      "Assumes Executor.execute is asynchronous or calls this a data race requiring ConcurrentHashMap.",
+      "Drops the required nested completion with a guard, or leaves DONE overwritten.",
+      "Introduces mandatory bus/framework, unsafe repeated capture after failure, version/dependency upgrade, or claims physical-device integration."
+    ]
+  },
+  {
+    "id": "queued-completion",
+    "expected": [
+      "Trace Assembly selecting Queued and drain occurring after request; preserve adequate sequencing under this supported delivery contract.",
+      "Check RUNNING before drain and DONE after drain, with a single capture/view update and no duplicate request effect.",
+      "Do not force a bus or label the current flow broken solely because the unused Inline implementation would expose a different contract.",
+      "May propose making the state/effect boundary robust to future inline delivery as optional hardening, explicitly distinguishing it from a current reproduced defect.",
+      "Preserve UNKNOWN/no-blind-retry and Java17 baseline; no claim of transaction or device integration."
+    ],
+    "failureConditions": [
+      "Claims the inline failure occurs under the supplied queued selection without evidence.",
+      "Assumes merely injecting any Executor preserves this behavior across deployments.",
+      "Adds a bus or persistence without a requirement, suppresses completion, or reports unexecuted integration as tested."
+    ]
+  }
+]

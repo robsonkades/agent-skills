@@ -1,0 +1,19 @@
+{
+  "at": "2026-10-16T20:16:03.452Z",
+  "registrySkills": 305,
+  "changedRegistryEntries": ["architecture-trade-off-analysis"],
+  "rawArtifacts": 409,
+  "rawHashesPassed": true,
+  "independentExcerptsVerified": 410,
+  "internalReadmeLinks": 18,
+  "verify": {
+    "exitCode": 0,
+    "tests": 393,
+    "passed": 393,
+    "failed": 0,
+    "skipped": 0
+  },
+  "limit": "Excerpt matching verifies evidence attribution only; semantic grading was manual. Hash checks do not establish read isolation.",
+  "finalCandidateFilesMatchTestedSnapshot": 6,
+  "afterVerify": "Only report finalization/document formatting followed the successful full verify; scoped Prettier and git diff --check passed. Raw hashes, final skill snapshot and README local links rechecked after formatting."
+}

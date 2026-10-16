@@ -138,14 +138,18 @@ the apparently redundant DTO is preventing schema-to-contract coupling.
 cost is paid and its benefit is absent.
 
 **Detection** Imports of framework packages in a package whose stated purpose is
-independence.
+independence. Follow public parameter/result types through wrappers and record components:
+an application-owned `PageRequest` with a Spring Data `Sort` component still exposes that
+framework type through its public accessor. Identify the affected independence contract or
+caller; a dependency map alone does not establish migration effort or runtime cost.
 
 **Direction** Either express the concept in the abstraction's own terms, or delete the
 abstraction and use the framework directly and honestly
 (`layering-and-boundaries`).
 
-**Acceptable when** the leak is deliberate, documented and bounded — a repository that
-accepts your own `PageRequest` record is not leaking.
+**Acceptable when** the leak is deliberate, documented and bounded, or the application-owned
+paging contract actually hides the framework types and semantics that callers must not depend
+on. Owning the outer type alone does not establish that boundary.
 
 ## Distributed monolith
 
@@ -333,9 +337,10 @@ the supplied context separately from the expected result and record the actual e
 
 ## Sources for consequential findings
 
+- [JLS 25, section 8.10.3](https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html#jls-8.10.3) — a record component has a public accessor with that component's declared type; a locally named wrapper does not erase the exposed dependency.
 - [Fowler: Transaction Script](https://martinfowler.com/eaaCatalog/transactionScript.html) — shared subtasks can remain procedures; duplicated logic does not mandate a domain model.
 - [Jakarta Servlet 6.0, section 7.7.1](https://jakarta.ee/specifications/servlet/6.0/jakarta-servlet-spec-6.0.pdf) — container session-attribute collection safety and application responsibility for attribute-object access; check the target servlet/session implementation.
-- [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2) — entity construction/access, relationship ownership and cascade/orphan semantics; inspect the project's actual provider and persistence version.
+- [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html) — entity construction/access, relationship ownership and cascade/orphan semantics; inspect the project's actual provider and persistence version.
 - [Spring Data JPA transactionality](https://docs.spring.io/spring-data/jpa/reference/jpa/transactions.html) — verify against the project's release.
 - [Spring AOP proxy semantics](https://docs.spring.io/spring-framework/reference/core/aop/proxying.html) — inspect effective proxy configuration before extraction.
 - [Git log](https://git-scm.com/docs/git-log) — history filters select commits, not business features.

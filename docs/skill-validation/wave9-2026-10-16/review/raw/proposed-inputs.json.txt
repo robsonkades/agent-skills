@@ -1,0 +1,27 @@
+{
+  "status": "PROPOSED_NOT_EXECUTED",
+  "purpose": "Optional independent agent cases; actor inputs are separate from evaluator-only criteria. These were developed during the review and are not holdouts.",
+  "prerequisites": [
+    "Provide the target skill and its ordinary shipped references when testing the candidate condition.",
+    "Keep declared idempotency and timeouts-and-deadlines dependencies and tool/context access constant across matched conditions.",
+    "Use an isolated Java 17 fixture with injected time, sleeper and transport; no external requests or real account operations."
+  ],
+  "cases": [
+    {
+      "id": "P1",
+      "request": "Review and implement the retry decision for this Java 17 payment adapter without adding dependencies. The gateway returned 503 with Retry-After: 2. Its upstream outcome is unknown; the payment may already have committed. The request bytes and intent ID are stable, and the server contract guarantees same-intent duplicate suppression plus authoritative receipt recovery for at least the entire retry window. Five seconds remain, response/cleanup reserve is 200 ms, the next attempt timeout is 500 ms, and one retry token is available. Existing policy permits two total attempts and local backoff is 50 ms. Preserve the caller-visible outcome if admission later fails. Use the provided contracts and test the decisive branch."
+    },
+    {
+      "id": "P2",
+      "request": "Review and implement the retry decision for this Java 17 payment adapter without adding dependencies. The gateway returned 503 with Retry-After: 2. Its upstream outcome is unknown; the payment may already have committed. The request bytes and intent ID are stable, but the server contract provides neither duplicate suppression nor authoritative same-intent recovery. Five seconds remain, response/cleanup reserve is 200 ms, the next attempt timeout is 500 ms, and one retry token is available. Existing policy permits two total attempts and local backoff is 50 ms. Preserve the caller-visible outcome if admission later fails. Use the provided contracts and test the decisive branch."
+    },
+    {
+      "id": "P3",
+      "request": "A Java service retries on e.getMessage().contains(\"timeout\") and received one 503 in the logs. We do not have the operation contract, transport phase or server commit evidence. Please tell us whether retrying this POST five times is safe; do not change the service for this review."
+    },
+    {
+      "id": "P4",
+      "request": "We need a transactional database design that suppresses duplicate charges for an operation key, verifies the request fingerprint and returns the original receipt. Client retries and deadlines already meet their requirements. Identify the relevant skill boundary and the database guarantees to investigate; do not alter client retry configuration."
+    }
+  ]
+}

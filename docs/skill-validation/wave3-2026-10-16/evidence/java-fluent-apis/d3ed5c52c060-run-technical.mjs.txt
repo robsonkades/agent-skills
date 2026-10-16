@@ -1,0 +1,61 @@
+import assert from 'node:assert/strict';
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
+
+const root = dirname(fileURLToPath(import.meta.url));
+const runName = process.argv[2] ?? 'run01';
+assert.match(runName, /^run\d+$/);
+const jdk = 'C:/Users/robso/.jdks/temurin-25.0.3/bin';
+const output = join(root, 'compiled', runName);
+const logs = join(root, 'logs', runName);
+mkdirSync(output, { recursive: true });
+mkdirSync(logs, { recursive: true });
+const commands = [];
+function run(id, tool, args, expectedExit = 0) {
+    const executable = join(jdk, tool + '.exe');
+    const result = spawnSync(executable, args, { cwd: root, encoding: 'utf8', timeout: 30000, windowsHide: true });
+    const stdout = result.stdout ?? '';
+    const stderr = result.stderr ?? '';
+    writeFileSync(join(logs, id + '.stdout.log'), stdout);
+    writeFileSync(join(logs, id + '.stderr.log'), stderr);
+    commands.push({ id, executable, args, cwd: root, expectedExit, actualExit: result.status, error: result.error?.message ?? null, stdout, stderr });
+    assert.equal(result.error, undefined, id + ': process error');
+    assert.equal(result.status, expectedExit, id + ': unexpected exit');
+}
+function javaFiles(directory) {
+    return readdirSync(directory, { recursive: true, withFileTypes: true })
+        .filter(entry => entry.isFile() && entry.name.endsWith('.java'))
+        .map(entry => join(entry.parentPath, entry.name)).sort();
+}
+try {
+    run('01-java-version', 'java', ['-version']);
+    run('02-javac-version', 'javac', ['-version']);
+    run('03-compile', 'javac', ['--release', '25', '-d', output,
+        ...javaFiles(join(root, 'actor-fixtures/shared/src')),
+        ...javaFiles(join(root, 'controls/src'))]);
+    const a = join(root, 'actor-fixtures/config-a.properties');
+    const b = join(root, 'actor-fixtures/config-b.properties');
+    run('04-candidate-a-negative', 'java', ['-cp', output, 'sample.ActorMain', a], 1);
+    run('05-candidate-b-negative', 'java', ['-cp', output, 'sample.ActorMain', b], 1);
+    run('06-copy-branches-a-positive', 'java', ['-cp', output, 'sample.TechnicalMain', a, 'copy-branches']);
+    run('07-retain-return-b-positive', 'java', ['-cp', output, 'sample.TechnicalMain', b, 'retain-return']);
+    run('08-copy-branches-b-negative', 'java', ['-cp', output, 'sample.TechnicalMain', b, 'copy-branches'], 1);
+    run('09-retain-return-a-negative', 'java', ['-cp', output, 'sample.TechnicalMain', a, 'retain-return'], 1);
+    run('10-jdk-contracts', 'java', ['-cp', output, 'sample.JdkContractChecks']);
+    const result = {
+        scope: 'Technical execution of synthetic consumers and existing JDK API contracts; not an agent evaluation.',
+        runName, runtime: commands[0].stderr.trim(), compilerRelease: '25',
+        commands: commands.length,
+        negativeControls: commands.filter(command => command.expectedExit === 1).map(command => command.id),
+        observations: commands.filter(command => command.id.startsWith('0') && Number(command.id.slice(0,2)) >= 4 || command.id.startsWith('10'))
+            .map(command => ({ id: command.id, exit: command.actualExit, stdout: command.stdout.trim() })),
+        fixturePropertyDifference: { a: readFileSync(a, 'utf8').trim(), b: readFileSync(b, 'utf8').trim() },
+        interpretation: 'The same consumer has different defects under actual factory-selected mutation contracts; crossed repairs fail. Existing skill guidance distinguishes these contracts.'
+    };
+    writeFileSync(join(root, 'technical-results-' + runName + '.json'), JSON.stringify(result, null, 2) + '\n');
+    console.log(JSON.stringify(result, null, 2));
+} finally {
+    writeFileSync(join(root, 'commands-' + runName + '.json'), JSON.stringify(commands, null, 2) + '\n');
+}

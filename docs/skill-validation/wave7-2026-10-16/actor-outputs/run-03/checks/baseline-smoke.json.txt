@@ -1,0 +1,14 @@
+{
+  "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave7-a765972c5d\\actors\\run-03\\output\\project",
+  "argv": [
+    "node",
+    "check.mjs"
+  ],
+  "startedAt": "2026-10-16T18:06:13.256Z",
+  "finishedAt": "2026-10-16T18:06:14.479Z",
+  "exit": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "PASS normal booking and receipt\r\n",
+  "stderr": ""
+}

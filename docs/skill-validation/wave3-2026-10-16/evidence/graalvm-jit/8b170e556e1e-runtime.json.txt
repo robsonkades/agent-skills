@@ -1,0 +1,11 @@
+{
+  "fixtureKind": "Synthetic development evidence; not production measurements or the technical JFR probe",
+  "application": "QuoteService.compute is the representative CPU hot path under fixed request mix",
+  "runtime": "GraalVM CE 25.0.2+10-jvmci-b01, Windows x64",
+  "comparison": "Three independent fresh processes per treatment on the same binary and resource limits; only UseJVMCICompiler differs",
+  "correctness": "Representative response contracts passed on both treatments; preserved accepted evidence",
+  "load": "2000 requests/second, 10-second windows, identical request mix, errors=0, no omitted requests",
+  "observation": "Metrics timestamps are seconds since process start; all starts use equivalent cache/data state; 60-150 seconds is the proposed measurement region",
+  "diagnostics": "Separate equivalent diagnostic runs; no compilation capture threshold or relevant dropped events",
+  "scope": "Review the measurement window; production adoption, licensing and fleet readiness remain a later decision"
+}

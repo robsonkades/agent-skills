@@ -1,0 +1,48 @@
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\orm-structural-mapping/references/embedding-and-serialization.md" "b/C:\\git\\agent-skills\\skills\\orm-structural-mapping/references/embedding-and-serialization.md"
+index 29e4617..aea939e 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\orm-structural-mapping/references/embedding-and-serialization.md"
++++ "b/C:\\git\\agent-skills\\skills\\orm-structural-mapping/references/embedding-and-serialization.md"
+@@ -53,7 +53,7 @@ This does not establish record support for every identifier use.
+ 
+ See the [Hibernate 6.2.0 record instantiator](https://github.com/hibernate/hibernate-orm/blob/6.2.0/hibernate-core/src/main/java/org/hibernate/metamodel/internal/EmbeddableInstantiatorRecordStandard.java),
+ [Hibernate 6.2 embeddable types](https://docs.hibernate.org/orm/6.2/introduction/html_single/#embeddable-types)
+-and [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2)
++and [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html)
+ for record, ownership and converter contracts.
+ 
+ ### Points that bite
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\orm-structural-mapping/references/identity-and-associations.md" "b/C:\\git\\agent-skills\\skills\\orm-structural-mapping/references/identity-and-associations.md"
+index 3296e52..53af844 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\orm-structural-mapping/references/identity-and-associations.md"
++++ "b/C:\\git\\agent-skills\\skills\\orm-structural-mapping/references/identity-and-associations.md"
+@@ -174,7 +174,7 @@ persisting; setting scalar fields in `PostTagId` alone does not establish those
+ Its attribute names and types must match the `@MapsId` names and referenced identifier types.
+ The mapped identifier components derive from the associations; direct mutation of those
+ components is not a request to update the foreign keys. See the
+-[`@MapsId` contract](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/mapsid).
++[`@MapsId` contract](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/MapsId.html).
+ 
+ Once persistent, do not change the primary key, whether natural, generated, assigned or derived.
+ Changing this link's post or tag would change its identity. Jakarta Persistence defines primary-key
+@@ -272,7 +272,7 @@ handling, and account for permissions or migration procedures that can alter enf
+ 
+ These are partial JPA examples, with imports, ids and constructors omitted where unrelated.
+ Verify Java, Jakarta/Javax namespace and provider versions before reuse. Sources:
+-[Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2)
++[Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html)
+ and Hibernate 6.6.56 source documentation for
+ [associations](https://github.com/hibernate/hibernate-orm/blob/6.6.56/documentation/src/main/asciidoc/userguide/chapters/domain/associations.adoc),
+ [identifiers](https://github.com/hibernate/hibernate-orm/blob/6.6.56/documentation/src/main/asciidoc/userguide/chapters/domain/identifiers.adoc)
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\orm-structural-mapping/skill.yaml" "b/C:\\git\\agent-skills\\skills\\orm-structural-mapping/skill.yaml"
+index 085af4e..2154712 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\orm-structural-mapping/skill.yaml"
++++ "b/C:\\git\\agent-skills\\skills\\orm-structural-mapping/skill.yaml"
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: orm-structural-mapping
+-version: 1.3.4
++version: 1.3.5
+ description: >-
+   Mapping the structure of an object model onto tables: Identity Field, Foreign Key Mapping,
+   Association Table Mapping, Dependent Mapping, Embedded Value and Serialized LOB. Use when

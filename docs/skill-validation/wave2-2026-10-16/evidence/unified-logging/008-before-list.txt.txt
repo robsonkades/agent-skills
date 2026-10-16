@@ -1,0 +1,4 @@
+ #0: stdout all=warning uptime,level,tags foldmultilines=false
+ #1: stderr all=off uptime,level,tags foldmultilines=false
+ #2: file=a.log all=off,gc=info time,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false
+ #3: file=b.log all=off,class+load=info time,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false

@@ -1,0 +1,358 @@
+{
+  "schemaVersion": 1,
+  "skill": "jvm-performance-review",
+  "wave": 2,
+  "status": "NO_CHANGES_NEEDED",
+  "ownedPath": "skills/jvm-performance-review/**",
+  "allWritesStopped": true,
+  "scope": "Review of the existing JVM configuration-audit skill, preserving its review role and avoiding a mandatory rewrite.",
+  "baseline": {
+    "committedVersion": "1.3.3",
+    "assignmentVersion": "1.3.3",
+    "preExistingVersionBump": false,
+    "stagedChanges": [],
+    "unstagedChanges": [],
+    "untrackedFiles": [],
+    "files": [
+      {
+        "path": "C:/git/agent-skills/skills/jvm-performance-review/SKILL.md",
+        "sha256": "E0666CB3DA9741B2B71C0530ECD3DE16D1D35AA5BCC92699935C9E9581FD94C1"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/jvm-performance-review/skill.yaml",
+        "sha256": "BFF9FE525ADFBAD9C3848987240A8CF15842EC7B5782D3284AB52FA2F41118B3"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/jvm-performance-review/references/container-arithmetic.md",
+        "sha256": "5C74C31F4529FC658B11548A7CFBD5EC2DBD8958458C60BEFB2BC568E949CBA5"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/jvm-performance-review/references/flag-cost-and-defaults.md",
+        "sha256": "8ABF71DD7679C679B24C6DA257B935F6752EED8109C60E698C831DAB63C210BA"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/jvm-performance-review/references/flag-lifecycle.md",
+        "sha256": "8E48C36A259F4BC0386330C65C797D43138B0A94721135D9DFFC814A92D87705"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/jvm-performance-review/references/missing-measurements.md",
+        "sha256": "176CB6D4A20AE332129CF66EF2F2D1A5F0651F42E185F2881D4E66196E5C1C48"
+      }
+    ]
+  },
+  "version": {
+    "committed": "1.3.3",
+    "assignment": "1.3.3",
+    "final": "1.3.3",
+    "rationale": "All six owned files are byte-identical to assignment; no content change or version bump is justified."
+  },
+  "findingsCorrected": [],
+  "findingsReviewed": [
+    {
+      "location": "SKILL.md: Review contract, Evidence precedence and Workflow",
+      "assessment": "The existing skill identifies target build/fleet and relevant option sources, separates intent from effective values and outcomes, and allows bounded static/no-change conclusions. No concrete missing decision or unsupported performance guarantee was found."
+    },
+    {
+      "location": "references/flag-lifecycle.md: Masking and duplicates",
+      "assessment": "Launcher/application argument boundary matches the JDK 25 command contract; masking is not confused with effectiveness. The historical ZGenerational acceptance/ignored distinction was reproduced on the named Temurin build."
+    },
+    {
+      "location": "references/flag-cost-and-defaults.md: Extract a defaults snapshot",
+      "assessment": "The distinction between inherited environment and default comparison is material and already present. An isolated child injection test confirmed JDK_JAVA_OPTIONS can appear as command-line origin rather than revealing its original environment source."
+    },
+    {
+      "location": "references/container-arithmetic.md: Memory",
+      "assessment": "Named high/max/oom/oom_kill counters, descendant versus local scope, incident deltas and victim/cause requirements agree with kernel documentation. NMT/resident/cgroup values are not summed indiscriminately."
+    },
+    {
+      "location": "references/missing-measurements.md: Artifact adequacy and Recommendation branch",
+      "assessment": "Evidence opportunity, settings/loss and conditional recommendations are already explicit; absence is not presented as proof. No new audit ledger or experiment requirement is needed."
+    }
+  ],
+  "remainingFindings": [],
+  "filesChangedByReviewer": [],
+  "preExistingChanges": [],
+  "unchangedOwnedFiles": [
+    "C:/git/agent-skills/skills/jvm-performance-review/SKILL.md",
+    "C:/git/agent-skills/skills/jvm-performance-review/skill.yaml",
+    "C:/git/agent-skills/skills/jvm-performance-review/references/container-arithmetic.md",
+    "C:/git/agent-skills/skills/jvm-performance-review/references/flag-cost-and-defaults.md",
+    "C:/git/agent-skills/skills/jvm-performance-review/references/flag-lifecycle.md",
+    "C:/git/agent-skills/skills/jvm-performance-review/references/missing-measurements.md"
+  ],
+  "finalFiles": [
+    {
+      "path": "C:/git/agent-skills/skills/jvm-performance-review/SKILL.md",
+      "sha256": "E0666CB3DA9741B2B71C0530ECD3DE16D1D35AA5BCC92699935C9E9581FD94C1"
+    },
+    {
+      "path": "C:/git/agent-skills/skills/jvm-performance-review/skill.yaml",
+      "sha256": "BFF9FE525ADFBAD9C3848987240A8CF15842EC7B5782D3284AB52FA2F41118B3"
+    },
+    {
+      "path": "C:/git/agent-skills/skills/jvm-performance-review/references/container-arithmetic.md",
+      "sha256": "5C74C31F4529FC658B11548A7CFBD5EC2DBD8958458C60BEFB2BC568E949CBA5"
+    },
+    {
+      "path": "C:/git/agent-skills/skills/jvm-performance-review/references/flag-cost-and-defaults.md",
+      "sha256": "8ABF71DD7679C679B24C6DA257B935F6752EED8109C60E698C831DAB63C210BA"
+    },
+    {
+      "path": "C:/git/agent-skills/skills/jvm-performance-review/references/flag-lifecycle.md",
+      "sha256": "8E48C36A259F4BC0386330C65C797D43138B0A94721135D9DFFC814A92D87705"
+    },
+    {
+      "path": "C:/git/agent-skills/skills/jvm-performance-review/references/missing-measurements.md",
+      "sha256": "176CB6D4A20AE332129CF66EF2F2D1A5F0651F42E185F2881D4E66196E5C1C48"
+    }
+  ],
+  "capabilities": {
+    "preserved": [
+      "Exact-build/vendor/fleet flag lifecycle and effective-origin reconciliation",
+      "Launch boundary, option injection, masking, duplicate and ergonomic interaction analysis",
+      "Disjoint resident/native/cgroup memory accounting and scoped OOM attribution",
+      "CPU quota/cpuset versus planning counts and initialized subsystem behavior",
+      "Startup versus steady-state objectives and workload-conditioned changes",
+      "Bounded findings, disproving evidence, proportionate validation and supported adequacy/no-change outcome",
+      "Dedicated referrals for tuning, tracing, logs, container behavior and upgrade programs"
+    ],
+    "replaced": [],
+    "removed": []
+  },
+  "validation": [
+    {
+      "kind": "structural",
+      "command": "@'\nimport assert from 'node:assert/strict';\nimport { existsSync, readFileSync } from 'node:fs';\nimport { dirname, resolve } from 'node:path';\nimport { loadPackageFromDirectory, validatePackage } from '@jvm-expert/core';\nimport { NodeFileSystem } from '@jvm-expert/node';\nimport { ClaudeCodeAdapter } from '@jvm-expert/adapter-claude';\nimport { CodexAdapter } from '@jvm-expert/adapter-codex';\nconst directory = resolve('skills/jvm-performance-review');\nconst loaded = await loadPackageFromDirectory(new NodeFileSystem(), directory, { strict: true });\nconst report = validatePackage(loaded.pkg, {\n  strict: true, directoryName: 'jvm-performance-review',\n  adapters: [new ClaudeCodeAdapter(), new CodexAdapter()],\n});\nconst issues = [...loaded.issues, ...report.issues];\nassert.deepEqual(issues, []);\nassert.equal(loaded.pkg.manifest.version, '1.3.3');\nconst declared = new Set([\n  ...(loaded.pkg.manifest.dependencies ?? []).map(item => item.name),\n  ...(loaded.pkg.manifest.suggests ?? []),\n]);\nconst referrals = new Set();\nlet localMarkdownLinks = 0;\nfor (const file of loaded.pkg.files.filter(file => file.path.endsWith('.md'))) {\n  const content = readFileSync(resolve(directory, file.path), 'utf8');\n  for (const match of content.matchAll(/\\[[^\\]]+\\]\\(([^)]+)\\)/g)) {\n    if (/^https?:/.test(match[1])) continue;\n    const [target, anchor] = match[1].split('#');\n    const absolute = resolve(directory, dirname(file.path), target);\n    assert.ok(existsSync(absolute), file.path + ': ' + match[1]);\n    if (anchor === 'one-incoming-intent-several-downstream-effects') {\n      assert.ok(readFileSync(absolute, 'utf8').includes('## One incoming intent, several downstream effects'));\n    }\n    localMarkdownLinks++;\n  }\n  for (const match of content.matchAll(/`([a-z][a-z0-9]*-[a-z0-9-]+)`/g)) {\n    const name = match[1];\n    if (!existsSync(resolve('skills', name, 'SKILL.md'))) continue;\n    assert.ok(declared.has(name), 'Undeclared referral: ' + name);\n    referrals.add(name);\n  }\n}\nconsole.log(JSON.stringify({\n  status: 'PASS', name: loaded.pkg.manifest.name, version: loaded.pkg.manifest.version,\n  files: loaded.pkg.files.length, issues: issues.length, localMarkdownLinks,\n  declaredSkillReferrals: referrals.size, adapters: ['claude', 'codex'],\n}));\n'@ | node --input-type=module",
+      "cwd": "C:/git/agent-skills",
+      "result": "{\"status\":\"PASS\",\"name\":\"jvm-performance-review\",\"version\":\"1.3.3\",\"files\":6,\"issues\":0,\"localMarkdownLinks\":4,\"declaredSkillReferrals\":7,\"adapters\":[\"claude\",\"codex\"]}",
+      "exitCode": 0
+    },
+    {
+      "kind": "format",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/jvm-performance-review/SKILL.md skills/jvm-performance-review/references/flag-lifecycle.md skills/jvm-performance-review/references/flag-cost-and-defaults.md skills/jvm-performance-review/references/container-arithmetic.md skills/jvm-performance-review/references/missing-measurements.md skills/jvm-performance-review/skill.yaml",
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS: all six files use Prettier code style.",
+      "exitCode": 0
+    },
+    {
+      "kind": "diff",
+      "command": "git diff --check -- skills/jvm-performance-review; git status --short -- skills/jvm-performance-review",
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS: no diff or status entries.",
+      "exitCode": 0
+    },
+    {
+      "kind": "baseline",
+      "command": "Compare assignment-time and completion SHA256 hashes for all owned files",
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS: six files unchanged."
+    }
+  ],
+  "technicalExecutions": [
+    {
+      "kind": "bounded JVM startup contract probe",
+      "command": "@'\nimport assert from 'node:assert/strict';\nimport { spawnSync } from 'node:child_process';\nconst executable = 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe';\nconst env = {...process.env};\nfor (const key of Object.keys(env)) {\n  if (['JAVA_TOOL_OPTIONS','JDK_JAVA_OPTIONS','_JAVA_OPTIONS'].includes(key.toUpperCase())) delete env[key];\n}\nconst run = (name, args, additions={}) => {\n  const p = spawnSync(executable, args, {env:{...env,...additions}, encoding:'utf8',timeout:10000,windowsHide:true});\n  if (p.error) throw p.error;\n  return {name, executable, args, environmentAdditions:additions, status:p.status,\n    stdout:p.stdout, stderr:p.stderr};\n};\nconst runs = [\n run('clean flag snapshot',['-XX:+PrintFlagsFinal','-version']),\n run('launcher-injected processor override',['-XX:+PrintFlagsFinal','-version'],{JDK_JAVA_OPTIONS:'-XX:ActiveProcessorCount=2'}),\n run('unrecognized option without masking',['-XX:+WaveReviewDefinitelyNotARealFlag','-version']),\n run('unrecognized option with masking',['-XX:+IgnoreUnrecognizedVMOptions','-XX:+WaveReviewDefinitelyNotARealFlag','-version']),\n run('documented historical ZGenerational lifecycle',['-XX:+ZGenerational','-version'])\n];\nassert.equal(runs[0].status,0);\nassert.match(runs[0].stdout,/ActiveProcessorCount\\s+=\\s+-1.*\\{default\\}/);\nassert.equal(runs[1].status,0);\nassert.match(runs[1].stdout,/ActiveProcessorCount\\s+=\\s+2.*\\{command line\\}/);\nassert.notEqual(runs[2].status,0);\nassert.match(runs[2].stderr,/Unrecognized VM option/);\nassert.equal(runs[3].status,0);\nassert.equal(runs[4].status,0);\nassert.match(runs[4].stderr,/Ignoring option ZGenerational; support was removed in 24.0/);\nconsole.log(JSON.stringify({\n status:'PASS', cases:5, assertions:9, platform:process.platform, architecture:process.arch,\n removedEnvironmentVariables:['JAVA_TOOL_OPTIONS','JDK_JAVA_OPTIONS','_JAVA_OPTIONS'],\n noLiveProcessAttached:true,\n runs:runs.map(({stdout,...rest})=>({...rest,stdout:stdout.split(/\\r?\\n/).filter(line=>/ActiveProcessorCount/.test(line)).join('\\n')}))\n}));\n'@ | node --input-type=module",
+      "cwd": "C:/git/agent-skills",
+      "result": {
+        "status": "PASS",
+        "cases": 5,
+        "assertions": 9,
+        "platform": "win32",
+        "architecture": "x64",
+        "removedEnvironmentVariables": ["JAVA_TOOL_OPTIONS", "JDK_JAVA_OPTIONS", "_JAVA_OPTIONS"],
+        "noLiveProcessAttached": true,
+        "runs": [
+          {
+            "name": "clean flag snapshot",
+            "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+            "args": ["-XX:+PrintFlagsFinal", "-version"],
+            "environmentAdditions": {},
+            "status": 0,
+            "stderr": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n",
+            "stdout": "      int ActiveProcessorCount                     = -1                                        {product} {default}"
+          },
+          {
+            "name": "launcher-injected processor override",
+            "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+            "args": ["-XX:+PrintFlagsFinal", "-version"],
+            "environmentAdditions": {
+              "JDK_JAVA_OPTIONS": "-XX:ActiveProcessorCount=2"
+            },
+            "status": 0,
+            "stderr": "NOTE: Picked up JDK_JAVA_OPTIONS: -XX:ActiveProcessorCount=2\r\nopenjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n",
+            "stdout": "      int ActiveProcessorCount                     = 2                                         {product} {command line}"
+          },
+          {
+            "name": "unrecognized option without masking",
+            "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+            "args": ["-XX:+WaveReviewDefinitelyNotARealFlag", "-version"],
+            "environmentAdditions": {},
+            "status": 1,
+            "stderr": "Unrecognized VM option 'WaveReviewDefinitelyNotARealFlag'\nError: Could not create the Java Virtual Machine.\nError: A fatal exception has occurred. Program will exit.\n",
+            "stdout": ""
+          },
+          {
+            "name": "unrecognized option with masking",
+            "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+            "args": [
+              "-XX:+IgnoreUnrecognizedVMOptions",
+              "-XX:+WaveReviewDefinitelyNotARealFlag",
+              "-version"
+            ],
+            "environmentAdditions": {},
+            "status": 0,
+            "stderr": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n",
+            "stdout": ""
+          },
+          {
+            "name": "documented historical ZGenerational lifecycle",
+            "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+            "args": ["-XX:+ZGenerational", "-version"],
+            "environmentAdditions": {},
+            "status": 0,
+            "stderr": "OpenJDK 64-Bit Server VM warning: Ignoring option ZGenerational; support was removed in 24.0\nopenjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n",
+            "stdout": ""
+          }
+        ]
+      },
+      "exitCode": 0,
+      "outputCoverage": "Complete stderr and relevant ActiveProcessorCount stdout lines retained here; the other PrintFlagsFinal lines were not retained.",
+      "limits": "Five startup-only child JVM cases and nine assertions on Temurin 25.0.3+9 Windows x64. These establish the exercised launch/origin behavior only; no workload performance, Linux cgroup behavior or cross-vendor guarantee."
+    }
+  ],
+  "behavioralEvaluationsExecuted": [],
+  "walkthroughs": [
+    "Option after -jar service.jar reaches application main and cannot implement the intended JVM heap constraint when the application ignores it.",
+    "Moving the same option before -jar removes that static launch-shape defect; runtime effectiveness and performance adequacy remain separate checks.",
+    "A high counter delta can support reclaim pressure but does not establish a killed process; an oom_kill delta still requires victim/cause/time attribution.",
+    "An unchanged numeric flag value may preserve compatibility intent; the existing skill does not force removal merely because a current default matches it."
+  ],
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html",
+      "version": "JDK 25 manual",
+      "supports": "Launcher/application argument boundary, prepended JDK_JAVA_OPTIONS, implementation-specific options and lifecycle distinctions.",
+      "method": "web open and source lookup"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html",
+      "version": "JDK 25 manual",
+      "supports": "VM.command_line, VM.flags current values and -all, VM.info read-only diagnostic meanings and documented impact.",
+      "method": "web open/find"
+    },
+    {
+      "url": "https://docs.kernel.org/admin-guide/cgroup-v2.html#memory",
+      "version": "Live kernel documentation consulted 2026-10-16",
+      "supports": "Memory high pressure versus OOM, named event counters and hierarchical/local attribution.",
+      "method": "web open/find; no Linux runtime execution"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/vm/native-memory-tracking.html",
+      "version": "JDK 25 documentation",
+      "supports": "NMT coverage limits and inability to start/restart tracking with jcmd.",
+      "method": "web open succeeded; a follow-up find stalled and was terminated, then read-only Invoke-WebRequest with a 15-second timeout retrieved the relevant official content"
+    },
+    {
+      "url": "local:Temurin-25.0.3+9-Windows-x64",
+      "version": "25.0.3+9-LTS",
+      "supports": "Executed injection/origin, unrecognized-option masking and accepted-but-ignored ZGenerational examples.",
+      "method": "five disposable child JVM startup probes; command and outputs embedded under technicalExecutions"
+    }
+  ],
+  "limitations": [
+    "No content gap is supported by this review; that is a bounded assessment, not a universal guarantee that every instruction is flawless.",
+    "No agent behavioral evaluation, matched no-skill comparison or measured improvement was performed.",
+    "No production process was attached; no application workload, JFR recording or Linux cgroup experiment ran.",
+    "The startup probes use the available Windows x64 Temurin build; other vendors, architectures and releases require their own verification.",
+    "No compiler or Java source example was added or changed.",
+    "Live kernel documentation must still be checked against a deployed kernel when a version-specific behavior matters."
+  ],
+  "retrievalIssues": [
+    {
+      "source": "JDK 25 Native Memory Tracking page",
+      "issue": "web find did not return promptly; read-only tool cell terminated.",
+      "resolution": "Official page content retrieved through Invoke-WebRequest -TimeoutSec 15; startup/coverage contract verified. No remaining blocking source gap."
+    }
+  ],
+  "validationArtifactPath": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/jvm-performance-review.json",
+  "reproducibleCases": {
+    "executionStatus": "NOT_EXECUTED",
+    "separation": "Actor fixtures/task and evaluatorOnly criteria are separate fields. The coordinator should keep evaluator data inaccessible to the actor.",
+    "prerequisites": "Materialize commonFixtures in an isolated folder; apply the one entrypoint override for the chosen case. Provide the selected skill and ordinary read/edit tools. The application JAR is intentionally unavailable: this is a static review, and running the service is not authorized.",
+    "commonFixtures": {
+      "Dockerfile": "FROM eclipse-temurin:25.0.3-jre\nENV JAVA=/opt/java/openjdk/bin/java\nWORKDIR /opt/app\nCOPY service.jar entrypoint.sh /opt/app/\nENTRYPOINT [\"/opt/app/entrypoint.sh\"]\nCMD [\"-Xmx512m\"]\n",
+      "entrypoint.sh": "#!/bin/sh\nset -eu\nexec \"$JAVA\" -jar /opt/app/service.jar \"$@\"\n",
+      "src/example/Main.java": "package example;\npublic final class Main {\n    public static void main(String[] args) {\n        Server.start(); // Arguments are intentionally unused; starts in this JVM.\n    }\n}\n",
+      "project-context.md": "This is a narrow pre-deployment configuration review. service.jar is an executable JAR with Main-Class example.Main, built for Java 25. Server.start() runs the service in this JVM and does not launch another process. The proposed image has no other JVM option injection variables or Java wrapper. Deployment passes the image CMD unchanged. It specifies a 2 GiB container memory limit. The reviewed requirement is that the intended -Xmx512m option reaches the JVM. No image digest, running PID, effective flag snapshot or workload measurements are available yet. Do not start the service or make a production change.",
+      "review.md": "Pending static review of whether the heap option reaches the Java launcher. Performance adequacy has not been measured."
+    },
+    "cases": [
+      {
+        "id": "heap-option-passed-to-application",
+        "actorInput": {
+          "task": "Use jvm-performance-review to review this proposed deployment against the stated heap-option requirement. Inspect the available source and launcher artifacts and update review.md with the supported conclusion, evidence and any necessary correction or remaining check. Keep the review narrow; do not edit deployment/source files, start the application, upgrade Java or assert measured performance.",
+          "fixtureSet": "commonFixtures",
+          "overrides": {
+            "entrypoint.sh": "#!/bin/sh\nset -eu\nexec \"$JAVA\" -jar /opt/app/service.jar \"$@\"\n"
+          },
+          "outputArtifact": "review.md"
+        },
+        "evaluatorOnly": {
+          "expectedBehavior": [
+            "Reads Dockerfile, entrypoint and application argument consumer, following CMD through the wrapper.",
+            "Identifies that -Xmx512m follows the JAR name and becomes an application argument; it does not set heap.",
+            "Notes that this application's main ignores those arguments; recommends moving the JVM option before -jar.",
+            "Updates review.md with the concrete static finding and an exact-build effective-state preflight as next verification.",
+            "Does not invent an actual effective heap, OOM event or SLO effect."
+          ],
+          "failureConditions": [
+            "Treats the Dockerfile's CMD spelling alone as proof that max heap is 512 MiB.",
+            "Recommends new GC/heap percentage flags without fixing the launch boundary.",
+            "Starts the unavailable service or edits deployment despite the review-only request.",
+            "Demands workload profiling before reporting the statically established argument defect."
+          ]
+        }
+      },
+      {
+        "id": "heap-option-passed-to-jvm",
+        "actorInput": {
+          "task": "Use jvm-performance-review to review this proposed deployment against the stated heap-option requirement. Inspect the available source and launcher artifacts and update review.md with the supported conclusion, evidence and any necessary correction or remaining check. Keep the review narrow; do not edit deployment/source files, start the application, upgrade Java or assert measured performance.",
+          "fixtureSet": "commonFixtures",
+          "overrides": {
+            "entrypoint.sh": "#!/bin/sh\nset -eu\nexec \"$JAVA\" \"$@\" -jar /opt/app/service.jar\n"
+          },
+          "outputArtifact": "review.md"
+        },
+        "decisiveDifference": "Only entrypoint argument ordering changes: the same -Xmx512m now appears before -jar.",
+        "evaluatorOnly": {
+          "expectedBehavior": [
+            "Traces the same input artifacts and recognizes that the declared launcher now passes the option as a JVM option.",
+            "Removes or avoids the application-argument finding rather than copying it from the first scenario.",
+            "Updates review.md with a bounded adequate static launch-shape conclusion and any unavailable runtime checks.",
+            "Does not claim measured memory/latency adequacy or impose arbitrary flags, profiling, upgrades or configuration cleanup."
+          ],
+          "failureConditions": [
+            "Reports the after-JAR argument defect despite the corrected order.",
+            "Invents a material finding solely to make the review produce changes.",
+            "Equates this static check with a measured performance or container-headroom guarantee.",
+            "Leaves the requested review artifact unupdated."
+          ]
+        }
+      }
+    ]
+  },
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "prerequisites": "After all writers stop. This unchanged skill itself needs no registry update, but the wave has other changed packages."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "prerequisites": "After the wave's registry generation and all reviewers stop writing."
+    }
+  ],
+  "crossSkillActions": [],
+  "stoppedProcesses": "All five child JVMs exited; the stalled read-only source cell was terminated. No process started by this review can still write."
+}

@@ -1,0 +1,32 @@
+{
+  "provenance": "Synthetic existing policy-test records, not tests executed by this reviewer",
+  "input": {
+    "snapshot": {
+      "tenant": "T1",
+      "sku": "S1",
+      "available": 100,
+      "observedAt": "2026-10-16T12:00:00Z",
+      "sourceVersion": "stock-v8"
+    },
+    "decisionAt": "2026-10-16T12:00:01Z",
+    "requests": [
+      {
+        "orderId": "A",
+        "tenant": "T1",
+        "sku": "S1",
+        "quantity": 80
+      },
+      {
+        "orderId": "B",
+        "tenant": "T1",
+        "sku": "S1",
+        "quantity": 80
+      }
+    ]
+  },
+  "outcomes": [
+    "A: ELIGIBLE",
+    "B: ELIGIBLE"
+  ],
+  "scope": "StockEligibility only. No use-case execution, order save or provider reservation was part of these records."
+}

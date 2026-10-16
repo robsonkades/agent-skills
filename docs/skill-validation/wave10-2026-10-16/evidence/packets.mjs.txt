@@ -1,0 +1,17 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+const root='C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23';
+const sha=x=>crypto.createHash('sha256').update(x).digest('hex');
+const actors=JSON.parse(fs.readFileSync(root+'/actors.json','utf8'));
+if(fs.existsSync(root+'/packets'))throw Error('Packets exist');
+fs.mkdirSync(root+'/packets');
+const order=actors.toSorted((a,b)=>sha('wave10-mask-'+a.id).localeCompare(sha('wave10-mask-'+b.id)));
+const mapping=order.map((a,i)=>({id:'M'+String(i+1).padStart(2,'0'),actor:a.id,case:a.case,condition:a.condition}));
+for(const m of mapping){
+ const a=actors.find(a=>a.id===m.actor),p={id:m.id,case:a.case};
+ for(const stage of [1,2])p[String(stage)]=fs.readFileSync(a.dir+'/output/answer'+stage+'.md','utf8');
+ fs.writeFileSync(root+'/packets/'+m.id+'.json',JSON.stringify(p,null,2)+'\n');
+}
+fs.writeFileSync(root+'/mask-map.json',JSON.stringify(mapping,null,2)+'\n');
+fs.writeFileSync(root+'/packets-seal.json',JSON.stringify({at:new Date().toISOString(),files:mapping.map(m=>({path:'packets/'+m.id+'.json',sha256:sha(fs.readFileSync(root+'/packets/'+m.id+'.json'))}))},null,2)+'\n');
+console.log(JSON.stringify({packets:mapping.length,masking:'Partial: arm labels and access logs withheld; response wording may reveal use of guidance.'}));

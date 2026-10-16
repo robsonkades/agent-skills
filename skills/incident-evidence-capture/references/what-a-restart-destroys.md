@@ -67,6 +67,37 @@ salvage within the storage budget and label them accurately. Perform repair/asse
 copy so the original evidence and its checksum remain available. `jfr summary` readability
 does not prove that the requested incident window or necessary event types were captured.
 
+## Container log coverage before restart
+
+Preserve the selected Pod UID, container name/ID, restart count and last termination state
+with collection timestamps. A replacement can reuse a pod name but has a different UID.
+`kubectl logs --previous -c <container> <pod>` addresses the previous container instance in
+that Pod, not an earlier Pod with the same name. The kubelet normally retains one terminated
+container's logs; another restart or eviction can remove the needed evidence. Compare identity
+around capture and record any race or unavailable prior instance rather than relabeling new
+logs as the failed process's output.
+
+Inspect the actual client/server versions and capture flags. In the
+[Kubernetes 1.35 command contract](https://v1-35.docs.kubernetes.io/docs/reference/kubectl/generated/kubectl_logs/),
+using a label selector without an explicit `--tail` defaults to ten lines per selected container.
+`--since` or `--since-time` does not remove that limit. Set the line/byte/time bounds deliberately
+for the approved cohort and budget; `--tail=-1` removes the line cap, not other coverage limits.
+Record `--limit-bytes`, truncation, requested range, returned first/last timestamps and source
+mapping (`--prefix` or separate artifacts). A deliberate small sample is useful when labeled
+as a sample; it cannot establish that the omitted interval had no errors.
+
+The [Kubernetes 1.35 logging contract](https://v1-35.docs.kubernetes.io/docs/concepts/cluster-administration/logging/)
+exposes only the latest rotated log file through `kubectl logs`. Widening the requested time
+range does not retrieve older rotated files. For missing intervals, preserve an available
+backend export or approved node-level copy with the original Pod/container identity; do not
+extend recovery or acquire extra privileges just to fill the gap. A replacement's clean log
+and an unavailable previous log are coverage limits, not proof the incident emitted no record.
+
+In a safe drill, emit an identifiable marker before the last ten lines, capture with and without
+an explicit tail policy, then test rotation and container restart separately. Verify marker
+coverage and provenance, not just exit zero or checksum. Keep pod replacement distinct from
+container restart; see the [Pod identity contract](https://v1-35.docs.kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/).
+
 ## Container storage questions
 
 Before relying on a path, answer:

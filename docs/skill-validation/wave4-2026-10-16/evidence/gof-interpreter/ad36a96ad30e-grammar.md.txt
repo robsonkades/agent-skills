@@ -1,0 +1,7 @@
+# Accepted grammar and API contracts
+
+StatusAtom = whitespace? 'status' whitespace+ 'eq' whitespace+ ('ACTIVE' | 'PAUSED'). Tokens cannot be prefixes of longer identifiers. No boolean operators or arbitrary quoted strings are supported or required. Inputs are bounded to 256 characters.
+
+SearchApi receives one complete StatusAtom with optional trailing whitespace. Anything else is an invalid request; it must not become a partial filter.
+
+WorkflowApi receives one complete line: 'when ' StatusAtom whitespace+ 'then' whitespace+ ('accept' | 'reject') whitespace?. It uses AtomParser as a shared internal recognizer and owns the line syntax after the atom. Both APIs remain supported; the configuration selects which entry point this review concerns.

@@ -1,0 +1,58 @@
+{
+  "scope": "Assigned skill only; existing repository metadata parsers; no catalog/global validation.",
+  "strictManifestIssues": 0,
+  "descriptionMatches": true,
+  "version": "1.2.6",
+  "shippedFiles": 5,
+  "localLinks": [
+    {
+      "source": "C:\\git\\agent-skills\\skills\\jdk-upgrade-impact\\SKILL.md",
+      "href": "references/breakage-classes.md",
+      "target": "C:\\git\\agent-skills\\skills\\jdk-upgrade-impact\\references\\breakage-classes.md"
+    },
+    {
+      "source": "C:\\git\\agent-skills\\skills\\jdk-upgrade-impact\\SKILL.md",
+      "href": "references/removed-and-degraded-apis.md",
+      "target": "C:\\git\\agent-skills\\skills\\jdk-upgrade-impact\\references\\removed-and-degraded-apis.md"
+    },
+    {
+      "source": "C:\\git\\agent-skills\\skills\\jdk-upgrade-impact\\SKILL.md",
+      "href": "references/verification-and-rollout.md",
+      "target": "C:\\git\\agent-skills\\skills\\jdk-upgrade-impact\\references\\verification-and-rollout.md"
+    }
+  ],
+  "allReferencesRouted": true,
+  "changedFilesFromAssignment": [
+    "SKILL.md",
+    "references/verification-and-rollout.md",
+    "skill.yaml"
+  ],
+  "finalFiles": [
+    {
+      "path": "C:\\git\\agent-skills\\skills\\jdk-upgrade-impact\\SKILL.md",
+      "bytes": 10969,
+      "sha256": "2919E08622F47E9A3BFF53A031821B2C80347D06A67CFB144F8F8959E988FF20"
+    },
+    {
+      "path": "C:\\git\\agent-skills\\skills\\jdk-upgrade-impact\\skill.yaml",
+      "bytes": 1935,
+      "sha256": "BC112EDEE9A08E132C2634771D5EC19F0187C02C0AA59D413A588833EF79DFB7"
+    },
+    {
+      "path": "C:\\git\\agent-skills\\skills\\jdk-upgrade-impact\\references\\breakage-classes.md",
+      "bytes": 8192,
+      "sha256": "89E36A60F20BA84452C82D3CE4F0060D4DD2313F17707C4EAF8DBAAC296C674D"
+    },
+    {
+      "path": "C:\\git\\agent-skills\\skills\\jdk-upgrade-impact\\references\\removed-and-degraded-apis.md",
+      "bytes": 11530,
+      "sha256": "4DB64F8588921073CC04123B7EF84BB94CFEC91F5EA6AB19A0EF1E81CDED26FB"
+    },
+    {
+      "path": "C:\\git\\agent-skills\\skills\\jdk-upgrade-impact\\references\\verification-and-rollout.md",
+      "bytes": 11621,
+      "sha256": "B317DFFE70F2114BA120802DD1FE445E3E8B239477ADE9D88E02C2B643B053A3"
+    }
+  ],
+  "casesDifferOnlyInConsumerMinimum": true
+}

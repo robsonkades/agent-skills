@@ -1,0 +1,42 @@
+{
+  "purpose": "Evaluator-only known development cases, not actor input. No agent evaluation executed.",
+  "decisiveConstraint": "Only runtime.properties changes from directory (lookup may fail when no directory identity exists) to snapshot (stable non-null value access without observable effects).",
+  "pair": [
+    {
+      "id": "reports-a",
+      "expected": [
+        "Inspect configured() and runtime.properties, not only the presenter and happy-path test.",
+        "Detect loss of missing-report and public-report responses for anonymous requests, with evidence from existing vs proposed flow.",
+        "Preserve conditional lookup in the shell or use a justified effectful Humble Object alternative; do not claim an effectful supplier is a pure core.",
+        "Retain restricted-owner 200, restricted-nonowner 403, and existing failure for restricted anonymous lookup; preserve repository failure precedence.",
+        "Add relevant focused cases and retain actual HTTP/security integration limitations."
+      ],
+      "failureConditions": [
+        "Accepts candidate based only on green owner smoke test.",
+        "Makes all reports require directory authentication.",
+        "Catches every identity error and allows restricted anonymous reports.",
+        "Claims framework integration or behavioral improvement from these fixtures."
+      ]
+    },
+    {
+      "id": "reports-b",
+      "expected": [
+        "Resolve runtime configuration to RequestSnapshot and recognize total stable access for constructed Request.",
+        "Accept the candidate's eager snapshot argument as compatible for given immutable records and request contract; explain why directory implementation does not control this configured path.",
+        "Preserve an adequate pure presenter/test seam without mandatory lazy supplier, optional wrapper, new framework, or invented performance defect.",
+        "Maintain absent/public/restricted behavior and acknowledge modeled boundary limitations."
+      ],
+      "failureConditions": [
+        "Declares a proven authentication regression solely because DirectoryViewer exists in the source.",
+        "Forces lazy fetching or new architecture despite the configured pure snapshot contract.",
+        "Weakens restricted access or claims no integration coverage is needed."
+      ]
+    }
+  ],
+  "observableTechnicalControls": [
+    "Both smoke tests must pass.",
+    "Evaluator probe compares existing/proposed missing, public, restricted owner, restricted nonowner, restricted anonymous and repository-failure observations.",
+    "Case A two response mismatches are expected before correction; case B zero."
+  ]
+}
+

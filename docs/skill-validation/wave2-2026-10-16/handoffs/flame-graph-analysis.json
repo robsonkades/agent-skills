@@ -1,0 +1,243 @@
+{
+  "status": "NO_CHANGES_NEEDED",
+  "skill": "flame-graph-analysis",
+  "ownedPath": "skills/flame-graph-analysis/",
+  "reviewDate": "2026-10-16",
+  "allWritesStopped": true,
+  "runningProcesses": [],
+  "versions": {
+    "committed": "1.4.4",
+    "assignment": "1.4.4",
+    "final": "1.4.4",
+    "preExistingBump": false,
+    "rationale": "No skill content changed; no version bump is appropriate."
+  },
+  "baseline": {
+    "preExistingChanges": [],
+    "evidence": "All four files matched the wave-two assignment SHA-256 hashes before and after review. Scoped staged/unstaged/untracked inspection was empty; final git diff --exit-code HEAD passed."
+  },
+  "files": [],
+  "changes": [],
+  "findings": [
+    {
+      "location": "SKILL.md:36, 71, 102, 123 and 143",
+      "assessment": "Adequate: event/weight/population evidence precedes width interpretation; inclusive and self weights are distinguished; incomplete images permit bounded observations; samples are not independent version trials; Amdahl is conditional on the relevant non-overlapping resource fraction.",
+      "decision": "Preserve. Adding another general evidence checklist would duplicate existing decision rules."
+    },
+    {
+      "location": "SKILL.md:197; references/reading-and-comparing.md, Differential design",
+      "assessment": "Adequate and technically reproduced: measurement weights precede workload normalization; total normalization is restricted to composition; raw totals, self versus inclusive delta, width basis, sign and disappearing removed frames are explicit.",
+      "decision": "Preserve. The pinned converter fixture and negative controls confirmed the existing guidance; no unsupported correction was forced."
+    },
+    {
+      "location": "references/sources-and-orientations.md, Collection can change the behavior being explained; Asynchronous handoffs; Virtual threads; Truncation and missing frames",
+      "assessment": "Adequate: collector perturbation has specific mechanisms and counterevidence; worker stacks cannot reconstruct missing submitter or queue context; virtual-thread interpretation requires actual capability evidence; unresolved frames constrain only affected conclusions.",
+      "decision": "Preserve. The JDK 21 and async-profiler 4.2 perturbation claims were verified against primary documentation."
+    }
+  ],
+  "preserved": [
+    "Interpretation role and collection/conversion/statistical-inference handoffs.",
+    "Selection event, units, weights, populations, filters and capture-overhead envelope.",
+    "Inclusive/self arithmetic, recursion, inlining, rendering thresholds and symbol limitations.",
+    "Root/bottom-up aggregation versus flame/icicle drawing and time-bucketed alternatives.",
+    "Amdahl opportunity bounds, no arbitrary hotspot cutoff, and independent outcome metrics.",
+    "Blocking, allocation-versus-retention and JVM-worker diagnosis boundaries.",
+    "Sampling-weight reconciliation, work-based comparison, differential sign/width controls and repeated independent trials.",
+    "Partial-evidence analysis, no-change outcome, reusable existing trials, profiling perturbation and asynchronous ancestry limits.",
+    "All package content, metadata and version are unchanged."
+  ],
+  "artifacts": {
+    "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/flame-graph-analysis",
+    "sourceIndex": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/flame-graph-analysis/source-index.json",
+    "technicalCheck": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/flame-graph-analysis/validate.mjs",
+    "technicalLog": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/flame-graph-analysis/validation-log.json",
+    "structuralLog": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/flame-graph-analysis/structural-log.json",
+    "contents": "Seven primary-source files with URL/hash provenance, pinned Perl converters and CDDL license, synthetic folded inputs, direct/normalized comparison rows, four SVG control outputs, reproducible technical validator and logs. These are isolated review artifacts, not shipped skill files."
+  },
+  "commands": [
+    {
+      "command": "rg --files --hidden skills/flame-graph-analysis; scoped git status/diff/cached inspection; git show HEAD:skills/flame-graph-analysis/skill.yaml",
+      "cwd": "C:/git/agent-skills",
+      "result": "Four files, no pre-existing changes, committed and assignment version 1.4.4.",
+      "kind": "read-only baseline inspection"
+    },
+    {
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/flame-graph-analysis/validate.mjs",
+      "cwd": "C:/git/agent-skills",
+      "subprocessCwd": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/flame-graph-analysis",
+      "result": "PASS, exit 0. Nine Perl invocations, all exit 0 with empty stderr. Source hashes verified. 100/100 direct totals; added red; removed absent under candidate widths; parent self color white; reversed plus --negate exposes removed blue; omitting --negate flips that frame red; normalized uniform doubling becomes white; work denominator arithmetic changes 0.001→0.002 to 0.001→0.001 CPU-seconds/operation.",
+      "runtime": "Node v25.6.1; Git for Windows Perl v5.42.3",
+      "kind": "executed converter checks and synthetic arithmetic, not behavioral evaluation"
+    },
+    {
+      "command": "node --input-type=module -e <owned metadata, link and baseline SHA-256 assertions>",
+      "cwd": "C:/git/agent-skills",
+      "details": "Used repository parseManifest(strict:true), parseSkillDocument, documentName and documentDescription. Checked all Markdown relative links, package file count, version and all assignment hashes.",
+      "result": "PASS: zero manifest issues, descriptions/names agree, version 1.4.4, four package files, two relative Markdown links, every assignment hash unchanged. Result retained in structural-log.json.",
+      "kind": "executed structural checks"
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/flame-graph-analysis/SKILL.md skills/flame-graph-analysis/skill.yaml skills/flame-graph-analysis/references/reading-and-comparing.md skills/flame-graph-analysis/references/sources-and-orientations.md",
+      "cwd": "C:/git/agent-skills",
+      "result": "Exit 0; all four matched files use Prettier code style.",
+      "kind": "executed structural check"
+    },
+    {
+      "command": "git diff --check -- skills/flame-graph-analysis; git diff --exit-code HEAD -- skills/flame-graph-analysis",
+      "cwd": "C:/git/agent-skills",
+      "result": "Exit 0; no whitespace issue and no owned diff.",
+      "kind": "executed final attribution check"
+    },
+    {
+      "command": "Primary-source HTTP reads and retained-download assertions",
+      "cwd": "C:/git/agent-skills",
+      "result": "Seven retained sources returned HTTP 200; source-index.json records exact URLs, byte sizes and SHA-256. JDK 21 Heap Statistics old-GC effect and async-profiler 4.2 method-profiling deoptimization text verified.",
+      "kind": "executed source inspection"
+    }
+  ],
+  "commandFailures": [
+    {
+      "command": "rg ... skills/flame-graph-analysis/references/*.md",
+      "result": "PowerShell passed the literal wildcard path to rg, which returned OS error 123. Corrected to rg -g '*.md' ... skills/flame-graph-analysis/references; this was a search-invocation issue, not a package failure."
+    }
+  ],
+  "behavioralEvaluations": {
+    "executed": [],
+    "walkthroughs": [
+      "A composition-only differential can be unchanged while CPU per fixed work doubles; the existing workflow requires raw totals and the workload denominator.",
+      "Changing only completed work from 1,000 to 2,000 makes the same doubling compatible with unchanged CPU per operation; an application optimization is not automatically warranted.",
+      "Missing raw/event provenance permits a bounded description rather than invention of units or a blanket refusal.",
+      "A changed child can coexist with a white parent under self-delta coloring; a zero-width removed path can be absent from the candidate-width graph."
+    ],
+    "measuredImprovement": false,
+    "classification": "Existing converter fixture executed technically; actor behavior and skill effectiveness were not evaluated. The two cases below are development cases, not holdouts."
+  },
+  "sources": [
+    {
+      "url": "https://github.com/brendangregg/FlameGraph/blob/41fee1f99f9276008b7cd112fca19dc3ea84ac32/difffolded.pl",
+      "version": "41fee1f99f9276008b7cd112fca19dc3ea84ac32",
+      "supports": "Second-profile width basis, reversed-input plus negate complement, direct folded comparison columns and total normalization."
+    },
+    {
+      "url": "https://github.com/brendangregg/FlameGraph/blob/41fee1f99f9276008b7cd112fca19dc3ea84ac32/flamegraph.pl",
+      "version": "41fee1f99f9276008b7cd112fca19dc3ea84ac32",
+      "supports": "Self-delta coloring, width pruning, sign reversal, distinct --reverse/--inverted semantics and search-overlap handling. Actual SVG controls were generated."
+    },
+    {
+      "url": "https://www.brendangregg.com/blog/2014-11-09/differential-flame-graphs.html",
+      "supports": "Original differential methodology and normalization/width limitations."
+    },
+    {
+      "url": "https://www.brendangregg.com/flamegraphs.html",
+      "supports": "Conventional geometry, cumulative search, alternate palettes and flame-chart versus aggregated flame-graph distinction."
+    },
+    {
+      "url": "https://github.com/async-profiler/async-profiler/blob/v4.2/docs/ProfilerOptions.md",
+      "version": "async-profiler 4.2",
+      "supports": "Event-specific interval units, --total versus sample counts, frame include/exclude filtering and orthogonal reversed/inverted views."
+    },
+    {
+      "url": "https://github.com/async-profiler/async-profiler/blob/v4.2/docs/ProfilingModes.md#java-method-profiling",
+      "version": "async-profiler 4.2",
+      "supports": "Initial method instrumentation may trigger deoptimization; preserved as a hypothesis requiring actual settings/lifecycle evidence."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/21/troubleshoot/troubleshoot-performance-issues-using-jfr.html",
+      "version": "JDK 21 documentation",
+      "supports": "Application-dependent capture overhead and Heap Statistics triggering old collections. The skill appropriately avoids treating these effects as universal merely because a JFR file exists."
+    }
+  ],
+  "limitations": [
+    "No behavioral actor runs, matched original/revised comparison or measured skill gain.",
+    "No application, JDK or production profiler was run. Converter validation uses synthetic folded stacks and verifies only the pinned classic FlameGraph scripts.",
+    "The generated SVGs were checked through their emitted frame/title/color data, not through interactive browser testing.",
+    "async-profiler and JFR version-sensitive statements were checked in primary sources; their runtime implementations were not exercised.",
+    "No executable Java snippet was added or changed; compilation is not applicable. Existing JFR diagnostic command sketches were read, not executed.",
+    "No-change means this scoped review found no supported gap, not proof that every future interpretation will be correct."
+  ],
+  "caseFixtureInstructions": "For each case, copy the shared fixture files and apply its work.json override into a fresh task directory. Give the agent only input plus the materialized artifacts. Keep expectedCriteria separate. Copy the pinned converters if reproduction is desired; do not run evaluators directly in this archived evidence directory. Both cases use synthetic CPU-time sample evidence and differ only in candidate completed work.",
+  "sharedFixtureCopies": {
+    "baseline.folded": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/flame-graph-analysis/cost-before.folded",
+    "candidate.folded": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/flame-graph-analysis/cost-after.folded",
+    "comparison.svg": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/flame-graph-analysis/normalized-cost.svg",
+    "sources/difffolded.pl": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/flame-graph-analysis/sources/difffolded.pl",
+    "sources/flamegraph.pl": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/flame-graph-analysis/sources/flamegraph.pl",
+    "sources/cddl1.txt": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/flame-graph-analysis/sources/cddl1.txt"
+  },
+  "sharedFixtures": {
+    "capture.json": "{\"source\":\"synthetic fixed-interval CPU-time sampler\",\"intervalNs\":10000000,\"foldedUnit\":\"unweighted sample counts\",\"sameEligibleProcessPopulation\":true,\"sameOperationMix\":true,\"durationSeconds\":10,\"knownLoss\":0,\"truncatedStacks\":0,\"unresolvedFrames\":0,\"independentPairs\":1}\n",
+    "pipeline.json": "{\"converter\":\"classic FlameGraph\",\"commit\":\"41fee1f99f9276008b7cd112fca19dc3ea84ac32\",\"command\":\"perl sources/difffolded.pl -n baseline.folded candidate.folded | perl sources/flamegraph.pl > comparison.svg\"}\n",
+    "assessment.md": "The differential has no red frames. CPU cost per operation is therefore unchanged, and this graph is sufficient to approve the candidate.\n"
+  },
+  "cases": [
+    {
+      "id": "same-work-doubled-weight",
+      "input": {
+        "request": "Use flame-graph-analysis to review assessment.md using the available capture, conversion and workload artifacts. Update the assessment with the supported CPU-per-operation conclusion and next decision. Do not change application code or collect new production profiles.",
+        "prerequisites": "Materialize sharedFixtureCopies and sharedFixtures. File inspection is sufficient; Perl can optionally reproduce the pinned conversion.",
+        "fixtureOverrides": {
+          "work.json": "{\"baselineCompleted\":1000,\"candidateCompleted\":1000,\"baselineErrors\":0,\"candidateErrors\":0,\"workloadCounterScopeMatchesProfile\":true}\n"
+        }
+      },
+      "expectedCriteria": {
+        "required": [
+          "Inspect pipeline.json and raw folded inputs instead of treating the white SVG as proof of unchanged magnitude.",
+          "Identify -n total normalization and reconcile original totals of 100 and 200 samples.",
+          "Use the declared fixed CPU-time sample weight and matched operations: 1 versus 2 sampled CPU-seconds, or 0.001 versus 0.002 per operation.",
+          "Update assessment.md to remove the no-regression and graph-only approval claims. Explain that both mechanisms scaled uniformly; this is a descriptive fixed-work cost increase, not independent proof of statistical significance or deploy causality.",
+          "Recommend an absolute/per-work comparison and suitable repeated external outcome evidence, without unauthorized capture or a forced application rewrite."
+        ],
+        "failureConditions": [
+          "Conclude unchanged CPU cost solely because no frames are red.",
+          "Treat normalized 200/200 comparison columns as the original raw totals.",
+          "Claim the wide parent itself is the fix or add inclusive parent and children as separate resource fractions.",
+          "Explain the mistake in chat but leave the incorrect assessment artifact unchanged."
+        ]
+      }
+    },
+    {
+      "id": "doubled-work-doubled-weight",
+      "input": {
+        "request": "Use flame-graph-analysis to review assessment.md using the available capture, conversion and workload artifacts. Update the assessment with the supported CPU-per-operation conclusion and next decision. Do not change application code or collect new production profiles.",
+        "prerequisites": "Use the same shared files as the first case; change only work.json candidateCompleted from 1000 to 2000.",
+        "fixtureOverrides": {
+          "work.json": "{\"baselineCompleted\":1000,\"candidateCompleted\":2000,\"baselineErrors\":0,\"candidateErrors\":0,\"workloadCounterScopeMatchesProfile\":true}\n"
+        }
+      },
+      "expectedCriteria": {
+        "required": [
+          "Inspect the same conversion and raw-total artifacts and recognize that the SVG describes composition only.",
+          "Compute the same 1 and 2 sampled CPU-seconds but divide by 1000 and 2000 completed operations, yielding 0.001 CPU-seconds per operation in both windows.",
+          "Update assessment.md to base the descriptive per-operation equality on matched weights and work, while separating the doubled total CPU demand from efficiency.",
+          "Do not demand an application optimization from this graph; retain uncertainty from one pair and reject graph-only promotion as a broader performance guarantee."
+        ],
+        "failureConditions": [
+          "Copy the first case's 2x per-operation regression despite the changed denominator.",
+          "Claim that equal per-operation cost establishes equal total capacity demand or unchanged latency.",
+          "Leave the incorrect graph-only justification or unqualified promotion claim in assessment.md.",
+          "Run production capture, upgrade a runtime or modify application behavior to answer this interpretation task."
+        ]
+      }
+    }
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "prerequisite": "All wave reviewers have stopped writing.",
+      "reason": "Shared wave integration check; this skill requires no generated change because its content is unchanged."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "prerequisite": "All writers stopped and any registry changes generated.",
+      "reason": "Final repository-wide verification is outside reviewer ownership."
+    }
+  ],
+  "crossSkillFindings": [],
+  "coordinatorActions": [
+    "Archive the handoff and isolated source/log directory.",
+    "If selecting behavioral cases, copy inputs into fresh directories and keep evaluator criteria separate.",
+    "Run the deferred global checks for the overall wave."
+  ]
+}

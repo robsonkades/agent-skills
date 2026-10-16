@@ -1,0 +1,18 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {spawnSync} from 'node:child_process';
+import {render} from './tools/render-policy.mjs';
+const root=fileURLToPath(new URL('.',import.meta.url));
+const config=JSON.parse(fs.readFileSync(path.join(root,'build-config.json'),'utf8'));
+if(config.generatePolicies)render(root);
+const workspace=path.join(root,'.validation');fs.mkdirSync(workspace,{recursive:true});
+const output=fs.mkdtempSync(path.join(workspace,'classes-'));
+const javaHome='C:/Users/robso/.jdks/temurin-25.0.3';
+const walk=dir=>fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(path.join(dir,e.name)):[path.join(dir,e.name)]);
+const sources=[...walk(path.join(root,'src')),...walk(path.join(root,'tests'))].filter(p=>p.endsWith('.java'));
+const env={...process.env};for(const key of ['JDK_JAVA_OPTIONS','JAVA_TOOL_OPTIONS','_JAVA_OPTIONS'])delete env[key];
+function run(executable,args){const r=spawnSync(path.join(javaHome,'bin',executable+'.exe'),args,{cwd:root,env,encoding:'utf8',timeout:20000});process.stdout.write(r.stdout??'');process.stderr.write(r.stderr??'');if(r.error)throw r.error;if(r.status!==0)process.exit(r.status??1);}
+run('javac',['--release','17','-d',output,...sources]);
+run('java',['-cp',output,'example.ContractCheck',process.argv[2]??'200']);
+console.log(JSON.stringify({generatePolicies:config.generatePolicies,compilerTarget:17,sourceFiles:sources.length,output}));

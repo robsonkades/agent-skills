@@ -1,0 +1,21 @@
+{
+  "id": "jar-banner",
+  "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javap.exe",
+  "args": [
+    "-classpath",
+    "lib/compat.jar",
+    "-c",
+    "-verbose",
+    "work.LegacyBanner"
+  ],
+  "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-05\\output\\project",
+  "startedAt": "2026-10-16T16:55:09.186Z",
+  "durationMs": 180,
+  "timeoutMs": 25000,
+  "exit": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "Classfile jar:file:///C:/Users/robso/AppData/Local/Temp/skills-wave5-actors-4tJ3OK/run-05/output/project/lib/compat.jar!/work/LegacyBanner.class\r\n  Last modified Oct 16, 2026; size 305 bytes\r\n  SHA-256 checksum 8f52680b8422a9828f124cc4280cfbd9e8c10058e95fbbcb5019cdf3ab27defc\r\n  Compiled from \"LegacyBanner.java\"\r\npublic final class work.LegacyBanner\r\n  minor version: 0\r\n  major version: 61\r\n  flags: (0x0031) ACC_PUBLIC, ACC_FINAL, ACC_SUPER\r\n  this_class: #9                          // work/LegacyBanner\r\n  super_class: #2                         // java/lang/Object\r\n  interfaces: 0, fields: 0, methods: 2, attributes: 1\r\nConstant pool:\r\n   #1 = Methodref          #2.#3          // java/lang/Object.\"<init>\":()V\r\n   #2 = Class              #4             // java/lang/Object\r\n   #3 = NameAndType        #5:#6          // \"<init>\":()V\r\n   #4 = Utf8               java/lang/Object\r\n   #5 = Utf8               <init>\r\n   #6 = Utf8               ()V\r\n   #7 = String             #8             // Exporter compatible mode\r\n   #8 = Utf8               Exporter compatible mode\r\n   #9 = Class              #10            // work/LegacyBanner\r\n  #10 = Utf8               work/LegacyBanner\r\n  #11 = Utf8               Code\r\n  #12 = Utf8               LineNumberTable\r\n  #13 = Utf8               label\r\n  #14 = Utf8               ()Ljava/lang/String;\r\n  #15 = Utf8               SourceFile\r\n  #16 = Utf8               LegacyBanner.java\r\n{\r\n  public work.LegacyBanner();\r\n    descriptor: ()V\r\n    flags: (0x0001) ACC_PUBLIC\r\n    Code:\r\n      stack=1, locals=1, args_size=1\r\n         0: aload_0\r\n         1: invokespecial #1                  // Method java/lang/Object.\"<init>\":()V\r\n         4: return\r\n      LineNumberTable:\r\n        line 1: 0\r\n\r\n  public static java.lang.String label();\r\n    descriptor: ()Ljava/lang/String;\r\n    flags: (0x0009) ACC_PUBLIC, ACC_STATIC\r\n    Code:\r\n      stack=1, locals=0, args_size=0\r\n         0: ldc           #7                  // String Exporter compatible mode\r\n         2: areturn\r\n      LineNumberTable:\r\n        line 1: 0\r\n}\r\nSourceFile: \"LegacyBanner.java\"\r\n",
+  "stderr": "",
+  "truncated": false
+}

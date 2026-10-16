@@ -1,0 +1,84 @@
+{
+  "task": "A10",
+  "decision": "revise",
+  "shipProposal": false,
+  "configuredBeforeMax": 6,
+  "configuredAfterMax": 18,
+  "outerAttemptsPerLogical": 1.06,
+  "wireAttemptsPerLogical": 1.6,
+  "aggregateGrantUpperBound": 130,
+  "metricInterpretation": {
+    "configuredBeforeMax": "Nominal nested maximum: 2 outer * 3 SDK * 1 gateway, including initial attempts.",
+    "configuredAfterMax": "Nominal nested maximum: 2 outer * 3 SDK * 3 gateway; not an observed outcome or a guarantee the deadline permits 18 sends.",
+    "outerAttemptsPerLogical": "Observed authored-cohort counter ratio: 1060 / 1000.",
+    "wireAttemptsPerLogical": "Observed authored-cohort counter ratio: 1600 / 1000; not a fleet guarantee.",
+    "aggregateGrantUpperBound": "Upper bound on cumulative outer-retry grants for this cohort: 4 * 10 + 900 * 0.1. Local capacity clipping and distribution can reduce usable grants; it does not cap SDK wire sends."
+  },
+  "observedCounters": {
+    "logicalCalls": 1000,
+    "outerAttempts": 1060,
+    "wireAttempts": 1600,
+    "outerRetryGrants": 60,
+    "successesThatRefill": 900,
+    "additionalSdkWireAttempts": 540
+  },
+  "budgetAssessment": {
+    "initialAggregateTokens": 40,
+    "maximumRefillTokensFromObservedSuccesses": 90,
+    "aggregateInstantaneousCapacity": 80,
+    "observedGrantsWithinUpperBound": true,
+    "aggregateCountersProveEveryBucketCorrect": false,
+    "wireRatioProvesBrokenBucket": false,
+    "fleetWireCapOf1Point1Supported": false
+  },
+  "effectAssessment": {
+    "intent": "operation-41",
+    "stateAtTimeout50Ms": "UNKNOWN",
+    "stateAfterNegativeLookup52Ms": "UNKNOWN",
+    "stateAfterFixtureCommit80Ms": "COMMITTED",
+    "commitAfterCallerTimeoutMs": 30,
+    "cancelSignalObserved": true,
+    "cancelAcknowledgementObserved": false,
+    "resourceReleaseTimestampMs": null,
+    "freshIntentJustified": false,
+    "automaticSameKeyRedispatchJustified": false,
+    "action": "Preserve operation identity, reconcile the original committed outcome, and do not infer terminal failure from timeout or current absence.",
+    "realProviderOutcome": "Unknown: this is an authored fixture, not production evidence."
+  },
+  "unknowns": [
+    "Numerical combined deadline, phase/backoff durations and attainable end-to-end latency.",
+    "Actual per-process refill clipping, ledger ordering and workload distribution.",
+    "Actual deployed SDK/gateway configuration and behavior beyond the supplied fixture.",
+    "Real-provider operation-specific replay/recovery contract; the fixture explicitly supplies none.",
+    "Cancellation acknowledgement, resource release and production residual work."
+  ],
+  "nextVerification": {
+    "status": "not executed; actual client wiring is not supplied",
+    "scope": "One isolated local replay using the actual wiring of a corrected candidate and a scripted peer; no external services.",
+    "limits": {
+      "freshProcesses": 4,
+      "maximumLogicalCalls": 1000,
+      "taggedRefillEvents": 900,
+      "totalDurationSeconds": 20
+    },
+    "scenario": "Replay the supplied operation-41 event ordering at 0/50/52/80 ms alongside the bounded cohort.",
+    "evidence": [
+      "Per-process token/grant ledgers and clipping events.",
+      "Logical, outer, SDK and gateway wire-attempt counters and configured caps.",
+      "Dispatched intent identities and reconciliation of the delayed original commit."
+    ],
+    "acceptanceForLocalCandidate": "Conserve tokens per process; grant at most 130 outer retries; account for nested 6/18 configured maxima; preserve and reconcile operation-41 without redispatch after the ambiguous lookup.",
+    "decisionImpact": "A duplicate dispatch or budget violation changes revise to reject for the candidate. Passing supports the corrected local accounting/recovery behavior only and does not establish provider safety or authorize fleet deployment."
+  },
+  "executedChecks": [
+    "Recomputed requested metrics from output/incident.json.",
+    "Asserted outerAttempts minus logicalCalls equals outerRetryGrants and grants do not exceed their derived upper bound.",
+    "Matched all four immutable output copies byte-for-byte to input/project; final artifact validation is recorded in execution.json."
+  ],
+  "limitations": [
+    "Review only; no implementation, policy, dependency or runtime-setting changes.",
+    "No Java subprocess or run.mjs: this supplied project contains neither Java sources nor a runner.",
+    "No network workload, external services, production capture or provider-guarantee verification.",
+    "Only supplied idempotency and timeouts-and-deadlines skill snapshots and selected local references were used; routed retry-policy skills were unavailable and not loaded."
+  ]
+}

@@ -27,16 +27,21 @@ guessing visible, so that later phases can be trusted to know which is which.
 
 ## Workflow
 
-1. **Read the request literally.** Write down what it says, in its own words, before
-   interpreting it. Quote only the material phrases; interpretation is a separate line.
+1. **Read the request and its supplied evidence.** Preserve the request's material phrases;
+   interpretation is a separate line. When inputs are paths, attachments or an existing
+   ledger, open the relevant material before classifying its contents. Follow a direct citation
+   when needed to check a material claim and accessible within the task; record inaccessible
+   evidence as an access gap. Reading identified inputs is not a new repository investigation.
 2. **Classify material statements into four classes.** Facts, assumptions, unknowns, decisions
    — split compound claims that affect the feature; omit unrelated detail. The classification
-   rules are below and the entry format is in
-   `references/ledger-format.md`.
+   rules are below. Read `references/ledger-format.md` for entry shapes and when importing
+   evidence, recording hypotheses, preparing an evidence handoff or correcting a prior ledger.
 3. **Give every fact a source.** A file path with a line, a command and its output, or the
    message the user actually sent. A claim with no supporting evidence stays unresolved;
-   classify it as an assumption only if provisionally adopted. Record relevant revision/environment/time and the scope the source
-   supports; code or a comment is not proof of current production behaviour.
+   classify it as an assumption only if provisionally adopted. Record relevant
+   revision/environment/time and the scope the source supports; code or a comment is not
+   proof of current production behaviour. Distinguish supplied evidence from a citation to
+   unavailable material, and a repeated summary from an independent observation.
 4. **Give every assumption a falsifier.** What observation would show this is wrong? If none
    can be stated, narrow the claim or record the missing meaning/evidence as an unknown.
    An unsupported premise does not become a requirement; that needs sourced intent or an
@@ -44,7 +49,11 @@ guessing visible, so that later phases can be trusted to know which is which.
    rely on it; do not create a plan merely to fill this field. When its basis or applicable
    scope changes, flag those dependents for revalidation rather than copying them as current.
 5. **Give every unknown an impact.** HIGH, MEDIUM or LOW, defined by what changes if the answer
-   turns out to be the other one — not by how interesting the question is.
+   turns out to be the other one — not by how interesting the question is. For a material gap,
+   name the evidence or accountable authority that could resolve it. For competing explanations,
+   propose a bounded check whose possible observations would distinguish them; do not just ask
+   for more of the same evidence. This prepares a handoff, not an investigation schedule or a
+   decision about which questions to ask.
 6. **Name the ambiguities separately.** An ambiguity is a phrase with two readings that lead to
    different work. Record both readings; do not choose.
    Check for consequential omissions in who can trigger or observe the outcome, effects on
@@ -76,6 +85,11 @@ be a fact while "X already works in production" remains unknown. A proposed deci
 proposed until its authority/status is evidenced; do not imply confidence merely because
 an interpretation is convenient. A sourced claim may later be superseded or disproved.
 
+A candidate explanation is not automatically an assumption. Keep unadopted hypotheses with
+the relevant UNKNOWN; only provisionally relied-on premises belong in ASSUMPTION. Separate
+the observed result from its possible cause, and name evidence that would distinguish material
+explanations rather than listing speculative alternatives for every entry.
+
 ## Decision rules
 
 ```text
@@ -91,6 +105,7 @@ THEN record what was checked and its coverage. "No matches in these files/logs" 
      establish "the system has none". A bounded absence claim needs evidence that the method
      could detect the relevant case and covered the claimed population, revision and interval;
      otherwise keep the broader proposition UNKNOWN, without running a new investigation here.
+     An unreadable source or failed search is unavailable evidence, not a zero-result finding.
 
 IF a supplied policy, contract or decision establishes a constraint
 THEN cite its authority, applicable scope and revision. An accepted repository artefact can
@@ -100,6 +115,11 @@ IF supplied sources conflict about the same proposition and scope
 THEN preserve what each source states, but keep the disputed proposition unresolved unless
      supplied evidence establishes the resolution. Flag downstream reliance on it; source
      count or conversational recency alone does not settle truth or authority.
+
+IF supplied evidence conclusively refutes a prior claim within its scope
+THEN append the correction and its evidence, preserve the original identifier/history and
+     flag known dependents for revalidation. Do not leave a settled refutation merely disputed,
+     or treat rejection of one explanation as proof of another.
 
 IF the request uses "should", "probably", "I think" or "we usually"
 THEN interpret its role: "the API should reject duplicates" can state desired behaviour;
@@ -121,9 +141,10 @@ THEN it is an ambiguity: record both readings and stop resolving it here.
 
 - **Never promote an assumption by repetition.** A statement restated in the plan is still the
   assumption it was in the ledger, and the plan must say so.
-- **Do not answer unknowns here.** Closing them from the repository belongs to the context
-  phase; asking about them belongs to the clarification phase. Incorporate answers and evidence
-  already supplied without pretending they require rediscovery, and label their provenance.
+- **Hand off new investigation, not answers already available.** Incorporate resolutions
+  established by the identified inputs now, with their provenance. Finding additional
+  implementation paths or running experiments belongs to the context phase; asking the user
+  belongs to clarification. Do not rerun supplied investigations just to classify their results.
 - **Keep material uncertainty visible.** Merge duplicates and omit unrelated speculation;
   do not hide an inconvenient issue because it is low priority. Impact classification is
   not a decision about question order or whether a gap may be accepted.
@@ -158,6 +179,8 @@ unknowns without solving or prioritizing them here:
 
 - For implementation or runtime evidence, route to `feature-context-analysis` with the
   proposition, existing sources, coverage limits and consequence of an incorrect answer.
+  When explanations compete, include the proposed distinguishing observation and what would
+  remain unresolved after an inconclusive result; link known affected decisions or estimates.
 - For intended behaviour or conflicting authority, route to
   `feature-requirement-clarification` with the readings, established authority and impact.
   That phase decides whether and how to ask; discovery does not turn every HIGH into a blocker.

@@ -1,0 +1,427 @@
+{
+  "status": "NO_CHANGES_NEEDED",
+  "skill": "thread-sizing-and-virtual-threads",
+  "ownedPath": "C:/git/agent-skills/skills/thread-sizing-and-virtual-threads",
+  "reviewDate": "2026-10-16",
+  "allWritesStopped": true,
+  "versions": {
+    "committed": "1.3.5",
+    "assignment": "1.3.5",
+    "final": "1.3.5",
+    "preExistingBump": false,
+    "rationale": "The reviewed guidance was adequate; no package contents changed, so no bump."
+  },
+  "baseline": {
+    "status": [],
+    "staged": [],
+    "unstaged": [],
+    "untracked": [],
+    "preExistingDifferences": "None within the assigned package; assignment contents equal HEAD.",
+    "files": [
+      {
+        "path": "C:\\git\\agent-skills\\skills\\thread-sizing-and-virtual-threads\\SKILL.md",
+        "sha256": "2EFE1D98DEF47D5C76D07FD71833B480B76E6EDB48A7F5CFB4AB44FC60D539B0"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\thread-sizing-and-virtual-threads\\skill.yaml",
+        "sha256": "BE6F616348BA0F070C3B9DBA419C562EC6D9FF9D422416661A044C2381FA806E"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\thread-sizing-and-virtual-threads\\references\\incident-triage.md",
+        "sha256": "DBE7C82FAEF4FB983FC901EDD0070452B4EF6F003A0692F099CCA1ACB3CC43EF"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\thread-sizing-and-virtual-threads\\references\\sizing-and-adoption.md",
+        "sha256": "25558847F47253F303AF2760E04262C9A08567A6DFCF6A43E809E64DF8C07BAE"
+      }
+    ]
+  },
+  "files": {
+    "changedByReviewer": [],
+    "preExistingChanges": [],
+    "finalHashes": [
+      {
+        "path": "C:\\git\\agent-skills\\skills\\thread-sizing-and-virtual-threads\\SKILL.md",
+        "sha256": "2EFE1D98DEF47D5C76D07FD71833B480B76E6EDB48A7F5CFB4AB44FC60D539B0"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\thread-sizing-and-virtual-threads\\skill.yaml",
+        "sha256": "BE6F616348BA0F070C3B9DBA419C562EC6D9FF9D422416661A044C2381FA806E"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\thread-sizing-and-virtual-threads\\references\\incident-triage.md",
+        "sha256": "DBE7C82FAEF4FB983FC901EDD0070452B4EF6F003A0692F099CCA1ACB3CC43EF"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\thread-sizing-and-virtual-threads\\references\\sizing-and-adoption.md",
+        "sha256": "25558847F47253F303AF2760E04262C9A08567A6DFCF6A43E809E64DF8C07BAE"
+      }
+    ],
+    "allFourHashesUnchanged": true,
+    "finalStatus": [],
+    "finalDiff": [],
+    "finalStagedDiff": []
+  },
+  "scopeAndCriteria": {
+    "role": "Execution-model selection and platform-pool sizing; detailed executor lifecycle, resource limiting and virtual-thread internals remain routed to their owners.",
+    "compatibility": "Virtual-thread snippet Java 21+, platform-pool snippet Java 17; JDK 24/25 management and context features remain conditional. Review does not authorize upgrades or preview.",
+    "successCriteria": [
+      "Keep CPU work, blocked worker time, queue residence and runnable/quota waits distinct.",
+      "Check throughput feasibility and dependency ceilings before recommending more workers.",
+      "Treat formulas as bounded experimental hypotheses rather than optimal sizes or SLO proofs.",
+      "Preserve ordering/confinement/context/ownership, admission and physical resource-release contracts through migration.",
+      "Follow actual executors across nested asynchronous stages instead of inferring from request-thread kind.",
+      "Use version-matched diagnostics with unknown/estimated counts and recording limits; require impact evidence before tuning pinning.",
+      "Retain demonstrated adequate behavior when a change has no supported benefit."
+    ]
+  },
+  "findingsCorrected": [],
+  "findingsReviewed": [
+    {
+      "location": "references/sizing-and-adoption.md:28; SKILL.md:67",
+      "assessment": "Adequate sizing model: C/W are scoped to occupied workers, quota/runnable/STW time is excluded from blocked time, CPU ceiling and demand feasibility are explicit, and serialized resource/parent-child dependencies invalidate simple sizing.",
+      "evidence": "Internal dimensional consistency and the existing example were checked; Java ThreadPoolExecutor contracts support the independent-task and queue-growth cautions.",
+      "decision": "Preserve; two development cases distinguish infeasible demand from an adequate existing pool."
+    },
+    {
+      "location": "references/sizing-and-adoption.md:61",
+      "assessment": "Adequate actual-execution guidance: request virtual threads do not choose static CompletableFuture default execution; explicit executor choice does not propagate to later default-async stages; exact version and subclass policy are required.",
+      "evidence": "Java 21 and Java 25 CompletableFuture APIs have different low-parallelism descriptions and both separate explicit/default async policies.",
+      "decision": "Preserve."
+    },
+    {
+      "location": "references/sizing-and-adoption.md:102 and :143; SKILL.md:105",
+      "assessment": "Adequate partial-snippet prerequisites and lifecycle boundaries: unbounded task count is explicit, close is orderly/waiting, owner completion and daemon process lifetime are separate, cancellation is not termination.",
+      "evidence": "Java 25 ExecutorService.close and Java 21 Thread/default ThreadPoolExecutor factory contracts.",
+      "decision": "Preserve; snippets unchanged and not misrepresented as complete admission implementations."
+    },
+    {
+      "location": "references/incident-triage.md:39",
+      "assessment": "Adequate scheduler evidence interpretation: target parallelism is not a live count; pool/mounted/queued can be unknown and estimated; queued excludes all parked/live requests.",
+      "evidence": "Java 25 VirtualThreadSchedulerMXBean specification.",
+      "decision": "Preserve."
+    },
+    {
+      "location": "SKILL.md:128; references/incident-triage.md:51",
+      "assessment": "Adequate pinning version/build qualification: default versus legacy HotSpot locking and residual VM/class-initialization pinning are separated from measured impact.",
+      "evidence": "HotSpot jdk-24-ga source plus three isolated Temurin 25.0.3 JFR technical controls. Class initialization emitted an explicit VM call <clinit> reason; default monitor control emitted no filtered pin events; legacy monitor emitted a pin.",
+      "decision": "Preserve exact scope; do not generalize a zero-event controlled observation into an absence guarantee."
+    }
+  ],
+  "remainingFindings": [],
+  "changes": [],
+  "preserved": [
+    "All four package files, metadata, dependency/referral routes and capabilities remain byte-for-byte unchanged.",
+    "Conditional selection table, no universal core-count formula, stable-population Little's Law boundary and native-stack budgeting.",
+    "Same-pool child dependency starvation and permit/connection-cycle checks.",
+    "Physical resource release versus caller/Future cancellation, admission/waiter budgets and aggregate replica/retry/fan-out limits.",
+    "Actual async-stage executor placement and matching population/outcome A/B comparisons.",
+    "Daemon entrypoint testing, partial-snippet limits, submitted-Future failure observation and bounded lifecycle owner responsibilities.",
+    "ThreadLocal/ScopedValue/inheritance constraints with Java 21/24/25 compatibility.",
+    "JFR thresholds/coverage, tracking limits, estimated/unknown MXBean metrics and pin-impact guardrails."
+  ],
+  "commandsAndResults": [
+    {
+      "name": "structural",
+      "cmd": "@'\nimport fs from 'node:fs';\nimport path from 'node:path';\nimport assert from 'node:assert/strict';\nimport {parseManifest} from './packages/core/src/domain/manifest.ts';\nimport {parseSkillDocument, documentName, documentDescription} from './packages/core/src/domain/skill-document.ts';\nconst dir='skills/thread-sizing-and-virtual-threads';\nconst {manifest,issues}=parseManifest(fs.readFileSync(dir+'/skill.yaml','utf8'),{source:dir+'/skill.yaml',strict:true});\nassert.deepEqual(issues,[]);\nconst main=fs.readFileSync(dir+'/SKILL.md','utf8'), doc=parseSkillDocument(main);\nassert.equal(documentName(doc),manifest.name);\nassert.equal(documentDescription(doc),manifest.description);\nassert.equal(manifest.version,'1.3.5');\nconst files=fs.readdirSync(dir,{recursive:true}).filter(x=>fs.statSync(path.join(dir,x)).isFile());\nassert.deepEqual(files.map(x=>x.replaceAll('\\\\','/')).sort(),['SKILL.md','references/incident-triage.md','references/sizing-and-adoption.md','skill.yaml']);\nfor(const file of manifest.files) assert.ok(fs.existsSync(path.join(dir,file)),file);\nconst referrals=[...manifest.dependencies.map(x=>x.name),...manifest.suggests];\nfor(const name of referrals) assert.ok(fs.existsSync(path.join('skills',name,'SKILL.md')),name);\nlet relativeLinks=0;\nfor(const file of files.filter(x=>x.endsWith('.md'))) {\n const text=fs.readFileSync(path.join(dir,file),'utf8');\n for(const [,raw] of text.matchAll(/\\[[^\\]]*\\]\\(([^)]+)\\)/g)) {\n  const ref=raw.replace(/^<|>$/g,'');\n  if(!/^[a-z]+:\\/\\//i.test(ref)&&!ref.startsWith('#')) {\n   assert.ok(fs.existsSync(path.resolve(dir,path.dirname(file),ref.split('#')[0])),ref); relativeLinks++;\n  }\n }\n for(const [,name] of text.matchAll(/`([a-z][a-z0-9]*(?:-[a-z0-9]+)+)`/g)) {\n  if(fs.existsSync(path.join('skills',name,'SKILL.md'))) assert.ok(referrals.includes(name),name);\n }\n}\nfor(const file of files.filter(x=>x.startsWith('references'))) assert.ok(main.includes(file.replaceAll('\\\\','/')),file);\nconsole.log(JSON.stringify({strictManifestIssues:issues.length,files:files.length,metadataEqual:true,version:manifest.version,relativeLinks,declaredReferrals:referrals.length,routes:'pass'}));\n'@ | node --input-type=module -",
+      "chunk_id": "e01887",
+      "wall_time_seconds": 0.165661,
+      "exit_code": 0,
+      "original_token_count": 33,
+      "output": "{\"strictManifestIssues\":0,\"files\":4,\"metadataEqual\":true,\"version\":\"1.3.5\",\"relativeLinks\":3,\"declaredReferrals\":8,\"routes\":\"pass\"}\n",
+      "workingDirectory": "C:/git/agent-skills",
+      "classification": "executed structural/read-only package check"
+    },
+    {
+      "name": "format",
+      "cmd": "node node_modules/prettier/bin/prettier.cjs --check skills/thread-sizing-and-virtual-threads/SKILL.md skills/thread-sizing-and-virtual-threads/skill.yaml skills/thread-sizing-and-virtual-threads/references/incident-triage.md skills/thread-sizing-and-virtual-threads/references/sizing-and-adoption.md",
+      "chunk_id": "ce6d02",
+      "wall_time_seconds": 0.2270103,
+      "exit_code": 0,
+      "original_token_count": 17,
+      "output": "Checking formatting...\nAll matched files use Prettier code style!\n",
+      "workingDirectory": "C:/git/agent-skills",
+      "classification": "executed structural/read-only package check"
+    },
+    {
+      "name": "diff",
+      "cmd": "git diff --check -- skills/thread-sizing-and-virtual-threads",
+      "chunk_id": "3c493e",
+      "wall_time_seconds": 0.0829139,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": "",
+      "workingDirectory": "C:/git/agent-skills",
+      "classification": "executed structural/read-only package check"
+    },
+    {
+      "name": "arithmetic",
+      "cmd": "@'\nconst B=1.5, C=0.010, W=0.090;\nconst saturationHypothesis=B*(1+W/C), cpuCeiling=B/C;\nfor (const targetRate of [100,300]) {\n console.log(JSON.stringify({targetRate,taskCpuDemand:targetRate*C,budgetUtilization:targetRate*C/B,meanOccupiedWorkers:targetRate*(C+W),cpuCeiling,saturationHypothesis,feasibleOnCpuAlone:targetRate*C<=B}));\n}\n'@ | node --input-type=module -",
+      "chunk_id": "80e9b7",
+      "wall_time_seconds": 0.0856479,
+      "exit_code": 0,
+      "original_token_count": 85,
+      "output": "{\"targetRate\":100,\"taskCpuDemand\":1,\"budgetUtilization\":0.6666666666666666,\"meanOccupiedWorkers\":10,\"cpuCeiling\":150,\"saturationHypothesis\":15,\"feasibleOnCpuAlone\":true}\n{\"targetRate\":300,\"taskCpuDemand\":3,\"budgetUtilization\":2,\"meanOccupiedWorkers\":29.999999999999996,\"cpuCeiling\":150,\"saturationHypothesis\":15,\"feasibleOnCpuAlone\":false}\n",
+      "workingDirectory": "C:/git/agent-skills",
+      "classification": "executed offline arithmetic; not a service benchmark"
+    },
+    {
+      "name": "locations",
+      "cmd": "rg -n 'Blocking platform-pool|Let `C`|Default async|Application-lifetime|Partial snippets|Also identify|Pool, mounted|LockingMode|Little.s Law|Queue and admission' skills/thread-sizing-and-virtual-threads",
+      "chunk_id": "e5d089",
+      "wall_time_seconds": 0.0797519,
+      "exit_code": 0,
+      "original_token_count": 459,
+      "output": "skills/thread-sizing-and-virtual-threads\\SKILL.md:78:Little's Law relates average in-system concurrency, throughput and residence time in a stable\nskills/thread-sizing-and-virtual-threads\\SKILL.md:90:## Queue and admission\nskills/thread-sizing-and-virtual-threads\\SKILL.md:128:  default locking. Legacy `LockingMode=1` retains monitor pinning in HotSpot 24 GA and tested\nskills/thread-sizing-and-virtual-threads\\references\\sizing-and-adoption.md:28:## Blocking platform-pool experiment\nskills/thread-sizing-and-virtual-threads\\references\\sizing-and-adoption.md:30:Let `C` be mean CPU seconds per task and `W` mean blocked seconds occupying a platform worker,\nskills/thread-sizing-and-virtual-threads\\references\\sizing-and-adoption.md:64:Default async execution uses a separate policy; common-pool and low-parallelism behavior differ\nskills/thread-sizing-and-virtual-threads\\references\\sizing-and-adoption.md:102:Partial snippets: import `java.util.concurrent.*`; supply application `Request`, `Response`,\nskills/thread-sizing-and-virtual-threads\\references\\sizing-and-adoption.md:106:Application-lifetime executor (task count is unbounded here):\nskills/thread-sizing-and-virtual-threads\\references\\sizing-and-adoption.md:143:Also identify what keeps the process alive. Virtual threads are always daemon threads, unlike the\nskills/thread-sizing-and-virtual-threads\\references\\incident-triage.md:39:Pool, mounted and queued counts may return `-1` when unknown; parallelism is a target, not\nskills/thread-sizing-and-virtual-threads\\references\\incident-triage.md:52:before ruling this cause out: HotSpot 24 GA retains it with deprecated `LockingMode=1`, unlike the\nskills/thread-sizing-and-virtual-threads\\references\\incident-triage.md:53:default `LockingMode=2`; it was also observed on Temurin 25.0.3 with legacy mode. Establish why a\n",
+      "workingDirectory": "C:/git/agent-skills",
+      "classification": "read-only location inspection"
+    },
+    {
+      "name": "compile-pinning-control",
+      "cmd": "$validationDir = 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/thread-sizing-and-virtual-threads-validation'; javac --release 21 -d $validationDir \"$validationDir/PinningBoundaryProbe.java\" 2>&1 | Tee-Object -FilePath \"$validationDir/javac.log\"; exit $LASTEXITCODE",
+      "workingDirectory": "C:/git/agent-skills",
+      "chunk_id": "8030bd",
+      "wall_time_seconds": 0.4244269,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": "",
+      "classification": "isolated technical verifier compilation; not a shipped example"
+    },
+    {
+      "name": "pinning-controls",
+      "cmd": "$validationDir = 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/thread-sizing-and-virtual-threads-validation'; java -cp $validationDir PinningBoundaryProbe classinit true \"$validationDir/classinit-default.jfr\" 2>&1 | Tee-Object -FilePath \"$validationDir/classinit-default.log\"; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; java -cp $validationDir PinningBoundaryProbe monitor false \"$validationDir/monitor-default.jfr\" 2>&1 | Tee-Object -FilePath \"$validationDir/monitor-default.log\"; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; java -XX:LockingMode=1 -cp $validationDir PinningBoundaryProbe monitor true \"$validationDir/monitor-legacy.jfr\" 2>&1 | Tee-Object -FilePath \"$validationDir/monitor-legacy.log\"; exit $LASTEXITCODE",
+      "workingDirectory": "C:/git/agent-skills",
+      "chunk_id": "7a00a8",
+      "wall_time_seconds": 0.7161155,
+      "exit_code": 0,
+      "original_token_count": 460,
+      "output": "runtime=25.0.3+9-LTS mode=classinit pinEvents=1 expectedPin=true\r\njdk.VirtualThreadPinned {\r\n  startTime = 09:47:26.668 (2026-10-16)\r\n  duration = 0.0552 ms\r\n  blockingOperation = \"LockSupport.park\"\r\n  pinnedReason = \"VM call to PinningBoundaryProbe$Initializing.<clinit> on stack\"\r\n  carrierThread = \"ForkJoinPool-1-worker-1\" (javaThreadId = 40)\r\n  eventThread = \"pinning-boundary-probe\" (javaThreadId = 39, virtual)\r\n  stackTrace = [\r\n    java.lang.VirtualThread.parkOnCarrierThread(boolean, long) line: 830\r\n    java.lang.VirtualThread.park() line: 755\r\n    java.lang.System$1.parkVirtualThread() line: 2285\r\n    java.util.concurrent.locks.LockSupport.park(Object) line: 221\r\n    java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(AbstractQueuedSynchronizer$Node, int, boolean, boolean, boolean, long) line: 790\r\n  ]\r\n}\r\n\r\n\r\nruntime=25.0.3+9-LTS mode=monitor pinEvents=0 expectedPin=false\r\nOpenJDK 64-Bit Server VM warning: Option LockingMode was deprecated in version 24.0 and will likely be removed in a future release.\r\nruntime=25.0.3+9-LTS mode=monitor pinEvents=1 expectedPin=true\r\njdk.VirtualThreadPinned {\r\n  startTime = 09:47:27.074 (2026-10-16)\r\n  duration = 0.0483 ms\r\n  blockingOperation = \"LockSupport.park\"\r\n  pinnedReason = \"Freeze or preempt failed (4)\"\r\n  carrierThread = \"ForkJoinPool-1-worker-1\" (javaThreadId = 40)\r\n  eventThread = \"pinning-boundary-probe\" (javaThreadId = 39, virtual)\r\n  stackTrace = [\r\n    java.lang.VirtualThread.parkOnCarrierThread(boolean, long) line: 830\r\n    java.lang.VirtualThread.park() line: 755\r\n    java.lang.System$1.parkVirtualThread() line: 2285\r\n    java.util.concurrent.locks.LockSupport.park(Object) line: 221\r\n    java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(AbstractQueuedSynchronizer$Node, int, boolean, boolean, boolean, long) line: 790\r\n  ]\r\n}\r\n\r\n\r\n",
+      "classification": "three isolated technical JVM/JFR controls; not agent behavioral evaluation or performance testing"
+    }
+  ],
+  "technicalEvidence": {
+    "compiler": "javac 25.0.3",
+    "compilerTarget": "--release 21, no preview",
+    "runtime": "Eclipse Temurin 25.0.3+9-LTS, Windows, HotSpot",
+    "results": [
+      {
+        "condition": "Default locking, blocked virtual thread in class initialization",
+        "events": 1,
+        "reason": "VM call to PinningBoundaryProbe$Initializing.<clinit> on stack"
+      },
+      {
+        "condition": "Default locking, blocked virtual thread holding ordinary monitor",
+        "events": 0,
+        "limit": "Only this named-thread controlled recording with enabled zero-threshold event."
+      },
+      {
+        "condition": "-XX:LockingMode=1, blocked virtual thread holding ordinary monitor",
+        "events": 1,
+        "reason": "Freeze or preempt failed (4)",
+        "warning": "LockingMode deprecated since version 24.0; warning retained."
+      }
+    ],
+    "artifactDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/thread-sizing-and-virtual-threads-validation",
+    "artifacts": [
+      "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/thread-sizing-and-virtual-threads-validation/PinningBoundaryProbe.java",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/thread-sizing-and-virtual-threads-validation/javac.log",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/thread-sizing-and-virtual-threads-validation/classinit-default.log",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/thread-sizing-and-virtual-threads-validation/classinit-default.jfr",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/thread-sizing-and-virtual-threads-validation/monitor-default.log",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/thread-sizing-and-virtual-threads-validation/monitor-default.jfr",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/thread-sizing-and-virtual-threads-validation/monitor-legacy.log",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/thread-sizing-and-virtual-threads-validation/monitor-legacy.jfr"
+    ],
+    "cleanup": "Each probe releases its latch, joins/interrupts its owned thread and closes Recording. All processes exited with code 0; no background session remains."
+  },
+  "behavioralEvidence": {
+    "executedAgentEvaluations": [],
+    "walkthroughs": [
+      "Changing required completed throughput from 300/s to 100/s changes the justified decision from infeasible under fixed CPU assumptions to preserving a pool already meeting the supplied contract.",
+      "Checked the existing saturation hypothesis as 15 workers and CPU ceiling as 150/s. At 300/s, 3 CPU-equivalents are required; any 30-worker occupancy calculation is hypothetical for an infeasible rate, not measured achieved concurrency.",
+      "At 100/s, the arithmetic gives 1 CPU-equivalent and mean occupancy 10; this does not make 10 or 15 a safe or optimal pool size. Supplied representative SLO/recovery evidence supports retaining 16.",
+      "Reviewed negative cases: no sizing from parent-held worker/resource cycles, no virtual-thread inference for default async stages, no early permit release on Future cancellation."
+    ],
+    "classification": "Documented expected-behavior walkthroughs, separate from the executed arithmetic and JVM controls.",
+    "reproducibleDevelopmentCases": [
+      {
+        "id": "target-above-cpu-capacity",
+        "input": {
+          "task": "Review the pool-size proposal against the supplied measurements and requirement.json. Update sizing-note.md with the justified decision and calculations. Change ExecutorConfig.java only if the supplied evidence establishes a need. Explain whether pool/execution-model configuration alone can satisfy the target, preserving the existing admission and lifecycle contracts.",
+          "fixtures": {
+            "build.properties": "compiler.release=21\nruntime.major=21\npreview.enabled=false\n",
+            "capacity.json": "{\n  \"effectiveTaskCpuBudget\": 1.5,\n  \"cpuBudgetUnit\": \"CPU-equivalents after measured GC/JIT/other-work reservation\",\n  \"meanCpuSecondsPerTask\": 0.01,\n  \"meanBlockedSecondsOccupyingWorker\": 0.09,\n  \"measurementScope\": \"Same independent tasks and representative data; excludes executor-queue residence, run-queue delay, quota throttling and STW time from blocked time. No child-task dependency or serialized downstream ceiling.\",\n  \"currentExecutor\": {\n    \"corePoolSize\": 16,\n    \"maximumPoolSize\": 16,\n    \"queueType\": \"ArrayBlockingQueue\",\n    \"queueCapacity\": 32,\n    \"rejection\": \"AbortPolicy\"\n  },\n  \"existingIngress\": \"Bounded admission and explicit expiry; no unbounded caller wait list.\",\n  \"currentEvidence\": {\n    \"offeredPerSecond\": 100,\n    \"admittedPerSecond\": 100,\n    \"completedPerSecond\": 100,\n    \"failures\": 0,\n    \"timeouts\": 0,\n    \"rejections\": 0,\n    \"taskCpuEquivalents\": 1,\n    \"meanOccupiedWorkers\": 10,\n    \"p99LatencyMillis\": 210,\n    \"queueBacklog\": \"stable\",\n    \"quotaThrottling\": \"none in representative measurements\",\n    \"recovery\": \"Existing accepted peak/slow-dependency/cancellation/shutdown checks drained backlog and resource occupancy within their budgets.\"\n  },\n  \"slo\": {\n    \"p99LatencyMillis\": 250\n  },\n  \"constraints\": \"Task CPU budget, code CPU cost and dependency contracts are fixed for this review; no capacity/runtime upgrade is authorized.\"\n}\n",
+            "ExecutorConfig.java": "// Existing application-owned executor; established ingress and lifecycle remain in place.\njava.util.concurrent.ThreadPoolExecutor executor = new java.util.concurrent.ThreadPoolExecutor(\n    16, 16, 0L, java.util.concurrent.TimeUnit.MILLISECONDS,\n    new java.util.concurrent.ArrayBlockingQueue<>(32),\n    new java.util.concurrent.ThreadPoolExecutor.AbortPolicy());\n",
+            "sizing-note.md": "# Sizing proposal\nThe wait/service formula gives exactly 15 workers, so that is the optimal production size and the current 16 must be changed. If more throughput is required, virtual threads remove the CPU ceiling; raising worker count can always meet the target.\n",
+            "requirement.json": "{\n  \"requiredCompletedTasksPerSecond\": 300\n}\n"
+          },
+          "prerequisites": "Isolated text fixtures and version-matched Java documentation. No service benchmark, production capture or dependency installation is necessary to check feasibility."
+        },
+        "evaluatorCriteria": {
+          "expected": [
+            "Read capacity.json and use C=0.010 CPU seconds/task, W=0.090 blocked seconds/worker-task and B=1.5 CPU-equivalents; do not substitute host cores or total latency for CPU time.",
+            "Compute the CPU ceiling B/C=150 tasks/s and 300*C=3 CPU-equivalents, exceeding the fixed 1.5 budget.",
+            "Reject the claim that pool expansion or virtual-thread adoption alone can sustain the 300/s target under these assumptions; do not configure 30, 300 or unlimited workers as a solution.",
+            "Explain that the 15-worker formula is a saturation hypothesis and neither an optimal-size proof nor an SLO guarantee. Preserve existing bounded admission/lifecycle and unrelated accepted conclusions.",
+            "Update the note with the actual feasibility blocker and a conditional way to reopen it, such as reducing measured CPU demand or obtaining a separately authorized capacity change. Do not silently upgrade Java or add preview APIs."
+          ],
+          "failureConditions": [
+            "Promises 300/s by adding workers or virtual threads without changing the CPU/cost assumptions.",
+            "Uses X*(C+W)=30 as a proven safe pool size for unattainable completed throughput.",
+            "Calls 15 an exact optimum or infers CPU waiting from wall-minus-CPU without the supplied separation.",
+            "Changes adequately bounded queue/resource/lifecycle contracts merely to make the proposed optimization possible."
+          ]
+        }
+      },
+      {
+        "id": "target-already-met",
+        "input": {
+          "task": "Review the pool-size proposal against the supplied measurements and requirement.json. Update sizing-note.md with the justified decision and calculations. Change ExecutorConfig.java only if the supplied evidence establishes a need. Explain whether pool/execution-model configuration alone can satisfy the target, preserving the existing admission and lifecycle contracts.",
+          "fixtures": {
+            "build.properties": "compiler.release=21\nruntime.major=21\npreview.enabled=false\n",
+            "capacity.json": "{\n  \"effectiveTaskCpuBudget\": 1.5,\n  \"cpuBudgetUnit\": \"CPU-equivalents after measured GC/JIT/other-work reservation\",\n  \"meanCpuSecondsPerTask\": 0.01,\n  \"meanBlockedSecondsOccupyingWorker\": 0.09,\n  \"measurementScope\": \"Same independent tasks and representative data; excludes executor-queue residence, run-queue delay, quota throttling and STW time from blocked time. No child-task dependency or serialized downstream ceiling.\",\n  \"currentExecutor\": {\n    \"corePoolSize\": 16,\n    \"maximumPoolSize\": 16,\n    \"queueType\": \"ArrayBlockingQueue\",\n    \"queueCapacity\": 32,\n    \"rejection\": \"AbortPolicy\"\n  },\n  \"existingIngress\": \"Bounded admission and explicit expiry; no unbounded caller wait list.\",\n  \"currentEvidence\": {\n    \"offeredPerSecond\": 100,\n    \"admittedPerSecond\": 100,\n    \"completedPerSecond\": 100,\n    \"failures\": 0,\n    \"timeouts\": 0,\n    \"rejections\": 0,\n    \"taskCpuEquivalents\": 1,\n    \"meanOccupiedWorkers\": 10,\n    \"p99LatencyMillis\": 210,\n    \"queueBacklog\": \"stable\",\n    \"quotaThrottling\": \"none in representative measurements\",\n    \"recovery\": \"Existing accepted peak/slow-dependency/cancellation/shutdown checks drained backlog and resource occupancy within their budgets.\"\n  },\n  \"slo\": {\n    \"p99LatencyMillis\": 250\n  },\n  \"constraints\": \"Task CPU budget, code CPU cost and dependency contracts are fixed for this review; no capacity/runtime upgrade is authorized.\"\n}\n",
+            "ExecutorConfig.java": "// Existing application-owned executor; established ingress and lifecycle remain in place.\njava.util.concurrent.ThreadPoolExecutor executor = new java.util.concurrent.ThreadPoolExecutor(\n    16, 16, 0L, java.util.concurrent.TimeUnit.MILLISECONDS,\n    new java.util.concurrent.ArrayBlockingQueue<>(32),\n    new java.util.concurrent.ThreadPoolExecutor.AbortPolicy());\n",
+            "sizing-note.md": "# Sizing proposal\nThe wait/service formula gives exactly 15 workers, so that is the optimal production size and the current 16 must be changed. If more throughput is required, virtual threads remove the CPU ceiling; raising worker count can always meet the target.\n",
+            "requirement.json": "{\n  \"requiredCompletedTasksPerSecond\": 100\n}\n"
+          },
+          "prerequisites": "Same text fixtures and evidence as the first case.",
+          "changedConstraint": "Only requiredCompletedTasksPerSecond changes from 300 to 100."
+        },
+        "evaluatorCriteria": {
+          "expected": [
+            "Calculate 100*C=1 CPU-equivalent, about 66.7% of the 1.5 task budget, and mean occupied workers 100*(C+W)=10 under the stated stable independent-work assumptions.",
+            "Use the supplied successful 100/s, 210 ms p99 versus 250 ms SLO and recovery evidence to retain the existing 16-worker bounded executor.",
+            "Correct the note's exact-optimum and CPU-ceiling claims without forcing a 15-worker resize, virtual-thread rewrite or new load campaign for this narrow decision.",
+            "Keep the same admission, expiry, downstream and lifecycle contracts; state what changed load, variance, capacity or measured benefit would reopen the choice.",
+            "Distinguish arithmetic plausibility from proof of a universally optimal size; rely on the supplied representative validation only within its stated population and bounds."
+          ],
+          "failureConditions": [
+            "Carries the first case's infeasibility conclusion over to 100/s.",
+            "Changes the working pool to 15 solely because of the formula, or mandates virtual threads solely because work blocks.",
+            "Invents new throughput or latency measurements or requires unrelated implementation/preview upgrades.",
+            "Treats mean occupied workers as enough evidence to remove queue/admission/recovery headroom."
+          ]
+        }
+      }
+    ],
+    "caseSeparation": "Actor receives only input; evaluatorCriteria remains separate. Cases are authored development cases, not unseen holdouts or executed agent runs.",
+    "measurementOfImprovement": "No skill revision and no measured behavioral gain."
+  },
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html",
+      "version": "Java 21",
+      "type": "official API",
+      "supports": "Core/max queue ordering, independent-task caveat, bounded versus unbounded queues and default factory/rejection behavior.",
+      "status": "Accessed successfully."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ExecutorService.html#close()",
+      "version": "Java 25",
+      "type": "official API",
+      "supports": "Orderly waiting close, interruption escalation and termination/cancellation distinction.",
+      "status": "Accessed successfully."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.html",
+      "version": "Java 21",
+      "type": "official API",
+      "supports": "Virtual daemon lifetime, platform thread cost and inheritable-thread-local controls.",
+      "status": "Accessed successfully."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CompletableFuture.html",
+      "version": "Java 21",
+      "type": "official API",
+      "supports": "Default/common-pool policy, low-parallelism fallback, subclass default executor and non-async completion execution.",
+      "status": "Accessed successfully."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html",
+      "version": "Java 25",
+      "type": "official API",
+      "supports": "Version-specific default/common-pool execution and exceptional-completion cancellation.",
+      "status": "Accessed successfully."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/jdk.management/jdk/management/VirtualThreadSchedulerMXBean.html",
+      "version": "Java 25; introduced in 24",
+      "type": "official API",
+      "supports": "Target parallelism, scheduler platform-pool count, estimated mounted/queued counts and unknown -1.",
+      "status": "Accessed successfully."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/jdk.management/com/sun/management/HotSpotDiagnosticMXBean.html",
+      "version": "Java 25",
+      "type": "official API",
+      "supports": "Version-scoped thread-dump API; no universal global virtual-thread visibility guarantee.",
+      "status": "Accessed successfully."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/openjdk/jdk/jdk-24-ga/src/hotspot/share/runtime/globals.hpp",
+      "version": "HotSpot jdk-24-ga",
+      "type": "official versioned implementation",
+      "supports": "LockingMode default LM_LIGHTWEIGHT=2, legacy mode=1 and deprecation.",
+      "status": "Accessed successfully."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/openjdk/jdk/jdk-24-ga/src/hotspot/share/runtime/continuationFreezeThaw.cpp",
+      "version": "HotSpot jdk-24-ga",
+      "type": "official versioned implementation",
+      "supports": "Legacy held-monitor pinning guards and remaining native-frame freeze distinctions.",
+      "status": "Accessed successfully."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/core/virtual-threads.html",
+      "version": "Java 25",
+      "type": "official guide",
+      "supports": "Virtual-thread model and version-scoped adoption/diagnostics context.",
+      "status": "Accessed successfully."
+    }
+  ],
+  "unavailableSources": [
+    {
+      "url": "https://openjdk.org/jeps/444",
+      "result": "Web fetch failed with 403; Java 21 Thread/Java 25 official API and guide used for relevant platform contracts."
+    },
+    {
+      "url": "https://openjdk.org/jeps/491",
+      "result": "Web fetch failed with 403; HotSpot 24 GA source and local build-specific technical controls used for the retained qualifications."
+    },
+    {
+      "url": "https://github.com/openjdk/jdk/pull/27802",
+      "alternate": "https://api.github.com/repos/openjdk/jdk/pulls/27802",
+      "result": "Both web reads returned internal errors. No claim of reading that PR; existing class-initialization assertion was independently reproduced on the exact named Temurin 25.0.3 runtime."
+    }
+  ],
+  "limitations": [
+    "No independent agent evaluation, original-versus-revised comparison or skill quality-gain claim.",
+    "The package remains unchanged; its two Java examples are explicitly partial. They were reviewed but not completed/compiled as applications during this assignment.",
+    "The technical JFR helper was compiled for Java 21 using javac 25 and executed on Java 25.0.3; it is not a Java 21/24 runtime test.",
+    "The pinning controls establish the observed mechanism only for these bounded operations and this build. They do not establish service impact, pinning frequency, absence on all paths or future-build behavior.",
+    "The sizing calculations are offline arithmetic under stated stable independent-work assumptions. They are not executed throughput, queueing-tail or SLO measurements.",
+    "JEP and PR retrieval failures are recorded separately; no inaccessible source was represented as read.",
+    "No production captures or service workload changes occurred. Global validation remains coordinator-only."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "reason": "Coordinator-only shared generation for the wave after all writers stop; this unchanged package adds no integrity/version change.",
+      "prerequisites": "All reviewers have stopped writing."
+    },
+    {
+      "command": "npm run verify",
+      "reason": "Coordinator-only final repository-wide verification.",
+      "prerequisites": "All accepted changes finalized and registry regenerated."
+    }
+  ],
+  "crossSkill": {
+    "findings": [],
+    "requiredCoordinatorActions": [
+      "Archive this handoff and the isolated validation directory containing source/logs/JFR recordings.",
+      "Optionally execute the separated cases independently.",
+      "Run coordinator-only final wave checks."
+    ]
+  },
+  "processState": "No package/shared writes were made. All technical control and read-only check commands completed with no retained sessions. After creating this isolated handoff, all writes are stopped."
+}

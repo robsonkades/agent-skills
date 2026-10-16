@@ -1,0 +1,29 @@
+import com.example.text.LineEndings;
+
+public final class NormalizeContract {
+    public static void main(String[] args) {
+        String[][] examples = {
+            { "lone CR", "A\rB", "A\nB" },
+            { "LF", "A\nB", "A\nB" },
+            { "CRLF", "A\r\nB", "A\nB" },
+            { "mixed endings", "A\rB\r\nC\nD", "A\nB\nC\nD" },
+            { "consecutive CR", "\r\r", "\n\n" },
+            { "empty", "", "" },
+            { "unchanged text", "Report 42", "Report 42" }
+        };
+        int failures = 0;
+        for (String[] example : examples) {
+            String actual = LineEndings.normalize(example[1]);
+            boolean pass = actual.equals(example[2]);
+            System.out.println(example[0] + ": " + (pass ? "PASS" : "FAIL")
+                + "; actual=" + visible(actual) + "; expected=" + visible(example[2]));
+            if (!pass) failures++;
+        }
+        System.out.println("Cases=" + examples.length + "; failures=" + failures);
+        if (failures != 0) throw new AssertionError("Normalization contract failures=" + failures);
+    }
+
+    private static String visible(String value) {
+        return value.replace("\r", "<CR>").replace("\n", "<LF>");
+    }
+}

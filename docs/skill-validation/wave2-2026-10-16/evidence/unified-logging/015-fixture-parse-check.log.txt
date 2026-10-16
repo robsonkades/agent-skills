@@ -1,0 +1,1 @@
+PASS: both PowerShell fixture scripts parse; neither was executed against a JVM.

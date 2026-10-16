@@ -1,0 +1,10 @@
+Compiled from "PageRequest.java"
+public final class demo.api.PageRequest extends java.lang.Record {
+  public demo.api.PageRequest(int, int, org.springframework.data.domain.Sort);
+  public final java.lang.String toString();
+  public final int hashCode();
+  public final boolean equals(java.lang.Object);
+  public int page();
+  public int size();
+  public org.springframework.data.domain.Sort sort();
+}

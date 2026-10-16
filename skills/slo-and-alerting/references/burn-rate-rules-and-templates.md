@@ -44,8 +44,10 @@ Adapt outcome classification and labels to the SLI contract:
     )
 ```
 
-Both numerator and denominator must select the same valid population. Aggregate away
-instance/pod before fleet alerting, but retain cohort labels required by separate SLOs.
+Both numerator and denominator must select the same valid population, including its event-time
+boundary. Check the actual increment sites; starts and completions in one window can be different
+cohorts. See [window membership](sli-and-error-budgets.md#window-membership-for-delayed-outcomes).
+Aggregate away instance/pod before fleet alerting, but retain cohort labels required by separate SLOs.
 Guard zero/absent denominators according to the no-traffic policy; do not blindly coerce
 missing data to zero.
 

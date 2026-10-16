@@ -1,0 +1,46 @@
+{
+  "scope": "C:/Users/robso/AppData/Local/Temp/skills-wave8-6b5d18c2/actors/run-04",
+  "filesRead": [
+    "TASK.md",
+    "input/README.md", "input/REQUEST.md", "input/schema.sql", "input/seed.sql",
+    "input/current.sql", "input/proposed.sql", "input/fixture.mjs",
+    "output/README.md", "output/REQUEST.md", "output/schema.sql", "output/seed.sql",
+    "output/current.sql", "output/proposed.sql", "output/fixture.mjs", "output/solution.sql",
+    "output/verify.mjs", "output/mutation-check.mjs", "output/REVIEW.md", "output/result.json",
+    "output/verification.log", "output/verification.stderr.log",
+    "output/mutation-check.log", "output/mutation-check.stderr.log"
+  ],
+  "commands": [
+    { "command": "Get-Content TASK.md -Raw", "exitCode": 0, "result": "Read isolation and task rules." },
+    { "command": "Get-Content input/README.md,input/REQUEST.md; rg --files input output", "exitCode": 0, "result": "Read request and enumerated this run's supplied artifacts." },
+    { "command": "Get-Content input/schema.sql,input/seed.sql,input/current.sql,input/proposed.sql,input/fixture.mjs,output/solution.sql -Raw", "exitCode": 0, "result": "Inspected every supplied SQL/helper artifact before executing helper." },
+    { "command": "node --version", "exitCode": 0, "result": "v25.6.1" },
+    { "command": "node verify.mjs (PowerShell Start-Process; 20-second timeout)", "exitCode": 0, "result": "15 candidate and 15 reference comparisons passed; 168-row final fixture; 6 wrong semantic controls detected; SQLite experimental warning only." },
+    { "command": "node mutation-check.mjs (PowerShell Start-Process; 20-second timeout)", "exitCode": 0, "result": "Nested verify.mjs has a 10-second timeout; replacing solution.sql with proposed.sql produced expected exit 1 on nullable witness. Original solution bytes restored in finally and checked." },
+    { "command": "node verify.mjs (final run, PowerShell Start-Process; 20-second timeout)", "exitCode": 0, "result": "Restored candidate passed all comparisons and negative controls again; logs overwritten with final successful run." },
+    { "command": "Get-FileHash SHA256 for seven input/output file pairs; count REVIEW.md words; ConvertFrom-Json result.json", "exitCode": 0, "result": "All seven immutable copies matched; review 482 words; result parsed. The final result edit only adds factual verification outcomes." }
+  ],
+  "webReads": [
+    "https://www.postgresql.org/docs/17/functions-comparison.html",
+    "https://www.postgresql.org/docs/17/ddl-constraints.html",
+    "https://www.postgresql.org/docs/17/using-explain.html"
+  ],
+  "authoredOrModifiedFiles": [
+    "output/solution.sql", "output/verify.mjs", "output/mutation-check.mjs",
+    "output/REVIEW.md", "output/result.json", "output/execution.json",
+    "output/verification.log", "output/verification.stderr.log",
+    "output/mutation-check.log", "output/mutation-check.stderr.log"
+  ],
+  "inputCopiesPreserved": true,
+  "skillBodiesLoaded": false,
+  "delegationUsed": false,
+  "targetPostgresqlExecuted": false,
+  "performanceMeasured": false,
+  "processesStillRunning": false,
+  "limits": [
+    "No PostgreSQL server/connection supplied; portable SQLite semantics only.",
+    "No performance evidence or PostgreSQL plan captured; approval of speedup withheld.",
+    "This journal summarizes actual reads and commands; it is not a full tool trace."
+  ],
+  "allWritesStopped": true
+}

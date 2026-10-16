@@ -1,0 +1,6 @@
+import java.io.IOException;
+
+public interface Parser extends AutoCloseable {
+    int parse(String input) throws IOException;
+    @Override void close() throws IOException;
+}

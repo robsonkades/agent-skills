@@ -1,0 +1,43 @@
+import assert from 'node:assert/strict';
+import { readFileSync, existsSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { createHash } from 'node:crypto';
+
+const repo = 'C:/git/agent-skills';
+const root = resolve(repo, 'skills/zgc-and-shenandoah');
+const { loadPackageFromDirectory } = await import(pathToFileURL(resolve(repo, 'packages/core/src/application/package-loader.ts')).href);
+const { validatePackage } = await import(pathToFileURL(resolve(repo, 'packages/core/src/application/validate-package.ts')).href);
+const { NodeFileSystem } = await import(pathToFileURL(resolve(repo, 'packages/node/src/file-system.ts')).href);
+const loaded = await loadPackageFromDirectory(new NodeFileSystem(), root, { strict: true });
+const report = validatePackage(loaded.pkg, { directoryName: 'zgc-and-shenandoah', strict: true });
+const issues = [...loaded.issues, ...report.issues];
+assert.equal(issues.length, 0, JSON.stringify(issues));
+const baseline = {
+  'SKILL.md': '3550499CC1C02AC26069DD51D886076F633D2C8C52B57EF822F89F742431CFF8',
+  'skill.yaml': 'C19F68A12B6100C9732C4E7ADB552FB6563E56ACD7006E0786175874A4069C4E',
+  'references/flags-and-modes.md': '1E742DFBD4E8DA9F006F14C15CE05B8E84D572B6044CC93283C15BDAEAA37044',
+  'references/reading-concurrent-gc-logs.md': '186303720EE8CD57DA47074416E6D4E98AABB69BF72FC6AE876218DA532851C7'
+};
+assert.equal(loaded.pkg.files.length, Object.keys(baseline).length);
+const links = [];
+const hashes = {};
+for (const [file, expected] of Object.entries(baseline)) {
+  const absolute = resolve(root, file);
+  const bytes = readFileSync(absolute);
+  hashes[file] = createHash('sha256').update(bytes).digest('hex').toUpperCase();
+  assert.equal(hashes[file], expected, `Unexpected change: ${file}`);
+  if (!file.endsWith('.md')) continue;
+  for (const match of bytes.toString('utf8').matchAll(/\[[^\]]*\]\(([^)]+)\)/g)) {
+    const target = match[1];
+    if (/^<?[a-z]+:/i.test(target)) continue;
+    const [path, anchor] = target.split('#');
+    assert.ok(existsSync(resolve(dirname(absolute), path)), `${file}: ${target}`);
+    assert.equal(anchor, undefined, 'Anchor validation needed if an internal anchor is added');
+    links.push({ file, target });
+  }
+}
+const referrals = ['gc-fundamentals', 'jvm-gc-tuning', 'zgc-generational-internals', 'epsilon-and-shenandoah-internals'];
+for (const name of referrals) assert.ok(existsSync(resolve(repo, 'skills', name, 'SKILL.md')), name);
+assert.equal(loaded.pkg.manifest.version, '1.3.3');
+console.log(JSON.stringify({ runtime: process.version, name: loaded.pkg.manifest.name, version: loaded.pkg.manifest.version, packageFiles: loaded.pkg.files.length, issues, localMarkdownLinks: links, referrals, hashes, allPackageHashesUnchanged: true }, null, 2));

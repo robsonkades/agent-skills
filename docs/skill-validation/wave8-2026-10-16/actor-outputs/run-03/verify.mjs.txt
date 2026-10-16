@@ -1,0 +1,81 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {createDb, query} from './fixture.mjs';
+
+// Always load the submitted candidate from disk, including on mutation runs.
+const candidate = fs.readFileSync(new URL('./solution.sql', import.meta.url), 'utf8');
+const original = fs.readFileSync(new URL('./current.sql', import.meta.url), 'utf8');
+const db = createDb();
+const failures = [];
+let checks = 0;
+const labels = values => values.map(customer_label => ({customer_label}));
+
+function check(name, tenant, expected) {
+  checks++;
+  try {
+    assert.deepEqual(query(db, original, {tenant}), expected, `${name}: original vs oracle`);
+    assert.deepEqual(query(db, candidate, {tenant}), expected, `${name}: solution.sql vs oracle`);
+  } catch (error) {
+    failures.push({name, message: error.message});
+  }
+}
+
+try {
+  check('seed preserves two distinct Acme invoices and overlap once', 71, labels(['Acme', 'Acme', 'Bravo']));
+  check('seed other tenant is isolated', 72, labels(['Other']));
+  check('seed absent tenant', 999, []);
+
+  db.exec("INSERT INTO invoices VALUES (6,71,'AlphaNull',NULL,100)");
+  check('nullable active at inclusive threshold', 71, labels(['Acme', 'Acme', 'AlphaNull', 'Bravo']));
+
+  db.exec('DELETE FROM invoices');
+  const rows = [];
+  const insert = db.prepare('INSERT INTO invoices VALUES (?, ?, ?, ?, ?)');
+  let id = 1;
+  const centsValues = [-999999999999, -1, 0, 9999, 10000, 10001, 999999999999];
+  for (const tenant of [72, 71, 0, -1]) {
+    for (const active of [1, 0, null]) {
+      for (const cents of centsValues) {
+        const label = `T${tenant}:A${active}:C${cents}`;
+        rows.push({tenant, active, cents, label});
+        insert.run(id++, tenant, label, active, cents / 100);
+      }
+    }
+  }
+  // Deliberately nonalphabetical insertion and repeated projected values.
+  for (const row of [
+    {tenant: 71, active: 1, cents: 15000, label: 'Zulu'},
+    {tenant: 71, active: 0, cents: 15000, label: 'Alpha'},
+    {tenant: 71, active: null, cents: 15000, label: 'Alpha'},
+    {tenant: 71, active: 1, cents: 5000, label: 'Alpha'},
+    {tenant: 71, active: 1, cents: 15000, label: 'Alpha'},
+    {tenant: 72, active: null, cents: 15000, label: 'ForeignNull'},
+    {tenant: 72, active: 0, cents: 15000, label: 'ForeignFalse'},
+    {tenant: 72, active: 1, cents: 5000, label: 'ForeignTrue'},
+  ]) {
+    rows.push(row);
+    insert.run(id++, row.tenant, row.label, row.active, row.cents / 100);
+  }
+  for (const tenant of [71, 72, 0, -1, 999]) {
+    const expected = rows
+      .filter(row => row.tenant === tenant && (row.active === 1 || row.cents >= 10000))
+      .map(row => row.label)
+      .sort();
+    check(`truth matrix, duplicates, projection, ordering, tenant ${tenant}`, tenant, labels(expected));
+  }
+  db.exec('DELETE FROM invoices');
+  check('empty relation', 71, []);
+  console.log(JSON.stringify({
+    status: failures.length ? 'failed' : 'passed',
+    candidate: 'solution.sql',
+    node: process.version,
+    sqlite: db.prepare('SELECT sqlite_version() AS version').get().version,
+    checks,
+    matrixRows: rows.length,
+    failures,
+    limits: 'Portable SQLite semantic checks only; no PostgreSQL execution, plan or performance measurement.',
+  }, null, 2));
+  if (failures.length) process.exitCode = 1;
+} finally {
+  db.close();
+}

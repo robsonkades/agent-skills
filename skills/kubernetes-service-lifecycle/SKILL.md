@@ -141,6 +141,9 @@ Prefer a startup probe instead when:
   not prevent a node crash or direct delete, and workload controllers are not constrained by
   it during rollout. `minAvailable: 1` with one healthy replica blocks compliant eviction;
   operators can still bypass it or time out, so call it unavailable by policy, not immortal.
+  Resolve percentage budgets at the actual replica count: PDB and Deployment rounding differ,
+  and a small percentage can permit losing the only healthy replica. The configuration
+  reference covers rounding, rollout fallback and the PDB status needed to assess this.
 - For a Deployment rollout, set `maxUnavailable` and `maxSurge` against the serving-capacity
   requirement and schedulable spare capacity. `minReadySeconds` delays counting a ready pod
   as available to that controller; it does not delay Service traffic. A progress deadline

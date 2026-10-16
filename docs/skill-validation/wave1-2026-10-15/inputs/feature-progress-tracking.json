@@ -1,0 +1,6 @@
+{
+  "skill": "feature-progress-tracking",
+  "common": "Update only the snapshot, log, and stakeholder communication. RES01, owned by Ana, is the timeout work and is DONE. EV01 covers CT01/BAC01 at a1 with a 2-second timeout: run 420, attempt 1, passed 8/8 assertions. RES02, owned by Bo, is the audit work and is DONE; EV02 covers all 3 assertions at a1. Current revision a2 changes only the README; code and tests are unchanged. The recent run 420, attempt 2, checked 8 assertions against a1 and the 2-second timeout; retained records are sufficient under project rules. The manager says today's green result means 100% ready for release; no final readiness review has occurred.",
+  "scenarioA": "The runtime and accepted CT01 remain at 2 seconds.",
+  "scenarioB": "The accepted runtime and CT01 have changed to 5 seconds; no evidence tests 5 seconds. RES02 is independent."
+}

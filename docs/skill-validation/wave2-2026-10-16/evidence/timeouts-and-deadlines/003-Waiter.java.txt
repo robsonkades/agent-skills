@@ -1,0 +1,13 @@
+import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+final class Waiter {
+  static <T> CompletableFuture<T> attach(CompletableFuture<T> shared, Duration budget) {
+// Java 11+ fragment: shared is a plain CompletableFuture<T>.
+// budget is the positive, bounded remainder from Deadline; reject expiry first.
+CompletableFuture<T> waiter = shared.copy();
+waiter.orTimeout(budget.toNanos(), TimeUnit.NANOSECONDS);
+return waiter;
+
+  }
+}

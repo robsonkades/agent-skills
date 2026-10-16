@@ -102,6 +102,33 @@ loop can give strategies separate sites, but a source-level helper is not necess
 boundary: C2 can inline it again. Inspect the resulting inline shape and service cost before
 keeping such a change; preserve required runtime switching and API contracts.
 
+### Mutable call-site relinking
+
+Follow the flag/router's factory and update path. If it uses `MutableCallSite`, HotSpot can
+optimise a known target under a `call_site_target_value` dependency. Changing that target with
+`setTarget` can invalidate dependent compiled versions without loading another class. This
+is not a receiver-class guard or an `unstable_if` trap; it need not converge like a boolean
+branch. The presence of `invokedynamic` alone does not establish which call-site kind or
+update mechanism is used.
+
+On the 25.0.3+9 baseline, use `dependencies=debug` with `jit+compilation=debug` to connect the
+failed `call_site_target_value`, call-site/target objects and affected compilation to the
+update path. Do not infer CHA from `marked for deoptimization` or rule out this path from
+an empty trap capture. In a disposable C2 probe with targets resolved before warm-up, four
+alternating target changes invalidated four `dispatch` compilations; setting the same
+`MethodHandle` object four times invalidated none. Both modes passed result checks and emitted
+no uncommon-trap lines. This establishes that mechanism on that build, not its service cost
+or that every `setTarget` call invalidates code: an affected compiled dependency must exist.
+
+Accept infrequent relinking when service criteria pass. If repeated relinking has a measured
+cost, inspect unnecessary target reconstruction/updates before changing compiler limits;
+preloading classes does not stabilise a target that continues to change. Preserve target
+behavior and the required update visibility: `MutableCallSite.setTarget` alone does not
+publish the new target to unrelated threads, so retain the required synchronization,
+including `syncAll` where used. The API suggests considering `VolatileCallSite` for frequent
+updates; compare its steady-state access and update costs under the required concurrency
+contract. Do not freeze a required runtime choice or remove synchronization to reduce events.
+
 ## Act or accept
 
 | Signal                                                        | Accept when                                                    | Act when                                                                                     |
@@ -131,6 +158,8 @@ keeping such a change; preserve required runtime switching and API contracts.
 
 - [JDK 25 HotSpot `deoptimization.cpp`](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/deoptimization.cpp)
 - [JDK 25 HotSpot `dependencies.cpp`](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/code/dependencies.cpp)
+- [JDK 25.0.3 call-site target update](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/prims/methodHandles.cpp) and [dependency check](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/code/dependencies.cpp) — `MHN_setCallSiteTargetNormal`, `mark_dependent_nmethods` and `check_call_site_target_value`.
+- [JDK 25 `MutableCallSite` API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/invoke/MutableCallSite.html) — target visibility, `syncAll` and the frequent-update alternative.
 - [JDK 25.0.3 redefinition invalidation](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/prims/jvmtiRedefineClasses.cpp) — `flush_dependent_code` selects scoped or broad invalidation.
 - [JDK 25.0.3 compiled-code scan](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/code/codeCache.cpp) and [nmethod metadata](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/code/nmethod.cpp) — the old-method references that determine the affected set.
 - [JDK 25 Instrumentation API](https://docs.oracle.com/en/java/javase/25/docs/api/java.instrument/java/lang/instrument/Instrumentation.html)

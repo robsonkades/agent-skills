@@ -1,0 +1,10 @@
+{
+  "node": "v25.6.1",
+  "packagedFiles": 8,
+  "issues": [],
+  "version": "1.2.4",
+  "localLinks": 8,
+  "caseDifference": "one output=... argument only",
+  "recordedTechnicalConditionsPassed": 5,
+  "behavioralEvaluations": 0
+}

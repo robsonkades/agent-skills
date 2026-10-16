@@ -1,0 +1,7 @@
+import java.util.*;
+public record Decision(Outcome outcome, String reason, List<DomainEvent> events) {
+    public Decision { events = List.copyOf(events); }
+}
+
+// Application boundary, pseudocode: persist decision + event intents atomically under
+// the operation key, then acknowledge. Relay intents and deduplicate downstream effects.

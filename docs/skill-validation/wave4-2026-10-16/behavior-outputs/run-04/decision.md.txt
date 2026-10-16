@@ -1,0 +1,25 @@
+Recomendo adotar **text-core 1.0.1 mantendo versões, calendários e responsáveis separados**. `input/project/delivery.json` seleciona o layout **external**. A inspeção dos JARs confirmou que `report-app-1.0.0.jar` contém apenas o consumidor e que a biblioteca é fornecida separadamente. Publicar a correção não atualiza automaticamente essa seleção.
+
+O método público `normalize(String): String` e seu descritor JVM são iguais nas duas versões. Executei o **mesmo JAR publicado de report-app 1.0.0**, sem recompilá-lo:
+
+| Seleção de text-core | Asserção | Resultado real |
+| --- | --- | --- |
+| 1.0.0 | CR | saída `A<CR>B`, código 0 |
+| 1.0.0 | LF | `AssertionError: Expected LF`, código 1 |
+| 1.0.1 | LF | saída `A<LF>B`, código 0 |
+| 1.0.1 | CR | `AssertionError: Expected CR`, código 1 |
+| retorno a 1.0.0 em novo processo | CR | saída `A<CR>B`, código 0 |
+
+O argumento CR/LF é uma **asserção**, não uma configuração da normalização. A biblioteca publicada 1.0.1 e sua reconstrução local passaram nove casos, incluindo CR, LF, CRLF, misturas e idempotência. A recompilação facultativa do consumidor contra 1.0.1 também passou; ela demonstra compatibilidade de fonte, mas não é necessária para entregar esta correção. O log de carregamento identifica os JARs realmente utilizados.
+
+Ordem de entrega proposta, **não executada em ambiente real**:
+
+1. A equipe de texto aprova/promove o artefato imutável 1.0.1 verificado, identifica seu hash e mantém 1.0.0 disponível. Não substituir bytes de uma versão já publicada.
+2. A equipe de report-app altera a dependência selecionada de 1.0.0 para 1.0.1, preservando o binário e a versão 1.0.0 do aplicativo. `delivery.proposed.json` representa essa alteração. Se a seleção integra uma distribuição imutável, gerar uma nova revisão dessa distribuição; isso não obriga a igualar as versões dos componentes.
+3. Validar a composição final com apenas a biblioteca pretendida no classpath, conferir sua origem/hash e iniciar um novo processo. A troca não afeta classes já carregadas. Confirmar LF no consumidor e CR/LF/CRLF no conjunto de regressão; concluir a adoção **dentro de 14 dias**, conforme a política. A aceitação temporária de ambas as saídas pelo armazenamento permite essa sequência assíncrona.
+
+Recuperação: reativar a seleção/distribuição anterior retida e iniciar outro processo. O retorno local a 1.0.0 foi exercitado e restaura o comportamento antigo, incluindo o defeito de CR isolado. Isso é mitigação temporária: exige nova correção antes do prazo e não desfaz dados já produzidos. O armazenamento real não foi exercitado; sua tolerância é uma premissa explícita da política fornecida.
+
+A dependência de código e a execução na mesma JVM não demonstram necessidade de uma única unidade de release. Há compatibilidade binária comprovada neste consumidor, publicação independente e uma janela admitida para adoção. O custo de atualizar a seleção de runtime, isoladamente, não sustenta fundir as fronteiras. Reavaliar se surgirem mudanças incompatíveis que exijam atualização simultânea, ausência de janela de coexistência ou evidência operacional persistente. No layout alternativo **bundled**, seria necessário publicar outra distribuição contendo as classes corrigidas; esse não é o layout selecionado aqui e também não impõe calendário único à biblioteca.
+
+Limites: caso sintético e consumidor mínimo; compilação com `--release 17`, execução somente em Temurin 25.0.3+9 no Windows. Não executei em Java 17, serviço real ou armazenamento. Nenhuma implantação, publicação ou instalação ocorreu. Inputs permaneceram intactos; comandos, saídas completas e limitações estão em `execution.json`.

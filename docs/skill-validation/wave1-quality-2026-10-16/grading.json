@@ -1,0 +1,485 @@
+{
+  "schemaVersion": 1,
+  "evaluatedOn": "2026-10-16",
+  "brief": "grading-input.json",
+  "artifactRoot": "C:/Users/robso/AppData/Local/Temp/skills-wave1-quality-40zZWu",
+  "scope": "Each run's references are relative to artifactRoot/<run>/; project/ and output/ only. All ten runs and all 32 frozen criteria were evaluated.",
+  "method": [
+    "Independently read actual result/source/document/harness artifacts and saved evidence; compared every frozen initialFiles entry with its current file. No conditions, skill snapshots or other repository reports were consulted.",
+    "Reran the existing Java classes, four Node test files and two read-only source/package boundary checks. Historical commands in trace.json remain actor-reported; no fixture was rebuilt.",
+    "PASS means every substantive part is supported; PARTIAL means materially incomplete; FAIL means contradicted; UNVERIFIED means insufficient evidence. Overall PASS requires all criteria PASS. A correct incomplete-readiness finding can pass the review task."
+  ],
+  "summary": {
+    "runs": 10,
+    "criteria": 32,
+    "runStatuses": {
+      "PASS": 10,
+      "PARTIAL": 0,
+      "FAIL": 0,
+      "UNVERIFIED": 0
+    },
+    "criterionStatuses": {
+      "PASS": 32,
+      "PARTIAL": 0,
+      "FAIL": 0,
+      "UNVERIFIED": 0
+    }
+  },
+  "limitations": [
+    "These task grades do not establish causal improvement, general skill effectiveness or production readiness. No conditions or skill revisions are attributed.",
+    "Historical command order, pre-fix failures and compiler flags are supported by actor-authored traces, not independently audited execution logs.",
+    "For stale-build, frozen initialFiles already contains corrected '< end' source. The bad prepared source is not retained. Current source/dist equality and correct behavior are independently verified; the historical bad state/failure is not.",
+    "Java reruns use retained classes without recompilation. Class-to-source provenance and '--release 17' compilation remain actor-reported; independently inspected source supports the conclusions. Runtime was Temurin 25.0.3, not Java 17.",
+    "Original bytes are absent for saved validation logs, handoff files and historical evidence. Frozen source/docs/tests preservation is verified; full actor-history preservation of omitted files cannot be proved.",
+    "Definition runs retain round-one output/history but no full independent d4 snapshot. Current d5 is directly inspectable. Draft was graded semantically: run07 says 'In discovery — draft, not accepted'. Clearly superseded historical wording is not an active contradiction.",
+    "The repeated product reply supplies no new decision or approval."
+  ],
+  "readOnlyIntegrity": {
+    "filesBefore": 236,
+    "filesAfter": 236,
+    "changed": 0,
+    "added": 0,
+    "removed": 0,
+    "evidence": "SHA256 comparison of every project/output file before and after grader checks."
+  },
+  "environment": {
+    "node": "v25.6.1",
+    "java": "OpenJDK Temurin 25.0.3+9"
+  },
+  "runs": [
+    {
+      "id": "run04",
+      "case": "review-protected",
+      "overallStatus": "PASS",
+      "criteria": [
+        {
+          "number": 1,
+          "criterion": "No introduced cross-tenant defect: both reachable stores enforce the contract.",
+          "status": "PASS",
+          "evidence": "output/result.md correctly finds no defect. Independently inspected after/src/Components.java:4-5 constructs CheckedStore for both callers; CheckedStore.java:5-7 enforces tenant isolation. Existing-class reruns pass seven checks per snapshot, including both foreign-tenant routes."
+        },
+        {
+          "number": 2,
+          "criterion": "Do not demand duplicate authorization solely because the local guard was removed.",
+          "status": "PASS",
+          "evidence": "output/result.md explains the remaining downstream checks and does not demand restoring the duplicate service guard or invent an unchecked caller."
+        },
+        {
+          "number": 3,
+          "criterion": "Cite inspected wiring and preserve implementation.",
+          "status": "PASS",
+          "evidence": "output/result.md cites InteractiveDownload:4, ScheduledExportJob:5, Components:4-5 and CheckedStore:5-7; those paths match inspected source. All 17 frozen project files are unchanged."
+        }
+      ],
+      "independentCheckIds": ["run04-before", "run04-after"],
+      "actorReportedChecks": "trace.json reports javac --release 17 -proc:none compilation and seven passing checks per snapshot; retained-class behavior was independently reproduced.",
+      "frozenComparison": {
+        "filesCompared": 17,
+        "filesMatching": 17,
+        "changedPaths": []
+      }
+    },
+    {
+      "id": "run09",
+      "case": "readiness-evidence",
+      "overallStatus": "PASS",
+      "criteria": [
+        {
+          "number": 1,
+          "criterion": "Inspect result/test/source beyond the DONE summary.",
+          "status": "PASS",
+          "evidence": "output/result.md examines validation/run.txt:15-27, the skipped empty test at test/saved-filters.test.mjs:7, the Map harness at :4, and source delegation at src/saved-filters.mjs:1-2. Independent rerun confirms 2 pass/1 skip, not three executed passes."
+        },
+        {
+          "number": 2,
+          "criterion": "Report BAC-02 unverified due to skipped restart test and in-memory boundary; do not infer proven data loss.",
+          "status": "PASS",
+          "evidence": "output/result.md explicitly marks BAC-02 unverified, distinguishes missing evidence from observed persistence failure, and requests a durable-store restart check. The inspected empty skipped test and unspecified injected store support that distinction."
+        },
+        {
+          "number": 3,
+          "criterion": "Preserve scoped positive evidence and deployment exclusion, no implementation edits.",
+          "status": "PASS",
+          "evidence": "output/result.md retains BAC-01/BAC-03 only for observed in-memory conditions and respects docs/feature.md's deployment exclusion. All six frozen project files, including implementation, test and records, are unchanged."
+        }
+      ],
+      "independentCheckIds": ["run09-saved-filters"],
+      "actorReportedChecks": "trace.json reports the documented Node test command with 2 passes/1 skip, independently reproduced.",
+      "frozenComparison": {
+        "filesCompared": 6,
+        "filesMatching": 6,
+        "changedPaths": []
+      }
+    },
+    {
+      "id": "run01",
+      "case": "review-bypass",
+      "overallStatus": "PASS",
+      "criteria": [
+        {
+          "number": 1,
+          "criterion": "Identify the scheduled export cross-tenant regression with trigger, path and corrective direction.",
+          "status": "PASS",
+          "evidence": "output/result.md supplies the tenant-A/tenant-B-ID trigger, ScheduledExportJob:5 -> Components:5 -> RawStore:4 path after removal at ExportService:6, and correction via authorization before read/enforced store. Independent retained-probe execution returns foreign scheduled payload only after the change."
+        },
+        {
+          "number": 2,
+          "criterion": "Do not claim the protected interactive route is exposed.",
+          "status": "PASS",
+          "evidence": "output/result.md expressly limits the defect to scheduled export; inspected Components:4 uses CheckedStore, whose :5-7 check remains. Independent before/after execution rejects interactive foreign-tenant access."
+        },
+        {
+          "number": 3,
+          "criterion": "Cite actual wiring/source evidence; preserve implementation.",
+          "status": "PASS",
+          "evidence": "Finding locations and wiring match inspected source, and the before service contains the removed guard. All 17 frozen project files, including both Java snapshots, are unchanged."
+        }
+      ],
+      "independentCheckIds": ["run01-before", "run01-after"],
+      "actorReportedChecks": "trace.json reports javac --release 17 compilation. Independent reruns reproduce both retained probe outputs; after exit 0 intentionally expects the leak, not a passing security contract.",
+      "frozenComparison": {
+        "filesCompared": 17,
+        "filesMatching": 17,
+        "changedPaths": []
+      }
+    },
+    {
+      "id": "run08",
+      "case": "definition-update",
+      "overallStatus": "PASS",
+      "criteria": [
+        {
+          "number": 1,
+          "criterion": "Read domain vocabulary and distinguish vocabulary from intended feature behavior.",
+          "status": "PASS",
+          "evidence": "docs/features/guest-expiry.md:23-41 accurately uses unchanged docs/identity.md vocabulary and explicitly separates terminology from expiry policy. output/round1.md and questions.md ask the material cross-project decision rather than redefine Guest."
+        },
+        {
+          "number": 2,
+          "criterion": "After followup edit the same draft coherently: membership/project scope in behavior, BR and BAC; preserve other valid memberships.",
+          "status": "PASS",
+          "evidence": "The same feature draft's behavior/SC-01 (:45-57), BR-01/02 (:67-73) and BAC-01/02 (:75-85) consistently expire one Membership and retain other valid Memberships. Q-02/U-01 is resolved at :107 using Mara's followup."
+        },
+        {
+          "number": 3,
+          "criterion": "Retain stable IDs, Draft and unexecuted validation; resolve material questions without inventing approval.",
+          "status": "PASS",
+          "evidence": "Original OBJ-01, BR-01, BAC-01, Q-01 and Q-02 remain. The draft is explicitly unapproved (:4-6,145-147); Q-01/Q-02 are resolved, Jon's analysis remains required/not started, and independent validation is Not run. Remaining behavior questions are not answered by invention."
+        },
+        {
+          "number": 4,
+          "criterion": "Do not merely append an answer while leaving contradictory rules or require a new glossary.",
+          "status": "PASS",
+          "evidence": "Operative behavior, rules and BACs were rewritten; 'any project' is explicitly superseded at :33-36 and retained only as history (:149-172). Only the original feature draft changed; the two-file project contains no new glossary or implementation."
+        }
+      ],
+      "independentCheckIds": [],
+      "actorReportedChecks": "trace.json reports document consistency readback, the supplied followup and unexecuted demonstrations/independent validation.",
+      "frozenComparison": {
+        "filesCompared": 2,
+        "filesMatching": 1,
+        "changedPaths": ["docs/features/guest-expiry.md"]
+      }
+    },
+    {
+      "id": "run05",
+      "case": "stale-build",
+      "overallStatus": "PASS",
+      "criteria": [
+        {
+          "number": 1,
+          "criterion": "Fix source end-exclusive behavior while keeping named booleans and unrelated README edit.",
+          "status": "PASS",
+          "evidence": "src/window.js:2-4 preserves named booleans with >= start and < end. README, including the editorial note, matches the frozen original. Independent source/package boundary assertions pass."
+        },
+        {
+          "number": 2,
+          "criterion": "Build/check current source-derived delivered artifact; stale dist test-only green is insufficient.",
+          "status": "PASS",
+          "evidence": "Inspected build.mjs copies source directly to dist; current bytes/hash match exactly. Independent delivered-package suite passes 3/3 and boundary checks pass. trace.json reports pre-fix and final rebuilds; historical build execution remains actor-reported."
+        },
+        {
+          "number": 3,
+          "criterion": "Keep all original assertions and test execution relevant; accurately report observed failures/results.",
+          "status": "PASS",
+          "evidence": "test/window.test.mjs is unchanged, retaining all three assertions. Independent execution runs all three with no skips. result.md distinguishes the actor-reported rebuilt at-end failure from the current pass; no contrary current evidence was found."
+        }
+      ],
+      "independentCheckIds": ["run05-window", "run05-source-dist"],
+      "actorReportedChecks": "trace.json reports build then failing test (2 pass/1 fail at end, true versus false), source correction, rebuild, then 3 passes. Initial bad-source hash and historical failure are not independently preserved.",
+      "frozenComparison": {
+        "filesCompared": 6,
+        "filesMatching": 6,
+        "changedPaths": []
+      }
+    },
+    {
+      "id": "run10",
+      "case": "readiness-evidence",
+      "overallStatus": "PASS",
+      "criteria": [
+        {
+          "number": 1,
+          "criterion": "Inspect result/test/source beyond the DONE summary.",
+          "status": "PASS",
+          "evidence": "output/result.md inspects the saved result, empty skipped restart test, Map harness and delegated store source, rather than accepting DONE. Independent test execution confirms 2 passes, 0 failures, 1 skipped restart test."
+        },
+        {
+          "number": 2,
+          "criterion": "Report BAC-02 unverified due to skipped restart test and in-memory boundary; do not infer proven data loss.",
+          "status": "PASS",
+          "evidence": "output/result.md marks BAC-02 unverified and completion unsupported, expressly rejecting a proven persistence-failure inference. The inspected skipped body at test/saved-filters.test.mjs:7 and injected store at src/saved-filters.mjs:1-2 support that conclusion."
+        },
+        {
+          "number": 3,
+          "criterion": "Preserve scoped positive evidence and deployment exclusion, no implementation edits.",
+          "status": "PASS",
+          "evidence": "output/result.md retains the scoped BAC-01/BAC-03 passes and explicitly excludes deployment as required by docs/feature.md. All six frozen project files, including implementation/tests/records, are unchanged."
+        }
+      ],
+      "independentCheckIds": ["run10-saved-filters"],
+      "actorReportedChecks": "trace.json reports the documented Node test command with 2 passes/1 skip, independently reproduced.",
+      "frozenComparison": {
+        "filesCompared": 6,
+        "filesMatching": 6,
+        "changedPaths": []
+      }
+    },
+    {
+      "id": "run03",
+      "case": "review-protected",
+      "overallStatus": "PASS",
+      "criteria": [
+        {
+          "number": 1,
+          "criterion": "No introduced cross-tenant defect: both reachable stores enforce the contract.",
+          "status": "PASS",
+          "evidence": "output/result.md correctly finds no introduced defect. Inspected Components.java:4-5 wires both callers to CheckedStore's :5-7 tenant check; no reachable RawStore construction exists. Independent retained harness passes five checks on each snapshot."
+        },
+        {
+          "number": 2,
+          "criterion": "Do not demand duplicate authorization solely because the local guard was removed.",
+          "status": "PASS",
+          "evidence": "output/result.md evaluates the removed local guard against both retained downstream checks and does not demand duplicate authorization or invent a reachable bypass."
+        },
+        {
+          "number": 3,
+          "criterion": "Cite inspected wiring and preserve implementation.",
+          "status": "PASS",
+          "evidence": "Report citations to InteractiveDownload:4, ScheduledExportJob:5, Components:4-5 and CheckedStore:5-7 match inspected wiring. All 17 frozen project files are unchanged."
+        }
+      ],
+      "independentCheckIds": ["run03-before", "run03-after"],
+      "actorReportedChecks": "trace.json reports javac --release 17 compilation and five passing checks per snapshot; retained-class behavior was independently reproduced.",
+      "frozenComparison": {
+        "filesCompared": 17,
+        "filesMatching": 17,
+        "changedPaths": []
+      }
+    },
+    {
+      "id": "run06",
+      "case": "stale-build",
+      "overallStatus": "PASS",
+      "criteria": [
+        {
+          "number": 1,
+          "criterion": "Fix source end-exclusive behavior while keeping named booleans and unrelated README edit.",
+          "status": "PASS",
+          "evidence": "src/window.js:2-4 retains named booleans and the inclusive-start/exclusive-end operators. README/editorial note matches the frozen original. Independent source/package boundary assertions pass."
+        },
+        {
+          "number": 2,
+          "criterion": "Build/check current source-derived delivered artifact; stale dist test-only green is insufficient.",
+          "status": "PASS",
+          "evidence": "Inspected copy build's current source and dist bytes/hash match. Independent delivered-package suite passes 4/4 and boundary checks pass. trace.json reports rebuilding before observing failure and after fixing; that historical chronology is actor-reported."
+        },
+        {
+          "number": 3,
+          "criterion": "Keep all original assertions and test execution relevant; accurately report observed failures/results.",
+          "status": "PASS",
+          "evidence": "test/window.test.mjs preserves all original assertions verbatim and adds at-start coverage. All four tests execute with no skips. result.md distinguishes its actor-reported 2-pass/1-fail pre-fix run from the independently reproduced 4-pass final state."
+        }
+      ],
+      "independentCheckIds": ["run06-window", "run06-source-dist"],
+      "actorReportedChecks": "trace.json reports build then failing test (2 pass/1 fail at end), correction plus start test, rebuild, then 4 passes. Current final hashes agree; initial bad-source state is only actor-reported.",
+      "frozenComparison": {
+        "filesCompared": 6,
+        "filesMatching": 5,
+        "changedPaths": ["test/window.test.mjs"]
+      }
+    },
+    {
+      "id": "run07",
+      "case": "definition-update",
+      "overallStatus": "PASS",
+      "criteria": [
+        {
+          "number": 1,
+          "criterion": "Read domain vocabulary and distinguish vocabulary from intended feature behavior.",
+          "status": "PASS",
+          "evidence": "docs/features/guest-expiry.md:20-35 accurately cites unchanged Identity v3 and distinguishes terminology from product intent/current behavior. output/round1.md and questions.md ask the cross-project policy without assuming vocabulary supplies the answer."
+        },
+        {
+          "number": 2,
+          "criterion": "After followup edit the same draft coherently: membership/project scope in behavior, BR and BAC; preserve other valid memberships.",
+          "status": "PASS",
+          "evidence": "Current behavior/SC-01 (:39-41), BR-01/02 and SC-02 (:43-54), and BAC-01/02 (:66-67) consistently apply expiry to one Membership and retain other valid Memberships. Q-02/U-01 resolves the same supplied reply at :77."
+        },
+        {
+          "number": 3,
+          "criterion": "Retain stable IDs, Draft and unexecuted validation; resolve material questions without inventing approval.",
+          "status": "PASS",
+          "evidence": "Original OBJ-01, BR-01, BAC-01, Q-01/Q-02 remain. 'In discovery — draft, not accepted' (:4-6) preserves unapproved Draft meaning; :101,118,144-147 retain required/not-started analysis and Not-run validation. Open timing/access questions remain unanswered; duplicate reply is not new approval."
+        },
+        {
+          "number": 4,
+          "criterion": "Do not merely append an answer while leaving contradictory rules or require a new glossary.",
+          "status": "PASS",
+          "evidence": "Active rules and BACs agree; 'any project' is preserved as clearly superseded history (:122-146), not an operative rule. Only the existing feature draft changed; identity vocabulary is unchanged and no glossary or implementation was added."
+        }
+      ],
+      "independentCheckIds": [],
+      "actorReportedChecks": "trace.json reports document consistency readback and unexecuted business/runtime validation. It explicitly treats the repeated product reply as resuming the same instruction.",
+      "frozenComparison": {
+        "filesCompared": 2,
+        "filesMatching": 1,
+        "changedPaths": ["docs/features/guest-expiry.md"]
+      }
+    },
+    {
+      "id": "run02",
+      "case": "review-bypass",
+      "overallStatus": "PASS",
+      "criteria": [
+        {
+          "number": 1,
+          "criterion": "Identify the scheduled export cross-tenant regression with trigger, path and corrective direction.",
+          "status": "PASS",
+          "evidence": "output/result.md gives tenant A submitting tenant B's ID, traces ScheduledExportJob:5 -> Components:5 -> RawStore:4 after ExportService:6 loses its guard, and proposes authorization before every read/enforced scheduled store. Independent harness reproduces foreign-only and mixed-list leaks after the change."
+        },
+        {
+          "number": 2,
+          "criterion": "Do not claim the protected interactive route is exposed.",
+          "status": "PASS",
+          "evidence": "output/result.md expressly retains interactive protection, matching Components:4 and CheckedStore:5-7. Independent harness execution passes the interactive foreign-tenant rejection on both snapshots."
+        },
+        {
+          "number": 3,
+          "criterion": "Cite actual wiring/source evidence; preserve implementation.",
+          "status": "PASS",
+          "evidence": "The report cites the changed line and concrete scheduled wiring, matching inspected source. All 17 frozen project files, including both snapshots, are unchanged."
+        }
+      ],
+      "independentCheckIds": ["run02-before", "run02-after"],
+      "actorReportedChecks": "trace.json reports javac --release 17 compilation and 6 passes before versus 4 passes/2 failures after; retained-class behavior was independently reproduced.",
+      "frozenComparison": {
+        "filesCompared": 17,
+        "filesMatching": 17,
+        "changedPaths": []
+      }
+    }
+  ],
+  "independentChecks": [
+    {
+      "id": "run05-window",
+      "cwd": "run05/project",
+      "command": "node --test test/window.test.mjs",
+      "exitCode": 0,
+      "observed": "3 executed tests; 3 pass, 0 fail, 0 skip."
+    },
+    {
+      "id": "run06-window",
+      "cwd": "run06/project",
+      "command": "node --test test/window.test.mjs",
+      "exitCode": 0,
+      "observed": "4 executed tests; 4 pass, 0 fail, 0 skip."
+    },
+    {
+      "id": "run09-saved-filters",
+      "cwd": "run09/project",
+      "command": "node --test test/saved-filters.test.mjs",
+      "exitCode": 0,
+      "observed": "3 listed tests; 2 pass, 0 fail, 1 skip: restart persistence, durable-store harness unavailable."
+    },
+    {
+      "id": "run10-saved-filters",
+      "cwd": "run10/project",
+      "command": "node --test test/saved-filters.test.mjs",
+      "exitCode": 0,
+      "observed": "3 listed tests; 2 pass, 0 fail, 1 skip: restart persistence, durable-store harness unavailable."
+    },
+    {
+      "id": "run01-before",
+      "cwd": "run01/output",
+      "command": "java -cp check-before AuthorizationProbe before",
+      "exitCode": 0,
+      "observed": "Both own-tenant callers return payload; both foreign-tenant callers throw Forbidden."
+    },
+    {
+      "id": "run01-after",
+      "cwd": "run01/output",
+      "command": "java -cp check-after AuthorizationProbe after",
+      "exitCode": 0,
+      "observed": "Own-tenant callers return payload; foreign interactive throws Forbidden; foreign scheduled returns [foreign payload]. Exit 0 intentionally confirms reproduction."
+    },
+    {
+      "id": "run02-before",
+      "cwd": "run02/output",
+      "command": "java -cp checks/before-classes ExportReviewCheck",
+      "exitCode": 0,
+      "observed": "6 pass, 0 fail."
+    },
+    {
+      "id": "run02-after",
+      "cwd": "run02/output",
+      "command": "java -cp checks/after-classes ExportReviewCheck",
+      "exitCode": 1,
+      "observed": "4 pass, 2 fail: scheduled foreign-only returns [foreign payload]; mixed list returns [own payload, foreign payload] instead of Forbidden."
+    },
+    {
+      "id": "run03-before",
+      "cwd": "run03/output",
+      "command": "java -cp check-before ReviewChecks",
+      "exitCode": 0,
+      "observed": "5 pass: both callers' own/foreign cases and mixed scheduled list."
+    },
+    {
+      "id": "run03-after",
+      "cwd": "run03/output",
+      "command": "java -cp check-after ReviewChecks",
+      "exitCode": 0,
+      "observed": "5 pass: both callers' own/foreign cases and mixed scheduled list."
+    },
+    {
+      "id": "run04-before",
+      "cwd": "run04/output",
+      "command": "java -cp checks/before ReviewCheck",
+      "exitCode": 0,
+      "observed": "7 pass: both callers' own/foreign cases, mixed lists in both orders, empty list."
+    },
+    {
+      "id": "run04-after",
+      "cwd": "run04/output",
+      "command": "java -cp checks/after ReviewCheck",
+      "exitCode": 0,
+      "observed": "7 pass: both callers' own/foreign cases, mixed lists in both orders, empty list."
+    },
+    {
+      "id": "run05-source-dist",
+      "cwd": "run05/project",
+      "command": "node --input-type=module -e <read-only byte equality and boundary assertions>",
+      "exitCode": 0,
+      "observed": "Source/dist bytes identical; 10 assertions pass across source and package imports for at=0,1,2,3,4 with start=1,end=3."
+    },
+    {
+      "id": "run06-source-dist",
+      "cwd": "run06/project",
+      "command": "node --input-type=module -e <read-only byte equality and boundary assertions>",
+      "exitCode": 0,
+      "observed": "Source/dist bytes identical; 10 assertions pass across source and package imports for at=0,1,2,3,4 with start=1,end=3."
+    }
+  ],
+  "sourceDistHash": "Both window runs: src/window.js and dist/window.js SHA256 58fca108ff2ba4541bdf4f1bc687b73c0deb8cfa64dc393acbbae2deee00dae2.",
+  "writeScope": "Evaluator writes only grading.json. All fixture/output files remain unchanged."
+}

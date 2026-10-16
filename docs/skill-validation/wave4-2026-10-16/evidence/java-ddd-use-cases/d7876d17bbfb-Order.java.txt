@@ -1,0 +1,24 @@
+package com.example.domain.order;
+import com.example.domain.tenant.TenantID;
+// Explicit test fixture, not a production aggregate or persistence implementation.
+public final class Order {
+    public enum Status { DRAFT, SUBMITTED, CANCELLED }
+    private final OrderID id;
+    private final TenantID tenant;
+    private final boolean empty;
+    private final long version;
+    private Status status;
+    public Order(OrderID id, TenantID tenant, long version, Status status, boolean empty) {
+        this.id = id; this.tenant = tenant; this.version = version; this.status = status; this.empty = empty;
+    }
+    public OrderID getId() { return id; }
+    public TenantID getTenant() { return tenant; }
+    public long getVersion() { return version; }
+    public Status getStatus() { return status; }
+    public Order copy() { return withVersion(version); }
+    public Order withVersion(long next) { return new Order(id, tenant, next, status, empty); }
+    public void submit() {
+        if (status != Status.DRAFT || empty) throw new IllegalStateException("order cannot submit");
+        status = Status.SUBMITTED;
+    }
+}

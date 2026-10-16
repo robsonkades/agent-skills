@@ -1,0 +1,93 @@
+[
+  {
+    "groupId": "org.hibernate.orm",
+    "artifactId": "hibernate-core",
+    "version": "6.6.33.Final",
+    "path": "C:/Users/robso/.m2/repository/org/hibernate/orm/hibernate-core/6.6.33.Final/hibernate-core-6.6.33.Final.jar",
+    "sha256": "1e083ed58d526a84cf5cf2298c892c2addc7cd2558a673916868a15b48bc4fae"
+  },
+  {
+    "groupId": "jakarta.persistence",
+    "artifactId": "jakarta.persistence-api",
+    "version": "3.1.0",
+    "path": "C:/Users/robso/.m2/repository/jakarta/persistence/jakarta.persistence-api/3.1.0/jakarta.persistence-api-3.1.0.jar",
+    "sha256": "475389446d35c6f46c565728b756dc508c284644ea2690644e0d8e7e339d42fd"
+  },
+  {
+    "groupId": "jakarta.transaction",
+    "artifactId": "jakarta.transaction-api",
+    "version": "2.0.1",
+    "path": "C:/Users/robso/.m2/repository/jakarta/transaction/jakarta.transaction-api/2.0.1/jakarta.transaction-api-2.0.1.jar",
+    "sha256": "50c0a7c760c13ae6c042acf182b28f0047413db95b4636fb8879bcffab5ba875"
+  },
+  {
+    "groupId": "org.jboss.logging",
+    "artifactId": "jboss-logging",
+    "version": "3.5.0.Final",
+    "path": "C:/Users/robso/.m2/repository/org/jboss/logging/jboss-logging/3.5.0.Final/jboss-logging-3.5.0.Final.jar",
+    "sha256": "7bb135b081952f6d32d83374619ae5201b05ca3bf862a28dd111016ce19b2c07"
+  },
+  {
+    "groupId": "org.hibernate.common",
+    "artifactId": "hibernate-commons-annotations",
+    "version": "7.0.3.Final",
+    "path": "C:/Users/robso/.m2/repository/org/hibernate/common/hibernate-commons-annotations/7.0.3.Final/hibernate-commons-annotations-7.0.3.Final.jar",
+    "sha256": "0db2fd57d5e43688ac6ed5cdf36deaf05d84340dcc24c2dd2a2114de38e5175d"
+  },
+  {
+    "groupId": "io.smallrye",
+    "artifactId": "jandex",
+    "version": "3.2.0",
+    "path": "C:/Users/robso/.m2/repository/io/smallrye/jandex/3.2.0/jandex-3.2.0.jar",
+    "sha256": "6da3e9ce8d0c0a433f3e7ce610a3c66accb00c71fee67aa0ff3e5a841395ac15"
+  },
+  {
+    "groupId": "com.fasterxml",
+    "artifactId": "classmate",
+    "version": "1.5.1",
+    "path": "C:/Users/robso/.m2/repository/com/fasterxml/classmate/1.5.1/classmate-1.5.1.jar",
+    "sha256": "aab4de3006808c09d25dd4ff4a3611cfb63c95463cfd99e73d2e1680d229a33b"
+  },
+  {
+    "groupId": "net.bytebuddy",
+    "artifactId": "byte-buddy",
+    "version": "1.15.11",
+    "path": "C:/Users/robso/.m2/repository/net/bytebuddy/byte-buddy/1.15.11/byte-buddy-1.15.11.jar",
+    "sha256": "fa08998aae1e7bdae83bde0712c50e8444d71c0e0c196bb2247ade8d4ad0eb90"
+  },
+  {
+    "groupId": "jakarta.xml.bind",
+    "artifactId": "jakarta.xml.bind-api",
+    "version": "4.0.0",
+    "path": "C:/Users/robso/.m2/repository/jakarta/xml/bind/jakarta.xml.bind-api/4.0.0/jakarta.xml.bind-api-4.0.0.jar",
+    "sha256": "57e3796ad5753640088f5f9d3c53c183f2c250b7dad90529ea3e19a5515aa122"
+  },
+  {
+    "groupId": "org.glassfish.jaxb",
+    "artifactId": "jaxb-runtime",
+    "version": "4.0.2",
+    "path": "C:/Users/robso/.m2/repository/org/glassfish/jaxb/jaxb-runtime/4.0.2/jaxb-runtime-4.0.2.jar",
+    "sha256": "1bc271e61b71ca4bd89eb053f3d2c91d478211b02a8982cb520f216fe0e9a939"
+  },
+  {
+    "groupId": "jakarta.inject",
+    "artifactId": "jakarta.inject-api",
+    "version": "2.0.1",
+    "path": "C:/Users/robso/.m2/repository/jakarta/inject/jakarta.inject-api/2.0.1/jakarta.inject-api-2.0.1.jar",
+    "sha256": "f7dc98062fccf14126abb751b64fab12c312566e8cbdc8483598bffcea93af7c"
+  },
+  {
+    "groupId": "org.antlr",
+    "artifactId": "antlr4-runtime",
+    "version": "4.13.0",
+    "path": "C:/Users/robso/.m2/repository/org/antlr/antlr4-runtime/4.13.0/antlr4-runtime-4.13.0.jar",
+    "sha256": "bd7f7b5d07bc0b047f10915b32ca4bb1de9e57d8049098882e4453c88c076a5d"
+  },
+  {
+    "groupId": "com.h2database",
+    "artifactId": "h2",
+    "version": "2.3.232",
+    "path": "C:/Users/robso/.m2/repository/com/h2database/h2/2.3.232/h2-2.3.232.jar",
+    "sha256": "8dae62d22db8982c3dcb3826edb9c727c5d302063a67eef7d63d82de401f07d3"
+  }
+]

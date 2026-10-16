@@ -1,0 +1,4 @@
+always-refuses: exit=1, started=21, failed=21, detected=true
+refuses-contention: exit=1, started=21, failed=1, detected=true
+wrong-debit: exit=1, started=21, failed=21, detected=true
+Production source unchanged: true; SHA-256 323782446f1217d5ff0df539911181413af17f0d51cb57b555dc073902682ac7

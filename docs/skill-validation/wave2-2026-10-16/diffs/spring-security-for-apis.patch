@@ -1,0 +1,79 @@
+diff --git a/skills/spring-security-for-apis/SKILL.md b/skills/spring-security-for-apis/SKILL.md
+index 2b18443..4e37599 100644
+--- a/skills/spring-security-for-apis/SKILL.md
++++ b/skills/spring-security-for-apis/SKILL.md
+@@ -93,7 +93,9 @@ reproduce framework setup from a diagnostic example.
+    any successfully authenticated caller; that is insufficient where permissions differ.
+    Prefer explicit permitted operations with `denyAll()` for the remaining surface when
+    the API contract is an allowlist; retain an authenticated fallback only when all such
+-   callers intentionally share access.
++   callers intentionally share access. When accepting multiple issuers, preserve validated
++   issuer/subject identity or an established canonical account mapping before ownership
++   checks; an authentication name alone need not be globally unique.
+ 4. **Trace the protected invocation.** `@EnableMethodSecurity` enables method checks;
+    annotations must be reached through the Spring proxy. Self-invocation and manually
+    constructed objects can bypass interception. Method permissions do not establish
+diff --git a/skills/spring-security-for-apis/references/token-validation.md b/skills/spring-security-for-apis/references/token-validation.md
+index 147470d..8744a28 100644
+--- a/skills/spring-security-for-apis/references/token-validation.md
++++ b/skills/spring-security-for-apis/references/token-validation.md
+@@ -133,6 +133,29 @@ different retrieval lifecycles; inspect the effective decoder. A test that trigg
+ via an unknown key does not measure cache TTL expiry or establish a startup guarantee.
+ [7.1.0 decoder key-source wiring](https://github.com/spring-projects/spring-security/blob/7.1.0/oauth2/oauth2-jose/src/main/java/org/springframework/security/oauth2/jwt/NimbusJwtDecoder.java).
+ 
++## Preserve principal identity when adding issuers
++
++Trace the authenticated principal into the application's caller context, account lookup,
++ownership checks and authorization caches. In Security 7.1.0 the default
++`JwtAuthenticationConverter` derives the principal name from `sub`. RFC 7519 permits a
++subject to be unique only within its issuer; two correctly validated tokens can therefore
++have the same `Authentication.getName()` while identifying different callers.
++[7.1.0 principal conversion](https://github.com/spring-projects/spring-security/blob/7.1.0/oauth2/oauth2-resource-server/src/main/java/org/springframework/security/oauth2/server/resource/authentication/JwtAuthenticationConverter.java),
++[JWT subject scope](https://www.rfc-editor.org/rfc/rfc7519.html#section-4.1.2).
++
++For multiple trusted issuers, retain the **validated issuer and subject pair**, or resolve
++it through the application's trusted canonical-account mapping. Use that identity
++consistently wherever callers share an account/permission namespace. Do not silently link
++accounts because `sub`, an email address or a display name happens to match. Only use claims
++after the configured authentication checks; a pair built from an unverified JWT establishes
++no identity. Required identity claims must not fall back to a shared empty/default account.
++
++Keep an adequate single-issuer mapping or a documented globally unique identity contract.
++Apply a needed change at the existing caller/account boundary; it need not replace the JWT
++decoder, scope converter or domain authorization model. If introducing a second issuer or
++changing the identity key, check existing account links, owner references and cache keys
++before rollout so the change neither merges unrelated callers nor strands valid owners.
++
+ ## Authorities are a schema contract
+ 
+ Spring's standard JWT converter maps scopes from `scope` or `scp` to `SCOPE_...`. An issuer
+diff --git a/skills/spring-security-for-apis/references/verification.md b/skills/spring-security-for-apis/references/verification.md
+index bb3d338..1e4b169 100644
+--- a/skills/spring-security-for-apis/references/verification.md
++++ b/skills/spring-security-for-apis/references/verification.md
+@@ -40,6 +40,12 @@ the chain even though the request never calls it.
+   outside HTTP. Include the MVC path with global exception advice enabled: a denied method
+   call must retain the agreed security status/challenge and must not become a generic 500.
+   Permission to read another user's record is a separate instance-policy test.
++- **Issuer/principal mapping changes:** use two validated identities with the same `sub`
++  from different trusted issuers through the actual converter and caller/account mapping.
++  Equal names must not transfer one account's permissions or ownership to the other caller.
++  Honor an explicit trusted account link where policy allows it. Include the original owner
++  as a permitted control and a missing required identity claim. A converter-only test does
++  not prove token validation or the application's account/query isolation.
+ - **Instance-policy integration:** wrong owner/tenant and missing identity across detail,
+   list/count, secondary lookup and write operations. Try a payload that assigns another
+   tenant/owner or an elevated privilege. Assert unchanged protected state, no foreign records
+diff --git a/skills/spring-security-for-apis/skill.yaml b/skills/spring-security-for-apis/skill.yaml
+index d4fc98b..a7993ba 100644
+--- a/skills/spring-security-for-apis/skill.yaml
++++ b/skills/spring-security-for-apis/skill.yaml
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: spring-security-for-apis
+-version: 1.2.0
++version: 1.2.1
+ description: >-
+   Configure and review Spring Security Servlet APIs when adding protected operations,
+   changing credential delivery, fixing uncovered routes, validating JWT or opaque

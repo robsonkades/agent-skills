@@ -133,6 +133,22 @@ degraded lifetime from the client's recovery/freshness requirement, and make res
 headers and application-cache policy agree. Preserve useful complete data only when its
 stale-use contract permits it; do not replace it automatically with an unavailable value.
 
+After composition or transformation, decide who owns `ETag`/`Last-Modified` and conditional
+evaluation. An upstream validator covers its selected representation; unchanged Orders data
+does not prove that Delivery's ETA, completeness or the BFF mapping is unchanged. Use validators
+valid for the final client representation, or omit unsupported validators. Do not forward an
+upstream 304 as the composed result without establishing that the client's selected view is
+still valid. Strong validators must change with observable representation data; weak validators
+still need a defensible equivalence contract. Unchanged pass-through representations can retain
+valid upstream validation. Perform access checks before conditional shortcuts. See
+[RFC 9110 validator semantics](https://www.rfc-editor.org/rfc/rfc9110.html#section-8.8) and
+[precondition ordering](https://www.rfc-editor.org/rfc/rfc9110.html#section-13.2.1).
+
+Exercise a conditional read with Orders unchanged but ETA changed or recovered from unavailable.
+When the stored view is no longer acceptable, verify that the client receives the changed view
+rather than reusing it after 304. Repeat with revoked access and a previously valid validator;
+matching metadata must not bypass the agreed denial policy.
+
 For the changed path, build hostile fixtures that exercise the deployed entry and service:
 forged `X-User-Id`/tenant/proxy values, a valid token with the wrong resource audience,
 authorized caller requesting another tenant's object, direct backend access, and a

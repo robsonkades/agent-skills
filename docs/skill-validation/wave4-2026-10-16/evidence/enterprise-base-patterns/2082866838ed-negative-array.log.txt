@@ -1,0 +1,3 @@
+Exception in thread "main" java.lang.AssertionError: Defensive copies alone fail the record copy/value contract
+	at RecordContractProbe.check(RecordContractProbe.java:32)
+	at RecordContractProbe.main(RecordContractProbe.java:38)

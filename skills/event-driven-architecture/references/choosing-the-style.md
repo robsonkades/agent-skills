@@ -18,6 +18,50 @@ document those contracts regardless of topic or queue transport. Conversely, a f
 currently have one consumer without becoming a command. Work distribution to interchangeable workers is
 `task-queues-and-competing-consumers`.
 
+## Acceptance, completion and read visibility
+
+For a representative operation, follow the entry point, command handler and local transaction
+through the selected publisher/relay and subscriber to the store used by the caller's next
+query. Inspect actual route/wiring configuration, including read replicas and caches; a nearby
+handler or a class named `OrderRepository` does not establish that path. Bound the review to
+the affected interaction and identify any unresolved hop.
+
+A committed business change with an outbox row establishes local state and publication intent.
+A publication acknowledgement establishes only the configured broker boundary. For example,
+[Kafka 4.1's producer future](https://kafka.apache.org/41/javadoc/org/apache/kafka/clients/producer/KafkaProducer.html)
+reports the send request's outcome, not subscriber completion; with `acks=0` it does not even
+wait for a broker acknowledgement. Neither proves that an asynchronous query projection has
+applied the change. Even a business-completion status may precede that projection; name what
+the status actually observes. `delivery-semantics` owns the acknowledgement mechanics.
+
+Choose the caller's contract from the required observation:
+
+- **The command's committed result is enough:** return that result when available, without
+  waiting for independent reactions. Keep a valid authoritative read path; separate read and
+  write models do not inherently require separate stores or asynchronous replication.
+- **The next query must include this change:** read the appropriate authoritative state, or
+  wait for the specific read model to reach a defined comparable revision/checkpoint within
+  a bounded budget. Establish what that checkpoint covers and the timeout behavior; an
+  arbitrary sleep, wall-clock timestamp or unrelated consumer's progress is not that proof.
+- **Completion can be deferred:** expose pending/failed/completed state through an owned
+  status or callback contract. HTTP `202 Accepted` communicates acceptance without completed
+  processing; its representation should explain current status and how to monitor it.
+  Changing the status code alone does not make a stale query current, and a completed local
+  resource creation need not become `202` merely because independent reactions are pending.
+
+These choices apply to ordinary integration events as well as event-sourced systems; do not
+introduce an event store, an orchestrator or a new broker just to fix a visibility mismatch.
+The HTTP distinction is specified by [RFC 9110 section 15.3.3](https://www.rfc-editor.org/rfc/rfc9110.html#section-15.3.3);
+[the CQRS pattern](https://learn.microsoft.com/en-us/azure/architecture/patterns/cqrs) distinguishes
+shared-store models from asynchronously updated read stores and their stale-read risk.
+
+For a confirming case, hold the projection consumer before applying a change while publication
+can succeed. Query through the real caller route and assert its declared pending/freshness
+behavior; resume processing and check recovery. If that route already reads the committed
+authoritative state, preserve it and verify that delayed independent reactions do not block
+the promised result. Broker acknowledgements or a handler unit test alone do not exercise
+this observation boundary.
+
 ## Map logical subscribers before scaling workers
 
 Decide whether each event must reach **each independent reaction**, or whether interchangeable

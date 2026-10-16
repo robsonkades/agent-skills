@@ -1,0 +1,29 @@
+O contrato está **violado** em `src/work/Job.java:8`: `collect()` executa `join(2)` e retorna `"DONE:" + result` incondicionalmente. O retorno por timeout não comprova término. O pedido aceita `PENDING` e proíbe `DONE:0`; exige manter a espera limitada.
+
+O caminho efetivo é: construir `Job` com `gate` final, iniciar esse mesmo objeto uma vez, bloquear o worker em `gate.await()`, chamar `collect()`, esgotar sua espera de 2 ms e ler `result` ainda zero. A escrita `result=83` só ocorre depois de abrir o gate. A inicialização anterior a `start()` publica o estado inicial para o worker; não publica antecipadamente seu resultado de volta. O campo final `gate` tampouco fornece essa garantia para `result`.
+
+A API de [Thread.join(long), Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Thread.html#join(long)) especifica espera limitada, sem indicador de conclusão. Pela [JLS 17.4.4–17.4.5](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.4.4), a ação final do worker sincroniza com a ação que detecta seu término. O caminho necessário é `result=83 → término → detecção pelo coletor → leitura de result`. Um timeout com o worker vivo não fornece essa cadeia. Com abertura concorrente do gate, a implementação também permite leitura ordinária sem a ordenação necessária; tornar apenas `result` volatile não comprovaria trabalho concluído.
+
+A correção focada proposta, **não aplicada nem executada**, é:
+
+```java
+public String collect() throws InterruptedException {
+    join(2);
+    if (isAlive()) return "PENDING";
+    return "DONE:" + result;
+}
+```
+
+No ciclo aceito, o worker correto já foi iniciado. Assim, `isAlive()==false` detecta término, e a cadeia acima publica a escrita ordinária de 83 sem exigir volatile. `isAlive()==true` permite retornar `PENDING`, inclusive se o worker terminar logo depois. A API informa que uma thread iniciada não pode reiniciar e que [isAlive](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Thread.html#isAlive()) é verdadeiro entre início e término. A proposta mantém uma única espera limitada e propaga a interrupção do coletor. Não adiciona espera ilimitada ou polling. Uma thread nunca iniciada também retorna false; essa consulta isolada não é prova de execução fora do ciclo aceito.
+
+O check fornecido foi compilado com `javac --release 25` e executado em Temurin 25.0.3+9, sem preview ou dependências. Produziu:
+
+```text
+while-gate-closed=DONE:0
+alive=true
+after-termination=DONE:83
+```
+
+O processo terminou com código 0 porque o Smoke imprime a observação; isso não significa conformidade. O gate permaneceu fechado durante a primeira coleta, tornando o contraexemplo controlado. O cleanup abriu o gate, aguardou até 2 s e verificou término; a coleta posterior preservou o resultado adequado.
+
+Não há evidência material ausente para este achado. Não executei a proposta, jcstress, testes de carga, cancelamento ou medição de latência; a execução finita confirma o contraexemplo, não prova todos os escalonamentos. Cancelamento não integra o contrato. Fontes, contratos e configuração permaneceram intactos, com hashes iguais nas duas cópias. Os subprocessos terminaram.

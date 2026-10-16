@@ -1,0 +1,24 @@
+{
+  "samples": [
+    {
+      "sampleId": "K1",
+      "caseId": "Q1",
+      "response": "The proposal is equivalent here: active is constrained NOT NULL; the second branch excludes true rows. UNION ALL preserves separate equal labels. No speedup has been measured; compare the same tenant/binds and cache/volume on PostgreSQL before adopting."
+    },
+    {
+      "sampleId": "K2",
+      "caseId": "Q2",
+      "response": "NOT true excludes the intersection and therefore preserves all rows even when active is NULL. Replace UNION ALL with UNION to be extra safe about duplicates. The two indexes guarantee speedup."
+    },
+    {
+      "sampleId": "K3",
+      "caseId": "Q3",
+      "response": "The inner node emits about 48000 rows across 12000 executions, with 780 ms inclusive loop work. It is not 780 ms extra request latency. Accurate local estimates and a LIMIT-stopped preview do not establish stale stats. The different tenant/literal and unknown cache/prepare mode cannot prove a generic-plan defect; repeat a bounded prepared capture of tenant71 with consistent types and compare custom/generic in that isolated session. Buffers read may hit OS cache. No global force/index deployment follows."
+    },
+    {
+      "sampleId": "K4",
+      "caseId": "Q4",
+      "response": "Use the proposed tuple < comparison: SQL follows ORDER BY directions automatically and NULL compares lower than all priorities. OFFSET-free syntax proves constant time for all pages."
+    }
+  ]
+}

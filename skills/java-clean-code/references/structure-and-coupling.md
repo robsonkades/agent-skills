@@ -23,6 +23,47 @@ clearest as one reader-path. Keep the test's action and assertions visible; a na
 for meaningful shared setup can still reduce distraction. Apply the actual project's
 conventions and lifetime, not a blanket prohibition on test helpers.
 
+## Extraction can change overload selection
+
+Inspect the declared receiver/argument types and selected overload before and after moving
+a call. A helper accepting a broader type can invoke a different method while receiving the
+same object; runtime argument classes do not redo overload resolution. The chosen descriptor
+comes from compile-time method selection ([JLS 25 §15.12.2](https://docs.oracle.com/javase/specs/jls/se25/html/jls-15.html#jls-15.12.2)).
+
+Partial Java 25 example; enclose these methods in a class. Both versions compile:
+
+```java
+static String original(char[] label) {
+    return new StringBuilder().append(label).toString();
+}
+
+static String widened(char[] label) {
+    return renderObject(label);
+}
+
+static String renderObject(Object value) {
+    return new StringBuilder().append(value).toString();
+}
+```
+
+For `new char[] {'O', 'K'}`, `original` returns `"OK"`; `widened` appends the array's object
+representation. The calls select `append(char[])` and `append(Object)` respectively, whose
+contracts differ ([StringBuilder API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/StringBuilder.html)).
+Keeping a meaningful helper's `char[]` parameter preserves this selection; keeping the short
+original call inline can be clearer. A cast inside a broadly reusable helper needs its own
+input contract and can introduce a failure; it is not a universal repair.
+
+The converse matters: if the original expression was already declared `Object`, retaining that
+overload can be correct even when one fixture happens to hold a character array. Follow the
+original contract rather than always narrowing to the runtime class. The same issue can route
+an application call to a different overload with different effects, not just change formatting.
+Compare the selected member in source or compiled descriptors when unclear, and check results
+and effect paths with a value that distinguishes the overloads. Compilation alone misses this.
+
+The example and typed-helper/original-`Object` controls were compiled with `--release 25` and
+run on Temurin 25.0.3+9. Those checks demonstrate this boundary; they do not establish equivalence
+for unrelated extractions or measure readability.
+
 ## Temporal coupling
 
 **Detect.**

@@ -36,6 +36,9 @@ already authorized mitigation to complete intake or a design checklist.
 1. **Say which boundary is crossed.** Process, host, availability zone, region, or an
    organisational boundary. The answer changes the fault model, the latency budget and who can be
    trusted. Missing details permit a provisional route, not an unsupported guarantee.
+   When completion or write visibility is disputed, follow one operation through its acknowledgement,
+   durable business effect and consumer read path using the contract, handler and available
+   operation evidence. An earlier success does not establish every later milestone.
 2. **Record the known fault assumptions and gaps.** Use `failure-models` when choosing a
    guarantee or when unknown outcomes are central. During an incident, do not delay a clear
    specialist handoff until a complete fault model has been written.

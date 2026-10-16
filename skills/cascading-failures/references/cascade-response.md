@@ -55,6 +55,28 @@ observe goodput and resource recovery, then retain guardrails until recovery is 
    fetches, or audit writes only when policy permits and durable capture remains. This is only available if criticality was decided in
    advance; see `cutting-the-loop.md`.
 
+## Verify where the loop is cut
+
+Trace the selected control through the deployed handler, middleware/client configuration and
+the saturated queue or pool. Locate the admission check relative to resource acquisition and
+dependency calls. Rejection after a database read cannot protect that database from the read;
+also inspect work on the rejection path, such as serialization, logging or fallback calls.
+
+A high rejection rate can itself exhaust CPU or connections. If that work dominates, consider
+an earlier gateway/client cap within the existing correctness and acceptance contract, rather
+than only lowering a downstream limit. Keep a working early control when evidence shows it
+already removes the costly work. Check how actual callers react to its rejection: repeated
+attempts can replace the load it removed. Detailed policy remains in `rate-limiting-and-load-shedding`
+and `retries-and-backoff`. The [Google overload chapter](https://sre.google/sre-book/handling-overload/)
+describes backend saturation from rejection cost and client-side throttling.
+
+Compare the same operation mix and time window across control admissions/rejections, arrivals
+at the protected resource, its occupancy and goodput. Previously admitted work can still drain;
+distinguish it from new arrivals before declaring the control ineffective. In a failure test,
+assert rejected requests do not start the protected operation, and exercise a high rejection
+volume to check the rejection path's cost. A handler-only counter or fast error latency cannot
+establish either property. If those observations are missing, keep effectiveness unverified.
+
 ## Contain transferred load
 
 Failover moves demand; it does not create capacity. Before redirecting a region, tenant or shard,
@@ -118,7 +140,10 @@ feedback mechanism and whether the drain rate is positive before claiming waitin
 
 ## Recording it
 
-Capture, before the evidence rotates out: the amplification point, the attempts-per-logical-
-call ratio at peak, which lever moved goodput first, and how long the metastable state
-persisted after the trigger cleared. The last number is the argument for the design controls
-in `cutting-the-loop.md`.
+Preserve the relevant configuration revision, measurement window and operation mix before evidence
+rotates out. Record the candidate edge, attempts per logical call where measurable, intervention
+times, predicted resource/goodput movement and what actually followed. Include concurrent traffic
+or capacity changes; recovery after a lever was pulled does not alone establish that it caused
+recovery. Mark unavailable evidence and unproven metastability explicitly. Update the runbook with
+the supported conditions and the observation that would invalidate the recommendation; link the
+design control in `cutting-the-loop.md` without promoting one incident into a universal rule.

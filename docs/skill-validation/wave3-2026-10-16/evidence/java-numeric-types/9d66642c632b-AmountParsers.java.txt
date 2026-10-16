@@ -1,0 +1,22 @@
+import java.math.*;
+public final class AmountParsers {
+    public static AmountParser selected(String name) {
+        return switch (name) {
+            case "text" -> AmountParsers::text;
+            case "ledger" -> AmountParsers::ledger;
+            default -> throw new IllegalArgumentException("unknown parser");
+        };
+    }
+    private static BigDecimal validated(String text) {
+        BigDecimal value = new BigDecimal(text);
+        if (value.abs().compareTo(new BigDecimal("1000000")) > 0) {
+            throw new IllegalArgumentException("amount out of range");
+        }
+        value.setScale(2, RoundingMode.UNNECESSARY);
+        return value;
+    }
+    public static BigDecimal text(String text) { return validated(text); }
+    public static BigDecimal ledger(String text) {
+        return validated(text).setScale(2, RoundingMode.UNNECESSARY);
+    }
+}

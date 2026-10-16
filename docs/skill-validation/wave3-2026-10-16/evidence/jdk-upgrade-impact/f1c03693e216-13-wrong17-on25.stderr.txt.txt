@@ -1,0 +1,4 @@
+Exception in thread "main" java.lang.ArrayIndexOutOfBoundsException: Index 0 out of bounds for length 0
+	at java.base/java.util.ImmutableCollections$ListN.get(ImmutableCollections.java:725)
+	at FirstChoice.first(FirstChoice.java:7)
+	at FirstChoiceTest.main(FirstChoiceTest.java:9)

@@ -1,0 +1,21 @@
+# Review: lookup contract violated
+
+The accepted contract permits permanent misses, but every hit must return 42 without throwing. The current implementation does not guarantee that safety property.
+
+`BestEffortMemo.find()` reads `entry` once into `observed` and then calls `reader.applyAsInt(observed)` (`BestEffortMemo.java:10–11`). `ReaderFactory.create()` selects **`PublishedEntry::legacyValue`** (`ReaderFactory.java:5`). That method reads **`legacy.value`**, not `primary.value` (`PublishedEntry.java:12`). Although both references receive the same payload during construction, `legacy` is an ordinary field. The unused `value()` method follows the final field `primary`.
+
+The accepted pre-`Thread.start()` handoff safely exposes the memo and its reader. It does not order the producer's later entry installation before concurrent consumer reads. The relevant actions are:
+
+```text
+Producer: payload.value=42 → primary=payload → legacy=payload
+          → constructor exit/freeze(primary) → ordinary entry write
+Consumer: ordinary entry read → callback → ordinary legacy read → payload.value read
+```
+
+There is no producer-to-consumer happens-before edge across that ordinary publication. The single reference read avoids inconsistent repeated reads but does not publish payload initialization. Final-field semantics protect construction-time state reached through `primary`; they do not automatically protect an ordinary alias. The safely published final `reader` also cannot cover entries constructed later. These are the distinctions in [JLS 17.4.5](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.4.5) and [JLS 17.5.1](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.5.1).
+
+Consequently, a consumer may observe a non-null entry but default-null `legacy`, causing `NullPointerException`. If `legacy` is non-null, the ordinary payload read may instead observe default zero, yielding `OptionalInt.of(0)`. These are JMM-permitted counterexamples, not failures reproduced by this review. Empty and present-42 are acceptable; exception and present-zero violate the accepted contract. No eventual-visibility guarantee is required.
+
+The focused proposed correction is to change only the factory binding to `PublishedEntry::value`. Then each hit follows `observed → primary (final) → payload.value`. Payload initialization precedes the enclosing constructor's freeze; publication follows constructor completion; and the contract excludes escape and later mutation. This path receives the final-field guarantee, while ordinary publication may continue to miss as allowed. A volatile entry or locking protocol is unnecessary for this accepted contract. No production correction was applied.
+
+Validation: Java and javac reported Temurin 25.0.3; the supplied `check.mjs` compiled with `--release 25` and ran `memo.Smoke`, reporting `sequential-controls=2 PASS`. `javap` confirmed the callback targets `legacyValue` and that its bytecode reads `legacy`. All eight supplied project files match between input and output by SHA-256. The sequential smoke confirms only its two sequential controls, not concurrent safety. No stress test, jcstress, modified-source test, architecture comparison, or performance measurement was run. There is no missing evidence needed to establish this contract gap under the accepted assumptions.

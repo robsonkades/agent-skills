@@ -66,14 +66,49 @@ and terminate the executor in teardown; an intentionally permanent deadlock need
 
 ## Submitted or scheduled work disappears
 
-- **Symptoms:** accepted effect absent; future/job freshness stale; logs may be empty.
-- **Distinguish:** accepted/started/completed/failed/rejected counters and observation of returned
-  `Future`; executor shutdown/rejection state; periodic task exceptional completion.
+- **Symptoms:** expected effect absent; future/job freshness stale; logs may be empty.
+- **Trace the path:** follow the affected call site through executor selection, task wrappers and
+  the configured rejection handler. Read where each counter increments, including whether it
+  observes submission, worker execution, task outcome or caller result. A configured pool name
+  or aggregate deficit does not establish which operation was lost.
+- **Distinguish the observation boundary:**
+  - A completed `submit` Future can contain a failure even when `afterExecute` received a null
+    `Throwable`; Future-wrapped exceptions are retained for the result observer. Inspect the
+    terminal result/cause before interpreting absent error logs as success.
+  - A normally returned but incomplete Future need not be queued or running: stock
+    `DiscardPolicy` can reject its task without cancelling that Future. Correlate the actual
+    rejection/shutdown path and task identity; a single absence from a changing queue is not
+    proof of discard. Inspect drained/removed tasks and wrappers if rejection does not explain it.
+  - Stock `CallerRunsPolicy` can finish work on the submitting thread without the pool's worker
+    hooks/completion accounting. Match task-body outcomes with the caller path before calling a
+    submission-versus-worker deficit a leak. After shutdown this policy discards instead; inspect
+    the executor state at submission, not only its later state.
+- **Observe without creating another hang:** check `isDone` before reading a terminal result;
+  distinguish success, failure and cancellation. Do not use an unbounded `get` on an unknown
+  Future merely to diagnose it. An intentionally bounded wait timing out leaves the underlying
+  cause unresolved. For periodic work, correlate last-attempt/last-success with the retained
+  scheduled Future and inspect exceptional completion.
 - **Remediate:** assign a terminal observer, handle rejection, expose last-attempt/last-success and
   choose durable delivery when required. For periodic work, catch and classify expected recoverable
   exceptions at the ownership boundary; do not blanket-catch `Throwable` and continue after
   process-integrity errors.
 - **Route:** `executors-and-task-lifecycle`.
+
+With one occupied worker and a full one-slot queue, a third `submit` under caller-runs can
+complete inline while worker counters remain unchanged. Changing only the rejection handler to
+discard leaves that third Future incomplete and its body unexecuted. The same apparent counter
+deficit therefore needs different classification. This is a bounded diagnostic scenario, not a
+recommendation to saturate a live pool or to replace its policy without reviewing caller contracts.
+
+The Java 25 [hook contract](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html#afterExecute(java.lang.Runnable,java.lang.Throwable)>),
+[discard policy](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.DiscardPolicy.html),
+[caller-runs policy](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.CallerRunsPolicy.html)
+and [Future contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Future.html)
+define these distinctions. The bypass of worker accounting is also visible in the pinned
+[OpenJDK 25.0.3 worker loop and rejection handlers](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/java.base/share/classes/java/util/concurrent/ThreadPoolExecutor.java);
+[the submission implementation](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/java.base/share/classes/java/util/concurrent/AbstractExecutorService.java)
+shows why a silent handler can return an unsettled Future. Custom wrappers may change these
+observation boundaries; inspect the implementation actually used.
 
 ## Cancellation/timeout leak
 

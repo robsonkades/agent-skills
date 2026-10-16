@@ -1,0 +1,59 @@
+{
+  "reference": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave9-93d1c7a4\\snapshot\\references\\retry-in-java.md",
+  "label": "baseline",
+  "harness": "Extracted snippets; injected budget/monotonic clock/scheduler/adapter placeholders; no network or independent agent runs",
+  "results": [
+    {
+      "command": "javac",
+      "args": [
+        "--release",
+        "17",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave9-93d1c7a4\\review\\baseline",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave9-93d1c7a4\\review\\baseline\\JitterChecks.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave9-93d1c7a4\\review\\baseline",
+      "status": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": "java",
+      "args": [
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave9-93d1c7a4\\review\\baseline",
+        "JitterChecks"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave9-93d1c7a4\\review\\baseline",
+      "status": 0,
+      "stdout": "PASS fullJitter: 16000 range/overflow samples; 4 invalid policies rejected\r\n",
+      "stderr": ""
+    },
+    {
+      "command": "javac",
+      "args": [
+        "--release",
+        "21",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave9-93d1c7a4\\review\\baseline",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave9-93d1c7a4\\review\\baseline\\LoopChecks.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave9-93d1c7a4\\review\\baseline",
+      "status": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": "java",
+      "args": [
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave9-93d1c7a4\\review\\baseline",
+        "LoopChecks"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave9-93d1c7a4\\review\\baseline",
+      "status": 1,
+      "stdout": "FAIL ambiguous safe replay respects server minimum: java.lang.AssertionError: server minimum lost: 0\r\nFAIL unfittable ambiguous guidance stops unknown before token/sleep: java.lang.AssertionError: expected stop deadline-would-be-exceeded\r\nPASS unsafe ambiguous replay stops after one attempt\r\nPASS retry budget exhaustion preserves unknown\r\nPASS attempt exhaustion preserves unknown\r\nPASS later terminal attempt cannot erase earlier ambiguity\r\nPASS expired entry starts no attempt\r\nPASS pre-interrupted entry starts no attempt\r\nPASS timer oversleep starts no late attempt\r\nPASS interrupted sleep starts no further attempt\r\nPASS known rejection retains delay without manufacturing ambiguity\r\nLoop cases: 9/11 passed\r\n",
+      "stderr": ""
+    }
+  ]
+}

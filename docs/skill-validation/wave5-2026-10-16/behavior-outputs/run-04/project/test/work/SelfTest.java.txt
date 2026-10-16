@@ -1,0 +1,55 @@
+package work;
+import java.util.Collections;
+import java.util.List;
+public final class SelfTest {
+    public static void main(String[] args) {
+        Catalog c = new Catalog();
+        c.load(new Entry("A", 450), new Entry("B", 550));
+        Report first = c.open();
+        if (first.total() != 1000 || first.entries().size() != 2) throw new AssertionError("initial report");
+        try { first.entries().clear(); throw new AssertionError("writable report"); }
+        catch (UnsupportedOperationException expected) { }
+
+        List<Entry> retained = first.entries();
+        readOnly(() -> retained.add(new Entry("X", 1)));
+        readOnly(() -> retained.remove(0));
+        readOnly(() -> retained.set(0, new Entry("X", 1)));
+        readOnly(() -> Collections.reverse(retained));
+        if (!retained.equals(List.of(new Entry("A", 450), new Entry("B", 550))))
+            throw new AssertionError("mutation attempt changed the catalog");
+
+        c.load(new Entry("C", 1200));
+        Report latest = c.open();
+        if (first.total() != 1200 || latest.total() != 1200)
+            throw new AssertionError("reports must observe reload totals");
+        if (!first.entries().equals(List.of(new Entry("C", 1200)))
+                || !retained.equals(first.entries()))
+            throw new AssertionError("reports and retained entry views must observe reload entries");
+
+        c.load(new Entry("D", 1200));
+        if (first.total() != 1200 || !retained.equals(List.of(new Entry("D", 1200))))
+            throw new AssertionError("equal totals must not hide changed entries");
+
+        Entry duplicate = new Entry("credit", -125);
+        List<Entry> signed = List.of(duplicate, new Entry("charge", 25), duplicate);
+        c.load(signed.toArray(Entry[]::new));
+        if (first.total() != -225 || latest.total() != -225 || !retained.equals(signed))
+            throw new AssertionError("reload must preserve order, duplicates and signed cents");
+        readOnly(() -> retained.clear());
+
+        c.load();
+        if (first.total() != 0 || latest.total() != 0 || !retained.isEmpty())
+            throw new AssertionError("empty reload must reach existing reports");
+        readOnly(() -> retained.add(new Entry("X", 1)));
+        c.load(new Entry("restored", 7));
+        if (first.total() != 7 || latest.total() != 7
+                || !retained.equals(List.of(new Entry("restored", 7))))
+            throw new AssertionError("reports must remain live after an empty reload");
+        System.out.println("SelfTest PASS: initial report, read-only entries, live reloads, signed duplicates, empty reload");
+    }
+
+    private static void readOnly(Runnable mutation) {
+        try { mutation.run(); throw new AssertionError("writable report"); }
+        catch (UnsupportedOperationException expected) { }
+    }
+}

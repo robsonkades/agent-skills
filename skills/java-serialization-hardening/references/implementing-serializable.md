@@ -8,9 +8,10 @@ features (`@Serial` 14+, records 16+). Do not treat these as compiled or securit
 
 Adding `implements Serializable` to a class:
 
-- **Publishes the private representation.** Field names, types and the class hierarchy become
-  part of the compatibility contract. Renaming a private field is now a breaking change for any
-  persisted or in-flight data.
+- **Publishes the private representation under the default form.** Field names, types and the
+  class hierarchy become part of the compatibility contract. With a retained UID, renaming a
+  field can discard its old value and default the new field rather than reject the stream.
+  Successful deserialization therefore does not establish semantic compatibility.
 - **Adds another construction path.** For an ordinary serializable class, its constructors and
   field initializers do not run; the accessible no-arg constructor of the first non-serializable
   superclass does. Stream state then populates fields. Records and `Externalizable` follow
@@ -120,9 +121,42 @@ against a partially deserialized object, the same hazard as calling one from a c
 (java-object-construction).
 
 Implement `readObjectNoData` when a serializable superclass must establish invariants but an old
-or tampered stream contains no data for it. Cross-object validation registered through
+or tampered stream contains no data for it; this does not detect an individual missing field.
+Cross-object validation registered through
 `ObjectInputValidation` runs after graph restoration and can check graph invariants, but it cannot
 undo hooks that already executed and is not a hostile-input defense.
+
+### Missing field versus legitimate default
+
+Ordinary serializable classes also receive Java defaults for fields missing from the stream.
+If absence violates the message contract but an explicit zero/null is valid, value validation
+alone cannot distinguish them. In `readObject`, use `readFields()` and
+[`GetField.defaulted`](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/ObjectInputStream.GetField.html#defaulted(java.lang.String)>)
+to test presence. This replaces `defaultReadObject`; do not call both. Restore each retained
+field explicitly, then apply its validation/copying rules.
+
+For a class whose only serialized field is a non-final `int maxRetries`, with a constructor
+contract allowing zero through ten retries and requiring the field on the wire:
+
+```java
+private void readObject(ObjectInputStream s) throws IOException, ClassNotFoundException {
+    ObjectInputStream.GetField fields = s.readFields();
+    if (fields.defaulted("maxRetries")) {
+        throw new InvalidObjectException("missing maxRetries");
+    }
+    int candidate = fields.get("maxRetries", 0);
+    if (candidate < 0 || candidate > 10) {
+        throw new InvalidObjectException("invalid maxRetries");
+    }
+    maxRetries = candidate;
+}
+```
+
+If a supported old form omits the field, use the explicitly approved compatibility default or
+migration instead of rejecting it indiscriminately. Presence is not proof of producer trust,
+and `readFields` has already read referenced objects: this is field-contract enforcement, not
+protection from their hooks. The [input specification](https://docs.oracle.com/en/java/javase/25/docs/specs/serialization/input.html#the-objectinputstream.getfield-class)
+defines this alternate access to the same serialized field protocol.
 
 ## The serialization proxy pattern
 
@@ -227,7 +261,9 @@ Serialization bugs surface across time, not within a single build. The tests tha
 
 - **Golden files.** Commit a serialized artifact for supported released forms and assert current
   code deserializes each into the expected semantic value. This catches real stream behavior;
-  API/serialization-form diff tooling can complement it but does not replace execution.
+  API/serialization-form diff tooling can complement it but does not replace execution. Include
+  a missing required field and an explicitly supplied default value; reject or map the missing
+  field according to the supported-form policy, not merely because the UID matches.
 - **Round trip with mutation.** Deserialize, mutate what the stream could have aliased, and
   assert the object is unaffected — the defensive-copy test.
 - **Hostile stream.** Feed invalid state through the class and proxy paths and assert the

@@ -1,0 +1,1 @@
+public final class PricingUnavailable extends RuntimeException { private static final long serialVersionUID = 1L; public PricingUnavailable(Sku sku) { super(sku.value()); } }

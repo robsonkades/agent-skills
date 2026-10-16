@@ -1,0 +1,12 @@
+{
+  "version": "1.2.4",
+  "packageFiles": [
+    "SKILL.md",
+    "references/building-text-safely.md",
+    "references/encoding-locale-and-unicode.md",
+    "skill.yaml"
+  ],
+  "issues": [],
+  "linksChecked": 2,
+  "declaredTargetsChecked": 10
+}

@@ -186,7 +186,7 @@ entity representation does not require conversion merely because the operation i
   set and cache/access behavior against batching or a join.
 - One statement has excessive cost → `sql-query-performance`, even if amplification also exists.
 
-Sources: [Jakarta Persistence 3.1 graph semantics](https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1),
+Sources: [Jakarta Persistence 3.1 graph semantics](https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1.html),
 [Hibernate 6.6 fetching](https://docs.hibernate.org/orm/6.6/userguide/html_single/#fetching)
 and [Statistics scope and counters](https://docs.hibernate.org/orm/6.6/javadocs/org/hibernate/stat/Statistics.html).
 The [6.6.33 fetch-join guidance](https://github.com/hibernate/hibernate-orm/blob/6.6.33/documentation/src/main/asciidoc/querylanguage/From.adoc)

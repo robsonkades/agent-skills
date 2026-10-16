@@ -1,0 +1,131 @@
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
+
+public final class ConditionProtocolChecks {
+    private static final class Gate {
+        final ReentrantLock lock = new ReentrantLock();
+        final Condition changed = lock.newCondition();
+        final CountDownLatch beforeLock = new CountDownLatch(1);
+        final CountDownLatch continueToLock = new CountDownLatch(1);
+        final CountDownLatch enteringAwait = new CountDownLatch(1);
+        final AtomicInteger awaitsAfterReady = new AtomicInteger();
+        volatile boolean ready;
+
+        void checkpoint() throws InterruptedException {
+            beforeLock.countDown();
+            require(continueToLock.await(5, TimeUnit.SECONDS), "checkpoint not released");
+        }
+
+        void brokenAwait() throws InterruptedException {
+            while (!ready) {
+                checkpoint();
+                lock.lockInterruptibly();
+                try {
+                    if (ready) awaitsAfterReady.incrementAndGet();
+                    // Bounded solely so the negative control cannot hang the validation.
+                    changed.awaitNanos(TimeUnit.MILLISECONDS.toNanos(1));
+                } finally {
+                    lock.unlock();
+                }
+            }
+        }
+
+        void guardedAwait() throws InterruptedException {
+            checkpoint();
+            lock.lockInterruptibly();
+            try {
+                while (!ready) {
+                    if (ready) awaitsAfterReady.incrementAndGet();
+                    enteringAwait.countDown();
+                    changed.await();
+                }
+            } finally {
+                lock.unlock();
+            }
+        }
+
+        void open() {
+            lock.lock();
+            try {
+                ready = true;
+                changed.signalAll();
+            } finally {
+                lock.unlock();
+            }
+        }
+    }
+
+    private static void checkSchedule(boolean broken, boolean signalFirst) throws Exception {
+        Gate gate = new Gate();
+        AtomicReference<Throwable> failure = new AtomicReference<>();
+        CountDownLatch finished = new CountDownLatch(1);
+        Thread waiter = new Thread(() -> {
+            try {
+                if (broken) gate.brokenAwait(); else gate.guardedAwait();
+            } catch (Throwable e) {
+                failure.set(e);
+            } finally {
+                finished.countDown();
+            }
+        }, "condition-protocol-waiter");
+        waiter.setDaemon(true);
+        waiter.start();
+        try {
+            require(gate.beforeLock.await(5, TimeUnit.SECONDS), "waiter missed checkpoint");
+            if (signalFirst) {
+                gate.open();
+                gate.continueToLock.countDown();
+            } else {
+                gate.continueToLock.countDown();
+                require(gate.enteringAwait.await(5, TimeUnit.SECONDS), "waiter did not reach await");
+                gate.open();
+            }
+            require(finished.await(5, TimeUnit.SECONDS), "waiter did not finish");
+            if (failure.get() != null) throw new AssertionError("waiter failed", failure.get());
+            require(gate.awaitsAfterReady.get() == (broken ? 1 : 0), "unexpected wait event");
+            System.out.println((broken ? "NEGATIVE CONTROL" : "PASS")
+                    + ": " + (signalFirst ? "signal-before-wait" : "wait-before-signal")
+                    + "; await-after-ready=" + gate.awaitsAfterReady.get());
+        } finally {
+            gate.continueToLock.countDown();
+            waiter.interrupt();
+            waiter.join(5000);
+            require(!waiter.isAlive(), "waiter cleanup failed");
+        }
+    }
+
+    private static void wrongLockMustFail() {
+        Gate gate = new Gate();
+        ReentrantLock unrelated = new ReentrantLock();
+        unrelated.lock();
+        try {
+            try {
+                gate.changed.signalAll();
+                throw new AssertionError("signal accepted an unrelated lock");
+            } catch (IllegalMonitorStateException expected) {
+                System.out.println("PASS: unrelated-lock signal rejected");
+            }
+        } finally {
+            unrelated.unlock();
+        }
+    }
+
+    private static void require(boolean condition, String message) {
+        if (!condition) throw new AssertionError(message);
+    }
+
+    public static void main(String[] args) throws Exception {
+        checkSchedule(true, true);
+        checkSchedule(false, true);
+        checkSchedule(false, false);
+        wrongLockMustFail();
+        BoundedBuffer<Integer> buffer = new BoundedBuffer<>();
+        buffer.put(7);
+        require(buffer.take() == 7, "existing buffer transfer regressed");
+        System.out.println("PASS: existing bounded-buffer example compiles and transfers");
+    }
+}

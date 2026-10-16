@@ -165,6 +165,20 @@ and logging settings. Check the versioned
 [external configuration contract](https://docs.spring.io/spring-boot/reference/features/external-config.html)
 instead of assuming all configuration sources have identical precedence or activation.
 
+Inspect the bound collection, not only individual winning keys. In Boot 4.1.1, a
+higher-priority `List` definition replaces the entire list; entries and their fields do
+not merge by index. A profile containing only `clients[0].timeout` can remove the other
+clients and leave that entry's omitted URL unset. A `Map` can combine keys/object fields
+from several sources, with the higher-priority value winning for the same property;
+nested lists still have list semantics. The versioned
+[collection binding contract](https://github.com/spring-projects/spring-boot/blob/v4.1.1/documentation/spring-boot-docs/src/docs/antora/modules/reference/pages/features/external-config.adoc#features.external-config.typesafe-configuration-properties.merging-complex-types)
+shows both cases. Preserve an ordered-list contract by supplying the intended complete
+override. Consider stable-key maps only when independent entry overrides fit the consumer;
+changing the configuration shape requires the compatibility work below. Test base and
+active-profile binding for element count, identity, required fields and changed values,
+including an override that omits a required field. A successful scalar lookup alone cannot
+establish that the consumer received the intended collection.
+
 For a cohesive group, use `@ConfigurationProperties`, register it through configuration
 properties scanning or explicit enabling, and validate it. A constructor-bound record
 does not need a component stereotype or `@Autowired`. Use `Duration`/`DataSize` for units

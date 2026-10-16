@@ -1,0 +1,133 @@
+{
+  "rule": "At most eight actor tasks concurrently. Recording timestamps are upper bounds after dispatch, not exact starts or elapsed execution time.",
+  "records": [
+    {
+      "run": "run-01",
+      "agent": "/root/wave8_actor01",
+      "recordedAfterDispatch": "2026-10-16T18:44:23.556Z",
+      "freshConversation": true,
+      "role": "default",
+      "modelOrEffortOverride": false
+    },
+    {
+      "run": "run-02",
+      "agent": "/root/wave8_actor02",
+      "recordedAfterDispatch": "2026-10-16T18:44:23.557Z",
+      "freshConversation": true,
+      "role": "default",
+      "modelOrEffortOverride": false
+    },
+    {
+      "run": "run-03",
+      "agent": "/root/wave8_actor03",
+      "recordedAfterDispatch": "2026-10-16T18:44:23.557Z",
+      "freshConversation": true,
+      "role": "default",
+      "modelOrEffortOverride": false
+    },
+    {
+      "run": "run-04",
+      "agent": "/root/wave8_actor04",
+      "recordedAfterDispatch": "2026-10-16T18:44:23.557Z",
+      "freshConversation": true,
+      "role": "default",
+      "modelOrEffortOverride": false
+    },
+    {
+      "run": "run-05",
+      "agent": "/root/wave8_actor05",
+      "recordedAfterDispatch": "2026-10-16T18:44:23.557Z",
+      "freshConversation": true,
+      "role": "default",
+      "modelOrEffortOverride": false
+    },
+    {
+      "run": "run-06",
+      "agent": "/root/wave8_actor06",
+      "recordedAfterDispatch": "2026-10-16T18:44:23.557Z",
+      "freshConversation": true,
+      "role": "default",
+      "modelOrEffortOverride": false
+    },
+    {
+      "run": "run-07",
+      "agent": "/root/wave8_actor07",
+      "recordedAfterDispatch": "2026-10-16T18:44:23.557Z",
+      "freshConversation": true,
+      "role": "default",
+      "modelOrEffortOverride": false
+    },
+    {
+      "run": "run-08",
+      "agent": "/root/wave8_actor08",
+      "recordedAfterDispatch": "2026-10-16T18:44:23.557Z",
+      "freshConversation": true,
+      "role": "default",
+      "modelOrEffortOverride": false
+    },
+    {
+      "run": "run-09",
+      "agent": "/root/wave8_actor09",
+      "recordedAfterDispatch": "2026-10-16T18:45:21.485Z",
+      "freshConversation": true,
+      "role": "default",
+      "modelOrEffortOverride": false
+    },
+    {
+      "run": "run-10",
+      "agent": "/root/wave8_actor10",
+      "recordedAfterDispatch": "2026-10-16T18:45:21.486Z",
+      "freshConversation": true,
+      "role": "default",
+      "modelOrEffortOverride": false
+    },
+    {
+      "run": "run-11",
+      "agent": "/root/wave8_actor11",
+      "recordedAfterDispatch": "2026-10-16T18:45:21.486Z",
+      "freshConversation": true,
+      "role": "default",
+      "modelOrEffortOverride": false
+    },
+    {
+      "run": "run-12",
+      "agent": "/root/wave8_actor12",
+      "recordedAfterDispatch": "2026-10-16T18:45:21.486Z",
+      "freshConversation": true,
+      "role": "default",
+      "modelOrEffortOverride": false
+    },
+    {
+      "run": "run-13",
+      "agent": "/root/wave8_actor13",
+      "recordedAfterDispatch": "2026-10-16T18:45:21.486Z",
+      "freshConversation": true,
+      "role": "default",
+      "modelOrEffortOverride": false
+    },
+    {
+      "run": "run-14",
+      "agent": "/root/wave8_actor14",
+      "recordedAfterDispatch": "2026-10-16T18:45:21.486Z",
+      "freshConversation": true,
+      "role": "default",
+      "modelOrEffortOverride": false
+    },
+    {
+      "run": "run-15",
+      "agent": "/root/wave8_actor15",
+      "recordedAfterDispatch": "2026-10-16T18:45:51.538Z",
+      "freshConversation": true,
+      "role": "default",
+      "modelOrEffortOverride": false
+    },
+    {
+      "run": "run-16",
+      "agent": "/root/wave8_actor16",
+      "recordedAfterDispatch": "2026-10-16T18:45:51.538Z",
+      "freshConversation": true,
+      "role": "default",
+      "modelOrEffortOverride": false
+    }
+  ]
+}

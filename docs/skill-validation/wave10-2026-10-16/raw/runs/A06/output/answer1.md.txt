@@ -1,0 +1,9 @@
+# Recomendação para a decisão de hoje
+
+Recomendo que Ana aprove **N, com migração pelo caminho P**, como direção de armazenamento para os próximos 24 meses. A decisão pode ser tomada com as evidências locais disponíveis; a autorização e a execução do rollout pertencem ao processo posterior.
+
+R e N satisfazem os contratos nos estados finais, segundo `decision.md`. A transição também é admissível: `operacao.md`, assinado por Ana e operações, estabelece pausa máxima de escritas de 25 minutos e registra ensaios de P entre 18 e 20 minutos, com limite operacional demonstrado de 20 minutos. Isso deixa 5 minutos de margem frente à obrigação. As leituras permanecem disponíveis, nenhuma escrita é reconhecida durante a pausa e preservação dos dados reconhecidos, recuperação e demais obrigações foram verificadas. Esses são dados fornecidos pelos documentos, não medições executadas nesta análise.
+
+Com as obrigações satisfeitas, o custo é o único critério que diferencia as alternativas. `options.csv` informa totais futuros de **410 mil para N via P e 520 mil para R**: vantagem de **110 mil** para N via P no horizonte aprovado. O total de 410 mil já inclui migração, sobreposição, operação, saída e recuperação. Os 90 mil gastos no protótipo são irrecuperáveis e estão fora dos totais futuros; não devem favorecer N nem ser somados novamente à comparação.
+
+O responsável técnico deve preparar o rollout de **P** para aprovação no processo próprio, preservando as condições verificadas de escala, continuidade das leituras, pausa de escritas e recuperação sem perda. A recomendação não autoriza substituir P por outro caminho: os demais não foram analisados nem estimados. R permanece uma alternativa viável, sem urgência de abandono. Se o planejamento alterar as premissas ou obrigações documentadas, será necessário reavaliar a escolha antes da execução; não há incompatibilidade aberta que exija adiar a decisão de direção hoje.

@@ -1,0 +1,16 @@
+import java.lang.reflect.Field;
+import java.nio.file.*;
+import java.util.*;
+public final class CurrentChecks {
+  static HashRing ring(String... nodes) { HashRing r=new HashRing(1024); for(String n:nodes) r.add(n,1); return r; }
+  public static void main(String[] args) throws Exception {
+    HashRing accepted=ring("n1","n2","n3","n4"), candidate=ring("n4","n3","n2","n1"), joined=ring("n1","n2","n3","n4","n5");
+    Field f=HashRing.class.getDeclaredField("ring");f.setAccessible(true);
+    if(!f.get(accepted).equals(f.get(candidate))) throw new AssertionError("points differ");
+    Properties config=new Properties();try(var in=Files.newInputStream(Path.of("candidate.properties"))){config.load(in);}
+    ClientRouter before=new ClientRouter(candidate,config),after=new ClientRouter(joined,config);int moved=0;
+    for(int i=0;i<10000;i++){String k="user:"+i;if(!before.owner(k).equals(after.owner(k))){moved++;if(!after.owner(k).equals("n5"))throw new AssertionError("monotonicity");}}
+    if(moved<1800||moved>2200)throw new AssertionError("movement="+moved);
+    System.out.println("Existing point and join checks passed; moved="+moved);
+  }
+}

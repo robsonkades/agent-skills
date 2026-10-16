@@ -1,0 +1,63 @@
+diff --git a/skills/java-reflection-and-method-handles/SKILL.md b/skills/java-reflection-and-method-handles/SKILL.md
+index 4c1c295..e4d104c 100644
+--- a/skills/java-reflection-and-method-handles/SKILL.md
++++ b/skills/java-reflection-and-method-handles/SKILL.md
+@@ -119,6 +119,8 @@ which becomes an execution primitive once initialization, construction or invoca
+ 
+ - Resolve mandatory members/providers during their owner's startup and optional plugins during
+   their own lifecycle; report missing/ambiguous signatures with loader/module/code source.
++  When failure must precede readiness, test the actual bootstrap with a missing member; declaring
++  a static handle holder does not ensure that startup initializes it.
+ - Test the deployment modes actually supported: named/classpath modules, duplicate loaders,
+   reload/unload and native artifacts where applicable. Do not build unused modes merely to
+   satisfy this list.
+diff --git a/skills/java-reflection-and-method-handles/references/method-handles-and-encapsulation.md b/skills/java-reflection-and-method-handles/references/method-handles-and-encapsulation.md
+index 4ea2afd..496dbe6 100644
+--- a/skills/java-reflection-and-method-handles/references/method-handles-and-encapsulation.md
++++ b/skills/java-reflection-and-method-handles/references/method-handles-and-encapsulation.md
+@@ -20,6 +20,7 @@ The two rules that follow:
+ 
+ The accessor sketch needs `java.lang.invoke` imports and accessible `Order`/`Money` types.
+ It assumes `Order.total()` declares no checked failures; adapt the catch policy if it does.
++Its static initializer runs on first active use, which may be the first request, not startup.
+ 
+ ```java
+ public final class Accessors {
+@@ -56,8 +57,13 @@ Details that matter:
+   `asType`; if types already match it follows the exact path. Cost is not specified.
+ - Handle methods declare `throws Throwable`. Preserve `Error`, cancellation/interruption and
+   domain-declared failures according to the target contract; do not blindly wrap everything.
+-- Resolve mandatory application-lifetime members during explicit startup or a static initializer.
+-  Resolve optional/reloadable plugins in their owned lifecycle so one failure does not poison an
++- Resolve mandatory application-lifetime members before the owner advertises readiness. For the
++  sketch, call an explicit resolver from bootstrap or initialize `Accessors` there with an
++  authorized lookup's `ensureInitialized(Accessors.class)` (Java 15+). A class literal,
++  `Class.forName(name, false, loader)` or member enumeration does not run that initializer.
++  Resolution validates the member, not the behavior or initialization of every future target;
++  do not invoke side-effectful business operations merely to trigger this check. Resolve
++  optional/reloadable plugins in their owned lifecycle so one failure does not poison an
+   unrelated class for the lifetime of its loader.
+ - For fields, use `VarHandle` (`lookup.findVarHandle`), which additionally offers the access
+   modes — plain, opaque, acquire/release, volatile — see varhandles-and-memory-ordering.
+@@ -225,6 +231,8 @@ injection can make dependencies explicit without proving native reachability. Se
+ 
+ ## Primary references
+ 
++- [JLS 17 class initialization triggers and failure state](https://docs.oracle.com/javase/specs/jls/se17/html/jls-12.html#jls-12.4)
++- [Java 17 `Lookup.ensureInitialized`](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/invoke/MethodHandles.Lookup.html#ensureInitialized(java.lang.Class)>)
+ - [Java 17 Class member lookup](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html)
+ - [Java 17 Method invocation contracts](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/reflect/Method.html)
+ - [Java 17 MethodHandle varargs and fixed arity](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/invoke/MethodHandle.html)
+diff --git a/skills/java-reflection-and-method-handles/skill.yaml b/skills/java-reflection-and-method-handles/skill.yaml
+index ec6c43b..4be52a9 100644
+--- a/skills/java-reflection-and-method-handles/skill.yaml
++++ b/skills/java-reflection-and-method-handles/skill.yaml
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: java-reflection-and-method-handles
+-version: 1.4.5
++version: 1.4.6
+ description: >-
+   Runtime access to code through dynamic names: what reflection costs beyond speed — weaker
+   ordinary compile-time/refactoring checks, module access requirements,

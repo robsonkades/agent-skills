@@ -1,0 +1,9 @@
+Recomendo que Diego escolha **J para os próximos 12 meses**, sem aguardar mais benchmarking. A atualização informa que o financeiro concluiu A e confirmou a fatura mensal de 17 mil, fixa e completa para o volume contratado.
+
+O custo futuro total de J é **12 + 12 × 17 = 216 mil**, contra **240 mil de H**. A economia é **24 mil, ou 10%**. Os 12 mil de migração/saída já estão incluídos; os 180 mil pagos anteriormente em H permanecem irrecuperáveis e não alteram a escolha.
+
+As premissas documentadas mantêm ambas as alternativas aprovadas em correção, prazo, segurança, suporte e recuperação, inclusive a transição de J. Como o único critério restante é o menor custo futuro e não há outra incerteza capaz de mudar a seleção, J é a alternativa preferível. A condição anterior foi resolvida: 17 mil está abaixo do ponto de empate de 19 mil.
+
+**Não recomendo novas investigações para esta decisão.** Os resultados plausíveis do benchmark não mudam custo, cumprimento do contrato nem preferência de Diego. Adiar quatro semanas não oferece benefício decisório demonstrado. A exigência do patrocinador de encontrar uma desvantagem para cada opção não justifica inventar uma compensação: o custo real de transição de J já foi contabilizado, e sua vantagem total permanece.
+
+A decisão pode ser apresentada amanhã. A recomendação não constitui autorização de gasto; cabe a Diego autorizar a migração. Usei a conclusão fornecida pelo financeiro como premissa atualizada: não executei a investigação nem qualquer benchmark.

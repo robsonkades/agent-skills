@@ -1,5 +1,47 @@
 # Evaluation axes
 
+## Deriving candidates from project findings
+
+Start from the feature's outcome and the responsibility that must change, not a list of products.
+Reuse applicable context findings; inspect gaps along the relevant caller, state owner and
+completion/failure path. An extension point, configured worker or retained record can suggest a
+reuse option. Check its contract and availability to this feature before calling it feasible:
+a class name or a use in another module does not establish the required behavior here. A failed
+or incomplete search leaves a bounded evidence gap, not proof that reuse is impossible.
+
+Turn those findings into complete candidates by asking where the changed responsibility can
+live: with its existing owner, through another available capability, or across a new boundary
+when the requirements justify one. These are prompts, not required options. State what each
+candidate retains and changes, and the evidence or unresolved premise behind that mechanism.
+Consolidate variants with no material difference on this feature's obligations; retain different
+technologies when their contracts, operating burden or transition costs actually separate them.
+Do not manufacture a fixed number of alternatives or extend the sweep across unrelated systems.
+
+Before favoring a candidate, challenge the premise carrying its advantage. Locate the artifact
+that can establish it: for example, the selected runtime implementation and recovery contract
+behind "reuse gives us durable jobs". Check that premise rather than benchmarking a property
+both options already satisfy. If the premise fails, update the affected candidate or add a
+credible alternative; do not silently price a missing mechanism at zero. A new component is a
+proposal until its feasibility is established, even if a similar component works elsewhere.
+
+### A reuse option changes when the obligation changes
+
+In this synthetic example, the feature needs accepted work to remain recoverable after a process
+restart. The existing worker has a handler extension point, but its selected implementation keeps
+pending work only in process memory and has no reconstruction path. The extension point alone
+does not make unchanged reuse feasible. Compare a complete extension that adds recoverable work
+state with a complete option that delegates that responsibility elsewhere; include acceptance,
+recovery and duplicate-effect handling wherever the chosen mechanism requires them. Calling both
+options "background processing" hides the difference. Changing executor wrappers does not supply
+the missing recovery mechanism.
+
+If the authorized obligation instead permits losing pending work on restart, the original reuse
+candidate may become feasible, subject to the other unchanged constraints. That change removes
+one elimination; it does not prove reuse wins every remaining comparison or authorize weakening
+the original requirement. If the worker's recovery behavior is unknown, inspect its wiring,
+implementation and relevant tests first; keep feasibility conditional if they cannot establish it.
+These cases illustrate option construction, not measured reliability or a required architecture.
+
 ## Choosing the axes
 
 Do not evaluate every option on every axis. Pick the axes on which the options **actually
@@ -38,7 +80,7 @@ those gaps separately from the cost estimate and technical feasibility; missing 
 neither zero cost nor evidence that the option cannot work. Reuse existing spending delegation,
 and keep any commitment outside it conditional on the specific missing authorization.
 
-## Two axes that are usually decisive and usually skipped
+## Operational effort and reversal
 
 **Operational cost.** The difference between using a technology and running one. An option that
 adds a broker, a cache or a scheduler adds an upgrade path, a failure mode, an alert and a
@@ -48,6 +90,29 @@ person who has to know about it. Price that, not just the API.
 an estimate from a tested rollback. An interface may contain code changes but does not establish
 reversal cost. Persisted data may require migration, compensation or a forward fix; the schema
 name alone does not prove reversibility or irreversibility. State the conditions and validation.
+
+## Comparing feature costs on the same basis
+
+When cost could separate the options, state the workload, useful outcome, time horizon and
+included costs before comparing totals. Separate one-time adoption/transition work, recurring
+usage/support and material exit costs. A setup estimate and a monthly bill are not comparable
+totals. Include work shifted to consumers or operators: a smaller server change that needs
+manual completion every day may not be the simplest complete solution.
+
+For reuse, distinguish added consumption, support and capacity needs from unchanged shared
+costs. An existing service is not automatically free, and charging its entire existing cost
+to only the reuse option can also mislead. State the allocation basis and avoid counting the
+same work twice. Keep effort in hours or another stated unit unless a supported conversion
+to money is available; do not invent labor rates. The
+[FinOps Foundation's unit-economics guidance](https://www.finops.org/framework/capabilities/unit-economics/)
+supports explicit unit definitions, assumptions and included costs.
+
+If a plausible demand range or feature lifetime reverses the preference, show the relevant
+threshold or scenarios and the source of that uncertainty. Ask for the missing forecast only
+if it can change the choice; if all supported scenarios favor the same feasible option, do not
+delay for an immaterial precision gain. A corrected forecast updates the cost comparison, not
+the accepted behavior, spending authority or an unrelated feasibility result. Use the general
+sensitivity method from `architecture-trade-off-analysis` when a more involved model is needed.
 
 ## Writing a comparison that is not generic
 

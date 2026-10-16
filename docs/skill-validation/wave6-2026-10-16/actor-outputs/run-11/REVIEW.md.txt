@@ -1,0 +1,32 @@
+Contrato violado em `src/work/Job.java:8`: `join(2)` pode expirar com o worker vivo, mas `collect()` sempre lê `result` e anuncia `DONE`. O contrato permite `PENDING` durante a execução e rejeita `DONE:0`.
+
+O caminho efetivo começa em `Smoke.main`: constrói o latch fechado e o Job, chama `start()` e chama `collect()` antes de liberar o latch. O worker fica em `gate.await()`; portanto ainda não executou `result=83`. A coleta retorna após o limite de espera e lê o zero inicial. No `finally`, o teste libera o latch, aguarda até 2 segundos e verifica que o worker terminou.
+
+No Java SE 25, [Thread.join(long)](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Thread.html#join(long)) limita a espera; retornar dessa sobrecarga não certifica término. A [JLS 17.4.4–17.4.5](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.4.4) distingue chamar um método de detectar efetivamente a terminação: a última ação do worker sincroniza com essa detecção.
+
+A inicialização precede `start()`, ordenando o estado inicial para o worker. `gate` é final e não há escape no construtor; isso não publica a escrita posterior no campo ordinário `result`. O [CountDownLatch](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CountDownLatch.html) ordena ações anteriores a `countDown()` para ações posteriores ao retorno de `await()`, na direção coletor→worker; não certifica conclusão para a primeira coleta. No cenário controlado, a leitura inicial precede inclusive a liberação do worker. Em outros entrelaçamentos, a leitura durante a execução não possui a aresta worker→coletor necessária e pode competir com a escrita. Atomicidade de `int` não prova conclusão.
+
+A alteração mínima proposta, sem implementação nesta revisão, é:
+
+```java
+public String collect() throws InterruptedException {
+    join(2);
+    if (isAlive()) return "PENDING";
+    return "DONE:" + result;
+}
+```
+
+Mantém a espera de 2 ms, mais overhead de escalonamento, sem repetição nem espera ilimitada. Para o worker correto já iniciado exatamente uma vez, `isAlive()==false` detecta término. A cadeia passa a ser `result=83 → término → detecção → leitura`; sem outras escritas e no fluxo normal contratado, a leitura deve produzir 83. Se ainda vivo, não lê resultado. Não é necessário tornar `result` volatile; isso isoladamente também não certificaria conclusão. Preserva-se a propagação de `InterruptedException` da coleta. O ramo de interrupção do worker pode terminar sem calcular 83, mas cancelamento não integra o pedido; não se amplia esse contrato.
+
+Executado `node check.mjs` na cópia em `output/project`, com `javac --release 25`, Temurin 25.0.3+9 e sem preview/dependências. Saída real:
+
+```text
+while-gate-closed=DONE:0
+alive=true
+after-termination=DONE:83
+```
+
+O processo retornou 0 porque o Smoke imprime os resultados e apenas verifica o cleanup; esse exit não significa aprovação do contrato. O primeiro resultado é permitido pela implementação/JMM e inaceitável para o contrato; o último confirma o caminho já terminado nesta execução.
+
+A prova normativa sustenta o diagnóstico e a proposta; a execução é um contraexemplo controlado. A proposta não foi compilada nem executada. Não foram realizados jcstress, análise estática, comparação de arquiteturas/JITs nem medição de latência; nenhum deles é necessário para demonstrar esta violação. Não há evidência material ausente para decidir. Fontes, contrato e dependências fornecidos foram preservados.
+

@@ -1,0 +1,16 @@
+{
+  "name": "frame-case",
+  "exe": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+  "args": [
+    "-cp",
+    "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\serialization-performance-check\\classes",
+    "CompressionReview",
+    "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\serialization-performance-check\\frame.properties"
+  ],
+  "expectedExit": 1,
+  "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\serialization-performance-check",
+  "exitCode": 1,
+  "signal": null,
+  "stdout": "",
+  "stderr": "Exception in thread \"main\" java.io.EOFException: Unexpected end of ZLIB input stream\r\n\tat java.base/java.util.zip.InflaterInputStream.fill(InflaterInputStream.java:310)\r\n\tat java.base/java.util.zip.InflaterInputStream.read(InflaterInputStream.java:208)\r\n\tat java.base/java.util.zip.GZIPInputStream.read(GZIPInputStream.java:155)\r\n\tat java.base/java.io.InputStream.readNBytes(InputStream.java:411)\r\n\tat java.base/java.io.InputStream.readAllBytes(InputStream.java:348)\r\n\tat CompressionReview.decompress(CompressionReview.java:74)\r\n\tat CompressionReview$FrameReceiver.receive(CompressionReview.java:63)\r\n\tat CompressionReview.main(CompressionReview.java:97)\r\n"
+}

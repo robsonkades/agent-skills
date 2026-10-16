@@ -1,0 +1,114 @@
+{
+  "skill": "gof-decorator",
+  "version": "1.2.4",
+  "examplePath": "C:\\git\\agent-skills\\skills\\gof-decorator\\references\\worked-example.md",
+  "exampleSha256": "fbbab0c97806b54c059cd1981d6a6583ca919e8bad2be1670610e5d6c318b9dd",
+  "extraction": "First Java block split into its two public top-level types; line endings normalized to LF, bodies unchanged.",
+  "extractedSha256": {
+    "PriceLookup.java": "298fdff87e5e58b5960beb200ab62095e41cf6c631fc91316831869d87ed8904",
+    "RetryingPriceLookup.java": "9fc78074018cf6f96da101f035930d356cdfefa01b6745791f543e37d0af0b4e"
+  },
+  "scaffold": "Seven minimal illustrative policy/domain/exception types plus a deterministic driver. These are not implementations of real backoff, transport, metrics, cache or breaker.",
+  "negativeControl": "Remove only the final-attempt rethrow from the extracted retry class in the negative directory; leave checks unchanged.",
+  "records": [
+    {
+      "label": "runtime-version",
+      "command": [
+        "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+        "-version"
+      ],
+      "workingDirectory": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-decorator-check",
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n",
+      "error": null
+    },
+    {
+      "label": "positive-compile",
+      "command": [
+        "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+        "--release",
+        "17",
+        "-Xlint:all",
+        "-Werror",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-decorator-check\\positive\\classes",
+        "Price.java",
+        "Sku.java",
+        "Deadline.java",
+        "RetryPolicy.java",
+        "PricingUnavailable.java",
+        "PriceRejected.java",
+        "PricingDeadlineExceeded.java",
+        "DecoratorChecks.java",
+        "PriceLookup.java",
+        "RetryingPriceLookup.java"
+      ],
+      "workingDirectory": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-decorator-check\\positive",
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "positive-run",
+      "command": [
+        "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-decorator-check\\positive\\classes",
+        "DecoratorChecks"
+      ],
+      "workingDirectory": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-decorator-check\\positive",
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "ORDER: outer=[success]; inner=[failure, failure, success]; delegate calls=3/3\r\nPASS: 28 checks\r\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "negative-compile",
+      "command": [
+        "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+        "--release",
+        "17",
+        "-Xlint:all",
+        "-Werror",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-decorator-check\\negative\\classes",
+        "Price.java",
+        "Sku.java",
+        "Deadline.java",
+        "RetryPolicy.java",
+        "PricingUnavailable.java",
+        "PriceRejected.java",
+        "PricingDeadlineExceeded.java",
+        "DecoratorChecks.java",
+        "PriceLookup.java",
+        "RetryingPriceLookup.java"
+      ],
+      "workingDirectory": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-decorator-check\\negative",
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "negative-run",
+      "command": [
+        "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-decorator-check\\negative\\classes",
+        "DecoratorChecks"
+      ],
+      "workingDirectory": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-decorator-check\\negative",
+      "exitCode": 1,
+      "signal": null,
+      "stdout": "",
+      "stderr": "Exception in thread \"main\" java.lang.AssertionError: failure identity: expected PricingUnavailable: sku-1, got java.lang.AssertionError: validated attempt limit\r\n\tat DecoratorChecks.check(DecoratorChecks.java:32)\r\n\tat DecoratorChecks.sameFailure(DecoratorChecks.java:38)\r\n\tat DecoratorChecks.main(DecoratorChecks.java:91)\r\n",
+      "error": null
+    }
+  ]
+}

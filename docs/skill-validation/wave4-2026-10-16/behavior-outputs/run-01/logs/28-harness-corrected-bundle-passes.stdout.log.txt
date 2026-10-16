@@ -1,0 +1,7 @@
+Library source: file:/C:/Users/robso/AppData/Local/Temp/skills-wave4-actors-HoLlUY/run-01/output/artifacts/report-fixed-review.jar
+CR: PASS actual=A<LF>B
+LF: PASS actual=A<LF>B
+CRLF: PASS actual=A<LF>B
+mixed: PASS actual=A<LF>B<LF>C<LF>D<LF>
+empty: PASS actual=
+plain: PASS actual=AB

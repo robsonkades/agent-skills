@@ -1,0 +1,55 @@
+{
+  "task": "A03",
+  "decision": "repaired",
+  "implementation": "RetryEngine.java",
+  "baseline": "Java 17 source/API; javac --release 17; OpenJDK 25.0.3+9",
+  "suppliedReplaySafe": false,
+  "changes": [
+    "Preserve stable intent ID/payload and terminal snapshots.",
+    "Persist UNKNOWN and forbid automatic redispatch when replay safety is absent.",
+    "Only authoritative OK applies a receipt; reject only when no unresolved attempt remains.",
+    "Enforce attempt/count/deadline/reserve/token/cancellation admission using overflow-safe arithmetic.",
+    "Use the greater local/server delay and recheck admission after sleep.",
+    "Close every returned reply exactly once before another action; propagate interruption."
+  ],
+  "evidence": [
+    {
+      "command": "node run.mjs Verification",
+      "stage": "before repair",
+      "exitCode": 1,
+      "result": "AssertionError: stable intent ID and payload on every call"
+    },
+    {
+      "command": "node run.mjs Verification",
+      "stage": "after repair",
+      "exitCode": 0,
+      "result": "Verification passed: 298 assertions; REPLAY_SAFE=false"
+    },
+    {
+      "command": "node run.mjs Smoke",
+      "stage": "after repair",
+      "exitCode": 0,
+      "result": "Smoke passed"
+    },
+    {
+      "check": "SHA256 equality of immutable supplied copies",
+      "result": "README.md, REQUEST.md, Ports.java, Contract.java, Smoke.java, contract.md, run.mjs all unchanged"
+    }
+  ],
+  "limits": [
+    "Authored local simulation; no provider, network, database, fleet, real configuration or concurrent worker was exercised.",
+    "Durable/atomic Store and stable-intent peer semantics are supplied contracts.",
+    "REPLAY_SAFE=true branch is implemented but not executed because the supplied Contract.java is immutable and false.",
+    "No reconciliation API is supplied; UNKNOWN remains unresolved.",
+    "No guarantee of physical cancellation, wall-clock latency, crash durability, key scope/retention or hidden lower-layer retry counts.",
+    "Skill routes beyond supplied snapshots were not opened."
+  ],
+  "artifacts": [
+    "RetryEngine.java",
+    "Verification.java",
+    "REVIEW.md",
+    "result.json",
+    "execution.json"
+  ],
+  "checksUseActualDeliverable": true
+}

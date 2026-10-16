@@ -46,12 +46,13 @@ public sealed interface OrderView {
 
 ```java
 public final class OrderPresenter {
-    public OrderView present(String id, Optional<Order> order, Viewer viewer, boolean detailed) {
+    public OrderView present(String id, Optional<Order> order,
+                             boolean viewerOwnsDraft, boolean detailed) {
         if (order.isEmpty()) {
             return new OrderView.NotFound(id);
         }
         Order found = order.get();
-        if (found.status() == Status.DRAFT && !viewer.owns(found)) {
+        if (found.status() == Status.DRAFT && !viewerOwnsDraft) {
             return new OrderView.Forbidden("draft orders are visible to their owner only");
         }
         return detailed
@@ -68,7 +69,11 @@ The controller becomes humble; its status/representation mapping still deserves 
 @GetMapping("/orders/{id}")
 ResponseEntity<?> get(@PathVariable String id,
                       @RequestParam(defaultValue = "false") boolean detailed) {
-    OrderView view = presenter.present(id, orders.find(id), viewerOf(currentUser()), detailed);
+    Optional<Order> order = orders.find(id);
+    boolean viewerOwnsDraft = order.isPresent()
+            && order.get().status() == Status.DRAFT
+            && currentUser().isOwner(order.get());
+    OrderView view = presenter.present(id, order, viewerOwnsDraft, detailed);
     return switch (view) {
         case OrderView.NotFound v  -> ResponseEntity.status(404).body(problem(v));
         case OrderView.Forbidden v -> ResponseEntity.status(403).body(problem(v));
@@ -78,8 +83,19 @@ ResponseEntity<?> get(@PathVariable String id,
 }
 ```
 
+The shell retains the original conditional identity lookup: missing and non-draft orders do
+not call `currentUser()`. The presenter ignores `viewerOwnsDraft` on those paths. Passing
+`viewerOf(currentUser())` directly as an argument would evaluate it before the presenter's
+early return, changing failure behavior if lookup throws. If the viewer is already a stable,
+effect-free value whose access cannot fail, passing it directly remains valid. Do not restore
+laziness by hiding an effectful supplier in a purportedly pure core.
+
+Test missing and non-draft orders with an identity lookup that throws if called, then cover
+draft owner/non-owner results and identity lookup failures on the draft path. These checks
+protect the boundary as well as the presenter rules.
+
 The non-null `view` switch is exhaustive; adding a fifth outcome exposes the missing case
-when this source is recompiled. `Order`, `Viewer` and `lineViews` must read stable data without
+when this source is recompiled. `Order` and `lineViews` must read stable data without
 lazy I/O; detach the required snapshot in the shell where ORM entities would violate that.
 
 **Payoff:** the shown visibility and shaping rules can be tested directly on `OrderPresenter`.
@@ -308,5 +324,6 @@ direct tests, while a forwarding method may gain nothing from another abstractio
 
 ## Sources
 
+- [Java 21 expression evaluation](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.7.4) — argument evaluation (§15.7.4) and conditional `&&` evaluation (§15.23).
 - [HTTP semantics, RFC 9110](https://www.rfc-editor.org/rfc/rfc9110.html) — idempotency (§9.2.2), Retry-After (§10.2.3), and conflict status (§15.5.10).
 - [Spring transaction annotation semantics](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/annotations.html) — proxy interception versus self-invocation; inspect the target framework version and advice mode.

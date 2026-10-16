@@ -1,0 +1,15 @@
+package inv.reporting;
+import inv.pricing.PriceList;
+import inv.stock.StockLevel;
+import inv.stock.Warehouse;
+import java.math.BigDecimal;
+import java.util.List;
+public final class ReportApp {
+    public static void main(String[] args) {
+        Warehouse warehouse = new Warehouse(List.of(new StockLevel("A", 3), new StockLevel("B", 2)));
+        PriceList prices = sku -> new BigDecimal(sku.equals("A") ? "2.50" : "5.25");
+        BigDecimal total = new inv.pricing.StockValuation(prices).value(warehouse.levels());
+        if (total.compareTo(new BigDecimal("18.00")) != 0) throw new AssertionError(total);
+        System.out.println("total=" + total);
+    }
+}

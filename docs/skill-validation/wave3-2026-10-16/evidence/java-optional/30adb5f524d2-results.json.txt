@@ -1,0 +1,84 @@
+{
+  "sourceReference": "C:/git/agent-skills/skills/java-optional/references/lookup-refactoring.md",
+  "referenceSha256": "4a6c2ce8877100c106868e7bae5027dd8b547dcd972119434d9f572938024743",
+  "extractedMethodSha256": "4cae4dad1fd1626b79d9e564a84285509c5842ea71359484a94e645cd5e39a69",
+  "originalFixtureSha256": "78f4e64ac5809cba42fb15704bdd8be27c2b7ecb4d64806cf233318dab25a0e6",
+  "mutantFixtureSha256": "7aec17088a3fab7c56a47d7f6ec36b5b5a839e29aa1678e757d3363b2a72e96e",
+  "fixtureProvenance": "Existing after-method and catalogue adapter extracted unchanged into a handwritten scratch scaffold supplying the documented imports, ports, Price invariant, runtime exception, annotation and observational checks.",
+  "mutation": "Replace only the two lazy or suppliers with eager(expression) factories. Factory returns a Supplier, but lookup expressions evaluate before or invocation. Original checks retained.",
+  "results": [
+    {
+      "id": "original-compile",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "--release",
+        "21",
+        "-Xlint:all",
+        "-Werror",
+        "-d",
+        "classes",
+        "PricingChecks.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-optional-check\\original",
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "id": "eager-mutant-compile",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "--release",
+        "21",
+        "-Xlint:all",
+        "-Werror",
+        "-d",
+        "classes",
+        "PricingChecks.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-optional-check\\eager-mutant",
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "id": "original-run",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-cp",
+        "classes",
+        "PricingChecks"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-optional-check\\original",
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "Passed 19 pricing checks\r\nruntime=25.0.3+9-LTS\r\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "id": "eager-mutant-run",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-cp",
+        "classes",
+        "PricingChecks"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-optional-check\\eager-mutant",
+      "expectedExitCode": 1,
+      "exitCode": 1,
+      "signal": null,
+      "stdout": "",
+      "stderr": "Exception in thread \"main\" java.lang.AssertionError: consulted sources: expected=[promotion], actual=[promotion, contract, catalogue]\r\n\tat PricingChecks.equal(PricingChecks.java:63)\r\n\tat PricingChecks.tier(PricingChecks.java:81)\r\n\tat PricingChecks.main(PricingChecks.java:84)\r\n",
+      "error": null
+    }
+  ],
+  "limits": "Technical test of the existing partial example in supplied scaffolding. Java 21 source/API compatibility; executed on JDK25, not JDK21. No agent evaluation, benchmark or measured skill gain."
+}

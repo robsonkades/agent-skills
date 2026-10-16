@@ -1,0 +1,86 @@
+{
+  "skill": "java-memory-model",
+  "structural": {
+    "metadata": "PASS",
+    "localReferenceLinks": 2,
+    "declaredOptionalReferrals": 6,
+    "actualReferralsChecked": 5,
+    "prettier": "PASS",
+    "gitDiffCheck": "PASS"
+  },
+  "technical": {
+    "runtime": "Temurin25.0.3+9",
+    "compilerRelease": 25,
+    "preview": false,
+    "bytecode": [
+      {
+        "id": "java-memory-model-A",
+        "selectedMethod": "value",
+        "compiled": true,
+        "sequentialControls": 2,
+        "classMajor": 69
+      },
+      {
+        "id": "java-memory-model-B",
+        "selectedMethod": "legacyValue",
+        "compiled": true,
+        "sequentialControls": 2,
+        "classMajor": 69
+      }
+    ],
+    "sequentialFixtureChecks": 4,
+    "constructorControls": 4
+  },
+  "behavioralEvaluations": [],
+  "cases": {
+    "inputs": [
+      {
+        "id": "java-memory-model-A",
+        "input": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/case-inputs/A/input.json",
+        "fixtureRoot": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/case-inputs/A/project",
+        "files": [
+          "README.md",
+          "docs/contract.md",
+          "docs/review-request.md",
+          "src/memo/BestEffortMemo.java",
+          "src/memo/PublishedEntry.java",
+          "src/memo/ReaderFactory.java",
+          "test/memo/Smoke.java"
+        ]
+      },
+      {
+        "id": "java-memory-model-B",
+        "input": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/case-inputs/B/input.json",
+        "fixtureRoot": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/case-inputs/B/project",
+        "files": [
+          "README.md",
+          "docs/contract.md",
+          "docs/review-request.md",
+          "src/memo/BestEffortMemo.java",
+          "src/memo/PublishedEntry.java",
+          "src/memo/ReaderFactory.java",
+          "test/memo/Smoke.java"
+        ]
+      }
+    ],
+    "criteria": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/evaluator-only/criteria.json",
+    "onlyDifference": [
+      {
+        "name": "src/memo/ReaderFactory.java",
+        "a": "87601944fc6f7e44f634aed1e56da1298adda524275c0dc4e03452714866c89c",
+        "b": "d6b8766eb709c274626023c345de09c08da665546445ddc180663818ebaf16de"
+      }
+    ],
+    "knownDevelopmentCases": true
+  },
+  "limitations": [
+    "No agent actor or behavioral comparison executed.",
+    "No racy default-value observation in case B was claimed; its rejected guarantee is supported by JLS reasoning, not by sequential smoke tests.",
+    "Bytecode checks confirm the selected read path, not all possible JIT executions.",
+    "Constructor-escape and post-construction-mutation controls deliberately violate assumptions absent from the paired fixtures; they are separate regression controls.",
+    "The constructor control uses explicit queue/latch/join synchronization; it is not a stress test of racy publication.",
+    "jcstress not present in the inspected local cache; not installed or run.",
+    "No target architecture diversity, concurrency performance or full memory-model verification claimed.",
+    "Global registry generation and verify are coordinator-only and pending."
+  ]
+}

@@ -41,6 +41,10 @@ its recovery window rather than restarting architecture discovery.
 2. **Ask when and where the outcome is needed.** An outcome needed in the current latency
    budget favors request/response. Deferred completion may use an addressed async command
    with status/callback; independent reactions to a fact favor events.
+   Follow the actual response and subsequent query route: acceptance, publication, business
+   completion and visibility in a separate read model are different observations. A broker
+   acknowledgement does not make that read model current. Use the acceptance/visibility
+   decision in `references/choosing-the-style.md` when a caller must read its own change.
 3. **Choose coordination from flow semantics.** Independent reactions can choreograph. A
    branching business workflow needing explicit state, deadlines, compensation or one
    recovery owner favors orchestration—participant count alone is not a threshold.
@@ -64,8 +68,10 @@ Inspect broker/client, serializer and Java/framework versions plus retention, re
 configuration before implementation advice. Integration events do not require an authoritative
 event store; adopting that storage model is a separate `event-sourcing` decision. The envelope reference uses Java 16+ record syntax;
 preserve the target rather than upgrading it. For an architecture change, deliver the interaction
-choice, logical subscriber topology, outcome/recovery owner, commit boundary, reader/writer horizon and a confirming
-failure/compatibility case. A narrow naming or contract review needs only the relevant subset.
+choice, logical subscriber topology, outcome/recovery owner, commit boundary, reader/writer
+horizon and a confirming failure/compatibility case. When completion or freshness matters,
+name the response/query observation that establishes it. A narrow naming or contract review
+needs only the relevant subset.
 If material facts are missing, state a conditional choice and the smallest contract/configuration
 evidence needed to resolve it. Retaining the existing design is a valid result. Record
 consequential changes through the project's ADR convention; a routine choice needs only a
@@ -157,11 +163,13 @@ One consumer does not make a fact a command; asynchronous availability can still
 - [AWS Lambda with Kafka event sources](https://docs.aws.amazon.com/lambda/latest/dg/with-kafka-configure.html)
 
 - [Choosing the style](references/choosing-the-style.md) — events versus commands versus
-  request/response with the condition that selects each, independent subscriptions versus
+  request/response with the condition that selects each, acceptance versus read visibility,
+  independent subscriptions versus
   competing replicas, choreography versus orchestration
   compared on debuggability, coupling, failure handling and participant count, and the FaaS
   versus long-lived-consumer decision with the Java cold-start considerations. Read when
-  deciding how two components should communicate, adding/scaling a subscriber, or when a saga is being designed.
+  deciding how two components should communicate, diagnosing a stale read after a successful
+  write, adding/scaling a subscriber, or when a saga is being designed.
 - [Designing an event](references/event-design.md) — naming, fat versus thin payloads and the
   read-back stampede, the event schema as a contract with unknown consumers, which direction
   of compatibility events actually need, and what belongs in the payload versus what must be

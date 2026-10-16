@@ -1,0 +1,8 @@
+META-INF/
+META-INF/MANIFEST.MF
+com/
+com/example/
+com/example/app/
+com/example/app/ReportApp.class
+com/example/text/
+com/example/text/LineEndings.class

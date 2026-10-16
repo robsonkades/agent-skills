@@ -1,0 +1,350 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "java-reference-types-and-leaks",
+  "ownedPath": "skills/java-reference-types-and-leaks/**",
+  "baseline": {
+    "head": "bbb7d996a929e81baf735bbaab5b6e3fbf6e8503",
+    "preExistingChanges": [],
+    "stagedChangesAtAssignment": [],
+    "untrackedFilesAtAssignment": [],
+    "allFourFilesMatchedCoordinatorSnapshot": true
+  },
+  "versions": {
+    "committed": "1.3.4",
+    "assignment": "1.3.4",
+    "final": "1.3.5",
+    "rationale": "One patch bump for an additional retaining-path mechanism and optional specialist handoff; no Java baseline or dependency upgrade."
+  },
+  "files": [
+    {
+      "path": "skills/java-reference-types-and-leaks/references/leak-patterns.md",
+      "assignmentSha256": "03baa66f8d4ba0c70fb4364612ae4068cf97ab7dd7b58fc7329ad9db51c06fd5",
+      "finalSha256": "d647f180cda6cc14326cef2d0c66b2f27540c23339819747cbfd075b2c46e05c",
+      "changedByReviewer": true
+    },
+    {
+      "path": "skills/java-reference-types-and-leaks/references/reachability-and-cleaners.md",
+      "assignmentSha256": "f26a27e92a4a7251799bbc4382db937fbee8317f797e2c96ba7776cd52914b22",
+      "finalSha256": "f26a27e92a4a7251799bbc4382db937fbee8317f797e2c96ba7776cd52914b22",
+      "changedByReviewer": false
+    },
+    {
+      "path": "skills/java-reference-types-and-leaks/SKILL.md",
+      "assignmentSha256": "d0d3267cf4e30577c3a126bca4b08b5c542b476e3d80388aec7e3247e24e88f3",
+      "finalSha256": "0d914eea9115a3fa46ce9b9e0f7da8108a6876123dd521c78f08375a048af55d",
+      "changedByReviewer": true
+    },
+    {
+      "path": "skills/java-reference-types-and-leaks/skill.yaml",
+      "assignmentSha256": "cda79998893e3b083d0babb5477a69ab4ea8a273b1a4d7a68e7d5cf707fdebd3",
+      "finalSha256": "d9400dfb412437de08e3f312588219b0cb603507089ad279249305131e05dbb9",
+      "changedByReviewer": true
+    }
+  ],
+  "changes": [
+    {
+      "location": "skills/java-reference-types-and-leaks/SKILL.md:113",
+      "finding": "The named class-loader retainers omitted a surviving thread's context class loader.",
+      "implemented": "Added the path and routed loader selection/component shutdown to the existing jvm-class-loading owner."
+    },
+    {
+      "location": "skills/java-reference-types-and-leaks/references/leak-patterns.md:146",
+      "finding": "A callback with no plugin capture and a restored submitting thread can still leave a lazily created long-lived worker holding the plugin loader.",
+      "evidenceType": "Thread inheritance contract plus deterministic local public-API probe; no GC/unloading inference.",
+      "implemented": "Inspect actual worker/factory ownership, correct worker context selection where the worker outlives the plugin, restore temporary task context in finally, preserve provider/resource lookup and shared-executor ownership, and test first creation plus success/failure paths without claiming unloading."
+    },
+    {
+      "location": "skills/java-reference-types-and-leaks/skill.yaml",
+      "implemented": "Version 1.3.5 and jvm-class-loading added to suggests."
+    }
+  ],
+  "preserved": [
+    "The complete reference-types/WeakHashMap/queue/Cleaner resource remained byte-for-byte unchanged.",
+    "Strong-path evidence, normalized reclamation/ownership criteria and no-change/conditional outcomes.",
+    "Reference wrapper/metadata ownership, manual enqueue/clear limits, WeakHashMap value-to-key paths and identity/equality caveats.",
+    "Explicit Cleaner ownership, no capture, failure assumptions and cleanup completion limitations.",
+    "ThreadLocal nested-scope restoration, callback capture corrections, authoritative backlog/recovery state and bounded diagnostics.",
+    "Existing version-matched JFR OldObjectSample caveats, collection-observation limits and no forced-GC default.",
+    "No capability removed and no neighboring skill edited."
+  ],
+  "checks": [
+    {
+      "cmd": "& 'C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe' --release 8 -d . ContextLoaderProbe.java",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\java-reference-types-and-leaks-check",
+      "result": {
+        "chunk_id": "105765",
+        "wall_time_seconds": 0.4058267,
+        "exit_code": 0,
+        "original_token_count": 68,
+        "output": "warning: [options] source value 8 is obsolete and will be removed in a future release\r\nwarning: [options] target value 8 is obsolete and will be removed in a future release\r\nwarning: [options] To suppress warnings about obsolete options, use -Xlint:-options.\r\n3 warnings\r\n"
+      },
+      "name": "compile-ownership-probe",
+      "category": "executed-technical-check",
+      "expectedExitCode": 0,
+      "compiler": "javac 25.0.3",
+      "compilerTarget": "--release 8",
+      "runtime": "Temurin 25.0.3+9-LTS",
+      "classification": "Executable review-only diagnostic; no shipped Java snippet added or changed.",
+      "warningInterpretation": "Three obsolete source/target option warnings from javac 25; the requested compatibility target was preserved."
+    },
+    {
+      "name": "inherited",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\java-reference-types-and-leaks-check",
+      "expectedExitCode": 0,
+      "cmd": "& 'C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe' -Xmx64m -cp . ContextLoaderProbe inherited",
+      "result": {
+        "chunk_id": "e38f8d",
+        "wall_time_seconds": 0.1238452,
+        "exit_code": 0,
+        "original_token_count": 78,
+        "output": "runtime=25.0.3+9-LTS\r\nfactory-and-pool-created-under=base; first-worker-created-under=plugin\r\nmode=inherited; submitter-restored=true; worker-holds-plugin=true\r\nPASS: first-worker ownership; same-worker restoration after success and failure\r\nNo collection, class unloading or memory-growth claim was tested.\r\n"
+      },
+      "category": "executed-technical-check"
+    },
+    {
+      "name": "fixed",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\java-reference-types-and-leaks-check",
+      "expectedExitCode": 0,
+      "cmd": "& 'C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe' -Xmx64m -cp . ContextLoaderProbe fixed",
+      "result": {
+        "chunk_id": "9d095b",
+        "wall_time_seconds": 0.0868114,
+        "exit_code": 0,
+        "original_token_count": 77,
+        "output": "runtime=25.0.3+9-LTS\r\nfactory-and-pool-created-under=base; first-worker-created-under=plugin\r\nmode=fixed; submitter-restored=true; worker-holds-plugin=false\r\nPASS: first-worker ownership; same-worker restoration after success and failure\r\nNo collection, class unloading or memory-growth claim was tested.\r\n"
+      },
+      "category": "executed-technical-check"
+    },
+    {
+      "name": "missing-restore",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\java-reference-types-and-leaks-check",
+      "expectedExitCode": 1,
+      "cmd": "& 'C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe' -Xmx64m -cp . ContextLoaderProbe missing-restore",
+      "result": {
+        "chunk_id": "83fdb5",
+        "wall_time_seconds": 0.1002423,
+        "exit_code": 1,
+        "original_token_count": 94,
+        "output": "runtime=25.0.3+9-LTS\r\nfactory-and-pool-created-under=base; first-worker-created-under=plugin\r\nmode=missing-restore; submitter-restored=true; worker-holds-plugin=false\r\nException in thread \"main\" java.lang.AssertionError: context not restored after failed task\r\n\tat ContextLoaderProbe.check(ContextLoaderProbe.java:92)\r\n\tat ContextLoaderProbe.main(ContextLoaderProbe.java:61)\r\n"
+      },
+      "category": "expected-failure-control"
+    },
+    {
+      "name": "strict-validation",
+      "cwd": "C:\\git\\agent-skills",
+      "expectedExitCode": 0,
+      "cmd": "node packages/cli/bin/agent-skills.mjs --no-update-check validate skills/java-reference-types-and-leaks --strict --json",
+      "result": {
+        "chunk_id": "ea4cc7",
+        "wall_time_seconds": 0.173032,
+        "exit_code": 0,
+        "original_token_count": 45,
+        "output": "{\n  \"ok\": true,\n  \"directory\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\java-reference-types-and-leaks\",\n  \"name\": \"java-reference-types-and-leaks\",\n  \"version\": \"1.3.5\",\n  \"issues\": []\n}\n"
+      },
+      "category": "structural"
+    },
+    {
+      "name": "format-check",
+      "cwd": "C:\\git\\agent-skills",
+      "expectedExitCode": 0,
+      "cmd": "node node_modules/prettier/bin/prettier.cjs --check skills/java-reference-types-and-leaks/SKILL.md skills/java-reference-types-and-leaks/skill.yaml skills/java-reference-types-and-leaks/references/leak-patterns.md",
+      "result": {
+        "chunk_id": "59a711",
+        "wall_time_seconds": 0.2012511,
+        "exit_code": 0,
+        "original_token_count": 17,
+        "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+      },
+      "category": "structural"
+    },
+    {
+      "name": "final-owned-diff",
+      "category": "structural",
+      "cwd": "C:/git/agent-skills",
+      "commands": [
+        "git diff --check -- skills/java-reference-types-and-leaks",
+        "git diff -- skills/java-reference-types-and-leaks",
+        "git status --short -- skills/java-reference-types-and-leaks"
+      ],
+      "combinedExitCode": 0,
+      "output": "diff --git a/skills/java-reference-types-and-leaks/SKILL.md b/skills/java-reference-types-and-leaks/SKILL.md\nindex 58533eb..8fe74b4 100644\n--- a/skills/java-reference-types-and-leaks/SKILL.md\n+++ b/skills/java-reference-types-and-leaks/SKILL.md\n@@ -110,7 +110,8 @@ them; otherwise report the ownership correction and the evidence needed to verif\n - Metaspace growth and old application classes after redeploy suggest loader retention;\n   confirm an unwanted root path and class-unloading/GC opportunity before declaring a leak.\n   The usual holders are static registries, `ThreadLocal` values on container threads,\n-  JDBC drivers, shutdown hooks and unremoved listeners.\n+  thread context class loaders, JDBC drivers, shutdown hooks and unremoved listeners.\n+  Use `jvm-class-loading` for loader selection and the component's stop protocol.\n - Restarts can mask per-replica retention until traffic concentrates or deploy cadence\n   changes. “It recovers after restart” is evidence of process-lifetime state, not proof of a\n   leak; bounded caches, fragmentation and load reset can look similar. Preserve evidence\ndiff --git a/skills/java-reference-types-and-leaks/references/leak-patterns.md b/skills/java-reference-types-and-leaks/references/leak-patterns.md\nindex b88eb06..be5642b 100644\n--- a/skills/java-reference-types-and-leaks/references/leak-patterns.md\n+++ b/skills/java-reference-types-and-leaks/references/leak-patterns.md\n@@ -143,6 +143,18 @@ driver registered with `DriverManager`, an unremoved shutdown hook, a JMX/MBean\n or a thread the application started and never joined. Fix each explicitly on undeploy — this\n is one of the few places where \"unregister everything you registered\" is a hard requirement.\n \n+Also inspect `Thread.contextClassLoader` and the factory that creates surviving workers.\n+A thread can inherit its creator's context loader: a lazily started shared pool can retain\n+a plugin loader even when callbacks capture no plugin objects. Restoring the submitting\n+thread's context does not reset workers already created with that loader. If a worker must\n+outlive the plugin, select a loader compatible with the worker's owner in its factory;\n+restore temporary task-level context changes in `finally`. Preserve required provider/resource\n+lookup rather than blindly setting the loader to null or stopping a shared executor.\n+Check the worker's context after first creation and after successful/failing tasks; these\n+direct checks do not prove that every root is gone or that unloading occurred. See the\n+[Java 25 thread inheritance contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Thread.html)\n+and use `jvm-class-loading` for loader selection and the complete stop protocol.\n+\n ### 7. Long-lived collections of short-lived context\n \n A queue, batch accumulator or buffer can exceed its budget when production outpaces\ndiff --git a/skills/java-reference-types-and-leaks/skill.yaml b/skills/java-reference-types-and-leaks/skill.yaml\nindex 50f3a65..b97fce5 100644\n--- a/skills/java-reference-types-and-leaks/skill.yaml\n+++ b/skills/java-reference-types-and-leaks/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: java-reference-types-and-leaks\n-version: 1.3.4\n+version: 1.3.5\n description: >-\n   Reachability-driven memory in Java: strong/soft/weak/phantom contracts and notification\n   limits, WeakHashMap and its value-holds-key trap, explicit Cleaner cleanup versus\n@@ -54,6 +54,7 @@ suggests:\n   - gc-log-analysis\n   - heap-dump-analysis\n   - java-object-construction\n+  - jvm-class-loading\n   - off-heap-memory\n   - reactive-backpressure\n   - scoped-values\n M skills/java-reference-types-and-leaks/SKILL.md\n M skills/java-reference-types-and-leaks/references/leak-patterns.md\n M skills/java-reference-types-and-leaks/skill.yaml\n"
+    },
+    {
+      "name": "resource-and-baseline-audit",
+      "category": "structural",
+      "cwd": "C:/git/agent-skills",
+      "command": "PowerShell here-string | node --input-type=module: local Markdown destinations/anchors, optional skill existence, baseline/final hashes and temporary-artifact inventory.",
+      "exitCode": 0,
+      "result": "PASS: 2 local resource links; jvm-class-loading exists; unchanged reachability-and-cleaners.md; exactly 3 declared package files changed.",
+      "hashes": [
+        {
+          "path": "skills/java-reference-types-and-leaks/references/leak-patterns.md",
+          "assignmentSha256": "03baa66f8d4ba0c70fb4364612ae4068cf97ab7dd7b58fc7329ad9db51c06fd5",
+          "finalSha256": "d647f180cda6cc14326cef2d0c66b2f27540c23339819747cbfd075b2c46e05c"
+        },
+        {
+          "path": "skills/java-reference-types-and-leaks/references/reachability-and-cleaners.md",
+          "assignmentSha256": "f26a27e92a4a7251799bbc4382db937fbee8317f797e2c96ba7776cd52914b22",
+          "finalSha256": "f26a27e92a4a7251799bbc4382db937fbee8317f797e2c96ba7776cd52914b22"
+        },
+        {
+          "path": "skills/java-reference-types-and-leaks/SKILL.md",
+          "assignmentSha256": "d0d3267cf4e30577c3a126bca4b08b5c542b476e3d80388aec7e3247e24e88f3",
+          "finalSha256": "0d914eea9115a3fa46ce9b9e0f7da8108a6876123dd521c78f08375a048af55d"
+        },
+        {
+          "path": "skills/java-reference-types-and-leaks/skill.yaml",
+          "assignmentSha256": "cda79998893e3b083d0babb5477a69ab4ea8a273b1a4d7a68e7d5cf707fdebd3",
+          "finalSha256": "d9400dfb412437de08e3f312588219b0cb603507089ad279249305131e05dbb9"
+        }
+      ]
+    }
+  ],
+  "observations": {
+    "defaultFactory": "Factory and pool created under base loader; first worker created during plugin context. After restoring submitter, worker-holds-plugin=true.",
+    "explicitHostLoaderFactory": "Same timing; factory sets the host-compatible loader. After restoring submitter, worker-holds-plugin=false.",
+    "taskScope": "The same worker restored its original context after both successful and failing tasks in the positive scenarios.",
+    "negativeControl": "Run ContextLoaderProbe missing-restore: skips the finally restoration only for the failing task. Exit 1, AssertionError: context not restored after failed task (check line 92, call line 61).",
+    "limits": "These checks inspect a direct context-loader reference. They do not drop every owner, request GC, observe class unloading or measure retained heap/Metaspace."
+  },
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Thread.html",
+      "version": "Java 25",
+      "support": "Inheritance occurs when a child thread is created; context loader get/set contract.",
+      "usedInSkill": true
+    },
+    {
+      "url": "https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/share/classes/java/lang/Thread.java",
+      "version": "OpenJDK 25 GA",
+      "support": "Constructors assign the parent's context class loader when inheritance is enabled; actual policies must be inspected.",
+      "usedInSkill": false
+    },
+    {
+      "url": "https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/share/classes/java/util/concurrent/Executors.java",
+      "version": "OpenJDK 25 GA",
+      "support": "DefaultThreadFactory constructs a new Thread when newThread is invoked, distinct from factory construction time.",
+      "usedInSkill": false
+    }
+  ],
+  "evaluations": {
+    "agentRunsExecuted": [],
+    "measuredBehavioralImprovement": false,
+    "measuredMemoryImprovement": false,
+    "structuredWalkthroughs": [
+      "Host-owned lazy worker using default inheritance: static callback and submitter restoration do not remove worker context-loader retention.",
+      "Same worker factory assigning the host-compatible loader: preserve the adequate path, and limit claims to that path rather than guaranteed whole-loader unloading."
+    ],
+    "classification": "Two development cases below, not independent behavioral executions or unseen holdouts."
+  },
+  "cases": [
+    {
+      "id": "inherited-worker-context",
+      "input": {
+        "task": "Review HostWorkers.java and lifecycle.md, then revise plan.md to match the evidence. Identify the smallest ownership correction if needed, preserve the host-owned executor and lookup contract, and state what validation remains unexecuted. Do not contact production or force GC.",
+        "prerequisites": "Create the supplied files in an isolated actor workspace; this is an artifact-review task and requires no live service.",
+        "fixtures": {
+          "lifecycle.md": "Synthetic review fixture. Java target 8; current test runtime Temurin 25.0.3.\nHostWorkers and its factory are constructed by the long-lived host while its context loader is hostLoader.\nNo worker exists until initializePlugin submits its first task under pluginLoader.\nThe shared worker must outlive every plugin and must remain available for other plugins; only host shutdown owns stopHost.\nWorker-level provider/resource lookup outside a plugin operation requires hostLoader.\nhostTask is defined by the host loader and captures no plugin instance. It completes before initialization returns.\nPlugin teardown closes its URLClassLoader and removes its own registry entries. Do not infer that closing alone unloads classes.\nNo actual heap dump, class-unloading observation or memory-growth measurement is supplied.",
+          "plan.md": "We made the callback static and restore the submitter context in finally. Consequently no worker can retain the obsolete plugin loader. Keep the host pool running and consider the loader-retention issue solved.",
+          "HostWorkers.java": "import java.util.concurrent.ExecutorService;\nimport java.util.concurrent.Executors;\nimport java.util.concurrent.ThreadFactory;\n\n// Host-loaded code; minimal source fixture for review.\nfinal class HostWorkers {\n    private final ExecutorService shared;\n    HostWorkers(ClassLoader hostLoader) {\n        ThreadFactory delegate = Executors.defaultThreadFactory();\n        ThreadFactory factory = delegate;\n        shared = Executors.newSingleThreadExecutor(factory);\n    }\n    void initializePlugin(ClassLoader pluginLoader) throws Exception {\n        Thread submitter = Thread.currentThread();\n        ClassLoader previous = submitter.getContextClassLoader();\n        try {\n            submitter.setContextClassLoader(pluginLoader);\n            shared.submit(HostWorkers::hostTask).get();\n        } finally {\n            submitter.setContextClassLoader(previous);\n        }\n    }\n    private static void hostTask() { }\n    void stopHost() { shared.shutdown(); }\n}"
+        }
+      },
+      "criteria": {
+        "expected": [
+          "Read when the worker is created, not merely when the executor/factory is constructed.",
+          "Identify the direct surviving worker context-loader path even though hostTask has no plugin capture and the submitter is restored.",
+          "Revise plan.md with a loader compatible with host ownership selected in the factory, or an equally valid ownership protocol that preserves required lookup.",
+          "Keep the host-owned executor alive and scope any temporary task context with restoration on success/failure.",
+          "Propose first-creation and reused-worker context assertions; keep actual class-unloading/memory verification explicitly pending."
+        ],
+        "failureConditions": [
+          "Conclude that static callback plus submitter finally removes every plugin retainer.",
+          "Treat TCCL as just a ThreadLocal and recommend only ThreadLocal.remove or weak references.",
+          "Blindly set null/system loader without considering the supplied lookup contract, or stop the shared host executor on plugin teardown.",
+          "Claim GC/unloading or a memory improvement was measured."
+        ]
+      }
+    },
+    {
+      "id": "explicit-host-worker-context",
+      "decisiveChange": "Only the ThreadFactory selection assigns hostLoader before starting the worker; all lifecycle timing, ownership, source target and task behavior remain identical.",
+      "input": {
+        "task": "Review HostWorkers.java and lifecycle.md, then revise plan.md to match the evidence. Identify the smallest ownership correction if needed, preserve the host-owned executor and lookup contract, and state what validation remains unexecuted. Do not contact production or force GC.",
+        "prerequisites": "Same isolated artifact-review setup.",
+        "fixtures": {
+          "lifecycle.md": "Synthetic review fixture. Java target 8; current test runtime Temurin 25.0.3.\nHostWorkers and its factory are constructed by the long-lived host while its context loader is hostLoader.\nNo worker exists until initializePlugin submits its first task under pluginLoader.\nThe shared worker must outlive every plugin and must remain available for other plugins; only host shutdown owns stopHost.\nWorker-level provider/resource lookup outside a plugin operation requires hostLoader.\nhostTask is defined by the host loader and captures no plugin instance. It completes before initialization returns.\nPlugin teardown closes its URLClassLoader and removes its own registry entries. Do not infer that closing alone unloads classes.\nNo actual heap dump, class-unloading observation or memory-growth measurement is supplied.",
+          "plan.md": "We made the callback static and restore the submitter context in finally. Consequently no worker can retain the obsolete plugin loader. Keep the host pool running and consider the loader-retention issue solved.",
+          "HostWorkers.java": "import java.util.concurrent.ExecutorService;\nimport java.util.concurrent.Executors;\nimport java.util.concurrent.ThreadFactory;\n\n// Host-loaded code; minimal source fixture for review.\nfinal class HostWorkers {\n    private final ExecutorService shared;\n    HostWorkers(ClassLoader hostLoader) {\n        ThreadFactory delegate = Executors.defaultThreadFactory();\n        ThreadFactory factory = task -> {\n            Thread worker = delegate.newThread(task);\n            worker.setContextClassLoader(hostLoader);\n            return worker;\n        };\n        shared = Executors.newSingleThreadExecutor(factory);\n    }\n    void initializePlugin(ClassLoader pluginLoader) throws Exception {\n        Thread submitter = Thread.currentThread();\n        ClassLoader previous = submitter.getContextClassLoader();\n        try {\n            submitter.setContextClassLoader(pluginLoader);\n            shared.submit(HostWorkers::hostTask).get();\n        } finally {\n            submitter.setContextClassLoader(previous);\n        }\n    }\n    private static void hostTask() { }\n    void stopHost() { shared.shutdown(); }\n}"
+        }
+      },
+      "criteria": {
+        "expected": [
+          "Recognize that the supplied factory prevents this specific inherited-plugin TCCL path.",
+          "Retain the adequate host loader/factory and executor ownership; avoid inventing a required weak reference, null loader or teardown of the shared pool.",
+          "Revise the overbroad solved/no-retainer claim to distinguish this path from other unexamined roots and actual unloading.",
+          "Retain success/failure task-scope checks where context overrides are introduced."
+        ],
+        "failureConditions": [
+          "Report the same default-inheritance bug despite the explicit host loader assignment.",
+          "Treat preserving the plugin loader on a host-lifetime worker as required just because initialization occurs under that plugin.",
+          "Demand a JDK upgrade, preview API or forced GC to answer this source-level ownership question."
+        ]
+      }
+    }
+  ],
+  "artifacts": {
+    "root": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/java-reference-types-and-leaks-check",
+    "files": [
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/java-reference-types-and-leaks-check/ContextLoaderProbe$1.class",
+        "sha256": "54735634e81f97e10bc21dd0bccf6d432279c66543948c492bafcff1ff0a8930"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/java-reference-types-and-leaks-check/ContextLoaderProbe$ExpectedTaskFailure.class",
+        "sha256": "5d1dffe20d2b1159da6052f6831c4da6953077a1db5c0e999c6cae6a72fd921e"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/java-reference-types-and-leaks-check/ContextLoaderProbe$PluginLoader.class",
+        "sha256": "4f815c45c31e0a78dee266a8f7c66f8cd52ace05901aef9e623ba19a4c99138b"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/java-reference-types-and-leaks-check/ContextLoaderProbe.class",
+        "sha256": "dd4958e52d354c9a73d20052f4d8e812e75be5c6f3a9f245d56f044412fd4ba2"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/java-reference-types-and-leaks-check/ContextLoaderProbe.java",
+        "sha256": "4aa23dadc46aef2460e135c3275bb05a307c03bbc30fc43b8b050c7656304650"
+      }
+    ],
+    "retainedForCoordinator": true,
+    "notes": "Probe source and compiled classes are isolated; all compiler/runtime outputs, including the negative control, are embedded above. Probe pools are stopped and awaited in finally."
+  },
+  "limits": [
+    "No behavioral agent evaluation, heap dump, collection observation, class unloading measurement or production performance/memory run.",
+    "Probe compiled against Java 8 APIs but executed only on Temurin 25.0.3; this is not a Java 8 runtime test.",
+    "Existing Cleaner and other unchanged partial Java sketches were not recompiled in this assignment.",
+    "Thread factories/builders/frameworks can choose other inheritance policies; the skill now directs inspection of the actual selected path.",
+    "Root removal and compatible provider/resource lookup still require application-specific validation."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "prerequisite": "All reviewers have stopped writing."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "prerequisite": "Registry regenerated; all reviewers remain read-only."
+    }
+  ],
+  "crossSkill": {
+    "issues": [],
+    "referralsAdded": [
+      "jvm-class-loading (existing optional skill; loader selection and full stop protocol remain its responsibility)"
+    ],
+    "actionsRequired": ["Coordinator archives JSON/probe artifacts and runs pending global checks."]
+  },
+  "allWritesStopped": true,
+  "pendingProcesses": []
+}

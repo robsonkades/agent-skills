@@ -1,0 +1,229 @@
+{
+  "skill": "numa-and-cpu-affinity",
+  "reviewedOn": "2026-10-16",
+  "reviewer": "/root/quality13",
+  "environment": {
+    "os": "Windows",
+    "shell": "PowerShell",
+    "repository": "C:/git/agent-skills"
+  },
+  "provenance": "Local review evidence, not Linux execution or behavioral agent evaluation.",
+  "baselineFile": "C:/Users/robso/AppData/Local/Temp/numa-quality13-ab52cba14962415d989f170651c3d19e/baseline.json",
+  "sourceDownloads": [
+    {
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "19c131",
+        "wall_time_seconds": 0.3732426,
+        "exit_code": 0,
+        "original_token_count": 53,
+        "output": "{\"Path\":\"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\numa-quality13-ab52cba14962415d989f170651c3d19e\\\\linux-v6.10-numa_memory_policy.rst\",\"Hash\":\"35888DF88FD39F9A624BA8165DC04B384BDDDE7FBF5A172F050462247C6D679B\"}\r\n"
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "8dcd59",
+        "wall_time_seconds": 0.3777989,
+        "exit_code": 0,
+        "original_token_count": 49,
+        "output": "{\"Path\":\"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\numa-quality13-ab52cba14962415d989f170651c3d19e\\\\numactl-v2.0.19.c\",\"Hash\":\"E68CBA746FFF64E21DFC421BAEF68760D780EA02C6C69458DD803DAFE8C3971B\"}\r\n"
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "e72842",
+        "wall_time_seconds": 0.3925786,
+        "exit_code": 0,
+        "original_token_count": 49,
+        "output": "{\"Path\":\"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\numa-quality13-ab52cba14962415d989f170651c3d19e\\\\libnuma-v2.0.19.c\",\"Hash\":\"CE278A0E8135A99ED98797CB466D029C0162BE31875B20BDC308D30BD948400C\"}\r\n"
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "4a3ec6",
+        "wall_time_seconds": 0.3933295,
+        "exit_code": 0,
+        "original_token_count": 49,
+        "output": "{\"Path\":\"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\numa-quality13-ab52cba14962415d989f170651c3d19e\\\\jdk25-os_linux.cpp\",\"Hash\":\"356AEE7E0B32EFFB53AD2EDEC884A3212EB5E20BD7F7C1D766D5C420AD50B810\"}\r\n"
+      }
+    }
+  ],
+  "localChecks": [
+    {
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "e7d797",
+        "wall_time_seconds": 0.2100875,
+        "exit_code": 0,
+        "original_token_count": 204,
+        "output": "{\r\n  \"name\": \"numa-and-cpu-affinity\",\r\n  \"version\": \"1.2.5\",\r\n  \"files\": [\r\n    \"SKILL.md\",\r\n    \"references/numactl-and-numastat.md\",\r\n    \"references/placement-decisions.md\",\r\n    \"skill.yaml\"\r\n  ],\r\n  \"issues\": [],\r\n  \"localLinks\": [\r\n    {\r\n      \"file\": \"SKILL.md\",\r\n      \"target\": \"references/numactl-and-numastat.md\",\r\n      \"resolved\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\numa-and-cpu-affinity\\\\references\\\\numactl-and-numastat.md\"\r\n    },\r\n    {\r\n      \"file\": \"SKILL.md\",\r\n      \"target\": \"references/placement-decisions.md\",\r\n      \"resolved\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\numa-and-cpu-affinity\\\\references\\\\placement-decisions.md\"\r\n    }\r\n  ],\r\n  \"brokenLinks\": [],\r\n  \"limitations\": \"Package-local generic validation only; no adapter/global index validation, Linux execution or NUMA experiment.\"\r\n}\r\n"
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "87e5dd",
+        "wall_time_seconds": 0.195112,
+        "exit_code": 1,
+        "original_token_count": 45,
+        "output": "Checking formatting...\n[warn] skills/numa-and-cpu-affinity/references/numactl-and-numastat.md\n[warn] Code style issues found in the above file. Run Prettier with --write to fix.\n"
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "b0528a",
+        "wall_time_seconds": 0.10535,
+        "exit_code": 0,
+        "original_token_count": 1664,
+        "output": " skills/numa-and-cpu-affinity/SKILL.md               |  8 +++++---\n .../references/numactl-and-numastat.md              | 21 +++++++++++++++++++--\n skills/numa-and-cpu-affinity/skill.yaml             |  2 +-\n 3 files changed, 25 insertions(+), 6 deletions(-)\ndiff --git a/skills/numa-and-cpu-affinity/SKILL.md b/skills/numa-and-cpu-affinity/SKILL.md\nindex 415b3ec..803e1c5 100644\n--- a/skills/numa-and-cpu-affinity/SKILL.md\n+++ b/skills/numa-and-cpu-affinity/SKILL.md\n@@ -69,9 +69,11 @@ Return the supported change or no-change, evidence limits, and checks run versus\n   for node IDs or `--physcpubind` for CPU IDs; check the installed version rather than\n   declaring the old spelling nonexistent.\n - Evaluate CPU and memory policies together, but one-sided changes can be deliberate:\n-  interleaving memory while CPUs roam, or binding CPUs while allowing memory fallback. For\n-  strict single-node confinement, `--cpunodebind=0 --membind=0` is the pair; it also creates\n-  an allocation-failure risk when node 0 cannot satisfy demand.\n+  interleaving memory while CPUs roam, or binding CPUs while allowing memory fallback.\n+  `--cpunodebind=0 --membind=0` requests CPU-node affinity plus a task memory policy;\n+  it does not set an administrative memory-node boundary. Check more-specific mapping\n+  policies and actual residence before claiming confinement. Allocations governed by that\n+  binding can fail when node 0 cannot satisfy demand.\n - `UseNUMA` is collector/build-specific. Linux ZGC in JDK 25 consumes this flag and its\n   initialization enables it by default when not explicitly configured (subject to later\n   platform/topology checks). Parallel/G1 behavior is different; verify effective settings.\ndiff --git a/skills/numa-and-cpu-affinity/references/numactl-and-numastat.md b/skills/numa-and-cpu-affinity/references/numactl-and-numastat.md\nindex 24c86a4..3ac3eb8 100644\n--- a/skills/numa-and-cpu-affinity/references/numactl-and-numastat.md\n+++ b/skills/numa-and-cpu-affinity/references/numactl-and-numastat.md\n@@ -11,7 +11,7 @@ flag. Check support and permissions before attaching to an owned or authorized t\n | ----------------------- | ----- | ------ | --------------------------------------------------------------------------------- |\n | `--cpunodebind=<nodes>` | `-N`  | CPU    | Restrict execution to the CPUs of the given node(s)                               |\n | `--physcpubind=<cpus>`  | `-C`  | CPU    | Restrict execution to specific CPUs, not whole nodes                              |\n-| `--membind=<nodes>`     | `-m`  | Memory | Allocate **only** from the given node(s); fails when exhausted                    |\n+| `--membind=<nodes>`     | `-m`  | Memory | Covered allocations use **only** the given node(s); fails when exhausted         |\n | `--interleave=<nodes>`  | `-i`  | Memory | Interleave allocation across nodes, with fallback if a target cannot satisfy it   |\n | `--preferred=<node>`    | `-p`  | Memory | Prefer one node, fall back to another when exhausted (one node)                   |\n | `--localalloc`          | `-l`  | Memory | Prefer the current node, with fallback; more-specific policy may override         |\n@@ -23,13 +23,20 @@ selection and `--physcpubind` for CPU selection. Check installed help/source and\n allowed masks; affinity and memory policy remain constrained by cpusets.\n \n ```bash\n-# Confine the whole process to one node — both axes together:\n+# Request CPU-node affinity and task memory binding at launch:\n numactl --cpunodebind=0 --membind=0 java -jar app.jar\n \n # Memory interleaving, independent of CPU binding:\n numactl --interleave=all java -jar app.jar\n ```\n \n+For a launched program, `--membind` sets task memory policy, not `cpuset.mems`. A later\n+application/native-library VMA policy can override it for the covered range within the allowed\n+nodes; a later task-policy change can also replace it. Distinguish this placement request from\n+an administrative allocation restriction. If that restriction is required, involve the platform\n+owner and inspect effective cpusets; neither a requested mask nor a new policy proves that all\n+existing/shared pages now reside there. See the policy/residence distinction below.\n+\n ## The two `numastat` modes\n \n They answer different questions and are not interchangeable.\n@@ -142,6 +149,15 @@ java <same-collector-and-options> -XX:+PrintFlagsFinal -version 2>&1 | grep UseN\n jcmd <pid> VM.flags -all | grep -i numa\n ```\n \n+`Mems_allowed_list` reports permitted allocation nodes, not the active task/VMA policy.\n+When launch flags and residence appear to disagree, inspect a matching\n+`/proc/<pid>/numa_maps` capture and correlate its starting addresses with `/proc/<pid>/maps`\n+and JVM/native-region evidence. For an anonymous range, an explicit `bind:1` policy can override\n+the launch task's `bind:0` when both nodes are allowed. The policy field describes current\n+allocation policy; `N0=...`/`N1=...` count currently mapped pages. A new policy without migration\n+can coexist with pages on the old node. Do not infer either a failed launch binding or completed\n+page migration from those counts alone; see [the numa_maps fields](https://man7.org/linux/man-pages/man7/numa.7.html).\n+\n ## Mapping GC threads to nodes\n \n The G1 example below reports worker counts and NUMA support at JVM initialization,\n@@ -173,6 +189,7 @@ node.\n ## Sources\n \n - [numactl 2.0.19 options](https://github.com/numactl/numactl/blob/v2.0.19/numactl.c): deprecated cpubind retained.\n+- [libnuma 2.0.19 memory-policy setters](https://github.com/numactl/numactl/blob/v2.0.19/libnuma.c): `numa_set_membind` sets task policy; range binding uses `mbind`.\n - [numastat 2.0.19](https://github.com/numactl/numactl/blob/v2.0.19/numastat.c): mapping categories, units and sorting.\n - [Linux 6.10 NUMA memory policy](https://github.com/torvalds/linux/blob/v6.10/Documentation/admin-guide/mm/numa_memory_policy.rst): task/VMA policy, allowed nodes and allocation behavior.\n - [Linux perf 6.10 generic cache aliases](https://github.com/torvalds/linux/blob/v6.10/tools/perf/util/evsel.c): node/load/store/miss names do not establish target PMU support.\ndiff --git a/skills/numa-and-cpu-affinity/skill.yaml b/skills/numa-and-cpu-affinity/skill.yaml\nindex e33165e..21e7da2 100644\n--- a/skills/numa-and-cpu-affinity/skill.yaml\n+++ b/skills/numa-and-cpu-affinity/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: numa-and-cpu-affinity\n-version: 1.2.4\n+version: 1.2.5\n description: >-\n   Placing a JVM on real hardware topology: reading the NUMA topology, numactl and taskset\n   pinning strategies, interpreting numastat, which collectors UseNUMA actually governs, how\n"
+      }
+    }
+  ],
+  "formattingAndWhitespaceRecheck": [
+    {
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "5de96d",
+        "wall_time_seconds": 0.2059412,
+        "exit_code": 0,
+        "original_token_count": 17,
+        "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "6dbab5",
+        "wall_time_seconds": 0.066413,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      }
+    }
+  ],
+  "fixtureConsistencyAndLinuxSourceInspection": [
+    {
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "d4062c",
+        "wall_time_seconds": 0.1126811,
+        "exit_code": 0,
+        "original_token_count": 42,
+        "output": "{\r\n  \"checks\": 18,\r\n  \"result\": \"PASS\",\r\n  \"scope\": \"Synthetic case consistency only; no Linux execution, affinity change, page allocation or agent evaluation.\"\r\n}\r\n"
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "e9bc1b",
+        "wall_time_seconds": 0.3354744,
+        "exit_code": 0,
+        "original_token_count": 803,
+        "output": "2711-};\n2712-\n2713-/*\n2714- * Display pages allocated per node and memory policy via /proc.\n2715- */\n2716:static int show_numa_map(struct seq_file *m, void *v)\n2717-{\n2718-\tstruct numa_maps_private *numa_priv = m->private;\n2719-\tstruct proc_maps_private *proc_priv = &numa_priv->proc_maps;\n2720-\tstruct vm_area_struct *vma = v;\n2721-\tstruct numa_maps *md = &numa_priv->md;\n2722-\tstruct file *file = vma->vm_file;\n2723-\tstruct mm_struct *mm = vma->vm_mm;\n2724-\tchar buffer[64];\n2725-\tstruct mempolicy *pol;\n2726-\tpgoff_t ilx;\n2727-\tint nid;\n2728-\n2729-\tif (!mm)\n2730-\t\treturn 0;\n2731-\n2732-\t/* Ensure we start with an empty set of numa_maps statistics. */\n2733-\tmemset(md, 0, sizeof(*md));\n2734-\n2735-\tpol = __get_vma_policy(vma, vma->vm_start, &ilx);\n2736-\tif (pol) {\n2737-\t\tmpol_to_str(buffer, sizeof(buffer), pol);\n2738-\t\tmpol_cond_put(pol);\n2739-\t} else {\n2740-\t\tmpol_to_str(buffer, sizeof(buffer), proc_priv->task_mempolicy);\n2741-\t}\n2742-\n2743-\tseq_printf(m, \"%08lx %s\", vma->vm_start, buffer);\n2744-\n2745-\tif (file) {\n2746-\t\tseq_puts(m, \" file=\");\n2747-\t\tseq_path(m, file_user_path(file), \"\\n\\t= \");\n2748-\t} else if (vma_is_initial_heap(vma)) {\n2749-\t\tseq_puts(m, \" heap\");\n2750-\t} else if (vma_is_initial_stack(vma)) {\n2751-\t\tseq_puts(m, \" stack\");\n2752-\t}\n2753-\n2754-\tif (is_vm_hugetlb_page(vma))\n2755-\t\tseq_puts(m, \" huge\");\n2756-\n2757-\t/* mmap_lock is held by m_start */\n2758-\twalk_page_vma(vma, &show_numa_ops, md);\n2759-\n2760-\tif (!md->pages)\n2761-\t\tgoto out;\n2762-\n2763-\tif (md->anon)\n2764-\t\tseq_printf(m, \" anon=%lu\", md->anon);\n2765-\n2766-\tif (md->dirty)\n2767-\t\tseq_printf(m, \" dirty=%lu\", md->dirty);\n2768-\n2769-\tif (md->pages != md->anon && md->pages != md->dirty)\n2770-\t\tseq_printf(m, \" mapped=%lu\", md->pages);\n2771-\n2772-\tif (md->mapcount_max > 1)\n2773-\t\tseq_printf(m, \" mapmax=%lu\", md->mapcount_max);\n2774-\n2775-\tif (md->swapcache)\n2776-\t\tseq_printf(m, \" swapcache=%lu\", md->swapcache);\n2777-\n2778-\tif (md->active < md->pages && !is_vm_hugetlb_page(vma))\n2779-\t\tseq_printf(m, \" active=%lu\", md->active);\n2780-\n2781-\tif (md->writeback)\n2782-\t\tseq_printf(m, \" writeback=%lu\", md->writeback);\n2783-\n2784-\tfor_each_node_state(nid, N_MEMORY)\n2785-\t\tif (md->node[nid])\n2786-\t\t\tseq_printf(m, \" N%d=%lu\", nid, md->node[nid]);\n2787-\n2788-\tseq_printf(m, \" kernelpagesize_kB=%lu\", vma_kernel_pagesize(vma) >> 10);\n2789-out:\n2790-\tseq_putc(m, '\\n');\n2791-\treturn 0;\n2792-}\n2793-\n2794-static const struct seq_operations proc_pid_numa_maps_op = {\n2795-\t.start  = m_start,\n2796-\t.next   = m_next,\n2797-\t.stop   = m_stop,\n2798-\t.show   = show_numa_map,\n2799-};\n2800-\n2801-static int pid_numa_maps_open(struct inode *inode, struct file *file)\n2802-{\n2803-\treturn proc_maps_open(inode, file, &proc_pid_numa_maps_op,\n2804-\t\t\t\tsizeof(struct numa_maps_private));\n2805-}\n2806-\n2807-const struct file_operations proc_pid_numa_maps_operations = {\n2808-\t.open\t\t= pid_numa_maps_open,\n2809-\t.read\t\t= seq_read,\n2810-\t.llseek\t\t= seq_lseek,\n2811-\t.release\t= proc_map_release,\n2812-};\n2813-\n2814-#endif /* CONFIG_NUMA */\n{\"Path\":\"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\numa-quality13-ab52cba14962415d989f170651c3d19e\\\\linux-v6.10-task_mmu.c\",\"Hash\":\"90874365B451F3F6501FA85209062CC4C98FCC8AF46C74C5E8CA7C0171A3DA55\"}\r\n"
+      }
+    }
+  ],
+  "findings": "Launch --membind establishes task memory policy. More-specific VMA policy can override it within allowed nodes; current policy is distinct from already faulted page residence. The updated guidance does not assert automatic HotSpot override; OpenJDK 25 startup source supplies counterevidence.",
+  "technicalScope": "Sources pinned to Linux 6.10, numactl/libnuma 2.0.19 and OpenJDK jdk-25+36. Synthetic case consistency assertions do not emulate or execute memory policy.",
+  "taskInputs": [
+    {
+      "id": "native-range-policy-node1",
+      "task": "Review placement-note.md against the supplied NUMA evidence for a Linux 6.10 / numactl 2.0.19 / OpenJDK 25 deployment. Rewrite the note with a supported conclusion and the next action needed for the stated goal: this identified native cache should use node 0 while its consumer threads run on node-0 CPUs.\n\nOnly edit the review note. Do not run Linux capture commands, change affinity/cpusets/policies, install software or operate on a real host. Explain what the evidence establishes, what remains unknown, and whether the current mapping policy itself needs changing. Preserve the distinction between allocation policy, existing page residence and observed memory accesses.\n\nThese are synthetic development fixtures shaped like operational evidence; no real machine measurement is being supplied. The recorded history is part of the fixture. All events and snapshots refer to PID 4242 and the same mapping. Other JVM memory ranges are out of scope.",
+      "taskFile": "C:/Users/robso/AppData/Local/Temp/numa-quality13-ab52cba14962415d989f170651c3d19e/cases/node1/task.md",
+      "fixtureFiles": [
+        "C:/Users/robso/AppData/Local/Temp/numa-quality13-ab52cba14962415d989f170651c3d19e/cases/node1/placement-note.md",
+        "C:/Users/robso/AppData/Local/Temp/numa-quality13-ab52cba14962415d989f170651c3d19e/cases/node1/launch.txt",
+        "C:/Users/robso/AppData/Local/Temp/numa-quality13-ab52cba14962415d989f170651c3d19e/cases/node1/topology.txt",
+        "C:/Users/robso/AppData/Local/Temp/numa-quality13-ab52cba14962415d989f170651c3d19e/cases/node1/status.txt",
+        "C:/Users/robso/AppData/Local/Temp/numa-quality13-ab52cba14962415d989f170651c3d19e/cases/node1/thread-affinity.txt",
+        "C:/Users/robso/AppData/Local/Temp/numa-quality13-ab52cba14962415d989f170651c3d19e/cases/node1/vm-flags.txt",
+        "C:/Users/robso/AppData/Local/Temp/numa-quality13-ab52cba14962415d989f170651c3d19e/cases/node1/maps.txt",
+        "C:/Users/robso/AppData/Local/Temp/numa-quality13-ab52cba14962415d989f170651c3d19e/cases/node1/native-region.txt",
+        "C:/Users/robso/AppData/Local/Temp/numa-quality13-ab52cba14962415d989f170651c3d19e/cases/node1/history.json",
+        "C:/Users/robso/AppData/Local/Temp/numa-quality13-ab52cba14962415d989f170651c3d19e/cases/node1/numa_maps.txt"
+      ],
+      "files": {
+        "placement-note.md": "The launcher confines every JVM allocation and resident page to node 0. Since the cache still has pages on node 1, numactl failed; enabling UseNUMA and repeating the same launch should enforce the original guarantee.\n",
+        "launch.txt": "numactl --cpunodebind=0 --membind=0 java -XX:+UseG1GC -Xms1g -Xmx1g -jar cache-service.jar\n",
+        "topology.txt": "available: 2 nodes (0-1)\nnode 0 cpus: 0 1 2 3 4 5 6 7\nnode 0 size: 65536 MB\nnode 0 free: 16384 MB\nnode 1 cpus: 8 9 10 11 12 13 14 15\nnode 1 size: 65536 MB\nnode 1 free: 16384 MB\nnode distances:\nnode  0  1\n  0: 10 21\n  1: 21 10\n",
+        "status.txt": "Name:\tjava\nPid:\t4242\nCpus_allowed_list:\t0-7\nMems_allowed_list:\t0-1\n",
+        "thread-affinity.txt": "Fixture capture: every current consumer/GC/compiler thread in PID 4242 has effective CPU affinity 0-7. No thread creation occurred within this recorded interval. No PMU access capture was taken.\n",
+        "vm-flags.txt": "UseG1GC = true\nUseNUMA = false\nUseNUMAInterleaving = false\n",
+        "maps.txt": "40000000-41000000 rw-p 00000000 00:00 0\n",
+        "native-region.txt": "Owned native allocator cache-17 identifies [0x40000000,0x41000000) as a 16777216-byte anonymous private cache region. This is not the Java heap. Base page size is 4096 bytes. No shared-file mappings are included in this region.\n",
+        "history.json": "{\n  \"pid\": 4242,\n  \"range\": {\n    \"start\": \"0x40000000\",\n    \"end\": \"0x41000000\",\n    \"bytes\": 16777216\n  },\n  \"events\": [\n    {\n      \"step\": 1,\n      \"action\": \"anonymous private mapping created\",\n      \"result\": \"success\"\n    },\n    {\n      \"step\": 2,\n      \"action\": \"mbind\",\n      \"mode\": \"MPOL_BIND\",\n      \"nodes\": [\n        1\n      ],\n      \"flags\": 0,\n      \"result\": 0\n    },\n    {\n      \"step\": 3,\n      \"action\": \"cache warmup writes all 4096 pages\",\n      \"observedResidence\": {\n        \"N1\": 4096\n      }\n    },\n    {\n      \"step\": 4,\n      \"action\": \"mbind\",\n      \"mode\": \"MPOL_BIND\",\n      \"nodes\": [\n        1\n      ],\n      \"flags\": 0,\n      \"result\": 0\n    },\n    {\n      \"step\": 5,\n      \"action\": \"matching numa_maps snapshot\",\n      \"scope\": \"no page migration operation recorded\"\n    }\n  ]\n}\n",
+        "numa_maps.txt": "40000000 bind:1 anon=4096 dirty=4096 N1=4096 kernelpagesize_kB=4\n"
+      }
+    },
+    {
+      "id": "native-range-policy-node0",
+      "task": "Review placement-note.md against the supplied NUMA evidence for a Linux 6.10 / numactl 2.0.19 / OpenJDK 25 deployment. Rewrite the note with a supported conclusion and the next action needed for the stated goal: this identified native cache should use node 0 while its consumer threads run on node-0 CPUs.\n\nOnly edit the review note. Do not run Linux capture commands, change affinity/cpusets/policies, install software or operate on a real host. Explain what the evidence establishes, what remains unknown, and whether the current mapping policy itself needs changing. Preserve the distinction between allocation policy, existing page residence and observed memory accesses.\n\nThese are synthetic development fixtures shaped like operational evidence; no real machine measurement is being supplied. The recorded history is part of the fixture. All events and snapshots refer to PID 4242 and the same mapping. Other JVM memory ranges are out of scope.",
+      "taskFile": "C:/Users/robso/AppData/Local/Temp/numa-quality13-ab52cba14962415d989f170651c3d19e/cases/node0/task.md",
+      "fixtureFiles": [
+        "C:/Users/robso/AppData/Local/Temp/numa-quality13-ab52cba14962415d989f170651c3d19e/cases/node0/placement-note.md",
+        "C:/Users/robso/AppData/Local/Temp/numa-quality13-ab52cba14962415d989f170651c3d19e/cases/node0/launch.txt",
+        "C:/Users/robso/AppData/Local/Temp/numa-quality13-ab52cba14962415d989f170651c3d19e/cases/node0/topology.txt",
+        "C:/Users/robso/AppData/Local/Temp/numa-quality13-ab52cba14962415d989f170651c3d19e/cases/node0/status.txt",
+        "C:/Users/robso/AppData/Local/Temp/numa-quality13-ab52cba14962415d989f170651c3d19e/cases/node0/thread-affinity.txt",
+        "C:/Users/robso/AppData/Local/Temp/numa-quality13-ab52cba14962415d989f170651c3d19e/cases/node0/vm-flags.txt",
+        "C:/Users/robso/AppData/Local/Temp/numa-quality13-ab52cba14962415d989f170651c3d19e/cases/node0/maps.txt",
+        "C:/Users/robso/AppData/Local/Temp/numa-quality13-ab52cba14962415d989f170651c3d19e/cases/node0/native-region.txt",
+        "C:/Users/robso/AppData/Local/Temp/numa-quality13-ab52cba14962415d989f170651c3d19e/cases/node0/history.json",
+        "C:/Users/robso/AppData/Local/Temp/numa-quality13-ab52cba14962415d989f170651c3d19e/cases/node0/numa_maps.txt"
+      ],
+      "files": {
+        "placement-note.md": "The launcher confines every JVM allocation and resident page to node 0. Since the cache still has pages on node 1, numactl failed; enabling UseNUMA and repeating the same launch should enforce the original guarantee.\n",
+        "launch.txt": "numactl --cpunodebind=0 --membind=0 java -XX:+UseG1GC -Xms1g -Xmx1g -jar cache-service.jar\n",
+        "topology.txt": "available: 2 nodes (0-1)\nnode 0 cpus: 0 1 2 3 4 5 6 7\nnode 0 size: 65536 MB\nnode 0 free: 16384 MB\nnode 1 cpus: 8 9 10 11 12 13 14 15\nnode 1 size: 65536 MB\nnode 1 free: 16384 MB\nnode distances:\nnode  0  1\n  0: 10 21\n  1: 21 10\n",
+        "status.txt": "Name:\tjava\nPid:\t4242\nCpus_allowed_list:\t0-7\nMems_allowed_list:\t0-1\n",
+        "thread-affinity.txt": "Fixture capture: every current consumer/GC/compiler thread in PID 4242 has effective CPU affinity 0-7. No thread creation occurred within this recorded interval. No PMU access capture was taken.\n",
+        "vm-flags.txt": "UseG1GC = true\nUseNUMA = false\nUseNUMAInterleaving = false\n",
+        "maps.txt": "40000000-41000000 rw-p 00000000 00:00 0\n",
+        "native-region.txt": "Owned native allocator cache-17 identifies [0x40000000,0x41000000) as a 16777216-byte anonymous private cache region. This is not the Java heap. Base page size is 4096 bytes. No shared-file mappings are included in this region.\n",
+        "history.json": "{\n  \"pid\": 4242,\n  \"range\": {\n    \"start\": \"0x40000000\",\n    \"end\": \"0x41000000\",\n    \"bytes\": 16777216\n  },\n  \"events\": [\n    {\n      \"step\": 1,\n      \"action\": \"anonymous private mapping created\",\n      \"result\": \"success\"\n    },\n    {\n      \"step\": 2,\n      \"action\": \"mbind\",\n      \"mode\": \"MPOL_BIND\",\n      \"nodes\": [\n        1\n      ],\n      \"flags\": 0,\n      \"result\": 0\n    },\n    {\n      \"step\": 3,\n      \"action\": \"cache warmup writes all 4096 pages\",\n      \"observedResidence\": {\n        \"N1\": 4096\n      }\n    },\n    {\n      \"step\": 4,\n      \"action\": \"mbind\",\n      \"mode\": \"MPOL_BIND\",\n      \"nodes\": [\n        0\n      ],\n      \"flags\": 0,\n      \"result\": 0\n    },\n    {\n      \"step\": 5,\n      \"action\": \"matching numa_maps snapshot\",\n      \"scope\": \"no page migration operation recorded\"\n    }\n  ]\n}\n",
+        "numa_maps.txt": "40000000 bind:0 anon=4096 dirty=4096 N1=4096 kernelpagesize_kB=4\n"
+      }
+    }
+  ],
+  "expectedOutcomeCriteria": [
+    {
+      "id": "native-range-policy-node1",
+      "expectedOutcome": [
+        "Revise the false guarantee in the note: launch membind is task policy, not a cpuset memory-node restriction; Mems_allowed_list permits both nodes.",
+        "Follow recorded successful range mbind to node1 and explain why it can govern this anonymous native range despite task bind0. Do not attribute it automatically to G1/UseNUMA.",
+        "State that current range policy still targets the wrong node for the declared node0 objective; direct the supported change to the owning native allocation policy, with node0 capacity/latency verification.",
+        "Distinguish policy change for future allocations from relocating existing N1 pages; propose separately planned recreation/allocation under desired policy or authorized migration if present pages must move.",
+        "Keep lack of PMU access evidence explicit; 4096 resident node1 pages is 16 MiB in this identified range, not a JVM remote-load ratio or Java heap total.",
+        "No real host actions or claims that another launch alone defeats explicit native range binding."
+      ],
+      "failureConditions": [
+        "Claims --membind is a hard administrative restriction that the VMA cannot override.",
+        "Says numactl failed or requires enabling UseNUMA from these artifacts.",
+        "Claims changing policy automatically moves 4096 resident pages.",
+        "Changes host configuration or treats synthetic artifacts as executed NUMA evidence."
+      ]
+    },
+    {
+      "id": "native-range-policy-node0",
+      "expectedOutcome": [
+        "Use bind0 current range policy and recorded later mbind with flags0 as the decisive difference.",
+        "Conclude that current allocation policy already matches the requested node0 target; do not require another policy toggle for this reason.",
+        "Explain why existing N1 pages can remain after a successful policy change without migration; direct any required residence change to an explicit supported relocation/recreation plan, retaining disruption and outcome checks.",
+        "Correct launch confinement and UseNUMA claims without erasing the accepted per-thread affinity/native mapping evidence.",
+        "Distinguish current allowed nodes, range policy and resident page counts; no unsupported remote-access/throughput conclusion.",
+        "No real host modifications or false Linux-execution claim."
+      ],
+      "failureConditions": [
+        "Reports that the current mapping policy is still bind1 or needs a new bind0 change.",
+        "Treats current bind0 plus N1 residence as proof that mbind failed.",
+        "Claims all process or heap pages were measured.",
+        "Proposes only repeating the same launch/UseNUMA as a guaranteed relocation fix."
+      ]
+    }
+  ],
+  "evaluatorInstruction": "Give only task and fixture files for the selected case to an evaluator; do not supply criteria, this evidence record, the handoff or check-case-fixtures.mjs."
+}

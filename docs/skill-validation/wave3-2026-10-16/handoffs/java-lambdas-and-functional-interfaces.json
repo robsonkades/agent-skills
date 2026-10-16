@@ -1,0 +1,454 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "java-lambdas-and-functional-interfaces",
+  "ownedPath": "C:/git/agent-skills/skills/java-lambdas-and-functional-interfaces",
+  "reviewer": "/root/quality08",
+  "wave": "wave3-2026-10-16",
+  "allWritesStopped": true,
+  "procedure": {
+    "read": [
+      "AGENTS.md",
+      "docs/skill-review-prompt.md (complete)",
+      "docs/skill-validation/wave3-2026-10-16/review-brief.md",
+      "skills/skill-engineering/SKILL.md",
+      "skills/skill-engineering/references/resource-design.md",
+      "skills/skill-engineering/references/evidence-and-confidence.md",
+      "skills/skill-engineering/references/evaluation.md",
+      "skills/skill-engineering/references/anti-patterns.md",
+      "docs/skill-validation/skills-comparative-research-2026-10-16.md"
+    ],
+    "notes": "Reused previously read unchanged skill-engineering references; full current review prompt/brief and evaluation reference read. Complete assigned package inspected. Findings sent before edits. No delegation."
+  },
+  "baseline": {
+    "committedVersion": "1.3.5",
+    "assignmentVersion": "1.3.5",
+    "preExistingVersionBump": false,
+    "stagedChanges": [],
+    "unstagedChanges": [],
+    "untrackedFiles": [],
+    "assignmentPackageClean": true,
+    "fileHashesAndAttribution": [
+      {
+        "path": "skills/java-lambdas-and-functional-interfaces/skill.yaml",
+        "beforeHash": "7736B6023050B6B1C660CD0AC76B9908F9AA10D16169133D5CB2521B5176667B",
+        "afterHash": "BC2A48F86D1ABA66C9701A73AAA51444E89956A6C22594C5E10A9131CBF9FC07",
+        "changed": true,
+        "beforeFences": 0,
+        "afterFences": 0,
+        "fencesIdentical": true
+      },
+      {
+        "path": "skills/java-lambdas-and-functional-interfaces/SKILL.md",
+        "beforeHash": "0DA82191C70F184D851F75B2CDC50185C15E7034F2AD10969C63DFBA01C2521E",
+        "afterHash": "59A2589AC2A378AAFA3BEEF82E14A3478C472913B02036AA60A84A84BC4688AA",
+        "changed": true,
+        "beforeFences": 0,
+        "afterFences": 0,
+        "fencesIdentical": true
+      },
+      {
+        "path": "skills/java-lambdas-and-functional-interfaces/references/standard-interfaces-and-cost.md",
+        "beforeHash": "1B269D34BBF9AB9ECD154B9B13D33A972EFE4F085BAC690526FD0048350C58B1",
+        "afterHash": "BCF8BB2D756D03784ECC2BD0A2B09535E0207CFFF37BD1984777F6DD0239D4E2",
+        "changed": true,
+        "beforeFences": 1,
+        "afterFences": 1,
+        "fencesIdentical": true
+      },
+      {
+        "path": "skills/java-lambdas-and-functional-interfaces/references/capture-and-composition.md",
+        "beforeHash": "01A1CBA83163910ACB261A863D76C8C1BE42C6E1C70D63B6E2A8A9D3BBE048AB",
+        "afterHash": "01A1CBA83163910ACB261A863D76C8C1BE42C6E1C70D63B6E2A8A9D3BBE048AB",
+        "changed": false,
+        "beforeFences": 7,
+        "afterFences": 7,
+        "fencesIdentical": true
+      }
+    ]
+  },
+  "findingsCorrected": [
+    {
+      "id": "consumer-invocation-contract",
+      "initialLocations": ["SKILL.md:37-40", "references/standard-interfaces-and-cost.md:26-48"],
+      "finalLocations": ["SKILL.md:37-43", "references/standard-interfaces-and-cost.md:50-70"],
+      "finding": "Target function shape, discarded results and ownership were covered, but the consumer's repeated invocation/commit policy was not made concrete for side-effectful callbacks.",
+      "consequence": "A valid IntUnaryOperator passed to AtomicInteger.updateAndGet can repeat an audit/message/captured-state effect for a failed update attempt; a thread-safe captured object does not couple that effect to the atomic state update.",
+      "fix": "Add a short first-step route to actual consumers/wrappers and one conditional reference section: inspect invocation policy, keep retryable calculations free of external effects, use returned committed values at the owner, preserve post-commit failure/order limits, and accept legitimate stateful callbacks under a single-invocation consumer contract.",
+      "evidence": [
+        "Java SE 25 AtomicInteger.updateAndGet API, since Java 8",
+        "Java SE 25 IntUnaryOperator API",
+        "OpenJDK jdk-25.0.3+9 AtomicInteger.updateAndGet source",
+        "Controlled local contention and negative/failure controls"
+      ]
+    }
+  ],
+  "findingsRemaining": [],
+  "filesChangedByReviewer": [
+    {
+      "path": "skills/java-lambdas-and-functional-interfaces/SKILL.md",
+      "change": "Three-line consumer-contract guard and conditional route in workflow step 1."
+    },
+    {
+      "path": "skills/java-lambdas-and-functional-interfaces/references/standard-interfaces-and-cost.md",
+      "change": "Focused invocation/commit section and two primary API links."
+    },
+    {
+      "path": "skills/java-lambdas-and-functional-interfaces/skill.yaml",
+      "change": "Patch 1.3.5 -> 1.3.6."
+    }
+  ],
+  "preExistingChanges": [],
+  "capabilitiesPreserved": [
+    "Interface selection, generic SAM/method-reference caveats, standard/custom/primitive alternatives and source compatibility.",
+    "Capture by value/reference, this versus anonymous class, bound receiver timing/null behavior and retention analysis.",
+    "Resource lifetime/ownership and deferred callback rejection/cancellation handoffs.",
+    "Result-discarding, asynchronous completion and failure observation safeguards.",
+    "Checked exception policies, composition order/short-circuiting/cleanup and identity-based registration.",
+    "JVM-specific allocation/linkage/inlining caveats and evidence-before-performance decisions.",
+    "All eight existing fenced examples are unchanged; capture-and-composition.md is byte-for-byte unchanged."
+  ],
+  "capabilitiesRemoved": [],
+  "version": {
+    "committed": "1.3.5",
+    "assignment": "1.3.5",
+    "final": "1.3.6",
+    "rationale": "One patch for focused content changes from a clean package baseline; no shared generated data touched.",
+    "descriptionUnchangedAndSynchronized": true
+  },
+  "validation": {
+    "structural": [
+      {
+        "name": "Strict package, links and related skill targets",
+        "workingDirectory": "C:/git/agent-skills",
+        "command": "@'\nimport { readFileSync, existsSync } from 'node:fs';\nimport { resolve, dirname } from 'node:path';\nimport { parseManifest } from './packages/core/src/domain/manifest.ts';\nimport { buildSkillPackage } from './packages/core/src/domain/skill-package.ts';\nimport { validatePackage } from './packages/core/src/application/validate-package.ts';\n\nconst root = resolve('skills/java-lambdas-and-functional-interfaces');\nconst paths = ['SKILL.md', 'skill.yaml', 'references/capture-and-composition.md', 'references/standard-interfaces-and-cost.md'];\nconst parsed = parseManifest(readFileSync(resolve(root, 'skill.yaml'), 'utf8'), { strict: true });\nconst pkg = buildSkillPackage(parsed.manifest, paths.map(path => ({ path, bytes: readFileSync(resolve(root, path)) })));\nconst report = validatePackage(pkg, { directoryName: 'java-lambdas-and-functional-interfaces' });\nconst failures = [...parsed.issues, ...report.issues];\nconst resources = [];\nfor (const path of paths.filter(path => path.endsWith('.md'))) {\n  const source = readFileSync(resolve(root, path), 'utf8');\n  for (const match of source.matchAll(/\\]\\(([^)]+)\\)/g)) {\n    const target = match[1].replace(/^<|>$/g, '');\n    if (/^https?:/.test(target)) continue;\n    const filePart = target.split('#')[0];\n    const absolute = resolve(dirname(resolve(root, path)), filePart || path.split('/').at(-1));\n    resources.push({ from: path, target, exists: existsSync(absolute) });\n    if (!existsSync(absolute)) failures.push({ missing: target, from: path });\n  }\n  for (const match of source.matchAll(/\\x60((?:references|assets|scripts)\\/[^\\x60]+)\\x60/g)) {\n    const absolute = resolve(root, match[1].split('#')[0]);\n    resources.push({ from: path, target: match[1], exists: existsSync(absolute) });\n    if (!existsSync(absolute)) failures.push({ missing: match[1], from: path });\n  }\n}\nconst related = [...parsed.manifest.dependencies.map(item => item.name), ...parsed.manifest.suggests];\nconst missingRelated = related.filter(name => !existsSync(resolve('skills', name, 'SKILL.md')));\nif (missingRelated.length) failures.push({ missingRelated });\nconsole.log(JSON.stringify({ skill: parsed.manifest.name, version: parsed.manifest.version, files: paths.length, packageReport: report, parseIssues: parsed.issues, resources, relatedSkillsChecked: related.length, missingRelated, failures }, null, 2));\nprocess.exitCode = failures.length ? 1 : 0;\n'@ | node --input-type=module",
+        "exitCode": 0,
+        "stdoutAndStderr": "{\n  \"skill\": \"java-lambdas-and-functional-interfaces\",\n  \"version\": \"1.3.6\",\n  \"files\": 4,\n  \"packageReport\": {\n    \"ok\": true,\n    \"issues\": [],\n    \"errors\": [],\n    \"warnings\": []\n  },\n  \"parseIssues\": [],\n  \"resources\": [\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/capture-and-composition.md\",\n      \"exists\": true\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/standard-interfaces-and-cost.md\",\n      \"exists\": true\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/standard-interfaces-and-cost.md\",\n      \"exists\": true\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/capture-and-composition.md\",\n      \"exists\": true\n    }\n  ],\n  \"relatedSkillsChecked\": 11,\n  \"missingRelated\": [],\n  \"failures\": []\n}\n",
+        "result": "PASS: four files; zero parser/validator issues; four local resource references and eleven suggested-skill targets resolve. Existing core validators used, no global/adapter validation claimed."
+      },
+      {
+        "name": "Owned-file Prettier",
+        "workingDirectory": "C:/git/agent-skills",
+        "command": "node node_modules/prettier/bin/prettier.cjs --check skills/java-lambdas-and-functional-interfaces/SKILL.md skills/java-lambdas-and-functional-interfaces/skill.yaml skills/java-lambdas-and-functional-interfaces/references/capture-and-composition.md skills/java-lambdas-and-functional-interfaces/references/standard-interfaces-and-cost.md",
+        "exitCode": 0,
+        "stdoutAndStderr": "Checking formatting...\nAll matched files use Prettier code style!\n",
+        "result": "PASS: all four explicitly named owned files."
+      },
+      {
+        "name": "Diff whitespace",
+        "workingDirectory": "C:/git/agent-skills",
+        "command": "git diff --check -- skills/java-lambdas-and-functional-interfaces",
+        "exitCode": 0,
+        "stdoutAndStderr": "",
+        "result": "PASS: exit 0, empty output."
+      },
+      {
+        "name": "Final diff/ownership/process inspection",
+        "workingDirectory": "C:/git/agent-skills",
+        "command": "git diff -- skills/java-lambdas-and-functional-interfaces; git status --short -- skills/java-lambdas-and-functional-interfaces; git diff --cached --name-status -- skills/java-lambdas-and-functional-interfaces; git ls-files --others --exclude-standard -- skills/java-lambdas-and-functional-interfaces; Get-CimInstance Win32_Process -Filter \"name = 'java.exe'\" | Where-Object { $_.CommandLine -match 'CallbackRetryProbe' } | Select-Object ProcessId, CommandLine",
+        "exitCode": 0,
+        "stdoutAndStderr": "diff --git a/skills/java-lambdas-and-functional-interfaces/SKILL.md b/skills/java-lambdas-and-functional-interfaces/SKILL.md\nindex 599133e..8a71de1 100644\n--- a/skills/java-lambdas-and-functional-interfaces/SKILL.md\n+++ b/skills/java-lambdas-and-functional-interfaces/SKILL.md\n@@ -37,7 +37,10 @@ and performance conclusions can be made.\n 1. **Check the contract first.** Check the target function type: a generic abstract method may\n    require a method reference or named implementation rather than a lambda. Identity, lifecycle,\n    serialization, annotations, diagnostic naming, extra protocol methods and state may justify a\n-   named implementation even with one abstract method.\n+   named implementation even with one abstract method. Follow the actual consumer and wrappers:\n+   the function type alone does not establish invocation count or make captured effects atomic.\n+   For retrying consumers, read `references/standard-interfaces-and-cost.md` before moving effects\n+   into the callback.\n 2. **Write it as a lambda, then try the method reference.** Keep whichever reads better; a\n    method reference that forces the reader to work out which of the four kinds it is has not\n    paid for itself.\ndiff --git a/skills/java-lambdas-and-functional-interfaces/references/standard-interfaces-and-cost.md b/skills/java-lambdas-and-functional-interfaces/references/standard-interfaces-and-cost.md\nindex 6cec29e..29cc048 100644\n--- a/skills/java-lambdas-and-functional-interfaces/references/standard-interfaces-and-cost.md\n+++ b/skills/java-lambdas-and-functional-interfaces/references/standard-interfaces-and-cost.md\n@@ -47,6 +47,28 @@ caller's observation/ownership path. `Consumer.andThen` sequences invocations an\n synchronous exceptions; it does not await work represented by a discarded stage. Keep an\n appropriate value-returning contract when that completion must be composed.\n \n+## Invocation and commit belong to the consumer's contract\n+\n+An `IntUnaryOperator` describes an input/result shape, not how often a caller applies it.\n+Follow the actual consumer, its wrappers and runtime selection. For example,\n+`AtomicInteger.updateAndGet` (Java 8+) may reapply its function after contention, so the update\n+function must be free of externally visible effects. Auditing, sending a message or mutating\n+another captured object inside it can happen for an attempt whose computed value is never\n+installed. A thread-safe capture prevents some races; it does not make those effects part of\n+the atomic update. A contention-free test does not prove single invocation under contention.\n+\n+When an effect describes a completed update, keep the calculation inside the retryable\n+function and use the returned committed value at the owning boundary. That still leaves two\n+operations: an effect failure does not roll back the counter, concurrent effects may be\n+observed out of update order, and caller retries need their own policy. If state and effect\n+must commit together, resolve that coordination contract rather than claiming that moving\n+the effect after `updateAndGet` makes them atomic.\n+\n+Do not impose purity on every functional interface. A consumer that deliberately invokes a\n+stateful callback once can support effects under its documented failure and concurrency\n+contract. The consuming API or implementation supplies that guarantee; a lambda, method\n+reference or `@FunctionalInterface` annotation does not.\n+\n ## When a custom functional interface is justified\n \n Define one when at least one of these holds:\n@@ -147,3 +169,5 @@ For primitive boundaries, see [JLS boxing](https://docs.oracle.com/javase/specs/\n For discarded results, see [JLS expression results](https://docs.oracle.com/javase/specs/jls/se25/html/jls-15.html#jls-15.1),\n [method-reference target types](https://docs.oracle.com/javase/specs/jls/se25/html/jls-15.html#jls-15.13.2)\n and [BlockingQueue.offer](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/BlockingQueue.html#offer(E)>).\n+For invocation policy, compare [IntUnaryOperator](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/function/IntUnaryOperator.html)\n+with the consuming [AtomicInteger.updateAndGet contract](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/atomic/AtomicInteger.html#updateAndGet(java.util.function.IntUnaryOperator)>).\ndiff --git a/skills/java-lambdas-and-functional-interfaces/skill.yaml b/skills/java-lambdas-and-functional-interfaces/skill.yaml\nindex 0c5dfd0..fdbe991 100644\n--- a/skills/java-lambdas-and-functional-interfaces/skill.yaml\n+++ b/skills/java-lambdas-and-functional-interfaces/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: java-lambdas-and-functional-interfaces\n-version: 1.3.5\n+version: 1.3.6\n description: >-\n   Lambdas, method references and the functional interfaces they implement: what a lambda\n   captures and what that costs, why its this differs from an anonymous class's, when a\n M skills/java-lambdas-and-functional-interfaces/SKILL.md\n M skills/java-lambdas-and-functional-interfaces/references/standard-interfaces-and-cost.md\n M skills/java-lambdas-and-functional-interfaces/skill.yaml\n",
+        "result": "Three intended owned files changed; no staged/untracked files and no CallbackRetryProbe JVM remains."
+      },
+      {
+        "name": "Examples/baseline attribution",
+        "method": "Compared all assignment/final SHA256 and fenced blocks in the functions runtime.",
+        "result": "All eight existing fenced blocks identical; only the three declared files changed.",
+        "details": [
+          {
+            "path": "skills/java-lambdas-and-functional-interfaces/skill.yaml",
+            "beforeHash": "7736B6023050B6B1C660CD0AC76B9908F9AA10D16169133D5CB2521B5176667B",
+            "afterHash": "BC2A48F86D1ABA66C9701A73AAA51444E89956A6C22594C5E10A9131CBF9FC07",
+            "changed": true,
+            "beforeFences": 0,
+            "afterFences": 0,
+            "fencesIdentical": true
+          },
+          {
+            "path": "skills/java-lambdas-and-functional-interfaces/SKILL.md",
+            "beforeHash": "0DA82191C70F184D851F75B2CDC50185C15E7034F2AD10969C63DFBA01C2521E",
+            "afterHash": "59A2589AC2A378AAFA3BEEF82E14A3478C472913B02036AA60A84A84BC4688AA",
+            "changed": true,
+            "beforeFences": 0,
+            "afterFences": 0,
+            "fencesIdentical": true
+          },
+          {
+            "path": "skills/java-lambdas-and-functional-interfaces/references/standard-interfaces-and-cost.md",
+            "beforeHash": "1B269D34BBF9AB9ECD154B9B13D33A972EFE4F085BAC690526FD0048350C58B1",
+            "afterHash": "BCF8BB2D756D03784ECC2BD0A2B09535E0207CFFF37BD1984777F6DD0239D4E2",
+            "changed": true,
+            "beforeFences": 1,
+            "afterFences": 1,
+            "fencesIdentical": true
+          },
+          {
+            "path": "skills/java-lambdas-and-functional-interfaces/references/capture-and-composition.md",
+            "beforeHash": "01A1CBA83163910ACB261A863D76C8C1BE42C6E1C70D63B6E2A8A9D3BBE048AB",
+            "afterHash": "01A1CBA83163910ACB261A863D76C8C1BE42C6E1C70D63B6E2A8A9D3BBE048AB",
+            "changed": false,
+            "beforeFences": 7,
+            "afterFences": 7,
+            "fencesIdentical": true
+          }
+        ]
+      }
+    ],
+    "technical": [
+      {
+        "name": "Probe compile",
+        "workingDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-lambdas-probe",
+        "command": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' --release 8 -d . CallbackRetryProbe.java 1> compile.stdout.txt 2> compile.stderr.txt\n$compileExit = $LASTEXITCODE\nGet-Content -LiteralPath compile.stdout.txt\nGet-Content -LiteralPath compile.stderr.txt\nWrite-Output \"javac exit: $compileExit\"\nexit $compileExit",
+        "exitCode": 0,
+        "stdoutAndStderr": "warning: [options] source value 8 is obsolete and will be removed in a future release\r\nwarning: [options] target value 8 is obsolete and will be removed in a future release\r\nwarning: [options] To suppress warnings about obsolete options, use -Xlint:-options.\r\n3 warnings\r\njavac exit: 0\r\n",
+        "result": "PASS with javac 25.0.3 --release 8. Three obsolete-source/target option warnings retained, not suppressed. No source errors.",
+        "artifacts": [
+          "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-lambdas-probe/CallbackRetryProbe.java",
+          "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-lambdas-probe/CallbackRetryProbe.class",
+          "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-lambdas-probe/compile.stdout.txt",
+          "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-lambdas-probe/compile.stderr.txt"
+        ]
+      },
+      {
+        "name": "Controlled stable probe",
+        "workingDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-lambdas-probe",
+        "command": "$probeProcess = Start-Process -FilePath 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -ArgumentList @('-cp', '.', 'CallbackRetryProbe', 'stable') -WindowStyle Hidden -PassThru -RedirectStandardOutput 'stable.stdout.log' -RedirectStandardError 'stable.stderr.log'\nif (-not $probeProcess.WaitForExit(30000)) { $probeProcess.Kill(); $probeProcess.WaitForExit(); throw 'Probe timed out and was killed' }\n$probeExit = $probeProcess.ExitCode\nGet-Content -LiteralPath 'stable.stdout.log'\nGet-Content -LiteralPath 'stable.stderr.log'\nWrite-Output \"java exit: $probeExit\"\nexit $probeExit",
+        "exitCode": 0,
+        "stdoutAndStderr": "PASS stable callbackCalls=1 result=1 auditValues=[1]\r\njava exit: 0\r\n",
+        "result": "PASS: one callback invocation, committed result 1, audit [1].",
+        "artifacts": [
+          "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-lambdas-probe/stable.stdout.log",
+          "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-lambdas-probe/stable.stderr.log"
+        ],
+        "coverage": "One bounded controlled execution on Temurin 25.0.3+9. A correctness observation, not every-interleaving proof or performance measurement."
+      },
+      {
+        "name": "Controlled retry probe",
+        "workingDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-lambdas-probe",
+        "command": "$probeProcess = Start-Process -FilePath 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -ArgumentList @('-cp', '.', 'CallbackRetryProbe', 'retry') -WindowStyle Hidden -PassThru -RedirectStandardOutput 'retry.stdout.log' -RedirectStandardError 'retry.stderr.log'\nif (-not $probeProcess.WaitForExit(30000)) { $probeProcess.Kill(); $probeProcess.WaitForExit(); throw 'Probe timed out and was killed' }\n$probeExit = $probeProcess.ExitCode\nGet-Content -LiteralPath 'retry.stdout.log'\nGet-Content -LiteralPath 'retry.stderr.log'\nWrite-Output \"java exit: $probeExit\"\nexit $probeExit",
+        "exitCode": 0,
+        "stdoutAndStderr": "PASS retry callbackCalls=2 result=2 auditValues=[1, 2]\r\njava exit: 0\r\n",
+        "result": "PASS: one updateAndGet call reapplied its callback after an interfering increment; two callbacks, committed result 2, audit [1,2].",
+        "artifacts": [
+          "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-lambdas-probe/retry.stdout.log",
+          "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-lambdas-probe/retry.stderr.log"
+        ],
+        "coverage": "One bounded controlled execution on Temurin 25.0.3+9. A correctness observation, not every-interleaving proof or performance measurement."
+      },
+      {
+        "name": "Controlled after-commit probe",
+        "workingDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-lambdas-probe",
+        "command": "$probeProcess = Start-Process -FilePath 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -ArgumentList @('-cp', '.', 'CallbackRetryProbe', 'after-commit') -WindowStyle Hidden -PassThru -RedirectStandardOutput 'after-commit.stdout.log' -RedirectStandardError 'after-commit.stderr.log'\nif (-not $probeProcess.WaitForExit(30000)) { $probeProcess.Kill(); $probeProcess.WaitForExit(); throw 'Probe timed out and was killed' }\n$probeExit = $probeProcess.ExitCode\nGet-Content -LiteralPath 'after-commit.stdout.log'\nGet-Content -LiteralPath 'after-commit.stderr.log'\nWrite-Output \"java exit: $probeExit\"\nexit $probeExit",
+        "exitCode": 0,
+        "stdoutAndStderr": "PASS after-commit callbackCalls=2 result=2 auditValues=[2]\r\njava exit: 0\r\n",
+        "result": "PASS: same controlled interference; two callback invocations, one post-return audit [2].",
+        "artifacts": [
+          "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-lambdas-probe/after-commit.stdout.log",
+          "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-lambdas-probe/after-commit.stderr.log"
+        ],
+        "coverage": "One bounded controlled execution on Temurin 25.0.3+9. A correctness observation, not every-interleaving proof or performance measurement."
+      },
+      {
+        "name": "Controlled audit-failure probe",
+        "workingDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-lambdas-probe",
+        "command": "$probeProcess = Start-Process -FilePath 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -ArgumentList @('-cp', '.', 'CallbackRetryProbe', 'audit-failure') -WindowStyle Hidden -PassThru -RedirectStandardOutput 'audit-failure.stdout.log' -RedirectStandardError 'audit-failure.stderr.log'\nif (-not $probeProcess.WaitForExit(30000)) { $probeProcess.Kill(); $probeProcess.WaitForExit(); throw 'Probe timed out and was killed' }\n$probeExit = $probeProcess.ExitCode\nGet-Content -LiteralPath 'audit-failure.stdout.log'\nGet-Content -LiteralPath 'audit-failure.stderr.log'\nWrite-Output \"java exit: $probeExit\"\nexit $probeExit",
+        "exitCode": 0,
+        "stdoutAndStderr": "PASS audit-failure committed=1 auditThrew=true counter=1\r\njava exit: 0\r\n",
+        "result": "PASS: deliberately throwing the post-return audit left counter value 1 committed.",
+        "artifacts": [
+          "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-lambdas-probe/audit-failure.stdout.log",
+          "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-lambdas-probe/audit-failure.stderr.log"
+        ],
+        "coverage": "One bounded controlled execution on Temurin 25.0.3+9. A correctness observation, not every-interleaving proof or performance measurement."
+      }
+    ],
+    "executedBehavioralEvaluations": [],
+    "behavioralComparison": "NOT EXECUTED. No evaluator/subagent launched and no measured improvement over the original or no-skill baseline established.",
+    "walkthroughs": [
+      {
+        "caseId": "consumer-atomic",
+        "kind": "Structured expected-behavior walkthrough",
+        "result": "Configured consumer delegates to retryable atomic update, so external audit must leave the retryable calculation; moving it does not create a state/effect transaction."
+      },
+      {
+        "caseId": "consumer-locked",
+        "kind": "Structured expected-behavior walkthrough",
+        "result": "Configured synchronized implementation applies the callback once per update; original stateful callback is acceptable under the supplied normal-completion contract, so no forced change."
+      }
+    ],
+    "failuresWarningsAndRecovery": [
+      {
+        "kind": "Compiler warning",
+        "detail": "javac --release 8 returned exit 0 with three obsolete source/target option warnings. The probe ran on Java 25, not a Java 8 VM."
+      },
+      {
+        "kind": "Read-only discovery status",
+        "detail": "The initial combined inspection ended with rg finding no nested skills/AGENTS.md (exit 1). The assigned directory/files and root instructions were available; this was not a validation failure."
+      }
+    ],
+    "processCleanup": {
+      "method": "Each hidden child Java process had a 30-second watchdog. The contention probe used bounded latches and joined its worker; all four modes exited normally. Final process query found no CallbackRetryProbe.",
+      "runningProcessesStartedByReviewer": 0
+    }
+  },
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/atomic/AtomicInteger.html#updateAndGet(java.util.function.IntUnaryOperator)",
+      "version": "Java SE 25 API; updateAndGet since 1.8",
+      "supports": "The consuming API requires a side-effect-free function because contention can reapply it; the return is the updated value."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/function/IntUnaryOperator.html",
+      "version": "Java SE 25 API; interface since 1.8",
+      "supports": "A standard primitive unary operation describes input/result and composition; it does not itself establish a consuming API's invocation count."
+    },
+    {
+      "url": "https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/java.base/share/classes/java/util/concurrent/atomic/AtomicInteger.java",
+      "retrievedAs": "https://raw.githubusercontent.com/openjdk/jdk25u/jdk-25.0.3%2B9/src/java.base/share/classes/java/util/concurrent/atomic/AtomicInteger.java",
+      "version": "OpenJDK jdk-25.0.3+9",
+      "supports": "updateAndGet loops around weakCompareAndSetVolatile; it recomputes when the observed prior value changes. This is implementation evidence for the exercised runtime, not a universal fixed retry count."
+    }
+  ],
+  "evidencePaths": {
+    "handoff": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-lambdas-and-functional-interfaces.json",
+    "fixtureDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-lambdas-probe",
+    "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-lambdas-probe/CallbackRetryProbe.java",
+    "compiledFixture": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-lambdas-probe/CallbackRetryProbe.class",
+    "compileStdout": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-lambdas-probe/compile.stdout.txt",
+    "compileStderr": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-lambdas-probe/compile.stderr.txt",
+    "runArtifacts": [
+      "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-lambdas-probe/stable.stdout.log",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-lambdas-probe/stable.stderr.log",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-lambdas-probe/retry.stdout.log",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-lambdas-probe/retry.stderr.log",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-lambdas-probe/after-commit.stdout.log",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-lambdas-probe/after-commit.stderr.log",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-lambdas-probe/audit-failure.stdout.log",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-lambdas-probe/audit-failure.stderr.log"
+    ],
+    "structuralOutputs": "Retained verbatim in validation.structural in this JSON.",
+    "baselineHashes": "Retained in baseline.fileHashesAndAttribution."
+  },
+  "reproducibleDevelopmentCases": {
+    "purpose": "Coordinator-owned independent evaluation inputs; development cases, not unseen holdouts.",
+    "decisiveConstraint": "Only runtime.properties selects a different actual consuming implementation: AtomicInteger retry versus one synchronized callback application. Common source, request, Java target and audit requirements are identical.",
+    "inputs": [
+      {
+        "id": "consumer-atomic",
+        "taskInput": {
+          "request": "Review this lambda and correct it only if the active consumer contract requires a change. After concurrent recordNext calls complete normally, there must be one in-process audit entry for each such call, with that call's returned counter value. Audit entry order does not matter. runtime.properties is the active deployment configuration, loaded with Properties.load and passed unchanged to the CounterAudit constructor. Preserve that backend selection, the Counter.update signature and the Java 8 source/API target. The queue is in-process bookkeeping; durable delivery, process-crash atomicity and fatal VM/resource failures are outside this fixture's requirement. Do not replace the counter backend, add dependencies, introduce a custom functional interface, or change unrelated code merely to simplify the callback. Explain the relevant behavior under contention and the limits if a later audit operation fails. A previous one-thread smoke run completed normally. Inspect the factory and implementation before choosing an action.",
+          "projectTarget": "Java 8 source/API compatibility. Available authoring runtime is Temurin 25.0.3+9; do not assume execution on Java 8 has occurred.",
+          "files": [
+            {
+              "path": "CounterAudit.java",
+              "content": "import java.util.ArrayList;\nimport java.util.List;\nimport java.util.Properties;\nimport java.util.concurrent.ConcurrentLinkedQueue;\nimport java.util.concurrent.atomic.AtomicInteger;\nimport java.util.function.IntUnaryOperator;\n\npublic final class CounterAudit {\n    interface Counter {\n        int update(IntUnaryOperator rule);\n    }\n\n    private final Counter counter;\n    private final ConcurrentLinkedQueue<Integer> audit = new ConcurrentLinkedQueue<>();\n\n    public CounterAudit(Properties runtime) {\n        counter = counterFor(runtime.getProperty(\"counter.backend\"));\n    }\n\n    public int recordNext() {\n        return counter.update(previous -> {\n            int next = previous + 1;\n            audit.add(next);\n            return next;\n        });\n    }\n\n    public List<Integer> completedAuditSnapshot() {\n        return new ArrayList<>(audit);\n    }\n\n    private static Counter counterFor(String backend) {\n        if (\"atomic\".equals(backend)) return new AtomicCounter();\n        if (\"locked\".equals(backend)) return new LockedCounter();\n        throw new IllegalArgumentException(\"Unsupported counter.backend\");\n    }\n\n    private static final class AtomicCounter implements Counter {\n        private final AtomicInteger value = new AtomicInteger();\n        public int update(IntUnaryOperator rule) {\n            return value.updateAndGet(rule);\n        }\n    }\n\n    private static final class LockedCounter implements Counter {\n        private int value;\n        public synchronized int update(IntUnaryOperator rule) {\n            value = rule.applyAsInt(value);\n            return value;\n        }\n    }\n}\n"
+            },
+            {
+              "path": "runtime.properties",
+              "content": "counter.backend=atomic\n"
+            }
+          ],
+          "prerequisites": [
+            "Coordinator materializes the supplied files in a fresh isolated task directory.",
+            "javac --release 8 CounterAudit.java compiles the supplied Java source; use an existing suitable JDK, do not install/upgrade.",
+            "All updates in this fixture go through recordNext; the counter's private value has no other writers.",
+            "Any concurrent verification must finish and join all callers before reading completedAuditSnapshot. Avoid sleep-based race claims."
+          ],
+          "allowedWork": "Review and, only if justified, modify CounterAudit.java in the isolated case directory. Return the observed checks and limitations."
+        }
+      },
+      {
+        "id": "consumer-locked",
+        "taskInput": {
+          "request": "Review this lambda and correct it only if the active consumer contract requires a change. After concurrent recordNext calls complete normally, there must be one in-process audit entry for each such call, with that call's returned counter value. Audit entry order does not matter. runtime.properties is the active deployment configuration, loaded with Properties.load and passed unchanged to the CounterAudit constructor. Preserve that backend selection, the Counter.update signature and the Java 8 source/API target. The queue is in-process bookkeeping; durable delivery, process-crash atomicity and fatal VM/resource failures are outside this fixture's requirement. Do not replace the counter backend, add dependencies, introduce a custom functional interface, or change unrelated code merely to simplify the callback. Explain the relevant behavior under contention and the limits if a later audit operation fails. A previous one-thread smoke run completed normally. Inspect the factory and implementation before choosing an action.",
+          "projectTarget": "Java 8 source/API compatibility. Available authoring runtime is Temurin 25.0.3+9; do not assume execution on Java 8 has occurred.",
+          "files": [
+            {
+              "path": "CounterAudit.java",
+              "content": "import java.util.ArrayList;\nimport java.util.List;\nimport java.util.Properties;\nimport java.util.concurrent.ConcurrentLinkedQueue;\nimport java.util.concurrent.atomic.AtomicInteger;\nimport java.util.function.IntUnaryOperator;\n\npublic final class CounterAudit {\n    interface Counter {\n        int update(IntUnaryOperator rule);\n    }\n\n    private final Counter counter;\n    private final ConcurrentLinkedQueue<Integer> audit = new ConcurrentLinkedQueue<>();\n\n    public CounterAudit(Properties runtime) {\n        counter = counterFor(runtime.getProperty(\"counter.backend\"));\n    }\n\n    public int recordNext() {\n        return counter.update(previous -> {\n            int next = previous + 1;\n            audit.add(next);\n            return next;\n        });\n    }\n\n    public List<Integer> completedAuditSnapshot() {\n        return new ArrayList<>(audit);\n    }\n\n    private static Counter counterFor(String backend) {\n        if (\"atomic\".equals(backend)) return new AtomicCounter();\n        if (\"locked\".equals(backend)) return new LockedCounter();\n        throw new IllegalArgumentException(\"Unsupported counter.backend\");\n    }\n\n    private static final class AtomicCounter implements Counter {\n        private final AtomicInteger value = new AtomicInteger();\n        public int update(IntUnaryOperator rule) {\n            return value.updateAndGet(rule);\n        }\n    }\n\n    private static final class LockedCounter implements Counter {\n        private int value;\n        public synchronized int update(IntUnaryOperator rule) {\n            value = rule.applyAsInt(value);\n            return value;\n        }\n    }\n}\n"
+            },
+            {
+              "path": "runtime.properties",
+              "content": "counter.backend=locked\n"
+            }
+          ],
+          "prerequisites": [
+            "Coordinator materializes the supplied files in a fresh isolated task directory.",
+            "javac --release 8 CounterAudit.java compiles the supplied Java source; use an existing suitable JDK, do not install/upgrade.",
+            "All updates in this fixture go through recordNext; the counter's private value has no other writers.",
+            "Any concurrent verification must finish and join all callers before reading completedAuditSnapshot. Avoid sleep-based race claims."
+          ],
+          "allowedWork": "Review and, only if justified, modify CounterAudit.java in the isolated case directory. Return the observed checks and limitations."
+        }
+      }
+    ],
+    "expectedOutcomeCriteria": [
+      {
+        "id": "consumer-atomic",
+        "expectedOutcome": [
+          "Read runtime.properties and trace CounterAudit construction through counterFor to AtomicCounter.update and AtomicInteger.updateAndGet.",
+          "Identify that a retry can reapply the lambda, adding audit entries for attempts whose candidate was not installed; a thread-safe queue and primitive SAM do not supply single-invocation semantics.",
+          "Keep the update function side-effect-free for this API and perform audit bookkeeping using the returned committed value at the owning boundary, preserving the public signature/backend and allowing unordered audit entries.",
+          "Provide or describe a bounded deterministic interference check; distinguish a reproducible callback retry from a probabilistic stress pass or a one-thread smoke test.",
+          "Explain that moving audit after the update does not roll back the counter if the effect fails and does not provide transactionality, durable exactly-once delivery or caller-retry idempotence.",
+          "Keep Java 8 compatibility and state that --release 8 on Java 25 is not execution on a Java 8 VM."
+        ],
+        "failureConditions": [
+          "Approve the original callback as single-invocation because the state and audit are thread-safe or because a sequential run passed.",
+          "Ignore the configured factory or discuss only the lambda syntax/interface name.",
+          "Put audit in another lambda/composed function still passed to updateAndGet and call the defect fixed.",
+          "Switch to the locked backend, break the Counter signature, or add dependencies/frameworks without need.",
+          "Claim state and audit now commit atomically or that callback retries always occur a fixed number of times."
+        ]
+      },
+      {
+        "id": "consumer-locked",
+        "expectedOutcome": [
+          "Read runtime.properties and resolve the active LockedCounter implementation rather than assuming the AtomicInteger implementation is selected.",
+          "Observe that the synchronized method invokes the rule once, then installs and returns its result while all updates are serialized under that object's monitor.",
+          "Accept the existing stateful callback for the stated normal-completion, in-process, unordered-audit contract; no forced code change or purity mandate is necessary.",
+          "Do not infer retry behavior merely from the shared Counter.update signature or presence of an unused AtomicCounter class.",
+          "State scope limits: synchronization here does not provide durable atomicity with external effects, and changing the backend later requires reviewing callback semantics again.",
+          "If checking behavior, keep observations separate from the implementation/API argument; a passing run alone does not establish every concurrency guarantee."
+        ],
+        "failureConditions": [
+          "Apply AtomicInteger's retry policy to the configured locked implementation and report duplicate attempts without evidence.",
+          "Require all IntUnaryOperator implementations to be pure by definition.",
+          "Replace the valid backend or change the public API merely to enforce a blanket style rule.",
+          "Claim this in-process synchronization solves external transactional/durable exactly-once effects."
+        ]
+      }
+    ],
+    "evaluatorIsolation": "Supply selected taskInput/files only. Keep expectedOutcomeCriteria and this review's prior outputs separate from actor input.",
+    "caseExecutionStatus": "These actor cases were structured walkthroughs, not agent runs. Embedded CounterAudit source was not separately compiled/executed during this review; the separate CallbackRetryProbe exercised the relevant JDK retry/failure mechanisms."
+  },
+  "assumptionsAndLimits": [
+    "Authoring/validation toolchain remained Temurin 25.0.3+9; --release 8 checks language/API availability, not Java 8 VM behavior.",
+    "The probe intentionally uses counters/latches to expose callback attempts. Those are test instrumentation, not advice to insert side effects into a production atomic update function.",
+    "The retry probe exercises one controlled interference, not all interleavings or a guaranteed retry count for every implementation/build.",
+    "Post-commit effect ordering was reasoned from the separate operations; no production message/audit system or durability protocol was tested.",
+    "No performance benchmark or allocation estimate was produced; no behavioral gain from the revised skill was measured.",
+    "Existing code examples were unchanged and not re-certified through execution.",
+    "The two evaluator cases are authored development fixtures and need coordinator materialization/execution; they are not hidden tests.",
+    "Full catalog, adapter-specific checks, generated integrity and version enforcement remain coordinator-owned."
+  ],
+  "crossSkillIssues": [],
+  "coordinatorActions": [
+    "Optionally materialize the two separated case inputs into independent evaluation workspaces and compare original/revised skills with explicit exposure controls.",
+    "After all reviewers stop, regenerate catalog and run repository verification."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "workingDirectory": "C:/git/agent-skills",
+      "purpose": "Regenerate integrity/version index and shared dependency/description checks.",
+      "prerequisites": "All reviewers stopped; coordinator executes."
+    },
+    {
+      "command": "npm run verify",
+      "workingDirectory": "C:/git/agent-skills",
+      "purpose": "Repository CI and published-version-policy checks.",
+      "prerequisites": "Registry rebuilt and all reviewers remain stopped; coordinator executes."
+    }
+  ],
+  "finalState": "Owned changes inspected; all probe processes terminated. After this handoff is written, only read-only JSON/evidence-path verification remains; no further writes."
+}

@@ -1,0 +1,53 @@
+{
+  "baseline": {
+    "name": "gof-adapter",
+    "initialVersion": "1.3.4",
+    "committedVersion": "1.3.4",
+    "status": "",
+    "files": [
+      {
+        "path": "skills/gof-adapter/SKILL.md",
+        "sha256": "ecf8b2b0569cee94e7d5709829f17563aa64bde98c61f41782f89f81db4f3745",
+        "bytes": 12052
+      },
+      {
+        "path": "skills/gof-adapter/references/decision-and-alternatives.md",
+        "sha256": "8a727cff7085ac8b0e7014c4d7b541ae727fd822a8630e84e9530fd68cf352f5",
+        "bytes": 10664
+      },
+      {
+        "path": "skills/gof-adapter/references/worked-example.md",
+        "sha256": "4343dbd4318971e056eb764e1c64685a9b28e6c7bb3cb1a7b6a3dc9ac2f34c8a",
+        "bytes": 11383
+      },
+      {
+        "path": "skills/gof-adapter/skill.yaml",
+        "sha256": "30e82f33e77698a1fe1c0cb1610fe03762725e2806c69f46bddc6fa1bb7b9845",
+        "bytes": 2187
+      }
+    ]
+  },
+  "hashesUnchanged": true,
+  "finalOwnedHashes": [
+    {
+      "path": "C:/git/agent-skills/skills/gof-adapter/SKILL.md",
+      "sha256": "ECF8B2B0569CEE94E7D5709829F17563AA64BDE98C61F41782F89F81DB4F3745",
+      "bytes": 12052
+    },
+    {
+      "path": "C:/git/agent-skills/skills/gof-adapter/references/decision-and-alternatives.md",
+      "sha256": "8A727CFF7085AC8B0E7014C4D7B541AE727FD822A8630E84E9530FD68CF352F5",
+      "bytes": 10664
+    },
+    {
+      "path": "C:/git/agent-skills/skills/gof-adapter/references/worked-example.md",
+      "sha256": "4343DBD4318971E056EB764E1C64685A9B28E6C7BB3CB1A7B6A3DC9AC2F34C8A",
+      "bytes": 11383
+    },
+    {
+      "path": "C:/git/agent-skills/skills/gof-adapter/skill.yaml",
+      "sha256": "30E82F33E77698A1FE1C0CB1610FE03762725E2806C69F46BDDC6FA1BB7B9845",
+      "bytes": 2187
+    }
+  ]
+}

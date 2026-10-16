@@ -1,0 +1,227 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "database-engine-selection-and-migration",
+  "ownedPath": "C:/git/agent-skills/skills/database-engine-selection-and-migration",
+  "versions": {
+    "committed": "1.0.4",
+    "assignment": "1.0.4",
+    "final": "1.0.5",
+    "reason": "Patch bump for qualified post-load integrity guidance; assignment tree was clean."
+  },
+  "baseline": {
+    "preExistingChanges": [],
+    "stagedChanges": [],
+    "untrackedFiles": [],
+    "files": [
+      {
+        "path": "skills/database-engine-selection-and-migration/skill.yaml",
+        "sha256": "82FB6B8E65941FCEE524B6680D28C618C39E78BE2C4C17E656421894A3A04F9C"
+      },
+      {
+        "path": "skills/database-engine-selection-and-migration/SKILL.md",
+        "sha256": "AACA0C50B9E6619878231BE4B4745E9AA11E6889E256B8F57F021FCA81B5CFC8"
+      },
+      {
+        "path": "skills/database-engine-selection-and-migration/references/shadow-and-cutover.md",
+        "sha256": "ADDB6F67262739C074E59C43B0F6C27880643184D72DB043A270AEE4EA6CB3D7"
+      },
+      {
+        "path": "skills/database-engine-selection-and-migration/references/migration-compatibility.md",
+        "sha256": "CD4C506533D16614996A270DC4748BCC3CA98FBF3FA3E344A1301BC614BDECF2"
+      },
+      {
+        "path": "skills/database-engine-selection-and-migration/references/engine-trade-offs.md",
+        "sha256": "7D302FDD8EBC4016FE95253A987238D56FA77A0E78EDB1B9CEA6ADD4237C26FC"
+      }
+    ]
+  },
+  "files": [
+    {
+      "path": "skills/database-engine-selection-and-migration/skill.yaml",
+      "changedByReviewer": true,
+      "sha256": "C5A11B10A21BAE29BC09F2AC903FCB7E361DD18D61BBE5365E3DA990F68EAFF4"
+    },
+    {
+      "path": "skills/database-engine-selection-and-migration/SKILL.md",
+      "changedByReviewer": true,
+      "sha256": "058B02102F2D754E2D0A86468BAF9A7FC34D243CC6BB245FE779C4A0FBD32B14"
+    },
+    {
+      "path": "skills/database-engine-selection-and-migration/references/shadow-and-cutover.md",
+      "changedByReviewer": true,
+      "sha256": "22B04676E7A76F253A526912036100A1B4D4BBE9AAB7CA2A2D7AAC5B29D98924"
+    },
+    {
+      "path": "skills/database-engine-selection-and-migration/references/migration-compatibility.md",
+      "changedByReviewer": true,
+      "sha256": "D2AE30688ADA77A2AE71119C1FA20AA67A31FA45FFF5C188EEDD4BA25F3520D5"
+    },
+    {
+      "path": "skills/database-engine-selection-and-migration/references/engine-trade-offs.md",
+      "changedByReviewer": false,
+      "sha256": "7D302FDD8EBC4016FE95253A987238D56FA77A0E78EDB1B9CEA6ADD4237C26FC"
+    }
+  ],
+  "changes": [
+    {
+      "location": "SKILL.md:67",
+      "finding": "Constraint definition and successful enablement could be credited as proof of all copied rows.",
+      "implemented": "Route critical constraint decisions to checks separating existing-data validity and future-write enforcement."
+    },
+    {
+      "location": "references/migration-compatibility.md:15",
+      "finding": "Bulk imports or staged DDL can leave historical rows unvalidated despite rejected new invalid writes.",
+      "implemented": "Inspect executed load options, constraint state and effective settings; distinguish MySQL re-enable, SQL Server enabled/trusted and PostgreSQL NOT VALID/validation. Require applicable boundary evidence, reuse sufficient completed validation, and preserve inherited violations for the agreed handling policy."
+    },
+    {
+      "location": "references/shadow-and-cutover.md:61",
+      "finding": "Cutover checklist did not explicitly carry the historical validation versus restored enforcement distinction.",
+      "implemented": "Carry both conditions into pre-cutover invariant checks, preserving final-boundary lag checks."
+    }
+  ],
+  "preserved": [
+    "Engine-selection role, retain-current-engine alternative, vetoes and evidence-driven comparison.",
+    "Equivalent durability/failover contract before benchmarking; engine-trade-offs.md is unchanged.",
+    "Five compatibility surfaces, Java/driver/version baseline checks and applicable edge cases.",
+    "Runtime-identity authorization checks and hostile synthetic tenant fixture.",
+    "Common shadow boundary, multiset comparisons, side-effect isolation, CDC recovery and schema limitations.",
+    "Single-authority fencing, destination-write rollback accounting and ID-generator readiness.",
+    "Proportionate outputs; no reload or full rescan when existing evidence is sufficient."
+  ],
+  "commands": [
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --write skills/database-engine-selection-and-migration/SKILL.md skills/database-engine-selection-and-migration/references/migration-compatibility.md skills/database-engine-selection-and-migration/references/shadow-and-cutover.md skills/database-engine-selection-and-migration/skill.yaml",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "All four files formatted; no additional formatter changes."
+    },
+    {
+      "command": "node --input-type=module",
+      "cwd": "C:/git/agent-skills",
+      "input": "Read-only inline checks using packages/core/src/domain/manifest.ts and skill-document.ts: strict manifest parsing, names/descriptions, version, file-list existence, reference routing, relative links/anchors and existing database-bulk-loading suggests declaration.",
+      "exitCode": 0,
+      "result": {
+        "manifestIssues": 0,
+        "descriptionMatches": true,
+        "version": "1.0.5",
+        "packagedEntries": 3,
+        "routedResources": 3,
+        "localLinks": 4,
+        "anchors": 1,
+        "existingBulkLoadingReferral": true
+      }
+    },
+    {
+      "command": "git diff --check -- skills/database-engine-selection-and-migration",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "No whitespace errors."
+    },
+    {
+      "command": "git diff --stat -- skills/database-engine-selection-and-migration; git diff -- skills/database-engine-selection-and-migration",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "Inspected final changes: four files, 42 insertions and 2 deletions; clean baseline makes HEAD diff attributable to this assignment."
+    }
+  ],
+  "validation": {
+    "structural": "Executed; passed.",
+    "technical": "Material claims verified against official engine documentation. No executable snippets were introduced or changed.",
+    "behavioral": "Not executed.",
+    "walkthroughs": [
+      "Enabled but untrusted SQL Server FK does not establish historical validity.",
+      "Successful boundary-matched validation is reusable evidence, without an automatic reload or repeat full scan.",
+      "An inherited source violation must not be attributed automatically to conversion or silently deleted."
+    ],
+    "failedChecks": [],
+    "pendingGlobal": ["npm run registry:build", "npm run verify"],
+    "pendingGlobalReason": "Coordinator owns shared generated files and global checks, after all writers have stopped."
+  },
+  "sources": [
+    {
+      "title": "MySQL 8.4 foreign-key checks",
+      "url": "https://dev.mysql.com/doc/refman/8.4/en/create-table-foreign-keys.html",
+      "supports": "Re-enabling foreign_key_checks does not scan previously loaded rows."
+    },
+    {
+      "title": "SQL Server enabling and trusting foreign keys",
+      "url": "https://learn.microsoft.com/en-us/sql/relational-databases/tables/disable-foreign-key-constraints-with-insert-and-update-statements?view=sql-server-ver17",
+      "supports": "Enabled and trusted states differ; existing-data validation is distinct from enabling."
+    },
+    {
+      "title": "PostgreSQL 18 ALTER TABLE",
+      "url": "https://www.postgresql.org/docs/18/sql-altertable.html",
+      "supports": "NOT VALID can skip historical validation while new writes are enforced; VALIDATE CONSTRAINT validates existing rows."
+    }
+  ],
+  "limits": [
+    "No database instance was contacted and no cross-engine rehearsal was executed.",
+    "No behavioral comparison or measured skill improvement.",
+    "Cases contain synthetic ordinary project artifacts, not captured real database results; they are development cases, not unseen holdouts.",
+    "Only this assigned package and the specifically authorized temporary handoff artifact were written."
+  ],
+  "cases": [
+    {
+      "id": "enabled-without-historical-validation",
+      "kind": "development",
+      "actor": {
+        "task": "Review the foreign-key integrity gate from the project artifacts and update docs/cutover-runbook.md with the supported conclusion and any remaining action. Do not modify source data or run commands against a live database.",
+        "files": {
+          "docs/request.md": "Migrate the existing MySQL/InnoDB 8.4 application to the mandated SQL Server destination. Review only the foreign-key integrity acceptance for dbo.Invoice.customer_id -> dbo.Customer.id. Existing rows must satisfy this relationship, and normal application writes must keep enforcing it before traffic opens. Other cutover gates have separate accepted evidence. Preserve source data; no repair or deletion policy has been authorized.",
+          "migration/load-options.json": "{\n  \"run\": \"R7\",\n  \"finalSourceBoundary\": \"C9\",\n  \"destinationBoundary\": \"C9\",\n  \"tables\": [\n    \"dbo.Customer\",\n    \"dbo.Invoice\"\n  ],\n  \"bulkCheckConstraints\": false,\n  \"applicationWritersFenced\": true,\n  \"replicationStoppedAfterBoundary\": true,\n  \"postFinalizeUncheckedWrites\": false,\n  \"sourceInvoiceRows\": 1000000,\n  \"destinationInvoiceRows\": 1000000\n}",
+          "migration/finalize.sql": "ALTER TABLE dbo.Invoice CHECK CONSTRAINT FK_Invoice_Customer;\nSELECT name, is_disabled, is_not_trusted FROM sys.foreign_keys WHERE name = 'FK_Invoice_Customer';\n",
+          "evidence/finalize.txt": "Synthetic rehearsal fixture R7 at boundary C9, after loading and final catch-up. Executed migration/finalize.sql successfully. FK_Invoice_Customer: is_disabled=0; is_not_trusted=1. No other existing-row validation result is supplied.",
+          "evidence/application-write-tests.txt": "Synthetic rehearsal fixture R7 at C9. Under the normal application identity, inserting a child for an existing parent succeeded and was rolled back; inserting a child for an absent parent failed with SQL Server error 547. No unchecked writes occurred afterward.",
+          "docs/cutover-runbook.md": "Foreign-key gate: COMPLETE. Invoice row counts match, the constraint was enabled successfully, and invalid new writes are rejected. Open destination traffic after the other approved cutover gates."
+        }
+      },
+      "evaluatorOnly": {
+        "expected": [
+          "Inspect finalization SQL, catalog state and the scope of the write tests.",
+          "Replace COMPLETE with pending historical-validation evidence for this FK.",
+          "Distinguish missing proof from a demonstrated corrupt row.",
+          "Specify an applicable existing-data validation at C9 with unchecked writes prevented, preserving future enforcement.",
+          "Keep independent accepted gates and do not authorize deployment or data deletion."
+        ],
+        "failure": [
+          "Counts or new-write rejection treated as validation of old rows.",
+          "Invented orphan rows or measured test results.",
+          "Constraint disabled, data deleted or contract weakened merely to pass the gate."
+        ]
+      }
+    },
+    {
+      "id": "historical-validation-completed",
+      "kind": "constraint-flip-development",
+      "actor": {
+        "task": "Review the foreign-key integrity gate from the project artifacts and update docs/cutover-runbook.md with the supported conclusion and any remaining action. Do not modify source data or run commands against a live database.",
+        "baseCase": "enabled-without-historical-validation",
+        "singleMaterialChange": "The finalization step now validates the historical population; matching execution/catalog evidence is supplied.",
+        "replaceFiles": {
+          "migration/finalize.sql": "ALTER TABLE dbo.Invoice WITH CHECK CHECK CONSTRAINT FK_Invoice_Customer;\nSELECT name, is_disabled, is_not_trusted FROM sys.foreign_keys WHERE name = 'FK_Invoice_Customer';\n",
+          "evidence/finalize.txt": "Synthetic rehearsal fixture R7 at boundary C9, after loading and final catch-up. Executed migration/finalize.sql successfully. FK_Invoice_Customer: is_disabled=0; is_not_trusted=0. No unchecked writes occurred afterward; the same source/destination boundary and runtime identity apply."
+        }
+      },
+      "evaluatorOnly": {
+        "expected": [
+          "Recognize that the supplied validation supports the existing-data gate under the stated scope.",
+          "Preserve the completed FK gate and evidence links; no redundant reload or full rescan solely because the original import bypassed checks.",
+          "Keep future enforcement and boundary conditions explicit.",
+          "Do not generalize one FK's validation to the entire migration."
+        ],
+        "failure": [
+          "Same missing-historical-validation diagnosis as case A without accounting for the changed operation/evidence.",
+          "Unsupported claims that a live test was executed by the reviewer.",
+          "New blanket migration or production approval."
+        ]
+      }
+    }
+  ],
+  "crossSkill": {
+    "requiredActions": [],
+    "notes": [
+      "database-bulk-loading already documents implementation mechanics and is already listed in suggests; reused the boundary without editing that package."
+    ]
+  },
+  "allWritesStopped": true
+}

@@ -1,0 +1,18 @@
+{
+  "disposition": "supported",
+  "basis": "No contrato aceito, entry é lido uma vez e pode permanecer nulo. O leitor criado por ReaderFactory é PublishedEntry::value, que lê primary.value, não legacy.value. A escrita do payload precede o freeze de primary final, e a publicação da entrada ocorre depois do construtor; a garantia JLS SE25 17.5.1 alcança Payload.value pelo acesso através de primary. Memo e leitor são entregues antes de Thread.start(), conforme precondição aceita e JLS 17.4.5. Portanto uma resposta presente vale 42 e o caminho não apresenta referência nula. Smoke sequencial é observação auxiliar, não prova concorrente.",
+  "requiredChange": null,
+  "missingEvidence": [],
+  "checked": [
+    "Leitura integral de TASK.md e dos oito arquivos fornecidos em input/project.",
+    "Caminho find -> entry local -> applyAsInt -> PublishedEntry::value -> primary.value; legacyValue não é selecionado.",
+    "Regras de happens-before de Thread.start e inicialização de campos finais consultadas na JLS SE25.",
+    "check.mjs executado em output/project; javac --release 25 e memo.Smoke concluíram com saída sequential-controls=2 PASS.",
+    "Comparação SHA256 corrigida confirmou os oito pares input/project e output/project sem mudanças."
+  ],
+  "limits": [
+    "Smoke apenas sequencial; nenhum teste de stress, jcstress, controle mutante ou ensaio em outra JVM foi executado.",
+    "Análise usa as precondições aceitas: uma instalação de 42, ausência de escape durante construção, entrega pré-start e ausência de mutações posteriores.",
+    "A primeira comparação de hashes usou normalização de caminhos incorreta; seus erros foram reconhecidos e a comparação foi repetida com sucesso."
+  ]
+}

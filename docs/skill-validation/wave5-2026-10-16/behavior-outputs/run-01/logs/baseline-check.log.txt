@@ -1,0 +1,16 @@
+{
+  "phase": "baseline",
+  "executable": "C:\\Program Files\\nodejs\\node.exe",
+  "args": [
+    "check.mjs"
+  ],
+  "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-01\\output\\project",
+  "timeoutMs": 28954,
+  "exit": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "SelfTest PASS\r\n",
+  "stderr": "",
+  "log": "output/logs/baseline-check.log",
+  "expectedExit": 0
+}

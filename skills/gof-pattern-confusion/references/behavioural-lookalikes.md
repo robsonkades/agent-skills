@@ -66,12 +66,22 @@ nobody designed, and a "command" passed as a parameter to configure behaviour ga
 | May be rejected               | Already happened                              |
 | The sender expects an outcome | Fact stands even if delivery/processing fails |
 
-**The misclassification:** `OrderValidated`, published for a subscriber to approve or reject.
+**The candidate:** `OrderValidated` reaches a subscriber that may approve or reject the order.
 
-**Cost:** the publisher now depends on a decision it cannot see, the answer has nowhere to go, and
-adding another decision-maker can change the operation's meaning. Tense is only a naming clue:
-an event may have one consumer and its handling can fail; the reported fact is already established.
-A broker acknowledgment concerns delivery, not whether that fact happened (`gof-command`).
+**Check:** establish what "validated" promises and trace the producer and consumer decisions.
+If the subscriber is being asked to perform that very validation, the message reports a fact
+that is still pending; inspect the decision owner and how the requester learns the outcome.
+If validation is already complete and the subscriber decides a separate credit approval,
+its rejection does not undo the validation fact. Preserve that valid event contract.
+
+**Cost:** presenting a pending decision as completed can hide the owner/result protocol;
+relabeling a genuine fact as a command can instead break consumers or move the wrong decision.
+Tense, subscriber count and a broker acknowledgment do not settle either case (`gof-command`).
+[Fowler's event-notification discussion](https://martinfowler.com/articles/201701-event-driven.html)
+distinguishes notification from a disguised request;
+[Microsoft's choreography description](https://learn.microsoft.com/en-us/azure/architecture/patterns/saga#choreography)
+shows events triggering later local transactions. Inspect that workflow's contract rather than
+assuming every downstream decision makes the original message a command.
 
 ## Observer vs Mediator
 

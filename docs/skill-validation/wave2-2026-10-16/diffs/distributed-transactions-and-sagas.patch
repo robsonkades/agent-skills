@@ -1,0 +1,99 @@
+diff --git a/skills/distributed-transactions-and-sagas/SKILL.md b/skills/distributed-transactions-and-sagas/SKILL.md
+index ea2b4c2..cdab8d5 100644
+--- a/skills/distributed-transactions-and-sagas/SKILL.md
++++ b/skills/distributed-transactions-and-sagas/SKILL.md
+@@ -56,8 +56,11 @@ For a findings-only review, report corrections and their verification without ch
+    on restart, silently. Preserve the plan definition and stable step identities across
+    deployments; a row's concurrency version does not identify which business plan it runs.
+ 6. **Design execute, status, compensation and completion protocols.** Each is repeat-safe and
+-   keyed by saga/step identity. Define terminal business rejection, ambiguous outcome,
+-   transient failure and permanent/manual-repair states separately.
++   keyed by saga/step identity. Trace the selected client/handler and its response mapping to the
++   participant's contract: command acceptance or an in-progress operation is not a completed effect.
++   Identify the observation that permits advancing or marking compensation complete. Keep known
++   pending work, terminal business rejection, ambiguous outcome, transient failure and permanent/
++   manual-repair states distinct; the saga reference covers asynchronous acceptance.
+ 7. **Give every step a timeout and every instance a query.** Define "stuck" numerically, and
+    make "which step is saga X on" answerable from a datastore, not from logs.
+ 
+diff --git a/skills/distributed-transactions-and-sagas/references/saga-and-compensation-in-java.md b/skills/distributed-transactions-and-sagas/references/saga-and-compensation-in-java.md
+index 788fada..f32f178 100644
+--- a/skills/distributed-transactions-and-sagas/references/saga-and-compensation-in-java.md
++++ b/skills/distributed-transactions-and-sagas/references/saga-and-compensation-in-java.md
+@@ -69,6 +69,27 @@ Pass the actual replay horizon, key scope, retention and status contract to `ide
+ participant protocol needs work. Require a repeat-safe resume/expiry policy; if that guidance is
+ unavailable, retain this recovery gate instead of inventing a new key for the unresolved operation.
+ 
++## Resolve acceptance before claiming completion
++
++Read the actual participant/client contract and response mapping before interpreting a returned
++call or completed future as step success. HTTP `202 Accepted` reports accepted processing, not its
++completed effect ([RFC 9110 section 15.3.3](https://www.rfc-editor.org/rfc/rfc9110.html#section-15.3.3)).
++Even a successful status-query response can describe an operation still running. Preserve the
++participant operation ID, stable command key and last observed state, then resume through the
++contracted status/callback protocol with a durable next check and escalation deadline. Keep accepted
++work nonterminal until its outcome is established; a lost response may leave acceptance unknown too.
++
++Advance dependencies, mark a pivot committed or mark compensation complete only when evidence
++establishes the step's required outcome. A step whose accepted contract is only durable submission
++can finish at that boundary; do not silently treat submission as fulfillment of a charge, allocation
++or refund obligation. Reconcile late or conflicting observations against the same step occurrence
++and participant state before changing recovery direction. Coordinator timeouts do not make accepted
++work disappear.
++
++[MicroProfile LRA 2.0 eventual compensations](https://download.eclipse.org/microprofile/microprofile-lra-2.0/microprofile-lra-spec-2.0.html#eventual-compensations)
++is one concrete protocol that distinguishes compensation in progress from final completion. Use the
++actual participant's protocol; the custom Java runner below does not implement LRA by naming states.
++
+ ## Persist intent before the call and transition atomically
+ 
+ ```text
+@@ -77,7 +98,11 @@ Claim current saga version -> receive updated state/version and ownership epoch.
+ For the current step:
+   Commit STARTED with stable (saga, step, operation) identity; receive the new version.
+   Invoke participant outside the storage transaction using that stable command key.
+-  On definite success:
++  On accepted/in-progress response:
++    Persist operation ID and pending step state using expected version/epoch;
++    keep the saga nonterminal and arrange durable follow-up across restart.
++    Do not advance dependencies or mark the step DONE on acceptance alone.
++  On confirmed completion of the step's required outcome:
+     Atomically persist effect IDs, DONE and next position using expected version/epoch;
+     receive updated state. Persist pivot-committed status here.
+   On definite business rejection with no effect:
+@@ -114,6 +139,10 @@ separately when heartbeats or retry bookkeeping refresh `updated_at` without bus
+ 
+ ## A compensation that survives being run twice
+ 
++The `void` participant calls in these Java sketches assume normal return confirms the required
++effect, not just transport or queue acceptance. An asynchronous participant needs the pending/result
++protocol above; do not discard its operation handle and let the runner mark `COMPENSATED` on return.
++
+ ```java
+ final class ChargeCard implements SagaStep.Compensatable {
+     public void execute(SagaContext ctx) {
+@@ -218,6 +247,11 @@ void failureAtAnyStepLeavesAConsistentState(int failingStep) {
+ 
+ Additional cases the parameterised sketch does not reach:
+ 
++- **Accepted but unfinished work** — return acceptance and then in-progress status for a step or
++  refund; crash and resume. Keep the saga nonterminal and do not advance dependent work or declare
++  compensation complete. Deliver final success or final rejection and assert the corresponding
++  transition. Exercise the selected client's real status mapping: a stub equating every 2xx with
++  completion cannot validate this distinction.
+ - **Duplicate application** — run the whole saga twice with the same saga id and assert one
+   charge and one reservation. This fails when a step forgot its idempotency key.
+ - **Two charge steps** — execute and retry two charges within one saga, then compensate only
+diff --git a/skills/distributed-transactions-and-sagas/skill.yaml b/skills/distributed-transactions-and-sagas/skill.yaml
+index 9c1283b..7759824 100644
+--- a/skills/distributed-transactions-and-sagas/skill.yaml
++++ b/skills/distributed-transactions-and-sagas/skill.yaml
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: distributed-transactions-and-sagas
+-version: 1.3.5
++version: 1.3.6
+ description: >-
+   Coordinating a business operation across transactional owners: dual writes, XA/2PC,
+   persisted sagas, compensation, pivot/forward recovery, ambiguous outcomes and manual

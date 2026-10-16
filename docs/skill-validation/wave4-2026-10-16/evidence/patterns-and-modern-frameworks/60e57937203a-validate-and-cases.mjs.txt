@@ -1,0 +1,185 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { createRequire } from 'node:module';
+import { spawnSync } from 'node:child_process';
+import assert from 'node:assert/strict';
+
+const repo = 'C:/git/agent-skills';
+const skill = 'patterns-and-modern-frameworks';
+const dir = `C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/${skill}`;
+const owned = `${repo}/skills/${skill}`;
+const require = createRequire(`${repo}/package.json`);
+const yaml = require('yaml');
+const hash = b => crypto.createHash('sha256').update(b).digest('hex');
+const write = (name, content) => { fs.mkdirSync(path.dirname(`${dir}/${name}`), { recursive: true }); fs.writeFileSync(`${dir}/${name}`, content); };
+const commands = [];
+function run(exe, args, cwd = dir) {
+  const p = spawnSync(exe, args, { cwd, encoding: 'utf8', timeout: 25000 });
+  const r = { exe, args, cwd, exitCode: p.status, stdout: p.stdout, stderr: p.stderr, error: p.error?.message };
+  commands.push(r);
+  write('commands.json', JSON.stringify(commands, null, 2));
+  assert.equal(p.status, 0, JSON.stringify(r));
+  return r;
+}
+const manifest = yaml.parse(fs.readFileSync(`${owned}/skill.yaml`, 'utf8'));
+const entrypoint = fs.readFileSync(`${owned}/SKILL.md`, 'utf8');
+const frontmatter = yaml.parse(entrypoint.match(/^---\r?\n([\s\S]*?)\r?\n---/)[1]);
+assert.equal(frontmatter.name, skill);
+assert.equal(manifest.name, skill);
+assert.equal(frontmatter.description.trim(), manifest.description.trim());
+assert.equal(manifest.version, '1.2.5');
+const internal = [...entrypoint.matchAll(/\]\((references\/[^)]+)\)/g)].map(m => m[1]);
+assert.equal(internal.length, 2);
+for (const p of internal) assert.ok(fs.existsSync(`${owned}/${p}`));
+const referrals = [...manifest.dependencies.map(d => d.name), ...manifest.suggests];
+for (const name of referrals) assert.ok(fs.existsSync(`${repo}/skills/${name}/skill.yaml`), name);
+const allText = entrypoint + internal.map(p => fs.readFileSync(`${owned}/${p}`, 'utf8')).join('\n');
+const namedReferrals = [...new Set([...allText.matchAll(/`([a-z]+(?:-[a-z]+){1,})`/g)].map(m => m[1]).filter(n => fs.existsSync(`${repo}/skills/${n}/skill.yaml`)))];
+for (const name of namedReferrals) assert.ok(referrals.includes(name), `Undeclared referral ${name}`);
+assert.ok(!/jakarta-persistence-spec-3\.2(?=[#)])/g.test(allText));
+run(process.execPath, [`${repo}/node_modules/prettier/bin/prettier.cjs`, '--check', `${owned}/SKILL.md`, `${owned}/skill.yaml`, ...internal.map(p => `${owned}/${p}`)], repo);
+run('git', ['diff', '--check', '--', `skills/${skill}`], repo);
+
+const sharedFiles = {
+  'README.md': `# Catalog cache integration review fixture\n\nJava 17 language/API baseline, Spring Framework 6.2.10. Sources are partial application fixtures with real Spring caching/proxy/transaction infrastructure. SandboxTransactionManager exercises Spring synchronization only; it does not persist data or simulate database isolation.\n\nRun the Smoke main class with the dependencies in pom.xml. The current smoke covers the successful path. Do not install or upgrade dependencies for this review. Inspect the supplied contracts and configuration; add isolated checks when useful.\n`,
+  'pom.xml': `<project xmlns="http://maven.apache.org/POM/4.0.0"><modelVersion>4.0.0</modelVersion><groupId>review</groupId><artifactId>catalog-cache</artifactId><version>1.0.0</version><properties><maven.compiler.release>17</maven.compiler.release></properties><dependencies><dependency><groupId>org.springframework</groupId><artifactId>spring-context-support</artifactId><version>6.2.10</version></dependency><dependency><groupId>org.springframework</groupId><artifactId>spring-tx</artifactId><version>6.2.10</version></dependency></dependencies></project>\n`,
+  'docs/cache-contract.md': `# Catalog cache contract\n\nThe cache contains disposable single-process read projections. A successful outer checkout transaction invalidates the affected catalog key. If that outer operation fails before committing, the prior cache entry must remain. Cache coherence across processes, crash-safe delivery and an atomic database/cache commit are outside this contract. Database visibility and transaction semantics need separate integration coverage; the sandbox transaction manager in this fixture proves none of those properties.\n\nThe integration keeps the default successful-method eviction operation. This change does not introduce immediate cache operations or a second cache manager selected at a call site.\n`,
+  'docs/review-request.md': `# Review request\n\nThe current implementation uses Spring caching for catalog updates. A proposed follow-up would add an application-owned CacheCoordinator and explicit transaction callbacks because the team is unsure whether the existing configuration is sufficient. Review the effective call path and configuration against the cache contract. Decide whether this follow-up is needed or another focused adjustment is appropriate. Preserve adequate mechanisms and accepted scope. Deliver a review with file evidence, the decision and a discriminating check; do not implement a production redesign.\n`,
+  'src/main/java/app/CatalogCommands.java': `package app;\nimport org.springframework.cache.annotation.CacheEvict;\npublic class CatalogCommands {\n    @CacheEvict(cacheNames = "catalog", key = "#p0")\n    public void change(String id, boolean fail) {\n        if (fail) throw new IllegalStateException("change rejected");\n    }\n}\n`,
+  'src/main/java/app/CheckoutFlow.java': `package app;\nimport org.springframework.transaction.annotation.Transactional;\npublic class CheckoutFlow {\n    private final CatalogCommands commands;\n    public CheckoutFlow(CatalogCommands commands) { this.commands = commands; }\n    @Transactional\n    public void submit(String id, boolean failAtEnd) {\n        commands.change(id, false);\n        if (failAtEnd) throw new IllegalStateException("checkout rejected");\n    }\n}\n`,
+  'src/main/java/app/SandboxTransactionManager.java': `package app;\nimport org.springframework.transaction.TransactionDefinition;\nimport org.springframework.transaction.support.AbstractPlatformTransactionManager;\nimport org.springframework.transaction.support.DefaultTransactionStatus;\n// Synchronization exercise only: there is no database or business resource.\npublic class SandboxTransactionManager extends AbstractPlatformTransactionManager {\n    public int commits;\n    public int rollbacks;\n    @Override protected Object doGetTransaction() { return new Object(); }\n    @Override protected void doBegin(Object tx, TransactionDefinition definition) { }\n    @Override protected void doCommit(DefaultTransactionStatus status) { commits++; }\n    @Override protected void doRollback(DefaultTransactionStatus status) { rollbacks++; }\n}\n`,
+  'src/test/java/app/Smoke.java': `package app;\nimport org.springframework.context.annotation.AnnotationConfigApplicationContext;\nimport org.springframework.cache.concurrent.ConcurrentMapCacheManager;\npublic class Smoke {\n    public static void main(String[] args) {\n        try (var context = new AnnotationConfigApplicationContext(CacheConfiguration.class)) {\n            var cache = context.getBean(ConcurrentMapCacheManager.class).getCache("catalog");\n            cache.put("sku-7", "old projection");\n            context.getBean(CheckoutFlow.class).submit("sku-7", false);\n            if (cache.get("sku-7") != null) throw new AssertionError("commit did not invalidate");\n            System.out.println("smoke=1 PASS");\n        }\n    }\n}\n`
+};
+const config = expression => `package app;\nimport org.springframework.cache.CacheManager;\nimport org.springframework.cache.annotation.EnableCaching;\nimport org.springframework.cache.concurrent.ConcurrentMapCacheManager;\nimport org.springframework.cache.transaction.TransactionAwareCacheManagerProxy;\nimport org.springframework.context.annotation.Bean;\nimport org.springframework.context.annotation.Configuration;\nimport org.springframework.context.annotation.Primary;\nimport org.springframework.transaction.annotation.EnableTransactionManagement;\n@Configuration\n@EnableCaching(proxyTargetClass = true)\n@EnableTransactionManagement(proxyTargetClass = true)\npublic class CacheConfiguration {\n    @Bean public ConcurrentMapCacheManager store() { return new ConcurrentMapCacheManager("catalog"); }\n    @Bean @Primary public CacheManager cacheManager(ConcurrentMapCacheManager store) {\n        return ${expression};\n    }\n    @Bean public SandboxTransactionManager transactionManager() { return new SandboxTransactionManager(); }\n    @Bean public CatalogCommands catalogCommands() { return new CatalogCommands(); }\n    @Bean public CheckoutFlow checkoutFlow(CatalogCommands commands) { return new CheckoutFlow(commands); }\n}\n`;
+const inputs = [];
+for (const [id, expression] of [['A', 'new TransactionAwareCacheManagerProxy(store)'], ['B', 'store']]) {
+  const files = { ...sharedFiles, 'src/main/java/app/CacheConfiguration.java': config(expression) };
+  for (const [p, s] of Object.entries(files)) write(`case-inputs/${id}/project/${p}`, s);
+  const input = {
+    id: `${skill}-${id}`,
+    task: 'Revise a proposta descrita em docs/review-request.md usando os artefatos deste projeto. Entregue review.md com decisão, evidência dos arquivos e validação adequada ao contrato. Preserve o escopo de revisão e a configuração suficiente. Não altere produção ou dependências; checks isolados podem ser criados em review-checks/.',
+    fixtureRoot: `${dir}/case-inputs/${id}/project`,
+    allowedWrites: ['review.md', 'review-checks/**'],
+    prerequisites: 'JDK17+ and existing Spring Framework 6.2.10 jars. No dependency installation authorized. Review can resolve static contracts and declare runtime limits if jars unavailable.',
+    files: Object.keys(files).sort()
+  };
+  write(`case-inputs/${id}/input.json`, JSON.stringify(input, null, 2));
+  inputs.push({ id: input.id, input: `${dir}/case-inputs/${id}/input.json`, fixtureRoot: input.fixtureRoot, files: input.files });
+}
+const comparisons = inputs[0].files.map(name => ({ name, a: hash(fs.readFileSync(`${inputs[0].fixtureRoot}/${name}`)), b: hash(fs.readFileSync(`${inputs[1].fixtureRoot}/${name}`)) }));
+assert.deepEqual(comparisons.filter(x => x.a !== x.b).map(x => x.name), ['src/main/java/app/CacheConfiguration.java']);
+write('evaluator-only/criteria.json', JSON.stringify({
+  exposure: 'Known development cases. Inputs and criteria separated procedurally, not by filesystem permissions. No independent actor run occurred.',
+  decisiveConstraint: 'Only the expression returned by the @Primary CacheManager bean differs. All calls, annotations, contract, transaction manager and smoke test are byte-identical.',
+  cases: [
+    { id: inputs[0].id, expected: ['Trace CheckoutFlow proxy -> CatalogCommands proxy -> default after-invocation CacheEvict -> @Primary TransactionAwareCacheManagerProxy.', 'Preserve the adequate existing integration for this bounded cache contract; a custom CacheCoordinator is unnecessary for that obligation.', 'Explain why inner-method success followed by outer rollback does not evict here; propose or execute a rollback control in addition to the existing smoke.'], failures: ['Reject the configuration solely because CacheEvict is not inherently after-commit.', 'Mandate a redundant wrapper/outbox/global redesign despite explicitly bounded contract.', 'Claim database/cache atomicity or crash guarantees from this fixture.'] },
+    { id: inputs[1].id, expected: ['Discover that @Primary returns the raw ConcurrentMapCacheManager.', 'Successful CatalogCommands invocation evicts before CheckoutFlow can throw; outer rollback therefore cannot restore the prior cache entry.', 'Recommend the smallest suitable existing framework integration such as TransactionAwareCacheManagerProxy and verify success plus outer rollback. A new custom coordinator is not required.', 'Preserve supported scope and separate local synchronization controls from real database integration.'], failures: ['Accept the successful smoke as proof of rollback behavior.', 'Infer commit-aware eviction solely from annotation presence or method success.', 'Fix with beforeInvocation=true or by moving code to a wrapper with unchanged guarantee.', 'Upgrade framework or require distributed machinery without a contract need.'] }
+  ],
+  commonCriteria: ['Ground conclusions in effective bean selection and intercepted call path.', 'Separate evidence, proposed changes and unexecuted checks.', 'Recognize runtime limits of SandboxTransactionManager; no DB integration is present.']
+}, null, 2));
+
+const checks = `package app;
+import org.springframework.aop.support.AopUtils;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
+import org.springframework.cache.transaction.TransactionAwareCacheDecorator;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.transaction.support.TransactionTemplate;
+
+public class IntegrationChecks {
+    static int checks;
+    static void check(boolean value, String label) {
+        if (!value) throw new AssertionError(label);
+        checks++; System.out.println("PASS " + label);
+    }
+    static void rejects(Runnable run, String label) {
+        try { run.run(); } catch (IllegalStateException expected) { check(true, label); return; }
+        throw new AssertionError(label);
+    }
+    public static void main(String[] args) {
+        boolean aware = Boolean.parseBoolean(args[0]);
+        try (var context = new AnnotationConfigApplicationContext(CacheConfiguration.class)) {
+            Cache raw = context.getBean(ConcurrentMapCacheManager.class).getCache("catalog");
+            Cache configured = context.getBean(CacheManager.class).getCache("catalog");
+            var flow = context.getBean(CheckoutFlow.class);
+            var commands = context.getBean(CatalogCommands.class);
+            var tx = context.getBean(SandboxTransactionManager.class);
+            check(AopUtils.isAopProxy(flow), "outer transaction bean is proxied");
+            check(AopUtils.isAopProxy(commands), "cache command bean is proxied");
+            check((configured instanceof TransactionAwareCacheDecorator) == aware, "effective primary manager matches fixture");
+            raw.put("sku-7", "old");
+            flow.submit("sku-7", false);
+            check(raw.get("sku-7") == null && tx.commits == 1, "successful outer transaction invalidates");
+            raw.put("sku-7", "old");
+            rejects(() -> flow.submit("sku-7", true), "outer failure propagated");
+            check(tx.rollbacks == 1, "outer rollback executed");
+            check((raw.get("sku-7") != null) == aware, "rollback cache retention depends on manager");
+            raw.put("sku-7", "old");
+            rejects(() -> commands.change("sku-7", true), "method failure propagated");
+            check(raw.get("sku-7") != null, "method failure skips default eviction");
+            commands.change("sku-7", false);
+            check(raw.get("sku-7") == null, "without transaction eviction is immediate");
+            if (aware) {
+                var template = new TransactionTemplate(tx);
+                raw.put("sku-7", "old");
+                template.executeWithoutResult(status -> {
+                    configured.put("sku-7", "new");
+                    check("old".equals(raw.get("sku-7", String.class)), "put deferred while synchronization active");
+                    status.setRollbackOnly();
+                });
+                check("old".equals(raw.get("sku-7", String.class)), "put omitted on rollback");
+                template.executeWithoutResult(status -> {
+                    configured.clear();
+                    check(raw.get("sku-7") != null, "clear deferred while synchronization active");
+                    status.setRollbackOnly();
+                });
+                check(raw.get("sku-7") != null, "clear omitted on rollback");
+                template.executeWithoutResult(status -> {
+                    configured.evictIfPresent("sku-7");
+                    check(raw.get("sku-7") == null, "evictIfPresent immediate");
+                    configured.putIfAbsent("inserted", "v");
+                    check(raw.get("inserted") != null, "putIfAbsent immediate");
+                    status.setRollbackOnly();
+                });
+                check(raw.get("sku-7") == null && raw.get("inserted") != null, "immediate operations not restored by rollback");
+                template.executeWithoutResult(status -> { configured.invalidate(); status.setRollbackOnly(); });
+                check(raw.get("inserted") == null, "invalidate immediate despite rollback");
+            }
+        }
+        System.out.println("controls=" + checks + " PASS");
+    }
+}
+`;
+write('evaluator-only/IntegrationChecks.java', checks);
+const names = ['spring-core', 'spring-jcl', 'spring-beans', 'spring-aop', 'spring-context', 'spring-expression', 'spring-context-support', 'spring-tx'];
+const jars = names.map(name => {
+  const p = `C:/Users/robso/.m2/repository/org/springframework/${name}/6.2.10/${name}-6.2.10.jar`;
+  assert.ok(fs.existsSync(p), `Required existing dependency missing: ${p}`);
+  return { name, version: '6.2.10', path: p, bytes: fs.statSync(p).size, sha256: hash(fs.readFileSync(p)) };
+});
+write('dependency-evidence.json', JSON.stringify({ policy: 'Read existing jars only; no installation or copying cache.', jars }, null, 2));
+const cp = jars.map(j => j.path).join(path.delimiter);
+const java = 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe';
+const javac = 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe';
+run(java, ['-version']);
+run(javac, ['-version']);
+const executed = [];
+for (const [i, input] of inputs.entries()) {
+  const classes = `${dir}/evaluator-only/classes-${i}`;
+  fs.mkdirSync(classes, { recursive: true });
+  const sources = input.files.filter(f => f.endsWith('.java')).map(f => `${input.fixtureRoot}/${f}`);
+  run(javac, ['--release', '17', '-cp', cp, '-d', classes, ...sources, `${dir}/evaluator-only/IntegrationChecks.java`]);
+  const major = fs.readFileSync(`${classes}/app/CheckoutFlow.class`).readUInt16BE(6);
+  assert.equal(major, 61);
+  const smoke = run(java, ['-cp', `${classes}${path.delimiter}${cp}`, 'app.Smoke']);
+  assert.match(smoke.stdout, /smoke=1 PASS/);
+  const checks = run(java, ['-cp', `${classes}${path.delimiter}${cp}`, 'app.IntegrationChecks', String(i === 0)]);
+  const count = Number(checks.stdout.match(/controls=(\d+) PASS/)[1]);
+  assert.equal(count, i === 0 ? 18 : 10);
+  executed.push({ id: input.id, smoke: 1, controls: count, release: 17, classMajor: major, runtime: 'Temurin 25.0.3+9', spring: '6.2.10', limitation: 'Real Spring AOP/cache/synchronization; fake resource transaction manager, no database or distributed cache.' });
+}
+const result = { skill, structural: { metadata: 'PASS', internalLinks: internal.length, dependenciesAndSuggestionsExist: referrals.length, actualSkillReferralsDeclared: namedReferrals.length, fixedJakartaUrls: 2, prettier: 'PASS', gitDiffCheck: 'PASS' }, behavioralEvaluations: [], technicalControls: executed, casePair: { inputs, onlyDifferingFile: comparisons.filter(x => x.a !== x.b), criteria: `${dir}/evaluator-only/criteria.json`, knownDevelopmentCases: true }, limitations: ['No independent agent evaluation or measured behavioral improvement.', 'No ORM/JPA mapping integration test; language snippets unchanged and not compiled in this review.', '--release 17 on JDK25 does not execute on a Java17 VM.', 'Spring synchronization checks do not validate an actual database transaction or database/cache atomicity.', 'No global checks run; coordinator alone owns registry:build and verify.'] };
+write('local-validation.json', JSON.stringify(result, null, 2));
+console.log(JSON.stringify({ skill, structural: result.structural, controls: executed, pairDiff: result.casePair.onlyDifferingFile.map(x => x.name), criteria: result.casePair.criteria }, null, 2));

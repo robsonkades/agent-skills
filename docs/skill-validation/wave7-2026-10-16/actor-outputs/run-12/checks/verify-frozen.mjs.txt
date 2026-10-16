@@ -1,0 +1,21 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+
+const project=process.cwd();
+const input=path.resolve(project,'../../input/project');
+const walk=(dir,prefix='')=>fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>{
+ const relative=prefix+e.name;
+ return e.isDirectory()?walk(path.join(dir,e.name),relative+'/'):[relative];
+});
+const hash=file=>crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const rows=walk(input).map(relative=>{
+ const before=hash(path.join(input,relative));
+ const after=hash(path.join(project,relative));
+ const frozen=relative!=='RUNBOOK.md'&&!relative.startsWith('src/')&&!relative.startsWith('test/');
+ return {relative,frozen,inputSha256:before,outputSha256:after,identical:before===after};
+});
+fs.writeFileSync(path.resolve(project,'../checks/integrity.json'),JSON.stringify(rows,null,2)+'\n');
+const failures=rows.filter(row=>row.frozen&&!row.identical);
+console.log(JSON.stringify({compared:rows.length,frozen:rows.filter(r=>r.frozen).length,frozenMismatches:failures.length,changed:rows.filter(r=>!r.identical).map(r=>r.relative)},null,2));
+if(failures.length)process.exitCode=1;

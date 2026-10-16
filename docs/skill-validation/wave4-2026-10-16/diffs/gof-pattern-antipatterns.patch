@@ -1,0 +1,66 @@
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\gof-pattern-antipatterns/SKILL.md" "b/C:\\git\\agent-skills\\skills\\gof-pattern-antipatterns/SKILL.md"
+index 52c57e5..908fba6 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\gof-pattern-antipatterns/SKILL.md"
++++ "b/C:\\git\\agent-skills\\skills\\gof-pattern-antipatterns/SKILL.md"
+@@ -80,7 +80,7 @@ framework contracts and external consumers. Examples target Java 17 terminology;
+ | **Opaque decorator stack**          | Order and observable policy cannot be explained        | Unclear composed semantics                         |
+ | **Proxy hiding a network**          | A getter that makes a call                             | Per-item remote calls hidden in an innocent loop   |
+ | **Flyweight contention**            | A shared pool on a hot path without measurements       | Lookup/retention may outweigh saved work           |
+-| **Visitor over a growing type set** | Every release breaks every visitor                     | The expression problem, chosen backwards           |
++| **Visitor over a growing type set** | Every release breaks every visitor                     | Repeated updates; may be required coverage         |
+ | **Template Method with 9 hooks**    | A base class nobody can subclass correctly             | Fragile base; unreviewable changes                 |
+ | **Strategy class for a lambda**     | One method, no state, no key                           | Five files for five expressions                    |
+ | **Prototype with `clone()`**        | `implements Cloneable`                                 | Shallow copies sharing mutable state               |
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\gof-pattern-antipatterns/references/catalogue.md" "b/C:\\git\\agent-skills\\skills\\gof-pattern-antipatterns/references/catalogue.md"
+index 6553a67..cbc5027 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\gof-pattern-antipatterns/references/catalogue.md"
++++ "b/C:\\git\\agent-skills\\skills\\gof-pattern-antipatterns/references/catalogue.md"
+@@ -169,16 +169,22 @@ confinement or a validated closed domain may help; short lifetime alone does not
+ 
+ ## Visitor over a growing type set
+ 
+-**Why.** Visitor was correct when the type set was stable, and the domain changed.
++**Why.** Visitor was adopted for a stable type set, and new kinds now arrive frequently.
+ 
+-**Detect.** Every release adds an element type and breaks every visitor.
++**Detect.** Each new kind requires changes to many operations. Inspect what those changes decide
++before treating them as boilerplate.
+ 
+-**Cost.** The expression problem, chosen in the wrong direction: each new type is a change to N
+-operations; a permissive default can accidentally skip a new type. Check whether its fallback is
+-intentional and satisfies the operation's contract.
++**Cost.** Repeated updates can be avoidable maintenance or required review of new-kind semantics.
++A new abstract visit method makes rebuilt concrete visitors that lack a matching implementation
++fail compilation; a permissive default may absorb missing handling. Compiler coverage does not prove
++correct results, and rebuilt-source checks do not establish compatibility with old binaries.
+ 
+-**Fix.** Move behaviour back onto the elements for the operations that are intrinsic; keep the
+-fold only for the operations that genuinely belong outside (`gof-visitor`).
++**Fix.** Decide per operation whether a new kind requires explicit treatment or may use a documented
++generic, rejecting or omission policy. Keep deliberate coverage checks when required; do not add a
++default merely to make the build green. A supported fallback may remove needless repeated edits.
++Move intrinsic behaviour onto owned elements when that reduces demonstrated cost; retain external
++operations and established consumer contracts (`gof-visitor`). Check new-kind results and actual
++dispatch, including inherited/default handling, before accepting a simpler representation.
+ 
+ ## Template Method with nine hooks
+ 
+@@ -267,3 +273,5 @@ Sources:
+ - [CopyOnWriteArrayList snapshot iteration](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/CopyOnWriteArrayList.html) — an existing iterator does not reflect subsequent removal.
+ - [JLS 17 lambda body and runtime evaluation](https://docs.oracle.com/javase/specs/jls/se17/html/jls-15.html#jls-15.27.2) — lexical receiver scope and the identity rules in §15.27.4.
+ - [Java 17 ServiceLoader provider deployment](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/ServiceLoader.html) — provider classes and classpath configuration.
++- [JLS 17 abstract classes](https://docs.oracle.com/javase/specs/jls/se17/html/jls-8.html#jls-8.1.1.1) — concrete classes must implement their abstract methods.
++- [Java 17 ElementVisitor evolution contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.compiler/javax/lang/model/element/ElementVisitor.html) — source incompatibility, default methods and unknown-kind handling are deliberate API choices.
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\gof-pattern-antipatterns/skill.yaml" "b/C:\\git\\agent-skills\\skills\\gof-pattern-antipatterns/skill.yaml"
+index 7f9ae8f..adc0895 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\gof-pattern-antipatterns/skill.yaml"
++++ "b/C:\\git\\agent-skills\\skills\\gof-pattern-antipatterns/skill.yaml"
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: gof-pattern-antipatterns
+-version: 1.2.4
++version: 1.2.5
+ description: >-
+   Detecting and removing design-pattern misuse: abstractions that trace to no requirement,
+   patterns chosen because a name sounded right, and the specific failure each overused pattern

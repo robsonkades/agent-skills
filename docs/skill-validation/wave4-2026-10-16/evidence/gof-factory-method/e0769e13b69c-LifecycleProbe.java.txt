@@ -1,0 +1,32 @@
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+
+public final class LifecycleProbe {
+    public static void main(String[] args) throws Exception {
+        var binding = new ApplicationBinding(Path.of("binding.properties"));
+        try {
+            var job = new BoundImportJob(binding);
+            List<Integer> saved = new ArrayList<>();
+            if (job.run("row", saved::add) != 3 || job.run("data", saved::add) != 4) {
+                throw new AssertionError("Wrong result");
+            }
+            if (!saved.equals(List.of(3, 4)) || binding.factoryCalls() != 2) {
+                throw new AssertionError("Wrong calls or saved rows");
+            }
+            if (binding.borrowed()) {
+                if (binding.instanceCount() != 1 || binding.sharedClosed() || binding.closeCount() != 0) {
+                    throw new AssertionError("Borrowed resource closed before owner shutdown");
+                }
+            } else if (binding.instanceCount() != 2 || binding.closeCount() != 2) {
+                throw new AssertionError("Owned resources were not closed per run");
+            }
+            System.out.println("PASS two configured imports and per-run ownership boundary");
+        } finally {
+            binding.close();
+        }
+        int expected = binding.borrowed() ? 1 : 2;
+        if (binding.closeCount() != expected) throw new AssertionError("Wrong final close count");
+        System.out.println("PASS owner shutdown boundary");
+    }
+}

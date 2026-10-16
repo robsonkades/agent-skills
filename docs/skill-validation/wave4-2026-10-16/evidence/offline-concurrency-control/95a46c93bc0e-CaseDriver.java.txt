@@ -1,0 +1,40 @@
+import java.sql.*;
+
+public final class CaseDriver {
+    private static Connection open(String url) throws SQLException {
+        Connection c = DriverManager.getConnection(url);
+        c.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+        c.setAutoCommit(false);
+        return c;
+    }
+
+    public static void main(String[] args) throws Exception {
+        String url = "jdbc:h2:mem:review_case;LOCK_TIMEOUT=1000";
+        try (Connection owner = DriverManager.getConnection(url)) {
+            try (Statement s = owner.createStatement()) {
+                s.execute("CREATE TABLE review_root(id INT PRIMARY KEY, revision BIGINT NOT NULL)");
+                s.execute("CREATE TABLE review_line(id INT PRIMARY KEY, amount INT NOT NULL)");
+                s.executeUpdate("INSERT INTO review_root VALUES(1,1)");
+                s.executeUpdate("INSERT INTO review_line VALUES(1,40),(2,10)");
+            }
+            ReviewStore.Edit edit;
+            try (Connection load = open(url)) {
+                edit = ReviewStore.loadEdit(load, () -> {
+                    try (Connection job = open(url)) { ReviewStore.recalculate(job); }
+                });
+                load.commit();
+            }
+            boolean committed;
+            try (Connection save = open(url)) { committed = ReviewStore.submit(save, edit, 50); }
+            try (Connection inspect = open(url)) {
+                System.out.println("captured=" + edit);
+                System.out.println("committed=" + committed);
+                System.out.println("final-first=" + ReviewStore.readInt(inspect, "SELECT amount FROM review_line WHERE id = 1"));
+                System.out.println("final-second=" + ReviewStore.readInt(inspect, "SELECT amount FROM review_line WHERE id = 2"));
+                System.out.println("final-revision=" + ReviewStore.readInt(inspect, "SELECT revision FROM review_root WHERE id = 1"));
+                inspect.commit();
+            }
+        }
+    }
+}
+

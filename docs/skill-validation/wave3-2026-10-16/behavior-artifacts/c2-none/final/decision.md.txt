@@ -1,0 +1,8 @@
+# Proposal
+
+Keep `connect_start: first_client_data` and all other policy fields unchanged. `protocol.json` selects `first_message: client`; `attachClient` sends `PING\n` on TCP connect, and `attachServer` replies with `PONG\n` after receiving it. Those client bytes trigger the upstream connection under the adapter contract. The trusted fixed route needs no payload inspection, but this client-first exchange does not require changing the connection policy.
+
+TCP connection acceptance alone establishes transport reachability, not completion of the application handshake. Do not raise `inspection_timeout_ms` from 1000 to 10000 as a presumed repair: there is no measured timeout failure, and a longer wait does not fix a dependency on bytes that never arrive. Keep the existing 4096-byte inspection buffer bound and do not add retries or change TLS/authentication.
+
+Check the complete `PING\n` / `PONG\n` exchange with a bounded local run. `local-check.mjs` uses the unchanged client and server plus a small TCP adapter model derived from `adapter-contract.md`, with ephemeral loopback ports, the policy's inspection timeout/buffer bound, and a 3000 ms overall deadline. It checks that upstream connection starts only after client data and that the client completion callback fires. This tests the supplied fixture and modeled behavior; it is not validation of an installed adapter or deployment. See `REVIEW.md` and `local-check.log` for the actual result and limits. Validate the real adapter's application handshake before deployment; this policy file is not vendor configuration.
+

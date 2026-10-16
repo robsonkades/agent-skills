@@ -1,0 +1,9 @@
+import fs from 'node:fs';
+const root='C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9';
+for(const name of process.argv.slice(2)){
+ const h=JSON.parse(fs.readFileSync(root+'/'+name+'.json','utf8')),executions=[];
+ function walk(v,p=''){if(!v||typeof v!=='object')return;if(Array.isArray(v)){v.forEach((x,i)=>walk(x,p+'/'+i));return;}for(const key of ['exit_code','exitCode','exit','status'])if(Number.isInteger(v[key])&&v[key]>=0&&v[key]<100){executions.push({path:p,key,exit:v[key],name:v.name??v.id??v.kind??v.command??v.cmd,result:v.summary??v.result??v.output??v.stdoutText??v.stdout});break;}for(const [k,x]of Object.entries(v))if(!/^(?:cases|caseInputs|caseCriteria|reproducibleCases|baseline|artifacts)$/.test(k))walk(x,p+'/'+k);}
+ walk(h);
+ const claims=Object.fromEntries(Object.entries(h).filter(([k])=>/^(?:summary|versions|findings|findingsCorrected|correctedFindings|findingsReviewed|remainingFindings|findingsRemaining|noChangeRationale|validationSummary|structuralResults|structuralValidation|technicalObservations|limitations|limits|assumptionsAndLimits|assumptionsAndLimitations|crossSkill|crossSkillFindings|crossSkillIssues)$/.test(k)));
+ console.log(JSON.stringify({skill:name,status:h.status,allWritesStopped:h.allWritesStopped,claims,executions,sourcesCount:(h.sources??h.primarySources??[]).length},(k,v)=>typeof v==='string'&&v.length>380?v.slice(0,380)+' [full record retained]':v,2));
+}

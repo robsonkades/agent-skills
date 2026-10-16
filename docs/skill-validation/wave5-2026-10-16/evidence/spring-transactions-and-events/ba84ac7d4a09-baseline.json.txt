@@ -1,0 +1,41 @@
+{
+  "skill": "spring-transactions-and-events",
+  "committedVersion": "1.1.0",
+  "assignmentVersion": "1.1.0",
+  "assignmentStatus": [],
+  "stagedDiff": [],
+  "unstagedDiff": [],
+  "baselineDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/baseline/spring-transactions-and-events",
+  "files": [
+    {
+      "path": "skills/spring-transactions-and-events/SKILL.md",
+      "sha256": "56b31b9b8c39015b48e10aeb2bedb769ded2d0924f77d315fdac690b78ecc555",
+      "baselineSha256": "56b31b9b8c39015b48e10aeb2bedb769ded2d0924f77d315fdac690b78ecc555",
+      "bytes": 8495
+    },
+    {
+      "path": "skills/spring-transactions-and-events/skill.yaml",
+      "sha256": "fe6706d66851084e0a8d0a34373e2fa9a19779b4f15f60c4da9703332aac2003",
+      "baselineSha256": "fe6706d66851084e0a8d0a34373e2fa9a19779b4f15f60c4da9703332aac2003",
+      "bytes": 1327
+    },
+    {
+      "path": "skills/spring-transactions-and-events/references/event-wiring-and-recovery.md",
+      "sha256": "2c158c3d83bb070ce0781b7e2b7907cde5510a21fd3de192ad1dd81e155d8f20",
+      "baselineSha256": "2c158c3d83bb070ce0781b7e2b7907cde5510a21fd3de192ad1dd81e155d8f20",
+      "bytes": 15844
+    },
+    {
+      "path": "skills/spring-transactions-and-events/references/interception-and-rollback.md",
+      "sha256": "6ccd1995155c797a07039a30e75eb37532e80f74a5b8714bda8c2c53084dd3f7",
+      "baselineSha256": "6ccd1995155c797a07039a30e75eb37532e80f74a5b8714bda8c2c53084dd3f7",
+      "bytes": 9557
+    },
+    {
+      "path": "skills/spring-transactions-and-events/references/verification.md",
+      "sha256": "d7490401fc49e0259ebce9e67b4f5f3d0dad300431388aaa797de0e23528620f",
+      "baselineSha256": "d7490401fc49e0259ebce9e67b4f5f3d0dad300431388aaa797de0e23528620f",
+      "bytes": 8078
+    }
+  ]
+}

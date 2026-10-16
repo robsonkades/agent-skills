@@ -1,0 +1,509 @@
+{
+  "schemaVersion": 1,
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "java-object-construction",
+  "ownedPath": "skills/java-object-construction/**",
+  "allWritesStopped": true,
+  "completedAtDate": "2026-10-16",
+  "scope": {
+    "rolePreserved": "Choose, review and implement object-creation paths and instance-control contracts, routing builder/resource mechanics to their existing owners.",
+    "noSharedOrNeighborWrites": true,
+    "subdelegation": false,
+    "installations": false,
+    "globalChecksExecuted": false,
+    "activeProcessesStartedByReviewer": 0,
+    "temporaryEvidenceRoot": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation"
+  },
+  "procedure": {
+    "requiredDocuments": "AGENTS.md, complete docs/skill-review-prompt.md, docs/parallel-skill-reviews.md and skill-engineering with relevant evidence/evaluation/resource-design/anti-pattern references read in this review sequence; unchanged procedure reused for this assignment as allowed by the wave brief.",
+    "assignmentBriefRead": "docs/skill-validation/wave3-2026-10-16/review-brief.md",
+    "entireAssignedPackageRead": true,
+    "ownedFilesRead": 4,
+    "findingsSentBeforeFirstEdit": true,
+    "assessment": "The package already covers factory identity, canonicalization, ownership, cleanup, framework creation paths and singleton scope well. The focused gap is the holder's initialization dependency graph: safe publication guidance did not identify recursive access to an unassigned field or waits across mutually dependent class initializers. Proposed local guard and primary baseline source, preserving valid holder use and existing examples.",
+    "alternativesConsidered": [
+      "Keep the holder for acyclic parameterless lifetime-scoped construction; this remains the legitimate control outcome.",
+      "Do not rewrite all factories or add a DI container; neither is needed to resolve the demonstrated dependency.",
+      "Do not treat final, volatile, extra locking or eager timing as a general repair for a dependency on unfinished state.",
+      "Keep the new detail in the existing conditional singleton reference; no new shipped file or broad workflow expansion."
+    ]
+  },
+  "baseline": {
+    "committedVersion": "1.3.5",
+    "assignmentVersion": "1.3.5",
+    "preExistingVersionBump": false,
+    "stagedChanges": [],
+    "unstagedChanges": [],
+    "untrackedFiles": [],
+    "preExistingChangedFiles": [],
+    "inspection": "Scoped status and both staged/unstaged diffs were empty before the HEAD manifest. All four package contents/hashes captured, then matched immediately before editing.",
+    "preEditBaselineMatched": true,
+    "files": [
+      {
+        "path": "skills/java-object-construction/skill.yaml",
+        "sha256": "11105109E494CBFB480B0A6A351C3B56859409D268768217F6DE7926FD1F07F9"
+      },
+      {
+        "path": "skills/java-object-construction/SKILL.md",
+        "sha256": "CCB0BBC3D20897C3307BCADF7CCD52388084C7B20E49A4EF804A8CF8D9A5E378"
+      },
+      {
+        "path": "skills/java-object-construction/references/singletons-and-static-state.md",
+        "sha256": "C7293255271E6F7B713B5D37B56E8315AFA89D59A939B26F370EF2776AAA3FE9"
+      },
+      {
+        "path": "skills/java-object-construction/references/factories-and-instance-control.md",
+        "sha256": "8FC9A6FAB8F897B6157ADA0EFF2EF3B61416A8B4C86BF8B19DA15A691DA91802"
+      }
+    ],
+    "initialCommandEvidence": {
+      "name": "baseline",
+      "cmd": "git status --short -- skills/java-object-construction; git diff -- skills/java-object-construction; git diff --cached -- skills/java-object-construction; git show HEAD:skills/java-object-construction/skill.yaml",
+      "chunk_id": "267c68",
+      "wall_time_seconds": 0.1292307,
+      "exit_code": 0,
+      "original_token_count": 560,
+      "output": "schemaVersion: 1\n\nname: java-object-construction\nversion: 1.3.5\ndescription: >-\n  Choosing how an object comes into existence in Java: static factory versus public\n  constructor, the of/from/valueOf/getInstance naming conventions, instance control\n  (caching, canonicalisation, value-based classes), enum and holder singletons,\n  noninstantiable utility classes, and passing collaborators in rather than hardwiring them\n  with new. Use when a class has several constructors distinguished only by parameter types,\n  when a constructor does work beyond assigning fields, when a singleton or a static mutable\n  field is proposed, when new appears inside domain logic for something the code can never\n  substitute in a test, or when a factory hands back a type its callers should not be able\n  to name. Does not cover builders and fluent chains (java-fluent-apis), which dependency\n  edge should exist at all (java-dependency-inversion), defensive copying of components\n  (java-immutability), or releasing what construction acquires (java-resource-management).\n\nlicense: Apache-2.0\n\nauthors:\n  - name: agent-skills contributors\n    url: https://github.com/robsonkades/agent-skills\n\nhomepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-object-construction\nrepository:\n  type: git\n  url: https://github.com/robsonkades/agent-skills\n  directory: skills/java-object-construction\n\nkeywords:\n  - java\n  - static-factory\n  - constructor\n  - singleton\n  - instance-control\n  - static-state\n  - api-design\n\nfiles:\n  - SKILL.md\n  - skill.yaml\n  - references/\n\ndependencies:\n  - name: java-fluent-apis\n    version: ^1.2.5\n\nsuggests:\n  - java-composition-over-inheritance\n  - java-dependency-inversion\n  - java-immutability\n  - java-memory-model\n  - java-reference-types-and-leaks\n  - java-resource-management\n  - java-serialization-hardening\n  - java-thread-safety-contracts\n  - distributed-locks-and-leases\n  - graalvm-native-image\n  - leader-election\n  - rpc-and-api-contracts\n  - session-state-strategies\n  - startup-cds-crac-leyden\n\ncapabilities:\n  - reads-source\n\nagentOverrides:\n  codex:\n    interface:\n      display_name: Java Object Construction\n      short_description: Factories, constructors, singletons and static state\n"
+    }
+  },
+  "versions": {
+    "committed": "1.3.5",
+    "initial": "1.3.5",
+    "final": "1.3.6",
+    "rationale": "One patch bump for supported specialist guidance added to an existing reference. No pre-existing unpublished bump to reuse.",
+    "versionFields": "skill.yaml only",
+    "descriptionsChanged": false,
+    "dependenciesChanged": false
+  },
+  "domainSuccessCriteria": [
+    "Follow consumer calls and every supported creation path before selecting construction forms.",
+    "Preserve initialization invariants, supported Java baseline, identity, ownership and failure behavior.",
+    "Distinguish publication after initialization from valid initialization dependencies.",
+    "Exercise first-use paths rather than only already initialized instances.",
+    "Retain ordinary constructors, valid holders and no-change outcomes when sufficient.",
+    "Limit technical and behavioral claims to executed coverage."
+  ],
+  "findings": [
+    {
+      "id": "JOC-01",
+      "status": "corrected",
+      "location": "skills/java-object-construction/references/singletons-and-static-state.md:68",
+      "kind": "Missing decision condition, not a claim that the existing holder idiom is inherently unsafe.",
+      "problem": "The holder discussion explained safe publication and sticky failure, but did not direct the reader to inspect constructors/factories for recursive or mutually dependent class initialization.",
+      "consequence": "A holder can be accepted from its static-final shape while a factory re-enters it before INSTANCE is assigned, or while multiple initializers form a waiting cycle.",
+      "change": "Added dependency tracing, the observable same-thread default-value case, conditional cross-thread waiting risk, appropriate construction/wiring alternatives and fresh first-use verification.",
+      "source": "JLS 21 §12.4.2; the multi-thread cycle is a consequence of its waiting procedure, not a separately executed deadlock test.",
+      "technicalEvidence": "An otherwise identical acyclic fixture passes; changing one factory return expression causes first-use null dereference and initialization failure."
+    },
+    {
+      "id": "JOC-02",
+      "status": "corrected",
+      "location": "skills/java-object-construction/references/singletons-and-static-state.md:159",
+      "kind": "Source alignment",
+      "problem": "The initialization source linked to JLS 25 while examples declare Java 21.",
+      "change": "Linked the verified Java 21 initialization procedure and identified its relevant recursion, waiting and error-state rules.",
+      "consequence": "The condition now has a directly applicable baseline primary source; no target Java upgrade was made."
+    }
+  ],
+  "remainingFindings": [],
+  "filesChangedByReviewer": [
+    {
+      "path": "skills/java-object-construction/skill.yaml",
+      "initialSha256": "11105109E494CBFB480B0A6A351C3B56859409D268768217F6DE7926FD1F07F9",
+      "finalSha256": "D77E1AC27D276FDD405AE458316883E486E3F3E4E21C74D4B9E96D010E234498"
+    },
+    {
+      "path": "skills/java-object-construction/references/singletons-and-static-state.md",
+      "initialSha256": "C7293255271E6F7B713B5D37B56E8315AFA89D59A939B26F370EF2776AAA3FE9",
+      "finalSha256": "BF94826678CB9ABED412C014BE267AAD24C4AE2B4FE404100AB1F9AB2C27AC33"
+    }
+  ],
+  "filesUnchangedFromAssignment": [
+    {
+      "path": "skills/java-object-construction/SKILL.md",
+      "initialSha256": "CCB0BBC3D20897C3307BCADF7CCD52388084C7B20E49A4EF804A8CF8D9A5E378",
+      "finalSha256": "CCB0BBC3D20897C3307BCADF7CCD52388084C7B20E49A4EF804A8CF8D9A5E378"
+    },
+    {
+      "path": "skills/java-object-construction/references/factories-and-instance-control.md",
+      "initialSha256": "8FC9A6FAB8F897B6157ADA0EFF2EF3B61416A8B4C86BF8B19DA15A691DA91802",
+      "finalSha256": "8FC9A6FAB8F897B6157ADA0EFF2EF3B61416A8B4C86BF8B19DA15A691DA91802"
+    }
+  ],
+  "preExistingChangesPreserved": "No prior changes in the owned package; previous assignments and other contributors untouched.",
+  "capabilities": {
+    "preserved": [
+      "Consumer-first choice among an ordinary constructor, named factory, record or builder with neighboring ownership retained.",
+      "Java 21 non-preview baseline and inspection of actual compiler/runtime/framework creation paths.",
+      "Complete MinorAmount record and exact BigDecimal conversion example plus misuse cases.",
+      "Factory naming versus documented behavior, identity guarantees, bounded canonicalization, atomic winner selection and discarded-candidate ownership.",
+      "Value-based identity restrictions, safe construction/publication and explicit collaborators without mandatory interfaces/containers.",
+      "Acquisition failure rollback, cleanup and usability after successful ownership transfer.",
+      "Public/source/binary/serialization compatibility, record canonical constructor bypass, sealed hierarchy evolution and hidden implementation contracts.",
+      "Enum/holder/factory singleton tradeoffs, readResolve graph escapes, class-loader and replica scope, concurrency and shutdown obligations.",
+      "Existing sticky initialization failures, Native Image/CRaC/CDS caveats, utility-class guidance and review checks."
+    ],
+    "intentionallyRemoved": [],
+    "replaced": [
+      "One initialization-reference URL now points to the declared Java 21 baseline."
+    ],
+    "mainSkillBodyUnchanged": true,
+    "existingExecutableExamplesChanged": false,
+    "subtractionReview": "Only one focused paragraph and source annotation added; no new shipped artifacts or generic ceremony."
+  },
+  "validation": {
+    "executedStructural": [
+      {
+        "purpose": "Baseline strict package and relative-link validation",
+        "result": "Passed: version 1.3.5, four files, issues=[], two relative links and no broken links.",
+        "workingDirectory": "C:/git/agent-skills",
+        "name": "package",
+        "cmd": "@'\nimport fs from 'node:fs';\nimport path from 'node:path';\nimport { parseManifest } from './packages/core/src/domain/manifest.ts';\nimport { buildSkillPackage } from './packages/core/src/domain/skill-package.ts';\nimport { validatePackage } from './packages/core/src/application/validate-package.ts';\nconst root = path.resolve('skills/java-object-construction');\nconst paths = [];\nfunction walk(dir) { for (const entry of fs.readdirSync(dir, {withFileTypes:true})) { const absolute = path.join(dir,entry.name); if(entry.isDirectory()) walk(absolute); else paths.push(absolute); } }\nwalk(root);\nconst files = paths.map(absolute=>({path:path.relative(root,absolute).split(path.sep).join('/'),bytes:fs.readFileSync(absolute)}));\nconst parsed = parseManifest(fs.readFileSync(path.join(root,'skill.yaml'),'utf8'),{strict:true,source:'skills/java-object-construction/skill.yaml'});\nconst pkg = buildSkillPackage(parsed.manifest,files);\nconst report = validatePackage(pkg,{directoryName:'java-object-construction'});\nconst brokenLinks = [];\nlet linksChecked = 0;\nfor (const file of files.filter(file=>file.path.endsWith('.md'))) {\n for (const match of Buffer.from(file.bytes).toString('utf8').matchAll(/\\[[^\\]]*\\]\\((<[^>]*>|[^)]+)\\)/g)) {\n  const destination = match[1].startsWith('<') ? match[1].slice(1,-1) : match[1];\n  const target = destination.split('#')[0];\n  if(!target || /^[a-z][a-z0-9+.-]*:/i.test(target)) continue;\n  linksChecked++;\n  if(!fs.existsSync(path.resolve(root,path.dirname(file.path),target))) brokenLinks.push({from:file.path,target});\n }\n}\nconst issues = [...parsed.issues,...report.issues];\nconsole.log(JSON.stringify({runtime:process.version,skill:parsed.manifest.name,version:parsed.manifest.version,files:files.map(f=>f.path),issues,linksChecked,brokenLinks},null,2));\nif(issues.length || brokenLinks.length) process.exitCode=1;\n\n'@ | node --input-type=module",
+        "chunk_id": "823e2a",
+        "wall_time_seconds": 0.1632012,
+        "exit_code": 0,
+        "original_token_count": 75,
+        "output": "{\n  \"runtime\": \"v25.6.1\",\n  \"skill\": \"java-object-construction\",\n  \"version\": \"1.3.5\",\n  \"files\": [\n    \"references/factories-and-instance-control.md\",\n    \"references/singletons-and-static-state.md\",\n    \"SKILL.md\",\n    \"skill.yaml\"\n  ],\n  \"issues\": [],\n  \"linksChecked\": 2,\n  \"brokenLinks\": []\n}\n"
+      },
+      {
+        "purpose": "Baseline scoped Prettier check",
+        "result": "Passed.",
+        "workingDirectory": "C:/git/agent-skills",
+        "name": "format",
+        "cmd": "node node_modules/prettier/bin/prettier.cjs --check skills/java-object-construction/SKILL.md skills/java-object-construction/skill.yaml skills/java-object-construction/references/*.md",
+        "chunk_id": "4b9bd3",
+        "wall_time_seconds": 0.2226223,
+        "exit_code": 0,
+        "original_token_count": 17,
+        "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+      },
+      {
+        "purpose": "Baseline scoped git diff --check",
+        "result": "Passed.",
+        "workingDirectory": "C:/git/agent-skills",
+        "name": "whitespace",
+        "cmd": "git diff --check -- skills/java-object-construction",
+        "chunk_id": "676bbe",
+        "wall_time_seconds": 0.0625247,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      },
+      {
+        "purpose": "Post-edit formatting on all owned Markdown/YAML",
+        "result": "Passed; no formatting write required.",
+        "workingDirectory": "C:/git/agent-skills",
+        "name": "format",
+        "cmd": "node node_modules/prettier/bin/prettier.cjs --check skills/java-object-construction/SKILL.md skills/java-object-construction/skill.yaml skills/java-object-construction/references/*.md",
+        "chunk_id": "8dd332",
+        "wall_time_seconds": 0.2272252,
+        "exit_code": 0,
+        "original_token_count": 17,
+        "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+      },
+      {
+        "purpose": "Final strict package and resource-link validation",
+        "result": "Passed: version 1.3.6, issues=[], two relative links, no broken links.",
+        "workingDirectory": "C:/git/agent-skills",
+        "name": "package",
+        "cmd": "@'\nimport fs from 'node:fs';\nimport path from 'node:path';\nimport { parseManifest } from './packages/core/src/domain/manifest.ts';\nimport { buildSkillPackage } from './packages/core/src/domain/skill-package.ts';\nimport { validatePackage } from './packages/core/src/application/validate-package.ts';\nconst root = path.resolve('skills/java-object-construction');\nconst paths = [];\nfunction walk(dir) { for (const entry of fs.readdirSync(dir, {withFileTypes:true})) { const absolute = path.join(dir,entry.name); if(entry.isDirectory()) walk(absolute); else paths.push(absolute); } }\nwalk(root);\nconst files = paths.map(absolute=>({path:path.relative(root,absolute).split(path.sep).join('/'),bytes:fs.readFileSync(absolute)}));\nconst parsed = parseManifest(fs.readFileSync(path.join(root,'skill.yaml'),'utf8'),{strict:true,source:'skills/java-object-construction/skill.yaml'});\nconst pkg = buildSkillPackage(parsed.manifest,files);\nconst report = validatePackage(pkg,{directoryName:'java-object-construction'});\nconst brokenLinks = [];\nlet linksChecked = 0;\nfor (const file of files.filter(file=>file.path.endsWith('.md'))) {\n for (const match of Buffer.from(file.bytes).toString('utf8').matchAll(/\\[[^\\]]*\\]\\((<[^>]*>|[^)]+)\\)/g)) {\n  const destination = match[1].startsWith('<') ? match[1].slice(1,-1) : match[1];\n  const target = destination.split('#')[0];\n  if(!target || /^[a-z][a-z0-9+.-]*:/i.test(target)) continue;\n  linksChecked++;\n  if(!fs.existsSync(path.resolve(root,path.dirname(file.path),target))) brokenLinks.push({from:file.path,target});\n }\n}\nconst issues = [...parsed.issues,...report.issues];\nconsole.log(JSON.stringify({runtime:process.version,skill:parsed.manifest.name,version:parsed.manifest.version,files:files.map(f=>f.path),issues,linksChecked,brokenLinks},null,2));\nif(issues.length || brokenLinks.length) process.exitCode=1;\n\n'@ | node --input-type=module",
+        "chunk_id": "121a46",
+        "wall_time_seconds": 0.1983306,
+        "exit_code": 0,
+        "original_token_count": 75,
+        "output": "{\n  \"runtime\": \"v25.6.1\",\n  \"skill\": \"java-object-construction\",\n  \"version\": \"1.3.6\",\n  \"files\": [\n    \"references/factories-and-instance-control.md\",\n    \"references/singletons-and-static-state.md\",\n    \"SKILL.md\",\n    \"skill.yaml\"\n  ],\n  \"issues\": [],\n  \"linksChecked\": 2,\n  \"brokenLinks\": []\n}\n"
+      },
+      {
+        "purpose": "Final scoped git diff --check",
+        "result": "Passed.",
+        "workingDirectory": "C:/git/agent-skills",
+        "name": "whitespace",
+        "cmd": "git diff --check -- skills/java-object-construction",
+        "chunk_id": "736193",
+        "wall_time_seconds": 0.0683049,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      },
+      {
+        "purpose": "Final owned diff inspection",
+        "result": "Inspected: one reference paragraph/source plus manifest patch.",
+        "workingDirectory": "C:/git/agent-skills",
+        "name": "diff",
+        "cmd": "git diff -- skills/java-object-construction",
+        "chunk_id": "58744e",
+        "wall_time_seconds": 0.1045485,
+        "exit_code": 0,
+        "original_token_count": 779,
+        "output": "diff --git a/skills/java-object-construction/references/singletons-and-static-state.md b/skills/java-object-construction/references/singletons-and-static-state.md\nindex 54ae54a..3def8f7 100644\n--- a/skills/java-object-construction/references/singletons-and-static-state.md\n+++ b/skills/java-object-construction/references/singletons-and-static-state.md\n@@ -65,6 +65,15 @@ live outside class initialization or support another lifecycle; it carries more\n surface. java-memory-model has the proof. Laziness helps only when deferred/unused work outweighs\n the first-use latency and sticky class-initialization failure risk.\n \n+Trace initialization dependencies through constructors and factories before choosing a holder.\n+Re-entry on the initializing thread does not wait for that initialization to finish: reading an\n+as-yet-unassigned `INSTANCE` can return `null`. Two threads initializing mutually dependent classes\n+can instead wait for each other. Remove dependencies on unfinished state or separate construction\n+from later wiring; a `final` field or eager initialization does not by itself resolve the cycle.\n+Exercise first access in a fresh JVM or defining loader, because an already initialized holder\n+skips this path. Bound tests of suspected blocking cycles in a forked process and inspect thread\n+stacks to distinguish a cycle from merely slow construction.\n+\n Class initialization also has a sticky failure mode: a non-`Error` throwable is wrapped in\n `ExceptionInInitializerError`; an `Error` propagates directly. Later active uses in that class loader can fail with\n `NoClassDefFoundError` rather than retrying initialization. Do not hide recoverable network or\n@@ -147,7 +156,7 @@ the port the JDK already ships.\n \n ## Authoritative references\n \n-- [JLS §12.4.2: Detailed Initialization Procedure](https://docs.oracle.com/javase/specs/jls/se25/html/jls-12.html#jls-12.4.2)\n+- [JLS 21 §12.4.2: Detailed Initialization Procedure](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.4.2) — same-thread recursion, waiting for another initializer and erroneous-class state.\n - [Java Object Serialization: enum constants](https://docs.oracle.com/en/java/javase/25/docs/specs/serialization/serial-arch.html#serialization-of-enum-constants)\n - [Serialization 21 §3.7: readResolve](https://docs.oracle.com/en/java/javase/21/docs/specs/serialization/input.html#the-readresolve-method) — graph references created before replacement are not repaired.\n - [JLS 21 §8.8.10: Preventing Instantiation](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.8.10)\ndiff --git a/skills/java-object-construction/skill.yaml b/skills/java-object-construction/skill.yaml\nindex e1a40df..a27e410 100644\n--- a/skills/java-object-construction/skill.yaml\n+++ b/skills/java-object-construction/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: java-object-construction\n-version: 1.3.5\n+version: 1.3.6\n description: >-\n   Choosing how an object comes into existence in Java: static factory versus public\n   constructor, the of/from/valueOf/getInstance naming conventions, instance control\n"
+      },
+      {
+        "purpose": "Final owned status",
+        "result": "Two modified owned files; no new shipped files.",
+        "workingDirectory": "C:/git/agent-skills",
+        "name": "status",
+        "cmd": "git status --short -- skills/java-object-construction",
+        "chunk_id": "ad2085",
+        "wall_time_seconds": 0.100821,
+        "exit_code": 0,
+        "original_token_count": 31,
+        "output": " M skills/java-object-construction/references/singletons-and-static-state.md\n M skills/java-object-construction/skill.yaml\n"
+      }
+    ],
+    "executedTechnical": [
+      {
+        "purpose": "Verify actual Java runtime",
+        "result": "Temurin 25.0.3+9; not a Java 21 VM.",
+        "workingDirectory": "C:/git/agent-skills",
+        "name": "runtime",
+        "cmd": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -version",
+        "chunk_id": "983bcb",
+        "wall_time_seconds": 0.104647,
+        "exit_code": 0,
+        "original_token_count": 49,
+        "output": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n"
+      },
+      {
+        "purpose": "Compile acyclic first-use control",
+        "result": "Passed with --release 21 -Xlint:all.",
+        "workingDirectory": "C:/git/agent-skills",
+        "name": "acyclic",
+        "cmd": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' --release 21 -Xlint:all -d 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/acyclic/classes' 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/acyclic/Catalog.java' 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/acyclic/RegionConfig.java' 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/acyclic/Defaults.java' 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/acyclic/ConstructionCheck.java'",
+        "chunk_id": "b9ada5",
+        "wall_time_seconds": 0.4211531,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      },
+      {
+        "purpose": "Compile recursive initializer and observation probe",
+        "result": "Passed with --release 21 -Xlint:all.",
+        "workingDirectory": "C:/git/agent-skills",
+        "name": "recursive",
+        "cmd": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' --release 21 -Xlint:all -d 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/recursive/classes' 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/recursive/Catalog.java' 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/recursive/RegionConfig.java' 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/recursive/Defaults.java' 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/recursive/ConstructionCheck.java' 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/recursive/InitializationProbe.java'",
+        "chunk_id": "ba8744",
+        "wall_time_seconds": 0.3865703,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      },
+      {
+        "purpose": "Run acyclic control in fresh JVM",
+        "result": "Passed: region=eu and same identity=true.",
+        "workingDirectory": "C:/git/agent-skills",
+        "name": "acyclic-ConstructionCheck",
+        "cmd": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -cp 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/acyclic/classes' ConstructionCheck 1> 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/acyclic/check-stdout.txt' 2> 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/acyclic/check-stderr.txt'\n$constructionRunExit = $LASTEXITCODE\n[pscustomobject]@{Variant='acyclic';Class='ConstructionCheck';ExitCode=$constructionRunExit;Stdout=(Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/acyclic/check-stdout.txt' -Raw);Stderr=(Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/acyclic/check-stderr.txt' -Raw)} | ConvertTo-Json\nexit $constructionRunExit",
+        "chunk_id": "c9cc03",
+        "wall_time_seconds": 0.153089,
+        "exit_code": 0,
+        "original_token_count": 43,
+        "output": "{\r\n  \"Variant\": \"acyclic\",\r\n  \"Class\": \"ConstructionCheck\",\r\n  \"ExitCode\": 0,\r\n  \"Stdout\": \"PASS first access: region=eu, same identity=true\\r\\n\",\r\n  \"Stderr\": null\r\n}\r\n"
+      },
+      {
+        "purpose": "Run recursive path in fresh JVM",
+        "result": "Expected negative-control failure: exit 1, ExceptionInInitializerError caused by NullPointerException from still-null Catalog.instance().",
+        "workingDirectory": "C:/git/agent-skills",
+        "name": "recursive-ConstructionCheck",
+        "cmd": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -cp 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/recursive/classes' ConstructionCheck 1> 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/recursive/check-stdout.txt' 2> 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/recursive/check-stderr.txt'\n$constructionRunExit = $LASTEXITCODE\n[pscustomobject]@{Variant='recursive';Class='ConstructionCheck';ExitCode=$constructionRunExit;Stdout=(Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/recursive/check-stdout.txt' -Raw);Stderr=(Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/recursive/check-stderr.txt' -Raw)} | ConvertTo-Json\nexit $constructionRunExit",
+        "chunk_id": "8d03b2",
+        "wall_time_seconds": 0.1628005,
+        "exit_code": 1,
+        "original_token_count": 143,
+        "output": "{\r\n  \"Variant\": \"recursive\",\r\n  \"Class\": \"ConstructionCheck\",\r\n  \"ExitCode\": 1,\r\n  \"Stdout\": null,\r\n  \"Stderr\": \"Exception in thread \\\"main\\\" java.lang.ExceptionInInitializerError\\r\\n\\tat Catalog.instance(Catalog.java:13)\\r\\n\\tat ConstructionCheck.main(ConstructionCheck.java:3)\\r\\nCaused by: java.lang.NullPointerException: Cannot invoke \\\"Catalog.region()\\\" because the return value of \\\"Catalog.instance()\\\" is null\\r\\n\\tat Defaults.region(Defaults.java:4)\\r\\n\\tat Catalog.<init>(Catalog.java:5)\\r\\n\\tat Catalog$Holder.<clinit>(Catalog.java:9)\\r\\n\\t... 2 more\\r\\n\"\r\n}\r\n"
+      },
+      {
+        "purpose": "Observe first and subsequent accesses in another fresh JVM",
+        "result": "Passed: first access produces ExceptionInInitializerError/NPE; later access produces NoClassDefFoundError.",
+        "workingDirectory": "C:/git/agent-skills",
+        "name": "recursive-InitializationProbe",
+        "cmd": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -cp 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/recursive/classes' InitializationProbe 1> 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/recursive/probe-stdout.txt' 2> 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/recursive/probe-stderr.txt'\n$constructionRunExit = $LASTEXITCODE\n[pscustomobject]@{Variant='recursive';Class='InitializationProbe';ExitCode=$constructionRunExit;Stdout=(Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/recursive/probe-stdout.txt' -Raw);Stderr=(Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/recursive/probe-stderr.txt' -Raw)} | ConvertTo-Json\nexit $constructionRunExit",
+        "chunk_id": "9e00b0",
+        "wall_time_seconds": 0.1258913,
+        "exit_code": 0,
+        "original_token_count": 64,
+        "output": "{\r\n  \"Variant\": \"recursive\",\r\n  \"Class\": \"InitializationProbe\",\r\n  \"ExitCode\": 0,\r\n  \"Stdout\": \"Observed first access: ExceptionInInitializerError caused by NullPointerException\\r\\nObserved later access: NoClassDefFoundError\\r\\n\",\r\n  \"Stderr\": null\r\n}\r\n"
+      }
+    ],
+    "unexpectedFailures": [],
+    "expectedFailures": [
+      "The recursive ConstructionCheck intentionally fails; its stdout/stderr is retained and it is evidence that the check rejects the invalid dependency."
+    ],
+    "allCommandsFinished": true,
+    "technicalArtifacts": [
+      "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/acyclic/Catalog.java",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/acyclic/Defaults.java",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/acyclic/RegionConfig.java",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/acyclic/ConstructionCheck.java",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/acyclic/check-stdout.txt",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/acyclic/check-stderr.txt",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/recursive/Catalog.java",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/recursive/Defaults.java",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/recursive/RegionConfig.java",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/recursive/ConstructionCheck.java",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/recursive/InitializationProbe.java",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/recursive/check-stdout.txt",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/recursive/check-stderr.txt",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/recursive/probe-stdout.txt",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/recursive/probe-stderr.txt",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/technical-evidence.json"
+    ],
+    "notRun": [
+      "No JDK 21 VM, other JVMs or alternate class-loader implementation was executed; javac25 used --release21.",
+      "No actual multi-thread class-initialization deadlock was started. That conditional risk is supported by JLS waiting semantics and is not claimed as a runtime observation.",
+      "No production captures, benchmarks or independent behavioral evaluations.",
+      "Unchanged complete/partial package code examples outside the focused initialization contract were reviewed but not recompiled for this prose-only change.",
+      "No global registry:build or verify."
+    ]
+  },
+  "behavioralEvaluation": {
+    "executedAgentOutputs": [],
+    "executedComparisons": [],
+    "measuredImprovement": false,
+    "walkthroughs": [
+      {
+        "case": "java-object-construction-case-a",
+        "type": "Structured walkthrough, not an agent evaluation.",
+        "result": "Defaults reaches the configuration constant without re-entering Catalog; the holder is a valid no-change outcome under the supplied contract."
+      },
+      {
+        "case": "java-object-construction-case-b",
+        "type": "Structured walkthrough, not an agent evaluation.",
+        "result": "The one changed factory expression closes the initialization cycle. A small correction can restore the independent configuration dependency without changing API, laziness or identity."
+      }
+    ],
+    "cases": [
+      {
+        "id": "java-object-construction-case-a",
+        "classification": "Development case, not held out",
+        "actorInput": {
+          "request": "Review this object's lazy creation path and make the smallest correction if its declared contract can fail. Preserve the public API, lazy first use and the documented identity/configuration contract. If the current implementation already meets those requirements, leave it unchanged and explain the evidence. Use the supplied code and existing check, without installing or upgrading tools or adding dependencies.",
+          "fixtures": {
+            "README.md": "# Catalog construction\n\nCatalog must be usable on its first call, return one identity within its defining class loader, and use the region supplied by RegionConfig. Initialization is intentionally lazy; no container is used. All source files for this sample are supplied. ConstructionCheck is an executable contract check. Compile with the project's Java 21 target and no preview; report the runtime actually exercised. Work only inside the isolated sample. No production incident frequency or performance measurements are supplied.\n",
+            "toolchain.properties": "java.release=21\npreview=false\n",
+            "Catalog.java": "public final class Catalog {\n    private final String region;\n\n    private Catalog() {\n        region = Defaults.region();\n    }\n\n    private static final class Holder {\n        static final Catalog INSTANCE = new Catalog();\n    }\n\n    public static Catalog instance() {\n        return Holder.INSTANCE;\n    }\n\n    public String region() {\n        return region;\n    }\n}\n",
+            "RegionConfig.java": "public final class RegionConfig {\n    public static final String REGION = \"eu\";\n    private RegionConfig() {}\n}\n",
+            "Defaults.java": "public final class Defaults {\n    private Defaults() {}\n    public static String region() {\n        return RegionConfig.REGION;\n    }\n}\n",
+            "ConstructionCheck.java": "public final class ConstructionCheck {\n    public static void main(String[] args) {\n        Catalog first = Catalog.instance();\n        if (first == null) throw new AssertionError(\"first access must return a catalog\");\n        if (!RegionConfig.REGION.equals(first.region())) {\n            throw new AssertionError(\"catalog must use configured region\");\n        }\n        if (first != Catalog.instance()) {\n            throw new AssertionError(\"identity must remain stable within this defining loader\");\n        }\n        System.out.println(\"PASS first access: region=\" + first.region() + \", same identity=true\");\n    }\n}\n"
+          }
+        },
+        "evaluator": {
+          "requiredBehavior": [
+            "Inspect Defaults.region and the actual initialization path, not only the apparent holder idiom.",
+            "Preserve Catalog.instance/region signatures, lazy creation, RegionConfig as the configuration source and documented per-defining-loader identity.",
+            "Keep any correction limited to the supplied sample; do not add a DI container, switch Java versions, or claim unmeasured performance improvement.",
+            "Verify first-use behavior in a fresh JVM/defining loader; distinguish --release 21 compilation from the actual VM used.",
+            "Report executed checks and any limitations, not hypothetical success."
+          ],
+          "failureConditions": [
+            "Approves all holder implementations solely because Holder.INSTANCE is static final.",
+            "Treats later access to an already initialized class as sufficient coverage of first-use construction.",
+            "Diagnoses a publication race without inspecting the recursive dependency or proposes volatile/additional locking as a complete cycle fix.",
+            "Replaces the configuration with a test-specific hard-coded value, or changes the declared lifecycle/identity contract.",
+            "Claims a no-change or implementation outcome unsupported by the actual artifact and available checks."
+          ],
+          "prerequisites": [
+            "Provide only the actorInput file/ordinary fixture to the actor. Withhold evaluator criteria, prior technical results and InitializationProbe.",
+            "Materialize files in a writable isolated fixture directory; do not expose the peer case's answer or revised solution.",
+            "Java 21+ compiler can use --release 21 for these non-preview examples. Report the runtime; no newer toolchain installation is authorized.",
+            "These development cases are not held out. File separation alone does not enforce isolation."
+          ],
+          "decisiveConstraint": "Defaults.region reads RegionConfig.REGION; the construction dependency path does not re-enter Catalog.instance.",
+          "expectedOutcome": [
+            "Conclude no construction-cycle defect is supported by the supplied code; retain the adequate holder design.",
+            "Show the dependency path is acyclic with respect to Catalog initialization and the first-access/identity check passes if executed.",
+            "Do not manufacture a need for a builder, interface, eager singleton, retry loop or broad rewrite."
+          ]
+        }
+      },
+      {
+        "id": "java-object-construction-case-b",
+        "classification": "Development case, not held out",
+        "actorInput": {
+          "request": "Review this object's lazy creation path and make the smallest correction if its declared contract can fail. Preserve the public API, lazy first use and the documented identity/configuration contract. If the current implementation already meets those requirements, leave it unchanged and explain the evidence. Use the supplied code and existing check, without installing or upgrading tools or adding dependencies.",
+          "fixtures": {
+            "README.md": "# Catalog construction\n\nCatalog must be usable on its first call, return one identity within its defining class loader, and use the region supplied by RegionConfig. Initialization is intentionally lazy; no container is used. All source files for this sample are supplied. ConstructionCheck is an executable contract check. Compile with the project's Java 21 target and no preview; report the runtime actually exercised. Work only inside the isolated sample. No production incident frequency or performance measurements are supplied.\n",
+            "toolchain.properties": "java.release=21\npreview=false\n",
+            "Catalog.java": "public final class Catalog {\n    private final String region;\n\n    private Catalog() {\n        region = Defaults.region();\n    }\n\n    private static final class Holder {\n        static final Catalog INSTANCE = new Catalog();\n    }\n\n    public static Catalog instance() {\n        return Holder.INSTANCE;\n    }\n\n    public String region() {\n        return region;\n    }\n}\n",
+            "RegionConfig.java": "public final class RegionConfig {\n    public static final String REGION = \"eu\";\n    private RegionConfig() {}\n}\n",
+            "Defaults.java": "public final class Defaults {\n    private Defaults() {}\n    public static String region() {\n        return Catalog.instance().region();\n    }\n}\n",
+            "ConstructionCheck.java": "public final class ConstructionCheck {\n    public static void main(String[] args) {\n        Catalog first = Catalog.instance();\n        if (first == null) throw new AssertionError(\"first access must return a catalog\");\n        if (!RegionConfig.REGION.equals(first.region())) {\n            throw new AssertionError(\"catalog must use configured region\");\n        }\n        if (first != Catalog.instance()) {\n            throw new AssertionError(\"identity must remain stable within this defining loader\");\n        }\n        System.out.println(\"PASS first access: region=\" + first.region() + \", same identity=true\");\n    }\n}\n"
+          }
+        },
+        "evaluator": {
+          "requiredBehavior": [
+            "Inspect Defaults.region and the actual initialization path, not only the apparent holder idiom.",
+            "Preserve Catalog.instance/region signatures, lazy creation, RegionConfig as the configuration source and documented per-defining-loader identity.",
+            "Keep any correction limited to the supplied sample; do not add a DI container, switch Java versions, or claim unmeasured performance improvement.",
+            "Verify first-use behavior in a fresh JVM/defining loader; distinguish --release 21 compilation from the actual VM used.",
+            "Report executed checks and any limitations, not hypothetical success."
+          ],
+          "failureConditions": [
+            "Approves all holder implementations solely because Holder.INSTANCE is static final.",
+            "Treats later access to an already initialized class as sufficient coverage of first-use construction.",
+            "Diagnoses a publication race without inspecting the recursive dependency or proposes volatile/additional locking as a complete cycle fix.",
+            "Replaces the configuration with a test-specific hard-coded value, or changes the declared lifecycle/identity contract.",
+            "Claims a no-change or implementation outcome unsupported by the actual artifact and available checks."
+          ],
+          "prerequisites": [
+            "Provide only the actorInput file/ordinary fixture to the actor. Withhold evaluator criteria, prior technical results and InitializationProbe.",
+            "Materialize files in a writable isolated fixture directory; do not expose the peer case's answer or revised solution.",
+            "Java 21+ compiler can use --release 21 for these non-preview examples. Report the runtime; no newer toolchain installation is authorized.",
+            "These development cases are not held out. File separation alone does not enforce isolation."
+          ],
+          "decisiveConstraint": "Only Defaults.region's return expression changes; it re-enters the Catalog being constructed.",
+          "expectedOutcome": [
+            "Follow Catalog.instance -> Holder initialization -> Catalog constructor -> Defaults.region -> Catalog.instance and identify the still-unassigned holder value.",
+            "Explain the observed null dereference/ExceptionInInitializerError and that later same-loader access does not retry the erroneous holder.",
+            "Make the smallest in-scope correction that removes the dependency on unfinished Catalog state while still sourcing the region from RegionConfig.",
+            "Run the existing first-use/identity check in a fresh process when execution is available and report the actual result."
+          ]
+        }
+      }
+    ],
+    "separation": {
+      "actorA": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/actor-a.json",
+      "actorB": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/actor-b.json",
+      "criteria": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/evaluator-criteria.json",
+      "onlyActorDifference": "Defaults.region returns RegionConfig.REGION in case A and Catalog.instance().region() in case B.",
+      "isolationLimit": "Separate files/fields do not enforce filesystem isolation. Coordinator must withhold evaluator criteria, peer outputs and technical probe/results."
+    },
+    "caseClassification": "Development cases used during review, not held out. No claim that the revised skill outperforms the original on them."
+  },
+  "primarySources": [
+    {
+      "title": "JLS 21 §12.4.2 — Detailed Initialization Procedure",
+      "url": "https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.4.2",
+      "verifiedDate": "2026-10-16",
+      "verification": "Primary source retrieved through web tool.",
+      "supports": "Same-thread recursive requests return without waiting; requests while another thread initializes wait. Initial static defaults precede assignment, and failure records an erroneous class state.",
+      "inference": "A mutual dependency across initializing threads can form a waiting cycle. This follows from the documented procedure; the review did not execute that scenario."
+    }
+  ],
+  "assumptionsAndLimits": [
+    "Local readiness is not repository-wide validation.",
+    "The added guard addresses a supported initialization mechanism; its effect on agent behavior has not been measured.",
+    "Existing broad guidance may already lead an agent to detect these cases. The review does not infer incremental gain from technical execution.",
+    "The tiny fixtures demonstrate selected initialization outcomes in the recorded toolchain, not universal performance, all dependency graphs or all class-loader environments.",
+    "The main skill, factory reference, descriptions, dependency ranges and examples are preserved."
+  ],
+  "crossSkillIssues": [],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Shared index/cross-package validation prohibited for reviewers.",
+      "prerequisite": "All writers have stopped."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Final repository CI and committed-index version checks remain coordinator-only.",
+      "prerequisite": "All writers stopped and index regenerated."
+    }
+  ],
+  "coordinatorActions": [
+    "Inspect the two-file diff and handoff.",
+    "Run deferred globals when all reviewers stop.",
+    "Run independent comparisons only with actor/evaluator separation and controlled treatment if measuring behavioral gain."
+  ]
+}

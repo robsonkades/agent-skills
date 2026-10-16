@@ -1,0 +1,23 @@
+{
+  "provenance": "Synthetic deployment records; operations retries have already been collapsed.",
+  "episodes": [
+    {
+      "id": "r10",
+      "script": "ship-all",
+      "quote": "1.4 to 1.5",
+      "pricing": "3.0 unchanged"
+    },
+    {
+      "id": "r11",
+      "script": "ship-all",
+      "quote": "1.5 to 1.6",
+      "pricing": "3.0 to 3.1"
+    },
+    {
+      "id": "r12",
+      "script": "ship-all",
+      "quote": "1.6 to 1.7",
+      "pricing": "3.1 to 3.2"
+    }
+  ]
+}

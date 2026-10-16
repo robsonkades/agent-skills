@@ -8,9 +8,10 @@ description: >
   locale, randomness. Use when a test name does not say what broke, when a failure message
   has to be decoded by reading the test, when setup is shared across unrelated tests, when
   a test sleeps, when tests pass alone and fail together, when a flaky test is about to be
-  retried or disabled, or when the same assertions are being copied across cases. Does not
-  cover which level to test at (java-testing-strategy), stubs and mocks (java-test-doubles),
-  the red-green-refactor loop (tdd), or threading (concurrency-testing).
+  retried or disabled, when the same assertions are being copied across cases, or when
+  intended behaviour changes and old expectations fail. Does not cover which level to test
+  at (java-testing-strategy), stubs and mocks (java-test-doubles), the red-green-refactor loop
+  (tdd), or threading (concurrency-testing).
 ---
 
 # Java Test Design
@@ -32,25 +33,38 @@ configuration and existing test command first. Reference snippets were authored 
 use Java 17+ syntax and Jupiter 5 APIs, and do not authorize upgrades or new dependencies. When a
 failure cannot be reproduced, report the observation and diagnostic next step, not a guessed cause.
 
-1. **Name it after the condition and the expected behaviour**, so a reader can predict the
+1. **Locate the executable test.** Follow the behavior's entrypoint to its owning module,
+   test source set and nearby tests. Use the repository's runner and focused selector; inspect
+   the identities and outcomes of the selected cases. Establish the existing result before
+   editing when practical. For requested test changes, edit or add the test in that harness
+   and run it; a proposed assertion alone is not an implemented test.
+2. **Establish the observable contract and oracle.** Find the requirement, API guarantee or
+   accepted behavior that justifies the expected result; today's implementation is not its own
+   oracle. Select representative valid, boundary and rejection cases that distinguish plausible
+   faults. Hold other inputs valid so they cannot mask the condition being tested; reuse existing
+   coverage and add combinations when their interaction changes the outcome.
+3. **Name it after the condition and the expected behaviour**, so a reader can predict the
    assertion from the name alone: `renewalOneDayAfterTheWindowIsNotDue`, not
    `testIsDueWithin2`. Method names or digits are fine when they help describe the contract.
-2. **Give it one reason to fail.** Multiple assertions are fine when they describe one
+4. **Give it one reason to fail.** Multiple assertions are fine when they describe one
    outcome; two unrelated outcomes are two tests, because the first failure hides the second.
-3. **Keep the relevant arrangement visible.** Direct construction is often enough. For
+5. **Keep the relevant arrangement visible.** Direct construction is often enough. For
    recurring incidental setup, a builder with sensible defaults can expose the changing input:
    `aSubscription().renewingOn(MARCH_9).build()`. Reuse adequate project helpers and assertions.
-4. **Choose the assertion for its failure message.** `assertThat(list).containsExactly(a, b)`
-   prints both lists on failure; `assertTrue(list.equals(...))` prints `false`.
-5. **Control the inputs relevant to the contract** — clock, order, locale/zone, randomness and
+6. **Choose an assertion that enforces the contract and explains failure.** For ordered exact
+   contents, `assertThat(list).containsExactly(a, b)` prints both lists on failure;
+   `assertTrue(list.equals(...))` prints `false`.
+7. **Control the inputs relevant to the contract** — clock, order, locale/zone, randomness and
    external resources. Preserve required integration and default-environment behavior by
    isolating/configuring it, rather than changing production semantics to simplify the test.
    See `references/determinism.md`.
-6. **For a consequential new regression test, check a representative fault** with a temporary
-   local mutation or the known failing revision. Confirm the intended assertion detects it;
-   compilation, discovery or unrelated setup failure is not evidence of that detection.
-   Restore the mutation and rerun the test; inspect diagnostic clarity. Do not leave broken
-   production code.
+8. **For a consequential new regression test, check a representative fault** with an isolated
+   temporary mutation or the known failing revision, preserving other work. Confirm the intended
+   assertion detects it; compilation, discovery or unrelated setup failure is not evidence of
+   that detection.
+   If it survives, check the selected cases, fixture and oracle before adding tests; the reference
+   shows how an existing case can expose a fault missed by a narrow selector. Restore only your
+   mutation and rerun the affected tests; inspect diagnostic clarity. Do not leave broken code.
 
 ## Rules
 
@@ -73,6 +87,11 @@ failure cannot be reproduced, report the observation and diagnostic next step, n
 - Do not derive the expectation by repeating the behavior under test; both copies can be
   wrong together. Use explicit example values or an independent oracle/property. Sharing
   incidental value constructors is different from copying the algorithm being tested.
+- When intended behavior changes, identify the superseded contract before updating expectations,
+  names or fixtures; retain assertions for unchanged behavior. Refactoring alone does not justify
+  a new expected result. If requirements and tests conflict without a clear authorized change,
+  surface the disputed case rather than copying current output into the oracle. See the contract
+  change example in `references/junit5-patterns.md`.
 - Assert on the resulting value whenever the outcome is observable as one. Verifying that a
   collaborator was called is a claim about implementation, and is only justified when the
   call _is_ the outcome (java-test-doubles).
@@ -103,8 +122,9 @@ behavior and its representative failure are supported, or identify the missing e
 - **JUnit patterns** — `references/junit5-patterns.md`. Partial examples
   (Java 17+ syntax, Jupiter 5 APIs): test data builder, `@ParameterizedTest` with `@CsvSource` and implicit
   `java.time` conversion, `@Nested` for context, exception assertions, and the lifecycle
-  choices that create shared state. Read when reaching for a Jupiter feature or checking
-  whether a passing test exercised its intended case.
+  choices that create shared state. Read when selecting or executing discriminating cases,
+  investigating a surviving controlled fault, revising an expectation after a contract change,
+  reaching for a Jupiter feature or checking whether a passing test exercised its intended case.
 - **Removing non-determinism** — `references/determinism.md`. The controllable inputs a test
   accidentally depends on — clock, zone, locale, charset, iteration order, randomness,
   filesystem, ports — each with the substitution, plus the "passes alone, fails together"

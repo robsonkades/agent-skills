@@ -1,0 +1,45 @@
+import fs from 'node:fs';
+import {spawnSync} from 'node:child_process';
+import assert from 'node:assert/strict';
+const root='C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4',report='C:/git/agent-skills/docs/skill-validation/wave9-2026-10-16';
+const label=process.argv[2]??'initial',file=report+'/preflight-'+label+'.json';if(fs.existsSync(file))throw Error('Keep earlier preflight');
+const read=p=>fs.readFileSync(root+'/'+p,'utf8'),variants=[];
+for(const id of ['R1','R2']){
+ const ref=read('ReferenceRetry.java.txt');
+ variants.push({id,name:'correct-reference',code:ref,pass:true});
+ variants.push({id,name:'equivalent-split-wait',code:ref.replace('rt.sleep(wait);','rt.sleep(wait / 2);\n            rt.sleep(wait - wait / 2);'),pass:true});
+ variants.push({id,name:'equivalent-preserved-interrupt-flag',code:ref.replaceAll('if (Thread.currentThread().isInterrupted()) throw new InterruptedException();','if (Thread.currentThread().isInterrupted()) return stop(store, attempts);'),pass:true});
+ variants.push({id,name:'null-pre-interruption-result',code:ref.replaceAll('if (Thread.currentThread().isInterrupted()) throw new InterruptedException();','if (Thread.currentThread().isInterrupted()) return null;'),pass:false});
+ variants.push({id,name:'provided-incorrect',code:read('cases/'+id+'/input/RetryEngine.java'),pass:false});
+ variants.push({id,name:'erase-earlier-unknown',code:ref.replace('if (store.snapshot().state() != Ports.State.UNKNOWN) store.rejected();','store.rejected();'),pass:false});
+ variants.push({id,name:'truncate-server-minimum',code:ref.replace('Math.max(p.localWaitNanos(), serverMinimum)','Math.min(p.localWaitNanos(), serverMinimum)'),pass:false});
+ variants.push({id,name:'skip-entry-deadline',code:ref.replace('rt.cancelled() || !fits(rt.remainingNanos(), 0, p)','rt.cancelled()'),pass:false});
+ if(id==='R1')variants.push({id,name:'unsafe-replay',code:ref.replaceAll('!Contract.REPLAY_SAFE','false'),pass:false});
+ if(id==='R2')variants.push({id,name:'lose-ambiguous-advice',code:ref.replace('serverMinimum = reply.serverMinimumNanos();','serverMinimum = kind == Ports.Kind.UNKNOWN ? 0 : reply.serverMinimumNanos();'),pass:false});
+ if(id==='R2')variants.push({id,name:'forget-resumed-unknown',code:ref.replace('while (true) {','if (initial == Ports.State.UNKNOWN && Contract.REPLAY_SAFE) store.rejected();\n        while (true) {'),pass:false});
+}
+const ref=read('ReferencePlan.java.txt');
+for(const v of [
+ {name:'correct-reference',code:ref,pass:true},
+ {name:'provided-incorrect',code:read('cases/R3/input/RetryPlan.java'),pass:false},
+ {name:'absolute-deadline-comparison',code:ref.replace('elapsed >= total','now >= start + total'),pass:false},
+ {name:'uncapped-shift-overflow',code:ref.replace('exponent >= 63 || base > (Long.MAX_VALUE >> exponent) ? Long.MAX_VALUE : base << exponent','base << exponent'),pass:false},
+ {name:'floating-point-window-precision',code:ref.replace('exponent >= 63 || base > (Long.MAX_VALUE >> exponent) ? Long.MAX_VALUE : base << exponent','(long) (base * Math.pow(2.0, exponent))'),pass:false},
+ {name:'truncate-server-minimum',code:ref.replace('Math.max(serverMinimum,draw.applyAsLong(window))','Math.min(serverMinimum,draw.applyAsLong(window))'),pass:false},
+ {name:'forget-reserve-allocation',code:ref.replace('Math.min(attemptCap,remaining-wait-reserve)','Math.min(attemptCap,remaining)'),pass:false},
+ {name:'off-by-one-attempt-cap',code:ref.replace('completed >= maxAttempts','completed > maxAttempts'),pass:false},
+ {name:'equivalent-modular-remaining',code:ref.replace('long remaining = total - elapsed;','long remaining = start + total - now;'),pass:true}
+])variants.push({...v,id:'R3'});
+const records=[];
+const command=(cmd,args,cwd)=>{const r=spawnSync(cmd,args,{cwd,encoding:'utf8',timeout:20000,windowsHide:true});return {cmd,args,exit:r.status,error:r.error?.message??null,stdout:r.stdout,stderr:r.stderr};};
+for(const v of variants){
+ const dir=root+'/preflight/'+label+'/'+v.id+'/'+v.name;fs.cpSync(root+'/cases/'+v.id+'/input',dir,{recursive:true});
+ const impl=v.id==='R3'?'RetryPlan.java':'RetryEngine.java',probe=v.id==='R3'?'ProbePlan':'ProbeRetry';
+ fs.writeFileSync(dir+'/'+impl,v.code);fs.copyFileSync(root+'/'+probe+'.java',dir+'/'+probe+'.java');fs.mkdirSync(dir+'/classes');
+ const compile=command('javac',['--release','17','-d','classes',...fs.readdirSync(dir).filter(f=>f.endsWith('.java'))],dir);
+ const run=compile.exit===0?command('java',['-ea','-cp','classes',probe],dir):null;
+ const actualMatch=compile.exit===0&&!compile.error&&run&&!run.error&&(v.pass?run.exit===0:run.exit!==0&&run.stderr.includes('AssertionError'));
+ records.push({caseId:v.id,variant:v.name,expectedPass:v.pass,actualMatch,compile,run});
+ console.log(JSON.stringify({caseId:v.id,variant:v.name,compile:compile.exit,run:run?.exit,expected:actualMatch}));
+}
+const out={at:new Date().toISOString(),label,allExpected:records.every(r=>r.actualMatch),records};fs.writeFileSync(file,JSON.stringify(out,null,2)+'\n');assert.ok(out.allExpected,'Investigate evaluator/fixture failures before freezing');

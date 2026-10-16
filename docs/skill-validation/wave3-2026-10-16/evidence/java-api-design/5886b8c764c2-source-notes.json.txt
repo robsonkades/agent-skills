@@ -1,0 +1,38 @@
+[
+  {
+    "url": "https://docs.oracle.com/javase/specs/jls/se25/html/jls-15.html#jls-15.12.4.4",
+    "version": "Java SE 25",
+    "finding": "Virtual lookup uses the actual receiver class; invoking a new name cannot invoke an old override unless the call path reaches that old virtual method. The existing naming reference correctly makes alias direction conditional.",
+    "role": "Primary normative basis for the executed dispatch control."
+  },
+  {
+    "url": "https://docs.oracle.com/javase/specs/jls/se25/html/jls-13.html#jls-13.2",
+    "version": "Java SE 25",
+    "finding": "Binary linkage and source compatibility are separate. Preserved method signatures and successful linkage do not prove unchanged behavior.",
+    "role": "Primary normative basis for compatibility classification."
+  },
+  {
+    "url": "https://docs.oracle.com/javase/specs/jls/se25/html/jls-13.html#jls-13.4.23",
+    "version": "Java SE 25",
+    "finding": "Precompiled call sites retain the chosen overload; recompilation can change selection. Existing skill requires both source checks and old-binary runs.",
+    "role": "Reviewed existing overload/evolution guidance; no edit."
+  },
+  {
+    "url": "https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html#jls-8.4.8.3",
+    "version": "Java SE 25",
+    "finding": "Overriding restrictions include result/throws compatibility. Existing exception-narrowing and subclass caveats preserve this boundary.",
+    "role": "Reviewed existing compatibility guidance; no edit."
+  },
+  {
+    "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/stream/BaseStream.html#close()",
+    "version": "Java SE 25",
+    "finding": "Explicit close runs stream close handlers. The skill distinguishes resource ownership from obtaining a terminal result.",
+    "role": "Reviewed existing stream ownership boundary; no new resource implementation tested."
+  },
+  {
+    "url": "https://semver.org/spec/v2.0.0.html",
+    "version": "Semantic Versioning 2.0.0",
+    "finding": "Stable public-API compatibility governs version changes; marking public functionality deprecated is a minor change. Existing skill conditions this policy on the project's actual compatibility agreement.",
+    "role": "Reviewed version/deprecation guidance; no edit."
+  }
+]

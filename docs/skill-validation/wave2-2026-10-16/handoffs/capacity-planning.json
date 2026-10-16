@@ -1,0 +1,354 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "capacity-planning",
+  "ownedPath": "skills/capacity-planning/**",
+  "allWritesStopped": true,
+  "retrospective": true,
+  "provenance": "Original review and writes were completed before this archive request. Assignment/final content snapshots and the original summarized outcomes were retained. The original full arithmetic command transcript was not retained in accessible session state; exact commands, controls and detailed results below are fresh read-only retrospective reruns, not asserted to be the original byte-for-byte transcript. Behavioral fixtures are reproducible retrospective materializations of the earlier 99%-versus-98% cases.",
+  "versions": {
+    "committed": "1.3.4",
+    "assignmentTime": "1.3.4",
+    "final": "1.3.5",
+    "preExistingBump": false,
+    "rationale": "One patch bump for new input-provenance and incomplete-outcome instructions. No additional edits or bump during archival."
+  },
+  "filesChangedByReviewer": [
+    "skills/capacity-planning/SKILL.md",
+    "skills/capacity-planning/references/inputs-forecast-and-cost.md",
+    "skills/capacity-planning/skill.yaml"
+  ],
+  "preExistingChanges": [],
+  "baselineComparison": [
+    {
+      "path": "C:\\git\\agent-skills\\skills\\capacity-planning\\SKILL.md",
+      "changedByReviewer": true
+    },
+    {
+      "path": "C:\\git\\agent-skills\\skills\\capacity-planning\\skill.yaml",
+      "changedByReviewer": true
+    },
+    {
+      "path": "C:\\git\\agent-skills\\skills\\capacity-planning\\references\\cloud-instance-selection.md",
+      "changedByReviewer": false
+    },
+    {
+      "path": "C:\\git\\agent-skills\\skills\\capacity-planning\\references\\inputs-forecast-and-cost.md",
+      "changedByReviewer": true
+    },
+    {
+      "path": "C:\\git\\agent-skills\\skills\\capacity-planning\\references\\kubernetes-scaling-controls.md",
+      "changedByReviewer": false
+    },
+    {
+      "path": "C:\\git\\agent-skills\\skills\\capacity-planning\\references\\provisioning-decision.md",
+      "changedByReviewer": false
+    },
+    {
+      "path": "C:\\git\\agent-skills\\skills\\capacity-planning\\references\\sizing-arithmetic.md",
+      "changedByReviewer": false
+    }
+  ],
+  "changes": [
+    {
+      "location": "SKILL.md, Workflow step 2: Establish comparable evidence",
+      "correction": "Route decision-changing metrics through their query/recording boundary, population and effective configuration before admitting a run to the feasible envelope.",
+      "consequence": "A success-only chart no longer establishes the outcome of all eligible demand."
+    },
+    {
+      "location": "references/inputs-forecast-and-cost.md, Qualify decision inputs",
+      "correction": "Trace admission/attempt/server/caller observation points, cohort windows and actual deployed instances; retain incomplete outcomes and ongoing resource occupancy.",
+      "consequence": "Avoid mixing logical-operation and retry denominators or assuming client timeout released server work."
+    },
+    {
+      "location": "references/inputs-forecast-and-cost.md, count-based good-event SLI bound",
+      "correction": "For n>0 eligible operations with g known good and u unresolved, use [g/n,(g+u)/n], validated nonoverlapping counts, and pass/fail/unresolved thresholds. Known deadline misses are not unresolved for timeliness.",
+      "consequence": "Makes the capacity cell checkable without manufacturing a percentile, confidence interval or future capacity guarantee; only affected envelope cells/forecasts change."
+    }
+  ],
+  "preserved": [
+    "Measured feasible envelopes, accepted demand/failure policies, scenario enumeration and provisional/no-change outcomes.",
+    "Workload/version/resource comparability, runtime/throughput/model limitations, placement, rollout and autoscaling headroom.",
+    "Forecast uncertainty/backtesting, cost accounting, saturation and lead-time decisions.",
+    "Sizing arithmetic, Kubernetes controls, cloud selection and provisioning references unchanged.",
+    "No fixed Java API baseline; no executable Java example or new dependency introduced.",
+    "Boundaries with load-testing-advanced, queueing-models, universal-scalability-law and overload/pool skills retained."
+  ],
+  "replacedOrRemoved": "No capability removed; added a focused qualification step and routed reference section.",
+  "commands": [
+    {
+      "name": "arithmeticRerun",
+      "command": "@'\nimport assert from 'node:assert/strict';\nfunction outcome(n,g,u,q){\n  if(!Number.isInteger(n)||n<=0||!Number.isInteger(g)||!Number.isInteger(u)||g<0||u<0||g+u>n||!Number.isFinite(q)||q<0||q>1)throw new RangeError('invalid cohort');\n  const lower=g/n, upper=(g+u)/n;\n  return {lower,upper,status:lower>=q?'pass':upper<q?'fail':'unresolved'};\n}\nconst direct=[\n  {n:10000,g:9800,u:200,q:0.99,expected:'unresolved'},\n  {n:10000,g:9800,u:200,q:0.98,expected:'pass'},\n  {n:10000,g:9700,u:100,q:0.99,expected:'fail'},\n  {n:10000,g:9900,u:100,q:0.99,expected:'pass'},\n  {n:10000,g:9800,u:0,q:0.99,expected:'fail'},\n  {n:10000,g:0,u:10000,q:0.99,expected:'unresolved'}\n];\nconst directResults=direct.map(c=>{const actual=outcome(c.n,c.g,c.u,c.q);assert.equal(actual.status,c.expected);return {...c,...actual};});\nconst invalid=[{n:0,g:0,u:0,q:0.99},{n:10,g:-1,u:1,q:0.99},{n:10,g:5,u:-1,q:0.99},{n:10,g:8,u:3,q:0.99}];\nfor(const c of invalid)assert.throws(()=>outcome(c.n,c.g,c.u,c.q),RangeError);\nlet combinations=0;\nconst thresholds=[{num:0,den:1},{num:1,den:2},{num:99,den:100},{num:1,den:1}];\nfor(let n=1;n<=40;n++)for(let g=0;g<=n;g++)for(let u=0;u<=n-g;u++)for(const q of thresholds){\n  let anyPass=false,anyFail=false;\n  for(let goodUnknown=0;goodUnknown<=u;goodUnknown++){\n    if((g+goodUnknown)*q.den>=q.num*n)anyPass=true;else anyFail=true;\n  }\n  const expected=!anyFail?'pass':!anyPass?'fail':'unresolved';\n  assert.equal(outcome(n,g,u,q.num/q.den).status,expected,JSON.stringify({n,g,u,q}));\n  combinations++;\n}\nassert.equal(combinations,49360);\nconsole.log(JSON.stringify({classification:'retrospective arithmetic rerun; not an agent behavioral evaluation',directResults,invalidControls:invalid,invalidControlsRejected:invalid.length,enumeration:{n:'1..40',g:'0..n',u:'0..n-g',thresholds,combinations,oracle:'Enumerate every possible count of good outcomes among the unresolved operations, using integer threshold cross-products.'}},null,2));\n'@ | node --input-type=module",
+      "cwd": "C:/git/agent-skills",
+      "classification": "retrospective read-only rerun",
+      "exitCode": 0,
+      "output": "{\n  \"classification\": \"retrospective arithmetic rerun; not an agent behavioral evaluation\",\n  \"directResults\": [\n    {\n      \"n\": 10000,\n      \"g\": 9800,\n      \"u\": 200,\n      \"q\": 0.99,\n      \"expected\": \"unresolved\",\n      \"lower\": 0.98,\n      \"upper\": 1,\n      \"status\": \"unresolved\"\n    },\n    {\n      \"n\": 10000,\n      \"g\": 9800,\n      \"u\": 200,\n      \"q\": 0.98,\n      \"expected\": \"pass\",\n      \"lower\": 0.98,\n      \"upper\": 1,\n      \"status\": \"pass\"\n    },\n    {\n      \"n\": 10000,\n      \"g\": 9700,\n      \"u\": 100,\n      \"q\": 0.99,\n      \"expected\": \"fail\",\n      \"lower\": 0.97,\n      \"upper\": 0.98,\n      \"status\": \"fail\"\n    },\n    {\n      \"n\": 10000,\n      \"g\": 9900,\n      \"u\": 100,\n      \"q\": 0.99,\n      \"expected\": \"pass\",\n      \"lower\": 0.99,\n      \"upper\": 1,\n      \"status\": \"pass\"\n    },\n    {\n      \"n\": 10000,\n      \"g\": 9800,\n      \"u\": 0,\n      \"q\": 0.99,\n      \"expected\": \"fail\",\n      \"lower\": 0.98,\n      \"upper\": 0.98,\n      \"status\": \"fail\"\n    },\n    {\n      \"n\": 10000,\n      \"g\": 0,\n      \"u\": 10000,\n      \"q\": 0.99,\n      \"expected\": \"unresolved\",\n      \"lower\": 0,\n      \"upper\": 1,\n      \"status\": \"unresolved\"\n    }\n  ],\n  \"invalidControls\": [\n    {\n      \"n\": 0,\n      \"g\": 0,\n      \"u\": 0,\n      \"q\": 0.99\n    },\n    {\n      \"n\": 10,\n      \"g\": -1,\n      \"u\": 1,\n      \"q\": 0.99\n    },\n    {\n      \"n\": 10,\n      \"g\": 5,\n      \"u\": -1,\n      \"q\": 0.99\n    },\n    {\n      \"n\": 10,\n      \"g\": 8,\n      \"u\": 3,\n      \"q\": 0.99\n    }\n  ],\n  \"invalidControlsRejected\": 4,\n  \"enumeration\": {\n    \"n\": \"1..40\",\n    \"g\": \"0..n\",\n    \"u\": \"0..n-g\",\n    \"thresholds\": [\n      {\n        \"num\": 0,\n        \"den\": 1\n      },\n      {\n        \"num\": 1,\n        \"den\": 2\n      },\n      {\n        \"num\": 99,\n        \"den\": 100\n      },\n      {\n        \"num\": 1,\n        \"den\": 1\n      }\n    ],\n    \"combinations\": 49360,\n    \"oracle\": \"Enumerate every possible count of good outcomes among the unresolved operations, using integer threshold cross-products.\"\n  }\n}\n"
+    },
+    {
+      "name": "packageRerun",
+      "command": "@'\nimport { loadPackageFromDirectory } from './packages/core/src/application/package-loader.ts';\nimport { validatePackage } from './packages/core/src/application/validate-package.ts';\nimport { NodeFileSystem } from './packages/node/src/file-system.ts';\nimport { CodexAdapter } from './packages/adapter-codex/src/index.ts';\nimport { ClaudeCodeAdapter } from './packages/adapter-claude/src/index.ts';\nconst loaded=await loadPackageFromDirectory(new NodeFileSystem(),'skills/capacity-planning',{strict:true});\nconst validated=validatePackage(loaded.pkg,{directoryName:'capacity-planning',adapters:[new CodexAdapter(),new ClaudeCodeAdapter()]});\nconst issues=[...loaded.issues,...validated.issues];\nconsole.log(JSON.stringify({name:loaded.pkg.manifest.name,version:loaded.pkg.manifest.version,files:loaded.pkg.files.map(f=>f.path),issues},null,2));\nif(issues.length)process.exitCode=1;\n'@ | node --input-type=module",
+      "cwd": "C:/git/agent-skills",
+      "classification": "retrospective read-only rerun",
+      "exitCode": 0,
+      "output": "{\n  \"name\": \"capacity-planning\",\n  \"version\": \"1.3.5\",\n  \"files\": [\n    \"SKILL.md\",\n    \"references/cloud-instance-selection.md\",\n    \"references/inputs-forecast-and-cost.md\",\n    \"references/kubernetes-scaling-controls.md\",\n    \"references/provisioning-decision.md\",\n    \"references/sizing-arithmetic.md\",\n    \"skill.yaml\"\n  ],\n  \"issues\": []\n}\n"
+    },
+    {
+      "name": "linksRerun",
+      "command": "@'\nimport { readFileSync,readdirSync,statSync,existsSync } from 'node:fs';\nimport { resolve,dirname } from 'node:path';\nconst files=[];function walk(d){for(const n of readdirSync(d)){const p=resolve(d,n);if(statSync(p).isDirectory())walk(p);else if(p.endsWith('.md'))files.push(p);}}walk(resolve('skills/capacity-planning'));\nconst links=[];for(const file of files)for(const m of readFileSync(file,'utf8').matchAll(/\\[[^\\]]+\\]\\(([^)]+)\\)/g)){const target=m[1];if(/^[a-z]+:/i.test(target))continue;const [p,anchor]=target.split('#');const abs=resolve(dirname(file),p);let valid=existsSync(abs);if(valid&&anchor){const heads=[...readFileSync(abs,'utf8').matchAll(/^#{1,6}\\s+(.+)$/gm)].map(x=>x[1].toLowerCase().replace(/[^\\w\\s-]/g,'').replace(/\\s+/g,'-'));valid=heads.includes(anchor);}links.push({file,target,valid});}\nconsole.log(JSON.stringify({markdownFiles:files.length,links,invalid:links.filter(x=>!x.valid).length},null,2));if(links.some(x=>!x.valid))process.exitCode=1;\n'@ | node --input-type=module",
+      "cwd": "C:/git/agent-skills",
+      "classification": "retrospective read-only rerun",
+      "exitCode": 0,
+      "output": "{\n  \"markdownFiles\": 6,\n  \"links\": [\n    {\n      \"file\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\capacity-planning\\\\SKILL.md\",\n      \"target\": \"references/inputs-forecast-and-cost.md#qualify-decision-inputs\",\n      \"valid\": true\n    },\n    {\n      \"file\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\capacity-planning\\\\SKILL.md\",\n      \"target\": \"references/sizing-arithmetic.md\",\n      \"valid\": true\n    },\n    {\n      \"file\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\capacity-planning\\\\SKILL.md\",\n      \"target\": \"references/kubernetes-scaling-controls.md\",\n      \"valid\": true\n    },\n    {\n      \"file\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\capacity-planning\\\\SKILL.md\",\n      \"target\": \"references/sizing-arithmetic.md\",\n      \"valid\": true\n    },\n    {\n      \"file\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\capacity-planning\\\\SKILL.md\",\n      \"target\": \"references/sizing-arithmetic.md\",\n      \"valid\": true\n    },\n    {\n      \"file\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\capacity-planning\\\\SKILL.md\",\n      \"target\": \"references/provisioning-decision.md\",\n      \"valid\": true\n    },\n    {\n      \"file\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\capacity-planning\\\\SKILL.md\",\n      \"target\": \"references/inputs-forecast-and-cost.md\",\n      \"valid\": true\n    },\n    {\n      \"file\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\capacity-planning\\\\SKILL.md\",\n      \"target\": \"references/kubernetes-scaling-controls.md\",\n      \"valid\": true\n    },\n    {\n      \"file\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\capacity-planning\\\\SKILL.md\",\n      \"target\": \"references/cloud-instance-selection.md\",\n      \"valid\": true\n    }\n  ],\n  \"invalid\": 0\n}\n"
+    },
+    {
+      "name": "formatRerun",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/capacity-planning/SKILL.md skills/capacity-planning/references/inputs-forecast-and-cost.md skills/capacity-planning/skill.yaml",
+      "cwd": "C:/git/agent-skills",
+      "classification": "retrospective read-only rerun",
+      "exitCode": 0,
+      "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+    },
+    {
+      "name": "diffCheckRerun",
+      "command": "git diff --check -- skills/capacity-planning",
+      "cwd": "C:/git/agent-skills",
+      "classification": "retrospective read-only rerun",
+      "exitCode": 0,
+      "output": ""
+    }
+  ],
+  "originalReportedChecks": {
+    "provenance": "Retained prior handoff summary, not full raw transcript",
+    "arithmetic": "6 direct cases, 4 invalid controls, 49,360 enumerated combinations passed",
+    "package": "7 files, 0 issues",
+    "links": "9 valid local links",
+    "format": "passed",
+    "diffCheck": "passed"
+  },
+  "arithmeticControls": {
+    "classification": "retrospective arithmetic rerun; not an agent behavioral evaluation",
+    "directResults": [
+      {
+        "n": 10000,
+        "g": 9800,
+        "u": 200,
+        "q": 0.99,
+        "expected": "unresolved",
+        "lower": 0.98,
+        "upper": 1,
+        "status": "unresolved"
+      },
+      {
+        "n": 10000,
+        "g": 9800,
+        "u": 200,
+        "q": 0.98,
+        "expected": "pass",
+        "lower": 0.98,
+        "upper": 1,
+        "status": "pass"
+      },
+      {
+        "n": 10000,
+        "g": 9700,
+        "u": 100,
+        "q": 0.99,
+        "expected": "fail",
+        "lower": 0.97,
+        "upper": 0.98,
+        "status": "fail"
+      },
+      {
+        "n": 10000,
+        "g": 9900,
+        "u": 100,
+        "q": 0.99,
+        "expected": "pass",
+        "lower": 0.99,
+        "upper": 1,
+        "status": "pass"
+      },
+      {
+        "n": 10000,
+        "g": 9800,
+        "u": 0,
+        "q": 0.99,
+        "expected": "fail",
+        "lower": 0.98,
+        "upper": 0.98,
+        "status": "fail"
+      },
+      {
+        "n": 10000,
+        "g": 0,
+        "u": 10000,
+        "q": 0.99,
+        "expected": "unresolved",
+        "lower": 0,
+        "upper": 1,
+        "status": "unresolved"
+      }
+    ],
+    "invalidControls": [
+      {
+        "n": 0,
+        "g": 0,
+        "u": 0,
+        "q": 0.99
+      },
+      {
+        "n": 10,
+        "g": -1,
+        "u": 1,
+        "q": 0.99
+      },
+      {
+        "n": 10,
+        "g": 5,
+        "u": -1,
+        "q": 0.99
+      },
+      {
+        "n": 10,
+        "g": 8,
+        "u": 3,
+        "q": 0.99
+      }
+    ],
+    "invalidControlsRejected": 4,
+    "enumeration": {
+      "n": "1..40",
+      "g": "0..n",
+      "u": "0..n-g",
+      "thresholds": [
+        {
+          "num": 0,
+          "den": 1
+        },
+        {
+          "num": 1,
+          "den": 2
+        },
+        {
+          "num": 99,
+          "den": 100
+        },
+        {
+          "num": 1,
+          "den": 1
+        }
+      ],
+      "combinations": 49360,
+      "oracle": "Enumerate every possible count of good outcomes among the unresolved operations, using integer threshold cross-products."
+    }
+  },
+  "behavioralEvaluations": {
+    "executed": [],
+    "measuredImprovement": false,
+    "walkthroughs": [
+      {
+        "case": "q99",
+        "result": "The success-only denominator is incomplete. Known good fraction lies in [98%,100%], so the 99% observed-cohort good-event criterion is unresolved; revise only that cell and affected forecast."
+      },
+      {
+        "case": "q98",
+        "result": "Only q changes to 98%. The lower bound meets the criterion, so this observed-cohort criterion passes despite unresolved terminal records; retain other guardrails and future uncertainty."
+      }
+    ],
+    "classification": "Reviewer walkthroughs only, no independent agent outputs."
+  },
+  "evaluationCases": [
+    {
+      "id": "q99",
+      "input": {
+        "request": "Inspect the supplied records and update the affected capacity decision. Explain whether the normal-peak point is supported under the accepted SLO; preserve unrelated accepted evidence. No new load test or deployment is authorized.",
+        "fixtures": {
+          "decision.md": "Candidate: 4 replicas, image digest fixture-v1, 1000 offered operations/s. Normal-peak cell is marked PASS using the dashboard's 100% good rate. Other required scenarios and resource/dependency guardrails have existing applicable evidence; preserve those decisions. No new deployment is requested.",
+          "slo.json": "{\n  \"population\": \"All 10000 eligible logical operations started in the measured cohort; no excluded operations.\",\n  \"goodEvent\": \"Caller receives the required successful result within 100 ms.\",\n  \"requiredGoodFraction\": 0.99\n}",
+          "dashboard-query.txt": "good_rate = count(terminal_events where successful and duration_ms <= 100) / count(terminal_events)\nThe dashboard has 9800 terminal events, all successful within 100 ms; it reports 100%.",
+          "cohort.json": "{\n  \"eligibleOperations\": 10000,\n  \"knownGood\": 9800,\n  \"knownBad\": 0,\n  \"missingTerminalRecords\": 200,\n  \"missingReason\": \"Collector lost terminal records; their timely outcomes cannot be reconstructed. These are not known timeouts or known deadline misses.\",\n  \"unit\": \"logical operations, not retry attempts\",\n  \"cohortCoverage\": \"Start-side census complete; all counts refer to the same fixed cohort.\",\n  \"configuration\": \"All selected instances served image fixture-v1 with the tested resource settings.\"\n}"
+        },
+        "prerequisites": "Materialize these small text fixtures in an isolated directory; give actor the skill and input only."
+      },
+      "criteria": {
+        "expected": [
+          "Inspect dashboard query and cohort source; distinguish observed terminal events from all eligible logical operations.",
+          "Derive g=9800, u=200, n=10000 and bound [0.98,1].",
+          "Classify q=0.99 as unresolved and amend only the affected capacity cell/downstream forecast, preserving other accepted decisions.",
+          "Request the missing outcome/instrumentation evidence when it can change the decision; do not manufacture p99 or mark all missing outcomes bad."
+        ],
+        "failureConditions": [
+          "Keeps PASS from the 100% success-only chart.",
+          "Reports n=9800 or mixes attempt counts.",
+          "Converts missing records to zero duration or guaranteed failure.",
+          "Calls an accounting bound a confidence interval or proof of future capacity."
+        ]
+      }
+    },
+    {
+      "id": "q98",
+      "changedConstraint": "Only slo.json requiredGoodFraction changes from 0.99 to 0.98; all observations, counts, configuration and other guardrails remain identical.",
+      "input": {
+        "request": "Inspect the supplied records and update the affected capacity decision. Explain whether the normal-peak point is supported under the accepted SLO; preserve unrelated accepted evidence. No new load test or deployment is authorized.",
+        "fixtures": {
+          "decision.md": "Candidate: 4 replicas, image digest fixture-v1, 1000 offered operations/s. Normal-peak cell is marked PASS using the dashboard's 100% good rate. Other required scenarios and resource/dependency guardrails have existing applicable evidence; preserve those decisions. No new deployment is requested.",
+          "slo.json": "{\n  \"population\": \"All 10000 eligible logical operations started in the measured cohort; no excluded operations.\",\n  \"goodEvent\": \"Caller receives the required successful result within 100 ms.\",\n  \"requiredGoodFraction\": 0.98\n}",
+          "dashboard-query.txt": "good_rate = count(terminal_events where successful and duration_ms <= 100) / count(terminal_events)\nThe dashboard has 9800 terminal events, all successful within 100 ms; it reports 100%.",
+          "cohort.json": "{\n  \"eligibleOperations\": 10000,\n  \"knownGood\": 9800,\n  \"knownBad\": 0,\n  \"missingTerminalRecords\": 200,\n  \"missingReason\": \"Collector lost terminal records; their timely outcomes cannot be reconstructed. These are not known timeouts or known deadline misses.\",\n  \"unit\": \"logical operations, not retry attempts\",\n  \"cohortCoverage\": \"Start-side census complete; all counts refer to the same fixed cohort.\",\n  \"configuration\": \"All selected instances served image fixture-v1 with the tested resource settings.\"\n}"
+        },
+        "prerequisites": "Same isolated fixture setup; actor must not receive evaluator criteria."
+      },
+      "criteria": {
+        "expected": [
+          "Retain the complete cohort denominator and [0.98,1] accounting bound.",
+          "Recognize lower bound equals q, so this observed-cohort criterion passes.",
+          "Keep unknown terminal outcomes explicit and retain other capacity guardrails; do not infer exact percentile or future capacity.",
+          "Change the affected conclusion only, without rerunning valid unrelated scenarios."
+        ],
+        "failureConditions": [
+          "Leaves this criterion unresolved solely because any outcome is missing.",
+          "Still uses 99% after the changed SLO.",
+          "Turns criterion pass into an unconditional production/future capacity guarantee."
+        ]
+      }
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://sre.google/workbook/implementing-slos/",
+      "verifiedDuring": "Original review, 2026-10-16",
+      "supports": "SLI specification versus implementation, user outcome and observation location/population limitations."
+    },
+    {
+      "url": "https://grpc.io/docs/guides/cancellation/",
+      "verifiedDuring": "Original review, 2026-10-16",
+      "supports": "Cancellation requires application cooperation; a caller ending its wait does not establish that all server-side work stopped."
+    },
+    {
+      "kind": "Elementary finite-cohort arithmetic",
+      "supports": "The displayed good-fraction interval and decision classifications follow from 0..u possible good unresolved outcomes. The exact fresh enumeration and negative controls are included above; this is not an external performance claim."
+    }
+  ],
+  "limits": [
+    "Original full arithmetic command transcript unavailable; exact recorded rerun controls must not be attributed as the original unretained code.",
+    "No actual load test, production telemetry, forecast fit, deployment or cost benchmark executed.",
+    "No agent behavioral evaluation or comparative gain measured; cases are development fixtures.",
+    "Count-based good-event bounds need a complete eligible denominator and mutually exclusive, consistently scoped counts; they do not estimate percentiles or sampling confidence.",
+    "No files under skills/capacity-planning were changed during this retrospective request."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "prerequisite": "All reviewers stopped"
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "prerequisite": "Index regenerated after all reviewers stopped"
+    }
+  ],
+  "crossSkill": {
+    "issues": [],
+    "action": "Archive this report; run independent cases if desired. Existing load-testing-advanced handoff retained, no neighboring edits."
+  }
+}

@@ -38,8 +38,10 @@ Reuse adequate models and tests; preserve findings-only scope and an already sou
 
 1. **Inspect the contract and write or update the relevant boundary's fault-model card.**
    Start with the requested operation, its success/degraded-success criteria, existing model,
-   client/driver behavior and deployment evidence. Reuse established facts; ask only for gaps
-   that change safety, recovery or the recommendation. Name the fault classes, failure domains,
+   client/driver behavior and deployment evidence. Follow the caller to the selected client
+   and deployed route, including retrying intermediaries; a configuration file alone does not
+   establish the active path. Reuse established facts; ask only for gaps that change safety,
+   recovery or the recommendation. Name the fault classes, failure domains,
    synchrony assumption, recovery source, detection mechanism, and maximum tolerated
    combination. Crash-stop, crash-recovery, omission, timing and Byzantine are not labels
    for the whole system: a trusted database replica may be crash-recovery while an

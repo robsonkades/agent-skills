@@ -1,0 +1,86 @@
+import { readFileSync, writeFileSync, readdirSync, statSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { createHash } from 'node:crypto';
+
+const repository = 'C:/git/agent-skills';
+const root = 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening';
+const readJson = (name) => JSON.parse(readFileSync(resolve(root, name), 'utf8').replace(/^\uFEFF/, ''));
+const validation = readJson('package-validation.json');
+const baseline = JSON.parse(readFileSync(resolve(repository, 'docs/skill-validation/wave3-2026-10-16/baseline.json'), 'utf8')).packages.find((entry) => entry.name === 'java-serialization-hardening');
+const actor = readJson('actor-inputs.json');
+const criteria = readJson('evaluator-criteria.json');
+const probeCommands = readJson('probe-commands.json');
+const changed = validation.hashes.filter((file) => !file.unchangedFromWave3Baseline).map((file) => file.path);
+const rootHashes = readdirSync(root).filter((name) => statSync(resolve(root, name)).isFile()).map((name) => ({ path: resolve(root, name), sha256: createHash('sha256').update(readFileSync(resolve(root, name))).digest('hex') }));
+const handoff = {
+  status: 'READY_FOR_GLOBAL_VALIDATION',
+  skill: 'java-serialization-hardening',
+  ownedPath: 'skills/java-serialization-hardening/**',
+  allWritesStopped: true,
+  versions: { committed: baseline.committedVersion, assignment: baseline.initialVersion, final: validation.version, preExistingBump: false, rationale: 'One patch bump for a focused correctness/security-contract addition. No consumer Java/framework upgrade, description or dependency change.' },
+  baseline: { source: 'docs/skill-validation/wave3-2026-10-16/baseline.json', assignmentState: 'Four files clean; all initial SHA-256 hashes matched the captured baseline. Scoped staged/unstaged/untracked differences were empty.', preExistingChanges: [], finalAttribution: 'Three files changed by this reviewer; untrusted-data-and-filters.md remains byte-identical. No generated index or shared file touched.', hashes: validation.hashes },
+  files: changed,
+  changes: [
+    { location: 'skills/java-serialization-hardening/SKILL.md:99', finding: 'Value revalidation did not distinguish a missing required serialized field from a legitimate explicit zero/null.', correction: 'Add the required-field versus accepted-legacy-form decision beside ordinary readObject invariant validation, routed to the existing implementation reference.' },
+    { location: 'skills/java-serialization-hardening/references/implementing-serializable.md:11', finding: 'The representation warning described private-field renaming as a blanket break, without explaining successful reads that silently lose/default data under a retained UID.', correction: 'Qualify the statement to default serialized form and distinguish stream acceptance from semantic compatibility.' },
+    { location: 'skills/java-serialization-hardening/references/implementing-serializable.md:123', finding: 'readObjectNoData was covered, but its class-level purpose was not explicitly distinguished from individual field omission.', correction: 'Clarify that it does not detect an individual missing field; teach readFields/GetField.defaulted as an alternative to defaultReadObject, with explicit assignment and validation.' },
+    { location: 'skills/java-serialization-hardening/references/implementing-serializable.md:129', finding: 'A zero-valued field can satisfy the constructor value invariant even when the stream omitted a required field.', correction: 'Add a scoped single-field ordinary-class snippet that rejects absent maxRetries while accepting explicit 0..10. Preserve approved legacy defaults as a legitimate alternative and state that referenced-object hooks may already have run.' },
+    { location: 'skills/java-serialization-hardening/references/implementing-serializable.md:262', finding: 'Compatibility testing did not explicitly contrast omitted fields with explicitly encoded default values.', correction: 'Add that contrast to golden-form testing under the supported-form policy.' },
+  ],
+  remainingFindings: [],
+  preserved: [
+    'Security/design/review scope, findings-only versus implementation authorization, target-build inspection and declared version boundaries.',
+    'Default recommendation to avoid native serialization for new trust/persistence boundaries; filters remain mitigations, not safety proofs.',
+    'JEP 290/415 effective-policy composition, closed context filters, primitive/string/array gaps, outer caps and rate-limited rejection handling.',
+    'Defensive copying, constructor/invariant rules, serialization proxies, records, readResolve/Externalizable distinctions and hook limitations.',
+    'Mixed-version golden data, old/new reader-writer rollout, cache fencing and logical-ID JSON subtype constraints.',
+    'Existing worked snippets unchanged; only the new field-presence snippet was added. All resources remain routed; no review fixtures shipped in the skill.',
+  ],
+  replacedOrRemoved: ['Replaced the blanket private-field-rename statement with the supported default-form/silent-defaulting consequence. No capability removed.'],
+  checks: [
+    { kind: 'structural', command: `node ${root}/local-validation.mjs`, workingDirectory: repository, result: 'PASS', details: 'Existing strict package loader/validator: 4 files, 0 issues; 2 relative links resolve; manifest/frontmatter and metadata consistent.', rawOutput: `${root}/package-validation.json`, boundary: 'Assigned package only; catalog dependency/index/version checks deferred.' },
+    { kind: 'format', command: 'node node_modules/prettier/bin/prettier.cjs --check skills/java-serialization-hardening/SKILL.md skills/java-serialization-hardening/skill.yaml skills/java-serialization-hardening/references/implementing-serializable.md skills/java-serialization-hardening/references/untrusted-data-and-filters.md', workingDirectory: repository, result: 'PASS', rawOutput: `${root}/prettier-check.txt`, details: 'Read-only exact-file check; no formatter writes required.' },
+    { kind: 'diff', command: 'git diff --check -- skills/java-serialization-hardening; git diff -- skills/java-serialization-hardening; git status --short -- skills/java-serialization-hardening; git diff --cached --name-only -- skills/java-serialization-hardening', workingDirectory: repository, result: 'PASS', details: 'Whitespace check clean; final complete diff inspected, exactly three intended files changed, no staged changes.', artifacts: [`${root}/diff-check.txt`, `${root}/final.diff`] },
+    { kind: 'technical-hostile-fixture', command: 'node prepare-probe.mjs; node run-probe.mjs', workingDirectory: root, result: 'PASS: 30 assertions, 10 per reader process', exactChildCommands: probeCommands, compilerTarget: 'Java 17 via Temurin javac 25.0.3 --release 17', runtime: 'Temurin 25.0.3+9-LTS on Windows x64', details: 'The exact new snippet is extracted from the reference into the required-field reader. Independent same-FQCN/UID-1 producer forms create current values and a descriptor omitting maxRetries. Value-only reader accepts omission as 0; required-field reader rejects it; approved-legacy reader maps it to 3. All retain explicit 0/5/10, reject -1/11 and null root, and reject unlisted DeniedPayload without running its harmless read hook. Constructor invalid-input control also passes.', artifacts: ['prepare-probe.mjs', 'run-probe.mjs', 'probe-commands.json', 'probe-summary.txt', 'extracted-snippet.java.txt', 'stream-integrity.json', 'read-baseline.stdout.txt', 'read-required.stdout.txt', 'read-legacy.stdout.txt'].map((name) => `${root}/${name}`), rawDirectories: ['writer', 'missing-writer', 'baseline', 'required', 'legacy', 'streams', 'probe-initial'].map((name) => `${root}/${name}`), boundary: 'Synthetic field-contract and class-denial controls, not RCE, general deserialization safety, producer authentication, large-input limits, concurrency or production validation. Streams are 5-57 bytes in owned static fixtures; the file-size precheck wrapper is not a production bounded-stream implementation.', refinement: 'Initial probe passed 27 assertions. Its review-only wrapper constructor did not enforce the stated constructor range. Preserved the initial source/classes/streams/stdout/stderr under probe-initial, strengthened reader constructors, added a constructor rejection control, and reran all five compilations plus writers/readers. Final 30-assertion run is authoritative.' },
+    { kind: 'case-fixture-integrity', command: 'node prepare-cases.mjs', workingDirectory: root, result: 'PASS', details: 'Two cases with 13 files each. All source and serialized bytes are identical; only acceptance-policy.json differs. Actor task and evaluator criteria are separate JSON resources.', rawOutput: `${root}/case-preparation.txt`, artifacts: [`${root}/case-integrity.json`] },
+    { kind: 'case-compilation', command: '& C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe --release 17 -d case-classes cases/case-a/consumer/fixture/RetryPolicy.java cases/case-a/consumer/fixture/DeniedPayload.java cases/case-a/consumer/ConsumerMain.java', workingDirectory: root, result: 'PASS', details: 'Identical source shared by both actor cases compiled after the constructor refinement. This checks case prerequisites only; no actor correction/evaluation was executed.', rawOutput: `${root}/case-compile.txt` },
+  ],
+  failures: [],
+  behavioralEvaluations: {
+    executedWithActualAgentOutputs: [],
+    walkthroughs: [
+      { case: 'case-a', result: 'Current-only accepted-form policy requires rejecting the omitted-field stream while keeping explicitly stored zero. An allowed class and matching UID are insufficient evidence of presence.' },
+      { case: 'case-b', result: 'Accepted legacy form requires the approved default 3, while explicit zero remains zero. Blanket rejection or a zero-as-absence heuristic would break the declared contract.' },
+    ],
+    measuredImprovement: 'Not measured. Technical before/after readers test the Java mechanism, not whether an agent follows the skill better.',
+  },
+  sources: [
+    { url: 'https://docs.oracle.com/en/java/javase/25/docs/specs/serialization/input.html', version: 'Java SE 25 Serialization Specification, sections 3.1, 3.2, 3.4 and 3.5', support: 'Missing ordinary fields receive Java defaults; readFields is alternate access to the same default-field protocol and cannot follow defaultReadObject; readObjectNoData applies to absent class data; referenced objects are reconstructed during field reading.', verification: 'Primary source opened and relevant passages inspected; mechanism reproduced on Temurin 25.0.3.' },
+    { url: 'https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/ObjectInputStream.GetField.html#defaulted(java.lang.String)', version: 'Java SE 25 API', support: 'defaulted identifies an omitted serializable field; get returns the supplied default when no value was encoded. Presence and a valid default-valued payload are different observations.', verification: 'Official API consulted; changed call compiled for Java 17 and executed on Java 25.' },
+    { url: 'https://docs.oracle.com/en/java/javase/25/docs/specs/serialization/version.html', version: 'Java SE 25 Serialization Specification, chapter 5', support: 'Type evolution and field mapping require semantic compatibility decisions beyond stream linking/UID matching; preserved golden-form and mixed-reader guidance.', verification: 'Primary specification consulted; no broad compatibility proof claimed.' },
+    { url: 'https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/ObjectInputFilter.html', version: 'Java SE 25 API', support: 'Filter callbacks and composition do not validate arbitrary domain field presence or content. Existing filter mitigations remain necessary and unchanged.', verification: 'Primary API consulted; harmless denied-class hook control executed with the configured per-stream filter.' },
+  ],
+  limits: [
+    'Source/API target was Java 17, actual runtime Temurin 25.0.3; no Java 17 VM, other vendor runtime, installation, network sink or production deployment exercised.',
+    'The exact new readObject snippet was tested inside a single-field ordinary Serializable wrapper. Records ignore this hook, and no record, proxy, Externalizable or Jackson example was changed or newly executed.',
+    'The omitted-field producer has the same class name and UID with a valid descriptor lacking the field; it is hostile relative to the required-current-form contract, not an arbitrary executable exploit.',
+    'The denied payload only increments an in-memory counter if its hook executes. No command execution, sockets, file modification by hooks, real secrets or gadget packages were involved.',
+    'No allowed nested-object hook, concurrent file modification, compression expansion, oversized string/array, global filter factory or old production artifact was tested in this focused probe. Those existing caveats were preserved, not re-proven.',
+    'Field-presence checks do not authenticate the producer or undo nested-object effects. Compatibility acceptance is application policy, not a property inferred from hostile bytes.',
+    'Two case inputs and criteria are separated procedurally in one shared filesystem. Coordinator must isolate one case and selected skill snapshot; known development cases are not holdouts.',
+    'No actor run or measured skill-quality gain. Global registry/verify checks remain coordinator-owned.',
+  ],
+  casePreparation: { classification: criteria.classification, actorInputFile: `${root}/actor-inputs.json`, evaluatorCriteriaFile: `${root}/evaluator-criteria.json`, decisiveConstraint: criteria.decisiveConstraint, separation: criteria.separation, prerequisites: 'An isolated case copy, selected skill snapshot and an existing JDK supporting --release 17. Do not expose probe readers/results or criteria to the actor; no installation needed.' },
+  cases: actor.cases.map((entry) => ({ id: entry.id, actorInputs: { file: `${root}/actor-inputs.json`, selection: entry.id, fixtureDirectory: entry.fixtureDirectory, files: entry.files }, evaluatorCriteria: { file: `${root}/evaluator-criteria.json`, selection: entry.id, common: 'Apply common criteria and the selected case only', expected: criteria.cases.find((candidate) => candidate.id === entry.id).expected, observableFailure: criteria.cases.find((candidate) => candidate.id === entry.id).observableFailure } })),
+  crossSkill: [],
+  pendingGlobalChecks: [
+    { command: 'npm run registry:build', purpose: 'Update catalog integrity/version data and cross-package constraints.', prerequisite: 'Coordinator only, after all reviewers stop writing.' },
+    { command: 'npm run verify', purpose: 'Repository-wide CI checks, including version policy and generated-index consistency.', prerequisite: 'Coordinator only, after all writers stop and registry regeneration.' },
+  ],
+  pendingBehavioralEvaluation: 'Coordinator can run matched original/revised cases with frozen criteria and isolated context/filesystem. None was executed by this reviewer.',
+  evidence: { directory: root, rootFileHashes: rootHashes, serializedStreams: readJson('stream-integrity.json'), caseIntegrity: `${root}/case-integrity.json` },
+  writeState: 'Every spawned compiler/Java/Node process exited; no writing process remains. Handoff creation is the last write, followed only by read-only parse/hash checks. No repository files outside ownership changed.',
+};
+if (changed.length !== 3 || validation.issues.length || probeCommands.some((command) => command.status !== 0 || command.error)) throw new Error('Readiness condition failed');
+writeFileSync(`${root}.json`, JSON.stringify(handoff, null, 2) + '\n');
+console.log(JSON.stringify({ status: handoff.status, skill: handoff.skill, version: handoff.versions.final, files: changed.length, output: `${root}.json`, allWritesStopped: handoff.allWritesStopped }, null, 2));

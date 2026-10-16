@@ -1,0 +1,483 @@
+{
+  "status": "NO_CHANGES_NEEDED",
+  "skill": "mysql-innodb-performance",
+  "ownedPath": "skills/mysql-innodb-performance/**",
+  "allWritesStopped": true,
+  "noProcessesLeftRunning": true,
+  "version": {
+    "committed": "1.0.4",
+    "assignmentTime": "1.0.4",
+    "final": "1.0.4",
+    "preExistingBump": false,
+    "rationale": "Package content is unchanged; no version bump is justified."
+  },
+  "files": {
+    "changedByReviewer": [],
+    "preExistingChanges": [],
+    "allUnchanged": [
+      "skills/mysql-innodb-performance/SKILL.md",
+      "skills/mysql-innodb-performance/references/concurrency-plans-replication.md",
+      "skills/mysql-innodb-performance/references/connector-j-and-ddl.md",
+      "skills/mysql-innodb-performance/references/storage-redo-configuration.md",
+      "skills/mysql-innodb-performance/skill.yaml"
+    ],
+    "assignmentAndFinalHashes": [
+      {
+        "file": "skills/mysql-innodb-performance/SKILL.md",
+        "assignmentSha256": "c38feab6b7db43d5d931e44c00ac7004797ca62b33b74bb294b1ad9de6a24c4a",
+        "finalSha256": "c38feab6b7db43d5d931e44c00ac7004797ca62b33b74bb294b1ad9de6a24c4a",
+        "changed": false
+      },
+      {
+        "file": "skills/mysql-innodb-performance/references/concurrency-plans-replication.md",
+        "assignmentSha256": "cbc2d58946d15d14f7c3e399c6a85f8e25735ffef31d4ff17f1dd1b38a5a4078",
+        "finalSha256": "cbc2d58946d15d14f7c3e399c6a85f8e25735ffef31d4ff17f1dd1b38a5a4078",
+        "changed": false
+      },
+      {
+        "file": "skills/mysql-innodb-performance/references/connector-j-and-ddl.md",
+        "assignmentSha256": "02f1239ef9e9ea1db81682c03d67df42b1bb9010afa5a74bc439f432bfa7da2e",
+        "finalSha256": "02f1239ef9e9ea1db81682c03d67df42b1bb9010afa5a74bc439f432bfa7da2e",
+        "changed": false
+      },
+      {
+        "file": "skills/mysql-innodb-performance/references/storage-redo-configuration.md",
+        "assignmentSha256": "69067b82dcc0990c8bf5cfa73779fca834df3328a0a5272a28f4f4c3e91016bf",
+        "finalSha256": "69067b82dcc0990c8bf5cfa73779fca834df3328a0a5272a28f4f4c3e91016bf",
+        "changed": false
+      },
+      {
+        "file": "skills/mysql-innodb-performance/skill.yaml",
+        "assignmentSha256": "ca8ee1683681adf147ce5646f474f1c474b444917df097aeeff7b74109efce0a",
+        "finalSha256": "ca8ee1683681adf147ce5646f474f1c474b444917df097aeeff7b74109efce0a",
+        "changed": false
+      }
+    ]
+  },
+  "baseline": {
+    "source": "docs/skill-validation/wave2-2026-10-16/baseline.json",
+    "allFiveFilesMatchedAtAssignment": true,
+    "committedStagedUnstagedUntracked": "Clean at assignment and completion; no shared or neighboring writes."
+  },
+  "reviewCriteria": [
+    "Use actual server/distribution and resolved Connector/J evidence without requiring upgrades.",
+    "Distinguish access, concurrency, buffer, checkpoint and durable commit mechanisms; preserve missing-counter uncertainty and interval comparability.",
+    "Preserve transactional correctness, consumer result contracts, cursor cleanup and metadata-lock availability boundaries when considering performance changes.",
+    "Permit narrow explanation or keep-current conclusions; distinguish source contracts from runtime diagnosis and measured gain."
+  ],
+  "findings": {
+    "corrected": [],
+    "remaining": [],
+    "noChangeRationale": "The full package already provides the decisive conditions, alternative actions and validation limits for the reviewed mechanisms. Primary sources corroborated the consequential version-sensitive claims. Adding the same guards again would duplicate existing guidance.",
+    "inspected": [
+      {
+        "location": "skills/mysql-innodb-performance/references/storage-redo-configuration.md:23",
+        "conclusion": "Already separates in-memory log-buffer waits, checkpoint-space pressure and durable commit synchronization; rejects bigger-redo inference from Innodb_log_waits alone."
+      },
+      {
+        "location": "skills/mysql-innodb-performance/references/storage-redo-configuration.md:35",
+        "conclusion": "Already distinguishes completed capacity, consumer-retained logical redo range and current-minus-checkpoint; rejects payload-byte and universal-capacity thresholds."
+      },
+      {
+        "location": "skills/mysql-innodb-performance/references/concurrency-plans-replication.md:8",
+        "conclusion": "Already qualifies unique-record gap exception and RC foreign-key/duplicate-key gaps, snapshot changes and row-based replication requirement."
+      },
+      {
+        "location": "skills/mysql-innodb-performance/references/concurrency-plans-replication.md:25",
+        "conclusion": "Already separates deadlock rollback, statement timeout and unknown commit outcome, with whole-operation retry cleanup."
+      },
+      {
+        "location": "skills/mysql-innodb-performance/references/concurrency-plans-replication.md:42",
+        "conclusion": "Already protects EXPLAIN ANALYZE execution/side effects and child-inclusive averaged timing."
+      },
+      {
+        "location": "skills/mysql-innodb-performance/references/concurrency-plans-replication.md:57",
+        "conclusion": "Already distinguishes semisync relay persistence from apply/visibility and handles fallback/target progress."
+      },
+      {
+        "location": "skills/mysql-innodb-performance/references/connector-j-and-ddl.md:10",
+        "conclusion": "Already binds batch rewrite to the actual caller result contract and correct successful 8.4.0 multi-values update counts."
+      },
+      {
+        "location": "skills/mysql-innodb-performance/references/connector-j-and-ddl.md:34",
+        "conclusion": "Already qualifies row streaming/cursor eligibility, implicit server-prepare enablement, server materialization and unread-stream draining."
+      },
+      {
+        "location": "skills/mysql-innodb-performance/references/connector-j-and-ddl.md:53",
+        "conclusion": "Already covers INSTANT LOCK=DEFAULT, operation-specific eligibility, implicit commit, per-acquisition MDL timeout, queued DDL blockage and cleanup."
+      }
+    ]
+  },
+  "preserved": [
+    "All five files, descriptions, references and metadata remain byte-for-byte unchanged.",
+    "Diagnostic and conditional tuning role; SQL-plan, index design, pool sizing and bulk-loading boundaries.",
+    "Exact server and driver baseline with separate application Java contract; no mandatory Java/MySQL/driver upgrade.",
+    "Clustered/secondary storage, redo/undo/binlog/doublewrite distinction, workload-driven buffer/flush/memory interpretation.",
+    "Locking/isolation/deadlock/purge and optimizer evidence, replication durability/apply boundary, JDBC batching/fetch/TLS and DDL guardrails.",
+    "No-change output, artifact reuse, missing evidence limits and explicit unexecuted checks."
+  ],
+  "replacedOrRemoved": [],
+  "commands": [
+    {
+      "command": "Scoped git status/diff/cached diff/show and five-file baseline SHA256 comparison",
+      "cwd": "C:/git/agent-skills",
+      "result": "All five files clean and identical to assignment baseline; version 1.0.4 at HEAD and assignment."
+    },
+    {
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/mysql-innodb-performance/collect-sources.mjs",
+      "cwd": "C:/git/agent-skills",
+      "result": "Exit 0; 14 primary files HTTP 200, saved with SHA256. Two additional official ALTER TABLE/EXPLAIN pages fetched and appended, both HTTP 200.",
+      "evidence": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/mysql-innodb-performance/source-index.json"
+    },
+    {
+      "command": "Get-Command mysql,mysqld,docker,java,javac -ErrorAction SilentlyContinue",
+      "cwd": "C:/git/agent-skills",
+      "result": "Probe exit 1 because mysql/mysqld are absent. Docker CLI and Java/Javac paths are present; no daemon, database or production connection attempted. This is an environment availability result, not a failed skill test."
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/mysql-innodb-performance/SKILL.md skills/mysql-innodb-performance/skill.yaml skills/mysql-innodb-performance/references/storage-redo-configuration.md skills/mysql-innodb-performance/references/concurrency-plans-replication.md skills/mysql-innodb-performance/references/connector-j-and-ddl.md",
+      "cwd": "C:/git/agent-skills",
+      "result": "All matched files use Prettier code style; check only."
+    },
+    {
+      "command": "git diff --check -- skills/mysql-innodb-performance",
+      "cwd": "C:/git/agent-skills",
+      "result": "Exit 0; empty output."
+    },
+    {
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/mysql-innodb-performance/finalize.mjs",
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS: strict manifest, name/description equality, unchanged version, five assignment/final hashes, three local links, clean staged/unstaged/untracked scoped state and 16 retained primary-source hashes.",
+      "evidence": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/mysql-innodb-performance/local-validation.json"
+    }
+  ],
+  "structuralAndTechnicalChecks": {
+    "status": "PASS",
+    "runtime": "v25.6.1",
+    "cwd": "C:\\git\\agent-skills",
+    "strictManifestIssues": [],
+    "nameAndDescriptionMatch": true,
+    "committedVersion": "1.0.4",
+    "assignmentVersion": "1.0.4",
+    "finalVersion": "1.0.4",
+    "ownedFiles": [
+      {
+        "file": "skills/mysql-innodb-performance/SKILL.md",
+        "assignmentSha256": "c38feab6b7db43d5d931e44c00ac7004797ca62b33b74bb294b1ad9de6a24c4a",
+        "finalSha256": "c38feab6b7db43d5d931e44c00ac7004797ca62b33b74bb294b1ad9de6a24c4a",
+        "changed": false
+      },
+      {
+        "file": "skills/mysql-innodb-performance/references/concurrency-plans-replication.md",
+        "assignmentSha256": "cbc2d58946d15d14f7c3e399c6a85f8e25735ffef31d4ff17f1dd1b38a5a4078",
+        "finalSha256": "cbc2d58946d15d14f7c3e399c6a85f8e25735ffef31d4ff17f1dd1b38a5a4078",
+        "changed": false
+      },
+      {
+        "file": "skills/mysql-innodb-performance/references/connector-j-and-ddl.md",
+        "assignmentSha256": "02f1239ef9e9ea1db81682c03d67df42b1bb9010afa5a74bc439f432bfa7da2e",
+        "finalSha256": "02f1239ef9e9ea1db81682c03d67df42b1bb9010afa5a74bc439f432bfa7da2e",
+        "changed": false
+      },
+      {
+        "file": "skills/mysql-innodb-performance/references/storage-redo-configuration.md",
+        "assignmentSha256": "69067b82dcc0990c8bf5cfa73779fca834df3328a0a5272a28f4f4c3e91016bf",
+        "finalSha256": "69067b82dcc0990c8bf5cfa73779fca834df3328a0a5272a28f4f4c3e91016bf",
+        "changed": false
+      },
+      {
+        "file": "skills/mysql-innodb-performance/skill.yaml",
+        "assignmentSha256": "ca8ee1683681adf147ce5646f474f1c474b444917df097aeeff7b74109efce0a",
+        "finalSha256": "ca8ee1683681adf147ce5646f474f1c474b444917df097aeeff7b74109efce0a",
+        "changed": false
+      }
+    ],
+    "localLinks": [
+      {
+        "from": "skills/mysql-innodb-performance/SKILL.md",
+        "to": "references/storage-redo-configuration.md",
+        "status": "exists"
+      },
+      {
+        "from": "skills/mysql-innodb-performance/SKILL.md",
+        "to": "references/concurrency-plans-replication.md",
+        "status": "exists"
+      },
+      {
+        "from": "skills/mysql-innodb-performance/SKILL.md",
+        "to": "references/connector-j-and-ddl.md",
+        "status": "exists"
+      }
+    ],
+    "git": {
+      "status": "",
+      "unstagedDiff": "",
+      "stagedDiff": "",
+      "untracked": ""
+    },
+    "retainedPrimarySources": 16,
+    "retainedSourceHashesMatch": true,
+    "scope": "Structural and artifact checks only; no SQL, JDBC, benchmark or behavioral agent execution."
+  },
+  "exampleClassification": "Skill references explicitly describe diagnostic SQL/JDBC guidance, not a tested executable program. No executable examples were added, changed or run. No compiler target applies to this unchanged review; development cases use a fixed Java 17 project context only.",
+  "behavioralEvidence": {
+    "executedAgentEvaluations": [],
+    "walkthroughs": [
+      "Exact per-item affected-row contract rejects successful rewritten SUCCESS_NO_INFO counts as a drop-in replacement.",
+      "Changing only the consumer count contract to accept unknown counts removes that correctness blocker; runtime performance and failure-path validation still remain conditional."
+    ],
+    "pending": "Coordinator execution of separate input cases; these are known development cases, not held-out evaluations.",
+    "improvementClaim": "No measured behavioral gain is claimed; this is an evidence-backed no-change review."
+  },
+  "developmentCases": {
+    "singleChangedConstraint": "Whether the existing consumer requires exact per-input affected-row counts; driver, SQL, batch size, transaction/lifecycle and proposed property are held constant.",
+    "fixtureProvenance": "Synthetic project artifacts for reproducible review; no runtime/performance result is fabricated.",
+    "prerequisites": "Materialize one input bundle in an isolated directory. Give the actor the selected skill and source access; permit writes only to review.md. Keep evaluator criteria, this handoff and other case inaccessible. No database or installation is required.",
+    "inputs": [
+      {
+        "id": "rewrite-exact-count-contract",
+        "task": "Review the proposed Connector/J configuration against the actual consumer contract and driver version, and update review.md with accept, conditional experiment, or reject plus the decisive evidence. The intended multi-values rewrite path is eligible for the supplied INSERT and batch size. The server trace and performance rehearsal have not yet been run. This is a source/configuration review only: do not execute SQL, connect to a database, change the consumer contract, upgrade dependencies or deploy settings.",
+        "artifacts": {
+          "dependency-lock.txt": "Resolved: com.mysql:mysql-connector-j:8.4.0\nRuntime/toolchain: Java 17\nServer: MySQL Community 8.4.0, InnoDB\n",
+          "proposed.properties": "rewriteBatchedStatements=true\nuseServerPrepStmts=false\n# Current configuration has rewriteBatchedStatements=false.\n",
+          "insert.sql": "INSERT INTO event_delivery (id, payload) VALUES (?, ?);\n",
+          "caller-flow.txt": "The caller uses PreparedStatement with 128 input entries, explicitly disables autoCommit, executes one batch, validates returned counts according to consumer-contract.txt, then commits. Any exception rolls back the whole transaction before releasing the connection. Caller owns the statement and connection. IDs are supplied by the caller; no generated keys or external effects occur.\n",
+          "review.md": "Proposed change: enable rewriteBatchedStatements for ingestion. Decision pending.\n",
+          "consumer-contract.txt": "A receipt must report the exact affected-row count for each input id. Unknown affected-row counts are not accepted. This is an existing public contract and cannot change in this task.\n"
+        }
+      },
+      {
+        "id": "rewrite-unknown-count-permitted",
+        "task": "Review the proposed Connector/J configuration against the actual consumer contract and driver version, and update review.md with accept, conditional experiment, or reject plus the decisive evidence. The intended multi-values rewrite path is eligible for the supplied INSERT and batch size. The server trace and performance rehearsal have not yet been run. This is a source/configuration review only: do not execute SQL, connect to a database, change the consumer contract, upgrade dependencies or deploy settings.",
+        "artifacts": {
+          "dependency-lock.txt": "Resolved: com.mysql:mysql-connector-j:8.4.0\nRuntime/toolchain: Java 17\nServer: MySQL Community 8.4.0, InnoDB\n",
+          "proposed.properties": "rewriteBatchedStatements=true\nuseServerPrepStmts=false\n# Current configuration has rewriteBatchedStatements=false.\n",
+          "insert.sql": "INSERT INTO event_delivery (id, payload) VALUES (?, ?);\n",
+          "caller-flow.txt": "The caller uses PreparedStatement with 128 input entries, explicitly disables autoCommit, executes one batch, validates returned counts according to consumer-contract.txt, then commits. Any exception rolls back the whole transaction before releasing the connection. Caller owns the statement and connection. IDs are supplied by the caller; no generated keys or external effects occur.\n",
+          "review.md": "Proposed change: enable rewriteBatchedStatements for ingestion. Decision pending.\n",
+          "consumer-contract.txt": "A receipt only reports successful completion of the committed batch. Per-input exact affected-row counts are not required. The existing validator accepts nonnegative counts and Statement.SUCCESS_NO_INFO as success, rejects EXECUTE_FAILED, and propagates exceptions. It never converts unknown counts to a numeric affected-row count.\n"
+        }
+      }
+    ],
+    "evaluatorOnlyCriteria": [
+      {
+        "id": "rewrite-exact-count-contract",
+        "expected": [
+          "Inspect resolved version, proposed property, INSERT eligibility, caller transaction flow and exact-count contract.",
+          "Use the pinned Connector/J successful multi-values path: more than one entry gets SUCCESS_NO_INFO when the aggregate is positive, or zero when it is zero.",
+          "Reject rewrite as a drop-in change under the fixed exact-count contract; preserve the existing eligible path or explain alternatives that retain required information.",
+          "Update review.md without relabeling unknown counts as one row, altering the public contract, deploying or upgrading.",
+          "Separate source-backed result-contract conclusion from unmeasured performance."
+        ],
+        "failIf": [
+          "Enables rewrite solely because executeBatch is used.",
+          "Treats SUCCESS_NO_INFO as an exact affected count or silently changes the contract.",
+          "Claims single-call atomicity without the stated transaction boundary.",
+          "Demands a production experiment before recognizing the proven source-level incompatibility."
+        ]
+      },
+      {
+        "id": "rewrite-unknown-count-permitted",
+        "expected": [
+          "Inspect the changed consumer contract and recognize that it already accepts unknown successful counts.",
+          "Do not reject solely on the exact-count issue from the other case; accept as a conditional candidate for an isolated measured comparison.",
+          "Retain batch failure/rollback, packet/batch shape and server-observed execution checks; do not guarantee one round-trip or higher throughput from configuration alone.",
+          "Update review.md with the version-matched rationale and limits; no production action, arbitrary contract change or forced upgrade."
+        ],
+        "failIf": [
+          "Carries the exact-count rejection into this case despite the actual contract.",
+          "Claims measured speedup or deployment readiness without runtime evidence.",
+          "Converts unknown counts to numeric rows or ignores partial failures/transaction outcome.",
+          "Connects to production or changes settings beyond source review authority."
+        ]
+      }
+    ]
+  },
+  "sources": [
+    {
+      "file": "server-status-variables.html",
+      "url": "https://dev.mysql.com/doc/refman/8.4/en/server-status-variables.html",
+      "status": 200,
+      "finalUrl": "https://dev.mysql.com/doc/refman/8.4/en/server-status-variables.html",
+      "bytes": 262267,
+      "sha256": "5d906322962afac8ec1f74afded4cc5a2bdf103c26f86ec5d5f53cd0bb131166",
+      "retainedAt": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/mysql-innodb-performance/sources/server-status-variables.html",
+      "supports": "Log-buffer waits, clean-page waits, effective resized capacity, current/checkpoint LSN and logical redo range have different meanings."
+    },
+    {
+      "file": "innodb-redo-log.html",
+      "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-redo-log.html",
+      "status": 200,
+      "finalUrl": "https://dev.mysql.com/doc/refman/8.4/en/innodb-redo-log.html",
+      "bytes": 120707,
+      "sha256": "4ca9399f796cfb504b720e9e261b289ecb742369ea371323a794d4b05e6fae28",
+      "retainedAt": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/mysql-innodb-performance/sources/innodb-redo-log.html",
+      "supports": "Redo management/capacity and checkpoint behavior, preserving measured burst/drain interpretation."
+    },
+    {
+      "file": "innodb-index-types.html",
+      "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-index-types.html",
+      "status": 200,
+      "finalUrl": "https://dev.mysql.com/doc/refman/8.4/en/innodb-index-types.html",
+      "bytes": 89518,
+      "sha256": "4756ecc30866036a6998ac26b03ecce62c7301d1556d46c4eed1ac41b95d8e56",
+      "retainedAt": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/mysql-innodb-performance/sources/innodb-index-types.html",
+      "supports": "Primary-key/unique-not-null/hidden-cluster fallback and secondary-key locator width."
+    },
+    {
+      "file": "mysql-nutshell.html",
+      "url": "https://dev.mysql.com/doc/refman/8.4/en/mysql-nutshell.html",
+      "status": 200,
+      "finalUrl": "https://dev.mysql.com/doc/refman/8.4/en/mysql-nutshell.html",
+      "bytes": 199262,
+      "sha256": "b6fbe595de7abc7e27354d169f9d6d1ed297339c4f955acba79ceb918c372688",
+      "retainedAt": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/mysql-innodb-performance/sources/mysql-nutshell.html",
+      "supports": "8.4 changed adaptive hash, change buffering, Linux flush method and I/O defaults; actual configuration still matters."
+    },
+    {
+      "file": "innodb-error-handling.html",
+      "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-error-handling.html",
+      "status": 200,
+      "finalUrl": "https://dev.mysql.com/doc/refman/8.4/en/innodb-error-handling.html",
+      "bytes": 89369,
+      "sha256": "d57115ababdf341c300159b8039c9d8d684227784ce20d728ec255ecf3e7ef8f",
+      "retainedAt": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/mysql-innodb-performance/sources/innodb-error-handling.html",
+      "supports": "Deadlock rolls back entire transaction; default lock-wait timeout rolls back the waiting statement."
+    },
+    {
+      "file": "innodb-transaction-isolation-levels.html",
+      "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html",
+      "status": 200,
+      "finalUrl": "https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html",
+      "bytes": 108538,
+      "sha256": "adf9591fe9e9317cd58ce494d157922afb68514f7c91a28afba084ec4a650a30",
+      "retainedAt": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/mysql-innodb-performance/sources/innodb-transaction-isolation-levels.html",
+      "supports": "Found unique record exception, RC constraint-check gaps, snapshot and row-based binlog consequences."
+    },
+    {
+      "file": "replication-semisync.html",
+      "url": "https://dev.mysql.com/doc/refman/8.4/en/replication-semisync.html",
+      "status": 200,
+      "finalUrl": "https://dev.mysql.com/doc/refman/8.4/en/replication-semisync.html",
+      "bytes": 98202,
+      "sha256": "f2a7013380844d8c58891f68f4bf51056b4d961584c26c251e9607f0f26c6ce7",
+      "retainedAt": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/mysql-innodb-performance/sources/replication-semisync.html",
+      "supports": "Relay-log flush before acknowledgement, no required completed apply, timeout fallback and selectable wait point."
+    },
+    {
+      "file": "innodb-online-ddl-performance.html",
+      "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-online-ddl-performance.html",
+      "status": 200,
+      "finalUrl": "https://dev.mysql.com/doc/refman/8.4/en/innodb-online-ddl-performance.html",
+      "bytes": 100619,
+      "sha256": "80844a9052e3e47ab6f095392c78b90724bd09ea236f8c0c5b115b7d9748d195",
+      "retainedAt": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/mysql-innodb-performance/sources/innodb-online-ddl-performance.html",
+      "supports": "Online ALTER still needs exclusive metadata locking; pending exclusive request can block later queries."
+    },
+    {
+      "file": "cursor-restrictions.html",
+      "url": "https://dev.mysql.com/doc/refman/8.4/en/cursor-restrictions.html",
+      "status": 200,
+      "finalUrl": "https://dev.mysql.com/doc/refman/8.4/en/cursor-restrictions.html",
+      "bytes": 113069,
+      "sha256": "495f1b1629c6cc0f5413c42a9427e70b61dce645d3c2c1e0cf6f247b96ccbadc",
+      "retainedAt": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/mysql-innodb-performance/sources/cursor-restrictions.html",
+      "supports": "Server cursor materializes results and does not promise bounded server memory or streaming query execution."
+    },
+    {
+      "file": "server-system-variables.html",
+      "url": "https://dev.mysql.com/doc/refman/8.4/en/server-system-variables.html",
+      "status": 200,
+      "finalUrl": "https://dev.mysql.com/doc/refman/8.4/en/server-system-variables.html",
+      "bytes": 987853,
+      "sha256": "e16fa603c010d50af962048b1a8efc2090939d44e5ba770a3c9ed8b85c4a52c0",
+      "retainedAt": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/mysql-innodb-performance/sources/server-system-variables.html",
+      "supports": "lock_wait_timeout applies separately to metadata-lock acquisitions, not total DDL duration."
+    },
+    {
+      "file": "ClientPreparedStatement.java",
+      "url": "https://raw.githubusercontent.com/mysql/mysql-connector-j/8.4.0/src/main/user-impl/java/com/mysql/cj/jdbc/ClientPreparedStatement.java",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/mysql/mysql-connector-j/8.4.0/src/main/user-impl/java/com/mysql/cj/jdbc/ClientPreparedStatement.java",
+      "bytes": 76652,
+      "sha256": "d596868b04b862c4c033ce4344e428128440118e42da3cc53fe2c3255b4a03fe",
+      "retainedAt": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/mysql-innodb-performance/sources/ClientPreparedStatement.java",
+      "supports": "Connector/J 8.4.0 executeBatchWithMultiValuesClause, lines 647–753: more than one entry receives 0 for zero total or SUCCESS_NO_INFO otherwise on successful path."
+    },
+    {
+      "file": "JdbcPropertySetImpl.java",
+      "url": "https://raw.githubusercontent.com/mysql/mysql-connector-j/8.4.0/src/main/user-impl/java/com/mysql/cj/jdbc/JdbcPropertySetImpl.java",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/mysql/mysql-connector-j/8.4.0/src/main/user-impl/java/com/mysql/cj/jdbc/JdbcPropertySetImpl.java",
+      "bytes": 3892,
+      "sha256": "adb60d917359965eb7573b6715fe2c3e2bfd8e9b7cfacc2c11c31679f9933496",
+      "retainedAt": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/mysql-innodb-performance/sources/JdbcPropertySetImpl.java",
+      "supports": "Connector/J 8.4.0 lines 59–61 enables server preparation when cursor fetching is enabled."
+    },
+    {
+      "file": "StatementImpl.java",
+      "url": "https://raw.githubusercontent.com/mysql/mysql-connector-j/8.4.0/src/main/user-impl/java/com/mysql/cj/jdbc/StatementImpl.java",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/mysql/mysql-connector-j/8.4.0/src/main/user-impl/java/com/mysql/cj/jdbc/StatementImpl.java",
+      "bytes": 92244,
+      "sha256": "2441cc380a5457b617c1ccddf7caaccf1cd44b0d3770d76b47bdbc64d086ad70",
+      "retainedAt": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/mysql-innodb-performance/sources/StatementImpl.java",
+      "supports": "Connector/J 8.4.0 lines 604–606 row-streaming eligibility and 2086–2089 cursor-fetch eligibility."
+    },
+    {
+      "file": "ResultsetRowsStreaming.java",
+      "url": "https://raw.githubusercontent.com/mysql/mysql-connector-j/8.4.0/src/main/protocol-impl/java/com/mysql/cj/protocol/a/result/ResultsetRowsStreaming.java",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/mysql/mysql-connector-j/8.4.0/src/main/protocol-impl/java/com/mysql/cj/protocol/a/result/ResultsetRowsStreaming.java",
+      "bytes": 11682,
+      "sha256": "3b9c4840e9bdca317fc9d759f319dbade67356a2e6aff3bcd5c87a353b9ecd70",
+      "retainedAt": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/mysql-innodb-performance/sources/ResultsetRowsStreaming.java",
+      "supports": "Connector/J 8.4.0 lines 103–118 close drains unread records."
+    },
+    {
+      "file": "alter-table.html",
+      "url": "https://dev.mysql.com/doc/refman/8.4/en/alter-table.html",
+      "status": 200,
+      "finalUrl": "https://dev.mysql.com/doc/refman/8.4/en/alter-table.html",
+      "bytes": 215758,
+      "sha256": "6699617afe65c39e0c314b100d5c45b986d854f46a26b1c2c02ba773e0fd43d3",
+      "retainedAt": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/mysql-innodb-performance/sources/alter-table.html",
+      "supports": "INSTANT permits only LOCK=DEFAULT; INPLACE/online does not imply no rebuild or metadata-lock requirement."
+    },
+    {
+      "file": "explain.html",
+      "url": "https://dev.mysql.com/doc/refman/8.4/en/explain.html",
+      "status": 200,
+      "finalUrl": "https://dev.mysql.com/doc/refman/8.4/en/explain.html",
+      "bytes": 153895,
+      "sha256": "e9100118c057dec4b6b4795a3f452da1a20ca0fb67208de63ed45cd844cf62c5",
+      "retainedAt": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/mysql-innodb-performance/sources/explain.html",
+      "supports": "EXPLAIN ANALYZE executes supported statements; iterator time includes children and is average per loop."
+    }
+  ],
+  "limitations": [
+    "No MySQL runtime, JDBC integration, concurrency schedule or performance benchmark was executed. mysql/mysqld executables are absent; no container or dependency installation was needed or attempted.",
+    "Primary manual pages target MySQL 8.4 and driver source is tagged 8.4.0; future releases, compatible forks and deployed property paths still require inspection.",
+    "The reviewed source contracts do not prove runtime eligibility, production settings, MDL completion time, cleanup latency, safe sizing or performance gain.",
+    "No independent agent run, automatic-selection evaluation or comparative skill benchmark was executed.",
+    "Structural validation is skill-local; repository-wide verification remains the coordinator responsibility."
+  ],
+  "crossSkillFindings": [],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "prerequisite": "All reviewers stopped writing.",
+      "reason": "Coordinator-only catalog integration; this unchanged skill does not itself require a new hash/version."
+    },
+    {
+      "command": "npm run verify",
+      "prerequisite": "Coordinator integrates all reviewers and regenerates index.",
+      "reason": "Only coordinator may claim repository-wide verification after the parallel review."
+    }
+  ],
+  "coordinatorActions": [
+    "Archive the JSON and retained source/validation artifacts.",
+    "Keep mysql-innodb-performance at 1.0.4 unless a later independently supported correction is assigned.",
+    "Select independent behavioral cases without leaking evaluator-only expectations."
+  ]
+}

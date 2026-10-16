@@ -1,0 +1,35 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { dirname, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { execFileSync } from 'node:child_process';
+const repository = 'C:/git/agent-skills';
+const skill = 'gof-flyweight';
+const root = resolve(repository, 'skills', skill);
+const { loadPackageFromDirectory, validatePackage, decodeText } = await import(pathToFileURL(resolve(repository, 'packages/core/dist/index.js')).href);
+const { NodeFileSystem } = await import(pathToFileURL(resolve(repository, 'packages/node/dist/index.js')).href);
+const loaded = await loadPackageFromDirectory(new NodeFileSystem(), root, { strict: true });
+const issues = [...loaded.issues, ...validatePackage(loaded.pkg, { directoryName: skill }).issues];
+const links = [];
+for (const file of loaded.pkg.files.filter(file => file.path.endsWith('.md'))) {
+  for (const match of decodeText(file.bytes).matchAll(/\[[^\]]*\]\(([^)]+)\)|`([^`\s]+\.md)`/g)) {
+    const target = match[1] ?? match[2];
+    if (/^(https?:|#|<https?:)/.test(target)) continue;
+    links.push({ from: file.path, target, exists: existsSync(resolve(dirname(resolve(root, file.path)), target.split('#')[0])) });
+  }
+}
+const baseline = JSON.parse(readFileSync(resolve(repository, 'docs/skill-validation/wave4-2026-10-16/baseline.json'), 'utf8')).packages.find(entry => entry.name === skill);
+const hashes = loaded.pkg.files.map(file => {
+  const path = `skills/${skill}/${file.path}`;
+  const sha256 = createHash('sha256').update(file.bytes).digest('hex');
+  const baselineSha256 = baseline.files.find(file => file.path === path)?.sha256;
+  return { path, sha256, baselineSha256, unchangedFromAssignment: sha256 === baselineSha256 };
+});
+const examples = loaded.pkg.files.filter(file => file.path.endsWith('.md')).map(file => {
+  const path = `skills/${skill}/${file.path}`;
+  const prior = execFileSync('git', ['show', `HEAD:${path}`], { cwd: repository, encoding: 'utf8' });
+  const blocks = text => [...text.replaceAll('\r\n', '\n').matchAll(/```java\n([\s\S]*?)```/g)].map(match => match[1]);
+  return { path, javaBlocks: blocks(decodeText(file.bytes)).length, unchanged: JSON.stringify(blocks(prior)) === JSON.stringify(blocks(decodeText(file.bytes))) };
+});
+console.log(JSON.stringify({ skill, version: loaded.pkg.manifest.version, baselineVersion: baseline.initialVersion, fileCount: loaded.pkg.files.length, issues, links, hashes, examples }, null, 2));
+if (issues.length || links.some(link => !link.exists) || examples.some(entry => !entry.unchanged)) process.exitCode = 1;

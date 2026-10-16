@@ -161,15 +161,38 @@ ptrace permissions (`CAP_SYS_PTRACE`, Yama policy or equivalent) and matching cr
 
 ## Inspecting a core
 
+Correlate hs_err, core and collector metadata by process instance, start/capture time,
+host/container namespace and build before combining their evidence. A shared filename or PID
+can refer to a reused process ID. Record whether the core came from fatal termination or a
+debugger snapshot of a still-live process; a hang snapshot is not evidence of a fatal signal.
+
+The core's terminal signal and current registers need not describe the first fault. In
+OpenJDK 25.0.3 on Linux, fatal reporting can end through `VMError::report_and_die` ->
+`os::abort` -> C `abort()`. Thus a core stopped in `SIGABRT`/`abort` can follow the original
+`SIGSEGV` reported in hs_err; the signal difference alone neither invalidates the pair nor
+identifies libc as the cause. Use the matching hs_err's signal, PC, OS thread ID and saved
+register context when available. Confirm the reporting path in the core rather than assuming
+every `SIGABRT` came from HotSpot; application/native code can also abort directly. Missing
+original context remains a gap, not a reason to substitute the final abort registers.
+
+GDB's `bt` shows its selected thread. Use `info threads` to map the report's OS thread ID to
+GDB's thread number before choosing a stack/frame; they are different identifiers, also
+distinct from Java thread IDs. Account for PID namespaces and hexadecimal/decimal notation
+when comparing captures. Inspect the signal-handler boundary and the relevant original frame
+if unwinding recovers them; do not assume frame 3, or the top abort/reporting frame, is the
+original fault. If the thread/context cannot be matched, report that limitation.
+
 ```bash
 "$ARCHIVED_JAVA_HOME/bin/jhsdb" jstack --exe "$TARGET_EXECUTABLE" --core /evidence/core.pid
 "$ARCHIVED_JAVA_HOME/bin/jhsdb" jmap --exe "$TARGET_EXECUTABLE" --core /evidence/core.pid --heap
 
 gdb "$TARGET_EXECUTABLE" /evidence/core.pid
-(gdb) bt            # backtrace
-(gdb) frame 3       # select a frame
-(gdb) info reg      # registers
-(gdb) x/10wx $rsp   # examine the stack
+(gdb) info threads
+(gdb) thread <gdb-thread-id>  # chosen by matching the target OS thread ID
+(gdb) bt
+(gdb) frame <frame-number>   # choose from that backtrace; label the recovered context
+(gdb) info reg
+(gdb) x/10wx $rsp            # x86-64 stack inspection; use the target architecture's register
 ```
 
 `jhsdb` gives Java objects and threads; GDB gives native registers and memory. Configure
@@ -259,6 +282,8 @@ secrets.
 ## Sources
 
 - [JDK 25 jhsdb](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jhsdb.html) and target `clhsdb help` — supported modes and invasive live attachment.
+- [OpenJDK 25.0.3 fatal reporting](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3-ga/src/hotspot/share/utilities/vmError.cpp) and [POSIX termination](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3-ga/src/hotspot/os/posix/os_posix.cpp), with [Linux abort(3)](https://man7.org/linux/man-pages/man3/abort.3.html) — a later abort/core context can differ from the original reported fault.
+- [GDB thread selection](https://sourceware.org/gdb/current/onlinedocs/gdb.html/Threads.html) and [backtraces](https://sourceware.org/gdb/current/onlinedocs/gdb.html/Backtrace.html) — GDB versus target thread IDs and the selected-thread scope of a backtrace.
 - [OpenJDK 25.0.3 Linux SA path mapping](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3-ga/src/jdk.hotspot.agent/linux/native/libsaproc/libproc_impl.c) — `pathmap_open`, `SA_ALTROOT` and suffix fallback; implementation-specific behavior.
 - [OpenJDK 25.0.3 Linux core reader](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3-ga/src/jdk.hotspot.agent/linux/native/libsaproc/ps_core.c) — direct core/executable opens and mapped loader/shared-library reads.
 - [OpenJDK 25.0.3 ZCollectedHeap](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3-ga/src/jdk.hotspot.agent/share/classes/sun/jvm/hotspot/gc/z/ZCollectedHeap.java) and [HeapSummary](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3-ga/src/jdk.hotspot.agent/share/classes/sun/jvm/hotspot/tools/HeapSummary.java) — operation-specific ZGC support.

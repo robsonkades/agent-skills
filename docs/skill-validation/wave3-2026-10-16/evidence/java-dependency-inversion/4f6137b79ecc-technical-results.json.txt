@@ -1,0 +1,283 @@
+{
+  "status": "PASS",
+  "compiler": "javac 25.0.3 --release 17",
+  "runtime": "Temurin 25.0.3+9 on Windows; not a Java 17 VM",
+  "fixture": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N",
+  "checks": 15,
+  "expectedNegativeCommands": [
+    "run-unrecompiled-before-breaking",
+    "recompile-before-breaking",
+    "compile-before-without-mechanism"
+  ],
+  "originalPolicyClassSha256": "964a75ad34c19ee78ba3f743dbf214c53213cc7322c430cc98627cc3f5344cd4",
+  "policyUnrecompiledForV2": true,
+  "extractedJavaBlocks": 7,
+  "noSmtpEdgeAfter": true,
+  "limits": "Illustrative SDK stubs print observations only; no SMTP server, delivery, SDK failure mapping, JPMS runtime or framework integration exercised.",
+  "runs": [
+    {
+      "name": "compile-sdk-v1",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "-J-Xms16m",
+        "-J-Xmx128m",
+        "--release",
+        "17",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\sdk-v1",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\sdk-v1\\shop\\smtp\\SmtpMessage.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\sdk-v1\\shop\\smtp\\SmtpClient.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "compile-sdk-v2",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "-J-Xms16m",
+        "-J-Xmx128m",
+        "--release",
+        "17",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\sdk-v2",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\sdk-v2\\shop\\smtp\\SmtpMessage.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\sdk-v2\\shop\\smtp\\SmtpClient.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "compile-sdk-breaking",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "-J-Xms16m",
+        "-J-Xmx128m",
+        "--release",
+        "17",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\sdk-breaking",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\sdk-breaking\\shop\\smtp\\SmtpMessage.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\sdk-breaking\\shop\\smtp\\SmtpClient.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "compile-before",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "-J-Xms16m",
+        "-J-Xmx128m",
+        "--release",
+        "17",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\policy-before",
+        "-classpath",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\sdk-v1",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\before\\shop\\orders\\Order.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\before\\shop\\orders\\OrderConfirmer.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\before\\shop\\orders\\RunBefore.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "run-before-v1",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-Xms16m",
+        "-Xmx64m",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\policy-before;C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\sdk-v1",
+        "shop.orders.RunBefore"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N",
+      "exitCode": 0,
+      "stdout": "v1|customer@example.test|Order confirmed|Order A-1 confirmed, total 12.50\r\n",
+      "stderr": ""
+    },
+    {
+      "name": "run-unrecompiled-before-v2",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-Xms16m",
+        "-Xmx64m",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\policy-before;C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\sdk-v2",
+        "shop.orders.RunBefore"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N",
+      "exitCode": 0,
+      "stdout": "v2|customer@example.test|Order confirmed|Order A-1 confirmed, total 12.50\r\n",
+      "stderr": ""
+    },
+    {
+      "name": "run-unrecompiled-before-breaking",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-Xms16m",
+        "-Xmx64m",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\policy-before;C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\sdk-breaking",
+        "shop.orders.RunBefore"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N",
+      "exitCode": 1,
+      "stdout": "",
+      "stderr": "Exception in thread \"main\" java.lang.NoSuchMethodError: 'void shop.smtp.SmtpClient.send(shop.smtp.SmtpMessage)'\r\n\tat shop.orders.OrderConfirmer.confirm(OrderConfirmer.java:13)\r\n\tat shop.orders.RunBefore.main(RunBefore.java:1)\r\n"
+    },
+    {
+      "name": "recompile-before-breaking",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "-J-Xms16m",
+        "-J-Xmx128m",
+        "--release",
+        "17",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\policy-breaking",
+        "-classpath",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\sdk-breaking",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\before\\shop\\orders\\Order.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\before\\shop\\orders\\OrderConfirmer.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\before\\shop\\orders\\RunBefore.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N",
+      "exitCode": 1,
+      "stdout": "",
+      "stderr": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\before\\shop\\orders\\OrderConfirmer.java:13: error: incompatible types: SmtpMessage cannot be converted to String\r\n        smtp.send(new SmtpMessage(order.customerEmail(), \"Order confirmed\", body));\r\n                  ^\r\nNote: Some messages have been simplified; recompile with -Xdiags:verbose to get full output\r\n1 error\r\n"
+    },
+    {
+      "name": "compile-before-without-mechanism",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "-J-Xms16m",
+        "-J-Xmx128m",
+        "--release",
+        "17",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\policy-no-mechanism",
+        "-classpath",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\empty-classpath",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\before\\shop\\orders\\Order.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\before\\shop\\orders\\OrderConfirmer.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\before\\shop\\orders\\RunBefore.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N",
+      "exitCode": 1,
+      "stdout": "",
+      "stderr": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\before\\shop\\orders\\OrderConfirmer.java:3: error: package shop.smtp does not exist\r\nimport shop.smtp.SmtpClient;      // policy imports the mechanism\r\n                ^\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\before\\shop\\orders\\OrderConfirmer.java:4: error: package shop.smtp does not exist\r\nimport shop.smtp.SmtpMessage;\r\n                ^\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\before\\shop\\orders\\OrderConfirmer.java:8: error: cannot find symbol\r\n    private final SmtpClient smtp = new SmtpClient(\"mail.internal\", 587);\r\n                  ^\r\n  symbol:   class SmtpClient\r\n  location: class OrderConfirmer\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\before\\shop\\orders\\OrderConfirmer.java:8: error: cannot find symbol\r\n    private final SmtpClient smtp = new SmtpClient(\"mail.internal\", 587);\r\n                                        ^\r\n  symbol:   class SmtpClient\r\n  location: class OrderConfirmer\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\before\\shop\\orders\\OrderConfirmer.java:13: error: cannot find symbol\r\n        smtp.send(new SmtpMessage(order.customerEmail(), \"Order confirmed\", body));\r\n                      ^\r\n  symbol:   class SmtpMessage\r\n  location: class OrderConfirmer\r\n5 errors\r\n"
+    },
+    {
+      "name": "compile-after-without-mechanism",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "-J-Xms16m",
+        "-J-Xmx128m",
+        "--release",
+        "17",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\policy-after",
+        "-classpath",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\empty-classpath",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\after\\shop\\orders\\Order.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\after\\shop\\orders\\Confirmation.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\after\\shop\\orders\\ConfirmationSender.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\after\\shop\\orders\\OrderConfirmer.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\after\\shop\\orders\\RecordingSender.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\after\\shop\\orders\\PolicyCheck.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "run-isolated-policy",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-Xms16m",
+        "-Xmx64m",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\policy-after",
+        "shop.orders.PolicyCheck"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N",
+      "exitCode": 0,
+      "stdout": "PASS: recording outcome and synchronous failure without retry\r\n",
+      "stderr": ""
+    },
+    {
+      "name": "jdeps-policy-after",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\jdeps.exe",
+      "args": [
+        "-verbose:class",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\policy-after"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N",
+      "exitCode": 0,
+      "stdout": "policy-after -> java.base\r\n   shop.orders.Confirmation                           -> java.lang.Class                                    java.base\r\n   shop.orders.Confirmation                           -> java.lang.Object                                   java.base\r\n   shop.orders.Confirmation                           -> java.lang.Record                                   java.base\r\n   shop.orders.Confirmation                           -> java.lang.String                                   java.base\r\n   shop.orders.Confirmation                           -> java.lang.invoke.MethodHandle                      java.base\r\n   shop.orders.Confirmation                           -> java.lang.invoke.MethodHandles                     java.base\r\n   shop.orders.Confirmation                           -> java.lang.invoke.MethodHandles$Lookup              java.base\r\n   shop.orders.Confirmation                           -> java.lang.invoke.TypeDescriptor                    java.base\r\n   shop.orders.Confirmation                           -> java.lang.runtime.ObjectMethods                    java.base\r\n   shop.orders.ConfirmationSender                     -> java.lang.Object                                   java.base\r\n   shop.orders.Order                                  -> java.lang.Class                                    java.base\r\n   shop.orders.Order                                  -> java.lang.Object                                   java.base\r\n   shop.orders.Order                                  -> java.lang.Record                                   java.base\r\n   shop.orders.Order                                  -> java.lang.String                                   java.base\r\n   shop.orders.Order                                  -> java.lang.invoke.MethodHandle                      java.base\r\n   shop.orders.Order                                  -> java.lang.invoke.MethodHandles                     java.base\r\n   shop.orders.Order                                  -> java.lang.invoke.MethodHandles$Lookup              java.base\r\n   shop.orders.Order                                  -> java.lang.invoke.TypeDescriptor                    java.base\r\n   shop.orders.Order                                  -> java.lang.runtime.ObjectMethods                    java.base\r\n   shop.orders.Order                                  -> java.math.BigDecimal                               java.base\r\n   shop.orders.OrderConfirmer                         -> java.lang.Object                                   java.base\r\n   shop.orders.OrderConfirmer                         -> java.lang.String                                   java.base\r\n   shop.orders.OrderConfirmer                         -> java.math.BigDecimal                               java.base\r\n   shop.orders.PolicyCheck                            -> java.io.PrintStream                                java.base\r\n   shop.orders.PolicyCheck                            -> java.lang.AssertionError                           java.base\r\n   shop.orders.PolicyCheck                            -> java.lang.Object                                   java.base\r\n   shop.orders.PolicyCheck                            -> java.lang.RuntimeException                         java.base\r\n   shop.orders.PolicyCheck                            -> java.lang.String                                   java.base\r\n   shop.orders.PolicyCheck                            -> java.lang.System                                   java.base\r\n   shop.orders.PolicyCheck                            -> java.lang.Throwable                                java.base\r\n   shop.orders.PolicyCheck                            -> java.lang.invoke.CallSite                          java.base\r\n   shop.orders.PolicyCheck                            -> java.lang.invoke.LambdaMetafactory                 java.base\r\n   shop.orders.PolicyCheck                            -> java.lang.invoke.MethodHandle                      java.base\r\n   shop.orders.PolicyCheck                            -> java.lang.invoke.MethodHandles                     java.base\r\n   shop.orders.PolicyCheck                            -> java.lang.invoke.MethodHandles$Lookup              java.base\r\n   shop.orders.PolicyCheck                            -> java.lang.invoke.MethodType                        java.base\r\n   shop.orders.PolicyCheck                            -> java.math.BigDecimal                               java.base\r\n   shop.orders.PolicyCheck                            -> java.util.List                                     java.base\r\n   shop.orders.RecordingSender                        -> java.lang.Object                                   java.base\r\n   shop.orders.RecordingSender                        -> java.util.ArrayList                                java.base\r\n   shop.orders.RecordingSender                        -> java.util.List                                     java.base\r\n",
+      "stderr": ""
+    },
+    {
+      "name": "compile-adapter-and-root",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "-J-Xms16m",
+        "-J-Xmx128m",
+        "--release",
+        "17",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\wiring",
+        "-classpath",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\policy-after;C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\sdk-v1",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\wiring\\shop\\smtp\\SmtpConfirmationSender.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\wiring\\shop\\app\\Main.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\wiring\\shop\\app\\WiredCheck.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "run-adapter-translation",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-Xms16m",
+        "-Xmx64m",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\wiring;C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\policy-after;C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\sdk-v1",
+        "shop.app.WiredCheck"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N",
+      "exitCode": 0,
+      "stdout": "v1|customer@example.test|Order confirmed|Order A-1 confirmed, total 12.50\r\n",
+      "stderr": ""
+    },
+    {
+      "name": "run-root-construction",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-Xms16m",
+        "-Xmx64m",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\wiring;C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\policy-after;C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\sdk-v1",
+        "shop.app.Main"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ]
+}

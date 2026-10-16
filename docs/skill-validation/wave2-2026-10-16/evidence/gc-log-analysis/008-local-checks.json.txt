@@ -1,0 +1,83 @@
+{
+  "status": "PASS",
+  "runtime": "v25.6.1",
+  "cwd": "C:\\git\\agent-skills",
+  "repositoryWrites": false,
+  "metadata": {
+    "strictManifestIssues": [],
+    "descriptionMatches": true,
+    "nameMatches": true,
+    "committedVersion": "1.4.4",
+    "assignmentVersion": "1.4.4",
+    "finalVersion": "1.4.5"
+  },
+  "files": [
+    {
+      "file": "skills/gc-log-analysis/SKILL.md",
+      "assignmentSha256": "ef5412bafa97547086506a5311a5982c30a7d1efe15260ebf6d2a954ab456f34",
+      "finalSha256": "ef5412bafa97547086506a5311a5982c30a7d1efe15260ebf6d2a954ab456f34",
+      "changed": false
+    },
+    {
+      "file": "skills/gc-log-analysis/references/cause-field.md",
+      "assignmentSha256": "ce932b867ab816287af1db11e40b5e083814a86baa35a41c5fc5db350d282ac0",
+      "finalSha256": "8471096c0565ebd71b1ad923533708ebdda659b51fb4a1407cbc91feecf8c3bd",
+      "changed": true
+    },
+    {
+      "file": "skills/gc-log-analysis/references/log-analysis-recipes.md",
+      "assignmentSha256": "b53f7c75710e8837401e4cf035074abf01a8d5b70a2dcb9834b60f9152d1cc20",
+      "finalSha256": "b53f7c75710e8837401e4cf035074abf01a8d5b70a2dcb9834b60f9152d1cc20",
+      "changed": false
+    },
+    {
+      "file": "skills/gc-log-analysis/references/rates-from-the-log.md",
+      "assignmentSha256": "99721d762c65d103fc6284705e407faea483cc70dc7d3e120b6a34be127670d7",
+      "finalSha256": "99721d762c65d103fc6284705e407faea483cc70dc7d3e120b6a34be127670d7",
+      "changed": false
+    },
+    {
+      "file": "skills/gc-log-analysis/skill.yaml",
+      "assignmentSha256": "3d28b794f25c7ac196900756d472d7f305a12592526e6fdd7304d3d4418491cf",
+      "finalSha256": "434f11de756d3d51c8f7468f0a4baee3e54c739fed6cedc23050ae2f8641b430",
+      "changed": true
+    }
+  ],
+  "localLinks": [
+    {
+      "from": "skills/gc-log-analysis/SKILL.md",
+      "to": "references/log-analysis-recipes.md",
+      "status": "exists"
+    },
+    {
+      "from": "skills/gc-log-analysis/SKILL.md",
+      "to": "references/rates-from-the-log.md",
+      "status": "exists"
+    },
+    {
+      "from": "skills/gc-log-analysis/SKILL.md",
+      "to": "references/cause-field.md",
+      "status": "exists"
+    }
+  ],
+  "primarySourceChecks": {
+    "printerPrefixes": [
+      "y:",
+      "major tag",
+      "unprefixed"
+    ],
+    "driverMajorTags": {
+      "young": "Y",
+      "old": "O"
+    }
+  },
+  "syntheticZgcControl": {
+    "oldFilter": "GC\\([0-9]+\\) [yo]: Pause ",
+    "oldFilterMatches": 0,
+    "caseAPhaseCount": 5,
+    "caseAPhaseTotalMs": 0.7000000000000001,
+    "caseBPhaseCount": 0,
+    "minorPrefixAccepted": true,
+    "limitation": "Synthetic strings based on primary source; no actual JVM capture, exhaustive ZGC parser or behavioral agent execution. Case B has no phase capture, so the absence of matched records is not a measured zero pause count."
+  }
+}

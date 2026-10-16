@@ -1,0 +1,6 @@
+number,unit
+1.0,bar
+1.00,bar
+1.5,bar
+1.0,kPa
+

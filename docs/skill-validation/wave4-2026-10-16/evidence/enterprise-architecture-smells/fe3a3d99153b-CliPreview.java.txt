@@ -1,0 +1,9 @@
+package demo.cli;
+
+import demo.api.PageRequest;
+
+public final class CliPreview {
+    public static String describe(PageRequest page) {
+        return page.page() + ":" + page.size() + ":" + page.sort();
+    }
+}

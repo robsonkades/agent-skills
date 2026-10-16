@@ -1,0 +1,110 @@
+import java.time.Clock;
+import java.time.DateTimeException;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.Period;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.ResolverStyle;
+import java.util.Locale;
+
+public class TemporalChecks {
+    private static int checks;
+
+    static Instant resolve(LocalDateTime local, ZoneId zone, ZoneOffset selected) {
+        var offsets = zone.getRules().getValidOffsets(local);
+        if (offsets.isEmpty()) {
+            throw new DateTimeException("Local time is in a gap");
+        }
+        if (selected == null) {
+            if (offsets.size() != 1) {
+                throw new DateTimeException("Choose an offset for the overlap");
+            }
+            selected = offsets.get(0);
+        }
+        return ZonedDateTime.ofStrict(local, selected, zone).toInstant();
+    }
+
+    static boolean expired(Instant expiresAt, Clock clock) {
+        return !clock.instant().isBefore(expiresAt);
+    }
+
+    static ZonedDateTime parseConsistent(String text) {
+        var parsed = DateTimeFormatter.ISO_ZONED_DATE_TIME.parse(text);
+        return ZonedDateTime.ofStrict(
+            LocalDateTime.from(parsed), ZoneOffset.from(parsed), ZoneId.from(parsed));
+    }
+
+    static void check(boolean condition) {
+        if (!condition) throw new AssertionError("Check " + (checks + 1));
+        checks++;
+    }
+
+    static void rejects(Runnable operation) {
+        try {
+            operation.run();
+        } catch (DateTimeException expected) {
+            checks++;
+            return;
+        }
+        throw new AssertionError("Expected temporal rejection");
+    }
+
+    public static void main(String[] args) {
+        ZoneId paris = ZoneId.of("Europe/Paris");
+        LocalDateTime gap = LocalDateTime.parse("2024-03-31T02:30");
+        rejects(() -> resolve(gap, paris, null));
+        LocalDateTime overlap = LocalDateTime.parse("2024-10-27T02:30");
+        rejects(() -> resolve(overlap, paris, null));
+        rejects(() -> resolve(overlap, paris, ZoneOffset.UTC));
+        Instant earlier = resolve(overlap, paris, ZoneOffset.ofHours(2));
+        Instant later = resolve(overlap, paris, ZoneOffset.ofHours(1));
+        check(earlier.equals(Instant.parse("2024-10-27T00:30:00Z")));
+        check(later.equals(Instant.parse("2024-10-27T01:30:00Z")));
+
+        String inconsistent = "2024-07-01T12:00+01:00[Europe/Paris]";
+        check(ZonedDateTime.parse(inconsistent).getHour() == 13);
+        rejects(() -> parseConsistent(inconsistent));
+        check(parseConsistent("2024-07-01T12:00+02:00[Europe/Paris]").getHour() == 12);
+        rejects(() -> parseConsistent("2024-03-31T02:30+01:00[Europe/Paris]"));
+        check(parseConsistent("2024-10-27T02:30+02:00[Europe/Paris]")
+            .toInstant().equals(earlier));
+        check(parseConsistent("2024-10-27T02:30+01:00[Europe/Paris]")
+            .toInstant().equals(later));
+
+        var noon = ZonedDateTime.of(2024, 3, 30, 12, 0, 0, 0, paris);
+        check(noon.plus(Period.ofDays(1)).getHour() == 12);
+        check(noon.plus(Duration.ofDays(1)).getHour() == 13);
+        LocalDate day = LocalDate.of(2024, 3, 31);
+        Instant start = day.atStartOfDay(paris).toInstant();
+        Instant end = day.plusDays(1).atStartOfDay(paris).toInstant();
+        check(Duration.between(start, end).equals(Duration.ofHours(23)));
+        check(LocalDate.of(2023, 1, 31).plusMonths(1)
+            .equals(LocalDate.of(2023, 2, 28)));
+
+        Instant expiry = Instant.parse("2024-01-01T00:00:00Z");
+        check(!expired(expiry, Clock.fixed(expiry.minusNanos(1), ZoneOffset.UTC)));
+        check(expired(expiry, Clock.fixed(expiry, ZoneOffset.UTC)));
+        check(expired(expiry, Clock.fixed(expiry.plusNanos(1), ZoneOffset.UTC)));
+        Clock fixed = Clock.fixed(expiry, ZoneOffset.UTC);
+        check(LocalDate.now(fixed.withZone(ZoneId.of("America/Los_Angeles")))
+            .equals(LocalDate.of(2023, 12, 31)));
+
+        var dateFormat = DateTimeFormatter.ofPattern("uuuu-MM-dd", Locale.ROOT)
+            .withResolverStyle(ResolverStyle.STRICT);
+        check(LocalDate.parse("2024-02-29", dateFormat)
+            .equals(LocalDate.of(2024, 2, 29)));
+        rejects(() -> LocalDate.parse("2023-02-29", dateFormat));
+        rejects(() -> LocalDate.parse("2024-02-29extra", dateFormat));
+        Instant precise = Instant.parse("1969-12-31T23:59:59.999999999Z");
+        check(!precise.equals(Instant.ofEpochMilli(precise.toEpochMilli())));
+        var original = earlier.atOffset(ZoneOffset.ofHours(2));
+        var utc = earlier.atOffset(ZoneOffset.UTC);
+        check(original.isEqual(utc) && !original.equals(utc));
+        System.out.println("Passed " + checks + " temporal checks");
+    }
+}

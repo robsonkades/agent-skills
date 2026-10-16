@@ -10,12 +10,12 @@
 Capture URL, retrieval date, JEP status/target and exact build. A proposed target can move; an
 Integrated JEP in a future release is not functionality in an older supported release.
 
-### Documentation checked: 2026-09-22
+### Documentation checked: 2026-10-16
 
 [JEP 401: Value Objects (Preview)](https://openjdk.org/jeps/401) and
 [JEP 539: Strict Field Initialization in the JVM (Preview)](https://openjdk.org/jeps/539)
 both report **Integrated**, release **28**. The project page directs experiments to
-[JDK 28 EA](https://jdk.java.net/28/), whose page listed build 16 dated 2026-09-17.
+[JDK 28 EA](https://jdk.java.net/28/), whose page listed build 20 dated 2026-10-15.
 This is integration into an EA release line, not GA delivery or a backport to standard JDK 25/27.
 Recheck these headers before repeating the status; verify inclusion in the particular binary.
 This snapshot records source checks, not execution or performance validation of that binary.
@@ -56,6 +56,15 @@ against the exact design rather than assuming source compatibility means behavio
 The current JEP 401 and matching API documentation impose these specific constraints. Recheck
 them for the pinned build; they are not claims about ordinary classes on the supported JDK.
 
+- **Opaque or sensitive data:** [JEP 401's migration risks](https://openjdk.org/jeps/401#Migrating-to-value-classes)
+  include private-field inference through `==` and `System.identityHashCode`. Overriding
+  `equals`/`hashCode` does not intercept either operation. For a wrapper containing one small
+  secret field, a caller able to construct candidate instances can use `==` as a guessing oracle,
+  even if accessors and `toString` hide that field. Probe the actual caller boundary with chosen
+  candidates; preserve the existing identity and construction boundary when confidentiality
+  requires those comparisons to reveal no field information. Interning identity instances by
+  the secret can create the same oracle. A hash match alone does not establish equality, and an
+  unsuccessful probe does not establish secrecy.
 - **Reachability-based ownership:** value objects cannot be `java.lang.ref` referents or
   [WeakHashMap keys](https://download.java.net/java/early_access/jdk28/docs/api/java.base/java/util/WeakHashMap.html);
   these uses throw `IdentityException`. Strongly held map values are a different case.

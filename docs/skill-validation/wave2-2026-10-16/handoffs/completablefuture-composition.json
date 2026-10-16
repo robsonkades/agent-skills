@@ -1,0 +1,250 @@
+{
+  "skill": "completablefuture-composition",
+  "owner": "/root/quality13",
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "retrospective": true,
+  "ownedPath": "C:/git/agent-skills/skills/completablefuture-composition",
+  "allWritesStopped": true,
+  "processesStillWriting": false,
+  "baseline": {
+    "committedVersion": "1.2.4",
+    "assignmentVersion": "1.2.4",
+    "preExistingChanges": "None: complete assigned package had no staged, unstaged or untracked changes.",
+    "fileHashes": [
+      {
+        "path": "C:\\git\\agent-skills\\skills\\completablefuture-composition\\SKILL.md",
+        "sha256": "5A8A65220893BBAB3033E32DD424B9F4B43A4BFE98F23121A16BFA60245FDC27"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\completablefuture-composition\\skill.yaml",
+        "sha256": "9BADC7D4F5757C91F497F5F486869DAFA4B0691DD103713F447D2EBB664BA156"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\completablefuture-composition\\references\\composition-recipes.md",
+        "sha256": "554BA230F7C95C2F12A0B8680203A8A1409D1B04A329764D0387B2300F97A141"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\completablefuture-composition\\references\\pitfalls-and-executors.md",
+        "sha256": "5926B9907E81558632307FC2436B7E69819F91A14ED13D7F6389500C42FA73B2"
+      }
+    ]
+  },
+  "finalVersion": "1.2.5",
+  "versionRationale": "One patch bump for the combined documentation and executable-example corrections; no per-edit increment.",
+  "findingsCorrected": [
+    {
+      "location": "SKILL.md: investigation workflow; execution contracts; context and security",
+      "finding": "A stage's executor and a request's context need distinct, per-edge ownership; registration, submission and execution may occur on different callers.",
+      "consequence": "Tracing only a similar chain or assuming executor inheritance/capture at graph construction can misdiagnose the actual continuation.",
+      "fix": "Follow caller-visible factories/classes/wrappers and every continuation; state per-edge executor and request-context capture at registration."
+    },
+    {
+      "location": "references/pitfalls-and-executors.md: Thread attribution without folklore",
+      "finding": "For base CompletableFuture, an explicit executor on one edge is not inherited by later executor-less Async edges.",
+      "fix": "Explain base behavior and subclass exceptions using defaultExecutor/newIncompleteFuture with Java 17 API/source references."
+    },
+    {
+      "location": "references/pitfalls-and-executors.md: Context transfer",
+      "finding": "OpenTelemetry Java 1.55.0 Context.taskWrapping captures at Executor.execute. Deferred CompletableFuture submission may happen under the provider's context.",
+      "fix": "Bind request-owned context before continuation registration and restore previous MDC/OTel context on inline/queued success/failure; avoid binding every request to one singleton executor context."
+    }
+  ],
+  "findingsRemaining": [],
+  "crossSkillActions": [],
+  "filesChangedByReviewer": [
+    "skills/completablefuture-composition/SKILL.md",
+    "skills/completablefuture-composition/references/pitfalls-and-executors.md",
+    "skills/completablefuture-composition/skill.yaml"
+  ],
+  "filesPreservedExactly": [
+    "skills/completablefuture-composition/references/composition-recipes.md"
+  ],
+  "preservedCapabilities": [
+    "Composition/outcome and aggregate policy distinctions",
+    "Cancellation versus future completion; provider-specific behavior",
+    "Caller deadlines, resource admission and branch ownership",
+    "Rejection/shutdown semantics and visible terminal results",
+    "Context and MDC restoration",
+    "Java 17/21 final API versus Java 25 preview caveats",
+    "Existing composition recipes and cross-skill ownership"
+  ],
+  "intentionallyRemovedCapabilities": [],
+  "validation": {
+    "workingDirectory": "C:/git/agent-skills",
+    "executedStructural": [
+      {
+        "command": "node node_modules/prettier/bin/prettier.cjs --check skills/completablefuture-composition",
+        "result": "PASS final. Initial warning on edited reference table fixed by --write limited to references/pitfalls-and-executors.md."
+      },
+      {
+        "command": "git diff --check -- skills/completablefuture-composition",
+        "result": "PASS"
+      },
+      {
+        "command": "Inline Node script calling loadPackageFromDirectory(new NodeFileSystem(), 'skills/completablefuture-composition', {strict:true}) and validatePackage(pkg,{directoryName:'completablefuture-composition'})",
+        "result": "PASS: four package files, zero issues; metadata, versions, manifest/frontmatter description and resource/path contracts validated."
+      },
+      {
+        "command": "Read-only Markdown target check for relative package links",
+        "result": "PASS: three checked local links; zero broken targets."
+      },
+      {
+        "command": "Final owned diff read; compare assignment-time hashes and extracted code",
+        "result": "Three changed files; composition-recipes.md unchanged; final Markdown snippet equals the compiled ContextRecipe.java fragment."
+      }
+    ],
+    "executedTechnical": [
+      {
+        "command": "javac --release 17 -cp 'C:/Users/robso/.m2/repository/io/opentelemetry/opentelemetry-context/1.55.0/opentelemetry-context-1.55.0.jar;C:/Users/robso/.m2/repository/org/slf4j/slf4j-api/2.0.17/slf4j-api-2.0.17.jar;C:/Users/robso/.m2/repository/ch/qos/logback/logback-classic/1.5.18/logback-classic-1.5.18.jar;C:/Users/robso/.m2/repository/ch/qos/logback/logback-core/1.5.18/logback-core-1.5.18.jar;C:/Users/robso/.m2/repository/io/opentelemetry/opentelemetry-common/1.55.0/opentelemetry-common-1.55.0.jar' -d 'C:/Users/robso/AppData/Local/Temp/cf-composition-quality13-085a169abcb1403da2b53d957cae2991/classes' 'C:/Users/robso/AppData/Local/Temp/cf-composition-quality13-085a169abcb1403da2b53d957cae2991/ContextRecipe.java' 'C:/Users/robso/AppData/Local/Temp/cf-composition-quality13-085a169abcb1403da2b53d957cae2991/CompositionContractsTest.java'",
+        "result": "PASS compilation against Java 17 APIs; no preview."
+      },
+      {
+        "command": "java -ea -cp 'C:/Users/robso/AppData/Local/Temp/cf-composition-quality13-085a169abcb1403da2b53d957cae2991/classes;C:/Users/robso/.m2/repository/io/opentelemetry/opentelemetry-context/1.55.0/opentelemetry-context-1.55.0.jar;C:/Users/robso/.m2/repository/org/slf4j/slf4j-api/2.0.17/slf4j-api-2.0.17.jar;C:/Users/robso/.m2/repository/ch/qos/logback/logback-classic/1.5.18/logback-classic-1.5.18.jar;C:/Users/robso/.m2/repository/ch/qos/logback/logback-core/1.5.18/logback-core-1.5.18.jar;C:/Users/robso/.m2/repository/io/opentelemetry/opentelemetry-common/1.55.0/opentelemetry-common-1.55.0.jar' CompositionContractsTest",
+        "result": "PASS: 15 cases/controls. Actual runtime Temurin 25.0.3+9; cached OTel context/common 1.55.0, SLF4J 2.0.17, Logback classic/core 1.5.18."
+      },
+      {
+        "command": "Compile each mutant ContextRecipe.java with the same CompositionContractsTest.java and classpath into its own classes directory; execute CompositionContractsTest with that directory first.",
+        "result": "Both compiled. Both fail as expected: submission-capture mutant expected=request, actual=provider; clear-MDC mutant expected=request, actual=null."
+      }
+    ],
+    "testCases": [
+      "Eight combinations: already-completed/deferred source × inline/queued executor × action success/IllegalStateException. Assert initiating-request OTel/MDC ownership and prior-context restoration.",
+      "Two actual Context.taskWrapping controls: already-completed source captures request; deferred source captures provider.",
+      "Two throwing-executor rejection cases: already-completed/deferred; stage completes exceptionally, action never runs, contexts preserved.",
+      "Two base-future executor edge cases: one explicit then executor-less edge yields one custom-queue submission; both explicit edges yield two.",
+      "One subclass case: defaultExecutor/newIncompleteFuture retain custom default for the second edge independently of first-edge explicit executor."
+    ],
+    "preExistingFailures": [],
+    "encounteredFailures": [
+      {
+        "artifact": "baseline-run.txt",
+        "failure": "Initial runtime NoClassDefFoundError: io/opentelemetry/common/ComponentLoader.",
+        "resolution": "Read cached OTel context POM, add same-version already-cached opentelemetry-common 1.55.0 jar, recompile/rerun successfully. No installation or upgrade."
+      }
+    ],
+    "executedBehavioralEvaluations": [],
+    "structuredWalkthroughs": "Two development task variants below reviewed against the expected decision boundary. No independent actor output collected.",
+    "measuredBehavioralGain": false
+  },
+  "technicalArtifacts": {
+    "retainedDirectory": "C:/Users/robso/AppData/Local/Temp/cf-composition-quality13-085a169abcb1403da2b53d957cae2991",
+    "files": [
+      "VALIDATION.md",
+      "CompositionContractsTest.java",
+      "ContextRecipe.java",
+      "classes/",
+      "baseline-run.txt",
+      "baseline-run-with-dependencies.txt",
+      "mutant-submission/ContextRecipe.java",
+      "mutant-submission/classes/",
+      "mutant-submission/run.txt",
+      "mutant-clear/ContextRecipe.java",
+      "mutant-clear/classes/",
+      "mutant-clear/run.txt"
+    ],
+    "replayInstructions": "VALIDATION.md records exact javac/java commands and resolved classpath. Mutants use the same harness and classpath with their isolated output directory. Controlled futures/manual executors avoid timing sleeps; get deadlines are bounded at two seconds.",
+    "installedDependencies": false
+  },
+  "reproducibleCases": {
+    "classification": "Development cases, related to shipped teaching material; not held out; not yet executed by an independent agent.",
+    "sharedActorInput": "Review request trace propagation through SearchService, fix confirmed violations and add a focused regression check. Preserve Java 17 and the existing executor/dependency versions.",
+    "sharedFixtures": {
+      "pom.xml constraints": "maven.compiler.release=17; io.opentelemetry:opentelemetry-context:1.55.0; preserve resolved executor/dependency versions.",
+      "ExecutorConfig": "tracedExecutor = Context.taskWrapping(workerExecutor);",
+      "SearchService": "return provider.lookup().thenApplyAsync(value -> render(value, Context.current().get(REQUEST_KEY)), tracedExecutor);",
+      "RequestEntry": "Invokes SearchService inside Context.root().with(REQUEST_KEY, \"request-A\").makeCurrent().",
+      "workerExecutor fixture": "Controlled queued executor. Its task is run under Context.root().with(REQUEST_KEY, \"worker-C\").makeCurrent().",
+      "existing regression": "Exercises only an already-completed provider response.",
+      "Provider.readme": "Each continuation must be attributed to the initiating request. Its worker's prior context must be restored after success or failure."
+    },
+    "actorCases": [
+      {
+        "id": "CF-A-deferred",
+        "input": "Review request trace propagation through SearchService, fix confirmed violations and add a focused regression check. Preserve Java 17 and the existing executor/dependency versions.",
+        "decisiveFixture": "Provider returns a pending base CompletableFuture. A controlled completer completes it under request key provider-B after RequestEntry has left request-A scope.",
+        "observableFixtureBehavior": "The queued continuation initially renders provider-B; worker-C must be restored after the task."
+      },
+      {
+        "id": "CF-B-already-completed",
+        "input": "Review request trace propagation through SearchService, fix confirmed violations and add a focused regression check. Preserve Java 17 and the existing executor/dependency versions.",
+        "decisiveFixture": "Only difference from A: final Provider implementation and documented contract always construct CompletableFuture.completedFuture(value) before returning. There is no deferred path.",
+        "observableFixtureBehavior": "Registration submits the task while request-A is current; Context.taskWrapping captures request-A."
+      }
+    ],
+    "evaluatorCriteriaSeparated": [
+      {
+        "caseId": "CF-A-deferred",
+        "pass": [
+          "Inspect actual SearchService, ExecutorConfig, Provider and resolved Context.taskWrapping capture semantics.",
+          "Reproduce deferred-source context attribution to provider-B.",
+          "Bind request context at invocation/registration or use verified registration-aware instrumentation.",
+          "Preserve asynchronous placement and Java 17/dependency baseline.",
+          "Assert action sees request-A and worker retains worker-C after success and failure."
+        ],
+        "fail": [
+          "Capture inside the callback or assume task-submission wrapping recovers earlier request context.",
+          "Bind singleton executor to one request forever.",
+          "Unconditionally clear an enclosing context.",
+          "Test only an already-completed source."
+        ]
+      },
+      {
+        "caseId": "CF-B-already-completed",
+        "pass": [
+          "Inspect actual final Provider contract and construction.",
+          "Recognize guaranteed already-completed base stage submits while request-A is current.",
+          "Do not invent a deferred failure or require API/JDK migration.",
+          "Compatible hardening is acceptable if described as hardening rather than evidence that B failed."
+        ],
+        "fail": [
+          "Claim this fixture reproduces provider-context capture despite guaranteed completion.",
+          "Treat A and B as identical without checking the decisive construction contract."
+        ]
+      }
+    ]
+  },
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/CompletableFuture.html",
+      "supports": "Java 17 executor and subclass API contract"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/CompletionStage.html",
+      "supports": "Stage placement and completion semantics"
+    },
+    {
+      "url": "https://github.com/openjdk/jdk/blob/jdk-17-ga/src/java.base/share/classes/java/util/concurrent/CompletableFuture.java",
+      "supports": "thenApplyAsync uses defaultExecutor or explicit screenExecutor; base newIncompleteFuture behavior"
+    },
+    {
+      "url": "https://github.com/open-telemetry/opentelemetry-java/blob/v1.55.0/context/src/main/java/io/opentelemetry/context/Context.java",
+      "supports": "taskWrapping captures Context.current at execute; Scope restores the prior context"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html",
+      "supports": "Preserved current-JDK common-pool caveat checked"
+    },
+    {
+      "url": "https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.net.http/share/classes/jdk/internal/net/http/common/MinimalFuture.java",
+      "supports": "Preserved provider-subclass caveat checked"
+    }
+  ],
+  "limitations": [
+    "No Java 17 runtime is installed; Java 17 target compilation and API/source inspection were executed on JDK 25.",
+    "No stress/load test or production instrumentation test.",
+    "No independent behavioral comparison or measured skill gain.",
+    "Generic package validation is not adapter-specific or repository-wide validation."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "prerequisite": "All reviewers have stopped writing."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "prerequisite": "Index regenerated after all reviewers stop."
+    }
+  ]
+}

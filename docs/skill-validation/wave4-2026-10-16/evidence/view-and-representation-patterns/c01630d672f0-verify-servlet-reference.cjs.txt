@@ -1,0 +1,31 @@
+const fs = require('node:fs');
+const crypto = require('node:crypto');
+(async () => {
+  const referenceFile = process.argv[2];
+  if (!referenceFile) throw new Error('Pass the representation reference Markdown path.');
+  const text = fs.readFileSync(referenceFile, 'utf8');
+  const url = text.match(/\[Servlet 6 response buffering and commitment\]\(([^)]+)\)/)?.[1];
+  if (!url) throw new Error('Expected Servlet reference was not found.');
+  const response = await fetch(url, {signal: AbortSignal.timeout(20000)});
+  const body = await response.text();
+  const title = body.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? null;
+  const members = ['getWriter()', 'flushBuffer()', 'reset()', 'isCommitted()']
+    .map(name => ({name, present: body.includes(name)}));
+  const ok = response.status === 200
+    && title === 'ServletResponse (Jakarta Servlet API documentation)'
+    && body.includes('Interface ServletResponse')
+    && members.every(member => member.present);
+  const result = {
+    kind: 'Versioned primary-source link check; not a renderer or agent behavior test',
+    node: process.version, referenceFile, url, status: response.status,
+    finalUrl: response.url, title, members,
+    responseUtf8Sha256: crypto.createHash('sha256').update(body).digest('hex'),
+    ok
+  };
+  console.log(JSON.stringify(result, null, 2));
+  process.exitCode = ok ? 0 : 1;
+})().catch(error => {
+  console.error(JSON.stringify({error: error.message}));
+  process.exitCode = 1;
+});
+

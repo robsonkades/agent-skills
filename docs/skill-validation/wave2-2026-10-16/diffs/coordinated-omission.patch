@@ -1,0 +1,77 @@
+diff --git a/skills/coordinated-omission/SKILL.md b/skills/coordinated-omission/SKILL.md
+index 01d5adf..085552f 100644
+--- a/skills/coordinated-omission/SKILL.md
++++ b/skills/coordinated-omission/SKILL.md
+@@ -44,6 +44,8 @@ decision. Keep a representative existing workload model rather than forcing open
+    completion and deadline so generator lag and send-to-completion response time are separable.
+    For an open target, establish how due times exist independently of actual starts and responses;
+    a "scheduled" counter incremented only at send time cannot reveal missing schedule slots.
++   Inspect when metrics are emitted: a counter timestamped on completion does not independently
++   count starts in that time bucket. Preserve the selected arrival cohort through its declared drain.
+ 3. **Check response coupling.** In a closed population at equilibrium, the interactive response
+    law is `X = N/(R+Z)` for population `N`, response time `R` and think time `Z`. It explains why
+    throughput falls as responses slow; `N ≥ λR` is a concurrency sizing estimate, not proof that
+@@ -120,6 +122,7 @@ proposed validation run; a narrow explanation does not require collecting a fres
+ ```text
+ Target workload: open / closed / semi-open / replay; production evidence
+ Clock model:     scheduled, actual start, accepted, completed/deadline timestamps
++Observation:     cohort selection, metric emission time and final outcome cutoff
+ Stage counts:    scheduled → admitted → started → accepted → each terminal outcome
+ Generator:       version/config, VUs/workers, CPU/GC/event-loop, sockets, clock sync
+ Schedule:        target and empirical inter-arrival distributions; lag/drop policy
+diff --git a/skills/coordinated-omission/references/detection-and-generator-configuration.md b/skills/coordinated-omission/references/detection-and-generator-configuration.md
+index bece785..f8ef4e4 100644
+--- a/skills/coordinated-omission/references/detection-and-generator-configuration.md
++++ b/skills/coordinated-omission/references/detection-and-generator-configuration.md
+@@ -35,6 +35,13 @@ Coordinated omission is the diagnosis when slow/in-flight work governed missed o
+ target arrival model. There is no universal 2% threshold: one missed start can matter for a tiny
+ safety test, while an explicitly modelled shed fraction can be acceptable if reported.
+ 
++For a claim about arrivals in `[a,b)`, select the cohort by its declared arrival clock and retain
++those IDs through the declared observation cutoff, including outcomes after `b`. Filtering to
++requests that also completed inside `[a,b)` preferentially removes waits crossing the boundary.
++Keep pending outcomes visible when the cutoff expires; neither label them as missing starts nor
++silently extend the experiment. If only aggregate completion buckets survive, they cannot establish
++start-time fidelity for the corresponding arrival window.
++
+ ## Audit the source of the schedule
+ 
+ For an open target, due times must come from its independent arrival plan, not be assigned
+@@ -158,6 +165,16 @@ matter, and use paired timestamps for the required end-to-end boundary. Adding c
+ does not produce the p99 of their sum. An arrival-rate executor does not change the definition
+ of `http_req_duration`.
+ 
++The metric's emission timestamp is another boundary. In k6 v2.3.0, `http_reqs` and HTTP timing
++samples are timestamped at request end, as shown by the
++[sample construction](https://github.com/grafana/k6/blob/v2.3.0/lib/netext/httpext/tracer.go#L39-L117).
++Requests dispatched before a stall may therefore appear only in later metric buckets. A zero
++`http_reqs` bucket during the stall does not establish zero dispatches; nor can subtracting
++`http_req_duration` recover a scheduled start because it excludes earlier waits. Inspect actual
++dispatch timestamps and join the outcome by attempt ID, or report that this evidence is missing.
++Keep late outcomes with their arrival cohort instead of truncating the slow tail to the dashboard
++window. Verify these semantics against the deployed k6 version.
++
+ ## Validation protocol
+ 
+ Use the checks needed to resolve the disputed claim, reusing valid artifacts. Before a new
+@@ -199,6 +216,7 @@ separately from the expected decision when evaluating; record tool use and missi
+ - [Grafana k6: constant-arrival-rate executor](https://grafana.com/docs/k6/latest/using-k6/scenarios/executors/constant-arrival-rate/)
+ - [Grafana k6: arrival-rate VU allocation](https://grafana.com/docs/k6/latest/using-k6/scenarios/concepts/arrival-rate-vu-allocation/)
+ - [Grafana k6: built-in metric boundaries](https://grafana.com/docs/k6/latest/using-k6/metrics/reference/)
++- [k6 v2.3.0 HTTP sample timestamps](https://github.com/grafana/k6/blob/v2.3.0/lib/netext/httpext/tracer.go#L39-L117)
+ - [Gatling workload models](https://docs.gatling.io/testing-concepts/workload-models/)
+ - [Gatling injection reference](https://docs.gatling.io/concepts/injection/)
+ - [Apache JMeter component reference](https://jmeter.apache.org/usermanual/component_reference.html)
+diff --git a/skills/coordinated-omission/skill.yaml b/skills/coordinated-omission/skill.yaml
+index 19e210f..c51d1b9 100644
+--- a/skills/coordinated-omission/skill.yaml
++++ b/skills/coordinated-omission/skill.yaml
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: coordinated-omission
+-version: 1.3.4
++version: 1.3.5
+ description: >-
+   Coordinated omission in depth: response-coupled sampling, open/closed/semi-open workload
+   models, scheduled-versus-actual clocks, generator saturation, correction at recording time versus at generation time,

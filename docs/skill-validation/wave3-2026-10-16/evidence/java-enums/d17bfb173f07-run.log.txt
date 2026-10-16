@@ -1,0 +1,19 @@
+NOTE: Picked up JDK_JAVA_OPTIONS: 
+Picked up JAVA_TOOL_OPTIONS: 
+Picked up _JAVA_OPTIONS: 
+PASS native round trip retains enum identity
+PASS enum read/write/replace/resolve hooks ignored
+PASS declared enum serialVersionUID ignored
+PASS reordering preserves native name identity
+PASS reordered positive control changes ordinal
+PASS same-code rename breaks old native bytes
+EXPECTED InvalidObjectException: enum constant APPROVED does not exist in class fixtures.Status
+PASS new native name breaks rollback reader
+EXPECTED InvalidObjectException: enum constant ACCEPTED does not exist in class fixtures.Status
+PASS rename hooks cannot bridge native names
+PASS explicit retained code reads after source rename
+PASS explicit retained code supports rollback reader
+PASS wrapping enum does not change nested identity
+EXPECTED InvalidObjectException: enum constant APPROVED does not exist in class fixtures.Status
+PASS DTO storing actual code preserves representation
+RESULT checks=12 runtime=25.0.3+9-LTS compilerRelease=17; runtime17NotExercised=true

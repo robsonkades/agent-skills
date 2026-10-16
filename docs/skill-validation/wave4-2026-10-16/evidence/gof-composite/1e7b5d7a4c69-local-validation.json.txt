@@ -1,0 +1,216 @@
+{
+  "capturedAt": "2026-10-16T15:42:29.289Z",
+  "node": "v25.6.1",
+  "skill": "gof-composite",
+  "versions": {
+    "committed": "1.2.4",
+    "assignment": "1.2.4",
+    "final": "1.2.4"
+  },
+  "fileCount": 4,
+  "filesUnchangedFromBaseline": [
+    {
+      "path": "skills/gof-composite/SKILL.md",
+      "bytes": 12243,
+      "sha256": "692e3b02be1ee1026696ef3ce93071950d8e22feeb2f7352d4056a00d7efbb60",
+      "unchanged": true
+    },
+    {
+      "path": "skills/gof-composite/references/structure-and-hazards.md",
+      "bytes": 14784,
+      "sha256": "9c6021ed475dd3c04fb376d4d484b7bd322526a2b6704a9ab52a24e6e9ffdb18",
+      "unchanged": true
+    },
+    {
+      "path": "skills/gof-composite/references/worked-example.md",
+      "bytes": 8098,
+      "sha256": "b60580e3da10e8aa4474003d89b2565d38b9472d7b8ddb754cde08c0220ee3f7",
+      "unchanged": true
+    },
+    {
+      "path": "skills/gof-composite/skill.yaml",
+      "bytes": 2047,
+      "sha256": "de76028ccd72a6f5310a467c4994c58d8173461112e7853491ad9f1d23f61260",
+      "unchanged": true
+    }
+  ],
+  "metadata": {
+    "strictIssues": [],
+    "descriptionMatches": true,
+    "nameMatches": true,
+    "referralDeclarationCount": 9,
+    "catalogWideResolutionChecked": false
+  },
+  "localLinks": [
+    {
+      "source": "skills/gof-composite/SKILL.md",
+      "target": "references/structure-and-hazards.md",
+      "exists": true
+    },
+    {
+      "source": "skills/gof-composite/SKILL.md",
+      "target": "references/worked-example.md",
+      "exists": true
+    }
+  ],
+  "commands": [
+    {
+      "command": "git",
+      "args": [
+        "status",
+        "--short",
+        "--untracked-files=all",
+        "--",
+        "skills/gof-composite"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "command": "git",
+      "args": [
+        "diff",
+        "--",
+        "skills/gof-composite"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "command": "git",
+      "args": [
+        "diff",
+        "--cached",
+        "--",
+        "skills/gof-composite"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "command": "git",
+      "args": [
+        "show",
+        "HEAD:skills/gof-composite/skill.yaml"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "schemaVersion: 1\n\nname: gof-composite\nversion: 1.2.4\ndescription: >-\n  Composite in modern Java: treating a leaf and a tree of leaves through one interface, and the\n  hazards that come with a recursive structure. Covers the transparent-versus-safe trade-off and\n  when a sealed interface with exhaustive pattern matching changes that trade-off, unbounded depth and\n  StackOverflowError, cycles introduced by parent pointers and the recursion hazards they create\n  in equals, hashCode and toString, mutation during traversal, and why remote children require\n  additional distributed contracts. Use when a part-whole hierarchy is being modelled, when a\n  leaf class is forced to implement add() and throw, when a recursive walk overflows the stack on\n  production data, when nested structures arrive from untrusted input, or when someone proposes\n  Composite for a flat group of items. Does not cover adding operations over a tree (gof-visitor),\n  traversal protocols (gof-iterator), adding behaviour to one object (gof-decorator), or aggregate\n  boundaries in a domain model (domain-logic-organization).\n\nlicense: Apache-2.0\n\nauthors:\n  - name: agent-skills contributors\n    url: https://github.com/robsonkades/agent-skills\n\nhomepage: https://github.com/robsonkades/agent-skills/tree/main/skills/gof-composite\nrepository:\n  type: git\n  url: https://github.com/robsonkades/agent-skills\n  directory: skills/gof-composite\n\nkeywords:\n  - design-patterns\n  - gof\n  - structural\n  - composite\n  - trees\n  - recursion\n\nfiles:\n  - SKILL.md\n  - skill.yaml\n  - references/\n\ndependencies: []\n\nsuggests:\n  - allocation-profiling\n  - domain-logic-organization\n  - gof-decorator\n  - gof-iterator\n  - gof-patterns-and-distribution\n  - gof-visitor\n  - java-composition-over-inheritance\n  - orm-behavioral-patterns\n  - scatter-gather\n\ncapabilities:\n  - reads-source\n\nagentOverrides:\n  codex:\n    interface:\n      display_name: Composite\n      short_description: Trees, and what breaks in them\n      default_prompt: Use Composite to review this recursive structure.\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "command": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "node_modules/prettier/bin/prettier.cjs",
+        "--check",
+        "skills/gof-composite/SKILL.md",
+        "skills/gof-composite/references/structure-and-hazards.md",
+        "skills/gof-composite/references/worked-example.md",
+        "skills/gof-composite/skill.yaml"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "Checking formatting...\nAll matched files use Prettier code style!\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "command": "git",
+      "args": [
+        "diff",
+        "--check",
+        "--",
+        "skills/gof-composite"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+      "args": [
+        "-version"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-composite",
+      "exitCode": 0,
+      "stdout": "javac 25.0.3\r\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-version"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-composite",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n",
+      "error": null
+    },
+    {
+      "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+      "args": [
+        "--release",
+        "21",
+        "-d",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-composite/java-controls/classes",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-composite/java-controls/CompositeContractChecks.java"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-composite",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-ea",
+        "-cp",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-composite/java-controls/classes",
+        "CompositeContractChecks"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-composite",
+      "exitCode": 0,
+      "stdout": "PASS equal leaf values retain distinct identity\r\nPASS recursive size counts all paths\r\nPASS quoted iterative size counts all paths\r\nPASS identity visited size has different valid semantics\r\nPASS value set merges equal-but-distinct leaves\r\nPASS remove Object removes the first equal instance\r\nPASS one-key parent index overwrites earlier parent\r\nPASS identity parent index separates equal node values\r\nPASS copyOf snapshots list membership\r\nPASS copyOf membership is unmodifiable\r\nPASS copyOf does not freeze contained objects\r\nPASS forward push reverses encounter order\r\nPASS record copy invariant\r\nPASS negative bytes rejected\r\nPASS recursive exact sum rejects overflow\r\nPASS iterative exact sum rejects overflow\r\nchecks=16\r\n",
+      "stderr": "",
+      "error": null
+    }
+  ],
+  "technicalControls": {
+    "checks": 16,
+    "compilationRelease": 21,
+    "classMajor": 65,
+    "runtime": "Temurin 25.0.3+9",
+    "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-composite/java-controls/CompositeContractChecks.java",
+    "extractedUnchanged": [
+      "Sealed Node/Leaf/Branch declarations from first Java fence, excluding alternative transparent/safe sketches",
+      "Entire second Java fence containing iterative size"
+    ],
+    "harnessOnly": [
+      "Imports and outer class",
+      "Named assertions and main",
+      "Identity-visited contrasting traversal",
+      "API controls for equality, membership, removal, copying and parent index"
+    ],
+    "limits": [
+      "Not executed on JDK 21.",
+      "No concurrency, parser-security, real authorization-cache, database or performance test.",
+      "Permission resolver remains a reviewed partial sketch, not a fully tested application.",
+      "No agent evaluation."
+    ]
+  }
+}

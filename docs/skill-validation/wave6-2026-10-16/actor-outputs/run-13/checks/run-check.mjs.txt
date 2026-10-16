@@ -1,0 +1,40 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+
+const root = process.cwd();
+const project = path.join(root, 'output/project');
+const jdk = 'C:/Users/robso/.jdks/temurin-25.0.3/bin';
+const files = ['docs/review-request.md', 'docs/contract.md', 'README.md', 'check.mjs',
+  'src/work/ResultBridge.java', 'src/work/Snapshot.java', 'src/work/Provider.java', 'test/work/Smoke.java'];
+const hash = p => createHash('sha256').update(fs.readFileSync(p)).digest('hex');
+const report = { startedAt: new Date().toISOString(), node: process.version,
+  runtimeEnvironment: Object.fromEntries(['JAVA_TOOL_OPTIONS', 'JDK_JAVA_OPTIONS', '_JAVA_OPTIONS']
+    .map(key => [key, process.env[key] ?? null])), commands: [], fileComparisons: [] };
+for (const name of files) {
+  const input = path.join(root, 'input/project', name);
+  const output = path.join(project, name);
+  report.fileComparisons.push({ name, inputSha256: hash(input), outputBeforeSha256: hash(output), operation: 'hash-only' });
+}
+function run(program, args, timeout) {
+  const startedAt = new Date().toISOString();
+  const result = spawnSync(program, args, { cwd: project, timeout, encoding: 'utf8', windowsHide: true });
+  report.commands.push({ program, args, cwd: project, timeoutMs: timeout, startedAt,
+    endedAt: new Date().toISOString(), exit: result.status, signal: result.signal,
+    error: result.error ? String(result.error) : null, stdout: result.stdout, stderr: result.stderr });
+}
+run(path.join(jdk, 'javac.exe'), ['-version'], 15000);
+run(path.join(jdk, 'java.exe'), ['-version'], 15000);
+run(process.execPath, ['check.mjs'], 30000);
+for (const entry of report.fileComparisons) {
+  entry.inputAfterSha256 = hash(path.join(root, 'input/project', entry.name));
+  entry.outputAfterSha256 = hash(path.join(project, entry.name));
+  entry.unchangedAndIdentical = [entry.inputAfterSha256, entry.outputBeforeSha256, entry.outputAfterSha256]
+    .every(value => value === entry.inputSha256);
+}
+report.endedAt = new Date().toISOString();
+report.allSpawnedChildrenReturned = report.commands.every(c => c.exit !== null && c.error === null);
+fs.writeFileSync(path.join(root, 'output/checks/check-log.json'), JSON.stringify(report, null, 2) + '\n');
+process.stdout.write(JSON.stringify(report, null, 2) + '\n');
+process.exitCode = report.commands.some(c => c.exit !== 0) || report.fileComparisons.some(f => !f.unchangedAndIdentical) ? 1 : 0;

@@ -1,0 +1,49 @@
+schemaVersion: 1
+name: java-ddd-domain-events
+version: 1.0.0
+description: >-
+  Model Java DDD domain events when an aggregate transition needs an explicit business
+  fact, handlers see mutable state, rehydration emits duplicate facts, or saving loses
+  pending events. Define immutable payloads, occurrence identity, time, collection
+  lifetime and the integration boundary in domain/application/infrastructure packages.
+  Excludes broker operations, event sourcing and Spring listener configuration.
+license: Apache-2.0
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-ddd-domain-events
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-ddd-domain-events
+keywords:
+  - java
+  - ddd
+  - domain-events
+  - clean-architecture
+  - aggregates
+  - event-lifecycle
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+suggests:
+  - java-ddd-aggregates
+  - java-ddd-use-cases
+  - java-ddd-repositories
+  - java-ddd-testing
+  - spring-transactions-and-events
+  - event-driven-architecture
+  - delivery-semantics
+  - idempotency
+  - message-ordering-and-partitioning
+  - schema-evolution-and-compatibility
+  - event-sourcing
+capabilities:
+  - reads-source
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java DDD Domain Events
+      short_description: Business facts, event lifetime and integration boundaries
+      default_prompt: Use Java DDD Domain Events to model and verify this business event and its lifecycle.

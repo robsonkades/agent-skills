@@ -1,0 +1,16 @@
+# Revisão
+
+**Disposição: violated.** A aprovação proposta deve ser recusada. O contrato em `docs/contract.md` exige preservar os dois valores capturados e permite reciclar o buffer assim que o construtor retorna. `src/work/Message.java:4` executa `this.words=words`, mantendo o mesmo array. `checksum()` (linha 5) lê seus elementos atuais. A ausência de mutadores na classe não elimina o alias que permanece com o produtor.
+
+O caminho fornecido por `test/work/Smoke.java` é determinístico: inicializa `{10,20}`, constrói a mensagem, calcula 30, escreve `{100,200}` no mesmo array e calcula 300. Tudo acontece em uma thread, em ordem de programa; não depende de uma corrida rara. O contrato exige 30 também depois da reciclagem.
+
+O campo `final` fixa a referência. O construtor não deixa `this` escapar; a inicialização dos elementos no caminho apresentado precede o freeze do campo na saída do construtor. As regras especiais de campos finais protegem a observação do estado inicial alcançável quando outra thread obtém a mensagem corretamente construída; não tornam esses elementos imutáveis, não cobrem suas alterações posteriores e não constituem uma aresta geral de publicação happens-before. [JLS SE25 §17.5–17.5.1](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.5)
+
+Com reciclagem concorrente, as escritas do produtor em `words[0]` e `words[1]` conflitam com as leituras ordinárias de `checksum()`. Não há protocolo que as ordene no código fornecido. A soma não representa um snapshot atômico: além de 30 e 300, interleavings podem produzir 120 ou 210. Esses resultados diferentes de 30 violam o contrato, embora possam ser legais no JMM da implementação atual. Cada acesso a um `int` não transforma duas leituras em uma operação atômica. [JLS SE25 §17.4.5](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.4.5)
+
+A correção mínima proposta é substituir apenas a atribuição por `this.words = words.clone();`, após a validação existente. Como os elementos são primitivos, a cópia cria armazenamento independente suficiente. Mantendo o array privado, final, sem mutação interna e sem expô-lo, a reciclagem posterior só altera o buffer do produtor. A cópia ocorre antes do retorno, respeitando a propriedade já aceita. Preserve a rejeição de nulo e tamanho diferente de dois, a API e a soma Java existente. Não é necessário impor retenção do buffer ao chamador.
+
+**Evidência executada:** `node check.mjs` em `output/project` compilou com `javac --release 25` e executou o smoke no Temurin 25.0.3. Saída: `before-recycle=30`, `after-recycle=300`; exit 0. O smoke imprime resultados, sem asserção, portanto exit 0 não significa conformidade. Os hashes das seis fontes/documentos/configuração de `output/project` coincidem com `input/project`.
+
+**Limites:** a correção foi proposta, não implementada nem testada. As validações de entrada foram inspecionadas, não exercitadas separadamente. Não houve stress, jcstress ou medição de desempenho. O transporte concreto até consumidores assíncronos não foi fornecido; não se prova sua entrega ou publicação geral. Isso não impede a conclusão: o contraexemplo sequencial já demonstra a violação. Não há caminhos de cancelamento/interrupção no projeto apresentado.
+

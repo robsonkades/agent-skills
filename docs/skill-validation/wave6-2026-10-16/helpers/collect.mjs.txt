@@ -1,0 +1,35 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+const root='C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh',report='C:/git/agent-skills/docs/skill-validation/wave6-2026-10-16';
+const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
+const put=(p,v)=>{fs.mkdirSync(path.dirname(p),{recursive:true});fs.writeFileSync(p,v);};
+const manifest=JSON.parse(fs.readFileSync(report+'/actors.json','utf8'));
+const select=process.argv.slice(2).filter(s=>/^run-\d+$/.test(s));
+const records=manifest.runs.map(r=>{
+ const required=['REVIEW.md','assessment.json','execution.json'],present=required.filter(f=>fs.existsSync(r.directory+'/output/'+f));
+ let stopped=false,assessment=null,error=null;
+ if(present.length===3)try{assessment=JSON.parse(fs.readFileSync(r.directory+'/output/assessment.json','utf8'));stopped=JSON.parse(fs.readFileSync(r.directory+'/output/execution.json','utf8')).allWritesStopped===true;}catch(e){error=e.message;}
+ const row={id:r.id,caseId:r.caseId,condition:r.condition,trial:r.trial,present,stopped,disposition:assessment?.disposition,error};
+ if(stopped){
+  const differences=[];for(const f of r.inputs)if(!fs.existsSync(r.directory+'/'+f.path)||sha(fs.readFileSync(r.directory+'/'+f.path))!==f.sha256)differences.push(f.path);row.protectedInputDifferences=differences;
+  for(const f of required)put(report+'/actor-outputs/'+r.id+'/'+f+'.txt',fs.readFileSync(r.directory+'/output/'+f));
+  row.reportSha256=sha(fs.readFileSync(r.directory+'/output/REVIEW.md'));row.executionSha256=sha(fs.readFileSync(r.directory+'/output/execution.json'));
+ }
+ if(select.includes(r.id))console.log(JSON.stringify({run:row,review:stopped?fs.readFileSync(r.directory+'/output/REVIEW.md','utf8'):null,assessment},null,2));
+ return row;
+});
+put(report+'/progress.json',JSON.stringify({at:new Date().toISOString(),records},null,2)+'\n');
+console.log(JSON.stringify({completed:records.filter(r=>r.stopped).length,total:records.length,completedIds:records.filter(r=>r.stopped).map(r=>r.id),pendingIds:records.filter(r=>!r.stopped).map(r=>r.id),problems:records.filter(r=>r.error||r.protectedInputDifferences?.length)},null,2));
+if(process.argv.some(a=>['--mask','--mask-first','--mask-second'].includes(a))){
+ const suffix=process.argv.includes('--mask-first')?'-batch1':process.argv.includes('--mask-second')?'-batch2':'';
+ const selectedRuns=suffix==='-batch1'?manifest.runs.slice(0,18):suffix==='-batch2'?manifest.runs.slice(18):manifest.runs;
+ assert.ok(selectedRuns.every(s=>records.find(r=>r.id===s.id).stopped),'Wait for selected actors to stop before final grading snapshot');
+ const entries=selectedRuns.map(r=>({sampleId:sha('wave6-grade/'+r.id).slice(0,10),caseId:r.caseId,review:fs.readFileSync(r.directory+'/output/REVIEW.md','utf8'),assessment:JSON.parse(fs.readFileSync(r.directory+'/output/assessment.json','utf8'))}));
+ const map=selectedRuns.map(r=>({run:r.id,sampleId:sha('wave6-grade/'+r.id).slice(0,10)}));
+ entries.sort((a,b)=>a.sampleId.localeCompare(b.sampleId));
+ put(root+'/review/masked-outputs'+suffix+'.json',JSON.stringify({scope:'Condition/run labels withheld; report text may reveal treatment. Proof review only; coordinator audits command/exposure records separately.',entries},null,2)+'\n');
+ put(report+'/grading-map'+suffix+'.json',JSON.stringify(map,null,2)+'\n');
+ console.log('Masked outputs prepared for independent review');
+}

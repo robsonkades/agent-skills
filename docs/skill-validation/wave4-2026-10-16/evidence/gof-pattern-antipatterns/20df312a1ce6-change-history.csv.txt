@@ -1,0 +1,4 @@
+change,kind,consumer_edits,reason
+R104,Text,Plain.text and Upper.text,initial label output
+R119,Heading,Plain.heading and Upper.heading,new document heading
+R131,Badge,pending,new status badge

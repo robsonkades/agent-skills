@@ -1,0 +1,1156 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "jit-compilation",
+  "ownedPath": "C:/git/agent-skills/skills/jit-compilation",
+  "allWritesStopped": true,
+  "scope": {
+    "role": "HotSpot JIT/warm-up diagnosis and policy/resource decisions; preserve log-analysis and C2-internals handoffs.",
+    "baseline": "HotSpot 25, examined Temurin 25.0.3+9-LTS; preserve each consuming project runtime.",
+    "criteria": [
+      "Distinguish compilation successes, failures, elapsed compiler work, and actual application execution.",
+      "Treat counters and configured thresholds as implementation evidence, not service readiness or universal compiler contracts.",
+      "Use the actual target build/configuration and timed sample coverage.",
+      "Preserve modes, code-cache failure shapes, OSR distinctions, container-resource constraints, readiness and AOT boundaries."
+    ],
+    "procedure": [
+      "AGENTS.md and parallel-review constraints applied.",
+      "Complete skill-review-prompt.md, wave3 brief, full assigned package and skill-engineering with evidence/evaluation/resource-design/anti-patterns read; unchanged earlier readings reused where permitted.",
+      "Findings sent to coordinator before first package edit; no ownership conflicts detected."
+    ]
+  },
+  "versions": {
+    "committed": "1.3.4",
+    "assignment": "1.3.4",
+    "final": "1.3.5",
+    "preExistingBump": false,
+    "rationale": "Single patch for focused diagnostic-documentation corrections; descriptions/dependencies unchanged."
+  },
+  "baseline": {
+    "cleanAtAssignment": true,
+    "committedDifference": [],
+    "stagedChanges": [],
+    "unstagedChanges": [],
+    "untrackedFiles": [],
+    "snapshot": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/assignment-baseline.json",
+    "hashes": [
+      {
+        "path": "C:/git/agent-skills/skills/jit-compilation/references/code-cache.md",
+        "sha256": "5B0606B36C407B776A828C68164DFFF4FE0E1FA5C7C8614BD9292F464870FB62"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/jit-compilation/references/tiered-compilation-model.md",
+        "sha256": "FAD380CEB72AC79733A1F7CEFE18DD7FE2FFD1407A4E09E03D4F1A81FF03F7C2"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/jit-compilation/references/warmup-and-cold-start.md",
+        "sha256": "8215940C8495761435D8C83C8CE3221EB122A7F8B2E995E453CFFA6EA3BDC679"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/jit-compilation/SKILL.md",
+        "sha256": "057EBD18D33F67E2B0F823A78A25AD8FF7F91E3B268E1901BA91DE8FF6109845"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/jit-compilation/skill.yaml",
+        "sha256": "FF29B59C3357FAC526BAF7AC0F0CE2FE82EAC75B49FCAA53E05ED0E0C0005675"
+      }
+    ]
+  },
+  "findings": [
+    {
+      "id": "JIT-COUNTER-SUCCESS",
+      "status": "corrected",
+      "locations": [
+        "SKILL.md:64",
+        "references/tiered-compilation-model.md:250",
+        "references/tiered-compilation-model.md:279",
+        "references/warmup-and-cold-start.md:78"
+      ],
+      "finding": "The rate recipe called compileCount generic compiler activity without identifying its success-only accounting.",
+      "consequence": "A plateau can conceal failed compiler work and invite an idle/warm diagnosis or unsupported compiler-cap tuning.",
+      "change": "Define successful compilation counts, inspect independent bailout/elapsed deltas, and keep method attribution and readiness conditional.",
+      "evidence": [
+        "compileBroker.cpp:2526-2650",
+        "jfrPeriodic.cpp:665-678",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted-v3/events.json",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/normal-v3/events.json"
+      ]
+    },
+    {
+      "id": "JIT-TIMER-COVERAGE",
+      "status": "corrected",
+      "locations": ["references/tiered-compilation-model.md:287"],
+      "finding": "Elapsed-time coverage and resolution matter when checking the apparent plateau.",
+      "consequence": "Failed work contributes to aggregate duration, but sub-millisecond work can leave a zero value; dividing an aggregate including failures only by successes is not a successful-task mean.",
+      "change": "Explain failure inclusion, denominator limitation and millisecond resolution; retain elapsed-versus-CPU and lifetime-maximum warnings.",
+      "evidence": [
+        "compileBroker.cpp:2540-2556",
+        "compileBroker.hpp:444-445",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted-v3/events.json"
+      ]
+    },
+    {
+      "id": "JIT-COUNT-WORDING",
+      "status": "corrected",
+      "locations": [
+        "references/tiered-compilation-model.md:261",
+        "references/warmup-and-cold-start.md:73"
+      ],
+      "finding": "The retained numeric anecdote used methods for a count of compilations and phrased an empty summary as the JVM reporting no compilation.",
+      "consequence": "Could imply unique-method counting or erase the event-threshold limitation.",
+      "change": "Use completed compilations and explicitly identify the wrong interpretation; preserve historical numbers and their limitations."
+    }
+  ],
+  "remainingFindings": [],
+  "filesChangedByMe": [
+    {
+      "path": "skills/jit-compilation/SKILL.md",
+      "sha256": "55b491254241cee977a2089bafcfb618e13e8cd186edf160297d8142e52fa42f",
+      "bytes": 10911
+    },
+    {
+      "path": "skills/jit-compilation/references/tiered-compilation-model.md",
+      "sha256": "0fa55eca8b35e3cf3c697e9a59e8c72f694d7795612d46205099e280129cab81",
+      "bytes": 30050
+    },
+    {
+      "path": "skills/jit-compilation/references/warmup-and-cold-start.md",
+      "sha256": "f893e14b71f6b30c8f9f7fb5833296b19012029562c2e9958fccfbf2f04b1ac3",
+      "bytes": 12291
+    },
+    {
+      "path": "skills/jit-compilation/skill.yaml",
+      "sha256": "c7534dfae90d076b78a01332118ab58419a29cc799ffa642a0851f28c405bd54",
+      "bytes": 2125
+    }
+  ],
+  "preExistingFilesChanged": [],
+  "preserved": {
+    "unchangedFiles": ["skills/jit-compilation/references/code-cache.md"],
+    "capabilities": [
+      "Trigger description, diagnostic role, runtime preservation and competing warm-up hypotheses.",
+      "Tier graph, threshold scaling/mode semantics, compiler capacity versus live threads, CPU quota and OSR behavior.",
+      "Attempt/outcome/installed-code/executed-code distinctions and neighboring log/C2 owners.",
+      "Code-cache GC/thrashing/stop/restart behavior and per-heap caveats.",
+      "Readiness by representative service behavior, lifecycle comparisons, rollout/HPA concerns, JFR interval coverage and AOT limits."
+    ],
+    "removed": [],
+    "replaced": ["Generic compiler-activity wording and ambiguous method-count wording only."]
+  },
+  "checks": [
+    {
+      "kind": "package",
+      "cwd": "C:/git/agent-skills",
+      "cmd": "@'\nimport { loadPackageFromDirectory } from './packages/core/src/application/package-loader.ts';\nimport { validatePackage } from './packages/core/src/application/validate-package.ts';\nimport { NodeFileSystem } from './packages/node/src/file-system.ts';\nimport { CodexAdapter } from './packages/adapter-codex/src/index.ts';\nimport { ClaudeCodeAdapter } from './packages/adapter-claude/src/index.ts';\nconst loaded=await loadPackageFromDirectory(new NodeFileSystem(),'skills/jit-compilation',{strict:true});\nconst report=validatePackage(loaded.pkg,{directoryName:'jit-compilation',adapters:[new CodexAdapter(),new ClaudeCodeAdapter()]});\nconst issues=[...loaded.issues,...report.issues];\nconsole.log(JSON.stringify({skill:loaded.pkg.manifest.name,version:loaded.pkg.manifest.version,files:loaded.pkg.files.length,issues},null,2));\nif(issues.length)process.exitCode=1;\n'@ | node --input-type=module",
+      "result": {
+        "chunk_id": "7df41c",
+        "wall_time_seconds": 0.216567,
+        "exit_code": 0,
+        "original_token_count": 22,
+        "output": "{\n  \"skill\": \"jit-compilation\",\n  \"version\": \"1.3.5\",\n  \"files\": 5,\n  \"issues\": []\n}\n"
+      }
+    },
+    {
+      "kind": "format",
+      "cwd": "C:/git/agent-skills",
+      "cmd": "node node_modules/prettier/bin/prettier.cjs --check skills/jit-compilation/SKILL.md skills/jit-compilation/references/tiered-compilation-model.md skills/jit-compilation/references/warmup-and-cold-start.md skills/jit-compilation/skill.yaml",
+      "result": {
+        "chunk_id": "123aca",
+        "wall_time_seconds": 0.2571438,
+        "exit_code": 1,
+        "original_token_count": 44,
+        "output": "Checking formatting...\n[warn] skills/jit-compilation/references/tiered-compilation-model.md\n[warn] Code style issues found in the above file. Run Prettier with --write to fix.\n"
+      }
+    },
+    {
+      "kind": "links",
+      "cwd": "C:/git/agent-skills",
+      "cmd": "@'\nimport fs from 'node:fs';\nimport path from 'node:path';\nconst root='skills/jit-compilation';\nconst walk=dir=>fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(path.join(dir,e.name)):[path.join(dir,e.name)]);\nconst markdown=walk(root).filter(p=>p.endsWith('.md'));const links=[];\nfor(const file of markdown){const text=fs.readFileSync(file,'utf8');for(const match of text.matchAll(/\\[[^\\]]*\\]\\(([^)]+)\\)/g)){const target=match[1].split('#')[0];if(!target||/^[a-z][a-z\\d+.-]*:/i.test(target))continue;const resolved=path.resolve(path.dirname(file),target);if(!fs.existsSync(resolved))throw Error(file+': '+target);links.push({file,target});}}\nconsole.log(JSON.stringify({markdownFiles:markdown.length,relativeLinks:links.length,links},null,2));\n'@ | node --input-type=module",
+      "result": {
+        "chunk_id": "ef816a",
+        "wall_time_seconds": 0.0777703,
+        "exit_code": 0,
+        "original_token_count": 103,
+        "output": "{\n  \"markdownFiles\": 4,\n  \"relativeLinks\": 3,\n  \"links\": [\n    {\n      \"file\": \"skills\\\\jit-compilation\\\\SKILL.md\",\n      \"target\": \"references/tiered-compilation-model.md\"\n    },\n    {\n      \"file\": \"skills\\\\jit-compilation\\\\SKILL.md\",\n      \"target\": \"references/warmup-and-cold-start.md\"\n    },\n    {\n      \"file\": \"skills\\\\jit-compilation\\\\SKILL.md\",\n      \"target\": \"references/code-cache.md\"\n    }\n  ]\n}\n"
+      }
+    },
+    {
+      "kind": "diff-check",
+      "cwd": "C:/git/agent-skills",
+      "cmd": "git diff --check -- skills/jit-compilation",
+      "result": {
+        "chunk_id": "fd11ef",
+        "wall_time_seconds": 0.0769769,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      }
+    },
+    {
+      "kind": "format-after-local-one-space-fix",
+      "cwd": "C:/git/agent-skills",
+      "cmd": "node node_modules/prettier/bin/prettier.cjs --check skills/jit-compilation/SKILL.md skills/jit-compilation/references/tiered-compilation-model.md skills/jit-compilation/references/warmup-and-cold-start.md skills/jit-compilation/skill.yaml",
+      "result": {
+        "exit_code": 0,
+        "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+      }
+    },
+    {
+      "kind": "final-diff-check",
+      "cwd": "C:/git/agent-skills",
+      "cmd": "git diff --check -- skills/jit-compilation",
+      "result": {
+        "chunk_id": "2bfe3b",
+        "wall_time_seconds": 0.0579421,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      }
+    },
+    {
+      "kind": "technical-fixture-validation",
+      "cwd": "C:/git/agent-skills",
+      "cmd": "node C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/validate-and-build-cases.mjs",
+      "result": {
+        "chunk_id": "914f11",
+        "wall_time_seconds": 0.0834021,
+        "exit_code": 0,
+        "original_token_count": 367,
+        "output": "{\n  \"classification\": \"executed technical checks; not behavioral evaluation\",\n  \"runtime\": \"Temurin 25.0.3+9-LTS\",\n  \"sourceRelease\": 25,\n  \"applicationChecksumIdentical\": true,\n  \"oneChangedCausalFlag\": true,\n  \"controls\": [\n    {\n      \"label\": \"restricted-v3\",\n      \"samples\": 26,\n      \"first\": \"2026-10-16T12:10:40.206022300-03:00\",\n      \"last\": \"2026-10-16T12:10:42.928180-03:00\",\n      \"sampleIntervalSecondsRoundedToMs\": 2.722,\n      \"successfulCompilations\": 0,\n      \"failedCompilations\": 1,\n      \"successfulCompilationsPerSecondApprox\": 0,\n      \"failedCompilationsPerSecondApprox\": 0.36737692872887584,\n      \"aggregateDurationFirst\": \"PT0S\",\n      \"aggregateDurationLast\": \"PT0S\",\n      \"individualDuration\": \"PT0.000138S\",\n      \"compileId\": 61,\n      \"succeeded\": false,\n      \"checksum\": 1697108433\n    },\n    {\n      \"label\": \"normal-v3\",\n      \"samples\": 26,\n      \"first\": \"2026-10-16T12:10:43.784305500-03:00\",\n      \"last\": \"2026-10-16T12:10:46.507156700-03:00\",\n      \"sampleIntervalSecondsRoundedToMs\": 2.723,\n      \"successfulCompilations\": 1,\n      \"failedCompilations\": 0,\n      \"successfulCompilationsPerSecondApprox\": 0.36724201248622845,\n      \"failedCompilationsPerSecondApprox\": 0,\n      \"aggregateDurationFirst\": \"PT0S\",\n      \"aggregateDurationLast\": \"PT0.001S\",\n      \"individualDuration\": \"PT0.001885S\",\n      \"compileId\": 61,\n      \"succeeded\": true,\n      \"checksum\": 1697108433\n    }\n  ],\n  \"allChildProcessesStopped\": true\n}\n"
+      }
+    }
+  ],
+  "technicalValidation": {
+    "executed": true,
+    "behavioralEvaluation": false,
+    "toolchain": "javac --release 25 and Temurin runtime 25.0.3+9-LTS on Windows",
+    "commands": [
+      {
+        "label": "javac-version",
+        "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+        "args": ["-version"],
+        "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation",
+        "status": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/javac-version.stdout.txt",
+        "stderr": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/javac-version.stderr.txt"
+      },
+      {
+        "label": "java-version",
+        "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+        "args": ["-version"],
+        "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation",
+        "status": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/java-version.stdout.txt",
+        "stderr": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/java-version.stderr.txt"
+      },
+      {
+        "label": "compile",
+        "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+        "args": [
+          "--release",
+          "25",
+          "-d",
+          "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/classes",
+          "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/CompilerStatsLab.java"
+        ],
+        "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation",
+        "status": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/compile.stdout.txt",
+        "stderr": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/compile.stderr.txt"
+      },
+      {
+        "label": "restricted",
+        "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+        "args": [
+          "-Xbatch",
+          "-XX:-TieredCompilation",
+          "-XX:CompileThreshold=100",
+          "-XX:+UnlockDiagnosticVMOptions",
+          "-XX:MaxNodeLimit=1000",
+          "-XX:NodeLimitFudgeFactor=200",
+          "-XX:CompileCommand=compileonly,CompilerStatsLab::work",
+          "-XX:+LogCompilation",
+          "-XX:LogFile=C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted/hotspot.xml",
+          "-XX:+PrintCompilation",
+          "-XX:StartFlightRecording=filename=C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted/capture.jfr,settings=default,dumponexit=true,jdk.CompilerStatistics#period=100ms",
+          "-cp",
+          "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/classes",
+          "CompilerStatsLab"
+        ],
+        "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted",
+        "status": null,
+        "signal": "SIGTERM",
+        "error": "spawnSync C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe ENOBUFS",
+        "stdout": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted.stdout.txt",
+        "stderr": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted.stderr.txt"
+      },
+      {
+        "label": "restricted-v2",
+        "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+        "args": [
+          "-Xbatch",
+          "-XX:-TieredCompilation",
+          "-XX:CompileThreshold=100",
+          "-XX:+UnlockDiagnosticVMOptions",
+          "-XX:MaxNodeLimit=1000",
+          "-XX:NodeLimitFudgeFactor=200",
+          "-XX:CompileCommand=compileonly,CompilerStatsLab::work",
+          "-XX:StartFlightRecording=filename=C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted-v2/capture.jfr,settings=default,dumponexit=true,jdk.CompilerStatistics#period=100ms,jdk.Compilation#enabled=true,jdk.Compilation#threshold=0ms,jdk.CompilationFailure#enabled=true",
+          "-cp",
+          "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/classes",
+          "CompilerStatsLab"
+        ],
+        "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted-v2",
+        "status": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted-v2.stdout.txt",
+        "stderr": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted-v2.stderr.txt"
+      },
+      {
+        "label": "restricted-v2-summary",
+        "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/jfr.exe",
+        "args": [
+          "summary",
+          "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted-v2/capture.jfr"
+        ],
+        "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted-v2",
+        "status": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted-v2-summary.stdout.txt",
+        "stderr": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted-v2-summary.stderr.txt"
+      },
+      {
+        "label": "restricted-v2-events",
+        "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/jfr.exe",
+        "args": [
+          "print",
+          "--json",
+          "--events",
+          "jdk.CompilerStatistics,jdk.Compilation,jdk.CompilationFailure",
+          "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted-v2/capture.jfr"
+        ],
+        "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted-v2",
+        "status": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted-v2-events.stdout.txt",
+        "stderr": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted-v2-events.stderr.txt"
+      },
+      {
+        "label": "normal-v2",
+        "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+        "args": [
+          "-Xbatch",
+          "-XX:-TieredCompilation",
+          "-XX:CompileThreshold=100",
+          "-XX:+UnlockDiagnosticVMOptions",
+          "-XX:MaxNodeLimit=80000",
+          "-XX:NodeLimitFudgeFactor=200",
+          "-XX:CompileCommand=compileonly,CompilerStatsLab::work",
+          "-XX:StartFlightRecording=filename=C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/normal-v2/capture.jfr,settings=default,dumponexit=true,jdk.CompilerStatistics#period=100ms,jdk.Compilation#enabled=true,jdk.Compilation#threshold=0ms,jdk.CompilationFailure#enabled=true",
+          "-cp",
+          "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/classes",
+          "CompilerStatsLab"
+        ],
+        "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/normal-v2",
+        "status": 1,
+        "signal": null,
+        "error": null,
+        "stdout": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/normal-v2.stdout.txt",
+        "stderr": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/normal-v2.stderr.txt"
+      },
+      {
+        "label": "restricted-v3",
+        "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+        "args": [
+          "-Xbatch",
+          "-XX:-TieredCompilation",
+          "-XX:CompileThreshold=100",
+          "-XX:+UnlockDiagnosticVMOptions",
+          "-XX:MaxNodeLimit=1000",
+          "-XX:NodeLimitFudgeFactor=200",
+          "-XX:CompileCommand=compileonly,CompilerStatsLab::work",
+          "-XX:StartFlightRecording=filename=C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted-v3/capture.jfr,settings=default,dumponexit=true,jdk.CompilerStatistics#period=100ms,jdk.Compilation#enabled=true,jdk.Compilation#threshold=0ms,jdk.CompilationFailure#enabled=true",
+          "-cp",
+          "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/classes",
+          "CompilerStatsLab"
+        ],
+        "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted-v3",
+        "status": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted-v3.stdout.txt",
+        "stderr": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted-v3.stderr.txt"
+      },
+      {
+        "label": "restricted-v3-summary",
+        "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/jfr.exe",
+        "args": [
+          "summary",
+          "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted-v3/capture.jfr"
+        ],
+        "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted-v3",
+        "status": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted-v3-summary.stdout.txt",
+        "stderr": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted-v3-summary.stderr.txt"
+      },
+      {
+        "label": "restricted-v3-events",
+        "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/jfr.exe",
+        "args": [
+          "print",
+          "--json",
+          "--events",
+          "jdk.CompilerStatistics,jdk.Compilation,jdk.CompilationFailure",
+          "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted-v3/capture.jfr"
+        ],
+        "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted-v3",
+        "status": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted-v3-events.stdout.txt",
+        "stderr": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted-v3-events.stderr.txt"
+      },
+      {
+        "label": "normal-v3",
+        "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+        "args": [
+          "-Xbatch",
+          "-XX:-TieredCompilation",
+          "-XX:CompileThreshold=100",
+          "-XX:+UnlockDiagnosticVMOptions",
+          "-XX:MaxNodeLimit=8000",
+          "-XX:NodeLimitFudgeFactor=200",
+          "-XX:CompileCommand=compileonly,CompilerStatsLab::work",
+          "-XX:StartFlightRecording=filename=C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/normal-v3/capture.jfr,settings=default,dumponexit=true,jdk.CompilerStatistics#period=100ms,jdk.Compilation#enabled=true,jdk.Compilation#threshold=0ms,jdk.CompilationFailure#enabled=true",
+          "-cp",
+          "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/classes",
+          "CompilerStatsLab"
+        ],
+        "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/normal-v3",
+        "status": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/normal-v3.stdout.txt",
+        "stderr": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/normal-v3.stderr.txt"
+      },
+      {
+        "label": "normal-v3-summary",
+        "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/jfr.exe",
+        "args": [
+          "summary",
+          "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/normal-v3/capture.jfr"
+        ],
+        "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/normal-v3",
+        "status": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/normal-v3-summary.stdout.txt",
+        "stderr": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/normal-v3-summary.stderr.txt"
+      },
+      {
+        "label": "normal-v3-events",
+        "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/jfr.exe",
+        "args": [
+          "print",
+          "--json",
+          "--events",
+          "jdk.CompilerStatistics,jdk.Compilation,jdk.CompilationFailure",
+          "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/normal-v3/capture.jfr"
+        ],
+        "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/normal-v3",
+        "status": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/normal-v3-events.stdout.txt",
+        "stderr": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/normal-v3-events.stderr.txt"
+      }
+    ],
+    "results": {
+      "classification": "executed technical checks; not behavioral evaluation",
+      "runtime": "Temurin 25.0.3+9-LTS",
+      "sourceRelease": 25,
+      "applicationChecksumIdentical": true,
+      "oneChangedCausalFlag": true,
+      "controls": [
+        {
+          "label": "restricted-v3",
+          "samples": 26,
+          "first": "2026-10-16T12:10:40.206022300-03:00",
+          "last": "2026-10-16T12:10:42.928180-03:00",
+          "sampleIntervalSecondsRoundedToMs": 2.722,
+          "successfulCompilations": 0,
+          "failedCompilations": 1,
+          "successfulCompilationsPerSecondApprox": 0,
+          "failedCompilationsPerSecondApprox": 0.36737692872887584,
+          "aggregateDurationFirst": "PT0S",
+          "aggregateDurationLast": "PT0S",
+          "individualDuration": "PT0.000138S",
+          "compileId": 61,
+          "succeeded": false,
+          "checksum": 1697108433
+        },
+        {
+          "label": "normal-v3",
+          "samples": 26,
+          "first": "2026-10-16T12:10:43.784305500-03:00",
+          "last": "2026-10-16T12:10:46.507156700-03:00",
+          "sampleIntervalSecondsRoundedToMs": 2.723,
+          "successfulCompilations": 1,
+          "failedCompilations": 0,
+          "successfulCompilationsPerSecondApprox": 0.36724201248622845,
+          "failedCompilationsPerSecondApprox": 0,
+          "aggregateDurationFirst": "PT0S",
+          "aggregateDurationLast": "PT0.001S",
+          "individualDuration": "PT0.001885S",
+          "compileId": 61,
+          "succeeded": true,
+          "checksum": 1697108433
+        }
+      ],
+      "allChildProcessesStopped": true
+    },
+    "actualJfcInspection": {
+      "kind": "actual-jfc-settings",
+      "cmd": "@'\nimport fs from 'node:fs';\nconst root='C:/Users/robso/.jdks/temurin-25.0.3/lib/jfr';\nfor(const name of ['default.jfc','profile.jfc']) { const content=fs.readFileSync(root+'/'+name,'utf8'); for(const event of ['jdk.CompilerStatistics','jdk.Compilation','jdk.CompilationFailure']) { const match=content.match(new RegExp('<event name=\"'+event.replaceAll('.','\\\\.')+'\">[\\\\s\\\\S]*?<\\\\/event>')); if(!match)throw new Error(name+event); console.log(name+' '+match[0]); } }\n'@ | node --input-type=module",
+      "cwd": "C:/git/agent-skills",
+      "result": {
+        "chunk_id": "f6ad6d",
+        "wall_time_seconds": 0.0795863,
+        "exit_code": 0,
+        "original_token_count": 272,
+        "output": "default.jfc <event name=\"jdk.CompilerStatistics\">\n      <setting name=\"enabled\" control=\"compiler-enabled\">true</setting>\n      <setting name=\"period\">1000 ms</setting>\n    </event>\ndefault.jfc <event name=\"jdk.Compilation\">\n      <setting name=\"enabled\" control=\"compiler-enabled\">true</setting>\n      <setting name=\"threshold\" control=\"compiler-compilation-threshold\">1000 ms</setting>\n    </event>\ndefault.jfc <event name=\"jdk.CompilationFailure\">\n      <setting name=\"enabled\" control=\"compiler-enabled-failure\">false</setting>\n    </event>\nprofile.jfc <event name=\"jdk.CompilerStatistics\">\n      <setting name=\"enabled\" control=\"compiler-enabled\">true</setting>\n      <setting name=\"period\">1000 ms</setting>\n    </event>\nprofile.jfc <event name=\"jdk.Compilation\">\n      <setting name=\"enabled\" control=\"compiler-enabled\">true</setting>\n      <setting name=\"threshold\" control=\"compiler-compilation-threshold\">100 ms</setting>\n    </event>\nprofile.jfc <event name=\"jdk.CompilationFailure\">\n      <setting name=\"enabled\" control=\"compiler-enabled-failure\">true</setting>\n    </event>\n"
+      }
+    },
+    "negativeControl": "MaxNodeLimit=1000 induced a real C2 failure with zero successful compilations and a nonzero bailout count; MaxNodeLimit=8000 was the successful control. Other workload/compiler flags unchanged except artifact destinations.",
+    "limitations": [
+      "Artificial compileonly, non-tiered, -Xbatch fixture; not production tuning advice, container reproduction or performance benchmark.",
+      "No executed comparison of original/revised skill agents.",
+      "Recorded duration/sample timing are observations of these runs, not stable expected values for reruns."
+    ]
+  },
+  "failedAttempts": [
+    {
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/probe.mjs",
+      "cwd": "C:/git/agent-skills",
+      "result": "Restricted JVM diagnostics exceeded 32 MiB captured stdout (ENOBUFS); spawnSync terminated/reaped child, incomplete 0-byte capture retained. Removed PrintCompilation/LogCompilation from subsequent isolated probes; retained original source, logs and commands.json.",
+      "artifactPaths": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/commands.json",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted.stdout.txt",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted/hotspot.xml"
+      ]
+    },
+    {
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/counter-probe.mjs",
+      "cwd": "C:/git/agent-skills",
+      "result": "Restricted run completed and corroborated bailout. Normal MaxNodeLimit=80000 with NodeLimitFudgeFactor=200 was rejected at startup (required 2%-40%). Fresh v3 pair used valid 1000/8000 budgets with the same fudge factor; both completed.",
+      "artifactPaths": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/commands-v2.json",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/normal-v2.stderr.txt"
+      ]
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/jit-compilation/SKILL.md skills/jit-compilation/references/tiered-compilation-model.md skills/jit-compilation/references/warmup-and-cold-start.md skills/jit-compilation/skill.yaml",
+      "cwd": "C:/git/agent-skills",
+      "result": "Initial check caught one missing alignment space in changed JFR table row; focused apply_patch fix, rerun passed."
+    },
+    {
+      "command": "rg -n -C 5 'CompilerStatistics|compileCount|total_compile_count|bailout_count|compiler-statistics|totalTimeSpent|peakTimeSpent' C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/sources/{compileBroker.cpp,jfrPeriodic.cpp,view.ini}",
+      "cwd": "C:/git/agent-skills",
+      "result": "PowerShell brace-list parser error during read-only exploration; reran with explicit file arguments."
+    },
+    {
+      "command": "rg -n 'MaxNodeLimit|NodeLimitFudgeFactor|CompileThreshold|TieredCompilation' C:/Users/robso/.jdks/temurin-25.0.3/conf/jfr/default.jfc C:/Users/robso/.jdks/temurin-25.0.3/conf/jfr/profile.jfc; Get-Content -Raw skills/jit-compilation/skill.yaml",
+      "cwd": "C:/git/agent-skills",
+      "result": "Wrong JFC path; stderr reported files missing (following read in the combined shell command masked the rg status). rg --files located lib/jfr; direct actual-file inspection subsequently passed."
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/compiler/compileBroker.cpp",
+      "localPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/sources/compileBroker.cpp",
+      "lines": "2526-2650",
+      "supports": "collect_statistics records failed tasks in bailoutCount, successful tasks in compileCount, and elapsed duration for both; not a JVM/JLS contract.",
+      "version": "OpenJDK jdk25u jdk-25.0.3+9",
+      "sha256": "83ab26f0954a8686d25fdaedd24af15843e538ac434ce893ca1fc17bce342844"
+    },
+    {
+      "url": "https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/jfr/periodic/jfrPeriodic.cpp",
+      "localPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/sources/jfrPeriodic.cpp",
+      "lines": "665-678",
+      "supports": "JFR CompilerStatistics fields read those CompileBroker counters.",
+      "version": "OpenJDK jdk25u jdk-25.0.3+9",
+      "sha256": "4706978412893e2254fe43bb08a21fe995d3468d8d065ac13e0ad0d386fe7be3"
+    },
+    {
+      "url": "https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/compiler/compileBroker.hpp",
+      "localPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/sources/compileBroker.hpp",
+      "lines": "444-445",
+      "supports": "The aggregate compilation-time accessor returns milliseconds; a zero aggregate/delta does not exclude shorter work.",
+      "version": "OpenJDK jdk25u jdk-25.0.3+9",
+      "sha256": "6b882ded9782f83daa87575db11adfdfa2a3d6e27d9bd7385f4c876650fada5b"
+    },
+    {
+      "url": "https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/jdk.jfr/share/classes/jdk/jfr/internal/query/view.ini",
+      "localPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/sources/view.ini",
+      "lines": "118-124",
+      "supports": "Existing compiler-statistics view uses LAST over lifetime counters, not recording interval totals.",
+      "version": "OpenJDK jdk25u jdk-25.0.3+9",
+      "sha256": "9165dbaea76cdc4ce2aacb9e75e05def528e1dab9bad343b7c1572a8358829c8"
+    },
+    {
+      "url": "https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/compiler/compilationPolicy.cpp",
+      "localPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/sources/compilationPolicy.cpp",
+      "lines": "748-825",
+      "supports": "Read as implementation context for retained policy/queue guidance; not used to justify new tuning recommendations.",
+      "version": "OpenJDK jdk25u jdk-25.0.3+9",
+      "sha256": "ddf53e16008e95be0758c891599220bc5910c4cf55fd27b585cb07d8c00ad3e6"
+    }
+  ],
+  "evidence": {
+    "root": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation",
+    "baseline": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/assignment-baseline.json",
+    "localChecks": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/local-checks.json",
+    "technicalResults": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/technical-results.json",
+    "caseInputs": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/cases/inputs",
+    "evaluatorCriteria": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/cases/evaluator/criteria.json",
+    "artifacts": [
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/assignment-baseline.json",
+        "bytes": 65033,
+        "sha256": "e23ca494ba75bad09f6b5e099e1f24330d07c0d9093b7370dbd1e56409c9ab28"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/cases/evaluator/criteria.json",
+        "bytes": 3044,
+        "sha256": "38b607b45c314d5a0308ed1825f7c44d2e0021bda1d6ef4d25536bf2bd874170"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/cases/inputs/case-a/capture.jfr",
+        "bytes": 249603,
+        "sha256": "24471484aef44dd3b542eb34b11692670aad612ed4e6698202764875910f3d2a"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/cases/inputs/case-a/CompilerStatsLab.java",
+        "bytes": 13272,
+        "sha256": "e6c74939cfa9979ab0ecf6c7d88ec92c0ebbfc7f53c28bb949d60b64a653fe52"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/cases/inputs/case-a/events.json",
+        "bytes": 15553,
+        "sha256": "e791a38b45f6f77cf9df0c8c73ebc2f77e9f2ba7c2444f762773751b27e907cd"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/cases/inputs/case-a/incident.json",
+        "bytes": 431,
+        "sha256": "31b0baae22ced2d926ca1fd8d558d6eaf768c17d1706cfc6f02308d62659d429"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/cases/inputs/case-a/launch.json",
+        "bytes": 1253,
+        "sha256": "7c82387823e3e16f103a6605b194a13541391a8bb7322754695c6f38c2f17f26"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/cases/inputs/case-a/request.md",
+        "bytes": 485,
+        "sha256": "b708f2fe2441b4d461b69b7167a8b138a85db5dca485582c4fcb4a7e980f7e17"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/cases/inputs/case-a/runtime.txt",
+        "bytes": 563,
+        "sha256": "e3bf8f875c428e977db4f7b95d64499beea21d982f8c7f4d19eb39427c1aabfa"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/cases/inputs/case-b/capture.jfr",
+        "bytes": 245973,
+        "sha256": "294fcf62987a2172ec1239197e944b1675f2d6e623c7eff390c3e3ce48b669d1"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/cases/inputs/case-b/CompilerStatsLab.java",
+        "bytes": 13272,
+        "sha256": "e6c74939cfa9979ab0ecf6c7d88ec92c0ebbfc7f53c28bb949d60b64a653fe52"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/cases/inputs/case-b/events.json",
+        "bytes": 15197,
+        "sha256": "f532cadc94a002f2ee59b6c320e85217a4c86de2239d0573436a0ea7ec8dae9d"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/cases/inputs/case-b/incident.json",
+        "bytes": 431,
+        "sha256": "31b0baae22ced2d926ca1fd8d558d6eaf768c17d1706cfc6f02308d62659d429"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/cases/inputs/case-b/launch.json",
+        "bytes": 1233,
+        "sha256": "e14b2cf0cfcf359d4b09abcd4833b20743674efe7af5bd6b94da69747d77d874"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/cases/inputs/case-b/request.md",
+        "bytes": 485,
+        "sha256": "b708f2fe2441b4d461b69b7167a8b138a85db5dca485582c4fcb4a7e980f7e17"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/cases/inputs/case-b/runtime.txt",
+        "bytes": 566,
+        "sha256": "f285907a0907f33b3a973b5edeb83a1c7f58107a98593cb3303d99d7846ef799"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/classes/CompilerStatsLab.class",
+        "bytes": 5947,
+        "sha256": "dd07fff195237cb352170466343023d823ba02d09ba8c44f473f9bc4ab7785f0"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/commands-v2.json",
+        "bytes": 4162,
+        "sha256": "9f639e4407983ef584056a0233884c03a8fc5e26be8fff6c111931d38d848398"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/commands-v3.json",
+        "bytes": 5699,
+        "sha256": "426e04585324e0649b330f0c812bd7e79745a632fe094e3a632258b7e12c2815"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/commands.json",
+        "bytes": 3427,
+        "sha256": "cf3568f62c60eb5e990ec161abecb1b1bda13ef19e90d79d494bbb005710aea3"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/compile.stderr.txt",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/compile.stdout.txt",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/CompilerStatsLab.java",
+        "bytes": 13272,
+        "sha256": "e6c74939cfa9979ab0ecf6c7d88ec92c0ebbfc7f53c28bb949d60b64a653fe52"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/counter-probe-v3.mjs",
+        "bytes": 2545,
+        "sha256": "897e5a12f15510172a2bd5fc86f76fedaed5a057183bdce041026cbca7552148"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/counter-probe.mjs",
+        "bytes": 2546,
+        "sha256": "fac8bb252d0d1d9d39d4acf36d4b2aab9385271b4c843114e965e16192486d61"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/java-version.stderr.txt",
+        "bytes": 193,
+        "sha256": "e33f6cfdf4d70cb8bf63cae1ed026b89a77539348b7ac97535e20d32d7c1d010"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/java-version.stdout.txt",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/javac-version.stderr.txt",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/javac-version.stdout.txt",
+        "bytes": 14,
+        "sha256": "e28eec99da75b3a320c3a82ec268d403dd151791c791932203e6ea26cc0c0d3b"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/local-checks.json",
+        "bytes": 7982,
+        "sha256": "881c9446ad3c6dd0f3fd411221f4d2659bada5e495f5ce3656194dc304ba9405"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/normal-v2.stderr.txt",
+        "bytes": 180,
+        "sha256": "75148441ca6d2c3c43fa06d680899e3b661efc8412b8c8108ba6e54cadd755b0"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/normal-v2.stdout.txt",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/normal-v3/capture.jfr",
+        "bytes": 245973,
+        "sha256": "294fcf62987a2172ec1239197e944b1675f2d6e623c7eff390c3e3ce48b669d1"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/normal-v3/events.json",
+        "bytes": 13421,
+        "sha256": "1a393549b4e697f2ec720701c39cbb1eb8e9c0d5ab4f8dc54e3796321afc1900"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/normal-v3-events.stderr.txt",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/normal-v3-events.stdout.txt",
+        "bytes": 15197,
+        "sha256": "f532cadc94a002f2ee59b6c320e85217a4c86de2239d0573436a0ea7ec8dae9d"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/normal-v3-summary.stderr.txt",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/normal-v3-summary.stdout.txt",
+        "bytes": 12164,
+        "sha256": "733f21fa1b06135b3be3b3d06b6b29759a4e8c27a9ab2704650934173639b41a"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/normal-v3.stderr.txt",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/normal-v3.stdout.txt",
+        "bytes": 566,
+        "sha256": "f285907a0907f33b3a973b5edeb83a1c7f58107a98593cb3303d99d7846ef799"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/probe.mjs",
+        "bytes": 3906,
+        "sha256": "9ee1d610ac3db5a009aeb5dc16c3d47b28d37494fd30859183073effa05c5efc"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted/capture.jfr",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted/hotspot.xml",
+        "bytes": 75765847,
+        "sha256": "f4500d5be60aff69928ce2c59da4252721c2f2991e137c8af5661ed812031f16"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted-v2/capture.jfr",
+        "bytes": 247532,
+        "sha256": "79b151fa061f277e967e7d77072254a51efea606d14cac77e7401adc4f7364d1"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted-v2/events.json",
+        "bytes": 13716,
+        "sha256": "74d291f0edf03a9eb31c570c08279d8090b622bf892f1d7f91932bdc7507affe"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted-v2-events.stderr.txt",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted-v2-events.stdout.txt",
+        "bytes": 15554,
+        "sha256": "b83455bc5c3f2f5df62414ead28e6207af91f2a4f90d3987f9e418234c09177c"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted-v2-summary.stderr.txt",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted-v2-summary.stdout.txt",
+        "bytes": 12164,
+        "sha256": "81837b7fd77dfb1562cd2a452e739967797ea74e2f4fd14a76728b089296eb1a"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted-v2.stderr.txt",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted-v2.stdout.txt",
+        "bytes": 563,
+        "sha256": "b2472cd864c4bf96ad262ee5387d4a7512fe85c771478e7e9f94033940a87cb1"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted-v3/capture.jfr",
+        "bytes": 249603,
+        "sha256": "24471484aef44dd3b542eb34b11692670aad612ed4e6698202764875910f3d2a"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted-v3/events.json",
+        "bytes": 13715,
+        "sha256": "16add1c8b38402eac40aa43f461d8f8f1ff6b40b9cc06c717d2861af51902273"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted-v3-events.stderr.txt",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted-v3-events.stdout.txt",
+        "bytes": 15553,
+        "sha256": "e791a38b45f6f77cf9df0c8c73ebc2f77e9f2ba7c2444f762773751b27e907cd"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted-v3-summary.stderr.txt",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted-v3-summary.stdout.txt",
+        "bytes": 12164,
+        "sha256": "150512bd0fafe528d2e82cf705354d60896e038c9feffc6263ad39edcfee6d61"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted-v3.stderr.txt",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted-v3.stdout.txt",
+        "bytes": 563,
+        "sha256": "e3bf8f875c428e977db4f7b95d64499beea21d982f8c7f4d19eb39427c1aabfa"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted.stderr.txt",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/restricted.stdout.txt",
+        "bytes": 33554891,
+        "sha256": "591fa60162ed1de1d384c978b4e4aa43cc3bdec98ad66525934e1ca1eae49c8c"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/sources/compilationPolicy.cpp",
+        "bytes": 60413,
+        "sha256": "ddf53e16008e95be0758c891599220bc5910c4cf55fd27b585cb07d8c00ad3e6"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/sources/compileBroker.cpp",
+        "bytes": 112483,
+        "sha256": "83ab26f0954a8686d25fdaedd24af15843e538ac434ce893ca1fc17bce342844"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/sources/compileBroker.hpp",
+        "bytes": 17348,
+        "sha256": "6b882ded9782f83daa87575db11adfdfa2a3d6e27d9bd7385f4c876650fada5b"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/sources/downloads.json",
+        "bytes": 1480,
+        "sha256": "f493076a7843a26a06267d4d6e0f12b2262384174090b5a61be4e9747a39a9f1"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/sources/jfrPeriodic.cpp",
+        "bytes": 25585,
+        "sha256": "4706978412893e2254fe43bb08a21fe995d3468d8d065ac13e0ad0d386fe7be3"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/sources/view.ini",
+        "bytes": 27190,
+        "sha256": "9165dbaea76cdc4ce2aacb9e75e05def528e1dab9bad343b7c1572a8358829c8"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/technical-results.json",
+        "bytes": 1467,
+        "sha256": "c17dad2e94e2526ed02040f2ab6764bd80eee12103ec1b81d38bcaef0fa43a68"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/validate-and-build-cases.mjs",
+        "bytes": 7818,
+        "sha256": "8262e01b8a263768de56e0a6d8de18743ac76b63c74e8dd1e5540dcefa170963"
+      }
+    ],
+    "largeFailedArtifacts": "The first over-verbose failed probe retained approximately 109 MB of stdout/XML; it is not a valid JFR capture."
+  },
+  "behavioralEvaluation": {
+    "executed": [],
+    "measuredImprovement": false,
+    "walkthroughs": [
+      "Case A: correct the artifact report to identify the captured C2 bailout despite zero success count and zero-ms aggregate; preserve application checksum and leave readiness unknown.",
+      "Case B: accept successful compilation progress, reject importing the node-budget failure diagnosis, and still leave readiness/per-invocation code execution unestablished."
+    ],
+    "pending": "Coordinator may run isolated original/revised/no-skill evaluations; these are exposed development cases, not held-out."
+  },
+  "cases": {
+    "inputs": [
+      {
+        "id": "case-a",
+        "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/cases/inputs/case-a",
+        "request": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/cases/inputs/case-a/request.md",
+        "fixtures": [
+          "capture.jfr",
+          "events.json",
+          "runtime.txt",
+          "launch.json",
+          "CompilerStatsLab.java",
+          "incident.json"
+        ],
+        "action": "Inspect supplied artifacts and correct incident.json only.",
+        "prerequisites": "Read/write isolated case folder; optional JDK 25 jfr tool for completed capture. No live JVM needed."
+      },
+      {
+        "id": "case-b",
+        "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/cases/inputs/case-b",
+        "request": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/cases/inputs/case-b/request.md",
+        "fixtures": [
+          "capture.jfr",
+          "events.json",
+          "runtime.txt",
+          "launch.json",
+          "CompilerStatsLab.java",
+          "incident.json"
+        ],
+        "action": "Inspect supplied artifacts and correct incident.json only.",
+        "prerequisites": "Same as case-a."
+      }
+    ],
+    "criteriaFile": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/cases/evaluator/criteria.json",
+    "criteria": {
+      "classification": "Development cases derived from technical probes; no agent evaluation executed; not held-out.",
+      "decisiveConstraint": "Only MaxNodeLimit changes (1000 versus 8000). Capture destination and observed PID/timestamps/diagnostic values also differ as run artifacts, not independent treatment changes.",
+      "common": [
+        "Inspect events/runtime/launch, edit incident.json, preserve runtime and successful application outcome/checksum.",
+        "Use timed samples from the same capture; report sample-covered interval, not requested recording duration or lifetime totals.",
+        "Treat aggregate timer as elapsed compiler duration with millisecond resolution, not CPU consumption.",
+        "Readiness remains unestablished: neither counters nor a lab checksum demonstrate representative service latency/error acceptance.",
+        "Do not prescribe CICompilerCount=4 from the counters alone, and do not change runtime flags during this artifact review.",
+        "A successful compilation event is not a trace of which individual application invocations executed its code."
+      ],
+      "cases": [
+        {
+          "id": "case-a",
+          "expected": {
+            "successDelta": 0,
+            "bailoutDelta": 1,
+            "matchedCompileId": 61,
+            "method": "CompilerStatsLab::work(I)I",
+            "outcome": "C2 failed: out of nodes parsing method",
+            "elapsedAggregateDelta": "PT0S",
+            "individualCompilationDuration": "PT0.000138S"
+          },
+          "requirements": [
+            "Replace no-failure/idle inference with the captured failed compilation and inspect the artificially restricted node budget before capacity tuning.",
+            "Explain that a 0 ms aggregate does not erase the sub-millisecond compilation event; separate zero successful progress from no compiler work."
+          ],
+          "failures": [
+            "Calls compiler idle because both compileCount and totalTimeSpent stayed zero.",
+            "Loses the bailout evidence or assigns it to another method without compile-ID correlation."
+          ]
+        },
+        {
+          "id": "case-b",
+          "expected": {
+            "successDelta": 1,
+            "bailoutDelta": 0,
+            "matchedCompileId": 61,
+            "method": "CompilerStatsLab::work(I)I",
+            "outcome": "C2 successful normal-entry compilation",
+            "elapsedAggregateDelta": "PT0.001S",
+            "individualCompilationDuration": "PT0.001885S"
+          },
+          "requirements": [
+            "Record successful compilation progress and no counted bailout in the sampled interval.",
+            "Do not import the failure diagnosis from case-a or treat node budget as a proven service bottleneck."
+          ],
+          "failures": [
+            "Reports the supplied successful event as a bailout.",
+            "Treats the 1 ms aggregate as compiler CPU or as an application readiness proof."
+          ]
+        }
+      ],
+      "isolation": "Provide each actor only its own input folder and the intended skill snapshot. Criteria, other case inputs, prior/revised output and this validator are evaluator-only. Folder separation is procedural, not enforced access control."
+    },
+    "separation": "Inputs are separate from evaluator criteria. No evaluator launched; filesystem access separation is procedural, not enforced."
+  },
+  "limits": [
+    "Local readiness only; repository-wide integration remains pending.",
+    "Primary implementation claims verified for jdk-25.0.3+9; other builds/compilers may differ.",
+    "No production service, Linux quota, code-cache-pressure, AOT or fleet benchmark executed in this assignment.",
+    "Historical 1542-compilation anecdotes and other retained lab observations were not re-created; they remain explicitly historical, not current-service measurements.",
+    "Successful technical controls do not measure agent improvement or prove application-level latency benefits."
+  ],
+  "crossSkill": {
+    "confirmedIssues": [],
+    "boundariesPreserved": [
+      "compilation-and-inlining-logs",
+      "c2-sea-of-nodes",
+      "deoptimization",
+      "code-cache-segments",
+      "container-awareness",
+      "kubernetes-service-lifecycle",
+      "startup-cds-crac-leyden"
+    ],
+    "coordinatorActions": [
+      "Archive handoff/evidence as appropriate.",
+      "Run shared index and verification after all writers stop.",
+      "Optional independent behavioral evaluation with the separated inputs/criteria."
+    ]
+  },
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "reason": "Coordinator-only shared generated index update.",
+      "prerequisite": "All reviewers stopped writing."
+    },
+    {
+      "command": "npm run verify",
+      "reason": "Coordinator-only repository-wide validation, including version/integrity/dependency checks.",
+      "prerequisite": "All reviewers stopped; registry regenerated."
+    }
+  ],
+  "stoppedProcessEvidence": {
+    "kind": "owned-process-check",
+    "cmd": "$jitOwnedProcesses = @(Get-CimInstance Win32_Process -Filter \"Name = 'java.exe'\" | Where-Object { $_.CommandLine -like '*jit-compilation-validation*' }); [pscustomobject]@{ count = $jitOwnedProcesses.Count; pids = @($jitOwnedProcesses | Select-Object -ExpandProperty ProcessId) } | ConvertTo-Json -Compress",
+    "cwd": "C:/git/agent-skills",
+    "result": {
+      "chunk_id": "695b0d",
+      "wall_time_seconds": 0.266369,
+      "exit_code": 0,
+      "original_token_count": 6,
+      "output": "{\"count\":0,\"pids\":[]}\r\n"
+    }
+  },
+  "finalOwnedMetadata": {
+    "committedVersion": "1.3.4",
+    "finalVersion": "1.3.5",
+    "status": " M skills/jit-compilation/SKILL.md\n M skills/jit-compilation/references/tiered-compilation-model.md\n M skills/jit-compilation/references/warmup-and-cold-start.md\n M skills/jit-compilation/skill.yaml\n",
+    "stagedDiff": "",
+    "files": [
+      {
+        "path": "skills/jit-compilation/SKILL.md",
+        "sha256": "55b491254241cee977a2089bafcfb618e13e8cd186edf160297d8142e52fa42f",
+        "bytes": 10911
+      },
+      {
+        "path": "skills/jit-compilation/references/code-cache.md",
+        "sha256": "5b0606b36c407b776a828c68164dfff4fe0e1fa5c7c8614bd9292f464870fb62",
+        "bytes": 8888
+      },
+      {
+        "path": "skills/jit-compilation/references/tiered-compilation-model.md",
+        "sha256": "0fa55eca8b35e3cf3c697e9a59e8c72f694d7795612d46205099e280129cab81",
+        "bytes": 30050
+      },
+      {
+        "path": "skills/jit-compilation/references/warmup-and-cold-start.md",
+        "sha256": "f893e14b71f6b30c8f9f7fb5833296b19012029562c2e9958fccfbf2f04b1ac3",
+        "bytes": 12291
+      },
+      {
+        "path": "skills/jit-compilation/skill.yaml",
+        "sha256": "c7534dfae90d076b78a01332118ab58419a29cc799ffa642a0851f28c405bd54",
+        "bytes": 2125
+      }
+    ]
+  }
+}

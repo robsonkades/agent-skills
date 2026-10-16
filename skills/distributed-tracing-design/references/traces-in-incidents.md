@@ -59,18 +59,50 @@ processors can observe it while standard export paths normally omit it. Neither
 `isRecording` nor a sampled flag is an export acknowledgment or backend retention guarantee.
 Inspect the pinned SDK and pipeline before treating an empty exporter as propagation loss.
 
+## Apparent duplicate spans
+
+Two rows with the same operation name are not enough to remove instrumentation. Obtain a
+representative raw record with trace/span IDs, parent, kind, timestamps, resource and
+instrumentation scope/version, where available. Follow the actual caller, enabled agent or
+library and manual span creation; scope identifies the emitting software unit, but does
+not prove which deployed path ran. Compare records at SDK export and backend ingestion when
+available to locate where repetition first appears.
+
+- **Same `(traceId, spanId)`:** compare normalized IDs and payloads before counting distinct
+  operations. OTLP permits duplicate delivery when acknowledgment is lost. Retransmission,
+  multiple export paths or a backend display/query can explain repetition; investigate the
+  observed path before suppressing a creator. ID equality alone does not prove retransmission;
+  conflicting payloads can also require checking transformations or erroneous ID reuse.
+- **Different IDs:** check whether the records represent client/server sides, retries or
+  independently actionable stages. Same names and overlapping timing do not make them
+  redundant. Map each to the operation/attempt and its actual creator.
+- **Redundant creators for the same protocol role and attempt:** select one owner that
+  preserves the required kind, attributes, parentage and completion semantics. Recheck the
+  changed operation and affected backend query; do not remove legitimate attempt or
+  business-stage spans to force a lower count.
+
+If records or origin evidence are unavailable, retain that uncertainty and identify the
+smallest capture that distinguishes creation from delivery/display duplication. Keep the
+span model unchanged until evidence justifies suppression; hand pipeline mechanics to
+`opentelemetry-performance` with the observed IDs and export path.
+
+The identity rule comes from the [Trace API](https://opentelemetry.io/docs/specs/otel/trace/api/#spancontext);
+emitter metadata from [instrumentation scope](https://opentelemetry.io/docs/concepts/instrumentation-scope/).
+The delivery limitation was checked against [OTLP specification v1.11.1](https://github.com/open-telemetry/opentelemetry-proto/blob/v1.11.1/docs/specification.md#duplicate-data).
+These sources do not establish a particular backend's storage or deduplication behavior.
+
 ## Contract tests
 
 For local model assertions, use an isolated SDK and an in-memory exporter with known
 recording/export settings. Select assertions relevant to the changed operation:
 
-- expected number and class of spans;
+- expected distinct span identities and operation classes, separate from delivered record counts;
 - stable name and kind;
 - parent trace/span IDs;
 - links for batch/messaging causes;
 - logical timestamps for async completion;
 - status/outcome for success/error/cancel/retry;
-- no duplicate auto/manual spans;
+- no redundant creators for the same protocol role/attempt, preserving legitimate stages;
 - truncation and sensitive-data policy.
 
 These assertions prove only what the exercised fixture records. Test actual broker/executor

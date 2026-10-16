@@ -1,0 +1,6 @@
+{
+  "skill": "feature-scope-analysis",
+  "common": "Analyze scope only and preserve IDs; do not implement or contact anyone. BAC07 requires exporting application activity to shared audit. SC11 is integration; SC12 is replacement and is explicitly excluded. Platform owns the service. The selected existing API is documented and matches BAC07. A colleague argues that because the dependency is required, the service must be rebuilt. Classify the work, exclusions, dependencies, and delivery evidence.",
+  "scenarioA": "Platform's current onboarding confirms that the namespace is usable, with recent integration evidence.",
+  "scenarioB": "The namespace appears only on an unaccepted Platform roadmap; there is no provisioning commitment or integration evidence."
+}

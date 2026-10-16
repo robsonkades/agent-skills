@@ -1,0 +1,17 @@
+{
+  "label": "run-case-a",
+  "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+  "args": [
+    "-cp",
+    "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-state-validation\\case-a\\classes",
+    "ConnectionApp",
+    "app.properties"
+  ],
+  "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-state-validation\\case-a",
+  "expectedExit": 0,
+  "exitCode": 0,
+  "signal": null,
+  "stdout": "servingInitial=true\r\nbeforeStop: initialClosed=0, callbackClosed=0\r\nafterStop: initialClosed=1, callbackClosed=1\r\n",
+  "stderr": "",
+  "error": null
+}

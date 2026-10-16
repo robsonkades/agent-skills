@@ -1,0 +1,239 @@
+[
+  {
+    "id": "java-version",
+    "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+    "args": [
+      "-version"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\orm-behavioral-patterns-validation",
+    "started": "2026-10-16T15:58:55.105Z",
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "",
+    "stderr": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n",
+    "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\orm-behavioral-patterns-validation\\logs\\java-version.txt"
+  },
+  {
+    "id": "javac-version",
+    "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+    "args": [
+      "-version"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\orm-behavioral-patterns-validation",
+    "started": "2026-10-16T15:58:55.156Z",
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "javac 25.0.3\r\n",
+    "stderr": "",
+    "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\orm-behavioral-patterns-validation\\logs\\javac-version.txt"
+  },
+  {
+    "id": "compile-fixtures",
+    "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+    "args": [
+      "--release",
+      "17",
+      "-cp",
+      "C:\\Users\\robso\\.m2\\repository\\org\\hibernate\\orm\\hibernate-core\\6.6.33.Final\\hibernate-core-6.6.33.Final.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\persistence\\jakarta.persistence-api\\3.1.0\\jakarta.persistence-api-3.1.0.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\transaction\\jakarta.transaction-api\\2.0.1\\jakarta.transaction-api-2.0.1.jar;C:\\Users\\robso\\.m2\\repository\\org\\jboss\\logging\\jboss-logging\\3.5.0.Final\\jboss-logging-3.5.0.Final.jar;C:\\Users\\robso\\.m2\\repository\\org\\hibernate\\common\\hibernate-commons-annotations\\7.0.3.Final\\hibernate-commons-annotations-7.0.3.Final.jar;C:\\Users\\robso\\.m2\\repository\\io\\smallrye\\jandex\\3.2.0\\jandex-3.2.0.jar;C:\\Users\\robso\\.m2\\repository\\com\\fasterxml\\classmate\\1.5.1\\classmate-1.5.1.jar;C:\\Users\\robso\\.m2\\repository\\net\\bytebuddy\\byte-buddy\\1.15.11\\byte-buddy-1.15.11.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\xml\\bind\\jakarta.xml.bind-api\\4.0.0\\jakarta.xml.bind-api-4.0.0.jar;C:\\Users\\robso\\.m2\\repository\\org\\glassfish\\jaxb\\jaxb-runtime\\4.0.2\\jaxb-runtime-4.0.2.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\inject\\jakarta.inject-api\\2.0.1\\jakarta.inject-api-2.0.1.jar;C:\\Users\\robso\\.m2\\repository\\org\\antlr\\antlr4-runtime\\4.13.0\\antlr4-runtime-4.13.0.jar;C:\\Users\\robso\\.m2\\repository\\org\\glassfish\\jaxb\\jaxb-core\\4.0.2\\jaxb-core-4.0.2.jar;C:\\Users\\robso\\.m2\\repository\\org\\glassfish\\jaxb\\txw2\\4.0.2\\txw2-4.0.2.jar;C:\\Users\\robso\\.m2\\repository\\com\\sun\\istack\\istack-commons-runtime\\4.1.1\\istack-commons-runtime-4.1.1.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\activation\\jakarta.activation-api\\2.1.1\\jakarta.activation-api-2.1.1.jar;C:\\Users\\robso\\.m2\\repository\\org\\eclipse\\angus\\angus-activation\\2.0.0\\angus-activation-2.0.0.jar;C:\\Users\\robso\\.m2\\repository\\com\\h2database\\h2\\2.3.232\\h2-2.3.232.jar",
+      "-d",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\orm-behavioral-patterns-validation\\classes",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\orm-behavioral-patterns-validation\\fixtures\\OrmFixture.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\orm-behavioral-patterns-validation\\fixtures\\EmailUpdateJob.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\orm-behavioral-patterns-validation\\fixtures\\OrmContractChecks.java"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\orm-behavioral-patterns-validation",
+    "started": "2026-10-16T15:58:55.247Z",
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "",
+    "stderr": "",
+    "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\orm-behavioral-patterns-validation\\logs\\compile-fixtures.txt"
+  },
+  {
+    "id": "orm-contracts",
+    "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+    "args": [
+      "-cp",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\orm-behavioral-patterns-validation\\classes;C:\\Users\\robso\\.m2\\repository\\org\\hibernate\\orm\\hibernate-core\\6.6.33.Final\\hibernate-core-6.6.33.Final.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\persistence\\jakarta.persistence-api\\3.1.0\\jakarta.persistence-api-3.1.0.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\transaction\\jakarta.transaction-api\\2.0.1\\jakarta.transaction-api-2.0.1.jar;C:\\Users\\robso\\.m2\\repository\\org\\jboss\\logging\\jboss-logging\\3.5.0.Final\\jboss-logging-3.5.0.Final.jar;C:\\Users\\robso\\.m2\\repository\\org\\hibernate\\common\\hibernate-commons-annotations\\7.0.3.Final\\hibernate-commons-annotations-7.0.3.Final.jar;C:\\Users\\robso\\.m2\\repository\\io\\smallrye\\jandex\\3.2.0\\jandex-3.2.0.jar;C:\\Users\\robso\\.m2\\repository\\com\\fasterxml\\classmate\\1.5.1\\classmate-1.5.1.jar;C:\\Users\\robso\\.m2\\repository\\net\\bytebuddy\\byte-buddy\\1.15.11\\byte-buddy-1.15.11.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\xml\\bind\\jakarta.xml.bind-api\\4.0.0\\jakarta.xml.bind-api-4.0.0.jar;C:\\Users\\robso\\.m2\\repository\\org\\glassfish\\jaxb\\jaxb-runtime\\4.0.2\\jaxb-runtime-4.0.2.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\inject\\jakarta.inject-api\\2.0.1\\jakarta.inject-api-2.0.1.jar;C:\\Users\\robso\\.m2\\repository\\org\\antlr\\antlr4-runtime\\4.13.0\\antlr4-runtime-4.13.0.jar;C:\\Users\\robso\\.m2\\repository\\org\\glassfish\\jaxb\\jaxb-core\\4.0.2\\jaxb-core-4.0.2.jar;C:\\Users\\robso\\.m2\\repository\\org\\glassfish\\jaxb\\txw2\\4.0.2\\txw2-4.0.2.jar;C:\\Users\\robso\\.m2\\repository\\com\\sun\\istack\\istack-commons-runtime\\4.1.1\\istack-commons-runtime-4.1.1.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\activation\\jakarta.activation-api\\2.1.1\\jakarta.activation-api-2.1.1.jar;C:\\Users\\robso\\.m2\\repository\\org\\eclipse\\angus\\angus-activation\\2.0.0\\angus-activation-2.0.0.jar;C:\\Users\\robso\\.m2\\repository\\com\\h2database\\h2\\2.3.232\\h2-2.3.232.jar",
+      "OrmContractChecks"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\orm-behavioral-patterns-validation",
+    "started": "2026-10-16T15:58:55.845Z",
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "PASS assertions=32\r\n",
+    "stderr": "Oct 16, 2026 12:58:55 PM org.hibernate.Version logVersion\r\nINFO: HHH000412: Hibernate ORM core version 6.6.33.Final\r\nOct 16, 2026 12:58:56 PM org.hibernate.cache.internal.RegionFactoryInitiator initiateService\r\nINFO: HHH000026: Second-level cache disabled\r\nOct 16, 2026 12:58:56 PM org.hibernate.engine.jdbc.connections.internal.DriverManagerConnectionProviderImpl configure\r\nWARN: HHH10001002: Using built-in connection pool (not intended for production use)\r\nOct 16, 2026 12:58:56 PM org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator logConnectionInfo\r\nINFO: HHH10001005: Database info:\n\tDatabase JDBC URL [jdbc:h2:mem:orm_bf5722e3-1fdc-4252-8c38-bf43274001c0]\n\tDatabase driver: org.h2.Driver\n\tDatabase version: 2.3.232\n\tAutocommit mode: false\n\tIsolation level: undefined/unknown\n\tMinimum pool size: 1\n\tMaximum pool size: 20\r\nOct 16, 2026 12:58:56 PM org.hibernate.engine.transaction.jta.platform.internal.JtaPlatformInitiator initiateService\r\nINFO: HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)\r\nOct 16, 2026 12:58:56 PM org.hibernate.resource.transaction.backend.jdbc.internal.DdlTransactionIsolatorNonJtaImpl getIsolatedConnection\r\nINFO: HHH10001501: Connection obtained from JdbcConnectionAccess [org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$ConnectionProviderJdbcConnectionAccess@642ee49c] for (non-JTA) DDL execution was not in auto-commit mode; the Connection 'local transaction' will be committed and the Connection will be set into auto-commit mode.\r\nOct 16, 2026 12:58:56 PM org.hibernate.resource.transaction.backend.jdbc.internal.DdlTransactionIsolatorNonJtaImpl getIsolatedConnection\r\nINFO: HHH10001501: Connection obtained from JdbcConnectionAccess [org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$ConnectionProviderJdbcConnectionAccess@47c7a9e5] for (non-JTA) DDL execution was not in auto-commit mode; the Connection 'local transaction' will be committed and the Connection will be set into auto-commit mode.\r\nOct 16, 2026 12:58:57 PM org.hibernate.engine.jdbc.spi.SqlExceptionHelper logExceptions\r\nWARN: SQL Error: 23505, SQLState: 23505\r\nOct 16, 2026 12:58:57 PM org.hibernate.engine.jdbc.spi.SqlExceptionHelper logExceptions\r\nERROR: Unique index or primary key violation: \"PUBLIC.CONSTRAINT_INDEX_C ON PUBLIC.CONTACTS(EMAIL NULLS FIRST) VALUES ( /* 8 */ 'contact8@example.test' )\"; SQL statement:\nupdate contacts set email=?,version=? where id=? and version=? [23505-232]\r\nOct 16, 2026 12:58:57 PM org.hibernate.resource.transaction.backend.jdbc.internal.DdlTransactionIsolatorNonJtaImpl getIsolatedConnection\r\nINFO: HHH10001501: Connection obtained from JdbcConnectionAccess [org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$ConnectionProviderJdbcConnectionAccess@68f79b7c] for (non-JTA) DDL execution was not in auto-commit mode; the Connection 'local transaction' will be committed and the Connection will be set into auto-commit mode.\r\n",
+    "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\orm-behavioral-patterns-validation\\logs\\orm-contracts.txt"
+  },
+  {
+    "id": "case-A",
+    "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+    "args": [
+      "-cp",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\orm-behavioral-patterns-validation\\classes;C:\\Users\\robso\\.m2\\repository\\org\\hibernate\\orm\\hibernate-core\\6.6.33.Final\\hibernate-core-6.6.33.Final.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\persistence\\jakarta.persistence-api\\3.1.0\\jakarta.persistence-api-3.1.0.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\transaction\\jakarta.transaction-api\\2.0.1\\jakarta.transaction-api-2.0.1.jar;C:\\Users\\robso\\.m2\\repository\\org\\jboss\\logging\\jboss-logging\\3.5.0.Final\\jboss-logging-3.5.0.Final.jar;C:\\Users\\robso\\.m2\\repository\\org\\hibernate\\common\\hibernate-commons-annotations\\7.0.3.Final\\hibernate-commons-annotations-7.0.3.Final.jar;C:\\Users\\robso\\.m2\\repository\\io\\smallrye\\jandex\\3.2.0\\jandex-3.2.0.jar;C:\\Users\\robso\\.m2\\repository\\com\\fasterxml\\classmate\\1.5.1\\classmate-1.5.1.jar;C:\\Users\\robso\\.m2\\repository\\net\\bytebuddy\\byte-buddy\\1.15.11\\byte-buddy-1.15.11.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\xml\\bind\\jakarta.xml.bind-api\\4.0.0\\jakarta.xml.bind-api-4.0.0.jar;C:\\Users\\robso\\.m2\\repository\\org\\glassfish\\jaxb\\jaxb-runtime\\4.0.2\\jaxb-runtime-4.0.2.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\inject\\jakarta.inject-api\\2.0.1\\jakarta.inject-api-2.0.1.jar;C:\\Users\\robso\\.m2\\repository\\org\\antlr\\antlr4-runtime\\4.13.0\\antlr4-runtime-4.13.0.jar;C:\\Users\\robso\\.m2\\repository\\org\\glassfish\\jaxb\\jaxb-core\\4.0.2\\jaxb-core-4.0.2.jar;C:\\Users\\robso\\.m2\\repository\\org\\glassfish\\jaxb\\txw2\\4.0.2\\txw2-4.0.2.jar;C:\\Users\\robso\\.m2\\repository\\com\\sun\\istack\\istack-commons-runtime\\4.1.1\\istack-commons-runtime-4.1.1.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\activation\\jakarta.activation-api\\2.1.1\\jakarta.activation-api-2.1.1.jar;C:\\Users\\robso\\.m2\\repository\\org\\eclipse\\angus\\angus-activation\\2.0.0\\angus-activation-2.0.0.jar;C:\\Users\\robso\\.m2\\repository\\com\\h2database\\h2\\2.3.232\\h2-2.3.232.jar",
+      "EmailUpdateJob",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\orm-behavioral-patterns-validation\\cases\\A.properties"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\orm-behavioral-patterns-validation",
+    "started": "2026-10-16T15:58:57.271Z",
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "RESULT email=updated@example.test phones=1\r\n",
+    "stderr": "Oct 16, 2026 12:58:57 PM org.hibernate.Version logVersion\r\nINFO: HHH000412: Hibernate ORM core version 6.6.33.Final\r\nOct 16, 2026 12:58:57 PM org.hibernate.cache.internal.RegionFactoryInitiator initiateService\r\nINFO: HHH000026: Second-level cache disabled\r\nOct 16, 2026 12:58:57 PM org.hibernate.engine.jdbc.connections.internal.DriverManagerConnectionProviderImpl configure\r\nWARN: HHH10001002: Using built-in connection pool (not intended for production use)\r\nOct 16, 2026 12:58:57 PM org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator logConnectionInfo\r\nINFO: HHH10001005: Database info:\n\tDatabase JDBC URL [jdbc:h2:mem:orm_a81ad9e8-3956-4722-982b-dfbc7c9841a0]\n\tDatabase driver: org.h2.Driver\n\tDatabase version: 2.3.232\n\tAutocommit mode: false\n\tIsolation level: undefined/unknown\n\tMinimum pool size: 1\n\tMaximum pool size: 20\r\nOct 16, 2026 12:58:58 PM org.hibernate.engine.transaction.jta.platform.internal.JtaPlatformInitiator initiateService\r\nINFO: HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)\r\nOct 16, 2026 12:58:58 PM org.hibernate.resource.transaction.backend.jdbc.internal.DdlTransactionIsolatorNonJtaImpl getIsolatedConnection\r\nINFO: HHH10001501: Connection obtained from JdbcConnectionAccess [org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$ConnectionProviderJdbcConnectionAccess@781711b7] for (non-JTA) DDL execution was not in auto-commit mode; the Connection 'local transaction' will be committed and the Connection will be set into auto-commit mode.\r\nOct 16, 2026 12:58:58 PM org.hibernate.resource.transaction.backend.jdbc.internal.DdlTransactionIsolatorNonJtaImpl getIsolatedConnection\r\nINFO: HHH10001501: Connection obtained from JdbcConnectionAccess [org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$ConnectionProviderJdbcConnectionAccess@64da6cbd] for (non-JTA) DDL execution was not in auto-commit mode; the Connection 'local transaction' will be committed and the Connection will be set into auto-commit mode.\r\nOct 16, 2026 12:58:58 PM org.hibernate.resource.transaction.backend.jdbc.internal.DdlTransactionIsolatorNonJtaImpl getIsolatedConnection\r\nINFO: HHH10001501: Connection obtained from JdbcConnectionAccess [org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$ConnectionProviderJdbcConnectionAccess@6f112f70] for (non-JTA) DDL execution was not in auto-commit mode; the Connection 'local transaction' will be committed and the Connection will be set into auto-commit mode.\r\n",
+    "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\orm-behavioral-patterns-validation\\logs\\case-A.txt"
+  },
+  {
+    "id": "case-B",
+    "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+    "args": [
+      "-cp",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\orm-behavioral-patterns-validation\\classes;C:\\Users\\robso\\.m2\\repository\\org\\hibernate\\orm\\hibernate-core\\6.6.33.Final\\hibernate-core-6.6.33.Final.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\persistence\\jakarta.persistence-api\\3.1.0\\jakarta.persistence-api-3.1.0.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\transaction\\jakarta.transaction-api\\2.0.1\\jakarta.transaction-api-2.0.1.jar;C:\\Users\\robso\\.m2\\repository\\org\\jboss\\logging\\jboss-logging\\3.5.0.Final\\jboss-logging-3.5.0.Final.jar;C:\\Users\\robso\\.m2\\repository\\org\\hibernate\\common\\hibernate-commons-annotations\\7.0.3.Final\\hibernate-commons-annotations-7.0.3.Final.jar;C:\\Users\\robso\\.m2\\repository\\io\\smallrye\\jandex\\3.2.0\\jandex-3.2.0.jar;C:\\Users\\robso\\.m2\\repository\\com\\fasterxml\\classmate\\1.5.1\\classmate-1.5.1.jar;C:\\Users\\robso\\.m2\\repository\\net\\bytebuddy\\byte-buddy\\1.15.11\\byte-buddy-1.15.11.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\xml\\bind\\jakarta.xml.bind-api\\4.0.0\\jakarta.xml.bind-api-4.0.0.jar;C:\\Users\\robso\\.m2\\repository\\org\\glassfish\\jaxb\\jaxb-runtime\\4.0.2\\jaxb-runtime-4.0.2.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\inject\\jakarta.inject-api\\2.0.1\\jakarta.inject-api-2.0.1.jar;C:\\Users\\robso\\.m2\\repository\\org\\antlr\\antlr4-runtime\\4.13.0\\antlr4-runtime-4.13.0.jar;C:\\Users\\robso\\.m2\\repository\\org\\glassfish\\jaxb\\jaxb-core\\4.0.2\\jaxb-core-4.0.2.jar;C:\\Users\\robso\\.m2\\repository\\org\\glassfish\\jaxb\\txw2\\4.0.2\\txw2-4.0.2.jar;C:\\Users\\robso\\.m2\\repository\\com\\sun\\istack\\istack-commons-runtime\\4.1.1\\istack-commons-runtime-4.1.1.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\activation\\jakarta.activation-api\\2.1.1\\jakarta.activation-api-2.1.1.jar;C:\\Users\\robso\\.m2\\repository\\org\\eclipse\\angus\\angus-activation\\2.0.0\\angus-activation-2.0.0.jar;C:\\Users\\robso\\.m2\\repository\\com\\h2database\\h2\\2.3.232\\h2-2.3.232.jar",
+      "EmailUpdateJob",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\orm-behavioral-patterns-validation\\cases\\B.properties"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\orm-behavioral-patterns-validation",
+    "started": "2026-10-16T15:58:58.549Z",
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "RESULT email=updated@example.test phones=0\r\n",
+    "stderr": "Oct 16, 2026 12:58:58 PM org.hibernate.Version logVersion\r\nINFO: HHH000412: Hibernate ORM core version 6.6.33.Final\r\nOct 16, 2026 12:58:58 PM org.hibernate.cache.internal.RegionFactoryInitiator initiateService\r\nINFO: HHH000026: Second-level cache disabled\r\nOct 16, 2026 12:58:58 PM org.hibernate.engine.jdbc.connections.internal.DriverManagerConnectionProviderImpl configure\r\nWARN: HHH10001002: Using built-in connection pool (not intended for production use)\r\nOct 16, 2026 12:58:58 PM org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator logConnectionInfo\r\nINFO: HHH10001005: Database info:\n\tDatabase JDBC URL [jdbc:h2:mem:orm_893a9c13-1d47-4616-9165-8860b20af133]\n\tDatabase driver: org.h2.Driver\n\tDatabase version: 2.3.232\n\tAutocommit mode: false\n\tIsolation level: undefined/unknown\n\tMinimum pool size: 1\n\tMaximum pool size: 20\r\nOct 16, 2026 12:58:59 PM org.hibernate.engine.transaction.jta.platform.internal.JtaPlatformInitiator initiateService\r\nINFO: HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)\r\nOct 16, 2026 12:58:59 PM org.hibernate.resource.transaction.backend.jdbc.internal.DdlTransactionIsolatorNonJtaImpl getIsolatedConnection\r\nINFO: HHH10001501: Connection obtained from JdbcConnectionAccess [org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$ConnectionProviderJdbcConnectionAccess@781711b7] for (non-JTA) DDL execution was not in auto-commit mode; the Connection 'local transaction' will be committed and the Connection will be set into auto-commit mode.\r\nOct 16, 2026 12:58:59 PM org.hibernate.resource.transaction.backend.jdbc.internal.DdlTransactionIsolatorNonJtaImpl getIsolatedConnection\r\nINFO: HHH10001501: Connection obtained from JdbcConnectionAccess [org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$ConnectionProviderJdbcConnectionAccess@64da6cbd] for (non-JTA) DDL execution was not in auto-commit mode; the Connection 'local transaction' will be committed and the Connection will be set into auto-commit mode.\r\nOct 16, 2026 12:58:59 PM org.hibernate.resource.transaction.backend.jdbc.internal.DdlTransactionIsolatorNonJtaImpl getIsolatedConnection\r\nINFO: HHH10001501: Connection obtained from JdbcConnectionAccess [org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$ConnectionProviderJdbcConnectionAccess@68d8ae27] for (non-JTA) DDL execution was not in auto-commit mode; the Connection 'local transaction' will be committed and the Connection will be set into auto-commit mode.\r\n",
+    "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\orm-behavioral-patterns-validation\\logs\\case-B.txt"
+  },
+  {
+    "id": "owned-package-structure",
+    "command": "in-process existing parseManifest/parseSkillDocument; local links and manifest resource existence",
+    "cwd": "C:/git/agent-skills",
+    "status": "PASS",
+    "issues": [],
+    "name": "orm-behavioral-patterns",
+    "version": "1.3.5",
+    "localTargets": [
+      {
+        "file": "SKILL.md",
+        "target": "references/unit-of-work-and-identity-map.md"
+      },
+      {
+        "file": "SKILL.md",
+        "target": "references/lazy-load.md"
+      }
+    ],
+    "manifestFiles": [
+      "SKILL.md",
+      "skill.yaml",
+      "references/"
+    ]
+  },
+  {
+    "id": "git-diff-check",
+    "command": "git",
+    "args": [
+      "diff",
+      "--check",
+      "--",
+      "skills/orm-behavioral-patterns"
+    ],
+    "cwd": "C:/git/agent-skills",
+    "started": "2026-10-16T15:59:22.977Z",
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "",
+    "stderr": "",
+    "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\orm-behavioral-patterns-validation\\logs\\git-diff-check.txt"
+  },
+  {
+    "id": "prettier-owned",
+    "command": "C:\\Program Files\\nodejs\\node.exe",
+    "args": [
+      "C:\\git\\agent-skills\\node_modules\\prettier\\bin\\prettier.cjs",
+      "--check",
+      "skills/orm-behavioral-patterns/skill.yaml",
+      "skills/orm-behavioral-patterns/references/unit-of-work-and-identity-map.md"
+    ],
+    "cwd": "C:/git/agent-skills",
+    "started": "2026-10-16T15:59:23.008Z",
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "Checking formatting...\nAll matched files use Prettier code style!\n",
+    "stderr": "",
+    "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\orm-behavioral-patterns-validation\\logs\\prettier-owned.txt"
+  },
+  {
+    "id": "compile-pair-final",
+    "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+    "args": [
+      "--release",
+      "17",
+      "-cp",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\orm-behavioral-patterns-validation\\classes;C:\\Users\\robso\\.m2\\repository\\org\\hibernate\\orm\\hibernate-core\\6.6.33.Final\\hibernate-core-6.6.33.Final.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\persistence\\jakarta.persistence-api\\3.1.0\\jakarta.persistence-api-3.1.0.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\transaction\\jakarta.transaction-api\\2.0.1\\jakarta.transaction-api-2.0.1.jar;C:\\Users\\robso\\.m2\\repository\\org\\jboss\\logging\\jboss-logging\\3.5.0.Final\\jboss-logging-3.5.0.Final.jar;C:\\Users\\robso\\.m2\\repository\\org\\hibernate\\common\\hibernate-commons-annotations\\7.0.3.Final\\hibernate-commons-annotations-7.0.3.Final.jar;C:\\Users\\robso\\.m2\\repository\\io\\smallrye\\jandex\\3.2.0\\jandex-3.2.0.jar;C:\\Users\\robso\\.m2\\repository\\com\\fasterxml\\classmate\\1.5.1\\classmate-1.5.1.jar;C:\\Users\\robso\\.m2\\repository\\net\\bytebuddy\\byte-buddy\\1.15.11\\byte-buddy-1.15.11.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\xml\\bind\\jakarta.xml.bind-api\\4.0.0\\jakarta.xml.bind-api-4.0.0.jar;C:\\Users\\robso\\.m2\\repository\\org\\glassfish\\jaxb\\jaxb-runtime\\4.0.2\\jaxb-runtime-4.0.2.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\inject\\jakarta.inject-api\\2.0.1\\jakarta.inject-api-2.0.1.jar;C:\\Users\\robso\\.m2\\repository\\org\\antlr\\antlr4-runtime\\4.13.0\\antlr4-runtime-4.13.0.jar;C:\\Users\\robso\\.m2\\repository\\org\\glassfish\\jaxb\\jaxb-core\\4.0.2\\jaxb-core-4.0.2.jar;C:\\Users\\robso\\.m2\\repository\\org\\glassfish\\jaxb\\txw2\\4.0.2\\txw2-4.0.2.jar;C:\\Users\\robso\\.m2\\repository\\com\\sun\\istack\\istack-commons-runtime\\4.1.1\\istack-commons-runtime-4.1.1.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\activation\\jakarta.activation-api\\2.1.1\\jakarta.activation-api-2.1.1.jar;C:\\Users\\robso\\.m2\\repository\\org\\eclipse\\angus\\angus-activation\\2.0.0\\angus-activation-2.0.0.jar;C:\\Users\\robso\\.m2\\repository\\com\\h2database\\h2\\2.3.232\\h2-2.3.232.jar",
+      "-d",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\orm-behavioral-patterns-validation\\classes",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\orm-behavioral-patterns-validation\\fixtures\\EmailUpdateJob.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\orm-behavioral-patterns-validation\\fixtures\\InputVersionCheck.java"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\orm-behavioral-patterns-validation",
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": "",
+    "signal": null,
+    "error": null,
+    "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\orm-behavioral-patterns-validation\\logs\\compile-pair-final.txt"
+  },
+  {
+    "id": "case-A-final",
+    "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+    "args": [
+      "-cp",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\orm-behavioral-patterns-validation\\classes;C:\\Users\\robso\\.m2\\repository\\org\\hibernate\\orm\\hibernate-core\\6.6.33.Final\\hibernate-core-6.6.33.Final.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\persistence\\jakarta.persistence-api\\3.1.0\\jakarta.persistence-api-3.1.0.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\transaction\\jakarta.transaction-api\\2.0.1\\jakarta.transaction-api-2.0.1.jar;C:\\Users\\robso\\.m2\\repository\\org\\jboss\\logging\\jboss-logging\\3.5.0.Final\\jboss-logging-3.5.0.Final.jar;C:\\Users\\robso\\.m2\\repository\\org\\hibernate\\common\\hibernate-commons-annotations\\7.0.3.Final\\hibernate-commons-annotations-7.0.3.Final.jar;C:\\Users\\robso\\.m2\\repository\\io\\smallrye\\jandex\\3.2.0\\jandex-3.2.0.jar;C:\\Users\\robso\\.m2\\repository\\com\\fasterxml\\classmate\\1.5.1\\classmate-1.5.1.jar;C:\\Users\\robso\\.m2\\repository\\net\\bytebuddy\\byte-buddy\\1.15.11\\byte-buddy-1.15.11.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\xml\\bind\\jakarta.xml.bind-api\\4.0.0\\jakarta.xml.bind-api-4.0.0.jar;C:\\Users\\robso\\.m2\\repository\\org\\glassfish\\jaxb\\jaxb-runtime\\4.0.2\\jaxb-runtime-4.0.2.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\inject\\jakarta.inject-api\\2.0.1\\jakarta.inject-api-2.0.1.jar;C:\\Users\\robso\\.m2\\repository\\org\\antlr\\antlr4-runtime\\4.13.0\\antlr4-runtime-4.13.0.jar;C:\\Users\\robso\\.m2\\repository\\org\\glassfish\\jaxb\\jaxb-core\\4.0.2\\jaxb-core-4.0.2.jar;C:\\Users\\robso\\.m2\\repository\\org\\glassfish\\jaxb\\txw2\\4.0.2\\txw2-4.0.2.jar;C:\\Users\\robso\\.m2\\repository\\com\\sun\\istack\\istack-commons-runtime\\4.1.1\\istack-commons-runtime-4.1.1.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\activation\\jakarta.activation-api\\2.1.1\\jakarta.activation-api-2.1.1.jar;C:\\Users\\robso\\.m2\\repository\\org\\eclipse\\angus\\angus-activation\\2.0.0\\angus-activation-2.0.0.jar;C:\\Users\\robso\\.m2\\repository\\com\\h2database\\h2\\2.3.232\\h2-2.3.232.jar",
+      "EmailUpdateJob",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\orm-behavioral-patterns-validation\\cases\\A.properties"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\orm-behavioral-patterns-validation",
+    "exitCode": 0,
+    "stdout": "RESULT email=updated@example.test phones=1\r\n",
+    "stderr": "Oct 16, 2026 1:01:38 PM org.hibernate.Version logVersion\r\nINFO: HHH000412: Hibernate ORM core version 6.6.33.Final\r\nOct 16, 2026 1:01:38 PM org.hibernate.cache.internal.RegionFactoryInitiator initiateService\r\nINFO: HHH000026: Second-level cache disabled\r\nOct 16, 2026 1:01:38 PM org.hibernate.engine.jdbc.connections.internal.DriverManagerConnectionProviderImpl configure\r\nWARN: HHH10001002: Using built-in connection pool (not intended for production use)\r\nOct 16, 2026 1:01:38 PM org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator logConnectionInfo\r\nINFO: HHH10001005: Database info:\n\tDatabase JDBC URL [jdbc:h2:mem:orm_9d1a57e5-0711-4273-a544-ecd3aa5c4481]\n\tDatabase driver: org.h2.Driver\n\tDatabase version: 2.3.232\n\tAutocommit mode: false\n\tIsolation level: undefined/unknown\n\tMinimum pool size: 1\n\tMaximum pool size: 20\r\nOct 16, 2026 1:01:38 PM org.hibernate.engine.transaction.jta.platform.internal.JtaPlatformInitiator initiateService\r\nINFO: HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)\r\nOct 16, 2026 1:01:38 PM org.hibernate.resource.transaction.backend.jdbc.internal.DdlTransactionIsolatorNonJtaImpl getIsolatedConnection\r\nINFO: HHH10001501: Connection obtained from JdbcConnectionAccess [org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$ConnectionProviderJdbcConnectionAccess@642ee49c] for (non-JTA) DDL execution was not in auto-commit mode; the Connection 'local transaction' will be committed and the Connection will be set into auto-commit mode.\r\nOct 16, 2026 1:01:38 PM org.hibernate.resource.transaction.backend.jdbc.internal.DdlTransactionIsolatorNonJtaImpl getIsolatedConnection\r\nINFO: HHH10001501: Connection obtained from JdbcConnectionAccess [org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$ConnectionProviderJdbcConnectionAccess@47c7a9e5] for (non-JTA) DDL execution was not in auto-commit mode; the Connection 'local transaction' will be committed and the Connection will be set into auto-commit mode.\r\nOct 16, 2026 1:01:39 PM org.hibernate.resource.transaction.backend.jdbc.internal.DdlTransactionIsolatorNonJtaImpl getIsolatedConnection\r\nINFO: HHH10001501: Connection obtained from JdbcConnectionAccess [org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$ConnectionProviderJdbcConnectionAccess@f3876ef] for (non-JTA) DDL execution was not in auto-commit mode; the Connection 'local transaction' will be committed and the Connection will be set into auto-commit mode.\r\n",
+    "signal": null,
+    "error": null,
+    "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\orm-behavioral-patterns-validation\\logs\\case-A-final.txt"
+  },
+  {
+    "id": "case-B-final",
+    "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+    "args": [
+      "-cp",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\orm-behavioral-patterns-validation\\classes;C:\\Users\\robso\\.m2\\repository\\org\\hibernate\\orm\\hibernate-core\\6.6.33.Final\\hibernate-core-6.6.33.Final.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\persistence\\jakarta.persistence-api\\3.1.0\\jakarta.persistence-api-3.1.0.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\transaction\\jakarta.transaction-api\\2.0.1\\jakarta.transaction-api-2.0.1.jar;C:\\Users\\robso\\.m2\\repository\\org\\jboss\\logging\\jboss-logging\\3.5.0.Final\\jboss-logging-3.5.0.Final.jar;C:\\Users\\robso\\.m2\\repository\\org\\hibernate\\common\\hibernate-commons-annotations\\7.0.3.Final\\hibernate-commons-annotations-7.0.3.Final.jar;C:\\Users\\robso\\.m2\\repository\\io\\smallrye\\jandex\\3.2.0\\jandex-3.2.0.jar;C:\\Users\\robso\\.m2\\repository\\com\\fasterxml\\classmate\\1.5.1\\classmate-1.5.1.jar;C:\\Users\\robso\\.m2\\repository\\net\\bytebuddy\\byte-buddy\\1.15.11\\byte-buddy-1.15.11.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\xml\\bind\\jakarta.xml.bind-api\\4.0.0\\jakarta.xml.bind-api-4.0.0.jar;C:\\Users\\robso\\.m2\\repository\\org\\glassfish\\jaxb\\jaxb-runtime\\4.0.2\\jaxb-runtime-4.0.2.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\inject\\jakarta.inject-api\\2.0.1\\jakarta.inject-api-2.0.1.jar;C:\\Users\\robso\\.m2\\repository\\org\\antlr\\antlr4-runtime\\4.13.0\\antlr4-runtime-4.13.0.jar;C:\\Users\\robso\\.m2\\repository\\org\\glassfish\\jaxb\\jaxb-core\\4.0.2\\jaxb-core-4.0.2.jar;C:\\Users\\robso\\.m2\\repository\\org\\glassfish\\jaxb\\txw2\\4.0.2\\txw2-4.0.2.jar;C:\\Users\\robso\\.m2\\repository\\com\\sun\\istack\\istack-commons-runtime\\4.1.1\\istack-commons-runtime-4.1.1.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\activation\\jakarta.activation-api\\2.1.1\\jakarta.activation-api-2.1.1.jar;C:\\Users\\robso\\.m2\\repository\\org\\eclipse\\angus\\angus-activation\\2.0.0\\angus-activation-2.0.0.jar;C:\\Users\\robso\\.m2\\repository\\com\\h2database\\h2\\2.3.232\\h2-2.3.232.jar",
+      "EmailUpdateJob",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\orm-behavioral-patterns-validation\\cases\\B.properties"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\orm-behavioral-patterns-validation",
+    "exitCode": 0,
+    "stdout": "RESULT email=updated@example.test phones=0\r\n",
+    "stderr": "Oct 16, 2026 1:01:39 PM org.hibernate.Version logVersion\r\nINFO: HHH000412: Hibernate ORM core version 6.6.33.Final\r\nOct 16, 2026 1:01:39 PM org.hibernate.cache.internal.RegionFactoryInitiator initiateService\r\nINFO: HHH000026: Second-level cache disabled\r\nOct 16, 2026 1:01:39 PM org.hibernate.engine.jdbc.connections.internal.DriverManagerConnectionProviderImpl configure\r\nWARN: HHH10001002: Using built-in connection pool (not intended for production use)\r\nOct 16, 2026 1:01:39 PM org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator logConnectionInfo\r\nINFO: HHH10001005: Database info:\n\tDatabase JDBC URL [jdbc:h2:mem:orm_c93a38ca-0bef-4090-9efe-55c58bd7cc22]\n\tDatabase driver: org.h2.Driver\n\tDatabase version: 2.3.232\n\tAutocommit mode: false\n\tIsolation level: undefined/unknown\n\tMinimum pool size: 1\n\tMaximum pool size: 20\r\nOct 16, 2026 1:01:40 PM org.hibernate.engine.transaction.jta.platform.internal.JtaPlatformInitiator initiateService\r\nINFO: HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)\r\nOct 16, 2026 1:01:40 PM org.hibernate.resource.transaction.backend.jdbc.internal.DdlTransactionIsolatorNonJtaImpl getIsolatedConnection\r\nINFO: HHH10001501: Connection obtained from JdbcConnectionAccess [org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$ConnectionProviderJdbcConnectionAccess@642ee49c] for (non-JTA) DDL execution was not in auto-commit mode; the Connection 'local transaction' will be committed and the Connection will be set into auto-commit mode.\r\nOct 16, 2026 1:01:40 PM org.hibernate.resource.transaction.backend.jdbc.internal.DdlTransactionIsolatorNonJtaImpl getIsolatedConnection\r\nINFO: HHH10001501: Connection obtained from JdbcConnectionAccess [org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$ConnectionProviderJdbcConnectionAccess@47c7a9e5] for (non-JTA) DDL execution was not in auto-commit mode; the Connection 'local transaction' will be committed and the Connection will be set into auto-commit mode.\r\nOct 16, 2026 1:01:40 PM org.hibernate.resource.transaction.backend.jdbc.internal.DdlTransactionIsolatorNonJtaImpl getIsolatedConnection\r\nINFO: HHH10001501: Connection obtained from JdbcConnectionAccess [org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$ConnectionProviderJdbcConnectionAccess@6be50b35] for (non-JTA) DDL execution was not in auto-commit mode; the Connection 'local transaction' will be committed and the Connection will be set into auto-commit mode.\r\n",
+    "signal": null,
+    "error": null,
+    "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\orm-behavioral-patterns-validation\\logs\\case-B-final.txt"
+  },
+  {
+    "id": "input-version-final",
+    "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+    "args": [
+      "-cp",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\orm-behavioral-patterns-validation\\classes;C:\\Users\\robso\\.m2\\repository\\org\\hibernate\\orm\\hibernate-core\\6.6.33.Final\\hibernate-core-6.6.33.Final.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\persistence\\jakarta.persistence-api\\3.1.0\\jakarta.persistence-api-3.1.0.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\transaction\\jakarta.transaction-api\\2.0.1\\jakarta.transaction-api-2.0.1.jar;C:\\Users\\robso\\.m2\\repository\\org\\jboss\\logging\\jboss-logging\\3.5.0.Final\\jboss-logging-3.5.0.Final.jar;C:\\Users\\robso\\.m2\\repository\\org\\hibernate\\common\\hibernate-commons-annotations\\7.0.3.Final\\hibernate-commons-annotations-7.0.3.Final.jar;C:\\Users\\robso\\.m2\\repository\\io\\smallrye\\jandex\\3.2.0\\jandex-3.2.0.jar;C:\\Users\\robso\\.m2\\repository\\com\\fasterxml\\classmate\\1.5.1\\classmate-1.5.1.jar;C:\\Users\\robso\\.m2\\repository\\net\\bytebuddy\\byte-buddy\\1.15.11\\byte-buddy-1.15.11.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\xml\\bind\\jakarta.xml.bind-api\\4.0.0\\jakarta.xml.bind-api-4.0.0.jar;C:\\Users\\robso\\.m2\\repository\\org\\glassfish\\jaxb\\jaxb-runtime\\4.0.2\\jaxb-runtime-4.0.2.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\inject\\jakarta.inject-api\\2.0.1\\jakarta.inject-api-2.0.1.jar;C:\\Users\\robso\\.m2\\repository\\org\\antlr\\antlr4-runtime\\4.13.0\\antlr4-runtime-4.13.0.jar;C:\\Users\\robso\\.m2\\repository\\org\\glassfish\\jaxb\\jaxb-core\\4.0.2\\jaxb-core-4.0.2.jar;C:\\Users\\robso\\.m2\\repository\\org\\glassfish\\jaxb\\txw2\\4.0.2\\txw2-4.0.2.jar;C:\\Users\\robso\\.m2\\repository\\com\\sun\\istack\\istack-commons-runtime\\4.1.1\\istack-commons-runtime-4.1.1.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\activation\\jakarta.activation-api\\2.1.1\\jakarta.activation-api-2.1.1.jar;C:\\Users\\robso\\.m2\\repository\\org\\eclipse\\angus\\angus-activation\\2.0.0\\angus-activation-2.0.0.jar;C:\\Users\\robso\\.m2\\repository\\com\\h2database\\h2\\2.3.232\\h2-2.3.232.jar",
+      "InputVersionCheck"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\orm-behavioral-patterns-validation",
+    "exitCode": 0,
+    "stdout": "PASS both input adapters reject stale versions and preserve stored state\r\n",
+    "stderr": "Oct 16, 2026 1:01:40 PM org.hibernate.Version logVersion\r\nINFO: HHH000412: Hibernate ORM core version 6.6.33.Final\r\nOct 16, 2026 1:01:40 PM org.hibernate.cache.internal.RegionFactoryInitiator initiateService\r\nINFO: HHH000026: Second-level cache disabled\r\nOct 16, 2026 1:01:40 PM org.hibernate.engine.jdbc.connections.internal.DriverManagerConnectionProviderImpl configure\r\nWARN: HHH10001002: Using built-in connection pool (not intended for production use)\r\nOct 16, 2026 1:01:40 PM org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator logConnectionInfo\r\nINFO: HHH10001005: Database info:\n\tDatabase JDBC URL [jdbc:h2:mem:orm_8239ff92-633d-4468-bba3-8947ae9fb01b]\n\tDatabase driver: org.h2.Driver\n\tDatabase version: 2.3.232\n\tAutocommit mode: false\n\tIsolation level: undefined/unknown\n\tMinimum pool size: 1\n\tMaximum pool size: 20\r\nOct 16, 2026 1:01:41 PM org.hibernate.engine.transaction.jta.platform.internal.JtaPlatformInitiator initiateService\r\nINFO: HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)\r\nOct 16, 2026 1:01:41 PM org.hibernate.resource.transaction.backend.jdbc.internal.DdlTransactionIsolatorNonJtaImpl getIsolatedConnection\r\nINFO: HHH10001501: Connection obtained from JdbcConnectionAccess [org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$ConnectionProviderJdbcConnectionAccess@642ee49c] for (non-JTA) DDL execution was not in auto-commit mode; the Connection 'local transaction' will be committed and the Connection will be set into auto-commit mode.\r\nOct 16, 2026 1:01:41 PM org.hibernate.resource.transaction.backend.jdbc.internal.DdlTransactionIsolatorNonJtaImpl getIsolatedConnection\r\nINFO: HHH10001501: Connection obtained from JdbcConnectionAccess [org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$ConnectionProviderJdbcConnectionAccess@47c7a9e5] for (non-JTA) DDL execution was not in auto-commit mode; the Connection 'local transaction' will be committed and the Connection will be set into auto-commit mode.\r\nOct 16, 2026 1:01:41 PM org.hibernate.resource.transaction.backend.jdbc.internal.DdlTransactionIsolatorNonJtaImpl getIsolatedConnection\r\nINFO: HHH10001501: Connection obtained from JdbcConnectionAccess [org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$ConnectionProviderJdbcConnectionAccess@4e2824b1] for (non-JTA) DDL execution was not in auto-commit mode; the Connection 'local transaction' will be committed and the Connection will be set into auto-commit mode.\r\nOct 16, 2026 1:01:41 PM org.hibernate.cache.internal.RegionFactoryInitiator initiateService\r\nINFO: HHH000026: Second-level cache disabled\r\nOct 16, 2026 1:01:41 PM org.hibernate.engine.jdbc.connections.internal.DriverManagerConnectionProviderImpl configure\r\nWARN: HHH10001002: Using built-in connection pool (not intended for production use)\r\nOct 16, 2026 1:01:41 PM org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator logConnectionInfo\r\nINFO: HHH10001005: Database info:\n\tDatabase JDBC URL [jdbc:h2:mem:orm_ad7788fc-bd40-47f4-977b-a7ebb33f251a]\n\tDatabase driver: org.h2.Driver\n\tDatabase version: 2.3.232\n\tAutocommit mode: false\n\tIsolation level: undefined/unknown\n\tMinimum pool size: 1\n\tMaximum pool size: 20\r\nOct 16, 2026 1:01:41 PM org.hibernate.engine.transaction.jta.platform.internal.JtaPlatformInitiator initiateService\r\nINFO: HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)\r\nOct 16, 2026 1:01:41 PM org.hibernate.resource.transaction.backend.jdbc.internal.DdlTransactionIsolatorNonJtaImpl getIsolatedConnection\r\nINFO: HHH10001501: Connection obtained from JdbcConnectionAccess [org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$ConnectionProviderJdbcConnectionAccess@f3876ef] for (non-JTA) DDL execution was not in auto-commit mode; the Connection 'local transaction' will be committed and the Connection will be set into auto-commit mode.\r\nOct 16, 2026 1:01:41 PM org.hibernate.resource.transaction.backend.jdbc.internal.DdlTransactionIsolatorNonJtaImpl getIsolatedConnection\r\nINFO: HHH10001501: Connection obtained from JdbcConnectionAccess [org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$ConnectionProviderJdbcConnectionAccess@6b751cb1] for (non-JTA) DDL execution was not in auto-commit mode; the Connection 'local transaction' will be committed and the Connection will be set into auto-commit mode.\r\nOct 16, 2026 1:01:41 PM org.hibernate.resource.transaction.backend.jdbc.internal.DdlTransactionIsolatorNonJtaImpl getIsolatedConnection\r\nINFO: HHH10001501: Connection obtained from JdbcConnectionAccess [org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$ConnectionProviderJdbcConnectionAccess@6ebbc06] for (non-JTA) DDL execution was not in auto-commit mode; the Connection 'local transaction' will be committed and the Connection will be set into auto-commit mode.\r\n",
+    "signal": null,
+    "error": null,
+    "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\orm-behavioral-patterns-validation\\logs\\input-version-final.txt"
+  }
+]

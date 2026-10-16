@@ -1,0 +1,19 @@
+{
+  "disposition": "violated",
+  "basis": "The accepted contract permits producer buffer recycling immediately after construction and requires Message to retain its original two words. Message.java:4 stores the caller's int[] without copying; checksum() at line 5 rereads that same array. The supplied smoke changes 30 to 300 after recycling in one thread. Final-field initialization visibility does not freeze mutable array elements or prohibit later writes through the producer's alias.",
+  "requiredChange": "Keep the existing null/length validation and replace this.words=words with this.words=words.clone() inside the constructor. Keep the private final reference, no mutator, and no array exposure. Copying primitive elements before the allowed recycling starts removes shared mutable storage without changing producer ownership, Java version, dependencies, or checksum semantics.",
+  "missingEvidence": [],
+  "checked": [
+    "Read all six supplied project files and TASK.md completely; compared original and working-copy hashes.",
+    "Ran supplied node check.mjs against output/project with javac --release 25: exit 0, before-recycle=30, after-recycle=300.",
+    "Ran independent assertions against original Message: four invalid-input cases passed; snapshot assertion failed as expected with expected=30 actual=120, exit 1.",
+    "Ran the same assertions against an isolated clone() candidate: four invalid-input cases and six snapshot/reuse checks passed, exit 0.",
+    "Consulted Java SE25 JLS 17.4.5, 17.5, 17.5.1 and 10.7 for initialization visibility, data races, and independent primitive-array clone elements."
+  ],
+  "limits": [
+    "No production correction was applied; the candidate is solely an output/checks control.",
+    "No concurrent stress, publication test, or benchmark was executed. Single-thread counterexamples establish the violation; specification and ownership reasoning establish why copying is sufficient for the accepted lifecycle.",
+    "No atomic snapshot during concurrent mutation inside the constructor is asserted; the accepted producer lifecycle starts recycling after constructor return.",
+    "No repository-wide checks were run because the isolated task prohibits repository access."
+  ]
+}

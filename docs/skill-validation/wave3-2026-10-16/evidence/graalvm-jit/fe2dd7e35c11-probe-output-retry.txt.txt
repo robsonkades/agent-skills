@@ -1,0 +1,19 @@
+CompileCommand: compileonly CompilerStatisticsProbe.hot bool compileonly = true
+[Use -Djdk.graal.LogFile=<path> to redirect Graal log output to a file.]
+Using "Graal Community compiler with Truffle extensions" loaded from a Native Image shared library (gc=Serial GC)
+PASS: First recording contains periodic statistics
+PASS: Second recording contains periodic statistics
+PASS: Aggregate statistics do not identify a compiler
+PASS: Aggregate statistics do not identify a method
+PASS: No application steady-state field exists
+PASS: Compilation occurred in the process
+PASS: Compilation count and aggregate time are nondecreasing within the recording
+PASS: Compilation count and aggregate time are nondecreasing within the recording
+PASS: A new recording does not reset the process compilation count
+PASS: A new recording does not reset aggregate compilation time
+PASS: The exercised hot method has a successful level-4 JVMCI compilation
+runtime=25.0.2+10-jvmci-b01
+firstSamples=23,laterSamples=5
+relevantSuccessfulJvmciLevel4=2
+sink=-4601915947746508629
+PASS: 11 assertions; technical event-semantics probe, not a benchmark or agent evaluation

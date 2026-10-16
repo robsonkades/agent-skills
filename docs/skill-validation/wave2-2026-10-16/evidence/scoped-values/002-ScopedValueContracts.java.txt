@@ -1,0 +1,72 @@
+import java.io.IOException;
+import java.util.NoSuchElementException;
+import java.util.Objects;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+
+// Java 25 final ScopedValue contracts: compile and run without preview.
+public final class ScopedValueContracts {
+    private static final ScopedValue<String> KEY = ScopedValue.newInstance();
+
+    static <R, X extends Throwable> R with(String value, ScopedValue.CallableOp<R, X> op)
+            throws X {
+        return ScopedValue.where(KEY, Objects.requireNonNull(value)).call(op);
+    }
+
+    static void check(boolean condition, String message) {
+        if (!condition) throw new AssertionError(message);
+    }
+
+    static void throwsType(Class<? extends Throwable> type, Runnable op) {
+        try { op.run(); }
+        catch (Throwable failure) {
+            if (type.isInstance(failure)) return;
+            throw new AssertionError("wrong failure", failure);
+        }
+        throw new AssertionError("expected " + type.getSimpleName());
+    }
+
+    public static void main(String[] args) throws Exception {
+        check(!KEY.isBound(), "new key unbound");
+        throwsType(NoSuchElementException.class, () -> KEY.get());
+        throwsType(NullPointerException.class, () -> KEY.orElse(null));
+        ScopedValue.where(KEY, null).run(() -> {
+            check(KEY.isBound() && KEY.get() == null, "bound null differs from absence");
+            throwsType(NullPointerException.class, () -> KEY.orElse(null));
+        });
+        IOException sentinel = new IOException("fixture");
+        with("outer", () -> {
+            try {
+                with("inner", () -> { throw sentinel; });
+                throw new AssertionError("checked exception missing");
+            } catch (IOException actual) {
+                check(actual == sentinel, "exception identity changed");
+                check("outer".equals(KEY.get()), "outer binding not restored");
+            }
+            FutureTask<Boolean> plainChild = new FutureTask<>(() -> KEY.isBound());
+            Thread child = Thread.ofVirtual().start(plainChild);
+            try {
+                check(!plainChild.get(5, TimeUnit.SECONDS), "plain child inherited scoped value");
+            } finally {
+                child.interrupt();
+                child.join(5000);
+                check(!child.isAlive(), "child still alive");
+            }
+            return null;
+        });
+        check(!KEY.isBound(), "binding survived completion");
+
+        AtomicReference<String> observed = new AtomicReference<>();
+        Runnable capturedWhileAbsent = () -> observed.set(KEY.orElse("absent"));
+        with("other-tenant", () -> {
+            capturedWhileAbsent.run();
+            return null;
+        });
+        check("other-tenant".equals(observed.get()), "hostile inline control not exercised");
+        System.out.println("PASS: final API, null/absence, checked exception, restoration,"
+                + " plain-thread noninheritance, absent-capture hostile control; runtime="
+                + Runtime.version());
+    }
+}
+

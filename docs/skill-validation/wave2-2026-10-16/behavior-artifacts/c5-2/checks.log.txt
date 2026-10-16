@@ -1,0 +1,6 @@
+Cohort reconciles: 10000 = 9800 good + 0 bad + 200 unknown
+Required good operations: 9900
+Full-cohort good fraction bounds: 0.98 to 1
+Unknown operations that must actually be good for the SLO to hold: at least 100 of 200
+Classification: UNKNOWN; neither pass nor failure is established.
+PASS: all 8 recorded input hashes unchanged.

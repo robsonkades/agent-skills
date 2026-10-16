@@ -1,0 +1,89 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+
+const root = path.dirname(fileURLToPath(import.meta.url));
+const skill = 'C:/git/agent-skills/skills/gc-log-analysis';
+const awk = 'C:/Program Files/Git/usr/bin/awk.exe';
+const sort = 'C:/Program Files/Git/usr/bin/sort.exe';
+const recipes = fs.readFileSync(skill + '/references/log-analysis-recipes.md', 'utf8');
+const rates = fs.readFileSync(skill + '/references/rates-from-the-log.md', 'utf8');
+const quote = String.fromCharCode(39);
+const programs = [...recipes.matchAll(new RegExp('awk\\s+' + quote + '([^]*?)' + quote, 'g'))].map(m => m[1]);
+const ratePrograms = [...rates.matchAll(new RegExp('awk\\s+' + quote + '([^]*?)' + quote, 'g'))].map(m => m[1]);
+assert.equal(programs.length, 6);
+assert.equal(ratePrograms.length, 1);
+const names = ['completions', 'durations', 'quantiles', 'types', 'causes', 'headroom'];
+const programMap = Object.fromEntries(names.map((name, i) => [name, programs[i]]));
+programMap.rates = ratePrograms[0];
+for (const [name, program] of Object.entries(programMap)) fs.writeFileSync(path.join(root, name + '.awk'), program);
+
+const checks = [];
+function run(name, input, expectedStatus = 0, variables = []) {
+  const args = ['--posix', ...variables, '-f', name + '.awk'];
+  const result = spawnSync(awk, args, { cwd: root, input, encoding: 'utf8', env: { ...process.env, LC_ALL: 'C' } });
+  checks.push({ name, args, expectedStatus, status: result.status, stdout: result.stdout, stderr: result.stderr, error: result.error?.message });
+  fs.writeFileSync(path.join(root, 'validation-log.json'), JSON.stringify({ status: 'RUNNING', checks }, null, 2));
+  assert.equal(result.status, expectedStatus, JSON.stringify(checks.at(-1)));
+  assert.equal(result.stderr, '', JSON.stringify(checks.at(-1)));
+  return result.stdout;
+}
+function block(id, time, eden, oldBefore, oldAfter, ms) {
+  return `[${time}s][info][gc,heap ] GC(${id}) Eden regions: ${eden}->0(40)\n` +
+    `[${time}s][info][gc,heap ] GC(${id}) Old regions: ${oldBefore}->${oldAfter}\n` +
+    `[${time}s][info][gc ] GC(${id}) Pause Young (Normal) (G1 Evacuation Pause) 150M->100M(256M) ${ms}ms\n`;
+}
+const initialization = '[0.001s][info][gc,init] Heap Region Size: 2M\n';
+const first = block(10, '600.000', 200, 10, 20, 2);
+const second = block(12, '602.000', 20, 20, 22, 4);
+const third = block(13, '604.000', 40, 22, 26, 6);
+const log = initialization + first + '[601.000s][info][gc] GC(11) Concurrent Mark Cycle 10.000ms\n' + second + third;
+fs.writeFileSync(path.join(root, 'valid.log'), log);
+const rateOutput = run('rates', log);
+assert.match(rateOutput, /young GCs=3\s+span=4\.000s\s+region=2MiB/);
+assert.match(rateOutput, /Eden refill ~ 30\.0 MiB\/s\s+old growth ~ 3\.0 MiB\/s/);
+const completed = run('completions', log);
+assert.equal(completed.trim().split('\n').length, 3);
+fs.writeFileSync(path.join(root, 'completed.log'), completed);
+const durations = run('durations', completed);
+const sorted = spawnSync(sort, ['-n'], { cwd: root, input: durations, encoding: 'utf8', env: { ...process.env, LC_ALL: 'C' } });
+assert.equal(sorted.status, 0); assert.equal(sorted.stderr, '');
+const distribution = run('quantiles', sorted.stdout);
+assert.equal(distribution.trim(), 'pauses=3  p50_nearest_rank=4.00ms  p99_nearest_rank=6.00ms  max=6.00ms  total=12.0ms');
+assert.equal(run('types', completed).trim(), 'Pause Young\nPause Young\nPause Young');
+assert.equal(run('causes', completed).trim(), '(G1 Evacuation Pause)\n(G1 Evacuation Pause)\n(G1 Evacuation Pause)');
+assert.equal(run('headroom', completed).trim().split('\n')[0], 'after=100M  headroom=156M (61%)');
+
+assert.equal(run('rates', log.replaceAll('\n', '\r\n')), rateOutput);
+assert.match(run('rates', initialization + first + second + block(13, '602.000', 40, 22, 26, 6)), /span=2\.000s/);
+assert.equal(run('rates', log.replace(initialization, ''), 0, ['-v', 'region_mb=2']), rateOutput);
+run('rates', log + third, 1);
+run('rates', log.replace('[604.000s][info][gc,heap ] GC(13) Old regions: 22->26\n', ''), 1);
+run('rates', initialization + first + second + block(13, '601.000', 40, 22, 26, 6), 1);
+run('rates', initialization + first + block(12, '600.000', 20, 20, 22, 4), 1);
+run('rates', log + '[605.000s][info][gc] GC(14) Pause Full (System.gc()) 100M->90M(256M) 20.000ms\n', 1);
+run('rates', '', 1);
+run('completions', completed + completed.split('\n')[0] + '\n', 1);
+run('completions', '[1.000s][info][gc] GC(0) Pause Unsupported 2.000ms\n', 1);
+run('completions', '', 1);
+const sharedCycle = '[5.000s][info][gc] GC(5) Pause Remark 2.000ms\n[6.000s][info][gc] GC(5) Pause Cleanup 1.000ms\n';
+assert.equal(run('completions', sharedCycle), sharedCycle);
+const failureSuffix = '[7.000s][info][gc] GC(7) Pause Young (Concurrent Start) (G1 Humongous Allocation) (Evacuation Failure: Allocation) 200M->190M(256M) 3.000ms\n';
+assert.equal(run('causes', run('completions', failureSuffix)).trim(), '(G1 Humongous Allocation) (Evacuation Failure: Allocation)');
+run('headroom', '[7.000s][info][gc] GC(7) Pause Full (System.gc()) 1G->1G(2G) 3.000ms\n', 1);
+run('quantiles', '', 1);
+
+const version = spawnSync(awk, ['--version'], { encoding: 'utf8' });
+assert.equal(version.status, 0);
+const report = {
+  status: 'PASS',
+  scope: 'Extracted shipped awk programs; GNU awk --posix on synthetic G1 records. No JVM capture or behavioral actor run.',
+  awkVersion: version.stdout.split('\n')[0],
+  programsExtracted: Object.keys(programMap),
+  sortStage: { executable: sort, status: sorted.status, stderr: sorted.stderr },
+  checks
+};
+fs.writeFileSync(path.join(root, 'validation-log.json'), JSON.stringify(report, null, 2) + '\n');
+console.log(JSON.stringify({ status: report.status, awkVersion: report.awkVersion, programs: Object.keys(programMap), executedCases: checks.length, rateOutput: rateOutput.trim(), distribution: distribution.trim() }, null, 2));

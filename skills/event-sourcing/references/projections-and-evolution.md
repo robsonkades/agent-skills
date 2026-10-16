@@ -261,9 +261,25 @@ cutoff. Dual publication needs deduplication and decommission evidence.
 
 **Copy-and-replace the stream.** The last resort: read the old stream, write a new one with
 transformed events, switch over, archive or destroy the original according to policy. It is
-high-risk because identities, positions, signatures and downstream copies may change. Require
-an explicit reason (defect, privacy obligation or bounded migration), mapping/audit record,
+high-risk because identities, positions, store-assigned timestamps, signatures and downstream copies
+may change. Require an explicit reason (defect, privacy obligation or bounded migration), mapping/audit record,
 downstream rebuild plan, rollback point and retention decision.
+
+Before the first copied append, inspect active subscription names/filters and follow their handlers
+through any outbox or relay to external effects. A `$all` or event-type subscriber can receive copied
+history as new log records even when the rebuilding projector has notifications disabled. Establish
+enforced exclusion or original-effect deduplication covering the copied history; a temporary pause
+only postpones delivery. Preserve the protection across restart and cut-over, without moving a
+checkpoint past unrelated unprocessed live events. In an isolated drill, copy an already-effected
+historical event, restart the relay, then append a genuine new command's event: the historical effect
+must not repeat and the new effect must still follow its delivery contract. A separate, authorized
+historical correction may require compensating effects; replay alone does not authorize them.
+
+Keep source identity and required original recorded/effective times in the migration mapping or
+envelope, separately from the destination cursor and append timestamp. KurrentDB's documented
+live migration changes native positions and creation timestamps; reusing them as original history
+changes temporal answers. Validate checkpoint translation and a historical cutoff query against
+the declared temporal semantics before switching readers.
 
 Establish write authority during replacement: quiesce and account for all in-flight appends,
 or use a store-enforced fence/equivalent protocol that prevents obsolete writers committing to
@@ -342,6 +358,8 @@ conditions and exceptions, not an unconditional technical deletion recipe.
 
 ## Sources for projection recovery and visibility
 
+- [Martin Fowler: Event Sourcing, external updates](https://martinfowler.com/eaaDev/EventSourcing.html) — replay and live processing need distinct external-update behavior.
+- [KurrentDB live migration](https://docs.kurrent.io/cloud/guides/migration) — replication changes native timestamps/positions and requires subscription checkpoint handling; match the deployed migration mechanism.
 - [KurrentDB 25 backup and restore](https://docs.kurrent.io/server/v25.0/operations/backup) — store-specific backup components and restore prerequisites; application-state alignment remains an application obligation.
 - [KurrentDB Java 1.2 catch-up subscriptions](https://docs.kurrent.io/clients/java/v1.2/subscriptions) — complete positions, beginning markers and exclusive resume semantics.
 - [PostgreSQL 18 transaction isolation](https://www.postgresql.org/docs/18/transaction-iso.html) — a repeatable-read snapshot does not advance when another transaction commits; verify the actual database and isolation level.

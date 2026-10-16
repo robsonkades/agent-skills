@@ -32,6 +32,9 @@ capacity estimate, not exact copied bytes because regions are partially occupied
 growth can mix promotion with region lifecycle. Calibrate against JFR/heap evidence when
 the estimate controls a flag, and report its distribution rather than one average.
 `g1-internals` covers the phase breakdown.
+Before calibrating a young-only model, reconcile marking and retained old-candidate work
+for the same GC id in [the policy log](policy-log-and-troubleshooting.md). A `Normal` or
+`Prepare Mixed` label alone does not establish that all copied bytes came from young regions.
 
 ## Young generation size and GC interval
 
@@ -279,8 +282,9 @@ exhaustion in the [policy log](policy-log-and-troubleshooting.md), not a promise
 
 - Every mixed collection is logged as `Pause Young (Mixed)`, never a bare `Pause Mixed`.
   A parser reading the type straight after `Pause ` labels all of them young, silently.
-- `Pause Young (Prepare Mixed)` is a young-only collection, the last before the mixed
-  phase. A parser matching `Mixed)` counts it as mixed; match `Pause Young \(Mixed\)`.
+- `Pause Young (Prepare Mixed)` precedes the mixed phase. A parser matching `Mixed)`
+  counts it as mixed; match `Pause Young \(Mixed\)`. Keep that phase classification separate
+  from retained old-candidate work, which can occur outside the mixed phase on JDK 25.
 - `Old regions: 50->55` has no third parenthesised value, unlike `Eden regions: 150->0(150)`.
   A regex requiring `(\d+)->(\d+)\((\d+)\)` matches nothing and yields old growth zero.
 - The `Old regions` delta is a region-capacity proxy for net old growth during that event,

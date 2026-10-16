@@ -1,0 +1,3 @@
+compiler.release=21
+preview.enabled=false
+supported.runtime=Java 21 or later

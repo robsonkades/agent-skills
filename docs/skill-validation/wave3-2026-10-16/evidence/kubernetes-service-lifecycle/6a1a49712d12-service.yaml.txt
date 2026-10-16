@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: lifecycle-review
+spec:
+  selector:
+    app: lifecycle-review
+  ports:
+    - port: 8080
+      targetPort: http

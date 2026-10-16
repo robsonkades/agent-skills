@@ -84,6 +84,9 @@ new binary, capture or canary. Test and rollout gates apply when producing or pr
    retain the build report, effective arguments, SBOM, target CPU, debug-symbol policy, binary
    hash, build time, and peak builder RSS. Treat expert `-H:` flags as release-coupled and prove
    that each is accepted and still needed.
+   Trace applied JAR configuration and plugin/profile overrides before accepting the intended
+   optimization level; use [effective-option inspection](references/build-and-measurement.md#resolve-effective-build-options)
+   when the command or measured behavior contradicts it.
 7. **Test the produced artifact against its supported contract.** Exercise relevant success,
    invalid input, optional integrations,
    reflection/serialization/JNI/FFM, resources, locales/time zones, TLS/security providers,

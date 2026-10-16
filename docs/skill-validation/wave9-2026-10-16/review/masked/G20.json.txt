@@ -1,0 +1,72 @@
+{
+  "id": "G20",
+  "caseId": "R3",
+  "review": "RetryPlan.java now implements the scheduling policy in contract.md while preserving the public method and Plan record. The prior implementation admitted a call when completed equaled maxAttempts, used the wrong retry exponent, allowed overflowing or masked shifts, chose the smaller of jitter and server advice, and allocated attempt time without subtracting wait and reserve. Its summed admission expression could also overflow. The new verification failed against that implementation: an initial call expected an 80 ns allocation but received 90 ns because reserve was omitted.\n\nElapsed time is computed as now - start. Under the supplied true-elapsed interval [0, 2^63), Java's modular subtraction handles negative readings and signed clock wrap. Expiry is checked before calculating total - elapsed. Reserve and minimum work are checked before subtraction, avoiding an overflow-prone sum of wait + minimumWork + reserve. No extra duration cap or narrower accepted input range was introduced.\n\nThe first call ignores serverMinimum and does not draw randomness. For retries, exponent = completed - 1. The jitter bound equals min(delayCap, base * 2^exponent): exponent >= 63 saturates directly, while smaller exponents compare base against delayCap >> exponent before shifting. This prevents signed overflow and Java's shift-count masking, including completed values near Integer.MAX_VALUE. The supplied draw is used once when needed; wait is exactly max(draw, serverMinimum), without shortening either to fit. A wait that exceeds available - minimumWork rejects. Otherwise attemptNanos is exactly min(attemptCap, available - wait), where available already excludes reserve. Exact fits are admitted. Every rejected result has zero durations.\n\nValidation used the supplied runner, inspected before execution. It compiles with javac --release 17 and bounds each Java subprocess to 20 seconds. The actual runtime reported Temurin OpenJDK 25.0.3+9. After the repair, node run.mjs Verification passed 13,634 cases: 17 focused examples, 1,617 jitter-bound cases, and 12,000 reproducible generated cases compared against a BigInteger arithmetic oracle. Cases exercise call limits, server advice, exact fits, insufficient budgets, cap selection, signed clock wrap, maximum elapsed duration, large reserves/delays, and large exponents. node run.mjs Smoke also passed. The contract, runner, smoke test, README and request copies remain unchanged.\n\nThis is a pure planning helper. Callers must recheck budget and admission after actual waiting or other elapsed work, enforce attempt timeouts, and own cooperative cancellation and resource release. These local tests establish arithmetic behavior only; they do not establish wall-clock return bounds, remote cancellation, provider replay guarantees, production latency, or durable idempotency. A post-dispatch timeout can still leave an external effect unknown. No framework, database/isolation configuration, provider endpoint/version, or idempotency recovery contract was supplied or changed.\n\nBoth supplied skills were read, along with the local deadline-propagation reference. Retry-policy design is routed to retries-and-backoff, which is outside the supplied skill context; it was not loaded. The checked-in scheduling contract supplied the policy for this repair. No browsing, delegation, dependencies, network workloads, or real configuration changes were used.\n",
+  "result": {
+    "task": "G20",
+    "decision": "Repaired RetryPlan.java to implement the checked-in scheduling contract without changing its public signature or input domain.",
+    "deliverables": [
+      "RetryPlan.java",
+      "Verification.java",
+      "REVIEW.md",
+      "result.json",
+      "execution.json"
+    ],
+    "arithmetic": {
+      "elapsed": "now - start, valid across signed nanoTime wrap under the contract's elapsed horizon",
+      "retryWindow": "min(delayCap, base * 2^(completed - 1)), saturating before shifts",
+      "retryWait": "max(local draw, serverMinimum)",
+      "attempt": "min(attemptCap, total - elapsed - wait - reserve)",
+      "admission": "completed < maxAttempts and attempt >= minimumWork; exact fit admitted",
+      "initialCall": "zero wait; no randomness; ignores serverMinimum",
+      "rejection": "both durations zero; guarded subtraction avoids overflowing sums"
+    },
+    "evidence": {
+      "contract": "output/contract.md",
+      "javaSourceAndApiBaseline": "17, compiled by run.mjs with javac --release 17",
+      "observedRuntime": "Temurin OpenJDK 25.0.3+9-LTS",
+      "baselineVerification": {
+        "command": "node run.mjs Verification",
+        "exitCode": 1,
+        "finding": "Initial attempt allocated 90 ns instead of 80 ns because reserve was omitted."
+      },
+      "repairedVerification": {
+        "command": "node run.mjs Verification",
+        "exitCode": 0,
+        "output": "Verification passed: 13634 cases",
+        "focusedCases": 17,
+        "windowBoundaryCases": 1617,
+        "generatedOracleCases": 12000
+      },
+      "smoke": {
+        "command": "node run.mjs Smoke",
+        "exitCode": 0,
+        "output": "Smoke passed"
+      },
+      "javaSubprocessTimeoutMillis": 20000
+    },
+    "limits": [
+      "Pure planning does not execute sleep, recheck elapsed time after wait, enforce request timeout, cancel work, or bound wall-clock return time.",
+      "Deterministic local arithmetic checks do not establish remote effect safety, provider replay guarantees, resource release, production latency, or fleet behavior.",
+      "No framework, database/isolation version, provider API contract, or durable operation identity was supplied; external retry outcomes remain outside this helper.",
+      "The routed retries-and-backoff skill was not supplied and was not accessed; scheduling policy came from contract.md."
+    ],
+    "scope": {
+      "modifiedExistingFiles": [
+        "RetryPlan.java"
+      ],
+      "immutableCopies": [
+        "README.md",
+        "REQUEST.md",
+        "contract.md",
+        "Smoke.java",
+        "run.mjs"
+      ],
+      "networkUsed": false,
+      "delegationUsed": false,
+      "dependenciesChanged": false,
+      "realConfigurationChanged": false
+    }
+  },
+  "implementation": "import java.util.function.LongUnaryOperator;\n\npublic final class RetryPlan {\n    public record Plan(boolean admitted, long waitNanos, long attemptNanos) {}\n\n    public static Plan next(long start, long now, long total, long reserve, long minimumWork,\n            long attemptCap, long base, long delayCap, int completed, int maxAttempts,\n            long serverMinimum, LongUnaryOperator draw) {\n        if (completed >= maxAttempts) return new Plan(false, 0, 0);\n\n        // Subtraction preserves elapsed time across signed nanoTime wrap for this contract.\n        long elapsed = now - start;\n        if (elapsed >= total) return new Plan(false, 0, 0);\n        long remaining = total - elapsed;\n        if (reserve >= remaining) return new Plan(false, 0, 0);\n        long available = remaining - reserve;\n        if (available < minimumWork) return new Plan(false, 0, 0);\n\n        long wait = 0;\n        if (completed > 0) {\n            long maximumWait = available - minimumWork;\n            if (serverMinimum > maximumWait) return new Plan(false, 0, 0);\n\n            int exponent = completed - 1;\n            // Saturate before shifting: Java masks large shift counts and signed shifts can overflow.\n            long window = exponent >= 63 || base > (delayCap >> exponent)\n                    ? delayCap : base << exponent;\n            wait = Math.max(draw.applyAsLong(window), serverMinimum);\n            if (wait > maximumWait) return new Plan(false, 0, 0);\n        }\n        return new Plan(true, wait, Math.min(attemptCap, available - wait));\n    }\n}\n"
+}

@@ -1,0 +1,34 @@
+[
+  {
+    "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-behavior-6orq6B\\c5-2\\TASK.md",
+    "Hash": "4F214BB9CA1A8105811C3653253CD3C0BCDAB77A0421DC1F3872F60E6BC3499D"
+  },
+  {
+    "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-behavior-6orq6B\\c5-2\\slo.json",
+    "Hash": "9AFA43B9781BE65C607307F8035EC69B716641E56449D0AD2BC57D8A96FAB9FF"
+  },
+  {
+    "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-behavior-6orq6B\\c5-2\\dashboard-query.txt",
+    "Hash": "D0528DC88BD99A12749C7116DDDE0742CD13370F12ECE5320AEE622F4510D0A9"
+  },
+  {
+    "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-behavior-6orq6B\\c5-2\\cohort.json",
+    "Hash": "C0124C2FC17518800623A6671B5ABE26CDBEC04BFD76246CEF3C98DA30EDA808"
+  },
+  {
+    "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-behavior-6orq6B\\c5-2\\.resources\\skill\\SKILL.md",
+    "Hash": "AA69844FB1EDB8655FB4181F32BF4D64734AE8879579845F02780F34635CFB48"
+  },
+  {
+    "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-behavior-6orq6B\\c5-2\\.resources\\skill\\references\\provisioning-decision.md",
+    "Hash": "31C65716870BB39AEA9C0114586F1D97614F959894F6D9B4AA695483D1A8B4F7"
+  },
+  {
+    "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-behavior-6orq6B\\c5-2\\.resources\\skill\\references\\inputs-forecast-and-cost.md",
+    "Hash": "10F7A110D6D9F1AE1C87C20AD2A093FEA690FBAC0F3A726693E3B0C3B31FA3DA"
+  },
+  {
+    "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-behavior-6orq6B\\c5-2\\.resources\\skill\\references\\sizing-arithmetic.md",
+    "Hash": "400E9AFB4AE92C2968EA0C66432BC66A3B6AA5956C95128853AC081D97C28D17"
+  }
+]

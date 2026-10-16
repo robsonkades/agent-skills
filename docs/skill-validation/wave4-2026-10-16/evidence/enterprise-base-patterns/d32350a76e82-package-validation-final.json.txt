@@ -1,0 +1,25 @@
+{
+  "name": "enterprise-base-patterns",
+  "version": "1.2.6",
+  "files": [
+    "SKILL.md",
+    "references/gateway-and-mapper.md",
+    "references/structural-base-patterns.md",
+    "skill.yaml"
+  ],
+  "issues": [],
+  "localLinks": [
+    {
+      "file": "SKILL.md",
+      "target": "references/gateway-and-mapper.md",
+      "resolved": "C:\\git\\agent-skills\\skills\\enterprise-base-patterns\\references\\gateway-and-mapper.md"
+    },
+    {
+      "file": "SKILL.md",
+      "target": "references/structural-base-patterns.md",
+      "resolved": "C:\\git\\agent-skills\\skills\\enterprise-base-patterns\\references\\structural-base-patterns.md"
+    }
+  ],
+  "brokenLinks": [],
+  "limitations": "Package-local generic validation only; no adapter/global index validation or behavioral agent evaluation."
+}

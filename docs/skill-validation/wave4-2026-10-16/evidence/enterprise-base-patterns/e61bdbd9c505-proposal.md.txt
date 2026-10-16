@@ -1,0 +1,3 @@
+# Pending refactor
+
+Normalize Measurement.amount with stripTrailingZeros() in its compact constructor, keeping the existing record, cache and report formatter. Records already supply equality and hashing, so this should simplify cache keys while leaving callers unaffected. Please review before implementation.

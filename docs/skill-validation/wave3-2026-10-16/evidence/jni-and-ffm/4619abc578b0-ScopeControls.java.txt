@@ -1,0 +1,44 @@
+import java.lang.foreign.Arena;
+import java.lang.foreign.MemorySegment;
+
+public final class ScopeControls {
+    private static void expect(Class<? extends Throwable> type,
+                               NativeFixture nativeFixture,
+                               MemorySegment argument) throws Exception {
+        int before = NativeFixture.calls();
+        Throwable observed = null;
+        try {
+            nativeFixture.call(argument);
+        } catch (Throwable failure) {
+            observed = failure;
+        }
+        if (observed == null || !type.isInstance(observed)) {
+            throw new AssertionError("Expected " + type.getName() + ", got " + observed);
+        }
+        if (NativeFixture.calls() != before) {
+            throw new AssertionError("Invalid argument reached callback");
+        }
+        System.out.println("PASS " + type.getSimpleName() + " before callback");
+    }
+
+    public static void main(String[] args) throws Exception {
+        try (NativeFixture nativeFixture = new NativeFixture()) {
+            try (Arena arena = Arena.ofConfined()) {
+                if (nativeFixture.call(arena.allocate(1)) != 7) {
+                    throw new AssertionError("Confined owner-thread call failed");
+                }
+                System.out.println("PASS confined owner-thread downcall");
+            }
+            MemorySegment closed;
+            try (Arena arena = Arena.ofConfined()) {
+                closed = arena.allocate(1);
+            }
+            expect(IllegalStateException.class, nativeFixture, closed);
+            expect(IllegalArgumentException.class, nativeFixture,
+                    MemorySegment.ofArray(new byte[1]));
+            if (NativeFixture.calls() != 1) {
+                throw new AssertionError("Expected only owner-thread callback");
+            }
+        }
+    }
+}

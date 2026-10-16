@@ -1,0 +1,19 @@
+package com.acme.orders.domain;
+
+import java.util.Objects;
+
+public final class OrderService {
+    private final NotificationPort notifier;
+
+    public OrderService(NotificationPort notifier) {
+        this.notifier = Objects.requireNonNull(notifier);
+    }
+
+    public String confirm(String orderId) {
+        if (orderId == null || orderId.isBlank()) {
+            throw new IllegalArgumentException("orderId");
+        }
+        notifier.send("confirmed:" + orderId);
+        return orderId;
+    }
+}

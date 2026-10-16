@@ -1,0 +1,44 @@
+{
+  "id": "discovery-outage-b",
+  "task": "Use service-discovery to review and correct this Java discovery adapter for the supplied operation contract. Inspect the implementation and trace, implement the smallest justified adapter change, and add deterministic checks. Preserve the teaching resolver's public and source contracts. Report actual validation separately from any network/convergence claim. Do not install dependencies, upgrade Java, add a registry or contact a live service.",
+  "context": {
+    "prerequisites": [
+      "Use an isolated directory and an available JDK supporting --release 21.",
+      "Copy the unmodified skills/service-discovery/assets/SnapshotResolverExample.java from this review baseline (SHA256 673B82F742B67464CF14D12C9349A652DA48C2CD03032155AC621E7C6262B898) alongside DiscoveryAdapter.java.",
+      "Use an AtomicLong as a monotonic nanosecond clock; advance explicitly with Duration.ofSeconds(t).toNanos(). No sleeps or actual registry calls.",
+      "Compile both files and your checks with javac --release 21 -d classes. Record the runtime used separately."
+    ],
+    "sourceContract": {
+      "authorityEpoch": "catalog/prod/epoch-1",
+      "revision": "Nonnegative monotonic long from this fixed authority; each reply is a complete scoped snapshot.",
+      "REGISTRY_READ": "Authenticated linearizable read completed at the supplied clock instant; the test fixture has zero transport delay. Identical revisions can occur when membership has not changed.",
+      "PROVIDER_CACHE": "An answer from provider memory after upstream loss. The API carries no authoritative observation timestamp for that cache entry. Returning successfully does not imply a registry call.",
+      "failure": "IOException, with no membership answer.",
+      "transport": "Only endpoint-view decisions are represented. TLS identity for A/B is independently valid throughout the fixture; transport pools and live connections are outside it."
+    },
+    "requirements": {
+      "positiveFreshTtlSeconds": 10,
+      "additionalStaleCapacitySeconds": 5,
+      "authoritativeEmptyTtlSeconds": 3,
+      "maximumEndpoints": 2,
+      "unavailable": "A result exposing no eligible endpoint is acceptable after the operation's membership-age bound; do not make up fallback addresses.",
+      "bootstrap": "A new process has no previously acquired snapshot.",
+      "boundary": "An age equal to the permitted maximum is no longer usable.",
+      "authorization": "The age policy is for discovery information. It is not a hard credential-revocation or endpoint-health guarantee.",
+      "availability": "Keep serving an already verified endpoint while its discovery information satisfies this operation's maximum age, unless an authoritative removal supersedes it."
+    },
+    "fixtures": {
+      "DiscoveryAdapter.java": "import java.io.IOException;\nimport java.net.URI;\nimport java.time.Duration;\nimport java.util.List;\nimport java.util.Set;\nimport java.util.concurrent.atomic.AtomicLong;\n\npublic final class DiscoveryAdapter {\n    static final String EPOCH = \"catalog/prod/epoch-1\";\n    static final URI A = URI.create(\"https://a.catalog.internal.example:8443\");\n    static final URI B = URI.create(\"https://b.catalog.internal.example:8443\");\n    enum Origin { REGISTRY_READ, PROVIDER_CACHE }\n    record Reply(long revision, List<URI> endpoints, Origin origin) {}\n    @FunctionalInterface\n    interface Provider { Reply fetch() throws IOException; }\n\n    private final Provider provider;\n    private final SnapshotResolverExample.Resolver cache;\n\n    DiscoveryAdapter(Provider provider, AtomicLong nanos) {\n        this.provider = provider;\n        this.cache = new SnapshotResolverExample.Resolver(\n                EPOCH, Duration.ofSeconds(10), Duration.ofSeconds(3),\n                Duration.ofSeconds(5), 2, nanos::get, Set.of(A, B)::contains);\n    }\n\n    void refresh() throws IOException {\n        Reply reply = provider.fetch();\n        cache.accept(EPOCH, reply.revision(), reply.endpoints(), true);\n    }\n\n    SnapshotResolverExample.View endpoints() {\n        return cache.resolve(SnapshotResolverExample.Policy.BOUNDED_STALE);\n    }\n}\n",
+      "trace.csv": "at_seconds,action,provider_reply\n0,refresh,REGISTRY_READ revision=7 endpoints=A\n9,refresh,PROVIDER_CACHE revision=7 endpoints=A\n10,refresh,IOException\n12,read_endpoint_view,\n15,read_endpoint_view,\n20,refresh,REGISTRY_READ revision=8 endpoints=empty\n21,refresh,PROVIDER_CACHE revision=7 endpoints=A\n21,read_endpoint_view,\n23,read_endpoint_view,\n",
+      "extra-traces.txt": "Also exercise a new process whose first fetch is PROVIDER_CACHE revision=7 endpoints=A, and a separate new process whose first fetch throws IOException. In a separate control, obtain revision=7 at t=0 then REGISTRY_READ revision=7 at t=9 and inspect the view at t=10."
+    },
+    "requestedDeliverables": [
+      "Focused DiscoveryAdapter.java change",
+      "Deterministic checks with observable state/endpoints",
+      "Short explanation grounded in the source contract, plus remaining integration limits"
+    ]
+  },
+  "operationContract": {
+    "maxSnapshotAgeSeconds": 10
+  }
+}

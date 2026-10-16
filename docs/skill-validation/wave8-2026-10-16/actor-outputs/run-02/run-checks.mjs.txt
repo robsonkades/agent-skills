@@ -1,0 +1,26 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
+
+const outputDir = fileURLToPath(new URL('.', import.meta.url));
+const preserved = ['README.md', 'REQUEST.md', 'schema.sql', 'seed.sql', 'current.sql', 'proposed.sql', 'fixture.mjs'];
+const preservation = preserved.map(file => {
+  const original = fs.readFileSync(new URL(`../input/${file}`, import.meta.url));
+  const copy = fs.readFileSync(new URL(file, import.meta.url));
+  assert.deepEqual(copy, original, `copied artifact changed: ${file}`);
+  return {file, sha256: crypto.createHash('sha256').update(original).digest('hex'), identical: true};
+});
+assert.deepEqual(fs.readFileSync(new URL('solution.sql', import.meta.url)), fs.readFileSync(new URL('proposed.sql', import.meta.url)), 'valid proposal must be retained exactly');
+const run = spawnSync(process.execPath, ['verify.mjs', '--self-test'], {
+  cwd: outputDir, encoding: 'utf8', timeout: 20000, windowsHide: true,
+});
+fs.writeFileSync(new URL('verification.stdout.json', import.meta.url), run.stdout ?? '');
+fs.writeFileSync(new URL('verification.stderr.log', import.meta.url), run.stderr ?? '');
+const summary = {command: 'node verify.mjs --self-test', timeoutMs: 20000, exitCode: run.status, signal: run.signal, error: run.error?.message ?? null, preservedCopies: preservation, solutionIdenticalToProposal: true};
+fs.writeFileSync(new URL('checks.json', import.meta.url), JSON.stringify(summary, null, 2) + '\n');
+console.log(JSON.stringify(summary, null, 2));
+process.stdout.write(run.stdout ?? '');
+process.stderr.write(run.stderr ?? '');
+process.exitCode = run.status ?? 1;

@@ -1,0 +1,13 @@
+import java.util.List;
+
+public final class Smoke {
+    public static void main(String[] args) {
+        var readings = ReadingIndex.distinct(List.of(
+                new ImportRow("1.0", "bar"),
+                new ImportRow("1.0", "bar"),
+                new ImportRow("1.5", "bar")));
+        if (readings.size() != 2) throw new AssertionError(readings);
+        System.out.println("PASS existing reading smoke");
+    }
+}
+

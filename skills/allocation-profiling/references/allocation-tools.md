@@ -85,6 +85,20 @@ actual heap allocation without disabling escape analysis, but absence of a sampl
 proof of elimination. See [profiling modes](https://github.com/async-profiler/async-profiler/blob/v4.1/docs/ProfilingModes.md)
 and [live/interval options](https://github.com/async-profiler/async-profiler/blob/v4.1/docs/ProfilerOptions.md).
 
+### Keep candidate contributions disjoint
+
+An allocation sample's byte weight contributes to every inclusive frame on its path.
+`--total` selects byte weighting; it does not remove that overlap. Aggregate the union of
+the selected stacks, counting each weight once, under the same window and filters. See
+[the 4.1 frame accumulation](https://github.com/async-profiler/async-profiler/blob/v4.1/src/converter/one/convert/FlameGraph.java).
+
+For example, `Serialize.encode` may carry 60 MB including 40 MB under `Copy.buffer`:
+selecting both covers 60 MB, not 100 MB. If the 40 MB instead belongs to an independent
+sibling path, 60 + 40 = 100 MB is valid attribution. Neither total establishes removable
+bytes: the change may retain required work or replace those allocations elsewhere.
+Verify total bytes/op and semantics with matched work. Use `flame-graph-analysis` when
+orientation, recursion or filtering makes the overlap unclear.
+
 ### Live samples have different coverage and units
 
 In async-profiler 4.1, ordinary JVMTI allocation samples carry a pressure weight of

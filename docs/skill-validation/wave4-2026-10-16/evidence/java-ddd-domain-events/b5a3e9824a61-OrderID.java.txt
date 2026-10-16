@@ -1,0 +1,3 @@
+package com.example.domain.order;
+import java.util.Objects;
+public record OrderID(String value) { public OrderID { Objects.requireNonNull(value); } }

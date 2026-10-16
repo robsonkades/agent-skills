@@ -1,0 +1,147 @@
+{
+  "work": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-thinking-artifacts\\snippets-AzUVSb",
+  "commands": [
+    {
+      "label": "compiler-version",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "-version"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-thinking-artifacts\\snippets-AzUVSb",
+      "expectedExit": 0,
+      "actualExit": 0,
+      "signal": null,
+      "stdout": "javac 25.0.3\r\n",
+      "stderr": ""
+    },
+    {
+      "label": "runtime-version",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-version"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-thinking-artifacts\\snippets-AzUVSb",
+      "expectedExit": 0,
+      "actualExit": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n"
+    },
+    {
+      "label": "discount-compile-java17",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "--release",
+        "17",
+        "-d",
+        "discount-classes",
+        "DiscountStrategy.java",
+        "Discount.java",
+        "Money.java",
+        "DiscountChecks.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-thinking-artifacts\\snippets-AzUVSb",
+      "expectedExit": 0,
+      "actualExit": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "discount-contracts",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-ea",
+        "-Xmx64m",
+        "-cp",
+        "discount-classes",
+        "DiscountChecks"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-thinking-artifacts\\snippets-AzUVSb",
+      "expectedExit": 0,
+      "actualExit": 0,
+      "signal": null,
+      "stdout": "Discount checks passed: 10\r\n",
+      "stderr": ""
+    },
+    {
+      "label": "state-compile-java21",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "--release",
+        "21",
+        "-d",
+        "state-classes",
+        "StateChecks.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-thinking-artifacts\\snippets-AzUVSb",
+      "expectedExit": 0,
+      "actualExit": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "state-contracts",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-ea",
+        "-Xmx64m",
+        "-cp",
+        "state-classes",
+        "StateChecks"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-thinking-artifacts\\snippets-AzUVSb",
+      "expectedExit": 0,
+      "actualExit": 0,
+      "signal": null,
+      "stdout": "State checks passed: 6\r\n",
+      "stderr": ""
+    },
+    {
+      "label": "state-java17-negative",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "--release",
+        "17",
+        "-d",
+        "unsupported-classes",
+        "StateChecks.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-thinking-artifacts\\snippets-AzUVSb",
+      "expectedExit": 1,
+      "actualExit": 1,
+      "signal": null,
+      "stdout": "",
+      "stderr": "StateChecks.java:9: error: patterns in switch statements are not supported in -source 17\r\n        case Draft d -> new Paid(clock.instant());\r\n             ^\r\n  (use -source 21 or higher to enable patterns in switch statements)\r\n1 error\r\n"
+    },
+    {
+      "label": "state-unhandled-variant-negative",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "--release",
+        "21",
+        "-d",
+        "expanded-classes",
+        "expanded/StateChecks.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-thinking-artifacts\\snippets-AzUVSb",
+      "expectedExit": 1,
+      "actualExit": 1,
+      "signal": null,
+      "stdout": "",
+      "stderr": "expanded\\StateChecks.java:8: error: the switch expression does not cover all possible input values\r\n    return switch (Objects.requireNonNull(current)) {\r\n           ^\r\n1 error\r\n"
+    }
+  ],
+  "pass": true,
+  "executedAssertions": {
+    "discount": 10,
+    "state": 6
+  },
+  "negativeControls": 2,
+  "limitations": [
+    "The Money and concrete state types are explicit local test fixtures, not production domain definitions.",
+    "Javac 25 with --release 17/21 and runtime Temurin 25; not execution on Java 17 or 21.",
+    "No database, Spring security, concurrency, performance or agent evaluation was run."
+  ]
+}

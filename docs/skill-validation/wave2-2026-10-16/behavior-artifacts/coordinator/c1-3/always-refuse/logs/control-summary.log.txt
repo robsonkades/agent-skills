@@ -1,0 +1,11 @@
+always-refuses: compile exit=0, runtime exit=1
+[        21 tests found           ]
+[        21 tests started         ]
+[         0 tests successful      ]
+[        21 tests failed          ]
+refuses-on-contention: compile exit=0, runtime exit=1
+[        21 tests found           ]
+[        21 tests started         ]
+[        20 tests successful      ]
+[         1 tests failed          ]
+Both faulty controls rejected; production source unchanged.

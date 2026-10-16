@@ -1,0 +1,4 @@
+import fs from 'node:fs';
+import {DatabaseSync} from 'node:sqlite';
+export function createDb(){const db=new DatabaseSync(':memory:');db.exec(fs.readFileSync(new URL('./schema.sql',import.meta.url),'utf8'));db.exec(fs.readFileSync(new URL('./seed.sql',import.meta.url),'utf8'));return db;}
+export function query(db,sql,params){return db.prepare(sql).all(params).map(r=>({...r}));}

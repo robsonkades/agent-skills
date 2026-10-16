@@ -1,0 +1,676 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "java-memory-model",
+  "ownedPath": "C:/git/agent-skills/skills/java-memory-model",
+  "completedAt": "2026-10-16T16:52:51.855Z",
+  "scope": "Specialist JMM publication/order/atomicity review; no algorithm/framework rewrite. Entire four-file package read and reviewed.",
+  "procedure": [
+    "AGENTS.md",
+    "Complete docs/skill-review-prompt.md",
+    "docs/parallel-skill-reviews.md (previously read unchanged)",
+    "docs/skill-validation/wave5-2026-10-16/review-brief.md",
+    "skill-engineering and all four relevant evidence/evaluation/resource/anti-pattern references (previously read unchanged, stable by coordinator)",
+    "Cumulative comparative research and prior-wave outcomes reused; no gain claim inferred from technical fixes"
+  ],
+  "versions": {
+    "committed": "1.3.5",
+    "assignment": "1.3.5",
+    "preExistingBump": false,
+    "final": "1.3.6",
+    "rationale": "One patch for a focused correctness qualification in a shipped reference; no duplicate version field in SKILL.md."
+  },
+  "baseline": {
+    "clean": true,
+    "preExistingChanges": [],
+    "matchedCoordinatorSnapshot": true,
+    "staged": "",
+    "unstaged": "",
+    "untracked": [],
+    "snapshot": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/assignment-baseline.json"
+  },
+  "correctedFindings": [
+    {
+      "id": "final-reachable-nonfinal-state",
+      "location": "references/happens-before.md:100",
+      "originalIssue": "Unqualified statement that final-field semantics do not guarantee non-final fields was broader than the JLS and inconsistent with the more precise reachable-state guidance already in SKILL.md.",
+      "consequence": "A reviewer could reject a valid constructor-initialized reachable payload, or fail to distinguish a read through the final field from an ordinary alias of the same object.",
+      "change": "Limit the exclusion to unrelated non-final containing-object fields and later mutation; explain that initialized reachable state may be protected under freeze/dereference conditions and require following the actual read path.",
+      "source": "JLS25 sections17.5 and17.5.1: final references protect specified initialized reachable object/array state; the special ordering is conditioned on the memory/dereference chain, not a generic transitive publication edge.",
+      "sourceUrl": "https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.5.1",
+      "limitations": "Specification correction, not a measured change in agent behavior or reproduced racy default-value outcome."
+    }
+  ],
+  "remainingFindings": [],
+  "findingsPreserved": [
+    {
+      "locations": ["SKILL.md Proof contract/Core model", "references/review-checklist.md"],
+      "reason": "Already separates missing proof evidence, JMM legality and application acceptability, conditional testing, processor/JIT observations and API handoff contracts."
+    },
+    {
+      "locations": [
+        "SKILL.md Volatile publication",
+        "references/happens-before.md Publication patterns"
+      ],
+      "reason": "Already addresses producer-to-publisher ordering, one-shot flag restrictions, single-read immutable replacement, lost updates and atomic-element versus snapshot guarantees."
+    },
+    {
+      "locations": ["SKILL.md Synchronization/final-field/wait sections"],
+      "reason": "Already distinguishes termination from timed/unstarted checks, interrupt direction, constructor escape, final freeze, monitor reacquisition and retained locks."
+    },
+    {
+      "location": "references/happens-before.md Authoritative references",
+      "reason": "MemoryVisibility fragment exists in the retrieved Java25 HTML. Text-only browser search did not display anchor IDs; no link edit justified."
+    }
+  ],
+  "filesChangedByReviewer": [
+    {
+      "path": "C:/git/agent-skills/skills/java-memory-model/skill.yaml",
+      "relativePath": "skill.yaml",
+      "baselineSha256": "1e2323798bd80080cf698cd1f8cc7085aa712c4e96f2113cb15c09eb97fe8c9b",
+      "finalSha256": "ebf7fdd7cf14ed7c51f1627d4cbfc022d264de515840da97004fa13531e53cab",
+      "changed": true
+    },
+    {
+      "path": "C:/git/agent-skills/skills/java-memory-model/references/happens-before.md",
+      "relativePath": "references/happens-before.md",
+      "baselineSha256": "ffb7b4955709d039d02549f7730d85b8bad661f22d9de908d14e741c6df5a076",
+      "finalSha256": "bf3c0632c5a2643752fa2ad160a9694b8cc98696474bb14fc6c67499bc33865c",
+      "changed": true
+    }
+  ],
+  "unchangedFiles": [
+    {
+      "path": "C:/git/agent-skills/skills/java-memory-model/SKILL.md",
+      "relativePath": "SKILL.md",
+      "baselineSha256": "a9f6dab4bf513019bf245efc9cd8757a5edcc9b212ec507e3545fa59573c2a1a",
+      "finalSha256": "a9f6dab4bf513019bf245efc9cd8757a5edcc9b212ec507e3545fa59573c2a1a",
+      "changed": false
+    },
+    {
+      "path": "C:/git/agent-skills/skills/java-memory-model/references/review-checklist.md",
+      "relativePath": "references/review-checklist.md",
+      "baselineSha256": "a9e6f00a8e7e26fcbe4b6d2a7a430198042acc7905025bb661772dd29b73b8a8",
+      "finalSha256": "a9e6f00a8e7e26fcbe4b6d2a7a430198042acc7905025bb661772dd29b73b8a8",
+      "changed": false
+    }
+  ],
+  "capabilities": {
+    "preserved": [
+      "JLS proof ownership and handoff to VarHandle/lock/algorithm/testing specialists",
+      "All entrypoint instructions, examples, activation and metadata description",
+      "One-shot and replacement volatile publication",
+      "Final-field semantics separated from ordinary safe publication and mutation safety",
+      "Wait, interruption, termination, initialization and API memory effects",
+      "Conditional jcstress/static/integration validation and honest finite-observation limits"
+    ],
+    "replaced": [
+      "One overbroad final-field exclusion replaced with scoped guarantee and actual-path distinction"
+    ],
+    "removed": []
+  },
+  "commands": [
+    {
+      "command": "git",
+      "args": ["status", "--short", "--untracked-files=all", "--", "skills/java-memory-model"],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": "git",
+      "args": ["diff", "--", "skills/java-memory-model"],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": "git",
+      "args": ["diff", "--cached", "--", "skills/java-memory-model"],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": "git",
+      "args": ["show", "HEAD:skills/java-memory-model/skill.yaml"],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "schemaVersion: 1\n\nname: java-memory-model\nversion: 1.3.5\ndescription: >-\n  Proving inter-thread visibility, ordering and atomicity under the Java Memory Model. Covers\n  actions/executions, synchronization order, synchronizes-with and happens-before, data races,\n  sequential consistency for correctly synchronized programs, volatile publication, monitor and\n  lifecycle edges, final-field freeze semantics, safe publication, compound invariants, benign\n  races, constructor escape, wait/notify, and architecture/JIT independence. Use for shared-state\n  correctness reviews and intermittent outcomes. VarHandle modes, algorithms, locks and testing\n  mechanics have separate owners.\n\nlicense: Apache-2.0\n\nauthors:\n  - name: agent-skills contributors\n    url: https://github.com/robsonkades/agent-skills\n\nhomepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-memory-model\nrepository:\n  type: git\n  url: https://github.com/robsonkades/agent-skills\n  directory: skills/java-memory-model\n\nkeywords:\n  - java\n  - jmm\n  - concurrency\n  - happens-before\n  - volatile\n  - memory-model\n  - publication\n\nfiles:\n  - SKILL.md\n  - skill.yaml\n  - references/\n\ndependencies: []\n\nsuggests:\n  - concurrency-diagnostics\n  - varhandles-and-memory-ordering\n  - java-thread-safety-contracts\n  - lock-free-patterns\n  - concurrency-testing\n  - cpu-cache-and-numa\n\ncapabilities:\n  - reads-source\n\nagentOverrides:\n  codex:\n    interface:\n      display_name: Java Memory Model\n      short_description: Happens-before, volatile and safe publication\n      default_prompt: Use Java Memory Model to check whether this concurrent code is correct.\n",
+      "stderr": ""
+    },
+    {
+      "command": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "C:/git/agent-skills/node_modules/prettier/bin/prettier.cjs",
+        "--check",
+        "C:/git/agent-skills/skills/java-memory-model/SKILL.md",
+        "C:/git/agent-skills/skills/java-memory-model/skill.yaml",
+        "C:/git/agent-skills/skills/java-memory-model/references/happens-before.md",
+        "C:/git/agent-skills/skills/java-memory-model/references/review-checklist.md"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "Checking formatting...\nAll matched files use Prettier code style!\n",
+      "stderr": ""
+    },
+    {
+      "command": "git",
+      "args": ["diff", "--check", "--", "skills/java-memory-model"],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": ["-version"],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n"
+    },
+    {
+      "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+      "args": ["-version"],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model",
+      "exitCode": 0,
+      "stdout": "javac 25.0.3\r\n",
+      "stderr": ""
+    },
+    {
+      "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+      "args": [
+        "--release",
+        "25",
+        "-d",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/evaluator-only/classes-0",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/case-inputs/A/project/src/memo/BestEffortMemo.java",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/case-inputs/A/project/src/memo/PublishedEntry.java",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/case-inputs/A/project/src/memo/ReaderFactory.java",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/case-inputs/A/project/test/memo/Smoke.java"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-cp",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/evaluator-only/classes-0",
+        "memo.Smoke"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model",
+      "exitCode": 0,
+      "stdout": "sequential-controls=2 PASS\r\n",
+      "stderr": ""
+    },
+    {
+      "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javap.exe",
+      "args": [
+        "-p",
+        "-v",
+        "-cp",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/evaluator-only/classes-0",
+        "memo.ReaderFactory"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model",
+      "exitCode": 0,
+      "stdout": "Classfile /C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/evaluator-only/classes-0/memo/ReaderFactory.class\r\n  Last modified Oct 16, 2026; size 943 bytes\r\n  SHA-256 checksum 4230fcf78db236eada57244011e86e347dec7ac12c20391c787ffd69b703f226\r\n  Compiled from \"ReaderFactory.java\"\r\nfinal class memo.ReaderFactory\r\n  minor version: 0\r\n  major version: 69\r\n  flags: (0x0030) ACC_FINAL, ACC_SUPER\r\n  this_class: #11                         // memo/ReaderFactory\r\n  super_class: #2                         // java/lang/Object\r\n  interfaces: 0, fields: 0, methods: 2, attributes: 3\r\nConstant pool:\r\n   #1 = Methodref          #2.#3          // java/lang/Object.\"<init>\":()V\r\n   #2 = Class              #4             // java/lang/Object\r\n   #3 = NameAndType        #5:#6          // \"<init>\":()V\r\n   #4 = Utf8               java/lang/Object\r\n   #5 = Utf8               <init>\r\n   #6 = Utf8               ()V\r\n   #7 = InvokeDynamic      #0:#8          // #0:applyAsInt:()Ljava/util/function/ToIntFunction;\r\n   #8 = NameAndType        #9:#10         // applyAsInt:()Ljava/util/function/ToIntFunction;\r\n   #9 = Utf8               applyAsInt\r\n  #10 = Utf8               ()Ljava/util/function/ToIntFunction;\r\n  #11 = Class              #12            // memo/ReaderFactory\r\n  #12 = Utf8               memo/ReaderFactory\r\n  #13 = Utf8               Code\r\n  #14 = Utf8               LineNumberTable\r\n  #15 = Utf8               create\r\n  #16 = Utf8               Signature\r\n  #17 = Utf8               ()Ljava/util/function/ToIntFunction<Lmemo/PublishedEntry;>;\r\n  #18 = Utf8               SourceFile\r\n  #19 = Utf8               ReaderFactory.java\r\n  #20 = Utf8               BootstrapMethods\r\n  #21 = MethodType         #22            //  (Ljava/lang/Object;)I\r\n  #22 = Utf8               (Ljava/lang/Object;)I\r\n  #23 = MethodHandle       5:#24          // REF_invokeVirtual memo/PublishedEntry.value:()I\r\n  #24 = Methodref          #25.#26        // memo/PublishedEntry.value:()I\r\n  #25 = Class              #27            // memo/PublishedEntry\r\n  #26 = NameAndType        #28:#29        // value:()I\r\n  #27 = Utf8               memo/PublishedEntry\r\n  #28 = Utf8               value\r\n  #29 = Utf8               ()I\r\n  #30 = MethodType         #31            //  (Lmemo/PublishedEntry;)I\r\n  #31 = Utf8               (Lmemo/PublishedEntry;)I\r\n  #32 = MethodHandle       6:#33          // REF_invokeStatic java/lang/invoke/LambdaMetafactory.metafactory:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;\r\n  #33 = Methodref          #34.#35        // java/lang/invoke/LambdaMetafactory.metafactory:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;\r\n  #34 = Class              #36            // java/lang/invoke/LambdaMetafactory\r\n  #35 = NameAndType        #37:#38        // metafactory:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;\r\n  #36 = Utf8               java/lang/invoke/LambdaMetafactory\r\n  #37 = Utf8               metafactory\r\n  #38 = Utf8               (Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;\r\n  #39 = Utf8               InnerClasses\r\n  #40 = Class              #41            // java/lang/invoke/MethodHandles$Lookup\r\n  #41 = Utf8               java/lang/invoke/MethodHandles$Lookup\r\n  #42 = Class              #43            // java/lang/invoke/MethodHandles\r\n  #43 = Utf8               java/lang/invoke/MethodHandles\r\n  #44 = Utf8               Lookup\r\n{\r\n  memo.ReaderFactory();\r\n    descriptor: ()V\r\n    flags: (0x0000)\r\n    Code:\r\n      stack=1, locals=1, args_size=1\r\n         0: aload_0\r\n         1: invokespecial #1                  // Method java/lang/Object.\"<init>\":()V\r\n         4: return\r\n      LineNumberTable:\r\n        line 3: 0\r\n\r\n  static java.util.function.ToIntFunction<memo.PublishedEntry> create();\r\n    descriptor: ()Ljava/util/function/ToIntFunction;\r\n    flags: (0x0008) ACC_STATIC\r\n    Code:\r\n      stack=1, locals=0, args_size=0\r\n         0: invokedynamic #7,  0              // InvokeDynamic #0:applyAsInt:()Ljava/util/function/ToIntFunction;\r\n         5: areturn\r\n      LineNumberTable:\r\n        line 5: 0\r\n    Signature: #17                          // ()Ljava/util/function/ToIntFunction<Lmemo/PublishedEntry;>;\r\n}\r\nSourceFile: \"ReaderFactory.java\"\r\nBootstrapMethods:\r\n  0: #32 REF_invokeStatic java/lang/invoke/LambdaMetafactory.metafactory:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;\r\n    Method arguments:\r\n      #21 (Ljava/lang/Object;)I\r\n      #23 REF_invokeVirtual memo/PublishedEntry.value:()I\r\n      #30 (Lmemo/PublishedEntry;)I\r\nInnerClasses:\r\n  public static final #44= #40 of #42;    // Lookup=class java/lang/invoke/MethodHandles$Lookup of class java/lang/invoke/MethodHandles\r\n",
+      "stderr": ""
+    },
+    {
+      "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javap.exe",
+      "args": [
+        "-p",
+        "-c",
+        "-cp",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/evaluator-only/classes-0",
+        "memo.PublishedEntry"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model",
+      "exitCode": 0,
+      "stdout": "Compiled from \"PublishedEntry.java\"\r\nfinal class memo.PublishedEntry {\r\n  private final memo.PublishedEntry$Payload primary;\r\n\r\n  private memo.PublishedEntry$Payload legacy;\r\n\r\n  memo.PublishedEntry(int);\r\n    Code:\r\n         0: aload_0\r\n         1: invokespecial #1                  // Method java/lang/Object.\"<init>\":()V\r\n         4: new           #7                  // class memo/PublishedEntry$Payload\r\n         7: dup\r\n         8: invokespecial #9                  // Method memo/PublishedEntry$Payload.\"<init>\":()V\r\n        11: astore_2\r\n        12: aload_2\r\n        13: iload_1\r\n        14: putfield      #10                 // Field memo/PublishedEntry$Payload.value:I\r\n        17: aload_0\r\n        18: aload_2\r\n        19: putfield      #14                 // Field primary:Lmemo/PublishedEntry$Payload;\r\n        22: aload_0\r\n        23: aload_2\r\n        24: putfield      #20                 // Field legacy:Lmemo/PublishedEntry$Payload;\r\n        27: return\r\n\r\n  int value();\r\n    Code:\r\n         0: aload_0\r\n         1: getfield      #14                 // Field primary:Lmemo/PublishedEntry$Payload;\r\n         4: getfield      #10                 // Field memo/PublishedEntry$Payload.value:I\r\n         7: ireturn\r\n\r\n  int legacyValue();\r\n    Code:\r\n         0: aload_0\r\n         1: getfield      #20                 // Field legacy:Lmemo/PublishedEntry$Payload;\r\n         4: getfield      #10                 // Field memo/PublishedEntry$Payload.value:I\r\n         7: ireturn\r\n}\r\n",
+      "stderr": ""
+    },
+    {
+      "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+      "args": [
+        "--release",
+        "25",
+        "-d",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/evaluator-only/classes-1",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/case-inputs/B/project/src/memo/BestEffortMemo.java",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/case-inputs/B/project/src/memo/PublishedEntry.java",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/case-inputs/B/project/src/memo/ReaderFactory.java",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/case-inputs/B/project/test/memo/Smoke.java"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-cp",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/evaluator-only/classes-1",
+        "memo.Smoke"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model",
+      "exitCode": 0,
+      "stdout": "sequential-controls=2 PASS\r\n",
+      "stderr": ""
+    },
+    {
+      "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javap.exe",
+      "args": [
+        "-p",
+        "-v",
+        "-cp",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/evaluator-only/classes-1",
+        "memo.ReaderFactory"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model",
+      "exitCode": 0,
+      "stdout": "Classfile /C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/evaluator-only/classes-1/memo/ReaderFactory.class\r\n  Last modified Oct 16, 2026; size 949 bytes\r\n  SHA-256 checksum 9d57af21357f2b62cb75c06dacc1020a5f74ee598a0545a3e85037d20f466cba\r\n  Compiled from \"ReaderFactory.java\"\r\nfinal class memo.ReaderFactory\r\n  minor version: 0\r\n  major version: 69\r\n  flags: (0x0030) ACC_FINAL, ACC_SUPER\r\n  this_class: #11                         // memo/ReaderFactory\r\n  super_class: #2                         // java/lang/Object\r\n  interfaces: 0, fields: 0, methods: 2, attributes: 3\r\nConstant pool:\r\n   #1 = Methodref          #2.#3          // java/lang/Object.\"<init>\":()V\r\n   #2 = Class              #4             // java/lang/Object\r\n   #3 = NameAndType        #5:#6          // \"<init>\":()V\r\n   #4 = Utf8               java/lang/Object\r\n   #5 = Utf8               <init>\r\n   #6 = Utf8               ()V\r\n   #7 = InvokeDynamic      #0:#8          // #0:applyAsInt:()Ljava/util/function/ToIntFunction;\r\n   #8 = NameAndType        #9:#10         // applyAsInt:()Ljava/util/function/ToIntFunction;\r\n   #9 = Utf8               applyAsInt\r\n  #10 = Utf8               ()Ljava/util/function/ToIntFunction;\r\n  #11 = Class              #12            // memo/ReaderFactory\r\n  #12 = Utf8               memo/ReaderFactory\r\n  #13 = Utf8               Code\r\n  #14 = Utf8               LineNumberTable\r\n  #15 = Utf8               create\r\n  #16 = Utf8               Signature\r\n  #17 = Utf8               ()Ljava/util/function/ToIntFunction<Lmemo/PublishedEntry;>;\r\n  #18 = Utf8               SourceFile\r\n  #19 = Utf8               ReaderFactory.java\r\n  #20 = Utf8               BootstrapMethods\r\n  #21 = MethodType         #22            //  (Ljava/lang/Object;)I\r\n  #22 = Utf8               (Ljava/lang/Object;)I\r\n  #23 = MethodHandle       5:#24          // REF_invokeVirtual memo/PublishedEntry.legacyValue:()I\r\n  #24 = Methodref          #25.#26        // memo/PublishedEntry.legacyValue:()I\r\n  #25 = Class              #27            // memo/PublishedEntry\r\n  #26 = NameAndType        #28:#29        // legacyValue:()I\r\n  #27 = Utf8               memo/PublishedEntry\r\n  #28 = Utf8               legacyValue\r\n  #29 = Utf8               ()I\r\n  #30 = MethodType         #31            //  (Lmemo/PublishedEntry;)I\r\n  #31 = Utf8               (Lmemo/PublishedEntry;)I\r\n  #32 = MethodHandle       6:#33          // REF_invokeStatic java/lang/invoke/LambdaMetafactory.metafactory:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;\r\n  #33 = Methodref          #34.#35        // java/lang/invoke/LambdaMetafactory.metafactory:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;\r\n  #34 = Class              #36            // java/lang/invoke/LambdaMetafactory\r\n  #35 = NameAndType        #37:#38        // metafactory:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;\r\n  #36 = Utf8               java/lang/invoke/LambdaMetafactory\r\n  #37 = Utf8               metafactory\r\n  #38 = Utf8               (Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;\r\n  #39 = Utf8               InnerClasses\r\n  #40 = Class              #41            // java/lang/invoke/MethodHandles$Lookup\r\n  #41 = Utf8               java/lang/invoke/MethodHandles$Lookup\r\n  #42 = Class              #43            // java/lang/invoke/MethodHandles\r\n  #43 = Utf8               java/lang/invoke/MethodHandles\r\n  #44 = Utf8               Lookup\r\n{\r\n  memo.ReaderFactory();\r\n    descriptor: ()V\r\n    flags: (0x0000)\r\n    Code:\r\n      stack=1, locals=1, args_size=1\r\n         0: aload_0\r\n         1: invokespecial #1                  // Method java/lang/Object.\"<init>\":()V\r\n         4: return\r\n      LineNumberTable:\r\n        line 3: 0\r\n\r\n  static java.util.function.ToIntFunction<memo.PublishedEntry> create();\r\n    descriptor: ()Ljava/util/function/ToIntFunction;\r\n    flags: (0x0008) ACC_STATIC\r\n    Code:\r\n      stack=1, locals=0, args_size=0\r\n         0: invokedynamic #7,  0              // InvokeDynamic #0:applyAsInt:()Ljava/util/function/ToIntFunction;\r\n         5: areturn\r\n      LineNumberTable:\r\n        line 5: 0\r\n    Signature: #17                          // ()Ljava/util/function/ToIntFunction<Lmemo/PublishedEntry;>;\r\n}\r\nSourceFile: \"ReaderFactory.java\"\r\nBootstrapMethods:\r\n  0: #32 REF_invokeStatic java/lang/invoke/LambdaMetafactory.metafactory:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;\r\n    Method arguments:\r\n      #21 (Ljava/lang/Object;)I\r\n      #23 REF_invokeVirtual memo/PublishedEntry.legacyValue:()I\r\n      #30 (Lmemo/PublishedEntry;)I\r\nInnerClasses:\r\n  public static final #44= #40 of #42;    // Lookup=class java/lang/invoke/MethodHandles$Lookup of class java/lang/invoke/MethodHandles\r\n",
+      "stderr": ""
+    },
+    {
+      "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javap.exe",
+      "args": [
+        "-p",
+        "-c",
+        "-cp",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/evaluator-only/classes-1",
+        "memo.PublishedEntry"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model",
+      "exitCode": 0,
+      "stdout": "Compiled from \"PublishedEntry.java\"\r\nfinal class memo.PublishedEntry {\r\n  private final memo.PublishedEntry$Payload primary;\r\n\r\n  private memo.PublishedEntry$Payload legacy;\r\n\r\n  memo.PublishedEntry(int);\r\n    Code:\r\n         0: aload_0\r\n         1: invokespecial #1                  // Method java/lang/Object.\"<init>\":()V\r\n         4: new           #7                  // class memo/PublishedEntry$Payload\r\n         7: dup\r\n         8: invokespecial #9                  // Method memo/PublishedEntry$Payload.\"<init>\":()V\r\n        11: astore_2\r\n        12: aload_2\r\n        13: iload_1\r\n        14: putfield      #10                 // Field memo/PublishedEntry$Payload.value:I\r\n        17: aload_0\r\n        18: aload_2\r\n        19: putfield      #14                 // Field primary:Lmemo/PublishedEntry$Payload;\r\n        22: aload_0\r\n        23: aload_2\r\n        24: putfield      #20                 // Field legacy:Lmemo/PublishedEntry$Payload;\r\n        27: return\r\n\r\n  int value();\r\n    Code:\r\n         0: aload_0\r\n         1: getfield      #14                 // Field primary:Lmemo/PublishedEntry$Payload;\r\n         4: getfield      #10                 // Field memo/PublishedEntry$Payload.value:I\r\n         7: ireturn\r\n\r\n  int legacyValue();\r\n    Code:\r\n         0: aload_0\r\n         1: getfield      #20                 // Field legacy:Lmemo/PublishedEntry$Payload;\r\n         4: getfield      #10                 // Field memo/PublishedEntry$Payload.value:I\r\n         7: ireturn\r\n}\r\n",
+      "stderr": ""
+    },
+    {
+      "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+      "args": [
+        "--release",
+        "25",
+        "-d",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/evaluator-only/construction-classes",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/evaluator-only/ConstructionControls.java"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-cp",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/evaluator-only/construction-classes",
+        "ConstructionControls"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model",
+      "exitCode": 0,
+      "stdout": "PASS constructor escape exposes incomplete reachable state\r\nPASS constructor worker finished without failure\r\nPASS join establishes completed constructor observation\r\nPASS final reference does not prevent later reachable-state mutation\r\nconstruction-controls=4 PASS\r\n",
+      "stderr": ""
+    },
+    {
+      "command": "git",
+      "args": ["status", "--short", "--untracked-files=all", "--", "skills/java-memory-model"],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": " M skills/java-memory-model/references/happens-before.md\n M skills/java-memory-model/skill.yaml\n",
+      "stderr": ""
+    },
+    {
+      "command": "git",
+      "args": ["diff", "--", "skills/java-memory-model"],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "diff --git a/skills/java-memory-model/references/happens-before.md b/skills/java-memory-model/references/happens-before.md\nindex 4d06037..b3a9506 100644\n--- a/skills/java-memory-model/references/happens-before.md\n+++ b/skills/java-memory-model/references/happens-before.md\n@@ -97,7 +97,11 @@ Prefer eager or holder initialization when lifecycle permits.\n \n Final-field semantics provide special visibility for correctly constructed objects even in some\n racy publication executions. They do not create a generic synchronizes-with/happens-before edge.\n-They do not guarantee non-final fields, later mutations, or that a reader sees a non-null reference.\n+They do not guarantee unrelated non-final fields on the containing object, later mutations, or\n+that a reader sees a non-null reference. Initialization writes to object/array state reached through\n+a final field can be covered by JLS 17.5.1's freeze/dereference rules even when that reachable state\n+is non-final. Follow the actual read path; an ordinary alias pointing to the same object does not\n+by itself establish that protection.\n \n Review reachable mutable objects separately:\n \ndiff --git a/skills/java-memory-model/skill.yaml b/skills/java-memory-model/skill.yaml\nindex cf77233..b4d073a 100644\n--- a/skills/java-memory-model/skill.yaml\n+++ b/skills/java-memory-model/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: java-memory-model\n-version: 1.3.5\n+version: 1.3.6\n description: >-\n   Proving inter-thread visibility, ordering and atomicity under the Java Memory Model. Covers\n   actions/executions, synchronization order, synchronizes-with and happens-before, data races,\n",
+      "stderr": ""
+    },
+    {
+      "command": "git",
+      "args": ["diff", "--cached", "--", "skills/java-memory-model"],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": "git",
+      "args": ["diff", "--check", "--", "skills/java-memory-model"],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "commandLogs": [
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/commands.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/final-validation.json"
+  ],
+  "checks": {
+    "structural": {
+      "metadata": "PASS",
+      "localReferenceLinks": 2,
+      "declaredOptionalReferrals": 6,
+      "actualReferralsChecked": 5,
+      "prettier": "PASS",
+      "gitDiffCheck": "PASS"
+    },
+    "technical": {
+      "runtime": "Temurin25.0.3+9",
+      "compilerRelease": 25,
+      "preview": false,
+      "bytecode": [
+        {
+          "id": "java-memory-model-A",
+          "selectedMethod": "value",
+          "compiled": true,
+          "sequentialControls": 2,
+          "classMajor": 69
+        },
+        {
+          "id": "java-memory-model-B",
+          "selectedMethod": "legacyValue",
+          "compiled": true,
+          "sequentialControls": 2,
+          "classMajor": 69
+        }
+      ],
+      "sequentialFixtureChecks": 4,
+      "constructorControls": 4
+    },
+    "executionScope": "Both paired fixtures compiled --release25 and ran on Temurin25.0.3+9; 2 sequential assertions each. javap confirms factory method target and corresponding field reads. Separate constructor controls exercised 4 assertions with queue/latch/join ordering.",
+    "concurrencyInterpretation": "No observed racy zero/default value is asserted for case B. The specification proof determines its missing guarantee. Separate constructor-escape control intentionally exposes unfinished state and observes0, then42 after join; another control observes99 after ordered later mutation.",
+    "behavioralEvaluationsExecuted": [],
+    "comparativeImprovementMeasured": false,
+    "structuredWalkthroughs": [
+      "A follows final primary -> initialized non-final payload; stale/absent holder observation is accepted, present42 guaranteed under stated assumptions.",
+      "B follows ordinary legacy alias only; presence of an unused final primary does not establish the required dereference chain. Default state/null is not excluded by the JMM and violates the accepted contract."
+    ],
+    "unavailable": [
+      "jcstress absent in C:/Users/robso/.m2/repository/org/openjdk/jcstress/jcstress-core as inspected; not installed or executed."
+    ],
+    "failures": [],
+    "discoveryLimits": [
+      "A read-only rg query for skill name in comparative documents returned no matches, not a validation failure.",
+      "Browser text find for MemoryVisibility did not expose anchor markup; direct HTML verified the anchor.",
+      "No materially changed executable example in the package; unchanged partial snippets were reviewed, not all compiled."
+    ]
+  },
+  "sources": [
+    {
+      "id": "jls-25-17",
+      "url": "https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html",
+      "resolvedUrl": "https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html",
+      "status": 200,
+      "consultedAt": "2026-10-16T16:48:24.983Z",
+      "version": "Java SE25",
+      "supports": "17.2 wait/notify; 17.4.4/5 lifecycle and synchronization; 17.5/17.5.1 final-field reachability; 17.6/7 atomicity.",
+      "file": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/sources/jls-25-17.html",
+      "sha256": "5f747f41e4d2acf422eb789a693d423b8d2453b2f27aedcda62e4a5a7310553a",
+      "bytes": 175855
+    },
+    {
+      "id": "jls-25-12",
+      "url": "https://docs.oracle.com/javase/specs/jls/se25/html/jls-12.html",
+      "resolvedUrl": "https://docs.oracle.com/javase/specs/jls/se25/html/jls-12.html",
+      "status": 200,
+      "consultedAt": "2026-10-16T16:48:25.006Z",
+      "version": "Java SE25",
+      "supports": "12.4.2 initialization, including recursive initialization and failure.",
+      "file": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/sources/jls-25-12.html",
+      "sha256": "180bddf144921dbaecd5363f86850ee5d240872feb65c108f6dfca97d16d64c9",
+      "bytes": 144130
+    },
+    {
+      "id": "concurrent-25",
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/package-summary.html",
+      "resolvedUrl": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/package-summary.html",
+      "status": 200,
+      "consultedAt": "2026-10-16T16:48:24.950Z",
+      "version": "Java SE25",
+      "supports": "API-level memory consistency and exact handoff clauses.",
+      "file": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/sources/concurrent-25.html",
+      "sha256": "34cac50914ecbcf977d39c329d33d9c40763b11ad699454eae63ed32251ce220",
+      "bytes": 64391,
+      "memoryVisibilityAnchor": true
+    },
+    {
+      "id": "thread-25",
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Thread.html",
+      "resolvedUrl": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Thread.html",
+      "status": 200,
+      "consultedAt": "2026-10-16T16:48:24.941Z",
+      "version": "Java SE25",
+      "supports": "join/timed join/isAlive/interrupt lifecycle distinctions.",
+      "file": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/sources/thread-25.html",
+      "sha256": "5e6778961fb01408a9ffa9c5233fb4e3d8e3f4a6c54a69b3d6b1b3c249fa4601",
+      "bytes": 139271
+    },
+    {
+      "id": "object-25",
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html",
+      "resolvedUrl": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html",
+      "status": 200,
+      "consultedAt": "2026-10-16T16:48:24.933Z",
+      "version": "Java SE25",
+      "supports": "wait releases only its monitor and reacquires; notification/predicate requirements.",
+      "file": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/sources/object-25.html",
+      "sha256": "835c07e9b2bfc274819dbf8ffc0ab12d7ef81d2990508a8b95dbc7ca4e5a34a0",
+      "bytes": 51945
+    },
+    {
+      "id": "atomic-25",
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/atomic/package-summary.html",
+      "resolvedUrl": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/atomic/package-summary.html",
+      "status": 200,
+      "consultedAt": "2026-10-16T16:48:25.074Z",
+      "version": "Java SE25",
+      "supports": "Individual atomic operations and arrays do not imply multi-element snapshot.",
+      "file": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/sources/atomic-25.html",
+      "sha256": "5317bf4e767000cd88120621d67f56bad3a5ea3271a0858b04751ccca0f4098b",
+      "bytes": 18652
+    }
+  ],
+  "evidenceFiles": [
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/assignment-baseline.json",
+      "sha256": "e9b896f3014cc24a0cca33669686fd67412f8d2ec79db8e6487ac5581fe1afe7"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/case-inputs/A/input.json",
+      "sha256": "b0698159af72b9d60f8bbf4989367958bbe770185a93d370aeb155e9dea4e6d9"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/case-inputs/A/project/README.md",
+      "sha256": "7528c8030c6e58136385c6ce004edd888cdc5ef758de6a3e686f9cafb18ff675"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/case-inputs/A/project/docs/contract.md",
+      "sha256": "ceaa05aa4c210245338b9c4b3e779e9d6878087febe314eab01e6814fe6d2287"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/case-inputs/A/project/docs/review-request.md",
+      "sha256": "86d670bf08679312dac2a34b2afd445a0548de7495460636959f86bcf1e868f2"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/case-inputs/A/project/src/memo/BestEffortMemo.java",
+      "sha256": "773ac3a0db89c62165fb6e34ef87203daf45504cd6ed320ae3492e771ae675db"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/case-inputs/A/project/src/memo/PublishedEntry.java",
+      "sha256": "b97db2071eb31c3584e786a99994684cde4c169034fe9d3ecb03bb78211946bb"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/case-inputs/A/project/src/memo/ReaderFactory.java",
+      "sha256": "87601944fc6f7e44f634aed1e56da1298adda524275c0dc4e03452714866c89c"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/case-inputs/A/project/test/memo/Smoke.java",
+      "sha256": "5fb4bf14f226c3cbaaa147cefd50a30a456eae5ce35ba8f19d40dc0398c9f335"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/case-inputs/B/input.json",
+      "sha256": "9fa0e9b845a36185aabd450fc0beba1c8e6d9abbfa52505672f36c8ec033ae41"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/case-inputs/B/project/README.md",
+      "sha256": "7528c8030c6e58136385c6ce004edd888cdc5ef758de6a3e686f9cafb18ff675"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/case-inputs/B/project/docs/contract.md",
+      "sha256": "ceaa05aa4c210245338b9c4b3e779e9d6878087febe314eab01e6814fe6d2287"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/case-inputs/B/project/docs/review-request.md",
+      "sha256": "86d670bf08679312dac2a34b2afd445a0548de7495460636959f86bcf1e868f2"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/case-inputs/B/project/src/memo/BestEffortMemo.java",
+      "sha256": "773ac3a0db89c62165fb6e34ef87203daf45504cd6ed320ae3492e771ae675db"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/case-inputs/B/project/src/memo/PublishedEntry.java",
+      "sha256": "b97db2071eb31c3584e786a99994684cde4c169034fe9d3ecb03bb78211946bb"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/case-inputs/B/project/src/memo/ReaderFactory.java",
+      "sha256": "d6b8766eb709c274626023c345de09c08da665546445ddc180663818ebaf16de"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/case-inputs/B/project/test/memo/Smoke.java",
+      "sha256": "5fb4bf14f226c3cbaaa147cefd50a30a456eae5ce35ba8f19d40dc0398c9f335"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/commands.json",
+      "sha256": "62f1bfbe9b1778e32e97d1896f49d04acbd2f326af4ab82cfc88d82cb6221a05"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/evaluator-only/ConstructionControls.java",
+      "sha256": "7f925c211c5a094aae951a2f87108ff2ba1588c9dc2a6a2bd4f11368cf95a5c6"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/evaluator-only/criteria.json",
+      "sha256": "4365f4fc638cd0c69b2a64efca721c64feb203859f004df5c62a52191dbf1d53"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/final-diff.patch",
+      "sha256": "b46581eafe7d90d976250bb402add1950abaea266fd291d2879696816cecc666"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/final-validation.json",
+      "sha256": "a8813c67eb8aa18ed682194875a65eb0909cae7bfd4bb3ecf9f7f6d24021671c"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/finish-review.mjs",
+      "sha256": "03126543a658cd5e82c8011b5c035cc4eac368e58221ca370672cc49816ad575"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/local-validation.json",
+      "sha256": "abf993c6dc4b827182a757f1ac1e3121acf817b4114849186f06e00ecfdf4f86"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/prepare-review.mjs",
+      "sha256": "658e8cd9f4628f2363c877aaa1c2ad135e5341277a2d88ab201d06bd8479f467"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/sources/source-index.json",
+      "sha256": "8a0034eda7bc3195a65718a6c7fd468c31928e318e2ebc3cf146603a25fca011"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/validate-and-cases.mjs",
+      "sha256": "45f4ed4648d2906db54349bcfec71ac0e0a9b7c141c5913dec77cc2ec4c01955"
+    }
+  ],
+  "evidenceDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model",
+  "sourceRetention": "Official documents remain under the isolated temp sources directory; source index carries URLs, sections, retrieval times and hashes. Raw documents are excluded from evidenceFiles for repository archival.",
+  "cases": {
+    "inputs": [
+      {
+        "id": "java-memory-model-A",
+        "input": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/case-inputs/A/input.json",
+        "fixtureRoot": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/case-inputs/A/project",
+        "files": [
+          "README.md",
+          "docs/contract.md",
+          "docs/review-request.md",
+          "src/memo/BestEffortMemo.java",
+          "src/memo/PublishedEntry.java",
+          "src/memo/ReaderFactory.java",
+          "test/memo/Smoke.java"
+        ]
+      },
+      {
+        "id": "java-memory-model-B",
+        "input": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/case-inputs/B/input.json",
+        "fixtureRoot": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/case-inputs/B/project",
+        "files": [
+          "README.md",
+          "docs/contract.md",
+          "docs/review-request.md",
+          "src/memo/BestEffortMemo.java",
+          "src/memo/PublishedEntry.java",
+          "src/memo/ReaderFactory.java",
+          "test/memo/Smoke.java"
+        ]
+      }
+    ],
+    "criteria": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/evaluator-only/criteria.json",
+    "onlyDifference": [
+      {
+        "name": "src/memo/ReaderFactory.java",
+        "a": "87601944fc6f7e44f634aed1e56da1298adda524275c0dc4e03452714866c89c",
+        "b": "d6b8766eb709c274626023c345de09c08da665546445ddc180663818ebaf16de"
+      }
+    ],
+    "knownDevelopmentCases": true
+  },
+  "caseLimitations": [
+    "Known development pair, no held-out status.",
+    "Input fixtures and evaluator-only criteria are separate paths; access isolation is procedural.",
+    "Only ReaderFactory.java method selection changes; all six other files are byte-identical.",
+    "The cases need specification reasoning; sequential smoke and javap are not concurrency proofs."
+  ],
+  "limitations": [
+    "No agent actor or behavioral comparison executed.",
+    "No racy default-value observation in case B was claimed; its rejected guarantee is supported by JLS reasoning, not by sequential smoke tests.",
+    "Bytecode checks confirm the selected read path, not all possible JIT executions.",
+    "Constructor-escape and post-construction-mutation controls deliberately violate assumptions absent from the paired fixtures; they are separate regression controls.",
+    "The constructor control uses explicit queue/latch/join synchronization; it is not a stress test of racy publication.",
+    "jcstress not present in the inspected local cache; not installed or run.",
+    "No target architecture diversity, concurrency performance or full memory-model verification claimed.",
+    "Global registry generation and verify are coordinator-only and pending."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "cwd": "C:/git/agent-skills",
+      "purpose": "Regenerate shared version/integrity index.",
+      "prerequisites": "Coordinator only, after all reviewers stop writes."
+    },
+    {
+      "command": "npm run verify",
+      "cwd": "C:/git/agent-skills",
+      "purpose": "Repository-wide integration and required checks.",
+      "prerequisites": "Coordinator only, after registry generation and all writers stop."
+    }
+  ],
+  "crossSkillFindings": [],
+  "coordinatorActions": [
+    "Inspect focused reference/version diff and archive authored evidence/cases if desired.",
+    "Run pending global checks; no behavioral success or incremental gain should be inferred from this handoff."
+  ],
+  "allWritesStopped": true,
+  "activeBackgroundProcesses": [],
+  "processAssurance": "All commands used synchronous bounded child processes and completed. Both spawned Java worker threads were joined; no watcher, server, actor or background process remains."
+}

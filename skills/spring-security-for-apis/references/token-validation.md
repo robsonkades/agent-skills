@@ -133,6 +133,29 @@ different retrieval lifecycles; inspect the effective decoder. A test that trigg
 via an unknown key does not measure cache TTL expiry or establish a startup guarantee.
 [7.1.0 decoder key-source wiring](https://github.com/spring-projects/spring-security/blob/7.1.0/oauth2/oauth2-jose/src/main/java/org/springframework/security/oauth2/jwt/NimbusJwtDecoder.java).
 
+## Preserve principal identity when adding issuers
+
+Trace the authenticated principal into the application's caller context, account lookup,
+ownership checks and authorization caches. In Security 7.1.0 the default
+`JwtAuthenticationConverter` derives the principal name from `sub`. RFC 7519 permits a
+subject to be unique only within its issuer; two correctly validated tokens can therefore
+have the same `Authentication.getName()` while identifying different callers.
+[7.1.0 principal conversion](https://github.com/spring-projects/spring-security/blob/7.1.0/oauth2/oauth2-resource-server/src/main/java/org/springframework/security/oauth2/server/resource/authentication/JwtAuthenticationConverter.java),
+[JWT subject scope](https://www.rfc-editor.org/rfc/rfc7519.html#section-4.1.2).
+
+For multiple trusted issuers, retain the **validated issuer and subject pair**, or resolve
+it through the application's trusted canonical-account mapping. Use that identity
+consistently wherever callers share an account/permission namespace. Do not silently link
+accounts because `sub`, an email address or a display name happens to match. Only use claims
+after the configured authentication checks; a pair built from an unverified JWT establishes
+no identity. Required identity claims must not fall back to a shared empty/default account.
+
+Keep an adequate single-issuer mapping or a documented globally unique identity contract.
+Apply a needed change at the existing caller/account boundary; it need not replace the JWT
+decoder, scope converter or domain authorization model. If introducing a second issuer or
+changing the identity key, check existing account links, owner references and cache keys
+before rollout so the change neither merges unrelated callers nor strands valid owners.
+
 ## Authorities are a schema contract
 
 Spring's standard JWT converter maps scopes from `scope` or `scp` to `SCOPE_...`. An issuer

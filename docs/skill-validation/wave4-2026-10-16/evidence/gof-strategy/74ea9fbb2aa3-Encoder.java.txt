@@ -1,0 +1,6 @@
+interface Encoder extends AutoCloseable {
+    void add(String row);
+    String finish();
+    @Override void close();
+}
+

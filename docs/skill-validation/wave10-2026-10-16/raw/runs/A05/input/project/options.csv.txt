@@ -1,0 +1,3 @@
+opcao,total_24_meses_mil,escopo
+R,520,retencao com todas as despesas
+N_via_P,410,migracao sobreposicao operacao saida e recuperacao incluidas

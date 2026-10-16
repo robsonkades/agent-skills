@@ -1,0 +1,6 @@
+{
+  "skill": "feature-solution-analysis",
+  "common": "Reassess draft C7 for exports through analysis only; do not implement, spend, or accept an option. C7 recommended OPT-A for the smallest setup cost and omitted recurring costs. ED12 accepts the behavior of both approaches; selection is delegated, with a budget of 90000. Both are verified feasible under Java 17 and meet the output deadline, security, recovery, and transition requirements, with equal quality and rollback capability. CS4 estimates A at 2000 setup plus 3000 per month, including operator costs, and B at 14000 setup plus 500 per month, including support. All material costs are included; there are no discount or demand differences. No option is accepted. The requester says to keep A because it has the smallest diff. Preserve IDs and history, and give a recommendation and reopening trigger.",
+  "scenarioA": "Approved P9 specifies a lifetime of 3 months.",
+  "scenarioB": "Approved P9 specifies a lifetime of 24 months."
+}

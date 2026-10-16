@@ -1,0 +1,4 @@
+Exception in thread "main" java.lang.AssertionError: resource admitted while initial operation open
+	at BulkheadChecks.held(BulkheadChecks.java:35)
+	at BulkheadChecks.callerScope(BulkheadChecks.java:129)
+	at BulkheadChecks.main(BulkheadChecks.java:11)

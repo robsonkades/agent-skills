@@ -56,10 +56,61 @@ Conversely, a consumer that only needs aggregate totals has a different contract
 individual-order export merely to satisfy this example.
 
 Link consequential criteria to the stated need or binding constraint and explain any proxy.
-If the intended workflow is unknown and changes the contract, inspect usage first, then ask
-the focused question. For a business outcome observable only after release, distinguish the
-delivery checks from that still-unverified outcome; do not invent a target, run an experiment
-outside the request, or impose a new release gate.
+For the relevant workflow, follow an actual actor or consumer from the entry point through the
+operation to where the result is observed, using source, tests or documented usage. Record the
+few paths or source links that establish this connection. A worker's success log may be useful
+evidence without showing that the consumer received a usable result. For new behavior, keep
+the intended observation point distinct from what exists or has been exercised today.
+If the workflow is unknown and changes the contract, inspect usage first, then ask the focused
+question; an unavailable source or failed search does not settle the requirement. For a business
+outcome observable only after release, distinguish delivery checks from that still-unverified
+outcome; do not invent a target, run an experiment outside the request, or impose a new release gate.
+
+## Preserve conditions when rewriting
+
+Compare changed criteria with their requirement or accepted clarification, not just with the
+current implementation. Preserve qualifiers that change the permitted outcomes: actor and
+resource scope, "only", "every" or "at most once", inclusive/exclusive bounds, timing, ordering
+and failure or retry conditions. Check both directions: each material source condition has a
+covering criterion or an explicit unresolved question, and each added condition has authority
+or is labeled proposed. Existing identifiers or short source links suffice.
+
+For example, "A reviewer may approve a request at most once, only if it is assigned to that
+reviewer and still pending when approval is applied" is weakened by "Selected requests can be
+approved." Keep the assignment, current-state and duplicate-effect constraints when deriving
+success and rejection cases; a successful approval alone does not exercise them. Splitting
+the rules into separate criteria must not erase their combined applicability.
+
+A wording edit or handoff is not authority to relax a condition. When an accepted clarification
+does change it, preserve the source and reason and review the affected checks as described below.
+
+## Time and state in acceptance criteria
+
+When processing continues after a response, specify acknowledgment and completion separately.
+For HTTP, `202 Accepted` means processing was accepted, not completed; it does not guarantee
+the eventual outcome ([RFC 9110, section 15.3.3](https://www.rfc-editor.org/rfc/rfc9110.html#section-15.3.3)).
+A job ID or a "ready" flag alone does not establish that the consumer can obtain the promised
+result. Name the observable result and how the consumer recognizes success or failure using
+the agreed interface; do not prescribe polling, callbacks or a new queue merely to write a criterion.
+
+For a timing promise, name the starting event, the required visible state and the agreed bound
+under the specified conditions. Keep an absent bound unresolved instead of inventing a default
+or accepting "eventually" as a finite check. Specify what happens if completion fails or the
+consumer stops waiting: a timeout observation is not evidence that cancellation or cleanup occurred.
+With a valid observation spanning the agreed start and deadline, absent required visible completion
+can make that timing criterion unmet while the eventual effect remains unverified. Without that
+coverage, keep the timing result unverified too; do not turn a disconnected observer into a verdict.
+If partial output is permitted, state how it is distinguished from a complete result and which
+guarantees still hold; do not silently treat a partial file as success or ban it without a requirement.
+
+For changing data, define the expected membership and field versions before asserting
+"every selected order exactly once." A point-in-time export and a live traversal have different
+contracts. Suppose orders A and B qualify at the agreed cutoff, then B changes and C is added
+while the export runs. A snapshot contract checks A and B with their cutoff values and excludes
+C; a live contract must state which later changes may appear and any completeness/duplicate
+guarantees it still promises. Use controlled changes between reads to check the chosen contract.
+Do not infer snapshot semantics from deterministic sorting, or choose a database isolation level
+in place of establishing the consumer's required view.
 
 ## Cover the unhappy paths explicitly
 
@@ -170,9 +221,15 @@ exhaustive correctness.
 
 ## Supporting sources
 
+- [NASA Systems Engineering Handbook, appendix C](https://www.nasa.gov/reference/appendix-c-how-to-write-a-good-requirement/)
+  covers unambiguous, verifiable requirements, timing, interfaces, failure responses and sequence assumptions.
+- [PostgreSQL 17 transaction isolation](https://www.postgresql.org/docs/17/transaction-iso.html)
+  illustrates why successive reads and one consistent snapshot are different guarantees;
+  this example does not mandate PostgreSQL or an isolation level for the target project.
 - [NASA Systems Engineering Handbook, section 2.4](https://www.nasa.gov/reference/2-0-fundamentals-of-systems-engineering/)
   distinguishes conformance verification from validation of intended use.
 - [NASA Systems Engineering Handbook, section 6.2](https://www.nasa.gov/reference/6-2-requirements-management/)
-  describes requirement sources, traceability and change-impact analysis. Apply those
-  reasoning principles proportionately; its NASA-specific approval machinery is not project
+  describes requirement sources, checking derived requirements against their parents, traceability
+  and change-impact analysis. Apply those reasoning principles proportionately;
+  its NASA-specific approval machinery is not project
   policy.

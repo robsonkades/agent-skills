@@ -1,0 +1,14 @@
+package example;
+import java.util.stream.Collectors;
+public final class Report {
+    public static String render(Order order) {
+        return order.lines().stream().map(line -> line.sku() + ":" + line.quantity())
+                .collect(Collectors.joining(","));
+    }
+    public static void main(String[] args) {
+        Order order = new Order();
+        order.add("A", 40);
+        order.add("B", 60);
+        System.out.println(render(order));
+    }
+}

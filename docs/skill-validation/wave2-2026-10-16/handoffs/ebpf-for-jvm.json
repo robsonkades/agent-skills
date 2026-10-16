@@ -1,0 +1,277 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "ebpf-for-jvm",
+  "ownedPath": "skills/ebpf-for-jvm/**",
+  "reviewedAt": "2026-10-16",
+  "versions": {
+    "committed": "2.1.4",
+    "assignment": "2.1.4",
+    "final": "2.1.5",
+    "rationale": "One patch bump for focused namespace-scoping clarification; no pre-existing bump."
+  },
+  "files": {
+    "inspected": [
+      {
+        "path": "skills/ebpf-for-jvm/SKILL.md",
+        "assignmentSha256": "8201f8607fd7a6943085e4b1015f2c2c4b8a9129874254a21a434f2247fdd274",
+        "finalSha256": "69ef9736df19b1b1b645ac6c608cc53e039f23d0210e6947df15fd2d1f703599"
+      },
+      {
+        "path": "skills/ebpf-for-jvm/skill.yaml",
+        "assignmentSha256": "6241004d640a76aa2411f3cd411f74c766568e5a9372fc9a3c690883653accc3",
+        "finalSha256": "8763b6fe447fd51aacdfcbe9538daa8f28beff8a4e528129187eaba3b6be2c10"
+      },
+      {
+        "path": "skills/ebpf-for-jvm/references/signal-interpretation.md",
+        "assignmentSha256": "2a23f8d216a1eed6a353d901394152350f1c03703f56a09982ee02b2ad0a2952",
+        "finalSha256": "a39aaddd0122b0c26c6b0b42f10380cb6a3c3dd9e55e315e3c0b47197f2eaed9"
+      },
+      {
+        "path": "skills/ebpf-for-jvm/references/bpftrace-recipes.md",
+        "assignmentSha256": "a4767c599e971fd9d5a86ecc9b5ba1ba870c25b0ff0fe877a88825cf41cd581d",
+        "finalSha256": "a4767c599e971fd9d5a86ecc9b5ba1ba870c25b0ff0fe877a88825cf41cd581d"
+      }
+    ],
+    "changedByReviewer": [
+      "skills/ebpf-for-jvm/SKILL.md",
+      "skills/ebpf-for-jvm/references/signal-interpretation.md",
+      "skills/ebpf-for-jvm/skill.yaml"
+    ],
+    "preExistingChanges": [],
+    "stagedChanges": [],
+    "untrackedPackageFiles": [],
+    "unchanged": ["skills/ebpf-for-jvm/references/bpftrace-recipes.md"]
+  },
+  "changes": [
+    {
+      "location": "SKILL.md:118, Scope correctly",
+      "change": "Require normalizing membership and pairing keys before comparing bpftrace builtins with tracepoint subject IDs.",
+      "consequence": "Prevents treating numerically different namespaces as one population."
+    },
+    {
+      "location": "references/signal-interpretation.md:35, PID/TID/cgroup semantics",
+      "change": "Add verified bpftrace 0.24 curr_ns/init behavior and tagged Linux 6.12 subject-field semantics, with a target-exclusion/non-target-collision example.",
+      "consequence": "A nested-namespace collector can otherwise reject its target or count another host thread despite successful attachment."
+    },
+    {
+      "location": "references/signal-interpretation.md:41",
+      "change": "Retain current-task versus event-subject distinction when explaining normalization and require positive/negative scope controls.",
+      "consequence": "Changing to tid(init) does not make a wakeup's current task the woken subject."
+    }
+  ],
+  "preserved": [
+    "All probe-selection, capture-authority, overhead and recovery-budget boundaries.",
+    "Lifecycle keys, cross-CPU correlation, map/counter loss, censoring and empty-output reasoning.",
+    "Cgroup subtree, dynamic membership, PID reuse, futex, scheduler, block-I/O and fault caveats.",
+    "JIT symbol lifecycle, stack unwinding, carrier/virtual-thread limits and USDT activation distinctions.",
+    "Existing partial bpftrace example, declared 0.24 baseline and all routed specialist handoffs."
+  ],
+  "commands": [
+    {
+      "command": "rg --files skills/ebpf-for-jvm; separate git status --short, git diff HEAD, git diff --cached and git show HEAD:skills/ebpf-for-jvm/skill.yaml",
+      "cwd": "C:/git/agent-skills",
+      "result": "Read-only invocations established four files, a clean baseline and version 2.1.4.",
+      "exitCode": 0
+    },
+    {
+      "command": "node --input-type=module (inline existing loadPackageFromDirectory strict:true and validatePackage, plus relative-link existence checks)",
+      "cwd": "C:/git/agent-skills",
+      "result": "Passed: zero issues, two relative references resolved; descriptions remain synchronized.",
+      "exitCode": 0
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/ebpf-for-jvm/SKILL.md skills/ebpf-for-jvm/skill.yaml skills/ebpf-for-jvm/references/signal-interpretation.md skills/ebpf-for-jvm/references/bpftrace-recipes.md",
+      "cwd": "C:/git/agent-skills",
+      "result": "All four files passed.",
+      "exitCode": 0
+    },
+    {
+      "command": "git diff --check -- skills/ebpf-for-jvm",
+      "cwd": "C:/git/agent-skills",
+      "result": "Passed.",
+      "exitCode": 0
+    },
+    {
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/ebpf-for-jvm-artifacts/namespace-scope-control.mjs",
+      "cwd": "C:/git/agent-skills",
+      "result": "Passed source-contract assertions and finite identity controls: initial namespace, nested mismatch, hostile host-ID collision, normalized membership and current-task/subject distinction. Not a BPF execution.",
+      "exitCode": 0
+    },
+    {
+      "command": "node --input-type=module (SHA-256 snapshots); git diff -- skills/ebpf-for-jvm; git status --short -- skills/ebpf-for-jvm; node --version",
+      "cwd": "C:/git/agent-skills",
+      "result": "Final diff limited to three intended files; bpftrace-recipes.md hash unchanged; runtime v25.6.1.",
+      "exitCode": 0
+    },
+    {
+      "command": "node --input-type=module (fetch four specified public primary sources and retain source-manifest.json with SHA-256)",
+      "cwd": "C:/git/agent-skills",
+      "result": "All four sources fetched successfully and retained only in the isolated artifact directory.",
+      "exitCode": 0
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://bpftrace.org/docs/release_024/stdlib#pid",
+      "version": "bpftrace 0.24",
+      "supports": "Bare pid/tid default to the collector PID namespace; init selects the initial namespace. Also checked existing nsecs and helper assumptions."
+    },
+    {
+      "url": "https://github.com/torvalds/linux/blob/v6.12/include/trace/events/sched.h",
+      "version": "Linux v6.12",
+      "supports": "sched_switch and wakeup subject IDs are copied from task_struct.pid."
+    },
+    {
+      "url": "https://github.com/torvalds/linux/blob/v6.12/include/linux/pid.h",
+      "version": "Linux v6.12",
+      "supports": "task_pid_nr returns task_struct.pid; documented as initial-namespace/global task ID."
+    },
+    {
+      "url": "https://github.com/torvalds/linux/blob/v6.12/kernel/fork.c",
+      "version": "Linux v6.12",
+      "supports": "Creation assigns p->pid from pid_nr; corroborates the task ID identity chain."
+    },
+    {
+      "url": "https://docs.kernel.org/bpf/map_hash.html",
+      "version": "Kernel documentation accessed 2026-10-16",
+      "supports": "Existing unchanged warning about per-CPU correlation and shared-map concurrency remains supported."
+    }
+  ],
+  "retainedArtifacts": {
+    "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/ebpf-for-jvm-artifacts",
+    "sources": [
+      {
+        "file": "bpftrace-0.24-stdlib.html",
+        "url": "https://bpftrace.org/docs/release_024/stdlib",
+        "bytes": 194601,
+        "sha256": "4e7fc3934bde64e38aa246909c50f5353c655066bdad1dcc6ad5d1bc2488c9d1"
+      },
+      {
+        "file": "linux-v6.12-sched.h",
+        "url": "https://raw.githubusercontent.com/torvalds/linux/v6.12/include/trace/events/sched.h",
+        "bytes": 20500,
+        "sha256": "b0544fa22f209a0f439ebf75942c79d70fd0a5f1bd039f346ac24beae5231d32"
+      },
+      {
+        "file": "linux-v6.12-pid.h",
+        "url": "https://raw.githubusercontent.com/torvalds/linux/v6.12/include/linux/pid.h",
+        "bytes": 9607,
+        "sha256": "bdbff03fdce4ca9ca3059fcc19a4da3990c2fbfc92847fffc88309002e009378"
+      },
+      {
+        "file": "linux-v6.12-fork.c",
+        "url": "https://raw.githubusercontent.com/torvalds/linux/v6.12/kernel/fork.c",
+        "bytes": 85947,
+        "sha256": "90342b5b1d7708052564b95a8855a19b3925fe0d1c3f018b472dc66045328433"
+      }
+    ],
+    "sourceManifest": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/ebpf-for-jvm-artifacts/source-manifest.json",
+    "technicalFixture": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/ebpf-for-jvm-artifacts/namespace-fixture.json",
+    "technicalControl": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/ebpf-for-jvm-artifacts/namespace-scope-control.mjs",
+    "technicalLog": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/ebpf-for-jvm-artifacts/controls.log",
+    "validationLog": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/ebpf-for-jvm-artifacts/validation-log.json"
+  },
+  "validationClassification": {
+    "executedStructural": [
+      "Strict package validation",
+      "Relative-resource existence",
+      "Scoped Prettier",
+      "Scoped git diff check",
+      "Assignment/final hash and diff inspection"
+    ],
+    "executedTechnical": [
+      "Finite JavaScript identity fixture with hostile/non-target collision, run under v25.6.1",
+      "Assertions against retained versioned bpftrace/Linux sources"
+    ],
+    "executedBpfOrJvm": [],
+    "executedBehavioralAgentEvaluations": [],
+    "walkthroughs": [
+      "The two development cases below were reasoned through, not executed by independent agents."
+    ],
+    "pending": [
+      "Independent coordinator evaluation",
+      "Coordinator registry regeneration",
+      "Coordinator repository verification"
+    ]
+  },
+  "limits": [
+    "The improvement addresses a verified cross-API identity distinction; no agent-quality or production-performance gain was measured.",
+    "The fixture is a logical model with synthetic IDs, not a captured Linux trace, BPF verifier test or kernel compatibility matrix.",
+    "No bpftrace compile/load, runtime attach, overhead test, kernel-policy change, installation or real agent configuration change occurred.",
+    "No Java example was added or changed. The pre-existing bpftrace snippet remains explicitly partial and unmodified; compiler target/runtime kernel execution is not applicable to the prose change.",
+    "Linux 6.12 is the inspected source example, not a required upgrade; deployed kernels and collector versions still need matching source/format evidence.",
+    "Dynamic identity churn, PID reuse and full run-queue lifecycles were not exercised by the finite control; existing guidance retains those requirements.",
+    "No additional supported in-scope gap remains from this review; this does not establish universal correctness."
+  ],
+  "cases": [
+    {
+      "id": "initial_namespace_selector",
+      "kind": "development case; not executed or held out",
+      "input": {
+        "task": "Review the supplied collector selector for the configured deployment and update incident-note.md with the supported target population, any necessary local correction and remaining limits. Work from these artifacts; no live attach or privilege change is authorized.",
+        "fixtures": {
+          "deployment.json": "{\"kernel\":\"6.12\",\"bpftrace\":\"0.24\",\"collectorPidNamespace\":\"initial\",\"targetArgument\":\"launcher resolves target TGID in collector PID namespace\"}",
+          "namespace-map.json": "{\"target\":{\"initialTgid\":41800,\"nestedTgid\":1,\"initialTid\":41802,\"nestedTid\":17},\"nonTarget\":{\"initialTid\":17,\"nestedTid\":null}}",
+          "collector.bt": "tracepoint:syscalls:sys_enter_read /pid == $1/ { @member[tid] = 1; }\ntracepoint:sched:sched_switch /has_key(@member, args.next_pid)/ { @selected[args.next_pid] = count(); }\n",
+          "fixture-notes.md": "This isolated selection test has one stable target worker. It performs read before the scheduler observations. Thread identities do not exit or recycle during the window; lifecycle cleanup is separately tested. The target and the non-target host thread both appear as scheduler subjects. Probe availability, syscall trigger and no-loss capture are established only for this fixture. The selector counts events; it does not measure scheduler delay.",
+          "incident-note.md": "Determine whether this selector includes the target and excludes the non-target in the specified deployment. Preserve the established fixture evidence; do not generalize it to production latency."
+        }
+      },
+      "criteria": {
+        "required": [
+          "Read deployment, namespace map and selector; recognize that in the initial namespace the membership key and scheduler subject field use the same identity domain.",
+          "Accept the limited fixture population selection without forcing a new collector or namespace change; document remaining lifecycle/coverage boundaries.",
+          "Keep event counts distinct from delay, starvation and causal attribution."
+        ],
+        "failures": [
+          "Declares a namespace defect solely because the target is containerized while the collector actually uses the initial PID namespace.",
+          "Replaces scheduler subject fields with the current-task builtin.",
+          "Claims complete production run-queue latency validation from this selection fixture."
+        ]
+      }
+    },
+    {
+      "id": "nested_namespace_selector",
+      "kind": "development case; not executed or held out",
+      "input": {
+        "task": "Use the same task and all fixtures from initial_namespace_selector, replacing only deployment.json below. Update incident-note.md and propose the smallest necessary selector correction.",
+        "baseCase": "initial_namespace_selector",
+        "fixtureOverrides": {
+          "deployment.json": "{\"kernel\":\"6.12\",\"bpftrace\":\"0.24\",\"collectorPidNamespace\":\"nested\",\"targetArgument\":\"launcher resolves target TGID in collector PID namespace\"}"
+        },
+        "decisiveConstraint": "Only the collector PID namespace changes."
+      },
+      "criteria": {
+        "required": [
+          "Identify membership key 17 versus target scheduler subject 41802 and the non-target host-TID 17 collision.",
+          "Normalize the membership key to the verified initial namespace, for example tid(init) at registration, while keeping args.next_pid as the scheduler subject.",
+          "Keep the current-namespace pid predicate compatible with the launcher's current-namespace argument, or normalize both together explicitly.",
+          "Update incident-note.md to retract any target-attribution claim for the unchanged selector and require inclusion/exclusion controls in the intended namespace."
+        ],
+        "failures": [
+          "Interprets absent target matches as absent scheduling activity.",
+          "Treats host TID 17 matches as target events.",
+          "Blindly changes pid to pid(init) while retaining a nested-namespace target argument.",
+          "Assumes tid(init) at sched_switch identifies the incoming subject, or broadens collection privileges to solve an identity bug."
+        ]
+      }
+    }
+  ],
+  "crossSkill": [],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "prerequisite": "All reviewers stopped writing",
+      "purpose": "Regenerate integrity/version metadata."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "prerequisite": "Index regenerated after all writers stop",
+      "purpose": "Repository-wide validation prohibited during parallel reviewer writes."
+    }
+  ],
+  "allWritesStopped": true,
+  "runningWriterProcesses": []
+}

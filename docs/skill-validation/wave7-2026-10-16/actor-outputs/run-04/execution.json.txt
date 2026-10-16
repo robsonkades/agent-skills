@@ -1,0 +1,215 @@
+{
+  "recordedAt": "2026-10-16T18:08:35.934Z",
+  "task": "Independent maintenance of supplied Java/Spring project",
+  "scope": {
+    "read": "TASK.md, input/project/**, own output/**, declared Java 25 tools, official technical sources",
+    "write": "output/** only",
+    "isolation": "Procedural boundaries; no OS isolation claimed"
+  },
+  "reads": [
+    "TASK.md",
+    "input/project/README.md",
+    "input/project/REQUEST.md",
+    "input/project/CONTRACT.md",
+    "input/project/toolchain.json",
+    "input/project/dependencies.json",
+    "input/project/check.mjs",
+    "input/project/RUNBOOK.md",
+    "input/project/src/work/BookingService.java",
+    "input/project/src/work/BookingListener.java",
+    "input/project/src/work/ReceiptWriter.java",
+    "input/project/src/work/ReceiptObserver.java",
+    "input/project/src/work/BookingRecorded.java",
+    "input/project/src/work/Config.java",
+    "input/project/test/work/Smoke.java",
+    "input/project/lib/** (copied; read by compilation and final SHA-256 comparison only)",
+    "output/project/** (compilation, execution and final comparison)",
+    "output/checks/*.json",
+    "output/assessment.json",
+    "output/REVIEW.md"
+  ],
+  "preparatoryCommands": [
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-04",
+      "argv": [
+        "powershell",
+        "-Command",
+        "Get-Content -Raw -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-04/TASK.md'"
+      ],
+      "exit": 0,
+      "stdoutFile": "../TASK.md",
+      "stderr": "",
+      "note": "Untimed preparatory read; actual tool output ede584."
+    },
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-04",
+      "argv": [
+        "powershell",
+        "-Command",
+        "Get-Content -Raw README.md; Get-Content -Raw REQUEST.md; Get-Content -Raw CONTRACT.md; rg --files input/project -g '!lib/**'"
+      ],
+      "exit": 0,
+      "stdout": "README.md, REQUEST.md and CONTRACT.md were not at the actor root. Get-Content emitted three Cannot find path errors. rg then enumerated the 26 files in input/project, including lib filenames because the supplied exclusion glob did not match the input/project prefix.",
+      "stderr": "",
+      "streamCapture": "Tool merged output. Summary retained; original tool output 8016d5.",
+      "unsuccessful": true,
+      "note": "Corrected paths to input/project. No binary contents searched."
+    },
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-04",
+      "argv": [
+        "powershell",
+        "-Command",
+        "Get-Content -Raw input/project/README.md\nGet-Content -Raw input/project/REQUEST.md\nGet-Content -Raw input/project/CONTRACT.md\nGet-Content -Raw input/project/toolchain.json\nGet-Content -Raw input/project/dependencies.json\nGet-Content -Raw input/project/check.mjs\nGet-Content -Raw input/project/RUNBOOK.md"
+      ],
+      "exit": 0,
+      "stdout": "# Application repair task\n\nJava SE25, Spring Framework7.0.9, JDBC and H2 2.4.240. This is a small imperative application without Boot/JPA, preview, network services or new dependencies. Dependencies are in lib with a frozen manifest. Use node check.mjs to compile all src/test sources and run work.Smoke; node check.mjs work.YourTest runs another main-based test. Each subprocess has a 30-second bound. Existing tests are small and not an exhaustive specification.\n\nRead CONTRACT.md and REQUEST.md. Make the smallest complete correction if required, or preserve a correct implementation with evidence. Existing public application operations and collaborator contracts must remain compatible. Add useful regression checks in test. Preserve the frozen CONTRACT.md, REQUEST.md, toolchain.json, dependencies.json, check.mjs, lib/** and support/**. You may edit src/**, add tests and update RUNBOOK.md. Never change contracts or dependencies just to pass a test. Tests should call actual Spring beans and inspect persisted state outside completion. Do not introduce application code that branches on test identities or expected results.\n\nThe database is local and disposable. No real agent installation or configuration is involved. These tests do not establish a production database's crash behavior, distributed deduplication or JPA semantics.\n\r\nReview the missing/failed receipt complaint against CONTRACT.md. A teammate suggests making every receipt run in REQUIRES_NEW to stop failures. Determine whether a correction is necessary and implement the smallest complete repair if so. Preserve a sufficient existing mechanism. Add a regression that distinguishes the contract from the proposed blanket fix. Report actual persisted-state observations and what they do not establish.\n\r\n# Accepted contract: optional post-commit receipt\n\nThe booking and stock reservation form the mandatory atomic business unit. The receipt is a best-effort local projection: a normal valid receipt must persist after the command succeeds, while an invalid receipt must not fail the already successful business call or undo its booking/reservation. Receipt body storage remains limited to 12 characters; do not truncate or increase this constraint to hide rejection. Receipt work must run only after source commit, when an independent READ_COMMITTED connection can see the booking. Receipt loss on failure or application interruption is accepted and no recovery store is required. Keep the current synchronous scheduling; no executor is requested.\n\nUnavailable stock must fail the business command and leave no booking/receipt/reservation. A nontransactional publication must not create a receipt. Retain public BookingService.place(id,sku,receiptText), event identity, stock rule and ReceiptObserver.beforeWrite's meaning: called inside the actual writer immediately before the write. The observer is diagnostic and does not authorize changing transaction behavior. No broker, durable registry or dependency addition is authorized.\n\nWhen called within an existing business transaction, the service joins that unit; its caller remains completion owner. Preserve this REQUIRED participation. A later owner failure must roll back the mandatory state; no receipt may survive a rollback of its booking.\n\nThe receipt consists of a header in receipt and body in receipt_detail. These two writes form one receipt unit: no partial header may remain if the body write fails. The 12-character limit applies to receipt_detail.body. Preserve this schema and atomic receipt behavior.\n\r\n{\n  \"release\": 25,\n  \"java\": \"C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe\",\n  \"javac\": \"C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe\"\n}\n\r\n[\n  {\n    \"coordinate\": \"org/springframework/spring-context:7.0.9\",\n    \"file\": \"spring-context-7.0.9.jar\",\n    \"sha256\": \"7552a2fcfa30cea53eb14d7a65a7a8e1b1dd82e832a7164fb7e6fb105f438858\",\n    \"bytes\": 1399435\n  },\n  {\n    \"coordinate\": \"org/springframework/spring-aop:7.0.9\",\n    \"file\": \"spring-aop-7.0.9.jar\",\n    \"sha256\": \"b8c5d6bfcb1f4993f2cc124f7ab7fac40edf5256b9e43c2f7250a733cb5510e9\",\n    \"bytes\": 426204\n  },\n  {\n    \"coordinate\": \"org/springframework/spring-beans:7.0.9\",\n    \"file\": \"spring-beans-7.0.9.jar\",\n    \"sha256\": \"ff218b827a25c9e8929b0cd56dfb56916cea9d5b669ed97dc7cb262508ff548b\",\n    \"bytes\": 928155\n  },\n  {\n    \"coordinate\": \"org/springframework/spring-core:7.0.9\",\n    \"file\": \"spring-core-7.0.9.jar\",\n    \"sha256\": \"5195f4722699b39878d99a832549fe65df2890b159d063b88fff31b1ca65ae36\",\n    \"bytes\": 2035755\n  },\n  {\n    \"coordinate\": \"org/springframework/spring-expression:7.0.9\",\n    \"file\": \"spring-expression-7.0.9.jar\",\n    \"sha256\": \"046434c40f43819729b9b1db0e6c659dfa68184c1c2c2efa5f7b3a5b27c4e2e2\",\n    \"bytes\": 327140\n  },\n  {\n    \"coordinate\": \"org/springframework/spring-tx:7.0.9\",\n    \"file\": \"spring-tx-7.0.9.jar\",\n    \"sha256\": \"bfb15da6e096e2c0752e9db9987d2415bf0da1d744efc988535c10c6b6c2eedd\",\n    \"bytes\": 292080\n  },\n  {\n    \"coordinate\": \"org/springframework/spring-jdbc:7.0.9\",\n    \"file\": \"spring-jdbc-7.0.9.jar\",\n    \"sha256\": \"ca0d9af1c5721eef8cac1f94c8b9d27a753248bc33c86e3472bd3d1dbd78f450\",\n    \"bytes\": 480730\n  },\n  {\n    \"coordinate\": \"commons-logging/commons-logging:1.3.5\",\n    \"file\": \"commons-logging-1.3.5.jar\",\n    \"sha256\": \"6d7a744e4027649fbb50895df9497d109f98c766a637062fe8d2eabbb3140ba4\",\n    \"bytes\": 73737\n  },\n  {\n    \"coordinate\": \"org/jspecify/jspecify:1.0.0\",\n    \"file\": \"jspecify-1.0.0.jar\",\n    \"sha256\": \"1fad6e6be7557781e4d33729d49ae1cdc8fdda6fe477bb0cc68ce351eafdfbab\",\n    \"bytes\": 3819\n  },\n  {\n    \"coordinate\": \"io/micrometer/micrometer-observation:1.16.7\",\n    \"file\": \"micrometer-observation-1.16.7.jar\",\n    \"sha256\": \"74f9e4d51ef30c141de8a2409879282e572eef98665e033e8922c2fbee16862d\",\n    \"bytes\": 83914\n  },\n  {\n    \"coordinate\": \"io/micrometer/micrometer-commons:1.16.7\",\n    \"file\": \"micrometer-commons-1.16.7.jar\",\n    \"sha256\": \"cd1ad64a94650a2ed3988a4ab48c9a7fad40c4986a81e328194dd757b5170273\",\n    \"bytes\": 51745\n  },\n  {\n    \"coordinate\": \"com/h2database/h2:2.4.240\",\n    \"file\": \"h2-2.4.240.jar\",\n    \"sha256\": \"29b70e427cc1c40cdc376283adbb0cc62853073797bb5fe5761f81fe73d57ce0\",\n    \"bytes\": 2685418\n  }\n]\n\r\nimport fs from 'node:fs';\nimport path from 'node:path';\nimport {spawnSync} from 'node:child_process';\nconst cwd=process.cwd(),tc=JSON.parse(fs.readFileSync('toolchain.json','utf8'));\nconst walk=d=>fs.readdirSync(d,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(path.join(d,e.name)):[path.join(d,e.name)]);\nconst cp=fs.readdirSync('lib').filter(f=>f.endsWith('.jar')).map(f=>path.resolve('lib',f)).join(path.delimiter);\nfs.mkdirSync('.build',{recursive:true});\nconst commands=[[tc.javac,['--release',String(tc.release),'-cp',cp,'-d','.build',...['src','test'].flatMap(d=>fs.existsSync(d)?walk(d).filter(p=>p.endsWith('.java')):[])]],[tc.java,['-cp',path.resolve('.build')+path.delimiter+cp,process.argv[2]??'work.Smoke',...process.argv.slice(3)]]];\nfor(const [exe,args] of commands){const r=spawnSync(exe,args,{cwd,encoding:'utf8',timeout:30000,windowsHide:true});process.stdout.write(r.stdout??'');process.stderr.write(r.stderr??'');if(r.error)process.stderr.write(r.error.message+'\\n');if(r.status!==0){process.exitCode=r.status??1;break;}}\n\r\nCall BookingService through the configured Spring application context. The schema is initialized by the existing launcher/tests. Inspect booking, receipt and stock state outside the completed command. Document the selected failure behavior here if it changes.\n\r\n",
+      "stderr": "",
+      "streamCapture": "Tool merged output"
+    },
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-04",
+      "argv": [
+        "powershell",
+        "-Command",
+        "Get-Content -Raw input/project/src/work/BookingService.java\nGet-Content -Raw input/project/src/work/BookingListener.java\nGet-Content -Raw input/project/src/work/ReceiptWriter.java\nGet-Content -Raw input/project/src/work/ReceiptObserver.java\nGet-Content -Raw input/project/src/work/BookingRecorded.java\nGet-Content -Raw input/project/src/work/Config.java\nGet-Content -Raw input/project/test/work/Smoke.java"
+      ],
+      "exit": 0,
+      "stdout": "package work;\nimport org.springframework.context.ApplicationEventPublisher;\nimport org.springframework.jdbc.core.JdbcTemplate;\nimport org.springframework.transaction.annotation.Transactional;\npublic class BookingService {\n private final JdbcTemplate jdbc; private final ApplicationEventPublisher events;\n public BookingService(JdbcTemplate jdbc,ApplicationEventPublisher events){this.jdbc=jdbc;this.events=events;}\n @Transactional(\"businessTx\")\n public void place(String id,String sku,String receiptText){\n  jdbc.update(\"insert into booking(id,sku) values (?,?)\",id,sku);\n  events.publishEvent(new BookingRecorded(id,receiptText));\n  if(jdbc.update(\"update stock set available=available-1 where sku=? and available>0\",sku)!=1)throw new IllegalStateException(\"Unavailable stock\");\n }\n}\n\r\npackage work;\nimport org.springframework.transaction.event.*;\npublic class BookingListener {\n private final ReceiptWriter writer;\n public BookingListener(ReceiptWriter writer){this.writer=writer;}\n @TransactionalEventListener(phase=TransactionPhase.BEFORE_COMMIT)\n public void on(BookingRecorded event){writer.record(event);}\n}\n\r\npackage work;\nimport org.springframework.jdbc.core.JdbcTemplate;\npublic class ReceiptWriter {\n private final JdbcTemplate jdbc; private final ReceiptObserver observer;\n public ReceiptWriter(JdbcTemplate jdbc,ReceiptObserver observer){this.jdbc=jdbc;this.observer=observer;}\n public void record(BookingRecorded event){observer.beforeWrite(event.id());jdbc.update(\"insert into receipt(id) values (?)\",event.id());jdbc.update(\"insert into receipt_detail(id,body) values (?,?)\",event.id(),event.receiptText());}\n}\n\r\npackage work; public interface ReceiptObserver {void beforeWrite(String bookingId);}\n\r\npackage work; public record BookingRecorded(String id,String receiptText) {}\n\r\npackage work;\nimport javax.sql.DataSource;\nimport org.springframework.context.annotation.*;\nimport org.springframework.jdbc.datasource.*;\nimport org.springframework.jdbc.core.JdbcTemplate;\nimport org.springframework.transaction.PlatformTransactionManager;\nimport org.springframework.transaction.annotation.EnableTransactionManagement;\n@Configuration @EnableTransactionManagement(proxyTargetClass=true)\npublic class Config {\n @Bean public DataSource dataSource(){return new DriverManagerDataSource(\"jdbc:h2:mem:booking;DB_CLOSE_DELAY=-1;LOCK_TIMEOUT=1000\", \"sa\", \"\");}\n @Bean public JdbcTemplate jdbc(DataSource ds){return new JdbcTemplate(ds);}\n @Bean public PlatformTransactionManager businessTx(DataSource ds){return new DataSourceTransactionManager(ds);}\n @Bean public ReceiptObserver receiptObserver(){return id->{};}\n @Bean public ReceiptWriter receiptWriter(JdbcTemplate jdbc,ReceiptObserver observer){return new ReceiptWriter(jdbc,observer);}\n @Bean public BookingListener bookingListener(ReceiptWriter writer){return new BookingListener(writer);}\n @Bean public BookingService bookingService(JdbcTemplate jdbc,org.springframework.context.ApplicationEventPublisher events){return new BookingService(jdbc,events);}\n}\n\r\npackage work;\nimport org.springframework.context.annotation.AnnotationConfigApplicationContext;\nimport org.springframework.jdbc.core.JdbcTemplate;\npublic class Smoke {public static void main(String[]args){try(var ctx=new AnnotationConfigApplicationContext(Config.class)){var jdbc=ctx.getBean(JdbcTemplate.class);jdbc.execute(\"drop all objects\");jdbc.execute(\"create table booking(id varchar(80) primary key,sku varchar(80))\");jdbc.execute(\"create table receipt(id varchar(80) primary key)\");jdbc.execute(\"create table receipt_detail(id varchar(80) primary key,body varchar(12))\");jdbc.execute(\"create table stock(sku varchar(80) primary key,available int)\");jdbc.update(\"insert into stock values ('ready',20),('sold-out',0)\");var service=ctx.getBean(BookingService.class);service.place(\"smoke\",\"ready\",\"normal\");if(jdbc.queryForObject(\"select count(*) from booking\",Integer.class)!=1||jdbc.queryForObject(\"select count(*) from receipt\",Integer.class)!=1)throw new AssertionError(\"normal path\");System.out.println(\"PASS normal booking and receipt\");}}}\n\r\n",
+      "stderr": "",
+      "streamCapture": "Tool merged output"
+    },
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-04",
+      "argv": [
+        "powershell",
+        "-Command",
+        "New-Item -ItemType Directory -Path output -Force | Out-Null\nCopy-Item -LiteralPath input/project -Destination output/project -Recurse"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "commands": [
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-04/output/project",
+      "argv": [
+        "node",
+        "../checks/run.mjs",
+        "baseline-smoke"
+      ],
+      "exit": 0,
+      "log": "checks/baseline-smoke.json"
+    },
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-04/output/project",
+      "argv": [
+        "node",
+        "../checks/run.mjs",
+        "baseline-regression",
+        "work.Regression"
+      ],
+      "exit": 1,
+      "log": "checks/baseline-regression.json",
+      "note": "Original application; useful intentional failing regression."
+    },
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-04/output/project",
+      "argv": [
+        "node",
+        "../checks/run.mjs",
+        "requires-new-only",
+        "work.Regression"
+      ],
+      "exit": 1,
+      "log": "checks/requires-new-only.json",
+      "note": "Intermediate counterexample: writer REQUIRES_NEW with original BEFORE_COMMIT listener."
+    },
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-04/output/project",
+      "argv": [
+        "node",
+        "../checks/run.mjs",
+        "repaired-smoke"
+      ],
+      "exit": 0,
+      "log": "checks/repaired-smoke.json"
+    },
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-04/output/project",
+      "argv": [
+        "node",
+        "../checks/run.mjs",
+        "repaired-regression",
+        "work.Regression"
+      ],
+      "exit": 0,
+      "log": "checks/repaired-regression.json",
+      "note": "Seven scenarios passed. Expected invalid body exception remains in stderr."
+    },
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-04/output/project",
+      "argv": [
+        "node",
+        "../checks/integrity.mjs"
+      ],
+      "exit": 0,
+      "log": "checks/integrity.json"
+    }
+  ],
+  "processBounds": {
+    "testRunnerTimeoutMs": 30000,
+    "javacAndJavaTimeoutMs": 30000,
+    "backgroundProcessesStarted": 0,
+    "note": "Every invoked command completed synchronously in less than 30 seconds. No installs or application external-service connections."
+  },
+  "sources": [
+    {
+      "url": "https://docs.spring.io/spring-framework/docs/7.0.9/javadoc-api/org/springframework/transaction/event/TransactionalEventListener.html",
+      "purpose": "No-transaction default suppression and remaining completion resources."
+    },
+    {
+      "url": "https://docs.spring.io/spring-framework/docs/7.0.9/javadoc-api/org/springframework/transaction/support/TransactionSynchronization.html",
+      "purpose": "afterCompletion errors are logged; new transaction needed for completion-time writes."
+    },
+    {
+      "url": "https://docs.spring.io/spring-framework/docs/7.0.9/javadoc-api/org/springframework/transaction/event/TransactionPhase.html",
+      "purpose": "Transactional AFTER_COMMIT dispatch is a specialization of afterCompletion."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.9/spring-tx/src/main/java/org/springframework/transaction/event/TransactionalApplicationListenerSynchronization.java",
+      "purpose": "Verify callback dispatch for the exact version."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.9/spring-tx/src/main/java/org/springframework/transaction/support/TransactionSynchronizationUtils.java",
+      "purpose": "Verify afterCompletion exception containment/logging for the exact version."
+    }
+  ],
+  "writes": [
+    "output/project (byte-preserving initial copy)",
+    "output/project/test/work/Regression.java",
+    "output/project/src/work/ReceiptWriter.java",
+    "output/project/src/work/BookingListener.java",
+    "output/project/RUNBOOK.md",
+    "output/project/.build/**",
+    "output/checks/run.mjs",
+    "output/checks/baseline-smoke.json",
+    "output/checks/baseline-regression.json",
+    "output/checks/requires-new-only.json",
+    "output/checks/repaired-smoke.json",
+    "output/checks/repaired-regression.json",
+    "output/checks/integrity.mjs",
+    "output/checks/integrity.json",
+    "output/REVIEW.md",
+    "output/assessment.json",
+    "output/execution.json"
+  ],
+  "evidenceLimits": [
+    "Actor self-report, not an independent complete trace.",
+    "Preparatory commands have no captured timestamp; timed test logs and final record provide actual timestamps.",
+    "One initial wrong-path read attempt is retained above; no other failed infrastructure commands."
+  ],
+  "allWritesStopped": true,
+  "completionNote": "All build/check subprocesses have exited. This execution.json write is the final artifact write; no ongoing writes, background jobs or follow-up mutations remain."
+}

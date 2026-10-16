@@ -1,0 +1,1277 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "orm-structural-mapping",
+  "ownedPath": "skills/orm-structural-mapping/**",
+  "reviewer": "/root/quality14",
+  "wave": 4,
+  "allWritesStopped": true,
+  "activeBackgroundProcesses": [],
+  "noProcessesStartedByReviewerCanStillWrite": true,
+  "readinessMeaning": "Local review is complete and writers stopped; repository-wide validation remains with coordinator.",
+  "changeSummary": "Repair three confirmed broken Jakarta Persistence 3.2 URLs, preserving versions, mapping content and examples. Bump one patch.",
+  "versions": {
+    "committed": "1.3.4",
+    "assignment": "1.3.4",
+    "final": "1.3.5",
+    "preExistingBump": false,
+    "rationale": "Changed skill integrity requires one patch; clean assignment had no unpublished bump to reuse."
+  },
+  "assignmentBaseline": {
+    "head": "bbb7d996a929e81baf735bbaab5b6e3fbf6e8503",
+    "sharedRecord": "docs/skill-validation/wave4-2026-10-16/baseline.json",
+    "package": {
+      "name": "orm-structural-mapping",
+      "initialVersion": "1.3.4",
+      "committedVersion": "1.3.4",
+      "status": "",
+      "files": [
+        {
+          "path": "skills/orm-structural-mapping/SKILL.md",
+          "sha256": "e87961684d276e721d85ca17562114c7b8c1c060bd8f473a12b29e996a14b8ab",
+          "bytes": 11920
+        },
+        {
+          "path": "skills/orm-structural-mapping/references/embedding-and-serialization.md",
+          "sha256": "e4d111adcac733d74dff69126a61fffd22a015f8144fa2f917d2fa4a9305c87b",
+          "bytes": 10354
+        },
+        {
+          "path": "skills/orm-structural-mapping/references/identity-and-associations.md",
+          "sha256": "9ff2a997f0654a3f86bc39900ba76322d68a71bfc557616b2b2b0600b0ee98d6",
+          "bytes": 16185
+        },
+        {
+          "path": "skills/orm-structural-mapping/skill.yaml",
+          "sha256": "745e22d653bca61bfb829db7bba671106b1ec971ff7896398ed04274644f5537",
+          "bytes": 2034
+        }
+      ]
+    },
+    "snapshot": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/baseline/orm-structural-mapping",
+    "preExistingChanges": [],
+    "confirmation": "Owned committed/staged/unstaged/untracked inspection was clean; all four assignment hashes matched coordinator snapshot.",
+    "retainedReadEvidence": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evaluator\\review-record.json"
+  },
+  "findingsCorrected": [
+    {
+      "id": "broken-spec-links",
+      "locations": [
+        "skills/orm-structural-mapping/references/embedding-and-serialization.md:56",
+        "skills/orm-structural-mapping/references/identity-and-associations.md:275"
+      ],
+      "severity": "documentation evidence access",
+      "consequence": "Readers could not reach the cited versioned persistence contract.",
+      "evidence": ["spec-original", "spec-correct"],
+      "correction": "Use the verified .html URL with the same Jakarta Persistence 3.2 version."
+    },
+    {
+      "id": "broken-mapsid-link",
+      "locations": ["skills/orm-structural-mapping/references/identity-and-associations.md:177"],
+      "severity": "documentation evidence access",
+      "consequence": "Derived identity advice referred readers to a nonexistent API path.",
+      "evidence": ["mapsid-original", "mapsid-correct"],
+      "correction": "Use exact case-sensitive MapsId.html API filename for the same 3.2 version."
+    }
+  ],
+  "remainingFindings": [],
+  "candidatesNotRequiringContentChange": [
+    "Mapping ownership is already separated from physical FK placement and domain ownership; inverse changes and cascades/orphans are qualified.",
+    "Derived identity and immutable persistent primary keys already distinguish link replacement from stable-id reassignment.",
+    "Database uniqueness, nullability, FK enforcement and minimum cardinality are already separated; annotations alone are not proof of deployment.",
+    "Association entities are conditional on identity/lifecycle/query needs; owned value collections and adequate many-to-many remain legitimate.",
+    "Collection SQL is provider/mapping-sensitive; existing guidance preserves order, duplicates, stable equality and managed wrappers.",
+    "Embeddables, records, converters, JSON concurrency and expand/contract migrations have appropriate version and consumer caveats."
+  ],
+  "filesChangedByReviewer": [
+    {
+      "path": "skills/orm-structural-mapping/references/identity-and-associations.md",
+      "locations": [177, 275],
+      "change": "Correct MapsId.html API path and .html specification path, retaining Jakarta Persistence 3.2."
+    },
+    {
+      "path": "skills/orm-structural-mapping/references/embedding-and-serialization.md",
+      "locations": [56],
+      "change": "Correct .html specification path, retaining Jakarta Persistence 3.2."
+    },
+    {
+      "path": "skills/orm-structural-mapping/skill.yaml",
+      "locations": [4],
+      "change": "1.3.4 to 1.3.5."
+    }
+  ],
+  "preExistingChanges": [],
+  "untouchedOwnedFiles": ["skills/orm-structural-mapping/SKILL.md"],
+  "finalOwnedFileHashes": [
+    {
+      "path": "skills/orm-structural-mapping/SKILL.md",
+      "sha256": "e87961684d276e721d85ca17562114c7b8c1c060bd8f473a12b29e996a14b8ab"
+    },
+    {
+      "path": "skills/orm-structural-mapping/skill.yaml",
+      "sha256": "aa73f16259ea95a67e9751d457b6681404274207a741f1ad1bf286f3d381f82b"
+    },
+    {
+      "path": "skills/orm-structural-mapping/references/identity-and-associations.md",
+      "sha256": "bf16bb536c1bbfed5ef69894e835bc40411949fab3f4cb8f01441d7f1179829b"
+    },
+    {
+      "path": "skills/orm-structural-mapping/references/embedding-and-serialization.md",
+      "sha256": "6ab104b2cef95c40f641d245edc339715a18aa0acc12f6ba2a42fabc7ce0e936"
+    }
+  ],
+  "preservedCapabilities": [
+    "Identity strategy alternatives, batching conditions and repository newness.",
+    "Owning-side bidirectional helpers and draft-only mutation before graph changes.",
+    "Composite keys, MapsId, persistent identity immutability and reassignment alternatives.",
+    "Both-direction cardinality and actual schema rejection tests.",
+    "Association entity versus owner-bound element collection versus simple many-to-many.",
+    "Orphan/dependent lifecycle, stable collection identity, ordering and duplicates.",
+    "Embeddable ownership, repeated-column overrides, record compatibility, currency policy and converter limits.",
+    "Native JSON versus opaque LOB, versioned payloads, lost-update controls and safe staged migration.",
+    "Scope boundaries to metadata/fetch/repositories and no-change path."
+  ],
+  "replacedOrIntentionallyRemovedCapabilities": [],
+  "scopeAndReviewCriteria": [
+    "Match the actual mapping and deployed schema to caller identity/cardinality contracts.",
+    "Preserve valid alternative mapping choices rather than impose a pattern or surrogate id.",
+    "Repair only confirmed broken source targets with the original versions retained.",
+    "Use real narrow persistence controls when available and qualify provider/database/runtime limits.",
+    "Separate technical checks from independent agent evaluation."
+  ],
+  "requiredReadings": [
+    "AGENTS.md; only root AGENTS.md found.",
+    "Complete docs/skill-review-prompt.md, including final integration/delivery sections separately after output truncation.",
+    "Complete docs/parallel-skill-reviews.md and wave4 review brief.",
+    "skill-engineering SKILL.md and full evidence-and-confidence, evaluation, resource-design and anti-patterns references.",
+    "Whole assigned package: SKILL.md, skill.yaml, both references; identity reference reread fully after combined output truncated.",
+    "Relevant comparative-research findings, roadmap specialist/evaluation sections and wave3 behavior-results; earlier wave lessons reused."
+  ],
+  "compatibility": {
+    "skillContract": "Project Java/API/provider/enhancement/dialect/schema must be inspected. Existing partial examples retain their version qualifications; no framework or toolchain upgraded.",
+    "testedCompiler": "Existing Temurin 25.0.3 javac --release 17.",
+    "testedRuntime": "Temurin 25.0.3 VM, not Java 17 VM.",
+    "testedProvider": "Hibernate ORM 6.6.33.Final with Jakarta Persistence API 3.1.0.",
+    "testedDatabase": "H2 2.3.232 (2024-08-11), isolated in-memory databases, provider schema generation none.",
+    "documentationBaselines": "Jakarta Persistence 3.2 specification/API; PostgreSQL 17; existing Hibernate 6.2 record and 6.6.56 association references retained.",
+    "limit": "The API/specification versions used for source evidence and the available runtime are distinct. Tests do not establish Jakarta Persistence 3.2-only record features, PostgreSQL behavior or other providers."
+  },
+  "localValidation": {
+    "runnerCommand": "node \"C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evaluator\\run-local.mjs\"",
+    "workingDirectory": "C:/git/agent-skills",
+    "runnerExitCode": 0,
+    "commandsExecuted": [
+      {
+        "label": "compile",
+        "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+        "args": [
+          "--release",
+          "17",
+          "-cp",
+          "C:/Users/robso/.m2/repository/org/hibernate/orm/hibernate-core/6.6.33.Final/hibernate-core-6.6.33.Final.jar;C:/Users/robso/.m2/repository/jakarta/persistence/jakarta.persistence-api/3.1.0/jakarta.persistence-api-3.1.0.jar;C:/Users/robso/.m2/repository/jakarta/transaction/jakarta.transaction-api/2.0.1/jakarta.transaction-api-2.0.1.jar;C:/Users/robso/.m2/repository/org/jboss/logging/jboss-logging/3.5.0.Final/jboss-logging-3.5.0.Final.jar;C:/Users/robso/.m2/repository/org/hibernate/common/hibernate-commons-annotations/7.0.3.Final/hibernate-commons-annotations-7.0.3.Final.jar;C:/Users/robso/.m2/repository/io/smallrye/jandex/3.2.0/jandex-3.2.0.jar;C:/Users/robso/.m2/repository/com/fasterxml/classmate/1.5.1/classmate-1.5.1.jar;C:/Users/robso/.m2/repository/net/bytebuddy/byte-buddy/1.15.11/byte-buddy-1.15.11.jar;C:/Users/robso/.m2/repository/jakarta/xml/bind/jakarta.xml.bind-api/4.0.0/jakarta.xml.bind-api-4.0.0.jar;C:/Users/robso/.m2/repository/org/glassfish/jaxb/jaxb-runtime/4.0.2/jaxb-runtime-4.0.2.jar;C:/Users/robso/.m2/repository/jakarta/inject/jakarta.inject-api/2.0.1/jakarta.inject-api-2.0.1.jar;C:/Users/robso/.m2/repository/org/antlr/antlr4-runtime/4.13.0/antlr4-runtime-4.13.0.jar;C:/Users/robso/.m2/repository/com/h2database/h2/2.3.232/h2-2.3.232.jar",
+          "-d",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\classes",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs\\case-a\\Member.java",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs\\case-a\\Badge.java",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs\\case-a\\BadgeIssueService.java",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs\\case-a\\BadgeDirectory.java",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evaluator\\OrmProbe.java"
+        ],
+        "workingDirectory": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\compile.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\compile.stderr.txt"
+      },
+      {
+        "label": "case-a-probe",
+        "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+        "args": [
+          "-cp",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\classes;C:/Users/robso/.m2/repository/org/hibernate/orm/hibernate-core/6.6.33.Final/hibernate-core-6.6.33.Final.jar;C:/Users/robso/.m2/repository/jakarta/persistence/jakarta.persistence-api/3.1.0/jakarta.persistence-api-3.1.0.jar;C:/Users/robso/.m2/repository/jakarta/transaction/jakarta.transaction-api/2.0.1/jakarta.transaction-api-2.0.1.jar;C:/Users/robso/.m2/repository/org/jboss/logging/jboss-logging/3.5.0.Final/jboss-logging-3.5.0.Final.jar;C:/Users/robso/.m2/repository/org/hibernate/common/hibernate-commons-annotations/7.0.3.Final/hibernate-commons-annotations-7.0.3.Final.jar;C:/Users/robso/.m2/repository/io/smallrye/jandex/3.2.0/jandex-3.2.0.jar;C:/Users/robso/.m2/repository/com/fasterxml/classmate/1.5.1/classmate-1.5.1.jar;C:/Users/robso/.m2/repository/net/bytebuddy/byte-buddy/1.15.11/byte-buddy-1.15.11.jar;C:/Users/robso/.m2/repository/jakarta/xml/bind/jakarta.xml.bind-api/4.0.0/jakarta.xml.bind-api-4.0.0.jar;C:/Users/robso/.m2/repository/org/glassfish/jaxb/jaxb-runtime/4.0.2/jaxb-runtime-4.0.2.jar;C:/Users/robso/.m2/repository/jakarta/inject/jakarta.inject-api/2.0.1/jakarta.inject-api-2.0.1.jar;C:/Users/robso/.m2/repository/org/antlr/antlr4-runtime/4.13.0/antlr4-runtime-4.13.0.jar;C:/Users/robso/.m2/repository/com/h2database/h2/2.3.232/h2-2.3.232.jar",
+          "OrmProbe",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs\\case-a",
+          "false"
+        ],
+        "workingDirectory": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\case-a-probe.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\case-a-probe.stderr.txt"
+      },
+      {
+        "label": "case-b-probe",
+        "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+        "args": [
+          "-cp",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\classes;C:/Users/robso/.m2/repository/org/hibernate/orm/hibernate-core/6.6.33.Final/hibernate-core-6.6.33.Final.jar;C:/Users/robso/.m2/repository/jakarta/persistence/jakarta.persistence-api/3.1.0/jakarta.persistence-api-3.1.0.jar;C:/Users/robso/.m2/repository/jakarta/transaction/jakarta.transaction-api/2.0.1/jakarta.transaction-api-2.0.1.jar;C:/Users/robso/.m2/repository/org/jboss/logging/jboss-logging/3.5.0.Final/jboss-logging-3.5.0.Final.jar;C:/Users/robso/.m2/repository/org/hibernate/common/hibernate-commons-annotations/7.0.3.Final/hibernate-commons-annotations-7.0.3.Final.jar;C:/Users/robso/.m2/repository/io/smallrye/jandex/3.2.0/jandex-3.2.0.jar;C:/Users/robso/.m2/repository/com/fasterxml/classmate/1.5.1/classmate-1.5.1.jar;C:/Users/robso/.m2/repository/net/bytebuddy/byte-buddy/1.15.11/byte-buddy-1.15.11.jar;C:/Users/robso/.m2/repository/jakarta/xml/bind/jakarta.xml.bind-api/4.0.0/jakarta.xml.bind-api-4.0.0.jar;C:/Users/robso/.m2/repository/org/glassfish/jaxb/jaxb-runtime/4.0.2/jaxb-runtime-4.0.2.jar;C:/Users/robso/.m2/repository/jakarta/inject/jakarta.inject-api/2.0.1/jakarta.inject-api-2.0.1.jar;C:/Users/robso/.m2/repository/org/antlr/antlr4-runtime/4.13.0/antlr4-runtime-4.13.0.jar;C:/Users/robso/.m2/repository/com/h2database/h2/2.3.232/h2-2.3.232.jar",
+          "OrmProbe",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs\\case-b",
+          "true"
+        ],
+        "workingDirectory": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\case-b-probe.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\case-b-probe.stderr.txt"
+      },
+      {
+        "label": "structural",
+        "executable": "C:\\Program Files\\nodejs\\node.exe",
+        "args": [
+          "--input-type=module",
+          "--eval",
+          "import assert from 'node:assert/strict';\nimport {readFileSync, readdirSync, existsSync} from 'node:fs';\nimport path from 'node:path';\nimport {loadPackageFromDirectory} from './packages/core/src/application/package-loader.ts';\nimport {validatePackage} from './packages/core/src/application/validate-package.ts';\nimport {NodeFileSystem} from './packages/node/src/file-system.ts';\nimport {ClaudeCodeAdapter} from './packages/adapter-claude/src/index.ts';\nimport {CodexAdapter} from './packages/adapter-codex/src/index.ts';\nconst root='skills/orm-structural-mapping';\nconst loaded=await loadPackageFromDirectory(new NodeFileSystem(),root,{strict:true});\nconst report=validatePackage(loaded.pkg,{directoryName:'orm-structural-mapping',adapters:[new ClaudeCodeAdapter(),new CodexAdapter()]});\nconst issues=[...loaded.issues,...report.issues];\nassert.equal(issues.length,0,JSON.stringify(issues));\nconst entry=readFileSync(path.join(root,'SKILL.md'),'utf8');\nconst refs=readdirSync(path.join(root,'references'));\nfor(const ref of refs) assert.ok(entry.includes('references/'+ref),'unrouted '+ref);\nlet links=0;\nfor(const file of ['SKILL.md',...refs.map(f=>'references/'+f)]) {\n const body=readFileSync(path.join(root,file),'utf8');\n for(const m of body.matchAll(/\\]\\(([^)]+)\\)/g)) {\n  const href=m[1];\n  if(/^(?:<)?[a-z]+:\\/\\//i.test(href)) continue;\n  const [target,anchor]=href.split('#');\n  const resolved=target?path.resolve(root,path.dirname(file),target):path.resolve(root,file);\n  assert.ok(existsSync(resolved),file+': '+href);\n  if(anchor) {\n   const targetText=readFileSync(resolved,'utf8');\n   const anchors=[...targetText.matchAll(/^#+ (.+)$/gm)].map(m=>m[1].toLowerCase().replace(/[^a-z0-9\\s-]/g,'').trim().replace(/\\s+/g,'-'));\n   assert.ok(anchors.includes(anchor),file+': '+href);\n  }\n  links++;\n }\n}\nconsole.log(JSON.stringify({skill:'orm-structural-mapping',version:loaded.pkg.manifest.version,issues,referenceFilesRouted:refs.length,localLinksAndAnchorsChecked:links},null,2));\n\n"
+        ],
+        "workingDirectory": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\structural.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\structural.stderr.txt"
+      },
+      {
+        "label": "format",
+        "executable": "C:\\Program Files\\nodejs\\node.exe",
+        "args": [
+          "node_modules/prettier/bin/prettier.cjs",
+          "--check",
+          "skills/orm-structural-mapping/SKILL.md",
+          "skills/orm-structural-mapping/skill.yaml",
+          "skills/orm-structural-mapping/references/identity-and-associations.md",
+          "skills/orm-structural-mapping/references/embedding-and-serialization.md"
+        ],
+        "workingDirectory": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\format.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\format.stderr.txt"
+      },
+      {
+        "label": "diff-check",
+        "executable": "git",
+        "args": ["diff", "--check", "--", "skills/orm-structural-mapping"],
+        "workingDirectory": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\diff-check.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\diff-check.stderr.txt"
+      },
+      {
+        "label": "final-diff",
+        "executable": "git",
+        "args": ["diff", "--", "skills/orm-structural-mapping"],
+        "workingDirectory": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\final-diff.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\final-diff.stderr.txt"
+      },
+      {
+        "label": "final-status",
+        "executable": "git",
+        "args": ["status", "--short", "--", "skills/orm-structural-mapping"],
+        "workingDirectory": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\final-status.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\final-status.stderr.txt"
+      },
+      {
+        "label": "staged-diff",
+        "executable": "git",
+        "args": ["diff", "--cached", "--", "skills/orm-structural-mapping"],
+        "workingDirectory": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\staged-diff.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\staged-diff.stderr.txt"
+      },
+      {
+        "label": "committed-SKILL.md",
+        "executable": "git",
+        "args": ["show", "HEAD:skills/orm-structural-mapping/SKILL.md"],
+        "workingDirectory": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\committed-SKILL.md.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\committed-SKILL.md.stderr.txt"
+      },
+      {
+        "label": "committed-skill.yaml",
+        "executable": "git",
+        "args": ["show", "HEAD:skills/orm-structural-mapping/skill.yaml"],
+        "workingDirectory": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\committed-skill.yaml.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\committed-skill.yaml.stderr.txt"
+      },
+      {
+        "label": "committed-references_identity-and-associations.md",
+        "executable": "git",
+        "args": [
+          "show",
+          "HEAD:skills/orm-structural-mapping/references/identity-and-associations.md"
+        ],
+        "workingDirectory": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\committed-references_identity-and-associations.md.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\committed-references_identity-and-associations.md.stderr.txt"
+      },
+      {
+        "label": "committed-references_embedding-and-serialization.md",
+        "executable": "git",
+        "args": [
+          "show",
+          "HEAD:skills/orm-structural-mapping/references/embedding-and-serialization.md"
+        ],
+        "workingDirectory": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\committed-references_embedding-and-serialization.md.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\committed-references_embedding-and-serialization.md.stderr.txt"
+      }
+    ],
+    "fullCommandResults": {
+      "compile": {
+        "exitCode": 0,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\compile.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\compile.stderr.txt",
+        "stdout": "",
+        "stderr": ""
+      },
+      "case-a-probe": {
+        "exitCode": 0,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\case-a-probe.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\case-a-probe.stderr.txt",
+        "stdout": "Java=25.0.3\r\nHibernate=6.6.33.Final\r\nDatabase=H2 2.3.232 (2024-08-11)\r\nHibernate: select m1_0.id,m1_0.name from access_member m1_0 where m1_0.id=?\r\nHibernate: insert into access_badge (label,member_id,version,id) values (?,?,?,?)\r\nHibernate: select b1_0.id,b1_0.label,b1_0.member_id,b1_0.version from access_badge b1_0 where b1_0.id=?\r\nHibernate: select m1_0.id,m1_0.name from access_member m1_0 where m1_0.id=?\r\nHibernate: select m1_0.id,m1_0.name from access_member m1_0 where m1_0.id=?\r\nHibernate: insert into access_badge (label,member_id,version,id) values (?,?,?,?)\r\nduplicateViaOrmRejected=false, sqlState=null\r\nHibernate: select b1_0.id,b1_0.label,b1_0.member_id,b1_0.version from access_badge b1_0 where b1_0.member_id=?\r\nHibernate: select b1_0.id,b1_0.label,b1_0.member_id,b1_0.version from access_badge b1_0 where b1_0.member_id=?\r\ndirectoryAmbiguous=true\r\nnullMemberRejected=23502\r\nmissingMemberRejected=23506\r\nconstraintCannotIgnoreExistingDuplicates=23505\r\nHibernate: select b1_0.id,b1_0.label,b1_0.member_id,b1_0.version from access_badge b1_0 where b1_0.id=?\r\nHibernate: delete from access_badge where id=? and version=?\r\nHibernate: select b1_0.id,b1_0.label,b1_0.member_id,b1_0.version from access_badge b1_0 where b1_0.id=?\r\nHibernate: select m1_0.id,m1_0.name from access_member m1_0 where m1_0.id=?\r\noriginalContract=violated: missing upper-cardinality enforcement\r\nassertions=20\r\nLIMIT: actual Hibernate/H2 fixture; not PostgreSQL, provider-general, production-migration or agent-evaluation evidence.\r\n",
+        "stderr": "Oct 16, 2026 1:00:02 PM org.hibernate.Version logVersion\r\nINFO: HHH000412: Hibernate ORM core version 6.6.33.Final\r\nOct 16, 2026 1:00:02 PM org.hibernate.cache.internal.RegionFactoryInitiator initiateService\r\nINFO: HHH000026: Second-level cache disabled\r\nOct 16, 2026 1:00:02 PM org.hibernate.engine.jdbc.connections.internal.DriverManagerConnectionProviderImpl configure\r\nWARN: HHH10001002: Using built-in connection pool (not intended for production use)\r\nOct 16, 2026 1:00:02 PM org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator logConnectionInfo\r\nINFO: HHH10001005: Database info:\n\tDatabase JDBC URL [jdbc:h2:mem:orm_skill_a;DB_CLOSE_DELAY=-1]\n\tDatabase driver: org.h2.Driver\n\tDatabase version: 2.3.232\n\tAutocommit mode: false\n\tIsolation level: undefined/unknown\n\tMinimum pool size: 1\n\tMaximum pool size: 2\r\nOct 16, 2026 1:00:03 PM org.hibernate.engine.transaction.jta.platform.internal.JtaPlatformInitiator initiateService\r\nINFO: HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)\r\n"
+      },
+      "case-b-probe": {
+        "exitCode": 0,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\case-b-probe.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\case-b-probe.stderr.txt",
+        "stdout": "Java=25.0.3\r\nHibernate=6.6.33.Final\r\nDatabase=H2 2.3.232 (2024-08-11)\r\nHibernate: select m1_0.id,m1_0.name from access_member m1_0 where m1_0.id=?\r\nHibernate: insert into access_badge (label,member_id,version,id) values (?,?,?,?)\r\nHibernate: select b1_0.id,b1_0.label,b1_0.member_id,b1_0.version from access_badge b1_0 where b1_0.id=?\r\nHibernate: select m1_0.id,m1_0.name from access_member m1_0 where m1_0.id=?\r\nHibernate: select m1_0.id,m1_0.name from access_member m1_0 where m1_0.id=?\r\nHibernate: insert into access_badge (label,member_id,version,id) values (?,?,?,?)\r\nduplicateViaOrmRejected=true, sqlState=23505\r\nHibernate: select b1_0.id,b1_0.label,b1_0.member_id,b1_0.version from access_badge b1_0 where b1_0.member_id=?\r\nHibernate: select b1_0.id,b1_0.label,b1_0.member_id,b1_0.version from access_badge b1_0 where b1_0.member_id=?\r\ndirectoryAmbiguous=false\r\nnullMemberRejected=23502\r\nmissingMemberRejected=23506\r\ndirectDuplicateRejected=23505\r\nHibernate: select b1_0.id,b1_0.label,b1_0.member_id,b1_0.version from access_badge b1_0 where b1_0.id=?\r\nHibernate: delete from access_badge where id=? and version=?\r\nHibernate: select b1_0.id,b1_0.label,b1_0.member_id,b1_0.version from access_badge b1_0 where b1_0.id=?\r\nHibernate: select m1_0.id,m1_0.name from access_member m1_0 where m1_0.id=?\r\noriginalContract=satisfied for tested constraints\r\nassertions=21\r\nLIMIT: actual Hibernate/H2 fixture; not PostgreSQL, provider-general, production-migration or agent-evaluation evidence.\r\n",
+        "stderr": "Oct 16, 2026 1:00:04 PM org.hibernate.Version logVersion\r\nINFO: HHH000412: Hibernate ORM core version 6.6.33.Final\r\nOct 16, 2026 1:00:04 PM org.hibernate.cache.internal.RegionFactoryInitiator initiateService\r\nINFO: HHH000026: Second-level cache disabled\r\nOct 16, 2026 1:00:04 PM org.hibernate.engine.jdbc.connections.internal.DriverManagerConnectionProviderImpl configure\r\nWARN: HHH10001002: Using built-in connection pool (not intended for production use)\r\nOct 16, 2026 1:00:04 PM org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator logConnectionInfo\r\nINFO: HHH10001005: Database info:\n\tDatabase JDBC URL [jdbc:h2:mem:orm_skill_b;DB_CLOSE_DELAY=-1]\n\tDatabase driver: org.h2.Driver\n\tDatabase version: 2.3.232\n\tAutocommit mode: false\n\tIsolation level: undefined/unknown\n\tMinimum pool size: 1\n\tMaximum pool size: 2\r\nOct 16, 2026 1:00:04 PM org.hibernate.engine.transaction.jta.platform.internal.JtaPlatformInitiator initiateService\r\nINFO: HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)\r\nOct 16, 2026 1:00:04 PM org.hibernate.engine.jdbc.spi.SqlExceptionHelper logExceptions\r\nWARN: SQL Error: 23505, SQLState: 23505\r\nOct 16, 2026 1:00:04 PM org.hibernate.engine.jdbc.spi.SqlExceptionHelper logExceptions\r\nERROR: Unique index or primary key violation: \"PUBLIC.UQ_BADGE_MEMBER_INDEX_4 ON PUBLIC.ACCESS_BADGE(MEMBER_ID NULLS FIRST) VALUES ( /* 10 */ CAST(1 AS BIGINT) )\"; SQL statement:\ninsert into access_badge (label,member_id,version,id) values (?,?,?,?) [23505-232]\r\n"
+      },
+      "structural": {
+        "exitCode": 0,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\structural.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\structural.stderr.txt",
+        "stdout": "{\n  \"skill\": \"orm-structural-mapping\",\n  \"version\": \"1.3.5\",\n  \"issues\": [],\n  \"referenceFilesRouted\": 2,\n  \"localLinksAndAnchorsChecked\": 2\n}\n",
+        "stderr": ""
+      },
+      "format": {
+        "exitCode": 0,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\format.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\format.stderr.txt",
+        "stdout": "Checking formatting...\nAll matched files use Prettier code style!\n",
+        "stderr": ""
+      },
+      "diff-check": {
+        "exitCode": 0,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\diff-check.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\diff-check.stderr.txt",
+        "stdout": "",
+        "stderr": ""
+      },
+      "final-diff": {
+        "exitCode": 0,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\final-diff.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\final-diff.stderr.txt",
+        "stdout": "diff --git a/skills/orm-structural-mapping/references/embedding-and-serialization.md b/skills/orm-structural-mapping/references/embedding-and-serialization.md\nindex 29e4617..aea939e 100644\n--- a/skills/orm-structural-mapping/references/embedding-and-serialization.md\n+++ b/skills/orm-structural-mapping/references/embedding-and-serialization.md\n@@ -53,7 +53,7 @@ This does not establish record support for every identifier use.\n \n See the [Hibernate 6.2.0 record instantiator](https://github.com/hibernate/hibernate-orm/blob/6.2.0/hibernate-core/src/main/java/org/hibernate/metamodel/internal/EmbeddableInstantiatorRecordStandard.java),\n [Hibernate 6.2 embeddable types](https://docs.hibernate.org/orm/6.2/introduction/html_single/#embeddable-types)\n-and [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2)\n+and [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html)\n for record, ownership and converter contracts.\n \n ### Points that bite\ndiff --git a/skills/orm-structural-mapping/references/identity-and-associations.md b/skills/orm-structural-mapping/references/identity-and-associations.md\nindex 3296e52..53af844 100644\n--- a/skills/orm-structural-mapping/references/identity-and-associations.md\n+++ b/skills/orm-structural-mapping/references/identity-and-associations.md\n@@ -174,7 +174,7 @@ persisting; setting scalar fields in `PostTagId` alone does not establish those\n Its attribute names and types must match the `@MapsId` names and referenced identifier types.\n The mapped identifier components derive from the associations; direct mutation of those\n components is not a request to update the foreign keys. See the\n-[`@MapsId` contract](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/mapsid).\n+[`@MapsId` contract](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/MapsId.html).\n \n Once persistent, do not change the primary key, whether natural, generated, assigned or derived.\n Changing this link's post or tag would change its identity. Jakarta Persistence defines primary-key\n@@ -272,7 +272,7 @@ handling, and account for permissions or migration procedures that can alter enf\n \n These are partial JPA examples, with imports, ids and constructors omitted where unrelated.\n Verify Java, Jakarta/Javax namespace and provider versions before reuse. Sources:\n-[Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2)\n+[Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html)\n and Hibernate 6.6.56 source documentation for\n [associations](https://github.com/hibernate/hibernate-orm/blob/6.6.56/documentation/src/main/asciidoc/userguide/chapters/domain/associations.adoc),\n [identifiers](https://github.com/hibernate/hibernate-orm/blob/6.6.56/documentation/src/main/asciidoc/userguide/chapters/domain/identifiers.adoc)\ndiff --git a/skills/orm-structural-mapping/skill.yaml b/skills/orm-structural-mapping/skill.yaml\nindex 085af4e..2154712 100644\n--- a/skills/orm-structural-mapping/skill.yaml\n+++ b/skills/orm-structural-mapping/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: orm-structural-mapping\n-version: 1.3.4\n+version: 1.3.5\n description: >-\n   Mapping the structure of an object model onto tables: Identity Field, Foreign Key Mapping,\n   Association Table Mapping, Dependent Mapping, Embedded Value and Serialized LOB. Use when\n",
+        "stderr": ""
+      },
+      "final-status": {
+        "exitCode": 0,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\final-status.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\final-status.stderr.txt",
+        "stdout": " M skills/orm-structural-mapping/references/embedding-and-serialization.md\n M skills/orm-structural-mapping/references/identity-and-associations.md\n M skills/orm-structural-mapping/skill.yaml\n",
+        "stderr": ""
+      },
+      "staged-diff": {
+        "exitCode": 0,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\staged-diff.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\staged-diff.stderr.txt",
+        "stdout": "",
+        "stderr": ""
+      },
+      "committed-SKILL.md": {
+        "exitCode": 0,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\committed-SKILL.md.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\committed-SKILL.md.stderr.txt",
+        "stdout": "---\nname: orm-structural-mapping\ndescription: >\n  Mapping the structure of an object model onto tables: Identity Field, Foreign Key Mapping,\n  Association Table Mapping, Dependent Mapping, Embedded Value and Serialized LOB. Use when\n  choosing an identifier strategy or when a generated identity breaks batching, when a\n  bidirectional association updates the wrong side and no foreign key is written, when a\n  many-to-many link already has attributes, when child rows are given repositories of their\n  own, when a value type is flattened into columns or hidden in a JSON column, or when a\n  collection is deleted and reinserted on every save. Does not cover subtype mapping\n  (inheritance-mapping-strategies), where the mapping lives (metadata-mapping), runtime\n  fetch behaviour (orm-behavioral-patterns), or which data-access pattern to use in the\n  first place (data-source-patterns).\n---\n\n# ORM Structural Mapping\n\n## Purpose\n\nChoose structural mappings from the identity, lifecycle and storage contracts they must serve.\nChanging persisted keys, representation or constraints can require a data migration;\nmetadata or helper changes may leave deployed data unchanged. These patterns are where the impedance mismatch\nactually lives: an object has references, a table has foreign keys; an object may contain a\nvalue, a table has columns; an object graph has ownership, a schema has constraints.\n\nThe failure this prevents is mapping by autocompletion — `@ManyToMany` because there are two\ncollections, `@GeneratedValue` because it was in the tutorial, a JSON column because the\nshape was awkward — and discovering the consequences at production volume.\n\n## The patterns\n\n```text\nIdentity Field         the object carries the row's primary key, so the\n                       mapper can find the row again. Choice of key type\n                       and generation is a schema-level commitment.\n\nForeign Key Mapping    an object reference becomes a foreign key column.\n                       The owning side writes it; the other side is a view.\n\nAssociation Table      a many-to-many becomes a third table. Link attributes\nMapping                may belong to an association entity or an owned value.\n\nDependent Mapping      a child's write lifecycle belongs to its parent;\n                       an entity child still has an identifier.\n\nEmbedded Value         a value object typically becomes owner-table columns.\n                       No independent persistent identity or lifecycle.\n\nSerialized LOB         a graph is stored as one JSON/XML/binary column.\n                       Opaque binary and native queryable JSON have different costs.\n```\n\n## Workflow\n\nStart with the requested decision or defect and the affected mappings. Preserve an adequate\ndesign; use only the steps relevant to its identity, writes, queries or schema contract.\n\n1. **Choose identity with lifecycle and storage topology**, because generation constrains batching,\n   sharding and when equality can be stable. It need not precede every domain decision.\n2. **For each association, name the owner** — the side that writes the foreign key — and\n   make both sides consistent in memory; mapping ownership differs from domain ownership.\n3. **Decide identity per concept, not per table.** Whether something is a dependent child,\n   an embedded value or an entity in its own right is a domain question with a schema\n   consequence.\n4. **For a value-storage decision, identify required queries, indexes and reports.**\n   Compare portability, constraints, update granularity and database JSON support;\n   querying alone does not decide embedded columns versus JSON.\n5. **Predict and inspect the write statements** for a scalar edit, collection addition and\n   removal. Distinguish child-row deletes, link-table recreation and order-column updates;\n   a Java `List` alone does not predict the SQL.\n6. **Check deployed nullability and constraints against the required invariant.**\n   Distinguish final enforcement from compatible nullable staging during a migration;\n   annotations alone do not establish what the database enforces.\n\n## Decision rules\n\n```text\nIdentifier for a normal entity\n        → preserve a suitable existing key. For a new choice, compare a supported\n          sequence, IDENTITY, assigned UUID or stable natural/composite key from\n          identity timing, topology, key width and actual insert/index workload.\n          IDENTITY/auto-increment can constrain batching\n          and generated-key retrieval depending on database, driver and ORM\n          version—measure the actual insert path for a high-volume table.\n\nIdentity must be known before the row exists (event id, correlation,\nclient-generated)\n        → assigned identifier from the domain's creation path. It can stabilize\n          id-based equality before persistence; still define equals/hashCode and\n          repository newness explicitly (orm-behavioral-patterns).\n\nNatural key that is stable, small and never changes\n        → usable when its immutability and uniqueness are real contracts.\n          Compare referencing-key width and change propagation with a surrogate\n          plus a unique constraint; do not replace an adequate key merely by rule.\n\nTwo entities, one reference\n        → foreign key mapping. Identify the owning mapping attribute.\n          Decide whether multiple referencing rows may share the same target:\n          that distinguishes ManyToOne from OneToOne, not the Java field type.\n          Verify uniqueness and nullability in the deployed schema; a child FK\n          alone does not require every parent to have a child.\n          Bidirectional is a convenience; keep both sides in sync in a\n          relationship helper, usually on the aggregate root.\n\nMany-to-many with nothing else to say\n        → association table mapping, no entity class.\n\nMany-to-many where the link has a domain attribute (when, by whom, quantity,\nrole) or independent lifecycle\n        → consider an association entity for independently identified or queried\n          links; an owner-bound value collection can also carry attributes.\n          Choose from lifecycle, mutation/query needs and actual collection SQL.\n\nA child that is never referenced from outside its parent and dies with it\n        → dependent mapping: choose cascades and orphan removal to enforce\n          the write lifecycle. Read projections need not create a child write repository.\n\nA value with no identity: Money, Address, DateRange, Coordinates\n        → embedded value, columns in the owner's table. Prefer this to\n          three loose primitives.\n\nA structure that is genuinely opaque to the database: a rendered\ndocument, an audit snapshot, a third-party payload, a variable form\n          → serialized LOB / JSON column. Accept vendor-specific query/index\n          support, coarse update semantics and harder relational constraints/migrations.\n\nThe same structure is later needed in a WHERE clause or a report\n        → compare relational promotion with supported JSON query/index options.\n          Choose from constraints, query plans and migration costs.\n```\n\n## Rules\n\n- Keep an entity's established primary key unchanged after persistence, including identity\n  derived through `@MapsId`. Reassigning an identifying relationship is not an ordinary foreign-key\n  update. Choose explicit link replacement or an independently identified relationship from the\n  domain lifecycle; see the identity reference before changing the mapping.\n- **The owning side is the mapping attribute that controls the foreign key/join table**, which is\n  not always the object residing in the table that physically stores the FK. Only changes to the\n  owning mapping update that relationship. Inverse collection changes can still cascade\n  persistence or orphan removal, so an inconsistent graph may cause missing links or\n  constraint failures, not simply a no-op. Keep both sides consistent through one helper.\n- Bidirectional associations are a cost: two references to keep in step, two ways to load,\n  and a serialisation cycle. Map an association bidirectionally only when both traversal\n  directions are actually used.\n- An association entity gives a link persistent identity and entity query/mutation semantics.\n  An owned value collection can carry link attributes without independent identity; database-owned\n  metadata need not become application state. Inspect affected mappings and callers when changing\n  representation. Do not introduce an entity solely because an attribute might someday appear.\n- Collection SQL depends on ownership, entity versus value elements, row identifiers and\n  order semantics. Inspect SQL before replacing a `List` with a `Set`; preserve required\n  duplicates and ordering. Mutate managed collections through an identity-based diff,\n  not an automatic clear-and-repopulate operation.\n- Embedded values remove loose primitives without introducing independent entity identity.\n  Record embeddables require a supporting ORM/API version; Java record syntax alone is\n  insufficient. A basic single-valued embed typically uses owner columns; collection or\n  secondary-table mappings have different storage shapes.\n- Nullability of embedded values is subtle: if every column is null, the ORM may hand back\n  an object with null fields or a null object depending on version and configuration. If\n  the value is optional, decide and test which.\n- **Distinguish opaque LOBs from native JSON.** JSON can have database queries, indexes,\n  validation and SQL migrations. Compare those capabilities with relational constraints,\n  portability and actual plans. Whole-value ORM writes need concurrency protection;\n  logical JSON path updates do not imply physically independent writes.\n- Dependent mapping concerns write lifecycle. A child entity can have an id and appear in\n  read-only reports while mutations remain governed by its parent. Independent mutation\n  commands or reassignment requirements warrant revisiting the boundary\n  (`repository-pattern`).\n- Enforce database-owned invariants with deployed constraints, including mandatory values and\n  uniqueness relied on across writers. Application checks alone leave bypass paths; domain-only\n  rules still need their owning boundary (`domain-logic-organization`).\n- Assess migration and reader/writer compatibility when persisted representation or enforcement\n  changes. A mapping-only repair need not migrate data (`architecture-decision-making`).\n\nBefore choosing version-sensitive mappings, inspect the Java toolchain, persistence API,\nprovider, enhancement settings, dialect and schema migrations. Examples are partial mappings,\nnot standalone applications. Return the relevant decision and evidence, or explain why the\nexisting mapping is adequate. For a changed write or reload contract, include the expected\nSQL/constraints and a focused flush-clear-reload check that would expose that defect. Missing\nprovider or schema evidence means the recommendation remains conditional; do not upgrade\nthe project to make an example work.\n\n## References\n\n- [Identity and associations](references/identity-and-associations.md) — identifier\n  generation strategies with their batching, sharding and equality consequences; owning\n  versus inverse sides and inconsistent links; association entities versus owned link values;\n  collection mapping and delete-then-insert; and the query cost of each\n  shape. Read when mapping a relationship or choosing a key.\n- [Embedding and serialisation](references/embedding-and-serialization.md) — embedded\n  values as records, converters for single-column types, dependent mapping and its\n  lifecycle rules, serialized LOB with the JSON-column trade-off stated honestly, indexing\n  and migrating JSON, and how to promote a LOB to columns when the requirement changes.\n  Read when mapping a value type or considering a JSON column.\n",
+        "stderr": ""
+      },
+      "committed-skill.yaml": {
+        "exitCode": 0,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\committed-skill.yaml.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\committed-skill.yaml.stderr.txt",
+        "stdout": "schemaVersion: 1\n\nname: orm-structural-mapping\nversion: 1.3.4\ndescription: >-\n  Mapping the structure of an object model onto tables: Identity Field, Foreign Key Mapping,\n  Association Table Mapping, Dependent Mapping, Embedded Value and Serialized LOB. Use when\n  choosing an identifier strategy or when a generated identity breaks batching, when a\n  bidirectional association updates the wrong side and no foreign key is written, when a\n  many-to-many link already has attributes, when child rows are given repositories of their\n  own, when a value type is flattened into columns or hidden in a JSON column, or when a\n  collection is deleted and reinserted on every save. Does not cover subtype mapping\n  (inheritance-mapping-strategies), where the mapping lives (metadata-mapping), runtime\n  fetch behaviour (orm-behavioral-patterns), or which data-access pattern to use in the\n  first place (data-source-patterns).\n\nlicense: Apache-2.0\n\nauthors:\n  - name: agent-skills contributors\n    url: https://github.com/robsonkades/agent-skills\n\nhomepage: https://github.com/robsonkades/agent-skills/tree/main/skills/orm-structural-mapping\nrepository:\n  type: git\n  url: https://github.com/robsonkades/agent-skills\n  directory: skills/orm-structural-mapping\n\nkeywords:\n  - mapping\n  - identity-field\n  - associations\n  - embeddable\n  - json-column\n  - jpa\n\nfiles:\n  - SKILL.md\n  - skill.yaml\n  - references/\n\ndependencies: []\n\nsuggests:\n  - orm-fetch-and-batching-performance\n  - architecture-and-performance\n  - architecture-decision-making\n  - architecture-refactoring-paths\n  - domain-logic-organization\n  - data-source-patterns\n  - inheritance-mapping-strategies\n  - metadata-mapping\n  - offline-concurrency-control\n  - orm-behavioral-patterns\n  - repository-pattern\n\ncapabilities:\n  - reads-source\n\nagentOverrides:\n  codex:\n    interface:\n      display_name: ORM Structural Mapping\n      short_description: Keys, associations, embedded values and LOBs\n      default_prompt: Use ORM Structural Mapping to decide or review this mapping.\n",
+        "stderr": ""
+      },
+      "committed-references_identity-and-associations.md": {
+        "exitCode": 0,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\committed-references_identity-and-associations.md.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\committed-references_identity-and-associations.md.stderr.txt",
+        "stdout": "# Identity and Associations\n\n## Identity Field: choosing the generator\n\n| Strategy                        | Identity known before insert | Insert batching               | Notes                                                              |\n| ------------------------------- | ---------------------------- | ----------------------------- | ------------------------------------------------------------------ |\n| `IDENTITY` / auto-increment     | no                           | constrained/provider-specific | Generated-key retrieval can prevent ordinary JDBC batching         |\n| `SEQUENCE` with allocation size | yes                          | usually                       | Amortizes sequence access; tune allocation and crash gaps          |\n| `TABLE`                         | yes                          | yes                           | A row lock per allocation; avoid under concurrency                 |\n| Assigned UUID (v4)              | yes                          | yes                           | Random placement can cost index locality; inspect actual layout    |\n| Assigned UUID (v7 / ULID)       | yes                          | yes                           | Time-ordered: can improve locality, identity before insert         |\n| Natural key                     | yes                          | yes                           | Only if genuinely immutable; migrations when it is not are painful |\n\nThe batching column indicates compatibility with batching, not that batching is enabled.\nInspect provider settings, driver and statements. A sequence-generated id normally becomes\navailable during persist, before the INSERT; it is not automatically available in the constructor.\nAlign sequence increment and provider optimizer/allocation configuration in the migration.\nTime-ordered identifiers can improve locality but do not guarantee global event order or\nremove index hot spots. `UuidCreator` below is an external library, not a JDK API; verify an\nexisting dependency rather than adding one implicitly.\n\nTwo consequences that decide most cases:\n\n**Batching.** Historically Hibernate executes `IDENTITY` inserts immediately to obtain each key,\npreventing its ordinary JDBC entity-insert batching. Database `RETURNING`, driver APIs, bulk\noperations and newer provider versions can change the available path. Do not derive a round-trip\ncount from row count alone; inspect statements and wire/database metrics. Where supported, a pooled\nsequence can amortize key allocation; tune `allocationSize` from concurrency and batching needs:\n\n```java\n@Id\n@GeneratedValue(strategy = SEQUENCE, generator = \"order_seq\")\n@SequenceGenerator(name = \"order_seq\", sequenceName = \"order_seq\", allocationSize = 50)\nprivate Long id;\n```\n\n**Equality before persistence.** With a generated key, `id` is initially null and is assigned\nat a strategy-dependent point during persistence. An id-based hash therefore changes — putting the entity in a `HashSet`\nbefore saving and looking it up afterwards fails. Either use an assigned identifier\ngenerated in the constructor:\n\n```java\n@Id private UUID id = UuidCreator.getTimeOrderedEpoch();   // or another v7 generator\n```\n\nor write `equals`/`hashCode` that are stable regardless (a business key, or a `hashCode`\nreturning a stable value with `equals` comparing non-null ids). Distinct transient entities\nwith null ids must not compare equal; handle proxy/entity type compatibility consistently.\nA constant hash can degrade large sets. Assigned ids also require correct repository\nnew-entity detection: a non-null id does not universally mean the row already exists.\n\n**Composite keys** can fit stable domain identity or an existing schema. Compare key width,\nreferencing mappings and change propagation with a surrogate plus a uniqueness constraint;\nthe mere availability of a surrogate is not a reason to migrate an adequate key.\nChoose `@EmbeddedId` or `@IdClass` with compatible field types and stable equality.\nJakarta Persistence 3.2 permits record key classes; do not infer that an older provider's\nrecord embeddable support also supports record identifiers. Use the project's supported\nkey-class form and test derived identity (`@MapsId`) explicitly.\n\n## Foreign Key Mapping: the owning side\n\n```java\n@Entity\npublic class OrderLine {\n    @ManyToOne(fetch = LAZY)\n    @JoinColumn(name = \"order_id\", nullable = false)\n    private Order order;                    // ← OWNER: this side has the column\n}\n\n@Entity\npublic class Order {\n    @OneToMany(mappedBy = \"order\", cascade = ALL, orphanRemoval = true)\n    private List<OrderLine> lines = new ArrayList<>();   // ← inverse: a view\n}\n```\n\nAn inconsistent inverse-side update (which can still cascade persistence):\n\n```java\norder.getLines().add(new OrderLine(product, 2));   // owner's order field is null\norders.save(order);\n// → either a not-null violation, or a row with order_id = NULL. Nothing \"saved wrong\";\n//   the inverse side is simply not what is persisted.\n```\n\nThe fix is to make the inconsistent state unreachable:\n\n```java\npublic void addLine(ProductId product, int quantity, Money unitPrice) {\n    requireDraft();\n    var line = new OrderLine(this, product, quantity, unitPrice);   // sets the owner\n    lines.add(line);\n}\n\npublic void removeLine(OrderLine line) {\n    requireDraft();\n    // Accept the actual managed member, not a detached equal-by-id copy.\n    for (var iterator = lines.iterator(); iterator.hasNext();) {\n        var member = iterator.next();\n        if (member == line) {\n            iterator.remove();\n            member.detachFromOrder();\n            return;\n        }\n    }\n}\n```\n\nBoth operations enforce this example's draft-only mutation contract before changing the graph.\nNo public setter for the collection, no public setter for `order` on the line. This is the\nsame discipline that keeps the aggregate's invariants enforceable\n(`domain-logic-organization`).\n\n### Cardinality in both directions\n\nA single-valued Java reference does not distinguish `@ManyToOne` from `@OneToOne`.\nDecide whether the target may be shared by multiple referencing rows. For a foreign-key-based\none-to-one, enforce uniqueness of the complete referencing key, or use a shared primary key\nwhen identity and lifecycle justify it. A many-to-one permits repeated references to the\nsame target. Mapping annotations describe the intended shape; inspect deployed constraints.\n\nFor each referencing row, `NOT NULL` plus a foreign key requires an existing target.\nUniqueness adds an upper bound on how many rows can reference that target. Neither requires\nevery target row to be referenced: a parent's existence does not force insertion of its\nchild, even with a non-null unique child FK. If that minimum cardinality is required,\nidentify the transaction boundary or database mechanism that enforces it across all writers.\n\nFor optional relationships, check the database's treatment of nulls in unique constraints;\ndo not assume all databases permit the same number of absent references. See\n[PostgreSQL 17 constraints](https://www.postgresql.org/docs/17/ddl-constraints.html)\nfor foreign-key, uniqueness and null semantics. Before tightening uniqueness, inspect existing\nduplicates and define their resolution from domain rules rather than deleting an arbitrary row.\n\nTest two different referencing rows using the same target, an absent relationship and a\nnonexistent target. Assert the allowed/rejected outcomes at flush or commit and after reload;\nuse direct SQL when checking enforcement outside the ORM. Include an unreferenced parent\nwhen claiming that every parent must have a child. A successful ordinary save proves none\nof those rejection or minimum-cardinality contracts.\n\n**Inverse `@OneToOne`:** optional-child existence may require a secondary query with\nordinary proxies. Hibernate 6.6 documents lazy state initialization enhancement as a way\nto defer this load. Inspect enhancement, provider and optionality, then test with and without\na child. Owning-side or unidirectional shared-key mappings can avoid inverse traversal;\na shared key alone does not guarantee every inverse mapping becomes lazy.\n\n## Association Table Mapping, and when it stops being one\n\n```java\n// Fine while the link genuinely carries nothing.\n@ManyToMany\n@JoinTable(name = \"post_tag\",\n    joinColumns = @JoinColumn(name = \"post_id\"),\n    inverseJoinColumns = @JoinColumn(name = \"tag_id\"))\nprivate Set<Tag> tags = new HashSet<>();\n```\n\nIf a link needs its own persistent identity, entity queries or mutation lifecycle, model an\nassociation entity. Attributes such as when/by whom a tag was added can then live on it:\n\n```java\n@Entity\n@Table(name = \"post_tag\")\npublic class PostTag {\n    @EmbeddedId private PostTagId id;\n    @MapsId(\"postId\") @ManyToOne(fetch = LAZY) private Post post;\n    @MapsId(\"tagId\")  @ManyToOne(fetch = LAZY) private Tag tag;\n    private Instant addedAt;\n    private String addedBy;\n}\n```\n\nHere `(postId, tagId)` identifies the link itself. Assign both parent references before\npersisting; setting scalar fields in `PostTagId` alone does not establish those relationships.\nIts attribute names and types must match the `@MapsId` names and referenced identifier types.\nThe mapped identifier components derive from the associations; direct mutation of those\ncomponents is not a request to update the foreign keys. See the\n[`@MapsId` contract](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/mapsid).\n\nOnce persistent, do not change the primary key, whether natural, generated, assigned or derived.\nChanging this link's post or tag would change its identity. Jakarta Persistence defines primary-key\nmutation after persistence as undefined behavior; neither an exception nor a successful re-key is\na portable expectation, and `merge` does not make it supported.\n\nIf different endpoints mean a different link, remove the old link and create a new one within the\nintended transaction, preserving required audit information, constraints and shared parent rows.\nIf link identity must survive reassignment, consider a stable independent id with ordinary mutable\nforeign keys and the required uniqueness constraint. An existing mapping with that shape can\nupdate the foreign key without changing its primary key, subject to domain and lifecycle rules.\nDo not redesign a suitable existing key merely to use a surrogate. For either path, inspect SQL\nand verify keys, endpoints, surviving parents and uniqueness after flush, clear and reload.\n\nAttributes alone do not require entity identity. An owner-bound `@ElementCollection` of\nembeddables can contain link values, including an owning `@ManyToOne` to the tag through a\nforeign key in the collection table. JPA restricts such elements to owning to-one entity\nrelationships and forbids nested element collections. Compare its supported queries and\ncollection DML with the association entity; it is not an automatic targeted-update shortcut.\nA database-default audit column that the ORM never reads or writes can also remain unmapped\nif database ownership satisfies the contract.\n\nChanging representation affects mappings and callers that expose or query that representation;\nan encapsulated public API may remain unchanged. Determine actual schema/data migration needs\nfrom deployed columns, constraints and writers. Do not predict that every link will need an entity.\n\nFor unique unordered links, a `Set` with stable equality can support targeted link deletes;\nbag/list behavior depends on mapping and provider. Do not discard required ordering to\nreduce statements. Do not cascade `REMOVE` to shared tags: deleting a post must not delete\nentities still referenced elsewhere. Enforce unique link pairs in the database.\n\n## Collections and the delete-then-insert trap\n\n```java\n@OneToMany(mappedBy = \"order\", cascade = ALL, orphanRemoval = true)\nprivate List<OrderLine> lines = new ArrayList<>();\n```\n\nThis inverse entity collection does not imply delete-all/reinsert just because it is a\n`List`. Hibernate can delete a removed child's row by its identifier. By contrast,\nunidirectional link-table bags or some value collections may recreate association rows.\nDistinguish child rows, join rows and order-column updates in the statement log.\n\n- Retain managed collection wrappers and apply an identity-based diff: change existing\n  children, add new ones and remove only absent ones through association helpers.\n- Blind `clear(); addAll(...)` can create orphan deletes or needless churn. Replacing the\n  wrapper can also break orphan tracking; neither is a universal repair.\n- A `Set` requires equality stable while elements are stored. Java reference equality is\n  not intrinsically a delete-all trigger, but may fail to recognize the same database entity\n  represented by a different instance.\n- `@OrderColumn` provides persisted positions and can cause many index updates on removal.\n  `@ElementCollection` update strategy depends on collection semantics and row identification;\n  it is not invariably wholesale replacement.\n\nFor a collection-write change, test the affected scalar edit, removal, addition or reorder;\ninclude a detached/merged round trip if that is an actual entry path. Inspect SQL and verify\nsurviving identities, required ordering/duplicates and orphan cleanup\nafter flush, clear and reload (`orm-behavioral-patterns`).\n\n## Query cost by association shape\n\nA lazy to-one or collection traversed for each result can cause N+1 selects, depending on\ncache state, distinct targets and fetch configuration. EAGER requires loading but does not\npromise a join. Batch fetching can reduce secondary round trips; it does not guarantee one\nquery. A collection fetch join multiplies rows, and joining two collections can multiply\ntheir cardinalities or be rejected for multiple bags. Route detailed tuning to\n`orm-fetch-and-batching-performance`.\n\nNo general fetch strategy wins. Batch fetching amortizes lazy traversal; fetch joins reduce round\ntrips but multiply rows and complicate pagination; projections avoid entity graphs for reads.\nChoose explicitly per use case and validate query count, bytes and plan\n(`architecture-and-performance`).\n\n## Constraints belong in the schema\n\nA mapping annotation does not prove a deployed constraint exists. Enforce invariants the\ndatabase must preserve across writers, after checking existing data and rollout compatibility.\nFor a domain requiring one product per order and positive mandatory quantities, for example:\n\n```sql\nALTER TABLE order_line ALTER COLUMN order_id SET NOT NULL;\nALTER TABLE order_line ADD CONSTRAINT uq_order_product UNIQUE (order_id, product_id);\nALTER TABLE order_line ADD CONSTRAINT ck_quantity_positive CHECK (quantity > 0);\n```\n\nThis DDL uses PostgreSQL syntax; inspect and migrate the actual database schema instead of\nassuming annotation changes update deployed constraints. Include a foreign key for `order_id`;\n`NOT NULL` alone does not establish referential integrity. A CHECK permits SQL UNKNOWN,\nso mandatory `quantity` also needs `NOT NULL`.\n\nImports, bulk statements, other services and manual fixes can bypass application checks;\nenabled database constraints enforce their defined rules on those writes. Domain rules outside\nthat contract still need application enforcement. Preserve any constraint names used by error\nhandling, and account for permissions or migration procedures that can alter enforcement.\n\nThese are partial JPA examples, with imports, ids and constructors omitted where unrelated.\nVerify Java, Jakarta/Javax namespace and provider versions before reuse. Sources:\n[Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2)\nand Hibernate 6.6.56 source documentation for\n[associations](https://github.com/hibernate/hibernate-orm/blob/6.6.56/documentation/src/main/asciidoc/userguide/chapters/domain/associations.adoc),\n[identifiers](https://github.com/hibernate/hibernate-orm/blob/6.6.56/documentation/src/main/asciidoc/userguide/chapters/domain/identifiers.adoc)\nand [collections](https://github.com/hibernate/hibernate-orm/blob/6.6.56/documentation/src/main/asciidoc/userguide/chapters/domain/collections.adoc).\n",
+        "stderr": ""
+      },
+      "committed-references_embedding-and-serialization.md": {
+        "exitCode": 0,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\committed-references_embedding-and-serialization.md.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\committed-references_embedding-and-serialization.md.stderr.txt",
+        "stdout": "# Embedding and Serialisation\n\n## Embedded Value\n\nA value object with no independent identity can group basic columns in its owner's table,\ngiving them a domain type without an extra table or join. Collection, relationship and\nprovider-specific aggregate mappings can have different storage shapes.\n\nThis partial example assumes the application permits only currencies using two fractional digits;\nit is not a general monetary model. Choose precision, scale and currency validation from\nthe domain, and match the database columns so persistence cannot silently round values.\nNormalize scale to make record equality consistent for numerically equal amounts.\n`CurrencyPolicy.requireSupportedTwoFractionCurrency` below is an application-owned hook,\nnot a JDK or persistence API. Its omitted implementation must reject codes outside the\ndomain's supported set and currencies that do not use this model's two-fraction scale;\nevery constructor path, including ORM reconstruction, invokes it. Supply that policy and\nthe omitted `CurrencyMismatch` exception before compiling; no allowed currency set is implied.\n\n```java\n@Embeddable\npublic record Money(BigDecimal amount, String currency) {\n\n    public Money {\n        Objects.requireNonNull(amount);\n        Objects.requireNonNull(currency);\n        CurrencyPolicy.requireSupportedTwoFractionCurrency(currency);\n        amount = amount.setScale(2, RoundingMode.UNNECESSARY);\n    }\n\n    public Money plus(Money other) {\n        if (!currency.equals(other.currency)) throw new CurrencyMismatch(currency, other.currency);\n        return new Money(amount.add(other.amount), currency);\n    }\n\n    public static Money zero(String currency) { return new Money(BigDecimal.ZERO, currency); }\n}\n\n@Entity\npublic class Invoice {\n    @Embedded\n    @AttributeOverrides({\n        @AttributeOverride(name = \"amount\",   column = @Column(name = \"total_amount\", nullable = false, precision = 19, scale = 2)),\n        @AttributeOverride(name = \"currency\", column = @Column(name = \"total_currency\", nullable = false, length = 3))\n    })\n    private Money total;\n}\n```\n\nRecord embeddables are supported by Hibernate 6.2+ and standardized by Jakarta Persistence\n3.2. Java record syntax alone (Java 16+) does not establish provider support. Inspect the\nproject's actual provider/API baseline; older mappings may need a regular embeddable class.\nThis does not establish record support for every identifier use.\n\nSee the [Hibernate 6.2.0 record instantiator](https://github.com/hibernate/hibernate-orm/blob/6.2.0/hibernate-core/src/main/java/org/hibernate/metamodel/internal/EmbeddableInstantiatorRecordStandard.java),\n[Hibernate 6.2 embeddable types](https://docs.hibernate.org/orm/6.2/introduction/html_single/#embeddable-types)\nand [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2)\nfor record, ownership and converter contracts.\n\n### Points that bite\n\n- **Repeated embeddables need distinct column mappings.** With JPA's default names, use\n  `@AttributeOverrides` to avoid collisions. A configured provider naming strategy can also\n  distinguish the paths; Hibernate's `ImplicitNamingStrategyComponentPathImpl` is such an\n  option, while explicit overrides retain provider portability. Inspect actual mapping names.\n- **Null semantics.** With every column null, some configurations hand back `null` and\n  others an object with null components. If the value is optional, pick one and write a test\n  for it; if it is mandatory, make the columns `NOT NULL` and the question disappears.\n- **Immutability pays here.** An immutable embeddable cannot be mutated behind the owner's\n  back. Still follow JPA's owner-specific embedded-instance semantics rather than sharing\n  one embedded instance between persistent owners. A mutable one can be modified through a reference obtained\n  from a getter, bypassing the owner entirely.\n- **Querying works normally**: `where i.total.amount > :x`. This is the property a JSON\n  column generally lacks through portable JPQL path navigation. Database JSON operators\n  and provider extensions can still query JSON; compare required portability and plans.\n\nSee [Hibernate 6.6.56 embeddables and implicit naming](https://github.com/hibernate/hibernate-orm/blob/6.6.56/documentation/src/main/asciidoc/userguide/chapters/domain/embeddables.adoc)\nfor the provider-specific alternative to explicit overrides.\n\n## Single-column values: converters\n\nWhen a value maps to exactly one column, a converter is lighter than an embeddable:\n\n```java\n@Converter(autoApply = true)\npublic class EmailConverter implements AttributeConverter<Email, String> {\n    @Override public String convertToDatabaseColumn(Email email) {\n        return email == null ? null : email.value();\n    }\n    @Override public Email convertToEntityAttribute(String column) {\n        return column == null ? null : new Email(column);\n    }\n}\n```\n\nDo not assume portable JPQL functions operate on the converted database type; provider\nsupport must be verified. `autoApply` applies to eligible attributes of that Java type in\nthe persistence unit, not every field in every application. An explicit `@Convert` is\nlocal, and `disableConversion` can opt out. Ids, versions and relationships are not ordinary\nauto-apply targets.\n\n## Dependent Mapping\n\nA child whose write lifecycle belongs to its parent. A JPA entity child still needs an\nidentifier; dependent lifecycle does not mean absence of row or entity identity.\n\n```java\n@Entity\npublic class Order {\n    @OneToMany(mappedBy = \"order\", cascade = ALL, orphanRemoval = true)\n    private List<OrderLine> lines = new ArrayList<>();\n}\n```\n\nKeep aggregate mutations behind the root's operations. Select cascades for the lifecycle\noperations needed; `ALL` is convenient but is not the definition of dependence.\n`orphanRemoval` is appropriate when removing a managed child from the relationship must\ndelete it; reassignment, detached/new children and bulk operations need explicit handling.\n\nA read-only projection or report over all lines does not make lines independently mutable\naggregate roots. Independent commands, external references and reassignment requirements\nmay justify revisiting the boundary, but a child query alone does not require its own\nwrite repository (`repository-pattern`).\n\n## Serialized LOB\n\nThe whole structure in one column — JSON, XML or binary. Native JSON types are not the\nsame as opaque binary LOBs. This partial example is Hibernate 6 JSON mapping with PostgreSQL\n`jsonb`; it needs an appropriate JSON format mapper/serialization library and is not\nportable JPA or a generic `@Lob` mapping.\n\n```java\n@Entity\npublic class InsuranceApplication {\n    @Id private UUID id;\n\n    @JdbcTypeCode(SqlTypes.JSON)\n    @Column(columnDefinition = \"jsonb\")\n    private ApplicationForm form;      // a deep, variable, form-shaped structure\n}\n```\n\n### The honest trade\n\nAn opaque binary value generally cannot be queried structurally. Native JSON can support\npath queries, indexes, CHECK constraints and SQL transformations. For example,\n[PostgreSQL 17 JSON types](https://www.postgresql.org/docs/17/datatype-json.html) document\n`jsonb` operators and indexing. These capabilities have dialect, index maintenance and\nportability costs; they are legitimate designs, not automatically temporary workarounds.\n\nPrefer native JSON for variable shapes, retained payloads or snapshots where document\naccess is natural. Prefer relational columns/tables for stable heavily queried fields,\nordinary foreign keys, shared references and invariants spanning records. Reporting alone\ndoes not settle the choice: compare actual query plans, selectivity and update patterns.\n\nAn ORM often replaces a JSON value as a whole. Database JSON path-update functions may\nexpress logical partial changes, but do not assume an in-place physical write or independent\nrow locks. Test dirty detection for in-place POJO mutations; immutable replacement may be\nclearer. Two whole-document writers can lose updates without version checks. With proper\noptimistic locking, one conflicts instead; a path update must still preserve invariants and\ncoexist safely with snapshot writers (`offline-concurrency-control`).\n\nIf keeping JSON:\n\n- Version the payload shape and define compatible readers/writers. This shape version is\n  distinct from the optimistic concurrency version.\n- Validate required structure, types and bounds in the application and enforce critical\n  database-expressible constraints. Valid JSON syntax is not a business schema.\n- Use extracted/generated columns and indexes where justified by the deployed database.\n  Keep foreign-key relationships in enforceable relational columns when required.\n- If duplicating values in columns and JSON, name the authoritative representation and\n  update them atomically or reconcile explicitly. Duplication is not inherently safer.\n- Test serialization round trips, optional/missing/null fields, numeric precision and\n  dirty checking on the actual mapper.\n\n## Promoting a LOB to columns\n\nThe migration when the requirement changes, in the safe order using expand/contract:\n\n1. Add compatible nullable columns and define how each payload version is interpreted.\n2. Deploy atomic dual writes and keep old readers working. Account for every old writer\n   during rollout; do not backfill while an old writer can silently change only JSON unless\n   a trigger, capture/reconciliation protocol or other guard keeps the columns synchronized.\n3. Backfill in bounded restartable chunks. Derive from the row being updated atomically,\n   or predicate on the version read and retry conflicts, so stale backfill cannot overwrite\n   newer dual-written data.\n4. Reconcile mismatches and missing values, then introduce/validate required constraints\n   and indexes using the database's supported migration procedure.\n5. Switch reads after verification. Retain compatible writes and payload data throughout\n   the rollback window.\n6. Stop redundant writes and remove payload fields only after older binaries and rollback\n   requirements no longer need them.\n\nExpansion can preserve rollback options; dropping fields or tightening constraints is not\nautomatically reversible. Rehearse concurrent edits during backfill, restart after failure,\nand rollback to the previous application version (`architecture-refactoring-paths`).\n",
+        "stderr": ""
+      }
+    },
+    "commandEvidence": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\commands.json",
+    "structuralResult": {
+      "skill": "orm-structural-mapping",
+      "version": "1.3.5",
+      "issues": [],
+      "referenceFilesRouted": 2,
+      "localLinksAndAnchorsChecked": 2
+    },
+    "pairCheck": {
+      "identicalFiles": 7,
+      "changedFile": "schema.sql",
+      "onlyDifference": "CONSTRAINT uq_badge_member UNIQUE (member_id)",
+      "criteriaExposedToActors": false,
+      "actorsExecuted": 0
+    },
+    "exampleExecution": {
+      "classification": "Executed actual ORM/database integration in a narrow disposable Hibernate/H2 fixture, not a mocked repository or complete production integration.",
+      "compileCount": 1,
+      "probeRuns": 2,
+      "assertions": {
+        "caseA": 20,
+        "caseB": 21,
+        "totalExecutions": 41,
+        "distinctPropertyCount": "Not claimed; many controls are repeated across cases."
+      },
+      "caseA": "Without deployed uniqueness, duplicate ORM and direct SQL writes succeeded; BadgeDirectory.getSingleResult encountered multiple rows. Adding uniqueness over existing duplicates was rejected. Passing probe characterizes this expected defect.",
+      "caseB": "Deployed uniqueness rejected duplicate ORM and direct SQL writes with SQLState 23505; directory consumer remained singular.",
+      "commonControls": [
+        "Assigned identity preserved",
+        "Flush-clear-reload verifies relationship/scalar values",
+        "Null reference rejected by direct SQL (23502)",
+        "Unknown target rejected by direct SQL FK (23506)",
+        "Unreferenced member allowed",
+        "Deleting badge preserves member",
+        "JDBC row counts verify surviving identities/cardinality"
+      ],
+      "closure": "SessionFactory and service registry closed; in-memory database explicitly SHUTDOWN; all child processes exited."
+    },
+    "expectedStderr": "Hibernate INFO diagnostics and built-in test-pool/JTA notices; case-b logged the deliberate 23505 duplicate rejection. These expected negative-case logs were inspected and are not suppressed.",
+    "unexpectedCheckFailures": [],
+    "sourceRetrievalLimitations": [
+      "Initial web access to MapsId returned an unspecified internal error; retry confirmed old path 404. The corrected API path was inaccessible via web tool but independently confirmed HTTP 200 through Node fetch."
+    ],
+    "installations": 0,
+    "dependencyCacheWrites": 0,
+    "dependencyJarsCopied": 0,
+    "noGlobalChecksRunByReviewer": true
+  },
+  "behavioralEvidence": {
+    "independentAgentRunsExecuted": 0,
+    "actualAgentOutputs": [],
+    "measuredIncrementalGain": false,
+    "classification": "Known development case pair plus technical characterization. No baseline/current/no-skill comparison was run.",
+    "walkthroughs": [
+      {
+        "case": "case-a",
+        "type": "Structured expected-behavior walkthrough",
+        "result": "Use effective provider configuration and deployed schema rather than unique=true alone; missing upper-cardinality enforcement breaks a real directory consumer. A targeted schema correction is justified, with duplicate-data policy for an existing deployment."
+      },
+      {
+        "case": "case-b",
+        "type": "Structured expected-behavior walkthrough",
+        "result": "Same mapping, consumer and requirement are adequate with the deployed unique constraint. Preserve mapping/identity and allow an unreferenced member."
+      }
+    ],
+    "reproducibleCases": [
+      {
+        "id": "case-a",
+        "inputDirectory": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs\\case-a",
+        "taskFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs\\case-a\\TASK.md",
+        "files": [
+          {
+            "name": "Badge.java",
+            "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs\\case-a\\Badge.java",
+            "sha256": "db0f37b44700ca7a0c116828874cd4248e4198900098aa79e3956c85962781f8"
+          },
+          {
+            "name": "BadgeDirectory.java",
+            "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs\\case-a\\BadgeDirectory.java",
+            "sha256": "de90e93e8e8a4808ddf73e16f3ad03877a1c519073903bb6807f53de8f8b69c8"
+          },
+          {
+            "name": "BadgeIssueService.java",
+            "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs\\case-a\\BadgeIssueService.java",
+            "sha256": "d40e82d40824c7843e0c92e2e77eae0d13792becccb4f87ad9230c7585dd1d70"
+          },
+          {
+            "name": "CONTRACT.md",
+            "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs\\case-a\\CONTRACT.md",
+            "sha256": "d197ed682583e4d0bb5ef768fe72a51ba9b5e329da9d7be235ea39eb50f6962c"
+          },
+          {
+            "name": "Member.java",
+            "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs\\case-a\\Member.java",
+            "sha256": "0c307539693a9bef6fafc98e4c41cbc01c0fe1700415f538797e5c2962a5f1c1"
+          },
+          {
+            "name": "TASK.md",
+            "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs\\case-a\\TASK.md",
+            "sha256": "bff443cde20dc21181366844255a3ca7f1d4b42a386a6cedceb91ec85a694264"
+          },
+          {
+            "name": "deployment.properties",
+            "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs\\case-a\\deployment.properties",
+            "sha256": "d8c1ff203815e6094d74487b67f39e418e978896ee7ce8f0cf0cdc3a816f4883"
+          },
+          {
+            "name": "schema.sql",
+            "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs\\case-a\\schema.sql",
+            "sha256": "d670b4298256ae4ab082159181ed8d20e80fa0df71128ac58f566537857b5fcb"
+          }
+        ],
+        "criteriaFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evaluator\\criteria.json",
+        "criteriaCaseId": "case-a",
+        "classification": "Known development fixture; no independent actor output.",
+        "actorVisibility": "Only this input directory and complete selected skill; withhold evaluator, evidence, other case, README and handoff."
+      },
+      {
+        "id": "case-b",
+        "inputDirectory": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs\\case-b",
+        "taskFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs\\case-b\\TASK.md",
+        "files": [
+          {
+            "name": "Badge.java",
+            "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs\\case-b\\Badge.java",
+            "sha256": "db0f37b44700ca7a0c116828874cd4248e4198900098aa79e3956c85962781f8"
+          },
+          {
+            "name": "BadgeDirectory.java",
+            "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs\\case-b\\BadgeDirectory.java",
+            "sha256": "de90e93e8e8a4808ddf73e16f3ad03877a1c519073903bb6807f53de8f8b69c8"
+          },
+          {
+            "name": "BadgeIssueService.java",
+            "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs\\case-b\\BadgeIssueService.java",
+            "sha256": "d40e82d40824c7843e0c92e2e77eae0d13792becccb4f87ad9230c7585dd1d70"
+          },
+          {
+            "name": "CONTRACT.md",
+            "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs\\case-b\\CONTRACT.md",
+            "sha256": "d197ed682583e4d0bb5ef768fe72a51ba9b5e329da9d7be235ea39eb50f6962c"
+          },
+          {
+            "name": "Member.java",
+            "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs\\case-b\\Member.java",
+            "sha256": "0c307539693a9bef6fafc98e4c41cbc01c0fe1700415f538797e5c2962a5f1c1"
+          },
+          {
+            "name": "TASK.md",
+            "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs\\case-b\\TASK.md",
+            "sha256": "bff443cde20dc21181366844255a3ca7f1d4b42a386a6cedceb91ec85a694264"
+          },
+          {
+            "name": "deployment.properties",
+            "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs\\case-b\\deployment.properties",
+            "sha256": "d8c1ff203815e6094d74487b67f39e418e978896ee7ce8f0cf0cdc3a816f4883"
+          },
+          {
+            "name": "schema.sql",
+            "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs\\case-b\\schema.sql",
+            "sha256": "6420ca563ef9e228dd18f6064a3202de7cf51b01215ad117a150076ce94e57d0"
+          }
+        ],
+        "criteriaFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evaluator\\criteria.json",
+        "criteriaCaseId": "case-b",
+        "classification": "Known development fixture; no independent actor output.",
+        "actorVisibility": "Only this input directory and complete selected skill; withhold evaluator, evidence, other case, README and handoff."
+      }
+    ],
+    "privateEvaluatorCriteria": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evaluator\\criteria.json",
+    "criteriaSha256": "202f12ee3032d2bc4ac1b631096570662887471e83c8a0f60088a5e549bff2c9",
+    "decisiveConstraint": "Only the deployed UNIQUE(member_id) constraint changes. Java mappings, consumer, requirements and effective Hibernate hbm2ddl=none configuration are identical.",
+    "expectedOutcomes": [
+      {
+        "id": "case-a",
+        "inputDirectory": "inputs/case-a",
+        "expected": [
+          "Trace @OneToOne/@JoinColumn to deployed schema and effective configuration; do not assume annotation causes runtime database enforcement.",
+          "Recognize that two badges may reference the same member without deployed uniqueness and that BadgeDirectory.getSingleResult then fails on that member.",
+          "Repair database enforcement with a named unique constraint after considering existing duplicate data and rollout; keep suitable one-to-one mapping and stable independent ids.",
+          "Test ordinary persisted/reloaded badge, duplicate ORM and direct SQL writes, absent member target, null reference, unreferenced member and surviving member on badge deletion.",
+          "Explain that H2 evidence is limited to this fixture and does not prove production migration readiness."
+        ],
+        "failureConditions": [
+          "Concludes unique=true alone enforces the deployed database while hbm2ddl is none.",
+          "Uses only an application precheck or @Version to claim cross-row uniqueness.",
+          "Changes to @ManyToOne or permits duplicates contrary to the supplied contract.",
+          "Deletes arbitrary duplicate rows or changes immutable established primary keys to force a constraint.",
+          "Treats written plans as executed ORM or production checks."
+        ]
+      },
+      {
+        "id": "case-b",
+        "inputDirectory": "inputs/case-b",
+        "expected": [
+          "Recognize that deployed NOT NULL, FK and UNIQUE already enforce the required upper cardinality and valid targets.",
+          "Choose no required mapping/schema change; preserve independent stable identity and the selected consumer.",
+          "Distinguish each badge having a member from every member needing a badge; an unreferenced member is valid.",
+          "Validate rejection and flush/clear/reload behavior without calling H2 results a general provider or production proof."
+        ],
+        "failureConditions": [
+          "Adds a redundant schema change or surrogate-key redesign solely from preference.",
+          "Claims a unique non-null child FK requires every member to have a badge.",
+          "Flags missing uniqueness without reading the deployed schema.",
+          "Cascades removal to Member or changes consumer to silently choose an arbitrary badge."
+        ]
+      }
+    ],
+    "prerequisites": [
+      "Fresh isolated input directory per actor/skill variant",
+      "Expose only one case and complete selected skill; evaluator files remain private",
+      "Existing Java/Jakarta/Hibernate/H2 dependencies, or report execution unavailable; no installation needed",
+      "For before/after actor evaluation, run post-change behavior against this contract; the private original-state oracle is not an agent score"
+    ],
+    "criteriaFrozenBeforeTechnicalExecution": true,
+    "technicalOracle": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evaluator\\OrmProbe.java",
+    "oracleCaveat": "Characterizes the original case-a defect and original adequate case-b. A passing negative-case probe does not mean that case-a meets the domain contract.",
+    "inputSeparation": "Separate files/directories; no actor ran. Future evaluation requires actual access boundaries or an explicit procedural-isolation limitation.",
+    "noBehavioralGainClaim": "Source-link access was repaired. Technical probe results do not measure the effect of those repairs on an agent."
+  },
+  "sources": [
+    {
+      "id": "spec-original",
+      "url": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2",
+      "version": "Jakarta Persistence 3.2",
+      "result": "web open returned HTTP 404",
+      "supports": "The two identical spec URLs in the assigned references were broken."
+    },
+    {
+      "id": "spec-correct",
+      "url": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html",
+      "version": "Jakarta Persistence 3.2, April 10 2024",
+      "sections": [
+        "2.4 Primary Keys and Entity Identity",
+        "2.4.1 Composite primary keys",
+        "2.4.2 Derived Identities",
+        "2.7 Embeddable Classes",
+        "2.11 Entity Relationships",
+        "11.1.40 MapsId Annotation"
+      ],
+      "result": "Opened and inspected versioned contract.",
+      "supports": [
+        "An established entity primary key must not be mutated; derived relationship fields determine mapped identity.",
+        "Composite-key records are permitted by this API version.",
+        "Embedded objects are owned by their entity and not shared across persistent owners.",
+        "The owning mapping determines relationship database updates."
+      ],
+      "limit": "Static specification evidence, not proof of every provider or application integration."
+    },
+    {
+      "id": "mapsid-original",
+      "url": "https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/mapsid",
+      "version": "Jakarta Persistence API 3.2",
+      "result": "web open and direct Node fetch returned HTTP 404",
+      "supports": "Specific API link had an incorrect case/filename."
+    },
+    {
+      "id": "mapsid-correct",
+      "url": "https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/MapsId.html",
+      "version": "Jakarta Persistence API 3.2",
+      "result": "Direct Node fetch returned HTTP 200 and title MapsId (Jakarta Persistence API documentation); page contained Annotation Interface MapsId.",
+      "supports": "Corrected same-version API target. Derived-identity semantics independently cross-checked with spec sections 2.4.2 and 11.1.40.",
+      "limit": "Web tool could not retrieve the uppercase .html API URL; native read-only HTTP retrieval verified it instead."
+    },
+    {
+      "id": "pg17-constraints",
+      "url": "https://www.postgresql.org/docs/17/ddl-constraints.html",
+      "version": "PostgreSQL 17",
+      "sections": [
+        "5.5.1 Check Constraints",
+        "5.5.2 Not-Null Constraints",
+        "5.5.3 Unique Constraints",
+        "5.5.5 Foreign Keys"
+      ],
+      "result": "Opened and inspected null/check/uniqueness/FK contracts.",
+      "supports": [
+        "CHECK accepting true or unknown does not require a non-null value.",
+        "Unique-null semantics need explicit database consideration.",
+        "A nullable FK can omit its reference; NOT NULL requires a target but does not require every target to be referenced."
+      ],
+      "limit": "PostgreSQL runtime was not exercised. H2 observations are separately limited."
+    },
+    {
+      "id": "hibernate62-record",
+      "url": "https://docs.hibernate.org/orm/6.2/introduction/html_single/#embeddable-types",
+      "version": "Page reports 6.2.52.Final in the 6.2 documentation line",
+      "sections": ["3.14 Embeddable objects"],
+      "result": "Opened and found record embeddable support with relaxed no-argument-constructor requirement.",
+      "supports": "Existing reference correctly qualifies provider support separately from Java record syntax.",
+      "limit": "Did not execute the Money record mapping or infer record-key support on an older API."
+    },
+    {
+      "id": "hibernate6656-associations",
+      "url": "https://github.com/hibernate/hibernate-orm/blob/6.6.56/documentation/src/main/asciidoc/userguide/chapters/domain/associations.adoc",
+      "version": "Hibernate ORM tag 6.6.56",
+      "result": "Versioned primary documentation opened; link target accessible.",
+      "supports": "Existing source reference retained.",
+      "limit": "Local runtime check uses already cached 6.6.33.Final, not this documentation release."
+    }
+  ],
+  "sourceConsultationDate": "2026-10-16",
+  "sourceEvidence": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evaluator\\SOURCES.json",
+  "externalLinkEvidence": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\mapsid-http.json",
+  "evidence": {
+    "root": "C:/Users/robso/AppData/Local/Temp/orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d",
+    "inputRoot": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs",
+    "privateEvaluatorRoot": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evaluator",
+    "rawLogs": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence",
+    "readme": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\README.md",
+    "artifactHashManifest": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\artifact-hashes.json",
+    "artifactHashManifestSha256": "2cded62768d58c67d67df68ca9e3910dca41d52e509a8a26bc54ee010dbafe39",
+    "retainedArtifactCount": 64,
+    "retainedArtifacts": [
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\README.md",
+        "relativePath": "README.md",
+        "sha256": "c0e5859024e2b3d9872edc7c8e10e2b3dd9dab4ff668896e0259badc4584f803",
+        "bytes": 2325
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\classes\\Badge.class",
+        "relativePath": "classes/Badge.class",
+        "sha256": "d2b8ce56f56528a8592614b9970e39ef8216c8e288243205866af56a18b67c54",
+        "bytes": 1160
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\classes\\BadgeDirectory.class",
+        "relativePath": "classes/BadgeDirectory.class",
+        "sha256": "23db9e4c32acd5887b77b3b45ce4dfa12bcb38c63429fdc54a3eb48b5efd754d",
+        "bytes": 1126
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\classes\\BadgeIssueService.class",
+        "relativePath": "classes/BadgeIssueService.class",
+        "sha256": "611b4a86ce043d65021493bc1077333e2d6bd58e1782683a23b907dfe4a2f481",
+        "bytes": 1235
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\classes\\Member.class",
+        "relativePath": "classes/Member.class",
+        "sha256": "9b64aebc1822a55cf6ada45297f1a83b14a320b3f48cdcc8fc234ff3f615f212",
+        "bytes": 776
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\classes\\OrmProbe.class",
+        "relativePath": "classes/OrmProbe.class",
+        "sha256": "7fcf15d8dbf648f3d9e92fc1e1e04a49c4d27c5a5166d96b8e07adf5fdab2af1",
+        "bytes": 11760
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evaluator\\OrmProbe.java",
+        "relativePath": "evaluator/OrmProbe.java",
+        "sha256": "5b50fceb545b6db50e1213d17875c9b5b94f6d42d41ba24adebbd42be560f75c",
+        "bytes": 9107
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evaluator\\SOURCES.json",
+        "relativePath": "evaluator/SOURCES.json",
+        "sha256": "0459268b352d3b1504b1acc0007cf55d04ab972314f1d1e4175eba632f2f2fba",
+        "bytes": 4599
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evaluator\\criteria.json",
+        "relativePath": "evaluator/criteria.json",
+        "sha256": "202f12ee3032d2bc4ac1b631096570662887471e83c8a0f60088a5e549bff2c9",
+        "bytes": 3429
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evaluator\\finalize-handoff.mjs",
+        "relativePath": "evaluator/finalize-handoff.mjs",
+        "sha256": "f60ef0691c4969f863a1a8a8dc67abf498eed7ad1ea3c2e16d9d615a958155c2",
+        "bytes": 14684
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evaluator\\review-record.json",
+        "relativePath": "evaluator/review-record.json",
+        "sha256": "ac610aca3e65a92136072aad3460e09512dd2661733b3c510a595e0ee0e9284b",
+        "bytes": 21835
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evaluator\\run-local.mjs",
+        "relativePath": "evaluator/run-local.mjs",
+        "sha256": "e422b10a826e79372f41fdbf21ff2437928d86c6d1baa8a4d22e0273ecf22d65",
+        "bytes": 7207
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evaluator\\structural-source.txt",
+        "relativePath": "evaluator/structural-source.txt",
+        "sha256": "54e5898388c0c8dadea3f5106877419783466f338fa25a3aa1277e69e107cc06",
+        "bytes": 1991
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\case-a-probe.stderr.txt",
+        "relativePath": "evidence/case-a-probe.stderr.txt",
+        "sha256": "9a1cd7bba739e248b041e2c75400adc7490ab39520750cb154420002a589ff0f",
+        "bytes": 1065
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\case-a-probe.stdout.txt",
+        "relativePath": "evidence/case-a-probe.stdout.txt",
+        "sha256": "beeae4642f6e424458be3999078544ca8f47bea0fbec2f1ef68e5bfbc37ac0c4",
+        "bytes": 1523
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\case-b-probe.stderr.txt",
+        "relativePath": "evidence/case-b-probe.stderr.txt",
+        "sha256": "fc9e00ffc5dd38584c0490bbce7fc72ed31c7b5c6c8c284091fb351fd1ceebbc",
+        "bytes": 1545
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\case-b-probe.stdout.txt",
+        "relativePath": "evidence/case-b-probe.stdout.txt",
+        "sha256": "ce031ad46332ebb5e1ad4b5b40396f46bdff5e649086c19427d9284ec299972d",
+        "bytes": 1492
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\commands.json",
+        "relativePath": "evidence/commands.json",
+        "sha256": "0ad4b7d60db72197f2007f5d24435f336edf78103bd6c5d4089b88e3366e673f",
+        "bytes": 15459
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\committed-SKILL.md.stderr.txt",
+        "relativePath": "evidence/committed-SKILL.md.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\committed-SKILL.md.stdout.txt",
+        "relativePath": "evidence/committed-SKILL.md.stdout.txt",
+        "sha256": "e87961684d276e721d85ca17562114c7b8c1c060bd8f473a12b29e996a14b8ab",
+        "bytes": 11920
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\committed-references_embedding-and-serialization.md.stderr.txt",
+        "relativePath": "evidence/committed-references_embedding-and-serialization.md.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\committed-references_embedding-and-serialization.md.stdout.txt",
+        "relativePath": "evidence/committed-references_embedding-and-serialization.md.stdout.txt",
+        "sha256": "e4d111adcac733d74dff69126a61fffd22a015f8144fa2f917d2fa4a9305c87b",
+        "bytes": 10354
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\committed-references_identity-and-associations.md.stderr.txt",
+        "relativePath": "evidence/committed-references_identity-and-associations.md.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\committed-references_identity-and-associations.md.stdout.txt",
+        "relativePath": "evidence/committed-references_identity-and-associations.md.stdout.txt",
+        "sha256": "9ff2a997f0654a3f86bc39900ba76322d68a71bfc557616b2b2b0600b0ee98d6",
+        "bytes": 16185
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\committed-skill.yaml.stderr.txt",
+        "relativePath": "evidence/committed-skill.yaml.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\committed-skill.yaml.stdout.txt",
+        "relativePath": "evidence/committed-skill.yaml.stdout.txt",
+        "sha256": "745e22d653bca61bfb829db7bba671106b1ec971ff7896398ed04274644f5537",
+        "bytes": 2034
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\compile.stderr.txt",
+        "relativePath": "evidence/compile.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\compile.stdout.txt",
+        "relativePath": "evidence/compile.stdout.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\dependency-hashes.json",
+        "relativePath": "evidence/dependency-hashes.json",
+        "sha256": "04c9f5cc55e677c28e07d98612bf3e1ab03f74b62ac98b506cae50d855a6b667",
+        "bytes": 3901
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\diff-check.stderr.txt",
+        "relativePath": "evidence/diff-check.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\diff-check.stdout.txt",
+        "relativePath": "evidence/diff-check.stdout.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\final-diff.stderr.txt",
+        "relativePath": "evidence/final-diff.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\final-diff.stdout.txt",
+        "relativePath": "evidence/final-diff.stdout.txt",
+        "sha256": "9aa9b3971a25ff27310ba184fc2691d5c55ad81696fe3f61e0a20380ecef66ad",
+        "bytes": 3562
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\final-hashes.json",
+        "relativePath": "evidence/final-hashes.json",
+        "sha256": "851dd3cc7277c49f3cbfce17b44605c01da5811f32b26b288bc27f3afaa9437b",
+        "bytes": 645
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\final-owned-snapshot\\SKILL.md",
+        "relativePath": "evidence/final-owned-snapshot/SKILL.md",
+        "sha256": "e87961684d276e721d85ca17562114c7b8c1c060bd8f473a12b29e996a14b8ab",
+        "bytes": 11920
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\final-owned-snapshot\\references\\embedding-and-serialization.md",
+        "relativePath": "evidence/final-owned-snapshot/references/embedding-and-serialization.md",
+        "sha256": "6ab104b2cef95c40f641d245edc339715a18aa0acc12f6ba2a42fabc7ce0e936",
+        "bytes": 10359
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\final-owned-snapshot\\references\\identity-and-associations.md",
+        "relativePath": "evidence/final-owned-snapshot/references/identity-and-associations.md",
+        "sha256": "bf16bb536c1bbfed5ef69894e835bc40411949fab3f4cb8f01441d7f1179829b",
+        "bytes": 16195
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\final-owned-snapshot\\skill.yaml",
+        "relativePath": "evidence/final-owned-snapshot/skill.yaml",
+        "sha256": "aa73f16259ea95a67e9751d457b6681404274207a741f1ad1bf286f3d381f82b",
+        "bytes": 2034
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\final-status.stderr.txt",
+        "relativePath": "evidence/final-status.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\final-status.stdout.txt",
+        "relativePath": "evidence/final-status.stdout.txt",
+        "sha256": "c730ff350d37b16d66008912c778b50aadc55a4e6e8d30c8937e95d2f64242c0",
+        "bytes": 192
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\format.stderr.txt",
+        "relativePath": "evidence/format.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\format.stdout.txt",
+        "relativePath": "evidence/format.stdout.txt",
+        "sha256": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20",
+        "bytes": 66
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\mapsid-http.json",
+        "relativePath": "evidence/mapsid-http.json",
+        "sha256": "7e926c6a5bcb799affffae2a2db97e89a063bda40ddadae9b198349980a73f3b",
+        "bytes": 3086
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\pair-check.json",
+        "relativePath": "evidence/pair-check.json",
+        "sha256": "10403a7f76ef4888ae5bacf77f17a9d0ae1dee1b2f46e3c2b323fb6e69885fbc",
+        "bytes": 185
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\staged-diff.stderr.txt",
+        "relativePath": "evidence/staged-diff.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\staged-diff.stdout.txt",
+        "relativePath": "evidence/staged-diff.stdout.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\structural.stderr.txt",
+        "relativePath": "evidence/structural.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\structural.stdout.txt",
+        "relativePath": "evidence/structural.stdout.txt",
+        "sha256": "dcad36f6d621a4cab579f7c957795b489c0a41b493d0488aca2bb526bb0d5acc",
+        "bytes": 143
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs\\case-a\\Badge.java",
+        "relativePath": "inputs/case-a/Badge.java",
+        "sha256": "db0f37b44700ca7a0c116828874cd4248e4198900098aa79e3956c85962781f8",
+        "bytes": 890
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs\\case-a\\BadgeDirectory.java",
+        "relativePath": "inputs/case-a/BadgeDirectory.java",
+        "sha256": "de90e93e8e8a4808ddf73e16f3ad03877a1c519073903bb6807f53de8f8b69c8",
+        "bytes": 542
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs\\case-a\\BadgeIssueService.java",
+        "relativePath": "inputs/case-a/BadgeIssueService.java",
+        "sha256": "d40e82d40824c7843e0c92e2e77eae0d13792becccb4f87ad9230c7585dd1d70",
+        "bytes": 434
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs\\case-a\\CONTRACT.md",
+        "relativePath": "inputs/case-a/CONTRACT.md",
+        "sha256": "d197ed682583e4d0bb5ef768fe72a51ba9b5e329da9d7be235ea39eb50f6962c",
+        "bytes": 1365
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs\\case-a\\Member.java",
+        "relativePath": "inputs/case-a/Member.java",
+        "sha256": "0c307539693a9bef6fafc98e4c41cbc01c0fe1700415f538797e5c2962a5f1c1",
+        "bytes": 456
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs\\case-a\\TASK.md",
+        "relativePath": "inputs/case-a/TASK.md",
+        "sha256": "bff443cde20dc21181366844255a3ca7f1d4b42a386a6cedceb91ec85a694264",
+        "bytes": 341
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs\\case-a\\deployment.properties",
+        "relativePath": "inputs/case-a/deployment.properties",
+        "sha256": "d8c1ff203815e6094d74487b67f39e418e978896ee7ce8f0cf0cdc3a816f4883",
+        "bytes": 255
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs\\case-a\\schema.sql",
+        "relativePath": "inputs/case-a/schema.sql",
+        "sha256": "d670b4298256ae4ab082159181ed8d20e80fa0df71128ac58f566537857b5fcb",
+        "bytes": 326
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs\\case-b\\Badge.java",
+        "relativePath": "inputs/case-b/Badge.java",
+        "sha256": "db0f37b44700ca7a0c116828874cd4248e4198900098aa79e3956c85962781f8",
+        "bytes": 890
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs\\case-b\\BadgeDirectory.java",
+        "relativePath": "inputs/case-b/BadgeDirectory.java",
+        "sha256": "de90e93e8e8a4808ddf73e16f3ad03877a1c519073903bb6807f53de8f8b69c8",
+        "bytes": 542
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs\\case-b\\BadgeIssueService.java",
+        "relativePath": "inputs/case-b/BadgeIssueService.java",
+        "sha256": "d40e82d40824c7843e0c92e2e77eae0d13792becccb4f87ad9230c7585dd1d70",
+        "bytes": 434
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs\\case-b\\CONTRACT.md",
+        "relativePath": "inputs/case-b/CONTRACT.md",
+        "sha256": "d197ed682583e4d0bb5ef768fe72a51ba9b5e329da9d7be235ea39eb50f6962c",
+        "bytes": 1365
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs\\case-b\\Member.java",
+        "relativePath": "inputs/case-b/Member.java",
+        "sha256": "0c307539693a9bef6fafc98e4c41cbc01c0fe1700415f538797e5c2962a5f1c1",
+        "bytes": 456
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs\\case-b\\TASK.md",
+        "relativePath": "inputs/case-b/TASK.md",
+        "sha256": "bff443cde20dc21181366844255a3ca7f1d4b42a386a6cedceb91ec85a694264",
+        "bytes": 341
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs\\case-b\\deployment.properties",
+        "relativePath": "inputs/case-b/deployment.properties",
+        "sha256": "d8c1ff203815e6094d74487b67f39e418e978896ee7ce8f0cf0cdc3a816f4883",
+        "bytes": 255
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\inputs\\case-b\\schema.sql",
+        "relativePath": "inputs/case-b/schema.sql",
+        "sha256": "6420ca563ef9e228dd18f6064a3202de7cf51b01215ad117a150076ce94e57d0",
+        "bytes": 377
+      }
+    ],
+    "preExistingDependencies": [
+      {
+        "groupId": "org.hibernate.orm",
+        "artifactId": "hibernate-core",
+        "version": "6.6.33.Final",
+        "path": "C:/Users/robso/.m2/repository/org/hibernate/orm/hibernate-core/6.6.33.Final/hibernate-core-6.6.33.Final.jar",
+        "sha256": "1e083ed58d526a84cf5cf2298c892c2addc7cd2558a673916868a15b48bc4fae"
+      },
+      {
+        "groupId": "jakarta.persistence",
+        "artifactId": "jakarta.persistence-api",
+        "version": "3.1.0",
+        "path": "C:/Users/robso/.m2/repository/jakarta/persistence/jakarta.persistence-api/3.1.0/jakarta.persistence-api-3.1.0.jar",
+        "sha256": "475389446d35c6f46c565728b756dc508c284644ea2690644e0d8e7e339d42fd"
+      },
+      {
+        "groupId": "jakarta.transaction",
+        "artifactId": "jakarta.transaction-api",
+        "version": "2.0.1",
+        "path": "C:/Users/robso/.m2/repository/jakarta/transaction/jakarta.transaction-api/2.0.1/jakarta.transaction-api-2.0.1.jar",
+        "sha256": "50c0a7c760c13ae6c042acf182b28f0047413db95b4636fb8879bcffab5ba875"
+      },
+      {
+        "groupId": "org.jboss.logging",
+        "artifactId": "jboss-logging",
+        "version": "3.5.0.Final",
+        "path": "C:/Users/robso/.m2/repository/org/jboss/logging/jboss-logging/3.5.0.Final/jboss-logging-3.5.0.Final.jar",
+        "sha256": "7bb135b081952f6d32d83374619ae5201b05ca3bf862a28dd111016ce19b2c07"
+      },
+      {
+        "groupId": "org.hibernate.common",
+        "artifactId": "hibernate-commons-annotations",
+        "version": "7.0.3.Final",
+        "path": "C:/Users/robso/.m2/repository/org/hibernate/common/hibernate-commons-annotations/7.0.3.Final/hibernate-commons-annotations-7.0.3.Final.jar",
+        "sha256": "0db2fd57d5e43688ac6ed5cdf36deaf05d84340dcc24c2dd2a2114de38e5175d"
+      },
+      {
+        "groupId": "io.smallrye",
+        "artifactId": "jandex",
+        "version": "3.2.0",
+        "path": "C:/Users/robso/.m2/repository/io/smallrye/jandex/3.2.0/jandex-3.2.0.jar",
+        "sha256": "6da3e9ce8d0c0a433f3e7ce610a3c66accb00c71fee67aa0ff3e5a841395ac15"
+      },
+      {
+        "groupId": "com.fasterxml",
+        "artifactId": "classmate",
+        "version": "1.5.1",
+        "path": "C:/Users/robso/.m2/repository/com/fasterxml/classmate/1.5.1/classmate-1.5.1.jar",
+        "sha256": "aab4de3006808c09d25dd4ff4a3611cfb63c95463cfd99e73d2e1680d229a33b"
+      },
+      {
+        "groupId": "net.bytebuddy",
+        "artifactId": "byte-buddy",
+        "version": "1.15.11",
+        "path": "C:/Users/robso/.m2/repository/net/bytebuddy/byte-buddy/1.15.11/byte-buddy-1.15.11.jar",
+        "sha256": "fa08998aae1e7bdae83bde0712c50e8444d71c0e0c196bb2247ade8d4ad0eb90"
+      },
+      {
+        "groupId": "jakarta.xml.bind",
+        "artifactId": "jakarta.xml.bind-api",
+        "version": "4.0.0",
+        "path": "C:/Users/robso/.m2/repository/jakarta/xml/bind/jakarta.xml.bind-api/4.0.0/jakarta.xml.bind-api-4.0.0.jar",
+        "sha256": "57e3796ad5753640088f5f9d3c53c183f2c250b7dad90529ea3e19a5515aa122"
+      },
+      {
+        "groupId": "org.glassfish.jaxb",
+        "artifactId": "jaxb-runtime",
+        "version": "4.0.2",
+        "path": "C:/Users/robso/.m2/repository/org/glassfish/jaxb/jaxb-runtime/4.0.2/jaxb-runtime-4.0.2.jar",
+        "sha256": "1bc271e61b71ca4bd89eb053f3d2c91d478211b02a8982cb520f216fe0e9a939"
+      },
+      {
+        "groupId": "jakarta.inject",
+        "artifactId": "jakarta.inject-api",
+        "version": "2.0.1",
+        "path": "C:/Users/robso/.m2/repository/jakarta/inject/jakarta.inject-api/2.0.1/jakarta.inject-api-2.0.1.jar",
+        "sha256": "f7dc98062fccf14126abb751b64fab12c312566e8cbdc8483598bffcea93af7c"
+      },
+      {
+        "groupId": "org.antlr",
+        "artifactId": "antlr4-runtime",
+        "version": "4.13.0",
+        "path": "C:/Users/robso/.m2/repository/org/antlr/antlr4-runtime/4.13.0/antlr4-runtime-4.13.0.jar",
+        "sha256": "bd7f7b5d07bc0b047f10915b32ca4bb1de9e57d8049098882e4453c88c076a5d"
+      },
+      {
+        "groupId": "com.h2database",
+        "artifactId": "h2",
+        "version": "2.3.232",
+        "path": "C:/Users/robso/.m2/repository/com/h2database/h2/2.3.232/h2-2.3.232.jar",
+        "sha256": "8dae62d22db8982c3dcb3826edb9c727c5d302063a67eef7d63d82de401f07d3"
+      }
+    ],
+    "dependencyHashManifest": "C:\\Users\\robso\\AppData\\Local\\Temp\\orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d\\evidence\\dependency-hashes.json"
+  },
+  "limitations": [
+    "No measured skill or agent improvement. The supported change is source accessibility, with existing guidance preserved.",
+    "Actual Hibernate/H2 fixtures do not prove behavior of PostgreSQL, another provider/version, a production database or concurrent application transactions.",
+    "The fixture starts empty; the negative duplicate-data constraint attempt does not supply a production data reconciliation/migration policy.",
+    "Compilation uses --release 17 on JDK 25 and runtime is JDK 25, not runtime verification on Java 17.",
+    "Unchanged partial snippets for MapsId, record Money, converters, JSON and collection mutation were reviewed but not all compiled or integrated.",
+    "The primary source link repairs retain Jakarta Persistence 3.2; the actual cached fixture uses API 3.1.0 and does not exercise 3.2-specific features.",
+    "No performance, query-plan, batching-throughput, concurrency or real deployment evaluation was performed.",
+    "External source verification is targeted to consequential claims, not an exhaustive link audit.",
+    "Repository-wide integrity, versions and optional-routing consistency await coordinator checks."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "purpose": "Regenerate shared registry integrity/version data.",
+      "prerequisite": "All wave reviewers have stopped writing."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "purpose": "Full repository checks, including generated registry/version integration.",
+      "prerequisite": "Index rebuilt and all wave writers stopped."
+    }
+  ],
+  "crossSkillIssues": [
+    {
+      "status": "resolved in owned scope",
+      "note": "Two suggested extensionless spec occurrences confirmed broken. A separate lowercase MapsId API occurrence was also independently confirmed broken and repaired. No neighboring URL changes or generalized claim about all Jakarta paths."
+    }
+  ],
+  "coordinatorActionsRequired": [
+    "Inspect the three-file owned diff and run deferred global checks after writers stop. Retain or archive the reproducible cases and raw evidence."
+  ],
+  "finalInspection": {
+    "ownedDiff": "diff --git a/skills/orm-structural-mapping/references/embedding-and-serialization.md b/skills/orm-structural-mapping/references/embedding-and-serialization.md\nindex 29e4617..aea939e 100644\n--- a/skills/orm-structural-mapping/references/embedding-and-serialization.md\n+++ b/skills/orm-structural-mapping/references/embedding-and-serialization.md\n@@ -53,7 +53,7 @@ This does not establish record support for every identifier use.\n \n See the [Hibernate 6.2.0 record instantiator](https://github.com/hibernate/hibernate-orm/blob/6.2.0/hibernate-core/src/main/java/org/hibernate/metamodel/internal/EmbeddableInstantiatorRecordStandard.java),\n [Hibernate 6.2 embeddable types](https://docs.hibernate.org/orm/6.2/introduction/html_single/#embeddable-types)\n-and [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2)\n+and [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html)\n for record, ownership and converter contracts.\n \n ### Points that bite\ndiff --git a/skills/orm-structural-mapping/references/identity-and-associations.md b/skills/orm-structural-mapping/references/identity-and-associations.md\nindex 3296e52..53af844 100644\n--- a/skills/orm-structural-mapping/references/identity-and-associations.md\n+++ b/skills/orm-structural-mapping/references/identity-and-associations.md\n@@ -174,7 +174,7 @@ persisting; setting scalar fields in `PostTagId` alone does not establish those\n Its attribute names and types must match the `@MapsId` names and referenced identifier types.\n The mapped identifier components derive from the associations; direct mutation of those\n components is not a request to update the foreign keys. See the\n-[`@MapsId` contract](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/mapsid).\n+[`@MapsId` contract](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/MapsId.html).\n \n Once persistent, do not change the primary key, whether natural, generated, assigned or derived.\n Changing this link's post or tag would change its identity. Jakarta Persistence defines primary-key\n@@ -272,7 +272,7 @@ handling, and account for permissions or migration procedures that can alter enf\n \n These are partial JPA examples, with imports, ids and constructors omitted where unrelated.\n Verify Java, Jakarta/Javax namespace and provider versions before reuse. Sources:\n-[Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2)\n+[Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html)\n and Hibernate 6.6.56 source documentation for\n [associations](https://github.com/hibernate/hibernate-orm/blob/6.6.56/documentation/src/main/asciidoc/userguide/chapters/domain/associations.adoc),\n [identifiers](https://github.com/hibernate/hibernate-orm/blob/6.6.56/documentation/src/main/asciidoc/userguide/chapters/domain/identifiers.adoc)\ndiff --git a/skills/orm-structural-mapping/skill.yaml b/skills/orm-structural-mapping/skill.yaml\nindex 085af4e..2154712 100644\n--- a/skills/orm-structural-mapping/skill.yaml\n+++ b/skills/orm-structural-mapping/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: orm-structural-mapping\n-version: 1.3.4\n+version: 1.3.5\n description: >-\n   Mapping the structure of an object model onto tables: Identity Field, Foreign Key Mapping,\n   Association Table Mapping, Dependent Mapping, Embedded Value and Serialized LOB. Use when\n",
+    "ownedStatus": " M skills/orm-structural-mapping/references/embedding-and-serialization.md\n M skills/orm-structural-mapping/references/identity-and-associations.md\n M skills/orm-structural-mapping/skill.yaml\n",
+    "stagedDiffEmpty": true,
+    "expectedChangedOwnedFiles": 3,
+    "finalOwnedHashesVerified": true,
+    "noNeighborSharedGeneratedOrGitStateWrites": true,
+    "noInstallationsOrRealAgentConfigurationChanges": true
+  }
+}

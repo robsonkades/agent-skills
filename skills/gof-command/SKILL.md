@@ -149,8 +149,9 @@ THEN the handler needs idempotent effects, deduplication, or an explicitly toler
      (idempotency, delivery-semantics).
 
 IF a command captures a mutable object and executes later
-THEN it holds a live reference, not a creation-time snapshot; unsynchronised changes
-     need not be observed reliably. Choose snapshot values, an identifier to re-load,
+THEN check receiver binding too: () -> this.order.cancel() reads the field when run,
+     while this.order::cancel binds its current object. Neither freezes that object's state;
+     unsynchronised changes need not be observed reliably. Choose snapshot values, an identifier to re-load,
      or an explicit confined live-receiver lifetime. A record does not freeze its
      components: copy mutable state to the required depth under consistent ownership.
 

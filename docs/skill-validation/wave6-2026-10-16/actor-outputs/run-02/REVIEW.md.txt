@@ -1,0 +1,15 @@
+# Revisão do memo
+
+**Disposition: supported.** O lookup atende ao contrato aceito de `docs/contract.md`. Não há correção necessária; fontes, contratos e dependências foram preservados.
+
+O caminho efetivo é `BestEffortMemo.find()` → `reader.applyAsInt(observed)` → `PublishedEntry::value` (selecionado por `ReaderFactory.create()`) → `primary.value`. `find()` lê `entry` uma única vez, guarda a referência local e testa essa mesma referência. O método `legacyValue()` e o campo não final `legacy` não integram esse caminho. A presença dessa segunda referência ao payload não elimina a proteção do acesso por `primary`.
+
+O memo e a função são entregues antes de `Thread.start()`; sua construção precede os acessos dos participantes, mas isso não ordena a instalação posterior com cada lookup. Há uma corrida em `entry`. Sua leitura atômica pode observar `null` ou a única entrada. `null` produz o miss permitido. Ver [JLS 17.4.5](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.4.5) e [17.7](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.7).
+
+Para um hit: `W` escreve `payload.value = 42`; `F` é o freeze de `primary`; `A` atribui a entrada; `R1` lê `primary`; `R2` lê `primary.value`. A construção estabelece `hb(W,F)` e `hb(F,A)`; observar a entrada estabelece `mc(A,R1)`, e existe `dereferences(R1,R2)`. A regra especial de [JLS 17.5.1](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.5.1) protege a referência final e o estado inicial alcançado por ela. Nesse caminho, `primary` não é nulo e o valor é 42, embora `Payload.value` não seja final. O freeze não é publicação geral por happens-before nem garante observar `entry`.
+
+Os requisitos excluem escape durante construção, substituições e mutações posteriores. A assinatura `install(int)` aceitar outros argumentos não é violação: a instalação única de 42 já é precondição aceita. Não existem caminhos de espera, cancelamento ou shutdown no código fornecido que precisem completar a prova.
+
+Resultados aceitáveis: vazio ou presente com 42. Presente com 0/outro valor e exceção por referência parcialmente inicializada são incompatíveis com esse caminho sob as premissas aceitas. Não é necessário tornar `entry` volatile nem tornar `legacy` final para satisfazer esse contrato.
+
+Observação executada: compilação `javac --release 25` e `memo.Smoke`, em Temurin 25.0.3, encerraram com código 0; saída `sequential-controls=2 PASS`. Os oito arquivos fornecidos na cópia de trabalho conservaram seus hashes. Isso verifica os controles sequenciais, não todos os escalonamentos. Não executei stress, jcstress, análise estática ou testes em outras arquiteturas. A conclusão concorrente depende da prova acima; não há evidência material ausente dentro do escopo aceito.

@@ -1,0 +1,24 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+const root='C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d',report='C:/git/agent-skills/docs/skill-validation/wave7-2026-10-16';
+const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
+const put=(p,b)=>{fs.mkdirSync(path.dirname(p),{recursive:true});fs.writeFileSync(p,b);};
+const m=JSON.parse(fs.readFileSync(report+'/actors.frozen.json.txt','utf8'));
+const records=m.runs.map(r=>{
+ const present=['REVIEW.md','assessment.json','execution.json'].filter(f=>fs.existsSync(r.directory+'/output/'+f));
+ let stopped=false,error=null,a=null;
+ try{if(present.length===3){a=JSON.parse(fs.readFileSync(r.directory+'/output/assessment.json','utf8'));stopped=JSON.parse(fs.readFileSync(r.directory+'/output/execution.json','utf8')).allWritesStopped===true;}}catch(e){error=e.message;}
+ const record={run:r.id,caseId:r.caseId,condition:r.condition,trial:r.trial,present,stopped,error};
+ if(stopped){record.protectedDifferences=r.inputs.filter(f=>!fs.existsSync(r.directory+'/'+f.path)||sha(fs.readFileSync(r.directory+'/'+f.path))!==f.sha256).map(f=>f.path);record.initialProjectChanges=r.initialProject.filter(f=>!fs.existsSync(r.directory+'/output/project/'+f.path)||sha(fs.readFileSync(r.directory+'/output/project/'+f.path))!==f.sha256).map(f=>f.path);record.outputHashes=present.map(f=>{const b=fs.readFileSync(r.directory+'/output/'+f);put(report+'/actor-outputs/'+r.id+'/'+f+'.txt',b);return {path:f,sha256:sha(b)};});record.assessment=a;}
+ return record;
+});
+put(report+'/progress.json',JSON.stringify({at:new Date().toISOString(),records},null,2)+'\n');
+console.log(JSON.stringify({completed:records.filter(r=>r.stopped).length,pending:records.filter(r=>!r.stopped).map(r=>r.run),problems:records.filter(r=>r.error||r.protectedDifferences?.length)}));
+if(process.argv.includes('--mask')){
+ assert.ok(records.every(r=>r.stopped));
+ const map=m.runs.map(r=>({run:r.id,sampleId:sha('wave7/'+r.id).slice(0,10)}));
+ const samples=map.map(x=>{const r=m.runs.find(r=>r.id===x.run);return {sampleId:x.sampleId,caseId:r.caseId,review:fs.readFileSync(r.directory+'/output/REVIEW.md','utf8'),assessment:JSON.parse(fs.readFileSync(r.directory+'/output/assessment.json','utf8'))};}).sort((a,b)=>a.sampleId.localeCompare(b.sampleId));
+ put(root+'/review/masked-outputs.json',JSON.stringify({scope:'Condition/run label withheld, response may reveal exposure. Semantics only; root separately validates artifacts and execution.',samples},null,2)+'\n');put(report+'/grading-map.json',JSON.stringify(map,null,2)+'\n');
+}

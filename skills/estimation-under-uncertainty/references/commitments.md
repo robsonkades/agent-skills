@@ -88,7 +88,9 @@ Repeated slips warrant investigating calibration, scope churn, dependencies and 
 
 - Compare recorded forecasts and actuals for comparable work, reporting sample size and
   changing conditions. A ratio correction is a hypothesis to validate on later outcomes,
-  not an automatically stable multiplier.
+  not an automatically stable multiplier. Use the
+  [outcome feedback procedure](methods.md#learn-from-outcomes-without-rewriting-history)
+  to distinguish a better forecast for this delivery from evidence of a better method.
 - Check omissions such as review latency, demonstration rework and environment problems.
 - Check whether estimates are being negotiated downward before being recorded. If so, the
   estimates are not the problem.

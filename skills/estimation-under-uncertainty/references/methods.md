@@ -30,8 +30,9 @@ SD = (10 − 2) / 6      = 1.33 days
 **The formula's expected value is 4 days, while its modal input is 3.** That distinction is useful,
 but the beta-distribution shape and endpoint interpretation are modelling assumptions, not measured
 facts. The range/6 variance shortcut is not the exact variance of every beta-PERT
-parameterization. State which distribution or heuristic you use; calibrate before making
-a probability claim. All numbers below are illustrative, not observed delivery data.
+parameterization. State which distribution or heuristic you use. Model probabilities can be
+reported conditionally; claiming observed reliability requires outcome-based calibration.
+All numbers below are illustrative, not observed delivery data.
 
 ## Combining pieces
 
@@ -159,28 +160,102 @@ changes take under similar delivery conditions?
 It can capture costs introspection omits — review latency, the
 interruptions, the environment being down for a day, the rework after the first demo. Those
 costs may change with staffing, queues, scope and delivery process; inspect comparability.
+If someone says this change is simpler, identify the concrete difference and its expected
+effect before adjusting the reference class; greater familiarity alone does not quantify it.
 
-Practical version, needing no process change:
+Build a small evidence set from existing project records; a short estimate need not create
+a separate tracking system:
 
-1. Collect comparable changes and report sample size, selection criteria and time window.
-2. Use start/end definitions matching the forecast event; for deployed completion, history
-   ending at merge omits deployment time. State the forecast origin and horizon.
-3. Use the observed spread as evidence, not automatically an 80% or 90% prediction interval.
-   Three observations give little information about tails. Record named differences and
-   unfinished work excluded from the sample; completed-only selection can bias forecasts.
-4. Preserve the forecast made at each decision point. Check later deadline hit rates or
-   interval coverage and width at comparable horizons and scope. Revisions are useful evidence,
-   but nine forecasts for one delivery are not nine independent delivery outcomes. Group by
-   delivery and forecast origin; distinguish scope changes and avoid fitting and evaluating on
-   the same outcomes or using information unavailable at the original forecast date.
+1. **Define the comparison.** State the forecast origin, horizon, start/end events, units and
+   calendar. Select by relevant work content and delivery conditions: for example, ordinary
+   changes with the same review and release process, rather than expedited incident fixes.
+   Record the time window, data cutoff and selection rule; do not choose only fast outcomes
+   or change the rule to make the target fit.
+2. **Trace the actual events.** Inspect available issue state transitions, linked pull requests,
+   release/deployment records and acceptance evidence as needed by the completion criterion.
+   Issue creation need not mean work started; merge need not mean deployed or enabled for users.
+   Join records by delivery identity so several PRs for one change do not become several
+   whole-change observations. Commit timestamps alone do not measure active person-hours.
+   If a source is inaccessible or a search fails, name that limit and the specific missing
+   event; do not conclude that no history exists or substitute another event silently.
+3. **Check the sample before calculating.** Retain source IDs/links and observed dates with
+   each included duration. Reconcile conflicting dates and calendars; missing dates are not
+   zero durations. Separate known unfinished work from missing completion records and report
+   exclusions with reasons. Inspect unusually long cases before excluding them: legitimate
+   waits or rework may be exactly what the forecast must cover. Use the remaining-time rules
+   below for ongoing work; completed-only selection can bias forecasts.
+4. **Check transfer to this change.** Compare scope, capacity, approval gates and release cadence.
+   Separate materially different groups or show conditional scenarios when their differences
+   affect the decision; pooling them merely to increase sample size does not resolve the mismatch.
+   Support any adjustment with its mechanism and evidence. Do not add review/deployment waits
+   already present in the selected elapsed-time observations.
+5. **Report what the evidence supports.** Show sample count and observed spread, not automatically
+   an 80% or 90% prediction interval. Three observations give little information about tails.
+   A compact basis can be `source | start/end | duration/status | selection reason`.
+   If the usable history is sparse or mismatched, state which bounds remain unsupported
+   and use justified scenarios or elicitation; identify the next evidence needed for the decision.
+
+Retain forecast snapshots and use the feedback procedure below. Revisions are useful evidence,
+but nine forecasts for one delivery are not nine independent delivery outcomes. Group by
+delivery and forecast origin when comparing methods.
+
+For a hypothetical event-definition check, two changes start on June 3 and June 4, merge on
+June 5 and June 7, and both become available to users on June 12. Using elapsed calendar days,
+start-to-merge observations are 2 and 3 days; start-to-availability observations are 9 and 8.
+If the requested milestone changes from merged code to user availability, change the endpoint
+and basis accordingly. Do not relabel 2–3 days as delivery time or add the release wait twice
+to 8–9 days. Neither two-point spread establishes future coverage; these are teaching inputs.
+
+## Remaining time for unfinished work
 
 For work already underway, forecast remaining time from its current state and elapsed age.
 Use comparable remaining-work evidence or an explicitly conditional model; subtracting elapsed
 time from a fresh-work mean or percentile ignores that this item is still unfinished. Sparse
 history may support only scenarios or no numerical forecast; do not force a fitted model.
 
-When someone says "but this one is simpler", ask what specifically is simpler and by how much.
-The answer is often "we understand it better now", which is what the previous team also said.
+For an exact illustrative model, total duration `T` is 2 days with probability 0.5, 6 days
+with probability 0.3, or 12 days with probability 0.2. Its fresh-work P80 is 6 days. If the
+item is still unfinished after 5 days and that is the only new information, condition on
+`T > 5`: remaining time is 1 day with probability 0.6 or 7 days with probability 0.4.
+Its remaining P80 is 7 days, not `6 - 5 = 1`. The change follows from conditioning,
+not a measured improvement in estimation. These probabilities are invented teaching inputs.
+
+Elapsed age is not the whole state: an observed test failure, completed migration or new
+approval gate can invalidate an age-only model. Use those facts when they change the remaining
+work. At a fixed data cutoff, record ongoing items as unfinished at their observed age; do not
+treat that age as a completed duration or discard them silently. Cancellation or scope changes
+need explicit treatment; they need not be ordinary censoring independent of delivery difficulty.
+
+## Learn from outcomes without rewriting history
+
+For recurring estimates, keep a small record in the existing planning artifact; do not invent
+past forecasts from current knowledge. Capture the delivery identifier, forecast timestamp,
+scope/completion definition, units/calendar, forecast value and meaning (scenario, quantile or
+interval), input/model version and material assumptions. Append the observed outcome or current
+status with its date. Keep the original and each revision separately.
+
+- **Match the check to the claim.** For a P80 deadline, record completion by that deadline.
+  For a central interval, record early/inside/late outcomes and interval width. Report counts
+  and eligible sample size, not only a percentage; one miss neither proves nor disproves
+  calibration. Exact 80% coverage is not required of a small sample or a discrete quantile.
+- **Keep unresolved cases visible.** Once a deadline passes with work unfinished, its deadline
+  hit is already false even though exact duration is unknown. An unfinished item with a future
+  deadline is still pending. Do not call pending items hits or exclude known misses as "not completed".
+  For duration-error scoring, report unavailable outcomes separately rather than filling in ages.
+- **Compare useful forecasts.** More coverage obtained only by widening intervals is not enough
+  to show improvement. Compare width and miss severity at the same nominal coverage, scope and
+  forecast horizon; quantile loss or an interval score can support repeated method comparisons.
+  A deadline hit-rate comparison alone also needs to show how far dates moved.
+- **Change a mechanism, then test it.** Check recorded evidence for omitted work, changed queues,
+  scope or capacity before applying a multiplier. Treat explanations as hypotheses unless the
+  record supports them. Evaluate a proposed correction on later comparable deliveries or replay
+  historical forecast origins using only information available then, against the current method.
+  Do not call an in-sample fit or one successful revision a proven improvement. If conditions
+  have changed, report that old calibration may no longer transfer.
+
+A scope change does not justify silently deleting a miss. Preserve it with the changed assumption
+and state which forecasts remain comparable; do not fabricate a counterfactual completion date
+for the original scope. A changed target or commitment is also not an observed delivery outcome.
 
 ## The cone of uncertainty
 
@@ -198,11 +273,12 @@ Consequences worth stating out loud:
 
 ## Monte Carlo, when it is worth it
 
-For a plan with many tasks and real dependencies, sample each task's distribution a few
-thousand times and recalculate the resource-constrained dependency network each time. Encode
-shared risks/correlation, calendars and availability; sampling individual durations alone
+Sample from the declared duration model and recalculate the resource-constrained dependency
+network each time. Encode shared risks/correlation, calendars and availability; sampling durations alone
 does not model them. Record input provenance, distribution choices, seed and sample count;
-check percentile stability across runs and sensitivity to uncertain assumptions.
+check percentile stability across seeds and increased sample counts at the resolution needed
+for the decision, as well as sensitivity to uncertain assumptions. No fixed iteration count
+establishes accuracy.
 
 Use simulation when dependency structure or tail risk could change the decision, regardless
 of plan length. More samples reduce simulation noise, not input/model error. With weak
@@ -222,7 +298,10 @@ percentiles as calibrated facts.
 
 ## Sources
 
-- [GAO Schedule Assessment Guide, Best Practices 3 and 8](https://www.gao.gov/assets/gao-16-89g.pdf): resource-aware schedules, dependencies, correlation and schedule risk analysis. Its project examples are not software-team calibration data.
+- [GAO Schedule Assessment Guide, Best Practices 3, 4, 8 and 9](https://www.gao.gov/assets/gao-16-89g.pdf): resource-aware schedules, documented duration assumptions and historical basis, dependencies, correlation, schedule risk analysis and updating from actual progress. Its project examples are not software-team calibration data.
+- [GAO Cost Estimating and Assessment Guide, chapter 9](https://www.gao.gov/assets/gao-20-195g.pdf): collecting, validating and comparing historical data. The project-record procedure above adapts its data-applicability principles; it does not transfer a cost model to software duration.
+- [DORA software delivery performance metrics](https://dora.dev/guides/dora-metrics/): change lead time measures committed code through production deployment. That event pair is distinct from total feature development or user availability; choose the pair required by the forecast.
 - [NIST prediction uncertainty](https://www.itl.nist.gov/div898/handbook/pmd/section5/pmd512.htm): prediction for a future observation differs from uncertainty in an estimated mean. The worked PERT arithmetic above remains a stated heuristic.
 - [NIST percentiles](https://www.itl.nist.gov/div898/handbook/prc/section2/prc262.htm): empirical quantile conventions can differ, particularly for small samples. The two-task example is exact enumeration of a declared model; it is not a NIST dataset.
-- [Forecasting: Principles and Practice, time series cross-validation](https://otexts.com/fpp3/tscv.html): forecast-origin and horizon-aware evaluation without future-data leakage; applying this discipline does not make software deliveries a time series model.
+- [NIST censoring](https://www.itl.nist.gov/div898/handbook/apr/section1/apr131.htm): unfinished observations provide bounds, not completed durations. Its reliability examples do not establish a software delivery distribution; the remaining-time example above is exact conditional arithmetic.
+- [Forecasting: Principles and Practice, sections 5.9–5.10](https://otexts.com/fpp3/toolbox.html): quantile/interval scores and forecast-origin evaluation without future-data leakage. The feedback procedure adapts these principles to delivery records; it does not assume software deliveries form a time series or prescribe a fitted model.

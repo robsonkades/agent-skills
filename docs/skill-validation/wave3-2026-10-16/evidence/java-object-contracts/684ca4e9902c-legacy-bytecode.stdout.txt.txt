@@ -1,0 +1,32 @@
+Compiled from "LegacyClient.java"
+public final class LegacyClient {
+  public LegacyClient();
+    Code:
+         0: aload_0
+         1: invokespecial #1                  // Method java/lang/Object."<init>":()V
+         4: return
+
+  public static void main(java.lang.String[]);
+    Code:
+         0: new           #7                  // class api/Key
+         3: dup
+         4: ldc           #9                  // String A-1
+         6: invokespecial #11                 // Method api/Key."<init>":(Ljava/lang/String;)V
+         9: new           #7                  // class api/Key
+        12: dup
+        13: ldc           #9                  // String A-1
+        15: invokespecial #11                 // Method api/Key."<init>":(Ljava/lang/String;)V
+        18: invokevirtual #14                 // Method api/Key.equals:(Lapi/Key;)Z
+        21: istore_1
+        22: iload_1
+        23: ifne          36
+        26: new           #18                 // class java/lang/AssertionError
+        29: dup
+        30: ldc           #20                 // String typed equality
+        32: invokespecial #22                 // Method java/lang/AssertionError."<init>":(Ljava/lang/Object;)V
+        35: athrow
+        36: getstatic     #25                 // Field java/lang/System.out:Ljava/io/PrintStream;
+        39: ldc           #31                 // String typed=true
+        41: invokevirtual #33                 // Method java/io/PrintStream.println:(Ljava/lang/String;)V
+        44: return
+}

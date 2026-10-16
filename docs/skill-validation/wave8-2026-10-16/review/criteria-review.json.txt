@@ -1,0 +1,68 @@
+{
+  "status": "CHANGES_REQUESTED",
+  "reviewedCriteriaVersion": 1,
+  "allWritesStopped": true,
+  "reviewedFiles": [
+    "criteria-draft.json",
+    "cases/Q1/input/*",
+    "cases/Q2/input/*",
+    "cases/Q3/input/*",
+    "cases/Q4/input/*",
+    "review/calibration-inputs.json",
+    "probe.mjs",
+    "preflight.mjs"
+  ],
+  "actorOutputsRead": false,
+  "rootGradesRead": false,
+  "skillChangesRequested": false,
+  "issues": [
+    {
+      "id": "R1",
+      "location": "criteria-draft.json C2 and perCase.Q4",
+      "severity": "material technical guard",
+      "finding": "Supplied PG17 ticket_feed priority DESC defaults NULLS FIRST, while current.sql requires NULLS LAST.",
+      "requestedFix": "Reject unconditional claims that this index directly provides the required whole ordering. Accept an explicitly matching null-order index proposal, a supported alternative, or a suitably conditional path discussion; do not mandate DDL or runtime measurement.",
+      "evidence": "PostgreSQL17 indexes-ordering and queries-order docs."
+    },
+    {
+      "id": "R2",
+      "location": "criteria-draft.json C3 for Q4",
+      "severity": "rubric clarity",
+      "finding": "Q4 requests runnable actual-result regression but does not explicitly require the actor to execute a wrong variant; Q1/Q2 do.",
+      "requestedFix": "Clarify that evaluator mutation of solution.sql can establish negative-control sensitivity for Q4. Do not fail a useful regression solely because the actor did not self-execute a mutant."
+    },
+    {
+      "id": "R3",
+      "location": "criteria-draft.json C1/C2 and perCase.Q3",
+      "severity": "rubric clarity",
+      "finding": "Cost units and cumulative buffer counters are consequential traps in the packet; broad counter wording could be interpreted inconsistently.",
+      "requestedFix": "Make explicit that605000 is estimated cost, not measured seconds, and sharedHitBlocks/sharedReadBlocks are cumulative counters not multiplied by12000. Preserve inclusive/loop/latency distinctions already present.",
+      "evidence": "PostgreSQL17 EXPLAIN docs and REL_17_STABLE explain.c/instrument.c."
+    },
+    {
+      "id": "R4",
+      "location": "probe.mjs Q3 numeric metric loop",
+      "severity": "evaluator defect",
+      "finding": "Math.abs coerces strings, so numeric strings satisfy the private arithmetic check despite REQUEST requiring numeric JSON fields.",
+      "requestedFix": "Assert typeof value === 'number' and Number.isFinite(value) before tolerance; add a numeric-string negative control."
+    },
+    {
+      "id": "R5",
+      "location": "probe.mjs Q4 priority values and preflight.mjs Q4 controls",
+      "severity": "consequential coverage gap",
+      "finding": "Values9,3,0,-2,null do not expose COALESCE(priority,-2147483648), which merges a schema-valid minimum integer with NULL.",
+      "requestedFix": "Include PostgreSQL integer bounds in private Q4 data and a minimum-sentinel negative control. Keep actual AssertionError required, so syntax/setup failures do not count as semantic rejection."
+    }
+  ],
+  "approvedAspects": [
+    "Q1/Q2 differ only NOT NULL, while CHECK still permits NULL in Q2.",
+    "Q1/Q2 common seed does not expose Q2 defect; independent probes add allowed NULL values.",
+    "Repaired OR loader has five placeholders for five columns.",
+    "Q3 authored serial counters and arithmetic are internally coherent and not mislabeled production data.",
+    "Both Q4 preflight lexicographic alternatives are semantically valid.",
+    "C1 allows equivalent SQL; C2/C3 separate semantics, runtime evidence and actual regression execution."
+  ],
+  "calibrationLimits": "K1/K3 accepted and K2/K4 rejected; this calibrates prose semantic screening only. Existing private preflight separately exercises valid SQL alternatives and invalid controls.",
+  "commandsExecutedForCriteriaReview": "Read-only file inspection only; did not run preflight (it writes coordinator-owned locations).",
+  "nextStep": "Coordinator resolves items, reruns affected private preflight, then requests read-only approval before freeze."
+}

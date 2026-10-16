@@ -1,0 +1,129 @@
+package work;
+
+import org.springframework.aop.support.AopUtils;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+
+public class Regression {
+    @Configuration
+    static class TestConfig {
+        @Bean @Primary ProbeNotifier probeNotifier() { return new ProbeNotifier(); }
+    }
+
+    static class ProbeNotifier implements OrderNotifier {
+        RuntimeException rejection;
+        int calls;
+        public void accepted(String id) {
+            calls++;
+            if (rejection != null) throw rejection;
+        }
+    }
+
+    static int failures;
+
+    public static void main(String[] args) {
+        try (var ctx = new AnnotationConfigApplicationContext(Config.class, TestConfig.class)) {
+            var orders = ctx.getBean("ordersJdbc", JdbcTemplate.class);
+            var metrics = ctx.getBean("metricsJdbc", JdbcTemplate.class);
+            var service = ctx.getBean(OrderService.class);
+            var metricsService = ctx.getBean(MetricsService.class);
+            var notifier = ctx.getBean(ProbeNotifier.class);
+            require(AopUtils.isAopProxy(service), "OrderService must be the actual Spring proxy");
+            require(AopUtils.isAopProxy(metricsService), "MetricsService must be the actual Spring proxy");
+
+            run("stock rejection rolls back the inserted order", () -> {
+                reset(orders, metrics, notifier);
+                var failure = expect(IllegalStateException.class, () -> service.place("rejected", "sold-out"));
+                require("Unavailable stock".equals(failure.getMessage()), "stock failure must retain its meaning");
+                completed();
+                equal(0, count(orders, "orders"), "rejected order count");
+                equal(0, stock(orders, "sold-out"), "sold-out stock");
+                equal(0, notifier.calls, "notifier must not run after stock rejection");
+            });
+
+            run("notifier rejection rolls back both writes and preserves the cause", () -> {
+                reset(orders, metrics, notifier);
+                var cause = new IllegalArgumentException("local validation");
+                var rejection = new IllegalStateException("rejected by notifier", cause);
+                notifier.rejection = rejection;
+                var failure = expect(IllegalStateException.class, () -> service.place("rejected", "available"));
+                require(failure == rejection && failure.getCause() == cause, "original notifier exception/cause");
+                completed();
+                equal(0, count(orders, "orders"), "notifier-rejected order count");
+                equal(2, stock(orders, "available"), "stock restored after notifier failure");
+                equal(1, notifier.calls, "notifier invocation count");
+            });
+
+            run("successful call commits one order and one reservation", () -> {
+                reset(orders, metrics, notifier);
+                service.place("accepted", "available");
+                completed();
+                equal(1, count(orders, "orders"), "successful order count");
+                equal(1, stock(orders, "available"), "successful stock reservation");
+                equal(1, notifier.calls, "successful notifier invocation");
+                equal(0, count(metrics, "sample"), "orders do not write metrics");
+            });
+
+            run("database rejection preserves existing order and stock", () -> {
+                reset(orders, metrics, notifier);
+                orders.update("insert into orders values ('existing', 'available')");
+                expect(DuplicateKeyException.class, () -> service.place("existing", "available"));
+                completed();
+                equal(1, count(orders, "orders"), "existing order retained");
+                equal(2, stock(orders, "available"), "stock unaffected by insertion failure");
+                equal(0, notifier.calls, "no notification after insertion failure");
+            });
+
+            run("metrics keep their primary manager and independent rollback", () -> {
+                reset(orders, metrics, notifier);
+                require(ctx.getBean(PlatformTransactionManager.class) == ctx.getBean("metricsTx"), "metricsTx remains primary");
+                service.place("accepted", "available");
+                metricsService.sample("accepted");
+                var failure = expect(IllegalArgumentException.class, () -> metricsService.sample(" "));
+                require("blank sample".equals(failure.getMessage()), "metrics rejection preserved");
+                completed();
+                equal(1, count(metrics, "sample"), "failed metric rolled back, accepted metric retained");
+                equal(0, metrics.queryForObject("select count(*) from sample where id=' '", Integer.class), "rejected metric absent");
+                equal(1, count(orders, "orders"), "metrics failure preserves orders");
+                equal(1, stock(orders, "available"), "metrics failure preserves reservation");
+            });
+        }
+        if (failures != 0) throw new AssertionError(failures + " regression(s) failed");
+        System.out.println("5 regressions passed");
+    }
+
+    static void reset(JdbcTemplate orders, JdbcTemplate metrics, ProbeNotifier notifier) {
+        completed();
+        orders.execute("drop all objects");
+        orders.execute("create table orders(id varchar primary key, sku varchar)");
+        orders.execute("create table stock(sku varchar primary key, available int)");
+        orders.update("insert into stock values ('sold-out',0), ('available',2)");
+        metrics.execute("drop all objects");
+        metrics.execute("create table sample(id varchar primary key)");
+        notifier.calls = 0;
+        notifier.rejection = null;
+    }
+
+    static void completed() { require(!TransactionSynchronizationManager.isActualTransactionActive(), "read state outside transaction completion"); }
+    static int count(JdbcTemplate jdbc, String table) { return jdbc.queryForObject("select count(*) from " + table, Integer.class); }
+    static int stock(JdbcTemplate jdbc, String sku) { return jdbc.queryForObject("select available from stock where sku=?", Integer.class, sku); }
+    static void equal(int expected, int actual, String label) { require(expected == actual, label + ": expected=" + expected + " actual=" + actual); }
+    static void require(boolean value, String message) { if (!value) throw new AssertionError(message); }
+    static <T extends RuntimeException> T expect(Class<T> type, Runnable operation) {
+        try { operation.run(); } catch (RuntimeException failure) {
+            if (type.isInstance(failure)) return type.cast(failure);
+            throw failure;
+        }
+        throw new AssertionError("Expected " + type.getSimpleName());
+    }
+    static void run(String name, Runnable check) {
+        try { check.run(); System.out.println("PASS " + name); }
+        catch (AssertionError failure) { failures++; System.out.println("FAIL " + name + ": " + failure.getMessage()); }
+    }
+}

@@ -1,0 +1,2211 @@
+{
+  "evaluator_role": "independent evaluator",
+  "rubric": "criteria.json congelado após os ajustes prospectivos documentados em criteria-review.json",
+  "permitted_inputs": {
+    "cases": "cases.json",
+    "criteria": "criteria.json, mesmo conteúdo congelado relido para esta avaliação",
+    "prior_evaluator_work": "revisão e calibração próprias disponíveis como contexto",
+    "actor_packets": [
+      "packets/M01.json",
+      "packets/M02.json",
+      "packets/M03.json",
+      "packets/M04.json",
+      "packets/M05.json",
+      "packets/M06.json",
+      "packets/M07.json",
+      "packets/M08.json",
+      "packets/M09.json",
+      "packets/M10.json",
+      "packets/M11.json",
+      "packets/M12.json",
+      "packets/M13.json",
+      "packets/M14.json",
+      "packets/M15.json",
+      "packets/M16.json",
+      "packets/M17.json",
+      "packets/M18.json",
+      "packets/M19.json",
+      "packets/M20.json",
+      "packets/M21.json",
+      "packets/M22.json",
+      "packets/M23.json",
+      "packets/M24.json"
+    ]
+  },
+  "independence": {
+    "coordinator_grades_consulted": false,
+    "actors_manifest_consulted": false,
+    "mask_map_consulted": false,
+    "runs_or_root_notes_consulted": false,
+    "skills_or_sources_consulted": false,
+    "other_reports_consulted": false,
+    "subagents_used": false,
+    "masking": "Parcial: rótulos, condições e IDs originais foram removidos, mas o texto pode revelar tratamento. Não se alega cegamento garantido.",
+    "method": "Julgamento semântico manual de cada critério; código usado apenas para serializar, contar e conferir existência literal dos excertos.",
+    "cumulative_context": "Informação inalterada da primeira etapa pode sustentar a segunda; cada atualização foi examinada quanto à aplicação dos novos fatos e à decisão atual."
+  },
+  "samples": [
+    {
+      "id": "M01",
+      "case": "T1",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "N por meio do caminho P",
+                "R permanece viável durante todo o horizonte"
+              ],
+              "reason": "Escolhe N via P e preserva R como alternativa viável de maior custo."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "limite operacional demonstrado de 20 minutos, abaixo dos 25 minutos permitidos",
+                "recuperação e demais obrigações foram verificadas"
+              ],
+              "reason": "Usa a evidência da transição e dos demais contratos."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "N via P custa 410 mil, contra 520 mil de R: economia de 110 mil",
+                "não alteram essa comparação"
+              ],
+              "reason": "Compara os totais futuros e exclui os 90 mil irrecuperáveis."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "preparação do rollout de P no processo próprio de autorização",
+                "Esta recomendação não autoriza executar a migração."
+              ],
+              "reason": "Oferece direção e planejamento proporcionais, sem inventar execução ou liberação."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "reter R pelos próximos 24 meses"
+              ],
+              "reason": "Revê a direção para R e retira N via P."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "20 minutos excede o contrato em 14 minutos",
+                "Isso não prova que todo caminho até N seja inviável"
+              ],
+              "reason": "Aplica o limite imediato de 6 minutos sem universalizar a falha de P."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "economia e prazo não compensam o descumprimento contratual",
+                "os demais permanecem sem análise, estimativa ou demonstração de conformidade"
+              ],
+              "reason": "Rejeita compensação econômica e não presume viabilidade de outro caminho."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "O responsável técnico deve manter R e retirar P da proposta de rollout."
+              ],
+              "reason": "Define ação concreta compatível com o novo limite, sem executar ou inventar evidência."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "M02",
+      "case": "T1",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "N pela migração P",
+                "R permanece viável durante todo o horizonte"
+              ],
+              "reason": "Recomenda o caminho demonstrado e mantém R como opção real de maior custo."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "limite operacional demonstrado de 20 minutos",
+                "leitura, preservação, recuperação e demais obrigações foram verificadas"
+              ],
+              "reason": "Compara corretamente os 20 minutos com o teto de 25 e mantém todas as obrigações."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "R custa 520 mil e N via P custa 410 mil",
+                "Os 90 mil irrecuperáveis do protótipo não justificam a escolha"
+              ],
+              "reason": "Usa os totais completos e exclui o custo afundado."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "encaminhar P ao processo de planejamento e autorização do rollout",
+                "Não executei ensaios, migração ou validação operacional independente."
+              ],
+              "reason": "Distingue recomendação, planejamento e autorização; não fabrica validação."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "manter R durante o horizonte de 24 meses",
+                "retiro a indicação de N via P"
+              ],
+              "reason": "Atualiza explicitamente a direção para R."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "com limite operacional demonstrado de 20 minutos",
+                "Isso não prova que todo caminho possível para N seja inviável"
+              ],
+              "reason": "Aplica o teto imediato de 6 minutos a P e limita a conclusão ao caminho disponível."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "seus 110 mil de economia não tornam admissível uma transição que falha em obrigação mandatória"
+              ],
+              "reason": "Recusa compensação econômica; outros caminhos continuam sem análise e estimativa."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "o responsável técnico deve apresentar a manutenção de R e retirar P da proposta de rollout"
+              ],
+              "reason": "Fornece próximo passo concreto sem antecipar autorização ou evidência."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "M03",
+      "case": "T4",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "J: 12 + 12m",
+                "total entre **180 e 312**",
+                "O empate ocorre em **m = 19**"
+              ],
+              "reason": "Aplica a fórmula, intervalo e limiar corretos; exclui os 180 mil irrecuperáveis."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "destinar o único dia à investigação A",
+                "manter H provisoriamente"
+              ],
+              "reason": "Escolhe a investigação que resolve a incerteza capaz de inverter a decisão."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "B não pode mudar a escolha, apesar dos gráficos.",
+                "C exige quatro semanas e custo desconhecido, sem necessidade demonstrada."
+              ],
+              "reason": "Não exige benchmark irrelevante nem réplicas."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "Abaixo de 19, escolher J; acima, continuar H; exatamente 19, há indiferença",
+                "o analista e o financeiro devem conferir todos os itens da fatura"
+              ],
+              "reason": "Apresenta a regra completa e uma verificação financeira delimitada, sem inventar resultado."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "12 + 12 × 17 = 216 mil",
+                "240 mil de H",
+                "J para os próximos 12 meses"
+              ],
+              "reason": "Usa o novo custo mensal, compara corretamente os totais e recomenda J."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "Não recomendo novas investigações para esta decisão.",
+                "não justifica inventar uma compensação"
+              ],
+              "reason": "Encerra a investigação decisória e rejeita atraso ou desvantagem artificial."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "fixa e completa para o volume contratado",
+                "Os 12 mil de migração/saída já estão incluídos"
+              ],
+              "reason": "Limita a conclusão aos 12 meses e ao volume contratado, incluindo o custo de transição."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "A recomendação não constitui autorização de gasto",
+                "não executei a investigação nem qualquer benchmark"
+              ],
+              "reason": "Entrega decisão acionável para Diego sem alegar execução ou liberar migração."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "M04",
+      "case": "T1",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "Escolher hoje o destino N, pelo caminho de migração P.",
+                "R permanece viável"
+              ],
+              "reason": "Seleciona N via P e reconhece a retenção como opção viável de maior custo."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "20 minutos, abaixo do máximo permitido de 25 minutos",
+                "preservação dos dados reconhecidos, recuperação e demais obrigações"
+              ],
+              "reason": "Usa a evidência do caminho e todos os contratos, sem inferir viabilidade apenas do destino."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "R custa 520 mil e N via P custa 410 mil",
+                "não entram na comparação futura"
+              ],
+              "reason": "Compara os totais completos e exclui o protótipo irrecuperável."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "preparar o rollout no processo separado exigido",
+                "A decisão de hoje não autoriza executar a migração."
+              ],
+              "reason": "Fornece encaminhamento operacional preservando a fronteira entre direção e execução."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "Escolher a retenção R para o horizonte aprovado de 24 meses e substituir a recomendação anterior"
+              ],
+              "reason": "Substitui claramente a direção anterior por R."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "20 minutos excede o teto em 14 minutos",
+                "não cabe concluir que N seja definitivamente inviável"
+              ],
+              "reason": "Aplica a alteração imediata sem exceção e distingue a falha de P da impossibilidade de N."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "A economia potencial de 110 mil não pode prevalecer sobre uma obrigação contratual",
+                "nem pressupor uma alternativa de migração conforme"
+              ],
+              "reason": "Não permite compensação econômica nem usa alternativa imaginada como saída estabelecida."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "o responsável técnico deve manter sua operação e retirar P de qualquer planejamento de execução"
+              ],
+              "reason": "Oferece ação concreta sob o contrato atual, sem implementação ou validação fictícia."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "M05",
+      "case": "T4",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "J custa **12 + 12m**",
+                "J custa **180 a 312**",
+                "O equilíbrio ocorre em **m = 19**"
+              ],
+              "reason": "Calcula corretamente o custo futuro, intervalo e limiar; exclui o pagamento antigo."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "usar hoje o único dia disponível na investigação A",
+                "manter H provisoriamente"
+              ],
+              "reason": "Usa o dia na incerteza financeira que pode inverter a escolha, preservando uma decisão condicional."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "B não muda custo nem qualquer preferência e não merece o dia",
+                "C exige quatro semanas e custo desconhecido"
+              ],
+              "reason": "Não torna benchmark ou réplicas condições necessárias para decidir."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "Abaixo de 19 mil/mês, escolher J",
+                "Acima de 19 mil/mês, escolher H",
+                "há empate econômico",
+                "o analista e o financeiro devem conferir e classificar todos os itens"
+              ],
+              "reason": "Fornece todos os ramos da regra e uma investigação financeira delimitada."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "Recomendo adotar J para os próximos 12 meses",
+                "12 + 12 × 17 = 216",
+                "H: **240**"
+              ],
+              "reason": "Recomenda J com totais e economia corretos."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "Não recomendo as quatro semanas adicionais de benchmarking",
+                "fabricaria um conflito que os dados não apresentam"
+              ],
+              "reason": "Encerra investigação sem relevância decisória e recusa desvantagem artificial."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "J domina H nesta decisão",
+                "O custo fixo de 12 mil é um compromisso aceito e já contabilizado"
+              ],
+              "reason": "A dominância é expressamente restrita à decisão e às premissas, não universal; inclui o custo fixo e condições de revisão."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "Encerrar a análise e apresentar a adoção de J para autorização de Diego",
+                "não autoriza, por si só, gastar com a migração"
+              ],
+              "reason": "Dá encaminhamento proporcional sem autorização fictícia ou resultado alegadamente medido."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "M06",
+      "case": "T3",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "U/u1 viola uma obrigação eliminatória.",
+                "V/v1 permanece desconhecido.",
+                "O gerador encerrou antes de enviar qualquer lote."
+              ],
+              "reason": "Distingue perda validada de U/u1 de ausência de observação de V, sem condenar todas as configurações."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "U mede submissão até resultado pronto; V mede submissão até confirmação de recebimento"
+              ],
+              "reason": "Rejeita a inferência de conclusão 40 vezes mais rápida a partir de marcos diferentes."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "nenhum candidato está qualificado pelo material disponível",
+                "não existe alternativa de retenção qualificada"
+              ],
+              "reason": "Não autoriza lançamento ou inventa alternativa segura de retenção."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "corrigir o gerador de V e executar um ensaio válido",
+                "verificar recuperação sem perdas e medir submissão até conclusão sob o perfil acordado"
+              ],
+              "reason": "Define teste concreto de durabilidade e conclusão, mantendo entrada em operação condicionada a evidência."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "Não recomendo liberar V hoje com a evidência atual",
+                "Antecipar a reunião e reduzir o volume não dispensam a obrigação"
+              ],
+              "reason": "Mantém a não liberação diante da urgência sem evidência ou dispensa nova."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "não restaura trabalhos perdidos nem oferece persistência, replay ou recuperação",
+                "Os 100 lotes reais continuam sujeitos às mesmas obrigações."
+              ],
+              "reason": "Explica a insuficiência da cópia do código e do pequeno lote real."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "iniciar um ensaio isolado com dados sintéticos, sem trabalhos reais"
+              ],
+              "reason": "Permite investigação limitada fora de produção, sem aceitar trabalho real antecipadamente."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "rastrear cada confirmação até o resultado correto, provocar quedas e verificar preservação e recuperação",
+                "violações dos 60 segundos"
+              ],
+              "reason": "Descreve observações decisivas de hoje, preserva os requisitos e não afirma teste realizado ou aprovado."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "M07",
+      "case": "T3",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "U/u1: reprovado em durabilidade.",
+                "V/v1: viabilidade desconhecida.",
+                "Falhou o ensaio, não foi demonstrada falha do candidato."
+              ],
+              "reason": "Classifica corretamente os dois tipos de evidência e limita a falha de U à configuração."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "Não demonstra que V conclui 40 vezes mais rápido.",
+                "U mede submissão até resultado pronto; V, submissão até confirmação de recebimento"
+              ],
+              "reason": "Rejeita o ganho de conclusão por diferença dos marcos, sem inventar resultados."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "não aprovar o lançamento de nenhum candidato hoje",
+                "Não existe ambiente atual ou retenção qualificada"
+              ],
+              "reason": "Reconhece ausência de opção comprovadamente viável sem inventar fallback."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "corrigir o gerador e ensaiar V/v1 em ambiente isolado",
+                "perda confirmada reprova a configuração; conclusão incorreta ou acima de 60 segundos viola requisitos"
+              ],
+              "reason": "Propõe ação delimitada e regra de observação, mantendo lançamento suspenso."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "não liberar V/v1 hoje, inclusive como piloto com 100 lotes reais",
+                "A reunião antecipada não altera a evidência"
+              ],
+              "reason": "Não transforma urgência em evidência ou dispensa."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "Limitar o volume reduz a exposição, mas não torna aceitável perder um único trabalho confirmado.",
+                "não demonstra recuperação do estado"
+              ],
+              "reason": "Explica por que tamanho e cópia de binário não garantem preservação."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "executar em ambiente isolado apenas lotes sintéticos",
+                "Não enviar os 100 lotes reais para obter essa evidência."
+              ],
+              "reason": "Permite o experimento sintético e exclui trabalho real até qualificação."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "provocar quedas ao redor da confirmação e reconciliar os trabalhos após recuperação",
+                "Perda, resultado incorreto ou violação do prazo reprovam a configuração"
+              ],
+              "reason": "Especifica teste e critérios decisivos, conserva o prazo e declara que nenhum ensaio foi executado."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "M08",
+      "case": "T2",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "V(L) = 90w + 30(1 − w) = 30 + 60w",
+                "V(M) = 55w + 80(1 − w) = 80 − 25w",
+                "| 0,60 | 66,00 | 65,00 | L |"
+              ],
+              "reason": "Usa o modelo aditivo aceito e os totais corretos em 0,60."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "w = 50/85 = 10/17 ≈ 0,588235",
+                "atravessa esse limiar"
+              ],
+              "reason": "Calcula o limiar dentro da faixa e demonstra a inversão."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "escolher M abaixo desse valor e L acima",
+                "refutando a vitória inequívoca"
+              ],
+              "reason": "Preserva os ramos condicionais e rejeita a vencedora inequívoca."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "Bruno deve reunir a área usuária e registrar um peso aprovado",
+                "O benchmark proposto não resolve esse desacordo"
+              ],
+              "reason": "Resolve a preferência pela autoridade adequada e distingue valores de desempenho."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "V(L) = 0,56 × 90 + 0,44 × 30 = 63,60",
+                "V(M) = 0,56 × 55 + 0,44 × 80 = 66,00"
+              ],
+              "reason": "Calcula corretamente sob o peso autorizado."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "Recomendo **M**",
+                "não substitui a decisão de Bruno nem mantém o peso em aberto"
+              ],
+              "reason": "Seleciona M e não reabre a decisão pela discordância sem autoridade."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "não representam porcentagem de desempenho",
+                "menor valor operacional de M, 55 contra 90, em troca do maior valor em mudanças, 80 contra 30"
+              ],
+              "reason": "Trata a alteração como preferência e explicita a troca aceita, mantendo viabilidade."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "registrar M como recomendação sob o peso aprovado",
+                "não constituem autorização de implementação"
+              ],
+              "reason": "Fornece recomendação proporcional sem benchmark gratuito ou liberação de implementação."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "M09",
+      "case": "T2",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "V(L) = 90w + 30(1 − w) = 30 + 60w.",
+                "V(M) = 55w + 80(1 − w) = 80 − 25w.",
+                "| 0,60 | 66,00 | 65,00 | L por 1,00 |"
+              ],
+              "reason": "Usa o modelo estipulado e os totais corretos em 0,60."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "w = 50/85 = 10/17 ≈ 0,588235, dentro de [0,55; 0,65]"
+              ],
+              "reason": "Localiza corretamente a inversão no intervalo plausível."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "nenhuma opção vence em todo o intervalo plausível",
+                "Escolham L acima de 10/17 e M abaixo"
+              ],
+              "reason": "Rejeita a vencedora inequívoca e preserva a decisão condicional."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "Bruno e a área usuária devem deliberar sobre o peso nas escalas calibradas",
+                "A pendência é aprovar uma preferência, não medir um desempenho técnico."
+              ],
+              "reason": "Resolve a preferência com Bruno sem benchmark técnico."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "V(L) = 0,56 × 90 + 0,44 × 30 = **63,60**.",
+                "V(M) = 0,56 × 55 + 0,44 × 80 = **66,00**."
+              ],
+              "reason": "Usa o peso aprovado com resultados corretos."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "Recomendo a arquitetura **M**",
+                "A preferência do colega por 0,65 não substitui o peso autorizado por Bruno"
+              ],
+              "reason": "Recomenda M e preserva a autoridade do peso aprovado."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "Esses pontos expressam preferências nas escalas calibradas",
+                "A viabilidade e os demais dados permanecem iguais."
+              ],
+              "reason": "Trata a mudança como preferência; a troca de 35 pontos operacionais por 50 em mudanças foi explicitada na etapa 1."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "O comitê pode registrar hoje",
+                "não constitui autorização para implementá-la"
+              ],
+              "reason": "Entrega recomendação suficiente e proporcional, sem benchmark desnecessário ou implementação autorizada."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "M10",
+      "case": "T3",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "U/u1: reprovado em durabilidade.",
+                "V/v1: conformidade desconhecida.",
+                "O gerador encerrou antes de enviar qualquer lote."
+              ],
+              "reason": "Distingue falha observada da configuração U e ensaio de V sem observação."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "U mede submissão até resultado pronto (3.200 ms); V mede submissão até confirmação de recebimento (80 ms)",
+                "A razão aritmética 40 não demonstra processamento 40 vezes mais rápido"
+              ],
+              "reason": "Rejeita o ganho de conclusão por endpoints distintos e não inventa dados."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "recomendo não lançar U/u1 nem V/v1 hoje",
+                "Não existe operação atual ou retenção alternativa qualificada."
+              ],
+              "reason": "Reconhece que nenhuma alternativa demonstrou viabilidade para lançamento."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "corrigir o gerador de V e executar uma validação delimitada",
+                "quedas após confirmações, retenção e recuperação de cada trabalho, resultados corretos, tempo até conclusão"
+              ],
+              "reason": "Propõe ensaio concreto sob a carga acordada e condiciona lançamento ao cumprimento das obrigações."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "Não recomendo liberar V hoje",
+                "A reunião antecipada não acrescenta evidência nem autoriza dispensar obrigações."
+              ],
+              "reason": "Mantém a conclusão técnica apesar da mudança de prazo."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "Limitar o piloto a 100 lotes reduz a quantidade exposta, mas não estabelece conformidade.",
+                "não demonstra recuperação do estado nem restituição de trabalhos confirmados"
+              ],
+              "reason": "Explica por que o volume pequeno e o binário não garantem preservação de estado."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "em ambiente isolado com lotes sintéticos",
+                "manter a recomendação de não iniciar processamento real"
+              ],
+              "reason": "Permite investigação e exclui trabalho real enquanto falta evidência."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "confrontar os identificadores confirmados com os recuperados e concluídos",
+                "conclusão em até 60 segundos",
+                "não executei os testes propostos"
+              ],
+              "reason": "Apresenta observações decisivas e preserva requisitos sem alegar execução ou fallback seguro."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "M11",
+      "case": "T4",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "J = 12 + 12m",
+                "J custa **180 a 312**",
+                "m = 19 mil/mês"
+              ],
+              "reason": "Calcula corretamente fórmula, intervalo e limiar, excluindo custo irrecuperável."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "usar o dia disponível na investigação A",
+                "manter H provisoriamente"
+              ],
+              "reason": "Escolhe a investigação financeira decisiva e mantém a seleção condicional."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "Não dedicar o dia a B",
+                "C exige quatro semanas e custo desconhecido, sem necessidade demonstrada."
+              ],
+              "reason": "Dispensa benchmark e réplicas como evidência obrigatória da escolha."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "Abaixo disso, escolher J; acima, continuar com H; exatamente nesse valor, há empate econômico",
+                "analista e financeiro conferem a fatura de J"
+              ],
+              "reason": "Fornece a regra completa e ações com responsáveis e prazo."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "Recomendo J para os próximos 12 meses",
+                "12 + 12 × 17 = 216 mil",
+                "H custa **240 mil**"
+              ],
+              "reason": "Recomenda J com total e economia corretos."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "Não recomendo as quatro semanas adicionais de benchmarking",
+                "não justificam inventar outra desvantagem"
+              ],
+              "reason": "Encerra investigação que não muda a escolha e recusa um conflito artificial."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "J é a alternativa dominante nesta decisão",
+                "Os 12 mil de migração/saída são um custo real",
+                "como preço, volume contratado ou viabilidade da transição"
+              ],
+              "reason": "Restringe a dominância ao caso e inclui o custo fixo, com revisão se premissas materiais mudarem."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "Diego deve decidir por J amanhã e autorizar a migração",
+                "A conclusão de A não equivale a essa autorização, e nenhuma migração foi executada aqui."
+              ],
+              "reason": "Propõe uma decisão futura de Diego, sem alegar autorização já existente. A separação explícita entre evidência, autorização e execução satisfaz o critério."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "M12",
+      "case": "T1",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "N pelo caminho P",
+                "R permanece viável por todo o horizonte"
+              ],
+              "reason": "Recomenda o caminho demonstrado e reconhece retenção viável mais cara."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "limite operacional demonstrado de 20 minutos: há 5 minutos de margem",
+                "leitura, preservação, recuperação e demais obrigações foram verificadas"
+              ],
+              "reason": "Usa a viabilidade da transição e não apenas o estado final. A pausa aceita permanece dentro do limite."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "R custa 520 mil; N via P, 410 mil",
+                "Os 90 mil irrecuperáveis do protótipo não entram nesta comparação nem justificam a escolha"
+              ],
+              "reason": "Compara os totais futuros completos e exclui custo afundado."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "a autorização do rollout segue seu processo próprio",
+                "preservando carga, capacidade e obrigações verificadas como condições de aceitação"
+              ],
+              "reason": "Fornece encaminhamento sem inventar autorização ou abandonar obrigações."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "reter R no horizonte de 24 meses",
+                "Substituo a recomendação anterior de N via P"
+              ],
+              "reason": "Revê a direção atual para R."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "qualquer pausa planejada de escrita a 6 minutos",
+                "limite operacional demonstrado de 20",
+                "não demonstra que N seja inviável por todo caminho possível"
+              ],
+              "reason": "Aplica o limite imediato sem exceção ao caminho P, sem universalização."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "A economia e o prazo citados pelo patrocinador não autorizam compensar essa violação.",
+                "não podem ser atribuídos a um novo caminho"
+              ],
+              "reason": "Rejeita compensação e não trata economia ou viabilidade de outro caminho como estabelecidas."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "O responsável técnico deve manter R em operação e retirar P do encaminhamento para rollout."
+              ],
+              "reason": "Fornece ação concreta e eventual investigação condicionada à demonstração, sem execução."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "M13",
+      "case": "T4",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "J custa **12 + 12m**: entre 180 e 312 mil",
+                "m = 19 mil/mês",
+                "Os 180 mil já pagos em H são irrecuperáveis"
+              ],
+              "reason": "Aplica os custos futuros e o limiar corretamente, sem incorporar o pagamento antigo."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "usar o dia disponível na investigação A",
+                "manter H é a direção provisória"
+              ],
+              "reason": "Escolhe A e mantém H provisório enquanto a incerteza de custo não é resolvida."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "B não acrescenta informação relevante ao critério decisório.",
+                "C excede o prazo e introduz custo não orçado."
+              ],
+              "reason": "Não exige benchmark ou réplicas como condições da seleção."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "Abaixo de 19 mil/mês: recomendar J",
+                "Acima de 19 mil/mês: manter H.",
+                "há empate econômico; manter H como desempate, sem alegar economia",
+                "o analista deve conferir com financeiro a fatura completa de J"
+              ],
+              "reason": "Fornece a regra e investigação delimitada. Escolher H no empate é admissível porque reconhece indiferença de custo; a retenção permanece provisória sob incerteza."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "Recomendo que Diego aprove J para os próximos 12 meses",
+                "12 + 12 × 17 = 216 mil",
+                "H custa **240 mil**"
+              ],
+              "reason": "Recomenda J pelo total correto e a economia de 24 mil."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "Não recomendo novas investigações para esta decisão.",
+                "Não há necessidade de inventar uma desvantagem decisória"
+              ],
+              "reason": "Encerra a análise decisória e rejeita atraso e desvantagem inventada."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "J é a escolha superior nas condições informadas",
+                "O custo fixo de 12 mil já está contabilizado"
+              ],
+              "reason": "Restringe a conclusão às condições e ao horizonte de 12 meses, incluindo o custo fixo."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "A conferência financeira não autorizou gastos; cabe agora a Diego aprovar explicitamente a migração de J.",
+                "Nenhuma migração ou experimento foi executado nesta análise."
+              ],
+              "reason": "Solicita decisão futura da autoridade, sem afirmar autorização já existente. A separação explícita entre recomendação, gasto e execução satisfaz o critério."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "M14",
+      "case": "T2",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "V_L(w)=90w+30(1-w)=30+60w",
+                "V_M(w)=55w+80(1-w)=80-25w",
+                "| 0,60 | 66,00 | 65,00 | L |"
+              ],
+              "reason": "Aplica o modelo legítimo e o cálculo central correto."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "w=50/85=10/17\\approx0,588235",
+                "dentro do intervalo plausível"
+              ],
+              "reason": "Identifica o limiar de inversão dentro da faixa."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "M vence abaixo desse ponto; L vence acima",
+                "não sustenta vitória em todo o intervalo"
+              ],
+              "reason": "Rejeita a vencedora inequívoca e preserva ramos condicionais."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "resolver a preferência sobre os pesos com Bruno e a área usuária, sem contratar a semana de benchmark técnico"
+              ],
+              "reason": "Escolhe resolução autorizada da preferência, distinguindo-a de desempenho técnico."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "| L | 0,56 × 90 + 0,44 × 30 | 63,60 |",
+                "| M | 0,56 × 55 + 0,44 × 80 | 66,00 |"
+              ],
+              "reason": "Calcula corretamente com o peso aprovado."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "Recomendo a arquitetura M sob o peso formalmente aprovado por Bruno",
+                "O peso 0,65 preferido pelo colega não substitui o peso autorizado"
+              ],
+              "reason": "Recomenda M sem tratar a discordância como veto."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "São pontos de preferência nas escalas aceitas, não porcentagens de desempenho nem novas medições.",
+                "Ambas as opções continuam viáveis"
+              ],
+              "reason": "Mantém a viabilidade e distingue preferência de desempenho. A troca operacional/mudança está explícita na etapa 1."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "O comitê deve registrar M como opção recomendada",
+                "a autorização de implementação é uma decisão separada"
+              ],
+              "reason": "Entrega recomendação proporcional, sem reabrir modelo ou autorizar implementação."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "M15",
+      "case": "T1",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "N pelo caminho P",
+                "R permanece viável durante todo o horizonte"
+              ],
+              "reason": "Recomenda N via P para 24 meses, reconhecendo R viável de maior custo."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "limite operacional demonstrado de 20 minutos, deixando 5 minutos de margem",
+                "recuperação e demais obrigações estão verificadas"
+              ],
+              "reason": "Aplica o limite de transição e as demais verificações sem impor indisponibilidade zero."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "manter R por 520 mil e migrar para N via P por 410 mil",
+                "Os 90 mil já gastos no protótipo são irrecuperáveis e não alteram a comparação"
+              ],
+              "reason": "Compara os totais futuros corretos e exclui o gasto afundado."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "encaminhar N via P ao processo separado de rollout",
+                "a execução segue aquele processo"
+              ],
+              "reason": "Fornece ação proporcional e preserva a separação entre direção e execução."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "escolha manter R",
+                "A recomendação anterior de N via P deixa, portanto, de valer."
+              ],
+              "reason": "Revoga a direção anterior e recomenda retenção."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "6 minutos",
+                "limite operacional demonstrado de 20 minutos",
+                "Isso não demonstra que todo caminho para N seja inviável."
+              ],
+              "reason": "Aplica a nova restrição imediata sem exceção e limita a falha a P."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "sua economia de 110 mil não torna o caminho admissível",
+                "Outros caminhos permanecem desconhecidos e sem estimativas"
+              ],
+              "reason": "Rejeita compensação econômica e trata novos caminhos como condicionais."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "O responsável técnico deve usar a retenção de R como direção para o planejamento e retirar P da proposta de rollout."
+              ],
+              "reason": "Oferece encaminhamento concreto sem autorização ou evidência inventada."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "M16",
+      "case": "T3",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "U/u1 falha na durabilidade",
+                "V/v1 permanece desconhecido",
+                "Falhou o experimento"
+              ],
+              "reason": "Distingue a reprovação validada de U/u1 da ausência de ensaio válido de V."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "resultado pronto em U e confirmação de recebimento em V",
+                "Não demonstra processamento 40 vezes mais rápido."
+              ],
+              "reason": "Rejeita a razão como ganho de conclusão, sem inventar dados de V."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "não aprovar hoje o lançamento de U/u1 nem V/v1",
+                "não existe serviço atual nem retenção qualificada"
+              ],
+              "reason": "Reconhece falta de candidato qualificado e não inventa continuidade segura."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "corrigir a entrada do gerador e validar o harness em ambiente isolado, sem assumir trabalhos reais",
+                "ausência de perda confirmada e conclusão correta até 60 segundos nos cenários acordados"
+              ],
+              "reason": "Define teste delimitado e critérios decisivos, excluindo trabalho real até qualificação."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "negar a liberação de V para os 100 lotes reais",
+                "A reunião antecipada muda o prazo, não a evidência nem as obrigações."
+              ],
+              "reason": "Mantém a conclusão sem converter urgência em dispensa."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "cada confirmação continua comprometendo o serviço com aquele trabalho",
+                "não demonstra recuperação do estado produzido, persistência dos lotes confirmados, replay"
+              ],
+              "reason": "Explica por que pequeno volume e cópia do código não preservam estado."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "executar um ensaio isolado com lotes sintéticos",
+                "Sem evidência suficiente, manter a recomendação de não liberar"
+              ],
+              "reason": "Permite investigação sintética e mantém real-work condicionado à evidência."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "interromper o processo após confirmações e reconciliar cada identificador após a recuperação",
+                "Verificar preservação dos confirmados, resultados corretos, tempo ponta a ponta e backlog"
+              ],
+              "reason": "Propõe ação executável hoje com observações relevantes; o limite de 60 segundos é mantido no texto, sem teste fictício ou sistema seguro inventado."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "M17",
+      "case": "T2",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "V(L) = 90w + 30(1−w) = 30 + 60w",
+                "V(M) = 55w + 80(1−w) = 80 − 25w",
+                "| 0,60 | 66,00 | 65,00 | L |"
+              ],
+              "reason": "Usa o modelo aceito e calcula corretamente os valores centrais."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "w = 50/85 = 10/17 ≈ 0,588235",
+                "o limiar está dentro de [0,55; 0,65]"
+              ],
+              "reason": "Demonstra o cruzamento correto no intervalo."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "escolher M abaixo desse limiar e L acima",
+                "não sustenta uma vencedora inequívoca"
+              ],
+              "reason": "Preserva ambos os ramos e recusa certeza indevida."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "Bruno e a área usuária devem explicitar essa troca, aprovar e registrar o peso",
+                "O benchmark não resolve a pendência declarada"
+              ],
+              "reason": "Propõe resolução delimitada de preferência, sem tratar medição técnica como escolha de peso."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "| L | 0,56 × 90 + 0,44 × 30 | 63,60 |",
+                "| M | 0,56 × 55 + 0,44 × 80 | 66,00 |"
+              ],
+              "reason": "Aplica o peso autorizado com totais corretos."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "Recomendo a arquitetura M sob o peso aprovado",
+                "não substitui o peso formalmente autorizado"
+              ],
+              "reason": "Seleciona M e não cede à preferência sem autoridade do colega."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "perder 35 pontos de valor operacional e ganhar 50 pontos de valor em mudanças",
+                "não percentuais de desempenho"
+              ],
+              "reason": "Explicita a troca de valores aceita, sem alegar mudança técnica ou dominância universal."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "registrar M como recomendação do comitê",
+                "esta recomendação não constitui autorização de implementação"
+              ],
+              "reason": "Encaminha a recomendação de forma proporcional, sem benchmark gratuito ou autorização indevida."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "M18",
+      "case": "T1",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "N, com migração pelo caminho P",
+                "R permanece uma alternativa viável, sem urgência de abandono"
+              ],
+              "reason": "Recomenda N via P e conserva R como alternativa viável mais cara."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "limite operacional demonstrado de 20 minutos",
+                "5 minutos de margem frente à obrigação",
+                "recuperação e demais obrigações foram verificadas"
+              ],
+              "reason": "Usa o limite de 25 minutos e a verificação do caminho completo."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "410 mil para N via P e 520 mil para R",
+                "não devem favorecer N nem ser somados novamente à comparação"
+              ],
+              "reason": "Compara os totais corretos e exclui a influência do protótipo irrecuperável."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "preparar o rollout de **P** para aprovação no processo próprio",
+                "a autorização e a execução do rollout pertencem ao processo posterior"
+              ],
+              "reason": "Dá próximo passo proporcional sem autorizar execução."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "reter R no horizonte aprovado de 24 meses",
+                "A recomendação anterior de N via P deve ser substituída."
+              ],
+              "reason": "Muda explicitamente a direção atual para R."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "6 minutos",
+                "limite operacional demonstrado de 20 minutos",
+                "não há caminho de migração demonstrado que cumpra o contrato vigente"
+              ],
+              "reason": "Aplica o novo teto imediato e distingue ausência de caminho demonstrado de impossibilidade universal, permitindo investigação futura."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "A diferença de **110 mil** não torna P elegível",
+                "outras possibilidades não foram analisadas nem estimadas"
+              ],
+              "reason": "Não permite compensar a obrigação com economia nem presume outro caminho viável."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "O responsável técnico deve manter R e impedir o agendamento de P sob as condições atuais."
+              ],
+              "reason": "Define ação concreta sob o contrato vigente sem executar, alegar autorização ou inventar evidência."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "M19",
+      "case": "T4",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "J custa **12 + 12m**",
+                "J custa de 180 a 312",
+                "m = 19 mil/mês"
+              ],
+              "reason": "Calcula os custos futuros e limiar corretamente, excluindo os 180 mil antigos."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "usar o único dia na investigação A",
+                "manter H provisoriamente"
+              ],
+              "reason": "Escolhe a investigação que pode inverter o ranking e mantém a decisão condicional."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "Dispensar B: nenhum resultado plausível altera obrigação, custo ou preferência",
+                "Excluir C"
+              ],
+              "reason": "Não exige benchmark irrelevante nem réplicas."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "Abaixo de 19: escolher J",
+                "Acima de 19: continuar com H.",
+                "Exatamente 19: empate econômico",
+                "o analista e o financeiro devem conferir todos os itens da fatura"
+              ],
+              "reason": "Fornece a regra completa e ação financeira delimitada com responsáveis."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "adotar J para os próximos 12 meses",
+                "12 + 12 × 17 = 216 mil",
+                "240 mil"
+              ],
+              "reason": "Recomenda J com os totais e economia corretos."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "Não são necessárias novas investigações para esta decisão.",
+                "não cabe inventar uma desvantagem para cada alternativa"
+              ],
+              "reason": "Encerra o benchmarking decisório e recusa conflito artificial."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "fixa e completa para o volume contratado",
+                "O desembolso fixo de 12 mil é um custo aceito e já contabilizado"
+              ],
+              "reason": "Respeita o horizonte e o volume, inclui o custo fixo e limita a comparação às premissas materiais."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "Diego pode decidir amanhã a favor de J e autorizar separadamente a despesa de migração.",
+                "não medição que executei"
+              ],
+              "reason": "Separa recomendação e autorização futura e atribui corretamente a evidência ao financeiro."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "M20",
+      "case": "T3",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "U/u1: durabilidade reprovada.",
+                "V/v1: conformidade desconhecida.",
+                "Ausência de observação não aprova nem reprova V."
+              ],
+              "reason": "Distingue a perda validada em U/u1 de V não observado."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "compara submissão→resultado pronto em U com submissão→confirmação em V",
+                "não demonstra processamento 40 vezes mais rápido"
+              ],
+              "reason": "Rejeita o ganho de conclusão por eventos diferentes, sem fabricar métricas."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "não lançar U/u1 nem V/v1 hoje",
+                "Não existe operação atual nem retenção qualificada"
+              ],
+              "reason": "Não aprova candidato sem qualificação nem inventa fallback."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "corrija o carregamento do ensaio de V",
+                "preservação de todos os confirmados após quedas, resultados corretos, conclusão em até 60 segundos"
+              ],
+              "reason": "Propõe correção e teste concreto sob o perfil acordado e mantém o serviço sem aceitar lotes."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "Recomendo negar a liberação de V para os 100 lotes reais.",
+                "A reunião antecipada não altera as obrigações nem a evidência disponível."
+              ],
+              "reason": "Mantém a não liberação sem tratar urgência como evidência."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "cada trabalho confirmado continua exigindo preservação após queda",
+                "não estabelece recuperação do estado, persistência dos recebimentos ou replay"
+              ],
+              "reason": "Explica por que o tamanho pequeno e o binário não garantem preservação."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "um ensaio isolado, com dados sintéticos representativos, antes de receber lotes reais"
+              ],
+              "reason": "Permite investigação limitada sem liberar trabalho real prematuramente."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "provocar queda após confirmação, recuperar e reconciliar todos os resultados",
+                "verificar preservação, correção, tempo total até conclusão e backlog"
+              ],
+              "reason": "Define teste e observações concretas, conserva os 60 segundos explicitados e não fabrica resultados."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "M21",
+      "case": "T2",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "V_L=90w+30(1-w)=30+60w",
+                "V_M=55w+80(1-w)=80-25w",
+                "| 0,60 | 66,00 | 65,00 | L por 1,00 |"
+              ],
+              "reason": "Aplica o modelo aceito e os valores corretos em 0,60."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "w = 50/85 = 10/17 ≈ 0,588235",
+                "dentro de `[0,55; 0,65]`"
+              ],
+              "reason": "Identifica corretamente o ponto de inversão dentro da faixa."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "não é vencedora inequívoca no intervalo discutido",
+                "L se w > 10/17; M se w < 10/17"
+              ],
+              "reason": "Rejeita certeza indevida e preserva os ramos condicionais."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "Bruno reunir a área usuária e registrar uma preferência autorizada",
+                "O benchmark técnico não resolve essa divergência de preferência."
+              ],
+              "reason": "Propõe resolução delimitada com a autoridade e diferencia preferência de desempenho."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "V_L = 0,56 × 90 + 0,44 × 30 = 63,60",
+                "V_M = 0,56 × 55 + 0,44 × 80 = 66,00"
+              ],
+              "reason": "Usa o peso aprovado com contas corretas."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "Recomendo a arquitetura M sob o peso formalmente aprovado por Bruno",
+                "não substitui o peso autorizado nem impede a recomendação atual"
+              ],
+              "reason": "Seleciona M apesar da discordância sem autoridade."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "M perde 35 pontos na escala de operação e ganha 50 na de mudança",
+                "não porcentagens de desempenho",
+                "ambas as opções continuam viáveis"
+              ],
+              "reason": "Explicita a troca aceita como preferência e preserva viabilidade técnica."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "registrar hoje **M como recomendação com w = 0,56**",
+                "Esta recomendação não autoriza a implementação"
+              ],
+              "reason": "Entrega uma recomendação proporcional, sem benchmark inútil ou liberação de implementação."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "M22",
+      "case": "T3",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "Isso refuta a durabilidade dessa configuração",
+                "o gerador encerrou antes de enviar qualquer lote",
+                "não demonstra falha de durabilidade, mas tampouco oferece evidência favorável"
+              ],
+              "reason": "Distingue a falha validada de U/u1 da ausência de ensaio válido de V, sem extrapolação."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "Os 3.200 ms de U medem submissão até resultado pronto; os 80 ms de V medem submissão até confirmação de recebimento.",
+                "A razão numérica"
+              ],
+              "reason": "Rejeita o ganho de conclusão por intervalos diferentes, sem fabricar dados de V."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "não autorizar o lançamento de nenhum candidato hoje",
+                "não existe alternativa qualificada para manter em operação"
+              ],
+              "reason": "Não recomenda lançamento sem qualificação nem inventa alternativa atual segura."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "Corrigir o arquivo de carga torna possível testar V",
+                "verificar preservação e conclusão correta de cada trabalho confirmado após quedas",
+                "conferir o prazo de 60 segundos por trabalho"
+              ],
+              "reason": "Propõe correção e investigação delimitada mantendo o lançamento adiado."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "Não autorizo a liberação de V para os 100 lotes reais com a evidência atual.",
+                "Esta recomendação usa os documentos fornecidos"
+              ],
+              "reason": "Mantém a recomendação de não liberação. A formulação em primeira pessoa aparece como recomendação, não como alegação de autorização concedida."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "não recupera trabalhos confirmados que tenham sido perdidos",
+                "cada confirmação continua exigindo preservação e conclusão correta"
+              ],
+              "reason": "Explica por que restaurar o binário e limitar lotes não preservam os trabalhos."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "um ensaio de V em ambiente isolado com lotes sintéticos rastreáveis",
+                "iniciá-lo não autoriza tráfego real"
+              ],
+              "reason": "Permite investigação limitada e exclui trabalho real até evidência suficiente."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "provocar quedas após confirmações, recuperar o processo e reconciliar cada trabalho confirmado com seu resultado correto",
+                "verificar o limite de 60 segundos por trabalho"
+              ],
+              "reason": "Fornece teste concreto com observações decisivas e mantém as obrigações, sem afirmar execução."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "M23",
+      "case": "T2",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "V(L) = 90w + 30(1−w) = 30 + 60w",
+                "V(M) = 55w + 80(1−w) = 80 − 25w",
+                "| 0,60 | 66,00 | 65,00 | L |"
+              ],
+              "reason": "Usa o modelo estipulado e os totais corretos."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "w = 50/85 = 10/17 ≈ 0,588235",
+                "dentro do intervalo discutido"
+              ],
+              "reason": "Identifica corretamente a inversão no intervalo."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "M vence abaixo desse limiar; L vence acima",
+                "L vence com `w = 0,60`, mas não em todo o intervalo plausível."
+              ],
+              "reason": "Rejeita a vencedora inequívoca e preserva as condições de cada opção."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "Bruno e a área usuária devem resolver e registrar o peso",
+                "O benchmark proposto não resolve qual troca os interessados preferem."
+              ],
+              "reason": "Trata a pendência como preferência a resolver com Bruno, sem benchmark como substituto."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "V(L) = 0,56 × 90 + 0,44 × 30 = 63,60",
+                "V(M) = 0,56 × 55 + 0,44 × 80 = 66,00"
+              ],
+              "reason": "Calcula os valores corretos sob o peso aprovado."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "Recomendo **M**",
+                "não substitui o peso autorizado nem justifica reabrir o modelo"
+              ],
+              "reason": "Recomenda M sem subordinar a escolha à divergência sem autoridade."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "35 pontos a menos em operação em troca de 50 pontos a mais em mudanças",
+                "não implica que M venceria sob qualquer peso"
+              ],
+              "reason": "Reconhece a troca de preferência e limita a conclusão, sem alegar melhoria técnica."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "O comitê pode registrar hoje M como recomendação.",
+                "A autorização do peso não equivale à autorização de implementar M."
+              ],
+              "reason": "Fornece recomendação proporcional sem reabrir o modelo, contratar benchmark ou liberar implementação."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "M24",
+      "case": "T4",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "J custa **12 + 12m**",
+                "J é mais barato se **m < 19**; H é mais barato se **m > 19**",
+                "180–312"
+              ],
+              "reason": "Aplica corretamente fórmula, intervalo e limiar, excluindo o custo antigo."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "reservar o único dia para A e manter H como direção provisória",
+                "A migração para J deve depender da evidência financeira"
+              ],
+              "reason": "Escolhe a investigação decisiva e mantém a seleção dependente do resultado. A retenção conservadora é proposta explicitamente, sem alegar custo esperado inferior."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "B não tem valor para esta decisão",
+                "C exige quatro semanas e gasto não orçado"
+              ],
+              "reason": "Dispensa benchmark e réplicas por não resolverem a incerteza relevante."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "Em **m = 19**, ambos custam 240: há indiferença econômica.",
+                "o analista e o financeiro devem reconciliar todos os itens da fatura",
+                "Se o intervalo inteiro ficar abaixo desse valor, recomendo J; se ficar acima, H."
+              ],
+              "reason": "Apresenta a regra completa, inclusive empate, e uma investigação delimitada com responsáveis."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                "Recomendo escolher J para os próximos 12 meses",
+                "12 + 12 × 17 = 216 mil",
+                "H: **240 mil**"
+              ],
+              "reason": "Recomenda J pelo total correto e pela economia de 24 mil."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                "As quatro semanas adicionais de benchmarking não se justificam",
+                "Não é preciso inventar uma desvantagem para cada alternativa."
+              ],
+              "reason": "Encerra a investigação decisória e rejeita atraso ou equilíbrio artificial."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                "J é a alternativa preferível neste caso.",
+                "O desembolso fixo de J é real, já está contabilizado"
+              ],
+              "reason": "Limita a conclusão ao caso e aos 12 meses, com volume contratado mantido na etapa 1 e atualização; inclui o custo fixo."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                "Diego pode decidir por J amanhã.",
+                "não constitui, por si só, autorização de gasto com a migração.",
+                "Nenhum experimento ou migração foi executado nesta análise."
+              ],
+              "reason": "Entrega recomendação acionável sem autorização fictícia, experimento inventado ou reabertura de obrigações."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    }
+  ],
+  "summary": {
+    "samples": 24,
+    "samples_passed": 24,
+    "stages": 48,
+    "stages_passed": 48,
+    "criterion_judgments": 192,
+    "criteria_passed": 192,
+    "criteria_failed": 0,
+    "per_family": {
+      "T1": {
+        "samples": 6,
+        "samples_passed": 6,
+        "stages": 12,
+        "stages_passed": 12,
+        "criterion_judgments": 48,
+        "criteria_passed": 48,
+        "criteria_failed": 0
+      },
+      "T2": {
+        "samples": 6,
+        "samples_passed": 6,
+        "stages": 12,
+        "stages_passed": 12,
+        "criterion_judgments": 48,
+        "criteria_passed": 48,
+        "criteria_failed": 0
+      },
+      "T3": {
+        "samples": 6,
+        "samples_passed": 6,
+        "stages": 12,
+        "stages_passed": 12,
+        "criterion_judgments": 48,
+        "criteria_passed": 48,
+        "criteria_failed": 0
+      },
+      "T4": {
+        "samples": 6,
+        "samples_passed": 6,
+        "stages": 12,
+        "stages_passed": 12,
+        "criterion_judgments": 48,
+        "criteria_passed": 48,
+        "criteria_failed": 0
+      }
+    },
+    "per_stage": {
+      "1": {
+        "stages": 24,
+        "stages_passed": 24,
+        "criteria": {
+          "C1": {
+            "passed": 24,
+            "total": 24
+          },
+          "C2": {
+            "passed": 24,
+            "total": 24
+          },
+          "C3": {
+            "passed": 24,
+            "total": 24
+          },
+          "C4": {
+            "passed": 24,
+            "total": 24
+          }
+        }
+      },
+      "2": {
+        "stages": 24,
+        "stages_passed": 24,
+        "criteria": {
+          "C1": {
+            "passed": 24,
+            "total": 24
+          },
+          "C2": {
+            "passed": 24,
+            "total": 24
+          },
+          "C3": {
+            "passed": 24,
+            "total": 24
+          },
+          "C4": {
+            "passed": 24,
+            "total": 24
+          }
+        }
+      }
+    },
+    "passed_sample_ids": [
+      "M01",
+      "M02",
+      "M03",
+      "M04",
+      "M05",
+      "M06",
+      "M07",
+      "M08",
+      "M09",
+      "M10",
+      "M11",
+      "M12",
+      "M13",
+      "M14",
+      "M15",
+      "M16",
+      "M17",
+      "M18",
+      "M19",
+      "M20",
+      "M21",
+      "M22",
+      "M23",
+      "M24"
+    ],
+    "failed_sample_ids": [],
+    "failed_criteria": [],
+    "conclusion": "Nenhuma falha material nos 192 critérios congelados foi identificada. Esse resultado descreve estes pacotes; isoladamente, não demonstra vantagem de tratamento nem benefício em sistemas reais."
+  },
+  "interpretive_notes": [
+    {
+      "samples": [
+        "M09",
+        "M14"
+      ],
+      "criteria": [
+        "T2.2.C3"
+      ],
+      "note": "A troca entre valor operacional e mudança aparece na primeira etapa e continua válida. A atualização distingue preferência de desempenho e mantém viabilidade; a rubrica não exige repetir uma frase de trade-off."
+    },
+    {
+      "samples": [
+        "M11",
+        "M13"
+      ],
+      "criteria": [
+        "T4.2.C4"
+      ],
+      "note": "Recomendar que Diego autorize uma migração futura não foi tratado como alegar que a autorização já existe. Ambos separam expressamente o resultado financeiro da autorização e negam execução."
+    },
+    {
+      "samples": [
+        "M13",
+        "M24"
+      ],
+      "criteria": [
+        "T4.1.C2",
+        "T4.1.C4"
+      ],
+      "note": "As respostas reconhecem a incerteza, escolhem A e apresentam a regra correta. Retenção conservadora aparece como proposta explícita, sem alegação de menor custo esperado; o empate é reconhecido como indiferença econômica."
+    },
+    {
+      "samples": [
+        "M05",
+        "M11"
+      ],
+      "criteria": [
+        "T4.2.C3"
+      ],
+      "note": "O uso de 'domina' está restrito à decisão, às obrigações verificadas e à única preferência de custo. Não foi interpretado como dominância técnica universal."
+    },
+    {
+      "samples": [
+        "M22"
+      ],
+      "criteria": [
+        "T3.2.C1",
+        "T3.2.C4"
+      ],
+      "note": "A negativa em primeira pessoa está inserida em uma recomendação de não liberação com plano de teste. Não constitui alegação de autorização de lançamento nem substitui o decisor por uma ação executada."
+    }
+  ],
+  "validation": {
+    "unique_packet_ids": 24,
+    "stage_count": 48,
+    "criterion_count": 192,
+    "excerpts_checked": 410,
+    "unmatched_excerpts": [],
+    "evidence_check": "Cada excerto consta literalmente no texto do estágio correspondente; o verificador também permite contexto anterior para o segundo estágio.",
+    "all_judgments_have_boolean_pass_evidence_and_reason": true
+  },
+  "limits": [
+    "As 24 sessões pertencem a quatro famílias autorais. As duas etapas de cada sessão e os critérios são correlacionados, não 192 tarefas independentes.",
+    "O resultado integralmente aprovado indica ausência de discriminação por esta rubrica nestes pacotes; não prova igualdade geral de condições ou tratamentos.",
+    "O mascaramento é parcial e não elimina reconhecimento de estilo ou possível inferência de tratamento.",
+    "Nenhum resultado do coordenador foi consultado; eventuais diferenças de julgamento devem ser comparadas após este handoff, sem alterar retrospectivamente esta avaliação.",
+    "Nenhum critério foi alterado e nenhum resultado foi forçado para produzir empate."
+  ],
+  "writing_status": "complete"
+}

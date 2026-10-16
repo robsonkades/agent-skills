@@ -1,0 +1,3020 @@
+{
+  "createdAt": "2026-10-16T17:26:50.395Z",
+  "skill": "java-memory-model",
+  "conditions": [
+    {
+      "id": "none",
+      "version": null
+    },
+    {
+      "id": "previous",
+      "version": "1.3.5"
+    },
+    {
+      "id": "current",
+      "version": "1.3.6"
+    }
+  ],
+  "runs": [
+    {
+      "id": "run-01",
+      "caseId": "D1",
+      "condition": "none",
+      "trial": 1,
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-01",
+      "inputs": [
+        {
+          "path": "input/project/check.mjs",
+          "sha256": "b6f9b3cd3e71dbf53f03c5b834f24f48cd95c7db7e8438218a64a6807bfaf4a0"
+        },
+        {
+          "path": "input/project/docs/contract.md",
+          "sha256": "ceaa05aa4c210245338b9c4b3e779e9d6878087febe314eab01e6814fe6d2287"
+        },
+        {
+          "path": "input/project/docs/review-request.md",
+          "sha256": "86d670bf08679312dac2a34b2afd445a0548de7495460636959f86bcf1e868f2"
+        },
+        {
+          "path": "input/project/README.md",
+          "sha256": "7528c8030c6e58136385c6ce004edd888cdc5ef758de6a3e686f9cafb18ff675"
+        },
+        {
+          "path": "input/project/src/memo/BestEffortMemo.java",
+          "sha256": "773ac3a0db89c62165fb6e34ef87203daf45504cd6ed320ae3492e771ae675db"
+        },
+        {
+          "path": "input/project/src/memo/PublishedEntry.java",
+          "sha256": "b97db2071eb31c3584e786a99994684cde4c169034fe9d3ecb03bb78211946bb"
+        },
+        {
+          "path": "input/project/src/memo/ReaderFactory.java",
+          "sha256": "87601944fc6f7e44f634aed1e56da1298adda524275c0dc4e03452714866c89c"
+        },
+        {
+          "path": "input/project/test/memo/Smoke.java",
+          "sha256": "5fb4bf14f226c3cbaaa147cefd50a30a456eae5ce35ba8f19d40dc0398c9f335"
+        },
+        {
+          "path": "output/project/check.mjs",
+          "sha256": "b6f9b3cd3e71dbf53f03c5b834f24f48cd95c7db7e8438218a64a6807bfaf4a0"
+        },
+        {
+          "path": "output/project/docs/contract.md",
+          "sha256": "ceaa05aa4c210245338b9c4b3e779e9d6878087febe314eab01e6814fe6d2287"
+        },
+        {
+          "path": "output/project/docs/review-request.md",
+          "sha256": "86d670bf08679312dac2a34b2afd445a0548de7495460636959f86bcf1e868f2"
+        },
+        {
+          "path": "output/project/README.md",
+          "sha256": "7528c8030c6e58136385c6ce004edd888cdc5ef758de6a3e686f9cafb18ff675"
+        },
+        {
+          "path": "output/project/src/memo/BestEffortMemo.java",
+          "sha256": "773ac3a0db89c62165fb6e34ef87203daf45504cd6ed320ae3492e771ae675db"
+        },
+        {
+          "path": "output/project/src/memo/PublishedEntry.java",
+          "sha256": "b97db2071eb31c3584e786a99994684cde4c169034fe9d3ecb03bb78211946bb"
+        },
+        {
+          "path": "output/project/src/memo/ReaderFactory.java",
+          "sha256": "87601944fc6f7e44f634aed1e56da1298adda524275c0dc4e03452714866c89c"
+        },
+        {
+          "path": "output/project/test/memo/Smoke.java",
+          "sha256": "5fb4bf14f226c3cbaaa147cefd50a30a456eae5ce35ba8f19d40dc0398c9f335"
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "a6e43492d45a5ee0fc40a2d853ff6a93d149b6d90a75f2c89eb68aa05adc510b"
+        }
+      ],
+      "actor": "/root/wave6_actor01",
+      "status": "pending"
+    },
+    {
+      "id": "run-02",
+      "caseId": "D1",
+      "condition": "previous",
+      "trial": 1,
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-02",
+      "inputs": [
+        {
+          "path": "input/project/check.mjs",
+          "sha256": "b6f9b3cd3e71dbf53f03c5b834f24f48cd95c7db7e8438218a64a6807bfaf4a0"
+        },
+        {
+          "path": "input/project/docs/contract.md",
+          "sha256": "ceaa05aa4c210245338b9c4b3e779e9d6878087febe314eab01e6814fe6d2287"
+        },
+        {
+          "path": "input/project/docs/review-request.md",
+          "sha256": "86d670bf08679312dac2a34b2afd445a0548de7495460636959f86bcf1e868f2"
+        },
+        {
+          "path": "input/project/README.md",
+          "sha256": "7528c8030c6e58136385c6ce004edd888cdc5ef758de6a3e686f9cafb18ff675"
+        },
+        {
+          "path": "input/project/src/memo/BestEffortMemo.java",
+          "sha256": "773ac3a0db89c62165fb6e34ef87203daf45504cd6ed320ae3492e771ae675db"
+        },
+        {
+          "path": "input/project/src/memo/PublishedEntry.java",
+          "sha256": "b97db2071eb31c3584e786a99994684cde4c169034fe9d3ecb03bb78211946bb"
+        },
+        {
+          "path": "input/project/src/memo/ReaderFactory.java",
+          "sha256": "87601944fc6f7e44f634aed1e56da1298adda524275c0dc4e03452714866c89c"
+        },
+        {
+          "path": "input/project/test/memo/Smoke.java",
+          "sha256": "5fb4bf14f226c3cbaaa147cefd50a30a456eae5ce35ba8f19d40dc0398c9f335"
+        },
+        {
+          "path": "output/project/check.mjs",
+          "sha256": "b6f9b3cd3e71dbf53f03c5b834f24f48cd95c7db7e8438218a64a6807bfaf4a0"
+        },
+        {
+          "path": "output/project/docs/contract.md",
+          "sha256": "ceaa05aa4c210245338b9c4b3e779e9d6878087febe314eab01e6814fe6d2287"
+        },
+        {
+          "path": "output/project/docs/review-request.md",
+          "sha256": "86d670bf08679312dac2a34b2afd445a0548de7495460636959f86bcf1e868f2"
+        },
+        {
+          "path": "output/project/README.md",
+          "sha256": "7528c8030c6e58136385c6ce004edd888cdc5ef758de6a3e686f9cafb18ff675"
+        },
+        {
+          "path": "output/project/src/memo/BestEffortMemo.java",
+          "sha256": "773ac3a0db89c62165fb6e34ef87203daf45504cd6ed320ae3492e771ae675db"
+        },
+        {
+          "path": "output/project/src/memo/PublishedEntry.java",
+          "sha256": "b97db2071eb31c3584e786a99994684cde4c169034fe9d3ecb03bb78211946bb"
+        },
+        {
+          "path": "output/project/src/memo/ReaderFactory.java",
+          "sha256": "87601944fc6f7e44f634aed1e56da1298adda524275c0dc4e03452714866c89c"
+        },
+        {
+          "path": "output/project/test/memo/Smoke.java",
+          "sha256": "5fb4bf14f226c3cbaaa147cefd50a30a456eae5ce35ba8f19d40dc0398c9f335"
+        },
+        {
+          "path": "skill/references/happens-before.md",
+          "sha256": "ffb7b4955709d039d02549f7730d85b8bad661f22d9de908d14e741c6df5a076"
+        },
+        {
+          "path": "skill/references/review-checklist.md",
+          "sha256": "a9e6f00a8e7e26fcbe4b6d2a7a430198042acc7905025bb661772dd29b73b8a8"
+        },
+        {
+          "path": "skill/SKILL.md",
+          "sha256": "a9f6dab4bf513019bf245efc9cd8757a5edcc9b212ec507e3545fa59573c2a1a"
+        },
+        {
+          "path": "skill/skill.yaml",
+          "sha256": "1e2323798bd80080cf698cd1f8cc7085aa712c4e96f2113cb15c09eb97fe8c9b"
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "35d865c2d43f1a1020eb55da34cefe29ac35133a7b83de608766bc4ca79563e4"
+        }
+      ],
+      "actor": "/root/wave6_actor02",
+      "status": "pending"
+    },
+    {
+      "id": "run-03",
+      "caseId": "D1",
+      "condition": "current",
+      "trial": 1,
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-03",
+      "inputs": [
+        {
+          "path": "input/project/check.mjs",
+          "sha256": "b6f9b3cd3e71dbf53f03c5b834f24f48cd95c7db7e8438218a64a6807bfaf4a0"
+        },
+        {
+          "path": "input/project/docs/contract.md",
+          "sha256": "ceaa05aa4c210245338b9c4b3e779e9d6878087febe314eab01e6814fe6d2287"
+        },
+        {
+          "path": "input/project/docs/review-request.md",
+          "sha256": "86d670bf08679312dac2a34b2afd445a0548de7495460636959f86bcf1e868f2"
+        },
+        {
+          "path": "input/project/README.md",
+          "sha256": "7528c8030c6e58136385c6ce004edd888cdc5ef758de6a3e686f9cafb18ff675"
+        },
+        {
+          "path": "input/project/src/memo/BestEffortMemo.java",
+          "sha256": "773ac3a0db89c62165fb6e34ef87203daf45504cd6ed320ae3492e771ae675db"
+        },
+        {
+          "path": "input/project/src/memo/PublishedEntry.java",
+          "sha256": "b97db2071eb31c3584e786a99994684cde4c169034fe9d3ecb03bb78211946bb"
+        },
+        {
+          "path": "input/project/src/memo/ReaderFactory.java",
+          "sha256": "87601944fc6f7e44f634aed1e56da1298adda524275c0dc4e03452714866c89c"
+        },
+        {
+          "path": "input/project/test/memo/Smoke.java",
+          "sha256": "5fb4bf14f226c3cbaaa147cefd50a30a456eae5ce35ba8f19d40dc0398c9f335"
+        },
+        {
+          "path": "output/project/check.mjs",
+          "sha256": "b6f9b3cd3e71dbf53f03c5b834f24f48cd95c7db7e8438218a64a6807bfaf4a0"
+        },
+        {
+          "path": "output/project/docs/contract.md",
+          "sha256": "ceaa05aa4c210245338b9c4b3e779e9d6878087febe314eab01e6814fe6d2287"
+        },
+        {
+          "path": "output/project/docs/review-request.md",
+          "sha256": "86d670bf08679312dac2a34b2afd445a0548de7495460636959f86bcf1e868f2"
+        },
+        {
+          "path": "output/project/README.md",
+          "sha256": "7528c8030c6e58136385c6ce004edd888cdc5ef758de6a3e686f9cafb18ff675"
+        },
+        {
+          "path": "output/project/src/memo/BestEffortMemo.java",
+          "sha256": "773ac3a0db89c62165fb6e34ef87203daf45504cd6ed320ae3492e771ae675db"
+        },
+        {
+          "path": "output/project/src/memo/PublishedEntry.java",
+          "sha256": "b97db2071eb31c3584e786a99994684cde4c169034fe9d3ecb03bb78211946bb"
+        },
+        {
+          "path": "output/project/src/memo/ReaderFactory.java",
+          "sha256": "87601944fc6f7e44f634aed1e56da1298adda524275c0dc4e03452714866c89c"
+        },
+        {
+          "path": "output/project/test/memo/Smoke.java",
+          "sha256": "5fb4bf14f226c3cbaaa147cefd50a30a456eae5ce35ba8f19d40dc0398c9f335"
+        },
+        {
+          "path": "skill/references/happens-before.md",
+          "sha256": "bf3c0632c5a2643752fa2ad160a9694b8cc98696474bb14fc6c67499bc33865c"
+        },
+        {
+          "path": "skill/references/review-checklist.md",
+          "sha256": "a9e6f00a8e7e26fcbe4b6d2a7a430198042acc7905025bb661772dd29b73b8a8"
+        },
+        {
+          "path": "skill/SKILL.md",
+          "sha256": "a9f6dab4bf513019bf245efc9cd8757a5edcc9b212ec507e3545fa59573c2a1a"
+        },
+        {
+          "path": "skill/skill.yaml",
+          "sha256": "ebf7fdd7cf14ed7c51f1627d4cbfc022d264de515840da97004fa13531e53cab"
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "722c6b1e9bc3af4b7331b0545898afa9b48e240f84801c7ad7782e8f7ee62d5c"
+        }
+      ],
+      "actor": "/root/wave6_actor03",
+      "status": "pending"
+    },
+    {
+      "id": "run-04",
+      "caseId": "D2",
+      "condition": "previous",
+      "trial": 1,
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-04",
+      "inputs": [
+        {
+          "path": "input/project/check.mjs",
+          "sha256": "b6f9b3cd3e71dbf53f03c5b834f24f48cd95c7db7e8438218a64a6807bfaf4a0"
+        },
+        {
+          "path": "input/project/docs/contract.md",
+          "sha256": "ceaa05aa4c210245338b9c4b3e779e9d6878087febe314eab01e6814fe6d2287"
+        },
+        {
+          "path": "input/project/docs/review-request.md",
+          "sha256": "86d670bf08679312dac2a34b2afd445a0548de7495460636959f86bcf1e868f2"
+        },
+        {
+          "path": "input/project/README.md",
+          "sha256": "7528c8030c6e58136385c6ce004edd888cdc5ef758de6a3e686f9cafb18ff675"
+        },
+        {
+          "path": "input/project/src/memo/BestEffortMemo.java",
+          "sha256": "773ac3a0db89c62165fb6e34ef87203daf45504cd6ed320ae3492e771ae675db"
+        },
+        {
+          "path": "input/project/src/memo/PublishedEntry.java",
+          "sha256": "b97db2071eb31c3584e786a99994684cde4c169034fe9d3ecb03bb78211946bb"
+        },
+        {
+          "path": "input/project/src/memo/ReaderFactory.java",
+          "sha256": "d6b8766eb709c274626023c345de09c08da665546445ddc180663818ebaf16de"
+        },
+        {
+          "path": "input/project/test/memo/Smoke.java",
+          "sha256": "5fb4bf14f226c3cbaaa147cefd50a30a456eae5ce35ba8f19d40dc0398c9f335"
+        },
+        {
+          "path": "output/project/check.mjs",
+          "sha256": "b6f9b3cd3e71dbf53f03c5b834f24f48cd95c7db7e8438218a64a6807bfaf4a0"
+        },
+        {
+          "path": "output/project/docs/contract.md",
+          "sha256": "ceaa05aa4c210245338b9c4b3e779e9d6878087febe314eab01e6814fe6d2287"
+        },
+        {
+          "path": "output/project/docs/review-request.md",
+          "sha256": "86d670bf08679312dac2a34b2afd445a0548de7495460636959f86bcf1e868f2"
+        },
+        {
+          "path": "output/project/README.md",
+          "sha256": "7528c8030c6e58136385c6ce004edd888cdc5ef758de6a3e686f9cafb18ff675"
+        },
+        {
+          "path": "output/project/src/memo/BestEffortMemo.java",
+          "sha256": "773ac3a0db89c62165fb6e34ef87203daf45504cd6ed320ae3492e771ae675db"
+        },
+        {
+          "path": "output/project/src/memo/PublishedEntry.java",
+          "sha256": "b97db2071eb31c3584e786a99994684cde4c169034fe9d3ecb03bb78211946bb"
+        },
+        {
+          "path": "output/project/src/memo/ReaderFactory.java",
+          "sha256": "d6b8766eb709c274626023c345de09c08da665546445ddc180663818ebaf16de"
+        },
+        {
+          "path": "output/project/test/memo/Smoke.java",
+          "sha256": "5fb4bf14f226c3cbaaa147cefd50a30a456eae5ce35ba8f19d40dc0398c9f335"
+        },
+        {
+          "path": "skill/references/happens-before.md",
+          "sha256": "ffb7b4955709d039d02549f7730d85b8bad661f22d9de908d14e741c6df5a076"
+        },
+        {
+          "path": "skill/references/review-checklist.md",
+          "sha256": "a9e6f00a8e7e26fcbe4b6d2a7a430198042acc7905025bb661772dd29b73b8a8"
+        },
+        {
+          "path": "skill/SKILL.md",
+          "sha256": "a9f6dab4bf513019bf245efc9cd8757a5edcc9b212ec507e3545fa59573c2a1a"
+        },
+        {
+          "path": "skill/skill.yaml",
+          "sha256": "1e2323798bd80080cf698cd1f8cc7085aa712c4e96f2113cb15c09eb97fe8c9b"
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "f08983e8cbb2c4c398da33290702b2c15a265987f9f1266abf929b6edb3bb1cb"
+        }
+      ],
+      "actor": "/root/wave6_actor04",
+      "status": "pending"
+    },
+    {
+      "id": "run-05",
+      "caseId": "D2",
+      "condition": "current",
+      "trial": 1,
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-05",
+      "inputs": [
+        {
+          "path": "input/project/check.mjs",
+          "sha256": "b6f9b3cd3e71dbf53f03c5b834f24f48cd95c7db7e8438218a64a6807bfaf4a0"
+        },
+        {
+          "path": "input/project/docs/contract.md",
+          "sha256": "ceaa05aa4c210245338b9c4b3e779e9d6878087febe314eab01e6814fe6d2287"
+        },
+        {
+          "path": "input/project/docs/review-request.md",
+          "sha256": "86d670bf08679312dac2a34b2afd445a0548de7495460636959f86bcf1e868f2"
+        },
+        {
+          "path": "input/project/README.md",
+          "sha256": "7528c8030c6e58136385c6ce004edd888cdc5ef758de6a3e686f9cafb18ff675"
+        },
+        {
+          "path": "input/project/src/memo/BestEffortMemo.java",
+          "sha256": "773ac3a0db89c62165fb6e34ef87203daf45504cd6ed320ae3492e771ae675db"
+        },
+        {
+          "path": "input/project/src/memo/PublishedEntry.java",
+          "sha256": "b97db2071eb31c3584e786a99994684cde4c169034fe9d3ecb03bb78211946bb"
+        },
+        {
+          "path": "input/project/src/memo/ReaderFactory.java",
+          "sha256": "d6b8766eb709c274626023c345de09c08da665546445ddc180663818ebaf16de"
+        },
+        {
+          "path": "input/project/test/memo/Smoke.java",
+          "sha256": "5fb4bf14f226c3cbaaa147cefd50a30a456eae5ce35ba8f19d40dc0398c9f335"
+        },
+        {
+          "path": "output/project/check.mjs",
+          "sha256": "b6f9b3cd3e71dbf53f03c5b834f24f48cd95c7db7e8438218a64a6807bfaf4a0"
+        },
+        {
+          "path": "output/project/docs/contract.md",
+          "sha256": "ceaa05aa4c210245338b9c4b3e779e9d6878087febe314eab01e6814fe6d2287"
+        },
+        {
+          "path": "output/project/docs/review-request.md",
+          "sha256": "86d670bf08679312dac2a34b2afd445a0548de7495460636959f86bcf1e868f2"
+        },
+        {
+          "path": "output/project/README.md",
+          "sha256": "7528c8030c6e58136385c6ce004edd888cdc5ef758de6a3e686f9cafb18ff675"
+        },
+        {
+          "path": "output/project/src/memo/BestEffortMemo.java",
+          "sha256": "773ac3a0db89c62165fb6e34ef87203daf45504cd6ed320ae3492e771ae675db"
+        },
+        {
+          "path": "output/project/src/memo/PublishedEntry.java",
+          "sha256": "b97db2071eb31c3584e786a99994684cde4c169034fe9d3ecb03bb78211946bb"
+        },
+        {
+          "path": "output/project/src/memo/ReaderFactory.java",
+          "sha256": "d6b8766eb709c274626023c345de09c08da665546445ddc180663818ebaf16de"
+        },
+        {
+          "path": "output/project/test/memo/Smoke.java",
+          "sha256": "5fb4bf14f226c3cbaaa147cefd50a30a456eae5ce35ba8f19d40dc0398c9f335"
+        },
+        {
+          "path": "skill/references/happens-before.md",
+          "sha256": "bf3c0632c5a2643752fa2ad160a9694b8cc98696474bb14fc6c67499bc33865c"
+        },
+        {
+          "path": "skill/references/review-checklist.md",
+          "sha256": "a9e6f00a8e7e26fcbe4b6d2a7a430198042acc7905025bb661772dd29b73b8a8"
+        },
+        {
+          "path": "skill/SKILL.md",
+          "sha256": "a9f6dab4bf513019bf245efc9cd8757a5edcc9b212ec507e3545fa59573c2a1a"
+        },
+        {
+          "path": "skill/skill.yaml",
+          "sha256": "ebf7fdd7cf14ed7c51f1627d4cbfc022d264de515840da97004fa13531e53cab"
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "cddbfc479170aad051c4bf2ee33d95ab375047f4daa134a1fbefddc9bd21fb4d"
+        }
+      ],
+      "actor": "/root/wave6_actor05",
+      "status": "pending"
+    },
+    {
+      "id": "run-06",
+      "caseId": "D2",
+      "condition": "none",
+      "trial": 1,
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-06",
+      "inputs": [
+        {
+          "path": "input/project/check.mjs",
+          "sha256": "b6f9b3cd3e71dbf53f03c5b834f24f48cd95c7db7e8438218a64a6807bfaf4a0"
+        },
+        {
+          "path": "input/project/docs/contract.md",
+          "sha256": "ceaa05aa4c210245338b9c4b3e779e9d6878087febe314eab01e6814fe6d2287"
+        },
+        {
+          "path": "input/project/docs/review-request.md",
+          "sha256": "86d670bf08679312dac2a34b2afd445a0548de7495460636959f86bcf1e868f2"
+        },
+        {
+          "path": "input/project/README.md",
+          "sha256": "7528c8030c6e58136385c6ce004edd888cdc5ef758de6a3e686f9cafb18ff675"
+        },
+        {
+          "path": "input/project/src/memo/BestEffortMemo.java",
+          "sha256": "773ac3a0db89c62165fb6e34ef87203daf45504cd6ed320ae3492e771ae675db"
+        },
+        {
+          "path": "input/project/src/memo/PublishedEntry.java",
+          "sha256": "b97db2071eb31c3584e786a99994684cde4c169034fe9d3ecb03bb78211946bb"
+        },
+        {
+          "path": "input/project/src/memo/ReaderFactory.java",
+          "sha256": "d6b8766eb709c274626023c345de09c08da665546445ddc180663818ebaf16de"
+        },
+        {
+          "path": "input/project/test/memo/Smoke.java",
+          "sha256": "5fb4bf14f226c3cbaaa147cefd50a30a456eae5ce35ba8f19d40dc0398c9f335"
+        },
+        {
+          "path": "output/project/check.mjs",
+          "sha256": "b6f9b3cd3e71dbf53f03c5b834f24f48cd95c7db7e8438218a64a6807bfaf4a0"
+        },
+        {
+          "path": "output/project/docs/contract.md",
+          "sha256": "ceaa05aa4c210245338b9c4b3e779e9d6878087febe314eab01e6814fe6d2287"
+        },
+        {
+          "path": "output/project/docs/review-request.md",
+          "sha256": "86d670bf08679312dac2a34b2afd445a0548de7495460636959f86bcf1e868f2"
+        },
+        {
+          "path": "output/project/README.md",
+          "sha256": "7528c8030c6e58136385c6ce004edd888cdc5ef758de6a3e686f9cafb18ff675"
+        },
+        {
+          "path": "output/project/src/memo/BestEffortMemo.java",
+          "sha256": "773ac3a0db89c62165fb6e34ef87203daf45504cd6ed320ae3492e771ae675db"
+        },
+        {
+          "path": "output/project/src/memo/PublishedEntry.java",
+          "sha256": "b97db2071eb31c3584e786a99994684cde4c169034fe9d3ecb03bb78211946bb"
+        },
+        {
+          "path": "output/project/src/memo/ReaderFactory.java",
+          "sha256": "d6b8766eb709c274626023c345de09c08da665546445ddc180663818ebaf16de"
+        },
+        {
+          "path": "output/project/test/memo/Smoke.java",
+          "sha256": "5fb4bf14f226c3cbaaa147cefd50a30a456eae5ce35ba8f19d40dc0398c9f335"
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "90aa52ebaa7d6c305ada01cf6bfbf58b20833a1447bd8929572170dc762f48c0"
+        }
+      ],
+      "actor": "/root/wave6_actor06",
+      "status": "pending"
+    },
+    {
+      "id": "run-07",
+      "caseId": "H1",
+      "condition": "current",
+      "trial": 1,
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-07",
+      "inputs": [
+        {
+          "path": "input/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "input/project/docs/contract.md",
+          "sha256": "2b31ca53219bf40a3242671bd7353870d440b35332d3f1f26fb13740d8330324"
+        },
+        {
+          "path": "input/project/docs/review-request.md",
+          "sha256": "98b1cfc08f3c1db4e5b154e6c30ae51b88f8a8df1b0f6334ee8911a392029b92"
+        },
+        {
+          "path": "input/project/README.md",
+          "sha256": "9a5207132c68d38c524f229423843bf390bad338c0d19d851e844c89fe8814ba"
+        },
+        {
+          "path": "input/project/src/work/Settings.java",
+          "sha256": "715d65b98b2eea34989a8f01a9d6f191f04be12bcca719e577db15e8a554295a"
+        },
+        {
+          "path": "input/project/src/work/SettingsRegistry.java",
+          "sha256": "45ec123a849b8b5273c9d708755d0454643fd63646264368d2f2d3e7f38660b1"
+        },
+        {
+          "path": "input/project/test/work/Smoke.java",
+          "sha256": "d60cd08037f61f64b2339399494db3c07558e9b4f62cadfd9261a86386988a59"
+        },
+        {
+          "path": "output/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "output/project/docs/contract.md",
+          "sha256": "2b31ca53219bf40a3242671bd7353870d440b35332d3f1f26fb13740d8330324"
+        },
+        {
+          "path": "output/project/docs/review-request.md",
+          "sha256": "98b1cfc08f3c1db4e5b154e6c30ae51b88f8a8df1b0f6334ee8911a392029b92"
+        },
+        {
+          "path": "output/project/README.md",
+          "sha256": "9a5207132c68d38c524f229423843bf390bad338c0d19d851e844c89fe8814ba"
+        },
+        {
+          "path": "output/project/src/work/Settings.java",
+          "sha256": "715d65b98b2eea34989a8f01a9d6f191f04be12bcca719e577db15e8a554295a"
+        },
+        {
+          "path": "output/project/src/work/SettingsRegistry.java",
+          "sha256": "45ec123a849b8b5273c9d708755d0454643fd63646264368d2f2d3e7f38660b1"
+        },
+        {
+          "path": "output/project/test/work/Smoke.java",
+          "sha256": "d60cd08037f61f64b2339399494db3c07558e9b4f62cadfd9261a86386988a59"
+        },
+        {
+          "path": "skill/references/happens-before.md",
+          "sha256": "bf3c0632c5a2643752fa2ad160a9694b8cc98696474bb14fc6c67499bc33865c"
+        },
+        {
+          "path": "skill/references/review-checklist.md",
+          "sha256": "a9e6f00a8e7e26fcbe4b6d2a7a430198042acc7905025bb661772dd29b73b8a8"
+        },
+        {
+          "path": "skill/SKILL.md",
+          "sha256": "a9f6dab4bf513019bf245efc9cd8757a5edcc9b212ec507e3545fa59573c2a1a"
+        },
+        {
+          "path": "skill/skill.yaml",
+          "sha256": "ebf7fdd7cf14ed7c51f1627d4cbfc022d264de515840da97004fa13531e53cab"
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "c9be6200f89775c4a7a9e29a3a4329f78a736871b792a72f510518982ce1d37a"
+        }
+      ],
+      "actor": "/root/wave6_actor07",
+      "status": "pending"
+    },
+    {
+      "id": "run-08",
+      "caseId": "H1",
+      "condition": "none",
+      "trial": 1,
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-08",
+      "inputs": [
+        {
+          "path": "input/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "input/project/docs/contract.md",
+          "sha256": "2b31ca53219bf40a3242671bd7353870d440b35332d3f1f26fb13740d8330324"
+        },
+        {
+          "path": "input/project/docs/review-request.md",
+          "sha256": "98b1cfc08f3c1db4e5b154e6c30ae51b88f8a8df1b0f6334ee8911a392029b92"
+        },
+        {
+          "path": "input/project/README.md",
+          "sha256": "9a5207132c68d38c524f229423843bf390bad338c0d19d851e844c89fe8814ba"
+        },
+        {
+          "path": "input/project/src/work/Settings.java",
+          "sha256": "715d65b98b2eea34989a8f01a9d6f191f04be12bcca719e577db15e8a554295a"
+        },
+        {
+          "path": "input/project/src/work/SettingsRegistry.java",
+          "sha256": "45ec123a849b8b5273c9d708755d0454643fd63646264368d2f2d3e7f38660b1"
+        },
+        {
+          "path": "input/project/test/work/Smoke.java",
+          "sha256": "d60cd08037f61f64b2339399494db3c07558e9b4f62cadfd9261a86386988a59"
+        },
+        {
+          "path": "output/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "output/project/docs/contract.md",
+          "sha256": "2b31ca53219bf40a3242671bd7353870d440b35332d3f1f26fb13740d8330324"
+        },
+        {
+          "path": "output/project/docs/review-request.md",
+          "sha256": "98b1cfc08f3c1db4e5b154e6c30ae51b88f8a8df1b0f6334ee8911a392029b92"
+        },
+        {
+          "path": "output/project/README.md",
+          "sha256": "9a5207132c68d38c524f229423843bf390bad338c0d19d851e844c89fe8814ba"
+        },
+        {
+          "path": "output/project/src/work/Settings.java",
+          "sha256": "715d65b98b2eea34989a8f01a9d6f191f04be12bcca719e577db15e8a554295a"
+        },
+        {
+          "path": "output/project/src/work/SettingsRegistry.java",
+          "sha256": "45ec123a849b8b5273c9d708755d0454643fd63646264368d2f2d3e7f38660b1"
+        },
+        {
+          "path": "output/project/test/work/Smoke.java",
+          "sha256": "d60cd08037f61f64b2339399494db3c07558e9b4f62cadfd9261a86386988a59"
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "f759b3b2db584c5d9b45c6fcea33c8b32b0337a94fc90f856bc86c40a03f2156"
+        }
+      ],
+      "actor": "/root/wave6_actor08",
+      "status": "pending"
+    },
+    {
+      "id": "run-09",
+      "caseId": "H1",
+      "condition": "previous",
+      "trial": 1,
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-09",
+      "inputs": [
+        {
+          "path": "input/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "input/project/docs/contract.md",
+          "sha256": "2b31ca53219bf40a3242671bd7353870d440b35332d3f1f26fb13740d8330324"
+        },
+        {
+          "path": "input/project/docs/review-request.md",
+          "sha256": "98b1cfc08f3c1db4e5b154e6c30ae51b88f8a8df1b0f6334ee8911a392029b92"
+        },
+        {
+          "path": "input/project/README.md",
+          "sha256": "9a5207132c68d38c524f229423843bf390bad338c0d19d851e844c89fe8814ba"
+        },
+        {
+          "path": "input/project/src/work/Settings.java",
+          "sha256": "715d65b98b2eea34989a8f01a9d6f191f04be12bcca719e577db15e8a554295a"
+        },
+        {
+          "path": "input/project/src/work/SettingsRegistry.java",
+          "sha256": "45ec123a849b8b5273c9d708755d0454643fd63646264368d2f2d3e7f38660b1"
+        },
+        {
+          "path": "input/project/test/work/Smoke.java",
+          "sha256": "d60cd08037f61f64b2339399494db3c07558e9b4f62cadfd9261a86386988a59"
+        },
+        {
+          "path": "output/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "output/project/docs/contract.md",
+          "sha256": "2b31ca53219bf40a3242671bd7353870d440b35332d3f1f26fb13740d8330324"
+        },
+        {
+          "path": "output/project/docs/review-request.md",
+          "sha256": "98b1cfc08f3c1db4e5b154e6c30ae51b88f8a8df1b0f6334ee8911a392029b92"
+        },
+        {
+          "path": "output/project/README.md",
+          "sha256": "9a5207132c68d38c524f229423843bf390bad338c0d19d851e844c89fe8814ba"
+        },
+        {
+          "path": "output/project/src/work/Settings.java",
+          "sha256": "715d65b98b2eea34989a8f01a9d6f191f04be12bcca719e577db15e8a554295a"
+        },
+        {
+          "path": "output/project/src/work/SettingsRegistry.java",
+          "sha256": "45ec123a849b8b5273c9d708755d0454643fd63646264368d2f2d3e7f38660b1"
+        },
+        {
+          "path": "output/project/test/work/Smoke.java",
+          "sha256": "d60cd08037f61f64b2339399494db3c07558e9b4f62cadfd9261a86386988a59"
+        },
+        {
+          "path": "skill/references/happens-before.md",
+          "sha256": "ffb7b4955709d039d02549f7730d85b8bad661f22d9de908d14e741c6df5a076"
+        },
+        {
+          "path": "skill/references/review-checklist.md",
+          "sha256": "a9e6f00a8e7e26fcbe4b6d2a7a430198042acc7905025bb661772dd29b73b8a8"
+        },
+        {
+          "path": "skill/SKILL.md",
+          "sha256": "a9f6dab4bf513019bf245efc9cd8757a5edcc9b212ec507e3545fa59573c2a1a"
+        },
+        {
+          "path": "skill/skill.yaml",
+          "sha256": "1e2323798bd80080cf698cd1f8cc7085aa712c4e96f2113cb15c09eb97fe8c9b"
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "48d4f230f2aee4357b350822973a7dc9a7e028b4d3d45bce76adfb11192bb673"
+        }
+      ],
+      "actor": "/root/wave6_actor09",
+      "status": "pending"
+    },
+    {
+      "id": "run-10",
+      "caseId": "H2",
+      "condition": "none",
+      "trial": 1,
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-10",
+      "inputs": [
+        {
+          "path": "input/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "input/project/docs/contract.md",
+          "sha256": "f2b702ba6fb794e030886c7a7b2c80fa8da6bb98e22223945a5a696d4fdc71b5"
+        },
+        {
+          "path": "input/project/docs/review-request.md",
+          "sha256": "a422a7854771e6c3b411b2b5e7083f7428cfd15a1fe7d538ce9512fba046c5ed"
+        },
+        {
+          "path": "input/project/README.md",
+          "sha256": "bb4df13b026852574a9c850cba10d2cc483aa5be644e391bbd16ff69852647b6"
+        },
+        {
+          "path": "input/project/src/work/Job.java",
+          "sha256": "34690066cc95f8d4349c7adc90fd0b9048accd5ec41f658f5946e17d0b9854a4"
+        },
+        {
+          "path": "input/project/test/work/Smoke.java",
+          "sha256": "171679869bd7d083fe6f5f31b1ab3480214c07ef13a02ecc0cfb360f3a30c543"
+        },
+        {
+          "path": "output/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "output/project/docs/contract.md",
+          "sha256": "f2b702ba6fb794e030886c7a7b2c80fa8da6bb98e22223945a5a696d4fdc71b5"
+        },
+        {
+          "path": "output/project/docs/review-request.md",
+          "sha256": "a422a7854771e6c3b411b2b5e7083f7428cfd15a1fe7d538ce9512fba046c5ed"
+        },
+        {
+          "path": "output/project/README.md",
+          "sha256": "bb4df13b026852574a9c850cba10d2cc483aa5be644e391bbd16ff69852647b6"
+        },
+        {
+          "path": "output/project/src/work/Job.java",
+          "sha256": "34690066cc95f8d4349c7adc90fd0b9048accd5ec41f658f5946e17d0b9854a4"
+        },
+        {
+          "path": "output/project/test/work/Smoke.java",
+          "sha256": "171679869bd7d083fe6f5f31b1ab3480214c07ef13a02ecc0cfb360f3a30c543"
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "eac76bc88c68d65ada1982b09b9450d8a23ef3d27e940da3590bbfe856e3ac5c"
+        }
+      ],
+      "actor": "/root/wave6_actor10",
+      "status": "pending"
+    },
+    {
+      "id": "run-11",
+      "caseId": "H2",
+      "condition": "previous",
+      "trial": 1,
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-11",
+      "inputs": [
+        {
+          "path": "input/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "input/project/docs/contract.md",
+          "sha256": "f2b702ba6fb794e030886c7a7b2c80fa8da6bb98e22223945a5a696d4fdc71b5"
+        },
+        {
+          "path": "input/project/docs/review-request.md",
+          "sha256": "a422a7854771e6c3b411b2b5e7083f7428cfd15a1fe7d538ce9512fba046c5ed"
+        },
+        {
+          "path": "input/project/README.md",
+          "sha256": "bb4df13b026852574a9c850cba10d2cc483aa5be644e391bbd16ff69852647b6"
+        },
+        {
+          "path": "input/project/src/work/Job.java",
+          "sha256": "34690066cc95f8d4349c7adc90fd0b9048accd5ec41f658f5946e17d0b9854a4"
+        },
+        {
+          "path": "input/project/test/work/Smoke.java",
+          "sha256": "171679869bd7d083fe6f5f31b1ab3480214c07ef13a02ecc0cfb360f3a30c543"
+        },
+        {
+          "path": "output/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "output/project/docs/contract.md",
+          "sha256": "f2b702ba6fb794e030886c7a7b2c80fa8da6bb98e22223945a5a696d4fdc71b5"
+        },
+        {
+          "path": "output/project/docs/review-request.md",
+          "sha256": "a422a7854771e6c3b411b2b5e7083f7428cfd15a1fe7d538ce9512fba046c5ed"
+        },
+        {
+          "path": "output/project/README.md",
+          "sha256": "bb4df13b026852574a9c850cba10d2cc483aa5be644e391bbd16ff69852647b6"
+        },
+        {
+          "path": "output/project/src/work/Job.java",
+          "sha256": "34690066cc95f8d4349c7adc90fd0b9048accd5ec41f658f5946e17d0b9854a4"
+        },
+        {
+          "path": "output/project/test/work/Smoke.java",
+          "sha256": "171679869bd7d083fe6f5f31b1ab3480214c07ef13a02ecc0cfb360f3a30c543"
+        },
+        {
+          "path": "skill/references/happens-before.md",
+          "sha256": "ffb7b4955709d039d02549f7730d85b8bad661f22d9de908d14e741c6df5a076"
+        },
+        {
+          "path": "skill/references/review-checklist.md",
+          "sha256": "a9e6f00a8e7e26fcbe4b6d2a7a430198042acc7905025bb661772dd29b73b8a8"
+        },
+        {
+          "path": "skill/SKILL.md",
+          "sha256": "a9f6dab4bf513019bf245efc9cd8757a5edcc9b212ec507e3545fa59573c2a1a"
+        },
+        {
+          "path": "skill/skill.yaml",
+          "sha256": "1e2323798bd80080cf698cd1f8cc7085aa712c4e96f2113cb15c09eb97fe8c9b"
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "e611467032ffc6f6168c8c0639c96cf3908df1c6e5782a2775d284e532473cf0"
+        }
+      ],
+      "actor": "/root/wave6_actor11",
+      "status": "pending"
+    },
+    {
+      "id": "run-12",
+      "caseId": "H2",
+      "condition": "current",
+      "trial": 1,
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-12",
+      "inputs": [
+        {
+          "path": "input/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "input/project/docs/contract.md",
+          "sha256": "f2b702ba6fb794e030886c7a7b2c80fa8da6bb98e22223945a5a696d4fdc71b5"
+        },
+        {
+          "path": "input/project/docs/review-request.md",
+          "sha256": "a422a7854771e6c3b411b2b5e7083f7428cfd15a1fe7d538ce9512fba046c5ed"
+        },
+        {
+          "path": "input/project/README.md",
+          "sha256": "bb4df13b026852574a9c850cba10d2cc483aa5be644e391bbd16ff69852647b6"
+        },
+        {
+          "path": "input/project/src/work/Job.java",
+          "sha256": "34690066cc95f8d4349c7adc90fd0b9048accd5ec41f658f5946e17d0b9854a4"
+        },
+        {
+          "path": "input/project/test/work/Smoke.java",
+          "sha256": "171679869bd7d083fe6f5f31b1ab3480214c07ef13a02ecc0cfb360f3a30c543"
+        },
+        {
+          "path": "output/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "output/project/docs/contract.md",
+          "sha256": "f2b702ba6fb794e030886c7a7b2c80fa8da6bb98e22223945a5a696d4fdc71b5"
+        },
+        {
+          "path": "output/project/docs/review-request.md",
+          "sha256": "a422a7854771e6c3b411b2b5e7083f7428cfd15a1fe7d538ce9512fba046c5ed"
+        },
+        {
+          "path": "output/project/README.md",
+          "sha256": "bb4df13b026852574a9c850cba10d2cc483aa5be644e391bbd16ff69852647b6"
+        },
+        {
+          "path": "output/project/src/work/Job.java",
+          "sha256": "34690066cc95f8d4349c7adc90fd0b9048accd5ec41f658f5946e17d0b9854a4"
+        },
+        {
+          "path": "output/project/test/work/Smoke.java",
+          "sha256": "171679869bd7d083fe6f5f31b1ab3480214c07ef13a02ecc0cfb360f3a30c543"
+        },
+        {
+          "path": "skill/references/happens-before.md",
+          "sha256": "bf3c0632c5a2643752fa2ad160a9694b8cc98696474bb14fc6c67499bc33865c"
+        },
+        {
+          "path": "skill/references/review-checklist.md",
+          "sha256": "a9e6f00a8e7e26fcbe4b6d2a7a430198042acc7905025bb661772dd29b73b8a8"
+        },
+        {
+          "path": "skill/SKILL.md",
+          "sha256": "a9f6dab4bf513019bf245efc9cd8757a5edcc9b212ec507e3545fa59573c2a1a"
+        },
+        {
+          "path": "skill/skill.yaml",
+          "sha256": "ebf7fdd7cf14ed7c51f1627d4cbfc022d264de515840da97004fa13531e53cab"
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "eb7e708f65045989974a08f06190f26d67c10757852faaa239d2513340e660cc"
+        }
+      ],
+      "actor": "/root/wave6_actor12",
+      "status": "pending"
+    },
+    {
+      "id": "run-13",
+      "caseId": "H3",
+      "condition": "previous",
+      "trial": 1,
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-13",
+      "inputs": [
+        {
+          "path": "input/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "input/project/docs/contract.md",
+          "sha256": "0e2ebc05b6296ec6bfba592160b83acdfaf118f3a52b80160955a4e32470d0ba"
+        },
+        {
+          "path": "input/project/docs/review-request.md",
+          "sha256": "5baa0daa5bddc25e48df9d052a02b1c062bfc7a5086599eeee09f7377c139be8"
+        },
+        {
+          "path": "input/project/README.md",
+          "sha256": "0dd7a087e22dbb2a44ae0d508763a26f3fd829efd12f8fbcd2958e9618e01758"
+        },
+        {
+          "path": "input/project/src/work/Provider.java",
+          "sha256": "1b2604204f5f97ec472f1a1b981d09290d2de91447e4de0d7469b62dbf527721"
+        },
+        {
+          "path": "input/project/src/work/ResultBridge.java",
+          "sha256": "3f0959c157d38290c15f6bb58fbb5d7e0c9fd04ad20455bb3c4c7ffa53a91d70"
+        },
+        {
+          "path": "input/project/src/work/Snapshot.java",
+          "sha256": "7804dbeb51b652d02623b9df39a8207b47d3a971bedb23a64ade34a9b06d7800"
+        },
+        {
+          "path": "input/project/test/work/Smoke.java",
+          "sha256": "fe141df22aa0153217ac2501d48c1f1a9dee87ed57e1960fb74e4b409373076b"
+        },
+        {
+          "path": "output/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "output/project/docs/contract.md",
+          "sha256": "0e2ebc05b6296ec6bfba592160b83acdfaf118f3a52b80160955a4e32470d0ba"
+        },
+        {
+          "path": "output/project/docs/review-request.md",
+          "sha256": "5baa0daa5bddc25e48df9d052a02b1c062bfc7a5086599eeee09f7377c139be8"
+        },
+        {
+          "path": "output/project/README.md",
+          "sha256": "0dd7a087e22dbb2a44ae0d508763a26f3fd829efd12f8fbcd2958e9618e01758"
+        },
+        {
+          "path": "output/project/src/work/Provider.java",
+          "sha256": "1b2604204f5f97ec472f1a1b981d09290d2de91447e4de0d7469b62dbf527721"
+        },
+        {
+          "path": "output/project/src/work/ResultBridge.java",
+          "sha256": "3f0959c157d38290c15f6bb58fbb5d7e0c9fd04ad20455bb3c4c7ffa53a91d70"
+        },
+        {
+          "path": "output/project/src/work/Snapshot.java",
+          "sha256": "7804dbeb51b652d02623b9df39a8207b47d3a971bedb23a64ade34a9b06d7800"
+        },
+        {
+          "path": "output/project/test/work/Smoke.java",
+          "sha256": "fe141df22aa0153217ac2501d48c1f1a9dee87ed57e1960fb74e4b409373076b"
+        },
+        {
+          "path": "skill/references/happens-before.md",
+          "sha256": "ffb7b4955709d039d02549f7730d85b8bad661f22d9de908d14e741c6df5a076"
+        },
+        {
+          "path": "skill/references/review-checklist.md",
+          "sha256": "a9e6f00a8e7e26fcbe4b6d2a7a430198042acc7905025bb661772dd29b73b8a8"
+        },
+        {
+          "path": "skill/SKILL.md",
+          "sha256": "a9f6dab4bf513019bf245efc9cd8757a5edcc9b212ec507e3545fa59573c2a1a"
+        },
+        {
+          "path": "skill/skill.yaml",
+          "sha256": "1e2323798bd80080cf698cd1f8cc7085aa712c4e96f2113cb15c09eb97fe8c9b"
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "b8fbe75fc0d7d707c619a9400677a42cce5532e9591013448bea4042bd750855"
+        }
+      ],
+      "actor": "/root/wave6_actor13",
+      "status": "pending"
+    },
+    {
+      "id": "run-14",
+      "caseId": "H3",
+      "condition": "current",
+      "trial": 1,
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-14",
+      "inputs": [
+        {
+          "path": "input/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "input/project/docs/contract.md",
+          "sha256": "0e2ebc05b6296ec6bfba592160b83acdfaf118f3a52b80160955a4e32470d0ba"
+        },
+        {
+          "path": "input/project/docs/review-request.md",
+          "sha256": "5baa0daa5bddc25e48df9d052a02b1c062bfc7a5086599eeee09f7377c139be8"
+        },
+        {
+          "path": "input/project/README.md",
+          "sha256": "0dd7a087e22dbb2a44ae0d508763a26f3fd829efd12f8fbcd2958e9618e01758"
+        },
+        {
+          "path": "input/project/src/work/Provider.java",
+          "sha256": "1b2604204f5f97ec472f1a1b981d09290d2de91447e4de0d7469b62dbf527721"
+        },
+        {
+          "path": "input/project/src/work/ResultBridge.java",
+          "sha256": "3f0959c157d38290c15f6bb58fbb5d7e0c9fd04ad20455bb3c4c7ffa53a91d70"
+        },
+        {
+          "path": "input/project/src/work/Snapshot.java",
+          "sha256": "7804dbeb51b652d02623b9df39a8207b47d3a971bedb23a64ade34a9b06d7800"
+        },
+        {
+          "path": "input/project/test/work/Smoke.java",
+          "sha256": "fe141df22aa0153217ac2501d48c1f1a9dee87ed57e1960fb74e4b409373076b"
+        },
+        {
+          "path": "output/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "output/project/docs/contract.md",
+          "sha256": "0e2ebc05b6296ec6bfba592160b83acdfaf118f3a52b80160955a4e32470d0ba"
+        },
+        {
+          "path": "output/project/docs/review-request.md",
+          "sha256": "5baa0daa5bddc25e48df9d052a02b1c062bfc7a5086599eeee09f7377c139be8"
+        },
+        {
+          "path": "output/project/README.md",
+          "sha256": "0dd7a087e22dbb2a44ae0d508763a26f3fd829efd12f8fbcd2958e9618e01758"
+        },
+        {
+          "path": "output/project/src/work/Provider.java",
+          "sha256": "1b2604204f5f97ec472f1a1b981d09290d2de91447e4de0d7469b62dbf527721"
+        },
+        {
+          "path": "output/project/src/work/ResultBridge.java",
+          "sha256": "3f0959c157d38290c15f6bb58fbb5d7e0c9fd04ad20455bb3c4c7ffa53a91d70"
+        },
+        {
+          "path": "output/project/src/work/Snapshot.java",
+          "sha256": "7804dbeb51b652d02623b9df39a8207b47d3a971bedb23a64ade34a9b06d7800"
+        },
+        {
+          "path": "output/project/test/work/Smoke.java",
+          "sha256": "fe141df22aa0153217ac2501d48c1f1a9dee87ed57e1960fb74e4b409373076b"
+        },
+        {
+          "path": "skill/references/happens-before.md",
+          "sha256": "bf3c0632c5a2643752fa2ad160a9694b8cc98696474bb14fc6c67499bc33865c"
+        },
+        {
+          "path": "skill/references/review-checklist.md",
+          "sha256": "a9e6f00a8e7e26fcbe4b6d2a7a430198042acc7905025bb661772dd29b73b8a8"
+        },
+        {
+          "path": "skill/SKILL.md",
+          "sha256": "a9f6dab4bf513019bf245efc9cd8757a5edcc9b212ec507e3545fa59573c2a1a"
+        },
+        {
+          "path": "skill/skill.yaml",
+          "sha256": "ebf7fdd7cf14ed7c51f1627d4cbfc022d264de515840da97004fa13531e53cab"
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "39ddac83362d5df3aa8ef202d246824b6eb6eb270b17830e120b50885596eb8c"
+        }
+      ],
+      "actor": "/root/wave6_actor14",
+      "status": "pending"
+    },
+    {
+      "id": "run-15",
+      "caseId": "H3",
+      "condition": "none",
+      "trial": 1,
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-15",
+      "inputs": [
+        {
+          "path": "input/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "input/project/docs/contract.md",
+          "sha256": "0e2ebc05b6296ec6bfba592160b83acdfaf118f3a52b80160955a4e32470d0ba"
+        },
+        {
+          "path": "input/project/docs/review-request.md",
+          "sha256": "5baa0daa5bddc25e48df9d052a02b1c062bfc7a5086599eeee09f7377c139be8"
+        },
+        {
+          "path": "input/project/README.md",
+          "sha256": "0dd7a087e22dbb2a44ae0d508763a26f3fd829efd12f8fbcd2958e9618e01758"
+        },
+        {
+          "path": "input/project/src/work/Provider.java",
+          "sha256": "1b2604204f5f97ec472f1a1b981d09290d2de91447e4de0d7469b62dbf527721"
+        },
+        {
+          "path": "input/project/src/work/ResultBridge.java",
+          "sha256": "3f0959c157d38290c15f6bb58fbb5d7e0c9fd04ad20455bb3c4c7ffa53a91d70"
+        },
+        {
+          "path": "input/project/src/work/Snapshot.java",
+          "sha256": "7804dbeb51b652d02623b9df39a8207b47d3a971bedb23a64ade34a9b06d7800"
+        },
+        {
+          "path": "input/project/test/work/Smoke.java",
+          "sha256": "fe141df22aa0153217ac2501d48c1f1a9dee87ed57e1960fb74e4b409373076b"
+        },
+        {
+          "path": "output/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "output/project/docs/contract.md",
+          "sha256": "0e2ebc05b6296ec6bfba592160b83acdfaf118f3a52b80160955a4e32470d0ba"
+        },
+        {
+          "path": "output/project/docs/review-request.md",
+          "sha256": "5baa0daa5bddc25e48df9d052a02b1c062bfc7a5086599eeee09f7377c139be8"
+        },
+        {
+          "path": "output/project/README.md",
+          "sha256": "0dd7a087e22dbb2a44ae0d508763a26f3fd829efd12f8fbcd2958e9618e01758"
+        },
+        {
+          "path": "output/project/src/work/Provider.java",
+          "sha256": "1b2604204f5f97ec472f1a1b981d09290d2de91447e4de0d7469b62dbf527721"
+        },
+        {
+          "path": "output/project/src/work/ResultBridge.java",
+          "sha256": "3f0959c157d38290c15f6bb58fbb5d7e0c9fd04ad20455bb3c4c7ffa53a91d70"
+        },
+        {
+          "path": "output/project/src/work/Snapshot.java",
+          "sha256": "7804dbeb51b652d02623b9df39a8207b47d3a971bedb23a64ade34a9b06d7800"
+        },
+        {
+          "path": "output/project/test/work/Smoke.java",
+          "sha256": "fe141df22aa0153217ac2501d48c1f1a9dee87ed57e1960fb74e4b409373076b"
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "49cb664680de684da61f2cafa602df650075a5f51f17bac915ea1f1efd92e5be"
+        }
+      ],
+      "actor": "/root/wave6_actor15",
+      "status": "pending"
+    },
+    {
+      "id": "run-16",
+      "caseId": "H4",
+      "condition": "current",
+      "trial": 1,
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-16",
+      "inputs": [
+        {
+          "path": "input/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "input/project/docs/contract.md",
+          "sha256": "bda240d743b23d54b26d335d25b8379187f5daf02ddea15bc5ead15d45616ab9"
+        },
+        {
+          "path": "input/project/docs/review-request.md",
+          "sha256": "b289f7eef31916b9fb63ad4b0cdf73ab6580a029e8233baa8474e7b490c12505"
+        },
+        {
+          "path": "input/project/README.md",
+          "sha256": "f7308d48921d2a1e694594aace471a6a27db4678ba1105b4a87b3157340bf641"
+        },
+        {
+          "path": "input/project/src/work/Message.java",
+          "sha256": "296d6afead1aa5cf9c04f3b211c88d6d797ce723d403eb199fd00f36444211ad"
+        },
+        {
+          "path": "input/project/test/work/Smoke.java",
+          "sha256": "07fe704f60685b8618d47f924a83aefc24b675c13a2066590c5b7329bfd6df72"
+        },
+        {
+          "path": "output/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "output/project/docs/contract.md",
+          "sha256": "bda240d743b23d54b26d335d25b8379187f5daf02ddea15bc5ead15d45616ab9"
+        },
+        {
+          "path": "output/project/docs/review-request.md",
+          "sha256": "b289f7eef31916b9fb63ad4b0cdf73ab6580a029e8233baa8474e7b490c12505"
+        },
+        {
+          "path": "output/project/README.md",
+          "sha256": "f7308d48921d2a1e694594aace471a6a27db4678ba1105b4a87b3157340bf641"
+        },
+        {
+          "path": "output/project/src/work/Message.java",
+          "sha256": "296d6afead1aa5cf9c04f3b211c88d6d797ce723d403eb199fd00f36444211ad"
+        },
+        {
+          "path": "output/project/test/work/Smoke.java",
+          "sha256": "07fe704f60685b8618d47f924a83aefc24b675c13a2066590c5b7329bfd6df72"
+        },
+        {
+          "path": "skill/references/happens-before.md",
+          "sha256": "bf3c0632c5a2643752fa2ad160a9694b8cc98696474bb14fc6c67499bc33865c"
+        },
+        {
+          "path": "skill/references/review-checklist.md",
+          "sha256": "a9e6f00a8e7e26fcbe4b6d2a7a430198042acc7905025bb661772dd29b73b8a8"
+        },
+        {
+          "path": "skill/SKILL.md",
+          "sha256": "a9f6dab4bf513019bf245efc9cd8757a5edcc9b212ec507e3545fa59573c2a1a"
+        },
+        {
+          "path": "skill/skill.yaml",
+          "sha256": "ebf7fdd7cf14ed7c51f1627d4cbfc022d264de515840da97004fa13531e53cab"
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "0820ebdc656ead92d8537c1d2fc0f9a104257b62efb83f5c45ed55e4b8342085"
+        }
+      ],
+      "actor": "/root/wave6_actor16",
+      "status": "pending"
+    },
+    {
+      "id": "run-17",
+      "caseId": "H4",
+      "condition": "none",
+      "trial": 1,
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-17",
+      "inputs": [
+        {
+          "path": "input/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "input/project/docs/contract.md",
+          "sha256": "bda240d743b23d54b26d335d25b8379187f5daf02ddea15bc5ead15d45616ab9"
+        },
+        {
+          "path": "input/project/docs/review-request.md",
+          "sha256": "b289f7eef31916b9fb63ad4b0cdf73ab6580a029e8233baa8474e7b490c12505"
+        },
+        {
+          "path": "input/project/README.md",
+          "sha256": "f7308d48921d2a1e694594aace471a6a27db4678ba1105b4a87b3157340bf641"
+        },
+        {
+          "path": "input/project/src/work/Message.java",
+          "sha256": "296d6afead1aa5cf9c04f3b211c88d6d797ce723d403eb199fd00f36444211ad"
+        },
+        {
+          "path": "input/project/test/work/Smoke.java",
+          "sha256": "07fe704f60685b8618d47f924a83aefc24b675c13a2066590c5b7329bfd6df72"
+        },
+        {
+          "path": "output/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "output/project/docs/contract.md",
+          "sha256": "bda240d743b23d54b26d335d25b8379187f5daf02ddea15bc5ead15d45616ab9"
+        },
+        {
+          "path": "output/project/docs/review-request.md",
+          "sha256": "b289f7eef31916b9fb63ad4b0cdf73ab6580a029e8233baa8474e7b490c12505"
+        },
+        {
+          "path": "output/project/README.md",
+          "sha256": "f7308d48921d2a1e694594aace471a6a27db4678ba1105b4a87b3157340bf641"
+        },
+        {
+          "path": "output/project/src/work/Message.java",
+          "sha256": "296d6afead1aa5cf9c04f3b211c88d6d797ce723d403eb199fd00f36444211ad"
+        },
+        {
+          "path": "output/project/test/work/Smoke.java",
+          "sha256": "07fe704f60685b8618d47f924a83aefc24b675c13a2066590c5b7329bfd6df72"
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "cb41b1de0da11f21e8ebf2adfe77a47be7639d3e2f48664d4f10fa68ef9145d8"
+        }
+      ],
+      "actor": "/root/wave6_actor17",
+      "status": "pending"
+    },
+    {
+      "id": "run-18",
+      "caseId": "H4",
+      "condition": "previous",
+      "trial": 1,
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-18",
+      "inputs": [
+        {
+          "path": "input/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "input/project/docs/contract.md",
+          "sha256": "bda240d743b23d54b26d335d25b8379187f5daf02ddea15bc5ead15d45616ab9"
+        },
+        {
+          "path": "input/project/docs/review-request.md",
+          "sha256": "b289f7eef31916b9fb63ad4b0cdf73ab6580a029e8233baa8474e7b490c12505"
+        },
+        {
+          "path": "input/project/README.md",
+          "sha256": "f7308d48921d2a1e694594aace471a6a27db4678ba1105b4a87b3157340bf641"
+        },
+        {
+          "path": "input/project/src/work/Message.java",
+          "sha256": "296d6afead1aa5cf9c04f3b211c88d6d797ce723d403eb199fd00f36444211ad"
+        },
+        {
+          "path": "input/project/test/work/Smoke.java",
+          "sha256": "07fe704f60685b8618d47f924a83aefc24b675c13a2066590c5b7329bfd6df72"
+        },
+        {
+          "path": "output/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "output/project/docs/contract.md",
+          "sha256": "bda240d743b23d54b26d335d25b8379187f5daf02ddea15bc5ead15d45616ab9"
+        },
+        {
+          "path": "output/project/docs/review-request.md",
+          "sha256": "b289f7eef31916b9fb63ad4b0cdf73ab6580a029e8233baa8474e7b490c12505"
+        },
+        {
+          "path": "output/project/README.md",
+          "sha256": "f7308d48921d2a1e694594aace471a6a27db4678ba1105b4a87b3157340bf641"
+        },
+        {
+          "path": "output/project/src/work/Message.java",
+          "sha256": "296d6afead1aa5cf9c04f3b211c88d6d797ce723d403eb199fd00f36444211ad"
+        },
+        {
+          "path": "output/project/test/work/Smoke.java",
+          "sha256": "07fe704f60685b8618d47f924a83aefc24b675c13a2066590c5b7329bfd6df72"
+        },
+        {
+          "path": "skill/references/happens-before.md",
+          "sha256": "ffb7b4955709d039d02549f7730d85b8bad661f22d9de908d14e741c6df5a076"
+        },
+        {
+          "path": "skill/references/review-checklist.md",
+          "sha256": "a9e6f00a8e7e26fcbe4b6d2a7a430198042acc7905025bb661772dd29b73b8a8"
+        },
+        {
+          "path": "skill/SKILL.md",
+          "sha256": "a9f6dab4bf513019bf245efc9cd8757a5edcc9b212ec507e3545fa59573c2a1a"
+        },
+        {
+          "path": "skill/skill.yaml",
+          "sha256": "1e2323798bd80080cf698cd1f8cc7085aa712c4e96f2113cb15c09eb97fe8c9b"
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "34b120f5fcc597b9cbde9935b3209f09d981ef6359ee1c9e4626ed1f7e721eb6"
+        }
+      ],
+      "actor": "/root/wave6_actor18",
+      "status": "pending"
+    },
+    {
+      "id": "run-19",
+      "caseId": "D1",
+      "condition": "current",
+      "trial": 2,
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-19",
+      "inputs": [
+        {
+          "path": "input/project/check.mjs",
+          "sha256": "b6f9b3cd3e71dbf53f03c5b834f24f48cd95c7db7e8438218a64a6807bfaf4a0"
+        },
+        {
+          "path": "input/project/docs/contract.md",
+          "sha256": "ceaa05aa4c210245338b9c4b3e779e9d6878087febe314eab01e6814fe6d2287"
+        },
+        {
+          "path": "input/project/docs/review-request.md",
+          "sha256": "86d670bf08679312dac2a34b2afd445a0548de7495460636959f86bcf1e868f2"
+        },
+        {
+          "path": "input/project/README.md",
+          "sha256": "7528c8030c6e58136385c6ce004edd888cdc5ef758de6a3e686f9cafb18ff675"
+        },
+        {
+          "path": "input/project/src/memo/BestEffortMemo.java",
+          "sha256": "773ac3a0db89c62165fb6e34ef87203daf45504cd6ed320ae3492e771ae675db"
+        },
+        {
+          "path": "input/project/src/memo/PublishedEntry.java",
+          "sha256": "b97db2071eb31c3584e786a99994684cde4c169034fe9d3ecb03bb78211946bb"
+        },
+        {
+          "path": "input/project/src/memo/ReaderFactory.java",
+          "sha256": "87601944fc6f7e44f634aed1e56da1298adda524275c0dc4e03452714866c89c"
+        },
+        {
+          "path": "input/project/test/memo/Smoke.java",
+          "sha256": "5fb4bf14f226c3cbaaa147cefd50a30a456eae5ce35ba8f19d40dc0398c9f335"
+        },
+        {
+          "path": "output/project/check.mjs",
+          "sha256": "b6f9b3cd3e71dbf53f03c5b834f24f48cd95c7db7e8438218a64a6807bfaf4a0"
+        },
+        {
+          "path": "output/project/docs/contract.md",
+          "sha256": "ceaa05aa4c210245338b9c4b3e779e9d6878087febe314eab01e6814fe6d2287"
+        },
+        {
+          "path": "output/project/docs/review-request.md",
+          "sha256": "86d670bf08679312dac2a34b2afd445a0548de7495460636959f86bcf1e868f2"
+        },
+        {
+          "path": "output/project/README.md",
+          "sha256": "7528c8030c6e58136385c6ce004edd888cdc5ef758de6a3e686f9cafb18ff675"
+        },
+        {
+          "path": "output/project/src/memo/BestEffortMemo.java",
+          "sha256": "773ac3a0db89c62165fb6e34ef87203daf45504cd6ed320ae3492e771ae675db"
+        },
+        {
+          "path": "output/project/src/memo/PublishedEntry.java",
+          "sha256": "b97db2071eb31c3584e786a99994684cde4c169034fe9d3ecb03bb78211946bb"
+        },
+        {
+          "path": "output/project/src/memo/ReaderFactory.java",
+          "sha256": "87601944fc6f7e44f634aed1e56da1298adda524275c0dc4e03452714866c89c"
+        },
+        {
+          "path": "output/project/test/memo/Smoke.java",
+          "sha256": "5fb4bf14f226c3cbaaa147cefd50a30a456eae5ce35ba8f19d40dc0398c9f335"
+        },
+        {
+          "path": "skill/references/happens-before.md",
+          "sha256": "bf3c0632c5a2643752fa2ad160a9694b8cc98696474bb14fc6c67499bc33865c"
+        },
+        {
+          "path": "skill/references/review-checklist.md",
+          "sha256": "a9e6f00a8e7e26fcbe4b6d2a7a430198042acc7905025bb661772dd29b73b8a8"
+        },
+        {
+          "path": "skill/SKILL.md",
+          "sha256": "a9f6dab4bf513019bf245efc9cd8757a5edcc9b212ec507e3545fa59573c2a1a"
+        },
+        {
+          "path": "skill/skill.yaml",
+          "sha256": "ebf7fdd7cf14ed7c51f1627d4cbfc022d264de515840da97004fa13531e53cab"
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "11e5e4881d99c7c4e11ef00148b2f33d124f0553b243a9a24f6d0dcb39b70b6d"
+        }
+      ],
+      "actor": "/root/wave6_actor19",
+      "status": "pending"
+    },
+    {
+      "id": "run-20",
+      "caseId": "D1",
+      "condition": "none",
+      "trial": 2,
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-20",
+      "inputs": [
+        {
+          "path": "input/project/check.mjs",
+          "sha256": "b6f9b3cd3e71dbf53f03c5b834f24f48cd95c7db7e8438218a64a6807bfaf4a0"
+        },
+        {
+          "path": "input/project/docs/contract.md",
+          "sha256": "ceaa05aa4c210245338b9c4b3e779e9d6878087febe314eab01e6814fe6d2287"
+        },
+        {
+          "path": "input/project/docs/review-request.md",
+          "sha256": "86d670bf08679312dac2a34b2afd445a0548de7495460636959f86bcf1e868f2"
+        },
+        {
+          "path": "input/project/README.md",
+          "sha256": "7528c8030c6e58136385c6ce004edd888cdc5ef758de6a3e686f9cafb18ff675"
+        },
+        {
+          "path": "input/project/src/memo/BestEffortMemo.java",
+          "sha256": "773ac3a0db89c62165fb6e34ef87203daf45504cd6ed320ae3492e771ae675db"
+        },
+        {
+          "path": "input/project/src/memo/PublishedEntry.java",
+          "sha256": "b97db2071eb31c3584e786a99994684cde4c169034fe9d3ecb03bb78211946bb"
+        },
+        {
+          "path": "input/project/src/memo/ReaderFactory.java",
+          "sha256": "87601944fc6f7e44f634aed1e56da1298adda524275c0dc4e03452714866c89c"
+        },
+        {
+          "path": "input/project/test/memo/Smoke.java",
+          "sha256": "5fb4bf14f226c3cbaaa147cefd50a30a456eae5ce35ba8f19d40dc0398c9f335"
+        },
+        {
+          "path": "output/project/check.mjs",
+          "sha256": "b6f9b3cd3e71dbf53f03c5b834f24f48cd95c7db7e8438218a64a6807bfaf4a0"
+        },
+        {
+          "path": "output/project/docs/contract.md",
+          "sha256": "ceaa05aa4c210245338b9c4b3e779e9d6878087febe314eab01e6814fe6d2287"
+        },
+        {
+          "path": "output/project/docs/review-request.md",
+          "sha256": "86d670bf08679312dac2a34b2afd445a0548de7495460636959f86bcf1e868f2"
+        },
+        {
+          "path": "output/project/README.md",
+          "sha256": "7528c8030c6e58136385c6ce004edd888cdc5ef758de6a3e686f9cafb18ff675"
+        },
+        {
+          "path": "output/project/src/memo/BestEffortMemo.java",
+          "sha256": "773ac3a0db89c62165fb6e34ef87203daf45504cd6ed320ae3492e771ae675db"
+        },
+        {
+          "path": "output/project/src/memo/PublishedEntry.java",
+          "sha256": "b97db2071eb31c3584e786a99994684cde4c169034fe9d3ecb03bb78211946bb"
+        },
+        {
+          "path": "output/project/src/memo/ReaderFactory.java",
+          "sha256": "87601944fc6f7e44f634aed1e56da1298adda524275c0dc4e03452714866c89c"
+        },
+        {
+          "path": "output/project/test/memo/Smoke.java",
+          "sha256": "5fb4bf14f226c3cbaaa147cefd50a30a456eae5ce35ba8f19d40dc0398c9f335"
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "7dbf10aa7c850ab992b91a0681a3c3527dd047db9eda90cdd7d062a885f58ff9"
+        }
+      ],
+      "actor": "/root/wave6_actor20",
+      "status": "pending"
+    },
+    {
+      "id": "run-21",
+      "caseId": "D1",
+      "condition": "previous",
+      "trial": 2,
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-21",
+      "inputs": [
+        {
+          "path": "input/project/check.mjs",
+          "sha256": "b6f9b3cd3e71dbf53f03c5b834f24f48cd95c7db7e8438218a64a6807bfaf4a0"
+        },
+        {
+          "path": "input/project/docs/contract.md",
+          "sha256": "ceaa05aa4c210245338b9c4b3e779e9d6878087febe314eab01e6814fe6d2287"
+        },
+        {
+          "path": "input/project/docs/review-request.md",
+          "sha256": "86d670bf08679312dac2a34b2afd445a0548de7495460636959f86bcf1e868f2"
+        },
+        {
+          "path": "input/project/README.md",
+          "sha256": "7528c8030c6e58136385c6ce004edd888cdc5ef758de6a3e686f9cafb18ff675"
+        },
+        {
+          "path": "input/project/src/memo/BestEffortMemo.java",
+          "sha256": "773ac3a0db89c62165fb6e34ef87203daf45504cd6ed320ae3492e771ae675db"
+        },
+        {
+          "path": "input/project/src/memo/PublishedEntry.java",
+          "sha256": "b97db2071eb31c3584e786a99994684cde4c169034fe9d3ecb03bb78211946bb"
+        },
+        {
+          "path": "input/project/src/memo/ReaderFactory.java",
+          "sha256": "87601944fc6f7e44f634aed1e56da1298adda524275c0dc4e03452714866c89c"
+        },
+        {
+          "path": "input/project/test/memo/Smoke.java",
+          "sha256": "5fb4bf14f226c3cbaaa147cefd50a30a456eae5ce35ba8f19d40dc0398c9f335"
+        },
+        {
+          "path": "output/project/check.mjs",
+          "sha256": "b6f9b3cd3e71dbf53f03c5b834f24f48cd95c7db7e8438218a64a6807bfaf4a0"
+        },
+        {
+          "path": "output/project/docs/contract.md",
+          "sha256": "ceaa05aa4c210245338b9c4b3e779e9d6878087febe314eab01e6814fe6d2287"
+        },
+        {
+          "path": "output/project/docs/review-request.md",
+          "sha256": "86d670bf08679312dac2a34b2afd445a0548de7495460636959f86bcf1e868f2"
+        },
+        {
+          "path": "output/project/README.md",
+          "sha256": "7528c8030c6e58136385c6ce004edd888cdc5ef758de6a3e686f9cafb18ff675"
+        },
+        {
+          "path": "output/project/src/memo/BestEffortMemo.java",
+          "sha256": "773ac3a0db89c62165fb6e34ef87203daf45504cd6ed320ae3492e771ae675db"
+        },
+        {
+          "path": "output/project/src/memo/PublishedEntry.java",
+          "sha256": "b97db2071eb31c3584e786a99994684cde4c169034fe9d3ecb03bb78211946bb"
+        },
+        {
+          "path": "output/project/src/memo/ReaderFactory.java",
+          "sha256": "87601944fc6f7e44f634aed1e56da1298adda524275c0dc4e03452714866c89c"
+        },
+        {
+          "path": "output/project/test/memo/Smoke.java",
+          "sha256": "5fb4bf14f226c3cbaaa147cefd50a30a456eae5ce35ba8f19d40dc0398c9f335"
+        },
+        {
+          "path": "skill/references/happens-before.md",
+          "sha256": "ffb7b4955709d039d02549f7730d85b8bad661f22d9de908d14e741c6df5a076"
+        },
+        {
+          "path": "skill/references/review-checklist.md",
+          "sha256": "a9e6f00a8e7e26fcbe4b6d2a7a430198042acc7905025bb661772dd29b73b8a8"
+        },
+        {
+          "path": "skill/SKILL.md",
+          "sha256": "a9f6dab4bf513019bf245efc9cd8757a5edcc9b212ec507e3545fa59573c2a1a"
+        },
+        {
+          "path": "skill/skill.yaml",
+          "sha256": "1e2323798bd80080cf698cd1f8cc7085aa712c4e96f2113cb15c09eb97fe8c9b"
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "4ca35d8b46dd7be1ed129b09f9dbbb57fc4f294b20a2b5e4ddd46f8dbee1c4fd"
+        }
+      ],
+      "actor": "/root/wave6_actor21",
+      "status": "pending"
+    },
+    {
+      "id": "run-22",
+      "caseId": "D2",
+      "condition": "none",
+      "trial": 2,
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-22",
+      "inputs": [
+        {
+          "path": "input/project/check.mjs",
+          "sha256": "b6f9b3cd3e71dbf53f03c5b834f24f48cd95c7db7e8438218a64a6807bfaf4a0"
+        },
+        {
+          "path": "input/project/docs/contract.md",
+          "sha256": "ceaa05aa4c210245338b9c4b3e779e9d6878087febe314eab01e6814fe6d2287"
+        },
+        {
+          "path": "input/project/docs/review-request.md",
+          "sha256": "86d670bf08679312dac2a34b2afd445a0548de7495460636959f86bcf1e868f2"
+        },
+        {
+          "path": "input/project/README.md",
+          "sha256": "7528c8030c6e58136385c6ce004edd888cdc5ef758de6a3e686f9cafb18ff675"
+        },
+        {
+          "path": "input/project/src/memo/BestEffortMemo.java",
+          "sha256": "773ac3a0db89c62165fb6e34ef87203daf45504cd6ed320ae3492e771ae675db"
+        },
+        {
+          "path": "input/project/src/memo/PublishedEntry.java",
+          "sha256": "b97db2071eb31c3584e786a99994684cde4c169034fe9d3ecb03bb78211946bb"
+        },
+        {
+          "path": "input/project/src/memo/ReaderFactory.java",
+          "sha256": "d6b8766eb709c274626023c345de09c08da665546445ddc180663818ebaf16de"
+        },
+        {
+          "path": "input/project/test/memo/Smoke.java",
+          "sha256": "5fb4bf14f226c3cbaaa147cefd50a30a456eae5ce35ba8f19d40dc0398c9f335"
+        },
+        {
+          "path": "output/project/check.mjs",
+          "sha256": "b6f9b3cd3e71dbf53f03c5b834f24f48cd95c7db7e8438218a64a6807bfaf4a0"
+        },
+        {
+          "path": "output/project/docs/contract.md",
+          "sha256": "ceaa05aa4c210245338b9c4b3e779e9d6878087febe314eab01e6814fe6d2287"
+        },
+        {
+          "path": "output/project/docs/review-request.md",
+          "sha256": "86d670bf08679312dac2a34b2afd445a0548de7495460636959f86bcf1e868f2"
+        },
+        {
+          "path": "output/project/README.md",
+          "sha256": "7528c8030c6e58136385c6ce004edd888cdc5ef758de6a3e686f9cafb18ff675"
+        },
+        {
+          "path": "output/project/src/memo/BestEffortMemo.java",
+          "sha256": "773ac3a0db89c62165fb6e34ef87203daf45504cd6ed320ae3492e771ae675db"
+        },
+        {
+          "path": "output/project/src/memo/PublishedEntry.java",
+          "sha256": "b97db2071eb31c3584e786a99994684cde4c169034fe9d3ecb03bb78211946bb"
+        },
+        {
+          "path": "output/project/src/memo/ReaderFactory.java",
+          "sha256": "d6b8766eb709c274626023c345de09c08da665546445ddc180663818ebaf16de"
+        },
+        {
+          "path": "output/project/test/memo/Smoke.java",
+          "sha256": "5fb4bf14f226c3cbaaa147cefd50a30a456eae5ce35ba8f19d40dc0398c9f335"
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "3d8326750e9ac652657bce4ffa47704cc71a8fe45d9e9824e6a73ece7da1d78c"
+        }
+      ],
+      "actor": "/root/wave6_actor22",
+      "status": "pending"
+    },
+    {
+      "id": "run-23",
+      "caseId": "D2",
+      "condition": "previous",
+      "trial": 2,
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-23",
+      "inputs": [
+        {
+          "path": "input/project/check.mjs",
+          "sha256": "b6f9b3cd3e71dbf53f03c5b834f24f48cd95c7db7e8438218a64a6807bfaf4a0"
+        },
+        {
+          "path": "input/project/docs/contract.md",
+          "sha256": "ceaa05aa4c210245338b9c4b3e779e9d6878087febe314eab01e6814fe6d2287"
+        },
+        {
+          "path": "input/project/docs/review-request.md",
+          "sha256": "86d670bf08679312dac2a34b2afd445a0548de7495460636959f86bcf1e868f2"
+        },
+        {
+          "path": "input/project/README.md",
+          "sha256": "7528c8030c6e58136385c6ce004edd888cdc5ef758de6a3e686f9cafb18ff675"
+        },
+        {
+          "path": "input/project/src/memo/BestEffortMemo.java",
+          "sha256": "773ac3a0db89c62165fb6e34ef87203daf45504cd6ed320ae3492e771ae675db"
+        },
+        {
+          "path": "input/project/src/memo/PublishedEntry.java",
+          "sha256": "b97db2071eb31c3584e786a99994684cde4c169034fe9d3ecb03bb78211946bb"
+        },
+        {
+          "path": "input/project/src/memo/ReaderFactory.java",
+          "sha256": "d6b8766eb709c274626023c345de09c08da665546445ddc180663818ebaf16de"
+        },
+        {
+          "path": "input/project/test/memo/Smoke.java",
+          "sha256": "5fb4bf14f226c3cbaaa147cefd50a30a456eae5ce35ba8f19d40dc0398c9f335"
+        },
+        {
+          "path": "output/project/check.mjs",
+          "sha256": "b6f9b3cd3e71dbf53f03c5b834f24f48cd95c7db7e8438218a64a6807bfaf4a0"
+        },
+        {
+          "path": "output/project/docs/contract.md",
+          "sha256": "ceaa05aa4c210245338b9c4b3e779e9d6878087febe314eab01e6814fe6d2287"
+        },
+        {
+          "path": "output/project/docs/review-request.md",
+          "sha256": "86d670bf08679312dac2a34b2afd445a0548de7495460636959f86bcf1e868f2"
+        },
+        {
+          "path": "output/project/README.md",
+          "sha256": "7528c8030c6e58136385c6ce004edd888cdc5ef758de6a3e686f9cafb18ff675"
+        },
+        {
+          "path": "output/project/src/memo/BestEffortMemo.java",
+          "sha256": "773ac3a0db89c62165fb6e34ef87203daf45504cd6ed320ae3492e771ae675db"
+        },
+        {
+          "path": "output/project/src/memo/PublishedEntry.java",
+          "sha256": "b97db2071eb31c3584e786a99994684cde4c169034fe9d3ecb03bb78211946bb"
+        },
+        {
+          "path": "output/project/src/memo/ReaderFactory.java",
+          "sha256": "d6b8766eb709c274626023c345de09c08da665546445ddc180663818ebaf16de"
+        },
+        {
+          "path": "output/project/test/memo/Smoke.java",
+          "sha256": "5fb4bf14f226c3cbaaa147cefd50a30a456eae5ce35ba8f19d40dc0398c9f335"
+        },
+        {
+          "path": "skill/references/happens-before.md",
+          "sha256": "ffb7b4955709d039d02549f7730d85b8bad661f22d9de908d14e741c6df5a076"
+        },
+        {
+          "path": "skill/references/review-checklist.md",
+          "sha256": "a9e6f00a8e7e26fcbe4b6d2a7a430198042acc7905025bb661772dd29b73b8a8"
+        },
+        {
+          "path": "skill/SKILL.md",
+          "sha256": "a9f6dab4bf513019bf245efc9cd8757a5edcc9b212ec507e3545fa59573c2a1a"
+        },
+        {
+          "path": "skill/skill.yaml",
+          "sha256": "1e2323798bd80080cf698cd1f8cc7085aa712c4e96f2113cb15c09eb97fe8c9b"
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "90397ee0aae87e79c309aed38c1bd07b58366690ff6c3d2752c0ec4d75a6a380"
+        }
+      ],
+      "actor": "/root/wave6_actor23",
+      "status": "pending"
+    },
+    {
+      "id": "run-24",
+      "caseId": "D2",
+      "condition": "current",
+      "trial": 2,
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-24",
+      "inputs": [
+        {
+          "path": "input/project/check.mjs",
+          "sha256": "b6f9b3cd3e71dbf53f03c5b834f24f48cd95c7db7e8438218a64a6807bfaf4a0"
+        },
+        {
+          "path": "input/project/docs/contract.md",
+          "sha256": "ceaa05aa4c210245338b9c4b3e779e9d6878087febe314eab01e6814fe6d2287"
+        },
+        {
+          "path": "input/project/docs/review-request.md",
+          "sha256": "86d670bf08679312dac2a34b2afd445a0548de7495460636959f86bcf1e868f2"
+        },
+        {
+          "path": "input/project/README.md",
+          "sha256": "7528c8030c6e58136385c6ce004edd888cdc5ef758de6a3e686f9cafb18ff675"
+        },
+        {
+          "path": "input/project/src/memo/BestEffortMemo.java",
+          "sha256": "773ac3a0db89c62165fb6e34ef87203daf45504cd6ed320ae3492e771ae675db"
+        },
+        {
+          "path": "input/project/src/memo/PublishedEntry.java",
+          "sha256": "b97db2071eb31c3584e786a99994684cde4c169034fe9d3ecb03bb78211946bb"
+        },
+        {
+          "path": "input/project/src/memo/ReaderFactory.java",
+          "sha256": "d6b8766eb709c274626023c345de09c08da665546445ddc180663818ebaf16de"
+        },
+        {
+          "path": "input/project/test/memo/Smoke.java",
+          "sha256": "5fb4bf14f226c3cbaaa147cefd50a30a456eae5ce35ba8f19d40dc0398c9f335"
+        },
+        {
+          "path": "output/project/check.mjs",
+          "sha256": "b6f9b3cd3e71dbf53f03c5b834f24f48cd95c7db7e8438218a64a6807bfaf4a0"
+        },
+        {
+          "path": "output/project/docs/contract.md",
+          "sha256": "ceaa05aa4c210245338b9c4b3e779e9d6878087febe314eab01e6814fe6d2287"
+        },
+        {
+          "path": "output/project/docs/review-request.md",
+          "sha256": "86d670bf08679312dac2a34b2afd445a0548de7495460636959f86bcf1e868f2"
+        },
+        {
+          "path": "output/project/README.md",
+          "sha256": "7528c8030c6e58136385c6ce004edd888cdc5ef758de6a3e686f9cafb18ff675"
+        },
+        {
+          "path": "output/project/src/memo/BestEffortMemo.java",
+          "sha256": "773ac3a0db89c62165fb6e34ef87203daf45504cd6ed320ae3492e771ae675db"
+        },
+        {
+          "path": "output/project/src/memo/PublishedEntry.java",
+          "sha256": "b97db2071eb31c3584e786a99994684cde4c169034fe9d3ecb03bb78211946bb"
+        },
+        {
+          "path": "output/project/src/memo/ReaderFactory.java",
+          "sha256": "d6b8766eb709c274626023c345de09c08da665546445ddc180663818ebaf16de"
+        },
+        {
+          "path": "output/project/test/memo/Smoke.java",
+          "sha256": "5fb4bf14f226c3cbaaa147cefd50a30a456eae5ce35ba8f19d40dc0398c9f335"
+        },
+        {
+          "path": "skill/references/happens-before.md",
+          "sha256": "bf3c0632c5a2643752fa2ad160a9694b8cc98696474bb14fc6c67499bc33865c"
+        },
+        {
+          "path": "skill/references/review-checklist.md",
+          "sha256": "a9e6f00a8e7e26fcbe4b6d2a7a430198042acc7905025bb661772dd29b73b8a8"
+        },
+        {
+          "path": "skill/SKILL.md",
+          "sha256": "a9f6dab4bf513019bf245efc9cd8757a5edcc9b212ec507e3545fa59573c2a1a"
+        },
+        {
+          "path": "skill/skill.yaml",
+          "sha256": "ebf7fdd7cf14ed7c51f1627d4cbfc022d264de515840da97004fa13531e53cab"
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "52ddf1f67c694244bb8bbdbcdd18ca95ce4581146368de8a4184871928f0e677"
+        }
+      ],
+      "actor": "/root/wave6_actor24",
+      "status": "pending"
+    },
+    {
+      "id": "run-25",
+      "caseId": "H1",
+      "condition": "previous",
+      "trial": 2,
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-25",
+      "inputs": [
+        {
+          "path": "input/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "input/project/docs/contract.md",
+          "sha256": "2b31ca53219bf40a3242671bd7353870d440b35332d3f1f26fb13740d8330324"
+        },
+        {
+          "path": "input/project/docs/review-request.md",
+          "sha256": "98b1cfc08f3c1db4e5b154e6c30ae51b88f8a8df1b0f6334ee8911a392029b92"
+        },
+        {
+          "path": "input/project/README.md",
+          "sha256": "9a5207132c68d38c524f229423843bf390bad338c0d19d851e844c89fe8814ba"
+        },
+        {
+          "path": "input/project/src/work/Settings.java",
+          "sha256": "715d65b98b2eea34989a8f01a9d6f191f04be12bcca719e577db15e8a554295a"
+        },
+        {
+          "path": "input/project/src/work/SettingsRegistry.java",
+          "sha256": "45ec123a849b8b5273c9d708755d0454643fd63646264368d2f2d3e7f38660b1"
+        },
+        {
+          "path": "input/project/test/work/Smoke.java",
+          "sha256": "d60cd08037f61f64b2339399494db3c07558e9b4f62cadfd9261a86386988a59"
+        },
+        {
+          "path": "output/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "output/project/docs/contract.md",
+          "sha256": "2b31ca53219bf40a3242671bd7353870d440b35332d3f1f26fb13740d8330324"
+        },
+        {
+          "path": "output/project/docs/review-request.md",
+          "sha256": "98b1cfc08f3c1db4e5b154e6c30ae51b88f8a8df1b0f6334ee8911a392029b92"
+        },
+        {
+          "path": "output/project/README.md",
+          "sha256": "9a5207132c68d38c524f229423843bf390bad338c0d19d851e844c89fe8814ba"
+        },
+        {
+          "path": "output/project/src/work/Settings.java",
+          "sha256": "715d65b98b2eea34989a8f01a9d6f191f04be12bcca719e577db15e8a554295a"
+        },
+        {
+          "path": "output/project/src/work/SettingsRegistry.java",
+          "sha256": "45ec123a849b8b5273c9d708755d0454643fd63646264368d2f2d3e7f38660b1"
+        },
+        {
+          "path": "output/project/test/work/Smoke.java",
+          "sha256": "d60cd08037f61f64b2339399494db3c07558e9b4f62cadfd9261a86386988a59"
+        },
+        {
+          "path": "skill/references/happens-before.md",
+          "sha256": "ffb7b4955709d039d02549f7730d85b8bad661f22d9de908d14e741c6df5a076"
+        },
+        {
+          "path": "skill/references/review-checklist.md",
+          "sha256": "a9e6f00a8e7e26fcbe4b6d2a7a430198042acc7905025bb661772dd29b73b8a8"
+        },
+        {
+          "path": "skill/SKILL.md",
+          "sha256": "a9f6dab4bf513019bf245efc9cd8757a5edcc9b212ec507e3545fa59573c2a1a"
+        },
+        {
+          "path": "skill/skill.yaml",
+          "sha256": "1e2323798bd80080cf698cd1f8cc7085aa712c4e96f2113cb15c09eb97fe8c9b"
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "933d72a0a2db7d50859fe88e19bbd0d4bab516618ee78b78ffc6b9cbb958c1cf"
+        }
+      ],
+      "actor": "/root/wave6_actor25",
+      "status": "pending"
+    },
+    {
+      "id": "run-26",
+      "caseId": "H1",
+      "condition": "current",
+      "trial": 2,
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-26",
+      "inputs": [
+        {
+          "path": "input/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "input/project/docs/contract.md",
+          "sha256": "2b31ca53219bf40a3242671bd7353870d440b35332d3f1f26fb13740d8330324"
+        },
+        {
+          "path": "input/project/docs/review-request.md",
+          "sha256": "98b1cfc08f3c1db4e5b154e6c30ae51b88f8a8df1b0f6334ee8911a392029b92"
+        },
+        {
+          "path": "input/project/README.md",
+          "sha256": "9a5207132c68d38c524f229423843bf390bad338c0d19d851e844c89fe8814ba"
+        },
+        {
+          "path": "input/project/src/work/Settings.java",
+          "sha256": "715d65b98b2eea34989a8f01a9d6f191f04be12bcca719e577db15e8a554295a"
+        },
+        {
+          "path": "input/project/src/work/SettingsRegistry.java",
+          "sha256": "45ec123a849b8b5273c9d708755d0454643fd63646264368d2f2d3e7f38660b1"
+        },
+        {
+          "path": "input/project/test/work/Smoke.java",
+          "sha256": "d60cd08037f61f64b2339399494db3c07558e9b4f62cadfd9261a86386988a59"
+        },
+        {
+          "path": "output/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "output/project/docs/contract.md",
+          "sha256": "2b31ca53219bf40a3242671bd7353870d440b35332d3f1f26fb13740d8330324"
+        },
+        {
+          "path": "output/project/docs/review-request.md",
+          "sha256": "98b1cfc08f3c1db4e5b154e6c30ae51b88f8a8df1b0f6334ee8911a392029b92"
+        },
+        {
+          "path": "output/project/README.md",
+          "sha256": "9a5207132c68d38c524f229423843bf390bad338c0d19d851e844c89fe8814ba"
+        },
+        {
+          "path": "output/project/src/work/Settings.java",
+          "sha256": "715d65b98b2eea34989a8f01a9d6f191f04be12bcca719e577db15e8a554295a"
+        },
+        {
+          "path": "output/project/src/work/SettingsRegistry.java",
+          "sha256": "45ec123a849b8b5273c9d708755d0454643fd63646264368d2f2d3e7f38660b1"
+        },
+        {
+          "path": "output/project/test/work/Smoke.java",
+          "sha256": "d60cd08037f61f64b2339399494db3c07558e9b4f62cadfd9261a86386988a59"
+        },
+        {
+          "path": "skill/references/happens-before.md",
+          "sha256": "bf3c0632c5a2643752fa2ad160a9694b8cc98696474bb14fc6c67499bc33865c"
+        },
+        {
+          "path": "skill/references/review-checklist.md",
+          "sha256": "a9e6f00a8e7e26fcbe4b6d2a7a430198042acc7905025bb661772dd29b73b8a8"
+        },
+        {
+          "path": "skill/SKILL.md",
+          "sha256": "a9f6dab4bf513019bf245efc9cd8757a5edcc9b212ec507e3545fa59573c2a1a"
+        },
+        {
+          "path": "skill/skill.yaml",
+          "sha256": "ebf7fdd7cf14ed7c51f1627d4cbfc022d264de515840da97004fa13531e53cab"
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "6513679ce22e552a5b75aa93b981accdb66289f2c6c0c35a6a4bbb4593de557e"
+        }
+      ],
+      "actor": "/root/wave6_actor26",
+      "status": "pending"
+    },
+    {
+      "id": "run-27",
+      "caseId": "H1",
+      "condition": "none",
+      "trial": 2,
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-27",
+      "inputs": [
+        {
+          "path": "input/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "input/project/docs/contract.md",
+          "sha256": "2b31ca53219bf40a3242671bd7353870d440b35332d3f1f26fb13740d8330324"
+        },
+        {
+          "path": "input/project/docs/review-request.md",
+          "sha256": "98b1cfc08f3c1db4e5b154e6c30ae51b88f8a8df1b0f6334ee8911a392029b92"
+        },
+        {
+          "path": "input/project/README.md",
+          "sha256": "9a5207132c68d38c524f229423843bf390bad338c0d19d851e844c89fe8814ba"
+        },
+        {
+          "path": "input/project/src/work/Settings.java",
+          "sha256": "715d65b98b2eea34989a8f01a9d6f191f04be12bcca719e577db15e8a554295a"
+        },
+        {
+          "path": "input/project/src/work/SettingsRegistry.java",
+          "sha256": "45ec123a849b8b5273c9d708755d0454643fd63646264368d2f2d3e7f38660b1"
+        },
+        {
+          "path": "input/project/test/work/Smoke.java",
+          "sha256": "d60cd08037f61f64b2339399494db3c07558e9b4f62cadfd9261a86386988a59"
+        },
+        {
+          "path": "output/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "output/project/docs/contract.md",
+          "sha256": "2b31ca53219bf40a3242671bd7353870d440b35332d3f1f26fb13740d8330324"
+        },
+        {
+          "path": "output/project/docs/review-request.md",
+          "sha256": "98b1cfc08f3c1db4e5b154e6c30ae51b88f8a8df1b0f6334ee8911a392029b92"
+        },
+        {
+          "path": "output/project/README.md",
+          "sha256": "9a5207132c68d38c524f229423843bf390bad338c0d19d851e844c89fe8814ba"
+        },
+        {
+          "path": "output/project/src/work/Settings.java",
+          "sha256": "715d65b98b2eea34989a8f01a9d6f191f04be12bcca719e577db15e8a554295a"
+        },
+        {
+          "path": "output/project/src/work/SettingsRegistry.java",
+          "sha256": "45ec123a849b8b5273c9d708755d0454643fd63646264368d2f2d3e7f38660b1"
+        },
+        {
+          "path": "output/project/test/work/Smoke.java",
+          "sha256": "d60cd08037f61f64b2339399494db3c07558e9b4f62cadfd9261a86386988a59"
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "bd3594e427f6c04de3e3c0894fa53beaf1d36444db4a08c08fdfa7cdb33583a8"
+        }
+      ],
+      "actor": "/root/wave6_actor27",
+      "status": "pending"
+    },
+    {
+      "id": "run-28",
+      "caseId": "H2",
+      "condition": "current",
+      "trial": 2,
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-28",
+      "inputs": [
+        {
+          "path": "input/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "input/project/docs/contract.md",
+          "sha256": "f2b702ba6fb794e030886c7a7b2c80fa8da6bb98e22223945a5a696d4fdc71b5"
+        },
+        {
+          "path": "input/project/docs/review-request.md",
+          "sha256": "a422a7854771e6c3b411b2b5e7083f7428cfd15a1fe7d538ce9512fba046c5ed"
+        },
+        {
+          "path": "input/project/README.md",
+          "sha256": "bb4df13b026852574a9c850cba10d2cc483aa5be644e391bbd16ff69852647b6"
+        },
+        {
+          "path": "input/project/src/work/Job.java",
+          "sha256": "34690066cc95f8d4349c7adc90fd0b9048accd5ec41f658f5946e17d0b9854a4"
+        },
+        {
+          "path": "input/project/test/work/Smoke.java",
+          "sha256": "171679869bd7d083fe6f5f31b1ab3480214c07ef13a02ecc0cfb360f3a30c543"
+        },
+        {
+          "path": "output/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "output/project/docs/contract.md",
+          "sha256": "f2b702ba6fb794e030886c7a7b2c80fa8da6bb98e22223945a5a696d4fdc71b5"
+        },
+        {
+          "path": "output/project/docs/review-request.md",
+          "sha256": "a422a7854771e6c3b411b2b5e7083f7428cfd15a1fe7d538ce9512fba046c5ed"
+        },
+        {
+          "path": "output/project/README.md",
+          "sha256": "bb4df13b026852574a9c850cba10d2cc483aa5be644e391bbd16ff69852647b6"
+        },
+        {
+          "path": "output/project/src/work/Job.java",
+          "sha256": "34690066cc95f8d4349c7adc90fd0b9048accd5ec41f658f5946e17d0b9854a4"
+        },
+        {
+          "path": "output/project/test/work/Smoke.java",
+          "sha256": "171679869bd7d083fe6f5f31b1ab3480214c07ef13a02ecc0cfb360f3a30c543"
+        },
+        {
+          "path": "skill/references/happens-before.md",
+          "sha256": "bf3c0632c5a2643752fa2ad160a9694b8cc98696474bb14fc6c67499bc33865c"
+        },
+        {
+          "path": "skill/references/review-checklist.md",
+          "sha256": "a9e6f00a8e7e26fcbe4b6d2a7a430198042acc7905025bb661772dd29b73b8a8"
+        },
+        {
+          "path": "skill/SKILL.md",
+          "sha256": "a9f6dab4bf513019bf245efc9cd8757a5edcc9b212ec507e3545fa59573c2a1a"
+        },
+        {
+          "path": "skill/skill.yaml",
+          "sha256": "ebf7fdd7cf14ed7c51f1627d4cbfc022d264de515840da97004fa13531e53cab"
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "782c06a1242d93093da069586635db7fe4ed32fe630d5135717a7b7db810219b"
+        }
+      ],
+      "actor": "/root/wave6_actor28",
+      "status": "pending"
+    },
+    {
+      "id": "run-29",
+      "caseId": "H2",
+      "condition": "none",
+      "trial": 2,
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-29",
+      "inputs": [
+        {
+          "path": "input/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "input/project/docs/contract.md",
+          "sha256": "f2b702ba6fb794e030886c7a7b2c80fa8da6bb98e22223945a5a696d4fdc71b5"
+        },
+        {
+          "path": "input/project/docs/review-request.md",
+          "sha256": "a422a7854771e6c3b411b2b5e7083f7428cfd15a1fe7d538ce9512fba046c5ed"
+        },
+        {
+          "path": "input/project/README.md",
+          "sha256": "bb4df13b026852574a9c850cba10d2cc483aa5be644e391bbd16ff69852647b6"
+        },
+        {
+          "path": "input/project/src/work/Job.java",
+          "sha256": "34690066cc95f8d4349c7adc90fd0b9048accd5ec41f658f5946e17d0b9854a4"
+        },
+        {
+          "path": "input/project/test/work/Smoke.java",
+          "sha256": "171679869bd7d083fe6f5f31b1ab3480214c07ef13a02ecc0cfb360f3a30c543"
+        },
+        {
+          "path": "output/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "output/project/docs/contract.md",
+          "sha256": "f2b702ba6fb794e030886c7a7b2c80fa8da6bb98e22223945a5a696d4fdc71b5"
+        },
+        {
+          "path": "output/project/docs/review-request.md",
+          "sha256": "a422a7854771e6c3b411b2b5e7083f7428cfd15a1fe7d538ce9512fba046c5ed"
+        },
+        {
+          "path": "output/project/README.md",
+          "sha256": "bb4df13b026852574a9c850cba10d2cc483aa5be644e391bbd16ff69852647b6"
+        },
+        {
+          "path": "output/project/src/work/Job.java",
+          "sha256": "34690066cc95f8d4349c7adc90fd0b9048accd5ec41f658f5946e17d0b9854a4"
+        },
+        {
+          "path": "output/project/test/work/Smoke.java",
+          "sha256": "171679869bd7d083fe6f5f31b1ab3480214c07ef13a02ecc0cfb360f3a30c543"
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "2767074c2e834dcdcf2159906ac8dde2577314c07597d41ad710588861419ca5"
+        }
+      ],
+      "actor": "/root/wave6_actor29",
+      "status": "pending"
+    },
+    {
+      "id": "run-30",
+      "caseId": "H2",
+      "condition": "previous",
+      "trial": 2,
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-30",
+      "inputs": [
+        {
+          "path": "input/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "input/project/docs/contract.md",
+          "sha256": "f2b702ba6fb794e030886c7a7b2c80fa8da6bb98e22223945a5a696d4fdc71b5"
+        },
+        {
+          "path": "input/project/docs/review-request.md",
+          "sha256": "a422a7854771e6c3b411b2b5e7083f7428cfd15a1fe7d538ce9512fba046c5ed"
+        },
+        {
+          "path": "input/project/README.md",
+          "sha256": "bb4df13b026852574a9c850cba10d2cc483aa5be644e391bbd16ff69852647b6"
+        },
+        {
+          "path": "input/project/src/work/Job.java",
+          "sha256": "34690066cc95f8d4349c7adc90fd0b9048accd5ec41f658f5946e17d0b9854a4"
+        },
+        {
+          "path": "input/project/test/work/Smoke.java",
+          "sha256": "171679869bd7d083fe6f5f31b1ab3480214c07ef13a02ecc0cfb360f3a30c543"
+        },
+        {
+          "path": "output/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "output/project/docs/contract.md",
+          "sha256": "f2b702ba6fb794e030886c7a7b2c80fa8da6bb98e22223945a5a696d4fdc71b5"
+        },
+        {
+          "path": "output/project/docs/review-request.md",
+          "sha256": "a422a7854771e6c3b411b2b5e7083f7428cfd15a1fe7d538ce9512fba046c5ed"
+        },
+        {
+          "path": "output/project/README.md",
+          "sha256": "bb4df13b026852574a9c850cba10d2cc483aa5be644e391bbd16ff69852647b6"
+        },
+        {
+          "path": "output/project/src/work/Job.java",
+          "sha256": "34690066cc95f8d4349c7adc90fd0b9048accd5ec41f658f5946e17d0b9854a4"
+        },
+        {
+          "path": "output/project/test/work/Smoke.java",
+          "sha256": "171679869bd7d083fe6f5f31b1ab3480214c07ef13a02ecc0cfb360f3a30c543"
+        },
+        {
+          "path": "skill/references/happens-before.md",
+          "sha256": "ffb7b4955709d039d02549f7730d85b8bad661f22d9de908d14e741c6df5a076"
+        },
+        {
+          "path": "skill/references/review-checklist.md",
+          "sha256": "a9e6f00a8e7e26fcbe4b6d2a7a430198042acc7905025bb661772dd29b73b8a8"
+        },
+        {
+          "path": "skill/SKILL.md",
+          "sha256": "a9f6dab4bf513019bf245efc9cd8757a5edcc9b212ec507e3545fa59573c2a1a"
+        },
+        {
+          "path": "skill/skill.yaml",
+          "sha256": "1e2323798bd80080cf698cd1f8cc7085aa712c4e96f2113cb15c09eb97fe8c9b"
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "576b94597e8644903670ab642295f50353871671068eb6d10d30fd884774dc9e"
+        }
+      ],
+      "actor": "/root/wave6_actor30",
+      "status": "pending"
+    },
+    {
+      "id": "run-31",
+      "caseId": "H3",
+      "condition": "none",
+      "trial": 2,
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-31",
+      "inputs": [
+        {
+          "path": "input/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "input/project/docs/contract.md",
+          "sha256": "0e2ebc05b6296ec6bfba592160b83acdfaf118f3a52b80160955a4e32470d0ba"
+        },
+        {
+          "path": "input/project/docs/review-request.md",
+          "sha256": "5baa0daa5bddc25e48df9d052a02b1c062bfc7a5086599eeee09f7377c139be8"
+        },
+        {
+          "path": "input/project/README.md",
+          "sha256": "0dd7a087e22dbb2a44ae0d508763a26f3fd829efd12f8fbcd2958e9618e01758"
+        },
+        {
+          "path": "input/project/src/work/Provider.java",
+          "sha256": "1b2604204f5f97ec472f1a1b981d09290d2de91447e4de0d7469b62dbf527721"
+        },
+        {
+          "path": "input/project/src/work/ResultBridge.java",
+          "sha256": "3f0959c157d38290c15f6bb58fbb5d7e0c9fd04ad20455bb3c4c7ffa53a91d70"
+        },
+        {
+          "path": "input/project/src/work/Snapshot.java",
+          "sha256": "7804dbeb51b652d02623b9df39a8207b47d3a971bedb23a64ade34a9b06d7800"
+        },
+        {
+          "path": "input/project/test/work/Smoke.java",
+          "sha256": "fe141df22aa0153217ac2501d48c1f1a9dee87ed57e1960fb74e4b409373076b"
+        },
+        {
+          "path": "output/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "output/project/docs/contract.md",
+          "sha256": "0e2ebc05b6296ec6bfba592160b83acdfaf118f3a52b80160955a4e32470d0ba"
+        },
+        {
+          "path": "output/project/docs/review-request.md",
+          "sha256": "5baa0daa5bddc25e48df9d052a02b1c062bfc7a5086599eeee09f7377c139be8"
+        },
+        {
+          "path": "output/project/README.md",
+          "sha256": "0dd7a087e22dbb2a44ae0d508763a26f3fd829efd12f8fbcd2958e9618e01758"
+        },
+        {
+          "path": "output/project/src/work/Provider.java",
+          "sha256": "1b2604204f5f97ec472f1a1b981d09290d2de91447e4de0d7469b62dbf527721"
+        },
+        {
+          "path": "output/project/src/work/ResultBridge.java",
+          "sha256": "3f0959c157d38290c15f6bb58fbb5d7e0c9fd04ad20455bb3c4c7ffa53a91d70"
+        },
+        {
+          "path": "output/project/src/work/Snapshot.java",
+          "sha256": "7804dbeb51b652d02623b9df39a8207b47d3a971bedb23a64ade34a9b06d7800"
+        },
+        {
+          "path": "output/project/test/work/Smoke.java",
+          "sha256": "fe141df22aa0153217ac2501d48c1f1a9dee87ed57e1960fb74e4b409373076b"
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "55017bd91795c2d8099fc8a5fdcc2f195314b64aded254bbad43e45690a47450"
+        }
+      ],
+      "actor": "/root/wave6_actor31",
+      "status": "pending"
+    },
+    {
+      "id": "run-32",
+      "caseId": "H3",
+      "condition": "previous",
+      "trial": 2,
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-32",
+      "inputs": [
+        {
+          "path": "input/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "input/project/docs/contract.md",
+          "sha256": "0e2ebc05b6296ec6bfba592160b83acdfaf118f3a52b80160955a4e32470d0ba"
+        },
+        {
+          "path": "input/project/docs/review-request.md",
+          "sha256": "5baa0daa5bddc25e48df9d052a02b1c062bfc7a5086599eeee09f7377c139be8"
+        },
+        {
+          "path": "input/project/README.md",
+          "sha256": "0dd7a087e22dbb2a44ae0d508763a26f3fd829efd12f8fbcd2958e9618e01758"
+        },
+        {
+          "path": "input/project/src/work/Provider.java",
+          "sha256": "1b2604204f5f97ec472f1a1b981d09290d2de91447e4de0d7469b62dbf527721"
+        },
+        {
+          "path": "input/project/src/work/ResultBridge.java",
+          "sha256": "3f0959c157d38290c15f6bb58fbb5d7e0c9fd04ad20455bb3c4c7ffa53a91d70"
+        },
+        {
+          "path": "input/project/src/work/Snapshot.java",
+          "sha256": "7804dbeb51b652d02623b9df39a8207b47d3a971bedb23a64ade34a9b06d7800"
+        },
+        {
+          "path": "input/project/test/work/Smoke.java",
+          "sha256": "fe141df22aa0153217ac2501d48c1f1a9dee87ed57e1960fb74e4b409373076b"
+        },
+        {
+          "path": "output/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "output/project/docs/contract.md",
+          "sha256": "0e2ebc05b6296ec6bfba592160b83acdfaf118f3a52b80160955a4e32470d0ba"
+        },
+        {
+          "path": "output/project/docs/review-request.md",
+          "sha256": "5baa0daa5bddc25e48df9d052a02b1c062bfc7a5086599eeee09f7377c139be8"
+        },
+        {
+          "path": "output/project/README.md",
+          "sha256": "0dd7a087e22dbb2a44ae0d508763a26f3fd829efd12f8fbcd2958e9618e01758"
+        },
+        {
+          "path": "output/project/src/work/Provider.java",
+          "sha256": "1b2604204f5f97ec472f1a1b981d09290d2de91447e4de0d7469b62dbf527721"
+        },
+        {
+          "path": "output/project/src/work/ResultBridge.java",
+          "sha256": "3f0959c157d38290c15f6bb58fbb5d7e0c9fd04ad20455bb3c4c7ffa53a91d70"
+        },
+        {
+          "path": "output/project/src/work/Snapshot.java",
+          "sha256": "7804dbeb51b652d02623b9df39a8207b47d3a971bedb23a64ade34a9b06d7800"
+        },
+        {
+          "path": "output/project/test/work/Smoke.java",
+          "sha256": "fe141df22aa0153217ac2501d48c1f1a9dee87ed57e1960fb74e4b409373076b"
+        },
+        {
+          "path": "skill/references/happens-before.md",
+          "sha256": "ffb7b4955709d039d02549f7730d85b8bad661f22d9de908d14e741c6df5a076"
+        },
+        {
+          "path": "skill/references/review-checklist.md",
+          "sha256": "a9e6f00a8e7e26fcbe4b6d2a7a430198042acc7905025bb661772dd29b73b8a8"
+        },
+        {
+          "path": "skill/SKILL.md",
+          "sha256": "a9f6dab4bf513019bf245efc9cd8757a5edcc9b212ec507e3545fa59573c2a1a"
+        },
+        {
+          "path": "skill/skill.yaml",
+          "sha256": "1e2323798bd80080cf698cd1f8cc7085aa712c4e96f2113cb15c09eb97fe8c9b"
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "5f89214a9ac67af03e132e074a92980e253773baa9a12cae3341e9f13350fb77"
+        }
+      ],
+      "actor": "/root/wave6_actor32",
+      "status": "pending"
+    },
+    {
+      "id": "run-33",
+      "caseId": "H3",
+      "condition": "current",
+      "trial": 2,
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-33",
+      "inputs": [
+        {
+          "path": "input/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "input/project/docs/contract.md",
+          "sha256": "0e2ebc05b6296ec6bfba592160b83acdfaf118f3a52b80160955a4e32470d0ba"
+        },
+        {
+          "path": "input/project/docs/review-request.md",
+          "sha256": "5baa0daa5bddc25e48df9d052a02b1c062bfc7a5086599eeee09f7377c139be8"
+        },
+        {
+          "path": "input/project/README.md",
+          "sha256": "0dd7a087e22dbb2a44ae0d508763a26f3fd829efd12f8fbcd2958e9618e01758"
+        },
+        {
+          "path": "input/project/src/work/Provider.java",
+          "sha256": "1b2604204f5f97ec472f1a1b981d09290d2de91447e4de0d7469b62dbf527721"
+        },
+        {
+          "path": "input/project/src/work/ResultBridge.java",
+          "sha256": "3f0959c157d38290c15f6bb58fbb5d7e0c9fd04ad20455bb3c4c7ffa53a91d70"
+        },
+        {
+          "path": "input/project/src/work/Snapshot.java",
+          "sha256": "7804dbeb51b652d02623b9df39a8207b47d3a971bedb23a64ade34a9b06d7800"
+        },
+        {
+          "path": "input/project/test/work/Smoke.java",
+          "sha256": "fe141df22aa0153217ac2501d48c1f1a9dee87ed57e1960fb74e4b409373076b"
+        },
+        {
+          "path": "output/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "output/project/docs/contract.md",
+          "sha256": "0e2ebc05b6296ec6bfba592160b83acdfaf118f3a52b80160955a4e32470d0ba"
+        },
+        {
+          "path": "output/project/docs/review-request.md",
+          "sha256": "5baa0daa5bddc25e48df9d052a02b1c062bfc7a5086599eeee09f7377c139be8"
+        },
+        {
+          "path": "output/project/README.md",
+          "sha256": "0dd7a087e22dbb2a44ae0d508763a26f3fd829efd12f8fbcd2958e9618e01758"
+        },
+        {
+          "path": "output/project/src/work/Provider.java",
+          "sha256": "1b2604204f5f97ec472f1a1b981d09290d2de91447e4de0d7469b62dbf527721"
+        },
+        {
+          "path": "output/project/src/work/ResultBridge.java",
+          "sha256": "3f0959c157d38290c15f6bb58fbb5d7e0c9fd04ad20455bb3c4c7ffa53a91d70"
+        },
+        {
+          "path": "output/project/src/work/Snapshot.java",
+          "sha256": "7804dbeb51b652d02623b9df39a8207b47d3a971bedb23a64ade34a9b06d7800"
+        },
+        {
+          "path": "output/project/test/work/Smoke.java",
+          "sha256": "fe141df22aa0153217ac2501d48c1f1a9dee87ed57e1960fb74e4b409373076b"
+        },
+        {
+          "path": "skill/references/happens-before.md",
+          "sha256": "bf3c0632c5a2643752fa2ad160a9694b8cc98696474bb14fc6c67499bc33865c"
+        },
+        {
+          "path": "skill/references/review-checklist.md",
+          "sha256": "a9e6f00a8e7e26fcbe4b6d2a7a430198042acc7905025bb661772dd29b73b8a8"
+        },
+        {
+          "path": "skill/SKILL.md",
+          "sha256": "a9f6dab4bf513019bf245efc9cd8757a5edcc9b212ec507e3545fa59573c2a1a"
+        },
+        {
+          "path": "skill/skill.yaml",
+          "sha256": "ebf7fdd7cf14ed7c51f1627d4cbfc022d264de515840da97004fa13531e53cab"
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "f3a70ba886ca1161670fa7d80fd5524524e262ba08ffeef0b22203bf5e4e8f39"
+        }
+      ],
+      "actor": "/root/wave6_actor33",
+      "status": "pending"
+    },
+    {
+      "id": "run-34",
+      "caseId": "H4",
+      "condition": "previous",
+      "trial": 2,
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-34",
+      "inputs": [
+        {
+          "path": "input/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "input/project/docs/contract.md",
+          "sha256": "bda240d743b23d54b26d335d25b8379187f5daf02ddea15bc5ead15d45616ab9"
+        },
+        {
+          "path": "input/project/docs/review-request.md",
+          "sha256": "b289f7eef31916b9fb63ad4b0cdf73ab6580a029e8233baa8474e7b490c12505"
+        },
+        {
+          "path": "input/project/README.md",
+          "sha256": "f7308d48921d2a1e694594aace471a6a27db4678ba1105b4a87b3157340bf641"
+        },
+        {
+          "path": "input/project/src/work/Message.java",
+          "sha256": "296d6afead1aa5cf9c04f3b211c88d6d797ce723d403eb199fd00f36444211ad"
+        },
+        {
+          "path": "input/project/test/work/Smoke.java",
+          "sha256": "07fe704f60685b8618d47f924a83aefc24b675c13a2066590c5b7329bfd6df72"
+        },
+        {
+          "path": "output/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "output/project/docs/contract.md",
+          "sha256": "bda240d743b23d54b26d335d25b8379187f5daf02ddea15bc5ead15d45616ab9"
+        },
+        {
+          "path": "output/project/docs/review-request.md",
+          "sha256": "b289f7eef31916b9fb63ad4b0cdf73ab6580a029e8233baa8474e7b490c12505"
+        },
+        {
+          "path": "output/project/README.md",
+          "sha256": "f7308d48921d2a1e694594aace471a6a27db4678ba1105b4a87b3157340bf641"
+        },
+        {
+          "path": "output/project/src/work/Message.java",
+          "sha256": "296d6afead1aa5cf9c04f3b211c88d6d797ce723d403eb199fd00f36444211ad"
+        },
+        {
+          "path": "output/project/test/work/Smoke.java",
+          "sha256": "07fe704f60685b8618d47f924a83aefc24b675c13a2066590c5b7329bfd6df72"
+        },
+        {
+          "path": "skill/references/happens-before.md",
+          "sha256": "ffb7b4955709d039d02549f7730d85b8bad661f22d9de908d14e741c6df5a076"
+        },
+        {
+          "path": "skill/references/review-checklist.md",
+          "sha256": "a9e6f00a8e7e26fcbe4b6d2a7a430198042acc7905025bb661772dd29b73b8a8"
+        },
+        {
+          "path": "skill/SKILL.md",
+          "sha256": "a9f6dab4bf513019bf245efc9cd8757a5edcc9b212ec507e3545fa59573c2a1a"
+        },
+        {
+          "path": "skill/skill.yaml",
+          "sha256": "1e2323798bd80080cf698cd1f8cc7085aa712c4e96f2113cb15c09eb97fe8c9b"
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "05c461f48be4affacf04db0e1e5b9270e3fb526b261f72f2ee290cf81fcbe70c"
+        }
+      ],
+      "actor": "/root/wave6_actor34",
+      "status": "pending"
+    },
+    {
+      "id": "run-35",
+      "caseId": "H4",
+      "condition": "current",
+      "trial": 2,
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-35",
+      "inputs": [
+        {
+          "path": "input/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "input/project/docs/contract.md",
+          "sha256": "bda240d743b23d54b26d335d25b8379187f5daf02ddea15bc5ead15d45616ab9"
+        },
+        {
+          "path": "input/project/docs/review-request.md",
+          "sha256": "b289f7eef31916b9fb63ad4b0cdf73ab6580a029e8233baa8474e7b490c12505"
+        },
+        {
+          "path": "input/project/README.md",
+          "sha256": "f7308d48921d2a1e694594aace471a6a27db4678ba1105b4a87b3157340bf641"
+        },
+        {
+          "path": "input/project/src/work/Message.java",
+          "sha256": "296d6afead1aa5cf9c04f3b211c88d6d797ce723d403eb199fd00f36444211ad"
+        },
+        {
+          "path": "input/project/test/work/Smoke.java",
+          "sha256": "07fe704f60685b8618d47f924a83aefc24b675c13a2066590c5b7329bfd6df72"
+        },
+        {
+          "path": "output/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "output/project/docs/contract.md",
+          "sha256": "bda240d743b23d54b26d335d25b8379187f5daf02ddea15bc5ead15d45616ab9"
+        },
+        {
+          "path": "output/project/docs/review-request.md",
+          "sha256": "b289f7eef31916b9fb63ad4b0cdf73ab6580a029e8233baa8474e7b490c12505"
+        },
+        {
+          "path": "output/project/README.md",
+          "sha256": "f7308d48921d2a1e694594aace471a6a27db4678ba1105b4a87b3157340bf641"
+        },
+        {
+          "path": "output/project/src/work/Message.java",
+          "sha256": "296d6afead1aa5cf9c04f3b211c88d6d797ce723d403eb199fd00f36444211ad"
+        },
+        {
+          "path": "output/project/test/work/Smoke.java",
+          "sha256": "07fe704f60685b8618d47f924a83aefc24b675c13a2066590c5b7329bfd6df72"
+        },
+        {
+          "path": "skill/references/happens-before.md",
+          "sha256": "bf3c0632c5a2643752fa2ad160a9694b8cc98696474bb14fc6c67499bc33865c"
+        },
+        {
+          "path": "skill/references/review-checklist.md",
+          "sha256": "a9e6f00a8e7e26fcbe4b6d2a7a430198042acc7905025bb661772dd29b73b8a8"
+        },
+        {
+          "path": "skill/SKILL.md",
+          "sha256": "a9f6dab4bf513019bf245efc9cd8757a5edcc9b212ec507e3545fa59573c2a1a"
+        },
+        {
+          "path": "skill/skill.yaml",
+          "sha256": "ebf7fdd7cf14ed7c51f1627d4cbfc022d264de515840da97004fa13531e53cab"
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "0475b7ac0a7afd33bac69a07dd61d44c2ea1ea7eff3642396eb6082b4edcabe0"
+        }
+      ],
+      "actor": "/root/wave6_actor35",
+      "status": "pending"
+    },
+    {
+      "id": "run-36",
+      "caseId": "H4",
+      "condition": "none",
+      "trial": 2,
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-36",
+      "inputs": [
+        {
+          "path": "input/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "input/project/docs/contract.md",
+          "sha256": "bda240d743b23d54b26d335d25b8379187f5daf02ddea15bc5ead15d45616ab9"
+        },
+        {
+          "path": "input/project/docs/review-request.md",
+          "sha256": "b289f7eef31916b9fb63ad4b0cdf73ab6580a029e8233baa8474e7b490c12505"
+        },
+        {
+          "path": "input/project/README.md",
+          "sha256": "f7308d48921d2a1e694594aace471a6a27db4678ba1105b4a87b3157340bf641"
+        },
+        {
+          "path": "input/project/src/work/Message.java",
+          "sha256": "296d6afead1aa5cf9c04f3b211c88d6d797ce723d403eb199fd00f36444211ad"
+        },
+        {
+          "path": "input/project/test/work/Smoke.java",
+          "sha256": "07fe704f60685b8618d47f924a83aefc24b675c13a2066590c5b7329bfd6df72"
+        },
+        {
+          "path": "output/project/check.mjs",
+          "sha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973"
+        },
+        {
+          "path": "output/project/docs/contract.md",
+          "sha256": "bda240d743b23d54b26d335d25b8379187f5daf02ddea15bc5ead15d45616ab9"
+        },
+        {
+          "path": "output/project/docs/review-request.md",
+          "sha256": "b289f7eef31916b9fb63ad4b0cdf73ab6580a029e8233baa8474e7b490c12505"
+        },
+        {
+          "path": "output/project/README.md",
+          "sha256": "f7308d48921d2a1e694594aace471a6a27db4678ba1105b4a87b3157340bf641"
+        },
+        {
+          "path": "output/project/src/work/Message.java",
+          "sha256": "296d6afead1aa5cf9c04f3b211c88d6d797ce723d403eb199fd00f36444211ad"
+        },
+        {
+          "path": "output/project/test/work/Smoke.java",
+          "sha256": "07fe704f60685b8618d47f924a83aefc24b675c13a2066590c5b7329bfd6df72"
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "934f31b179e3e1772bc317e917f737eeabed5e0e15932d66da1a21e87af18be2"
+        }
+      ],
+      "actor": "/root/wave6_actor36",
+      "status": "pending"
+    }
+  ],
+  "criteriaSha256": "bdb8083f28085d0bfb6167f0769d6afed767b29e673618292c5493c3dd775218",
+  "design": "6 cases x 3 conditions x 2 fresh actors =36 attempts; order rotated prospectively, no model/effort override.2 known regression cases and4 newly authored reserved projects; no post-outcome case selection.",
+  "isolation": "fork_turns:none, separate directories and scoped instructions; not OS-enforced isolation. Global platform skill metadata may remain. Each actor sees only one treatment/case.",
+  "runtime": "Inherited model/effort; exact model version and token billing not available. Node25.6.1/Temurin25.0.3, target25. No external API evaluation service or global installation.",
+  "boundaries": "Explicit loading tests execution, not automatic selection. No memory or multi-client experiment. Reviewer is independent of actor sessions; shared model biases remain.",
+  "resourceBudget": {
+    "plannedAttempts": 36,
+    "maxConcurrentActors": 18,
+    "plannedMinutesPerAttempt": 8,
+    "maxChildProcessMs": 30000,
+    "timeoutHandling": "Stop an overrun, preserve partial output, classify it explicitly; do not count a timeout as a completed contract success."
+  }
+}

@@ -34,6 +34,37 @@ different snapshot, report their limited applicability instead of calling the re
 tested. If conflicts or unavailable history prevent a coherent snapshot, mark affected coverage
 incomplete without inventing a merge result.
 
+## Trace affected behavior and retain coverage
+
+Start with the changed behaviors and contracts, then use the questions below to choose
+checks. For a small, single-path change, a brief scope/validation note is enough. When paths
+diverge or review needs multiple passes, keep a compact working note for each material behavior:
+**entry/trigger → changed operation → observable result**, the relevant contract, inspected
+evidence and any remaining check. This is review working state, not a requirement to add files
+to the repository or produce a separate audit report.
+
+- Follow the changed symbol to its callers and consumers. Where calls are indirect, inspect
+  interface implementations, registration/wiring or configuration instead of assuming a text
+  search found every caller. Include alternate entry points, retries or cleanup paths when
+  they can change the affected contract; do not expand into unrelated subsystems.
+- Check a guard or invariant on the particular path being assessed. A guarded single-item
+  entry point does not establish that a batch caller uses it; a downstream wrapper can enforce
+  a check omitted locally. Trace through to the read, write or external effect before deciding.
+- If a search yields no match, verify its scope, exclusions, symbol variants and execution
+  result before claiming absence. A failed command, truncated output or unavailable generated
+  wiring is a coverage limit. State the missing evidence and continue independent paths.
+- Mark an obligation **checked** only with a relevant source trace or executed check and its
+  result; record static inspection separately from execution. Keep uninspected work **pending**;
+  identify a concrete access/environment blocker for **blocked**, or a reason for **deferred**
+  work. Checked means the specified question was examined, not that the path is defect-free.
+
+Before the final verdict, reconcile these notes with the requested diff: every material changed
+behavior must have a supported conclusion or an explicit remaining obligation. This does not
+replace reading the assigned changes. Report only the coverage and limits needed to interpret
+the findings; no mandatory table or percentage is needed. When the reviewed revision changes,
+reopen notes whose paths or assumptions changed instead of carrying a prior check forward as
+current evidence.
+
 ## 1. Is it the right thing?
 
 - Does the change do what the description says, and is that what the ticket asked for?
@@ -46,8 +77,8 @@ incomplete without inventing a merge result.
 
 ## 2. Does it fail well?
 
-The highest-yield question in most reviews, because happy paths get tested and failure paths
-get imagined.
+Prioritize failure paths when the change alters recovery, cleanup or partial state and the
+available tests exercise only successful execution.
 
 - What happens on: empty, null, zero, negative, maximum, duplicate, out-of-order input?
 - What happens when the dependency times out, returns 500, or returns success after the caller
@@ -112,8 +143,12 @@ for one engine's enforcement; inspect the actual engine and schema before genera
 
 ## 7. Tests
 
-- Can each new test fail? Look for assertions that restate the implementation, mocks verified
-  against themselves, and tests with no assertion at all (java-test-doubles).
+- What specific incorrect behavior would fail each new test? Look for assertions that restate
+  the implementation and mocks verified against themselves (java-test-doubles). Inspect helpers
+  and the test framework before declaring assertions absent. A test of successful completion
+  can fail on an unexpected exception without an explicit assertion; that alone does not check
+  returned values or state changes. See the
+  [JUnit 5.10.5 assertion usage note](<https://docs.junit.org/5.10.5/api/org.junit.jupiter.api/org/junit/jupiter/api/Assertions.html#assertDoesNotThrow(org.junit.jupiter.api.function.Executable)>).
 - Does the test cover the risk the change carries, or only the path that was easy to test
   (java-testing-strategy)?
 - Were tests deleted or disabled in this change? That needs an explicit reason in the

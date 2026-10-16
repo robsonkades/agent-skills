@@ -1,0 +1,137 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { createDb } from './fixture.mjs';
+
+// All candidate checks execute the supplied file; no embedded replacement query.
+const solution = fs.readFileSync(new URL('./solution.sql', import.meta.url), 'utf8');
+const current = fs.readFileSync(new URL('./current.sql', import.meta.url), 'utf8');
+const proposed = fs.readFileSync(new URL('./proposed.sql', import.meta.url), 'utf8');
+const db = createDb();
+let resultComparisons = 0;
+let cursorChecks = 0;
+let walks = 0;
+const datasets = [];
+
+function prepare(sql) {
+  const statement = db.prepare(sql);
+  // Avoid JS Number rounding when returning and rebinding bigint primary keys.
+  statement.setReadBigInts(true);
+  return statement;
+}
+function rows(statement, bindings) {
+  return statement.all(bindings).map(row => ({ ...row }));
+}
+function same(actual, expected, context) {
+  assert.deepStrictEqual(actual, expected, context);
+  resultComparisons++;
+}
+function params(tenant, cursor, size) {
+  return {
+    tenant,
+    cursor_priority: cursor.priority,
+    cursor_created: cursor.created_at,
+    cursor_id: cursor.id,
+    page_size: size,
+  };
+}
+
+try {
+  const candidate = prepare(solution);
+  const reference = prepare(current);
+  const firstPage = prepare(current.trim().replace(/;\s*$/, '') + ' LIMIT :page_size');
+  const proposal = prepare(proposed);
+  const pageSizes = [0, 1, 2, 3, 5, 19, 1000];
+
+  function checkTenant(name, tenant) {
+    const expected = rows(reference, { tenant });
+    datasets.push({ name, tenant: String(tenant), rows: expected.length });
+    for (let index = 0; index < expected.length; index++) {
+      for (const size of pageSizes) {
+        same(
+          rows(candidate, params(tenant, expected[index], size)),
+          expected.slice(index + 1, index + 1 + size),
+          `${name}: cursor ${expected[index].id}, page size ${size}`,
+        );
+        cursorChecks++;
+      }
+    }
+    // Obtain an actual first page, then repeatedly bind its final row.
+    for (const size of [1, 2, 3, 7, 1000]) {
+      const seen = rows(firstPage, { tenant, page_size: size });
+      let page = seen;
+      let steps = 0;
+      while (page.length > 0) {
+        assert.ok(++steps <= expected.length + 1, `${name}: traversal must terminate`);
+        page = rows(candidate, params(tenant, page.at(-1), size));
+        seen.push(...page);
+      }
+      same(seen, expected, `${name}: complete walk with page size ${size}`);
+      assert.equal(new Set(seen.map(row => row.id)).size, seen.length);
+      walks++;
+    }
+    return expected;
+  }
+
+  const seed = checkTenant('supplied mixed priorities', 71n);
+  same(seed.map(row => row.id), [2n, 1n, 3n, 4n, 6n, 5n, 7n], 'seed order');
+  checkTenant('supplied second tenant', 72n);
+  const proposalFailures = [];
+  for (const cursorId of [1n, 3n, 6n]) {
+    const index = seed.findIndex(row => row.id === cursorId);
+    const expected = seed.slice(index + 1);
+    const actual = rows(proposal, params(71n, seed[index], 1000));
+    assert.notDeepStrictEqual(actual, expected, 'proposal negative control');
+    proposalFailures.push({
+      cursorId: String(cursorId),
+      expectedIds: expected.map(row => String(row.id)),
+      actualIds: actual.map(row => String(row.id)),
+    });
+  }
+
+  const insert = db.prepare('INSERT INTO tickets(id, tenant_id, priority, created_at, label) VALUES (?, ?, ?, ?, ?)');
+  let id = 1000n;
+  const priorities = [2147483647, 3, 1, 0, -1, -2, -100, -2147483648, null];
+  const dates = ['2025-12-31', '2026-01-01', '2026-01-02', '2027-01-01'];
+  for (const priority of priorities) {
+    for (const date of dates) {
+      for (let tie = 0; tie < 3; tie++) {
+        insert.run(id++, 101n, priority, date, `original '${priority}' ${date} ${tie} Ω`);
+        // Interleave foreign-tenant rows that pass the cursor predicates.
+        insert.run(id++, 102n, priority, date, 'foreign tenant');
+      }
+    }
+  }
+  // Both signed bigint extremes and values on either side of Number precision.
+  for (const extremeId of [-9223372036854775808n, -9007199254740993n, 9007199254740992n, 9007199254740993n, 9223372036854775807n]) {
+    insert.run(extremeId, 101n, -1, '2026-01-01', `exact id ${extremeId}`);
+  }
+  for (const [priority, tenant] of [[null, 103n], [-2147483648, 104n]]) {
+    for (const date of dates) {
+      for (let tie = 0; tie < 3; tie++) insert.run(id++, tenant, priority, date, tie === 0 ? '' : `preserve ${tie}`);
+    }
+  }
+  insert.run(id++, 105n, null, '2026-01-01', 'single row');
+
+  checkTenant('negative and integer boundaries, bigint keys, ties', 101n);
+  checkTenant('interleaved foreign tenant', 102n);
+  checkTenant('only NULL priorities', 103n);
+  checkTenant('only minimum integer priorities', 104n);
+  checkTenant('single row', 105n);
+  checkTenant('empty tenant first page', 106n);
+
+  const sqliteVersion = db.prepare('SELECT sqlite_version() AS version').get().version;
+  console.log(JSON.stringify({
+    status: 'pass',
+    nodeVersion: process.version,
+    sqliteVersion,
+    candidateSource: 'solution.sql',
+    resultComparisons,
+    cursorChecks,
+    completePageWalks: walks,
+    datasets,
+    proposalFailures,
+    limits: 'SQLite result semantics only; no PostgreSQL execution, plans, timings, concurrency or production verification.',
+  }, null, 2));
+} finally {
+  db.close();
+}

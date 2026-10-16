@@ -1,0 +1,85 @@
+import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicLong;
+
+public final class Probe {
+    private static int assertions;
+    private static void check(boolean condition, String label) {
+        assertions++;
+        if (!condition) throw new AssertionError(label);
+    }
+    private static void rejects(Runnable action, Class<? extends Throwable> type, String label) {
+        try { action.run(); throw new AssertionError(label + " accepted"); }
+        catch (Throwable error) { check(type.isInstance(error), label + " type: " + error); }
+    }
+    private static void timedOut(CompletableFuture<?> future) throws Exception {
+        try { future.get(3, TimeUnit.SECONDS); throw new AssertionError("expected timeout completion"); }
+        catch (ExecutionException expected) {
+            check(expected.getCause() instanceof TimeoutException, "timeout cause");
+        }
+    }
+    public static void main(String[] args) throws Exception {
+        AtomicLong clock = new AtomicLong(100);
+        Deadline deadline = Deadline.in(Duration.ofNanos(1000), clock::get);
+        check(deadline.remaining().equals(Duration.ofNanos(1000)), "initial budget");
+        clock.addAndGet(300);
+        check(deadline.remaining().equals(Duration.ofNanos(700)), "elapsed subtraction");
+        check(deadline.forNextHop(Duration.ofNanos(200)).equals(Duration.ofNanos(500)), "reserve");
+        check(deadline.forNextHop(Duration.ofNanos(700)).isZero(), "equal reserve");
+        check(deadline.forNextHop(Duration.ofSeconds(Long.MAX_VALUE)).isZero(), "huge reserve no overflow");
+        clock.addAndGet(700);
+        check(deadline.expired(), "exact expiry");
+        clock.incrementAndGet();
+        check(deadline.remaining().isZero(), "past expiry");
+        clock.set(Long.MAX_VALUE - 5);
+        Deadline wrap = Deadline.in(Duration.ofNanos(20), clock::get);
+        clock.addAndGet(12);
+        check(wrap.remaining().equals(Duration.ofNanos(8)), "signed clock wrap");
+        clock.set(100);
+        Deadline regressing = Deadline.in(Duration.ofNanos(20), clock::get);
+        clock.set(99);
+        check(regressing.expired(), "regressing test clock fails closed");
+        check(Deadline.in(Duration.ZERO, clock::get).expired(), "zero expiry");
+        check(Deadline.in(Duration.ofSeconds(Long.MAX_VALUE), clock::get).remaining().equals(Duration.ofDays(365)), "cap before conversion");
+        Deadline submillis = Deadline.in(Duration.ofNanos(999999), clock::get);
+        check(submillis.forNextHop(Duration.ZERO).toMillis() == 0, "wire rounding to expiry");
+        rejects(() -> Deadline.in(Duration.ofNanos(-1), clock::get), IllegalArgumentException.class, "negative budget");
+        rejects(() -> deadline.forNextHop(Duration.ofNanos(-1)), IllegalArgumentException.class, "negative reserve");
+        rejects(() -> Deadline.in(null, clock::get), NullPointerException.class, "null budget");
+        rejects(() -> Deadline.in(Duration.ofNanos(1), null), NullPointerException.class, "null clock");
+
+        // Negative control: modifying the source decides every downstream view's outcome.
+        CompletableFuture<String> badSource = new CompletableFuture<>();
+        CompletableFuture<String> badOther = badSource.copy();
+        check(badSource.orTimeout(20, TimeUnit.MILLISECONDS) == badSource, "orTimeout same instance");
+        timedOut(badSource);
+        timedOut(badOther);
+        check(!badSource.complete("late"), "timed-out source rejects owner success");
+
+        CompletableFuture<String> shared = new CompletableFuture<>();
+        CompletableFuture<String> shortWaiter = Waiter.attach(shared, Duration.ofMillis(20));
+        CompletableFuture<String> longWaiter = shared.copy();
+        check(shortWaiter != shared, "isolated completion view");
+        timedOut(shortWaiter);
+        check(!shared.isDone() && !longWaiter.isDone(), "other wait remains live");
+        check(shared.complete("owner-result"), "owner can complete");
+        check(longWaiter.get(3, TimeUnit.SECONDS).equals("owner-result"), "long waiter receives owner result");
+
+        CompletableFuture<String> cancellationSource = new CompletableFuture<>();
+        CompletableFuture<String> cancelledWaiter = Waiter.attach(cancellationSource, Duration.ofSeconds(3));
+        check(cancelledWaiter.cancel(true), "waiter cancellation accepted");
+        check(!cancellationSource.isDone(), "waiter cancel cannot cancel source");
+        check(cancellationSource.complete("retained"), "source can still finish");
+        CompletableFuture<String> failedSource = new CompletableFuture<>();
+        CompletableFuture<String> failedWaiter = Waiter.attach(failedSource, Duration.ofSeconds(3));
+        IllegalStateException failure = new IllegalStateException("owner failure");
+        failedSource.completeExceptionally(failure);
+        try { failedWaiter.get(3, TimeUnit.SECONDS); throw new AssertionError("lost owner failure"); }
+        catch (ExecutionException expected) { check(expected.getCause() == failure, "owner failure propagated"); }
+        check(Waiter.attach(CompletableFuture.completedFuture("ready"), Duration.ofSeconds(3)).get().equals("ready"), "already complete");
+        System.out.println("PASS " + assertions + " assertions; Java 11 API target; runtime=" + Runtime.version());
+    }
+}

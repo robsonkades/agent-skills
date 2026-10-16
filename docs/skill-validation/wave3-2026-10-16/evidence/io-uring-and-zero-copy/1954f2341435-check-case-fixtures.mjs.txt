@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+const root=path.dirname(fileURLToPath(import.meta.url));
+const get=(variant,file)=>readFile(path.join(root,'cases',variant,file),'utf8');
+assert.equal(await get('flags-zero','task.md'),await get('waitall','task.md'));
+assert.equal(await get('flags-zero','native_send.c'),await get('waitall','native_send.c'));
+assert.equal((await get('flags-zero','send_policy.c')).replace('= 0;','= MSG_WAITALL;'),await get('waitall','send_policy.c'));
+const criteria=JSON.parse(await readFile(path.join(root,'case-criteria.json'),'utf8'));
+assert.equal(criteria.length,2);
+assert.equal(new Set(criteria.map(c=>c.id)).size,2);
+console.log(JSON.stringify({checks:5,result:'PASS',scope:'Fixture integrity only. No native compilation, kernel execution, benchmark or agent evaluation.'},null,2));
+

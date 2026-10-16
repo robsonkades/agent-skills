@@ -73,7 +73,8 @@ arena ownership.
   small short-lived values, but benchmark the complete data path.
 - Avoid one native allocation per hot-path operation unless ownership and measurements justify
   it. Prefer a library's proven bounded pool or a scoped arena; pooling adds retention,
-  zeroing/data-remanence, fairness and use-after-release risks.
+  zeroing/data-remanence, fairness and use-after-release risks. A long-lived arena does not enforce
+  a shorter pool lease; see [pool lifetime and escaped views](references/ffm-memory-api.md#pooling-long-lived-allocations).
 - Every raw `Unsafe` address needs explicit single-owner lifetime, overflow/alignment checks,
   failure-safe release and use-after-free protection. Prefer `MemorySegment` where its scoped
   lifetime and access model fit; migration is not a mechanical allocation-call replacement.

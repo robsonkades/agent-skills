@@ -1,0 +1,10 @@
+{
+  "name": "project-valhalla",
+  "version": "1.0.5",
+  "files": [
+    "SKILL.md",
+    "references/status-and-experiments.md",
+    "skill.yaml"
+  ],
+  "issues": []
+}

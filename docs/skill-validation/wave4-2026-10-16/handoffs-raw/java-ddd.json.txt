@@ -1,0 +1,620 @@
+{
+  "schemaVersion": 1,
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "java-ddd",
+  "ownedPath": "C:/git/agent-skills/skills/java-ddd",
+  "reviewer": "/root/quality16",
+  "reviewDate": "2026-10-16",
+  "allWritesStopped": true,
+  "backgroundProcesses": {
+    "active": [],
+    "allStartedProcessesExited": true,
+    "detail": "No process was launched in the background. All command invocations and spawnSync children exited. Read-only web retrieval cell 216 was terminated after returning no output; versioned primary sources were then retrieved successfully through synchronous Invoke-WebRequest."
+  },
+  "baseline": {
+    "coordinatorSnapshot": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/baseline/java-ddd",
+    "reviewerSnapshot": "C:/Users/robso/AppData/Local/Temp/codex-java-ddd-20261016-5fa65f2a926140439f29cc3e662e3f4b/baseline",
+    "hashes": [
+      {
+        "relativePath": "SKILL.md",
+        "sha256": "bd1711ad23f85bcaa49a242bc708599ec171b60bd3e52af2b130f9190e781d99",
+        "bytes": 9358,
+        "coordinatorHash": "bd1711ad23f85bcaa49a242bc708599ec171b60bd3e52af2b130f9190e781d99"
+      },
+      {
+        "relativePath": "skill.yaml",
+        "sha256": "81bbed3f1db4bec41d928b9493c3c30ec6894b1a8392eaa1cf75913a013be934",
+        "bytes": 1741,
+        "coordinatorHash": "81bbed3f1db4bec41d928b9493c3c30ec6894b1a8392eaa1cf75913a013be934"
+      },
+      {
+        "relativePath": "references/modeling-decisions.md",
+        "sha256": "da4e87f9156b1c172695357d3fc67c5b80246c67751aff166bb224e35d889284",
+        "bytes": 4846,
+        "coordinatorHash": "da4e87f9156b1c172695357d3fc67c5b80246c67751aff166bb224e35d889284"
+      },
+      {
+        "relativePath": "references/project-conventions.md",
+        "sha256": "2e1bbb3d5d704bcd5e5da0ce1b8d3698a54eb6eda6919a0c6cc6a86f1d3b440b",
+        "bytes": 8613,
+        "coordinatorHash": "2e1bbb3d5d704bcd5e5da0ce1b8d3698a54eb6eda6919a0c6cc6a86f1d3b440b"
+      }
+    ],
+    "preExistingChanges": {
+      "staged": [],
+      "unstaged": [],
+      "untracked": []
+    },
+    "committedVersion": "1.0.0",
+    "assignmentVersion": "1.0.0",
+    "preExistingVersionBump": false
+  },
+  "reviewPromise": {
+    "role": "DDD entry/hub connecting business examples to a coherent Java use-case slice, with review/design/implementation modes preserved.",
+    "criteria": [
+      "Resolve business vocabulary, identity, lifecycle and invariant timing from accepted/rejected examples and actual writers.",
+      "Retain a transaction script/simple capability when sufficient; do not impose aggregate hierarchies or distributed patterns.",
+      "Separate model, aggregate consistency, persistence identity and actual delivery mechanisms.",
+      "Follow actual configuration/consumer and transaction interception before attributing behavior to the historical reference.",
+      "Preserve Java 17 source baseline, historical Boot 2.7.7 reference, target conventions and conditional specialist handoff."
+    ]
+  },
+  "findings": [
+    {
+      "id": "DDD-1",
+      "status": "corrected",
+      "location": "references/project-conventions.md:97",
+      "before": "Historical reference asserted a Rabbit sender inside the transaction before DB commit without qualifying effective selection/interception.",
+      "evidence": [
+        "EventConfig declares a development-profile InMemoryEventService and a conditional RabbitEventService.",
+        "InMemoryEventService.send only logs; RabbitEventService.send invokes RabbitOperations.convertAndSend.",
+        "DefaultVideoGateway saves then publishes events through the injected service before returning; Entity.publishDomainEvents invokes the publisher on recorded events.",
+        "Spring Framework 5.3.24 standard transaction advice invokes the target before transaction completion; annotations/source alone do not establish actual runtime interception."
+      ],
+      "consequence": "An agent could attribute an external delivery effect or fixed commit timing to a configuration that had not been resolved.",
+      "fix": "Describe injected publication and both declared implementation paths; require effective profile/bean and transaction evidence. Preserve durable delivery and simpler local notification alternatives.",
+      "sources": [
+        "sample-gateway",
+        "sample-configuration",
+        "sample-local-service",
+        "sample-rabbit-service",
+        "sample-entity",
+        "sample-root",
+        "boot-bom",
+        "spring-interceptor"
+      ]
+    },
+    {
+      "id": "DDD-2",
+      "status": "preserved",
+      "location": "SKILL.md:19–116; references/modeling-decisions.md",
+      "finding": "The hub already asks for business examples/decision authority, simple alternatives, state/effect rejection, actual commit/concurrency checks and conditional handoff. No supported need to duplicate tactical specialists, add templates or force a rich model.",
+      "evidence": "Whole package read; comparison with primary conceptual sources and actual reference construction/rehydration/build paths.",
+      "consequence": "Preserving this content avoids scope expansion and changes without evidence."
+    }
+  ],
+  "remainingFindings": [],
+  "changedFilesByReviewer": [
+    "skills/java-ddd/references/project-conventions.md",
+    "skills/java-ddd/skill.yaml"
+  ],
+  "unchangedFiles": [
+    "skills/java-ddd/SKILL.md",
+    "skills/java-ddd/references/modeling-decisions.md"
+  ],
+  "changesOutsideOwnedRepositoryPath": [],
+  "capabilities": {
+    "preserved": [
+      "Concrete activation and exclusions; review/design/implementation outcomes.",
+      "CRUD/transaction-script alternative and deliberate rich-model selection.",
+      "Business vocabulary, true consistency boundaries, rehydration/audit identity and failure contracts.",
+      "Java baseline/target distinction; no incidental framework upgrade or new dependency.",
+      "Historical naming and installed foundation alternatives; no dependency on the example path.",
+      "Seven tactical specialist dependencies, four optional referrals, conditional resource loading.",
+      "No atomic DB/broker guarantee from a call; durable integration only when required."
+    ],
+    "replaced": [
+      "Unconditional description of the historical event sender/timing with configuration- and interception-qualified evidence."
+    ],
+    "removed": []
+  },
+  "version": {
+    "committed": "1.0.0",
+    "assignment": "1.0.0",
+    "final": "1.0.1",
+    "rationale": "One patch for supported content correction. No pre-existing bump. Description and entrypoint unchanged; generated shared registry left to coordinator."
+  },
+  "commandsAndResults": {
+    "validationEntry": {
+      "command": "node C:/Users/robso/AppData/Local/Temp/codex-java-ddd-20261016-5fa65f2a926140439f29cc3e662e3f4b/validate.mjs",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "script": "C:/Users/robso/AppData/Local/Temp/codex-java-ddd-20261016-5fa65f2a926140439f29cc3e662e3f4b/validate.mjs",
+      "results": "C:/Users/robso/AppData/Local/Temp/codex-java-ddd-20261016-5fa65f2a926140439f29cc3e662e3f4b/validation-results.json",
+      "note": "Local package/metadata/link/case-shape and exact-file format/diff checks. Rerun after final publication wording and case fixture additions; no content/runtime integration test is implied."
+    },
+    "fullFinalResults": {
+      "nodeVersion": "v25.6.1",
+      "packageChecks": [
+        {
+          "label": "baseline",
+          "directory": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-ddd-20261016-5fa65f2a926140439f29cc3e662e3f4b\\baseline",
+          "version": "1.0.0",
+          "fileCount": 4,
+          "issues": []
+        },
+        {
+          "label": "revised",
+          "directory": "C:\\git\\agent-skills\\skills\\java-ddd",
+          "version": "1.0.1",
+          "fileCount": 4,
+          "issues": []
+        }
+      ],
+      "commands": [
+        {
+          "id": "prettier-current",
+          "executable": "C:\\Program Files\\nodejs\\node.exe",
+          "args": [
+            "node_modules/prettier/bin/prettier.cjs",
+            "--check",
+            "skills/java-ddd/SKILL.md",
+            "skills/java-ddd/references/modeling-decisions.md",
+            "skills/java-ddd/references/project-conventions.md",
+            "skills/java-ddd/skill.yaml"
+          ],
+          "cwd": "C:/git/agent-skills",
+          "status": 0,
+          "signal": null,
+          "error": null,
+          "stdout": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-ddd-20261016-5fa65f2a926140439f29cc3e662e3f4b\\logs\\prettier-current.stdout.txt",
+          "stderr": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-ddd-20261016-5fa65f2a926140439f29cc3e662e3f4b\\logs\\prettier-current.stderr.txt"
+        },
+        {
+          "id": "diff-check",
+          "executable": "git",
+          "args": [
+            "diff",
+            "--check",
+            "--",
+            "skills/java-ddd"
+          ],
+          "cwd": "C:/git/agent-skills",
+          "status": 0,
+          "signal": null,
+          "error": null,
+          "stdout": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-ddd-20261016-5fa65f2a926140439f29cc3e662e3f4b\\logs\\diff-check.stdout.txt",
+          "stderr": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-ddd-20261016-5fa65f2a926140439f29cc3e662e3f4b\\logs\\diff-check.stderr.txt"
+        },
+        {
+          "id": "owned-status",
+          "executable": "git",
+          "args": [
+            "status",
+            "--short",
+            "--untracked-files=all",
+            "--",
+            "skills/java-ddd"
+          ],
+          "cwd": "C:/git/agent-skills",
+          "status": 0,
+          "signal": null,
+          "error": null,
+          "stdout": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-ddd-20261016-5fa65f2a926140439f29cc3e662e3f4b\\logs\\owned-status.stdout.txt",
+          "stderr": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-ddd-20261016-5fa65f2a926140439f29cc3e662e3f4b\\logs\\owned-status.stderr.txt"
+        },
+        {
+          "id": "owned-diff",
+          "executable": "git",
+          "args": [
+            "diff",
+            "--no-ext-diff",
+            "--",
+            "skills/java-ddd"
+          ],
+          "cwd": "C:/git/agent-skills",
+          "status": 0,
+          "signal": null,
+          "error": null,
+          "stdout": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-ddd-20261016-5fa65f2a926140439f29cc3e662e3f4b\\logs\\owned-diff.stdout.txt",
+          "stderr": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-ddd-20261016-5fa65f2a926140439f29cc3e662e3f4b\\logs\\owned-diff.stderr.txt"
+        }
+      ],
+      "localLinks": [
+        {
+          "file": "SKILL.md",
+          "target": "references/project-conventions.md",
+          "present": true
+        },
+        {
+          "file": "SKILL.md",
+          "target": "references/modeling-decisions.md",
+          "present": true
+        }
+      ],
+      "caseChecks": [
+        {
+          "check": "two case sources/context/request identical; only notification contract differs",
+          "passed": true,
+          "caseIds": [
+            "A",
+            "B"
+          ]
+        }
+      ],
+      "finalHashes": [
+        {
+          "relativePath": "references/modeling-decisions.md",
+          "bytes": 4846,
+          "sha256": "da4e87f9156b1c172695357d3fc67c5b80246c67751aff166bb224e35d889284"
+        },
+        {
+          "relativePath": "references/project-conventions.md",
+          "bytes": 8961,
+          "sha256": "a0ee002339fb6d212859149018c19566bcf8e401c23682ffb6d8bda85bc43158"
+        },
+        {
+          "relativePath": "SKILL.md",
+          "bytes": 9358,
+          "sha256": "bd1711ad23f85bcaa49a242bc708599ec171b60bd3e52af2b130f9190e781d99"
+        },
+        {
+          "relativePath": "skill.yaml",
+          "bytes": 1741,
+          "sha256": "2075a6000408190bb01355333f880897eca7b26c5929ba9cc9768fb285cf0592"
+        }
+      ]
+    },
+    "baselineCommands": [
+      {
+        "command": "git status --short --untracked-files=all -- skills/java-ddd",
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "result": "empty",
+        "artifact": "C:/Users/robso/AppData/Local/Temp/codex-java-ddd-20261016-5fa65f2a926140439f29cc3e662e3f4b/logs/status-before.txt"
+      },
+      {
+        "command": "git diff -- skills/java-ddd",
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "result": "empty",
+        "artifact": "C:/Users/robso/AppData/Local/Temp/codex-java-ddd-20261016-5fa65f2a926140439f29cc3e662e3f4b/logs/unstaged-before.diff"
+      },
+      {
+        "command": "git diff --cached -- skills/java-ddd",
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "result": "empty",
+        "artifact": "C:/Users/robso/AppData/Local/Temp/codex-java-ddd-20261016-5fa65f2a926140439f29cc3e662e3f4b/logs/staged-before.diff"
+      },
+      {
+        "command": "git show HEAD:skills/java-ddd/skill.yaml",
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "result": "version 1.0.0",
+        "artifact": "C:/Users/robso/AppData/Local/Temp/codex-java-ddd-20261016-5fa65f2a926140439f29cc3e662e3f4b/logs/committed-manifest.yaml"
+      }
+    ],
+    "sourceDownloads": [
+      {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "09cbda",
+          "wall_time_seconds": 0.3962839,
+          "exit_code": 0,
+          "original_token_count": 111,
+          "output": "{\r\n  \"url\": \"https://raw.githubusercontent.com/spring-projects/spring-framework/v5.3.24/spring-tx/src/main/java/org/springframework/transaction/interceptor/TransactionAspectSupport.java\",\r\n  \"status\": 200,\r\n  \"path\": \"C:/Users/robso/AppData/Local/Temp/codex-java-ddd-20261016-5fa65f2a926140439f29cc3e662e3f4b/sources/TransactionAspectSupport-v5.3.24.java\",\r\n  \"sha256\": \"18a72bb6831ebcdcf3ebc3ef5c102e661253f84fed6d2a181580a8537112cfa9\"\r\n}\r\n"
+        }
+      },
+      {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "6bc9b6",
+          "wall_time_seconds": 0.4480205,
+          "exit_code": 0,
+          "original_token_count": 99,
+          "output": "{\r\n  \"url\": \"https://raw.githubusercontent.com/spring-projects/spring-boot/v2.7.7/spring-boot-project/spring-boot-dependencies/build.gradle\",\r\n  \"status\": 200,\r\n  \"path\": \"C:/Users/robso/AppData/Local/Temp/codex-java-ddd-20261016-5fa65f2a926140439f29cc3e662e3f4b/sources/spring-boot-dependencies-v2.7.7.gradle\",\r\n  \"sha256\": \"9618a7b36ca4b76be885110d84029d903b63ac52357ac73d318a4bbc6d45b1d1\"\r\n}\r\n"
+        }
+      }
+    ],
+    "readOnlyInspection": "Complete package and authoritative procedure; exact referenced Java classes/configuration and Gradle reference baseline; applicable primary DDD articles. No external reference repository modifications/build.",
+    "relevantFailures": [
+      {
+        "kind": "source retrieval",
+        "result": "A later web find operation returned no output and was terminated. Alternate direct downloads succeeded; evidence retained."
+      },
+      {
+        "kind": "inspection path",
+        "result": "A guessed wave3 report.md path did not exist. Located/read actual wave3 README.md; not a validation failure."
+      }
+    ]
+  },
+  "validationClassification": {
+    "structural": "EXECUTED: strict real package validator baseline/revised (4 files each, zero issues), 2 local resource links, case equality outside notification contract, exact owned files Prettier, git diff --check.",
+    "technical": "EXECUTED: read-only direct primary source/configuration/interceptor inspection; no Java program/test execution. No executable Java example was added or materially changed.",
+    "behavioral": "NOT EXECUTED: zero independent actor runs, zero matched skill/no-skill comparisons; no measured gain.",
+    "walkthroughs": [
+      {
+        "id": "A",
+        "kind": "structured reviewer walkthrough only",
+        "outcome": "Existing hub and corrected reference can support retaining local diagnostics, rejecting a forced outbox and qualifying bean/commit evidence."
+      },
+      {
+        "id": "B",
+        "kind": "structured reviewer walkthrough only",
+        "outcome": "Existing hub and corrected reference can support explicit durable delivery and specialist handoff while leaving configuration and integration results unproven."
+      }
+    ]
+  },
+  "evaluation": {
+    "caseInputsPath": "C:/Users/robso/AppData/Local/Temp/codex-java-ddd-20261016-5fa65f2a926140439f29cc3e662e3f4b/case-inputs.json",
+    "criteriaPath": "C:/Users/robso/AppData/Local/Temp/codex-java-ddd-20261016-5fa65f2a926140439f29cc3e662e3f4b/case-evaluator-criteria.json",
+    "taskInputs": {
+      "schemaVersion": 1,
+      "kind": "actor-inputs",
+      "cases": [
+        {
+          "id": "A",
+          "request": "Review the next video intake capability from these project artifacts. Give a short domain/application design and the smallest justified changes for the notification contract. State what can be concluded from the source and which delivery checks are still needed. Do not implement or upgrade the framework in this task.",
+          "artifacts": {
+            "infrastructure/DefaultVideoGateway.java": "package com.robsonkades.admin.catalogo.infrastructure.video;\n\nimport com.robsonkades.admin.catalogo.domain.Identifier;\nimport com.robsonkades.admin.catalogo.domain.pagination.Pagination;\nimport com.robsonkades.admin.catalogo.domain.video.*;\nimport com.robsonkades.admin.catalogo.infrastructure.configuration.annotations.VideoCreatedQueue;\nimport com.robsonkades.admin.catalogo.infrastructure.services.EventService;\nimport com.robsonkades.admin.catalogo.infrastructure.utils.SqlUtils;\nimport com.robsonkades.admin.catalogo.infrastructure.video.persistence.VideoJpaEntity;\nimport com.robsonkades.admin.catalogo.infrastructure.video.persistence.VideoRepository;\nimport org.springframework.data.domain.PageRequest;\nimport org.springframework.data.domain.Sort;\nimport org.springframework.stereotype.Component;\nimport org.springframework.transaction.annotation.Transactional;\n\nimport java.util.Objects;\nimport java.util.Optional;\n\nimport static com.robsonkades.admin.catalogo.domain.utils.CollectionUtils.mapTo;\nimport static com.robsonkades.admin.catalogo.domain.utils.CollectionUtils.nullIfEmpty;\n\n@Component\npublic class DefaultVideoGateway implements VideoGateway {\n\n    private final EventService eventService;\n    private final VideoRepository videoRepository;\n\n    public DefaultVideoGateway(\n            @VideoCreatedQueue final EventService eventService,\n            final VideoRepository videoRepository\n    ) {\n        this.eventService = Objects.requireNonNull(eventService);\n        this.videoRepository = Objects.requireNonNull(videoRepository);\n    }\n\n    @Override\n    @Transactional\n    public Video create(final Video aVideo) {\n        return save(aVideo);\n    }\n\n    @Override\n    public void deleteById(final VideoID anId) {\n        final var aVideoId = anId.getValue();\n        if (this.videoRepository.existsById(aVideoId)) {\n            this.videoRepository.deleteById(aVideoId);\n        }\n    }\n\n    @Override\n    @Transactional(readOnly = true)\n    public Optional<Video> findById(final VideoID anId) {\n        return this.videoRepository.findById(anId.getValue())\n                .map(VideoJpaEntity::toAggregate);\n    }\n\n    @Override\n    @Transactional\n    public Video update(final Video aVideo) {\n        return save(aVideo);\n    }\n\n    @Override\n    public Pagination<VideoPreview> findAll(final VideoSearchQuery aQuery) {\n        final var page = PageRequest.of(\n                aQuery.page(),\n                aQuery.perPage(),\n                Sort.by(Sort.Direction.fromString(aQuery.direction()), aQuery.sort())\n        );\n\n        final var actualPage = this.videoRepository.findAll(\n                SqlUtils.like(SqlUtils.upper(aQuery.terms())),\n                nullIfEmpty(mapTo(aQuery.castMembers(), Identifier::getValue)),\n                nullIfEmpty(mapTo(aQuery.categories(), Identifier::getValue)),\n                nullIfEmpty(mapTo(aQuery.genres(), Identifier::getValue)),\n                page\n        );\n\n        return new Pagination<>(\n                actualPage.getNumber(),\n                actualPage.getSize(),\n                actualPage.getTotalElements(),\n                actualPage.toList()\n        );\n    }\n\n    private Video save(final Video aVideo) {\n        final var result = this.videoRepository.save(VideoJpaEntity.from(aVideo))\n                .toAggregate();\n\n        aVideo.publishDomainEvents(this.eventService::send);\n\n        return result;\n    }\n}",
+            "infrastructure/EventConfig.java": "package com.robsonkades.admin.catalogo.infrastructure.configuration;\n\nimport com.robsonkades.admin.catalogo.infrastructure.configuration.annotations.VideoCreatedQueue;\nimport com.robsonkades.admin.catalogo.infrastructure.configuration.properties.amqp.QueueProperties;\nimport com.robsonkades.admin.catalogo.infrastructure.services.EventService;\nimport com.robsonkades.admin.catalogo.infrastructure.services.impl.RabbitEventService;\nimport com.robsonkades.admin.catalogo.infrastructure.services.local.InMemoryEventService;\nimport org.springframework.amqp.rabbit.core.RabbitOperations;\nimport org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;\nimport org.springframework.context.annotation.Bean;\nimport org.springframework.context.annotation.Configuration;\nimport org.springframework.context.annotation.Profile;\n\n@Configuration\npublic class EventConfig {\n\n    @Bean\n    @VideoCreatedQueue\n    @Profile({\"development\"})\n    EventService localVideoCreatedEventService() {\n        return new InMemoryEventService();\n    }\n\n    @Bean\n    @VideoCreatedQueue\n    @ConditionalOnMissingBean\n    EventService videoCreatedEventService(\n            @VideoCreatedQueue final QueueProperties props,\n            final RabbitOperations ops\n    ) {\n        return new RabbitEventService(props.getExchange(), props.getRoutingKey(), ops);\n    }\n}\n",
+            "infrastructure/RabbitEventService.java": "package com.robsonkades.admin.catalogo.infrastructure.services.impl;\n\nimport com.robsonkades.admin.catalogo.infrastructure.configuration.json.Json;\nimport com.robsonkades.admin.catalogo.infrastructure.services.EventService;\nimport org.springframework.amqp.rabbit.core.RabbitOperations;\n\nimport java.util.Objects;\n\npublic class RabbitEventService implements EventService {\n\n    private final String exchange;\n    private final String routingKey;\n    private final RabbitOperations ops;\n\n    public RabbitEventService(\n            final String exchange,\n            final String routingKey,\n            final RabbitOperations ops\n    ) {\n        this.exchange = Objects.requireNonNull(exchange);\n        this.routingKey = Objects.requireNonNull(routingKey);\n        this.ops = Objects.requireNonNull(ops);\n    }\n\n    @Override\n    public void send(final Object event) {\n        this.ops.convertAndSend(this.exchange, this.routingKey, Json.writeValueAsString(event));\n    }\n}\n",
+            "infrastructure/InMemoryEventService.java": "package com.robsonkades.admin.catalogo.infrastructure.services.local;\n\nimport com.robsonkades.admin.catalogo.infrastructure.configuration.json.Json;\nimport com.robsonkades.admin.catalogo.infrastructure.services.EventService;\nimport org.slf4j.Logger;\nimport org.slf4j.LoggerFactory;\n\npublic class InMemoryEventService implements EventService {\n\n    private static final Logger LOG = LoggerFactory.getLogger(InMemoryEventService.class);\n\n    @Override\n    public void send(Object event) {\n        LOG.info(\"Event was observed: {}\", Json.writeValueAsString(event));\n    }\n}\n",
+            "project-notes.md": "# Project notes\n\nThis is a source excerpt for a design review, not a runnable project. The catalog application uses Java 17 source features, Spring Boot 2.7.7, JPA and Rabbit libraries. The application creates a Video with a VideoCreated fact and invokes VideoGateway.create through an injected port. Category and video identities and names are already established. Preserve the existing module and class naming.\n\nThe attached files are the event configuration, implementations and video adapter. No deployment profile, bean inventory, transaction-manager configuration, database trace or broker trace has been supplied. An existing unit test uses a mocked VideoRepository and mocked EventService, checks one save and one send, and passes.\n",
+            "requirements.md": "# Video intake\n\nAn operator submits a new video. Valid input creates a pending video with a stable ID and preserved creation time; invalid input must not create a video or start processing. Updating descriptive metadata must keep the existing identity. The only new requirement under review is the notification contract below.\n",
+            "domain/Entity.java": "package com.robsonkades.admin.catalogo.domain;\n\nimport com.robsonkades.admin.catalogo.domain.events.DomainEvent;\nimport com.robsonkades.admin.catalogo.domain.events.DomainEventPublisher;\nimport com.robsonkades.admin.catalogo.domain.validation.ValidationHandler;\n\nimport java.util.ArrayList;\nimport java.util.Collections;\nimport java.util.List;\nimport java.util.Objects;\n\npublic abstract class Entity<ID extends Identifier> {\n\n    protected final ID id;\n    private final List<DomainEvent> domainEvents;\n\n    protected Entity(final ID id) {\n        this(id, null);\n    }\n\n    protected Entity(final ID id, final List<DomainEvent> domainEvents) {\n        Objects.requireNonNull(id, \"'id' should not be null\");\n        this.id = id;\n        this.domainEvents = new ArrayList<>(domainEvents == null ? Collections.emptyList() : domainEvents);\n    }\n\n    public abstract void validate(ValidationHandler handler);\n\n    public ID getId() {\n        return id;\n    }\n\n    public List<DomainEvent> getDomainEvents() {\n        return Collections.unmodifiableList(domainEvents);\n    }\n\n    public void publishDomainEvents(final DomainEventPublisher publisher) {\n        if (publisher == null) {\n            return;\n        }\n\n        getDomainEvents()\n                .forEach(publisher::publishEvent);\n\n        this.domainEvents.clear();\n    }\n\n    public void registerEvent(final DomainEvent event) {\n        if (event == null) {\n            return;\n        }\n\n        this.domainEvents.add(event);\n    }\n\n    @Override\n    public boolean equals(final Object o) {\n        if (this == o) return true;\n        if (o == null || getClass() != o.getClass()) return false;\n        final Entity<?> entity = (Entity<?>) o;\n        return getId().equals(entity.getId());\n    }\n\n    @Override\n    public int hashCode() {\n        return Objects.hash(getId());\n    }\n}\n",
+            "domain/AggregateRoot.java": "package com.robsonkades.admin.catalogo.domain;\n\nimport com.robsonkades.admin.catalogo.domain.events.DomainEvent;\n\nimport java.util.List;\n\npublic abstract class AggregateRoot<ID extends Identifier> extends Entity<ID> {\n\n    protected AggregateRoot(final ID id) {\n        super(id);\n    }\n\n    protected AggregateRoot(final ID id, final List<DomainEvent> events) {\n        super(id, events);\n    }\n}"
+          },
+          "notificationContract": "Acceptance is established by storing and retrieving the pending video. The VideoCreated notification is a diagnostic activity trace; losing that trace is acceptable and no other system depends on it."
+        },
+        {
+          "id": "B",
+          "request": "Review the next video intake capability from these project artifacts. Give a short domain/application design and the smallest justified changes for the notification contract. State what can be concluded from the source and which delivery checks are still needed. Do not implement or upgrade the framework in this task.",
+          "artifacts": {
+            "infrastructure/DefaultVideoGateway.java": "package com.robsonkades.admin.catalogo.infrastructure.video;\n\nimport com.robsonkades.admin.catalogo.domain.Identifier;\nimport com.robsonkades.admin.catalogo.domain.pagination.Pagination;\nimport com.robsonkades.admin.catalogo.domain.video.*;\nimport com.robsonkades.admin.catalogo.infrastructure.configuration.annotations.VideoCreatedQueue;\nimport com.robsonkades.admin.catalogo.infrastructure.services.EventService;\nimport com.robsonkades.admin.catalogo.infrastructure.utils.SqlUtils;\nimport com.robsonkades.admin.catalogo.infrastructure.video.persistence.VideoJpaEntity;\nimport com.robsonkades.admin.catalogo.infrastructure.video.persistence.VideoRepository;\nimport org.springframework.data.domain.PageRequest;\nimport org.springframework.data.domain.Sort;\nimport org.springframework.stereotype.Component;\nimport org.springframework.transaction.annotation.Transactional;\n\nimport java.util.Objects;\nimport java.util.Optional;\n\nimport static com.robsonkades.admin.catalogo.domain.utils.CollectionUtils.mapTo;\nimport static com.robsonkades.admin.catalogo.domain.utils.CollectionUtils.nullIfEmpty;\n\n@Component\npublic class DefaultVideoGateway implements VideoGateway {\n\n    private final EventService eventService;\n    private final VideoRepository videoRepository;\n\n    public DefaultVideoGateway(\n            @VideoCreatedQueue final EventService eventService,\n            final VideoRepository videoRepository\n    ) {\n        this.eventService = Objects.requireNonNull(eventService);\n        this.videoRepository = Objects.requireNonNull(videoRepository);\n    }\n\n    @Override\n    @Transactional\n    public Video create(final Video aVideo) {\n        return save(aVideo);\n    }\n\n    @Override\n    public void deleteById(final VideoID anId) {\n        final var aVideoId = anId.getValue();\n        if (this.videoRepository.existsById(aVideoId)) {\n            this.videoRepository.deleteById(aVideoId);\n        }\n    }\n\n    @Override\n    @Transactional(readOnly = true)\n    public Optional<Video> findById(final VideoID anId) {\n        return this.videoRepository.findById(anId.getValue())\n                .map(VideoJpaEntity::toAggregate);\n    }\n\n    @Override\n    @Transactional\n    public Video update(final Video aVideo) {\n        return save(aVideo);\n    }\n\n    @Override\n    public Pagination<VideoPreview> findAll(final VideoSearchQuery aQuery) {\n        final var page = PageRequest.of(\n                aQuery.page(),\n                aQuery.perPage(),\n                Sort.by(Sort.Direction.fromString(aQuery.direction()), aQuery.sort())\n        );\n\n        final var actualPage = this.videoRepository.findAll(\n                SqlUtils.like(SqlUtils.upper(aQuery.terms())),\n                nullIfEmpty(mapTo(aQuery.castMembers(), Identifier::getValue)),\n                nullIfEmpty(mapTo(aQuery.categories(), Identifier::getValue)),\n                nullIfEmpty(mapTo(aQuery.genres(), Identifier::getValue)),\n                page\n        );\n\n        return new Pagination<>(\n                actualPage.getNumber(),\n                actualPage.getSize(),\n                actualPage.getTotalElements(),\n                actualPage.toList()\n        );\n    }\n\n    private Video save(final Video aVideo) {\n        final var result = this.videoRepository.save(VideoJpaEntity.from(aVideo))\n                .toAggregate();\n\n        aVideo.publishDomainEvents(this.eventService::send);\n\n        return result;\n    }\n}",
+            "infrastructure/EventConfig.java": "package com.robsonkades.admin.catalogo.infrastructure.configuration;\n\nimport com.robsonkades.admin.catalogo.infrastructure.configuration.annotations.VideoCreatedQueue;\nimport com.robsonkades.admin.catalogo.infrastructure.configuration.properties.amqp.QueueProperties;\nimport com.robsonkades.admin.catalogo.infrastructure.services.EventService;\nimport com.robsonkades.admin.catalogo.infrastructure.services.impl.RabbitEventService;\nimport com.robsonkades.admin.catalogo.infrastructure.services.local.InMemoryEventService;\nimport org.springframework.amqp.rabbit.core.RabbitOperations;\nimport org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;\nimport org.springframework.context.annotation.Bean;\nimport org.springframework.context.annotation.Configuration;\nimport org.springframework.context.annotation.Profile;\n\n@Configuration\npublic class EventConfig {\n\n    @Bean\n    @VideoCreatedQueue\n    @Profile({\"development\"})\n    EventService localVideoCreatedEventService() {\n        return new InMemoryEventService();\n    }\n\n    @Bean\n    @VideoCreatedQueue\n    @ConditionalOnMissingBean\n    EventService videoCreatedEventService(\n            @VideoCreatedQueue final QueueProperties props,\n            final RabbitOperations ops\n    ) {\n        return new RabbitEventService(props.getExchange(), props.getRoutingKey(), ops);\n    }\n}\n",
+            "infrastructure/RabbitEventService.java": "package com.robsonkades.admin.catalogo.infrastructure.services.impl;\n\nimport com.robsonkades.admin.catalogo.infrastructure.configuration.json.Json;\nimport com.robsonkades.admin.catalogo.infrastructure.services.EventService;\nimport org.springframework.amqp.rabbit.core.RabbitOperations;\n\nimport java.util.Objects;\n\npublic class RabbitEventService implements EventService {\n\n    private final String exchange;\n    private final String routingKey;\n    private final RabbitOperations ops;\n\n    public RabbitEventService(\n            final String exchange,\n            final String routingKey,\n            final RabbitOperations ops\n    ) {\n        this.exchange = Objects.requireNonNull(exchange);\n        this.routingKey = Objects.requireNonNull(routingKey);\n        this.ops = Objects.requireNonNull(ops);\n    }\n\n    @Override\n    public void send(final Object event) {\n        this.ops.convertAndSend(this.exchange, this.routingKey, Json.writeValueAsString(event));\n    }\n}\n",
+            "infrastructure/InMemoryEventService.java": "package com.robsonkades.admin.catalogo.infrastructure.services.local;\n\nimport com.robsonkades.admin.catalogo.infrastructure.configuration.json.Json;\nimport com.robsonkades.admin.catalogo.infrastructure.services.EventService;\nimport org.slf4j.Logger;\nimport org.slf4j.LoggerFactory;\n\npublic class InMemoryEventService implements EventService {\n\n    private static final Logger LOG = LoggerFactory.getLogger(InMemoryEventService.class);\n\n    @Override\n    public void send(Object event) {\n        LOG.info(\"Event was observed: {}\", Json.writeValueAsString(event));\n    }\n}\n",
+            "project-notes.md": "# Project notes\n\nThis is a source excerpt for a design review, not a runnable project. The catalog application uses Java 17 source features, Spring Boot 2.7.7, JPA and Rabbit libraries. The application creates a Video with a VideoCreated fact and invokes VideoGateway.create through an injected port. Category and video identities and names are already established. Preserve the existing module and class naming.\n\nThe attached files are the event configuration, implementations and video adapter. No deployment profile, bean inventory, transaction-manager configuration, database trace or broker trace has been supplied. An existing unit test uses a mocked VideoRepository and mocked EventService, checks one save and one send, and passes.\n",
+            "requirements.md": "# Video intake\n\nAn operator submits a new video. Valid input creates a pending video with a stable ID and preserved creation time; invalid input must not create a video or start processing. Updating descriptive metadata must keep the existing identity. The only new requirement under review is the notification contract below.\n",
+            "domain/Entity.java": "package com.robsonkades.admin.catalogo.domain;\n\nimport com.robsonkades.admin.catalogo.domain.events.DomainEvent;\nimport com.robsonkades.admin.catalogo.domain.events.DomainEventPublisher;\nimport com.robsonkades.admin.catalogo.domain.validation.ValidationHandler;\n\nimport java.util.ArrayList;\nimport java.util.Collections;\nimport java.util.List;\nimport java.util.Objects;\n\npublic abstract class Entity<ID extends Identifier> {\n\n    protected final ID id;\n    private final List<DomainEvent> domainEvents;\n\n    protected Entity(final ID id) {\n        this(id, null);\n    }\n\n    protected Entity(final ID id, final List<DomainEvent> domainEvents) {\n        Objects.requireNonNull(id, \"'id' should not be null\");\n        this.id = id;\n        this.domainEvents = new ArrayList<>(domainEvents == null ? Collections.emptyList() : domainEvents);\n    }\n\n    public abstract void validate(ValidationHandler handler);\n\n    public ID getId() {\n        return id;\n    }\n\n    public List<DomainEvent> getDomainEvents() {\n        return Collections.unmodifiableList(domainEvents);\n    }\n\n    public void publishDomainEvents(final DomainEventPublisher publisher) {\n        if (publisher == null) {\n            return;\n        }\n\n        getDomainEvents()\n                .forEach(publisher::publishEvent);\n\n        this.domainEvents.clear();\n    }\n\n    public void registerEvent(final DomainEvent event) {\n        if (event == null) {\n            return;\n        }\n\n        this.domainEvents.add(event);\n    }\n\n    @Override\n    public boolean equals(final Object o) {\n        if (this == o) return true;\n        if (o == null || getClass() != o.getClass()) return false;\n        final Entity<?> entity = (Entity<?>) o;\n        return getId().equals(entity.getId());\n    }\n\n    @Override\n    public int hashCode() {\n        return Objects.hash(getId());\n    }\n}\n",
+            "domain/AggregateRoot.java": "package com.robsonkades.admin.catalogo.domain;\n\nimport com.robsonkades.admin.catalogo.domain.events.DomainEvent;\n\nimport java.util.List;\n\npublic abstract class AggregateRoot<ID extends Identifier> extends Entity<ID> {\n\n    protected AggregateRoot(final ID id) {\n        super(id);\n    }\n\n    protected AggregateRoot(final ID id, final List<DomainEvent> events) {\n        super(id, events);\n    }\n}"
+          },
+          "notificationContract": "Acceptance must also ensure the VideoCreated notification eventually reaches the enrichment service despite a process restart. A rejected video must not start enrichment."
+        }
+      ]
+    },
+    "evaluatorOnlyCriteria": {
+      "schemaVersion": 1,
+      "kind": "evaluator-only",
+      "knownDevelopmentCases": true,
+      "independentActorRunsExecuted": 0,
+      "pair": {
+        "changedConstraint": "Only notificationContract differs; source, request, versions, missing deployment evidence and the mocked unit test are identical.",
+        "expectedDecisionDifference": "A permits keeping the local/simple notification path and does not justify mandatory durable messaging. B requires a supported state-and-delivery contract with a durability mechanism, integration checks and appropriate specialist handoff; selecting Rabbit by name or adding @Transactional does not meet it.",
+        "isolation": "Provide one expanded case only to each fresh actor. Do not expose this file, source-review notes, handoff or peer outputs; folder separation alone is not enforced isolation.",
+        "comparison": "Hold tools/model/budget/context fixed across baseline 1.0.0 and revised 1.0.1 (and no-skill if desired). Supply unchanged neighboring skill versions consistently when available. Record actually read resources. Cases are known development examples, not held-out."
+      },
+      "commonExpected": [
+        "Keep the role as review/design and preserve Java 17 source / Boot 2.7.7 and target naming; do not implement, upgrade or introduce microservices, CQRS or event sourcing without a requirement.",
+        "Trace DefaultVideoGateway's injected EventService to EventConfig and both implementations. Note the development logger and conditional Rabbit bean, while qualifying actual selection without a deployment profile/bean inventory.",
+        "Distinguish repository save, method invocation order and effective transactional interception from observed database commit. Passing mocked save/send tests do not prove database/broker behavior.",
+        "Keep simple domain capabilities proportionate; route detailed persistence/delivery/transaction questions to the relevant specialists instead of reproducing them or loading all seven by default.",
+        "Record material unknowns and discriminating checks while continuing source-supported design; do not require stakeholder ceremonies for the supplied clear acceptance examples."
+      ],
+      "caseCriteria": [
+        {
+          "id": "A",
+          "required": [
+            "Accept the simple notification contract as legitimate.",
+            "Do not prescribe an outbox/broker solely because an event or Rabbit implementation exists.",
+            "Check rejected input and saved identity/audit behavior in the eventual slice; state delivery loss is acceptable only under this contract."
+          ],
+          "failures": [
+            "Calls the active service Rabbit without resolving configuration.",
+            "Requires durable delivery or a rich aggregate hierarchy without supporting business rules.",
+            "Claims the mocked test proves commit ordering or atomicity."
+          ]
+        },
+        {
+          "id": "B",
+          "required": [
+            "Do not call the current excerpt a proven durable delivery path.",
+            "Connect accepted state, recoverable notification and rejected-video exclusion to a supported transaction/delivery mechanism; an outbox is one acceptable proposal, not the only acceptable answer.",
+            "Ask for/inspect effective configuration and transaction/consumer evidence; propose relevant restart/rollback/duplicate-delivery integration checks without claiming they ran."
+          ],
+          "failures": [
+            "Treats changing the profile to Rabbit as sufficient durability.",
+            "Claims successful save/send or @Transactional alone provides atomic DB/broker delivery.",
+            "Weakens the accepted-video requirement to best-effort logging.",
+            "Automatically decomposes the monolith or imposes event sourcing/CQRS."
+          ]
+        }
+      ],
+      "walkthroughs": [
+        {
+          "id": "A",
+          "kind": "structured reviewer walkthrough only",
+          "outcome": "Existing hub and corrected reference can support retaining local diagnostics, rejecting a forced outbox and qualifying bean/commit evidence."
+        },
+        {
+          "id": "B",
+          "kind": "structured reviewer walkthrough only",
+          "outcome": "Existing hub and corrected reference can support explicit durable delivery and specialist handoff while leaving configuration and integration results unproven."
+        }
+      ],
+      "behavioralBenefitMeasured": false
+    },
+    "prerequisites": "No runnable project or services required for this read-only design task. Expand exactly one case into an isolated actor workspace. Provide only that case and the assigned skill snapshot/resources; keep evaluator criteria, handoff and other outputs unavailable.",
+    "casesAreKnownDevelopmentExamples": true,
+    "heldOutCase": false,
+    "actualAgentOutputs": [],
+    "measuredImprovement": false
+  },
+  "sources": [
+    {
+      "consulted": "2026-10-16",
+      "id": "sample-gateway",
+      "kind": "user-provided primary source",
+      "version": "unversioned local snapshot inspected 2026-10-16",
+      "path": "C:/Users/robso/Downloads/ddd-example-master/ddd-example-master/infrastructure/src/main/java/com/robsonkades/admin/catalogo/infrastructure/video/DefaultVideoGateway.java",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/codex-java-ddd-20261016-5fa65f2a926140439f29cc3e662e3f4b/sources/DefaultVideoGateway.java",
+      "sections": "constructor lines 28–33; create/update lines 37–40,58–60; private save lines 87–93",
+      "supports": "Port is injected using VideoCreatedQueue. JPA save precedes event publication inside create/update target method; source alone does not establish actual proxy, transaction manager or commit."
+    },
+    {
+      "consulted": "2026-10-16",
+      "id": "sample-configuration",
+      "kind": "user-provided primary source",
+      "version": "same local snapshot",
+      "path": "C:/Users/robso/Downloads/ddd-example-master/ddd-example-master/infrastructure/src/main/java/com/robsonkades/admin/catalogo/infrastructure/configuration/EventConfig.java",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/codex-java-ddd-20261016-5fa65f2a926140439f29cc3e662e3f4b/sources/EventConfig.java",
+      "sections": "lines 17–31",
+      "supports": "Declares development-profile InMemoryEventService and a conditional RabbitEventService. This supports inspecting actual selection, not asserting any profile/bean won at runtime."
+    },
+    {
+      "consulted": "2026-10-16",
+      "id": "sample-local-service",
+      "kind": "user-provided primary source",
+      "version": "same local snapshot",
+      "path": "C:/Users/robso/Downloads/ddd-example-master/ddd-example-master/infrastructure/src/main/java/com/robsonkades/admin/catalogo/infrastructure/services/local/InMemoryEventService.java",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/codex-java-ddd-20261016-5fa65f2a926140439f29cc3e662e3f4b/sources/InMemoryEventService.java",
+      "sections": "send",
+      "supports": "The implementation logs JSON to SLF4J; it does not publish to Rabbit."
+    },
+    {
+      "consulted": "2026-10-16",
+      "id": "sample-rabbit-service",
+      "kind": "user-provided primary source",
+      "version": "same local snapshot",
+      "path": "C:/Users/robso/Downloads/ddd-example-master/ddd-example-master/infrastructure/src/main/java/com/robsonkades/admin/catalogo/infrastructure/services/impl/RabbitEventService.java",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/codex-java-ddd-20261016-5fa65f2a926140439f29cc3e662e3f4b/sources/RabbitEventService.java",
+      "sections": "send",
+      "supports": "Rabbit path calls RabbitOperations.convertAndSend; no durable end-to-end transaction contract is established by this call alone."
+    },
+    {
+      "consulted": "2026-10-16",
+      "id": "sample-entity",
+      "kind": "user-provided primary source",
+      "version": "same local snapshot",
+      "path": "C:/Users/robso/Downloads/ddd-example-master/ddd-example-master/domain/src/main/java/com/robsonkades/admin/catalogo/domain/Entity.java",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/codex-java-ddd-20261016-5fa65f2a926140439f29cc3e662e3f4b/sources/Entity.java",
+      "sections": "publishDomainEvents",
+      "supports": "Iterates recorded events through the publisher then clears the list; no callback scheduling is hidden in this method."
+    },
+    {
+      "consulted": "2026-10-16",
+      "id": "sample-root",
+      "kind": "user-provided primary source",
+      "version": "same local snapshot",
+      "path": "C:/Users/robso/Downloads/ddd-example-master/ddd-example-master/domain/src/main/java/com/robsonkades/admin/catalogo/domain/AggregateRoot.java",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/codex-java-ddd-20261016-5fa65f2a926140439f29cc3e662e3f4b/sources/AggregateRoot.java",
+      "sections": "class declaration",
+      "supports": "AggregateRoot extends Entity; publication method is inherited."
+    },
+    {
+      "consulted": "2026-10-16",
+      "id": "boot-bom",
+      "kind": "versioned primary source",
+      "version": "Spring Boot v2.7.7",
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-boot/v2.7.7/spring-boot-project/spring-boot-dependencies/build.gradle",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/codex-java-ddd-20261016-5fa65f2a926140439f29cc3e662e3f4b/sources/spring-boot-dependencies-v2.7.7.gradle",
+      "sections": "library Spring Framework, line 1705",
+      "supports": "Boot 2.7.7 manages Framework 5.3.24. An overridden/resolved target dependency was not measured."
+    },
+    {
+      "consulted": "2026-10-16",
+      "id": "spring-interceptor",
+      "kind": "versioned primary source",
+      "version": "Spring Framework v5.3.24",
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v5.3.24/spring-tx/src/main/java/org/springframework/transaction/interceptor/TransactionAspectSupport.java",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/codex-java-ddd-20261016-5fa65f2a926140439f29cc3e662e3f4b/sources/TransactionAspectSupport-v5.3.24.java",
+      "sections": "invokeWithinTransaction standard PlatformTransactionManager path, lines 379–408; commitTransactionAfterReturning",
+      "supports": "Standard advice proceeds with target invocation and then invokes transaction completion. Actual interception, participation, manager and database behavior must still be verified."
+    },
+    {
+      "consulted": "2026-10-16",
+      "id": "fowler-simple-alternative",
+      "kind": "author primary article",
+      "version": "25 November 2003; consulted 2026-10-16",
+      "url": "https://martinfowler.com/bliki/AnemicDomainModel.html",
+      "sections": "domain model cost/benefit and service layer discussion",
+      "supports": "Retaining transaction scripts for simple logic and using behavior-rich models for appropriate complexity are compatible alternatives.",
+      "limitations": "Conceptual support only; no project runtime or empirical skill-gain claim."
+    },
+    {
+      "consulted": "2026-10-16",
+      "id": "fowler-context",
+      "kind": "author primary article",
+      "version": "15 January 2014; consulted 2026-10-16",
+      "url": "https://martinfowler.com/bliki/BoundedContext.html",
+      "sections": "language/meaning and interrelationships",
+      "supports": "Context depends on consistent meaning and explicit model relationships; one universal class structure is not required.",
+      "limitations": "Conceptual support only."
+    },
+    {
+      "consulted": "2026-10-16",
+      "id": "vernon-aggregate",
+      "kind": "author primary essay",
+      "version": "Effective Aggregate Design Part I, consulted 2026-10-16",
+      "url": "https://kalele.io/wp-content/uploads/2019/01/DDD_COMMUNITY_ESSAY_AGGREGATES_PART_1.pdf",
+      "sections": "opening and invariant/consistency-boundary sections",
+      "supports": "Avoid both oversized containment-driven aggregates and boundaries too small to protect business invariants.",
+      "limitations": "Conceptual support only; no quantitative concurrency or transactional guarantee."
+    }
+  ],
+  "sourceSupportArtifact": "C:/Users/robso/AppData/Local/Temp/codex-java-ddd-20261016-5fa65f2a926140439f29cc3e662e3f4b/source-support.json",
+  "limitations": [
+    "Local structural success does not establish repository-wide registry/dependency/routing correctness.",
+    "No Spring context, active deployment profile, runtime bean selection, actual JPA transaction manager, database or broker was executed. Source annotations are not runtime evidence.",
+    "Boot 2.7.7's managed Framework 5.3.24 was verified; resolved dependencies of the user reference were not built/measured.",
+    "The local reference is an unversioned user-provided snapshot; preserved hashes identify inspected files. It is not made a prerequisite for applying the skill.",
+    "No Java compilation was necessary for this prose/configuration correction; case Java sources are incomplete project excerpts intended for design review.",
+    "No benchmark, stakeholder validation or independent behavioral comparison; expected reliability benefit remains unmeasured."
+  ],
+  "evidenceRoot": "C:/Users/robso/AppData/Local/Temp/codex-java-ddd-20261016-5fa65f2a926140439f29cc3e662e3f4b",
+  "artifactManifest": "C:/Users/robso/AppData/Local/Temp/codex-java-ddd-20261016-5fa65f2a926140439f29cc3e662e3f4b/artifacts.json",
+  "finalOwnedHashes": [
+    {
+      "relativePath": "references/modeling-decisions.md",
+      "bytes": 4846,
+      "sha256": "da4e87f9156b1c172695357d3fc67c5b80246c67751aff166bb224e35d889284"
+    },
+    {
+      "relativePath": "references/project-conventions.md",
+      "bytes": 8961,
+      "sha256": "a0ee002339fb6d212859149018c19566bcf8e401c23682ffb6d8bda85bc43158"
+    },
+    {
+      "relativePath": "SKILL.md",
+      "bytes": 9358,
+      "sha256": "bd1711ad23f85bcaa49a242bc708599ec171b60bd3e52af2b130f9190e781d99"
+    },
+    {
+      "relativePath": "skill.yaml",
+      "bytes": 1741,
+      "sha256": "2075a6000408190bb01355333f880897eca7b26c5929ba9cc9768fb285cf0592"
+    }
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Parallel ownership exception; needs all reviewers stopped and finalized manifests."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Parallel ownership exception; after registry regeneration and stable working tree."
+    }
+  ],
+  "crossSkillIssues": [],
+  "coordinatorActions": [
+    "Review the two-file diff against the recorded baseline.",
+    "Retain/copy evidence as appropriate, without vendoring third-party implementation sources into shipped skills.",
+    "Run global registry/verify once all reviewers stop.",
+    "If evaluating the improvement, use the separated cases/criteria in fresh controlled runs and report possible ties honestly."
+  ]
+}
+

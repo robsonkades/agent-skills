@@ -1,0 +1,10 @@
+{
+  "caseId": "class-init-a",
+  "task": "Review the exact startup sequence and correct startup-note.md using the supplied source and selected configuration. Explain which operation runs initialization, whether active use after dependency recovery succeeds for this definition, and the smallest justified next step. Preserve supported observations. Do not add jars, global module flags or fresh loaders as speculative fixes, and do not change the Java baseline.",
+  "fixtureDirectory": ".",
+  "prerequisites": [
+    "Read/edit local files.",
+    "Existing JDK supporting --release 17 for optional execution; no services, installations or production capture."
+  ],
+  "evaluationStatus": "not executed"
+}

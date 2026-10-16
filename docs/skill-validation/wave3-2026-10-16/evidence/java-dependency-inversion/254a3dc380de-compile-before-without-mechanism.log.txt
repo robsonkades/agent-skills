@@ -1,0 +1,21 @@
+{
+  "name": "compile-before-without-mechanism",
+  "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+  "args": [
+    "-J-Xms16m",
+    "-J-Xmx128m",
+    "--release",
+    "17",
+    "-d",
+    "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\policy-no-mechanism",
+    "-classpath",
+    "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\empty-classpath",
+    "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\before\\shop\\orders\\Order.java",
+    "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\before\\shop\\orders\\OrderConfirmer.java",
+    "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\before\\shop\\orders\\RunBefore.java"
+  ],
+  "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N",
+  "exitCode": 1,
+  "stdout": "",
+  "stderr": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\before\\shop\\orders\\OrderConfirmer.java:3: error: package shop.smtp does not exist\r\nimport shop.smtp.SmtpClient;      // policy imports the mechanism\r\n                ^\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\before\\shop\\orders\\OrderConfirmer.java:4: error: package shop.smtp does not exist\r\nimport shop.smtp.SmtpMessage;\r\n                ^\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\before\\shop\\orders\\OrderConfirmer.java:8: error: cannot find symbol\r\n    private final SmtpClient smtp = new SmtpClient(\"mail.internal\", 587);\r\n                  ^\r\n  symbol:   class SmtpClient\r\n  location: class OrderConfirmer\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\before\\shop\\orders\\OrderConfirmer.java:8: error: cannot find symbol\r\n    private final SmtpClient smtp = new SmtpClient(\"mail.internal\", 587);\r\n                                        ^\r\n  symbol:   class SmtpClient\r\n  location: class OrderConfirmer\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\before\\shop\\orders\\OrderConfirmer.java:13: error: cannot find symbol\r\n        smtp.send(new SmtpMessage(order.customerEmail(), \"Order confirmed\", body));\r\n                      ^\r\n  symbol:   class SmtpMessage\r\n  location: class OrderConfirmer\r\n5 errors\r\n"
+}

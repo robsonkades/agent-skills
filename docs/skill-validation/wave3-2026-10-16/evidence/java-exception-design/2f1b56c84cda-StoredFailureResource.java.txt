@@ -1,0 +1,18 @@
+import java.io.IOException;
+
+public final class StoredFailureResource implements AutoCloseable {
+    private final IOException closeFailure;
+    private int closeCalls;
+
+    public StoredFailureResource(IOException closeFailure) {
+        this.closeFailure = closeFailure;
+    }
+
+    public int closeCalls() { return closeCalls; }
+
+    @Override public void close() throws IOException {
+        closeCalls++;
+        if (closeFailure != null) throw closeFailure;
+    }
+}
+

@@ -1,0 +1,2 @@
+PASS ordinary publisher/replay path
+

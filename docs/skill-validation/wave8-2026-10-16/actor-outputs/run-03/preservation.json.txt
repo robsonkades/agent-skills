@@ -1,0 +1,40 @@
+{
+  "allPreserved": true,
+  "files": [
+    {
+      "name": "README.md",
+      "unchanged": true,
+      "sha256": "a9e61238b03c45b3a034c72addd0f73e9c36880d023c3149b497d4a9b03c988d"
+    },
+    {
+      "name": "REQUEST.md",
+      "unchanged": true,
+      "sha256": "e00bddc7da551cb680825db8a682002fec7a26bd80212bdc2a0e9ed7acbf81bd"
+    },
+    {
+      "name": "schema.sql",
+      "unchanged": true,
+      "sha256": "8d3bb884dd3efc9b3f6419c9ed7259cdb95f94d6af385a1ed97f52b6e9665718"
+    },
+    {
+      "name": "seed.sql",
+      "unchanged": true,
+      "sha256": "bb2404bc6c875bab75df324b9bda8efe402f671cb3a2dcf13e722e66f8037b31"
+    },
+    {
+      "name": "current.sql",
+      "unchanged": true,
+      "sha256": "6b359fc8d3fb98e936a77afb73f331ad3955e347a1c4b9e371d3f2720d2d0770"
+    },
+    {
+      "name": "proposed.sql",
+      "unchanged": true,
+      "sha256": "3e28c96e76cec40b332729cd90c147c03a9c6d3929aef976a8590778f99adebd"
+    },
+    {
+      "name": "fixture.mjs",
+      "unchanged": true,
+      "sha256": "8ff06a6157c9d865ef4b7f2cb5b88cbea2969575b7ef551b9acc1d8d36353bd6"
+    }
+  ]
+}

@@ -16,6 +16,16 @@ versus individual results where relevant. Quantization can change accuracy; a fa
 alone does not establish acceptable results. This regression gate preserves an existing quality
 target, rather than defining model quality or a training method.
 
+First establish what reaches session creation. In ONNX Runtime Java **1.22.0**,
+`OrtEnvironment.getAvailableProviders()` reports available providers, not this session's
+operator placement. `createSession(modelPath)` constructs fresh default `SessionOptions`;
+configuring a separate options object has no effect on that call. Trace the invoked factory
+and the options passed to `createSession(modelPath, options)`, including provider and thread
+settings, before diagnosing an ignored setting or changing worker counts. Correlate startup
+logs/profiles with the session and model generation used by the request. If the intended
+options already reach that session, reject the unused-configuration hypothesis and investigate
+placement and costs rather than applying a redundant wiring fix.
+
 Provider registration does not prove every operator runs there. ONNX Runtime assigns supported
 nodes/subgraphs by provider capability and priority; unsupported work can run on a configured
 CPU provider. Inspect actual placement using supported logs/profiles, and separate preprocessing,
@@ -121,6 +131,7 @@ generalize one wrapper's behavior.
 
 ## Primary references
 
+- [ONNX Runtime 1.22.0 OrtEnvironment source](https://github.com/microsoft/onnxruntime/blob/v1.22.0/java/src/main/java/ai/onnxruntime/OrtEnvironment.java) — default versus supplied session options and environment-level provider availability.
 - [ONNX Runtime 1.22.0 OnnxTensor source](https://github.com/microsoft/onnxruntime/blob/v1.22.0/java/src/main/java/ai/onnxruntime/OnnxTensor.java) — buffer construction/close behavior and the `getBufferRef` null-buffer discrepancy between Javadoc and implementation.
 - [ONNX Runtime 1.22.0 OrtSession source](https://github.com/microsoft/onnxruntime/blob/v1.22.0/java/src/main/java/ai/onnxruntime/OrtSession.java) — `Result.close`, `isResultOwner` and caller-supplied pinned-output ownership.
 - [DJL 0.33.0 inference performance](https://github.com/deepjavalibrary/djl/blob/v0.33.0/docs/development/inference_performance_optimization.md) — predictor concurrency; engine tuning details require their own version checks.

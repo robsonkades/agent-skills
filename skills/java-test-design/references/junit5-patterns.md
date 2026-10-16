@@ -37,6 +37,31 @@ These examples pass a fixed `Clock`, making the time input explicit. Injection a
 control other inputs or make an arbitrary clock deterministic; the determinism reference also
 covers constrained legacy seams.
 
+## Select cases that distinguish faults
+
+The teaching contract here is: an active subscription is due from today through the supplied
+window's last day, inclusive. The cases below explain why the later examples use those inputs;
+derive expectations from the target project's contract before adopting them.
+
+| Plausible fault       | Distinguishing case                           | Why a nearby case misses it                                                   |
+| --------------------- | --------------------------------------------- | ----------------------------------------------------------------------------- |
+| Excludes the last day | Active, renewing exactly on the last day: due | A date strictly inside the window passes either boundary rule                 |
+| Ignores active status | Inactive, renewing inside the window: not due | An inactive date outside the window is rejected even without the active check |
+| Hard-codes seven days | Zero-day window, renewing tomorrow: not due   | Testing only seven-day windows cannot reveal that the argument was ignored    |
+
+Cover both sides of relevant boundaries, but do not generate the full Cartesian product by
+default. Add interacting conditions when the contract or an observed defect makes them material.
+Branch execution alone cannot show that the oracle distinguishes these faulty rules.
+
+If an authorized change makes the upper bound exclusive, revise the last-day expectation and
+its name; retain the past-date, future-date and inactive-subscription checks that still apply.
+Revisit the zero-day case too: an interval from today inclusive to today exclusive is empty.
+If zero days has a separate business meaning, resolve that rule instead of silently inferring it.
+For a refactor with the inclusive contract unchanged, preserve those expected results and
+investigate the implementation or fixture. Changing the assertion to match a new result is not
+evidence that the contract changed. Check that the revised oracle rejects the superseded behavior
+where the new contract differs, and rerun retained cases for unchanged behavior.
+
 ## Test data builder
 
 ```java
@@ -180,7 +205,30 @@ Assert `hasMessage` only when that exact message is a contract. Use `hasMessageC
 when a required diagnostic fragment is the contract; omit message assertions for incidental
 wording and prefer stable structured exception fields where available.
 
-## Check that the intended case ran
+## Run the test that carries the contract
+
+Find the existing test class, source set and configured runner before choosing a command.
+Retain the project's wrapper, module, profiles and required fixtures; use its supported focused
+selector. Read the fresh result for the named test and parameterized invocations, not just an
+aggregate count from other tests. If the test is absent, inspect the selected module/task,
+engine, filters and source set before changing its assertions. A missing engine or fixture is
+an execution limitation, not an assertion failure. Choosing or repairing the CI gate belongs
+to `java-testing-strategy`; this step establishes what the local design check actually ran.
+
+For the renewal examples, selecting only `windowBoundaries` runs four cases, all with a
+seven-day window. A fault that replaces `today.plus(window)` with `today.plusDays(7)` can
+survive all four. Before adding another seven-day row, run the existing
+`WhenTheWindowIsZeroDays.onlyARenewalTodayIsDue` case: its tomorrow assertion distinguishes the
+fault from the contract. Inspect that assertion's failure, restore the implementation and rerun
+the affected class so the other boundary and rejection cases remain covered.
+
+When a controlled fault survives, establish whether the test ran and whether its actual fixture
+reaches a behavior changed by the fault. Then inspect whether the oracle distinguishes the
+results. A useful new case needs a contract-relevant difference; an equivalent implementation
+change does not justify assertions about private structure. Retain an unresolved hypothesis
+when the difference cannot be established rather than claiming fault detection from a green run.
+
+## Check that the intended assertion ran
 
 An element-wise assertion says nothing about whether required elements exist. `allMatch`
 returns true for an empty stream, and `assertAll` over an empty collection/stream has no
@@ -196,6 +244,11 @@ Choose membership, multiplicity and order assertions from the contract; do not r
 for an unordered result or nonemptiness when the scenario expects no matches. For an empty-result
 case, assert emptiness explicitly. A test can execute successfully while an empty loop checks
 nothing, so runner counts alone are insufficient.
+
+Do not normalize away a requirement: converting both results to a `Set` loses duplicate counts,
+and sorting both results cannot detect a required ordering violation. For an unordered result
+that must contain each match once, use an assertion that checks exact membership and multiplicity
+without imposing order; use existing assertion-library support or explicit counts.
 
 Likewise, a failed Jupiter assumption aborts a test instead of failing it. Use assumptions for
 genuine environment applicability, not to turn a missing required fixture or incorrect result
@@ -221,10 +274,13 @@ Synchronization prevents some races but does not by itself prevent stale state l
 
 ## Primary references
 
-- [JUnit 5.13.4 user guide](https://docs.junit.org/5.13.4/user-guide/) — lifecycle, parameter conversion, assertions and execution configuration.
+- [JUnit 5.13.4 user guide](https://docs.junit.org/5.13.4/user-guide/) — lifecycle, parameter conversion, assertions, execution selectors and reported outcomes.
 - [JUnit 5.13.4 Assertions](https://docs.junit.org/5.13.4/api/org.junit.jupiter.api/org/junit/jupiter/api/Assertions.html) — exception scope, subtype acceptance, exact-type API availability and assertion messages.
 - [JUnit 5.7.2 Assertions](https://docs.junit.org/5.7.2/api/org.junit.jupiter.api/org/junit/jupiter/api/Assertions.html) — older `assertThrows` and `assertEquals` APIs for the exact-class fallback.
 - [JUnit 5.13.4 TestInstance](https://docs.junit.org/5.13.4/api/org.junit.jupiter.api/org/junit/jupiter/api/TestInstance.html)
 - [JUnit 5.13.4 ResourceLock](https://docs.junit.org/5.13.4/api/org.junit.jupiter.api/org/junit/jupiter/api/parallel/ResourceLock.html)
 - [Java 17 Stream.allMatch](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/stream/Stream.html#allMatch(java.util.function.Predicate)>)
   specifies empty-stream success without evaluating the predicate.
+- [Java 17 Set](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Set.html) — sets cannot represent duplicate counts.
+- [Google Testing Blog: Test Behavior, Not Implementation](https://testing.googleblog.com/2013/08/testing-on-toilet-test-behavior-not.html) — behavior assertions remain stable through implementation-only changes, though arrangement may change.
+- [PIT mutation testing concepts](https://pitest.org/quickstart/basic_concepts/) — distinguishes detected, surviving and uncovered mutations; equivalent behavior is not distinguishable by a valid behavioral assertion. The examples illustrate selected faults, not complete coverage or a requirement to install a mutation tool.

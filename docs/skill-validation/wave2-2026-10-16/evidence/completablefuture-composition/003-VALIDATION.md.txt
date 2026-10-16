@@ -1,0 +1,34 @@
+# CompletableFuture composition local validation
+
+Source package: C:/git/agent-skills/skills/completablefuture-composition, version 1.2.5.
+The Java context snippet was extracted from references/pitfalls-and-executors.md into
+ContextRecipe.java with an enclosing class and application function supplied by the harness.
+
+Compiler target: Java 17, without preview. Actual runtime: Temurin 25.0.3+9.
+Cached libraries: OpenTelemetry context/common 1.55.0, SLF4J API 2.0.17,
+Logback classic/core 1.5.18. No dependency was installed or upgraded.
+
+Compilation command, from the repository:
+
+```powershell
+javac --release 17 -cp 'C:/Users/robso/.m2/repository/io/opentelemetry/opentelemetry-context/1.55.0/opentelemetry-context-1.55.0.jar;C:/Users/robso/.m2/repository/org/slf4j/slf4j-api/2.0.17/slf4j-api-2.0.17.jar;C:/Users/robso/.m2/repository/ch/qos/logback/logback-classic/1.5.18/logback-classic-1.5.18.jar;C:/Users/robso/.m2/repository/ch/qos/logback/logback-core/1.5.18/logback-core-1.5.18.jar;C:/Users/robso/.m2/repository/io/opentelemetry/opentelemetry-common/1.55.0/opentelemetry-common-1.55.0.jar' -d 'C:/Users/robso/AppData/Local/Temp/cf-composition-quality13-085a169abcb1403da2b53d957cae2991/classes' 'C:/Users/robso/AppData/Local/Temp/cf-composition-quality13-085a169abcb1403da2b53d957cae2991/ContextRecipe.java' 'C:/Users/robso/AppData/Local/Temp/cf-composition-quality13-085a169abcb1403da2b53d957cae2991/CompositionContractsTest.java'
+java -ea -cp 'C:/Users/robso/AppData/Local/Temp/cf-composition-quality13-085a169abcb1403da2b53d957cae2991/classes;C:/Users/robso/.m2/repository/io/opentelemetry/opentelemetry-context/1.55.0/opentelemetry-context-1.55.0.jar;C:/Users/robso/.m2/repository/org/slf4j/slf4j-api/2.0.17/slf4j-api-2.0.17.jar;C:/Users/robso/.m2/repository/ch/qos/logback/logback-classic/1.5.18/logback-classic-1.5.18.jar;C:/Users/robso/.m2/repository/ch/qos/logback/logback-core/1.5.18/logback-core-1.5.18.jar;C:/Users/robso/.m2/repository/io/opentelemetry/opentelemetry-common/1.55.0/opentelemetry-common-1.55.0.jar' CompositionContractsTest
+```
+
+Results:
+
+- baseline-run.txt preserves the initial classpath failure: opentelemetry-common was missing.
+  Its same-version cached jar was added after reading the published local POM.
+- baseline-run-with-dependencies.txt: 15 cases/controls passed. They cover already-complete and
+  deferred sources, inline and queued execution, action success/failure, context restoration,
+  rejected scheduling, explicit versus default executor edges, and a subclass default executor.
+- The actual Context.taskWrapping control observes request context for an already-completed
+  source, and provider context for a deferred source. This is the intended negative control.
+- mutant-submission/run.txt: the compiled mutation that delegates context capture to task
+  submission fails with expected=request, actual=provider.
+- mutant-clear/run.txt: the compiled mutation that clears MDC instead of restoring it fails
+  with expected=request, actual=null.
+
+Each mutant uses its own classes directory and the same CompositionContractsTest.java and
+classpath. These are deterministic contract/example checks, not a stress test, a Java 17 runtime
+execution, a production instrumentation test, or an agent behavioral comparison.

@@ -62,8 +62,10 @@ lock-wait and cleanup bounds. Rollback does not restore every sequence or extern
    physical representation and visibility rules.
 5. Quantify benefit and cost: rows/pages avoided times execution frequency versus bytes, write
    maintenance, cache footprint, logging, lock reach, and operational DDL cost.
-6. Validate with the application's parameterized statement and executed plan. Confirm which key
-   parts positioned the scan and which remained residual.
+6. Validate with the application's generated SQL, bind types, preparation/session settings and
+   executed plan. A manually literalized plan does not establish applicability to that path.
+   Separate index eligibility, optimizer selection and measured benefit; confirm which key parts
+   positioned the scan and which remained residual.
 7. Plan the engine's explicit online/concurrent algorithm where supported; execute only within the
    authorized deployment scope. Observe boundary locks and log/disk headroom, then re-measure reads
    and writes. Removal needs an observation window
@@ -111,7 +113,7 @@ queries/workload served:
 key and included columns, with the role of each:
 engine-specific DDL and prerequisite/version:
 predicted positioned prefix and residual work:
-benefit evidence and tail parameter used:
+benefit evidence, application plan context, and tail parameter used:
 write/storage/lock/maintenance cost:
 deployment, validation, rollback, and removal criteria:
 confidence and missing evidence:

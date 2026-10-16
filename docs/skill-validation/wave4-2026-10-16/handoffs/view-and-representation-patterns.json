@@ -1,0 +1,720 @@
+{
+  "schemaVersion": 1,
+  "skill": "view-and-representation-patterns",
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "reviewDate": "2026-10-16",
+  "reviewer": "/root/quality01",
+  "ownedPath": "skills/view-and-representation-patterns/**",
+  "summary": "The specialist guidance was already adequate for the reviewed representation, security, data-access, compatibility and streaming boundaries. Corrected one confirmed broken primary-source URL; no behavioral rule or example was changed.",
+  "versions": {
+    "committed": "1.3.3",
+    "assignment": "1.3.3",
+    "final": "1.3.4",
+    "preExistingBump": false,
+    "bumpRationale": "One patch from 1.3.3 to 1.3.4 because changing a reference URL changes immutable package contents/integrity. No second bump and no neighboring/generated version edits."
+  },
+  "procedure": {
+    "authoritative": [
+      "AGENTS.md",
+      "docs/skill-review-prompt.md",
+      "docs/parallel-skill-reviews.md",
+      "docs/skill-validation/wave4-2026-10-16/review-brief.md",
+      "skills/skill-engineering/SKILL.md",
+      "skills/skill-engineering/references/evidence-and-confidence.md",
+      "skills/skill-engineering/references/evaluation.md",
+      "skills/skill-engineering/references/resource-design.md",
+      "skills/skill-engineering/references/anti-patterns.md"
+    ],
+    "reading": "Complete assigned four-file package read. Complete review prompt/workflow and skill-engineering main instructions re-read; unchanged reference instructions and accumulated comparative/wave lessons reused as allowed by the wave brief. No package instruction was reconstructed from the skill name.",
+    "role": "Select/review how a representation is produced, with conditional implementation examples; retained the separation from request routing, remote-contract ownership and serialization performance.",
+    "successCriteria": [
+      "Inspect response purpose, actual producer and accepted consumer contract before selecting a pattern.",
+      "Preserve presentation decisions and valid template/transform/helper composition; only domain policy and unsafe boundaries justify movement.",
+      "Verify materialized/deferred data access, visibility and escaping using actual framework and serializer configuration.",
+      "Distinguish response commitment, bounded streaming, resource cleanup and detectable completion/failure.",
+      "Do not force a new model, envelope, framework upgrade or audit when an existing seam is adequate."
+    ],
+    "assessmentBeforeFirstEdit": true,
+    "noSubagents": true,
+    "noGlobalCommands": true,
+    "noNeighborWrites": true
+  },
+  "baseline": {
+    "recordedHead": "bbb7d996a929e81baf735bbaab5b6e3fbf6e8503",
+    "record": "docs/skill-validation/wave4-2026-10-16/baseline.json",
+    "snapshot": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/baseline/view-and-representation-patterns",
+    "initialStatus": "",
+    "staged": [],
+    "unstaged": [],
+    "untracked": [],
+    "committedVersion": "1.3.3",
+    "assignmentVersion": "1.3.3",
+    "snapshotHashesMatchRecord": true,
+    "files": [
+      {
+        "path": "skills/view-and-representation-patterns/SKILL.md",
+        "sha256": "e810925e89e749a7efc20941739277fd54feab07403f03d9b945ac5729cdde26",
+        "recorded": "e810925e89e749a7efc20941739277fd54feab07403f03d9b945ac5729cdde26"
+      },
+      {
+        "path": "skills/view-and-representation-patterns/references/template-and-transform-view.md",
+        "sha256": "e33ba0dc8508b2974a0b5b83c41d541e124f25e18417bfdda7ebf160f78fa7b3",
+        "recorded": "e33ba0dc8508b2974a0b5b83c41d541e124f25e18417bfdda7ebf160f78fa7b3"
+      },
+      {
+        "path": "skills/view-and-representation-patterns/references/two-step-view-and-modern-representations.md",
+        "sha256": "652d1a1cf99f683713b59c5c6017745230d041bf69ef0161ad96d8f71b85d25f",
+        "recorded": "652d1a1cf99f683713b59c5c6017745230d041bf69ef0161ad96d8f71b85d25f"
+      },
+      {
+        "path": "skills/view-and-representation-patterns/skill.yaml",
+        "sha256": "7f1db7eadea3ec7a102a733c377a97ad45f8e892a8f9ad50910f8e955c7ec83f",
+        "recorded": "7f1db7eadea3ec7a102a733c377a97ad45f8e892a8f9ad50910f8e955c7ec83f"
+      }
+    ],
+    "attribution": "Working package was clean at assignment. Compared final owned hashes with the recorded baseline and retained copy; exactly the reference file and version manifest changed."
+  },
+  "findingsCorrected": [
+    {
+      "id": "VIEW-W4-1",
+      "location": "references/two-step-view-and-modern-representations.md:196, Sources",
+      "finding": "The Servlet 6 response-lifecycle source URL used a lowercase class name without .html and returned a real HTTP 404. This was confirmed with direct fetch after the web reader returned an internal error; an internal-reader failure alone was not treated as a broken URL.",
+      "consequence": "Following the cited evidence for buffer commitment, reset and writer ownership failed to reach the authoritative API documentation.",
+      "correction": "Replaced only the URL suffix servletresponse with ServletResponse.html in the same versioned Servlet 6 API path.",
+      "oldUrl": "https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/servletresponse",
+      "newUrl": "https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/ServletResponse.html",
+      "evidence": "The same retained checker reports baseline HTTP 404/title 404 Page Not Found, exit 1; revised HTTP 200/title ServletResponse, expected API members present, exit 0.",
+      "impactLimit": "Repairs evidence accessibility. Does not demonstrate a change in an agent's reasoning, rendering behavior or correctness."
+    }
+  ],
+  "findingsReviewedAndPreserved": [
+    {
+      "location": "SKILL.md:20-113 and references/two-step-view-and-modern-representations.md:3-28",
+      "finding": "Classical HTML patterns are distinguished from JSON/error analogies; helper or layout reuse is not automatically Two Step View. Existing adequate composition remains valid.",
+      "support": ["Fowler Template View", "Fowler Transform View", "Fowler Two Step View"]
+    },
+    {
+      "location": "SKILL.md:117-156 and references/template-and-transform-view.md:3-69",
+      "finding": "Presentation branching is valid; pricing/authorization ownership is upstream. Managed lazy traversal differs from application-owned bounded lazy data. OSIV is not evidence of an open original transaction or connection occupancy.",
+      "support": [
+        "Thymeleaf 3.1 tutorial, lazy values",
+        "Thymeleaf 3.1.2.RELEASE LazyContextVariable",
+        "Spring 6.1.14 OpenEntityManagerInViewFilter"
+      ]
+    },
+    {
+      "location": "references/template-and-transform-view.md:70-132",
+      "finding": "Context-specific encoding, rich-HTML sanitization, htmx behavioral attributes, serializer configuration and complete field contracts are covered. One negative JSON assertion is explicitly limited to one field.",
+      "support": [
+        "Thymeleaf 3.1 text/utext",
+        "OWASP XSS Prevention Cheat Sheet",
+        "htmx security guidance"
+      ]
+    },
+    {
+      "location": "references/two-step-view-and-modern-representations.md:30-96",
+      "finding": "ProblemDetail version baseline, publicly safe fields/messages, non-null Map.of entries and errors outside controller advice are qualified; envelopes and tenant/locale shaping preserve accepted contracts.",
+      "support": ["Spring 6.1.14 ProblemDetail", "Spring 6.1.14 ResponseEntityExceptionHandler"]
+    },
+    {
+      "location": "references/two-step-view-and-modern-representations.md:113-148",
+      "finding": "Bounded cursor/context lifetime, cleanup on acquisition/write failures, slow clients, PrintWriter error state, response commitment and detectable partial output already have concrete guidance. No further generic warnings were needed.",
+      "support": ["Jakarta Servlet 6 ServletResponse", "Java SE 17 PrintWriter"]
+    },
+    {
+      "location": "references/two-step-view-and-modern-representations.md:150-172",
+      "finding": "Full HTML versus fragment variants require the effective selector in cache variation; direct/history restoration and conditional requests are distinct checks. Distinct URLs or avoiding reuse remain valid alternatives.",
+      "support": ["RFC 9111 section 4.1", "htmx caching/history documentation"]
+    }
+  ],
+  "findingsRemaining": [],
+  "filesChangedByReviewer": [
+    {
+      "path": "skills/view-and-representation-patterns/references/two-step-view-and-modern-representations.md",
+      "change": "One broken Servlet 6 source link repaired."
+    },
+    {
+      "path": "skills/view-and-representation-patterns/skill.yaml",
+      "change": "Single patch version increment only."
+    }
+  ],
+  "preExistingChanges": [],
+  "unchangedFiles": [
+    "skills/view-and-representation-patterns/SKILL.md",
+    "skills/view-and-representation-patterns/references/template-and-transform-view.md"
+  ],
+  "capabilitiesPreserved": [
+    "Trigger/scope boundaries for rendering policy, data access, multi-format shaping and response contracts.",
+    "Template View, Transform View, Two Step View and adequate existing helpers/composition as alternatives.",
+    "Classical HTML definitions versus modern JSON/error analogies.",
+    "Presentation-model construction while retaining typed machine values and renderer-specific locale formatting.",
+    "Java 16+ records and Spring Framework 6+/Java 17+ ProblemDetail prerequisites without implicit upgrades.",
+    "Explicitly partial snippets and pseudocode rather than falsely standalone programs.",
+    "Authorization and field visibility before data crosses a trust boundary; UI hints are not enforcement.",
+    "Context-specific escaping, rich HTML sanitization and htmx attribute isolation.",
+    "Direct internal entity exposure only under explicit visibility/fetch contracts; projections do not prove query count or snapshot consistency.",
+    "Application-owned lazy data with work/failure/lifetime limits, retaining legitimate optional rendering.",
+    "Per-format shapes when consumers differ and explicit consistency/version assumptions.",
+    "Public-safe error details, existing framework support, errors outside controller advice and deliberate correlation exposure.",
+    "Streaming resource lifetime, suppressed writer errors, transport commitment and detectable incomplete output.",
+    "Negotiated media types, cache variants, validators and full-page history restoration.",
+    "Focused validation and keeping established contracts rather than demanding new patterns or full audits."
+  ],
+  "capabilitiesRemovedOrReplaced": [],
+  "checks": {
+    "preliminary": [
+      {
+        "command": "node packages/cli/bin/agent-skills.mjs --no-update-check validate skills/view-and-representation-patterns --strict --json",
+        "workingDirectory": "C:/git/agent-skills",
+        "chunk_id": "ce5655",
+        "wall_time_seconds": 0.2058206,
+        "exit_code": 0,
+        "original_token_count": 46,
+        "output": "{\n  \"ok\": true,\n  \"directory\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\view-and-representation-patterns\",\n  \"name\": \"view-and-representation-patterns\",\n  \"version\": \"1.3.3\",\n  \"issues\": []\n}\n"
+      },
+      {
+        "command": "node node_modules/prettier/bin/prettier.cjs --check skills/view-and-representation-patterns/SKILL.md skills/view-and-representation-patterns/skill.yaml skills/view-and-representation-patterns/references/template-and-transform-view.md skills/view-and-representation-patterns/references/two-step-view-and-modern-representations.md",
+        "workingDirectory": "C:/git/agent-skills",
+        "chunk_id": "130e54",
+        "wall_time_seconds": 0.3242746,
+        "exit_code": 0,
+        "original_token_count": 17,
+        "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+      }
+    ],
+    "final": [
+      {
+        "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/view-and-representation-patterns-check/verify-servlet-reference.cjs C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/baseline/view-and-representation-patterns/references/two-step-view-and-modern-representations.md",
+        "workingDirectory": "C:/git/agent-skills",
+        "chunk_id": "536a0c",
+        "wall_time_seconds": 1.0354568,
+        "exit_code": 1,
+        "original_token_count": 251,
+        "output": "{\n  \"kind\": \"Versioned primary-source link check; not a renderer or agent behavior test\",\n  \"node\": \"v25.6.1\",\n  \"referenceFile\": \"C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/baseline/view-and-representation-patterns/references/two-step-view-and-modern-representations.md\",\n  \"url\": \"https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/servletresponse\",\n  \"status\": 404,\n  \"finalUrl\": \"https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/servletresponse\",\n  \"title\": \"404 Page Not Found | Jakarta EE | The Eclipse Foundation\",\n  \"members\": [\n    {\n      \"name\": \"getWriter()\",\n      \"present\": false\n    },\n    {\n      \"name\": \"flushBuffer()\",\n      \"present\": false\n    },\n    {\n      \"name\": \"reset()\",\n      \"present\": false\n    },\n    {\n      \"name\": \"isCommitted()\",\n      \"present\": false\n    }\n  ],\n  \"responseUtf8Sha256\": \"16ef63755b816a4e1abc5ea79a7c942fc6f11495379cbd680610de77e412090d\",\n  \"ok\": false\n}\n"
+      },
+      {
+        "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/view-and-representation-patterns-check/verify-servlet-reference.cjs skills/view-and-representation-patterns/references/two-step-view-and-modern-representations.md",
+        "workingDirectory": "C:/git/agent-skills",
+        "chunk_id": "569567",
+        "wall_time_seconds": 0.7250917,
+        "exit_code": 0,
+        "original_token_count": 234,
+        "output": "{\n  \"kind\": \"Versioned primary-source link check; not a renderer or agent behavior test\",\n  \"node\": \"v25.6.1\",\n  \"referenceFile\": \"skills/view-and-representation-patterns/references/two-step-view-and-modern-representations.md\",\n  \"url\": \"https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/ServletResponse.html\",\n  \"status\": 200,\n  \"finalUrl\": \"https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/ServletResponse.html\",\n  \"title\": \"ServletResponse (Jakarta Servlet API documentation)\",\n  \"members\": [\n    {\n      \"name\": \"getWriter()\",\n      \"present\": true\n    },\n    {\n      \"name\": \"flushBuffer()\",\n      \"present\": true\n    },\n    {\n      \"name\": \"reset()\",\n      \"present\": true\n    },\n    {\n      \"name\": \"isCommitted()\",\n      \"present\": true\n    }\n  ],\n  \"responseUtf8Sha256\": \"58f68b18d82039ecf89d9a6988a5d64147b6dfed28830d56886dd70dac2778b3\",\n  \"ok\": true\n}\n"
+      },
+      {
+        "command": "node packages/cli/bin/agent-skills.mjs --no-update-check validate skills/view-and-representation-patterns --strict --json",
+        "workingDirectory": "C:/git/agent-skills",
+        "chunk_id": "8e8bbc",
+        "wall_time_seconds": 0.1729456,
+        "exit_code": 0,
+        "original_token_count": 46,
+        "output": "{\n  \"ok\": true,\n  \"directory\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\view-and-representation-patterns\",\n  \"name\": \"view-and-representation-patterns\",\n  \"version\": \"1.3.4\",\n  \"issues\": []\n}\n"
+      },
+      {
+        "command": "node node_modules/prettier/bin/prettier.cjs --check skills/view-and-representation-patterns/SKILL.md skills/view-and-representation-patterns/skill.yaml skills/view-and-representation-patterns/references/template-and-transform-view.md skills/view-and-representation-patterns/references/two-step-view-and-modern-representations.md",
+        "workingDirectory": "C:/git/agent-skills",
+        "chunk_id": "0d3d97",
+        "wall_time_seconds": 0.2182584,
+        "exit_code": 0,
+        "original_token_count": 17,
+        "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+      },
+      {
+        "command": "git diff --check -- skills/view-and-representation-patterns",
+        "workingDirectory": "C:/git/agent-skills",
+        "chunk_id": "798b48",
+        "wall_time_seconds": 0.0765182,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      }
+    ],
+    "sourceUrlDiscovery": {
+      "command": "@'\nconst urls=[\n'https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/servletresponse',\n'https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/ServletResponse.html',\n'https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta/servlet/ServletResponse.html'\n];\nPromise.all(urls.map(async url=>{try{const r=await fetch(url,{signal:AbortSignal.timeout(20000)});const body=await r.text();return {url,status:r.status,finalUrl:r.url,title:body.match(/<title>([\\s\\S]*?)<\\/title>/i)?.[1],length:body.length,servletResponse:body.includes('Interface ServletResponse')};}catch(e){return {url,error:e.message};}})).then(r=>console.log(JSON.stringify(r,null,2)));\n'@ | node",
+      "workingDirectory": "C:/git/agent-skills",
+      "chunk_id": "490f06",
+      "wall_time_seconds": 1.0219783,
+      "exit_code": 0,
+      "original_token_count": 288,
+      "output": "[\n  {\n    \"url\": \"https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/servletresponse\",\n    \"status\": 404,\n    \"finalUrl\": \"https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/servletresponse\",\n    \"title\": \"404 Page Not Found | Jakarta EE | The Eclipse Foundation\",\n    \"length\": 211839,\n    \"servletResponse\": false\n  },\n  {\n    \"url\": \"https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/ServletResponse.html\",\n    \"status\": 200,\n    \"finalUrl\": \"https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/ServletResponse.html\",\n    \"title\": \"ServletResponse (Jakarta Servlet API documentation)\",\n    \"length\": 46035,\n    \"servletResponse\": true\n  },\n  {\n    \"url\": \"https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta/servlet/ServletResponse.html\",\n    \"status\": 404,\n    \"finalUrl\": \"https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta/servlet/ServletResponse.html\",\n    \"title\": \"404 Page Not Found | Jakarta EE | The Eclipse Foundation\",\n    \"length\": 211839,\n    \"servletResponse\": false\n  }\n]\n"
+    },
+    "ownedReadOnlyAudit": {
+      "command": "@'\nconst fs = require('node:fs');\nconst path = require('node:path');\nconst crypto = require('node:crypto');\nconst {execFileSync} = require('node:child_process');\nconst yaml = require('yaml');\nconst name = 'view-and-representation-patterns';\nconst root = 'skills/'+name;\nconst baseline = JSON.parse(fs.readFileSync('docs/skill-validation/wave4-2026-10-16/baseline.json','utf8'));\nconst initial = baseline.packages.find(x=>x.name===name);\nconst files = [];\nfunction walk(dir) { for (const e of fs.readdirSync(dir,{withFileTypes:true})) { const p=dir+'/'+e.name; if(e.isDirectory()) walk(p); else files.push(p); } }\nwalk(root); files.sort();\nconst manifest = yaml.parse(fs.readFileSync(root+'/skill.yaml','utf8'));\nconst entry = fs.readFileSync(root+'/SKILL.md','utf8');\nconst front = yaml.parse(entry.match(/^---\\r?\\n([\\s\\S]*?)\\r?\\n---/)[1]);\nconst localLinks=[];\nfor(const p of files.filter(x=>x.endsWith('.md'))) for(const m of fs.readFileSync(p,'utf8').matchAll(/\\[[^\\]]*\\]\\((?:<([^>]+)>|([^\\s)]+))\\)/g)) { const t=m[1]||m[2]; if(/^(?:https?:|mailto:|#)/.test(t)) continue; const resolved=path.resolve(path.dirname(p),decodeURIComponent(t.split('#')[0])); localLinks.push({file:p,target:t,exists:fs.existsSync(resolved)}); }\nconst referrals=[...(manifest.dependencies||[]),...(manifest.suggests||[])].map(v=>typeof v==='string'?v:v.name).map(n=>({name:n,exists:fs.existsSync('skills/'+n+'/SKILL.md')}));\nconst hashes=files.map(p=>({path:p,bytes:fs.statSync(p).size,sha256:crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex')}));\nconst snapshotRoot='C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/baseline/'+name;\nconst snapshot=initial.files.map(f=>{const p=path.join(snapshotRoot,path.relative(root,f.path));return {path:f.path,sha256:crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex'),recorded:f.sha256};});\nconst mismatches=hashes.filter(f=>{const b=initial.files.find(x=>x.path===f.path);return !b||b.sha256!==f.sha256||b.bytes!==f.bytes;});\nconst status=execFileSync('git',['status','--short','--untracked-files=all','--',root],{encoding:'utf8'}).trim();\nconst committed=yaml.parse(execFileSync('git',['show','HEAD:'+root+'/skill.yaml'],{encoding:'utf8'})).version;\nconst result={node:process.version,skill:name,versions:{committed,assignment:initial.initialVersion,final:manifest.version},initialStatus:initial.status,finalStatus:status,nameConsistent:front.name===manifest.name&&manifest.name===name,descriptionConsistent:front.description.trim()===manifest.description.trim(),fileCount:files.length,localLinks,referrals,changedPaths:mismatches.map(f=>f.path),sameFileSet:files.length===initial.files.length&&hashes.every(f=>initial.files.some(b=>b.path===f.path)),snapshotMatchesBaseline:snapshot.every(f=>f.sha256===f.recorded),snapshot,hashes};\nconsole.log(JSON.stringify(result,null,2));\nif(!result.nameConsistent||!result.descriptionConsistent||!result.sameFileSet||!result.snapshotMatchesBaseline||JSON.stringify(result.changedPaths)!==JSON.stringify([root+'/references/two-step-view-and-modern-representations.md',root+'/skill.yaml'])||localLinks.some(x=>!x.exists)||referrals.some(x=>!x.exists)||manifest.version!=='1.3.4'||initial.initialVersion!=='1.3.3'||committed!==initial.committedVersion) process.exitCode=1;\n'@ | node",
+      "workingDirectory": "C:/git/agent-skills",
+      "chunk_id": "ce9219",
+      "wall_time_seconds": 0.1825396,
+      "exit_code": 0,
+      "original_token_count": 917,
+      "output": "{\n  \"node\": \"v25.6.1\",\n  \"skill\": \"view-and-representation-patterns\",\n  \"versions\": {\n    \"committed\": \"1.3.3\",\n    \"assignment\": \"1.3.3\",\n    \"final\": \"1.3.4\"\n  },\n  \"initialStatus\": \"\",\n  \"finalStatus\": \"M skills/view-and-representation-patterns/references/two-step-view-and-modern-representations.md\\n M skills/view-and-representation-patterns/skill.yaml\",\n  \"nameConsistent\": true,\n  \"descriptionConsistent\": true,\n  \"fileCount\": 4,\n  \"localLinks\": [\n    {\n      \"file\": \"skills/view-and-representation-patterns/SKILL.md\",\n      \"target\": \"references/template-and-transform-view.md\",\n      \"exists\": true\n    },\n    {\n      \"file\": \"skills/view-and-representation-patterns/SKILL.md\",\n      \"target\": \"references/two-step-view-and-modern-representations.md\",\n      \"exists\": true\n    }\n  ],\n  \"referrals\": [\n    {\n      \"name\": \"mvc-and-request-handling\",\n      \"exists\": true\n    },\n    {\n      \"name\": \"architecture-and-performance\",\n      \"exists\": true\n    },\n    {\n      \"name\": \"orm-behavioral-patterns\",\n      \"exists\": true\n    },\n    {\n      \"name\": \"query-objects-and-specifications\",\n      \"exists\": true\n    },\n    {\n      \"name\": \"remote-facade-and-dto\",\n      \"exists\": true\n    },\n    {\n      \"name\": \"repository-pattern\",\n      \"exists\": true\n    },\n    {\n      \"name\": \"rpc-and-api-contracts\",\n      \"exists\": true\n    },\n    {\n      \"name\": \"serialization-performance\",\n      \"exists\": true\n    },\n    {\n      \"name\": \"service-layer-design\",\n      \"exists\": true\n    }\n  ],\n  \"changedPaths\": [\n    \"skills/view-and-representation-patterns/references/two-step-view-and-modern-representations.md\",\n    \"skills/view-and-representation-patterns/skill.yaml\"\n  ],\n  \"sameFileSet\": true,\n  \"snapshotMatchesBaseline\": true,\n  \"snapshot\": [\n    {\n      \"path\": \"skills/view-and-representation-patterns/SKILL.md\",\n      \"sha256\": \"e810925e89e749a7efc20941739277fd54feab07403f03d9b945ac5729cdde26\",\n      \"recorded\": \"e810925e89e749a7efc20941739277fd54feab07403f03d9b945ac5729cdde26\"\n    },\n    {\n      \"path\": \"skills/view-and-representation-patterns/references/template-and-transform-view.md\",\n      \"sha256\": \"e33ba0dc8508b2974a0b5b83c41d541e124f25e18417bfdda7ebf160f78fa7b3\",\n      \"recorded\": \"e33ba0dc8508b2974a0b5b83c41d541e124f25e18417bfdda7ebf160f78fa7b3\"\n    },\n    {\n      \"path\": \"skills/view-and-representation-patterns/references/two-step-view-and-modern-representations.md\",\n      \"sha256\": \"652d1a1cf99f683713b59c5c6017745230d041bf69ef0161ad96d8f71b85d25f\",\n      \"recorded\": \"652d1a1cf99f683713b59c5c6017745230d041bf69ef0161ad96d8f71b85d25f\"\n    },\n    {\n      \"path\": \"skills/view-and-representation-patterns/skill.yaml\",\n      \"sha256\": \"7f1db7eadea3ec7a102a733c377a97ad45f8e892a8f9ad50910f8e955c7ec83f\",\n      \"recorded\": \"7f1db7eadea3ec7a102a733c377a97ad45f8e892a8f9ad50910f8e955c7ec83f\"\n    }\n  ],\n  \"hashes\": [\n    {\n      \"path\": \"skills/view-and-representation-patterns/SKILL.md\",\n      \"bytes\": 10789,\n      \"sha256\": \"e810925e89e749a7efc20941739277fd54feab07403f03d9b945ac5729cdde26\"\n    },\n    {\n      \"path\": \"skills/view-and-representation-patterns/references/template-and-transform-view.md\",\n      \"bytes\": 10291,\n      \"sha256\": \"e33ba0dc8508b2974a0b5b83c41d541e124f25e18417bfdda7ebf160f78fa7b3\"\n    },\n    {\n      \"path\": \"skills/view-and-representation-patterns/references/two-step-view-and-modern-representations.md\",\n      \"bytes\": 11974,\n      \"sha256\": \"22c6c2f220937570121a641fe36cd8310ad2682e99d78bb2b74525014135a497\"\n    },\n    {\n      \"path\": \"skills/view-and-representation-patterns/skill.yaml\",\n      \"bytes\": 2251,\n      \"sha256\": \"6762d736ddaa84dd8b94780996daed992dbd6f32d77ec51a71b6c26e3d1000b2\"\n    }\n  ]\n}\n",
+      "parsedResult": {
+        "node": "v25.6.1",
+        "skill": "view-and-representation-patterns",
+        "versions": {
+          "committed": "1.3.3",
+          "assignment": "1.3.3",
+          "final": "1.3.4"
+        },
+        "initialStatus": "",
+        "finalStatus": "M skills/view-and-representation-patterns/references/two-step-view-and-modern-representations.md\n M skills/view-and-representation-patterns/skill.yaml",
+        "nameConsistent": true,
+        "descriptionConsistent": true,
+        "fileCount": 4,
+        "localLinks": [
+          {
+            "file": "skills/view-and-representation-patterns/SKILL.md",
+            "target": "references/template-and-transform-view.md",
+            "exists": true
+          },
+          {
+            "file": "skills/view-and-representation-patterns/SKILL.md",
+            "target": "references/two-step-view-and-modern-representations.md",
+            "exists": true
+          }
+        ],
+        "referrals": [
+          {
+            "name": "mvc-and-request-handling",
+            "exists": true
+          },
+          {
+            "name": "architecture-and-performance",
+            "exists": true
+          },
+          {
+            "name": "orm-behavioral-patterns",
+            "exists": true
+          },
+          {
+            "name": "query-objects-and-specifications",
+            "exists": true
+          },
+          {
+            "name": "remote-facade-and-dto",
+            "exists": true
+          },
+          {
+            "name": "repository-pattern",
+            "exists": true
+          },
+          {
+            "name": "rpc-and-api-contracts",
+            "exists": true
+          },
+          {
+            "name": "serialization-performance",
+            "exists": true
+          },
+          {
+            "name": "service-layer-design",
+            "exists": true
+          }
+        ],
+        "changedPaths": [
+          "skills/view-and-representation-patterns/references/two-step-view-and-modern-representations.md",
+          "skills/view-and-representation-patterns/skill.yaml"
+        ],
+        "sameFileSet": true,
+        "snapshotMatchesBaseline": true,
+        "snapshot": [
+          {
+            "path": "skills/view-and-representation-patterns/SKILL.md",
+            "sha256": "e810925e89e749a7efc20941739277fd54feab07403f03d9b945ac5729cdde26",
+            "recorded": "e810925e89e749a7efc20941739277fd54feab07403f03d9b945ac5729cdde26"
+          },
+          {
+            "path": "skills/view-and-representation-patterns/references/template-and-transform-view.md",
+            "sha256": "e33ba0dc8508b2974a0b5b83c41d541e124f25e18417bfdda7ebf160f78fa7b3",
+            "recorded": "e33ba0dc8508b2974a0b5b83c41d541e124f25e18417bfdda7ebf160f78fa7b3"
+          },
+          {
+            "path": "skills/view-and-representation-patterns/references/two-step-view-and-modern-representations.md",
+            "sha256": "652d1a1cf99f683713b59c5c6017745230d041bf69ef0161ad96d8f71b85d25f",
+            "recorded": "652d1a1cf99f683713b59c5c6017745230d041bf69ef0161ad96d8f71b85d25f"
+          },
+          {
+            "path": "skills/view-and-representation-patterns/skill.yaml",
+            "sha256": "7f1db7eadea3ec7a102a733c377a97ad45f8e892a8f9ad50910f8e955c7ec83f",
+            "recorded": "7f1db7eadea3ec7a102a733c377a97ad45f8e892a8f9ad50910f8e955c7ec83f"
+          }
+        ],
+        "hashes": [
+          {
+            "path": "skills/view-and-representation-patterns/SKILL.md",
+            "bytes": 10789,
+            "sha256": "e810925e89e749a7efc20941739277fd54feab07403f03d9b945ac5729cdde26"
+          },
+          {
+            "path": "skills/view-and-representation-patterns/references/template-and-transform-view.md",
+            "bytes": 10291,
+            "sha256": "e33ba0dc8508b2974a0b5b83c41d541e124f25e18417bfdda7ebf160f78fa7b3"
+          },
+          {
+            "path": "skills/view-and-representation-patterns/references/two-step-view-and-modern-representations.md",
+            "bytes": 11974,
+            "sha256": "22c6c2f220937570121a641fe36cd8310ad2682e99d78bb2b74525014135a497"
+          },
+          {
+            "path": "skills/view-and-representation-patterns/skill.yaml",
+            "bytes": 2251,
+            "sha256": "6762d736ddaa84dd8b94780996daed992dbd6f32d77ec51a71b6c26e3d1000b2"
+          }
+        ]
+      },
+      "purpose": "Assigned package metadata, local reference targets, declared dependency/referral existence, versions and baseline hashes; not a catalog-wide replacement validator."
+    },
+    "finalDiffAndLocations": {
+      "command": "git diff -- skills/view-and-representation-patterns\nrg -n '^##|Servlet 6|version:' skills/view-and-representation-patterns",
+      "workingDirectory": "C:/git/agent-skills",
+      "chunk_id": "afa8eb",
+      "wall_time_seconds": 0.0743543,
+      "exit_code": 0,
+      "original_token_count": 1132,
+      "output": "diff --git a/skills/view-and-representation-patterns/references/two-step-view-and-modern-representations.md b/skills/view-and-representation-patterns/references/two-step-view-and-modern-representations.md\nindex 44022d6..7873529 100644\n--- a/skills/view-and-representation-patterns/references/two-step-view-and-modern-representations.md\n+++ b/skills/view-and-representation-patterns/references/two-step-view-and-modern-representations.md\n@@ -193,4 +193,4 @@ Sources: [Fowler Two Step View](https://martinfowler.com/eaaCatalog/twoStepView.\n [Spring 6.1.14 ProblemDetail](https://docs.spring.io/spring-framework/docs/6.1.14/javadoc-api/org/springframework/http/ProblemDetail.html),\n [htmx caching and history](https://htmx.org/docs/#caching),\n [RFC 9111 cache selection with Vary](https://www.rfc-editor.org/rfc/rfc9111.html#section-4.1),\n-[Servlet 6 response buffering and commitment](https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/servletresponse).\n+[Servlet 6 response buffering and commitment](https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/ServletResponse.html).\ndiff --git a/skills/view-and-representation-patterns/skill.yaml b/skills/view-and-representation-patterns/skill.yaml\nindex 6c30289..161dba2 100644\n--- a/skills/view-and-representation-patterns/skill.yaml\n+++ b/skills/view-and-representation-patterns/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: view-and-representation-patterns\n-version: 1.3.3\n+version: 1.3.4\n description: >-\n   Producing the response: Template View, Transform View and Two Step View as three ways to\n   turn a model into output, and what each becomes in a JSON API, a server-rendered page or a\nskills/view-and-representation-patterns\\skill.yaml:4:version: 1.3.4\nskills/view-and-representation-patterns\\skill.yaml:46:    version: ^1.0.0\nskills/view-and-representation-patterns\\SKILL.md:20:## Purpose\nskills/view-and-representation-patterns\\SKILL.md:31:## The three patterns\nskills/view-and-representation-patterns\\SKILL.md:49:## Workflow\nskills/view-and-representation-patterns\\SKILL.md:80:## Decision rules\nskills/view-and-representation-patterns\\SKILL.md:117:## Rules\nskills/view-and-representation-patterns\\SKILL.md:160:## References\nskills/view-and-representation-patterns\\references\\two-step-view-and-modern-representations.md:3:## The pattern\nskills/view-and-representation-patterns\\references\\two-step-view-and-modern-representations.md:17:## Candidate shared rendering seams\nskills/view-and-representation-patterns\\references\\two-step-view-and-modern-representations.md:30:## Errors: a useful shared step\nskills/view-and-representation-patterns\\references\\two-step-view-and-modern-representations.md:73:## Response envelopes and the consumer contract\nskills/view-and-representation-patterns\\references\\two-step-view-and-modern-representations.md:83:## Per-tenant and per-locale rendering\nskills/view-and-representation-patterns\\references\\two-step-view-and-modern-representations.md:98:## Where the patterns land in modern architectures\nskills/view-and-representation-patterns\\references\\two-step-view-and-modern-representations.md:113:## Streaming and large responses\nskills/view-and-representation-patterns\\references\\two-step-view-and-modern-representations.md:150:## Content negotiation\nskills/view-and-representation-patterns\\references\\two-step-view-and-modern-representations.md:174:## Reviewing a representation layer\nskills/view-and-representation-patterns\\references\\two-step-view-and-modern-representations.md:196:[Servlet 6 response buffering and commitment](https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/ServletResponse.html).\nskills/view-and-representation-patterns\\references\\template-and-transform-view.md:3:## Template View and domain policy\nskills/view-and-representation-patterns\\references\\template-and-transform-view.md:44:## Deliberate data access during rendering\nskills/view-and-representation-patterns\\references\\template-and-transform-view.md:70:## Escaping is a security boundary\nskills/view-and-representation-patterns\\references\\template-and-transform-view.md:94:## Transform View\nskills/view-and-representation-patterns\\references\\template-and-transform-view.md:133:## One model, several formats\nskills/view-and-representation-patterns\\references\\template-and-transform-view.md:156:## Choosing between them\nskills/view-and-representation-patterns\\references\\template-and-transform-view.md:167:## Presentation model construction\n",
+      "inspected": true
+    },
+    "expectedNegativeCheck": {
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/view-and-representation-patterns-check/verify-servlet-reference.cjs C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/baseline/view-and-representation-patterns/references/two-step-view-and-modern-representations.md",
+      "exitCode": 1,
+      "reason": "Known-broken baseline URL; expected 404 and absent API class/member markers."
+    },
+    "unexpectedFailures": [],
+    "javaCompilation": {
+      "status": "NOT_RUN_NOT_REQUIRED_FOR_THIS_EDIT",
+      "reason": "No Java/template/controller example was added or materially changed. The only content correction is a URL. Available existing JARs were inspected read-only; no compilation, framework/container test, installation or dependency upgrade was needed or claimed."
+    },
+    "runtimeIntegration": {
+      "status": "NOT_EXECUTED",
+      "reason": "No running servlet container, database, browser cache path, sanitizer or serializer integration was exercised by this resource-link repair."
+    }
+  },
+  "technicalEvidence": {
+    "classification": "EXECUTED_EXTERNAL_RESOURCE_CHECK_WITH_BASELINE_NEGATIVE_CONTROL",
+    "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/view-and-representation-patterns-check",
+    "runner": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/view-and-representation-patterns-check/verify-servlet-reference.cjs",
+    "nodeVersion": "v25.6.1",
+    "scriptSha256": "e3dd776ee076db2277ee9ebbfd4ad416205b772ca2eea614bee17660f395506d",
+    "resultsSha256": "f8e71f00fe9dfbd17d3b6656f270a98207a7e4b1c965f1cb43c761f31d940dab",
+    "checkerBehavior": "Reads the labeled Servlet source link from the supplied Markdown file, fetches it with a 20-second timeout and requires HTTP 200, the exact ServletResponse page title and four expected API member names. Reports JSON and exits 1 on mismatch.",
+    "baselineRecord": {
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/view-and-representation-patterns-check/verify-servlet-reference.cjs C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/baseline/view-and-representation-patterns/references/two-step-view-and-modern-representations.md",
+      "workingDirectory": "C:/git/agent-skills",
+      "exitCode": 1,
+      "output": "{\n  \"kind\": \"Versioned primary-source link check; not a renderer or agent behavior test\",\n  \"node\": \"v25.6.1\",\n  \"referenceFile\": \"C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/baseline/view-and-representation-patterns/references/two-step-view-and-modern-representations.md\",\n  \"url\": \"https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/servletresponse\",\n  \"status\": 404,\n  \"finalUrl\": \"https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/servletresponse\",\n  \"title\": \"404 Page Not Found | Jakarta EE | The Eclipse Foundation\",\n  \"members\": [\n    {\n      \"name\": \"getWriter()\",\n      \"present\": false\n    },\n    {\n      \"name\": \"flushBuffer()\",\n      \"present\": false\n    },\n    {\n      \"name\": \"reset()\",\n      \"present\": false\n    },\n    {\n      \"name\": \"isCommitted()\",\n      \"present\": false\n    }\n  ],\n  \"responseUtf8Sha256\": \"16ef63755b816a4e1abc5ea79a7c942fc6f11495379cbd680610de77e412090d\",\n  \"ok\": false\n}\n"
+    },
+    "finalRecord": {
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/view-and-representation-patterns-check/verify-servlet-reference.cjs skills/view-and-representation-patterns/references/two-step-view-and-modern-representations.md",
+      "workingDirectory": "C:/git/agent-skills",
+      "exitCode": 0,
+      "output": "{\n  \"kind\": \"Versioned primary-source link check; not a renderer or agent behavior test\",\n  \"node\": \"v25.6.1\",\n  \"referenceFile\": \"skills/view-and-representation-patterns/references/two-step-view-and-modern-representations.md\",\n  \"url\": \"https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/ServletResponse.html\",\n  \"status\": 200,\n  \"finalUrl\": \"https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/ServletResponse.html\",\n  \"title\": \"ServletResponse (Jakarta Servlet API documentation)\",\n  \"members\": [\n    {\n      \"name\": \"getWriter()\",\n      \"present\": true\n    },\n    {\n      \"name\": \"flushBuffer()\",\n      \"present\": true\n    },\n    {\n      \"name\": \"reset()\",\n      \"present\": true\n    },\n    {\n      \"name\": \"isCommitted()\",\n      \"present\": true\n    }\n  ],\n  \"responseUtf8Sha256\": \"58f68b18d82039ecf89d9a6988a5d64147b6dfed28830d56886dd70dac2778b3\",\n  \"ok\": true\n}\n"
+    },
+    "negativeControl": "No fabricated semantic mutation: executed the same checker against the retained assignment-time reference and then the revised reference. The unchanged baseline itself supplies the known-broken control.",
+    "reproduction": [
+      "Use existing Node with fetch support and network access to jakarta.ee.",
+      "Run the retained verify-servlet-reference.cjs with the baseline reference path from baselineRecord.command; expect HTTP 404, ok:false and exit 1 for the recorded original path.",
+      "Run the identical checker with the revised reference path from finalRecord.command; expect HTTP 200, the ServletResponse title, all member checks true and exit 0.",
+      "Future site changes or network errors may change results; retain actual status/output and consultation date. This is not a servlet or agent behavior test."
+    ],
+    "limits": "The check validates retrieval and the document identity/member presence; it does not execute the API. Method semantics were read from the versioned primary page separately. Web-reader errors were distinguished from direct HTTP status."
+  },
+  "behavioralEvaluation": {
+    "executed": false,
+    "actorRuns": 0,
+    "gainMeasured": false,
+    "baselineVsRevisedComparison": false,
+    "knownDevelopmentCases": true,
+    "heldOut": false,
+    "classification": "STRUCTURED_WALKTHROUGHS_AND_PENDING_COORDINATOR_CASES",
+    "walkthroughs": [
+      {
+        "caseId": "VIEW-W4-A",
+        "result": "Given only a small buffered header with no committer, a reset before a clean problem response is available. Changing status/type without clearing buffered CSV is insufficient. Real container behavior remains a targeted execution check."
+      },
+      {
+        "caseId": "VIEW-W4-B",
+        "result": "The single changed flush setting commits the response before the same read failure. A JSON replacement is unavailable; ending without the already-required completion marker lets the contract-aware client reject the partial response. Shared error construction does not alter commitment."
+      }
+    ],
+    "pairDifference": "Only config/export.properties differs: export.flushHeader=false versus true. All source excerpts, request text, failure location, accepted protocol and version requirements are identical.",
+    "evaluationInstructions": "Give only one caseInputs object and the selected baseline or revised skill to an evaluator. Keep criteria, this handoff, source-link results and counterpart case hidden. Use equal tools/model/context conditions for a comparison and do not relax criteria to force a gain. Cases are synthetic review artifacts and not a runnable project; actor execution has not occurred.",
+    "expectedComparisonLimit": "Behavioral instructions did not change, so the pair primarily checks retained specialist decisions. A behavioral tie is expected to be plausible and is not a failed review."
+  },
+  "caseInputs": [
+    {
+      "caseId": "VIEW-W4-A",
+      "task": "Revise a falha de exportação usando estes artefatos. Determine se o renderer compartilhado produz uma resposta válida, proponha o menor ajuste que respeita o contrato e indique verificações observáveis. Preserve as decisões aceitas que já são adequadas; diferencie o que os trechos provam do que exige execução no container.",
+      "files": [
+        {
+          "path": "README.md",
+          "content": "Trechos de um projeto Java 17, Spring MVC 6.1.14 e Jakarta Servlet 6.0. São artefatos para uma revisão, não um projeto completo. O endpoint executa no thread Servlet; queries.openCursor é uma operação autorizada dentro do escopo de recursos declarado. Não há filtro/compressão que force flush nesta reprodução. A resposta começa sem conteúdo anterior, com buffer de 8192 bytes e UTF-8. Nenhuma mudança de framework está aprovada."
+        },
+        {
+          "path": "src/ExportEndpoint.java",
+          "content": "// Trecho relevante; helpers e tipos de projeto já existem.\nvoid export(ExportRequest request, HttpServletResponse response) throws IOException {\n    authorization.requireExport(request.tenant(), request.scope());\n    response.setBufferSize(8192);\n    response.setCharacterEncoding(\"UTF-8\");\n    response.setContentType(\"text/csv\");\n    response.setHeader(\"Content-Disposition\", \"attachment; filename=orders.csv\");\n    try (Rows rows = queries.openCursor(request)) {\n        PrintWriter writer = response.getWriter();\n        writer.write(\"id,status\\r\\n\");\n        if (settings.flushHeader()) response.flushBuffer();\n        long count = 0;\n        while (rows.hasNext()) {\n            csv.write(rows.next(), writer);\n            count++;\n        }\n        writer.write(\"#COMPLETE,\" + count + \"\\r\\n\");\n        writer.flush();\n        if (writer.checkError()) throw new ExportWriteFailure();\n    } catch (ExportReadFailure failure) {\n        errorRenderer.render(response);\n    }\n}\n"
+        },
+        {
+          "path": "src/ExportErrorRenderer.java",
+          "content": "// Trecho atual. O corpo é estático e deliberadamente público.\nvoid render(HttpServletResponse response) throws IOException {\n    response.setStatus(500);\n    response.setContentType(\"application/problem+json\");\n    response.getWriter().write(\"{\\\"type\\\":\\\"https://errors.example.test/export-failed\\\",\\\"title\\\":\\\"Export failed\\\",\\\"status\\\":500}\");\n}\n"
+        },
+        {
+          "path": "docs/export-contract.md",
+          "content": "Contrato aprovado do consumidor interno: sucesso é text/csv com cabeçalho id,status, registros CSV escapados e uma linha final #COMPLETE,<quantidade>. O parser valida o marcador obrigatório e a contagem; resposta sem marcador é falha, mesmo com HTTP 200. Essa extensão é explícita do consumidor interno; não é prometido CSV genérico para qualquer cliente. Um erro HTTP 500 application/problem+json é aceito quando ainda pode ser entregue como resposta completa. Não emitir campos privados. A equipe propôs usar o renderer compartilhado para falhas de exportação. Na resposta de erro JSON, não deve permanecer Content-Disposition que a faça ser baixada como orders.csv."
+        },
+        {
+          "path": "fixtures/failure.txt",
+          "content": "Reprodução: o cursor é adquirido com sucesso. A primeira chamada a rows.hasNext() lança ExportReadFailure antes de produzir registros. Rows.close() é chamado uma vez e termina normalmente. Até a falha, o endpoint escreveu apenas id,status\\r\\n. A conexão do cliente está aberta e não houve erro de escrita. O incidente observado é conteúdo inesperado no arquivo recebido. Não há captura de resposta HTTP nem assertion de isCommitted nesta reprodução."
+        },
+        {
+          "path": "config/export.properties",
+          "content": "export.flushHeader=false\n"
+        }
+      ]
+    },
+    {
+      "caseId": "VIEW-W4-B",
+      "task": "Revise a falha de exportação usando estes artefatos. Determine se o renderer compartilhado produz uma resposta válida, proponha o menor ajuste que respeita o contrato e indique verificações observáveis. Preserve as decisões aceitas que já são adequadas; diferencie o que os trechos provam do que exige execução no container.",
+      "files": [
+        {
+          "path": "README.md",
+          "content": "Trechos de um projeto Java 17, Spring MVC 6.1.14 e Jakarta Servlet 6.0. São artefatos para uma revisão, não um projeto completo. O endpoint executa no thread Servlet; queries.openCursor é uma operação autorizada dentro do escopo de recursos declarado. Não há filtro/compressão que force flush nesta reprodução. A resposta começa sem conteúdo anterior, com buffer de 8192 bytes e UTF-8. Nenhuma mudança de framework está aprovada."
+        },
+        {
+          "path": "src/ExportEndpoint.java",
+          "content": "// Trecho relevante; helpers e tipos de projeto já existem.\nvoid export(ExportRequest request, HttpServletResponse response) throws IOException {\n    authorization.requireExport(request.tenant(), request.scope());\n    response.setBufferSize(8192);\n    response.setCharacterEncoding(\"UTF-8\");\n    response.setContentType(\"text/csv\");\n    response.setHeader(\"Content-Disposition\", \"attachment; filename=orders.csv\");\n    try (Rows rows = queries.openCursor(request)) {\n        PrintWriter writer = response.getWriter();\n        writer.write(\"id,status\\r\\n\");\n        if (settings.flushHeader()) response.flushBuffer();\n        long count = 0;\n        while (rows.hasNext()) {\n            csv.write(rows.next(), writer);\n            count++;\n        }\n        writer.write(\"#COMPLETE,\" + count + \"\\r\\n\");\n        writer.flush();\n        if (writer.checkError()) throw new ExportWriteFailure();\n    } catch (ExportReadFailure failure) {\n        errorRenderer.render(response);\n    }\n}\n"
+        },
+        {
+          "path": "src/ExportErrorRenderer.java",
+          "content": "// Trecho atual. O corpo é estático e deliberadamente público.\nvoid render(HttpServletResponse response) throws IOException {\n    response.setStatus(500);\n    response.setContentType(\"application/problem+json\");\n    response.getWriter().write(\"{\\\"type\\\":\\\"https://errors.example.test/export-failed\\\",\\\"title\\\":\\\"Export failed\\\",\\\"status\\\":500}\");\n}\n"
+        },
+        {
+          "path": "docs/export-contract.md",
+          "content": "Contrato aprovado do consumidor interno: sucesso é text/csv com cabeçalho id,status, registros CSV escapados e uma linha final #COMPLETE,<quantidade>. O parser valida o marcador obrigatório e a contagem; resposta sem marcador é falha, mesmo com HTTP 200. Essa extensão é explícita do consumidor interno; não é prometido CSV genérico para qualquer cliente. Um erro HTTP 500 application/problem+json é aceito quando ainda pode ser entregue como resposta completa. Não emitir campos privados. A equipe propôs usar o renderer compartilhado para falhas de exportação. Na resposta de erro JSON, não deve permanecer Content-Disposition que a faça ser baixada como orders.csv."
+        },
+        {
+          "path": "fixtures/failure.txt",
+          "content": "Reprodução: o cursor é adquirido com sucesso. A primeira chamada a rows.hasNext() lança ExportReadFailure antes de produzir registros. Rows.close() é chamado uma vez e termina normalmente. Até a falha, o endpoint escreveu apenas id,status\\r\\n. A conexão do cliente está aberta e não houve erro de escrita. O incidente observado é conteúdo inesperado no arquivo recebido. Não há captura de resposta HTTP nem assertion de isCommitted nesta reprodução."
+        },
+        {
+          "path": "config/export.properties",
+          "content": "export.flushHeader=true\n"
+        }
+      ]
+    }
+  ],
+  "caseCriteria": [
+    {
+      "caseId": "VIEW-W4-A",
+      "decisiveConstraint": "Header is written but not explicitly flushed; the small output is within the stated buffer, with no other committer.",
+      "common": [
+        "Traces response writing, flush/commit boundary, error rendering and existing completion protocol. Does not select a pattern solely from a shared helper's name.",
+        "Finds that a status/content-type update alone does not remove buffered CSV bytes and that committed status/headers cannot be replaced. Uses effective isCommitted/transport evidence for runtime claims.",
+        "Preserves authorization, resource cleanup, Java 17/Spring 6.1.14/Servlet 6.0 and the already adequate deliberate completion protocol; avoids introducing a Two Step View model solely for consistency.",
+        "Distinguishes the given read failure from swallowed PrintWriter write failures, and does not claim a full runtime/security/integration verification from a source-only review.",
+        "Requests or specifies focused container/adapter tests; no actor-output claim without execution."
+      ],
+      "expected": [
+        "The present failure can still produce a clean problem response while uncommitted. Reset the buffered response before setting error status, content type and appropriate headers; reacquire the writer after reset rather than use the stale one.",
+        "Verify the final body contains only valid public problem JSON, status 500 and its media type, without CSV prefix or stale attachment disposition. The valid success output should retain its CSV contract.",
+        "Use a committed-response guard for a general error path; do not state that every first application write commits the response."
+      ],
+      "failures": [
+        "Appends JSON after the buffered CSV header or only changes status/content type.",
+        "Insists a problem response is impossible just because write was called.",
+        "Reuses a stale writer after reset or removes the accepted completion protocol without reason."
+      ]
+    },
+    {
+      "caseId": "VIEW-W4-B",
+      "decisiveConstraint": "The explicit flushBuffer has already committed headers/status before the same cursor failure.",
+      "common": [
+        "Traces response writing, flush/commit boundary, error rendering and existing completion protocol. Does not select a pattern solely from a shared helper's name.",
+        "Finds that a status/content-type update alone does not remove buffered CSV bytes and that committed status/headers cannot be replaced. Uses effective isCommitted/transport evidence for runtime claims.",
+        "Preserves authorization, resource cleanup, Java 17/Spring 6.1.14/Servlet 6.0 and the already adequate deliberate completion protocol; avoids introducing a Two Step View model solely for consistency.",
+        "Distinguishes the given read failure from swallowed PrintWriter write failures, and does not claim a full runtime/security/integration verification from a source-only review.",
+        "Requests or specifies focused container/adapter tests; no actor-output claim without execution."
+      ],
+      "expected": [
+        "Does not attempt reset/status replacement or append JSON to the committed CSV response. Records the failure, preserves cleanup and ends the response without a completion marker.",
+        "Uses the existing client-required marker/count to make the incomplete stream rejectable; does not claim transport close alone or a successful write proves completeness.",
+        "Tests committed failure output with the actual consumer parser and verifies it rejects the missing marker, alongside old success and precommit-error paths. A different artifact/stream protocol is optional only if the accepted contract cannot be met.",
+        "Explains that sharing error-shape construction cannot override the HTTP commitment boundary; a separate lifecycle-aware adapter can delegate only when the state permits it."
+      ],
+      "failures": [
+        "Promises the shared renderer can replace the already committed status/media type.",
+        "Appends a ProblemDetail body into CSV or writes the success marker after failure.",
+        "Demands an asynchronous artifact despite the explicit completion protocol already making this failure detectable, without identifying an unmet requirement.",
+        "Claims the fixture or skill proves real database/Servlet integration behavior without running it."
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "SERVLET6",
+      "title": "Jakarta Servlet 6.0 ServletResponse API",
+      "version": "Servlet 6.0",
+      "url": "https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/ServletResponse.html",
+      "sections": ["getWriter", "flushBuffer", "reset", "isCommitted"],
+      "consulted": "2026-10-16",
+      "supports": "Correct document target; writer/flush commitment and reset limitations support the preserved streaming boundary.",
+      "evidence": "Direct HTTP 200, expected title and members. Read relevant method text through fetch after the web reader failed.",
+      "limits": "Documentation and link check, not actual container execution; no permanent availability guarantee."
+    },
+    {
+      "id": "FOWLER-TEMPLATE",
+      "title": "Martin Fowler, Template View",
+      "version": "Catalog entry dated 2003-03-05",
+      "url": "https://martinfowler.com/eaaCatalog/templateView.html",
+      "consulted": "2026-10-16",
+      "supports": "Classical output markers embedded in an HTML template; preserved pattern meaning.",
+      "limits": "Does not prescribe a particular modern Java framework or prove runtime properties."
+    },
+    {
+      "id": "FOWLER-TRANSFORM",
+      "title": "Martin Fowler, Transform View",
+      "version": "Catalog entry dated 2003-03-05",
+      "url": "https://martinfowler.com/eaaCatalog/transformView.html",
+      "consulted": "2026-10-16",
+      "supports": "Classical element-wise domain-data-to-HTML transformation; retained distinction from a DTO/serializer analogy.",
+      "limits": "Not proof that every response DTO implements this pattern."
+    },
+    {
+      "id": "FOWLER-TWO-STEP",
+      "title": "Martin Fowler, Two Step View",
+      "version": "Catalog entry dated 2003-03-05",
+      "url": "https://martinfowler.com/eaaCatalog/twoStepView.html",
+      "consulted": "2026-10-16",
+      "supports": "Logical first stage followed by shared formatting/rendering; preserves the condition before applying the label.",
+      "limits": "Does not require a new intermediate model when existing composition already meets the contract."
+    },
+    {
+      "id": "THYMELEAF",
+      "title": "Using Thymeleaf tutorial",
+      "version": "Thymeleaf 3.1 tutorial",
+      "url": "https://www.thymeleaf.org/doc/tutorials/3.1/usingthymeleaf.html",
+      "sections": ["3.2 Unescaped Text", "6.3 Optimizing through lazy retrieval of data"],
+      "consulted": "2026-10-16",
+      "supports": "th:text escaping versus th:utext markup and lazy context evaluation with a skipped conditional panel.",
+      "limits": "Verify installed engine/mode and actual application behavior; no local template engine execution in this review."
+    },
+    {
+      "id": "THYMELEAF-LAZY",
+      "title": "LazyContextVariable implementation",
+      "version": "thymeleaf-3.1.2.RELEASE tag",
+      "url": "https://github.com/thymeleaf/thymeleaf/blob/thymeleaf-3.1.2.RELEASE/lib/thymeleaf/src/main/java/org/thymeleaf/context/LazyContextVariable.java",
+      "sections": ["getValue"],
+      "consulted": "2026-10-16",
+      "supports": "The initialized flag is set after successful loadValue, so success caching does not itself guarantee only one attempt when loading throws.",
+      "limits": "No specific SpEL retry sequence executed; the existing skill appropriately requires inspecting the actual expression engine."
+    },
+    {
+      "id": "SPRING-OSIV",
+      "title": "OpenEntityManagerInViewFilter API",
+      "version": "Spring Framework 6.1.14",
+      "url": "https://docs.spring.io/spring-framework/docs/6.1.14/javadoc-api/org/springframework/orm/jpa/support/OpenEntityManagerInViewFilter.html",
+      "consulted": "2026-10-16",
+      "supports": "View lazy loading can occur after the original transaction completes; distinguishes persistence-context binding from the original transaction.",
+      "limits": "Does not measure a particular connection lifetime/query budget; actual project evidence is still required."
+    },
+    {
+      "id": "SPRING-PROBLEM",
+      "title": "ProblemDetail API",
+      "version": "Spring Framework 6.1.14; class since 6.0",
+      "url": "https://docs.spring.io/spring-framework/docs/6.1.14/javadoc-api/org/springframework/http/ProblemDetail.html",
+      "consulted": "2026-10-16",
+      "supports": "ProblemDetail baseline and extension properties used in the preserved partial error example.",
+      "limits": "Serializer/converter configuration and actual public output remain integration concerns."
+    },
+    {
+      "id": "SPRING-HANDLER",
+      "title": "ResponseEntityExceptionHandler API",
+      "version": "Spring Framework 6.1.14",
+      "url": "https://docs.spring.io/spring-framework/docs/6.1.14/javadoc-api/org/springframework/web/servlet/mvc/method/annotation/ResponseEntityExceptionHandler.html",
+      "sections": ["handleMethodArgumentNotValid", "handleExceptionInternal"],
+      "consulted": "2026-10-16",
+      "supports": "Override signatures and existing MVC exception support; retained caution about failures outside controller advice.",
+      "limits": "No full MockMvc/container error pipeline executed."
+    },
+    {
+      "id": "OWASP",
+      "title": "Cross Site Scripting Prevention Cheat Sheet",
+      "version": "Rolling official guidance consulted on review date",
+      "url": "https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html",
+      "sections": ["Output Encoding", "HTML Sanitization", "Dangerous Contexts"],
+      "consulted": "2026-10-16",
+      "supports": "Context-specific output encoding, sanitization of rich HTML, and preserving sanitization after later transformations.",
+      "limits": "No sanitizer bypass or browser security test performed; skill already requires appropriate maintained implementation."
+    },
+    {
+      "id": "HTMX",
+      "title": "htmx documentation",
+      "version": "Rolling documentation; installation example identifies 2.0.11 on consultation date",
+      "url": "https://htmx.org/docs/",
+      "sections": ["Caching", "History Support", "Security", "hx-disable"],
+      "consulted": "2026-10-16",
+      "supports": "HX-Request cache variation, full-page history restores, historyRestoreAsHxRequest condition and untrusted behavioral-attribute boundaries.",
+      "limits": "No browser/cache execution; do not generalize rolling documentation to every installed htmx version."
+    },
+    {
+      "id": "RFC9111",
+      "title": "RFC 9111 HTTP Caching",
+      "version": "June 2022",
+      "url": "https://www.rfc-editor.org/rfc/rfc9111.html#section-4.1",
+      "sections": ["4.1 Calculating Cache Keys with the Vary Header Field"],
+      "consulted": "2026-10-16",
+      "supports": "Stored response selection considers named request headers; absence matches absence and default variants also need appropriate variation.",
+      "limits": "Does not establish correct deployment/cache configuration without observing the actual path."
+    },
+    {
+      "id": "PRINTWRITER",
+      "title": "Java SE 17 PrintWriter API",
+      "version": "Java SE 17",
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/PrintWriter.html",
+      "sections": ["Class contract", "checkError"],
+      "consulted": "2026-10-16",
+      "supports": "Write methods do not throw I/O exceptions; checkError exposes errors, supporting preserved streaming guidance.",
+      "limits": "No new writer-failure runtime probe was required or executed for this link-only edit."
+    }
+  ],
+  "evidenceArtifacts": [
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/view-and-representation-patterns-check/results.json",
+      "bytes": 4771,
+      "sha256": "f8e71f00fe9dfbd17d3b6656f270a98207a7e4b1c965f1cb43c761f31d940dab"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/view-and-representation-patterns-check/verify-servlet-reference.cjs",
+      "bytes": 1471,
+      "sha256": "e3dd776ee076db2277ee9ebbfd4ad416205b772ca2eea614bee17660f395506d"
+    }
+  ],
+  "limitations": [
+    "No measured behavioral improvement; only evidence-access repair and structural checks were executed.",
+    "The HTTP endpoint was checked on the recorded date; source availability may change.",
+    "No Java, Thymeleaf, ORM, serialization, security-browser, servlet-container or real cache integration test was run.",
+    "Existing Java examples remained partial and byte-for-byte semantically unchanged; no toolchain/dependency installation or upgrade.",
+    "The 2 local references and 9 declared dependency/referral targets exist; dependency-range resolution/catalog-wide routing is left to coordinator globals.",
+    "No performance claims, runtime benchmark or whole-catalog pass is inferred."
+  ],
+  "crossSkill": [],
+  "coordinatorActions": [
+    "Archive this handoff and the two small evidence artifacts.",
+    "Review the two-line semantic diff (URL and patch version).",
+    "Run global index/version checks after all reviewers have stopped.",
+    "Run independent cases only if evaluating retained behavior; do not treat URL retrieval as a behavioral gain."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "workingDirectory": "C:/git/agent-skills",
+      "status": "DEFERRED_TO_COORDINATOR",
+      "reason": "Shared generated registry and dependency constraints; execute only once all reviewers stop writing."
+    },
+    {
+      "command": "npm run verify",
+      "workingDirectory": "C:/git/agent-skills",
+      "status": "DEFERRED_TO_COORDINATOR",
+      "reason": "Repository-wide CI checks are coordinator-owned after registry regeneration and writers stop."
+    }
+  ],
+  "allWritesStopped": true,
+  "noActiveBackgroundProcesses": true
+}

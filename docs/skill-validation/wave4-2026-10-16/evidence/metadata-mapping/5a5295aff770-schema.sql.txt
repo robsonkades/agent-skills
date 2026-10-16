@@ -1,0 +1,2 @@
+create table customer_order (id bigint primary key);
+insert into customer_order(id) values (41);

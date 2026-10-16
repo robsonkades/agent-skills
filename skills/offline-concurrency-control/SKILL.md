@@ -77,6 +77,9 @@ Do not require a new abstraction, workload measurement or database campaign for 
 3. **Choose the coordination boundary from the invariant**, not from the table layout.
    A shared root version is one option; an existing atomic constraint or conditional operation
    may already enforce the invariant without versioning every related row together.
+   Include unchanged data and query membership on which the decision depends, not only
+   modified rows. Keep each checked version associated with the state it guards; a newer
+   token obtained after reading older state does not validate that state.
 4. **Design the conflict experience before the mechanism.** What does the user see, and
    what can they do about it? A pattern that produces an unusable error is not implemented.
 5. **Ensure every affected write path participates.** A mapped superclass, repository base

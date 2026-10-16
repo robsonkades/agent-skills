@@ -1,0 +1,3 @@
+ M skills/sidecar-pattern/SKILL.md
+ M skills/sidecar-pattern/references/lifecycle-and-composition.md
+ M skills/sidecar-pattern/skill.yaml

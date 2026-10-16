@@ -1,0 +1,402 @@
+{
+  "observedFreeBlocks": 18,
+  "changedBlocks": 17,
+  "first": [
+    {
+      "address": "0x000002cc98e79380",
+      "index": 0,
+      "bytes": 768
+    },
+    {
+      "address": "0x000002cc98e79980",
+      "index": 1,
+      "bytes": 768
+    },
+    {
+      "address": "0x000002cc98e79f80",
+      "index": 2,
+      "bytes": 768
+    },
+    {
+      "address": "0x000002cc98e7a580",
+      "index": 3,
+      "bytes": 768
+    },
+    {
+      "address": "0x000002cc98e7ab80",
+      "index": 4,
+      "bytes": 768
+    },
+    {
+      "address": "0x000002cc98e7b180",
+      "index": 5,
+      "bytes": 768
+    },
+    {
+      "address": "0x000002cc98e7b780",
+      "index": 6,
+      "bytes": 768
+    },
+    {
+      "address": "0x000002cc98e7bd80",
+      "index": 7,
+      "bytes": 768
+    },
+    {
+      "address": "0x000002cc98e7c380",
+      "index": 8,
+      "bytes": 768
+    },
+    {
+      "address": "0x000002cc98e7c980",
+      "index": 9,
+      "bytes": 768
+    },
+    {
+      "address": "0x000002cc98e7cf80",
+      "index": 10,
+      "bytes": 768
+    },
+    {
+      "address": "0x000002cc98e7d580",
+      "index": 11,
+      "bytes": 768
+    },
+    {
+      "address": "0x000002cc98e7db80",
+      "index": 12,
+      "bytes": 768
+    },
+    {
+      "address": "0x000002cc98e7e180",
+      "index": 13,
+      "bytes": 768
+    },
+    {
+      "address": "0x000002cc98e7e780",
+      "index": 14,
+      "bytes": 768
+    },
+    {
+      "address": "0x000002cc98e7ed80",
+      "index": 15,
+      "bytes": 768
+    },
+    {
+      "address": "0x000002cc98e7f380",
+      "index": 16,
+      "bytes": 768
+    },
+    {
+      "address": "0x000002cc98e7f980",
+      "index": 17,
+      "bytes": 768
+    }
+  ],
+  "repeated": [
+    {
+      "address": "0x000002cc98e79380",
+      "index": 0,
+      "bytes": 2304
+    },
+    {
+      "address": "0x000002cc98e79980",
+      "index": 1,
+      "bytes": 2304
+    },
+    {
+      "address": "0x000002cc98e79f80",
+      "index": 2,
+      "bytes": 2304
+    },
+    {
+      "address": "0x000002cc98e7a580",
+      "index": 3,
+      "bytes": 2304
+    },
+    {
+      "address": "0x000002cc98e7ab80",
+      "index": 4,
+      "bytes": 2304
+    },
+    {
+      "address": "0x000002cc98e7b180",
+      "index": 5,
+      "bytes": 2304
+    },
+    {
+      "address": "0x000002cc98e7b780",
+      "index": 6,
+      "bytes": 2304
+    },
+    {
+      "address": "0x000002cc98e7bd80",
+      "index": 7,
+      "bytes": 2304
+    },
+    {
+      "address": "0x000002cc98e7c380",
+      "index": 8,
+      "bytes": 2304
+    },
+    {
+      "address": "0x000002cc98e7c980",
+      "index": 9,
+      "bytes": 2304
+    },
+    {
+      "address": "0x000002cc98e7cf80",
+      "index": 10,
+      "bytes": 2304
+    },
+    {
+      "address": "0x000002cc98e7d580",
+      "index": 11,
+      "bytes": 2304
+    },
+    {
+      "address": "0x000002cc98e7db80",
+      "index": 12,
+      "bytes": 2304
+    },
+    {
+      "address": "0x000002cc98e7e180",
+      "index": 13,
+      "bytes": 2304
+    },
+    {
+      "address": "0x000002cc98e7e780",
+      "index": 14,
+      "bytes": 2304
+    },
+    {
+      "address": "0x000002cc98e7ed80",
+      "index": 15,
+      "bytes": 2304
+    },
+    {
+      "address": "0x000002cc98e7f380",
+      "index": 16,
+      "bytes": 2304
+    },
+    {
+      "address": "0x000002cc98e7f980",
+      "index": 17,
+      "bytes": 768
+    }
+  ],
+  "refreshed": [
+    {
+      "address": "0x000002cc98e79380",
+      "index": 0,
+      "bytes": 768
+    },
+    {
+      "address": "0x000002cc98e79980",
+      "index": 1,
+      "bytes": 768
+    },
+    {
+      "address": "0x000002cc98e79f80",
+      "index": 2,
+      "bytes": 768
+    },
+    {
+      "address": "0x000002cc98e7a580",
+      "index": 3,
+      "bytes": 768
+    },
+    {
+      "address": "0x000002cc98e7ab80",
+      "index": 4,
+      "bytes": 768
+    },
+    {
+      "address": "0x000002cc98e7b180",
+      "index": 5,
+      "bytes": 768
+    },
+    {
+      "address": "0x000002cc98e7b780",
+      "index": 6,
+      "bytes": 768
+    },
+    {
+      "address": "0x000002cc98e7bd80",
+      "index": 7,
+      "bytes": 768
+    },
+    {
+      "address": "0x000002cc98e7c380",
+      "index": 8,
+      "bytes": 768
+    },
+    {
+      "address": "0x000002cc98e7c980",
+      "index": 9,
+      "bytes": 768
+    },
+    {
+      "address": "0x000002cc98e7cf80",
+      "index": 10,
+      "bytes": 768
+    },
+    {
+      "address": "0x000002cc98e7d580",
+      "index": 11,
+      "bytes": 768
+    },
+    {
+      "address": "0x000002cc98e7db80",
+      "index": 12,
+      "bytes": 768
+    },
+    {
+      "address": "0x000002cc98e7e180",
+      "index": 13,
+      "bytes": 768
+    },
+    {
+      "address": "0x000002cc98e7e780",
+      "index": 14,
+      "bytes": 768
+    },
+    {
+      "address": "0x000002cc98e7ed80",
+      "index": 15,
+      "bytes": 768
+    },
+    {
+      "address": "0x000002cc98e7f380",
+      "index": 16,
+      "bytes": 768
+    },
+    {
+      "address": "0x000002cc98e7f980",
+      "index": 17,
+      "bytes": 768
+    }
+  ],
+  "changed": [
+    {
+      "address": "0x000002cc98e79380",
+      "index": 0,
+      "bytes": 768,
+      "repeatedBytes": 2304,
+      "refreshedBytes": 768
+    },
+    {
+      "address": "0x000002cc98e79980",
+      "index": 1,
+      "bytes": 768,
+      "repeatedBytes": 2304,
+      "refreshedBytes": 768
+    },
+    {
+      "address": "0x000002cc98e79f80",
+      "index": 2,
+      "bytes": 768,
+      "repeatedBytes": 2304,
+      "refreshedBytes": 768
+    },
+    {
+      "address": "0x000002cc98e7a580",
+      "index": 3,
+      "bytes": 768,
+      "repeatedBytes": 2304,
+      "refreshedBytes": 768
+    },
+    {
+      "address": "0x000002cc98e7ab80",
+      "index": 4,
+      "bytes": 768,
+      "repeatedBytes": 2304,
+      "refreshedBytes": 768
+    },
+    {
+      "address": "0x000002cc98e7b180",
+      "index": 5,
+      "bytes": 768,
+      "repeatedBytes": 2304,
+      "refreshedBytes": 768
+    },
+    {
+      "address": "0x000002cc98e7b780",
+      "index": 6,
+      "bytes": 768,
+      "repeatedBytes": 2304,
+      "refreshedBytes": 768
+    },
+    {
+      "address": "0x000002cc98e7bd80",
+      "index": 7,
+      "bytes": 768,
+      "repeatedBytes": 2304,
+      "refreshedBytes": 768
+    },
+    {
+      "address": "0x000002cc98e7c380",
+      "index": 8,
+      "bytes": 768,
+      "repeatedBytes": 2304,
+      "refreshedBytes": 768
+    },
+    {
+      "address": "0x000002cc98e7c980",
+      "index": 9,
+      "bytes": 768,
+      "repeatedBytes": 2304,
+      "refreshedBytes": 768
+    },
+    {
+      "address": "0x000002cc98e7cf80",
+      "index": 10,
+      "bytes": 768,
+      "repeatedBytes": 2304,
+      "refreshedBytes": 768
+    },
+    {
+      "address": "0x000002cc98e7d580",
+      "index": 11,
+      "bytes": 768,
+      "repeatedBytes": 2304,
+      "refreshedBytes": 768
+    },
+    {
+      "address": "0x000002cc98e7db80",
+      "index": 12,
+      "bytes": 768,
+      "repeatedBytes": 2304,
+      "refreshedBytes": 768
+    },
+    {
+      "address": "0x000002cc98e7e180",
+      "index": 13,
+      "bytes": 768,
+      "repeatedBytes": 2304,
+      "refreshedBytes": 768
+    },
+    {
+      "address": "0x000002cc98e7e780",
+      "index": 14,
+      "bytes": 768,
+      "repeatedBytes": 2304,
+      "refreshedBytes": 768
+    },
+    {
+      "address": "0x000002cc98e7ed80",
+      "index": 15,
+      "bytes": 768,
+      "repeatedBytes": 2304,
+      "refreshedBytes": 768
+    },
+    {
+      "address": "0x000002cc98e7f380",
+      "index": 16,
+      "bytes": 768,
+      "repeatedBytes": 2304,
+      "refreshedBytes": 768
+    }
+  ],
+  "freshAggregationRestoredSnapshot": true
+}

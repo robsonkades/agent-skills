@@ -1,0 +1,364 @@
+{
+  "disposition": "supported",
+  "startedAt": null,
+  "firstTimestampObserved": "2026-10-16T14:32:51.1014234-03:00",
+  "endedAt": "2026-10-16T17:34:45Z",
+  "timestampNote": "TASK.md foi lido antes do primeiro timestamp observado; não foi inferido um horário de início. endedAt é a leitura real do relógio antes de gravar este registro final.",
+  "scope": {
+    "workdir": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-20",
+    "writesRestrictedTo": "output/**",
+    "delegated": false,
+    "externalRepositoryRead": false,
+    "skillsRead": false
+  },
+  "commands": [
+    {
+      "program": "PowerShell",
+      "arguments": {
+        "exec_command_cmd": "Get-Content -Raw TASK.md"
+      },
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-20",
+      "exit": 0,
+      "output": "# Revisão local\n\nRevise o projeto e o pedido em docs/review-request.md. Decida se o contrato aceito está sustentado, violado ou depende de evidência ausente.",
+      "outputComplete": false
+    },
+    {
+      "program": "PowerShell",
+      "arguments": {
+        "exec_command_cmd": "Get-Date -Format o\nrg --files input output\nGet-FileHash -Algorithm SHA256 TASK.md"
+      },
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-20",
+      "exit": 0,
+      "output": "2026-10-16T14:32:51.1014234-03:00\noutput\\project\\test\\memo\\Smoke.java\ninput\\project\\test\\memo\\Smoke.java\noutput\\project\\src\\memo\\ReaderFactory.java\noutput\\project\\src\\memo\\PublishedEntry.java\noutput\\project\\src\\memo\\BestEffortMemo.java\noutput\\project\\README.md\ninput\\project\\src\\memo\\ReaderFactory.java\ninput\\project\\src\\memo\\PublishedEntry.java\ninput\\project\\src\\memo\\BestEffortMemo.java\ninput\\project\\README.md\ninput\\project\\docs\\review-request.md\ninput\\project\\docs\\contract.md\ninput\\project\\check.mjs\noutput\\project\\check.mjs\noutput\\project\\docs\\review-request.md\noutput\\project\\docs\\contract.md",
+      "outputComplete": false
+    },
+    {
+      "program": "PowerShell",
+      "arguments": {
+        "exec_command_cmd": "$reviewFiles = @('input/project/docs/review-request.md','input/project/docs/contract.md','input/project/README.md','input/project/src/memo/BestEffortMemo.java','input/project/src/memo/PublishedEntry.java','input/project/src/memo/ReaderFactory.java','input/project/test/memo/Smoke.java','input/project/check.mjs')\nforeach ($reviewFile in $reviewFiles) {\n  Write-Output ('FILE ' + $reviewFile)\n  Get-Content -Raw -LiteralPath $reviewFile\n  (Get-FileHash -Algorithm SHA256 -LiteralPath $reviewFile) | Select-Object Path,Hash | ConvertTo-Json -Compress\n}"
+      },
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-20",
+      "exit": 0,
+      "output": "FILE input/project/docs/review-request.md\n# Review request",
+      "outputComplete": false
+    },
+    {
+      "program": "PowerShell",
+      "arguments": {
+        "exec_command_cmd": "node -e \"const fs=require('node:fs'),cp=require('node:child_process');const start=new Date().toISOString();const r=cp.spawnSync(process.execPath,['check.mjs'],{encoding:'utf8',timeout:30000,windowsHide:true});const record={program:process.execPath,args:['check.mjs'],cwd:process.cwd(),startedAt:start,endedAt:new Date().toISOString(),exit:r.status,signal:r.signal,stdout:r.stdout,stderr:r.stderr,error:r.error?String(r.error):null};fs.mkdirSync('../checks',{recursive:true});fs.writeFileSync('../checks/validation-log.json',JSON.stringify(record,null,2));process.stdout.write(r.stdout||'');process.stderr.write(r.stderr||'');process.exit(r.status??1);\""
+      },
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-20/output/project",
+      "exit": 0,
+      "output": "sequential-controls=2 PASS\r\n",
+      "outputComplete": true,
+      "log": "output/checks/validation-log.json"
+    },
+    {
+      "program": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "check.mjs"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-20/output/project",
+      "exit": 0,
+      "stdout": "sequential-controls=2 PASS\r\n",
+      "stderr": "",
+      "timeoutMs": 30000,
+      "startedAt": "2026-10-16T17:33:13.970Z",
+      "endedAt": "2026-10-16T17:33:14.454Z",
+      "log": "output/checks/validation-log.json"
+    },
+    {
+      "program": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+      "args": [
+        "--release",
+        "25",
+        "-d",
+        ".build",
+        "src\\memo\\BestEffortMemo.java",
+        "src\\memo\\PublishedEntry.java",
+        "src\\memo\\ReaderFactory.java",
+        "test\\memo\\Smoke.java"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-20/output/project",
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "timeoutMs": 15000,
+      "evidence": "Invocação síncrona de check.mjs; o script encerra imediatamente em status não zero e prosseguiu até Smoke."
+    },
+    {
+      "program": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-cp",
+        ".build",
+        "memo.Smoke"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-20/output/project",
+      "exit": 0,
+      "stdout": "sequential-controls=2 PASS\r\n",
+      "stderr": "",
+      "timeoutMs": 15000,
+      "evidence": "Invocação síncrona de check.mjs; saída e conclusão registradas em validation-log.json."
+    },
+    {
+      "program": "PowerShell",
+      "arguments": {
+        "exec_command_cmd": "$auditFiles = rg --files input/project\nforeach ($auditFile in $auditFiles) {\n  $relative = $auditFile -replace '^input\\\\project\\\\',''\n  $originalHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $auditFile).Hash\n  $workingHash = (Get-FileHash -Algorithm SHA256 -LiteralPath (Join-Path 'output/project' $relative)).Hash\n  [PSCustomObject]@{file=$relative;inputSHA256=$originalHash;outputSHA256=$workingHash;equal=($originalHash -eq $workingHash)} | ConvertTo-Json -Compress\n}\nGet-Content -Raw output/checks/validation-log.json\nGet-Date -Format o"
+      },
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-20",
+      "exit": 0,
+      "output": "Could not find a part of the path 'C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave6-0tHxwh\\actors\\run-20\\output\\project\\input\\project\\test\\memo\\Smoke.java'.\n2026-10-16T14:33:22.8895859-03:00",
+      "outputComplete": false,
+      "result": "Falha de comparação: oito erros não terminantes Get-FileHash, embora o shell tenha saído com 0. A expressão não removeu o prefixo com separadores mistos. Nenhuma conclusão de integridade foi tomada desta tentativa."
+    },
+    {
+      "program": "PowerShell",
+      "arguments": {
+        "exec_command_cmd": "$auditFiles = rg --files input/project\n$hashResults = foreach ($auditFile in $auditFiles) {\n  $relative = $auditFile -replace '^input[\\\\/]project[\\\\/]',''\n  $originalHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $auditFile).Hash\n  $workingHash = (Get-FileHash -Algorithm SHA256 -LiteralPath (Join-Path 'output/project' $relative)).Hash\n  [PSCustomObject]@{file=$relative;inputSHA256=$originalHash;outputSHA256=$workingHash;equal=($originalHash -eq $workingHash)}\n}\n$hashResults | ConvertTo-Json | Set-Content -LiteralPath output/checks/integrity-log.json\n$hashResults | ConvertTo-Json\nif (@($hashResults | Where-Object {-not $_.equal}).Count -ne 0) { exit 1 }"
+      },
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-20",
+      "exit": 0,
+      "output": "[\r\n  {\r\n    \"file\": \"test\\\\memo\\\\Smoke.java\",\r\n    \"inputSHA256\": \"5FB4BF14F226C3CBAAA147CEFD50A30A456EAE5CE35BA8F19D40DC0398C9F335\",\r\n    \"outputSHA256\": \"5FB4BF14F226C3CBAAA147CEFD50A30A456EAE5CE35BA8F19D40DC0398C9F335\",\r\n    \"equal\": true\r\n  },\r\n  {\r\n    \"file\": \"docs\\\\review-request.md\",\r\n    \"inputSHA256\": \"86D670BF08679312DAC2A34B2AFD445A0548DE7495460636959F86BCF1E868F2\",\r\n    \"outputSHA256\": \"86D670BF08679312DAC2A34B2AFD445A0548DE7495460636959F86BCF1E868F2\",\r\n    \"equal\": true\r\n  },\r\n  {\r\n    \"file\": \"docs\\\\contract.md\",\r\n    \"inputSHA256\": \"CEAA05AA4C210245338B9C4B3E779E9D6878087FEBE314EAB01E6814FE6D2287\",\r\n    \"outputSHA256\": \"CEAA05AA4C210245338B9C4B3E779E9D6878087FEBE314EAB01E6814FE6D2287\",\r\n    \"equal\": true\r\n  },\r\n  {\r\n    \"file\": \"check.mjs\",\r\n    \"inputSHA256\": \"B6F9B3CD3E71DBF53F03C5B834F24F48CD95C7DB7E8438218A64A6807BFAF4A0\",\r\n    \"outputSHA256\": \"B6F9B3CD3E71DBF53F03C5B834F24F48CD95C7DB7E8438218A64A6807BFAF4A0\",\r\n    \"equal\": true\r\n  },\r\n  {\r\n    \"file\": \"README.md\",\r\n    \"inputSHA256\": \"7528C8030C6E58136385C6CE004EDD888CDC5EF758DE6A3E686F9CAFB18FF675\",\r\n    \"outputSHA256\": \"7528C8030C6E58136385C6CE004EDD888CDC5EF758DE6A3E686F9CAFB18FF675\",\r\n    \"equal\": true\r\n  },\r\n  {\r\n    \"file\": \"src\\\\memo\\\\ReaderFactory.java\",\r\n    \"inputSHA256\": \"87601944FC6F7E44F634AED1E56DA1298ADDA524275C0DC4E03452714866C89C\",\r\n    \"outputSHA256\": \"87601944FC6F7E44F634AED1E56DA1298ADDA524275C0DC4E03452714866C89C\",\r\n    \"equal\": true\r\n  },\r\n  {\r\n    \"file\": \"src\\\\memo\\\\PublishedEntry.java\",\r\n    \"inputSHA256\": \"B97DB2071EB31C3584E786A99994684CDE4C169034FE9D3ECB03BB78211946BB\",\r\n    \"outputSHA256\": \"B97DB2071EB31C3584E786A99994684CDE4C169034FE9D3ECB03BB78211946BB\",\r\n    \"equal\": true\r\n  },\r\n  {\r\n    \"file\": \"src\\\\memo\\\\BestEffortMemo.java\",\r\n    \"inputSHA256\": \"773AC3A0DB89C62165FB6E34EF87203DAF45504CD6ED320AE3492E771AE675DB\",\r\n    \"outputSHA256\": \"773AC3A0DB89C62165FB6E34EF87203DAF45504CD6ED320AE3492E771AE675DB\",\r\n    \"equal\": true\r\n  }\r\n]\r\n",
+      "outputComplete": true,
+      "log": "output/checks/integrity-log.json",
+      "result": "Oito pares iguais."
+    },
+    {
+      "program": "PowerShell",
+      "arguments": {
+        "exec_command_cmd": "node -e \"const fs=require('node:fs'),crypto=require('node:crypto');const start=new Date().toISOString();const sha=b=>crypto.createHash('sha256').update(b).digest('hex').toUpperCase();const read=p=>{const b=fs.readFileSync(p);return {path:p,sha256:sha(b),bytes:b.length,content:b.toString('utf8')};};const own=['output/REVIEW.md','output/assessment.json','output/checks/validation-log.json','output/checks/integrity-log.json'].map(read);const assessment=JSON.parse(own[1].content),validation=JSON.parse(own[2].content),integrity=JSON.parse(own[3].content);if(assessment.disposition!=='supported'||assessment.requiredChange!==null||validation.exit!==0||validation.error!==null)throw Error('invalid assessment or smoke');const words=own[0].content.trim().split(/\\s+/).length;if(words>800)throw Error('review too long');const supplied=integrity.map(item=>{const file=item.file.replace(/\\\\/g,'/');const input=read('input/project/'+file),output=read('output/project/'+file);if(input.sha256!==item.inputSHA256||output.sha256!==item.inputSHA256)throw Error('supplied file changed: '+file);return {path:file,sha256:input.sha256,unchanged:true};});const result={startedAt:start,endedAt:new Date().toISOString(),reviewWords:words,reportsValid:true,suppliedFiles:supplied,reads:own.map(({content,...meta})=>({...meta,read:'complete content for validation'})),processEvidence:'check.mjs completed synchronously with exit 0; its javac and java invocations are synchronous and returned normally; no background process was launched'};fs.writeFileSync('output/checks/final-validation.json',JSON.stringify(result,null,2));console.log(JSON.stringify(result,null,2));\""
+      },
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-20",
+      "exit": 0,
+      "output": "{\n  \"startedAt\": \"2026-10-16T17:34:33.277Z\",\n  \"endedAt\": \"2026-10-16T17:34:33.284Z\",\n  \"reviewWords\": 411,\n  \"reportsValid\": true,\n  \"suppliedFiles\": [\n    {\n      \"path\": \"test/memo/Smoke.java\",\n      \"sha256\": \"5FB4BF14F226C3CBAAA147CEFD50A30A456EAE5CE35BA8F19D40DC0398C9F335\",\n      \"unchanged\": true\n    },\n    {\n      \"path\": \"docs/review-request.md\",\n      \"sha256\": \"86D670BF08679312DAC2A34B2AFD445A0548DE7495460636959F86BCF1E868F2\",\n      \"unchanged\": true\n    },\n    {\n      \"path\": \"docs/contract.md\",\n      \"sha256\": \"CEAA05AA4C210245338B9C4B3E779E9D6878087FEBE314EAB01E6814FE6D2287\",\n      \"unchanged\": true\n    },\n    {\n      \"path\": \"check.mjs\",\n      \"sha256\": \"B6F9B3CD3E71DBF53F03C5B834F24F48CD95C7DB7E8438218A64A6807BFAF4A0\",\n      \"unchanged\": true\n    },\n    {\n      \"path\": \"README.md\",\n      \"sha256\": \"7528C8030C6E58136385C6CE004EDD888CDC5EF758DE6A3E686F9CAFB18FF675\",\n      \"unchanged\": true\n    },\n    {\n      \"path\": \"src/memo/ReaderFactory.java\",\n      \"sha256\": \"87601944FC6F7E44F634AED1E56DA1298ADDA524275C0DC4E03452714866C89C\",\n      \"unchanged\": true\n    },\n    {\n      \"path\": \"src/memo/PublishedEntry.java\",\n      \"sha256\": \"B97DB2071EB31C3584E786A99994684CDE4C169034FE9D3ECB03BB78211946BB\",\n      \"unchanged\": true\n    },\n    {\n      \"path\": \"src/memo/BestEffortMemo.java\",\n      \"sha256\": \"773AC3A0DB89C62165FB6E34EF87203DAF45504CD6ED320AE3492E771AE675DB\",\n      \"unchanged\": true\n    }\n  ],\n  \"reads\": [\n    {\n      \"path\": \"output/REVIEW.md\",\n      \"sha256\": \"8D46B4EF89092A9F0C7F1C889E1DFF5479FB763E41310A9C1C886B7F151506FD\",\n      \"bytes\": 3118,\n      \"read\": \"complete content for validation\"\n    },\n    {\n      \"path\": \"output/assessment.json\",\n      \"sha256\": \"25F9E370DE71D43175B2DC6D227A850D4C3F152A8389970207CD7914A626F2A3\",\n      \"bytes\": 1750,\n      \"read\": \"complete content for validation\"\n    },\n    {\n      \"path\": \"output/checks/validation-log.json\",\n      \"sha256\": \"2CDC1666D2FFD2A571897F2990727FB2F4AEB8180AD4E37AE6494549B338E43D\",\n      \"bytes\": 386,\n      \"read\": \"complete content for validation\"\n    },\n    {\n      \"path\": \"output/checks/integrity-log.json\",\n      \"sha256\": \"12EBBCD1203FA9C73228CC20D671D9D9B29BDF9D9A3D66EC813CDABAD3B8A25A\",\n      \"bytes\": 1966,\n      \"read\": \"complete content for validation\"\n    }\n  ],\n  \"processEvidence\": \"check.mjs completed synchronously with exit 0; its javac and java invocations are synchronous and returned normally; no background process was launched\"\n}\n",
+      "outputComplete": true,
+      "log": "output/checks/final-validation.json",
+      "result": "REVIEW com 411 palavras, assessment válido, todos os arquivos fornecidos inalterados."
+    }
+  ],
+  "commandRecordNotes": [
+    "Cada arguments.exec_command_cmd contém o texto enviado ao shell. Os argumentos internos do launcher PowerShell não são expostos pela ferramenta.",
+    "outputComplete:false identifica excertos da saída, não leitura truncada dos arquivos. As leituras integrais estão identificadas separadamente.",
+    "Compilação e execução ocorreram uma única vez. As entradas javac/java detalham os filhos dessa mesma execução de check.mjs."
+  ],
+  "filesRead": [
+    {
+      "path": "TASK.md",
+      "sha256": "7DBF10AA7C850AB992B91A0681A3C3527DD047DB9EDA90CDD7D062A885F58FF9",
+      "operation": "content",
+      "completeness": "complete",
+      "hashOperation": "separate Get-FileHash"
+    },
+    {
+      "path": "input/project/test/memo/Smoke.java",
+      "sha256": "5FB4BF14F226C3CBAAA147CEFD50A30A456EAE5CE35BA8F19D40DC0398C9F335",
+      "operation": "content",
+      "completeness": "complete",
+      "laterOperation": "hash-only comparison"
+    },
+    {
+      "path": "input/project/docs/review-request.md",
+      "sha256": "86D670BF08679312DAC2A34B2AFD445A0548DE7495460636959F86BCF1E868F2",
+      "operation": "content",
+      "completeness": "complete",
+      "laterOperation": "hash-only comparison"
+    },
+    {
+      "path": "input/project/docs/contract.md",
+      "sha256": "CEAA05AA4C210245338B9C4B3E779E9D6878087FEBE314EAB01E6814FE6D2287",
+      "operation": "content",
+      "completeness": "complete",
+      "laterOperation": "hash-only comparison"
+    },
+    {
+      "path": "input/project/check.mjs",
+      "sha256": "B6F9B3CD3E71DBF53F03C5B834F24F48CD95C7DB7E8438218A64A6807BFAF4A0",
+      "operation": "content",
+      "completeness": "complete",
+      "laterOperation": "hash-only comparison"
+    },
+    {
+      "path": "input/project/README.md",
+      "sha256": "7528C8030C6E58136385C6CE004EDD888CDC5EF758DE6A3E686F9CAFB18FF675",
+      "operation": "content",
+      "completeness": "complete",
+      "laterOperation": "hash-only comparison"
+    },
+    {
+      "path": "input/project/src/memo/ReaderFactory.java",
+      "sha256": "87601944FC6F7E44F634AED1E56DA1298ADDA524275C0DC4E03452714866C89C",
+      "operation": "content",
+      "completeness": "complete",
+      "laterOperation": "hash-only comparison"
+    },
+    {
+      "path": "input/project/src/memo/PublishedEntry.java",
+      "sha256": "B97DB2071EB31C3584E786A99994684CDE4C169034FE9D3ECB03BB78211946BB",
+      "operation": "content",
+      "completeness": "complete",
+      "laterOperation": "hash-only comparison"
+    },
+    {
+      "path": "input/project/src/memo/BestEffortMemo.java",
+      "sha256": "773AC3A0DB89C62165FB6E34EF87203DAF45504CD6ED320AE3492E771AE675DB",
+      "operation": "content",
+      "completeness": "complete",
+      "laterOperation": "hash-only comparison"
+    },
+    {
+      "path": "output/project/test/memo/Smoke.java",
+      "sha256": "5FB4BF14F226C3CBAAA147CEFD50A30A456EAE5CE35BA8F19D40DC0398C9F335",
+      "operation": "hash-only",
+      "completeness": "entire bytes hashed; not displayed as source content",
+      "executionRead": "also consumed by Node or javac"
+    },
+    {
+      "path": "output/project/docs/review-request.md",
+      "sha256": "86D670BF08679312DAC2A34B2AFD445A0548DE7495460636959F86BCF1E868F2",
+      "operation": "hash-only",
+      "completeness": "entire bytes hashed; not displayed as source content",
+      "executionRead": "none"
+    },
+    {
+      "path": "output/project/docs/contract.md",
+      "sha256": "CEAA05AA4C210245338B9C4B3E779E9D6878087FEBE314EAB01E6814FE6D2287",
+      "operation": "hash-only",
+      "completeness": "entire bytes hashed; not displayed as source content",
+      "executionRead": "none"
+    },
+    {
+      "path": "output/project/check.mjs",
+      "sha256": "B6F9B3CD3E71DBF53F03C5B834F24F48CD95C7DB7E8438218A64A6807BFAF4A0",
+      "operation": "hash-only",
+      "completeness": "entire bytes hashed; not displayed as source content",
+      "executionRead": "also consumed by Node or javac"
+    },
+    {
+      "path": "output/project/README.md",
+      "sha256": "7528C8030C6E58136385C6CE004EDD888CDC5EF758DE6A3E686F9CAFB18FF675",
+      "operation": "hash-only",
+      "completeness": "entire bytes hashed; not displayed as source content",
+      "executionRead": "none"
+    },
+    {
+      "path": "output/project/src/memo/ReaderFactory.java",
+      "sha256": "87601944FC6F7E44F634AED1E56DA1298ADDA524275C0DC4E03452714866C89C",
+      "operation": "hash-only",
+      "completeness": "entire bytes hashed; not displayed as source content",
+      "executionRead": "also consumed by Node or javac"
+    },
+    {
+      "path": "output/project/src/memo/PublishedEntry.java",
+      "sha256": "B97DB2071EB31C3584E786A99994684CDE4C169034FE9D3ECB03BB78211946BB",
+      "operation": "hash-only",
+      "completeness": "entire bytes hashed; not displayed as source content",
+      "executionRead": "also consumed by Node or javac"
+    },
+    {
+      "path": "output/project/src/memo/BestEffortMemo.java",
+      "sha256": "773AC3A0DB89C62165FB6E34EF87203DAF45504CD6ED320AE3492E771AE675DB",
+      "operation": "hash-only",
+      "completeness": "entire bytes hashed; not displayed as source content",
+      "executionRead": "also consumed by Node or javac"
+    },
+    {
+      "path": "output/REVIEW.md",
+      "sha256": "8D46B4EF89092A9F0C7F1C889E1DFF5479FB763E41310A9C1C886B7F151506FD",
+      "operation": "content for machine validation",
+      "completeness": "complete",
+      "bytes": 3118
+    },
+    {
+      "path": "output/assessment.json",
+      "sha256": "25F9E370DE71D43175B2DC6D227A850D4C3F152A8389970207CD7914A626F2A3",
+      "operation": "content for machine validation",
+      "completeness": "complete",
+      "bytes": 1750
+    },
+    {
+      "path": "output/checks/validation-log.json",
+      "sha256": "2CDC1666D2FFD2A571897F2990727FB2F4AEB8180AD4E37AE6494549B338E43D",
+      "operation": "content for machine validation",
+      "completeness": "complete",
+      "bytes": 386
+    },
+    {
+      "path": "output/checks/integrity-log.json",
+      "sha256": "12EBBCD1203FA9C73228CC20D671D9D9B29BDF9D9A3D66EC813CDABAD3B8A25A",
+      "operation": "content for machine validation",
+      "completeness": "complete",
+      "bytes": 1966
+    }
+  ],
+  "listings": [
+    {
+      "command": "rg --files input output",
+      "scope": [
+        "input/**",
+        "output/**"
+      ],
+      "operation": "listing only"
+    },
+    {
+      "command": "rg --files input/project",
+      "scope": [
+        "input/project/**"
+      ],
+      "operation": "listing only"
+    }
+  ],
+  "primaryUrls": [
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.5.1",
+      "status": "retrieved",
+      "use": "Final-field initialization; relevant section fully inspected in later line-positioned retrieval.",
+      "fullDocumentRead": false
+    },
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.4.5",
+      "status": "retrieved",
+      "use": "Thread.start happens-before and data-race definition.",
+      "fullDocumentRead": false
+    },
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html",
+      "requestedLine": 475,
+      "status": "retrieved",
+      "visibleLines": [
+        342,
+        667
+      ],
+      "use": "Inspected sections 17.5 and 17.5.1, including freeze, memory chain and dereference chain.",
+      "fullDocumentRead": false
+    }
+  ],
+  "webFailures": [],
+  "checks": {
+    "smokeExit": 0,
+    "smokeOutput": "sequential-controls=2 PASS",
+    "reviewWords": 411,
+    "unchangedSuppliedFilePairs": 8,
+    "sourceEdits": 0
+  },
+  "limits": [
+    "Sem teste concorrente de stress, jcstress, mutantes ou ensaio em outras JVMs; smoke não prova segurança concorrente.",
+    "A prova aplica-se ao contrato aceito, sem reabrir entrega antes de Thread.start, instalação única de 42 ou ausência de mutações.",
+    "A primeira normalização de caminhos falhou e foi corrigida; os erros estão registrados.",
+    "Não foram medidos custo, tokens ou duração total. Não foram iniciados processos em segundo plano.",
+    "Fontes web foram consultadas em trechos; documentos completos não foram copiados."
+  ],
+  "writes": [
+    "output/project/.build/**",
+    "output/checks/validation-log.json",
+    "output/checks/integrity-log.json",
+    "output/checks/final-validation.json",
+    "output/REVIEW.md",
+    "output/assessment.json",
+    "output/execution.json"
+  ],
+  "processStatus": {
+    "allSubprocessesEnded": true,
+    "evidence": "check.mjs completed synchronously with exit 0; its javac and java invocations are synchronous and returned normally; no background process was launched Final validation also exited 0; no exec session remains."
+  },
+  "allWritesStopped": true
+}

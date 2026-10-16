@@ -1,0 +1,12 @@
+public abstract class Runner {
+    protected String currentInput;
+
+    public final synchronized String run(String input) {
+        currentInput = input;
+        loaded(input);
+        return publish();
+    }
+
+    protected void loaded(String input) {}
+    protected String publish() { return currentInput; }
+}

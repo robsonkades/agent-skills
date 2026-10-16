@@ -1,0 +1,23 @@
+import com.example.text.LineEndings;
+
+public final class NormalizationCheck {
+    public static void main(String[] args) {
+        String[][] cases = {
+            {"CR", "A\rB", "A\nB"},
+            {"LF", "A\nB", "A\nB"},
+            {"CRLF", "A\r\nB", "A\nB"},
+            {"mixed", "A\rB\r\nC\nD\r", "A\nB\nC\nD\n"},
+            {"empty", "", ""},
+            {"plain", "AB", "AB"}
+        };
+        int failures = 0;
+        System.out.println("Library source: " + LineEndings.class.getProtectionDomain().getCodeSource().getLocation());
+        for (String[] test : cases) {
+            String actual = LineEndings.normalize(test[1]);
+            boolean passed = actual.equals(test[2]);
+            System.out.println(test[0] + ": " + (passed ? "PASS" : "FAIL") + " actual=" + actual.replace("\r", "<CR>").replace("\n", "<LF>"));
+            if (!passed) failures++;
+        }
+        if (failures > 0) throw new AssertionError(failures + " normalization cases failed");
+    }
+}

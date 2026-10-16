@@ -1,0 +1,338 @@
+{
+  "schemaVersion": 1,
+  "task": "Revisão local do memo Java SE25",
+  "timestamps": {
+    "firstClockObservationUtc": "2026-10-16 17:27:34 UTC",
+    "reviewAndVerificationCompletedUtc": "2026-10-16 17:29:32 UTC",
+    "note": "A primeira leitura de TASK.md ocorreu antes da primeira observação de relógio. O timestamp final foi obtido após os checks e antes da gravação deste registro. Não foram estimados tokens, custo ou duração."
+  },
+  "commands": [
+    {
+      "program": "powershell",
+      "arguments": [
+        "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-06/TASK.md' -Raw"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-06",
+      "exit": 0,
+      "output": "TASK.md integralmente apresentado no resultado da ferramenta; conteúdo registrado entre as leituras."
+    },
+    {
+      "program": "powershell",
+      "arguments": [
+        "rg --files input output"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-06",
+      "exit": 0,
+      "output": "output\\project\\test\\memo\\Smoke.java\ninput\\project\\test\\memo\\Smoke.java\noutput\\project\\src\\memo\\ReaderFactory.java\ninput\\project\\docs\\review-request.md\noutput\\project\\src\\memo\\PublishedEntry.java\noutput\\project\\src\\memo\\BestEffortMemo.java\ninput\\project\\docs\\contract.md\noutput\\project\\README.md\ninput\\project\\check.mjs\ninput\\project\\README.md\noutput\\project\\check.mjs\ninput\\project\\src\\memo\\ReaderFactory.java\ninput\\project\\src\\memo\\PublishedEntry.java\ninput\\project\\src\\memo\\BestEffortMemo.java\noutput\\project\\docs\\review-request.md\noutput\\project\\docs\\contract.md\n"
+    },
+    {
+      "program": "powershell",
+      "arguments": [
+        "$paths = @('TASK.md', 'input/project/docs/review-request.md', 'input/project/docs/contract.md', 'input/project/README.md', 'input/project/check.mjs', 'input/project/src/memo/ReaderFactory.java', 'input/project/src/memo/PublishedEntry.java', 'input/project/src/memo/BestEffortMemo.java', 'input/project/test/memo/Smoke.java'); $reads = foreach ($path in $paths) { [pscustomobject]@{ path = $path; sha256 = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash; content = Get-Content -LiteralPath $path -Raw; read = 'complete' } }; $reads | ConvertTo-Json -Depth 4"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-06",
+      "exit": 0,
+      "output": "[\r\n  {\r\n    \"path\": \"TASK.md\",\r\n    \"sha256\": \"90AA52EBAA7D6C305ADA01CF6BFBF58B20833A1447BD8929572170DC762F48C0\",\r\n    \"content\": \"# Revisão local\\n\\nRevise o projeto e o pedido em docs/review-request.md. Decida se o contrato aceito está sustentado, violado ou depende de evidência ausente. Explique o caminho efetivo e as garantias pertinentes. Preserve comportamento adequado; proponha correção somente para uma lacuna demonstrada. Entregue REVIEW.md e assessment.json; não altere fontes, contratos ou dependências. Checks próprios podem ficar em output/checks/. Diferencie prova de contrato, resultados observados e trabalho não executado.\\n\\nO projeto está em input/project; output/project é sua cópia de trabalho para compilar e executar os checks. Os arquivos fornecidos de fontes/contratos/configuração permanecem imutáveis em ambas as cópias. Não implemente correções na produção desta tarefa de revisão; snippets, propostas e verificadores próprios podem ficar em output/checks.\\n\\nEntregue output/REVIEW.md, output/assessment.json e output/execution.json. O formato mínimo de assessment.json é:\\n\\n```json\\n{\\n  \\\"disposition\\\": \\\"supported | violated | unresolved\\\",\\n  \\\"basis\\\": \\\"Your reasoning tied to concrete code and accepted contract\\\",\\n  \\\"requiredChange\\\": \\\"Necessary correction, or null\\\",\\n  \\\"missingEvidence\\\": [],\\n  \\\"checked\\\": [],\\n  \\\"limits\\\": []\\n}\\n```\\n\\nexecution.json deve registrar comandos reais (programa/argumentos/cwd/exit/saída ou log), arquivos efetivamente lidos (nome, hash e se a leitura foi completa/truncada), URLs primárias consultadas, limites e allWritesStopped:true ao terminar. Diferencie leitura de conteúdo, listagem e mero hash. Registre timestamps reais de início/fim se disponíveis; não invente custo, tokens, duração ou execução. Não exponha raciocínio privado; basta a justificativa técnica e as evidências utilizadas.\\n\\nNenhuma skill está fornecida para esta tarefa; não procure nem leia skills de outros diretórios.\\n\\n## Escopo de execução\\n\\n- Seu único diretório de trabalho é C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-06. Nas chamadas de shell, sempre informe esse workdir (ou um filho dentro de output).\\n- Leia somente TASK.md, input/**, output/** e nenhum diretório de skill deste run. Não leia repositório externo, outros runs, critérios, resultados anteriores, config de agentes ou arquivos globais de skills. Você não está sozinho no filesystem; não reverta trabalho de outros.\\n- Pode usar o Node disponível e executáveis Java em C:/Users/robso/.jdks/temurin-25.0.3/bin. O alvo é Java SE25, sem preview/dependências/instalações. Comandos filhos devem ter timeout de no máximo 30 segundos; não deixe processos ativos.\\n- Consultas web somente para especificações/API/documentação primária pertinente (docs.oracle.com, openjdk.org, fontes do OpenJDK e SEI CERT). Registre URLs e falhas, sem copiar documentos inteiros. Não consulte catálogos de skills, este repositório remoto, respostas de terceiros, outros experimentos ou pessoas.\\n- Toda escrita fica em output/**. Não faça commits, instalações, deploys ou alterações de configuração real. Não delegue nem abra agentes adicionais.\\n- Esta é uma revisão: perguntas materiais sem resposta devem ficar como lacunas em REVIEW.md; não bloqueie esperando contato com alguém. Não reabra requisitos já aceitos.\\n- Limite planejado por tentativa: 8 minutos. Prefira a menor investigação suficiente; registre indisponibilidades sem trocar por afirmações inventadas.\\n- Ao terminar, declare allWritesStopped:true e confirme que subprocessos terminaram.\\n\\nArtefatos novos de compilação em output/project/.build são permitidos. Os arquivos fornecidos continuam protegidos; para controles que alterem código, crie uma cópia separada em output/checks.\\n\\nMantenha REVIEW.md conciso (até 800 palavras). Não crie um framework de auditoria: um JSON com os comandos observados, leituras e limites é suficiente.\\n\",\r\n    \"read\": \"complete\"\r\n  },\r\n  {\r\n    \"path\": \"input/project/docs/review-request.md\",\r\n    \"sha256\": \"86D670BF08679312DAC2A34B2AFD445A0548DE7495460636959F86BCF1E868F2\",\r\n    \"content\": \"# Review request\\n\\nThe team wants a concurrency review of the current memo. A sequential smoke is green. Determine whether the accepted lookup contract is satisfied and explain the relevant access path. Preserve valid code; propose a focused correction only for a demonstrated contract gap. A successful smoke alone is not an answer to the review. Deliver review.md; do not change production sources or the contract.\\n\",\r\n    \"read\": \"complete\"\r\n  },\r\n  {\r\n    \"path\": \"input/project/docs/contract.md\",\r\n    \"sha256\": \"CEAA05AA4C210245338B9C4B3E779E9D6878087FEBE314EAB01E6814FE6D2287\",\r\n    \"content\": \"# Lookup contract\\n\\nThis is an optional memo of an expensive pure calculation. For a memo instance, one producer may install a single entry with value 42, once. Consumers may run concurrently with that installation. A lookup may return OptionalInt.empty() on any call, including indefinitely; callers compute the value on a miss. If a lookup returns a present value, it must be 42 and must not throw. There are no replacement updates, serialization hooks, reflective writes or mutations after construction.\\n\\nThe memo and its reader function are constructed privately and handed to each participating thread before Thread.start(). There are no other publication, callback, constructor-escape or mutation paths. These are accepted requirements, not questions to reopen.\\n\",\r\n    \"read\": \"complete\"\r\n  },\r\n  {\r\n    \"path\": \"input/project/README.md\",\r\n    \"sha256\": \"7528C8030C6E58136385C6CE004EDD888CDC5EF758DE6A3E686F9CAFB18FF675\",\r\n    \"content\": \"# Best-effort memo review\\n\\nTarget: Java SE25, no preview or external dependencies. Compile src/memo/*.java and test/memo/Smoke.java with javac --release 25 into a temporary output directory; run memo.Smoke.\\n\\nThe memo is initialized before worker threads start. A producer installs one entry after constructing it; independent consumers call find(). The project intentionally allows lookup misses and has no eventual-hit requirement. Review the source and docs/contract.md rather than inferring a stronger cache contract.\\n\",\r\n    \"read\": \"complete\"\r\n  },\r\n  {\r\n    \"path\": \"input/project/check.mjs\",\r\n    \"sha256\": \"B6F9B3CD3E71DBF53F03C5B834F24F48CD95C7DB7E8438218A64A6807BFAF4A0\",\r\n    \"content\": \"import fs from 'node:fs';import path from 'node:path';import {spawnSync} from 'node:child_process';\\nconst jdk=\\\"C:/Users/robso/.jdks/temurin-25.0.3/bin\\\";const walk=p=>fs.readdirSync(p,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(path.join(p,e.name)):e.name.endsWith('.java')?[path.join(p,e.name)]:[]);\\nconst run=(tool,args)=>{const r=spawnSync(path.join(jdk,tool),args,{encoding:'utf8',timeout:15000,windowsHide:true});process.stdout.write(r.stdout||'');process.stderr.write(r.stderr||'');if(r.status!==0)process.exit(r.status??1);};\\nfs.mkdirSync('.build',{recursive:true});run('javac.exe',['--release','25','-d','.build',...walk('src'),...walk('test')]);run('java.exe',['-cp','.build',\\\"memo.Smoke\\\"]);\\n\",\r\n    \"read\": \"complete\"\r\n  },\r\n  {\r\n    \"path\": \"input/project/src/memo/ReaderFactory.java\",\r\n    \"sha256\": \"D6B8766EB709C274626023C345DE09C08DA665546445DDC180663818EBAF16DE\",\r\n    \"content\": \"package memo;\\nimport java.util.function.ToIntFunction;\\nfinal class ReaderFactory {\\n    static ToIntFunction<PublishedEntry> create() {\\n        return PublishedEntry::legacyValue;\\n    }\\n}\\n\",\r\n    \"read\": \"complete\"\r\n  },\r\n  {\r\n    \"path\": \"input/project/src/memo/PublishedEntry.java\",\r\n    \"sha256\": \"B97DB2071EB31C3584E786A99994684CDE4C169034FE9D3ECB03BB78211946BB\",\r\n    \"content\": \"package memo;\\nfinal class PublishedEntry {\\n    private final Payload primary;\\n    private Payload legacy;\\n    PublishedEntry(int value) {\\n        Payload payload = new Payload();\\n        payload.value = value;\\n        primary = payload;\\n        legacy = payload;\\n    }\\n    int value() { return primary.value; }\\n    int legacyValue() { return legacy.value; }\\n    private static final class Payload { int value; }\\n}\\n\",\r\n    \"read\": \"complete\"\r\n  },\r\n  {\r\n    \"path\": \"input/project/src/memo/BestEffortMemo.java\",\r\n    \"sha256\": \"773AC3A0DB89C62165FB6E34EF87203DAF45504CD6ED320AE3492E771AE675DB\",\r\n    \"content\": \"package memo;\\nimport java.util.OptionalInt;\\nimport java.util.function.ToIntFunction;\\npublic final class BestEffortMemo {\\n    private final ToIntFunction<PublishedEntry> reader;\\n    private PublishedEntry entry;\\n    public BestEffortMemo() { reader = ReaderFactory.create(); }\\n    public void install(int value) { entry = new PublishedEntry(value); }\\n    public OptionalInt find() {\\n        PublishedEntry observed = entry;\\n        return observed == null ? OptionalInt.empty() : OptionalInt.of(reader.applyAsInt(observed));\\n    }\\n}\\n\",\r\n    \"read\": \"complete\"\r\n  },\r\n  {\r\n    \"path\": \"input/project/test/memo/Smoke.java\",\r\n    \"sha256\": \"5FB4BF14F226C3CBAAA147CEFD50A30A456EAE5CE35BA8F19D40DC0398C9F335\",\r\n    \"content\": \"package memo;\\npublic final class Smoke {\\n    public static void main(String[] args) {\\n        BestEffortMemo memo = new BestEffortMemo();\\n        if (memo.find().isPresent()) throw new AssertionError(\\\"initial miss\\\");\\n        memo.install(42);\\n        if (memo.find().orElseThrow() != 42) throw new AssertionError(\\\"sequential lookup\\\");\\n        System.out.println(\\\"sequential-controls=2 PASS\\\");\\n    }\\n}\\n\",\r\n    \"read\": \"complete\"\r\n  }\r\n]\r\n"
+    },
+    {
+      "program": "powershell",
+      "arguments": [
+        "$paths = rg --files output/project; $records = foreach ($path in $paths) { [pscustomobject]@{ path = $path; sha256 = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash; read = 'hash-only' } }; $records | ConvertTo-Json -Depth 3"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-06",
+      "exit": 0,
+      "output": "[\r\n  {\r\n    \"path\": \"output/project\\\\docs\\\\review-request.md\",\r\n    \"sha256\": \"86D670BF08679312DAC2A34B2AFD445A0548DE7495460636959F86BCF1E868F2\",\r\n    \"read\": \"hash-only\"\r\n  },\r\n  {\r\n    \"path\": \"output/project\\\\docs\\\\contract.md\",\r\n    \"sha256\": \"CEAA05AA4C210245338B9C4B3E779E9D6878087FEBE314EAB01E6814FE6D2287\",\r\n    \"read\": \"hash-only\"\r\n  },\r\n  {\r\n    \"path\": \"output/project\\\\check.mjs\",\r\n    \"sha256\": \"B6F9B3CD3E71DBF53F03C5B834F24F48CD95C7DB7E8438218A64A6807BFAF4A0\",\r\n    \"read\": \"hash-only\"\r\n  },\r\n  {\r\n    \"path\": \"output/project\\\\README.md\",\r\n    \"sha256\": \"7528C8030C6E58136385C6CE004EDD888CDC5EF758DE6A3E686F9CAFB18FF675\",\r\n    \"read\": \"hash-only\"\r\n  },\r\n  {\r\n    \"path\": \"output/project\\\\test\\\\memo\\\\Smoke.java\",\r\n    \"sha256\": \"5FB4BF14F226C3CBAAA147CEFD50A30A456EAE5CE35BA8F19D40DC0398C9F335\",\r\n    \"read\": \"hash-only\"\r\n  },\r\n  {\r\n    \"path\": \"output/project\\\\src\\\\memo\\\\ReaderFactory.java\",\r\n    \"sha256\": \"D6B8766EB709C274626023C345DE09C08DA665546445DDC180663818EBAF16DE\",\r\n    \"read\": \"hash-only\"\r\n  },\r\n  {\r\n    \"path\": \"output/project\\\\src\\\\memo\\\\PublishedEntry.java\",\r\n    \"sha256\": \"B97DB2071EB31C3584E786A99994684CDE4C169034FE9D3ECB03BB78211946BB\",\r\n    \"read\": \"hash-only\"\r\n  },\r\n  {\r\n    \"path\": \"output/project\\\\src\\\\memo\\\\BestEffortMemo.java\",\r\n    \"sha256\": \"773AC3A0DB89C62165FB6E34EF87203DAF45504CD6ED320AE3492E771AE675DB\",\r\n    \"read\": \"hash-only\"\r\n  }\r\n]\r\n"
+    },
+    {
+      "program": "powershell",
+      "arguments": [
+        "node -e \"const {spawnSync}=require('node:child_process'); const r=spawnSync(process.execPath,['check.mjs'],{cwd:'output/project',encoding:'utf8',timeout:30000,windowsHide:true}); process.stdout.write(r.stdout||''); process.stderr.write(r.stderr||''); console.log(JSON.stringify({child:'node check.mjs',status:r.status,signal:r.signal,error:r.error?.message||null})); process.exit(r.status??1);\""
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-06",
+      "exit": 0,
+      "output": "sequential-controls=2 PASS\r\n{\"child\":\"node check.mjs\",\"status\":0,\"signal\":null,\"error\":null}\n"
+    },
+    {
+      "program": "powershell",
+      "arguments": [
+        "$paths = @('TASK.md') + @(rg --files input/project output/project | Where-Object { $_ -notmatch '[\\\\/]\\.build[\\\\/]' }); $hashes = foreach ($path in $paths) { [pscustomobject]@{ path = $path; sha256 = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash; read = 'hash-only' } }; $reports = foreach ($path in @('output/REVIEW.md', 'output/assessment.json')) { [pscustomobject]@{ path = $path; sha256 = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash; content = Get-Content -LiteralPath $path -Raw; read = 'complete' } }; [pscustomobject]@{ hashes = $hashes; reports = $reports; assessmentDisposition = ((Get-Content -LiteralPath 'output/assessment.json' -Raw | ConvertFrom-Json).disposition) } | ConvertTo-Json -Depth 5"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-06",
+      "exit": 0,
+      "output": "{\r\n  \"hashes\": [\r\n    {\r\n      \"path\": \"TASK.md\",\r\n      \"sha256\": \"90AA52EBAA7D6C305ADA01CF6BFBF58B20833A1447BD8929572170DC762F48C0\",\r\n      \"read\": \"hash-only\"\r\n    },\r\n    {\r\n      \"path\": \"output/project\\\\test\\\\memo\\\\Smoke.java\",\r\n      \"sha256\": \"5FB4BF14F226C3CBAAA147CEFD50A30A456EAE5CE35BA8F19D40DC0398C9F335\",\r\n      \"read\": \"hash-only\"\r\n    },\r\n    {\r\n      \"path\": \"input/project\\\\test\\\\memo\\\\Smoke.java\",\r\n      \"sha256\": \"5FB4BF14F226C3CBAAA147CEFD50A30A456EAE5CE35BA8F19D40DC0398C9F335\",\r\n      \"read\": \"hash-only\"\r\n    },\r\n    {\r\n      \"path\": \"output/project\\\\src\\\\memo\\\\ReaderFactory.java\",\r\n      \"sha256\": \"D6B8766EB709C274626023C345DE09C08DA665546445DDC180663818EBAF16DE\",\r\n      \"read\": \"hash-only\"\r\n    },\r\n    {\r\n      \"path\": \"output/project\\\\src\\\\memo\\\\PublishedEntry.java\",\r\n      \"sha256\": \"B97DB2071EB31C3584E786A99994684CDE4C169034FE9D3ECB03BB78211946BB\",\r\n      \"read\": \"hash-only\"\r\n    },\r\n    {\r\n      \"path\": \"output/project\\\\src\\\\memo\\\\BestEffortMemo.java\",\r\n      \"sha256\": \"773AC3A0DB89C62165FB6E34EF87203DAF45504CD6ED320AE3492E771AE675DB\",\r\n      \"read\": \"hash-only\"\r\n    },\r\n    {\r\n      \"path\": \"output/project\\\\README.md\",\r\n      \"sha256\": \"7528C8030C6E58136385C6CE004EDD888CDC5EF758DE6A3E686F9CAFB18FF675\",\r\n      \"read\": \"hash-only\"\r\n    },\r\n    {\r\n      \"path\": \"output/project\\\\docs\\\\review-request.md\",\r\n      \"sha256\": \"86D670BF08679312DAC2A34B2AFD445A0548DE7495460636959F86BCF1E868F2\",\r\n      \"read\": \"hash-only\"\r\n    },\r\n    {\r\n      \"path\": \"output/project\\\\docs\\\\contract.md\",\r\n      \"sha256\": \"CEAA05AA4C210245338B9C4B3E779E9D6878087FEBE314EAB01E6814FE6D2287\",\r\n      \"read\": \"hash-only\"\r\n    },\r\n    {\r\n      \"path\": \"output/project\\\\check.mjs\",\r\n      \"sha256\": \"B6F9B3CD3E71DBF53F03C5B834F24F48CD95C7DB7E8438218A64A6807BFAF4A0\",\r\n      \"read\": \"hash-only\"\r\n    },\r\n    {\r\n      \"path\": \"input/project\\\\src\\\\memo\\\\ReaderFactory.java\",\r\n      \"sha256\": \"D6B8766EB709C274626023C345DE09C08DA665546445DDC180663818EBAF16DE\",\r\n      \"read\": \"hash-only\"\r\n    },\r\n    {\r\n      \"path\": \"input/project\\\\src\\\\memo\\\\PublishedEntry.java\",\r\n      \"sha256\": \"B97DB2071EB31C3584E786A99994684CDE4C169034FE9D3ECB03BB78211946BB\",\r\n      \"read\": \"hash-only\"\r\n    },\r\n    {\r\n      \"path\": \"input/project\\\\src\\\\memo\\\\BestEffortMemo.java\",\r\n      \"sha256\": \"773AC3A0DB89C62165FB6E34EF87203DAF45504CD6ED320AE3492E771AE675DB\",\r\n      \"read\": \"hash-only\"\r\n    },\r\n    {\r\n      \"path\": \"input/project\\\\README.md\",\r\n      \"sha256\": \"7528C8030C6E58136385C6CE004EDD888CDC5EF758DE6A3E686F9CAFB18FF675\",\r\n      \"read\": \"hash-only\"\r\n    },\r\n    {\r\n      \"path\": \"input/project\\\\check.mjs\",\r\n      \"sha256\": \"B6F9B3CD3E71DBF53F03C5B834F24F48CD95C7DB7E8438218A64A6807BFAF4A0\",\r\n      \"read\": \"hash-only\"\r\n    },\r\n    {\r\n      \"path\": \"input/project\\\\docs\\\\review-request.md\",\r\n      \"sha256\": \"86D670BF08679312DAC2A34B2AFD445A0548DE7495460636959F86BCF1E868F2\",\r\n      \"read\": \"hash-only\"\r\n    },\r\n    {\r\n      \"path\": \"input/project\\\\docs\\\\contract.md\",\r\n      \"sha256\": \"CEAA05AA4C210245338B9C4B3E779E9D6878087FEBE314EAB01E6814FE6D2287\",\r\n      \"read\": \"hash-only\"\r\n    }\r\n  ],\r\n  \"reports\": [\r\n    {\r\n      \"path\": \"output/REVIEW.md\",\r\n      \"sha256\": \"97772E91F7B370AFB2F6F9DF00DE229524356B5BFFEB44A59FC12345AFDE86F4\",\r\n      \"content\": \"# Revisão de concorrência\\n\\n**Disposição: violated.** O contrato permite misses indefinidamente, mas exige que um hit seja 42 e não lance exceção. Há uma lacuna demonstrada pelas garantias da linguagem no caminho efetivamente usado; nenhuma falha concorrente foi reproduzida nesta execução.\\n\\nO caminho é `BestEffortMemo.find()` → leitura única de `entry` em `observed` → `reader.applyAsInt(observed)` → referência `PublishedEntry::legacyValue` criada em `ReaderFactory.create()` → `legacy.value`. As referências relevantes são `src/memo/BestEffortMemo.java:9-11`, `src/memo/ReaderFactory.java:5` e `src/memo/PublishedEntry.java:12`. O método `value()`, que acessa `primary.value`, não é chamado por esse leitor.\\n\\nA publicação do memo e do leitor antes de `Thread.start()` sustenta sua inicialização. Ela não ordena, entre produtor e consumidores, a instalação posterior de `entry`. A atribuição comum de `entry` não estabelece happens-before. A variável local evita reler o slot, mas não publica o estado do objeto. Ver [JLS 25 §17.4.5](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.4.5).\\n\\nQuando o consumidor observa `entry != null`, a leitura comum de `legacy` pode ainda observar null e lançar `NullPointerException`; se observar o payload, sua leitura comum de `value` pode observar zero. Esses são resultados permitidos, não resultados observados no smoke. A existência de `primary` final apontando para o mesmo payload não protege o acesso pelo alias comum `legacy`. A garantia depende da leitura do campo final e da cadeia de desreferências correspondente. O campo final `reader` também não protege objetos instalados posteriormente e recebidos como argumento. Ver [JLS 25 §17.5.1](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.5.1).\\n\\nA correção proposta é alterar somente a referência retornada pela fábrica para `PublishedEntry::value`. Nesse caminho, a leitura de `primary` final alcança o payload inicializado antes do término do construtor. O freeze protege essa referência e o valor alcançado, sob as premissas aceitas de construção sem escape e ausência de mutações. Um slot observado como null continua sendo um miss válido; um slot não nulo permite ler 42. Não é necessário impor atualização eventual nem substituir a publicação comum por volatile para este contrato. A proposta não foi aplicada.\\n\\n**Verificação observada:** os oito arquivos fornecidos em `output/project` têm hashes iguais aos correspondentes em `input/project`. O comando `node check.mjs`, na cópia de trabalho, compilou fontes e smoke com `javac --release 25` e executou `memo.Smoke`: `sequential-controls=2 PASS`, saída 0. Isso confirma os dois controles sequenciais, sem provar segurança concorrente.\\n\\n**Limites:** não houve stress concorrente, exploração exaustiva de interleavings, execução da proposta ou alteração de fontes, contratos e dependências. Nenhuma evidência material ausente impede a conclusão: as premissas fornecidas foram aceitas. O julgamento de concorrência é uma análise do contrato segundo a JLS, separada do resultado empírico do smoke.\\n\\n\",\r\n      \"read\": \"complete\"\r\n    },\r\n    {\r\n      \"path\": \"output/assessment.json\",\r\n      \"sha256\": \"BCDBDEEF6006990C391774010940302504120F7C88BA4F717F5EFA7B0C268781\",\r\n      \"content\": \"{\\n  \\\"disposition\\\": \\\"violated\\\",\\n  \\\"basis\\\": \\\"O contrato aceita misses indefinidamente, mas exige hit igual a 42 sem exceção. find() lê entry uma vez e aplica o leitor criado como PublishedEntry::legacyValue, acessando legacy.value por campos comuns. A publicação inicial antes de Thread.start() protege memo/leitor, não a instalação posterior. A escrita comum de entry não publica com happens-before o payload. Sem ler primary final, o caminho por legacy não recebe a garantia de final-field/dereference-chain da JLS 25 §17.5.1: legacy pode ser null (NPE) ou value pode ser zero. A conclusão deriva das execuções permitidas pelo JMM; o smoke não reproduziu esses resultados.\\\",\\n  \\\"requiredChange\\\": \\\"Alterar somente ReaderFactory.create() de PublishedEntry::legacyValue para PublishedEntry::value. Isso usa a referência final primary e o payload inicializado antes do freeze, mantendo a publicação comum e os misses permitidos. Proposta não aplicada.\\\",\\n  \\\"missingEvidence\\\": [],\\n  \\\"checked\\\": [\\n    \\\"Leitura integral de TASK.md e dos oito arquivos fornecidos em input/project.\\\",\\n    \\\"Hashes dos oito arquivos de output/project iguais aos correspondentes em input/project antes da compilação.\\\",\\n    \\\"Análise do caminho find -> reader.applyAsInt -> PublishedEntry::legacyValue -> legacy.value.\\\",\\n    \\\"Consulta à JLS Java SE25 §§17.4.5 e 17.5.1.\\\",\\n    \\\"node check.mjs em output/project: javac --release 25 e memo.Smoke concluíram; sequential-controls=2 PASS; exit 0.\\\"\\n  ],\\n  \\\"limits\\\": [\\n    \\\"Nenhuma falha concorrente foi empiricamente reproduzida; resultados inválidos descritos são permitidos pelo JMM.\\\",\\n    \\\"Smoke sequencial não prova segurança concorrente.\\\",\\n    \\\"Não executados stress concorrente, exploração exaustiva ou testes da correção proposta.\\\",\\n    \\\"Fontes, contratos e dependências permaneceram imutáveis; somente artefatos de compilação e relatório em output.\\\"\\n  ]\\n}\\n\",\r\n      \"read\": \"complete\"\r\n    }\r\n  ],\r\n  \"assessmentDisposition\": \"violated\"\r\n}\r\n"
+    }
+  ],
+  "fileContentReads": [
+    {
+      "path": "TASK.md",
+      "sha256": "90AA52EBAA7D6C305ADA01CF6BFBF58B20833A1447BD8929572170DC762F48C0",
+      "read": "complete"
+    },
+    {
+      "path": "input/project/docs/review-request.md",
+      "sha256": "86D670BF08679312DAC2A34B2AFD445A0548DE7495460636959F86BCF1E868F2",
+      "read": "complete"
+    },
+    {
+      "path": "input/project/docs/contract.md",
+      "sha256": "CEAA05AA4C210245338B9C4B3E779E9D6878087FEBE314EAB01E6814FE6D2287",
+      "read": "complete"
+    },
+    {
+      "path": "input/project/README.md",
+      "sha256": "7528C8030C6E58136385C6CE004EDD888CDC5EF758DE6A3E686F9CAFB18FF675",
+      "read": "complete"
+    },
+    {
+      "path": "input/project/check.mjs",
+      "sha256": "B6F9B3CD3E71DBF53F03C5B834F24F48CD95C7DB7E8438218A64A6807BFAF4A0",
+      "read": "complete"
+    },
+    {
+      "path": "input/project/src/memo/ReaderFactory.java",
+      "sha256": "D6B8766EB709C274626023C345DE09C08DA665546445DDC180663818EBAF16DE",
+      "read": "complete"
+    },
+    {
+      "path": "input/project/src/memo/PublishedEntry.java",
+      "sha256": "B97DB2071EB31C3584E786A99994684CDE4C169034FE9D3ECB03BB78211946BB",
+      "read": "complete"
+    },
+    {
+      "path": "input/project/src/memo/BestEffortMemo.java",
+      "sha256": "773AC3A0DB89C62165FB6E34EF87203DAF45504CD6ED320AE3492E771AE675DB",
+      "read": "complete"
+    },
+    {
+      "path": "input/project/test/memo/Smoke.java",
+      "sha256": "5FB4BF14F226C3CBAAA147CEFD50A30A456EAE5CE35BA8F19D40DC0398C9F335",
+      "read": "complete"
+    },
+    {
+      "path": "output/REVIEW.md",
+      "sha256": "97772E91F7B370AFB2F6F9DF00DE229524356B5BFFEB44A59FC12345AFDE86F4",
+      "read": "complete"
+    },
+    {
+      "path": "output/assessment.json",
+      "sha256": "BCDBDEEF6006990C391774010940302504120F7C88BA4F717F5EFA7B0C268781",
+      "read": "complete"
+    }
+  ],
+  "hashOnlyReads": {
+    "beforeCompilation": [
+      {
+        "path": "output/project\\docs\\review-request.md",
+        "sha256": "86D670BF08679312DAC2A34B2AFD445A0548DE7495460636959F86BCF1E868F2",
+        "read": "hash-only"
+      },
+      {
+        "path": "output/project\\docs\\contract.md",
+        "sha256": "CEAA05AA4C210245338B9C4B3E779E9D6878087FEBE314EAB01E6814FE6D2287",
+        "read": "hash-only"
+      },
+      {
+        "path": "output/project\\check.mjs",
+        "sha256": "B6F9B3CD3E71DBF53F03C5B834F24F48CD95C7DB7E8438218A64A6807BFAF4A0",
+        "read": "hash-only"
+      },
+      {
+        "path": "output/project\\README.md",
+        "sha256": "7528C8030C6E58136385C6CE004EDD888CDC5EF758DE6A3E686F9CAFB18FF675",
+        "read": "hash-only"
+      },
+      {
+        "path": "output/project\\test\\memo\\Smoke.java",
+        "sha256": "5FB4BF14F226C3CBAAA147CEFD50A30A456EAE5CE35BA8F19D40DC0398C9F335",
+        "read": "hash-only"
+      },
+      {
+        "path": "output/project\\src\\memo\\ReaderFactory.java",
+        "sha256": "D6B8766EB709C274626023C345DE09C08DA665546445DDC180663818EBAF16DE",
+        "read": "hash-only"
+      },
+      {
+        "path": "output/project\\src\\memo\\PublishedEntry.java",
+        "sha256": "B97DB2071EB31C3584E786A99994684CDE4C169034FE9D3ECB03BB78211946BB",
+        "read": "hash-only"
+      },
+      {
+        "path": "output/project\\src\\memo\\BestEffortMemo.java",
+        "sha256": "773AC3A0DB89C62165FB6E34EF87203DAF45504CD6ED320AE3492E771AE675DB",
+        "read": "hash-only"
+      }
+    ],
+    "afterCompilationAndReports": [
+      {
+        "path": "TASK.md",
+        "sha256": "90AA52EBAA7D6C305ADA01CF6BFBF58B20833A1447BD8929572170DC762F48C0",
+        "read": "hash-only"
+      },
+      {
+        "path": "output/project\\test\\memo\\Smoke.java",
+        "sha256": "5FB4BF14F226C3CBAAA147CEFD50A30A456EAE5CE35BA8F19D40DC0398C9F335",
+        "read": "hash-only"
+      },
+      {
+        "path": "input/project\\test\\memo\\Smoke.java",
+        "sha256": "5FB4BF14F226C3CBAAA147CEFD50A30A456EAE5CE35BA8F19D40DC0398C9F335",
+        "read": "hash-only"
+      },
+      {
+        "path": "output/project\\src\\memo\\ReaderFactory.java",
+        "sha256": "D6B8766EB709C274626023C345DE09C08DA665546445DDC180663818EBAF16DE",
+        "read": "hash-only"
+      },
+      {
+        "path": "output/project\\src\\memo\\PublishedEntry.java",
+        "sha256": "B97DB2071EB31C3584E786A99994684CDE4C169034FE9D3ECB03BB78211946BB",
+        "read": "hash-only"
+      },
+      {
+        "path": "output/project\\src\\memo\\BestEffortMemo.java",
+        "sha256": "773AC3A0DB89C62165FB6E34EF87203DAF45504CD6ED320AE3492E771AE675DB",
+        "read": "hash-only"
+      },
+      {
+        "path": "output/project\\README.md",
+        "sha256": "7528C8030C6E58136385C6CE004EDD888CDC5EF758DE6A3E686F9CAFB18FF675",
+        "read": "hash-only"
+      },
+      {
+        "path": "output/project\\docs\\review-request.md",
+        "sha256": "86D670BF08679312DAC2A34B2AFD445A0548DE7495460636959F86BCF1E868F2",
+        "read": "hash-only"
+      },
+      {
+        "path": "output/project\\docs\\contract.md",
+        "sha256": "CEAA05AA4C210245338B9C4B3E779E9D6878087FEBE314EAB01E6814FE6D2287",
+        "read": "hash-only"
+      },
+      {
+        "path": "output/project\\check.mjs",
+        "sha256": "B6F9B3CD3E71DBF53F03C5B834F24F48CD95C7DB7E8438218A64A6807BFAF4A0",
+        "read": "hash-only"
+      },
+      {
+        "path": "input/project\\src\\memo\\ReaderFactory.java",
+        "sha256": "D6B8766EB709C274626023C345DE09C08DA665546445DDC180663818EBAF16DE",
+        "read": "hash-only"
+      },
+      {
+        "path": "input/project\\src\\memo\\PublishedEntry.java",
+        "sha256": "B97DB2071EB31C3584E786A99994684CDE4C169034FE9D3ECB03BB78211946BB",
+        "read": "hash-only"
+      },
+      {
+        "path": "input/project\\src\\memo\\BestEffortMemo.java",
+        "sha256": "773AC3A0DB89C62165FB6E34EF87203DAF45504CD6ED320AE3492E771AE675DB",
+        "read": "hash-only"
+      },
+      {
+        "path": "input/project\\README.md",
+        "sha256": "7528C8030C6E58136385C6CE004EDD888CDC5EF758DE6A3E686F9CAFB18FF675",
+        "read": "hash-only"
+      },
+      {
+        "path": "input/project\\check.mjs",
+        "sha256": "B6F9B3CD3E71DBF53F03C5B834F24F48CD95C7DB7E8438218A64A6807BFAF4A0",
+        "read": "hash-only"
+      },
+      {
+        "path": "input/project\\docs\\review-request.md",
+        "sha256": "86D670BF08679312DAC2A34B2AFD445A0548DE7495460636959F86BCF1E868F2",
+        "read": "hash-only"
+      },
+      {
+        "path": "input/project\\docs\\contract.md",
+        "sha256": "CEAA05AA4C210245338B9C4B3E779E9D6878087FEBE314EAB01E6814FE6D2287",
+        "read": "hash-only"
+      }
+    ]
+  },
+  "listings": [
+    {
+      "commandIndex": 1,
+      "scope": [
+        "input/**",
+        "output/**"
+      ],
+      "kind": "path listing only",
+      "note": "rg --files não foi tratado como leitura de conteúdo."
+    }
+  ],
+  "immutableFilesCheck": {
+    "mismatches": [],
+    "allSuppliedFilesUnchanged": true
+  },
+  "sourceConsultations": [
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html",
+      "anchors": [
+        "https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.4.5",
+        "https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.5.1"
+      ],
+      "provider": "Oracle, Java Language Specification Java SE25",
+      "operations": [
+        "open",
+        "find: dereference chain",
+        "find: A call to start()"
+      ],
+      "status": "success",
+      "contentRead": "Excertos retornados pela ferramenta, não o capítulo inteiro.",
+      "failure": null
+    }
+  ],
+  "checks": {
+    "projectCommand": {
+      "program": "node",
+      "arguments": [
+        "check.mjs"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-06/output/project",
+      "exit": 0,
+      "output": "sequential-controls=2 PASS"
+    },
+    "invocation": "Executado por spawnSync do Node com timeout de 30000 ms; o check.mjs fornecido usa spawnSync para javac.exe e java.exe com timeout de 15000 ms cada.",
+    "compiledWith": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe --release 25",
+    "runtime": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe -cp .build memo.Smoke",
+    "resultMeaning": "Dois controles sequenciais passaram; isso não é prova de concorrência.",
+    "reportValidation": "REVIEW.md e assessment.json foram relidos integralmente. assessment.json foi interpretado por ConvertFrom-Json, com disposition=violated.",
+    "suppliedFiles": "Todos os oito arquivos em cada cópia mantiveram os hashes; nenhuma divergência."
+  },
+  "fileOperations": [
+    {
+      "tool": "apply_patch",
+      "operation": "create",
+      "paths": [
+        "output/REVIEW.md",
+        "output/assessment.json"
+      ],
+      "result": "success"
+    },
+    {
+      "operation": "compilation",
+      "target": "output/project/.build",
+      "writes": "Classes compiladas pelo check.mjs fornecido",
+      "completed": true
+    },
+    {
+      "tool": "apply_patch",
+      "operation": "create",
+      "paths": [
+        "output/execution.json"
+      ],
+      "note": "Este registro é a última escrita; allWritesStopped descreve o estado após o retorno desta operação."
+    }
+  ],
+  "limits": [
+    "Nenhuma skill fornecida ou consultada; nenhum repositório externo, outro run ou configuração de agentes lido.",
+    "Não executados stress concorrente, exploração exaustiva, teste da proposta ou npm run verify do repositório externo.",
+    "A violação é fundamentada no caminho do código e nas garantias da JLS; nenhum resultado concorrente inválido foi observado empiricamente.",
+    "O registro de leituras distingue conteúdo revisado, listagem e hash. As leituras internas do compilador/runtime não foram instrumentadas; seus arquivos de entrada são os arquivos fornecidos cujos hashes foram comparados.",
+    "O smoke e todos os comandos de shell concluíram com exit 0, sem sessão pendente. Não foram iniciados processos de fundo."
+  ],
+  "allWritesStopped": true,
+  "allSubprocessesStopped": true
+}
+

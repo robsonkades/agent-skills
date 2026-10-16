@@ -57,14 +57,34 @@ repair candidates that never contend with one another or are mistaken for the sa
 
 Three things the table is saying:
 
-- A monotonic revision is only a candidate token. The election library must return it, every
-  command must carry it, and each sink must atomically reject terms older than its current one.
+- A monotonic revision is only a candidate token. Bind it to a successful acquisition of this
+  role by this participant; every command must carry that term, and each sink must atomically
+  reject terms older than its current one.
   Activate the successor's term at the sink before useful work: a highest-seen-term check
   alone cannot reject an old term that arrives before that transition.
 - Mechanisms establish who _should_ lead; none automatically fences arbitrary databases,
   object stores or external APIs.
 - Failover depends on remaining lease/session detection, coordination, state recovery, warm-up
   and backlog. A mechanism and its timing configuration jointly determine it.
+
+**Check where candidacy becomes acquired leadership.** In etcd's Go concurrency client 3.6.0,
+`Campaign` creates or reuses a candidate key and records its creation revision before waiting
+for older candidates to disappear. Its successful return is the acquisition boundary; a
+positive `Rev()` or an existing candidate key alone is not that event. `Leader` and `Observe`
+report leader state, which may belong to another participant. Accept acquisition only for the
+still-valid local participation, then activate its term at the sink before admitting work.
+Do not advance a sink's fence while merely queued for election: that can exclude the current
+leader before a successor is authorized or ready. Inspect the corresponding completion/callback
+contract in the actual Java client; these Go method names are not a Java API recipe.
+
+After acquisition, `Rev()` identifies the candidate key's **creation** revision. A key's
+modification revision or a read/watch response's store revision serves a different purpose:
+value changes or unrelated writes can advance revisions without awarding this process a new
+term. Do not refresh a command's authority from such observations. A stalled former holder
+could otherwise attach a number larger than the real successor's term and defeat a
+highest-seen-term sink. Keep delayed commands bound to their acquired term and test rejection
+after successor activation. This token discipline complements the validity, sink activation
+and replay contracts; a successful campaign is not a perpetual grant.
 
 For example, PostgreSQL 17 row locks last until transaction end (with savepoint rollback
 exceptions), while advisory locks can use transaction or session scope. Session advisory locks
@@ -195,6 +215,8 @@ These are reviewed source versions, not upgrade requirements; confirm the deploy
 provider's contract before transferring a behavior to it.
 
 - [etcd 3.6.0 concurrency election source](https://github.com/etcd-io/etcd/blob/v3.6.0/client/v3/concurrency/election.go)
+- [etcd 3.6.0 response-header revision contract](https://github.com/etcd-io/etcd/blob/v3.6.0/api/etcdserverpb/rpc.proto)
+- [etcd 3.6.0 key creation and modification revisions](https://github.com/etcd-io/etcd/blob/v3.6.0/api/mvccpb/kv.proto)
 - [Apache ZooKeeper 3.9.3 recipes: leader election](https://zookeeper.apache.org/doc/r3.9.3/recipes.html#sc_leaderElection)
 - [ShedLock 6.10.0 README and behavioral guarantees](https://github.com/lukas-krecan/ShedLock/blob/shedlock-parent-6.10.0/README.md)
 - [client-go 0.33.0 election timing and fencing limitations](https://github.com/kubernetes/client-go/blob/v0.33.0/tools/leaderelection/leaderelection.go)

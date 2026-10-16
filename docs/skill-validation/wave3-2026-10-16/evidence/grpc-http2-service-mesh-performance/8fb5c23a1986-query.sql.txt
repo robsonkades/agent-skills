@@ -1,0 +1,7 @@
+-- CSV files are exposed as the matching table names for this saved dashboard query.
+SELECT variant,
+       COUNT(*) AS offered,
+       COUNT(*) FILTER (WHERE http_status BETWEEN 200 AND 299) AS successful,
+       percentile_cont(0.95) WITHIN GROUP (ORDER BY duration_ms) AS latency_p95_ms
+FROM proxy_calls
+GROUP BY variant;

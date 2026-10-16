@@ -1,0 +1,14 @@
+package work;
+import java.util.*;
+public final class Oracle {
+    static void same(Object a,Object b){if(!Objects.equals(a,b))throw new AssertionError(a+" != "+b);}
+    static void inspect(Report r,List<Entry> expected){same(r.entries(),expected);same(r.total(),expected.stream().mapToLong(Entry::cents).sum());try{r.entries().add(new Entry("X",1));throw new AssertionError("writable");}catch(UnsupportedOperationException e){}}
+    public static void main(String[] args){
+        Catalog c=new Catalog(); Entry a=new Entry("A",450),b=new Entry("B",550),x=new Entry("C",1200),y=new Entry("D",-200);
+        c.load(a,b); Report first=c.open();inspect(first,List.of(a,b));
+        c.load(x,y); Report second=c.open();inspect(first,List.of(x,y));inspect(second,List.of(x,y));
+        c.load(a,a,y);inspect(first,List.of(a,a,y));inspect(second,List.of(a,a,y));inspect(c.open(),List.of(a,a,y));
+        c.load();inspect(first,List.of());inspect(second,List.of());inspect(c.open(),List.of());
+        System.out.println("Oracle H2 PASS");
+    }
+}

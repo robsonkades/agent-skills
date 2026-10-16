@@ -1,0 +1,138 @@
+{
+  "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave7-a765972c5d\\actors\\run-13\\output\\project",
+  "exit": 0,
+  "stdout": "Changed existing files: RUNBOOK.md, src/work/OrderService.java; frozen files unchanged: 18",
+  "stderr": "",
+  "filesRead": [
+    {
+      "input": "input/project/check.mjs",
+      "output": "output/project/check.mjs",
+      "fullBytes": true
+    },
+    {
+      "input": "input/project/CONTRACT.md",
+      "output": "output/project/CONTRACT.md",
+      "fullBytes": true
+    },
+    {
+      "input": "input/project/dependencies.json",
+      "output": "output/project/dependencies.json",
+      "fullBytes": true
+    },
+    {
+      "input": "input/project/lib/commons-logging-1.3.5.jar",
+      "output": "output/project/lib/commons-logging-1.3.5.jar",
+      "fullBytes": true
+    },
+    {
+      "input": "input/project/lib/h2-2.4.240.jar",
+      "output": "output/project/lib/h2-2.4.240.jar",
+      "fullBytes": true
+    },
+    {
+      "input": "input/project/lib/jspecify-1.0.0.jar",
+      "output": "output/project/lib/jspecify-1.0.0.jar",
+      "fullBytes": true
+    },
+    {
+      "input": "input/project/lib/micrometer-commons-1.16.7.jar",
+      "output": "output/project/lib/micrometer-commons-1.16.7.jar",
+      "fullBytes": true
+    },
+    {
+      "input": "input/project/lib/micrometer-observation-1.16.7.jar",
+      "output": "output/project/lib/micrometer-observation-1.16.7.jar",
+      "fullBytes": true
+    },
+    {
+      "input": "input/project/lib/spring-aop-7.0.9.jar",
+      "output": "output/project/lib/spring-aop-7.0.9.jar",
+      "fullBytes": true
+    },
+    {
+      "input": "input/project/lib/spring-beans-7.0.9.jar",
+      "output": "output/project/lib/spring-beans-7.0.9.jar",
+      "fullBytes": true
+    },
+    {
+      "input": "input/project/lib/spring-context-7.0.9.jar",
+      "output": "output/project/lib/spring-context-7.0.9.jar",
+      "fullBytes": true
+    },
+    {
+      "input": "input/project/lib/spring-core-7.0.9.jar",
+      "output": "output/project/lib/spring-core-7.0.9.jar",
+      "fullBytes": true
+    },
+    {
+      "input": "input/project/lib/spring-expression-7.0.9.jar",
+      "output": "output/project/lib/spring-expression-7.0.9.jar",
+      "fullBytes": true
+    },
+    {
+      "input": "input/project/lib/spring-jdbc-7.0.9.jar",
+      "output": "output/project/lib/spring-jdbc-7.0.9.jar",
+      "fullBytes": true
+    },
+    {
+      "input": "input/project/lib/spring-tx-7.0.9.jar",
+      "output": "output/project/lib/spring-tx-7.0.9.jar",
+      "fullBytes": true
+    },
+    {
+      "input": "input/project/README.md",
+      "output": "output/project/README.md",
+      "fullBytes": true
+    },
+    {
+      "input": "input/project/REQUEST.md",
+      "output": "output/project/REQUEST.md",
+      "fullBytes": true
+    },
+    {
+      "input": "input/project/RUNBOOK.md",
+      "output": "output/project/RUNBOOK.md",
+      "fullBytes": true
+    },
+    {
+      "input": "input/project/src/work/Config.java",
+      "output": "output/project/src/work/Config.java",
+      "fullBytes": true
+    },
+    {
+      "input": "input/project/src/work/MetricsService.java",
+      "output": "output/project/src/work/MetricsService.java",
+      "fullBytes": true
+    },
+    {
+      "input": "input/project/src/work/OrderNotifier.java",
+      "output": "output/project/src/work/OrderNotifier.java",
+      "fullBytes": true
+    },
+    {
+      "input": "input/project/src/work/OrderService.java",
+      "output": "output/project/src/work/OrderService.java",
+      "fullBytes": true
+    },
+    {
+      "input": "input/project/test/work/Smoke.java",
+      "output": "output/project/test/work/Smoke.java",
+      "fullBytes": true
+    },
+    {
+      "input": "input/project/toolchain.json",
+      "output": "output/project/toolchain.json",
+      "fullBytes": true
+    }
+  ],
+  "changed": [
+    "RUNBOOK.md",
+    "src/work/OrderService.java"
+  ],
+  "frozenUnchanged": true,
+  "commandNote": "SHA-256 comparison of every input/project file with its output/project counterpart, invoked by node -e through exec_command. Exact shell code is retained in tool transcript chunk 0944ea.",
+  "outputLog": {
+    "kind": "tool-transcript",
+    "chunk": "0944ea"
+  }
+}

@@ -1,0 +1,23 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {createHash} from 'node:crypto';
+const root = process.cwd();
+const hash = name => createHash('sha256').update(fs.readFileSync(path.join(root,name))).digest('hex');
+const expected = JSON.parse(fs.readFileSync('output/checks/hashes.json','utf8'));
+const supplied = expected.map(item => {
+  const input = 'input/project/' + item.path;
+  const output = 'output/project/' + item.path;
+  const inputHash = hash(input);
+  const outputHash = hash(output);
+  if (inputHash !== item.input || outputHash !== item.output || inputHash !== outputHash) throw new Error('Supplied file changed: ' + item.path);
+  return {input, output, sha256: inputHash};
+});
+const assessment = JSON.parse(fs.readFileSync('output/assessment.json','utf8'));
+if (assessment.disposition !== 'violated') throw new Error('Unexpected assessment');
+const review = fs.readFileSync('output/REVIEW.md','utf8');
+const wordCount = review.trim().split(/\s+/u).length;
+if (wordCount > 800) throw new Error('Review exceeds 800 words');
+const commands = JSON.parse(fs.readFileSync('output/checks/commands.json','utf8'));
+if (commands.length !== 4 || commands.some(command => command.exit !== 0 || command.signal || command.error)) throw new Error('Process failure');
+const artifacts = ['TASK.md','output/REVIEW.md','output/assessment.json','output/checks/run-checks.mjs','output/checks/final-check.mjs','output/checks/commands.json','output/checks/hashes.json','output/project/.build/memo/ReaderFactory.class'].map(name => ({path:name,sha256:hash(name)}));
+console.log(JSON.stringify({checkedAt:new Date().toISOString(),supplied,artifacts,wordCount,processes:commands.map(({program,args,exit}) => ({program,args,exit})),allChildProcessesExited:true}));

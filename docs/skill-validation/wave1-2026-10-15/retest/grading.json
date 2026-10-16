@@ -1,0 +1,101 @@
+{
+  "skill": "feature-risk-analysis",
+  "run": "wave1-2026-10-15 targeted retest",
+  "candidateVersion": "1.2.5",
+  "frozenAt": "2026-10-16T01:08:16.377Z",
+  "inputSha256": "219e6655367f0cca24ed76cd934e152010bfa9d8123df3db1cd45c9686da1aef",
+  "criteriaSha256": "6cf57540112942d960e4959cd7fd7bf5f5197e43ed7e43072a786d60848032aa",
+  "protocolSha256": "52df408406360d19afcf78859fb012a81c1f9d0f6514fec2abd3f570dee0bbea",
+  "method": "Independent model grading of the fresh actor's actual A and B responses against the unchanged frozen risk-analysis criteria. The original failure remains recorded; this file adds a remediation trace rather than replacing it.",
+  "counts": {
+    "scenarios": 2,
+    "PASS": 2,
+    "FAIL": 0,
+    "INCONCLUSIVE": 0
+  },
+  "integrity": {
+    "inputHashMatches": true,
+    "criteriaHashMatches": true,
+    "protocolHashMatches": true,
+    "declaredReadCount": 4,
+    "declaredReadsOutsideAllowlist": [],
+    "reportedUnexpectedExposure": [],
+    "exposureResult": "No exposure deviation is evident in the actor-declared read list.",
+    "exposureLimit": "This checks self-reported paths and unexpectedExposure only; it is not a full tool-trace audit or proof of enforced isolation."
+  },
+  "scenarioA": {
+    "result": "PASS",
+    "assessment": "Credits the bounded EV04/EV05 protection and reuses GAP03 acceptance without adding a release gate. Rejects the quiet-canary rationale, leaves unsupported impact unknown, and bounds the protection claim to the specified failure path rather than eliminating overall risk.",
+    "excerpts": [
+      "LOW likelihood is supportable for that bounded path from EV04/EV05, not EV06.",
+      "Impact remains UNKNOWN: charge amounts, affected population and recovery bounds are absent",
+      "GAP03's 24-hour acceptance remains applicable; preserve its recorded authority and scope.",
+      "No additional exposure gate or arbitrary canary waiting period follows from this analysis.",
+      "EV06 covers only new operations; archived-replay production outcomes remain pending."
+    ],
+    "flags": []
+  },
+  "scenarioB": {
+    "result": "PASS",
+    "assessment": "Identifies both the 48-hour provider guarantee and the narrower 24-hour accepted scope, reopens the affected exposure, proposes control alternatives, and leaves likelihood unknown. Preserves independent analysis and does not claim implementation or deployment approval.",
+    "excerpts": [
+      "Likelihood is UNKNOWN without relevant replay exposure/frequency",
+      "Replay beyond 24 hours exceeds accepted scope, including the 24–48-hour interval still covered by the provider guarantee.",
+      "Compare returning to the accepted cutoff with a design that prevents duplicates throughout seven days.",
+      "independent analysis and mitigation planning can continue.",
+      "EV06 supplies no archived-replay outcome evidence; runtime outcomes remain pending."
+    ],
+    "flags": [
+      {
+        "type": "protocol_word_limit",
+        "severity": "NOTE",
+        "actualWords": 221,
+        "limit": 220,
+        "explanation": "One-word format overrun, separate from the passing material domain criteria."
+      }
+    ]
+  },
+  "crossCuttingAudit": {
+    "sharedIdMutationObserved": false,
+    "unwantedApprovalRequestObserved": false,
+    "falseExecutionClaimObserved": false,
+    "lostIndependentWorkObserved": false,
+    "notes": "RISK17, EV04, EV05, EV06, GAP03, r12, cutoff values, authority boundaries, and historical LOW-note provenance remain intact. The original unsupported HIGH impact categories are not repeated."
+  },
+  "protocol": {
+    "wordCounting": "Trim each response and split on whitespace.",
+    "words": {
+      "scenarioA": 210,
+      "scenarioB": 221
+    },
+    "limitPerScenario": 220,
+    "scenarioA": "PASS",
+    "scenarioB": "DEVIATION",
+    "domainScoringSeparation": "The word-count deviation does not change either material domain judgment."
+  },
+  "remediationTrace": {
+    "originalRun": {
+      "gradingFile": "../grading.json",
+      "scenarioA": "PASS",
+      "scenarioB": "FAIL",
+      "failureExcerpt": "likelihood is MEDIUM for the credible permitted path, with production frequency unknown."
+    },
+    "retest": {
+      "scenarioA": "PASS",
+      "scenarioB": "PASS",
+      "correctiveExcerpt": "Likelihood is UNKNOWN without relevant replay exposure/frequency"
+    },
+    "interpretation": "The fresh response no longer exhibits the original unsupported MEDIUM likelihood judgment on this known scenario, while preserving A's bounded acceptance behavior. Both responses now avoid unsupported categorical impact ratings. This is a narrow observed remediation trace, not a statistical or causal estimate of skill improvement.",
+    "originalEvidencePreserved": true
+  },
+  "evaluatorLimitations": [
+    "The evaluator is a model and may make qualitative grading errors; actor self-scores were not used.",
+    "The evaluator previously prepared the scenario wording and graded the original run. These are known development cases, not held-out evaluation.",
+    "The revised candidate was tested once per scenario after the observed failure; there is no repeated-run stability estimate or randomized comparison.",
+    "Both scenarios shared one fresh actor session, so within-pair awareness may influence the responses.",
+    "The exercise was output-only. It does not demonstrate implementation, runtime controls, deployment, or actual replay-safety tests.",
+    "The original and revised outputs form a targeted before/after trace, not an original-skill or no-skill baseline establishing causal improvement.",
+    "The retest manifest reports that protocol changes only concern candidate/output paths; this grader verified the recorded protocol hash but did not independently compare protocol texts or inspect skill contents.",
+    "Read allowlist compliance is based on actor-reported paths in a shared filesystem, not enforced isolation or a full tool-log audit."
+  ]
+}

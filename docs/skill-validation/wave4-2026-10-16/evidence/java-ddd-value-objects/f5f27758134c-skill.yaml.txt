@@ -1,0 +1,57 @@
+schemaVersion: 1
+
+name: java-ddd-value-objects
+version: 1.0.0
+description: >-
+  Design and review Java DDD value objects when primitives hide business meaning,
+  factories accept invalid values, equality disagrees with collections, or records expose
+  mutable state. Covers semantic equality, identifiers, immutable composition, explicit
+  normalization, money, units, ranges, and persistence or JSON boundaries within a bounded
+  context. Use for CustomerDocument.of(), OrderID, monetary values, and replacing primitive
+  obsession. Aggregate consistency and use-case orchestration belong to their own skills.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-ddd-value-objects
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-ddd-value-objects
+
+keywords:
+  - java
+  - ddd
+  - value-objects
+  - domain-modeling
+  - equality
+  - immutability
+  - clean-architecture
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+  - assets/
+
+dependencies: []
+
+suggests:
+  - java-ddd-aggregates
+  - java-ddd-use-cases
+  - java-ddd-repositories
+  - java-immutability
+  - java-object-contracts
+  - java-numeric-types
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java DDD Value Objects
+      short_description: Business values, equality and immutable Java models

@@ -1,0 +1,22 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {spawnSync} from 'node:child_process';
+const root=path.dirname(fileURLToPath(import.meta.url));
+const jdk='C:/Users/robso/.jdks/temurin-25.0.3/bin';
+const results=[];
+for(const id of ['a','b']){
+ const cwd=path.join(root,'cases',id);
+ for(const [name,command,args] of [
+ ['compile',jdk+'/javac.exe',['--release','17','-Xlint:all','-Werror','-d','classes','ProxyCase.java']],
+ ['baseline',jdk+'/java.exe',['-cp','classes','ProxyCase']]]){
+  const r=spawnSync(command,args,{cwd,encoding:'utf8',timeout:15000,windowsHide:true});
+  const result={id,name,command,args,cwd,exitCode:r.status,signal:r.signal,error:r.error?.message??null,stdout:r.stdout??'',stderr:r.stderr??''};
+  results.push(result);
+  fs.writeFileSync(path.join(root,'case-'+id+'-'+name+'.log'),JSON.stringify(result,null,2)+'\n');
+  console.log(JSON.stringify(result));
+  if(r.status!==0||r.error){process.exitCode=1;break;}
+ }
+}
+fs.writeFileSync(path.join(root,'case-technical-results.json'),JSON.stringify({results,interpretation:'Baseline fixture execution only; not an actor run or acceptance of current behavior.'},null,2)+'\n');
+

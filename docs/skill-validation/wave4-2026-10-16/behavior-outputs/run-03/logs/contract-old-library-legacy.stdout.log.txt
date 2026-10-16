@@ -1,0 +1,7 @@
+CR OK: A<CR>B
+LF OK: A<LF>B
+CRLF OK: A<LF>B
+mixed OK: A<CR>B<LF>C<LF>D
+empty OK: 
+plain OK: AB
+6 cases passed (legacy)

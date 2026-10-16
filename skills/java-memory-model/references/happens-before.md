@@ -89,15 +89,39 @@ Resource resource() {
 }
 ```
 
-The volatile publication is required. Also define initialization exception/retry, reentrancy,
-shutdown and whether duplicate speculative construction is permitted in alternative CAS designs.
-Prefer eager or holder initialization when lifecycle permits.
+The volatile field supplies the general publication guarantee for the `Resource` pattern above;
+keep it by default. Also define initialization exception/retry, reentrancy, shutdown and whether
+duplicate speculative construction is permitted in alternative CAS designs. Prefer eager or holder
+initialization when lifecycle permits.
+
+For a nonvolatile variant relying on final-field semantics, require a separate proof of the
+accepted contract:
+
+- The holder and its lock are safely shared with every participant.
+- Construction completes successfully with a non-null result before publication, without escape
+  or reentrant access.
+- The resource state read on the fast path is covered by correctly initialized final fields or
+  their protected dereference chains, and never mutates after construction.
+- The null check and return use one captured local reference. A null observation, including a
+  stale null, takes a recheck under the same monitor guarding construction and publication.
+- The lifecycle permits one initialization, with no reset, replacement or shutdown invalidation.
+
+Under those conditions, final-field initialization guarantees can protect the observed state
+while the monitor recheck handles a stale outer null. A local variable or an immutable label alone
+does not establish this proof. This is a narrow application of
+[JLS 17.5.1](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.5.1), not generic
+happens-before publication for ordinary mutable resources or a reason to remove volatile from
+arbitrary double-checked initialization.
 
 ## Final-field freeze versus publication
 
 Final-field semantics provide special visibility for correctly constructed objects even in some
 racy publication executions. They do not create a generic synchronizes-with/happens-before edge.
-They do not guarantee non-final fields, later mutations, or that a reader sees a non-null reference.
+They do not guarantee unrelated non-final fields on the containing object, later mutations, or
+that a reader sees a non-null reference. Initialization writes to object/array state reached through
+a final field can be covered by JLS 17.5.1's freeze/dereference rules even when that reachable state
+is non-final. Follow the actual read path; an ordinary alias pointing to the same object does not
+by itself establish that protection.
 
 Review reachable mutable objects separately:
 

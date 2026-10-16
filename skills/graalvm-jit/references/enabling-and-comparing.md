@@ -160,9 +160,23 @@ prove that every selected runtime value stayed equal.
 
 The stabilisation criterion is evidence of a stationary measurement region, not an iteration
 count or a universal percentage. Use `-v EXTRA` to inspect per-iteration scores, multiple
-forks to separate process effects, and retain raw JSON with uncertainty. If the score still
-trends, compilation events/code-cache growth continue, or forks settle at different levels,
-increase warm-up or report the workload as non-steady rather than averaging it away.
+forks to separate process effects, and retain raw JSON with uncertainty. If scores trend or
+forks settle at different levels, investigate compilation, caches, GC and workload changes;
+extend warm-up only when that addresses the cause, or report the non-steady result. Continued
+compilation or code-cache growth is a diagnostic clue, not sufficient proof that the measured
+path is still warming: unrelated background work may continue during a stable measurement.
+
+On JDK 25, `jdk.CompilerStatistics` contains cumulative VM-wide counters, without method or
+compiler identity. Compare `compileCount` and `totalTimeSpent` deltas within the same process
+to summarize compilation activity, not to identify when Graal or the application became warm.
+`totalTimeSpent` aggregates compilation elapsed time, including failed attempts; it is neither
+process uptime nor compiler CPU time. See the [JDK 25 event producer](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/jfr/periodic/jfrPeriodic.cpp)
+and [compilation accounting](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/compiler/compileBroker.cpp).
+A flat counter also cannot establish steady state: caches or dependencies can keep changing
+application latency after compilation subsides. Correlate successful relevant `jdk.Compilation`
+events with throughput/latency over the same workload timeline. For deployment readiness,
+measure the actual cold-to-ready path under representative traffic and its deadline; compiler
+quietness alone is not a readiness condition.
 
 If the run is in jargraal mode, distinguish compilation of the compiler from compilation
 of the application. On CE 25.0.2, `CompileGraalWithC1Only=true` is the default; under

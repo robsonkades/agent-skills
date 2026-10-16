@@ -1,0 +1,6 @@
+{
+  "skill": "java-legacy-code-testing",
+  "common": "Use java-legacy-code-testing to recommend the smallest seam and first meaningful check; provide output only, without edits or execution. The project uses Java 17, Mockito 5.23.0 with the inline mock maker, and JUnit Jupiter 5.13.4; no upgrades are authorized. The final QuoteService.quote(id, units) calls LegacyRates.lookup(id) and multiplies its result by units. Public signatures must remain unchanged; small internal edits for testability are authorized. The proposed scoped mockStatic returns 5 for every lookup and expects quote('A', 2) == 10. It passes alone; the suite sometimes fails after another test modifies shared settings, with no causal trace. A teammate proposes retries and calling it verified. Give a recommendation, its limits, and the next checks.",
+  "scenarioA": "LegacyRates.lookup executes synchronously on the calling thread.",
+  "scenarioB": "quote submits the calculation to the existing executor and waits; LegacyRates.lookup executes on that worker thread."
+}

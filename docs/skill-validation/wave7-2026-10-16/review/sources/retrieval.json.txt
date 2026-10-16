@@ -1,0 +1,72 @@
+[
+  {
+    "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.9/spring-tx/src/main/java/org/springframework/transaction/annotation/RestrictedTransactionalEventListenerFactory.java",
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave7-a765972c5d\\review\\sources\\RestrictedTransactionalEventListenerFactory.java",
+    "status": 200,
+    "sha256": "7a967f182fd47ac2525102df29fc1a2116c26901b14263e5f69641fdf38ba36d",
+    "retrievedAtUtc": "2026-10-16T17:53:36.6954815Z"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.9/spring-tx/src/main/java/org/springframework/transaction/event/TransactionalApplicationListenerSynchronization.java",
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave7-a765972c5d\\review\\sources\\TransactionalApplicationListenerSynchronization.java",
+    "status": 200,
+    "sha256": "be89eaaadcf1c303d8b26517edded2a43f21cdef9cbaecc61446058d82c54639",
+    "retrievedAtUtc": "2026-10-16T17:53:36.9301663Z"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.9/spring-tx/src/main/java/org/springframework/transaction/support/TransactionSynchronizationUtils.java",
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave7-a765972c5d\\review\\sources\\TransactionSynchronizationUtils.java",
+    "status": 200,
+    "sha256": "5b801fbee982a482b934150d0f0b49dc8d8412c14f906038578d8cebee21feac",
+    "retrievedAtUtc": "2026-10-16T17:53:37.1405040Z"
+  },
+  {
+    "url": "https://docs.spring.io/spring-framework/docs/7.0.9/javadoc-api/org/springframework/transaction/event/TransactionalEventListener.html",
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave7-a765972c5d\\review\\sources\\TransactionalEventListener.html",
+    "status": 200,
+    "sha256": "7df18faa55ca7e79e3b185cda00a25e72e734c59b7070db6b65c966fdbdacad1",
+    "retrievedAtUtc": "2026-10-16T17:53:37.2611543Z"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.9/spring-jdbc/src/main/java/org/springframework/jdbc/datasource/DataSourceTransactionManager.java",
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave7-a765972c5d\\review\\sources\\DataSourceTransactionManager.java",
+    "status": 200,
+    "sha256": "99c6e75f87752f9e452c1ae6c6d8c65d80f5405055c029299409e9978500df3e",
+    "retrievedAtUtc": "2026-10-16T17:53:37.4831841Z"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.9/spring-jdbc/src/main/java/org/springframework/jdbc/datasource/DataSourceUtils.java",
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave7-a765972c5d\\review\\sources\\DataSourceUtils.java",
+    "status": 200,
+    "sha256": "713a3afbda7801cea1286e977e80be3371241957b08d07bbd61b0f7f278d9673",
+    "retrievedAtUtc": "2026-10-16T17:53:37.6627901Z"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.9/spring-tx/src/main/java/org/springframework/transaction/support/AbstractPlatformTransactionManager.java",
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave7-a765972c5d\\review\\sources\\AbstractPlatformTransactionManager.java",
+    "status": 200,
+    "sha256": "1a9e9e79f3eb038ed287f69dd4bb7dafd927169959495b5f6d25d274c2dfb1ff",
+    "retrievedAtUtc": "2026-10-16T17:53:37.8472730Z"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.9/spring-tx/src/main/java/org/springframework/transaction/support/TransactionSynchronizationManager.java",
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave7-a765972c5d\\review\\sources\\TransactionSynchronizationManager.java",
+    "status": 200,
+    "sha256": "dbfac482e44731e0908a19fc5b0cb2c08875fc0a844f648d91954ef7b8f4ab6f",
+    "retrievedAtUtc": "2026-10-16T17:53:38.0503114Z"
+  },
+  {
+    "url": "https://microservices.io/patterns/data/transactional-outbox.html",
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave7-a765972c5d\\review\\sources\\transactional-outbox-pattern.html",
+    "status": 200,
+    "sha256": "7b9d9b224d9b985bf03d581dcdef5c94a21f49a93f3ac1e74c6bc2104a48b3eb",
+    "retrievedAtUtc": "2026-10-16T17:53:38.4373853Z"
+  },
+  {
+    "url": "https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/transactional-outbox.html",
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave7-a765972c5d\\review\\sources\\aws-transactional-outbox.html",
+    "status": 200,
+    "sha256": "8444f45302b4af60a33ae465c2fac9a48190a915a5c2b1f893692799b6546d7f",
+    "retrievedAtUtc": "2026-10-16T17:53:38.7495678Z"
+  }
+]

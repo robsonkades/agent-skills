@@ -1,0 +1,116 @@
+[
+  {
+    "id": "jls-12-17",
+    "url": "https://docs.oracle.com/javase/specs/jls/se17/html/jls-12.html",
+    "version": "Java SE 17",
+    "sections": [
+      "12.5 Creation of New Class Instances"
+    ],
+    "supports": "Superclass construction precedes subclass field initializers; overridden methods still dispatch during construction.",
+    "consultedAt": "2026-10-16T15:52:18.846Z",
+    "status": 200,
+    "finalUrl": "https://docs.oracle.com/javase/specs/jls/se17/html/jls-12.html",
+    "bytes": 127234,
+    "sha256": "6a782c16e2aac0e824b866c192249da99d6c13337aac7856595a3ef12f57d052",
+    "file": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-template-method/sources/jls-12-17.html",
+    "limits": "Source contract, not a production outcome, empirical skill benefit or blanket migration recommendation."
+  },
+  {
+    "id": "jls-17-17",
+    "url": "https://docs.oracle.com/javase/specs/jls/se17/html/jls-17.html",
+    "version": "Java SE 17",
+    "sections": [
+      "17.1 Synchronization"
+    ],
+    "supports": "Java monitors permit the owning thread to acquire the same monitor repeatedly; synchronization does not forbid reentry.",
+    "consultedAt": "2026-10-16T15:52:18.723Z",
+    "status": 200,
+    "finalUrl": "https://docs.oracle.com/javase/specs/jls/se17/html/jls-17.html",
+    "bytes": 174374,
+    "sha256": "f4531e1e559e5fea8310947e85315fbdba9b2fe044a8c1da782f362451704e2d",
+    "file": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-template-method/sources/jls-17-17.html",
+    "limits": "Source contract, not a production outcome, empirical skill benefit or blanket migration recommendation."
+  },
+  {
+    "id": "jls-14-17",
+    "url": "https://docs.oracle.com/javase/specs/jls/se17/html/jls-14.html",
+    "version": "Java SE 17",
+    "sections": [
+      "14.20.2 Execution of try-finally and try-catch-finally",
+      "14.20.3 try-with-resources"
+    ],
+    "supports": "Abrupt finally completion can replace earlier failure; acquired resources close in reverse order and secondary close failures may be suppressed.",
+    "consultedAt": "2026-10-16T15:52:18.953Z",
+    "status": 200,
+    "finalUrl": "https://docs.oracle.com/javase/specs/jls/se17/html/jls-14.html",
+    "bytes": 420797,
+    "sha256": "51f5fcea8d5d078e8413b95639f30f537b02e2be3c5540336b0741e5cc9091c0",
+    "file": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-template-method/sources/jls-14-17.html",
+    "limits": "Source contract, not a production outcome, empirical skill benefit or blanket migration recommendation."
+  },
+  {
+    "id": "jls-13-17",
+    "url": "https://docs.oracle.com/javase/specs/jls/se17/html/jls-13.html",
+    "version": "Java SE 17",
+    "sections": [
+      "13.4.17 final Methods"
+    ],
+    "supports": "Finalizing an instance method can break preexisting overriding subclasses.",
+    "consultedAt": "2026-10-16T15:52:18.901Z",
+    "status": 200,
+    "finalUrl": "https://docs.oracle.com/javase/specs/jls/se17/html/jls-13.html",
+    "bytes": 169240,
+    "sha256": "8fc034be74b27034d3bf8394bfc186ba68e5cfdf65d4c70f677c18249bb77c55",
+    "file": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-template-method/sources/jls-13-17.html",
+    "limits": "Source contract, not a production outcome, empirical skill benefit or blanket migration recommendation."
+  },
+  {
+    "id": "completion-stage-17",
+    "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/CompletionStage.html",
+    "version": "Java SE 17",
+    "sections": [
+      "interface completion dependencies and exceptional propagation"
+    ],
+    "supports": "Stage dependencies determine completion-triggered work; asynchronous return is not necessarily completion of later work or provider cancellation.",
+    "consultedAt": "2026-10-16T15:52:18.847Z",
+    "status": 200,
+    "finalUrl": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/CompletionStage.html",
+    "bytes": 136163,
+    "sha256": "54bf15b88afe8672c62625aadb5817c68e557a32db8a2f17c964de23a3b61875",
+    "file": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-template-method/sources/completion-stage-17.html",
+    "limits": "Source contract, not a production outcome, empirical skill benefit or blanket migration recommendation."
+  },
+  {
+    "id": "throwable-17",
+    "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Throwable.html",
+    "version": "Java SE 17",
+    "sections": [
+      "Throwable(String,Throwable,boolean,boolean)",
+      "addSuppressed"
+    ],
+    "supports": "Disabled suppression retains no secondary exceptions; self-suppression is rejected.",
+    "consultedAt": "2026-10-16T15:52:18.909Z",
+    "status": 200,
+    "finalUrl": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Throwable.html",
+    "bytes": 56637,
+    "sha256": "b2d83b6a367933fe01600ca0b8bae882cd248c6f5631d2dc299b21da859e1040",
+    "file": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-template-method/sources/throwable-17.html",
+    "limits": "Source contract, not a production outcome, empirical skill benefit or blanket migration recommendation."
+  },
+  {
+    "id": "stripe-idempotency",
+    "url": "https://docs.stripe.com/api/idempotent_requests",
+    "version": "Mutable provider documentation retrieved 2026-10-16",
+    "sections": [
+      "Idempotent requests"
+    ],
+    "supports": "Provider compares parameters, retains keys for a bounded interval and replays stored results; not a generic cross-provider guarantee.",
+    "consultedAt": "2026-10-16T15:52:19.819Z",
+    "status": 200,
+    "finalUrl": "https://docs.stripe.com/api/idempotent_requests",
+    "bytes": 1376495,
+    "sha256": "ddfdc5ef6b9195ca295abd38634b84b8c620eab01b41c91743b4433efbcb3c10",
+    "file": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-template-method/sources/stripe-idempotency.html",
+    "limits": "Source contract, not a production outcome, empirical skill benefit or blanket migration recommendation."
+  }
+]

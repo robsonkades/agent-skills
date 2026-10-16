@@ -1,0 +1,29 @@
+@'
+import {mkdirSync, readdirSync, realpathSync} from 'node:fs';
+import {spawnSync} from 'node:child_process';
+import assert from 'node:assert/strict';
+const root='C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-strategy-evidence';
+const jdk='C:/Users/robso/.jdks/temurin-25.0.3/bin';
+const checks=[];
+function run(name,executable,args,expected=0){
+ const result=spawnSync(executable,args,{encoding:'utf8',cwd:root});
+ const row={name,executable:realpathSync(executable),args,cwd:root,expectedExitCode:expected,exitCode:result.status,stdout:result.stdout,stderr:result.stderr,error:result.error?.message};
+ checks.push(row);
+ assert.equal(result.status,expected,JSON.stringify(row));
+ return row;
+}
+run('javac identity',jdk+'/javac.exe',['-version']);
+run('java identity',jdk+'/java.exe',['-version']);
+for(const id of ['case-a','case-b']){
+ const dir=root+'/'+id;
+ const out=root+'/classes/'+id;
+ mkdirSync(out,{recursive:true});
+ const sources=readdirSync(dir).filter(n=>n.endsWith('.java')).map(n=>dir+'/'+n);
+ run(id+' compile release 17',jdk+'/javac.exe',['--release','17','-d',out,...sources,root+'/evaluator/ContractProbe.java']);
+ run(id+' one-call smoke',jdk+'/java.exe',['-cp',out,'Smoke',dir+'/application.properties']);
+ const probe=run(id+' repeated-operation contract',jdk+'/java.exe',['-cp',out,'ContractProbe',dir+'/application.properties'],id==='case-a'?1:0);
+ if(id==='case-a')assert.match(probe.stderr,/IllegalStateException: encoder already closed/);
+}
+console.log(JSON.stringify({checks,behavioralAgentEvaluation:false,interpretation:'A single-job smoke passes both. Repeated-operation controls reject cached A and pass fresh B. JDK 25.0.3 compiler targeting Java 17; execution on JDK 25.0.3, not a Java 17 VM.'},null,2));
+'@ | node --input-type=module
+

@@ -1,0 +1,65 @@
+{
+  "task": "Review the proposed recovery run for the pending authorization in these artifacts. Decide the next concrete action, what outcome the application may report, and whether the existing retry plan needs adjustment for this run. Keep the established protocol and bounded policy when they suffice. This is an evidence review; do not contact the provider or perform a payment.",
+  "fixtures": {
+    "ops/recovery-plan.json": {
+      "reviewedAt": "2026-10-16T10:00:00Z",
+      "operationId": "purchase-483",
+      "intentKey": "auth-purchase-483",
+      "action": "Submit the saved request with the same key; a returned original receipt resolves the pending operation.",
+      "totalDeadlineMs": 1000,
+      "maxAttemptsIncludingFirst": 2,
+      "perAttemptTimeoutMs": 300,
+      "fullJitterBaseMs": 50,
+      "fullJitterCapMs": 100,
+      "responseCleanupReserveMs": 200,
+      "budgetScope": "authorization dependency / process",
+      "availableRetryTokens": 1,
+      "onUnresolvedExhaustion": "Keep UNKNOWN and return to the reconciliation queue",
+      "transportTotalAttempts": 1,
+      "proxyTotalAttempts": 1
+    },
+    "data/pending-authorization.json": {
+      "operationId": "purchase-483",
+      "intentKey": "auth-purchase-483",
+      "createdAt": "2026-10-15T08:00:00Z",
+      "outcome": "UNKNOWN",
+      "savedPayload": {
+        "amountMinor": 4900,
+        "currency": "BRL",
+        "purchaseId": "purchase-483"
+      },
+      "payloadSource": "Immutable saved bytes loaded afresh for each attempt"
+    },
+    "logs/attempts.json": [
+      {
+        "at": "2026-10-15T08:00:00Z",
+        "operationId": "purchase-483",
+        "attempt": 1,
+        "evidence": "TLS request body completed locally; response wait timed out; server outcome unavailable."
+      },
+      {
+        "at": "2026-10-16T09:58:00Z",
+        "operationId": "purchase-483",
+        "action": "authoritative status lookup",
+        "responseStatus": 503,
+        "evidence": "No receipt/status representation returned. This is not an absent-operation result."
+      }
+    ],
+    "contracts/authorization.json": {
+      "acceptedRevision": "auth-v3",
+      "operation": "POST /authorizations",
+      "duplicateSuppression": {
+        "keyScope": "merchant plus operation type",
+        "retainedForHours": 72,
+        "retainedKeyBehavior": "Same key and payload join one operation and return its original authoritative receipt when completed.",
+        "changedPayloadBehavior": "Reject the request",
+        "expiredKeyBehavior": "The key may be treated as a new operation; no duplicate-effect protection remains."
+      },
+      "reconciliation": "GET /authorizations/by-intent is authoritative when it returns a completed status or explicit absence; an unavailable lookup does not settle the original outcome.",
+      "timing": "The first attempt and review clocks differ from provider time by less than one minute. Retention begins when the first request is accepted.",
+      "dispatchEvidence": "A local response timeout alone does not establish non-application."
+    },
+    "docs/environment.md": "Java 21 service. The listed retry owner is the only application retry layer. No response bytes have been delivered to the caller. The immutable payload and merchant identity are unchanged, credentials are valid, and failed HTTP response resources are released before backoff. The recovery plan is for this pending record, not a proposal to replay every historical record. Provider contract is an accepted synthetic fixture for this review; no real provider availability or business effect is supplied."
+  },
+  "classification": "Known development case; fixtures are synthetic ordinary operational artifacts, not production measurements."
+}

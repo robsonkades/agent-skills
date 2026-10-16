@@ -1,0 +1,261 @@
+{
+  "schemaVersion": 1,
+  "skill": "consensus-and-quorums",
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "reportKind": "Retrospective handoff reconstructed from this review's recorded commands and results; no new behavioral execution.",
+  "ownedPath": "skills/consensus-and-quorums/",
+  "allWritesStopped": true,
+  "noBackgroundWriters": true,
+  "versions": {
+    "committed": "1.2.5",
+    "assignment": "1.2.5",
+    "final": "1.2.6",
+    "rationale": "One unpublished patch bump for changed package contents."
+  },
+  "baseline": {
+    "staged": [],
+    "unstaged": [],
+    "untracked": [],
+    "capturedFileCount": 4,
+    "priorChanges": "None in this assigned package."
+  },
+  "changedFiles": [
+    {
+      "path": "skills/consensus-and-quorums/SKILL.md",
+      "changes": [
+        "Trace the client wrapper to effective read options and operation boundaries.",
+        "Attribute partition-test results to effective membership, connected sets and contacted endpoints; automatic failover is not minority-side progress."
+      ]
+    },
+    {
+      "path": "skills/consensus-and-quorums/references/quorum-arithmetic.md",
+      "changes": [
+        "Replace the incorrect unconditional claim that two keys written together are independent decisions with the actual transaction/read boundary.",
+        "Add an incomplete-write counterexample where majority reads return new then old.",
+        "Use effective membership/roles and per-domain surviving sets.",
+        "Make three-voter placement assumptions explicit and replace unconditional fast-read/write labels with response counts."
+      ]
+    },
+    {
+      "path": "skills/consensus-and-quorums/skill.yaml",
+      "changes": ["Version 1.2.5 to 1.2.6."]
+    }
+  ],
+  "unchangedFiles": [
+    {
+      "path": "skills/consensus-and-quorums/references/coordination-stores.md",
+      "sha256": "4614F123B1CB9FA4B893146AE00884D7691A0E6649A853B7A6B33D5E8C8923EA"
+    }
+  ],
+  "preservedCapabilities": [
+    "FLP and safety/liveness distinction",
+    "Crash versus Byzantine/failure-model limits",
+    "Weighted/hierarchical quorums",
+    "Joint and transitional membership, learner promotion and recovery",
+    "Product-specific read/watch contracts",
+    "CAS unknown outcomes",
+    "External fencing boundary"
+  ],
+  "removedCapabilities": [],
+  "technicalFindings": [
+    {
+      "location": "references/quorum-arithmetic.md:107",
+      "finding": "Old wording treated two keys written together as always two independent decisions.",
+      "correction": "Per-key intersection alone supplies no multi-key atomicity, but etcd 3.6 Txn already provides an atomic operation. Separate reads can still straddle an atomic update.",
+      "support": "etcd 3.6 KV API guarantees"
+    },
+    {
+      "location": "references/quorum-arithmetic.md:116",
+      "finding": "The generic R+W caveat lacked a concrete incomplete-write history that could be inspected.",
+      "correction": "Show N=3, R=W=2, a write reaching only A, then reads A/B=new and B/C=old, with X finishing before Y starts.",
+      "support": "ABD section 4 explains why a read must propagate its selected version under that protocol."
+    },
+    {
+      "location": "SKILL.md:80",
+      "finding": "Fault-test interpretation did not explicitly bind successful probes to the partition/endpoints actually serving them.",
+      "correction": "Record endpoints and surviving sets, accounting for failover and a quorum retained on another side."
+    }
+  ],
+  "validation": {
+    "workingDirectory": "C:/git/agent-skills",
+    "executed": [
+      {
+        "command": "PowerShell here-string piped to node --input-type=module",
+        "purpose": "Read four owned files; parseManifest strict; buildSkillPackage; validatePackage; check local links and entrypoint reference routes.",
+        "result": {
+          "exitCode": 0,
+          "version": "1.2.6",
+          "files": 4,
+          "issues": [],
+          "missing": [],
+          "unreferenced": []
+        },
+        "limit": "Structural package validation, not a skill efficacy test; no agent adapters or live stores exercised."
+      },
+      {
+        "command": "node node_modules/prettier/bin/prettier.cjs --check skills/consensus-and-quorums/SKILL.md skills/consensus-and-quorums/references/quorum-arithmetic.md skills/consensus-and-quorums/skill.yaml",
+        "result": {
+          "exitCode": 1,
+          "failure": "Table alignment in references/quorum-arithmetic.md."
+        }
+      },
+      {
+        "command": "node node_modules/prettier/bin/prettier.cjs --write skills/consensus-and-quorums/references/quorum-arithmetic.md",
+        "result": {
+          "exitCode": 0
+        },
+        "effects": "Only the owned Markdown reference formatted."
+      },
+      {
+        "command": "node node_modules/prettier/bin/prettier.cjs --check skills/consensus-and-quorums/SKILL.md skills/consensus-and-quorums/references/quorum-arithmetic.md skills/consensus-and-quorums/skill.yaml",
+        "result": {
+          "exitCode": 0,
+          "output": "All matched files use Prettier code style!"
+        }
+      },
+      {
+        "command": "git diff --check -- skills/consensus-and-quorums",
+        "result": {
+          "exitCode": 0
+        }
+      },
+      {
+        "command": "PowerShell here-string piped to node --input-type=module",
+        "purpose": "Deterministic illustrative read-history and voter-set controls.",
+        "script": "import assert from 'node:assert/strict';\nconst replicas={A:1,B:0,C:0};\nconst read=names=>Math.max(...names.map(name=>replicas[name]));\nconst observed=[read(['A','B']),read(['B','C'])];\nassert.deepEqual(observed,[1,0]);\nconst validSerialReads=[];\nfor(let position=0;position<=2;position++){const order=['X','Y'];order.splice(position,0,'W');let value=0;const result=[];for(const operation of order){if(operation==='W')value=1;else result.push(value);}validSerialReads.push(result);}\nassert(!validSerialReads.some(result=>JSON.stringify(result)===JSON.stringify(observed)));\nreplicas.B=Math.max(replicas.B,replicas.A);\nconst withReadPropagation=[read(['A','B']),read(['B','C'])];\nassert.deepEqual(withReadPropagation,[1,1]);\nassert(validSerialReads.some(result=>JSON.stringify(result)===JSON.stringify(withReadPropagation)));\nconst members=[['a','A',false],['b','A',false],['c','B',false],['d','C',false],['e','C',true]];\nfunction availability(list){const voters=list.filter(member=>!member[2]);const quorum=Math.floor(voters.length/2)+1;return {voters:voters.length,quorum,losses:Object.fromEntries(['A','B','C'].map(zone=>{const survivors=voters.filter(member=>member[1]!==zone).length;return [zone,{survivors,canFormQuorum:survivors>=quorum}];}))};}\nconst before=availability(members);const after=availability(members.map(member=>[member[0],member[1],false]));\nassert.equal(before.voters,4);assert.equal(before.quorum,3);assert.equal(before.losses.A.canFormQuorum,false);\nassert.equal(after.voters,5);assert.equal(after.quorum,3);assert(Object.values(after.losses).every(value=>value.canFormQuorum));\nconsole.log(JSON.stringify({observed,validSerialReads,withReadPropagation,before,after},null,2));",
+        "result": {
+          "exitCode": 0,
+          "naiveReadHistory": [1, 0],
+          "validSerialReads": [
+            [1, 1],
+            [0, 1],
+            [0, 0]
+          ],
+          "readPropagationControl": [1, 1],
+          "learnerConfiguration": {
+            "voters": 4,
+            "quorum": 3,
+            "survivingByAzLoss": {
+              "A": 2,
+              "B": 3,
+              "C": 3
+            }
+          },
+          "promotedConfiguration": {
+            "voters": 5,
+            "quorum": 3,
+            "survivingByAzLoss": {
+              "A": 3,
+              "B": 4,
+              "C": 3
+            }
+          }
+        },
+        "limit": "Finite schedules and set arithmetic only. Not a full consensus/ABD implementation, live cluster test, or agent evaluation."
+      }
+    ],
+    "behavioralExecutions": [],
+    "walkthroughs": [
+      "Atomic Txn versus separate read boundaries",
+      "Incomplete-write read inversion and propagation control",
+      "Learner-role constraint-flip cases"
+    ],
+    "deferred": [
+      "npm run registry:build",
+      "npm run verify",
+      "Coordinator-selected independent behavioral evaluations"
+    ],
+    "reasonDeferred": "Only the coordinator runs global checks after all package writers stop. Independent actors are outside reviewer permissions.",
+    "javaBaseline": "Not applicable to this protocol/documentation change.",
+    "liveSystems": "No live store or production system accessed."
+  },
+  "sources": [
+    {
+      "url": "https://etcd.io/docs/v3.6/learning/api_guarantees/#kv-apis",
+      "version": "etcd 3.6",
+      "supports": "Atomic KV requests/Txn and individual-operation read semantics."
+    },
+    {
+      "url": "https://etcd.io/docs/v3.6/op-guide/runtime-configuration/",
+      "version": "etcd 3.6",
+      "supports": "Effective membership, learners, promotion checks and quorum during reconfiguration."
+    },
+    {
+      "url": "https://raft.github.io/raft.pdf",
+      "version": "Raft paper, sections 6 and 8",
+      "supports": "Membership transitions and leader/read/client-routing constraints."
+    },
+    {
+      "url": "https://groups.csail.mit.edu/tds/papers/Attiya/JACM95.pdf",
+      "version": "JACM 1995, section 4",
+      "supports": "Atomic-register read propagation prevents new/old inversion under the complete protocol."
+    }
+  ],
+  "cases": [
+    {
+      "id": "consensus-effective-voters-learner",
+      "classification": "Development case; not executed and not a holdout.",
+      "actorInput": {
+        "task": "Review docs/quorum-review.md using the available project artifacts. Determine whether the current configuration preserves a quorum after losing any single AZ and update the review. Do not reconfigure anything.",
+        "fixtures": {
+          "deploy/cluster.yaml": "desiredProcesses: 5\navailabilityZones: [AZ-A, AZ-B, AZ-C]\n",
+          "evidence/members.json": "{\n  \"captureKind\": \"Synthetic normalized membership capture\",\n  \"clusterId\": \"cluster-101\",\n  \"capturedAt\": \"2026-10-16T12:00:00Z\",\n  \"membershipChangeInProgress\": false,\n  \"members\": [\n    {\n      \"id\": \"a\",\n      \"az\": \"AZ-A\",\n      \"started\": true,\n      \"isLearner\": false\n    },\n    {\n      \"id\": \"b\",\n      \"az\": \"AZ-A\",\n      \"started\": true,\n      \"isLearner\": false\n    },\n    {\n      \"id\": \"c\",\n      \"az\": \"AZ-B\",\n      \"started\": true,\n      \"isLearner\": false\n    },\n    {\n      \"id\": \"d\",\n      \"az\": \"AZ-C\",\n      \"started\": true,\n      \"isLearner\": false\n    },\n    {\n      \"id\": \"e\",\n      \"az\": \"AZ-C\",\n      \"started\": true,\n      \"isLearner\": true\n    }\n  ]\n}",
+          "docs/quorum-review.md": "# Quorum review\nStatus: preliminary\nClaim: Five configured processes across three AZs tolerate loss of any one AZ.\nAssumptions: surviving voters communicate and retain required durable state. Recovery latency has not been measured.\n"
+        },
+        "permissions": "Read fixture files and update docs/quorum-review.md only. No cluster access or reconfiguration."
+      },
+      "evaluatorOnly": {
+        "expected": [
+          "Inspect effective roles, not only desired process count.",
+          "Count four voters and majority three.",
+          "AZ-A loss leaves two voters; AZ-B and AZ-C losses leave three.",
+          "Correct the current availability claim without declaring the future five-voter design invalid.",
+          "Do not promote the learner automatically or equate started status with voting/catch-up readiness.",
+          "Do not claim a measured recovery deadline."
+        ],
+        "failureConditions": [
+          "Counts five current voters",
+          "Certifies any-AZ tolerance in this configuration",
+          "Changes membership or invokes production operations",
+          "Treats arithmetic as measured recovery performance"
+        ]
+      }
+    },
+    {
+      "id": "consensus-effective-voters-promoted",
+      "classification": "Development constraint-flip case; not executed and not a holdout.",
+      "actorInput": {
+        "sameTaskAndFixturesAs": "consensus-effective-voters-learner",
+        "onlyFixtureChange": "In evidence/members.json, set only member e.isLearner from true to false."
+      },
+      "evaluatorOnly": {
+        "expected": [
+          "Count five voters and majority three.",
+          "Survivors after AZ-A, AZ-B, AZ-C losses are three, four, three respectively.",
+          "Accept the stated quorum arithmetic under the recorded communication/durability assumptions.",
+          "Keep recovery latency unverified and do not prescribe more voters without another requirement."
+        ],
+        "failureConditions": [
+          "Repeats the learner-case availability failure despite the changed role",
+          "Demands seven voters without another requirement",
+          "Claims runtime validation or recovery timing"
+        ]
+      }
+    }
+  ],
+  "crossSkillIssues": [],
+  "coordinatorActions": [
+    "Run global registry/verify after all reviewers stop.",
+    "Select behavioral cases independently if desired."
+  ],
+  "limitations": [
+    "Primary-source and structural validation do not establish comparative efficacy.",
+    "No live product or protocol implementation tested.",
+    "No independent behavioral actor run."
+  ],
+  "completionHashes": {
+    "SKILL.md": "2C576D0CA784F59F8606E2096011BB73D66903E92EAD4D4AD72F6C38DA4D265A",
+    "references/quorum-arithmetic.md": "082FD64D055D151BA0AFD5AF082E3335C3380737A89F011783698B0E34A326C3",
+    "skill.yaml": "FC091A8B87B5FC0F5CB981122950F0222954230153D6326428659581B8E22A0D"
+  }
+}

@@ -1,0 +1,37 @@
+$ErrorActionPreference = 'Stop'
+$taskRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+$paths = @(
+    'input/published/text-core-1.0.0.jar',
+    'input/published/text-core-1.0.1.jar',
+    'input/published/report-app-1.0.0.jar',
+    'input/bundles/report-1.0.0.jar',
+    'output/report-with-text-core-1.0.1-review.jar'
+)
+$archives = foreach ($path in $paths) {
+    $zip = [IO.Compression.ZipFile]::OpenRead((Join-Path $taskRoot $path))
+    try {
+        $manifestReader = [IO.StreamReader]::new($zip.GetEntry('META-INF/MANIFEST.MF').Open())
+        try { $manifest = $manifestReader.ReadToEnd() } finally { $manifestReader.Dispose() }
+        $classes = @($zip.Entries | Where-Object FullName -like '*.class' | ForEach-Object {
+            $stream = $_.Open()
+            try { $hash = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($stream)) } finally { $stream.Dispose() }
+            [ordered]@{ name = $_.FullName; sha256 = $hash }
+        })
+        [ordered]@{ path = $path; manifest = $manifest; classes = $classes }
+    } finally { $zip.Dispose() }
+}
+$oldConsumerHash = ($archives[2].classes | Where-Object name -eq 'com/example/app/ReportApp.class').sha256
+$deployedConsumerHash = ($archives[3].classes | Where-Object name -eq 'com/example/app/ReportApp.class').sha256
+$candidateConsumerHash = ($archives[4].classes | Where-Object name -eq 'com/example/app/ReportApp.class').sha256
+$candidateLibraryHash = ($archives[1].classes | Where-Object name -eq 'com/example/text/LineEndings.class').sha256
+$bundledLibraryHash = ($archives[4].classes | Where-Object name -eq 'com/example/text/LineEndings.class').sha256
+$unchangedConsumer = $oldConsumerHash -eq $deployedConsumerHash -and $oldConsumerHash -eq $candidateConsumerHash
+$publishedCandidateInBundle = $candidateLibraryHash -eq $bundledLibraryHash
+$oneLibraryClass = @($archives[4].classes | Where-Object name -eq 'com/example/text/LineEndings.class').Count -eq 1
+[ordered]@{
+    archives = @($archives)
+    unchangedConsumer = $unchangedConsumer
+    publishedCandidateInBundle = $publishedCandidateInBundle
+    oneLibraryClass = $oneLibraryClass
+} | ConvertTo-Json -Depth 12
+if (-not ($unchangedConsumer -and $publishedCandidateInBundle -and $oneLibraryClass)) { exit 1 }

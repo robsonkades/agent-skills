@@ -3,9 +3,9 @@ name: feature-progress-tracking
 description: >
   Keeping a feature's state true while it is being built: one status per resource with defined
   transitions, a validation line required before anything reaches done, and a persisted record
-  current enough that another agent or another session can resume from it without asking. Use
-  when a feature spans more than one sitting, when someone else may pick the work up, when the
-  answer to "where are we" is a summary of the conversation, when resources are marked done
+  current enough that another agent or another session can resume without reconstructing the
+  conversation. Use when a feature spans more than one sitting, when someone else may pick the
+  work up, when the answer to "where are we" is a summary of the conversation, when resources are marked done
   because code was written for them, when a blocker has been open long enough that nobody
   remembers what it needs, or when a plan and the code have silently diverged. Does not
   implement the resources (feature-execution), does not decide what counts as a resource
@@ -59,13 +59,18 @@ resumption, not workflow accounting for its own sake.
 ## Workflow
 
 1. **Reuse the established tracking location and record format.** The table and log are roles,
-   not mandatory separate files. Create entries when resources are defined, initially TODO for
-   unstarted work. When tracking begins later, reconstruct only evidence-supported state and label unknowns.
+   not mandatory separate files. On resumption, locate that entry point and reconcile the selected
+   resource's recorded state with its accepted scope, current implementation and evidence before
+   updating it or handing it to an executor. Follow the resumption procedure in the reference below.
+   Create entries when resources are defined, initially TODO for unstarted work. When tracking
+   begins later, reconstruct only evidence-supported state and label unknowns.
 2. **Update at durable handoff points and material transitions.** For multi-session or parallel
    work, update before ownership changes and before ending a session. Do not turn sub-minute local
    edits into an event stream that costs more than the work.
 3. **Require relevant acceptance evidence for DONE.** Link what ran, results and the checked
    code/contract revision and environment; a command name alone is not a passing result.
+   Confirm that required checks actually executed and cover the claimed scope. A recent rerun
+   can still check an older revision; a green aggregate does not establish omitted coverage.
    Keep enough durable evidence in the established record for the next owner to substantiate
    that status. A mutable "latest" badge or expiring artifact link alone is insufficient. If an
    artifact becomes unavailable, assess the remaining evidence before reopening affected work;
@@ -74,15 +79,21 @@ resumption, not workflow accounting for its own sake.
    evidence needed to unblock, and what continues meanwhile. If the owner is unknown, say so
    instead of assigning decision authority by assumption.
 5. **Append to the execution log** on start, completion, blocking, unblocking and any plan
-   change. The log is append-only; a correction is a new entry.
-6. **Leave the files true at the end of every session**, whatever state the work is in.
+   change. The log is append-only; a correction is a new entry. When an attempt changes the
+   next action, retain its observed outcome and why it supports that adjustment; distinguish
+   a confirmed cause from an explanation still needing evidence.
+6. **Leave an actionable handoff at the end of every session.** Name the next resource, owner,
+   starting file/check, expected result and any prerequisite still preventing that action.
+   Verify that the entry point links to the corrected state and evidence, whatever the status.
 7. **Track revision impact.** Record the Product/Engineering or Tech baseline and plan revision. When
-   either changes, trace the actual acceptance, implementation and evidence impact. Reopen `RES-*`
+   either, the implementation, or a relevant environment/configuration assumption changes,
+   trace the actual acceptance, implementation and evidence impact. Reopen `RES-*`
    and mark `EV-*` stale only where their coverage is invalidated; a new revision label or reordered
    plan alone does not invalidate a passing check. Name what triggered each state change.
 
 Load [artefact formats](references/artefact-formats.md) when creating or resuming records, or
-when evidence access or retention puts a completion claim in doubt.
+when evidence applicability, access or retention puts a completion claim in doubt, or a status
+update needs to explain an outcome that changed the next action.
 
 ## Decision rules
 
@@ -107,9 +118,12 @@ THEN record who decided, why and which commitments remain. Neither status amends
      otherwise report the feature incomplete against that commitment. Reuse existing authority.
      A replacement still awaiting validation remains open under its own ID.
 
-IF the same resource has been IN_PROGRESS across three sessions
-THEN inspect remaining work, session length and dependencies. Split only when useful;
-     session count alone proves neither oversizing nor an external blocker.
+IF an expected checkpoint is missed, attempts repeat without new evidence, or a blocker
+threatens dependent work
+THEN inspect the remaining scope, observed attempts and dependencies with the owner.
+     Choose a next evidence-producing action, resolve a blocker, or request a useful split
+     through feature-decomposition. Elapsed time or session count alone determines neither
+     resource size nor status; do not wait for an arbitrary number of sessions to investigate.
 
 IF the progress file and the code disagree
 THEN reconcile accepted scope, code revision and evidence before changing state. The tracker
@@ -149,9 +163,14 @@ The progress table, current, and the report derived from it:
 Feature      Asynchronous order dispatch
 Resources    10 total — 4 DONE, 1 IN_PROGRESS, 2 BLOCKED, 2 TODO, 1 CANCELLED
 Blocked on   Q-08 (uniqueness scope for the idempotency key), asked 2026-09-05
-Next         RES-09 (metrics), unaffected by the blocker
+Next         RES-09 (metrics), agent-B; inspect plan.md#res-09 paths for missing counters
 Plan changes RES-06 added 2026-09-05; RES-11 cancelled 2026-09-04
 ```
 
+For a tracking-only request, produce this record and handoff; executing the next resource belongs
+to feature-execution and requires that work to be in the authorized scope.
+
 Keep the report proportionate; include material validation gaps and changed assumptions when
-the five-line summary would hide them. Resource counts are not effort percentages or release readiness.
+the five-line summary would hide them. Say what changed since the last update and what evidence
+or decision the next action should produce. Resource counts are not effort percentages or release
+readiness; a scope change can change the denominator without completing any work.

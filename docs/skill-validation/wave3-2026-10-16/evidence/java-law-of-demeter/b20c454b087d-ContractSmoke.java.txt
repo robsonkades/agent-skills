@@ -1,0 +1,25 @@
+import orders.Contact;
+import orders.Customer;
+import orders.Order;
+import shipping.ShippingLabel;
+public final class ContractSmoke {
+    public static void main(String[] args) {
+        ShippingLabel labels = new ShippingLabel();
+        Order order = new Order(new Customer(new Contact("south")));
+        equal("zone:south", labels.label(order));
+        equal(order.customer().contact().deliveryZone(), order.deliveryZone());
+        equal("zone:", labels.label(new Order(new Customer(new Contact("")))));
+        npe(() -> labels.label(null));
+        npe(() -> new Order(null));
+        npe(() -> new Customer(null));
+        npe(() -> new Contact(null));
+        System.out.println("PASS: 7 fixture contract assertions; runtime=" + Runtime.version());
+    }
+    private static void equal(Object expected, Object actual) {
+        if (!expected.equals(actual)) throw new AssertionError(expected + " != " + actual);
+    }
+    private static void npe(Runnable action) {
+        try { action.run(); } catch (NullPointerException expected) { return; }
+        throw new AssertionError("Expected NullPointerException");
+    }
+}

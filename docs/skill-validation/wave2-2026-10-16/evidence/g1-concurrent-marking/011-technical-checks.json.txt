@@ -1,0 +1,10 @@
+{
+  "concurrentCauseRequest": true,
+  "concurrentStart": true,
+  "concurrentCycleCompleted": true,
+  "fixedThresholdBytes": true,
+  "noOccupancyRequest": true,
+  "noFullInConcurrentCase": true,
+  "fullControl": true,
+  "noConcurrentInControl": true
+}

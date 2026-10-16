@@ -224,19 +224,28 @@ site between a backward `goto` and its target.
 
 The JIT compiles against a **runtime type profile**. Bytecode records only the declared type,
 so it cannot tell you whether a speculation held or was invalidated. That question belongs to
-the compilation logs, but two corrections are worth carrying across:
+runtime compilation and deoptimization diagnostics, matched to the deployed build:
 
 ```bash
 # -XX:+TraceDeoptimization is a DIAGNOSTIC flag: without -XX:+UnlockDiagnosticVMOptions
 # the JVM refuses the command line (verified: "must be enabled via -XX:+UnlockDiagnosticVMOptions").
 java -XX:+UnlockDiagnosticVMOptions -XX:+PrintCompilation -XX:+TraceDeoptimization MyApp
 
-# Cleaner in production — unified logging, no diagnostic flags:
-java -Xlog:deoptimization=info:file=deopt.log:time,uptime MyApp
+# HotSpot 25.0.3 uncommon traps: debug level, no diagnostic flags:
+java -Xlog:deoptimization=debug:file=deopt.log:time,uptime MyApp
 
 # Or via JFR, correlated with the rest of the recording:
 jfr print --events jdk.Deoptimization rec.jfr
 ```
+
+On HotSpot 25.0.3, `deoptimization=info` is accepted but excludes these `debug`-level
+records. Both this log and `jdk.Deoptimization` cover **uncommon traps**, not every cause of
+compiled-code invalidation. Check the settings and covered workload/window before interpreting
+an empty capture; even a valid empty capture does not rule out dependency invalidation.
+Use `deoptimization` for that investigation and for joining the trapping method/descriptor,
+bci and compile ID to compilation history. Reuse adequate recordings; bound new captures by
+time, disk and overhead budget, and reserve detailed `TraceDeoptimization` output for a focused
+session. A trap identifies a failed assumption, not its contribution to application latency.
 
 `-XX:+PrintDeoptimizationInfo` is not a HotSpot flag: `Unrecognized VM option
 'PrintDeoptimizationInfo'`, with the JVM suggesting `PrintDeoptimizationDetails` — itself a
@@ -261,6 +270,7 @@ validate any optimization on the production objective, especially tail latency a
 
 - [JVMS 25, instruction set](https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html)
 - [JVMS 25, method and dynamic-call-site resolution](https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-5.html#jvms-5.4.3)
+- [HotSpot 25.0.3+9: trap logging level and JFR emission in `uncommon_trap_inner`](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/runtime/deoptimization.cpp#L1889-L2004)
 - [JEP 181: Nest-Based Access Control](https://openjdk.org/jeps/181)
 - [JEP 280: Indify String Concatenation](https://openjdk.org/jeps/280)
 - [JEP 371: Hidden Classes](https://openjdk.org/jeps/371)

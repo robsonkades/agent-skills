@@ -66,6 +66,21 @@ are disabled. Eligibility changes do not prove existing huge mappings were split
 residency separately. Check the target kernel's exceptions and separate tmpfs/shmem policy
 when those mappings matter.
 
+Separate policy, residency and allocation activity. On Linux 6.12, `AnonHugePages` in
+`/proc/meminfo` reports system PMD-sized anonymous THP; the fields in `/proc/<pid>/smaps`
+cover that process's PMD mappings. They do not count smaller PTE-mapped mTHP. A zero value
+therefore does not establish that all anonymous THP is absent. Read `smaps` only as needed;
+frequent scans add overhead.
+
+When smaller sizes matter, inspect the deployed kernel's available
+`/sys/kernel/mm/transparent_hugepage/hugepages-<size>kB/stats` fields. For example,
+`anon_fault_alloc` counts successful fault allocations: compare same-host, same-size deltas
+over the incident window, retaining reset/unavailable status. Those host-wide events are
+neither a process attribution nor a count of pages still resident. A rising 64 KiB counter
+beside zero JVM `AnonHugePages` can coexist without proving either use or non-use by that
+JVM. Leave that attribution unresolved until targeted evidence supports it; neither signal
+alone justifies changing THP policy or blaming it for a latency spike.
+
 ## CPU
 
 - Inspect the JVM effective available processor count inside its container and any
@@ -141,7 +156,8 @@ Record reused evidence and unresolved gaps; retain adequate settings rather than
 
 - [JDK 25 Java launcher](https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html): AlwaysPreTouch requests heap-page touching before application use.
 - [OpenJDK 25 G1 region commitment](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/g1/g1RegionToSpaceMapper.cpp): pre-touch on committed ranges; not a guarantee that all process faults disappear.
-- [Linux 6.12 THP](https://www.kernel.org/doc/html/v6.12/admin-guide/mm/transhuge.html): allocation, defrag modes and multiple page sizes; check the deployed kernel.
+- [Linux 6.12 THP](https://www.kernel.org/doc/html/v6.12/admin-guide/mm/transhuge.html): allocation, defrag modes, multiple sizes and the PMD-only scope of `AnonHugePages`; check the deployed kernel.
+- [Linux v6.12 per-size statistics](https://github.com/torvalds/linux/blob/v6.12/mm/huge_memory.c): `sum_mthp_stat` sums CPU counters by size, not by process; distinguish allocation events from residency.
 - [Linux 6.12 cgroup v2](https://www.kernel.org/doc/html/v6.12/admin-guide/cgroup-v2.html): memory.high reclaim throttling versus the memory.max hard boundary.
 - [Linux 6.12 OOM accounting](https://github.com/torvalds/linux/blob/v6.12/mm/oom_kill.c): `__oom_kill_process` records both VM and memcg kill events.
 - [systemd v257 limits](https://github.com/systemd/systemd/blob/v257/man/systemd.exec.xml): LimitNPROC scope and TasksMax preference.

@@ -1,0 +1,52 @@
+$ErrorActionPreference = 'Stop'
+$reviewOutput = 'C:/Users/robso/AppData/Local/Temp/skills-wave4-actors-HoLlUY/run-03/output'
+$executionPath = Join-Path $reviewOutput 'execution.json'
+$execution = Get-Content -LiteralPath $executionPath -Raw | ConvertFrom-Json -AsHashtable
+$execution.versionsUsed = [ordered]@{
+    javaRuntime = 'OpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)'
+    javaVm = 'OpenJDK 64-Bit Server VM Temurin-25.0.3+9'
+    javac = '25.0.3'
+    jar = '25.0.3'
+    javap = '25.0.3'
+    compilationRelease = 17
+    suppliedClassFileMajorVersion = 61
+    powershell = $PSVersionTable.PSVersion.ToString()
+    platform = [System.Environment]::OSVersion.VersionString
+}
+$execution.reviewToolTranscript = 'review-tool-transcript.json'
+$execution.scripts = @('run-checks.ps1', 'finalize-records.ps1', 'check-contract/CheckLineEndings.java')
+$execution.summary = [ordered]@{
+    processCount = $execution.executions.Count
+    expectedAssertionFailures = @($execution.executions | Where-Object { $_.expectedExitCode -eq 1 }).Count
+    unexpectedResults = @($execution.executions | Where-Object { -not $_.matchedExpectedExit }).Count
+    timeouts = @($execution.executions | Where-Object { $_.timedOut }).Count
+    allChildProcessesExited = $true
+    allWritesStopped = $true
+    publicationPerformed = $false
+    deploymentPerformed = $false
+}
+if ($execution.summary.processCount -ne 30 -or $execution.summary.unexpectedResults -ne 0 -or $execution.summary.timeouts -ne 0) {
+    throw 'Unexpected execution summary.'
+}
+if (-not $execution.artifactHashes.inputsUnchanged) {
+    throw 'Input retention verification did not pass.'
+}
+foreach ($required in @('decision.md', 'review-tool-transcript.json', 'report-review-text-core-1.0.1.jar')) {
+    $requiredFile = Get-Item -LiteralPath (Join-Path $reviewOutput $required)
+    if ($requiredFile.Length -eq 0) {
+        throw "Empty required output: $required"
+    }
+}
+$null = Get-Content -LiteralPath (Join-Path $reviewOutput 'review-tool-transcript.json') -Raw | ConvertFrom-Json
+foreach ($run in $execution.executions) {
+    if ([System.IO.File]::ReadAllText($run.stdoutFile) -cne $run.stdout) {
+        throw "stdout mismatch for $($run.id)"
+    }
+    if ([System.IO.File]::ReadAllText($run.stderrFile) -cne $run.stderr) {
+        throw "stderr mismatch for $($run.id)"
+    }
+}
+$execution.completedAtUtc = [DateTime]::UtcNow.ToString('o')
+$execution | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $executionPath -Encoding utf8
+Write-Output ($execution.summary | ConvertTo-Json -Compress)
+Write-Output 'Execution JSON, individual logs, preserved input hashes and required outputs verified. All 30 child processes exited.'

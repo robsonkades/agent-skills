@@ -1,0 +1,252 @@
+{
+  "skill": "mvc-and-request-handling",
+  "checkedAt": "2026-10-16T15:59:56.282Z",
+  "node": "v25.6.1",
+  "platform": "win32",
+  "commands": [
+    {
+      "label": "compile-case-a",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "--release",
+        "17",
+        "-cp",
+        "C:\\Users\\robso\\.m2\\repository\\org\\springframework\\spring-webmvc\\6.2.7\\spring-webmvc-6.2.7.jar;C:\\Users\\robso\\.m2\\repository\\org\\springframework\\spring-web\\6.2.7\\spring-web-6.2.7.jar;C:\\Users\\robso\\.m2\\repository\\org\\springframework\\spring-core\\6.2.7\\spring-core-6.2.7.jar;C:\\Users\\robso\\.m2\\repository\\org\\springframework\\spring-beans\\6.2.7\\spring-beans-6.2.7.jar;C:\\Users\\robso\\.m2\\repository\\org\\springframework\\spring-jcl\\6.2.7\\spring-jcl-6.2.7.jar;C:\\Users\\robso\\.m2\\repository\\org\\springframework\\spring-context\\6.2.7\\spring-context-6.2.7.jar;C:\\Users\\robso\\.m2\\repository\\org\\springframework\\spring-test\\6.2.7\\spring-test-6.2.7.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\servlet\\jakarta.servlet-api\\6.0.0\\jakarta.servlet-api-6.0.0.jar",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\mvc-and-request-handling\\case-a-classes",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\mvc-and-request-handling\\fixtures\\LifecycleProbe.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\mvc-and-request-handling\\evaluator-private\\CaseProbe.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\mvc-and-request-handling\\cases\\case-a\\example\\RequestTagInterceptor.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\mvc-and-request-handling",
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": "Note: Some input files use or override a deprecated API.\r\nNote: Recompile with -Xlint:deprecation for details.\r\n",
+      "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\mvc-and-request-handling\\logs\\compile-case-a.json"
+    },
+    {
+      "label": "execute-case-a",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\mvc-and-request-handling\\case-a-classes;C:\\Users\\robso\\.m2\\repository\\org\\springframework\\spring-webmvc\\6.2.7\\spring-webmvc-6.2.7.jar;C:\\Users\\robso\\.m2\\repository\\org\\springframework\\spring-web\\6.2.7\\spring-web-6.2.7.jar;C:\\Users\\robso\\.m2\\repository\\org\\springframework\\spring-core\\6.2.7\\spring-core-6.2.7.jar;C:\\Users\\robso\\.m2\\repository\\org\\springframework\\spring-beans\\6.2.7\\spring-beans-6.2.7.jar;C:\\Users\\robso\\.m2\\repository\\org\\springframework\\spring-jcl\\6.2.7\\spring-jcl-6.2.7.jar;C:\\Users\\robso\\.m2\\repository\\org\\springframework\\spring-context\\6.2.7\\spring-context-6.2.7.jar;C:\\Users\\robso\\.m2\\repository\\org\\springframework\\spring-test\\6.2.7\\spring-test-6.2.7.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\servlet\\jakarta.servlet-api\\6.0.0\\jakarta.servlet-api-6.0.0.jar",
+        "CaseProbe"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\mvc-and-request-handling",
+      "exitCode": 1,
+      "expectedExitCode": 1,
+      "signal": null,
+      "error": null,
+      "stdout": "allow tagAfterDispatch=null events=[prior.pre, handler, prior.after]\r\nstop tagAfterDispatch=/reports/status events=[prior.pre, prior.after]\r\nreadiness-failure tagAfterDispatch=/reports/status events=[prior.pre, prior.after]\r\nhandler-failure tagAfterDispatch=null events=[prior.pre, handler, prior.after]\r\nCompleted 4 framework dispatch paths; response and handler controls passed\r\n",
+      "stderr": "Exception in thread \"main\" java.lang.AssertionError: Request tag retained after dispatch: [stop, readiness-failure]\r\n\tat CaseProbe.main(CaseProbe.java:55)\r\n",
+      "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\mvc-and-request-handling\\logs\\execute-case-a.json"
+    },
+    {
+      "label": "compile-case-b",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "--release",
+        "17",
+        "-cp",
+        "C:\\Users\\robso\\.m2\\repository\\org\\springframework\\spring-webmvc\\6.2.7\\spring-webmvc-6.2.7.jar;C:\\Users\\robso\\.m2\\repository\\org\\springframework\\spring-web\\6.2.7\\spring-web-6.2.7.jar;C:\\Users\\robso\\.m2\\repository\\org\\springframework\\spring-core\\6.2.7\\spring-core-6.2.7.jar;C:\\Users\\robso\\.m2\\repository\\org\\springframework\\spring-beans\\6.2.7\\spring-beans-6.2.7.jar;C:\\Users\\robso\\.m2\\repository\\org\\springframework\\spring-jcl\\6.2.7\\spring-jcl-6.2.7.jar;C:\\Users\\robso\\.m2\\repository\\org\\springframework\\spring-context\\6.2.7\\spring-context-6.2.7.jar;C:\\Users\\robso\\.m2\\repository\\org\\springframework\\spring-test\\6.2.7\\spring-test-6.2.7.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\servlet\\jakarta.servlet-api\\6.0.0\\jakarta.servlet-api-6.0.0.jar",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\mvc-and-request-handling\\case-b-classes",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\mvc-and-request-handling\\fixtures\\LifecycleProbe.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\mvc-and-request-handling\\evaluator-private\\CaseProbe.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\mvc-and-request-handling\\cases\\case-b\\example\\RequestTagInterceptor.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\mvc-and-request-handling",
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": "Note: Some input files use or override a deprecated API.\r\nNote: Recompile with -Xlint:deprecation for details.\r\n",
+      "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\mvc-and-request-handling\\logs\\compile-case-b.json"
+    },
+    {
+      "label": "execute-case-b",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\mvc-and-request-handling\\case-b-classes;C:\\Users\\robso\\.m2\\repository\\org\\springframework\\spring-webmvc\\6.2.7\\spring-webmvc-6.2.7.jar;C:\\Users\\robso\\.m2\\repository\\org\\springframework\\spring-web\\6.2.7\\spring-web-6.2.7.jar;C:\\Users\\robso\\.m2\\repository\\org\\springframework\\spring-core\\6.2.7\\spring-core-6.2.7.jar;C:\\Users\\robso\\.m2\\repository\\org\\springframework\\spring-beans\\6.2.7\\spring-beans-6.2.7.jar;C:\\Users\\robso\\.m2\\repository\\org\\springframework\\spring-jcl\\6.2.7\\spring-jcl-6.2.7.jar;C:\\Users\\robso\\.m2\\repository\\org\\springframework\\spring-context\\6.2.7\\spring-context-6.2.7.jar;C:\\Users\\robso\\.m2\\repository\\org\\springframework\\spring-test\\6.2.7\\spring-test-6.2.7.jar;C:\\Users\\robso\\.m2\\repository\\jakarta\\servlet\\jakarta.servlet-api\\6.0.0\\jakarta.servlet-api-6.0.0.jar",
+        "CaseProbe"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\mvc-and-request-handling",
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "allow tagAfterDispatch=null events=[prior.pre, handler, prior.after]\r\nstop tagAfterDispatch=null events=[prior.pre, prior.after]\r\nreadiness-failure tagAfterDispatch=null events=[prior.pre, prior.after]\r\nhandler-failure tagAfterDispatch=null events=[prior.pre, handler, prior.after]\r\nCompleted 4 framework dispatch paths; response and handler controls passed\r\nPASS request-tag lifecycle contract\r\n",
+      "stderr": "",
+      "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\mvc-and-request-handling\\logs\\execute-case-b.json"
+    },
+    {
+      "label": "prettier-check",
+      "command": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "C:\\git\\agent-skills\\node_modules\\prettier\\bin\\prettier.cjs",
+        "--check",
+        "C:\\git\\agent-skills\\skills\\mvc-and-request-handling\\SKILL.md",
+        "C:\\git\\agent-skills\\skills\\mvc-and-request-handling\\skill.yaml",
+        "C:\\git\\agent-skills\\skills\\mvc-and-request-handling\\references\\application-controller.md",
+        "C:\\git\\agent-skills\\skills\\mvc-and-request-handling\\references\\page-vs-front-controller.md"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "Checking formatting...\nAll matched files use Prettier code style!\n",
+      "stderr": "",
+      "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\mvc-and-request-handling\\logs\\prettier-check.json"
+    },
+    {
+      "label": "diff-check",
+      "command": "git",
+      "args": [
+        "diff",
+        "--check",
+        "--",
+        "skills/mvc-and-request-handling"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": "",
+      "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\mvc-and-request-handling\\logs\\diff-check.json"
+    },
+    {
+      "label": "status",
+      "command": "git",
+      "args": [
+        "status",
+        "--short",
+        "--",
+        "skills/mvc-and-request-handling"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": " M skills/mvc-and-request-handling/SKILL.md\n M skills/mvc-and-request-handling/references/page-vs-front-controller.md\n M skills/mvc-and-request-handling/skill.yaml\n",
+      "stderr": "",
+      "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\mvc-and-request-handling\\logs\\status.json"
+    },
+    {
+      "label": "diff",
+      "command": "git",
+      "args": [
+        "diff",
+        "--",
+        "skills/mvc-and-request-handling"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "diff --git a/skills/mvc-and-request-handling/SKILL.md b/skills/mvc-and-request-handling/SKILL.md\nindex 6067342..730a16d 100644\n--- a/skills/mvc-and-request-handling/SKILL.md\n+++ b/skills/mvc-and-request-handling/SKILL.md\n@@ -95,7 +95,9 @@ a full request-chain redesign or an Application Controller on every review.\n    chain when centralization prevents drift and preserves ordering.\n 3. **Place it at the right stage.** Filter, interceptor, argument resolver, exception\n    handler, advice: they see different things and run at different times. Choosing wrongly\n-   produces a concern that works until it does not.\n+   produces a concern that works until it does not. For request state or resources, trace\n+   acquisition and release through short-circuit, exception and async paths; a callback's\n+   name does not guarantee that it runs on each path.\n 4. **Assess flow decisions.** Repeated or independently changing journey decisions can\n    justify an HTTP-independent Application Controller. A local response choice may remain\n    in a handler; authoritative mutation rules still belong to the application/domain contract.\ndiff --git a/skills/mvc-and-request-handling/references/page-vs-front-controller.md b/skills/mvc-and-request-handling/references/page-vs-front-controller.md\nindex 2b0f32a..caaabc5 100644\n--- a/skills/mvc-and-request-handling/references/page-vs-front-controller.md\n+++ b/skills/mvc-and-request-handling/references/page-vs-front-controller.md\n@@ -50,11 +50,24 @@ and `ResponseEntity`, writing occurs inside the handler adapter, before intercep\n stage before writing begins. For a view-rendering handler, `postHandle` can still adjust\n the `ModelAndView` before rendering. Verify the actual response path, especially for streaming.\n \n+Pair acquired state with the callbacks that actually run. Spring calls an interceptor's\n+`afterCompletion` only if its own `preHandle` completed with `true`. If `preHandle` acquires\n+context or a resource and then returns `false` or throws, release what it acquired on that\n+path; its own `afterCompletion` will not do so. Returning `false` skips the handler and later\n+interceptors and assumes the stopping interceptor handled the response. Exercise success,\n+short-circuit and exception paths, checking both the response and cleanup; acquiring state\n+only after a decision that can stop processing may avoid unnecessary cleanup paths.\n+\n For async requests, a filter returning does not mean the response is complete. Configure\n REQUEST/ASYNC/ERROR dispatch coverage deliberately, restore logging context in `finally`,\n-and propagate it explicitly across thread changes. Measure completion through the supported\n-async lifecycle, avoiding duplicate observations on redispatch. A tenant from an untrusted\n-header is a claim, not authorization to access that tenant.\n+and propagate it explicitly across thread changes. Spring invokes\n+`AsyncHandlerInterceptor.afterConcurrentHandlingStarted` instead of `postHandle` and\n+`afterCompletion` when the initial dispatch exits for concurrent handling: use it to release\n+interceptor-owned thread context, not to declare the response complete. Redispatch runs the\n+chain again; timeout or network failure can complete without that MVC redispatch. Track\n+final outcomes through the applicable Spring async callbacks or Servlet async lifecycle,\n+avoiding duplicate observations. A tenant from an untrusted header is a claim, not\n+authorization to access that tenant.\n \n ## Binding surface before validation\n \n@@ -220,7 +233,8 @@ being idempotent (`idempotency`, `delivery-semantics`).\n - [Spring MVC 6.2.7 binding model design](https://github.com/spring-projects/spring-framework/blob/v6.2.7/framework-docs/modules/ROOT/partials/web/web-data-binding-model-design.adoc): dedicated inputs, constructor/property binding and allowed fields.\n - [Spring MVC 6.2.7 request-body processing](https://github.com/spring-projects/spring-framework/blob/v6.2.7/spring-webmvc/src/main/java/org/springframework/web/servlet/mvc/method/annotation/RequestResponseBodyMethodProcessor.java): message conversion precedes binder validation; property binding is not the JSON deserialization mechanism.\n - [Spring MVC 6.2.7 interception](https://github.com/spring-projects/spring-framework/blob/v6.2.7/framework-docs/modules/ROOT/pages/web/webmvc/mvc-servlet/handlermapping-interceptor.adoc): interceptor security limitations and response writing before `postHandle`.\n-- [Spring MVC 6.2.7 HandlerInterceptor](https://github.com/spring-projects/spring-framework/blob/v6.2.7/spring-webmvc/src/main/java/org/springframework/web/servlet/HandlerInterceptor.java): `postHandle` can adjust `ModelAndView` before rendering.\n+- [Spring MVC 6.2.7 HandlerInterceptor](https://github.com/spring-projects/spring-framework/blob/v6.2.7/spring-webmvc/src/main/java/org/springframework/web/servlet/HandlerInterceptor.java): response ownership on short-circuit, `postHandle` before view rendering and the successful-`preHandle` prerequisite for `afterCompletion`.\n+- [Spring MVC 6.2.7 AsyncHandlerInterceptor](https://github.com/spring-projects/spring-framework/blob/v6.2.7/spring-webmvc/src/main/java/org/springframework/web/servlet/AsyncHandlerInterceptor.java): initial thread release, redispatch and async paths without ordinary completion callbacks.\n - [Spring MVC 6.2.7 validation](https://github.com/spring-projects/spring-framework/blob/v6.2.7/framework-docs/modules/ROOT/pages/web/webmvc/mvc-controller/ann-validation.adoc): argument versus method validation and class-level `@Validated`.\n - [Spring 6.2.7 HandlerMethodValidationException](https://github.com/spring-projects/spring-framework/blob/v6.2.7/spring-web/src/main/java/org/springframework/web/method/annotation/HandlerMethodValidationException.java): input versus return-value status codes.\n - [Spring MVC 6.2.7 ResponseEntityExceptionHandler](https://github.com/spring-projects/spring-framework/blob/v6.2.7/spring-webmvc/src/main/java/org/springframework/web/servlet/mvc/method/annotation/ResponseEntityExceptionHandler.java): validation error handling and committed-response guard.\ndiff --git a/skills/mvc-and-request-handling/skill.yaml b/skills/mvc-and-request-handling/skill.yaml\nindex 06a8a71..5d685f1 100644\n--- a/skills/mvc-and-request-handling/skill.yaml\n+++ b/skills/mvc-and-request-handling/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: mvc-and-request-handling\n-version: 1.3.5\n+version: 1.3.6\n description: >-\n   How a web request is routed and handled: MVC's actual division of responsibilities, Page\n   Controller versus Front Controller, and Application Controller for flows whose next step\n",
+      "stderr": "",
+      "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\mvc-and-request-handling\\logs\\diff.json"
+    },
+    {
+      "label": "staged-diff",
+      "command": "git",
+      "args": [
+        "diff",
+        "--cached",
+        "--",
+        "skills/mvc-and-request-handling"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": "",
+      "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\mvc-and-request-handling\\logs\\staged-diff.json"
+    }
+  ],
+  "strictValidation": {
+    "issues": [],
+    "shippedFiles": 4
+  },
+  "internalLinks": [
+    {
+      "from": "skills/mvc-and-request-handling/SKILL.md",
+      "target": "references/page-vs-front-controller.md"
+    },
+    {
+      "from": "skills/mvc-and-request-handling/SKILL.md",
+      "target": "references/application-controller.md"
+    }
+  ],
+  "optionalReferrals": [
+    "architecture-testing",
+    "delivery-semantics",
+    "idempotency",
+    "orm-behavioral-patterns",
+    "query-objects-and-specifications",
+    "rpc-and-api-contracts",
+    "service-layer-design",
+    "spring-boot-web",
+    "view-and-representation-patterns"
+  ],
+  "dependencies": [
+    "layering-and-boundaries",
+    "domain-logic-organization",
+    "remote-facade-and-dto",
+    "session-state-strategies"
+  ],
+  "explicitTextReferrals": [
+    "architecture-testing",
+    "delivery-semantics",
+    "domain-logic-organization",
+    "layering-and-boundaries",
+    "orm-behavioral-patterns",
+    "query-objects-and-specifications",
+    "remote-facade-and-dto",
+    "rpc-and-api-contracts",
+    "service-layer-design",
+    "session-state-strategies",
+    "spring-boot-web"
+  ],
+  "finalHashes": [
+    {
+      "path": "skills/mvc-and-request-handling/SKILL.md",
+      "sha256": "ba8b3f5a89413e94d988eccb1f0ac67b18abcef89de5c66e9a274e9bc16a490f"
+    },
+    {
+      "path": "skills/mvc-and-request-handling/skill.yaml",
+      "sha256": "4530c41e1f346baaab3669bbb3861e4178940037f3410f53153e08c9bafe6821"
+    },
+    {
+      "path": "skills/mvc-and-request-handling/references/application-controller.md",
+      "sha256": "0c04fa4249d9a709da09a35c2005b36a6cfff216cccccf94f69482bdf5ed4e29"
+    },
+    {
+      "path": "skills/mvc-and-request-handling/references/page-vs-front-controller.md",
+      "sha256": "82b2aedae6eefb212d7dd84043ff69620a93cf225c6e257ee5f64212d70ae019"
+    }
+  ],
+  "changedSinceAssignment": [
+    "skills/mvc-and-request-handling/SKILL.md",
+    "skills/mvc-and-request-handling/references/page-vs-front-controller.md",
+    "skills/mvc-and-request-handling/skill.yaml"
+  ],
+  "noActiveChildren": true,
+  "caseContractResults": {
+    "a": "Expected exit 1 only after all 4 response/handler controls: retained state on stop and readiness failure.",
+    "b": "Exit 0, 4 paths satisfy tag lifetime and response/handler controls."
+  },
+  "caseArtifactIsolation": "Case input fixtures match compiled RequestTagInterceptor sources. Criteria and harness are separate; do not expose them to an actor."
+}

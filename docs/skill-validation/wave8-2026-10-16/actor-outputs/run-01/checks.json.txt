@@ -1,0 +1,78 @@
+{
+  "verification": {
+    "status": "passed",
+    "candidateFile": "solution.sql",
+    "node": "v25.6.1",
+    "sqlite": "3.51.2",
+    "candidateCases": 7,
+    "generatedRows": 288,
+    "activeValues": [
+      false,
+      true
+    ],
+    "amountSamples": [
+      -9999999999.99,
+      -0.01,
+      0,
+      99.99,
+      100,
+      100.01,
+      150,
+      9999999999.99
+    ],
+    "constraintChecks": 2,
+    "rejectedMutants": [
+      "set-union-drops-distinct-invoices",
+      "overlap-emits-one-invoice-twice",
+      "tenant-leak-in-second-branch",
+      "threshold-excludes-exactly-100",
+      "descending-label-order"
+    ],
+    "limit": "Portable SQLite result checks only; no PostgreSQL execution, plans, or timings."
+  },
+  "positiveExit": 0,
+  "externalMutation": {
+    "change": "UNION ALL to UNION in solution.sql",
+    "exit": 1,
+    "rejected": true
+  },
+  "restoredCandidateSha256": "3e28c96e76cec40b332729cd90c147c03a9c6d3929aef976a8590778f99adebd",
+  "protectedCopies": [
+    {
+      "file": "README.md",
+      "sha256": "a9e61238b03c45b3a034c72addd0f73e9c36880d023c3149b497d4a9b03c988d",
+      "matches": true
+    },
+    {
+      "file": "REQUEST.md",
+      "sha256": "e00bddc7da551cb680825db8a682002fec7a26bd80212bdc2a0e9ed7acbf81bd",
+      "matches": true
+    },
+    {
+      "file": "schema.sql",
+      "sha256": "c01aea27b07236c70bc921980e5954d5b300b19c87208f4f2a37b1063d6b8c0c",
+      "matches": true
+    },
+    {
+      "file": "seed.sql",
+      "sha256": "bb2404bc6c875bab75df324b9bda8efe402f671cb3a2dcf13e722e66f8037b31",
+      "matches": true
+    },
+    {
+      "file": "current.sql",
+      "sha256": "6b359fc8d3fb98e936a77afb73f331ad3955e347a1c4b9e371d3f2720d2d0770",
+      "matches": true
+    },
+    {
+      "file": "proposed.sql",
+      "sha256": "3e28c96e76cec40b332729cd90c147c03a9c6d3929aef976a8590778f99adebd",
+      "matches": true
+    },
+    {
+      "file": "fixture.mjs",
+      "sha256": "8ff06a6157c9d865ef4b7f2cb5b88cbea2969575b7ef551b9acc1d8d36353bd6",
+      "matches": true
+    }
+  ],
+  "subprocessTimeoutMs": 20000
+}

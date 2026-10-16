@@ -1,0 +1,42 @@
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+
+public final class InitializationProbe {
+    public static final class Order {
+        public String total() { return "42"; }
+    }
+
+    public static final class Accessors {
+        private static final MethodHandle TOTAL;
+        static {
+            System.out.println("ACCESSORS_INITIALIZING");
+            try {
+                TOTAL = MethodHandles.lookup().findVirtual(Order.class,
+                        System.getProperty("member", "total"), MethodType.methodType(String.class));
+            } catch (ReflectiveOperationException e) {
+                throw new ExceptionInInitializerError(e);
+            }
+        }
+        public static String totalOf(Order order) {
+            try {
+                return (String) TOTAL.invokeExact(order);
+            } catch (RuntimeException | Error e) {
+                throw e;
+            } catch (Throwable t) {
+                throw new IllegalStateException("accessor failed", t);
+            }
+        }
+    }
+
+    public static void main(String[] args) throws Exception {
+        Class<?> accessors = Accessors.class;
+        Class.forName(accessors.getName(), false, accessors.getClassLoader());
+        System.out.println("DISCOVERED methods=" + accessors.getDeclaredMethods().length);
+        if (args[0].equals("eager")) {
+            MethodHandles.lookup().ensureInitialized(accessors);
+        }
+        System.out.println("READY");
+        System.out.println("FIRST_REQUEST " + Accessors.totalOf(new Order()));
+    }
+}

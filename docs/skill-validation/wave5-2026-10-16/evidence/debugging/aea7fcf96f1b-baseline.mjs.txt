@@ -1,0 +1,35 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+
+const root = 'C:/git/agent-skills';
+const out = path.dirname(fileURLToPath(import.meta.url));
+const scoped = 'skills/debugging';
+const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' });
+const prior = JSON.parse(fs.readFileSync(path.join(root, 'docs/skill-validation/wave5-2026-10-16/baseline.json'), 'utf8'));
+const expected = prior.packages.find(item => item.name === 'debugging');
+const files = git('ls-files', '--', scoped).trim().split(/\r?\n/).filter(Boolean).map(name => {
+  const bytes = fs.readFileSync(path.join(root, name));
+  return { path: name, bytes: bytes.length, sha256: crypto.createHash('sha256').update(bytes).digest('hex') };
+});
+for (const file of files) assert.equal(file.sha256, expected.files.find(item => item.path === file.path).sha256, file.path);
+assert.equal(files.length, expected.files.length);
+const result = {
+  skill: 'debugging', capturedAt: new Date().toISOString(), node: process.version,
+  gitVersion: git('--version').trim(), head: git('rev-parse', 'HEAD').trim(),
+  status: git('status', '--short', '--', scoped),
+  unstagedDiff: git('diff', '--', scoped), stagedDiff: git('diff', '--cached', '--', scoped),
+  untracked: git('ls-files', '--others', '--exclude-standard', '--', scoped),
+  committedVersion: git('show', 'HEAD:skills/debugging/skill.yaml').match(/^version:\s*(.+)$/m)[1],
+  assignmentVersion: fs.readFileSync(path.join(root, scoped, 'skill.yaml'), 'utf8').match(/^version:\s*(.+)$/m)[1],
+  coordinatorBaselineMatched: true, files
+};
+assert.equal(result.status, '');
+assert.equal(result.unstagedDiff, '');
+assert.equal(result.stagedDiff, '');
+assert.equal(result.untracked, '');
+fs.writeFileSync(path.join(out, 'baseline.json'), JSON.stringify(result, null, 2) + '\n');
+console.log(JSON.stringify(result, null, 2));

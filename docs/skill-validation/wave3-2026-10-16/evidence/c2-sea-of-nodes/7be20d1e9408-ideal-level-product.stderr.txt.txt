@@ -1,0 +1,4 @@
+Error: VM option 'PrintIdealGraphLevel' is develop and is available only in debug version of VM.
+Improperly specified VM option 'PrintIdealGraphLevel=2'
+Error: Could not create the Java Virtual Machine.
+Error: A fatal exception has occurred. Program will exit.

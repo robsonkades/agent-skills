@@ -1,0 +1,2 @@
+policy=abort phase=shutdown normalReturns=0 received=[first] completed=[] recovered=[first] unresolved=[] permits=3 executorTerminated=true threads=[]
+exit=0 expected=0

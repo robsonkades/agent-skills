@@ -1,0 +1,50 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+const report='C:/git/agent-skills/docs/skill-validation/wave4-2026-10-16';
+const manifest=JSON.parse(fs.readFileSync(report+'/behavior-manifest.frozen.json.txt','utf8'));
+const technical=JSON.parse(fs.readFileSync(report+'/behavior-technical-checks.json','utf8'));
+assert.ok(technical.records.every(r=>r.passed));
+// Manual coordinator judgments after reading all six complete decisions and their execution records.
+// These rationales do not derive from keyword matching, elapsed time, or a changed rubric.
+const rationale={
+ 'run-01':[
+  'Lê delivery.json como bundled e confirma classe antiga dentro do JAR; distingue a receita externa disponível da entrega efetiva.',
+  'Exige nova distribuição imutável e entrega separada da publicação, reutiliza bytecode original e declara recompilação desnecessária para este caso.',
+  'Executa bundle retido/candidato e casos CR/LF/CRLF; retorno ao bundle antigo restaura CR, preserva hashes e limita recuperação à janela.',
+  'Mantém donos/calendários distintos: prazo14dias e custo de remontagem não exigem simultaneidade; pede evidência para reconsiderar.'
+ ],
+ 'run-02':[
+  'Identifica configuração bundled, inspeciona conteúdos e distingue dependência compilação/montagem/runtime no mesmo processo.',
+  'Separa publicação, remontagem e novos processos; produz bundle com consumidor original e biblioteca1.0.1 sem exigir recompilação.',
+  'Valida candidato e biblioteca incorporada, inclui negativos e recuperação com antigo; reconhece reintrodução do defeito e limite14dias.',
+  'Rejeita fundir fronteiras com base apenas em adoção obrigatória; mantém proprietários e versão própria da distribuição.'
+ ],
+ 'run-03':[
+  'Usa configuração bundled e jar/javap para confirmar duas classes e corpo antigo incorporado; não troca indevidamente a receita ativa.',
+  'Novo bundle usa ReportApp.class extraído do antigo; distingue compatibilidade do binário, compilação diagnóstica e entrega necessária.',
+  'Testa LF no artefato final, negativos e recuperação CR; mantém imutabilidade e não renova prazo por rollback.',
+  'Mantém unidades separadas e sequência admitida pela coexistência, reconhecendo ausência de histórico/custo para justificar fusão.'
+ ],
+ 'run-04':[
+  'Confirma external em delivery.json e que o JAR da aplicação só contém o consumidor.',
+  'Reutiliza report-app1.0.0, propõe mudar libraryVersion e iniciar novo processo; distingue revisão de distribuição de reempacotar aplicação.',
+  'Mesmo JAR com1.0.1 passa LF; antigos/negativos/rollback e regressões CR/LF/CRLF registrados, inputs preservados.',
+  'Mantém fronteiras e prazo14dias, não trata execução conjunta/adoção da dependência como exigência de release único.'
+ ],
+ 'run-05':[
+  'Segue layout external selecionado e reconhece bundle apenas como receita alternativa fornecida.',
+  'Propõe seleção imutável nova mantendo aplicação1.0.0 e seu JAR; afirma que edição de seleção não altera JVM iniciada.',
+  'Executa binário antigo combiblioteca nova e retorno à seleção antiga; testes adicionais de normalização e hashes, recuperação temporária.',
+  'Não unifica versões/calendário sem histórico ou contrato incompatível; preserva dono e janela de adoção.'
+ ],
+ 'run-06':[
+  'Inspeciona external e aplicação sem classes da biblioteca; separa o bundle não selecionado.',
+  'Mantém fonte/JAR/versão da aplicação, altera seleção externa e exige novo processo, admitindo revisão de distribuição imutável.',
+  'Registra controles de LF/CR, regressões e recuperação comdependência anterior; ressalta que rollback não renova prazo.',
+  'Preserva releases separados; compatibilidade do consumidor e coexistência14dias não sustentam unificação permanente.'
+ ]
+};
+const runs=manifest.runs.map(r=>({runId:r.runId,caseId:r.caseId,condition:r.condition,skillVersion:r.skillVersion,agent:'/root/wave4_actor'+r.runId.slice(-2),allWritesStopped:true,criteriaSha256:r.criteriaSha256,decision:'behavior-outputs/'+r.runId+'/decision.md.txt',executionRecord:'behavior-outputs/'+r.runId+'/execution.json.txt',criteria:r.criteria.expected.map((c,i)=>({id:c.id,outcome:'PASS',rationale:rationale[r.runId][i]})),failureConditions:r.criteria.failureConditions.map(text=>({text,observed:false,judgment:'Manual review found no triggering recommendation; supporting distinctions are recorded per criterion above.'})),outcome:'PASS'}));
+const result={judgedAt:new Date().toISOString(),judge:'Coordinator, unblinded manual judgment using pre-dispatch frozen criteria; all full decisions read before writing this result.',runs,aggregate:{runs:6,criteria:24,passedCriteria:24,none:{runs:2,passedCriteria:8},baseline:{runs:2,passedCriteria:8},revised:{runs:2,passedCriteria:8},observedIncrementalGain:false},conclusion:'All conditions satisfy these two known development tasks. No incremental behavioral gain observed for the revision. The technical/documentary correction remains supported independently; this small saturated comparison does not establish universal equivalence, superiority or failure of skills.',limits:['Two development cases from the reviewer, not held-out; one run per condition/case.','Same inherited model/effort and tool permissions, no explicit override; exact runtime model identity, internal settings and token cost unavailable.','Actor history forked none; read boundaries instructed, not sandbox-enforced. Available skill metadata can remain in system context.','Coordinator judgment is not blinded or an independent second judge.','No automatic skill discovery/selection, real deployment, production fleet, Maven/Gradle resolution, cost or latency evaluated.','Historical actor execution records are authored by actors; 30 coordinator subprocess checks corroborate current artifacts without changing their contents.','Actor02 initially used unsupported javap --version; corrected -version passed. Coordinator initially assumed a uniform JSON field; both failures are retained separately.','No criteria, input, baseline/revised package snapshot or actor answer was tuned after seeing the outcomes.']};
+fs.writeFileSync(report+'/behavior-results.json',JSON.stringify(result,null,2)+'\n');
+console.log(JSON.stringify(result.aggregate,null,2));

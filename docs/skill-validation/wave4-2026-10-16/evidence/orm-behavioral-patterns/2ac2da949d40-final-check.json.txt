@@ -1,0 +1,25 @@
+{
+  "status": "PASS",
+  "exactBaselineTransform": true,
+  "files": [
+    {
+      "relative": "SKILL.md",
+      "sha256": "a99579f31697054a16cb5c5f4181338d0e26c7b56d312655599deb0091e65de6"
+    },
+    {
+      "relative": "skill.yaml",
+      "sha256": "a33522533b0a0076619ff419a8577095ec0f3268e9f0d6d01ed7ec9e01d81d3d"
+    },
+    {
+      "relative": "references\\lazy-load.md",
+      "sha256": "c3f0ef8a4e6279858a075721d8f886abd4f21b2bdd5397507f2980453952bbc3"
+    },
+    {
+      "relative": "references\\unit-of-work-and-identity-map.md",
+      "sha256": "23459b6e7104df64f319f3261b15045a9d94fea09c0ea5188690d9f1a907f6a7"
+    }
+  ],
+  "referrals": 10,
+  "routedReferences": 2,
+  "pairedCaseOnlyDifference": "input.adapter"
+}

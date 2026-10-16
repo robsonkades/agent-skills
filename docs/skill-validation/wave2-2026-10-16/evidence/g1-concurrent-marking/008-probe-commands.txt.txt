@@ -1,0 +1,10 @@
+Working directory: C:/Users/robso/AppData/Local/Temp/agent-skills-wave2-g1-concurrent-marking-e3c9b04bbfa94b8f8cd3a3845082f474
+Compiler: C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe
+Runtime: C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe
+javac --release 25 -Xlint:all G1InitiationProbe.java
+java -version
+java -Xms64m -Xmx64m -XX:+UseG1GC -XX:G1HeapRegionSize=1m -XX:ActiveProcessorCount=2 -XX:-G1UseAdaptiveIHOP -XX:InitiatingHeapOccupancyPercent=45 -XX:+ExplicitGCInvokesConcurrent -Xlog:gc*,gc+ergo=debug,gc+ergo+ihop=debug,gc+ihop=debug:file=explicit-concurrent.log:uptime,level,tags G1InitiationProbe
+java -Xms64m -Xmx64m -XX:+UseG1GC -XX:G1HeapRegionSize=1m -XX:ActiveProcessorCount=2 -XX:-G1UseAdaptiveIHOP -XX:InitiatingHeapOccupancyPercent=45 -XX:-ExplicitGCInvokesConcurrent -Xlog:gc*,gc+ergo=debug,gc+ergo+ihop=debug,gc+ihop=debug:file=explicit-full-control.log:uptime,level,tags G1InitiationProbe
+
+Both runs exited 0. javac emitted no diagnostics.
+This is a controlled implementation check on one build, not a workload benchmark or an agent behavioral evaluation.

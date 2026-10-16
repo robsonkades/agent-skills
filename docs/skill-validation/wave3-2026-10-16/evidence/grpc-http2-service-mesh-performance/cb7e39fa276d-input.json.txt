@@ -1,0 +1,13 @@
+{
+  "caseId": "grpc-outcome-b",
+  "task": "Inspect the files in fixtures/. Update fixtures/report.md to state whether the candidate meets the fixed-run gate in context.md, and correct fixtures/query.sql if its accounting is inappropriate. Preserve supported observations and identify any conclusion the evidence does not establish. Keep the scope to this fixture; do not change infrastructure, RPC contracts or dependency versions.",
+  "fixtureDirectory": "fixtures",
+  "prerequisites": [
+    "File reading/editing; no external services, gRPC server, Envoy or SQL installation required."
+  ],
+  "expectedDeliverables": [
+    "Edited report.md",
+    "Saved query correction if justified"
+  ],
+  "evaluationStatus": "not executed"
+}

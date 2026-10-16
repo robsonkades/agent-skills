@@ -9,14 +9,14 @@ illustrative snippet was executed. Check the exact deployed build and recording 
 | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
 | Continuous production monitoring, low overhead                  | JFR `jdk.Deoptimization` — on in `default.jfc`, with stack traces in `profile.jfc`          |
 | Investigation session, one line per trap with `cid` and `bci`   | `-Xlog:deoptimization=debug`                                                                |
-| Dependency invalidation from class loading                      | `-Xlog:jit+compilation=debug` (`marked for deoptimization`) plus `-Xlog:dependencies=debug` |
+| Class-loading or mutable call-site dependency invalidation      | `-Xlog:jit+compilation=debug` (`marked for deoptimization`) plus `-Xlog:dependencies=debug` |
 | Class redefinition/retransformation invalidation scope          | `-Xlog:redefine+class+nmethod=debug` plus compilation and safepoint logs                    |
 | Was the invalidation a safepoint or a handshake, and how long   | `-Xlog:handshake=info`, `-Xlog:safepoint=info`                                              |
 | Frame reconstruction in detail, rematerialised objects          | `-XX:+UnlockDiagnosticVMOptions -XX:+TraceDeoptimization`, one-off only                     |
 | Installed compiled versions and their states, without a restart | `jcmd <pid> Compiler.codelist`                                                              |
 | Machine-readable trap history for JITWatch                      | `-XX:+UnlockDiagnosticVMOptions -XX:+LogCompilation`                                        |
 
-The first two see **uncommon traps only**. A CHA invalidation or a class redefinition
+The first two see **uncommon traps only**. CHA invalidation, mutable call-site relinking or class redefinition
 produces no `jdk.Deoptimization` event and no `-Xlog:deoptimization` line; a production
 setup collecting only this JFR event misses the invalidation. Other enabled JFR event types
 may still provide class-loading, safepoint or agent context.

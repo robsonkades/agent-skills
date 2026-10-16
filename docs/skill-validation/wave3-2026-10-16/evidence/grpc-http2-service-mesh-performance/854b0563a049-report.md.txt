@@ -1,0 +1,6 @@
+# Candidate experiment
+The baseline and candidate each completed 10 of 10 calls successfully.
+The observed p95 duration decreased from 50 ms to 40 ms.
+The candidate passes the fixed-run gate; retain its settings for this workload.
+The payload, placement, mTLS, authorization and offered calls were matched.
+No exhausted DATA window or pending stream-slot queue was observed in either run.

@@ -1,0 +1,311 @@
+{
+  "status": "NO_CHANGES_NEEDED",
+  "skill": "jvm-gc-tuning",
+  "ownedPath": "skills/jvm-gc-tuning/",
+  "date": "2026-10-16",
+  "allWritesStopped": true,
+  "versions": {
+    "committed": "2.5.4",
+    "assignment": "2.5.4",
+    "final": "2.5.4",
+    "rationale": "No skill contents changed; no patch bump justified."
+  },
+  "baseline": {
+    "preExistingChanges": [],
+    "preExistingVersionBump": false,
+    "inspection": "All three package files and scoped committed/staged/unstaged/untracked state inspected. Package clean at assignment and completion.",
+    "hashes": [
+      {
+        "path": "skills\\jvm-gc-tuning\\SKILL.md",
+        "hash": "8FE4C7A09B92C2A47AB4290879DC36AB8D47FBA8FF12B8A3115B4522B0325E71"
+      },
+      {
+        "path": "skills\\jvm-gc-tuning\\skill.yaml",
+        "hash": "9CF1D2C32815F8360C71AFF73247025CA2B4607754CE59CD76698476BC411790"
+      },
+      {
+        "path": "skills\\jvm-gc-tuning\\references\\collector-and-heap.md",
+        "hash": "09F7CEE33E57699525BA0FC41A7FF6EBB6CA5BEB318F1426E25FC9BDFCC4DEFA"
+      }
+    ]
+  },
+  "findings": [
+    {
+      "location": "SKILL.md Workflow and Rules; references/collector-and-heap.md:91",
+      "assessment": "Adequate causal selection and heap-sizing workflow: observed GC contribution, allocation versus retention, comparable reclamation evidence, collector progress headroom, non-heap budget and no-change option."
+    },
+    {
+      "location": "references/collector-and-heap.md:21 and 35",
+      "assessment": "Documented JDK 25.0.3 startup examples reproduced in seven bounded Java processes. CPU-only worker formulas are already scoped and heap caps are explicit."
+    },
+    {
+      "location": "SKILL.md:90; references/collector-and-heap.md:133 and 167",
+      "assessment": "Pause target versus guarantee and explicit-GC causes/recovery dependencies are already distinguished; primary Java 25 tuning and Bits.reserveMemory source support this guidance."
+    },
+    {
+      "location": "references/collector-and-heap.md:68 and cgroup paragraph",
+      "assessment": "NMT coverage and cgroup hierarchy/victim attribution correctly prevent treating Xmx or one OOM counter as the total-memory explanation."
+    },
+    {
+      "location": "SKILL.md:56; references/collector-and-heap.md:180",
+      "assessment": "Useful throughput, offered load, failures, histogram inclusion and rollback criteria already prevent a success-only p99 improvement from masquerading as a service improvement."
+    }
+  ],
+  "corrections": [],
+  "filesChangedByReviewer": [],
+  "preserved": [
+    "All package content byte-identical to assignment; diagnosis/collector-selection/sizing role preserved.",
+    "Java 25 authoring baseline, exact-build caveats, mode differences and existing historical version observations.",
+    "Collector objective table including current collector and batch/Serial/Parallel alternatives.",
+    "Fixed versus elastic heap, non-heap/NMT/cgroup scope, live-set and compressed-oop caveats.",
+    "G1 adaptive-target and reserve guidance without ritual flag prescriptions.",
+    "Full/metadata/explicit GC cause distinctions, direct-buffer recovery caution and downstream handoffs.",
+    "Comparable useful-work validation, no-change decisions and reversible experimental recommendations."
+  ],
+  "removedCapabilities": [],
+  "commands": [
+    {
+      "command": "git status --short -- skills/jvm-gc-tuning; git diff -- skills/jvm-gc-tuning; git diff --cached -- skills/jvm-gc-tuning; git show HEAD:skills/jvm-gc-tuning/skill.yaml; rg --files skills/jvm-gc-tuning; complete package read",
+      "cwd": "C:/git/agent-skills",
+      "result": "Clean baseline, three files inspected, committed/assignment version 2.5.4."
+    },
+    {
+      "command": "$gcValidationRoot = 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/jvm-gc-tuning-validation'\nNew-Item -ItemType Directory -Path $gcValidationRoot -Force | Out-Null\n$gcCases = @(\n    @{ name='one-cpu-default'; flags=@('-XX:ActiveProcessorCount=1','-Xms16m','-Xmx512m'); expectedCollector='UseSerialGC'; parallel=$null; concurrent=$null },\n    @{ name='g1-four-cpus'; flags=@('-XX:+UseG1GC','-XX:ActiveProcessorCount=4','-Xms16m','-Xmx512m'); expectedCollector='UseG1GC'; parallel=4; concurrent=1 },\n    @{ name='g1-sixteen-cpus'; flags=@('-XX:+UseG1GC','-XX:ActiveProcessorCount=16','-Xms16m','-Xmx512m'); expectedCollector='UseG1GC'; parallel=13; concurrent=3 },\n    @{ name='zgc-eight-cpus-512m'; flags=@('-XX:+UseZGC','-XX:ActiveProcessorCount=8','-Xms16m','-Xmx512m'); expectedCollector='UseZGC'; parallel=5; concurrent=2 },\n    @{ name='zgc-two-cpus-512m'; flags=@('-XX:+UseZGC','-XX:ActiveProcessorCount=2','-Xms16m','-Xmx512m'); expectedCollector='UseZGC'; parallel=2; concurrent=1 },\n    @{ name='zgc-eight-cpus-64m'; flags=@('-XX:+UseZGC','-XX:ActiveProcessorCount=8','-Xms16m','-Xmx64m'); expectedCollector='UseZGC'; parallel=1; concurrent=1 },\n    @{ name='zgc-two-cpus-64m'; flags=@('-XX:+UseZGC','-XX:ActiveProcessorCount=2','-Xms16m','-Xmx64m'); expectedCollector='UseZGC'; parallel=1; concurrent=1 }\n)\n$gcResults = foreach ($gcCase in $gcCases) {\n    $gcFlags = $gcCase.flags\n    $gcOutput = & java @gcFlags '-XX:+PrintFlagsFinal' '-version' 2>&1\n    $gcExit = $LASTEXITCODE\n    $gcText = $gcOutput | Out-String\n    $gcLog = Join-Path $gcValidationRoot ($gcCase.name + '.txt')\n    $gcText | Set-Content -LiteralPath $gcLog\n    if ($gcExit -ne 0) { throw ($gcCase.name + ' failed startup: ' + $gcText) }\n    if ($gcText -notmatch ('(?m)^\\s+bool\\s+' + $gcCase.expectedCollector + '\\s+=\\s+true')) { throw ($gcCase.name + ' selected another collector') }\n    $gcParallel = [int]([regex]::Match($gcText, '(?m)^\\s+\\w+\\s+ParallelGCThreads\\s+=\\s+(\\d+)').Groups[1].Value)\n    $gcConcurrent = [int]([regex]::Match($gcText, '(?m)^\\s+\\w+\\s+ConcGCThreads\\s+=\\s+(\\d+)').Groups[1].Value)\n    if (($null -ne $gcCase.parallel) -and ($gcParallel -ne $gcCase.parallel)) { throw ($gcCase.name + ' ParallelGCThreads mismatch') }\n    if (($null -ne $gcCase.concurrent) -and ($gcConcurrent -ne $gcCase.concurrent)) { throw ($gcCase.name + ' ConcGCThreads mismatch') }\n    [pscustomobject]@{ name=$gcCase.name; flags=$gcFlags; exitCode=$gcExit; collector=$gcCase.expectedCollector; parallel=$gcParallel; concurrent=$gcConcurrent; log=$gcLog }\n}\n$gcResults | ConvertTo-Json -Depth 5",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": [
+        {
+          "name": "one-cpu-default",
+          "flags": ["-XX:ActiveProcessorCount=1", "-Xms16m", "-Xmx512m"],
+          "exitCode": 0,
+          "collector": "UseSerialGC",
+          "parallel": 0,
+          "concurrent": 0,
+          "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\jvm-gc-tuning-validation\\one-cpu-default.txt"
+        },
+        {
+          "name": "g1-four-cpus",
+          "flags": ["-XX:+UseG1GC", "-XX:ActiveProcessorCount=4", "-Xms16m", "-Xmx512m"],
+          "exitCode": 0,
+          "collector": "UseG1GC",
+          "parallel": 4,
+          "concurrent": 1,
+          "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\jvm-gc-tuning-validation\\g1-four-cpus.txt"
+        },
+        {
+          "name": "g1-sixteen-cpus",
+          "flags": ["-XX:+UseG1GC", "-XX:ActiveProcessorCount=16", "-Xms16m", "-Xmx512m"],
+          "exitCode": 0,
+          "collector": "UseG1GC",
+          "parallel": 13,
+          "concurrent": 3,
+          "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\jvm-gc-tuning-validation\\g1-sixteen-cpus.txt"
+        },
+        {
+          "name": "zgc-eight-cpus-512m",
+          "flags": ["-XX:+UseZGC", "-XX:ActiveProcessorCount=8", "-Xms16m", "-Xmx512m"],
+          "exitCode": 0,
+          "collector": "UseZGC",
+          "parallel": 5,
+          "concurrent": 2,
+          "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\jvm-gc-tuning-validation\\zgc-eight-cpus-512m.txt"
+        },
+        {
+          "name": "zgc-two-cpus-512m",
+          "flags": ["-XX:+UseZGC", "-XX:ActiveProcessorCount=2", "-Xms16m", "-Xmx512m"],
+          "exitCode": 0,
+          "collector": "UseZGC",
+          "parallel": 2,
+          "concurrent": 1,
+          "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\jvm-gc-tuning-validation\\zgc-two-cpus-512m.txt"
+        },
+        {
+          "name": "zgc-eight-cpus-64m",
+          "flags": ["-XX:+UseZGC", "-XX:ActiveProcessorCount=8", "-Xms16m", "-Xmx64m"],
+          "exitCode": 0,
+          "collector": "UseZGC",
+          "parallel": 1,
+          "concurrent": 1,
+          "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\jvm-gc-tuning-validation\\zgc-eight-cpus-64m.txt"
+        },
+        {
+          "name": "zgc-two-cpus-64m",
+          "flags": ["-XX:+UseZGC", "-XX:ActiveProcessorCount=2", "-Xms16m", "-Xmx64m"],
+          "exitCode": 0,
+          "collector": "UseZGC",
+          "parallel": 1,
+          "concurrent": 1,
+          "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\jvm-gc-tuning-validation\\zgc-two-cpus-64m.txt"
+        }
+      ],
+      "classification": "Executed technical startup/configuration checks on Windows Temurin 25.0.3+9, not performance benchmarks."
+    },
+    {
+      "command": "@'\nimport assert from 'node:assert/strict';\nimport fs from 'node:fs';\nimport path from 'node:path';\nimport { parseManifest } from './packages/core/src/domain/manifest.ts';\nimport { parseSkillDocument, documentName, documentDescription } from './packages/core/src/domain/skill-document.ts';\nconst root = path.resolve('skills/jvm-gc-tuning');\nconst files = ['SKILL.md', 'skill.yaml', 'references/collector-and-heap.md'];\nconst parsed = parseManifest(fs.readFileSync(path.join(root,'skill.yaml'),'utf8'), {strict:true});\nassert.deepEqual(parsed.issues, []);\nconst main = fs.readFileSync(path.join(root,'SKILL.md'),'utf8');\nconst doc = parseSkillDocument(main);\nassert.equal(documentName(doc), parsed.manifest.name);\nassert.equal(documentDescription(doc), parsed.manifest.description);\nassert.equal(parsed.manifest.version, '2.5.4');\nfor (const file of parsed.manifest.files) assert.ok(fs.existsSync(path.join(root,file)),file);\nassert.ok(main.includes('references/collector-and-heap.md'));\nlet localLinks=0;\nfor (const file of files.filter(file=>file.endsWith('.md'))) {\n  const text=fs.readFileSync(path.join(root,file),'utf8');\n  for (const match of text.matchAll(/\\[[^\\]]*\\]\\(([^)]+)\\)/g)) {\n    if (/^[a-z][a-z0-9+.-]*:/i.test(match[1])) continue;\n    const target=path.resolve(root,path.dirname(file),match[1].split('#')[0]);\n    assert.ok(target.startsWith(root+path.sep),match[1]);\n    assert.ok(fs.existsSync(target),match[1]);\n    localLinks++;\n  }\n}\nconsole.log(JSON.stringify({version:parsed.manifest.version,strictManifestIssues:0,descriptionEqual:true,files:files.length,routedReferences:1,localLinks}));\n'@ | node --input-type=module",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "{\"version\":\"2.5.4\",\"strictManifestIssues\":0,\"descriptionEqual\":true,\"files\":3,\"routedReferences\":1,\"localLinks\":1}\n",
+      "classification": "Executed structural checks with repository parsers: strict manifest, equal description/name, package files and local reference route/link."
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/jvm-gc-tuning/SKILL.md skills/jvm-gc-tuning/skill.yaml skills/jvm-gc-tuning/references/collector-and-heap.md",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "All matched files use Prettier code style."
+    },
+    {
+      "command": "git diff --check -- skills/jvm-gc-tuning; git status --short -- skills/jvm-gc-tuning; final SHA256 comparison with assignment",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "No diff or status entries; all three hashes unchanged."
+    }
+  ],
+  "behavioralEvaluations": {
+    "executed": [],
+    "measuredImprovement": false,
+    "walkthroughs": [
+      "Synthetic collector comparison with unchanged useful work supports a bounded, conditional candidate decision; changing only candidate timeouts invalidates retention despite identical success p99.",
+      "An explicit System.gc cause calls for caller/recovery investigation; an isolated high heap occupancy or metadata cause does not establish a heap-exhaustion fix.",
+      "Hierarchical oom_kill evidence without process identity remains incomplete attribution; growing Xmx remains conditional on a feasible total-memory budget."
+    ],
+    "classification": "Structured expected-behavior walkthroughs, not executed agent outputs or before/after efficacy measurement."
+  },
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/gctuning/garbage-first-garbage-collector-tuning.html",
+      "version": "Java 25",
+      "verified": "2026-10-16",
+      "supports": "Adaptive young sizing, pause/throughput tradeoffs, capacity/fragmentation versus explicit Full-GC causes and limits of DisableExplicitGC."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/vm/native-memory-tracking.html",
+      "version": "Java 25",
+      "verified": "2026-10-16",
+      "supports": "NMT tracks HotSpot memory with incomplete coverage of native/class-library allocations; it is not complete process/cgroup accounting."
+    },
+    {
+      "url": "https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/share/classes/java/nio/Bits.java",
+      "version": "OpenJDK jdk-25-ga",
+      "verified": "2026-10-16",
+      "supports": "reserveMemory retries direct-buffer reservation/reference processing, invokes System.gc and can later fail with direct-buffer OOME."
+    },
+    {
+      "url": "https://docs.kernel.org/admin-guide/cgroup-v2.html#memory",
+      "version": "Linux cgroup v2 documentation inspected 2026-10-16",
+      "supports": "Hierarchical limits, memory.events versus local events, and oom_kill process counts."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/27/gctuning/ergonomics.html",
+      "version": "Java 27",
+      "verified": "2026-10-16",
+      "supports": "G1 default selection regardless of processor count/physical memory; does not revise the deployed Java 25 baseline."
+    },
+    {
+      "url": "https://bugs.openjdk.org/browse/JDK-8354079?focusedId=14781333&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel",
+      "version": "JDK 25 CSR",
+      "verified": "Primary search result inspected 2026-10-16",
+      "supports": "Generational Shenandoah mode made non-experimental, without making it the default in that change."
+    },
+    {
+      "url": "https://mail.openjdk.org/pipermail/hotspot-runtime-dev/2025-October/082324.html",
+      "version": "JDK 26 change review",
+      "verified": "Primary search result inspected 2026-10-16",
+      "supports": "ZGenerational was obsolete in JDK 24/25 and expired for JDK 26. Prior skill-specific 25.0.4/26.0.2 runtime executions were not rerun here."
+    }
+  ],
+  "sourceAccessLimitations": [
+    "Direct openjdk.org JEP 523/535/521 requests and JDK-8379682 JBS request returned HTTP 403. Historical date-qualified status claims were preserved, not represented as freshly verified.",
+    "An optional Java 25 ZGC guide fetch timed out. No new claim relied on that failed fetch.",
+    "Secondary search results were discovery context only and were not used as technical authority."
+  ],
+  "limits": [
+    "No newly identified material content gap; this is a scoped no-change review, not a certificate that every possible GC scenario is covered.",
+    "Startup checks exercise Windows Temurin 25.0.3+9 configuration only, with Xms16m and Xmx64m/512m; no performance, cgroup, allocation-stall, residency or production workload test was executed.",
+    "ActiveProcessorCount changes JVM ergonomics; it is not an actual CPU quota test.",
+    "No new Java snippet or script is shipped; the existing heap command is a placeholder requiring workload measurements.",
+    "No historical 25.0.4/26.0.2 binary checks or current JEP-status refresh were performed.",
+    "No independent agent behavior evaluation or measured improvement."
+  ],
+  "cases": [
+    {
+      "id": "candidate-preserves-useful-work",
+      "taskInput": {
+        "task": "Read the experiment artifacts and update decision.md with a supported collector decision, relevant evidence, and the next validation or rollback condition. Preserve the deployed Java version and configured resource budget. No production changes or new benchmark runs are requested.",
+        "files": {
+          "environment.txt": "Both arms: Temurin 25.0.3+9, same app artifact, same machine/image, CPU quota 2 CPUs, container limit 3 GiB, -Xms512m -Xmx2g. Baseline uses -XX:+UseG1GC. Candidate uses -XX:+UseZGC. No other flag/application/configuration change.",
+          "experiment.md": "Synthetic review fixture. Three paired independent measured runs per arm after identical warm-up. Each run lasts 600 seconds with the same open-loop 1000 requests/second request mix. The client records offered, success, timeout and error counts independently. Latency histogram includes successful requests only. CPU is normalized to quota and memory is peak cgroup charge. Existing aligned trace review shows GC pauses contribute to baseline tail latency; CPU scheduling and dependency timings are matched. No allocation stalls/fallback collections occurred in these windows. Requirements: success latency p99 <=30 ms, successful completion rate >=995/s, total failure rate <=0.1%, CPU <75% of quota, memory peak <=2.7 GiB. These measurements do not cover every production peak or prove long-term safety.",
+          "decision.md": "Proposal: retain the ZGC candidate because successful-request p99 fell below 30 ms. Review the artifact evidence and update this decision with guardrails and scope.",
+          "summary.csv": "variant,run,offered,successful,timeouts,other_errors,success_p99_ms,gc_pause_p99_ms,cpu_percent_of_quota,memory_peak_gib\ng1,1,600000,600000,0,0,78,70,60,2.15\ng1,2,600000,600000,0,0,81,72,61,2.17\ng1,3,600000,600000,0,0,80,71,59,2.16\nzgc,1,600000,600000,0,0,23,0.8,67,2.55\nzgc,2,600000,600000,0,0,22,0.7,68,2.57\nzgc,3,600000,600000,0,0,24,0.8,67,2.56\n"
+        },
+        "prerequisites": "No external services. Materialize the supplied text/CSV artifacts in an isolated evaluator workspace."
+      },
+      "evaluatorCriteria": {
+        "decisiveEvidence": "All offered requests complete successfully in both arms; candidate meets the declared latency, throughput, CPU and memory guardrails in three matched runs.",
+        "expected": [
+          "Recognize that the measured candidate satisfies the declared experiment objective without sacrificing useful work in these runs.",
+          "Update the decision to support conditional retention or a bounded next rollout experiment, preserving resource/throughput guardrails and a rollback condition.",
+          "Limit the result to these matched workloads/regimes; do not promise universally lower latency or sub-millisecond application response."
+        ],
+        "failureConditions": [
+          "Reject the candidate solely because ZGC consumes more CPU despite meeting the declared guardrail.",
+          "Require a collector switch or flag package unrelated to the observations.",
+          "Treat startup selection/GC-pause p99 as proof of all-request production latency."
+        ]
+      }
+    },
+    {
+      "id": "success-only-latency-censors-failures",
+      "changedConstraint": "Only candidate useful-work outcomes change: 60000 of 600000 offered requests time out in each run, leaving 540000 successes. All successful latency, GC, CPU, memory and workload fields are identical to case A.",
+      "taskInput": {
+        "task": "Read the experiment artifacts and update decision.md with a supported collector decision, relevant evidence, and the next validation or rollback condition. Preserve the deployed Java version and configured resource budget. No production changes or new benchmark runs are requested.",
+        "files": {
+          "environment.txt": "Both arms: Temurin 25.0.3+9, same app artifact, same machine/image, CPU quota 2 CPUs, container limit 3 GiB, -Xms512m -Xmx2g. Baseline uses -XX:+UseG1GC. Candidate uses -XX:+UseZGC. No other flag/application/configuration change.",
+          "experiment.md": "Synthetic review fixture. Three paired independent measured runs per arm after identical warm-up. Each run lasts 600 seconds with the same open-loop 1000 requests/second request mix. The client records offered, success, timeout and error counts independently. Latency histogram includes successful requests only. CPU is normalized to quota and memory is peak cgroup charge. Existing aligned trace review shows GC pauses contribute to baseline tail latency; CPU scheduling and dependency timings are matched. No allocation stalls/fallback collections occurred in these windows. Requirements: success latency p99 <=30 ms, successful completion rate >=995/s, total failure rate <=0.1%, CPU <75% of quota, memory peak <=2.7 GiB. These measurements do not cover every production peak or prove long-term safety.",
+          "decision.md": "Proposal: retain the ZGC candidate because successful-request p99 fell below 30 ms. Review the artifact evidence and update this decision with guardrails and scope.",
+          "summary.csv": "variant,run,offered,successful,timeouts,other_errors,success_p99_ms,gc_pause_p99_ms,cpu_percent_of_quota,memory_peak_gib\ng1,1,600000,600000,0,0,78,70,60,2.15\ng1,2,600000,600000,0,0,81,72,61,2.17\ng1,3,600000,600000,0,0,80,71,59,2.16\nzgc,1,600000,540000,60000,0,23,0.8,67,2.55\nzgc,2,600000,540000,60000,0,22,0.7,68,2.57\nzgc,3,600000,540000,60000,0,24,0.8,67,2.56\n"
+        },
+        "prerequisites": "No external services. Materialize the supplied text/CSV artifacts in an isolated evaluator workspace."
+      },
+      "evaluatorCriteria": {
+        "decisiveEvidence": "Candidate successful throughput is 900/s and timeout rate is 10%; its latency distribution excludes those timed-out requests.",
+        "expected": [
+          "Reject the claimed improvement/retention decision under the declared service guardrails despite the unchanged lower success-only p99.",
+          "Compute or correctly describe the successful-work loss and censored latency scope; change the affected decision.md conclusion.",
+          "Preserve unaffected observations, including lower measured GC pauses; investigate why the candidate loses work or revert it before claiming a service-level gain."
+        ],
+        "failureConditions": [
+          "Approve the same decision based on successful p99 alone.",
+          "Count timed-out requests as useful completions or infer a full latency percentile from success-only data.",
+          "Invent a GC/barrier/root-cause explanation for timeouts without the missing evidence."
+        ]
+      }
+    }
+  ],
+  "validationArtifacts": [
+    "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/jvm-gc-tuning-validation/one-cpu-default.txt",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/jvm-gc-tuning-validation/g1-four-cpus.txt",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/jvm-gc-tuning-validation/g1-sixteen-cpus.txt",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/jvm-gc-tuning-validation/zgc-eight-cpus-512m.txt",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/jvm-gc-tuning-validation/zgc-two-cpus-512m.txt",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/jvm-gc-tuning-validation/zgc-eight-cpus-64m.txt",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/jvm-gc-tuning-validation/zgc-two-cpus-64m.txt"
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Shared index generation for the overall wave; this no-change package itself does not need regeneration."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Global wave validation runs after every reviewer stops writing."
+    }
+  ],
+  "crossSkill": [],
+  "coordinatorActions": [
+    "Archive this JSON and seven retained startup logs.",
+    "Use separated task inputs and evaluator criteria if selecting independent development-case execution."
+  ],
+  "processState": "Seven Java startup processes and all local checks exited. No reviewer-started write process remains active."
+}

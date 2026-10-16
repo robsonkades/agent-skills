@@ -1,0 +1,22 @@
+[
+  {
+    "path": "skills/java-null-safety/references/boundary-hardening.md",
+    "baselineSha256": "946e2b9daf824b4d750e1b41c2e29a5276b8914934c3206d8f9e4d314fa6baed",
+    "finalSha256": "946e2b9daf824b4d750e1b41c2e29a5276b8914934c3206d8f9e4d314fa6baed"
+  },
+  {
+    "path": "skills/java-null-safety/references/nullability-contracts.md",
+    "baselineSha256": "baecb0745ea9da287b88086ef5e39684eb0ddecb1efde72e1a6dc577b666612f",
+    "finalSha256": "285cad1c7a6c17ad198e64d01c0e20bee5d8f24e90d37a3f774b506848c04f96"
+  },
+  {
+    "path": "skills/java-null-safety/SKILL.md",
+    "baselineSha256": "147cdca61032755fdafffcea0f62478c6bd07ebb9023c917353014344110d1b8",
+    "finalSha256": "9899747ecb1a5cde32cd88979c2190049e32daa018d8539e3a17b7954aa0bcaf"
+  },
+  {
+    "path": "skills/java-null-safety/skill.yaml",
+    "baselineSha256": "f9b519ff1af72279f2e6614f87ef6d99284e00ed672aece619ad0143a8005c66",
+    "finalSha256": "5f84b0a6460d4ede8d1c886449c8f6e5fbde6924a2f62afe85468ecc70c9fb10"
+  }
+]

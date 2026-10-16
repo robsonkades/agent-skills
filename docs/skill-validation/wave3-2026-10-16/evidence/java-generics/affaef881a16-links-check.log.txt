@@ -1,0 +1,17 @@
+{
+  "checkedLocalLinks": 3,
+  "links": [
+    {
+      "file": "skills/java-generics/SKILL.md",
+      "target": "references/erasure-and-arrays.md"
+    },
+    {
+      "file": "skills/java-generics/SKILL.md",
+      "target": "references/wildcards-and-api-design.md"
+    },
+    {
+      "file": "skills/java-generics/SKILL.md",
+      "target": "references/typesafe-heterogeneous-containers.md"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+# RetryPlan repair
+
+The public `next` signature and `Plan` record are preserved. The implementation follows the fixed scheduling policy in `contract.md`; it adds no input restrictions, dependencies, sleeps, clock reads, or random source.
+
+The original code admitted a call after `completed == maxAttempts`, used the wrong retry exponent and overflow-prone shifts, selected the smaller server/local delay, checked an overflowing sum, and allocated the attempt without deducting wait or reserve. The new verification first reproduced the allocation bug: a 100 ns total and 30 ns reserve incorrectly yielded a 100 ns attempt instead of 70 ns.
+
+## Arithmetic
+
+`elapsed = now - start` recovers elapsed time across signed monotonic-clock wrap under the specified elapsed horizon below 2^63 ns. After expiry is checked, subtraction computes remaining time. Comparing the reserve before subtracting it, then comparing minimum work before subtracting it, avoids adding potentially overflowing positive durations.
+
+The initial call ignores server advice, uses zero wait and never invokes the draw. A retry uses exponent `completed - 1`; exponent and overflow checks saturate the mathematical exponential at `Long.MAX_VALUE` before applying `delayCap`. This produces the prescribed positive half-open draw bound, including very large attempt ordinals. Wait is exactly `max(draw, serverMinimum)`. Advice that cannot fit causes rejection; it is never shortened. The attempt is exactly `min(attemptCap, remaining - reserve - wait)`. Equality with minimum work is accepted. Rejection always yields both durations zero.
+
+Server advice can create a concentration of waits at its minimum, but adding post-minimum jitter would change the supplied policy and is outside this repair.
+
+## Executed validation
+
+- Inspected `run.mjs` before execution. It compiles with `javac --release 17` and caps each Java subprocess at 20 seconds.
+- `node run.mjs Verification` against the original implementation: failed at the reserve/allocation regression, as expected.
+- The same command against the repaired implementation: passed **94,234 exact-plan checks**. An independent `BigInteger` oracle checks the mathematical policy, and a controlled draw checks exact bounds at zero, midpoint and upper edge. Cases cover initial calls, counts including `Integer.MAX_VALUE`, server/local precedence, exact fits, exhausted budgets, reserves and advice near `Long.MAX_VALUE`, exponential saturation, negative clock readings and signed wrap.
+- `node run.mjs Smoke`: passed.
+- Bounded `javac -version` / `java -version` subprocesses confirmed Temurin JDK 25.0.3; the runner retained Java 17 source/API compatibility.
+
+## Boundaries and evidence limits
+
+This pure function plans from one time snapshot. The caller must recheck remaining admission after actual waiting or intervening work, enforce the attempt lifetime, and own cancellation/cleanup. It does not establish a wall-clock return bound, stop remote work, classify failures, establish request reproducibility or idempotency, resolve ambiguous effects, coordinate hidden retry layers, or enforce an aggregate retry budget.
+
+Only authored local inputs and supplied skill snapshots were used; no provider/client, database or production evidence was available or queried. The arithmetic checks do not establish durable provider guarantees, cancellation behavior, latency or fleet behavior. No broader skill packages were opened. The retry/deadline references were used for arithmetic; their client, provider and fleet integration routes remain unverified and outside this helper's scope.

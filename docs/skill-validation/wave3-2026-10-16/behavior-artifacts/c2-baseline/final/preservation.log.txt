@@ -1,0 +1,1 @@
+PASS: all five supplied implementation/contract/policy artifacts retain their SHA-256 hashes.

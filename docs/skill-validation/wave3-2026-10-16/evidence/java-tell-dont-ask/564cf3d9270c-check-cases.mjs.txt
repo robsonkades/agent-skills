@@ -1,0 +1,50 @@
+import assert from 'node:assert/strict';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
+const artifacts = dirname(fileURLToPath(import.meta.url));
+const fixture = mkdtempSync(join(artifacts, 'case-check-'));
+const bin = 'C:/Users/robso/.jdks/temurin-25.0.3/bin';
+const env = { ...process.env };
+for (const key of ['JAVA_TOOL_OPTIONS', 'JDK_JAVA_OPTIONS', '_JAVA_OPTIONS']) delete env[key];
+const commands = [];
+function run(name, executable, args, expected = 0) {
+  const result = spawnSync(executable, args, { cwd: fixture, encoding: 'utf8', env, timeout: 30000 });
+  const record = { name, executable, args, cwd: fixture, expectedExitCode: expected, exitCode: result.status, stdout: result.stdout ?? '', stderr: result.stderr ?? '', error: result.error?.message ?? null };
+  commands.push(record);
+  writeFileSync(join(fixture, `${name}.json`), JSON.stringify(record, null, 2));
+  assert.equal(result.error, undefined, name);
+  assert.equal(result.status, expected, `${name}: ${result.stderr}`);
+  return record;
+}
+const probe = join(fixture, 'AliasProbe.java');
+writeFileSync(probe, `package example;
+public class AliasProbe {
+  public static void main(String[] args) {
+    Order order = new Order();
+    order.add("A", 40);
+    order.lines().get(0).setQuantity(101);
+    if (order.totalUnits() != 101) throw new AssertionError("Expected alias to expose 101-unit order");
+    System.out.println("Observed invariant bypass: " + order.totalUnits());
+  }
+}
+`);
+assert.equal(readFileSync(join(artifacts, 'case-a-input/task.json'), 'utf8'), readFileSync(join(artifacts, 'case-b-input/task.json'), 'utf8'));
+for (const file of ['Order.java', 'Report.java']) {
+  assert.equal(readFileSync(join(artifacts, 'case-a-input/src/example', file), 'utf8'), readFileSync(join(artifacts, 'case-b-input/src/example', file), 'utf8'));
+}
+for (const id of ['a', 'b']) {
+  const root = join(artifacts, `case-${id}-input/src/example`);
+  const classes = join(fixture, `classes-${id}`);
+  mkdirSync(classes);
+  run(`compile-case-${id}`, join(bin, 'javac.exe'), ['-J-Xms16m', '-J-Xmx128m', '--release', '17', '-d', classes, ...['Order.java', 'Line.java', 'Report.java'].map(file => join(root, file))]);
+  const report = run(`run-report-${id}`, join(bin, 'java.exe'), ['-Xms16m', '-Xmx64m', '-cp', classes, 'example.Report']);
+  assert.equal(report.stdout.trim(), 'A:40,B:60');
+  const compileProbe = run(`compile-probe-${id}`, join(bin, 'javac.exe'), ['-J-Xms16m', '-J-Xmx128m', '--release', '17', '-cp', classes, '-d', classes, probe], id === 'a' ? 1 : 0);
+  if (id === 'a') assert.match(compileProbe.stderr, /cannot find symbol[\s\S]*setQuantity/);
+  if (id === 'b') run('run-probe-b', join(bin, 'java.exe'), ['-Xms16m', '-Xmx64m', '-cp', classes, 'example.AliasProbe']);
+}
+const summary = { fixture, targetRelease: 17, actualCompilerAndRuntime: 'Temurin 25.0.3+9', commands, behavioralEvaluation: false, result: 'Both actor source sets compile and report identically. The same alias mutation is not callable in A; B exposes a 101-unit order. Only Line differs.' };
+writeFileSync(join(artifacts, 'case-technical-results.json'), JSON.stringify(summary, null, 2));
+console.log(JSON.stringify(summary, null, 2));

@@ -1,0 +1,13 @@
+package client;
+
+public final class NewClient {
+    public static void main(String[] args) {
+        api.Labeler labeler = new api.Labeler();
+        String expected = "base:invoice";
+        String actual = labeler.label("invoice");
+        System.out.println("expected=" + expected + " actual=" + actual);
+        if (!expected.equals(actual)) {
+            throw new AssertionError("new name changed the consumer result");
+        }
+    }
+}

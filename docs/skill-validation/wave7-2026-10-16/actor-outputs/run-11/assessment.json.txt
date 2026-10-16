@@ -1,0 +1,83 @@
+{
+  "decision": "changed",
+  "cause": "BEFORE_COMMIT executed optional receipt work before source commit in the mandatory business transaction. Invalid body propagated and rolled back booking/stock; independent READ_COMMITTED observer could not see the booking.",
+  "changes": [
+    "BookingListener uses synchronous AFTER_COMMIT with default fallbackExecution=false.",
+    "ReceiptWriter.record uses businessTx REQUIRES_NEW through its existing separate bean proxy, keeping header/body atomic.",
+    "Preserved BookingService REQUIRED participation, public operations, event identity, observer placement, stock rule and 12-character detail schema.",
+    "Added seven persisted-state regressions and documented failure policy in RUNBOOK.md."
+  ],
+  "verification": [
+    {
+      "command": [
+        "node",
+        "check.mjs"
+      ],
+      "stage": "baseline",
+      "exit": 0,
+      "result": "PASS normal booking and receipt"
+    },
+    {
+      "command": [
+        "node",
+        "check.mjs",
+        "work.Regression"
+      ],
+      "stage": "baseline",
+      "exit": 1,
+      "result": "4 failed: valid visibility, invalid business preservation, ownerCommit visibility, lateOwnerFailure attempted writer"
+    },
+    {
+      "command": [
+        "node",
+        "check.mjs",
+        "work.Regression"
+      ],
+      "stage": "REQUIRES_NEW-only negative control",
+      "exit": 1,
+      "result": "4 failed; late owner failure left header/body without booking"
+    },
+    {
+      "command": [
+        "node",
+        "check.mjs",
+        "work.Regression"
+      ],
+      "stage": "final",
+      "exit": 0,
+      "result": "PASS all 7; invalid body booking=1/header=0/detail=0/ready stock=19, no caller failure; expected logged DataIntegrityViolationException"
+    },
+    {
+      "command": [
+        "node",
+        "check.mjs"
+      ],
+      "stage": "final",
+      "exit": 0,
+      "result": "PASS normal booking and receipt"
+    },
+    {
+      "stage": "preservation",
+      "exit": 0,
+      "result": "23 unchanged original files byte-identical to input, including frozen files and dependency jars"
+    }
+  ],
+  "limits": [
+    "Local disposable H2/JDBC checks do not establish production crash durability, distributed delivery/deduplication or JPA behavior.",
+    "Receipt loss on failure/interruption is accepted; no recovery store or retries were introduced.",
+    "An accidental redundant input copy was relocated without deletion to output/checks/unused-input-copy after automatic review blocked its removal; it is outside the executed project.",
+    "Execution records are actor reports, not an independent complete trace."
+  ],
+  "regressionCommands": [
+    [
+      "node",
+      "check.mjs"
+    ],
+    [
+      "node",
+      "check.mjs",
+      "work.Regression"
+    ]
+  ]
+}
+

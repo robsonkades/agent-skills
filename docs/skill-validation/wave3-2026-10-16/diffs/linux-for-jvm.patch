@@ -1,0 +1,66 @@
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\linux-for-jvm/SKILL.md" "b/C:\\git\\agent-skills\\skills\\linux-for-jvm/SKILL.md"
+index 377e82c..19420b6 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\linux-for-jvm/SKILL.md"
++++ "b/C:\\git\\agent-skills\\skills\\linux-for-jvm/SKILL.md"
+@@ -85,8 +85,10 @@ within the established containment and availability deadline.
+   Defrag modes such as `always`, `madvise`, `defer`, `defer+madvise` and `never` have different
+   latency/memory trade-offs. On kernels with per-size controls, only `inherit` follows the
+   top-level `enabled` value; inspect explicit overrides before declaring THP disabled. Verify
+-  kernel and JDK behaviour, measure `AnonHugePages`, TLB/CPU benefit and compaction stalls,
+-  then record the chosen policy.
++  kernel and JDK behaviour, page-size usage, TLB/CPU benefit and compaction stalls before
++  choosing policy. `AnonHugePages` is not an all-size THP measure: zero does not rule out
++  smaller PTE-mapped mTHP. Keep process residency distinct from host per-size
++  allocation counters; neither eligibility nor host activity proves this JVM uses that size.
+ - Distinguish global OOM from memory-cgroup OOM by evidence. Victim selection can incorporate
+   `oom_score_adj` within applicable constraints; it is not a protection against exceeding a
+   container's or ancestor's `memory.max`. Kubernetes QoS influences scores; correlate
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\linux-for-jvm/references/host-configuration.md" "b/C:\\git\\agent-skills\\skills\\linux-for-jvm/references/host-configuration.md"
+index be6143b..a7f0127 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\linux-for-jvm/references/host-configuration.md"
++++ "b/C:\\git\\agent-skills\\skills\\linux-for-jvm/references/host-configuration.md"
+@@ -66,6 +66,21 @@ are disabled. Eligibility changes do not prove existing huge mappings were split
+ residency separately. Check the target kernel's exceptions and separate tmpfs/shmem policy
+ when those mappings matter.
+ 
++Separate policy, residency and allocation activity. On Linux 6.12, `AnonHugePages` in
++`/proc/meminfo` reports system PMD-sized anonymous THP; the fields in `/proc/<pid>/smaps`
++cover that process's PMD mappings. They do not count smaller PTE-mapped mTHP. A zero value
++therefore does not establish that all anonymous THP is absent. Read `smaps` only as needed;
++frequent scans add overhead.
++
++When smaller sizes matter, inspect the deployed kernel's available
++`/sys/kernel/mm/transparent_hugepage/hugepages-<size>kB/stats` fields. For example,
++`anon_fault_alloc` counts successful fault allocations: compare same-host, same-size deltas
++over the incident window, retaining reset/unavailable status. Those host-wide events are
++neither a process attribution nor a count of pages still resident. A rising 64 KiB counter
++beside zero JVM `AnonHugePages` can coexist without proving either use or non-use by that
++JVM. Leave that attribution unresolved until targeted evidence supports it; neither signal
++alone justifies changing THP policy or blaming it for a latency spike.
++
+ ## CPU
+ 
+ - Inspect the JVM effective available processor count inside its container and any
+@@ -141,7 +156,8 @@ Record reused evidence and unresolved gaps; retain adequate settings rather than
+ 
+ - [JDK 25 Java launcher](https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html): AlwaysPreTouch requests heap-page touching before application use.
+ - [OpenJDK 25 G1 region commitment](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/g1/g1RegionToSpaceMapper.cpp): pre-touch on committed ranges; not a guarantee that all process faults disappear.
+-- [Linux 6.12 THP](https://www.kernel.org/doc/html/v6.12/admin-guide/mm/transhuge.html): allocation, defrag modes and multiple page sizes; check the deployed kernel.
++- [Linux 6.12 THP](https://www.kernel.org/doc/html/v6.12/admin-guide/mm/transhuge.html): allocation, defrag modes, multiple sizes and the PMD-only scope of `AnonHugePages`; check the deployed kernel.
++- [Linux v6.12 per-size statistics](https://github.com/torvalds/linux/blob/v6.12/mm/huge_memory.c): `sum_mthp_stat` sums CPU counters by size, not by process; distinguish allocation events from residency.
+ - [Linux 6.12 cgroup v2](https://www.kernel.org/doc/html/v6.12/admin-guide/cgroup-v2.html): memory.high reclaim throttling versus the memory.max hard boundary.
+ - [Linux 6.12 OOM accounting](https://github.com/torvalds/linux/blob/v6.12/mm/oom_kill.c): `__oom_kill_process` records both VM and memcg kill events.
+ - [systemd v257 limits](https://github.com/systemd/systemd/blob/v257/man/systemd.exec.xml): LimitNPROC scope and TasksMax preference.
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\linux-for-jvm/skill.yaml" "b/C:\\git\\agent-skills\\skills\\linux-for-jvm/skill.yaml"
+index 2ba344c..ade071b 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\linux-for-jvm/skill.yaml"
++++ "b/C:\\git\\agent-skills\\skills\\linux-for-jvm/skill.yaml"
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: linux-for-jvm
+-version: 1.3.4
++version: 1.3.5
+ description: >-
+   The Linux side of a JVM incident: RSS versus virtual memory, page faults and swap,
+   AlwaysPreTouch, transparent huge pages, cgroup CPU throttling, the two OOM killers,

@@ -1,0 +1,102 @@
+# Account concurrency test review
+
+Corrected `test/AccountTest.java` using `docs/account-contract.md`. Production source,
+Java 21 compiler target (no preview), JUnit Jupiter 5.11.4 dependencies, and the
+existing bounded worker/cleanup structure are unchanged.
+
+The original conservation/accounting assertions admitted an implementation that
+always returned false. The repeated test now also requires 1,000 successes,
+31,000 refusals, and zero final balance: all 32,000 calls withdraw 10 from an
+initial 10,000, and this fixture has no deposits or fees. Existing nonnegative,
+conservation, accounting, worker-result, and termination checks remain.
+
+The added test acquires `holdGate` before starting an affordable withdrawal. It
+rejects an observed false result while the gate is held, then releases the gate,
+requires true, observes the gate-owner future, and requires balance 70 after
+withdrawing 30 from 100. Release is also in `finally`, before cancellation and
+shutdown. Latch waits and final future waits are bounded at two seconds, the
+held-gate observation window is 250 ms, termination is bounded at two seconds,
+and the test has a 15-second JUnit timeout. There is no unbounded executor close.
+
+## Observed checks
+
+| Check | Exit | Observed result |
+| --- | --- | --- |
+| Baseline `node check.mjs` | 0 | 20 started, 20 passed, no skipped/aborted tests |
+| Corrected `node check.mjs` | 0 | 21 started, 21 passed, no skipped/aborted tests |
+| Isolated always-refuses mutation | 1 (expected) | 21 started, 21 failed |
+| Isolated tryLock/refuse-on-contention mutation | 1 (expected) | 21 started, 1 failed: new contention test; all 20 stress repetitions passed |
+| Isolated wrong-debit mutation | 1 (expected) | 21 started, 21 failed; focused test expected 70, observed 71 |
+| `node diagnostics/mutation-check.mjs` | 0 | All three faults detected; production source hash unchanged |
+
+The check script compiles with the declared Temurin 25.0.3 toolchain and
+`--release 21`. No dependencies were installed. `check.log` retains the corrected
+run. `diagnostics/mutation-summary.log` and the three named mutation logs retain
+the fault-probe results; isolated sources/classes and the reproducible diagnostic
+script are under `diagnostics/`. Mutations were applied only to those copies.
+Production `src/Account.java` SHA-256 before/after the probes was
+`323782446f1217d5ff0df539911181413af17f0d51cb57b555dc073902682ac7`.
+
+## Limits
+
+Twenty repetitions sample schedules; they do not establish linearizability or
+exhaustive concurrency coverage. The contention latch signals immediately before
+`withdraw`, not from inside it. A severely delayed worker can therefore first
+execute the call after gate release; the 250 ms window is a bounded observation
+opportunity, not proof of overlap on every run. The observed contention mutation
+failure establishes detection in this run. Timeouts bound the test harness and
+can fail on a sufficiently stalled environment; they do not prove production
+liveness. Java 21 compatibility was compiled, but execution used Java 25.0.3,
+not a separate Java 21 runtime. Fault probes cover only the three stated defects.
+
+## Commands and access record
+
+All shell commands ran with working directory
+`C:/Users/robso/AppData/Local/Temp/skills-wave2-behavior-6orq6B/c1-1`.
+Read/search commands below exited 0. The test file read occurred twice, before
+editing and during final inspection. Independent reads were issued in parallel.
+
+```powershell
+Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave2-behavior-6orq6B/c1-1/TASK.md' -Raw
+rg --files -g '!out/**' -g '!build/**' -g '!target/**'
+Get-Content -LiteralPath 'docs/account-contract.md' -Raw
+Get-Content -LiteralPath 'README.md' -Raw
+Get-Content -LiteralPath 'src/Account.java' -Raw
+Get-Content -LiteralPath 'test/AccountTest.java' -Raw
+Get-Content -LiteralPath 'check.mjs' -Raw
+Get-Content -LiteralPath 'tools/TestRunner.java' -Raw
+node check.mjs
+```
+
+Corrected-suite command (exit 0):
+
+```powershell
+node check.mjs 2>&1 | Tee-Object -FilePath 'check.log'
+exit $LASTEXITCODE
+```
+
+Fault-probe command (exit 0; child commands were `node <absolute path to diagnostics/<variant>/check.mjs>` for the three variants above):
+
+```powershell
+node diagnostics/mutation-check.mjs 2>&1 | Tee-Object -FilePath 'diagnostics/mutation-summary.log'
+exit $LASTEXITCODE
+```
+
+Final evidence inspection (each exited 0):
+
+```powershell
+Get-Content -LiteralPath 'diagnostics/refuses-contention.log' -Raw
+rg -n -m 4 -g '*.log' 'tests failed|=>|expected:' diagnostics
+Get-Content -LiteralPath 'test/AccountTest.java' -Raw
+```
+
+Files read: `TASK.md`, `README.md`, `docs/account-contract.md`,
+`src/Account.java`, `test/AccountTest.java`, `check.mjs`,
+`tools/TestRunner.java`, and the generated diagnostic logs. Execution also read
+the diagnostic script, copies of these sources/check runner, generated classes,
+and the toolchain/JUnit jar paths explicitly declared by `check.mjs`. Hand edits
+used `apply_patch` for the test, diagnostic script, and this report. No sibling
+tasks, repository reports, installed skills, comparison answers, or evaluator
+materials were accessed. Accidental access outside allowed files: none.
+
+All requested work is complete. All writes are stopped after this report.

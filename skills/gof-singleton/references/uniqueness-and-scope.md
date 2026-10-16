@@ -107,9 +107,22 @@ Consequences worth knowing:
 
 - Two definitions of one class can produce two instances even in one context. Child contexts may
   inherit a parent's instance or define another; inspect actual registration and lookup.
+- A single definition does not constrain every Java call to its factory. With
+  `@Configuration(proxyBeanMethods=false)` or other lite `@Bean` processing, an inter-bean call
+  such as `new Worker(client())` executes `client()` as an ordinary method. If that method
+  allocates, it can create an extra object outside the cached bean and its managed lifecycle.
+  Use a factory parameter such as `worker(Client client)` to receive the managed collaborator.
+  Conversely, an interceptable call on a container-enhanced full configuration can legitimately
+  reuse the singleton; a manually constructed configuration object is not that enhanced instance.
+  Check the mode and receiver before changing adequate wiring. See
+  [Spring 6.2.7 `proxyBeanMethods`](<https://docs.spring.io/spring-framework/docs/6.2.7/javadoc-api/org/springframework/context/annotation/Configuration.html#proxyBeanMethods()>).
 - For container-managed creation/destruction, lifecycle configuration gives initialization an
   owner. Still establish who closes the context/resource and whether an injected object is borrowed;
   injection alone does not transfer lifetime ownership.
+  For resource-holding beans, compare the objects actually used by consumers with the managed
+  instance and check creation/close counts across context shutdown. Counting bean definitions or
+  repeated `getBean` results alone misses extra objects made by direct factory calls;
+  closing every borrowed reference separately is not the repair.
 - A prototype directly injected into a singleton is resolved during singleton creation and retained;
   prototype scope does not supply a new object on each method call. If each operation needs a fresh
   instance, obtain it from a configured provider/factory at that operation's boundary and assign

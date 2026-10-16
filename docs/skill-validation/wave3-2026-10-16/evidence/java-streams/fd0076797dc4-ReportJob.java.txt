@@ -1,0 +1,11 @@
+import java.util.*;
+public final class ReportJob {
+    public static String render(List<Integer> input) {
+        var states = PrefixEngine.states(input);
+        return (states.isEmpty() ? List.of() : states.getLast()).toString();
+    }
+    public static void main(String[] args) {
+        System.out.println(render(List.of(1, 2, 3)));
+        System.out.println(render(List.of()));
+    }
+}

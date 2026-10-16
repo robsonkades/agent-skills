@@ -147,6 +147,18 @@ When NMT was off, use available process maps, RSS/cgroup and pool metrics, and l
 category attribution as unknown. An empty NMT event stream does not mean zero native memory;
 plan a restart with NMT only when that additional evidence is needed and a restart is feasible.
 
+For the `direct` BufferPoolMXBean, compare `TotalCapacity` with `MaxDirectMemorySize` and
+inspect `MemoryUsed` separately for backing-allocation accounting. On HotSpot 25.0.3,
+`Bits.tryReserveMemory` enforces the capacity counter, while its memory-used counter records
+the allocation size; alignment can make the latter exceed the configured capacity ceiling.
+Neither counter measures RSS, and neither covers arbitrary JNI/FFM allocations. The
+[BufferPoolMXBean contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.management/java/lang/management/BufferPoolMXBean.html)
+also permits `MemoryUsed=-1` when unavailable; preserve that as unknown, not zero or a
+negative budget allowance. Budget backing allocation and allocator overhead without adding
+the same tracked bytes again under NMT. Use `off-heap-memory` for buffer ownership and sizing.
+See the pinned [capacity check and counters](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/java.base/share/classes/java/nio/Bits.java)
+and [direct-buffer allocation](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/java.base/share/classes/java/nio/Direct-X-Buffer.java.template).
+
 ## When RSS is bigger than NMT
 
 NMT covers instrumented HotSpot allocation paths, not every native allocation made by the
@@ -171,8 +183,13 @@ accounting sets; their difference is a clue, not an estimate of missing native b
 | virtual size / reserved | `ps` `VSZ`, NMT `reserved` (different accounting sets) | address ranges; not physical residency and not directly additive              |
 | committed               | NMT `committed`                                        | JVM-tracked range made accessible/committed; pages may still be nonresident   |
 | used                    | JMX, Micrometer, dashboards                            | logical occupancy inside a managed pool; meaning is pool-specific             |
-| resident                | `ps` `RSS`, `smaps` RSS/PSS, `VmHWM`                   | process-resident pages; shared-page accounting needs care                     |
+| resident                | `ps` `RSS`, `smaps` RSS/PSS                            | current process-resident pages; shared-page accounting needs care             |
 | cgroup charged          | `memory.current` / `memory.stat`                       | anon, file and other charges against the cgroup limit; not simply process RSS |
+
+Linux `VmHWM` is a historical RSS high-water mark, not current residency. Reading it beside
+NMT or `memory.current` at one timestamp does not show that their peaks overlapped or when
+that RSS peak occurred. Keep it as peak evidence; use current RSS/PSS and a correlated time
+series to test overlap ([Linux `/proc` field definitions](https://docs.kernel.org/filesystems/proc.html)).
 
 ```bash
 ps -o pid,rss,vsz,comm -p <verified-pid>

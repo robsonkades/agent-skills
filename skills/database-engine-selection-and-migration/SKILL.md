@@ -64,6 +64,9 @@ supported by the available evidence.
    can be as consequential as SQL, concurrency or operational differences.
 2. Turn every source-specific behavior into an explicit destination invariant or an accepted change.
    Do not transliterate hints, types, index syntax, isolation names, or driver properties.
+   For critical constraints, distinguish definition, future-write enforcement and validation of
+   existing rows; use the [post-load checks](references/migration-compatibility.md#prove-post-load-integrity)
+   when loading or CDC bypasses checks, or constraints are introduced without validating old data.
 3. Compare source and destination using an anonymized edge-case corpus and production-shaped load.
    Check result set, order, JDBC types, errors, plans, and work. Exercise the actual application
    roles and tenant/session context, including forbidden reads and writes; privileged shadow

@@ -179,11 +179,17 @@ sed -E 's/^ *([0-9]+) +([0-9]+) (.....) ([0-9-]) +(.*)$/\1\t\2\t[\3]\t\4\t\5/' j
   | awk -F'\t' '$4 == 4 && $5 ~ /com\.myapp/'
 
 # Tier-4 lines in the unified-logging form
-grep -E '\]\[jit,compilation\] +[0-9]+ [ %s!bn]{5} 4 ' jit.log
+grep -E '\]\[jit,compilation *\] +[0-9]+ [ %s!bn]{5} 4 ' jit.log
 
 # Invalidations worth reading
 grep -E 'made not entrant: (uncommon trap|marked for deoptimization)|COMPILE SKIPPED' jit.txt
 ```
+
+The unified filter assumes the tag decoration follows another bracketed decoration, as in
+the commands above. HotSpot 25.0.3 pads each decoration to the widest value already written
+to that output: adding `class+loader+data` to the same sink can turn `[jit,compilation]` into
+`[jit,compilation  ]`. Allow the trailing spaces inside the brackets; an exact unpadded tag
+match can miss real tier-4 records. Validate a different decorator layout separately.
 
 An extraction command that has never been run against real output is a hypothesis, and an
 empty result from one is indistinguishable from "nothing happened". Under load, lines from
@@ -251,6 +257,9 @@ whether the method was invoked.
 ## Primary references
 
 - [JDK 25.0.3+9 `compileTask.cpp`](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/compiler/compileTask.cpp)
+- [JDK 25.0.3+9 unified-log decoration padding](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/logging/logFileStreamOutput.cpp)
+  — `write_decorations` widens each output's padding; the mixed-tag extraction was checked
+  against a simultaneous `PrintCompilation` capture on Temurin 25.0.3.
 - [Attempt headers, bailout output and JFR outcomes in `compileBroker.cpp`](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/compiler/compileBroker.cpp)
   — source checked against 25.0.3+9; `COMPILE SKIPPED` output coverage reproduced on Temurin 25.0.3.
 - [Compiler-mode and legacy threshold initialization](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/compiler/compilerDefinitions.cpp)

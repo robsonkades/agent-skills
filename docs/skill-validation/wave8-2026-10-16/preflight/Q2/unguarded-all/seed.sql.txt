@@ -1,0 +1,1 @@
+INSERT INTO invoices VALUES (1,71,'Acme',true,150),(2,71,'Acme',false,120),(3,71,'Bravo',true,20),(4,71,'Charlie',false,50),(5,72,'Other',true,150);

@@ -1,0 +1,45 @@
+{
+  "version": "1.3.4",
+  "packageFiles": [
+    "SKILL.md",
+    "references/relationship-graph.md",
+    "references/selection-matrix.md",
+    "skill.yaml"
+  ],
+  "issues": [],
+  "resourceLinks": [
+    {
+      "from": "SKILL.md",
+      "target": "references/selection-matrix.md"
+    },
+    {
+      "from": "SKILL.md",
+      "target": "references/relationship-graph.md"
+    }
+  ],
+  "declaredTargetsChecked": 24,
+  "ownedHashes": [
+    {
+      "path": "skills/gof-pattern-selection/SKILL.md",
+      "sha256": "f49227a7679d83a19b5c2a14d4301ee11a41e01f41706b4a62b9eed9159242a0",
+      "matchesBaseline": true
+    },
+    {
+      "path": "skills/gof-pattern-selection/skill.yaml",
+      "sha256": "6884507d2efa9fa98b4a75c975bbe5675bfe7408a16293dbbd34f2670dc3fafe",
+      "matchesBaseline": true
+    },
+    {
+      "path": "skills/gof-pattern-selection/references/relationship-graph.md",
+      "sha256": "10e1595094fc0d5638e7549fc0c5c6364dfdec2c7041741f515ed44b615df6e0",
+      "matchesBaseline": true
+    },
+    {
+      "path": "skills/gof-pattern-selection/references/selection-matrix.md",
+      "sha256": "ec7ddfcc169edbfc22ec52d613f6b07d8921a0067c8e82a4f0396a3102d28bd7",
+      "matchesBaseline": true
+    }
+  ],
+  "unchanged": true,
+  "limits": "Local package validation and declared-target existence only; not catalog-wide version resolution or behavioral evaluation."
+}

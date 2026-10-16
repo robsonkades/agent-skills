@@ -1,0 +1,16 @@
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.NoResultException;
+import java.util.Optional;
+
+public final class BadgeDirectory {
+    public Optional<Badge> forMember(EntityManager em, long memberId) {
+        try {
+            return Optional.of(em.createQuery(
+                "select b from Badge b where b.member.id = :memberId", Badge.class)
+                .setParameter("memberId", memberId).getSingleResult());
+        } catch (NoResultException absent) {
+            return Optional.empty();
+        }
+    }
+}
+

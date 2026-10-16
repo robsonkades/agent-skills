@@ -58,7 +58,8 @@ freeze or replication catch-up boundary:
 all writer identities and fencing/drain mechanism, including jobs, retries and old pools:
 final source commit marker and destination applied marker:
 destination ID-generator state/ranges and first-write validation:
-pre-cutover invariant and lag checks:
+pre-cutover invariant checks, including existing-row validation and restored enforcement:
+lag checks through the final boundary:
 traffic ramp stages and owner:
 abort thresholds for correctness, error, latency, lag, and resource saturation:
 reconciliation window and repair authority:

@@ -1,0 +1,50 @@
+{
+  "classification": "Known development cases; no independent agent run. Withhold evaluator directory, other case and evidence from actor.",
+  "decisiveConstraint": "Only the deployed UNIQUE(member_id) constraint changes. Java mappings, consumer, requirements and effective Hibernate hbm2ddl=none configuration are identical.",
+  "cases": [
+    {
+      "id": "case-a",
+      "inputDirectory": "inputs/case-a",
+      "expected": [
+        "Trace @OneToOne/@JoinColumn to deployed schema and effective configuration; do not assume annotation causes runtime database enforcement.",
+        "Recognize that two badges may reference the same member without deployed uniqueness and that BadgeDirectory.getSingleResult then fails on that member.",
+        "Repair database enforcement with a named unique constraint after considering existing duplicate data and rollout; keep suitable one-to-one mapping and stable independent ids.",
+        "Test ordinary persisted/reloaded badge, duplicate ORM and direct SQL writes, absent member target, null reference, unreferenced member and surviving member on badge deletion.",
+        "Explain that H2 evidence is limited to this fixture and does not prove production migration readiness."
+      ],
+      "failureConditions": [
+        "Concludes unique=true alone enforces the deployed database while hbm2ddl is none.",
+        "Uses only an application precheck or @Version to claim cross-row uniqueness.",
+        "Changes to @ManyToOne or permits duplicates contrary to the supplied contract.",
+        "Deletes arbitrary duplicate rows or changes immutable established primary keys to force a constraint.",
+        "Treats written plans as executed ORM or production checks."
+      ]
+    },
+    {
+      "id": "case-b",
+      "inputDirectory": "inputs/case-b",
+      "expected": [
+        "Recognize that deployed NOT NULL, FK and UNIQUE already enforce the required upper cardinality and valid targets.",
+        "Choose no required mapping/schema change; preserve independent stable identity and the selected consumer.",
+        "Distinguish each badge having a member from every member needing a badge; an unreferenced member is valid.",
+        "Validate rejection and flush/clear/reload behavior without calling H2 results a general provider or production proof."
+      ],
+      "failureConditions": [
+        "Adds a redundant schema change or surrogate-key redesign solely from preference.",
+        "Claims a unique non-null child FK requires every member to have a badge.",
+        "Flags missing uniqueness without reading the deployed schema.",
+        "Cascades removal to Member or changes consumer to silently choose an arbitrary badge."
+      ]
+    }
+  ],
+  "criteriaFrozenBeforeTechnicalExecution": true,
+  "prerequisites": [
+    "Fresh isolated input directory per actor/skill variant",
+    "Expose only one case and complete selected skill; evaluator files remain private",
+    "Existing Java/Jakarta/Hibernate/H2 dependencies, or report execution unavailable; no installation needed",
+    "For before/after actor evaluation, run post-change behavior against this contract; the private original-state oracle is not an agent score"
+  ],
+  "technicalOracle": "evaluator/OrmProbe.java",
+  "technicalOracleCaveat": "Characterizes the original case-a defect and original adequate case-b. A passing negative-case probe does not mean that case-a meets the domain contract."
+}
+

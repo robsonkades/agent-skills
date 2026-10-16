@@ -63,8 +63,10 @@ without reopening agreed requirements.
    routine choices. Pending answers block only dependent work; continue independent
    authorized work.
 5. **Write acceptance criteria** at the behaviour level, one per rule, each derivable into a
-   test (`references/acceptance-criteria.md`). Check the set against the intended workflow as
-   well as each criterion's testability: could every check pass while the user's need fails?
+   test (`references/acceptance-criteria.md`). Name the actor or consumer and where the promised
+   outcome is observable. Preserve decisive source conditions when splitting or simplifying
+   criteria; check for both omissions and unsupported additions. Check the set against the
+   intended workflow: could every check pass while the user's need fails?
 6. **Record material scope boundaries** without inventing exclusions to requested work. Scope is defined as much by the exclusions as by
    the inclusions, and unstated exclusions are where "but obviously it should also…" lives.
 7. **Close clarification for the next increment** when its intended behavior, constraints and
@@ -94,6 +96,9 @@ without reopening agreed requirements.
   merely to replace adjectives. See the acceptance reference for conditional examples.
 - Prefer observable outcomes. Record implementation constraints separately when explicitly
   required by a user, contract or project policy; a mandated mechanism is also checkable.
+- When work finishes after acknowledgment, distinguish acceptance from completion and name
+  the observable result and agreed timing boundary. If data changes during the operation,
+  establish which population and versions the result must represent; see the acceptance reference.
 - Apply the existing definition of done and checks proportionate to the changed risks.
   Do not turn an example checklist into new mandatory approvals, migrations or telemetry.
 - Report criteria as met, unmet or unverified with supporting evidence. A passing test proves
@@ -118,6 +123,8 @@ actual validation and disclose what remains unverified.
   edges are unstated.
 - **Writing acceptance criteria** — `references/acceptance-criteria.md`. Criteria at the right
   level of abstraction, the Given/When/Then form and where it misleads, deriving tests from
-  criteria, checking coverage of the intended need, consumer-specific export contracts,
-  non-functional scenarios, and a definition of done that is a checklist rather than a
-  sentiment. Read when writing or reviewing criteria or assessing changed requirements.
+  criteria, preserving source conditions, checking the consumer's observation point, completion
+  states, export contracts for changing data and specific consumers, non-functional scenarios,
+  and a definition of done
+  that is a checklist rather than a sentiment. Read when writing or reviewing criteria or
+  assessing changed requirements.

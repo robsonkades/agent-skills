@@ -1,0 +1,272 @@
+{
+  "skill": "metrics-and-cardinality",
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "ownedPath": "C:/git/agent-skills/skills/metrics-and-cardinality",
+  "versions": {
+    "committed": "1.3.4",
+    "assignment": "1.3.4",
+    "final": "1.3.5",
+    "preExistingBump": false,
+    "rationale": "One patch increment for the focused content correction. No subsequent increments."
+  },
+  "files": {
+    "changedByReviewer": [
+      "skills/metrics-and-cardinality/SKILL.md",
+      "skills/metrics-and-cardinality/references/micrometer-and-prometheus.md",
+      "skills/metrics-and-cardinality/skill.yaml"
+    ],
+    "preExistingStaged": [],
+    "preExistingUnstaged": [],
+    "preExistingUntracked": [],
+    "unchanged": [
+      "skills/metrics-and-cardinality/references/cardinality-budget.md",
+      "skills/metrics-and-cardinality/references/instrument-selection.md"
+    ],
+    "assignmentHashes": [
+      {
+        "path": "C:/git/agent-skills/skills/metrics-and-cardinality/SKILL.md",
+        "sha256": "2c06a11dc5b658dfd2db160b75154a4eec9b9c7f1cfece45f7c837257d2ddc07"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/metrics-and-cardinality/skill.yaml",
+        "sha256": "e68731b9ecbdc19529040f4dd9ce5cb02dae566a3257af98bffcf1cf94dea79f"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/metrics-and-cardinality/references/cardinality-budget.md",
+        "sha256": "b0fe2f7922b4d932d558090d1cfd3d9a3b92d276da6f85ea863575b2de608389"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/metrics-and-cardinality/references/instrument-selection.md",
+        "sha256": "f40b3a7b878d832c3b41dfb76f161523bb275bb8878d77601b14a272ca7d165a"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/metrics-and-cardinality/references/micrometer-and-prometheus.md",
+        "sha256": "f91cf39f4ba0deac3bc7a986a30fb82b1b331926dc4de485fdef8a8a157a36c4"
+      }
+    ],
+    "temporaryArtifacts": [
+      "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/metrics-and-cardinality/RegistrationContextProbe.java",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/metrics-and-cardinality/run-probe.ps1",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/metrics-and-cardinality/probe-output.txt",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/metrics-and-cardinality/validate-local.mjs",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/metrics-and-cardinality.json"
+    ],
+    "attribution": "Assignment package was clean. Final diff contains only this review's three owned files; two supporting references remain byte-for-byte unchanged. No review-only file was shipped."
+  },
+  "changes": [
+    {
+      "location": "SKILL.md:85",
+      "change": "Adds a short guard placing request-dependent labels at the instrumentation/observation boundary rather than cached meter registration.",
+      "consequence": "Low cardinality alone no longer suffices to approve semantically misattributed cohorts."
+    },
+    {
+      "location": "references/micrometer-and-prometheus.md:70",
+      "change": "Explains stable Meter.Id mapping versus request-local ThreadLocal/MDC reads, cached same-ID lookup, appropriate bounded tagging, fixed process tag exception and a two-context verification.",
+      "consequence": "Prevents first-context attribution while preserving valid stable filters and requiring per-cohort checks instead of only aggregate totals."
+    },
+    {
+      "location": "skill.yaml:4",
+      "change": "Patch version 1.3.4 to 1.3.5.",
+      "consequence": "Publishable integrity change can be incorporated by coordinator's registry generation."
+    }
+  ],
+  "assessment": {
+    "criteria": [
+      "Actual source of labels and meter identity before/after filters.",
+      "Client, scrape and backend containment boundaries; population, cardinality, churn and overflow semantics.",
+      "Reset-aware aggregation, histogram schema/threshold population compatibility and units.",
+      "Gauge ownership/collisions and consumer-visible registration/exposition.",
+      "Minimal evidence acquisition, valid no-change alternatives and preservation of adequate instrumentation."
+    ],
+    "correctedFinding": {
+      "location": "references/micrometer-and-prometheus.md:66 at assignment",
+      "evidence": "Micrometer 1.15.5 filter contract requires stable mapping; MeterRegistry returns a cached mapped meter for the same original ID. The focused runtime probe reproduced the missing second tier.",
+      "impact": "Request cohorts can be wrong even though the total and cardinality look correct."
+    },
+    "remainingFindings": [],
+    "rejectedHypotheses": [
+      "Did not assert that every original raw ID is retained indefinitely after a bounded mapping: in the inspected 1.15.5 path preFilterIdToMeterMap is populated when a new mapped meter is created, not on every equivalent lookup.",
+      "Did not assert a single-registry concurrent maximumAllowableTags bypass from the filter's set/size code in isolation: the inspected registry calls accept while holding its meter-creation lock. No cross-registry guarantee is inferred."
+    ]
+  },
+  "preserved": [
+    "Skill's metric design/review and diagnosis role, Java/project-version inspection and no implicit upgrades.",
+    "Bounded evolving operational dimensions with ownership/churn/privacy controls; rejection of raw per-occurrence identities.",
+    "Classic/native histogram cost distinction, population compatibility, quantile aggregation and migration restraint.",
+    "Rate-before-sum counter reset handling and appropriate gauge aggregation.",
+    "Actual scrape/registration evidence, inconsistent tag-key/type rejection, ACCEPT ordering and gauge collisions.",
+    "Source aggregation versus relabel collision, app-registry versus backend containment and overflow accountability.",
+    "Async in-flight lifecycle, censored completion distributions and active-age signals.",
+    "All existing examples and primary-source links; no capability removed or replaced."
+  ],
+  "checks": [
+    {
+      "type": "executed_structural",
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/metrics-and-cardinality/validate-local.mjs C:/git/agent-skills",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "PASS",
+      "exitCode": 0,
+      "output": "{\n  \"status\": \"PASS\",\n  \"scope\": \"metrics-and-cardinality\",\n  \"manifestIssues\": 0,\n  \"metadataAgreement\": true,\n  \"version\": \"1.3.5\",\n  \"declaredPaths\": 3,\n  \"relativeLinks\": 4,\n  \"changedFromAssignment\": [\n    \"SKILL.md\",\n    \"references/micrometer-and-prometheus.md\",\n    \"skill.yaml\"\n  ],\n  \"unchangedReferences\": 2\n}\n"
+    },
+    {
+      "type": "executed_structural",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/metrics-and-cardinality/SKILL.md skills/metrics-and-cardinality/skill.yaml skills/metrics-and-cardinality/references/cardinality-budget.md skills/metrics-and-cardinality/references/instrument-selection.md skills/metrics-and-cardinality/references/micrometer-and-prometheus.md",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "PASS",
+      "exitCode": 0,
+      "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+    },
+    {
+      "type": "executed_structural",
+      "command": "git diff --check -- skills/metrics-and-cardinality\ngit diff -- skills/metrics-and-cardinality\ngit diff --cached --numstat -- skills/metrics-and-cardinality\ngit status --short -- skills/metrics-and-cardinality",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "PASS",
+      "exitCode": 0,
+      "output": "diff --git a/skills/metrics-and-cardinality/SKILL.md b/skills/metrics-and-cardinality/SKILL.md\nindex c29d0ad..86a76ae 100644\n--- a/skills/metrics-and-cardinality/SKILL.md\n+++ b/skills/metrics-and-cardinality/SKILL.md\n@@ -82,6 +82,9 @@ operational identity such as an approved logical queue alias can be a useful coh\n population, churn, access/privacy and overflow contract fit the budget. Bounded cardinality\n alone does not make sensitive data suitable; hashing does not remove identity or churn.\n \n+Assign request-dependent labels at the instrumentation/observation boundary; a cached\n+meter-registration filter is not a per-request hook.\n+\n Estimate worst-case and realistic **active** combinations; labels are correlated, so the\n simple product is an upper bound, not the observed bill. Include targets/replicas as a label\n dimension rather than multiplying and then also counting the instance label.\ndiff --git a/skills/metrics-and-cardinality/references/micrometer-and-prometheus.md b/skills/metrics-and-cardinality/references/micrometer-and-prometheus.md\nindex bcbfed9..8450ab6 100644\n--- a/skills/metrics-and-cardinality/references/micrometer-and-prometheus.md\n+++ b/skills/metrics-and-cardinality/references/micrometer-and-prometheus.md\n@@ -66,6 +66,18 @@ test rather than assuming Spring/Micrometer always normalizes a custom filter/cl\n ## MeterFilter boundaries\n \n Micrometer provides maximum-allowable-tag and metric filters, denial and tag replacement.\n+\n+Keep `MeterFilter.map` a stable transformation of the incoming `Meter.Id` and configuration\n+fixed for the registry lifetime. Reading a request's tier/outcome from `ThreadLocal` or MDC\n+there can attribute later observations to the first context: lookups of the same original ID\n+can reuse the previously mapped meter. Repeating the lookup is not a per-observation callback.\n+Select a meter with bounded request-dependent tags at the instrumentation boundary, or use\n+the resolved instrumentation's observation convention/filter. Fixed process tags remain valid\n+in a meter filter. Exercise two different request contexts through the same registry and the\n+actual handle lookup/reuse path; assert both cohort counts, not only the combined total.\n+See the [Micrometer 1.15.5 filter contract](https://github.com/micrometer-metrics/micrometer/blob/v1.15.5/docs/modules/ROOT/pages/concepts/meter-filters.adoc)\n+and [registry lookup implementation](https://github.com/micrometer-metrics/micrometer/blob/v1.15.5/micrometer-core/src/main/java/io/micrometer/core/instrument/MeterRegistry.java).\n+\n Install filters before affected meters register. Verify:\n \n - prefix/key matching;\ndiff --git a/skills/metrics-and-cardinality/skill.yaml b/skills/metrics-and-cardinality/skill.yaml\nindex 5589e30..3c179dd 100644\n--- a/skills/metrics-and-cardinality/skill.yaml\n+++ b/skills/metrics-and-cardinality/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: metrics-and-cardinality\n-version: 1.3.4\n+version: 1.3.5\n description: >-\n   Designing bounded, decision-oriented metrics for Java services: selecting counters,\n   gauges and histogram forms; defining RED, USE and business outcomes; budgeting active\n M skills/metrics-and-cardinality/SKILL.md\n M skills/metrics-and-cardinality/references/micrometer-and-prometheus.md\n M skills/metrics-and-cardinality/skill.yaml\n"
+    },
+    {
+      "type": "executed Java contract probe",
+      "command": "& C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/metrics-and-cardinality/run-probe.ps1",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "PASS",
+      "compilerTarget": "javac --release 17",
+      "runtime": "OpenJDK Temurin 25.0.3+9-LTS",
+      "dependencies": [
+        "C:/Users/robso/.m2/repository/io/micrometer/micrometer-core/1.15.5/micrometer-core-1.15.5.jar",
+        "C:/Users/robso/.m2/repository/io/micrometer/micrometer-commons/1.15.5/micrometer-commons-1.15.5.jar",
+        "C:/Users/robso/.m2/repository/io/micrometer/micrometer-observation/1.15.5/micrometer-observation-1.15.5.jar"
+      ],
+      "output": "PASS fixed process tier: basic=2; mapping calls=1; reuse is correct\r\nPASS negative control: basic=2; premium absent; mapping calls=1\r\nPASS instrumentation selection: basic=1; premium=1; other=2; total=4; meters=3\r\nopenjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n",
+      "interpretation": "Three bounded assertion groups: stable process mapping valid, negative control reproduces first-context misattribution, per-observation bounded selection restores cohorts and unknown totals. This is a client-registration contract test, not performance measurement."
+    }
+  ],
+  "behavioralEvaluations": {
+    "executedAgentRuns": [],
+    "structuredWalkthroughs": [
+      {
+        "case": "fixed-tier-source",
+        "expected": "Retain stable mapping based on actual TierSource.current implementation; basic=2 under declared contract."
+      },
+      {
+        "case": "request-tier-source",
+        "expected": "Correct context acquisition at instrumentation boundary; basic=1,premium=1 while total remains 2."
+      }
+    ],
+    "technicalExecutions": "The related SimpleMeterRegistry contract cases were executed by the Java probe; no independent agent was run on the separate development cases.",
+    "measuredImprovement": "Not measured. Demonstrated technical failure/control behavior supports the correction, not a measured gain in agent behavior."
+  },
+  "sources": [
+    {
+      "version": "Micrometer 1.15.5",
+      "url": "https://github.com/micrometer-metrics/micrometer/blob/v1.15.5/docs/modules/ROOT/pages/concepts/meter-filters.adoc",
+      "supports": "Stable ID mapping, fixed runtime configuration exception and request-context tagging in instrumentation."
+    },
+    {
+      "version": "Micrometer 1.15.5",
+      "url": "https://github.com/micrometer-metrics/micrometer/blob/v1.15.5/micrometer-core/src/main/java/io/micrometer/core/instrument/MeterRegistry.java",
+      "supports": "Original-ID cache lookup, mapping and synchronized creation/accept path; first registered ID reuse."
+    },
+    {
+      "version": "Micrometer 1.15.5",
+      "url": "https://github.com/micrometer-metrics/micrometer/blob/v1.15.5/micrometer-core/src/main/java/io/micrometer/core/instrument/config/MeterFilter.java",
+      "supports": "maximumAllowableTags behavior and acceptance boundaries; evaluated in registry call-path context."
+    },
+    {
+      "version": "Micrometer 1.15.5",
+      "url": "https://github.com/micrometer-metrics/micrometer/blob/v1.15.5/implementations/micrometer-registry-prometheus/src/main/java/io/micrometer/prometheusmetrics/PrometheusMeterRegistry.java",
+      "supports": "Existing same exported name/type/tag-key registration constraints."
+    },
+    {
+      "version": "Prometheus 3.5.0",
+      "url": "https://github.com/prometheus/prometheus/blob/v3.5.0/docs/querying/functions.md",
+      "supports": "Existing reset-aware rate-before-aggregate rule; extrapolation and counter-only semantics."
+    },
+    {
+      "version": "Prometheus 3.5.0",
+      "url": "https://github.com/prometheus/prometheus/blob/v3.5.0/docs/configuration/configuration.md",
+      "supports": "Existing native histogram bucket/resolution limits and failed scrape semantics."
+    },
+    {
+      "version": "Current Micrometer reference identified as 1.17.1; corroboration only",
+      "url": "https://docs.micrometer.io/micrometer/reference/concepts/gauges.html",
+      "supports": "Existing weak-reference and duplicate registration caveats; no target dependency change inferred."
+    }
+  ],
+  "limitations": [
+    "The runtime probe used SimpleMeterRegistry on Micrometer 1.15.5, Java 17 compilation target and JVM 25.0.3. It did not execute a Prometheus scrape, remote backend, concurrent load, or Spring/Observation integration.",
+    "No executable code snippet was added to the shipped package; the temporary probe is review evidence and must not be described as a shipped feature.",
+    "The source package does not impose one Java baseline on all consumers. It requires project baseline inspection; the probe's --release 17 target is a validation choice, not authorization to change a target project.",
+    "Prior September reports describe Prometheus rule tests and older registration checks; those were read as history and are not counted as fresh executions.",
+    "An initial archived Prometheus website lookup failed; the versioned v3.5.0 repository source was successfully consulted instead.",
+    "No independent agent evaluation or before/after comparison; the two cases are development cases, not unseen holdouts.",
+    "Global dependency/integrity/index validation remains coordinator-owned."
+  ],
+  "twoCases": [
+    {
+      "id": "fixed-tier-source",
+      "prerequisites": "Micrometer 1.15.5 with Java 17-compatible compiler; repository skill metrics-and-cardinality. Three cached jars used for local reproduction are listed in checks. Existing project dependencies or isolated temporary compilation only; no dependency installation required.",
+      "taskInput": {
+        "task": "Review this instrumentation against its contract: each completed checkout contributes once to the bounded tier returned by TierSource.current() at that call. The resolved dependency is Micrometer 1.15.5 and the target Java baseline is 17. A proposed fix says every MeterFilter must be removed because filters cache labels. Inspect the actual label source and registration/lookup path, then make the smallest supported correction or retain the implementation with evidence. Supply a focused check for cohort counts as well as the combined total; do not upgrade dependencies, add raw tenant identifiers, run benchmarks or alter alert policy.",
+        "context": "The only valid tier values are basic, premium and other; their privacy and cardinality budget is already accepted. TierSource.current() is the authoritative source for this metric's label. Registry and metrics instance live across both calls. These files contain the complete source and lookup paths relevant to the task.",
+        "files": {
+          "CheckoutMetrics.java": "import io.micrometer.core.instrument.Meter;\nimport io.micrometer.core.instrument.MeterRegistry;\nimport io.micrometer.core.instrument.Tag;\nimport io.micrometer.core.instrument.config.MeterFilter;\n\npublic final class CheckoutMetrics {\n    private final MeterRegistry registry;\n\n    public CheckoutMetrics(MeterRegistry registry, TierSource tiers) {\n        this.registry = registry;\n        registry.config().meterFilter(new MeterFilter() {\n            @Override\n            public Meter.Id map(Meter.Id id) {\n                if (!id.getName().equals(\"checkout.requests\")) return id;\n                return id.withTag(Tag.of(\"tier\", tiers.current()));\n            }\n        });\n    }\n\n    public void completed() {\n        registry.counter(\"checkout.requests\").increment();\n    }\n}\n",
+          "Scenario.java": "import io.micrometer.core.instrument.simple.SimpleMeterRegistry;\n\npublic final class Scenario {\n    public static void main(String[] args) {\n        SimpleMeterRegistry registry = new SimpleMeterRegistry();\n        try {\n            CheckoutMetrics metrics = new CheckoutMetrics(registry, new TierSource());\n            TierSource.REQUEST_TIER.set(\"basic\");\n            metrics.completed();\n            TierSource.REQUEST_TIER.set(\"premium\");\n            metrics.completed();\n            // Inspect the registered cohort counts here in a focused test.\n        } finally {\n            TierSource.REQUEST_TIER.remove();\n            registry.close();\n        }\n    }\n}\n",
+          "TierSource.java": "public final class TierSource {\n    static final ThreadLocal<String> REQUEST_TIER = ThreadLocal.withInitial(() -> \"basic\");\n    private final String configuredTier = \"basic\";\n\n    public String current() {\n        return configuredTier;\n    }\n}\n"
+        }
+      },
+      "evaluatorExpectations": {
+        "decisiveEvidence": "TierSource.current returns a fixed instance field for the registry lifetime. The ThreadLocal is changed by the scenario but is not read by this implementation.",
+        "acceptableOutcome": "Reject the proposed universal removal rule and retain this stable tag transformation. The correct counts are basic=2, premium absent, total=2 under this declared label contract.",
+        "requiredChecks": "Trace the return expression and same-ID reuse. A focused registration check is sufficient; no new exporter or benchmark campaign is required.",
+        "failureConditions": [
+          "Treats the mere presence of ThreadLocal as proof that map reads request context.",
+          "Changes the label contract to request entitlement despite TierSource being the declared authority.",
+          "Forces a rewrite of a stable process tag solely because the registry caches its meter.",
+          "Claims evidence of a performance improvement or complete end-to-end scrape verification."
+        ]
+      }
+    },
+    {
+      "id": "request-tier-source",
+      "decisiveChangeFrom": "fixed-tier-source: only the TierSource.current return expression changes from configuredTier to REQUEST_TIER.get(); the label source is now request-dependent.",
+      "prerequisites": "Micrometer 1.15.5 with Java 17-compatible compiler; repository skill metrics-and-cardinality. Three cached jars used for local reproduction are listed in checks. Existing project dependencies or isolated temporary compilation only; no dependency installation required.",
+      "taskInput": {
+        "task": "Review this instrumentation against its contract: each completed checkout contributes once to the bounded tier returned by TierSource.current() at that call. The resolved dependency is Micrometer 1.15.5 and the target Java baseline is 17. A proposed fix says every MeterFilter must be removed because filters cache labels. Inspect the actual label source and registration/lookup path, then make the smallest supported correction or retain the implementation with evidence. Supply a focused check for cohort counts as well as the combined total; do not upgrade dependencies, add raw tenant identifiers, run benchmarks or alter alert policy.",
+        "context": "The only valid tier values are basic, premium and other; their privacy and cardinality budget is already accepted. TierSource.current() is the authoritative source for this metric's label. Registry and metrics instance live across both calls. These files contain the complete source and lookup paths relevant to the task.",
+        "files": {
+          "CheckoutMetrics.java": "import io.micrometer.core.instrument.Meter;\nimport io.micrometer.core.instrument.MeterRegistry;\nimport io.micrometer.core.instrument.Tag;\nimport io.micrometer.core.instrument.config.MeterFilter;\n\npublic final class CheckoutMetrics {\n    private final MeterRegistry registry;\n\n    public CheckoutMetrics(MeterRegistry registry, TierSource tiers) {\n        this.registry = registry;\n        registry.config().meterFilter(new MeterFilter() {\n            @Override\n            public Meter.Id map(Meter.Id id) {\n                if (!id.getName().equals(\"checkout.requests\")) return id;\n                return id.withTag(Tag.of(\"tier\", tiers.current()));\n            }\n        });\n    }\n\n    public void completed() {\n        registry.counter(\"checkout.requests\").increment();\n    }\n}\n",
+          "Scenario.java": "import io.micrometer.core.instrument.simple.SimpleMeterRegistry;\n\npublic final class Scenario {\n    public static void main(String[] args) {\n        SimpleMeterRegistry registry = new SimpleMeterRegistry();\n        try {\n            CheckoutMetrics metrics = new CheckoutMetrics(registry, new TierSource());\n            TierSource.REQUEST_TIER.set(\"basic\");\n            metrics.completed();\n            TierSource.REQUEST_TIER.set(\"premium\");\n            metrics.completed();\n            // Inspect the registered cohort counts here in a focused test.\n        } finally {\n            TierSource.REQUEST_TIER.remove();\n            registry.close();\n        }\n    }\n}\n",
+          "TierSource.java": "public final class TierSource {\n    static final ThreadLocal<String> REQUEST_TIER = ThreadLocal.withInitial(() -> \"basic\");\n    private final String configuredTier = \"basic\";\n\n    public String current() {\n        return REQUEST_TIER.get();\n    }\n}\n"
+        }
+      },
+      "evaluatorExpectations": {
+        "decisiveEvidence": "The filter reads changing external context while the original meter ID remains checkout.requests with no tier tag. Cached lookup can bypass map on the second call.",
+        "acceptableOutcome": "Identify the misattribution and move bounded tier selection to the actual instrumentation/observation boundary. Select the appropriate meter for each observation; repeating the unchanged base-ID lookup or reusing the first context's handle is insufficient.",
+        "requiredChecks": "Before fix, expose basic=2 and premium absent despite total=2. After fix, verify basic=1,premium=1,total=2. Preserve bounded values, name and type; optionally test unknown→other without retaining raw IDs.",
+        "failureConditions": [
+          "Approves instrumentation solely because cardinality is low or total is 2.",
+          "Suggests looking up the same untagged meter every time as the correction.",
+          "Continues to read request-local state only in MeterFilter.map.",
+          "Retains one cached first-context Counter for all later contexts.",
+          "Adds high-cardinality IDs or silently discards a cohort to meet a cap."
+        ]
+      }
+    }
+  ],
+  "crossSkill": [],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "purpose": "Regenerate shared index and integrity/version data.",
+      "prerequisites": "All reviewers stopped writing."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "purpose": "Complete repository-wide validation including versions and dependencies.",
+      "prerequisites": "All reviewers stopped and registry rebuilt."
+    }
+  ],
+  "allWritesStopped": true
+}

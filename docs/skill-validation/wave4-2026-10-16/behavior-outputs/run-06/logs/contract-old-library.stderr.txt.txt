@@ -1,0 +1,2 @@
+Exception in thread "main" java.lang.AssertionError: Normalization failures: 2
+	at NormalizationProbe.main(NormalizationProbe.java:28)

@@ -1,0 +1,22 @@
+import java.util.Comparator;
+import jdk.jfr.EventType;
+import jdk.jfr.FlightRecorder;
+
+public final class CatalogueSnippet {
+    public static void main(String[] args) {
+        FlightRecorder.getFlightRecorder().getEventTypes().stream()
+            .sorted(Comparator.comparing(EventType::getName))
+            .forEach(type -> {
+                System.out.println(type.getName() + " id=" + type.getId()
+                    + " enabled=" + type.isEnabled());
+                type.getSettingDescriptors().forEach(setting ->
+                    System.out.println("  setting " + setting.getName()
+                        + " default=" + setting.getDefaultValue()));
+                type.getFields().forEach(field ->
+                    System.out.println("  field " + field.getName()
+                        + " type=" + field.getTypeName()
+                        + " content=" + field.getContentType()));
+            });
+    }
+}
+

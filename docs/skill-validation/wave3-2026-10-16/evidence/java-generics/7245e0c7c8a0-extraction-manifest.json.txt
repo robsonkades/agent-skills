@@ -1,0 +1,20 @@
+[
+  {
+    "name": "Attributes.java",
+    "source": "skills/java-generics/references/typesafe-heterogeneous-containers.md",
+    "adaptation": "Imports and enclosing class where needed; remove illustrative call sites after complete class. Method/class body copied unchanged.",
+    "sha256": "f5eec7a81aea735a2edc41a9eeb3a00a9e1cdab051ac1e8ab74cc2e11a9428a9"
+  },
+  {
+    "name": "TypeRef.java",
+    "source": "skills/java-generics/references/typesafe-heterogeneous-containers.md",
+    "adaptation": "Imports and enclosing class where needed; remove illustrative call sites after complete class. Method/class body copied unchanged.",
+    "sha256": "9d3a13ddbd0c60dc86800264ab397bd741348538f6a6e2014e1cfd0b1b710796"
+  },
+  {
+    "name": "WildcardOps.java",
+    "source": "skills/java-generics/references/wildcards-and-api-design.md",
+    "adaptation": "Imports and enclosing class where needed; remove illustrative call sites after complete class. Method/class body copied unchanged.",
+    "sha256": "768edd424f257c4e6b6047d600a85320d785168a1163d486a7a9005f2edd1663"
+  }
+]

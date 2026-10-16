@@ -1,0 +1,1 @@
+package org.openrewrite; public class FileAttributes { public boolean isReadable(){return true;} public boolean isWritable(){return true;} public boolean isExecutable(){return false;} }

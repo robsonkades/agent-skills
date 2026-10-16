@@ -1,0 +1,2 @@
+Exception in thread "main" java.lang.AssertionError: old render changed the consumer result
+	at client.OldClient.main(OldClient.java:10)

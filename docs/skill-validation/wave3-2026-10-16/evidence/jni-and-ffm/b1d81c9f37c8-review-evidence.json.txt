@@ -1,0 +1,173 @@
+{
+  "baselineCommands": [
+    {
+      "name": "snapshot",
+      "cmd": "$nativeSkillFiles = rg --files skills/jni-and-ffm; $nativeSkillFiles | ForEach-Object { [pscustomobject]@{Path=$_;Sha256=(Get-FileHash -LiteralPath $_ -Algorithm SHA256).Hash;Content=[System.IO.File]::ReadAllText((Resolve-Path -LiteralPath $_).Path)} } | ConvertTo-Json -Depth 3",
+      "chunk_id": "a8fcae",
+      "wall_time_seconds": 0.125842,
+      "exit_code": 0,
+      "original_token_count": 12614,
+      "output": "Full package snapshot read at assignment; exact file hashes retained in baselineFiles. Contents remain unchanged in the owned package.",
+      "workingDirectory": "C:/git/agent-skills"
+    },
+    {
+      "name": "baseline",
+      "cmd": "git status --short -- skills/jni-and-ffm; git diff -- skills/jni-and-ffm; git diff --cached -- skills/jni-and-ffm; git show HEAD:skills/jni-and-ffm/skill.yaml",
+      "chunk_id": "b47a07",
+      "wall_time_seconds": 0.1252731,
+      "exit_code": 0,
+      "original_token_count": 500,
+      "output": "schemaVersion: 1\n\nname: jni-and-ffm\nversion: 1.3.4\ndescription: >-\n  Crossing into native code: JNI call overhead, critical sections and what they block, the\n  FFM downcall and upcall path, `Linker` and method handles, why a native frame pins a\n  virtual thread, and measuring the boundary cost. Use when a native call sits inside a\n  tight loop, when someone proposes migrating JNI to Panama to fix pinning, when\n  `Linker.Option.critical()` is applied without a measured duration, when\n  `jdk.VirtualThreadPinned` events point at a `native` method or `MethodHandle.invokeExact`,\n  when `WARNING: A restricted method ... has been called` appears after a JDK upgrade, when\n  a runbook still references `-Djdk.tracePinnedThreads` or `--enable-preview` for FFM, when\n  `jextract` is assumed to ship with the JDK, when a downcall fails with\n  `WrongThreadException` on a confined arena, or when `GCLocker Initiated GC` appears as a\n  cause in the GC log. Does not cover holding native memory (off-heap-memory), pinning as\n  scheduling (virtual-threads-internals), or the native memory budget (jvm-memory-regions).\n\nlicense: Apache-2.0\n\nauthors:\n  - name: agent-skills contributors\n    url: https://github.com/robsonkades/agent-skills\n\nhomepage: https://github.com/robsonkades/agent-skills/tree/main/skills/jni-and-ffm\nrepository:\n  type: git\n  url: https://github.com/robsonkades/agent-skills\n  directory: skills/jni-and-ffm\n\nkeywords:\n  - java\n  - jvm\n  - jni\n  - panama\n  - ffm\n  - downcall\n  - pinning\n\nfiles:\n  - SKILL.md\n  - skill.yaml\n  - references/\n\ndependencies:\n  - name: gc-log-analysis\n    version: ^1.0.0\n  - name: off-heap-memory\n    version: ^1.0.0\n\nsuggests:\n  - jvm-memory-regions\n  - virtual-threads-internals\n\ncapabilities:\n  - reads-source\n\nagentOverrides:\n  codex:\n    interface:\n      display_name: JNI And FFM\n      short_description: Native call cost, critical downcalls and pinning\n      default_prompt: Use JNI And FFM to assess the cost and pinning risk of this native call.\n",
+      "workingDirectory": "C:/git/agent-skills"
+    },
+    {
+      "name": "scope",
+      "cmd": "rg --files -g AGENTS.md skills/jni-and-ffm; Get-Content -LiteralPath 'docs/skill-validation/wave3-2026-10-16/review-brief.md' -Raw",
+      "chunk_id": "356e5c",
+      "wall_time_seconds": 0.0641512,
+      "exit_code": 0,
+      "original_token_count": 1615,
+      "output": "# Wave 3 — cumulative specialist review\n\nThe user authorized the next wave after wave 2. Scope: exactly the 63 inventory\nrows marked `3` in `docs/skills-evolution-inventory.md`. Improve the skills;\npackage-manager implementation, other waves and real agent configuration are\noutside this task. Baseline: `baseline.json`, captured before assignments. All\n63 selected packages start unchanged from HEAD. Preserve every earlier wave.\n\n## Procedure and ownership\n\nFollow `AGENTS.md`, `docs/parallel-skill-reviews.md`, the complete\n`docs/skill-review-prompt.md`, and `skills/skill-engineering/SKILL.md` with its\nrelevant evidence, evaluation, resource-design and anti-pattern references.\nPreviously read unchanged references may be reused. Read the entire assigned\npackage, including examples and references, before deciding what needs changing.\n\nOwn only `skills/<assigned-name>/**`, one skill per assignment. You are not alone\nin the codebase; preserve other contributors' work. No shared writes, neighboring\nedits, subagents, global builds, formatters, generators, dependency installation,\ncommits, publishing or global installation. Use `apply_patch` for manual edits.\nSend findings before editing, then proceed autonomously with justified changes.\nThe coordinator alone writes repository reports, regenerates the index and runs\nglobal verification after all authors stop. A local check must actually be local.\n\nInspect committed, assignment and final versions. Bump one patch when contents\nchange; reuse that unpublished bump for subsequent corrections. No change means\nno bump. Keep descriptions synchronized and resource routing valid. Preserve the\nskill's role and useful depth; do not paste this review workflow into its body.\n\n## Lessons carried forward\n\nConsult the comparative research in\n`docs/skill-validation/skills-comparative-research-2026-10-16.md`, the roadmap,\nand the wave 1 and wave 2 reports where relevant. These are evidence and limits,\nnot a reason to presume that another skill is defective.\n\n- Acquire missing evidence from actual callers, factories, consumers, build\n  configuration, artifacts and deployed runtime selection. A method or pattern\n  name alone does not establish its effective contract.\n- Challenge the premise that controls the next decision. Identify a realistic\n  alternative and evidence that would change the diagnosis, including no change.\n- Apply refuting evidence to the working artifact and affected conclusions while\n  preserving unrelated accepted evidence. A question log alone is insufficient.\n- Preserve decisive preconditions and the consumer's observation point. Test the\n  wrong behavior as well as the legitimate alternative when a verifier is involved.\n- Keep uncertainty, missing coverage and unknown frequency explicit. A successful\n  command, stress test or empty capture is not proof of every claimed guarantee.\n- Use conditional references or focused helpers only when they prevent a specific\n  error. Neither brevity, popularity, extra agents nor file count proves efficacy.\n\nWave 2 supplied concrete technical corrections, but its six development cases were\nsaturated: original and revised skills both met all criteria. No incremental\nbehavioral gain was demonstrated. Do not turn source review, compilation or a\nwalkthrough into a claim of measured agent improvement.\n\nRelevant lessons include: a broad `java..` architecture allowance admitted JDBC;\na ZGC parser rejected lowercase minor-cycle labels in a real log; reflective\nconfiguration and factory policies changed runtime behavior; accepted output did\nnot establish cleanup or bounded resource use; versioned APIs differed despite\nmatching names. Use these as investigative lenses, not boilerplate additions.\n\n## Domain-specific review\n\nFor JVM compilation and execution, separate JVM/JLS contracts from implementation\nand compiler heuristics. Match flags, diagnostics, event meanings, assembly and\navailability to the actual build; do not recommend a tuning change from a label\nor a single compilation event. Preserve counterevidence and fallback explanations.\n\nFor Java language and APIs, follow callers and observable contracts: overload and\ndispatch resolution, nullability, exceptions, equality, ordering, ownership,\nresource lifetime, module access and source/binary compatibility where relevant.\nCompile material examples for the declared target and state the runtime actually\nused. A modern toolchain running `--release` does not exercise an older VM.\n\nFor platform skills, verify the actual kernel, container, CPU topology, protocol,\nproxy and lifecycle boundary. Documentation for another platform is not execution\nproof. Preserve legitimate alternatives and avoid changing user infrastructure.\n\nVerify consequential uncertain/versioned claims through primary sources; record\nthe relevant version, URL and exact limitation. Do not upgrade a consumer baseline,\ndownload a new toolchain or run production/high-impact captures merely to validate\ndocumentation. Available tools include Node 25.6.1 and Temurin 25.0.3+9 at\n`C:/Users/robso/.jdks/temurin-25.0.3/bin`; inspect any other prerequisite first.\n\n## Validation and handoff\n\nRun appropriate narrow structural and technical checks; retain stdout/stderr and\nfixtures in an isolated temporary directory. Include hostile/negative controls for\nsecurity or material executable changes. Do not manufacture edits when the existing\nguidance is adequate. Report failed attempts and unavailable runtimes honestly.\n\nReturn two small reproducible development cases, inputs separate from evaluator\ncriteria, changing one decisive constraint. Prefer real artifact inspection and\naction to a prompt that states its own answer. These are not unseen holdouts or\nagent evaluations. Do not launch an evaluator; the coordinator handles comparisons.\n\nWrite your handoff JSON to the exact temporary path in your assignment. Include\nstatus (`READY_FOR_GLOBAL_VALIDATION`, `NO_CHANGES_NEEDED` or `BLOCKED`), skill,\nowned path, `allWritesStopped: true`, findings and files changed, preserved\ncapabilities, committed/initial/final versions, exact commands/results/failures,\nprimary sources, evidence paths, cases with separate inputs/criteria, limits,\ncross-skill findings and pending globals. Parse/read it back. Never ship review-only\nartifacts inside the skill. Stop every write/process before handoff and remain\nread-only until explicitly reassigned. Global validation remains pending locally.\n\r\n",
+      "workingDirectory": "C:/git/agent-skills"
+    }
+  ],
+  "baselineFiles": [
+    {
+      "path": "skills/jni-and-ffm/skill.yaml",
+      "sha256": "E90FEA8A73388ACDDC5E6C12C93BB0F2B0A9F60BCC401804F1740A66F69CD44F"
+    },
+    {
+      "path": "skills/jni-and-ffm/SKILL.md",
+      "sha256": "22BF94672FC864B8CA2D4005A59DA564DFCD83B9ABFC289F72CE85FE64EBD39C"
+    },
+    {
+      "path": "skills/jni-and-ffm/references/pinning-and-native-access.md",
+      "sha256": "904C3A4DF9B4C7FF6376A1979DAC22B03080EE7F3922918D4FD67375229E85A6"
+    },
+    {
+      "path": "skills/jni-and-ffm/references/critical-and-decision-matrix.md",
+      "sha256": "F52FEC2F508082D7E36E0864310F18ADABEA07C5D3A38868544F90E1767419C8"
+    },
+    {
+      "path": "skills/jni-and-ffm/references/arenas-upcalls-and-gc.md",
+      "sha256": "09E446335B65F9D5F1B040604362C9C45D7BEAABA4A5EF6BEF088094612FB176"
+    }
+  ],
+  "structuralChecks": [
+    {
+      "name": "package",
+      "cmd": "@'\nimport fs from 'node:fs';\nimport path from 'node:path';\nimport { parseManifest } from './packages/core/src/domain/manifest.ts';\nimport { buildSkillPackage } from './packages/core/src/domain/skill-package.ts';\nimport { validatePackage } from './packages/core/src/application/validate-package.ts';\nconst root = path.resolve('skills/jni-and-ffm');\nconst paths = [];\nfunction walk(dir) { for (const entry of fs.readdirSync(dir, {withFileTypes:true})) { const absolute = path.join(dir,entry.name); if(entry.isDirectory()) walk(absolute); else paths.push(absolute); } }\nwalk(root);\nconst files = paths.map(absolute=>({path:path.relative(root,absolute).split(path.sep).join('/'),bytes:fs.readFileSync(absolute)}));\nconst parsed = parseManifest(fs.readFileSync(path.join(root,'skill.yaml'),'utf8'),{strict:true,source:'skills/jni-and-ffm/skill.yaml'});\nconst pkg = buildSkillPackage(parsed.manifest,files);\nconst report = validatePackage(pkg,{directoryName:'jni-and-ffm'});\nconst brokenLinks = [];\nlet linksChecked = 0;\nfor (const file of files.filter(file=>file.path.endsWith('.md'))) {\n for (const match of Buffer.from(file.bytes).toString('utf8').matchAll(/\\[[^\\]]*\\]\\((<[^>]*>|[^)]+)\\)/g)) {\n  const destination = match[1].startsWith('<') ? match[1].slice(1,-1) : match[1];\n  const target = destination.split('#')[0];\n  if(!target || /^[a-z][a-z0-9+.-]*:/i.test(target)) continue;\n  linksChecked++;\n  if(!fs.existsSync(path.resolve(root,path.dirname(file.path),target))) brokenLinks.push({from:file.path,target});\n }\n}\nconst issues = [...parsed.issues,...report.issues];\nconsole.log(JSON.stringify({runtime:process.version,skill:parsed.manifest.name,version:parsed.manifest.version,files:files.map(f=>f.path),issues,linksChecked,brokenLinks},null,2));\nif(issues.length || brokenLinks.length) process.exitCode=1;\n\n'@ | node --input-type=module",
+      "chunk_id": "314787",
+      "wall_time_seconds": 0.1676598,
+      "exit_code": 0,
+      "original_token_count": 81,
+      "output": "{\n  \"runtime\": \"v25.6.1\",\n  \"skill\": \"jni-and-ffm\",\n  \"version\": \"1.3.4\",\n  \"files\": [\n    \"references/arenas-upcalls-and-gc.md\",\n    \"references/critical-and-decision-matrix.md\",\n    \"references/pinning-and-native-access.md\",\n    \"SKILL.md\",\n    \"skill.yaml\"\n  ],\n  \"issues\": [],\n  \"linksChecked\": 4,\n  \"brokenLinks\": []\n}\n",
+      "workingDirectory": "C:/git/agent-skills"
+    },
+    {
+      "name": "format",
+      "cmd": "node node_modules/prettier/bin/prettier.cjs --check skills/jni-and-ffm/SKILL.md skills/jni-and-ffm/skill.yaml skills/jni-and-ffm/references/*.md",
+      "chunk_id": "724ee1",
+      "wall_time_seconds": 0.2201838,
+      "exit_code": 0,
+      "original_token_count": 17,
+      "output": "Checking formatting...\nAll matched files use Prettier code style!\n",
+      "workingDirectory": "C:/git/agent-skills"
+    },
+    {
+      "name": "whitespace",
+      "cmd": "git diff --check -- skills/jni-and-ffm",
+      "chunk_id": "e0db0c",
+      "wall_time_seconds": 0.0602696,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": "",
+      "workingDirectory": "C:/git/agent-skills"
+    },
+    {
+      "name": "tools",
+      "cmd": "Get-Command java, javac, clang, gcc, cl -ErrorAction SilentlyContinue | Select-Object Name, Source; & 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -version",
+      "chunk_id": "224916",
+      "wall_time_seconds": 0.2162373,
+      "exit_code": 0,
+      "original_token_count": 89,
+      "output": "\r\nopenjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\nName      Source\r\n----      ------\r\njava.exe  C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe\r\njavac.exe C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe\r\n\r\n",
+      "workingDirectory": "C:/git/agent-skills"
+    }
+  ],
+  "finalOwnedCheck": {
+    "command": "git status --short -- skills/jni-and-ffm; git diff --stat -- skills/jni-and-ffm; git diff --cached -- skills/jni-and-ffm; $nativeFinalFiles = rg --files skills/jni-and-ffm; $nativeFinalFiles | ForEach-Object { [pscustomobject]@{Path=$_;Sha256=(Get-FileHash -LiteralPath $_ -Algorithm SHA256).Hash} } | ConvertTo-Json -Depth 3",
+    "workingDirectory": "C:/git/agent-skills",
+    "exitCode": 0,
+    "result": "Empty status/staged/unstaged diff; all five SHA-256 hashes match assignment baseline.",
+    "output": "[\r\n  {\r\n    \"Path\": \"skills/jni-and-ffm\\\\skill.yaml\",\r\n    \"Sha256\": \"E90FEA8A73388ACDDC5E6C12C93BB0F2B0A9F60BCC401804F1740A66F69CD44F\"\r\n  },\r\n  {\r\n    \"Path\": \"skills/jni-and-ffm\\\\SKILL.md\",\r\n    \"Sha256\": \"22BF94672FC864B8CA2D4005A59DA564DFCD83B9ABFC289F72CE85FE64EBD39C\"\r\n  },\r\n  {\r\n    \"Path\": \"skills/jni-and-ffm\\\\references\\\\pinning-and-native-access.md\",\r\n    \"Sha256\": \"904C3A4DF9B4C7FF6376A1979DAC22B03080EE7F3922918D4FD67375229E85A6\"\r\n  },\r\n  {\r\n    \"Path\": \"skills/jni-and-ffm\\\\references\\\\critical-and-decision-matrix.md\",\r\n    \"Sha256\": \"F52FEC2F508082D7E36E0864310F18ADABEA07C5D3A38868544F90E1767419C8\"\r\n  },\r\n  {\r\n    \"Path\": \"skills/jni-and-ffm\\\\references\\\\arenas-upcalls-and-gc.md\",\r\n    \"Sha256\": \"09E446335B65F9D5F1B040604362C9C45D7BEAABA4A5EF6BEF088094612FB176\"\r\n  }\r\n]\r\n"
+  },
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/foreign/Linker.Option.html",
+      "version": "Java SE 25",
+      "supports": "critical requires an extremely short function on all paths and no Java upcall; temporary heap addresses last for the call. captureCallState and firstVariadicArg have explicit ABI/argument contracts.",
+      "verification": "Consulted primary API, not performance measured."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/foreign/Linker.html",
+      "version": "Java SE 25",
+      "supports": "Address arguments must have a live, thread-accessible scope; active downcalls acquire scopes. Plain downcalls reject heap arguments. Escaping upcall exceptions terminate the JVM; upcall-stub lifetime follows its arena.",
+      "verification": "Consulted primary API. Safe owned-stub controls exercised only the specific scope, thread, heap and authorization conditions recorded."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/foreign/Arena.html",
+      "version": "Java SE 25; since 22",
+      "supports": "Confined segments require their Java owner thread; shared segments permit multiple threads. Closing invalidates scopes; automatic/global arenas do not allow manual close.",
+      "verification": "Consulted primary API; owner/shared/closed cases executed on 25.0.3."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/foreign/package-summary.html",
+      "version": "Java SE 25",
+      "supports": "Final foreign-memory model: arena-managed temporal/thread bounds and explicit layouts; restricted operations remain native interop obligations.",
+      "verification": "Consulted primary API; --release 22 compilation confirms used source/API surface, not execution on a Java 22 VM."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/core/restricted-methods.html",
+      "version": "JDK 25 native-access guide",
+      "supports": "Unauthorized restricted calls use allow/warn/deny policy; warn is current guide default, deny raises IllegalCallerException. Native authorization belongs to actual modules.",
+      "verification": "Consulted primary guide. Child JVM ran with explicit ALL-UNNAMED plus deny; separate ungranted control failed at upcallStub with IllegalCallerException."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/core/virtual-threads.html",
+      "version": "JDK 25 guide",
+      "supports": "Native/foreign frames pin virtual threads to their carriers; pinning may affect scalability. JFR events have thresholds and native execution requires complementary evidence.",
+      "verification": "Consulted primary guide for native pinning; no carrier or JFR behavior measured in this review."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/specs/jni/functions.html#getprimitivearraycritical-releaseprimitivearraycritical",
+      "version": "JNI specification JDK 25",
+      "supports": "JNI critical regions have restricted operations; array access may copy. JNI_COMMIT on copied elements requires final release; JNI_ABORT is not rollback for directly exposed storage.",
+      "verification": "Consulted primary specification. No JNI C library compiled or executed."
+    },
+    {
+      "url": "https://www.oracle.com/java/technologies/javase/25-relnote-issues.html#JDK-8192647",
+      "version": "JDK 25 release notes",
+      "supports": "Serial/Parallel GC waits for JNI critical regions and blocks new entrants before GC; old retry-related premature OOME mechanism and flag differ from earlier JDKs.",
+      "verification": "Consulted release notes; no collector/GC-latency experiment."
+    }
+  ],
+  "failedAttempts": [
+    {
+      "command": "rg -n '^##|^###' skills/jni-and-ffm/SKILL.md skills/jni-and-ffm/references/*.md",
+      "workingDirectory": "C:/git/agent-skills",
+      "exitCode": 1,
+      "reason": "rg received a literal Windows wildcard path (OS error 123); rerun successfully as rg -n '^##|^###' skills/jni-and-ffm -g '*.md'. No file change."
+    },
+    {
+      "operation": "web open/find",
+      "url": "https://openjdk.org/jeps/491",
+      "result": "Tool returned Internal Error / no matching text; not counted as successfully consulted primary evidence for removal chronology."
+    },
+    {
+      "operation": "web open",
+      "url": "https://docs.oracle.com/en/java/javase/25/core/java-native-interface-jni.html",
+      "result": "Tool reported inaccessible URL; consulted JDK 25 JNI specification directly instead."
+    }
+  ]
+}

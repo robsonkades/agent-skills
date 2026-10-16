@@ -1,0 +1,2 @@
+[100.000s][info][gc] GC(17) Major Collection (Warmup)
+[101.000s][info][gc] GC(17) Major Collection (Warmup) 2048M(50%)->1024M(25%) 1.000s

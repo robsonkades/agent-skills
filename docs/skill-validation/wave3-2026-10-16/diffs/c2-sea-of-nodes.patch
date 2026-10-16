@@ -1,0 +1,95 @@
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\c2-sea-of-nodes/SKILL.md" "b/C:\\git\\agent-skills\\skills\\c2-sea-of-nodes/SKILL.md"
+index 46bcb25..8cc916c 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\c2-sea-of-nodes/SKILL.md"
++++ "b/C:\\git\\agent-skills\\skills\\c2-sea-of-nodes/SKILL.md"
+@@ -52,8 +52,10 @@ diagnostics require an alternative evidence source, not an assumed result.
+ 3. **If it reached tier 4, check inlining on the hot call site** with `-XX:+PrintInlining`,
+    reading the **tier-4** tree, not the tier-3 one above it. C2 names the limit it applied:
+    `too big` is `MaxInlineSize` at a cold site, `hot method too big` is `FreqInlineSize`,
+-   `already compiled into a big method` is `InlineSmallCode`, `inlining too deep` is
+-   `MaxInlineLevel`. `callee is too large` is C1's verdict and says nothing about C2.
++   `already compiled into a big method` uses `InlineSmallCode`; the cold-branch
++   `already compiled into a medium method` uses one quarter of that compiled-code limit.
++   `inlining too deep` is `MaxInlineLevel`. `callee is too large` is C1's verdict and says
++   nothing about C2. Use the phase reference to distinguish compiled size from bytecode size.
+ 4. **If an allocation appears to survive, get the escape evidence before theorising.** On a **debug
+    build**, `-XX:+PrintEscapeAnalysis` with `-XX:+PrintEliminateAllocations` answers two
+    different questions; both are `develop` flags, so a product JVM refuses to start on
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\c2-sea-of-nodes/references/c2-phases-and-ir.md" "b/C:\\git\\agent-skills\\skills\\c2-sea-of-nodes/references/c2-phases-and-ir.md"
+index 77ad0c2..24984f2 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\c2-sea-of-nodes/references/c2-phases-and-ir.md"
++++ "b/C:\\git\\agent-skills\\skills\\c2-sea-of-nodes/references/c2-phases-and-ir.md"
+@@ -137,16 +137,17 @@ and [allocation elimination versus expansion](https://github.com/openjdk/jdk25u/
+ The refusal text is the limit's name in disguise. These are the exact strings C2 prints under
+ `-XX:+PrintInlining` (`bytecodeInfo.cpp`, confirmed on Temurin 25.0.3):
+ 
+-| Flag                      | Default                         | Effect                                                            | Refusal printed                       |
+-| ------------------------- | ------------------------------- | ----------------------------------------------------------------- | ------------------------------------- |
+-| `MaxInlineSize`           | 35 bytecode bytes               | Base bytecode-size allowance                                      | `too big`                             |
+-| `FreqInlineSize`          | 325 bytecode bytes              | Larger allowance for eligible sites                               | `hot method too big`                  |
+-| `InlineSmallCode`         | 2500 adjusted instruction bytes | Eligible compiled-code size gate                                  | `already compiled into a big method`  |
+-| `MaxInlineLevel`          | 15 (C1: `C1MaxInlineLevel` 9)   | Maximum nested inlining depth                                     | `inlining too deep`                   |
+-| `MaxRecursiveInlineLevel` | 1                               | Recursion: only one level is inlined                              | `recursive inlining is too deep`      |
+-| —                         | —                               | Megamorphic or unprofiled receiver: size never considered         | `virtual call`, `no static binding`   |
+-| —                         | —                               | Callee class not yet loaded or resolved at compile time           | `not inlineable` after `(not loaded)` |
+-| `C1MaxInlineSize`         | 35 (C1 only)                    | C1's own limit, printed in **tier 1/2/3** trees, not a C2 verdict | `callee is too large`                 |
++| Flag                      | Default                         | Effect                                                            | Refusal printed                         |
++| ------------------------- | ------------------------------- | ----------------------------------------------------------------- | --------------------------------------- |
++| `MaxInlineSize`           | 35 bytecode bytes               | Base bytecode-size allowance                                      | `too big`                               |
++| `FreqInlineSize`          | 325 bytecode bytes              | Larger allowance for eligible sites                               | `hot method too big`                    |
++| `InlineSmallCode`         | 2500 adjusted instruction bytes | Eligible compiled-code size gate                                  | `already compiled into a big method`    |
++| `InlineSmallCode / 4`     | 625 adjusted instruction bytes  | Derived cold-branch gate, not a separate VM option                | `already compiled into a medium method` |
++| `MaxInlineLevel`          | 15 (C1: `C1MaxInlineLevel` 9)   | Maximum nested inlining depth                                     | `inlining too deep`                     |
++| `MaxRecursiveInlineLevel` | 1                               | Recursion: only one level is inlined                              | `recursive inlining is too deep`        |
++| —                         | —                               | Megamorphic or unprofiled receiver: size never considered         | `virtual call`, `no static binding`     |
++| —                         | —                               | Callee class not yet loaded or resolved at compile time           | `not inlineable` after `(not loaded)`   |
++| `C1MaxInlineSize`         | 35 (C1 only)                    | C1's own limit, printed in **tier 1/2/3** trees, not a C2 verdict | `callee is too large`                   |
+ 
+ A verdict needs its compiler and compilation identity. In the recipe's example, C1 refuses
+ the 85-byte callee with `callee is too large`; C2 later says `inline (hot)` for that callee.
+@@ -165,6 +166,16 @@ total nmethod or `Compiler.codelist` address span. The inspected
+ its verified entry and skipped instructions. A larger compiled callee can block later
+ inlining and escape-analysis opportunities that depend on removing that call boundary.
+ 
++The `medium method` refusal comes from `should_inline`'s cold branch: when frequency,
++unboxing and constructor criteria do not select the frequent-site branch, an eligible
++pre-existing optimized nmethod is checked against `InlineSmallCode / 4` **before** the
++bytecode-size check. The `big method` gate in `should_not_inline` uses the full flag value.
++Thus even a tiny bytecode method can fail the cold gate while its compiled size is below
++the full limit; increasing `MaxInlineSize` alone does not remove this refusal. Keep the
++observed reason, caller profile and effective flags together rather than treating every
++size refusal as a bytecode budget problem. Other legality/profitability gates still apply;
++identify a material measured cost before considering a change to either policy.
++
+ Implementation references: [C2 allowance selection](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/opto/bytecodeInfo.cpp)
+ and [the compiled instruction-size metric](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/ci/ciMethod.cpp).
+ 
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\c2-sea-of-nodes/references/jit-diagnosis-recipes.md" "b/C:\\git\\agent-skills\\skills\\c2-sea-of-nodes/references/jit-diagnosis-recipes.md"
+index 73b51de..fbca3cb 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\c2-sea-of-nodes/references/jit-diagnosis-recipes.md"
++++ "b/C:\\git\\agent-skills\\skills\\c2-sea-of-nodes/references/jit-diagnosis-recipes.md"
+@@ -43,8 +43,9 @@ Method suspected of being under-optimised
+ |
+ +-- 2. Does the hot path call other methods?
+ |      PrintInlining on the TIER-4 tree shows "too big" / "hot method too big" /
+-|      "already compiled into a big method" / "virtual call" / "inlining too deep"?
+-|      yes -> the string names the limit (c2-phases-and-ir.md); check size, hotness, depth
++|      "already compiled into a big method" / "already compiled into a medium method" /
++|      "virtual call" / "inlining too deep"?
++|      yes -> identify the gate (c2-phases-and-ir.md): bytecode vs compiled size, hotness, depth
+ |      (a tier-3 tree saying "callee is too large" is C1's verdict, not C2's)
+ |
+ +-- 3. Is there an allocation that "should" have disappeared?
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\c2-sea-of-nodes/skill.yaml" "b/C:\\git\\agent-skills\\skills\\c2-sea-of-nodes/skill.yaml"
+index 19d2460..c0779f8 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\c2-sea-of-nodes/skill.yaml"
++++ "b/C:\\git\\agent-skills\\skills\\c2-sea-of-nodes/skill.yaml"
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: c2-sea-of-nodes
+-version: 1.4.5
++version: 1.4.6
+ description: >-
+   How HotSpot actually executes and compiles: the runtime-generated template interpreter,
+   C2's sea-of-nodes IR, a release-scoped diagnostic map of compilation phases, and why a given

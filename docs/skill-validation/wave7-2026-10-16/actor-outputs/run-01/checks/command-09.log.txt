@@ -1,0 +1,4 @@
+PASS assessment JSON and 25-file preservation evidence parsed
+ReceiptContractRegression.java
+RequiresNewCounterexample.java
+Smoke.java

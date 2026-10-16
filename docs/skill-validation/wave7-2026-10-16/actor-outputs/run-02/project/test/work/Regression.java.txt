@@ -1,0 +1,183 @@
+package work;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import javax.sql.DataSource;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.transaction.support.TransactionTemplate;
+
+public class Regression {
+    @Configuration
+    static class ProbeConfig {
+        @Bean @Primary
+        Probe probe(JdbcTemplate jdbc, DataSource dataSource) {
+            return new Probe(jdbc, dataSource);
+        }
+    }
+
+    static class Probe implements ReceiptObserver {
+        private final JdbcTemplate jdbc;
+        private final DataSource dataSource;
+        int calls;
+
+        Probe(JdbcTemplate jdbc, DataSource dataSource) {
+            this.jdbc = jdbc;
+            this.dataSource = dataSource;
+        }
+
+        @Override
+        public void beforeWrite(String id) {
+            calls++;
+            equal(1, count(jdbc, "booking", id), "writer sees publisher's row");
+            equal(0, independentCount(dataSource, "booking", id),
+                    "publisher is uncommitted inside the actual writer");
+            equal(0, count(jdbc, "receipt", id), "observer precedes header write");
+            equal(0, count(jdbc, "receipt_detail", id), "observer precedes body write");
+        }
+    }
+
+    static class OwnerFailure extends RuntimeException {}
+
+    public static void main(String[] args) {
+        try (var context = new AnnotationConfigApplicationContext(Config.class, ProbeConfig.class)) {
+            var jdbc = context.getBean(JdbcTemplate.class);
+            var dataSource = context.getBean(DataSource.class);
+            var service = context.getBean(BookingService.class);
+            var probe = context.getBean(Probe.class);
+            var owner = new TransactionTemplate(context.getBean("businessTx", PlatformTransactionManager.class));
+            owner.setTimeout(5);
+
+            reset(jdbc, probe);
+            service.place("normal", "ready", "123456789012");
+            state(jdbc, "normal", 1, 19);
+            equal("123456789012", jdbc.queryForObject(
+                    "select body from receipt_detail where id='normal'", String.class), "12-character body unchanged");
+            equal(1, probe.calls, "one real writer callback");
+            System.out.println("PASS success: booking/header/body=1/1/1, stock=19; writer sees uncommitted booking, independent reader=0");
+
+            reset(jdbc, probe);
+            expect(DataIntegrityViolationException.class,
+                    () -> service.place("invalid", "ready", "1234567890123"));
+            state(jdbc, "invalid", 0, 20);
+            equal(1, probe.calls, "invalid body reaches writer");
+            System.out.println("PASS 13-character rejection: booking/header/body=0/0/0, stock=20; call fails");
+
+            reset(jdbc, probe);
+            expect(IllegalStateException.class, () -> service.place("empty", "sold-out", "valid"));
+            state(jdbc, "empty", 0, 20);
+            equal(0, jdbc.queryForObject("select available from stock where sku='sold-out'", Integer.class), "sold-out stock");
+            equal(0, probe.calls, "rollback does not deliver BEFORE_COMMIT");
+            System.out.println("PASS unavailable stock: booking/header/body=0/0/0, sold-out stock=0; call fails");
+
+            reset(jdbc, probe);
+            context.publishEvent(new BookingRecorded("outside", "valid"));
+            state(jdbc, "outside", 0, 20);
+            equal(0, probe.calls, "nontransactional event skipped");
+            System.out.println("PASS nontransactional publication: no receipt or writer invocation");
+
+            reset(jdbc, probe);
+            owner.executeWithoutResult(status -> {
+                service.place("joined", "ready", "valid");
+                equal(1, count(jdbc, "booking", "joined"), "owner sees booking");
+                equal(0, count(jdbc, "receipt", "joined"), "receipt awaits owner completion");
+                equal(0, independentCount(dataSource, "booking", "joined"), "service did not commit owner's unit");
+                equal(0, probe.calls, "listener deferred to owner");
+            });
+            state(jdbc, "joined", 1, 19);
+            equal(1, probe.calls, "owner commit invokes writer");
+            System.out.println("PASS REQUIRED participation: inner return is uncommitted; owner commit persists booking/header/body and stock");
+
+            reset(jdbc, probe);
+            expect(OwnerFailure.class, () -> owner.executeWithoutResult(status -> {
+                service.place("owner-fails", "ready", "valid");
+                equal(0, independentCount(dataSource, "booking", "owner-fails"), "no early service commit");
+                throw new OwnerFailure();
+            }));
+            state(jdbc, "owner-fails", 0, 20);
+            equal(0, probe.calls, "owner rollback skips callback");
+            System.out.println("PASS owner failure after inner return: booking/header/body=0/0/0, stock=20");
+
+            reset(jdbc, probe);
+            expect(OwnerFailure.class, () -> owner.executeWithoutResult(status -> {
+                service.place("late-failure", "ready", "valid");
+                // Same default order, registered after the event synchronization.
+                // Inspect the real writes before a later owner completion failure.
+                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                    @Override
+                    public void beforeCommit(boolean readOnly) {
+                        equal(1, count(jdbc, "receipt", "late-failure"), "header written before late failure");
+                        equal(1, count(jdbc, "receipt_detail", "late-failure"), "body written before late failure");
+                        equal(0, independentCount(dataSource, "receipt", "late-failure"), "receipt has no independent commit");
+                        throw new OwnerFailure();
+                    }
+                });
+            }));
+            state(jdbc, "late-failure", 0, 20);
+            equal(1, probe.calls, "late failure follows writer");
+            System.out.println("PASS late completion failure after both receipt writes: booking/header/body=0/0/0, stock=20");
+            System.out.println("PASS all 7 mandatory-receipt regression scenarios");
+        }
+    }
+
+    private static void reset(JdbcTemplate jdbc, Probe probe) {
+        jdbc.execute("drop all objects");
+        jdbc.execute("create table booking(id varchar(80) primary key,sku varchar(80))");
+        jdbc.execute("create table receipt(id varchar(80) primary key)");
+        jdbc.execute("create table receipt_detail(id varchar(80) primary key,body varchar(12))");
+        jdbc.execute("create table stock(sku varchar(80) primary key,available int)");
+        jdbc.update("insert into stock values ('ready',20),('sold-out',0)");
+        probe.calls = 0;
+    }
+
+    private static int count(JdbcTemplate jdbc, String table, String id) {
+        return jdbc.queryForObject("select count(*) from " + table + " where id=?", Integer.class, id);
+    }
+
+    private static int independentCount(DataSource dataSource, String table, String id) {
+        try (var connection = dataSource.getConnection()) {
+            connection.setAutoCommit(false);
+            connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+            try (var statement = connection.prepareStatement("select count(*) from " + table + " where id=?")) {
+                statement.setQueryTimeout(2);
+                statement.setString(1, id);
+                try (var result = statement.executeQuery()) {
+                    result.next();
+                    int count = result.getInt(1);
+                    connection.rollback();
+                    return count;
+                }
+            }
+        } catch (SQLException failure) {
+            throw new AssertionError("independent observation failed", failure);
+        }
+    }
+
+    private static void state(JdbcTemplate jdbc, String id, int rows, int stock) {
+        equal(rows, count(jdbc, "booking", id), "committed booking");
+        equal(rows, count(jdbc, "receipt", id), "committed header");
+        equal(rows, count(jdbc, "receipt_detail", id), "committed body");
+        equal(stock, jdbc.queryForObject("select available from stock where sku='ready'", Integer.class), "committed stock");
+    }
+
+    private static void expect(Class<? extends RuntimeException> type, Runnable action) {
+        try {
+            action.run();
+        } catch (RuntimeException failure) {
+            if (type.isInstance(failure)) return;
+            throw new AssertionError("expected " + type.getName() + " but got " + failure, failure);
+        }
+        throw new AssertionError("expected " + type.getName());
+    }
+
+    private static void equal(Object expected, Object actual, String label) {
+        if (!expected.equals(actual)) throw new AssertionError(label + ": expected " + expected + ", got " + actual);
+    }
+}

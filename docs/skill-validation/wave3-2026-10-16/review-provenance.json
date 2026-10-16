@@ -1,0 +1,446 @@
+{
+  "capturedAt": "2026-10-16T15:23:49.349Z",
+  "allReviewersStopped": true,
+  "handoffs": [
+    {
+      "skill": "adapter-sidecar-pattern",
+      "raw": "handoffs-raw/adapter-sidecar-pattern.json.txt",
+      "sha256": "26a4196ffb5702696851db425b7b516e823bbf81cf0d663cc717c678f84ba529",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/adapter-sidecar-pattern.json"
+    },
+    {
+      "skill": "ambassador-pattern",
+      "raw": "handoffs-raw/ambassador-pattern.json.txt",
+      "sha256": "5838e28dcfb90769ce9297fcfa765e2ee59796f8054a76d79ea84fa2d9988f74",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/ambassador-pattern.json"
+    },
+    {
+      "skill": "c2-sea-of-nodes",
+      "raw": "handoffs-raw/c2-sea-of-nodes.json.txt",
+      "sha256": "491cdf6631a5da9610fe9e9449bc9e1b92dbb706e52267540997b9a416d494f5",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/c2-sea-of-nodes.json"
+    },
+    {
+      "skill": "code-cache-segments",
+      "raw": "handoffs-raw/code-cache-segments.json.txt",
+      "sha256": "c3aa54ff7cbf3dff92839e7ed179d2b00721e10d3faba9ed131b8f4feb5445b0",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/code-cache-segments.json"
+    },
+    {
+      "skill": "compilation-and-inlining-logs",
+      "raw": "handoffs-raw/compilation-and-inlining-logs.json.txt",
+      "sha256": "407395f49d75b8d3926fc36187ef24b776bdcda0b23486808f605b734473c928",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/compilation-and-inlining-logs.json"
+    },
+    {
+      "skill": "container-awareness",
+      "raw": "handoffs-raw/container-awareness.json.txt",
+      "sha256": "4dd0b3469309b905cb6fea7387b76aef2047b5ebf402595b99cc3f843d41739e",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/container-awareness.json"
+    },
+    {
+      "skill": "cpu-cache-and-numa",
+      "raw": "handoffs-raw/cpu-cache-and-numa.json.txt",
+      "sha256": "de3fd0b3496ea8a041d7132595ae8f0d4fa616b208dfdd4bb6002f7a2d2bd26b",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/cpu-cache-and-numa.json"
+    },
+    {
+      "skill": "deoptimization",
+      "raw": "handoffs-raw/deoptimization.json.txt",
+      "sha256": "8b2dff60544afaa2c36cbb63f0381c08ef924942f155febefb146f62e9676b2c",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/deoptimization.json"
+    },
+    {
+      "skill": "escape-analysis-internals",
+      "raw": "handoffs-raw/escape-analysis-internals.json.txt",
+      "sha256": "b39c697726d21cfcb749e04bc7d7b7b00dc63429e7b551e7a352ab383b3d908d",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/escape-analysis-internals.json"
+    },
+    {
+      "skill": "graalvm-jit",
+      "raw": "handoffs-raw/graalvm-jit.json.txt",
+      "sha256": "f29b6a5579e0f9c4110ae74c4fdc9647a1a249382a7fa0aee6fececfd2b0673e",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/graalvm-jit.json"
+    },
+    {
+      "skill": "graalvm-native-image",
+      "raw": "handoffs-raw/graalvm-native-image.json.txt",
+      "sha256": "0de7e7f35f2518f15bdda10ee726bee2c891adafc658ba193fcfd80345f41565",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/graalvm-native-image.json"
+    },
+    {
+      "skill": "grpc-http2-service-mesh-performance",
+      "raw": "handoffs-raw/grpc-http2-service-mesh-performance.json.txt",
+      "sha256": "49e46104a5653f3b9bdb63e7f48582779f23be3eb8a7a57c8a9e883a037afa7a",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/grpc-http2-service-mesh-performance.json"
+    },
+    {
+      "skill": "io-uring-and-zero-copy",
+      "raw": "handoffs-raw/io-uring-and-zero-copy.json.txt",
+      "sha256": "00736e0de083db0a5167080816cb467b5d5a92b593311a53ef7aa4c016b15d63",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/io-uring-and-zero-copy.json"
+    },
+    {
+      "skill": "java-annotations",
+      "raw": "handoffs-raw/java-annotations.json.txt",
+      "sha256": "441fff12cf1863b304b8c917abfc6eaeb3eea4f73ebbee43c63a6a396811d45c",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-annotations.json"
+    },
+    {
+      "skill": "java-api-design",
+      "raw": "handoffs-raw/java-api-design.json.txt",
+      "sha256": "7cef5018b852154df53915084839de0f0a845ddafa8e1d69c034cb857ea78515",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-api-design.json"
+    },
+    {
+      "skill": "java-application-security-basics",
+      "raw": "handoffs-raw/java-application-security-basics.json.txt",
+      "sha256": "4912deb084b2e19549d8c2c3fb199d1d0a47d44b82bff8ff289a56a1d1a64ee7",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-application-security-basics.json"
+    },
+    {
+      "skill": "java-build-and-dependencies",
+      "raw": "handoffs-raw/java-build-and-dependencies.json.txt",
+      "sha256": "06bc7ffbd3f9d351a11389dd8676434b598344640af196964aa963998f3d0c62",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-build-and-dependencies.json"
+    },
+    {
+      "skill": "java-clean-code",
+      "raw": "handoffs-raw/java-clean-code.json.txt",
+      "sha256": "63b4dcb4d5f0f79f51ce8c31e6a85560f1e1efea9a9808107c3884933e9b30bf",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-clean-code.json"
+    },
+    {
+      "skill": "java-code-smells",
+      "raw": "handoffs-raw/java-code-smells.json.txt",
+      "sha256": "1e64c1b9c89346e24b5e407a73777e52e20bdba2c19f5089e867da08ca610ea1",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-code-smells.json"
+    },
+    {
+      "skill": "java-cohesion-coupling",
+      "raw": "handoffs-raw/java-cohesion-coupling.json.txt",
+      "sha256": "1bc18b03c91343d0128b0b782d79747dcf69c101a2359e28e92f0ec535cf5f29",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-cohesion-coupling.json"
+    },
+    {
+      "skill": "java-composition-over-inheritance",
+      "raw": "handoffs-raw/java-composition-over-inheritance.json.txt",
+      "sha256": "317fe82a96085cd9051374364f808faf51334f51db93194cb024ee74b73697eb",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-composition-over-inheritance.json"
+    },
+    {
+      "skill": "java-date-and-time",
+      "raw": "handoffs-raw/java-date-and-time.json.txt",
+      "sha256": "8f1c791e533794c3bb0ea1c3c1de7dd40a552cc5ac381d58d4160443e494ec5d",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-date-and-time.json"
+    },
+    {
+      "skill": "java-defensive-programming",
+      "raw": "handoffs-raw/java-defensive-programming.json.txt",
+      "sha256": "91612876a072ac75f254ae3840b97fbc8ba18506df92a52bdf121b0d97efd179",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-defensive-programming.json"
+    },
+    {
+      "skill": "java-dependency-inversion",
+      "raw": "handoffs-raw/java-dependency-inversion.json.txt",
+      "sha256": "c6e882aadb0be3c721acd18f9bcf863d8509388dd10f476a6e4581a4655813aa",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-dependency-inversion.json"
+    },
+    {
+      "skill": "java-design-by-contract",
+      "raw": "handoffs-raw/java-design-by-contract.json.txt",
+      "sha256": "3dab17a4dfa6523d3773ee0efc62d6690921b4d32d02fd78a4c255aa327faa18",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-design-by-contract.json"
+    },
+    {
+      "skill": "java-dry-kiss-yagni",
+      "raw": "handoffs-raw/java-dry-kiss-yagni.json.txt",
+      "sha256": "3126376b566df0e552d4dfc566b5fe650cf621580ec2a5233e17c287d358eb36",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-dry-kiss-yagni.json"
+    },
+    {
+      "skill": "java-enums",
+      "raw": "handoffs-raw/java-enums.json.txt",
+      "sha256": "ba00c2abf84b2aeea0de4b36b92790d4d72ea8082aaf8f339853d97825e3c56b",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-enums.json"
+    },
+    {
+      "skill": "java-exception-design",
+      "raw": "handoffs-raw/java-exception-design.json.txt",
+      "sha256": "7eaecb940c0c4eb115dead57a995efa0319755daae7229842c025d5fa46b22fb",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-exception-design.json"
+    },
+    {
+      "skill": "java-fluent-apis",
+      "raw": "handoffs-raw/java-fluent-apis.json.txt",
+      "sha256": "a54372945646fee1316be16bf7e70e4f5af4e8e3e28ae59be070592bfaedf389",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-fluent-apis.json"
+    },
+    {
+      "skill": "java-generics",
+      "raw": "handoffs-raw/java-generics.json.txt",
+      "sha256": "b86121fd52a262a99fe8a3f5fd91cd501eb63ece77066a011a97f61b6627bbb3",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-generics.json"
+    },
+    {
+      "skill": "java-immutability",
+      "raw": "handoffs-raw/java-immutability.json.txt",
+      "sha256": "d615505e86c51d70cb2cc81595577bf19a22590746839b28e94506108c0eaf2e",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-immutability.json"
+    },
+    {
+      "skill": "java-lambdas-and-functional-interfaces",
+      "raw": "handoffs-raw/java-lambdas-and-functional-interfaces.json.txt",
+      "sha256": "0ff16a7e677a05a90212397f66d34152a2372ef6c493a7f556585a15c319671e",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-lambdas-and-functional-interfaces.json"
+    },
+    {
+      "skill": "java-law-of-demeter",
+      "raw": "handoffs-raw/java-law-of-demeter.json.txt",
+      "sha256": "b5a21ec0ea3a74f50b50f4f03a6f6c8f288663c07880e23a9392c8fd7d402cd2",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-law-of-demeter.json"
+    },
+    {
+      "skill": "java-null-safety",
+      "raw": "handoffs-raw/java-null-safety.json.txt",
+      "sha256": "e0f20512f453413b0ed86491ad57b29d6de839fe3736629925c2e45594f163a8",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-null-safety.json"
+    },
+    {
+      "skill": "java-numeric-types",
+      "raw": "handoffs-raw/java-numeric-types.json.txt",
+      "sha256": "dee25e035001a642aacc26bfd7c9a8f2073d1fcaf07dc6dc6d7829836fdd8db3",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-numeric-types.json"
+    },
+    {
+      "skill": "java-object-construction",
+      "raw": "handoffs-raw/java-object-construction.json.txt",
+      "sha256": "a26519c61892597a01eaf83cc0af514a614ead09f2ef2f2dfcaf39c0f666373d",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction.json"
+    },
+    {
+      "skill": "java-object-contracts",
+      "raw": "handoffs-raw/java-object-contracts.json.txt",
+      "sha256": "ac18e9481166cad05c5c56ef4c7d69730182c2637613eb527affd4e874543006",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts.json"
+    },
+    {
+      "skill": "java-optional",
+      "raw": "handoffs-raw/java-optional.json.txt",
+      "sha256": "e6380bd6697ff27a80017f12e6b906bc190d53706e68befb108c8839e236dbd8",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-optional.json"
+    },
+    {
+      "skill": "java-refactoring",
+      "raw": "handoffs-raw/java-refactoring.json.txt",
+      "sha256": "2988f6372331dddea16775225588f2c3d55bc0dca2a15fd51f0133efbd3880b1",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-refactoring.json"
+    },
+    {
+      "skill": "java-reflection-and-method-handles",
+      "raw": "handoffs-raw/java-reflection-and-method-handles.json.txt",
+      "sha256": "3d0fc6ced3e8dd6e5709ba91622374cc5b9b8a5ddd440bb2a7b092f79dfcc1fa",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-reflection-and-method-handles.json"
+    },
+    {
+      "skill": "java-resource-management",
+      "raw": "handoffs-raw/java-resource-management.json.txt",
+      "sha256": "90a69ce1c115b7520c9225fb2a96c6c030e4f00adec2a794320093f380b1f676",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-resource-management.json"
+    },
+    {
+      "skill": "java-serialization-hardening",
+      "raw": "handoffs-raw/java-serialization-hardening.json.txt",
+      "sha256": "f27af9344a51cedbf44df6a29d6e84d0aaba6c187e5d85c64f6ef56c17c49d68",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening.json"
+    },
+    {
+      "skill": "java-solid",
+      "raw": "handoffs-raw/java-solid.json.txt",
+      "sha256": "c566abd7de66b41a0f2fc8ba1444daff5941023db13c55c8aaec866064dc219c",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-solid.json"
+    },
+    {
+      "skill": "java-streams",
+      "raw": "handoffs-raw/java-streams.json.txt",
+      "sha256": "b4aebfbf2d4c0a860e5690815557bf5c96b596eddeecddd1b61121ecb1546503",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-streams.json"
+    },
+    {
+      "skill": "java-strings-and-text",
+      "raw": "handoffs-raw/java-strings-and-text.json.txt",
+      "sha256": "be5eaa263648e627dea85289623112c0c3c85ef3006a8eb366c17b1f2b8e60a6",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-strings-and-text.json"
+    },
+    {
+      "skill": "java-tell-dont-ask",
+      "raw": "handoffs-raw/java-tell-dont-ask.json.txt",
+      "sha256": "7395c80f4e85292210a2217a0cbfddc928ca37421894fd6c1d91d01b92e23261",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-tell-dont-ask.json"
+    },
+    {
+      "skill": "jdk-upgrade-impact",
+      "raw": "handoffs-raw/jdk-upgrade-impact.json.txt",
+      "sha256": "a259f4845b887eb1c3b689affcbf9a6c820a282959479fa8b936234bca1a2880",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jdk-upgrade-impact.json"
+    },
+    {
+      "skill": "jit-compilation",
+      "raw": "handoffs-raw/jit-compilation.json.txt",
+      "sha256": "563b256e2bb49d562db7866481f5dcc4ac2ea3cbfd26e09d6e2188ac2961fa0c",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation.json"
+    },
+    {
+      "skill": "jit-inlining-and-escape-analysis",
+      "raw": "handoffs-raw/jit-inlining-and-escape-analysis.json.txt",
+      "sha256": "7d3fbe6defe327f795d96229e16ea6b6d1390734f387f69db30a39a9c1e3de49",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-inlining-and-escape-analysis.json"
+    },
+    {
+      "skill": "jni-and-ffm",
+      "raw": "handoffs-raw/jni-and-ffm.json.txt",
+      "sha256": "db84a61bebd4cd2129e6a07a55a1d32251260f9c3a48ca3c18758844dad3c37e",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jni-and-ffm.json"
+    },
+    {
+      "skill": "jvm-bytecode",
+      "raw": "handoffs-raw/jvm-bytecode.json.txt",
+      "sha256": "a8fc8c64c6eae4e46909fee8249d5dd4e0799b6e7e8b054273e14b9cbf75d78e",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-bytecode.json"
+    },
+    {
+      "skill": "jvm-class-loading",
+      "raw": "handoffs-raw/jvm-class-loading.json.txt",
+      "sha256": "80016e6d9943ba5d97570ff16c96798cef98d769c77891d4817f34ebfde48333",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-class-loading.json"
+    },
+    {
+      "skill": "kubernetes-service-lifecycle",
+      "raw": "handoffs-raw/kubernetes-service-lifecycle.json.txt",
+      "sha256": "8d48e4f832ed5c01ea370312d9ecf787359e0c3c0e6abd5ee28a49d85e2d5082",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/kubernetes-service-lifecycle.json"
+    },
+    {
+      "skill": "linux-for-jvm",
+      "raw": "handoffs-raw/linux-for-jvm.json.txt",
+      "sha256": "229293cf74eb2b5f83e998c28e40f46cc3eeb0ee1ec7257df374ad4d8a6e4828",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/linux-for-jvm.json"
+    },
+    {
+      "skill": "numa-and-cpu-affinity",
+      "raw": "handoffs-raw/numa-and-cpu-affinity.json.txt",
+      "sha256": "ed78dcc7999e92eb085ad8bb8f1f86be168cdb5b5406331f2cc0ecad7a8aa8bd",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/numa-and-cpu-affinity.json"
+    },
+    {
+      "skill": "project-valhalla",
+      "raw": "handoffs-raw/project-valhalla.json.txt",
+      "sha256": "cfa81ddb9ffdafd25207636c7ac1c6bacf9bb11745fa1fe6d20362d1ab11511c",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/project-valhalla.json"
+    },
+    {
+      "skill": "reading-jit-assembly",
+      "raw": "handoffs-raw/reading-jit-assembly.json.txt",
+      "sha256": "6f19dfc45f6c4e4f277f13053321bdac64e57287898542dbfae6361e731cf63f",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/reading-jit-assembly.json"
+    },
+    {
+      "skill": "refactoring-automation",
+      "raw": "handoffs-raw/refactoring-automation.json.txt",
+      "sha256": "989e07b905ab26ea4c6b9631b735a973cc2a401d067476941460810bc7f105c2",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/refactoring-automation.json"
+    },
+    {
+      "skill": "serialization-performance",
+      "raw": "handoffs-raw/serialization-performance.json.txt",
+      "sha256": "bc36c0b98b3657a674aab267801a175a3aa6a0917c2a04abe5cb49b1e72b85b1",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/serialization-performance.json"
+    },
+    {
+      "skill": "sidecar-pattern",
+      "raw": "handoffs-raw/sidecar-pattern.json.txt",
+      "sha256": "0363807b55a4af868229ded9fa2820e2c05214c76e0096cc371680ac6c2e8881",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/sidecar-pattern.json"
+    },
+    {
+      "skill": "simd-and-vector-api",
+      "raw": "handoffs-raw/simd-and-vector-api.json.txt",
+      "sha256": "eadda52f7fd11f6a5efc6048cb0f165dbd25e42205596091c111042b6ff0a9d6",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/simd-and-vector-api.json"
+    },
+    {
+      "skill": "startup-cds-crac-leyden",
+      "raw": "handoffs-raw/startup-cds-crac-leyden.json.txt",
+      "sha256": "98773d64ecfebf808f25c859fd094464ea821163837d6c6f6c240291233c1481",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/startup-cds-crac-leyden.json"
+    },
+    {
+      "skill": "tcp-tuning",
+      "raw": "handoffs-raw/tcp-tuning.json.txt",
+      "sha256": "9de39cc5472ea8f56e515f175757dcb084877aea45898e8756ea8e5d045c9014",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/tcp-tuning.json"
+    }
+  ],
+  "helpers": [
+    {
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/coordinator.mjs",
+      "target": "coordinator-tools/coordinator.mjs.txt",
+      "sha256": "431bffcc7e33c64a2c44ce65336422f540422a9781473919957ea9bc10199c8b",
+      "note": "Coordinator helper snapshot; paths are environment-specific. Archival copy, not shipped runtime code."
+    },
+    {
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/audit-wave.mjs",
+      "target": "coordinator-tools/audit-wave.mjs.txt",
+      "sha256": "b587e87ee701538b67c3db3066b984307a0cd440576209e5c98097eb27acd3fe",
+      "note": "Coordinator helper snapshot; paths are environment-specific. Archival copy, not shipped runtime code."
+    },
+    {
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/archive-evidence.mjs",
+      "target": "coordinator-tools/archive-evidence.mjs.txt",
+      "sha256": "f931a85843872cfda118c9c7fbe0e7cf7b727b330ce26864db39dae308cc1167",
+      "note": "Coordinator helper snapshot; paths are environment-specific. Archival copy, not shipped runtime code."
+    },
+    {
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/prepare-behavior.mjs",
+      "target": "coordinator-tools/prepare-behavior.mjs.txt",
+      "sha256": "d7543339770a761781b92c011ebd57a518f3fa7b300ed680c1ece5523af8a435",
+      "note": "Coordinator helper snapshot; paths are environment-specific. Archival copy, not shipped runtime code."
+    },
+    {
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/grade-behavior.mjs",
+      "target": "coordinator-tools/grade-behavior.mjs.txt",
+      "sha256": "96dcbd878b75cd3eb8bc7c661923ce1a05f9b1746c4696bc9a1221908cb361df",
+      "note": "Coordinator helper snapshot; paths are environment-specific. Archival copy, not shipped runtime code."
+    },
+    {
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/finalize-behavior.mjs",
+      "target": "coordinator-tools/finalize-behavior.mjs.txt",
+      "sha256": "0502a5c31ea17793aa1009fd931830e4a882aa4d3cb4155a2eb024d41edd7a82",
+      "note": "Coordinator helper snapshot; paths are environment-specific. Archival copy, not shipped runtime code."
+    },
+    {
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/audit-report.mjs",
+      "target": "coordinator-tools/audit-report.mjs.txt",
+      "sha256": "2dd932d36c626b6393d74dc7c24b50c1d8608d1218edfb7c94b7ca73af4b7ca9",
+      "note": "Coordinator helper snapshot; paths are environment-specific. Archival copy, not shipped runtime code."
+    },
+    {
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/run-global.mjs",
+      "target": "coordinator-tools/run-global.mjs.txt",
+      "sha256": "5ddf215ca3135bdec2ec647484fd0585bc4703da593488f8b7beff067508c4c8",
+      "note": "Coordinator helper snapshot; paths are environment-specific. Archival copy, not shipped runtime code."
+    },
+    {
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/finish-wave.mjs",
+      "target": "coordinator-tools/finish-wave.mjs.txt",
+      "sha256": "3d5e9bf730b3df633c74a2d9e4eeaa119c9527bf1a964b15fd1982ede60b2609",
+      "note": "Coordinator helper snapshot; paths are environment-specific. Archival copy, not shipped runtime code."
+    },
+    {
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/prepare-validation.mjs",
+      "target": "coordinator-tools/prepare-validation.mjs.txt",
+      "sha256": "69a99ea2a3478af60acfb6194fbb40af4e83006cd3e5b398d028360dd62dc0d3",
+      "note": "Coordinator helper snapshot; paths are environment-specific. Archival copy, not shipped runtime code."
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+public final class RetryEngine {
+    private static Ports.Result stop(Ports.Store store, int attempts) {
+        if (store.snapshot().state() != Ports.State.UNKNOWN) store.rejected();
+        return new Ports.Result(store.snapshot(), attempts);
+    }
+    private static boolean fits(long remaining, long wait, Ports.Policy p) {
+        return remaining >= wait && remaining - wait >= p.reserveNanos()
+                && remaining - wait - p.reserveNanos() >= p.attemptNanos();
+    }
+    public static Ports.Result execute(Ports.Intent intent, Ports.Policy p, Ports.Store store,
+            Ports.Operation op, Ports.Runtime rt) throws InterruptedException {
+        int attempts = 0;
+        Ports.State initial = store.snapshot().state();
+        if (initial == Ports.State.APPLIED || initial == Ports.State.REJECTED) return new Ports.Result(store.snapshot(), 0);
+        if (initial == Ports.State.UNKNOWN && !Contract.REPLAY_SAFE) return new Ports.Result(store.snapshot(), 0);
+        while (true) {
+            if (Thread.currentThread().isInterrupted()) throw new InterruptedException();
+            if (rt.cancelled() || !fits(rt.remainingNanos(), 0, p)) return stop(store, attempts);
+            Ports.Kind kind;
+            String receipt;
+            long serverMinimum;
+            attempts++;
+            try (Ports.Reply reply = op.call(intent, p.attemptNanos())) {
+                kind = reply.kind(); receipt = reply.receipt(); serverMinimum = reply.serverMinimumNanos();
+                if (kind == Ports.Kind.UNKNOWN) store.unknown();
+            } catch (InterruptedException interrupted) {
+                store.unknown(); throw interrupted;
+            }
+            if (kind == Ports.Kind.OK) { store.applied(receipt); return new Ports.Result(store.snapshot(), attempts); }
+            if (kind == Ports.Kind.PERMANENT || (kind == Ports.Kind.UNKNOWN && !Contract.REPLAY_SAFE)
+                    || attempts >= p.maxAttempts()) return stop(store, attempts);
+            if (Thread.currentThread().isInterrupted()) throw new InterruptedException();
+            long wait = Math.max(p.localWaitNanos(), serverMinimum);
+            if (rt.cancelled() || !fits(rt.remainingNanos(), wait, p) || !rt.acquireRetry()) return stop(store, attempts);
+            rt.sleep(wait);
+        }
+    }
+}

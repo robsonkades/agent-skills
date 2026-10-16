@@ -122,6 +122,9 @@ evidence, change one causal factor, and reproduce.
   aggregation dimensions with percentiles.
 - Do not average or add percentiles across replicas, windows or path components.
 - Do not treat error responses as fast successes. Report outcome and latency jointly.
+- For asynchronous operations, distinguish admission from the required terminal effect.
+  A fast accepted-job response does not establish completion throughput or latency; use
+  the asynchronous boundary checks in `references/test-plan.md` when that is the claim.
 - Separate client- and server-observed latency.
 - Name each timer's start/end and included phases. Report scheduled-to-start delay separately
   from started-request latency; a tool's request-duration metric may omit DNS, connection or

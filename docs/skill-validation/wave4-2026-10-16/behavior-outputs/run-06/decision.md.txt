@@ -1,0 +1,25 @@
+Manter text-core e report-app como unidades de release separadas, sob a equipe de plataforma de texto e a equipe de relatórios, respectivamente. A correção protege a normalização exigida de CR, LF e CRLF para LF. Unificar versões e calendário não é sustentado por este caso: existe uma dependência de compilação e execução report-app → text-core, sem aresta inversa observada; o consumidor antigo funciona com a biblioteca nova. A janela obrigatória de 14 dias exige adoção, mas permite resultados antigos e corrigidos coexistirem e não exige publicação ou implantação simultânea. Unificar números tampouco atualizaria processos já iniciados.
+
+A configuração efetiva é `layout: external`, com report-app 1.0.0 e text-core 1.0.0. As listagens dos JARs confirmam que `published/report-app-1.0.0.jar` contém apenas a aplicação. O bundle fornecido contém ambas as classes, mas pertence à outra receita e não é o artefato da entrega configurada. Portanto, não há necessidade técnica de alterar o fonte, recompilar ou reempacotar o JAR da aplicação para esta correção. É necessário entregar a dependência externa nova e alterar sua seleção efetiva; se essa seleção fizer parte de uma distribuição imutável, criar uma nova revisão da distribuição/configuração, reutilizando o JAR da aplicação. Não sobrescrever a versão existente.
+
+Ordem proposta, sem implantação executada:
+
+1. A equipe de texto aprova/disponibiliza o artefato imutável text-core 1.0.1 fornecido, com integridade e nota sobre a correção de CR isolado. Preservar 1.0.0 e a distribuição/seleção anterior para reprodução e recuperação. A assinatura pública `normalize(String): String` permanece igual; a mudança de comportamento corrige o contrato documentado, sustentando um patch para este consumidor.
+2. A equipe de relatórios prepara a nova seleção equivalente a `libraryVersion: "1.0.1"`, mantendo `applicationVersion: "1.0.0"` e `layout: "external"`. O classpath deve conter o JAR da aplicação e somente a versão pretendida de text-core. Fixar artefatos/hashes e verificar a seleção realmente usada pelo launcher.
+3. Validar essa composição e iniciar novos processos/reiniciar os existentes, concluindo a adoção em até 14 dias. Publicar a biblioteca ou mudar um arquivo de configuração não atualiza a JVM em execução. No consumidor mínimo, executar com o argumento `LF`, que é uma asserção do resultado, não uma opção para escolher o algoritmo. Verificar saída, origem da classe e versão efetiva após a entrega.
+
+A verificação local usou os artefatos publicados reais, em classpath, sem dependências extras:
+
+| Verificação | Resultado observado |
+| --- | --- |
+| JAR original de report-app + text-core 1.0.0, argumento CR | exit 0; `A<CR>B` |
+| Mesmo par, argumento LF | exit 1; `AssertionError: Expected LF` (controle negativo) |
+| Mesmo JAR original + text-core 1.0.1, argumento LF | exit 0; `A<LF>B` |
+| Mesmo par corrigido, argumento CR | exit 1; `AssertionError: Expected CR` (controle negativo) |
+| Retorno à seleção 1.0.0 em nova JVM | exit 0 com CR; reproduz comportamento anterior |
+| Fonte consumidor compilado separadamente contra 1.0.1 | compilou com `--release 17` e passou com LF |
+| Contrato com CR/LF/CRLF, mistos, vazio, texto simples e idempotência | candidata passou; antiga falhou em CR e mistos |
+
+Recuperação: reverter à seleção/distribuição anterior retida e reiniciar; isso restaura também o defeito. A coexistência com armazenamento é permitida pela política somente durante a janela declarada. Rollback não renova o prazo de 14 dias: corrigir e repetir a entrega dentro dele, ou obter decisão explícita dos responsáveis se a janela não puder ser cumprida.
+
+Limites: foram 21 processos locais, todos encerrados, sem timeout ou resultado inesperado; os exits 1 acima eram esperados. Execução em Temurin 25.0.3+9, ferramentas 25.0.3; os artefatos inspecionados têm major 61 e as novas compilações usaram alvo 17, mas não houve execução em Java 17. Os quatro JARs de entrada mantiveram seus hashes. O experimento demonstra compatibilidade deste consumidor mínimo, não disponibilidade de um serviço, recarga dinâmica ou integração real com armazenamento. Não foram fornecidos histórico de releases, outros consumidores ou metadados Maven/Gradle; não há prova de economia por fusão nem de independência de uma frota. Reavaliar a fronteira se aparecerem mudanças incompatíveis que impeçam coexistência, política obrigatória de releases conjuntos ou histórico que demonstre custos de publicação superiores ao valor da separação. Scripts, comandos, argumentos, cwd, códigos e stdout/stderr estão em `execution.json`, `review.ps1` e `logs/`. Nada foi implantado.

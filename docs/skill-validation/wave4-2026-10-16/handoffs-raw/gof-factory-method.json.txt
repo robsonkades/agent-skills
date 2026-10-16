@@ -1,0 +1,552 @@
+{
+  "skill": "gof-factory-method",
+  "status": "NO_CHANGES_NEEDED",
+  "ownedPath": "skills/gof-factory-method/**",
+  "allWritesStopped": true,
+  "noActiveBackgroundProcess": true,
+  "summary": "Complete package review found no supported change. Existing rules already cover extension, safe construction, factory/product contract, owned versus borrowed lifetime, and simpler alternatives. Technical controls supported those existing rules; no behavioral gain was measured.",
+  "assessmentSentBeforeWrites": true,
+  "procedure": {
+    "unchangedProcedureReused": [
+      "AGENTS.md",
+      "docs/parallel-skill-reviews.md",
+      "docs/skill-review-prompt.md (complete)",
+      "docs/skill-validation/wave4-2026-10-16/review-brief.md",
+      "skills/skill-engineering/SKILL.md",
+      "skills/skill-engineering/references/evidence-and-confidence.md",
+      "skills/skill-engineering/references/evaluation.md",
+      "skills/skill-engineering/references/resource-design.md",
+      "skills/skill-engineering/references/anti-patterns.md"
+    ],
+    "assignmentRead": [
+      "All four gof-factory-method package files",
+      "Coordinator wave4 baseline row and owned git status/diffs",
+      "Versioned JLS/API sources and versioned Spring API"
+    ],
+    "cumulativeLessons": "Reused the wave4 comparative-research/roadmap and wave3 behavioral-report readings from the preceding assignment: inspect effective bindings and consumer contracts, keep legitimate alternatives, do not infer gain from source/technical checks.",
+    "domainSuccessCriteria": [
+      "Identify the actual overridable extension point and its supported consumers",
+      "Avoid initialization-time dispatch into unreadied subclass state",
+      "Preserve creation frequency, arguments/nullability, checked failures and subtype contract",
+      "Determine ownership from actual provider/registration evidence rather than method name",
+      "Preserve resource last-use/cleanup and simple adequate alternatives"
+    ]
+  },
+  "baseline": {
+    "committedVersion": "1.2.4",
+    "assignmentVersion": "1.2.4",
+    "preExistingVersionBump": false,
+    "stagedChanges": [],
+    "unstagedChanges": [],
+    "untrackedFiles": [],
+    "committedOwnedDifferenceAtAssignment": "None; git status and staged/unstaged owned diffs were empty.",
+    "files": [
+      {
+        "path": "skills/gof-factory-method/skill.yaml",
+        "sha256": "9E81EE0AE59E404DBD0A80737DFAD9F784401056C787FCDE14105704905F5888"
+      },
+      {
+        "path": "skills/gof-factory-method/SKILL.md",
+        "sha256": "DABCD497419225C71E6FD1FCF8A3AEE55B6D24EEA0E3D8E8A4191E9357C8BB60"
+      },
+      {
+        "path": "skills/gof-factory-method/references/worked-example.md",
+        "sha256": "E6D49B716EEAB40B69C56BA8C3B535FB233BF9CC6E53BF404F880C771B0AF736"
+      },
+      {
+        "path": "skills/gof-factory-method/references/decision-and-alternatives.md",
+        "sha256": "ED8ADF5FD73BE537D187F70551E0299770FEA26819FF344180487691DFE3D28F"
+      }
+    ],
+    "inspection": {
+      "name": "baseline",
+      "cmd": "git status --short -- skills/gof-factory-method; git diff -- skills/gof-factory-method; git diff --cached -- skills/gof-factory-method; git show HEAD:skills/gof-factory-method/skill.yaml",
+      "chunk_id": "377339",
+      "wall_time_seconds": 0.2248041,
+      "exit_code": 0,
+      "original_token_count": 507,
+      "output": "schemaVersion: 1\n\nname: gof-factory-method\nversion: 1.2.4\ndescription: >-\n  Factory Method in modern Java, and the three different things that share its name: the GoF\n  pattern (an overridable creation method that lets subclasses select the product), Effective Java's\n  static factory method (a named constructor, not this pattern), and any method someone called\n  createX. Covers when the subclass hook is genuinely right, when an injected Supplier or a keyed\n  map is a simpler alternative, and the constructor-calls-an-overridable-method trap\n  it invites. Use when a protected createX() hook is proposed, when a class is subclassed only to\n  change which type it instantiates, when tests subclass production code to substitute an object,\n  when a static factory is being called Factory Method in review, or when deciding between a\n  subclass hook and a Supplier. Does not cover families of related products\n  (gof-abstract-factory), the surrounding algorithm skeleton (gof-template-method), or static\n  factory naming conventions (java-object-construction).\n\nlicense: Apache-2.0\n\nauthors:\n  - name: agent-skills contributors\n    url: https://github.com/robsonkades/agent-skills\n\nhomepage: https://github.com/robsonkades/agent-skills/tree/main/skills/gof-factory-method\nrepository:\n  type: git\n  url: https://github.com/robsonkades/agent-skills\n  directory: skills/gof-factory-method\n\nkeywords:\n  - design-patterns\n  - gof\n  - creational\n  - factory-method\n  - supplier\n  - java\n\nfiles:\n  - SKILL.md\n  - skill.yaml\n  - references/\n\ndependencies: []\n\nsuggests:\n  - gof-abstract-factory\n  - gof-prototype\n  - gof-template-method\n  - java-composition-over-inheritance\n  - java-object-construction\n  - java-resource-management\n  - java-test-doubles\n  - jit-inlining-and-escape-analysis\n\ncapabilities:\n  - reads-source\n\nagentOverrides:\n  codex:\n    interface:\n      display_name: Factory Method\n      short_description: A creation hook, not a static factory\n      default_prompt: Use Factory Method to judge this creation hook.\n",
+      "workingDirectory": "C:/git/agent-skills"
+    },
+    "waveBaseline": {
+      "name": "wavebaseline",
+      "cmd": "$factoryWaveBaseline = Get-Content -Raw docs/skill-validation/wave4-2026-10-16/baseline.json | ConvertFrom-Json; $factoryWaveBaseline.packages | Where-Object { $_.name -eq 'gof-factory-method' } | ConvertTo-Json -Depth 6; rg --files skills/gof-factory-method -g AGENTS.md",
+      "chunk_id": "93b195",
+      "wall_time_seconds": 0.2351048,
+      "exit_code": 1,
+      "original_token_count": 222,
+      "output": "{\r\n  \"name\": \"gof-factory-method\",\r\n  \"initialVersion\": \"1.2.4\",\r\n  \"committedVersion\": \"1.2.4\",\r\n  \"status\": \"\",\r\n  \"files\": [\r\n    {\r\n      \"path\": \"skills/gof-factory-method/SKILL.md\",\r\n      \"sha256\": \"dabcd497419225c71e6fd1fcf8a3aee55b6d24eea0e3d8e8a4191e9357c8bb60\",\r\n      \"bytes\": 11646\r\n    },\r\n    {\r\n      \"path\": \"skills/gof-factory-method/references/decision-and-alternatives.md\",\r\n      \"sha256\": \"ed8adf5fd73be537d187f70551e0299770fea26819ff344180487691dfe3d28f\",\r\n      \"bytes\": 9481\r\n    },\r\n    {\r\n      \"path\": \"skills/gof-factory-method/references/worked-example.md\",\r\n      \"sha256\": \"e6d49b716eeab40b69c56ba8c3b535fb233bf9cc6e53bf404f880c771b0af736\",\r\n      \"bytes\": 10658\r\n    },\r\n    {\r\n      \"path\": \"skills/gof-factory-method/skill.yaml\",\r\n      \"sha256\": \"9e81ee0ae59e404dbd0a80737dfad9f784401056c787fcde14105704905f5888\",\r\n      \"bytes\": 2026\r\n    }\r\n  ]\r\n}\r\n",
+      "workingDirectory": "C:/git/agent-skills",
+      "interpretation": "Wave row shows version 1.2.4 and matching four hashes. Exit 1 came from final rg finding no nested AGENTS.md; not from baseline parsing."
+    },
+    "fullPackageRead": "SKILL.md, skill.yaml, references/decision-and-alternatives.md and references/worked-example.md read in full."
+  },
+  "versions": {
+    "committed": "1.2.4",
+    "assignment": "1.2.4",
+    "final": "1.2.4",
+    "rationale": "No content changed; preserve the existing version without a bump."
+  },
+  "findingsCorrected": [],
+  "findingsReviewed": [
+    {
+      "id": "hook-and-extension-boundary",
+      "disposition": "PRESERVED",
+      "locations": [
+        "skills/gof-factory-method/SKILL.md:19",
+        "skills/gof-factory-method/SKILL.md:33",
+        "skills/gof-factory-method/references/decision-and-alternatives.md:25",
+        "skills/gof-factory-method/references/worked-example.md:224"
+      ],
+      "finding": "The current skill inspects actual creators, callers, all supported hooks, covariance and framework registration before replacing a hierarchy. An inherited workflow is one justification, not the only defining shape.",
+      "consequence": "Preserves meaningful external extension and consumer behavior rather than forcing Supplier or final classes from a few example subclasses."
+    },
+    {
+      "id": "factory-product-contract",
+      "disposition": "PRESERVED_WITH_TECHNICAL_CONTROLS",
+      "locations": [
+        "skills/gof-factory-method/SKILL.md:134",
+        "skills/gof-factory-method/references/decision-and-alternatives.md:113",
+        "skills/gof-factory-method/references/worked-example.md:110"
+      ],
+      "finding": "Existing instructions already preserve checked failures, invocation timing/count, nullability, freshness and ownership. Owned transfer and borrowed application ownership are explicitly distinguished, including per-run leases.",
+      "consequence": "Avoids early shared-resource closure and owned-resource leaks. Paired active bindings demonstrated why the concrete provider contract controls cleanup."
+    },
+    {
+      "id": "safe-construction",
+      "disposition": "PRESERVED_WITH_TECHNICAL_CONTROL",
+      "locations": [
+        "skills/gof-factory-method/SKILL.md:109",
+        "skills/gof-factory-method/references/decision-and-alternatives.md:44",
+        "skills/gof-factory-method/references/worked-example.md:186"
+      ],
+      "finding": "The non-constant subclass delimiter and after-construction alternatives accurately expose constructor-time virtual dispatch; merely invoking a lazy provider in a constructor is not readiness.",
+      "consequence": "The early control saw NUL; the deferred control saw semicolon, agreeing with the existing guidance. No fix needed."
+    },
+    {
+      "id": "failure-ownership",
+      "disposition": "PRESERVED_WITH_TECHNICAL_CONTROLS",
+      "locations": [
+        "skills/gof-factory-method/references/worked-example.md:110"
+      ],
+      "finding": "The owned example closes after success and parse/save failure, preserves suppression and notes close failure after save is not transaction rollback or evidence of safe retry.",
+      "consequence": "Existing technical rules matched targeted exception-identity and close-count tests. Partial factory acquisition and async/streaming use correctly require separate lifecycle protocols."
+    },
+    {
+      "id": "classification-and-selection",
+      "disposition": "PRESERVED",
+      "locations": [
+        "skills/gof-factory-method/references/decision-and-alternatives.md:3",
+        "skills/gof-factory-method/references/decision-and-alternatives.md:81",
+        "skills/gof-factory-method/references/worked-example.md:167"
+      ],
+      "finding": "Static factories, provider methods, routing hooks and GoF overridable creation are distinguished; external keys use explicit supported registration before class initialization.",
+      "consequence": "Prevents hierarchy selection from names alone and preserves simple constructor/provider/map alternatives."
+    }
+  ],
+  "remainingFindings": [],
+  "filesChangedByReviewer": [],
+  "preExistingChanges": [],
+  "filesUnchanged": [
+    "skills/gof-factory-method/skill.yaml",
+    "skills/gof-factory-method/SKILL.md",
+    "skills/gof-factory-method/references/worked-example.md",
+    "skills/gof-factory-method/references/decision-and-alternatives.md"
+  ],
+  "capabilitiesPreserved": [
+    "GoF subclass creation distinct from static factory naming and ordinary provider/routing methods.",
+    "Consumer-first inspection of arguments, supported external hooks, covariance, framework construction and public compatibility.",
+    "Application-controlled Supplier/Function/map/sealed-kind alternatives without forcing composition over a meaningful SPI.",
+    "Java 17 partial examples; Java 21 condition for sealed type pattern switch and no implicit baseline upgrade.",
+    "Constructor-time dispatch hazard with non-constant state, appropriate injection/deferred-use/readiness alternatives.",
+    "Explicit factory invocation count, null, freshness, checked failure and owned/borrowed product contract.",
+    "Owned resource closure, acquisition-before-transfer responsibility, suppressed exceptions and close-after-save retry caveat.",
+    "Borrowed product owner/lease boundary and streaming/asynchronous last-use handoff.",
+    "Required-key validation before map lookup, approved registry keys and class-initialization risk before a cast.",
+    "Safe caching publication/failure/disposal policy and no allocation/inlining claims without evidence.",
+    "Retained legitimate test subclass and published hook rather than test-style-only refactors."
+  ],
+  "capabilitiesRemovedOrReplaced": [],
+  "checks": {
+    "structuralExecuted": [
+      {
+        "name": "package",
+        "cmd": "@'\nimport fs from 'node:fs';\nimport path from 'node:path';\nimport { parseManifest } from './packages/core/src/domain/manifest.ts';\nimport { buildSkillPackage } from './packages/core/src/domain/skill-package.ts';\nimport { validatePackage } from './packages/core/src/application/validate-package.ts';\nconst root = path.resolve('skills/gof-factory-method');\nconst paths = [];\nfunction walk(dir) { for (const entry of fs.readdirSync(dir, {withFileTypes:true})) { const absolute = path.join(dir,entry.name); if(entry.isDirectory()) walk(absolute); else paths.push(absolute); } }\nwalk(root);\nconst files = paths.map(absolute=>({path:path.relative(root,absolute).split(path.sep).join('/'),bytes:fs.readFileSync(absolute)}));\nconst parsed = parseManifest(fs.readFileSync(path.join(root,'skill.yaml'),'utf8'),{strict:true,source:'skills/gof-factory-method/skill.yaml'});\nconst pkg = buildSkillPackage(parsed.manifest,files);\nconst report = validatePackage(pkg,{directoryName:'gof-factory-method'});\nconst brokenLinks = [];\nlet linksChecked = 0;\nfor (const file of files.filter(file=>file.path.endsWith('.md'))) {\n for (const match of Buffer.from(file.bytes).toString('utf8').matchAll(/\\[[^\\]]*\\]\\((<[^>]*>|[^)]+)\\)/g)) {\n  const destination = match[1].startsWith('<') ? match[1].slice(1,-1) : match[1];\n  const target = destination.split('#')[0];\n  if(!target || /^[a-z][a-z0-9+.-]*:/i.test(target)) continue;\n  linksChecked++;\n  if(!fs.existsSync(path.resolve(root,path.dirname(file.path),target))) brokenLinks.push({from:file.path,target});\n }\n}\nconst issues = [...parsed.issues,...report.issues];\nconsole.log(JSON.stringify({runtime:process.version,skill:parsed.manifest.name,version:parsed.manifest.version,files:files.map(f=>f.path),issues,linksChecked,brokenLinks},null,2));\nif(issues.length || brokenLinks.length) process.exitCode=1;\n\n'@ | node --input-type=module",
+        "chunk_id": "2883a4",
+        "wall_time_seconds": 0.2564869,
+        "exit_code": 0,
+        "original_token_count": 69,
+        "output": "{\n  \"runtime\": \"v25.6.1\",\n  \"skill\": \"gof-factory-method\",\n  \"version\": \"1.2.4\",\n  \"files\": [\n    \"references/decision-and-alternatives.md\",\n    \"references/worked-example.md\",\n    \"SKILL.md\",\n    \"skill.yaml\"\n  ],\n  \"issues\": [],\n  \"linksChecked\": 2,\n  \"brokenLinks\": []\n}\n",
+        "workingDirectory": "C:/git/agent-skills"
+      },
+      {
+        "name": "format",
+        "cmd": "node node_modules/prettier/bin/prettier.cjs --check skills/gof-factory-method/SKILL.md skills/gof-factory-method/skill.yaml skills/gof-factory-method/references/*.md",
+        "chunk_id": "13e592",
+        "wall_time_seconds": 0.2740797,
+        "exit_code": 0,
+        "original_token_count": 17,
+        "output": "Checking formatting...\nAll matched files use Prettier code style!\n",
+        "workingDirectory": "C:/git/agent-skills"
+      },
+      {
+        "name": "whitespace",
+        "cmd": "git diff --check -- skills/gof-factory-method",
+        "chunk_id": "bb0555",
+        "wall_time_seconds": 0.1136612,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": "",
+        "workingDirectory": "C:/git/agent-skills"
+      }
+    ],
+    "runtimeInspection": {
+      "cmd": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -version",
+      "chunk_id": "454a65",
+      "wall_time_seconds": 0.1104358,
+      "exit_code": 0,
+      "original_token_count": 49,
+      "output": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n",
+      "workingDirectory": "C:/git/agent-skills"
+    },
+    "technicalExecuted": {
+      "runnerCommand": "@'\nimport fs from 'node:fs';\nimport path from 'node:path';\nimport {spawnSync} from 'node:child_process';\nconst root='C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-factory-method-validation';\nconst jdk='C:/Users/robso/.jdks/temurin-25.0.3/bin';\nconst results=[];\nfunction run(id,executable,args,cwd) {\n  const r=spawnSync(executable,args,{cwd,encoding:'utf8',timeout:15000,windowsHide:true});\n  const result={id,executable,args,cwd,timeoutMs:15000,status:r.status,signal:r.signal,error:r.error?String(r.error):null,stdout:r.stdout,stderr:r.stderr};\n  fs.writeFileSync(path.join(root,id+'.stdout.txt'),r.stdout ?? '');\n  fs.writeFileSync(path.join(root,id+'.stderr.txt'),r.stderr ?? '');\n  results.push(result);\n  return result;\n}\nfor(const suffix of ['a','b']) {\n  const actor=JSON.parse(fs.readFileSync(path.join(root,'actor-'+suffix+'.json'),'utf8'));\n  const cwd=path.join(root,'case-'+suffix);\n  fs.mkdirSync(path.join(cwd,'classes'),{recursive:true});\n  for(const [name,content] of Object.entries(actor.files)) fs.writeFileSync(path.join(cwd,name),content);\n  const sources=Object.keys(actor.files).filter(name=>name.endsWith('.java'));\n  const compiled=run('compile-'+suffix,path.join(jdk,'javac.exe'),['--release','17','-Xlint:all','-d','classes',...sources,'../LifecycleProbe.java','../ContractControls.java'],cwd);\n  if(compiled.status===0) {\n    run('smoke-'+suffix,path.join(jdk,'java.exe'),['-cp','classes','SmokeTest'],cwd);\n    run('lifecycle-'+suffix,path.join(jdk,'java.exe'),['-cp','classes','LifecycleProbe'],cwd);\n  }\n}\nrun('contract-controls',path.join(jdk,'java.exe'),['-cp','classes','ContractControls'],path.join(root,'case-b'));\nconst byId=Object.fromEntries(results.map(r=>[r.id,r]));\nconst checks={\n compiledA:byId['compile-a']?.status===0,\n compiledB:byId['compile-b']?.status===0,\n smokeA:byId['smoke-a']?.status===0,\n smokeB:byId['smoke-b']?.status===0,\n borrowedPrematureCloseDetected:byId['lifecycle-a']?.status===1 && byId['lifecycle-a']?.stderr.includes('java.io.IOException: parser is closed'),\n ownedLifecyclePasses:byId['lifecycle-b']?.status===0 && byId['lifecycle-b']?.stdout.includes('PASS owner shutdown boundary'),\n ownedFailureAndInitializationControls:byId['contract-controls']?.status===0 && byId['contract-controls']?.stdout.includes('SUMMARY checks=7'),\n noTimeoutOrSpawnError:results.every(r=>r.signal===null && !r.error)\n};\nconst output={compilerApiTarget:17,runtime:'Temurin 25.0.3+9',checks,results};\nfs.writeFileSync(path.join(root,'technical-results.json'),JSON.stringify(output,null,2)+'\\n');\nconsole.log(JSON.stringify(output,null,2));\nif(Object.values(checks).some(pass=>!pass)) process.exitCode=1;\n'@ | node --input-type=module",
+      "runnerWorkingDirectory": "C:/git/agent-skills",
+      "runnerExitCode": 0,
+      "compilerApiTarget": 17,
+      "runtime": "Temurin 25.0.3+9",
+      "results": [
+        {
+          "id": "compile-a",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+          "args": [
+            "--release",
+            "17",
+            "-Xlint:all",
+            "-d",
+            "classes",
+            "Parser.java",
+            "TrackingParser.java",
+            "ApplicationBinding.java",
+            "ImportJob.java",
+            "BoundImportJob.java",
+            "SmokeTest.java",
+            "../LifecycleProbe.java",
+            "../ContractControls.java"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-factory-method-validation\\case-a",
+          "timeoutMs": 15000,
+          "status": 0,
+          "signal": null,
+          "error": null,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "id": "smoke-a",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+          "args": [
+            "-cp",
+            "classes",
+            "SmokeTest"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-factory-method-validation\\case-a",
+          "timeoutMs": 15000,
+          "status": 0,
+          "signal": null,
+          "error": null,
+          "stdout": "PASS one configured import\r\n",
+          "stderr": ""
+        },
+        {
+          "id": "lifecycle-a",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+          "args": [
+            "-cp",
+            "classes",
+            "LifecycleProbe"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-factory-method-validation\\case-a",
+          "timeoutMs": 15000,
+          "status": 1,
+          "signal": null,
+          "error": null,
+          "stdout": "",
+          "stderr": "Exception in thread \"main\" java.io.IOException: parser is closed\r\n\tat TrackingParser.parse(TrackingParser.java:8)\r\n\tat ImportJob.run(ImportJob.java:14)\r\n\tat LifecycleProbe.main(LifecycleProbe.java:11)\r\n"
+        },
+        {
+          "id": "compile-b",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+          "args": [
+            "--release",
+            "17",
+            "-Xlint:all",
+            "-d",
+            "classes",
+            "Parser.java",
+            "TrackingParser.java",
+            "ApplicationBinding.java",
+            "ImportJob.java",
+            "BoundImportJob.java",
+            "SmokeTest.java",
+            "../LifecycleProbe.java",
+            "../ContractControls.java"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-factory-method-validation\\case-b",
+          "timeoutMs": 15000,
+          "status": 0,
+          "signal": null,
+          "error": null,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "id": "smoke-b",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+          "args": [
+            "-cp",
+            "classes",
+            "SmokeTest"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-factory-method-validation\\case-b",
+          "timeoutMs": 15000,
+          "status": 0,
+          "signal": null,
+          "error": null,
+          "stdout": "PASS one configured import\r\n",
+          "stderr": ""
+        },
+        {
+          "id": "lifecycle-b",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+          "args": [
+            "-cp",
+            "classes",
+            "LifecycleProbe"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-factory-method-validation\\case-b",
+          "timeoutMs": 15000,
+          "status": 0,
+          "signal": null,
+          "error": null,
+          "stdout": "PASS two configured imports and per-run ownership boundary\r\nPASS owner shutdown boundary\r\n",
+          "stderr": ""
+        },
+        {
+          "id": "contract-controls",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+          "args": [
+            "-cp",
+            "classes",
+            "ContractControls"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-factory-method-validation\\case-b",
+          "timeoutMs": 15000,
+          "status": 0,
+          "signal": null,
+          "error": null,
+          "stdout": "PASS factory once and owned success closure\r\nPASS parse failure remains primary and close suppressed\r\nPASS save failure closes owned resource\r\nPASS acquisition checked failure propagates unchanged\r\nPASS null factory result rejected before processing\r\nPASS close-only failure does not undo save\r\nPASS constructor hook sees default subclass value\r\nSUMMARY checks=7\r\n",
+          "stderr": ""
+        }
+      ],
+      "checks": {
+        "compiledA": true,
+        "compiledB": true,
+        "smokeA": true,
+        "smokeB": true,
+        "borrowedPrematureCloseDetected": true,
+        "ownedLifecyclePasses": true,
+        "ownedFailureAndInitializationControls": true,
+        "noTimeoutOrSpawnError": true
+      },
+      "interpretation": "Both active bindings pass one import. The borrowed negative control fails on the second import because the application-owned parser was closed. Owned transfer passes two imports with two creations/two closes. Seven additional controls cover creation count, null result, checked acquisition failure, parse/save/close failures and suppression, close after save, and constructor-time default state versus deferred dispatch.",
+      "expectedNegativeResult": "lifecycle-a exit 1 with IOException: parser is closed is a deliberately invalid adapter control; not a failing skill check.",
+      "warnings": "Compilations emitted no warnings; success processes had no stderr.",
+      "processState": "Seven synchronously supervised compiler/JVM processes completed without timeout, signal or spawn error; no background process remains.",
+      "evidenceKind": "Executed Java fixture tests, not agent evaluations."
+    },
+    "finalOwnedCheck": {
+      "cmd": "git status --short -- skills/gof-factory-method; git diff -- skills/gof-factory-method; git diff --cached -- skills/gof-factory-method; $factoryFinalFiles = rg --files skills/gof-factory-method; $factoryFinalFiles | ForEach-Object { [pscustomobject]@{Path=$_;Sha256=(Get-FileHash -LiteralPath $_ -Algorithm SHA256).Hash} } | ConvertTo-Json -Depth 3",
+      "chunk_id": "8f94a9",
+      "wall_time_seconds": 0.2336327,
+      "exit_code": 0,
+      "original_token_count": 160,
+      "output": "[\r\n  {\r\n    \"Path\": \"skills/gof-factory-method\\\\skill.yaml\",\r\n    \"Sha256\": \"9E81EE0AE59E404DBD0A80737DFAD9F784401056C787FCDE14105704905F5888\"\r\n  },\r\n  {\r\n    \"Path\": \"skills/gof-factory-method\\\\SKILL.md\",\r\n    \"Sha256\": \"DABCD497419225C71E6FD1FCF8A3AEE55B6D24EEA0E3D8E8A4191E9357C8BB60\"\r\n  },\r\n  {\r\n    \"Path\": \"skills/gof-factory-method\\\\references\\\\worked-example.md\",\r\n    \"Sha256\": \"E6D49B716EEAB40B69C56BA8C3B535FB233BF9CC6E53BF404F880C771B0AF736\"\r\n  },\r\n  {\r\n    \"Path\": \"skills/gof-factory-method\\\\references\\\\decision-and-alternatives.md\",\r\n    \"Sha256\": \"ED8ADF5FD73BE537D187F70551E0299770FEA26819FF344180487691DFE3D28F\"\r\n  }\r\n]\r\n",
+      "workingDirectory": "C:/git/agent-skills",
+      "interpretation": "Empty owned status and diffs; four final hashes equal assignment baseline and coordinator wave row."
+    },
+    "unavailableOrFailedAttempts": [
+      {
+        "operation": "Nested instruction search",
+        "command": "rg --files skills/gof-factory-method -g AGENTS.md",
+        "exitCode": 1,
+        "result": "No nested AGENTS.md matched; repository root instructions apply."
+      },
+      {
+        "operation": "Primary GoF PDF lookup",
+        "url": "https://erp.metbhujbalknowledgecity.ac.in/StudyMaterial/01SG042017008670012.pdf",
+        "result": "web tool returned 400 Timeout fetching. The book excerpt was not consulted successfully in this assignment; no content or link was changed from this transient failure."
+      }
+    ]
+  },
+  "behavioralEvaluationsExecuted": [],
+  "behavioralEvaluationStatus": "NOT_RUN. No independent actor comparison or with/without-skill experiment; no original/revised content difference and no measured incremental gain.",
+  "structuredWalkthroughs": [
+    {
+      "id": "gof-factory-method-binding-a",
+      "classification": "Expected-behavior walkthrough; technical invalid adapter fixture executed separately.",
+      "result": "Inspect active borrowed binding and inherited per-run ownership requirement. Preserve the SPI and adapt the borrowed parser via a declared operation lease or equivalent safe ownership boundary; keep application shutdown responsible for the actual parser."
+    },
+    {
+      "id": "gof-factory-method-binding-b",
+      "classification": "Expected-behavior walkthrough; technical current owned flow executed separately.",
+      "result": "Active owned transfer satisfies the per-run closure contract. Preserve active production behavior and verify repeated calls, creation count and cleanup; any dormant borrowed deployment issue remains conditional."
+    },
+    {
+      "id": "extension-removal-and-static-naming",
+      "classification": "Source review walkthrough only.",
+      "result": "Existing unknown external subclasses/other hooks prevent unconditional final/Supplier replacement. A static returning a subtype is not overridable creation dispatch."
+    }
+  ],
+  "cases": {
+    "kind": "Known development pair, not held-out cases.",
+    "decisiveConstraint": "Only binding.properties changes: application-owned borrowed parser in A versus per-operation ownership transfer in B. All source, input request and inherited SPI contract stay identical.",
+    "inputs": [
+      {
+        "id": "gof-factory-method-binding-a",
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-factory-method-validation/actor-a.json",
+        "materializedProject": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-factory-method-validation/case-a"
+      },
+      {
+        "id": "gof-factory-method-binding-b",
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-factory-method-validation/actor-b.json",
+        "materializedProject": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-factory-method-validation/case-b"
+      }
+    ],
+    "evaluatorCriteria": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-factory-method-validation/evaluator-criteria.json",
+    "separation": "Only actor JSON request/context/prerequisites/commands and ordinary project sources/configuration are actor inputs. Keep evaluator criteria, technical probes/results and this handoff out of actor context; filesystem isolation must be handled by the coordinator.",
+    "scopeNuance": "The request reviews the configured installation. B may report that a dormant borrowed mode would require an adapter, but should not misdiagnose the active owned flow.",
+    "actorRuns": "Not executed by reviewer."
+  },
+  "primarySources": [
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/Supplier.html",
+      "version": "Java SE 17",
+      "sections": [
+        "Interface contract",
+        "get()"
+      ],
+      "consultedOn": "2026-10-16",
+      "supports": "Supplier does not require a new/distinct result per invocation. get() declares no checked throws; naming or substitution does not establish freshness, ownership or checked failure preservation.",
+      "limits": "The concrete provider still determines lifecycle; no benchmark or agent behavior claim."
+    },
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se17/html/jls-12.html#jls-12.5",
+      "version": "JLS 17",
+      "sections": [
+        "12.5 Creation of New Class Instances"
+      ],
+      "consultedOn": "2026-10-16",
+      "supports": "Overriding dispatch applies during construction even before the subclass is completely initialized. The existing non-constant delimiter example exposes default-valued subclass state.",
+      "limits": "Constructor control executed on JDK 25.0.3 with --release 17, not on a JDK 17 VM."
+    },
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se17/html/jls-14.html#jls-14.20.3",
+      "version": "JLS 17",
+      "sections": [
+        "14.20.3 try-with-resources",
+        "14.20.3.1 basic translation"
+      ],
+      "consultedOn": "2026-10-16",
+      "supports": "Initialized non-null resources are closed; processing failure remains primary with close failure suppressed; close-only failure propagates. Acquisition before return remains outside the caller's returned-resource cleanup.",
+      "limits": "Targeted resource test doubles validated exception identity, close count and save occurrence. No actual file parser, database or partial-acquisition cleanup experiment."
+    },
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se17/html/jls-8.html#jls-8.4.8.2",
+      "version": "JLS 17",
+      "sections": [
+        "8.4.8.2 Hiding by Class Methods"
+      ],
+      "consultedOn": "2026-10-16",
+      "supports": "A static method is hidden rather than overridden by instance dispatch. Returning a subtype from a static factory does not itself create the GoF subclass creation hook.",
+      "limits": "Language distinction reviewed; no new source/binary API change or compatibility experiment."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html#forName(java.lang.String)",
+      "version": "Java SE 17",
+      "sections": [
+        "forName(String)",
+        "forName(String,boolean,ClassLoader)"
+      ],
+      "consultedOn": "2026-10-16",
+      "supports": "The one-argument class lookup initializes the selected class. A later cast does not prevent initialization effects; registry-key validation must precede arbitrary loading.",
+      "limits": "Documentation verified; no untrusted class loading or production action executed."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html",
+      "version": "Java SE 17",
+      "sections": [
+        "Map key eligibility",
+        "get(Object)"
+      ],
+      "consultedOn": "2026-10-16",
+      "supports": "Queries using ineligible keys may throw; maps that disallow null may reject null get calls. Existing required-key guard before lookup is justified.",
+      "limits": "Source contract reviewed; registry security/authorization integration not executed."
+    },
+    {
+      "url": "https://docs.spring.io/spring-framework/docs/6.2.x/javadoc-api/org/springframework/jdbc/datasource/lookup/AbstractRoutingDataSource.html",
+      "version": "Spring Framework 6.2.19 API served by 6.2.x route",
+      "sections": [
+        "class summary",
+        "determineCurrentLookupKey"
+      ],
+      "consultedOn": "2026-10-16",
+      "supports": "AbstractRoutingDataSource routes among targets using a lookup key; determineCurrentLookupKey supplies that key, not a newly created product.",
+      "limits": "API review only. No Spring dependency installed or application context/database integration executed."
+    }
+  ],
+  "assumptionsAndLimits": [
+    "Compiled with --release 17 using the available Temurin 25.0.3+9 compiler and ran on that VM; no Java 17 VM was exercised.",
+    "Parser resources and save callbacks are deterministic local test doubles. These controls do not establish real parser cleanup, database transactions, provider hydration, durable save or retry safety.",
+    "Acquisition failure was tested before any product returned, but factory-internal partial acquisition cleanup was not exercised.",
+    "No production framework, dynamic plugin, ServiceLoader, precompiled external-client, concurrent caching or performance experiment ran.",
+    "Safe construction and exception/lifecycle controls test specific code paths, not every arbitrary subclass contract.",
+    "GoF PDF citation timed out; the original author excerpt was not freshly retrieved. Versioned JLS/API and Spring references listed above were retrieved successfully.",
+    "Spring 6.2.x served API version 6.2.19; this confirms the routing-hook example only and is not a consumer framework upgrade recommendation.",
+    "Local package validation and relative-file existence passed; catalog-wide dependency/referral resolution and every external source URL were not exhaustively checked.",
+    "Cases and walkthroughs are not independent behavioral evaluations; no gain, correctness percentage or catalog superiority inferred.",
+    "Global index generation and verification remain pending with the coordinator."
+  ],
+  "evidencePaths": {
+    "root": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-factory-method-validation",
+    "reviewEvidence": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-factory-method-validation/review-evidence.json",
+    "technicalResults": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-factory-method-validation/technical-results.json",
+    "lifecycleProbe": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-factory-method-validation/LifecycleProbe.java",
+    "contractControls": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-factory-method-validation/ContractControls.java",
+    "actorA": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-factory-method-validation/actor-a.json",
+    "actorB": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-factory-method-validation/actor-b.json",
+    "criteria": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-factory-method-validation/evaluator-criteria.json",
+    "rawLogs": "Per-command *.stdout.txt and *.stderr.txt in evidence root; materialized source/configuration and compiled classes retained in case-a/case-b."
+  },
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "prerequisites": "All reviewers stopped writing.",
+      "reason": "Parallel workflow reserves generated shared writes. This skill has no content/version update."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "prerequisites": "Global index finalized with all reviewers stopped.",
+      "reason": "Repository-wide verification reserved to coordinator."
+    }
+  ],
+  "crossSkillIssues": [],
+  "coordinatorActions": [
+    "Record no-change and keep 1.2.4.",
+    "Optional behavioral comparison may use the separated actor pair; audit active-scope criteria and keep evaluator artifacts hidden."
+  ],
+  "repositoryWrites": "None. Only explicitly authorized temporary evidence and handoff written.",
+  "readiness": "Local review complete, owned files unchanged, writes stopped and no active process. Not a claim of repository-wide validation or measured skill efficacy."
+}

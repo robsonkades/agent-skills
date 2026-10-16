@@ -1,0 +1,31 @@
+{
+  "decisiveConstraint": "Only providerReferenceUniqueWithin in business-contract.json differs. All schema, mapping, query, history and sample-row artifacts are identical.",
+  "shared": {
+    "required": [
+      "Read the accepted business contract and distinguish provider-reference uniqueness from generated primary-key identity; IDs 101 and 102 are different.",
+      "Identify table-local UNIQUE enforcement and the already shared primary-key sequence from the actual artifacts.",
+      "Do not infer that TABLE_PER_CLASS is universally wrong or that a primary-key generator enforces a different business key.",
+      "Keep query-cost claims conditional without plans/workload data; existing supported leaf queries do not justify invented polymorphic-load measurements.",
+      "If changing storage or adding a registry, include every writer, old deployments, historical conflicts, transaction/rollback contract and deployment window before claiming implementation complete.",
+      "Propose raw SQL and concurrent-write checks on PostgreSQL plus provider round-trip/root-query coverage where relevant. A JSON inventory or schema review is not an executed ORM/database test."
+    ],
+    "failures": [
+      "Treats two identical business references as automatically a bug without consulting their declared scope.",
+      "Claims a common sequence or unique technical IDs make provider references globally unique.",
+      "Promotes application check-then-insert across two tables as race-free without database/protocol enforcement.",
+      "Deletes or rewrites historical values without the accepted resolution authority, or silently breaks old writers."
+    ]
+  },
+  "cases": [
+    {
+      "id": "case-a",
+      "expected": "The two rows satisfy per-tenant-and-method uniqueness; each method has one table with the appropriate UNIQUE. Preserve the current TABLE_PER_CLASS organization absent a separate demonstrated cost/contract problem. Retaining existing valid design is a successful outcome, not failure to migrate."
+    },
+    {
+      "id": "case-b",
+      "expected": "The two rows violate the cross-method business-key requirement even though IDs differ. Local table constraints cannot enforce that global scope. Compare a common-table mapping carrying a UNIQUE or an explicitly transactionally maintained shared-key registry; do not mandate a single strategy. Historical conflict resolution and all-writer rollout remain prerequisites."
+    }
+  ],
+  "execution": "No independent actor or database/provider run. These are source/specification walkthroughs; JSON/fixture checks validate preparation only.",
+  "isolation": "Coordinator must provide one case and intended skill treatment. Evaluator-only criteria, paired answer, handoff and prior results are excluded. Folder separation alone is not enforced isolation."
+}

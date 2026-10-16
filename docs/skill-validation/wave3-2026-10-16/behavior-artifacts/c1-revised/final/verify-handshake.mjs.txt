@@ -1,0 +1,255 @@
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
+import { createConnection, createServer } from 'node:net';
+import { performance } from 'node:perf_hooks';
+import { attachClient } from './client.mjs';
+import { attachServer } from './server.mjs';
+
+// Contract model only: no vendor proxy or deployment is exercised.
+// All listeners use ephemeral loopback ports, never the configured live port.
+const policy = JSON.parse(await readFile(new URL('./proxy-policy.json', import.meta.url)));
+const fixtureProtocol = JSON.parse(await readFile(new URL('./protocol.json', import.meta.url)));
+const baseline = JSON.parse(await readFile(new URL('./fixture-baseline.json', import.meta.url)));
+const log = entry => console.log(JSON.stringify(entry));
+const watchdog = setTimeout(() => {
+  log({ event: 'global_watchdog_failed', limit_ms: 12000 });
+  process.exit(1);
+}, 12000);
+
+async function listen(server) {
+  await new Promise((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(0, '127.0.0.1', () => {
+      server.off('error', reject);
+      resolve();
+    });
+  });
+  return server.address().port;
+}
+
+async function closeServer(server) {
+  if (!server.listening) return;
+  await new Promise((resolve, reject) => {
+    server.close(error => error ? reject(error) : resolve());
+  });
+}
+
+async function checkCase(protocol, mode) {
+  const name = `${protocol.first_message}-first/${mode}`;
+  const start = performance.now();
+  const events = [];
+  const activeSockets = new Set();
+  const socketClosures = [];
+  const inspectionTimers = new Set();
+  const errors = [];
+  let guard;
+  let downstreamAccepted = 0;
+  let clientConnected = false;
+  let upstreamAttempts = 0;
+  let upstreamAccepted = 0;
+  let serverReceived = '';
+  let clientReceived = '';
+  let completed = false;
+  const record = (event, detail = {}) => events.push({
+    sequence: events.length + 1,
+    elapsed_ms: Number((performance.now() - start).toFixed(2)),
+    event,
+    ...detail,
+  });
+  const track = socket => {
+    activeSockets.add(socket);
+    socketClosures.push(new Promise(resolve => socket.once('close', () => {
+      activeSockets.delete(socket);
+      resolve();
+    })));
+    return socket;
+  };
+  const onError = (hop, error) => {
+    errors.push({ hop, code: error.code, message: error.message });
+    record('socket_error', { hop, code: error.code });
+  };
+
+  const server = createServer(socket => {
+    track(socket);
+    upstreamAccepted += 1;
+    record('server_accepted_upstream');
+    socket.on('error', error => onError('server', error));
+    socket.on('data', bytes => {
+      serverReceived += bytes.toString();
+      record('server_received', { bytes: bytes.toString() });
+    });
+    attachServer(socket, protocol);
+  });
+  let upstreamPort;
+  const proxy = createServer(downstream => {
+    track(downstream);
+    downstreamAccepted += 1;
+    record('proxy_accepted_downstream');
+    let upstream;
+    let connected = false;
+    let clientEnded = false;
+    let pending = [];
+    let pendingLength = 0;
+    let inspectionTimer;
+    const clearInspection = () => {
+      clearTimeout(inspectionTimer);
+      inspectionTimers.delete(inspectionTimer);
+    };
+    const connectUpstream = () => {
+      if (upstream) return;
+      clearInspection();
+      upstreamAttempts += 1;
+      record('proxy_opens_upstream', { route: policy.route });
+      upstream = track(createConnection({ host: '127.0.0.1', port: upstreamPort }));
+      upstream.on('connect', () => {
+        connected = true;
+        record('proxy_upstream_connected');
+        for (const bytes of pending) upstream.write(bytes);
+        pending = [];
+        pendingLength = 0;
+        if (clientEnded) upstream.end();
+      });
+      upstream.on('data', bytes => {
+        record('proxy_received_upstream', { bytes: bytes.toString() });
+        downstream.write(bytes);
+      });
+      upstream.on('end', () => downstream.end());
+      upstream.on('error', error => {
+        onError('proxy-upstream', error);
+        downstream.destroy();
+      });
+    };
+    downstream.on('data', bytes => {
+      record('proxy_received_downstream', { bytes: bytes.toString() });
+      if (connected) {
+        upstream.write(bytes);
+        return;
+      }
+      pendingLength += bytes.length;
+      if (pendingLength > policy.inspection_buffer_limit) {
+        record('inspection_buffer_limit');
+        downstream.destroy();
+        return;
+      }
+      pending.push(bytes);
+      connectUpstream();
+    });
+    downstream.on('end', () => {
+      clientEnded = true;
+      if (connected) upstream.end();
+    });
+    downstream.on('error', error => onError('proxy-downstream', error));
+    downstream.on('close', () => {
+      clearInspection();
+      upstream?.destroy();
+    });
+    if (mode === 'immediate') {
+      connectUpstream();
+    } else {
+      inspectionTimer = setTimeout(() => {
+        record('inspection_timeout', { limit_ms: policy.inspection_timeout_ms });
+        downstream.destroy();
+      }, policy.inspection_timeout_ms);
+      inspectionTimers.add(inspectionTimer);
+    }
+  });
+
+  let outcome;
+  try {
+    upstreamPort = await listen(server);
+    const proxyPort = await listen(proxy);
+    record('isolated_listeners_ready', { host: '127.0.0.1', proxyPort, upstreamPort });
+    outcome = await new Promise(resolve => {
+      let settled = false;
+      const settle = result => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(guard);
+        resolve(result);
+      };
+      const socket = track(createConnection({ host: '127.0.0.1', port: proxyPort }));
+      socket.on('connect', () => {
+        clientConnected = true;
+        record('client_tcp_connected');
+      });
+      socket.on('data', bytes => {
+        clientReceived += bytes.toString();
+        record('client_received', { bytes: bytes.toString() });
+      });
+      socket.on('error', error => {
+        onError('client', error);
+        settle('client_error');
+      });
+      socket.on('close', () => settle('closed_without_handshake'));
+      attachClient(socket, protocol, () => {
+        completed = true;
+        record('handshake_complete');
+        settle('complete');
+      });
+      guard = setTimeout(() => {
+        record('case_deadline', { limit_ms: 2500 });
+        settle('deadline');
+      }, 2500);
+    });
+  } finally {
+    clearTimeout(guard);
+    for (const timer of inspectionTimers) clearTimeout(timer);
+    for (const socket of activeSockets) socket.destroy();
+    await Promise.all([closeServer(proxy), closeServer(server), ...socketClosures]);
+    record('resources_closed', {
+      activeSockets: activeSockets.size,
+      proxyListening: proxy.listening,
+      serverListening: server.listening,
+    });
+  }
+
+  const result = {
+    case: name, outcome, completed, clientConnected, downstreamAccepted,
+    upstreamAttempts, upstreamAccepted, serverReceived, clientReceived,
+    elapsed_ms: Number((performance.now() - start).toFixed(2)), errors, events,
+  };
+  log(result);
+  const shouldComplete = protocol.first_message === 'client' || mode === 'immediate';
+  assert.equal(clientConnected, true, `${name}: client TCP connection`);
+  assert.equal(downstreamAccepted, 1, `${name}: one downstream connection`);
+  assert.equal(completed, shouldComplete, `${name}: completion`);
+  assert.equal(upstreamAttempts, shouldComplete ? 1 : 0, `${name}: attempt count`);
+  assert.equal(upstreamAccepted, shouldComplete ? 1 : 0, `${name}: server connection count`);
+  assert.equal(serverReceived, shouldComplete ? 'PING\n' : '', `${name}: server bytes`);
+  assert.equal(clientReceived, shouldComplete
+    ? (protocol.first_message === 'server' ? 'HELLO\nPONG\n' : 'PONG\n')
+    : '', `${name}: client bytes`);
+  assert.deepEqual(errors, [], `${name}: unexpected network error`);
+  if (!shouldComplete) {
+    assert.equal(outcome, 'closed_without_handshake');
+    assert.ok(events.some(event => event.event === 'inspection_timeout'));
+    assert.ok(!events.some(event => event.event === 'proxy_received_downstream'));
+  }
+  assert.equal(activeSockets.size, 0);
+  assert.equal(proxy.listening, false);
+  assert.equal(server.listening, false);
+}
+
+try {
+  assert.equal(fixtureProtocol.first_message, 'server');
+  assert.equal(baseline.originalPolicy.connect_start, 'first_client_data');
+  assert.deepEqual(policy, { ...baseline.originalPolicy, connect_start: 'immediate' });
+  for (const [file, expected] of Object.entries(baseline.unchangedFixtureSha256)) {
+    const hash = createHash('sha256')
+      .update(await readFile(new URL(file, import.meta.url))).digest('hex');
+    assert.equal(hash, expected, `${file}: unchanged fixture`);
+  }
+  log({ event: 'scope_checks_passed', node: process.version,
+    unchangedFixtureFiles: Object.keys(baseline.unchangedFixtureSha256),
+    changedPolicyFields: ['connect_start'], caseDeadline_ms: 2500,
+    globalDeadline_ms: 12000 });
+  for (const protocol of [fixtureProtocol, { first_message: 'client' }]) {
+    for (const mode of ['first_client_data', 'immediate']) {
+      await checkCase(protocol, mode);
+    }
+  }
+  log({ event: 'all_checks_passed', cases: 4, allSocketsAndListenersClosed: true });
+} finally {
+  clearTimeout(watchdog);
+}

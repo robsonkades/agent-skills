@@ -1,0 +1,101 @@
+{
+  "checks": [
+    {
+      "id": "01-extract",
+      "command": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "extract-examples.mjs",
+        "C:/git/agent-skills/skills/gof-proxy",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "{\n  \"status\": \"extracted\",\n  \"sourceRoot\": \"C:/git/agent-skills/skills/gof-proxy\",\n  \"sources\": [\n    \"references/worked-example.md:first Java block\",\n    \"references/proxy-kinds-and-hazards.md:first Java block\"\n  ],\n  \"adaptations\": [\n    \"Split exact public interface/class into separate files; added Supplier import\",\n    \"Added Report/ReportSpec record stubs\",\n    \"Placed exact Foo handler statement in a probe factory; Foo, target and loader supplied by harness\"\n  ],\n  \"generated\": [\n    \"ReportEngine.java\",\n    \"LazyReportEngine.java\",\n    \"Report.java\",\n    \"ReportSpec.java\",\n    \"ProxyProbe.java\"\n  ]\n}\n",
+      "stderr": ""
+    },
+    {
+      "id": "02-javac-version",
+      "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+      "args": [
+        "-version"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "javac 25.0.3\r\n",
+      "stderr": ""
+    },
+    {
+      "id": "03-java-version",
+      "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-version"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n"
+    },
+    {
+      "id": "04-compile",
+      "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+      "args": [
+        "--release",
+        "17",
+        "-Xlint:all",
+        "-Werror",
+        "-XDrawDiagnostics",
+        "-d",
+        "classes",
+        "Report.java",
+        "ReportSpec.java",
+        "ReportEngine.java",
+        "LazyReportEngine.java",
+        "LazyProbe.java",
+        "ProxyProbe.java"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "id": "05-lazy",
+      "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-cp",
+        "classes",
+        "LazyProbe"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "PASS construction deferred until first use\r\nPASS factory entered with concurrent consumers\r\nPASS all concurrent calls observe initialized target in this run\r\nPASS one factory invocation across 24 consumers\r\nPASS all consumers reach target\r\nPASS initialization RuntimeException preserves instance\r\nPASS initialization RuntimeException cached without retry\r\nPASS null supplier rejected\r\nPASS null factory result rejected\r\nPASS null-result failure cached\r\nPASS same-thread recursive factory entry rejected\r\nPASS uncaught recursive runtime failure retained\r\nPASS Error propagated without conversion\r\nPASS Error not cached; later attempt allowed\r\nPASS target render failure propagated\r\nPASS render failure does not recreate target\r\nPASS lazy checks=16; executor terminated=true\r\n",
+      "stderr": ""
+    },
+    {
+      "id": "06-proxy",
+      "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-cp",
+        "classes",
+        "ProxyProbe"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "PASS extracted handler equality is reflexive\r\nPASS proxy identity equality differs from target\r\nPASS proxy identity hash preserved\r\nPASS toString handled without target delegation\r\nPASS JDK proxy delegates final implementation\r\nPASS InvocationTargetException removed; declared cause preserved\r\nPASS raw fluent self-return exposes target as documented\r\nPASS guard intercepts direct denied invocation\r\nPASS negative control: raw fluent self-return bypasses second-call guard\r\nPASS identity-compatible self-return substitution\r\nPASS same-receiver substitution keeps guard on subsequent call\r\nPASS negative control: self-only policy cannot protect distinct returned object\r\nPASS negative control: replacing distinct result loses returned-object state\r\nPASS wrapping distinct child retains its state and receiver\r\nPASS wrapped distinct child enforces current permission\r\nPASS checked exception must fit every duplicate method declaration\r\nPASS null primitive handler result rejected\r\nPASS incompatible handler result rejected\r\nPASS proxy checks=18; no executor or owned external resource\r\n",
+      "stderr": ""
+    }
+  ],
+  "scope": "Extracted Java 17 snippets and synthetic API controls; runtime JDK 25, not a JDK 17 or framework integration run"
+}

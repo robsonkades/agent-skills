@@ -1,0 +1,12 @@
+{
+  "version": "1.3.4",
+  "packageFiles": [
+    "SKILL.md",
+    "references/context-propagation-bridges.md",
+    "references/threadlocal-migration.md",
+    "skill.yaml"
+  ],
+  "issues": [],
+  "linksChecked": 2,
+  "declaredTargetsChecked": 4
+}

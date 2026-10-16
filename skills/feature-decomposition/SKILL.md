@@ -20,6 +20,9 @@ be **shared** across people or sessions. Outside those, a breakdown is a table o
 change that would have been easier to read as a diff.
 
 Child Product/Tech Features must remain valuable, independently decidable/deliverable, and testable.
+Independence does not require zero prerequisites: name what must already exist, then show what
+usable outcome this child adds. A component that only becomes useful when its sibling arrives
+remains enabling work unless it has a separate accepted engineering outcome.
 During delivery preparation, **resources** are what gets implemented, validated and tracked.
 The calling stage determines which of these outputs is needed.
 
@@ -45,7 +48,7 @@ unclear, resolve that boundary before creating a delivery breakdown.
 1. **Test whether to decompose at all.** If the feature is one resource, a concise `RES-*` entry
    is sufficient: retain its identity, scope, applicable acceptance and validation, plus relevant
    prerequisites and shared ownership. A short answer still satisfies those obligations.
-2. **Produce the resource list first**, from the impact map. Account for each entry as scoped work,
+2. **Derive resources from both the impact map and accepted criteria.** Account for each map entry as scoped work,
    validation coverage or an evidenced unchanged dependency. A `READ` entry need not become an edit:
    link the resource that verifies its relied-on behavior or cite applicable existing evidence.
    Keep alternatives and Optional/Recommended proposals outside the delivery resource list unless
@@ -54,8 +57,12 @@ unclear, resolve that boundary before creating a delivery breakdown.
    dispositions against the baseline.
    Reuse the current map/scope revision. If none exists, record a minimal source-to-resource
    mapping for the known work; leave material unknowns open rather than inventing files or scope.
+   When a split or prerequisite depends on a claim in that map, open its linked contract, code,
+   fixture or check and confirm the relevant semantics and revision. Reuse sufficient current
+   evidence; do not repeat the entire impact analysis. A proposed path or unavailable artifact
+   is not a ready input. Route contradictions to the owning analysis and keep affected work provisional.
 3. **Reuse each resource's `RES-*` identifier or assign one to new work**, with dependencies and
-   validation. Read `references/resource-catalogue.md` for fields, examples and revision rules.
+   validation. Read `references/resource-catalogue.md` for fields, coverage checks and revision rules.
    A resource with no stated validation is not finished being defined.
 4. **Create child features only when the grouping adds an independently valuable outcome.** A Product
    Feature uses `PF-*`; a Tech Feature uses `TF-*` and names measurable engineering value.
@@ -67,6 +74,9 @@ unclear, resolve that boundary before creating a delivery breakdown.
    cycles in the required order. A cycle calls for clarifying a shared contract, separating the
    relevant readiness milestones, or merging inseparable work; do not invent a linear order over it.
 7. **Say why the shape is what it is** — including "not decomposed, because it is one resource".
+   For a consequential choice, retain the deciding evidence and what changed constraint would
+   require revisiting it: acceptance, contract stability, deployment compatibility or ownership.
+   A previous successful split is useful under those conditions, not a universal template.
 
 ## When to decompose
 
@@ -86,6 +96,25 @@ into controller, service and repository stories usually leaves incomplete outcom
 delivery resources can still be useful for a real handoff or staged contract, with validation and
 integration prerequisites explicit; they do not become child features merely by being testable.
 
+### Find a useful slice
+
+Start with the smallest complete outcome for a named beneficiary. Try a meaningful operation,
+workflow path or supported input category before dividing technical layers. Each candidate must
+answer: can its beneficiary use the result with the named prerequisites, and can its acceptance
+be checked without pretending unfinished siblings exist? Compare keeping one feature with the
+best useful split; do not enumerate every possible partition.
+
+For example, exporting one supported format may be useful before adding another. Export generation
+without the accepted tenant-access check is an incomplete slice. Preserve required rejection,
+recovery, security and compatibility behavior for every slice where it applies; "happy path first"
+does not move those obligations into optional follow-up work. Reducing supported inputs or quality
+is a scope proposal until the accountable owner accepts it.
+
+Bill Wake's [INVEST guidance](https://xp123.com/invest-in-good-stories-and-smart-tasks/) supports
+valuable slices across layers and acknowledges that full independence is not always achievable.
+His [splitting dimensions](https://xp123.com/twenty-ways-to-split-stories/) are candidate boundaries;
+the accepted feature baseline determines which simplifications are permissible here.
+
 ## Decision rules
 
 ```text
@@ -103,6 +132,11 @@ THEN consider merging unless ownership, staged compatibility or a real handoff r
 IF a resource cannot be validated without another resource existing
 THEN name the validation gate and its prerequisites. Do not infer implementation order from
      validation order when an agreed contract or fixture permits independent implementation.
+
+IF a missing contract, environment or external commitment determines a boundary or dependency
+THEN name the affected resources, required evidence and accountable owner or next inspection.
+     Keep that part provisional; continue independent decomposition. Do not invent a fixture,
+     delivery date or approved discovery resource to make the graph appear ready.
 
 IF a resource lacks a path to in-scope impact and acceptance
 THEN identify the missing mapping or scope decision. One impact entry can justify several
@@ -152,16 +186,18 @@ TF-01  <independently valuable engineering outcome and TC-*>
 Parent resources (including work not assigned to a child)
   RES-04  <resource>
 
-Dependencies RES-02 needs RES-01's column; RES-03 needs RES-02's contract
-Ready first  RES-01, RES-04 (no dependency between them)
-Then         RES-02 -> RES-03; RES-04 may proceed independently
+Implementation inputs  <resource -> required deliverable/contract revision + readiness evidence>
+Integration/release    <affected resources -> combined check + prerequisites + owner>
+Parallel candidates   <resources whose implementation inputs and shared ownership are resolved>
+Unresolved            <criterion/input -> affected work + owner or next evidence to obtain>
 ```
 
 Execution consumes resource scope, acceptance, ownership and dependencies together. Independence
 in the graph permits parallel planning only when shared-file/resource ownership is also resolved.
-Before handoff, check scope coverage, unique/stable IDs, an acyclic dependency graph and validation
-for each resource. Check the reverse direction too: every applicable accepted criterion needs a
-resource or shared validation mapping, including parent-wide behavior that no child alone proves.
-Keep criterion meaning with its owning stage; report missing acceptance or dependencies rather than
-claiming the breakdown ready.
+Before handoff, check unique/stable IDs, the implementation dependency graph and the coverage
+procedure in the resource catalogue. Retain source locators, planned checks and unresolved inputs
+in the existing breakdown so the implementation plan can consume them without guessing. Update an
+authorized existing artifact when persistence is required; otherwise return the same information
+inline. Keep criterion meaning with its owning stage; identify which part is defined and which
+part remains provisional instead of claiming all resources ready.
 A defined breakdown does not establish accepted scope, implementation or observed validation.

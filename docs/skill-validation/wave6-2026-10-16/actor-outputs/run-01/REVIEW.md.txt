@@ -1,0 +1,18 @@
+**Disposition: supported. No production change is required.**
+
+Under `docs/contract.md`, one producer installs 42 once; misses are allowed on every call, indefinitely. Memo and reader initialization precede each worker's `Thread.start()`; construction does not escape, and there are no subsequent mutations or alternate access paths. These are accepted premises.
+
+The effective path is `BestEffortMemo.find()` → one read of `entry` into `observed` → null guard → `reader.applyAsInt(observed)` → `PublishedEntry.value()` → `primary.value`. `ReaderFactory.create()` selects `PublishedEntry::value`, an unbound instance method reference: its argument becomes the receiver when invoked. It neither reads an entry during factory construction nor selects `legacyValue()`. This follows the source and [JLS SE25 §15.13.3](https://docs.oracle.com/javase/specs/jls/se25/html/jls-15.html#jls-15.13.3).
+
+The contract argument has two separate parts:
+
+- `entry` is a plain field, so concurrent installation and lookup have a data race. Reference reads are atomic, but freshness is not promised. A null observation returns empty; the same local observation is used on the hit branch. Indefinite misses satisfy the accepted contract. See [JLS §17.7](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.7).
+- In `PublishedEntry`, the write `payload.value = 42` precedes the constructor-exit freeze of final `primary`. Installation publishes the entry afterward. A consumer reaching `primary.value` through that final reference receives the initialized payload value, even though `Payload.value` itself is non-final. Formally: the payload write precedes the freeze; the freeze precedes publication; publication reaches the final-field read through the memory chain; that read dereferences the payload read. The final-field rule therefore excludes zero here. See [JLS §17.5.1](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.5.1).
+
+The separate publication of memo and reader before thread start makes the initialized, non-null reader visible to participants ([JLS §17.4.5](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.4.5)). Thus the hit path has a non-null receiver and primary payload, and returns 42 without a concurrency-induced exception.
+
+`legacy` is non-final and its accessor lacks this final-reference path. It is unused by the accepted lookup; its presence does not invalidate `primary` or justify changing production code. The guarantee concerns construction-time state through the actual final-field path, not general publication of every sibling field or future mutations.
+
+Observed validation: `node check.mjs` in `output/project` exited 0 and printed `sequential-controls=2 PASS`. The supplied script compiled with `javac --release 25` and ran `memo.Smoke`; each Java child had a 15-second timeout. This checks compilation and two sequential cases. The concurrent conclusion above comes from the accepted premises, source path, and specification; the smoke does not prove it.
+
+No concurrency stress, alternate-machine runs, bytecode inspection, or production correction was executed. No material evidence is missing for this contract. Preserve the existing implementation.

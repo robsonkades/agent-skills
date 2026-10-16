@@ -41,6 +41,16 @@ an external payment or other remote effect; use that system's retry/reconciliati
 (`idempotency`). Verify both the lost-publication window and duplicate-delivery window;
 the relay's retry loop alone does not close the latter.
 
+Check ordering separately. Applying distinct account snapshots in reverse revision order can
+leave stale state even when each event ID is committed only once. Ordered publication does
+not by itself order parallel handler commits. Trace the actual reader and effect; preserve
+an adequate order-insensitive merge or query. Otherwise compare per-key effect sequencing
+with an atomic authoritative-version guard for complete snapshots whose intermediate effects
+may be skipped. Discarding older deltas or required transitions is not an equivalent fix.
+Test two distinct same-key events with completion reversed and a replay; pass the event
+semantics, required scope/stage and actual dispatch/read paths to
+`message-ordering-and-partitioning` for protocol details.
+
 **Where it fails:** unbounded aggregates; rules that leaked into the service; reads forced
 through the write model.
 
@@ -244,6 +254,10 @@ Primary definitions: [Remote Facade](https://martinfowler.com/eaaCatalog/remoteF
 [Transactional Outbox](https://microservices.io/patterns/data/transactional-outbox.html) and
 [Idempotent Consumer](https://microservices.io/patterns/communication-style/idempotent-consumer.html)
 for publication retries and consumer effect responsibility.
+The outbox definition also requires publication order and explicitly leaves consumer delivery
+order outside its scope. [Kafka 4.1 consumer threading guidance](https://kafka.apache.org/41/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html)
+illustrates why parallel processing needs its own ordering contract; inspect the actual
+broker/client and dispatch design rather than assuming a common guarantee.
 The [optimistic](https://martinfowler.com/eaaCatalog/optimisticOfflineLock.html) and
 [pessimistic](https://martinfowler.com/eaaCatalog/pessimisticOfflineLock.html) offline-lock
 definitions describe coordination responsibilities; expiry and a version column are

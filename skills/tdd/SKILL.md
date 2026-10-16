@@ -22,8 +22,8 @@ detects the intended missing behavior, expose design choices through a caller, a
 changed scope small enough to investigate. An observed failure does not prove every assertion
 effective or rule out setup, environment and nondeterminism as causes of later failures.
 
-Where those three are cheap to get another way, TDD costs more than it returns. Deciding which
-situation you are in is the skill; performing the loop is mechanics.
+Where those benefits are cheap to get another way, compare the feedback and maintenance costs
+before choosing TDD. Deciding which situation you are in is the skill; the loop is mechanics.
 
 ## Workflow
 
@@ -32,21 +32,43 @@ Inspect the project's Java release, test runner, resolved dependencies and focus
 Do not upgrade them to match the worked example. Report missing tools or an unreproduced fault
 as a limitation; do not invent a red run. The following loop applies when test-first is selected.
 
+Locate the agreed behavior in its requirement or caller contract, then follow the relevant caller,
+entry point and configuration to the code being changed. Inspect a neighboring test and the build's
+module/source-set selection before adding a test. Use `java-testing-strategy` when the boundary is
+unclear: a helper test must not stand in for a caller path that does not use that helper.
+
+Keep a short list of behavior scenarios from the agreed contract: ordinary use, relevant boundaries
+and failures, and existing behavior the change must preserve. Add discoveries as work proceeds;
+the list records remaining obligations, not a demand to implement every test before starting.
+
 1. **Write one failing test for the next behaviour**, keeping the change small enough that
    an unexpected result is understandable. Name it after the behaviour (java-test-design).
 2. **Run it and read the failure.** This is the step that is skipped and the one that carries
    the value: a passing test whose sensitivity was never checked gives weaker evidence.
    A failure from unrelated setup or a typo is not the intended red. A missing API or bean
    can be the intended failure when creating that API or wiring is the behavior under test.
+   Distinguish compilation, setup/discovery, and behavior failures. For a runnable test, confirm
+   the intended case actually ran; zero discovered tests, a skip or an abort does not exercise
+   its assertion. Repair selection/setup or report the blocker before attributing a failure
+   to production behavior. A compile-time red for a missing API does not yet check its runtime result.
 3. **Make it pass with the simplest change that satisfies the intended behaviour.** A literal
    return can complete a genuinely constant contract. For a broader input-dependent contract,
    a temporary constant may be a step; drive the remaining real requirements with discriminating
    cases rather than inventing a second test merely to forbid constants.
+   Rerun the same case under the relevant conditions; a narrower selector, substituted boundary
+   or unrelated passing suite does not establish that its failure was fixed.
+   Keep earlier tests in the focused loop green too; the newest test passing does not cancel
+   a regression in behavior already covered. If an authorized contract change supersedes an old
+   expectation, revise that expectation explicitly and preserve unaffected coverage; do not weaken
+   a still-valid assertion to obtain green.
 4. **Refactor while green** — both the code and the test. Skipping this converts TDD into
    "writing tests first and accumulating mess". Refactor when there is a concrete improvement;
-   the step can legitimately end with no edit.
+   the step can legitimately end with no edit. After an edit, rerun the focused tests before
+   taking the next behavior step.
 5. **Run affected checks and the repository's required gates.** Inspect discovery counts,
-   failures and skips; report pre-existing failures separately. Commit only if authorized.
+   failures and skips; report pre-existing failures separately. Reconcile remaining scenarios
+   with the agreed scope; a green suite does not complete required behavior that was never tested.
+   Commit only if authorized.
    If interrupted while red, leave an explicit handoff of the failing case and current state.
 
 ## Rules
@@ -68,6 +90,9 @@ as a limitation; do not invent a red run. The following loop applies when test-f
 - Do not write a test whose assertion restates the implementation. `verify(repo).save(any())`
   alone often misses wrong data or timing. Interaction assertions are useful when the call,
   payload, ordering or absence of a side effect is itself the observable contract.
+  If the expected result is disputed, follow
+  [Resolving a disputed red](references/when-tdd-pays.md#resolving-a-disputed-red) before changing
+  either the assertion or production behavior; green is not authority to choose the contract.
 - TDD does not produce a test strategy. Unit tests do not establish real schema, wiring or
   external contracts when those boundaries carry the risk; choose their coverage deliberately.
   A pure component with no such boundary need not acquire an unrelated integration suite.

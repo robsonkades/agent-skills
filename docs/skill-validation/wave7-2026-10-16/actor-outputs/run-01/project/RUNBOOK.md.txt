@@ -1,0 +1,17 @@
+Call BookingService through the configured Spring application context. The schema is initialized by the existing launcher/tests. Inspect booking, receipt, receipt_detail and stock state outside the completed transaction.
+
+The existing mandatory-receipt implementation is retained. BookingService joins businessTx with REQUIRED propagation. BookingListener runs BEFORE_COMMIT; ReceiptWriter uses the same transaction-bound JdbcTemplate connection. Both receipt writes therefore commit or roll back with the booking and stock reservation. A 13-character receipt body is rejected by the unchanged VARCHAR(12) constraint, rolling back the header as well. Events published without a transaction are ignored.
+
+If an existing caller transaction owns completion, place may return before receipt validation runs. The enclosing transaction's completion reports a receipt failure; the caller must not treat the inner method's return as a committed booking. A caller rollback skips the pending listener, and even a later before-commit failure after receipt writes rolls back all mandatory state.
+
+Do not change the receipt writer to REQUIRES_NEW: it cannot see the uncommitted booking, and its committed receipt can survive a later owner rollback. ReceiptObserver.beforeWrite remains diagnostic and executes inside the actual writer before its first write.
+
+Run from this project directory:
+
+```text
+node check.mjs
+node check.mjs work.ReceiptContractRegression
+node check.mjs work.RequiresNewCounterexample
+```
+
+The contract regression checks eight scenarios through real Spring beans and reads final state on fresh JDBC connections after transaction completion. The counterexample registers a test-only REQUIRES_NEW writer and asserts its contract violations; production Config never registers it. These local H2 checks do not establish crash durability, production isolation behavior, distributed delivery, concurrency behavior or JPA semantics.

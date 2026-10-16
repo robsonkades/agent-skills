@@ -1,0 +1,51 @@
+{
+  "kind": "evaluator-only criteria",
+  "doNotProvideToActor": true,
+  "decisiveConstraint": "Somente app.properties muda execution.mode=inline para execution.mode=queued. Código, consumidor e contrato de resultado/ciclo de vida são idênticos.",
+  "cases": [
+    {
+      "id": "chain-inline",
+      "expectedDecision": "Preservar o middleware simples quando a fábrica efetiva executa o terminal inline antes de retornar.",
+      "requiredEvidence": [
+        "Rastrear app.properties até executor(config, queue), o Next render e o consumidor real; não inferir execução adiada apenas do nome supplyAsync.",
+        "Demonstrar resultado report e ordem open/read/close, com uma leitura terminal e um fechamento.",
+        "Justificar por que try-with-resources cobre o uso síncrono mostrado mesmo com retorno CompletionStage; não generalizar para outras fábricas ou cancelamento externo."
+      ],
+      "acceptableAlternatives": [
+        "No-change é a decisão mínima adequada.",
+        "Uma mudança mínima equivalente pode ser aceita somente se houver requisito demonstrado nos artefatos; preferência por mais infraestrutura não é justificativa."
+      ],
+      "failureConditions": [
+        "Inventar use-after-close na execução inline exibida.",
+        "Trocar a configuração aceita, bloquear um fluxo antes assíncrono, habilitar preview ou subir o target Java.",
+        "Exigir framework, cadeia encadeada ou tratamento assíncrono indiscriminado só porque o retorno é CompletionStage."
+      ]
+    },
+    {
+      "id": "chain-queued",
+      "expectedDecision": "Corrigir encerramento prematuro da sessão quando a fábrica efetiva enfileira o terminal para depois de SessionStage.handle retornar.",
+      "requiredEvidence": [
+        "Ler configuração, fábrica, estágio, terminal e drain do consumidor; demonstrar que o fechamento lexical ocorre antes de read.",
+        "Preservar execution.mode=queued e a API de conclusão, mantendo a sessão válida até o terminal parar de usá-la.",
+        "Verificar sucesso, falha do terminal e lançamento síncrono antes de obter um estágio; a sessão fecha exatamente uma vez e a falha continua visível.",
+        "Evitar join dentro do middleware: o caller só drena depois do retorno, portanto bloquear ali impede progresso."
+      ],
+      "acceptableAlternatives": [
+        "Mover posse para a tarefa terminal, ou amarrar cleanup à conclusão efetiva do trabalho usando o contrato concreto do estágio.",
+        "Neste caso o terminal retorna minimalCompletionStage e o único consumidor não cancela/completa externamente; uma composição whenComplete pode ser válida. Não exigir protocolo de cancelamento inexistente, mas não afirmar que isso resolve qualquer futuro cancelável."
+      ],
+      "failureConditions": [
+        "Deixar a sessão fechar antes do terminal ou apenas engolir a falha.",
+        "Mudar a configuração para inline ou fazer join antes de o caller poder drenar a fila.",
+        "Encerrar só no caminho de sucesso ou perder cleanup se next.handle lançar antes de retornar.",
+        "Reimplementar a cadeia inteira sem necessidade, invocar terminal duas vezes, ou tratar conclusão de um futuro arbitrariamente cancelável como prova universal de fim do trabalho."
+      ]
+    }
+  ],
+  "limitations": [
+    "Casos conhecidos de desenvolvimento, não holdouts; nenhum ator independente executado.",
+    "A fila é adaptador local determinístico; não valida agendamento concorrente de produção, Spring ou Netty.",
+    "Critérios foram registrados antes das execuções técnicas confirmatórias e antes de qualquer possível avaliação de agente."
+  ],
+  "observablePair": "A execução original inline deve mostrar report com [open, read, close]; a original queued expõe session closed com [open, close]. O controle corrigido fora dos inputs deve passar nos dois modos."
+}

@@ -1,0 +1,39 @@
+{
+  "reviewDate": "2026-10-16",
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se25/html/jls-5.html#jls-5.1.11",
+      "retained": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-strings-and-text/sources/jls-5.html",
+      "version": "Java SE25",
+      "location": "Section5.1.11; retained HTML1931–1958",
+      "support": "String conversion maps null references to literal null and otherwise uses the referenced object's toString, with a null return mapped to literal null."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/StringBuilder.html",
+      "retained": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-strings-and-text/sources/StringBuilder.html",
+      "version": "Java SE25",
+      "location": "append(Object), append(char[]), class-level null policy",
+      "support": "Object overload converts through String.valueOf(Object); char[] overload appends array characters; the class-level null exception contract applies to append(char[])."
+    }
+  ],
+  "retrieval": [
+    {
+      "method": "web.open",
+      "urls": [
+        "https://docs.oracle.com/javase/specs/jls/se25/html/jls-5.html#jls-5.1.11",
+        "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/StringBuilder.html"
+      ],
+      "result": "Pending request was terminated by reviewer; no returned page was treated as evidence."
+    },
+    {
+      "method": "web.search",
+      "result": "Official Java SE25 StringBuilder API returned and inspected; nonprimary/unrelated results were ignored."
+    },
+    {
+      "method": "PowerShell Invoke-WebRequest with TimeoutSec20",
+      "result": "Both exact Java SE25 HTML sources retrieved successfully and retained; relevant sections read from retained files.",
+      "details": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-strings-and-text/sources/retrieval.json"
+    }
+  ],
+  "interpretation": "The correction is a Java language/API contract distinction. Actual execution is separately bounded to Temurin25.0.3+9; no performance or agent-quality effect was measured."
+}

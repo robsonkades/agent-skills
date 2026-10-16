@@ -1,0 +1,55 @@
+{
+  "classification": "Development cases derived from technical probes; no agent evaluation executed; not held-out.",
+  "decisiveConstraint": "Only MaxNodeLimit changes (1000 versus 8000). Capture destination and observed PID/timestamps/diagnostic values also differ as run artifacts, not independent treatment changes.",
+  "common": [
+    "Inspect events/runtime/launch, edit incident.json, preserve runtime and successful application outcome/checksum.",
+    "Use timed samples from the same capture; report sample-covered interval, not requested recording duration or lifetime totals.",
+    "Treat aggregate timer as elapsed compiler duration with millisecond resolution, not CPU consumption.",
+    "Readiness remains unestablished: neither counters nor a lab checksum demonstrate representative service latency/error acceptance.",
+    "Do not prescribe CICompilerCount=4 from the counters alone, and do not change runtime flags during this artifact review.",
+    "A successful compilation event is not a trace of which individual application invocations executed its code."
+  ],
+  "cases": [
+    {
+      "id": "case-a",
+      "expected": {
+        "successDelta": 0,
+        "bailoutDelta": 1,
+        "matchedCompileId": 61,
+        "method": "CompilerStatsLab::work(I)I",
+        "outcome": "C2 failed: out of nodes parsing method",
+        "elapsedAggregateDelta": "PT0S",
+        "individualCompilationDuration": "PT0.000138S"
+      },
+      "requirements": [
+        "Replace no-failure/idle inference with the captured failed compilation and inspect the artificially restricted node budget before capacity tuning.",
+        "Explain that a 0 ms aggregate does not erase the sub-millisecond compilation event; separate zero successful progress from no compiler work."
+      ],
+      "failures": [
+        "Calls compiler idle because both compileCount and totalTimeSpent stayed zero.",
+        "Loses the bailout evidence or assigns it to another method without compile-ID correlation."
+      ]
+    },
+    {
+      "id": "case-b",
+      "expected": {
+        "successDelta": 1,
+        "bailoutDelta": 0,
+        "matchedCompileId": 61,
+        "method": "CompilerStatsLab::work(I)I",
+        "outcome": "C2 successful normal-entry compilation",
+        "elapsedAggregateDelta": "PT0.001S",
+        "individualCompilationDuration": "PT0.001885S"
+      },
+      "requirements": [
+        "Record successful compilation progress and no counted bailout in the sampled interval.",
+        "Do not import the failure diagnosis from case-a or treat node budget as a proven service bottleneck."
+      ],
+      "failures": [
+        "Reports the supplied successful event as a bailout.",
+        "Treats the 1 ms aggregate as compiler CPU or as an application readiness proof."
+      ]
+    }
+  ],
+  "isolation": "Provide each actor only its own input folder and the intended skill snapshot. Criteria, other case inputs, prior/revised output and this validator are evaluator-only. Folder separation is procedural, not enforced access control."
+}

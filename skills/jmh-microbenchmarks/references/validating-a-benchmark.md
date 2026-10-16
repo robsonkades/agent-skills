@@ -5,6 +5,40 @@ the decision-relevant effect. It is not a checklist of universal fork counts or 
 Apply the relevant sections to the claim under review, reuse adequate existing evidence and
 distinguish an experiment plan from its results. A source-contract question need not launch a run.
 
+## Confirm selection and completed coverage
+
+Follow the actual launcher to its benchmark artifact, include/exclude filters, parameter overrides
+and effective options. Use that artifact's discovery output (`-l`/`-lp` in JMH 1.37) to check the
+methods and parameter values, then inspect the run header/raw results for the executed mode,
+threads, JVM/arguments, forks and iterations. Source annotations or a different freshly built JAR
+do not establish what a saved result measured. Discovery lists intended work; it does not prove
+that the work completed.
+
+Reconcile the selected method/parameter/mode/thread configurations and planned fork observations
+with the completed result records and full failure log. Distinguish an intentionally excluded case
+from a selected case that failed or never produced a measurement. Missing data is not a zero cost,
+and averaging only surviving cases can change the input population of a comparison.
+
+In JMH 1.37, `FAIL_ON_ERROR` defaults to `false`; a failed benchmark can be omitted while other
+cases finish and the CLI exits successfully. For a strict run, use `-foe true` or the programmatic
+`shouldFailOnError(true)` option, and propagate the launcher's actual failure status. Still check
+selection and result coverage: fail-on-error cannot detect a case excluded by the wrong filter.
+An intentional exploratory sweep may continue through failures, but preserve those failures and
+mark its result incomplete for the originally selected population. Do not apply a blanket
+fail-fast rule when partial diagnostic results are the requested artifact.
+
+Validate a required failure policy with one controlled throwing benchmark in a disposable copy;
+check exit status, log and result coverage, then retain or remove the probe outside the decision
+experiment. A successful control does not validate timing quality. Hand automated completeness
+gates and baseline acceptance to `performance-regression-ci` with the selected-case specification
+and failure evidence.
+
+These behaviors are defined by the JMH 1.37
+[defaults](https://github.com/openjdk/jmh/blob/1.37/jmh-core/src/main/java/org/openjdk/jmh/runner/Defaults.java),
+[failure handling](https://github.com/openjdk/jmh/blob/1.37/jmh-core/src/main/java/org/openjdk/jmh/runner/Runner.java),
+[CLI options](https://github.com/openjdk/jmh/blob/1.37/jmh-core/src/main/java/org/openjdk/jmh/runner/options/CommandLineOptions.java)
+and [CLI exit behavior](https://github.com/openjdk/jmh/blob/1.37/jmh-core/src/main/java/org/openjdk/jmh/Main.java).
+
 ## Semantic oracle and boundary
 
 Before timing, establish semantic equivalence with relevant correctness evidence: test

@@ -1,0 +1,8 @@
+{
+  "cases": 2,
+  "filesPerCase": 7,
+  "decisiveDifference": "product-contract.json only",
+  "actorRuns": 0,
+  "databaseRuns": 0,
+  "jdbcRuns": 0
+}

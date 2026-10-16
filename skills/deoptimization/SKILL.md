@@ -44,9 +44,10 @@ the JVM takes longer to give up on a method whose underlying assumption keeps ch
    `jdk.Deoptimization` (enabled in the baseline `default.jfc`; stacks enabled by `profile.jfc`
    or explicit event settings) for
    production, `-Xlog:deoptimization=debug` for a session. Both see **uncommon traps only**:
-   a class-loading or `RedefineClasses` invalidation appears in neither. If that path matters,
+   a class-loading, mutable call-site target or `RedefineClasses` invalidation appears in neither.
+   If that path matters,
    use existing evidence or collect `-Xlog:jit+compilation=debug` with
-   `-Xlog:dependencies=debug` for class loading, or `-Xlog:redefine+class+nmethod=debug`
+   `-Xlog:dependencies=debug` for class loading or call-site relinking, or `-Xlog:redefine+class+nmethod=debug`
    for redefinition scope, within the budget. See
    `references/deopt-tooling.md`.
 3. **Group by method and bci, reason and action, over a stated window.** Preserve the compile id

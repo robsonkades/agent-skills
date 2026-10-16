@@ -1,0 +1,2 @@
+/Pause/ && match($0, /[0-9]+([.][0-9]+)?ms$/) {
+       print substr($0, RSTART, RLENGTH - 2) }

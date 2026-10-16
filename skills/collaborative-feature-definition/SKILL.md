@@ -34,7 +34,8 @@ implementation, progress, and completion review.
 If both apply, keep one parent objective and separate the product outcome from the enabling technical
 work. Do not hide a multi-feature initiative under one title.
 
-Identify both the artefact and the current stage. Read exactly one template for that stage:
+Identify both the artefact and the current stage. Read the matching template; consult another stage's
+template only when resolving a handoff or the impact of a change:
 
 - For the product-owned definition of a Product Feature, read
   [Product Feature](references/product-feature.md).
@@ -78,6 +79,12 @@ Reuse the request, supplied documents and accepted session decisions. Use `featu
 separate facts, assumptions, unknowns, and decisions, preserving each source's scope and authority.
 Mark missing mandatory content as `OPEN`; never fill it with plausible intent or approval.
 
+Locate the current working draft and any accepted baseline before creating another version. When the
+request includes updating a document, keep that document current after each resolved round; a chat
+summary is not the update. Preserve accepted snapshots and edit the working revision. A conversation-only
+workshop may keep its draft inline. If a source cannot be read or an update fails, state what is missing
+or unsaved and provide the proposed text; do not claim the document was checked or updated.
+
 Assign the shared lifecycle identifiers as items appear: `OBJ-*`, `F-*`, `A-*`, `U-*`, `BR-*`,
 `BAC-*`, `PF-*`, `TF-*`, `SC-*`, `Q-*`, `IMP-*`, `ED-*`, `EXP-*`, `CT-*`, `TC-*`, `RES-*`,
 `RISK-*`, `EV-*`, and `GAP-*`. Use the namespace in `feature-engineering`'s artefact contract.
@@ -100,14 +107,28 @@ within the feature's scope without turning every possible concern into a new req
 Use `feature-requirement-clarification` to select questions. There is no predetermined number of
 rounds. Size each round dynamically: ask one question when one answer determines the next direction,
 or two to three when the questions belong to the same decision area and can be answered together.
-For each question:
+Use these checks to choose a question; the labels need not appear in the conversation:
 
 ```text
-Question       one decision in language the user uses
+Question       one missing fact or decision in language the user uses
 Why now        which section or decision it blocks
 Consequence    what changes between the likely answers
 Recommendation agent recommendation, when evidence supports one
 ```
+
+When seeking evidence, ask neutrally about a concrete case, affected users, or observed behavior;
+do not embed a preferred solution in the question. When seeking a choice, explain viable options and
+their consequences, with a recommendation if supported. A stakeholder's preference is a decision
+input, not proof that users experience the claimed problem. Use follow-ups to resolve consequential
+ambiguity, adapting to the answer rather than replaying the outline. This applies the questioning
+technique in [GOV.UK's interview guidance](https://www.gov.uk/service-manual/user-research/using-in-depth-interviews),
+without treating a definition workshop as completed user research.
+
+Resolve terminology when different readings change an actor, state, eligibility, timing, or acceptance
+result. Check the applicable glossary, rules, and workflow examples first. If still ambiguous, ask about
+one case that separates the readings: for example, does cancelling a renewal end access now or at the
+paid-through date? If both behaviors exist, name them distinctly within their contexts. Do not force
+different concepts into one meaning, interrogate harmless synonyms, or require a project-wide glossary.
 
 Question order is adaptive, but normally moves through:
 
@@ -117,7 +138,8 @@ Question order is adaptive, but normally moves through:
 4. criteria and unresolved constraints appropriate to the current author's stage;
 5. acceptance criteria, decomposition, unresolved risks, and confirmation.
 
-Do not open a later area while an earlier answer can invalidate it.
+Defer a dependent question while an earlier answer could make it irrelevant. Skip areas already
+settled by evidence; the order is not a gate on independent work.
 
 Use supplied answers and authoritative context before asking; a challenge already resolved
 by that evidence does not need to be asked again. Independent questions can proceed while
@@ -134,11 +156,18 @@ all of them mechanically.
 
 After each answer:
 
-- update the affected sections and decision/assumption ledger;
-- show what changed in a compact delta;
-- identify contradictions, new dependencies, or consequences;
-- close resolved questions and promote nothing from assumption to fact without a source;
-- choose the next highest-impact gap.
+- map all resolved parts of the answer to their open items and check them against the current definition;
+- if it conflicts with accepted intent, state the competing readings and the affected decision;
+  clarify material ambiguity instead of silently treating the latest statement as an approved change;
+- record a resolved term's scoped meaning and source in the brief or link its existing authoritative
+  glossary entry; an inline definition beside the affected rule is enough. Preserve a distinguishing
+  example when it prevents the original ambiguity; resolving vocabulary does not authorize code renames;
+- update the affected behavior, rules, examples, criteria and decision/assumption ledger together,
+  preserving identifiers, source and authority. Close answered questions and replace dependent questions
+  made irrelevant by the answer; promote nothing from assumption to fact without a source;
+- reread the updated sections together: their actors, states, timing and expected outcomes must agree.
+  A note appended to the ledger does not repair a contradictory criterion left in the body;
+- show the consequential delta and choose the next highest-impact gap from the updated draft.
 
 Maintain bidirectional traceability as the draft grows:
 
@@ -162,10 +191,15 @@ Challenge scope or rules with a concrete consequence, not generic disagreement. 
 against a recommendation, record the decision and its trade-off; do not keep relitigating it unless
 new evidence changes the choice.
 
-When an accepted baseline changes, do not silently edit it. Create a change-impact entry containing the
+When an accepted baseline changes semantically, do not silently edit it. Create a change-impact entry containing the
 previous and new revision, changed statement and reason, affected rules/criteria/contracts/ADRs/PoCs/
-decomposition, owners who must reconsider, and validations to rerun. Mark affected downstream items
-stale until reapproved; unaffected items remain valid.
+decomposition, owners who must reconsider, and validations to rerun. Follow direct and transitive
+dependencies; mark affected downstream conclusions stale until rechecked or reapproved. Preserve the
+old evidence and its conditions: it may still support unaffected claims. A clarification that confirms
+the existing meaning records its source without inventing a semantic revision or restarting unrelated
+questions. Using traceability to assess change impact is described in
+[NASA's requirements-change guidance](https://swehb.nasa.gov/spaces/7150/pages/16449679/SWE-053%2B-%2BManage%2BRequirements%2BChanges);
+its formal review-board process is not required here.
 
 ### 4. Decide whether another round earns its cost
 
@@ -210,6 +244,11 @@ to clarify existing behavior or known dependencies; do not turn repository evide
 author's engineering decision. Implementation shows what exists; an applicable accepted policy,
 contract or decision can establish what is required. Cite its authority, scope and revision rather than
 promoting common code into a business rule or standard.
+
+Before a version-sensitive engineering recommendation, inspect the project's declared toolchain,
+dependencies and deployment constraints. Preserve that baseline; a proposed upgrade or new dependency
+is a separate choice, not implied by this workshop. If compatibility evidence is missing, keep the
+recommendation conditional and name the needed check. This skill imposes no Java or framework version.
 
 ### 6. Write checkable criteria
 
@@ -260,7 +299,7 @@ The product-definition stage may finish when:
 - assumptions, dependencies, risks, and unresolved product questions are visible;
 - the need for engineering analysis is recorded as `Required`, or `Not required` with an accountable
   engineering owner and rationale;
-- the product author confirms the business definition and hands it off without supplying engineering
+- the accountable product owner accepts the business definition and hands it off without supplying engineering
   decisions on behalf of the later owner.
 
 Require engineering analysis when the feature introduces or materially changes an API, event, schema,
@@ -285,12 +324,14 @@ pending`; it is not yet ready for final validation. The engineering-analysis sta
 - engineering does not silently rewrite product intent. A conflict reopens the affected product
   question with the product owner.
 
-A Tech Feature, or a Product Feature whose required analysis is complete, may converge when:
+A Tech Feature, or a Product Feature whose analysis is complete or accountably `Not required`, may
+converge when:
 
 - value and beneficiary are explicit, including engineering value for a Tech Feature;
 - detailed behavior or desired technical state, rules, boundaries, failure cases, and exclusions agree;
 - facts, assumptions, decisions, dependencies, constraints, and unresolved risks are visible;
-- business acceptance and technical criteria are observable and name verification;
+- applicable business acceptance and technical criteria are observable and name verification; an
+  internal Tech Feature need not invent a BAC, nor a Product Feature an unnecessary technical criterion;
 - every remaining `OPEN` item is explicitly accepted as non-blocking or deferred;
 - any decomposition produces valuable, independent, testable children;
 - the accountable owner confirms the resulting definition is acceptable.
@@ -357,14 +398,18 @@ with the accountable role and creates a new snapshot when resolved.
 
 ## Working response shape
 
-During the loop, respond with:
+Keep each reply proportional: the consequential update, remaining blocker or next decision, and the
+focused question when needed can fit in a short paragraph. Use the fields below when they help the
+reader follow a larger workshop; do not emit empty fields or repeat unchanged sections. After a
+material shift or on resumption, briefly restate the current objective, boundaries and accepted
+revision so accumulated deltas do not leave the understanding fragmented.
 
 ```text
 Updated      <sections changed and decisions made>
 Open         <highest-impact unresolved items>
 Checkpoint   <Continue | Close the stage | Blocked, with reason>
 Next         <next focused subject or optional deeper area>
-Questions    <one coherent round of one to three questions, only when continuing>
+Questions    <one coherent round of one to three questions, when needed to continue or unblock>
 Impact       <downstream items made stale by this change, or None>
 Draft        <only the affected excerpt, unless a full draft was requested>
 ```
@@ -378,3 +423,8 @@ the Product Feature plus required Engineering Analysis (or its accountable not-r
 or the Tech Feature, followed by accepted
 assumptions/risks, decision authority, traceability, accepted gaps, snapshot revisions, decomposition if
 any, and the normalized `feature-engineering` validation result.
+
+Return or link the coherent current document, not a chain of conversational deltas. Verify that it
+contains the resolved meanings, rules and criteria; previously answered questions must not remain
+`OPEN` unless new evidence reopened them. Keep approval and validation statuses tied to the revisions
+actually reviewed, including when the workshop ends with unresolved work.

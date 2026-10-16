@@ -36,22 +36,30 @@ bounded gap; it need not prove that no answer exists anywhere.
 2. **Reuse supplied answers and the context report.** Check accepted session decisions and applicable
    policy/contract evidence before asking again. Run a focused repository check only when it could
    settle the remaining gap; a scope question needed to locate relevant code can come first.
+   Follow the relevant entry point, contract or test for this decision; stop when the proposition is
+   settled or the remaining gap needs intent/authority. Do not turn clarification into a repository audit.
    Distinguish a missing requirement from missing evidence that a solution can meet it: an owner's
    target answers the first, not the second.
 3. **Price each surviving question** by impact, and mark BLOCKING or NON-BLOCKING
    (`references/impact-and-blocking.md`). Assess consequences and the work about to start;
    high impact alone does not establish a blocker.
-4. **Group dynamically into rounds** (`references/question-rounds.md`). Ask one question when its
-   answer controls what is worth asking next; ask two or three only when they share one decision area.
-   There is no target number of rounds.
-5. **Write each question so it can be answered in one line**, and state the consequence of each
-   answer. A question whose consequence you cannot state is not ready to ask.
+4. **Select questions whose prerequisites are settled**, then group them into rounds
+   (`references/question-rounds.md`). Ask one question when its answer controls what is worth asking
+   next; ask two or three only when they share one decision area and are independent. Recompute after
+   each answer or evidence result; an irrelevant branch needs no further questions. There is no target
+   number of rounds.
+5. **Make the missing decision easy to answer.** Use the user's terms and state the consequences of
+   plausible answers. Offer options for a known trade-off; ask for a concrete scenario when the
+   behavior itself is unclear. Do not compress a business rule into a false binary to get a short reply.
 6. **Proceed with independent authorized work.** Keep later consequential questions unresolved until
    their answers are needed. Adopt a stated, bounded assumption only for a reversible choice within
    existing authority; non-blocking for current work does not mean the missing answer was decided.
-7. **Update question state when an answer arrives or changes.** Record its source and applicable
-   scope; close only what it resolves. When an accepted answer changes, reassess affected questions
-   and dependent work using `references/question-rounds.md`; preserve unaffected answers.
+7. **Apply answers to the current requirement**, not only the question log. Record source and scope,
+   update affected rules and criteria in the existing working draft or inline note, and reread them
+   against the answer before choosing another question. Resolve terminology only when it changes
+   behavior, reusing an existing definition or recording the scoped meaning beside the rule. Use
+   `references/question-rounds.md` for partial answers, conflicts, changed premises and document
+   updates; preserve unaffected answers and accepted snapshots.
 
 ## The repository-first rule
 

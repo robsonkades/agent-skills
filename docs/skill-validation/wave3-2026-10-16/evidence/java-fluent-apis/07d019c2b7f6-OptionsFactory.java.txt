@@ -1,0 +1,41 @@
+package sample;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Objects;
+import java.util.Properties;
+
+public final class OptionsFactory {
+    private OptionsFactory() {}
+
+    public static Options create(Path configuration) throws IOException {
+        Properties properties = new Properties();
+        try (var input = Files.newInputStream(configuration)) {
+            properties.load(input);
+        }
+        return switch (properties.getProperty("implementation", "")) {
+            case "mutable" -> new MutableOptions("base", false);
+            case "immutable" -> new ImmutableOptions("base", false);
+            default -> throw new IllegalArgumentException("Unknown implementation");
+        };
+    }
+
+    private static final class MutableOptions implements Options {
+        private String label;
+        private boolean audit;
+        MutableOptions(String label, boolean audit) { this.label = label; this.audit = audit; }
+        public Options withLabel(String value) { label = Objects.requireNonNull(value); return this; }
+        public Options withAudit(boolean enabled) { audit = enabled; return this; }
+        public Options copy() { return new MutableOptions(label, audit); }
+        public Product build() { return new Product(label, audit); }
+    }
+
+    private record ImmutableOptions(String label, boolean audit) implements Options {
+        private ImmutableOptions { Objects.requireNonNull(label); }
+        public Options withLabel(String value) { return new ImmutableOptions(value, audit); }
+        public Options withAudit(boolean enabled) { return new ImmutableOptions(label, enabled); }
+        public Options copy() { return this; }
+        public Product build() { return new Product(label, audit); }
+    }
+}

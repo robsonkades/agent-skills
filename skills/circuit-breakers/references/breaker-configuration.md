@@ -174,8 +174,27 @@ while retry policy itself is `retries-and-backoff`.
 
 Normally exclude `CallNotPermittedException` from retries: waiting and retrying local rejection
 adds no backend evidence and may synchronize callers with recovery. Verify actual annotation/AOP
-order or reactive/CompletionStage decoration at runtime; decorating only future creation or
-publisher assembly can miss the eventual failure and record an artificially short duration.
+order or reactive/CompletionStage decoration at runtime.
+
+## Which asynchronous completion is recorded
+
+Follow the returned stage or publisher through the timeout, breaker and fallback. Decorating
+only future creation or publisher assembly can miss the eventual failure and record an
+artificially short duration. A caller-visible timeout also need not be the recorded outcome.
+
+Resilience4j 2.3.0's `decorateCompletionStage` observes the supplier's stage and returns a
+separate promise. Applying `orTimeout` or cancellation only to that returned promise does not
+complete the source stage. The breaker can still have zero recorded outcomes after the caller
+times out, then record a late source success. Check both objects, not only the final exception.
+See the tagged [CompletionStage decorator](https://github.com/resilience4j/resilience4j/blob/v2.3.0/resilience4j-circuitbreaker/src/main/java/io/github/resilience4j/circuitbreaker/CircuitBreaker.java#L86-L119).
+
+If the intended sample includes a dependency timeout, make that outcome reach the operation
+the breaker observes and verify its failure/ignore classification. Preserve shared-stage
+ownership: `CompletableFuture.orTimeout` modifies and returns its receiver. Completing or
+cancelling a future does not itself prove that transport work stopped; Java's
+`CompletableFuture.cancel(true)` does not interrupt the producer. Keep actual client deadlines
+and cleanup, and distinguish dependency failure from caller abandonment.
+See the [Java 21 CompletableFuture contract and implementation](https://github.com/openjdk/jdk/blob/jdk-21%2B35/src/java.base/share/classes/java/util/concurrent/CompletableFuture.java).
 
 ## Per-instance state, and the alternative
 

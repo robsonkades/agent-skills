@@ -1,0 +1,25 @@
+{
+  "skill": "feature-risk-analysis",
+  "version": "1.2.5",
+  "frozenAt": "2026-10-16T01:08:16.377Z",
+  "reason": "Original B followed an inconsistent MEDIUM rule; narrow corrective amendment after observed failure. Original run retained.",
+  "inputSha256": "219e6655367f0cca24ed76cd934e152010bfa9d8123df3db1cd45c9686da1aef",
+  "criteriaSha256": "6cf57540112942d960e4959cd7fd7bf5f5197e43ed7e43072a786d60848032aa",
+  "protocolSha256": "52df408406360d19afcf78859fb012a81c1f9d0f6514fec2abd3f570dee0bbea",
+  "snapshotRoot": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave1-6pR7U0/candidate-retest/feature-risk-analysis",
+  "files": [
+    {
+      "path": "references/risk-register.md",
+      "sha256": "707253abddccfa868b7c90a30301019ec66667c8d76f0b59dfcd3a37c8613b18"
+    },
+    {
+      "path": "SKILL.md",
+      "sha256": "0cdbd214beacd28fb3187610bb19be4092b394f0a9f73575d30221e21d72e5b9"
+    },
+    {
+      "path": "skill.yaml",
+      "sha256": "d66ef7640a0d61cd3220a0318d74bc66e0f42c96cabc72fe73790ae8b5c7881d"
+    }
+  ],
+  "method": "Fresh actor; same input and criteria; protocol differs only in candidate/output paths. One paired session, output-only."
+}

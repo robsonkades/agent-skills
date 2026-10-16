@@ -1,0 +1,57 @@
+schemaVersion: 1
+
+name: consistent-hashing
+version: 1.2.5
+description: >-
+  Stable key-to-node placement across membership changes: modulo remapping, consistent-hash
+  rings, virtual points, rendezvous and jump hashing, collision-safe Java implementations, hash
+  contracts, replica selection, weighting, testing and membership handoff. Use when changing
+  node count causes a miss storm or migration, ownership is uneven, or placement relies on
+  Object.hashCode. Does not choose the shard key (sharding-and-partitioning), repair hot keys
+  (hot-partitions-and-rebalancing), define cache topology
+  (cache-sharding-and-replication), or balance interchangeable replicas
+  (load-balancing-and-routing).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/consistent-hashing
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/consistent-hashing
+
+keywords:
+  - consistent-hashing
+  - rendezvous-hashing
+  - virtual-nodes
+  - partitioning
+  - distributed-systems
+  - java
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+suggests:
+  - cache-sharding-and-replication
+  - hot-partitions-and-rebalancing
+  - java-memory-model
+  - load-balancing-and-routing
+  - sharding-and-partitioning
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Consistent Hashing
+      short_description: Mapping a key to an owner, and rebalancing
+      default_prompt: Use Consistent Hashing to review or implement how keys are mapped to nodes here.

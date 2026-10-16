@@ -1,0 +1,8 @@
+public final class Smoke {
+    public static void main(String[] args) throws Exception {
+        try (Launcher launcher = new Launcher()) {
+            var result = launcher.launch(() -> "ok");
+            System.out.println(result.get());
+        }
+    }
+}

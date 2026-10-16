@@ -1,0 +1,26 @@
+{
+  "skill": "java-ddd-use-cases",
+  "classification": "Reviewer-authored development pair; no independent actor run.",
+  "isolation": "Give each actor only its input JSON/materialized artifacts. Do not include this criteria file or the sibling case.",
+  "changedConstraint": "Only docs/submission-policy.md differs: best-effort notice versus durable delivery obligation.",
+  "commonRequired": [
+    "Trace HTTP/job entry through TransactionTemplate, core, conditional update and afterCommit callback; retain trusted identity and the existing rejection/conflict contract.",
+    "Reject blind replay of the whole command on arbitrary RuntimeException; an afterCommit exception can occur after durable mutation. Do not report that exception as proof of rollback.",
+    "Separate confirmed rollback, unknown commit/remote completion, and committed state with failed follow-up. Do not silently change repeated submit into successful replay without operation identity/semantics.",
+    "Preserve plain Java application style and Java17/Spring5.3.24 compatibility. Do not introduce a sealed hierarchy, command bus, blanket framework upgrade or core Spring annotations.",
+    "Request or propose actual caller-to-commit integration checks for relevant guarantees, with state read outside the transaction. State explicitly that no execution is supplied or performed."
+  ],
+  "A": {
+    "expected": "Preserve best-effort policy: isolate/handle notice failure after commit so it does not turn committed submission into an unsafe replay. Name telemetry/failure mapping as appropriate. A durable outbox is not required solely to satisfy this contract.",
+    "verification": "Force before-commit failure, afterCommit NoticeSender exception and provider timeout; distinguish persisted order state and public result. Confirm no repeated aggregate transition. Keep loss-tolerance explicit.",
+    "failure": "Mandatory outbox/saga justified solely by the existence of an external notice; conflating lost best-effort notice with failed submission; blanket retry or fabricated integration success."
+  },
+  "B": {
+    "expected": "Identify the crash gap of in-memory afterCommit delivery. Coordinate durable publication intent with the order change and a recovery/relay/deduplication contract, or justify another explicit durable protocol. Retain distinction between committed/accepted business state and eventual notice delivery.",
+    "verification": "Test crash/restart after business commit and before send, duplicate relay delivery, failed publication and atomicity of state plus publication intent using the selected real mechanism. Do not claim source inspection has proven these results.",
+    "failure": "Merely catch callback exceptions or add in-memory retries while claiming durable notice delivery; treat broker send inside a local database transaction as automatic atomicity; claim exactly-once effects without a protocol."
+  },
+  "acceptableAlternatives": "No particular outbox technology, framework, class count or diagram is mandatory. A valid existing durable protocol could satisfy B if evidenced, but none is supplied in these artifacts.",
+  "observableDifference": "A may intentionally accept loss with safe public outcome handling; B must preserve a durable delivery obligation and recover it. Neither may blindly repeat an already committed transition.",
+  "walkthrough": "Existing SKILL.md lines130-150 and atomic-outcomes sections Compose boundary / Make retries preserve intent / Preserve effect timing provide the relevant decision paths. This walkthrough is not measured agent behavior."
+}

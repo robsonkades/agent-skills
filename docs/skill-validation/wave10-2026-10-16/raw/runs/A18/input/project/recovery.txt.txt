@@ -1,0 +1,2 @@
+U / configuração suportada u1: registro 831 foi confirmado em t=10; processo caiu em t=11; recuperação terminou em t=19; registro 831 ausente e sem possibilidade de replay. Repetição controlada confirmou a perda; os logs do gerador e armazenamento concordam. O auditor validou o harness e a observação.
+V / configuração v1: o gerador não conseguiu abrir o arquivo de carga e encerrou antes de enviar o primeiro lote. Não existe observação de recuperação, durabilidade, conclusão ou backlog de V.

@@ -1,0 +1,118 @@
+{
+  "skill": "spring-security-for-apis",
+  "version": "1.2.1",
+  "baselineVersion": "1.2.0",
+  "fileCount": 7,
+  "issues": [],
+  "links": [
+    {
+      "from": "SKILL.md",
+      "target": "references/verification.md#sources-and-compatibility",
+      "exists": true
+    },
+    {
+      "from": "SKILL.md",
+      "target": "references/access-policy-delivery.md",
+      "exists": true
+    },
+    {
+      "from": "SKILL.md",
+      "target": "references/boot-resource-server.md",
+      "exists": true
+    },
+    {
+      "from": "SKILL.md",
+      "target": "references/chains-and-browser.md",
+      "exists": true
+    },
+    {
+      "from": "SKILL.md",
+      "target": "references/token-validation.md",
+      "exists": true
+    },
+    {
+      "from": "SKILL.md",
+      "target": "references/verification.md",
+      "exists": true
+    },
+    {
+      "from": "SKILL.md",
+      "target": "references/verification.md#focused-project-tests",
+      "exists": true
+    },
+    {
+      "from": "SKILL.md",
+      "target": "references/verification.md#remote-validation-cases",
+      "exists": true
+    },
+    {
+      "from": "references/boot-resource-server.md",
+      "target": "token-validation.md",
+      "exists": true
+    },
+    {
+      "from": "references/boot-resource-server.md",
+      "target": "verification.md",
+      "exists": true
+    },
+    {
+      "from": "references/token-validation.md",
+      "target": "verification.md#remote-validation-cases",
+      "exists": true
+    },
+    {
+      "from": "references/verification.md",
+      "target": "boot-resource-server.md",
+      "exists": true
+    },
+    {
+      "from": "references/verification.md",
+      "target": "token-validation.md",
+      "exists": true
+    }
+  ],
+  "hashes": [
+    {
+      "path": "skills/spring-security-for-apis/SKILL.md",
+      "sha256": "b60cbb0fc8e7b7efcefe0908c16b28b65278c521cd89ede9c53ab9b2fdced077",
+      "baselineSha256": "3765d94bb968e195230a199fbd8e15590782a37e921c309ff3c13486cc49eff6",
+      "unchangedFromWave2Baseline": false
+    },
+    {
+      "path": "skills/spring-security-for-apis/references/access-policy-delivery.md",
+      "sha256": "5591758dca9fb7863045e07fc8bd58d6ee2006756fe9bc4e713620dc60c657b7",
+      "baselineSha256": "5591758dca9fb7863045e07fc8bd58d6ee2006756fe9bc4e713620dc60c657b7",
+      "unchangedFromWave2Baseline": true
+    },
+    {
+      "path": "skills/spring-security-for-apis/references/boot-resource-server.md",
+      "sha256": "329ba149cd95416552fd3c395974a4f1de8e5635a210e729ac455bb7a6ee8412",
+      "baselineSha256": "329ba149cd95416552fd3c395974a4f1de8e5635a210e729ac455bb7a6ee8412",
+      "unchangedFromWave2Baseline": true
+    },
+    {
+      "path": "skills/spring-security-for-apis/references/chains-and-browser.md",
+      "sha256": "59a19139e4817782d1d6d90410ce3d7efe25ccdb182b387534afc7ce4584bcbc",
+      "baselineSha256": "59a19139e4817782d1d6d90410ce3d7efe25ccdb182b387534afc7ce4584bcbc",
+      "unchangedFromWave2Baseline": true
+    },
+    {
+      "path": "skills/spring-security-for-apis/references/token-validation.md",
+      "sha256": "ed7dfecc4ea5b5322a97902ed4f02f7f9b5c4d116ddbefe76dab12c19923b7fd",
+      "baselineSha256": "3f644bf603518345e3b97215271e93612d3c68c9217932d10b36232e1933a29e",
+      "unchangedFromWave2Baseline": false
+    },
+    {
+      "path": "skills/spring-security-for-apis/references/verification.md",
+      "sha256": "0dc79540b74a1994703a64443e7158e0cd50f18481baff059ce83f9d315f8a11",
+      "baselineSha256": "5a5321ae9d8de532c923acf0e2c9094538815acc3144e3f0a8a9347afdd43a2d",
+      "unchangedFromWave2Baseline": false
+    },
+    {
+      "path": "skills/spring-security-for-apis/skill.yaml",
+      "sha256": "47878d0a5208ce0a16c6d9d75dcabfc4b8194edc2be52da3af1f088315680a5f",
+      "baselineSha256": "7ad6b30570cc5454ebf32dbc5efb444fc29a2d1a0052ec849c30b3c56f35cc76",
+      "unchangedFromWave2Baseline": false
+    }
+  ]
+}

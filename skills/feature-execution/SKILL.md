@@ -62,12 +62,15 @@ Light/Inline work need not create an artifact solely to document sub-minute step
    Reconcile any previously started command or partial effect before repeating it; a stale
    progress entry does not prove that an interrupted operation did nothing.
    Unforced ordering means a blocked resource does not stop unrelated authorized work.
-2. **Read the code you are about to change**, including its callers and its tests, before
-   editing. Inspect repository instructions, the working tree and the actual language, build,
+2. **Reconcile the resource with current code before editing.** For behavioral code changes,
+   follow the actual caller or entrypoint through relevant wiring/configuration to the proposed
+   change and its tests. A file named in the plan is not proof that this path uses it; resolve
+   stale targets or already-covered behavior with `references/deviation-and-blockers.md`.
+   Inspect repository instructions, the working tree and the actual language, build,
    dependency and runtime settings; preserve other contributors' changes and compatibility.
-   The plan named files; it did not read them for you, and does not authorize a toolchain upgrade.
-3. **Implement to the project's conventions** as the context report established them, reusing
-   what exists rather than adding a parallel mechanism.
+   The plan does not authorize a toolchain upgrade.
+3. **Implement to the project's applicable conventions and accepted contracts**, reusing
+   the mechanism found in that path rather than adding a parallel one from an outdated plan.
 4. **Validate at the level the resource warrants** (`references/validation-by-resource.md`).
    Reuse meaningful existing checks; do not add tests merely to mirror a reversible edit.
    If planned validation is missing or inadequate, define the needed evidence before completion.
@@ -79,14 +82,16 @@ Light/Inline work need not create an artifact solely to document sub-minute step
    choices. Test methods and gate policies guide implementation without changing its target stack.
 5. **Read the completed result.** A launch acknowledgement or partial log is not completion;
    retain the command/job handle and obtain its final outcome. A suite can exit successfully
-   while running zero relevant tests.
+   while running zero relevant tests or passing only after retries. Inspect failed attempts;
+   a later pass does not by itself resolve contradictory evidence about required behavior.
    Inspect changes made by validation commands or their hooks; recheck affected properties if
    later generated or rewritten inputs no longer match what the tests exercised.
-6. **Record the outcome** with what actually ran, then move on.
+6. **Record the outcome against the resource's accepted obligations**, with what actually
+   ran and what remains unverified, then move on.
 7. **When implementation contradicts the plan or a decision**, classify the affected work
    (`references/deviation-and-blockers.md`), reconcile the plan and continue independent work.
    Use that reference also when interruption or ownership transfer leaves running commands
-   or uncertain partial effects to reconcile.
+   or uncertain partial effects to reconcile, or a resolved finding should guide similar work.
 
 ## Decision rules
 

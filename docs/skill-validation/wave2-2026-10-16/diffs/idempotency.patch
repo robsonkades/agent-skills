@@ -1,0 +1,92 @@
+diff --git a/skills/idempotency/SKILL.md b/skills/idempotency/SKILL.md
+index 76dde2c..cdc2f95 100644
+--- a/skills/idempotency/SKILL.md
++++ b/skills/idempotency/SKILL.md
+@@ -35,6 +35,9 @@ configuration, retention jobs, tests and documented API/provider contracts. Trac
+ from caller through every durable mutation and external effect. Establish the target
+ Java/framework and database/isolation versions from build/runtime evidence; the reference's
+ Java 17 schema sketch does not authorize an upgrade or prove transaction behavior.
++Resolve remote calls to the actual HTTP method/path, account/sandbox scope and API version
++from client wiring/configuration or redacted request evidence. A provider name or SDK version
++alone does not select its replay contract.
+ 
+ Separate the requested guarantee and documented contract from incidental code patterns. If
+ identity, acceptable duplicate effects, replay horizon or provider recovery guarantees remain
+diff --git a/skills/idempotency/references/idempotency-key-filter.md b/skills/idempotency/references/idempotency-key-filter.md
+index 16ea4b8..d333caa 100644
+--- a/skills/idempotency/references/idempotency-key-filter.md
++++ b/skills/idempotency/references/idempotency-key-filter.md
+@@ -127,19 +127,28 @@ comparison that affects zero rows as loss of ownership and reload state, not suc
+ 
+ ### Response replay is separate from effect resolution
+ 
+-[Stripe](https://docs.stripe.com/api/idempotent_requests) stores the first executed request's
+-status/body, including `500`. Its [error-handling contract](https://docs.stripe.com/error-low-level#server-errors)
++For idempotency-key `POST` requests, [Stripe API v1](https://docs.stripe.com/api/idempotent_requests)
++stores the first executed request's status/body, including `500`. Its
++[error-handling contract](https://docs.stripe.com/error-low-level#server-errors)
+ treats those server errors as indeterminate: replaying that same error does not prove that no
+ effect occurred. Keep recovery active through supported status/webhook/reconciliation paths;
+ do not issue a fresh key merely to escape a cached error. A stored protocol response and the
+ operation's unresolved effect state may need separate fields.
+ 
++[Stripe API v2](https://docs.stripe.com/api-v2-overview#idempotency) can re-execute failed or
++partially failed work and return an updated response without repeating successful effects.
++Its documented replay scope requires the same key, API and account/sandbox within 30 days.
++Do not apply the v1 cached-error rule to `/v2`, or transfer the v2 window to `/v1`. These
++namespaces can coexist in one integration; inspect the actual endpoint, not just the SDK
++version. Preserve the operation key and semantic payload when retrying, and classify the
++new outcome rather than assuming the first error remains the final response.
++
+ [PayPal](https://developer.paypal.com/api/rest/reference/idempotency/) instead describes returning
+ the request's current status, not its original status, and may reject a simultaneous duplicate.
+ These differences do not by themselves indicate a repeated effect. If your API promises an
+ original response, retain sufficient local outcome data rather than relying on every provider
+ to replay bytes or return the same status. Do not promise exact original replay if that response
+-cannot be recovered after a crash. Check the concrete endpoint/version before applying either example.
++cannot be recovered after a crash. Check the concrete endpoint/version before applying these examples.
+ 
+ For multi-effect workflows, track and reconcile each effect separately while respecting workflow
+ prerequisites; one completed charge does not prove a later entitlement/email completed.
+@@ -183,7 +192,7 @@ Takeover is safe only when one of these holds:
+ 
+ If the business instead tolerates duplicate effects followed by compensation, document that
+ weaker recovery guarantee explicitly; it is not idempotent takeover. Check provider retention
+-as well as local TTL. For example, Stripe documents that a reused key creates a new request after
++as well as local TTL. For example, Stripe API v1 documents that a reused key creates a new request after
+ the old key has been pruned; retaining the local operation ID longer does not extend that promise.
+ 
+ TTL expiry is not a takeover protocol. Do not physically delete a live `PENDING`/`UNKNOWN`
+@@ -221,6 +230,9 @@ effects committed in that same transaction. Name the guarantee actually provided
+ - replay a provider's cached `500` after it applied an effect; assert reconciliation remains
+   active and no fresh key is issued. Separately verify a provider that returns current status
+   still refers to the original effect;
++- verify the selected endpoint's replay policy, including an updated outcome after a failed
++  request when supported. Trace the sent key, API and account/sandbox through SDK retries and
++  process restart; a passing adapter mock cannot prove the provider's effect guarantee;
+ - give one parent two distinct effects with identical payloads, interrupt between them, and
+   resume its persisted plan after input enumeration order changes. Assert distinct stable effect
+   IDs, reuse on retries and no suppression of the second effect or repetition of the first;
+@@ -239,7 +251,8 @@ proxy or test dependency that applies the operation and then drops the acknowled
+ - [RFC 9110 §9.2.2: Idempotent Methods](https://www.rfc-editor.org/rfc/rfc9110#section-9.2.2)
+ - [IETF HTTPAPI Idempotency-Key header draft](https://datatracker.ietf.org/doc/draft-ietf-httpapi-idempotency-key-header/) — revision 07 is an expired Internet-Draft, not a published HTTP standard; use the actual API's contract.
+ - [Stripe API: idempotent requests](https://docs.stripe.com/api/idempotent_requests)
+-- [Stripe advanced error handling](https://docs.stripe.com/error-low-level) — authentication
++- [Stripe API v2 idempotency](https://docs.stripe.com/api-v2-overview#idempotency) — namespace-specific replay behavior, scope and window.
++- [Stripe API v1 advanced error handling](https://docs.stripe.com/error-low-level) — authentication
+   and rate-limit failures can precede idempotency lookup; network errors leave outcomes unknown.
+ - [PayPal idempotency](https://developer.paypal.com/api/rest/reference/idempotency/) — endpoint-specific support/retention, request identity and current-status replay.
+ - [PostgreSQL unique constraints](https://www.postgresql.org/docs/current/ddl-constraints.html#DDL-CONSTRAINTS-UNIQUE-CONSTRAINTS)
+diff --git a/skills/idempotency/skill.yaml b/skills/idempotency/skill.yaml
+index f7863b3..8c3cb76 100644
+--- a/skills/idempotency/skill.yaml
++++ b/skills/idempotency/skill.yaml
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: idempotency
+-version: 1.2.4
++version: 1.2.5
+ description: >-
+   Making an operation safe to apply more than once: natural idempotency versus an
+   idempotency key plus durable operation state; choosing and scoping the key, distinguishing

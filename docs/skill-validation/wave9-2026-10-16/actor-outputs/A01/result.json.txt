@@ -1,0 +1,51 @@
+{
+  "task": "A01",
+  "decision": "Repaired RetryEngine.java to enforce the supplied single-owner retry contract.",
+  "implementation": "RetryEngine.java",
+  "javaBaseline": 17,
+  "toolchain": "Temurin/OpenJDK and javac 25.0.3; javac --release 17",
+  "contract": {
+    "replaySafe": false,
+    "ownerModel": "single-owner synchronous",
+    "store": "durable and atomic by supplied contract",
+    "identity": "unchanged supplied intent ID and payload",
+    "unknownRecovery": "preserve UNKNOWN; no automatic redispatch; no reconciliation port",
+    "timing": "full attempt plus reserve; retries additionally require max(local wait, server minimum); overflow-safe arithmetic"
+  },
+  "evidence": [
+    {
+      "command": "node run.mjs Verification",
+      "exitCode": 0,
+      "observed": "26 scenarios passed; REPLAY_SAFE=false"
+    },
+    {
+      "command": "node run.mjs Smoke",
+      "exitCode": 0,
+      "observed": "Smoke passed"
+    },
+    {
+      "check": "Regression compiled against immutable original",
+      "observed": "Expected Java exit 1; terminal snapshot dispatched with modified intent ID"
+    },
+    {
+      "check": "Immutable SHA-256 comparisons",
+      "observed": "All seven supplied immutable copies match input/project"
+    }
+  ],
+  "limits": [
+    "Simulation does not establish store durability, provider repeat safety, physical cancellation, wall-clock latency or fleet behavior.",
+    "No real endpoint/API version, SDK, database/isolation, tenant/fingerprint/retention contract is supplied.",
+    "REPLAY_SAFE=true branch was inspected but not executed; changing Contract.java is forbidden.",
+    "No reconciliation operation exists; UNKNOWN remains unresolved.",
+    "Only two supplied skills and their local references were read; no browsing, delegation or global skills."
+  ],
+  "artifacts": [
+    "RetryEngine.java",
+    "Verification.java",
+    "REVIEW.md",
+    "result.json",
+    "execution.json"
+  ],
+  "implementationSha256": "48edf7be0dd08fa5da124dbb9529a8ed067d119b4fab307d27195a3879bf9129",
+  "verificationSha256": "95406b38fd573b252849e8df3b115f5cfc4a6c52bd895bfee2891e9baed70bd9"
+}

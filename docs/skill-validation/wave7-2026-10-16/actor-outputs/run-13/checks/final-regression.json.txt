@@ -1,0 +1,11 @@
+{
+  "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave7-a765972c5d\\actors\\run-13\\output\\project",
+  "argv": [
+    "node",
+    "check.mjs",
+    "work.Regression"
+  ],
+  "exit": 0,
+  "stdout": "PASS: sold-out order rolls back\r\ndiagnostic: active=true ordersAutoCommit=false metricsAutoCommit=true rejectedOrders=0 stock=3\r\nPASS: notifier rejection rolls back both writes and preserves exception\r\nPASS: success commits one order and reserves one unit\r\nPASS: insert failure preserves existing order and stock\r\nPASS: metrics retains primary manager and independent rollback\r\nPASS: 5 persisted-state scenarios\r\n",
+  "stderr": ""
+}

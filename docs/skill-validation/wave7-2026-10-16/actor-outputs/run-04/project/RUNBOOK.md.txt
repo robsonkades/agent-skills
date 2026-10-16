@@ -1,0 +1,34 @@
+Call BookingService through the configured Spring application context. The schema is initialized by the existing launcher/tests. Inspect booking, receipt and stock state outside the completed command. Document the selected failure behavior here if it changes.
+
+`BookingService.place` retains REQUIRED participation in `businessTx`. Booking and
+stock either commit together or roll back together. An enclosing transaction owns
+completion: receipt handling waits for its successful commit, synchronously on the
+same thread. Nontransactional publication is ignored by the listener.
+
+`BookingListener` now uses AFTER_COMMIT. Its call crosses the Spring proxy for
+`ReceiptWriter.record`, whose REQUIRES_NEW transaction commits the receipt header
+and body together. The observer remains inside that writer immediately before its
+first insert. Bodies longer than 12 characters are rejected by the existing schema;
+the new receipt transaction rolls back its header as well.
+
+An invalid receipt does not fail the completed booking command. In this pinned
+Spring version, transactional AFTER_COMMIT listeners run through afterCompletion.
+Spring logs callback failures without propagating them to the command. The expected
+regression log contains a SEVERE DataIntegrityViolationException for the 13-character
+body; successful test exit and persisted booking/stock are required alongside it.
+This deliberately uses the existing framework failure containment without adding a
+second catch/recovery mechanism. See [TransactionPhase 7.0.9](https://docs.spring.io/spring-framework/docs/7.0.9/javadoc-api/org/springframework/transaction/event/TransactionPhase.html)
+and [TransactionSynchronization 7.0.9](https://docs.spring.io/spring-framework/docs/7.0.9/javadoc-api/org/springframework/transaction/support/TransactionSynchronization.html).
+
+Run `node check.mjs` and `node check.mjs work.Regression` from this directory.
+Regression inspects fresh READ_COMMITTED connections after completion and uses a
+diagnostic observer to verify that the booking is already visible before any receipt
+write. It covers valid/invalid bodies, stock exhaustion, nontransactional publication,
+an owner commit, an owner rollback, and a later beforeCommit rejection. Keeping
+BEFORE_COMMIT and only adding REQUIRES_NEW fails these checks and can leave an orphan
+receipt after the later rejection.
+
+Receipt loss after failure or interruption is accepted. There is no retry store,
+broker, executor or recovery guarantee. These H2 checks establish local transaction
+behavior only, not process-crash durability, distributed deduplication, production
+database behavior or JPA semantics.

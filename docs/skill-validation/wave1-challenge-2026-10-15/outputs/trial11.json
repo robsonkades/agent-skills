@@ -1,0 +1,15 @@
+{
+  "trialId": "trial11",
+  "caseId": "estimation-under-uncertainty-two-specialists",
+  "filesRead": [
+    "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/actor-protocol.md",
+    "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/inputs/estimation-under-uncertainty-two-specialists.json",
+    "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/revised/estimation-under-uncertainty/SKILL.md",
+    "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/revised/estimation-under-uncertainty/references/methods.md",
+    "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/revised/estimation-under-uncertainty/references/commitments.md"
+  ],
+  "unexpectedExposure": [
+    "Repository-wide AGENTS.md instructions and environment context were supplied in the inherited conversation before these file reads. No other task, evaluator criteria, prior result, or actor output was read."
+  ],
+  "response": "The model gives a 100% probability of deployment acceptance by working-time 8. The project’s P80 is 8 working days from origin 0. These are conditional model results, not calibrated delivery reliability or a promise.\n\nBoth specialists start at time 0, so the adapters finish together when the slower task finishes: max(A, B). Coding, tests and review are already included in their durations. Add the separate one-day combined acceptance, then wait for the next deployment slot:\n\n- Both adapters take 2 days: probability 0.8 × 0.8 = 0.64. Combined acceptance runs from time 2 to 3; deployment acceptance occurs at time 4.\n- At least one adapter takes 6 days: probability 1 − 0.64 = 0.36. Combined acceptance runs from time 6 to 7; deployment acceptance occurs at time 8.\n\nThus cumulative completion probability is 64% at time 4 and 100% at time 8. Time 8 is the earliest completion time reaching at least 80%; this discrete P80 has coverage above 80%. Individual task P80s of 2 days do not establish the project percentile.\n\nI recommend retaining time 8 as the planning target. No commitment has been made; making one requires an explicit agreement about these elicited assumptions. The model supports the target but supplies no empirical guarantee.\n\nUpdate immediately if either specialist’s reserved availability changes or an adapter remains unfinished after time 6, invalidating the modeled schedule. Preserve this forecast and explain the revised assumptions and target impact."
+}

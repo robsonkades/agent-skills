@@ -121,6 +121,11 @@ Use these as review prompts when an implementation touches the relevant contract
   version from before another committed edit. The service must reject the stale expectation
   even if it loads a fresh managed entity. Never overwrite `@Version` or silently retry
   with the current version; preserve the unrelated fields and the winning edit.
+- A same-value edit accepts validation at the initial read; then require explicit optimistic
+  verification for that unchanged participant. Keep the simple path for the first contract;
+  for the second, coordinate a writer before transaction completion and verify the chosen
+  lock mode detects it. A dirty-update test alone does not cover this case. Check an
+  uncontended no-op too; do not add forced version increments without a consumer requirement.
 - A registration service has two replicas and must reject a duplicate canonical identifier.
   Compare a pre-insert check plus JVM lock with a database constraint and classification
   outside the transaction owner. Then move failure from explicit flush to commit: catching

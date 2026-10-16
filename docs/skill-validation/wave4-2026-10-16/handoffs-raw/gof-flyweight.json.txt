@@ -1,0 +1,615 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "gof-flyweight",
+  "ownedPath": "skills/gof-flyweight/",
+  "allWritesStopped": true,
+  "versions": {
+    "committed": "1.2.4",
+    "assignment": "1.2.4",
+    "final": "1.2.5",
+    "preExistingBump": false,
+    "rationale": "One patch for corrected skill contents and added primary citation; no changes to metadata descriptions, dependencies or capability scope."
+  },
+  "baseline": {
+    "source": "docs/skill-validation/wave4-2026-10-16/baseline.json",
+    "initialStatus": "",
+    "initialStagedDiff": "",
+    "initialUnstagedDiff": "",
+    "initialUntracked": [],
+    "initialHashesMatched": true,
+    "preExistingChanges": []
+  },
+  "files": {
+    "changedByReviewer": [
+      "skills/gof-flyweight/references/when-sharing-pays.md",
+      "skills/gof-flyweight/skill.yaml"
+    ],
+    "unchanged": [
+      "skills/gof-flyweight/SKILL.md",
+      "skills/gof-flyweight/references/worked-example.md"
+    ],
+    "preExistingChanges": [],
+    "finalHashes": [
+      {
+        "path": "skills/gof-flyweight/SKILL.md",
+        "sha256": "cac2ce32dbeb9c9cd5fe8b8b65aa903474903942d63223b9fc916c2f690fe72e",
+        "baselineSha256": "cac2ce32dbeb9c9cd5fe8b8b65aa903474903942d63223b9fc916c2f690fe72e",
+        "unchangedFromAssignment": true
+      },
+      {
+        "path": "skills/gof-flyweight/references/when-sharing-pays.md",
+        "sha256": "16f2ab53383c595139cf93ebfe9e79b698725cf5d731bc634e3864874d46cf71",
+        "baselineSha256": "2c517486cf6acaacc06fc2f6d31fb663eb4dd834ead4bec18e86a4bfe21cc601",
+        "unchangedFromAssignment": false
+      },
+      {
+        "path": "skills/gof-flyweight/references/worked-example.md",
+        "sha256": "99d958ccd06719d95c78c4cd21c877c205f257d28b1eb2ff727ebfe78fa04e5f",
+        "baselineSha256": "99d958ccd06719d95c78c4cd21c877c205f257d28b1eb2ff727ebfe78fa04e5f",
+        "unchangedFromAssignment": true
+      },
+      {
+        "path": "skills/gof-flyweight/skill.yaml",
+        "sha256": "943b068ef1ec6ee6dd0e4f909f698c2368f7e14456b52675e8207ad2a43adf57",
+        "baselineSha256": "bdb52654bb6150b815834eb943724384e3f6918a3436cbc87ec5e684106e0f5e",
+        "unchangedFromAssignment": false
+      }
+    ]
+  },
+  "correctedFindings": [
+    {
+      "location": "references/when-sharing-pays.md:44 and 192",
+      "finding": "The table conflated Boolean constructor deprecation since Java 9 with deprecation for removal since Java 9.",
+      "correction": "States that constructors are deprecated for removal on the declared Java 17 baseline and cites that API. Keeps the factory recommendation without adding unnecessary version history.",
+      "consequence": "Corrects a factual compatibility statement; no error in the existing sharing decision paths or measured actor effect was established.",
+      "sources": [
+        "boolean-9",
+        "boolean-17",
+        "deprecated-17"
+      ]
+    }
+  ],
+  "remainingFindings": [],
+  "preserved": [
+    "SKILL.md and worked-example.md unchanged byte-for-byte; all three Java fences unchanged.",
+    "Intrinsic/extrinsic state, complete effective semantic keys, stable equality/hash, actual hash collision handling and no unjustified normalization.",
+    "Deep immutability, reachable aliases, publication, library contracts, per-occurrence identity and independent monitor ownership.",
+    "Admission/byte budgets, operation-scoped peak retention, caller-held values after eviction, parser-thread confinement and resource-owner lifecycle.",
+    "WeakHashMap value-to-key trap, weak local StringTable versus application strong maps and implementation-qualified backing-array sharing.",
+    "Net retained-byte accounting including map/key overhead and existing sharing, construction versus retained-memory costs, real workload/CPU evidence, no mandatory benchmark or collector migration.",
+    "Simple values, enums/static tables, existing adequate caches, retained no-change design, applicable deduplication and compact-layout alternatives."
+  ],
+  "replacedOrRemoved": {
+    "capabilities": [],
+    "text": "Only the incorrect historical wording was replaced with baseline-specific wording; no code/example or decision rule was removed."
+  },
+  "checks": {
+    "commands": [
+      {
+        "id": "local-validation",
+        "executable": "C:\\Program Files\\nodejs\\node.exe",
+        "args": [
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-flyweight\\local-validation.mjs"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "stdout": "local-validation.stdout.txt",
+        "stderr": "local-validation.stderr.txt",
+        "stdoutText": "{\n  \"skill\": \"gof-flyweight\",\n  \"version\": \"1.2.5\",\n  \"baselineVersion\": \"1.2.4\",\n  \"fileCount\": 4,\n  \"issues\": [],\n  \"links\": [\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/when-sharing-pays.md\",\n      \"exists\": true\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/worked-example.md\",\n      \"exists\": true\n    }\n  ],\n  \"hashes\": [\n    {\n      \"path\": \"skills/gof-flyweight/SKILL.md\",\n      \"sha256\": \"cac2ce32dbeb9c9cd5fe8b8b65aa903474903942d63223b9fc916c2f690fe72e\",\n      \"baselineSha256\": \"cac2ce32dbeb9c9cd5fe8b8b65aa903474903942d63223b9fc916c2f690fe72e\",\n      \"unchangedFromAssignment\": true\n    },\n    {\n      \"path\": \"skills/gof-flyweight/references/when-sharing-pays.md\",\n      \"sha256\": \"16f2ab53383c595139cf93ebfe9e79b698725cf5d731bc634e3864874d46cf71\",\n      \"baselineSha256\": \"2c517486cf6acaacc06fc2f6d31fb663eb4dd834ead4bec18e86a4bfe21cc601\",\n      \"unchangedFromAssignment\": false\n    },\n    {\n      \"path\": \"skills/gof-flyweight/references/worked-example.md\",\n      \"sha256\": \"99d958ccd06719d95c78c4cd21c877c205f257d28b1eb2ff727ebfe78fa04e5f\",\n      \"baselineSha256\": \"99d958ccd06719d95c78c4cd21c877c205f257d28b1eb2ff727ebfe78fa04e5f\",\n      \"unchangedFromAssignment\": true\n    },\n    {\n      \"path\": \"skills/gof-flyweight/skill.yaml\",\n      \"sha256\": \"943b068ef1ec6ee6dd0e4f909f698c2368f7e14456b52675e8207ad2a43adf57\",\n      \"baselineSha256\": \"bdb52654bb6150b815834eb943724384e3f6918a3436cbc87ec5e684106e0f5e\",\n      \"unchangedFromAssignment\": false\n    }\n  ],\n  \"examples\": [\n    {\n      \"path\": \"skills/gof-flyweight/SKILL.md\",\n      \"javaBlocks\": 0,\n      \"unchanged\": true\n    },\n    {\n      \"path\": \"skills/gof-flyweight/references/when-sharing-pays.md\",\n      \"javaBlocks\": 1,\n      \"unchanged\": true\n    },\n    {\n      \"path\": \"skills/gof-flyweight/references/worked-example.md\",\n      \"javaBlocks\": 2,\n      \"unchanged\": true\n    }\n  ]\n}\n",
+        "stderrText": ""
+      },
+      {
+        "id": "prettier",
+        "executable": "C:\\Program Files\\nodejs\\node.exe",
+        "args": [
+          "C:\\git\\agent-skills\\node_modules\\prettier\\bin\\prettier.cjs",
+          "--check",
+          "skills/gof-flyweight/SKILL.md",
+          "skills/gof-flyweight/skill.yaml",
+          "skills/gof-flyweight/references/when-sharing-pays.md",
+          "skills/gof-flyweight/references/worked-example.md"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "stdout": "prettier.stdout.txt",
+        "stderr": "prettier.stderr.txt",
+        "stdoutText": "Checking formatting...\nAll matched files use Prettier code style!\n",
+        "stderrText": ""
+      },
+      {
+        "id": "diff-check",
+        "executable": "git",
+        "args": [
+          "diff",
+          "--check",
+          "--",
+          "skills/gof-flyweight"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "stdout": "diff-check.stdout.txt",
+        "stderr": "diff-check.stderr.txt",
+        "stdoutText": "",
+        "stderrText": ""
+      },
+      {
+        "id": "scoped-status",
+        "executable": "git",
+        "args": [
+          "status",
+          "--short",
+          "--untracked-files=all",
+          "--",
+          "skills/gof-flyweight"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "stdout": "scoped-status.stdout.txt",
+        "stderr": "scoped-status.stderr.txt",
+        "stdoutText": " M skills/gof-flyweight/references/when-sharing-pays.md\n M skills/gof-flyweight/skill.yaml\n",
+        "stderrText": ""
+      },
+      {
+        "id": "scoped-diff",
+        "executable": "git",
+        "args": [
+          "diff",
+          "--",
+          "skills/gof-flyweight"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "stdout": "scoped-diff.stdout.txt",
+        "stderr": "scoped-diff.stderr.txt",
+        "stdoutText": "diff --git a/skills/gof-flyweight/references/when-sharing-pays.md b/skills/gof-flyweight/references/when-sharing-pays.md\nindex 63f7b23..393f198 100644\n--- a/skills/gof-flyweight/references/when-sharing-pays.md\n+++ b/skills/gof-flyweight/references/when-sharing-pays.md\n@@ -41,7 +41,7 @@ low ratios; tiny values can lose even at much higher ratios.\n | Mechanism                               | Shared set                 | Limit to know                                                           |\n | --------------------------------------- | -------------------------- | ----------------------------------------------------------------------- |\n | `Integer.valueOf`                       | At least −128..127         | More caching is permitted; never assume 128 misses                      |\n-| `Boolean.valueOf`                       | `TRUE`, `FALSE`            | Constructors are deprecated for removal since Java 9; use the factory   |\n+| `Boolean.valueOf`                       | `TRUE`, `FALSE`            | Constructors are deprecated for removal on Java 17; use the factory     |\n | String literals                         | JVM string table           | Equal literals are interned; identity is still the wrong value contract |\n | `String.intern()`                       | JVM-managed string table   | Retention, lookup and sizing behavior vary by JDK/collector             |\n | Enum constants                          | One per constant           | The closed-set case, and the best one                                   |\n@@ -188,5 +188,6 @@ such as use-after-return or dirty state. Consider reuse for expensive resources\n ownership and capacity. Plain-object\n reuse needs measured benefit and a lifecycle correctness argument; flyweight does not imply it.\n \n-Sources: [Integer.valueOf contract](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Integer.html#valueOf(int)>)\n+Sources: [Integer.valueOf contract](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Integer.html#valueOf(int)>),\n+[Boolean constructor and factory contracts](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Boolean.html),\n and [List factory contracts](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html).\ndiff --git a/skills/gof-flyweight/skill.yaml b/skills/gof-flyweight/skill.yaml\nindex be8a7a2..e124731 100644\n--- a/skills/gof-flyweight/skill.yaml\n+++ b/skills/gof-flyweight/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: gof-flyweight\n-version: 1.2.4\n+version: 1.2.5\n description: >-\n   Flyweight in modern Java: sharing one immutable instance across many logical occurrences to\n   reduce retained memory, with benefits dependent on duplicate lifetimes and lookup cost. Covers the\n",
+        "stderrText": ""
+      },
+      {
+        "id": "staged-diff",
+        "executable": "git",
+        "args": [
+          "diff",
+          "--cached",
+          "--",
+          "skills/gof-flyweight"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "stdout": "staged-diff.stdout.txt",
+        "stderr": "staged-diff.stderr.txt",
+        "stdoutText": "",
+        "stderrText": ""
+      },
+      {
+        "id": "java-version",
+        "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+        "args": [
+          "-version"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "stdout": "java-version.stdout.txt",
+        "stderr": "java-version.stderr.txt",
+        "stdoutText": "",
+        "stderrText": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n"
+      },
+      {
+        "id": "javac-version",
+        "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+        "args": [
+          "-version"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "stdout": "javac-version.stdout.txt",
+        "stderr": "javac-version.stderr.txt",
+        "stdoutText": "javac 25.0.3\r\n",
+        "stderrText": ""
+      },
+      {
+        "id": "case-preparation",
+        "executable": "C:\\Program Files\\nodejs\\node.exe",
+        "args": [
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-flyweight\\prepare-cases.mjs"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "stdout": "case-preparation.stdout.txt",
+        "stderr": "case-preparation.stderr.txt",
+        "stdoutText": "{\n  \"cases\": 2,\n  \"filesPerCase\": 6,\n  \"decisiveDifference\": \"import.properties only\",\n  \"actorsRun\": 0\n}\n",
+        "stderrText": ""
+      },
+      {
+        "id": "case-compile",
+        "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+        "args": [
+          "--release",
+          "17",
+          "-d",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-flyweight\\case-compiled",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-flyweight\\cases\\case-a\\Bootstrap.java",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-flyweight\\cases\\case-a\\FormatterFactory.java",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-flyweight\\cases\\case-a\\ImportPreview.java",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-flyweight\\UncachedControl.java"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "stdout": "case-compile.stdout.txt",
+        "stderr": "case-compile.stderr.txt",
+        "stdoutText": "",
+        "stderrText": ""
+      },
+      {
+        "id": "case-a-cached",
+        "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+        "args": [
+          "-cp",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-flyweight\\case-compiled",
+          "imports.ImportPreview",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-flyweight\\cases\\case-a"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "stdout": "case-a-cached.stdout.txt",
+        "stderr": "case-a-cached.stderr.txt",
+        "stdoutText": "en-US,2026-03-01\r\nfr-FR,REJECTED\r\n",
+        "stderrText": ""
+      },
+      {
+        "id": "case-a-uncached",
+        "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+        "args": [
+          "-cp",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-flyweight\\case-compiled",
+          "imports.UncachedControl",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-flyweight\\cases\\case-a"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "stdout": "case-a-uncached.stdout.txt",
+        "stderr": "case-a-uncached.stderr.txt",
+        "stdoutText": "en-US,2026-03-01\r\nfr-FR,REJECTED\r\n",
+        "stderrText": ""
+      },
+      {
+        "id": "case-b-cached",
+        "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+        "args": [
+          "-cp",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-flyweight\\case-compiled",
+          "imports.ImportPreview",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-flyweight\\cases\\case-b"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "stdout": "case-b-cached.stdout.txt",
+        "stderr": "case-b-cached.stderr.txt",
+        "stdoutText": "en-US,2026-03-01\r\nfr-FR,REJECTED\r\n",
+        "stderrText": ""
+      },
+      {
+        "id": "case-b-uncached",
+        "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+        "args": [
+          "-cp",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-flyweight\\case-compiled",
+          "imports.UncachedControl",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-flyweight\\cases\\case-b"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "stdout": "case-b-uncached.stdout.txt",
+        "stderr": "case-b-uncached.stderr.txt",
+        "stdoutText": "en-US,2026-03-01\r\nfr-FR,2026-03-01\r\n",
+        "stderrText": ""
+      }
+    ],
+    "package": {
+      "status": "PASS",
+      "files": 4,
+      "issues": [],
+      "relativeLinks": 2,
+      "details": {
+        "skill": "gof-flyweight",
+        "version": "1.2.5",
+        "baselineVersion": "1.2.4",
+        "fileCount": 4,
+        "issues": [],
+        "links": [
+          {
+            "from": "SKILL.md",
+            "target": "references/when-sharing-pays.md",
+            "exists": true
+          },
+          {
+            "from": "SKILL.md",
+            "target": "references/worked-example.md",
+            "exists": true
+          }
+        ],
+        "hashes": [
+          {
+            "path": "skills/gof-flyweight/SKILL.md",
+            "sha256": "cac2ce32dbeb9c9cd5fe8b8b65aa903474903942d63223b9fc916c2f690fe72e",
+            "baselineSha256": "cac2ce32dbeb9c9cd5fe8b8b65aa903474903942d63223b9fc916c2f690fe72e",
+            "unchangedFromAssignment": true
+          },
+          {
+            "path": "skills/gof-flyweight/references/when-sharing-pays.md",
+            "sha256": "16f2ab53383c595139cf93ebfe9e79b698725cf5d731bc634e3864874d46cf71",
+            "baselineSha256": "2c517486cf6acaacc06fc2f6d31fb663eb4dd834ead4bec18e86a4bfe21cc601",
+            "unchangedFromAssignment": false
+          },
+          {
+            "path": "skills/gof-flyweight/references/worked-example.md",
+            "sha256": "99d958ccd06719d95c78c4cd21c877c205f257d28b1eb2ff727ebfe78fa04e5f",
+            "baselineSha256": "99d958ccd06719d95c78c4cd21c877c205f257d28b1eb2ff727ebfe78fa04e5f",
+            "unchangedFromAssignment": true
+          },
+          {
+            "path": "skills/gof-flyweight/skill.yaml",
+            "sha256": "943b068ef1ec6ee6dd0e4f909f698c2368f7e14456b52675e8207ad2a43adf57",
+            "baselineSha256": "bdb52654bb6150b815834eb943724384e3f6918a3436cbc87ec5e684106e0f5e",
+            "unchangedFromAssignment": false
+          }
+        ],
+        "examples": [
+          {
+            "path": "skills/gof-flyweight/SKILL.md",
+            "javaBlocks": 0,
+            "unchanged": true
+          },
+          {
+            "path": "skills/gof-flyweight/references/when-sharing-pays.md",
+            "javaBlocks": 1,
+            "unchanged": true
+          },
+          {
+            "path": "skills/gof-flyweight/references/worked-example.md",
+            "javaBlocks": 2,
+            "unchanged": true
+          }
+        ]
+      }
+    },
+    "formatting": {
+      "status": "PASS_AFTER_FIX",
+      "initial": "Prettier found one missing alignment space in the changed table cell.",
+      "correction": "Applied the one-space hand edit; reran exact-file Prettier, local validator, scoped diff/check/status only. Unaffected Java checks were not rerun.",
+      "initialArtifacts": "initial-checks/"
+    },
+    "examplePreservation": {
+      "changedExecutableExamples": 0,
+      "details": [
+        {
+          "path": "skills/gof-flyweight/SKILL.md",
+          "javaBlocks": 0,
+          "unchanged": true
+        },
+        {
+          "path": "skills/gof-flyweight/references/when-sharing-pays.md",
+          "javaBlocks": 1,
+          "unchanged": true
+        },
+        {
+          "path": "skills/gof-flyweight/references/worked-example.md",
+          "javaBlocks": 2,
+          "unchanged": true
+        }
+      ],
+      "limitation": "Unchanged illustrative skill snippets were read but not recompiled during this assignment."
+    },
+    "caseControl": {
+      "status": "PASS",
+      "purpose": "Validate synthetic case distinction against uncached API behavior; not a benchmark or actor evaluation.",
+      "assertions": 5,
+      "outputs": {
+        "case-a-cached": "en-US,2026-03-01\nfr-FR,REJECTED\n",
+        "case-a-uncached": "en-US,2026-03-01\nfr-FR,REJECTED\n",
+        "case-b-cached": "en-US,2026-03-01\nfr-FR,REJECTED\n",
+        "case-b-uncached": "en-US,2026-03-01\nfr-FR,2026-03-01\n"
+      },
+      "limits": "Only the two ordered rows and current runtime locale data were executed. No concurrency, cap/bypass, retained-memory or reverse-order test.",
+      "compiler": "Temurin javac 25.0.3",
+      "release": "17",
+      "runtime": "Temurin 25.0.3+9-LTS, Windows x64",
+      "sourceFiles": [
+        "cases/case-a/FormatterFactory.java",
+        "cases/case-a/Bootstrap.java",
+        "cases/case-a/ImportPreview.java",
+        "UncachedControl.java"
+      ],
+      "casesShareIdenticalJavaSources": true,
+      "actualExecution": "Four short JVM runs: cached and uncached control under each configuration. Five predefined assertions passed."
+    },
+    "finalDiff": {
+      "status": "PASS",
+      "inspected": true,
+      "artifact": "scoped-diff.stdout.txt",
+      "stagedDiffEmpty": true
+    }
+  },
+  "failures": {
+    "resolvedLocal": [
+      {
+        "command": "Exact-file Prettier --check",
+        "cause": "One table-padding space introduced by the manual wording edit.",
+        "initialExitCode": 1,
+        "finalExitCode": 0,
+        "preserved": "initial-checks/prettier.stderr.txt and initial-checks/commands.json"
+      }
+    ],
+    "unavailableSources": [
+      {
+        "url": "https://openjdk.org/jeps/390",
+        "outcome": "HTTP 403 in web tool; not cited as successfully read.",
+        "alternative": "Versioned Java 9 and 17 Boolean API plus Deprecated contract resolved the narrower corrected statement."
+      }
+    ]
+  },
+  "behavioralEvaluations": {
+    "actorsExecuted": 0,
+    "measuredImprovement": false,
+    "comparisonsExecuted": [],
+    "walkthroughs": [
+      "Case-a: Bootstrap disables request locale overrides; locale and strictness are fixed per factory. Pattern-only keys are sufficient for the supported constructor inputs. Retain the confined bounded factory if adequate and do not approve an unmeasured cross-thread expansion.",
+      "Case-b: Bootstrap enables request locale overrides; same pattern can require different immutable formatters. An English first request then French input exposes the missing key dimension. A composite effective-locale key or appropriate factory scoping preserves semantics."
+    ],
+    "technicalExecutionDistinction": "The raw parsing outputs validate the synthetic cases against an uncached API control. They are not independent agent outputs, a performance benchmark or evidence that this small documentation correction improved behavior."
+  },
+  "cases": {
+    "inputs": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-flyweight/actor-inputs.json",
+    "evaluatorCriteria": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-flyweight/evaluator-criteria.json",
+    "fixtureIntegrity": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-flyweight/case-integrity.json",
+    "count": 2,
+    "knownDevelopmentCases": true,
+    "heldOut": false,
+    "decisiveConstraint": "Only allowLocaleOverride in import.properties differs; all five other fixture files are identical.",
+    "expectedDifference": "Pattern-only key is valid for fixed effective locale but invalid when effective locale varies; both must reject unsupported broad sharing/cap expansion without ownership and workload evidence.",
+    "isolation": "Procedural only. Coordinator must expose one case directory and intended skill treatment; exclude evaluator criteria, UncachedControl, paired results and handoff."
+  },
+  "sources": [
+    {
+      "id": "boolean-9",
+      "url": "https://docs.oracle.com/javase/9/docs/api/java/lang/Boolean.html",
+      "version": "Java SE 9",
+      "section": "Constructor Detail",
+      "support": "Both constructors carry @Deprecated(since=\"9\") and ordinary Deprecated documentation; the entry does not show forRemoval=true. This contradicts the original statement that they were deprecated for removal since 9.",
+      "consulted": "2026-10-16",
+      "kind": "primary"
+    },
+    {
+      "id": "boolean-17",
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Boolean.html",
+      "version": "Java SE 17",
+      "section": "Constructor Details and valueOf(boolean)",
+      "support": "Shows @Deprecated(since=\"9\", forRemoval=true) on the constructors and the TRUE/FALSE factory return contract. Supports the corrected baseline-specific wording.",
+      "consulted": "2026-10-16",
+      "kind": "primary"
+    },
+    {
+      "id": "deprecated-17",
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Deprecated.html",
+      "version": "Java SE 17",
+      "section": "since and forRemoval elements",
+      "support": "since records first deprecation; forRemoval is a distinct removal-intent flag. The since string alone is not a timestamp for later changes to that flag.",
+      "consulted": "2026-10-16",
+      "kind": "primary"
+    },
+    {
+      "id": "pattern-17",
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/regex/Pattern.html",
+      "version": "Java SE 17",
+      "section": "Class contract, compile(String,int), matcher",
+      "support": "Confirms existing immutable shared Pattern/confined Matcher guidance and expression/flags as behavior-changing inputs.",
+      "consulted": "2026-10-16",
+      "kind": "primary"
+    },
+    {
+      "id": "weak-map-17",
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/WeakHashMap.html",
+      "version": "Java SE 17",
+      "section": "Class implementation note on value-to-key references",
+      "support": "Confirms the existing strong-value-to-key retention caveat. No GC experiment or prompt collection claim was made.",
+      "consulted": "2026-10-16",
+      "kind": "primary"
+    },
+    {
+      "id": "string-17",
+      "url": "https://raw.githubusercontent.com/openjdk/jdk/jdk-17-ga/src/java.base/share/classes/java/lang/String.java",
+      "version": "OpenJDK jdk-17-ga",
+      "section": "String(String) constructor",
+      "support": "Confirms existing backing-array sharing for this implementation. This is a source fact, not a portable memory-size guarantee or a heap measurement.",
+      "consulted": "2026-10-16",
+      "kind": "primary"
+    },
+    {
+      "id": "string-table-17",
+      "url": "https://raw.githubusercontent.com/openjdk/jdk/jdk-17-ga/src/hotspot/share/classfile/stringTable.cpp",
+      "version": "OpenJDK jdk-17-ga",
+      "section": "StringTableConfig, local table insertion and weak handles",
+      "support": "Confirms the existing implementation-qualified weak local StringTable explanation; does not establish prompt cleanup or bounded memory.",
+      "consulted": "2026-10-16",
+      "kind": "primary"
+    },
+    {
+      "id": "formatter-17",
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/format/DateTimeFormatter.html",
+      "version": "Java SE 17",
+      "section": "Implementation Requirements, ofPattern(String,Locale), withResolverStyle",
+      "support": "Grounds the case pair: immutable thread-safe formatters can still differ in behavior by locale. Cache-key completeness depends on effective factory configuration; map thread safety is a separate responsibility.",
+      "consulted": "2026-10-16",
+      "kind": "primary"
+    }
+  ],
+  "limits": [
+    "The revision corrects a small factual statement. No new gap in the central Flyweight decision guidance was established, and no broad rewrite or claim of incremental skill gain is justified.",
+    "No heap dump, allocation/GC profile, concurrency test, memory/CPU benchmark or comparison of actual application designs was executed.",
+    "Case execution used JDK 25.0.3 with sources compiled --release 17. This is not Java 17 JVM execution; locale text behavior was observed under the available runtime data.",
+    "Technical case runs cover only the two ordered sample rows. Reverse order, cap/admission bypass, high cardinality, collision, mutable aliases and concurrent factory use remain proposed checks, not executed outcomes.",
+    "Versioned API/source inspection establishes the selected contracts and source facts, not every runtime/collector implementation or end-to-end memory saving.",
+    "Local loader/validator does not validate catalog-wide optional routing or the generated registry. Shared checks remain coordinator-owned."
+  ],
+  "crossSkill": {
+    "requiredActions": [],
+    "neighboringFilesEdited": false
+  },
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Regenerate index and integrity after all reviewers stop writing."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Parallel-review constraint; global verification after registry generation and stable shared tree."
+    }
+  ],
+  "pendingBehavioralEvaluation": "Coordinator may run matched actors with frozen separate inputs/criteria. No actor run was performed by this reviewer.",
+  "evidenceDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-flyweight",
+  "evidence": [
+    "local-validation.mjs",
+    "local-validation.stdout.txt",
+    "commands.json",
+    "run-local.mjs",
+    "initial-checks/",
+    "scoped-diff.stdout.txt",
+    "scoped-status.stdout.txt",
+    "staged-diff.stdout.txt",
+    "prepare-cases.mjs",
+    "actor-inputs.json",
+    "evaluator-criteria.json",
+    "case-integrity.json",
+    "case-control.json",
+    "cases/case-a/",
+    "cases/case-b/",
+    "UncachedControl.java",
+    "case-compiled/",
+    "case-a-cached.stdout.txt",
+    "case-a-uncached.stdout.txt",
+    "case-b-cached.stdout.txt",
+    "case-b-uncached.stdout.txt"
+  ],
+  "writeState": {
+    "noActiveBackgroundProcess": true,
+    "allProcessesWaited": true,
+    "repositoryWritesRestrictedToOwnedPath": true,
+    "reviewArtifactsRestrictedToAssignedTempDirectory": true,
+    "stoppedBeforeHandoff": true
+  }
+}

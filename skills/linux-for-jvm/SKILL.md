@@ -85,8 +85,10 @@ within the established containment and availability deadline.
   Defrag modes such as `always`, `madvise`, `defer`, `defer+madvise` and `never` have different
   latency/memory trade-offs. On kernels with per-size controls, only `inherit` follows the
   top-level `enabled` value; inspect explicit overrides before declaring THP disabled. Verify
-  kernel and JDK behaviour, measure `AnonHugePages`, TLB/CPU benefit and compaction stalls,
-  then record the chosen policy.
+  kernel and JDK behaviour, page-size usage, TLB/CPU benefit and compaction stalls before
+  choosing policy. `AnonHugePages` is not an all-size THP measure: zero does not rule out
+  smaller PTE-mapped mTHP. Keep process residency distinct from host per-size
+  allocation counters; neither eligibility nor host activity proves this JVM uses that size.
 - Distinguish global OOM from memory-cgroup OOM by evidence. Victim selection can incorporate
   `oom_score_adj` within applicable constraints; it is not a protection against exceeding a
   container's or ancestor's `memory.max`. Kubernetes QoS influences scores; correlate

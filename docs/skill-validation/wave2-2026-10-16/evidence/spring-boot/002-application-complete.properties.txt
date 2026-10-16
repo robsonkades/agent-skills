@@ -1,0 +1,5 @@
+demo.clients[0].url=https://primary.invalid
+demo.clients[0].timeout=2s
+demo.clients[1].url=https://secondary.invalid
+demo.clients[1].timeout=1s
+demo.clients-by-name.primary.timeout=2s

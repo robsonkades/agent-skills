@@ -1,0 +1,157 @@
+import assert from 'node:assert/strict';
+import { readFileSync, writeFileSync, readdirSync, mkdirSync, existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+import path from 'node:path';
+import { parseManifest } from 'file:///C:/git/agent-skills/packages/core/src/domain/manifest.ts';
+import { parseSkillDocument, documentName, documentDescription } from 'file:///C:/git/agent-skills/packages/core/src/domain/skill-document.ts';
+
+const repo = 'C:/git/agent-skills';
+const owned = 'skills/gof-composite';
+const out = 'C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-composite';
+const javaHome = 'C:/Users/robso/.jdks/temurin-25.0.3';
+mkdirSync(out, { recursive: true });
+const commands = [];
+function run(command, args, cwd = repo) {
+  const result = spawnSync(command, args, { cwd, encoding: 'utf8', windowsHide: true, timeout: 20000 });
+  const log = { command, args, cwd, exitCode: result.status, stdout: result.stdout, stderr: result.stderr, error: result.error ? String(result.error) : null };
+  commands.push(log);
+  writeFileSync(`${out}/commands.json`, JSON.stringify(commands, null, 2) + '\n');
+  assert.equal(result.status, 0, JSON.stringify(log));
+  return result.stdout;
+}
+function walk(dir) {
+  return readdirSync(path.join(repo, dir), { withFileTypes: true }).flatMap(e => e.isDirectory() ? walk(`${dir}/${e.name}`) : [`${dir}/${e.name}`]);
+}
+const status = run('git', ['status', '--short', '--untracked-files=all', '--', owned]);
+const unstagedDiff = run('git', ['diff', '--', owned]);
+const stagedDiff = run('git', ['diff', '--cached', '--', owned]);
+const committedManifest = run('git', ['show', `HEAD:${owned}/skill.yaml`]);
+const files = walk(owned).sort().map(file => {
+  const bytes = readFileSync(path.join(repo, file));
+  return { path: file, bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex'), content: bytes.toString('utf8') };
+});
+assert.equal(status, ''); assert.equal(unstagedDiff, ''); assert.equal(stagedDiff, '');
+const parsed = parseManifest(files.find(f => f.path.endsWith('/skill.yaml')).content, { strict: true });
+assert.deepEqual(parsed.issues, []);
+const manifest = parsed.manifest;
+const doc = parseSkillDocument(files.find(f => f.path.endsWith('/SKILL.md')).content);
+assert.equal(documentName(doc), manifest.name);
+assert.equal(documentDescription(doc), manifest.description);
+assert.equal(String(manifest.version), '1.2.4');
+assert.equal(String(parseManifest(committedManifest).manifest.version), '1.2.4');
+const initial = JSON.parse(readFileSync(`${repo}/docs/skill-validation/wave4-2026-10-16/baseline.json`, 'utf8')).packages.find(p => p.name === manifest.name);
+assert.ok(initial);
+assert.equal(initial.initialVersion, '1.2.4');
+assert.equal(initial.committedVersion, '1.2.4');
+assert.equal(initial.files.length, files.length);
+for (const file of files) assert.equal(initial.files.find(f => f.path === file.path)?.sha256, file.sha256, file.path);
+writeFileSync(`${out}/assignment-baseline.json`, JSON.stringify({ capturedAt: new Date().toISOString(), skill: manifest.name, status, unstagedDiff, stagedDiff, committedManifest, files }, null, 2) + '\n');
+const localLinks = [];
+for (const file of files.filter(f => f.path.endsWith('.md'))) {
+  for (const match of file.content.matchAll(/\]\(([^)]+)\)/g)) {
+    const target = match[1].replace(/^</, '');
+    if (/^[a-z][a-z0-9+.-]*:/i.test(target) || target.startsWith('#')) continue;
+    assert.ok(existsSync(path.resolve(repo, path.dirname(file.path), target.split('#')[0])), `${file.path}: ${target}`);
+    localLinks.push({ source: file.path, target, exists: true });
+  }
+}
+const referrals = ['allocation-profiling', 'domain-logic-organization', 'gof-decorator', 'gof-iterator', 'gof-patterns-and-distribution', 'gof-visitor', 'java-composition-over-inheritance', 'orm-behavioral-patterns', 'scatter-gather'];
+for (const referral of referrals) assert.ok(manifest.suggests.includes(referral), referral);
+run(process.execPath, ['node_modules/prettier/bin/prettier.cjs', '--check', ...files.map(f => f.path)]);
+run('git', ['diff', '--check', '--', owned]);
+
+const hazards = files.find(f => f.path.endsWith('/structure-and-hazards.md')).content;
+const blocks = [...hazards.matchAll(/```java\r?\n([\s\S]*?)```/g)].map(m => m[1]);
+const sealedStart = blocks[0].indexOf('sealed interface Node');
+assert.ok(sealedStart >= 0);
+const sealedDeclarations = blocks[0].slice(sealedStart);
+const iterativeSize = blocks[1];
+assert.ok(iterativeSize.includes('static long size(Node root)'));
+const controlSource = `import java.util.*;
+
+public class CompositeContractChecks {
+${sealedDeclarations}
+${iterativeSize}
+    private static int checks;
+    private static void check(String name, boolean condition) {
+        if (!condition) throw new AssertionError(name);
+        checks++;
+        System.out.println("PASS " + name);
+    }
+    private static void expect(String name, Class<? extends Throwable> expected, Runnable work) {
+        try { work.run(); } catch (Throwable failure) {
+            check(name, expected.isInstance(failure));
+            return;
+        }
+        throw new AssertionError(name + ": expected " + expected.getName());
+    }
+    private static long distinctIdentitySize(Node root) {
+        Set<Node> visited = Collections.newSetFromMap(new IdentityHashMap<>());
+        Deque<Node> pending = new ArrayDeque<>();
+        pending.push(root);
+        long total = 0;
+        while (!pending.isEmpty()) {
+            Node node = pending.pop();
+            if (!visited.add(node)) continue;
+            switch (node) {
+                case Leaf leaf -> total = Math.addExact(total, leaf.bytes());
+                case Branch branch -> branch.children().forEach(pending::push);
+            }
+        }
+        return total;
+    }
+    public static void main(String[] args) {
+        var first = new Leaf("entry", 7);
+        var second = new Leaf("entry", 7);
+        var left = new Branch("left", List.of(first));
+        var right = new Branch("right", List.of(first, second));
+        var root = new Branch("root", List.of(left, right));
+        check("equal leaf values retain distinct identity", first.equals(second) && first != second);
+        check("recursive size counts all paths", root.size() == 21);
+        check("quoted iterative size counts all paths", size(root) == 21);
+        check("identity visited size has different valid semantics", distinctIdentitySize(root) == 14);
+        var equalSet = new HashSet<Node>(List.of(first, second));
+        check("value set merges equal-but-distinct leaves", equalSet.size() == 1);
+        var children = new ArrayList<Node>(List.of(first, second));
+        children.remove(second);
+        check("remove Object removes the first equal instance", children.size() == 1 && children.get(0) == second);
+        var parentIndex = new IdentityHashMap<Node, Node>();
+        parentIndex.put(first, left);
+        parentIndex.put(first, right);
+        check("one-key parent index overwrites earlier parent", parentIndex.size() == 1 && parentIndex.get(first) == right);
+        parentIndex.put(second, left);
+        check("identity parent index separates equal node values", parentIndex.size() == 2);
+        var source = new ArrayList<Node>(List.of(first));
+        var snapshot = new Branch("snapshot", source);
+        source.clear();
+        check("copyOf snapshots list membership", snapshot.children().size() == 1);
+        expect("copyOf membership is unmodifiable", UnsupportedOperationException.class, () -> snapshot.children().clear());
+        var mutableRule = new StringBuilder("allow");
+        var frozenMembership = List.copyOf(List.of(mutableRule));
+        mutableRule.replace(0, mutableRule.length(), "deny");
+        check("copyOf does not freeze contained objects", frozenMembership.get(0).toString().equals("deny"));
+        var stack = new ArrayDeque<Node>();
+        List.<Node>of(first, second).forEach(stack::push);
+        check("forward push reverses encounter order", stack.pop() == second && stack.pop() == first);
+        check("record copy invariant", first.equals(new Leaf(first.name(), first.bytes())));
+        expect("negative bytes rejected", IllegalArgumentException.class, () -> new Leaf("negative", -1));
+        var overflowing = new Branch("overflow", List.of(new Leaf("max", Long.MAX_VALUE), new Leaf("one", 1)));
+        expect("recursive exact sum rejects overflow", ArithmeticException.class, overflowing::size);
+        expect("iterative exact sum rejects overflow", ArithmeticException.class, () -> size(overflowing));
+        System.out.println("checks=" + checks);
+    }
+}
+`;
+mkdirSync(`${out}/java-controls/classes`, { recursive: true });
+writeFileSync(`${out}/java-controls/CompositeContractChecks.java`, controlSource);
+run(`${javaHome}/bin/javac.exe`, ['-version'], out);
+run(`${javaHome}/bin/java.exe`, ['-version'], out);
+run(`${javaHome}/bin/javac.exe`, ['--release', '21', '-d', `${out}/java-controls/classes`, `${out}/java-controls/CompositeContractChecks.java`], out);
+const stdout = run(`${javaHome}/bin/java.exe`, ['-ea', '-cp', `${out}/java-controls/classes`, 'CompositeContractChecks'], out);
+assert.ok(stdout.includes('checks=16'));
+const majorVersion = readFileSync(`${out}/java-controls/classes/CompositeContractChecks.class`).readUInt16BE(6);
+assert.equal(majorVersion, 65);
+const result = { capturedAt: new Date().toISOString(), node: process.version, skill: manifest.name, versions: { committed: '1.2.4', assignment: '1.2.4', final: '1.2.4' }, fileCount: files.length, filesUnchangedFromBaseline: files.map(({ content, ...file }) => ({ ...file, unchanged: true })), metadata: { strictIssues: parsed.issues, descriptionMatches: true, nameMatches: true, referralDeclarationCount: referrals.length, catalogWideResolutionChecked: false }, localLinks, commands, technicalControls: { checks: 16, compilationRelease: 21, classMajor: majorVersion, runtime: 'Temurin 25.0.3+9', source: `${out}/java-controls/CompositeContractChecks.java`, extractedUnchanged: ['Sealed Node/Leaf/Branch declarations from first Java fence, excluding alternative transparent/safe sketches', 'Entire second Java fence containing iterative size'], harnessOnly: ['Imports and outer class', 'Named assertions and main', 'Identity-visited contrasting traversal', 'API controls for equality, membership, removal, copying and parent index'], limits: ['Not executed on JDK 21.', 'No concurrency, parser-security, real authorization-cache, database or performance test.', 'Permission resolver remains a reviewed partial sketch, not a fully tested application.', 'No agent evaluation.'] } };
+writeFileSync(`${out}/local-validation.json`, JSON.stringify(result, null, 2) + '\n');
+console.log(JSON.stringify({ skill: result.skill, version: result.versions.final, unchangedFiles: result.fileCount, metadata: result.metadata, localLinks: result.localLinks, technicalControls: result.technicalControls, stdout }, null, 2));

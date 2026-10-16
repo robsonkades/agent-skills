@@ -1,0 +1,72 @@
+diff --git a/skills/lock-inflation/SKILL.md b/skills/lock-inflation/SKILL.md
+index 4190b41..8aec1ac 100644
+--- a/skills/lock-inflation/SKILL.md
++++ b/skills/lock-inflation/SKILL.md
+@@ -69,6 +69,7 @@ may still vary. Deflation is lifecycle/housekeeping, not a remediation for activ
+ | --------------------------------- | ---------------------------------------- | ------------------------------------------------------ |
+ | thread `BLOCKED` entering monitor | intrinsic-monitor acquisition            | one sample has no duration/population                  |
+ | JFR `JavaMonitorEnter`            | qualifying monitor acquisition wait      | settings/threshold censor shorter waits                |
++| JFR `JavaMonitorInflate`          | recorded inflation path/trigger          | cause labels do not prove inter-thread contention      |
+ | JFR `JavaMonitorWait`             | `Object.wait` lifecycle                  | intentional condition wait may be healthy              |
+ | JFR `ThreadPark`                  | park-based synchronizer/wait             | includes many locks, pools, futures, queues            |
+ | high CPU in monitor/spin path     | spinning/churn/contention                | require owner/progress and compiled/native attribution |
+@@ -184,8 +185,8 @@ design is a complete result without an invented capture or finding.
+ 
+ - [Version-scoped monitor lifecycle](references/monitor-lifecycle.md) — read when interpreting
+   inflation, wait/reacquisition, headers or monitor-state evidence.
+-- [Measuring and reducing contention](references/measuring-contention.md) — read when planning
+-  a capture or changing critical-section scope/partitioning.
++- [Measuring and reducing contention](references/measuring-contention.md) — read when interpreting
++  monitor events, planning a capture or changing critical-section scope/partitioning.
+ - [JEP 491](https://openjdk.org/jeps/491)
+ - [JLS 17 monitors and waits](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html)
+ - [OpenJDK 25 GA monitor source example](https://github.com/openjdk/jdk/tree/jdk-25-ga/src/hotspot/share/runtime) — match the target vendor/build before attributing a runtime path.
+diff --git a/skills/lock-inflation/references/measuring-contention.md b/skills/lock-inflation/references/measuring-contention.md
+index 8693e78..8e051d2 100644
+--- a/skills/lock-inflation/references/measuring-contention.md
++++ b/skills/lock-inflation/references/measuring-contention.md
+@@ -77,6 +77,23 @@ have committed its duration event. Report that unfinished population using threa
+ and any justified observed lower bounds; a completed-event summary alone cannot rule out a long
+ wait. Do not turn a missing event into zero duration or an invented completed acquisition.
+ 
++### Inflation events versus blocked acquisitions
++
++Do not read `JavaMonitorInflate` as `JavaMonitorEnter`. In OpenJDK 25 GA, the inflation event
++records the triggering path in `cause`, along with a thread/stack and monitor class. Even
++`Monitor Enter` does not prove another thread contended: `LightweightSynchronizer::enter`
++can inflate a monitor already owned by the same thread when fast recursive entry cannot
++handle it. For example, the lock stack's fast-recursion check requires its top object to
++match; nested `A -> B -> A` can reach that inflation path with no competing thread. Actual
++emission depends on the selected build/path, optimization and recording settings.
++
++The inflation event's duration covers its instrumented inflation region, not the subsequent
++acquisition wait, the owner's hold time or the monitor's inflated lifetime. Counts are not
++a blocked-thread population or a count of all acquisitions. Follow the event stack to the
++selected guarded code and callers, including whether the object is shared or thread-confined.
++Correlate acquisition/owner/progress and workload evidence before treating inflation as a
++serialization bottleneck; an inflation-only capture can leave that attribution unresolved.
++
+ ### Monitor identity and aggregation
+ 
+ Grouping by `monitorClass` can combine unrelated instances and critical sections. A hot class
+@@ -151,6 +168,7 @@ Report inconclusive if event opportunity/threshold or workload drift prevents di
+ 
+ - [Java 25 Flight Recorder settings and control API](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/package-summary.html) — event discovery, thresholds, stacks and commitment.
+ - [OpenJDK 25 GA monitor-event definitions](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/jfr/metadata/metadata.xml) — inspect the actual target schema before consuming fields.
++- [OpenJDK 25 GA lightweight synchronization](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/lightweightSynchronizer.cpp) and [lock-stack recursion](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/lockStack.inline.hpp) — inflation-event regions and already-owned recursion paths; a cause label alone does not prove contention.
+ - [OpenJDK 25 GA monitor implementation](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/objectMonitor.cpp) — event commitment, previous-owner recording and wait/reacquisition boundaries.
+ - [Java 25 Object.wait](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#wait(long,int)>) — reacquisition before return or interruption exception.
+ - [JDK `jcmd`](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)
+diff --git a/skills/lock-inflation/skill.yaml b/skills/lock-inflation/skill.yaml
+index 5ca492a..b751c40 100644
+--- a/skills/lock-inflation/skill.yaml
++++ b/skills/lock-inflation/skill.yaml
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: lock-inflation
+-version: 1.2.4
++version: 1.2.5
+ description: >-
+   Diagnosing and engineering Java intrinsic-monitor contention across fast and inflated monitor
+   states without freezing one HotSpot release's internals. Covers ownership, recursion, wait sets,

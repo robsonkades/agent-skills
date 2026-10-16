@@ -1,0 +1,326 @@
+{
+  "schemaVersion": 1,
+  "skill": "gof-patterns-in-modern-java",
+  "status": "NO_CHANGES_NEEDED",
+  "ownedPath": "C:/git/agent-skills/skills/gof-patterns-in-modern-java",
+  "reviewedOn": "2026-10-16",
+  "scope": "Review content and examples of exactly the existing skill; no application/API implementation and no mandatory modernization.",
+  "baseline": {
+    "externalCopy": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/baseline/gof-patterns-in-modern-java",
+    "committedVersion": "1.3.4",
+    "assignmentVersion": "1.3.4",
+    "finalVersion": "1.3.4",
+    "committedDifference": [],
+    "stagedDifference": [],
+    "unstagedDifference": [],
+    "untrackedFiles": [],
+    "preExistingVersionBump": false,
+    "assignmentAndFinalSha256": {
+      "SKILL.md": "3201083C996D8D8221B4A8F01C3868E1153A434137D27E249885B08A2D241F17",
+      "skill.yaml": "13E2CEA3E9FEC6736EB83FBEACA217B68B786E661E1B151DD040ADB5B4F4EA2C",
+      "references/feature-to-pattern.md": "7593B2EEC59857385DB90FDDD82BA3B20665A4C6F8627BDA53624C260BA536B7",
+      "references/pattern-by-pattern.md": "4BB988D51E15E8D68B1BA54A84B2B225689A0C6F10E3B4F69A8426E995B9623F"
+    },
+    "byteForByteUnchanged": true
+  },
+  "versions": {
+    "committed": "1.3.4",
+    "assignment": "1.3.4",
+    "final": "1.3.4",
+    "rationale": "No supported correction required and no package content changed; no bump."
+  },
+  "domainCriteria": [
+    "Identify concrete variation, ordinary caller and supported extension point before swapping a mechanism.",
+    "Preserve identity, ownership, capture, dispatch, lifecycle, failures, equality and public construction where relevant.",
+    "Respect actual Java/framework baseline and preview authorization.",
+    "Separate source/binary/behavioral compatibility and keep adequate current design as a valid outcome.",
+    "Route specialist detail without imposing a full audit workflow on every consumer."
+  ],
+  "findingsCorrected": [],
+  "findingsReviewed": [
+    {
+      "location": "SKILL.md:38-43; references/feature-to-pattern.md:69-90",
+      "finding": "Release gates and partial record-pattern snippet are already correct.",
+      "support": "Shipped snippet compiles with --release 21 without preview; --release 17 rejects it. Exact snippet with scaffolding exercised four accessor/null/dispatch assertions.",
+      "consequence": "Preserve version-sensitive alternatives; no upgrade recommendation."
+    },
+    {
+      "location": "SKILL.md:80-88; references/feature-to-pattern.md:45-67",
+      "finding": "Existing guidance correctly distinguishes a binary-compatible added permitted subtype from behavior of a previously compiled exhaustive consumer.",
+      "support": "JLS 21 13.5.2 and local old/new consumer controls.",
+      "consequence": "Actual selected consumer changes the rollout decision; neither universal rejection of sealed design nor newest-source compilation proves compatibility."
+    },
+    {
+      "location": "references/feature-to-pattern.md:5-43,94-136",
+      "finding": "Records and lambdas already retain shallow immutability, array equality, canonical construction/public extension and receiver/capture caveats.",
+      "support": "Entire content inspected; Java 17 Record/JLS resources resolve, JLS17 9.8 confirms sealed-shaped interface is not a functional interface.",
+      "consequence": "No generic modernization mandate or duplicate deep dive added."
+    },
+    {
+      "location": "references/feature-to-pattern.md:193-230,233-254",
+      "finding": "Preview/final status and lifecycle/continuation limitations are already qualified.",
+      "support": "JEP485/506/505 release metadata, JDK25 StructuredTaskScope close contract, pinned Spring7.0.9 interceptor continuation contract.",
+      "consequence": "Retain alternatives, prerequisite checks and neighboring specialist referrals."
+    }
+  ],
+  "remainingFindings": [],
+  "filesChangedByReviewer": [],
+  "preExistingChanges": [],
+  "capabilitiesPreserved": [
+    "Intent versus implementation mechanism and all 23 GoF comparisons.",
+    "Records, sealed switches, functional interfaces, defaults, DI, collection factories, virtual threads, ScopedValue, structured concurrency and Gatherers.",
+    "Record equality/ownership/construction and lambda receiver/capture caveats.",
+    "Framework mechanism ordering/lifecycle/failure contracts and no-pattern/retain-current outcome.",
+    "Two conditionally routed references and existing manifest dependencies/suggestions."
+  ],
+  "capabilitiesRemoved": [],
+  "commands": [
+    {
+      "id": "technical",
+      "cmd": "node 'C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-patterns-in-modern-java/validate-java.mjs'",
+      "result": {
+        "chunk_id": "34d0c6",
+        "wall_time_seconds": 3.4434933,
+        "exit_code": 0,
+        "original_token_count": 193,
+        "output": "{\n  \"status\": \"PASS\",\n  \"runtime\": \"Temurin 25.0.3+9-LTS\",\n  \"compileTarget\": \"Java 21 --release 21, no preview\",\n  \"classMajorVersion\": 65,\n  \"processChecks\": 15,\n  \"snippetAssertions\": 4,\n  \"casePairOnlyDifference\": \"deployment.json rendererVersion 1 -> 2\",\n  \"snippetSource\": \"Exact sole java fence from feature-to-pattern.md with minimal surrounding Node, helpers and assertions; not a standalone shipped program.\",\n  \"limitations\": [\n    \"Execution on JDK 25, not a Java 21 runtime. --release 21 verifies compiler language/API target and class major 65.\",\n    \"Cases are synthetic local Java fixtures, not application integration, performance or agent behavior.\",\n    \"Negative compile/runtime results are required counterexamples, not unaddressed failures.\"\n  ]\n}\n"
+      },
+      "cwd": "C:/git/agent-skills"
+    },
+    {
+      "id": "structural",
+      "cmd": "@'\nimport assert from 'node:assert/strict';\nimport { existsSync, readFileSync } from 'node:fs';\nimport { dirname, resolve } from 'node:path';\nimport { loadPackageFromDirectory, validatePackage } from '@jvm-expert/core';\nimport { NodeFileSystem } from '@jvm-expert/node';\nimport { ClaudeCodeAdapter } from '@jvm-expert/adapter-claude';\nimport { CodexAdapter } from '@jvm-expert/adapter-codex';\nconst directory = resolve('skills/gof-patterns-in-modern-java');\nconst loaded = await loadPackageFromDirectory(new NodeFileSystem(), directory, { strict: true });\nconst report = validatePackage(loaded.pkg, {\n  strict: true, directoryName: 'gof-patterns-in-modern-java',\n  adapters: [new ClaudeCodeAdapter(), new CodexAdapter()],\n});\nconst issues = [...loaded.issues, ...report.issues];\nassert.deepEqual(issues, []);\nassert.equal(loaded.pkg.manifest.version, '1.3.4');\nconst declared = new Set([\n  ...(loaded.pkg.manifest.dependencies ?? []).map(item => item.name),\n  ...(loaded.pkg.manifest.suggests ?? []),\n]);\nconst referrals = new Set();\nlet localMarkdownLinks = 0;\nfor (const file of loaded.pkg.files.filter(file => file.path.endsWith('.md'))) {\n  const content = readFileSync(resolve(directory, file.path), 'utf8');\n  for (const match of content.matchAll(/\\[[^\\]]+\\]\\(([^)]+)\\)/g)) {\n    if (/^https?:/.test(match[1])) continue;\n    const [target, anchor] = match[1].split('#');\n    const absolute = resolve(directory, dirname(file.path), target);\n    assert.ok(existsSync(absolute), file.path + ': ' + match[1]);\n    if (anchor === 'one-incoming-intent-several-downstream-effects') {\n      assert.ok(readFileSync(absolute, 'utf8').includes('## One incoming intent, several downstream effects'));\n    }\n    localMarkdownLinks++;\n  }\n  for (const match of content.matchAll(/`([a-z][a-z0-9]*-[a-z0-9-]+)`/g)) {\n    const name = match[1];\n    if (!existsSync(resolve('skills', name, 'SKILL.md'))) continue;\n    assert.ok(declared.has(name), 'Undeclared referral: ' + name);\n    referrals.add(name);\n  }\n}\nconsole.log(JSON.stringify({\n  status: 'PASS', name: loaded.pkg.manifest.name, version: loaded.pkg.manifest.version,\n  files: loaded.pkg.files.length, issues: issues.length, localMarkdownLinks,\n  declaredSkillReferrals: referrals.size, adapters: ['claude', 'codex'],\n}));\n'@ | node --input-type=module",
+      "result": {
+        "chunk_id": "557e46",
+        "wall_time_seconds": 0.2254689,
+        "exit_code": 0,
+        "original_token_count": 44,
+        "output": "{\"status\":\"PASS\",\"name\":\"gof-patterns-in-modern-java\",\"version\":\"1.3.4\",\"files\":4,\"issues\":0,\"localMarkdownLinks\":2,\"declaredSkillReferrals\":18,\"adapters\":[\"claude\",\"codex\"]}\n"
+      },
+      "cwd": "C:/git/agent-skills"
+    },
+    {
+      "id": "format",
+      "cmd": "node node_modules/prettier/bin/prettier.cjs --check skills/gof-patterns-in-modern-java/SKILL.md skills/gof-patterns-in-modern-java/skill.yaml skills/gof-patterns-in-modern-java/references/feature-to-pattern.md skills/gof-patterns-in-modern-java/references/pattern-by-pattern.md",
+      "result": {
+        "chunk_id": "6df0e5",
+        "wall_time_seconds": 0.2847472,
+        "exit_code": 0,
+        "original_token_count": 17,
+        "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+      },
+      "cwd": "C:/git/agent-skills"
+    },
+    {
+      "id": "final-scope",
+      "cmd": "git diff --check -- skills/gof-patterns-in-modern-java; git diff --stat -- skills/gof-patterns-in-modern-java; git diff --cached --stat -- skills/gof-patterns-in-modern-java; git status --short --untracked-files=all -- skills/gof-patterns-in-modern-java; git show HEAD:skills/gof-patterns-in-modern-java/skill.yaml | Select-Object -First 5; $owned = (Resolve-Path -LiteralPath 'skills/gof-patterns-in-modern-java').Path; $base = 'C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/baseline/gof-patterns-in-modern-java'; Get-ChildItem -LiteralPath $owned -File -Recurse | ForEach-Object { $relative = [IO.Path]::GetRelativePath($owned, $_.FullName); $original = Join-Path $base $relative; $hash = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash; [pscustomobject]@{ file = $relative; sha256=$hash; sameAsAssignment=($hash -eq (Get-FileHash -LiteralPath $original -Algorithm SHA256).Hash) } } | ConvertTo-Json -Depth 5; node --version",
+      "result": {
+        "chunk_id": "17c453",
+        "wall_time_seconds": 0.2748888,
+        "exit_code": 0,
+        "original_token_count": 188,
+        "output": "schemaVersion: 1\r\n\r\nname: gof-patterns-in-modern-java\r\nversion: 1.3.4\r\ndescription: >-\r\n[\r\n  {\r\n    \"file\": \"SKILL.md\",\r\n    \"sha256\": \"3201083C996D8D8221B4A8F01C3868E1153A434137D27E249885B08A2D241F17\",\r\n    \"sameAsAssignment\": true\r\n  },\r\n  {\r\n    \"file\": \"skill.yaml\",\r\n    \"sha256\": \"13E2CEA3E9FEC6736EB83FBEACA217B68B786E661E1B151DD040ADB5B4F4EA2C\",\r\n    \"sameAsAssignment\": true\r\n  },\r\n  {\r\n    \"file\": \"references\\\\feature-to-pattern.md\",\r\n    \"sha256\": \"7593B2EEC59857385DB90FDDD82BA3B20665A4C6F8627BDA53624C260BA536B7\",\r\n    \"sameAsAssignment\": true\r\n  },\r\n  {\r\n    \"file\": \"references\\\\pattern-by-pattern.md\",\r\n    \"sha256\": \"4BB988D51E15E8D68B1BA54A84B2B225689A0C6F10E3B4F69A8426E995B9623F\",\r\n    \"sameAsAssignment\": true\r\n  }\r\n]\r\nv25.6.1\r\n"
+      },
+      "cwd": "C:/git/agent-skills"
+    }
+  ],
+  "executedStructuralChecks": {
+    "existingStrictLoaderAndValidator": "PASS; 4 package files, 0 issues, Claude/Codex adapters",
+    "localLinks": "PASS; 2 local Markdown links",
+    "declaredReferrals": "PASS; 18 actual backtick skill references declared; not a global routing test",
+    "prettier": "PASS; four owned files checked, no formatting writes",
+    "externalLinks": "PASS; all 16 shipped external Markdown URLs HTTP200",
+    "gitDiffCheck": "PASS; diff and status empty, four assignment hashes preserved"
+  },
+  "executedTechnicalChecks": {
+    "result": "PASS",
+    "processChecks": 15,
+    "includesVersionProbes": true,
+    "snippetAssertions": 4,
+    "runtime": "Temurin 25.0.3+9-LTS",
+    "compilerTarget": "--release 21, class major 65; no preview",
+    "actualResults": [
+      "Original model and renderer print hello and Title:*hello*.",
+      "Expanded model plus old renderer still links and prints the same known-variant output.",
+      "Case A selects model2/renderer1: prints known variants then java.lang.MatchException on Note, expected exit1.",
+      "Case B selects model2/renderer2: prints known variants and NOTE release, exit0.",
+      "Recompiling old renderer against expanded model fails exhaustive-coverage check, expected exit1.",
+      "--release17 rejects pattern switch and record deconstruction, expected exit1.",
+      "Exact shipped Java fence in minimal scaffolding passes accessor-return, recursive Section, null-selector rejection and accessor-exception cause checks."
+    ],
+    "resultArtifact": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-patterns-in-modern-java/technical-results.json",
+    "script": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-patterns-in-modern-java/validate-java.mjs",
+    "failuresIntroducedBySkillChange": [],
+    "unexpectedTechnicalFailures": []
+  },
+  "behavioralEvaluations": {
+    "executed": [],
+    "independentActorRuns": 0,
+    "measuredImprovement": false,
+    "reason": "Reviewers do not execute actors; written cases and technical controls are not behavioral evaluation."
+  },
+  "structuredWalkthroughs": [
+    "A: use deployment-selected old consumer to revise the affected READY conclusion while retaining accepted sealed/operation/no-performance decisions.",
+    "B: use deployment-selected updated consumer to retain the adequate rollout for observed cases and qualify coverage instead of inventing a failure."
+  ],
+  "caseInputs": [
+    {
+      "id": "A",
+      "taskPath": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-patterns-in-modern-java/common/task.md",
+      "commonFixtureRoot": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-patterns-in-modern-java/common",
+      "selectedOverlay": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-patterns-in-modern-java/cases/A/input/deployment.json",
+      "actorWritesAllowed": [
+        "docs/review.md",
+        "isolated temporary validation output"
+      ],
+      "prerequisites": [
+        "Fresh copy of common plus selected overlay only",
+        "Existing JDK supporting release21; installed JDK25 sufficient for declared compiler/runtime limits"
+      ],
+      "knownDevelopmentCase": true
+    },
+    {
+      "id": "B",
+      "taskPath": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-patterns-in-modern-java/common/task.md",
+      "commonFixtureRoot": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-patterns-in-modern-java/common",
+      "selectedOverlay": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-patterns-in-modern-java/cases/B/input/deployment.json",
+      "actorWritesAllowed": [
+        "docs/review.md",
+        "isolated temporary validation output"
+      ],
+      "prerequisites": [
+        "Fresh copy of common plus selected overlay only",
+        "Existing JDK supporting release21; installed JDK25 sufficient for declared compiler/runtime limits"
+      ],
+      "knownDevelopmentCase": true
+    }
+  ],
+  "evaluatorCriteria": {
+    "separatePath": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-patterns-in-modern-java/evaluator/criteria.json",
+    "pairDifference": "Only deployment.json.rendererVersion differs, 1 versus 2.",
+    "preserveSeparation": "Do not expose evaluator criteria, other case overlay, technical probe scripts/results or reviewer handoff to actor. Coordinator must enforce or disclose procedural isolation.",
+    "withheldHoldout": false,
+    "frozenBeforeActorRun": true
+  },
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se21/html/jls-13.html#jls-13.5.2",
+      "version": "Java SE21",
+      "consulted": "2026-10-16",
+      "claim": "Adding permitted subtype is binary compatible; old exhaustive switch can throw MatchException.",
+      "technicalEvidence": [
+        "old-consumer-links-with-expanded-library-known-variants",
+        "case-A",
+        "case-B",
+        "old-consumer-source-rejects-new-unhandled-variant"
+      ]
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/21/language/record-patterns.html",
+      "version": "Java SE21",
+      "consulted": "2026-10-16",
+      "claim": "Record patterns call accessors and null does not match a record pattern.",
+      "technicalEvidence": [
+        "compile-exact-shipped-snippet-with-scaffolding",
+        "exact-shipped-snippet-contracts"
+      ]
+    },
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.30.2",
+      "version": "Java SE21",
+      "consulted": "2026-10-16",
+      "claim": "Accessor abrupt completion during record matching becomes MatchException with cause.",
+      "technicalEvidence": [
+        "exact-shipped-snippet-contracts"
+      ]
+    },
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se17/html/jls-9.html#jls-9.8",
+      "version": "Java SE17",
+      "consulted": "2026-10-16",
+      "claim": "A functional interface is not sealed.",
+      "technicalEvidence": [],
+      "limit": "Source-verified; no separate lambda compiler probe executed in this review."
+    },
+    {
+      "url": "https://openjdk.org/jeps/485",
+      "version": "Delivered in Java24",
+      "consulted": "2026-10-16",
+      "claim": "Gatherers final release gate.",
+      "technicalEvidence": []
+    },
+    {
+      "url": "https://openjdk.org/jeps/506",
+      "version": "Delivered in Java25",
+      "consulted": "2026-10-16",
+      "claim": "Scoped values final release gate.",
+      "technicalEvidence": []
+    },
+    {
+      "url": "https://openjdk.org/jeps/505",
+      "version": "Java25 fifth preview",
+      "consulted": "2026-10-16",
+      "claim": "Structured concurrency remains preview in Java25.",
+      "technicalEvidence": []
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/StructuredTaskScope.html",
+      "version": "Java SE25",
+      "consulted": "2026-10-16",
+      "claim": "Close waits for children; tasks unresponsive to interrupt can delay indefinitely.",
+      "technicalEvidence": [],
+      "limit": "Source verification only; no concurrency schedule experiment."
+    },
+    {
+      "url": "https://docs.spring.io/spring-framework/docs/7.0.9/javadoc-api/org/springframework/http/client/ClientHttpRequestInterceptor.html",
+      "version": "Spring Framework7.0.9",
+      "consulted": "2026-10-16",
+      "claim": "Interceptor may wrap and choose whether to continue, with response closing responsibility on exception.",
+      "technicalEvidence": [],
+      "limit": "No Spring application/integration test."
+    }
+  ],
+  "assumptions": [
+    "Synthetic fixture inputs reflect the accepted closed-hierarchy and successful-rendering contract recorded in the case artifacts.",
+    "No supported package defect was identified in the inspected content and selected tests; this is not universal correctness."
+  ],
+  "limitations": [
+    "No Java21 JVM executed; JDK25 --release21 checks language/API target and emitted class major only.",
+    "No real deployment, framework integration, serialization path, stress test, performance benchmark or cost measurement.",
+    "Only representative behavior-sensitive mechanisms tested, not every table entry.",
+    "Two cases were developed during this review and are not held-out.",
+    "No agent comparison, automatic activation study or measured incremental benefit.",
+    "Initial source extraction syntax failures and web JEP errors are retained in source-evidence.json; successful fetch/source reads replaced them.",
+    "No catalog-wide verification or registry generation performed."
+  ],
+  "evidencePaths": [
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-patterns-in-modern-java/validation.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-patterns-in-modern-java/source-evidence.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-patterns-in-modern-java/technical-results.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-patterns-in-modern-java/validate-java.mjs",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-patterns-in-modern-java/common",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-patterns-in-modern-java/cases/A/input/deployment.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-patterns-in-modern-java/cases/B/input/deployment.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-patterns-in-modern-java/evaluator/criteria.json"
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Parallel workflow reserves shared generated index writes to coordinator.",
+      "prerequisite": "All reviewers stopped writing; no-change package itself adds no index delta."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Catalog-wide check deferred by explicit ownership constraint.",
+      "prerequisite": "All reviewers stopped writing and coordinator registry generation completed."
+    }
+  ],
+  "crossSkillIssues": [],
+  "coordinatorActions": [
+    "Inspect no-change hash evidence; optionally run the two separated actor cases with appropriate isolation; run batch global checks."
+  ],
+  "allWritesStopped": true,
+  "noActiveBackgroundProcesses": true
+}

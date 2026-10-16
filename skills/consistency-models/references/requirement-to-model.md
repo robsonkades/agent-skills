@@ -114,6 +114,37 @@ visibility behavior is not checked against the required contract:
   time. Bound that time with an enforcement policy, including during rebalance or redeploy.
   Delivery-side causes are `delivery-semantics`.
 
+## Verify a visibility watermark
+
+Before accepting `observed >= required` as a freshness gate, follow the write token to the
+progress update and the actual read. Inspect the code/configuration that advances that progress,
+not just the comparison:
+
+- **Meaning:** receipt, polling and durable transport storage do not establish that the read
+  model exposes the effect. Identify when application and visibility complete, including an
+  index refresh or downstream replica if that is where the endpoint reads.
+- **Scope:** compare compatible positions for the same history and relevant shard/partition.
+  A maximum across independent partitions cannot establish progress on the requested one.
+- **Coverage:** the watermark must establish inclusion of the required effects. A highest
+  completed position can jump over unfinished work during parallel processing. For a prefix
+  watermark, track all required effects through that position, not merely consecutive integers;
+  some logs legitimately omit offsets. A documented per-object version may prove a narrower
+  requirement without a global prefix.
+- **Observation:** the checked progress must apply to the selected reader and its data snapshot.
+  Ahead-of-data metadata, a stale snapshot or a different replica breaks that inference. Keep
+  the existing deadline/fallback policy when the proof is unavailable.
+
+For example, if effects at offsets 40 and 41 update different objects, completion of 41 does not
+prove that the object changed by 40 is readable. Hold 40 pending while 41 completes, then read
+with the token for 40; the gate must wait, use a proven path or refuse. Once the required effect
+is visible, preserve a valid gate rather than replacing it with a fixed delay or global ordering.
+This is a reasoning scenario, not an executed test.
+
+[Kafka 4.1 consumer positions](https://kafka.apache.org/41/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html)
+are partition-scoped; `position()` advances with polling, and committed offsets are recovery
+checkpoints. Their use as evidence of a downstream effect depends on application coordination.
+Use the chosen product's contract rather than interpreting every numeric token as a commit index.
+
 ## Decision block — routing reads to replicas
 
 ```text
@@ -139,7 +170,8 @@ Prefer a bounded authoritative-read window when:
 Prefer a version token instead when:
 - clients can carry a commit position or version from the write into the read, so the read
   path can wait for or select a replica that has caught up. This supports a strict guarantee
-  when token durability, history/epoch comparability and unavailable-path behavior are defined
+  when token durability, scope/history comparability, visible-effect coverage and
+  unavailable-path behavior are defined
 ```
 
 ## Stating the guarantee in an API contract

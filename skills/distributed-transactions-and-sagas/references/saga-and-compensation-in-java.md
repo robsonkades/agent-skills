@@ -69,6 +69,27 @@ Pass the actual replay horizon, key scope, retention and status contract to `ide
 participant protocol needs work. Require a repeat-safe resume/expiry policy; if that guidance is
 unavailable, retain this recovery gate instead of inventing a new key for the unresolved operation.
 
+## Resolve acceptance before claiming completion
+
+Read the actual participant/client contract and response mapping before interpreting a returned
+call or completed future as step success. HTTP `202 Accepted` reports accepted processing, not its
+completed effect ([RFC 9110 section 15.3.3](https://www.rfc-editor.org/rfc/rfc9110.html#section-15.3.3)).
+Even a successful status-query response can describe an operation still running. Preserve the
+participant operation ID, stable command key and last observed state, then resume through the
+contracted status/callback protocol with a durable next check and escalation deadline. Keep accepted
+work nonterminal until its outcome is established; a lost response may leave acceptance unknown too.
+
+Advance dependencies, mark a pivot committed or mark compensation complete only when evidence
+establishes the step's required outcome. A step whose accepted contract is only durable submission
+can finish at that boundary; do not silently treat submission as fulfillment of a charge, allocation
+or refund obligation. Reconcile late or conflicting observations against the same step occurrence
+and participant state before changing recovery direction. Coordinator timeouts do not make accepted
+work disappear.
+
+[MicroProfile LRA 2.0 eventual compensations](https://download.eclipse.org/microprofile/microprofile-lra-2.0/microprofile-lra-spec-2.0.html#eventual-compensations)
+is one concrete protocol that distinguishes compensation in progress from final completion. Use the
+actual participant's protocol; the custom Java runner below does not implement LRA by naming states.
+
 ## Persist intent before the call and transition atomically
 
 ```text
@@ -77,7 +98,11 @@ Claim current saga version -> receive updated state/version and ownership epoch.
 For the current step:
   Commit STARTED with stable (saga, step, operation) identity; receive the new version.
   Invoke participant outside the storage transaction using that stable command key.
-  On definite success:
+  On accepted/in-progress response:
+    Persist operation ID and pending step state using expected version/epoch;
+    keep the saga nonterminal and arrange durable follow-up across restart.
+    Do not advance dependencies or mark the step DONE on acceptance alone.
+  On confirmed completion of the step's required outcome:
     Atomically persist effect IDs, DONE and next position using expected version/epoch;
     receive updated state. Persist pivot-committed status here.
   On definite business rejection with no effect:
@@ -113,6 +138,10 @@ This is a candidate inactivity query. Calibrate the threshold and track step/att
 separately when heartbeats or retry bookkeeping refresh `updated_at` without business progress.
 
 ## A compensation that survives being run twice
+
+The `void` participant calls in these Java sketches assume normal return confirms the required
+effect, not just transport or queue acceptance. An asynchronous participant needs the pending/result
+protocol above; do not discard its operation handle and let the runner mark `COMPENSATED` on return.
 
 ```java
 final class ChargeCard implements SagaStep.Compensatable {
@@ -218,6 +247,11 @@ void failureAtAnyStepLeavesAConsistentState(int failingStep) {
 
 Additional cases the parameterised sketch does not reach:
 
+- **Accepted but unfinished work** — return acceptance and then in-progress status for a step or
+  refund; crash and resume. Keep the saga nonterminal and do not advance dependent work or declare
+  compensation complete. Deliver final success or final rejection and assert the corresponding
+  transition. Exercise the selected client's real status mapping: a stub equating every 2xx with
+  completion cannot validate this distinction.
 - **Duplicate application** — run the whole saga twice with the same saga id and assert one
   charge and one reservation. This fails when a step forgot its idempotency key.
 - **Two charge steps** — execute and retry two charges within one saga, then compensate only

@@ -1,0 +1,438 @@
+{
+  "recording": {
+    "events": [{
+      "type": "jdk.ThreadPark", 
+      "values": {
+        "startTime": "2026-10-16T09:20:53.080945200-03:00", 
+        "duration": "PT0.0243807S", 
+        "eventThread": {
+          "osName": "review-positive", 
+          "osThreadId": 35656, 
+          "javaName": "review-positive", 
+          "javaThreadId": 39, 
+          "group": {
+            "parent": {
+              "parent": null, 
+              "name": "system"
+            }, 
+            "name": "main"
+          }, 
+          "virtual": false
+        }, 
+        "stackTrace": {
+          "truncated": false, 
+          "frames": [{
+            "method": {
+              "type": {
+                "classLoader": {
+                  "type": null, 
+                  "name": "bootstrap"
+                }, 
+                "name": "jdk\/internal\/misc\/Unsafe", 
+                "package": {
+                  "name": "jdk\/internal\/misc", 
+                  "module": {
+                    "name": "java.base", 
+                    "version": "25.0.3", 
+                    "location": "jrt:\/java.base", 
+                    "classLoader": {
+                      "type": null, 
+                      "name": "bootstrap"
+                    }
+                  }, 
+                  "exported": true
+                }, 
+                "modifiers": 17, 
+                "hidden": false
+              }, 
+              "name": "park", 
+              "descriptor": "(ZJ)V", 
+              "modifiers": 257, 
+              "hidden": false
+            }, 
+            "lineNumber": -1, 
+            "bytecodeIndex": 0, 
+            "type": "Native"
+          }, {
+            "method": {
+              "type": {
+                "classLoader": {
+                  "type": null, 
+                  "name": "bootstrap"
+                }, 
+                "name": "java\/util\/concurrent\/locks\/LockSupport", 
+                "package": {
+                  "name": "java\/util\/concurrent\/locks", 
+                  "module": {
+                    "name": "java.base", 
+                    "version": "25.0.3", 
+                    "location": "jrt:\/java.base", 
+                    "classLoader": {
+                      "type": null, 
+                      "name": "bootstrap"
+                    }
+                  }, 
+                  "exported": true
+                }, 
+                "modifiers": 17, 
+                "hidden": false
+              }, 
+              "name": "parkNanos", 
+              "descriptor": "(J)V", 
+              "modifiers": 9, 
+              "hidden": false
+            }, 
+            "lineNumber": 408, 
+            "bytecodeIndex": 32, 
+            "type": "Interpreted"
+          }, {
+            "method": {
+              "type": {
+                "classLoader": {
+                  "type": {
+                    "classLoader": {
+                      "type": null, 
+                      "name": "bootstrap"
+                    }, 
+                    "name": "jdk\/internal\/loader\/ClassLoaders$AppClassLoader", 
+                    "package": {
+                      "name": "jdk\/internal\/loader", 
+                      "module": {
+                        "name": "java.base", 
+                        "version": "25.0.3", 
+                        "location": "jrt:\/java.base", 
+                        "classLoader": {
+                          "type": null, 
+                          "name": "bootstrap"
+                        }
+                      }, 
+                      "exported": true
+                    }, 
+                    "modifiers": 10, 
+                    "hidden": false
+                  }, 
+                  "name": "app"
+                }, 
+                "name": "ProfileVisibilityCheck", 
+                "package": null, 
+                "modifiers": 17, 
+                "hidden": false
+              }, 
+              "name": "lambda$main$1", 
+              "descriptor": "()V", 
+              "modifiers": 4106, 
+              "hidden": false
+            }, 
+            "lineNumber": 34, 
+            "bytecodeIndex": 3, 
+            "type": "Interpreted"
+          }, {
+            "method": {
+              "type": {
+                "classLoader": {
+                  "type": {
+                    "classLoader": {
+                      "type": null, 
+                      "name": "bootstrap"
+                    }, 
+                    "name": "jdk\/internal\/loader\/ClassLoaders$AppClassLoader", 
+                    "package": {
+                      "name": "jdk\/internal\/loader", 
+                      "module": {
+                        "name": "java.base", 
+                        "version": "25.0.3", 
+                        "location": "jrt:\/java.base", 
+                        "classLoader": {
+                          "type": null, 
+                          "name": "bootstrap"
+                        }
+                      }, 
+                      "exported": true
+                    }, 
+                    "modifiers": 10, 
+                    "hidden": false
+                  }, 
+                  "name": "app"
+                }, 
+                "name": "ProfileVisibilityCheck$$Lambda\/0x0000000034040438", 
+                "package": null, 
+                "modifiers": 4112, 
+                "hidden": true
+              }, 
+              "name": "run", 
+              "descriptor": "()V", 
+              "modifiers": 1, 
+              "hidden": true
+            }, 
+            "lineNumber": -1, 
+            "bytecodeIndex": 0, 
+            "type": "Interpreted"
+          }, {
+            "method": {
+              "type": {
+                "classLoader": {
+                  "type": null, 
+                  "name": "bootstrap"
+                }, 
+                "name": "java\/lang\/Thread", 
+                "package": {
+                  "name": "java\/lang", 
+                  "module": {
+                    "name": "java.base", 
+                    "version": "25.0.3", 
+                    "location": "jrt:\/java.base", 
+                    "classLoader": {
+                      "type": null, 
+                      "name": "bootstrap"
+                    }
+                  }, 
+                  "exported": true
+                }, 
+                "modifiers": 1, 
+                "hidden": false
+              }, 
+              "name": "runWith", 
+              "descriptor": "(Ljava\/lang\/Object;Ljava\/lang\/Runnable;)V", 
+              "modifiers": 16, 
+              "hidden": true
+            }, 
+            "lineNumber": 1487, 
+            "bytecodeIndex": 5, 
+            "type": "Interpreted"
+          }]
+        }, 
+        "parkedClass": null, 
+        "timeout": "PT0.025S", 
+        "until": "-999999999-01-01T00:00+18:00", 
+        "address": 0
+      }
+    }, {
+      "type": "jdk.ThreadPark", 
+      "values": {
+        "startTime": "2026-10-16T09:20:53.105586-03:00", 
+        "duration": "PT0.0742458S", 
+        "eventThread": {
+          "osName": "review-target", 
+          "osThreadId": 27520, 
+          "javaName": "review-target", 
+          "javaThreadId": 35, 
+          "group": {
+            "parent": {
+              "parent": null, 
+              "name": "system"
+            }, 
+            "name": "main"
+          }, 
+          "virtual": false
+        }, 
+        "stackTrace": {
+          "truncated": false, 
+          "frames": [{
+            "method": {
+              "type": {
+                "classLoader": {
+                  "type": null, 
+                  "name": "bootstrap"
+                }, 
+                "name": "jdk\/internal\/misc\/Unsafe", 
+                "package": {
+                  "name": "jdk\/internal\/misc", 
+                  "module": {
+                    "name": "java.base", 
+                    "version": "25.0.3", 
+                    "location": "jrt:\/java.base", 
+                    "classLoader": {
+                      "type": null, 
+                      "name": "bootstrap"
+                    }
+                  }, 
+                  "exported": true
+                }, 
+                "modifiers": 17, 
+                "hidden": false
+              }, 
+              "name": "park", 
+              "descriptor": "(ZJ)V", 
+              "modifiers": 257, 
+              "hidden": false
+            }, 
+            "lineNumber": -1, 
+            "bytecodeIndex": 0, 
+            "type": "Native"
+          }, {
+            "method": {
+              "type": {
+                "classLoader": {
+                  "type": null, 
+                  "name": "bootstrap"
+                }, 
+                "name": "java\/util\/concurrent\/locks\/LockSupport", 
+                "package": {
+                  "name": "java\/util\/concurrent\/locks", 
+                  "module": {
+                    "name": "java.base", 
+                    "version": "25.0.3", 
+                    "location": "jrt:\/java.base", 
+                    "classLoader": {
+                      "type": null, 
+                      "name": "bootstrap"
+                    }
+                  }, 
+                  "exported": true
+                }, 
+                "modifiers": 17, 
+                "hidden": false
+              }, 
+              "name": "park", 
+              "descriptor": "(Ljava\/lang\/Object;)V", 
+              "modifiers": 9, 
+              "hidden": false
+            }, 
+            "lineNumber": 223, 
+            "bytecodeIndex": 32, 
+            "type": "Interpreted"
+          }, {
+            "method": {
+              "type": {
+                "classLoader": {
+                  "type": {
+                    "classLoader": {
+                      "type": null, 
+                      "name": "bootstrap"
+                    }, 
+                    "name": "jdk\/internal\/loader\/ClassLoaders$AppClassLoader", 
+                    "package": {
+                      "name": "jdk\/internal\/loader", 
+                      "module": {
+                        "name": "java.base", 
+                        "version": "25.0.3", 
+                        "location": "jrt:\/java.base", 
+                        "classLoader": {
+                          "type": null, 
+                          "name": "bootstrap"
+                        }
+                      }, 
+                      "exported": true
+                    }, 
+                    "modifiers": 10, 
+                    "hidden": false
+                  }, 
+                  "name": "app"
+                }, 
+                "name": "ProfileVisibilityCheck", 
+                "package": null, 
+                "modifiers": 17, 
+                "hidden": false
+              }, 
+              "name": "lambda$main$0", 
+              "descriptor": "()V", 
+              "modifiers": 4106, 
+              "hidden": false
+            }, 
+            "lineNumber": 22, 
+            "bytecodeIndex": 11, 
+            "type": "Interpreted"
+          }, {
+            "method": {
+              "type": {
+                "classLoader": {
+                  "type": {
+                    "classLoader": {
+                      "type": null, 
+                      "name": "bootstrap"
+                    }, 
+                    "name": "jdk\/internal\/loader\/ClassLoaders$AppClassLoader", 
+                    "package": {
+                      "name": "jdk\/internal\/loader", 
+                      "module": {
+                        "name": "java.base", 
+                        "version": "25.0.3", 
+                        "location": "jrt:\/java.base", 
+                        "classLoader": {
+                          "type": null, 
+                          "name": "bootstrap"
+                        }
+                      }, 
+                      "exported": true
+                    }, 
+                    "modifiers": 10, 
+                    "hidden": false
+                  }, 
+                  "name": "app"
+                }, 
+                "name": "ProfileVisibilityCheck$$Lambda\/0x0000000034040210", 
+                "package": null, 
+                "modifiers": 4112, 
+                "hidden": true
+              }, 
+              "name": "run", 
+              "descriptor": "()V", 
+              "modifiers": 1, 
+              "hidden": true
+            }, 
+            "lineNumber": -1, 
+            "bytecodeIndex": 0, 
+            "type": "Interpreted"
+          }, {
+            "method": {
+              "type": {
+                "classLoader": {
+                  "type": null, 
+                  "name": "bootstrap"
+                }, 
+                "name": "java\/lang\/Thread", 
+                "package": {
+                  "name": "java\/lang", 
+                  "module": {
+                    "name": "java.base", 
+                    "version": "25.0.3", 
+                    "location": "jrt:\/java.base", 
+                    "classLoader": {
+                      "type": null, 
+                      "name": "bootstrap"
+                    }
+                  }, 
+                  "exported": true
+                }, 
+                "modifiers": 1, 
+                "hidden": false
+              }, 
+              "name": "runWith", 
+              "descriptor": "(Ljava\/lang\/Object;Ljava\/lang\/Runnable;)V", 
+              "modifiers": 16, 
+              "hidden": true
+            }, 
+            "lineNumber": 1487, 
+            "bytecodeIndex": 5, 
+            "type": "Interpreted"
+          }]
+        }, 
+        "parkedClass": {
+          "classLoader": {
+            "type": null, 
+            "name": "bootstrap"
+          }, 
+          "name": "java\/lang\/Class", 
+          "package": {
+            "name": "java\/lang", 
+            "module": {
+              "name": "java.base", 
+              "version": "25.0.3", 
+              "location": "jrt:\/java.base", 
+              "classLoader": {
+                "type": null, 
+                "name": "bootstrap"
+              }
+            }, 
+            "exported": true
+          }, 
+          "modifiers": 17, 
+          "hidden": false
+        }, 
+        "timeout": "PT-2562047788015215H-30M-8S", 
+        "until": "-999999999-01-01T00:00+18:00", 
+        "address": 4291958912
+      }
+    }]
+  }
+}

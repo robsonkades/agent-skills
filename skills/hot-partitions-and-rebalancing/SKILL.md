@@ -164,6 +164,8 @@ Change the shard key when:
 - At most one ownership epoch may commit writes for a partition.
 - Every acknowledged pre-cutover write is present at the target before target activation.
 - Every accepted post-cutover write is routed to or forwarded into the target epoch.
+- Reads through stale routes still meet the accepted consistency contract; retaining a
+  source copy or fencing its writes does not establish its freshness.
 - Map publication is monotonic, cacheable only with bounded staleness, and observable by
   version; rollback uses a new epoch rather than resurrecting an old one.
 - Replica safety is preserved throughout: moving data must not remove enough healthy copies

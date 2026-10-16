@@ -1,0 +1,11 @@
+import java.nio.*;
+public final class Packet {
+    private final ByteBuffer frozen;
+    private Packet(ByteBuffer storage, ByteOrder order) { frozen = storage.asReadOnlyBuffer().order(order); }
+    public static Packet capture(ByteBuffer source) {
+        ByteOrder order = source.order();
+        ByteBuffer storage = source.slice();
+        return new Packet(storage, order);
+    }
+    public ByteBuffer bytes() { return frozen.asReadOnlyBuffer().order(frozen.order()); }
+}

@@ -1,0 +1,17 @@
+{
+  "checkedAt": "2026-10-16T15:49:45.164Z",
+  "results": [
+    {
+      "url": "https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/filter",
+      "status": 404,
+      "finalUrl": "https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/filter",
+      "title": "404 Page Not Found | Jakarta EE | The Eclipse Foundation"
+    },
+    {
+      "url": "https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/Filter.html",
+      "status": 200,
+      "finalUrl": "https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/Filter.html",
+      "title": "Filter (Jakarta Servlet API documentation)"
+    }
+  ]
+}

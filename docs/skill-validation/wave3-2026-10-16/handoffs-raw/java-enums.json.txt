@@ -1,0 +1,458 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "java-enums",
+  "ownedPath": "C:/git/agent-skills/skills/java-enums",
+  "allWritesStopped": true,
+  "reviewDate": "2026-10-16",
+  "procedure": {
+    "requiredReadings": [
+      "Applicable root AGENTS.md",
+      "Complete docs/skill-review-prompt.md",
+      "docs/parallel-skill-reviews.md (previously read unchanged)",
+      "docs/skill-validation/wave3-2026-10-16/review-brief.md",
+      "skills/skill-engineering/SKILL.md and evidence/resource-design/anti-pattern references (previously read unchanged)",
+      "skills/skill-engineering/references/evaluation.md (reread)",
+      "Comparative research and cumulative wave lessons (previously read)"
+    ],
+    "fullPackageRead": [
+      "SKILL.md",
+      "skill.yaml",
+      "references/enum-patterns.md",
+      "references/enums-across-boundaries.md"
+    ],
+    "findingsSentBeforeEdits": true,
+    "delegation": false,
+    "rolePreserved": "Enum modeling, correctness, representation and compatibility decisions; no consumer runtime upgrade or migration."
+  },
+  "baseline": {
+    "committedVersion": "1.2.4",
+    "assignmentVersion": "1.2.4",
+    "stagedChanges": [],
+    "unstagedChanges": [],
+    "untrackedFiles": [],
+    "preexistingBump": false,
+    "hashes": [
+      {
+        "path": "C:\\git\\agent-skills\\skills\\java-enums\\SKILL.md",
+        "hash": "B1CA3C14E560EB2190E71DF9B99202D16AA824962617117C4CDE996CF5A7A388"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\java-enums\\skill.yaml",
+        "hash": "88EA6E1032DB3957D4FD704954F917781CE193729B80CA2CE74C68A4EF0BD7D5"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\java-enums\\references\\enum-patterns.md",
+        "hash": "2277C911020EA0A01C6E7B28CEB0665B680B01006AB44E8DBEC31E9124A194CA"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\java-enums\\references\\enums-across-boundaries.md",
+        "hash": "C95117091CBD107D105D4D51FE9756DA539AF223994AEB3E3315344B64EBD88F"
+      }
+    ]
+  },
+  "version": {
+    "committed": "1.2.4",
+    "initial": "1.2.4",
+    "final": "1.2.5",
+    "rationale": "One patch for the native serialization boundary clarification and repaired primary-source links. No additional bump during validation."
+  },
+  "findings": [
+    {
+      "id": "F1",
+      "location": "SKILL.md/Workflow step 5; references/enums-across-boundaries.md/Java object serialization",
+      "evidence": "Java Object Serialization Specification 25 section 1.12 and isolated runtime probe.",
+      "consequence": "A stable enum code field or writeReplace method could be mistaken for protection against native-stream breakage after a source rename.",
+      "correction": "Require checking the selected codec; add conditional native identity/hook rules, retained-byte and rollback checks, and the legitimate explicit-code alternative."
+    },
+    {
+      "id": "F2",
+      "location": "references/enums-across-boundaries.md/Primary mapping references",
+      "evidence": "Both old lowercase extensionless Jakarta URLs returned 404; corrected class-name .html URLs returned 200.",
+      "consequence": "The version-sensitive Persistence 3.2 guidance could not be verified through its shipped links.",
+      "correction": "Repaired Enumerated and EnumeratedValue URLs; verified their contracts without changing the already adequate mapping advice."
+    }
+  ],
+  "remainingFindings": [],
+  "filesChangedByReviewer": [
+    "skills/java-enums/SKILL.md",
+    "skills/java-enums/references/enums-across-boundaries.md",
+    "skills/java-enums/skill.yaml"
+  ],
+  "preexistingFilesChanged": [],
+  "unchangedFiles": [
+    "skills/java-enums/references/enum-patterns.md"
+  ],
+  "diffSummary": {
+    "files": 3,
+    "insertions": 22,
+    "deletions": 5
+  },
+  "finalHashes": [
+    {
+      "path": "C:\\git\\agent-skills\\skills\\java-enums\\SKILL.md",
+      "hash": "72B1404BD3827FA5DB785DF99DBC4C8F4AE1CB29567DD89297AE961F24D3054F"
+    },
+    {
+      "path": "C:\\git\\agent-skills\\skills\\java-enums\\skill.yaml",
+      "hash": "B4FA372C4E0FA6FB23DEC088E8D2C88BE3E5D99C1F9A0322B4A158BDB9B27B25"
+    },
+    {
+      "path": "C:\\git\\agent-skills\\skills\\java-enums\\references\\enum-patterns.md",
+      "hash": "2277C911020EA0A01C6E7B28CEB0665B680B01006AB44E8DBEC31E9124A194CA"
+    },
+    {
+      "path": "C:\\git\\agent-skills\\skills\\java-enums\\references\\enums-across-boundaries.md",
+      "hash": "43A17B2065D3AAAA7D5FFED4BC353D3DBBF7E90EBA5D639F6C9594F1FFC98BE3"
+    }
+  ],
+  "capabilities": {
+    "preserved": [
+      "Closed-set decision over a defined compatibility horizon and no-change outcomes",
+      "Stable explicit identity versus ordinal position; legitimate internal ordinal structures",
+      "Version-aware Persistence 3.2 inference, explicit enum values and converters",
+      "Jackson 2.19 token/coercion checks preserving explicit numeric codes",
+      "EnumSet/EnumMap null, empty-copy, aliasing and new-constant membership constraints",
+      "Behavior ownership, strategy enum and interface extensibility alternatives",
+      "Switch absence/exhaustiveness and separate-compilation behavior",
+      "Mutable enum state, per-entity ownership and concurrency boundaries",
+      "Actual reader/writer, replay, retained-data and rollback compatibility"
+    ],
+    "replaced": [],
+    "removed": []
+  },
+  "domainSuccessCriteria": [
+    "Distinguish the enum's domain identity from the representation the selected serializer actually uses.",
+    "Avoid approving source evolution solely from stable fields or method names.",
+    "Use old bytes and required rollback readers to test the relevant boundary.",
+    "Preserve legitimate explicit-code evolution and suitable existing representations.",
+    "Qualify compiler target versus runtime validation and refrain from baseline upgrades."
+  ],
+  "commandsExecuted": [
+    {
+      "label": "structural",
+      "command": "@'\nimport assert from 'node:assert/strict';\nimport { existsSync, readFileSync } from 'node:fs';\nimport { dirname, resolve } from 'node:path';\nimport { loadPackageFromDirectory, validatePackage } from '@jvm-expert/core';\nimport { NodeFileSystem } from '@jvm-expert/node';\nimport { ClaudeCodeAdapter } from '@jvm-expert/adapter-claude';\nimport { CodexAdapter } from '@jvm-expert/adapter-codex';\nconst directory = resolve('skills/java-enums');\nconst loaded = await loadPackageFromDirectory(new NodeFileSystem(), directory, { strict: true });\nconst report = validatePackage(loaded.pkg, {\n  strict: true, directoryName: 'java-enums',\n  adapters: [new ClaudeCodeAdapter(), new CodexAdapter()],\n});\nconst issues = [...loaded.issues, ...report.issues];\nassert.deepEqual(issues, []);\nassert.equal(loaded.pkg.manifest.version, '1.2.5');\nconst declared = new Set([\n  ...(loaded.pkg.manifest.dependencies ?? []).map(item => item.name),\n  ...(loaded.pkg.manifest.suggests ?? []),\n]);\nconst referrals = new Set();\nlet localMarkdownLinks = 0;\nfor (const file of loaded.pkg.files.filter(file => file.path.endsWith('.md'))) {\n  const content = readFileSync(resolve(directory, file.path), 'utf8');\n  for (const match of content.matchAll(/\\[[^\\]]+\\]\\(([^)]+)\\)/g)) {\n    if (/^https?:/.test(match[1])) continue;\n    const [target, anchor] = match[1].split('#');\n    const absolute = resolve(directory, dirname(file.path), target);\n    assert.ok(existsSync(absolute), file.path + ': ' + match[1]);\n    if (anchor === 'one-incoming-intent-several-downstream-effects') {\n      assert.ok(readFileSync(absolute, 'utf8').includes('## One incoming intent, several downstream effects'));\n    }\n    localMarkdownLinks++;\n  }\n  for (const match of content.matchAll(/`([a-z][a-z0-9]*-[a-z0-9-]+)`/g)) {\n    const name = match[1];\n    if (!existsSync(resolve('skills', name, 'SKILL.md'))) continue;\n    assert.ok(declared.has(name), 'Undeclared referral: ' + name);\n    referrals.add(name);\n  }\n}\nconsole.log(JSON.stringify({\n  status: 'PASS', name: loaded.pkg.manifest.name, version: loaded.pkg.manifest.version,\n  files: loaded.pkg.files.length, issues: issues.length, localMarkdownLinks,\n  declaredSkillReferrals: referrals.size, adapters: ['claude', 'codex'],\n}));\n'@ | node --input-type=module",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": {
+        "chunk_id": "c1ae11",
+        "wall_time_seconds": 0.2108988,
+        "exit_code": 0,
+        "original_token_count": 40,
+        "output": "{\"status\":\"PASS\",\"name\":\"java-enums\",\"version\":\"1.2.5\",\"files\":4,\"issues\":0,\"localMarkdownLinks\":2,\"declaredSkillReferrals\":0,\"adapters\":[\"claude\",\"codex\"]}\n"
+      },
+      "status": "fulfilled"
+    },
+    {
+      "label": "format",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/java-enums/SKILL.md skills/java-enums/skill.yaml skills/java-enums/references/enum-patterns.md skills/java-enums/references/enums-across-boundaries.md",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": {
+        "chunk_id": "30d0bb",
+        "wall_time_seconds": 0.2442315,
+        "exit_code": 0,
+        "original_token_count": 17,
+        "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+      },
+      "status": "fulfilled"
+    },
+    {
+      "label": "diff-check",
+      "command": "git diff --check -- skills/java-enums",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": {
+        "chunk_id": "cde9c3",
+        "wall_time_seconds": 0.0939869,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      },
+      "status": "fulfilled"
+    }
+  ],
+  "technicalChecks": {
+    "serializationProbe": {
+      "command": "$enumProbeRoot = 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-enums/probe'\nforeach ($enumEnvName in @('JAVA_TOOL_OPTIONS','JDK_JAVA_OPTIONS','_JAVA_OPTIONS','CLASSPATH')) { [Environment]::SetEnvironmentVariable($enumEnvName, $null, 'Process') }\nNew-Item -ItemType Directory -Path \"$enumProbeRoot/mainclasses\" -Force | Out-Null\n& C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe --release 17 -d \"$enumProbeRoot/mainclasses\" \"$enumProbeRoot/EnumSerializationProbe.java\" 2>&1 | Tee-Object -FilePath \"$enumProbeRoot/compile.log\"\nif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }\n& C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe -cp \"$enumProbeRoot/mainclasses\" EnumSerializationProbe \"$enumProbeRoot\" 2>&1 | Tee-Object -FilePath \"$enumProbeRoot/run.log\"\nexit $LASTEXITCODE",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-enums/probe",
+      "exitCode": 0,
+      "output": "Picked up JAVA_TOOL_OPTIONS: \r\nPicked up _JAVA_OPTIONS: \r\nNOTE: Picked up JDK_JAVA_OPTIONS: \r\nPicked up JAVA_TOOL_OPTIONS: \r\nPicked up _JAVA_OPTIONS: \r\nPASS native round trip retains enum identity\r\nPASS enum read/write/replace/resolve hooks ignored\r\nPASS declared enum serialVersionUID ignored\r\nPASS reordering preserves native name identity\r\nPASS reordered positive control changes ordinal\r\nPASS same-code rename breaks old native bytes\r\nEXPECTED InvalidObjectException: enum constant APPROVED does not exist in class fixtures.Status\r\nPASS new native name breaks rollback reader\r\nEXPECTED InvalidObjectException: enum constant ACCEPTED does not exist in class fixtures.Status\r\nPASS rename hooks cannot bridge native names\r\nPASS explicit retained code reads after source rename\r\nPASS explicit retained code supports rollback reader\r\nPASS wrapping enum does not change nested identity\r\nEXPECTED InvalidObjectException: enum constant APPROVED does not exist in class fixtures.Status\r\nPASS DTO storing actual code preserves representation\r\nRESULT checks=12 runtime=25.0.3+9-LTS compilerRelease=17; runtime17NotExercised=true\r\n",
+      "checksPassed": 12,
+      "compiler": "Temurin javac 25.0.3 --release 17",
+      "runtime": "Temurin 25.0.3+9-LTS",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-enums/probe/EnumSerializationProbe.java",
+      "stdoutStderr": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-enums/probe/compile.log",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-enums/probe/run.log"
+      ],
+      "scope": "Three enum definitions compiled with the same binary name and loaded separately; local trusted byte streams. Not a Java 17 VM test."
+    },
+    "fixtureCompile": {
+      "cmd": "$enumCaseRoot = 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-enums'\nforeach ($enumEnvName in @('JAVA_TOOL_OPTIONS','JDK_JAVA_OPTIONS','_JAVA_OPTIONS','CLASSPATH')) { [Environment]::SetEnvironmentVariable($enumEnvName, $null, 'Process') }\nNew-Item -ItemType Directory -Path \"$enumCaseRoot/case-checks/classes\" -Force | Out-Null\n& C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe --release 17 -d \"$enumCaseRoot/case-checks/classes\" \"$enumCaseRoot/case-a/src/Status.java\" \"$enumCaseRoot/case-a/src/Codecs.java\" \"$enumCaseRoot/case-a/src/CaseApp.java\" 2>&1 | Tee-Object -FilePath \"$enumCaseRoot/case-checks/compile.log\"\nexit $LASTEXITCODE",
+      "chunk_id": "2446da",
+      "wall_time_seconds": 0.49019,
+      "exit_code": 0,
+      "original_token_count": 15,
+      "output": "Picked up JAVA_TOOL_OPTIONS: \r\nPicked up _JAVA_OPTIONS: \r\n"
+    },
+    "fixtureBaselineReads": [
+      {
+        "id": "a",
+        "cmd": "foreach ($enumEnvName in @('JAVA_TOOL_OPTIONS','JDK_JAVA_OPTIONS','_JAVA_OPTIONS','CLASSPATH')) { [Environment]::SetEnvironmentVariable($enumEnvName, $null, 'Process') }\n& C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe -cp C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-enums/case-checks/classes CaseApp 2>&1 | Tee-Object -FilePath C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-enums/case-checks/case-a-baseline.log\nexit $LASTEXITCODE",
+        "workdir": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-enums/case-a",
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "dfab29",
+          "wall_time_seconds": 0.1218949,
+          "exit_code": 0,
+          "original_token_count": 27,
+          "output": "NOTE: Picked up JDK_JAVA_OPTIONS: \r\nPicked up JAVA_TOOL_OPTIONS: \r\nPicked up _JAVA_OPTIONS: \r\nAPPROVED|A\r\n"
+        }
+      },
+      {
+        "id": "b",
+        "cmd": "foreach ($enumEnvName in @('JAVA_TOOL_OPTIONS','JDK_JAVA_OPTIONS','_JAVA_OPTIONS','CLASSPATH')) { [Environment]::SetEnvironmentVariable($enumEnvName, $null, 'Process') }\n& C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe -cp C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-enums/case-checks/classes CaseApp 2>&1 | Tee-Object -FilePath C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-enums/case-checks/case-b-baseline.log\nexit $LASTEXITCODE",
+        "workdir": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-enums/case-b",
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "f8ca23",
+          "wall_time_seconds": 0.1280145,
+          "exit_code": 0,
+          "original_token_count": 27,
+          "output": "NOTE: Picked up JDK_JAVA_OPTIONS: \r\nPicked up JAVA_TOOL_OPTIONS: \r\nPicked up _JAVA_OPTIONS: \r\nAPPROVED|A\r\n"
+        }
+      }
+    ],
+    "fixtureSeparation": {
+      "cmd": "@'\nimport assert from 'node:assert/strict';\nimport {readFileSync,readdirSync} from 'node:fs';\nimport {resolve,relative} from 'node:path';\nconst root='C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-enums';\nfunction files(dir){return readdirSync(dir,{withFileTypes:true}).flatMap(entry=>entry.isDirectory()?files(resolve(dir,entry.name)):[resolve(dir,entry.name)]);}\nconst a=resolve(root,'case-a'), b=resolve(root,'case-b');\nconst changed=files(a).map(path=>relative(a,path)).filter(path=>readFileSync(resolve(a,path),'utf8')!==readFileSync(resolve(b,path),'utf8')).sort();\nassert.deepEqual(changed,['config.properties','input.json']);\nconst ia=JSON.parse(readFileSync(resolve(a,'input.json'),'utf8')), ib=JSON.parse(readFileSync(resolve(b,'input.json'),'utf8'));\ndelete ia.caseId; delete ib.caseId; assert.deepEqual(ia,ib);\nJSON.parse(readFileSync(resolve(root,'evaluator-criteria.json'),'utf8'));\nconsole.log(JSON.stringify({status:'PASS',fixtureFiles:files(a).length,decisiveDifference:'config.properties codec=native versus codec=code',otherDifference:'input case identifier only',agentEvaluation:false}));\n'@ | node --input-type=module",
+      "chunk_id": "402f79",
+      "wall_time_seconds": 0.0877587,
+      "exit_code": 0,
+      "original_token_count": 45,
+      "output": "{\"status\":\"PASS\",\"fixtureFiles\":10,\"decisiveDifference\":\"config.properties codec=native versus codec=code\",\"otherDifference\":\"input case identifier only\",\"agentEvaluation\":false}\n"
+    },
+    "result": "12 contract checks passed; both actor fixtures compile and read their old value as APPROVED|A. No executable Java example was added to the shipped skill.",
+    "warnings": [
+      "Java launchers reported empty JAVA_TOOL_OPTIONS/_JAVA_OPTIONS/JDK_JAVA_OPTIONS after process-local clearing; no injected option values were used.",
+      "Expected InvalidObjectException results are negative controls, not test failures."
+    ],
+    "failedTechnicalChecks": []
+  },
+  "sourceFetchFailures": [
+    {
+      "url": "https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/enumerated",
+      "result": "web open: HTTP 404",
+      "resolution": "Fixed to Enumerated.html; bounded Invoke-WebRequest verified HTTP 200 and mapping contract."
+    },
+    {
+      "url": "https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/enumeratedvalue",
+      "result": "web open: HTTP 404",
+      "resolution": "Fixed to EnumeratedValue.html; bounded Invoke-WebRequest verified HTTP 200 and field requirements."
+    },
+    {
+      "url": "https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/Enumerated.html",
+      "result": "web tool reported inaccessible",
+      "resolution": "Invoke-WebRequest -TimeoutSec 15 returned HTTP 200."
+    },
+    {
+      "url": "https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/EnumeratedValue.html",
+      "result": "web tool reported inaccessible",
+      "resolution": "Invoke-WebRequest -TimeoutSec 15 returned HTTP 200."
+    },
+    {
+      "url": "https://openjdk.org/jeps/441",
+      "result": "web open: HTTP 403",
+      "resolution": "Invoke-WebRequest -TimeoutSec 15 returned HTTP 200 and enum-switch change text; no source URL edit needed."
+    }
+  ],
+  "finalInspection": {
+    "commands": [
+      "git diff --numstat -- skills/java-enums",
+      "git diff -- skills/java-enums",
+      "git status --porcelain=v1 --untracked-files=all -- skills/java-enums",
+      "Get-ChildItem -LiteralPath skills/java-enums -File -Recurse | ForEach-Object { [PSCustomObject]@{path=$_.FullName;hash=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash} } | ConvertTo-Json"
+    ],
+    "workingDirectory": "C:/git/agent-skills",
+    "result": "Only three expected owned files changed; enum-patterns.md hash unchanged; complete diff inspected. No running process remains.",
+    "evidence": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-enums/validation.json"
+  },
+  "behavioralEvaluations": {
+    "executed": false,
+    "actualAgentOutputs": [],
+    "measuredIncrementalGain": false,
+    "walkthroughs": [
+      {
+        "caseId": "enum-codec-a",
+        "classification": "Structured source/contract walkthrough",
+        "expected": "Active native codec requires retaining the published name or a separately planned migration; updating an enum hook cannot supply compatibility."
+      },
+      {
+        "caseId": "enum-codec-b",
+        "classification": "Structured source/contract walkthrough",
+        "expected": "Active explicit-code mapping allows the rename while code A and old/new reader meaning remain stable."
+      }
+    ],
+    "technicalExecutionIsNotBehavioralEvaluation": true,
+    "pending": "Coordinator may compare original and revised skills using fresh actor case copies."
+  },
+  "cases": {
+    "singleDecisiveConstraint": "Only config.properties changes: codec=native in A versus codec=code in B. Source, old bytes, code values, proposed rename and rollback requirements are identical.",
+    "actorInputs": [
+      {
+        "caseId": "enum-codec-a",
+        "inputPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-enums/case-a/input.json",
+        "fixturePath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-enums/case-a",
+        "input": {
+          "caseId": "enum-codec-a",
+          "task": "Complete the planned APPROVED -> ACCEPTED enum rename if it preserves the actual retained-value and rollback contracts. Inspect the selected writer/reader and supplied data, then update evolution-note.md and any justified source changes. If the active path prevents a compatible rename now, retain the published constant and replace the approval note with the evidence and concrete next step. Do not wipe retained data, switch formats without migration, add dependencies or upgrade Java.",
+          "fixtureDirectory": ".",
+          "prerequisites": [
+            "Read/edit local fixture files.",
+            "Existing JDK supporting --release 17 for optional technical checks; no installation or services required."
+          ],
+          "evaluationStatus": "not executed"
+        }
+      },
+      {
+        "caseId": "enum-codec-b",
+        "inputPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-enums/case-b/input.json",
+        "fixturePath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-enums/case-b",
+        "input": {
+          "caseId": "enum-codec-b",
+          "task": "Complete the planned APPROVED -> ACCEPTED enum rename if it preserves the actual retained-value and rollback contracts. Inspect the selected writer/reader and supplied data, then update evolution-note.md and any justified source changes. If the active path prevents a compatible rename now, retain the published constant and replace the approval note with the evidence and concrete next step. Do not wipe retained data, switch formats without migration, add dependencies or upgrade Java.",
+          "fixtureDirectory": ".",
+          "prerequisites": [
+            "Read/edit local fixture files.",
+            "Existing JDK supporting --release 17 for optional technical checks; no installation or services required."
+          ],
+          "evaluationStatus": "not executed"
+        }
+      }
+    ],
+    "evaluatorCriteriaPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-enums/evaluator-criteria.json",
+    "evaluatorCriteria": {
+      "classification": "Author-designed development cases, not unseen holdouts or executed agent comparisons.",
+      "isolation": "Give the actor only a fresh copy of one case directory and the selected skill variant. Hide probe outputs, this file and the reviewer handoff.",
+      "singleDecisiveConstraint": "Only config.properties changes: codec=native in A versus codec=code in B. Source, old bytes, code values, proposed rename and rollback requirements are identical.",
+      "common": [
+        "Trace config.properties -> Codecs.selected -> actual read/write implementation; do not infer storage format from an unused codec or the enum's code field.",
+        "Inspect retained representation and test old/new-reader and new/rollback-reader pairs where execution is available, with runtime limitations stated.",
+        "Apply the supported decision to evolution-note.md and source, preserving the stored domain code A and retained artifacts.",
+        "Do not assert enum writeReplace changes native enum serialization, introduce ordinal encoding, delete retained fixtures, change the selected codec, or upgrade Java."
+      ],
+      "cases": {
+        "enum-codec-a": {
+          "expected": [
+            "Reject the existing compatibility approval for the active native codec; retain APPROVED unless a concrete compatible migration is separately authorized.",
+            "Explain that the old stream identifies APPROVED by enum type/name; same code A and enum writeReplace do not rescue its removal.",
+            "Keep old and rollback read paths working; provide a concrete migration/representation plan as the prerequisite for a future rename."
+          ],
+          "failureConditions": [
+            "Renames APPROVED to ACCEPTED directly and calls it compatible because code A is unchanged.",
+            "Adds/relies on enum readResolve, writeReplace or serialVersionUID as a native-name alias mechanism.",
+            "Switches the selected codec or discards old data to make the task pass without the required migration."
+          ]
+        },
+        "enum-codec-b": {
+          "expected": [
+            "Complete the source rename to ACCEPTED while retaining explicit code A and byCode decoding.",
+            "Update the note using actual CodeCodec read/write evidence, not the ignored enum writeReplace method.",
+            "Verify or accurately plan old code A -> new ACCEPTED and new code A -> old APPROVED; no native-name migration is needed for this inactive path."
+          ],
+          "failureConditions": [
+            "Blocks the source rename solely because an inactive native codec exists.",
+            "Changes code A, removes rollback compatibility, or adds unnecessary aliases/format migration.",
+            "Reports a proof from writeReplace rather than the selected explicit-code codec."
+          ]
+        }
+      }
+    },
+    "isolation": "Inputs are physically separate from criteria and probe results, but folder layout is not access control. Coordinator must provide fresh isolated copies and prevent answer/other-variant exposure."
+  },
+  "primarySources": [
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/specs/serialization/serial-arch.html#serialization-of-enum-constants",
+      "version": "Java SE 25",
+      "section": "1.12",
+      "supports": "Native enum serialization identity and ignored fields/hooks; source for the focused correction.",
+      "limit": "Normative contract plus JDK 25 probe; not execution on every supported consumer VM."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Enum.html",
+      "version": "Java SE 25",
+      "section": "Class description; equals/hashCode/compareTo/getDeclaringClass",
+      "supports": "Special serialization treatment and preserved identity/ordering guidance.",
+      "limit": "No cross-execution hash guarantee inferred."
+    },
+    {
+      "url": "https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/Enumerated.html",
+      "version": "Jakarta Persistence 3.2",
+      "supports": "Inference and explicit ORDINAL default; verified replacement URL.",
+      "method": "Bounded Invoke-WebRequest after web-tool access failure",
+      "limit": "No provider integration test; mapping remains conditional on deployed provider support."
+    },
+    {
+      "url": "https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/EnumeratedValue.html",
+      "version": "Jakarta Persistence 3.2",
+      "supports": "Final distinct numeric/String value requirements; verified replacement URL.",
+      "method": "Bounded Invoke-WebRequest after web-tool access failure",
+      "limit": "No provider integration test."
+    },
+    {
+      "url": "https://github.com/FasterXML/jackson-databind/blob/jackson-databind-2.19.0/src/main/java/com/fasterxml/jackson/databind/deser/std/EnumDeserializer.java",
+      "version": "Jackson 2.19.0",
+      "section": "_fromInteger, _deserializeAltString, _isFromIntValue path",
+      "supports": "Rechecked existing ordinal coercion and explicit-code distinctions.",
+      "limit": "No Jackson runtime test needed for unchanged guidance; actual endpoint mapper can override these paths."
+    },
+    {
+      "url": "https://openjdk.org/jeps/441",
+      "version": "Delivered Java 21",
+      "section": "Enum switch incompatible change",
+      "supports": "Rechecked existing ICCE versus MatchException distinction.",
+      "method": "Bounded Invoke-WebRequest HTTP 200 after web-tool HTTP 403",
+      "limit": "No new switch example or runtime switch test in this review."
+    }
+  ],
+  "evidencePaths": [
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-enums/validation.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-enums/probe/EnumSerializationProbe.java",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-enums/probe/compile.log",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-enums/probe/run.log",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-enums/probe/legacy-native.bin",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-enums/probe/legacy-code.txt",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-enums/case-checks/compile.log",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-enums/case-checks/case-a-baseline.log",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-enums/case-checks/case-b-baseline.log",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-enums/case-a/input.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-enums/case-b/input.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-enums/evaluator-criteria.json"
+  ],
+  "assumptionsAndLimits": [
+    "The skill declares no single executable Java authoring baseline; existing release gates remain unchanged.",
+    "The probe compiled for release 17 on JDK 25 and executed only on JDK 25. It does not establish Java 17 VM execution.",
+    "Tests used local trusted synthetic enum definitions and byte streams; no real cache/session, database, broker, framework mapper or production data was touched.",
+    "Custom stream subclasses/replacement layers require actual codec inspection; new text scopes native behavior to standard object serialization.",
+    "Case fixtures and technical negative controls are development evidence, not unseen holdouts or measured agent improvement.",
+    "Unchanged examples were reviewed; no full runtime matrix or performance benchmark was necessary for this correction.",
+    "Global index/version/build/test integration remains coordinator-owned and pending."
+  ],
+  "crossSkillIssues": [],
+  "coordinatorActions": [
+    "Review the three-file diff and retained technical evidence.",
+    "Use separate inputs/criteria for any independent behavioral comparisons.",
+    "After all authors stop, regenerate registry and run full verification."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Shared index writes are prohibited during parallel review.",
+      "prerequisite": "All reviewers stopped writing and final package changes accepted."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Global checks reserved to coordinator.",
+      "prerequisite": "All reviewers stopped writing; registry regenerated."
+    }
+  ],
+  "handoffPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-enums.json"
+}

@@ -1,0 +1,3 @@
+PASS confined owner-thread downcall
+PASS IllegalStateException before callback
+PASS IllegalArgumentException before callback

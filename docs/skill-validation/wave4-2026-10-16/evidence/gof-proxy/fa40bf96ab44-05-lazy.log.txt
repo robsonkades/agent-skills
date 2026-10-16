@@ -1,0 +1,18 @@
+C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe -cp classes LazyProbe
+PASS construction deferred until first use
+PASS factory entered with concurrent consumers
+PASS all concurrent calls observe initialized target in this run
+PASS one factory invocation across 24 consumers
+PASS all consumers reach target
+PASS initialization RuntimeException preserves instance
+PASS initialization RuntimeException cached without retry
+PASS null supplier rejected
+PASS null factory result rejected
+PASS null-result failure cached
+PASS same-thread recursive factory entry rejected
+PASS uncaught recursive runtime failure retained
+PASS Error propagated without conversion
+PASS Error not cached; later attempt allowed
+PASS target render failure propagated
+PASS render failure does not recreate target
+PASS lazy checks=16; executor terminated=true

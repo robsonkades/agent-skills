@@ -1,0 +1,19 @@
+FAIL missing-anonymous
+existing=Response[status=404, body=not found]
+proposed=IllegalStateException:No directory identity
+FAIL public-anonymous
+existing=Response[status=200, body=Published]
+proposed=IllegalStateException:No directory identity
+PASS restricted-owner
+existing=Response[status=200, body=Internal]
+proposed=Response[status=200, body=Internal]
+PASS restricted-nonowner
+existing=Response[status=403, body=forbidden]
+proposed=Response[status=403, body=forbidden]
+PASS restricted-anonymous
+existing=IllegalStateException:No directory identity
+proposed=IllegalStateException:No directory identity
+PASS repository-failure
+existing=IllegalStateException:Repository unavailable
+proposed=IllegalStateException:Repository unavailable
+checks=6 failed=2

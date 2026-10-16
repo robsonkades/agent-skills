@@ -32,12 +32,17 @@ and recovery can be harder.
 1. **Name the defect classes that actually reach your production**, from incidents and from
    review comments, plus prospective material risks. Inspect existing required checks, versions
    and accepted exception policy first; this skill does not authorize bypassing them.
+   For an existing pipeline, [trace a gate to its protected decision](references/selecting-gates.md#trace-a-gate-to-its-protected-decision)
+   before treating a configured job as enforced protection.
 2. **Assign each class to the cheapest mechanism that catches it**: the compiler, a static
    analyser, a test, a review. Repeated human findings suggest an automation candidate when
    detection is reliable enough; contextual judgment may remain a review responsibility
-   (code-review).
-3. **Place each gate where its cost is bearable** (`references/gate-catalogue.md`): seconds
-   pre-commit, minutes on the pull request, longer on main, longest at release.
+   (code-review). Inspect the selected rule or assertion that can expose the named failure;
+   a test count or a job named "integration" does not establish that relevance.
+3. **Place each gate before the decision it must protect**, then manage its cost
+   (`references/gate-catalogue.md`). Fast local checks support feedback; required PR checks
+   protect merging, and release checks protect shipping. Moving a slow check to main changes
+   merge prevention into later detection; establish whether that delay is acceptable first.
 4. **Select per change, by risk** (`references/selecting-gates.md`). A README edit and a schema
    migration should not face the same pipeline, and pretending they do is how the pipeline
    becomes something to be endured.
@@ -54,6 +59,10 @@ and recovery can be harder.
    A successful repair command does not prove the submitted revision passed. Likewise, a
    tolerated checker failure is not a passing required gate; inspect the underlying result
    before any failure-ignoring wrapper or CI option changes it.
+8. **Revisit gates when their evidence changes.** For an escaped defect, repeated invalid runs,
+   or changed toolchain/selection rules, locate the failed mechanism before adding another check.
+   Use the [feedback procedure](references/gate-catalogue.md#updating-gates-from-observed-failures)
+   and retain before/after evidence; a green run alone does not demonstrate better detection.
 
 ## Rules
 
@@ -87,16 +96,18 @@ checked by the query's projection`. A bare suppression is a silent removal of th
   evaluation timestamps so changed results remain explainable.
 
 Return the selected gates and the risks they cover, material alternatives or exclusions, actual
-results and remaining required evidence. For implementation, include the configuration changes
-and evidence that enforcement works; selecting a gate set alone does not complete implementation.
+results and remaining required evidence. Distinguish configured intent, executed check results
+and verified enforcement for the target decision; an unavailable policy is not proof of either
+protection or absence. For implementation, include the configuration changes and evidence that
+enforcement works; selecting a gate set alone does not complete implementation.
 
 ## References
 
 - **The gate catalogue** — `references/gate-catalogue.md`. Candidate gates for a Java build:
   the evidence each provides, placement and calibration considerations, and how to ratchet one
-  onto an existing codebase. Read when adding, moving or
-  removing a check.
+  onto an existing codebase. Read when adding, moving or removing a check, or tracing why a
+  defect escaped an existing gate.
 - **Selecting gates for a change** — `references/selecting-gates.md`. Risk tiers with the gate
   set each warrants, five worked changes from a docs typo to a hotfix under incident, and the
   rules for what may legitimately be skipped and what may never be. Read when deciding what
-  this particular change must pass.
+  this particular change must pass, implementing selective checks, or reviewing an exception.

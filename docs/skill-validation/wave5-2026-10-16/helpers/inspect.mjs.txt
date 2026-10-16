@@ -1,0 +1,13 @@
+import fs from 'node:fs';
+const root='C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2';
+for(const name of process.argv.slice(2)){
+ const h=JSON.parse(fs.readFileSync(root+'/'+name+'.json','utf8'));
+ console.log(JSON.stringify({skill:name,keys:Object.keys(h)}));
+ for(const key of ['status','versions','findingsCorrected','correctedFindings','remainingFindings','noChangeRationale','findingsPreserved','capabilitiesPreserved','limitations','crossSkillIssues','crossSkillFindings','allWritesStopped'])if(h[key]!==undefined)console.log(JSON.stringify({key,value:h[key]}));
+ const commands=[],sources=[];
+ function visit(v){if(Array.isArray(v))return v.forEach(visit);if(!v||typeof v!=='object')return;
+ if(typeof v.command==='string'||(Array.isArray(v.commands)&&v.commands.every(c=>typeof c==='string')))commands.push({label:v.label??v.kind??v.name,command:v.command??v.commands,args:v.args,exit:v.exitCode??v.exit,expected:v.expectedExitCode??v.expected,log:v.log,result:typeof v.result==='string'?v.result:undefined});
+ if(v.url||v.sourceUrl)sources.push({url:v.url??v.sourceUrl,claim:v.claim??v.supports??v.support??v.finding,version:v.version});
+ Object.values(v).forEach(visit);}
+ visit(h);console.log(JSON.stringify({commands,sources}));
+}

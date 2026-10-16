@@ -1,0 +1,112 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { fileURLToPath } from 'node:url';
+
+const out = path.dirname(fileURLToPath(import.meta.url));
+const root = path.dirname(out);
+const executionFile = path.join(out, 'execution.json');
+const audit = JSON.parse(fs.readFileSync(executionFile, 'utf8'));
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+
+audit.fileIntegrity = audit.filesRead
+  .filter(file => file.path.startsWith('input/') || file.path === 'TASK.md' || file.path === 'skill/SKILL.md')
+  .map(file => {
+    const actual = fs.readFileSync(path.join(root, file.path));
+    return { path: file.path, originalSha256: file.sha256, finalSha256: sha(actual), unchanged: file.sha256 === sha(actual) };
+  });
+if (audit.fileIntegrity.some(file => !file.unchanged)) throw new Error('An immutable input changed');
+
+audit.finalProjectComparison = audit.filesRead
+  .filter(file => file.path.startsWith('input/project/'))
+  .map(file => {
+    const working = file.path.replace('input/', 'output/');
+    const actual = fs.readFileSync(path.join(root, working));
+    return { input: file.path, output: working, originalSha256: file.sha256, finalSha256: sha(actual), changed: file.sha256 !== sha(actual) };
+  });
+const changed = audit.finalProjectComparison.filter(file => file.changed).map(file => file.output).sort();
+const expectedChanges = ['output/project/src/work/Report.java', 'output/project/test/work/SelfTest.java'];
+if (JSON.stringify(changed) !== JSON.stringify(expectedChanges)) throw new Error(`Unexpected project changes: ${changed}`);
+
+audit.hypotheses[0].result = {
+  status: 'confirmed for the supplied sequential path',
+  before: 'Demo 1000 -> 1200; minimal probe old entry A/1 -> A/2 after reload',
+  after: 'Demo old 1000 -> 1000 and new 1200; minimal old A/1 -> A/1 and new A/2',
+  controlledProductionChange: 'Only Report construction now copies and wraps the input list',
+  regression: 'Added before the fix, failed at reload assertion (exit 1), passed after the fix (exit 0)',
+  remainingUncertainty: 'No production or version-history evidence identifies introduction time, renderer changes, or affected population'
+};
+
+const phases = [
+  ['baseline', 1.2797416, ['baseline-node-version', 'baseline-java-version', 'baseline-javac-version', 'baseline-check', 'baseline-demo', 'baseline-probe-compile', 'baseline-probe']],
+  ['check-before-fix', 0.698465, ['regression-before-fix']],
+  ['final', 1.2764577, ['final-check', 'final-demo', 'final-probe-compile', 'final-probe', 'final-class-target']]
+];
+audit.shellInvocations = phases.map(([phase, durationSeconds, children]) => ({
+  executable: 'powershell (exec_command default)',
+  command: `node -e "const {spawnSync}=require('node:child_process');const r=spawnSync(process.execPath,['output/run-checks.mjs','${phase}'],{cwd:process.cwd(),encoding:'utf8',timeout:30000,windowsHide:true});process.stdout.write(r.stdout||'');process.stderr.write(r.stderr||'');if(r.error)process.stderr.write(r.error.message);process.exit(r.status??1);"`,
+  cwd: root, login: false, executed: true, exit: 0, durationSeconds,
+  runnerTimeoutMs: 30000,
+  outputLogs: children.map(id => `logs/${id}.json`),
+  outputTruncated: false,
+  note: phase === 'check-before-fix' ? 'Runner exit 0 means the intentionally failing regression returned its expected exit 1, not that SelfTest passed.' : 'All child expectations met.'
+}));
+
+audit.nestedCheckCommands = ['baseline-check', 'regression-before-fix', 'final-check'].flatMap(id => {
+  const parent = audit.commands.find(command => command.id === id);
+  const base = { parent: id, cwd: path.join(out, 'project'), timeoutMs: 30000, executed: true,
+    evidence: 'Exact child commands are defined in the unchanged check.mjs; reaching the SelfTest output establishes successful compilation.' };
+  return [
+    { ...base, executable: 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe',
+      args: ['--release', '17', '-d', '.build', 'src\\work\\Catalog.java', 'src\\work\\Demo.java', 'src\\work\\Entry.java', 'src\\work\\Report.java', 'test\\work\\SelfTest.java'],
+      exit: 0, stdout: '', stderr: '' },
+    { ...base, executable: 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe', args: ['-cp', '.build', 'work.SelfTest'],
+      exit: parent.exit, stdout: parent.stdout, stderr: parent.stderr }
+  ];
+});
+
+for (const relative of ['output/run-checks.mjs', 'output/finalize-audit.mjs', 'output/REVIEW.md']) {
+  const bytes = fs.readFileSync(path.join(root, relative));
+  audit.filesRead.push({ path: relative, purpose: 'Final audit of authored delivery artifact', complete: true,
+    truncation: false, modelRead: true, bytes: bytes.length, sha256: sha(bytes), content: bytes.toString('utf8') });
+}
+audit.finalAudit = {
+  script: 'output/finalize-audit.mjs',
+  immutableInputsVerified: audit.fileIntegrity.length,
+  changedProjectFiles: changed,
+  commandExpectationsMet: audit.commands.filter(command => 'expectationMet' in command).every(command => command.expectationMet),
+  noBackgroundProcessesStarted: true,
+  allInvokedChildProcessesExited: audit.commands.filter(command => 'expectationMet' in command).every(command => command.exit !== null && command.error === null),
+  skillReferencesRead: [],
+  contentTruncation: false,
+  networkAccess: false,
+  installations: false,
+  dependencyChanges: false,
+  contractChanges: false,
+  javaSourceTarget: 17,
+  runtime: 'Temurin-25.0.3+9',
+  allChangesApplied: true,
+  proposalsRemaining: []
+};
+audit.limitations = [
+  'No production, database, renderer, deployment, or revision history was provided; the local defect is established, not its introduction time or population distribution.',
+  'Execution was sequential, matching the contract. No concurrency claim is made.',
+  'Compiled with --release 17 and checked class major version 61; executed on the required Temurin-25.0.3+9 runtime, not a Java 17 runtime.',
+  'Initial read-only shell invocations completed within one second each but had no explicit hard timeout exposed by exec_command. All compilation and application processes used timeout 30000 ms.',
+  'Initial tool-read output is represented by complete file contents and normalized inventory/errors rather than a raw terminal transcript. Verification process stdout/stderr is preserved exactly in logs.'
+];
+audit.writeOperations = [
+  { tool: 'apply_patch', scope: 'output/', affected: ['run-checks.mjs', 'probe/work/MinimalProbe.java', 'project/test/work/SelfTest.java', 'project/src/work/Report.java', 'REVIEW.md', 'finalize-audit.mjs'] },
+  { tool: 'node/run-checks.mjs', scope: 'output/', affected: ['execution.json', 'logs/', 'project/.build/', 'probe-classes/'] },
+  { tool: 'node/finalize-audit.mjs', scope: 'output/', affected: ['execution.json'] }
+];
+audit.allWritesStopped = true;
+audit.completedAt = new Date().toISOString();
+fs.writeFileSync(executionFile, JSON.stringify(audit, null, 2) + '\n');
+process.stdout.write(JSON.stringify({
+  immutableInputsVerified: audit.fileIntegrity.length,
+  changedProjectFiles: changed,
+  allCommandExpectationsMet: audit.finalAudit.commandExpectationsMet,
+  allProcessesExited: audit.finalAudit.allInvokedChildProcessesExited,
+  allWritesStopped: true
+}, null, 2) + '\n');

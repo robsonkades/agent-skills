@@ -1,0 +1,244 @@
+{
+  "skill": "jmh-advanced",
+  "status": "NO_CHANGES_NEEDED",
+  "ownedPath": "C:/git/agent-skills/skills/jmh-advanced",
+  "versions": {
+    "committed": "1.2.4",
+    "assignment": "1.2.4",
+    "final": "1.2.4",
+    "preExistingBump": false,
+    "rationale": "No package contents changed; version unchanged."
+  },
+  "files": {
+    "changedByReviewer": [],
+    "preExistingStaged": [],
+    "preExistingUnstaged": [],
+    "preExistingUntracked": [],
+    "unchanged": [
+      {
+        "path": "C:/git/agent-skills/skills/jmh-advanced/SKILL.md",
+        "sha256": "057fd37d8e4bd505a2c5997b47d0e76fae479fdcd1855c598be3c5b76a5d5914"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/jmh-advanced/skill.yaml",
+        "sha256": "b621eb65fdb8eacab84e154e01b115ea127a0fb4bce2f551fa208078af5d9ad1"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/jmh-advanced/references/configuration-recipes.md",
+        "sha256": "635d312e729023cf3c482e014459c02c4b914083a852f3a9ce93a6779b83f305"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/jmh-advanced/references/profilers-and-hsdis.md",
+        "sha256": "ae6da2594d67e6217f8eb2929697e6d2741b51a4523f44d52ee3d94edd7e8459"
+      }
+    ],
+    "reviewOnlyArtifacts": [
+      "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/jmh-advanced/validate-local.mjs",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/jmh-advanced.json"
+    ]
+  },
+  "changes": [],
+  "assessment": {
+    "criteria": [
+      "Trace actual object construction and aliases, group topology and generated harness rather than relying on annotation names.",
+      "Preserve Java 17/JMH 1.37 compatibility; discover effective fork and profiler versions.",
+      "Match auxiliary counter population, collection window, unit and aggregation with the claimed result.",
+      "Treat group termination, cold-state resets, profiler coverage and perturbation as conditions on the inference.",
+      "Acquire only missing evidence and permit no change/inconclusive findings; avoid unnecessary matrices."
+    ],
+    "findingsCorrected": [],
+    "findingsRemaining": [],
+    "noChangeEvidence": [
+      {
+        "location": "SKILL.md:34-47, 74-78",
+        "observation": "Already directs repository/toolchain/artifact investigation and explicitly says Scope.Thread does not isolate static or referenced objects. This addresses the selected actual-execution/alias premise challenge."
+      },
+      {
+        "location": "SKILL.md:80-102; references/configuration-recipes.md:94-143",
+        "observation": "Already distinguishes group replication from same-object contention, successful outcomes from invocations, and cooperative stop from arbitrary blocking cancellation. Matches JMH 1.37 asymmetric and Control samples."
+      },
+      {
+        "location": "SKILL.md:183-199; references/configuration-recipes.md:156-207",
+        "observation": "Already qualifies AuxCounters by Scope.Thread, collection window, primary OPI/batch scaling and EVENTS SUM. Versioned annotations and generator source support these consequential details."
+      },
+      {
+        "location": "SKILL.md:162-228; references/profilers-and-hsdis.md:33-46, 84-116",
+        "observation": "Already separates diagnostic, calibration and decision runs; requires event population/denominator and coverage checks; cold labels require proven reset at each claimed layer."
+      }
+    ]
+  },
+  "preserved": [
+    "Discovery/experiment design role and boundaries with basic JMH validity, assembly interpretation, load testing and concurrency correctness.",
+    "Topology and alias tracing, asymmetric group ratio and replication rules, cooperative stop and outcome distinctions.",
+    "Per-worker deterministic input generation without treating fixed seeds as deterministic scheduling.",
+    "Auxiliary-counter lifecycle/window/unit/aggregation caveats, Level.Invocation limitations and reset influence.",
+    "Runtime profiler discovery, PMU coverage/normalization, profiler calibration and unforced compiler controls.",
+    "Cold-state reset matrix and fork/block protocol; scoped minimal investigation and valid no-change or inconclusive outcomes.",
+    "All four package files byte-for-byte."
+  ],
+  "checks": [
+    {
+      "type": "executed_structural",
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/jmh-advanced/validate-local.mjs C:/git/agent-skills",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "PASS",
+      "exitCode": 0,
+      "output": "{\n  \"status\": \"PASS\",\n  \"scope\": \"jmh-advanced\",\n  \"manifestIssues\": 0,\n  \"metadataAgreement\": true,\n  \"version\": \"1.2.4\",\n  \"declaredPaths\": 3,\n  \"relativeLinks\": 2,\n  \"anchors\": 0,\n  \"allFourAssignmentHashesUnchanged\": true\n}\n"
+    },
+    {
+      "type": "executed_structural",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/jmh-advanced/SKILL.md skills/jmh-advanced/skill.yaml skills/jmh-advanced/references/configuration-recipes.md skills/jmh-advanced/references/profilers-and-hsdis.md",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "PASS",
+      "exitCode": 0,
+      "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+    },
+    {
+      "type": "executed_structural",
+      "command": "git diff --check -- skills/jmh-advanced\ngit diff --numstat -- skills/jmh-advanced\ngit diff --cached --numstat -- skills/jmh-advanced\ngit status --short -- skills/jmh-advanced",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "PASS",
+      "exitCode": 0,
+      "output": ""
+    }
+  ],
+  "sourceChecks": [
+    {
+      "type": "executed source inspection",
+      "result": "PASS",
+      "detail": "Browsed JMH 1.37 AuxCounters, Level, Control and asymmetric group samples; confirmed claims already present."
+    },
+    {
+      "type": "executed source inspection",
+      "result": "PASS",
+      "detail": "Read JMH 1.37 StateObjectHandler and BenchmarkGenerator paths for auxiliary reset/read timing, EVENTS SUM, warmdown synchronization and primary operation scaling."
+    }
+  ],
+  "behavioralEvaluations": {
+    "executed": [],
+    "structuredWalkthroughs": [
+      {
+        "case": "shared-map-referent",
+        "result": "Existing alias-tracing guidance leads to retaining per-thread cursors and correcting the annotation-only finding when factory returns SHARED."
+      },
+      {
+        "case": "per-worker-map-referent",
+        "result": "Changing only the factory return expression changes actual ownership and should produce a map-sharing correction while keeping cursors private."
+      },
+      {
+        "case": "auxiliary-unit-negative-control",
+        "result": "Walked through existing eight-items-per-invocation example against generator source: primary OPI scaling does not change raw auxiliary event counts, so a secondary/primary ratio is not a success fraction. No measurement executed."
+      }
+    ],
+    "independentCasesPending": true,
+    "measuredImprovement": "Not measured; no baseline/candidate behavioral comparison or performance run was executed."
+  },
+  "sources": [
+    {
+      "version": "JMH 1.37",
+      "url": "https://raw.githubusercontent.com/openjdk/jmh/1.37/jmh-core/src/main/java/org/openjdk/jmh/annotations/AuxCounters.java",
+      "supports": "Scope.Thread restriction, public numeric counters, supported modes and OPERATIONS versus EVENTS semantics."
+    },
+    {
+      "version": "JMH 1.37",
+      "url": "https://raw.githubusercontent.com/openjdk/jmh/1.37/jmh-core/src/main/java/org/openjdk/jmh/annotations/Level.java",
+      "supports": "Invocation-level timing, arbitration and omission caveats."
+    },
+    {
+      "version": "JMH 1.37",
+      "url": "https://raw.githubusercontent.com/openjdk/jmh/1.37/jmh-samples/src/main/java/org/openjdk/jmh/samples/JMHSample_18_Control.java",
+      "supports": "Asymmetric call counts can livelock cooperative group experiments; experimental stopMeasurement escape checks."
+    },
+    {
+      "version": "JMH 1.37",
+      "url": "https://raw.githubusercontent.com/openjdk/jmh/1.37/jmh-samples/src/main/java/org/openjdk/jmh/samples/JMHSample_15_Asymmetric.java",
+      "supports": "Group workers and replication across group-sized sets."
+    },
+    {
+      "version": "JMH 1.37",
+      "url": "https://raw.githubusercontent.com/openjdk/jmh/1.37/jmh-core/src/main/java/org/openjdk/jmh/generators/core/StateObjectHandler.java",
+      "supports": "Auxiliary reset and read generation, raw secondary values, EVENTS ScalarResult with AggregationPolicy.SUM."
+    },
+    {
+      "version": "JMH 1.37",
+      "url": "https://raw.githubusercontent.com/openjdk/jmh/1.37/jmh-core/src/main/java/org/openjdk/jmh/generators/core/BenchmarkGenerator.java",
+      "supports": "Generated measurement/warmdown windows, primary OperationsPerInvocation/batch scaling and auxiliary read placement."
+    }
+  ],
+  "limitations": [
+    "No Java snippet compilation or benchmark execution was performed in this assignment: no changed executable content or material unresolved runtime/performance claim justified a run.",
+    "Historical September review reports document prior JMH annotation-processor compilation and smoke runs. They were read as history, not counted as fresh validation; the old referenced raw temporary result was unavailable.",
+    "The two cases are structured source-based walkthroughs and reproducible task inputs, not executed independent agent outputs or unseen holdouts.",
+    "No catalog-wide validation, dependency resolution, registry regeneration or external-link crawler was run. Primary sources were inspected directly.",
+    "No guarantee of improved agent performance or benchmark quality is claimed from a documentation review."
+  ],
+  "twoCases": [
+    {
+      "id": "shared-map-referent",
+      "prerequisites": "Repository skill package jmh-advanced; JMH 1.37 source fixture. For optional compilation use a configured Java 17-compatible JMH project with its annotation processor, without installing dependencies or running the measurement matrix. Separate task/context from evaluator criteria when assigning.",
+      "invocation": "Give only taskInput to an independent evaluator, require actual file/line evidence and a corrected finding/artifact proposal; score against evaluatorExpectations afterward.",
+      "taskInput": {
+        "task": "Review the benchmark's state ownership against production: eight workers update the same bounded-key ConcurrentHashMap, with independent per-worker cursors. A reviewer says the Scope.Thread annotation removed shared-map contention and asks to change WorkerState to Scope.Benchmark. Inspect the supplied code and the appropriate jmh-advanced guidance, update the review finding and propose the smallest justified correction or no change. No performance result or correctness proof is requested; do not run a benchmark merely to determine object identity.",
+        "context": "Eight benchmark threads in one fork; the desired topology is one shared mutable map and one cursor per worker. These are the complete object-construction paths relevant to the question.",
+        "files": {
+          "src/main/java/bench/WorkerState.java": "package bench;\nimport java.util.concurrent.ConcurrentMap;\nimport org.openjdk.jmh.annotations.*;\n\n@State(Scope.Thread)\npublic class WorkerState {\n    ConcurrentMap<Integer, Integer> map;\n    int cursor;\n\n    @Setup(Level.Trial)\n    public void setup() {\n        map = MapFactory.mapForWorker();\n    }\n}\n",
+          "src/main/java/bench/MapBench.java": "package bench;\nimport org.openjdk.jmh.annotations.*;\n\npublic class MapBench {\n    @Benchmark\n    public Integer update(WorkerState worker) {\n        int key = worker.cursor++ & 31;\n        return worker.map.put(key, key);\n    }\n}\n",
+          "src/main/java/bench/MapFactory.java": "package bench;\nimport java.util.concurrent.ConcurrentHashMap;\nimport java.util.concurrent.ConcurrentMap;\n\npublic final class MapFactory {\n    private static final ConcurrentMap<Integer, Integer> SHARED = new ConcurrentHashMap<>();\n\n    public static ConcurrentMap<Integer, Integer> mapForWorker() {\n        return SHARED;\n    }\n}\n"
+        }
+      },
+      "evaluatorExpectations": {
+        "decisiveEvidence": "WorkerState.setup assigns the MapFactory return value. MapFactory returns the same static SHARED reference for every worker in the fork.",
+        "acceptableOutcome": "Refute the annotation-only finding and retain the per-worker cursor plus shared referent. Scope.Benchmark on the entire WorkerState is not required and would share the cursor too. A wrapper ownership annotation alone does not establish map ownership.",
+        "verification": "If any identity verification is proposed, keep it outside the measured operation and proportionate; no new performance matrix is necessary for this source-resolved identity claim.",
+        "failureConditions": [
+          "Concludes Scope.Thread makes the referenced map private without tracing MapFactory.",
+          "Changes the whole worker state to Scope.Benchmark and silently shares the cursor.",
+          "Claims improved speed, absence of contention or concurrency correctness from source topology alone.",
+          "Mandates unrelated compiler/profiler experiments despite adequate identity evidence."
+        ]
+      }
+    },
+    {
+      "id": "per-worker-map-referent",
+      "decisiveChangeFrom": "shared-map-referent: only the MapFactory.mapForWorker return expression changes from SHARED to new ConcurrentHashMap<>().",
+      "prerequisites": "Repository skill package jmh-advanced; JMH 1.37 source fixture. For optional compilation use a configured Java 17-compatible JMH project with its annotation processor, without installing dependencies or running the measurement matrix. Separate task/context from evaluator criteria when assigning.",
+      "invocation": "Give only taskInput to an independent evaluator, require actual file/line evidence and a corrected finding/artifact proposal; score against evaluatorExpectations afterward.",
+      "taskInput": {
+        "task": "Review the benchmark's state ownership against production: eight workers update the same bounded-key ConcurrentHashMap, with independent per-worker cursors. A reviewer says the Scope.Thread annotation removed shared-map contention and asks to change WorkerState to Scope.Benchmark. Inspect the supplied code and the appropriate jmh-advanced guidance, update the review finding and propose the smallest justified correction or no change. No performance result or correctness proof is requested; do not run a benchmark merely to determine object identity.",
+        "context": "Eight benchmark threads in one fork; the desired topology is one shared mutable map and one cursor per worker. These are the complete object-construction paths relevant to the question.",
+        "files": {
+          "src/main/java/bench/WorkerState.java": "package bench;\nimport java.util.concurrent.ConcurrentMap;\nimport org.openjdk.jmh.annotations.*;\n\n@State(Scope.Thread)\npublic class WorkerState {\n    ConcurrentMap<Integer, Integer> map;\n    int cursor;\n\n    @Setup(Level.Trial)\n    public void setup() {\n        map = MapFactory.mapForWorker();\n    }\n}\n",
+          "src/main/java/bench/MapBench.java": "package bench;\nimport org.openjdk.jmh.annotations.*;\n\npublic class MapBench {\n    @Benchmark\n    public Integer update(WorkerState worker) {\n        int key = worker.cursor++ & 31;\n        return worker.map.put(key, key);\n    }\n}\n",
+          "src/main/java/bench/MapFactory.java": "package bench;\nimport java.util.concurrent.ConcurrentHashMap;\nimport java.util.concurrent.ConcurrentMap;\n\npublic final class MapFactory {\n    private static final ConcurrentMap<Integer, Integer> SHARED = new ConcurrentHashMap<>();\n\n    public static ConcurrentMap<Integer, Integer> mapForWorker() {\n        return new ConcurrentHashMap<>();\n    }\n}\n"
+        }
+      },
+      "evaluatorExpectations": {
+        "decisiveEvidence": "The factory allocates a new ConcurrentHashMap for each per-thread setup. The unused static SHARED field does not establish actual aliasing.",
+        "acceptableOutcome": "Confirm that the map ownership mismatches the required shared topology, with a precise construction-path finding. Propose the smallest appropriate shared map holder/factory correction while keeping cursors per-thread; either explicit Scope.Benchmark map state injected into the worker/benchmark or a justified factory fix can work.",
+        "verification": "Inspect or verify actual referent identity across workers and preserve the independent cursor before interpreting benchmark output. Update the original finding to explain allocation, not merely the Scope.Thread label.",
+        "failureConditions": [
+          "Assumes the declared static field is used and incorrectly accepts the topology.",
+          "Recommends a whole WorkerState Scope.Benchmark change that silently shares the cursor.",
+          "Treats eight independent maps as an eight-worker shared-map contention experiment.",
+          "Claims the topology repair already measured a performance gain."
+        ]
+      }
+    }
+  ],
+  "crossSkill": [],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "purpose": "Regenerate shared catalog after all assigned reviewers stop writing.",
+      "prerequisites": "All reviewers stopped; not required by this unchanged package alone."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "purpose": "Repository-wide CI and version/integrity checks.",
+      "prerequisites": "All reviewers stopped and registry regenerated for changed packages."
+    }
+  ],
+  "allWritesStopped": true
+}

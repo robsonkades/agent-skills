@@ -1,0 +1,610 @@
+{
+  "status": "NO_CHANGES_NEEDED",
+  "skill": "java-ddd-domain-events",
+  "ownedPath": "skills/java-ddd-domain-events/**",
+  "reviewDate": "2026-10-16",
+  "coordinator": "/root",
+  "reviewer": "/root/quality13",
+  "allWritesStopped": true,
+  "activeBackgroundProcesses": [],
+  "processesTerminated": true,
+  "processNote": "Every started shell/Java/Node/download call completed synchronously with a final exit result. No background session, service or actor was started.",
+  "scope": "Specialist review of the entire existing four-file package; preserve domain fact modeling, local event paths, event ownership and conditional integration boundary. No repository file changed.",
+  "procedure": {
+    "read": [
+      "AGENTS.md (user-provided and repository guidance)",
+      "docs/skill-review-prompt.md (complete review procedure)",
+      "docs/parallel-skill-reviews.md",
+      "docs/skill-validation/wave4-2026-10-16/review-brief.md",
+      "skills/skill-engineering/SKILL.md",
+      "skills/skill-engineering/references/evidence-and-confidence.md",
+      "skills/skill-engineering/references/evaluation.md",
+      "skills/skill-engineering/references/resource-design.md",
+      "skills/skill-engineering/references/anti-patterns.md"
+    ],
+    "reusedUnchangedReadings": "Wave4 permits reuse of unchanged instructions already read in previous assignments; the complete assigned package and current wave brief were read. Comparative research/roadmap and earlier-wave lessons were retained from those readings.",
+    "findingsBeforeEdits": "Assessment sent to coordinator before any potential package edit. No package edit ultimately justified."
+  },
+  "baseline": {
+    "snapshot": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/baseline/java-ddd-domain-events",
+    "preExistingStagedChanges": [],
+    "preExistingUnstagedChanges": [],
+    "preExistingUntrackedFiles": [],
+    "preExistingVersionBump": false,
+    "files": [
+      {
+        "path": "SKILL.md",
+        "currentHash": "E1F52F9A571192CDE672E45389C68E6846DD5096367CFD0E38121EBFD47DD608",
+        "baselineHash": "E1F52F9A571192CDE672E45389C68E6846DD5096367CFD0E38121EBFD47DD608",
+        "equal": true
+      },
+      {
+        "path": "skill.yaml",
+        "currentHash": "E144B55E3A2534E193531A7106667CA7F5A6E65D012D975642F256E0947B5AE7",
+        "baselineHash": "E144B55E3A2534E193531A7106667CA7F5A6E65D012D975642F256E0947B5AE7",
+        "equal": true
+      },
+      {
+        "path": "references\\event-lifecycle.md",
+        "currentHash": "ED03F5BF117ECB42905BB24ABAB1E18B1922558A86D5CCB142433D675B8FBED5",
+        "baselineHash": "ED03F5BF117ECB42905BB24ABAB1E18B1922558A86D5CCB142433D675B8FBED5",
+        "equal": true
+      },
+      {
+        "path": "references\\verification.md",
+        "currentHash": "CB7403247DD0DFA1192846F3655706FA470C670BC945172DE852D84DA34C8D59",
+        "baselineHash": "CB7403247DD0DFA1192846F3655706FA470C670BC945172DE852D84DA34C8D59",
+        "equal": true
+      }
+    ],
+    "fileCount": 4,
+    "committedVersion": "1.0.0",
+    "assignmentVersion": "1.0.0",
+    "finalVersion": "1.0.0",
+    "attribution": "All four final SHA-256 hashes equal the assignment snapshot and initial content hashes. Scoped final Git status, staged diff and unstaged diff are empty."
+  },
+  "version": {
+    "committed": "1.0.0",
+    "assignmentTime": "1.0.0",
+    "final": "1.0.0",
+    "bumpRationale": "No skill content changes; repository policy therefore requires no bump."
+  },
+  "findingsCorrected": [],
+  "findingsRetained": [
+    {
+      "id": "business-fact-and-smallest-path",
+      "status": "ADEQUATE_PRESERVED",
+      "locations": ["SKILL.md:13", "SKILL.md:19", "SKILL.md:49", "SKILL.md:103"],
+      "observation": "The entry point inspects one actual producer/consumer path, distinguishes fact/current state/command, preserves direct/local mechanisms and routes conditional delivery work.",
+      "consequence": "No reason to add a broker, framework, outbox or generic event base merely because a domain event appears."
+    },
+    {
+      "id": "accepted-occurrence-payload",
+      "status": "ADEQUATE_PRESERVED",
+      "locations": [
+        "SKILL.md:63",
+        "references/event-lifecycle.md:9",
+        "references/event-lifecycle.md:21",
+        "references/event-lifecycle.md:60"
+      ],
+      "observation": "The Java 17 fragments construct/validate the event before state mutation, register only accepted transitions, preserve supplied identity/time, and explicitly require immutable occurrence values only where actual consumers need them.",
+      "evidence": [
+        "21 technical checks with the two published partial snippets and explicit fixtures",
+        "Expected failing mutation-order negative control",
+        "Java SE 17 Record/List documentation",
+        "Evans DDD Reference and Fowler Domain Event"
+      ],
+      "consequence": "Supports rejection without state/history mutation and avoids mistaking record syntax or an ID-only event for a historical snapshot."
+    },
+    {
+      "id": "batch-and-work-unit-ownership",
+      "status": "ADEQUATE_PRESERVED",
+      "locations": [
+        "references/event-lifecycle.md:88",
+        "references/event-lifecycle.md:111",
+        "references/verification.md:24"
+      ],
+      "observation": "Snapshot versus view, single work-unit ownership, repeated saves, exact occurrence acknowledgment, new events appended by handlers, restoration/discard and partial failure already have concrete rules and observable checks.",
+      "evidence": [
+        "Java SE 17 Collections.unmodifiableList and List.copyOf contracts",
+        "Technical snapshot/view, shallow element and removeAll negative examples"
+      ],
+      "consequence": "Avoids silently losing new occurrences or claiming list copying makes aggregate mutation atomic."
+    },
+    {
+      "id": "durability-and-unknown-outcome",
+      "status": "ADEQUATE_PRESERVED",
+      "locations": [
+        "SKILL.md:77",
+        "SKILL.md:83",
+        "references/event-lifecycle.md:127",
+        "references/event-lifecycle.md:166",
+        "references/verification.md:46"
+      ],
+      "observation": "Registration/save are distinguished from commit; local disposable work remains valid. Required durable intent needs actual atomic enlistment and a recoverable relay. Unknown command outcome is reconciled with command identity rather than new event IDs.",
+      "evidence": [
+        "Spring Framework 6.2.3 TransactionalEventListener",
+        "Transactional outbox author's pattern",
+        "AWS Builders Library idempotent API rationale"
+      ],
+      "consequence": "No new generic delivery infrastructure is justified; actual integration guarantees remain application-specific and require appropriate tests."
+    },
+    {
+      "id": "consumer-contract-change",
+      "status": "ADEQUATE_PRESERVED",
+      "locations": [
+        "SKILL.md:68",
+        "references/event-lifecycle.md:63",
+        "references/verification.md:78"
+      ],
+      "observation": "Existing guidance explicitly permits current-state reload when its semantics are accepted and requires occurrence values otherwise. The paired cases exercise that decision without varying delivery durability.",
+      "consequence": "Preserves a legitimate ID-only event in one case while identifying historical-value loss in the other."
+    }
+  ],
+  "remainingMaterialFindings": [],
+  "changedFilesByReviewer": [],
+  "preExistingChanges": [],
+  "temporaryArtifacts": {
+    "root": "C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e",
+    "index": "C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/artifact-inventory.json",
+    "evidence": "C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/review-evidence.json",
+    "notes": "Evidence, probes, source snapshots and evaluator cases reside only in the coordinator-authorized temporary area, not the catalog."
+  },
+  "capabilities": {
+    "preserved": [
+      "Business meaning and accepted transition/rejection semantics",
+      "Java 17 partial record/transition examples and existing project naming/base interfaces",
+      "Immutable payload decisions based on actual consumers, occurrence vs recording time and identity",
+      "Creation/rehydration/replay separation",
+      "Snapshot/pull/ack alternatives and work-unit rollback ownership",
+      "Direct/local best-effort paths when adequate; required durable boundary and actual handoffs when justified",
+      "External contract mapping, privacy, ordering scope, stable source/message identity and compatibility",
+      "Evidence-specific verification that distinguishes mocks, database tests and crash recovery"
+    ],
+    "replaced": [],
+    "removed": []
+  },
+  "commands": [
+    {
+      "purpose": "Compile and execute unchanged partial Java 17 snippets with explicit local fixtures",
+      "cmd": "$ErrorActionPreference = 'Stop'\n& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' -version 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/toolchain.log'\n& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -version 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/runtime.log'\n$probeSources = @(Get-ChildItem -LiteralPath 'C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/probe-src' -Recurse -Filter '*.java' | ForEach-Object FullName)\n& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' --release 17 -d 'C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/probe-classes' @probeSources 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/compile.log'\nif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }\n& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -cp 'C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/probe-classes' DomainEventsProbe 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/probe.log'\nexit $LASTEXITCODE",
+      "workdir": "C:/git/agent-skills",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "66bd70",
+          "wall_time_seconds": 0.8456256,
+          "exit_code": 0,
+          "original_token_count": 391,
+          "output": "javac 25.0.3\r\nopenjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\nPASS reject null time [NullPointerException]\r\nPASS null time leaves state and pending events unchanged\r\nPASS reject null event identity [NullPointerException]\r\nPASS null identity leaves state and pending events unchanged\r\nPASS event rejects null immutable subject identity [NullPointerException]\r\nPASS accepted transition updates state\r\nPASS accepted transition creates one fact\r\nPASS fact preserves occurrence identity subject and supplied time\r\nPASS reject repeated submit by fixture policy [DomainException]\r\nPASS rejection leaves state and accepted event unchanged\r\nPASS reject empty draft [DomainException]\r\nPASS invalid draft produces no event or state change\r\nPASS fixture rehydration restores state without inventing a fact\r\nPASS immutable captured batch excludes a later occurrence\r\nPASS equal subject and time do not erase distinct occurrence identity\r\nPASS acknowledgment preserves newly appended occurrence\r\nPASS snapshot rejects membership mutation [UnsupportedOperationException]\r\nPASS read-only view differs from membership snapshot\r\nPASS snapshot rejects null entries [NullPointerException]\r\nPASS record and list snapshot do not deep-freeze mutable payload\r\nPASS negative example: value equality cleanup can erase a distinct occurrence\r\nPASS 21 checks; partial snippets plus explicit fixtures only; no database/framework/crash guarantee.\r\n"
+        }
+      }
+    },
+    {
+      "purpose": "Validate package metadata and relative resources without global commands",
+      "cmd": "node 'C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/check-package.mjs' 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/package-check.log'\nexit $LASTEXITCODE",
+      "workdir": "C:/git/agent-skills",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "b66539",
+          "wall_time_seconds": 0.2467325,
+          "exit_code": 0,
+          "original_token_count": 194,
+          "output": "{\r\n  \"name\": \"java-ddd-domain-events\",\r\n  \"version\": \"1.0.0\",\r\n  \"files\": [\r\n    \"SKILL.md\",\r\n    \"references/event-lifecycle.md\",\r\n    \"references/verification.md\",\r\n    \"skill.yaml\"\r\n  ],\r\n  \"issues\": [],\r\n  \"localLinks\": [\r\n    {\r\n      \"file\": \"SKILL.md\",\r\n      \"target\": \"references/event-lifecycle.md\",\r\n      \"resolved\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\java-ddd-domain-events\\\\references\\\\event-lifecycle.md\"\r\n    },\r\n    {\r\n      \"file\": \"SKILL.md\",\r\n      \"target\": \"references/verification.md\",\r\n      \"resolved\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\java-ddd-domain-events\\\\references\\\\verification.md\"\r\n    }\r\n  ],\r\n  \"brokenLinks\": [],\r\n  \"limitations\": \"Package-local generic validation only; no adapter/global index validation or behavioral agent evaluation.\"\r\n}\r\n"
+        }
+      }
+    },
+    {
+      "purpose": "Check existing scoped formatting and whitespace",
+      "cmd": "node node_modules/prettier/bin/prettier.cjs --check skills/java-ddd-domain-events 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/prettier.log'\nif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }\ngit diff --check -- skills/java-ddd-domain-events 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/diff-check.log'\nexit $LASTEXITCODE",
+      "workdir": "C:/git/agent-skills",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "17b12b",
+          "wall_time_seconds": 0.2944361,
+          "exit_code": 0,
+          "original_token_count": 17,
+          "output": "Checking formatting...\r\nAll matched files use Prettier code style!\r\n"
+        }
+      }
+    },
+    {
+      "purpose": "Negative control: move mutation before event validation and require the probe to reject it",
+      "cmd": "$ErrorActionPreference = 'Stop'\n& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' --release 17 -cp 'C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/probe-classes' -d 'C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/negative-control-classes' 'C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/negative-control-src/com/example/domain/order/Order.java' 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/negative-control-compile.log'\nif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }\n& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -cp 'C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/negative-control-classes;C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/probe-classes' DomainEventsProbe 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/negative-control.log'\n$controlExit = $LASTEXITCODE\n$controlOutput = Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/negative-control.log' -Raw\nif ($controlExit -eq 0 -or $controlOutput -notmatch 'null time leaves state and pending events unchanged') { throw 'Negative control did not expose intended mutation-order defect' }\n'PASS expected negative-control failure, java exit=' + $controlExit",
+      "workdir": "C:/git/agent-skills",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "03c650",
+          "wall_time_seconds": 0.7899886,
+          "exit_code": 0,
+          "original_token_count": 79,
+          "output": "PASS reject null time [NullPointerException]\r\nException in thread \"main\" java.lang.AssertionError: null time leaves state and pending events unchanged\r\n\tat DomainEventsProbe.check(DomainEventsProbe.java:19)\r\n\tat DomainEventsProbe.main(DomainEventsProbe.java:38)\r\nPASS expected negative-control failure, java exit=1\r\n"
+        }
+      }
+    },
+    {
+      "purpose": "Check separate case integrity and execute the shared input trace without actor evaluation",
+      "cmd": "$ErrorActionPreference = 'Stop'\nnode 'C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/check-cases.mjs' 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/case-integrity.log'\nif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }\n& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' --release 17 -d 'C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/case-classes' 'C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/cases/occurrence-preview/input/PreviewTrace.java' 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/case-compile.log'\nif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }\n& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -cp 'C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/case-classes' PreviewTrace 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/case-trace.log'\nexit $LASTEXITCODE",
+      "workdir": "C:/git/agent-skills",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "a845b2",
+          "wall_time_seconds": 0.8501992,
+          "exit_code": 0,
+          "original_token_count": 221,
+          "output": "PASS two separate case inputs\r\nPASS two separately stored evaluator criteria\r\nPASS same actor task\r\nPASS same ordinary code fixture\r\nPASS same runtime and fixture limitations\r\nPASS contract sizes comparable\r\nPASS exactly one decisive contract sentence differs\r\nPASS occurrence-preview: no evaluator answers in task schema\r\nPASS occurrence-preview: retained code matches input\r\nPASS current-preview: no evaluator answers in task schema\r\nPASS current-preview: retained code matches input\r\nPASS 11 input-integrity checks; no actor run.\r\nafter acceptance row=QuoteRow[quoteId=00000000-0000-0000-0000-000000000011, totalCents=10000]\r\nafter amendment row=QuoteRow[quoteId=00000000-0000-0000-0000-000000000011, totalCents=12500]\r\npreview=Preview[eventId=00000000-0000-0000-0000-000000000029, quoteId=00000000-0000-0000-0000-000000000011, occurredOn=2026-10-16T10:00:00Z, totalCents=12500]\r\n"
+        }
+      }
+    },
+    {
+      "purpose": "Compare all owned file hashes with coordinator baseline and inspect scoped Git state",
+      "cmd": "$ErrorActionPreference = 'Stop'\n$skillRoot = (Resolve-Path 'skills/java-ddd-domain-events').Path\n$assignedBaseline = (Resolve-Path 'C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/baseline/java-ddd-domain-events').Path\n$ownedFiles = @(Get-ChildItem -LiteralPath $skillRoot -Recurse -File)\n$comparisons = @($ownedFiles | ForEach-Object {\n    $relative = [IO.Path]::GetRelativePath($skillRoot, $_.FullName)\n    $currentHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $_.FullName).Hash\n    $baselineHash = (Get-FileHash -Algorithm SHA256 -LiteralPath (Join-Path $assignedBaseline $relative)).Hash\n    [pscustomobject]@{ path = $relative; currentHash = $currentHash; baselineHash = $baselineHash; equal = ($currentHash -eq $baselineHash) }\n})\n$scopedStatus = @(git status --short --untracked-files=all -- skills/java-ddd-domain-events)\n$unstagedDiff = @(git diff -- skills/java-ddd-domain-events)\n$stagedDiff = @(git diff --cached -- skills/java-ddd-domain-events)\n$headManifest = @(git show HEAD:skills/java-ddd-domain-events/skill.yaml)\n$baselineManifest = Get-Content -LiteralPath (Join-Path $assignedBaseline 'skill.yaml')\n$currentManifest = Get-Content -LiteralPath (Join-Path $skillRoot 'skill.yaml')\n[pscustomobject]@{ files = $comparisons; baselineFileCount = @(Get-ChildItem -LiteralPath $assignedBaseline -Recurse -File).Count; committedVersion = ($headManifest | Select-String '^version:').Line; assignmentVersion = ($baselineManifest | Select-String '^version:').Line; currentVersion = ($currentManifest | Select-String '^version:').Line; scopedStatus = $scopedStatus; unstagedDiff = $unstagedDiff; stagedDiff = $stagedDiff } | ConvertTo-Json -Depth 6 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/final-baseline-check.json'\nif (@($comparisons | Where-Object { -not $_.equal }).Count -ne 0) { throw 'Owned package differs from assigned baseline' }",
+      "workdir": "C:/git/agent-skills",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "eddf9c",
+          "wall_time_seconds": 0.3982658,
+          "exit_code": 0,
+          "original_token_count": 315,
+          "output": "{\r\n  \"files\": [\r\n    {\r\n      \"path\": \"SKILL.md\",\r\n      \"currentHash\": \"E1F52F9A571192CDE672E45389C68E6846DD5096367CFD0E38121EBFD47DD608\",\r\n      \"baselineHash\": \"E1F52F9A571192CDE672E45389C68E6846DD5096367CFD0E38121EBFD47DD608\",\r\n      \"equal\": true\r\n    },\r\n    {\r\n      \"path\": \"skill.yaml\",\r\n      \"currentHash\": \"E144B55E3A2534E193531A7106667CA7F5A6E65D012D975642F256E0947B5AE7\",\r\n      \"baselineHash\": \"E144B55E3A2534E193531A7106667CA7F5A6E65D012D975642F256E0947B5AE7\",\r\n      \"equal\": true\r\n    },\r\n    {\r\n      \"path\": \"references\\\\event-lifecycle.md\",\r\n      \"currentHash\": \"ED03F5BF117ECB42905BB24ABAB1E18B1922558A86D5CCB142433D675B8FBED5\",\r\n      \"baselineHash\": \"ED03F5BF117ECB42905BB24ABAB1E18B1922558A86D5CCB142433D675B8FBED5\",\r\n      \"equal\": true\r\n    },\r\n    {\r\n      \"path\": \"references\\\\verification.md\",\r\n      \"currentHash\": \"CB7403247DD0DFA1192846F3655706FA470C670BC945172DE852D84DA34C8D59\",\r\n      \"baselineHash\": \"CB7403247DD0DFA1192846F3655706FA470C670BC945172DE852D84DA34C8D59\",\r\n      \"equal\": true\r\n    }\r\n  ],\r\n  \"baselineFileCount\": 4,\r\n  \"committedVersion\": \"version: 1.0.0\",\r\n  \"assignmentVersion\": \"version: 1.0.0\",\r\n  \"currentVersion\": \"version: 1.0.0\",\r\n  \"scopedStatus\": [],\r\n  \"unstagedDiff\": [],\r\n  \"stagedDiff\": []\r\n}\r\n"
+        }
+      }
+    }
+  ],
+  "sourceAcquisitionCommands": [
+    {
+      "purpose": "Retain primary source java17-collections",
+      "workdir": "C:/git/agent-skills",
+      "cmd": "$ErrorActionPreference = 'Stop'\nInvoke-WebRequest -Uri 'https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collections.html' -OutFile 'C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/java17-collections.html' -TimeoutSec 25\nGet-FileHash -Algorithm SHA256 -LiteralPath 'C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/java17-collections.html' | Select-Object Path, Hash | ConvertTo-Json -Compress",
+      "result": {
+        "chunk_id": "b54e2e",
+        "wall_time_seconds": 0.4420401,
+        "exit_code": 0,
+        "original_token_count": 52,
+        "output": "{\"Path\":\"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\domain-events-quality13-526a906044334cb18c03191a95c00a5e\\\\java17-collections.html\",\"Hash\":\"26615EEE25B4876F7DE176FB374DA504F84AB74A12EB3560C2A5A8CB274D6EDE\"}\r\n"
+      }
+    },
+    {
+      "purpose": "Retain primary source java17-list",
+      "workdir": "C:/git/agent-skills",
+      "cmd": "$ErrorActionPreference = 'Stop'\nInvoke-WebRequest -Uri 'https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html' -OutFile 'C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/java17-list.html' -TimeoutSec 25\nGet-FileHash -Algorithm SHA256 -LiteralPath 'C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/java17-list.html' | Select-Object Path, Hash | ConvertTo-Json -Compress",
+      "result": {
+        "chunk_id": "c29337",
+        "wall_time_seconds": 0.3251181,
+        "exit_code": 0,
+        "original_token_count": 51,
+        "output": "{\"Path\":\"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\domain-events-quality13-526a906044334cb18c03191a95c00a5e\\\\java17-list.html\",\"Hash\":\"976EEBA5B8D75A702CA65EED816E0EC190559400909ED3A8271D9B9DE923C6ED\"}\r\n"
+      }
+    },
+    {
+      "purpose": "Retain primary source java17-record",
+      "workdir": "C:/git/agent-skills",
+      "cmd": "$ErrorActionPreference = 'Stop'\nInvoke-WebRequest -Uri 'https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Record.html' -OutFile 'C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/java17-record.html' -TimeoutSec 25\nGet-FileHash -Algorithm SHA256 -LiteralPath 'C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/java17-record.html' | Select-Object Path, Hash | ConvertTo-Json -Compress",
+      "result": {
+        "chunk_id": "887ebf",
+        "wall_time_seconds": 0.4457913,
+        "exit_code": 0,
+        "original_token_count": 51,
+        "output": "{\"Path\":\"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\domain-events-quality13-526a906044334cb18c03191a95c00a5e\\\\java17-record.html\",\"Hash\":\"A07E4F1E8610ACFBE0006F749D4D5CD6CD73C0A39BA93C541D3B882F897B6D42\"}\r\n"
+      }
+    },
+    {
+      "purpose": "Retain primary source evans-domain-events",
+      "workdir": "C:/git/agent-skills",
+      "cmd": "$ErrorActionPreference = 'Stop'\nInvoke-WebRequest -Uri 'https://www.domainlanguage.com/wp-content/uploads/2016/05/DDD_Reference_2015-03.pdf' -OutFile 'C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/evans-ddd-reference-2015.pdf' -TimeoutSec 25\nGet-FileHash -Algorithm SHA256 -LiteralPath 'C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/evans-ddd-reference-2015.pdf' | Select-Object Path, Hash | ConvertTo-Json -Compress",
+      "result": {
+        "chunk_id": "1b738b",
+        "wall_time_seconds": 0.4894091,
+        "exit_code": 0,
+        "original_token_count": 54,
+        "output": "{\"Path\":\"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\domain-events-quality13-526a906044334cb18c03191a95c00a5e\\\\evans-ddd-reference-2015.pdf\",\"Hash\":\"CF82DC7B4736BB24F4A1B69A3213C25CBD38AA98E37B99C2FACFB94FF5CACB99\"}\r\n"
+      }
+    },
+    {
+      "purpose": "Retain primary source fowler-domain-event",
+      "workdir": "C:/git/agent-skills",
+      "cmd": "$ErrorActionPreference = 'Stop'\nInvoke-WebRequest -Uri 'https://martinfowler.com/eaaDev/DomainEvent.html' -OutFile 'C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/fowler-domain-event.html' -TimeoutSec 25\nGet-FileHash -Algorithm SHA256 -LiteralPath 'C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/fowler-domain-event.html' | Select-Object Path, Hash | ConvertTo-Json -Compress",
+      "result": {
+        "chunk_id": "492be0",
+        "wall_time_seconds": 0.6357006,
+        "exit_code": 0,
+        "original_token_count": 53,
+        "output": "{\"Path\":\"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\domain-events-quality13-526a906044334cb18c03191a95c00a5e\\\\fowler-domain-event.html\",\"Hash\":\"2E345066F8566F42014B81249624C66C44ADF361B789E45E6EA6999ECD12C44B\"}\r\n"
+      }
+    },
+    {
+      "purpose": "Retain primary source spring62-transactional-event-listener",
+      "workdir": "C:/git/agent-skills",
+      "cmd": "$ErrorActionPreference = 'Stop'\nInvoke-WebRequest -Uri 'https://docs.spring.io/spring-framework/docs/6.2.3/javadoc-api/org/springframework/transaction/event/TransactionalEventListener.html' -OutFile 'C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/spring62-transactional-event-listener.html' -TimeoutSec 25\nGet-FileHash -Algorithm SHA256 -LiteralPath 'C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/spring62-transactional-event-listener.html' | Select-Object Path, Hash | ConvertTo-Json -Compress",
+      "result": {
+        "chunk_id": "a4366f",
+        "wall_time_seconds": 0.5063144,
+        "exit_code": 0,
+        "original_token_count": 57,
+        "output": "{\"Path\":\"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\domain-events-quality13-526a906044334cb18c03191a95c00a5e\\\\spring62-transactional-event-listener.html\",\"Hash\":\"C680DB0D51282C318F3F033E6FDF21150DB80136B5F9992DD1707459DD3E1498\"}\r\n"
+      }
+    },
+    {
+      "purpose": "Retain primary source transactional-outbox",
+      "workdir": "C:/git/agent-skills",
+      "cmd": "$ErrorActionPreference = 'Stop'\nInvoke-WebRequest -Uri 'https://microservices.io/patterns/data/transactional-outbox.html' -OutFile 'C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/transactional-outbox.html' -TimeoutSec 25\nGet-FileHash -Algorithm SHA256 -LiteralPath 'C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/transactional-outbox.html' | Select-Object Path, Hash | ConvertTo-Json -Compress",
+      "result": {
+        "chunk_id": "6f382a",
+        "wall_time_seconds": 0.4540275,
+        "exit_code": 0,
+        "original_token_count": 53,
+        "output": "{\"Path\":\"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\domain-events-quality13-526a906044334cb18c03191a95c00a5e\\\\transactional-outbox.html\",\"Hash\":\"7B9D9B224D9B985BF03D581DCDEF5C94A21F49A93F3AC1E74C6BC2104A48B3EB\"}\r\n"
+      }
+    },
+    {
+      "purpose": "Retain primary source aws-idempotent-apis",
+      "workdir": "C:/git/agent-skills",
+      "cmd": "$ErrorActionPreference = 'Stop'\nInvoke-WebRequest -Uri 'https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/' -OutFile 'C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/aws-idempotent-apis.html' -TimeoutSec 25\nGet-FileHash -Algorithm SHA256 -LiteralPath 'C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/aws-idempotent-apis.html' | Select-Object Path, Hash | ConvertTo-Json -Compress",
+      "result": {
+        "chunk_id": "08bd61",
+        "wall_time_seconds": 0.6434798,
+        "exit_code": 0,
+        "original_token_count": 53,
+        "output": "{\"Path\":\"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\domain-events-quality13-526a906044334cb18c03191a95c00a5e\\\\aws-idempotent-apis.html\",\"Hash\":\"96CD176E01A7328F2B2B171C3F446DF65B48077F04551822F04C955C78A7FE5F\"}\r\n"
+      }
+    }
+  ],
+  "executedStructuralChecks": {
+    "package": "Strict existing repository loadPackageFromDirectory/validatePackage APIs: 4 files, zero issues; description/name/manifest consistency checked.",
+    "links": "2 relative links resolve; all conditional references retained.",
+    "format": "Prettier --check on assigned skill passed; scoped git diff --check passed with no output.",
+    "attribution": "Four hashes equal coordinator snapshot; committed/assignment/final versions all 1.0.0; scoped Git diff/status empty.",
+    "fixtureIntegrity": "11 checks passed: task and code identical, exactly one contract sentence differs, evaluator criteria separate and physical fixtures match."
+  },
+  "executedTechnicalChecks": {
+    "toolchain": "javac 25.0.3, Temurin runtime 25.0.3+9; compiled with --release 17, no preview or dependencies.",
+    "publishedCode": "Two Java fragments extracted unchanged except indentation/newline normalization: OrderSubmitted record and Order.submit. Explicit DomainEvent, OrderID, exception, Order and collection-owner fixture supplies omitted project context.",
+    "probe": "21 checks passed; raw source and probe.log retained. Includes null input/rejected transition no mutation, accepted identity/time, repeated command, snapshot/new occurrence acknowledgment, view vs copy, shallow payload and value-equality cleanup example.",
+    "negativeControl": "Moved state assignment before event construction in an isolated fixture. Java exited 1 with the expected state/pending-event assertion; the control harness reported success only after observing that intended failure.",
+    "caseTrace": "Compiled/executed the shared ordinary case fixture; after acceptance total is 10000, after permitted amendment 12500, delayed reload preview is 12500. This is an observed fixture trace, not an actor response.",
+    "limits": [
+      "Fixture rehydration and acknowledgment are reviewer implementations illustrating prose, not a real target's classes or database behavior.",
+      "No Spring, database, broker, concurrency stress, process-kill or recovery integration tests executed.",
+      "Java 17 release compilation on JVM 25 does not establish execution on an actual Java 17 runtime."
+    ]
+  },
+  "behavioralEvaluations": {
+    "executed": [],
+    "measurementOfGain": "NOT_PERFORMED",
+    "actorRuns": 0,
+    "reason": "Reviewers may not run subagents/actors; coordinator receives reproducible inputs and evaluator-only criteria. No revision exists to compare original versus revised content."
+  },
+  "walkthroughs": [
+    {
+      "caseId": "occurrence-preview",
+      "type": "STRUCTURED_WALKTHROUGH",
+      "result": "Approved occurrence-based total requires preserving 10000 at acceptance; existing reload of 12500 loses the earlier value. Select immutable event data or evidenced historical storage; retain disposable local delivery.",
+      "notClaimed": "Not an agent execution or measured skill improvement."
+    },
+    {
+      "caseId": "current-preview",
+      "type": "STRUCTURED_WALKTHROUGH",
+      "result": "Approved current-state semantics require 12500; existing ID/time event and consumer reload are adequate. A forced occurrence snapshot would change the accepted requirement.",
+      "notClaimed": "Not an agent execution or measured skill improvement."
+    }
+  ],
+  "reproducibleCases": {
+    "inputFile": "C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/case-inputs.json",
+    "criteriaFile": "C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/case-criteria.json",
+    "inputs": [
+      {
+        "id": "occurrence-preview",
+        "task": "Review the pending QuoteAccepted change against the preview contract and propose the smallest justified fix, if any. Read the supplied code and contract, explain the event/consumer behavior, and provide focused verification. Existing tests are green. Preserve approved behavior and project conventions.",
+        "files": {
+          "PreviewTrace.java": "import java.time.Instant;\nimport java.util.ArrayDeque;\nimport java.util.ArrayList;\nimport java.util.HashMap;\nimport java.util.List;\nimport java.util.Map;\nimport java.util.Queue;\nimport java.util.UUID;\n\npublic final class PreviewTrace {\n    record QuoteAccepted(UUID eventId, UUID quoteId, Instant occurredOn) {}\n    record QuoteRow(UUID quoteId, long totalCents) {}\n    record Preview(UUID eventId, UUID quoteId, Instant occurredOn, long totalCents) {}\n\n    static final class Quote {\n        private final UUID id;\n        private long totalCents;\n        private boolean accepted;\n        private final List<QuoteAccepted> pending = new ArrayList<>();\n        Quote(UUID id, long totalCents) {\n            if (totalCents < 0) throw new IllegalArgumentException(\"negative total\");\n            this.id = id;\n            this.totalCents = totalCents;\n        }\n        void accept(UUID eventId, Instant time) {\n            if (accepted) throw new IllegalStateException(\"already accepted\");\n            var event = new QuoteAccepted(eventId, id, time);\n            accepted = true;\n            pending.add(event);\n        }\n        void amendTotal(long value) {\n            if (!accepted || value < 0) throw new IllegalStateException(\"invalid amendment\");\n            totalCents = value;\n        }\n        QuoteRow row() { return new QuoteRow(id, totalCents); }\n        List<QuoteAccepted> pullEvents() {\n            var batch = List.copyOf(pending);\n            pending.clear();\n            return batch;\n        }\n    }\n\n    static final class MemoryRepository {\n        private final Map<UUID, QuoteRow> rows = new HashMap<>();\n        void save(QuoteRow row) { rows.put(row.quoteId(), row); }\n        QuoteRow find(UUID id) { return rows.get(id); }\n    }\n\n    static final class PreviewConsumer {\n        private final MemoryRepository repository;\n        PreviewConsumer(MemoryRepository repository) { this.repository = repository; }\n        Preview on(QuoteAccepted event) {\n            var row = repository.find(event.quoteId());\n            return new Preview(event.eventId(), event.quoteId(), event.occurredOn(), row.totalCents());\n        }\n    }\n\n    public static void main(String[] args) {\n        var quoteId = new UUID(0, 17);\n        var eventId = new UUID(0, 41);\n        var occurredOn = Instant.parse(\"2026-10-16T10:00:00Z\");\n        var repository = new MemoryRepository();\n        Queue<QuoteAccepted> localQueue = new ArrayDeque<>();\n        var quote = new Quote(quoteId, 10000);\n        quote.accept(eventId, occurredOn);\n        repository.save(quote.row());\n        localQueue.addAll(quote.pullEvents());\n        System.out.println(\"after acceptance row=\" + repository.find(quoteId));\n        quote.amendTotal(12500);\n        repository.save(quote.row());\n        System.out.println(\"after amendment row=\" + repository.find(quoteId));\n        var preview = new PreviewConsumer(repository).on(localQueue.remove());\n        System.out.println(\"preview=\" + preview);\n    }\n}\n",
+          "README.md": "# Quote acceptance preview\nThe branch introduces a small domain event and a deferred consumer.\nPreviewTrace.java is a dependency-free reproduction of the event/data flow.\nMemoryRepository is only a fixture; it does not establish production commit, isolation,\nor recovery behavior. It copies immutable rows so later amendments are separate rows.\n\nReproduce with an available Java 17-compatible compiler/runtime:\njavac --release 17 -d classes PreviewTrace.java\njava -cp classes PreviewTrace\n\nThe trace has no golden expected total; compare it with the approved preview contract.\n",
+          "preview-contract.md": "# Preview contract\nStatus: approved by the product owner.\n\nJava baseline: 17. No framework is required by the supplied reproducer.\nA quote can be amended after acceptance without accepting it a second time.\nThe preview is an in-process operator panel. It is disposable: queued updates may be lost\non failure or restart and can be recreated by the operator. It is not an audit, payment\nor integration feed. There is no requirement to deliver every acceptance notification.\n\nThe preview total represents the quote total at acceptance, even if an amendment occurs before the queued event is handled.\n\nThe occurrence ID and occurredOn displayed by the preview belong to the accepted event.\n"
+        },
+        "prerequisites": "Read the selected input fixture only. An available Java compiler/runtime is optional for review; --release 17 on a newer JVM does not constitute Java 17 runtime execution.",
+        "artifactRoot": "C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/cases/occurrence-preview/input",
+        "exposure": "Reviewer-authored development case; not held out. No agent evaluation executed."
+      },
+      {
+        "id": "current-preview",
+        "task": "Review the pending QuoteAccepted change against the preview contract and propose the smallest justified fix, if any. Read the supplied code and contract, explain the event/consumer behavior, and provide focused verification. Existing tests are green. Preserve approved behavior and project conventions.",
+        "files": {
+          "PreviewTrace.java": "import java.time.Instant;\nimport java.util.ArrayDeque;\nimport java.util.ArrayList;\nimport java.util.HashMap;\nimport java.util.List;\nimport java.util.Map;\nimport java.util.Queue;\nimport java.util.UUID;\n\npublic final class PreviewTrace {\n    record QuoteAccepted(UUID eventId, UUID quoteId, Instant occurredOn) {}\n    record QuoteRow(UUID quoteId, long totalCents) {}\n    record Preview(UUID eventId, UUID quoteId, Instant occurredOn, long totalCents) {}\n\n    static final class Quote {\n        private final UUID id;\n        private long totalCents;\n        private boolean accepted;\n        private final List<QuoteAccepted> pending = new ArrayList<>();\n        Quote(UUID id, long totalCents) {\n            if (totalCents < 0) throw new IllegalArgumentException(\"negative total\");\n            this.id = id;\n            this.totalCents = totalCents;\n        }\n        void accept(UUID eventId, Instant time) {\n            if (accepted) throw new IllegalStateException(\"already accepted\");\n            var event = new QuoteAccepted(eventId, id, time);\n            accepted = true;\n            pending.add(event);\n        }\n        void amendTotal(long value) {\n            if (!accepted || value < 0) throw new IllegalStateException(\"invalid amendment\");\n            totalCents = value;\n        }\n        QuoteRow row() { return new QuoteRow(id, totalCents); }\n        List<QuoteAccepted> pullEvents() {\n            var batch = List.copyOf(pending);\n            pending.clear();\n            return batch;\n        }\n    }\n\n    static final class MemoryRepository {\n        private final Map<UUID, QuoteRow> rows = new HashMap<>();\n        void save(QuoteRow row) { rows.put(row.quoteId(), row); }\n        QuoteRow find(UUID id) { return rows.get(id); }\n    }\n\n    static final class PreviewConsumer {\n        private final MemoryRepository repository;\n        PreviewConsumer(MemoryRepository repository) { this.repository = repository; }\n        Preview on(QuoteAccepted event) {\n            var row = repository.find(event.quoteId());\n            return new Preview(event.eventId(), event.quoteId(), event.occurredOn(), row.totalCents());\n        }\n    }\n\n    public static void main(String[] args) {\n        var quoteId = new UUID(0, 17);\n        var eventId = new UUID(0, 41);\n        var occurredOn = Instant.parse(\"2026-10-16T10:00:00Z\");\n        var repository = new MemoryRepository();\n        Queue<QuoteAccepted> localQueue = new ArrayDeque<>();\n        var quote = new Quote(quoteId, 10000);\n        quote.accept(eventId, occurredOn);\n        repository.save(quote.row());\n        localQueue.addAll(quote.pullEvents());\n        System.out.println(\"after acceptance row=\" + repository.find(quoteId));\n        quote.amendTotal(12500);\n        repository.save(quote.row());\n        System.out.println(\"after amendment row=\" + repository.find(quoteId));\n        var preview = new PreviewConsumer(repository).on(localQueue.remove());\n        System.out.println(\"preview=\" + preview);\n    }\n}\n",
+          "README.md": "# Quote acceptance preview\nThe branch introduces a small domain event and a deferred consumer.\nPreviewTrace.java is a dependency-free reproduction of the event/data flow.\nMemoryRepository is only a fixture; it does not establish production commit, isolation,\nor recovery behavior. It copies immutable rows so later amendments are separate rows.\n\nReproduce with an available Java 17-compatible compiler/runtime:\njavac --release 17 -d classes PreviewTrace.java\njava -cp classes PreviewTrace\n\nThe trace has no golden expected total; compare it with the approved preview contract.\n",
+          "preview-contract.md": "# Preview contract\nStatus: approved by the product owner.\n\nJava baseline: 17. No framework is required by the supplied reproducer.\nA quote can be amended after acceptance without accepting it a second time.\nThe preview is an in-process operator panel. It is disposable: queued updates may be lost\non failure or restart and can be recreated by the operator. It is not an audit, payment\nor integration feed. There is no requirement to deliver every acceptance notification.\n\nThe preview total represents the current quote total when the queued event is handled, including any amendments since acceptance.\n\nThe occurrence ID and occurredOn displayed by the preview belong to the accepted event.\n"
+        },
+        "prerequisites": "Read the selected input fixture only. An available Java compiler/runtime is optional for review; --release 17 on a newer JVM does not constitute Java 17 runtime execution.",
+        "artifactRoot": "C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/cases/current-preview/input",
+        "exposure": "Reviewer-authored development case; not held out. No agent evaluation executed."
+      }
+    ],
+    "evaluatorOnlyCriteria": {
+      "visibility": "EVALUATOR ONLY. Do not supply this file, handoff, technical probe, sources or the other case to the actor. Copy only each case input into a controlled run.",
+      "changedConstraint": "One sentence in preview-contract.md changes whether displayed total means accepted occurrence data or current state. Code, delivery requirement, task and every other file are identical.",
+      "common": [
+        "Inspect the actual producer and PreviewConsumer reload rather than infer semantics from QuoteAccepted naming or the use of a record.",
+        "Preserve event identity and occurrence time; no replay/new occurrence is needed for an amendment.",
+        "Keep the approved disposable local mechanism; adding a broker, outbox or event store solely because a domain event exists is unwarranted.",
+        "State that MemoryRepository does not prove database, transaction or crash guarantees. No need to demand missing persistence evidence to resolve the source-level payload contract."
+      ],
+      "cases": [
+        {
+          "id": "occurrence-preview",
+          "expected": [
+            "Identify that a delayed reload observes 12500 cents whereas the accepted fact was 10000, violating the approved occurrence-based preview contract.",
+            "Recommend the smallest contract-preserving solution: capture immutable accepted total at the transition and read it from the event, or use an already available immutable versioned historical snapshot only with supporting evidence. Do not store a mutable aggregate reference or generate a new ID/time.",
+            "Propose or execute a focused test accept 10000, amend 12500, handle the pending event => preview total 10000 with original event ID/time; preserve rejection/repeated-command semantics."
+          ],
+          "failureConditions": [
+            "Approves current reload as historical reconstruction.",
+            "Changes product semantics to latest total instead of preserving approved contract.",
+            "Claims an outbox, callback phase or record keyword fixes the historical-value defect."
+          ]
+        },
+        {
+          "id": "current-preview",
+          "expected": [
+            "Recognize current reload produces the approved 12500 value; retain ID/time event plus consumer reload as adequate.",
+            "Do not force a snapshot of 10000 into the preview contract or expand the event payload solely to match a pattern.",
+            "Propose or execute a focused test accept 10000, amend 12500, handle => preview total 12500 and original occurrence ID/time; name consistency timing limits if considering a production repository."
+          ],
+          "failureConditions": [
+            "Calls the observed updated total a defect despite approved current-state semantics.",
+            "Changes consumer to old accepted total or requires snapshot payload without a demonstrated need.",
+            "Treats the local disposable event as automatically requiring durable messaging."
+          ]
+        }
+      ],
+      "method": "Structured walkthrough only. Exact actor inputs separate from criteria. Coordinator can compare skill versus no-skill with the same model/tools/permissions and controlled snapshots; there is no revised version because no changes are justified.",
+      "limit": "Both cases intentionally expose the known snapshot/current-state decision; results would be development-case evidence, not a blind holdout or proof of general gain."
+    },
+    "isolation": "The files are separated but share this machine. Coordinator must give an actor only the selected task/input fixture and intended skill treatment, excluding handoff/evidence/criteria/other-case. No enforced filesystem isolation was claimed.",
+    "developmentExposure": "Reviewer-authored known decision cases, not held-out examples."
+  },
+  "sources": [
+    {
+      "id": "java17-collections",
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collections.html",
+      "file": "java17-collections.html",
+      "version": "Java SE 17",
+      "sections": ["unmodifiableList(List)"],
+      "supports": "The read-only list reflects backing-list changes; it is not an immutable batch.",
+      "consulted": "2026-10-16",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/java17-collections.html",
+      "sha256": "26615EEE25B4876F7DE176FB374DA504F84AB74A12EB3560C2A5A8CB274D6EDE"
+    },
+    {
+      "id": "java17-list",
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html",
+      "file": "java17-list.html",
+      "version": "Java SE 17",
+      "sections": ["Unmodifiable Lists", "copyOf(Collection)"],
+      "supports": "copyOf freezes membership and rejects nulls but does not make mutable elements immutable.",
+      "consulted": "2026-10-16",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/java17-list.html",
+      "sha256": "976EEBA5B8D75A702CA65EED816E0EC190559400909ED3A8271D9B9DE923C6ED"
+    },
+    {
+      "id": "java17-record",
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Record.html",
+      "file": "java17-record.html",
+      "version": "Java SE 17",
+      "sections": ["Class Record"],
+      "supports": "Records are shallowly immutable; component references require their own immutability/copy rules.",
+      "consulted": "2026-10-16",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/java17-record.html",
+      "sha256": "A07E4F1E8610ACFBE0006F749D4D5CD6CD73C0A39BA93C541D3B882F897B6D42"
+    },
+    {
+      "id": "evans-domain-events",
+      "url": "https://www.domainlanguage.com/wp-content/uploads/2016/05/DDD_Reference_2015-03.pdf",
+      "file": "evans-ddd-reference-2015.pdf",
+      "version": "2015-03 DDD Reference",
+      "sections": ["Domain Events, printed page 13 / PDF page 20"],
+      "supports": "Domain occurrences carry business meaning and past data, distinct from software activity; occurrence and recording time may differ.",
+      "consulted": "2026-10-16",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/evans-ddd-reference-2015.pdf",
+      "sha256": "CF82DC7B4736BB24F4A1B69A3213C25CBD38AA98E37B99C2FACFB94FF5CACB99"
+    },
+    {
+      "id": "fowler-domain-event",
+      "url": "https://martinfowler.com/eaaDev/DomainEvent.html",
+      "file": "fowler-domain-event.html",
+      "version": "2005-12-12 draft",
+      "sections": ["How it works"],
+      "supports": "Immutable occurrence/source data differs from mutable processing data; occurrence and notice times differ.",
+      "limitation": "Conceptual draft, not a Java API or application delivery guarantee.",
+      "consulted": "2026-10-16",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/fowler-domain-event.html",
+      "sha256": "2E345066F8566F42014B81249624C66C44ADF361B789E45E6EA6999ECD12C44B"
+    },
+    {
+      "id": "spring62-transactional-event-listener",
+      "url": "https://docs.spring.io/spring-framework/docs/6.2.3/javadoc-api/org/springframework/transaction/event/TransactionalEventListener.html",
+      "file": "spring62-transactional-event-listener.html",
+      "version": "Spring Framework 6.2.3",
+      "sections": ["phase()", "fallbackExecution()", "class warning"],
+      "supports": "AFTER_COMMIT is default; without a transaction no invocation unless fallback is enabled. Completion-phase code runs after original completion; resource accessibility does not reopen commit.",
+      "limitation": "Reference verification only; no target Spring project or runtime executed. Skill tells consumers to check their target release.",
+      "consulted": "2026-10-16",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/spring62-transactional-event-listener.html",
+      "sha256": "C680DB0D51282C318F3F033E6FDF21150DB80136B5F9992DD1707459DD3E1498"
+    },
+    {
+      "id": "transactional-outbox",
+      "url": "https://microservices.io/patterns/data/transactional-outbox.html",
+      "file": "transactional-outbox.html",
+      "version": "Author-maintained pattern page consulted 2026-10-16",
+      "sections": ["Solution", "Result context"],
+      "supports": "Persisting publication intent with business state permits recovery by a relay; send-before-mark crashes can duplicate messages and require repeat-safe consumer effects.",
+      "limitation": "Pattern prerequisites, not proof of actual transaction enlistment or delivery liveness.",
+      "consulted": "2026-10-16",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/transactional-outbox.html",
+      "sha256": "7B9D9B224D9B985BF03D581DCDEF5C94A21F49A93F3AC1E74C6BC2104A48B3EB"
+    },
+    {
+      "id": "aws-idempotent-apis",
+      "url": "https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/",
+      "file": "aws-idempotent-apis.html",
+      "version": "Author article consulted 2026-10-16",
+      "sections": [
+        "Retrying and side effects",
+        "Reducing client complexity with idempotent API design",
+        "Same client request ID, different intent"
+      ],
+      "supports": "A missing response can leave outcome unknown. Stable request identity distinguishes retries from intentionally repeated commands; intent matters.",
+      "consulted": "2026-10-16",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e/aws-idempotent-apis.html",
+      "sha256": "96CD176E01A7328F2B2B171C3F446DF65B48077F04551822F04C955C78A7FE5F"
+    }
+  ],
+  "assumptions": [
+    "The skill correctly declares Java 17 as illustrative fragment baseline and requires project compatibility inspection before adoption.",
+    "Spring 6.2.3 documentation was selected to verify the retained listener default/fallback statements; this does not assert a target Spring release.",
+    "The isolated fixture's local lifetime, permitted reopen/amendment and storage behavior are explicit harness contracts, not inferred business policy for real applications."
+  ],
+  "limitations": [
+    "No measured agent behavioral gain, automatic activation result or complete catalog validation.",
+    "No application project exists in this assignment; actual producer/consumer contracts, database enlistment and recovery remain consumer-project evidence requirements.",
+    "Conceptual sources do not prove a concrete implementation's durability or idempotency.",
+    "No guarantees beyond exercised source-level conditions; negative control intentionally fails.",
+    "Silent successful compile/diff commands have no stdout; their exit results and exact commands are retained here even if Tee-Object did not create an empty log."
+  ],
+  "failures": {
+    "unexpected": [],
+    "preExisting": [],
+    "expected": [
+      "Negative control Java exit 1 due to state mutation before null event time validation; intended assertion observed."
+    ]
+  },
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Parallel review procedure reserves shared generated index writes to coordinator after every writer stops.",
+      "prerequisites": "All wave reviewers stopped; preserve shared baseline."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Global validation is coordinator-only after index generation; local readiness is not repository-wide verification.",
+      "prerequisites": "Stable wave tree and registry build complete."
+    },
+    {
+      "command": "Independent behavioral evaluation of the two cases",
+      "owner": "coordinator",
+      "reason": "Reviewer did not execute actors; optional empirical execution is required before claiming measured behavioral effect.",
+      "prerequisites": "Controlled actor contexts, case inputs separated from evaluator answers and comparable model/tools/permissions."
+    }
+  ],
+  "crossSkillIssues": [],
+  "coordinatorActions": [
+    "Accept no-change decision and preserve version 1.0.0.",
+    "Retain temporary evidence and copy only actor-facing inputs if evaluating.",
+    "Run final shared registry/verify once all writers have stopped."
+  ]
+}

@@ -1,0 +1,202 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "delivery-semantics",
+  "ownedPath": "skills/delivery-semantics/**",
+  "allWritesStopped": true,
+  "allProcessesStopped": true,
+  "versions": {
+    "committed": "1.2.4",
+    "assignment": "1.2.4",
+    "final": "1.2.5",
+    "rationale": "One patch bump for the combined content changes. No pre-existing owned changes or unpublished bump."
+  },
+  "baseline": {
+    "waveBaselinePath": "docs/skill-validation/wave2-2026-10-16/baseline.json",
+    "allFourOwnedFilesMatchedWaveBaselineAtAssignment": true,
+    "preExistingOwnedChanges": [],
+    "stagedOwnedChanges": [],
+    "untrackedOwnedFiles": [],
+    "assignmentSha256": {
+      "SKILL.md": "5D789EF3288AFB7BDFD6F99F33C4351C43A3A5626A2796FDB6448599F384086A",
+      "skill.yaml": "64E7601E4CFC6B24B58B1F2E1F5EC203B6FA97BB693CC49ACB5519F2EB9BCD58",
+      "references/ack-placement.md": "A92312E4EC5435BA8A676321A6D0EDC63AEC194197BA47D7DFA6ED1AFE074A47",
+      "references/exactly-once-boundary.md": "11582F630639B32928992248576181626BD24578ED2ED7BC5A355B57BEB43548"
+    },
+    "concurrentChangeCheck": "Immediately before editing, all four hashes still matched assignment. No overlap detected."
+  },
+  "domainCriteria": [
+    "Identify acknowledgement evidence at the actual producer/consumer/effect boundary.",
+    "Keep known business effect completion separate from failed or ambiguous delivery progress.",
+    "Preserve provider-specific redelivery limits and current Java/client/container constraints.",
+    "Use evidence from the actual receipt and per-entry response to change the recovery recommendation, without claiming duplicate freedom or rerunning known effects."
+  ],
+  "files": [
+    "skills/delivery-semantics/SKILL.md",
+    "skills/delivery-semantics/references/ack-placement.md",
+    "skills/delivery-semantics/skill.yaml"
+  ],
+  "changes": [
+    {
+      "location": "SKILL.md:98",
+      "finding": "Existing lease overlap guidance did not require checking which SQS delivery receipt and per-entry deletion result actually support progress.",
+      "correction": "Add a short guard and route to the existing visibility-lease reference."
+    },
+    {
+      "location": "references/ack-placement.md:138",
+      "finding": "AWS DeleteMessage permits an old receipt handle to report success without removing the message; a receipt is not stable business identity.",
+      "correction": "Trace the current receive handle through the completion path, reject cached earlier-delivery handles, and preserve Standard queue redelivery after deletion."
+    },
+    {
+      "location": "references/ack-placement.md:144",
+      "finding": "DeleteMessageBatch HTTP 200 can contain failed entries; transport success does not settle every message.",
+      "correction": "Correlate Successful/Failed by request-entry Id, preserve known effect completion, and recover deletion independently instead of marking the entire batch deleted or reapplying an already confirmed effect."
+    }
+  ],
+  "preserved": [
+    "Java 17 partial-snippet baseline; Kafka 4.1 and Jakarta Messaging 3.1 API/container distinctions.",
+    "Consumer auto-commit coupling, per-partition completed-prefix commits and valid numeric offset gaps.",
+    "Local consumer position versus authoritative committed progress; abort does not rewind input.",
+    "Kafka transaction participants, committed-only visibility, transaction recovery/fencing and downstream completeness limits.",
+    "Outbox publication confirmation, RabbitMQ confirmed-but-unroutable handling and sent-marker duplicate windows.",
+    "External effect ambiguity, atomic dedup/effect boundaries and idempotency handoff.",
+    "Visibility expiry does not cancel/fence prior handlers; measured lease sizing, heartbeat limits and Standard queue duplicate behavior.",
+    "Existing description, dependencies, suggested skills and all Java snippets.",
+    "references/exactly-once-boundary.md remains byte-identical to assignment."
+  ],
+  "removed": [],
+  "checks": [
+    {
+      "kind": "structural",
+      "command": "@'\nimport { readFileSync, existsSync } from 'node:fs';\nimport { resolve, dirname, relative } from 'node:path';\nimport { createHash } from 'node:crypto';\nimport { loadPackageFromDirectory } from './packages/core/src/application/package-loader.ts';\nimport { validatePackage } from './packages/core/src/application/validate-package.ts';\nimport { NodeFileSystem } from './packages/node/src/file-system.ts';\nconst root = resolve('skills/delivery-semantics');\nconst loaded = await loadPackageFromDirectory(new NodeFileSystem(), root, { strict: true });\nconst validation = validatePackage(loaded.pkg, { directoryName: 'delivery-semantics', strict: true });\nconst files = ['SKILL.md', 'skill.yaml', 'references/ack-placement.md', 'references/exactly-once-boundary.md'];\nconst links = [];\nconst missing = [];\nlet anchorCount = 0;\nfor (const file of files.filter(f => f.endsWith('.md'))) {\n  const text = readFileSync(resolve(root, file), 'utf8');\n  for (const match of text.matchAll(/\\[[^\\]]+\\]\\(([^)]+)\\)/g)) {\n    if (/^[a-z]+:/i.test(match[1])) continue;\n    const [target, anchor] = match[1].split('#');\n    const absolute = target ? resolve(dirname(resolve(root, file)), target) : resolve(root, file);\n    links.push({ source: file, target: relative(root, absolute).replaceAll('\\\\', '/'), anchor });\n    if (!existsSync(absolute)) { missing.push(match[1]); continue; }\n    if (anchor) {\n      anchorCount++;\n      const headings = [...readFileSync(absolute, 'utf8').matchAll(/^#{1,6}\\s+(.+)$/gm)]\n        .map(m => m[1].toLowerCase().replace(/[^\\p{L}\\p{N}\\s_-]/gu, '').replace(/\\s/g, '-'));\n      if (!headings.includes(anchor)) missing.push(match[1]);\n    }\n  }\n}\nconst finalHashes = Object.fromEntries(files.map(f => [f, createHash('sha256').update(readFileSync(resolve(root, f))).digest('hex')]));\nconst unchangedReference = finalHashes['references/exactly-once-boundary.md'] === '11582f630639b32928992248576181626bd24578ed2ed7bc5a355b57beb43548';\nconst result = {\n  package: loaded.pkg.manifest.name, version: loaded.pkg.manifest.version,\n  files: loaded.pkg.files.length, issues: [...loaded.issues, ...validation.issues],\n  relativeLinks: links, anchorCount, missing, unchangedReference, finalHashes\n};\nconsole.log(JSON.stringify(result, null, 2));\nif (result.issues.length || missing.length || !unchangedReference) process.exitCode = 1;\n'@ | node --input-type=module",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "PASS",
+      "exitCode": 0,
+      "output": "{\n  \"package\": \"delivery-semantics\",\n  \"version\": \"1.2.5\",\n  \"files\": 4,\n  \"issues\": [],\n  \"relativeLinks\": [\n    {\n      \"source\": \"SKILL.md\",\n      \"target\": \"references/ack-placement.md\",\n      \"anchor\": \"publication-progress\"\n    },\n    {\n      \"source\": \"SKILL.md\",\n      \"target\": \"references/ack-placement.md\"\n    },\n    {\n      \"source\": \"SKILL.md\",\n      \"target\": \"references/ack-placement.md\",\n      \"anchor\": \"visibility-leases-and-messaging-acknowledgements\"\n    },\n    {\n      \"source\": \"SKILL.md\",\n      \"target\": \"references/ack-placement.md\"\n    },\n    {\n      \"source\": \"SKILL.md\",\n      \"target\": \"references/exactly-once-boundary.md\"\n    },\n    {\n      \"source\": \"references/exactly-once-boundary.md\",\n      \"target\": \"references/ack-placement.md\",\n      \"anchor\": \"publication-progress\"\n    }\n  ],\n  \"anchorCount\": 3,\n  \"missing\": [],\n  \"unchangedReference\": true,\n  \"finalHashes\": {\n    \"SKILL.md\": \"f53e9b75c0e0eb68e8bfe62cff22c5dc73092862d2a2fead263a8ddf3c8d9da0\",\n    \"skill.yaml\": \"c5a1716602c1cedfa9f4a4ddcc41ab015e87baddc13eb53d0618151e359ec889\",\n    \"references/ack-placement.md\": \"d14d2e43df566d98ffb29ba98ff7d832b99b37ac0224e7761a5b8dfbbc256681\",\n    \"references/exactly-once-boundary.md\": \"11582f630639b32928992248576181626bd24578ed2ed7bc5a355b57beb43548\"\n  }\n}\n",
+      "details": "Uses existing package loader and validator; supplemental read-only relative-link/anchor and unchanged-reference checks cover only the assigned package."
+    },
+    {
+      "kind": "format",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/delivery-semantics/SKILL.md skills/delivery-semantics/references/ack-placement.md skills/delivery-semantics/skill.yaml",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "PASS",
+      "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+    },
+    {
+      "kind": "whitespace",
+      "command": "git diff --check -- skills/delivery-semantics",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "PASS",
+      "output": ""
+    },
+    {
+      "kind": "attribution-and-review",
+      "command": "git diff --stat -- skills/delivery-semantics; git diff -- skills/delivery-semantics; git diff --cached -- skills/delivery-semantics; git ls-files --others --exclude-standard -- skills/delivery-semantics",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "PASS",
+      "details": "Three files changed, 15 insertions and one deletion. Full owned diff inspected; no staged or untracked owned files and no unexpected changes."
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/APIReference/API_DeleteMessage.html",
+      "version": "Amazon SQS current service API reference, accessed 2026-10-16; no SDK version dependency introduced",
+      "support": "Each receive has a new receipt handle; using an older handle can succeed without deleting; Standard queues can redeliver after deletion."
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/APIReference/API_DeleteMessageBatch.html",
+      "version": "Amazon SQS current service API reference, accessed 2026-10-16",
+      "support": "Successful/Failed outcomes are per entry even with HTTP 200; both identify entries using Id."
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-visibility-timeout.html",
+      "version": "Amazon SQS current developer guide, accessed 2026-10-16",
+      "support": "Preserved visibility timeout, expiry/redelivery and within-interval duplicate caveats."
+    }
+  ],
+  "artifactPaths": [
+    "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/delivery-semantics.json"
+  ],
+  "behavioralEvaluationsExecuted": [],
+  "walkthroughsPerformed": [
+    "DS-D1: correlate out-of-order batch request/result entry IDs and preserve both committed effects while only B deletion failed.",
+    "DS-D2: flip only A's submitted receipt to the earlier delivery; A removal becomes unresolved despite its successful entry, while B remains failed and both effects remain known."
+  ],
+  "limits": [
+    "No independent agent evaluation, AWS execution, broker fault injection, SDK runtime test or measured behavioral improvement.",
+    "The correction is supported by the actual SQS service API contract. Synthetic fixtures exercise review decisions, not provider implementation.",
+    "No Java snippet was added or changed, so existing partial examples were not compiled or re-executed in this review.",
+    "Global registry generation and verification are deferred to the coordinator.",
+    "An initial read-only attempt to open packages/node/src/fs/node-file-system.ts failed; rg located packages/node/src/file-system.ts, which was inspected before running the successful local validator."
+  ],
+  "casePreparation": {
+    "classification": "Reproducible development cases and structured walkthroughs; not executed behavioral evaluations or unseen holdouts.",
+    "separation": "Give only actorTask and actorFixtures to the actor; keep evaluatorExpectations and failureConditions separate.",
+    "actorTask": "Review the completion path from the supplied artifacts and update docs/delivery-contract.md with the guarantee actually supported and the smallest justified recovery or code adjustment. Do not call AWS, run a service, or change the ledger protocol.",
+    "sharedActorFixtures": {
+      "README.md": "These are synthetic, normalized artifacts for a manual Amazon SQS Standard consumer. There is no framework auto-ack. Times are elapsed milliseconds on one trace clock. The ledger's durable completion export is authoritative for these two business events; its existing atomic dedup/effect transaction is out of scope. Receipt labels stand in for opaque real receipt handles. Source lookup is permitted. No live AWS credentials or client are supplied.\n",
+      "consumer-config.json": "{\"service\":\"Amazon SQS\",\"queueType\":\"Standard\",\"visibilityTimeoutSeconds\":30,\"completion\":\"manual-delete-batch\",\"identityField\":\"body.businessEventId\"}\n",
+      "receives.ndjson": "{\"timeMs\":0,\"messageId\":\"message-a\",\"businessEventId\":\"event-a\",\"receiptHandle\":\"receipt-a-first\"}\n{\"timeMs\":35000,\"messageId\":\"message-a\",\"businessEventId\":\"event-a\",\"receiptHandle\":\"receipt-a-current\"}\n{\"timeMs\":35000,\"messageId\":\"message-b\",\"businessEventId\":\"event-b\",\"receiptHandle\":\"receipt-b-current\"}\n",
+      "ledger-completions.csv": "businessEventId,status,committedAtMs\nevent-a,durable-committed,36000\nevent-b,durable-committed,36000\n",
+      "delete-response.json": "{\"httpStatus\":200,\"receivedAtMs\":37000,\"body\":{\"Successful\":[{\"Id\":\"entry-a\"}],\"Failed\":[{\"Id\":\"entry-b\",\"Code\":\"InternalError\",\"SenderFault\":false,\"Message\":\"Synthetic transient entry failure\"}]}}\n",
+      "docs/delivery-contract.md": "# Delivery contract\nBoth ledger writes committed and DeleteMessageBatch returned HTTP 200, so both messages are deleted and there is no replay risk. On a delete error, rerun the corresponding ledger operation to finish processing.\n"
+    }
+  },
+  "cases": [
+    {
+      "id": "DS-D1",
+      "actorTask": "Use casePreparation.actorTask unchanged.",
+      "actorFixtures": {
+        "inherit": "casePreparation.sharedActorFixtures",
+        "add": {
+          "delete-request.json": "{\"sentAtMs\":36900,\"QueueUrl\":\"https://sqs.invalid/example/orders\",\"Entries\":[{\"Id\":\"entry-b\",\"ReceiptHandle\":\"receipt-b-current\"},{\"Id\":\"entry-a\",\"ReceiptHandle\":\"receipt-a-current\"}]}\n"
+        }
+      },
+      "evaluatorExpectations": [
+        "Read the configuration, receives, ledger completions, delete request and individual results; actually update docs/delivery-contract.md.",
+        "Map results by Id, not array order: A has a successful delete entry using its current receipt; B deletion failed despite HTTP 200.",
+        "Preserve durable completion for both business events. Recover B deletion with a valid current receipt under the lease/recovery policy or handle repeat-safe redelivery; do not rerun ledger solely to retry deletion.",
+        "Retain the current-handle path for A rather than inventing a stale-handle defect.",
+        "Remove the duplicate-free claim because SQS Standard can redeliver even after successful deletion.",
+        "Limit the conclusion to supplied evidence and documented semantics; do not claim AWS calls/tests were executed."
+      ],
+      "failureConditions": [
+        "Mark both entries deleted from HTTP 200, swap A/B by list order, or discard known business completion.",
+        "Use receipt handle as the durable business dedup key, rerun the ledger to recover only deletion, or claim Standard queue duplicate freedom.",
+        "Fail to update the artifact or invent a runtime verification."
+      ]
+    },
+    {
+      "id": "DS-D2",
+      "constraintFlip": "Only A's receipt handle in delete-request.json changes from receipt-a-current to receipt-a-first; all other input artifacts are identical.",
+      "actorTask": "Use casePreparation.actorTask unchanged.",
+      "actorFixtures": {
+        "inherit": "casePreparation.sharedActorFixtures",
+        "add": {
+          "delete-request.json": "{\"sentAtMs\":36900,\"QueueUrl\":\"https://sqs.invalid/example/orders\",\"Entries\":[{\"Id\":\"entry-b\",\"ReceiptHandle\":\"receipt-b-current\"},{\"Id\":\"entry-a\",\"ReceiptHandle\":\"receipt-a-first\"}]}\n"
+        }
+      },
+      "evaluatorExpectations": [
+        "Read and join receipt history to actual deletion request, then update docs/delivery-contract.md.",
+        "Flag A's earlier receipt: its successful batch entry cannot establish removal because the current receive has a different handle.",
+        "Recommend propagating the current delivery receipt through deletion rather than reusing a cached earlier handle. Keep A deletion unresolved until appropriate recovery evidence.",
+        "Still identify B's separate deletion failure by Id and preserve both ledger completions.",
+        "Retain repeat-safe redelivery and avoid inferring duplicate freedom, running AWS, or changing the ledger protocol."
+      ],
+      "failureConditions": [
+        "Give the same clean A-delete conclusion as DS-D1 despite the older submitted receipt.",
+        "Treat HTTP 200 or A's Successful entry as proof that the stale-handle request removed A.",
+        "Conflate failed cleanup with failed business effects, use the receipt as stable identity, or claim execution."
+      ]
+    }
+  ],
+  "crossSkill": [],
+  "pendingGlobalChecks": [
+    "npm run registry:build after all reviewers stop writing",
+    "npm run verify after registry generation"
+  ],
+  "pendingBehavioralEvaluation": ["DS-D1", "DS-D2"],
+  "coordinatorActions": [
+    "Archive this JSON and materialize actor/evaluator fixtures separately if selected for independent evaluation.",
+    "The async-profiler-advanced retrospective JSON was separately saved and parsed successfully at C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/async-profiler-advanced.json."
+  ]
+}

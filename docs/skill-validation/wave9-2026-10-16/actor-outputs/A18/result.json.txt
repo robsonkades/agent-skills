@@ -1,0 +1,33 @@
+{
+  "task": "A18",
+  "decision": "Repaired RetryEngine.java within the supplied single-owner synchronous component contract.",
+  "artifacts": ["RetryEngine.java", "Verification.java", "REVIEW.md", "result.json", "execution.json"],
+  "baseline": {
+    "sourceAndApi": "Java 17",
+    "compiler": "javac 25.0.3, --release 17",
+    "runtime": "Temurin OpenJDK 25.0.3+9-LTS",
+    "node": "v25.6.1",
+    "javaSubprocessTimeoutMs": 20000
+  },
+  "changes": [
+    "Keep the original intent ID and payload for every attempt; replay terminal snapshots without calls.",
+    "Persist UNKNOWN and retain operation-wide uncertainty until authoritative OK; propagate interruption.",
+    "Close every returned reply before retry admission, wait, another call or return.",
+    "Honor maximum of local and server delays; enforce overflow-safe attempt, reserve and wait budgets.",
+    "Require retry tokens and recheck cancellation, interruption and remaining time after sleep."
+  ],
+  "evidence": [
+    {"command": "node run.mjs Verification", "stage": "original implementation", "exitCode": 1, "observed": "AssertionError: intent identity or payload changed"},
+    {"command": "node run.mjs Verification", "stage": "repaired implementation", "exitCode": 0, "observed": "Verification passed: 27 scenarios"},
+    {"command": "node run.mjs Smoke", "stage": "repaired implementation", "exitCode": 0, "observed": "Smoke passed"},
+    {"command": "node run.mjs Verification", "stage": "final regression with persistence-order assertions", "exitCode": 0, "observed": "Verification passed: 27 scenarios"},
+    {"check": "Immutable output copies byte-equal their input/project sources", "observed": "All seven copies unchanged"}
+  ],
+  "limits": [
+    "Durable atomic store and replay-safe provider behavior are supplied contracts, not demonstrated guarantees.",
+    "REPLAY_SAFE=false is guarded but not executed because the supplied immutable constant is true.",
+    "No real provider, database, process-crash test, physical cancellation, wall-clock measurement or fleet workload was used.",
+    "No authoritative reconciliation operation, provider API version, tenant scope or retention contract is supplied.",
+    "Only the supplied skill snapshots were used; broader routed packages were not opened."
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "id": "case-a",
+  "evaluatorOnly": true,
+  "expectedBehavior": [
+    "Trace Intake.submit, Publication and CreditSubscriber.on. Input acceptance precedes publication; credit is PENDING in the publication snapshot and may later become REJECTED.",
+    "Use the approved meaning: input acceptance is an established fact even when later credit is rejected. Retain the Event classification and reject compulsory renaming based solely on one decision-making subscriber.",
+    "Distinguish the established intake decision from the subsequent credit decision and preserve the declared public consumers and wire contract.",
+    "State that callback/transport shape alone does not prove a broker, persistence, delivery or transactional guarantee.",
+    "Keep the result a focused classification review with concrete evidence; do not add a pattern hierarchy, CQRS, saga, broker or framework."
+  ],
+  "observableFailures": [
+    "Classify OrderValidated as a command solely because its subscriber may reject credit.",
+    "Conclude no consumer may make a decision after an event.",
+    "Rename the public message or remove the subscriber without a contract defect.",
+    "Claim the local model validates real transport or transaction guarantees."
+  ]
+}

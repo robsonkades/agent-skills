@@ -1,0 +1,18 @@
+[
+  {
+    "file": "skills/kubernetes-service-lifecycle/SKILL.md",
+    "sha256": "b4cff48411ea66056456d9f8320c7b124560d6512e605901b19fc82f7216a8b7"
+  },
+  {
+    "file": "skills/kubernetes-service-lifecycle/skill.yaml",
+    "sha256": "f5eedd7b5a5deaf14d4a3662f0cbd46bcdd905d53375ec005bf541ce4be6b2d8"
+  },
+  {
+    "file": "skills/kubernetes-service-lifecycle/references/draining-non-http-work.md",
+    "sha256": "8e92cb5d567ffe5eabd1afbfd4e85afcb83ef6f6c89f34cf6bc616b0a595781b"
+  },
+  {
+    "file": "skills/kubernetes-service-lifecycle/references/probe-and-shutdown-configuration.md",
+    "sha256": "7494c754150027717be5c5d6c8614547bb0c0bff3d9c02bd1e4ec1cec5d793b5"
+  }
+]

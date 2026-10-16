@@ -1,0 +1,479 @@
+{
+  "status": "NO_CHANGES_NEEDED",
+  "skill": "architecture-refactoring-paths",
+  "ownedPath": "C:/git/agent-skills/skills/architecture-refactoring-paths",
+  "wave": 4,
+  "reviewDate": "2026-10-16",
+  "allWritesStopped": true,
+  "activeBackgroundProcesses": [],
+  "summary": "Full package reviewed. The existing specialist paths already handle incremental compatibility, authority transfer, recovery limits, useful stopping points and refuting evidence. An initially suspected missing skill referral was rejected after contextual review; only this reviewer’s provisional edits were reversed. No final content or metadata changes.",
+  "procedure": {
+    "fullPackageRead": true,
+    "requiredReadings": [
+      "AGENTS.md (root; no applicable nested instructions found)",
+      "docs/skill-review-prompt.md (complete)",
+      "docs/parallel-skill-reviews.md",
+      "docs/skill-validation/wave4-2026-10-16/review-brief.md",
+      "skills/skill-engineering/SKILL.md and its evidence, evaluation, resource-design and anti-pattern references (unchanged readings reused)",
+      "docs/skill-validation/skills-comparative-research-2026-10-16.md (relevant architecture-discovery research)",
+      "docs/skills-evolution-roadmap.md (expert behaviors and evidence-led adaptation)",
+      "docs/skill-validation/wave3-2026-10-16/README.md (prior-wave evidence and no measured incremental behavioral gain)",
+      "docs/skill-validation/wave4-2026-10-16/baseline.json (selected package only)"
+    ],
+    "findingsSentBeforeFirstEdit": true,
+    "ownershipPreserved": true,
+    "noDelegation": true,
+    "noGlobalWritesOrCommands": true,
+    "noInstallationOrRealAgentConfigurationChanges": true
+  },
+  "promise": {
+    "role": "Plan or review the sequencing of an already-agreed enterprise architecture change.",
+    "activatesFor": [
+      "Old/new paths coexist",
+      "Code and persisted representations change together",
+      "Independent consumer upgrades",
+      "Unclear rollback or useful pause checkpoints",
+      "Stalled migration"
+    ],
+    "exclusions": [
+      "Selecting target architecture or discovering refactoring opportunities",
+      "Diagnosing whether a modernization is needed",
+      "Implementing database migration tooling",
+      "Unrequested toolchain upgrades"
+    ],
+    "successCriteria": [
+      "Preserve accepted contracts and distinguish the proposed target from implemented state.",
+      "Select a first slice that exercises the hard seam, not only a read-only happy path.",
+      "Define read/write/in-flight authority and compatibility for every intermediate state.",
+      "Name acceptance, pause, abort, recovery and irreversible boundaries.",
+      "Distinguish binary rollback, routing reversal, reconciliation, restore and forward repair.",
+      "Allow an accepted partial outcome or bounded atomic cutover when supported.",
+      "Use refuting observations to reconsider the claimed benefit and avoid unsupported cutover guarantees."
+    ],
+    "javaContract": "Planning pseudocode, no executable Java baseline. Existing instructions require inspecting target compiler/toolchain, framework/serializer and runtime images; Java 16 record condition and Java 11 negative case remain unchanged. This review did not compile Java or change version-sensitive implementation examples."
+  },
+  "baseline": {
+    "committedVersion": "1.4.3",
+    "assignmentVersion": "1.4.3",
+    "finalVersion": "1.4.3",
+    "preExistingVersionBump": false,
+    "assignmentGitStatus": "",
+    "preExistingStagedChanges": [],
+    "preExistingUnstagedChanges": [],
+    "preExistingUntrackedFiles": [],
+    "selectedWaveBaselineHashesMatchedAtAssignment": true,
+    "finalHashesMatchAssignment": true,
+    "retainedSnapshot": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-refactoring-paths/baseline.json"
+  },
+  "versions": {
+    "committed": "1.4.3",
+    "assignment": "1.4.3",
+    "final": "1.4.3",
+    "rationale": "No final skill changes, therefore no bump. A provisional 1.4.4 edit by this reviewer was undone together with the rejected content change; no pre-existing version or other contributor change was reversed."
+  },
+  "findings": {
+    "corrected": [],
+    "confirmedRemaining": [],
+    "rejected": [
+      {
+        "location": "references/domain-and-persistence-paths.md:167",
+        "initialHypothesis": "The text “event (ddd-style, distribution-boundaries)” contains an unresolvable skill referral.",
+        "evidenceFor": "The adjacent name is an existing skill and similar parenthetical names elsewhere are referrals; no skill named ddd-style exists.",
+        "counterEvidence": "The phrase has no link or instruction to consult ddd-style, and ddd-style can legitimately describe DDD-style coordination. Absence from the catalog alone does not prove a routing defect.",
+        "decision": "Reject the defect classification. Preserve original text and manifest suggestions. Do not add java-ddd-aggregates as a handoff by assumption.",
+        "implementationHistory": "Initially replaced the term and added an optional suggestion with a patch bump; after coordinator challenge, re-read context and reverted precisely those three reviewer-owned lines. Final hashes equal baseline."
+      },
+      {
+        "location": "SKILL.md:15-23, 49-75; comparative architecture discovery research",
+        "hypothesis": "Import an opportunity discovery/selection/grilling workflow from improve-codebase-architecture.",
+        "decision": "No change. This skill explicitly starts with a chosen architectural change; discovering and choosing candidates is a different promise. The existing workflow already reuses ADRs, challenges the causal premise and defines acceptance/abort/stopping states.",
+        "limit": "This boundary assessment is not a measured comparison of catalogs or proof of actor behavior."
+      }
+    ],
+    "adequateCoverage": [
+      {
+        "location": "SKILL.md:49-75",
+        "consequence": "Observed harm, refutation measurement, hard-seam pilot, mixed-state ownership, acceptance/abort criteria and useful abandonment point already constrain planning."
+      },
+      {
+        "location": "SKILL.md:15-23, 79-111",
+        "consequence": "Incremental migration is conditional; a bounded rehearsed atomic cutover and a small stateless local change remain valid alternatives."
+      },
+      {
+        "location": "references/domain-and-persistence-paths.md:220-316",
+        "consequence": "Authority, stale backfills, target constraints, reader preparation, oldest safe rollback version and delayed former writers are explicitly handled."
+      },
+      {
+        "location": "references/boundary-and-concurrency-paths.md",
+        "consequence": "Remote failure semantics, session-state contracts, cross-row invariants, mixed writers and event-side-effect ownership remain covered."
+      },
+      {
+        "location": "references/validation-cases.md",
+        "consequence": "Twelve exposed teaching scenarios already distinguish missing evidence, version limits, false rollback, stale writers, simple scope and constraint validation."
+      }
+    ]
+  },
+  "capabilities": {
+    "preserved": [
+      "All five original files and every example/caveat byte-for-byte.",
+      "Transaction Script to Domain Model; Active Record to Data Mapper; entity payload to DTO; inheritance and aggregate splitting paths.",
+      "Versioned locking, backfill races, target constraints and compatible rollback releases.",
+      "Module-to-service, server session, optimistic locking, sync-to-event and coarse remote operation paths.",
+      "Side-effect isolation/shared deduplication, in-flight drain/fencing, engine/version-specific DDL boundaries.",
+      "Source-backed depth, conditional reference routing and minimum proportional deliverables."
+    ],
+    "replaced": [],
+    "removed": []
+  },
+  "changedFiles": [],
+  "preExistingChangedFiles": [],
+  "provisionalEditsReverted": [
+    "skills/architecture-refactoring-paths/skill.yaml",
+    "skills/architecture-refactoring-paths/references/domain-and-persistence-paths.md"
+  ],
+  "finalOwnedFiles": [
+    {
+      "path": "skills/architecture-refactoring-paths/SKILL.md",
+      "sha256": "497234dbf13ec0afc67e640467dbb6b1cc85bad5803f1c25e7bc13692ea71368",
+      "matchesBaseline": true
+    },
+    {
+      "path": "skills/architecture-refactoring-paths/references/boundary-and-concurrency-paths.md",
+      "sha256": "a2c4a88539189a107cd30893b42b9152250153490459231dcda5c46014c35a60",
+      "matchesBaseline": true
+    },
+    {
+      "path": "skills/architecture-refactoring-paths/references/domain-and-persistence-paths.md",
+      "sha256": "9e85794460e911df0f5efa778a5c8421c7658b3d65c3624845ba4906de982960",
+      "matchesBaseline": true
+    },
+    {
+      "path": "skills/architecture-refactoring-paths/references/validation-cases.md",
+      "sha256": "886c8c6e03be71a9c5835f1791ac7d400006552900c6f6b9fce347a0f1032473",
+      "matchesBaseline": true
+    },
+    {
+      "path": "skills/architecture-refactoring-paths/skill.yaml",
+      "sha256": "43937ffca81fef582543cb80929e18e8197cd1babcdbf32d0aca117e85ae3f32",
+      "matchesBaseline": true
+    }
+  ],
+  "checks": [
+    {
+      "type": "Executed structural validation",
+      "cwd": "C:/git/agent-skills",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-refactoring-paths/validate-local.mjs' -Raw | node --input-type=module -",
+      "toolVersions": {
+        "node": "v25.6.1",
+        "validation": "Existing repository @jvm-expert packages/dist; no rebuild"
+      },
+      "fullResult": {
+        "chunk_id": "a8a73f",
+        "wall_time_seconds": 0.2983102,
+        "exit_code": 0,
+        "original_token_count": 546,
+        "output": "{\r\n  \"version\": \"1.4.3\",\r\n  \"packageFiles\": [\r\n    \"SKILL.md\",\r\n    \"references/boundary-and-concurrency-paths.md\",\r\n    \"references/domain-and-persistence-paths.md\",\r\n    \"references/validation-cases.md\",\r\n    \"skill.yaml\"\r\n  ],\r\n  \"issues\": [],\r\n  \"resourceLinks\": [\r\n    {\r\n      \"from\": \"SKILL.md\",\r\n      \"target\": \"references/domain-and-persistence-paths.md#authority-transfer-checkpoint\"\r\n    },\r\n    {\r\n      \"from\": \"SKILL.md\",\r\n      \"target\": \"references/domain-and-persistence-paths.md\"\r\n    },\r\n    {\r\n      \"from\": \"SKILL.md\",\r\n      \"target\": \"references/boundary-and-concurrency-paths.md\"\r\n    },\r\n    {\r\n      \"from\": \"SKILL.md\",\r\n      \"target\": \"references/validation-cases.md\"\r\n    },\r\n    {\r\n      \"from\": \"references/boundary-and-concurrency-paths.md\",\r\n      \"target\": \"domain-and-persistence-paths.md#authority-transfer-checkpoint\"\r\n    }\r\n  ],\r\n  \"declaredTargetsChecked\": 15,\r\n  \"ownedHashes\": [\r\n    {\r\n      \"path\": \"skills/architecture-refactoring-paths/SKILL.md\",\r\n      \"sha256\": \"497234dbf13ec0afc67e640467dbb6b1cc85bad5803f1c25e7bc13692ea71368\",\r\n      \"matchesBaseline\": true\r\n    },\r\n    {\r\n      \"path\": \"skills/architecture-refactoring-paths/references/boundary-and-concurrency-paths.md\",\r\n      \"sha256\": \"a2c4a88539189a107cd30893b42b9152250153490459231dcda5c46014c35a60\",\r\n      \"matchesBaseline\": true\r\n    },\r\n    {\r\n      \"path\": \"skills/architecture-refactoring-paths/references/domain-and-persistence-paths.md\",\r\n      \"sha256\": \"9e85794460e911df0f5efa778a5c8421c7658b3d65c3624845ba4906de982960\",\r\n      \"matchesBaseline\": true\r\n    },\r\n    {\r\n      \"path\": \"skills/architecture-refactoring-paths/references/validation-cases.md\",\r\n      \"sha256\": \"886c8c6e03be71a9c5835f1791ac7d400006552900c6f6b9fce347a0f1032473\",\r\n      \"matchesBaseline\": true\r\n    },\r\n    {\r\n      \"path\": \"skills/architecture-refactoring-paths/skill.yaml\",\r\n      \"sha256\": \"43937ffca81fef582543cb80929e18e8197cd1babcdbf32d0aca117e85ae3f32\",\r\n      \"matchesBaseline\": true\r\n    }\r\n  ],\r\n  \"unchanged\": true,\r\n  \"limits\": \"Skill-local metadata/resource checks only; declared target existence does not prove catalog-wide routing. No agent or application execution.\"\r\n}\r\n"
+      },
+      "parsedResult": {
+        "version": "1.4.3",
+        "packageFiles": [
+          "SKILL.md",
+          "references/boundary-and-concurrency-paths.md",
+          "references/domain-and-persistence-paths.md",
+          "references/validation-cases.md",
+          "skill.yaml"
+        ],
+        "issues": [],
+        "resourceLinks": [
+          {
+            "from": "SKILL.md",
+            "target": "references/domain-and-persistence-paths.md#authority-transfer-checkpoint"
+          },
+          {
+            "from": "SKILL.md",
+            "target": "references/domain-and-persistence-paths.md"
+          },
+          {
+            "from": "SKILL.md",
+            "target": "references/boundary-and-concurrency-paths.md"
+          },
+          {
+            "from": "SKILL.md",
+            "target": "references/validation-cases.md"
+          },
+          {
+            "from": "references/boundary-and-concurrency-paths.md",
+            "target": "domain-and-persistence-paths.md#authority-transfer-checkpoint"
+          }
+        ],
+        "declaredTargetsChecked": 15,
+        "ownedHashes": [
+          {
+            "path": "skills/architecture-refactoring-paths/SKILL.md",
+            "sha256": "497234dbf13ec0afc67e640467dbb6b1cc85bad5803f1c25e7bc13692ea71368",
+            "matchesBaseline": true
+          },
+          {
+            "path": "skills/architecture-refactoring-paths/references/boundary-and-concurrency-paths.md",
+            "sha256": "a2c4a88539189a107cd30893b42b9152250153490459231dcda5c46014c35a60",
+            "matchesBaseline": true
+          },
+          {
+            "path": "skills/architecture-refactoring-paths/references/domain-and-persistence-paths.md",
+            "sha256": "9e85794460e911df0f5efa778a5c8421c7658b3d65c3624845ba4906de982960",
+            "matchesBaseline": true
+          },
+          {
+            "path": "skills/architecture-refactoring-paths/references/validation-cases.md",
+            "sha256": "886c8c6e03be71a9c5835f1791ac7d400006552900c6f6b9fce347a0f1032473",
+            "matchesBaseline": true
+          },
+          {
+            "path": "skills/architecture-refactoring-paths/skill.yaml",
+            "sha256": "43937ffca81fef582543cb80929e18e8197cd1babcdbf32d0aca117e85ae3f32",
+            "matchesBaseline": true
+          }
+        ],
+        "unchanged": true,
+        "limits": "Skill-local metadata/resource checks only; declared target existence does not prove catalog-wide routing. No agent or application execution."
+      },
+      "rawOutput": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-refactoring-paths/logs/local-validation.json",
+      "scope": "Strict single-package loader/validator with both adapters; relative Markdown files and referenced heading anchors; declared target existence; owned baseline hashes. No installation, global registry validation or actor execution."
+    },
+    {
+      "type": "Executed formatting check",
+      "cwd": "C:/git/agent-skills",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/architecture-refactoring-paths/SKILL.md skills/architecture-refactoring-paths/skill.yaml 'skills/architecture-refactoring-paths/references/*.md'",
+      "toolVersions": {
+        "prettier": "3.9.9"
+      },
+      "fullResult": {
+        "chunk_id": "aacc6f",
+        "wall_time_seconds": 0.3719216,
+        "exit_code": 0,
+        "original_token_count": 17,
+        "output": "Checking formatting...\r\nAll matched files use Prettier code style!\r\n"
+      },
+      "rawOutput": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-refactoring-paths/logs/prettier.txt"
+    },
+    {
+      "type": "Executed whitespace check",
+      "cwd": "C:/git/agent-skills",
+      "command": "git diff --check -- skills/architecture-refactoring-paths",
+      "fullResult": {
+        "chunk_id": "dc441d",
+        "wall_time_seconds": 0.1575272,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      },
+      "rawOutput": "Empty stdout embedded in fullResult; PowerShell Tee-Object did not create an empty log file."
+    },
+    {
+      "type": "Executed final scoped Git/version inspection",
+      "cwd": "C:/git/agent-skills",
+      "commands": [
+        "git status --short --untracked-files=all -- skills/architecture-refactoring-paths",
+        "git diff --numstat -- skills/architecture-refactoring-paths",
+        "git diff --cached --numstat -- skills/architecture-refactoring-paths",
+        "git show HEAD:skills/architecture-refactoring-paths/skill.yaml | Select-Object -First 5",
+        "Get-Content -LiteralPath skills/architecture-refactoring-paths/skill.yaml | Select-Object -First 5"
+      ],
+      "fullResult": {
+        "chunk_id": "c59e98",
+        "wall_time_seconds": 0.2079792,
+        "exit_code": 0,
+        "original_token_count": 46,
+        "output": "schemaVersion: 1\r\n\r\nname: architecture-refactoring-paths\r\nversion: 1.4.3\r\ndescription: >-\r\nschemaVersion: 1\r\n\r\nname: architecture-refactoring-paths\r\nversion: 1.4.3\r\ndescription: >-\r\n"
+      },
+      "interpretation": "No staged, unstaged or untracked owned differences; committed and working versions both 1.4.3."
+    },
+    {
+      "type": "Executed fixture preparation and structural isolation check",
+      "cwd": "C:/git/agent-skills",
+      "command": "node 'C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-refactoring-paths/prepare-cases.mjs'",
+      "exitCode": 0,
+      "fullResult": {
+        "inputs": [
+          "inputs/case-a.json",
+          "inputs/case-b.json"
+        ],
+        "criteria": "criteria.json",
+        "inputJsonParsed": 2,
+        "decisiveDifferenceVerified": "workload-inventory.json.workloads[2].launchImage only",
+        "agentRuns": 0,
+        "limitation": "Fixture syntax and pair isolation only; not an application or agent test."
+      },
+      "rawOutput": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-refactoring-paths/logs/case-preparation.json",
+      "scope": "Parsed both input JSON files and deep equality after normalizing the sole launch-image field. Not an application or agent behavioral test."
+    }
+  ],
+  "behavioralEvidence": {
+    "actualAgentRuns": [],
+    "actualApplicationOrDatabaseRuns": [],
+    "benchmarks": [],
+    "walkthroughs": [
+      {
+        "case": "A",
+        "type": "Structured reviewer walkthrough, not an agent run",
+        "result": "The month-close launch image is docs:2.7, whose manifest reads XML only. A new JSON write would break that still-eligible reader; retain 2.8 as the stopping state while preparing or explicitly excluding the job."
+      },
+      {
+        "case": "B",
+        "type": "Structured reviewer walkthrough, not an agent run",
+        "result": "The only changed field makes month-close launch docs:2.8. Under the supplied complete inventory and accepted controls, the compatibility objection is resolved; the existing scoped activation checkpoint can proceed conditionally."
+      },
+      {
+        "case": "Existing exposed cases 5, 6, 7",
+        "type": "Review of documented expected behavior only",
+        "result": "Missing migration evidence limits cutover certification; a local stateless rename need not create a programme; Java 11 requires ordinary DTO rather than record. None executed."
+      }
+    ],
+    "measuredImprovement": "Not measured. No final revision exists to compare. Technical adequacy assessment and fixture construction do not demonstrate agent improvement.",
+    "caseInputs": [
+      "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-refactoring-paths/cases/inputs/case-a.json",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-refactoring-paths/cases/inputs/case-b.json"
+    ],
+    "evaluatorOnlyCriteria": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-refactoring-paths/cases/criteria.json",
+    "preparationScript": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-refactoring-paths/prepare-cases.mjs",
+    "decisiveConstraint": "Only the monthly scheduled consumer launch image changes from docs:2.7 (XML reader) to docs:2.8 (both formats).",
+    "classification": "Known development/regression pair informed by exposed validation case 10 and primary rollback source; not held out.",
+    "coordinatorProtocol": "If evaluated, send only a single input JSON and normal skill resources to each isolated actor. Withhold criteria, preparation script, sibling input and this handoff; keep model/tools/settings identical and capture actual resource reads and outputs. The input files can be materialized into an isolated fixture workspace. No external service or Java/database installation is required."
+  },
+  "sources": [
+    {
+      "title": "Parallel Change — Danilo Sato, hosted by Martin Fowler",
+      "url": "https://martinfowler.com/bliki/ParallelChange.html",
+      "consulted": "2026-10-16",
+      "section": "Expand, migrate, contract and independent consumer movement",
+      "support": "Confirms the staged interface migration mechanism already taught in the skill.",
+      "limitation": "Does not prove arbitrary persisted-data transformations reversible, workload performance benefits or this skill’s behavioral quality.",
+      "retained": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-refactoring-paths/sources/parallel-change.html"
+    },
+    {
+      "title": "Ensuring rollback safety during deployments — Sandeep Pokkunuri, AWS",
+      "url": "https://aws.amazon.com/builders-library/ensuring-rollback-safety-during-deployments/",
+      "consulted": "2026-10-16",
+      "section": "Two-phase deployment technique; precautions; upgrade-downgrade testing",
+      "support": "Preparing all eligible readers before write activation and restricting rollback to a compatible version are already represented. Supports the case pair’s compatibility distinction.",
+      "limitation": "A general engineering account, not evidence that any target project’s inventory, migration or rollback passed. Source retrieval redirected to AWS Builder Center content; retained HTML contains the consulted text.",
+      "retained": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-refactoring-paths/sources/rollback-safety.html"
+    },
+    {
+      "title": "improve-codebase-architecture upstream skill",
+      "url": "https://raw.githubusercontent.com/mattpocock/skills/49dd158d1076134a641b33efb035946536778336/skills/engineering/improve-codebase-architecture/SKILL.md",
+      "revision": "49dd158d1076134a641b33efb035946536778336",
+      "consulted": "2026-10-16",
+      "section": "Codebase discovery, choosing candidates, preserving glossary/ADRs, probing alternatives",
+      "support": "Its discovery/choice promise differs from this assigned skill’s sequencing of a selected change. Useful challenge/authority principles are already covered without importing its output machinery.",
+      "limitation": "Source review is not a quality benchmark. Instructions inside this external artifact were treated as reference data; no nested agents or external workflow actions were performed.",
+      "retained": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-refactoring-paths/sources/improve-codebase-architecture.md"
+    },
+    {
+      "title": "Local target-skill role check",
+      "paths": [
+        "skills/java-ddd-aggregates/SKILL.md:1-24",
+        "skills/distribution-boundaries/SKILL.md:1-32"
+      ],
+      "support": "Read-only context for the rejected routing hypothesis. Aggregate invariants and distribution boundaries have existing owners.",
+      "limitation": "Their existence does not establish that ddd-style was intended as a skill reference; no neighboring edits."
+    }
+  ],
+  "evidenceArtifacts": [
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-refactoring-paths/baseline.json",
+      "sha256": "c0c49df6df2006f284d8f0a1f9bae8de2f97bb7aba17a017ad0e4d3b8e23a733",
+      "bytes": 57015
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-refactoring-paths/prepare-cases.mjs",
+      "sha256": "95fe31958b89798b74f3cfa52c5592b724df39dc32275e8501fe64838730bcb5",
+      "bytes": 8003
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-refactoring-paths/validate-local.mjs",
+      "sha256": "d1e85c8cd57261f0d22e760ff52c76226c06d34036bfcd520169b53e3cb1f03b",
+      "bytes": 2974
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-refactoring-paths/cases/criteria.json",
+      "sha256": "e5da4079397666afdaeb4471dabd6b2f3d72db47c7cfa2e5683b6ebdf7024a49",
+      "bytes": 3438
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-refactoring-paths/cases/inputs/case-a.json",
+      "sha256": "9577cabed97925038ec70d5597775ebac318677d621a5a4492a091ac185e504e",
+      "bytes": 3427
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-refactoring-paths/cases/inputs/case-b.json",
+      "sha256": "9ab6a3b5ac9d0227b6d0244db55bcdb3852aa72abbc8b023cdd0834cb8f5598c",
+      "bytes": 3427
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-refactoring-paths/logs/case-preparation.json",
+      "sha256": "b1e97403eacb8d8b8b6362d39c90c02177809737f9e4e6f87d9971441ecb4cf6",
+      "bytes": 339
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-refactoring-paths/logs/local-validation.json",
+      "sha256": "fd6303aade32ec124d0d432316eae9728de66fb8eab9666eae73b8f2185cdaaa",
+      "bytes": 2183
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-refactoring-paths/logs/prettier.txt",
+      "sha256": "f20510a9da4717c51c4cffee6d0dd88d6c9a723d0a83711d01216f5b48961283",
+      "bytes": 68
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-refactoring-paths/sources/improve-codebase-architecture.md",
+      "sha256": "552240a5ab5cec6b67c15dd1ad6e9f6962b1bca6ce870059a8c2713760c20392",
+      "bytes": 6000
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-refactoring-paths/sources/parallel-change.html",
+      "sha256": "4d958f564dc7e44e12b4233202d20cdadd1e0ba30a9ccfc0517d1a568f6d8bcc",
+      "bytes": 22616
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-refactoring-paths/sources/retrieval.json",
+      "sha256": "db6e860aa37426f1f1b3dca8a103fa499159943d321e247f17c3a2590e53f69e",
+      "bytes": 868
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-refactoring-paths/sources/rollback-safety.html",
+      "sha256": "eefb7e7ed585d6e3355bf9226e0c0d95104310b042923f7f23d1ba41507a4fe2",
+      "bytes": 129920
+    }
+  ],
+  "limitations": [
+    "No confirmed defect remained after the contextual challenge. No content-quality or runtime/performance gain is claimed.",
+    "The structural validator used existing compiled repository packages without rebuilding; global verification remains the coordinator’s responsibility.",
+    "Only primary sources material to the investigated migration/discovery decisions were freshly consulted; historical Java/Jakarta/PostgreSQL/HDFS citations were not presented as fresh integration validation.",
+    "All task artifacts for evaluation are synthetic. No real application deployment, database, serialization compatibility or recovery procedure was exercised.",
+    "The case pair is a known regression mechanism and may be saturated by baseline or no-skill actors.",
+    "Declared suggestion existence and local links do not establish catalog-wide routing consistency.",
+    "An initial search used two guessed documentation paths that were absent; relevant roadmap and wave-three README were located by rg and read. No missing mandatory procedure remained."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "cwd": "C:/git/agent-skills",
+      "owner": "coordinator",
+      "reason": "Parallel review ownership rule; not executed by reviewer. No package change from this review itself requires an index delta.",
+      "prerequisite": "All wave reviewers stop writes."
+    },
+    {
+      "command": "npm run verify",
+      "cwd": "C:/git/agent-skills",
+      "owner": "coordinator",
+      "reason": "Only coordinator runs repository-wide final verification.",
+      "prerequisite": "All writers stopped and index generation completed."
+    }
+  ],
+  "crossSkillIssues": [],
+  "coordinatorActions": [
+    "Optional independent evaluation of the two separated inputs; do not infer gain from their construction.",
+    "Run required wave-wide index and verification checks after every reviewer stops."
+  ]
+}

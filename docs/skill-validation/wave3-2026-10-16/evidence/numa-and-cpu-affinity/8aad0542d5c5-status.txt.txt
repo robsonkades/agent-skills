@@ -1,0 +1,5 @@
+Name:	java
+Pid:	4242
+Cpus_allowed_list:	0-7
+Mems_allowed_list:	0-1
+

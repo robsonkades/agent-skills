@@ -50,6 +50,33 @@ the supported prior schema with representative data when that is the deployment 
 fresh-database startup alone cannot verify an upgrade. A failed migration must fail that
 startup/test path. Do not silently fall back to an embedded database.
 
+## When startup customization is part of acceptance
+
+In Boot 4.1.1, `@SpringBootTest` defaults to `useMainMethod = NEVER`: it creates the
+context from the selected configuration without invoking that class's `main`. A real
+server does not change this default. Profiles or initializers installed only by a custom
+`SpringApplication` in `main` can therefore be absent while ordinary bean-wiring tests pass.
+
+Follow the deployed entry point to its actual customization, then inspect which application
+configuration the test selects and which properties/profiles it supplies. When the claim
+requires that main-method path, use the supported `useMainMethod = ALWAYS` option with the
+actual application class; setup must fail if the required configuration/main method is
+missing. `WHEN_AVAILABLE` permits the normal loading fallback and is appropriate only when
+that fallback is acceptable. Keep ordinary loading for a claim that does not depend on
+custom launch behavior; do not widen slices or add a new main method to the teaching fixture.
+
+Assert the customization's meaningful application effect, such as selection of the required
+implementation, rather than only context startup or a main-invocation counter. A test that
+copies the expected profile into `@ActiveProfiles` can still pass after the application's
+profile registration is removed. For a startup regression check, remove the relevant
+registration in a disposable copy and confirm the affected assertion fails; test overrides
+must not supply the very behavior whose launch registration is being checked. Retain
+unrelated isolation settings and separately test ordinary wiring when that is the claim.
+
+Invoking `main` through the Boot harness still uses test configuration and classpath. It does
+not prove the packaged artifact or deployment entry point works. Add an isolated launch check
+only when that stronger delivery requirement exists; keep its evidence distinct.
+
 ## Compare the published contract with the actual boundary
 
 When an OpenAPI contract is shipped, identify whether its source of truth is an authored
@@ -111,10 +138,15 @@ fresh per-suite counts, failures, errors and skips, and report the actual databa
 request transport and authentication boundary exercised. Keep fast slice evidence and
 full service evidence distinct. High line coverage cannot fill an untested boundary.
 
-Sources verified on 2026-09-29:
+Sources verified on 2026-09-29; main-method selection rechecked on 2026-10-16:
 
 - [Boot 4.1.1 test modes and slices](https://github.com/spring-projects/spring-boot/blob/v4.1.1/documentation/spring-boot-docs/src/docs/antora/modules/reference/pages/testing/spring-boot-applications.adoc)
-  establishes what mock, live-server and JPA contexts actually configure.
+  establishes what mock, live-server and JPA contexts actually configure, including the
+  separate main-method selection policy.
+- [Boot 4.1.1 SpringBootTest contract](https://github.com/spring-projects/spring-boot/blob/v4.1.1/core/spring-boot-test/src/main/java/org/springframework/boot/test/context/SpringBootTest.java)
+  declares `NEVER` as the default and the strict `ALWAYS` versus fallback `WHEN_AVAILABLE` choices.
+- [Boot 4.1.1 context loader](https://github.com/spring-projects/spring-boot/blob/v4.1.1/core/spring-boot-test/src/main/java/org/springframework/boot/test/context/SpringBootContextLoader.java)
+  selects the main-method path and still configures it for the test environment.
 - [Framework 7.0.9 MockMvc and end-to-end boundaries](https://github.com/spring-projects/spring-framework/blob/v7.0.9/framework-docs/modules/ROOT/pages/testing/mockmvc/vs-end-to-end-integration-tests.adoc)
   explains mock servlet objects, real MVC configuration and missing container dispatch.
 - [Boot 4.1.1 test services](https://github.com/spring-projects/spring-boot/blob/v4.1.1/documentation/spring-boot-docs/src/docs/antora/modules/reference/pages/testing/testcontainers.adoc)

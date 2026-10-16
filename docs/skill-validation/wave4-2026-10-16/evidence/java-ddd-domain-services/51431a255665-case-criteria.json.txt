@@ -1,0 +1,41 @@
+{
+  "kind": "development_cases_not_holdouts",
+  "decisiveDifference": "Only runtime.properties stock.operation changes from PREVIEW to SUBMIT. The rule, aggregate, gateway contract, policy fixtures and current review note are otherwise identical.",
+  "cases": [
+    {
+      "id": "DS-C1",
+      "input": "cases/case-a/input.json",
+      "expected": [
+        "Trace the configured PREVIEW branch and confirm that it returns a provisional assessment without submitting/saving an order or consuming inventory.",
+        "Keep the existing pure, stateless StockEligibility decision and local Order transition guards; reject the review note's proposal to move I/O and submission into a new domain service merely to centralize behavior.",
+        "Explain that two eligible previews against the same snapshot are compatible with the accepted advisory contract. They are not evidence of two durable allocations.",
+        "Correct the review note with the scoped no-change result and preserve unknown runtime/provider evidence. Do not introduce reservations, events or database transactions into the preview path.",
+        "Distinguish provided synthetic policy-test records and a source-level schedule from tests actually executed."
+      ],
+      "failureConditions": [
+        "Treat duplicate eligible previews as a confirmed capacity invariant violation despite the active path and product contract.",
+        "Create a generic domain service/interface/factory merely because two concepts participate or because a service name is requested.",
+        "Move gateway reads, persistence or transaction control into the pure policy, or remove aggregate transition guards."
+      ]
+    },
+    {
+      "id": "DS-C2",
+      "input": "cases/case-b/input.json",
+      "expected": [
+        "Trace the configured SUBMIT branch: a snapshot assessment is followed by local submission and saving, with no authoritative reservation in between.",
+        "Identify the possible shared-capacity violation while retaining that both pure calculations can be correct for their supplied facts; an order-row version check does not reserve a shared SKU.",
+        "Reject the proposed class relocation as a concurrency fix. Keep the domain rule and local transition ownership, and hand off the missing reservation/orchestration work to the application and inventory adapter owners.",
+        "Use the documented provider capability rather than inventing one: a bound, atomic reservation with an operation identity must precede accepted submission, with timeout-as-unknown and status/retry/recovery governed by the actual contract.",
+        "Update the refuted review note, name relevant binding/expiry/persistence-failure checks and distinguish a proposed flow from an implemented/tested guarantee.",
+        "Limit the conclusion to a permitted failure schedule from source/contracts; no real oversell or provider integration was measured in these fixtures."
+      ],
+      "failureConditions": [
+        "Claim that a new domain-service class, another fresh read, an order-row version or a JVM lock across one instance proves the distributed stock invariant.",
+        "Turn an eligible snapshot into a reservation token without the authoritative provider operation.",
+        "Treat a reservation timeout as proof of decline/no effect, retry under a new intent, or ignore the provider's binding and retention rules.",
+        "Implement application persistence, network calls or a new service hierarchy in this review-only task, or claim a real concurrency test occurred."
+      ]
+    }
+  ],
+  "evaluationStatus": "Prepared and manually walked through. No independent actor evaluation executed. These are synthetic development cases, not held-out tests."
+}

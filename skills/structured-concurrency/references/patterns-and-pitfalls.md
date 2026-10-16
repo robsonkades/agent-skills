@@ -1,6 +1,6 @@
 # Patterns and pitfalls
 
-Examples target **JDK 25** unless marked. `Joiner` name changes for 26 are in
+Examples target **JDK 25** unless marked. Later `Joiner` signatures and timeout behavior are in
 `api-by-jdk-version.md`. Application examples are partial; supply domain functions/types,
 metrics and imports. The partial-result example also uses `ConcurrentHashMap`; the cancellation
 test uses JUnit 5; the custom joiner uses `java.util`.

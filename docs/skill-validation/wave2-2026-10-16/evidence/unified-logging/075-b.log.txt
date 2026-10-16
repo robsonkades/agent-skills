@@ -1,0 +1,2 @@
+[2026-10-16T09:48:09.430-0300][info][class,load] java.lang.Shutdown source: shared objects file
+[2026-10-16T09:48:09.430-0300][info][class,load] java.lang.Shutdown$Lock source: shared objects file

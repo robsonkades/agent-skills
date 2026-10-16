@@ -48,6 +48,8 @@ validation. A supported existing ordering design can remain unchanged.
 2. **Resolve an unclear ordering requirement before designing for it.** Commutative handlers,
    or a version guard on full snapshots, can relax arrival order for specified outcomes.
    Check intermediate transitions and external effects before relaxing keys or sequencing.
+   Check cold rebuild too: compaction keeps the last appended value per key, which need not
+   have the highest business version. A live sink's version guard cannot recover a removed record.
    See `references/designing-without-ordering.md`.
 3. **Choose the partition key from the ordering scope**, then check it for skew. The entity
    whose order must hold forces the key; whether that key is evenly loaded is a separate

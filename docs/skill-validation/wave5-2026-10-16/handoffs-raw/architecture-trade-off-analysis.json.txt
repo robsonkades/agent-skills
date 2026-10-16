@@ -1,0 +1,410 @@
+{
+  "schemaVersion": 1,
+  "skill": "architecture-trade-off-analysis",
+  "status": "NO_CHANGES_NEEDED",
+  "ownedPath": "skills/architecture-trade-off-analysis/**",
+  "reviewer": "/root/quality01",
+  "wave": 5,
+  "reviewDate": "2026-10-16",
+  "summary": "Reviewed the complete six-file package against the full prompt and cumulative wave-five criteria. Existing 1.2.4 guidance already covers the consequential decision boundaries examined. No supported in-scope defect was found; preserve rather than duplicate safeguards. This is a bounded review result, not a guarantee of universal correctness or measured agent benefit.",
+  "scope": {
+    "promise": "Compare complete feasible architectural alternatives under quality, cost, uncertainty and stakeholder preferences; produce a recommendation, conditional choice or bounded evidence-gathering step.",
+    "activate": "Conflicting quality goals, advocacy or scorecards presented as verdicts, mixed abstraction levels, uncertain benchmark implications.",
+    "excluded": "ADR lifecycle, primary quality-driver elicitation, domain pattern implementation and migration execution.",
+    "successCriteria": [
+      "Inspect actual contracts, code/configuration, consumers and existing operational evidence; implementation convention does not establish policy.",
+      "Screen mandatory obligations and transition feasibility before preference; failed and unknown obligations do not become a numerical pass.",
+      "Use comparable business milestones, meaningful value scales and sensitivity rather than unqualified topology or performance claims.",
+      "Preserve feasible current, staged and competing alternatives, including a dominant choice without manufacturing trade-offs.",
+      "Carry evidence into an actionable decision artifact while retaining unrelated accepted constraints and distinguishing authorization from recommendation."
+    ],
+    "procedureRead": [
+      "AGENTS.md",
+      "docs/skill-review-prompt.md (complete)",
+      "docs/parallel-skill-reviews.md",
+      "docs/skill-validation/wave5-2026-10-16/review-brief.md",
+      "skills/skill-engineering/SKILL.md",
+      "skills/skill-engineering/references/evidence-and-confidence.md",
+      "skills/skill-engineering/references/evaluation.md",
+      "skills/skill-engineering/references/resource-design.md",
+      "skills/skill-engineering/references/anti-patterns.md",
+      "docs/skill-validation/skills-comparative-research-2026-10-16.md",
+      "Prior wave reports: unchanged prior readings reused; wave4/behavior-results.md reread"
+    ],
+    "javaCompatibility": "The analysis method declares no Java runtime baseline and no executable Java example. It requires checking a consuming project's compiler/toolchains, resolved dependencies, CI/runtime and compatibility obligations before recommending Java-dependent candidates; no upgrade is authorized implicitly."
+  },
+  "baseline": {
+    "source": "docs/skill-validation/wave5-2026-10-16/baseline.json",
+    "initialStatus": "",
+    "committedVersion": "1.2.4",
+    "assignmentVersion": "1.2.4",
+    "preExistingVersionBump": false,
+    "preExistingChanges": [],
+    "readFiles": [
+      "skills/architecture-trade-off-analysis/SKILL.md",
+      "skills/architecture-trade-off-analysis/references/bias-and-evidence.md",
+      "skills/architecture-trade-off-analysis/references/qualitative-and-quantitative.md",
+      "skills/architecture-trade-off-analysis/references/validation-cases.md",
+      "skills/architecture-trade-off-analysis/references/worked-analysis.md",
+      "skills/architecture-trade-off-analysis/skill.yaml"
+    ],
+    "allSixFinalHashesEqualAssignment": true,
+    "finalFileHashes": [
+      {
+        "path": "skills/architecture-trade-off-analysis/SKILL.md",
+        "sha256": "f53d8686017e317089c10184ef2e7f31888b2e9d188b1845a3a650d283254ff0",
+        "bytes": 8682
+      },
+      {
+        "path": "skills/architecture-trade-off-analysis/references/bias-and-evidence.md",
+        "sha256": "a731d9c1cd50e931c911b9c1fff18575fbb9aa40ae6931efc138a8e1af53166a",
+        "bytes": 7650
+      },
+      {
+        "path": "skills/architecture-trade-off-analysis/references/qualitative-and-quantitative.md",
+        "sha256": "e8782a149de65eab35a6ccab46c6a72ea785ed8eb1f30ad6394095168087bf3f",
+        "bytes": 12939
+      },
+      {
+        "path": "skills/architecture-trade-off-analysis/references/validation-cases.md",
+        "sha256": "f12ee03e485033d72b5a4694e72a91d7a2e2d6d972b281eea61df672ff3930d6",
+        "bytes": 13282
+      },
+      {
+        "path": "skills/architecture-trade-off-analysis/references/worked-analysis.md",
+        "sha256": "7bbccf10a4da8d7111a2f779ffff29e66bef42c75d0b493d4acd13b1638d7f8a",
+        "bytes": 10500
+      },
+      {
+        "path": "skills/architecture-trade-off-analysis/skill.yaml",
+        "sha256": "dcc67e226a01189095c2f3893dda75c53014ae9e6bb4e5a59f56e050cc1320d2",
+        "bytes": 1620
+      }
+    ]
+  },
+  "findings": [
+    {
+      "id": "ATA-1",
+      "status": "ADEQUATE_PRESERVED",
+      "locations": [
+        "SKILL.md:21",
+        "SKILL.md:39",
+        "references/qualitative-and-quantitative.md:39"
+      ],
+      "finding": "The skill already distinguishes approved obligations from observed conventions, failed/unknown feasibility from preference, and target design from migration/recovery feasibility.",
+      "consequence": "Prevents attractive scores or a code rollback from silently overriding data, compatibility or consumer obligations.",
+      "evidence": [
+        "Full package inspection",
+        "NASA-DA",
+        "AWS-BLUEGREEN"
+      ],
+      "action": "No edit; preserve and exercise contract change in the paired cases."
+    },
+    {
+      "id": "ATA-2",
+      "status": "ADEQUATE_PRESERVED",
+      "locations": [
+        "references/qualitative-and-quantitative.md:100",
+        "references/qualitative-and-quantitative.md:175",
+        "references/validation-cases.md:42"
+      ],
+      "finding": "Meaningful additive value models remain a legitimate conditional option, with swing interpretation, preference independence, double-counting cautions and sensitivity. The illustrative 64/66 result, 0.625 tie and reversal are correct. ATAM terminology is explicitly bounded rather than calling a small matrix a complete ATAM.",
+      "consequence": "Avoids both arbitrary score totals and an unjustified ban on all quantified comparison.",
+      "evidence": [
+        "MCDA",
+        "SEI-ATAM",
+        "local-validation.json arithmetic and negative control"
+      ],
+      "action": "No edit."
+    },
+    {
+      "id": "ATA-3",
+      "status": "ADEQUATE_PRESERVED",
+      "locations": [
+        "references/qualitative-and-quantitative.md:136",
+        "references/worked-analysis.md:105"
+      ],
+      "finding": "The minimum comparison contract distinguishes equivalent semantics, acknowledgement and completed work, candidate failure and harness failure, and local observation and generalization. The worked example already separates durable acceptance, initiation and completion.",
+      "consequence": "Prevents a faster response from being reported as faster finished business work, without categorically rejecting asynchronous designs.",
+      "evidence": [
+        "MS-ASYNC",
+        "AWS-SAGA",
+        "Structured walkthrough of ATA-W5-A/B"
+      ],
+      "action": "No edit; return ordinary project artifacts to test use of this existing guidance."
+    },
+    {
+      "id": "ATA-4",
+      "status": "ADEQUATE_PRESERVED",
+      "locations": [
+        "SKILL.md:61",
+        "SKILL.md:67",
+        "SKILL.md:75",
+        "references/bias-and-evidence.md:67"
+      ],
+      "finding": "A-D remain proportionate effort heuristics, with conditional conclusions, no forced experiment or forced reversal, and explicit limits on bias-study and skill-performance claims.",
+      "consequence": "Keeps this skill in architectural analysis rather than mandatory implementation or unsupported causal claims.",
+      "evidence": [
+        "NASA-DA",
+        "BIAS-INTERVIEWS",
+        "BIAS-EXPERIMENT"
+      ],
+      "action": "No edit."
+    }
+  ],
+  "correctionsImplemented": [],
+  "remainingSupportedDefects": [],
+  "filesChangedByReviewer": [],
+  "filesChangedByOthersAtAssignment": [],
+  "changes": "None in the owned package; temporary review evidence only.",
+  "preservedCapabilities": [
+    "Complete comparable option sets, including status quo, staging/hybrid or deferral when materially relevant.",
+    "Hard constraints before preferences; retained nondifferentiating checks and unknown evidence handling.",
+    "Proportionate qualitative or numerical analysis with correct weighted-model conditions, dominance and preference disagreement.",
+    "State/transaction, transition, consumer and recovery mechanisms; conditional specialist referrals.",
+    "Value of information and experiment stopping rules; candidate-negative evidence separated from invalid harness observations.",
+    "Payment worked example, async milestone distinctions and all eleven existing validation cases.",
+    "Explicit evidence limitations and separation of analysis from ADR lifecycle, deployment authorization or implementation."
+  ],
+  "replacedOrRemovedCapabilities": [],
+  "versions": {
+    "committed": "1.2.4",
+    "assignment": "1.2.4",
+    "final": "1.2.4",
+    "bumpRationale": "No package contents changed; repository policy requires no bump."
+  },
+  "checks": {
+    "executedStructuralAndTechnical": [
+      {
+        "command": "node 'C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/architecture-trade-off-analysis-check/validate-local.cjs'",
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "result": "Strict CLI validation reports ok:true/issues:[]; explicit six-file format check passes; owned staged/unstaged/untracked state and diff are empty; every file hash equals assignment baseline; four local resource links and five declared referrals resolve.",
+        "log": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/architecture-trade-off-analysis-check/local-validation.json"
+      },
+      {
+        "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/architecture-trade-off-analysis-check/validate-local.cjs --negative-model",
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 1,
+        "expectedExitCode": 1,
+        "result": "REJECTED: Y total differs from published result",
+        "mutation": "The script changes only an in-memory copy of validation-cases.md from Y=66 to Y=65. The normal arithmetic parses original values and published results; mutation must be rejected. No package file is mutated.",
+        "limit": "Checker sensitivity to this arithmetic error only; not an agent-behavior improvement."
+      },
+      {
+        "command": "@'\nconst fs=require('node:fs'),assert=require('node:assert/strict');\nconst root='C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/architecture-trade-off-analysis-check';\nconst input=JSON.parse(fs.readFileSync(root+'/case-inputs.json','utf8'));\nconst criteria=JSON.parse(fs.readFileSync(root+'/case-criteria.json','utf8'));\nconst a={...input.commonFiles,...input.cases[0].fixtureOverrides};\nconst b={...input.commonFiles,...input.cases[1].fixtureOverrides};\nassert.deepEqual(Object.keys(a).sort(),Object.keys(b).sort());\nconst changed=Object.keys(a).filter(p=>a[p]!==b[p]);\nassert.deepEqual(changed,['api/report-contract.yaml']);\nassert.equal(a[changed[0]].replace('allowPendingOnSuccessfulPost: false','allowPendingOnSuccessfulPost: true'),b[changed[0]]);\nassert.equal(input.cases[0].input,input.cases[1].input);\nassert.equal(criteria.behavioralEvaluationsExecuted,0);\nassert.deepEqual(criteria.cases.map(x=>x.id),input.cases.map(x=>x.id));\nconst costs=a['ops/costs.csv'].trim().split('\\n').slice(1).map(line=>{const [candidate,monthly,transition,months]=line.split(',');return {candidate,total:Number(monthly)*Number(months)+Number(transition)};});\nassert.deepEqual(costs,[{candidate:'A',total:54000},{candidate:'B',total:43700}]);\nconsole.log(JSON.stringify({status:'PASS',fixtureFiles:Object.keys(a).length,cases:input.cases.map(x=>x.id),changedFiles:changed,onlyChangedField:'allowPendingOnSuccessfulPost false -> true',sameTask:true,costTotals:costs,inputCriteriaFilesSeparated:true,actorsExecuted:0},null,2));\n'@ | node",
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "result": "Both cases have twelve files, the identical task and exactly one changed field in one contract file. Cost totals are 54,000 and 43,700. Input/criteria files are separated.",
+        "log": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/architecture-trade-off-analysis-check/case-fixture-check.json"
+      },
+      {
+        "command": "Node fetch of the two cited PDFs, piped in memory to existing pdftotext -layout - -; exact commands in source-review.json.",
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "result": "HTTP 200 and pdftotext 0 for both PDFs. SEI §7.2 and UK MCDA §§5.4.4.4/6.2.10 consulted; document bytes/hashes retained.",
+        "log": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/architecture-trade-off-analysis-check/source-review.json"
+      }
+    ],
+    "executedBehavioralEvaluations": [],
+    "behavioralActorsExecuted": 0,
+    "walkthroughs": [
+      "Reviewed existing validation cases for complete option sets, legitimate weighted scoring, deadline pressure, dominance, acknowledgement/completion, ADR boundary, harness failure, Java baseline, modularization uncertainty and two transition/recovery cases.",
+      "Mapped the unchanged workflow to ATA-W5-A/B. The same proposed worker design is inadmissible when success may not precede completion and becomes a feasible lower-cost conditional recommendation when that sole constraint changes. Both cases still require correcting the unqualified speed claim and preserving accepted decisions."
+    ],
+    "failuresAndRecoveries": [
+      "Expected negative-control exit 1 is a success criterion of the local checker, not a failing skill.",
+      "Web PDF find/open produced Internal Error/no-match or timeout; direct HTTP and existing pdftotext recovered access. No missing-text or broken-link conclusion was inferred from those failures.",
+      "Exploratory Windows rg wildcard/assumed source-file paths produced path errors; corrected scoped paths were used. Broad historical output was truncated and not treated as complete review evidence.",
+      "Initial broad PDF excerpts were truncated, and one heading regex missed indentation; subsequent narrow/source-section inspection supplied the relevant text."
+    ],
+    "notApplicable": [
+      "Java compilation/runtime or framework integration: no added/changed executable example and no Java runtime baseline for this analysis method.",
+      "Application benchmark: the package contains an explicitly illustrative decision example, not a measured performance claim requiring a new benchmark."
+    ],
+    "pendingGlobalChecks": [
+      {
+        "command": "npm run registry:build",
+        "owner": "coordinator",
+        "reason": "Parallel-review shared index ownership; run after all writers stop."
+      },
+      {
+        "command": "npm run verify",
+        "owner": "coordinator",
+        "reason": "Parallel-review repository-wide verification; run after registry generation and all writers stop."
+      }
+    ]
+  },
+  "sources": [
+    {
+      "id": "NASA-DA",
+      "url": "https://www.nasa.gov/reference/6-8-decision-analysis/",
+      "title": "NASA Systems Engineering Handbook, 6.8 Decision Analysis",
+      "access": "Successful web reader access; relevant uncertainty, criteria, selection and recommendation text inspected.",
+      "supports": "Proportion effort to decision uncertainty and consequences; screen mandatory constraints; compare value of further information with delay/cost; report close alternatives to the decision-maker.",
+      "locations": [
+        "references/qualitative-and-quantitative.md:119"
+      ]
+    },
+    {
+      "id": "MCDA",
+      "url": "https://assets.publishing.service.gov.uk/media/5a790545e5274a2acd18b975/1132618.pdf",
+      "title": "UK Communities and Local Government, Multi-criteria analysis: a manual (2009)",
+      "access": "Web PDF initially recognized but follow-up open/find failed. Recovered using direct fetch and existing Poppler pdftotext, entirely in memory.",
+      "httpStatus": 200,
+      "bytes": 2034293,
+      "sha256": "0d5e8e6580f1590d3720714ce56b4953de667d55deec91b2877071befb25f761",
+      "pdftotextExit": 0,
+      "sectionsInspected": [
+        "5.4.4.4 Mutual independence of preferences",
+        "5.4.4.5 Double counting",
+        "6.2.10 Assess weights"
+      ],
+      "supports": "Simple additive preferences require compatible meaningful value scales and independence; interactions can need another model. Weights relate to the value of differences over criterion ranges rather than abstract importance.",
+      "locations": [
+        "references/qualitative-and-quantitative.md:100"
+      ]
+    },
+    {
+      "id": "SEI-ATAM",
+      "url": "https://www.sei.cmu.edu/documents/629/2000_005_001_13706.pdf",
+      "title": "ATAM: Method for Architecture Evaluation, CMU/SEI-2000-TR-004 (2000)",
+      "access": "Web PDF initially recognized but follow-up open/find failed. Recovered using direct fetch and existing Poppler pdftotext, entirely in memory.",
+      "httpStatus": 200,
+      "bytes": 245552,
+      "sha256": "f3d40302402a9f075615b2bf431e4ed84397cb4072fca6d842432191e9bdf324",
+      "pdftotextExit": 0,
+      "sectionsInspected": [
+        "7.2 Sensitivity and Tradeoff Points",
+        "beginning of 7.3 A Structure for Reasoning"
+      ],
+      "supports": "Sensitivity concerns an architectural property critical to a quality response; a tradeoff point is sensitive for multiple attributes. Focused comparison using these concepts is not a complete ATAM.",
+      "locations": [
+        "references/qualitative-and-quantitative.md:175"
+      ]
+    },
+    {
+      "id": "AWS-BLUEGREEN",
+      "url": "https://docs.aws.amazon.com/whitepapers/latest/blue-green-deployments/best-practices-for-managing-data-synchronization-and-schema-changes.html",
+      "title": "AWS Blue/Green Deployments: data synchronization and schema changes",
+      "access": "Successful web reader access; data synchronization and bidirectional schema compatibility discussion inspected.",
+      "supports": "Rolling application code back does not establish compatibility with changed data/schema; design transition and recovery with both versions' actual state needs.",
+      "limits": "Living AWS guidance is used for the mechanism, not as a mandate to deploy every system on AWS or use blue/green.",
+      "locations": [
+        "references/qualitative-and-quantitative.md:39"
+      ]
+    },
+    {
+      "id": "AWS-SAGA",
+      "url": "https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/saga-orchestration.html",
+      "title": "AWS Prescriptive Guidance: Saga orchestration",
+      "access": "Successful web reader access; issues/considerations inspected.",
+      "supports": "Saga steps need idempotency and failure handling; sagas do not provide transaction isolation by themselves.",
+      "limits": "Support restricted to the relevant issues/considerations. Unrelated broad claims on that page about transaction support were not adopted.",
+      "locations": [
+        "references/worked-analysis.md:48"
+      ]
+    },
+    {
+      "id": "MS-ASYNC",
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/asynchronous-request-reply",
+      "title": "Microsoft Azure Architecture Center: Asynchronous Request-Reply pattern",
+      "version": "Page reports last updated 2026-03-30",
+      "access": "Successful web reader access; solution, 202 acknowledgement, status resource, completion, client behavior and error handling text inspected.",
+      "supports": "Initial acceptance and eventual completion are separate milestones; callers need a supported way to obtain terminal state. Synchronous HTTP does not itself determine which business milestone a service commits.",
+      "locations": [
+        "references/worked-analysis.md:105"
+      ]
+    },
+    {
+      "id": "BIAS-INTERVIEWS",
+      "url": "https://arxiv.org/abs/2309.14175",
+      "title": "The influence of cognitive biases on architectural technical debt",
+      "version": "arXiv v1 submitted 2023-09-25; publication history identifies ICSA 2021",
+      "access": "Authors' abstract inspected, not full paper/data reanalysis.",
+      "supports": "Architect interviews investigate bias and technical debt; does not establish population prevalence or universal effectiveness of a debiasing rule.",
+      "locations": [
+        "references/bias-and-evidence.md:67"
+      ]
+    },
+    {
+      "id": "BIAS-EXPERIMENT",
+      "url": "https://arxiv.org/abs/2502.04011",
+      "title": "Debiasing Architectural Decision-Making: An Experiment With Students and Practitioners",
+      "version": "arXiv v1 submitted 2025-02-06; ICSA 2025",
+      "access": "Authors' abstract inspected, not full paper/data reanalysis.",
+      "supports": "The reported experiment has 16 students and 20 practitioners and studies a workshop and argumentation/bias outcomes. The skill appropriately limits generalization about seniority and delivered-system performance.",
+      "locations": [
+        "references/bias-and-evidence.md:73"
+      ]
+    }
+  ],
+  "sourcesArtifact": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/architecture-trade-off-analysis-check/source-review.json",
+  "cases": {
+    "inputsFile": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/architecture-trade-off-analysis-check/case-inputs.json",
+    "criteriaFile": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/architecture-trade-off-analysis-check/case-criteria.json",
+    "fixtureCheckFile": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/architecture-trade-off-analysis-check/case-fixture-check.json",
+    "ids": [
+      "ATA-W5-A",
+      "ATA-W5-B"
+    ],
+    "decisiveConstraint": "api/report-contract.yaml allowPendingOnSuccessfulPost changes false -> true; all other task and fixture bytes are identical after materialization.",
+    "reproduction": "Materialize commonFiles then the selected case's fixtureOverrides into a fresh isolated workspace; provide that workspace and input task only. Do not expose criteria, handoff or sibling cases. The Java extracts are deliberately partial reading artifacts, not standalone compilable examples.",
+    "prerequisites": "File-reading/editing tools; coordinator-controlled isolated actor environment if evaluated. No installs, live infrastructure or runtime upgrade needed.",
+    "expectedCriteriaAreSeparated": true,
+    "exampleExposure": "Reviewer-authored development pair, not held out. Existing package already covers acknowledgement/completion, so topic exposure is known.",
+    "executionStatus": "NOT_EXECUTED",
+    "coordinatorAction": "Optional isolated behavioral comparison; no revised treatment exists because 1.2.4 is preserved. Repeated runs and novel cases would be needed before inferring a general effect."
+  },
+  "evidenceFiles": [
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/architecture-trade-off-analysis-check/case-criteria.json",
+      "bytes": 4345,
+      "sha256": "e0870d18db8fa47fd422762b927dec587afd39f334e4f7a3b4860a6deb9767c0"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/architecture-trade-off-analysis-check/case-fixture-check.json",
+      "bytes": 2338,
+      "sha256": "9b112ff48474d641c734fd93dd6c7432d50d53aaea7df7395e3bcef5c0635e5e"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/architecture-trade-off-analysis-check/case-inputs.json",
+      "bytes": 8182,
+      "sha256": "187e2971de14d55c6b1ac968325ba0355f91d4347b738b4554adc5f7855a09ce"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/architecture-trade-off-analysis-check/local-validation.json",
+      "bytes": 8661,
+      "sha256": "9b3b7aa12af3e69b9514600f20cbaa789b49bcc6bbc2d46db3c9a7156f96e611"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/architecture-trade-off-analysis-check/source-review.json",
+      "bytes": 10655,
+      "sha256": "b015ad968183ba18140eb7a0f18fe5b0ecbe3d69a9745c669fa478d597f763a7"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/architecture-trade-off-analysis-check/validate-local.cjs",
+      "bytes": 6714,
+      "sha256": "8b926ae05f6c76e61285a5c8321a8a0e72c96b87806975109f2f2900e76f02cd"
+    }
+  ],
+  "limitations": [
+    "No agent actors were run. Written cases and reviewer walkthroughs do not measure agent behavior or skill gain.",
+    "No claim of incremental improvement, equivalence between treatments, or guaranteed future correctness is made.",
+    "Numeric checks establish the supplied model arithmetic, not suitability of any real stakeholder preference model.",
+    "Bias evidence was verified at abstract level only; full data or causal effects were not reanalyzed.",
+    "PDF/HTML sources were consulted for relevant claims, not read exhaustively. Living vendor pages may change; the two PDF hashes identify the versions retrieved.",
+    "Global registry generation and verification remain solely with the coordinator."
+  ],
+  "crossSkill": [],
+  "coordinatorActions": [
+    "Review the no-change disposition and evidence; preserve version 1.2.4.",
+    "Run the deferred global checks after all reviewers stop.",
+    "If evaluating behavior, keep the cases and criteria physically separated from actor access."
+  ],
+  "allWritesStopped": true,
+  "allProcessesStopped": true,
+  "processAccounting": "All child processes were synchronous and returned; every tool command finished without a session ID. No actor or background process was started.",
+  "readOnlyAfterHandoff": true
+}
+

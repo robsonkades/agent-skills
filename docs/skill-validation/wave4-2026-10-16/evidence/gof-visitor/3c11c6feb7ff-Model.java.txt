@@ -1,0 +1,13 @@
+public final class Model {
+    public interface Node { <R> R accept(Visitor<R> visitor); }
+    public interface Visitor<R> {
+        R visitText(Text text);
+        default R visitCode(Code code) { throw new UnsupportedOperationException("Code unsupported"); }
+    }
+    public record Text(String value) implements Node {
+        public <R> R accept(Visitor<R> visitor) { return visitor.visitText(this); }
+    }
+    public record Code(String value) implements Node {
+        public <R> R accept(Visitor<R> visitor) { return visitor.visitCode(this); }
+    }
+}

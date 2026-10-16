@@ -1,0 +1,68 @@
+{
+  "consultationDate": "2026-10-16",
+  "sources": [
+    {
+      "title": "Fowler: Service Layer",
+      "url": "https://martinfowler.com/eaaCatalog/serviceLayer.html",
+      "checked": "Application boundary, available operations and coordinated responses; pattern does not require one class per use case."
+    },
+    {
+      "title": "Spring Framework 6.2.12 TransactionAspectSupport",
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.12/spring-tx/src/main/java/org/springframework/transaction/interceptor/TransactionAspectSupport.java",
+      "checked": "Standard imperative invokeWithinTransaction calls target, handles target exception/cleanup, then commitTransactionAfterReturning before returning. Actual transaction ownership still matters."
+    },
+    {
+      "title": "Spring Framework 6.2.12 declarative annotations",
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.12/framework-docs/modules/ROOT/pages/data-access/transaction/declarative/annotations.adoc",
+      "checked": "Proxy self-invocation versus AspectJ; runtime/error versus checked exception defaults and configurable rollback rules."
+    },
+    {
+      "title": "Spring Framework 6.2.12 scopes",
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.12/framework-docs/modules/ROOT/pages/core/beans/factory-scopes.adoc",
+      "checked": "A prototype injected into a singleton is resolved at injection; per-invocation lifetime needs deliberate retrieval/scoping."
+    },
+    {
+      "title": "Spring Framework 6.2.12 TransactionalEventListener",
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.12/spring-tx/src/main/java/org/springframework/transaction/event/TransactionalEventListener.java",
+      "checked": "AFTER_COMMIT default and completion-phase resource caveats; publishing alone is not a durable delivery contract."
+    },
+    {
+      "title": "Spring Framework 6.2.12 ApplicationEventPublisher",
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.12/spring-context/src/main/java/org/springframework/context/ApplicationEventPublisher.java",
+      "checked": "Publishing is a handoff and does not itself imply synchronous/asynchronous or immediate listener execution."
+    },
+    {
+      "title": "Git 2.51.0 diff options",
+      "url": "https://raw.githubusercontent.com/git/git/v2.51.0/Documentation/diff-options.adoc",
+      "checked": "numstat format and pathname quoting/NUL behavior; numeric churn must not be promoted to semantic change evidence."
+    },
+    {
+      "title": "Git 2.51.0 glossary",
+      "url": "https://raw.githubusercontent.com/git/git/v2.51.0/Documentation/glossary-content.adoc",
+      "checked": "glob pathspec with /**/ matches zero or more directories; literal pathspec is preserved by shell quoting."
+    }
+  ],
+  "scope": "Primary documentation/source corroboration, not executed Java/framework/database behavior.",
+  "unavailable": [
+    {
+      "url": "https://www.gnu.org/software/bash/manual/html_node/Pipelines.html",
+      "status": 403
+    },
+    {
+      "url": "https://www.gnu.org/software/bash/manual/html_node/Simple-Command-Expansion.html",
+      "status": 403
+    }
+  ],
+  "unavailableConclusion": "Access was denied in this environment; no dead-link conclusion or canonical URL repair is supported. Bash controls were executed independently.",
+  "optionalBatch": {
+    "status": "Aborted without results",
+    "cell": "214",
+    "urls": [
+      "https://www.domainlanguage.com/wp-content/uploads/2016/05/DDD_Reference_2015-03.pdf",
+      "https://alistair.cockburn.us/hexagonal-architecture",
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-deadlocks-handling.html",
+      "https://docs.oracle.com/javase/specs/jls/se10/html/jls-14.html#jls-14.14.2"
+    ],
+    "note": "Read-only optional request did not return and was terminated. No claims of reverification from it; following scheduled shell read was not confirmed executed."
+  }
+}

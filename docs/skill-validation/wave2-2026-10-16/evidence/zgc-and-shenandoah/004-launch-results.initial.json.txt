@@ -1,0 +1,172 @@
+{
+  "runtimeScope": "Temurin 25.0.3+9 Windows x64 owned launch only; no workload performance measurement",
+  "results": [
+    {
+      "id": "zgc-obsolete-mode",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "arguments": [
+        "-Xms16m",
+        "-Xmx64m",
+        "-XX:+UseZGC",
+        "-XX:+ZGenerational",
+        "-Xlog:gc+init=info",
+        "-XX:+PrintFlagsFinal",
+        "-version"
+      ],
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "expectedExit": 0,
+      "patterns": [
+        {
+          "pattern": "Ignoring option ZGenerational; support was removed in 24\\.0",
+          "matched": true
+        }
+      ],
+      "stdout": "zgc-obsolete-mode.stdout.log",
+      "stderr": "zgc-obsolete-mode.stderr.log"
+    },
+    {
+      "id": "shenandoah-default",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "arguments": [
+        "-Xms16m",
+        "-Xmx64m",
+        "-XX:+UseShenandoahGC",
+        "-Xlog:gc+init=info",
+        "-XX:+PrintFlagsFinal",
+        "-version"
+      ],
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "expectedExit": 0,
+      "patterns": [
+        {
+          "pattern": "Shenandoah GC mode: Snapshot-At-The-Beginning \\(SATB\\)",
+          "matched": false
+        },
+        {
+          "pattern": "ShenandoahGCMode\\s+= satb",
+          "matched": true
+        }
+      ],
+      "stdout": "shenandoah-default.stdout.log",
+      "stderr": "shenandoah-default.stderr.log"
+    },
+    {
+      "id": "shenandoah-generational",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "arguments": [
+        "-Xms16m",
+        "-Xmx64m",
+        "-XX:+UseShenandoahGC",
+        "-XX:ShenandoahGCMode=generational",
+        "-Xlog:gc+init=info",
+        "-XX:+PrintFlagsFinal",
+        "-version"
+      ],
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "expectedExit": 0,
+      "patterns": [
+        {
+          "pattern": "Shenandoah GC mode: Generational",
+          "matched": false
+        },
+        {
+          "pattern": "ShenandoahGCMode\\s+= generational",
+          "matched": true
+        }
+      ],
+      "stdout": "shenandoah-generational.stdout.log",
+      "stderr": "shenandoah-generational.stderr.log"
+    },
+    {
+      "id": "shenandoah-generational-compact",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "arguments": [
+        "-Xms16m",
+        "-Xmx64m",
+        "-XX:+UseShenandoahGC",
+        "-XX:ShenandoahGCMode=generational",
+        "-XX:ShenandoahGCHeuristics=compact",
+        "-Xlog:gc+init=info",
+        "-XX:+PrintFlagsFinal",
+        "-version"
+      ],
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "expectedExit": 0,
+      "patterns": [
+        {
+          "pattern": "Ignoring -XX:ShenandoahGCHeuristics=compact",
+          "matched": false
+        },
+        {
+          "pattern": "only supports adaptive heuristics",
+          "matched": true
+        },
+        {
+          "pattern": "Heuristics: Adaptive",
+          "matched": true
+        }
+      ],
+      "stdout": "shenandoah-generational-compact.stdout.log",
+      "stderr": "shenandoah-generational-compact.stderr.log"
+    },
+    {
+      "id": "shenandoah-invalid-buffer",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "arguments": [
+        "-Xms16m",
+        "-Xmx64m",
+        "-XX:+UseShenandoahGC",
+        "-XX:ShenandoahMaxSATBBufferSize=1024",
+        "-Xlog:gc+init=info",
+        "-XX:+PrintFlagsFinal",
+        "-version"
+      ],
+      "status": 1,
+      "signal": null,
+      "error": null,
+      "expectedExit": 1,
+      "patterns": [
+        {
+          "pattern": "Unrecognized VM option 'ShenandoahMaxSATBBufferSize=1024'",
+          "matched": true
+        }
+      ],
+      "stdout": "shenandoah-invalid-buffer.stdout.log",
+      "stderr": "shenandoah-invalid-buffer.stderr.log"
+    },
+    {
+      "id": "zgc-fixed-heap-uncommit",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "arguments": [
+        "-Xms16m",
+        "-Xmx64m",
+        "-XX:+UseZGC",
+        "-Xms64m",
+        "-XX:+ZUncommit",
+        "-Xlog:gc+init=info",
+        "-XX:+PrintFlagsFinal",
+        "-version"
+      ],
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "expectedExit": 0,
+      "patterns": [
+        {
+          "pattern": "Uncommit: Disabled \\(Xms equals Xmx\\)",
+          "matched": false
+        }
+      ],
+      "stdout": "zgc-fixed-heap-uncommit.stdout.log",
+      "stderr": "zgc-fixed-heap-uncommit.stderr.log"
+    }
+  ]
+}

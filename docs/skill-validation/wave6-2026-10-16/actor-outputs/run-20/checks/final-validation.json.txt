@@ -1,0 +1,75 @@
+{
+  "startedAt": "2026-10-16T17:34:33.277Z",
+  "endedAt": "2026-10-16T17:34:33.284Z",
+  "reviewWords": 411,
+  "reportsValid": true,
+  "suppliedFiles": [
+    {
+      "path": "test/memo/Smoke.java",
+      "sha256": "5FB4BF14F226C3CBAAA147CEFD50A30A456EAE5CE35BA8F19D40DC0398C9F335",
+      "unchanged": true
+    },
+    {
+      "path": "docs/review-request.md",
+      "sha256": "86D670BF08679312DAC2A34B2AFD445A0548DE7495460636959F86BCF1E868F2",
+      "unchanged": true
+    },
+    {
+      "path": "docs/contract.md",
+      "sha256": "CEAA05AA4C210245338B9C4B3E779E9D6878087FEBE314EAB01E6814FE6D2287",
+      "unchanged": true
+    },
+    {
+      "path": "check.mjs",
+      "sha256": "B6F9B3CD3E71DBF53F03C5B834F24F48CD95C7DB7E8438218A64A6807BFAF4A0",
+      "unchanged": true
+    },
+    {
+      "path": "README.md",
+      "sha256": "7528C8030C6E58136385C6CE004EDD888CDC5EF758DE6A3E686F9CAFB18FF675",
+      "unchanged": true
+    },
+    {
+      "path": "src/memo/ReaderFactory.java",
+      "sha256": "87601944FC6F7E44F634AED1E56DA1298ADDA524275C0DC4E03452714866C89C",
+      "unchanged": true
+    },
+    {
+      "path": "src/memo/PublishedEntry.java",
+      "sha256": "B97DB2071EB31C3584E786A99994684CDE4C169034FE9D3ECB03BB78211946BB",
+      "unchanged": true
+    },
+    {
+      "path": "src/memo/BestEffortMemo.java",
+      "sha256": "773AC3A0DB89C62165FB6E34EF87203DAF45504CD6ED320AE3492E771AE675DB",
+      "unchanged": true
+    }
+  ],
+  "reads": [
+    {
+      "path": "output/REVIEW.md",
+      "sha256": "8D46B4EF89092A9F0C7F1C889E1DFF5479FB763E41310A9C1C886B7F151506FD",
+      "bytes": 3118,
+      "read": "complete content for validation"
+    },
+    {
+      "path": "output/assessment.json",
+      "sha256": "25F9E370DE71D43175B2DC6D227A850D4C3F152A8389970207CD7914A626F2A3",
+      "bytes": 1750,
+      "read": "complete content for validation"
+    },
+    {
+      "path": "output/checks/validation-log.json",
+      "sha256": "2CDC1666D2FFD2A571897F2990727FB2F4AEB8180AD4E37AE6494549B338E43D",
+      "bytes": 386,
+      "read": "complete content for validation"
+    },
+    {
+      "path": "output/checks/integrity-log.json",
+      "sha256": "12EBBCD1203FA9C73228CC20D671D9D9B29BDF9D9A3D66EC813CDABAD3B8A25A",
+      "bytes": 1966,
+      "read": "complete content for validation"
+    }
+  ],
+  "processEvidence": "check.mjs completed synchronously with exit 0; its javac and java invocations are synchronous and returned normally; no background process was launched"
+}

@@ -1,0 +1,32 @@
+package imports;
+
+import java.time.format.DateTimeFormatter;
+import java.time.format.ResolverStyle;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+
+public final class FormatterFactory {
+    private final Locale defaultLocale;
+    private final boolean allowLocaleOverride;
+    private final Map<String, DateTimeFormatter> formatters = new HashMap<>();
+
+    public FormatterFactory(Locale defaultLocale, boolean allowLocaleOverride) {
+        this.defaultLocale = Objects.requireNonNull(defaultLocale);
+        this.allowLocaleOverride = allowLocaleOverride;
+    }
+
+    public DateTimeFormatter formatter(String pattern, Locale requestedLocale) {
+        Objects.requireNonNull(pattern);
+        Objects.requireNonNull(requestedLocale);
+        if (pattern.length() > 128) throw new IllegalArgumentException("pattern too long");
+        Locale locale = allowLocaleOverride ? requestedLocale : defaultLocale;
+        DateTimeFormatter found = formatters.get(pattern);
+        if (found != null) return found;
+        DateTimeFormatter created = DateTimeFormatter.ofPattern(pattern, locale)
+                .withResolverStyle(ResolverStyle.STRICT);
+        if (formatters.size() < 64) formatters.put(pattern, created);
+        return created;
+    }
+}

@@ -1,0 +1,92 @@
+{
+  "fileCountPerCase": 6,
+  "pairDiffs": [
+    "docs/payload-size.md"
+  ],
+  "pairHashes": [
+    {
+      "path": "README.md",
+      "A": "2b6764e3a3ff5c6ae2c0f824b40a569be9d9325519035e090c7372bb56e8fa90",
+      "B": "2b6764e3a3ff5c6ae2c0f824b40a569be9d9325519035e090c7372bb56e8fa90"
+    },
+    {
+      "path": "src/Node.java",
+      "A": "1753f7016eab94e960ee7fe6d17a6506ab88326bf923c78cfb180907fdba3d30",
+      "B": "1753f7016eab94e960ee7fe6d17a6506ab88326bf923c78cfb180907fdba3d30"
+    },
+    {
+      "path": "src/PayloadSummary.java",
+      "A": "b387e733db69f4b83d8d1f9f768e374ccb383c3a9378bbe29afab154be14cc1f",
+      "B": "b387e733db69f4b83d8d1f9f768e374ccb383c3a9378bbe29afab154be14cc1f"
+    },
+    {
+      "path": "src/ExampleCatalog.java",
+      "A": "98d6e6ebbff8b5c2b2d03c9833f47fb57a6ed0590b86074b6e8437e15fc7f35a",
+      "B": "98d6e6ebbff8b5c2b2d03c9833f47fb57a6ed0590b86074b6e8437e15fc7f35a"
+    },
+    {
+      "path": "test/SmokeTest.java",
+      "A": "1713e66443217a8d7cb20f0afd7dfeb61a67794bd4f7988aa44adb82826f0b48",
+      "B": "1713e66443217a8d7cb20f0afd7dfeb61a67794bd4f7988aa44adb82826f0b48"
+    },
+    {
+      "path": "docs/payload-size.md",
+      "A": "3d180b2e842888f19b58e93bf6da331ed3b1117614a3116aef6b4d2772d7b8e7",
+      "B": "99c4af8dd04b3afb37a4e3cfd02ce250f9d356e369ad255815f444bb65885871"
+    }
+  ],
+  "compilationRelease": 21,
+  "runtime": "Temurin 25.0.3+9",
+  "codeExecuted": "Case A source; Case B sources are byte-identical. Only consumer contract differs.",
+  "commands": [
+    {
+      "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+      "args": [
+        "--release",
+        "21",
+        "-d",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-composite/evaluator-only/probe-classes",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-composite/case-inputs/A/project/src/ExampleCatalog.java",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-composite/case-inputs/A/project/src/Node.java",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-composite/case-inputs/A/project/src/PayloadSummary.java",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-composite/case-inputs/A/project/test/SmokeTest.java",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-composite/evaluator-only/CaseProbe.java"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-composite",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-ea",
+        "-cp",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-composite/evaluator-only/probe-classes",
+        "SmokeTest"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-composite",
+      "exitCode": 0,
+      "stdout": "smoke=3 PASS\r\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-cp",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-composite/evaluator-only/probe-classes",
+        "CaseProbe"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-composite",
+      "exitCode": 0,
+      "stdout": "sample=12\r\n",
+      "stderr": "",
+      "error": null
+    }
+  ],
+  "smokeChecksPassed": 3,
+  "observedTotal": 12,
+  "classification": "Executed fixture/technical checks, not agent runs or proof of an actual production defect."
+}

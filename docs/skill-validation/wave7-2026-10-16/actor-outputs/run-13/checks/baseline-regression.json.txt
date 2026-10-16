@@ -1,0 +1,11 @@
+{
+  "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave7-a765972c5d\\actors\\run-13\\output\\project",
+  "argv": [
+    "node",
+    "check.mjs",
+    "work.Regression"
+  ],
+  "exit": 1,
+  "stdout": "FAIL: sold-out order rolls back: rejected order count: expected=0 actual=1\r\ndiagnostic: active=true ordersAutoCommit=true metricsAutoCommit=false rejectedOrders=1 stock=2\r\nFAIL: notifier rejection rolls back both writes and preserves exception: notifier-rejected order count: expected=0 actual=1\r\nFAIL: success commits one order and reserves one unit: orders connection must participate\r\nPASS: insert failure preserves existing order and stock\r\nPASS: metrics retains primary manager and independent rollback\r\n",
+  "stderr": "Exception in thread \"main\" java.lang.AssertionError: 3 regression scenario(s) failed\r\n\tat work.Regression.main(Regression.java:92)\r\n"
+}

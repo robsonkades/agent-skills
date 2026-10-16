@@ -1,0 +1,14 @@
+{
+  "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave7-a765972c5d\\actors\\run-15\\output\\project",
+  "argv": [
+    "node",
+    "check.mjs"
+  ],
+  "startedAt": "2026-10-16T18:12:22.385Z",
+  "finishedAt": "2026-10-16T18:12:23.998Z",
+  "exit": 0,
+  "signal": null,
+  "stdout": "PASS ordinary publisher/replay path\r\n",
+  "stderr": "",
+  "error": null
+}

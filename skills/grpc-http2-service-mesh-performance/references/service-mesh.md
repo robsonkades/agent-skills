@@ -26,6 +26,33 @@ whole body can impose buffering and size limits before the backend sees it. Envo
 documents this distinction. Locate the rejection and verify that version's filter/route behavior;
 do not disable a required inspection filter merely to make a streaming experiment pass.
 
+## Count useful work at the consumer
+
+Define the useful unit from the consumer's contract: a completed RPC with the required result, or
+agreed message/progress units on a long-lived stream. The
+[gRPC HTTP/2 response contract](https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md#responses)
+carries `grpc-status` in trailers or a trailers-only response; HTTP 200 can accompany a nonzero
+gRPC status. Initial metadata or some received messages do not prove successful RPC completion.
+Measure stream progress separately from terminal call status; useful messages need not wait for
+a long-lived call to close. Missing wire status is not OK: the client can synthesize a failure status.
+
+Inspect the actual dashboard query, access-log format and client completion signal before accepting
+a gain. A lower latency from fast failures is not evidence of more useful work. Reconcile logical
+client calls with proxy attempts and distinguish successful-result latency from failure latency.
+If HTTP-only success accounting is refuted, correct the completion counts and affected performance
+conclusion in the working report or query, preserving unrelated measurements. A proxy observation
+does not establish what the caller ultimately received; keep that gap explicit when client evidence
+is unavailable, without discarding directly observed transport limits.
+
+For Envoy 1.36.0, [access-log operators](https://www.envoyproxy.io/docs/envoy/v1.36.0/configuration/observability/access_log/usage)
+include `%RESPONSE_CODE%` and `%GRPC_STATUS(NUMBER)%` as distinct fields; verify the effective format.
+Reading only `%TRAILER(grpc-status)%` can miss a trailers-only response stored as headers. Envoy's
+[status extraction](https://github.com/envoyproxy/envoy/blob/v1.36.0/source/common/grpc/common.cc)
+prefers gRPC status from trailers, then headers, then an HTTP-derived fallback. Thus even a formatted
+gRPC status can be inferred rather than received on the wire; correlate it with the client's final
+status and response/reset evidence. Do not convert an absent field to success or assume every mesh
+metric uses the same extraction rules.
+
 ## Policy composition
 
 Inventory timeout, retry, hedge, circuit breaking, connection-pool and outlier policies at client,

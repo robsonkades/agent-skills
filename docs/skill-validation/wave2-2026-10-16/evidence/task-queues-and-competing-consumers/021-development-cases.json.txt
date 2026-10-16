@@ -1,0 +1,80 @@
+{
+  "classification": "Development cases, not unseen holdouts and not executed agent evaluations",
+  "decisiveConstraint": "Only the rejection handler in WorkerPoolFactory changes; all QueueConsumer code and ownership requirements are identical.",
+  "actorInputs": [
+    {
+      "id": "A",
+      "task": "Review the handoff in this queue-consumer model. Every received ID must complete or be handed to recovery once, and its local permit must be released once. Check the actual selected factory and run relevant local checks; make a focused correction only if the implementation violates that contract. Keep compiler target Java 17 and do not add dependencies. State what the local ledger does and does not establish about a real broker.",
+      "files": [
+        {
+          "from": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/task-queues-and-competing-consumers/case-inputs/common/QueueConsumer.java",
+          "to": "QueueConsumer.java"
+        },
+        {
+          "from": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/task-queues-and-competing-consumers/case-inputs/a/WorkerPoolFactory.java",
+          "to": "WorkerPoolFactory.java"
+        }
+      ],
+      "prerequisites": "JDK with --release 17. Copy only these inputs to an isolated directory; do not expose other case files, technical expectations, controls, logs or evaluator criteria.",
+      "commands": [
+        "javac --release 17 -d classes QueueConsumer.java WorkerPoolFactory.java",
+        "java -cp classes QueueConsumer saturation",
+        "java -cp classes QueueConsumer shutdown"
+      ]
+    },
+    {
+      "id": "B",
+      "task": "Review the handoff in this queue-consumer model. Every received ID must complete or be handed to recovery once, and its local permit must be released once. Check the actual selected factory and run relevant local checks; make a focused correction only if the implementation violates that contract. Keep compiler target Java 17 and do not add dependencies. State what the local ledger does and does not establish about a real broker.",
+      "files": [
+        {
+          "from": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/task-queues-and-competing-consumers/case-inputs/common/QueueConsumer.java",
+          "to": "QueueConsumer.java"
+        },
+        {
+          "from": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/task-queues-and-competing-consumers/case-inputs/b/WorkerPoolFactory.java",
+          "to": "WorkerPoolFactory.java"
+        }
+      ],
+      "prerequisites": "JDK with --release 17. Copy only these inputs to an isolated directory; do not expose other case files, technical expectations, controls, logs or evaluator criteria.",
+      "commands": [
+        "javac --release 17 -d classes QueueConsumer.java WorkerPoolFactory.java",
+        "java -cp classes QueueConsumer saturation",
+        "java -cp classes QueueConsumer shutdown"
+      ]
+    }
+  ],
+  "evaluatorOnlyCriteria": {
+    "common": [
+      "Inspect factory and handler selected by the delivered artifact, not merely the queue capacity.",
+      "Use received IDs and the permit ledger to observe missing ownership; no claim of actual broker recovery or exhaustive race safety.",
+      "Preserve Java target, dependencies, and out-of-scope lease/ack/idempotency policy.",
+      "A suitable alternative recovery protocol is acceptable; AbortPolicy is not mandatory for every design."
+    ],
+    "A": {
+      "expected": "No supported correction needed for the exercised dispatch contract. AbortPolicy throws on saturation and shutdown; caller recovery resolves the rejected delivery. Both runs exit 0 with permits=3 and unresolved=[].",
+      "failures": [
+        "Fabricate silent discard despite reading AbortPolicy.",
+        "Force a new executor design or dependencies without a supported defect.",
+        "Claim passing local ledger establishes broker recovery."
+      ]
+    },
+    "B": {
+      "expected": "Initial saturation exits 1 with second unresolved and permits=2; shutdown also exits 1 with first unresolved. Identify that normal execute return can drop a prior delivery or current shutdown delivery. Correct the selected policy to visible rejection handled by existing recovery, or implement explicit settlement for every discarded/evicted item and verify both runs.",
+      "failures": [
+        "Inspect only new third delivery and miss evicted second delivery.",
+        "Treat bounded queue, execute return or executor termination as proof of all deliveries accounted for.",
+        "Increase queue size/permits/visibility as the correctness fix or release permits without resolving ownership.",
+        "Weaken the received-ID invariant to make probes pass."
+      ]
+    }
+  },
+  "walkthroughs": [
+    "A should preserve the existing adequately bounded intake and observable rejection.",
+    "B should change only the invalid dispatch/recovery premise; unaffected broker semantics remain unchanged."
+  ],
+  "behavioralExecution": {
+    "executed": false,
+    "measuredImprovement": false
+  },
+  "evidenceAccessLimit": "Filesystem separation is the coordinator's responsibility; these directories alone are not enforced isolation."
+}

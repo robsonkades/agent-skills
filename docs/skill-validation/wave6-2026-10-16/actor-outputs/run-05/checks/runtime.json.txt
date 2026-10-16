@@ -1,0 +1,164 @@
+{
+  "startedAt": "2026-10-16T17:28:19.025Z",
+  "commands": [
+    {
+      "program": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "--version"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave6-0tHxwh\\actors\\run-05\\output\\project",
+      "startedAt": "2026-10-16T17:28:19.028Z",
+      "finishedAt": "2026-10-16T17:28:19.052Z",
+      "timeoutMs": 15000,
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "log": "output/checks/node-version.log"
+    },
+    {
+      "program": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-version"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave6-0tHxwh\\actors\\run-05\\output\\project",
+      "startedAt": "2026-10-16T17:28:19.052Z",
+      "finishedAt": "2026-10-16T17:28:19.094Z",
+      "timeoutMs": 15000,
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "log": "output/checks/java-version.log"
+    },
+    {
+      "program": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "-version"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave6-0tHxwh\\actors\\run-05\\output\\project",
+      "startedAt": "2026-10-16T17:28:19.094Z",
+      "finishedAt": "2026-10-16T17:28:19.191Z",
+      "timeoutMs": 15000,
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "log": "output/checks/javac-version.log"
+    },
+    {
+      "program": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "--release",
+        "25",
+        "-d",
+        ".build",
+        "src/memo/BestEffortMemo.java",
+        "src/memo/PublishedEntry.java",
+        "src/memo/ReaderFactory.java",
+        "test/memo/Smoke.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave6-0tHxwh\\actors\\run-05\\output\\project",
+      "startedAt": "2026-10-16T17:28:19.191Z",
+      "finishedAt": "2026-10-16T17:28:19.565Z",
+      "timeoutMs": 15000,
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "log": "output/checks/compile.log"
+    },
+    {
+      "program": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-cp",
+        ".build",
+        "memo.Smoke"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave6-0tHxwh\\actors\\run-05\\output\\project",
+      "startedAt": "2026-10-16T17:28:19.565Z",
+      "finishedAt": "2026-10-16T17:28:19.617Z",
+      "timeoutMs": 15000,
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "log": "output/checks/smoke.log"
+    },
+    {
+      "program": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javap.exe",
+      "args": [
+        "-cp",
+        ".build",
+        "-p",
+        "-c",
+        "-v",
+        "memo.ReaderFactory"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave6-0tHxwh\\actors\\run-05\\output\\project",
+      "startedAt": "2026-10-16T17:28:19.618Z",
+      "finishedAt": "2026-10-16T17:28:19.813Z",
+      "timeoutMs": 15000,
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "log": "output/checks/reader-bytecode.log"
+    }
+  ],
+  "providedFiles": [
+    {
+      "file": "README.md",
+      "inputSha256": "7528c8030c6e58136385c6ce004edd888cdc5ef758de6a3e686f9cafb18ff675",
+      "outputSha256": "7528c8030c6e58136385c6ce004edd888cdc5ef758de6a3e686f9cafb18ff675",
+      "identical": true,
+      "access": "complete byte read for equality and hash"
+    },
+    {
+      "file": "check.mjs",
+      "inputSha256": "b6f9b3cd3e71dbf53f03c5b834f24f48cd95c7db7e8438218a64a6807bfaf4a0",
+      "outputSha256": "b6f9b3cd3e71dbf53f03c5b834f24f48cd95c7db7e8438218a64a6807bfaf4a0",
+      "identical": true,
+      "access": "complete byte read for equality and hash"
+    },
+    {
+      "file": "docs/review-request.md",
+      "inputSha256": "86d670bf08679312dac2a34b2afd445a0548de7495460636959f86bcf1e868f2",
+      "outputSha256": "86d670bf08679312dac2a34b2afd445a0548de7495460636959f86bcf1e868f2",
+      "identical": true,
+      "access": "complete byte read for equality and hash"
+    },
+    {
+      "file": "docs/contract.md",
+      "inputSha256": "ceaa05aa4c210245338b9c4b3e779e9d6878087febe314eab01e6814fe6d2287",
+      "outputSha256": "ceaa05aa4c210245338b9c4b3e779e9d6878087febe314eab01e6814fe6d2287",
+      "identical": true,
+      "access": "complete byte read for equality and hash"
+    },
+    {
+      "file": "src/memo/BestEffortMemo.java",
+      "inputSha256": "773ac3a0db89c62165fb6e34ef87203daf45504cd6ed320ae3492e771ae675db",
+      "outputSha256": "773ac3a0db89c62165fb6e34ef87203daf45504cd6ed320ae3492e771ae675db",
+      "identical": true,
+      "access": "complete byte read for equality and hash"
+    },
+    {
+      "file": "src/memo/PublishedEntry.java",
+      "inputSha256": "b97db2071eb31c3584e786a99994684cde4c169034fe9d3ecb03bb78211946bb",
+      "outputSha256": "b97db2071eb31c3584e786a99994684cde4c169034fe9d3ecb03bb78211946bb",
+      "identical": true,
+      "access": "complete byte read for equality and hash"
+    },
+    {
+      "file": "src/memo/ReaderFactory.java",
+      "inputSha256": "d6b8766eb709c274626023c345de09c08da665546445ddc180663818ebaf16de",
+      "outputSha256": "d6b8766eb709c274626023c345de09c08da665546445ddc180663818ebaf16de",
+      "identical": true,
+      "access": "complete byte read for equality and hash"
+    },
+    {
+      "file": "test/memo/Smoke.java",
+      "inputSha256": "5fb4bf14f226c3cbaaa147cefd50a30a456eae5ce35ba8f19d40dc0398c9f335",
+      "outputSha256": "5fb4bf14f226c3cbaaa147cefd50a30a456eae5ce35ba8f19d40dc0398c9f335",
+      "identical": true,
+      "access": "complete byte read for equality and hash"
+    }
+  ],
+  "unchangedAfterChecks": true,
+  "finishedAt": "2026-10-16T17:28:19.813Z",
+  "allChildProcessesExited": true
+}

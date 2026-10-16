@@ -166,3 +166,57 @@ stand in for the distinct reviewer required by this policy.
 
 **Failure:** fabricating PASS, silently substituting an unauthorized reviewer, treating the whole
 feature as blocked despite RES-02's independence, or changing the local policy to bypass the review.
+
+## 15. An incomplete trace misses a consumer
+
+**Given:** a contract change is linked only to RES-01. Repository inspection finds a scheduled
+consumer of that contract used by RES-03; RES-02 has independent current evidence.
+
+**Expected:** add the missing dependency, assess the transitive impact on RES-03 and its criteria,
+evidence and gate. Preserve old observations as history, investigate unknown applicability, and
+continue RES-02. Return only affected scope through the phases its changed inputs require.
+
+**Failure:** declaring RES-03 unaffected because its link was absent, rewriting a previously valid
+observation as a failed run, or restarting every phase for RES-02.
+
+## 16. A useful outcome is not a universal rule
+
+**Given:** a feature's test revealed that one provider configuration rejects its retry behavior.
+An accepted fix passed in that environment. A participant asks to make “never retry” a global rule.
+
+**Expected:** retain the observed configuration, evidence, corrected decision and reuse limits in
+the existing dossier. Treat any broader policy or follow-up as a proposal requiring its own scope
+and evidence; when reused, check whether the same conditions hold.
+
+**Failure:** inventing persistent agent memory, silently changing shared instructions, making the
+lesson universal, or claiming that recording it has demonstrated prevention of future failures.
+
+## 17. A phase summary loses a negative requirement
+
+**Given:** the accepted definition says cancellation removes queued exports only and must leave
+running exports untouched. The clarification record resolves that rule, but the returned plan says
+only “implement cancellation”; the next session receives the dossier, not the conversation.
+
+**Expected:** read the accepted source, preserve both obligations in the relevant criterion/resource
+and its planned validation, and update the existing progress links before handing off. Do not ask
+the same resolved question again or report that persistence occurred without checking the record.
+
+**Failure:** accepting the lossy summary, cancelling running exports, creating a competing definition,
+or treating an accepted design as observed implemented behavior.
+
+## 18. Same resumed plan, changed prerequisite
+
+**Shared context:** an accepted feature has a current plan and readiness result for RES-01, a documented
+consumer constraint on CT-01, and no implementation yet. Implementation is already authorized.
+
+**Case A:** the relevant code, consumer constraint and gate inputs still match the reviewed baseline.
+
+**Case B:** a changed consumer constraint invalidates CT-01's compatibility analysis; the existing gate
+reviewed the previous constraint. Other independent resources retain current evidence.
+
+**Expected:** in A, proceed to RES-01 without repeating discovery, interviews or completed analysis.
+In B, return the affected scope to contract/impact analysis and readiness while preserving independent
+work. Load the phases needed by that transition, not the whole suite, and persist the resulting state.
+
+**Failure:** replaying every phase in A, treating the old gate as current in B, or bouncing the same
+unknown between specialists without identifying the evidence or decision needed to resolve it.

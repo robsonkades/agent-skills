@@ -1,0 +1,50 @@
+[
+  {
+    "path": "README.md",
+    "input": "7528c8030c6e58136385c6ce004edd888cdc5ef758de6a3e686f9cafb18ff675",
+    "output": "7528c8030c6e58136385c6ce004edd888cdc5ef758de6a3e686f9cafb18ff675",
+    "mode": "hash-only"
+  },
+  {
+    "path": "docs/review-request.md",
+    "input": "86d670bf08679312dac2a34b2afd445a0548de7495460636959f86bcf1e868f2",
+    "output": "86d670bf08679312dac2a34b2afd445a0548de7495460636959f86bcf1e868f2",
+    "mode": "hash-only"
+  },
+  {
+    "path": "docs/contract.md",
+    "input": "ceaa05aa4c210245338b9c4b3e779e9d6878087febe314eab01e6814fe6d2287",
+    "output": "ceaa05aa4c210245338b9c4b3e779e9d6878087febe314eab01e6814fe6d2287",
+    "mode": "hash-only"
+  },
+  {
+    "path": "src/memo/BestEffortMemo.java",
+    "input": "773ac3a0db89c62165fb6e34ef87203daf45504cd6ed320ae3492e771ae675db",
+    "output": "773ac3a0db89c62165fb6e34ef87203daf45504cd6ed320ae3492e771ae675db",
+    "mode": "hash-only"
+  },
+  {
+    "path": "src/memo/PublishedEntry.java",
+    "input": "b97db2071eb31c3584e786a99994684cde4c169034fe9d3ecb03bb78211946bb",
+    "output": "b97db2071eb31c3584e786a99994684cde4c169034fe9d3ecb03bb78211946bb",
+    "mode": "hash-only"
+  },
+  {
+    "path": "src/memo/ReaderFactory.java",
+    "input": "d6b8766eb709c274626023c345de09c08da665546445ddc180663818ebaf16de",
+    "output": "d6b8766eb709c274626023c345de09c08da665546445ddc180663818ebaf16de",
+    "mode": "hash-only"
+  },
+  {
+    "path": "test/memo/Smoke.java",
+    "input": "5fb4bf14f226c3cbaaa147cefd50a30a456eae5ce35ba8f19d40dc0398c9f335",
+    "output": "5fb4bf14f226c3cbaaa147cefd50a30a456eae5ce35ba8f19d40dc0398c9f335",
+    "mode": "hash-only"
+  },
+  {
+    "path": "check.mjs",
+    "input": "b6f9b3cd3e71dbf53f03c5b834f24f48cd95c7db7e8438218a64a6807bfaf4a0",
+    "output": "b6f9b3cd3e71dbf53f03c5b834f24f48cd95c7db7e8438218a64a6807bfaf4a0",
+    "mode": "hash-only"
+  }
+]

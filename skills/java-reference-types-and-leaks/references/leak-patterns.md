@@ -143,6 +143,18 @@ driver registered with `DriverManager`, an unremoved shutdown hook, a JMX/MBean 
 or a thread the application started and never joined. Fix each explicitly on undeploy — this
 is one of the few places where "unregister everything you registered" is a hard requirement.
 
+Also inspect `Thread.contextClassLoader` and the factory that creates surviving workers.
+A thread can inherit its creator's context loader: a lazily started shared pool can retain
+a plugin loader even when callbacks capture no plugin objects. Restoring the submitting
+thread's context does not reset workers already created with that loader. If a worker must
+outlive the plugin, select a loader compatible with the worker's owner in its factory;
+restore temporary task-level context changes in `finally`. Preserve required provider/resource
+lookup rather than blindly setting the loader to null or stopping a shared executor.
+Check the worker's context after first creation and after successful/failing tasks; these
+direct checks do not prove that every root is gone or that unloading occurred. See the
+[Java 25 thread inheritance contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Thread.html)
+and use `jvm-class-loading` for loader selection and the complete stop protocol.
+
 ### 7. Long-lived collections of short-lived context
 
 A queue, batch accumulator or buffer can exceed its budget when production outpaces

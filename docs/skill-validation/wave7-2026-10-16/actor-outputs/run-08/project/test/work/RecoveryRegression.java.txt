@@ -1,0 +1,174 @@
+package work;
+
+import java.nio.file.Path;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
+
+public class RecoveryRegression {
+    private static int checkpointCalls;
+    private static boolean failCheckpoint;
+
+    @Configuration
+    public static class ObservedConfig extends Config {
+        @Bean @Override public Checkpoint checkpoint() {
+            return eventId -> {
+                checkpointCalls++;
+                check(receiver().count() > 0, "checkpoint must follow receiver acknowledgment");
+                if (failCheckpoint) throw new IllegalStateException("checkpoint unavailable");
+            };
+        }
+    }
+
+    public static void main(String[] args) {
+        if (args.length != 1) throw new IllegalArgumentException("failure, replay, or controls required");
+        switch (args[0]) {
+            case "failure" -> retainAfterFailure();
+            case "replay" -> resumeInNewProcess();
+            case "controls" -> controls();
+            default -> throw new IllegalArgumentException(args[0]);
+        }
+    }
+
+    private static void fileDatabases() {
+        String root = Path.of(".build", "recovery").toAbsolutePath().toString().replace('\\', '/');
+        System.setProperty("work.businessUrl", "jdbc:h2:file:" + root + "-business");
+        System.setProperty("work.receiverUrl", "jdbc:h2:file:" + root + "-receiver");
+    }
+
+    private static JdbcTemplate receiverJdbc() {
+        return new JdbcTemplate(new DriverManagerDataSource(System.getProperty("work.receiverUrl"), "sa", ""));
+    }
+
+    private static void schema(JdbcTemplate jdbc) {
+        jdbc.execute("drop all objects");
+        jdbc.execute("create table orders(id varchar primary key,payload varchar)");
+        jdbc.execute("create table outbox(event_id varchar primary key,payload varchar,done boolean)");
+    }
+
+    private static void retainAfterFailure() {
+        fileDatabases();
+        failCheckpoint = true;
+        try (var ctx = new AnnotationConfigApplicationContext(ObservedConfig.class)) {
+            var jdbc = ctx.getBean(JdbcTemplate.class);
+            schema(jdbc);
+            receiverJdbc().update("delete from accepted");
+            ctx.getBean(Publisher.class).create("retained", "original fact");
+            try {
+                ctx.getBean(Dispatcher.class).replayOne();
+                throw new AssertionError("checkpoint failure must propagate");
+            } catch (IllegalStateException failure) {
+                check("checkpoint unavailable".equals(failure.getMessage()), "expected checkpoint failure");
+            }
+            equal(1, checkpointCalls, "checkpoint called exactly once after acknowledgment");
+            equal(1, ctx.getBean(ReceiverClient.class).count(), "receiver committed before local failure");
+            assertRetained(jdbc, false);
+            System.out.println("PASS acknowledgment survives checkpoint failure; original order and pending event retained");
+        }
+    }
+
+    private static void resumeInNewProcess() {
+        fileDatabases();
+        try (var ctx = new AnnotationConfigApplicationContext(ObservedConfig.class)) {
+            var jdbc = ctx.getBean(JdbcTemplate.class);
+            var dispatcher = ctx.getBean(Dispatcher.class);
+            assertRetained(jdbc, false);
+            equal(1, ctx.getBean(ReceiverClient.class).count(), "prior receiver acceptance persists");
+            check(dispatcher.replayOne(), "retained event must replay without republishing");
+            equal(1, ctx.getBean(ReceiverClient.class).count(), "replay must not duplicate receiver effect");
+            equal("original fact", receiverJdbc().queryForObject(
+                "select payload from accepted where token='event:retained'", String.class), "stable token and payload");
+            assertRetained(jdbc, true);
+            equal(1, checkpointCalls, "replay checkpoint completed");
+            check(!dispatcher.replayOne(), "completed outbox must drain");
+            equal(1, checkpointCalls, "empty replay must not invoke checkpoint");
+            System.out.println("PASS fresh JVM replays retained file-backed event once and commits completion");
+        }
+    }
+
+    private static void assertRetained(JdbcTemplate jdbc, boolean done) {
+        equal(1, count(jdbc, "orders"), "publisher not rerun");
+        equal(1, count(jdbc, "outbox"), "same outbox row retained");
+        equal("original fact", jdbc.queryForObject("select payload from orders where id='retained'", String.class), "order payload retained");
+        equal("original fact", jdbc.queryForObject("select payload from outbox where event_id='event:retained'", String.class), "event payload retained");
+        equal(done, jdbc.queryForObject("select done from outbox where event_id='event:retained'", Boolean.class), "outbox completion state");
+    }
+
+    private static void controls() {
+        System.setProperty("work.businessUrl", "jdbc:h2:mem:recovery-controls;DB_CLOSE_DELAY=-1");
+        System.setProperty("work.receiverUrl", "jdbc:h2:mem:receiver-controls;DB_CLOSE_DELAY=-1");
+        try (var ctx = new AnnotationConfigApplicationContext(ObservedConfig.class)) {
+            var jdbc = ctx.getBean(JdbcTemplate.class);
+            var publisher = ctx.getBean(Publisher.class);
+            var dispatcher = ctx.getBean(Dispatcher.class);
+            var receiver = ctx.getBean(ReceiverClient.class);
+            schema(jdbc);
+            publisher.create("rejected", "reject");
+            for (int attempt = 0; attempt < 2; attempt++) {
+                expectRejected(dispatcher, "receiver rejected payload");
+                equal(false, jdbc.queryForObject("select done from outbox", Boolean.class), "rejection remains pending");
+            }
+            equal(0, checkpointCalls, "receiver rejection must not call checkpoint");
+            equal(0, receiver.count(), "rejected work has no receiver effect");
+            System.out.println("PASS receiver rejection propagates and retains pending work");
+
+            schema(jdbc);
+            publisher.create("conflict", "original");
+            receiver.accept("event:conflict", "different immutable fact");
+            expectRejected(dispatcher, "identity reused for a different payload");
+            equal(false, jdbc.queryForObject("select done from outbox", Boolean.class), "identity conflict remains pending");
+            equal(0, checkpointCalls, "identity conflict must not call checkpoint");
+            equal(1, receiver.count(), "identity conflict adds no receiver effect");
+            System.out.println("PASS receiver token/payload conflict is not acknowledged locally");
+
+            schema(jdbc);
+            receiverJdbc().update("delete from accepted");
+            jdbc.update("insert into outbox values ('event:collision','existing fact',false)");
+            try {
+                publisher.create("collision", "new fact");
+                throw new AssertionError("duplicate event must fail publisher");
+            } catch (org.springframework.dao.DuplicateKeyException expected) {
+                equal(0, count(jdbc, "orders"), "outbox failure rolls back business order");
+                equal(1, count(jdbc, "outbox"), "existing outbox unchanged");
+                equal("existing fact", jdbc.queryForObject("select payload from outbox", String.class), "collision cannot replace payload");
+            }
+            System.out.println("PASS publisher order/outbox atomicity preserved");
+
+            schema(jdbc);
+            publisher.create("a", "first");
+            publisher.create("b", "second");
+            check(dispatcher.replayOne(), "first pending row delivered");
+            equal(1, receiver.count(), "one receiver effect per replay");
+            equal(1, jdbc.queryForObject("select count(*) from outbox where done=false", Integer.class), "one row remains pending");
+            check(dispatcher.replayOne(), "second pending row delivered");
+            equal(2, receiver.count(), "second event has distinct identity");
+            check(!dispatcher.replayOne(), "drained replay returns false");
+            equal(2, checkpointCalls, "checkpoint once per successful row");
+            System.out.println("PASS at most one row per replay and empty queue behavior");
+        }
+    }
+
+    private static void expectRejected(Dispatcher dispatcher, String message) {
+        try {
+            dispatcher.replayOne();
+            throw new AssertionError("receiver failure must propagate");
+        } catch (IllegalArgumentException failure) {
+            equal(message, failure.getMessage(), "receiver error preserved");
+        }
+    }
+
+    private static int count(JdbcTemplate jdbc, String table) {
+        return jdbc.queryForObject("select count(*) from " + table, Integer.class);
+    }
+
+    private static void equal(Object expected, Object actual, String message) {
+        if (!java.util.Objects.equals(expected, actual))
+            throw new AssertionError(message + ": expected=" + expected + " actual=" + actual);
+    }
+
+    private static void check(boolean condition, String message) {
+        if (!condition) throw new AssertionError(message);
+    }
+}

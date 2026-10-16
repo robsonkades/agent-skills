@@ -1,0 +1,69 @@
+import jdk.incubator.vector.*;
+public final class VectorAPILab {
+static final VectorSpecies<Float> FSPECIES = FloatVector.SPECIES_PREFERRED;
+
+static void addArraysVector(float[] a, float[] b, float[] c) {
+    if (a.length != b.length || a.length != c.length) {
+        throw new IllegalArgumentException("length mismatch");
+    }
+    int length = a.length;
+    int upperBound = FSPECIES.loopBound(length);
+    int i = 0;
+    for (; i < upperBound; i += FSPECIES.length()) {
+        FloatVector va = FloatVector.fromArray(FSPECIES, a, i);
+        FloatVector vb = FloatVector.fromArray(FSPECIES, b, i);
+        va.add(vb).intoArray(c, i);
+    }
+    for (; i < length; i++) {          // 0 to LANES-1 remaining elements
+        c[i] = a[i] + b[i];
+    }
+}
+
+static void addArraysVectorMasked(float[] a, float[] b, float[] c) {
+    if (a.length != b.length || a.length != c.length) {
+        throw new IllegalArgumentException("length mismatch");
+    }
+    int length = a.length;
+    int bound = FSPECIES.loopBound(length);
+    int i = 0;
+    for (; i < bound; i += FSPECIES.length()) {
+        FloatVector va = FloatVector.fromArray(FSPECIES, a, i);
+        FloatVector vb = FloatVector.fromArray(FSPECIES, b, i);
+        va.add(vb).intoArray(c, i);
+    }
+    if (i < length) {  // one tail; no final int increment past the array length
+        VectorMask<Float> mask = FSPECIES.indexInRange(i, length);
+        FloatVector va = FloatVector.fromArray(FSPECIES, a, i, mask);
+        FloatVector vb = FloatVector.fromArray(FSPECIES, b, i, mask);
+        va.add(vb).intoArray(c, i, mask);
+    }
+}
+
+static float dotProductVector(float[] a, float[] b) {
+    if (a.length != b.length) throw new IllegalArgumentException("length mismatch");
+    int bound = FSPECIES.loopBound(a.length);
+    FloatVector accumulator = FloatVector.zero(FSPECIES);
+    int i = 0;
+    for (; i < bound; i += FSPECIES.length()) {
+        FloatVector va = FloatVector.fromArray(FSPECIES, a, i);
+        FloatVector vb = FloatVector.fromArray(FSPECIES, b, i);
+        accumulator = va.fma(vb, accumulator);      // fused semantics; verify lowering
+    }
+    float sum = accumulator.reduceLanes(VectorOperators.ADD);
+    for (; i < a.length; i++) sum += a[i] * b[i];
+    return sum;
+}
+
+static int countAboveVector(float[] data, float threshold) {
+    FloatVector vthreshold = FloatVector.broadcast(FSPECIES, threshold);
+    int bound = FSPECIES.loopBound(data.length);
+    int count = 0;
+    int i = 0;
+    for (; i < bound; i += FSPECIES.length()) {
+        FloatVector v = FloatVector.fromArray(FSPECIES, data, i);
+        count += v.compare(VectorOperators.GT, vthreshold).trueCount();
+    }
+    for (; i < data.length; i++) if (data[i] > threshold) count++;
+    return count;
+}
+}

@@ -1,0 +1,1 @@
+package org.openrewrite; public class PrintOutputCapture<T> { public PrintOutputCapture(T context, Object printer) { } }

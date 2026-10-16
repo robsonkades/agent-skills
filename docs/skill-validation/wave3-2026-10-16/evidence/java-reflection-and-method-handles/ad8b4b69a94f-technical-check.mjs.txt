@@ -1,0 +1,59 @@
+import { spawnSync } from 'node:child_process';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import assert from 'node:assert/strict';
+
+const root = fileURLToPath(new URL('.', import.meta.url));
+const bin = 'C:/Users/robso/.jdks/temurin-25.0.3/bin';
+const results = [];
+mkdirSync(resolve(root, 'logs'), { recursive: true });
+function run(name, program, args) {
+  const result = spawnSync(resolve(bin, program), args, {
+    cwd: root, encoding: 'utf8', windowsHide: true, timeout: 15000,
+  });
+  writeFileSync(resolve(root, 'logs', name + '.stdout.txt'), result.stdout || '');
+  writeFileSync(resolve(root, 'logs', name + '.stderr.txt'), result.stderr || '');
+  results.push({ name, command: [resolve(bin, program), ...args], cwd: root,
+    status: result.status, signal: result.signal, error: result.error?.message ?? null,
+    stdout: 'logs/' + name + '.stdout.txt', stderr: 'logs/' + name + '.stderr.txt' });
+  writeFileSync(resolve(root, 'technical-results.json'), JSON.stringify(results, null, 2) + '\n');
+  assert.equal(result.error, undefined, name + ': spawn');
+  return result;
+}
+
+assert.equal(run('java-version', 'java.exe', ['-version']).status, 0);
+assert.equal(run('javac-version', 'javac.exe', ['-version']).status, 0);
+assert.equal(run('compile-initialization', 'javac.exe', ['--release', '17', '-d', 'classes', 'InitializationProbe.java']).status, 0);
+const passiveMissing = run('passive-missing', 'java.exe', ['-Dmember=missing', '-cp', 'classes', 'InitializationProbe', 'passive']);
+assert.equal(passiveMissing.status, 1);
+assert.match(passiveMissing.stdout, /DISCOVERED[\s\S]*READY[\s\S]*ACCESSORS_INITIALIZING/);
+assert.match(passiveMissing.stderr, /ExceptionInInitializerError[\s\S]*NoSuchMethodException/);
+const eagerMissing = run('eager-missing', 'java.exe', ['-Dmember=missing', '-cp', 'classes', 'InitializationProbe', 'eager']);
+assert.equal(eagerMissing.status, 1);
+assert.doesNotMatch(eagerMissing.stdout, /READY/);
+assert.match(eagerMissing.stdout, /DISCOVERED[\s\S]*ACCESSORS_INITIALIZING/);
+assert.match(eagerMissing.stderr, /ExceptionInInitializerError[\s\S]*NoSuchMethodException/);
+for (const mode of ['passive', 'eager']) {
+  const valid = run(mode + '-valid', 'java.exe', ['-cp', 'classes', 'InitializationProbe', mode]);
+  assert.equal(valid.status, 0);
+  assert.match(valid.stdout, /FIRST_REQUEST 42/);
+  assert.match(valid.stdout, mode === 'eager' ? /ACCESSORS_INITIALIZING[\s\S]*READY/ : /READY[\s\S]*ACCESSORS_INITIALIZING/);
+}
+const moduleFiles = ['modules/m.target/module-info.java', 'modules/m.target/target/Foreign.java',
+  'modules/m.client/module-info.java', 'modules/m.client/client/Main.java'];
+assert.equal(run('compile-modules', 'javac.exe', ['--release', '17', '--module-source-path', 'modules', '-d', 'module-classes', ...moduleFiles]).status, 0);
+const modules = run('module-access', 'java.exe', ['--module-path', 'module-classes', '-m', 'm.client/client.Main']);
+assert.equal(modules.status, 0);
+assert.match(modules.stdout, /local modes=\d+ fullPrivilege=true handle=local/);
+assert.match(modules.stdout, /local linkage=PASS/);
+assert.match(modules.stdout, /foreign modes=\d+ fullPrivilege=false handle=foreign/);
+assert.match(modules.stdout, /foreign linkage=java.lang.invoke.LambdaConversionException/);
+assert.match(modules.stdout, /foreign typedAdapter=PASS/);
+console.log(JSON.stringify({ status: 'PASS', commands: results.length,
+  compilationTarget: 17, runtime: 'Temurin 25.0.3+9',
+  intentionalNegativeExits: ['passive-missing', 'eager-missing'],
+  checks: ['passive metadata access does not run initializer', 'explicit initialization rejects missing member before readiness',
+    'valid target passes both modes with different initialization order',
+    'same-module full privilege links a direct handle', 'cross-module private access permits invocation but rejects metafactory caller',
+    'narrow typed adapters work with authorized handles'] }, null, 2));

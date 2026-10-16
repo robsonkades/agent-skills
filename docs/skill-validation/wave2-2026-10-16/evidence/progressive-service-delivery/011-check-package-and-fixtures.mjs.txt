@@ -1,0 +1,48 @@
+import assert from 'node:assert/strict';
+import { readFile, access } from 'node:fs/promises';
+import { dirname, resolve, isAbsolute } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
+import { loadPackageFromDirectory } from 'file:///C:/git/agent-skills/packages/core/src/application/package-loader.ts';
+import { validatePackage } from 'file:///C:/git/agent-skills/packages/core/src/application/validate-package.ts';
+import { NodeFileSystem } from 'file:///C:/git/agent-skills/packages/node/src/file-system.ts';
+
+const require = createRequire('file:///C:/git/agent-skills/package.json');
+const { parse } = require('yaml');
+const skill = 'progressive-service-delivery';
+const root = 'C:/git/agent-skills/skills/' + skill;
+const artifacts = dirname(fileURLToPath(import.meta.url));
+const loaded = await loadPackageFromDirectory(new NodeFileSystem(), root, { strict: true });
+const report = validatePackage(loaded.pkg, { directoryName: skill });
+const issues = [...loaded.issues, ...report.issues];
+assert.deepEqual(issues, []);
+assert.equal(loaded.pkg.manifest.version, '1.0.1');
+let localLinks = 0;
+for (const relative of ['SKILL.md', 'references/cohort-evidence-and-gates.md', 'references/java-spring-release-constraints.md']) {
+  const path = resolve(root, relative);
+  const content = await readFile(path, 'utf8');
+  for (const match of content.matchAll(/\]\(([^)]+)\)/g)) {
+    const target = match[1].split('#')[0];
+    if (!target || /^[a-z]+:/i.test(target) || isAbsolute(target)) continue;
+    await access(resolve(dirname(path), target));
+    localLinks++;
+  }
+}
+const readFixture = async (name, path) => parse(await readFile(resolve(artifacts, 'cases', name, path), 'utf8'));
+const background = await readFixture('background-caller', 'deploy/rollout.yaml');
+const inline = await readFixture('inline-caller', 'deploy/rollout.yaml');
+const analysis = await readFixture('background-caller', 'deploy/analysis-template.yaml');
+assert.deepEqual(analysis, await readFixture('inline-caller', 'deploy/analysis-template.yaml'));
+const backgroundCanary = background.spec.strategy.canary;
+const inlineCanary = inline.spec.strategy.canary;
+const inlineStep = inlineCanary.steps.find(step => step.analysis);
+assert.deepEqual(backgroundCanary.analysis, inlineStep.analysis);
+delete backgroundCanary.analysis;
+inlineCanary.steps = inlineCanary.steps.filter(step => !step.analysis);
+assert.deepEqual(background, inline);
+assert.equal(analysis.spec.metrics[0].count, 3);
+assert.equal(analysis.spec.metrics[0].initialDelay, '70s');
+assert.equal(analysis.spec.metrics[0].failureLimit, 0);
+assert.equal(analysis.spec.metrics[0].inconclusiveLimit, 0);
+assert.equal(await readFile(resolve(artifacts, 'cases/background-caller/release-policy.md'), 'utf8'), await readFile(resolve(artifacts, 'cases/inline-caller/release-policy.md'), 'utf8'));
+console.log(JSON.stringify({ node: process.version, skill, version: loaded.pkg.manifest.version, issues, packagedFiles: loaded.pkg.files.length, localLinks, caseFixturesParsed: 4, caseDifference: 'analysis invocation placement only', limitations: ['No Argo controller, provider, cluster or behavioral-agent execution performed.'] }, null, 2));

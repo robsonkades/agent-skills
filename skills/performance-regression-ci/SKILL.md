@@ -52,6 +52,7 @@ For a new or materially changed comparator, define the applicable contract befor
 | Field         | Required decision                                                                     |
 | ------------- | ------------------------------------------------------------------------------------- |
 | Decision      | What merge, release, or investigation action follows each status?                     |
+| Target        | Candidate identity actually measured and the revision/artifact receiving the decision |
 | Metric        | Benchmark/workload identity, population, parameters, unit, direction, and aggregation |
 | Scope         | Critical benchmarks that block; diagnostic benchmarks that only report                |
 | MPIR          | Smallest practically important regression, in product-relevant units                  |
@@ -318,6 +319,7 @@ explanation need not implement or rerun the full protocol.
 - [ ] Independent experimental unit and pairing/blocking are explicit.
 - [ ] False-block rate, power, inconclusive rate, and runtime were calibrated.
 - [ ] Comparator rejects incompatible fingerprints and missing entries.
+- [ ] Trusted evidence is bound to the intended candidate and reporting target, including reruns.
 - [ ] Multiplicity and retries have predeclared policies.
 - [ ] Baselines are immutable, attributable, epoch-aware, and promoted only by trust.
 - [ ] Pipeline preserves comparator/logging status and evidence, or classifies their loss explicitly.

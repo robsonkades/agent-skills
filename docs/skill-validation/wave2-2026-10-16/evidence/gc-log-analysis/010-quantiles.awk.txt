@@ -1,0 +1,8 @@
+{ v[n++] = $1; total += $1 }
+       END {
+         if (n == 0) { print "no pauses found"; exit 1 }
+         r50 = int(0.50 * n); if (r50 < 0.50 * n) r50++
+         r99 = int(0.99 * n); if (r99 < 0.99 * n) r99++
+         printf "pauses=%d  p50_nearest_rank=%.2fms  p99_nearest_rank=%.2fms  max=%.2fms  total=%.1fms\n",
+                n, v[r50-1], v[r99-1], v[n-1], total
+       }

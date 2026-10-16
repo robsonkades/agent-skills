@@ -1,0 +1,25 @@
+diff --git a/skills/session-state-strategies/references/session-failure-modes.md b/skills/session-state-strategies/references/session-failure-modes.md
+index d58cf71..0fbc29f 100644
+--- a/skills/session-state-strategies/references/session-failure-modes.md
++++ b/skills/session-state-strategies/references/session-failure-modes.md
+@@ -178,6 +178,6 @@ Do not require a full session audit or new latency/failure campaign for a narrow
+ 5. What happens with two tabs?
+ 6. What is the p99 added latency of the session lookup on the request path?
+ 
+-Sources: [Servlet 6.0 session concurrency and client semantics](https://jakarta.ee/specifications/servlet/6.0/jakarta-servlet-spec-6.0),
++Sources: [Servlet 6.0 session concurrency and client semantics](https://jakarta.ee/specifications/servlet/6.0/jakarta-servlet-spec-6.0.html),
+ [OWASP session lifecycle](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html),
+ [JWT BCP](https://datatracker.ietf.org/doc/html/rfc8725).
+diff --git a/skills/session-state-strategies/skill.yaml b/skills/session-state-strategies/skill.yaml
+index 9ebe4f8..c17ede1 100644
+--- a/skills/session-state-strategies/skill.yaml
++++ b/skills/session-state-strategies/skill.yaml
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: session-state-strategies
+-version: 1.1.4
++version: 1.1.5
+ description: >-
+   Placing the state that spans several requests of one conversation: client session state,
+   server session state and database session state, plus signed tokens and external stores.

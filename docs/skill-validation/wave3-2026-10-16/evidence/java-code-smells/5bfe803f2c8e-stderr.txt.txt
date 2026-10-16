@@ -1,0 +1,2 @@
+Exception in thread "main" java.lang.AssertionError: archive must retain id and note: restored note=null
+	at ArchiveClient.main(ArchiveClient.java:15)

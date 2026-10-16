@@ -1,0 +1,10 @@
+{"runtime":"v25.6.1","caseBoundMs":1200,"hardBoundMs":8000,"scope":"local fixture + documented connection-start model"}
+{"check":"policy diff","result":"PASS","changedFields":["connect_start"],"from":"first_client_data","to":"immediate"}
+{"check":"protected fixture","file":"client.mjs","sha256":"03f3c11d53a2d6273fe791b7dc41a42ce03b99e33747bf785e480a27630bf043","result":"PASS"}
+{"check":"protected fixture","file":"server.mjs","sha256":"9207275610e3e93e7f06b73f9dde844d56e519ff874cf6a1854f6d170192b7d0","result":"PASS"}
+{"check":"protected fixture","file":"protocol.json","sha256":"093a5214ebd8a4ba26a9aa3588b6add210b22e21678d324d5e4f634430fdc2e9","result":"PASS"}
+{"check":"protected fixture","file":"adapter-contract.md","sha256":"591f36efd3fb491c27ecf90fe637c61933beaff291858d60502e7c3a0c1aab29","result":"PASS"}
+{"name":"direct client/server control","connectionStart":"direct","clientConnected":true,"downstreamAccepted":0,"proxyUpstreamAttempts":0,"upstreamAccepted":1,"completed":1,"clientReceived":"HELLO\nPONG\n","upstreamReceived":"PING\n","errors":[],"outcome":"completed","elapsedMs":13.8,"cleanup":"all scenario sockets destroyed and listeners closed"}
+{"name":"original policy gate","connectionStart":"first_client_data","clientConnected":true,"downstreamAccepted":1,"proxyUpstreamAttempts":0,"upstreamAccepted":0,"completed":0,"clientReceived":"","upstreamReceived":"","errors":[],"outcome":"deadline","elapsedMs":1213.3,"cleanup":"all scenario sockets destroyed and listeners closed"}
+{"name":"proposed policy gate","connectionStart":"immediate","clientConnected":true,"downstreamAccepted":1,"proxyUpstreamAttempts":1,"upstreamAccepted":1,"completed":1,"clientReceived":"HELLO\nPONG\n","upstreamReceived":"PING\n","errors":[],"outcome":"completed","elapsedMs":2.4,"cleanup":"all scenario sockets destroyed and listeners closed"}
+{"result":"PASS","scenarios":3,"deploymentValidated":false,"cleanup":"complete"}

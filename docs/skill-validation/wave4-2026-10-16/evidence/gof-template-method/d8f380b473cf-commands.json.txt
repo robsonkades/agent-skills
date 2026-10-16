@@ -1,0 +1,140 @@
+[
+  {
+    "command": "git",
+    "args": [
+      "status",
+      "--short",
+      "--untracked-files=all",
+      "--",
+      "skills/gof-template-method"
+    ],
+    "cwd": "C:/git/agent-skills",
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": "",
+    "error": null
+  },
+  {
+    "command": "git",
+    "args": [
+      "diff",
+      "--",
+      "skills/gof-template-method"
+    ],
+    "cwd": "C:/git/agent-skills",
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": "",
+    "error": null
+  },
+  {
+    "command": "git",
+    "args": [
+      "diff",
+      "--cached",
+      "--",
+      "skills/gof-template-method"
+    ],
+    "cwd": "C:/git/agent-skills",
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": "",
+    "error": null
+  },
+  {
+    "command": "git",
+    "args": [
+      "show",
+      "HEAD:skills/gof-template-method/skill.yaml"
+    ],
+    "cwd": "C:/git/agent-skills",
+    "exitCode": 0,
+    "stdout": "schemaVersion: 1\n\nname: gof-template-method\nversion: 1.2.4\ndescription: >-\n  Template Method in modern Java: fixing an algorithm's skeleton while named steps vary, and the\n  inheritance coupling that often makes composition preferable. Covers when final protects the\n  sequence, controlled overriding, minimal hook surfaces, the constructor-calls-an-overridable-method trap,\n  protected hooks becoming an API you cannot change, when the pattern is genuinely right\n  (frameworks that instantiate your subclass, contract test base classes), and how to convert one\n  to a class taking its steps as collaborators. Use when an abstract base class with protected\n  hooks is proposed, when a base-class change broke subclasses, when a template has grown past a\n  handful of hooks, or when subclasses override the template method itself. Does not cover\n  choosing a whole algorithm (gof-strategy), creating the product a template needs\n  (gof-factory-method), the general inheritance decision (java-composition-over-inheritance), or\n  pipeline stages contributed independently (gof-chain-of-responsibility).\n\nlicense: Apache-2.0\n\nauthors:\n  - name: agent-skills contributors\n    url: https://github.com/robsonkades/agent-skills\n\nhomepage: https://github.com/robsonkades/agent-skills/tree/main/skills/gof-template-method\nrepository:\n  type: git\n  url: https://github.com/robsonkades/agent-skills\n  directory: skills/gof-template-method\n\nkeywords:\n  - design-patterns\n  - gof\n  - behavioral\n  - template-method\n  - inheritance\n  - composition\n\nfiles:\n  - SKILL.md\n  - skill.yaml\n  - references/\n\ndependencies: []\n\nsuggests:\n  - completablefuture-composition\n  - gof-chain-of-responsibility\n  - gof-factory-method\n  - gof-strategy\n  - idempotency\n  - java-composition-over-inheritance\n  - java-memory-model\n  - java-test-design\n  - orm-behavioral-patterns\n  - retries-and-backoff\n  - timeouts-and-deadlines\n\ncapabilities:\n  - reads-source\n\nagentOverrides:\n  codex:\n    interface:\n      display_name: Template Method\n      short_description: A fixed sequence, at the price of inheritance\n      default_prompt: Use Template Method to review this base class and its hooks.\n",
+    "stderr": "",
+    "error": null
+  },
+  {
+    "command": "C:\\Program Files\\nodejs\\node.exe",
+    "args": [
+      "node_modules/prettier/bin/prettier.cjs",
+      "--check",
+      "skills/gof-template-method/SKILL.md",
+      "skills/gof-template-method/references/inheritance-or-composition.md",
+      "skills/gof-template-method/references/worked-example.md",
+      "skills/gof-template-method/skill.yaml"
+    ],
+    "cwd": "C:/git/agent-skills",
+    "exitCode": 0,
+    "stdout": "Checking formatting...\nAll matched files use Prettier code style!\n",
+    "stderr": "",
+    "error": null
+  },
+  {
+    "command": "git",
+    "args": [
+      "diff",
+      "--check",
+      "--",
+      "skills/gof-template-method"
+    ],
+    "cwd": "C:/git/agent-skills",
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": "",
+    "error": null
+  },
+  {
+    "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+    "args": [
+      "-version"
+    ],
+    "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-template-method",
+    "exitCode": 0,
+    "stdout": "javac 25.0.3\r\n",
+    "stderr": "",
+    "error": null
+  },
+  {
+    "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+    "args": [
+      "-version"
+    ],
+    "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-template-method",
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n",
+    "error": null
+  },
+  {
+    "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+    "args": [
+      "--release",
+      "17",
+      "-d",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-template-method/java-controls/classes",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-template-method/java-controls/SettlementRun.java",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-template-method/java-controls/SettlementSteps.java",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-template-method/java-controls/Domain.java",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-template-method/java-controls/TemplateChecks.java"
+    ],
+    "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-template-method",
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": "",
+    "error": null
+  },
+  {
+    "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+    "args": [
+      "-ea",
+      "-cp",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-template-method/java-controls/classes",
+      "TemplateChecks"
+    ],
+    "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-template-method",
+    "exitCode": 0,
+    "stdout": "PASS successful fixed sequence and returned context\r\nPASS load preserves primary identity\r\nPASS load skips success-only successors\r\nPASS validate preserves primary identity\r\nPASS validate skips success-only successors\r\nPASS settle preserves primary identity\r\nPASS settle skips success-only successors\r\nPASS record preserves primary identity\r\nPASS record skips success-only successors\r\nPASS start-audit failure has no failure-audit attempt\r\nPASS finish-audit failure can follow recording\r\nPASS distinct audit failure is suppressed\r\nPASS same failure is not self-suppressed\r\nPASS disabled suppression does not retain secondary\r\nPASS Error bypasses runtime-failure audit\r\nPASS null logical ID rejected before audit\r\nPASS dependent success effect waits for incomplete input\r\nPASS dependent success effect follows completion\r\nPASS exceptional completion skips success effect\r\nPASS completed CompletableFuture continuation observed inline\r\nchecks=20\r\n",
+    "stderr": "",
+    "error": null
+  }
+]

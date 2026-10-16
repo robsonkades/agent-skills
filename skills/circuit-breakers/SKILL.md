@@ -59,7 +59,9 @@ in `references/breaker-configuration.md` to distinguish wiring defects from thre
 2. **Decide what the caller does with a fast failure**, including status/type, retry guidance,
    fallback provenance and whether accepted writes may be queued.
 3. **Put a timeout under the breaker.** A breaker counts outcomes, and a call that never
-   returns produces none (`timeouts-and-deadlines`).
+   returns produces none (`timeouts-and-deadlines`). For asynchronous calls, identify the
+   completion the breaker observes: timing out only the caller-facing wrapper can leave the
+   recorded operation pending. See `references/breaker-configuration.md` before moving decorators.
 4. **Write the failure predicate explicitly**, exception type by exception type and status
    class by status class. This is the decision with the largest consequence; the table is in
    `references/breaker-configuration.md`.
@@ -99,9 +101,9 @@ Prefer instead when:
 ## Rules
 
 - Prefer a rate/slow-call window with a minimum sample for ordinary noisy traffic. Consecutive
-  thresholds react faster and can fit rare calls or categorical failures, but are noise-sensitive
-  and miss sustained intermittent failure. Choose from traffic and failure correlation; test
-  false-open probability and detection time.
+  thresholds can fit rare calls or categorical failure bursts, but are noise-sensitive and can
+  miss sustained intermittent failure. Neither policy is inherently faster: compare the actual
+  thresholds against representative outcome sequences, false-open frequency and detection time.
 - **State the effective minimum number of calls and derive it from the endpoint's rate.**
   Resilience4j 2.3.0 caps the minimum at the count-window size, including the half-open
   window; a configured minimum or probe allowance alone does not establish the recovery

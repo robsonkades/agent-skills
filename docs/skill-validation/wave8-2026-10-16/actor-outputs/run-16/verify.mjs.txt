@@ -1,0 +1,109 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { createDb, query } from './fixture.mjs';
+
+// All candidate-result checks execute this file's contents, including after replacement.
+const read = name => fs.readFileSync(new URL(name, import.meta.url), 'utf8');
+const solution = read('./solution.sql');
+const current = read('./current.sql');
+const proposed = read('./proposed.sql');
+const firstPageSql = current.trim().replace(/;$/, '') + ' LIMIT :page_size;';
+const ids = rows => rows.map(row => row.id);
+let candidateExecutions = 0;
+let cursorChecks = 0;
+let walks = 0;
+const next = (db, tenant, cursor, pageSize, sql = solution) => {
+  if (sql === solution) candidateExecutions++;
+  return query(db, sql, {
+    tenant,
+    cursor_priority: cursor.priority,
+    cursor_created: cursor.created_at,
+    cursor_id: cursor.id,
+    page_size: pageSize,
+  });
+};
+
+function exercise(db, tenants, sizes) {
+  for (const tenant of tenants) {
+    const expected = query(db, current, { tenant });
+    for (let index = 0; index < expected.length; index++) {
+      for (const size of sizes) {
+        assert.deepEqual(
+          next(db, tenant, expected[index], size),
+          expected.slice(index + 1, index + 1 + size),
+          `tenant=${tenant}, cursor=${expected[index].id}, size=${size}`,
+        );
+        cursorChecks++;
+      }
+    }
+    for (const size of sizes.filter(size => size > 0)) {
+      let page = query(db, firstPageSql, { tenant, page_size: size });
+      const actual = [...page];
+      let requests = 0;
+      while (page.length) {
+        assert.ok(++requests <= expected.length + 1, 'pagination must terminate');
+        page = next(db, tenant, page.at(-1), size);
+        actual.push(...page);
+      }
+      assert.deepEqual(actual, expected, `complete walk tenant=${tenant}, size=${size}`);
+      assert.equal(new Set(ids(actual)).size, actual.length, 'no duplicate IDs');
+      walks++;
+    }
+    // Empty tenant has no valid cursor; this also checks tenant isolation explicitly.
+    assert.deepEqual(next(db, 999, { priority: null, created_at: '2026-01-01', id: 6 }, 1000), []);
+  }
+}
+
+const db = createDb();
+try {
+  const seedRows = query(db, current, { tenant: 71 });
+  assert.deepEqual(ids(seedRows), [2, 1, 3, 4, 6, 5, 7]);
+  const proposalCounterexamples = [1, 3, 6].map(id => {
+    const index = seedRows.findIndex(row => row.id === id);
+    const expected = seedRows.slice(index + 1);
+    const actual = next(db, 71, seedRows[index], 100, proposed);
+    assert.notDeepEqual(actual, expected, 'supplied proposal must expose the known defect');
+    assert.deepEqual(next(db, 71, seedRows[index], 100), expected);
+    return { cursorId: id, expectedIds: ids(expected), proposedIds: ids(actual) };
+  });
+  exercise(db, [71, 72, 999], [0, 1, 2, 3, 7, 100]);
+
+  // Supplementary rows exist only in this in-memory test database.
+  // Repeated keys/labels, every boundary priority class, and mirrored tenants.
+  const insert = db.prepare('INSERT INTO tickets(id,tenant_id,priority,created_at,label) VALUES (?,?,?,?,?)');
+  const priorities = [2147483647, 3, 2, 0, -1, -999999, -2147483648, null];
+  const dates = ['2025-12-31', '2026-01-01', '2026-01-02', '2027-01-01'];
+  let id = -1000;
+  let addedRows = 0;
+  for (const tenant of [71, 72, 73]) {
+    for (const priority of priorities) {
+      for (const date of dates) {
+        for (let duplicate = 0; duplicate < 3; duplicate++) {
+          insert.run(id++, tenant, priority, date, 'same label');
+          addedRows++;
+        }
+      }
+    }
+  }
+  for (let n = 0; n < 4; n++) {
+    insert.run(id++, 74, null, dates[n % 2], `null-only ${n}`);
+    addedRows++;
+  }
+  insert.run(id++, 75, -2147483648, '2026-01-01', 'singleton');
+  addedRows++;
+  exercise(db, [71, 72, 73, 74, 75, 76], [0, 1, 2, 3, 7, 31, 500]);
+  console.log(JSON.stringify({
+    status: 'passed',
+    node: process.version,
+    sqlite: query(db, 'SELECT sqlite_version() AS version', {})[0].version,
+    seedRows: 9,
+    supplementaryRows: addedRows,
+    cursorChecks,
+    completePaginationWalks: walks,
+    candidateExecutions,
+    proposalCounterexamples,
+    scope: 'SQLite result semantics only; no PostgreSQL execution or timings',
+  }, null, 2));
+} finally {
+  db.close();
+}

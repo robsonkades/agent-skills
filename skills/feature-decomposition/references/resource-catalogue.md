@@ -12,6 +12,7 @@ analysis does not require a resource catalogue.
 RES-03 Dispatch state column and migration
       Description   Adds orders.dispatch_state with a LEGACY default for existing rows.
       Depends on    none
+      Integration   <checks/prerequisites shared with consumers, if applicable>
       Files         src/main/resources/db/migration/V42__order_dispatch_state.sql
                     src/main/java/com/acme/order/Order.java
       Traces to     IMP-08 (schema), SC-02
@@ -32,18 +33,44 @@ For shared work, identify ownership and files that require coordination. Two fie
 - **Validation** — written before implementation starts, not chosen afterwards to fit what was
   built. Derive it from the applicable acceptance and contract, including when reconstructing an
   existing resource; a later-written check can still be valid when it tests that obligation.
-- **Depends on** — necessary inputs and their readiness criteria. Shared-file conflicts and
-  release/validation prerequisites also constrain safe execution; label them explicitly.
+  Name the observable result and relevant fixture/environment, linking an existing check where
+  available. Label new checks or fixtures as planned work and assign them to the resource that
+  provides them; do not imply a test exists merely by giving it a plausible path.
+- **Depends on** — inputs required before dependent implementation and their readiness evidence.
+  Keep integration/release gates separate. Shared-file ownership is a coordination constraint,
+  not proof that the behavior depends on another resource's implementation.
+
+## Check coverage before handoff
 
 Link acceptance to its existing criterion or source; a validation method is not a new acceptance
-decision. Review coverage in both directions: each delivery resource has a selected scope reason,
-and each applicable accepted criterion has a resource or shared check that will establish it.
-For a criterion spanning child features, retain its parent-level meaning and name who owns the
-combined check. For example, two independently useful export modes may each pass happy-path tests
-while neither establishes the accepted requirement that every export enforces tenant access.
-Map that requirement to the relevant checks across both modes; do not weaken it to the first mode
-tested or create another child feature merely to hold its tests. Missing criteria return to the
-accountable stage while unaffected decomposition proceeds.
+decision. Read the applicable criteria from their authoritative baseline, not just the IDs already
+copied into the resource list. For each, locate the implementing resource or applicable existing
+behavior, then the check that could establish the complete obligation. Inspect the scope of reused
+evidence: a passing check for one path does not cover another merely because they share a criterion
+ID. Missing checks are work to assign; missing or disputed criterion meaning returns to its owner.
+
+For example, an accepted export feature supports CSV and JSON with tenant access enforced for
+every export. Both formats are independently useful. The illustrative mapping below belongs in
+the existing breakdown; it is not a new status ledger or evidence that any check has run.
+
+| Accepted obligation            | Work/evidence mapping                                | Gap that must stay visible                                   |
+| ------------------------------ | ---------------------------------------------------- | ------------------------------------------------------------ |
+| CSV export                     | RES-01, CSV result check                             | Name its expected contents, not just successful execution    |
+| JSON export                    | RES-02, JSON result check                            | Name its expected contents, not just successful execution    |
+| Tenant access for every export | RES-01 + RES-02, access-denial checks for both paths | An existing CSV denial check alone leaves JSON coverage open |
+
+If both paths are claimed to use one access guard, inspect their routing to that guard before
+reusing its evidence; an alternate entry can bypass it. Keep the shared criterion's parent-level
+meaning and name who owns any combined check. Do not create another child feature merely to hold
+tests, weaken the criterion to the first format tested, or defer its required protection to a later
+slice. Keep ordinary checks with their behavior; separate shared validation only for a real handoff.
+
+Finally trace each resource back to selected scope, removing no obligation merely to make the
+table complete. An orphan resource needs a scope reason; an orphan criterion needs assigned work,
+applicable evidence or an explicit unresolved disposition. These links support checking allocation,
+not proof of acceptance. This use of bidirectional tracing follows
+[NASA's requirements-management guidance](https://www.nasa.gov/reference/6-2-requirements-management/)
+without importing its organizational approval process.
 
 ## Resource kinds
 
@@ -88,8 +115,12 @@ or integration validation instead of requiring it to run in isolation.
 
 Distinguish dependencies from scheduling preferences:
 
-- **Produces-consumes** — RES-02 needs the column RES-01 adds. Forced.
-- **Contract** — RES-04 implements CT-01 defined by RES-03. Forced.
+- **Produces-consumes** — RES-02 needs the column RES-01 adds before database integration or
+  use. Only force implementation order if it needs an unavailable output to implement correctly;
+  an accepted schema and suitable fixture may allow both implementations to proceed.
+- **Contract** — RES-04 needs agreed CT-01. If its required semantics are still undecided, that
+  decision blocks dependent implementation. If CT-01 is settled, implementing its producer need
+  not precede implementing its consumer.
 - **Validation/release** — implementation can use an agreed contract or fixture, but final
   integration/release needs the real producer. State the separate gate rather than blocking
   all implementation until the other resource is finished.
@@ -98,14 +129,39 @@ Distinguish dependencies from scheduling preferences:
 
 Record the dependency graph and currently ready resources; give a preferred sequence separately.
 Check every referenced ID exists, reject cycles, and distinguish missing evidence from a real
-dependency. A blocked node need not stall unrelated work; shared-file ownership still matters.
+dependency. Before declaring parallel implementation possible, inspect required contracts/fixtures
+and proposed write sets, including generated files and shared configuration. Resolve overlapping
+writes through ownership or sequencing; disjoint files alone do not establish independent inputs.
+A blocked node need not stall unrelated work.
+For an external prerequisite, name the provider, required deliverable and evidence of readiness.
+Keep it an external gate unless delivering it is actually in scope; a resource ID does not grant
+ownership of another team's work or establish their commitment.
 
-For example, a producer and consumer may be implemented against an agreed contract in parallel,
-while their integration check waits for both implementations. Link that common check and its
+For example, a producer and consumer may be implemented against an agreed contract and suitable
+fixtures in parallel, while their integration check waits for both implementations. If the contract's
+retry semantics are still undecided, dependent behavior is not ready to implement even if the two
+files have different owners; identify the missing decision and any unaffected preparation instead.
+Link the common integration check and its
 prerequisites to both resources instead of adding reciprocal implementation dependencies. If the
 check is tracked separately, name its owner and link its evidence back to each affected criterion;
 keep affected acceptance open until its required evidence exists. A separate check does not waive
 that obligation or reopen unrelated acceptance already established by sufficient evidence.
+
+### Compatibility changes the split
+
+When an accepted design requires old and new consumers to coexist, resources may follow
+expansion, consumer migration and eventual removal of the old interface. Carry the mixed-version
+checks and the evidence that old consumers no longer need it into the respective validation/release
+gates; cleanup is not ready merely because the first new consumer passes. This follows the
+conditions in Danilo Sato's [Parallel Change](https://martinfowler.com/bliki/ParallelChange.html).
+The temporary support for both interfaces and its removal are real work, not automatically useful
+child features.
+
+If instead all consumers are controlled and an accepted coordinated cutover satisfies compatibility,
+one resource or a smaller set with a combined gate may be sufficient. Do not introduce an overlap
+mechanism solely to obtain more resources. If deployment constraints are unknown, keep the affected
+split provisional and route the missing contract/deployment decision; decomposition carries that
+decision into the breakdown, while the implementation plan owns the operational sequence.
 
 ## Revising an existing breakdown
 

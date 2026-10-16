@@ -66,7 +66,10 @@ may suffice without a new capture or configuration change.
    failure deadline. Otherwise inspect both trigger bases. In generational
    mode use the relevant generation's capacity/rate and actual triggers. Capacity:
    the configured `Max Evacuation` budget and actual `available` in the
-   `gc+ergo` lines. A heap can satisfy one and violate the other.
+   `gc+ergo` lines. For a failed large allocation, also compare its aligned object size
+   with eligible contiguous regions using the `gc+free` evidence described in the log
+   reference. Aggregate free space and `humongous waste` do not establish that fit.
+   A heap can satisfy one constraint and violate another.
 6. **Look for pacing before looking for pauses.** `-Xlog:gc+stats` → `Allocation pacing
 accrued` per thread. Correlate affected requests; absent pauses alone do not identify pacing.
 7. **Classify a fallback before reacting to it.** The degeneration point (`Mark`,

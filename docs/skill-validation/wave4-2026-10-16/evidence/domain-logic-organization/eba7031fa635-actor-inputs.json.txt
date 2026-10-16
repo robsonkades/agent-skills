@@ -1,0 +1,36 @@
+[
+  {
+    "id": "case-a",
+    "request": "Review the warehouse reservation module described in change-request.md. Use the supplied project artifacts and report a supported recommendation with its limits.",
+    "fixtureDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/domain-logic-organization/cases/case-a",
+    "actorFiles": [
+      "README.md",
+      "change-request.md",
+      "schema.sql",
+      "Bootstrap.java",
+      "StockGateway.java",
+      "ReservationService.java",
+      "read-stock.sql"
+    ],
+    "role": "review only",
+    "prerequisites": "Java 17 source; PostgreSQL 17 contract. No database credentials or runtime are supplied.",
+    "origin": "Known development case authored for this review; not held out."
+  },
+  {
+    "id": "case-b",
+    "request": "Review the warehouse reservation module described in change-request.md. Use the supplied project artifacts and report a supported recommendation with its limits.",
+    "fixtureDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/domain-logic-organization/cases/case-b",
+    "actorFiles": [
+      "README.md",
+      "change-request.md",
+      "schema.sql",
+      "Bootstrap.java",
+      "StockGateway.java",
+      "ReservationService.java",
+      "read-stock.sql"
+    ],
+    "role": "review only",
+    "prerequisites": "Java 17 source; PostgreSQL 17 contract. No database credentials or runtime are supplied.",
+    "origin": "Known development case authored for this review; not held out."
+  }
+]

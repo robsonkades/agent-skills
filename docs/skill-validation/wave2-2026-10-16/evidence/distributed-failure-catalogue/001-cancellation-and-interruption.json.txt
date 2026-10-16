@@ -1,0 +1,151 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "cancellation-and-interruption",
+  "ownedPath": "skills/cancellation-and-interruption/",
+  "allWritesStopped": true,
+  "processesStopped": true,
+  "retrospective": true,
+  "versions": {
+    "committed": "1.1.4",
+    "assignment": "1.1.4",
+    "final": "1.1.5",
+    "rationale": "One patch bump for justified documentation changes; clean assignment baseline."
+  },
+  "preExistingChanges": [],
+  "filesChanged": [
+    "skills/cancellation-and-interruption/SKILL.md",
+    "skills/cancellation-and-interruption/references/uninterruptible-operations.md",
+    "skills/cancellation-and-interruption/skill.yaml"
+  ],
+  "findingsCorrected": [
+    {
+      "location": "SKILL.md:121; references/uninterruptible-operations.md:105",
+      "problem": "Task-handle ownership alone did not explicitly account for interruption automatically closing a borrowed InterruptibleChannel, even without application close().",
+      "change": "Added resource-ownership analysis distinct from task ownership, pre-existing interrupt status on I/O entry, and conditional choices that protect other channel users.",
+      "consequence": "Prevents describing cancel(true) as request-isolated when interruption can invalidate a shared channel."
+    },
+    {
+      "location": "SKILL.md:202",
+      "problem": "The test inventory did not explicitly exercise collateral effects on borrowed-channel users.",
+      "change": "Added that case, including interrupt status already set before I/O."
+    }
+  ],
+  "capabilitiesPreserved": [
+    "Task-specific cancellation handles and late-delivery race handling",
+    "Shared-operation ownership and caller-local abandonment",
+    "Cleanup, bounded abort dispatch, unknown side effects and recovery",
+    "Distinction between public outcome, task termination and resource release",
+    "Target-JDK compatibility and no implicit upgrades or preview adoption"
+  ],
+  "capabilitiesRemoved": [],
+  "unchangedFiles": [
+    "skills/cancellation-and-interruption/references/interrupt-protocol.md"
+  ],
+  "finalHashesSha256": {
+    "SKILL.md": "8C71DB530FDE7C2B3770382812D2370AA26515D59D842812D117FBF8DA9FBE08",
+    "skill.yaml": "9010B638F6B913ABA18731D2DB65D328740A94DD514FF63113E7A269DDC55DE3",
+    "references/interrupt-protocol.md": "7A2C5C72A18379B5377B8DF20A6603DD0267270A79F84A9E9D35DD93AFE490AC",
+    "references/uninterruptible-operations.md": "D428B29ACBB484858AD634A4DED62A52B082732391DE7DD595D4BDB7542B79A6"
+  },
+  "checks": [
+    {
+      "kind": "structural",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/cancellation-and-interruption/SKILL.md skills/cancellation-and-interruption/skill.yaml skills/cancellation-and-interruption/references/interrupt-protocol.md skills/cancellation-and-interruption/references/uninterruptible-operations.md",
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS: all matched files use Prettier code style."
+    },
+    {
+      "kind": "structural",
+      "command": "git diff --check -- skills/cancellation-and-interruption",
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS: no whitespace errors."
+    },
+    {
+      "kind": "structural",
+      "command": "Read-only Node invocation of repository parseManifest({strict:true}), buildSkillPackage and validatePackage, plus resource and neighboring-skill existence checks",
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS: four package files; zero issues/warnings; both routed resources and declared neighboring skills exist."
+    },
+    {
+      "kind": "technical",
+      "command": "javac --release 25 -d C:/Users/robso/AppData/Local/Temp/agent-skills-cancellation-quality08-20261016 C:/Users/robso/AppData/Local/Temp/agent-skills-cancellation-quality08-20261016/ChannelOwnershipProbe.java",
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS: compiled with javac 25.0.3, target release 25, no preview or dependencies."
+    },
+    {
+      "kind": "technical",
+      "command": "java -cp C:/Users/robso/AppData/Local/Temp/agent-skills-cancellation-quality08-20261016 ChannelOwnershipProbe C:/Users/robso/AppData/Local/Temp/agent-skills-cancellation-quality08-20261016",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/agent-skills-cancellation-quality08-20261016",
+      "runtime": "Temurin OpenJDK 25.0.3+9",
+      "result": "PASS 6 cases; exit 0. Platform and virtual threads each exercise no-interrupt shared-channel control, interrupted borrower invalidating the shared channel, and separate task-owned channel preserving the other reader.",
+      "bounds": "5-second worker joins; isolated child JVM with 15-second parent watchdog; process exited normally.",
+      "limit": "Initial-interrupt-before-positional-read contract only; no cancellation-latency measurement or arbitrary-provider guarantee."
+    }
+  ],
+  "artifacts": [
+    "C:/Users/robso/AppData/Local/Temp/agent-skills-cancellation-quality08-20261016/ChannelOwnershipProbe.java",
+    "C:/Users/robso/AppData/Local/Temp/agent-skills-cancellation-quality08-20261016/stdout.log",
+    "C:/Users/robso/AppData/Local/Temp/agent-skills-cancellation-quality08-20261016/stderr.log"
+  ],
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/nio/channels/InterruptibleChannel.html",
+      "version": "JDK 25; installed source distribution 25.0.3",
+      "consulted": "C:/Users/robso/.jdks/temurin-25.0.3/lib/src.zip!java.base/java/nio/channels/InterruptibleChannel.java",
+      "supports": "Interruption while blocked and already-set status on blocking I/O entry close the channel, throw ClosedByInterruptException and leave interrupt status set."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/nio/channels/FileChannel.html",
+      "version": "JDK 25; installed source distribution 25.0.3",
+      "consulted": "C:/Users/robso/.jdks/temurin-25.0.3/lib/src.zip!java.base/java/nio/channels/FileChannel.java",
+      "supports": "FileChannel operation contracts, including positional read interruption and operation-specific exceptions."
+    }
+  ],
+  "limitations": [
+    "Oracle web retrieval stalled and the read-only tool request was terminated; authoritative Javadoc was inspected from the installed OpenJDK source archive instead.",
+    "No independent agent behavioral evaluation or measured improvement caused by the skill.",
+    "Technical probes do not test every cancellation race, provider or runtime, and do not measure stop latency."
+  ],
+  "walkthroughs": [
+    "Task-owned Future with borrowed channel versus separately opened request-owned channel",
+    "Pre-existing interrupt status before I/O and its effects on another reader",
+    "Missing isolated stop mechanism retains an explicit residual-work/latency constraint"
+  ],
+  "behavioralEvaluationsExecuted": [],
+  "cases": {
+    "classification": "Reproducible development cases supplied after editing; not executed or held out.",
+    "sharedFixturePreparation": "Isolated JDK 25 export project. ExportManager owns one cached FileChannel, submits reader tasks, retains their Futures and cancels with cancel(true). Include a controllable pre-read gate preserving interrupt status, existing tests checking only Future cancellation, and the requirement that cancelling export A must leave export B usable. The source file remains immutable during both requests. Provide ordinary source/configuration files; keep evaluator criteria separate.",
+    "development": {
+      "actorInput": "Review cancellation in this export implementation. Improve the implementation/tests where needed so cancelling one export preserves other exports. Retain compatible APIs and existing dependencies.",
+      "evaluatorExpectations": [
+        "Trace Future and channel ownership separately and detect automatic channel closure.",
+        "Preserve cooperative cancellation while selecting a justified isolation mechanism.",
+        "Assert the other reader's usability and task/resource completion separately."
+      ],
+      "failureConditions": [
+        "Clear interruption to hide the problem.",
+        "Treat isCancelled() as proof of termination.",
+        "Retain an unsafe shared-channel abort while claiming isolation."
+      ]
+    },
+    "constraintFlip": {
+      "fixtureDifference": "Change only construction so each export opens and owns its own channel.",
+      "actorInput": "Review cancellation in this export implementation. Improve the implementation/tests where needed so cancelling one export preserves other exports. Retain compatible APIs and existing dependencies.",
+      "evaluatorExpectations": [
+        "Retain adequate task-specific interruption.",
+        "Verify closure remains local and another reader can succeed.",
+        "Keep missing termination evidence explicit."
+      ],
+      "failureConditions": [
+        "Impose token-only cancellation or unnecessary redesign despite adequate isolation.",
+        "Claim timing or physical termination without corresponding evidence."
+      ]
+    }
+  },
+  "pendingGlobalChecks": [
+    { "command": "npm run registry:build", "owner": "coordinator", "prerequisite": "All reviewers have stopped writing." },
+    { "command": "npm run verify", "owner": "coordinator", "prerequisite": "Registry regenerated and all writers stopped." }
+  ],
+  "crossSkillIssues": [],
+  "remainingFindings": []
+}

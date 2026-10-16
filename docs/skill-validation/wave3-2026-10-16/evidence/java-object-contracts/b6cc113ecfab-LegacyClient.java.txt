@@ -1,0 +1,8 @@
+import api.Key;
+public final class LegacyClient {
+  public static void main(String[] args) {
+    boolean equal = new Key("A-1").equals(new Key("A-1"));
+    if (!equal) throw new AssertionError("typed equality");
+    System.out.println("typed=true");
+  }
+}

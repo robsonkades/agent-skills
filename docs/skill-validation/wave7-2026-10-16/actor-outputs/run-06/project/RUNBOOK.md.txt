@@ -1,0 +1,22 @@
+Call OrderService and MetricsService through their configured Spring beans. Inspect the corresponding datasource after the call completes.
+
+OrderService.place explicitly selects ordersTx. Its order insert, stock reservation and
+synchronous local OrderNotifier validation complete in one orders-database transaction.
+A stock or notifier rejection rolls back both writes and propagates the original failure.
+Success returns after transaction completion. The notifier remains a local participant;
+there is no asynchronous follow-up or recovery queue.
+
+MetricsService intentionally retains unqualified @Transactional and the primary metricsTx
+manager. A failed sample rolls back its metrics-store write independently of orders.
+Do not switch the primary manager to repair an orders failure.
+
+The transaction-active diagnostic alone cannot identify which datasource is enlisted.
+Previously the orders operation opened a metrics transaction while its orders JDBC writes
+autocommitted. Both rejection exceptions were already unchecked; rollbackFor and a new
+proxy/self-invocation workaround were unnecessary.
+
+Run `node check.mjs` for the incident reproduction (expected: active=true, committed orders=0).
+Run `node check.mjs work.Regression` for five assertions covering stock rejection, notifier
+rejection after both writes with cause preservation, successful reservation, database
+insertion failure and unchanged metrics commit/rollback. Tests call actual Spring beans
+without enclosing test transactions and inspect persisted state after completion.

@@ -1,0 +1,34 @@
+{
+  "id": "tail-jfr-coverage-a",
+  "preparation": "In an isolated directory, materialize context.fixtures as the named text files and serialize activeSettings as active-settings.json. Give the acting agent context.task, context.constraints, the prepared artifacts and the reviewed skill; withhold evaluator-criteria.json and the full handoff.",
+  "context": {
+    "task": "Use tail-latency-analysis to review the incident note and proposed capture from the supplied artifacts. Correct incident-notes.md and capture-plan.json with the next discriminating step and its limits. Preserve supported observations. This is a review task: do not tune GC, upgrade the runtime, run a production capture or change a running service. If a proposed setting differs by JDK/event, verify the applicable contract.",
+    "provenance": "Synthetic development fixture. The exports represent one isolated JVM and a recording covering every timestamp below; no actor evaluation has been executed.",
+    "fixtures": {
+      "runtime.properties": "java.version=25.0.3\njava.vendor=Eclipse Adoptium\nprocess.instance=worker-7\n",
+      "event-metadata.json": "{\n  \"name\": \"jdk.SocketRead\",\n  \"settings\": [\n    \"enabled\",\n    \"threshold\",\n    \"stackTrace\",\n    \"throttle\"\n  ],\n  \"fields\": [\n    \"host\",\n    \"address\",\n    \"port\",\n    \"timeout\",\n    \"bytesRead\",\n    \"endOfStream\"\n  ]\n}",
+      "event-summary.json": "{\n  \"recording\": \"tail-review\",\n  \"process\": \"worker-7\",\n  \"startMs\": 0,\n  \"endMs\": 10000,\n  \"eventCounts\": {\n    \"jdk.SocketRead\": 0,\n    \"jdk.DataLoss\": 0\n  },\n  \"dataLossEventEnabled\": true\n}",
+      "requests.csv": "request,process,arrival_ms,finish_ms,outcome,controller_future_wait_ms\nnormal-1,worker-7,1000,1005,success,2\nslow-2,worker-7,2000,2180,success,150\n",
+      "caller.java": "// Application excerpt, not a complete compilable program.\nCompletionStage<Result> lookup(Key key) {\n    return CompletableFuture.supplyAsync(() -> client.query(key), lookupExecutor);\n}\n// Controller waits for this result. The concrete client transport, worker\n// queue timestamps and pool-acquisition trace were not part of this export.\n",
+      "incident-notes.md": "# Incident note\nA slow request took 180 ms, including 150 ms waiting for lookup completion. No SocketRead events were present even though the event was enabled and its duration threshold was zero. Therefore I/O is excluded as a contributor; attribute the wait to GC. Lower the SocketRead threshold for the next recording so it captures all reads.\n",
+      "capture-plan.json": "{\n  \"scope\": \"worker-7\",\n  \"event\": \"jdk.SocketRead\",\n  \"durationSeconds\": 10,\n  \"maximumAdditionalMiB\": 20,\n  \"proposedSettings\": {\n    \"threshold\": \"0 ns\"\n  },\n  \"goal\": \"Capture every I/O operation and confirm the GC diagnosis\",\n  \"executionAuthorized\": false\n}"
+    },
+    "constraints": [
+      "Treat the caller excerpt and two request rows as partial attribution evidence, not complete request-population measurements.",
+      "Use event-metadata.json to determine supported settings and active-settings.json for effective values; a distribution template is not the effective recording.",
+      "Return corrected artifacts and identify the missing evidence needed for any remaining claim; no extra instrumentation framework is required.",
+      "Any later capture proposal must stay scoped and bounded and account for event volume/overhead."
+    ]
+  },
+  "activeSettings": {
+    "recording": "tail-review",
+    "process": "worker-7",
+    "event": "jdk.SocketRead",
+    "effective": {
+      "enabled": true,
+      "threshold": "0 ns",
+      "stackTrace": true,
+      "throttle": "0/s"
+    }
+  }
+}

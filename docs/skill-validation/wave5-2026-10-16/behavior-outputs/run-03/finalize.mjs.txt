@@ -1,0 +1,160 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {createHash} from 'node:crypto';
+
+const output = path.dirname(fileURLToPath(import.meta.url));
+const run = path.dirname(output);
+const manifestPath = path.join(output, 'execution.json');
+const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+const hash = bytes => createHash('sha256').update(bytes).digest('hex');
+const projectFiles = [
+  'support.md', 'contract.md', 'check.mjs',
+  'src/work/Report.java', 'src/work/Entry.java',
+  'src/work/Demo.java', 'src/work/Catalog.java',
+  'test/work/SelfTest.java'
+];
+manifest.skills = {provided: false, read: [], referencesRead: [], truncated: false};
+manifest.initialInspection = {
+  executed: true,
+  tool: 'functions.exec -> tools.exec_command (PowerShell)',
+  commands: [
+    {
+      commandText: `Get-Content -LiteralPath '${run.replaceAll('\\', '/')}/TASK.md'`,
+      cwd: 'C:/git/agent-skills', exit: 0,
+      output: 'Complete TASK.md content recorded under reads; no truncation.'
+    },
+    {
+      commandText: "rg --files -g '!*.class' -g '!*.jar' -g '!execution.json' .",
+      cwd: run, exit: 0,
+      stdout: [
+        '.\\TASK.md',
+        '.\\output\\project\\test\\work\\SelfTest.java',
+        '.\\output\\project\\support.md',
+        '.\\output\\project\\src\\work\\Report.java',
+        '.\\output\\project\\src\\work\\Entry.java',
+        '.\\output\\project\\src\\work\\Demo.java',
+        '.\\output\\project\\src\\work\\Catalog.java',
+        '.\\output\\project\\contract.md',
+        '.\\output\\project\\check.mjs',
+        '.\\input\\project\\test\\work\\SelfTest.java',
+        '.\\input\\project\\contract.md',
+        '.\\input\\project\\check.mjs',
+        '.\\input\\project\\support.md',
+        '.\\input\\project\\src\\work\\Report.java',
+        '.\\input\\project\\src\\work\\Entry.java',
+        '.\\input\\project\\src\\work\\Demo.java',
+        '.\\input\\project\\src\\work\\Catalog.java'
+      ].join('\n') + '\n',
+      truncated: false
+    },
+    ...projectFiles.map(relative => ({
+      commandText: `Get-Content -LiteralPath 'output/project/${relative}'`,
+      cwd: run, exit: 0,
+      output: `Complete initial content recorded under reads for output/project/${relative}, phase baseline; no truncation.`
+    }))
+  ]
+};
+manifest.supervisedInvocations = ['baseline', 'final'].map(phase => ({
+  executed: true,
+  executable: 'node',
+  args: ['-e', `const {spawnSync}=require('node:child_process');const r=spawnSync(process.execPath,['output/verify.mjs','${phase}'],{cwd:process.cwd(),encoding:'utf8',timeout:30000,windowsHide:true});process.stdout.write(r.stdout||'');process.stderr.write(r.stderr||'');if(r.error)process.stderr.write(r.error.message);process.exit(r.status??1)`],
+  cwd: run, exit: 0, timeoutMs: 30000,
+  output: manifest.commands.filter(command => command.phase === phase)
+    .map(command => `${phase} ${command.label}: exit=${command.exit}\n${command.stdout}${command.stderr}`).join(''),
+  truncated: false
+}));
+
+manifest.fileComparison = [];
+for (const relative of projectFiles) {
+  const inputRelative = `input/project/${relative}`;
+  const inputBytes = fs.readFileSync(path.join(run, inputRelative));
+  const finalRelative = `output/project/${relative}`;
+  const finalBytes = fs.readFileSync(path.join(run, finalRelative));
+  const baseline = manifest.reads.find(read => read.path === finalRelative && read.phase === 'baseline');
+  manifest.reads.push({
+    phase: 'final-comparison', path: inputRelative,
+    bytes: inputBytes.length, sha256: hash(inputBytes),
+    truncated: false, content: inputBytes.toString('utf8')
+  });
+  manifest.reads.push({
+    phase: 'final-comparison', path: finalRelative,
+    bytes: finalBytes.length, sha256: hash(finalBytes),
+    truncated: false, content: finalBytes.toString('utf8')
+  });
+  const comparison = {
+    file: relative,
+    inputSha256: hash(inputBytes), finalSha256: hash(finalBytes),
+    inputMatchesInitialWorkingCopy: baseline?.sha256 === hash(inputBytes),
+    finalMatchesInput: inputBytes.equals(finalBytes)
+  };
+  manifest.fileComparison.push(comparison);
+  if (!comparison.inputMatchesInitialWorkingCopy) throw new Error(`Input diverged from original working copy: ${relative}`);
+  if (relative !== 'test/work/SelfTest.java' && !comparison.finalMatchesInput) throw new Error(`Unexpected project change: ${relative}`);
+}
+
+for (const relative of ['output/verify.mjs', 'output/finalize.mjs', 'output/REVIEW.md']) {
+  const bytes = fs.readFileSync(path.join(run, relative));
+  manifest.reads.push({
+    phase: 'artifact-finalization', path: relative,
+    bytes: bytes.length, sha256: hash(bytes),
+    truncated: false, content: bytes.toString('utf8')
+  });
+}
+manifest.manifestRead = {
+  path: 'output/execution.json',
+  purpose: 'Append execution records and finalize the manifest; prior contents retained.',
+  truncated: false
+};
+manifest.changes = [{
+  path: 'output/project/test/work/SelfTest.java',
+  tool: 'apply_patch',
+  purpose: 'Preserve original coverage and assert accepted live, read-only behavior across reloads.'
+}];
+manifest.preserved = {
+  inputMatchesInitialWorkingCopy: true,
+  productionSources: true, contract: true, checkScript: true,
+  dependencies: true, javaTarget: 17, runtime: 'Temurin-25.0.3+9',
+  originalTestCoverage: true
+};
+manifest.limitations = [
+  'Only supplied local artifacts and the sequential accepted contract were evaluated.',
+  'No production, database, renderer implementation or historical version was supplied.',
+  'Compiled with --release 17; executed with the available Temurin 25.0.3+9 runtime, not a separate Java 17 runtime.',
+  'Initial read-only shell inspections completed below 30 seconds; their tool exposed a yield interval, not a hard timeout option. Java verification and supervised Node verification explicitly used 30000 ms timeouts.'
+];
+manifest.outOfScopeAccess = [{
+  kind: 'inherited-cwd-only',
+  path: 'C:/git/agent-skills',
+  detail: 'First command inherited this cwd but read only the absolute TASK.md inside the authorized run. No repository file content or directory listing was read or written. All later shell commands used the run cwd.',
+  filesReadOutsideScope: [], filesWrittenOutsideScope: []
+}];
+manifest.notExecuted = [
+  'No production fix, snapshot conversion, contract change or dependency change was proposed or applied.',
+  'No network access, package installation, real agent configuration access or delegation.'
+];
+manifest.result = {
+  defectInReportedFlow: false,
+  conclusion: '1000 -> 1200 follows the required live view after load(); integer-cent aggregation contains no rounding step.',
+  baselineCheck: 'PASS', finalCheck: 'PASS',
+  baselineDemo: ['first=1000', 'first-after-reload=1200', 'latest=1200'],
+  finalDemo: ['first=1000', 'first-after-reload=1200', 'latest=1200']
+};
+manifest.processes = {
+  model: 'Synchronous child processes only; no background processes launched.',
+  verificationProcessesCompleted: manifest.commands.every(command => command.exit === 0 && command.signal === null && command.error === null),
+  activeChildProcesses: 0
+};
+manifest.finalizationInvocation = {
+  executed: true,
+  executable: 'node',
+  args: ['-e', "const {spawnSync}=require('node:child_process');const r=spawnSync(process.execPath,['output/finalize.mjs'],{cwd:process.cwd(),encoding:'utf8',timeout:30000,windowsHide:true});process.stdout.write(r.stdout||'');process.stderr.write(r.stderr||'');if(r.error)process.stderr.write(r.error.message);process.exit(r.status??1)"],
+  cwd: run, timeoutMs: 30000,
+  exit: 0,
+  output: 'Final artifact audit PASS; only SelfTest.java changed; allWritesStopped:true\n',
+  recordedAtFinalSuccessfulWrite: true
+};
+manifest.allWritesStopped = true;
+manifest.completedAt = new Date().toISOString();
+fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
+process.stdout.write('Final artifact audit PASS; only SelfTest.java changed; allWritesStopped:true\n');

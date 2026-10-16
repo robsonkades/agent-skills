@@ -1,0 +1,23 @@
+import com.sun.management.HotSpotDiagnosticMXBean;
+import java.lang.management.ManagementFactory;
+
+public class DumpFixture {
+    static final Payload[] KEPT = new Payload[128];
+
+    static final class Payload {
+        final byte[] bytes = new byte[2048];
+    }
+
+    public static void main(String[] args) throws Exception {
+        for (int i = 0; i < KEPT.length; i++) {
+            KEPT[i] = new Payload();
+            KEPT[i].bytes[0] = (byte) i;
+        }
+        ManagementFactory.getPlatformMXBean(HotSpotDiagnosticMXBean.class)
+                .dumpHeap(args[0], true);
+        if (KEPT.length != 128 || KEPT[127].bytes[0] != 127) {
+            throw new AssertionError("Fixture state unexpectedly lost");
+        }
+        System.out.println("Captured 128 statically retained Payload instances.");
+    }
+}

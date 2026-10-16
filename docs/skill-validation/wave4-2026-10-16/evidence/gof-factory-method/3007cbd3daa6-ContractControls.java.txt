@@ -1,0 +1,125 @@
+import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public final class ContractControls {
+    private static int checks;
+
+    private static void require(boolean condition, String message) {
+        if (!condition) throw new AssertionError(message);
+    }
+
+    private static Throwable failure(Run operation) {
+        try {
+            operation.run();
+        } catch (Throwable caught) {
+            return caught;
+        }
+        throw new AssertionError("Expected failure");
+    }
+
+    @FunctionalInterface interface Run { void run() throws Exception; }
+
+    private static void check(String name, Run action) throws Exception {
+        action.run();
+        checks++;
+        System.out.println("PASS " + name);
+    }
+
+    private static final class TestParser implements Parser {
+        int parsed;
+        int closed;
+        final IOException parseFailure;
+        final IOException closeFailure;
+        TestParser(IOException parseFailure, IOException closeFailure) {
+            this.parseFailure = parseFailure;
+            this.closeFailure = closeFailure;
+        }
+        public int parse(String input) throws IOException {
+            parsed++;
+            if (parseFailure != null) throw parseFailure;
+            return input.length();
+        }
+        public void close() throws IOException {
+            closed++;
+            if (closeFailure != null) throw closeFailure;
+        }
+    }
+
+    @FunctionalInterface interface Factory { Parser open() throws IOException; }
+    private static ImportJob job(Factory factory, AtomicInteger calls) {
+        return new ImportJob() {
+            @Override protected Parser createParser() throws IOException {
+                calls.incrementAndGet();
+                return factory.open();
+            }
+        };
+    }
+
+    abstract static class EarlyCreator {
+        final char seen;
+        EarlyCreator() { seen = create(); }
+        abstract char create();
+    }
+    static final class EarlyChild extends EarlyCreator {
+        final char delimiter;
+        EarlyChild(char delimiter) { this.delimiter = delimiter; }
+        @Override char create() { return delimiter; }
+    }
+    abstract static class DeferredCreator {
+        abstract char create();
+        final char run() { return create(); }
+    }
+    static final class DeferredChild extends DeferredCreator {
+        final char delimiter;
+        DeferredChild(char delimiter) { this.delimiter = delimiter; }
+        @Override char create() { return delimiter; }
+    }
+
+    public static void main(String[] args) throws Exception {
+        check("factory once and owned success closure", () -> {
+            var parser = new TestParser(null, null);
+            var calls = new AtomicInteger();
+            require(job(() -> parser, calls).run("row", rows -> {}) == 3, "result");
+            require(calls.get() == 1 && parser.parsed == 1 && parser.closed == 1, "lifecycle");
+        });
+        check("parse failure remains primary and close suppressed", () -> {
+            var parse = new IOException("parse");
+            var close = new IOException("close");
+            var parser = new TestParser(parse, close);
+            var saved = new AtomicInteger();
+            Throwable caught = failure(() -> job(() -> parser, new AtomicInteger()).run("row", saved::addAndGet));
+            require(caught == parse && caught.getSuppressed().length == 1 && caught.getSuppressed()[0] == close, "exception identity");
+            require(saved.get() == 0 && parser.closed == 1, "failed parse cleanup");
+        });
+        check("save failure closes owned resource", () -> {
+            var parser = new TestParser(null, null);
+            var save = new IllegalStateException("save");
+            Throwable caught = failure(() -> job(() -> parser, new AtomicInteger()).run("row", rows -> { throw save; }));
+            require(caught == save && parser.closed == 1, "save cleanup");
+        });
+        check("acquisition checked failure propagates unchanged", () -> {
+            var open = new IOException("open");
+            var calls = new AtomicInteger();
+            var saved = new AtomicInteger();
+            Throwable caught = failure(() -> job(() -> { throw open; }, calls).run("row", saved::addAndGet));
+            require(caught == open && calls.get() == 1 && saved.get() == 0, "acquisition contract");
+        });
+        check("null factory result rejected before processing", () -> {
+            var saved = new AtomicInteger();
+            Throwable caught = failure(() -> job(() -> null, new AtomicInteger()).run("row", saved::addAndGet));
+            require(caught instanceof NullPointerException && saved.get() == 0, "null result");
+        });
+        check("close-only failure does not undo save", () -> {
+            var close = new IOException("close");
+            var parser = new TestParser(null, close);
+            var saved = new AtomicInteger();
+            Throwable caught = failure(() -> job(() -> parser, new AtomicInteger()).run("row", saved::addAndGet));
+            require(caught == close && saved.get() == 3 && parser.closed == 1, "post-save close");
+        });
+        check("constructor hook sees default subclass value", () -> {
+            require(new EarlyChild(';').seen == 0, "early dispatch");
+            require(new DeferredChild(';').run() == ';', "post-construction dispatch");
+        });
+        System.out.println("SUMMARY checks=" + checks);
+    }
+}

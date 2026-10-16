@@ -1,0 +1,247 @@
+---
+name: gof-memento
+description: >
+  Memento in modern Java: capturing an object's state so it can be restored later, without
+  exposing that state to whoever holds the capture. Covers the encapsulation techniques Java offers, why
+  immutable state can be retained by reference behind an appropriate boundary, the memory cost of an undo stack and the alternatives
+  (inverses, diffs, structural sharing), the torn capture when the source mutates mid-copy, and
+  the distinction from a durable snapshot and from event sourcing. Use when undo, drafts, what-if branches or checkpoints are being designed, when
+  a getState/setState pair is proposed on a domain object, when an undo stack grows without bound,
+  or when someone calls a persisted snapshot a memento. Does not cover the operations being undone
+  (gof-command), copying an object for reuse (gof-prototype), event-sourced aggregates and
+  projections (event-sourcing), or distributed checkpoint barriers
+  (distributed-aggregation-and-barriers).
+---
+
+# Memento
+
+## Purpose
+
+Let something outside an object hold that object's past state without being able to read or
+corrupt it. The caretaker keeps the capture and hands it back; only the originator understands
+what is inside.
+
+That opacity is the pattern, and it is what a `getState()`/`setState()` pair is not: exposing the
+state as a public structure lets holders inspect it, depend on its shape and, if mutable, change it, which
+is the coupling the pattern exists to prevent.
+
+Start with the consumer's undo/recovery operation and existing history. Establish which state is
+restorable, who may hold or apply a capture, whether restore overwrites intervening edits, and
+which external facts must remain true. Reuse existing observations and budgets; ask only about
+missing ownership, conflict or recovery requirements that change the design.
+
+Inspect the project's compiler release/toolchain and state ownership before changing the API.
+Examples are partial Java 17 snippets (records and sealed types, no preview); imports, domain
+types and mutators are omitted. Keep the project baseline rather than upgrading it for a pattern.
+
+## Memento, snapshot, event sourcing
+
+```text
+Memento          opaque to its caretaker; restores an originator to prior
+                 state. It may be transient or durable—the pattern does not
+                 remove schema/versioning duties when persisted.
+                 Answers: what was it?
+
+Snapshot         a state capture, often durable/serialized and consumed across
+                 versions, so it needs a schema and compatibility policy.
+                 Answers: what was it, later and elsewhere?
+
+Event sourcing   state is derived by replaying an append-only log of
+                 facts. Snapshots become an optimisation over replay.
+                 Answers: what was it, AND why did it become that?
+```
+
+Choose by recovery and history requirements. Audit value alone does not require event sourcing:
+a separate audit trail may suffice. Event sourcing makes the event log authoritative and pays for
+replay and schema evolution; snapshots alone cannot reconstruct unrecorded intervening changes
+(`event-sourcing`).
+
+A durable state document can be both a snapshot and the memento in an undo/recovery design. The
+important review point is not the label: persistence and cross-version readers make its schema a
+contract regardless of pattern name.
+
+## When it is the answer
+
+```text
+Undo or revert of in-memory work, where the operation's inverse is
+hard to compute or lossy
+        → Memento. Cheaper to remember the old value than to invert.
+
+A what-if branch: the user explores a change and may discard it
+        → Memento of the pre-state, or a copy of the working object.
+
+A long computation must be resumable after a failure
+        → a checkpoint/durable snapshot; it may play the memento role,
+          but needs consistency, format and version policy.
+```
+
+## When it is not
+
+- **A retained immutable value already meets the capture contract.** Keep the reference when
+  its exposure is permitted. Deep immutability removes copying, not an opaque caretaker API or
+  originator ownership requirement; an opaque handle can still hold that value (`java-immutability`).
+- **The operation has a cheap exact inverse.** `Move(+5)` can undo with `Move(-5)` only without
+  rounding, clamping, overflow or conflicting intervening edits (`gof-command`).
+- **The capture must survive the process.** Memento alone is insufficient guidance: add durable
+  snapshot consistency, schema, compatibility, corruption and recovery semantics.
+- **State must be rebuilt from authoritative changes.** Route event sourcing decisions to
+  `event-sourcing`; audit-only requirements may use a separate history.
+- **The "memento" is passed to another module that reads it.** Then it is a DTO with a contract,
+  and the encapsulation the pattern promised is gone.
+
+## Modern Java expression
+
+```text
+Classical                          Modern
+─────────────────────────────────  ────────────────────────────────────
+class Memento with package-        a private nested record inside the
+private accessors                  originator — opaque by construction
+
+originator.setMemento(m)           originator.restore(m), where the
+                                   parameter type is a public marker
+                                   interface the caretaker cannot read
+
+deep-copied mutable state          immutable components; capture is then
+                                   a field copy with no defensive copying
+
+full state per undo step           the object is immutable and the "undo
+                                   stack" is a stack of references, with
+                                   structural sharing between versions
+```
+
+```java
+public final class Editor {
+
+    public sealed interface Snapshot permits State { }        // opaque to callers
+    private final Object owner = new Object();
+    private record State(Object owner, String text, int caret, List<Mark> marks) implements Snapshot {
+        @Override public String toString() { return "Editor snapshot"; }
+    }
+
+    public Snapshot capture() { return new State(owner, text, caret, List.copyOf(marks)); }
+
+    public void restore(Snapshot snapshot) {
+        if (!(snapshot instanceof State state) || state.owner() != owner) {
+            throw new IllegalArgumentException("foreign or null snapshot");
+        }
+        var restoredMarks = new ArrayList<>(state.marks()); // prepare before changing live fields
+        this.text = state.text();
+        this.caret = state.caret();
+        this.marks = restoredMarks;
+    }
+}
+```
+
+A private implementation hides typed accessors from ordinary callers. Generated record
+`toString()` exposes components unless overridden; equality/hash codes also remain observable.
+This is API encapsulation, not a security boundary against reflection. The example rejects
+captures from another Editor and assumes immutable Mark values plus thread confinement.
+`List.copyOf` copies the list structure, not mutable elements.
+
+## Decision rules
+
+```text
+IF the originator is immutable
+THEN retain its old state reference when the access/restore contract permits it;
+     preserve any required opaque handle and originator ownership check.
+
+IF the caretaker reads fields of the capture
+THEN encapsulation is broken and the capture is now a contract. Either
+     narrow the type, or accept it is a DTO and version it.
+
+IF the capture shares mutable structure with the originator
+THEN restoring later restores whatever it has become, not what it was.
+     Isolate mutable parts at capture time. Restore must also keep a retained
+     capture isolated from later edits: copy mutable parts back into live state,
+     or use immutable snapshot values. Deeply immutable values may remain shared.
+
+IF the source can be mutated while it is being captured
+THEN the capture may hold fields from two different states. Capture
+     under the same lock as the mutators, or from an immutable value.
+
+IF the caretaker provides undo/redo
+THEN serialize live state and history transitions together. Prepare fallible restore work
+     before changing live state; a rejected restore must not consume the history entry.
+     A new successful edit discards obsolete redo in linear history; retained branches
+     need an explicit selection and retention policy instead.
+
+IF an undo stack holds full captures of a large object
+THEN estimate independent copy cost from depth and capture size, then inspect shared/variable
+     retained state. Compare full copies, exact inverses, diffs and persistent structures;
+     retain the simplest representation that meets restore and history budgets.
+
+IF the capture is written to storage or sent to another process
+THEN it is also a wire/storage snapshot: it needs a stable format and explicit
+     compatibility strategy. A literal version field is one mechanism, not mandatory
+     when schema identifiers/envelopes or evolution rules provide the version.
+
+IF restoring must also restore things outside the object — files sent,
+messages published, money moved
+THEN restore is not enough. Determine whether authorized compensation or reconciliation
+     is possible; some effects make undo unavailable
+     (distributed-transactions-and-sagas).
+
+IF what changed matters as much as what it was
+THEN consider event sourcing before building a snapshot history that
+     will never answer "why".
+```
+
+## Cross-cutting checks
+
+- **Concurrency.** Unsynchronized multi-field capture can mix states during concurrent mutation.
+  The same applies to `restore`, which must not be
+  observable half-applied. Either both run under the lock that guards the state, or the state is
+  an immutable state value swapped through a single `volatile`/atomic reference—in which case
+  capture/restore of that state reference is atomic, provided no related state lives outside it
+  (`java-memory-model`).
+- **Failure.** A lock prevents concurrent observation, not partial mutation after an exception.
+  Check ownership, compatibility and invariants and prepare replacement state before publishing
+  it. Define recoverable failures to leave state and history unchanged; if an edit or external
+  callback can leave partial effects, report/recover that state explicitly instead of treating
+  capture/restore as a transaction. Do not promise recovery from arbitrary VM failure.
+- **Distribution.** A persisted memento is also a serialized snapshot with a schema identity
+  and evolution policy. Reject unsupported meaning rather than assuming tolerant reading is safe;
+  added fields need validated defaults or a migration. Distributed checkpointing across processes
+  is a different problem requiring barriers or a consistent-cut algorithm
+  (`distributed-aggregation-and-barriers`).
+- **Performance.** Depth × capture size estimates independent full copies, not a universal heap
+  bound. Account for variable payloads, shared objects, redo/branch roots and overhead; measure the
+  retained graph when the estimate matters. Full copies may be simplest for small bounded state;
+  compare inverses, diffs and persistent structures using edit/restore cost and actual retention.
+  Bound history depth and/or bytes to the required retention contract. Also watch retention: an undo
+  stack holding large graphs keeps them alive and is a common source of "the heap grows during a
+  long editing session" (`heap-dump-analysis`).
+- **Testing.** The property to assert is a round trip: `restore(capture(s))` leaves the object
+  equal to `s`, over generated states, plus mutate-after-capture and restore-after-intervening-change
+  cases. Restore a capture, mutate the restored object, and restore that same capture again to
+  expose aliases introduced by restore. These checks catch omitted state only when generators
+  and semantic equality include that state.
+
+## Review checklist
+
+Return the capture boundary and ownership, concurrency/restore-conflict policy, memory bound,
+and checks executed versus pending. Missing state or deployment evidence leaves completeness
+and compatibility conditional; enumerate fields and external effects before proposing restore.
+
+- [ ] Immutable state is retained without unnecessary copying; required opacity and ownership remain intact
+- [ ] The capture type is opaque to the caretaker
+- [ ] Retained captures cannot be mutated through live state after capture or restore
+- [ ] Capture and restore are atomic with respect to concurrent mutation
+- [ ] Rejected restore leaves state/history unchanged; undo/redo and new-edit transitions have a defined policy
+- [ ] Independent semantic observations cover every restorable field; capture equality alone is insufficient
+- [ ] History bounds cover actual retained state, including variable capture sizes and redo/branch history
+- [ ] A durable capture has an explicit schema identity/evolution strategy and corruption handling
+- [ ] External effects have an explicit compensation, reconciliation or irreversible-effect policy
+- [ ] Persisted captures are treated as snapshots/contracts even when they also serve as mementos
+
+## References
+
+- [Memento, snapshot and event sourcing](references/memento-snapshot-eventsourcing.md) — the three
+  compared on durability, schema, history and cost; Java encapsulation techniques for an opaque
+  capture; caretaker failure and branching rules; memory strategies for undo stacks (inverses,
+  diffs, persistent structures); and versioning rules once a capture becomes durable. Read when
+  choosing between them or implementing history transitions.
+- [Worked example](references/worked-example.md) — a multi-step form with undo built on an opaque
+  memento, converted to an immutable state with structural sharing when the stack grew, plus a
+  batch job checkpoint that deliberately is a versioned snapshot rather than a memento. Read when
+  implementing.

@@ -38,7 +38,8 @@ Suspicion: this object should be eliminated and is not
   |
   2. Ask the compiler: -XX:+UnlockDiagnosticVMOptions -XX:+LogCompilation -XX:LogFile=c2.xml
      Inside the method's tier-4 <task>: is there an <eliminate_allocation> for the class?
-     |-- yes ........ removed in this compilation. Confirm it was installed and active;
+     |-- yes ........ check failures/retries: was it removed in the successful attempt?
+     |                Then confirm the resulting code was installed and active;
      |                other versions, tiers and deoptimization can still allocate here.
      +-- no ......... continue at 3
   |
@@ -216,6 +217,22 @@ Reading it:
 - An absent element alone does not establish allocation survival: unused removal, incomplete
   logs, another compilation or an allocation absent from that graph can explain it.
 
+Read the whole task in order, including `<failure>` and `<task_done>`, rather than only
+the matching elimination lines. On JDK 25.0.3, `C2Compiler::compile_method` can discard a
+`Compile` and retry within the same `ciEnv` and `CompileTask`, retaining its compile ID.
+An elimination in an attempt that later fails does not establish that the final nmethod
+includes it, even when that task ends with `success='1'`. Locate it in the successful
+attempt and match its method/BCI and inline context again. If an excerpt omits the attempt
+boundaries, keep that attribution unresolved; do not infer allocation survival either.
+
+Interpret the actual retry reason against the target source. For example, `retry without
+escape analysis`, `retry without iterative escape analysis`, and `retry without reducing
+allocation merges` disable different local compilation options; a retry without subsuming
+loads does not by itself disable EA. `PrintFlagsFinal` can still show the corresponding
+global flag enabled. Correct the mechanism claim and any flag recommendation that relied on
+the discarded attempt, while retaining valid allocation measurements and unrelated compiler
+evidence. Compiler retry is separate from deoptimization of already installed code.
+
 The same file feeds JITWatch; the format is the subject of `compilation-and-inlining-logs`.
 
 ## What the emitted code can and cannot show
@@ -360,6 +377,9 @@ than inferring no rematerialisation from an empty trap stream.
 
 - [JDK 25 ThreadMXBean allocation counters](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.management/com/sun/management/ThreadMXBean.html) — support, enablement, unavailable readings and platform-thread scope.
 - [JDK 25 compile-task logging](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/compiler/compileTask.cpp): highest-tier task level omission.
+- [C2 retry options, JDK 25.0.3](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3-ga/src/hotspot/share/opto/c2compiler.cpp) — per-attempt options in `compile_method`.
+- [C2 failure logging, JDK 25.0.3](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3-ga/src/hotspot/share/opto/compile.cpp) — `record_failure` logs the failed attempt and discards its graph.
+- [Compile-task lifetime, JDK 25.0.3](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3-ga/src/hotspot/share/compiler/compileBroker.cpp) — `CompileTaskWrapper` brackets the compiler call, including its retries.
 - [HotSpot escape analysis source, JDK 25](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/opto/escape.cpp)
 - [HotSpot macro expansion source, JDK 25](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/opto/macro.cpp)
 - [JDK-8257602: allocation sampling events](https://bugs.openjdk.org/browse/JDK-8257602)

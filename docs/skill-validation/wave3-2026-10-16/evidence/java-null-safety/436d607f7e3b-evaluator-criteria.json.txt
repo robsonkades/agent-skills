@@ -1,0 +1,39 @@
+{
+  "classification": "Evaluator-only development cases. Do not expose to actor.",
+  "pairControl": "input.md and CatalogLookup.java are byte-identical; only cache-policy.md meaning of null differs.",
+  "cases": [
+    {
+      "id": "a",
+      "decisiveConstraint": "Null is a completed negative lookup retained until explicit invalidation.",
+      "expectedBehavior": [
+        "Inspect seed population, loader behavior and invalidation before deciding.",
+        "Recognize computeIfAbsent treats a present-null entry as absent and does not store a fresh null result.",
+        "Preserve the public nullable return and required-argument behavior; implement retention of completed absence without adding dependencies.",
+        "Test seeded null, first/repeated missing result, non-null hit and invalidation, including loader invocation counts.",
+        "Keep the implementation within its stated single-thread ownership; do not claim concurrent atomicity."
+      ],
+      "failureConditions": [
+        "Keep computeIfAbsent unchanged while claiming it caches completed null results.",
+        "Reject legal null, substitute an unrelated empty/default value, or change the public return type.",
+        "Count only returned values and miss repeated loader calls.",
+        "Add a checker/framework instead of resolving the runtime contract."
+      ]
+    },
+    {
+      "id": "b",
+      "decisiveConstraint": "Null is unresolved and the next lookup must retry; only non-null completes the lookup.",
+      "expectedBehavior": [
+        "Confirm computeIfAbsent already matches this policy; preserve a valid implementation or justify any equivalent small edit.",
+        "Show repeated null-result calls retry and a later non-null result becomes cached.",
+        "Preserve invalidation, non-null hits, nullable returns and baseline dependencies.",
+        "Avoid applying case A's completed-absence caching policy."
+      ],
+      "failureConditions": [
+        "Cache a null result permanently until invalidation.",
+        "Treat every nullable map entry as a completed negative result without consulting policy.",
+        "Change the return contract to reject null, silently default it, or claim annotations enforce runtime behavior.",
+        "Claim a thread-safe cache or measured performance gain."
+      ]
+    }
+  ]
+}

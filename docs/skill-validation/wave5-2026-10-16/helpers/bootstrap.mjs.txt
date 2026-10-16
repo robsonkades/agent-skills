@@ -1,0 +1,34 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+import {execFileSync} from 'node:child_process';
+import YAML from 'file:///C:/git/agent-skills/node_modules/yaml/dist/index.js';
+const repo='C:/git/agent-skills', root='C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2', report=repo+'/docs/skill-validation/wave5-2026-10-16';
+const git=args=>execFileSync('git',args,{cwd:repo,encoding:'utf8',maxBuffer:64*1024*1024});
+const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
+const inventory=fs.readFileSync(repo+'/docs/skills-evolution-inventory.md','utf8');
+const rows=[...inventory.matchAll(/^\| \[([^\]]+)\]\(\.\.\/skills\/[^)]+\)\s*\|\s*([^|]+)\|\s*([^|]+)\|/gm)].map(m=>({name:m[1],version:m[2].trim(),wave:m[3].trim()}));
+const prior=[];
+for(const d of ['wave1-quality-2026-10-16','wave2-2026-10-16','wave3-2026-10-16','wave4-2026-10-16']){
+ const file=repo+'/docs/skill-validation/'+d+(d.startsWith('wave1-')?'/README.md':'/queue.json');
+ const bytes=fs.readFileSync(file), s=bytes.toString();
+ const names=d.startsWith('wave1-')?[...s.matchAll(/^\| \[([^\]]+)\]\(\.\.\/\.\.\/\.\.\/skills\//gm)].map(m=>m[1]):JSON.parse(s).tasks.map(t=>{assert.equal(t.status,'validated');return t.name;});
+ prior.push({report:d,source:file.slice(repo.length+1),sha256:sha(bytes),count:names.length,names});
+}
+const actual=fs.readdirSync(repo+'/skills').filter(n=>fs.existsSync(repo+'/skills/'+n+'/skill.yaml')&&fs.existsSync(repo+'/skills/'+n+'/SKILL.md')).sort();
+const covered=new Set(prior.flatMap(r=>r.names));
+const names=actual.filter(n=>!covered.has(n));
+assert.equal(actual.length,305);assert.equal(rows.length,305);assert.equal(covered.size,298);
+assert.deepEqual(names,rows.filter(r=>['Base','Piloto'].includes(r.wave)).map(r=>r.name).sort());assert.equal(names.length,7);
+assert.ok(!fs.existsSync(report));
+const allFiles=[...new Set(git(['ls-files','-z','--cached','--others','--exclude-standard']).split('\0').filter(Boolean))].filter(p=>fs.existsSync(repo+'/'+p)).map(p=>{const b=fs.readFileSync(repo+'/'+p);return {path:p,sha256:sha(b),bytes:b.length};});
+const packages=names.map(name=>({name,initialVersion:YAML.parse(fs.readFileSync(repo+'/skills/'+name+'/skill.yaml','utf8')).version,committedVersion:YAML.parse(git(['show','HEAD:skills/'+name+'/skill.yaml'])).version,status:git(['status','--short','--','skills/'+name]),files:allFiles.filter(f=>f.path.startsWith('skills/'+name+'/'))}));
+const baseline={capturedAt:new Date().toISOString(),head:git(['rev-parse','HEAD']).trim(),wave:5,repo,temporaryRoot:root,registryBefore:fs.readFileSync(repo+'/registry/skills.yaml','utf8'),gitStatus:git(['status','--short']),gitDiffStat:git(['diff','--stat']),gitCachedDiffStat:git(['diff','--cached','--stat']),allFiles,packages};
+fs.mkdirSync(report+'/handoffs',{recursive:true});fs.mkdirSync(report+'/diffs',{recursive:true});
+fs.writeFileSync(report+'/baseline.json',JSON.stringify(baseline,null,2)+'\n');
+for(const p of packages)fs.cpSync(repo+'/skills/'+p.name,root+'/baseline/'+p.name,{recursive:true,errorOnExist:true,force:false});
+const coverage={capturedAt:baseline.capturedAt,catalogCount:actual.length,inventoryCount:rows.length,reviewedBefore:covered.size,scopeReason:'Inventory Base/Piloto rows omitted from waves 1–4; wave 5 closes individual review coverage, not the full experimental roadmap.',prior,selected:rows.filter(r=>names.includes(r.name))};
+fs.writeFileSync(report+'/coverage.json',JSON.stringify(coverage,null,2)+'\n');
+const queue={wave:5,scope:coverage.scopeReason,temporaryValidationRoot:root,createdAt:baseline.capturedAt,tasks:packages.map((p,i)=>({name:p.name,owner:p.name==='skill-engineering'?'quality07':'quality'+String(names.filter(n=>n!=='skill-engineering').indexOf(p.name)+1).padStart(2,'0'),status:'pending',initialVersion:p.initialVersion,committedVersion:p.committedVersion,preexistingChanges:p.status,validation:'not started',diffReviewed:false}))};
+fs.writeFileSync(report+'/queue.json',JSON.stringify(queue,null,2)+'\n');
+console.log(JSON.stringify({root,report,filesPreserved:allFiles.length,head:baseline.head,packages:packages.map(({files,...p})=>p)},null,2));

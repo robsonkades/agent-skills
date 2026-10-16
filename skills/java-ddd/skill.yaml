@@ -1,6 +1,6 @@
 schemaVersion: 1
 name: java-ddd
-version: 1.0.0
+version: 1.0.1
 description: >-
   Turn a business workflow into a Java DDD model and a complete use-case slice when
   language, invariants and responsibilities must be resolved together. Discover the

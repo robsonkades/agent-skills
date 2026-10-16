@@ -1,0 +1,10 @@
+import java.io.IOException;
+import java.io.InputStream;
+
+interface PayloadReader {
+    /**
+     * Reads the remaining bytes.
+     * Ownership stays with the caller; this method must not close input on success or read failure.
+     */
+    byte[] read(InputStream input) throws IOException;
+}

@@ -1,0 +1,447 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "poison-messages-and-dlq",
+  "ownedPath": "skills/poison-messages-and-dlq/**",
+  "allWritesStopped": true,
+  "noProcessesLeftRunning": true,
+  "version": {
+    "committed": "1.2.4",
+    "assignmentTime": "1.2.4",
+    "final": "1.2.5",
+    "preExistingBump": false,
+    "rationale": "One patch bump for the supported reference change; descriptions and other metadata remain unchanged."
+  },
+  "baseline": {
+    "source": "docs/skill-validation/wave2-2026-10-16/baseline.json",
+    "allFourFilesMatchedAtAssignment": true,
+    "stagedUnstagedUntrackedAtAssignment": "Empty; no pre-existing changes in assigned package.",
+    "files": [
+      {
+        "file": "skills/poison-messages-and-dlq/SKILL.md",
+        "assignmentSha256": "6276face4a45768663c15e887d4935ffc59c1fe83d6d0285abcb26e74cdab9d6",
+        "finalSha256": "6276face4a45768663c15e887d4935ffc59c1fe83d6d0285abcb26e74cdab9d6",
+        "changed": false
+      },
+      {
+        "file": "skills/poison-messages-and-dlq/references/classification-and-routing.md",
+        "assignmentSha256": "de9a0e3161b27959e540f162c331e97ddc3e19ddf982db70a2fba6a8ef722564",
+        "finalSha256": "de9a0e3161b27959e540f162c331e97ddc3e19ddf982db70a2fba6a8ef722564",
+        "changed": false
+      },
+      {
+        "file": "skills/poison-messages-and-dlq/references/dlq-operations.md",
+        "assignmentSha256": "af9438dd47260e28d5a94d67f8fd45b3636fd2ceab6e09304b1b9a6fcd0fc476",
+        "finalSha256": "680ebb5118a457c224dc97f6db7fb1696b7860793981828466262a2875e82023",
+        "changed": true
+      },
+      {
+        "file": "skills/poison-messages-and-dlq/skill.yaml",
+        "assignmentSha256": "e23f9053fa7516ecefe7df57b412ebcab62f4da68723574fcea5cc23ac834d4b",
+        "finalSha256": "5dfe6cb3a83c22d7f0d42927797ea2b377d5f2415a331c24ce5ce26690b2d48c",
+        "changed": true
+      }
+    ]
+  },
+  "files": {
+    "changedByReviewer": [
+      "skills/poison-messages-and-dlq/references/dlq-operations.md",
+      "skills/poison-messages-and-dlq/skill.yaml"
+    ],
+    "preExistingChanges": [],
+    "unchanged": [
+      "skills/poison-messages-and-dlq/SKILL.md",
+      "skills/poison-messages-and-dlq/references/classification-and-routing.md"
+    ],
+    "sharedWrites": false
+  },
+  "reviewCriteria": [
+    "Classify from input/environment/effect evidence instead of exception type or attempt count.",
+    "Prove a recoverable source disposition at actual publish/offset/ack and external-object boundaries, including uncertain outcomes and retry.",
+    "Preserve operation identity, retention, envelope fidelity and correct ordering during quarantine/redrive.",
+    "Keep diagnosis/review scope narrow, preserve adequate recovery controls and distinguish source contracts from runtime proof."
+  ],
+  "findings": {
+    "corrected": [
+      {
+        "location": "skills/poison-messages-and-dlq/references/dlq-operations.md:114",
+        "gap": "Atomic Kafka transfer and crash/restart tests did not expose abort-without-restart recovery, where local consumer position is still advanced.",
+        "evidence": "Kafka 4.1 design explicitly requires resetting application/consumer position after abort; Consumer API distinguishes poll position from committed position.",
+        "consequence": "After a successful abort, fresh polls and a later commit can pass the unresolved batch even though its DLQ disposition did not commit.",
+        "change": "Require retrying the retained unresolved batch or restoring a safe owned position before later commits; inspect existing framework rollback/reseek rather than adding unconditional manual seeks."
+      },
+      {
+        "location": "skills/poison-messages-and-dlq/references/dlq-operations.md:243",
+        "gap": "Restart-only transfer-ambiguity control could pass while same-consumer abort recovery remains unsafe.",
+        "change": "Extend the existing control to abort after poll without restarting, and check that later offset commits cannot overtake unresolved work."
+      }
+    ],
+    "remaining": []
+  },
+  "preserved": [
+    "Evidence-based payload/environment/transient/ambiguous classification; bounded attempts remain useful without proving poison.",
+    "Native DLQ as a legitimate durable holding path when ownership, retention and cause are explicit.",
+    "Block/skip/park-key/resynchronize alternatives, prefix commits, offset gaps, ownership, in-flight effects and replay ordering.",
+    "Raw bytes, null/tombstone distinction, repeated binary headers, bounded envelope/history and Kafka compaction disposition identity.",
+    "External blob upload/reconciliation/access/decryption/lifecycle boundary and no unsafe compensating deletion.",
+    "Stable operation identity, sink idempotency, semantic validity, shared production handler, bounded replay and unique-effect reconciliation.",
+    "Conditional monitoring, retention clock differences, native provider limitations and explicit privacy controls.",
+    "Java 17 conceptual schema and its explicit validation/mutability limits; no implementation or project upgrade added."
+  ],
+  "replacedOrRemoved": [],
+  "commands": [
+    {
+      "command": "Scoped git status/diff/cached diff/show and wave-two baseline SHA256 comparison",
+      "cwd": "C:/git/agent-skills",
+      "result": "Four clean files, all matching assignment baseline, version 1.2.4. Final changed paths match exactly the two expected files."
+    },
+    {
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/poison-messages-and-dlq/collect-sources.mjs",
+      "cwd": "C:/git/agent-skills",
+      "result": "Exit 0; eleven primary source pages HTTP 200, saved with SHA256. Pub/Sub web-tool open initially returned Internal Error, but direct official GET succeeded and followed its official redirect.",
+      "evidence": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/poison-messages-and-dlq/source-index.json"
+    },
+    {
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/poison-messages-and-dlq/validate.mjs",
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS before edits and after the final edit: strict manifest/name/description, version, four attribution hashes, two internal links, source hashes, schema compilation and synthetic retention arithmetic.",
+      "evidence": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/poison-messages-and-dlq/local-validation.json",
+      "baselineEvidence": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/poison-messages-and-dlq/baseline-local-validation.json"
+    },
+    {
+      "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+      "args": [
+        "--release",
+        "17",
+        "-d",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/poison-messages-and-dlq/classes",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/poison-messages-and-dlq/DeadLetter.java"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/poison-messages-and-dlq",
+      "result": "javac 25.0.3 --release 17 exit 0, no output; class version 61 and nested SafeHeader class present. Extracted schema is unchanged from assignment.",
+      "evidence": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/poison-messages-and-dlq/DeadLetter.java"
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/poison-messages-and-dlq/SKILL.md skills/poison-messages-and-dlq/skill.yaml skills/poison-messages-and-dlq/references/classification-and-routing.md skills/poison-messages-and-dlq/references/dlq-operations.md",
+      "cwd": "C:/git/agent-skills",
+      "result": "Exit 0; all matched files use Prettier code style."
+    },
+    {
+      "command": "git diff --check -- skills/poison-messages-and-dlq",
+      "cwd": "C:/git/agent-skills",
+      "result": "Exit 0; empty output."
+    },
+    {
+      "command": "git diff -- skills/poison-messages-and-dlq",
+      "cwd": "C:/git/agent-skills",
+      "result": "Final focused diff inspected: abort-position recovery paragraph, same-consumer test extension, one patch version bump."
+    }
+  ],
+  "structuralAndTechnicalChecks": {
+    "status": "PASS",
+    "node": "v25.6.1",
+    "cwd": "C:\\git\\agent-skills",
+    "metadata": {
+      "issues": [],
+      "nameMatches": true,
+      "descriptionMatches": true,
+      "committedVersion": "1.2.4",
+      "assignmentVersion": "1.2.4",
+      "finalVersion": "1.2.5"
+    },
+    "files": [
+      {
+        "file": "skills/poison-messages-and-dlq/SKILL.md",
+        "assignmentSha256": "6276face4a45768663c15e887d4935ffc59c1fe83d6d0285abcb26e74cdab9d6",
+        "finalSha256": "6276face4a45768663c15e887d4935ffc59c1fe83d6d0285abcb26e74cdab9d6",
+        "changed": false
+      },
+      {
+        "file": "skills/poison-messages-and-dlq/references/classification-and-routing.md",
+        "assignmentSha256": "de9a0e3161b27959e540f162c331e97ddc3e19ddf982db70a2fba6a8ef722564",
+        "finalSha256": "de9a0e3161b27959e540f162c331e97ddc3e19ddf982db70a2fba6a8ef722564",
+        "changed": false
+      },
+      {
+        "file": "skills/poison-messages-and-dlq/references/dlq-operations.md",
+        "assignmentSha256": "af9438dd47260e28d5a94d67f8fd45b3636fd2ceab6e09304b1b9a6fcd0fc476",
+        "finalSha256": "680ebb5118a457c224dc97f6db7fb1696b7860793981828466262a2875e82023",
+        "changed": true
+      },
+      {
+        "file": "skills/poison-messages-and-dlq/skill.yaml",
+        "assignmentSha256": "e23f9053fa7516ecefe7df57b412ebcab62f4da68723574fcea5cc23ac834d4b",
+        "finalSha256": "5dfe6cb3a83c22d7f0d42927797ea2b377d5f2415a331c24ce5ce26690b2d48c",
+        "changed": true
+      }
+    ],
+    "localLinks": [
+      {
+        "from": "skills/poison-messages-and-dlq/SKILL.md",
+        "to": "references/classification-and-routing.md",
+        "status": "exists"
+      },
+      {
+        "from": "skills/poison-messages-and-dlq/SKILL.md",
+        "to": "references/dlq-operations.md",
+        "status": "exists"
+      }
+    ],
+    "git": {
+      "status": " M skills/poison-messages-and-dlq/references/dlq-operations.md\n M skills/poison-messages-and-dlq/skill.yaml\n",
+      "diff": "diff --git a/skills/poison-messages-and-dlq/references/dlq-operations.md b/skills/poison-messages-and-dlq/references/dlq-operations.md\nindex c7f6b23..10eed1b 100644\n--- a/skills/poison-messages-and-dlq/references/dlq-operations.md\n+++ b/skills/poison-messages-and-dlq/references/dlq-operations.md\n@@ -111,6 +111,12 @@ effects after an effect succeeds and source acknowledgement fails. Options for q\n - durable transfer ledger keyed by source identity, repeat-safe DLQ publish, then source ack;\n - stop/pause when quarantine cannot be made durable.\n \n+Successful Kafka `abortTransaction()` does not rewind records already returned by `poll()`.\n+Before a later commit, retry the retained unresolved batch or restore a safe per-partition\n+processing position under current ownership. Continuing with fresh records can commit past the\n+aborted work even though its DLQ disposition did not commit. Inspect the framework's actual\n+rollback/reseek behavior before adding manual seeks; preserve an adequate existing recovery path.\n+\n A plain asynchronous DLQ `send()` followed by source acknowledgement loses data when the send\n fails or its outcome is unknown. Retrying publish requires a stable quarantine ID such as\n `(cluster, topic, partition, offset, consumer-purpose)` to reconcile duplicate quarantine attempts.\n@@ -234,6 +240,8 @@ transactions, retention or rebalances. Reuse adequate prior evidence for an unch\n   redrive uses, or the test proves nothing about the tool you will actually run.\n - **Transfer ambiguity.** Apply DLQ publish then drop its acknowledgement/crash before source\n   commit; restart and prove one logical quarantine entry and no source loss.\n+  Also abort a transaction after polling without restarting the consumer: verify its unresolved\n+  batch is retried or its position restored before any later offset commit can pass that work.\n - **Externalized evidence.** Fail or lose the upload response before publication; source work\n   must remain recoverable. Then lose the DLQ acknowledgement after a successful upload and\n   verify cleanup cannot remove a referenced blob. Exercise delayed replay with object expiry,\ndiff --git a/skills/poison-messages-and-dlq/skill.yaml b/skills/poison-messages-and-dlq/skill.yaml\nindex 7d2b236..60cacb4 100644\n--- a/skills/poison-messages-and-dlq/skill.yaml\n+++ b/skills/poison-messages-and-dlq/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: poison-messages-and-dlq\n-version: 1.2.4\n+version: 1.2.5\n description: >-\n   What happens to a message that cannot succeed: separating the permanently poison message\n   that fails on its own content from the transiently blocked one whose dependency is down,\n",
+      "staged": "",
+      "untracked": ""
+    },
+    "sources": {
+      "count": 11,
+      "statuses200": true,
+      "hashesVerified": true
+    },
+    "conceptualJavaSchema": {
+      "source": "skills/poison-messages-and-dlq/references/dlq-operations.md",
+      "extractedSourceSha256": "5c2ad70e3abf7fb18084f451ee7a708ca9ed96a2efeaa26b848f8bf8de2d4230",
+      "compiler": "javac 25.0.3",
+      "runtimeUsedForCompilation": "Temurin JDK 25.0.3",
+      "targetRelease": 17,
+      "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+      "args": [
+        "--release",
+        "17",
+        "-d",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/poison-messages-and-dlq/classes",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/poison-messages-and-dlq/DeadLetter.java"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/poison-messages-and-dlq",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "classFileMajorVersion": 61,
+      "unchangedFromAssignment": true,
+      "limitation": "Compilation of the unchanged conceptual schema only. It intentionally omits validation, defensive copying and serializer implementation; no claim of immutable DTO or broker/runtime safety."
+    },
+    "syntheticRetentionArithmetic": {
+      "originalEnqueuedAt": "2026-10-12T10:00:00Z",
+      "movedToDlqAt": "2026-10-14T10:00:00Z",
+      "observedAt": "2026-10-14T12:00:00Z",
+      "ttlHours": 96,
+      "requiredRemainingHours": 84,
+      "standardRemainingHours": 46,
+      "fifoRemainingHours": 94,
+      "limitation": "Source-defined clock arithmetic on development fixtures; no SQS API or delivery/expiry execution."
+    },
+    "behavioralExecutions": 0
+  },
+  "behavioralEvidence": {
+    "executedAgentEvaluations": [],
+    "executedBrokerIntegrationTests": [],
+    "walkthroughs": [
+      "Aborted output/offset writes leave committed next offset 101 but local poll position 104; an empty recovery hook cannot justify continuing to fresh work.",
+      "A verified existing after-rollback hook restoring the currently owned partition to 101 closes that specific gap without an additional manual seek.",
+      "Exploratory SQS clock arithmetic was executed: identical 96-hour retention and 50-hour total age leave 46 hours for Standard versus 94 hours for FIFO; this is not a provider expiry test."
+    ],
+    "improvementClaim": "The documented mechanism and missing failure control were corrected with primary evidence. No measured agent behavioral gain or broker integration guarantee is claimed.",
+    "pending": "Coordinator independent actor evaluation and, where desired, actual Kafka transfer integration using the target client/framework path."
+  },
+  "developmentCases": {
+    "singleChangedConstraint": "Whether the existing post-abort recovery hook actually restores the consumer position; the poll batch, committed offset, successful abort and all other contracts are held constant.",
+    "fixtureProvenance": "Synthetic source excerpts and traces. These are known development cases, not actual broker captures or held-out cases.",
+    "prerequisites": "Materialize only one input bundle in an isolated directory; provide the selected skill and source access. Permit writes only to recovery-review.md. Keep evaluator criteria, handoff and other case out of actor access. No broker or dependencies need installation.",
+    "inputs": [
+      {
+        "id": "abort-without-position-recovery",
+        "task": "Review whether this Kafka transactional quarantine loop can safely resume after the DLQ destination recovers. Inspect the supplied loop, recovery hook and trace, then update recovery-review.md with the supported decision and any minimal correction needed. Preserve an adequate existing framework recovery path. This is an offline source/trace review; do not connect to a broker, change broker settings or deploy.",
+        "artifacts": {
+          "versions.txt": "Application Java 17. Resolved kafka-clients 4.1.2. Broker 4.1.2. Automatic commit is disabled. Kafka output and source offsets use the same transactional producer, current group metadata and one cluster. Destination consumers use read_committed. There are no database/HTTP side effects in this fixture.\n",
+          "poll-loop.txt": "One consumer thread owns source-0 throughout the shown interval. Before poll, the safely committed next offset is 101. A single transaction processes every record returned by poll: valid records go to the output topic; payload-intrinsic record 103 goes to the DLQ; offsets are sent and committed only if all outputs succeed. On failure, abortTransaction() completes, the old ConsumerRecords reference is discarded after RecoveryHook returns, and the outer loop calls poll() again. No rebalance occurred. No other buffered retry mechanism exists. The DLQ outage has since been repaired.\n",
+          "trace.json": "{\n  \"sourcePartition\": \"source-0\",\n  \"committedNextOffsetBefore\": 101,\n  \"returnedOffsets\": [\n    101,\n    102,\n    103\n  ],\n  \"consumerPositionAfterPoll\": 104,\n  \"transactionOutcome\": \"ABORT_COMPLETED\",\n  \"cause\": \"DLQ publish failure before commit\",\n  \"committedNextOffsetAfterAbort\": 101,\n  \"committedDispositionFor103\": false\n}\n",
+          "recovery-review.md": "Proposed: resume the existing poll loop now that the DLQ destination is healthy. Review pending.\n",
+          "RecoveryHook.java": "// Source excerpt invoked synchronously on the consumer thread after successful abort.\nvoid recoverAfterAbort() {\n    metrics.recordAbortedBatch();\n    // No retained batch, seek, consumer replacement or framework after-rollback processing.\n}\n"
+        }
+      },
+      {
+        "id": "abort-with-existing-position-recovery",
+        "task": "Review whether this Kafka transactional quarantine loop can safely resume after the DLQ destination recovers. Inspect the supplied loop, recovery hook and trace, then update recovery-review.md with the supported decision and any minimal correction needed. Preserve an adequate existing framework recovery path. This is an offline source/trace review; do not connect to a broker, change broker settings or deploy.",
+        "artifacts": {
+          "versions.txt": "Application Java 17. Resolved kafka-clients 4.1.2. Broker 4.1.2. Automatic commit is disabled. Kafka output and source offsets use the same transactional producer, current group metadata and one cluster. Destination consumers use read_committed. There are no database/HTTP side effects in this fixture.\n",
+          "poll-loop.txt": "One consumer thread owns source-0 throughout the shown interval. Before poll, the safely committed next offset is 101. A single transaction processes every record returned by poll: valid records go to the output topic; payload-intrinsic record 103 goes to the DLQ; offsets are sent and committed only if all outputs succeed. On failure, abortTransaction() completes, the old ConsumerRecords reference is discarded after RecoveryHook returns, and the outer loop calls poll() again. No rebalance occurred. No other buffered retry mechanism exists. The DLQ outage has since been repaired.\n",
+          "trace.json": "{\n  \"sourcePartition\": \"source-0\",\n  \"committedNextOffsetBefore\": 101,\n  \"returnedOffsets\": [\n    101,\n    102,\n    103\n  ],\n  \"consumerPositionAfterPoll\": 104,\n  \"transactionOutcome\": \"ABORT_COMPLETED\",\n  \"cause\": \"DLQ publish failure before commit\",\n  \"committedNextOffsetAfterAbort\": 101,\n  \"committedDispositionFor103\": false\n}\n",
+          "recovery-review.md": "Proposed: resume the existing poll loop now that the DLQ destination is healthy. Review pending.\n",
+          "RecoveryHook.java": "// Source excerpt invoked synchronously on the consumer thread after successful abort.\nvoid recoverAfterAbort() {\n    metrics.recordAbortedBatch();\n    // safeStart was captured from the confirmed committed prefix before this poll.\n    // This hook verifies ownership and restores the only affected assigned partition.\n    frameworkAfterRollback.restoreAssignedPosition(sourcePartition, safeStart);\n}\n",
+          "recovery-hook-trace.json": "{\n  \"currentAssignment\": [\n    \"source-0\"\n  ],\n  \"safeStart\": 101,\n  \"hookRunsOnConsumerThread\": true,\n  \"seekCompleted\": true,\n  \"consumerPositionAfterHook\": 101,\n  \"nextPollFirstOffset\": 101\n}\n"
+        }
+      }
+    ],
+    "evaluatorOnlyCriteria": [
+      {
+        "id": "abort-without-position-recovery",
+        "expected": [
+          "Read the loop, source offset trace and no-op recovery hook.",
+          "Distinguish committed next offset 101 from local position 104; aborting producer transaction does not by itself rewind consumer state.",
+          "Reject simply resuming fresh polls: a later commit can skip 101–103 and the uncommitted quarantine disposition.",
+          "Propose retaining/retrying the unresolved batch or restoring source-0 to the verified safe offset 101 under current ownership before new commits; consider actual framework ownership rather than unconditional global seeking.",
+          "Update recovery-review.md with this specific finding and a same-consumer abort control; no production action or broad recovery redesign."
+        ],
+        "failIf": [
+          "Claims abort alone resets KafkaConsumer position.",
+          "Treats unchanged committed offset as proof that fresh polls cannot skip records.",
+          "Advances the source commit without a committed disposition.",
+          "Uses a crash/restart-only test as proof of the shown live-consumer recovery path.",
+          "Blindly seeks all partitions or ignores ownership and delivered-prefix constraints."
+        ]
+      },
+      {
+        "id": "abort-with-existing-position-recovery",
+        "expected": [
+          "Inspect the hook and observed seek/next-poll evidence rather than stopping at the generic Kafka abort rule.",
+          "Recognize the existing framework path restores safe position 101 on the owner thread before the next poll.",
+          "Preserve the adequate recovery mechanism; an extra manual seek or mandatory consumer restart is unnecessary for the shown gap.",
+          "Keep the conclusion scoped to this position-recovery evidence; source/trace review is not proof of all broker failure paths or external exactly-once effects.",
+          "Update recovery-review.md with the supported decision and any relevant unexecuted broker control."
+        ],
+        "failIf": [
+          "Reports the same missing-rewind defect despite the actual hook and trace.",
+          "Requires adding an unconditional manual seek/restart without an unresolved risk.",
+          "Claims broader end-to-end exactly-once proof from this fixture.",
+          "Connects to production, deploys or changes broker settings."
+        ]
+      }
+    ]
+  },
+  "sources": [
+    {
+      "file": "kafka-design.html",
+      "url": "https://kafka.apache.org/41/design/design/",
+      "status": 200,
+      "finalUrl": "https://kafka.apache.org/41/design/design/",
+      "bytes": 143074,
+      "sha256": "6039a9926e28c03e10ae4a6307ddc382f5631d17f1f65735d0d165f57022337b",
+      "retainedAt": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/poison-messages-and-dlq/sources/kafka-design.html",
+      "supports": "Material correction: after a transaction abort, application state and consumer position must be reset explicitly. Also supports atomic Kafka output/offset scope versus external sink coordination, and compaction/tombstones."
+    },
+    {
+      "file": "kafka-consumer.html",
+      "url": "https://kafka.apache.org/41/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html",
+      "status": 200,
+      "finalUrl": "https://kafka.apache.org/41/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html",
+      "bytes": 266673,
+      "sha256": "fa66c5836b36dabeaccc8ba2ff01a8e59fdfc86e77058a38cdc5f9f6cb501444",
+      "retainedAt": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/poison-messages-and-dlq/sources/kafka-consumer.html",
+      "supports": "Poll advances local position separately from committed position; offsets can have gaps; rebalance does not preserve pause state."
+    },
+    {
+      "file": "kafka-headers.html",
+      "url": "https://kafka.apache.org/41/javadoc/org/apache/kafka/common/header/Headers.html",
+      "status": 200,
+      "finalUrl": "https://kafka.apache.org/41/javadoc/org/apache/kafka/common/header/Headers.html",
+      "bytes": 18304,
+      "sha256": "ce6d580ac28a05925bcc0c7113ca3853ec15ab2d2275df9cd4cb83b3461b6de5",
+      "retainedAt": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/poison-messages-and-dlq/sources/kafka-headers.html",
+      "supports": "Repeated header names and ordered iteration/addition."
+    },
+    {
+      "file": "kafka-header.html",
+      "url": "https://kafka.apache.org/41/javadoc/org/apache/kafka/common/header/Header.html",
+      "status": 200,
+      "finalUrl": "https://kafka.apache.org/41/javadoc/org/apache/kafka/common/header/Header.html",
+      "bytes": 7096,
+      "sha256": "06e30c13257a7d96a2246de2cc721ef05ecfc16e7e8fa20bd1b8e0211361a324",
+      "retainedAt": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/poison-messages-and-dlq/sources/kafka-header.html",
+      "supports": "Header value is byte[], not necessarily UTF-8 text."
+    },
+    {
+      "file": "spring-tombstones.html",
+      "url": "https://docs.spring.io/spring-kafka/reference/3.3/kafka/tombstones.html",
+      "status": 200,
+      "finalUrl": "https://docs.spring.io/spring-kafka/reference/3.3/kafka/tombstones.html",
+      "bytes": 50837,
+      "sha256": "c5c209c5db307e3de4b5b59d6e612b2557747c83b13a44cdcfd9fd6a0a2fc0c9",
+      "retainedAt": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/poison-messages-and-dlq/sources/spring-tombstones.html",
+      "supports": "Original null can be a tombstone; a deserializer can also return null after failure."
+    },
+    {
+      "file": "spring-error-handling.html",
+      "url": "https://docs.spring.io/spring-kafka/reference/3.3/kafka/annotation-error-handling.html",
+      "status": 200,
+      "finalUrl": "https://docs.spring.io/spring-kafka/reference/3.3/kafka/annotation-error-handling.html",
+      "bytes": 112081,
+      "sha256": "5daa83600e774b74acfaea753a8aa6e9e1f77165725f30cec7c648f66db001fc",
+      "retainedAt": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/poison-messages-and-dlq/sources/spring-error-handling.html",
+      "supports": "Dead-letter publication error handling and repeated original/exception header accumulation can affect transfer success."
+    },
+    {
+      "file": "sqs-dlq.html",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-dead-letter-queues.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-dead-letter-queues.html",
+      "bytes": 18485,
+      "sha256": "1bad70a471afec919ac98e29a9ddc5d52934d77e336966fbace91e7c06e57b6a",
+      "retainedAt": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/poison-messages-and-dlq/sources/sqs-dlq.html",
+      "supports": "Native delivery-count routing is not causal classification; Standard retains original enqueue clock, FIFO resets it on DLQ transfer, age metric differs."
+    },
+    {
+      "file": "sqs-redrive.html",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-configure-dead-letter-queue-redrive.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-configure-dead-letter-queue-redrive.html",
+      "bytes": 41404,
+      "sha256": "4f49146de66f947a2fbf27fab72889d46d6ba72170336c8718d783f49ff8030d",
+      "retainedAt": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/poison-messages-and-dlq/sources/sqs-redrive.html",
+      "supports": "Redrive receives new message identity/time and can interleave with live arrivals; velocity and cancellation have bounded operational semantics."
+    },
+    {
+      "file": "s3-lifecycle.html",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lifecycle-mgmt.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lifecycle-mgmt.html",
+      "bytes": 20978,
+      "sha256": "a2b47f7e7d97c35983f12a5e78bdcfeb088553c750ab4bb25262067d835f5018",
+      "retainedAt": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/poison-messages-and-dlq/sources/s3-lifecycle.html",
+      "supports": "Object expiry/lifecycle is separate from the DLQ envelope retention policy."
+    },
+    {
+      "file": "s3-presigned.html",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-presigned-url.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-presigned-url.html",
+      "bytes": 28325,
+      "sha256": "4e6f7c5f3d9c826b209fd4e7048c9982125cb75c18ff4d4ab7e470cd4235eecc",
+      "retainedAt": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/poison-messages-and-dlq/sources/s3-presigned.html",
+      "supports": "Access-link expiry may be earlier than requested URL lifetime due to credential expiry; expired access is not proof of object deletion."
+    },
+    {
+      "file": "pubsub-dead-letter.html",
+      "url": "https://cloud.google.com/pubsub/docs/dead-letter-topics",
+      "status": 200,
+      "finalUrl": "https://docs.cloud.google.com/pubsub/docs/dead-letter-topics",
+      "bytes": 662887,
+      "sha256": "15b49e5af81b74b959077c3147c75d2209cb33b873a3a505f0aee8b9c8cc92d4",
+      "retainedAt": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/poison-messages-and-dlq/sources/pubsub-dead-letter.html",
+      "supports": "Approximate best-effort forwarding/delivery attempts, required IAM and destination subscription."
+    }
+  ],
+  "limitations": [
+    "No Kafka/SQS/PubSub/S3 service was contacted beyond public documentation; no broker integration or replay operation was executed.",
+    "Java compilation validates only the conceptual Java 17 schema syntax/API availability, not defensive copying, serialization, null variants or operational safety.",
+    "Kafka API pages under /41 currently identify 4.1.2; the skill still requires inspecting actual target broker/client/framework versions and recovery hooks.",
+    "Retention arithmetic and Kafka review cases are synthetic; they are not runtime fault-injection or behavioral comparison results.",
+    "Global registry, version integration and repository checks remain coordinator-only after all reviewers stop writing."
+  ],
+  "crossSkillFindings": [],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "prerequisite": "All reviewer writes stopped.",
+      "reason": "Coordinator owns shared index/integrity and cross-package checks."
+    },
+    {
+      "command": "npm run verify",
+      "prerequisite": "Coordinator regenerates registry and integrates final skill versions.",
+      "reason": "Local readiness does not claim repository-wide verification."
+    }
+  ],
+  "coordinatorActions": [
+    "Archive this JSON and relevant retained primary sources/local validation files.",
+    "Choose independent evaluator cases with input and criteria kept separate.",
+    "Run the global checks after all writers stop."
+  ]
+}

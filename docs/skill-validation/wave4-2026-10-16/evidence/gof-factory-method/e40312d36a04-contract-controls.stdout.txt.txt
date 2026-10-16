@@ -1,0 +1,8 @@
+PASS factory once and owned success closure
+PASS parse failure remains primary and close suppressed
+PASS save failure closes owned resource
+PASS acquisition checked failure propagates unchanged
+PASS null factory result rejected before processing
+PASS close-only failure does not undo save
+PASS constructor hook sees default subclass value
+SUMMARY checks=7

@@ -73,8 +73,8 @@ APIs on older stacks; adopting this skill does not authorize a dependency/runtim
 4. **Check the work shape.** Consider a SQL gateway for set-based or reporting work when
    query control, translation or measured cost warrants it. An existing ORM projection or
    bulk query may already fit; validate its invariant, versioning and managed-state effects
-   before adding another access layer. For mixed JDBC/JPA paths, verify transaction participation
-   and flush/context visibility; sharing a database URL does not prove atomicity.
+   before adding another access layer. For mixed JDBC/JPA paths, verify transaction participation,
+   effective isolation and flush/context visibility; sharing a database URL does not prove atomicity.
 5. **Decide per module.** A pricing engine with a mapper and an admin CRUD area with Active
    Record in one application is a reasonable design, provided the boundary between them is
    explicit.
@@ -148,6 +148,11 @@ Read path of an application whose write path uses a mapper
   deliberately partitioned operations, but they must share invariant, versioning and transaction
   rules with explicit write authority. Uncoordinated writers are the defect
   (`offline-concurrency-control`).
+- Mapping style does not determine concurrency protection. Trace the state a rule reads, the rows
+  each operation writes and the effective transaction boundary. A unit of work or individual
+  `@Version` fields do not by themselves protect an invariant across independently updated rows.
+  Resolve that protocol before attributing the defect to a missing mapper; the comparison
+  reference covers this boundary and routes transaction details to their owner.
 - SQL can avoid object loading for reporting and bulk changes; verify plans, rows touched,
   round trips and application latency. Set-based writes must preserve invariants, versioning
   and transaction semantics; ORM callbacks and managed state may be bypassed. Decide flush
@@ -174,4 +179,4 @@ is missing, state the conditional choice instead of prescribing a migration.
   actually couples, testability and query control, the JPA middle ground and its risks, and
   the migration path when the choice must change. Read when the decision is genuinely open,
   is being re-opened, or a read projection is being reused for writes; it includes worked
-  cases for that boundary.
+  cases for that boundary and distinguishes mapping from cross-row concurrency protection.

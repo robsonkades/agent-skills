@@ -32,6 +32,29 @@ from the underlying datasource may execute independently, even against the same 
 Multiple transaction managers do not automatically combine their resources. Check persisted
 state after a mid-operation failure, not only annotation placement or transaction activity.
 
+## What enforces a timeout
+
+Inspect the selected transaction manager and the actual statement-creation path. Spring's
+local JDBC `DataSourceTransactionManager` applies transaction timeouts through JDBC statement
+timeouts (Spring 6.2.19 contract). `JdbcTemplate`, explicit
+`DataSourceUtils.applyTransactionTimeout(statement, dataSource)`, or a configured
+`TransactionAwareDataSourceProxy` can supply that propagation. Calling
+`DataSourceUtils.getConnection` alone obtains the participating connection; a manually created
+statement still needs timeout configuration. Preserve an existing path that already applies it.
+
+This timeout does not interrupt arbitrary Java work or an HTTP call after the configured
+duration. Pool acquisition, JDBC/driver cancellation, database lock or statement limits and
+remote-call deadlines have their own enforcement points. Identify which one bounds each wait;
+do not infer a completed rollback merely because the transaction's nominal duration elapsed.
+Other managers/providers may enforce timeouts differently, so do not transfer this local JDBC
+mechanism to JTA or JPA without checking their integration.
+
+For a timeout fix, check the remaining timeout passed to the actual statement, then exercise
+slow SQL and a deadline expired before the next statement against the target driver/database.
+Also verify rollback and released resources from outside the completed boundary. A recording
+JDBC double can prove that timeout propagation occurred; it cannot prove database cancellation,
+lock release or a wall-clock bound on the use case.
+
 ## The silent no-ops
 
 Partial Java illustration (omitted domain methods/imports), assuming Spring proxy mode:
@@ -250,7 +273,9 @@ implement concurrent-worker claiming, cancellation or changing-input semantics.
 - [Spring propagation](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/tx-propagation.html): physical versus logical scope, joining attributes and retained resources.
 - [Spring rollback rules](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/rolling-back.html): default rules and overrides.
 - [Spring transaction annotation settings](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/annotations.html): proxy interception and the 6.2+ global rollback default. Consult the project's version.
-- [Spring 6.2.19 `DataSourceTransactionManager`](https://docs.spring.io/spring-framework/docs/6.2.19/javadoc-api/org/springframework/jdbc/datasource/DataSourceTransactionManager.html): bound JDBC connection access and optional database read-only enforcement; verify the target provider.
+- [Spring 6.2.19 `DataSourceTransactionManager`](https://docs.spring.io/spring-framework/docs/6.2.19/javadoc-api/org/springframework/jdbc/datasource/DataSourceTransactionManager.html): bound JDBC connection access, statement-timeout integration and optional database read-only enforcement; verify the target provider.
+- [Spring 6.2.19 `DataSourceUtils`](https://docs.spring.io/spring-framework/docs/6.2.19/javadoc-api/org/springframework/jdbc/datasource/DataSourceUtils.html): obtaining a bound connection and applying its remaining timeout are separate operations.
+- [Spring 6.2.19 JDBC transaction implementation](https://github.com/spring-projects/spring-framework/blob/v6.2.19/spring-jdbc/src/main/java/org/springframework/jdbc/datasource/DataSourceTransactionManager.java): timeout stored on the connection holder; inspect the manager's begin/commit path rather than assuming a method-interruption timer.
 - [Spring 6.2 `LazyConnectionDataSourceProxy`](https://docs.spring.io/spring-framework/docs/6.2.x/javadoc-api/org/springframework/jdbc/datasource/LazyConnectionDataSourceProxy.html): physical connection acquisition can be deferred until statement creation.
 - [AWS transactional outbox](https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/transactional-outbox.html): duplicate delivery and idempotent processing at the remote edge.
 - [Azure compensating transaction](https://learn.microsoft.com/en-us/azure/architecture/patterns/compensating-transaction): recoverable progress, retryable compensation and business-specific restoration.

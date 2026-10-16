@@ -105,6 +105,9 @@ already authorized recovery through a validated rollback/drain path.
   a system-default socket read closes that socket; a read timeout has different semantics.
   Audit pool reuse, shared-resource ownership and retry classification before widening;
   see `references/what-breaks.md`.
+- **Preserve when the calling method returns.** A new per-call executor in try-with-resources
+  waits at `close()` even after a timed wait or a `return` of its Future. Match executor ownership
+  to the task's permitted lifetime — `references/what-breaks.md`.
 - **Rollback should be fast and rehearsed.** A per-workload runtime/configuration switch is ideal;
   where architecture prevents it, staged deployment rollback must still preserve task ordering,
   drain and compatibility.

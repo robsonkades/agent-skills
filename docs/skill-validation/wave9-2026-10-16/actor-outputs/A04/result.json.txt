@@ -1,0 +1,76 @@
+{
+  "task": "A04",
+  "decision": "Repaired RetryEngine.java while retaining its public signature and Java 17 source/API baseline.",
+  "implementation": "RetryEngine.java",
+  "verification": "Verification.java",
+  "review": "REVIEW.md",
+  "journal": "execution.json",
+  "contract": {
+    "singleOwner": true,
+    "sequential": true,
+    "replaySafe": true,
+    "storeDurableAndAtomic": "Supplied assumption; not validated by simulation",
+    "attemptLimitScope": "Calls in this invocation",
+    "keyAndPayload": "Original Ports.Intent preserved on every call",
+    "outcomeRule": "Only OK establishes APPLIED; any unresolved dispatch preserves UNKNOWN; otherwise normal stop is REJECTED",
+    "delayRule": "max(localWaitNanos, serverMinimumNanos), never truncated",
+    "deadlineRule": "Fresh remaining budget must cover attempt plus reserve; retries must additionally fit their delay"
+  },
+  "changes": [
+    "Return terminal snapshots without writes or calls",
+    "Preserve UNKNOWN across attempts and interruptions",
+    "Close each reply before sleep, next call or return",
+    "Use overflow-safe admission and post-sleep checks",
+    "Retain configured retry policy and token semantics"
+  ],
+  "checks": [
+    {
+      "command": "node run.mjs Verification",
+      "exitCode": 0,
+      "result": "Verification passed: 23 scenario groups (REPLAY_SAFE=true)",
+      "compilation": "javac --release 17",
+      "javaSubprocessTimeoutMs": 20000
+    },
+    {
+      "command": "node run.mjs Smoke",
+      "exitCode": 0,
+      "result": "Smoke passed",
+      "compilation": "javac --release 17",
+      "javaSubprocessTimeoutMs": 20000
+    },
+    {
+      "command": "Compile and run Verification against immutable input/project/RetryEngine.java",
+      "compileExitCode": 0,
+      "javaExitCode": 1,
+      "expectedResult": "Regression rejects original modified intent ID stable-intent-0",
+      "javaSubprocessTimeoutMs": 20000
+    },
+    {
+      "command": "SHA-256 comparison of seven immutable output copies against input/project",
+      "exitCode": 0,
+      "result": "All equal"
+    },
+    {
+      "command": "java -version and javac -version via 20-second subprocess wrappers",
+      "exitCode": 0,
+      "result": "Temurin 25.0.3; javac 25.0.3"
+    }
+  ],
+  "limitations": [
+    "REPLAY_SAFE=false branch not executed because supplied Contract.java is immutable and true",
+    "Local fixtures do not establish durable store behavior or provider recovery/replay guarantees",
+    "No live dependency, network, concurrent-worker, crash durability, fleet amplification, physical cancellation or wall-clock validation",
+    "No supplied provider API/version, database/isolation, retention or fingerprint implementation",
+    "External skill routes were not opened; only supplied snapshots were used",
+    "Repository npm verify not applicable to the isolated Java exercise and not run"
+  ],
+  "artifacts": [
+    "RetryEngine.java",
+    "Verification.java",
+    "REVIEW.md",
+    "result.json",
+    "execution.json",
+    "classes/",
+    "baseline-classes/"
+  ]
+}

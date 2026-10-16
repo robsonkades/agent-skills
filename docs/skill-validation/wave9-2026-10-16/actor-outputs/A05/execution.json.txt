@@ -1,0 +1,118 @@
+{
+  "task": "A05",
+  "scope": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A05",
+  "readScope": "Only TASK.md, supplied input/project and input/skills, and this task output; no siblings, other sessions, global skills or evaluator files read.",
+  "commands": [
+    {
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A05/TASK.md'",
+      "workdir": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "Read assignment, immutable/write boundaries, required skill snapshots, 20-second Java limit and required artifacts."
+    },
+    {
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A05/input/skills/idempotency/SKILL.md','C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A05/input/skills/timeouts-and-deadlines/SKILL.md','C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A05/input/skills/retries-and-backoff/SKILL.md'",
+      "workdir": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "Read all three skill snapshots before project implementation."
+    },
+    {
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A05/input/project/README.md','C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A05/input/project/REQUEST.md'\nrg --files 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A05/input/project' 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A05/output'",
+      "workdir": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "Read Java 17 baseline and repair scope; listed supplied project/output files."
+    },
+    {
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A05/input/project/Ports.java','C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A05/input/project/Contract.java','C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A05/input/project/contract.md','C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A05/input/project/RetryEngine.java','C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A05/input/project/Smoke.java','C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A05/output/run.mjs'",
+      "workdir": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "Read complete component contract, ports, defective implementation and smoke; inspected runner before executing. Runner compiles all local Java using --release 17 and gives each javac/java subprocess timeout:20000."
+    },
+    {
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A05/input/skills/idempotency/references/key-selection.md','C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A05/input/skills/idempotency/references/idempotency-key-filter.md','C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A05/input/skills/timeouts-and-deadlines/references/deadline-propagation.md','C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A05/input/skills/timeouts-and-deadlines/references/java-timeout-surface.md','C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A05/input/skills/retries-and-backoff/references/retry-in-java.md'",
+      "workdir": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "Read key selection and retry reference; combined tool output truncated middle, so reread affected references separately."
+    },
+    {
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A05/input/skills/idempotency/references/idempotency-key-filter.md','C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A05/input/skills/timeouts-and-deadlines/references/deadline-propagation.md'",
+      "workdir": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "Read effect-state preservation and deadline arithmetic; outer tool output truncated 186 tokens of header example, reread below."
+    },
+    {
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A05/input/skills/timeouts-and-deadlines/references/java-timeout-surface.md'",
+      "workdir": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "Read timeout scope and cancellation/resource-release limitations."
+    },
+    {
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A05/input/skills/timeouts-and-deadlines/references/deadline-propagation.md' | Select-Object -Skip 85 -First 35\nGet-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A05/output/RetryEngine.java'",
+      "workdir": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "Read truncated deadline-header passage and confirmed editable output implementation before patching."
+    },
+    {
+      "command": "node run.mjs Verification",
+      "workdir": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A05/output",
+      "exitCode": 0,
+      "result": "Verification passed: 169 scenarios (REPLAY_SAFE=true, Java 17 API)"
+    },
+    {
+      "command": "node run.mjs Smoke",
+      "workdir": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A05/output",
+      "exitCode": 0,
+      "result": "Smoke passed"
+    },
+    {
+      "command": "$taskRoot = 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A05'\n$immutableNames = @('README.md','REQUEST.md','Ports.java','Contract.java','contract.md','Smoke.java','run.mjs')\nforeach ($name in $immutableNames) {\n    $original = (Get-FileHash -Algorithm SHA256 -LiteralPath \"$taskRoot/input/project/$name\").Hash\n    $copy = (Get-FileHash -Algorithm SHA256 -LiteralPath \"$taskRoot/output/$name\").Hash\n    if ($original -ne $copy) { throw \"Immutable file differs: $name\" }\n    Write-Output \"Unchanged: $name\"\n}\nGet-Content -LiteralPath \"$taskRoot/output/RetryEngine.java\"",
+      "workdir": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A05/output",
+      "exitCode": 0,
+      "result": "All seven immutable output copies equal their input/project originals by SHA-256; read final RetryEngine.java."
+    },
+    {
+      "command": "node -e \"const cp=require('node:child_process');for(const name of ['java','javac']){const r=cp.spawnSync(name,['-version'],{encoding:'utf8',timeout:20000,windowsHide:true});process.stdout.write(r.stdout||'');process.stderr.write(r.stderr||'');if(r.error||r.status!==0)process.exit(r.status||1)}console.log('Node '+process.version)\"",
+      "workdir": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A05/output",
+      "exitCode": 0,
+      "result": "openjdk version \"25.0.3\" 2026-04-21 LTS; Temurin-25.0.3+9-LTS; javac 25.0.3; Node v25.6.1. Version probes also used 20-second subprocess timeouts."
+    },
+    {
+      "command": "$ErrorActionPreference = 'Stop'\n$taskOutput = 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A05/output'\n$reviewText = Get-Content -Raw -LiteralPath \"$taskOutput/REVIEW.md\"\n$wordCount = ($reviewText -split '\\s+' | Where-Object { $_ }).Count\nif ($wordCount -gt 750) { throw \"Review exceeds 750 words: $wordCount\" }\n$result = Get-Content -Raw -LiteralPath \"$taskOutput/result.json\" | ConvertFrom-Json\n$execution = Get-Content -Raw -LiteralPath \"$taskOutput/execution.json\" | ConvertFrom-Json\nif ($result.task -ne 'A05' -or $execution.task -ne 'A05') { throw 'Wrong task metadata' }\nif ($result.evidence.regression.scenarios -ne 169) { throw 'Incorrect scenario count' }\nforeach ($name in @('RetryEngine.java','Verification.java','REVIEW.md','result.json','execution.json')) {\n    if (-not (Test-Path -LiteralPath \"$taskOutput/$name\" -PathType Leaf)) { throw \"Missing deliverable: $name\" }\n}\nWrite-Output \"Artifact validation passed; REVIEW.md words: $wordCount\"\nGet-ChildItem -LiteralPath $taskOutput -Name",
+      "workdir": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A05/output",
+      "exitCode": 0,
+      "result": "Artifact validation passed; REVIEW.md words: 438\r\nclasses\r\nContract.java\r\ncontract.md\r\nexecution.json\r\nPorts.java\r\nREADME.md\r\nREQUEST.md\r\nresult.json\r\nRetryEngine.java\r\nREVIEW.md\r\nrun.mjs\r\nSmoke.java\r\nVerification.java"
+    }
+  ],
+  "mutations": [
+    {
+      "tool": "apply_patch",
+      "path": "output/RetryEngine.java",
+      "result": "Patched authorized implementation; no protected project files changed."
+    },
+    {
+      "tool": "apply_patch",
+      "path": "output/Verification.java",
+      "result": "Added executable regression against actual implementation."
+    },
+    {
+      "tool": "run.mjs",
+      "path": "output/classes/",
+      "result": "Generated local Java class files during the two successful checks."
+    },
+    {
+      "tool": "apply_patch",
+      "paths": [
+        "output/REVIEW.md",
+        "output/result.json",
+        "output/execution.json"
+      ],
+      "result": "Created task reporting artifacts."
+    },
+    {
+      "tool": "apply_patch",
+      "path": "output/execution.json",
+      "result": "Finalized the read/command journal and stopped-write declaration after successful checks and artifact validation. This journal update is the final write."
+    }
+  ],
+  "allWritesStopped": true,
+  "processes": "All invoked commands and their subprocesses completed synchronously; no background processes were started."
+}

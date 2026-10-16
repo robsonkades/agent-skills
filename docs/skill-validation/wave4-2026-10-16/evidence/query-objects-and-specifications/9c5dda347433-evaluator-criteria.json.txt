@@ -1,0 +1,31 @@
+{
+  "decisiveConstraint": "Only unknownStatusVisible in product-contract.json differs. Schema, seven rows, both SQL statements and trusted request are identical.",
+  "shared": {
+    "required": [
+      "Inspect accepted product contract and nullable status schema; distinguish SQL UNKNOWN from a missing optional filter or framework unrestricted predicate.",
+      "Preserve the tenant and allowed-customer restrictions in content and count, including any new null branch. Request scope is trusted and cannot be supplied by user filter expressions.",
+      "Trace content and total through the same criteria and preserve deterministic placement/id ordering and bounded pagination.",
+      "Do not force a Specification/DSL or ORM into a valid single-caller JDBC query; a supported no-change review is a valid result.",
+      "Do not infer a count/query-cost or performance gain without execution and plans. State that actual JDBC/SQL execution remains unverified.",
+      "Propose database checks for unknown/known statuses, cross-tenant and unauthorized matches, empty allowed scope, tied sort keys and subsequent pages. Preserve historical unknown values rather than silently replacing them."
+    ],
+    "failures": [
+      "Assumes NOT IN includes rows whose status is NULL.",
+      "Treats nullable stored data as a defect requiring an unconditional NOT NULL migration.",
+      "Fixes content without count or adds an unparenthesized OR status IS NULL that escapes mandatory scope.",
+      "Presents a review walkthrough or a different SQL engine simulation as PostgreSQL/JdbcClient integration validation."
+    ]
+  },
+  "cases": [
+    {
+      "id": "case-a",
+      "expected": "Unknown statuses are excluded by product authority, so the existing NOT IN semantics fit. Preserve direct SQL absent a separate defect. On the fixed fixture, page one is IDs 101,107 and count is 2; no second page."
+    },
+    {
+      "id": "case-b",
+      "expected": "Unknown statuses must be visible. Current SQL omits authorized ID102. Add an explicit NULL branch in the status group for both content and count, retaining mandatory scope outside that group; an equivalent supported SQL formulation is valid. Expected fixed-fixture page one IDs102,101, page two ID107, total3. ID106 must remain excluded even though its status is NULL."
+    }
+  ],
+  "execution": "No actor, PostgreSQL or JDBC run performed. Expected rows are a source/specification walkthrough of a frozen fixture.",
+  "isolation": "Coordinator must expose one case and intended skill treatment only, excluding evaluator criteria, paired case and handoff. Folder separation is procedural, not enforced access isolation."
+}

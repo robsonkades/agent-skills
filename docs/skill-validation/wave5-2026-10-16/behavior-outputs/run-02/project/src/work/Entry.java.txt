@@ -1,0 +1,2 @@
+package work;
+public record Entry(String sku, long cents) {}

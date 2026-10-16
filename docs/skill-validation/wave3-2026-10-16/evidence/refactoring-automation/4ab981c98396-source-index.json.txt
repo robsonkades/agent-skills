@@ -1,0 +1,137 @@
+[
+  {
+    "file": "AbstractRewriteDryRunMojo.java",
+    "url": "https://raw.githubusercontent.com/openrewrite/rewrite-maven-plugin/v6.24.0/src/main/java/org/openrewrite/maven/AbstractRewriteDryRunMojo.java",
+    "supports": "Pinned dry-run output and failure handling",
+    "status": 200,
+    "sha256": "80368d2bab0478c70f240dba9291b8d0b12f17f024a7f21432a310463d77fb56",
+    "bytes": 7385,
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\refactoring-automation\\sources\\AbstractRewriteDryRunMojo.java"
+  },
+  {
+    "file": "AbstractRewriteMojo.java",
+    "url": "https://raw.githubusercontent.com/openrewrite/rewrite-maven-plugin/v6.24.0/src/main/java/org/openrewrite/maven/AbstractRewriteMojo.java",
+    "supports": "Pinned recipe validation and result processing",
+    "status": 200,
+    "sha256": "abfdb192a13925f7f457b440c1b59632f86a4ae23df9c8f2753afbcd57c8f723",
+    "bytes": 7425,
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\refactoring-automation\\sources\\AbstractRewriteMojo.java"
+  },
+  {
+    "file": "AbstractRewriteRunMojo.java",
+    "url": "https://raw.githubusercontent.com/openrewrite/rewrite-maven-plugin/v6.24.0/src/main/java/org/openrewrite/maven/AbstractRewriteRunMojo.java",
+    "supports": "Pinned application and execution errors",
+    "status": 200,
+    "sha256": "db612224bbdba049020f2c3194825ea83bc9a9786ce800f19f802ab03d24836d",
+    "bytes": 12150,
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\refactoring-automation\\sources\\AbstractRewriteRunMojo.java"
+  },
+  {
+    "file": "MavenMojoProjectParser.java",
+    "url": "https://raw.githubusercontent.com/openrewrite/rewrite-maven-plugin/v6.24.0/src/main/java/org/openrewrite/maven/MavenMojoProjectParser.java",
+    "supports": "Pinned parsing, source selection, generated filtering",
+    "status": 200,
+    "sha256": "321858396d238592bba7c4251c5039cc12106d8b8c0485ed1f61b4e0e50d783a",
+    "bytes": 50070,
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\refactoring-automation\\sources\\MavenMojoProjectParser.java"
+  },
+  {
+    "file": "ConfigBase.java",
+    "url": "https://raw.githubusercontent.com/openrewrite/rewrite-maven-plugin/v6.24.0/src/main/java/org/openrewrite/maven/ConfigBase.java",
+    "supports": "Pinned plugin parameter metadata",
+    "status": 404,
+    "sha256": "d5558cd419c8d46bdc958064cb97f963d1ea793866414c025906ec15033512ed",
+    "bytes": 14,
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\refactoring-automation\\sources\\ConfigBase.java"
+  },
+  {
+    "file": "rewrite-maven-plugin-6.24.0.pom",
+    "url": "https://repo.maven.apache.org/maven2/org/openrewrite/maven/rewrite-maven-plugin/6.24.0/rewrite-maven-plugin-6.24.0.pom",
+    "supports": "Exact resolved rewrite dependency baseline; metadata only, no installation",
+    "status": 200,
+    "sha256": "db0602dddd61edf337dfe642059d19db324d569c0c4a319d722743fa696acf9e",
+    "bytes": 25078,
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\refactoring-automation\\sources\\rewrite-maven-plugin-6.24.0.pom"
+  },
+  {
+    "file": "maven-plugin.html",
+    "url": "https://docs.openrewrite.org/reference/rewrite-maven-plugin",
+    "supports": "Current goal/options documentation; compare with pinned implementation",
+    "status": 200,
+    "sha256": "b0ce224f9d4eb88931c2e63bc281a786249b079e219afe534e2a5d197f9c30fe",
+    "bytes": 76725,
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\refactoring-automation\\sources\\maven-plugin.html"
+  },
+  {
+    "file": "yaml-format.html",
+    "url": "https://docs.openrewrite.org/reference/yaml-format-reference",
+    "supports": "Precondition file/generation scope",
+    "status": 200,
+    "sha256": "40af57f8f1e5757d971434f3bd40b71a87d3af601a1b0a27530a860f12071ff6",
+    "bytes": 86265,
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\refactoring-automation\\sources\\yaml-format.html"
+  },
+  {
+    "file": "recipe-conventions.html",
+    "url": "https://docs.openrewrite.org/authoring-recipes/recipe-conventions-and-best-practices",
+    "supports": "Visitor identity and immutability",
+    "status": 200,
+    "sha256": "328e505bb5c24df5b292fe2353672176bec1f6026d3b57705a94caeb3f9f4927",
+    "bytes": 67222,
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\refactoring-automation\\sources\\recipe-conventions.html"
+  },
+  {
+    "file": "recipe-testing.html",
+    "url": "https://docs.openrewrite.org/authoring-recipes/recipe-testing",
+    "supports": "Positive, negative, type attribution and cycle tests",
+    "status": 200,
+    "sha256": "1a411855494fc58fd328e2fc82040279f878d7e7b3e9265ac64c194d9e605628",
+    "bytes": 169313,
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\refactoring-automation\\sources\\recipe-testing.html"
+  },
+  {
+    "file": "refaster.html",
+    "url": "https://errorprone.info/docs/refaster",
+    "supports": "Compiler patch generation/application",
+    "status": 200,
+    "sha256": "91ef053651af164a8305114abb8229887e2132eabfda97c5567ee538aa2fc908",
+    "bytes": 51060,
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\refactoring-automation\\sources\\refaster.html"
+  },
+  {
+    "file": "intellij-rename.html",
+    "url": "https://www.jetbrains.com/help/idea/rename-refactorings.html",
+    "supports": "IDE index and scope limitations",
+    "status": 200,
+    "sha256": "f86a8cd0c636a859f570a250d19c2600e1b4d0d1b7bcdde5aa565d59c80c3e4d",
+    "bytes": 27926,
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\refactoring-automation\\sources\\intellij-rename.html"
+  },
+  {
+    "file": "ConfigurableRewriteMojo.java",
+    "url": "https://raw.githubusercontent.com/openrewrite/rewrite-maven-plugin/v6.24.0/src/main/java/org/openrewrite/maven/ConfigurableRewriteMojo.java",
+    "status": 200,
+    "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/refactoring-automation/sources/ConfigurableRewriteMojo.java",
+    "bytes": 12320,
+    "sha256": "45e22fd12a9a2012432035ef7235b0129ff713a23ee47d0f9ac24b898a255a95",
+    "supports": "Follow pinned superclass/result handling; correct source filenames after initial ConfigBase.java 404"
+  },
+  {
+    "file": "AbstractRewriteBaseRunMojo.java",
+    "url": "https://raw.githubusercontent.com/openrewrite/rewrite-maven-plugin/v6.24.0/src/main/java/org/openrewrite/maven/AbstractRewriteBaseRunMojo.java",
+    "status": 200,
+    "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/refactoring-automation/sources/AbstractRewriteBaseRunMojo.java",
+    "bytes": 21976,
+    "sha256": "323bbd537579add70179d818ad00759e3cb0a332bea06f8f309d0967c9a21798",
+    "supports": "Follow pinned superclass/result handling; correct source filenames after initial ConfigBase.java 404"
+  },
+  {
+    "file": "ResultsContainer.java",
+    "url": "https://raw.githubusercontent.com/openrewrite/rewrite-maven-plugin/v6.24.0/src/main/java/org/openrewrite/maven/ResultsContainer.java",
+    "status": 404,
+    "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/refactoring-automation/sources/ResultsContainer.java",
+    "bytes": 14,
+    "sha256": "d5558cd419c8d46bdc958064cb97f963d1ea793866414c025906ec15033512ed",
+    "supports": "Follow pinned superclass/result handling; correct source filenames after initial ConfigBase.java 404"
+  }
+]

@@ -1,0 +1,6 @@
+Java=25.0.3
+context=field
+crossRootAlias=false
+originalContract=violated: shared node duplicated across roots
+assertions=26
+LIMIT: bounded in-memory Java checks; no concurrency/ORM/persistence execution or agent evaluation.

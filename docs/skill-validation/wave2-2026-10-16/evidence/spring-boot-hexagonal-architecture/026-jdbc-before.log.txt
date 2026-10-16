@@ -1,0 +1,45 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -----------------< example:hexagonal-contract-fixture >-----------------
+[INFO] Building hexagonal-contract-fixture 1.0.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- clean:3.5.0:clean (default-clean) @ hexagonal-contract-fixture ---
+[INFO] Deleting C:\Users\robso\AppData\Local\Temp\skills-wave2-validation-Bu1zNV\spring-boot-hexagonal-architecture-artifacts\fixture\target
+[INFO] 
+[INFO] --- resources:3.5.0:resources (default-resources) @ hexagonal-contract-fixture ---
+[INFO] skip non existing resourceDirectory C:\Users\robso\AppData\Local\Temp\skills-wave2-validation-Bu1zNV\spring-boot-hexagonal-architecture-artifacts\fixture\src\main\resources
+[INFO] skip non existing resourceDirectory C:\Users\robso\AppData\Local\Temp\skills-wave2-validation-Bu1zNV\spring-boot-hexagonal-architecture-artifacts\fixture\src\main\resources
+[INFO] 
+[INFO] --- compiler:3.15.0:compile (default-compile) @ hexagonal-contract-fixture ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 8 source files with javac [debug parameters release 25] to target\classes
+[INFO] 
+[INFO] --- resources:3.5.0:testResources (default-testResources) @ hexagonal-contract-fixture ---
+[INFO] skip non existing resourceDirectory C:\Users\robso\AppData\Local\Temp\skills-wave2-validation-Bu1zNV\spring-boot-hexagonal-architecture-artifacts\fixture\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.15.0:testCompile (default-testCompile) @ hexagonal-contract-fixture ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 4 source files with javac [debug parameters release 25] to target\test-classes
+[INFO] 
+[INFO] --- surefire:3.5.6:test (default-test) @ hexagonal-contract-fixture ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running example.hexagonal.application.ArchitectureTest
+09:41:21.376 [main] INFO com.tngtech.archunit.core.PluginLoader -- Detected Java version 25.0.3
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.780 s -- in example.hexagonal.application.ArchitectureTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  2.798 s
+[INFO] Finished at: 2026-10-16T09:41:22-03:00
+[INFO] ------------------------------------------------------------------------

@@ -1,0 +1,368 @@
+{
+  "schemaVersion": 1,
+  "skill": "legacy-enterprise-modernization",
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "ownedPath": "C:/git/agent-skills/skills/legacy-enterprise-modernization",
+  "reviewedOn": "2026-10-16",
+  "scope": "Existing skill content: choosing bounded migration, maintaining consumer contracts and preserving authority/recovery. No application migration performed.",
+  "procedure": {
+    "read": "Entire assigned package and wave4 brief; reused unchanged AGENTS/full review prompt/parallel workflow/skill-engineering and its four references already read in this review session.",
+    "research": "Applied comparative-research/roadmap lessons selectively: effective principal, discriminating counterexample, retain an adequate design and keep technical claims separate from behavior.",
+    "findingsSentBeforeEdits": true,
+    "noSubdelegation": true,
+    "noSharedWrites": true
+  },
+  "baseline": {
+    "externalCopy": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/baseline/legacy-enterprise-modernization",
+    "committedVersion": "1.2.3",
+    "assignmentVersion": "1.2.3",
+    "finalVersion": "1.2.4",
+    "stagedChanges": [],
+    "unstagedChanges": [],
+    "untrackedFiles": [],
+    "preExistingVersionBump": false,
+    "assignmentSha256": {
+      "SKILL.md": "A810CD4C2006737582008835A5BFFFFE9176DE4B08368D78D7A39426291BC450",
+      "skill.yaml": "E6C500CE32165FA69B31ED8255BD1F5176FE927A04116A6F2FA81B23297E046D",
+      "references/strangler-and-anticorruption.md": "F9E089E6A009A08B3515DF5B2F3E0C3893BE5A5DB3B50217E1FAB3B81041B2B9",
+      "references/understanding-and-data-migration.md": "FC2543CADF82F579304DA6FDF2CDC5E92E6D3D7A9ED04DE4DC170E50B1896561"
+    },
+    "finalSha256": {
+      "SKILL.md": "A810CD4C2006737582008835A5BFFFFE9176DE4B08368D78D7A39426291BC450",
+      "skill.yaml": "0A728627014870FEBEFD2B5A7B3A1115AA8473F745B1FD032AFDAA01B1CDE8D1",
+      "references/strangler-and-anticorruption.md": "F9E089E6A009A08B3515DF5B2F3E0C3893BE5A5DB3B50217E1FAB3B81041B2B9",
+      "references/understanding-and-data-migration.md": "E3CF417A770E9DA8437FCB5F20CB4F17C570A28B1BD7F94BFE1BDB72E61FB999"
+    },
+    "preservedUnchangedFiles": [
+      "SKILL.md",
+      "references/strangler-and-anticorruption.md"
+    ]
+  },
+  "versions": {
+    "committed": "1.2.3",
+    "assignment": "1.2.3",
+    "final": "1.2.4",
+    "rationale": "Single patch bump for the conditional PostgreSQL view/principal guidance and source link; no extra bumps."
+  },
+  "domainCriteria": [
+    "Choose the smallest adequate migration or no change using consumer contracts and retained decisions.",
+    "Trace actual principals and write authority, including inherited/indirect access and admitted work.",
+    "Preserve caller-specific reads, invariant enforcement, side effects and recovery boundaries during coexistence.",
+    "Distinguish source guarantees, deployed configuration and executed target-database evidence."
+  ],
+  "findingsCorrected": [
+    {
+      "id": "view-principal-contract",
+      "location": "references/understanding-and-data-migration.md:159",
+      "finding": "The compatibility-view section referred generally to engine-dependent security but lacked the decisive PostgreSQL17 distinction between view-owner access and caller access.",
+      "consequence": "An unchanged lookup name, row shape or owner smoke test can coexist with wider visibility for the application principal.",
+      "correction": "Added conditional owner/invoker comparison, invoker-grant precondition, retained approved delegation, function-security distinction, and tests under actual consumer roles plus intended owner operations.",
+      "evidence": "PostgreSQL17 CREATE VIEW Notes and Row Security Policies; no application security outcome inferred."
+    }
+  ],
+  "remainingFindings": [],
+  "filesChangedByReviewer": [
+    {
+      "path": "skills/legacy-enterprise-modernization/references/understanding-and-data-migration.md",
+      "change": "10-line conditional view/principal paragraph and PostgreSQL17 row-security source."
+    },
+    {
+      "path": "skills/legacy-enterprise-modernization/skill.yaml",
+      "change": "Version 1.2.3 -> 1.2.4."
+    }
+  ],
+  "preExistingChanges": [],
+  "diffSummary": "2 files, 12 insertions, 1 deletion",
+  "capabilitiesPreserved": [
+    "Bounded/incremental or bounded replacement and no-change outcomes.",
+    "Evidence-based slice discovery, characterization with approved behavior changes kept distinct, periodic/recovery paths.",
+    "Local seams and optional ACL only for semantic mismatch; no compulsory target architecture.",
+    "Actual writer permissions, authority-transfer checkpoint, atomicity, dual-write/outbox and backfill race controls.",
+    "Bounded shadow execution, effect suppression and diagnostic failure limits.",
+    "Compatible rollback, reconciliation, restoration and decommissioning gates.",
+    "All existing Java/SQL examples, metadata descriptions, dependency/suggestion declarations and resource routes."
+  ],
+  "capabilitiesRemoved": [],
+  "commandsExecuted": [
+    {
+      "id": "structural",
+      "cmd": "@'\nimport assert from 'node:assert/strict';\nimport { existsSync, readFileSync } from 'node:fs';\nimport { dirname, resolve } from 'node:path';\nimport { loadPackageFromDirectory, validatePackage } from '@jvm-expert/core';\nimport { NodeFileSystem } from '@jvm-expert/node';\nimport { ClaudeCodeAdapter } from '@jvm-expert/adapter-claude';\nimport { CodexAdapter } from '@jvm-expert/adapter-codex';\nconst directory = resolve('skills/legacy-enterprise-modernization');\nconst loaded = await loadPackageFromDirectory(new NodeFileSystem(), directory, { strict: true });\nconst report = validatePackage(loaded.pkg, {\n  strict: true, directoryName: 'legacy-enterprise-modernization',\n  adapters: [new ClaudeCodeAdapter(), new CodexAdapter()],\n});\nconst issues = [...loaded.issues, ...report.issues];\nassert.deepEqual(issues, []);\nassert.equal(loaded.pkg.manifest.version, '1.2.4');\nconst declared = new Set([\n  ...(loaded.pkg.manifest.dependencies ?? []).map(item => item.name),\n  ...(loaded.pkg.manifest.suggests ?? []),\n]);\nconst referrals = new Set();\nlet localMarkdownLinks = 0;\nfor (const file of loaded.pkg.files.filter(file => file.path.endsWith('.md'))) {\n  const content = readFileSync(resolve(directory, file.path), 'utf8');\n  for (const match of content.matchAll(/\\[[^\\]]+\\]\\(([^)]+)\\)/g)) {\n    if (/^<?https?:/.test(match[1])) continue;\n    const [target, anchor] = match[1].split('#');\n    const absolute = resolve(directory, dirname(file.path), target);\n    assert.ok(existsSync(absolute), file.path + ': ' + match[1]);\n    if (anchor === 'one-incoming-intent-several-downstream-effects') {\n      assert.ok(readFileSync(absolute, 'utf8').includes('## One incoming intent, several downstream effects'));\n    }\n    localMarkdownLinks++;\n  }\n  for (const match of content.matchAll(/`([a-z][a-z0-9]*-[a-z0-9-]+)`/g)) {\n    const name = match[1];\n    if (!existsSync(resolve('skills', name, 'SKILL.md'))) continue;\n    assert.ok(declared.has(name), 'Undeclared referral: ' + name);\n    referrals.add(name);\n  }\n}\nconsole.log(JSON.stringify({\n  status: 'PASS', name: loaded.pkg.manifest.name, version: loaded.pkg.manifest.version,\n  files: loaded.pkg.files.length, issues: issues.length, localMarkdownLinks,\n  declaredSkillReferrals: referrals.size, adapters: ['claude', 'codex'],\n}));\n'@ | node --input-type=module",
+      "result": {
+        "chunk_id": "c5eac6",
+        "wall_time_seconds": 0.1831795,
+        "exit_code": 0,
+        "original_token_count": 45,
+        "output": "{\"status\":\"PASS\",\"name\":\"legacy-enterprise-modernization\",\"version\":\"1.2.4\",\"files\":4,\"issues\":0,\"localMarkdownLinks\":2,\"declaredSkillReferrals\":6,\"adapters\":[\"claude\",\"codex\"]}\n"
+      },
+      "cwd": "C:/git/agent-skills"
+    },
+    {
+      "id": "format",
+      "cmd": "node node_modules/prettier/bin/prettier.cjs --check skills/legacy-enterprise-modernization/SKILL.md skills/legacy-enterprise-modernization/skill.yaml skills/legacy-enterprise-modernization/references/strangler-and-anticorruption.md skills/legacy-enterprise-modernization/references/understanding-and-data-migration.md",
+      "result": {
+        "chunk_id": "069fb4",
+        "wall_time_seconds": 0.2194618,
+        "exit_code": 0,
+        "original_token_count": 17,
+        "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+      },
+      "cwd": "C:/git/agent-skills"
+    },
+    {
+      "id": "external-links",
+      "cmd": "@'\nimport {readFileSync} from 'node:fs';\nconst root='skills/legacy-enterprise-modernization';\nconst files=['SKILL.md','references/strangler-and-anticorruption.md','references/understanding-and-data-migration.md'];\nconst urls=[...new Set(files.flatMap(f=>[...readFileSync(root+'/'+f,'utf8').matchAll(/\\]\\((?:<(https:\\/\\/[^>]+)>|(https:\\/\\/[^)\\s]+))\\)/g)].map(m=>m[1]??m[2])))];\nconst results=await Promise.all(urls.map(async url=>{\n try{const response=await fetch(url);const raw=await response.text();\n return {url,status:response.status,finalUrl:response.url,title:(raw.match(/<title[^>]*>([\\s\\S]*?)<\\/title>/i)?.[1]??'').replace(/\\s+/g,' ').trim()};\n }catch(error){return {url,error:String(error)};}\n}));\nconsole.log(JSON.stringify({status:results.every(r=>r.status===200)?'PASS':'CHECK_REQUIRED',links:results.length,results},null,2));\n'@ | node --input-type=module",
+      "result": {
+        "chunk_id": "9a506b",
+        "wall_time_seconds": 1.2633585,
+        "exit_code": 0,
+        "original_token_count": 1139,
+        "output": "{\n  \"status\": \"PASS\",\n  \"links\": 15,\n  \"results\": [\n    {\n      \"url\": \"https://learn.microsoft.com/en-us/azure/architecture/patterns/anti-corruption-layer\",\n      \"status\": 200,\n      \"finalUrl\": \"https://learn.microsoft.com/en-us/azure/architecture/patterns/anti-corruption-layer\",\n      \"title\": \"Anti-Corruption Layer Pattern - Azure Architecture Center | Microsoft Learn\"\n    },\n    {\n      \"url\": \"https://learn.microsoft.com/en-us/azure/architecture/patterns/strangler-fig\",\n      \"status\": 200,\n      \"finalUrl\": \"https://learn.microsoft.com/en-us/azure/architecture/patterns/strangler-fig\",\n      \"title\": \"Strangler Fig Pattern - Azure Architecture Center | Microsoft Learn\"\n    },\n    {\n      \"url\": \"https://www.postgresql.org/docs/17/monitoring-stats.html\",\n      \"status\": 200,\n      \"finalUrl\": \"https://www.postgresql.org/docs/17/monitoring-stats.html\",\n      \"title\": \"PostgreSQL: Documentation: 17: 27.2. The Cumulative Statistics System\"\n    },\n    {\n      \"url\": \"https://www.postgresql.org/docs/17/trigger-definition.html\",\n      \"status\": 200,\n      \"finalUrl\": \"https://www.postgresql.org/docs/17/trigger-definition.html\",\n      \"title\": \"PostgreSQL: Documentation: 17: 37.1. Overview of Trigger Behavior\"\n    },\n    {\n      \"url\": \"https://www.postgresql.org/docs/17/sql-createview.html\",\n      \"status\": 200,\n      \"finalUrl\": \"https://www.postgresql.org/docs/17/sql-createview.html\",\n      \"title\": \"PostgreSQL: Documentation: 17: CREATE VIEW\"\n    },\n    {\n      \"url\": \"https://www.postgresql.org/docs/17/ddl-rowsecurity.html\",\n      \"status\": 200,\n      \"finalUrl\": \"https://www.postgresql.org/docs/17/ddl-rowsecurity.html\",\n      \"title\": \"PostgreSQL: Documentation: 17: 5.9. Row Security Policies\"\n    },\n    {\n      \"url\": \"https://www.postgresql.org/docs/17/sql-revoke.html\",\n      \"status\": 200,\n      \"finalUrl\": \"https://www.postgresql.org/docs/17/sql-revoke.html\",\n      \"title\": \"PostgreSQL: Documentation: 17: REVOKE\"\n    },\n    {\n      \"url\": \"https://www.postgresql.org/docs/17/ddl-priv.html\",\n      \"status\": 200,\n      \"finalUrl\": \"https://www.postgresql.org/docs/17/ddl-priv.html\",\n      \"title\": \"PostgreSQL: Documentation: 17: 5.8. Privileges\"\n    },\n    {\n      \"url\": \"https://www.postgresql.org/docs/17/sql-createfunction.html\",\n      \"status\": 200,\n      \"finalUrl\": \"https://www.postgresql.org/docs/17/sql-createfunction.html\",\n      \"title\": \"PostgreSQL: Documentation: 17: CREATE FUNCTION\"\n    },\n    {\n      \"url\": \"https://docs.spring.io/spring-framework/reference/6.2/data-access/transaction/declarative.html\",\n      \"status\": 200,\n      \"finalUrl\": \"https://docs.spring.io/spring-framework/reference/6.2/data-access/transaction/declarative.html\",\n      \"title\": \"Declarative Transaction Management :: Spring Framework\"\n    },\n    {\n      \"url\": \"https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/transactional-outbox.html\",\n      \"status\": 200,\n      \"finalUrl\": \"https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/transactional-outbox.html\",\n      \"title\": \"Transactional outbox pattern - AWS Prescriptive Guidance\"\n    },\n    {\n      \"url\": \"https://martinfowler.com/bliki/StranglerFigApplication.html\",\n      \"status\": 200,\n      \"finalUrl\": \"https://martinfowler.com/bliki/StranglerFigApplication.html\",\n      \"title\": \"Strangler Fig\"\n    },\n    {\n      \"url\": \"https://docs.junit.org/5.11.4/api/org.junit.jupiter.params/org/junit/jupiter/params/provider/MethodSource.html\",\n      \"status\": 200,\n      \"finalUrl\": \"https://docs.junit.org/5.11.4/api/org.junit.jupiter.params/org/junit/jupiter/params/provider/MethodSource.html\",\n      \"title\": \"MethodSource (JUnit 5.11.4 API)\"\n    },\n    {\n      \"url\": \"https://github.com/junit-team/junit5/blob/r5.11.4/junit-jupiter-params/src/main/java/org/junit/jupiter/params/ParameterizedTestExtension.java\",\n      \"status\": 200,\n      \"finalUrl\": \"https://github.com/junit-team/junit-framework/blob/r5.11.4/junit-jupiter-params/src/main/java/org/junit/jupiter/params/ParameterizedTestExtension.java\",\n      \"title\": \"junit-framework/junit-jupiter-params/src/main/java/org/junit/jupiter/params/ParameterizedTestExtension.java at r5.11.4 · junit-team/junit-framework · GitHub\"\n    },\n    {\n      \"url\": \"https://docs.oracle.com/en/java/javase/16/docs/api/java.base/java/util/stream/Stream.html#toList()\",\n      \"status\": 200,\n      \"finalUrl\": \"https://docs.oracle.com/en/java/javase/16/docs/api/java.base/java/util/stream/Stream.html\",\n      \"title\": \"Stream (Java SE 16 &amp; JDK 16)\"\n    }\n  ]\n}\n"
+      },
+      "cwd": "C:/git/agent-skills"
+    },
+    {
+      "id": "owned-diff",
+      "cmd": "git diff --check -- skills/legacy-enterprise-modernization; git diff -- skills/legacy-enterprise-modernization",
+      "result": {
+        "chunk_id": "f42bea",
+        "wall_time_seconds": 0.0968358,
+        "exit_code": 0,
+        "original_token_count": 883,
+        "output": "diff --git a/skills/legacy-enterprise-modernization/references/understanding-and-data-migration.md b/skills/legacy-enterprise-modernization/references/understanding-and-data-migration.md\nindex 0c1c0da..5c7b785 100644\n--- a/skills/legacy-enterprise-modernization/references/understanding-and-data-migration.md\n+++ b/skills/legacy-enterprise-modernization/references/understanding-and-data-migration.md\n@@ -156,6 +156,16 @@ on it: update support, security and performance depend on the engine and view de\n A temporary view needs an owner and removal gates; an intentionally supported compatibility\n view can remain with a tested contract and an accounted support cost.\n \n+Preserve the consumer's access contract as well as the row shape. In PostgreSQL 17, a view\n+normally uses its owner's privileges and row-security policies for underlying relations;\n+an owner that bypasses row security can expose rows the original caller could not read.\n+When the caller's policies must remain authoritative, compare `security_invoker = true`,\n+which also requires the caller's privileges on the view and underlying relations. Retain\n+owner-based access when it is an explicitly approved delegation with a tested contract.\n+Functions called by either kind of view retain their own `SECURITY INVOKER`/`SECURITY DEFINER`\n+semantics. Test permitted and forbidden reads as the actual consumer roles, and verify that\n+intended owner operations still work; an owner-run smoke test alone cannot prove isolation.\n+\n ### Dual write with reconciliation\n \n When the new model needs a different shape and both must work:\n@@ -249,6 +259,7 @@ atomicity contract and needs its own justification.\n - [PostgreSQL 17 cumulative statistics](https://www.postgresql.org/docs/17/monitoring-stats.html) — per-table counters and visibility limits.\n - [PostgreSQL 17 trigger behaviour](https://www.postgresql.org/docs/17/trigger-definition.html) — transaction, timing and cascading effects.\n - [PostgreSQL 17 views](https://www.postgresql.org/docs/17/sql-createview.html) — update and security conditions for compatibility views.\n+- [PostgreSQL 17 row security](https://www.postgresql.org/docs/17/ddl-rowsecurity.html) — caller policies and owner/`BYPASSRLS` exceptions when replacing direct access with a view.\n - [PostgreSQL 17 REVOKE](https://www.postgresql.org/docs/17/sql-revoke.html), [privileges](https://www.postgresql.org/docs/17/ddl-priv.html) and [CREATE FUNCTION](https://www.postgresql.org/docs/17/sql-createfunction.html) — inherited authority, owner grants and definer execution.\n - [Spring Framework 6.2 declarative transactions](https://docs.spring.io/spring-framework/reference/6.2/data-access/transaction/declarative.html) — transaction contexts do not automatically propagate across remote calls.\n - [AWS transactional outbox](https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/transactional-outbox.html) — atomic source intent and duplicate handling.\ndiff --git a/skills/legacy-enterprise-modernization/skill.yaml b/skills/legacy-enterprise-modernization/skill.yaml\nindex 01943b3..cebdd22 100644\n--- a/skills/legacy-enterprise-modernization/skill.yaml\n+++ b/skills/legacy-enterprise-modernization/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: legacy-enterprise-modernization\n-version: 1.2.3\n+version: 1.2.4\n description: >-\n   Modernising an enterprise application that is in production and cannot stop: understanding\n   a system nobody fully knows, pinning behaviour before changing it, strangling\n"
+      },
+      "cwd": "C:/git/agent-skills"
+    },
+    {
+      "id": "fixture-integrity",
+      "cwd": "C:/git/agent-skills",
+      "command": "@'\nimport assert from 'node:assert/strict';\nimport {readFileSync,existsSync,readdirSync} from 'node:fs';\nimport {resolve,dirname} from 'node:path';\nimport {createHash} from 'node:crypto';\nconst root='C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/legacy-enterprise-modernization';\nconst a=readFileSync(root+'/cases/A/input/migration.sql','utf8');\nconst b=readFileSync(root+'/cases/B/input/migration.sql','utf8');\nassert.notEqual(a,b);\nassert.equal(a.replace('security_invoker = false','security_invoker = true'),b);\nconst criteria=JSON.parse(readFileSync(root+'/evaluator/criteria.json','utf8'));\nassert.equal(criteria.cases.length,2);\nassert.equal(criteria.technicalProbe.status,'NOT_EXECUTED');\nconst consumer=JSON.parse(readFileSync(root+'/common/consumer.json','utf8'));\nassert.equal(consumer.majorVersion,17);\nassert.equal(consumer.principal,'lm_w4_app_a');\nconst files=[];\nfunction walk(path){for(const entry of readdirSync(path,{withFileTypes:true})){const full=resolve(path,entry.name);if(entry.isDirectory())walk(full);else files.push(full);}}\nwalk(root);\nlet includes=0;\nfor(const file of files.filter(p=>p.endsWith('.sql'))){\n const content=readFileSync(file,'utf8');\n for(const match of content.matchAll(/^\\\\ir\\s+(.+)$/gm)){\n  assert.ok(existsSync(resolve(dirname(file),match[1].trim())),file+': '+match[1]);\n  includes++;\n }\n}\nconsole.log(JSON.stringify({\n status:'PASS',scope:'Fixture JSON, paths and single decisive difference only; not SQL parsing or database execution',\n files:files.length,psqlIncludesResolved:includes,cases:2,criteriaSeparate:true,\n databaseExecution:'NOT_EXECUTED',\n fixtureHashes:files.map(file=>({file:file.replaceAll('\\\\','/'),sha256:createHash('sha256').update(readFileSync(file)).digest('hex')}))\n},null,2));\n'@ | node --input-type=module",
+      "result": {
+        "chunk_id": "b76e63",
+        "wall_time_seconds": 0.0981088,
+        "exit_code": 0,
+        "original_token_count": 829,
+        "output": "{\n  \"status\": \"PASS\",\n  \"scope\": \"Fixture JSON, paths and single decisive difference only; not SQL parsing or database execution\",\n  \"files\": 13,\n  \"psqlIncludesResolved\": 11,\n  \"cases\": 2,\n  \"criteriaSeparate\": true,\n  \"databaseExecution\": \"NOT_EXECUTED\",\n  \"fixtureHashes\": [\n    {\n      \"file\": \"C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/legacy-enterprise-modernization/cases/A/input/migration.sql\",\n      \"sha256\": \"df1064e011362925457b86a77c03831ac426051396ba39da671ee3cfafd4cf27\"\n    },\n    {\n      \"file\": \"C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/legacy-enterprise-modernization/cases/B/input/migration.sql\",\n      \"sha256\": \"234cbbadfc91876a9bb6f54cb14d359210daee1e2e31a73d50d99dcd3352e969\"\n    },\n    {\n      \"file\": \"C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/legacy-enterprise-modernization/common/consumer-query.sql\",\n      \"sha256\": \"f638a48e2ec847669d63309a6830fd361e8536f4b0cb364a6c2c982d850568db\"\n    },\n    {\n      \"file\": \"C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/legacy-enterprise-modernization/common/consumer.json\",\n      \"sha256\": \"68431bb3658d0de49fefb65dd1bf5dda4d610ee3dba82395d69098d8f8d2eb09\"\n    },\n    {\n      \"file\": \"C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/legacy-enterprise-modernization/common/docs/accepted-decisions.md\",\n      \"sha256\": \"60b68330829afab8df299c8cffce94883741c217b0b20e2ed7ef8328f745e983\"\n    },\n    {\n      \"file\": \"C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/legacy-enterprise-modernization/common/docs/review.md\",\n      \"sha256\": \"32eae193f4afb56681ce9a52d11c4806764bee81ced3b072cd9563bcec4f090c\"\n    },\n    {\n      \"file\": \"C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/legacy-enterprise-modernization/common/recovery.sql\",\n      \"sha256\": \"6d5c0d9f0f2321fd0af7e76fcdde1822934273219f3dbca3a72c06f2444209db\"\n    },\n    {\n      \"file\": \"C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/legacy-enterprise-modernization/common/schema.sql\",\n      \"sha256\": \"3dccc750c5b48d93278b5ff1b5a9d09b36cfcdcf224cca4e32bbf04d09cb3c7f\"\n    },\n    {\n      \"file\": \"C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/legacy-enterprise-modernization/common/task.md\",\n      \"sha256\": \"7ab823e6d0bcdddabf9d2ece25eca1c6fb68992ad3e6b09d99cc6291bc422bfe\"\n    },\n    {\n      \"file\": \"C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/legacy-enterprise-modernization/evaluator/check-reader.sql\",\n      \"sha256\": \"7e371aa997a2968f194b45f7471f762aba5890a1206de1f53f0bb14e8966d86a\"\n    },\n    {\n      \"file\": \"C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/legacy-enterprise-modernization/evaluator/criteria.json\",\n      \"sha256\": \"e7002fa114fc0531f3086a90e9447c9e81447618d73b21ab0e8c99edb822c455\"\n    },\n    {\n      \"file\": \"C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/legacy-enterprise-modernization/evaluator/probe.sql\",\n      \"sha256\": \"628497dbdef27e93d0dc35125ea043af01c88b2bd7ce48485b90e74d1cade064\"\n    },\n    {\n      \"file\": \"C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/legacy-enterprise-modernization/evaluator/README.md\",\n      \"sha256\": \"cfb058d50756c84121ea744a5273e235be9a8d092a9d65ce06eb2eb7873797fe\"\n    }\n  ]\n}\n"
+      }
+    },
+    {
+      "id": "final-owned-check",
+      "cwd": "C:/git/agent-skills",
+      "command": "git diff --check -- skills/legacy-enterprise-modernization; git diff --stat -- skills/legacy-enterprise-modernization; git status --short --untracked-files=all -- skills/legacy-enterprise-modernization; git diff --cached --stat -- skills/legacy-enterprise-modernization; $owned=(Resolve-Path -LiteralPath 'skills/legacy-enterprise-modernization').Path; $base='C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/baseline/legacy-enterprise-modernization'; Get-ChildItem -LiteralPath $owned -File -Recurse | ForEach-Object { $relative=[IO.Path]::GetRelativePath($owned,$_.FullName); $hash=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash; [pscustomobject]@{file=$relative;sha256=$hash;sameAsAssignment=($hash -eq (Get-FileHash -LiteralPath (Join-Path $base $relative) -Algorithm SHA256).Hash)} } | ConvertTo-Json -Depth 5; $line=0; Get-Content skills/legacy-enterprise-modernization/references/understanding-and-data-migration.md | ForEach-Object { $line++; if ($line -ge 150 -and $line -le 170) { '{0}: {1}' -f $line,$_ } }",
+      "result": {
+        "chunk_id": "8b56e7",
+        "wall_time_seconds": 0.2326954,
+        "exit_code": 0,
+        "original_token_count": 633,
+        "output": " .../references/understanding-and-data-migration.md            | 11 +++++++++++\n skills/legacy-enterprise-modernization/skill.yaml             |  2 +-\n 2 files changed, 12 insertions(+), 1 deletion(-)\n M skills/legacy-enterprise-modernization/references/understanding-and-data-migration.md\n M skills/legacy-enterprise-modernization/skill.yaml\n[\r\n  {\r\n    \"file\": \"SKILL.md\",\r\n    \"sha256\": \"A810CD4C2006737582008835A5BFFFFE9176DE4B08368D78D7A39426291BC450\",\r\n    \"sameAsAssignment\": true\r\n  },\r\n  {\r\n    \"file\": \"skill.yaml\",\r\n    \"sha256\": \"0A728627014870FEBEFD2B5A7B3A1115AA8473F745B1FD032AFDAA01B1CDE8D1\",\r\n    \"sameAsAssignment\": false\r\n  },\r\n  {\r\n    \"file\": \"references\\\\strangler-and-anticorruption.md\",\r\n    \"sha256\": \"F9E089E6A009A08B3515DF5B2F3E0C3893BE5A5DB3B50217E1FAB3B81041B2B9\",\r\n    \"sameAsAssignment\": true\r\n  },\r\n  {\r\n    \"file\": \"references\\\\understanding-and-data-migration.md\",\r\n    \"sha256\": \"E3CF417A770E9DA8437FCB5F20CB4F17C570A28B1BD7F94BFE1BDB72E61FB999\",\r\n    \"sameAsAssignment\": false\r\n  }\r\n]\r\n150: ```\r\n151: \r\n152: Partial SQL (`...` is an omitted column list), not a deployable migration. Verify locks,\r\n153: privileges, constraints, triggers, ORM metadata, writes and rollback on the target database.\r\n154: It can preserve selected legacy reads across a rename. Limits worth knowing before relying\r\n155: on it: update support, security and performance depend on the engine and view definition.\r\n156: A temporary view needs an owner and removal gates; an intentionally supported compatibility\r\n157: view can remain with a tested contract and an accounted support cost.\r\n158: \r\n159: Preserve the consumer's access contract as well as the row shape. In PostgreSQL 17, a view\r\n160: normally uses its owner's privileges and row-security policies for underlying relations;\r\n161: an owner that bypasses row security can expose rows the original caller could not read.\r\n162: When the caller's policies must remain authoritative, compare `security_invoker = true`,\r\n163: which also requires the caller's privileges on the view and underlying relations. Retain\r\n164: owner-based access when it is an explicitly approved delegation with a tested contract.\r\n165: Functions called by either kind of view retain their own `SECURITY INVOKER`/`SECURITY DEFINER`\r\n166: semantics. Test permitted and forbidden reads as the actual consumer roles, and verify that\r\n167: intended owner operations still work; an owner-run smoke test alone cannot prove isolation.\r\n168: \r\n169: ### Dual write with reconciliation\r\n170: \r\n"
+      }
+    },
+    {
+      "id": "runtime-availability",
+      "cwd": "C:/git/agent-skills",
+      "command": "Get-Command psql, postgres, docker -ErrorAction SilentlyContinue; Test-Path C:/Program Files/PostgreSQL",
+      "result": "No psql or PostgreSQL executable/install path; docker CLI present."
+    },
+    {
+      "id": "docker-image-list",
+      "cwd": "C:/git/agent-skills",
+      "command": "docker image ls --format '{{.Repository}}:{{.Tag}} {{.ID}}'",
+      "result": {
+        "chunk_id": "8b848f",
+        "wall_time_seconds": 1.6560283999999998,
+        "exit_code": 1,
+        "original_token_count": 51,
+        "output": "failed to connect to the docker API at npipe:////./pipe/docker_engine; check if the path is correct and if the daemon is running: open //./pipe/docker_engine: The system cannot find the file specified.\n"
+      }
+    }
+  ],
+  "executedStructuralChecks": {
+    "existingStrictPackageLoaderValidator": "PASS; 4 files, 0 issues, Claude/Codex adapters",
+    "localMarkdownLinks": "PASS; 2",
+    "declaredBacktickReferrals": "PASS; 6 actual optional/dependency skill referrals, not global registry validation",
+    "ownedPrettier": "PASS; all four owned files checked, no formatting writes",
+    "externalMarkdownLinks": "PASS; 15 HTTP200 resources, including new PostgreSQL17 link",
+    "ownedDiff": "PASS; scoped git diff --check, only intended two files changed",
+    "fixtureIntegrity": "PASS; 13 files, valid JSON, 11 psql include paths resolved; only security_invoker value differs between case overlays. This is not SQL syntax or engine validation."
+  },
+  "executedTechnicalChecks": {
+    "database": "NOT_EXECUTED",
+    "postgresRuntime": "UNAVAILABLE",
+    "java": "NOT_REEXECUTED; existing snippets unchanged",
+    "verifiedSourceContract": "PostgreSQL17 versioned docs read and matched; claims connected to precise Notes/row-security sections",
+    "failures": [
+      {
+        "kind": "availability",
+        "command": "docker image ls --format '{{.Repository}}:{{.Tag}} {{.ID}}'",
+        "exitCode": 1,
+        "result": "Cannot connect to docker_engine named pipe; no database test started."
+      }
+    ],
+    "simulatedDatabase": false,
+    "securityOutcomeClaim": "No project/database isolation guarantee claimed."
+  },
+  "behavioralEvaluations": {
+    "executed": [],
+    "independentActorRuns": 0,
+    "measuredImprovement": false,
+    "reason": "Reviewers do not run actors; cases and contract reasoning are not measured improvement."
+  },
+  "structuredWalkthroughs": [
+    {
+      "case": "A",
+      "type": "SOURCE_BASED_EXPECTATION_NOT_OBSERVATION",
+      "decision": "The caller-isolation contract conflicts with this view owner context; correct the affected access conclusion and propose the smallest policy-preserving change."
+    },
+    {
+      "case": "B",
+      "type": "SOURCE_BASED_EXPECTATION_NOT_OBSERVATION",
+      "decision": "Configured invoker mode plus existing base/view SELECT grants fits the declared read policy; retain it, but do not turn an owner-only smoke test into an executed isolation/rollout proof."
+    },
+    {
+      "case": "approved-delegation boundary",
+      "type": "CONTENT_REVIEW_ONLY",
+      "decision": "An explicitly approved owner-context view remains a valid integration; do not mandate invoker mode universally."
+    }
+  ],
+  "caseInputs": [
+    {
+      "id": "A",
+      "taskPath": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/legacy-enterprise-modernization/common/task.md",
+      "commonFixtureRoot": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/legacy-enterprise-modernization/common",
+      "selectedOverlay": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/legacy-enterprise-modernization/cases/A/input/migration.sql",
+      "actorOutput": "docs/review.md",
+      "knownDevelopmentCase": true,
+      "prerequisites": [
+        "Fresh workspace with common plus only selected migration",
+        "PostgreSQL17/psql only if an existing disposable runtime is available; otherwise source-based review and honest pending checks"
+      ]
+    },
+    {
+      "id": "B",
+      "taskPath": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/legacy-enterprise-modernization/common/task.md",
+      "commonFixtureRoot": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/legacy-enterprise-modernization/common",
+      "selectedOverlay": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/legacy-enterprise-modernization/cases/B/input/migration.sql",
+      "actorOutput": "docs/review.md",
+      "knownDevelopmentCase": true,
+      "prerequisites": [
+        "Fresh workspace with common plus only selected migration",
+        "PostgreSQL17/psql only if an existing disposable runtime is available; otherwise source-based review and honest pending checks"
+      ]
+    }
+  ],
+  "evaluatorCriteria": {
+    "separatePath": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/legacy-enterprise-modernization/evaluator/criteria.json",
+    "adversarialSql": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/legacy-enterprise-modernization/evaluator/probe.sql",
+    "assertionHelper": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/legacy-enterprise-modernization/evaluator/check-reader.sql",
+    "instructions": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/legacy-enterprise-modernization/evaluator/README.md",
+    "decisiveConstraint": "Only security_invoker=false vs true; same roles, grants, data, contract and caller.",
+    "isolation": "Coordinator must isolate actors from evaluator-only files, alternate case and reviewer output; directory naming alone is not isolation.",
+    "heldOut": false,
+    "actorRuns": 0,
+    "databaseExecution": "NOT_EXECUTED"
+  },
+  "sources": [
+    {
+      "url": "https://www.postgresql.org/docs/17/sql-createview.html",
+      "version": "PostgreSQL17",
+      "section": "Notes; security_invoker",
+      "consultedOn": "2026-10-16",
+      "supports": [
+        "Default owner rights/RLS versus invoker rights/RLS",
+        "Required view/base grants",
+        "Functions retain their own invocation/definer semantics"
+      ],
+      "technicalLimit": "Source contract; no target-database run."
+    },
+    {
+      "url": "https://www.postgresql.org/docs/17/ddl-rowsecurity.html",
+      "version": "PostgreSQL17",
+      "section": "5.9 Row Security Policies",
+      "consultedOn": "2026-10-16",
+      "supports": [
+        "Owner, FORCE ROW LEVEL SECURITY and BYPASSRLS distinction",
+        "Per-role visibility and denied-row controls"
+      ],
+      "technicalLimit": "Source contract; no target-database run."
+    },
+    {
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/anti-corruption-layer",
+      "version": "Page updated2026-05-30",
+      "consultedOn": "2026-10-16",
+      "supports": [
+        "Retained optional semantic translation",
+        "Monolithic boundary is valid; no compulsory separate service"
+      ],
+      "technicalLimit": "Architecture guidance, not measured outcome."
+    },
+    {
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/strangler-fig",
+      "version": "Living primary architecture guidance",
+      "consultedOn": "2026-10-16",
+      "supports": [
+        "Retained bounded migration and coexistence approach"
+      ],
+      "technicalLimit": "No superiority/organizational cost experiment."
+    }
+  ],
+  "assumptions": [
+    "Cases intentionally use separate non-superuser, NOBYPASSRLS roles and an owning role without FORCE RLS, matching the documented distinction.",
+    "Case lookup policies are explicitly caller-scoped; deliberately delegated access would require different expected behavior.",
+    "No pre-existing lm_w4 roles or schema in the disposable fixture database."
+  ],
+  "limitations": [
+    "SQL fixtures were source-reviewed and their include paths checked, but not parser-validated or executed.",
+    "No PostgreSQL, RLS, role/grant, migration-lock, recovery, replication or application integration result is claimed.",
+    "No new Java executable snippet was changed; old snippets were inspected, not recompiled in this review.",
+    "Prepared cases are known development examples, not held-out evaluations.",
+    "No actor evaluation, automatic skill selection test, performance/cost benchmark or measured incremental gain.",
+    "HTTP200 only confirms link resolution; source reading supports the particular documented contracts.",
+    "Global catalog checks deferred to coordinator."
+  ],
+  "evidencePaths": [
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/legacy-enterprise-modernization/validation.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/legacy-enterprise-modernization/source-evidence.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/legacy-enterprise-modernization/common",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/legacy-enterprise-modernization/cases/A/input/migration.sql",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/legacy-enterprise-modernization/cases/B/input/migration.sql",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/legacy-enterprise-modernization/evaluator/criteria.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/legacy-enterprise-modernization/evaluator/probe.sql",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/legacy-enterprise-modernization/evaluator/check-reader.sql",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/legacy-enterprise-modernization/evaluator/README.md"
+  ],
+  "deferredChecks": [
+    {
+      "command": "psql --no-psqlrc --dbname <DISPOSABLE_PG17_DSN> -v ON_ERROR_STOP=1 -v case_id=A -f evaluator/probe.sql",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/legacy-enterprise-modernization",
+      "status": "NOT_EXECUTED",
+      "prerequisites": "Existing disposable PostgreSQL17 and psql; administrator; fixture names absent."
+    },
+    {
+      "command": "psql --no-psqlrc --dbname <DISPOSABLE_PG17_DSN> -v ON_ERROR_STOP=1 -v case_id=B -f evaluator/probe.sql",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/legacy-enterprise-modernization",
+      "status": "NOT_EXECUTED",
+      "prerequisites": "Existing disposable PostgreSQL17 and psql; administrator; fixture names absent."
+    }
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Shared generated registry reserved to coordinator.",
+      "prerequisite": "All reviewers stopped writing."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Repository-wide integration reserved to coordinator.",
+      "prerequisite": "All writers stopped and registry regenerated."
+    }
+  ],
+  "crossSkillIssues": [],
+  "coordinatorActions": [
+    "Review the narrow documentary diff and its source-based limit.",
+    "If evaluating database behavior, run the prepared adversarial fixture only on an existing disposable PostgreSQL17 runtime; no such runtime was identified here.",
+    "Preserve input/evaluator separation for any future agent cases; run global checks after all reviewers stop."
+  ],
+  "allWritesStopped": true,
+  "noActiveBackgroundProcesses": true
+}

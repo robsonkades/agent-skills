@@ -1,0 +1,98 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
+const root = path.dirname(fileURLToPath(import.meta.url));
+const javaHome = process.env.GPA_JAVA_HOME || 'C:/Users/robso/.jdks/temurin-25.0.3';
+const java = path.join(javaHome, 'bin/java.exe');
+const javac = path.join(javaHome, 'bin/javac.exe');
+const env = { ...process.env };
+for (const key of ['JAVA_TOOL_OPTIONS', 'JDK_JAVA_OPTIONS', '_JAVA_OPTIONS']) delete env[key];
+function invoke(executable, args, cwd, label) {
+  const r = spawnSync(executable, args, { cwd, env, encoding: 'utf8', timeout: 25000, maxBuffer: 1024 * 1024, windowsHide: true });
+  const result = { label, executable, args, cwd, status: r.status, signal: r.signal, stdout: r.stdout, stderr: r.stderr, error: r.error?.message ?? null };
+  fs.writeFileSync(path.join(root, label + '.json'), JSON.stringify(result, null, 2));
+  if (r.error || r.signal) throw new Error('Process failed: ' + JSON.stringify(result));
+  return result;
+}
+function source(mode) {
+  const genericOnly = mode === 'generic-new';
+  const newKind = mode !== 'baseline';
+  const fallback = mode === 'default-new' || mode === 'bad-default';
+  const badgeMethod = !newKind ? '' : fallback
+    ? 'default String badge(Badge node) { return ' + (mode === 'bad-default' ? '""' : 'unknown(node)') + '; }'
+    : 'String badge(Badge node);';
+  const extraNodeMethod = genericOnly ? '' : 'String accept(Visitor visitor);';
+  const kinds = ['Text', 'Heading', ...(newKind ? ['Badge'] : [])];
+  const records = kinds.map(kind => 'record ' + kind + '(String label) implements Node { ' + (genericOnly ? '' : 'public String accept(Visitor v) { return v.' + kind.toLowerCase() + '(this); }') + ' }').join('\n');
+  const visitors = genericOnly ? '' : `
+  interface Visitor {
+    String text(Text node);
+    String heading(Heading node);
+    String unknown(Node node);
+    ${badgeMethod}
+  }
+  static class Plain implements Visitor {
+    public String text(Text node) { return node.label(); }
+    public String heading(Heading node) { return node.label(); }
+    public String unknown(Node node) { return node.label(); }
+  }
+  static class Upper implements Visitor {
+    public String text(Text node) { return node.label().toUpperCase(java.util.Locale.ROOT); }
+    public String heading(Heading node) { return node.label().toUpperCase(java.util.Locale.ROOT); }
+    public String unknown(Node node) { return node.label().toUpperCase(java.util.Locale.ROOT); }
+  }`;
+  const checkVisitor = genericOnly ? '' : `
+      eq(node.accept(new Plain()), node.label());
+      eq(node.accept(new Upper()), node.label().toUpperCase(java.util.Locale.ROOT));`;
+  return `import java.util.List;
+public class RenderDemo {
+  interface Node { String label(); ${extraNodeMethod} }
+  ${records}
+  ${visitors}
+  static String plain(Node node) { return node.label(); }
+  static String upper(Node node) { return node.label().toUpperCase(java.util.Locale.ROOT); }
+  static int assertions;
+  static void eq(String actual, String expected) {
+    assertions++;
+    if (!actual.equals(expected)) throw new AssertionError("expected=" + expected + " actual=" + actual);
+  }
+  public static void main(String[] args) {
+    List<Node> nodes = List.of(new Text("daily"), new Heading("status")${newKind ? ', new Badge("staging")' : ''});
+    for (Node node : nodes) {
+      eq(plain(node), node.label());
+      eq(upper(node), node.label().toUpperCase(java.util.Locale.ROOT));
+      ${checkVisitor}
+    }
+    System.out.println("nodes=" + nodes.size() + " assertions=" + assertions);
+  }
+}
+`;
+}
+const toolchain = [invoke(java, ['-version'], root, 'java-version'), invoke(javac, ['-version'], root, 'javac-version')];
+const modes = ['baseline', 'abstract-new', 'default-new', 'generic-new', 'bad-default'];
+const results = [];
+for (const mode of modes) {
+  const dir = path.join(root, 'technical', mode);
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, 'RenderDemo.java'), source(mode));
+  const compiled = invoke(javac, ['--release', '17', '-d', 'classes', 'RenderDemo.java'], dir, mode + '-compile');
+  if (mode === 'abstract-new') {
+    const expectedDiagnostic = compiled.status !== 0 && /Plain is not abstract/.test(compiled.stderr) && /Upper is not abstract/.test(compiled.stderr) && /badge\(Badge\)/.test(compiled.stderr);
+    if (!expectedDiagnostic) throw new Error('Expected both missing-method compiler failures: ' + JSON.stringify(compiled));
+    results.push({ mode, outcome: 'expected compiler rejection', expectedDiagnostic, compiled });
+    continue;
+  }
+  if (compiled.status !== 0) throw new Error('Unexpected compile failure: ' + JSON.stringify(compiled));
+  const classBytes = fs.readFileSync(path.join(dir, 'classes', 'RenderDemo.class'));
+  const majorVersion = classBytes.readUInt16BE(6);
+  if (majorVersion !== 61) throw new Error('Unexpected classfile baseline');
+  const executed = invoke(java, ['-cp', 'classes', 'RenderDemo'], dir, mode + '-run');
+  const expected = mode === 'bad-default' ? executed.status !== 0 && /AssertionError: expected=staging actual=/.test(executed.stderr) : executed.status === 0 && /nodes=\d+ assertions=\d+/.test(executed.stdout);
+  if (!expected) throw new Error('Unexpected runtime outcome: ' + JSON.stringify(executed));
+  results.push({ mode, outcome: mode === 'bad-default' ? 'expected new-kind semantic assertion failure' : 'pass', majorVersion, compiled, executed });
+}
+const result = { baseline: 'Java 17 source/API/classfile via --release 17', executionLimit: 'Executed on actual toolchain runtime below, not Java 17 JVM', toolchain, results, checks: '5 controlled variants: 3 positive, 1 expected compile rejection, 1 expected semantic assertion failure', allChildProcessesExited: true };
+fs.writeFileSync(path.join(root, 'technical-results.json'), JSON.stringify(result, null, 2));
+console.log(JSON.stringify(result, null, 2));
+

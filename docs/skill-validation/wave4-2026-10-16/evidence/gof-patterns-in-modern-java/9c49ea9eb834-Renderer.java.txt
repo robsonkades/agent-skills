@@ -1,0 +1,18 @@
+package demo;
+import java.util.List;
+import static demo.Document.*;
+public final class Renderer {
+    private Renderer() {}
+    public static String render(Node node) {
+        return switch (node) {
+            case Text(String value, var emphasis) -> render(value, emphasis);
+            case Section(var title, var children) -> renderSection(title, children);
+        };
+    }
+    private static String render(String value, boolean emphasis) {
+        return emphasis ? "*" + value + "*" : value;
+    }
+    private static String renderSection(String title, List<Node> children) {
+        return title + ":" + children.stream().map(Renderer::render).reduce("", String::concat);
+    }
+}

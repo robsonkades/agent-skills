@@ -1,0 +1,29 @@
+package com.acme.architecture;
+
+import com.tngtech.archunit.core.importer.ClassFileImporter;
+import com.tngtech.archunit.core.importer.ImportOption;
+import org.junit.jupiter.api.Test;
+
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+class ArchitectureTest {
+    @Test
+    void domain_does_not_depend_on_infrastructure() {
+        var production = new ClassFileImporter()
+                .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
+                .importPackages("com.acme");
+
+        assertTrue(production.stream().anyMatch(c ->
+                c.getPackageName().equals("com.acme.domain")
+                || c.getPackageName().startsWith("com.acme.domain.")),
+                "No domain classes imported; check package roots and build outputs");
+
+        noClasses().that().resideInAPackage("..domain..")
+                .should().dependOnClassesThat().resideInAnyPackage(
+                        "..persistence..", "org.springframework..",
+                        "jakarta.persistence..", "jakarta.servlet..")
+                .because("the domain must not depend on infrastructure")
+                .check(production);
+    }
+}

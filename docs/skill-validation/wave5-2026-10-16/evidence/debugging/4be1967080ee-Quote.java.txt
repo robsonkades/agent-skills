@@ -1,0 +1,1 @@
+record Quote(String sku, String currency, int minorUnits) {}

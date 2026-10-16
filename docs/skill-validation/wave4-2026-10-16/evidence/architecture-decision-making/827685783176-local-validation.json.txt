@@ -1,0 +1,164 @@
+{
+  "capturedAt": "2026-10-16T15:35:39.769Z",
+  "node": "v25.6.1",
+  "scope": "skills/architecture-decision-making",
+  "status": "",
+  "unstagedDiff": "",
+  "stagedDiff": "",
+  "versions": {
+    "committed": "2.1.4",
+    "assignment": "2.1.4",
+    "final": "2.1.4"
+  },
+  "fileCount": 6,
+  "filesUnchangedFromWaveBaseline": [
+    {
+      "path": "skills/architecture-decision-making/SKILL.md",
+      "unchanged": true,
+      "sha256": "3ecabc5ad7b6e398d3b288b0a7e1ea3c6334659d4ba32b335c608cacb95d1da6",
+      "bytes": 7643
+    },
+    {
+      "path": "skills/architecture-decision-making/references/evidence-and-tooling.md",
+      "unchanged": true,
+      "sha256": "e9b0f96768ff9fd8f9b6aafec9b73ed3aa8ef1cb4946307052b4210853b845ab",
+      "bytes": 9707
+    },
+    {
+      "path": "skills/architecture-decision-making/references/templates-and-lifecycle.md",
+      "unchanged": true,
+      "sha256": "0cc5e0e0d034a920033ec2078227794e9494b546594ef41937782bc6d2374bde",
+      "bytes": 11591
+    },
+    {
+      "path": "skills/architecture-decision-making/references/validation-cases.md",
+      "unchanged": true,
+      "sha256": "a19562ffeb7581e9c7e07f80df6630ceea34c75a79cc4b61d30178e23aa296f2",
+      "bytes": 13596
+    },
+    {
+      "path": "skills/architecture-decision-making/references/writing-the-record.md",
+      "unchanged": true,
+      "sha256": "3d9e71d0fb63c23bb7edc19f6cf211317bd71a4852894e65573811a59f0f757a",
+      "bytes": 11124
+    },
+    {
+      "path": "skills/architecture-decision-making/skill.yaml",
+      "unchanged": true,
+      "sha256": "673fe71ecb96fc22d0053345686187b07d5bf52110f6fab3df75cd8cb5c012ea",
+      "bytes": 1709
+    }
+  ],
+  "localLinks": [
+    {
+      "source": "skills/architecture-decision-making/SKILL.md",
+      "target": "references/writing-the-record.md",
+      "exists": true
+    },
+    {
+      "source": "skills/architecture-decision-making/SKILL.md",
+      "target": "references/templates-and-lifecycle.md",
+      "exists": true
+    },
+    {
+      "source": "skills/architecture-decision-making/SKILL.md",
+      "target": "references/evidence-and-tooling.md",
+      "exists": true
+    },
+    {
+      "source": "skills/architecture-decision-making/SKILL.md",
+      "target": "references/validation-cases.md",
+      "exists": true
+    }
+  ],
+  "metadata": {
+    "strictIssues": [],
+    "nameMatches": true,
+    "descriptionMatches": true,
+    "referralDeclarationCount": 6,
+    "catalogWideResolutionChecked": false
+  },
+  "commands": [
+    {
+      "command": "git",
+      "args": [
+        "status",
+        "--short",
+        "--untracked-files=all",
+        "--",
+        "skills/architecture-decision-making"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": "git",
+      "args": [
+        "diff",
+        "--",
+        "skills/architecture-decision-making"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": "git",
+      "args": [
+        "diff",
+        "--cached",
+        "--",
+        "skills/architecture-decision-making"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": "git",
+      "args": [
+        "show",
+        "HEAD:skills/architecture-decision-making/skill.yaml"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "schemaVersion: 1\n\nname: architecture-decision-making\nversion: 2.1.4\ndescription: >-\n  Write, review, reconstruct or supersede architecture decision records when rationale is\n  missing, a decision is repeatedly reopened, a proposal needs an explicit outcome, or an\n  accepted choice changes. Decide how much record is warranted; preserve evidence,\n  alternatives, consequences, decision authority and revisit conditions. Covers ADR scope,\n  lifecycle and traceability; option comparison belongs to architecture-trade-off-analysis,\n  quality-driver elicitation to architecture-characteristics, and shortcut/repayment choices\n  to technical-debt-decisions.\nlicense: Apache-2.0\n\nauthors:\n  - name: agent-skills contributors\n    url: https://github.com/robsonkades/agent-skills\n\nhomepage: https://github.com/robsonkades/agent-skills/tree/main/skills/architecture-decision-making\nrepository:\n  type: git\n  url: https://github.com/robsonkades/agent-skills\n  directory: skills/architecture-decision-making\n\nkeywords:\n  - architecture\n  - decision-making\n  - adr\n  - decision-record\n  - reversibility\n  - supersession\n\nfiles:\n  - SKILL.md\n  - skill.yaml\n  - references/\n\ndependencies:\n  - name: architecture-coupling-and-quanta\n    version: ^1.0.0\n\nsuggests:\n  - architecture-characteristics\n  - architecture-fitness-functions\n  - architecture-trade-off-analysis\n  - engineering-communication\n  - technical-debt-decisions\n\ncapabilities:\n  - reads-source\n\nagentOverrides:\n  codex:\n    interface:\n      display_name: Architecture Decision Making\n      short_description: Records that stay re-openable on evidence\n      default_prompt: Use Architecture Decision Making to write this decision down so it can be re-opened.\n",
+      "stderr": ""
+    },
+    {
+      "command": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "node_modules/prettier/bin/prettier.cjs",
+        "--check",
+        "skills/architecture-decision-making/SKILL.md",
+        "skills/architecture-decision-making/references/evidence-and-tooling.md",
+        "skills/architecture-decision-making/references/templates-and-lifecycle.md",
+        "skills/architecture-decision-making/references/validation-cases.md",
+        "skills/architecture-decision-making/references/writing-the-record.md",
+        "skills/architecture-decision-making/skill.yaml"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "Checking formatting...\nAll matched files use Prettier code style!\n",
+      "stderr": ""
+    },
+    {
+      "command": "git",
+      "args": [
+        "diff",
+        "--check",
+        "--",
+        "skills/architecture-decision-making"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "boundaries": "Read-only checks scoped to the assigned package. No agent execution, ADR checker implementation, compilation, runtime or performance test."
+}

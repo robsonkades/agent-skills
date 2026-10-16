@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lifecycle-review
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: lifecycle-review
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: "25%"
+      maxSurge: "25%"
+  template:
+    metadata:
+      labels:
+        app: lifecycle-review
+    spec:
+      containers:
+        - name: application
+          image: example.invalid/lifecycle-review:fixture-only
+          ports:
+            - name: http
+              containerPort: 8080

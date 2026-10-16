@@ -1,0 +1,253 @@
+import java.util.ArrayList;
+import java.util.List;
+
+public final class Verification {
+    private static int checks;
+    private static final Ports.Intent INTENT = new Ports.Intent("intent-1", "unchanging payload");
+    private static final Ports.Policy POLICY = new Ports.Policy(3, 10, 5, 4);
+
+    public static void main(String[] args) throws Exception {
+        check(!Contract.REPLAY_SAFE, "fixture uses the supplied non-replay-safe contract");
+        successAndRetry();
+        stateTransitions();
+        deadlineAndAdmission();
+        cancellationAndInterruption();
+        System.out.println("Verification passed: " + checks + " assertions; REPLAY_SAFE=" + Contract.REPLAY_SAFE);
+    }
+
+    private static void successAndRetry() throws Exception {
+        Fixture f = new Fixture();
+        f.replies.add(new Response(Ports.Kind.OK, 0));
+        result(f, POLICY, Ports.State.APPLIED, 1);
+        check(f.store.snapshot.receipt().equals("original-receipt"), "authoritative receipt");
+        check(f.runtime.grants == 0 && f.runtime.waits.isEmpty(), "initial call needs no retry token");
+        for (long minimum : new long[] {0, 2, 4, 9}) {
+            f = new Fixture();
+            f.replies.add(new Response(Ports.Kind.TRANSIENT, minimum));
+            f.replies.add(new Response(Ports.Kind.OK, 0));
+            result(f, POLICY, Ports.State.APPLIED, 2);
+            check(f.runtime.waits.equals(List.of(Math.max(4L, minimum))), "maximum of local and server delay");
+            check(f.runtime.grants == 1, "one token per retry admission");
+        }
+        f = new Fixture();
+        f.replies.add(new Response(Ports.Kind.TRANSIENT, 0));
+        f.replies.add(new Response(Ports.Kind.OK, 0));
+        result(f, new Ports.Policy(2, 10, 0, 0), Ports.State.APPLIED, 2);
+        check(f.runtime.waits.equals(List.of(0L)), "zero delay remains admissible");
+    }
+
+    private static void stateTransitions() throws Exception {
+        for (Ports.Kind kind : new Ports.Kind[] {Ports.Kind.PERMANENT, Ports.Kind.UNKNOWN}) {
+            Fixture f = new Fixture();
+            f.replies.add(new Response(kind, 900));
+            result(f, POLICY, kind == Ports.Kind.UNKNOWN ? Ports.State.UNKNOWN : Ports.State.REJECTED, 1);
+            check(f.runtime.grants == 0 && f.runtime.waits.isEmpty(), "terminal or unsafe outcome cannot retry");
+        }
+        Fixture f = new Fixture();
+        f.store.snapshot = new Ports.Snapshot(Ports.State.UNKNOWN, null);
+        result(f, POLICY, Ports.State.UNKNOWN, 0);
+        check(f.runtime.grants == 0, "prior uncertainty cannot be redispatched without guarantee");
+        for (Ports.State state : new Ports.State[] {Ports.State.APPLIED, Ports.State.REJECTED}) {
+            f = new Fixture();
+            Ports.Snapshot original = new Ports.Snapshot(state, "retained-receipt");
+            f.store.snapshot = original;
+            result(f, POLICY, state, 0);
+            check(f.store.snapshot == original && f.store.writes == 0, "terminal snapshots unchanged");
+        }
+        f = new Fixture();
+        f.replies.add(new Response(Ports.Kind.TRANSIENT, 0));
+        result(f, new Ports.Policy(1, 10, 5, 4), Ports.State.REJECTED, 1);
+        check(f.runtime.grants == 0 && f.runtime.waits.isEmpty(), "exhaustion does not acquire or sleep");
+        f = new Fixture();
+        f.replies.add(new Response(Ports.Kind.TRANSIENT, 0));
+        f.replies.add(new Response(Ports.Kind.TRANSIENT, 0));
+        f.replies.add(new Response(Ports.Kind.TRANSIENT, 0));
+        result(f, POLICY, Ports.State.REJECTED, 3);
+        check(f.runtime.grants == 2 && f.runtime.waits.size() == 2, "maxAttempts includes initial call");
+    }
+
+    private static void deadlineAndAdmission() throws Exception {
+        for (long remaining : new long[] {0, 10, 14}) {
+            Fixture f = new Fixture();
+            f.runtime.remaining = remaining;
+            result(f, POLICY, Ports.State.REJECTED, 0);
+        }
+        Fixture f = new Fixture();
+        f.runtime.remaining = 15;
+        f.replies.add(new Response(Ports.Kind.OK, 0));
+        result(f, POLICY, Ports.State.APPLIED, 1);
+        f = new Fixture();
+        f.runtime.remaining = Long.MAX_VALUE;
+        result(f, new Ports.Policy(1, Long.MAX_VALUE, 1, 0), Ports.State.REJECTED, 0);
+        f = new Fixture();
+        f.runtime.remaining = Long.MAX_VALUE;
+        f.replies.add(new Response(Ports.Kind.OK, 0));
+        result(f, new Ports.Policy(1, Long.MAX_VALUE - 1, 1, 0), Ports.State.APPLIED, 1);
+        for (long minimum : new long[] {86, Long.MAX_VALUE}) {
+            f = new Fixture();
+            f.runtime.remaining = 100;
+            f.replies.add(new Response(Ports.Kind.TRANSIENT, minimum));
+            result(f, POLICY, Ports.State.REJECTED, 1);
+            check(f.runtime.grants == 0 && f.runtime.waits.isEmpty(), "unfit server minimum refused without token");
+        }
+        f = new Fixture();
+        f.runtime.remaining = 100;
+        f.replies.add(new Response(Ports.Kind.TRANSIENT, 85));
+        f.replies.add(new Response(Ports.Kind.OK, 0));
+        result(f, POLICY, Ports.State.APPLIED, 2);
+        check(f.runtime.waits.equals(List.of(85L)), "exact remaining budget fits");
+        f = new Fixture();
+        f.runtime.remaining = Long.MAX_VALUE;
+        f.replies.add(new Response(Ports.Kind.TRANSIENT, 0));
+        result(f, new Ports.Policy(2, 10, 5, Long.MAX_VALUE), Ports.State.REJECTED, 1);
+        check(f.runtime.grants == 0 && f.runtime.waits.isEmpty(), "wait sum cannot overflow into admission");
+        f = new Fixture();
+        f.runtime.allow = false;
+        f.replies.add(new Response(Ports.Kind.TRANSIENT, 0));
+        result(f, POLICY, Ports.State.REJECTED, 1);
+        check(f.runtime.requests == 1 && f.runtime.waits.isEmpty(), "denied retry token prevents sleep");
+        f = new Fixture();
+        f.runtime.oversleep = true;
+        f.replies.add(new Response(Ports.Kind.TRANSIENT, 0));
+        result(f, POLICY, Ports.State.REJECTED, 1);
+        check(f.runtime.grants == 1 && f.runtime.waits.size() == 1, "oversleep consumes token but starts no late call");
+        f = new Fixture();
+        final Fixture elapsed = f;
+        f.afterCall = () -> elapsed.runtime.remaining = 18;
+        f.replies.add(new Response(Ports.Kind.TRANSIENT, 0));
+        result(f, POLICY, Ports.State.REJECTED, 1);
+        check(f.runtime.grants == 0, "fresh post-attempt budget includes elapsed work");
+    }
+
+    private static void cancellationAndInterruption() throws Exception {
+        Fixture f = new Fixture();
+        f.runtime.cancelled = true;
+        result(f, POLICY, Ports.State.REJECTED, 0);
+        f = new Fixture();
+        f.runtime.cancelAfterSleep = true;
+        f.replies.add(new Response(Ports.Kind.TRANSIENT, 0));
+        result(f, POLICY, Ports.State.REJECTED, 1);
+        check(f.runtime.grants == 1, "cancel after sleep forbids next call");
+        f = new Fixture();
+        f.runtime.cancelAtGrant = true;
+        f.replies.add(new Response(Ports.Kind.TRANSIENT, 0));
+        result(f, POLICY, Ports.State.REJECTED, 1);
+        check(f.runtime.waits.isEmpty(), "cancel observed after admission prevents sleep");
+        f = new Fixture();
+        Thread.currentThread().interrupt();
+        try {
+            expectInterrupt(f);
+            check(f.calls == 0, "pre-interrupted caller makes no call");
+            check(Thread.currentThread().isInterrupted(), "pre-interrupt flag retained");
+        } finally { Thread.interrupted(); }
+        f = new Fixture();
+        f.callInterrupt = true;
+        expectInterrupt(f);
+        check(f.store.snapshot.state() == Ports.State.UNKNOWN, "interrupted operation persisted unknown");
+        check(f.calls == 1 && f.runtime.grants == 0, "operation interruption cannot retry");
+        f = new Fixture();
+        f.runtime.interruptSleep = true;
+        f.replies.add(new Response(Ports.Kind.TRANSIENT, 0));
+        expectInterrupt(f);
+        f.assertClosed();
+        check(f.calls == 1, "sleep interruption prevents retry");
+        f = new Fixture();
+        f.afterCall = () -> Thread.currentThread().interrupt();
+        f.replies.add(new Response(Ports.Kind.TRANSIENT, 0));
+        try {
+            expectInterrupt(f);
+            f.assertClosed();
+            check(f.runtime.requests == 0, "interrupt after reply prevents admission");
+        } finally { Thread.interrupted(); }
+    }
+
+    private static void expectInterrupt(Fixture f) throws Exception {
+        try { f.execute(POLICY); throw new AssertionError("InterruptedException must propagate"); }
+        catch (InterruptedException expected) { checks++; }
+    }
+
+    private static void result(Fixture f, Ports.Policy p, Ports.State expected, int attempts) throws Exception {
+        Ports.Result r = f.execute(p);
+        check(r.snapshot().state() == expected, "expected state " + expected + ", got " + r);
+        check(r.attempts() == attempts && f.calls == attempts, "actual call count");
+        f.assertClosed();
+    }
+
+    private static void check(boolean value, String message) {
+        checks++;
+        if (!value) throw new AssertionError(message);
+    }
+
+    private static final class MemoryStore implements Ports.Store {
+        Ports.Snapshot snapshot = new Ports.Snapshot(Ports.State.PENDING, null);
+        int writes;
+        public Ports.Snapshot snapshot() { return snapshot; }
+        public void unknown() { writes++; snapshot = new Ports.Snapshot(Ports.State.UNKNOWN, null); }
+        public void applied(String r) { writes++; snapshot = new Ports.Snapshot(Ports.State.APPLIED, r); }
+        public void rejected() { writes++; snapshot = new Ports.Snapshot(Ports.State.REJECTED, null); }
+    }
+
+    private static final class Response implements Ports.Reply {
+        final Ports.Kind kind;
+        final long minimum;
+        int closed;
+        Response(Ports.Kind kind, long minimum) { this.kind = kind; this.minimum = minimum; }
+        public Ports.Kind kind() { return kind; }
+        public String receipt() { return "original-receipt"; }
+        public long serverMinimumNanos() { return minimum; }
+        public void close() { closed++; check(closed == 1, "reply closed exactly once"); }
+    }
+
+    private static final class Fixture {
+        final MemoryStore store = new MemoryStore();
+        final List<Response> replies = new ArrayList<>();
+        final FakeRuntime runtime = new FakeRuntime(this);
+        int calls;
+        boolean callInterrupt;
+        Runnable afterCall = () -> {};
+        Ports.Result execute(Ports.Policy p) throws InterruptedException {
+            return RetryEngine.execute(INTENT, p, store, (intent, timeout) -> {
+                assertClosed();
+                check(intent.equals(INTENT), "stable intent ID and payload on every call");
+                check(timeout == p.attemptNanos(), "propagated attempt timeout");
+                calls++;
+                if (callInterrupt) throw new InterruptedException("during call");
+                check(calls <= replies.size(), "unexpected extra call");
+                afterCall.run();
+                return replies.get(calls - 1);
+            }, runtime);
+        }
+        void assertClosed() {
+            for (int i = 0; i < Math.min(calls, replies.size()); i++) {
+                check(replies.get(i).closed == 1, "earlier reply closed before next action");
+            }
+        }
+    }
+
+    private static final class FakeRuntime implements Ports.Runtime {
+        final Fixture fixture;
+        long remaining = 1000;
+        boolean cancelled, oversleep, cancelAfterSleep, cancelAtGrant, interruptSleep;
+        boolean allow = true;
+        int requests, grants;
+        final List<Long> waits = new ArrayList<>();
+        FakeRuntime(Fixture fixture) { this.fixture = fixture; }
+        public long remainingNanos() { return remaining; }
+        public boolean cancelled() { return cancelled; }
+        public boolean acquireRetry() {
+            fixture.assertClosed();
+            requests++;
+            if (cancelAtGrant) cancelled = true;
+            if (allow) grants++;
+            return allow;
+        }
+        public void sleep(long nanos) throws InterruptedException {
+            fixture.assertClosed();
+            waits.add(nanos);
+            if (interruptSleep) throw new InterruptedException("during sleep");
+            check(nanos <= remaining, "sleep cannot exceed remaining budget");
+            remaining = oversleep ? 0 : remaining - nanos;
+            if (cancelAfterSleep) cancelled = true;
+        }
+    }
+}

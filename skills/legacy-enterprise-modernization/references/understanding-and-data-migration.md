@@ -156,6 +156,16 @@ on it: update support, security and performance depend on the engine and view de
 A temporary view needs an owner and removal gates; an intentionally supported compatibility
 view can remain with a tested contract and an accounted support cost.
 
+Preserve the consumer's access contract as well as the row shape. In PostgreSQL 17, a view
+normally uses its owner's privileges and row-security policies for underlying relations;
+an owner that bypasses row security can expose rows the original caller could not read.
+When the caller's policies must remain authoritative, compare `security_invoker = true`,
+which also requires the caller's privileges on the view and underlying relations. Retain
+owner-based access when it is an explicitly approved delegation with a tested contract.
+Functions called by either kind of view retain their own `SECURITY INVOKER`/`SECURITY DEFINER`
+semantics. Test permitted and forbidden reads as the actual consumer roles, and verify that
+intended owner operations still work; an owner-run smoke test alone cannot prove isolation.
+
 ### Dual write with reconciliation
 
 When the new model needs a different shape and both must work:
@@ -249,6 +259,7 @@ atomicity contract and needs its own justification.
 - [PostgreSQL 17 cumulative statistics](https://www.postgresql.org/docs/17/monitoring-stats.html) — per-table counters and visibility limits.
 - [PostgreSQL 17 trigger behaviour](https://www.postgresql.org/docs/17/trigger-definition.html) — transaction, timing and cascading effects.
 - [PostgreSQL 17 views](https://www.postgresql.org/docs/17/sql-createview.html) — update and security conditions for compatibility views.
+- [PostgreSQL 17 row security](https://www.postgresql.org/docs/17/ddl-rowsecurity.html) — caller policies and owner/`BYPASSRLS` exceptions when replacing direct access with a view.
 - [PostgreSQL 17 REVOKE](https://www.postgresql.org/docs/17/sql-revoke.html), [privileges](https://www.postgresql.org/docs/17/ddl-priv.html) and [CREATE FUNCTION](https://www.postgresql.org/docs/17/sql-createfunction.html) — inherited authority, owner grants and definer execution.
 - [Spring Framework 6.2 declarative transactions](https://docs.spring.io/spring-framework/reference/6.2/data-access/transaction/declarative.html) — transaction contexts do not automatically propagate across remote calls.
 - [AWS transactional outbox](https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/transactional-outbox.html) — atomic source intent and duplicate handling.

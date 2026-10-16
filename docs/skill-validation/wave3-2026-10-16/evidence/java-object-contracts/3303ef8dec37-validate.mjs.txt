@@ -1,0 +1,93 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import { parseManifest } from 'file:///C:/git/agent-skills/packages/core/src/domain/manifest.ts';
+import { parseSkillDocument, documentName, documentDescription } from 'file:///C:/git/agent-skills/packages/core/src/domain/skill-document.ts';
+
+const repo = 'C:/git/agent-skills';
+const owned = 'skills/java-object-contracts';
+const out = 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts';
+const read = p => fs.readFileSync(p, 'utf8');
+const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const baseline = JSON.parse(read(`${out}/assignment-baseline.json`));
+const waveBaseline = JSON.parse(read(`${repo}/docs/skill-validation/wave3-2026-10-16/baseline.json`)).packages.find(p => p.name === 'java-object-contracts');
+assert.equal(baseline.status, '');
+assert.equal(baseline.unstaged, '');
+assert.equal(baseline.staged, '');
+assert.equal(baseline.committedVersion, '1.2.4');
+assert.equal(baseline.initialVersion, '1.2.4');
+assert.equal(waveBaseline.initialVersion, '1.2.4');
+for (const file of baseline.files) assert.equal(waveBaseline.files.find(p => p.path === file.path).sha256, file.sha256);
+
+const manifest = parseManifest(read(`${repo}/${owned}/skill.yaml`), { strict: true });
+assert.deepEqual(manifest.issues, []);
+assert.equal(String(manifest.manifest.version), '1.2.5');
+const doc = parseSkillDocument(read(`${repo}/${owned}/SKILL.md`));
+assert.equal(documentName(doc), manifest.manifest.name);
+assert.equal(documentDescription(doc), manifest.manifest.description);
+
+const git = args => execFileSync('git', args, { cwd: repo, encoding: 'utf8' });
+const status = git(['status', '--short', '--untracked-files=all', '--', owned]);
+const diff = git(['diff', '--', owned]);
+assert.equal(git(['diff', '--cached', '--', owned]), '');
+assert.equal(git(['ls-files', '--others', '--exclude-standard', '--', owned]), '');
+assert.equal(git(['diff', '--check', '--', owned]), '');
+assert.match(git(['show', `HEAD:${owned}/skill.yaml`]), /^version: 1\.2\.4$/m);
+const changed = git(['diff', '--name-only', '--', owned]).trim().split('\n').sort();
+assert.deepEqual(changed, [
+  `${owned}/SKILL.md`, `${owned}/references/equals-and-hashcode.md`,
+  `${owned}/references/tostring-and-copying.md`, `${owned}/skill.yaml`,
+].sort());
+const currentFiles = fs.readdirSync(`${repo}/${owned}`, { withFileTypes: true, recursive: true })
+  .filter(e => e.isFile()).map(e => path.relative(repo, path.join(e.parentPath, e.name)).replaceAll('\\', '/')).sort();
+assert.deepEqual(currentFiles, baseline.files.map(file => file.path).sort());
+const files = baseline.files.map(file => ({ path: file.path, initialSha256: file.sha256,
+  finalSha256: hash(fs.readFileSync(`${repo}/${file.path}`)), changedByReviewer: changed.includes(file.path) }));
+for (const file of files) assert.equal(file.initialSha256 !== file.finalSha256, file.changedByReviewer);
+
+const links = [];
+for (const file of currentFiles.filter(file => file.endsWith('.md'))) {
+  for (const match of read(`${repo}/${file}`).matchAll(/\]\(([^)]+)\)/g)) {
+    const target = match[1].replace(/^<|>$/g, '').split('#')[0];
+    if (!target || /^[a-z][a-z0-9+.-]*:/i.test(target)) continue;
+    const absolute = path.resolve(repo, path.dirname(file), target);
+    assert(fs.existsSync(absolute), `${file} -> ${target}`);
+    links.push({ file, target, exists: true });
+  }
+}
+const sources = JSON.parse(read(`${out}/source-index.json`));
+for (const source of sources) {
+  assert.equal(source.status, 200);
+  assert.equal(hash(fs.readFileSync(source.path)), source.sha256);
+}
+const probes = JSON.parse(read(`${out}/probes.json`));
+assert.equal(probes.runs.length, 17);
+for (const probe of probes.runs) {
+  assert.equal(probe.passed, true, probe.name);
+  assert.equal(probe.actualExit, probe.expectedExit, probe.name);
+  assert.equal(read(probe.stdoutPath), probe.stdout);
+  assert.equal(read(probe.stderrPath), probe.stderr);
+}
+const fixtureOutput = read(`${out}/logs/run-contracts.stdout.txt`);
+assert.equal(fixtureOutput.match(/^PASS /gm).length, 29);
+assert.match(fixtureOutput, /SUMMARY checks=29/);
+const classBytes = fs.readFileSync(`${out}/classes/ContractsProbe.class`);
+assert.equal(classBytes.readUInt16BE(6), 60);
+assert.equal(classBytes.readUInt16BE(4), 0);
+
+const result = {
+  status: 'PASS', node: process.version, cwd: process.cwd(),
+  baseline: { clean: true, waveBaselineMatches: true, staged: [], unstaged: [], untracked: [], versions: ['1.2.4', '1.2.4', '1.2.5'] },
+  metadata: { strictIssues: [], nameAndDescriptionMatch: true }, files, localLinks: links,
+  git: { status, diffCheck: 'pass', staged: '', untracked: '' },
+  sources: { count: sources.length, allHttp200: true, hashesMatch: true },
+  technical: { runtime: 'Temurin 25.0.3+9', compileRelease: 16, classMajor: 60, classMinor: 0,
+    fixtureChecks: 29, commandCount: 17, expectedNegativeControls: 3, allPassed: true,
+    limitations: 'Finite isolated technical checks; Java 16 class/API compilation executed on Java 25, not a Java 16 VM. No ORM runtime, agent evaluation, universal proof or performance benchmark.' },
+};
+fs.writeFileSync(`${out}/local-validation.json`, JSON.stringify(result, null, 2) + '\n');
+fs.writeFileSync(`${out}/final-owned.patch`, diff);
+console.log(JSON.stringify({ status: result.status, version: '1.2.5', files: currentFiles.length, changed: changed.length,
+  links: links.length, sources: sources.length, technicalChecks: 29 }, null, 2));

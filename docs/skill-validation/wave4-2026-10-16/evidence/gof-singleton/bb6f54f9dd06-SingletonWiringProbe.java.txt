@@ -1,0 +1,84 @@
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.Set;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.SpringVersion;
+
+public final class SingletonWiringProbe {
+    static int checks;
+
+    static void check(boolean condition, String message) {
+        checks++;
+        if (!condition) throw new AssertionError(message);
+    }
+
+    @Configuration(proxyBeanMethods = false)
+    public static class ParameterConfiguration {
+        @Bean(destroyMethod = "close")
+        public ArchiveClient archiveClient() throws IOException {
+            return new ArchiveClient(Path.of(System.getProperty("fixture.storage")));
+        }
+        @Bean public UploadService uploads(ArchiveClient client) { return new UploadService(client); }
+        @Bean public DownloadService downloads(ArchiveClient client) { return new DownloadService(client); }
+    }
+
+    static void inspectContext(Class<?> configuration, Path directory, int expectedObjects, String label) throws Exception {
+        System.setProperty("fixture.storage", directory.toString());
+        Set<ArchiveClient> clients = Collections.newSetFromMap(new IdentityHashMap<>());
+        ArchiveClient managed;
+        try (var context = new AnnotationConfigApplicationContext(configuration)) {
+            managed = context.getBean(ArchiveClient.class);
+            ArchiveClient upload = context.getBean(UploadService.class).client();
+            ArchiveClient download = context.getBean(DownloadService.class).client();
+            clients.add(managed);
+            clients.add(upload);
+            clients.add(download);
+            check(context.getBeanNamesForType(ArchiveClient.class).length == 1, "one managed definition");
+            check(managed == context.getBean(ArchiveClient.class), "lookup identity preserved");
+            check(clients.size() == expectedObjects, "actual object count");
+            check(clients.stream().allMatch(ArchiveClient::isOpen), "all acquired channels open");
+            check((upload == managed && download == managed) == (expectedObjects == 1), "consumer identity");
+            try (var files = Files.list(directory)) {
+                check(files.count() == expectedObjects, "one acquisition file per constructed client");
+            }
+            System.out.println(label + " before-close: managedDefinitions=1 consumerObjects=" + clients.size()
+                    + " consumersUseManaged=" + (upload == managed && download == managed)
+                    + " configurationReceiver=" + context.getBean(configuration).getClass().getName());
+        }
+        try {
+            long closed = clients.stream().filter(c -> !c.isOpen()).count();
+            check(closed == 1, "context closed only the managed client");
+            check(clients.stream().mapToInt(ArchiveClient::closeCalls).sum() == 1, "one context close call");
+            check(!managed.isOpen() && managed.closeCalls() == 1, "managed client closed once");
+            System.out.println(label + " after-context-close: closed=" + closed + " remainingOpen=" + (clients.size() - closed));
+        } finally {
+            for (ArchiveClient client : clients) if (client.isOpen()) client.close();
+        }
+        check(clients.stream().noneMatch(ArchiveClient::isOpen), "probe cleanup closed any unmanaged extras");
+    }
+
+    public static void main(String[] args) throws Exception {
+        Path evidence = Files.createTempDirectory(Path.of(args[0]), "run-");
+        int expectedObjects = Integer.parseInt(args[1]);
+        inspectContext(StorageConfiguration.class, evidence.resolve("configured"), expectedObjects, "selected");
+        inspectContext(ParameterConfiguration.class, evidence.resolve("parameter"), 1, "parameter-injection");
+
+        System.setProperty("fixture.storage", evidence.resolve("manual").toString());
+        var rawConfiguration = new StorageConfiguration();
+        try (ArchiveClient first = rawConfiguration.archiveClient();
+             ArchiveClient second = rawConfiguration.archiveClient()) {
+            check(first != second, "ordinary receiver allocates separate clients");
+            check(first.isOpen() && second.isOpen(), "manual owner holds both channels");
+            System.out.println("manual-receiver: independentObjects=2; caller closes both");
+        }
+        System.out.println("PASS assertions=" + checks);
+        System.out.println("spring=" + SpringVersion.getVersion());
+        System.out.println("runtime=" + System.getProperty("java.runtime.version"));
+        System.out.println("retained=" + evidence);
+    }
+}

@@ -1,0 +1,2 @@
+unsupported or malformed pause record: [info][gc,phases] GC(99) Y: Pause Unsupported 1.0ms
+pause extraction failed; retain inputs and diagnostics

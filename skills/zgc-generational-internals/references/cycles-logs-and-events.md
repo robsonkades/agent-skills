@@ -16,9 +16,10 @@ The verified JDK 25 log exposes these three pause labels. `Pause Relocate Start`
 dropped from simplified diagrams and measurement scripts. Treat names/count as
 release-sensitive and validate them on the target build.
 
-This is a schematic, not a log fixture. In inspected JDK 25, a major cycle starts both
-generations with `Y: Pause Mark Start (Major)`; old marking does not emit its own separate
-Pause Mark Start. Mark-end attempts can repeat if marking must continue. Do not assert
+This is a schematic, not a log fixture. In inspected JDK 25, combined young/old marking
+starts with `Y: Pause Mark Start (Major)`; a full-collection path can first run a young
+preclean with `Y: Pause Mark Start`. Old marking does not emit its own separate Pause
+Mark Start. Mark-end attempts can repeat if marking must continue. Do not assert
 exactly three pause records for each generation or one fixed sequence for every cycle.
 
 | STW phase            | What it does                                    |
@@ -54,8 +55,9 @@ capture or treat an evicted rotated segment as evidence of no pauses.
 
 ## Reading the log
 
-Observed shape on Temurin 25.0.3 (durations illustrative): Y/O identify the generation;
-Minor/Major also appear in cycle context. Preserve both cycle and generation identity.
+Observed shape on Temurin 25.0.3 (durations illustrative): `y:` identifies young work in
+a minor cycle; `Y:` and `O:` identify young and old work within a major cycle. Case carries
+cycle context. Preserve both cycle and generation identity.
 
 ```
 [info][gc,phases] GC(42) Y: Pause Mark Start (Major) 0.011ms
@@ -65,6 +67,9 @@ Minor/Major also appear in cycle context. Preserve both cycle and generation ide
 [info][gc,phases] GC(42) O: Pause Mark End 0.005ms
 [info][gc,phases] GC(42) O: Pause Relocate Start 0.006ms
 [info][gc,phases] GC(42) O: Old Generation 28M(22%)->30M(23%) 0.001s
+[info][gc,phases] GC(43) y: Pause Mark Start 0.004ms
+[info][gc,phases] GC(43) y: Pause Mark End 0.003ms
+[info][gc,phases] GC(43) y: Pause Relocate Start 0.002ms
 ```
 
 Equal old-generation occupancy before/after does not prove old collection was absent:
@@ -83,7 +88,7 @@ pooled per-phase nearest-rank sample percentile, not per-cycle pause time, TTSP 
 sample_dir=$(mktemp -d "${TMPDIR:-/tmp}/zgc-pauses.XXXXXXXX") || exit 1
 if ! LC_ALL=C awk '
   /\[gc,phases[ ]*\].*Pause / {
-    if ($0 !~ /\[gc,phases[ ]*\].*GC\([0-9]+\) [YO]: Pause (Mark Start( \(Major\))?|Mark End|Relocate Start) [0-9]+(\.[0-9]+)?ms[[:space:]]*$/) {
+    if ($0 !~ /\[gc,phases[ ]*\].*GC\([0-9]+\) [yYO]: Pause (Mark Start( \(Major\))?|Mark End|Relocate Start) [0-9]+(\.[0-9]+)?ms[[:space:]]*$/) {
       print "unsupported or malformed pause record: " $0 > "/dev/stderr"; bad=1; next
     }
     value=$NF; sub(/\r$/, "", value); sub(/ms$/, "", value)
@@ -140,6 +145,19 @@ confirm a complete artifact before printing. Inspect effective event settings an
 | `jdk.ZOldGarbageCollection`   | End of each old cycle                               | Old cycle frequency/duration; correlate aging/live set            |
 | `jdk.ZAllocationStall`        | Allocation wait finishes and the event is committed | Completed stall evidence; classify heap, rate, CPU and page cause |
 | `jdk.ZPageAllocation`         | A ZGC heap-page allocation is reported              | Page allocator activity, not one event per Java object            |
+
+On the checked 25.0.3 schema, `ZAllocationStall` has `type` and `size` plus standard
+thread/stack/timing metadata, but no `gcId`. Young/old cycle events do have `gcId`;
+do not invent that join for stalls. A collection labelled `(Allocation Stall)` records
+a trigger, not one allocating thread's wait count or duration. The allocator requests
+asynchronous collection before waiting, and can request further cycles while allocations
+remain pending. Do not assume one cycle equals one stall.
+
+Correlate completed waits by thread and interval with cycle progress and capacity; retain
+ambiguity where several cycles overlap a wait. Summing overlapping waits across threads
+gives aggregate blocked-thread time, not elapsed global pause time or a request's latency.
+Keep wait counts/durations, cycle causes and STW phase distributions separate; attributing
+request impact additionally needs the affected request/thread path.
 
 JDK 25 also exposes relocation-set, statistics, thread-phase and uncommit events. There is no
 combined `jdk.ZGCGarbageCollection` on that build. The **field names inside** events vary
@@ -207,3 +225,9 @@ Sources: [JDK 25 phase definitions](https://github.com/openjdk/jdk/blob/jdk-25-g
 [interval alias](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/z/zArguments.cpp),
 [allocation-stall event commit](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/z/zPageAllocator.cpp),
 [JEP 490 flag lifecycle](https://openjdk.org/jeps/490).
+The stall fields and asynchronous request/wait relationship above were checked against
+the [25.0.3 event schema](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/jfr/metadata/metadata.xml)
+and [allocation/retry paths](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/z/zPageAllocator.cpp).
+The prefix case and optional young preclean were checked against the same build's
+[GC ID printer](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/z/zGCIdPrinter.cpp)
+and [major driver](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/z/zDriver.cpp).

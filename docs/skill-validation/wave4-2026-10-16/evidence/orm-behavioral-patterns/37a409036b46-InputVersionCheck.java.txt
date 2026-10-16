@@ -1,0 +1,19 @@
+import jakarta.persistence.OptimisticLockException;
+
+public final class InputVersionCheck {
+    public static void main(String[] args) {
+        for (String adapter : new String[]{"editor", "form"}) {
+            try (OrmFixture db = new OrmFixture()) {
+                try {
+                    var edit = new EmailUpdateJob.Edit(7L, -1L, "stale@example.test");
+                    EmailUpdateJob.execute(db, EmailUpdateJob.input(db, edit, adapter));
+                    throw new AssertionError("Expected stale-version rejection: " + adapter);
+                } catch (OptimisticLockException expected) {
+                    if (!db.readContact(7).email.equals("contact7@example.test") || db.phoneCount(7) != 1)
+                        throw new AssertionError("Stale input changed stored state: " + adapter);
+                }
+            }
+        }
+        System.out.println("PASS both input adapters reject stale versions and preserve stored state");
+    }
+}

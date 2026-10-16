@@ -1,0 +1,69 @@
+schemaVersion: 1
+
+name: gof-observer
+version: 1.2.4
+description: >-
+  Observer in Java: choosing and reviewing in-process listener contracts for ordering,
+  errors, threads, registration lifetime, reentrancy and notification outside locks.
+  Use when adding listeners, investigating retained listeners or missed callbacks, or
+  assessing a move from local notifications to a broker. Covers migration contract changes;
+  detailed transaction/outbox design belongs to event-driven-architecture, broker guarantees
+  to delivery-semantics, demand protocols to reactive-backpressure, and hub coordination
+  to gof-mediator.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/gof-observer
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/gof-observer
+
+keywords:
+  - design-patterns
+  - gof
+  - behavioral
+  - observer
+  - events
+  - listeners
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+suggests:
+  - allocation-profiling
+  - delivery-semantics
+  - distributed-locks-and-leases
+  - distributed-tracing-design
+  - distributed-transactions-and-sagas
+  - event-driven-architecture
+  - gof-command
+  - gof-mediator
+  - heap-dump-analysis
+  - idempotency
+  - java-memory-model
+  - message-ordering-and-partitioning
+  - poison-messages-and-dlq
+  - reactive-backpressure
+  - rpc-and-api-contracts
+  - scoped-values
+  - slo-and-alerting
+  - structured-logging
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Observer
+      short_description: Notification without the guarantees you assumed
+      default_prompt: Use Observer to review this notification mechanism.

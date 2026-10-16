@@ -1,0 +1,33 @@
+import assert from 'node:assert/strict';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { spawnSync } from 'node:child_process';
+const root = import.meta.dirname;
+const env = { ...process.env };
+for (const key of ['JDK_JAVA_OPTIONS','JAVA_TOOL_OPTIONS','_JAVA_OPTIONS']) delete env[key];
+const decrypt = readFileSync(resolve(root,'cases/decrypt/StreamCodec.java'),'utf8');
+const encrypt = readFileSync(resolve(root,'cases/encrypt/StreamCodec.java'),'utf8');
+assert.equal(decrypt.replace('Cipher.DECRYPT_MODE','Cipher.ENCRYPT_MODE'), encrypt);
+assert.equal(readFileSync(resolve(root,'cases/decrypt/input.md'),'utf8'),
+  readFileSync(resolve(root,'cases/encrypt/input.md'),'utf8'));
+const runs = [];
+for (const mode of ['decrypt','encrypt']) {
+  const cwd = resolve(root,'cases',mode);
+  mkdirSync(resolve(cwd,'classes'),{recursive:true});
+  const command = 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe';
+  const args = ['--release','21','-d','classes','StreamCodec.java'];
+  const result = spawnSync(command,args,{cwd,env,windowsHide:true,timeout:30000,encoding:'utf8'});
+  const stdoutPath = resolve(root,'case-'+mode+'-compile.stdout.log');
+  const stderrPath = resolve(root,'case-'+mode+'-compile.stderr.log');
+  writeFileSync(stdoutPath,result.stdout ?? '');
+  writeFileSync(stderrPath,result.stderr ?? '');
+  runs.push({mode,command,args,cwd,status:result.status,signal:result.signal,
+    error:result.error?.message ?? null,stdoutPath,stderrPath});
+  writeFileSync(resolve(root,'case-validation-results.json'),JSON.stringify({
+    onlyConstraintDifference:'Cipher.DECRYPT_MODE vs Cipher.ENCRYPT_MODE',
+    taskInputsByteIdentical:true,classification:'Fixture compilation only; no agent evaluated',runs
+  },null,2)+'\n');
+  assert.equal(result.status,0,mode+': '+result.error+'\n'+result.stderr);
+}
+console.log(JSON.stringify({samePrompt:true,onlyModeChanged:true,compiledFixtures:2,
+  runtimeExecution:'Not performed on case fixtures; 10 separate technical probe conditions executed',runs},null,2));

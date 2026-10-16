@@ -1,0 +1,27 @@
+{
+  "recordId": "PLAN-72",
+  "decisionDate": "2026-10-16",
+  "accountableOwner": "Priya Rao",
+  "status": "approved",
+  "selectedPlan": "retire",
+  "plans": {
+    "retire": {
+      "endDate": "2026-12-15",
+      "relevantChangesRemaining": [
+        1,
+        2
+      ],
+      "description": "Move the existing customers to the already-supported successor import service and retire this module."
+    },
+    "renew": {
+      "endDate": "2027-10-15",
+      "relevantChangesRemaining": [
+        18,
+        24
+      ],
+      "description": "Continue operating this module for the renewed service term with the listed maintenance plan."
+    }
+  },
+  "authority": "selectedPlan identifies the ratified plan for this snapshot; the alternative was costed but is not selected."
+}
+

@@ -1,0 +1,28 @@
+import fs from 'node:fs';
+import { createHash } from 'node:crypto';
+const startedAt = new Date().toISOString();
+const hash = b => createHash('sha256').update(b).digest('hex');
+const reads = [];
+function read(p) {
+  const b = fs.readFileSync(p);
+  reads.push({ path: p, kind: 'content (artifact validation)', complete: true, truncated: false, sha256: hash(b) });
+  return b.toString('utf8');
+}
+const execution = JSON.parse(read('output/execution.json'));
+const assessment = JSON.parse(read('output/assessment.json'));
+const review = read('output/REVIEW.md');
+const validation = JSON.parse(read('output/checks/validation.json'));
+const words = review.trim().split(/\s+/u).length;
+if (words > 800 || assessment.disposition !== 'supported' || assessment.requiredChange !== null ||
+    !validation.allChildrenExited || validation.commands.some(c => c.exit !== 0) ||
+    validation.comparisons.some(c => !c.unchanged)) throw new Error('Final artifact validation failed');
+execution.reads.push(...reads);
+execution.commands.push({ program: 'node', arguments: ['output/checks/finalize.mjs'], cwd: process.cwd(),
+  startedAt, endedAt: new Date().toISOString(), exit: 0,
+  outputObserved: `Artifacts valid; reviewWords=${words}; Java subprocesses terminated; allWritesStopped=true.`,
+  note: 'No child process is spawned. End timestamp is sampled immediately before final log write; enclosing tool confirms process exit.' });
+execution.endedAt = new Date().toISOString();
+execution.allSubprocessesTerminated = true;
+execution.allWritesStopped = true;
+fs.writeFileSync('output/execution.json', JSON.stringify(execution, null, 2) + '\n');
+console.log(`Artifacts valid; reviewWords=${words}; Java subprocesses terminated; allWritesStopped=true.`);

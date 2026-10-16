@@ -1,0 +1,63 @@
+{
+  "runs": [
+    {
+      "script": "verify.mjs",
+      "exitCode": 0,
+      "error": null,
+      "stdout": "{\n  \"status\": \"passed\",\n  \"node\": \"v25.6.1\",\n  \"sqlite\": \"3.51.2\",\n  \"orderedBagComparisons\": 11,\n  \"generatedRows\": 124,\n  \"invalidActiveValuesRejected\": [\n    \"NULL\",\n    \"2\"\n  ],\n  \"coverage\": [\n    \"legal boolean domain\",\n    \"amount below/equal/above 100\",\n    \"numeric extremes\",\n    \"duplicate labels\",\n    \"overlapping predicates\",\n    \"tenant isolation\",\n    \"projection\",\n    \"global ordering\",\n    \"empty relation\"\n  ],\n  \"scope\": \"SQLite portable result semantics only; no PostgreSQL execution or performance evidence\"\n}\n",
+      "stderr": "(node:43584) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n"
+    },
+    {
+      "script": "check-mutants.mjs",
+      "exitCode": 0,
+      "error": null,
+      "stdout": "{\n  \"status\": \"passed\",\n  \"mutants\": [\n    {\n      \"name\": \"overlap duplicated\",\n      \"exitCode\": 1,\n      \"rejected\": true\n    },\n    {\n      \"name\": \"duplicate labels collapsed\",\n      \"exitCode\": 1,\n      \"rejected\": true\n    },\n    {\n      \"name\": \"second branch tenant leak\",\n      \"exitCode\": 1,\n      \"rejected\": true\n    },\n    {\n      \"name\": \"threshold row lost\",\n      \"exitCode\": 1,\n      \"rejected\": true\n    },\n    {\n      \"name\": \"global order reversed\",\n      \"exitCode\": 1,\n      \"rejected\": true\n    }\n  ],\n  \"originalBytesRestored\": true\n}\n",
+      "stderr": ""
+    },
+    {
+      "script": "verify.mjs",
+      "exitCode": 0,
+      "error": null,
+      "stdout": "{\n  \"status\": \"passed\",\n  \"node\": \"v25.6.1\",\n  \"sqlite\": \"3.51.2\",\n  \"orderedBagComparisons\": 11,\n  \"generatedRows\": 124,\n  \"invalidActiveValuesRejected\": [\n    \"NULL\",\n    \"2\"\n  ],\n  \"coverage\": [\n    \"legal boolean domain\",\n    \"amount below/equal/above 100\",\n    \"numeric extremes\",\n    \"duplicate labels\",\n    \"overlapping predicates\",\n    \"tenant isolation\",\n    \"projection\",\n    \"global ordering\",\n    \"empty relation\"\n  ],\n  \"scope\": \"SQLite portable result semantics only; no PostgreSQL execution or performance evidence\"\n}\n",
+      "stderr": "(node:3416) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n"
+    }
+  ],
+  "preserved": [
+    {
+      "file": "current.sql",
+      "sha256": "6b359fc8d3fb98e936a77afb73f331ad3955e347a1c4b9e371d3f2720d2d0770",
+      "copyUnchanged": true
+    },
+    {
+      "file": "fixture.mjs",
+      "sha256": "8ff06a6157c9d865ef4b7f2cb5b88cbea2969575b7ef551b9acc1d8d36353bd6",
+      "copyUnchanged": true
+    },
+    {
+      "file": "proposed.sql",
+      "sha256": "3e28c96e76cec40b332729cd90c147c03a9c6d3929aef976a8590778f99adebd",
+      "copyUnchanged": true
+    },
+    {
+      "file": "README.md",
+      "sha256": "a9e61238b03c45b3a034c72addd0f73e9c36880d023c3149b497d4a9b03c988d",
+      "copyUnchanged": true
+    },
+    {
+      "file": "REQUEST.md",
+      "sha256": "e00bddc7da551cb680825db8a682002fec7a26bd80212bdc2a0e9ed7acbf81bd",
+      "copyUnchanged": true
+    },
+    {
+      "file": "schema.sql",
+      "sha256": "c01aea27b07236c70bc921980e5954d5b300b19c87208f4f2a37b1063d6b8c0c",
+      "copyUnchanged": true
+    },
+    {
+      "file": "seed.sql",
+      "sha256": "bb2404bc6c875bab75df324b9bda8efe402f671cb3a2dcf13e722e66f8037b31",
+      "copyUnchanged": true
+    }
+  ],
+  "solutionEqualsProposed": true
+}

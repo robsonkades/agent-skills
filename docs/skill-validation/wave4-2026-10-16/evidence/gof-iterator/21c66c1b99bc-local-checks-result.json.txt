@@ -1,0 +1,50 @@
+{
+  "scope": "Read-only package-local checks using existing repository parsers; no catalog-wide routing verification.",
+  "strictManifestIssues": 0,
+  "descriptionMatches": true,
+  "version": "1.2.4",
+  "shippedFiles": 4,
+  "localLinks": [
+    {
+      "source": "C:\\git\\agent-skills\\skills\\gof-iterator\\SKILL.md",
+      "href": "references/iterator-stream-spliterator.md",
+      "target": "C:\\git\\agent-skills\\skills\\gof-iterator\\references\\iterator-stream-spliterator.md"
+    },
+    {
+      "source": "C:\\git\\agent-skills\\skills\\gof-iterator\\SKILL.md",
+      "href": "references/worked-example.md",
+      "target": "C:\\git\\agent-skills\\skills\\gof-iterator\\references\\worked-example.md"
+    },
+    {
+      "source": "C:\\git\\agent-skills\\skills\\gof-iterator\\references\\iterator-stream-spliterator.md",
+      "href": "worked-example.md",
+      "target": "C:\\git\\agent-skills\\skills\\gof-iterator\\references\\worked-example.md"
+    }
+  ],
+  "allReferencesRouted": true,
+  "changedFilesFromAssignment": [],
+  "matchesCoordinatorWaveBaseline": true,
+  "casesDifferOnlyInRequestedTraversal": true,
+  "finalFiles": [
+    {
+      "path": "C:\\git\\agent-skills\\skills\\gof-iterator\\SKILL.md",
+      "bytes": 12294,
+      "sha256": "3168CAADAAAF253CFF4057D01E12BBF40B1B4417D3D9D81A1BBC8489189789CC"
+    },
+    {
+      "path": "C:\\git\\agent-skills\\skills\\gof-iterator\\skill.yaml",
+      "bytes": 1937,
+      "sha256": "C2D4F2C5E96B83816943D69B8BBE641BC4739B8B3CA481D54FE879A5D77EC3D4"
+    },
+    {
+      "path": "C:\\git\\agent-skills\\skills\\gof-iterator\\references\\iterator-stream-spliterator.md",
+      "bytes": 12425,
+      "sha256": "5433BF1FAD102230718CAAF4A7D54E7044D72BF655F66BAE46C0888B31A23102"
+    },
+    {
+      "path": "C:\\git\\agent-skills\\skills\\gof-iterator\\references\\worked-example.md",
+      "bytes": 10326,
+      "sha256": "008CC0F79C91A41EA47042D8D33A335F009F883E8435D47B3C642FCCA7B7A140"
+    }
+  ]
+}

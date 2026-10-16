@@ -95,6 +95,8 @@ configuration. Existing project versions govern implementation; do not upgrade t
   Duplicates are possible even with zero application retries and zero broker failures.
 - A visibility-timeout queue makes work eligible for redelivery when the handler outlives
   the timeout. Expiry does not stop the first handler; overlapping effects are possible.
+  For SQS deletion, verify the delivery's receipt handle and each batch entry's result;
+  HTTP success alone is insufficient. See [visibility leases](references/ack-placement.md#visibility-leases-and-messaging-acknowledgements).
 - Kafka producer idempotence deduplicates protocol retries from one producer session using
   producer identity and per-partition sequence numbers. It does not recognize the same
   business event reconstructed and sent again by application code, and it does not make an

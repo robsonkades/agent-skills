@@ -77,6 +77,14 @@ under investigation.
 | Pool/cancellation        | Exhaust a small pool on the deployed transport, cancel body consumption, and observe release/acquisition metrics and subsequent progress.                                                  |
 | TLS/destination policy   | Exercise trusted identity, wrong hostname, untrusted issuer, required client certificate and forbidden redirect destinations as applicable.                                                |
 
+For a memory-bound claim, keep the active buffering predicate, wrappers and logging
+interceptors in the check. A callback throwing for an oversized body can still pass
+after an earlier layer buffered it all. Use an unknown-length oversized response and
+observe consumption at the layer before aggregation; include a buffering-enabled
+negative control when that is the suspected bypass. A counted test stream can expose
+this wrapper behavior, but does not establish an exact wire-byte limit or socket
+cleanup; transport prefetch and decoding buffers have separate costs.
+
 A close invocation is evidence of close ownership, not proof of socket reuse or immediate
 release of every operating-system resource. Caller timeout does not prove server work
 stopped. Timing tolerances detect missing limits; they are not latency measurements or

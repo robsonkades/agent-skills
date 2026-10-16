@@ -143,9 +143,10 @@ Clock domains, timestamp preservation, chunking, conversion, and rate limits det
 whether cross-event temporal claims remain valid. A collapsed stack file destroys most event
 metadata and timestamps. Preserve the original JFR plus exact command before conversion.
 Select the conversion population explicitly: a default CPU/wall mixture or an overriding state
-filter can change the question being answered. Time/latency filters can also discard matching
-native frees or treat a wall batch as one timestamp. Read the conversion protocol before
-claiming precise incident-window attribution or full-recording native survival.
+filter can change the question being answered. Resolve time-selector units, recording-relative
+versus absolute bounds, and the converter's timezone before slicing an incident. Time/latency
+filters can also discard matching native frees or treat a wall batch as one timestamp. Read the
+conversion protocol before claiming precise incident-window attribution or full-recording native survival.
 
 ## Differential evidence
 

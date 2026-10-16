@@ -157,8 +157,10 @@ THEN inspect lifecycle invariants and transitions before calling it State;
 
 IF an "event" can be rejected, or has exactly one handler that owes
 an answer
-THEN distinguish rejecting a requested action from failing to process an
-     established fact. Handler count and delivery acknowledgments do not decide.
+THEN distinguish a pending requested action, failure to process a fact,
+     and a later business decision triggered by that fact. Inspect what was
+     established when published; handler count and delivery acknowledgments
+     do not decide.
 
 IF a "Factory Method" is static and lives on the product type
 THEN judge it as a named constructor, not by this pattern's criteria.

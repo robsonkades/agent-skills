@@ -1,0 +1,79 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+const report='C:/git/agent-skills/docs/skill-validation/wave4-2026-10-16';
+const read=p=>JSON.parse(fs.readFileSync(report+'/'+p,'utf8'));
+const write=(p,v)=>fs.writeFileSync(report+'/'+p,JSON.stringify(v,null,2)+'\n');
+const final=process.argv.includes('--final');
+const queue=read('queue.json'),base=read('baseline.json'),notes=read('review-notes.json');
+assert.equal(queue.tasks.length,68);assert.ok(queue.tasks.every(t=>t.diffReviewed&&['implemented','validated'].includes(t.status)));
+assert.deepEqual(Object.keys(notes).sort(),queue.tasks.map(t=>t.name).sort());
+const linkOnly=new Set(['gof-prototype','gof-state','inheritance-mapping-strategies','java-ddd-repositories','java-ddd-testing','orm-behavioral-patterns','orm-structural-mapping','patterns-and-modern-frameworks','query-objects-and-specifications','remote-facade-and-dto','repository-pattern','view-and-representation-patterns']);
+const rows=queue.tasks.map(t=>{
+ const before=base.packages.find(p=>p.name===t.name).initialVersion;
+ const changed=t.finalVersion!==before;
+ assert.ok(!linkOnly.has(t.name)||changed);
+ return {name:t.name,owner:t.owner,before,after:t.finalVersion,changed,classification:!changed?'preserved':linkOnly.has(t.name)?'source-link-repair-only':'technical-guidance-or-factual-correction',decision:notes[t.name][0],evidenceAndLimit:notes[t.name][1]};
+});
+const counts={reviewed:68,changed:rows.filter(r=>r.changed).length,unchanged:rows.filter(r=>!r.changed).length,sourceLinkRepairOnly:rows.filter(r=>r.classification==='source-link-repair-only').length,guidanceOrFactualCorrection:rows.filter(r=>r.classification==='technical-guidance-or-factual-correction').length};
+write('review-results.json',{at:new Date().toISOString(),classification:'Coordinator synthesis from full semantic diffs and reviewer evidence. Changed count includes source-link repair; not an efficacy metric.',counts,skills:rows});
+let validation='As revisões locais e a leitura dos diffs terminaram. Regeneração do índice e verificação global ainda pendentes; este arquivo não declara conclusão.';
+let preservation='A auditoria final de preservação será registrada após regenerar o índice.';
+if(final){
+ const registry=read('registry-build-result.json'),verify=read('verify-result.json'),audit=read('preservation-final.json'),integrity=read('report-integrity.json');
+ assert.equal(registry.exit,0);assert.equal(verify.exit,0);assert.equal(integrity.passed,true);
+ assert.equal(audit.implemented,68);assert.equal(audit.unexpected.length,0);assert.equal(audit.indexMatchesPackageChanges,true);
+ assert.equal(audit.indexChangesOutsideWave.length,0);assert.equal(audit.lostIndexEntries.length,0);
+ assert.ok(audit.packages.every(p=>p.versionCorrect&&p.descriptionMatches&&p.diffReviewed&&p.reviewedDiffStillMatches&&p.allWritesStopped&&p.rawHandoffMatches));
+ const log=fs.readFileSync(report+'/'+verify.log,'utf8'),testSummary={};
+ for(const key of ['tests','suites','pass','fail','cancelled','skipped','todo']){const m=log.match(new RegExp('(?:^|\\n)[^\\n]*?\\b'+key+' (\\d+)\\r?(?:\\n|$)'));assert.ok(m,key+' test summary');testSummary[key]=Number(m[1]);}
+ assert.ok(testSummary.tests>0&&testSummary.suites>0);assert.equal(testSummary.pass,testSummary.tests);
+ for(const key of ['fail','cancelled','skipped','todo'])assert.equal(testSummary[key],0);
+ counts.changedFiles=audit.packages.reduce((n,p)=>n+p.changedFiles.length,0);
+ validation='**`npm run registry:build` e `npm run verify` passaram**, após todos os revisores encerrarem as escritas. A verificação completa executou '+testSummary.tests+' testes em '+testSummary.suites+' suites: todos passaram, sem falhas, cancelamentos, skips ou TODOs. Isso verifica os contratos do repositório, não a eficácia de todas as skills. [Log completo](verify.log.txt), [índice](registry-build-result.json) e [verificação](verify-result.json).';
+ preservation='A auditoria comparou os arquivos versionados e não ignorados com os '+base.allFiles.length+' arquivos registrados antes da onda: nenhuma alteração fora dos pacotes selecionados, deste relatório e do índice. As '+counts.changed+' entradas alteradas do índice correspondem exatamente aos pacotes modificados; nenhuma entrada foi perdida. Foram alterados '+counts.changedFiles+' arquivos de skills. [Auditoria final](preservation-final.json).';
+ for(const t of queue.tasks)Object.assign(t,{status:'validated',validation:'local checks, coordinator diff review, registry:build and npm run verify passed'});
+ queue.updatedAt=new Date().toISOString();write('queue.json',queue);
+ fs.writeFileSync(report+'/tasks.md','# Onda 4 — fila concluída\n\n68 revisões com ownership exclusivo. Escritas encerradas e validação global concluída.\n\n| Skill | Responsável | Estado | Validação |\n| --- | --- | --- | --- |\n'+queue.tasks.map(t=>`| ${t.name} | ${t.owner} | ${t.status} | ${t.validation} |`).join('\n')+'\n');
+ write('completion.json',{completedAt:new Date().toISOString(),scope:'Exactly the 68 wave4 inventory skills',counts,globalChecks:[registry,verify],testSummary,preservation:{baselineFiles:base.allFiles.length,unexpectedChanges:0,indexEntriesChanged:audit.indexChanges.length,indexEntriesLost:0},behavior:read('behavior-results.json').aggregate,limits:['No catalog-wide efficacy, skill discovery, popularity or cost advantage demonstrated.','Two known development cases, one actor run per condition/case, unblinded coordinator; no incremental gain observed.','Technical runs are limited to their recorded runtimes, fixtures and substitutes; source-only and unavailable-runtime checks are explicitly labeled.'],commit:false,publish:false,globalInstall:false});
+}
+const esc=s=>s.replace(/\b(Java|JDK|JPA|Spring|Hibernate|PostgreSQL|Boot|Release|release|Validation|Book)(?=\d)/g,'$1 ').replace(/\b(em|com|para|desde|e|confirmada|confirmadas|retornaram|exit)(?=\d)/g,'$1 ').replaceAll('|','\\|').replaceAll('\n',' ');
+const table=rows.map(r=>`| [${r.name}](handoffs/${r.name}.json) | ${r.before===r.after?r.before:r.before+' → '+r.after} | ${esc(r.decision)} | ${esc(r.evidenceAndLimit)} |`).join('\n');
+fs.writeFileSync(report+'/README.md',`# Onda 4 — ${final?'revisão concluída':'validação global pendente'}
+
+Foram revisadas as **68 skills** marcadas como onda 4 no [inventário](../../skills-evolution-inventory.md): **${counts.changed} alteradas e ${counts.unchanged} preservadas**. Entre as alteradas, ${counts.guidanceOrFactualCorrection} receberam correções de orientação técnica ou de fatos e ${counts.sourceLinkRepairOnly} somente reparos de links, além do incremento de versão. Cada pacote modificado recebeu um único patch. Essa contagem descreve o trabalho realizado; não mede ganho de agente.
+
+## Aplicação das lições anteriores
+
+A [instrução cumulativa](review-brief.md) aplicou a pesquisa e as lições das ondas anteriores: investigar a premissa que decide o caso, seguir o contrato efetivamente consumido, verificar fontes primárias, transformar o achado em orientação específica e preservar soluções já adequadas. Cada skill teve um responsável exclusivo, pacote completo revisado e dois casos com entradas separadas dos critérios. O coordenador leu todos os diffs e registrou decisões e limites por skill.
+
+As mudanças incluem associação entre estado e versão em concorrência; seleção efetiva de validação de schema; efeitos introduzidos por refatoração; limpeza de interceptors nos caminhos de interrupção; limites de cobertura arquitetural; e distinções entre compatibilidade, publicação, empacotamento e entrega. Também foram qualificadas heurísticas de padrões para preservar escolhas deliberadas, sem impor abstrações apenas pela forma do código.
+
+## Evidência e conclusão
+
+${validation}
+
+A [comparação comportamental](behavior-results.md) executou seis agentes novos em dois casos de desenvolvimento de \`component-and-release-boundaries\`. Sem skill, versão anterior e revisada satisfizeram todos os critérios: **nenhum ganho incremental foi demonstrado nesta amostra**. Entradas e critérios foram congelados antes dos despachos; o coordenador julgou as respostas e executou 30 controles adicionais nos artefatos produzidos. Não houve holdout, repetição para estimar variância, avaliação de seleção automática ou medição de custo.
+
+As verificações técnicas têm limites explícitos. Compilar com \`--release\` no JDK 25 não equivale a executar uma JVM antiga. Controles H2 não demonstram comportamento PostgreSQL; mocks de Servlet não substituem um container; doubles JDBC não demonstram cancelamento no banco. Os casos de privilégios/RLS foram conferidos nas fontes e preparados como SQL adversarial, mas PostgreSQL não estava disponível para execução. Tentativas fracassadas e controles negativos permanecem nos registros. As asserções heterogêneas não foram somadas como avaliações independentes.
+
+${preservation}
+
+## Resultado por skill
+
+O nome aponta para o handoff com fontes, comandos, casos e limites. Os [diffs completos](diffs) usam o início desta onda como baseline. “Preservada” significa que a revisão não encontrou uma lacuna material nos pontos investigados; não certifica ausência de defeitos. Reparar um link restabelece acesso à referência, sem constituir por si só melhoria comportamental.
+
+| Skill | Versão | Decisão | Evidência e limite principal |
+| --- | --- | --- | --- |
+${table}
+
+## Rastreabilidade
+
+- [Baseline](baseline.json), [fila](tasks.md) e [decisões estruturadas](review-results.json).
+- [Handoffs originais e helpers](review-provenance.json), preservados por bytes e hash; os helpers são registros históricos, não uma instrução para repetir mutações ou execuções.
+- [Manifesto de evidência técnica](evidence-manifest.json): textos pequenos do trabalho de revisão; dependências, grandes dumps e documentação/implementações de terceiros permanecem referenciados.
+- [Comparação comportamental](behavior-results.md), [manifesto congelado](behavior-manifest.frozen.json.txt) e [artefatos](behavior-artifact-manifest.json).
+- [Integridade do relatório](report-integrity.json) e [resultado consolidado](completion.json).
+
+O sufixo \`.txt\` das cópias de evidência preserva os bytes originais. Os pacotes distribuídos contêm as correções pertinentes; fixtures e critérios de avaliação ficam separados. Não houve commit, publicação, instalação global ou alteração do código do gerenciador.
+`);
+console.log(JSON.stringify({phase:final?'complete':'local complete; global pending',...counts},null,2));

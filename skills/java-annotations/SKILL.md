@@ -115,6 +115,10 @@ behavior than an isolated usage pattern; state consequential assumptions when th
   Occurrences only on type uses do not trigger JSR 269 processor matching by annotation name.
   Check processor invocation and type traversal before trusting a compile-time checker; the
   retention reference covers selection and coexistence with other processors.
+- In a processor, read class-valued annotation elements through the compiler model: a typed
+  annotation accessor can throw `MirroredTypeException` instead of returning a `Class`.
+  The retention reference covers mirrors, omitted defaults and class arrays. Keep ordinary
+  runtime reflection when it already satisfies that reader's contract.
 - Deprecate with `@Deprecated(since = "…", forRemoval = …)` plus `@deprecated` Javadoc saying
   what to use instead. `forRemoval = true` turns usage warnings into a stronger signal and is
   part of the API contract — see java-api-design.
@@ -137,7 +141,8 @@ the remaining check rather than inventing a framework, nullness or native-image 
 
 - [Retention, targets and processing](references/retention-targets-and-processing.md) — read
   when defining an annotation, when one appears to have no effect, or when choosing between
-  runtime reflection, an annotation processor and build-time generation.
+  runtime reflection, an annotation processor and build-time generation; also when a processor
+  reads class-valued elements.
 - [Markers, custom annotations and enforcement](references/markers-and-custom-annotations.md)
   — read when choosing between a marker interface and a marker annotation, when designing an
   annotation that must be enforced, or when annotation-driven behaviour is silently not

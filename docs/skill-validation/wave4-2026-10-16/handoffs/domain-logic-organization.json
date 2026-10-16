@@ -1,0 +1,563 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "domain-logic-organization",
+  "ownedPath": "skills/domain-logic-organization/",
+  "allWritesStopped": true,
+  "versions": {
+    "committed": "1.3.5",
+    "assignment": "1.3.5",
+    "final": "1.3.6",
+    "preExistingBump": false,
+    "rationale": "One patch bump for changed published contents; metadata descriptions and dependency ranges preserved."
+  },
+  "baseline": {
+    "source": "docs/skill-validation/wave4-2026-10-16/baseline.json",
+    "initialStatus": "",
+    "initialStagedDiff": "",
+    "initialUnstagedDiff": "",
+    "initialUntracked": [],
+    "initialHashesMatched": true,
+    "preExistingChanges": []
+  },
+  "files": {
+    "changedByReviewer": [
+      "skills/domain-logic-organization/references/domain-model.md",
+      "skills/domain-logic-organization/references/transaction-script-and-table-module.md",
+      "skills/domain-logic-organization/skill.yaml"
+    ],
+    "unchanged": ["skills/domain-logic-organization/SKILL.md"],
+    "preExistingChanges": [],
+    "finalHashes": [
+      {
+        "path": "skills/domain-logic-organization/SKILL.md",
+        "sha256": "2a7e2ad7668dfeb94eb3d6d933792dce6805d1a3e96ec3a9a321a67bed4c111f",
+        "baselineSha256": "2a7e2ad7668dfeb94eb3d6d933792dce6805d1a3e96ec3a9a321a67bed4c111f",
+        "unchangedFromAssignment": true
+      },
+      {
+        "path": "skills/domain-logic-organization/references/domain-model.md",
+        "sha256": "9179c7cf6cb54ea2eff45eb61a9f5980d7143d6088ba888a71b7e3f5c3267ba2",
+        "baselineSha256": "1d2d8be81ed286c3358e1d5a549145696f746583353534e296cbbf724000cd22",
+        "unchangedFromAssignment": false
+      },
+      {
+        "path": "skills/domain-logic-organization/references/transaction-script-and-table-module.md",
+        "sha256": "086752d088514c72bbcd66c61dce64fa53e75934bcf10e62bcb11a15c13de8cf",
+        "baselineSha256": "3694f24385ba9022fcbeb3abeadf09aeaff59cef47fe9993e336465ece8b346f",
+        "unchangedFromAssignment": false
+      },
+      {
+        "path": "skills/domain-logic-organization/skill.yaml",
+        "sha256": "6451f4c724ceda93c5b9fddb9e1f08d0bce8061d4a3adfa64fbf0a9f99dac88b",
+        "baselineSha256": "61a04405d390463dcef9f59f990a07cd624af32f25ca489b34a88cd91e97d26c",
+        "unchangedFromAssignment": false
+      }
+    ]
+  },
+  "correctedFindings": [
+    {
+      "location": "references/transaction-script-and-table-module.md:9-12 and 42",
+      "finding": "The caption one transaction could blur business-use-case organization and actual database guarantees despite good transaction guards elsewhere.",
+      "change": "Clarified that the pattern organizes a request/use case; participating resources, commit/rollback and competing-writer protection require separate evidence. Replaced the caption with one cohesive use case.",
+      "consequence": "Removes an interpretive ambiguity when reviewing a procedural path or moving the same steps into objects; no actual actor misclassification or incremental behavioral gain was measured.",
+      "sources": [
+        "fowler-transaction-script",
+        "spring-transactions-6.2",
+        "postgresql-locking-17",
+        "postgresql-isolation-17"
+      ]
+    },
+    {
+      "location": "references/domain-model.md:246 and references/transaction-script-and-table-module.md:207",
+      "finding": "Both JPA 3.2 citations omitted .html and returned HTTP 404.",
+      "change": "Pointed both citations to the working versioned specification URL; old and corrected endpoint responses retained.",
+      "consequence": "Restores access to the primary source behind entity/version/bulk-operation caveats.",
+      "sources": ["jpa-3.2"]
+    },
+    {
+      "location": "references/transaction-script-and-table-module.md:203",
+      "finding": "The JdbcClient source used a floating current URL while supporting introduction in 6.1.",
+      "change": "Pinned the citation to the verified 6.1.0 API page.",
+      "consequence": "Makes the cited compatibility evidence reproducible without changing the target project baseline.",
+      "sources": ["spring-jdbc-6.1.0"]
+    }
+  ],
+  "remainingFindings": [],
+  "preserved": [
+    "SKILL.md byte-for-byte: scope, activation, rule interaction, actual callers/writers, provisional decisions and flip criteria.",
+    "Transaction Script, shared pure policy, adequate small model and no-change alternatives; no new preference for a rich model.",
+    "Table Module versus persistence gateway responsibility distinction and measured set-versus-entity tradeoffs.",
+    "Required audit/events and effect equivalence, input effective time, concurrency/version policy, persistence-context ordering and targeted handoffs.",
+    "Domain identity/value/service classification, Java release caveats, record equality, bounded state loading, root/child version caveat and concurrency enforcement.",
+    "All four Java code blocks unchanged, including cancellation failure ordering; manifest description, dependencies, suggests and capabilities unchanged except version."
+  ],
+  "replacedOrRemoved": {
+    "capabilities": [],
+    "text": "Only ambiguous caption wording and source addresses were replaced; no existing technique or example was removed."
+  },
+  "checks": {
+    "commands": [
+      {
+        "id": "local-validation",
+        "executable": "C:\\Program Files\\nodejs\\node.exe",
+        "args": [
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\domain-logic-organization\\local-validation.mjs"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "stdout": "local-validation.stdout.txt",
+        "stderr": "local-validation.stderr.txt",
+        "stdoutText": "{\n  \"skill\": \"domain-logic-organization\",\n  \"version\": \"1.3.6\",\n  \"baselineVersion\": \"1.3.5\",\n  \"fileCount\": 4,\n  \"issues\": [],\n  \"links\": [\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/transaction-script-and-table-module.md\",\n      \"exists\": true\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/transaction-script-and-table-module.md\",\n      \"exists\": true\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/domain-model.md\",\n      \"exists\": true\n    },\n    {\n      \"from\": \"references/transaction-script-and-table-module.md\",\n      \"target\": \"domain-model.md\",\n      \"exists\": true\n    }\n  ],\n  \"hashes\": [\n    {\n      \"path\": \"skills/domain-logic-organization/SKILL.md\",\n      \"sha256\": \"2a7e2ad7668dfeb94eb3d6d933792dce6805d1a3e96ec3a9a321a67bed4c111f\",\n      \"baselineSha256\": \"2a7e2ad7668dfeb94eb3d6d933792dce6805d1a3e96ec3a9a321a67bed4c111f\",\n      \"unchangedFromAssignment\": true\n    },\n    {\n      \"path\": \"skills/domain-logic-organization/references/domain-model.md\",\n      \"sha256\": \"9179c7cf6cb54ea2eff45eb61a9f5980d7143d6088ba888a71b7e3f5c3267ba2\",\n      \"baselineSha256\": \"1d2d8be81ed286c3358e1d5a549145696f746583353534e296cbbf724000cd22\",\n      \"unchangedFromAssignment\": false\n    },\n    {\n      \"path\": \"skills/domain-logic-organization/references/transaction-script-and-table-module.md\",\n      \"sha256\": \"086752d088514c72bbcd66c61dce64fa53e75934bcf10e62bcb11a15c13de8cf\",\n      \"baselineSha256\": \"3694f24385ba9022fcbeb3abeadf09aeaff59cef47fe9993e336465ece8b346f\",\n      \"unchangedFromAssignment\": false\n    },\n    {\n      \"path\": \"skills/domain-logic-organization/skill.yaml\",\n      \"sha256\": \"6451f4c724ceda93c5b9fddb9e1f08d0bce8061d4a3adfa64fbf0a9f99dac88b\",\n      \"baselineSha256\": \"61a04405d390463dcef9f59f990a07cd624af32f25ca489b34a88cd91e97d26c\",\n      \"unchangedFromAssignment\": false\n    }\n  ],\n  \"examplePreservation\": [\n    {\n      \"path\": \"skills/domain-logic-organization/SKILL.md\",\n      \"javaBlocks\": 0,\n      \"unchanged\": true\n    },\n    {\n      \"path\": \"skills/domain-logic-organization/references/domain-model.md\",\n      \"javaBlocks\": 2,\n      \"unchanged\": true\n    },\n    {\n      \"path\": \"skills/domain-logic-organization/references/transaction-script-and-table-module.md\",\n      \"javaBlocks\": 2,\n      \"unchanged\": true\n    }\n  ]\n}\n",
+        "stderrText": ""
+      },
+      {
+        "id": "prettier",
+        "executable": "C:\\Program Files\\nodejs\\node.exe",
+        "args": [
+          "C:\\git\\agent-skills\\node_modules\\prettier\\bin\\prettier.cjs",
+          "--check",
+          "skills/domain-logic-organization/SKILL.md",
+          "skills/domain-logic-organization/skill.yaml",
+          "skills/domain-logic-organization/references/domain-model.md",
+          "skills/domain-logic-organization/references/transaction-script-and-table-module.md"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "stdout": "prettier.stdout.txt",
+        "stderr": "prettier.stderr.txt",
+        "stdoutText": "Checking formatting...\nAll matched files use Prettier code style!\n",
+        "stderrText": ""
+      },
+      {
+        "id": "diff-check",
+        "executable": "git",
+        "args": ["diff", "--check", "--", "skills/domain-logic-organization"],
+        "cwd": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "stdout": "diff-check.stdout.txt",
+        "stderr": "diff-check.stderr.txt",
+        "stdoutText": "",
+        "stderrText": ""
+      },
+      {
+        "id": "scoped-status",
+        "executable": "git",
+        "args": [
+          "status",
+          "--short",
+          "--untracked-files=all",
+          "--",
+          "skills/domain-logic-organization"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "stdout": "scoped-status.stdout.txt",
+        "stderr": "scoped-status.stderr.txt",
+        "stdoutText": " M skills/domain-logic-organization/references/domain-model.md\n M skills/domain-logic-organization/references/transaction-script-and-table-module.md\n M skills/domain-logic-organization/skill.yaml\n",
+        "stderrText": ""
+      },
+      {
+        "id": "scoped-diff",
+        "executable": "git",
+        "args": ["diff", "--", "skills/domain-logic-organization"],
+        "cwd": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "stdout": "scoped-diff.stdout.txt",
+        "stderr": "scoped-diff.stderr.txt",
+        "stdoutText": "diff --git a/skills/domain-logic-organization/references/domain-model.md b/skills/domain-logic-organization/references/domain-model.md\nindex e95043e..6324427 100644\n--- a/skills/domain-logic-organization/references/domain-model.md\n+++ b/skills/domain-logic-organization/references/domain-model.md\n@@ -243,7 +243,7 @@ an approximate or stale summary cannot enforce a strict invariant merely because\n ## Sources\n \n - [Evans: DDD Reference](https://www.domainlanguage.com/ddd/reference/) — entity identity, value semantics and aggregate/repository boundaries.\n-- [Jakarta Persistence 3.2 specification](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2): entity requirements, relationship ownership, optimistic locking and bulk operations.\n+- [Jakarta Persistence 3.2 specification](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html): entity requirements, relationship ownership, optimistic locking and bulk operations.\n - [Java 17 Record API](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Record.html): default component equality and explicitly declared methods.\n - [Fowler: Domain Model](https://martinfowler.com/eaaCatalog/domainModel.html): data and behavior in the domain model.\n - [Fowler: Active Record](https://martinfowler.com/eaaCatalog/activeRecord.html): domain behavior and persistence can coexist in one object.\ndiff --git a/skills/domain-logic-organization/references/transaction-script-and-table-module.md b/skills/domain-logic-organization/references/transaction-script-and-table-module.md\nindex 98dbbf7..4f31574 100644\n--- a/skills/domain-logic-organization/references/transaction-script-and-table-module.md\n+++ b/skills/domain-logic-organization/references/transaction-script-and-table-module.md\n@@ -6,6 +6,11 @@ One procedure per business transaction. Input arrives, the procedure validates i\n what it needs, computes, writes, and returns. Data is carried in structures — records,\n rows, DTOs — with no behaviour of their own.\n \n+Here, business transaction means a request or use case, not a guarantee of one atomic\n+database transaction. Trace the participating resources, commit/rollback boundary and\n+protection against competing writers separately (`enterprise-transactions`). Moving the\n+same steps into domain objects or a Table Module does not supply those guarantees.\n+\n ```java\n public class RegisterShipment {\n \n@@ -34,7 +39,7 @@ public class RegisterShipment {\n }\n ```\n \n-That is a good Transaction Script: one transaction, explicit steps, no hidden state, and\n+That is a good Transaction Script: one cohesive use case, explicit steps, no hidden state, and\n trivially readable. The pattern's reputation suffers from bad examples, not from the\n pattern.\n \n@@ -195,9 +200,9 @@ compare the model's benefits and load costs (`domain-model.md`).\n ## Sources\n \n - [Fowler: Transaction Script](https://martinfowler.com/eaaCatalog/transactionScript.html) — procedures per business transaction, with shared subtasks where useful.\n-- [JdbcClient API](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/jdbc/core/simple/JdbcClient.html): API introduced in Spring Framework 6.1.\n+- [JdbcClient 6.1.0 API](https://docs.spring.io/spring-framework/docs/6.1.0/javadoc-api/org/springframework/jdbc/core/simple/JdbcClient.html): API introduced in Spring Framework 6.1.\n - [Spring proxying](https://docs.spring.io/spring-framework/reference/core/aop/proxying.html) — final classes and proxy/self-invocation boundaries.\n - [Fowler: Table Module](https://martinfowler.com/eaaCatalog/tableModule.html) — record-set organization, distinct from a gateway's persistence responsibility.\n - [Fowler: Table Data Gateway](https://martinfowler.com/eaaCatalog/tableDataGateway.html) — table-level database access, which does not by itself assign business-policy ownership.\n-- [Jakarta Persistence 3.2 specification](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2) — entity lifecycle callbacks and the separate direct-database bulk-operation path.\n+- [Jakarta Persistence 3.2 specification](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html) — entity lifecycle callbacks and the separate direct-database bulk-operation path.\n - [Spring Data aggregate event publication](https://docs.spring.io/spring-data/jpa/reference/repositories/core-domain-events.html) — hooks depend on the repository operation and aggregate instances; check the deployed version.\ndiff --git a/skills/domain-logic-organization/skill.yaml b/skills/domain-logic-organization/skill.yaml\nindex a8998be..1118909 100644\n--- a/skills/domain-logic-organization/skill.yaml\n+++ b/skills/domain-logic-organization/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: domain-logic-organization\n-version: 1.3.5\n+version: 1.3.6\n description: >-\n   Choosing where business rules live — Transaction Script, Domain Model or Table Module —\n   from the shape of the logic rather than from convention, and recognising when the choice\n",
+        "stderrText": ""
+      },
+      {
+        "id": "staged-diff",
+        "executable": "git",
+        "args": ["diff", "--cached", "--", "skills/domain-logic-organization"],
+        "cwd": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "stdout": "staged-diff.stdout.txt",
+        "stderr": "staged-diff.stderr.txt",
+        "stdoutText": "",
+        "stderrText": ""
+      },
+      {
+        "id": "java-version",
+        "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+        "args": ["-version"],
+        "cwd": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "stdout": "java-version.stdout.txt",
+        "stderr": "java-version.stderr.txt",
+        "stdoutText": "",
+        "stderrText": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n"
+      },
+      {
+        "id": "javac-version",
+        "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+        "args": ["-version"],
+        "cwd": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "stdout": "javac-version.stdout.txt",
+        "stderr": "javac-version.stderr.txt",
+        "stdoutText": "javac 25.0.3\r\n",
+        "stderrText": ""
+      },
+      {
+        "id": "case-preparation",
+        "executable": "C:\\Program Files\\nodejs\\node.exe",
+        "args": [
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\domain-logic-organization\\prepare-cases.mjs"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "stdout": "case-preparation.stdout.txt",
+        "stderr": "case-preparation.stderr.txt",
+        "stdoutText": "{\n  \"cases\": 2,\n  \"filesPerCase\": 7,\n  \"decisiveDifference\": \"read-stock.sql only\",\n  \"actorsRun\": 0\n}\n",
+        "stderrText": ""
+      },
+      {
+        "id": "case-compile",
+        "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+        "args": [
+          "--release",
+          "17",
+          "-d",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\domain-logic-organization\\case-compiled",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\domain-logic-organization\\cases\\case-a\\Bootstrap.java",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\domain-logic-organization\\cases\\case-a\\StockGateway.java",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\domain-logic-organization\\cases\\case-a\\ReservationService.java"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "stdout": "case-compile.stdout.txt",
+        "stderr": "case-compile.stderr.txt",
+        "stdoutText": "",
+        "stderrText": ""
+      }
+    ],
+    "package": {
+      "status": "PASS",
+      "files": 4,
+      "issues": [],
+      "relativeLinkOccurrences": 4,
+      "details": {
+        "skill": "domain-logic-organization",
+        "version": "1.3.6",
+        "baselineVersion": "1.3.5",
+        "fileCount": 4,
+        "issues": [],
+        "links": [
+          {
+            "from": "SKILL.md",
+            "target": "references/transaction-script-and-table-module.md",
+            "exists": true
+          },
+          {
+            "from": "SKILL.md",
+            "target": "references/transaction-script-and-table-module.md",
+            "exists": true
+          },
+          {
+            "from": "SKILL.md",
+            "target": "references/domain-model.md",
+            "exists": true
+          },
+          {
+            "from": "references/transaction-script-and-table-module.md",
+            "target": "domain-model.md",
+            "exists": true
+          }
+        ],
+        "hashes": [
+          {
+            "path": "skills/domain-logic-organization/SKILL.md",
+            "sha256": "2a7e2ad7668dfeb94eb3d6d933792dce6805d1a3e96ec3a9a321a67bed4c111f",
+            "baselineSha256": "2a7e2ad7668dfeb94eb3d6d933792dce6805d1a3e96ec3a9a321a67bed4c111f",
+            "unchangedFromAssignment": true
+          },
+          {
+            "path": "skills/domain-logic-organization/references/domain-model.md",
+            "sha256": "9179c7cf6cb54ea2eff45eb61a9f5980d7143d6088ba888a71b7e3f5c3267ba2",
+            "baselineSha256": "1d2d8be81ed286c3358e1d5a549145696f746583353534e296cbbf724000cd22",
+            "unchangedFromAssignment": false
+          },
+          {
+            "path": "skills/domain-logic-organization/references/transaction-script-and-table-module.md",
+            "sha256": "086752d088514c72bbcd66c61dce64fa53e75934bcf10e62bcb11a15c13de8cf",
+            "baselineSha256": "3694f24385ba9022fcbeb3abeadf09aeaff59cef47fe9993e336465ece8b346f",
+            "unchangedFromAssignment": false
+          },
+          {
+            "path": "skills/domain-logic-organization/skill.yaml",
+            "sha256": "6451f4c724ceda93c5b9fddb9e1f08d0bce8061d4a3adfa64fbf0a9f99dac88b",
+            "baselineSha256": "61a04405d390463dcef9f59f990a07cd624af32f25ca489b34a88cd91e97d26c",
+            "unchangedFromAssignment": false
+          }
+        ],
+        "examplePreservation": [
+          {
+            "path": "skills/domain-logic-organization/SKILL.md",
+            "javaBlocks": 0,
+            "unchanged": true
+          },
+          {
+            "path": "skills/domain-logic-organization/references/domain-model.md",
+            "javaBlocks": 2,
+            "unchanged": true
+          },
+          {
+            "path": "skills/domain-logic-organization/references/transaction-script-and-table-module.md",
+            "javaBlocks": 2,
+            "unchanged": true
+          }
+        ]
+      }
+    },
+    "externalLinks": {
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/domain-logic-organization/source-check.mjs",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": {
+        "consulted": "2026-10-16",
+        "results": [
+          {
+            "url": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2",
+            "finalUrl": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2",
+            "status": 404,
+            "title": "404 Page Not Found | Jakarta EE | The Eclipse Foundation"
+          },
+          {
+            "url": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html",
+            "finalUrl": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html",
+            "status": 200,
+            "title": "Jakarta Persistence"
+          },
+          {
+            "url": "https://docs.spring.io/spring-framework/docs/6.1.0/javadoc-api/org/springframework/jdbc/core/simple/JdbcClient.html",
+            "finalUrl": "https://docs.spring.io/spring-framework/docs/6.1.0/javadoc-api/org/springframework/jdbc/core/simple/JdbcClient.html",
+            "status": 200,
+            "title": "JdbcClient (Spring Framework 6.1.0 API)"
+          }
+        ]
+      },
+      "purpose": "Read-only HTTP status/title checks of the broken and repaired JPA source and pinned JdbcClient source; no third-party content vendored."
+    },
+    "javaExamples": {
+      "materiallyChanged": 0,
+      "preserved": [
+        {
+          "path": "skills/domain-logic-organization/SKILL.md",
+          "javaBlocks": 0,
+          "unchanged": true
+        },
+        {
+          "path": "skills/domain-logic-organization/references/domain-model.md",
+          "javaBlocks": 2,
+          "unchanged": true
+        },
+        {
+          "path": "skills/domain-logic-organization/references/transaction-script-and-table-module.md",
+          "javaBlocks": 2,
+          "unchanged": true
+        }
+      ],
+      "result": "All four existing Java fences exactly preserved after newline normalization; no recompilation or runtime evaluation of unchanged Spring/JPA examples was performed."
+    },
+    "caseFixture": {
+      "result": "PASS: three common Java sources compiled with --release 17 using javac 25.0.3; no Java program or JDBC/PostgreSQL operation executed.",
+      "compiler": "Temurin 25.0.3+9-LTS",
+      "release": "17",
+      "compiledCase": "case-a",
+      "commonSourcesIdenticalAcrossCases": true,
+      "onlyFixtureDifference": "read-stock.sql",
+      "artifact": "case-compile.stdout.txt / case-compile.stderr.txt"
+    },
+    "finalDiff": {
+      "status": "PASS",
+      "inspected": true,
+      "artifact": "scoped-diff.stdout.txt",
+      "stagedDiffEmpty": true
+    }
+  },
+  "failures": {
+    "localChecks": [],
+    "recoveredDiscovery": [
+      "An rg read initially guessed report.md paths for wave2/wave3; files were absent. rg --files located the actual README.md reports, which were inspected. No files were created as substitutes.",
+      "The initial unversioned extensionless JPA source returned 404 as recorded; corrected .html source succeeded.",
+      "Spring Framework reference/6.1 transaction path returned 404; reference/6.2 was consulted explicitly as 6.2. A Spring Data 3.2 reference-path lookup and old 6.1.0 HTML overview lookup were unavailable; neither was claimed as verified evidence or used for a correction."
+    ]
+  },
+  "behavioralEvaluations": {
+    "actorsExecuted": 0,
+    "measuredImprovement": false,
+    "comparisonsExecuted": [],
+    "walkthroughs": [
+      "Case-a: row lock is acquired before checking stock, persists across both writes and commit/rollback, so a waiting second locking read observes the committed remaining quantity under PostgreSQL 17 READ COMMITTED.",
+      "Case-b: simultaneous plain SELECTs may both return 100; both then write the absolute value 40 and insert distinct reservations. Changing class organization does not alter that allowed schedule.",
+      "Rollback after insertion failure is visible in the supplied code and part of the proposed integration assertions; no database failure was injected during this review."
+    ],
+    "walkthroughStatus": "Structured source/spec reasoning only, not executed behavioral or database evaluations."
+  },
+  "cases": {
+    "inputs": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/domain-logic-organization/actor-inputs.json",
+    "evaluatorCriteria": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/domain-logic-organization/evaluator-criteria.json",
+    "fixtureIntegrity": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/domain-logic-organization/case-integrity.json",
+    "count": 2,
+    "knownDevelopmentCases": true,
+    "heldOut": false,
+    "decisiveConstraint": "Only read-stock.sql changes: FOR UPDATE versus ordinary SELECT. All accepted business requirements and other six files are identical.",
+    "expectedDecisionDifference": "Retaining simple rule organization remains valid in both; case-b requires a concurrency correction while case-a already has the relevant locking mechanism under its declared assumptions.",
+    "isolation": "Procedural only. Coordinator must provide one fixture and intended skill treatment without evaluator criteria, paired answer, handoff or prior results."
+  },
+  "sources": [
+    {
+      "id": "fowler-transaction-script",
+      "url": "https://martinfowler.com/eaaCatalog/transactionScript.html",
+      "version": "PoEAA author catalog entry dated 2003-03-05",
+      "section": "Definition and description",
+      "support": "The organization is one procedure per presentation request, with shared subtasks permitted. It is a business-logic organization, not an isolation/atomicity mechanism.",
+      "consulted": "2026-10-16",
+      "kind": "primary"
+    },
+    {
+      "id": "fowler-domain-model",
+      "url": "https://martinfowler.com/eaaCatalog/domainModel.html",
+      "version": "PoEAA author catalog entry dated 2003-03-05",
+      "section": "Definition and description",
+      "support": "Behavior and data together; supports preserving the existing alternative where interacting state benefits from a natural owner.",
+      "consulted": "2026-10-16",
+      "kind": "primary"
+    },
+    {
+      "id": "fowler-table-module",
+      "url": "https://martinfowler.com/eaaCatalog/tableModule.html",
+      "version": "PoEAA author catalog entry dated 2003-03-05",
+      "section": "Definition and description",
+      "support": "Business logic for table/view rows versus one identity-bearing object per row. SQL alone does not establish rule ownership.",
+      "consulted": "2026-10-16",
+      "kind": "primary"
+    },
+    {
+      "id": "fowler-table-gateway",
+      "url": "https://martinfowler.com/eaaCatalog/tableDataGateway.html",
+      "version": "PoEAA author catalog entry dated 2003-03-05",
+      "section": "Definition and description",
+      "support": "Database access role, supporting preservation of the distinction from business-rule ownership.",
+      "consulted": "2026-10-16",
+      "kind": "primary"
+    },
+    {
+      "id": "jpa-3.2",
+      "url": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html",
+      "version": "Jakarta Persistence 3.2, 2024-04-10",
+      "section": "2.1, 3.5.1-3.5.2, 4.11",
+      "support": "Verified corrected URL and existing guards: portable entity non-final requirements, version ownership excludes inverse relationships, bulk operations bypass normal optimistic checks and do not synchronize the persistence context.",
+      "consulted": "2026-10-16",
+      "kind": "primary"
+    },
+    {
+      "id": "spring-jdbc-6.1.0",
+      "url": "https://docs.spring.io/spring-framework/docs/6.1.0/javadoc-api/org/springframework/jdbc/core/simple/JdbcClient.html",
+      "version": "Spring Framework 6.1.0",
+      "section": "JdbcClient description and Since",
+      "support": "Version-specific source confirms JdbcClient introduced in 6.1 and the fluent SQL facade. Replaces floating current URL; no implementation baseline was upgraded.",
+      "consulted": "2026-10-16",
+      "kind": "primary"
+    },
+    {
+      "id": "spring-transactions-6.2",
+      "url": "https://docs.spring.io/spring-framework/reference/6.2/data-access/transaction/declarative/annotations.html",
+      "version": "Spring Framework 6.2 reference line",
+      "section": "Proxy mode and self-invocation",
+      "support": "Confirms the existing conditional managed-bean/proxy guard. This is source inspection, not a Spring runtime test or a required upgrade to 6.2.",
+      "consulted": "2026-10-16",
+      "kind": "primary"
+    },
+    {
+      "id": "evans-aggregate",
+      "url": "https://www.domainlanguage.com/wp-content/uploads/2016/05/DDD_Reference_2015-03.pdf",
+      "version": "DDD Reference, 2015-03",
+      "section": "Aggregates (PDF page 23, printed page 16)",
+      "support": "Aggregate invariant enforcement belongs to the root or designated framework mechanism; supports the preserved responsibility lens.",
+      "consulted": "2026-10-16",
+      "kind": "primary"
+    },
+    {
+      "id": "postgresql-locking-17",
+      "url": "https://www.postgresql.org/docs/17/explicit-locking.html#LOCKING-ROWS",
+      "version": "PostgreSQL 17",
+      "section": "13.3.2 Row-Level Locks / FOR UPDATE",
+      "support": "Supports the case-a walkthrough: row lock retained to transaction end, competing locking read waits and returns updated row under the stated isolation level. No PostgreSQL test was run.",
+      "consulted": "2026-10-16",
+      "kind": "primary"
+    },
+    {
+      "id": "postgresql-isolation-17",
+      "url": "https://www.postgresql.org/docs/17/transaction-iso.html#XACT-READ-COMMITTED",
+      "version": "PostgreSQL 17",
+      "section": "13.2.1 Read Committed",
+      "support": "Supports the ordinary SELECT versus locking SELECT distinction and the possible stale read-check-absolute-write schedule in case-b; not an observed deployment trace.",
+      "consulted": "2026-10-16",
+      "kind": "primary"
+    }
+  ],
+  "limits": [
+    "This is a small clarification and evidence-repair patch. No broad defect was found in the existing pattern-selection guidance; no measured agent gain, universal correctness or performance claim follows.",
+    "No PostgreSQL server, driver, Spring container, ORM or application integration was executed. The case SQL schedules are grounded in PostgreSQL 17 documentation and stated single-writer-path assumptions, not measured production behavior.",
+    "The case source compiled for Java 17 on JDK 25.0.3; this is not execution on a Java 17 JVM, and the sources were not run.",
+    "No executable skill example changed. The unchanged Spring/JPA partial sketches were read, not built or integration-tested during this assignment.",
+    "Local loader/validator and relative links do not establish catalog-wide dependency/routing consistency. Global build, registry and verification belong to the coordinator.",
+    "HTTP status checks establish source availability at consultation, not correctness of every recommendation or future URL stability."
+  ],
+  "crossSkill": {
+    "requiredActions": [],
+    "optionalObservation": "The corrected malformed JPA URL may warrant a separate scoped search by the coordinator; no neighboring package was edited or audited for that defect."
+  },
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Parallel-review policy; run after all reviewers stop writing to regenerate package integrity/version entry."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Parallel-review policy; run after registry generation and stable shared tree. Local readiness is not repository-wide validation."
+    }
+  ],
+  "pendingBehavioralEvaluation": "Optional coordinator-run matched evaluation with frozen separate cases/criteria; no actor runs authorized to this reviewer.",
+  "evidenceDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/domain-logic-organization",
+  "evidence": [
+    "local-validation.mjs",
+    "local-validation.stdout.txt",
+    "commands.json",
+    "run-local.mjs",
+    "source-check.mjs",
+    "source-status.json",
+    "scoped-diff.stdout.txt",
+    "scoped-status.stdout.txt",
+    "staged-diff.stdout.txt",
+    "prepare-cases.mjs",
+    "actor-inputs.json",
+    "evaluator-criteria.json",
+    "case-integrity.json",
+    "cases/case-a",
+    "cases/case-b",
+    "case-compiled"
+  ],
+  "writeState": {
+    "noActiveBackgroundProcess": true,
+    "allProcessesWaited": true,
+    "repositoryWritesRestrictedToOwnedPath": true,
+    "reviewArtifactsRestrictedToAssignedTempDirectory": true,
+    "stoppedBeforeHandoff": true
+  }
+}

@@ -1,0 +1,275 @@
+{
+  "command": "node 'C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/skill-engineering-quality07-20261016/fixture-preflight.mjs'",
+  "cwd": "C:/git/agent-skills",
+  "exitCode": 0,
+  "result": {
+    "status": "PASS",
+    "kind": "deterministic fixture preflight, not agent evaluation",
+    "node": "v25.6.1",
+    "pairDifference": [
+      "evaluation/config.json"
+    ],
+    "commands": [
+      {
+        "case": "A",
+        "command": "node evaluation/grade.mjs archive",
+        "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-validation-ujPBF2\\skill-engineering-quality07-20261016\\case-a",
+        "exitCode": 0,
+        "result": {
+          "completionMode": "narrative",
+          "input": "archive",
+          "grades": [
+            {
+              "id": "original/batch/1",
+              "condition": "original",
+              "task": "batch",
+              "trial": 1,
+              "checks": {
+                "object": true,
+                "count": true,
+                "totalCents": true,
+                "completion": true
+              },
+              "passedChecks": 4,
+              "totalChecks": 4,
+              "passed": true
+            },
+            {
+              "id": "revised/batch/1",
+              "condition": "revised",
+              "task": "batch",
+              "trial": 1,
+              "checks": {
+                "object": true,
+                "count": true,
+                "totalCents": true,
+                "completion": true
+              },
+              "passedChecks": 4,
+              "totalChecks": 4,
+              "passed": true
+            },
+            {
+              "id": "original/empty/1",
+              "condition": "original",
+              "task": "empty",
+              "trial": 1,
+              "checks": {
+                "object": true,
+                "count": true,
+                "totalCents": true,
+                "completion": true
+              },
+              "passedChecks": 4,
+              "totalChecks": 4,
+              "passed": true
+            },
+            {
+              "id": "revised/empty/1",
+              "condition": "revised",
+              "task": "empty",
+              "trial": 1,
+              "checks": {
+                "object": true,
+                "count": true,
+                "totalCents": true,
+                "completion": true
+              },
+              "passedChecks": 4,
+              "totalChecks": 4,
+              "passed": true
+            }
+          ]
+        }
+      },
+      {
+        "case": "A",
+        "command": "node evaluation/grade.mjs samples",
+        "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-validation-ujPBF2\\skill-engineering-quality07-20261016\\case-a",
+        "exitCode": 0,
+        "result": {
+          "completionMode": "narrative",
+          "input": "samples",
+          "grades": [
+            {
+              "id": "alpha",
+              "condition": null,
+              "task": "batch",
+              "trial": null,
+              "checks": {
+                "object": true,
+                "count": true,
+                "totalCents": true,
+                "completion": true
+              },
+              "passedChecks": 4,
+              "totalChecks": 4,
+              "passed": true
+            },
+            {
+              "id": "beta",
+              "condition": null,
+              "task": "batch",
+              "trial": null,
+              "checks": {
+                "object": true,
+                "count": true,
+                "totalCents": true,
+                "completion": true
+              },
+              "passedChecks": 4,
+              "totalChecks": 4,
+              "passed": true
+            },
+            {
+              "id": "gamma",
+              "condition": null,
+              "task": "batch",
+              "trial": null,
+              "checks": {
+                "object": true,
+                "count": true,
+                "totalCents": true,
+                "completion": false
+              },
+              "passedChecks": 3,
+              "totalChecks": 4,
+              "passed": false
+            }
+          ]
+        }
+      },
+      {
+        "case": "B",
+        "command": "node evaluation/grade.mjs archive",
+        "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-validation-ujPBF2\\skill-engineering-quality07-20261016\\case-b",
+        "exitCode": 0,
+        "result": {
+          "completionMode": "contract",
+          "input": "archive",
+          "grades": [
+            {
+              "id": "original/batch/1",
+              "condition": "original",
+              "task": "batch",
+              "trial": 1,
+              "checks": {
+                "object": true,
+                "count": true,
+                "totalCents": true,
+                "completion": true
+              },
+              "passedChecks": 4,
+              "totalChecks": 4,
+              "passed": true
+            },
+            {
+              "id": "revised/batch/1",
+              "condition": "revised",
+              "task": "batch",
+              "trial": 1,
+              "checks": {
+                "object": true,
+                "count": true,
+                "totalCents": true,
+                "completion": true
+              },
+              "passedChecks": 4,
+              "totalChecks": 4,
+              "passed": true
+            },
+            {
+              "id": "original/empty/1",
+              "condition": "original",
+              "task": "empty",
+              "trial": 1,
+              "checks": {
+                "object": true,
+                "count": true,
+                "totalCents": true,
+                "completion": true
+              },
+              "passedChecks": 4,
+              "totalChecks": 4,
+              "passed": true
+            },
+            {
+              "id": "revised/empty/1",
+              "condition": "revised",
+              "task": "empty",
+              "trial": 1,
+              "checks": {
+                "object": true,
+                "count": true,
+                "totalCents": true,
+                "completion": true
+              },
+              "passedChecks": 4,
+              "totalChecks": 4,
+              "passed": true
+            }
+          ]
+        }
+      },
+      {
+        "case": "B",
+        "command": "node evaluation/grade.mjs samples",
+        "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-validation-ujPBF2\\skill-engineering-quality07-20261016\\case-b",
+        "exitCode": 0,
+        "result": {
+          "completionMode": "contract",
+          "input": "samples",
+          "grades": [
+            {
+              "id": "alpha",
+              "condition": null,
+              "task": "batch",
+              "trial": null,
+              "checks": {
+                "object": true,
+                "count": true,
+                "totalCents": true,
+                "completion": true
+              },
+              "passedChecks": 4,
+              "totalChecks": 4,
+              "passed": true
+            },
+            {
+              "id": "beta",
+              "condition": null,
+              "task": "batch",
+              "trial": null,
+              "checks": {
+                "object": true,
+                "count": true,
+                "totalCents": true,
+                "completion": false
+              },
+              "passedChecks": 3,
+              "totalChecks": 4,
+              "passed": false
+            },
+            {
+              "id": "gamma",
+              "condition": null,
+              "task": "batch",
+              "trial": null,
+              "checks": {
+                "object": true,
+                "count": true,
+                "totalCents": true,
+                "completion": true
+              },
+              "passedChecks": 4,
+              "totalChecks": 4,
+              "passed": true
+            }
+          ]
+        }
+      }
+    ],
+    "processes": "four synchronous child commands exited; no process kept running"
+  },
+  "scope": "Deterministic control of case fixtures, not agent evaluation; no new dependency/toolchain installed."
+}

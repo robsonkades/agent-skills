@@ -1,0 +1,81 @@
+{
+  "decision": "reject",
+  "scope": "Review only; no implementation or policy changes",
+  "configuredBeforeMax": 6,
+  "configuredAfterMax": 18,
+  "outerAttemptsPerLogical": 1.06,
+  "wireAttemptsPerLogical": 1.6,
+  "aggregateGrantUpperBound": 130,
+  "configuredLimits": {
+    "beforeFormula": "1 gateway * 2 outer * 3 SDK = 6",
+    "afterFormula": "3 gateway * 2 outer * 3 SDK = 18",
+    "interpretation": "Nominal nested maxima including initial attempts; deadline reachability unknown.",
+    "budgetScope": "Four process-local buckets admit outer retries, not SDK wire sends",
+    "grantUpperBoundFormula": "4 processes * 10 initial tokens + 0.1 tokens/success * 900 successes = 130",
+    "capacityCaveat": "20-token per-process capacity may discard refill; timing/distribution absent. Bound uses no restarts or other refills."
+  },
+  "observedCounters": {
+    "provenance": "Authored fixture, not production captures",
+    "logicalCalls": 1000,
+    "outerAttempts": 1060,
+    "wireAttempts": 1600,
+    "successesThatRefill": 900,
+    "outerRetryGrants": 60,
+    "sdkAdditionalWireAttempts": 540,
+    "wireAttemptsPerSdkOperation": 1.509433962264151,
+    "attribution": "Matched cohort; each outer attempt invokes one SDK operation; packet attributes additional wire sends to SDK retries and excludes fanout, hedging and unrelated traffic."
+  },
+  "budgetConclusion": "60 observed outer grants <= 130 aggregate grant upper bound. No bucket violation established. Refill ratio does not imply a 1.1 fleet wire amplification cap.",
+  "effectConclusion": {
+    "intent": "operation-41",
+    "at50ms": "UNKNOWN: dispatched write timed out; cancellation signal only",
+    "at52ms": "UNKNOWN: current-state not-found lookup cannot rule out later application",
+    "at80ms": "Original write committed in supplied trace; reconcile original outcome",
+    "automaticRedispatchAllowed": false,
+    "freshIntentAllowedAsRecovery": false,
+    "cancellationAcknowledged": false,
+    "resourceReleaseTimeMs": null,
+    "providerReplayGuarantee": "None for this operation",
+    "remainingUnknowns": [
+      "Production outcome and behavior",
+      "Resource release time",
+      "Exact result/response to replay"
+    ]
+  },
+  "nextVerification": {
+    "status": "not executed",
+    "type": "One bounded offline delayed-commit recovery replay against actual handler when supplied",
+    "limit": "One original intent; one four-event schedule; 20-second process limit",
+    "assertions": [
+      "UNKNOWN at 50 and 52 ms",
+      "No replacement intent or automatic redispatch",
+      "Original committed outcome reconciled at/after 80 ms"
+    ],
+    "decisionImpact": "After arithmetic corrections, passing changes reject to revise pending production-contract validation; failing retains reject.",
+    "limitOfEvidence": "A local replay does not establish provider durability/replay guarantees or fleet behavior."
+  },
+  "checksExecuted": [
+    "Parsed supplied incident JSON",
+    "Recomputed configured maxima, observed ratios, aggregate grants, and SDK additional sends",
+    "SHA-256 compared all four immutable output copies against input/project",
+    "Final artifact JSON/schema-value consistency and review <=750-word validation"
+  ],
+  "checksNotExecuted": [
+    "Java compilation/tests: not a Java implementation case",
+    "node run.mjs Verification: no run.mjs supplied",
+    "External service or production tests",
+    "Repository npm verify: outside isolated task scope"
+  ],
+  "limitations": [
+    "Inputs are authored exercise evidence.",
+    "No concrete endpoint/API/account, SDK/gateway version, database/isolation, retention or numerical combined deadline supplied.",
+    "Production provider and cancellation/resource-release behavior are unverified.",
+    "Only supplied skill snapshots were used; routed skills outside the snapshot were unavailable under task scope."
+  ],
+  "modifiedSuppliedFiles": [],
+  "artifacts": [
+    "REVIEW.md",
+    "result.json",
+    "execution.json"
+  ]
+}

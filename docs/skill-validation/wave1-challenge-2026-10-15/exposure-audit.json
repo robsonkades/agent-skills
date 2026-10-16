@@ -1,0 +1,576 @@
+{
+  "checkedAt": "2026-10-16T01:54:20.211Z",
+  "isolation": "Procedural only; self-reported reads, no independent full tool trace audit",
+  "trials": [
+    {
+      "trialId": "trial01",
+      "caseId": "code-review-borrowed-session",
+      "condition": "original",
+      "outputSha256": "8a0907c4e67978a193034afe0c28492bb0621513d94eb19e291de378e61772ed",
+      "responseSha256": "cb8e6bd13472eeca494f0024ac0289b3dc3f89ba353cd3efcd77527708aeb7ff",
+      "words": 254,
+      "filesRead": [
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/actor-protocol.md",
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/inputs/code-review-borrowed-session.json",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/original/code-review/SKILL.md",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/original/code-review/references/what-to-look-for.md",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/original/code-review/references/giving-and-receiving.md"
+      ],
+      "outsideDeclaredReadAllowlist": [],
+      "unexpectedExposure": []
+    },
+    {
+      "trialId": "trial02",
+      "caseId": "code-review-borrowed-session",
+      "condition": "none",
+      "outputSha256": "3288521e7df26a1990e5ea237bd4756a0df28f886ef92602e743aae35933d856",
+      "responseSha256": "02eab58caacdd104bb68d37f67575988d2595db21bfdb82c18f8cf7c5908cf70",
+      "words": 237,
+      "filesRead": [
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/actor-protocol.md",
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/inputs/code-review-borrowed-session.json"
+      ],
+      "outsideDeclaredReadAllowlist": [],
+      "unexpectedExposure": []
+    },
+    {
+      "trialId": "trial03",
+      "caseId": "code-review-borrowed-session",
+      "condition": "revised",
+      "outputSha256": "9934beb8c86da40fa5caf15560cae593bd11e599f2e19d5dd184bb938e53dee0",
+      "responseSha256": "5df793528749d4dff0fdc04169b7a95a467838e0ca5883bb0bd5cd6ac9d6cc95",
+      "words": 259,
+      "filesRead": [
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/actor-protocol.md",
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/inputs/code-review-borrowed-session.json",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/revised/code-review/SKILL.md",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/revised/code-review/references/what-to-look-for.md",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/revised/code-review/references/giving-and-receiving.md"
+      ],
+      "outsideDeclaredReadAllowlist": [],
+      "unexpectedExposure": []
+    },
+    {
+      "trialId": "trial04",
+      "caseId": "code-review-owned-session",
+      "condition": "original",
+      "outputSha256": "87b492e7edcf11deb07dfc398d033702732d8b66fc1af3c3bbe6b3a62f34db48",
+      "responseSha256": "20250777beca9b46eab6b5da1c356df80dce86be0eec78aaa3efdb220a5c54f3",
+      "words": 245,
+      "filesRead": [
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/actor-protocol.md",
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/inputs/code-review-owned-session.json",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/original/code-review/SKILL.md",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/original/code-review/references/what-to-look-for.md",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/original/code-review/references/giving-and-receiving.md"
+      ],
+      "outsideDeclaredReadAllowlist": [],
+      "unexpectedExposure": []
+    },
+    {
+      "trialId": "trial05",
+      "caseId": "code-review-owned-session",
+      "condition": "none",
+      "outputSha256": "c562ab0ab7c1509d27678a4dc43cbc1155869dce58c8f44efa9ef64f11e6fc1b",
+      "responseSha256": "1b669bb65602c1e13195e3c88db1f3d1e1e1c3b48caa80fd0a52cb4eb96e23a0",
+      "words": 242,
+      "filesRead": [
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/actor-protocol.md",
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/inputs/code-review-owned-session.json"
+      ],
+      "outsideDeclaredReadAllowlist": [],
+      "unexpectedExposure": []
+    },
+    {
+      "trialId": "trial06",
+      "caseId": "code-review-owned-session",
+      "condition": "revised",
+      "outputSha256": "b939a5f17eea1f8dc5b2c63d1863b6bc989d091005861bbae0761261d554d3cc",
+      "responseSha256": "4ac855cbb29b6a23140676a43f6167df2de51bf4474d61a29287cbb36856559b",
+      "words": 241,
+      "filesRead": [
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/actor-protocol.md",
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/inputs/code-review-owned-session.json",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/revised/code-review/SKILL.md",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/revised/code-review/references/what-to-look-for.md",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/revised/code-review/references/giving-and-receiving.md"
+      ],
+      "outsideDeclaredReadAllowlist": [],
+      "unexpectedExposure": []
+    },
+    {
+      "trialId": "trial07",
+      "caseId": "estimation-under-uncertainty-one-specialist",
+      "condition": "none",
+      "outputSha256": "291b2535d931e3065c601992d88c63b1c317b88c80698f0ba65752ae878b17c7",
+      "responseSha256": "aa579d08fd4e385d6c07340c2e48d47c66c6a1c8010430cf42ab150004401422",
+      "words": 260,
+      "filesRead": [
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/actor-protocol.md",
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/inputs/estimation-under-uncertainty-one-specialist.json"
+      ],
+      "outsideDeclaredReadAllowlist": [],
+      "unexpectedExposure": []
+    },
+    {
+      "trialId": "trial08",
+      "caseId": "estimation-under-uncertainty-one-specialist",
+      "condition": "original",
+      "outputSha256": "a4f37a6aec926bd9e90199d1c005a2afbb66440d0d456fec2f466105c3b23934",
+      "responseSha256": "cc5934137f984208c027322405169d68655cd41931d4cbddac5de3f66711b7b2",
+      "words": 259,
+      "filesRead": [
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/actor-protocol.md",
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/inputs/estimation-under-uncertainty-one-specialist.json",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/original/estimation-under-uncertainty/SKILL.md",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/original/estimation-under-uncertainty/references/methods.md",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/original/estimation-under-uncertainty/references/commitments.md"
+      ],
+      "outsideDeclaredReadAllowlist": [],
+      "unexpectedExposure": []
+    },
+    {
+      "trialId": "trial09",
+      "caseId": "estimation-under-uncertainty-one-specialist",
+      "condition": "revised",
+      "outputSha256": "d86cb0c6687b3c8b3039fad6dc17c7800722e70e23529e2a30b12a66c96026aa",
+      "responseSha256": "cc5aa782bb8c9558abb12d567cf4f53d41f5a536e6dadb66de8ff409a95ead0f",
+      "words": 260,
+      "filesRead": [
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/actor-protocol.md",
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/inputs/estimation-under-uncertainty-one-specialist.json",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/revised/estimation-under-uncertainty/SKILL.md",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/revised/estimation-under-uncertainty/references/methods.md",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/revised/estimation-under-uncertainty/references/commitments.md"
+      ],
+      "outsideDeclaredReadAllowlist": [],
+      "unexpectedExposure": []
+    },
+    {
+      "trialId": "trial10",
+      "caseId": "estimation-under-uncertainty-two-specialists",
+      "condition": "original",
+      "outputSha256": "4f0fa284a0704a5d58fc059e6bb0d20f3c98d9d6411015d3e4ed63dd2df2b65b",
+      "responseSha256": "ff67f5b136fdcc1b480ffe2eda60bc37b4e73deba1b5cce472db866403ff86c6",
+      "words": 250,
+      "filesRead": [
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/actor-protocol.md",
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/inputs/estimation-under-uncertainty-two-specialists.json",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/original/estimation-under-uncertainty/SKILL.md",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/original/estimation-under-uncertainty/references/methods.md",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/original/estimation-under-uncertainty/references/commitments.md"
+      ],
+      "outsideDeclaredReadAllowlist": [],
+      "unexpectedExposure": []
+    },
+    {
+      "trialId": "trial11",
+      "caseId": "estimation-under-uncertainty-two-specialists",
+      "condition": "revised",
+      "outputSha256": "4270448362e5a1c4ddf30f680d96f09b29e585c29d44de46c2fab597be7089a9",
+      "responseSha256": "8d9ce3dedeea87de0eec1aceee343a1afb1c082d470c546083448fa6e00b4a8a",
+      "words": 238,
+      "filesRead": [
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/actor-protocol.md",
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/inputs/estimation-under-uncertainty-two-specialists.json",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/revised/estimation-under-uncertainty/SKILL.md",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/revised/estimation-under-uncertainty/references/methods.md",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/revised/estimation-under-uncertainty/references/commitments.md"
+      ],
+      "outsideDeclaredReadAllowlist": [],
+      "unexpectedExposure": [
+        "Repository-wide AGENTS.md instructions and environment context were supplied in the inherited conversation before these file reads. No other task, evaluator criteria, prior result, or actor output was read."
+      ]
+    },
+    {
+      "trialId": "trial12",
+      "caseId": "estimation-under-uncertainty-two-specialists",
+      "condition": "none",
+      "outputSha256": "8a1add8963b93b0bface0502e486da24dce92569b6339408bc2fea405e0e4276",
+      "responseSha256": "f17e91b34ac838ef1409d405f50c45118924e1b9989d1a903a8f0dc854c43816",
+      "words": 240,
+      "filesRead": [
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/actor-protocol.md",
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/inputs/estimation-under-uncertainty-two-specialists.json"
+      ],
+      "outsideDeclaredReadAllowlist": [],
+      "unexpectedExposure": []
+    },
+    {
+      "trialId": "trial13",
+      "caseId": "feature-readiness-review-accepted-amendment",
+      "condition": "none",
+      "outputSha256": "3363d10de5e83912a9ef2281c81f50b0dcba63534808e9645aa49762097a4065",
+      "responseSha256": "eee33daf595ba52ec84d6ab056546251925423bf99b8374a55c489e80b500490",
+      "words": 243,
+      "filesRead": [
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/actor-protocol.md",
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/inputs/feature-readiness-review-accepted-amendment.json"
+      ],
+      "outsideDeclaredReadAllowlist": [],
+      "unexpectedExposure": []
+    },
+    {
+      "trialId": "trial14",
+      "caseId": "feature-readiness-review-accepted-amendment",
+      "condition": "original",
+      "outputSha256": "eadf7bc610a48465eaecf8e96805c75251106b65da0d18af4fe595535bff3156",
+      "responseSha256": "dd43d3fd4e6f98dd896030e92732b60ac9cd7c8401512de7ff9d0ba6175316c9",
+      "words": 249,
+      "filesRead": [
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/actor-protocol.md",
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/inputs/feature-readiness-review-accepted-amendment.json",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/original/feature-readiness-review/SKILL.md",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/original/feature-readiness-review/references/completion-review.md"
+      ],
+      "outsideDeclaredReadAllowlist": [],
+      "unexpectedExposure": []
+    },
+    {
+      "trialId": "trial15",
+      "caseId": "feature-readiness-review-accepted-amendment",
+      "condition": "revised",
+      "outputSha256": "6def15f0b01df33ae41bf23e38caedf77a24cf2baff34176a2d50853f6446174",
+      "responseSha256": "b74ab73537d0521af0284f137d525b705fb3071e3a234f33df79f81862cbbf88",
+      "words": 257,
+      "filesRead": [
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/actor-protocol.md",
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/inputs/feature-readiness-review-accepted-amendment.json",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/revised/feature-readiness-review/SKILL.md",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/revised/feature-readiness-review/references/completion-review.md"
+      ],
+      "outsideDeclaredReadAllowlist": [],
+      "unexpectedExposure": []
+    },
+    {
+      "trialId": "trial16",
+      "caseId": "feature-readiness-review-proposed-amendment",
+      "condition": "revised",
+      "outputSha256": "d8afd02797a6f5058540987940259b255c59130e5f3f00e408149d77e7c1b144",
+      "responseSha256": "5b4e5d58416b057b34bef7764761d967e08e3e69078c597177b2d4250d65d1bd",
+      "words": 268,
+      "filesRead": [
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/actor-protocol.md",
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/inputs/feature-readiness-review-proposed-amendment.json",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/revised/feature-readiness-review/SKILL.md",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/revised/feature-readiness-review/references/completion-review.md"
+      ],
+      "outsideDeclaredReadAllowlist": [],
+      "unexpectedExposure": []
+    },
+    {
+      "trialId": "trial17",
+      "caseId": "feature-readiness-review-proposed-amendment",
+      "condition": "none",
+      "outputSha256": "64c89fbf0dc57982e7028904cbe4dc60d213e7f7cea856cfff0d2b9c8ade2107",
+      "responseSha256": "e3995415d7c7b35553c16bd3cef2d4e85db1e79cf3fb6f7d943294231f478762",
+      "words": 246,
+      "filesRead": [
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/actor-protocol.md",
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/inputs/feature-readiness-review-proposed-amendment.json"
+      ],
+      "outsideDeclaredReadAllowlist": [],
+      "unexpectedExposure": []
+    },
+    {
+      "trialId": "trial18",
+      "caseId": "feature-readiness-review-proposed-amendment",
+      "condition": "original",
+      "outputSha256": "a12b69e15899ae6a06703099d867dde1b9dff49469fa943956dc29d7d24f2fcf",
+      "responseSha256": "c4ddfa2945c4a3accca2d9004349ae47758c8f10ae9c60956658875ce025cc6a",
+      "words": 256,
+      "filesRead": [
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/actor-protocol.md",
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/inputs/feature-readiness-review-proposed-amendment.json",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/original/feature-readiness-review/SKILL.md",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/original/feature-readiness-review/references/completion-review.md"
+      ],
+      "outsideDeclaredReadAllowlist": [],
+      "unexpectedExposure": []
+    },
+    {
+      "trialId": "trial19",
+      "caseId": "feature-risk-analysis-long-hold",
+      "condition": "revised",
+      "outputSha256": "2245054a20490d18499831f48d23faa56e26971f6844b13b6e8e213f49394959",
+      "responseSha256": "dad37a400218c838b740c0ed738188e6fac3f0130ff860a4d81909fa4cbd20e8",
+      "words": 270,
+      "filesRead": [
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/actor-protocol.md",
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/inputs/feature-risk-analysis-long-hold.json",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/revised/feature-risk-analysis/SKILL.md",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/revised/feature-risk-analysis/references/risk-register.md"
+      ],
+      "outsideDeclaredReadAllowlist": [],
+      "unexpectedExposure": []
+    },
+    {
+      "trialId": "trial20",
+      "caseId": "feature-risk-analysis-long-hold",
+      "condition": "original",
+      "outputSha256": "a5b921663be3911c65059260d9c8a0e1b6ac6d5594fe150fcc99ac3b972e77f7",
+      "responseSha256": "71b0c9c916e6e6d742a3a3c2bbc8ac40feb8cf3dd636e16c89f4fa89ed22f92b",
+      "words": 259,
+      "filesRead": [
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/actor-protocol.md",
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/inputs/feature-risk-analysis-long-hold.json",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/original/feature-risk-analysis/SKILL.md",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/original/feature-risk-analysis/references/risk-register.md"
+      ],
+      "outsideDeclaredReadAllowlist": [],
+      "unexpectedExposure": []
+    },
+    {
+      "trialId": "trial21",
+      "caseId": "feature-risk-analysis-long-hold",
+      "condition": "none",
+      "outputSha256": "780a670a3b5850c3a09172837fd261895ffe66cd80ce3ff63529e97bb9aa6228",
+      "responseSha256": "90cf3971a296592ecc2e29965f65de07ffb4456e58909becc1901f3067137dc8",
+      "words": 250,
+      "filesRead": [
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/actor-protocol.md",
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/inputs/feature-risk-analysis-long-hold.json"
+      ],
+      "outsideDeclaredReadAllowlist": [],
+      "unexpectedExposure": []
+    },
+    {
+      "trialId": "trial22",
+      "caseId": "feature-risk-analysis-short-hold",
+      "condition": "revised",
+      "outputSha256": "1fb0c8a77e6d276a7030bd352a2d6aa2f00404b3f62b567ae013b6a05b0c6845",
+      "responseSha256": "7255411862323709b51643250b38387e8e2e5d0a1cb5f3e74678c8deb335ec96",
+      "words": 281,
+      "filesRead": [
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/actor-protocol.md",
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/inputs/feature-risk-analysis-short-hold.json",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/revised/feature-risk-analysis/SKILL.md",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/revised/feature-risk-analysis/references/risk-register.md"
+      ],
+      "outsideDeclaredReadAllowlist": [],
+      "unexpectedExposure": []
+    },
+    {
+      "trialId": "trial23",
+      "caseId": "feature-risk-analysis-short-hold",
+      "condition": "original",
+      "outputSha256": "56c4b3099ce484453b1dfc01b760697a010024acfb56e59b00b56627ca5c5d26",
+      "responseSha256": "d2d514f7a027387ffe00257265eb24c9ffdbc2de10087385c3295d5a99acaa19",
+      "words": 271,
+      "filesRead": [
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/actor-protocol.md",
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/inputs/feature-risk-analysis-short-hold.json",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/original/feature-risk-analysis/SKILL.md",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/original/feature-risk-analysis/references/risk-register.md"
+      ],
+      "outsideDeclaredReadAllowlist": [],
+      "unexpectedExposure": []
+    },
+    {
+      "trialId": "trial24",
+      "caseId": "feature-risk-analysis-short-hold",
+      "condition": "none",
+      "outputSha256": "c804ae17a2f764b2140f7c1113cd5704c015a57f2e1b28d8fe7f4f217181f9ae",
+      "responseSha256": "2b5de97346d2aa3d9ded912ac55b6354144003468c0628b6db20c4814fb3b0fd",
+      "words": 251,
+      "filesRead": [
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/actor-protocol.md",
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/inputs/feature-risk-analysis-short-hold.json"
+      ],
+      "outsideDeclaredReadAllowlist": [],
+      "unexpectedExposure": []
+    },
+    {
+      "trialId": "trial25",
+      "caseId": "java-test-design-ordered-result",
+      "condition": "revised",
+      "outputSha256": "26f24da26413df79b06d959b6fd065fa0aceabf8102331293bc85fb6dddf1fb3",
+      "responseSha256": "729c95f9e265154d40baa1f0c8ed03e191dfee34fad00392bb938f3ad0dc61a8",
+      "words": 254,
+      "filesRead": [
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/actor-protocol.md",
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/inputs/java-test-design-ordered-result.json",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/revised/java-test-design/SKILL.md",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/revised/java-test-design/references/junit5-patterns.md"
+      ],
+      "outsideDeclaredReadAllowlist": [],
+      "unexpectedExposure": [
+        "The inherited session included repository instructions and installed-skill catalog metadata. No unassigned skill files, other tasks, evaluator criteria, prior results, or actor outputs were read."
+      ]
+    },
+    {
+      "trialId": "trial26",
+      "caseId": "java-test-design-ordered-result",
+      "condition": "original",
+      "outputSha256": "2aaa27a61f463b7a215f88ab31d954d491f5ba24c65816fb07aefd869bfdb210",
+      "responseSha256": "d455936fb5ca527993fb8e7179ca1dd5cb0f98921e070b0d8b337cdb46ca9838",
+      "words": 268,
+      "filesRead": [
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/actor-protocol.md",
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/inputs/java-test-design-ordered-result.json",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/original/java-test-design/SKILL.md",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/original/java-test-design/references/junit5-patterns.md"
+      ],
+      "outsideDeclaredReadAllowlist": [],
+      "unexpectedExposure": []
+    },
+    {
+      "trialId": "trial27",
+      "caseId": "java-test-design-ordered-result",
+      "condition": "none",
+      "outputSha256": "e7412456450ab057dc8241eb0095791f9838321cc76bbd46f30beb098c543c3d",
+      "responseSha256": "0f043281af39f5b4ca9b7cb6a465e7a24918c4ebae152825f76daaf61ed0113c",
+      "words": 270,
+      "filesRead": [
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/actor-protocol.md",
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/inputs/java-test-design-ordered-result.json"
+      ],
+      "outsideDeclaredReadAllowlist": [],
+      "unexpectedExposure": []
+    },
+    {
+      "trialId": "trial28",
+      "caseId": "java-test-design-unordered-result",
+      "condition": "original",
+      "outputSha256": "8cbfe57f4f799fed5798ad870ed2317bbb87287e0be942311bdb3685c26ad81b",
+      "responseSha256": "4c920b42c16af0d23ba40043939ef269fc1f4cb5dea5dd984b1c10ac49a131d4",
+      "words": 262,
+      "filesRead": [
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/actor-protocol.md",
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/inputs/java-test-design-unordered-result.json",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/original/java-test-design/SKILL.md",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/original/java-test-design/references/junit5-patterns.md",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/original/java-test-design/references/determinism.md"
+      ],
+      "outsideDeclaredReadAllowlist": [],
+      "unexpectedExposure": []
+    },
+    {
+      "trialId": "trial29",
+      "caseId": "java-test-design-unordered-result",
+      "condition": "none",
+      "outputSha256": "5e4bfb58f49992bb297880d3a7686d6099ff123a9c8bf5cc1d60a09cd7a5aec0",
+      "responseSha256": "77ad6caa075be58c35e2b68196dd01e17b08183f31d68a4c132d305f4481260b",
+      "words": 258,
+      "filesRead": [
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/actor-protocol.md",
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/inputs/java-test-design-unordered-result.json"
+      ],
+      "outsideDeclaredReadAllowlist": [],
+      "unexpectedExposure": []
+    },
+    {
+      "trialId": "trial30",
+      "caseId": "java-test-design-unordered-result",
+      "condition": "revised",
+      "outputSha256": "aee939c6903762ca95ffabbf947cf943174d8124bc15da5235cc0746a7844909",
+      "responseSha256": "e5b0a8e1f8086b0a5582b389a96f88dbee16fe16eb3da3b6cdbf50a9b00a605b",
+      "words": 252,
+      "filesRead": [
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/actor-protocol.md",
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/inputs/java-test-design-unordered-result.json",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/revised/java-test-design/SKILL.md",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/revised/java-test-design/references/junit5-patterns.md",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/revised/java-test-design/references/determinism.md"
+      ],
+      "outsideDeclaredReadAllowlist": [],
+      "unexpectedExposure": []
+    },
+    {
+      "trialId": "trial31",
+      "caseId": "quality-gates-current-exception",
+      "condition": "original",
+      "outputSha256": "da0b8abcae7c9021438dc3a48e663b967674cf5e93d2a6e663e27fe010b2f101",
+      "responseSha256": "f053c7e95a76bab668adcc6763f65a6bc5ca327f835c7691fe412e90e389a917",
+      "words": 260,
+      "filesRead": [
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/actor-protocol.md",
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/inputs/quality-gates-current-exception.json",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/original/quality-gates/SKILL.md",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/original/quality-gates/references/selecting-gates.md",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/original/quality-gates/references/gate-catalogue.md"
+      ],
+      "outsideDeclaredReadAllowlist": [],
+      "unexpectedExposure": []
+    },
+    {
+      "trialId": "trial32",
+      "caseId": "quality-gates-current-exception",
+      "condition": "none",
+      "outputSha256": "7232afc64d1dc5da0360e8450829597c0b6a86136b497153afc3eb15cd60a5bc",
+      "responseSha256": "4fa0f86462be4df558de95ed3e0171869d0bbbbd2d3ae3941b1f5bfdf9f24c49",
+      "words": 254,
+      "filesRead": [
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/actor-protocol.md",
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/inputs/quality-gates-current-exception.json"
+      ],
+      "outsideDeclaredReadAllowlist": [],
+      "unexpectedExposure": []
+    },
+    {
+      "trialId": "trial33",
+      "caseId": "quality-gates-current-exception",
+      "condition": "revised",
+      "outputSha256": "9950bce1e371881260664f68dfec17b88eb953929f2966e396c0203dd3985cb5",
+      "responseSha256": "4c7852c327b043337c1fe1106341f19a746d44f07c828de48c73ce69ec7b4c22",
+      "words": 264,
+      "filesRead": [
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/actor-protocol.md",
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/inputs/quality-gates-current-exception.json",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/revised/quality-gates/SKILL.md",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/revised/quality-gates/references/gate-catalogue.md",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/revised/quality-gates/references/selecting-gates.md"
+      ],
+      "outsideDeclaredReadAllowlist": [],
+      "unexpectedExposure": []
+    },
+    {
+      "trialId": "trial34",
+      "caseId": "quality-gates-other-candidate-exception",
+      "condition": "none",
+      "outputSha256": "8077be7c2420d7d7c142c4c072d8981e7a0b69e68b15250440341cec67001269",
+      "responseSha256": "2982fbe2a016f7cbcbaba0d7ea21bebd7ad0fdf442b1f4b0cc1519519f0021c5",
+      "words": 269,
+      "filesRead": [
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/actor-protocol.md",
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/inputs/quality-gates-other-candidate-exception.json"
+      ],
+      "outsideDeclaredReadAllowlist": [],
+      "unexpectedExposure": []
+    },
+    {
+      "trialId": "trial35",
+      "caseId": "quality-gates-other-candidate-exception",
+      "condition": "revised",
+      "outputSha256": "ef556ea1ad02f137c422224af519c93264a843180455267756b06cbdca99a65c",
+      "responseSha256": "e44b7f077e331f56d6b5de12019f512aa8e6ff767202ad55a63f3ae3ddee8d30",
+      "words": 265,
+      "filesRead": [
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/actor-protocol.md",
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/inputs/quality-gates-other-candidate-exception.json",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/revised/quality-gates/SKILL.md",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/revised/quality-gates/references/gate-catalogue.md",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/revised/quality-gates/references/selecting-gates.md"
+      ],
+      "outsideDeclaredReadAllowlist": [],
+      "unexpectedExposure": []
+    },
+    {
+      "trialId": "trial36",
+      "caseId": "quality-gates-other-candidate-exception",
+      "condition": "original",
+      "outputSha256": "b74edea7903d59d34f5be7fee36e35b35b8d5f4918feb0ba3dd5bf74ae5bf9f7",
+      "responseSha256": "7b528901e052dbd1339e2cc26808e2480b40f4b132b0be6c76d6476b37b6561f",
+      "words": 270,
+      "filesRead": [
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/actor-protocol.md",
+        "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/inputs/quality-gates-other-candidate-exception.json",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/original/quality-gates/SKILL.md",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/original/quality-gates/references/selecting-gates.md",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/original/quality-gates/references/gate-catalogue.md"
+      ],
+      "outsideDeclaredReadAllowlist": [],
+      "unexpectedExposure": []
+    }
+  ]
+}

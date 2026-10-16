@@ -136,6 +136,8 @@ induce an outage or run every scenario. The following are validation options, no
   does not establish it.
 - **Server guidance and cancellation.** Exercise valid/invalid `Retry-After`, a delay beyond
   remaining deadline, interruption during sleep, response streaming and breaker-open results.
+  Include an ambiguous result with safe replay and valid advice: preserve the server minimum,
+  and retain the unknown outcome when the wait cannot fit or admission rejects another attempt.
   Confirm expired/pre-interrupted entry starts zero attempts and physical work is still counted
   after caller timeout until it actually finishes. Validate unknown outcomes survive budget exhaustion.
 - **Statistical jitter.** With a deterministic random source in unit tests verify range and

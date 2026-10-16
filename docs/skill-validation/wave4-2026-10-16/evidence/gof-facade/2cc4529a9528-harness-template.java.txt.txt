@@ -1,0 +1,103 @@
+import java.time.Duration;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.StructuredTaskScope;
+import java.util.concurrent.StructuredTaskScope.Joiner;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+
+public class FacadeRemoteCheck {
+    record OrderId(String value) {}
+    record Order(String customerId) {}
+    record Customer(String id) {}
+    record Shipping(boolean available) {
+        static Shipping unavailable() { return new Shipping(false); }
+    }
+    record OrderCustomer(Order order, Customer customer) {}
+    record OrderView(Order order, Customer customer, Shipping shipping) {
+        static OrderView of(Order o, Customer c, Shipping s) { return new OrderView(o, c, s); }
+    }
+    interface Deadline { Duration remaining(); }
+    interface Orders { Order byId(OrderId id, Deadline deadline) throws InterruptedException; }
+    interface Customers { Customer byId(String id, Deadline deadline) throws InterruptedException; }
+    interface Shipments { Shipping forOrder(OrderId id, Deadline deadline) throws InterruptedException; }
+    static class DeadlineExpired extends RuntimeException {}
+    static class ShippingUnavailable extends RuntimeException {}
+    final Orders orders;
+    final Customers customers;
+    final Shipments shipments;
+    FacadeRemoteCheck(Orders orders, Customers customers, Shipments shipments) {
+        this.orders=orders; this.customers=customers; this.shipments=shipments;
+    }
+
+__EXTRACTED_METHOD__
+
+    static final OrderId ID = new OrderId("order-17");
+    static final Deadline BUDGET = () -> Duration.ofSeconds(5);
+    static final Orders GOOD_ORDER = (id,d) -> new Order("customer-20");
+    static final Customers GOOD_CUSTOMER = (id,d) -> new Customer(id);
+    static final Shipments GOOD_SHIPPING = (id,d) -> new Shipping(true);
+    interface Checked { void run() throws Exception; }
+
+    static void require(boolean condition, String message) {
+        if (!condition) throw new AssertionError(message);
+    }
+    static void pass(String name) { System.out.println("PASS " + name); }
+    static void expectFailureCause(Throwable expected, Checked action, String name) throws Exception {
+        try { action.run(); }
+        catch (StructuredTaskScope.FailedException failure) {
+            require(failure.getCause() == expected, "Wrong cause identity for " + name);
+            pass(name);
+            return;
+        }
+        throw new AssertionError("Expected FailedException for " + name);
+    }
+
+    public static void main(String[] args) throws Exception {
+        OrderView normal=new FacadeRemoteCheck(GOOD_ORDER,GOOD_CUSTOMER,GOOD_SHIPPING).view(ID,BUDGET);
+        require(normal.order().customerId().equals(normal.customer().id()) && normal.shipping().available(), "Wrong complete result");
+        pass("success and dependent customer lookup");
+
+        OrderView degraded=new FacadeRemoteCheck(GOOD_ORDER,GOOD_CUSTOMER,(id,d)->{throw new ShippingUnavailable();}).view(ID,BUDGET);
+        require(!degraded.shipping().available(), "Missing explicit shipping fallback");
+        pass("named shipping-unavailable fallback");
+
+        var requiredFailure=new IllegalStateException("required-customer");
+        expectFailureCause(requiredFailure,()->new FacadeRemoteCheck(GOOD_ORDER,(id,d)->{throw requiredFailure;},GOOD_SHIPPING).view(ID,BUDGET),"required failure wrapped with original cause");
+
+        var denied=new SecurityException("shipping-denied");
+        expectFailureCause(denied,()->new FacadeRemoteCheck(GOOD_ORDER,GOOD_CUSTOMER,(id,d)->{throw denied;}).view(ID,BUDGET),"unrelated shipping failure is not degraded");
+
+        var childInterrupted=new InterruptedException("child-origin");
+        expectFailureCause(childInterrupted,()->new FacadeRemoteCheck(GOOD_ORDER,(id,d)->{throw childInterrupted;},GOOD_SHIPPING).view(ID,BUDGET),"child InterruptedException is wrapped as FailedException");
+
+        try { new FacadeRemoteCheck((id,d)->{throw new AssertionError("Must not call exhausted budget");},GOOD_CUSTOMER,GOOD_SHIPPING).view(ID,()->Duration.ZERO); }
+        catch (DeadlineExpired expected) { pass("exhausted input budget rejected"); }
+
+        try {
+            new FacadeRemoteCheck((id,d)->{new CountDownLatch(1).await();return new Order("never");},GOOD_CUSTOMER,GOOD_SHIPPING)
+                    .view(ID,()->Duration.ofMillis(25));
+            throw new AssertionError("Expected scope timeout");
+        } catch (StructuredTaskScope.TimeoutException expected) { pass("timeout remains scope TimeoutException"); }
+
+        CountDownLatch childStarted=new CountDownLatch(1);
+        AtomicReference<Throwable> observed=new AtomicReference<>();
+        Thread caller=Thread.ofPlatform().start(()->{
+            try {
+                new FacadeRemoteCheck((id,d)->{childStarted.countDown();new CountDownLatch(1).await();return new Order("never");},GOOD_CUSTOMER,GOOD_SHIPPING).view(ID,BUDGET);
+                observed.set(new AssertionError("Unexpected successful owner call"));
+            } catch (Throwable failure) { observed.set(failure); }
+        });
+        try {
+            require(childStarted.await(2,TimeUnit.SECONDS),"Owner fixture did not start child");
+            caller.interrupt();
+            caller.join(3000);
+            require(!caller.isAlive(),"Owner failed to terminate");
+            require(observed.get() instanceof InterruptedException,"Owner interruption was not direct InterruptedException: "+observed.get());
+            pass("owner interruption while joining propagates directly");
+        } finally {
+            caller.interrupt();
+            caller.join(3000);
+            require(!caller.isAlive(),"Live fixture thread after cleanup");
+        }
+    }
+}

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-ddd-repositories
-version: 1.0.0
+version: 1.0.1
 description: >-
   Implement or review Java DDD aggregate persistence when a Gateway loses identity,
   audit or child state, concurrent updates bypass an aggregate invariant, database

@@ -1,0 +1,53 @@
+package work;
+import java.util.Comparator;
+import java.util.List;
+public final class SelfTest {
+    public static void main(String[] args) {
+        Catalog c = new Catalog();
+        c.load(new Entry("A", 450), new Entry("B", 550));
+        Report first = c.open();
+        if (first.total() != 1000 || first.entries().size() != 2) throw new AssertionError("initial report");
+        try { first.entries().clear(); throw new AssertionError("writable report"); }
+        catch (UnsupportedOperationException expected) { }
+
+        List<Entry> retainedEntries = first.entries();
+        c.load(new Entry("C", 1200));
+        assertReport(first, List.of(new Entry("C", 1200)), 1200, "existing report after reload");
+        Report latest = c.open();
+        assertReport(latest, List.of(new Entry("C", 1200)), 1200, "new report after reload");
+        if (!retainedEntries.equals(latest.entries())) throw new AssertionError("retained live entries");
+
+        Entry duplicate = new Entry("C", -50);
+        List<Entry> ordered = List.of(new Entry("C", 1200), duplicate, new Entry("D", 25), duplicate);
+        c.load(ordered.toArray(Entry[]::new));
+        assertReport(first, ordered, 1125, "first report keeps order, duplicates and signed cents");
+        assertReport(latest, ordered, 1125, "second report follows another reload");
+        if (!retainedEntries.equals(ordered)) throw new AssertionError("retained entries follow another reload");
+
+        rejectsMutation("add", () -> first.entries().add(new Entry("E", 1)));
+        rejectsMutation("remove", () -> first.entries().remove(0));
+        rejectsMutation("replace", () -> first.entries().set(0, new Entry("E", 1)));
+        rejectsMutation("reorder", () -> first.entries().sort(Comparator.comparingLong(Entry::cents)));
+        rejectsMutation("sublist clear", () -> first.entries().subList(0, 1).clear());
+        assertReport(first, ordered, 1125, "rejected mutations preserve catalog");
+        assertReport(c.open(), ordered, 1125, "new report after rejected mutations");
+
+        c.load();
+        assertReport(first, List.of(), 0, "first report observes empty reload");
+        assertReport(latest, List.of(), 0, "second report observes empty reload");
+        if (!retainedEntries.isEmpty()) throw new AssertionError("retained entries observe empty reload");
+        c.load(new Entry("negative", -7));
+        assertReport(first, List.of(new Entry("negative", -7)), -7, "reload after empty catalog");
+        System.out.println("SelfTest PASS");
+    }
+
+    private static void assertReport(Report report, List<Entry> entries, long total, String label) {
+        if (!report.entries().equals(entries) || report.total() != total) throw new AssertionError(label);
+    }
+
+    private static void rejectsMutation(String label, Runnable mutation) {
+        try { mutation.run(); }
+        catch (UnsupportedOperationException expected) { return; }
+        throw new AssertionError("writable report: " + label);
+    }
+}

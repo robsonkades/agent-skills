@@ -1,0 +1,14 @@
+{
+  "status": "pass",
+  "immutableCopies": 7,
+  "reviewWords": 559,
+  "hashes": {
+    "README.md": "a9e61238b03c45b3a034c72addd0f73e9c36880d023c3149b497d4a9b03c988d",
+    "REQUEST.md": "e1b005325d81afb9c588a39e65ea095f135cddc6dd78cc0aacd1c87ab751d6c3",
+    "schema.sql": "8f8a8f6c9cdb7f6b8adb8bc1dde4dbfdf75f03a96fe4e0dc07ac8d0c14280eed",
+    "seed.sql": "da6ee15af91897b4250bc9d7333c33441a5f2d021bb28d84a7d963145e8f5730",
+    "current.sql": "9a74620c3f5eaa7be5fda1d728d69da84c739578399011c0a17bcd2937476da9",
+    "proposed.sql": "9cbb1ca42e3d52f63cd5d11e292f25d6e4b82accb4e4b723d3457b2238599965",
+    "fixture.mjs": "8ff06a6157c9d865ef4b7f2cb5b88cbea2969575b7ef551b9acc1d8d36353bd6"
+  }
+}

@@ -1,0 +1,421 @@
+{
+  "schemaVersion": 1,
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "off-heap-memory",
+  "reviewer": "/root/quality14",
+  "ownedPath": "skills/off-heap-memory/**",
+  "handoffPath": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/off-heap-memory.json",
+  "allWritesStopped": true,
+  "outstandingWriterProcesses": [],
+  "scope": {
+    "rolePreserved": "Diagnosis and design of direct/native memory, FFM ownership and bounded pooling, without forcing a code implementation workflow.",
+    "successCriteria": [
+      "Distinguish logical pool lease expiration from temporal validity of an arena-backed alias.",
+      "Choose a proportionate ownership mechanism according to whether callers cooperate or runtime revocation is promised.",
+      "Prevent read-only aliases or zeroing from being mistaken for immutable snapshots or post-return access revocation.",
+      "Preserve final Java 22 FFM, native diagnosis, budgeting, confinement, ByteBuffer bridge, and Unsafe migration guidance.",
+      "Retain concrete controlled reuse evidence without claiming a general concurrency, performance, or agent-behavior result."
+    ],
+    "requiredProcedure": [
+      "AGENTS.md",
+      "docs/parallel-skill-reviews.md",
+      "docs/skill-review-prompt.md (complete)",
+      "docs/skill-validation/wave2-2026-10-16/review-brief.md",
+      "skills/skill-engineering/SKILL.md and relevant evidence, evaluation, resource-design and anti-pattern references"
+    ],
+    "findingsSentBeforeFirstEdit": true,
+    "noGlobalCommands": true,
+    "noDelegation": true
+  },
+  "baseline": {
+    "committedVersion": "1.3.3",
+    "assignmentVersion": "1.3.3",
+    "finalVersion": "1.3.4",
+    "preExistingVersionBump": false,
+    "preExistingChanges": [],
+    "committedStagedUnstagedInspection": {
+      "ownedStatusAtAssignment": "",
+      "ownedUnstagedDiffAtAssignment": "",
+      "ownedStagedDiffAtAssignment": "",
+      "packageInventory": "skills/off-heap-memory\\skill.yaml\nskills/off-heap-memory\\SKILL.md\nskills/off-heap-memory\\references\\native-memory-diagnosis.md\nskills/off-heap-memory\\references\\ffm-memory-api.md\n",
+      "ownedStatusAfter": " M skills/off-heap-memory/SKILL.md\n M skills/off-heap-memory/references/ffm-memory-api.md\n M skills/off-heap-memory/skill.yaml\n"
+    },
+    "assignmentHashes": [
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\off-heap-memory\\SKILL.md",
+        "Hash": "35A9A250AEB7BDD28E444A89F75339900F12036C72E017396CF58F0FCFBEB179"
+      },
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\off-heap-memory\\skill.yaml",
+        "Hash": "95FA1CA8F3DBBB0118A6F64CC44253CE039AAF4361C3E445315C0377813D5B52"
+      },
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\off-heap-memory\\references\\ffm-memory-api.md",
+        "Hash": "03DC357787C03C3602919B3219E047B9953876EB3532986B90CAA534D132CBA2"
+      },
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\off-heap-memory\\references\\native-memory-diagnosis.md",
+        "Hash": "55EB244E6451AEC88B348C6008171E21E8FD9839E1763217381D4DC640B127A5"
+      }
+    ],
+    "finalHashes": [
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\off-heap-memory\\SKILL.md",
+        "Hash": "687B412D96AA7F99BFB2752592838B1F72465755F32B6E498300B66B351092D0"
+      },
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\off-heap-memory\\skill.yaml",
+        "Hash": "A1BF856E5CD194C28117C3A419E230C009C01AAF07A29469CBB2C9C83777364D"
+      },
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\off-heap-memory\\references\\ffm-memory-api.md",
+        "Hash": "FFFE28F197504A3D3975BE1913E1712BBBAABDC3395C09D501D0B7AA8178A3C4"
+      },
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\off-heap-memory\\references\\native-memory-diagnosis.md",
+        "Hash": "55EB244E6451AEC88B348C6008171E21E8FD9839E1763217381D4DC640B127A5"
+      }
+    ],
+    "bumpRationale": "Patch bump required because skill contents changed. No pre-existing bump existed; shared generated registry remains coordinator-owned."
+  },
+  "findingsCorrected": [
+    {
+      "id": "OH-LEASE-SCOPE",
+      "location": "skills/off-heap-memory/references/ffm-memory-api.md:129, Pooling long-lived allocations; added guidance starts near line 139",
+      "baselineFinding": "Existing pool invariants required generation tokens, zeroing, cancellation and close/drain but left implicit whether logical lease return revokes escaped MemorySegment or ByteBuffer access.",
+      "consequence": "An agent could advertise runtime post-return safety because a lease handle rejects access while an escaped read-only alias continues to observe the next borrower's data through a still-live arena scope.",
+      "evidence": [
+        "Java 22 MemorySegment slices share temporal bounds/backing storage.",
+        "Java 22 ByteBuffer read-only views share content rather than taking an immutable snapshot.",
+        "Executed controlled one-slot reuse: checked handle rejects after release, scope remains alive, retained read-only views read new value 99, independent copy stays 11."
+      ],
+      "correction": "Clarify that arena scope and pool lease can have different lifetimes; generation checks do not intercept escaped accesses. Preserve a cooperative contract when adequate. Where runtime rejection is required, use separately scoped storage or checked nonescaping accesses coordinated with release. Keep leases alive for retained consumers or copy into separately owned storage. Include a controlled reuse negative control while the arena remains open."
+    },
+    {
+      "id": "OH-ENTRY-ROUTING",
+      "location": "skills/off-heap-memory/SKILL.md:74",
+      "baselineFinding": "Entry-point pool advice named use-after-release risk without routing the enforcement/lifetime decision.",
+      "consequence": "A consumer loading only SKILL.md could miss the distinction and assume a long-lived arena protects a shorter pool borrow.",
+      "correction": "Add one explicit boundary sentence and a link to the existing pool section."
+    }
+  ],
+  "remainingFindings": [],
+  "filesChangedByReviewer": [
+    {
+      "path": "skills/off-heap-memory/SKILL.md",
+      "change": "Pool-lifetime boundary and routed reference anchor."
+    },
+    {
+      "path": "skills/off-heap-memory/references/ffm-memory-api.md",
+      "change": "Lease-versus-arena lifetime, escaped views, proportional alternatives, controlled reuse validation, two primary-source links."
+    },
+    {
+      "path": "skills/off-heap-memory/skill.yaml",
+      "change": "Version only: 1.3.3 to 1.3.4."
+    }
+  ],
+  "filesInspectedAndPreserved": [
+    {
+      "path": "skills/off-heap-memory/references/native-memory-diagnosis.md",
+      "result": "Unchanged; SHA-256 equals assignment baseline. Existing capacity-reservation versus RSS/native usage guidance was adequate."
+    }
+  ],
+  "capabilities": {
+    "preserved": [
+      "Final Java 22 FFM baseline and arena factory choice, explicit close and thread confinement.",
+      "ByteBuffer bridging, byte order, size/position-limit, ownership and actual asynchronous completion.",
+      "Typed/aligned layouts, memory maps and truncation caveats.",
+      "Direct/native budgeting, direct capacity versus memory usage/RSS, wrapper versus payload, NMT limitations.",
+      "Unsafe migration and on-heap VarHandle alternatives.",
+      "Bounded pool bytes/blocks, backpressure, membership/generation, zeroing, cancellation and shutdown/drain.",
+      "Cooperative borrowing without mandatory wrappers when an existing caller contract is adequate."
+    ],
+    "replaced": [],
+    "intentionallyRemoved": []
+  },
+  "executedChecks": [
+    {
+      "kind": "technical",
+      "command": "javac --release 22 LeaseScopeEvidenceCheck.java",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/off-heap-memory-quality14-8a0871017a604885b4b11756a742c359",
+      "exitCode": 0,
+      "result": "Compiled deterministic lifetime/reuse evidence harness against Java 22 APIs."
+    },
+    {
+      "kind": "technical",
+      "command": "java -cp . LeaseScopeEvidenceCheck | Tee-Object -FilePath results.txt; if ($LASTEXITCODE -ne 0) { throw 'Lease scope control failed' }",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/off-heap-memory-quality14-8a0871017a604885b4b11756a742c359",
+      "exitCode": 0,
+      "output": "afterRelease: checkedRead=REJECTED, scopeAlive=true\nafterReuse: staleReadOnlySegment=99, staleReadOnlyBuffer=99, independentCopy=11\nafterArenaClose: segmentRead=REJECTED, bufferRead=REJECTED\nPASS: logical lease return and arena close have distinct access boundaries\n"
+    },
+    {
+      "kind": "technical",
+      "command": "javac --release 22 Pool.java Consumer.java",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/off-heap-memory-quality14-8a0871017a604885b4b11756a742c359",
+      "exitCode": 0,
+      "result": "Exact shared actor code fixture compiled."
+    },
+    {
+      "kind": "technical",
+      "command": "java -cp . Consumer",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/off-heap-memory-quality14-8a0871017a604885b4b11756a742c359",
+      "exitCode": 0,
+      "output": "first=11\r\nsecond=99\r\n"
+    },
+    {
+      "kind": "environment",
+      "command": "java -version",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/off-heap-memory-quality14-8a0871017a604885b4b11756a742c359",
+      "exitCode": 0,
+      "output": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n"
+    },
+    {
+      "kind": "structural",
+      "command": "@'\nimport assert from 'node:assert/strict';\nimport {readFileSync, readdirSync, existsSync} from 'node:fs';\nimport path from 'node:path';\nimport {loadPackageFromDirectory} from './packages/core/src/application/package-loader.ts';\nimport {validatePackage} from './packages/core/src/application/validate-package.ts';\nimport {NodeFileSystem} from './packages/node/src/file-system.ts';\nimport {ClaudeCodeAdapter} from './packages/adapter-claude/src/index.ts';\nimport {CodexAdapter} from './packages/adapter-codex/src/index.ts';\nconst root='skills/off-heap-memory';\nconst loaded=await loadPackageFromDirectory(new NodeFileSystem(),root,{strict:true});\nconst report=validatePackage(loaded.pkg,{directoryName:'off-heap-memory',adapters:[new ClaudeCodeAdapter(),new CodexAdapter()]});\nconst issues=[...loaded.issues,...report.issues];\nassert.equal(issues.length,0,JSON.stringify(issues));\nconst entry=readFileSync(path.join(root,'SKILL.md'),'utf8');\nconst refs=readdirSync(path.join(root,'references'));\nfor(const ref of refs) assert.ok(entry.includes('references/'+ref),'unrouted '+ref);\nlet links=0;\nfor(const file of ['SKILL.md',...refs.map(f=>'references/'+f)]) {\n const body=readFileSync(path.join(root,file),'utf8');\n for(const m of body.matchAll(/\\]\\(([^)]+)\\)/g)) {\n  const href=m[1];\n  if(/^(?:<)?[a-z]+:\\/\\//i.test(href)) continue;\n  const [target,anchor]=href.split('#');\n  const resolved=target?path.resolve(root,path.dirname(file),target):path.resolve(root,file);\n  assert.ok(existsSync(resolved),file+': '+href);\n  if(anchor) {\n   const targetText=readFileSync(resolved,'utf8');\n   const anchors=[...targetText.matchAll(/^#+ (.+)$/gm)].map(m=>m[1].toLowerCase().replace(/[^a-z0-9\\s-]/g,'').trim().replace(/\\s+/g,'-'));\n   assert.ok(anchors.includes(anchor),file+': '+href);\n  }\n  links++;\n }\n}\nconsole.log(JSON.stringify({skill:'off-heap-memory',version:loaded.pkg.manifest.version,issues,referenceFilesRouted:refs.length,localLinksAndAnchorsChecked:links},null,2));\n\n'@ | node --input-type=module -",
+      "workingDirectory": "C:/git/agent-skills",
+      "exitCode": 0,
+      "output": "{\n  \"skill\": \"off-heap-memory\",\n  \"version\": \"1.3.4\",\n  \"issues\": [],\n  \"referenceFilesRouted\": 2,\n  \"localLinksAndAnchorsChecked\": 3\n}\n",
+      "actualEffects": "Read-only official package loading/validation for this skill plus its local links and headings. No global registry writes or substitute global validation."
+    },
+    {
+      "kind": "structural",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/off-heap-memory/SKILL.md skills/off-heap-memory/skill.yaml skills/off-heap-memory/references/ffm-memory-api.md",
+      "workingDirectory": "C:/git/agent-skills",
+      "exitCode": 0,
+      "output": "Checking formatting...\nAll matched files use Prettier code style!\n",
+      "timing": "Repeated after final text qualification."
+    },
+    {
+      "kind": "structural",
+      "command": "git diff --check -- skills/off-heap-memory",
+      "workingDirectory": "C:/git/agent-skills",
+      "exitCode": 0,
+      "output": "",
+      "timing": "Repeated after final text qualification."
+    },
+    {
+      "kind": "inspection",
+      "command": "git diff -- skills/off-heap-memory; scoped git status; Get-FileHash of all four owned files",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "Final owned diff reviewed; exactly three changed files, no staged or untracked owned files, native-memory reference unchanged.",
+      "finalDiff": "diff --git a/skills/off-heap-memory/SKILL.md b/skills/off-heap-memory/SKILL.md\nindex 9c0a748..7e1d257 100644\n--- a/skills/off-heap-memory/SKILL.md\n+++ b/skills/off-heap-memory/SKILL.md\n@@ -73,7 +73,8 @@ arena ownership.\n   small short-lived values, but benchmark the complete data path.\n - Avoid one native allocation per hot-path operation unless ownership and measurements justify\n   it. Prefer a library's proven bounded pool or a scoped arena; pooling adds retention,\n-  zeroing/data-remanence, fairness and use-after-release risks.\n+  zeroing/data-remanence, fairness and use-after-release risks. A long-lived arena does not enforce\n+  a shorter pool lease; see [pool lifetime and escaped views](references/ffm-memory-api.md#pooling-long-lived-allocations).\n - Every raw `Unsafe` address needs explicit single-owner lifetime, overflow/alignment checks,\n   failure-safe release and use-after-free protection. Prefer `MemorySegment` where its scoped\n   lifetime and access model fit; migration is not a mechanical allocation-call replacement.\ndiff --git a/skills/off-heap-memory/references/ffm-memory-api.md b/skills/off-heap-memory/references/ffm-memory-api.md\nindex 82b9140..abcbc22 100644\n--- a/skills/off-heap-memory/references/ffm-memory-api.md\n+++ b/skills/off-heap-memory/references/ffm-memory-api.md\n@@ -136,6 +136,31 @@ and generation token, exclusive lease, zero-on-release policy, close/drain proto\n and behavior for cancellation. Closing the shared arena invalidates every outstanding slice;\n the pool must first prevent acquisition and coordinate all leases.\n \n+A pool lease and its backing arena can have different lifetimes. Returning a block does not\n+itself invalidate segments, slices or `ByteBuffer` views whose arena scope remains alive. A generation\n+check on `release()` or on a lease handle cannot protect accesses through an escaped view.\n+Even a read-only view can observe the next borrower's writes; it is not an immutable snapshot.\n+Zeroing on return does not prevent that later observation.\n+\n+For cooperative borrowing, keep all view access within the lease and wait for actual consumer\n+completion before reuse; an adequate existing contract need not acquire a new wrapper. If the\n+contract requires post-return access to be rejected, use separately scoped storage or checked\n+access operations coordinated with release, without letting raw segments, buffers or addresses\n+bypass those checks. When a\n+consumer must retain a `ByteBuffer`, keep its lease alive or copy into independently owned storage\n+as described above; read-only conversion does not solve ownership or isolation.\n+\n+Validate the distinction with a controlled reuse: borrow, retain a segment and read-only buffer,\n+return the lease, then reuse the same block for different data while the arena remains open.\n+Check the chosen contract: rejected access through the checked API, preserved copied contents,\n+or a borrower that never accesses after return. An escaped view still reading reused data is a\n+negative control for enforced revocation. A test only after closing the whole arena misses this\n+logical use-after-return case.\n+\n+The Java 22 [`MemorySegment` scope and slicing contract](https://docs.oracle.com/en/java/javase/22/docs/api/java.base/java/lang/foreign/MemorySegment.html)\n+and [`ByteBuffer` read-only view contract](https://docs.oracle.com/en/java/javase/22/docs/api/java.base/java/nio/ByteBuffer.html)\n+specify the shared lifetime and content; a pool's shorter ownership protocol is application code.\n+\n ## Migrating from Unsafe or DirectByteBuffer\n \n 1. Identify the ownership pattern and pick the `Arena` from the selection rule above — one\ndiff --git a/skills/off-heap-memory/skill.yaml b/skills/off-heap-memory/skill.yaml\nindex a39147c..266be53 100644\n--- a/skills/off-heap-memory/skill.yaml\n+++ b/skills/off-heap-memory/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: off-heap-memory\n-version: 1.3.3\n+version: 1.3.4\n description: >-\n   Memory outside the Java heap: direct `ByteBuffer` and its Cleaner-driven release,\n   `MemorySegment` and `Arena` in the FFM API, lifetime and thread confinement, when off-heap\n"
+    }
+  ],
+  "failures": [],
+  "behavioralEvidence": {
+    "executedAgentEvaluations": [],
+    "measuredSkillGain": false,
+    "technicalExecutionIsNotAgentEvaluation": true,
+    "walkthroughs": [
+      {
+        "caseId": "off-heap-memory-enforced",
+        "reasoning": "Runtime guarantee is violated by an escaped alias although readChecked rejects. Expected proportional correction removes bypasses or gives each borrowed view a valid separately scoped lifetime; controlled reuse must distinguish former and current borrowers."
+      },
+      {
+        "caseId": "off-heap-memory-cooperative",
+        "reasoning": "Consumer reads only before closing its lease, satisfying the stated cooperative protocol. The same escaped-alias possibility does not alone justify a mandatory redesign."
+      }
+    ],
+    "independentEvaluationPending": true,
+    "caseClassification": "Reviewer-authored development cases; not independent holdouts.",
+    "decisiveConstraint": "Only CONTRACT.md's borrowing rule differs: enforced post-return revocation versus cooperative access limited to a live lease."
+  },
+  "actorInputs": [
+    {
+      "id": "off-heap-memory-enforced",
+      "request": "Review CONTRACT.md, Pool.java, and Consumer.java using off-heap-memory. Determine whether the current implementation satisfies the stated contract. Implement the smallest justified correction if it does not; otherwise preserve adequate behavior and explain the relevant boundary. Run focused checks and report commands, outputs, and limitations. Keep the Java 22 API baseline, avoid dependencies and unrelated changes, and do not turn this teaching fixture into a production allocator.",
+      "prerequisites": {
+        "runtime": "JDK 22 or newer with javac and java; reviewer compiled with --release 22 and executed on Temurin 25.0.3+9.",
+        "workspace": "Materialize only these three files in a fresh isolated directory. Provide the candidate off-heap-memory package to the actor through the usual skill mechanism.",
+        "suggestedInitialCommands": [
+          "javac --release 22 Pool.java Consumer.java",
+          "java -cp . Consumer"
+        ],
+        "knownInitialHappyPath": "first=11\\nsecond=99\\n",
+        "noAdditionalContext": "Do not give the actor evaluatorOnly or technicalEvidence."
+      },
+      "files": {
+        "CONTRACT.md": "# Pool contract\n\nThis is a small internal teaching fixture, not a production allocator. The API baseline is final Java 22 FFM. It has a single byte of payload storage and permits at most one active lease. Keep the single-slot bound, zero-on-return behavior, outstanding-lease shutdown check, and correct values for the current borrower. No new dependencies or Java baseline upgrade. Internal Pool and Consumer APIs may be changed when required by this contract. Independently owned copies are allowed and must be identified as copies, not borrowed aliases. Do not claim performance gains without measurement.\n\n## Borrowing rule\n\nBorrowed handles may be retained by callers after Lease.close(). Access through every returned borrowed handle must be rejected at runtime after that lease closes, even while the pool remains alive and is reused. This is an enforced API guarantee; a caller promise alone is insufficient.\n",
+        "Pool.java": "import java.lang.foreign.Arena;\nimport java.lang.foreign.MemorySegment;\nimport java.lang.foreign.ValueLayout;\n\npublic final class Pool implements AutoCloseable {\n    private final Arena arena = Arena.ofShared();\n    private final MemorySegment block = arena.allocate(1);\n    private boolean leased;\n    private long generation;\n\n    public synchronized Lease acquire(byte value) {\n        if (leased) throw new IllegalStateException(\"slot is leased\");\n        block.set(ValueLayout.JAVA_BYTE, 0, value);\n        leased = true;\n        return new Lease(this, ++generation);\n    }\n\n    private void requireCurrent(Lease lease) {\n        if (!leased || lease.returned || lease.generation != generation) {\n            throw new IllegalStateException(\"lease is no longer current\");\n        }\n    }\n\n    private synchronized byte read(Lease lease) {\n        requireCurrent(lease);\n        return block.get(ValueLayout.JAVA_BYTE, 0);\n    }\n\n    private synchronized MemorySegment view(Lease lease) {\n        requireCurrent(lease);\n        return block.asSlice(0, 1).asReadOnly();\n    }\n\n    private synchronized byte[] copy(Lease lease) {\n        requireCurrent(lease);\n        return block.toArray(ValueLayout.JAVA_BYTE);\n    }\n\n    private synchronized void release(Lease lease) {\n        requireCurrent(lease);\n        block.fill((byte) 0);\n        lease.returned = true;\n        leased = false;\n    }\n\n    @Override\n    public synchronized void close() {\n        if (leased) throw new IllegalStateException(\"outstanding lease\");\n        arena.close();\n    }\n\n    public static final class Lease implements AutoCloseable {\n        private final Pool pool;\n        private final long generation;\n        private boolean returned;\n        private Lease(Pool pool, long generation) {\n            this.pool = pool;\n            this.generation = generation;\n        }\n        public byte readChecked() { return pool.read(this); }\n        public MemorySegment readOnlyView() { return pool.view(this); }\n        public byte[] copy() { return pool.copy(this); }\n        @Override public void close() { pool.release(this); }\n    }\n}\n",
+        "Consumer.java": "import java.lang.foreign.ValueLayout;\n\npublic final class Consumer {\n    static byte consume(Pool pool, byte value) {\n        try (Pool.Lease lease = pool.acquire(value)) {\n            return lease.readOnlyView().get(ValueLayout.JAVA_BYTE, 0);\n        }\n    }\n\n    public static void main(String[] args) {\n        try (Pool pool = new Pool()) {\n            System.out.println(\"first=\" + consume(pool, (byte) 11));\n            System.out.println(\"second=\" + consume(pool, (byte) 99));\n        }\n    }\n}\n"
+      }
+    },
+    {
+      "id": "off-heap-memory-cooperative",
+      "request": "Review CONTRACT.md, Pool.java, and Consumer.java using off-heap-memory. Determine whether the current implementation satisfies the stated contract. Implement the smallest justified correction if it does not; otherwise preserve adequate behavior and explain the relevant boundary. Run focused checks and report commands, outputs, and limitations. Keep the Java 22 API baseline, avoid dependencies and unrelated changes, and do not turn this teaching fixture into a production allocator.",
+      "prerequisites": {
+        "runtime": "JDK 22 or newer with javac and java; reviewer compiled with --release 22 and executed on Temurin 25.0.3+9.",
+        "workspace": "Materialize only these three files in a fresh isolated directory. Provide the candidate off-heap-memory package to the actor through the usual skill mechanism.",
+        "suggestedInitialCommands": [
+          "javac --release 22 Pool.java Consumer.java",
+          "java -cp . Consumer"
+        ],
+        "knownInitialHappyPath": "first=11\\nsecond=99\\n",
+        "noAdditionalContext": "Do not give the actor evaluatorOnly or technicalEvidence."
+      },
+      "files": {
+        "CONTRACT.md": "# Pool contract\n\nThis is a small internal teaching fixture, not a production allocator. The API baseline is final Java 22 FFM. It has a single byte of payload storage and permits at most one active lease. Keep the single-slot bound, zero-on-return behavior, outstanding-lease shutdown check, and correct values for the current borrower. No new dependencies or Java baseline upgrade. Internal Pool and Consumer APIs may be changed when required by this contract. Independently owned copies are allowed and must be identified as copies, not borrowed aliases. Do not claim performance gains without measurement.\n\n## Borrowing rule\n\nBorrowed handles are used only by the reviewed internal Consumer within its try-with-resources lease. Retaining or accessing a borrowed handle after Lease.close() is outside this cooperative API contract. Automatic runtime rejection of accesses through retained aliases is not required.\n",
+        "Pool.java": "import java.lang.foreign.Arena;\nimport java.lang.foreign.MemorySegment;\nimport java.lang.foreign.ValueLayout;\n\npublic final class Pool implements AutoCloseable {\n    private final Arena arena = Arena.ofShared();\n    private final MemorySegment block = arena.allocate(1);\n    private boolean leased;\n    private long generation;\n\n    public synchronized Lease acquire(byte value) {\n        if (leased) throw new IllegalStateException(\"slot is leased\");\n        block.set(ValueLayout.JAVA_BYTE, 0, value);\n        leased = true;\n        return new Lease(this, ++generation);\n    }\n\n    private void requireCurrent(Lease lease) {\n        if (!leased || lease.returned || lease.generation != generation) {\n            throw new IllegalStateException(\"lease is no longer current\");\n        }\n    }\n\n    private synchronized byte read(Lease lease) {\n        requireCurrent(lease);\n        return block.get(ValueLayout.JAVA_BYTE, 0);\n    }\n\n    private synchronized MemorySegment view(Lease lease) {\n        requireCurrent(lease);\n        return block.asSlice(0, 1).asReadOnly();\n    }\n\n    private synchronized byte[] copy(Lease lease) {\n        requireCurrent(lease);\n        return block.toArray(ValueLayout.JAVA_BYTE);\n    }\n\n    private synchronized void release(Lease lease) {\n        requireCurrent(lease);\n        block.fill((byte) 0);\n        lease.returned = true;\n        leased = false;\n    }\n\n    @Override\n    public synchronized void close() {\n        if (leased) throw new IllegalStateException(\"outstanding lease\");\n        arena.close();\n    }\n\n    public static final class Lease implements AutoCloseable {\n        private final Pool pool;\n        private final long generation;\n        private boolean returned;\n        private Lease(Pool pool, long generation) {\n            this.pool = pool;\n            this.generation = generation;\n        }\n        public byte readChecked() { return pool.read(this); }\n        public MemorySegment readOnlyView() { return pool.view(this); }\n        public byte[] copy() { return pool.copy(this); }\n        @Override public void close() { pool.release(this); }\n    }\n}\n",
+        "Consumer.java": "import java.lang.foreign.ValueLayout;\n\npublic final class Consumer {\n    static byte consume(Pool pool, byte value) {\n        try (Pool.Lease lease = pool.acquire(value)) {\n            return lease.readOnlyView().get(ValueLayout.JAVA_BYTE, 0);\n        }\n    }\n\n    public static void main(String[] args) {\n        try (Pool pool = new Pool()) {\n            System.out.println(\"first=\" + consume(pool, (byte) 11));\n            System.out.println(\"second=\" + consume(pool, (byte) 99));\n        }\n    }\n}\n"
+      }
+    }
+  ],
+  "evaluatorOnly": [
+    {
+      "caseId": "off-heap-memory-enforced",
+      "expectedOutcomes": [
+        "Identify that readOnlyView returns an alias whose arena remains open after lease return and whose direct get bypasses Pool.requireCurrent.",
+        "Distinguish checked-handle generation enforcement from the lifetime of an escaped MemorySegment or ByteBuffer.",
+        "Do not treat read-only conversion or zeroing on release as revocation or an immutable snapshot.",
+        "Implement a proportionate contract-conforming option: a nonescaping checked API coordinated with release, or valid separately scoped borrowed storage. Independently owned copy is an explicit alternative but must not be misrepresented as a revoked alias.",
+        "Keep at most one active lease, the payload bound, zeroing behavior where applicable, and orderly shutdown semantics. Update Consumer to the selected valid API.",
+        "Verify former-borrower access after return and after controlled reuse while the pool remains open, current-borrower correctness, and retained independent-copy content if copying remains exposed.",
+        "Report Java 22 API targeting separately from the actual runtime and avoid unmeasured performance claims."
+      ],
+      "reproducibleControl": {
+        "initialSetup": "Pool is open. Acquire first lease with byte 11; retain readOnlyView, its asByteBuffer view, and copy().",
+        "ordering": [
+          "Close first lease, which zeroes storage without closing the arena.",
+          "Assert first.readChecked rejects but the retained segment scope is still alive.",
+          "Acquire second lease with byte 99 on the same block before closing the pool.",
+          "Baseline retained segment and buffer read 99 while copy[0] remains 11.",
+          "Release second lease and close the pool; the old segment and buffer then reject access."
+        ],
+        "correctedObservable": "The implemented borrowed-access API must enforce the promised post-return rejection without relying solely on whole-pool closure. If raw aliases were removed, validate the available public borrowed handle instead and show that no raw escape remains; valid separately scoped storage is also acceptable.",
+        "fixtureNote": "The baseline sequence is executed in technicalEvidence. An evaluator may reproduce equivalent checks against Pool.java; do not supply the control or expected values to the actor as an answer."
+      },
+      "observableFailures": [
+        "Claims contract compliance because readChecked or release checks a generation token while leaving escaped same-scope raw aliases accessible.",
+        "Uses a read-only alias, slice, or zero-on-return as the entire repair.",
+        "Tests only after closing the whole pool and claims it proves lease-level rejection.",
+        "Turns all independently owned copies into borrowed handles or rejects them without an ownership reason.",
+        "Changes Java baseline or adds infrastructure unrelated to the fixture."
+      ]
+    },
+    {
+      "caseId": "off-heap-memory-cooperative",
+      "expectedOutcomes": [
+        "Recognize that Consumer's accesses are entirely inside its active lease and meet this cooperative contract.",
+        "Preserve an adequate API and caller without an unnecessary enforced-revocation wrapper, mandatory copy, or per-request arena.",
+        "Explain that stale aliases could remain accessible if callers violated the contract, without inventing that violation in the supplied Consumer.",
+        "Keep original focused happy-path values first=11 and second=99; preserve bounds and shutdown guard.",
+        "No claim that cooperative safety equals runtime revocation, no measured performance claim, and no package-wide workflow changes."
+      ],
+      "observableFailures": [
+        "Forces the same redesign as the enforced case solely because a caller could retain an alias outside the stated contract.",
+        "Claims read-only views make retained data immutable or revoked after return.",
+        "Changes correct Consumer behavior or relaxes the single-slot/shutdown invariants.",
+        "Reports walkthrough predictions as executed agent evaluation or performance results."
+      ]
+    }
+  ],
+  "technicalEvidence": {
+    "fixtureDirectory": "C:/Users/robso/AppData/Local/Temp/off-heap-memory-quality14-8a0871017a604885b4b11756a742c359",
+    "sourceFile": "C:/Users/robso/AppData/Local/Temp/off-heap-memory-quality14-8a0871017a604885b4b11756a742c359/LeaseScopeEvidenceCheck.java",
+    "exactSource": "import java.lang.foreign.Arena;\nimport java.lang.foreign.MemorySegment;\nimport java.lang.foreign.ValueLayout;\nimport java.nio.ByteBuffer;\nimport java.nio.ReadOnlyBufferException;\n\npublic final class LeaseScopeEvidenceCheck {\n    // Isolated counterexample: checked handles coexist with deliberately escaped views.\n    // This one-slot sequential fixture is not a production pool implementation.\n    static final class OneSlotPool implements AutoCloseable {\n        private final Arena arena = Arena.ofShared();\n        private final MemorySegment block = arena.allocate(1);\n        private boolean leased;\n        private long generation;\n\n        synchronized Lease acquire(byte value) {\n            if (leased) throw new IllegalStateException(\"slot is leased\");\n            block.set(ValueLayout.JAVA_BYTE, 0, value);\n            leased = true;\n            return new Lease(this, ++generation);\n        }\n\n        private void requireCurrent(Lease lease) {\n            if (!leased || lease.returned || lease.generation != generation) {\n                throw new IllegalStateException(\"lease is no longer current\");\n            }\n        }\n\n        synchronized byte read(Lease lease) {\n            requireCurrent(lease);\n            return block.get(ValueLayout.JAVA_BYTE, 0);\n        }\n\n        synchronized MemorySegment view(Lease lease) {\n            requireCurrent(lease);\n            return block.asSlice(0, 1).asReadOnly();\n        }\n\n        synchronized byte[] copy(Lease lease) {\n            requireCurrent(lease);\n            return block.toArray(ValueLayout.JAVA_BYTE);\n        }\n\n        synchronized void release(Lease lease) {\n            requireCurrent(lease);\n            block.fill((byte) 0);\n            lease.returned = true;\n            leased = false;\n        }\n\n        @Override\n        public synchronized void close() {\n            if (leased) throw new IllegalStateException(\"outstanding lease\");\n            arena.close();\n        }\n    }\n\n    static final class Lease implements AutoCloseable {\n        private final OneSlotPool pool;\n        private final long generation;\n        private boolean returned;\n        Lease(OneSlotPool pool, long generation) {\n            this.pool = pool;\n            this.generation = generation;\n        }\n        byte readChecked() { return pool.read(this); }\n        MemorySegment readOnlyView() { return pool.view(this); }\n        byte[] copy() { return pool.copy(this); }\n        @Override public void close() { pool.release(this); }\n    }\n\n    public static void main(String[] args) throws Exception {\n        Thread deadline = new Thread(() -> {\n            try {\n                Thread.sleep(30_000);\n                System.err.println(\"Validation exceeded its 30-second deadline\");\n                Runtime.getRuntime().halt(124);\n            } catch (InterruptedException finished) {\n                Thread.currentThread().interrupt();\n            }\n        });\n        deadline.setDaemon(true);\n        deadline.start();\n        try {\n            verify();\n        } finally {\n            deadline.interrupt();\n        }\n    }\n\n    static void verify() {\n        MemorySegment escaped;\n        ByteBuffer buffer;\n        byte[] copy;\n        try (OneSlotPool pool = new OneSlotPool()) {\n            Lease first = pool.acquire((byte) 11);\n            escaped = first.readOnlyView();\n            buffer = escaped.asByteBuffer();\n            copy = first.copy();\n            require(escaped.get(ValueLayout.JAVA_BYTE, 0) == 11, \"initial segment\");\n            require(buffer.get(0) == 11, \"initial buffer\");\n            first.close();\n            expectIllegalState(first::readChecked, \"checked read after release\");\n            require(escaped.scope().isAlive(), \"arena remains alive\");\n            require(escaped.get(ValueLayout.JAVA_BYTE, 0) == 0, \"zeroed slot still visible\");\n            try (Lease second = pool.acquire((byte) 99)) {\n                require(second.readChecked() == 99, \"current lease\");\n                require(escaped.get(ValueLayout.JAVA_BYTE, 0) == 99, \"stale segment aliases reused block\");\n                require(buffer.get(0) == 99, \"stale buffer aliases reused block\");\n                require(copy[0] == 11, \"copy keeps prior value\");\n                try {\n                    buffer.put(0, (byte) 42);\n                    throw new AssertionError(\"read-only view allowed write\");\n                } catch (ReadOnlyBufferException expected) {\n                    // The restriction blocks writes, but does not isolate later contents.\n                }\n                System.out.println(\"afterRelease: checkedRead=REJECTED, scopeAlive=true\");\n                System.out.println(\"afterReuse: staleReadOnlySegment=99, staleReadOnlyBuffer=99, independentCopy=11\");\n            }\n        }\n        MemorySegment finalEscaped = escaped;\n        ByteBuffer finalBuffer = buffer;\n        expectIllegalState(() -> finalEscaped.get(ValueLayout.JAVA_BYTE, 0), \"segment after arena close\");\n        expectIllegalState(() -> finalBuffer.get(0), \"buffer after arena close\");\n        require(!escaped.scope().isAlive(), \"arena closed\");\n        System.out.println(\"afterArenaClose: segmentRead=REJECTED, bufferRead=REJECTED\");\n        System.out.println(\"PASS: logical lease return and arena close have distinct access boundaries\");\n    }\n\n    @FunctionalInterface\n    interface Access { byte read(); }\n\n    static void expectIllegalState(Access access, String label) {\n        try {\n            access.read();\n            throw new AssertionError(label + \" unexpectedly succeeded\");\n        } catch (IllegalStateException expected) {\n            // Expected controlled rejection.\n        }\n    }\n\n    static void require(boolean condition, String message) {\n        if (!condition) throw new AssertionError(message);\n    }\n}\n",
+    "stdoutFile": "C:/Users/robso/AppData/Local/Temp/off-heap-memory-quality14-8a0871017a604885b4b11756a742c359/results.txt",
+    "resultSummary": "Sequential controlled reuse demonstrated logical use-after-return, a checked-handle positive control, independent-copy positive control, read-only write rejection, and arena-close lifetime control.",
+    "retainedArtifactsAndHashes": [
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\off-heap-memory-quality14-8a0871017a604885b4b11756a742c359\\Consumer.class",
+        "Hash": "AEC0A66DB88E52388523ADEBCE2235FF9310D0DF43933B3345724A48F1C6E4A4"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\off-heap-memory-quality14-8a0871017a604885b4b11756a742c359\\Consumer.java",
+        "Hash": "DBF01EB929EC52690743A57B2D0590EA72C21D9D13D4B173778A5AB19BE00771"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\off-heap-memory-quality14-8a0871017a604885b4b11756a742c359\\LeaseScopeEvidenceCheck.class",
+        "Hash": "521942772DF327EAB64B01EEE29392B7BF33FA220E1A133DF20B4A2683F2AA67"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\off-heap-memory-quality14-8a0871017a604885b4b11756a742c359\\LeaseScopeEvidenceCheck.java",
+        "Hash": "273A3A6397828952053BBB11859C0ECF47B71A9B5FE09529E111ECA082ACBFC3"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\off-heap-memory-quality14-8a0871017a604885b4b11756a742c359\\LeaseScopeEvidenceCheck$Access.class",
+        "Hash": "ADE4778CAA34796650C801F4677186EE14A8205BF87B6DE92833F96EA640498E"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\off-heap-memory-quality14-8a0871017a604885b4b11756a742c359\\LeaseScopeEvidenceCheck$Lease.class",
+        "Hash": "982EF7D5541957AB9A50367E4016425B32FA4C44D9D2EE19BC1AB8B44DE56A1E"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\off-heap-memory-quality14-8a0871017a604885b4b11756a742c359\\LeaseScopeEvidenceCheck$OneSlotPool.class",
+        "Hash": "C134F48416A6568285D3554393D1D4A392998507E66DB6EA29CF276C23F2614A"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\off-heap-memory-quality14-8a0871017a604885b4b11756a742c359\\Pool.class",
+        "Hash": "2A8C3F5AD03B0EB53F2733CFD9CFD11F012D8749E8E08031A6B89543A70348E8"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\off-heap-memory-quality14-8a0871017a604885b4b11756a742c359\\Pool.java",
+        "Hash": "DB1AE5E9A1C1C16E404C082FEF8C33B52B8DCC08CE452782852A2C2DE845D5E0"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\off-heap-memory-quality14-8a0871017a604885b4b11756a742c359\\Pool$Lease.class",
+        "Hash": "94A45C78D633A9FDA1582F9C81D020D228D5595DDC091ACA6C07C406C112D1ED"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\off-heap-memory-quality14-8a0871017a604885b4b11756a742c359\\results.txt",
+        "Hash": "2A9B7A46FB09B9D7C7C7FF459BD966765B47401CEBF13DF74E05760C9D65886B"
+      }
+    ],
+    "processState": "All commands completed. The harness included a daemon watchdog; no process remains running or writing.",
+    "coverageLimits": [
+      "Executed on Temurin JDK 25.0.3+9 with --release 22 compilation, not on a Java 22 runtime.",
+      "Sequential one-slot evidence, not a multi-thread race, cancellation, arbitrary native pointer, production allocator, or performance proof.",
+      "Actor fixtures were compiled and their original happy path executed; no candidate agent output was generated."
+    ]
+  },
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/en/java/javase/22/docs/api/java.base/java/lang/foreign/MemorySegment.html",
+      "primary": true,
+      "verified": true,
+      "supports": "Slicing/aliasing shares backing and temporal bounds; read-only segment is a view; ByteBuffer bridge respects originating lifetime.",
+      "conclusionType": "API facts combined with the explicit application-level lease protocol and executed control."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/22/docs/api/java.base/java/nio/ByteBuffer.html",
+      "primary": true,
+      "verified": true,
+      "supports": "Read-only buffer shares content; read-only means no writes through that view, not immutable copied contents."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/22/docs/api/java.base/java/lang/foreign/Arena.html",
+      "primary": true,
+      "verified": true,
+      "supports": "Arena lifetime/close context; retained for review evidence, not a new universal claim about every possible pool implementation."
+    }
+  ],
+  "assumptionsAndLimits": [
+    "The corrected risk applies when a returned alias remains attached to a live arena scope. Separately scoped storage can make a lease and scope end together; text explicitly permits this.",
+    "No unsupported claim that every pool must use a checked wrapper, forbid ByteBuffer, or allocate per operation.",
+    "No broad race-freedom, secrecy, absence-of-leaks, performance, or behavior-improvement guarantee.",
+    "No Java 22 runtime was available in the executed evidence; API source and --release 22 compilation support baseline compatibility.",
+    "Primary API pages and actual local execution support this specific correction; independent behavioral comparison remains pending."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Shared generated registry; run only after all reviewers stop writing.",
+      "prerequisites": "All skill writers stopped."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Repository-wide validation reserved for coordinator in parallel review workflow.",
+      "prerequisites": "All skill writers stopped and registry regenerated."
+    }
+  ],
+  "coordinatorActions": [
+    "Run independent actor evaluations from actorInputs only; retain evaluatorOnly and technicalEvidence outside the actor prompt.",
+    "Compare baseline and candidate only if making a measured gain claim; this handoff makes no such claim.",
+    "Run global registry/verify after all reviewers stop."
+  ],
+  "crossSkillIssues": [],
+  "crossSkillNote": "Neighbor jvm-memory-regions capacity-versus-MemoryUsed/RSS finding already covered by this skill's native-memory reference; inspected and intentionally left unchanged.",
+  "writesStoppedAfter": "Final skill edits, local checks, final diff/hash inspection, and this authorized temporary handoff write. Remain read-only after handoff."
+}

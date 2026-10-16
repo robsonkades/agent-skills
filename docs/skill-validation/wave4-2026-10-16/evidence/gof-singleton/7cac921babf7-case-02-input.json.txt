@@ -1,0 +1,30 @@
+{
+  "id": "gof-singleton-02",
+  "request": "Review this storage-service configuration before release. Check the stated singleton scope and lifetime against startup, consumers and factory code; verify any material finding. Preserve a design that already meets the accepted contract, keep Java 17 and the pinned Spring version, and distinguish proposed changes from executed results.",
+  "resources": [
+    {
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-singleton-validation-quality18/common",
+      "target": "."
+    },
+    {
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-singleton-validation-quality18/case-02/StorageConfiguration.java",
+      "target": "src/StorageConfiguration.java"
+    }
+  ],
+  "prerequisites": [
+    "Disposable working directory with write access.",
+    "Existing JDK25 path from fixture-dependencies.json used with --release17; target remains Java17.",
+    "Existing read-only Spring6.2.7 and Micrometer1.14.7 cache JARs; no install/download."
+  ],
+  "baselineCommand": "PowerShell: ./run-smoke.ps1",
+  "allowedScope": "Read fixture and primary docs, run isolated checks, report findings. A review need not implement a refactor.",
+  "singleDifference": "The StorageConfiguration annotation's proxyBeanMethods value changes; all ordinary source, accepted contract and smoke tests are identical.",
+  "exclusions": [
+    "evaluator-criteria.json",
+    "technical-probe/",
+    "evidence.json",
+    "other case, actor outputs or package versions outside assigned treatment"
+  ],
+  "classification": "Known development case, no independent actor run",
+  "isolation": "Coordinator must materialize only listed resources and chosen skill treatment; current separation is procedural."
+}

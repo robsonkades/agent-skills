@@ -174,7 +174,7 @@ persisting; setting scalar fields in `PostTagId` alone does not establish those 
 Its attribute names and types must match the `@MapsId` names and referenced identifier types.
 The mapped identifier components derive from the associations; direct mutation of those
 components is not a request to update the foreign keys. See the
-[`@MapsId` contract](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/mapsid).
+[`@MapsId` contract](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/MapsId.html).
 
 Once persistent, do not change the primary key, whether natural, generated, assigned or derived.
 Changing this link's post or tag would change its identity. Jakarta Persistence defines primary-key
@@ -272,7 +272,7 @@ handling, and account for permissions or migration procedures that can alter enf
 
 These are partial JPA examples, with imports, ids and constructors omitted where unrelated.
 Verify Java, Jakarta/Javax namespace and provider versions before reuse. Sources:
-[Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2)
+[Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html)
 and Hibernate 6.6.56 source documentation for
 [associations](https://github.com/hibernate/hibernate-orm/blob/6.6.56/documentation/src/main/asciidoc/userguide/chapters/domain/associations.adoc),
 [identifiers](https://github.com/hibernate/hibernate-orm/blob/6.6.56/documentation/src/main/asciidoc/userguide/chapters/domain/identifiers.adoc)

@@ -1,0 +1,108 @@
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
+import org.junit.jupiter.api.*;
+import static org.junit.jupiter.api.Assertions.*;
+public class AccountTest {
+@RepeatedTest(20)                       // more sampled executions, not exhaustive coverage
+@Timeout(30)
+void balanceConservesSuccessfulWithdrawalsAfterWorkersFinish() throws Exception {
+    Account account = new Account(10_000);
+    int threads = 32, opsPerThread = 1_000;
+
+    CyclicBarrier start = new CyclicBarrier(threads);
+    AtomicInteger succeeded = new AtomicInteger();
+    AtomicInteger refused = new AtomicInteger();
+
+    var exec = Executors.newVirtualThreadPerTaskExecutor();
+    List<Future<?>> tasks = new ArrayList<>();
+    assertAll("workers and teardown",
+        () -> {
+            try {
+                for (int t = 0; t < threads; t++) {
+                    tasks.add(exec.submit(() -> {
+                        start.await(5, TimeUnit.SECONDS); // overlap with a bounded barrier
+                        for (int i = 0; i < opsPerThread; i++) {
+                            if (account.withdraw(10)) succeeded.incrementAndGet();
+                            else refused.incrementAndGet();
+                        }
+                        return null;
+                    }));
+                }
+                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(20);
+                assertAll("worker outcomes", tasks.stream().map(task -> () ->
+                        task.get(Math.max(0, deadline - System.nanoTime()), TimeUnit.NANOSECONDS)));
+            } finally {
+                tasks.forEach(task -> task.cancel(true));
+                exec.shutdownNow();
+            }
+        },
+        () -> assertTrue(exec.awaitTermination(2, TimeUnit.SECONDS), "executor survived teardown"));
+
+    // Invariants, not schedules:
+    assertTrue(account.balance() >= 0);
+    assertEquals(10_000 - succeeded.get() * 10, account.balance());       // conservation
+    assertEquals(threads * opsPerThread, succeeded.get() + refused.get()); // accounting
+    assertEquals(1_000, succeeded.get(), "affordable withdrawals must succeed");
+    assertEquals(31_000, refused.get(), "only withdrawals beyond available funds may fail");
+    assertEquals(0, account.balance(), "enough attempts were made to exhaust the account");
+}
+
+@Test
+@Timeout(10)
+void affordableWithdrawalSucceedsDespiteContention() throws Exception {
+    Account account = new Account(10);
+    CountDownLatch gateEntered = new CountDownLatch(1);
+    CountDownLatch releaseGate = new CountDownLatch(1);
+    CountDownLatch attempting = new CountDownLatch(1);
+    AtomicReference<Thread> withdrawingThread = new AtomicReference<>();
+    var exec = Executors.newVirtualThreadPerTaskExecutor();
+    List<Future<?>> tasks = new ArrayList<>();
+
+    assertAll("contended withdrawal and teardown",
+        () -> {
+            try {
+                Future<?> holder = exec.submit(() -> {
+                    account.holdGate(gateEntered, releaseGate);
+                    return null;
+                });
+                tasks.add(holder);
+                assertTrue(gateEntered.await(2, TimeUnit.SECONDS), "gate was not acquired");
+                Future<Boolean> withdrawal = exec.submit(() -> {
+                    withdrawingThread.set(Thread.currentThread());
+                    attempting.countDown();
+                    return account.withdraw(10);
+                });
+                tasks.add(withdrawal);
+                assertTrue(attempting.await(2, TimeUnit.SECONDS), "withdrawal did not start");
+
+                // The latch alone precedes withdraw and cannot establish contention.
+                // In this fixture the only subsequent blocking call is the held gate.
+                // An immediate refusal completes instead, and must still be checked.
+                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(2);
+                while (!withdrawal.isDone()
+                        && withdrawingThread.get().getState() != Thread.State.WAITING
+                        && System.nanoTime() < deadline) {
+                    TimeUnit.MILLISECONDS.sleep(1); // bounded observation poll, not a progress oracle
+                }
+                assertTrue(withdrawal.isDone()
+                        || withdrawingThread.get().getState() == Thread.State.WAITING,
+                        "withdrawal neither reached the held gate nor completed within the test budget");
+                releaseGate.countDown();
+                assertAll("worker outcomes",
+                    () -> holder.get(2, TimeUnit.SECONDS),
+                    () -> assertTrue(withdrawal.get(2, TimeUnit.SECONDS),
+                            "contention cannot refuse an affordable withdrawal"));
+            } finally {
+                releaseGate.countDown();
+                tasks.forEach(task -> task.cancel(true));
+                exec.shutdownNow();
+            }
+        },
+        () -> assertTrue(exec.awaitTermination(2, TimeUnit.SECONDS), "executor survived teardown"));
+
+    assertEquals(0, account.balance(), "the successful withdrawal must subtract exactly once");
+    assertFalse(account.withdraw(10), "an exhausted account must refuse a further withdrawal");
+    assertEquals(0, account.balance(), "refusal must leave the balance unchanged");
+}
+}

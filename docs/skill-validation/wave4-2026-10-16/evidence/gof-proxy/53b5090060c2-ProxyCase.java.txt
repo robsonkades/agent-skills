@@ -1,0 +1,54 @@
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Proxy;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+public final class ProxyCase {
+    public interface Reports {
+        Reports withFormat(String format);
+        String render();
+    }
+
+    public static final class Client implements Reports {
+        private String format;
+        public Client(String format) { this.format = format; }
+        public Reports withFormat(String next) {
+            this.format = next;
+            return this;
+        }
+        public String render() { return format; }
+    }
+
+    public static Reports forCaller(Reports target, AtomicBoolean allowed) {
+        return (Reports) Proxy.newProxyInstance(Reports.class.getClassLoader(),
+                new Class<?>[]{Reports.class}, (proxy, method, args) -> {
+                    if (method.getDeclaringClass() == Object.class) {
+                        return switch (method.getName()) {
+                            case "equals" -> proxy == args[0];
+                            case "hashCode" -> System.identityHashCode(proxy);
+                            case "toString" -> "Reports";
+                            default -> throw new AssertionError(method);
+                        };
+                    }
+                    if (method.getName().equals("render") && !allowed.get()) {
+                        throw new SecurityException("denied");
+                    }
+                    try { return method.invoke(target, args); }
+                    catch (InvocationTargetException e) { throw e.getCause(); }
+                });
+    }
+
+    private static String invokeRender(Reports client) {
+        try { return client.render(); }
+        catch (SecurityException e) { return "DENIED"; }
+    }
+
+    public static void main(String[] args) {
+        AtomicBoolean allowed = new AtomicBoolean(true);
+        Reports client = forCaller(new Client("full"), allowed);
+        System.out.println("allowed-format=" + client.withFormat("summary").render());
+        allowed.set(false);
+        System.out.println("revoked-direct=" + invokeRender(client));
+        System.out.println("revoked-chain=" + invokeRender(client.withFormat("detail")));
+    }
+}
+

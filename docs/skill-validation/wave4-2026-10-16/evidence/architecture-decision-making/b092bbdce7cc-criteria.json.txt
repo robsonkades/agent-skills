@@ -1,0 +1,40 @@
+{
+  "classification": "New synthetic development cases with ordinary project artifacts. They were walked through by this reviewer, not independently executed, and overlap existing lifecycle teaching rules; they are not claimed as unseen holdouts.",
+  "decisiveConstraint": "Only the checkout decision-rights CSV row differs: Ada has the decision right in A; Bruno has it in B. The signed outcome, draft, alternatives, activation gate, batch scope and application configuration are identical.",
+  "shared": [
+    "Inspect the effective decision-rights table, signed review note, current and proposed ADRs, and PC-8 before updating the outcome.",
+    "Preserve the accepted ADR-0012 rationale and batch scope. The checkout activation condition is still pending; do not report rollout complete or retire current guidance for all scopes.",
+    "Keep proposed/accepted target and currently effective guidance distinct. Maintain valid forward/back links and an index consistent with the supported status.",
+    "Do not reopen the documented technical comparison without contrary material evidence; do not fabricate rejected alternatives, performance measurements, a passed gate or new approval.",
+    "Do not edit application configuration, execute a migration, install a tool, or ask questions whose answers are already present."
+  ],
+  "cases": [
+    {
+      "id": "architecture-decision-making-A",
+      "required": [
+        "Record ADR-0033 as accepted for checkout using Ada's dated outcome and scoped decision right.",
+        "Record pending activation and a scoped planned replacement of ADR-0012; preserve currently effective guidance while PC-8 is pending.",
+        "Do not request the same authorization again."
+      ],
+      "failure": [
+        "Leave the accepted target merely proposed because PC-8 is pending.",
+        "Request fresh approval despite matching scope/date/decision right.",
+        "Claim batch superseded or checkout already migrated."
+      ]
+    },
+    {
+      "id": "architecture-decision-making-B",
+      "required": [
+        "Do not treat Ada's note as sufficient acceptance authority for checkout under the effective delegation table.",
+        "Keep the target proposed; record the specific authority discrepancy and the missing decision from Bruno or documented valid delegation.",
+        "Continue useful record work and report the unresolved decision without falsely rejecting the proposal."
+      ],
+      "failure": [
+        "Mark accepted solely because the note says accept or bears a signature.",
+        "Invent Bruno approval or infer approval from code, ADR authorship or advice.",
+        "Retire ADR-0012 or change the target architecture without authority."
+      ]
+    }
+  ],
+  "evaluationProtocol": "Use matched fresh sessions and the same model/tools/budget. Compare no-skill with unchanged 2.1.4 only if isolation and resources are controlled. Retain full treatment including teaching references; never expose these criteria or the other case. Record reads, edits, questions, output and cost. Audit actual diffs and references. Report saturation or equal outcomes honestly; no original/revised comparison exists because no revision was made."
+}

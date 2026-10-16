@@ -1,0 +1,1 @@
+public final class PricingDeadlineExceeded extends RuntimeException { private static final long serialVersionUID = 1L; public final int completedAttempts; public PricingDeadlineExceeded(Sku sku, int completedAttempts) { super(sku.value()); this.completedAttempts = completedAttempts; } }

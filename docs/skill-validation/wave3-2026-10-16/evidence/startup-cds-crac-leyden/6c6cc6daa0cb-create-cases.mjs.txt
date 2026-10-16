@@ -1,0 +1,53 @@
+import assert from 'node:assert/strict';
+import { mkdirSync, copyFileSync, writeFileSync, readFileSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+const here = dirname(fileURLToPath(import.meta.url));
+const sourceFiles = ['jep-544.html', 'jdk-28.html', 'jep-515.html'];
+const inputs = [];
+for (const [name, id, release] of [['jdk25', 'ST-C1', '25'], ['jdk28ea', 'ST-C2', '28-ea']]) {
+  const workspace = resolve(here, 'cases', name);
+  mkdirSync(resolve(workspace, 'sources'), { recursive: true });
+  for (const file of sourceFiles) copyFileSync(resolve(here, 'sources', file), resolve(workspace, 'sources', file));
+  const inventory = {
+    fixtureType: 'synthetic project inventory for review exercise; not a probed runtime',
+    selectedJavaRelease: release,
+    vendorAndExactBuild: 'not included in this inventory export',
+    launch: ['java', '-XX:AOTCache=orders.aot', '-jar', 'orders.jar'],
+    trainingPlan: 'application refresh then exit; endpoint traffic not recorded',
+    preservedEvidence: ['inventory and primary source captures only'],
+    unavailableEvidence: ['candidate binary diagnostics', 'cache producer manifest', 'cache load logs', 'first successful endpoint response', 'first response meeting latency SLO', 'controlled performance cohorts']
+  };
+  writeFileSync(resolve(workspace, 'runtime-inventory.json'), JSON.stringify(inventory, null, 2) + '\n');
+  writeFileSync(resolve(workspace, 'adoption-note.md'), '# Proposed startup decision\n\nJEP 544 is integrated, so our selected AOT cache can be treated as a cache of native application methods. The application refresh path is enough training. We can accept the port-open timestamp as the readiness result and omit additional first-response measurements. Retain the current serving command from the runtime inventory.\n');
+  writeFileSync(resolve(workspace, 'source-provenance.json'), JSON.stringify([
+    { file: 'sources/jep-544.html', url: 'https://openjdk.org/jeps/544', captured: '2026-10-16', transportStatus: 200 },
+    { file: 'sources/jdk-28.html', url: 'https://openjdk.org/projects/jdk/28/', captured: '2026-10-16', transportStatus: 200 },
+    { file: 'sources/jep-515.html', url: 'https://openjdk.org/jeps/515', captured: '2026-10-16', transportStatus: 200 }
+  ], null, 2) + '\n');
+  const input = { id, workspace,
+    request: 'Review the startup adoption proposal against the supplied project inventory and primary-source captures. Revise adoption-note.md into a defensible decision for the selected runtime, keeping the requested scope to a source review. Identify any missing evidence that materially changes the recommendation. Do not install or download a toolchain, run a deployment, upgrade the target, or claim measurements that were not supplied.',
+    fixtures: ['runtime-inventory.json', 'adoption-note.md', 'source-provenance.json', ...sourceFiles.map(f => 'sources/' + f)],
+    prerequisites: 'Read-only source inspection and local Markdown editing only; no runtime prerequisite for this review.',
+    evaluationStatus: 'Input prepared; no agent run.' };
+  writeFileSync(resolve(workspace, 'input.json'), JSON.stringify(input, null, 2) + '\n');
+  inputs.push(input);
+}
+const a = JSON.parse(readFileSync(resolve(inputs[0].workspace, 'runtime-inventory.json'), 'utf8'));
+const b = JSON.parse(readFileSync(resolve(inputs[1].workspace, 'runtime-inventory.json'), 'utf8'));
+assert.equal(a.selectedJavaRelease, '25');
+assert.equal(b.selectedJavaRelease, '28-ea');
+delete a.selectedJavaRelease;
+delete b.selectedJavaRelease;
+assert.deepEqual(a, b);
+assert.equal(inputs[0].request, inputs[1].request);
+for (const file of ['adoption-note.md', 'source-provenance.json', ...sourceFiles.map(f => 'sources/' + f)]) {
+  assert.equal(readFileSync(resolve(inputs[0].workspace, file), 'utf8'), readFileSync(resolve(inputs[1].workspace, file), 'utf8'));
+}
+const criteria = JSON.parse(readFileSync(resolve(here, 'case-criteria.json'), 'utf8'));
+assert.deepEqual(criteria.cases.map(c => c.id), inputs.map(c => c.id));
+const result = { status: 'PASS', cases: inputs.map(i => ({ id: i.id, input: resolve(i.workspace, 'input.json') })),
+  decisiveDifference: 'selectedJavaRelease only; all other inventory, request, proposal and source content is identical',
+  criteria: resolve(here, 'case-criteria.json'), agentEvaluationsExecuted: 0 };
+writeFileSync(resolve(here, 'case-fixture-results.json'), JSON.stringify(result, null, 2) + '\n');
+console.log(JSON.stringify(result, null, 2));

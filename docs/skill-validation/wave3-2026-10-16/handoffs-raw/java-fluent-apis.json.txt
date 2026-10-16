@@ -1,0 +1,787 @@
+{
+  "status": "NO_CHANGES_NEEDED",
+  "skill": "java-fluent-apis",
+  "ownedPath": "skills/java-fluent-apis/**",
+  "reviewer": "/root/quality15",
+  "wave": 3,
+  "reviewDate": "2026-10-16",
+  "allWritesStopped": true,
+  "processesStillWriting": [],
+  "baseline": {
+    "committedVersion": "1.2.5",
+    "assignmentVersion": "1.2.5",
+    "finalVersion": "1.2.5",
+    "staged": [],
+    "unstaged": [],
+    "untracked": [],
+    "ignored": [],
+    "preExistingVersionBump": false,
+    "assignmentHashes": [
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\java-fluent-apis\\SKILL.md",
+        "SHA256": "B6CADE9831E623642658B19062C15FB6460E47D824EE51B767B13ECAEB9F24F7",
+        "Bytes": 11347
+      },
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\java-fluent-apis\\skill.yaml",
+        "SHA256": "E64B1503EBF3C3D03DFACE43097DDAF00C466D2AF78A96117C05950673B85D0F",
+        "Bytes": 1514
+      },
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\java-fluent-apis\\references\\builder-decision.md",
+        "SHA256": "6A901559835D34B6BDAC11E971B574E59BB0E96671809D000DDD6F1DA21F3938",
+        "Bytes": 9692
+      },
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\java-fluent-apis\\references\\worked-example.md",
+        "SHA256": "6F0D66C411DF88315E2387C0B1B1D19411C8BC386748ED422F2339D36C6079EF",
+        "Bytes": 9482
+      }
+    ],
+    "finalHashes": [
+      {
+        "path": "C:\\git\\agent-skills\\skills\\java-fluent-apis\\SKILL.md",
+        "bytes": 11347,
+        "sha256": "B6CADE9831E623642658B19062C15FB6460E47D824EE51B767B13ECAEB9F24F7"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\java-fluent-apis\\skill.yaml",
+        "bytes": 1514,
+        "sha256": "E64B1503EBF3C3D03DFACE43097DDAF00C466D2AF78A96117C05950673B85D0F"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\java-fluent-apis\\references\\builder-decision.md",
+        "bytes": 9692,
+        "sha256": "6A901559835D34B6BDAC11E971B574E59BB0E96671809D000DDD6F1DA21F3938"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\java-fluent-apis\\references\\worked-example.md",
+        "bytes": 9482,
+        "sha256": "6F0D66C411DF88315E2387C0B1B1D19411C8BC386748ED422F2339D36C6079EF"
+      }
+    ],
+    "attribution": "Clean assignment baseline. All four package files remain byte-identical; no content or version edit."
+  },
+  "procedure": {
+    "instructions": "Applied the complete review prompt and wave 3 brief, AGENTS/parallel ownership rules, and skill-engineering evidence/evaluation/resource-design/anti-pattern references read in the immediately preceding assignment; unchanged guidance reused.",
+    "packageRead": "SKILL.md, skill.yaml and both references read completely before deciding changes.",
+    "scope": "Fluent construction and chain contracts, not general API naming, navigation coupling, payment protocol implementation or package-manager tooling.",
+    "findingsBeforeEdits": "Preliminary assessment sent to /root before any technical fixture work. Reported existing mutation/aliasing/repetition/failure/lifecycle guards and proposed factory-selected state controls. No skill edit was justified.",
+    "ownership": "No shared, neighboring or generated edits; prior java-api-design remains read-only. No subagents, installations, global checks or Git-state mutations."
+  },
+  "successCriteria": [
+    "Select constructor/factory/builder/staging/wither from actual caller risks rather than counts or names.",
+    "Determine actual mutable/immutable behavior and selected factory implementation before changing conditional or branching callers.",
+    "Preserve repeated-call semantics, product invariants, snapshots, confinement/reuse and failure-state contracts.",
+    "Separate compile-time sequence restrictions from semantic validity and linear ownership.",
+    "State resource acquisition/cleanup boundaries and published return-descriptor risks with appropriate evidence.",
+    "Retain proportionate verification and missing-evidence behavior without forcing templates, DSLs or tooling."
+  ],
+  "findings": [
+    {
+      "id": "EXISTING-MUTATION-CONTRACT-GUARD-ADEQUATE",
+      "location": "skills/java-fluent-apis/SKILL.md:70 and references/builder-decision.md:43",
+      "result": "Existing guidance confirmed; no edit.",
+      "evidence": "The body requires retaining immutable returns, identifying mutable aliases, choosing fresh/copy or immutable derivation for variants, and not inferring semantics from with-prefixed names. The reference requires reading contract/implementation and gives distinct conditional/branching rules.",
+      "executedOutcome": "With the same consumer and sources, only the factory property changed. Mutable selection produced right/true twice; immutable selection produced left/false and right/false. Copying mutable branches passed; retaining the immutable return passed; crossed repairs failed.",
+      "consequence": "The skill already contains the decision rule needed to distinguish the actual consumer failures."
+    },
+    {
+      "id": "EXISTING-REPEATED-AND-FAILURE-STATE-GUARDS-ADEQUATE",
+      "location": "skills/java-fluent-apis/SKILL.md:74,82 and references/builder-decision.md:54",
+      "result": "Existing guidance confirmed; no edit.",
+      "evidence": "Rules specify replace/accumulate/reset semantics, option order, local validation, authoritative product/build invariants and the lack of automatic chain rollback.",
+      "executedOutcome": "Actual Java 25 LocalDate and HttpRequest.Builder checks confirmed ignored immutable returns, setter identity, prior-product independence, independent copy, header accumulation/replacement and survival of an earlier header mutation after invalid timeout failure. No HTTP request was sent.",
+      "consequence": "No broad new builder wrapper or generic retry advice is justified."
+    },
+    {
+      "id": "EXISTING-STAGING-LIFETIME-AND-EVOLUTION-LIMITS-ADEQUATE",
+      "location": "skills/java-fluent-apis/SKILL.md:98 and references/builder-decision.md:68,85,90",
+      "result": "Adequate within reviewed scope; no edit.",
+      "evidence": "Stages restrict static call paths without guaranteeing nullness/single use; aliases/casts and runtime product validation are explicit. Return descriptor/bridge conditions are qualified. The resource rule places acquisition into the protected lifetime before fallible fluent setup.",
+      "sourceSupport": "JLS 25 try-with-resources translation confirms the initializer boundary. The shared API-design review already verified the normative return/compatibility distinctions.",
+      "limitation": "This review did not run staged-builder misuse, return-type binary migration or Files.lines cleanup fixtures."
+    },
+    {
+      "id": "EXISTING-CHARGE-EXAMPLE-BOUNDARIES-ADEQUATE",
+      "location": "skills/java-fluent-apis/references/worked-example.md:45,110,142,185",
+      "result": "Reviewed and preserved; no supported defect.",
+      "evidence": "Required role types/factory entry, stable caller key, reusable confined builder, immutable role-type precondition, exact UTF-16 descriptor unit, constructor migration and framework-path evidence are all stated. Partial snippets are explicitly classified.",
+      "limitation": "The partial payment sketch is not a real provider or distributed idempotency implementation and was not executed here."
+    }
+  ],
+  "findingsCorrected": [],
+  "remainingMaterialDefects": [],
+  "filesChangedByReviewer": [],
+  "preExistingChanges": [],
+  "capabilitiesPreserved": [
+    "Java 25 no-preview authoring default with explicit record/var/Optional and project-target conditions.",
+    "Caller-first alternatives and no numerical builder threshold.",
+    "Required-in-factory versus staged construction, public stage evolution costs and runtime validity.",
+    "Mutable/immutable conditional configuration, branch aliasing, copy contracts, repeated options and failure recovery.",
+    "Product immutability, mutable-element ownership, builder reuse and confinement.",
+    "Delayed effects/resource lifetime and cleanup when fluent setup fails.",
+    "Full return descriptors, bridges/inheritance, interface method additions and source ambiguity caveats.",
+    "Honest wither allocation mechanism without unmeasured performance verdicts.",
+    "Charge-request worked example, stable retry identity, provider-specific validation-unit limits, old-constructor/framework evidence and routed references."
+  ],
+  "removedOrReplacedCapabilities": [],
+  "versionRationale": "No package content changed; version-only increment would be unwarranted. HEAD, assignment and final are all 1.2.5.",
+  "checks": {
+    "structuralExecuted": [
+      {
+        "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-fluent-apis-validation/local-checks.mjs",
+        "cwd": "C:/git/agent-skills",
+        "result": "PASS exit 0: strict manifest issues 0; descriptions/name match; four files; two local links valid; both references routed; all baseline hashes unchanged.",
+        "artifact": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-fluent-apis-validation/local-checks.log"
+      },
+      {
+        "command": "node node_modules/prettier/bin/prettier.cjs --check skills/java-fluent-apis/SKILL.md skills/java-fluent-apis/skill.yaml skills/java-fluent-apis/references/*.md",
+        "cwd": "C:/git/agent-skills",
+        "result": "PASS exit 0; all four files use Prettier style.",
+        "artifact": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-fluent-apis-validation/prettier-check.log"
+      },
+      {
+        "command": "git diff --check -- skills/java-fluent-apis",
+        "cwd": "C:/git/agent-skills",
+        "result": "PASS exit 0; no whitespace output."
+      },
+      {
+        "command": "git status --short --untracked-files=all -- skills/java-fluent-apis; git diff --cached -- skills/java-fluent-apis; git diff -- skills/java-fluent-apis; git ls-files --others --ignored --exclude-standard -- skills/java-fluent-apis",
+        "cwd": "C:/git/agent-skills",
+        "result": "All outputs empty; owned package clean."
+      },
+      {
+        "command": "git show HEAD:skills/java-fluent-apis/skill.yaml",
+        "cwd": "C:/git/agent-skills",
+        "result": "Committed version 1.2.5 confirmed."
+      }
+    ],
+    "technicalExecuted": {
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-fluent-apis-validation/run-technical.mjs run01",
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS exit 0; ten child commands; seven Java check invocations with four expected AssertionError negative controls and three passing invocations.",
+      "compiler": "Temurin javac 25.0.3, --release 25, no preview",
+      "runtime": "Temurin 25.0.3+9 HotSpot, actual Java 25 VM",
+      "criteriaFrozenBeforeRun": true,
+      "exactCommandsAndResults": [
+        {
+          "id": "01-java-version",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+          "args": [
+            "-version"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation",
+          "expectedExit": 0,
+          "actualExit": 0,
+          "error": null,
+          "stdout": "",
+          "stderr": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n"
+        },
+        {
+          "id": "02-javac-version",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+          "args": [
+            "-version"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation",
+          "expectedExit": 0,
+          "actualExit": 0,
+          "error": null,
+          "stdout": "javac 25.0.3\r\n",
+          "stderr": ""
+        },
+        {
+          "id": "03-compile",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+          "args": [
+            "--release",
+            "25",
+            "-d",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\compiled\\run01",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\actor-fixtures\\shared\\src\\sample\\ActorMain.java",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\actor-fixtures\\shared\\src\\sample\\Options.java",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\actor-fixtures\\shared\\src\\sample\\OptionsFactory.java",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\actor-fixtures\\shared\\src\\sample\\Product.java",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\actor-fixtures\\shared\\src\\sample\\Variants.java",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\controls\\src\\sample\\JdkContractChecks.java",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\controls\\src\\sample\\TechnicalMain.java"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation",
+          "expectedExit": 0,
+          "actualExit": 0,
+          "error": null,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "id": "04-candidate-a-negative",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+          "args": [
+            "-cp",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\compiled\\run01",
+            "sample.ActorMain",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\actor-fixtures\\config-a.properties"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation",
+          "expectedExit": 1,
+          "actualExit": 1,
+          "error": null,
+          "stdout": "actual=[Product[label=right, audit=true], Product[label=right, audit=true]]\r\n",
+          "stderr": "Exception in thread \"main\" java.lang.AssertionError: Both independent variants must retain audit=true: [Product[label=right, audit=true], Product[label=right, audit=true]]\r\n\tat sample.ActorMain.verify(ActorMain.java:15)\r\n\tat sample.ActorMain.main(ActorMain.java:8)\r\n"
+        },
+        {
+          "id": "05-candidate-b-negative",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+          "args": [
+            "-cp",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\compiled\\run01",
+            "sample.ActorMain",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\actor-fixtures\\config-b.properties"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation",
+          "expectedExit": 1,
+          "actualExit": 1,
+          "error": null,
+          "stdout": "actual=[Product[label=left, audit=false], Product[label=right, audit=false]]\r\n",
+          "stderr": "Exception in thread \"main\" java.lang.AssertionError: Both independent variants must retain audit=true: [Product[label=left, audit=false], Product[label=right, audit=false]]\r\n\tat sample.ActorMain.verify(ActorMain.java:15)\r\n\tat sample.ActorMain.main(ActorMain.java:8)\r\n"
+        },
+        {
+          "id": "06-copy-branches-a-positive",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+          "args": [
+            "-cp",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\compiled\\run01",
+            "sample.TechnicalMain",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\actor-fixtures\\config-a.properties",
+            "copy-branches"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation",
+          "expectedExit": 0,
+          "actualExit": 0,
+          "error": null,
+          "stdout": "actual=[Product[label=left, audit=true], Product[label=right, audit=true]]\r\n",
+          "stderr": ""
+        },
+        {
+          "id": "07-retain-return-b-positive",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+          "args": [
+            "-cp",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\compiled\\run01",
+            "sample.TechnicalMain",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\actor-fixtures\\config-b.properties",
+            "retain-return"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation",
+          "expectedExit": 0,
+          "actualExit": 0,
+          "error": null,
+          "stdout": "actual=[Product[label=left, audit=true], Product[label=right, audit=true]]\r\n",
+          "stderr": ""
+        },
+        {
+          "id": "08-copy-branches-b-negative",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+          "args": [
+            "-cp",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\compiled\\run01",
+            "sample.TechnicalMain",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\actor-fixtures\\config-b.properties",
+            "copy-branches"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation",
+          "expectedExit": 1,
+          "actualExit": 1,
+          "error": null,
+          "stdout": "actual=[Product[label=left, audit=false], Product[label=right, audit=false]]\r\n",
+          "stderr": "Exception in thread \"main\" java.lang.AssertionError: Both independent variants must retain audit=true: [Product[label=left, audit=false], Product[label=right, audit=false]]\r\n\tat sample.ActorMain.verify(ActorMain.java:15)\r\n\tat sample.TechnicalMain.main(TechnicalMain.java:14)\r\n"
+        },
+        {
+          "id": "09-retain-return-a-negative",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+          "args": [
+            "-cp",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\compiled\\run01",
+            "sample.TechnicalMain",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\actor-fixtures\\config-a.properties",
+            "retain-return"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation",
+          "expectedExit": 1,
+          "actualExit": 1,
+          "error": null,
+          "stdout": "actual=[Product[label=right, audit=true], Product[label=right, audit=true]]\r\n",
+          "stderr": "Exception in thread \"main\" java.lang.AssertionError: Both independent variants must retain audit=true: [Product[label=right, audit=true], Product[label=right, audit=true]]\r\n\tat sample.ActorMain.verify(ActorMain.java:15)\r\n\tat sample.TechnicalMain.main(TechnicalMain.java:14)\r\n"
+        },
+        {
+          "id": "10-jdk-contracts",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+          "args": [
+            "-cp",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\compiled\\run01",
+            "sample.JdkContractChecks"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation",
+          "expectedExit": 0,
+          "actualExit": 0,
+          "error": null,
+          "stdout": "PASS: immutable results, mutable identity, snapshots, copy isolation, repeated options and failed-chain state\r\nNo HTTP request was sent.\r\n",
+          "stderr": ""
+        }
+      ],
+      "summary": {
+        "scope": "Technical execution of synthetic consumers and existing JDK API contracts; not an agent evaluation.",
+        "runName": "run01",
+        "runtime": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)",
+        "compilerRelease": "25",
+        "commands": 10,
+        "negativeControls": [
+          "04-candidate-a-negative",
+          "05-candidate-b-negative",
+          "08-copy-branches-b-negative",
+          "09-retain-return-a-negative"
+        ],
+        "observations": [
+          {
+            "id": "04-candidate-a-negative",
+            "exit": 1,
+            "stdout": "actual=[Product[label=right, audit=true], Product[label=right, audit=true]]"
+          },
+          {
+            "id": "05-candidate-b-negative",
+            "exit": 1,
+            "stdout": "actual=[Product[label=left, audit=false], Product[label=right, audit=false]]"
+          },
+          {
+            "id": "06-copy-branches-a-positive",
+            "exit": 0,
+            "stdout": "actual=[Product[label=left, audit=true], Product[label=right, audit=true]]"
+          },
+          {
+            "id": "07-retain-return-b-positive",
+            "exit": 0,
+            "stdout": "actual=[Product[label=left, audit=true], Product[label=right, audit=true]]"
+          },
+          {
+            "id": "08-copy-branches-b-negative",
+            "exit": 1,
+            "stdout": "actual=[Product[label=left, audit=false], Product[label=right, audit=false]]"
+          },
+          {
+            "id": "09-retain-return-a-negative",
+            "exit": 1,
+            "stdout": "actual=[Product[label=right, audit=true], Product[label=right, audit=true]]"
+          },
+          {
+            "id": "10-jdk-contracts",
+            "exit": 0,
+            "stdout": "PASS: immutable results, mutable identity, snapshots, copy isolation, repeated options and failed-chain state\r\nNo HTTP request was sent."
+          }
+        ],
+        "fixturePropertyDifference": {
+          "a": "implementation=mutable",
+          "b": "implementation=immutable"
+        },
+        "interpretation": "The same consumer has different defects under actual factory-selected mutation contracts; crossed repairs fail. Existing skill guidance distinguishes these contracts."
+      },
+      "commandArtifact": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-fluent-apis-validation/commands-run01.json",
+      "resultArtifact": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-fluent-apis-validation/technical-results-run01.json",
+      "negativeControlExplanation": "Both uncorrected factory selections fail for distinct product-state reasons. Applying each implementation-specific repair to the other implementation also fails. These expected exit-1 results are controls, not unhandled review failures.",
+      "unexpectedFailures": []
+    },
+    "behavioralEvaluationsExecuted": [],
+    "comparativeGain": "Not measured; no independent agent run, baseline comparison or held-out claim.",
+    "walkthroughsPerformed": [
+      "Reviewed the full partial charge example for required roles, immutable values, setter/build validation, retained state and stable operation key.",
+      "Reviewed stage-alias/cast and repeated-build limitations without claiming stage interfaces prove a linear protocol.",
+      "Checked try-with-resources initialization scope against JLS translation; no new file-handle observation was executed.",
+      "Reviewed public fluent return evolution and framework/generated construction evidence boundaries."
+    ],
+    "unavailableOrNotExecuted": [
+      "Independent behavioral execution of the paired cases is pending coordinator selection.",
+      "No earlier Java VM, framework binding, real payment provider, allocation profile or performance benchmark was used.",
+      "The existing partial charge/staged examples, compile-negative staged callers and Files.lines leak example were not executed; no such snippet changed.",
+      "Published old/new library compatibility checks were not run for this unchanged package.",
+      "Global registry generation and verification are deferred to the coordinator."
+    ],
+    "pendingGlobals": [
+      {
+        "command": "npm run registry:build",
+        "owner": "coordinator",
+        "prerequisite": "All reviewers stopped writing.",
+        "reason": "Shared generated index outside reviewer ownership."
+      },
+      {
+        "command": "npm run verify",
+        "owner": "coordinator",
+        "prerequisite": "All reviewers stopped and registry regenerated.",
+        "reason": "Repository-wide validation is coordinator-only."
+      }
+    ]
+  },
+  "cases": {
+    "classification": "Author-designed development cases; actor tasks are unexecuted, technical fixture controls are executed.",
+    "actorInputs": [
+      {
+        "id": "factory-selected-state-a",
+        "input": "Review and fix the consumer in this synthetic Java project so that an audited run creates two independent products: Product(\"left\", true) and Product(\"right\", true). The selected factory/configuration and Options implementations are established contracts; change the consumer rather than switching implementations or redesigning the public API. Inspect the build evidence and selected configuration before choosing a repair. Exercise the actual product results, keep unrelated behavior, and report commands and limitations. Java 25 without preview; do not add dependencies or upgrade the toolchain. Work in a disposable copy of the supplied sources.\n\nSource root: C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-fluent-apis-validation/actor-fixtures/shared\nConfiguration to pass to sample.ActorMain: C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-fluent-apis-validation/actor-fixtures/config-a.properties\nEntry point: src/sample/ActorMain.java. Consumer: src/sample/Variants.java. Factory: src/sample/OptionsFactory.java. Build evidence: build.properties.",
+        "resources": [
+          "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-fluent-apis-validation/actor-fixtures/shared",
+          "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-fluent-apis-validation/actor-fixtures/config-a.properties"
+        ]
+      },
+      {
+        "id": "factory-selected-state-b",
+        "input": "Review and fix the consumer in this synthetic Java project so that an audited run creates two independent products: Product(\"left\", true) and Product(\"right\", true). The selected factory/configuration and Options implementations are established contracts; change the consumer rather than switching implementations or redesigning the public API. Inspect the build evidence and selected configuration before choosing a repair. Exercise the actual product results, keep unrelated behavior, and report commands and limitations. Java 25 without preview; do not add dependencies or upgrade the toolchain. Work in a disposable copy of the supplied sources.\n\nSource root: C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-fluent-apis-validation/actor-fixtures/shared\nConfiguration to pass to sample.ActorMain: C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-fluent-apis-validation/actor-fixtures/config-b.properties\nEntry point: src/sample/ActorMain.java. Consumer: src/sample/Variants.java. Factory: src/sample/OptionsFactory.java. Build evidence: build.properties.",
+        "resources": [
+          "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-fluent-apis-validation/actor-fixtures/shared",
+          "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-fluent-apis-validation/actor-fixtures/config-b.properties"
+        ]
+      }
+    ],
+    "evaluatorOnlyCriteria": [
+      {
+        "id": "factory-selected-state-a",
+        "decisiveConstraint": "Only the selected configuration differs: implementation=mutable.",
+        "expected": [
+          "Read the actual properties/factory and mutable implementation rather than infer immutability from withLabel/withAudit names.",
+          "Identify that conditional withAudit(true) applies, but left/right Options aliases refer to one mutable object, so both built products receive right.",
+          "Create independent mutable branches using the documented copy operation or equally justified fresh construction while preserving the audit option.",
+          "Compile/run the selected configuration and verify both product fields, not merely returned references or successful compilation.",
+          "Do not change the selected implementation, require an unrelated staged builder, or claim universal correctness."
+        ],
+        "failures": [
+          "Only retains the withAudit return and leaves branch aliasing.",
+          "Changes the factory mode to make the test pass.",
+          "Checks only label/audit individually while omitting the other contractual field.",
+          "Claims an ignored return is the only defect without inspecting the implementation."
+        ],
+        "acceptableAlternatives": "A repair that is valid for both implementations is acceptable if its contracts are inspected and its additional steps are justified; do not grade exact source text."
+      },
+      {
+        "id": "factory-selected-state-b",
+        "decisiveConstraint": "Only the selected configuration differs: implementation=immutable.",
+        "expected": [
+          "Read the selected configuration/factory and immutable implementation; the receiver remains unchanged.",
+          "Identify that left/right labels already branch independently, but the conditional withAudit(true) result is discarded, leaving audit=false.",
+          "Retain the returned configured value; preserve independent product results without insisting immutable branches require mutation isolation.",
+          "Compile/run the selected configuration and verify both product labels and audit fields.",
+          "Do not modify factory/API contracts or invent concurrency/performance evidence."
+        ],
+        "failures": [
+          "Only copies before branching and still discards the conditional result.",
+          "Claims all with-prefixed APIs are immutable or bases the decision on names alone.",
+          "Changes the factory mode, weakens the expected audit behavior, or mandates unrelated builder stages.",
+          "Reports execution or framework behavior not actually observed."
+        ],
+        "acceptableAlternatives": "An explicit copy on the immutable implementation is allowed by the documented contract, but is not required for isolation; correct evidence-based repairs need not match one textual patch."
+      }
+    ],
+    "separateInputFile": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-fluent-apis-validation/case-inputs.json",
+    "separateCriteriaFile": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-fluent-apis-validation/case-criteria.json",
+    "decisiveConstraint": "Exactly one configuration property selects mutable versus immutable Options; task, source and expected product requirements are otherwise identical.",
+    "legitimateAlternatives": "Correct consumer repairs valid under both documented implementations are acceptable if the reasoning identifies the selected contract; exact patch text is not graded.",
+    "isolation": "Only selected config plus actor-fixtures/shared should be copied into an actor snapshot. Withhold controls/, compiled/, logs/, runner, results, criteria and this handoff. Directory separation alone is not enforced filesystem isolation."
+  },
+  "primarySources": [
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.net.http/java/net/http/HttpRequest.Builder.html",
+      "version": "Java SE 25; Builder available since 11",
+      "observed": "Setters mutate and return the same builder. copy permits independent configuration; header accumulates values while setHeader replaces them; build returns a new immutable request. Relevant declared timeout precondition rejects non-positive durations.",
+      "support": "Primary API contract, complemented by executed local JDK checks; no request was sent."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html#withDayOfMonth(int)",
+      "version": "Java SE 25; LocalDate available since 8",
+      "observed": "The receiver stays unchanged; the adjusted value must be retained, and an invalid date is rejected.",
+      "support": "Primary API contract plus actual valid/ignored/invalid result checks."
+    },
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se25/html/jls-15.html#jls-15.12.4.1",
+      "version": "Java SE 25",
+      "observed": "Receiver evaluation precedes arguments for the next invocation. A chain does not provide a rollback mechanism for completed mutations.",
+      "support": "Normative evaluation-order basis; actual failed-chain state checked with HttpRequest.Builder."
+    },
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se25/html/jls-14.html#jls-14.20.3.1",
+      "version": "Java SE 25",
+      "observed": "The resource initializer precedes the translated try/finally. Automatic cleanup covers resources initialized by the try-with-resources statement, not an unregistered acquisition buried inside a failing initializer.",
+      "support": "Confirms existing setup-failure guard; source reasoning, not a new Files.lines resource-leak experiment."
+    },
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se25/html/jls-13.html#jls-13.4.15",
+      "version": "Java SE 25",
+      "observed": "Return-type evolution can remove the old binary descriptor; bridge/inheritance and erasure conditions require inspection. Existing skill qualifies the general warning.",
+      "support": "Primary compatibility contract reviewed during the immediately preceding API-design assignment and reused; no return-type evolution fixture was added for this unchanged skill."
+    }
+  ],
+  "evidenceRoot": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-fluent-apis-validation",
+  "artifacts": [
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\baseline-hashes.json",
+      "bytes": 778,
+      "sha256": "647AABDF06D351F76740002C6903704C65F1C25D763A11943845EAADA061BCB5"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\case-criteria.json",
+      "bytes": 2766,
+      "sha256": "935136CD403ABF1E1BF7F8D3AB2258BED4A603066C6F691A35F38E19D3085D9F"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\case-inputs.json",
+      "bytes": 2917,
+      "sha256": "DAA93B6F20ADA4FBA4BDC1308686E524737714285FDB51967E3FA888AF965032"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\commands-run01.json",
+      "bytes": 8953,
+      "sha256": "02E690E6FC89D11218F81F7289F188E556CEF55C114CD087AF9659F48B9EA576"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\local-checks.log",
+      "bytes": 1613,
+      "sha256": "AE3C6DFDE9195B28F7506853C4B75EFDCC26746FC66A56326A436E01176D0D61"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\local-checks.mjs",
+      "bytes": 3066,
+      "sha256": "0C6A8E947D09B1F68AEC6676CE17AE424FE8533431D6DADDACF7D39EB17516AB"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\local-tool-results.json",
+      "bytes": 2568,
+      "sha256": "3D50B88A7B6B4C07EF291DA9ED688E18BC4DC92A050B62A1E28DBC5580D27753"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\prettier-check.log",
+      "bytes": 68,
+      "sha256": "F20510A9DA4717C51C4CFFEE6D0DD88D6C9A723D0A83711D01216F5B48961283"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\run-technical.mjs",
+      "bytes": 3904,
+      "sha256": "B08ED91B4248038B95FFA0DA274C81A81EB663EC0454ED72446A90D31ECAB44A"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\source-notes.json",
+      "bytes": 2339,
+      "sha256": "F27D0226DF837612307ED6E448CEB9F8055A70566EBA23DC5D132B629BCE5055"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\technical-results-run01.json",
+      "bytes": 2094,
+      "sha256": "5FD06262C1B1217F20D9E4D18DD71FFCE5F65EED13BDBE25B828BBA4BD4542A5"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\actor-fixtures\\config-a.properties",
+      "bytes": 23,
+      "sha256": "580AABF9A834FA0AB969B1B15DD820A5E589774D5D020820149BD4A59E8915B9"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\actor-fixtures\\config-b.properties",
+      "bytes": 25,
+      "sha256": "E165C267420A56D858E14457C54017A144E6F2AD9B739A4E4BBCB28A894AEFB8"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\actor-fixtures\\shared\\build.properties",
+      "bytes": 16,
+      "sha256": "B7AFC6CE257848C68BD1AF02CB39748990C5E0FAB5AEDE4A72D437596CAF8059"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\actor-fixtures\\shared\\src\\sample\\ActorMain.java",
+      "bytes": 605,
+      "sha256": "09B38ADCF084FF699A0100988AD6F56E3FE118B75462DC6A6097D56068046D30"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\actor-fixtures\\shared\\src\\sample\\Options.java",
+      "bytes": 397,
+      "sha256": "2EEE5C1171BC8C068C0B4441BA60B37AE14A87D614E154BC9C0A76FF163F7B56"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\actor-fixtures\\shared\\src\\sample\\OptionsFactory.java",
+      "bytes": 1800,
+      "sha256": "2F2FFE72CF6BC063374629467B03973667626215A5F95AE75B31299B572125D6"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\actor-fixtures\\shared\\src\\sample\\Product.java",
+      "bytes": 162,
+      "sha256": "2EBBA8BBFA182B19D13DF8ADD214BCF9AB60792D6F80951AE31315C7C4B568DA"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\actor-fixtures\\shared\\src\\sample\\Variants.java",
+      "bytes": 393,
+      "sha256": "8E7814CF6FB28E2D2326E785950646B4581B3AE9EAC52EA65E925FD3F2B95175"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\compiled\\run01\\sample\\ActorMain.class",
+      "bytes": 1865,
+      "sha256": "0DC930CE0D95BD798132E3A695FCC9EF9C2AA359D48C401D9BD4C6B757130E78"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\compiled\\run01\\sample\\JdkContractChecks.class",
+      "bytes": 3121,
+      "sha256": "DF076D77FACD219025BF9A2771AAF08FED12D32C4A47C6FDB60F40F2A7A79274"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\compiled\\run01\\sample\\Options.class",
+      "bytes": 276,
+      "sha256": "AC1BD24875A76F1D3ACE3156C5E15B14B25386A523A8AD6D630E6C8C54B1AFB9"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\compiled\\run01\\sample\\OptionsFactory.class",
+      "bytes": 1642,
+      "sha256": "E36E9F9B716C664FAD33687800377C2594D6416CA51A6C2782F6FBD7B5898F2B"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\compiled\\run01\\sample\\OptionsFactory$ImmutableOptions.class",
+      "bytes": 1906,
+      "sha256": "2D2DB4BFA4109204EC3FDFCC96547DF0EDDC2D817738958D538E51E2E51D81F6"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\compiled\\run01\\sample\\OptionsFactory$MutableOptions.class",
+      "bytes": 946,
+      "sha256": "F0B3F351EE0F8F666420008D6B804695F33490D3EC09D3E0F338E742115A1A7E"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\compiled\\run01\\sample\\Product.class",
+      "bytes": 1358,
+      "sha256": "E8A36F02DB2589A46ED63E31E43E63E24CC207953578F126766A86710AF30304"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\compiled\\run01\\sample\\TechnicalMain.class",
+      "bytes": 1729,
+      "sha256": "7BFE7468C0C3751C46F61D14FB4BCC55019F5E9C7321ED6BA598036B18E0E5CF"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\compiled\\run01\\sample\\Variants.class",
+      "bytes": 713,
+      "sha256": "D7F9C572B627FC35E9181CF221175EEB9048F8D5FAC7ED9BD55DDBDCF1FC39E5"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\controls\\src\\sample\\JdkContractChecks.java",
+      "bytes": 2429,
+      "sha256": "523AF3DC4501419978DE4C9768858A3D685C2924113BC9C2C35651E83DEAB228"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\controls\\src\\sample\\TechnicalMain.java",
+      "bytes": 1039,
+      "sha256": "40FEB5A8B60D06F22E19A9834EF45BA3630976DD42FAE7881054DC4D4860A541"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\logs\\run01\\01-java-version.stderr.log",
+      "bytes": 193,
+      "sha256": "E33F6CFDF4D70CB8BF63CAE1ED026B89A77539348B7AC97535E20D32D7C1D010"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\logs\\run01\\01-java-version.stdout.log",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\logs\\run01\\02-javac-version.stderr.log",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\logs\\run01\\02-javac-version.stdout.log",
+      "bytes": 14,
+      "sha256": "E28EEC99DA75B3A320C3A82EC268D403DD151791C791932203E6EA26CC0C0D3B"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\logs\\run01\\03-compile.stderr.log",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\logs\\run01\\03-compile.stdout.log",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\logs\\run01\\04-candidate-a-negative.stderr.log",
+      "bytes": 266,
+      "sha256": "7094AC89C2E57018948441CB4F07958F359228EAAFC30B4E6A8AFCE3627411AF"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\logs\\run01\\04-candidate-a-negative.stdout.log",
+      "bytes": 77,
+      "sha256": "5F151117C10A305E9698A474FA5492768B874321F0CF54762064F725C1E4F99F"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\logs\\run01\\05-candidate-b-negative.stderr.log",
+      "bytes": 267,
+      "sha256": "E72B6E393308176A83B9D0A08EB23B07AA3F62650ACF221704AD4DC4CD39932E"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\logs\\run01\\05-candidate-b-negative.stdout.log",
+      "bytes": 78,
+      "sha256": "DF5DAAFB12830382E9EB2475806FF39C105FF48299709A58562A8705477D238C"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\logs\\run01\\06-copy-branches-a-positive.stderr.log",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\logs\\run01\\06-copy-branches-a-positive.stdout.log",
+      "bytes": 76,
+      "sha256": "EFF4CD20150AB6FF0F9EF1A3457C43A5101DD8C84C893BA1E49D282416EB7269"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\logs\\run01\\07-retain-return-b-positive.stderr.log",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\logs\\run01\\07-retain-return-b-positive.stdout.log",
+      "bytes": 76,
+      "sha256": "EFF4CD20150AB6FF0F9EF1A3457C43A5101DD8C84C893BA1E49D282416EB7269"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\logs\\run01\\08-copy-branches-b-negative.stderr.log",
+      "bytes": 276,
+      "sha256": "2A3B5E811CB22814017115FBB5546C7811AEAC5EC95C7611309E2F3C82F3577E"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\logs\\run01\\08-copy-branches-b-negative.stdout.log",
+      "bytes": 78,
+      "sha256": "DF5DAAFB12830382E9EB2475806FF39C105FF48299709A58562A8705477D238C"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\logs\\run01\\09-retain-return-a-negative.stderr.log",
+      "bytes": 275,
+      "sha256": "700BA1193CD6C2FB2FBCD0F98309CB13DFE9BD28CC591634BB0A8B149B2F26DE"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\logs\\run01\\09-retain-return-a-negative.stdout.log",
+      "bytes": 77,
+      "sha256": "5F151117C10A305E9698A474FA5492768B874321F0CF54762064F725C1E4F99F"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\logs\\run01\\10-jdk-contracts.stderr.log",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\logs\\run01\\10-jdk-contracts.stdout.log",
+      "bytes": 138,
+      "sha256": "11F374650D15F059C3C0F25F51CD13520E45B0895487CFF4DF1EFD5974B71ACB"
+    }
+  ],
+  "limits": [
+    "No change is a bounded review conclusion, not universal completeness or proof that agents always apply the guidance.",
+    "Synthetic selected-factory results and real JDK contract checks are technical evidence; neither establishes skill efficacy.",
+    "The fixture requirements cover two product fields and one selected runtime on Java 25, not unknown application callers or concurrency.",
+    "HTTP builder objects were constructed only; no client, server, network request or production resource was used.",
+    "Existing resource-lifetime and staged-builder guards were source-reviewed but not runtime-tested in this assignment.",
+    "Primary URL/version/claim notes are retained; full primary web pages were not archived. All executed fixture source, compiled classes and stdout/stderr are retained.",
+    "Common review instructions and source/compatibility evidence read in the immediately preceding assignment were reused where unchanged."
+  ],
+  "crossSkillIssues": [],
+  "coordinatorActions": [
+    "Inspect/accept no-change with clean diff and unchanged 1.2.5.",
+    "If evaluating these actor cases, provide controlled snapshots of shared sources and the selected config, without controls or evaluator criteria.",
+    "Complete registry/verify only after every reviewer has stopped."
+  ]
+}

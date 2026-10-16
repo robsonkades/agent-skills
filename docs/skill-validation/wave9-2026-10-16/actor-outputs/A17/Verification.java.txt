@@ -1,0 +1,262 @@
+import java.util.ArrayList;
+import java.util.List;
+
+public final class Verification {
+    private static int checks;
+    private static final Ports.Intent INTENT = new Ports.Intent("purchase-17", "same-payload");
+    private static final Ports.Policy POLICY = new Ports.Policy(3, 10, 5, 4);
+
+    private static void check(boolean condition, String message) {
+        checks++;
+        if (!condition) throw new AssertionError(message);
+    }
+
+    private static final class MemoryStore implements Ports.Store {
+        Ports.Snapshot value;
+        int writes;
+        MemoryStore(Ports.State state) {
+            value = new Ports.Snapshot(state, state == Ports.State.APPLIED ? "original" : null);
+        }
+        public Ports.Snapshot snapshot() { return value; }
+        public void unknown() { writes++; value = new Ports.Snapshot(Ports.State.UNKNOWN, null); }
+        public void applied(String receipt) { writes++; value = new Ports.Snapshot(Ports.State.APPLIED, receipt); }
+        public void rejected() { writes++; value = new Ports.Snapshot(Ports.State.REJECTED, null); }
+    }
+
+    private static final class Response implements Ports.Reply {
+        final Ports.Kind kind;
+        final long minimum;
+        int closes;
+        Response(Ports.Kind kind, long minimum) { this.kind = kind; this.minimum = minimum; }
+        public Ports.Kind kind() { return kind; }
+        public String receipt() { return "authoritative-receipt"; }
+        public long serverMinimumNanos() { return minimum; }
+        public void close() { check(++closes == 1, "reply closed more than once"); }
+    }
+
+    private static final class Scenario implements Ports.Runtime, Ports.Operation {
+        final MemoryStore store;
+        final List<Response> replies = new ArrayList<>();
+        final List<Long> waits = new ArrayList<>();
+        long remaining = 1000;
+        long elapsedPerCall;
+        long oversleep;
+        int calls;
+        int tokenRequests;
+        boolean cancelled;
+        boolean tokenGranted = true;
+        boolean interruptCall;
+        boolean interruptSleep;
+        boolean cancelAfterCall;
+        boolean cancelAfterSleep;
+        boolean cancelOnToken;
+        boolean unknownSeen;
+        Ports.Policy policy = POLICY;
+
+        Scenario(Ports.State state, Ports.Kind... kinds) {
+            store = new MemoryStore(state);
+            unknownSeen = state == Ports.State.UNKNOWN;
+            for (Ports.Kind kind : kinds) replies.add(new Response(kind, 0));
+        }
+        Scenario(Ports.Kind... kinds) { this(Ports.State.PENDING, kinds); }
+        Scenario minimum(int index, long nanos) {
+            replies.set(index, new Response(replies.get(index).kind, nanos));
+            return this;
+        }
+        public long remainingNanos() { return remaining; }
+        public boolean cancelled() { return cancelled; }
+        public boolean acquireRetry() {
+            tokenRequests++;
+            cancelled |= cancelOnToken;
+            return tokenGranted;
+        }
+        private void closedReplies() {
+            for (int i = 0; i < calls && i < replies.size(); i++) {
+                check(replies.get(i).closes == 1, "previous reply must close before sleep/call/return");
+            }
+        }
+        public void sleep(long nanos) throws InterruptedException {
+            closedReplies();
+            check(!unknownSeen || store.snapshot().state() == Ports.State.UNKNOWN,
+                    "UNKNOWN must be durable before sleep");
+            waits.add(nanos);
+            if (interruptSleep) throw new InterruptedException("sleep interrupted");
+            remaining = nanos >= remaining ? 0 : remaining - nanos;
+            remaining = oversleep >= remaining ? 0 : remaining - oversleep;
+            cancelled |= cancelAfterSleep;
+        }
+        public Ports.Reply call(Ports.Intent intent, long timeout) throws InterruptedException {
+            closedReplies();
+            check(!cancelled && !Thread.currentThread().isInterrupted(), "dispatch after cancellation/interruption");
+            check(INTENT.equals(intent), "stable intent identity and payload must be preserved");
+            check(timeout == policy.attemptNanos(), "wrong propagated attempt timeout");
+            check(remaining >= policy.reserveNanos()
+                    && remaining - policy.reserveNanos() >= policy.attemptNanos(), "attempt must fit budget");
+            check(!unknownSeen || store.snapshot().state() == Ports.State.UNKNOWN,
+                    "UNKNOWN must be durable before replay");
+            calls++;
+            if (interruptCall) throw new InterruptedException("call interrupted");
+            check(calls <= replies.size(), "unexpected extra attempt");
+            Response response = replies.get(calls - 1);
+            unknownSeen |= response.kind == Ports.Kind.UNKNOWN;
+            remaining = elapsedPerCall >= remaining ? 0 : remaining - elapsedPerCall;
+            cancelled |= cancelAfterCall;
+            return response;
+        }
+        Ports.Result run() throws InterruptedException {
+            Ports.Result result = RetryEngine.execute(INTENT, policy, store, this, this);
+            closedReplies();
+            check(result.attempts() == calls, "attempt count differs from actual calls");
+            check(result.snapshot().equals(store.snapshot()), "result differs from persisted state");
+            check(tokenRequests >= Math.max(0, calls - 1), "retry needs a token");
+            return result;
+        }
+        void expect(Ports.State state, int expectedCalls) throws InterruptedException {
+            check(run().snapshot().state() == state, "wrong state: " + store.snapshot());
+            check(calls == expectedCalls, "wrong number of calls");
+        }
+    }
+
+    private static void outcomePaths() throws Exception {
+        Scenario success = new Scenario(Ports.Kind.OK);
+        success.expect(Ports.State.APPLIED, 1);
+        check(success.store.snapshot().receipt().equals("authoritative-receipt"), "receipt was invented");
+        check(success.tokenRequests == 0 && success.waits.isEmpty(), "initial call does not need retry admission");
+        for (Ports.State terminal : List.of(Ports.State.APPLIED, Ports.State.REJECTED)) {
+            Scenario s = new Scenario(terminal);
+            Ports.Snapshot before = s.store.snapshot();
+            s.expect(terminal, 0);
+            check(s.store.writes == 0 && before.equals(s.store.snapshot()), "terminal state changed");
+        }
+        new Scenario(Ports.Kind.PERMANENT).expect(Ports.State.REJECTED, 1);
+        new Scenario(Ports.Kind.UNKNOWN, Ports.Kind.PERMANENT).expect(Ports.State.UNKNOWN, 2);
+        new Scenario(Ports.Kind.UNKNOWN, Ports.Kind.TRANSIENT, Ports.Kind.TRANSIENT).expect(Ports.State.UNKNOWN, 3);
+        new Scenario(Ports.State.UNKNOWN, Ports.Kind.TRANSIENT, Ports.Kind.PERMANENT).expect(Ports.State.UNKNOWN, 2);
+        new Scenario(Ports.State.UNKNOWN, Ports.Kind.OK).expect(Ports.State.APPLIED, 1);
+        new Scenario(Ports.Kind.UNKNOWN, Ports.Kind.OK).expect(Ports.State.APPLIED, 2);
+        Scenario exhaustion = new Scenario(Ports.Kind.TRANSIENT, Ports.Kind.TRANSIENT, Ports.Kind.TRANSIENT);
+        exhaustion.expect(Ports.State.REJECTED, 3);
+        check(exhaustion.tokenRequests == 2 && exhaustion.waits.size() == 2, "admitted retry after exhaustion");
+        Scenario one = new Scenario(Ports.Kind.UNKNOWN);
+        one.policy = new Ports.Policy(1, 10, 5, 4);
+        one.expect(Ports.State.UNKNOWN, 1);
+        check(one.tokenRequests == 0 && one.waits.isEmpty(), "last attempt must not sleep or spend a token");
+    }
+
+    private static void budgetPaths() throws Exception {
+        for (Ports.State initial : List.of(Ports.State.PENDING, Ports.State.UNKNOWN)) {
+            Scenario s = new Scenario(initial);
+            s.remaining = 14;
+            s.expect(initial == Ports.State.UNKNOWN ? Ports.State.UNKNOWN : Ports.State.REJECTED, 0);
+            check(s.tokenRequests == 0 && s.waits.isEmpty(), "initial refusal did work");
+        }
+        Scenario exact = new Scenario(Ports.Kind.OK);
+        exact.remaining = 15;
+        exact.expect(Ports.State.APPLIED, 1);
+        for (Ports.Kind kind : List.of(Ports.Kind.TRANSIENT, Ports.Kind.UNKNOWN)) {
+            Scenario floor = new Scenario(kind, Ports.Kind.OK).minimum(0, 7);
+            floor.remaining = 22;
+            floor.expect(Ports.State.APPLIED, 2);
+            check(floor.waits.equals(List.of(7L)), "server minimum was truncated");
+            Scenario local = new Scenario(kind, Ports.Kind.OK).minimum(0, 2);
+            local.remaining = 19;
+            local.expect(Ports.State.APPLIED, 2);
+            check(local.waits.equals(List.of(4L)), "chosen local wait was changed");
+            Scenario insufficient = new Scenario(kind).minimum(0, 7);
+            insufficient.remaining = 21;
+            insufficient.expect(kind == Ports.Kind.UNKNOWN ? Ports.State.UNKNOWN : Ports.State.REJECTED, 1);
+            check(insufficient.waits.isEmpty() && insufficient.tokenRequests == 0,
+                    "unaffordable wait spent a token or slept");
+            Scenario denied = new Scenario(kind);
+            denied.tokenGranted = false;
+            denied.expect(kind == Ports.Kind.UNKNOWN ? Ports.State.UNKNOWN : Ports.State.REJECTED, 1);
+            check(denied.tokenRequests == 1 && denied.waits.isEmpty(), "retry denial ignored");
+        }
+        Scenario elapsed = new Scenario(Ports.Kind.TRANSIENT);
+        elapsed.remaining = 30;
+        elapsed.elapsedPerCall = 12;
+        elapsed.expect(Ports.State.REJECTED, 1);
+        check(elapsed.waits.isEmpty(), "budget not refreshed after call");
+        Scenario overslept = new Scenario(Ports.Kind.UNKNOWN);
+        overslept.remaining = 19;
+        overslept.oversleep = 1;
+        overslept.expect(Ports.State.UNKNOWN, 1);
+        check(overslept.tokenRequests == 1 && overslept.waits.equals(List.of(4L)), "oversleep scenario did not admit wait");
+        Scenario additionOverflow = new Scenario();
+        additionOverflow.policy = new Ports.Policy(3, Long.MAX_VALUE, 1, 0);
+        additionOverflow.remaining = Long.MAX_VALUE;
+        additionOverflow.expect(Ports.State.REJECTED, 0);
+        Scenario waitOverflow = new Scenario(Ports.Kind.TRANSIENT).minimum(0, Long.MAX_VALUE);
+        waitOverflow.remaining = Long.MAX_VALUE;
+        waitOverflow.expect(Ports.State.REJECTED, 1);
+        check(waitOverflow.tokenRequests == 0 && waitOverflow.waits.isEmpty(), "overflow admitted impossible wait");
+        Scenario largeValid = new Scenario(Ports.Kind.OK);
+        largeValid.policy = new Ports.Policy(1, Long.MAX_VALUE - 1, 1, 0);
+        largeValid.remaining = Long.MAX_VALUE;
+        largeValid.expect(Ports.State.APPLIED, 1);
+        Scenario zeroDelay = new Scenario(Ports.Kind.TRANSIENT, Ports.Kind.OK);
+        zeroDelay.policy = new Ports.Policy(2, 10, 5, 0);
+        zeroDelay.remaining = 15;
+        zeroDelay.expect(Ports.State.APPLIED, 2);
+        check(zeroDelay.tokenRequests == 1, "zero delay bypassed retry token");
+    }
+
+    private static void cancellationAndInterruption() throws Exception {
+        Scenario cancelled = new Scenario();
+        cancelled.cancelled = true;
+        cancelled.expect(Ports.State.REJECTED, 0);
+        Scenario cancelledUnknown = new Scenario(Ports.State.UNKNOWN);
+        cancelledUnknown.cancelled = true;
+        cancelledUnknown.expect(Ports.State.UNKNOWN, 0);
+        Scenario afterReply = new Scenario(Ports.Kind.UNKNOWN);
+        afterReply.cancelAfterCall = true;
+        afterReply.expect(Ports.State.UNKNOWN, 1);
+        check(afterReply.tokenRequests == 0 && afterReply.waits.isEmpty(), "cancelled retry admitted");
+        Scenario afterSleep = new Scenario(Ports.Kind.UNKNOWN);
+        afterSleep.cancelAfterSleep = true;
+        afterSleep.expect(Ports.State.UNKNOWN, 1);
+        Scenario onToken = new Scenario(Ports.Kind.TRANSIENT);
+        onToken.cancelOnToken = true;
+        onToken.expect(Ports.State.REJECTED, 1);
+        check(onToken.tokenRequests == 1, "token cancellation scenario not reached");
+        Scenario preInterrupted = new Scenario();
+        Thread.currentThread().interrupt();
+        try {
+            preInterrupted.run();
+            throw new AssertionError("pre-interruption swallowed");
+        } catch (InterruptedException expected) {
+            check(preInterrupted.calls == 0, "pre-interrupted dispatch");
+        } finally { Thread.interrupted(); }
+        Scenario interruptedCall = new Scenario();
+        interruptedCall.interruptCall = true;
+        try {
+            interruptedCall.run();
+            throw new AssertionError("call interruption swallowed");
+        } catch (InterruptedException expected) {
+            check(interruptedCall.calls == 1 && interruptedCall.store.snapshot().state() == Ports.State.UNKNOWN,
+                    "interrupted dispatch not persisted UNKNOWN");
+        } finally { Thread.interrupted(); }
+        for (Ports.Kind kind : List.of(Ports.Kind.UNKNOWN, Ports.Kind.TRANSIENT)) {
+            Scenario interruptedSleep = new Scenario(kind);
+            interruptedSleep.interruptSleep = true;
+            try {
+                interruptedSleep.run();
+                throw new AssertionError("sleep interruption swallowed");
+            } catch (InterruptedException expected) {
+                check(interruptedSleep.calls == 1 && interruptedSleep.replies.get(0).closes == 1,
+                        "sleep interruption leaked reply or dispatched again");
+                check(interruptedSleep.store.snapshot().state()
+                        == (kind == Ports.Kind.UNKNOWN ? Ports.State.UNKNOWN : Ports.State.PENDING),
+                        "exception changed known effect evidence");
+            } finally { Thread.interrupted(); }
+        }
+    }
+
+    public static void main(String[] args) throws Exception {
+        check(Contract.REPLAY_SAFE, "this verification targets the supplied replay-safe peer contract");
+        outcomePaths();
+        budgetPaths();
+        cancellationAndInterruption();
+        System.out.println("Verification passed: " + checks + " assertions; outcomes, budgets, ownership, interruption");
+    }
+}

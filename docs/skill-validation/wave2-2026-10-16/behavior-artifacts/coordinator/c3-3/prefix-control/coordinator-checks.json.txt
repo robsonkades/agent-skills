@@ -1,0 +1,15 @@
+{
+  "run": "c3-3",
+  "label": "Coordinator changes only candidate prefix to \"\"",
+  "scope": "Disposable copy; does not count as actor executing a missing control",
+  "startedAt": "2026-10-16T12:51:26.988Z",
+  "finishedAt": "2026-10-16T12:51:27.756Z",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "check.mjs"
+  ],
+  "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-behavior-6orq6B\\grader\\c3-3\\prefix-control",
+  "exit": 0,
+  "stdout": "Existing point and join checks passed; moved=2094\r\nChecking frozen placement contract at epoch E\naccepted.properties: key=user:2, primary=n2, ordered replicas=[n2, n3, n4]\r\nFrozen ClientRouter placement vector passed: accepted.properties\r\ncandidate.properties: key=user:2, primary=n2, ordered replicas=[n2, n3, n4]\r\nFrozen ClientRouter placement vector passed: candidate.properties\r\n",
+  "stderr": ""
+}

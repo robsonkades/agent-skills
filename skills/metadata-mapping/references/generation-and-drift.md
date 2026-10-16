@@ -23,7 +23,24 @@ Incoherent — competing authorities for the same shared schema
     first. This is the configuration that produces "it works in staging".
 ```
 
-Example Spring Boot configuration when startup validation is an acceptable control:
+Resolve schema actions from the effective persistence-unit bootstrap settings before relying on
+a configuration file. Database actions and script-output actions have separate targets. In
+Hibernate 6.6.18, the native `hibernate.hbm2ddl.auto` fallback is selected only when neither JPA
+database nor script action is specified for the contributor; inspect the target provider/version
+and any contributor-specific overrides. For example, `hibernate.hbm2ddl.auto=validate` together
+with `jakarta.persistence.schema-generation.scripts.action=create` can generate a script while
+performing no database validation. An explicit database action can instead request mutation.
+
+Trace profiles, persistence properties and programmatic overrides to the settings actually passed
+to the provider. Keep legitimate script generation, but verify the required validation separately
+or separate the export and validation bootstraps. Do not change correct annotations merely because
+a configured validator did not execute. In an owned disposable fixture, check that a missing mapped
+column is rejected by the selected validation path and that a compatible schema succeeds; inspect
+database state separately from the generated file. Neither startup success nor a DDL file proves
+that a live schema was checked or changed.
+
+Example Spring Boot configuration when startup validation is an acceptable control and no
+effective schema-generation setting overrides it:
 
 ```yaml
 spring:
@@ -177,6 +194,7 @@ Sources: [Hibernate ORM 6.6 guide](https://docs.hibernate.org/orm/6.6/userguide/
 [Spring Data repository bootstrap](https://docs.spring.io/spring-data/jpa/reference/repositories/create-instances.html),
 [jOOQ 3.20 generator configuration](https://www.jooq.org/doc/3.20/manual/code-generation/codegen-configuration/),
 [Hibernate 6.6.0 validator source](https://github.com/hibernate/hibernate-orm/blob/6.6.0/hibernate-core/src/main/java/org/hibernate/tool/schema/internal/AbstractSchemaValidator.java),
+[Hibernate 6.6.18 schema-action selection](https://github.com/hibernate/hibernate-orm/blob/6.6.18/hibernate-core/src/main/java/org/hibernate/tool/schema/spi/SchemaManagementToolCoordinator.java),
 [PostgreSQL17 pg_dump connection and selection options](https://www.postgresql.org/docs/17/app-pgdump.html),
 [PostgreSQL17 updatable view rules](https://www.postgresql.org/docs/17/sql-createview.html#SQL-CREATEVIEW-UPDATABLE-VIEWS),
 [Flyway Maven configuration precedence](https://documentation.red-gate.com/flyway/reference/usage/maven-goal).

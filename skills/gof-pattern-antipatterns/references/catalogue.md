@@ -169,16 +169,22 @@ confinement or a validated closed domain may help; short lifetime alone does not
 
 ## Visitor over a growing type set
 
-**Why.** Visitor was correct when the type set was stable, and the domain changed.
+**Why.** Visitor was adopted for a stable type set, and new kinds now arrive frequently.
 
-**Detect.** Every release adds an element type and breaks every visitor.
+**Detect.** Each new kind requires changes to many operations. Inspect what those changes decide
+before treating them as boilerplate.
 
-**Cost.** The expression problem, chosen in the wrong direction: each new type is a change to N
-operations; a permissive default can accidentally skip a new type. Check whether its fallback is
-intentional and satisfies the operation's contract.
+**Cost.** Repeated updates can be avoidable maintenance or required review of new-kind semantics.
+A new abstract visit method makes rebuilt concrete visitors that lack a matching implementation
+fail compilation; a permissive default may absorb missing handling. Compiler coverage does not prove
+correct results, and rebuilt-source checks do not establish compatibility with old binaries.
 
-**Fix.** Move behaviour back onto the elements for the operations that are intrinsic; keep the
-fold only for the operations that genuinely belong outside (`gof-visitor`).
+**Fix.** Decide per operation whether a new kind requires explicit treatment or may use a documented
+generic, rejecting or omission policy. Keep deliberate coverage checks when required; do not add a
+default merely to make the build green. A supported fallback may remove needless repeated edits.
+Move intrinsic behaviour onto owned elements when that reduces demonstrated cost; retain external
+operations and established consumer contracts (`gof-visitor`). Check new-kind results and actual
+dispatch, including inherited/default handling, before accepting a simpler representation.
 
 ## Template Method with nine hooks
 
@@ -267,3 +273,5 @@ Sources:
 - [CopyOnWriteArrayList snapshot iteration](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/CopyOnWriteArrayList.html) — an existing iterator does not reflect subsequent removal.
 - [JLS 17 lambda body and runtime evaluation](https://docs.oracle.com/javase/specs/jls/se17/html/jls-15.html#jls-15.27.2) — lexical receiver scope and the identity rules in §15.27.4.
 - [Java 17 ServiceLoader provider deployment](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/ServiceLoader.html) — provider classes and classpath configuration.
+- [JLS 17 abstract classes](https://docs.oracle.com/javase/specs/jls/se17/html/jls-8.html#jls-8.1.1.1) — concrete classes must implement their abstract methods.
+- [Java 17 ElementVisitor evolution contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.compiler/javax/lang/model/element/ElementVisitor.html) — source incompatibility, default methods and unknown-kind handling are deliberate API choices.

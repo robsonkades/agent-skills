@@ -1,0 +1,10 @@
+import java.util.function.Supplier;
+
+final class FactoryPolicy {
+    static <T> Supplier<T> build(Supplier<T> constructor, boolean cache) {
+        if (!cache) return constructor;
+        T cached = constructor.get();
+        return () -> cached;
+    }
+}
+

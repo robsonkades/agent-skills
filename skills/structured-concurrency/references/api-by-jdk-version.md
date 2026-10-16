@@ -21,20 +21,35 @@ responsibilities; its semantics are not automatically identical to a scope.
 
 ## Signature drift
 
-| Element                       | JDK 21–24 (JEP 453/462/480/499)                          | JDK 25 (JEP 505)                            | JDK 26 (JEP 525)                    | JDK 27 (JEP 533, delivered)                                                |
-| ----------------------------- | -------------------------------------------------------- | ------------------------------------------- | ----------------------------------- | -------------------------------------------------------------------------- |
-| Construction                  | `new StructuredTaskScope<>()`, `new ShutdownOnFailure()` | `StructuredTaskScope.open(...)`             | unchanged                           | extra `open` overload                                                      |
-| All-or-fail policy            | `ShutdownOnFailure` + `throwIfFailed`                    | `open()` or `Joiner.allSuccessfulOrThrow()` | unchanged                           | `…OrThrow` throws `ExecutionException`                                     |
-| First success                 | `ShutdownOnSuccess` + `result()`                         | `Joiner.anySuccessfulResultOrThrow()`       | **`Joiner.anySuccessfulOrThrow()`** | overload taking an exception mapper                                        |
-| `allSuccessfulOrThrow` result | n/a                                                      | `Stream<Subtask<T>>`                        | **`List<T>`**                       | `List<T>`                                                                  |
-| Wait for everything           | `join()` + inspect subtasks                              | `Joiner.awaitAll()`                         | unchanged                           | `awaitAll()` removed; select/customize policy                              |
-| Stop at a condition           | n/a                                                      | `Joiner.allUntil(Predicate)`                | unchanged                           | unchanged                                                                  |
-| Config parameter              | constructor arguments                                    | `Function<Configuration, Configuration>`    | **`UnaryOperator<Configuration>`**  | `UnaryOperator<Configuration>`                                             |
-| Custom joiner callbacks       | n/a                                                      | `onFork`, `onComplete`, `result`            | adds **`onTimeout()`**              | `onTimeout` replaced by `timeout`; exception type parameter                |
-| `fork` returns                | `Subtask<T>` (since 21)                                  | `Subtask<T>`                                | `Subtask<T>`                        | `Subtask<T>`                                                               |
-| Failure from `join`           | `ExecutionException` via `throwIfFailed`                 | `FailedException`                           | `FailedException`                   | standard `…OrThrow`: `ExecutionException`; custom policy/mapper may differ |
+| Element                          | JDK 21–24 (JEP 453/462/480/499)                          | JDK 25 (JEP 505)                            | JDK 26 (JEP 525)                    | JDK 27 (JEP 533, delivered)                                                |
+| -------------------------------- | -------------------------------------------------------- | ------------------------------------------- | ----------------------------------- | -------------------------------------------------------------------------- |
+| Construction                     | `new StructuredTaskScope<>()`, `new ShutdownOnFailure()` | `StructuredTaskScope.open(...)`             | unchanged                           | extra `open` overload                                                      |
+| All-or-fail policy               | `ShutdownOnFailure` + `throwIfFailed`                    | `open()` or `Joiner.allSuccessfulOrThrow()` | unchanged                           | `…OrThrow` throws `ExecutionException`                                     |
+| First success                    | `ShutdownOnSuccess` + `result()`                         | `Joiner.anySuccessfulResultOrThrow()`       | **`Joiner.anySuccessfulOrThrow()`** | overload taking an exception mapper                                        |
+| `allSuccessfulOrThrow` result    | n/a                                                      | `Stream<Subtask<T>>`                        | **`List<T>`**                       | `List<T>`                                                                  |
+| Wait for everything              | `join()` + inspect subtasks                              | `Joiner.awaitAll()`                         | unchanged                           | `awaitAll()` removed; select/customize policy                              |
+| Stop at a condition (`allUntil`) | n/a                                                      | returns `Stream<Subtask<T>>`                | returns `List<Subtask<T>>`          | returns `List<Subtask<T>>`                                                 |
+| `allUntil` on scope timeout      | n/a                                                      | `join()` throws `TimeoutException`          | `join()` returns the subtask list   | `join()` returns the subtask list                                          |
+| Config parameter                 | constructor arguments                                    | `Function<Configuration, Configuration>`    | **`UnaryOperator<Configuration>`**  | `UnaryOperator<Configuration>`                                             |
+| Custom joiner callbacks          | n/a                                                      | `onFork`, `onComplete`, `result`            | adds **`onTimeout()`**              | `onTimeout` replaced by `timeout`; exception type parameter                |
+| `fork` returns                   | `Subtask<T>` (since 21)                                  | `Subtask<T>`                                | `Subtask<T>`                        | `Subtask<T>`                                                               |
+| Failure from `join`              | `ExecutionException` via `throwIfFailed`                 | `FailedException`                           | `FailedException`                   | standard `…OrThrow`: `ExecutionException`; custom policy/mapper may differ |
 
 Read one column. Mixing two is how code ends up calling a method that exists in neither.
+`allUntil` changes behavior as well as its result type: on JDK 26–27, a normal `join()` return
+can include `UNAVAILABLE` subtasks after timeout. Inspect states before calling `get()` or
+`exception()`; a catch-only timeout metric or fallback copied from JDK 25 will miss this path.
+`UNAVAILABLE` alone does not identify the cancellation cause: a predicate can also cancel early.
+When distinguishing timeout from other cancellation matters, use the target joiner's timeout
+contract and verify that observation separately from successful-result processing.
+
+Custom joiners also need a signature check: `onFork` and `onComplete` take
+`Subtask<? extends T>` on JDK 25 but `Subtask<T>` on JDK 26–27. Match the target's predicate
+types too; do not copy the JDK 25 custom-joiner override into another preview unchanged.
+These differences follow the [JDK 25 Joiner](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/StructuredTaskScope.Joiner.html),
+[JDK 26 Joiner](https://docs.oracle.com/en/java/javase/26/docs/api/java.base/java/util/concurrent/StructuredTaskScope.Joiner.html)
+and [JDK 27 Joiner](https://docs.oracle.com/en/java/javase/27/docs/api/java.base/java/util/concurrent/StructuredTaskScope.Joiner.html) contracts.
+
 Examples are partial: supply domain types/functions and imports for the scope, nested
 `Subtask`/`Joiner` and collection/time types. Preview requires the matching feature-release
 compiler, not just a newer javac's `--release`.

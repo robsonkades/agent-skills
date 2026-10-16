@@ -1,0 +1,6 @@
+{
+  "Cases": 2,
+  "SharedFixtureFiles": 6,
+  "SoleChangedConstraint": "checkout.query-source",
+  "ActorAndCriteriaSeparate": true
+}

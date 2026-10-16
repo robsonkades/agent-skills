@@ -1,0 +1,16 @@
+**Recomendo a arquitetura M sob o peso aprovado, w = 0,56.** A pendência de preferência foi resolvida por Bruno, responsável pela decisão. Ambas as opções continuam viáveis, inclusive na transição, conforme as premissas fornecidas.
+
+Aplicando o modelo aceito, com peso 0,44 para mudanças:
+
+| Opção | Cálculo | Valor total |
+| --- | --- | ---: |
+| L | 0,56 × 90 + 0,44 × 30 | 63,60 |
+| M | 0,56 × 55 + 0,44 × 80 | 66,00 |
+
+**M supera L em 2,40 pontos de valor.** A troca aceita é perder 35 pontos de valor operacional e ganhar 50 pontos de valor em mudanças: `0,56 × (−35) + 0,44 × 50 = 2,40`. Esses pontos expressam preferências nas escalas existentes, não percentuais de desempenho; os custos relevantes já estão incluídos.
+
+A preferência do colega por 0,65 pode ser registrada, mas não substitui o peso formalmente autorizado. Não há pendência material que justifique reabrir o modelo ou contratar o benchmark solicitado anteriormente.
+
+**Próximo passo hoje:** registrar M como recomendação do comitê, com o peso aprovado, a conta e a consequência operacional aceita. A autorização de Bruno descrita na atualização é para o peso; esta recomendação não constitui autorização de implementação.
+
+Usei os dados locais como premissas do caso autoral e executei apenas o cálculo. Não realizei medições técnicas nem implementei qualquer opção.

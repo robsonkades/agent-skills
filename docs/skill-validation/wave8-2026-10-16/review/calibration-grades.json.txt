@@ -1,0 +1,33 @@
+{
+  "status": "COMPLETE",
+  "scope": "Independent semantic accept/reject of authored calibration prose only; no C3/C4/artifact or actor grading.",
+  "allWritesStopped": true,
+  "rootExpectedFileRead": false,
+  "actorOutputsRead": false,
+  "grades": [
+    {
+      "sampleId": "K1",
+      "caseId": "Q1",
+      "decision": "accept",
+      "reason": "NOT NULL makes NOT(active=true) a valid disjoint second branch. UNION ALL retains duplicate projected labels, with conditional performance conclusions."
+    },
+    {
+      "sampleId": "K2",
+      "caseId": "Q2",
+      "decision": "reject",
+      "reason": "An active=NULL row with amount>=100 is lost by NOT; UNION can collapse separate equal labels; indexes do not guarantee a speedup."
+    },
+    {
+      "sampleId": "K3",
+      "caseId": "Q3",
+      "decision": "accept",
+      "reason": "Correct12000/48000/780 loop interpretation and evidence bounds; no unjustified statistics/generic-plan/disk conclusion; bounded same-parameter experiment."
+    },
+    {
+      "sampleId": "K4",
+      "caseId": "Q4",
+      "decision": "reject",
+      "reason": "Tuple comparison does not inherit mixed ORDER BY directions and becomes unknown at decisive NULL pairs; removing OFFSET does not prove constant runtime."
+    }
+  ]
+}

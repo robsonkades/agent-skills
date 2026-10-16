@@ -13,6 +13,12 @@ enumerate satisfying voter sets and test the stated failure-domain losses agains
 neither total server count nor one surviving numeric majority establishes availability.
 See [ZooKeeper quorum policies](https://zookeeper.apache.org/doc/r3.8.4/zookeeperInternals.html#sc_quorum).
 
+Derive the voter set from the product's effective membership and role evidence, not the desired
+replica count in a deployment manifest. Record cluster identity, capture time and any reconfiguration
+phase; join member IDs to their actual failure domains. For each proposed failure, name the surviving
+communicating voter sets and check the applicable quorum rule. A running learner is not an extra vote,
+and a process restart or edited bootstrap list does not by itself establish a membership change.
+
 To keep a majority available while `f` nodes are down you need `N - f > N/2`, which is
 `N > 2f`, which is `N = 2f+1` at minimum.
 
@@ -87,8 +93,8 @@ retention, version comparison and the read/write protocol, especially during con
 | N   | W   | R   | Intersects? | Character                                                      |
 | --- | --- | --- | ----------- | -------------------------------------------------------------- |
 | 3   | 2   | 2   | yes         | Balanced; tolerates one replica down for both reads and writes |
-| 3   | 3   | 1   | yes         | Fast reads, and **any** replica down stops all writes          |
-| 3   | 1   | 3   | yes         | Fast writes, and any replica down stops all reads              |
+| 3   | 3   | 1   | yes         | One read response; **any** replica down stops all writes       |
+| 3   | 1   | 3   | yes         | One write acknowledgement; any replica down stops all reads    |
 | 3   | 1   | 1   | no          | No intersection: a read may legally return a stale value       |
 | 5   | 3   | 3   | yes         | Tolerates two down on both paths                               |
 
@@ -98,11 +104,33 @@ Three things intersection does **not** give you:
   concurrent-write protocol; timestamps may depend on unsafe clock assumptions and vector
   clocks can expose incomparable versions rather than one newest value. Read repair alone
   does not establish linearizability. Concurrent writes may leave different acknowledged values.
-- **It is not atomicity across keys.** Each key has its own quorum. Two keys written together
-  are two independent decisions.
+- **It does not establish atomicity across keys.** Independent per-key writes need an additional
+  transaction protocol to become one atomic operation. A product may already supply it: etcd 3.6
+  applies the operations in one `Txn` atomically. Inspect the actual request boundary, not just the
+  number of keys. Separate reads can still straddle an atomic update; use a supported snapshot or
+  read transaction when the consumer needs a coherent set. See [etcd KV guarantees](https://etcd.io/docs/v3.6/learning/api_guarantees/#kv-apis).
 - **It survives no sloppy quorum.** If a store accepts `W` acknowledgements from _any_ reachable
   node rather than from the key's own replicas (hinted handoff), the read quorum may contain
   none of the writers. The arithmetic silently stops holding.
+
+### A majority read can still go backward
+
+Illustrative schedule for a protocol that returns the highest version from any two of A, B and C,
+with writes requiring two acknowledgements and no read write-back:
+
+1. All replicas start at `(version=0, value=old)`.
+2. A pending write reaches only A with `(1, new)`; delivery to B and C is delayed.
+3. Read X queries A and B, returns `new`, and completes.
+4. Read Y starts after X completes, queries B and C, and returns `old`.
+
+`R + W = 4 > 3` still holds, but this history is not linearizable. Returning `new` requires placing
+the pending write before X; then Y cannot return `old`. The write's missing acknowledgement does not
+undo what X exposed. Inspect incomplete writes as well as completed ones when reviewing the protocol.
+
+An atomic-register protocol can prevent this by making a read propagate its selected version to a
+majority before replying, with compatible version and replica-update rules; ABD section 4 provides
+such a protocol. This is not a recipe to add ad hoc read repair, nor does an atomic register implement
+consensus. Check the complete algorithm and failure model instead of replacing a product's protocol.
 
 ## Placement and the cost per decision
 
@@ -111,12 +139,12 @@ the commit path also includes leader routing, log processing, durable-write poli
 queueing. With a stable Raft leader, one follower response can complete a three-voter quorum only
 after the leader's own durability requirements are met.
 
-| Placement                  | Illustrative RTT scale to check | Consequence                                                                              |
-| -------------------------- | ------------------------------- | ---------------------------------------------------------------------------------------- |
-| One AZ, 3 nodes            | sub-millisecond                 | No cross-AZ quorum hop; an AZ failure takes the whole cluster                            |
-| Three AZs, one region      | low single-digit ms             | Survives one AZ; quorum decisions cross AZs, so measure caller latency and availability  |
-| Three regions              | tens of ms                      | Survives a region; budget cross-region delay for callers, elections and recovery         |
-| Two AZs, asymmetric voters | topology-dependent              | Can survive loss of the smaller side, not the larger; maintenance/failover is asymmetric |
+| Placement                          | Illustrative RTT scale to check | Consequence                                                                              |
+| ---------------------------------- | ------------------------------- | ---------------------------------------------------------------------------------------- |
+| One AZ, 3 nodes                    | sub-millisecond                 | No cross-AZ quorum hop; an AZ failure takes the whole cluster                            |
+| 3 voters, one per AZ in one region | low single-digit ms             | Survives one AZ; quorum decisions cross AZs, so measure caller latency and availability  |
+| 3 voters, one per region           | tens of ms                      | Survives a region; budget cross-region delay for callers, elections and recovery         |
+| Two AZs, asymmetric voters         | topology-dependent              | Can survive loss of the smaller side, not the larger; maintenance/failover is asymmetric |
 
 Measure your own RTTs rather than trusting the column; the shape is what matters. The rule that
 follows is to budget latency and benchmark the offered write rate separately: increased RTT
@@ -147,7 +175,8 @@ actual semantics.
 
 - [ ] Majority size and voter count follow a stated simultaneous-failure objective; even voters
       have a documented transitional or placement purpose.
-- [ ] Placement is evaluated for loss of **each** failure domain, including asymmetric two-domain outcomes.
+- [ ] Effective membership/roles and surviving voter sets are shown for loss of **each** failure
+      domain, including asymmetric two-domain outcomes and transitional configurations.
 - [ ] Measured commit latency at the chosen placement is below the budget of the fastest
       caller that waits on it.
 - [ ] Read scaling uses a product-supported mode whose staleness and leader replication cost were tested.
@@ -157,3 +186,4 @@ actual semantics.
 
 - [Raft membership changes, section 6](https://raft.github.io/raft.pdf)
 - [etcd 3.6 runtime reconfiguration and learner promotion](https://etcd.io/docs/v3.6/op-guide/runtime-configuration/)
+- [Attiya, Bar-Noy and Dolev: atomic registers and read propagation, section 4](https://groups.csail.mit.edu/tds/papers/Attiya/JACM95.pdf)

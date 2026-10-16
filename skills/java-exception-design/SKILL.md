@@ -70,10 +70,13 @@ evidence explicitly; do not invent handlers or retry guarantees from a type name
   does not make `catch` clauses exhaustive, though it can still control extension/document variants.
 - Do not accidentally swallow: `catch (Exception e) { log.warn(...); }` followed by a
   normal return converts a failure into a false success. Handle, translate, or let fly.
-- Prefer try-with-resources for owned `AutoCloseable` resources. If work and closing both fail,
-  the work failure remains primary and closing failures are suppressed; if work succeeds,
+- Prefer try-with-resources for owned `AutoCloseable` resources. If work and closing throw
+  distinct failures, the work failure remains primary and closing failures are suppressed; if work succeeds,
   closing can still be the primary failure. For manual cleanup, preserve the primary failure
-  and attach secondary failures with `addSuppressed`. A `return` or escaping failure from
+  and attach secondary failures with `addSuppressed` only when they are different objects.
+  If `close()` rethrows the same throwable as the work, even try-with-resources can replace it
+  with an `IllegalArgumentException` from self-suppression; inspect cached/reused exceptions
+  as described in `references/design-decisions.md`. A `return` or escaping failure from
   `finally` can replace the original outcome; it does not automatically preserve suppression.
   Inspect both paths before claiming that cleanup preserves the exception contract, and check
   that custom exceptions have suppression enabled when cleanup evidence is required.

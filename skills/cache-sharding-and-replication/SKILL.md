@@ -3,7 +3,7 @@ name: cache-sharding-and-replication
 description: >
   Topology for a cache that no longer fits one node: client-side sharded, proxy-fronted,
   clustered, and fully replicated, compared on failure behaviour, cost and client
-  complexity; and why a read after a write on a replicated cache is not read-your-writes.
+  complexity; and why replication alone does not guarantee read-your-writes.
   Estimates origin load when a cache node fails from its measured request share and the
   surviving copies, routing and capacity — mitigated by
   replication, warming, coalescing and admission control. Use when choosing between client

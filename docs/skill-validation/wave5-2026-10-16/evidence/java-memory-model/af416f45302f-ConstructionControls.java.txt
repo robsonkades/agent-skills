@@ -1,0 +1,51 @@
+import java.util.concurrent.*;
+public final class ConstructionControls {
+    static int checks;
+    static void check(boolean ok, String label) {
+        if (!ok) throw new AssertionError(label);
+        checks++; System.out.println("PASS " + label);
+    }
+    static final class Payload { int value; }
+    static final class Holder {
+        final Payload payload;
+        Holder(int value) { payload = new Payload(); payload.value = value; }
+    }
+    static final class EscapingHolder {
+        final Payload payload;
+        EscapingHolder(BlockingQueue<EscapingHolder> exposed, CountDownLatch finish) {
+            payload = new Payload();
+            exposed.add(this);
+            try { finish.await(); } catch (InterruptedException e) { throw new AssertionError(e); }
+            payload.value = 42;
+        }
+    }
+    public static void main(String[] args) throws Exception {
+        var exposed = new ArrayBlockingQueue<EscapingHolder>(1);
+        var finish = new CountDownLatch(1);
+        var failure = new java.util.concurrent.atomic.AtomicReference<Throwable>();
+        Thread producer = new Thread(() -> {
+            try { new EscapingHolder(exposed, finish); } catch (Throwable e) { failure.set(e); }
+        });
+        producer.start();
+        EscapingHolder escaped;
+        try {
+            escaped = exposed.poll(3, TimeUnit.SECONDS);
+            if (escaped == null) throw new AssertionError("escape handoff timeout");
+            check(escaped.payload.value == 0, "constructor escape exposes incomplete reachable state");
+        } finally {
+            finish.countDown();
+            producer.join(3000);
+            if (producer.isAlive()) { producer.interrupt(); producer.join(3000); throw new AssertionError("producer did not finish"); }
+        }
+        check(failure.get() == null, "constructor worker finished without failure");
+        check(escaped.payload.value == 42, "join establishes completed constructor observation");
+        Holder holder = new Holder(42);
+        Payload sameReference = holder.payload;
+        Thread mutator = new Thread(() -> holder.payload.value = 99);
+        mutator.start(); mutator.join(3000);
+        if (mutator.isAlive()) { mutator.interrupt(); mutator.join(3000); throw new AssertionError("mutator did not finish"); }
+        check(holder.payload == sameReference && holder.payload.value == 99,
+              "final reference does not prevent later reachable-state mutation");
+        System.out.println("construction-controls=" + checks + " PASS");
+    }
+}

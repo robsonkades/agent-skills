@@ -1,0 +1,51 @@
+# Review result
+
+Corrected `decision.md` and changed only `proxy-policy.json.connect_start`, from `first_client_data` to `immediate`. The supplied server-first protocol cannot make progress while the adapter waits for client bytes before connecting upstream. The route is known independently of payload, so the adapter's documented immediate mode resolves that ordering conflict. The listener, route, 1000 ms inspection timeout and 4096 buffer limit remain unchanged. No retries, TLS/authentication changes, deployments or installations were introduced.
+
+The existing TCP connect observation proves only downstream acceptance. The client waits for `HELLO`, the server sends `HELLO` only after accepting the upstream connection, and the old gate never initiates that connection without client bytes. Waiting ten seconds instead of one cannot supply the missing event. This conclusion comes from `protocol.json`, `client.mjs`, `server.mjs` and `adapter-contract.md`; it is not a diagnosis of an observed deployment.
+
+Added `local-handshake-check.mjs`, a Node built-in-only check that imports the unchanged client/server and implements just the documented connection-start gate. It binds ephemeral ports on `127.0.0.1`, never the configured port 15001, and maps the trusted fixed route to its own temporary upstream. Its 1200 ms scenario deadlines and 8000 ms watchdog bound the local experiment; they are not production deadlines or adapter settings. Every scenario destroys its sockets and closes its listeners in `finally`.
+
+The verification command ran once, with exit code 0 under Node v25.6.1. Full JSON-line output remains in `local-handshake-check.log`.
+
+| Check | Actual result |
+| --- | --- |
+| Policy preservation | PASS: only `connect_start` differs from the supplied policy. |
+| Fixture preservation | PASS: SHA-256 hashes for client, server, protocol and adapter contract match their initial hashes. |
+| Direct control | PASS: one upstream connection, one handshake completion, client received `HELLO\nPONG\n`, server received `PING\n`; 14.4 ms. |
+| Original gate | PASS for expected stall: TCP connected to the model listener, zero upstream attempts, zero upstream connections, no payload and no completion at the external deadline; 1207.8 ms. |
+| Immediate gate | PASS: one upstream attempt/connection, one handshake completion with the expected bytes; 3.2 ms. |
+| Cleanup | All three scenarios reported sockets destroyed and listeners closed. Node exited normally; no background processes were started. |
+
+Exact commands executed from `C:/Users/robso/AppData/Local/Temp/skills-wave3-behavior-mJrztd/c1-baseline`:
+
+```powershell
+Get-Content -Raw TASK.md
+Get-Content -Raw skill-resources/SKILL.md
+rg --files -g '!handshake-probe.mjs' -g '!coordinator*' -g '!**/node_modules/**'
+Get-Content -Raw skill-resources/references/failure-and-policy-composition.md
+Get-Content -Raw skill-resources/references/routing-and-experiments.md
+Get-Content -Raw decision.md
+Get-Content -Raw proxy-policy.json
+Get-Content -Raw protocol.json
+Get-Content -Raw client.mjs
+Get-Content -Raw server.mjs
+Get-Content -Raw adapter-contract.md
+node --version
+Get-FileHash -Algorithm SHA256 TASK.md,client.mjs,server.mjs,protocol.json,adapter-contract.md,proxy-policy.json,decision.md,skill-resources/SKILL.md,skill-resources/references/failure-and-policy-composition.md,skill-resources/references/routing-and-experiments.md | Format-Table -AutoSize | Out-String -Width 300
+node .\local-handshake-check.mjs 2>&1 | Tee-Object -FilePath .\local-handshake-check.log
+exit $LASTEXITCODE
+```
+
+All inspection commands returned exit code 0. `node --version` returned `v25.6.1`. The hash command recorded the initial file hashes; the verification log retains the four protected fixture hashes and their comparisons. `apply_patch` was used to edit the policy and decision and add the check and this review. The test output is retained rather than replaced by a success-only summary.
+
+Coverage limits: the actual adapter executable/image/version and upstream mapping were not supplied or run. The check does not implement inspection timeout actions, buffer enforcement, authentication, TLS, retries, resource limits, lifecycle/reload behavior, existing-connection migration, production load, or config rollback. It did not run a ten-second timeout variant; source/contract reasoning shows why a longer inspection wait does not break the cycle. It exercised one direct session and one session for each gate, with no latency or reliability claim. The decisions about bounded failure and real rollout/rollback checks remain proposals, explicitly unexecuted.
+
+Access inventory:
+
+- File contents read: `TASK.md`, `decision.md`, `proxy-policy.json`, `protocol.json`, `client.mjs`, `server.mjs`, `adapter-contract.md`, `skill-resources/SKILL.md`, `skill-resources/references/failure-and-policy-composition.md`, and `skill-resources/references/routing-and-experiments.md`. The generated `local-handshake-check.mjs` was executed by Node, which also imported/read client, server, protocol, policy and adapter contract for the assertions above.
+- Names only from the bounded workspace inventory: `skill-resources/skill.yaml` and `skill-resources/references/validation-cases.md`; their contents were not read. The two routed skill references were the only supplemental material used beyond the supplied main skill.
+- Writes: `decision.md`, the single policy field in `proxy-policy.json`, new `local-handshake-check.mjs`, new `local-handshake-check.log`, and new `REVIEW.md`. Implementation fixtures and skill resources were preserved.
+- No repository, other run, prior report, coordinator material, prohibited probe, other installed skill, or external local content was inspected. No web lookup, installation, deployment, subagent, real agent configuration access, or background process was used. Accidental access: none.
+
+Work is complete. The local Node process has exited and all test listeners/sockets were closed. No further writes or processes are required.

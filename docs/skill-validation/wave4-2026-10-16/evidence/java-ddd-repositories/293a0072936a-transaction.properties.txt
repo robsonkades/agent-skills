@@ -1,0 +1,5 @@
+database=PostgreSQL18
+isolation=REPEATABLE_READ
+freshPersistenceContext=true
+secondLevelCache=false
+queryCache=false

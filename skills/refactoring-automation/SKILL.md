@@ -50,7 +50,9 @@ ask only when missing ownership or compatibility information would change the sa
    extend to them.
 5. **Prepare a reproducible, correct patch** — record input revision plus preserved local
    changes, tool/recipe versions, scope and command. Identify manual corrections separately
-   for review, but fix known defects before delivery. Commit/publish only when authorized.
+   for review, but fix known defects before delivery. If application fails, compare actual files
+   with that input before retrying: a failing tool can leave a partially applied transformation.
+   Commit/publish only when authorized.
    `references/large-scale-change.md` covers staging, review, blame and rollback.
 6. **Prevent recurrence when justified.** Add a scoped enforcement check only when it
    reliably detects a consequential regression and fits existing policy (quality-gates).

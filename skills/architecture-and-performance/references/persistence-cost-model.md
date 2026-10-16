@@ -22,7 +22,7 @@ per order, every collection accessed, no extra eager relationships and no count 
 Jakarta Persistence defines graph loading semantics rather than guaranteeing one SQL statement.
 An identity map belongs to the persistence context, which may span transactions; it reuses managed
 identity but does not make arbitrary repeated queries avoid SQL. See
-[Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2).
+[Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html).
 
 Parallel collection joins multiply rows: with 4 lines and 3 payments, 25 orders can produce
 300 rows before deduplication. Some collection mappings cannot be fetched together. Measure
@@ -111,7 +111,7 @@ require it to be thread-safe. Spring's imperative, thread-bound transaction does
 to newly started worker threads. Separate contexts/transactions may change snapshot consistency
 and atomicity, and require additional connections. If the operation requires one transaction,
 prefer sequential or set-based access unless the chosen transaction model explicitly supports
-the alternative. See [Jakarta Persistence concurrency contract](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2#obtaining-an-entity-manager)
+the alternative. See [Jakarta Persistence concurrency contract](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html#obtaining-an-entitymanager)
 and [Spring transaction context](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/transaction/annotation/Transactional.html).
 
 A simple sequential read-through cache model is:

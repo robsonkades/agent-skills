@@ -1,0 +1,282 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "database-index-design",
+  "ownedPath": "skills/database-index-design/**",
+  "allWritesStopped": true,
+  "readinessMeaning": "Local work complete; no process started by this reviewer remains able to write. Repository-wide checks and independent behavioral evaluation remain pending.",
+  "versions": {
+    "committed": "1.0.4",
+    "assignmentTime": "1.0.4",
+    "final": "1.0.5",
+    "preExistingBump": false,
+    "rationale": "One patch bump for focused instruction/reference changes; no second bump for formatting."
+  },
+  "baseline": {
+    "preExistingChanges": [],
+    "evidence": "Scoped git status, staged/unstaged diffs were empty at assignment; every package file read. Final contents compared with the captured assignment snapshot, not only HEAD.",
+    "files": [
+      {
+        "path": "C:\\git\\agent-skills\\skills\\database-index-design\\SKILL.md",
+        "assignmentSha256": "0C96DE33A1F491717567812070505C2EF398DD109ECE2A1BD9ACF62ACB81D16E",
+        "finalSha256": "4A64758100F3FD1950822A0EDD0F9B3F84454A4C1AE8CBFFF348AB5A45EBA888",
+        "changedByReviewer": true
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\database-index-design\\skill.yaml",
+        "assignmentSha256": "AB87441CADCB29B3152F6D92306B8B22C6EE7B58F2966040378159337E63C0FD",
+        "finalSha256": "34A832442F75B83B31FDEFA1F407B112E00137FDC4CE10ABF7946492C75A6FF8",
+        "changedByReviewer": true
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\database-index-design\\references\\composite-index-derivation.md",
+        "assignmentSha256": "2AD7532FE95E2CE01F92285290A8F73196FBC6CB9CE46BEB9826843EC666247F",
+        "finalSha256": "2AD7532FE95E2CE01F92285290A8F73196FBC6CB9CE46BEB9826843EC666247F",
+        "changedByReviewer": false
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\database-index-design\\references\\engine-differences.md",
+        "assignmentSha256": "71DCF44F7E67D0CECB6076C2CB9A77F49D3260B427C6630CE8300433F72EBA81",
+        "finalSha256": "A4E07F6C0E26AC558BB1A74341E0A8A3F42D63D2B6ABB5C4E031925FFA787A53",
+        "changedByReviewer": true
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\database-index-design\\references\\portfolio-lifecycle.md",
+        "assignmentSha256": "1E9780B1BFADBAF088CF9C16DAF3717FE0E319D806595FAD80CC5900F8624C0E",
+        "finalSha256": "1E9780B1BFADBAF088CF9C16DAF3717FE0E319D806595FAD80CC5900F8624C0E",
+        "changedByReviewer": false
+      }
+    ]
+  },
+  "filesChangedByReviewer": [
+    "skills/database-index-design/SKILL.md",
+    "skills/database-index-design/references/engine-differences.md",
+    "skills/database-index-design/skill.yaml"
+  ],
+  "changes": [
+    {
+      "location": "SKILL.md:65-68,116",
+      "finding": "A parameterized-plan requirement existed, but did not make plan provenance and deployed preparation/session settings explicit in the validation decision.",
+      "correction": "Match generated SQL, bind types and session/preparation context, and separate eligibility, optimizer selection and measured benefit.",
+      "consequence": "A manually literalized plan is insufficient to establish that a proposed portfolio change benefits the actual application path."
+    },
+    {
+      "location": "references/engine-differences.md:60-88",
+      "finding": "The generic-plan caveat was correct but lacked an evidence acquisition path and a discriminating partial-index example.",
+      "correction": "Added conditional PostgreSQL 18 guidance covering pgJDBC preparation, plan_cache_mode, fixed-versus-bound partial predicates, EXPLAIN EXECUTE, local diagnostic overrides and retain/compare decisions.",
+      "consequence": "Prevents treating all observed ready binds as planner proof, and prevents the inverse blanket rejection of partial indexes when only other predicates are parameterized."
+    }
+  ],
+  "preserved": [
+    "Portfolio and DDL decision ownership; sql-query-performance retains single-statement diagnosis.",
+    "Composite-key derivation, conditional amplification, equality/range/order trade-offs, skip-scan and covering caveats.",
+    "All SQL Server, MySQL/InnoDB and PostgreSQL physical, uniqueness, partition, expression, visibility and UUID distinctions.",
+    "Write/storage/lock costs; safe concurrent/online creation, invalid-index recovery and role/business-cycle-aware removal.",
+    "No Java minimum; actual database, driver and migration compatibility must be inspected. Existing dependency and metadata descriptions unchanged.",
+    "Both composite-index-derivation.md and portfolio-lifecycle.md remained byte-for-byte unchanged."
+  ],
+  "replacedOrRemoved": "No useful capability removed. The previous two-line parameterized-plan instruction was strengthened in place.",
+  "commands": [
+    {
+      "command": "git status --short -- skills/database-index-design; git diff -- skills/database-index-design; git diff --cached -- skills/database-index-design; git show HEAD:skills/database-index-design/skill.yaml (executed as separate read-only calls)",
+      "cwd": "C:/git/agent-skills",
+      "result": "Clean assignment; committed and assignment manifest version 1.0.4."
+    },
+    {
+      "command": "Get-ChildItem / Get-Content / Get-FileHash for all owned files, required review instructions, and sql-query-performance/SKILL.md (read-only inspections)",
+      "cwd": "C:/git/agent-skills",
+      "result": "All five package files read and assignment/final hashes compared; neighboring skill read only to check the diagnosis boundary."
+    },
+    {
+      "command": "rg -n parameter|partial|Plan evidence|Before adding|Sources skills/database-index-design -g '*.md'",
+      "cwd": "C:/git/agent-skills",
+      "result": "Located relevant rules. Earlier invocation used a PowerShell literal *.md path, produced rg error 123, and was rerun with -g successfully."
+    },
+    {
+      "command": "Get-Command psql, postgres -ErrorAction SilentlyContinue",
+      "cwd": "C:/git/agent-skills",
+      "result": "Neither executable found on PATH; exit 1, no SQL execution or connection attempted."
+    },
+    {
+      "name": "packageValidation",
+      "command": "@'\nimport { loadPackageFromDirectory } from './packages/core/src/application/package-loader.ts';\nimport { validatePackage } from './packages/core/src/application/validate-package.ts';\nimport { NodeFileSystem } from './packages/node/src/file-system.ts';\nimport { CodexAdapter } from './packages/adapter-codex/src/index.ts';\nimport { ClaudeCodeAdapter } from './packages/adapter-claude/src/index.ts';\nconst loaded = await loadPackageFromDirectory(new NodeFileSystem(), 'skills/database-index-design', { strict: true });\nconst report = validatePackage(loaded.pkg, { directoryName: 'database-index-design', adapters: [new CodexAdapter(), new ClaudeCodeAdapter()] });\nconst issues = [...loaded.issues, ...report.issues];\nconsole.log(JSON.stringify({name:loaded.pkg.manifest.name,version:loaded.pkg.manifest.version,files:loaded.pkg.files.map(f=>f.path),issues},null,2));\nif(issues.length)process.exitCode=1;\n'@ | node --input-type=module",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "output": "{\n  \"name\": \"database-index-design\",\n  \"version\": \"1.0.5\",\n  \"files\": [\n    \"SKILL.md\",\n    \"references/composite-index-derivation.md\",\n    \"references/engine-differences.md\",\n    \"references/portfolio-lifecycle.md\",\n    \"skill.yaml\"\n  ],\n  \"issues\": []\n}\n"
+    },
+    {
+      "name": "format",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/database-index-design/SKILL.md skills/database-index-design/references/engine-differences.md skills/database-index-design/skill.yaml",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 1,
+      "output": "Checking formatting...\n[warn] skills/database-index-design/references/engine-differences.md\n[warn] Code style issues found in the above file. Run Prettier with --write to fix.\n"
+    },
+    {
+      "name": "diffCheck",
+      "command": "git diff --check -- skills/database-index-design",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "output": ""
+    },
+    {
+      "name": "localLinks",
+      "command": "@'\nimport { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';\nimport { resolve, dirname } from 'node:path';\nconst root=resolve('skills/database-index-design');\nconst files=[];\nfunction visit(dir){for(const name of readdirSync(dir)){const p=resolve(dir,name); if(statSync(p).isDirectory())visit(p); else if(p.endsWith('.md'))files.push(p);}}\nvisit(root);\nconst links=[];\nfor(const file of files){const source=readFileSync(file,'utf8');for(const m of source.matchAll(/\\[[^\\]]+\\]\\(([^)]+)\\)/g)){const target=m[1];if(/^[a-z]+:/i.test(target))continue; const path=resolve(dirname(file),target.split('#')[0]); links.push({file,target,exists:existsSync(path)});}}\nconsole.log(JSON.stringify({markdownFiles:files.length,localLinks:links,missing:links.filter(x=>!x.exists).length},null,2));\nif(links.some(x=>!x.exists))process.exitCode=1;\n'@ | node --input-type=module",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "output": "{\n  \"markdownFiles\": 4,\n  \"localLinks\": [\n    {\n      \"file\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\database-index-design\\\\SKILL.md\",\n      \"target\": \"references/composite-index-derivation.md\",\n      \"exists\": true\n    },\n    {\n      \"file\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\database-index-design\\\\SKILL.md\",\n      \"target\": \"references/engine-differences.md\",\n      \"exists\": true\n    },\n    {\n      \"file\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\database-index-design\\\\SKILL.md\",\n      \"target\": \"references/portfolio-lifecycle.md\",\n      \"exists\": true\n    }\n  ],\n  \"missing\": 0\n}\n"
+    },
+    {
+      "command": "In-memory prettier.format comparison for engine-differences.md; focused apply_patch alignment of the four new table lines",
+      "cwd": "C:/git/agent-skills",
+      "result": "Initial format failure was introduced by the new table; only its alignment changed. No whole-repository formatter ran."
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/database-index-design/SKILL.md skills/database-index-design/references/engine-differences.md skills/database-index-design/skill.yaml",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+    },
+    {
+      "command": "git diff --check -- skills/database-index-design",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "output": ""
+    },
+    {
+      "command": "git diff -- skills/database-index-design; git status --short -- skills/database-index-design (separate calls)",
+      "cwd": "C:/git/agent-skills",
+      "result": "Final diff inspected; exactly the three reported files modified, no package files added or removed."
+    }
+  ],
+  "checksSummary": {
+    "package": "5 packaged files; 0 strict-loader or dual-adapter validation issues; name and description consistent",
+    "links": "4 Markdown files inspected; 3 local resource links resolve",
+    "format": "Initial new-table alignment failure fixed; all three changed files pass final check",
+    "diff": "Final scoped diff --check passed",
+    "sqlExamples": "Only illustrative predicate fragments added. PostgreSQL engine execution unavailable; no Java executable example added or changed."
+  },
+  "behavioralEvaluations": {
+    "executed": [],
+    "measuredImprovement": false,
+    "walkthroughs": [
+      {
+        "case": "generic-bound-state",
+        "result": "Observed ready binds and a literal manual plan do not establish generic-plan partial-index eligibility; retain the existing full index and compare alternatives within the service contract."
+      },
+      {
+        "case": "generic-fixed-subset",
+        "result": "The added fixed state predicate proves the subset despite remaining parameters; eligibility becomes supported, while selection, runtime benefit, write cost and removal remain unverified."
+      }
+    ],
+    "classification": "Structured reviewer walkthroughs only; no actual agent outputs, original-versus-revised comparison or unseen holdout."
+  },
+  "evaluationCases": [
+    {
+      "id": "generic-bound-state",
+      "input": {
+        "request": "Review the index replacement proposal using the attached artifacts. State the portfolio decision, the decisive evidence, and the smallest remaining validation. Do not execute DDL.",
+        "fixtures": {
+          "README.txt": "Review the proposed portfolio change only; do not execute DDL. PostgreSQL 18. Tables have matching bigint/text/timestamptz types. The service's poll operation must return only ready jobs. All query, constraint and replica roles for this table were collected for a complete six-month business cycle. The current full index serves only this operation; no constraint or FK depends on it. No production plan after the candidate index was added is available. The manual sandbox plan is abbreviated and is a fixture, not a new measurement. Write/storage cost remains to be measured. Decide whether this proposal is supported and specify the smallest remaining validation.",
+          "schema.sql": "CREATE TABLE jobs (id bigint PRIMARY KEY, tenant_id bigint NOT NULL, state text NOT NULL, created_at timestamptz NOT NULL);\nCREATE INDEX jobs_work ON jobs (tenant_id, state, created_at);\n-- No CHECK constraint restricts state to ready.\n",
+          "application-query.sql": "SELECT id FROM jobs WHERE tenant_id = $1 AND state = $2 ORDER BY created_at LIMIT 20;\n",
+          "runtime-capture.json": "{\n  \"engine\": \"PostgreSQL 18\",\n  \"preparedStatement\": \"poll_jobs\",\n  \"parameterTypes\": [\n    \"bigint\",\n    \"text\"\n  ],\n  \"plan_cache_mode\": \"force_generic_plan\",\n  \"generic_plans\": 41,\n  \"custom_plans\": 0,\n  \"observedBindings\": [\n    {\n      \"tenant_id\": 7,\n      \"state\": \"ready\"\n    },\n    {\n      \"tenant_id\": 99,\n      \"state\": \"ready\"\n    }\n  ]\n}",
+          "workload.json": "{\n  \"rows\": 1000000,\n  \"pollExecutionsPerMinute\": 300,\n  \"writesPerSecond\": 50,\n  \"states\": {\n    \"ready\": 0.01,\n    \"working\": 0.09,\n    \"done\": 0.9\n  },\n  \"contract\": \"The poll operation returns only ready jobs; all observed calls bind ready. Other states remain in the table.\",\n  \"candidateWriteCost\": \"unmeasured\"\n}",
+          "proposal.sql": "-- Proposal for review, not authorized execution.\nCREATE INDEX CONCURRENTLY jobs_ready ON jobs (tenant_id, created_at) WHERE state = 'ready';\nDROP INDEX CONCURRENTLY jobs_work;\n",
+          "captures/manual-plan.txt": "Source: manually literalized SQL in a disposable sandbox with the proposed index present.\nEXPLAIN SELECT id FROM jobs WHERE tenant_id = 7 AND state = 'ready' ORDER BY created_at LIMIT 20;\nAbbreviated fixture: Limit -> Index Scan using jobs_ready; Index Cond: tenant_id = 7.\nNo ANALYZE, buffers, elapsed time or application execution capture is supplied.\n"
+        },
+        "prerequisites": "Evaluator materializes the text fixtures in an isolated temporary directory and gives the actor the skill plus this input only. No database is required for the evidence review."
+      },
+      "criteria": {
+        "expected": [
+          "Read the actual application query and runtime capture rather than accepting the manual plan alone.",
+          "Recognize that the generic plan's bound state does not establish the partial predicate for all possible values; observed ready binds do not supply that planner proof.",
+          "Reject the proposed replacement as validated for the current path; retain jobs_work pending an eligible, measured alternative.",
+          "May compare a full composite index or an explicitly fixed-ready query if it preserves the stated poll contract; keep arbitrary inputs bound.",
+          "Separate eligibility from selected plan, runtime gain and write/removal cost; request targeted application-path evidence rather than an entire infrastructure audit."
+        ],
+        "failureConditions": [
+          "Approves dropping jobs_work based on the literal EXPLAIN.",
+          "Claims latency improvement or production use from estimated/manual-plan evidence.",
+          "Globally forces custom plans or disables safe binding as an automatic fix.",
+          "Claims PostgreSQL execution or behavioral tests that did not occur."
+        ]
+      }
+    },
+    {
+      "id": "generic-fixed-subset",
+      "changedConstraint": "Only application-query.sql adds AND state = 'ready'; all bindings, session mode, workload, schema, manual evidence and proposal are unchanged.",
+      "input": {
+        "request": "Review the index replacement proposal using the attached artifacts. State the portfolio decision, the decisive evidence, and the smallest remaining validation. Do not execute DDL.",
+        "fixtures": {
+          "README.txt": "Review the proposed portfolio change only; do not execute DDL. PostgreSQL 18. Tables have matching bigint/text/timestamptz types. The service's poll operation must return only ready jobs. All query, constraint and replica roles for this table were collected for a complete six-month business cycle. The current full index serves only this operation; no constraint or FK depends on it. No production plan after the candidate index was added is available. The manual sandbox plan is abbreviated and is a fixture, not a new measurement. Write/storage cost remains to be measured. Decide whether this proposal is supported and specify the smallest remaining validation.",
+          "schema.sql": "CREATE TABLE jobs (id bigint PRIMARY KEY, tenant_id bigint NOT NULL, state text NOT NULL, created_at timestamptz NOT NULL);\nCREATE INDEX jobs_work ON jobs (tenant_id, state, created_at);\n-- No CHECK constraint restricts state to ready.\n",
+          "application-query.sql": "SELECT id FROM jobs WHERE tenant_id = $1 AND state = $2 AND state = 'ready' ORDER BY created_at LIMIT 20;\n",
+          "runtime-capture.json": "{\n  \"engine\": \"PostgreSQL 18\",\n  \"preparedStatement\": \"poll_jobs\",\n  \"parameterTypes\": [\n    \"bigint\",\n    \"text\"\n  ],\n  \"plan_cache_mode\": \"force_generic_plan\",\n  \"generic_plans\": 41,\n  \"custom_plans\": 0,\n  \"observedBindings\": [\n    {\n      \"tenant_id\": 7,\n      \"state\": \"ready\"\n    },\n    {\n      \"tenant_id\": 99,\n      \"state\": \"ready\"\n    }\n  ]\n}",
+          "workload.json": "{\n  \"rows\": 1000000,\n  \"pollExecutionsPerMinute\": 300,\n  \"writesPerSecond\": 50,\n  \"states\": {\n    \"ready\": 0.01,\n    \"working\": 0.09,\n    \"done\": 0.9\n  },\n  \"contract\": \"The poll operation returns only ready jobs; all observed calls bind ready. Other states remain in the table.\",\n  \"candidateWriteCost\": \"unmeasured\"\n}",
+          "proposal.sql": "-- Proposal for review, not authorized execution.\nCREATE INDEX CONCURRENTLY jobs_ready ON jobs (tenant_id, created_at) WHERE state = 'ready';\nDROP INDEX CONCURRENTLY jobs_work;\n",
+          "captures/manual-plan.txt": "Source: manually literalized SQL in a disposable sandbox with the proposed index present.\nEXPLAIN SELECT id FROM jobs WHERE tenant_id = 7 AND state = 'ready' ORDER BY created_at LIMIT 20;\nAbbreviated fixture: Limit -> Index Scan using jobs_ready; Index Cond: tenant_id = 7.\nNo ANALYZE, buffers, elapsed time or application execution capture is supplied.\n"
+        },
+        "prerequisites": "Same isolated fixture setup as the first case. Give the actor this complete input independently, without the first case's criteria."
+      },
+      "criteria": {
+        "expected": [
+          "Read the fixed state predicate now present in the application's actual statement.",
+          "Recognize that this establishes the partial predicate under the generic plan; remaining tenant/state parameters do not by themselves prevent eligibility.",
+          "Move from rejecting the candidate for generic-plan ineligibility to retaining it as an eligible candidate for comparable application-plan and cost validation.",
+          "Still withhold claims of optimizer selection, measured gain or safe full-index removal until corresponding evidence is available.",
+          "Preserve the poll-only-ready contract and the existing operational/constraint checks."
+        ],
+        "failureConditions": [
+          "Repeats a blanket rule that generic or parameterized queries can never use a partial index.",
+          "Treats eligible as automatically selected or faster.",
+          "Approves unconditional drop from the unchanged manual evidence.",
+          "Claims source inspection or execution that was unavailable."
+        ]
+      }
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://www.postgresql.org/docs/18/indexes-partial.html",
+      "version": "PostgreSQL 18",
+      "verified": "2026-10-16",
+      "supports": "Partial-index predicate implication is established during planning; lack of proof for unknown predicate parameters. Fixed-subset example is a domain inference from this rule, not a performance measurement."
+    },
+    {
+      "url": "https://www.postgresql.org/docs/18/sql-prepare.html",
+      "version": "PostgreSQL 18",
+      "verified": "2026-10-16",
+      "supports": "Generic/custom parameter visibility, auto selection, force_generic_plan/force_custom_plan, EXPLAIN EXECUTE interpretation."
+    },
+    {
+      "url": "https://jdbc.postgresql.org/documentation/server-prepare/",
+      "version": "Current official pgJDBC documentation; skill explicitly requires checking the resolved driver",
+      "verified": "2026-10-16",
+      "supports": "JDBC PreparedStatement and protocol/server preparation behavior; prepareThreshold affects named preparation, so API type alone does not settle the planning path."
+    }
+  ],
+  "limits": [
+    "No PostgreSQL 18 executable available on PATH and no database contacted; syntax/optimizer behavior was checked against official documentation, not executed.",
+    "No performance benefit, production result or comparative skill gain measured.",
+    "No independent behavioral evaluation executed. Cases and walkthroughs are development evidence only.",
+    "Existing other-engine guidance was preserved; this focused correction adds no new SQL Server/MySQL behavior claim.",
+    "Local link validation checks repository resource resolution, not availability of every pre-existing external URL."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "purpose": "Regenerate integrity/index and check cross-package metadata/ranges",
+      "prerequisite": "All assigned reviewers have stopped writing"
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "purpose": "Repository-wide validation including version policy",
+      "prerequisite": "Index regenerated after all writes stop"
+    }
+  ],
+  "crossSkill": {
+    "issues": [],
+    "action": "No neighboring edits or new dependencies needed. Keep single-query diagnosis with sql-query-performance; archive this authorized temporary report and optionally run the separated cases."
+  }
+}

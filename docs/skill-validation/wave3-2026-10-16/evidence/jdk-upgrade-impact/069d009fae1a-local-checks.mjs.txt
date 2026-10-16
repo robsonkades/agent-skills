@@ -1,0 +1,59 @@
+import assert from 'node:assert/strict';
+import { readFileSync, writeFileSync, existsSync, readdirSync, statSync } from 'node:fs';
+import { join, resolve, dirname, relative } from 'node:path';
+import { pathToFileURL, fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
+
+const repo = resolve('C:/git/agent-skills');
+const skill = join(repo, 'skills/jdk-upgrade-impact');
+const artifactRoot = dirname(fileURLToPath(import.meta.url));
+const { parseManifest } = await import(pathToFileURL(join(repo, 'packages/core/src/domain/manifest.ts')));
+const { parseSkillDocument, documentName, documentDescription } = await import(pathToFileURL(join(repo, 'packages/core/src/domain/skill-document.ts')));
+const manifestText = readFileSync(join(skill, 'skill.yaml'), 'utf8');
+const { manifest, issues } = parseManifest(manifestText, { strict: true });
+assert.deepEqual(issues, []);
+const doc = parseSkillDocument(readFileSync(join(skill, 'SKILL.md'), 'utf8'));
+assert.equal(documentName(doc), 'jdk-upgrade-impact');
+assert.equal(documentName(doc), manifest.name);
+assert.equal(documentDescription(doc), manifest.description);
+assert.match(manifestText, /^version: 1\.2\.6$/m);
+for (const entry of manifest.files) assert.ok(existsSync(join(skill, entry)), entry);
+const files = [join(skill, 'SKILL.md'), join(skill, 'skill.yaml'), ...readdirSync(join(skill, 'references')).map(file => join(skill, 'references', file))];
+assert.equal(files.length, 5);
+const localLinks = [];
+for (const file of files.filter(file => file.endsWith('.md'))) {
+    for (const match of readFileSync(file, 'utf8').matchAll(/\[[^\]]*\]\(([^)]+)\)/g)) {
+        const href = match[1].replace(/^<|>$/g, '');
+        if (/^[a-z][a-z\d+.-]*:/i.test(href)) continue;
+        const [rel, anchor] = href.split('#');
+        const target = rel ? resolve(dirname(file), rel) : file;
+        assert.ok(existsSync(target), href);
+        if (anchor) {
+            const headings = [...readFileSync(target, 'utf8').matchAll(/^#+\s+(.+)$/gm)]
+                .map(match => match[1].trim().toLowerCase().replace(/[^\p{L}\p{N}_\s-]/gu, '').replace(/\s/g, '-'));
+            assert.ok(headings.includes(anchor), href);
+        }
+        localLinks.push({ source: file, href, target });
+    }
+}
+for (const ref of readdirSync(join(skill, 'references'))) assert.ok(doc.body.includes('references/' + ref), ref);
+const baseline = JSON.parse(readFileSync(join(artifactRoot, 'baseline-hashes.json'), 'utf8'));
+const finalFiles = files.map(path => ({ path, bytes: statSync(path).size, sha256: createHash('sha256').update(readFileSync(path)).digest('hex').toUpperCase() }));
+const changed = finalFiles.filter(file => file.sha256 !== baseline.find(old => resolve(old.Path) === resolve(file.path)).SHA256)
+    .map(file => relative(skill, file.path).replaceAll('\\', '/')).sort();
+assert.deepEqual(changed, ['SKILL.md', 'references/verification-and-rollout.md', 'skill.yaml']);
+const a = JSON.parse(readFileSync(join(artifactRoot, 'actor/case-a/runtime-contract.json'), 'utf8'));
+const b = JSON.parse(readFileSync(join(artifactRoot, 'actor/case-b/runtime-contract.json'), 'utf8'));
+assert.equal(a.minimumSupportedRuntime, 17);
+assert.equal(b.minimumSupportedRuntime, 21);
+assert.deepEqual({ ...a, minimumSupportedRuntime: 21 }, b);
+for (const fixture of JSON.parse(readFileSync(join(artifactRoot, 'cases-inputs.json'), 'utf8')).sharedInputs)
+    assert.ok(existsSync(join(artifactRoot, fixture)), fixture);
+const summary = {
+    scope: 'Assigned skill only; existing repository metadata parsers; no catalog/global validation.',
+    strictManifestIssues: 0, descriptionMatches: true, version: '1.2.6', shippedFiles: files.length,
+    localLinks, allReferencesRouted: true, changedFilesFromAssignment: changed, finalFiles,
+    casesDifferOnlyInConsumerMinimum: true
+};
+writeFileSync(join(artifactRoot, 'local-checks-result.json'), JSON.stringify(summary, null, 2) + '\n');
+console.log(JSON.stringify(summary, null, 2));

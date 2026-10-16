@@ -1,0 +1,7 @@
+SELECT o.id, o.status, o.placed_at
+  FROM customer_order o
+ WHERE o.tenant_id = :tenantId
+   AND o.customer_id IN (:allowedCustomers)
+   AND o.status NOT IN ('SETTLED', 'VOID')
+ ORDER BY o.placed_at DESC, o.id DESC
+ OFFSET :offset ROWS FETCH NEXT :size ROWS ONLY;

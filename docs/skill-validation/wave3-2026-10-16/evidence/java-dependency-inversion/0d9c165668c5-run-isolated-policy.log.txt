@@ -1,0 +1,15 @@
+{
+  "name": "run-isolated-policy",
+  "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+  "args": [
+    "-Xms16m",
+    "-Xmx64m",
+    "-cp",
+    "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\policy-after",
+    "shop.orders.PolicyCheck"
+  ],
+  "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N",
+  "exitCode": 0,
+  "stdout": "PASS: recording outcome and synchronous failure without retry\r\n",
+  "stderr": ""
+}

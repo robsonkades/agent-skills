@@ -1,0 +1,7 @@
+INFO Applying recipes would make no changes. No patch file generated.
+OBSERVED state=PROCESSED
+OBSERVED failure=none
+OBSERVED A.exists=false
+OBSERVED B.regularFile=false
+OBSERVED B.directory=false
+OBSERVED localNotes=keep this unrelated local work

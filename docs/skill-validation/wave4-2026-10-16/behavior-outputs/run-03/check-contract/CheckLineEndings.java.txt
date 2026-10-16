@@ -1,0 +1,27 @@
+import com.example.text.LineEndings;
+
+public final class CheckLineEndings {
+    public static void main(String[] args) {
+        boolean corrected = args.length == 1 && args[0].equals("corrected");
+        String[][] cases = {
+            {"CR", "A\rB", corrected ? "A\nB" : "A\rB"},
+            {"LF", "A\nB", "A\nB"},
+            {"CRLF", "A\r\nB", "A\nB"},
+            {"mixed", "A\rB\nC\r\nD", corrected ? "A\nB\nC\nD" : "A\rB\nC\nD"},
+            {"empty", "", ""},
+            {"plain", "AB", "AB"}
+        };
+        for (String[] test : cases) {
+            String actual = LineEndings.normalize(test[1]);
+            if (!actual.equals(test[2])) {
+                throw new AssertionError(test[0] + ": expected " + visible(test[2]) + " but got " + visible(actual));
+            }
+            System.out.println(test[0] + " OK: " + visible(actual));
+        }
+        System.out.println("6 cases passed (" + (corrected ? "corrected" : "legacy") + ")");
+    }
+
+    private static String visible(String value) {
+        return value.replace("\r", "<CR>").replace("\n", "<LF>");
+    }
+}

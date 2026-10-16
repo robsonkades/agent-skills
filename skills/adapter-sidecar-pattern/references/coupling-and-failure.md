@@ -146,6 +146,24 @@ injection. For a pipe, a full blocking writer waits for its reader; a nonblockin
 fail instead. See [Linux pipe behavior](https://man7.org/linux/man-pages/man7/pipe.7.html);
 do not infer the application's failure policy from the IPC mechanism alone.
 
+For direct push output, inspect the actual client/exporter and receiver acknowledgement before
+counting records as accepted. A successful send or HTTP status alone may be insufficient.
+With OTLP/HTTP, HTTP 200 can carry `partial_success.rejected_log_records`: in a ten-record
+fixture, two rejections mean eight accepted by that receiver, not ten. Zero rejections with
+an error message can instead be a warning with full acceptance. Decode the agreed binary or
+JSON Protobuf response; JSON uses `partialSuccess.rejectedLogRecords` and `partialSuccess.errorMessage`.
+The [OTLP response contract (specification v1.11.1)](https://github.com/open-telemetry/opentelemetry-proto/blob/v1.11.1/docs/specification.md#partial-success-1)
+forbids retrying a request with populated `partial_success`. Its
+[log response schema](https://github.com/open-telemetry/opentelemetry-proto/blob/v1.11.1/opentelemetry/proto/collector/logs/v1/logs_service.proto)
+gives a count, not rejected record identities: do not invent a subset to replay or resubmit
+the accepted records. Keep bounded, redacted rejection/warning diagnostics and test partial
+rejection, full acceptance and warning-only responses.
+
+Distinguish explicit rejection from a missing acknowledgement. For uncertain outcomes, follow
+the protocol's retry policy while recording duplicate/loss limits. Acceptance by a local
+collector does not establish durable delivery through the remaining hops; inspect its
+forwarding and queue boundary separately when the requirement is end-to-end delivery.
+
 ## Validate the output contract
 
 Use the consumer's parser and semantic assertions. The following is a test specification,

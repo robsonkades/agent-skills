@@ -1,0 +1,475 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "service-data-ownership",
+  "ownedPath": "skills/service-data-ownership/**",
+  "allWritesStopped": true,
+  "processesStillRunning": [],
+  "date": "2026-10-16",
+  "rolePreserved": "Define, review and verify service data authority/access contracts after a boundary is identified; no imposed architecture, topology, ORM implementation or ownership-transfer protocol.",
+  "procedure": {
+    "requiredReadings": [
+      "AGENTS.md",
+      "docs/skill-review-prompt.md",
+      "docs/parallel-skill-reviews.md",
+      "docs/skill-validation/wave2-2026-10-16/review-brief.md",
+      "skills/skill-engineering/SKILL.md",
+      "skills/skill-engineering/references/resource-design.md",
+      "skills/skill-engineering/references/evidence-and-confidence.md",
+      "skills/skill-engineering/references/evaluation.md",
+      "skills/skill-engineering/references/anti-patterns.md"
+    ],
+    "note": "Previously completed unchanged cumulative-wave readings reused as permitted. Read the entire four-file assigned package and recorded its clean baseline before editing. No nested AGENTS.md was found under skills. Findings and primary UPDATE contract sent to coordinator before first edit.",
+    "noDelegation": true,
+    "noSharedRepositoryWrites": true,
+    "noGlobalChecks": true
+  },
+  "baseline": {
+    "waveHead": "bbb7d996a929e81baf735bbaab5b6e3fbf6e8503",
+    "committedVersion": "1.0.0",
+    "assignmentVersion": "1.0.0",
+    "finalVersion": "1.0.1",
+    "preExistingVersionBump": false,
+    "stagedDifferences": [],
+    "unstagedDifferences": [],
+    "untrackedFiles": [],
+    "fileHashes": [
+      {
+        "path": "skills/service-data-ownership/references/access-contract.md",
+        "sha256": "a82df2fd4594a13f5a2a0d9b098f57465699cf1ab979242530bcb003823b5b1a"
+      },
+      {
+        "path": "skills/service-data-ownership/references/enforcement-and-verification.md",
+        "sha256": "debd5f70b365d4b54ef780d0ef5644eb2f68b7a3f073aeb5427175acec42f07e"
+      },
+      {
+        "path": "skills/service-data-ownership/SKILL.md",
+        "sha256": "b559fb2a6fe455313ea29dad06933924724ff7b142ba2b243492af4700e8d74a"
+      },
+      {
+        "path": "skills/service-data-ownership/skill.yaml",
+        "sha256": "f69e5d48794f49a8102451bc2dd407e06228b49cd7975d3b9bed70d6b51cbbe6"
+      }
+    ],
+    "attribution": "All four assignment-time files matched wave-two allFiles hashes. The final diff changes only the enforcement reference and manifest; these changes are this reviewer's work."
+  },
+  "versionRationale": "One patch for a consequential permission-test correction and its negative control; no description, dependency, scope or technology-baseline change.",
+  "findingsCorrected": [
+    {
+      "id": "select-dependent-denial-false-positive",
+      "originalLocation": "skills/service-data-ownership/references/enforcement-and-verification.md:125",
+      "finalLocations": [
+        "skills/service-data-ownership/references/enforcement-and-verification.md:109",
+        "skills/service-data-ownership/references/enforcement-and-verification.md:125",
+        "skills/service-data-ownership/references/enforcement-and-verification.md:131"
+      ],
+      "evidence": "PostgreSQL 17 UPDATE requires UPDATE on assigned columns and SELECT on columns read by expressions/conditions. The previous SET quantity=quantity WHERE order_id=42 can return 42501 solely because SELECT is missing, even while UPDATE(quantity) remains granted.",
+      "consequence": "A successful denial gate could be misread as proving no source mutation is reachable while a literal-only blind update remains possible.",
+      "correction": "The illustrative probe now assigns a valid literal without WHERE/RETURNING in a single-row disposable fixture with explicit prerequisites. Added an UPDATE-only/no-SELECT hostile control, permitted-view positive control, and instruction to inspect other write columns/paths separately.",
+      "validationLimit": "The primary contract supports the correction; the PostgreSQL adversarial fixture is supplied but was not executed because no isolated runtime was available and the coordinator prohibited infrastructure startup/installation."
+    }
+  ],
+  "remainingFindings": [],
+  "filesChangedByMe": [
+    {
+      "path": "skills/service-data-ownership/references/enforcement-and-verification.md",
+      "change": "One hostile-case row; narrow literal-only UPDATE probe and explicit fixture conditions; primary PostgreSQL UPDATE source and negative-control explanation."
+    },
+    {
+      "path": "skills/service-data-ownership/skill.yaml",
+      "change": "Version 1.0.0 to 1.0.1 only."
+    }
+  ],
+  "preExistingChanges": [],
+  "unchangedOwnedFiles": [
+    "skills/service-data-ownership/SKILL.md",
+    "skills/service-data-ownership/references/access-contract.md"
+  ],
+  "capabilitiesPreserved": [
+    "Fact/invariant authority distinguished from object ownership, replicas, custodians and source lineage.",
+    "Inventory of deployed readers/writers, dormant jobs, functions, triggers, migrations, CDC, repair and administration; unknown/unobserved access remains explicit.",
+    "Supported owner operations, SQL views/exports, API/events or derived copies selected from consumer requirements without forcing HTTP or dedicated servers.",
+    "Temporary exceptions, downstream correction/deletion, credential revocation and pooled-session limitations.",
+    "Runtime versus migration identities, Spring readOnly hint limitations, tenant authorization and target version/toolchain inspection.",
+    "PostgreSQL 17 role inheritance/SET ROLE, PUBLIC privileges, default privileges, view/RLS/security-invoker behavior, search paths and logical-replication access caveats.",
+    "Direct authentication versus SET ROLE permission testing, positive allowed-interface checks, denied mutation and separate RLS result/row-count semantics.",
+    "Optional handoffs to existing ownership-transfer, CDC, query and transaction specialists; no unrelated architectural redesign."
+  ],
+  "capabilitiesRemoved": [
+    "Replaced the read-dependent denial probe as the sole example of a prohibited UPDATE check, because it could be denied for SELECT rather than UPDATE. Its old statement remains explicitly as the adverse-control comparison."
+  ],
+  "validation": {
+    "executedStructuralAndTechnical": [
+      {
+        "command": "@'\nimport assert from 'node:assert/strict';\nimport { readFileSync, readdirSync, existsSync } from 'node:fs';\nimport path from 'node:path';\nimport { parseManifest } from './packages/core/src/domain/manifest.ts';\nimport { buildSkillPackage } from './packages/core/src/domain/skill-package.ts';\nimport { validatePackage } from './packages/core/src/application/validate-package.ts';\nconst root = path.resolve('skills/service-data-ownership');\nfunction gather(dir, prefix = '') {\n  return readdirSync(dir, { withFileTypes: true }).flatMap(e => {\n    const rel = prefix + e.name;\n    return e.isDirectory() ? gather(path.join(dir, e.name), rel + '/') : [{ path: rel, bytes: readFileSync(path.join(dir, e.name)) }];\n  });\n}\nconst files = gather(root);\nconst parsed = parseManifest(readFileSync(path.join(root, 'skill.yaml'), 'utf8'));\nconst pkg = buildSkillPackage(parsed.manifest, files);\nconst report = validatePackage(pkg, { directoryName: 'service-data-ownership' });\nassert.deepEqual(parsed.issues, []);\nassert.deepEqual(report.issues, []);\nassert.equal(parsed.manifest.version, '1.0.1');\nlet linkCount = 0;\nfor (const file of files.filter(f => f.path.endsWith('.md'))) {\n  const text = file.bytes.toString('utf8');\n  for (const match of text.matchAll(/\\[[^\\]]+\\]\\(([^)]+)\\)/g)) {\n    const href = match[1].replace(/^<|>$/g, '');\n    if (/^(?:https?:|mailto:)/.test(href)) continue;\n    const [relative, fragment] = href.split('#');\n    const target = path.resolve(root, path.dirname(file.path), relative || path.basename(file.path));\n    assert.ok(target.startsWith(root + path.sep), href);\n    assert.ok(existsSync(target), href);\n    if (fragment) {\n      const headings = [...readFileSync(target, 'utf8').matchAll(/^#+\\s+(.+)$/gm)].map(m => m[1].toLowerCase().replace(/[^\\w\\s-]/g, '').trim().replace(/\\s+/g, '-'));\n      assert.ok(headings.includes(fragment), href);\n    }\n    linkCount++;\n  }\n}\nconst entry = readFileSync(path.join(root, 'SKILL.md'), 'utf8');\nfor (const file of files.filter(f => f.path.startsWith('references/'))) assert.ok(entry.includes(file.path), 'Unrouted reference: ' + file.path);\nconsole.log(JSON.stringify({ name: parsed.manifest.name, version: parsed.manifest.version, files: files.length, packageIssues: report.issues, manifestIssues: parsed.issues, relativeLinksChecked: linkCount, referencesRouted: files.filter(f => f.path.startsWith('references/')).length }));\n'@ | node --input-type=module",
+        "cwd": "C:/git/agent-skills",
+        "result": {
+          "chunk_id": "2e79b8",
+          "wall_time_seconds": 0.1705252,
+          "exit_code": 0,
+          "original_token_count": 37,
+          "output": "{\"name\":\"service-data-ownership\",\"version\":\"1.0.1\",\"files\":4,\"packageIssues\":[],\"manifestIssues\":[],\"relativeLinksChecked\":2,\"referencesRouted\":2}\n"
+        },
+        "classification": "Executed existing pure package parser/validator only for this package, plus relative-link/anchor and reference-routing checks. Four files, zero issues, two relative links and two routed references."
+      },
+      {
+        "command": "node node_modules/prettier/bin/prettier.cjs --file-info skills/service-data-ownership/references/enforcement-and-verification.md",
+        "cwd": "C:/git/agent-skills",
+        "result": {
+          "chunk_id": "dcc380",
+          "wall_time_seconds": 0.115255,
+          "exit_code": 0,
+          "original_token_count": 13,
+          "output": "{ \"ignored\": false, \"inferredParser\": \"markdown\" }\n"
+        },
+        "classification": "Confirmed changed reference is not ignored and is parsed as Markdown."
+      },
+      {
+        "command": "node node_modules/prettier/bin/prettier.cjs --check skills/service-data-ownership/SKILL.md skills/service-data-ownership/skill.yaml skills/service-data-ownership/references/access-contract.md skills/service-data-ownership/references/enforcement-and-verification.md",
+        "cwd": "C:/git/agent-skills",
+        "result": {
+          "chunk_id": "ef1fdd",
+          "wall_time_seconds": 0.23047,
+          "exit_code": 0,
+          "original_token_count": 17,
+          "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+        },
+        "classification": "Final read-only four-file formatting check passed."
+      },
+      {
+        "command": "git diff --check -- skills/service-data-ownership",
+        "cwd": "C:/git/agent-skills",
+        "result": {
+          "chunk_id": "a930c7",
+          "wall_time_seconds": 0.0829097,
+          "exit_code": 0,
+          "original_token_count": 0,
+          "output": ""
+        },
+        "classification": "Final owned-diff whitespace check passed."
+      },
+      {
+        "command": "git diff -- skills/service-data-ownership",
+        "cwd": "C:/git/agent-skills",
+        "result": {
+          "chunk_id": "bbd4c4",
+          "wall_time_seconds": 0.0680732,
+          "exit_code": 0,
+          "original_token_count": 1349,
+          "output": "diff --git a/skills/service-data-ownership/references/enforcement-and-verification.md b/skills/service-data-ownership/references/enforcement-and-verification.md\nindex a965a8c..37e2c4b 100644\n--- a/skills/service-data-ownership/references/enforcement-and-verification.md\n+++ b/skills/service-data-ownership/references/enforcement-and-verification.md\n@@ -106,6 +106,7 @@ not evidence that any scenario has already run.\n | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |\n | Dedicated report principal                                          | Supported view/export read, then direct private-table read                                | Supported result succeeds with permitted fields; the private path fails for the expected authorisation reason   |\n | Same report principal                                               | Valid update against an existing source row, and any reachable mutating routine           | Mutation denied; authoritative row unchanged; failure is not a syntax error or missing row                      |\n+| Hostile report role with column `UPDATE` but no base-table `SELECT` | Compare a read-dependent update with a literal-only update in the disposable fixture      | The literal update exposes the write grant even when the read-dependent statement returns `42501`               |\n | Same report principal, tempting owner membership in hostile fixture | Attempt `SET ROLE` or inherited access to the owner/writer                                | Boundary test catches the reachable privilege; after removing the path, both escalation and mutation are denied |\n | Runtime writer                                                      | Valid business command, then prohibited DDL/foreign-service access                        | Ordinary operation succeeds; only the prohibited capability is denied                                           |\n | Actual migration creator                                            | Create a representative new object, then retry disallowed access                          | New-object privileges preserve the contract; an old-object-only grant test is insufficient                      |\n@@ -114,17 +115,33 @@ not evidence that any scenario has already run.\n \n With SQL probes, first confirm the intended database and session identity. The following\n is a **partial PostgreSQL 17 probe**, to adapt only inside the disposable fixture with\n-existing `orders.order_line(order_id, quantity)` and a report principal connected directly.\n-It deliberately omits provisioning/authentication and does not prove the whole boundary:\n+`orders.order_line(order_id, quantity)` containing exactly one synthetic row `(42, 3)`.\n+For this table-privilege check, `7` must be valid, schema `USAGE` must be available, and the\n+fixture has no row policies, triggers or external effects. Connect the report principal\n+directly. The snippet omits provisioning/authentication and does not prove the whole boundary:\n \n ```sql\n SELECT current_database(), session_user, current_user;\n BEGIN;\n-UPDATE orders.order_line SET quantity = quantity WHERE order_id = 42;\n+UPDATE orders.order_line SET quantity = 7;\n ROLLBACK;\n ```\n \n-For this probe's missing table privilege, expect an insufficient-privilege error\n+The literal-only assignment deliberately has no `WHERE` or `RETURNING`: it needs no\n+column `SELECT` privilege. PostgreSQL requires `SELECT` for columns read by update\n+expressions/conditions. Thus `SET quantity = quantity WHERE order_id = 42` could fail for\n+missing `SELECT` even if the principal still has `UPDATE(quantity)` and can perform a blind\n+write. Do not interpret that failure as proof that writes are denied. See the\n+[PostgreSQL 17 UPDATE privilege contract](https://www.postgresql.org/docs/17/sql-update.html).\n+\n+Use an adverse control in the disposable fixture: grant `UPDATE(quantity)` without base-table\n+`SELECT`, show that the read-dependent statement fails but the literal update changes the\n+synthetic row within its transaction, then roll back. Remove the unwanted grant and require\n+the literal probe to fail while the supported view still succeeds. This checks whether the\n+test detects the reachable capability rather than merely some missing prerequisite. Inspect\n+other granted write columns and mutation paths separately; one denied column proves no more.\n+\n+For this probe's missing `UPDATE` privilege, expect an insufficient-privilege error\n ([PostgreSQL SQLSTATE `42501`](https://www.postgresql.org/docs/17/errcodes-appendix.html))\n and verify the row through an independent authorised connection. Configure the\n test runner to inspect that exact failure and clean up even when a statement errors.\ndiff --git a/skills/service-data-ownership/skill.yaml b/skills/service-data-ownership/skill.yaml\nindex 49cb53b..4cf35d5 100644\n--- a/skills/service-data-ownership/skill.yaml\n+++ b/skills/service-data-ownership/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: service-data-ownership\n-version: 1.0.0\n+version: 1.0.1\n description: >-\n   Define and verify data authority and access contracts when services, jobs or\n   integrations share writers, read private tables, or bypass supported interfaces.\n"
+        },
+        "classification": "Final owned diff inspected."
+      },
+      {
+        "command": "git status --short -- skills/service-data-ownership",
+        "cwd": "C:/git/agent-skills",
+        "result": {
+          "chunk_id": "4a1456",
+          "wall_time_seconds": 0.0430258,
+          "exit_code": 0,
+          "original_token_count": 30,
+          "output": " M skills/service-data-ownership/references/enforcement-and-verification.md\n M skills/service-data-ownership/skill.yaml\n"
+        },
+        "classification": "Only the two reported owned files modified."
+      },
+      {
+        "command": "git diff --cached -- skills/service-data-ownership",
+        "cwd": "C:/git/agent-skills",
+        "result": {
+          "chunk_id": "b1b009",
+          "wall_time_seconds": 0.0536719,
+          "exit_code": 0,
+          "original_token_count": 0,
+          "output": ""
+        },
+        "classification": "No staged changes."
+      },
+      {
+        "command": "git ls-files --others --exclude-standard -- skills/service-data-ownership",
+        "cwd": "C:/git/agent-skills",
+        "result": {
+          "chunk_id": "c4d7bb",
+          "wall_time_seconds": 0.0834137,
+          "exit_code": 0,
+          "original_token_count": 0,
+          "output": ""
+        },
+        "classification": "No untracked package files; validation-only artifact remains in authorized temporary root."
+      },
+      {
+        "command": "git show HEAD:skills/service-data-ownership/skill.yaml",
+        "cwd": "C:/git/agent-skills",
+        "result": {
+          "chunk_id": "488c19",
+          "wall_time_seconds": 0.084781,
+          "exit_code": 0,
+          "original_token_count": 423,
+          "output": "schemaVersion: 1\n\nname: service-data-ownership\nversion: 1.0.0\ndescription: >-\n  Define and verify data authority and access contracts when services, jobs or\n  integrations share writers, read private tables, or bypass supported interfaces.\n  Inventory readers and writers, choose supported access paths, enforce credentials\n  and grants, and expire temporary exceptions. Use after identifying a service\n  boundary; does not decide service extraction, implement sagas, tune ORM queries,\n  or execute data-ownership transfer migrations.\n\nlicense: Apache-2.0\n\nauthors:\n  - name: agent-skills contributors\n    url: https://github.com/robsonkades/agent-skills\n\nhomepage: https://github.com/robsonkades/agent-skills/tree/main/skills/service-data-ownership\nrepository:\n  type: git\n  url: https://github.com/robsonkades/agent-skills\n  directory: skills/service-data-ownership\n\nkeywords:\n  - architecture\n  - microservices\n  - data-ownership\n  - database-permissions\n  - access-contracts\n\nfiles:\n  - SKILL.md\n  - skill.yaml\n  - references/\n\ndependencies: []\n\nsuggests:\n  - change-data-capture-operations\n  - cross-service-query-design\n  - distributed-transactions-and-sagas\n  - distribution-boundaries\n  - legacy-enterprise-modernization\n  - online-database-schema-migrations\n  - service-identity-and-trust\n  - spring-boot-jpa\n  - spring-security-for-apis\n  - spring-transactions-and-events\n  - sql-query-performance\n\ncapabilities:\n  - reads-source\n\nagentOverrides:\n  codex:\n    interface:\n      display_name: Service Data Ownership\n      short_description: Enforce data authority and supported access\n      default_prompt: Use Service Data Ownership to define and verify this data access boundary.\n"
+        },
+        "classification": "Committed baseline version confirmed as 1.0.0."
+      }
+    ],
+    "environmentChecks": [
+      {
+        "command": "Get-Command psql,postgres,initdb,pg_ctl,docker -ErrorAction SilentlyContinue | Select-Object Name,CommandType,Source | ConvertTo-Json",
+        "cwd": "C:/git/agent-skills",
+        "result": {
+          "chunk_id": "bf661d",
+          "wall_time_seconds": 0.1774399,
+          "exit_code": 1,
+          "original_token_count": 38,
+          "output": "{\r\n  \"Name\": \"docker.exe\",\r\n  \"CommandType\": 32,\r\n  \"Source\": \"C:\\\\Program Files\\\\Rancher Desktop\\\\resources\\\\resources\\\\win32\\\\bin\\\\docker.exe\"\r\n}\r\n"
+        },
+        "classification": "PostgreSQL executables were not found on PATH; Docker executable was found. Exit 1 reflects missing command names, not a skill check."
+      },
+      {
+        "command": "& 'C:/Program Files/Rancher Desktop/resources/resources/win32/bin/docker.exe' --version",
+        "cwd": "C:/git/agent-skills",
+        "result": {
+          "chunk_id": "cdbb51",
+          "wall_time_seconds": 0.0704067,
+          "exit_code": 0,
+          "original_token_count": 10,
+          "output": "Docker version 29.6.2-rd, build ede120b\n"
+        },
+        "classification": "Local client reported Docker 29.6.2-rd; no PostgreSQL runtime or server identity established."
+      },
+      {
+        "command": "& 'C:/Program Files/Rancher Desktop/resources/resources/win32/bin/docker.exe' --host npipe:////./pipe/docker_engine image ls --filter reference=postgres --format '{{.Repository}}:{{.Tag}} {{.ID}}'",
+        "cwd": "C:/git/agent-skills",
+        "result": {
+          "chunk_id": "593149",
+          "wall_time_seconds": 0.0600096,
+          "exit_code": 1,
+          "original_token_count": 51,
+          "output": "failed to connect to the docker API at npipe:////./pipe/docker_engine; check if the path is correct and if the daemon is running: open //./pipe/docker_engine: The system cannot find the file specified.\n"
+        },
+        "classification": "Explicit local named-pipe access failed because the pipe did not exist. No daemon, container or database was started; cached image availability was not determined."
+      },
+      {
+        "command": "Test-Path -LiteralPath 'C:/Program Files/PostgreSQL'",
+        "cwd": "C:/git/agent-skills",
+        "result": {
+          "chunk_id": "dc55f5",
+          "wall_time_seconds": 0.0727539,
+          "exit_code": 0,
+          "original_token_count": 2,
+          "output": "False\r\n"
+        },
+        "classification": "Standard native installation path absent; this is not an exhaustive machine inventory."
+      }
+    ],
+    "resolvedLocalFailures": [
+      {
+        "command": "node node_modules/prettier/bin/prettier.cjs --check skills/service-data-ownership/SKILL.md skills/service-data-ownership/skill.yaml skills/service-data-ownership/references/access-contract.md skills/service-data-ownership/references/enforcement-and-verification.md",
+        "cwd": "C:/git/agent-skills",
+        "result": {
+          "chunk_id": "e3f177",
+          "wall_time_seconds": 0.2587561,
+          "exit_code": 1,
+          "original_token_count": 47,
+          "output": "Checking formatting...\n[warn] skills/service-data-ownership/references/enforcement-and-verification.md\n[warn] Code style issues found in the above file. Run Prettier with --write to fix.\n"
+        },
+        "resolution": "Only spacing in the new hostile-case Markdown row differed. Corrected that single row with apply_patch and reran package, formatting and diff checks successfully."
+      }
+    ],
+    "executedBehavioralEvaluations": [],
+    "executedPostgreSQLChecks": [],
+    "structuredWalkthroughs": [
+      {
+        "case": "UPDATE(quantity) without SELECT",
+        "result": "The old read-dependent statement can fail for SELECT while a valid literal-only assignment remains authorized. Source-backed expected behavior, not an observed database execution."
+      },
+      {
+        "case": "UPDATE(quantity) revoked with supported view retained",
+        "result": "The same literal-only assignment should fail for missing UPDATE while the supported view returns the original synthetic row. Other privilege prerequisites and row-policy behavior remain separately scoped."
+      },
+      {
+        "case": "RLS regression",
+        "result": "The revision preserves the existing distinction between privilege errors and policy-filtered rows; it does not demand SQLSTATE 42501 for every RLS denial."
+      },
+      {
+        "case": "no-change topology",
+        "result": "A published view with adequate scoped grants remains valid on shared infrastructure; the correction does not justify service extraction or new messaging."
+      }
+    ],
+    "adversarialFixture": {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/service-data-ownership-postgres17.sql",
+      "status": "AUTHORED_NOT_EXECUTED",
+      "prerequisites": "A separately authorized disposable PostgreSQL 17 instance, fresh database sdo_wave2_validation, psql 17-compatible client, administrative fixture principal. No colliding sdo_wave2 roles/schema. Supply explicit isolated endpoint/database/user; never inherited production defaults.",
+      "reproductionCommand": "psql -X --set=ON_ERROR_STOP=1 --host <isolated-host> --port <isolated-port> --username <fixture-admin> --dbname sdo_wave2_validation --file service-data-ownership-postgres17.sql",
+      "expected": "Under the UPDATE-only/no-SELECT role, the read-dependent UPDATE raises 42501 but literal UPDATE changes one row to 7, observed via the allowed view. Roll back the hostile mutation, revoke column UPDATE, then literal UPDATE and direct base-table SELECT raise 42501 while the supported view still returns quantity 3. All fixture role/object creation and mutations roll back at the end.",
+      "limitations": "Uses NOLOGIN roles and SET ROLE from an administrator to isolate SQL privilege semantics. It cannot validate direct authentication, deployed secrets, application wiring, pooling, revocation timing or production enforcement. The fixture has not been parsed or executed by PostgreSQL in this review."
+    },
+    "notExecuted": [
+      "No PostgreSQL engine execution, SQL syntax validation by PostgreSQL, direct-principal authentication or application integration was performed.",
+      "No infrastructure was installed or started, following the coordinator's explicit instruction after runtime availability checks.",
+      "No independent agent evaluation or before/after skill-quality comparison was performed."
+    ],
+    "measuredImprovement": "No measured behavioral gain is claimed. The change repairs a source-confirmed verification gap and delivers an unexecuted adverse control."
+  },
+  "sources": [
+    {
+      "title": "PostgreSQL 17 UPDATE",
+      "url": "https://www.postgresql.org/docs/17/sql-update.html",
+      "version": "17",
+      "verified": "2026-10-16",
+      "supports": "UPDATE privileges on assigned columns; SELECT privileges on columns read by expressions/conditions. Literal-only assignment versus the old read-dependent probe is a direct application of this contract."
+    },
+    {
+      "title": "PostgreSQL 17 Privileges",
+      "url": "https://www.postgresql.org/docs/17/ddl-priv.html",
+      "version": "17",
+      "verified": "2026-10-16",
+      "supports": "Privilege capabilities are distinct and can be granted per object/column; supports inspection of effective grants rather than inference from one denied statement."
+    },
+    {
+      "title": "PostgreSQL 17 CREATE VIEW",
+      "url": "https://www.postgresql.org/docs/17/sql-createview.html",
+      "version": "17",
+      "verified": "2026-10-16",
+      "supports": "Ordinary views use their owner's underlying-relation permissions; the fixture's supported view can remain usable without base-table SELECT."
+    },
+    {
+      "title": "PostgreSQL 17 SAVEPOINT",
+      "url": "https://www.postgresql.org/docs/17/sql-savepoint.html",
+      "version": "17",
+      "verified": "2026-10-16",
+      "supports": "Fixture design uses rollback to a savepoint to undo the hostile mutation without keeping it."
+    },
+    {
+      "title": "PostgreSQL 17 psql",
+      "url": "https://www.postgresql.org/docs/17/app-psql.html",
+      "version": "17",
+      "verified": "2026-10-16",
+      "supports": "Reproduction command uses explicit connection inputs, -X and ON_ERROR_STOP; reading this source is not an execution of the fixture."
+    }
+  ],
+  "reproducibleCases": {
+    "classification": "Development inputs and evaluator criteria separated; not executed behavior, not holdouts.",
+    "decisiveConstraint": "Only the effective column UPDATE grant changes. Both cases retain no base-table SELECT and have the identical old 42501 observation.",
+    "setup": "Materialize each actor input's fixture files in a separate temporary directory. Provide only actorInputs to the actor. evaluatorOnly and the adversarial SQL control contain the intended checks and must remain separate.",
+    "actorInputs": [
+      {
+        "id": "ownership-denial-a",
+        "task": "Review the supplied ownership evidence and update ownership-check.sql plus decision.md. State whether the deployed grants need a change or should be retained, and tie any recommendation to the operation actually reachable. Preserve the accepted supported SQL view and shared infrastructure when adequate. Do not contact a real database. Supply an isolated verification plan and distinguish expected results from executions.",
+        "fixtures": {
+          "contract.md": "Orders is the authority for accepted order quantities. Billing's report is allowed to read orders.billing_order_v1, but must not mutate orders.order_line or read its private base-table path. The supported read contract, field semantics and one shared PostgreSQL server topology are accepted and satisfy this report's availability/load requirements. No service extraction or ownership transfer is requested.",
+          "environment.md": "PostgreSQL 17. The disposable schema has exactly one row (42,3), quantity=7 is valid, and there are no triggers, row-security policies, inheritance, external effects or extra mutation functions. The inspected effective role graph has no owner/admin membership, alternate credentials, PUBLIC base-table grants or other write grants. billing_report is a directly connected non-owner runtime principal; schema USAGE and the supported view grant are present. These fixture facts are accepted for the review; no runtime is provided to the actor.",
+          "schema.sql": "-- Objects belong to orders_owner, not billing_report.\nCREATE SCHEMA orders AUTHORIZATION orders_owner;\nSET ROLE orders_owner;\nCREATE TABLE orders.order_line (order_id integer PRIMARY KEY, quantity integer NOT NULL CHECK (quantity > 0));\nINSERT INTO orders.order_line VALUES (42, 3);\nCREATE VIEW orders.billing_order_v1 AS SELECT order_id, quantity FROM orders.order_line;\nRESET ROLE;\n",
+          "ownership-check.sql": "-- Executed as billing_report in the disposable fixture.\nSELECT current_database(), session_user, current_user;\nSELECT order_id, quantity FROM orders.billing_order_v1;\nBEGIN;\nUPDATE orders.order_line SET quantity = quantity WHERE order_id = 42;\nROLLBACK;\n-- Existing gate accepts SQLSTATE 42501 from the UPDATE as proof that source writes are denied.\n",
+          "check-observation.txt": "Identity: isolated_fixture / billing_report / billing_report\nSupported view: order_id=42, quantity=3\nDirect SELECT of orders.order_line: SQLSTATE 42501\nRead-dependent UPDATE in ownership-check.sql: SQLSTATE 42501\nIndependent authorised read after rollback: order_id=42, quantity=3\nNo literal-only UPDATE was executed.\n",
+          "decision.md": "Proposed: retain the current access grants and report-only contract. The old gate returned 42501, so the review currently records source writes as denied. Review this conclusion and update the affected verification artifact.",
+          "deployed-access.sql": "GRANT USAGE ON SCHEMA orders TO billing_report;\nGRANT SELECT ON orders.billing_order_v1 TO billing_report;\nGRANT UPDATE(quantity) ON orders.order_line TO billing_report;\n"
+        }
+      },
+      {
+        "id": "ownership-denial-b",
+        "task": "Review the supplied ownership evidence and update ownership-check.sql plus decision.md. State whether the deployed grants need a change or should be retained, and tie any recommendation to the operation actually reachable. Preserve the accepted supported SQL view and shared infrastructure when adequate. Do not contact a real database. Supply an isolated verification plan and distinguish expected results from executions.",
+        "fixtures": {
+          "contract.md": "Orders is the authority for accepted order quantities. Billing's report is allowed to read orders.billing_order_v1, but must not mutate orders.order_line or read its private base-table path. The supported read contract, field semantics and one shared PostgreSQL server topology are accepted and satisfy this report's availability/load requirements. No service extraction or ownership transfer is requested.",
+          "environment.md": "PostgreSQL 17. The disposable schema has exactly one row (42,3), quantity=7 is valid, and there are no triggers, row-security policies, inheritance, external effects or extra mutation functions. The inspected effective role graph has no owner/admin membership, alternate credentials, PUBLIC base-table grants or other write grants. billing_report is a directly connected non-owner runtime principal; schema USAGE and the supported view grant are present. These fixture facts are accepted for the review; no runtime is provided to the actor.",
+          "schema.sql": "-- Objects belong to orders_owner, not billing_report.\nCREATE SCHEMA orders AUTHORIZATION orders_owner;\nSET ROLE orders_owner;\nCREATE TABLE orders.order_line (order_id integer PRIMARY KEY, quantity integer NOT NULL CHECK (quantity > 0));\nINSERT INTO orders.order_line VALUES (42, 3);\nCREATE VIEW orders.billing_order_v1 AS SELECT order_id, quantity FROM orders.order_line;\nRESET ROLE;\n",
+          "ownership-check.sql": "-- Executed as billing_report in the disposable fixture.\nSELECT current_database(), session_user, current_user;\nSELECT order_id, quantity FROM orders.billing_order_v1;\nBEGIN;\nUPDATE orders.order_line SET quantity = quantity WHERE order_id = 42;\nROLLBACK;\n-- Existing gate accepts SQLSTATE 42501 from the UPDATE as proof that source writes are denied.\n",
+          "check-observation.txt": "Identity: isolated_fixture / billing_report / billing_report\nSupported view: order_id=42, quantity=3\nDirect SELECT of orders.order_line: SQLSTATE 42501\nRead-dependent UPDATE in ownership-check.sql: SQLSTATE 42501\nIndependent authorised read after rollback: order_id=42, quantity=3\nNo literal-only UPDATE was executed.\n",
+          "decision.md": "Proposed: retain the current access grants and report-only contract. The old gate returned 42501, so the review currently records source writes as denied. Review this conclusion and update the affected verification artifact.",
+          "deployed-access.sql": "GRANT USAGE ON SCHEMA orders TO billing_report;\nGRANT SELECT ON orders.billing_order_v1 TO billing_report;\nREVOKE UPDATE(quantity) ON orders.order_line FROM billing_report;\n"
+        }
+      }
+    ],
+    "evaluatorOnly": [
+      {
+        "id": "ownership-denial-a",
+        "mustObserve": [
+          "Read deployed-access.sql and identify the reachable UPDATE(quantity) grant despite absent SELECT.",
+          "Explain why the old 42501 does not establish no mutation: the self-assignment and predicate require SELECT.",
+          "Update the verification artifact to isolate UPDATE using a valid literal in a single-row disposable fixture, with cleanup and positive supported-view control.",
+          "Recommend removal of the unwanted UPDATE grant while preserving the accepted view/read contract and legitimate reporting.",
+          "Keep supplied other role-path facts and topology decisions; do not invent a missing owner-role escalation.",
+          "State that the authored probe has not run and does not cover every write column, routine, RLS behavior, authentication or pool."
+        ],
+        "observableFailures": [
+          "Accepts no-write enforcement because the old statement returned 42501.",
+          "Treats missing SELECT as denying all UPDATE statements.",
+          "Grants SELECT solely to make a denial test meaningful, enlarging the consumer's private-table access.",
+          "Recommends removing the view or splitting databases without a relevant violated constraint.",
+          "Claims database execution or measured behavioral gain without evidence."
+        ]
+      },
+      {
+        "id": "ownership-denial-b",
+        "mustObserve": [
+          "Read the revoked UPDATE grant and distinguish the fixture's adequate grant design from the old gate's insufficient proof.",
+          "Retain the supported view and current scoped grants under the supplied effective-role evidence; do not require an additional access revocation without a reachable capability.",
+          "Improve the same denial probe and state the expected literal-only UPDATE denial and supported-view success.",
+          "Scope any enforcement conclusion to the available static evidence until the isolated runtime check is actually executed.",
+          "Preserve separate checks for other write paths and row policies without pretending this bounded fixture proves the entire deployment."
+        ],
+        "observableFailures": [
+          "Reports the same UPDATE leak as case A despite the only grant being revoked and no other path in the supplied facts.",
+          "Accepts the old probe as sufficient solely because its expected answer happens to be correct.",
+          "Forces unrelated credential or topology changes to manufacture a finding.",
+          "Claims direct authentication/pool proof from SET ROLE or a document-only review."
+        ]
+      }
+    ]
+  },
+  "assumptionsAndLimitations": [
+    "The corrected snippet is an isolated table-privilege probe with one synthetic row, valid literal, available schema USAGE, no RLS/triggers/external effects and a directly connected test principal.",
+    "A single denied column does not establish denial of other columns, routines, roles, view mutations or external paths.",
+    "No environment-wide absence claim is made: PostgreSQL was absent from PATH and the standard Windows path, and the explicit local Docker pipe was unavailable. The coordinator independently reported no isolated runtime already available in this wave.",
+    "The coordinator instructed not to install or start infrastructure. Runtime proof is therefore explicitly deferred; primary source evidence supports the documentation correction.",
+    "The SQL control is authored and manually walked through, not database-executed or database-parser-validated.",
+    "No semantic, performance or agent-quality guarantee is inferred from structural checks."
+  ],
+  "artifacts": [
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/service-data-ownership-postgres17.sql",
+      "purpose": "Preserved unexecuted PostgreSQL 17 adverse control with strict failures, allowed-view control and transactional cleanup."
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/service-data-ownership.json",
+      "purpose": "Complete retrospective handoff, raw results, sources, file hashes and separately delivered actor/evaluator cases."
+    }
+  ],
+  "finalFileHashes": [
+    {
+      "path": "skills/service-data-ownership/references/access-contract.md",
+      "sha256": "a82df2fd4594a13f5a2a0d9b098f57465699cf1ab979242530bcb003823b5b1a"
+    },
+    {
+      "path": "skills/service-data-ownership/references/enforcement-and-verification.md",
+      "sha256": "d430128e501eaf820c0c850fb1a53aca7a391b087d3589855bf0bb7013b0451a"
+    },
+    {
+      "path": "skills/service-data-ownership/SKILL.md",
+      "sha256": "b559fb2a6fe455313ea29dad06933924724ff7b142ba2b243492af4700e8d74a"
+    },
+    {
+      "path": "skills/service-data-ownership/skill.yaml",
+      "sha256": "75b6400763be5cb87c6680c7d621bec5fc6fb9ad31d96c9616d24e86effc9a10"
+    }
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Shared generated registry, after all reviewers stop writes."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Repository-wide verification and generated/version consistency, after registry build and reviewer quiescence."
+    }
+  ],
+  "deferredChecks": [
+    {
+      "command": "psql -X --set=ON_ERROR_STOP=1 --host <isolated-host> --port <isolated-port> --username <fixture-admin> --dbname sdo_wave2_validation --file service-data-ownership-postgres17.sql",
+      "purpose": "Execute the delivered adverse-control fixture only if separately authorized isolated PostgreSQL 17 infrastructure becomes available.",
+      "reason": "No isolated runtime available; do not install or start infrastructure for this review."
+    }
+  ],
+  "crossSkillIssues": [],
+  "coordinatorActions": [
+    "Archive the complete handoff and preserved SQL fixture; preserve AUTHORED_NOT_EXECUTED and environment limits in the consolidated report; select independent evaluation cases; run global checks after wave writers stop."
+  ]
+}

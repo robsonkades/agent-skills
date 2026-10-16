@@ -1,0 +1,117 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+
+const repo = 'C:/git/agent-skills';
+const evidence = path.dirname(new URL(import.meta.url).pathname.replace(/^\/(?:([A-Za-z]):)/, '$1:'));
+const work = fs.mkdtempSync(path.join(evidence, 'snippets-'));
+const bin = 'C:/Users/robso/.jdks/temurin-25.0.3/bin';
+const childEnv = { ...process.env };
+for (const name of ['JAVA_TOOL_OPTIONS', 'JDK_JAVA_OPTIONS', '_JAVA_OPTIONS']) delete childEnv[name];
+const commands = [];
+function run(label, executable, args, expectedExit = 0, requiredDiagnostic) {
+  const result = spawnSync(executable, args, { cwd: work, env: childEnv, encoding: 'utf8', timeout: 30000 });
+  const entry = { label, executable, args, cwd: work, expectedExit, actualExit: result.status, signal: result.signal, stdout: result.stdout, stderr: result.stderr, error: result.error?.message };
+  commands.push(entry);
+  fs.writeFileSync(path.join(work, 'results.json'), JSON.stringify({ work, commands }, null, 2));
+  assert.equal(result.error, undefined, label);
+  assert.equal(result.status, expectedExit, `${label}: ${result.stderr}`);
+  if (requiredDiagnostic) assert.match(result.stderr, requiredDiagnostic, label);
+}
+const java = path.join(bin, 'java.exe');
+const javac = path.join(bin, 'javac.exe');
+run('compiler-version', javac, ['-version']);
+run('runtime-version', java, ['-version']);
+const doc = fs.readFileSync(path.join(repo, 'skills/gof-pattern-thinking/references/alternatives-ladder.md'), 'utf8');
+const snippets = [...doc.matchAll(/```java\r?\n([\s\S]*?)```/g)].map(match => match[1]);
+assert.equal(snippets.length, 3);
+function write(relative, text) {
+  const target = path.join(work, relative);
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  fs.writeFileSync(target, text);
+  return target;
+}
+write('DiscountStrategy.java', snippets[0]);
+write('Discount.java', 'import java.math.BigDecimal;\nimport java.util.Objects;\nimport java.util.function.UnaryOperator;\n' + snippets[1]);
+write('Money.java', `import java.math.BigDecimal;
+// Test fixture: exact decimal arithmetic only; no real currency/rounding policy is implied.
+record Money(BigDecimal amount) {
+    Money minus(Money other) { return new Money(amount.subtract(other.amount)); }
+    Money times(BigDecimal fraction) { return new Money(amount.multiply(fraction)); }
+}
+`);
+write('DiscountChecks.java', `import java.math.BigDecimal;
+public class DiscountChecks {
+    static int checks;
+    static void require(boolean value) { checks++; if (!value) throw new AssertionError(); }
+    static void rejects(Class<? extends Throwable> expected, Runnable action) {
+        checks++;
+        try { action.run(); } catch (Throwable actual) {
+            if (expected.isInstance(actual)) return;
+            throw new AssertionError(actual);
+        }
+        throw new AssertionError("expected " + expected.getName());
+    }
+    public static void main(String[] args) {
+        Money subtotal = new Money(new BigDecimal("100.00"));
+        Discount twenty = Discount.percentage("TWENTY", new BigDecimal("0.20"));
+        require(twenty.code().equals("TWENTY"));
+        require(twenty.rule().apply(subtotal).amount().compareTo(new BigDecimal("80")) == 0);
+        require(Discount.none().rule().apply(subtotal) == subtotal);
+        require(Discount.percentage("ZERO", BigDecimal.ZERO).rule().apply(subtotal).amount().compareTo(subtotal.amount()) == 0);
+        require(Discount.percentage("ALL", BigDecimal.ONE).rule().apply(subtotal).amount().signum() == 0);
+        rejects(IllegalArgumentException.class, () -> Discount.percentage("BAD", new BigDecimal("-0.01")));
+        rejects(IllegalArgumentException.class, () -> Discount.percentage("BAD", new BigDecimal("1.01")));
+        rejects(NullPointerException.class, () -> Discount.percentage("BAD", null));
+        rejects(NullPointerException.class, () -> new Discount(null, twenty.rule()));
+        rejects(NullPointerException.class, () -> new Discount("BAD", null));
+        System.out.println("Discount checks passed: " + checks);
+    }
+}
+`);
+const discountFiles = ['DiscountStrategy.java', 'Discount.java', 'Money.java', 'DiscountChecks.java'];
+run('discount-compile-java17', javac, ['--release', '17', '-d', 'discount-classes', ...discountFiles]);
+run('discount-contracts', java, ['-ea', '-Xmx64m', '-cp', 'discount-classes', 'DiscountChecks']);
+
+const stateHelpers = `
+    record Draft() implements OrderState {}
+    record Paid(Instant time) implements OrderState {}
+    record Shipped() implements OrderState {}
+    record Cancelled() implements OrderState {}
+    static class IllegalTransition extends RuntimeException {
+        IllegalTransition(OrderState state, String event) { super(state + ":" + event); }
+    }
+    static int checks;
+    static void rejects(Class<? extends Throwable> expected, Runnable action) {
+        checks++;
+        try { action.run(); } catch (Throwable actual) {
+            if (expected.isInstance(actual)) return;
+            throw new AssertionError(actual);
+        }
+        throw new AssertionError("expected " + expected.getName());
+    }
+    public static void main(String[] args) {
+        Instant now = Instant.parse("2026-10-16T12:00:00Z");
+        Clock clock = Clock.fixed(now, ZoneOffset.UTC);
+        if (!onPayment(new Draft(), clock).equals(new Paid(now))) throw new AssertionError();
+        checks++;
+        rejects(IllegalTransition.class, () -> onPayment(new Paid(now), clock));
+        rejects(IllegalTransition.class, () -> onPayment(new Shipped(), clock));
+        rejects(IllegalTransition.class, () -> onPayment(new Cancelled(), clock));
+        rejects(NullPointerException.class, () -> onPayment(null, clock));
+        rejects(NullPointerException.class, () -> onPayment(new Draft(), null));
+        System.out.println("State checks passed: " + checks);
+    }
+`;
+const state = 'import java.time.*;\nimport java.util.Objects;\npublic class StateChecks {\n' + snippets[2] + stateHelpers + '}\n';
+write('StateChecks.java', state);
+run('state-compile-java21', javac, ['--release', '21', '-d', 'state-classes', 'StateChecks.java']);
+run('state-contracts', java, ['-ea', '-Xmx64m', '-cp', 'state-classes', 'StateChecks']);
+run('state-java17-negative', javac, ['--release', '17', '-d', 'unsupported-classes', 'StateChecks.java'], 1, /patterns in switch statements are not supported in -source 17/);
+write('expanded/StateChecks.java', state.replace('permits Draft, Paid, Shipped, Cancelled', 'permits Draft, Paid, Shipped, Cancelled, Refunded').replace('record Draft()', 'record Refunded() implements OrderState {}\n    record Draft()'));
+run('state-unhandled-variant-negative', javac, ['--release', '21', '-d', 'expanded-classes', 'expanded/StateChecks.java'], 1, /does not cover all possible input values/);
+const final = { work, commands, pass: true, executedAssertions: { discount: 10, state: 6 }, negativeControls: 2, limitations: ['The Money and concrete state types are explicit local test fixtures, not production domain definitions.', 'Javac 25 with --release 17/21 and runtime Temurin 25; not execution on Java 17 or 21.', 'No database, Spring security, concurrency, performance or agent evaluation was run.'] };
+fs.writeFileSync(path.join(work, 'results.json'), JSON.stringify(final, null, 2));
+fs.writeFileSync(path.join(evidence, 'latest-technical-results.json'), JSON.stringify(final, null, 2));
+console.log(JSON.stringify({ work, pass: final.pass, commands: commands.map(({ label, expectedExit, actualExit, stdout, stderr }) => ({ label, expectedExit, actualExit, stdout, stderr })) }, null, 2));

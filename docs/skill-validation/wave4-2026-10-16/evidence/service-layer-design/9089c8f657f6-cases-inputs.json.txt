@@ -1,0 +1,24 @@
+{
+  "classification": "Known development pair; authored project artifacts, not production captures.",
+  "task": "Review the submission boundary against the accepted receipt contract and the configured entry path. Inspect the actual owner of transaction completion and identify any necessary correction, preserving valid contracts and existing collaborators. Report what is established by source and what still needs runtime verification.",
+  "sharedInputs": [
+    "actor/common/contract.md",
+    "actor/common/SubmissionService.java",
+    "actor/common/SubmissionEndpoint.java",
+    "actor/common/Entry.java",
+    "actor/common/failure-plan.json"
+  ],
+  "cases": [
+    {
+      "id": "proxy-owns-completion",
+      "input": "actor/case-a/entry.properties"
+    },
+    {
+      "id": "caller-owns-completion",
+      "input": "actor/case-b/entry.properties"
+    }
+  ],
+  "decisiveDifference": "Only outerTransaction changes false→true; the endpoint, transactional service, receipt contract, manager and failure plan are unchanged.",
+  "prerequisites": "Static source review requires no build. Partial excerpts use Java 17 and Spring 6.2.12; a real transaction harness is required to validate persisted outcomes. Do not install or upgrade dependencies.",
+  "isolation": "Give only task, common artifacts and selected case file. Keep evaluator criteria, reviewer outputs and control logs separate; procedural separation only."
+}

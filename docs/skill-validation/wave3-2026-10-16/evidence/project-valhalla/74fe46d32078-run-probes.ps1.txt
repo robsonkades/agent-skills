@@ -1,0 +1,27 @@
+$ErrorActionPreference = 'Stop'
+$jdkBin = 'C:/Users/robso/.jdks/temurin-25.0.3/bin'
+$results = [System.Collections.Generic.List[object]]::new()
+function Run-Check {
+    param([string]$Id, [string]$Tool, [string[]]$ToolArgs, [int]$ExpectedExit)
+    $logPath = Join-Path $PSScriptRoot ($Id + '.log')
+    $output = & (Join-Path $jdkBin $Tool) @ToolArgs 2>&1
+    $actualExit = $LASTEXITCODE
+    $output | Set-Content -LiteralPath $logPath -Encoding utf8
+    $output | ForEach-Object { Write-Output $_ }
+    $results.Add([pscustomobject]@{id=$Id;executable=(Join-Path $jdkBin $Tool);arguments=$ToolArgs;cwd=$PSScriptRoot;expectedExit=$ExpectedExit;actualExit=$actualExit;log=$logPath})
+    if ($actualExit -ne $ExpectedExit) { throw "Check $Id expected $ExpectedExit but got $actualExit" }
+}
+Push-Location $PSScriptRoot
+try {
+    New-Item -ItemType Directory -Path 'identity-classes','unsupported-value25','unsupported-release28' -Force | Out-Null
+    Run-Check -Id 'java-version' -Tool 'java.exe' -ToolArgs @('--version') -ExpectedExit 0
+    Run-Check -Id 'javac-version' -Tool 'javac.exe' -ToolArgs @('--version') -ExpectedExit 0
+    Run-Check -Id 'identity-compile' -Tool 'javac.exe' -ToolArgs @('--release','25','-Xlint:all','-Werror','-XDrawDiagnostics','-d','identity-classes','identity/OpaqueCode.java','ChosenCandidateProbe.java') -ExpectedExit 0
+    Run-Check -Id 'identity-hostile-probe' -Tool 'java.exe' -ToolArgs @('-cp','identity-classes','ChosenCandidateProbe','identity') -ExpectedExit 0
+    Run-Check -Id 'value25-unavailable' -Tool 'javac.exe' -ToolArgs @('--release','25','--enable-preview','-XDrawDiagnostics','-d','unsupported-value25','value/OpaqueCode.java','ChosenCandidateProbe.java') -ExpectedExit 1
+    Run-Check -Id 'release28-unavailable' -Tool 'javac.exe' -ToolArgs @('--release','28','--enable-preview','-d','unsupported-release28','value/OpaqueCode.java','ChosenCandidateProbe.java') -ExpectedExit 2
+} finally {
+    $results | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $PSScriptRoot 'technical-check-results.json') -Encoding utf8
+    Pop-Location
+}
+exit 0

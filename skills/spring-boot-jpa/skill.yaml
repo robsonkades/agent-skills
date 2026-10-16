@@ -1,6 +1,6 @@
 schemaVersion: 1
 name: spring-boot-jpa
-version: 1.2.0
+version: 1.2.1
 description: >-
   Implement, diagnose and review Spring Boot 4 persistence with Spring Data JPA when
   creating a durable service or verifying entity state, mappings, identifiers, fetching,

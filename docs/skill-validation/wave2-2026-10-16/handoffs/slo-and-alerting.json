@@ -1,0 +1,336 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "slo-and-alerting",
+  "owner": "/root/quality08",
+  "ownedPath": "skills/slo-and-alerting/**",
+  "date": "2026-10-16",
+  "allWritesStopped": true,
+  "writeStopScope": "Owned skill edits and this coordinator-authorized handoff artifact are complete; no background processes started. Read-only until coordinator explicitly reopens writes.",
+  "baseline": {
+    "committedVersion": "1.4.4",
+    "assignmentVersion": "1.4.4",
+    "preExistingVersionBump": false,
+    "stagedChanges": [],
+    "unstagedChanges": [],
+    "untrackedFiles": [],
+    "completePackageRead": [
+      "SKILL.md",
+      "skill.yaml",
+      "references/sli-and-error-budgets.md",
+      "references/burn-rate-rules-and-templates.md",
+      "references/alerting-design.md"
+    ],
+    "attribution": "Assignment full-file contents and hashes captured before edits. Final diff and per-file hashes compared against assignment.",
+    "hashes": [
+      {
+        "path": "C:/git/agent-skills/skills/slo-and-alerting/SKILL.md",
+        "assignmentSha256": "73881C2E0E8B0D32D94868BD62B58314C16AFAAD5E4456E3C89B898A5AA979AA",
+        "finalSha256": "73881C2E0E8B0D32D94868BD62B58314C16AFAAD5E4456E3C89B898A5AA979AA",
+        "changedByReviewer": false
+      },
+      {
+        "path": "C:/git/agent-skills/skills/slo-and-alerting/skill.yaml",
+        "assignmentSha256": "B71A987598542DB278645010FDDA104252DF36FE68CF6CF0267C1383AF96DC3F",
+        "finalSha256": "386AEF458DAD12C9FAB8C6386D071960338D55B2E00483241ADDD4B5EFA0447E",
+        "changedByReviewer": true
+      },
+      {
+        "path": "C:/git/agent-skills/skills/slo-and-alerting/references/alerting-design.md",
+        "assignmentSha256": "2E4B10B5AE12E62C5099437CCA2DD9A2AD01265D8064FBE60274E76B11ECF356",
+        "finalSha256": "2E4B10B5AE12E62C5099437CCA2DD9A2AD01265D8064FBE60274E76B11ECF356",
+        "changedByReviewer": false
+      },
+      {
+        "path": "C:/git/agent-skills/skills/slo-and-alerting/references/burn-rate-rules-and-templates.md",
+        "assignmentSha256": "2D9F527C5A5054DDCA36754268AE04CCB2484C0245A022E6AF540767F1027B39",
+        "finalSha256": "3646CFA16012B64F5CFF695BC9EF490D1DB537D37DE07979014800661BE9E47E",
+        "changedByReviewer": true
+      },
+      {
+        "path": "C:/git/agent-skills/skills/slo-and-alerting/references/sli-and-error-budgets.md",
+        "assignmentSha256": "EA301A8DFC544C8E6983C3D9FD49EFF4DA6877975A9C75300F505AF294E59685",
+        "finalSha256": "BE45C05DB0A9FD088515E3FF97D50FA87BF771D4A1E424D8D043752931F6E917",
+        "changedByReviewer": true
+      }
+    ]
+  },
+  "procedure": {
+    "requiredReadings": "Root AGENTS.md, complete review prompt, skill-engineering with relevant references, comparative research and wave-two brief read. Unchanged readings reused across assignments as brief permits; wave-two brief reread in this assignment.",
+    "findingsBeforeEdits": true,
+    "noDelegation": true,
+    "noSharedRepositoryWrites": true,
+    "noGlobalChecks": true
+  },
+  "domainSuccessCriteria": [
+    "Keep the user-centered SLO/SLI and actionable-alert design role; no generic metrics or incident-response rewrite.",
+    "A ratio numerator is a classified subset of the valid denominator under the same temporal assignment, not merely identical labels/window lengths.",
+    "Outcome-time versus admission/schedule-cohort semantics must change the measurement recommendation.",
+    "Known deadline misses, not-yet-due work and missing telemetry remain distinct.",
+    "Preserve supported no-change, ratio arithmetic assumptions, low-volume/absent-data behavior and existing Prometheus version/timing qualifications."
+  ],
+  "findingsCorrected": [
+    {
+      "location": "references/sli-and-error-budgets.md:47",
+      "finding": "Population/start/end were specified but cross-window starts-versus-outcomes cohort mismatch was not explained.",
+      "consequence": "A numerator finalized in one window can include earlier admissions while its denominator counts only new admissions, producing invalid ratios and misleading burn.",
+      "correction": "Inspect actual increment sites or query timestamps; numerical 130/10 example; choose consistent finalization for outcome-time contracts, retaining separate arrival diagnostics."
+    },
+    {
+      "location": "references/sli-and-error-budgets.md:59",
+      "finding": "Deadline eligibility and unfinished-work treatment were not explicit in the SLI reference.",
+      "consequence": "A completion-only population can drop overdue unfinished operations, or a broad starts denominator can classify still-eligible work too early.",
+      "correction": "State eligibility/due boundary, keep overdue known misses bad despite late success, distinguish pending and telemetry-unknown, and validate cross-window and deadline boundaries."
+    },
+    {
+      "location": "references/burn-rate-rules-and-templates.md:47",
+      "finding": "Same population instruction lacked an explicit time-assignment check at the rule review point.",
+      "consequence": "Matching labels and durations could be mistaken for proof that denominator and classified outcomes cover the same events.",
+      "correction": "Add a focused source-increment check and link to the detailed SLI reference without changing executable rule fragments."
+    }
+  ],
+  "findingsRemaining": [],
+  "filesChangedByReviewer": [
+    "skills/slo-and-alerting/references/sli-and-error-budgets.md",
+    "skills/slo-and-alerting/references/burn-rate-rules-and-templates.md",
+    "skills/slo-and-alerting/skill.yaml"
+  ],
+  "preExistingChanges": [],
+  "preservedCapabilities": [
+    "SLI versus SLO versus SLA distinctions, user journey scope and consequences, ratio/non-ratio objectives, attainable target negotiation and no blanket 100% prohibition.",
+    "Request/event versus time budgets, variable-traffic event shares, unfinished-period forecasts and rolling-window caveats.",
+    "Logical outcomes versus attempts, classifications for overload/client errors/degradation and scoped no-change decisions.",
+    "Multi-window derivation, initialized counters, partial telemetry loss, inclusive histogram threshold and joint-success populations.",
+    "PromQL filtering versus bool/set semantics, stable identity labels, for and keep_firing_for version/timing limits.",
+    "Actionability/urgency including predictive hazards, low traffic, missing data, inhibition label scope and notification-path evidence.",
+    "Migration/effective-date/history policy and rules for proportionate validation."
+  ],
+  "removedCapabilities": [],
+  "version": {
+    "committed": "1.4.4",
+    "assignment": "1.4.4",
+    "final": "1.4.5",
+    "reason": "One patch for focused guidance changes; clean starting package with no pre-existing bump. Only manifest has version field."
+  },
+  "checks": [
+    {
+      "kind": "executed structural",
+      "command": "@'\nimport { readFileSync, existsSync } from 'node:fs';\nimport { resolve, dirname } from 'node:path';\nimport { parseManifest } from './packages/core/src/domain/manifest.ts';\nimport { buildSkillPackage } from './packages/core/src/domain/skill-package.ts';\nimport { validatePackage } from './packages/core/src/application/validate-package.ts';\n\nconst root = resolve('skills/slo-and-alerting');\nconst paths = ['SKILL.md', 'skill.yaml', 'references/sli-and-error-budgets.md', 'references/burn-rate-rules-and-templates.md', 'references/alerting-design.md'];\nconst parsed = parseManifest(readFileSync(resolve(root, 'skill.yaml'), 'utf8'), { strict: true });\nconst pkg = buildSkillPackage(parsed.manifest, paths.map(path => ({ path, bytes: readFileSync(resolve(root, path)) })));\nconst report = validatePackage(pkg, { directoryName: 'slo-and-alerting' });\nconst failures = [...parsed.issues, ...report.issues];\nconst resources = [];\nfor (const path of paths.filter(path => path.endsWith('.md'))) {\n  const source = readFileSync(resolve(root, path), 'utf8');\n  for (const match of source.matchAll(/\\]\\(([^)]+)\\)/g)) {\n    const target = match[1].replace(/^<|>$/g, '');\n    if (/^https?:/.test(target)) continue;\n    const filePart = target.split('#')[0];\n    const absolute = resolve(dirname(resolve(root, path)), filePart || path.split('/').at(-1));\n    resources.push({ from: path, target, exists: existsSync(absolute) });\n    if (!existsSync(absolute)) failures.push({ missing: target, from: path });\n  }\n  for (const match of source.matchAll(/\\x60((?:references|assets|scripts)\\/[^\\x60]+)\\x60/g)) {\n    const absolute = resolve(root, match[1].split('#')[0]);\n    resources.push({ from: path, target: match[1], exists: existsSync(absolute) });\n    if (!existsSync(absolute)) failures.push({ missing: match[1], from: path });\n  }\n}\nconst related = [...parsed.manifest.dependencies.map(item => item.name), ...parsed.manifest.suggests];\nconst missingRelated = related.filter(name => !existsSync(resolve('skills', name, 'SKILL.md')));\nif (missingRelated.length) failures.push({ missingRelated });\nconsole.log(JSON.stringify({ skill: parsed.manifest.name, version: parsed.manifest.version, files: paths.length, packageReport: report, parseIssues: parsed.issues, resources, relatedSkillsChecked: related.length, missingRelated, failures }, null, 2));\nprocess.exitCode = failures.length ? 1 : 0;\n'@ | node --input-type=module",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "Strict manifest parse and core package validation passed: 5 files, 0 issues/errors/warnings, 5 internal resource-link occurrences resolved and 8 related-skill target paths exist. No adapter supplied; this is not adapter validation or global dependency-range verification.",
+      "output": "{\n  \"skill\": \"slo-and-alerting\",\n  \"version\": \"1.4.5\",\n  \"files\": 5,\n  \"packageReport\": {\n    \"ok\": true,\n    \"issues\": [],\n    \"errors\": [],\n    \"warnings\": []\n  },\n  \"parseIssues\": [],\n  \"resources\": [\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/alerting-design.md\",\n      \"exists\": true\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/sli-and-error-budgets.md\",\n      \"exists\": true\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/alerting-design.md\",\n      \"exists\": true\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/burn-rate-rules-and-templates.md\",\n      \"exists\": true\n    },\n    {\n      \"from\": \"references/burn-rate-rules-and-templates.md\",\n      \"target\": \"sli-and-error-budgets.md#window-membership-for-delayed-outcomes\",\n      \"exists\": true\n    }\n  ],\n  \"relatedSkillsChecked\": 8,\n  \"missingRelated\": [],\n  \"failures\": []\n}\n"
+    },
+    {
+      "kind": "executed formatting",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/slo-and-alerting/SKILL.md skills/slo-and-alerting/skill.yaml skills/slo-and-alerting/references/sli-and-error-budgets.md skills/slo-and-alerting/references/burn-rate-rules-and-templates.md skills/slo-and-alerting/references/alerting-design.md",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "Checking formatting...\nAll matched files use Prettier code style!\n"
+    },
+    {
+      "kind": "executed whitespace",
+      "command": "git diff --check -- skills/slo-and-alerting",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "Standalone final check passed with no output."
+    },
+    {
+      "kind": "executed read-only inspection",
+      "command": "git diff -- skills/slo-and-alerting; git status --short -- skills/slo-and-alerting; git diff --cached --name-only -- skills/slo-and-alerting; Get-FileHash for all package files",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "Only two owned reference files and manifest changed; no staged changes; entrypoint and alerting-design hashes unchanged."
+    },
+    {
+      "kind": "executed read-only anchor inspection",
+      "command": "rg -n 'Window membership|window-membership|^version:' skills/slo-and-alerting",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "New link fragment manually matched the exact heading Window membership for delayed outcomes."
+    },
+    {
+      "kind": "executed fenced-block regression comparison",
+      "command": "functions.exec compared all Markdown fenced blocks in assignment-time and final full contents",
+      "cwd": "not applicable",
+      "result": "All five existing fenced blocks byte-identical; no executable YAML or PromQL changed.",
+      "details": [
+        {
+          "file": "C:/git/agent-skills/skills/slo-and-alerting/SKILL.md",
+          "fencedBlocks": 0,
+          "unchanged": true
+        },
+        {
+          "file": "C:/git/agent-skills/skills/slo-and-alerting/references/alerting-design.md",
+          "fencedBlocks": 1,
+          "unchanged": true
+        },
+        {
+          "file": "C:/git/agent-skills/skills/slo-and-alerting/references/burn-rate-rules-and-templates.md",
+          "fencedBlocks": 3,
+          "unchanged": true
+        },
+        {
+          "file": "C:/git/agent-skills/skills/slo-and-alerting/references/sli-and-error-budgets.md",
+          "fencedBlocks": 1,
+          "unchanged": true
+        }
+      ]
+    },
+    {
+      "kind": "tool availability",
+      "command": "Get-Command promtool -ErrorAction SilentlyContinue | Select-Object Name,Source",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 1,
+      "result": "No promtool resolved on PATH. No dependency installed. No new or changed executable PromQL rule requires a fresh evaluator run for this edit."
+    }
+  ],
+  "failures": {
+    "introduced": [],
+    "preExisting": [],
+    "unavailable": ["promtool not resolved on PATH; no evaluator or notification path run."],
+    "notes": "No local package/format/whitespace check failed."
+  },
+  "behavioralEvidence": {
+    "independentAgentEvaluationsExecuted": [],
+    "runtimeRuleEvaluationsExecuted": [],
+    "technicalFixtureReplaysExecuted": [],
+    "measuredImprovement": false,
+    "structuredWalkthroughs": [
+      {
+        "case": "slo-cohort-A",
+        "result": "Exact event-ledger deltas imply 130 good outcomes / 10 admissions = 13. The declared outcome-time denominator should cover 130 finalized outcomes; only the denominator increment location needs correction."
+      },
+      {
+        "case": "slo-cohort-B",
+        "result": "The same ledger produces 130/130 = 1 for the declared finalization-time contract. No metric-boundary change is needed."
+      },
+      {
+        "case": "Unfinished deadline",
+        "input": "An eligible operation has a reliable authoritative observation showing no success at D; another is still before D.",
+        "result": "First misses the complete-within-D promise; second is pending rather than prematurely bad. A later success does not undo the actual missed deadline."
+      },
+      {
+        "case": "Missing outcome telemetry",
+        "input": "A record's outcome capture is unavailable and no authoritative work state proves the result.",
+        "result": "Unknown under the coverage/backfill policy, not a newly proven success or failure."
+      },
+      {
+        "case": "Existing alert behavior",
+        "input": "False PromQL bool comparison still emits a zero-valued series; inhibition lacks scope labels.",
+        "result": "Existing rules still require filtering before set composition and correct inhibition scope; new temporal-cohort section does not replace either safeguard."
+      }
+    ]
+  },
+  "evaluationCases": {
+    "executionStatus": "Reproducible development cases only; pending coordinator's independent evaluation. Do not pass expectedOutcomes to the acting evaluator.",
+    "pairConstraint": "Only the increment site of logical_total differs; contract, finalization guarantee, good increment, event ledger, window and report are unchanged.",
+    "inputs": [
+      {
+        "id": "slo-cohort-A",
+        "input": {
+          "language": "pt-BR",
+          "task": "Revise a definição de SLO e a implementação fornecida. Decida se a razão respeita a definição; se necessário, devolva uma alteração mínima ao código virtual e explique o efeito. Se já estiver adequada, preserve-a. Use os eventos fornecidos para justificar a decisão sem inventar uma execução ou medição de produção. Não adicione dependências, outro objetivo ou regras de alerta.",
+          "files": {
+            "slo.md": "O objetivo é pelo menos 99% de bons resultados entre as operações lógicas cujo resultado final é atribuído à janela [t0,t1). Bom = sucesso dentro de 300 ms desde admissão. O resultado final é emitido uma única vez no primeiro sucesso/falha definitivo ou na expiração do deadline de 300 ms. A expiração emite bad mesmo se um worker ainda continua; sucesso posterior não emite outro resultado. O registro usado neste fixture é completo e preserva essa garantia. O SLO usa outcome-time, não admission-time. O relatório trabalha com deltas exatos dos contadores entre os limites da janela; não usa um estimador rate/increase.",
+            "telemetry.mjs": "export const counters = { logical_total: 0, logical_good_total: 0 };\nexport function onAdmitted() { counters.logical_total++;  }\nexport function onOutcome(classification) {\n  if (classification === 'good') counters.logical_good_total++;\n}\nexport function ratioSince(before) {\n  return (counters.logical_good_total - before.logical_good_total)\n    / (counters.logical_total - before.logical_total);\n}\n",
+            "window-events.json": "{\n  \"timeUnit\": \"seconds\",\n  \"window\": {\n    \"start\": 0,\n    \"end\": 300\n  },\n  \"beforeWindow\": [\n    {\n      \"at\": -0.1,\n      \"event\": \"admitted\",\n      \"count\": 120,\n      \"logicalIds\": \"old-1..old-120\"\n    }\n  ],\n  \"snapshotBefore\": \"Immediately at t=0, after the beforeWindow admissions and before every in-window outcome.\",\n  \"inWindow\": [\n    {\n      \"at\": 0.1,\n      \"event\": \"outcome\",\n      \"classification\": \"good\",\n      \"count\": 120,\n      \"logicalIds\": \"old-1..old-120\"\n    },\n    {\n      \"at\": 10,\n      \"event\": \"admitted\",\n      \"count\": 10,\n      \"logicalIds\": \"new-1..new-10\"\n    },\n    {\n      \"at\": 10.1,\n      \"event\": \"outcome\",\n      \"classification\": \"good\",\n      \"count\": 10,\n      \"logicalIds\": \"new-1..new-10\"\n    }\n  ],\n  \"snapshotAfter\": \"Immediately at t=300. No other events, resets or instrumentation gaps occur.\",\n  \"note\": \"IDs belong to this audit fixture only, not metric labels.\"\n}"
+          },
+          "prerequisites": "No external service required. The virtual JavaScript is complete for the counter/window reasoning; an optional local replay needs ordinary JavaScript support. No replay has been executed by the reviewer.",
+          "decisiveConstraint": "The logical_total increment is at admission."
+        }
+      },
+      {
+        "id": "slo-cohort-B",
+        "input": {
+          "language": "pt-BR",
+          "task": "Revise a definição de SLO e a implementação fornecida. Decida se a razão respeita a definição; se necessário, devolva uma alteração mínima ao código virtual e explique o efeito. Se já estiver adequada, preserve-a. Use os eventos fornecidos para justificar a decisão sem inventar uma execução ou medição de produção. Não adicione dependências, outro objetivo ou regras de alerta.",
+          "files": {
+            "slo.md": "O objetivo é pelo menos 99% de bons resultados entre as operações lógicas cujo resultado final é atribuído à janela [t0,t1). Bom = sucesso dentro de 300 ms desde admissão. O resultado final é emitido uma única vez no primeiro sucesso/falha definitivo ou na expiração do deadline de 300 ms. A expiração emite bad mesmo se um worker ainda continua; sucesso posterior não emite outro resultado. O registro usado neste fixture é completo e preserva essa garantia. O SLO usa outcome-time, não admission-time. O relatório trabalha com deltas exatos dos contadores entre os limites da janela; não usa um estimador rate/increase.",
+            "telemetry.mjs": "export const counters = { logical_total: 0, logical_good_total: 0 };\nexport function onAdmitted() { }\nexport function onOutcome(classification) {\n  counters.logical_total++;\n  if (classification === 'good') counters.logical_good_total++;\n}\nexport function ratioSince(before) {\n  return (counters.logical_good_total - before.logical_good_total)\n    / (counters.logical_total - before.logical_total);\n}\n",
+            "window-events.json": "{\n  \"timeUnit\": \"seconds\",\n  \"window\": {\n    \"start\": 0,\n    \"end\": 300\n  },\n  \"beforeWindow\": [\n    {\n      \"at\": -0.1,\n      \"event\": \"admitted\",\n      \"count\": 120,\n      \"logicalIds\": \"old-1..old-120\"\n    }\n  ],\n  \"snapshotBefore\": \"Immediately at t=0, after the beforeWindow admissions and before every in-window outcome.\",\n  \"inWindow\": [\n    {\n      \"at\": 0.1,\n      \"event\": \"outcome\",\n      \"classification\": \"good\",\n      \"count\": 120,\n      \"logicalIds\": \"old-1..old-120\"\n    },\n    {\n      \"at\": 10,\n      \"event\": \"admitted\",\n      \"count\": 10,\n      \"logicalIds\": \"new-1..new-10\"\n    },\n    {\n      \"at\": 10.1,\n      \"event\": \"outcome\",\n      \"classification\": \"good\",\n      \"count\": 10,\n      \"logicalIds\": \"new-1..new-10\"\n    }\n  ],\n  \"snapshotAfter\": \"Immediately at t=300. No other events, resets or instrumentation gaps occur.\",\n  \"note\": \"IDs belong to this audit fixture only, not metric labels.\"\n}"
+          },
+          "prerequisites": "No external service required. The virtual JavaScript is complete for the counter/window reasoning; an optional local replay needs ordinary JavaScript support. No replay has been executed by the reviewer.",
+          "decisiveConstraint": "The logical_total increment is at outcome."
+        }
+      }
+    ],
+    "expectedOutcomes": [
+      {
+        "id": "slo-cohort-A",
+        "criteria": [
+          "Inspect actual increment sites and the declared outcome-time contract rather than rely on counter names.",
+          "Derive the exact audit delta ratio 130/10 = 13 without claiming a Prometheus estimator or production result.",
+          "Move the logical_total increment from onAdmitted to onOutcome so numerator/denominator classify the same finalized operations; retain separate arrival telemetry if needed but do not force a new SLI.",
+          "Preserve exactly-once timeout finalization and late-result behavior specified by the fixture.",
+          "Explain that clamping to 1, extending the window or changing the target does not repair the semantic mismatch."
+        ],
+        "failureConditions": [
+          "Calls 1300% a meaningful success SLI or hides it by clamping.",
+          "Changes the agreed contract to admission time merely to accommodate the code.",
+          "Counts only successful outcomes in total or drops deadline-bad outcomes.",
+          "Claims runtime tests or production gain that were not executed."
+        ]
+      },
+      {
+        "id": "slo-cohort-B",
+        "criteria": [
+          "Recognize aligned total/good outcome-time counting and derive 130/130 = 1 for the supplied complete fixture.",
+          "Return no-change for this bounded issue, retaining the finalization/timeout contract.",
+          "Do not insist every SLI must count at admission or invent a missing-deadline defect despite the explicit finalization guarantee.",
+          "Do not generalize the fixture result to whole reporting-period compliance, alert delivery or complete production correctness."
+        ],
+        "failureConditions": [
+          "Moves total counting to admission and reintroduces the cross-window mismatch.",
+          "Forces a monitoring rebuild/new alert/dependency despite an adequate scoped implementation.",
+          "Asserts measured behavioral improvement or future reliability from the ledger alone."
+        ]
+      }
+    ]
+  },
+  "sources": [
+    {
+      "url": "https://prometheus.io/docs/practices/instrumentation/",
+      "kind": "primary Prometheus instrumentation guidance",
+      "checked": "2026-10-16",
+      "supports": "Start/end counting consistency and preference for end counting when aligning with error/latency data; separate in-progress/offline processing signals.",
+      "versionScope": "General instrumentation contract; no new version-sensitive PromQL syntax."
+    },
+    {
+      "url": "https://sre.google/workbook/implementing-slos/",
+      "kind": "primary Google SRE Workbook",
+      "checked": "2026-10-16",
+      "supports": "SLI specification versus implementation, outcome/coverage distinction, pipeline coverage of expected records within a time window.",
+      "inference": "Specific cross-window arithmetic and deadline classifications are derived from the explicitly declared event population and complete-within-D promise, not quoted as an evaluator guarantee."
+    }
+  ],
+  "limitations": [
+    "No independent agent comparison, Prometheus evaluator run, notification test or technical fixture execution; improvement is not measured.",
+    "Paired cases are source/event-ledger fixtures with exact delta reporting, intentionally not a claim about rate/increase extrapolation.",
+    "Outcome-time guidance is conditional on the declared promise and required timeout finalization; it does not universally prefer completed-only populations.",
+    "Existing executable rules and version-specific timing examples were preserved byte-for-byte, not exhaustively revalidated across evaluator versions in this assignment.",
+    "Core-only structural checks do not replace coordinator registry/range/adapter/full-repository validation."
+  ],
+  "artifacts": {
+    "handoff": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/slo-and-alerting.json",
+    "caseInputs": "Embedded under evaluationCases.inputs",
+    "evaluationRubrics": "Separate under evaluationCases.expectedOutcomes",
+    "runtimeOutput": "Not applicable: no runtime replay"
+  },
+  "deferredGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Shared generated index; parallel workflow requires all reviewers stopped first."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Repository-wide validation after registry rebuild and all reviewer writes stop."
+    }
+  ],
+  "coordinatorActions": [
+    "Run the deferred global checks after all reviewers stop.",
+    "Use separated inputs for independent behavioral evaluation if desired."
+  ],
+  "crossSkillIssues": []
+}

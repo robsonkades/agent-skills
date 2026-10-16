@@ -1,0 +1,113 @@
+{
+  "classification": "Offline package and YAML syntax/fixture checks; no cluster or agent execution",
+  "node": "v25.6.1",
+  "processes": [
+    {
+      "label": "prettier",
+      "command": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "node_modules/prettier/bin/prettier.cjs",
+        "--check",
+        "skills/sidecar-pattern/SKILL.md",
+        "skills/sidecar-pattern/skill.yaml",
+        "skills/sidecar-pattern/references/lifecycle-and-composition.md",
+        "skills/sidecar-pattern/references/sidecar-or-node-agent.md"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\prettier.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\prettier.stderr.log"
+    },
+    {
+      "label": "diff-check",
+      "command": "git",
+      "args": [
+        "diff",
+        "--check",
+        "--",
+        "skills/sidecar-pattern"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\diff-check.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\diff-check.stderr.log"
+    },
+    {
+      "label": "final-owned-diff",
+      "command": "git",
+      "args": [
+        "diff",
+        "--",
+        "skills/sidecar-pattern"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\final-owned-diff.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\final-owned-diff.stderr.log"
+    },
+    {
+      "label": "final-owned-status",
+      "command": "git",
+      "args": [
+        "status",
+        "--short",
+        "--untracked-files=all",
+        "--",
+        "skills/sidecar-pattern"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\final-owned-status.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\final-owned-status.stderr.log"
+    },
+    {
+      "label": "final-staged-diff",
+      "command": "git",
+      "args": [
+        "diff",
+        "--cached",
+        "--",
+        "skills/sidecar-pattern"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\final-staged-diff.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\final-staged-diff.stderr.log"
+    }
+  ],
+  "package": {
+    "issues": [],
+    "version": "1.3.6",
+    "fileCount": 4
+  },
+  "routedReferences": [
+    "references/lifecycle-and-composition.md",
+    "references/sidecar-or-node-agent.md"
+  ],
+  "examplePreservation": {
+    "byteIdenticalPlacementReference": true,
+    "unchangedBlocks": 2,
+    "parsedConceptualYamlBlocks": 1,
+    "javaBlock": "Unchanged; not recompiled"
+  },
+  "cases": {
+    "fixtures": 2,
+    "yamlDocuments": 4,
+    "embeddedConfigDocuments": 2,
+    "changedConstraint": "Application mount mode only; mountPath adjusted to preserve the consumer path",
+    "taskInputsByteIdentical": true,
+    "consumerContractsByteIdentical": true,
+    "interpretation": "Parsing and explicit fixture-shape checks only; no Kubernetes admission, mounts, watcher, cache, adoption or rollout tested"
+  },
+  "allProcessesExited": true
+}

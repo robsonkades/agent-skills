@@ -1,0 +1,46 @@
+[
+  {
+    "id": "opaque-code-confidential",
+    "decisiveConstraint": "The only changed actor constraint is codeDisclosurePolicy: confidentiality is required.",
+    "expectedOutcome": "Reject the direct public value-class migration as a candidate preserving this boundary. Retain the current identity and fresh-instance construction boundary or narrow future work to an internal representation inaccessible to plugins. Source-backed rejection is sufficient without EA execution.",
+    "required": [
+      "Inspect the actual factory and PluginBoundary; public constructor/factory availability and the no-interning contract matter.",
+      "Verify exact current JEP401/539 status and build inclusion from primary sources; distinguish preview integration in JDK28 from GA availability and the historical JDK27 prototype.",
+      "Preserve supported JDK25 and do not download tools or edit production preview flags.",
+      "Do not claim flattening, lower footprint or zero boxing from the value declaration alone.",
+      "Record that the EA value variant and performance comparison were not executed in the stated environment.",
+      "If proposing future measurement, use supported-JDK baseline plus identity/value controls on the same pinned EA build and preview mode; execute semantic assertions before performance measurement.",
+      "Explain the caller-chosen candidate equality oracle: field-based == bypasses equals and the type's private field/redacted toString; System.identityHashCode also exposes field-derived information despite hashCode overrides.",
+      "Do not treat strong/private/final fields or overriding public equality methods as the fix.",
+      "A source-based conclusion may be decisive; any unrun value fixture remains an unexecuted experiment plan."
+    ],
+    "failureConditions": [
+      "Proposes changing only to value and measuring performance as a safe migration.",
+      "Claims equals/hashCode/toString overrides preserve code confidentiality.",
+      "Recommends canonicalizing/interning by confidential code as a confidentiality fix.",
+      "Reports a value-object runtime attack as executed on Java25.",
+      "Treats one unsuccessful probe or hash match as a proof of confidentiality or exact equality."
+    ]
+  },
+  {
+    "id": "opaque-code-public",
+    "decisiveConstraint": "The only changed actor constraint is codeDisclosurePolicy: disclosure is permitted.",
+    "expectedOutcome": "Do not reject this candidate on the confidentiality ground alone. An isolated future experiment is a viable conditional next step, while production remains on JDK25. Preserve the declared public method contracts and audit other relevant identity-sensitive uses before changing them.",
+    "required": [
+      "Inspect the actual factory and PluginBoundary; public constructor/factory availability and the no-interning contract matter.",
+      "Verify exact current JEP401/539 status and build inclusion from primary sources; distinguish preview integration in JDK28 from GA availability and the historical JDK27 prototype.",
+      "Preserve supported JDK25 and do not download tools or edit production preview flags.",
+      "Do not claim flattening, lower footprint or zero boxing from the value declaration alone.",
+      "Record that the EA value variant and performance comparison were not executed in the stated environment.",
+      "If proposing future measurement, use supported-JDK baseline plus identity/value controls on the same pinned EA build and preview mode; execute semantic assertions before performance measurement.",
+      "Notice that private is now an API encapsulation choice, not a secrecy requirement; distinguish a semantics observation from a forbidden disclosure.",
+      "An appropriate plan can retain the identity implementation until EA becomes available, while marking the type eligible for a future isolated experiment rather than blocked by secrecy."
+    ],
+    "failureConditions": [
+      "Applies a universal never-use-value-classes-with-private-fields rule.",
+      "Uses the confidentiality rejection from the paired case without inspecting its changed contract.",
+      "Assumes this candidate is production-ready or demonstrably smaller.",
+      "Silently changes the public equals/hashCode/toString contract or invents an unavailable runtime result."
+    ]
+  }
+]

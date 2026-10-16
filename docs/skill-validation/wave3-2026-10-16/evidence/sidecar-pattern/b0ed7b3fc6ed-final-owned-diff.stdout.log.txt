@@ -1,0 +1,78 @@
+diff --git a/skills/sidecar-pattern/SKILL.md b/skills/sidecar-pattern/SKILL.md
+index 36ebbd6..a316a1b 100644
+--- a/skills/sidecar-pattern/SKILL.md
++++ b/skills/sidecar-pattern/SKILL.md
+@@ -63,6 +63,9 @@ placement or lifecycle change, include the relevant capability, failure and reso
+ 5. **Write down the coupling surface** — listener/protocol, shared mounts and any deliberately
+    exposed management/agent or process-namespace interface. Specify identity, permissions and
+    lifetime. Filesystems and the PID namespace are not shared unless configured.
++   For a config reloader, trace source publication, each container's mounted bytes and process
++   adoption separately. ConfigMap projection, `subPath` and environment variables have different
++   update contracts; startup ordering does not establish live reload.
+ 6. **Decide what the app does when the sidecar is up and answering wrongly.** A crash loop is
+    visible to Kubernetes; a gray failure needs meaningful probes and request-path telemetry.
+ 7. **Retain container identity alongside Pod totals** for relevant restarts, memory, CPU and
+@@ -148,7 +151,7 @@ Prefer changing the application instead when:
+ 
+ - [Lifecycle and composition mechanics](references/lifecycle-and-composition.md) — native
+   versus ordinary sidecar with a manifest fragment, startup and shutdown ordering, the Job
+-  case, shared-volume lifetime and localhost contracts, init-phase resource accounting, pod QoS, and the failure
++  case, shared-volume lifetime, configuration reload and localhost contracts, init-phase resource accounting, pod QoS, and the failure
+   matrix. Read when writing or reviewing a two-container pod.
+ - [Sidecar, library, node agent or nothing](references/sidecar-or-node-agent.md) — the four
+   options with the observable condition that selects each, and what each really costs in
+diff --git a/skills/sidecar-pattern/references/lifecycle-and-composition.md b/skills/sidecar-pattern/references/lifecycle-and-composition.md
+index 9490557..befd49a 100644
+--- a/skills/sidecar-pattern/references/lifecycle-and-composition.md
++++ b/skills/sidecar-pattern/references/lifecycle-and-composition.md
+@@ -166,6 +166,28 @@ earlier but adds work; protocol health checks, max lifetime and failure eviction
+ Use the HTTP client/proxy's actual connection and stream contracts here; `connection-pool-sizing`
+ owns JDBC/HikariCP sizing, not generic HTTP pool configuration.
+ 
++## Reloading mounted configuration
++
++For a reloader intended to update a running Pod, trace the source through **each container's
++read path** to the consumer's effective configuration. In Kubernetes 1.34, ConfigMap volume
++projections update eventually, with delay depending on kubelet sync and cache propagation.
++ConfigMap `subPath` mounts do not receive those updates, and ConfigMap-derived environment
++variables do not change in the running process. A reload signal cannot repair stale delivery.
++The reloader may see a new projected file while the app still reads a pinned `subPath` file;
++inspect both mounts, not only the common volume name.
++
++Also inspect how the watcher and consumer reopen data. Kubernetes v1.34.0's `AtomicWriter`
++publishes projected files by switching the `..data` symlink to a new data directory, not by
++editing each visible file in place. Verify that the actual watcher/reload implementation
++handles replacement and reads the current path; do not assume a file-modified event or an
++already-open descriptor represents the new configuration.
++
++Verify a controlled change at the API object, the consumer's mounted path and its effective
++configuration/version or request behavior. A successful reload request alone does not prove
++adoption. Check the application's invalid-config and recovery behavior too. A versioned config
++released by replacing Pods is a valid alternative when live reload is not required; preserve
++that lifecycle instead of adding a reloader by default.
++
+ ## Resources: per container, consequences per pod
+ 
+ - Resources are traditionally declared per container; newer clusters can also enable Pod-level
+@@ -228,6 +250,8 @@ faults; a narrow explanation does not require an unrelated full cluster campaign
+ - [Kubernetes 1.34 Pod QoS](https://v1-34.docs.kubernetes.io/docs/concepts/workloads/pods/pod-qos/) — effective resource model.
+ - [Kubernetes v1.34.0 resource helpers](https://github.com/kubernetes/kubernetes/blob/v1.34.0/staging/src/k8s.io/component-helpers/resource/helpers.go) — `AggregateContainerRequests` accounts for overlapping init phases; `PodRequests` applies Pod-level overrides and overhead.
+ - [Kubernetes 1.34 emptyDir volumes](https://v1-34.docs.kubernetes.io/docs/concepts/storage/volumes/#emptydir) — Pod lifetime, memory accounting and shared node capacity.
++- [Kubernetes 1.34 ConfigMaps](https://v1-34.docs.kubernetes.io/docs/concepts/configuration/configmap/#mounted-configmaps-are-updated-automatically) — eventual projection updates, `subPath` and environment-variable limits.
++- [Kubernetes v1.34.0 AtomicWriter](https://github.com/kubernetes/kubernetes/blob/v1.34.0/pkg/volume/util/atomic_writer.go) — projected-data replacement and watcher implications; inspect the deployed implementation.
+ - [Kubernetes 1.34 Pod lifecycle](https://v1-34.docs.kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/) — grace and failure conditions.
+ - [Kubernetes 1.34 process namespace sharing](https://v1-34.docs.kubernetes.io/docs/tasks/configure-pod-container/share-process-namespace/) — process and filesystem visibility with permissions.
+ - [Kubernetes 1.34 probe configuration](https://v1-34.docs.kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#http-probes) — kubelet HTTP probe destination and the host-network loopback exception.
+diff --git a/skills/sidecar-pattern/skill.yaml b/skills/sidecar-pattern/skill.yaml
+index 76027b3..4bb9353 100644
+--- a/skills/sidecar-pattern/skill.yaml
++++ b/skills/sidecar-pattern/skill.yaml
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: sidecar-pattern
+-version: 1.3.5
++version: 1.3.6
+ description: >-
+   Composing a second container into the same pod to add a capability to a container you
+   cannot or will not modify: the shared network namespace and volumes that make this

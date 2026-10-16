@@ -1,0 +1,3 @@
+# Accepted export contract
+
+Java source target is 17. The local export command is `node run.mjs export input output`. It must replace CRLF and isolated CR by LF, preserve all other text, and continue to provide LegacyBanner from the retained compatibility library. That library and fixture inputs are read-only. Its metadata is not a security boundary. No dependency or toolchain upgrades. Build products are disposable, source and launch configuration are authoritative inputs.

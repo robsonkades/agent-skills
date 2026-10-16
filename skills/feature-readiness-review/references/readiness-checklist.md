@@ -5,6 +5,12 @@ for dependent implementation, not a feature-wide stop by default. Trace affected
 their dependents; only a common prerequisite blocks all implementation. Other OPEN items need an
 owner and the stage/resource where they become prerequisites. Reuse existing authority and evidence.
 
+Treat a supplied all-PASS checklist as claims to verify. Open the accepted definition, decisions,
+contracts and plans at their source locators; check that their contents support the relevant rows.
+Retain those locators in the review so a missing prerequisite can be traced to its owner and dependent
+resources. At this gate, inspect whether planned checks can establish the accepted criteria; their
+execution may correctly be future work. Do not demand completion evidence to allow implementation.
+
 ## Definition intake
 
 | #   | Item                                                               | Blocking |
@@ -30,6 +36,11 @@ and existing authority; do not treat acceptance as permission to skip a declared
 | 3   | Every HIGH-impact unknown is resolved or linked to a valid GAP-* accepted by its accountable owner                    | yes      |
 | 4   | No question marked BLOCKING is open                                                                                   | yes      |
 | 5   | Scope-changing ambiguities were resolved by an authorised owner; local reversible choices follow recorded conventions | yes      |
+
+For item 2, compare material assumptions with available current evidence, not just their recorded
+falsifiers. A contradicted assumption reopens the decisions and resources that depend on it.
+If a consequential prerequisite cannot be checked, keep it OPEN and name the smallest missing
+fact or evidence that would resolve it. A documented assumption is not proof that it holds.
 
 ## Scope
 
@@ -110,9 +121,11 @@ Not every feature runs all thirty-two. By depth class:
   increases scrutiny; it does not make every feature touch an API, schema, migration, deployment
   sequence, security boundary, or new telemetry.
 
-Items are selected by depth **and applicability**, never by convenience. An item omitted because it
-is awkward is a likely gap; an item marked N/A because the impact map proves the feature cannot
-touch that concern is valid tailoring.
+Items are selected by depth **and applicability**, never by convenience. Cross-check consequential
+N/A claims against the planned changes and relevant current contracts, schemas or configuration at
+the impact map's locators; the map's assertion is not its own proof. A NEW target need not exist yet:
+inspect its proposed effect and existing boundary instead. Reopen a contradicted exclusion for the
+affected resources; retain exclusions supported by the inspected scope.
 
 ## Reporting the gate
 
@@ -130,5 +143,5 @@ N/A   #29 (migration) — none of the resources touches persisted data.
 Subset PASS: RES-09, RES-10 (authorized; no dependency on any open prerequisite).
 ```
 
-The corrected line is worth imitating. An N/A that turns out to be wrong is the most common way
-a checklist passes while the feature is not ready.
+The corrected line is worth imitating. An unsupported N/A can hide a prerequisite and make the
+checklist appear to pass while the feature is not ready.

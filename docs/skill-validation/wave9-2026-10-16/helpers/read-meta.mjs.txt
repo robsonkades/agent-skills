@@ -1,0 +1,9 @@
+import fs from 'node:fs';
+const root='C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4';
+for(const id of process.argv.slice(2)){
+ const out=root+'/runs/'+id+'/output',result=JSON.parse(fs.readFileSync(out+'/result.json','utf8')),journal=JSON.parse(fs.readFileSync(out+'/execution.json','utf8'));
+ const json=JSON.stringify(journal).replaceAll('\\\\','/');
+ const skillPaths=[...new Set(json.match(/(?:input\/)?skills\/[-a-z]+\/(?:SKILL\.md|references\/[-a-z]+\.md)/g)??[])].sort();
+ const flags=Object.fromEntries(Object.entries(journal).filter(([k,v])=>/scope|outside|network|delegat|process|stopped/i.test(k)&&typeof v!=='string'||/scope|outside|network|delegat|process|stopped/i.test(k)&&typeof v==='string'&&v.length<500));
+ console.log(JSON.stringify({id,result,journalDeclaredSkillPaths:skillPaths,journalFlags:flags},null,2));
+}

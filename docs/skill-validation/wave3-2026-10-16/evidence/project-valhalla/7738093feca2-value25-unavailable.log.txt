@@ -1,0 +1,2 @@
+OpaqueCode.java:1:8: compiler.err.class.method.or.field.expected
+1 error

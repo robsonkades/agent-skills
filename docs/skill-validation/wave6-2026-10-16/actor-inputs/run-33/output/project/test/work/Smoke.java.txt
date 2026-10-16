@@ -1,0 +1,7 @@
+package work;
+public final class Smoke { public static void main(String[] args) {
+ ResultBridge bridge=new ResultBridge();
+ bridge.attach(callback -> { Snapshot snapshot=new Snapshot(); snapshot.setValue(91); callback.accept(snapshot); });
+ if(bridge.currentValue()!=91) throw new AssertionError();
+ System.out.println("synchronous provider PASS; deployed provider absent");
+} }

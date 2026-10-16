@@ -1,0 +1,35 @@
+[
+  {
+    "id": "jls17-abstract-classes",
+    "url": "https://docs.oracle.com/javase/specs/jls/se17/html/jls-8.html",
+    "section": "8.1.1.1 abstract Classes",
+    "consulted": "2026-10-16",
+    "status": 200,
+    "finalUrl": "https://docs.oracle.com/javase/specs/jls/se17/html/jls-8.html",
+    "file": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-antipatterns-validation\\sources\\jls17-abstract-classes.html",
+    "bytes": 581514,
+    "sha256": "5a7941c1fbbc32590962a291cb221b22fdc6b87091bf7a604013434649fdc3bc"
+  },
+  {
+    "id": "jls17-binary-compatibility",
+    "url": "https://docs.oracle.com/javase/specs/jls/se17/html/jls-13.html",
+    "section": "13.5 interface evolution; rebuilt source and pre-existing binary compatibility are distinct",
+    "consulted": "2026-10-16",
+    "status": 200,
+    "finalUrl": "https://docs.oracle.com/javase/specs/jls/se17/html/jls-13.html",
+    "file": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-antipatterns-validation\\sources\\jls17-binary-compatibility.html",
+    "bytes": 169240,
+    "sha256": "8fc034be74b27034d3bf8394bfc186ba68e5cfdf65d4c70f677c18249bb77c55"
+  },
+  {
+    "id": "java17-elementvisitor",
+    "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.compiler/javax/lang/model/element/ElementVisitor.html",
+    "section": "API Note; default visitModule and visitRecordComponent delegate to visitUnknown",
+    "consulted": "2026-10-16",
+    "status": 200,
+    "finalUrl": "https://docs.oracle.com/en/java/javase/17/docs/api/java.compiler/javax/lang/model/element/ElementVisitor.html",
+    "file": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-antipatterns-validation\\sources\\java17-elementvisitor.html",
+    "bytes": 34637,
+    "sha256": "77c1ab2bfd035d4922abbc94a328d688c7fe836bbd7280e97aea2e75465db457"
+  }
+]

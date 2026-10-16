@@ -1,0 +1,67 @@
+{
+  "sources": [
+    {
+      "url": "https://docs.spring.io/spring-framework/reference/6.2/data-access/transaction/declarative/annotations.html",
+      "version": "Spring Framework 6.2.19 as displayed when consulted",
+      "sections": [
+        "Method visibility and @Transactional in proxy mode",
+        "Multiple Transaction Managers with @Transactional"
+      ],
+      "supports": "Annotation metadata alone is insufficient: actual runtime interception and transaction-manager selection matter. Matches the existing workflow guard and the fixture's effective caller/configuration.",
+      "limit": "Documentation review only; no Spring runtime was executed. The initial unversioned lookup displayed 7.0.9 and was not used as the fixture's 6.2 baseline.",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://docs.spring.io/spring-framework/reference/6.2/data-access/transaction/strategies.html",
+      "version": "Spring Framework 6.2.19 as displayed when consulted",
+      "sections": [
+        "Understanding the Spring Framework Transaction Abstraction"
+      ],
+      "supports": "The selected transaction manager and associated resources determine the transaction mechanism; local JDBC DataSourceTransactionManager differs from globally coordinated JTA.",
+      "limit": "Does not establish the enlistment of any real project; the skill properly requests project evidence.",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://microservices.io/patterns/data/transactional-outbox.html",
+      "version": "Author-maintained pattern page, consulted 2026-10-16; no release number",
+      "sections": [
+        "Solution",
+        "Result context"
+      ],
+      "supports": "Local state and publication intent share a transaction; a relay can publish duplicates. Supports the existing local-intent versus remote business-effect distinction.",
+      "limit": "Conceptual pattern contract, not proof that a particular relay or consumer is reliable.",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://microservices.io/patterns/data/saga.html",
+      "version": "Author-maintained pattern page, consulted 2026-10-16; no release number",
+      "sections": [
+        "Resulting context"
+      ],
+      "supports": "Saga compensation is not automatic ACID rollback and lacks transaction isolation by default. Supports preserving the required intermediate visibility/recovery contract before selecting this mechanism.",
+      "limit": "No deployed saga implementation evaluated; case requirements are authored synthetic business contracts.",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://martinfowler.com/eaaCatalog/serviceLayer.html",
+      "version": "Patterns of Enterprise Application Architecture catalog entry, Randy Stafford, 2003-03-05",
+      "sections": [
+        "Service Layer"
+      ],
+      "supports": "Application operations and response/transaction coordination belong to the service boundary; this is not proof of one universal resource transaction.",
+      "limit": "Architecture pattern definition; it does not mandate the pattern for every module.",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://martinfowler.com/bliki/CQRS.html",
+      "version": "Martin Fowler, 2011-07-14",
+      "sections": [
+        "When to use it"
+      ],
+      "supports": "Separate command/query models carry complexity and can apply to selected portions; ordinary CRUD can remain appropriate. Supports the skill's conditional module-specific choices.",
+      "limit": "Expert pattern guidance, not a comparative benchmark for this catalog or target application.",
+      "consulted": "2026-10-16"
+    }
+  ],
+  "method": "Primary documentation and pattern-author sources consulted via web; only concise contract summaries retained. No third-party code vendored."
+}

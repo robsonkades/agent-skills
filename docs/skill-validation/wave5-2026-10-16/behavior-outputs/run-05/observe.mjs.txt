@@ -1,0 +1,28 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
+
+const outputRoot = path.dirname(fileURLToPath(import.meta.url));
+const [id, command, ...args] = process.argv.slice(2);
+if (!id || !command || !/^[a-z0-9-]+$/.test(id)) throw new Error('Usage: observe.mjs id command ...args');
+const startedAt = new Date().toISOString();
+const started = performance.now();
+const result = spawnSync(command, args, {
+  cwd: process.cwd(),
+  encoding: 'utf8',
+  timeout: 25000,
+  windowsHide: true,
+  maxBuffer: 4 * 1024 * 1024,
+});
+const record = {
+  id, command, args, cwd: process.cwd(), startedAt,
+  durationMs: Math.round(performance.now() - started),
+  timeoutMs: 25000, exit: result.status, signal: result.signal,
+  error: result.error ? { name: result.error.name, code: result.error.code, message: result.error.message } : null,
+  stdout: result.stdout || '', stderr: result.stderr || '', truncated: false,
+};
+fs.mkdirSync(path.join(outputRoot, 'logs'), { recursive: true });
+fs.writeFileSync(path.join(outputRoot, 'logs', `${id}.json`), JSON.stringify(record, null, 2) + '\n');
+process.stdout.write(JSON.stringify(record, null, 2) + '\n');
+process.exitCode = result.status ?? 1;

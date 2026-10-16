@@ -17,7 +17,7 @@ about; neither values nor policy structure are public contracts.
 | `MaxInlineLevel`                  | 15            | product    | Nesting depth of the inline tree                                              |
 | `MaxRecursiveInlineLevel`         | 1             | product    | How many times a method may be inlined into itself                            |
 | `InlineFrequencyRatio`            | 0.25          | diagnostic | Call-site count / caller invocations at or above which a site is hot          |
-| `MinInlineFrequencyRatio`         | 0.0085        | diagnostic | Below this ratio the site is refused outright                                 |
+| `MinInlineFrequencyRatio`         | 0.0085        | diagnostic | Lower bound of a conditional frequency gate; see effective floor below        |
 | `DesiredMethodLimit`              | 8000          | develop    | Aggregate bytecode bytes of one compilation unit after inlining               |
 | `MaxNodeLimit`                    | 80000         | product    | Ideal-graph nodes per compilation; overridable per method                     |
 | `NodeLimitFudgeFactor`            | 2000          | product    | Reserve below `MaxNodeLimit` that some optimisations keep                     |
@@ -38,6 +38,23 @@ cannot be set in a product JVM; refactoring or a supported policy experiment may
 gates help select hot/cold size budgets and can produce `low call site frequency`, but do not
 fully determine inlining: intrinsic/annotation rules, receiver profile, depth, node budget
 and compiler state also apply.
+
+For `low call site frequency`, the pinned C2 policy checks the scaled call-site count divided
+by caller invocations against
+`max(MinInlineFrequencyRatio, 1.0 / max(1, Tier4MinInvocationThreshold))`.
+This applies when that gate is reached, `UseInterpreter` is true and
+`MinInlineFrequencyRatio > 0`; earlier exits for trivial callees, forced inlining, unboxing
+and selected EA-related methods can bypass it. `CompilationPolicy::min_invocations()` returns
+the effective `Tier4MinInvocationThreshold` in these sources. Lowering a positive ratio below
+the reciprocal floor therefore need not remove the refusal. For example, an effective
+threshold of 60 gives a floor near 0.0167 even with the ratio set to 0.0085 or 0.001.
+
+Read effective values with the actual launch configuration, not just the arguments supplied.
+On 25.0.3, disabling tiered compilation can ergonomically replace
+`Tier4MinInvocationThreshold` with `CompileThreshold`; threshold scaling can change it too.
+Changing compilation policy to alter this floor also changes warm-up and compilation behavior,
+so it is not a local fix. First verify the C2 root/call site, profile and workload cost;
+relative frequency alone does not establish that a call is cheap or worth changing.
 
 ## Verdict to fix
 
@@ -69,7 +86,7 @@ recorded training data can supply the metric instead. It is not total nmethod st
 | `inlining too deep`                             | Tree deeper than `MaxInlineLevel`                                                 | Compare retaining the chain with a local flattening experiment; preserve useful delegation/extension contracts                      |
 | `recursive inlining is too deep`                | Method inlined into itself more than once                                         | Expected for recursion; test a behaviorally equivalent loop only when measured cost warrants it                                     |
 | `virtual call`                                  | No usable guarded/static target under current profile/policy                      | Inspect types at **this** site; isolate a stable hot site only if design remains sound                                              |
-| `low call site frequency`                       | Site below `MinInlineFrequencyRatio`                                              | Nothing: it is cold                                                                                                                 |
+| `low call site frequency`                       | Site below the effective frequency floor described above                          | Verify effective policy/profile; usually retain unless workload cost justifies a scoped experiment                                  |
 | `never executed`                                | Callee has no counters and no code                                                | Nothing; the path did not run during profiling                                                                                      |
 | `call site not reached`                         | Current profile/graph treats the site as unreachable                              | Exercise representative paths; later execution may trap and recompile                                                               |
 | `size > DesiredMethodLimit`                     | Current or proposed aggregate inline bytecodes reach the limit                    | Inspect caller total and proposed callee size; test a smaller inline tree only when worthwhile                                      |
@@ -225,6 +242,9 @@ better than reshaping a clear API for one compiler heuristic.
 ## Primary references
 
 - [HotSpot C2 inlining policy (`bytecodeInfo.cpp`)](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/opto/bytecodeInfo.cpp)
+- [JDK 25.0.3 C2 frequency gates (`bytecodeInfo.cpp`)](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/opto/bytecodeInfo.cpp)
+- [JDK 25.0.3 minimum-invocation policy (`compilationPolicy.hpp`)](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/compiler/compilationPolicy.hpp)
+- [JDK 25.0.3 effective threshold configuration (`compilerDefinitions.cpp`)](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/compiler/compilerDefinitions.cpp)
 - [HotSpot C1 call eligibility and verdicts (`c1_GraphBuilder.cpp`)](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/c1/c1_GraphBuilder.cpp)
 - [HotSpot C2 call selection (`doCall.cpp`)](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/opto/doCall.cpp)
 - [HotSpot C2 bytecode parsing for inlining (`callGenerator.cpp`)](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/opto/callGenerator.cpp)

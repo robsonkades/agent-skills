@@ -1,0 +1,206 @@
+[
+  {
+    "id": "local-validation",
+    "executable": "C:\\Program Files\\nodejs\\node.exe",
+    "args": [
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-flyweight\\local-validation.mjs"
+    ],
+    "cwd": "C:/git/agent-skills",
+    "status": 0,
+    "signal": null,
+    "stdout": "local-validation.stdout.txt",
+    "stderr": "local-validation.stderr.txt"
+  },
+  {
+    "id": "prettier",
+    "executable": "C:\\Program Files\\nodejs\\node.exe",
+    "args": [
+      "C:\\git\\agent-skills\\node_modules\\prettier\\bin\\prettier.cjs",
+      "--check",
+      "skills/gof-flyweight/SKILL.md",
+      "skills/gof-flyweight/skill.yaml",
+      "skills/gof-flyweight/references/when-sharing-pays.md",
+      "skills/gof-flyweight/references/worked-example.md"
+    ],
+    "cwd": "C:/git/agent-skills",
+    "status": 1,
+    "signal": null,
+    "stdout": "prettier.stdout.txt",
+    "stderr": "prettier.stderr.txt"
+  },
+  {
+    "id": "diff-check",
+    "executable": "git",
+    "args": [
+      "diff",
+      "--check",
+      "--",
+      "skills/gof-flyweight"
+    ],
+    "cwd": "C:/git/agent-skills",
+    "status": 0,
+    "signal": null,
+    "stdout": "diff-check.stdout.txt",
+    "stderr": "diff-check.stderr.txt"
+  },
+  {
+    "id": "scoped-status",
+    "executable": "git",
+    "args": [
+      "status",
+      "--short",
+      "--untracked-files=all",
+      "--",
+      "skills/gof-flyweight"
+    ],
+    "cwd": "C:/git/agent-skills",
+    "status": 0,
+    "signal": null,
+    "stdout": "scoped-status.stdout.txt",
+    "stderr": "scoped-status.stderr.txt"
+  },
+  {
+    "id": "scoped-diff",
+    "executable": "git",
+    "args": [
+      "diff",
+      "--",
+      "skills/gof-flyweight"
+    ],
+    "cwd": "C:/git/agent-skills",
+    "status": 0,
+    "signal": null,
+    "stdout": "scoped-diff.stdout.txt",
+    "stderr": "scoped-diff.stderr.txt"
+  },
+  {
+    "id": "staged-diff",
+    "executable": "git",
+    "args": [
+      "diff",
+      "--cached",
+      "--",
+      "skills/gof-flyweight"
+    ],
+    "cwd": "C:/git/agent-skills",
+    "status": 0,
+    "signal": null,
+    "stdout": "staged-diff.stdout.txt",
+    "stderr": "staged-diff.stderr.txt"
+  },
+  {
+    "id": "java-version",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+    "args": [
+      "-version"
+    ],
+    "cwd": "C:/git/agent-skills",
+    "status": 0,
+    "signal": null,
+    "stdout": "java-version.stdout.txt",
+    "stderr": "java-version.stderr.txt"
+  },
+  {
+    "id": "javac-version",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+    "args": [
+      "-version"
+    ],
+    "cwd": "C:/git/agent-skills",
+    "status": 0,
+    "signal": null,
+    "stdout": "javac-version.stdout.txt",
+    "stderr": "javac-version.stderr.txt"
+  },
+  {
+    "id": "case-preparation",
+    "executable": "C:\\Program Files\\nodejs\\node.exe",
+    "args": [
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-flyweight\\prepare-cases.mjs"
+    ],
+    "cwd": "C:/git/agent-skills",
+    "status": 0,
+    "signal": null,
+    "stdout": "case-preparation.stdout.txt",
+    "stderr": "case-preparation.stderr.txt"
+  },
+  {
+    "id": "case-compile",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+    "args": [
+      "--release",
+      "17",
+      "-d",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-flyweight\\case-compiled",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-flyweight\\cases\\case-a\\Bootstrap.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-flyweight\\cases\\case-a\\FormatterFactory.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-flyweight\\cases\\case-a\\ImportPreview.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-flyweight\\UncachedControl.java"
+    ],
+    "cwd": "C:/git/agent-skills",
+    "status": 0,
+    "signal": null,
+    "stdout": "case-compile.stdout.txt",
+    "stderr": "case-compile.stderr.txt"
+  },
+  {
+    "id": "case-a-cached",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+    "args": [
+      "-cp",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-flyweight\\case-compiled",
+      "imports.ImportPreview",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-flyweight\\cases\\case-a"
+    ],
+    "cwd": "C:/git/agent-skills",
+    "status": 0,
+    "signal": null,
+    "stdout": "case-a-cached.stdout.txt",
+    "stderr": "case-a-cached.stderr.txt"
+  },
+  {
+    "id": "case-a-uncached",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+    "args": [
+      "-cp",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-flyweight\\case-compiled",
+      "imports.UncachedControl",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-flyweight\\cases\\case-a"
+    ],
+    "cwd": "C:/git/agent-skills",
+    "status": 0,
+    "signal": null,
+    "stdout": "case-a-uncached.stdout.txt",
+    "stderr": "case-a-uncached.stderr.txt"
+  },
+  {
+    "id": "case-b-cached",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+    "args": [
+      "-cp",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-flyweight\\case-compiled",
+      "imports.ImportPreview",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-flyweight\\cases\\case-b"
+    ],
+    "cwd": "C:/git/agent-skills",
+    "status": 0,
+    "signal": null,
+    "stdout": "case-b-cached.stdout.txt",
+    "stderr": "case-b-cached.stderr.txt"
+  },
+  {
+    "id": "case-b-uncached",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+    "args": [
+      "-cp",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-flyweight\\case-compiled",
+      "imports.UncachedControl",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-flyweight\\cases\\case-b"
+    ],
+    "cwd": "C:/git/agent-skills",
+    "status": 0,
+    "signal": null,
+    "stdout": "case-b-uncached.stdout.txt",
+    "stderr": "case-b-uncached.stderr.txt"
+  }
+]

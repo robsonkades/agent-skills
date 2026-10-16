@@ -1,0 +1,105 @@
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.config.MeterFilter;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+
+public final class RegistrationContextProbe {
+    private static final String NAME = "checkout.requests";
+
+    private static MeterFilter mappedTier(AtomicReference<String> tier, AtomicInteger calls) {
+        return new MeterFilter() {
+            @Override
+            public Meter.Id map(Meter.Id id) {
+                if (!id.getName().equals(NAME)) return id;
+                calls.incrementAndGet();
+                return id.withTag(Tag.of("tier", tier.get()));
+            }
+        };
+    }
+
+    private static void require(boolean condition, String message) {
+        if (!condition) throw new AssertionError(message);
+    }
+
+    private static void expectCount(SimpleMeterRegistry registry, String tier, double expected) {
+        Counter counter = registry.find(NAME).tag("tier", tier).counter();
+        require(counter != null, "Missing tier " + tier);
+        require(counter.count() == expected, "Wrong count for " + tier + ": " + counter.count());
+    }
+
+    private static void fixedProcessValue() {
+        SimpleMeterRegistry registry = new SimpleMeterRegistry();
+        try {
+            AtomicInteger mapCalls = new AtomicInteger();
+            registry.config().meterFilter(mappedTier(new AtomicReference<>("basic"), mapCalls));
+            Counter first = registry.counter(NAME);
+            first.increment();
+            Counter second = registry.counter(NAME);
+            second.increment();
+            require(first == second, "Same original ID should reuse the meter");
+            expectCount(registry, "basic", 2);
+            require(mapCalls.get() == 1, "Fixed source mapping should be cached");
+            System.out.println("PASS fixed process tier: basic=2; mapping calls=1; reuse is correct");
+        } finally {
+            registry.close();
+        }
+    }
+
+    private static void changingContextIsNotPerObservation() {
+        SimpleMeterRegistry registry = new SimpleMeterRegistry();
+        try {
+            AtomicReference<String> requestTier = new AtomicReference<>("basic");
+            AtomicInteger mapCalls = new AtomicInteger();
+            registry.config().meterFilter(mappedTier(requestTier, mapCalls));
+            Counter first = registry.counter(NAME);
+            first.increment();
+            requestTier.set("premium");
+            Counter second = registry.counter(NAME);
+            second.increment();
+            require(first == second, "Same original ID is cached despite changed external context");
+            require(mapCalls.get() == 1, "Context changes must not be mistaken for a mapping callback");
+            expectCount(registry, "basic", 2);
+            require(registry.find(NAME).tag("tier", "premium").counter() == null, "Control must expose missing premium cohort");
+            System.out.println("PASS negative control: basic=2; premium absent; mapping calls=1");
+        } finally {
+            registry.close();
+        }
+    }
+
+    private static String boundedTier(String externalTier) {
+        return switch (externalTier) {
+            case "basic", "premium" -> externalTier;
+            default -> "other";
+        };
+    }
+
+    private static void selectMeterAtInstrumentationBoundary() {
+        SimpleMeterRegistry registry = new SimpleMeterRegistry();
+        try {
+            // Stable transformation of the input ID; no request-local state is captured.
+            registry.config().meterFilter(MeterFilter.replaceTagValues("tier", RegistrationContextProbe::boundedTier));
+            for (String requestTier : new String[] {"basic", "premium", "unknown-1", "unknown-2"}) {
+                registry.counter(NAME, "tier", boundedTier(requestTier)).increment();
+            }
+            expectCount(registry, "basic", 1);
+            expectCount(registry, "premium", 1);
+            expectCount(registry, "other", 2);
+            require(registry.getMeters().size() == 3, "Allowed and unknown cohorts must remain bounded");
+            double total = registry.find(NAME).counters().stream().mapToDouble(Counter::count).sum();
+            require(total == 4, "All four observations must be preserved");
+            System.out.println("PASS instrumentation selection: basic=1; premium=1; other=2; total=4; meters=3");
+        } finally {
+            registry.close();
+        }
+    }
+
+    public static void main(String[] args) {
+        fixedProcessValue();
+        changingContextIsNotPerObservation();
+        selectMeterAtInstrumentationBoundary();
+    }
+}
+

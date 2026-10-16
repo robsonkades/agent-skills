@@ -1,0 +1,106 @@
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\data-source-patterns/SKILL.md" "b/C:\\git\\agent-skills\\skills\\data-source-patterns/SKILL.md"
+index 4cfa465..6c7be40 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\data-source-patterns/SKILL.md"
++++ "b/C:\\git\\agent-skills\\skills\\data-source-patterns/SKILL.md"
+@@ -73,8 +73,8 @@ APIs on older stacks; adopting this skill does not authorize a dependency/runtim
+ 4. **Check the work shape.** Consider a SQL gateway for set-based or reporting work when
+    query control, translation or measured cost warrants it. An existing ORM projection or
+    bulk query may already fit; validate its invariant, versioning and managed-state effects
+-   before adding another access layer. For mixed JDBC/JPA paths, verify transaction participation
+-   and flush/context visibility; sharing a database URL does not prove atomicity.
++   before adding another access layer. For mixed JDBC/JPA paths, verify transaction participation,
++   effective isolation and flush/context visibility; sharing a database URL does not prove atomicity.
+ 5. **Decide per module.** A pricing engine with a mapper and an admin CRUD area with Active
+    Record in one application is a reasonable design, provided the boundary between them is
+    explicit.
+@@ -148,6 +148,11 @@ Read path of an application whose write path uses a mapper
+   deliberately partitioned operations, but they must share invariant, versioning and transaction
+   rules with explicit write authority. Uncoordinated writers are the defect
+   (`offline-concurrency-control`).
++- Mapping style does not determine concurrency protection. Trace the state a rule reads, the rows
++  each operation writes and the effective transaction boundary. A unit of work or individual
++  `@Version` fields do not by themselves protect an invariant across independently updated rows.
++  Resolve that protocol before attributing the defect to a missing mapper; the comparison
++  reference covers this boundary and routes transaction details to their owner.
+ - SQL can avoid object loading for reporting and bulk changes; verify plans, rows touched,
+   round trips and application latency. Set-based writes must preserve invariants, versioning
+   and transaction semantics; ORM callbacks and managed state may be bypassed. Decide flush
+@@ -174,4 +179,4 @@ is missing, state the conditional choice instead of prescribing a migration.
+   actually couples, testability and query control, the JPA middle ground and its risks, and
+   the migration path when the choice must change. Read when the decision is genuinely open,
+   is being re-opened, or a read projection is being reused for writes; it includes worked
+-  cases for that boundary.
++  cases for that boundary and distinguishes mapping from cross-row concurrency protection.
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\data-source-patterns/references/active-record-vs-data-mapper.md" "b/C:\\git\\agent-skills\\skills\\data-source-patterns/references/active-record-vs-data-mapper.md"
+index 34ceb7f..f840445 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\data-source-patterns/references/active-record-vs-data-mapper.md"
++++ "b/C:\\git\\agent-skills\\skills\\data-source-patterns/references/active-record-vs-data-mapper.md"
+@@ -110,6 +110,30 @@ state. Reconstitution must reject corrupt combinations or translate known legacy
+ explicitly; it is not permission to bypass all validation. Use an appropriately accessible
+ factory without weakening creation invariants.
+ 
++### Concurrency scope is separate from mapping style
++
++The version check above protects the entity being written; it does not automatically validate
++every other row read to make that decision. Suppose a rule requires at least one available
++operator. Two transactions both read two available operators, then each disables a different
++operator using that row's unchanged version. Both row-version checks can succeed under isolation
++that permits this interleaving. Moving the same reads and writes behind a mapper, or collecting
++them in a unit of work, does not remove the race.
++
++Inspect the rule's read set, actual write predicates, participating writers and effective
++database isolation/lock modes. Keep a narrow conditional update or simple mapper when its
++guard covers the required state. If the rule spans independently updated rows, choose a
++protocol covering that state rather than adding a second object model as a concurrency fix.
++Shared version/locking protocols or serializable transactions with whole-transaction retry
++may be candidates; their scope, costs and interaction with other writers need validation.
++Use `enterprise-transactions` and `offline-concurrency-control` for that choice. Test a
++controlled two-transaction interleaving as well as the legitimate rule that allows both writes.
++
++Jakarta Persistence 3.1 section 3.4 scopes version checks to entity state and leaves database
++isolation configuration outside the specification. As one database-specific example,
++[PostgreSQL 17 isolation](https://www.postgresql.org/docs/17/transaction-iso.html) permits
++serialization anomalies at Read Committed and Repeatable Read. Verify the actual database;
++an ORM transaction annotation or isolation-level name alone is not proof of the needed guarantee.
++
+ ## Read shape and write intent
+ 
+ A mapper may return a deliberately lossy read projection. That does not make the projection
+@@ -137,7 +161,7 @@ does not provide a general “update only supplied DTO fields” contract. The s
+ exception for unfetched LAZY fields concerns provider-tracked loading state, not arbitrary
+ fields omitted from an application-created object. Inspect cascade and managed-state behavior
+ before adapting a partial model; see section 3.2.7.1,
+-[merging detached entity state](https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1).
++[merging detached entity state](https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1.html).
+ Use `orm-behavioral-patterns` for the runtime details, carrying the read shape, supplied fields,
+ expected version and required write semantics. If the runtime behavior cannot be established,
+ keep the read projection read-only and report which write contract still needs verification.
+@@ -239,4 +263,4 @@ or creating a redundant mapper without a supported benefit.
+ ## Sources
+ 
+ - [Fowler: Data Mapper](https://martinfowler.com/eaaCatalog/dataMapper.html)
+-- [Jakarta Persistence 3.1: entities, versioning and bulk operations](https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1)
++- [Jakarta Persistence 3.1: entities, versioning and bulk operations](https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1.html)
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\data-source-patterns/references/gateways-and-active-record.md" "b/C:\\git\\agent-skills\\skills\\data-source-patterns/references/gateways-and-active-record.md"
+index f30181a..19ba869 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\data-source-patterns/references/gateways-and-active-record.md"
++++ "b/C:\\git\\agent-skills\\skills\\data-source-patterns/references/gateways-and-active-record.md"
+@@ -201,4 +201,4 @@ the same tables.
+ - [Fowler: Table Data Gateway](https://martinfowler.com/eaaCatalog/tableDataGateway.html)
+ - [Spring Framework 6.1 JdbcClient](https://docs.spring.io/spring-framework/docs/6.1.x/javadoc-api/org/springframework/jdbc/core/simple/JdbcClient.html)
+ - [Spring 6.1.21 JpaTransactionManager connection-sharing contract](https://github.com/spring-projects/spring-framework/blob/v6.1.21/spring-orm/src/main/java/org/springframework/orm/jpa/JpaTransactionManager.java)
+-- [Jakarta Persistence 3.1 EntityManager flush, clear and refresh](https://jakarta.ee/specifications/persistence/3.1/apidocs/jakarta.persistence/jakarta/persistence/entitymanager)
++- [Jakarta Persistence 3.1 EntityManager flush, clear and refresh](https://jakarta.ee/specifications/persistence/3.1/apidocs/jakarta.persistence/jakarta/persistence/EntityManager.html)
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\data-source-patterns/skill.yaml" "b/C:\\git\\agent-skills\\skills\\data-source-patterns/skill.yaml"
+index 31af3b2..0b3a814 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\data-source-patterns/skill.yaml"
++++ "b/C:\\git\\agent-skills\\skills\\data-source-patterns/skill.yaml"
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: data-source-patterns
+-version: 1.3.4
++version: 1.3.5
+ description: >-
+   Choosing how code reaches the database — Table Data Gateway, Row Data Gateway, Active
+   Record or Data Mapper — from the shape of the domain logic rather than from framework

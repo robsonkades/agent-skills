@@ -1,0 +1,26 @@
+import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import assert from 'node:assert/strict';import {spawnSync} from 'node:child_process';import {fileURLToPath} from 'node:url';
+const root=path.dirname(fileURLToPath(import.meta.url)),repo='C:/git/agent-skills';
+const files=['SKILL.md','skill.yaml','references/decimals-and-money.md','references/integers-boxing-and-overflow.md'];
+const sha=b=>crypto.createHash('sha256').update(b).digest('hex').toUpperCase();
+const owned=[];
+for(const file of files) {
+ const rel='skills/java-numeric-types/'+file,final=fs.readFileSync(path.join(repo,rel));
+ const r=spawnSync('git',['show','HEAD:'+rel],{cwd:repo});
+ assert.equal(r.status,0,r.stderr.toString());
+ for(const [label,bytes]of [['baseline-committed',r.stdout],['final',final]]) {
+  const out=path.join(root,label,file);fs.mkdirSync(path.dirname(out),{recursive:true});fs.writeFileSync(out,bytes);
+ }
+ owned.push({path:rel,committedSha256:sha(r.stdout),finalSha256:sha(final)});
+}
+const diff=spawnSync('git',['diff','--','skills/java-numeric-types'],{cwd:repo});assert.equal(diff.status,0);
+fs.writeFileSync(path.join(root,'owned.diff'),diff.stdout);
+fs.mkdirSync(path.join(root,'case-runs'),{recursive:true});
+for(const [label,dir]of Object.entries({text:'C:/Users/robso/AppData/Local/Temp/numeric-reader-case-wLfQBP',ledger:'C:/Users/robso/AppData/Local/Temp/numeric-reader-case-IxgMg4',fixedControl:'C:/Users/robso/AppData/Local/Temp/numeric-reader-case-FX2oe3'}))fs.copyFileSync(path.join(dir,'results.json'),path.join(root,'case-runs',label+'.json'));
+const inventory=dir=>fs.readdirSync(dir,{recursive:true}).filter(f=>fs.statSync(path.join(dir,f)).isFile()).sort();
+const a=path.join(root,'cases/text/input'),b=path.join(root,'cases/ledger/input'),af=inventory(a),bf=inventory(b);assert.deepEqual(af,bf);
+const differing=af.filter(file=>!fs.readFileSync(path.join(a,file)).equals(fs.readFileSync(path.join(b,file))));assert.deepEqual(differing,['project.properties']);
+assert.equal(fs.readFileSync(path.join(a,'project.properties'),'utf8').replace('amount.parser=text','amount.parser=ledger'),fs.readFileSync(path.join(b,'project.properties'),'utf8'));
+fs.writeFileSync(path.join(root,'case-pair.json'),JSON.stringify({filesPerInput:af.length,differingFiles:differing,decisiveConstraint:'amount.parser=text versus ledger'},null,2)+'\n');
+const artifacts=fs.readdirSync(root,{recursive:true}).filter(f=>f!=='artifact-manifest.json'&&fs.statSync(path.join(root,f)).isFile()).sort().map(file=>({file:file.replaceAll('\\','/'),sha256:sha(fs.readFileSync(path.join(root,file)))}));
+fs.writeFileSync(path.join(root,'artifact-manifest.json'),JSON.stringify({owned,artifacts},null,2)+'\n');
+console.log(JSON.stringify({owned,retainedArtifacts:artifacts.length,filesPerInput:af.length,differingFiles:differing,onlyChangedConstraint:'amount.parser'}));

@@ -1,0 +1,5 @@
+primary-only: move BLOCKED; checkpoint=10; A retains its last known row
+primary-only delete: two different prior owners yield identical routing input
+after-only negative control: ghost copy exists on A and new copy exists on B
+old-routing control: move/delete/replay leave A=[], B=[]; tombstones A=20, B=30
+PASS: capture identity changes whether the proposed routed application is determined

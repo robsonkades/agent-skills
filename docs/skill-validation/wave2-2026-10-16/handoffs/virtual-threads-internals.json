@@ -1,0 +1,413 @@
+{
+  "status": "NO_CHANGES_NEEDED",
+  "skill": "virtual-threads-internals",
+  "ownedPath": "C:/git/agent-skills/skills/virtual-threads-internals",
+  "recorded": "2026-10-16",
+  "assignmentBaseline": {
+    "committedVersion": "1.1.3",
+    "assignmentVersion": "1.1.3",
+    "preExistingVersionBump": false,
+    "stagedChanges": [],
+    "unstagedChanges": [],
+    "untrackedFiles": [],
+    "files": [
+      {
+        "path": "skills\\virtual-threads-internals\\SKILL.md",
+        "sha256": "7D6E1423B173721FB023C6A3DDB4A854499152922A7A04D39AE8BF80EC9BE903"
+      },
+      {
+        "path": "skills\\virtual-threads-internals\\skill.yaml",
+        "sha256": "9E3E56FD8403BC0A0B1EA8FF6BEDAA109BC2DB54FD6DAC7DA4A80F16DC8AF942"
+      },
+      {
+        "path": "skills\\virtual-threads-internals\\references\\continuation-mechanics.md",
+        "sha256": "1A59D36B39AB9B8847D9928C9379BF7779883C5D97E489000A638A50056B7FD5"
+      },
+      {
+        "path": "skills\\virtual-threads-internals\\references\\pinning-diagnostics.md",
+        "sha256": "3B5A55ACB23F86C05F361CA6968E10CA5DD55F5EB049A5AEB35B13A5C03C8917"
+      }
+    ],
+    "note": "All four files read in full. No nested AGENTS.md found; repository instructions and wave2 parallel exception followed."
+  },
+  "versions": {
+    "committed": "1.1.3",
+    "assignment": "1.1.3",
+    "final": "1.1.3",
+    "rationale": "No supported in-scope defect was found. Package remains unchanged; no version bump warranted."
+  },
+  "filesChangedByReviewer": [],
+  "filesChangedBeforeAssignment": [],
+  "changes": [],
+  "findingsReviewed": [
+    {
+      "location": "SKILL.md:14-45,84-108; references/pinning-diagnostics.md:3-25,83-109",
+      "finding": "The package already separates CPU-ready work, normal unmounted waits, captured carriers with possible compensation, and residual native/VM pins. It locates the enclosing frame before suggesting offload.",
+      "consequence": "Avoids treating every busy carrier as a native pin or claiming an inner executor makes a class initializer/native callback unmountable.",
+      "disposition": "Adequate; preserved."
+    },
+    {
+      "location": "SKILL.md:89-100,142-154; references/continuation-mechanics.md:85-101",
+      "finding": "JEP 491 guidance is conditioned on effective locking configuration; legacy LockingMode=1 and invariant-preserving lock changes already have explicit branches.",
+      "consequence": "Avoids both indiscriminate ReentrantLock rewrites on default Java 24+ and falsely ruling out legacy monitor pinning from the major version.",
+      "disposition": "Tagged JDK 24 freeze guard freshly checked; historical Temurin 25.0.3 experiment remains clearly historical."
+    },
+    {
+      "location": "SKILL.md:110-129; references/pinning-diagnostics.md:64-81,127-136",
+      "finding": "MXBean sentinel values, estimates, non-atomic reads, absent parked-task coverage and dynamic tuning effects are explicit.",
+      "consequence": "Prevents treating startup maxPoolSize as admission control/permanent native-thread ceiling or pool > target as proof of a particular mechanism.",
+      "disposition": "Confirmed against Java 25 API and tagged VirtualThread/ForkJoinPool implementation; no change."
+    },
+    {
+      "location": "SKILL.md:101-108; references/pinning-diagnostics.md:3-62",
+      "finding": "JFR threshold/window/settings/loss and direct native-call noncoverage are distinguished; RecordingStream ownership and callback/export limitations are already documented.",
+      "consequence": "Zero events and a completed await cannot establish absence, capture completeness or measured improvement.",
+      "disposition": "Preserved; capture snippet unchanged."
+    },
+    {
+      "location": "SKILL.md:47-82; references/continuation-mechanics.md:3-65",
+      "finding": "Scheduling/continuation implementation details are separated from Java semantics, and retained-state/GC claims require actual memory evidence rather than thread-count arithmetic.",
+      "consequence": "Avoids relying on carrier identity/internal fields or attributing GC cost to StackChunk alone.",
+      "disposition": "Preserved without broadening into introductory adoption or GC tuning."
+    }
+  ],
+  "preserved": [
+    "Java 21–25 version/implementation scope with Java 25 reference target, exact runtime/locking-mode inspection and no implicit upgrade.",
+    "Four-way mechanism classification, actual virtual-thread caller confirmation, aligned causal evidence and no-change option.",
+    "Native/VM/class-initialization pin reasons, capture/compensation boundaries and outer-frame isolation caveat.",
+    "Legacy/default locking distinction and invariants across every participating lock user.",
+    "MXBean availability/sentinel/estimate/time-series semantics and dynamic target versus startup limits.",
+    "JFR RecordingStream and MXBean partial snippets with lifecycle/module/version conditions.",
+    "Heap stack-chunk/ThreadLocal retained state measurement and no universal performance benefit claim.",
+    "Optional skill boundaries, manifests, references and all four files byte-identical."
+  ],
+  "reviewCriteria": [
+    "Does the agent inspect effective runtime/locking state before deciding whether a monitor rewrite applies?",
+    "Can it distinguish instrumented blocking, direct native carrier occupation and unsupported absence claims?",
+    "Does it preserve enclosing-frame/initialization/publication contracts when isolating work?",
+    "Does it interpret scheduler telemetry as estimates rather than an atomic inventory or causal proof?",
+    "Can it stop at a justified no-change finding and a bounded discriminating check?"
+  ],
+  "commands": [
+    {
+      "command": "$ErrorActionPreference = 'Stop'\n@'\nimport {readFileSync,readdirSync,existsSync} from 'node:fs';\nimport {resolve,relative,dirname} from 'node:path';\nimport {parseManifest} from './packages/core/src/domain/manifest.ts';\nimport {buildSkillPackage} from './packages/core/src/domain/skill-package.ts';\nimport {validatePackage} from './packages/core/src/application/validate-package.ts';\nconst root=resolve('skills/virtual-threads-internals');\nconst paths=readdirSync(root,{recursive:true,withFileTypes:true}).filter(e=>e.isFile()).map(e=>resolve(e.parentPath,e.name));\nconst files=paths.map(p=>({path:relative(root,p).replaceAll('\\\\','/'),bytes:readFileSync(p)}));\nconst parsed=parseManifest(readFileSync(resolve(root,'skill.yaml'),'utf8'),{strict:true});\nconst report=validatePackage(buildSkillPackage(parsed.manifest,files),{directoryName:'virtual-threads-internals'});\nconst issues=[...parsed.issues,...report.issues];\nconst links=[];\nfor(const path of paths.filter(p=>p.endsWith('.md'))) {\n const text=readFileSync(path,'utf8');\n for(const match of text.matchAll(/\\[[^\\]]*\\]\\((<[^>]+>|[^\\s)]+)(?:\\s+[^)]*)?\\)/g)) {\n  const target=match[1].replace(/^<|>$/g,'');\n  if(/^[a-z][a-z0-9+.-]*:/i.test(target)) continue;\n  const [file,anchor]=target.split('#');\n  const dest=file?resolve(dirname(path),decodeURIComponent(file)):path;\n  if(!existsSync(dest)) throw new Error('Missing link '+target+' from '+path);\n  if(anchor) {\n   const headings=[...readFileSync(dest,'utf8').matchAll(/^#{1,6}\\s+(.+)$/gm)].map(m=>m[1].toLowerCase().replace(/[^\\w\\s-]/g,'').replace(/\\s/g,'-'));\n   if(!headings.includes(anchor)) throw new Error('Missing anchor '+target);\n  }\n  links.push({from:relative(root,path).replaceAll('\\\\','/'),target});\n }\n}\nconsole.log(JSON.stringify({skill:'virtual-threads-internals',files:files.map(f=>f.path),manifestVersion:parsed.manifest.version,issues,relativeLinks:links},null,2));\nif(issues.length) process.exitCode=1;\n'@ | node --input-type=module -",
+      "cwd": "C:/git/agent-skills",
+      "classification": "executed read-only skill-local check",
+      "chunk_id": "c83e9e",
+      "wall_time_seconds": 0.173534,
+      "exit_code": 0,
+      "original_token_count": 109,
+      "output": "{\n  \"skill\": \"virtual-threads-internals\",\n  \"files\": [\n    \"SKILL.md\",\n    \"skill.yaml\",\n    \"references/continuation-mechanics.md\",\n    \"references/pinning-diagnostics.md\"\n  ],\n  \"manifestVersion\": \"1.1.3\",\n  \"issues\": [],\n  \"relativeLinks\": [\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/continuation-mechanics.md\"\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/pinning-diagnostics.md\"\n    }\n  ]\n}\n"
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/virtual-threads-internals/SKILL.md skills/virtual-threads-internals/skill.yaml skills/virtual-threads-internals/references/continuation-mechanics.md skills/virtual-threads-internals/references/pinning-diagnostics.md",
+      "cwd": "C:/git/agent-skills",
+      "classification": "executed read-only skill-local check",
+      "chunk_id": "283f6c",
+      "wall_time_seconds": 0.2125494,
+      "exit_code": 0,
+      "original_token_count": 17,
+      "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+    },
+    {
+      "command": "git diff --check -- skills/virtual-threads-internals; git status --short -- skills/virtual-threads-internals; git diff -- skills/virtual-threads-internals; git diff --cached -- skills/virtual-threads-internals",
+      "cwd": "C:/git/agent-skills",
+      "classification": "executed read-only skill-local check",
+      "chunk_id": "0575a4",
+      "wall_time_seconds": 0.1373759,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    }
+  ],
+  "structuralResults": {
+    "strictPackageValidation": {
+      "status": "PASS",
+      "files": 4,
+      "manifestVersion": "1.1.3",
+      "issues": []
+    },
+    "relativeLinksAndAnchors": {
+      "status": "PASS",
+      "checked": 2
+    },
+    "scopedPrettier": {
+      "status": "PASS",
+      "files": 4
+    },
+    "scopedDiffCheck": {
+      "status": "PASS"
+    },
+    "finalScopedGit": {
+      "stagedChanges": [],
+      "unstagedChanges": [],
+      "untrackedFiles": []
+    },
+    "assignmentToFinalHashes": {
+      "status": "PASS",
+      "allFourUnchanged": true,
+      "finalFiles": [
+        {
+          "path": "skills\\virtual-threads-internals\\SKILL.md",
+          "sha256": "7D6E1423B173721FB023C6A3DDB4A854499152922A7A04D39AE8BF80EC9BE903"
+        },
+        {
+          "path": "skills\\virtual-threads-internals\\skill.yaml",
+          "sha256": "9E3E56FD8403BC0A0B1EA8FF6BEDAA109BC2DB54FD6DAC7DA4A80F16DC8AF942"
+        },
+        {
+          "path": "skills\\virtual-threads-internals\\references\\continuation-mechanics.md",
+          "sha256": "1A59D36B39AB9B8847D9928C9379BF7779883C5D97E489000A638A50056B7FD5"
+        },
+        {
+          "path": "skills\\virtual-threads-internals\\references\\pinning-diagnostics.md",
+          "sha256": "3B5A55ACB23F86C05F361CA6968E10CA5DD55F5EB049A5AEB35B13A5C03C8917"
+        }
+      ]
+    }
+  },
+  "technicalChecks": {
+    "executed": [
+      {
+        "type": "primary source/API inspection",
+        "artifact": "Java 25 VirtualThreadSchedulerMXBean API",
+        "result": "Since 24; current platform pool count and mounted/queued estimates can be unknown; dynamic target updates and overestimate notes agree with the skill."
+      },
+      {
+        "type": "primary source inspection",
+        "artifact": "jdk-25-ga javaThread.cpp",
+        "result": "Pinned-event reasons explicitly distinguish waiting for another class initializer, a VM call to <clinit>, native/VM frame and other freeze failures; operation and carrier metadata are posted."
+      },
+      {
+        "type": "primary source inspection",
+        "artifact": "jdk-25-ga VirtualThread.java",
+        "result": "Default scheduler is a dedicated ForkJoinPool in FIFO mode; startup properties establish target/max/minRunnable."
+      },
+      {
+        "type": "primary source inspection",
+        "artifact": "jdk-25-ga ForkJoinPool.java",
+        "result": "Constructor stores spare allowance relative to initial target; setParallelism changes target. Startup maximum is not treated as a timeless absolute native-thread budget."
+      },
+      {
+        "type": "primary source inspection",
+        "artifact": "jdk-24-ga continuationFreezeThaw.cpp",
+        "result": "Legacy held-monitor guard still rejects continuation freeze, supporting the conditional legacy branch."
+      }
+    ],
+    "notExecuted": [
+      "No fresh JVM probe, native call, capture, attachment or benchmark.",
+      "No Java snippet compiled in this no-change review.",
+      "No repeat of historical Temurin monitor or dynamic-scheduler experiment.",
+      "No dependency/model download or repository-wide check."
+    ],
+    "sourceAcquisition": "Read-only web opens and PowerShell Invoke-WebRequest of exact tagged source; sources were not modified."
+  },
+  "behavioralEvaluation": {
+    "status": "NOT_EXECUTED",
+    "actualAgentOutputs": [],
+    "measuredImprovement": false,
+    "walkthroughs": [
+      {
+        "caseId": "virtual-threads-locking-a",
+        "type": "structured reviewer walkthrough",
+        "result": "Existing effective-locking branch retains legacy monitor pinning as a hypothesis and selects an isolated default-mode comparison before a lock rewrite; capture gap prevents causal certainty."
+      },
+      {
+        "caseId": "virtual-threads-locking-b",
+        "type": "structured reviewer walkthrough",
+        "result": "Existing default-locking branch rejects a monitor-only-pin rationale while retaining lock invariants and seeking aligned evidence for other mechanisms."
+      }
+    ],
+    "caveat": "These are proposed development cases and reviewer walkthroughs, not independent actor runs, unseen holdouts or measured gains."
+  },
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/jdk.management/jdk/management/VirtualThreadSchedulerMXBean.html",
+      "version": "Java SE 25",
+      "checked": "2026-10-16",
+      "kind": "primary API",
+      "supports": "MXBean availability, target/pool semantics, unknown counts, estimates and dynamic target adjustment."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/core/virtual-threads.html",
+      "version": "Java 25",
+      "checked": "2026-10-16",
+      "kind": "primary guide",
+      "supports": "Mount/unmount behavior, native/foreign pinning, JFR/diagnostic scope and retained ThreadLocal concerns."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/24/core/virtual-threads.html",
+      "version": "Java 24",
+      "checked": "2026-10-16",
+      "kind": "primary guide",
+      "supports": "Post-JEP 491 native/foreign pinning guidance and diagnostic event contracts."
+    },
+    {
+      "url": "https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/javaThread.cpp",
+      "version": "jdk-25-ga",
+      "checked": "2026-10-16",
+      "kind": "tagged primary implementation",
+      "supports": "Class initialization/native/VM reasons, blockingOperation and carrierThread in pin events."
+    },
+    {
+      "url": "https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/share/classes/java/lang/VirtualThread.java",
+      "version": "jdk-25-ga",
+      "checked": "2026-10-16",
+      "kind": "tagged primary implementation",
+      "supports": "Dedicated FIFO scheduler and startup properties."
+    },
+    {
+      "url": "https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/share/classes/java/util/concurrent/ForkJoinPool.java",
+      "version": "jdk-25-ga",
+      "checked": "2026-10-16",
+      "kind": "tagged primary implementation",
+      "supports": "Parallelism and compensation bounds relative to startup spare allowance."
+    },
+    {
+      "url": "https://github.com/openjdk/jdk/blob/jdk-24-ga/src/hotspot/share/runtime/continuationFreezeThaw.cpp",
+      "version": "jdk-24-ga",
+      "checked": "2026-10-16",
+      "kind": "tagged primary implementation",
+      "supports": "Legacy held-monitor freeze rejection; scope does not assert every vendor patch behaves identically."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/consumer/RecordingStream.html",
+      "version": "Java SE 25",
+      "checked": "2026-10-16",
+      "kind": "primary API",
+      "supports": "API reference consulted for existing capture lifecycle; no runtime execution inferred."
+    }
+  ],
+  "evidenceFailures": [
+    {
+      "action": "Direct web opens of https://openjdk.org/jeps/444 and https://openjdk.org/jeps/491",
+      "result": "Internal Error; pages not retrieved.",
+      "resolution": "Used Oracle Java 24/25 guide/API and tagged primary implementation for the consequential checked claims. Do not claim a fresh successful read of those JEP pages."
+    },
+    {
+      "action": "Scoped rg --files -g AGENTS.md skills/virtual-threads-internals",
+      "result": "Exit 1, no matches; this was the final command in the initial inventory call.",
+      "resolution": "No nested instructions found. Initial git outputs showed no owned changes; no package validation failure."
+    }
+  ],
+  "limits": [
+    "No fresh runtime proof for historical 25.0.3 probe observations, snippet execution, current target-project behavior or all vendor/architecture variants.",
+    "Tagged implementation checks substantiate scoped mechanisms, not portable JLS/JVMS guarantees.",
+    "No claim of complete causality or coverage follows from the synthetic case metrics or empty off-window recording.",
+    "No supported gap was found within this specialist scope; this is not a guarantee of correctness for every future activation.",
+    "Other reviewers are active; only assigned package state and local checks were inspected for readiness."
+  ],
+  "cases": [
+    {
+      "id": "virtual-threads-locking-a",
+      "classification": "proposed development case; not executed; not an unseen holdout",
+      "input": {
+        "task": "Use virtual-threads-internals to review the proposed lock rewrite for the supplied Java 25 regression. Inspect the runtime and capture artifacts, follow the selected blocking path, and update diagnosis.md with the supported mechanism, decision on the proposed change, and smallest discriminating next check. Preserve the stated ordering/publication contract. This is a findings-only review: do not edit application code, change JVM options, attach to a process or run a capture.",
+        "prerequisites": [
+          "Materialize only this case's fixture files in a fresh isolated workspace, and provide the current virtual-threads-internals skill plus routed references.",
+          "Give the actor task and fixtures only; keep evaluator criteria, the other case and review handoff hidden.",
+          "File reading and writing diagnosis.md are sufficient. Primary-source lookup may be allowed. No JVM, native toolchain, benchmark, attachment or live service is required."
+        ],
+        "fixtureFiles": {
+          "README.md": "# Virtual-thread incident review fixture\nSynthetic source/capture review, not an executed incident or benchmark.\nTarget is Temurin HotSpot 25.0.3+9 on x86_64, G1, no preview features.\nThe application has confirmed Thread.currentThread().isVirtual() for this selected request path. It invokes Journal.append from an ordinary already-initialized instance method. There is no native callback or class initializer on the supplied path. Other request paths are not included; do not infer full application coverage.\nJVM scheduler startup properties: parallelism=2, maxPoolSize=256. No runtime MXBean tuning occurred. Two effective CPUs are available and the provided interval has no CPU throttling.\nRemote acknowledgement completes from a separate platform-thread integration. Journal entries must remain in submission order: the next append must not pass the current acknowledgement, and readers must observe sequence/committed consistently under the same monitor. Splitting the critical section is not an authorized contract change.\n",
+          "src/Journal.java": "import java.util.concurrent.CompletableFuture;\n\npublic final class Journal {\n    private final Object lock = new Object();\n    private long sequence;\n    private long committed;\n\n    public void append(CompletableFuture<Void> acknowledgement) {\n        synchronized (lock) {\n            long next = ++sequence;\n            acknowledgement.join();\n            committed = next;\n        }\n    }\n\n    public long committed() {\n        synchronized (lock) {\n            return committed;\n        }\n    }\n}\n",
+          "capture/metrics.csv": "uptime_s,target,pool,mounted_estimate,queued_estimate,cpu_fraction,completed_per_s,p99_ms\n120,2,2,2,12,0.08,25,850\n130,2,2,2,38,0.07,22,910\n140,2,2,2,52,0.09,20,980\n",
+          "capture/jfr-summary.json": "{\n  \"recordingStartUptime\": 90,\n  \"recordingEndUptime\": 100,\n  \"events\": {\n    \"jdk.VirtualThreadPinned\": {\n      \"enabled\": true,\n      \"thresholdMilliseconds\": 20,\n      \"count\": 0\n    }\n  },\n  \"captureErrors\": 0,\n  \"stackTraceEnabled\": true\n}\n",
+          "capture/path-notes.md": "The selected method has acknowledged waits around 40 ms in application timing. The metrics interval is uptime 120–140 s. No event-time native/VM/monitor stack or thread dump was retained for that interval. The metrics are separately read MXBean estimates, not an atomic inventory of all tasks.\n",
+          "diagnosis.md": "# Proposed change\nReplace Journal's synchronized blocks with ReentrantLock because every synchronized block pins virtual threads on Java 25.\nZero recorded VirtualThreadPinned events demonstrates that the recorder missed a known monitor-pin bottleneck. Increasing the scheduler maximum is a fallback fix if the lock conversion cannot ship.\n",
+          "runtime/effective-flags.txt": "intx LockingMode = 1 {product} {command line}\n"
+        }
+      },
+      "criteria": {
+        "expected": [
+          "Update diagnosis.md with an evidence-backed decision and next check, rather than only restating the proposed change.",
+          "Inspect effective LockingMode, exact build and actual virtual-thread caller before applying a version-only conclusion.",
+          "Notice that the JFR window 90–100 s does not cover the metrics interval 120–140 s. Zero events do not confirm absence or presence of pinning during the regression.",
+          "Treat non-atomic mounted/queued values and low CPU as candidates, not proof of pinning, capture, or the identity of a blocked carrier.",
+          "Preserve the monitor's ordered acknowledgement and reader/publication contract; no moving the wait outside the critical section or unilateral partial lock conversion.",
+          "Do not recommend automatic maxPoolSize growth as pin compensation. Select a mechanism-specific isolated verification before a scheduler/lock change.",
+          "State that other application paths and event-time cause remain unobserved; do not claim a confirmed performance improvement.",
+          "Identify legacy stack locking as the decisive runtime constraint. Monitor pinning remains a credible mechanism despite Java 25; the ordinary park under a held monitor deserves an aligned check.",
+          "Establish why legacy mode was selected and propose an authorized isolated comparison with the supported default before committing to a lock rewrite.",
+          "If a measured carrier bottleneck still supports a lock change, compare a targeted invariant-preserving ReentrantLock conversion with viable configuration/call-boundary alternatives; do not label the cause confirmed from the supplied evidence."
+        ],
+        "failureConditions": [
+          "Assumes all Java 25 synchronized blocks pin, or that the major version alone rules monitor pinning out.",
+          "Uses zero JFR events from a different interval as evidence of the incident's presence or absence.",
+          "Treats queued/pool/mounted samples as a complete atomic task census.",
+          "Changes the ordering invariant, removes synchronized reads, or converts only one participating lock user.",
+          "Promises scheduler compensation for native/monitor pins or proposes increasing maximum without headroom/mechanism evidence.",
+          "Edits code or flags, attaches a recorder, or claims an executed experiment contrary to the task.",
+          "Dismisses monitor pinning solely because JEP 491 shipped in Java 24.",
+          "Treats changing deprecated legacy mode as already authorized or universally safe without its deployment reason."
+        ]
+      }
+    },
+    {
+      "id": "virtual-threads-locking-b",
+      "classification": "proposed development case; not executed; not an unseen holdout",
+      "input": {
+        "task": "Use virtual-threads-internals to review the proposed lock rewrite for the supplied Java 25 regression. Inspect the runtime and capture artifacts, follow the selected blocking path, and update diagnosis.md with the supported mechanism, decision on the proposed change, and smallest discriminating next check. Preserve the stated ordering/publication contract. This is a findings-only review: do not edit application code, change JVM options, attach to a process or run a capture.",
+        "prerequisites": [
+          "Materialize only this case's fixture files in a fresh isolated workspace, and provide the current virtual-threads-internals skill plus routed references.",
+          "Give the actor task and fixtures only; keep evaluator criteria, the other case and review handoff hidden.",
+          "File reading and writing diagnosis.md are sufficient. Primary-source lookup may be allowed. No JVM, native toolchain, benchmark, attachment or live service is required."
+        ],
+        "fixtureFiles": {
+          "README.md": "# Virtual-thread incident review fixture\nSynthetic source/capture review, not an executed incident or benchmark.\nTarget is Temurin HotSpot 25.0.3+9 on x86_64, G1, no preview features.\nThe application has confirmed Thread.currentThread().isVirtual() for this selected request path. It invokes Journal.append from an ordinary already-initialized instance method. There is no native callback or class initializer on the supplied path. Other request paths are not included; do not infer full application coverage.\nJVM scheduler startup properties: parallelism=2, maxPoolSize=256. No runtime MXBean tuning occurred. Two effective CPUs are available and the provided interval has no CPU throttling.\nRemote acknowledgement completes from a separate platform-thread integration. Journal entries must remain in submission order: the next append must not pass the current acknowledgement, and readers must observe sequence/committed consistently under the same monitor. Splitting the critical section is not an authorized contract change.\n",
+          "src/Journal.java": "import java.util.concurrent.CompletableFuture;\n\npublic final class Journal {\n    private final Object lock = new Object();\n    private long sequence;\n    private long committed;\n\n    public void append(CompletableFuture<Void> acknowledgement) {\n        synchronized (lock) {\n            long next = ++sequence;\n            acknowledgement.join();\n            committed = next;\n        }\n    }\n\n    public long committed() {\n        synchronized (lock) {\n            return committed;\n        }\n    }\n}\n",
+          "capture/metrics.csv": "uptime_s,target,pool,mounted_estimate,queued_estimate,cpu_fraction,completed_per_s,p99_ms\n120,2,2,2,12,0.08,25,850\n130,2,2,2,38,0.07,22,910\n140,2,2,2,52,0.09,20,980\n",
+          "capture/jfr-summary.json": "{\n  \"recordingStartUptime\": 90,\n  \"recordingEndUptime\": 100,\n  \"events\": {\n    \"jdk.VirtualThreadPinned\": {\n      \"enabled\": true,\n      \"thresholdMilliseconds\": 20,\n      \"count\": 0\n    }\n  },\n  \"captureErrors\": 0,\n  \"stackTraceEnabled\": true\n}\n",
+          "capture/path-notes.md": "The selected method has acknowledged waits around 40 ms in application timing. The metrics interval is uptime 120–140 s. No event-time native/VM/monitor stack or thread dump was retained for that interval. The metrics are separately read MXBean estimates, not an atomic inventory of all tasks.\n",
+          "diagnosis.md": "# Proposed change\nReplace Journal's synchronized blocks with ReentrantLock because every synchronized block pins virtual threads on Java 25.\nZero recorded VirtualThreadPinned events demonstrates that the recorder missed a known monitor-pin bottleneck. Increasing the scheduler maximum is a fallback fix if the lock conversion cannot ship.\n",
+          "runtime/effective-flags.txt": "intx LockingMode = 2 {product} {command line}\n"
+        }
+      },
+      "criteria": {
+        "expected": [
+          "Update diagnosis.md with an evidence-backed decision and next check, rather than only restating the proposed change.",
+          "Inspect effective LockingMode, exact build and actual virtual-thread caller before applying a version-only conclusion.",
+          "Notice that the JFR window 90–100 s does not cover the metrics interval 120–140 s. Zero events do not confirm absence or presence of pinning during the regression.",
+          "Treat non-atomic mounted/queued values and low CPU as candidates, not proof of pinning, capture, or the identity of a blocked carrier.",
+          "Preserve the monitor's ordered acknowledgement and reader/publication contract; no moving the wait outside the critical section or unilateral partial lock conversion.",
+          "Do not recommend automatic maxPoolSize growth as pin compensation. Select a mechanism-specific isolated verification before a scheduler/lock change.",
+          "State that other application paths and event-time cause remain unobserved; do not claim a confirmed performance improvement.",
+          "Identify default lightweight locking semantics: the shown monitor ownership plus ordinary future wait does not establish monitor-only pinning on this runtime.",
+          "Decline a ReentrantLock rewrite whose sole rationale is avoiding monitor-only pinning; retain the lock until a different contention/interruption/condition requirement justifies change.",
+          "Investigate intended serialized acknowledgement waiting and other unobserved native/VM/capture paths with aligned evidence. Do not propose a legacy-to-default configuration correction for an already lightweight runtime."
+        ],
+        "failureConditions": [
+          "Assumes all Java 25 synchronized blocks pin, or that the major version alone rules monitor pinning out.",
+          "Uses zero JFR events from a different interval as evidence of the incident's presence or absence.",
+          "Treats queued/pool/mounted samples as a complete atomic task census.",
+          "Changes the ordering invariant, removes synchronized reads, or converts only one participating lock user.",
+          "Promises scheduler compensation for native/monitor pins or proposes increasing maximum without headroom/mechanism evidence.",
+          "Edits code or flags, attaches a recorder, or claims an executed experiment contrary to the task.",
+          "Invents a native/class-initialization frame on the supplied ordinary path.",
+          "Recommends changing LockingMode=2 to itself or labels the active mode legacy."
+        ]
+      }
+    }
+  ],
+  "pairedCaseConstraint": "Only runtime/effective-flags.txt changes, from LockingMode=1 to LockingMode=2. Task and all other actor files are identical. This changes the appropriate monitor-pinning branch and next intervention while leaving the JFR coverage gap and guarded invariant unchanged.",
+  "crossSkill": {
+    "findings": [],
+    "actions": []
+  },
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Parallel review restriction; shared index regeneration is coordinator-only.",
+      "prerequisites": "All reviewers stopped writes."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Repository-wide validation not run by reviewer.",
+      "prerequisites": "All reviewers stopped writes and shared generated index prepared."
+    }
+  ],
+  "allWritesStopped": true,
+  "processesStillWriting": false
+}

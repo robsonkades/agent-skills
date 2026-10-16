@@ -1,0 +1,3 @@
+outerTransaction=true
+transactionManager=shared-local
+propagation=REQUIRED

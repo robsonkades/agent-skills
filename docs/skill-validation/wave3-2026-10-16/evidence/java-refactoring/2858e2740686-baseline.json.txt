@@ -1,0 +1,50 @@
+{
+  "skill": "java-refactoring",
+  "committedVersion": "1.4.4",
+  "initialVersion": "1.4.4",
+  "gitStatus": [],
+  "stagedDiff": [],
+  "unstagedDiff": [],
+  "files": [
+    {
+      "path": "SKILL.md",
+      "sha256": "e13f01ad60345d969217fda38ba931d96bbca667a41679adc6f832972ff6ca61"
+    },
+    {
+      "path": "skill.yaml",
+      "sha256": "b5e0339c693a9ca40ae9cddcf742b7e0819568f37c62621f91cfa361a7d14306"
+    },
+    {
+      "path": "references/behaviour-preservation.md",
+      "sha256": "d80caac0b0444bfbd93d458b73fa2ed2ef9741bbb122e7e14e272e430baa9976"
+    },
+    {
+      "path": "references/catalogue-api-shape.md",
+      "sha256": "bbb55b136e425f4e3656789225ed4063f2d3400082138221931f56571f8d028e"
+    },
+    {
+      "path": "references/catalogue-conditionals.md",
+      "sha256": "7fd9735b1ec9ffddc35a6abd907323641e8521f041a53a49f258e6fd85c5c099"
+    },
+    {
+      "path": "references/catalogue-inheritance.md",
+      "sha256": "62f4ae43cfa802c2497e52c4a268beb70bff998f61f8e38f6ba155b30e59131f"
+    },
+    {
+      "path": "references/catalogue-statements-and-data.md",
+      "sha256": "8e3dae55c9aa4020da21449a8b6bfc05396c4475de35d61e635ac750831e1166"
+    },
+    {
+      "path": "references/compatibility.md",
+      "sha256": "18b7c8da7069f42d8a1f1e4e15ab2faff39919c1b534cba57a6d3cdb4e8854d1"
+    },
+    {
+      "path": "references/safety-workflow.md",
+      "sha256": "25efc6fd434766fb1234aea6d376a589c8a9887770d475ccd2ce1c1abe878c5d"
+    },
+    {
+      "path": "references/techniques.md",
+      "sha256": "5bf88f146993e0a4db7aa12be7076749a781372d44e18bb7b785f635c4491d88"
+    }
+  ]
+}

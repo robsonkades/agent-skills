@@ -1,0 +1,70 @@
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\ambassador-pattern/SKILL.md" "b/C:\\git\\agent-skills\\skills\\ambassador-pattern/SKILL.md"
+index 75ca213..e565f63 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\ambassador-pattern/SKILL.md"
++++ "b/C:\\git\\agent-skills\\skills\\ambassador-pattern/SKILL.md"
+@@ -50,6 +50,8 @@ different restart consequences; name the actual update mechanism before promisin
+    A dedicated TCP listener can select an upstream without parsing HTTP. Routing by path or `Host`/`:authority`
+    requires visible HTTP; TLS pass-through cannot inspect those fields. Allowlist destinations
+    and define missing/forged routing-key behavior. Locality alone does not authenticate callers.
++   For TCP or protocol detection, establish who sends the first message before deferring
++   upstream connection; see [Connection establishment](references/failure-and-policy-composition.md#connection-establishment-and-the-first-message).
+ 4. **Check cost and failure semantics.** Compare the maintained client-library baseline with
+    independent policy rollout and operational ownership. Measure added latency under representative
+    concurrency and payloads; no service-count or millisecond threshold alone decides adoption.
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\ambassador-pattern/references/failure-and-policy-composition.md" "b/C:\\git\\agent-skills\\skills\\ambassador-pattern/references/failure-and-policy-composition.md"
+index f2277bb..afa440e 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\ambassador-pattern/references/failure-and-policy-composition.md"
++++ "b/C:\\git\\agent-skills\\skills\\ambassador-pattern/references/failure-and-policy-composition.md"
+@@ -60,6 +60,27 @@ make that host an authorized destination. Never fix a localhost/authority mismat
+ name verification. Test wrong-name certificates signed by a trusted CA, forged authority and
+ the legitimate upstream virtual host, checking both acceptance and rejection paths.
+ 
++### Connection establishment and the first message
++
++Before waiting for client bytes or a handshake to choose/connect an upstream, inspect the
++actual client/server handshake and selected proxy filters. Record who speaks first and when
++the routing metadata becomes available. For example, MySQL's classic handshake sends a server
++greeting before the client response, including before its optional TLS request; it does not
++start with a TLS ClientHello merely because TLS is required later.
++
++If the client waits for that greeting while the proxy waits for client data before opening
++the upstream connection, neither can progress. Increasing the timeout only prolongs the wait.
++Use a listener or other trusted route that can connect before the greeting, or a supported
++protocol-aware intermediary with an explicit handshake contract. Do not fabricate a greeting
++or silently change TLS/authentication to make a generic byte-forwarder work. Deferred connection
++can still suit a client-first protocol when the needed metadata is available and inspection
++time/buffering are bounded; check the deployed version's mechanism rather than copying a flag.
++
++Test actual handshake completion, not just TCP connect or a healthy listener. Include a client
++that waits for a server greeting, a client-first control, and both the deferred and immediate
++connection paths; correlate bytes and upstream connection creation to distinguish circular
++waiting from upstream refusal or slowness.
++
+ ## Count actual pools
+ 
+ The estimate `pods × m` holds only when `m` is the total upstream connections per identical
+@@ -147,6 +168,11 @@ these establish the option distinction, not compatibility with an unspecified de
+   request authority identifies the target origin; CONNECT establishes a tunnel.
+ - [Envoy upstream HTTP protocol options](https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/core/v3/protocol.proto#envoy-v3-api-msg-config-core-v3-upstreamhttpprotocoloptions):
+   separate automatic SNI and SAN validation controls and their header-derived inputs.
++- [Envoy TCP proxy](https://www.envoyproxy.io/docs/envoy/latest/configuration/listeners/network_filters/tcp_proxy_filter):
++  checked 2026-10-16 against moving 1.41 development docs; waiting for downstream data is
++  unsuitable for server-first protocols. This is not a deployment-version compatibility claim.
++- [MySQL 8.0.46 connection phase](https://dev.mysql.com/doc/dev/mysql-server/8.0.46/page_protocol_connection_phase.html):
++  server greeting precedes the client response and optional TLS negotiation.
+ - [Envoy router](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/router_filter):
+   retry and timeout controls are implementation-specific.
+ - [gRPC deadlines](https://grpc.io/docs/guides/deadlines/):
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\ambassador-pattern/skill.yaml" "b/C:\\git\\agent-skills\\skills\\ambassador-pattern/skill.yaml"
+index 8d40cb3..bd15c1e 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\ambassador-pattern/skill.yaml"
++++ "b/C:\\git\\agent-skills\\skills\\ambassador-pattern/skill.yaml"
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: ambassador-pattern
+-version: 1.3.4
++version: 1.3.5
+ description: >-
+   Choose or review a local outbound proxy when discovery or routing changes require client
+   releases, a canary or shadow needs routing outside the app, or retries overlap across app,

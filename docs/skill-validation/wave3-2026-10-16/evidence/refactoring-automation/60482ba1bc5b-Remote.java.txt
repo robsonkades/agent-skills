@@ -1,0 +1,1 @@
+package org.openrewrite.remote; public abstract class Remote implements org.openrewrite.SourceFile { public abstract java.io.InputStream getInputStream(org.openrewrite.ExecutionContext ctx); }

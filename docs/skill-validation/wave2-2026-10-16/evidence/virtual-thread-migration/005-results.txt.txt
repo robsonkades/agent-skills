@@ -1,0 +1,6 @@
+lexical-return: task active, Future not delivered to caller
+lexical-return: after release, method returns completed Future
+timeout-close: timeout caught; Future done/cancelled; task active; caller not returned
+timeout-close: after task release, close returns and owner interrupt is restored
+component-owner: Future delivered while task remains active
+PASS: method return, Future state and actual task termination are distinct boundaries

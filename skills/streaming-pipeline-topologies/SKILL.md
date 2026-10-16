@@ -101,6 +101,9 @@ Consider separate pipelines when:
 - Filter cost and removable upstream work depend on payloads, batching and predicate cost.
   Push a pure predicate earlier only if null/type/time semantics and required audit/security
   observations remain equivalent; a 99% record drop does not imply 99% byte or CPU savings.
+  For a current-table projection, preserve removals when a row stops matching or is deleted;
+  dropping changelog records is not equivalent to filtering independent events. Inspect the
+  operator and downstream delete/retraction contract in `references/stage-catalogue.md`.
 - For a **splitter**, establish output multiplicity, ordering, backpressure and partial failure,
   including whether the N outputs must be atomic. If not,
   a crash after output 1 leaves consumers of output 2 with a gap they must tolerate. What a

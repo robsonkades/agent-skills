@@ -1,0 +1,72 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { createDb, query } from './fixture.mjs';
+
+// Always load the candidate from disk, so this also tests replacement candidates.
+const candidate = fs.readFileSync(new URL('./solution.sql', import.meta.url), 'utf8');
+const baseline = fs.readFileSync(new URL('./current.sql', import.meta.url), 'utf8');
+const db = createDb();
+let comparisons = 0;
+function check(tenant, expected, context) {
+  assert.deepEqual(query(db, baseline, { tenant }), expected, `${context}: baseline versus independent oracle`);
+  assert.deepEqual(query(db, candidate, { tenant }), expected, `${context}: candidate ordered bag/projection`);
+  comparisons++;
+}
+const labels = values => values.map(customer_label => ({ customer_label }));
+
+try {
+  const sqliteVersion = db.prepare('SELECT sqlite_version() AS version').get().version;
+  check(71, labels(['Acme', 'Acme', 'Bravo']), 'provided tenant 71 seed');
+  check(72, labels(['Other']), 'provided tenant 72 seed');
+  check(99, [], 'absent tenant');
+  check(null, [], 'null bound tenant');
+
+  const insert = db.prepare('INSERT INTO invoices(id,tenant_id,customer_label,active,amount) VALUES (?,?,?,?,?)');
+  assert.throws(() => insert.run(8000, 71, 'Invalid', null, 150), /NOT NULL/);
+  assert.throws(() => insert.run(8001, 71, 'Invalid', 2, 150), /CHECK/);
+
+  db.exec('DELETE FROM invoices');
+  const rows = [];
+  let id = 100;
+  // Both legal active values, numeric boundaries and domain extremes, several tenants.
+  // Two distinct invoices per label expose accidental DISTINCT/UNION deduplication.
+  const centsCases = [-999999999999, -1, 0, 9999, 10000, 10001, 999999999999];
+  for (const tenant of [71, 72, 0, -1]) {
+    for (const active of [0, 1]) {
+      for (const cents of centsCases) {
+        const label = `Invoice${String(id).padStart(4, '0')}`;
+        for (let copy = 0; copy < 2; copy++) {
+          rows.push({ id: id++, tenant, active, cents, label });
+        }
+      }
+    }
+    // Same projection across the first-only, second-only and overlapping cases.
+    rows.push({ id: id++, tenant, active: 1, cents: 5000, label: 'Shared' });
+    rows.push({ id: id++, tenant, active: 0, cents: 10000, label: 'Shared' });
+    rows.push({ id: id++, tenant, active: 1, cents: 15000, label: 'Shared' });
+  }
+  // Reverse physical insertion so an unordered append cannot accidentally pass.
+  for (const row of [...rows].reverse()) {
+    insert.run(row.id, row.tenant, row.label, row.active, row.cents / 100);
+  }
+  for (const tenant of [71, 72, 0, -1, 999, null]) {
+    const expectedLabels = rows
+      .filter(row => row.tenant === tenant && (row.active === 1 || row.cents >= 10000))
+      .map(row => row.label)
+      .sort();
+    check(tenant, labels(expectedLabels), `matrix tenant ${tenant}`);
+  }
+  db.exec('DELETE FROM invoices');
+  check(71, [], 'empty relation');
+  console.log(JSON.stringify({
+    status: 'passed', node: process.version, sqlite: sqliteVersion,
+    orderedBagComparisons: comparisons, generatedRows: rows.length,
+    invalidActiveValuesRejected: ['NULL', '2'],
+    coverage: ['legal boolean domain', 'amount below/equal/above 100', 'numeric extremes',
+      'duplicate labels', 'overlapping predicates', 'tenant isolation', 'projection',
+      'global ordering', 'empty relation'],
+    scope: 'SQLite portable result semantics only; no PostgreSQL execution or performance evidence'
+  }, null, 2));
+} finally {
+  db.close();
+}

@@ -1,0 +1,305 @@
+{
+  "task": "A14",
+  "scope": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A14",
+  "writesRestrictedTo": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A14/output",
+  "meaningfulReads": [
+    {
+      "path": "TASK.md",
+      "purpose": "Assignment, ownership and restrictions",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A14/TASK.md' -Raw",
+      "exitCode": 0,
+      "result": "File contents returned; immutable file path identifies read evidence. Combined-response truncation was followed by re-reads where needed."
+    },
+    {
+      "path": "input/skills/idempotency/SKILL.md",
+      "purpose": "Stable identity, accumulated uncertainty and effect/reply distinction",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A14/input/skills/idempotency/SKILL.md' -Raw",
+      "exitCode": 0,
+      "result": "File contents returned; immutable file path identifies read evidence. Combined-response truncation was followed by re-reads where needed."
+    },
+    {
+      "path": "input/skills/timeouts-and-deadlines/SKILL.md",
+      "purpose": "Admission, remaining budget and interruption",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A14/input/skills/timeouts-and-deadlines/SKILL.md' -Raw",
+      "exitCode": 0,
+      "result": "File contents returned; immutable file path identifies read evidence. Combined-response truncation was followed by re-reads where needed."
+    },
+    {
+      "path": "input/skills/retries-and-backoff/SKILL.md",
+      "purpose": "Classification, minimum delay, retry budget and resource release",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A14/input/skills/retries-and-backoff/SKILL.md' -Raw",
+      "exitCode": 0,
+      "result": "File contents returned; immutable file path identifies read evidence. Combined-response truncation was followed by re-reads where needed."
+    },
+    {
+      "path": "input/project/README.md",
+      "purpose": "Java baseline and execution limits",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A14/input/project/README.md' -Raw",
+      "exitCode": 0,
+      "result": "File contents returned; immutable file path identifies read evidence. Combined-response truncation was followed by re-reads where needed."
+    },
+    {
+      "path": "input/project/REQUEST.md",
+      "purpose": "Requested implementation and ordinary project evidence",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A14/input/project/REQUEST.md' -Raw",
+      "exitCode": 0,
+      "result": "File contents returned; immutable file path identifies read evidence. Combined-response truncation was followed by re-reads where needed."
+    },
+    {
+      "path": "input/project/contract.md",
+      "purpose": "Requested implementation and ordinary project evidence",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A14/input/project/contract.md' -Raw",
+      "exitCode": 0,
+      "result": "File contents returned; immutable file path identifies read evidence. Combined-response truncation was followed by re-reads where needed."
+    },
+    {
+      "path": "input/project/Contract.java",
+      "purpose": "Requested implementation and ordinary project evidence",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A14/input/project/Contract.java' -Raw",
+      "exitCode": 0,
+      "result": "File contents returned; immutable file path identifies read evidence. Combined-response truncation was followed by re-reads where needed."
+    },
+    {
+      "path": "input/project/Ports.java",
+      "purpose": "Requested implementation and ordinary project evidence",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A14/input/project/Ports.java' -Raw",
+      "exitCode": 0,
+      "result": "File contents returned; immutable file path identifies read evidence. Combined-response truncation was followed by re-reads where needed."
+    },
+    {
+      "path": "input/project/RetryEngine.java",
+      "purpose": "Requested implementation and ordinary project evidence",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A14/input/project/RetryEngine.java' -Raw",
+      "exitCode": 0,
+      "result": "File contents returned; immutable file path identifies read evidence. Combined-response truncation was followed by re-reads where needed."
+    },
+    {
+      "path": "input/project/Smoke.java",
+      "purpose": "Requested implementation and ordinary project evidence",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A14/input/project/Smoke.java' -Raw",
+      "exitCode": 0,
+      "result": "File contents returned; immutable file path identifies read evidence. Combined-response truncation was followed by re-reads where needed."
+    },
+    {
+      "path": "input/project/run.mjs",
+      "purpose": "Requested implementation and ordinary project evidence",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A14/input/project/run.mjs' -Raw",
+      "exitCode": 0,
+      "result": "File contents returned; immutable file path identifies read evidence. Combined-response truncation was followed by re-reads where needed."
+    },
+    {
+      "path": "input/skills/timeouts-and-deadlines/SKILL.md",
+      "purpose": "Re-read after combined tool output truncation",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A14/input/skills/timeouts-and-deadlines/SKILL.md' -Raw",
+      "exitCode": 0,
+      "result": "File contents returned; immutable file path identifies read evidence. Combined-response truncation was followed by re-reads where needed."
+    },
+    {
+      "path": "input/skills/idempotency/references/key-selection.md",
+      "purpose": "Applicable local reference",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A14/input/skills/idempotency/references/key-selection.md' -Raw",
+      "exitCode": 0,
+      "result": "File contents returned; immutable file path identifies read evidence. Combined-response truncation was followed by re-reads where needed."
+    },
+    {
+      "path": "input/skills/idempotency/references/idempotency-key-filter.md",
+      "purpose": "Applicable local reference",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A14/input/skills/idempotency/references/idempotency-key-filter.md' -Raw",
+      "exitCode": 0,
+      "result": "File contents returned; immutable file path identifies read evidence. Combined-response truncation was followed by re-reads where needed."
+    },
+    {
+      "path": "input/skills/timeouts-and-deadlines/references/java-timeout-surface.md",
+      "purpose": "Applicable local reference",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A14/input/skills/timeouts-and-deadlines/references/java-timeout-surface.md' -Raw",
+      "exitCode": 0,
+      "result": "File contents returned; immutable file path identifies read evidence. Combined-response truncation was followed by re-reads where needed."
+    },
+    {
+      "path": "input/skills/timeouts-and-deadlines/references/deadline-propagation.md",
+      "purpose": "Applicable local reference",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A14/input/skills/timeouts-and-deadlines/references/deadline-propagation.md' -Raw",
+      "exitCode": 0,
+      "result": "File contents returned; immutable file path identifies read evidence. Combined-response truncation was followed by re-reads where needed."
+    },
+    {
+      "path": "input/skills/retries-and-backoff/references/retry-in-java.md",
+      "purpose": "Applicable local reference",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A14/input/skills/retries-and-backoff/references/retry-in-java.md' -Raw",
+      "exitCode": 0,
+      "result": "File contents returned; immutable file path identifies read evidence. Combined-response truncation was followed by re-reads where needed."
+    },
+    {
+      "path": "input/skills/idempotency/references/key-selection.md",
+      "purpose": "Re-read after combined tool output truncation",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A14/input/skills/idempotency/references/key-selection.md' -Raw",
+      "exitCode": 0,
+      "result": "File contents returned; immutable file path identifies read evidence. Combined-response truncation was followed by re-reads where needed."
+    },
+    {
+      "path": "input/skills/idempotency/references/idempotency-key-filter.md",
+      "purpose": "Re-read after combined tool output truncation",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A14/input/skills/idempotency/references/idempotency-key-filter.md' -Raw",
+      "exitCode": 0,
+      "result": "File contents returned; immutable file path identifies read evidence. Combined-response truncation was followed by re-reads where needed."
+    },
+    {
+      "path": "input/skills/timeouts-and-deadlines/references/java-timeout-surface.md",
+      "purpose": "Re-read after combined tool output truncation",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A14/input/skills/timeouts-and-deadlines/references/java-timeout-surface.md' -Raw",
+      "exitCode": 0,
+      "result": "File contents returned; immutable file path identifies read evidence. Combined-response truncation was followed by re-reads where needed."
+    },
+    {
+      "path": "input/skills/timeouts-and-deadlines/references/deadline-propagation.md",
+      "purpose": "Re-read after combined tool output truncation",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A14/input/skills/timeouts-and-deadlines/references/deadline-propagation.md' -Raw",
+      "exitCode": 0,
+      "result": "File contents returned; immutable file path identifies read evidence. Combined-response truncation was followed by re-reads where needed."
+    },
+    {
+      "path": "input/skills/timeouts-and-deadlines/references/deadline-propagation.md",
+      "purpose": "Isolated complete re-read after output truncation",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A14/input/skills/timeouts-and-deadlines/references/deadline-propagation.md' -Raw",
+      "exitCode": 0,
+      "result": "File contents returned; immutable file path identifies read evidence. Combined-response truncation was followed by re-reads where needed."
+    },
+    {
+      "path": "output/RetryEngine.java",
+      "purpose": "Confirmed mutable implementation copy before editing",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A14/output/RetryEngine.java' -Raw",
+      "exitCode": 0,
+      "result": "File contents returned; immutable file path identifies read evidence. Combined-response truncation was followed by re-reads where needed."
+    },
+    {
+      "path": "output/run.mjs",
+      "purpose": "Inspected actual runner before executing",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A14/output/run.mjs' -Raw",
+      "exitCode": 0,
+      "result": "File contents returned; immutable file path identifies read evidence. Combined-response truncation was followed by re-reads where needed."
+    },
+    {
+      "path": "output/RetryEngine.java",
+      "purpose": "Final implementation review after successful verification",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A14/output/RetryEngine.java' -Raw",
+      "exitCode": 0,
+      "result": "File contents returned; immutable file path identifies read evidence. Combined-response truncation was followed by re-reads where needed."
+    }
+  ],
+  "discovery": {
+    "command": "rg --files 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A14/input' 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A14/output'",
+    "exitCode": 0,
+    "result": "Enumerated supplied project copies, skill snapshots and their local references only."
+  },
+  "commands": [
+    {
+      "label": "Original implementation regression",
+      "command": "node run.mjs Verification",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A14/output",
+      "exitCode": 1,
+      "output": "Exception in thread \"main\" java.lang.AssertionError: regressions failed\r\n\tat Verification.main(Verification.java:209)\r\nFAIL authoritative OK and stable identity: java.lang.AssertionError: intent identity/payload changed\r\nFAIL transient retry preserves identity and max delay: java.lang.AssertionError: intent identity/payload changed\r\nFAIL local delay can dominate server advice: java.lang.AssertionError: intent identity/payload changed\r\nFAIL permanent nonapplication stops: java.lang.AssertionError: intent identity/payload changed\r\nFAIL unknown effect is durable and cannot be replayed: java.lang.AssertionError: intent identity/payload changed\r\nFAIL previous UNKNOWN is preserved: java.lang.AssertionError: intent identity/payload changed\r\nFAIL terminal APPLIED is returned unchanged: java.lang.AssertionError: intent identity/payload changed\r\nFAIL terminal REJECTED is returned unchanged: java.lang.AssertionError: intent identity/payload changed\r\nFAIL initial insufficient budget rejects without call: java.lang.AssertionError: intent identity/payload changed\r\nFAIL exact initial budget admits call: java.lang.AssertionError: intent identity/payload changed\r\nFAIL attempt plus reserve cannot overflow: java.lang.AssertionError: intent identity/payload changed\r\nFAIL unrepresentable wait total refuses before token: java.lang.AssertionError: intent identity/payload changed\r\nFAIL server minimum cannot be truncated to fit: java.lang.AssertionError: intent identity/payload changed\r\nFAIL exact retry budget fits: java.lang.AssertionError: intent identity/payload changed\r\nFAIL fresh budget includes time spent calling: java.lang.AssertionError: intent identity/payload changed\r\nFAIL oversleep forbids next call; grant is consumed: java.lang.AssertionError: intent identity/payload changed\r\nFAIL retry budget denial closes reply: java.lang.AssertionError: intent identity/payload changed\r\nFAIL last attempt neither grants nor sleeps: java.lang.AssertionError: intent identity/payload changed\r\nFAIL count exhaustion preserves bounded retries: java.lang.AssertionError: intent identity/payload changed\r\nFAIL zero wait is permitted: java.lang.AssertionError: intent identity/payload changed\r\nFAIL initial cancellation prevents call: java.lang.AssertionError: called while cancelled\r\nFAIL cancellation during sleep prevents next call: java.lang.AssertionError: intent identity/payload changed\r\nFAIL cancellation after grant stops before sleep: java.lang.AssertionError: intent identity/payload changed\r\nFAIL pre-interruption propagates without dispatch: java.lang.AssertionError: called while interrupted\r\nFAIL interrupted dispatch preserves unknown effect: java.lang.AssertionError: intent identity/payload changed\r\nFAIL sleep interruption propagates after close: java.lang.AssertionError: intent identity/payload changed\r\nFAIL interrupt after reply prevents retry: java.lang.AssertionError: intent identity/payload changed\r\nVerification: 0 passed, 27 failed\r\n",
+      "wallTimeSeconds": 0.7305292
+    },
+    {
+      "label": "Repaired implementation regression",
+      "command": "node run.mjs Verification",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A14/output",
+      "exitCode": 0,
+      "output": "PASS authoritative OK and stable identity\r\nPASS transient retry preserves identity and max delay\r\nPASS local delay can dominate server advice\r\nPASS permanent nonapplication stops\r\nPASS unknown effect is durable and cannot be replayed\r\nPASS previous UNKNOWN is preserved\r\nPASS terminal APPLIED is returned unchanged\r\nPASS terminal REJECTED is returned unchanged\r\nPASS initial insufficient budget rejects without call\r\nPASS exact initial budget admits call\r\nPASS attempt plus reserve cannot overflow\r\nPASS unrepresentable wait total refuses before token\r\nPASS server minimum cannot be truncated to fit\r\nPASS exact retry budget fits\r\nPASS fresh budget includes time spent calling\r\nPASS oversleep forbids next call; grant is consumed\r\nPASS retry budget denial closes reply\r\nPASS last attempt neither grants nor sleeps\r\nPASS count exhaustion preserves bounded retries\r\nPASS zero wait is permitted\r\nPASS initial cancellation prevents call\r\nPASS cancellation during sleep prevents next call\r\nPASS cancellation after grant stops before sleep\r\nPASS pre-interruption propagates without dispatch\r\nPASS interrupted dispatch preserves unknown effect\r\nPASS sleep interruption propagates after close\r\nPASS interrupt after reply prevents retry\r\nVerification: 27 passed, 0 failed\r\n",
+      "wallTimeSeconds": 0.6627547
+    },
+    {
+      "label": "Unchanged smoke regression",
+      "command": "node run.mjs Smoke",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A14/output",
+      "exitCode": 0,
+      "output": "Smoke passed\r\n",
+      "wallTimeSeconds": 0.6184499
+    },
+    {
+      "label": "Actual tool versions",
+      "command": "node -e \"const {spawnSync}=require('node:child_process'); for (const command of ['java','javac']) { const r=spawnSync(command,['-version'],{encoding:'utf8',timeout:20000,windowsHide:true}); process.stdout.write(r.stdout||''); process.stderr.write(r.stderr||''); if(r.error||r.status!==0) process.exit(1); }\"",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A14/output",
+      "exitCode": 0,
+      "output": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\njavac 25.0.3\r\n",
+      "wallTimeSeconds": 0.208361
+    },
+    {
+      "label": "Immutable project copy verification",
+      "command": "$taskRoot = 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A14'\n$names = @('README.md','REQUEST.md','contract.md','Contract.java','Ports.java','Smoke.java','run.mjs')\nforeach ($name in $names) {\n  $original = Get-FileHash -LiteralPath (Join-Path \"$taskRoot/input/project\" $name) -Algorithm SHA256\n  $copy = Get-FileHash -LiteralPath (Join-Path \"$taskRoot/output\" $name) -Algorithm SHA256\n  if ($original.Hash -ne $copy.Hash) { throw \"Immutable file changed: $name\" }\n}\nWrite-Output 'Immutable project copies verified: 7 unchanged.'",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A14/output",
+      "exitCode": 0,
+      "output": "Immutable project copies verified: 7 unchanged.\r\n",
+      "wallTimeSeconds": 0.0250825
+    }
+  ],
+  "runnerExpansion": {
+    "compile": [
+      "javac",
+      "--release",
+      "17",
+      "-d",
+      "classes",
+      "Contract.java",
+      "Ports.java",
+      "RetryEngine.java",
+      "Smoke.java",
+      "Verification.java"
+    ],
+    "runVerification": [
+      "java",
+      "-ea",
+      "-cp",
+      "classes",
+      "Verification"
+    ],
+    "runSmoke": [
+      "java",
+      "-ea",
+      "-cp",
+      "classes",
+      "Smoke"
+    ],
+    "timeoutMillisPerSubprocess": 20000,
+    "generatedFiles": "output/classes/ only"
+  },
+  "edits": [
+    {
+      "tool": "apply_patch",
+      "path": "output/Verification.java",
+      "action": "Added executable 27-case regression; then executed against original implementation."
+    },
+    {
+      "tool": "apply_patch",
+      "path": "output/RetryEngine.java",
+      "action": "Repaired state, stable intent, admission, delay, cancellation and reply closure."
+    },
+    {
+      "tool": "apply_patch",
+      "paths": [
+        "output/REVIEW.md",
+        "output/result.json",
+        "output/execution.json"
+      ],
+      "action": "Recorded repair, actual checks and scope limitations."
+    }
+  ],
+  "limitations": [
+    "Authored local simulation only; no production provider/durable-store guarantee established.",
+    "Contract.REPLAY_SAFE is immutable false; replay-safe branches were not executed.",
+    "No reconciliation, remote API/version, database/isolation, retention, tenant/fingerprint enforcement or physical-cancellation implementation supplied.",
+    "Concurrency, real latency/resource release, crash recovery and fleet behavior are outside this single-owner component test.",
+    "Referenced skills outside supplied snapshots were not opened; no network or delegation."
+  ],
+  "artifactValidation": {
+    "command": "node -e \"const fs=require('node:fs'); const assert=require('node:assert/strict'); const result=JSON.parse(fs.readFileSync('result.json','utf8')); const execution=JSON.parse(fs.readFileSync('execution.json','utf8')); const review=fs.readFileSync('REVIEW.md','utf8'); const count=review.trim().split(/\\s+/).length; assert(count<=750); assert.equal(result.evidence.verification.passed,27); assert.equal(result.evidence.verification.failed,0); assert.equal(execution.allWritesStopped,false); for(const p of ['RetryEngine.java','Verification.java','REVIEW.md','result.json','execution.json']) assert(fs.existsSync(p)); console.log('Artifact validation passed: JSON readable, all five deliverables present, REVIEW.md '+count+' words.'); console.log('Files: '+fs.readdirSync('.').join(', '));\"",
+    "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A14/output",
+    "exitCode": 0,
+    "output": "Artifact validation passed: JSON readable, all five deliverables present, REVIEW.md 424 words.\nFiles: classes, Contract.java, contract.md, execution.json, Ports.java, README.md, REQUEST.md, result.json, RetryEngine.java, REVIEW.md, run.mjs, Smoke.java, Verification.java\n",
+    "wallTimeSeconds": 0.0694793
+  },
+  "noNetwork": true,
+  "noDelegation": true,
+  "noProcessesLeftRunning": true,
+  "allWritesStopped": true
+}

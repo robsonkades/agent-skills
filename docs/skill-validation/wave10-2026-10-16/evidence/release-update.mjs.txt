@@ -1,0 +1,14 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+const root='C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23';
+const actors=JSON.parse(fs.readFileSync(root+'/actors.json','utf8')),cases=JSON.parse(fs.readFileSync(root+'/cases.json','utf8'));
+for(const id of process.argv.slice(2)){
+ const a=actors.find(a=>a.id===id);if(!a)throw Error('Unknown actor '+id);
+ const answer=a.dir+'/output/answer1.md',access=a.dir+'/output/access1.json';
+ if(!fs.existsSync(answer)||!fs.existsSync(access))throw Error('Stage1 incomplete '+id);
+ if(fs.existsSync(a.dir+'/input/UPDATE.md'))throw Error('Update already released '+id);
+ const seal={at:new Date().toISOString(),id,files:[answer,access].map(path=>({path,sha256:crypto.createHash('sha256').update(fs.readFileSync(path)).digest('hex')}))};
+ fs.mkdirSync(root+'/stage-seals',{recursive:true});fs.writeFileSync(root+'/stage-seals/'+id+'.json',JSON.stringify(seal,null,2)+'\n');
+ fs.writeFileSync(a.dir+'/input/UPDATE.md',cases[a.case].update+'\n');
+ console.log(JSON.stringify({id,sealed:seal.at,prompt:a.stage2Prompt}));
+}

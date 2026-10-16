@@ -1,0 +1,54 @@
+{
+  "upstreamCommit": "41fee1f99f9276008b7cd112fca19dc3ea84ac32",
+  "sources": [
+    {
+      "file": "sources/flamegraph.pl",
+      "url": "https://raw.githubusercontent.com/brendangregg/FlameGraph/41fee1f99f9276008b7cd112fca19dc3ea84ac32/flamegraph.pl",
+      "status": 200,
+      "bytes": 39741,
+      "sha256": "088f82e6848a4f12a56e1e8e8170ee6761fccf12e5615cd64630f6b087c99ea7"
+    },
+    {
+      "file": "sources/difffolded.pl",
+      "url": "https://raw.githubusercontent.com/brendangregg/FlameGraph/41fee1f99f9276008b7cd112fca19dc3ea84ac32/difffolded.pl",
+      "status": 200,
+      "bytes": 3640,
+      "sha256": "55685edab6a33da695474233ff4978865a3e319e906ff27cdcfad0628ea47f5c"
+    },
+    {
+      "file": "sources/cddl1.txt",
+      "url": "https://raw.githubusercontent.com/brendangregg/FlameGraph/41fee1f99f9276008b7cd112fca19dc3ea84ac32/docs/cddl1.txt",
+      "status": 200,
+      "bytes": 18924,
+      "sha256": "1ffb70c33c4f79f04e947facc5c7851f289609256aacb47fc115f700427d9520"
+    },
+    {
+      "file": "sources/async-profiler-4.2-options.md",
+      "url": "https://raw.githubusercontent.com/async-profiler/async-profiler/v4.2/docs/ProfilerOptions.md",
+      "status": 200,
+      "bytes": 23432,
+      "sha256": "b334245f9663bb8aca5b075bea98f4aff9303c76a1116598592ba1f54cc72aa9"
+    },
+    {
+      "file": "sources/differential-flame-graphs.html",
+      "url": "https://www.brendangregg.com/blog/2014-11-09/differential-flame-graphs.html",
+      "status": 200,
+      "bytes": 27199,
+      "sha256": "4681fdc4c1d9d70b39fc8db20563358c905e7536c5ccaa71d00baa6874ef1334"
+    },
+    {
+      "file": "sources/async-profiler-4.2-modes.md",
+      "url": "https://raw.githubusercontent.com/async-profiler/async-profiler/v4.2/docs/ProfilingModes.md",
+      "status": 200,
+      "bytes": 20560,
+      "sha256": "ae582ebb5a88068f4632cc5934f6673fff113f7dde993785c004407e4869aa1b"
+    },
+    {
+      "file": "sources/jdk21-jfr-overhead.html",
+      "url": "https://docs.oracle.com/en/java/javase/21/troubleshoot/troubleshoot-performance-issues-using-jfr.html",
+      "status": 200,
+      "bytes": 60917,
+      "sha256": "7c9f9d513afaa8ed556507864c2b711af3931a7fbb2e2fd53b1941eee474cd97"
+    }
+  ]
+}

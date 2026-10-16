@@ -1,0 +1,3 @@
+# Current coupling map
+
+Quote and Pricing always require technical lockstep releases: the ship-all script ran for every recorded episode. They are one quantum for every workflow. They also share sales-cluster-01, so both own the same tables. Mixed-version checks are listed in test-records.json but have not yet been incorporated into this map.

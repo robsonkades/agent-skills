@@ -29,7 +29,9 @@ Latency is a distribution. Every rule here follows from that one fact.
    treatment, quantile definition, observation window and grouping. “Endpoint p99” is
    incomplete until these are fixed.
 2. **Preserve denominator and missingness.** Report offered, admitted, completed, failed,
-   cancelled, timed-out, dropped and still-in-flight counts. Time to an observed timeout
+   cancelled, timed-out, dropped and still-in-flight counts. Trace count provenance before
+   using it as sample size: rate-derived estimates are not observed trials; see
+   `references/histograms-and-aggregation.md`. Time to an observed timeout
    response is a terminal duration; time to an unobserved eventual completion may instead
    be right-censored. State which variable is being estimated; excluding timeouts selects
    a different, success-only population.

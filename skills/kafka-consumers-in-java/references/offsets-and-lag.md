@@ -142,6 +142,12 @@ reassignment, replay, transaction durability or no-loss behavior.
   merely because `commitAsync()` returned. Exercise a rebalance during commit, with the next
   poll delivering new records; a retry must neither commit their unfinished work nor reuse
   lost ownership. Record callback/exception, assignment epoch, effects and broker checkpoints.
+- **Fail required assignment initialization.** When a callback restores an external checkpoint
+  or required state, fail partway through restoring multiple partitions. Continue through the
+  target client's callback/error path, including a later empty assignment callback. Assert that
+  no unrestored partition reaches the handler or commit map, that recovery restores the correct
+  position, and that an old-epoch restore cannot make a reassigned partition ready. A mock can
+  check the application guard; use the actual client/protocol fixture to establish callback behavior.
 - **Overrun the poll interval on purpose.** Set a small `max.poll.interval.ms`, make the handler
   slower than it, and assert the protocol-specific departure/reassignment timing and eventual
   replay from the safe checkpoint; static membership can delay it until session expiry. It documents

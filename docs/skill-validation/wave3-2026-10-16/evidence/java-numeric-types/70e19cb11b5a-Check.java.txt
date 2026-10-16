@@ -1,0 +1,41 @@
+import java.math.*;
+import java.nio.file.*;
+import java.util.*;
+public final class Check {
+    private static int checks, failures;
+    private static void price(Quotation quote, String total, int units, String expected) {
+        checks++;
+        BigDecimal actual = quote.unitPrice(total, units);
+        if (!new BigDecimal(expected).equals(actual)) {
+            failures++;
+            System.out.println("FAIL " + total + "/" + units + " expected=" + expected + " actual=" + actual);
+        }
+    }
+    private static void rejected(Class<? extends RuntimeException> type, Runnable work) {
+        checks++;
+        try { work.run(); failures++; System.out.println("FAIL accepted invalid input"); }
+        catch (RuntimeException e) {
+            if (!type.isInstance(e)) { failures++; System.out.println("FAIL wrong rejection: " + e); }
+        }
+    }
+    public static void main(String[] args) throws Exception {
+        Properties props = new Properties();
+        try (var reader = Files.newBufferedReader(Path.of(args[0]))) { props.load(reader); }
+        if (!props.getProperty("release").equals("17")) throw new AssertionError("release changed");
+        Quotation quote = new Quotation(AmountParsers.selected(props.getProperty("amount.parser")));
+        for (String total : List.of("2","2.0","2.00","2.000","2E+0")) price(quote,total,3,"0.67");
+        price(quote,"2E+2",3,"66.67");
+        price(quote,"200.00",3,"66.67");
+        price(quote,"-2",3,"-0.67");
+        price(quote,"-2.00",3,"-0.67");
+        price(quote,"0",3,"0.00");
+        price(quote,"25.00",8,"3.13");
+        price(quote,"-25.00",8,"-3.13");
+        rejected(ArithmeticException.class,()->quote.unitPrice("2.005",3));
+        rejected(IllegalArgumentException.class,()->quote.unitPrice("1000000.01",3));
+        rejected(IllegalArgumentException.class,()->quote.unitPrice("2.00",0));
+        rejected(IllegalArgumentException.class,()->quote.unitPrice("2.00",-1));
+        System.out.println("parser="+props.getProperty("amount.parser")+" checks="+checks+" failures="+failures);
+        if(failures!=0)throw new AssertionError("unit-price contract failures="+failures);
+    }
+}

@@ -1,0 +1,576 @@
+{
+  "grader": "grader-a",
+  "cases": [
+    {
+      "caseId": "code-review-borrowed-session",
+      "responses": [
+        {
+          "responseId": "response01",
+          "verdict": "PASS",
+          "criteria": [
+            {
+              "id": "lifecycle-verdict",
+              "verdict": "PASS",
+              "evidence": "ExportJob.java:20 calls writeAudit on an invalidated session, throws ClosedSessionException, and fails the export.",
+              "reason": "Requests changes at ReportReader.java:41 and identifies the reachable caller audit and resulting export failure."
+            },
+            {
+              "id": "ownership-remedy",
+              "verdict": "PASS",
+              "evidence": "Remove the reader's try-with-resources wrapper and retain ownership in ExportJob.",
+              "reason": "Restores caller ownership, acknowledges the existing finally cleanup, and explains that isolated tests never exercise caller reuse."
+            },
+            {
+              "id": "suppression-claim",
+              "verdict": "PASS",
+              "evidence": "If the body and close both throw, the body exception remains primary and the close failure is suppressed.",
+              "reason": "Rejects exception replacement and separately states that a close failure propagates after a successful body."
+            },
+            {
+              "id": "evidence-scope",
+              "verdict": "PASS",
+              "evidence": "The supplied H tests establish correct isolated results and closure behavior",
+              "reason": "Limits the verdict to the supplied B-to-H contract, identifies missing ExportJob coverage, and explicitly says no tests were run."
+            }
+          ]
+        },
+        {
+          "responseId": "response02",
+          "verdict": "PASS",
+          "criteria": [
+            {
+              "id": "lifecycle-verdict",
+              "verdict": "PASS",
+              "evidence": "line 20 calls writeAudit on the invalidated session, throws ClosedSessionException, and fails the export.",
+              "reason": "Requests changes at ReportReader.java:41 and ties premature closure to the reachable ExportJob audit failure."
+            },
+            {
+              "id": "ownership-remedy",
+              "verdict": "PASS",
+              "evidence": "retain cleanup in ExportJob's finally at line 22.",
+              "reason": "Restores caller ownership, rejects the leak rationale because caller cleanup already exists, and explains that isolated reports miss reuse."
+            },
+            {
+              "id": "suppression-claim",
+              "verdict": "PASS",
+              "evidence": "the body exception remains primary and the close exception is suppressed.",
+              "reason": "Rejects the masking allegation and distinguishes propagation when only close throws."
+            },
+            {
+              "id": "evidence-scope",
+              "verdict": "PASS",
+              "evidence": "I ran no tests or commands against the scenario.",
+              "reason": "Scopes the review to supplied lifecycle facts and reports, with caller reuse explicitly untested and regression checks only proposed."
+            }
+          ]
+        },
+        {
+          "responseId": "response03",
+          "verdict": "PASS",
+          "criteria": [
+            {
+              "id": "lifecycle-verdict",
+              "verdict": "PASS",
+              "evidence": "s.writeAudit(rows.size()) throws ClosedSessionException, failing the export.",
+              "reason": "Requests changes at ReportReader.java:41 and explicitly locates the reachable invalid-session audit at ExportJob line 20."
+            },
+            {
+              "id": "ownership-remedy",
+              "verdict": "PASS",
+              "evidence": "Remove the reader’s session-closing boundary and retain cleanup with the caller after its final use.",
+              "reason": "Restores the borrowed-resource contract, acknowledges existing finally cleanup, and says the isolated tests miss caller reuse."
+            },
+            {
+              "id": "suppression-claim",
+              "verdict": "PASS",
+              "evidence": "If the body succeeds and close throws, the close exception propagates.",
+              "reason": "Also explicitly retains the body exception as primary and suppresses a simultaneous close failure, rejecting the allegation."
+            },
+            {
+              "id": "evidence-scope",
+              "verdict": "PASS",
+              "evidence": "Validation is limited to static reasoning from the supplied B/H facts and reported H tests; I ran nothing.",
+              "reason": "Keeps the verdict within supplied lifecycle behavior and distinguishes reported isolated tests from proposed caller regression coverage."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "caseId": "code-review-owned-session",
+      "responses": [
+        {
+          "responseId": "response04",
+          "verdict": "PASS",
+          "criteria": [
+            {
+              "id": "lifecycle-verdict",
+              "verdict": "PASS",
+              "evidence": "Approve H for the supplied lifecycle scope.",
+              "reason": "Finds no blocking lifecycle defect because ownership transfers, both exits close, and the separate auditSink remains independent."
+            },
+            {
+              "id": "ownership-evidence",
+              "verdict": "PASS",
+              "evidence": "The accepted contract transfers ownership to ReportReader on entry and requires closing on both success and failure.",
+              "reason": "Connects approval to ownership, absent caller reuse, and reported close evidence; missing ExportJob coverage is a stated limit rather than a blocker."
+            },
+            {
+              "id": "suppression-claim",
+              "verdict": "PASS",
+              "evidence": "the body exception remains primary and the close failure is attached as suppressed.",
+              "reason": "Rejects replacement and separately explains that a close failure after body success propagates instead of returning rows."
+            },
+            {
+              "id": "evidence-scope",
+              "verdict": "PASS",
+              "evidence": "Validation is limited to the authoritative facts and supplied H test reports.",
+              "reason": "Explicitly says no tests were run, identifies caller and throwing-close coverage limits, and confines approval to lifecycle correctness."
+            }
+          ]
+        },
+        {
+          "responseId": "response05",
+          "verdict": "PASS",
+          "criteria": [
+            {
+              "id": "lifecycle-verdict",
+              "verdict": "PASS",
+              "evidence": "Approve H for lifecycle correctness in the B-to-H change at ReportReader.java:41.",
+              "reason": "Supports closure of the owned session on success or failure and explains why the independent auditSink introduces no use-after-close."
+            },
+            {
+              "id": "ownership-evidence",
+              "verdict": "PASS",
+              "evidence": "Approval rests on this ownership and lifetime evidence, not simply on using try-with-resources.",
+              "reason": "Uses the transfer contract, absence of later session consumers, and supplied success/failure close reports; does not make caller coverage a blocker."
+            },
+            {
+              "id": "suppression-claim",
+              "verdict": "PASS",
+              "evidence": "If reading succeeds but close() throws, the close failure propagates instead of returning rows",
+              "reason": "Also explicitly says simultaneous reading and close failures leave the reading exception primary with close suppressed."
+            },
+            {
+              "id": "evidence-scope",
+              "verdict": "PASS",
+              "evidence": "These coverage limits do not establish a lifecycle defect in the stated caller path.",
+              "reason": "Treats the H results as supplied reports, states that nothing was run, and limits approval to the B-to-H lifecycle scope."
+            }
+          ]
+        },
+        {
+          "responseId": "response06",
+          "verdict": "PASS",
+          "criteria": [
+            {
+              "id": "lifecycle-verdict",
+              "verdict": "PASS",
+              "evidence": "No supported blocking or non-blocking defects were identified in this scope.",
+              "reason": "Approves the scoped change because read owns and closes the session on both paths while the independent auditSink remains usable."
+            },
+            {
+              "id": "ownership-evidence",
+              "verdict": "PASS",
+              "evidence": "The caller neither reuses nor closes s afterward.",
+              "reason": "Combines explicit transfer and caller facts with reported success/failure closure; identifies absent ExportJob coverage without inventing a blocker."
+            },
+            {
+              "id": "suppression-claim",
+              "verdict": "PASS",
+              "evidence": "When the body and close() both throw, the body exception remains primary and the close exception is suppressed on it.",
+              "reason": "Rejects replacement and explicitly distinguishes propagation when the body succeeds and close throws."
+            },
+            {
+              "id": "evidence-scope",
+              "verdict": "PASS",
+              "evidence": "I ran no tests and inspected no repository implementation.",
+              "reason": "Limits validation to authoritative facts and reports, acknowledges unexecuted caller coverage, and makes only a scoped lifecycle judgment."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "caseId": "estimation-under-uncertainty-one-specialist",
+      "responses": [
+        {
+          "responseId": "response07",
+          "verdict": "PASS",
+          "criteria": [
+            {
+              "id": "schedule-model",
+              "verdict": "PASS",
+              "evidence": "The single specialist prevents overlap, so adapter durations add.",
+              "reason": "Schedules sequential tasks plus one acceptance day; its table maps totals 4/8/12 to ready 5/9/13 and deployment 8/12/16 using independent draws."
+            },
+            {
+              "id": "probabilities",
+              "verdict": "PASS",
+              "evidence": "Thus cumulative completion probability is 64% at time 8, 96% at time 12, and 100% at time 16 within this model.",
+              "reason": "Gives the correct 64%/32%/4% outcome masses, target probability 64%, and earliest cumulative P80 of time 12."
+            },
+            {
+              "id": "forecast-not-promise",
+              "verdict": "PASS",
+              "evidence": "these elicited probabilities are not calibrated historical reliability.",
+              "reason": "Keeps time 8 as the target and time 12 as conditional P80 planning, explicitly refusing to promise the target."
+            },
+            {
+              "id": "update-trigger",
+              "verdict": "PASS",
+              "evidence": "A two-day result raises the conditional chance of meeting time 8 to 80%; a six-day result makes that target impossible",
+              "reason": "Uses concrete observed task-duration evidence to trigger a conditional forecast update, with the target impact explained."
+            }
+          ]
+        },
+        {
+          "responseId": "response08",
+          "verdict": "PASS",
+          "criteria": [
+            {
+              "id": "schedule-model",
+              "verdict": "PASS",
+              "evidence": "One specialist means the tasks must run sequentially, although their duration draws remain independent.",
+              "reason": "Adds one shared acceptance day and the next deployment slot; the table correctly gives ready 5/9/13 and deployment 8/12/16."
+            },
+            {
+              "id": "probabilities",
+              "verdict": "PASS",
+              "evidence": "The cumulative probability is 64% at time 8 and 96% at time 12",
+              "reason": "Gives 64%/32%/4% outcome masses and correctly identifies target probability 64% and project P80 time 12."
+            },
+            {
+              "id": "forecast-not-promise",
+              "verdict": "PASS",
+              "evidence": "These probabilities follow elicited, uncalibrated inputs; they are forecasts, not demonstrated reliability or promises.",
+              "reason": "Explicitly retains target 8, separates P80 12, and states that no commitment has been made."
+            },
+            {
+              "id": "update-trigger",
+              "verdict": "PASS",
+              "evidence": "if the first adapter remains unfinished, its duration is 6 under this model, and meeting time 8 becomes impossible.",
+              "reason": "Names a specific observed duration condition at time 2 and its forecast consequence, rather than only a calendar reminder."
+            }
+          ]
+        },
+        {
+          "responseId": "response09",
+          "verdict": "PASS",
+          "criteria": [
+            {
+              "id": "schedule-model",
+              "verdict": "PASS",
+              "evidence": "The tasks cannot overlap; independence of duration draws does not create additional capacity.",
+              "reason": "Schedules sequential task totals 4/8/12, adds acceptance to ready 5/9/13, and uses deployment slots 8/12/16 without double counting."
+            },
+            {
+              "id": "probabilities",
+              "verdict": "PASS",
+              "evidence": "Cumulative completion probability is 64% at 8, 96% at 12, and 100% at 16.",
+              "reason": "Reports the correct 64%/32%/4% masses, 64% target probability, and earliest cumulative P80 of time 12."
+            },
+            {
+              "id": "forecast-not-promise",
+              "verdict": "PASS",
+              "evidence": "Time 8 remains the sponsor's target; no commitment exists.",
+              "reason": "Separates target 8 from P80 12, refuses a promise, and describes the elicited inputs as lacking historical calibration."
+            },
+            {
+              "id": "update-trigger",
+              "verdict": "PASS",
+              "evidence": "If unfinished then, this model implies a six-day duration, making time 8 unattainable.",
+              "reason": "Uses observed task status after two days as concrete new duration evidence requiring a revised conditional forecast."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "caseId": "estimation-under-uncertainty-two-specialists",
+      "responses": [
+        {
+          "responseId": "response10",
+          "verdict": "PASS",
+          "criteria": [
+            {
+              "id": "schedule-model",
+              "verdict": "PASS",
+              "evidence": "Both adapters start at 0 with separate, fully reserved specialists, so their joint finish time is max(A, B).",
+              "reason": "Adds shared acceptance once and applies release slots: short/short is ready 3 and deployed 4; any long is ready 7 and deployed 8."
+            },
+            {
+              "id": "probabilities",
+              "verdict": "PASS",
+              "evidence": "Thus cumulative completion probability is 64% at time 4 and 100% at time 8.",
+              "reason": "Correctly gives outcome masses 0.64 and 0.36, target probability 1, and earliest cumulative project P80 at 8."
+            },
+            {
+              "id": "forecast-not-promise",
+              "verdict": "PASS",
+              "evidence": "elicited inputs have no historical calibration, and a forecast does not itself create a promise.",
+              "reason": "Retains target 8, explicitly conditions the model result, and states that no commitment has been made."
+            },
+            {
+              "id": "update-trigger",
+              "verdict": "PASS",
+              "evidence": "Reforecast immediately if reserved capacity changes or an adapter exceeds 6 days",
+              "reason": "Names concrete capacity and duration-bound changes that invalidate the current forecast."
+            }
+          ]
+        },
+        {
+          "responseId": "response11",
+          "verdict": "PASS",
+          "criteria": [
+            {
+              "id": "schedule-model",
+              "verdict": "PASS",
+              "evidence": "combined acceptance finishes at time 3, and deployment acceptance occurs at slot 4.",
+              "reason": "Uses two reserved parallel specialists and one shared acceptance day; also maps any long task to ready 7 and deployed 8."
+            },
+            {
+              "id": "probabilities",
+              "verdict": "PASS",
+              "evidence": "Thus cumulative completion probability is 64% at time 4 and 100% at time 8.",
+              "reason": "Correctly gives 64%/36% outcome masses, a 100% model target probability, and project P80 at 8 from the cumulative distribution."
+            },
+            {
+              "id": "forecast-not-promise",
+              "verdict": "PASS",
+              "evidence": "100% within this bounded model is not proof of real-world certainty.",
+              "reason": "Keeps time 8 for conditional planning, labels probabilities elicited and uncalibrated, and rejects an unconditional promise."
+            },
+            {
+              "id": "update-trigger",
+              "verdict": "PASS",
+              "evidence": "a specialist becomes unavailable, or a deployment slot changes.",
+              "reason": "Identifies concrete capacity and release-slot changes, as well as duration evidence, requiring an updated forecast."
+            }
+          ]
+        },
+        {
+          "responseId": "response12",
+          "verdict": "PASS",
+          "criteria": [
+            {
+              "id": "schedule-model",
+              "verdict": "PASS",
+              "evidence": "Add the separate one-day combined acceptance, then wait for the next deployment slot:",
+              "reason": "Uses max(A,B) for parallel completion and correctly gives ready/deployment times 3/4 for both short and 7/8 for any long."
+            },
+            {
+              "id": "probabilities",
+              "verdict": "PASS",
+              "evidence": "Thus cumulative completion probability is 64% at time 4 and 100% at time 8.",
+              "reason": "Gives 0.64/0.36 outcome masses, target probability 1, and earliest cumulative P80 at 8 rather than combining task percentiles."
+            },
+            {
+              "id": "forecast-not-promise",
+              "verdict": "PASS",
+              "evidence": "These are conditional model results, not calibrated delivery reliability or a promise.",
+              "reason": "Retains time 8 as the planning target and explicitly says no commitment exists or empirical guarantee is supplied."
+            },
+            {
+              "id": "update-trigger",
+              "verdict": "PASS",
+              "evidence": "Update immediately if either specialist’s reserved availability changes or an adapter remains unfinished after time 6",
+              "reason": "Names concrete capacity and duration-bound changes that invalidate the schedule and require revising the forecast."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "caseId": "feature-readiness-review-accepted-amendment",
+      "responses": [
+        {
+          "responseId": "response13",
+          "verdict": "PASS",
+          "criteria": [
+            {
+              "id": "baseline-and-result",
+              "verdict": "PASS",
+              "evidence": "Complete: yes — for the inventory-report feature under accepted baseline r6, candidate c22, at implementation acceptance.",
+              "reason": "Uses the accepted amended baseline and treats archive work as separate future scope, without adding deployment or observation requirements."
+            },
+            {
+              "id": "correct-justification",
+              "verdict": "PASS",
+              "evidence": "The decisive fact is Product’s authorized acceptance of ED-08 and r6.",
+              "reason": "Explains why terminal statuses and GAP-04 do not establish satisfaction, identifies Product's scope authority, and leaves archive behavior undelivered."
+            },
+            {
+              "id": "preserve-evidence",
+              "verdict": "PASS",
+              "evidence": "Preserve RES-10’s DONE status and that evidence; the amendment supplies no reason to rerun those checks.",
+              "reason": "Retains EV-10 at c22 as support for BAC-01, keeps already-recorded archive work separate, and requires no repeated approval."
+            },
+            {
+              "id": "review-boundary",
+              "verdict": "PASS",
+              "evidence": "The judgment uses the supplied dossier; no new inspection or execution is claimed.",
+              "reason": "Provides a findings-only implementation-acceptance judgment with no claimed record edits or deployment authority."
+            }
+          ]
+        },
+        {
+          "responseId": "response14",
+          "verdict": "PASS",
+          "criteria": [
+            {
+              "id": "baseline-and-result",
+              "verdict": "PASS",
+              "evidence": "Complete: yes, for inventory-report implementation acceptance against accepted baseline r6 at candidate c22",
+              "reason": "Correctly judges amended r6 complete and excludes deferred BAC-02 from current Required scope."
+            },
+            {
+              "id": "correct-justification",
+              "verdict": "PASS",
+              "evidence": "the accountable Product owner used established authority to accept r6, removing BAC-02 from this feature’s Required scope.",
+              "reason": "Attributes completion to the authorized amendment, rejects terminal-status and gap reasoning, and explicitly leaves archive unimplemented and unverified."
+            },
+            {
+              "id": "preserve-evidence",
+              "verdict": "PASS",
+              "evidence": "No additional current-feature implementation, rerun or renewed approval is justified by these facts.",
+              "reason": "Preserves BAC-01/RES-10/EV-10 at c22 and retains separately recorded future archive work without reopening supported CSV evidence."
+            },
+            {
+              "id": "review-boundary",
+              "verdict": "PASS",
+              "evidence": "This judgment uses the supplied dossier; no new inspection or execution is claimed.",
+              "reason": "Keeps the result findings-only and limited to implementation acceptance, without claiming edits or deployment approval."
+            }
+          ]
+        },
+        {
+          "responseId": "response15",
+          "verdict": "PASS",
+          "criteria": [
+            {
+              "id": "baseline-and-result",
+              "verdict": "PASS",
+              "evidence": "implementation acceptance is supported for candidate c22 against the accepted baseline r6.",
+              "reason": "Correctly uses accepted r6 with BAC-01 alone and treats archive delivery as separately recorded future work."
+            },
+            {
+              "id": "correct-justification",
+              "verdict": "PASS",
+              "evidence": "Completion becomes justified because Product validly amended the baseline, not because RES-11 is CANCELLED or GAP-04 is accepted.",
+              "reason": "Identifies Product's authorized amendment as decisive and explicitly states that archive implementation and validation evidence do not exist."
+            },
+            {
+              "id": "preserve-evidence",
+              "verdict": "PASS",
+              "evidence": "Preserve the supported CSV result: RES-10 is DONE",
+              "reason": "Connects EV-10's c22 real-path results to BAC-01, requires no repeat validation or scope acceptance, and preserves future archive obligations."
+            },
+            {
+              "id": "review-boundary",
+              "verdict": "PASS",
+              "evidence": "This finding relies solely on the supplied dossier; no new execution or record update is claimed.",
+              "reason": "Makes only an implementation-completion finding and explicitly excludes deployment and production observation."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "caseId": "feature-readiness-review-proposed-amendment",
+      "responses": [
+        {
+          "responseId": "response16",
+          "verdict": "PASS",
+          "criteria": [
+            {
+              "id": "baseline-and-result",
+              "verdict": "PASS",
+              "evidence": "Result: implementation acceptance is incomplete at candidate c22 against accepted baseline r5.",
+              "reason": "Keeps proposed r6 inactive and identifies the missing archive capability and replacement coverage as an unmet Required criterion."
+            },
+            {
+              "id": "authority-and-gap",
+              "verdict": "PASS",
+              "evidence": "Operations accepted temporarily unavailable archive evidence; that neither supplies the missing archive capability nor authorizes changing Product's requirements.",
+              "reason": "Rejects GAP-04 as a scope waiver and explains that cancellation and current-only download cannot satisfy 30-day retrieval."
+            },
+            {
+              "id": "targeted-next-step",
+              "verdict": "PASS",
+              "evidence": "The smallest justified follow-up is an explicit decision from the accountable Product owner on ED-08 and the proposed r6 baseline.",
+              "reason": "Preserves completed CSV evidence and gives both valid paths: accepted amendment or archive implementation and validation under r5."
+            },
+            {
+              "id": "review-boundary",
+              "verdict": "PASS",
+              "evidence": "Deployment and production observation are outside this review.",
+              "reason": "Reports only dossier-based implementation findings, proposes conditional next steps, and claims no runs, record edits, or external approval."
+            }
+          ]
+        },
+        {
+          "responseId": "response17",
+          "verdict": "PASS",
+          "criteria": [
+            {
+              "id": "baseline-and-result",
+              "verdict": "PASS",
+              "evidence": "This findings-only review judges the inventory-report feature against accepted baseline r5 at candidate c22",
+              "reason": "Explicitly concludes incomplete because BAC-02 has no implemented coverage or validation, while ED-08/r6 remain proposals."
+            },
+            {
+              "id": "authority-and-gap",
+              "verdict": "PASS",
+              "evidence": "Cancellation does not discharge Required scope.",
+              "reason": "Also distinguishes Operations' acceptance of unavailable evidence from Product scope authority and rejects current-only download as 30-day retrieval."
+            },
+            {
+              "id": "targeted-next-step",
+              "verdict": "PASS",
+              "evidence": "return ED-08/r6 to the accountable Product owner for an explicit decision.",
+              "reason": "Preserves BAC-01/RES-10/EV-10 and offers accepted amendment or Engineering archive delivery with passing validation, avoiding unrelated revalidation."
+            },
+            {
+              "id": "review-boundary",
+              "verdict": "PASS",
+              "evidence": "All findings rely on the supplied dossier; no new execution is claimed.",
+              "reason": "Keeps the review findings-only and confined to implementation acceptance, with no claimed record change or deployment approval."
+            }
+          ]
+        },
+        {
+          "responseId": "response18",
+          "verdict": "PASS",
+          "criteria": [
+            {
+              "id": "baseline-and-result",
+              "verdict": "PASS",
+              "evidence": "This is a known missing Required capability; archive validation is also absent.",
+              "reason": "Judges c22 incomplete against accepted r5, leaves r6 proposed, and explicitly distinguishes missing implementation from merely missing evidence."
+            },
+            {
+              "id": "authority-and-gap",
+              "verdict": "PASS",
+              "evidence": "neither supplies that evidence nor gives Operations authority to waive Product’s requirement.",
+              "reason": "Rejects GAP-04 as satisfaction or waiver and explains that cancellation/current-only CSV does not discharge 30-day retrieval."
+            },
+            {
+              "id": "targeted-next-step",
+              "verdict": "PASS",
+              "evidence": "The smallest follow-up is to return ED-08 to the accountable Product owner for an explicit decision.",
+              "reason": "Preserves BAC-01/RES-10/EV-10 and other supported results while giving conditional accepted-amendment or archive-delivery-and-validation paths."
+            },
+            {
+              "id": "review-boundary",
+              "verdict": "PASS",
+              "evidence": "This finding uses the supplied dossier; no new execution or inspection is claimed.",
+              "reason": "Reports findings without claiming record edits, archive implementation, accepted scope change, or deployment approval."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unexpectedExposure": []
+}

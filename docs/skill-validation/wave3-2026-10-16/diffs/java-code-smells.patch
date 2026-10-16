@@ -1,0 +1,55 @@
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\java-code-smells/references/catalogue-within.md" "b/C:\\git\\agent-skills\\skills\\java-code-smells/references/catalogue-within.md"
+index 5bd527e..5986178 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\java-code-smells/references/catalogue-within.md"
++++ "b/C:\\git\\agent-skills\\skills\\java-code-smells/references/catalogue-within.md"
+@@ -89,11 +89,20 @@ zip` recurring together across signatures.
+ 
+ - **Looks like:** unused private methods, unreachable branches, commented-out blocks,
+   feature-flag arms for flags that shipped, `@Deprecated` items with no external callers.
+-- **Detect:** compiler and IDE inspections for private scope; for public scope, search
+-  callers — reflection, serialisation and framework wiring first.
++- **Detect:** compiler/IDE reports and missing direct callers are leads at any visibility.
++  Inspect reflective, serialization and framework entry points for private members as well
++  as public APIs; `private` does not establish unreachability. If supported callers or runtime
++  configuration cannot be inspected, keep that reachability gap explicit.
+ - **Not it when:** public API kept for compatibility (that is java-api-design's
+-  deprecation policy), or entry points invoked reflectively by a framework.
+-- **Fix:** delete it. Version control is the archive; there is no other technique.
++  deprecation policy), or a verified runtime entry point. For an ordinary `Serializable`
++  class, private `writeObject(ObjectOutputStream)` and `readObject(ObjectInputStream)` can
++  be called by serialization without direct source callers. Check the exact signature and
++  effective protocol: `Externalizable` uses `writeExternal`/`readExternal` instead, so the
++  familiar hook name alone does not establish use
++  ([Serializable](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/Serializable.html),
++  [Externalizable](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/Externalizable.html), Java 21).
++- **Fix:** delete only after establishing it is unused in the supported configurations and
++  compatibility surface. Version control is the archive.
+ 
+ ## Comments as deodorant
+ 
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\java-code-smells/references/smell-to-refactoring.md" "b/C:\\git\\agent-skills\\skills\\java-code-smells/references/smell-to-refactoring.md"
+index b00a3b8..2aa3f80 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\java-code-smells/references/smell-to-refactoring.md"
++++ "b/C:\\git\\agent-skills\\skills\\java-code-smells/references/smell-to-refactoring.md"
+@@ -29,7 +29,7 @@ The same investigation can support both findings without duplicating their sever
+ | Global Data                      | Encapsulate Variable                                         | Narrow the scope, or inject                                                                            | Same: get one access point before arguing about lifetime                                                                             |
+ | Loops                            | Keep a cohesive loop; split independent computations only    | Convert the parts that read better as pipelines                                                        | Preserve dependencies, effect order and failure behavior; early exit, index use or a measured hot path may favour keeping the loop   |
+ | Boolean blindness                | Replace Type Code with an enum                               | Remove Flag Argument at the call sites                                                                 | Is the boolean a property (keep) or a behaviour switch (split)?                                                                      |
+-| Dead Code                        | Prove reachability, then delete                              | Deprecate/migrate if externally observable                                                             | Public, reflective, serialized, native-image and framework entry points need stronger evidence than text search                      |
++| Dead Code                        | Establish unreachability, then delete                        | Deprecate/migrate if externally observable                                                             | At every visibility, inspect reflective, serialized, native-image and framework entry points; text search alone is insufficient      |
+ | Comments as deodorant            | Rename or extract when code hides intent                     | Preserve the rationale/invariant and simplify around it                                                | Syntax paraphrase is noise; phase comments in dense algorithms and why-comments may be essential                                     |
+ | Speculative Generality           | Inline Class; Collapse Hierarchy                             | Delete unused parameters and hooks                                                                     | Is the seam load-bearing for tests or module boundaries? Then it stays                                                               |
+ | Lazy Element                     | Inline Function / Inline Class                               | Collapse Hierarchy                                                                                     | A thin wrapper carrying a rule or demonstrated concept distinction can be a fix                                                      |
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\java-code-smells/skill.yaml" "b/C:\\git\\agent-skills\\skills\\java-code-smells/skill.yaml"
+index 632dde3..f649e8d 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\java-code-smells/skill.yaml"
++++ "b/C:\\git\\agent-skills\\skills\\java-code-smells/skill.yaml"
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: java-code-smells
+-version: 1.4.4
++version: 1.4.5
+ description: >-
+   The detection catalogue for Java code smells: Long Method, God Object, Feature Envy,
+   Primitive Obsession, Data Clumps, Shotgun Surgery, Divergent Change, Mysterious Name,

@@ -1,0 +1,49 @@
+{
+  "runtime": "v25.6.1",
+  "classification": "deterministic numerical controls; no workload or agent evaluation",
+  "checks": 7,
+  "results": [
+    {
+      "name": "complete post-change trace time average",
+      "actual": 0.4,
+      "expected": 0.4,
+      "passed": true
+    },
+    {
+      "name": "independent clipped residence integral",
+      "actual": 0.4,
+      "expected": 0.4,
+      "passed": true
+    },
+    {
+      "name": "negative control: arithmetic row mean is not time mean",
+      "actual": 1,
+      "expected": 1,
+      "passed": true
+    },
+    {
+      "name": "redundant unchanged observation leaves time average invariant",
+      "actual": 0.4,
+      "expected": 0.4,
+      "passed": true
+    },
+    {
+      "name": "redundant unchanged observation changes arithmetic row mean",
+      "actual": 0.8,
+      "expected": 0.8,
+      "passed": true
+    },
+    {
+      "name": "same sparse observations admit a different true time average",
+      "actual": 0.7,
+      "expected": 0.7,
+      "passed": true
+    },
+    {
+      "name": "preserved edge-effect control: complete departure residences differ from clipped area",
+      "actual": 0.6,
+      "expected": 0.6,
+      "passed": true
+    }
+  ]
+}

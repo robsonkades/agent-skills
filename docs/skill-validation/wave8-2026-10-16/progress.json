@@ -1,0 +1,541 @@
+{
+  "at": "2026-10-16T18:48:45.840Z",
+  "records": [
+    {
+      "run": "run-01",
+      "caseId": "Q1",
+      "condition": "none",
+      "trial": 1,
+      "stopped": true,
+      "error": null,
+      "protectedDifferences": [],
+      "outputs": [
+        {
+          "path": "REVIEW.md",
+          "present": true,
+          "sha256": "4b9f8c461e31805afcdff7123c765466b9e1043fee88fbd4d4ce627ee53751e8"
+        },
+        {
+          "path": "result.json",
+          "present": true,
+          "sha256": "8a2583117ebd4efcd360832ab8fec8641f453efe795aec4d0800b3d292ac6527"
+        },
+        {
+          "path": "execution.json",
+          "present": true,
+          "sha256": "001809384388011f7dd1900b09a87528ca8aab24d92826b2dc4f7beef1cee32a"
+        },
+        {
+          "path": "solution.sql",
+          "present": true,
+          "sha256": "3e28c96e76cec40b332729cd90c147c03a9c6d3929aef976a8590778f99adebd"
+        },
+        {
+          "path": "verify.mjs",
+          "present": true,
+          "sha256": "c0524411e11986416121651f83024aff4b4d0f92a6fe3cd8d1ebfb57d1145001"
+        }
+      ]
+    },
+    {
+      "run": "run-02",
+      "caseId": "Q1",
+      "condition": "skill",
+      "trial": 1,
+      "stopped": true,
+      "error": null,
+      "protectedDifferences": [],
+      "outputs": [
+        {
+          "path": "REVIEW.md",
+          "present": true,
+          "sha256": "a2d3f5e239c4a79c16c9dd203ad07299232196445354d2eb7fed09243ea0b141"
+        },
+        {
+          "path": "result.json",
+          "present": true,
+          "sha256": "764b79c5cd046224cd9124bc89e3e9bcca0922816cc2d9e277f4ef864201e744"
+        },
+        {
+          "path": "execution.json",
+          "present": true,
+          "sha256": "3415ed8cfafb5fbad03ba26549b51d1068a5d3444c11938d535c5b7e8a951c34"
+        },
+        {
+          "path": "solution.sql",
+          "present": true,
+          "sha256": "3e28c96e76cec40b332729cd90c147c03a9c6d3929aef976a8590778f99adebd"
+        },
+        {
+          "path": "verify.mjs",
+          "present": true,
+          "sha256": "c690803d840a4775b7ca25fe6aa706ae0687116159682484480dbae2f6aa42cf"
+        }
+      ]
+    },
+    {
+      "run": "run-03",
+      "caseId": "Q2",
+      "condition": "skill",
+      "trial": 1,
+      "stopped": true,
+      "error": null,
+      "protectedDifferences": [],
+      "outputs": [
+        {
+          "path": "REVIEW.md",
+          "present": true,
+          "sha256": "5b7f7ac65f7b0e8de52a7066b1ab91c9b9e1a66f5f2c24068987c8d8dae124cd"
+        },
+        {
+          "path": "result.json",
+          "present": true,
+          "sha256": "fb128ffe54760d0658e5c0de65a6afb96c590e3260d540612d9bac9a164d845b"
+        },
+        {
+          "path": "execution.json",
+          "present": true,
+          "sha256": "f7e632a1592dbc01f55161d002c4f5f46836786400f4921152f221ad6cfed85a"
+        },
+        {
+          "path": "solution.sql",
+          "present": true,
+          "sha256": "804dba50203f249b5c7ae746a02f0b90fdf17ffe925492d2830930b6867acb63"
+        },
+        {
+          "path": "verify.mjs",
+          "present": true,
+          "sha256": "b69fa22b6b3d38d109e42b2be7b9f64bd7e5acf3ca45486cb84967fdcf005242"
+        }
+      ]
+    },
+    {
+      "run": "run-04",
+      "caseId": "Q2",
+      "condition": "none",
+      "trial": 1,
+      "stopped": true,
+      "error": null,
+      "protectedDifferences": [],
+      "outputs": [
+        {
+          "path": "REVIEW.md",
+          "present": true,
+          "sha256": "dd23c38d388a622267eb58f944a276cb67734727460ae8a55548a00611281c51"
+        },
+        {
+          "path": "result.json",
+          "present": true,
+          "sha256": "5b68d9341b8853f5f58b326b121e1a4ef757fa90964779fde34b88a8eb1dc674"
+        },
+        {
+          "path": "execution.json",
+          "present": true,
+          "sha256": "d887e39d4a1ad19f741d98aef3cf8edd9d4f056398ea2a74a2c65b63d613ebda"
+        },
+        {
+          "path": "solution.sql",
+          "present": true,
+          "sha256": "f0525b36cdb94d8b0f2e06051a5c0b421f60f86e84dcb604f059b13927f25c08"
+        },
+        {
+          "path": "verify.mjs",
+          "present": true,
+          "sha256": "6561e8db4a025d20b59a16ad62a2d113e5b89cd4bbf605312a2e921b51132241"
+        }
+      ]
+    },
+    {
+      "run": "run-05",
+      "caseId": "Q3",
+      "condition": "none",
+      "trial": 1,
+      "stopped": true,
+      "error": null,
+      "protectedDifferences": [],
+      "outputs": [
+        {
+          "path": "REVIEW.md",
+          "present": true,
+          "sha256": "3613aa0d41ee7efd0439f6d43f59bd5790ebfff0050720f800e52532dee6248a"
+        },
+        {
+          "path": "result.json",
+          "present": true,
+          "sha256": "df9a9a6a9861c11ea8a405b26ac566ce7e8a69b0ed138f343253550abb3769d4"
+        },
+        {
+          "path": "execution.json",
+          "present": true,
+          "sha256": "29734d579cdf8a7f257c87e0c19a542f95946465a8dd6f8ef8d4ae08323a10c7"
+        }
+      ]
+    },
+    {
+      "run": "run-06",
+      "caseId": "Q3",
+      "condition": "skill",
+      "trial": 1,
+      "stopped": true,
+      "error": null,
+      "protectedDifferences": [],
+      "outputs": [
+        {
+          "path": "REVIEW.md",
+          "present": true,
+          "sha256": "0aac75822dfa531bf50c261900f8e2672e98c45b891599f0e8a05fd68c70b356"
+        },
+        {
+          "path": "result.json",
+          "present": true,
+          "sha256": "7b4f228ad98854041f8f4138b6bf234c3054f65c71b88f45d0f214c6430fda55"
+        },
+        {
+          "path": "execution.json",
+          "present": true,
+          "sha256": "dd53588cbc1846ac5fc30d0cc26ae0534411b0f4119ef036cbbac389fafb9511"
+        }
+      ]
+    },
+    {
+      "run": "run-07",
+      "caseId": "Q4",
+      "condition": "skill",
+      "trial": 1,
+      "stopped": true,
+      "error": null,
+      "protectedDifferences": [],
+      "outputs": [
+        {
+          "path": "REVIEW.md",
+          "present": true,
+          "sha256": "b603fa3bf2be74400881e1d39bad8ac48063b849cd3af6d4a56fdf0a5d6257fa"
+        },
+        {
+          "path": "result.json",
+          "present": true,
+          "sha256": "4a673feab2c923baff21b2112add75a5a6dcc4aa6aa0e08d09696125fbc2c0d2"
+        },
+        {
+          "path": "execution.json",
+          "present": true,
+          "sha256": "1e905ea3216a6355a8934f36dc0b345eec3e4c3754f9df97a5447416f26ba4f3"
+        },
+        {
+          "path": "solution.sql",
+          "present": true,
+          "sha256": "73d9efb7db9f8c8250bee96ccf6546d6e2f4cf9db05e88b6152e46c81fcb5c77"
+        },
+        {
+          "path": "verify.mjs",
+          "present": true,
+          "sha256": "ac3a03bce9c62b2c612ad0d579b0dfdcc5a3558dc988cd3e5241b69f3508027a"
+        }
+      ]
+    },
+    {
+      "run": "run-08",
+      "caseId": "Q4",
+      "condition": "none",
+      "trial": 1,
+      "stopped": true,
+      "error": null,
+      "protectedDifferences": [],
+      "outputs": [
+        {
+          "path": "REVIEW.md",
+          "present": true,
+          "sha256": "e59a695f2e79cd698248d017e2d02eb094978cbb06cd6cee78e1eaa0f1a894f2"
+        },
+        {
+          "path": "result.json",
+          "present": true,
+          "sha256": "65404124b3c54b9b262293e80d90379c0f67984ca11a8003927b88132f94d9e0"
+        },
+        {
+          "path": "execution.json",
+          "present": true,
+          "sha256": "4811958fac4b1530b30dd1d53883e24e05d57e9cc92c806af254bc65c2cd6a4b"
+        },
+        {
+          "path": "solution.sql",
+          "present": true,
+          "sha256": "91fb8090bc4333777e477439245839451683c486c9f5f579081b5127078e7bfc"
+        },
+        {
+          "path": "verify.mjs",
+          "present": true,
+          "sha256": "0a76e69c372c10810366881aa44210c4127025adb97b7660ed9e44b2beb17c42"
+        }
+      ]
+    },
+    {
+      "run": "run-09",
+      "caseId": "Q1",
+      "condition": "skill",
+      "trial": 2,
+      "stopped": true,
+      "error": null,
+      "protectedDifferences": [],
+      "outputs": [
+        {
+          "path": "REVIEW.md",
+          "present": true,
+          "sha256": "450c61a607ef11e761937ce40694577c1123a5607158e347dd888e0d3b27a842"
+        },
+        {
+          "path": "result.json",
+          "present": true,
+          "sha256": "0e67dd7d4b4ae5347db9fc34e81da1597528b3e9f33c2c4cf43cafad3a9bc5f4"
+        },
+        {
+          "path": "execution.json",
+          "present": true,
+          "sha256": "b53df7e79375f28baff888a2603412db0fe8fbd13e7942e4e36d49738ba666a9"
+        },
+        {
+          "path": "solution.sql",
+          "present": true,
+          "sha256": "3e28c96e76cec40b332729cd90c147c03a9c6d3929aef976a8590778f99adebd"
+        },
+        {
+          "path": "verify.mjs",
+          "present": true,
+          "sha256": "1bcb382e3c25ebc799a42713d02086d247969904c63be55ee871251a655c2fb8"
+        }
+      ]
+    },
+    {
+      "run": "run-10",
+      "caseId": "Q1",
+      "condition": "none",
+      "trial": 2,
+      "stopped": true,
+      "error": null,
+      "protectedDifferences": [],
+      "outputs": [
+        {
+          "path": "REVIEW.md",
+          "present": true,
+          "sha256": "387c3f0085789653f9251cdcda5ffa5190964c16baeb1c242957e419e4ac4bf5"
+        },
+        {
+          "path": "result.json",
+          "present": true,
+          "sha256": "54ae25c928cf4a27eac4524187428ff8b3514eab996c386ca7fbc55b074a87e6"
+        },
+        {
+          "path": "execution.json",
+          "present": true,
+          "sha256": "d05c3d45f0cf21d5536ec4c33f61b5cc382b46f2fa73e1deaa7dfbf14da0066d"
+        },
+        {
+          "path": "solution.sql",
+          "present": true,
+          "sha256": "3e28c96e76cec40b332729cd90c147c03a9c6d3929aef976a8590778f99adebd"
+        },
+        {
+          "path": "verify.mjs",
+          "present": true,
+          "sha256": "00a92c6e2140850a0fc4e26d2b59c07e497341cb615afc350ffa065ce5b85e80"
+        }
+      ]
+    },
+    {
+      "run": "run-11",
+      "caseId": "Q2",
+      "condition": "none",
+      "trial": 2,
+      "stopped": true,
+      "error": null,
+      "protectedDifferences": [],
+      "outputs": [
+        {
+          "path": "REVIEW.md",
+          "present": true,
+          "sha256": "44afa24b278673570cbb72dbc61b4c73fd16ddec2955d9d7a5ff02dc5ad9310b"
+        },
+        {
+          "path": "result.json",
+          "present": true,
+          "sha256": "38d4108af2129012c0099995a8f58cbcecbb71215118642d4496fa0553d041f0"
+        },
+        {
+          "path": "execution.json",
+          "present": true,
+          "sha256": "b655550853880d835d699c842abb1254435748702cd73655e3c3e0dd4cd398f1"
+        },
+        {
+          "path": "solution.sql",
+          "present": true,
+          "sha256": "804dba50203f249b5c7ae746a02f0b90fdf17ffe925492d2830930b6867acb63"
+        },
+        {
+          "path": "verify.mjs",
+          "present": true,
+          "sha256": "85bd7e2736fb6804c1fb01d5678c076ac91492c28e84ca30e6e2f77a1394af85"
+        }
+      ]
+    },
+    {
+      "run": "run-12",
+      "caseId": "Q2",
+      "condition": "skill",
+      "trial": 2,
+      "stopped": true,
+      "error": null,
+      "protectedDifferences": [],
+      "outputs": [
+        {
+          "path": "REVIEW.md",
+          "present": true,
+          "sha256": "ab220eb192bfe7df5737784077772527513b531defd0d89a5df2bb261405d218"
+        },
+        {
+          "path": "result.json",
+          "present": true,
+          "sha256": "f86acd6becf0f3db2d6aed237fdd3a678928bd8b0c4c83f73e88ef5eb4c63894"
+        },
+        {
+          "path": "execution.json",
+          "present": true,
+          "sha256": "b78e38c46e91a45ccb2e6c3251a8cf78e3c614195760cd798a130ca63ed5ae3d"
+        },
+        {
+          "path": "solution.sql",
+          "present": true,
+          "sha256": "6161d74b45dc4ac361e5cc7d28383a82e901426d0f472a99077a126545c22c42"
+        },
+        {
+          "path": "verify.mjs",
+          "present": true,
+          "sha256": "183e62629e9db2de70119e0583ba371e94f8db7e91c612f55110bc180962505e"
+        }
+      ]
+    },
+    {
+      "run": "run-13",
+      "caseId": "Q3",
+      "condition": "skill",
+      "trial": 2,
+      "stopped": true,
+      "error": null,
+      "protectedDifferences": [],
+      "outputs": [
+        {
+          "path": "REVIEW.md",
+          "present": true,
+          "sha256": "ae579acd3788a43153d05be6ab43388772f09c2c428b811d0d7a7f84ef2badfb"
+        },
+        {
+          "path": "result.json",
+          "present": true,
+          "sha256": "59c3b4c438d3e8a20fd11b6ed2c6811f47dd77bdc1cd27790f285884ea6368b0"
+        },
+        {
+          "path": "execution.json",
+          "present": true,
+          "sha256": "06c81eb4f23defe80c9da3d9b827f0de7b2fcc6f84c3ec61475b255d302d1e80"
+        }
+      ]
+    },
+    {
+      "run": "run-14",
+      "caseId": "Q3",
+      "condition": "none",
+      "trial": 2,
+      "stopped": true,
+      "error": null,
+      "protectedDifferences": [],
+      "outputs": [
+        {
+          "path": "REVIEW.md",
+          "present": true,
+          "sha256": "c17df348f966f8a11eb90267f09670f8b18beac7a8f4096c070da1f3ed18a0b5"
+        },
+        {
+          "path": "result.json",
+          "present": true,
+          "sha256": "0671501ad5f8a845ec26ad9fc8a88d1a0fc6e11333945020ee5960fee0604244"
+        },
+        {
+          "path": "execution.json",
+          "present": true,
+          "sha256": "fbd675b46b384e19e9e6097ef47a9c9654b545b2ec560dd3718031366b4fad0e"
+        }
+      ]
+    },
+    {
+      "run": "run-15",
+      "caseId": "Q4",
+      "condition": "none",
+      "trial": 2,
+      "stopped": true,
+      "error": null,
+      "protectedDifferences": [],
+      "outputs": [
+        {
+          "path": "REVIEW.md",
+          "present": true,
+          "sha256": "adecd38c95d22008ce250897be416dd99f581ab0791421cc6fcf7c88a1c44d84"
+        },
+        {
+          "path": "result.json",
+          "present": true,
+          "sha256": "17fac38e2eb23cbd70cb2d20ba2ab0128a683c817198e9f0d4d7df4d087d1b22"
+        },
+        {
+          "path": "execution.json",
+          "present": true,
+          "sha256": "2ec9809d50ec4fe8be3a568b874dc497bf8e3fcf2c75638ac08ff432f9b91a24"
+        },
+        {
+          "path": "solution.sql",
+          "present": true,
+          "sha256": "73d9efb7db9f8c8250bee96ccf6546d6e2f4cf9db05e88b6152e46c81fcb5c77"
+        },
+        {
+          "path": "verify.mjs",
+          "present": true,
+          "sha256": "f6f67868c73827abec983b8554a8f6df59b54ff9828821da5705f79178fbe0ff"
+        }
+      ]
+    },
+    {
+      "run": "run-16",
+      "caseId": "Q4",
+      "condition": "skill",
+      "trial": 2,
+      "stopped": true,
+      "error": null,
+      "protectedDifferences": [],
+      "outputs": [
+        {
+          "path": "REVIEW.md",
+          "present": true,
+          "sha256": "0c192b369f641055ace1c2857f238aeed61914a7fce4328df358daa1a3536feb"
+        },
+        {
+          "path": "result.json",
+          "present": true,
+          "sha256": "9330799af1ed849ab2ed612bccd57a9b9f3ffbcdf600279a474f8ce9b42b1209"
+        },
+        {
+          "path": "execution.json",
+          "present": true,
+          "sha256": "d8fe2b485dfb5f64219073214f6a3776621053b4d0aab578f307505ec22b83b2"
+        },
+        {
+          "path": "solution.sql",
+          "present": true,
+          "sha256": "24f43d3c6723947308c5ea2ffe5df501bf8b10370874e2fd61b5134dc07ce2a5"
+        },
+        {
+          "path": "verify.mjs",
+          "present": true,
+          "sha256": "308d1329e90fd4faad489cf691f3bc4afd904242062553d5d1450d33b6d87f9a"
+        }
+      ]
+    }
+  ]
+}

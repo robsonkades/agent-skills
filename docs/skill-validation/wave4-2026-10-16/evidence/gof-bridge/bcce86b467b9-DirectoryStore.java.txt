@@ -1,0 +1,29 @@
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import static java.nio.file.StandardOpenOption.CREATE_NEW;
+
+final class DirectoryStore implements Store {
+    private final Path root;
+
+    DirectoryStore(Path root) throws IOException {
+        this.root = Files.createDirectories(root);
+    }
+
+    Path path(String key) {
+        if (!key.matches("[a-z0-9-]+")) throw new IllegalArgumentException("key");
+        return root.resolve(key + ".txt");
+    }
+
+    public boolean exists(String key) {
+        return Files.exists(path(key));
+    }
+
+    public void write(String key, byte[] bytes) throws IOException {
+        Files.write(path(key), bytes);
+    }
+
+    void importReport(String key, byte[] bytes) throws IOException {
+        Files.write(path(key), bytes, CREATE_NEW);
+    }
+}

@@ -95,7 +95,9 @@ a full request-chain redesign or an Application Controller on every review.
    chain when centralization prevents drift and preserves ordering.
 3. **Place it at the right stage.** Filter, interceptor, argument resolver, exception
    handler, advice: they see different things and run at different times. Choosing wrongly
-   produces a concern that works until it does not.
+   produces a concern that works until it does not. For request state or resources, trace
+   acquisition and release through short-circuit, exception and async paths; a callback's
+   name does not guarantee that it runs on each path.
 4. **Assess flow decisions.** Repeated or independently changing journey decisions can
    justify an HTTP-independent Application Controller. A local response choice may remain
    in a handler; authoritative mutation rules still belong to the application/domain contract.

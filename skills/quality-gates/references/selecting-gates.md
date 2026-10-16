@@ -17,6 +17,49 @@ The tier is set by blast radius, not file count or version labels. A default tim
 systemic if widely shared. A rename can affect reflection, serialization or external contracts
 that compilation does not check. Use the table as guidance within the repository's required gates.
 
+## Trace a gate to its protected decision
+
+Use this when reviewing an existing pipeline, choosing a check for a failure mode, or claiming
+that a changed gate blocks merge or release. Trace one relevant gate through the existing
+artifacts before generalizing to the rest:
+
+1. **Detection:** locate the enabled rule, assertion or validator for the named failure and the
+   inputs it examines. Follow the workflow command into scripts, lifecycle/task bindings,
+   profiles, includes/excludes and relevant environment. A declared plugin, a generated report
+   or a successful build does not by itself show that this detection ran. If the assertion is
+   absent or exercises a different boundary, route the missing coverage to test design rather
+   than adding unrelated checks.
+2. **Execution:** compare that scope with a retained run: selected tests/rules, input revision or
+   artifact digest, conditions, reports and original result. Check that a known violation of
+   the intended property reaches the detector, not just that a synthetic command exits nonzero.
+   The latter tests result propagation, not detection quality.
+3. **Decision:** locate the current rule requiring that result for the actual merge target or
+   release path. Inspect applicable protections, check identity/source, enforcement state and
+   relevant bypass conditions. Repository workflow YAML describes a job; it is not the live
+   policy. A red check is not evidence that the decision was blocked, and a green check alone
+   cannot demonstrate rejection of an invalid change.
+
+Keep the links and gaps in the existing PR, gate configuration or review record. State separately
+what is configured, what executed, and what enforcement was verified, including the scope and
+conditions of each claim. If current policy or a representative run is inaccessible, leave that
+part unverified and continue local configuration and checker validation. Do not infer a missing
+protection merely because its configuration is outside the checkout.
+
+## Evidence needed for selective checks
+
+A narrow gate set needs a complete change comparison and a credible affected-scope map, not
+just a list of familiar file extensions. Inspect the base/head revisions, deleted and renamed
+paths, shared build/configuration inputs, generated sources and dependent modules/consumers.
+For example, a parent POM change can affect modules whose source paths did not change; a docs
+file consumed by a generator is not necessarily cosmetic.
+
+If the diff, dependency map or selector result is missing, truncated or stale, do not interpret
+it as "nothing affected". Repair the evidence or use the repository's conservative fallback
+gate set; if neither can run, report required evidence as missing. Retain the selected/excluded
+checks, revision and selection reason so an aggregate result can distinguish a justified skip
+from a check that never ran. Test the selector with both a truly unrelated edit and a shared-input
+change that must select downstream checks.
+
 ## Five worked changes
 
 ### A typo in a README
@@ -101,10 +144,18 @@ for the hotfix" becoming the normal path.
 
 ## Recording a skip
 
-Whenever a gate is skipped under pressure, one line in the pull request or incident record:
-what was skipped, why, and when it will run. This is the difference between a decision and a
-habit, and it is the same discipline as recording deliberate technical debt
-(technical-debt-decisions).
+Distinguish a policy-authorized out-of-scope selection from an exception to an applicable gate.
+For an exception, link the existing authorization and record the exact check/revision or release,
+accepted risk, accountable owner, compensating evidence and expiry or completion trigger in the
+pull request or incident record (technical-debt-decisions). A short record is enough when it
+contains those facts; an issue link without a decision is not a waiver.
+
+Recheck the exception when its expiry arrives or its assumptions change: expanded scope,
+different artifact, failed compensation or a new applicable advisory may invalidate it before
+the date. Restore the required check or obtain a fresh decision through the established policy;
+do not renew by copying yesterday's waiver. An accepted exception remains deferred/accepted risk,
+not a test pass. Close it with the promised evidence or an explicitly recorded replacement
+decision, not merely because the incident ended.
 
 ## For an agent running gates
 
@@ -133,6 +184,12 @@ cancelled, missing or unexpectedly skipped results. Accept an out-of-scope skip 
 successful, trusted selection decision explains it. Test both legitimate non-selection and an
 upstream failure that must block merging.
 
+Also verify the change comparison used by path selection. GitHub documents different diffs for
+push and pull-request events and limits on the returned changed-file set; a match outside that
+set may not trigger a filtered workflow. Custom selectors must account for their own pagination
+and truncation behavior. Do not treat a partial list as proof that all changes are cosmetic.
+See [GitHub diff comparisons](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#git-diff-comparisons).
+
 Check whether an earlier step already hid the failure. With step-level `continue-on-error`,
 `steps.<id>.outcome` can be `failure` while `steps.<id>.conclusion` is `success`; a successful
 job result alone then does not prove its checker passed. Prefer leaving required checkers
@@ -145,6 +202,10 @@ options enabled; a report artifact is insufficient. See [GitHub step outcome and
 Verify which commit the required result covers (head, test merge or merge-group commit). If a
 merge queue requires this Actions check, include the `merge_group` trigger; a pull-request run
 alone does not supply that result. Confirm the configured required check name and source.
+Inspect all applicable branch protection and rulesets for that target: GitHub rulesets can be
+disabled, can target different branches, and can allow specified bypass actors; applicable
+rulesets also layer with other protections. A ruleset file or one disabled ruleset alone does
+not establish the effective policy. See [GitHub ruleset enforcement and layering](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets).
 
 See [GitHub required-check behavior](https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/troubleshooting-required-status-checks)
 and [job dependencies and conditions](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-jobs).

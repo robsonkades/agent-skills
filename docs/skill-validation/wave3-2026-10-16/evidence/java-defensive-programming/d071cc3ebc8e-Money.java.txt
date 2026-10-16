@@ -1,0 +1,17 @@
+import java.math.*;
+import java.util.*;
+import java.util.regex.*;
+
+public record Money(BigDecimal amount, Currency currency) {
+    public Money {
+        if (amount == null) throw new RefundInputException("amount", "required");
+        if (currency == null) throw new RefundInputException("currency", "required");
+        if (amount.getClass() != BigDecimal.class) {
+            throw new RefundInputException("amount", "unsupported_representation");
+        }
+        if (amount.signum() <= 0) {
+            throw new RefundInputException("amount", "must_be_positive");
+        }
+    }
+}
+

@@ -1,0 +1,25 @@
+# Budget persistence slice
+
+This is an authored review fixture, not a production capture. Java source is a partial
+excerpt: project domain types, JPA mapping boilerplate and transaction wiring are omitted.
+The shape uses Java17 and javax.persistence. No dependency upgrade is authorized.
+
+The domain owns BudgetGateway.findById(BudgetId), returning Optional<Budget>.
+An existing identity must reconstruct one coherent committed revision of the root and
+all its allocations. It may be an older coherent revision. A missing identity is absent;
+provider failure and invalid persisted state are failures handled at the outer boundary.
+Loading raises no new events and preserves recorded identity/revision/audit facts.
+A listing projection is a separate application query and is unaffected by this review.
+
+BudgetJpaEntity has id, spendingLimit and a mapped long version. Budget.with restores
+those fields plus allocation facts without creation side effects. The gateway only reads.
+Each invocation has a fresh EntityManager and one already-active read-only PostgreSQL18
+transaction. Root and child SQL run on the same connection under the effective isolation
+setting supplied in transaction.properties. L2 and query caches are disabled; ordinary
+first-level persistence-context identity is retained. No OSIV or earlier managed state.
+The scalar allocation query is executed, not fulfilled by a cache.
+
+Every writer of the root or allocation rows uses the single atomic transaction/revision
+protocol shown in writer.sql; a zero root update rolls that transaction back.
+Do not generalize this fixture's writer coverage to unrelated applications.
+The read transaction has not modified these rows and does not request explicit locks.

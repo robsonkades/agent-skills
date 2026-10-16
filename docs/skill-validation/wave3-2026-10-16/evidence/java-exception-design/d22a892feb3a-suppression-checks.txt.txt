@@ -1,0 +1,18 @@
+PASS distinct TWR retains body identity
+PASS distinct TWR retains cleanup identity
+PASS distinct TWR closes once
+PASS same TWR masks primary with self-suppression error
+PASS self-suppression error retains original as cause on this JDK
+PASS same object not added as suppressed
+PASS same TWR still closes once
+PASS guarded manual cleanup retains shared primary
+PASS guarded shared cleanup attempted once
+PASS guard still records distinct cleanup failure
+PASS manual cleanup failure primary when work succeeds
+PASS manual successful cleanup retains normal completion
+PASS disabled suppression loses distinct cleanup evidence
+PASS disabled suppression does not allow self-suppression
+PASS identity matters; same text on distinct instances is valid
+CHECKS=15
+Runtime=25.0.3+9-LTS
+Scope=isolated contract checks compiled with --release 21; runtime is not JDK 21

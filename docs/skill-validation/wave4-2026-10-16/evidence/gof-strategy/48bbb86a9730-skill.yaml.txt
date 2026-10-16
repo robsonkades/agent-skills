@@ -1,0 +1,73 @@
+schemaVersion: 1
+
+name: gof-strategy
+version: 1.2.4
+description: >-
+  Strategy in modern Java, separated into three things that are usually conflated: the design
+  concept (an algorithm varies), the classical class hierarchy, and the lambda or functional
+  interface that expresses it today. Covers when a function value is enough and when a named type
+  earns its keep, selecting a strategy by key instead of an if-else chain, the trap of strategies
+  that differ only in constants and may be configuration, how shared state changes concurrency
+  obligations, and the contract test implementations can share. Use when an algorithm must vary
+  at runtime, when a switch over a type code keeps growing, when a class hierarchy exists whose
+  members are one-line methods, or when strategy classes differ only in a rate or a threshold.
+  Does not cover lifecycle-governed legal operations and transitions (gof-state), separating an
+  abstraction from independently evolving implementations (gof-bridge), an algorithm skeleton
+  with varying steps (gof-template-method), or subclass-controlled creation hooks (gof-factory-method).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/gof-strategy
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/gof-strategy
+
+keywords:
+  - design-patterns
+  - gof
+  - behavioral
+  - strategy
+  - lambda
+  - selection
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: gof-factory-method
+    version: ^1.0.0
+  - name: gof-state
+    version: ^1.0.0
+  - name: gof-template-method
+    version: ^1.0.0
+
+suggests:
+  - gof-bridge
+  - caching-strategies
+  - flame-graph-analysis
+  - gof-chain-of-responsibility
+  - gof-pattern-thinking
+  - java-composition-over-inheritance
+  - java-memory-model
+  - jit-inlining-and-escape-analysis
+  - load-balancing-and-routing
+  - message-ordering-and-partitioning
+  - retries-and-backoff
+  - sharding-and-partitioning
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Strategy
+      short_description: Concept, hierarchy and lambda are three things
+      default_prompt: Use Strategy to review this varying algorithm.

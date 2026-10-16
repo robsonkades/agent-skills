@@ -86,6 +86,11 @@ smuggled in as cleanup; changing existing behavior also requires a compatibility
   Do not copy an already adequate immutable value merely to follow a ritual. Mechanics belong to
   java-immutability; pass the mutable component, aliases and required invariant if redesign is
   needed. See [SEI CERT OBJ06-J](https://cmu-sei.github.io/secure-coding-standards/sei-cert-oracle-coding-standard-for-java/rules/object-orientation-obj/obj06-j/).
+  A non-final class's immutability contract does not establish that an arbitrary subclass
+  preserves it. Do not validate through an overridable accessor and then retain/reread an
+  untrusted implementation as proof-carrying state. Use a trusted implementation or an explicit
+  conversion/snapshot contract, then validate what will be used. Rejecting subclasses is a
+  compatibility decision, not a universal replacement for that evidence.
 
 ## The overengineering line
 

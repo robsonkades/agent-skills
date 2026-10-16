@@ -1,0 +1,15 @@
+{
+  "name": "run-before-v1",
+  "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+  "args": [
+    "-Xms16m",
+    "-Xmx64m",
+    "-cp",
+    "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\policy-before;C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\sdk-v1",
+    "shop.orders.RunBefore"
+  ],
+  "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N",
+  "exitCode": 0,
+  "stdout": "v1|customer@example.test|Order confirmed|Order A-1 confirmed, total 12.50\r\n",
+  "stderr": ""
+}

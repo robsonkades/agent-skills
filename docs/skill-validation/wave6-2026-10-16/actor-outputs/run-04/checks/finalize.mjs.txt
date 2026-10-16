@@ -1,0 +1,103 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { createHash } from 'node:crypto';
+
+const root = process.cwd();
+const project = path.join(root, 'output/project');
+const evidencePath = 'output/checks/evidence.json';
+const evidence = JSON.parse(fs.readFileSync(evidencePath, 'utf8'));
+const review = fs.readFileSync('output/REVIEW.md', 'utf8');
+const assessment = JSON.parse(fs.readFileSync('output/assessment.json', 'utf8'));
+const words = review.trim().split(/\s+/).length;
+if (words > 800 || assessment.disposition !== 'violated') throw new Error('Artifact validation failed');
+const filesRead = [...evidence.fileHashes];
+for (const file of ['output/checks/collect.mjs', 'output/checks/finalize.mjs', evidencePath, 'output/REVIEW.md', 'output/assessment.json']) {
+  filesRead.push({ file, sha256: createHash('sha256').update(fs.readFileSync(file)).digest('hex'), mode: 'complete generated artifact; script executed or content validated', complete: true, truncated: false });
+}
+for (const pair of evidence.comparisons) {
+  for (const file of [pair.input, pair.output]) {
+    const expected = evidence.fileHashes.find(row => row.file === file).sha256;
+    const actual = createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+    if (actual !== expected) throw new Error('Protected file changed: ' + file);
+  }
+}
+const commands = [
+  {
+    program: 'PowerShell (exec_command default shell)',
+    arguments: ['Get-Content -LiteralPath \'TASK.md\' -Raw'], cwd: root,
+    exit: null, exitNote: 'Initial tool wrapper retained stdout only; exit status was not separately recorded.',
+    output: 'Complete TASK.md content returned to reviewer, not truncated; identified by SHA-256 in filesRead.'
+  },
+  {
+    program: 'PowerShell (exec_command default shell)',
+    arguments: ["Get-Date -Format o\nrg --files input skill output\nGet-FileHash -Algorithm SHA256 -LiteralPath 'TASK.md'\nGet-Content -LiteralPath 'skill/SKILL.md' -Raw"], cwd: root,
+    exit: null, exitNote: 'Initial tool wrapper retained stdout only; exit status was not separately recorded.',
+    output: 'Timestamp 2026-10-16T14:27:27.4903011-03:00; project/skill/output paths listed; TASK hash returned; complete skill content returned without truncation.'
+  },
+  {
+    program: 'PowerShell (exec_command default shell)',
+    arguments: ["$paths = @('input/project/docs/review-request.md','input/project/docs/contract.md','input/project/README.md','input/project/check.mjs','input/project/src/memo/BestEffortMemo.java','input/project/src/memo/PublishedEntry.java','input/project/src/memo/ReaderFactory.java','input/project/test/memo/Smoke.java','skill/references/happens-before.md','skill/references/review-checklist.md')\nforeach ($path in $paths) { Write-Output \"FILE $path\"; Get-Content -LiteralPath $path -Raw; Get-FileHash -Algorithm SHA256 -LiteralPath $path | Select-Object Path,Hash | ConvertTo-Json -Compress }\nGet-FileHash -Algorithm SHA256 -LiteralPath 'skill/SKILL.md' | Select-Object Path,Hash | ConvertTo-Json -Compress"], cwd: root, exit: 0,
+    output: 'Complete content of all ten listed paths and their hashes; SKILL.md hash. No truncation. Contents were reviewed; final hashes are recorded below.'
+  },
+  {
+    program: 'node', arguments: ['check.mjs'], cwd: project, exit: 0,
+    stdout: 'sequential-controls=2 PASS\r\n', stderr: '',
+    nestedCommands: 'Reviewed check.mjs uses javac.exe --release 25 -d .build with src/test Java files, then java.exe -cp .build memo.Smoke. Each synchronous Java child has timeout 15000 ms.'
+  },
+  {
+    program: 'node', arguments: ['output/checks/collect.mjs'], cwd: root, exit: 0,
+    output: 'java/javac 25.0.3; factory bootstrap targets legacyValue; bytecode reads entry once and distinct primary/legacy fields; provided-files-identical=true; all-synchronous-children-exited=true.',
+    nestedCommandLogs: evidencePath
+  },
+  ...evidence.commands,
+  {
+    program: 'node', arguments: ['output/checks/finalize.mjs'], cwd: root,
+    exit: '0 on successful completion of this script; confirm in tool result',
+    output: `Validated ${words} review words, assessment JSON, and unchanged protected files; execution.json written.`,
+    note: 'This synchronous finalizer has no child processes.'
+  }
+];
+const execution = {
+  firstObservedTimestamp: '2026-10-16T14:27:27.4903011-03:00',
+  taskStartTimestamp: null,
+  endedAt: new Date().toISOString(),
+  scope: root,
+  commands,
+  filesRead,
+  listingOnly: {
+    command: 'rg --files input skill output',
+    notReadAsContent: ['skill/skill.yaml'],
+    note: 'Listing is not treated as content reading. Output project copies were hashed for equivalence, not independently reviewed. check.mjs was executed; javac consumed all supplied Java sources; javap consumed generated class files.'
+  },
+  urlsConsulted: [
+    {
+      url: 'https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.5.1',
+      access: 'web.run open; success', contentRead: 'Initial chapter excerpt; requested anchor did not initially expose the final-field section.'
+    },
+    {
+      url: 'https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.4.5',
+      access: 'web.run open; success', contentRead: 'Happens-before, startup, data-race rules in returned excerpts.'
+    },
+    {
+      url: 'https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html',
+      arguments: { lineno: 480, response_length: 'long' },
+      access: 'web.run open; success',
+      contentRead: 'Returned lines 342-667, especially 517-582: final-field example, freeze, memory-chain and dereference rules. Excerpt only, not a full chapter read or local document copy.'
+    }
+  ],
+  urlFailures: [],
+  checks: { smoke: 'sequential-controls=2 PASS', protectedFilesIdentical: true, reviewWordCount: words, artifactsValidJson: true },
+  notExecuted: ['stress/jcstress', 'corrected production variant', 'assembly inspection', 'repository-wide checks outside this isolated task'],
+  writes: ['output/project/.build/**', 'output/checks/collect.mjs', 'output/checks/evidence.json', 'output/checks/finalize.mjs', 'output/REVIEW.md', 'output/assessment.json', 'output/execution.json'],
+  limits: [
+    'No runtime concurrency violation was reproduced; diagnosis is a contract/JMM argument.',
+    'Initial command timestamps/statuses not retained are explicitly null; no invented cost, token count or duration.',
+    'All Java child commands used 15000 ms timeouts and returned exit 0. No asynchronous/background process was started.',
+    'Initial read command outputs are summarized here; complete bytes are identified by hashes. Compiler and disassembler logs are in output/checks/evidence.json.',
+    'All source, contract and configuration files supplied in input/project and output/project remain unchanged.'
+  ],
+  subprocessesTerminated: evidence.allSynchronousChildrenExited,
+  allWritesStopped: true
+};
+fs.writeFileSync('output/execution.json', JSON.stringify(execution, null, 2) + '\n');
+console.log(`Validated ${words} review words; JSON and protected hashes OK; subprocessesTerminated=true; allWritesStopped=true.`);

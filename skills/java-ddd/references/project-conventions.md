@@ -94,9 +94,13 @@ The example is evidence of names and implementation, not a correctness oracle:
   No root `@Version` was found in the inspected mappings. That absence is not proof
   that concurrent writes preserve invariants; inspect locking/constraints and test
   the real persistence mechanism before claiming it.
-- `DefaultVideoGateway` saves JPA state and invokes `publishDomainEvents` with a
-  Rabbit sender inside the transactional method, before database commit. This does
-  not establish atomic database/broker delivery. A durable integration requirement
+- `DefaultVideoGateway` publishes recorded events through its injected `EventService`
+  after JPA `save`, before returning. `EventConfig` declares a development-profile
+  local logger and a conditional Rabbit implementation; inspect the effective bean/profile before
+  describing an external effect. With effective JPA transaction interception around
+  the gateway, publication precedes completion of that boundary; an annotation or
+  a repository `save` return alone does not establish commit timing. This does not
+  establish atomic database/broker delivery. A durable integration requirement
   needs a verified mechanism, such as state plus outbox in one transaction followed
   by replay-safe delivery. Preserve simpler local-event handling when durability is
   not required.

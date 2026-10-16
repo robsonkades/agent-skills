@@ -1,0 +1,2 @@
+ M skills/gof-prototype/references/copying-in-java.md
+ M skills/gof-prototype/skill.yaml

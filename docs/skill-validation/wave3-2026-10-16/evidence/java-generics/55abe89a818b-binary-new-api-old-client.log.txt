@@ -1,0 +1,2 @@
+Exception in thread "main" java.lang.NoSuchMethodError: 'java.lang.Comparable Api.identity(java.lang.Comparable)'
+	at Client.main(Client.java:3)

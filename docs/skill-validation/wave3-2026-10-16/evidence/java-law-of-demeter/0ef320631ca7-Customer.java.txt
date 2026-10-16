@@ -1,0 +1,7 @@
+package orders;
+import java.util.Objects;
+public final class Customer {
+    private final Contact contact;
+    public Customer(Contact contact) { this.contact = Objects.requireNonNull(contact); }
+    public Contact contact() { return contact; }
+}

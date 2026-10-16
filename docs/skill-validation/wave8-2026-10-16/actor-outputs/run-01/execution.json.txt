@@ -1,0 +1,104 @@
+{
+  "scope": "Only run-01/TASK.md, run-01/input/, and run-01/output/ were accessed locally. No skills, sibling runs, repository, evaluator, or other agent artifacts were read.",
+  "filesRead": [
+    "TASK.md",
+    "input/README.md",
+    "input/REQUEST.md",
+    "input/schema.sql",
+    "input/seed.sql",
+    "input/current.sql",
+    "input/proposed.sql",
+    "input/fixture.mjs",
+    "output/README.md",
+    "output/REQUEST.md",
+    "output/schema.sql",
+    "output/seed.sql",
+    "output/current.sql",
+    "output/proposed.sql",
+    "output/fixture.mjs",
+    "output/solution.sql",
+    "output/verify.mjs",
+    "output/check.mjs",
+    "output/REVIEW.md",
+    "output/result.json",
+    "output/checks.json",
+    "output/verification.stderr.log",
+    "output/external-mutation.stderr.log"
+  ],
+  "commands": [
+    {
+      "command": "Get-Content -LiteralPath <run-01>/TASK.md -Raw",
+      "exit": 0,
+      "result": "Read scope and task conditions."
+    },
+    {
+      "command": "Get-Content input/README.md and input/REQUEST.md; rg --files input output",
+      "exit": 0,
+      "result": "Read requested contract, environment and authorized file inventory. Paths were absolute and restricted to this run."
+    },
+    {
+      "command": "Get-Content input/schema.sql, input/seed.sql, input/current.sql, input/proposed.sql, input/fixture.mjs, output/solution.sql",
+      "exit": 0,
+      "result": "Inspected all SQL and the supplied helper before using it; confirmed candidate initially matched proposal."
+    },
+    {
+      "command": "node check.mjs",
+      "cwd": "output",
+      "exit": 0,
+      "result": "Seven protected copies matched their inputs byte-for-byte; candidate passed seven semantic cases over seed data and 288 generated rows, two constraint checks and five incorrect-variant checks.",
+      "children": [
+        {
+          "command": "node verify.mjs",
+          "timeoutMs": 20000,
+          "exit": 0,
+          "result": "Approved candidate passed; SQLite experimental-feature warning only."
+        },
+        {
+          "command": "node verify.mjs",
+          "timeoutMs": 20000,
+          "exit": 1,
+          "result": "With solution.sql temporarily changed from UNION ALL to UNION, failed expected ordered-bag assertion for seed tenant 71. Exact original candidate bytes then restored in finally."
+        }
+      ]
+    },
+    {
+      "command": "Get-Content verification.stderr.log and external-mutation.stderr.log; node -e <JSON consistency and REVIEW word-count assertions>",
+      "cwd": "output",
+      "exit": 0,
+      "result": "Read actual warning and expected mutation assertion; REVIEW has 498 whitespace-delimited words; result.json SHA-256 and case count agree with checks.json."
+    }
+  ],
+  "toolActions": [
+    "Applied authored additions using apply_patch: verify.mjs, REVIEW.md, check.mjs, result.json, and this execution.json.",
+    "Opened the four PostgreSQL 17 primary-documentation URLs below using web; no external database connection was made."
+  ],
+  "documentationRead": [
+    "https://www.postgresql.org/docs/17/queries-union.html",
+    "https://www.postgresql.org/docs/17/indexes-bitmap-scans.html",
+    "https://www.postgresql.org/docs/17/using-explain.html",
+    "https://www.postgresql.org/docs/17/datatype-boolean.html"
+  ],
+  "filesCreated": [
+    "output/verify.mjs",
+    "output/REVIEW.md",
+    "output/check.mjs",
+    "output/result.json",
+    "output/checks.json",
+    "output/verification.stdout.log",
+    "output/verification.stderr.log",
+    "output/external-mutation.stdout.log",
+    "output/external-mutation.stderr.log",
+    "output/execution.json"
+  ],
+  "filesTemporarilyChangedAndRestored": [
+    "output/solution.sql"
+  ],
+  "solutionEqualsProvidedProposal": true,
+  "limits": [
+    "No PostgreSQL server or connection supplied; no PostgreSQL execution, plans, SQL timings or performance approval.",
+    "SQLite checks portable result semantics only; general correctness follows from the schema and predicate partition.",
+    "This is a concise actor journal, not a fabricated complete tool trace."
+  ],
+  "activeProcesses": [],
+  "allWritesStopped": true
+}

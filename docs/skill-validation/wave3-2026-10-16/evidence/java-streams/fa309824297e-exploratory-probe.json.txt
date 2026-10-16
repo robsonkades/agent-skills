@@ -1,0 +1,31 @@
+{
+  "purpose": "Before-edit reproduction of scan state aliasing and legitimate final-only observation",
+  "cwd": "C:/git/agent-skills",
+  "compile": {
+    "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+    "args": [
+      "--release",
+      "24",
+      "-d",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-streams-validation/probe-classes",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-streams-validation/ScanAliasProbe.java"
+    ],
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "run": {
+    "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+    "args": [
+      "-cp",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-streams-validation/probe-classes",
+      "ScanAliasProbe"
+    ],
+    "chunk_id": "e7d889",
+    "wall_time_seconds": 0.0988348,
+    "exit_code": 0,
+    "original_token_count": 51,
+    "output": "parallel=false aliased=[[1, 2, 3], [1, 2, 3], [1, 2, 3]] stable=[[1], [1, 2], [1, 2, 3]]\r\nparallel=true aliased=[[1, 2, 3], [1, 2, 3], [1, 2, 3]] stable=[[1], [1, 2], [1, 2, 3]]\r\nfinal-only=[1, 2, 3]\r\n"
+  },
+  "type": "technical reproduction, not agent behavioral evaluation"
+}

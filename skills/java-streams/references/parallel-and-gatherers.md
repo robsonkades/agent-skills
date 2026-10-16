@@ -97,6 +97,32 @@ operations the JDK does not otherwise ship. The built-ins:
 An unbounded upstream therefore needs a semantically justified bound before `fold`; `scan`
 can emit incrementally, but a downstream terminal `toList()` still needs a finite result stream.
 
+`scan` emits the scanner's returned value without snapshotting it. If the scanner mutates and
+returns the same `ArrayList` for inputs `1, 2, 3`, a terminal `toList()` can retain three aliases
+whose eventual contents are all `[1, 2, 3]`. An unmodifiable outer list does not freeze those
+elements. Follow the consumer: when it retains prefix history, produce independent stable
+states, or keep a custom gatherer's accumulator private and emit snapshots. Copying the results
+only after collection cannot recover the lost prefixes. For a finite final-result-only contract,
+`fold` can keep private mutable state until its single emission; copying every prefix is unnecessary.
+
+```java
+// Java 24+: retain each prefix, not repeated references to a growing list
+List<List<Integer>> prefixes = Stream.of(1, 2, 3)
+    .gather(Gatherers.scan(
+        () -> List.<Integer>of(),
+        (prefix, value) -> {
+            List<Integer> next = new ArrayList<>(prefix);
+            next.add(value);
+            return List.copyOf(next);
+        }))
+    .toList(); // [[1], [1, 2], [1, 2, 3]]
+```
+
+This example copies a growing prefix at each step and intentionally returns unmodifiable lists
+of immutable, non-null elements. A shallow copy would not isolate mutable elements. Keep that
+cost only when the consumer needs retained histories. Verify the earliest prefix after the full
+traversal, not just while it is emitted, and verify that separate evaluations do not share state.
+
 ```java
 // Batch a large feed into chunks of 500 for bulk insertion
 records.stream()

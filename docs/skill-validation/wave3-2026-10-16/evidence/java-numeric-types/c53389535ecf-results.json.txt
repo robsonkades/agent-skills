@@ -1,0 +1,57 @@
+[
+  {
+    "name": "java-version",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+    "args": [
+      "-version"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\java-numeric-types-quality14-00e7fc8878124684ac1b4da1ee72375a",
+    "status": 0,
+    "stdout": "",
+    "stderr": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n",
+    "error": null
+  },
+  {
+    "name": "javac-version",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+    "args": [
+      "-version"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\java-numeric-types-quality14-00e7fc8878124684ac1b4da1ee72375a",
+    "status": 0,
+    "stdout": "javac 25.0.3\r\n",
+    "stderr": "",
+    "error": null
+  },
+  {
+    "name": "compile-doc-examples",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+    "args": [
+      "--release",
+      "17",
+      "-d",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-numeric-types-quality14-00e7fc8878124684ac1b4da1ee72375a\\classes",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-numeric-types-quality14-00e7fc8878124684ac1b4da1ee72375a\\src\\Money.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-numeric-types-quality14-00e7fc8878124684ac1b4da1ee72375a\\src\\RoundingProbe.java"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\java-numeric-types-quality14-00e7fc8878124684ac1b4da1ee72375a",
+    "status": 0,
+    "stdout": "",
+    "stderr": "",
+    "error": null
+  },
+  {
+    "name": "probe",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+    "args": [
+      "-cp",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-numeric-types-quality14-00e7fc8878124684ac1b4da1ee72375a\\classes",
+      "RoundingProbe"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\java-numeric-types-quality14-00e7fc8878124684ac1b4da1ee72375a",
+    "status": 0,
+    "stdout": "documented coarse=1 scale=0\r\ndocumented finer=0.67 scale=2\r\ndocumented fixed=0.67 scale=2\r\npost-division padding=1.00 scale=2\r\nfixed 2=0.67 scale=2\r\nfixed 2.0=0.67 scale=2\r\nfixed 2.00=0.67 scale=2\r\nfixed 2.000=0.67 scale=2\r\nfixed 2E+0=0.67 scale=2\r\ncoarse negative=-1 scale=0\r\nfixed negative=-0.67 scale=2\r\nfixed zero=0.00 scale=2\r\nnegative-scale division=1E+2 scale=-2\r\nfixed exponent=66.67 scale=2\r\nfixed ordinary=66.67 scale=2\r\nstripped operand=2E+2 scale=-2\r\nstripped coarse division=1E+2 scale=-2\r\ndivide zero=ArithmeticException\r\nexact-only nonterminating=ArithmeticException\r\nexact-only insufficient scale=ArithmeticException\r\nexisting Money invariant=2.00 scale=2\r\ninvariant makes overload adequate=0.67 scale=2\r\nMoney rejects fractional loss=ArithmeticException\r\ndirect quotient from fine operand=1.34 scale=2\r\npremature operand rounding changes result=1.35 scale=2\r\nfinal-only=1.24 scale=2\r\nintentional two-stage=1.25 scale=2\r\nCHECKS=27\r\n",
+    "stderr": "",
+    "error": null
+  }
+]

@@ -1,0 +1,8 @@
+empty: PASS actual= expected=
+plain: PASS actual=AB expected=AB
+LF: PASS actual=A<LF>B expected=A<LF>B
+CRLF: PASS actual=A<LF>B expected=A<LF>B
+CR: PASS actual=A<LF>B expected=A<LF>B
+mixed: PASS actual=<LF>A<LF>B<LF>C<LF> expected=<LF>A<LF>B<LF>C<LF>
+provider=file:/C:/Users/robso/AppData/Local/Temp/skills-wave4-actors-HoLlUY/run-06/input/published/text-core-1.0.1.jar
+failures=0

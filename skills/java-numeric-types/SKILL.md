@@ -72,6 +72,9 @@ behaviour differ from the primitive it looks like.
   an overload with an explicit result scale and rounding mode, or a domain `MathContext` when
   significant-digit precision is the policy. Never invent a default: contractual and regulatory
   rules decide where and how rounding occurs.
+  `divide(divisor, roundingMode)` instead inherits the dividend's scale; a later `setScale`
+  cannot recover digits already lost. Inspect the actual overload and any upstream normalization;
+  the decimal reference shows equivalent inputs that expose this difference.
 - `BigDecimal.equals` compares value **and scale**, so `1.0` does not equal `1.00`. Compare
   numerically with `compareTo(other) == 0`; raw hash keys remain scale-sensitive unless the
   domain canonicalizes them consistently. A naturally ordered `TreeSet` treats these values as

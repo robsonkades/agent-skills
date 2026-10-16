@@ -1,0 +1,11 @@
+Recomendo que Ana escolha **reter R pelos próximos 24 meses**. A atualização contratual torna inviável a recomendação anterior de migrar para N pelo caminho P.
+
+O limite obrigatório de pausa planejada de escritas passou de 25 para **6 minutos**, com efeito imediato e sem exceções. Os ensaios fornecidos continuam indicando 18 a 20 minutos para P; seu limite operacional demonstrado de 20 minutos excede o contrato em 14 minutos. Portanto, P falha na obrigação de transição, embora leitura, preservação dos dados reconhecidos, recuperação e demais requisitos continuem atendidos. A ausência de reconhecimento de escritas durante a pausa não elimina a duração dessa interrupção.
+
+R permanece viável durante todo o horizonte, com custo total de **520 mil**. N continua atendendo aos contratos em seu estado final, mas seu único caminho ensaiado está excluído nas condições atuais. Isso não prova que todo caminho até N seja inviável: os demais permanecem sem análise, estimativa ou demonstração de conformidade.
+
+Os 410 mil de N via P e a diferença de 110 mil continuam válidos como valores fornecidos. Porém, economia e prazo não compensam o descumprimento contratual; a preferência do patrocinador não autoriza exceção. Os 90 mil irrecuperáveis do protótipo continuam fora da comparação futura. Ao reter R, aceita-se seu custo de 520 mil; não há alternativa mais barata demonstrada como viável neste conjunto de evidências.
+
+O responsável técnico deve manter R e retirar P da proposta de rollout. Se houver interesse em reabrir N, deve apresentar um caminho que demonstre pausa máxima de 6 minutos na escala contratada, disponibilidade de leitura, preservação e recuperação sem perda, além do custo completo para os mesmos 24 meses. Uma alternativa viável e mais barata que R justificaria revisão por Ana. Essa investigação não impede a decisão de hoje nem estabelece antecipadamente um caminho seguro.
+
+Esta é uma recomendação de direção baseada nos documentos locais e na atualização autenticada; não executei ensaios ou migração.

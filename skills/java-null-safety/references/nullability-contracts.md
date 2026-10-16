@@ -67,6 +67,25 @@ The shape is: establish the nullness contract where data enters/objects are cons
 on it within the checked scope. Re-check only when another framework, override, reflective path or
 trust boundary can invalidate the proof.
 
+## Null-valued cache entries
+
+Inspect the cache's population and invalidation policy before treating a null lookup as a miss.
+In a nullable map, “no mapping” and “mapped to null after a completed lookup” can represent
+different states. `getOrDefault` preserves a mapped null; `putIfAbsent` and `computeIfAbsent`
+treat it as absent and may replace it. If a `computeIfAbsent` loader returns null for a missing
+key, no mapping is recorded, so a later call may invoke the loader again.
+
+When completed absence must be cached, preserve the distinction with an explicit cached-result
+representation, or a documented nullable-map protocol that tests presence before loading and
+records the null result. A `containsKey`/`get`/load/`put` sequence needs confinement or appropriate
+synchronization; it is not an atomic concurrent-cache recipe. If null deliberately means
+“unresolved; try again,” recomputation can be correct. Do not cache permanent absence by accident.
+
+Test an absent key, a present-null entry and a present value, asserting both the returned result
+and loader calls. Include a loader returning null and a repeated lookup: returning the right value
+once does not establish the intended caching policy. See the
+[Java SE 25 Map contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html).
+
 ## Implicit unboxing can erase a legal absence
 
 Unboxing a null wrapper throws NPE. Numeric conditional expressions can unbox before assignment

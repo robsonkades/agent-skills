@@ -1,0 +1,1 @@
+Call OrderService and MetricsService through their configured Spring beans. Inspect the corresponding datasource after the call completes.

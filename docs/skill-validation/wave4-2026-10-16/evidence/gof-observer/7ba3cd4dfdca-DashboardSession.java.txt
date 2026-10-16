@@ -1,0 +1,23 @@
+import java.util.concurrent.atomic.AtomicInteger;
+
+final class DashboardSession implements AutoCloseable {
+    private final AtomicInteger deliveries = new AtomicInteger();
+    private final SnapshotBus.Subscription subscription;
+
+    DashboardSession(SnapshotBus bus) {
+        subscription = bus.subscribe(this::onEvent);
+    }
+
+    private void onEvent(SnapshotBus.Event event) {
+        deliveries.incrementAndGet();
+    }
+
+    int deliveries() {
+        return deliveries.get();
+    }
+
+    @Override
+    public void close() {
+        subscription.close();
+    }
+}

@@ -1,0 +1,27 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+import {createRequire} from 'node:module';
+const repo='C:/git/agent-skills',root='C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23',report=repo+'/docs/skill-validation/wave10-2026-10-16';
+const require=createRequire(repo+'/package.json'),yaml=require('yaml');
+const read=p=>JSON.parse(fs.readFileSync(p,'utf8'));
+const sha=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
+const before=yaml.parse(fs.readFileSync(root+'/registry-before.yaml','utf8')),after=yaml.parse(fs.readFileSync(repo+'/registry/skills.yaml','utf8'));
+const changed=after.skills.filter(s=>JSON.stringify(s)!==JSON.stringify(before.skills.find(b=>b.name===s.name))).map(s=>s.name);
+assert.equal(before.skills.length,305);assert.equal(after.skills.length,305);assert.deepEqual(changed,['architecture-trade-off-analysis']);
+const manifest=read(report+'/artifact-manifest.json');
+for(const f of manifest.artifacts)assert.equal(sha(report+'/'+f.path),f.sha256,f.path);
+const grader=read(root+'/review/actor-grades.json'),packets=new Map(fs.readdirSync(root+'/packets').map(n=>{const p=read(root+'/packets/'+n);return[p.id,p];}));
+let excerpts=0;
+for(const s of grader.samples)for(const stage of['1','2'])for(const c of Object.values(s.stages[stage].criteria))for(const quote of c.evidence){assert.equal(typeof quote,'string');const p=packets.get(s.id);assert.ok(p[stage].includes(quote)||(stage==='2'&&p['1'].includes(quote)),s.id+'/'+stage+'/'+quote);excerpts++;}
+assert.equal(sha(root+'/review/actor-grades.json'),read(root+'/independent-grades-seal.json').sha256);
+const links=[];
+for(const match of fs.readFileSync(report+'/README.md','utf8').matchAll(/\[[^\]]*\]\(([^)]+)\)/g)){
+ const href=match[1];if(/^[a-z]+:/i.test(href)||href.startsWith('#'))continue;links.push(href);
+}
+const verify=read(report+'/verify-result.json'),log=fs.readFileSync(report+'/verify.log.txt','utf8');assert.equal(verify.exitCode,0);assert.match(log,/(?:#|ℹ)\s+tests 393/);assert.match(log,/(?:#|ℹ)\s+pass 393/);assert.match(log,/(?:#|ℹ)\s+fail 0/);assert.match(log,/(?:#|ℹ)\s+skipped 0/);
+const result={at:new Date().toISOString(),registrySkills:after.skills.length,changedRegistryEntries:changed,rawArtifacts:manifest.artifacts.length,rawHashesPassed:true,independentExcerptsVerified:excerpts,internalReadmeLinks:links.length,verify:{exitCode:verify.exitCode,tests:393,passed:393,failed:0,skipped:0},limit:'Excerpt matching verifies evidence attribution only; semantic grading was manual. Hash checks do not establish read isolation.'};
+fs.writeFileSync(report+'/final-audit.json',JSON.stringify(result,null,2)+'\n');
+for(const href of links)assert.ok(fs.existsSync(path.resolve(report,href.split('#')[0])),href);
+console.log(JSON.stringify(result));

@@ -1,0 +1,34 @@
+import com.example.text.LineEndings;
+
+public final class LineEndingsCheck {
+    public static void main(String[] args) {
+        if (args.length != 1 || !(args[0].equals("OLD") || args[0].equals("NEW"))) {
+            throw new IllegalArgumentException("Expected OLD or NEW");
+        }
+        boolean corrected = args[0].equals("NEW");
+        String[][] cases = {
+            {"lone CR", "A\rB", corrected ? "A\nB" : "A\rB"},
+            {"LF", "A\nB", "A\nB"},
+            {"CRLF", "A\r\nB", "A\nB"},
+            {"mixed", "A\rB\r\nC\nD", corrected ? "A\nB\nC\nD" : "A\rB\nC\nD"},
+            {"repeated CR", "\r\r", corrected ? "\n\n" : "\r\r"},
+            {"empty", "", ""},
+            {"plain", "AB", "AB"}
+        };
+        for (String[] test : cases) {
+            String actual = LineEndings.normalize(test[1]);
+            if (!actual.equals(test[2])) {
+                throw new AssertionError(test[0] + ": expected " + visible(test[2]) + ", got " + visible(actual));
+            }
+            if (!LineEndings.normalize(actual).equals(actual)) {
+                throw new AssertionError("Not idempotent: " + test[0]);
+            }
+        }
+        System.out.println("PASS " + args[0] + ": " + cases.length + " cases and idempotence");
+        System.out.println("provider=" + LineEndings.class.getProtectionDomain().getCodeSource().getLocation());
+    }
+
+    private static String visible(String text) {
+        return text.replace("\r", "<CR>").replace("\n", "<LF>");
+    }
+}

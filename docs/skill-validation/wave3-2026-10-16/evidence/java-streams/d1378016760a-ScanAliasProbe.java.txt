@@ -1,0 +1,56 @@
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Gatherers;
+import java.util.stream.Stream;
+
+public final class ScanAliasProbe {
+    static void check(boolean condition, String message) {
+        if (!condition) throw new AssertionError(message);
+    }
+
+    static List<ArrayList<Integer>> aliased(boolean parallel) {
+        Stream<Integer> input = Stream.of(1, 2, 3);
+        if (parallel) input = input.parallel();
+        return input.gather(Gatherers.scan(ArrayList<Integer>::new, (state, value) -> {
+            state.add(value);
+            return state;
+        })).toList();
+    }
+
+    static List<List<Integer>> snapshots(boolean parallel) {
+        Stream<Integer> input = Stream.of(1, 2, 3);
+        if (parallel) input = input.parallel();
+        return input.gather(Gatherers.scan(
+                () -> List.<Integer>of(),
+                (prefix, value) -> {
+                    List<Integer> next = new ArrayList<>(prefix);
+                    next.add(value);
+                    return List.copyOf(next);
+                })).toList();
+    }
+
+    public static void main(String[] args) {
+        List<List<Integer>> expected = List.of(List.of(1), List.of(1, 2), List.of(1, 2, 3));
+        for (boolean parallel : new boolean[]{false, true}) {
+            List<ArrayList<Integer>> bad = aliased(parallel);
+            check(bad.get(0) == bad.get(1) && bad.get(1) == bad.get(2), "expected aliased control");
+            check(bad.equals(List.of(List.of(1, 2, 3), List.of(1, 2, 3), List.of(1, 2, 3))), "lost prefixes");
+            List<List<Integer>> tooLate = bad.stream().map(List::copyOf).toList();
+            check(!tooLate.equals(expected), "copying after collection cannot restore history");
+            List<List<Integer>> good = snapshots(parallel);
+            check(good.equals(expected), "stable prefix snapshots");
+            try { good.get(0).add(9); throw new AssertionError("snapshot mutable"); }
+            catch (UnsupportedOperationException expectedFailure) {}
+            System.out.println("parallel=" + parallel + " aliased=" + bad + " stable=" + good);
+        }
+        List<Integer> finalOnly = Stream.of(1, 2, 3)
+                .gather(Gatherers.fold(ArrayList<Integer>::new, (state, value) -> {
+                    state.add(value);
+                    return state;
+                }))
+                .map(List::copyOf)
+                .findFirst().orElseThrow();
+        check(finalOnly.equals(List.of(1, 2, 3)), "private fold state is valid for final-only consumer");
+        System.out.println("final-only=" + finalOnly);
+    }
+}

@@ -1,0 +1,145 @@
+# Review record
+
+Completed the requested local compatibility review. The supplied candidate is not
+compatible with authoritative epoch E placement: for frozen key `user:2`, its primary
+is `n1` instead of `n2`, and its ordered replicas are `[n1, n3, n2]` instead of
+`[n2, n3, n4]`. `rollout.md` now withdraws the zero-migration rollout recommendation.
+
+The smallest decisive check is a frozen-vector comparison through both routing
+methods on `ClientRouter`, loading the actual properties files. `check.mjs` parses the
+supplied JSON fixture and passes its topology and expected results to
+`test/RoutingCompatibilityCheck.java`. Expected ownership is never generated from the
+candidate. The accepted configuration is a positive control; the candidate must satisfy
+the same independent expectation. The check also verifies three distinct replicas and
+primary-first ordering. Original checks remain intact.
+
+## Scope and files
+
+All work used this directory as the working directory:
+
+`C:/Users/robso/AppData/Local/Temp/skills-wave2-behavior-6orq6B/c3-2`
+
+Task/resource files read:
+
+- `TASK.md`
+- `.resources/skill/SKILL.md`
+- `.resources/skill/references/ring-in-java.md`
+- `.resources/skill/references/mapping-functions.md`
+- `README.md`, original `rollout.md`, and `check.mjs`
+- `src/HashRing.java`, `src/ClientRouter.java`, `test/CurrentChecks.java`
+- `accepted.properties`, `candidate.properties`, `accepted-vectors.json`
+
+The local `consistent-hashing` skill was applied: inspect the real key path, preserve
+the existing algorithm and parameters, compare frozen ownership through the client,
+and distinguish ring monotonicity from authoritative-state compatibility. No choice of
+replacement hash algorithm or V tuning is justified or needed for this counterexample.
+
+Changed/created artifacts:
+
+- `check.mjs`: runs both frozen-vector comparisons after the existing checks.
+- `test/RoutingCompatibilityCheck.java`: focused Java 16-compatible check.
+- `rollout.md` and this `REVIEW.md`: decision and evidence.
+- `logs/baseline-check.txt`, `logs/compatibility-check.txt`, `logs/toolchain.txt`:
+  captured command output.
+- `classes/`: compiled output from the existing local runner.
+
+The final check and documentation were re-read with the read-only command below.
+No source implementation, properties, golden vector, dependency, Java baseline,
+weights or V was changed. No deployment, installation, production access, delegation,
+repository-wide verification or real agent-configuration operation was performed.
+
+## Exact commands and outcomes
+
+Inventory command (exit 0):
+
+```powershell
+rg --files -g '!target/**' -g '!build/**' -g '!dist/**' -g '!.git/**' -g '*'
+```
+
+Initial reads (each `Get-Content` succeeded; independent groups were read together):
+
+```powershell
+Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave2-behavior-6orq6B/c3-2/TASK.md'
+Get-Content -LiteralPath '.resources/skill/SKILL.md'
+Get-Content -LiteralPath 'README.md'
+Get-Content -LiteralPath 'rollout.md'
+Get-Content -LiteralPath 'check.mjs'
+Get-Content -LiteralPath 'src/HashRing.java'
+Get-Content -LiteralPath 'src/ClientRouter.java'
+Get-Content -LiteralPath 'test/CurrentChecks.java'
+Get-Content -LiteralPath 'accepted.properties'
+Get-Content -LiteralPath 'candidate.properties'
+Get-Content -LiteralPath 'accepted-vectors.json'
+Get-Content -LiteralPath '.resources/skill/references/ring-in-java.md'
+Get-Content -LiteralPath '.resources/skill/references/mapping-functions.md'
+```
+
+Before the change:
+
+```powershell
+New-Item -ItemType Directory -Path 'logs' -Force | Out-Null
+node check.mjs 2>&1 | Tee-Object -FilePath 'logs/baseline-check.txt'
+exit $LASTEXITCODE
+```
+
+Exit 0. Output: `Existing point and join checks passed; moved=2075`.
+
+After adding the focused check:
+
+```powershell
+node check.mjs 2>&1 | Tee-Object -FilePath 'logs/compatibility-check.txt'
+exit $LASTEXITCODE
+```
+
+Exit 1, intentionally exposing the candidate's incompatibility. Compilation completed
+with `--release 16`; the unchanged existing checks passed with `moved=2075`.
+The accepted configuration passed (`n2`, `[n2, n3, n4]`). The candidate produced
+`n1`, `[n1, n3, n2]` and threw
+`AssertionError: ClientRouter placement differs from accepted epoch E`.
+This was an actual failed compatibility assertion, not a compiler failure or skipped test.
+
+Toolchain/dependency confirmation:
+
+```powershell
+& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' -version 2>&1 | Tee-Object -FilePath 'logs/toolchain.txt'
+& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -version 2>&1 | Tee-Object -FilePath 'logs/toolchain.txt' -Append
+Get-FileHash -Algorithm SHA256 -LiteralPath 'C:/Users/robso/.m2/repository/com/google/guava/guava/33.5.0-jre/guava-33.5.0-jre.jar' | Format-List | Out-String | Tee-Object -FilePath 'logs/toolchain.txt' -Append
+```
+
+Exit 0. Observed `javac 25.0.3`, Temurin `25.0.3+9-LTS`, and the declared Guava jar
+SHA-256 `1E301F0C52AC248B0B14FDC3D12283C77252D4D6F48521D572E7D8C4C2CC4AC7`.
+The runner still compiles for Java 16 without preview; execution was on the supplied
+Temurin 25 runtime, not on a Java 16 runtime. The declared jar was used
+directly, with no dependency installation or version changes.
+
+Final read-only inspection:
+
+```powershell
+Get-Content -LiteralPath 'check.mjs'
+Get-Content -LiteralPath 'test/RoutingCompatibilityCheck.java'
+Get-Content -LiteralPath 'rollout.md'
+Get-Content -LiteralPath 'REVIEW.md'
+Get-Content -LiteralPath 'logs/baseline-check.txt'
+Get-Content -LiteralPath 'logs/compatibility-check.txt'
+Get-Content -LiteralPath 'logs/toolchain.txt'
+```
+
+Edits used `apply_patch`; no shell rewrite or regeneration of the frozen fixture occurred.
+
+## Limits and access audit
+
+One independently supplied frozen vector disproves placement preservation. It cannot
+quantify the global fraction of changed primaries/replicas, transferred bytes or traffic,
+prove balance or performance, validate failure-domain policy, or establish cross-language
+agreement and malformed-input handling. No additional measurements are needed to reject
+this candidate under the requested no-contract-change/no-migration constraint.
+Restoring the empty prefix is the narrowly justified remediation to validate for a future
+release; the properties under review were preserved so the failing gate remains reproducible.
+
+No accidental access outside allowed files occurred. The only external local paths
+accessed were the explicitly declared Java toolchain and Guava dependency. No sibling
+task, repository report, installed skill, comparison answer or evaluator material was read.
+The inventory listed `.resources/skill/skill.yaml`, but its content was not read.
+
+All artifact and log writes are complete. The final read-only inspection does not change
+files; no process is left running to write later. All writes are stopped.

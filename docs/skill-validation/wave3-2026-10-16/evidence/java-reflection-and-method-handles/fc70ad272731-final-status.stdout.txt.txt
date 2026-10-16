@@ -1,0 +1,3 @@
+ M skills/java-reflection-and-method-handles/SKILL.md
+ M skills/java-reflection-and-method-handles/references/method-handles-and-encapsulation.md
+ M skills/java-reflection-and-method-handles/skill.yaml

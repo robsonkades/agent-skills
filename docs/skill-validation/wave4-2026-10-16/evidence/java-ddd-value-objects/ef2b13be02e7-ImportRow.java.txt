@@ -1,0 +1,13 @@
+import java.util.Objects;
+
+public record ImportRow(String rawNumber, String rawUnit) {
+    public ImportRow {
+        Objects.requireNonNull(rawNumber);
+        Objects.requireNonNull(rawUnit);
+    }
+
+    public GaugeReading toValue() {
+        return GaugeReading.parse(rawNumber, rawUnit);
+    }
+}
+

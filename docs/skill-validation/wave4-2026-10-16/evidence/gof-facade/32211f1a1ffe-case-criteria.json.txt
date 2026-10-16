@@ -1,0 +1,39 @@
+[
+  {
+    "id": "facade-consumer-contract-a",
+    "required": [
+      "Inspect the supported consumer's catch branch instead of inferring exception transparency from the facade signature or method name.",
+      "Identify that the candidate's selected child failure reaches the owner as FailedException with ProductMissing as cause, bypassing this consumer's ProductMissing handling.",
+      "Make a compatible library correction, such as narrowly translating the agreed ProductMissing cause outside scope cleanup. Keeping a valid direct/sequential implementation can also be justified if the proposed concurrency has no required contract or demonstrated benefit.",
+      "Keep unrelated failures visible, preserve diagnostic cause where wrapping remains, and distinguish caller interruption from a child-reported InterruptedException rather than generically unwrapping every cause or returning a missing result.",
+      "Preserve ordinary result and missing presentation without changing the read-only consumer/probe or adding an unnecessary wrapper. State that unit fixture success does not demonstrate transport cleanup, transaction atomicity or speedup."
+    ],
+    "failures": [
+      "Approves the candidate solely because both methods declare InterruptedException or both normal paths return View.",
+      "Changes the consumer to accept the library's accidental failure shape.",
+      "Catches every failure as missing, retries all failed operations, or converts every child interruption into caller cancellation.",
+      "Adds a new facade abstraction without solving the consumer contract.",
+      "Reports benchmark or real-service guarantees from these read-only synthetic ports."
+    ],
+    "decisiveResult": "With this consumer, the unmodified candidate does not preserve the missing-product behavior; a library compatibility adjustment is required.",
+    "evaluationStatus": "Written criteria only; this case pair has not been run by an actor or compiled. Separate extracted-skill technical controls did execute."
+  },
+  {
+    "id": "facade-consumer-contract-b",
+    "required": [
+      "Inspect the supported consumer and recognize that it intentionally handles FailedException with a ProductMissing cause.",
+      "Preserve the valid wrapper contract or explain a contract-compatible change; do not apply blanket exception unwrapping merely because wrappers exist.",
+      "Keep the normal and missing presentation, other failures and direct owner interruption intact. Do not transform a child failure into caller cancellation.",
+      "Give a bounded validation plan/check at the consumer boundary and compare against keeping the existing implementation; do not add a redundant facade or claim measured speedup."
+    ],
+    "failures": [
+      "Unwraps ProductMissing unconditionally, breaking this consumer's established wrapper handling.",
+      "Treats every FailedException as a missing product or caller cancellation.",
+      "Changes the read-only consumer/probe to make an incompatible rewrite pass.",
+      "Requires reverting concurrency or introducing new frameworks regardless of the observed working contract.",
+      "Claims the pattern itself guarantees resource/transaction/distribution properties."
+    ],
+    "decisiveResult": "The supplied consumer already agrees with the candidate's wrapper failure contract; no forced compatibility edit is needed.",
+    "evaluationStatus": "Written criteria only; this case pair has not been run by an actor or compiled. Separate extracted-skill technical controls did execute."
+  }
+]

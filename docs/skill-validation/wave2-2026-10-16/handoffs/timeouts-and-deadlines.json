@@ -1,0 +1,300 @@
+{
+  "skill": "timeouts-and-deadlines",
+  "status": "NO_CHANGES_NEEDED",
+  "ownedPath": "skills/timeouts-and-deadlines/**",
+  "allWritesStopped": true,
+  "versions": {
+    "committed": "1.1.5",
+    "assignment": "1.1.5",
+    "final": "1.1.5",
+    "preExistingBump": false,
+    "rationale": "No shipped contents changed; no version bump is justified."
+  },
+  "baseline": {
+    "staged": [],
+    "unstaged": [],
+    "untracked": [],
+    "committedInspection": "git show HEAD:skills/timeouts-and-deadlines/skill.yaml matched assignment metadata.",
+    "sha256": {
+      "SKILL.md": "EE9A435A6004AC96D1C991A0110EF6205AEBAA2C6FC4F68B4D33CE660F2DC29F",
+      "skill.yaml": "EC2C2602056B0FCF0076D65EBEFBA6D4DA86D47020D6FFABD08AD483F8E6E0FB",
+      "references/deadline-propagation.md": "A2CB2FBD6733E2EC1649CEDAE206C82EC83AD83A3EF3E5CB8F200272FF3B312F",
+      "references/java-timeout-surface.md": "CE67E676B63EEE0FE821E5E5407ED48B12194CA04CACBC0DE8A501948789106A"
+    }
+  },
+  "files": {
+    "readCompletely": [
+      "SKILL.md",
+      "skill.yaml",
+      "references/deadline-propagation.md",
+      "references/java-timeout-surface.md"
+    ],
+    "changedByReviewer": [],
+    "preExistingChanges": [],
+    "removed": [],
+    "finalHashesEqualAssignment": true
+  },
+  "reviewCriteria": [
+    "Trace effective client/driver/protocol versions and timeout phase coverage; distinguish configuration from enforcement.",
+    "Preserve a monotonically shrinking local budget with overflow and wire-unit handling; never reset a smaller inherited bound.",
+    "Separate caller completion, cooperative cancellation, resource release and unknown remote business outcome.",
+    "Change cancellation ownership when work is shared, exclusive or accepted under an independent asynchronous contract.",
+    "Keep diagnosis/review outcomes proportionate; retain adequate policies and report untested runtime paths."
+  ],
+  "findings": [
+    {
+      "location": "SKILL.md:22-40, 42-69, 73-125",
+      "result": "Adequate: phase and whole-policy bounds, censored latency evidence, real-version inspection, refusal by conditional value, hidden retries and local-wait versus callee-work evidence already determine decisions.",
+      "action": "Preserved; no confirmed defect."
+    },
+    {
+      "location": "SKILL.md:105-109; references/java-timeout-surface.md, java.net.http.HttpClient",
+      "result": "The unusual JDK 25/26 body-coverage distinction is supported by versioned primary sources; it must not be simplified into a universal total timeout claim.",
+      "action": "Preserved."
+    },
+    {
+      "location": "SKILL.md:116-119; references/java-timeout-surface.md, Shared work and caller-local timeout",
+      "result": "Plain CompletableFuture timeout mutation and waiter-copy isolation are explicitly distinguished from underlying work cancellation; ownership is already actionable.",
+      "action": "Preserved; checked with a negative control and isolated waiter executions."
+    },
+    {
+      "location": "references/deadline-propagation.md, complete Deadline helper and integration snippets",
+      "result": "Arithmetic horizon, signed monotonic-clock wrap, cap-before-conversion, huge reserve comparison, zero and sub-millisecond wire behavior are explicit and locally validated.",
+      "action": "Preserved. Partial integrations remain partial; no unsupported production guarantee."
+    }
+  ],
+  "changes": [],
+  "preserved": [
+    "Review/diagnosis role, concrete activation conditions and exclusions for retry policy, latency statistics, circuit breakers and pool sizing.",
+    "Existing adequate-policy/no-change path and request versus durable job-acceptance lifecycle.",
+    "Primary evidence requirements for JDK, frameworks, clients, protocol and JDBC driver behavior.",
+    "Bounded Java 11 helper, monotonic local clock, wire duration, clamps, arithmetic horizon, reserves and refuse-before-dispatch checks.",
+    "JDK 25 versus 26 body-timer coverage; separate streaming ownership; orTimeout cannot stand in for exchange abortion.",
+    "Shared waiter isolation and explicitly separate cancellation ownership, including completion races.",
+    "JDBC network-expiry connection failure versus statement cancellation and transaction recovery.",
+    "Kafka poll/session/heartbeat/static-membership distinctions.",
+    "Malformed/negative/overflow input guardrails, low-cardinality observability and unknown-outcome handling."
+  ],
+  "checks": [
+    {
+      "category": "executed structural",
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/timeouts-and-deadlines/validate-local.mjs C:/git/agent-skills",
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS: strict manifest zero issues, name/description agreement, version 1.1.5, three declared paths, two relative resource links, all four assignment hashes unchanged.",
+      "exitCode": 0
+    },
+    {
+      "category": "executed structural",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/timeouts-and-deadlines/SKILL.md skills/timeouts-and-deadlines/skill.yaml skills/timeouts-and-deadlines/references/deadline-propagation.md skills/timeouts-and-deadlines/references/java-timeout-surface.md",
+      "cwd": "C:/git/agent-skills",
+      "result": "All matched files use Prettier code style.",
+      "exitCode": 0
+    },
+    {
+      "category": "executed technical",
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/timeouts-and-deadlines/technical-check.mjs C:/git/agent-skills",
+      "cwd": "C:/git/agent-skills",
+      "result": "Extracted actual shipped Deadline helper and shared.copy waiter fragment; compiled and executed successfully.",
+      "exitCode": 0,
+      "artifacts": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/timeouts-and-deadlines/technical-results.json"
+    },
+    {
+      "category": "executed compile",
+      "command": "javac --release 11 -d C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/timeouts-and-deadlines/classes C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/timeouts-and-deadlines/Deadline.java C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/timeouts-and-deadlines/Waiter.java C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/timeouts-and-deadlines/Probe.java",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/timeouts-and-deadlines",
+      "result": "PASS; javac 25.0.3, source/API target Java 11, no preview, no added dependencies.",
+      "exitCode": 0
+    },
+    {
+      "category": "executed technical",
+      "command": "java -cp C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/timeouts-and-deadlines/classes Probe",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/timeouts-and-deadlines",
+      "result": "PASS 30 assertions; runtime Temurin 25.0.3+9-LTS. Deadline elapsed/reserve/exact expiry, post-expiry, signed wrap, regressing test clock, zero, huge cap/reserve, sub-ms and negative/null arguments; negative same-source orTimeout propagation; copy isolation, later owner result, waiter cancellation, owner failure and already-complete result.",
+      "exitCode": 0
+    },
+    {
+      "category": "executed final attribution",
+      "command": "git diff --check -- skills/timeouts-and-deadlines; git diff --stat -- skills/timeouts-and-deadlines; git diff --cached --stat -- skills/timeouts-and-deadlines; git status --short -- skills/timeouts-and-deadlines; Get-FileHash -Algorithm SHA256 -LiteralPath <the four listed owned files>",
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS; unstaged and staged diffs empty, status empty, four hashes unchanged.",
+      "exitCode": 0
+    },
+    {
+      "category": "environment inspection",
+      "command": "javac -version; java -version; node --version",
+      "cwd": "C:/git/agent-skills",
+      "result": "javac 25.0.3; Temurin 25.0.3+9-LTS; Node v25.6.1.",
+      "exitCode": 0
+    },
+    {
+      "category": "unavailable historical fixture",
+      "command": "Get-Content -LiteralPath C:/Users/robso/AppData/Local/Temp/skill-review-resume-L4rvro/timeouts-and-deadlines-check.mjs -Raw",
+      "cwd": "C:/git/agent-skills",
+      "result": "Historical September 25 temp harness no longer exists. Its reported 61 assertions were not rerun or claimed as current evidence. A new bounded probe extracted current examples and ran 30 assertions.",
+      "exitCode": 1
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://raw.githubusercontent.com/openjdk/jdk/jdk-25%2B36/src/java.net.http/share/classes/jdk/internal/net/http/MultiExchange.java",
+      "version": "OpenJDK jdk-25+36",
+      "verified": "responseAsyncImpl cancels response timer before responseAsync0 reads response body; implementation-specific existing guidance preserved."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/26/docs/api/java.net.http/java/net/http/HttpRequest.Builder.html#timeout(java.time.Duration)",
+      "version": "Java SE 26",
+      "verified": "Built-in implementation stops timer after body-subscriber completion; not every custom implementation or application processing."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/concurrent/CompletableFuture.html",
+      "version": "Java SE 11",
+      "verified": "orTimeout and completeOnTimeout return/mutate same future; copy yields separate completion state; plain cancellation does not control computation/interruption."
+    },
+    {
+      "url": "https://grpc.io/docs/guides/deadlines/",
+      "version": "Official guide, last modification shown July 7, 2025; accessed 2026-10-16",
+      "verified": "Elapsed-time subtraction on timeout propagation, Java propagation support, application responsibility for stopping spawned work."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html#setNetworkTimeout(java.util.concurrent.Executor,int)",
+      "version": "Java SE 25 JDBC API",
+      "verified": "Network timeout cannot affect outstanding requests; expiry closes connection/statements; query timeout and network timeout have different lifecycles."
+    },
+    {
+      "url": "https://docs.spring.io/spring-boot/3.5/reference/io/rest-client.html",
+      "version": "Spring Boot 3.5",
+      "verified": "Effective request-factory selection and global HTTP client connect/read properties; direct construction differs from configured builders."
+    },
+    {
+      "url": "https://kafka.apache.org/41/generated/consumer_config.html",
+      "version": "Apache Kafka 4.1",
+      "verified": "max.poll.interval differs from request timeout; static members defer reassignment until session expiry; Consumer protocol broker controls session/heartbeat."
+    }
+  ],
+  "behavioralEvaluations": {
+    "executed": [],
+    "status": "Not executed: no delegated/nested agent runs permitted. No before/after or without-skill comparison and no measured quality gain."
+  },
+  "walkthroughs": [
+    {
+      "case": "C1-shared-load",
+      "classification": "structured expected-behavior walkthrough only",
+      "result": "Inspect mode and coalescing contract; isolate request completion, retain registry-owned work while another waiter needs it; validate expired request does not acquire work."
+    },
+    {
+      "case": "C2-exclusive-load",
+      "classification": "structured expected-behavior walkthrough only",
+      "result": "Same input except ownership mode; caller expiry now owns a cancellation signal to actual work, and a copied future alone does not establish cleanup."
+    }
+  ],
+  "twoCases": [
+    {
+      "id": "C1-shared-load",
+      "classification": "reproducible development case; not executed agent evaluation or unseen holdout",
+      "taskInput": {
+        "request": "Review and repair Lookup.find so each request respects its remaining budget while preserving the configured loader's lifecycle. Inspect the supplied artifacts before choosing the cancellation owner. Make the smallest Java 11-compatible change, and provide focused executable checks of caller outcome and cancellation observations. Reject invalid/expired budgets before acquiring work. Do not change deployment mode, registry semantics or dependencies.",
+        "files": {
+          "pom.xml": "<project><modelVersion>4.0.0</modelVersion><groupId>fixture</groupId><artifactId>lookup</artifactId><version>1</version><properties><maven.compiler.release>11</maven.compiler.release></properties></project>",
+          "Lookup.java": "import java.time.Duration;\nimport java.util.concurrent.CompletableFuture;\nimport java.util.concurrent.TimeUnit;\npublic final class Lookup {\n  private final Loader loader;\n  public Lookup(Loader loader) { this.loader = loader; }\n  public CompletableFuture<String> find(String key, Duration remaining) {\n    LoadHandle handle = loader.acquire(key);\n    return handle.result.orTimeout(remaining.toNanos(), TimeUnit.NANOSECONDS);\n  }\n}\n",
+          "Loader.java": "public interface Loader {\n  LoadHandle acquire(String key);\n}\n",
+          "LoadHandle.java": "import java.util.concurrent.CompletableFuture;\npublic final class LoadHandle {\n  public final CompletableFuture<String> result;\n  private final Runnable cancellation;\n  public LoadHandle(CompletableFuture<String> result, Runnable cancellation) {\n    this.result = result; this.cancellation = cancellation;\n  }\n  public void requestCancellation() { cancellation.run(); }\n}\n",
+          "loader-contract.md": "Deployment reads loader.properties. In shared mode, acquire(key) coalesces concurrent calls for the same key and returns the same handle while its load is outstanding. The registry owns that load and enforces its separate 5-second lifetime. In exclusive mode, each acquire creates a fresh handle owned by that request, with the same 5-second fallback lifetime. All result fields are plain CompletableFuture<String>; the requestCancellation callback signals the actual owned task/transport separately and is idempotent. No durable asynchronous job acceptance exists. The local controllable fixture records cancellation calls and permits explicit owner completion; production remote release and effects need separate evidence. Do not implement last-waiter cancellation for the shared registry in this task.",
+          "loader.properties": "ownership=shared\n"
+        },
+        "fixturesAndPrerequisites": "Use separate working directories. The actor gets these files and the shipped timeouts-and-deadlines package. Implement a small local controllable Loader test double matching loader-contract.md; no live external systems, dependency upgrades or coordinator expected answers. Java 11 API compiler target; a newer runtime must be reported separately.",
+        "requestedChecks": "Exercise expiry before acquire, a timeout while owner work is outstanding, cancellation observation, owner completion/failure and completion racing expiry. Use bounded test guards; scheduling tolerance is not a production deadline guarantee."
+      },
+      "evaluatorOnly": {
+        "expected": [
+          "Read loader.properties and loader-contract.md; use actual sharing contract before changing cancellation.",
+          "Validate expiry/invalid budget before acquire and preserve Java 11 APIs.",
+          "Separate caller timeout/completion from shared result; do not call shared work cancellation because one waiter expires.",
+          "Test short caller expiry with shared source still incomplete and a longer waiter subsequently receiving owner success; test negative direct source timeout.",
+          "Report registry work deadline and actual remote-release evidence as separate from caller outcome."
+        ],
+        "failures": [
+          "Mutates shared future with orTimeout/completeOnTimeout directly or cancels shared owner on one waiter timeout.",
+          "Treats plain CompletableFuture.cancel(true) as interruption of its supplier.",
+          "Only asserts caller TimeoutException while ignoring the unaffected caller and owner result.",
+          "Upgrades Java, adds preview API or claims a production resource-release guarantee from the local fixture."
+        ]
+      }
+    },
+    {
+      "id": "C2-exclusive-load",
+      "classification": "paired reproducible development case; not executed",
+      "decisiveConstraintChanged": "Only loader.properties ownership changes from shared to exclusive; all other artifacts and requirements identical.",
+      "taskInput": {
+        "request": "Review and repair Lookup.find so each request respects its remaining budget while preserving the configured loader's lifecycle. Inspect the supplied artifacts before choosing the cancellation owner. Make the smallest Java 11-compatible change, and provide focused executable checks of caller outcome and cancellation observations. Reject invalid/expired budgets before acquiring work. Do not change deployment mode, registry semantics or dependencies.",
+        "files": {
+          "pom.xml": "<project><modelVersion>4.0.0</modelVersion><groupId>fixture</groupId><artifactId>lookup</artifactId><version>1</version><properties><maven.compiler.release>11</maven.compiler.release></properties></project>",
+          "Lookup.java": "import java.time.Duration;\nimport java.util.concurrent.CompletableFuture;\nimport java.util.concurrent.TimeUnit;\npublic final class Lookup {\n  private final Loader loader;\n  public Lookup(Loader loader) { this.loader = loader; }\n  public CompletableFuture<String> find(String key, Duration remaining) {\n    LoadHandle handle = loader.acquire(key);\n    return handle.result.orTimeout(remaining.toNanos(), TimeUnit.NANOSECONDS);\n  }\n}\n",
+          "Loader.java": "public interface Loader {\n  LoadHandle acquire(String key);\n}\n",
+          "LoadHandle.java": "import java.util.concurrent.CompletableFuture;\npublic final class LoadHandle {\n  public final CompletableFuture<String> result;\n  private final Runnable cancellation;\n  public LoadHandle(CompletableFuture<String> result, Runnable cancellation) {\n    this.result = result; this.cancellation = cancellation;\n  }\n  public void requestCancellation() { cancellation.run(); }\n}\n",
+          "loader-contract.md": "Deployment reads loader.properties. In shared mode, acquire(key) coalesces concurrent calls for the same key and returns the same handle while its load is outstanding. The registry owns that load and enforces its separate 5-second lifetime. In exclusive mode, each acquire creates a fresh handle owned by that request, with the same 5-second fallback lifetime. All result fields are plain CompletableFuture<String>; the requestCancellation callback signals the actual owned task/transport separately and is idempotent. No durable asynchronous job acceptance exists. The local controllable fixture records cancellation calls and permits explicit owner completion; production remote release and effects need separate evidence. Do not implement last-waiter cancellation for the shared registry in this task.",
+          "loader.properties": "ownership=exclusive\n"
+        },
+        "fixturesAndPrerequisites": "Use separate working directories. The actor gets these files and the shipped timeouts-and-deadlines package. Implement a small local controllable Loader test double matching loader-contract.md; no live external systems, dependency upgrades or coordinator expected answers. Java 11 API compiler target; a newer runtime must be reported separately.",
+        "requestedChecks": "Exercise expiry before acquire, a timeout while owner work is outstanding, cancellation observation, owner completion/failure and completion racing expiry. Use bounded test guards; scheduling tolerance is not a production deadline guarantee."
+      },
+      "evaluatorOnly": {
+        "expected": [
+          "Read exclusive mode and establish one request owns each handle.",
+          "Bound caller completion and wire expiry to handle.requestCancellation; do not rely solely on mutating/cancelling plain result future.",
+          "Permit legitimate completion/expiry races, avoid resurrecting expired work, and keep rejection before acquisition for expired budget.",
+          "Observe cancellation callback and local cleanup separately from caller future completion; identify untested remote effect/release.",
+          "Maintain Java 11 and bounded test guards without claiming exact wall-clock return."
+        ],
+        "failures": [
+          "Copies the shared-case policy and intentionally leaves owned outstanding work running only because a waiter copy timed out.",
+          "Assumes CompletableFuture cancellation interrupts task or guarantees rollback.",
+          "Cancels unrelated work or mutates loader mode/registry lifecycle to make a test pass.",
+          "Omits cancellation observations or presents pending remote checks as passed."
+        ]
+      }
+    }
+  ],
+  "limitations": [
+    "No actual agent behavioral evaluation, selection test, holdout or comparison; no improvement claim.",
+    "Compiler source/API target 11 was exercised on JDK 25.0.3, not a Java 11 runtime; Java 26 behavior was verified from versioned documentation, not executed.",
+    "Partial inherit/outbound/HTTP/JDBC snippets were reviewed, not compiled as standalone applications.",
+    "Probe is local and bounded: no real HTTP/gRPC, JDBC/database, Kafka, Spring wiring, remote resource release or committed business outcome was tested.",
+    "The tests do not establish timing guarantees, exhaustive races or production cancellation behavior. The regressing-clock check is a test-seam observation, not a property of arbitrary invalid clock sequences.",
+    "No security rule changed. Existing input-validation arithmetic was exercised locally; no broader hostile network or trust-boundary evaluation occurred.",
+    "Historical temp validation artifact was unavailable; archived report content was not counted as a fresh execution.",
+    "Source review covers material supported distinctions, not every runtime/client/driver permutation."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Parallel review ownership; only after all reviewers stop. No integrity/version change from this package."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Parallel review global check; no repository-wide verification claimed by reviewer."
+    }
+  ],
+  "crossSkill": {
+    "findings": [],
+    "actionsRequired": [
+      "Coordinator may independently run the two cases with taskInput only; keep evaluatorOnly and prior results out of actor context.",
+      "Coordinator archives this handoff and retained temp evidence, then performs global checks."
+    ]
+  },
+  "artifacts": {
+    "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/timeouts-and-deadlines",
+    "retained": [
+      "validate-local.mjs",
+      "technical-check.mjs",
+      "Probe.java",
+      "Deadline.java",
+      "Waiter.java",
+      "technical-results.json",
+      "classes/"
+    ],
+    "scope": "Temporary validation evidence only; no review artifacts added to shipped package."
+  },
+  "processState": "All spawned compile/runtime processes completed synchronously; no server, background writer or active review process remains."
+}

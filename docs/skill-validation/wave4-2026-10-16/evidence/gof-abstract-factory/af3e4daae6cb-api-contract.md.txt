@@ -1,0 +1,6 @@
+# Consumer contract
+
+Report creation must use a paginator, renderer and stylesheet belonging to the requested format.
+External SDK clients are supported consumers and may construct bundles using the public API.
+The entry point must reject incompatible product combinations before rendering. Verification
+covers client-created bundles as well as the module's supported assemblies and outputs.

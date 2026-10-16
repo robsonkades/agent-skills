@@ -1,0 +1,9 @@
+package com.example.text;
+
+public final class LineEndings {
+    private LineEndings() { }
+
+    public static String normalize(String text) {
+        return text.replace("\r\n", "\n");
+    }
+}

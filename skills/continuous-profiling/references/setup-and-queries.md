@@ -211,6 +211,28 @@ Profile stores often intern stacks and labels. Schema changes to frame normaliza
 demangling, hidden/lambda names, thread labels, or weight units can split/merge historical
 series. Version the schema and prevent comparisons across incompatible epochs by default.
 
+### Preserve weights through export
+
+Trace a representative raw event through the deployed converter, stored value/unit, and query
+aggregate. A field or graph named CPU may contain sample counts, estimated CPU-time weights,
+or normalized shares. Check the conversion and query, not just the collection policy.
+
+For example, JDK 25 `jdk.CPUTimeSample` carries `samplingPeriod`; a rate throttle can change
+that period with the active processor count even when its configured rate is unchanged. The
+[JDK 25 GA sampler](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/jfr/periodic/sampling/jfrCPUTimeThreadSampler.cpp)
+records the effective period, whereas its
+[`cpu-time-hot-methods` view](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/jdk.jfr/share/classes/jdk/jfr/internal/query/view.ini)
+aggregates counts. Preserve each sample's period with its units when deriving CPU-time weights.
+If the converter already exports weighted nanoseconds, do not multiply by the period again.
+If conversion discarded the periods, recover them from compatible raw evidence or keep the
+conclusion in sample-count terms; current settings cannot reconstruct historical weights.
+
+As an arithmetic control, 1,000 samples at 10 ms and 500 at 20 ms both represent 10 seconds of
+sampled CPU-time weight. The 50% count reduction is not a 50% CPU-cost reduction. At an
+unchanged 10 ms period, 500 samples instead represent 5 seconds. Validate this distinction
+through conversion and aggregation, with workload denominators aligned separately. Weighting
+does not recover lost samples, remove sampling bias, or make unmatched windows causal.
+
 ## Query procedure
 
 ### Incident localization

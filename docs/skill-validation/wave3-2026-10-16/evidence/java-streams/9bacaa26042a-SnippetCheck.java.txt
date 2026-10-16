@@ -1,0 +1,31 @@
+import java.util.*;
+import java.util.stream.*;
+public final class SnippetCheck {
+    static List<List<Integer>> prefixes(Stream<Integer> input) {
+        // Java 24+: retain each prefix, not repeated references to a growing list
+List<List<Integer>> prefixes = input
+    .gather(Gatherers.scan(
+        () -> List.<Integer>of(),
+        (prefix, value) -> {
+            List<Integer> next = new ArrayList<>(prefix);
+            next.add(value);
+            return List.copyOf(next);
+        }))
+    .toList(); // [[1], [1, 2], [1, 2, 3]]
+
+        return prefixes;
+    }
+    static void check(boolean condition, String label) { if (!condition) throw new AssertionError(label); }
+    public static void main(String[] args) {
+        var expected = List.of(List.of(1), List.of(1, 2), List.of(1, 2, 3));
+        var first = prefixes(Stream.of(1, 2, 3));
+        check(first.equals(expected), "sequential history");
+        check(prefixes(Stream.of(1, 2, 3).parallel()).equals(expected), "parallel history");
+        check(prefixes(Stream.empty()).isEmpty(), "empty input");
+        check(prefixes(Stream.of(9)).equals(List.of(List.of(9))), "single input");
+        check(first.equals(expected), "separate evaluation does not mutate old prefixes");
+        try { first.get(0).add(7); throw new AssertionError("mutable prefix"); }
+        catch (UnsupportedOperationException expectedFailure) {}
+        System.out.println("PASS exact added snippet, sequential/parallel, empty/single input, independent evaluations, stable unmodifiable prefixes");
+    }
+}

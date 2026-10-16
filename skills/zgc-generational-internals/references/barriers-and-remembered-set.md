@@ -81,9 +81,10 @@ updates prevent losing concurrent sets in shared words.
 `ZRememberedSet`, in `zRememberedSet.hpp`: **one bit per potential object-field address** inside
 the page. JDK 25 stores two `ZMovableBitMap` instances in `_bitmap[2]`, with `CHeapBitMap`
 accessors; `ZBitMap::ReverseIterator` is an iteration helper, not the backing storage type.
-There is no card — no fixed-size memory slice — in the real structure. G1's one byte per
-512-byte card is a different granularity of tracked datum, not merely a different processing
-schedule. The exact bit-to-address mapping and the size of `_bitmap[2]` should be checked
+There is no card — no fixed-size memory slice — in the real structure. G1 uses one byte per
+card (512 bytes by default; inspect `GCCardSizeInBytes`). This is a different granularity of
+tracked datum, not merely a different processing schedule. The exact bit-to-address mapping
+and the size of `_bitmap[2]` should be checked
 against `zRememberedSet.hpp` / `zRememberedSet.inline.hpp` on the build in use before citing.
 
 ### Double buffering
@@ -174,3 +175,4 @@ Sources: [JEP 439](https://openjdk.org/jeps/439),
 [remembered-set storage](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/z/zRememberedSet.hpp),
 [remembered-set mapping](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/z/zRememberedSet.inline.hpp),
 [remembered-set roles](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/z/zRememberedSet.cpp).
+The comparison uses the [25.0.3 card-size default and configurable range](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/shared/gc_globals.hpp).

@@ -1,0 +1,62 @@
+[
+  {
+    "case": "case-a",
+    "file": "README.md",
+    "sha256": "f9cf76558e06f04566e500c6c8432d59bcff39390a17452112c9e6d5de878ebc"
+  },
+  {
+    "case": "case-a",
+    "file": "mapping-inventory.json",
+    "sha256": "c4c066fe59f57d804c1e9fd925f79ebd7f15f2189bb213d44601e371dfc170b1"
+  },
+  {
+    "case": "case-a",
+    "file": "schema.sql",
+    "sha256": "356581fb93ce9f28d252aabe11696b53b41c15bbfde89ef36c7c3cef3c4aade0"
+  },
+  {
+    "case": "case-a",
+    "file": "sample-rows.csv",
+    "sha256": "b7df614499bc4785dd162aad50dbe15cfb79c41b1105bec6ce555988c4f2390b"
+  },
+  {
+    "case": "case-a",
+    "file": "queries.sql",
+    "sha256": "42b0d0cf5d4ed3233cba46f49a7628ac39d5e1a5ddf7d2c6ba8f80c7cb3d28e2"
+  },
+  {
+    "case": "case-a",
+    "file": "business-contract.json",
+    "sha256": "5f082e81ecc169ba8202d19b4951a495afdffc869dc8aa94cafaef8dfb432a6d"
+  },
+  {
+    "case": "case-b",
+    "file": "README.md",
+    "sha256": "f9cf76558e06f04566e500c6c8432d59bcff39390a17452112c9e6d5de878ebc"
+  },
+  {
+    "case": "case-b",
+    "file": "mapping-inventory.json",
+    "sha256": "c4c066fe59f57d804c1e9fd925f79ebd7f15f2189bb213d44601e371dfc170b1"
+  },
+  {
+    "case": "case-b",
+    "file": "schema.sql",
+    "sha256": "356581fb93ce9f28d252aabe11696b53b41c15bbfde89ef36c7c3cef3c4aade0"
+  },
+  {
+    "case": "case-b",
+    "file": "sample-rows.csv",
+    "sha256": "b7df614499bc4785dd162aad50dbe15cfb79c41b1105bec6ce555988c4f2390b"
+  },
+  {
+    "case": "case-b",
+    "file": "queries.sql",
+    "sha256": "42b0d0cf5d4ed3233cba46f49a7628ac39d5e1a5ddf7d2c6ba8f80c7cb3d28e2"
+  },
+  {
+    "case": "case-b",
+    "file": "business-contract.json",
+    "sha256": "c6a5f3e7bdbe8ca77703729806e622a649b6379bd82fb1083ead1561f9b9e7b2"
+  }
+]

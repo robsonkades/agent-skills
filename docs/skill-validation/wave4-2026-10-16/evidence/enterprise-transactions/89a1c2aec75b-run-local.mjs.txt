@@ -1,0 +1,56 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),"..");
+const repo="C:/git/agent-skills";
+const evidence=path.join(root,"evidence");
+fs.mkdirSync(evidence,{recursive:true});
+const records=[];
+function run(label,bin,args,cwd=repo) {
+ const result=spawnSync(bin,args,{cwd,encoding:"utf8",windowsHide:true});
+ const stdoutFile=path.join(evidence,label+".stdout.txt"), stderrFile=path.join(evidence,label+".stderr.txt");
+ fs.writeFileSync(stdoutFile,result.stdout??""); fs.writeFileSync(stderrFile,result.stderr??"");
+ const record={label,executable:bin,args,workingDirectory:cwd,exitCode:result.status,signal:result.signal,error:result.error?.message??null,stdoutFile,stderrFile};
+ records.push(record);
+ fs.writeFileSync(path.join(evidence,"commands.json"),JSON.stringify(records,null,2)+"\n");
+ assert.equal(result.status,0,JSON.stringify(record));
+ return result.stdout;
+}
+const hash=p=>createHash("sha256").update(fs.readFileSync(p)).digest("hex");
+const jars=["spring-core","spring-beans","spring-tx","spring-jdbc","spring-jcl"].map(id=>"C:/Users/robso/.m2/repository/org/springframework/"+id+"/6.2.12/"+id+"-6.2.12.jar");
+for(const jar of jars) assert.ok(fs.existsSync(jar),jar);
+fs.writeFileSync(path.join(evidence,"dependencies.json"),JSON.stringify(jars.map(file=>({file,sha256:hash(file)})),null,2)+"\n");
+const inputA=path.join(root,"inputs","case-a"), inputB=path.join(root,"inputs","case-b");
+assert.deepEqual(fs.readdirSync(inputA).sort(),fs.readdirSync(inputB).sort());
+const different=fs.readdirSync(inputA).filter(file=>fs.readFileSync(path.join(inputA,file),"utf8")!==fs.readFileSync(path.join(inputB,file),"utf8"));
+assert.deepEqual(different,["application.properties"]);
+assert.equal(fs.readFileSync(path.join(inputB,"application.properties"),"utf8"),fs.readFileSync(path.join(inputA,"application.properties"),"utf8").replace("basic","remaining"));
+fs.writeFileSync(path.join(evidence,"pair-check.json"),JSON.stringify({identicalFiles:4,changedFile:"application.properties",onlyChangedConstraint:"batch.statements=basic versus remaining",actorInputsSeparateFromCriteria:true},null,2)+"\n");
+const jdk="C:/Users/robso/.jdks/temurin-25.0.3/bin";
+for(const id of ["case-a","case-b"]) {
+ const classes=path.join(root,"classes",id);
+ fs.mkdirSync(classes,{recursive:true});
+ run(id+"-compile",jdk+"/javac.exe",["--release","17","-cp",jars.join(";"),"-d",classes,path.join(root,"inputs",id,"BatchWrite.java"),path.join(root,"evaluator","TimeoutProbe.java")]);
+ run(id+"-probe",jdk+"/java.exe",["-cp",[classes,...jars].join(";"),"TimeoutProbe",path.join(root,"inputs",id)]);
+}
+run("structural",process.execPath,["--input-type=module","--eval",fs.readFileSync(path.join(root,"evaluator","structural-source.txt"),"utf8")]);
+run("format",process.execPath,["node_modules/prettier/bin/prettier.cjs","--check","skills/enterprise-transactions/SKILL.md","skills/enterprise-transactions/skill.yaml","skills/enterprise-transactions/references/boundaries-and-propagation.md","skills/enterprise-transactions/references/isolation-and-recovery.md"]);
+run("diff-check","git",["diff","--check","--","skills/enterprise-transactions"]);
+run("final-diff","git",["diff","--","skills/enterprise-transactions"]);
+run("final-status","git",["status","--short","--","skills/enterprise-transactions"]);
+run("staged-diff","git",["diff","--cached","--","skills/enterprise-transactions"]);
+const finalHashes=[];
+for(const file of ["SKILL.md","skill.yaml","references/boundaries-and-propagation.md","references/isolation-and-recovery.md"]) {
+ const source=path.join(repo,"skills","enterprise-transactions",file);
+ const final=path.join(evidence,"final",file);
+ fs.mkdirSync(path.dirname(final),{recursive:true}); fs.copyFileSync(source,final);
+ const committed=path.join(evidence,"committed",file);
+ fs.mkdirSync(path.dirname(committed),{recursive:true});
+ fs.writeFileSync(committed,run("committed-"+file.replaceAll("/","_"),"git",["show","HEAD:skills/enterprise-transactions/"+file]));
+ finalHashes.push({path:"skills/enterprise-transactions/"+file,sha256:hash(source)});
+}
+fs.writeFileSync(path.join(evidence,"final-hashes.json"),JSON.stringify(finalHashes,null,2)+"\n");
+console.log(JSON.stringify({commands:records.length,allPassed:true,finalHashes,evidenceDirectory:evidence,subprocessesRemaining:0},null,2));

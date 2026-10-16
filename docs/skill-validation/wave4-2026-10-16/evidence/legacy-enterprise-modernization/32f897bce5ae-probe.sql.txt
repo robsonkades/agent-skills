@@ -1,0 +1,61 @@
+\set ON_ERROR_STOP on
+-- Run only against an already available disposable PostgreSQL 17 database/cluster.
+-- All fixture roles, objects and data are created inside this transaction and rolled back.
+BEGIN;
+SELECT version();
+SELECT set_config('lm_w4.case_id', :'case_id', true);
+DO $requirements$
+BEGIN
+    IF current_setting('server_version_num')::integer NOT BETWEEN 170000 AND 179999 THEN
+        RAISE EXCEPTION 'This fixture targets PostgreSQL 17';
+    END IF;
+    IF current_setting('lm_w4.case_id') NOT IN ('A', 'B') THEN
+        RAISE EXCEPTION 'case_id must be A or B';
+    END IF;
+END
+$requirements$;
+\ir ../common/schema.sql
+SELECT set_config('lm_w4.expected_ids', '1', true);
+SET ROLE lm_w4_app_a;
+\ir check-reader.sql
+RESET ROLE;
+SELECT set_config('lm_w4.expected_ids', '2', true);
+SET ROLE lm_w4_app_b;
+\ir check-reader.sql
+RESET ROLE;
+SELECT current_setting('lm_w4.case_id') = 'A' AS is_a \gset
+\if :is_a
+\ir ../cases/A/input/migration.sql
+\else
+\ir ../cases/B/input/migration.sql
+\endif
+SELECT set_config('lm_w4.expected_ids', CASE current_setting('lm_w4.case_id') WHEN 'A' THEN '1,2' ELSE '1' END, true);
+SET ROLE lm_w4_app_a;
+\ir check-reader.sql
+RESET ROLE;
+SELECT set_config('lm_w4.expected_ids', CASE current_setting('lm_w4.case_id') WHEN 'A' THEN '1,2' ELSE '2' END, true);
+SET ROLE lm_w4_app_b;
+\ir check-reader.sql
+RESET ROLE;
+SET ROLE lm_w4_owner;
+DO $owner$
+BEGIN
+    INSERT INTO lm_w4.customer(id, tenant_role, nome_cli) VALUES (99, 'lm_w4_owner', 'maintenance');
+    IF NOT EXISTS (SELECT 1 FROM lm_w4.customer WHERE id = 99) THEN
+        RAISE EXCEPTION 'owner maintenance write unavailable';
+    END IF;
+    DELETE FROM lm_w4.customer WHERE id = 99;
+END
+$owner$;
+RESET ROLE;
+\ir ../common/recovery.sql
+SELECT set_config('lm_w4.expected_ids', '1', true);
+SET ROLE lm_w4_app_a;
+\ir check-reader.sql
+RESET ROLE;
+SELECT set_config('lm_w4.expected_ids', '2', true);
+SET ROLE lm_w4_app_b;
+\ir check-reader.sql
+RESET ROLE;
+ROLLBACK;
+\echo 'Fixture completed; A reproduces overexposure, B preserves the declared read policy. This is not a project-wide security check.'

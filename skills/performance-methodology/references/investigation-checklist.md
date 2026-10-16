@@ -70,6 +70,8 @@ and a completed causal diagnosis support different claims; unfinished checks rem
       not proof that collection effects are isolated)
 - [ ] Treatment is defined and other differences controlled; interactions use a designed
       factorial experiment rather than an undocumented bundle
+- [ ] Assignment/exposure records reconcile with analysed populations; export loss, joins and
+      filters do not silently select different outcomes between arms, even with balanced counts
 - [ ] Shared-resource exposure and carry-over checked; assignment unit and rollout fraction
       support the intended contrast, with interference limits reported
 - [ ] Independent experimental unit, sample-size rationale, run count, allocation/blocking,

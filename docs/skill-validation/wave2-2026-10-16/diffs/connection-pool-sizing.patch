@@ -1,0 +1,119 @@
+diff --git a/skills/connection-pool-sizing/SKILL.md b/skills/connection-pool-sizing/SKILL.md
+index 714f27a..65614d1 100644
+--- a/skills/connection-pool-sizing/SKILL.md
++++ b/skills/connection-pool-sizing/SKILL.md
+@@ -32,6 +32,11 @@ Start from the requested sizing, diagnosis or review and reuse adequate evidence
+ missing workload, deadline or database-budget inputs that change the decision. A review can retain
+ a sound configuration; it does not require changing pool settings or database access code.
+ 
++First trace the affected endpoint or job to its selected transaction manager/DataSource, physical
++pool, runtime configuration and database target. Match that pool and replica to the captured metric
++labels before sizing it; a default property or fleet-wide dashboard may describe a different pool.
++Use the identity checks in `references/sizing-and-configuration.md` when that mapping is unclear.
++
+ 1. **Measure `W`**, the mean connection **hold** time, with `hikaricp.connections.usage`;
+    inspect p50/p99 separately for tails. Hold time runs from successful checkout until return to
+    the pool, which can include time before the first statement and after commit. Verify the metric
+@@ -79,7 +84,10 @@ a sound configuration; it does not require changing pool settings or database ac
+   An acquisition timeout alone does not prove the database is unavailable. Immediate retries
+   against the same exhausted pool can amplify overload; prefer bounded rejection/degradation
+   unless a retry has remaining deadline, safe operation semantics and a bounded retry budget.
+-  This timeout is pool-wide and covers acquisition, not query execution or the whole request.
++  This timeout is pool-wide and covers ordinary acquisition, not query execution or the whole request.
++  If pool suspension is enabled and active, HikariCP can wait outside this timeout and its ordinary
++  pending/acquisition metrics. Inspect the suspension branch in `references/incident-triage.md`
++  before treating a finite setting or quiet dashboard as proof of a bounded wait.
+   For shorter remaining budgets than the supported minimum, use deadline-aware upstream admission
+   and a client cancellation policy; do not assume setting a sub-minimum value works.
+ - Set `max-lifetime` a few seconds **below** an enforced database or infrastructure connection
+@@ -128,7 +136,8 @@ a sound configuration; it does not require changing pool settings or database ac
+ 
+ ## References
+ 
+-Return the measurement interval/population, mean and tail hold times, completed borrow rate and
++Return the affected operation, identified pool/replica and effective configuration source,
++measurement interval/population, mean and tail hold times, completed borrow rate and
+ offered/failed demand, candidate pool and aggregate database budget, competing diagnosis, and
+ validation/rollback bounds. State which checks ran and which claims remain conditional.
+ 
+diff --git a/skills/connection-pool-sizing/references/incident-triage.md b/skills/connection-pool-sizing/references/incident-triage.md
+index e5f8d99..76bc595 100644
+--- a/skills/connection-pool-sizing/references/incident-triage.md
++++ b/skills/connection-pool-sizing/references/incident-triage.md
+@@ -6,6 +6,10 @@ database headroom and aggregate budget evidence can relocate the bottleneck.
+ 
+ ## 1. Is it the pool at all?
+ 
++Resolve the affected operation's pool and replica using the
++[identity checks](sizing-and-configuration.md#identify-the-pool-being-changed) before interpreting
++these series. Preserve that identity when correlating application waits with database sessions.
++
+ ```
+ hikaricp.connections.pending        > 0 sustained → threads are waiting
+ hikaricp.connections.acquire p99    compare with remaining request budget
+@@ -16,6 +20,18 @@ A sampled zero pending count does not rule out bursts between scrapes. Acquisiti
+ also accompany inability to create/validate connections, not just a fully occupied healthy pool.
+ Check acquisition distributions, timeout deltas, effective limits and connectivity together.
+ 
++When suspension is enabled (`allowPoolSuspension`, default false), check failover/JMX action history
++and wait stacks before excluding pool waits. In HikariCP 6.3.3, a suspended acquisition normally
++waits in `SuspendResumeLock` before the acquisition clock starts or the connection bag is entered.
++That wait can exceed `connectionTimeout` without appearing in `pending` or the acquisition timer;
++the default suspension wait is also uninterruptible. Verify the resolved implementation and
++customizations rather than assuming request cancellation releases it. Increasing pool size does
++not release this wait. Establish why suspension exists and verify the failover runbook's recovery
++conditions before resuming; ask its owner only for missing decisions. Test recovery and upstream
++admission in an isolated setting.
++See the [6.3.3 acquisition and pending paths](https://github.com/brettwooldridge/HikariCP/blob/HikariCP-6.3.3/src/main/java/com/zaxxer/hikari/pool/HikariPool.java)
++and [suspension lock](https://github.com/brettwooldridge/HikariCP/blob/HikariCP-6.3.3/src/main/java/com/zaxxer/hikari/util/SuspendResumeLock.java).
++
+ Check which outcomes each metric covers. In HikariCP 5.1.0/6.3.3, successful acquisitions and
+ acquisition timeouts both feed the `acquire` timer; an interrupted pool wait feeds neither that
+ timer nor the timeout counter. A timeout is already in the acquisition count: adding timeout
+diff --git a/skills/connection-pool-sizing/references/sizing-and-configuration.md b/skills/connection-pool-sizing/references/sizing-and-configuration.md
+index c941ab8..f064417 100644
+--- a/skills/connection-pool-sizing/references/sizing-and-configuration.md
++++ b/skills/connection-pool-sizing/references/sizing-and-configuration.md
+@@ -1,5 +1,29 @@
+ # Sizing and configuration
+ 
++## Identify the pool being changed
++
++Follow one affected caller through its repository/JDBC access and transaction manager to the
++selected DataSource. In a multi-DataSource application, inspect bean qualifiers, transaction-manager
++selection and routing targets; a read-only annotation or a familiar bean name alone does not prove
++which physical pool is used. Trace the selected pool's property binding, active profile and deployment
++overrides, then compare effective values from existing runtime evidence. Record the relevant file,
++bean/pool name, replica and database endpoint without copying credentials.
++
++For Spring Boot custom DataSources, inspect `@Bean` and `@ConfigurationProperties` declarations:
++the pool may bind under an application-specific prefix rather than `spring.datasource.hikari`.
++See the [Spring Boot 3.4.5 custom DataSource examples](https://github.com/spring-projects/spring-boot/blob/v3.4.5/spring-boot-project/spring-boot-docs/src/docs/antora/modules/how-to/pages/data-access.adoc).
++Correcting the wrong property is not a pool-size experiment; first confirm that the proposed setting
++actually reaches the intended pool.
++
++Match runtime identities before comparing metrics. Spring Boot 3.4.5 tags `jdbc.connections` by a
++DataSource name derived from its bean, while `hikaricp` metrics use the pool name; these need not be
++the same string. Keep replica/pool labels when diagnosing local waits, and aggregate separately for
++the database-wide budget. Two ten-connection pools with ten active on one and zero on the other
++have 50% aggregate occupancy, yet the first can have waiters. Spare connections in the second do
++not establish local headroom in the first. If only aggregate data is available, leave local sizing
++conditional and obtain a scoped capture; do not derive a per-instance increase from the aggregate alone.
++See [Spring Boot 3.4.5 metric identities](https://github.com/spring-projects/spring-boot/blob/v3.4.5/spring-boot-project/spring-boot-docs/src/docs/antora/modules/reference/pages/actuator/metrics.adoc).
++
+ ## The calculation
+ 
+ ```
+diff --git a/skills/connection-pool-sizing/skill.yaml b/skills/connection-pool-sizing/skill.yaml
+index e8d3f84..095e5e5 100644
+--- a/skills/connection-pool-sizing/skill.yaml
++++ b/skills/connection-pool-sizing/skill.yaml
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: connection-pool-sizing
+-version: 1.2.4
++version: 1.2.5
+ description: >-
+   Sizing and diagnosing a JDBC connection pool: L = λ × W where W is connection hold time
+   rather than query latency, the database-side ceiling, HikariCP timeouts and lifetimes,

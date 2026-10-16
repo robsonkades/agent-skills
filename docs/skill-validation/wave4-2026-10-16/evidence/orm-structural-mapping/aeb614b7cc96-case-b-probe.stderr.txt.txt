@@ -1,0 +1,22 @@
+Oct 16, 2026 1:00:04 PM org.hibernate.Version logVersion
+INFO: HHH000412: Hibernate ORM core version 6.6.33.Final
+Oct 16, 2026 1:00:04 PM org.hibernate.cache.internal.RegionFactoryInitiator initiateService
+INFO: HHH000026: Second-level cache disabled
+Oct 16, 2026 1:00:04 PM org.hibernate.engine.jdbc.connections.internal.DriverManagerConnectionProviderImpl configure
+WARN: HHH10001002: Using built-in connection pool (not intended for production use)
+Oct 16, 2026 1:00:04 PM org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator logConnectionInfo
+INFO: HHH10001005: Database info:
+	Database JDBC URL [jdbc:h2:mem:orm_skill_b;DB_CLOSE_DELAY=-1]
+	Database driver: org.h2.Driver
+	Database version: 2.3.232
+	Autocommit mode: false
+	Isolation level: undefined/unknown
+	Minimum pool size: 1
+	Maximum pool size: 2
+Oct 16, 2026 1:00:04 PM org.hibernate.engine.transaction.jta.platform.internal.JtaPlatformInitiator initiateService
+INFO: HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+Oct 16, 2026 1:00:04 PM org.hibernate.engine.jdbc.spi.SqlExceptionHelper logExceptions
+WARN: SQL Error: 23505, SQLState: 23505
+Oct 16, 2026 1:00:04 PM org.hibernate.engine.jdbc.spi.SqlExceptionHelper logExceptions
+ERROR: Unique index or primary key violation: "PUBLIC.UQ_BADGE_MEMBER_INDEX_4 ON PUBLIC.ACCESS_BADGE(MEMBER_ID NULLS FIRST) VALUES ( /* 10 */ CAST(1 AS BIGINT) )"; SQL statement:
+insert into access_badge (label,member_id,version,id) values (?,?,?,?) [23505-232]

@@ -1,0 +1,11 @@
+import java.util.List;
+
+public final class SmokeTest {
+    public static void main(String[] args) {
+        PackingPlan plan = new PlanBuilder().label("outbound").addItem("book").build();
+        if (!plan.label().equals("outbound") || !plan.items().equals(List.of("book"))) {
+            throw new AssertionError("Unexpected plan");
+        }
+        System.out.println("PASS ordinary creation");
+    }
+}

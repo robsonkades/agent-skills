@@ -1,0 +1,16 @@
+{
+  "run": "c2-2",
+  "label": "All stress withdrawals occur while actual gate is externally owned; then isolated success",
+  "productionUnchanged": true,
+  "intervention": "Only disposable copy of actor test: bounded holder, finally release, outcome assertions",
+  "startedAt": "2026-10-16T12:49:21.908Z",
+  "finishedAt": "2026-10-16T12:49:22.858Z",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "check.mjs"
+  ],
+  "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-behavior-6orq6B\\grader\\c2-2\\legal-all-busy",
+  "exit": 0,
+  "stdout": "\r\nTest run finished after 113 ms\r\n[         3 containers found      ]\r\n[         0 containers skipped    ]\r\n[         3 containers started    ]\r\n[         0 containers aborted    ]\r\n[         3 containers successful ]\r\n[         0 containers failed     ]\r\n[        21 tests found           ]\r\n[         0 tests skipped         ]\r\n[        21 tests started         ]\r\n[         0 tests aborted         ]\r\n[        21 tests successful      ]\r\n[         0 tests failed          ]\r\n\r\n",
+  "stderr": ""
+}

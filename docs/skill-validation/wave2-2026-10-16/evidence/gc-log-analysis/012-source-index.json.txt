@@ -1,0 +1,81 @@
+{
+  "sources": [
+    {
+      "file": "sources/java25.html",
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html",
+      "status": 200,
+      "bytes": 236668,
+      "sha256": "ec11b8ca0d227c1a93a964d5bcde71131a473797ffb7e809d35258fabe84eedd"
+    },
+    {
+      "file": "sources/profile25.jfc",
+      "url": "https://raw.githubusercontent.com/openjdk/jdk/jdk-25-ga/src/jdk.jfr/share/conf/jfr/profile.jfc",
+      "status": 200,
+      "bytes": 40387,
+      "sha256": "3e2c847608b1e7d182337f56bbf75b6a026ba4e9634b398bd92aec865e9ea8a7"
+    },
+    {
+      "file": "sources/gcCause.cpp",
+      "url": "https://raw.githubusercontent.com/openjdk/jdk25u/2fce64f0ecc22355298b9ab9c1ba9477a2f1ec86/src/hotspot/share/gc/shared/gcCause.cpp",
+      "status": 200,
+      "bytes": 3373,
+      "sha256": "1fb2d51c3a62c935ad8b4309e800055be056c9e967aa70b3d077be8aa6003298"
+    },
+    {
+      "file": "sources/g1YoungCollector.cpp",
+      "url": "https://raw.githubusercontent.com/openjdk/jdk25u/2fce64f0ecc22355298b9ab9c1ba9477a2f1ec86/src/hotspot/share/gc/g1/g1YoungCollector.cpp",
+      "status": 200,
+      "bytes": 43687,
+      "sha256": "f143f2700dfe7c1443836b92d2fb458f97d6c892425048e8eb2aa9837037f022"
+    },
+    {
+      "file": "sources/jep490.html",
+      "url": "https://openjdk.org/jeps/490",
+      "status": 200,
+      "bytes": 12681,
+      "sha256": "7b96eb818dc94d7feef88d710a4043a28151007548c3a689b7da7a7059e1333e"
+    },
+    {
+      "file": "sources/zPageAllocator.cpp",
+      "url": "https://raw.githubusercontent.com/openjdk/jdk25u/jdk-25.0.3%2B9/src/hotspot/share/gc/z/zPageAllocator.cpp",
+      "status": 200,
+      "bytes": 79997,
+      "sha256": "7a472866f7f5d58327b8b2bfae60b2227bd3dd08dc13a1f1eaa18fdf45ca3a2c"
+    },
+    {
+      "file": "sources/zStat.cpp",
+      "url": "https://raw.githubusercontent.com/openjdk/jdk25u/jdk-25.0.3%2B9/src/hotspot/share/gc/z/zStat.cpp",
+      "status": 200,
+      "bytes": 63534,
+      "sha256": "d0184d98584eedbb0707495ebcb3b65d009caf4f21b6f54130ecfa7ca6956959"
+    },
+    {
+      "file": "sources/jdk16-metadata.xml",
+      "url": "https://raw.githubusercontent.com/openjdk/jdk/jdk-16-ga/src/hotspot/share/jfr/metadata/metadata.xml",
+      "status": 200,
+      "bytes": 91605,
+      "sha256": "933942239b33a0de695d7f16fcf6688c285aa9357292923a72ad84a7dc42330f"
+    },
+    {
+      "file": "sources/zGCIdPrinter.cpp",
+      "url": "https://raw.githubusercontent.com/openjdk/jdk25u/jdk-25.0.3%2B9/src/hotspot/share/gc/z/zGCIdPrinter.cpp",
+      "status": 200,
+      "bytes": 2942,
+      "sha256": "ea6cf53c1a12f059f84449f0a221a87d30b17435c093821b7c605790e4f88beb"
+    },
+    {
+      "file": "sources/zDriver.cpp",
+      "url": "https://raw.githubusercontent.com/openjdk/jdk25u/jdk-25.0.3%2B9/src/hotspot/share/gc/z/zDriver.cpp",
+      "status": 200,
+      "bytes": 13027,
+      "sha256": "a44a6c572817d70a826758f0b9a1f202d63744d7d1432ab7171da3010c261aea"
+    },
+    {
+      "file": "sources/zGeneration.cpp",
+      "url": "https://raw.githubusercontent.com/openjdk/jdk25u/jdk-25.0.3%2B9/src/hotspot/share/gc/z/zGeneration.cpp",
+      "status": 200,
+      "bytes": 47045,
+      "sha256": "2f026d7e5357d9edbbb9a85047c98a9fa43b5b0184bfecdd8a4d7c0c9812f118"
+    }
+  ]
+}

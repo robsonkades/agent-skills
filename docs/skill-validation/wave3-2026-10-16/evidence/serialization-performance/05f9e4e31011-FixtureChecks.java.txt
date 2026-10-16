@@ -1,0 +1,55 @@
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+import java.util.zip.*;
+
+public class FixtureChecks {
+    public static void main(String[] args) throws Exception {
+        List<String> expected = List.of("order-17:USD:1200", "order-18:EUR:2500");
+        CompressionReview.Transmission candidate = CompressionReview.encode(expected);
+
+        require(expected.equals(new CompressionReview.StreamReceiver().receive(candidate)),
+                "Continuous stream must preserve count, order and values");
+        System.out.println("PASS continuous-consumer accepts completed session");
+
+        expectIOException(() -> new CompressionReview.FrameReceiver().receive(candidate),
+                "Independent consumer must reject unfinished members");
+
+        byte[] truncatedTail = Arrays.copyOf(candidate.tail(), candidate.tail().length - 1);
+        CompressionReview.Transmission truncated =
+                new CompressionReview.Transmission(candidate.chunks(), truncatedTail);
+        expectIOException(() -> new CompressionReview.StreamReceiver().receive(truncated),
+                "Continuous consumer must reject truncated final trailer");
+
+        List<byte[]> completeFrames = new ArrayList<>();
+        for (String record : expected) {
+            ByteArrayOutputStream sink = new ByteArrayOutputStream();
+            try (GZIPOutputStream gzip = new GZIPOutputStream(sink)) {
+                gzip.write((record + "\n").getBytes(StandardCharsets.UTF_8));
+                gzip.finish();
+            }
+            completeFrames.add(sink.toByteArray());
+        }
+        CompressionReview.Transmission independent =
+                new CompressionReview.Transmission(completeFrames, new byte[0]);
+        require(expected.equals(new CompressionReview.FrameReceiver().receive(independent)),
+                "Independent complete members must preserve count, order and values");
+        System.out.println("PASS independent-consumer accepts complete members");
+    }
+
+    interface CheckedAction { void run() throws IOException; }
+
+    static void expectIOException(CheckedAction action, String label) throws IOException {
+        try {
+            action.run();
+        } catch (IOException expected) {
+            System.out.println("PASS " + label + " [" + expected.getClass().getSimpleName() + "]");
+            return;
+        }
+        throw new AssertionError(label);
+    }
+
+    static void require(boolean condition, String message) {
+        if (!condition) throw new AssertionError(message);
+    }
+}

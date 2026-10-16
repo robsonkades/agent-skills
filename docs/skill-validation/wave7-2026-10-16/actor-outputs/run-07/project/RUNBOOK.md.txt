@@ -1,0 +1,32 @@
+The operator calls Dispatcher.replayOne until it returns false, under the existing one-worker policy. Pending rows are outbox.done=false. Retry the retained work after resolving a receiver or checkpoint error; never resubmit a committed order merely to redeliver.
+
+The acceptance token is the retained outbox.event_id. Replay sends its original payload unchanged;
+it does not reload current order state or generate a new token. Receiver acknowledgment commits
+independently. Checkpoint.afterAccepted runs after that acknowledgment and before done=true is
+recorded. A checkpoint failure propagates while the row remains pending, even if the receiver
+already committed. A retry with the same token and payload then reuses the receiver's existing
+effect and attempts the checkpoint again. A rejected payload or identity/payload conflict also
+propagates and remains pending; investigate the cause before another replay. Do not change event
+identity or the original payload to bypass a rejection.
+
+The following checks use only disposable H2 databases under .build. The prepare/recover pair
+exits the first JVM before the second loads the retained rows; run them in order:
+
+```text
+node check.mjs
+node check.mjs work.Regression prepare
+node check.mjs work.Regression recover
+node check.mjs work.Regression controls
+```
+
+Prepare deliberately fails the checkpoint after receiver acknowledgment and asserts retained work.
+Recover finishes it without rerunning Publisher.create and verifies one receiver effect. Controls
+verify publisher rollback on its second write, one row per replay, distinct events with equal
+payloads, receiver rejection and conflicting reuse of a token. The default Regression entrypoint
+also runs all phases using separate Spring contexts in one JVM.
+
+This is evidence of orderly process recreation with file-backed H2, the existing single-worker
+path and the frozen receiver surrogate. It does not test process killing, power loss, production
+provider behavior or concurrent workers. Previously acknowledged random UUID tokens from the
+defective implementation were not retained in the outbox; identifying those old receiver effects
+requires reconciliation before replay. This repair cannot reconstruct those lost token mappings.

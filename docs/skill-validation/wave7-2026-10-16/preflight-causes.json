@@ -1,0 +1,85 @@
+{
+  "at": "2026-10-16T18:03:58.336Z",
+  "records": [
+    {
+      "caseId": "T3",
+      "variant": "smoke",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/preflight/causes/T3/smoke",
+      "command": ["node", "check.mjs", "work.Smoke"],
+      "startedAt": "2026-10-16T18:03:50.916Z",
+      "finishedAt": "2026-10-16T18:03:52.159Z",
+      "exit": 0,
+      "expectedExit": 0,
+      "expectedMatched": true,
+      "stdout": "command rejected\r\nactive=true committed orders=1\r\n",
+      "stderr": ""
+    },
+    {
+      "caseId": "T3",
+      "variant": "original",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/preflight/causes/T3/original",
+      "command": ["node", "check.mjs", "work.ContractProbe"],
+      "startedAt": "2026-10-16T18:03:52.174Z",
+      "finishedAt": "2026-10-16T18:03:53.378Z",
+      "exit": 1,
+      "expectedExit": 1,
+      "expectedMatched": true,
+      "stdout": "PASS successful order=1\r\nPASS successful stock=19\r\nPASS stock failure propagated=true\r\n",
+      "stderr": "Exception in thread \"main\" java.lang.AssertionError: no rejected order expected=1 actual=2\r\n\tat work.ContractProbe.eq(ContractProbe.java:7)\r\n\tat work.ContractProbe.main(ContractProbe.java:13)\r\n"
+    },
+    {
+      "caseId": "T3",
+      "variant": "positive-qualified-manager",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/preflight/causes/T3/positive-qualified-manager",
+      "command": ["node", "check.mjs", "work.ContractProbe"],
+      "startedAt": "2026-10-16T18:03:53.393Z",
+      "finishedAt": "2026-10-16T18:03:54.614Z",
+      "exit": 0,
+      "expectedExit": 0,
+      "expectedMatched": true,
+      "stdout": "PASS successful order=1\r\nPASS successful stock=19\r\nPASS stock failure propagated=true\r\nPASS no rejected order=1\r\nPASS notifier failure propagated=true\r\nPASS no notifier-rejected order=1\r\nPASS reservation restored=19\r\nPASS metrics failure propagated=true\r\nPASS metrics default still rolls back=1\r\nPASS orders unaffected=1\r\nCONTRACT-PASS checks=10\r\n",
+      "stderr": ""
+    },
+    {
+      "caseId": "T3",
+      "variant": "positive-cause-wrapper",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/preflight/causes/T3/positive-cause-wrapper",
+      "command": ["node", "check.mjs", "work.ContractProbe"],
+      "startedAt": "2026-10-16T18:03:54.634Z",
+      "finishedAt": "2026-10-16T18:03:55.855Z",
+      "exit": 0,
+      "expectedExit": 0,
+      "expectedMatched": true,
+      "stdout": "PASS successful order=1\r\nPASS successful stock=19\r\nPASS stock failure propagated=true\r\nPASS no rejected order=1\r\nPASS notifier failure propagated=true\r\nPASS no notifier-rejected order=1\r\nPASS reservation restored=19\r\nPASS metrics failure propagated=true\r\nPASS metrics default still rolls back=1\r\nPASS orders unaffected=1\r\nCONTRACT-PASS checks=10\r\n",
+      "stderr": ""
+    },
+    {
+      "caseId": "T3",
+      "variant": "negative-dropped-cause",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/preflight/causes/T3/negative-dropped-cause",
+      "command": ["node", "check.mjs", "work.ContractProbe"],
+      "startedAt": "2026-10-16T18:03:55.871Z",
+      "finishedAt": "2026-10-16T18:03:57.100Z",
+      "exit": 1,
+      "expectedExit": 1,
+      "expectedMatched": true,
+      "stdout": "PASS successful order=1\r\nPASS successful stock=19\r\n",
+      "stderr": "Exception in thread \"main\" java.lang.AssertionError: stock failure propagated expected=true actual=false\r\n\tat work.ContractProbe.eq(ContractProbe.java:7)\r\n\tat work.ContractProbe.main(ContractProbe.java:13)\r\n"
+    },
+    {
+      "caseId": "T3",
+      "variant": "negative-global-default",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/preflight/causes/T3/negative-global-default",
+      "command": ["node", "check.mjs", "work.ContractProbe"],
+      "startedAt": "2026-10-16T18:03:57.116Z",
+      "finishedAt": "2026-10-16T18:03:58.335Z",
+      "exit": 1,
+      "expectedExit": 1,
+      "expectedMatched": true,
+      "stdout": "PASS successful order=1\r\nPASS successful stock=19\r\nPASS stock failure propagated=true\r\nPASS no rejected order=1\r\nPASS notifier failure propagated=true\r\nPASS no notifier-rejected order=1\r\nPASS reservation restored=19\r\nPASS metrics failure propagated=true\r\n",
+      "stderr": "Exception in thread \"main\" java.lang.AssertionError: metrics default still rolls back expected=1 actual=2\r\n\tat work.ContractProbe.eq(ContractProbe.java:7)\r\n\tat work.ContractProbe.main(ContractProbe.java:15)\r\n"
+    }
+  ],
+  "allExpected": true,
+  "limits": "Author-built controls, not actor trials. Candidate control patches are evaluator-only and do not change the skill."
+}

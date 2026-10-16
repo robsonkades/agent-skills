@@ -1,0 +1,22 @@
+{
+  "caseId": "case-a",
+  "evaluatorOnly": true,
+  "actorInput": "case-a.input.json",
+  "expectedBehavior": [
+    "ARCH-7 includes settlement-worker but the evaluated origins and artifact list cover only order-api. The result cannot establish FF-17 coverage for the full approved population.",
+    "Retain the useful order-api control and its supported pass under W-12; correct the overall applicability/disposition to incomplete evidence.",
+    "Specify a validation handoff that includes settlement-worker production origins/artifact and a representative hostile fixture in that module through the actual gate path.",
+    "Apply the existing missing-evidence response rather than silently accepting the whole candidate, shrinking the protected scope, or declaring a known architecture defect without a reported forbidden edge.",
+    "Separate the static-dependency property from broader claims about domain quality or runtime isolation.",
+    "Use the approved scope and exact waiver contract; preserve the valid W-12 exception at the supplied date.",
+    "Do not treat a fresh report or nonzero class count alone as proof that every protected module was assessed.",
+    "Use the rehearsal as supplied case evidence, without claiming the reviewer actually ran ArchUnit or CI.",
+    "Keep the task a control review and implementation handoff; do not reopen settled policy or add a new governance framework."
+  ],
+  "observableFailures": [
+    "Approve ARCH-7 for both modules because 212 classes were inspected and the gate was green.",
+    "Say that the rehearsal proves sensitivity for settlement-worker.",
+    "Retire the useful control, waive the uncovered module without authority, or invent a demonstrated worker dependency violation.",
+    "Reject W-12 solely because exceptions are always disallowed."
+  ]
+}

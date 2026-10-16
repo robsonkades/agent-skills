@@ -1,0 +1,13 @@
+import java.lang.reflect.*;
+
+public abstract class TypeRef<T> {
+    private final Type type;
+    protected TypeRef() {
+        this.type = ((ParameterizedType) getClass().getGenericSuperclass())
+                        .getActualTypeArguments()[0];
+    }
+    public Type type() { return type; }
+    @Override public boolean equals(Object o) { return o instanceof TypeRef<?> r && type.equals(r.type); }
+    @Override public int hashCode() { return type.hashCode(); }
+}
+

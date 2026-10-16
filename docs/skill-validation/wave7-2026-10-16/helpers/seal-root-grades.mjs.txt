@@ -1,0 +1,14 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+const root='C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d',report='C:/git/agent-skills/docs/skill-validation/wave7-2026-10-16';
+const read=p=>JSON.parse(fs.readFileSync(p,'utf8'));
+assert.ok(!fs.existsSync(root+'/review/actor-grades.json'),'Do not create pre-review record after reading independent grades');
+assert.ok(!fs.existsSync(report+'/root-grades.frozen.json.txt'));
+const grades=[...read(root+'/root-grades-part1.json').grades,...read(root+'/root-grades-part2.json').grades].sort((a,b)=>a.run.localeCompare(b.run));
+assert.equal(grades.length,16);assert.equal(new Set(grades.map(g=>g.run)).size,16);
+const rechecks=read(report+'/rechecks.json').records;assert.equal(rechecks.length,16);
+for(const g of grades){const r=rechecks.find(r=>r.run===g.run);assert.equal(g.C1,r.probe.exit===0);assert.ok(r.regressions.some(t=>t.candidate?.exit===0&&t.counterfactual?.exit===1),'Discriminating regression '+g.run);}
+const record={frozenAt:new Date().toISOString(),independentActorGradesSeen:false,scope:'Coordinator semantic/source review and independent artifact re-execution. Conditions visible to coordinator; independent semantic reviewer receives partially masked outputs afterward.',grades};
+const b=JSON.stringify(record,null,2)+'\n';fs.writeFileSync(report+'/root-grades.json',b);fs.writeFileSync(report+'/root-grades.frozen.json.txt',b);fs.writeFileSync(report+'/root-grades-seal.json',JSON.stringify({at:new Date().toISOString(),sha256:crypto.createHash('sha256').update(b).digest('hex'),actorCount:16,independentGradesFileExisted:false},null,2)+'\n');
+console.log(JSON.stringify({attempts:grades.length,allCriteriaPass:grades.every(g=>['C1','C2','C3','C4'].every(k=>g[k]))}));

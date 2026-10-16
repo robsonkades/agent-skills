@@ -239,7 +239,7 @@ Hibernate's `Statistics` supplies aggregate counters, not SQL text, parameter va
 causal ownership. Use it with isolated query-budget tests and statement inspection
 (`architecture-and-performance`).
 
-Primary contracts: [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2)
+Primary contracts: [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html)
 (context lifecycle, removal, rollback, merge, query exceptions/flush mode and bulk updates),
 [Hibernate 6.6 Session](https://docs.hibernate.org/orm/6.6/javadocs/org/hibernate/Session.html)
 (failed-session disposal), and

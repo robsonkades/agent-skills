@@ -1,0 +1,2452 @@
+The Operational Analysis of Queueing N e t w o r k M o d e l s *
+
+PETER J. DENNING
+Computer Sciences Department, Purdue Unwers~ty, West Lafayette, Indiana 47907
+
+JEFFREY P. BUZEN
+BGS Systems, Inc., Box 128, Lincoln, Massachusetts 01773
+
+
+
+
+             Queueing network models have proved to be cost effectwe tools for analyzing modern
+             computer systems. This tutorial paper presents the basic results using the operational
+             approach, a framework which allows the analyst to test whether each assumption is met
+             in a given system. The early sections describe the nature of queueing network models and
+             their apphcations for calculating and predicting performance quantitms The basic
+             performance quantities--such as utilizations, mean queue lengths, and mean response
+             tunes--are defined, and operatmnal relationships among them are derwed Following this,
+             the concept of job flow balance is introduced and used to study asymptotic throughputs
+             and response tunes. The concepts of state transition balance, one-step behavior, and
+             homogeneity are then used to relate the proportions of time that each system state is
+             occupied to the parameters of job demand and to dewce charactenstms Efficmnt methods
+             for computing basic performance quantities are also described. Finally the concept of
+             decomposition is used to stmphfy analyses by replacing subsystems with equivalent
+             devices. All concepts are illustrated liberally with examples
+             Keywords and Phrases" balanced system, bottlenecks, decomposability, operational
+             analysis, performance evaluation, performance modeling, queuelng models, queuelng
+             networks, response tunes, saturation.
+             CR Categorws: 8.1, 4.3
+
+
+
+
+INTRODUCTION                                             service rates at all devices [JACK63]. In
+                                                         1967, Gordon and Newell simplified the no-
+Queueing networks are used widely to an-                 tational structure of these results for the
+alyze the performance of multiprogrammed                 special case of closed systems [GORD67].
+computer systems. The theory dates back                  Baskett, et al. extended the results to in-
+to the 1950s. In 1957, Jackson published an              clude different queueing disciplines, multi-
+analysis of a multiple device system                     ple classes of jobs, and nonexponential ser-
+wherein each device contained one or more                vice distributions [BASK75].
+parallel servers and jobs could enter or exit              The first successful application of a net-
+the system anywhere [JACK57]. In 1963                    work model to a computer system came in
+Jackson extended his analysis to open and                1965 when Scherr used the classical ma-
+closed systems with local load-dependent                 chine repairman model to analyze the MIT
+* This work was supported in part by NSF Grant           time sharing system, CTSS [SCHE67]. How-
+GJ-41289 at Purdue University                            ever, the Jackson-Gordon-Newell theory
+
+ PermmsIon to copy without fee all or part of this material is granted provided that the copies are not m a d e
+ or distributed for direct commercial advantage, the A C M copyright notice and the titleof the publication and
+ its date appear, and notice is given that copymg m by permission of the Assoclatlon for Computing Machinery.
+ T o copy otherwlse, or to republish, reqmres a fee and/or specific permission.
+ © 1978 ACM 0010-4892/78/0900-0225
+
+
+                                                                   Computing Surveys, Vol. 10, No. 3, September 1978
+226               P. J. Denning and J. P. Buzen
+      CONTENTS                                                    • The system is modeled by a stationary
+                                                                    stochastic process;
+                                                                  • Jobs are stochastically independent;
+                                                                  • Job steps from device to device follow
+                                                                    a Markov chain;
+                                                                  • The system is in stochastic equilib-
+                                                                    rium;
+        INTRODUCTION                                               • The service time requirements at each
+        1 THE BASIS FOR OPERATIONAL ANALYSIS                          device conform to an exponential dis-
+          Operatmnal Variables, Laws and Theorems
+          ApphcattonAreas
+                                                                      tribution; and
+          Prior Work m Operatmnal Analysts                         • The system is ergodic--i.e., long-term
+        2 VALIDATION AND PREDICTION                                   time averages converge to the values
+        3 OPERATIONAL MEASURES OF NETWORKS
+          Types of Networks
+                                                                      computed for stochastic equilibrium.
+          Bamc Operatmnal Quantities                            The theory of queueing networks based
+        4 JOB FLOW ANALYSIS
+          Vtslt Ratms
+                                                                on these assumptions is usually called
+          System Response Tune                                  "Markovian queueing network theory"
+            Examples                                            [KLEI75]. The italicized words in this list of
+          Bottleneck Analys~
+            Examples                                            assumptions illustrate concepts that the an-
+          Summary                                               alyst must understand to be able to deploy
+        5 LOAD DEPENDENT BEHAVIOR                               the models. Some of these concepts are
+        6 SOLVING FOR STATE OCCUPANCIES
+          State Trap~ttmn Balance                               difficult. Some, such as "equilibrium" or
+          Solving the Balance Equations                         "stationarity," cannot be proved to hold by
+           An Example
+          Accuracy of the Analysm
+                                                                observing the system in a finite time period.
+        7 COMPUTATION OF PERFORMANCE QUANTITIES                 In fact, most can be disproved empirically
+          Closed System with Homogeneous Service Tm~es          --for example, parameters change over
+          Termmal Driven System with Homogeneous Serwce Tunes
+          General Systems
+                                                                time, jobs are dependent, device to device
+        8 DECOMPOSITON                                          transitions do not follow Markov chains,
+          Offime Experiments                                    systems are observable only for short pe-
+          Apphcatmns
+        CONCLUSIONS                                             riods, service distributions are seldom ex-
+        ACKNOWLEDGMENTS                                         ponential. It is no wonder that many people
+        REFERENCES                                              are surprised that these models apply so
+                                                                well to systems which violate so many as-
+                                                                sumptions of the analysis!
+lay dormant until 1971 when Buzen intro-                           In applying or validating the results of
+duced the central server model and fast                         Markovian queueing network theory, ana-
+computational algorithms for these models                       lysts substitute operational (i.e., directly
+[BuzE71a, BuzE71b, BUZE73]. Working                             measured} values for stochastic parameters
+independently,     Moore     showed     that                    in the equations. The repeated successes of
+queueing network models could predict the                       validations led us to investigate whether
+response times on the Michigan Terminal                         the traditional equations of Markovian
+System (MTS) to within 10% [MooR71].                            queueing network theory might also be re-
+Extensive validations since 1971 have veri-                     lations among operational variables, and, if
+fied that these models reproduce observed                       so, whether they can be derived using dif-
+performance quantities with remarkable                          ferent assumptions that can be directly ver-
+accuracy [BuzE75, GIAM76, HUGH73,                               ified and that are likely to hold in actual
+LII's77, ROSE78]. Good surveys are                              systems. This has proved to be true
+[GELE76a, KLEI75, KLEI76, and MONT75].                          [BuzE76a,b,c; and DENN77].
+   Many analysts have experienced puzzle-                           This tutorial paper outlines the opera-
+ment at the accuracy of queueing network                         tional approach to queueing network
+results. The traditional approach to deriv-                      modeling. All the basic equations and re-
+ing them depends on a series of assump-                          sults are derived from one or more of three
+tions used in the theory of stochastic proc-                    operational principles:
+esses:                                                              • All quantities should be defined so as
+
+Computing Surveys, Vol 10, No, 3, September 1978
+                    The Operational Analysis of Queueing Network Models                               227
+     to be precisely measurable, and all as-     state, ergodicity, independence, and the dis-
+     sumptions stated so as to be directly       tributions of specific random variables. All
+     testable. The validity of results should    these hypotheses constitute a stochastic
+     depend only on assumptions which can        model.
+     be tested by observing a real system           Observable aspects of the real system--
+     for a finite period of time.                e.g., states, parameters, and probability dis-
+   • The system must be flow balanced--          tributions--can be identified with quanti-
+     i.e., the number of arrivals at a given     ties in the stochastic model, and equations
+     device must be (almost) the same as         relating these quantities can be derived.
+     the number of departures from that          Although formally applicable only to the
+     device during the observation period.       stochastic process, these equations can also
+   • The devices must be homogeneous--           be applied to the observable behavior of
+     i.e., the routing of jobs must be inde-     the system itself under suitable limiting
+     pendent of local queue lengths, and the     conditions [BuzE78a].
+     mean time between service comple-              Stochastic models bestow bountiful
+     tions at a given device must not depend     benefits. Independent and dependent vari-
+     on the queue lengths of other devices.      ables can be defined precisely, hypotheses
+These operational principles, which will be      can be stated succinctly, and a considerable
+discussed at length in later sections, lead to   body of theory can be called on during
+the same mathematical equations as the           analysis. However, stochastic modeling has
+traditional Markovian assumptions. How-          certain disadvantages, the most important
+ever, the operational assumptions can be         being the impossibility of validating the
+tested, and there are good reasons to be-        Stochastic Hypothesis and the supplemen-
+lieve that they often hold. This is why          tary hypotheses that depend on it.
+operational queueing network analysis ex-           The Stochastic Hypothesis is an asser-
+plains the success of validation experi-         tion about the causes underlying the behav-
+ments. It is now possible to use the             ior of a real system. Because one cannot
+queueing network technology with much            prove asserted causes by studying observed
+more confidence and understanding.               effects, the truth or falsehood of the Sto-
+                                                 chastic Hypothesis and its dependent sup-
+1. THE BASIS FOR OPERATIONAL
+                                                 plementary hypotheses--for a given system
+ANALYSIS
+                                                 and time period--can never be established
+                                                 beyond doubt through any measurement. 1
+Throughout this paper we will be concerned       This is true even if measurement error is
+with deriving equations that characterize        assumed to be zero and every conceivable
+the performance of actual computer sys-          measurement is assumed to be taken.
+tems during given time periods. To do this,         Thus, an analyst can never be certain
+we need a mathematical framework in              that an equation derived from a stochastic
+which we can define formal variables, for-       model can be correctly applied to the ob-
+mulate hypotheses, and prove theorems.           servable behavior of a real system.
+   The theory of stochastic processes has
+traditionally been used as such a frame-         Operational Variables, Laws, and Theorems
+work. Most analyses of performance begin
+                                                 Hypotheses whose veracity can be estab-
+with the
+                                                 lished beyond doubt by measurement will
+   Stochastic Hypothesis: The behavior           be called operationally testable. Opera-
+   of the real system during a given period      tional analysis provides a rigorous mathe-
+   of time is characterized by the proba-        matical discipline for studying computer
+   bility distributions of a stochastic          system performance based solely on oper-
+   process.                                      ationally testable hypotheses.
+Supplementary hypotheses are usually also
+made. These hypotheses, which concern            ] For example, one can never establish through mea-
+                                                 surement that a set of observed service times ts or is
+the nature of the stochastic process, typi-      not a sample from a sequence of independent expo-
+cally introduce concepts such as steady          nentially distributed r a n d o m variables.
+
+
+                                                          Computing Surveys, Vol. 10, No. 3, September 1978
+228              P. J. D e n n i n g a n d J. P. B u z e n
+
+     In operational analysis there are two                   change from one observation period to an-
+ basic components to every problem: a sys-                   other.
+ t e m , which can be real or hypothetical, and                 It is easy to see that the derived quanti-
+ a time period, which may be past, present,                  ties satisfy the equation
+ or future. The objective of an analysis is                                      U = XS.
+ equations relating quantities measurable in
+                                                             Thus, if the system is completing 3 jobs/
+ the system during the given time period.
+                                                             second, and if each job requires 0.1 second
+     The finite time period in which a system
+                                                             of service, then the utilization of the system
+ is observed is called the observation period.
+                                                             is 0.3 or 30%. An equation such as this,
+ An operational variable is a formal symbol
+                                                             which expresses an identity among opera-
+ that stands for the value of some quantity
+                                                             tional quantities, is called an operational
+ which is measurable during the observation
+                                                             law or operational identity. This is because
+ period. It has a single, specific value for
+                                                             the relation must hold in every observation
+ each observation period.
+                                                             period, regardless of the values observed.
+     Operational variables are either basic
+                                                             The identity U = X S is called the utiliza-
+ quantities, which are directly measured
+                                                             tion law. We will encounter various other
+ during the observation period, or derived
+                                                             operational laws later.
+ quantities, which are computed from the
+                                                                Now, suppose that we assume that the
+ basic quantities. Figure 1 shows a single-
+                                                             number of arrivals is equal to the number
+ server queueing system with four basic
+                                                             of completions during the observation pe-
+ quantities:
+                                                             riod. That is, we assume
+     T--the length of the observation period;                                     A ffi C.
+     A - - t h e number of arrivals occurring dur-
+            ing the observation period;                      This assumption is called j o b flow balance
+     B - - t h e total amount of time during                 because it implies ~ ffi X. Job flow balance
+            which the system is busy during the              holds only in some observation periods.
+            observation period (B _< T); and                 However, it is often a very good approxi-
+     C--the number of completions occurring                  mation, especially if the observation period
+            during the observation period.                   is long, because the ratio of unfinished to
+ Four important derived quantities are                       completed jobs, (A - C)/C, is typically
+                                                             small. J o b flow balance is an example of an
+           ffi A / T , the arrival rate
+                                                             operationally testable assumption: it need
+                (jobs/second);                               not hold in every observation period, but
+     X = C / T , the output rate                             an analyst can always test whether or not
+                (jobs/second);                               it does--or how much error is made by
+     U ffi B / T , the utilization (fraction                 assuming it does.
+               of time system is busy); and                     Under the assumption of job flow bal-
+     S ffi B / C , the m e a n service time
+                                                             ance, it is easy to see that
+               per completed job.
+                                                                                 U ffi AS.
+The basic quantities (A, B, C) are typical
+                                                             This is an example of an operational theo-
+of "raw data" collected during an observa-
+                                                             rem: a proposition derived from operational
+tion, and the derived quantities (~, X, U, S)
+                                                             quantities with the help of operationally
+are typical of "performance measures." All
+                                                             testable assumptions.
+these quantities are variables which may
+                                                                In a stochastic analysis of Figure 1,
+                                                             would be interpreted as the reciprocal of
+              queue                                          the mean time between arrivals, S as the
+                                                  ×          mean amount of service requested by jobs,
+                              server
+                                                  ¢
+                                                             and U as the steady-state probability that
+                                                             the system has at least one job in it. The
+                                                             statement U = AS is a limit theorem for
+                                                             stochastic steady state [KLEI75]. In gen-
+                              B,T                            eral, a steady-state stochastic theorem is a
+FIGURE 1     Single server queuelng system.                  statement about a collection (ensemble) of
+
+Computing Surveys, Vol 10, No 3, September 1978
+                    The Operational Analysis of Queueing Network Models                              229
+
+possible infinite behavior sequences, but it     performance prediction, is a problem of in-
+is not guaranteed to apply to a particular       duction-inferring the characteristics of an
+finite behavior sequence. An operational         unseen part of the universe on the basis of
+theorem is a statement about the collection      observations of another finite part. Gardner
+of behavior sequences, finite or infinite,       has an interesting discussion of why no one
+that satisfy the given operational assump-       has found a consistent system of inductive
+tions: it is guaranteed to apply to every        mathematics [GARD76]. Various techniques
+behavior sequence in the collection. (For        for dealing with the parameter estimation
+detailed comparisons between stochastic          problem will be discussed throughout this
+and operational modeling, see [BouH78,           paper.
+BuzE78a].)
+                                                 Prior Work in Operational Analysis
+Application Areas
+                                                 Many textbooks illustrate the ideas of prob-
+There are three major applications for op-       ability with operational concepts such as
+erational results such as the utilization law:   "relative frequencies" and "proportions of
+  • Performance Calculation. Operational         time." In addition, the derivations of many
+     results can be used to compute quan-        well-known results in the classical theory of
+     tities which were not measured, but         stochastic processes are based, in part, on
+     could have been. For example, a mea-        operational arguments. However, the ex-
+     surement of U is not needed in a flow-      plicit recognition that operational analysis
+     balanced system if k and S have been        is a separate branch of applied mathemat-
+     measured.                                   i c s - q u i t e apart from the theory of stochas-
+  • Consistency Checking. A failure of the       tic processes--is a more recent develop-
+     data to verify a theorem or identity        ment.
+     reveals an error in the data, a fault in        The concept of operational analysis as a
+     the measurement procedure, or a viola-      separate mathematical discipline was first
+     tion of a critical hypothesis. For ex-      proposed by Buzen [BuzE76b], who char-
+     ample, U ~ kS would imply an error if       acterized the real-world problems that
+     observed in a flow-balanced system.         could be treated with operational tech-
+  • Performance Prediction. Operational          niques, and derived operational laws and
+     results can be used to estimate per-        theorems giving exact answers for a large
+     formance quantities in a future time        class of practical performance problems. At
+     period (or indeed a past one) for which     about the same time, operational argu-
+     no directly measured data are avail-        ments leading to upper and lower bounds
+     able. For example, the analyst can es-      on the saturation behavior of computer sys-
+     timate k and S for the future time          tems were presented by Denning and Kahn
+     period, and then predict that U will        [DENN75a]. These arguments were the op-
+     have the value kS in that time period.      erational counterpart of similar results de-
+     (Although the analyst may find ways         veloped by Muntz and Wong [MUNT74].
+     of estimating U directly, it is often       The only operational assumption used at
+     easier to calculate it indirectly from      this point was job flow balance.
+     estimates of k and S.)                          These early operational results dealt ex-
+The first two applications are straightfor-      clusively with mean values of quantities
+ward, but the third is actually a two-step       such as throughput, response time, and
+process. The first step is estimating the        queue length. The theory was soon ex-
+values of k and S for the future time period;    tended so that complete operational distri-
+the second step is calculating U. Our pri-       b u t i o n s - a s well as mean values--could be
+mary concern in this paper is deriving the       derived for operational analogs of the
+equations which can be used for perform-         "birth-death process" and the " M / M / 1
+ance calculation, consistency checking, and      queueing process" [BUzE76a, BUZE78a].
+the second step in performance prediction.       These extensions introduced two new
+  Parameter estimation, the first step in        analysis techniques: the application of
+
+
+                                                         Computing Surveys, Vol. 10, No. 3, September 1978
+230             P. J. Denning and J. P. Buzen
+"flow balance" in the logical state space of      measured performance quantities. If, over
+the system (as contrasted with the physical       many different observation periods, the
+system itself) and the homogeneity assump-        computed values compare well with actual
+tions, which are the operational counter-         (measured) values, the analyst will come to
+parts of Markovian assumptions in stochas-        believe that the model is good. Thereafter,
+tic theory. These techniques form the basis       he will employ it confidently for predicting
+for the operationaltreatment of many prob-        future behavior and for evaluating pro-
+lems which are conventionally analyzed            posed changes in the system.
+with ergodic Markovian models.                       The scheme of Figure 2 is used to validate
+   The results in [BuzE76a and Buzz78a]           many types of models, including highly de-
+applied only to single-resource queueing          tailed deterministic models, simulation
+systems. The same analysis techniques             models, and queueing network models. In
+were applied to multiple-resource queueing        general, the more parameters used by the
+networks by Denning and Buzen                     model, the greater is its accuracy in such
+[DENN77a], who showed that the "product           validations.
+form solution," encountered in Markovian             Performance prediction typically follows
+queueing networks, holds in general               the scheme of Figure 3. The analyst begins
+queueing networks with flow balance and           with a set of workload and device param-
+homogeneity; this result is more general          eters for a particular observation period,
+than can be derived in the Markovian              known as the baseline period. He then
+framework. This work also introduced a            carries out a modification analysis to esti-
+new operational concept, "online ffi offline      mate the values these parameters are ex-
+behavior," which characterizes the way an-        pected to have in the projection period,
+alysts use decomposition to estimate pa-          which is another time period for which he
+rameters of devices and subsystems. The
+operational treatment of queueing network
+models is discussed in detail in the rest of
+this paper. Additional points about the the-
+ory and applications of operational analysis
+have been given in [BOUH78, BUZE77,                                                                   ?
+BuzE78a].
+                                                         ~ me(osuerm4m)t Per
+                                                                         CM
+                                                                          of¢lcO
+                                                                               ~m
+                                                                                aD
+                                                                                 oto~EtcLe   VALIC
+                                                                                                 D
+                                                                                                 P~
+                                                                                                 Q
+2. VALIDATION AND PREDICTION
+We have noted three uses of models in
+studying computer performance: calcula-           FIGURE 2. Typical validation scheme.
+tion, consistency-checking, and prediction
+of performance measures. Validation refers
+to extensive testing of a model to determine
+its accuracy in calculating performance
+measures. Predictzon refers to using a val-
+idated model to calculate performance                       M
+measures for'a time period (usually in the                  ANOADLF
+                                                                  IYC
+                                                                    ISAISTO
+                                                                          IN
+future) when the values of parameters re-
+quired by the model are uncertain.
+   Figure 2 illustrates the steps followed in
+a typical validation. First, the analyst runs
+an actual workload on an actual system.
+For the observation period, he measures
+performance quantities, such as throughput
+and response time, and also the parameters
+of the devices and the workload. Then the
+analyst applies a model to these param-
+eters, and compares the results against the       FIGURE 3. Typical performance prediction scheme.
+
+
+Computing Surveys, Vol 10, No 3, September 1978
+                     The Operational Analysis of Queueing Network Models                            231
+desires to know performance quantities. (In       load and the system, the greater the accu-
+the projection period, the same system may        racy attainable in its calculations. However,
+be processing a changed workload, or a            when there are many parameters, there
+changed system may be processing the              may be a lot of uncertainty about whether
+same workload, or both.) The analyst ap-          all are correctly estimated for a projection
+plies the validated model to calculate per-       period; the confidence in the predictions
+formance quantities for the projection pe-        may thereby be reduced. Queueing network
+riod. If the modification is ever imple-          models isolate the few critical parameters.
+mented, the predictions can be validated by       They permit accurate calculation and cred-
+comparing the actual workload and system          ible prediction.
+parameters against the project values (#1)           Additional issues of performance calcu-
+and the actual performance quantities             lation and parameter estimation will be dis-
+against the projected quantities (#2).            cussed as they arise throughout the paper.
+   A variety of invariance assumptions are        (See also [BuzE77, BUZE78a].)
+employed in the modification analysis.
+These assumptions are typically that device       3. OPERATIONAL MEASURES OF
+and workload parameters do not change             NETWORKS
+unless they are explicitly modified--the an-
+alyst may assume, for example, that the           Figure 1 illustrated a "single resource"
+mean disk service time will be invariant if       queueing model consisting of a queue and
+the same disk is present in both the baseline     a service facility. This model can be used
+and projection periods, or that the mean          to represent a single input/output (I/O)
+number of requests for each disk will be          device or central processing unit (CPU)
+invariant if the same workload is present in      within a computer system. A model of the
+both periods. Though usually satisfactory,        entire computer system can be developed
+such assumptions can lead to trouble if a         by connecting single-resource models in the
+given change has side effects--for example,       same configuration as the devices of an
+increasing the number of time-sharing ter-        actual computer system. A set of intercon-
+minals may unexpectedly reduce the batch          nected single-resource queueing models
+multiprogramming level even though the            comprises a multiple-resource queueing
+batch workload is the same.                       network.
+   The wise analyst will make all his invar-
+iance assumptions explicit. Otherwise, he         Types of Networks
+will have difficulty in explaining a failure in
+                                                  Figure 4 shows two of K devices in a mul-
+Validation #1, which will cause a failure in
+                                                  tiple-resource network. A job enters the
+Validation #2--even though previous tests
+                                                  system at IN. It circulates around in the
+of the model were satisfactory (Figure 2).
+                                                  network, waiting in queues and having ser-
+   In some prediction problems there is no
+                                                  vice requests processed at various devices.
+explicit baseline period. In these cases, the
+                                                  When done, it exits at OUT. The network
+analyst must estimate parameters for the
+                                                  is operationally connected in that each de-
+projection period by other means. For ex-
+                                                  vice is visited at least once by some job
+ ample, he can estimate the mean service
+                                                  during the observation period.
+time for a disk from published specifica-
+                                                     The model assumes that no job overlaps
+tions of seek time, rotation time, and data
+                                                  its use of different devices. In practice, few
+transfer rate; and he can estimate the mean
+                                                  applications programs ever achieve more
+number of disk requests per job from an
+                                                  than a few per cent overlap between CPU
+ analysis of the source code of representative
+                                                  and I/O devices: the error introduced by
+ programs. Usually, however, the modifica-
+                                                  this assumption is usually not significant.2
+ tion analysis is more accurate when it be-
+                                                  The model also assumes that a device is
+ gins with a measured baseline period.
+    A model's quality depends on the number
+                                                  2 Measurements taken at the Purdue Umverslty Com-
+of parameters it requires. The more infor-        puter Center reveal t h a t the average overlap of CPU
+mation the model requires about the work-         and I/O within a job is between 4 and 6 per cent.
+
+
+                                                           Computing Surveys, Vol 10, No 3, September 1978
+232               P. J . D e n n i n g a n d J . P. B u z e n
+
+
+              K     Devices
+              N     Oobs
+
+                                .~-~ Device[ X~ ~ / / ~
+
+
+                                             ••/             qlJ
+
+                                                                                     Xj
+
+
+
+
+                                                                                          . . .
+
+
+                             "'"   qo,I            qoi . . . . . .        qlo
+
+                                              IN                          OUT
+
+                                                           (closed)
+
+                                   FIGURE 4.      T w o devices in a queueing network.
+
+
+
+
+busy if a request is pending theremno part                           the distribution of N. An analysis of a closed
+of the system can block progress in another                          system begins with N given and seeks to
+part. This assumption is not met by all real                         determine the resulting X0 along the OUT/
+systems; for example, the CPU might be                               IN path. Other quantities such as queue
+unable to continue if an I/O buffer is full.                         lengths and response times at the devices
+    A job is "in queue" at device i if it is                         may be sought in both cases.
+waiting for or receiving service there. We
+let n, denote the number of jobs in queue                              Example: Figure 5 shows a common type
+at device i, and N = n l + • • • +nK denote the                        of network, the "central server." Device 1
+                                                                       is the CPU, devices 2, • , K are I/O sta-
+total number of jobs in the system. The
+                                                                       tions. A job begins with a CPU service
+s y s t e m o u t p u t rate, Xo, is the number of                     interval (burst) and continues with zero or
+jobs per second leaving the system. If the                             more I/O service intervals which alternate
+system is open, Xo is known and N varies                               with further CPU bursts. The quantities
+as jobs enter or leave the system. If the                              qu are called the "routing frequencies" and
+system is closed, the number of jobs N is                              the S, the "mean service times." Definitions
+fixed; this is modeled by connecting the                               for these quantities will be given shortly.
+output back to the input, as suggested by
+the dashed arrow in Figure 4.                                          In the closed central server network of
+    An analysis of an open system assumes                            Figure 5, a new job enters the system as
+that X0 is known and seeks to characterize                           soon as an active job terminates. This be-
+
+Computing Surveys, Vol 10, No 3, September 1978
+                   The Operational Analysis of Queueing Network Models                               233
+
+
+
+
+                                                  qlK
+                     qlO + q12 + "" + qlK ffi I
+                                                               SK
+
+
+
+
+                                                  ql2   ~~--'~-~
+                             Si             qlo                 S2
+
+             IN                                   OUT
+
+                             Xo
+                             FIGURE 5.    Central server network.
+
+
+
+
+havior typically occurs in a batch process-       user spends in a waiting interval is called
+ing system operating under a backlog. The         the response time (of the central subsys-
+throughput of the system under these con-         tem); we denote it by R. Since users think
+ditions is denoted by X0.                         independently, the think time Z is indepen-
+  Time sharing systems which are driven           dent of M. Because jobs delay each other
+by interactive terminals can also be repre-       while contending for resources in the cen-
+sented as closed networks. Figure 6 depicts       tral subsystem, R is a function of M.
+the structure. The model is separated into           It is also possible to define mixed systems
+two {open) subnetworks: the central sub-          which are open for some workloads and
+system, which consists of I/O devices and         closed for others. Figure 7 illustrates a typ-
+the CPUs, and the terminal subsystem.             ical case. The interactive workload com-
+Each terminal is manned by a user who             prises the jobs associated with the M inter-
+alternates between thinking and waiting.          active terminals. The batch workload com-
+In the thinking state, the user is contem-        prises jobs submitted by other means, for
+plating what job next to submit, and the          example, remote job entry stations. The
+central subsystem is performing no work           number of interactive jobs in the network
+for him. On submitting a next job, the user       (including the terminal subnetwork) is fixed
+enters the waiting state, where he remains        at M, but the number of batch jobs may be
+until the central subsystem completes the         variable. The batch throughput (Xo) is
+job for him. The mean time a user spends          given, but the interactive throughput (Xo')
+in a thinking interval is called the think        depends on X0 and on the other parameters
+time; we denote it by Z. The mean time a          of the network.
+
+                                                           Computmg Surveys, Vol 10, No. 3, September 1978
+234              P. J. D e n n i n g a n d J. P. B u z e n
+
+                                                                ×;
+
+
+
+                                                            CENTRAL           SUBSYSTEM
+                                  TERMINAL
+                                  SUBSYSTEM
+
+
+
+
+               -"~N      ~
+                                                                                           [   i OUT
+                                  M Term,nols
+                                  Z Think T,me
+                                                          K Devices          N Jobs (O~N<-M)
+
+
+
+
+                                                FmURE 6. Termmal-drivensystem.
+
+
+
+
+                                                                     that these data are collected for each device
+                                                                     i ffi 1. . . . , K:
+                                                                        A, --number of arrivals;
+      I TERMINALS                                                       B , - - t o t a l busy time (time during which
+                                                                                 n, > 0);
+                                                          OUT
+                                                                        C,~--number of times a job requests ser-
+                                                                                 vice at device j immediately after
+                          __~         CENTRAL                                    completing a service request at de-
+                                     SUBSYSTEM
+
+
+                             -'                        L OUTXo                   vice i.
+                                                                     These are similar to data specified in Figure
+                                                                     1, but here we are not requiring device i to
+                                                                     be a single server. If we treat the "outside
+                                                                     world" as device "O", we can define also
+                                 P interactive Workload                 Aoj--number of jobs whose first service
+                    -- -- -- ~     Batch Workload                                 request is for device j;
+                                                                        C,o--number of jobs whose last service
+             FIGURE 7.           Mixed s y s t e m .                              request is for device i.
+                                                                     We will assume that Coo = 0, because other-
+                                                                     wise there would be jobs that used no re-
+Basic Operational Quantities                                         sources before departing. However, it is
+                                                                     possible that C, > 0 for any device i since
+Suppose that the system is measured dur-                             a job could request another burst of service
+ing an observation period of T seconds and                           from a device which had just completed a
+
+Computing Surveys, Vol 10, No 3, September 1978
+                          The Operational Analysis of Queueing Network Models                                     235
+request for t h a t job. T h e n u m b e r of com-                                      nt(t)
+                                                                                         A
+pletions at device i is                                                            /              \
+
+                    K
+            C,=ECv, t = l . . . . . K.
+                   j--0
+                                                                                             B,
+T h e n u m b e r of arrivals to, and departures
+from, the system are, respectively,                               (t)
+                     K               K
+                                                             6
+            A0 = ~ Ao~, Co=~C,o.                             5
+                   j--1            t-I
+                                                             4-
+F r o m Figure 4 it is clear t h a t Ao = Co in a            3-
+closed system.                                               2.
+    In terms of these basic data, four derived               I-
+operational quantities are defined:                          0
+                                                                             5          I0            15     20
+
+
+   U, ffi utilization of device i                      FIGURE 8. Example of a device's operation.
+       = B,/T.
+  S, ffi m e a n service time between
+         completions of requests at                     receiving service. Sometimes we write n,(t)
+         device i                                       to make explicit the time dependence. (An
+       =   B,/C~                                        example n,(t) appears in Figure 8.) T o cal-
+  X, = output rate of requests from                     culate mean queue length and response
+       device i                                         time at a device, analysts usually introduce
+       = C,/T
+                                                        the basic measure W,, which is the area
+  qu ---- routing frequency, the fraction               u n d e r the graph of n,(t) during the obser-
+          of jobs proceeding next to                    vation period. Since f~,, the m e a n queue
+          device j on completing a                      length at device i, is the average height of
+          service request at device i                   this graph,
+                                                                            ft, = WJT.
+         fC,/C,,     i f / - - 1. . . . . K
+       = "--LAoj/Ao, if i = 0.                             T h e m e a n response time at device i, de-
+                                                        noted by R,, is also related to W, in a simple
+                                                        way. Note t h a t W~ can be interpreted as
+Note that, for any i, q,o + qtl +          + qtK
+                                         . . .    =     the total n u m b e r of "job-seconds" accu-
+1. Note t h a t q,0 is an o u t p u t routing fre-      mulated at device i during the observation
+quency (fraction of completions from de-                period (ifj jobs are at a device for s seconds,
+vice i corresponding to the final service              j s job-seconds accumulate). R, is defined as
+request of some job) and q0j is an input                the average a m o u n t of time accumulated at
+routing frequency (fraction of arrivals to              device i per completed request. T h u s
+the system which proceed first to device j).                                R, = W,/C,.
+N o t e also t h a t the system o u t p u t rate is
+defined as Xo -- Co/T. It is easy to deduce            An immediate consequence of these defi-
+the operational law                                     nitions is the operational law
+                           K                                                 6, = X~R,,
+                     Xo = ~ X,q,o.                     which is called Little's Law.
+                          t-1
+
+Note t h a t X0, X1 . . . . . . X r cannot be inter-       Example: Figure 8 shows device t and a
+preted as " t h r o u g h p u t s " because no as-         possible observation of its queue length for
+                                                           a period of 20 seconds. The basic measures
+sumption of job flow balance has been                    are
+made. It is clear t h a t the utilization law
+                                                        A, = 7 jobs, B, = 16 seconds, C, ffi 10 jobs.
+                  U, = X,S,                              Note that n,(0) ffi 3 and that
+holds at every device.                                          n,(20) ffi n,(0) + A, - C~ = 0.
+  We let n, denote the queue length at                 The basic operational performance measures
+device i; it includes jobs waiting for and             are
+
+
+
+                                                                        Computing Surveys, Vol 10, No. 3, September 1978
+236                 P. J. Denning and J. P. B u z e n
+
+  U, -- 1 6 / 2 0    St = 1 6 / 1 0      X, ffi 1 0 / 2 0
+                                                      If the network is open, the value of X0 is
+     = 0.80             --- 1.6              -- 0.5externally specified and these equations
+                      seconds          jobs/second will have a unique solution for the un-
+  The total area under n,(t) in the observation    knowns X,. However, if the network is
+  period is                                        closed, Xo is initially unknown, and the
+              W~ -- 40 job-seconds.                equations have no unique solution; this can
+  Thus the mean queue length is                    be  verified b y showing t h a t the sum of the
+                                                   Xj-equations f o r j ffi 1. . . . , K reduces to the
+              ht = W,/T ffi 2 jobs,
+                                                   Xo-equation. In a closed network, there are
+  and the mean response time per service           K independent equations but K + 1 un-
+  completion is:
+                                                   knowns. Nonetheless, the job flow balance
+            R, ffi WJC, = 4 seconds.               equations contain information of consider-
+                                                   able value.
+4. JOB FLOW ANALYSIS
+Given the mean service times (S,) and the                   Visit Ratios
+routing frequencies (q,j), how m u c h can we               T h e "visit ratio," which expresses the m e a n
+determine a b o u t overall device completion               n u m b e r of requests per job for a device, can
+rates (XJ or response times (RJ? T h e s e                  always be calculated uniquely from the job
+questions are usually approached through                    flow balance equations. With the m e a n ser-
+the operational hypothesis known as the                     vice times, t h e y can be used to determine
+    Prmciple of Job Flow Balance: For                       the t h r o u g h p u t s and response times of sys-
+    each device i, Xt is the same as the                    tems u n d e r very light or very heavy loads.
+    total input rate to device i.                           Define
+This principle will give a good approxima-                                       V, = X,/Xo;
+tion for observation periods long enough                    V~ is the job flow through device t relative
+t h a t the difference between arrivals and                 to the system's o u t p u t flow. Our definitions
+completions, A t - C, is small compared to                  imply t h a t V, ffi C,/Co, which is the m e a n
+C~. It will be exact if the initial queue length            n u m b e r of completions at device i for each
+n~(0) is the same as the final n,(T). Choosing              completion from the system. Since V, can
+an observation period so that the initial and               be interpreted as the m e a n n u m b e r of visits
+final states of every queue are the same is                 per job to device i, we call it the visit ratio.
+not as strange as it might seem. This notion                    T h e relation X, ffi V, Xo is an operational
+underlies the highly successful "regenera-                  law, called the Forced Flow Law. It states
+tion point" m e t h o d of conducting simula-               t h a t the flow in any one part of the system
+tions [IGLE78].                                             determines the flows everywhere in the sys-
+    When job flow is balanced, we refer to                  tem.
+the X, as device throughputs. Expressing                        E x a m p l e : Consider the performance ques-
+the balance principle as an equation,                           tion: "Jobs generate an average of 5 disk
+                          K
+                                                                requests and disk throughput is measured
+          C j f A j = Z C,j, t = O . . . . g                    as 10 requests/second; what is the system
+                          t--O
+                                                                throughput?" This question seems momen-
+(Note t h a t job flow balance allows us to                     tartly frivolous, since nothing is stated about
+substitute Coj for Ao~.) With the definition                    the relation between the disk and any other
+qtj = C J C , , we m a y write                                  part of the system. Yet the forced flow law
+                                 K                              gives the answer precisely. Let subscript t
+                         Cj = E C,q,j.                          refer to the disk:
+                                 tmO
+
+Employing the definition X~ ffi C,/T, we                                   Xo ffi X,/ V,
+obtain                                                                        ffi 10 requests/second
+    JOB FLOW BALANCE EQUATIONS                                                       5 requests/job
+                     K                                                        ffi 2 jobs/second.
+            X+ffi Y,X,q,~, /ffiO . . . . . g                   On replacing each X, with V, Xo in the job
+                    tmO
+                                                            flow balance equations, we obtain the
+
+Computmg Surveys, Vol. 1O, No. 3, September 1978
+                         The Operational Analysis of Queueing Network Models                                       237
+
+         VISIT RATIO EQUATIONS                       where fil = fh + ... + fix. If/g/or Xo are not
+        170=1                                        known, an alternate m e t h o d can be used.
+                    K
+                                                     Since h, = X,R, from Little's law at device
+        V~=qoj+ ~ V,q,j, 1 = 1 . . . . . K           i, and X, = V, Xo from the forced flow law,
+                                                     we have fi,/Xo = V,R,. This reduces [V/Xo
+These are K + 1 independent equations                to the G e n e r a l R e s p o n s e T t m e L a w :
+with K + 1 unknowns: a unique solution is                                             K
+
+always possible assuming the network is                                       Rf      Y. V~R,.
+                                                                                     tll
+operationally connected. These equations
+show the relation between the network's              This law holds even if job flow is not bal-
+"connective structure," represented by the           anced.
+q,j, and the visit ratios. Although V~ =                Little's law can be used to compute the
+X , / X o is an operational law, the iT, satisfy     central subsystem's response time R in the
+the visit ratio equations only if job flow is        terminal driven system of Figure 6. T h e
+balanced in the network.                             mean time for a user to complete a think-
+                                                     wait cycle is Z + R. When job flow is
+    Example: The central server network
+    (Figure 5) has these job flow equations:         balanced, X0 will denote the rate at which
+                                                     cycles are completed. B y Little's law,
+           Xo = Xlqlo
+                                                     ( Z + R ) X o must be the m e a n n u m b e r of
+           XI f Xo + X2 + ... + X~                   users observed to be in a think-wait cycle;
+           X , = X I q I , , iffi2 . . . . . K.      but all the users are in such cycles, hence,
+                                                     M = (Z + R)Xo. Therefore,
+  Setting X, = V, Xo, these equations reduce
+                                                                            R ffi M / X o -   Z.
+  to
+             1 = Vlqlo                               This is called the I n t e r a c t i v e R e s p o n s e
+                                                     Time Formula.
+            V]= I + V2+ ... + VK
+            V,=   Vlq~,, t = 2   ..... K.            Examples
+  It is easy to see that                             This section's three examples illustrate per-
+           V1 -- 1/qlo                               formance calculation and performance pre-
+           V, = ql,/qlo,   i = 2 . . . . . K.
+                                                     diction using the operational laws summa-
+                                                     rized in Table I. T h e first example illus-
+   In this case, only K of the possible routing      trates a simple performance calculation; a
+   frequencies q~j are nonzero; these q~, can be
+   determined uniquely if the 17, are given.         few measured data are used to find the
+   This is not so in a general network, where        mean response time. T h e second example
+   K visit ratios are insufficient to determine      illustrates a performance calculation for a
+   the (K + 1)2 unknown routing frequencies.         system with an interactive and a batch
+As we shall see, all the performance quan-           workload; it also illustrates a performance
+tities can be computed using only the visit          prediction, estimating the effect of tripled
+ratios and the mean service times S, as                       T A B L E I. OPERATIONAL EQUATIONS*
+parameters. T h e visit ratio equations are
+used to prove t h a t this is so. In practice, the    Utthzatton Law                               U, = X,S,
+analyst m a y be able to extract the visit           Ltttle' s L a w                             f~ ffi X,R,
+ratios directly from workload data, thereby          Forced Flow Law                             X~ ffi V, Xo
+avoiding computing a solution of the visit                                                               K
+ratio equations.                                     Output F l o w L a w                        Xo ffi ~ X,q,o
+                                                                                                         K
+System Response Time                                 General Response Ttme Law                   R    ffi ~ V,R,
+One m e t h o d of computing the mean re-
+                                                     Interacttve R e s p o n s e T i m e         R    - M/Xo - Z
+sponse time per job, R, for an open or closed          F o r m u l a (Assumes flow bal-
+system is to apply Little's law to the system          ance)
+as a whole,                                          * Operational derivations for most of these equations
+                   R = ~f/Xo,                        were fLrst presented In [BuzE76b].
+
+
+                                                                 Computmg Surveys, Voi. 10, No. 3, September 1978
+238              P. J . D e n n i n g a n d J. P. B u z e n
+
+batch throughput on interactive response                                      Xo' ffi M / ( Z + R')
+time. T h e third example illustrates a more                                   ffi 40/(15 + 5)
+complex prediction problem, estimating the                                     ffi 2 jobs/second.
+effect of consolidating two separate time                     Let subscript i refer to the disk. T h e disk
+sharing systems; it illustrates the use of                    throughput is X , + X,', where X, is the batch
+invariance assumptions in the modification                    component and X / i s the interactive com-
+analysis.                                                     ponent. T h e utilization law implies
+                                                                       X, + X ; ffi U,/S,
+                                                                                   ffi (.9)/(.04)
+   For the first example, we suppose that                                          ffi 22.5 requests/second.
+these data have been measured on a time
+                                                              T he forced flow law implies that the inter-
+sharing system:
+                                                              active component is
+   Each job generates 20 disk requests;
+   T h e disk utilization is 50%;                               X," ffi V,'Xo' ffi (10)(2) ffi 20 requests/second,
+   T h e mean service time at the disk is 25                  so that the batch component is
+     milliseconds;                                                X, -- 22.5 - 20 ffi 2.5 requests/second.
+   T h e r e are 25 terminals; and
+   Think time is 18 seconds.                                  Using the forced flow law again, we find the
+                                                              batch throughput:
+We can calculate the response time after
+first calculating the throughput. Let sub-                          Xo ffi X J V , ffi 2.5/5 ffi 0.5 jobs/second.
+script i refer to the disk. T he forced flow                    Now consider the effect of tripling the
+and utilization laws imply                                    batch throughput. If X0 were changed to 1.5
+               Xo = X , / V , ffi u J v , s,.                 jobs/second without changing V, then X,
+From the data,                                                would become V~0 ffi 7.5 requests/second.
+                                                              Assuming that the increased throughput
+                (.5)
+      Xo ffi - -        ffi 1 job/second.                     does not change the disk service time, the
+             (20)(.025)                                       maximum completion rate at the disk is
+From the interactive response time for-                       1/S~ ffi 25 requests/second; this implies that
+mula,                                                         the completion rate of the interactive work-
+       R ffi 20/1 - 18 ffi 2 seconds.                         load, X/, cannot exceed 25         7.5 ffi 17.5
+                                                                                                      -
+
+
+
+
+                                                              requests/second. Therefore
+                                                                Xo' = X , ' / V ; <- 17.5/10 ffi 1.75 jobs/second
+                                                              and
+   Our second example considers a mixed                                R' ffi M/Xo" - Z >_ 40/1.75 - 15
+system of the type shown in Figure 7. These                              ffi 7.9 seconds.
+data are collected:                                           Tripling batch throughput increases inter-
+   There are 40 terminals;                                    active response time by at least 2.9 seconds.
+   Think time is 15 seconds;                                     Notice that the validity of these esti-
+   Interactive response time is 5 seconds;                    mates depends on the assumptions that the
+   Disk mean service time is 40 milliseconds;                 parameters M, Z, 11,, and S, are invariant
+   Each interactive job generates 10 disk                     under the change of batch throughput. Al-
+      requests;                                               though these are often reasonable assump-
+   Each batch job generates 5 disk requests;                  tions, the careful analyst will check them
+      and                                                     by verifying that the internal policies of the
+   Disk utilization is 90%.                                   operating system do not adjust to the new
+We would like to calculate the throughput                     load, and that interactive users are inde-
+of the batch system and then estimate a                       pendent of batch users.
+lower bound on interactive response time
+assuming that batch throughput is tripled.
+T h e interactive response time formula gives                   For the third example, we consider a
+the interactive throughput:                                   computer center which has two time shar-
+
+Computing Surveys, Vol 10, No. 3, September 1978
+                       The Operatmnal Analysis of Queueing Network Models                                 239
+ing systems; each is based on a swapping              24 requests/second. Of this total, the
+disk whose m e a n service time per request           throughputs of the two types of users are
+is 42 msec. T h e mean think time in both
+                                                          X, = (2/3)(24)
+systems is Z - 15 seconds. T h e s e data have
+been collected:                                               = 16 requests/second    (A-users)
+        System A                  System B                X { = (1/3)(24)
+   16 terminals          10 terminals                         ffi 8 requests/second   (B-users)
+  25 disk requests/job   16 disk requests/job         This implies t h a t the system throughputs
+  80% disk utilization   40% disk utilization         are
+In order to reduce disk rentals, manage-                     Xo = XJV~
+m e n t is proposing to consolidate the two
+                                                                 = 16/25
+systems into one with 26 terminals and
+using only one of the disks. We would like                       ffi 0.64 jobs/second (A-users)
+to estimate the effect on the response times                Xo' = X / / V /
+for the two classes of users.                                    = 8/16
+
+   We let subscript i refer to the disk, and                     -- 0.5 jobs/second   (B-users)
+use primed symbols to refer to System B.
+                                                      and t h a t the response times are
+T h e formula X0 = U,/V~S, gives through-
+puts for the two systems:                                      R = 16/(.64) - 15
+                (.8)                                               = 10 seconds          (A-users)
+      X o - - - -                                              R ' = 10/(.5) - 15
+             (25)(.042)
+                                                                   =  5 seconds          (B-users)
+           = 0.77 jobs/second    (System A)
+                (.4)                                  Note t h a t the two types of users experience
+       Xo'                                            different response times. T h i s is because
+             (16)(.042)
+                                                      the B-users, who generate less work for the
+           = 0.60 jobs/second    (System B)           disk, are delayed less at the disk t h a n the
+T h e response times are                              A-users.
+       R --- 16/(.77) - 15                                Once again it is worth noting explicitly
+                                                      t h a t the p a r a m e t e r s V,, ]7,', S,, and Z are
+          = 5.8 seconds          (System A)
+                                                      assumed to be invariant u n d e r the proposed
+       R'ffi 10/(.6) - 15                             change. T h e careful analyst will check the
+          = 1.1 seconds          (System B)           validity of these assumptions. T h e assump-
+Over an observation period of T seconds               tion t h a t the ratio of S y s t e m A to System
+there would be X , T disk requests serviced           B throughputs is invariant under the
+in S y s t e m A, and X { T in System B; the          change should be approached with caution;
+fraction of all disk requests which are A-            it is typical of the assumptions a skilled
+requests would be                                     analyst will make when given insufficient
+                                                      data about the problem. We will present an
+    X~T/(X,T + X{T) ffi U,/(U, + U{) = 2/3.           example shortly in which a faster C P U af-
+   In order to estimate the effect of consol-         fects two workloads differently: the ratio of
+idation, we need to know the disk comple-             interactive to batch t h r o u g h p u t changes.
+tion rates for each workload when both
+workloads share the one disk. Because the             Bottleneck Analysis
+characteristics of the users and the disk are         This section deals with the asymptotic be-
+the same before and after the change, it is           havior of t h r o u g h p u t and response time of
+reasonable to make this invariance assump-            closed systems as N, the n u m b e r of jobs in
+tion: In the consolidated system, 2/3 of the          the system, increases. We will assume t h a t
+disk requests will come from the A-users. It          the visit ratios and m e a n service times are
+is also reasonable to assume t h a t the disk         invariant under changes in N.
+utilization will be nearly 100% in the con-             Note t h a t the ratio of completion rates
+solidated system. T h i s implies t h a t the total   for any two devices is equal to the ratio of
+disk t h r o u g h p u t will be 1/S, -- 1/(.042) =   their visit ratios:
+
+                                                               Computmg Surveys, Voi. 10, No. 3, September 1978
+240              P. J. D e n n i n g a n d J. P. B u z e n
+
+                  X, IXj = V,IV~.                               Were we to hypothesize that k jobs al-
+Since/.7, ffiX,S,, a similar property holds for              ways managed to avoid delaying each other
+utilizations:                                                in the network, so that Xo ffi k/Ro, the
+                                                             saturation asymptote requires that k / R o <--
+                 u,/v~ = v,s,/y~s,.                          1/ VbSb, or
+Our invariance assumptions imply that
+these ratios are the same for all N.                           k < N* ffi Ro = V'S' +                        + VrSr
+   Device i is s a t u r a t e d if its utilization is              --            VbSb                   VbSb            -= K.
+approximately 100%. If U, ffi 1, the utiliza-                In words, k > N* would imply with cer-
+tion law implies that                                        tainty that jobs queue somewhere in the
+                                                             system. Since N* thus represents the load
+                      X, = l / S , ;                         beyond which queueing is certain to be
+this means that the saturated device is com-                 observed, we call N* the saturation p o i n t
+pleting work at its capacity--an average of                  of the system.
+one request each S, seconds. In general,                         These results extend to the response time
+U, -< 1 and X, <_ 1/S,.                                      of the terminal driven system (Figure 6).
+  Let the subscript b refer to any device                    For M terminals and think time Z, the mean
+capable of saturating as N becomes large.                    response time is R = M / X o - Z. When M
+Such devices are called bottlenecks because                  ffi 1, R must be Ro. Since Xo cannot exceed
+they limit the system's overall performance.                 l/VbSb,
+Every network has at least one bottleneck.                   R >_ M V b S b - Z >- M V , S, - Z,                lffil,        -,K.
+  Since the ratios U,/Uj are fixed, the de-
+vice i with the largest value of V,S, will be                As M becomes large, R approaches the
+the first to achieve 100% utilization as N                   asymptote MVbSb - Z. These facts are
+increases. Thus we see that, whenever de-                    summarized in Figure 10.
+vice b is a bottleneck,                                        Notice that the response time asymptote
+                                                             intersects the horizontal axis at
+          VbSb ffi max {V1S, ..... VKSK}.
+                                                                                      Mb = Z/VbSb.
+The bottleneck(s) is (are) determined by
+device and workload parameters.                                      lObS/sec
+
+  Now: if N becomes large we will observe
+Ub = 1 and Xb ffi 1/Sb; since Xo/Xb ffi 1/Vb,
+this implies                                                     vbs,
+
+                     Xo-..= 1 / V b S b
+is the maximum possible value of system
+throughput. Since V,S, is the total of all
+service requests per job for device i, the
+sum                                                                                                                      D
+                                                                                                                             Load
+                                                                             I           N ~'                                 N
+             Ro ffi V,S, +             + VKSK,
+                                                                             FIGURE 9. System throughput
+which ignores queueing delays, denotes the
+smallest possible value of mean response
+time. In fact, Ro is the response time when
+N = i. This implies that Xo = I/Ro when
+N=I.
+  The properties of Xo are summarized in
+Figure 9. As a function of N, Xo rises
+monotonically from I/Ro at N -- 1 to the
+asymptote I/VbSb. It stays below the line
+of slope i/Ro emanating from the origin:
+Job interference via queueing when N ffi k
+                                                               Ro
+                                                                         I
+                                                                         i
+                                                                                            /            /            Number of
+                                                                                                                   Iv Termlno~$
+usually prevents throughput from achiev-                                 l               M~     M~   M                   M
+
+ing k/Ro.                                                                        FIGURE I0. Response time
+
+
+Computing Surveys, Vol. 10, No. 3, September 1978
+                     The Operational Analysis of Queueing Network Models                               241
+This is a product of a waiting time at the         much improvement at device b will move
+terminals (Z) and a saturation job flow            the bottleneck elsewhere. These points will
+through the terminals (1/VbSD; by Little's         be illustrated by the example of the next
+law, Mb denotes the mean number of think-          section.
+ing terminals when the system is saturated.           The property that 1/VbSb limits system
+The response time asymptote crosses the            throughput was observed by Buzen for
+minimum response time R0 at                        Markovian      central  server    networks
+                                                   [BvzE71a]. It was shown to hold under very
+       Mb* = (Ro + Z}/VbSb = N* + Mb.
+                                                   general conditions by Chang and Laven-
+when there are more than Mb* terminals,            berg [CHAN74]. Muntz and Wong used it in
+queueing is certain to be observed in the          bottleneck analysis of general stochastic
+central subsystem.                                 queueing networks [MUNT74, MUNT75];
+   Notice that the response time asymp-            Denning and Kahn derived the operational
+totes and intersections M0 and M0* depend          counterpart [DENN75a]. Response time
+only on M, Z, V0, and S0. The only assump-         asymptotes were observed by Scherr for his
+tions needed to compute them are job flow          model of CTSS [SCHE67], and by Moore
+balance and invariance of the visit ratios         for his model of MTS [Moon71]. The
+and mean service times under changes in            concept of saturation point was introduced
+load. Note also that when Z = 0 these              by Kleinrock [KLEI68], who also studied
+results yield the response time asymptotes         all these results in detail in his book
+of a closed central system. These results          [KLEI76].
+may be extended to include the case where
+service times are not strictly invariant, but      Examples
+each S, approaches some limit as the queue
+length at device i increases [MUNT74,              This section illustrates the applications of
+DENN75a].                                          bottleneck analysis for the three cases of
+   To summarize: the workload parameters           Figures 11 through 13. For each, we con-
+or the visit ratio equations allows the ana-       sider a series of questions as might be posed
+lyst to determine the visit ratios, V,. Device     by a computing center's managers, who
+characteristics allow determination of the         seek to understand the present system and
+mean service time per visit, S,. The largest       to explore the consequences of proposed
+of the products V,S, determines the bottle-        changes.
+neck device, b. The sum of these products             Figure ll(a) depicts a central server sys-
+determines the smallest possible response          tem driven by a set of interactive terminals.
+time, R0. The system throughput is 1/VoSb          The visit ratio equations for this network
+in saturation. The saturation point N* of          are
+the central subsystem is Ro/VbSb; and                            V0 = 1 = .05VI
+N* + Z/VoSo terminals will begin to satu-                        Vl = Vo + V~ + V3
+rate the terminal driven system.                                 v2 = .55V,
+   An analysis leading to sketches such as                       V3 = .40V~
+Figures 9 and 10 may give some gross guid-
+ance on effects of proposed changes. For
+example, reducing V,S, for a device which
+
+
+
+                                                                    i
+is not a bottleneck (e.g., by reducing the
+service time or the visit ratio) will not affect
+the bottleneck; it will make no change in                                          qJ2
+the asymptote 1/VoSo and will generally
+produce only a minor change in minimal
+response time R0. Reducing the product                                             Q*a
+V,S, for all the bottleneck devices will re-                                             $ a " 04t.~
+
+move the bottleneck(s); it will raise the
+asymptote 1/VbS0 and reduce R0. However,
+this effect will be noticed only as long as
+VbSb remains the largest of the V,S,: too                FIGURE ll(a).    An example system.
+
+
+                                                          Computing Surveys,Vol. 10, No 3, September 1978
+242                     P. J. Denning and J. P. Buzen
+  Sec,                                                                                         N* ffi Ro/V]S1 = 2.2 jobs.
+                                                                           T h e n u m b e r of terminals required to begin
+                                                                           s a t u r a t i n g t h e entire s y s t e m is
+                                                                                                 Ml* ffi 22.2.
+                                                                              Q u e s t i o n : Throughput is measured as
+
+
+
+
+          i j//
+                                                                           O.715jobs~second a n d mean response time
+                                                                           as 5.2 seconds. W h a t is the mean number
+                                                                           of users logged in during the observation
+2.2 -;                                                                     period? T h e interactive response t i m e for-
+                                                                           m u l a can be solved for the (mean) n u m b e r
+                                                                      ~M
+          I                        20 22                                   of active terminals,
+                                   Ms Mi}*                                 M = (R + Z)/Xo
+              FIGURE l l ( b ) .   R e s p o n s e t i m e curve.               ffi (5.2 + 20)/(.715)
+                                                                                ffi 18 terminals.
+   sec.                                          CPU          DISK
+                                                                                Q u e s t i o n : Is 8-second response time
+                                                                           feasible when 30 users are logged in? I f
+                                                                           not, what minimum amount of C P U
+                                                                           speedup is required? Since the response
+                                                                           t i m e a s y m p t o t e requires that, for M ffi 30,
+                                                                    DRUM
+ 24   ........................ / / --                                 %0
+                                                                                     R >_ (30)(1.00) - 20 ffi 10 seconds,
+                                                                           the 8-second r e q u i r e m e n t cannot be met. I f
+                                                                           $1' is the service t i m e of a faster C P U , we
+                                                                           need
+                                                                    ~ M                      MV1SI' - Z ~ 8 seconds,
+                      21 22 23              50     63
+      FIGURE 11(C).            Response t i m e asymptotes.                or
+                                                                                             $1' < .047 seconds.
+T h e solution is                                                          T h i s gives a speedup factor of S1/SI' - 1.07;
+          V1=20, V ~ = l l ,                     V3=8.                     the new C P U m u s t be at least 7% faster.
+T h e V,S, p r o d u c t s are                                             Since V]S]' ffi (20) (.047) = .93, the s y s t e m
+                                                                           would still be C P U - b o u n d with this faster
+   V~S~ = (20)(.05)                                                        processor (see Figure 11(c)); therefore the
+        ffi 1.00 seconds                 (Total CPU time)                  change is feasible.
+   V2S2 = (11)(.08)                                                           Q u e s t i o n : Is lO-second response time
+        -- .88 seconds                   (Total Disk time)                 feasible when 50 users are logged in? I f
+   V~S3 ffi (8)(.04)                                                       not, what minimum amount of C P U
+        = .32 seconds                    (Total Drum time)                 speedup is required? If the C P U were infi-
+                                                                           nitely fast (S1 ffi 0), the disk would be the
+These products sum                      to the minimal re-
+                                                                           b o t t l e n e c k (see Figure 11(c)). In this case
+sponse t i m e
+                                                                                                  R >_MV2S~ - Z.
+                         R0 ffi 2.2 seconds.
+                                                                           For M ffi 50,
+T h e largest p r o d u c t is ~S1; therefore                                           R _> (50)(.88) - 20 = 24 seconds.
+b ffi 1 a n d the C P U is the bottleneck. ( T h e
+s y s t e m is " C P U bound.")                                            T h u s , no a m o u n t of C P U speedup will
+    Figure 11(b) shows the a s y m p t o t e s of the                      m a k e 10-second response feasible w h e n
+response time curve. T h e n u m b e r of think-                           M = 50.
+ing terminals in saturation is
+             M1 = Z/VISI = 20 terminals.                                     Our second example concerns the 25-ter-
+T h e s a t u r a t i o n point of the central subsys-                     minal t i m e sharing s y s t e m of Figure 12. A
+t e m is                                                                   m e a s u r e m e n t h a s revealed t h a t jobs require
+
+
+Computmg Surveys, Vol 10, No. 3, September 1978
+                            The Operational Analysis of Queueing Network Models                                    243
+
+                                                              p e r f o r m a n c e adversely. E a c h b a t c h job re-
+                                                              quires one disk-swap followed b y an unin-
+                                                              t e r r u p t e d C P U execution b u r s t averaging 1
+
+
+
+                        I loTl                                second. E a c h interactive job requires an
+                                                              average of 10 page swaps f r o m the disk,
+                                                              each followed b y a short C P U burst aver-
+
+
+
+                        I I°-
+                                                              aging 10 msec.
+                                                                   P r i m e d symbols refer to the interactive
+         25 Termmall                                          workload. It is easy to see f r o m Figure 13
+                                      R=   511¢
+                                                              t h a t the b a t c h visit ratios are V, ffi 112 = 1,
+                                                              and the interactive visit ratios are V f ffi V2'
+        FIGURE 12. A time sharing system.
+                                                              ffi 10. T h e total of t i m e s required b y jobs at
+                                                              the devices are:
+a m e a n total C P U time of 240 msec, t h a t
+C P U utilization is 30%, and t h a t response                                           Disk                 CPU
+                                                              Batch                V~S~ ffi .09 sec.  V2S2 ffi 1.0 sec.
+t i m e is 5 seconds. T h e t h r o u g h p u t and
+                                                              Interactive V,'S,' ffi .90 sec.         V2'$2'ffi .1 sec.
+think time are
+        X o ffi U,/ V,SI
+                                                                 Evidently the interactive workload is
+                                                              disk-bound and the b a t c h workload C P U -
+          ffi (.30)/(.24)    ffi 1.25 j o b s / s e c o n d
+                                                              bound. T h i s is a good mixture of jobs in the
+           Z ffi M/Xo - R
+                                                              system.
+              ffi 25/1.25 - 5 -- 15 seconds.
+                                                                 Question: A measurement reveals that
+    Question: The C P U utilization seems                     the C PU is saturated, and that interactive
+low. W h a t effect would a cheaper C P U of                  response time is 4 seconds. W h a t ~s batch
+h a l f speed have on response time? Install-                 throughput? Disk utilization? We can solve
+ing a C P U of half speed cannot increase                     the interactive response t i m e formula for
+s y s t e m throughput, nor can it reduce                     the interactive throughput:
+t h r o u g h p u t below half its original value. (If               Xo' ffi M/(R' + Z)
+all service times, including Z, were doubled,
+t h r o u g h p u t would be exactly half the orig-                       ffi 25/(4 + 30) = .735 jobs/second.
+inal value.) Therefore,                                          Since Xo' = X2'/V2', the interactive com-
+              0.625 _< Xo ~ 1.25 jobs/second                  p o n e n t of C P U t h r o u g h p u t is X2' ffi 7.35
+                                                              requests/second, and the utilization due to
+after the change. (With U~ = XoVIS~ this                      interactive jobs is
+implies 0.3 _< /31 -< 0.6 after the change.)                             U2' ffi X{S2' = (7.35)(.01) ffi .074.
+Applying the response time formula,
+                                                                 Since total utilization is 1.00, the com-
+                5.0 _ R _< 25.0 seconds.
+                                                              p o n e n t due to b a t c h jobs m u s t be Us = .926.
+T h e slower C P U will h a v e no effect on                  T h u s the b a t c h t h r o u g h p u t is
+response time if s o m e o t h e r device is satu-                Xo = X1 ffi X2 = U2/$2 = .926 jobs/second.
+r a t e d (no change in Xo); otherwise, it could
+cause response time to increase b y as m u c h                   T h e utilization of the disk is
+as a factor of five.                                          X,S~ + X{SI' = (.926)(.09) + (7.35)(.09) ffi .745.
+     T h i s example illustrates why s y s t e m bot-
+tlenecks can confuse the u n w a r y analyst. I f                  Question: A n analysis of batch back-
+some device (not the C P U ) is saturated,                    logs reveals that the computing center
+                                                              needs to support a batch throughput of at
+lowering C P U speed will increase C P U uti-
+lization without observable effect on re-                     least 4.S jobs~second. Is this feasible in the
+sponse time. C P U utilization can be a de-                   present system? If there were no interactive
+ceptive m e a s u r e of a s y s t e m ' s performance.       jobs, the highest possible C P U b a t c h
+                                                              t h r o u g h p u t would be X2 = 1/82 = 1 j o b /
+                                                              second. T h e required b a t c h t h r o u g h p u t
+                                                              c a n n o t be achieved.
+   Our third example concerns the s y s t e m
+of Figure 13, which has two workloads. It                       Question: A C P U 5 times faster is avail-
+will illustrate how a faster device m a y affect              able. W h a t happens if batch throughput of
+
+
+                                                                        Computing Surveys, Vol 10, No. 3, September 1978
+244                  P. J. D e n n i n g a n d J. P. B u z e n
+
+
+
+
+             IN I           ~-.                                                                              1,
+                            ~L             ,                                                                      .9
+                          M=25             ,                                . ,
+             IN        Z = 30sec.              --I~-IT        DISK          "-cJ-~Tl"       cPu       x2' ~_       .I =
+                                                                  '                           2                        ;OUT
+
+                                                         S=' = . 0 9 s e c .           Sz'=    .01 sec.
+                                                         S I = .09sec.                 S z = 1.0sec.
+
+
+
+
+                                                                               Interochve         Workload
+
+                                                                       4~      Botch       Workload
+
+                                           FIGURE 13.           A system with two workloads.
+
+
+
+
+4 . 5 j o b s ~ s e c o n d is a c h i e v e d w i t h t h i s C P U ?         This implies a lower bound on the interac-
+With the new CPU, the b a t c h C P U burst                                    tive response time:
+b e c o m e s $2 ffi .2 second, and the interactive                               R' = M/Xo' - Z ~_ 25/.66 -           30   =   7.8 seconds.
+C P U burst $2' = .002 second. With a forced
+b a t c h flow of X0 ffi X1 = X2 = 4.5 j o b s /                                   T h e interesting feature of this example is
+second, the b a t c h c o m p o n e n t s of disk and                          t h a t the added capacity in the system ac-
+C P U utilization would be                                                     tually hurts the performance of the inter-
+              U~ = X~S~ = (4.5)(.09) ffi .41                                   active workload. T h e reason is t h a t speed-
+                                                                               ing up the C P U alleviates the b a t c h bottle-
+              U2 ffi X2S2 ffi (4.5)(.20) = .90
+                                                                               neck there, allowing more b a t c h jobs to
+T h i s gives bounds for the interactive com-                                  queue up at the disk. T h e additional disk
+ponents of throughput:                                                         queueing interferes with the already disk-
+          Xl' ffi UI'/S~' ~- (1 - .41)/(.09)                                   b o u n d interactive jobs. T o achieve Xo = 4.5
+              = 6.61 requests/second                                           j o b s / s e c o n d in the b a t c h s t r e a m without
+                                                                               affecting interactive response time, the sys-
+          X2' = U2'/$2' <- (1 - .90)/(.002)
+                                                                               t e m needs a faster disk as well. T h e disk
+              = 50 requests/second.                                            m u s t support X1 + XI' ffi 4.5 + 7.35 = 11.85
+Since XI' = X2', the m a x i m u m possible in-                                r e q u e s t s / s e c o n d total, which m e a n s t h a t its
+teractive job flow at the C P U is 6.61 re-                                    service time must not exceed 1/11.85 sec-
+quests/second, and the m a x i m u m possible                                  ond (85 msec). We will r e t u r n to this ex-
+interactive t h r o u g h p u t is 0.66 jobs/second.                           ample later.
+
+
+Computmg Surveys, Vol 10, No. 3, September 1978
+                    The Operational Analysis of Queueing Network Models                              245
+Summary                                          queue length is n (for any integer n), is
+By augmenting the basic operational defi-        assumed to be the same in both the baseline
+nitions with the assumption that job flow is     and the projection period, but the propor-
+balanced in the system, the analyst can use      tion of time that the queue length is n may
+visit ratios, via the forced flow law, to de-    differ in the two periods. Similarly, the
+termine flows everywhere in the network.         swapping device's visit ratio whenever the
+Response times of interactive systems can        multiprogramming level is N is assumed to
+also be estimated. Table I summarized the        be the same in both the baseline and the
+principal equations.                             projection period, but the proportion of
+   When the available information is insuf-      time that the multiprogramming level is N
+ficient to determine flows in the network at     may differ in the two periods.
+a given load, the analyst can still approxi-        Tables II and III summarize the opera-
+mate the behavior under light and heavy          tional concepts needed to express condi-
+loads. For light loads the lack of queueing      tional invariants and to work with load
+permits determining response time and            dependent behavior. Table II shows that
+throughput directly from the products V~S,.      each of the basic quantities (C,j, B,) is re-
+For heavy loads, a saturating device limits      placed with a function of the load. Thus
+the flow at one point in the network,            C,j(n) counts the number of times t at which
+thereby limiting the flows everywhere;           jobs request service at devicej immediately
+again, response time and throughput can be       on completing a service request at device i,
+                                                 given that n, ffi n just before each such
+computed easily. For intermediate loads,
+further assumptions about the system are         time t. The function T,(n) specifies the total
+                                                 time during which n, ffi n.
+needed.
+                                                    Table III shows the various operational
+5. LOAD DEPENDENT BEHAVIOR
+                                                 measures which can be derived from the
+                                                 basic quantities of Table II. There are two
+The examples of the preceding section were       new concepts here. The first is the service
+based on assumptions of invariance for ser-      function, S~(n) ffi 1/X,(n), which measures
+vice times, visit ratios, and routing frequen-   the mean time between completions when
+cies. These assumptions are too rigid for        n, = n; if device i can process several service
+many real systems. For example, if the mov-      requests at once, S,(n) can be less than the
+ing-arm disk employs a scheduler that min-       mean amount of service required by a re-
+imizes arm movement, a measurement of            quest. The second concept is the queue
+the mean seek time during a lightly loaded       length distribution, p,(n), which measures
+baseline period will differ significantly from   the proportion of time during which n, ffi n.
+the average seek time observed in a heavily      That the mean queue length f~, ffi W , / T is
+loaded projection period. Similarly, the         equivalent to the usual definition E,>o
+visit ratios for a swapping device will differ   np,(n) can be seen from the definition of
+in baseline and projection periods having         W, in Table II.
+different average levels of multiprogram-           The method of partitioning the data ac-
+ming.                                            cording to time intervals in which n,(t) = n
+   These two examples illustrate load de-        is called stratified sampling. The sets of
+pendent behavior. To cope with it, the an-       intervals in which n,(t) ffi n are called the
+alyst replaces the simple invariance as-         "strata" of the sample. All data in the same
+sumptions with conditional invariance as-        stratum are aggregated to form the mea-
+sumptions that express the dependence of         sures of Tables II and III.
+important parameters on the load. Instead           Our analytic methods can deal with only
+of asserting that the disk's mean seek time      two kinds of load dependent behavior: a
+is invariant in all observation periods, the     device's service function may depend on
+analyst asserts that the mean seek time is       the length of that device's queue; the visit
+the same in any two intervals in which the       ratios and routing frequencies may depend
+disk's queue length is the same. That is, the    on the total number of jobs in the system.
+average seek time, whenever the disk's           Thus quantities like q,~(n) = C~(n)/C,(n) or
+
+
+                                                         Computing Surveys. Vol. 10, No. 3, September 1978
+246                    P. J. Denning and J. P. Buzen
+
+                                                           TABLE II. BASXCMEASURES
+                                                           iffil . . . . . K              jffi0 . . . . . K
+
+Completion Counts
+   Interdevice                                        C,j(n)         ffiN u m b e r of times t at which a job requests service at device j
+                                                                           next after completing a service request at devlce i, given n,
+                                                                           s n just before t.
+                                                                          K
+
+   Device, conditional                                C,(n)          = ~ C.j(n)
+                                                                        j-o
+   Device, unconditional                              C,             ffi ~ C,(n)
+                                                                         n>0
+Arrwal Counts
+  To a device                                        Ao~             ffi Number of times t at which an arrwing job uses devicej for its
+                                                                         first service request.
+                                                                          E
+  To the system                                      Ao              == ~ A o j
+                                                                        jll
+Busy Ttmes
+  Conditional                                         T,(n)          ffi Total time dunng which n, ffi n.
+   Unconditional                                      B,             = ~ T,(n) = T -               T,(0)
+                                                                         n>0
+Routing Frequencws
+
+   Originating in system                             qv                  1 ~ C,j(n) [Undefined if C, ffi 0]
+                                                                     --~ C , n > O
+   Originating outside system                        qo~             ffi AoJAo [Undefined ff Ao -- 0]
+Accumulated Waiting Ttme                             W,              = ~ nT,(n)
+                                                                         n:>O
+
+                                         TABLE        Ill. OPERATIONAL P E R F O R M A N C E M E A S U R E S
+                                                  iffil . . . . . K yffi0 . . . . K
+                                   [Any quantity whose denominator would be zero is undefined ]
+
+Request Completton Rates
+  Conditional                                                                     X,(n)         ffi C,(n)/T,(n)
+  Unconditional, dewce*                                                           X,            - CJT
+                                                                                                      K
+ Unconchtlonal, system                                                            Xo            = ~. X,q,0ffiColT
+                                                                                                     #--l
+Mean Service Time Between Completions
+ Conditional                                                                      S,(n)         ffi T,(n)/C,(n)
+ Unconditional                                                                    S,            ffi B,/C,
+Queue Size Dtstrtbutwn                                                            p,(n)         ffi T,(n)/T
+Utthzation                                                                         U,           ffi B , / T ffi 1 -p,(O)
+Mean Queue Length                                                                 fz,           ffi W , / T
+Mean Response Time                                                                R,            ffi W,/C,
+* Note that X, ffi ~ X,(n) p,(n) is an identity.
+                         n>0
+
+
+ V , ( n ) ffi C , ( n ) l C o c a n n o t b e h a n d l e d . Be-                        jobs arrive. Each job requires exactly 4 sec-
+c a u s e r o u t i n g f r e q u e n c i e s a n d visit r a t i o s                     onds of service. (This implies that comple-
+o r d i n a r i l y d e p e n d o n l y o n t h e i n t r i n s i c de-                   tions occur at times t -- 4, 8, 12, and 16.)
+m a n d s of j o b s a n d n o t o n local q u e u e                                      The resulting n,(t) is sketched in Figure 14.
+l e n g t h s , s u c h q u a n t i t i e s a r e o f little i n t e r e s t .            T h e load dependent quantities are:
+H o w e v e r , q u a n t i t i e s like q v ( N ) a n d V , ( N )
+do arise f r e q u e n t l y - - e . g . , w h e n t h e d e m a n d                             n            C,(n)   T,(n)    Sf(n) Xf(n) p,(n)
+for s w a p p i n g d e p e n d s o n t h e m u l t i p r o g r a m -                            0              0       0        -     -     0
+m i n g l e v e l N [DE~N75b, D E s ~ 7 6 ] - - a n d                                            1              1       5        5    1/5 5/16
+these quantities can be h a n d l e d in the                                                     2              1       5        5    1/5 5/16
+models.                                                                                          3              1       5        5    1/5 5/16
+    E x a m p l e : An initially idle device i is ob-                                            4              1       1        1     1    1/16
+    served for 16 seconds. At t -- 0, 1, 2, and 3                                          Totals:          C, ffi4 T ffi 16    -     -   16/16
+
+
+ComputingSurveys,Vol. 10, No. 3, September1978
+                              The Operational Analysis of Queueing Network Models                           •       247
+  n,ft)                                                  or to c o m p u t e response times accurately.
+                                                         T h e s e quantities depend on how jobs dis-
+  5
+                                                         tribute t h r o u g h o u t the network; the job
+                                                         flow balance equations do not. T o represent
+  3
+                                                         the job distribution, we define a "state" of
+  2 ¸                          I                         the system: a vector
+                                          I                                 n -- (nl, .... nx)
+                                                         in which n, __ 0 is the n u m b e r of jobs in
+             2      4     6    8   I0     12   14
+                                                    I
+                                                    16   queue at device i, and N = n~ + . . . + n K is
+                                                         the total n u m b e r of jobs in the system.
+            FIGURE 14. A queueing at a device.
+                                                             T h e set of all states n is called the "sys-
+  Note that C,(0) = 0 since departures from              t e m state space." T h e n u m b e r of possible
+  an idle device are impossible. The uncon-              states is usually quite large. We observe
+  ditional mean service time is, as expected,            t h a t each state can be encoded by a binary
+        S, ffi B,/C, ffi 16/4 = 4 seconds.               string of N ls and K - 1 0s,
+  Notice, however, that S,(n) is not 4 for any                        11...1011...10...011...1 ;
+  value of n. The accumulated waiting time                                nl       n2             nK
+  is:                                                    the n u m b e r of such strings is the n u m b e r
+       W, = Y. n T,(n) = 34 job-seconds.                 of permutations of N indistinguishable ob-
+                    n>0
+                                                         jects and K - 1 indistinguishable objects,
+  Therefore the mean queue length and re-                namely,
+  sponse time are:
+  ~, = W , / T       R, = W,/C,
+                                                                 Lf(N+K-1)!                 [N+K-1)
+        =   34/16                  =    34/4                         N!(K-1)!             =~ K-1    _"
+        -- 2.125 jobs             = 8.5 seconds.         T h e n u m b e r of possible states, L, can be
+       If the arrivals were synchronized with the        large even for relatively small systems; for
+    departuresmi.e., occurring at t = 0, 4, 8, and       example, when N ffi K = 10, L is approxi-
+    12--then n,(t) = I throughout the 16-second          mately 92,000. For an open system, where
+    observation period. In this case S, (1) = 4
+    seconds, S,(n) = 0 for n > 1, f~, = 1, and           N itself can change, the n u m b e r of possible
+    R, = 4 seconds.                                      states can be considerably larger. We will
+                                                         be greatly concerned with the computa-
+This example illustrates two important                   tional feasibility of solutions over this state
+points. First, the a m o u n t of queueing de-           space.
+pends on the nature of the arrivals and
+departures. Different patterns of arrival of
+the same jobs m a y produce different mea-               State Transition Balance
+sures of m e a n queue length and response
+time, even while producing the same                      In the following discussion, k, n, and m
+t h r o u g h p u t and utilization. This is why an      denote distinct system states. If the system
+analyst who seeks to measure queueing                    moves from state n to state m without
+(e.g., withp,(n), or fz,, or R,) needs to make           passing through any observable intermedi-
+more assumptions.                                        ate state, a o n e - s t e p s t a t e t r a n s i t i o n (from
+    T h e example also illustrates t h a t the ob-       n to m) has occurred. Let C(n, m) denote
+served service function S,(n) depends on                 the n u m b e r of one-step state transitions
+the arrival pattern, even though all the jobs            observed from n to m; since no transition
+m a y have identical service requirements.               implies no state change, C(n, n) = 0.
+T h e r e is, in general, no simple relationship            Now, if job flow is balanced, the n u m b e r
+between S,(n) and the service times re-                  of arrivals at every device is the same as
+quired by jobs.                                          the n u m b e r of departures. This means t h a t
+                                                         n~(0) = n,(T) for each device i, or equiva-
+                                                         lently t h a t n(0) ffi n(T). In moving from its
+6. SOLVING FOR STATE OCCUPANCIES
+                                                         initial state to its final state, the system
+T h e assumption of job flow balance is in-              must leave every state once for every entry.
+sufficient to find flows in a closed network,            Hence job flow balance is equivalent to the
+
+
+                                                                    Computing Surveys, Vol. 10, No. 3, September 1978
+248                P. J. Denning and J. P. Buzen
+  Principle of State Transition Balance:               simultaneously. (Our definitions imply p(n)
+  The number of entries to every state is              = 0 for states not included in these balance
+  the same as the number of exits from                 equations.)
+  that state during the observation
+  period.                                              Solving the Balance Equations
+  From now on we will use the term flow                The state space balance equations are op-
+balance to mean that arrivals equal depar-             erational relationships expressing the val-
+tures at every device or system state. With            ues of p(n) in terms of the r(n, m). This
+the flow balance principle we can write                form of expression is generally not useful
+"conservation of transition" equations:                since the analyst does not have the values
+          C(k,n) ffi~C(n,m) all n.                     of r(n, m). Instead, the analyst wishes to
+         k                   m
+                                                       express the r(n, m) in terms of available
+For given n, both sides of this equation are           quantities such as visit ratios and the ser-
+0 if and only if T(n) = 0.                             vice functions, and then solve for the p(n).
+   If we use these equations without flow                 To avoid a lot of symbol manipulation,
+balance, the only error would be a + 1 (or             we will outline the steps of the solution; the
+-1) term missing on the right side if n is             details are found in [DENN77a]. The solu-
+the final (or initial) state of the system for         tion uses two additional assumptions about
+the observation period. This error is not              system's behavior. The first is:
+significant if the initial and final states are          One-Step Behavior: The only observ-
+visited frequently during the observation                able state changes result from single
+period. (The error is zero if the initial and            jobs either entering the system, or mov-
+final states are the same--i.e., flow is bal-            ing between pairs of devices in the sys-
+anced.) As we noted in discussing job flow               tem, or exiting from the system.
+balance, choosing the observation period so
+that flow is balanced is not a new notion.             The hypothesis of one-step behavior asserts
+   The "transition rate" from n to m is the            that simultaneous job-moves will not be
+number of transitions per unit time while n            observed; it reduces the number of nonzero
+is occupied:                                           rates r(n, m) that must be considered. For
+             r ( n , m ) ffi C ( n , m ) / T ( n ) ;
+                                                       example, when a job moves from device i
+                                                       to device j, the system moves from state n
+it is not defined if T(n) ffi 0. The transition        to its "neighbor," n,j, where
+conservation equations can be re-expressed
+as                                                         n = (nl,            , n,,      , nj,      , nK)
+        Y. T(k) r(k, n) -- T(n) ~ r(n, m),                n,~ffi ( n l , . .   ,n,-1,..           ,nj+   1,   ,nK).
+        k                                   m
+                                                       The nonzero transition rates correspond to
+for all n from which exit rates r(n, m) are
+                                                       (i, j) job moves under the one-step assump-
+defined; note T(n) ffi 0 if r(n, m) is not
+                                                       tion. Thus there are about LK "~ rates to
+defined. Substituting T(n) -- p ( n ) T and
+                                                       specify, rather than L e. (L is the size of the
+cancelling T, we obtain the
+                                                       state space.) With this assumption, r(n, n,j)
+          STATE SPACE BALANCE                          depends only on the rate of job flow from
+                 EQUATIONS                             device i to device j. The one-step property
+          p(k) r(k, n) = p(n) ~ r(n, m)                is met in many real systems.
+         k                                  m
+                                                           To specify the transition rates in terms
+       for all n in which r(n,.) is defined.           of routing frequencies and service func-
+Because the T(n) sum to T, we can aug-                 tions, we need to remove the conditioning
+ment these equations with the normalizing              on the total system state. The assumptions
+condition                                              that do this are called "homogeneity" be-
+                 p(n) = 1.                             cause they assert that, for given n,, device
+                         n                             i is influenced equally by all system states:
+If the system can move from any n to any                  Devtce Homogeneity: The output rate of
+m, then these are L - 1 linearly independent               a device is determined completely by its
+balance equations; only one set ofp(n) can                 queue length, and is otherwise indepen-
+satisfy them and the normalizing condition                 dent of the system's state.
+
+Computing Surveys, Vo|. 10, No. 3, September 1978
+                     The Operational A n a l y s i s of Queueing N e t w o r k M o d e l s                             249
+
+   R o u t i n g Homogeneity: The routing fre-       individual devices [JACK57, KLEI75]. The
+   quencies for a given total load (N) are           operational counterpart of Jackson's result
+   independent of the system's state.                is proved in [DENN77a]:
+Device homogeneity is a reasonable as-                       p(n) =pl(nl)p2(n2) " pK(n~)
+sumption for systems in which no device              where
+can block any other. 3 Routing homogeneity
+                                                                    p,(n) = F,(n)/G,
+is a reasonable assumption for most sys-                                                 N
+tems because job transitions generally de-                                      G, ffi ~ F,(n)
+pend on the intrinsic demands of jobs but                                               n~O
+
+not on instantaneous queue lengths.                  and N is the maximum number of jobs
+   The stochastic counterpart of routing ho-         observed in any queue of the system. The
+mogeneity is the assumption that job tran-           constant G of the product form solution is
+sitions among devices follow an ergodic              GIG2"" "GK. (Because each n, can range
+Markov chain. The stochastic counterpart             from 0 to N in an open system, we can
+of device homogeneity is that interdepar-            interchange the sums and products in the
+ture times of a device are exponentially             definition of G, thereby manipulating G
+distributed. Because they are operationally          into the product of the G,.) Note that pt(n)
+testable, homogeneity assumptions are fun-           is exactly the queue length distribution ob-
+damentally different from their stochastic           tained by considering device i as an iso-
+counterparts. The example of the next sub-           lated, single-device network with through-
+section (based on Figure 15) illustrates a           put Xt [BvzE76b]. Jackson's result shows
+homogeneous system. It is impossible to              that the performance quantities of device i
+determine whether or not this system sat-            in an open network are easy to calculate
+isfies any stochastic assumptions.                   from these formulae.
+   Device homogeneity asserts that the                  For a closed system, p(n) cannot be sep-
+ratio C(n, n~j)/T(n) is the same as                  arated into the product of the individual
+C,~(nJ/T~(n,). Routing homogeneity asserts           queue length distributions. This is because
+that the count Cu(nt) is the same as q,jCt(n,).      the queue lengths are not independent and
+Both assertions imply                                the products and sums in the definition of
+                  r(n, n,~) = qJS~(n,).              G cannot be interchanged. More complex
+With this substitution, the state space bal-         computations are required for closed sys-
+ance equations reduce to a set of "homog-            tems.
+enized balance equations" [DENN77a]. The                To simplify calculations analysts some-
+resulting solution forp(n) is of the so-called       times use the operational assumption called
+                                                     homogeneous service times (HST). It as-
+product form because it separates into K
+factors, one for each device, as shown in the        serts that the conditional service times
+                                                     St(n) all have the same value St, which is
+box below [BASK75, COFF73, GORD67,
+JACK63, KLEI75].                                     the (unconditional) mean time between
+                                                     completions. (That is, St(n) = St for all n.)
+                                                     In this case the factor F,(n) becomes ( V,St) n
+      -.PRODUCT FORM SOLUTION                        for a closed system and (XtS,) n ffi U,n for an
+         p(n) = F~(n~)F2(n2) .. Fg(ng)/G             open system. In obtaining parameters for
+  where the factor for device t is                   the HST solution, the analyst does not need
+          I1,                            n -- 0      to know each V, and St; he needs only VtSt,
+  F,(n) ~- X~S,(n)S,(n _ 1)       S,(1), n > 0       the mean total time a job requires at de-
+                                                     vice i. As illustrated in the next subsection,
+  and G is a normalizing constant. The S~(n)
+  are the service functions. The X, are a so-
+  lution of the job flow balance equations; for      3 E x a m p l e s of blockmg are multiple C P U s t h a t can
+  an open system X~ = V, Xo, and for a closed        lock one a n o t h e r o u t of t h e scheduling queues, or a
+  system X~ ffi IT, will do.                         store-and-forward c o m m u n i c a t i o n s processor t h a t
+                                                     c a n n o t t r a n s m i t a m e s s a g e to t h e n e x t node because
+                                                     no buffer space is available at t h a t node. Device ho-
+Jackson showed that, for open systems, this          m o g e n e i t y can also be a poor a p p r o x i m a h o n in a closed
+                                                     s y s t e m if s o m e device h a s a very h i g h variance in t h e
+solution is separable further into the prod-         t i m e s b e t w e e n t h e completions of r e q u e s t s for its
+uct of the queue-length distributions of the         service.
+
+
+                                                                 Computing Surveys. VoL 10, No. 3, September 1978
+250              P. J. D e n n i n g a n d J. P. B u z e n
+
+the H S T assumption m a y cause significant                 T h e state space balance equations are:
+errors in the queue length distributions.                      p(11)(2/3)             ffi p(20)(2/16)
+    Open and closed networks with more                         p(20)(2/16) + p(02)(1) = p(11)(1/3 + 2/3)
+t h a n one class of jobs (workloads) exhibit                  p(11)(1/3)             = p(02)(1)
+similar p r o d u c t form solutions. T h e major              p(20) +p(11) +p(02) = 1
+difference is t h a t there is a factor corre-               I t is easily verified t h a t the actual p(n)
+sponding to each job class at each device                    satisfy these equations.
+[BASK75].                                                       Because the initial and final states of the
+                                                             observation period are the same, the system
+                                                             is flow balanced. Because there are no rout-
+An Example
+                                                             ing choices (q12 = q21 = 1), and because the
+                                                             state is fully determined by either queue
+Figure 15 illustrates a simple system with
+                                                             length (nl ffi 2 - n 2 ) , the system is homo-
+K ffi 2 and N -- 2. T h e timing diagram
+                                                             geneous. 4 Therefore, the p r o d u c t form so-
+shows a possible behavior. T h e n u m b e r s
+                                                             lution is exact. We will verify this. T h e
+inside the diagram show which job is using
+                                                             device service functions are:
+a device, and shaded portions show idle-
+ness. T h e observation period lasts 20 sec-                    n               St(n)                          S~(n)
+onds. All three possible states--(nln2) ffi 20,                 1           3/1 = 3.0                 3/2 = 1.5                   (seconds)
+11, and 0 2 - - a r e observed; they are dis-                   2          16/2 = 8.0                 1/1 = 1.0
+played along the b o t t o m of the diagram.
+    We will c o m p a r e the actual performance              Since I11 ffi V2 ffi 1, the device factors are:
+quantities with the model's estimates. T h e                           n                        Fl(n)                             F~(n)
+actual proportions of time of state occu-                              0                          1.0                              1.0
+p a n c y are                                                          1                             3.0                           1.5
+  p(20) ffi T(20)/T ffi 16/20 = .80                                    2                         24.0                              1.5
+  p(11) ffi T(11)/T-- 3/20--.15
+                                                              T h e normalizing factor is
+  p(02) -- T(O2)/T = 1/20 = .05
+                                                                  G -- F](2)F2(0) + F](1)F2(1) + F](0)F2(2)
+T h e transition rates are:                                         : (24.0)(1.0) + (3.0)(1.5) + (1.0)(1.5)
+  r(20,11) ffi T(20,11)/T(20) = 2/16 = .125                         : 30
+  r(11,02) ffi T(11,02)/T(11) = 1/3 -- .333                  (This illustrates that a system can be homogeneous
+  r(02,11) ffi T(O2,11)/T(02) ffi 1/1 ffi 1.000              without its devices having to satisfy assumphons of
+  r(11,20) ffi T(ll,20)/T(11) ffi 2/3 = .667                 exponentially distributed mterdeparture times.
+
+
+                                                                 ×o
+                                                                .el
+
+
+                                                        K=2                N=2
+
+
+
+
+                                                                                                                              T
+                 0                                           I0 II     12 13                                           19 2 0
+                     I   I     I   I   I    I   I   i   i        ~/j        i      .    •        i         i     i            i
+
+
+  Device     I                         I                      2~/                           I                                 2
+  Device 2                                                      ,
+
+   STATES :                            20                     II 02 II                      20                           II       20
+                             FIGURE 15. A two-devicesystem and observed behavior.
+
+
+ComputingSurveys,Vol.10,No. 3, September 1978
+                          T h e Operational A n a l y s i s o f Q u e u e i n g N e t w o r k M o d e l s              251
+
+T h e s t a t e occupancies are as observed:                   tributions, e.g.,p](n) = p(n, 2 - n). H o w e v e r
+               p(20) -- F~(2)F2(O)/G                           these errors are less serious t h a n the ones
+                                                               in transition rates, and t h e y hardly affect
+                     -- (24.0)(1.0)/30--.80
+                                                               the m o d e l ' s e s t i m a t e s of utilizations (U] =
+               p(11) -- F~(1)F2(1)/G                           1 - p(02),     /-?2 = 1 - p ( 2 0 ) ) :
+                     = (3.0)(1.5)/30 = .15
+               p(02) -- FI(O)F2(2)/G                                 U~        Actual           HST
+                                                                                                Model         Error
+                     ffi (1.0)(1.5)/30 = .05
+                                                                     U1           .950            .965        +1.5%
+  Next, we will c o m p a r e with the solution                      U2           .200            .203        +1.5%
+based on h o m o g e n e o u s service times
+(HST). Because the service t i m e functions                   T h e m o d e l e s t i m a t e s t h a t X0 ffi U1/S1 ffi
+are not constant, this solution is not exact                   U2/$2 ffi .152 j o b s / s e c o n d , which is 1.5%
+for this system. T h e unconditional m e a n                   higher t h a n actual. T h e m e a n queue
+service times are                                              lengths are calculated as
+      $1 = B1/C1 ffi 19/3 = 6.333 seconds                                     f~l ffi 2.p(20) + 1.p(ll)
+      $2 = B2/C2 = 4/3 = 1.333 seconds                                        h2 = 2 - fil
+T h e H S T transition r a t e s are                           T h e y work out as follows:
+            r(20,11) = r(11,02) ffi 1/$1                                                         lIST          Error
+            r(02,11) ffi r(11,20) = 1/$2                            fz,       Actual             Model
+                                                                    ft~         1.750             1.762        +0.7%
+T h e r e are significant errors b e t w e e n these
+                                                                    h2           .250              .238        -4.8%
+a n d the actual rates:
+                            HST                                T h e m e a n response t i m e in the s y s t e m is R
+     r(n, m)     Actual    Model           Error
+                                                               = 2/Xo. T h e H S T m o d e l e s t i m a t e s t h a t R
+   r(20,11)        .125          .158         +26.4%           = 13.2 seconds, which is a b o u t 1.3% less
+   r(ll,02)        .333          .158         -52.5%           t h a n the actual of 13.3 seconds.
+   r(02,11)       1.000          .750         -25.0%               T h i s example illustrates w h a t is observed
+   r(ll,20)        .667          .750         +12.5%
+                                                               frequently in practice: the H S T m o d e l gives
+                                                               excellent a p p r o x i m a t i o n s of utilizations and
+In the H S T model, the device factors are of
+                                                               s y s t e m response times, fair to good approx-
+the f o r m F,(n) ffi (V, S J n, which works out
+                                                               imations for m e a n queue lengths (and re-
+to be:
+                                                               sponse times) at devices; and fair to p o o r
+       n              Fdn)             F2(n)
+                                                               a p p r o x i m a t i o n s to the queue length distri-
+       0                 1                1                    butions.
+       1               19/3              4/3
+       2             361/9              16/9
+                                                               Accuracy of the Analysis
+T h e normalizing factor is                                    Flow balance, one-step behavior, a n d ho-
+     G -- Fl(2)F2(0) + Fz(1)F2(1) + F~(0)F2(2)                 m o g e n e i t y are the w e a k e s t k n o w n assump-
+       = (361/9)(1) + (19/3)(4/3) + (1)(16/9)                  tions leading to a p r o d u c t f o r m solution for
+       ffi 453/9                                               p ( n ) . T h e balance a s s u m p t i o n s introduce
+                                                               no error if the o b s e r v a t i o n period is chosen
+W i t h the f o r m u l a p(nln2) = FI(n])F2(n2)/G             so t h a t the initial s t a t e of the s y s t e m is the
+we can calculate the state occupancies ac-                     s a m e as the final. Otherwise, the error will
+cording to the H S T model:                                    be small if the observation period starts a n d
+                              HST                              ends on frequently visited states.
+  p(n]n2)     Actual          Model            Error                One-step b e h a v i o r is a p r o p e r t y of m a n y
+   p(20)        .800            .797           -0.4%           real systems. In m a n y others, the n u m b e r
+   p(ll)        .150            .168          +11.8%           of s i m u l t a n e o u s job transitions are a small
+   p(02)        .050            .035          -29.3%           fraction of the total n u m b e r of state
+                                                               changes. ( T h e r e are, however, s y s t e m s in
+T h i s shows t h a t the H S T model can m a k e              which " b u l k arrivals" allow groups of jobs
+significant errors in the queue length dis-                    to m a k e transitions together, in violation of
+
+
+                                                                          Computing Surveys, Vol. 10, No. 3, September 1978
+
+       t
+252               P. J. D e n n i n g a n d J. P. B u z e n
+the one-step assumption. Such cases can be                    requires about 2 K N arithmetic operations;
+treated by introducing new operational as-                    a utilization (U,) can be computed with 2
+sumptions to characterize the bulk ar-                        more operations, and a mean queue length
+rivals.)                                                      (fz,) with 2N more. For systems whose de-
+   Homogeneity is often a reasonable ap-                      vices have load dependent service func-
+proximation. In systems where devices can-                    tions, the computation of G increases to
+not block each other, a device's service                      about N 2 K operations.
+function may not be influenced significantly                     The next two subsections review the es-
+by queueing at other devices. Routing fre-                    sentials of these computations for two kinds
+quencies seldom depend on local queue                         of systems with homogeneous service times:
+lengths. If used, the homogeneous ser-                        a closed system and a terminal-driven sys-
+vice time (HST) approximation can intro-                      tem. A third subsection surveys the general
+duce further errors; these errors affect                      algorithms and returns to the example of
+queue length distributions the most, utili-                   Figure 13.
+zations the least. H S T models seldom esti-
+mate utilizations with errors exceeding                       Closed System with Homogeneous Service
+10%, but they may make larger errors in                       Times
+estimating mean queue lengths (as much as
+30%).                                                         Figure 16 shows the essence of the result
+   As we will see in the section on decom-                    developed by Buzen [Buzz71b, BUZE73].
+position, device homogeneity is equivalent                    The algorithm fills in numbers in a two-
+to the assumption that a device's service                     dimensional matrix g. The columns of g
+function S,(n) is the same whether the de-                    correspond to devices, rows to loads. The
+vice is observed online, or offline under a                   computation starts with ls in the first row
+constant load of n requests. For single-                      and 0s in the first column below the first
+server devices an offiine experiment will                     row. A typical interior element is ,computed
+report that S,(n) is the mean of request                      from
+sizes regardless of the queue length--an                           g(n, k) ffi g(n, k - 1) + Ykg(n - 1, k),
+H S T assumption. In reality, the relation                    where Yk ffi VkSk. The normalizing constant
+between the distribution of request sizes                     G is g(N, K). It can be computed in 2KN
+and the service function is more complex.                     arithmetic operations.
+                                                                 The algorithm actually requires much
+7. COMPUTATION OF PERFORMANCE                                 less storage than Figure 16 suggests. Be-
+QUANTITIES                                                    cause the matrix can be filled one column
+                                                              at a time, we need only store the column
+The product form solution forp(n) is math-
+                                                              currently being computed. Let G[0             N],
+ematically neat but not obviously useful:                     initially 0, denote a vector array represent-
+computing a utilization U,, for example,                      ing a current column of g, and let Y[1        K]
+seems to require first computing the nor-
+                                                              denote       another       vector     containing
+malizing constant G, then summing the
+p(n) for those n in which n, _ 1. For a                                                    O   E V    I C     E   S
+closed system with homogeneous service                                         0   t   2       ...      k-t           k        ...   K
+times, a direct computation requires
+                      [N+K-          1)
+                  L---~ K - 1
+additions, and N - 1 multiplications for
+each addition--a total of L N arithmetic
+operations. This computation would be pro-
+                                                                    O
+                                                                     0
+                                                                     A
+
+
+                                                                    $ n-t, 0
+
+                                                                         n
+                                                                                   ....                C
+                                                                                                     fl(n. k-II
+                                                                                                                    o(n-i,k)
+                                                                                                                  .~¥,
+
+                                                                                                                          ¢(n. k)
+                                                                                                                                     ii  g(n,K)
+hibitively expensive for reasonable choices
+of N and K.                                                              •                                                               I
+                                                                                                                                         O(N,K) • G
+   In 1971 Buzen developed a fast algorithm                              N                                                           oI
+for computing G [BuzE71b, B~ZE73]. For a                      FmURE 16. Algorithm for computing g(n, k) of
+system with homogeneous service times, it                       closed system with homogeneous servme times.
+
+
+Computing Surveys, Vol. 10, No. 3, September 1978
+                             The Operational Analysis of Queueing Network Models                                                253
+VIS1, • • -, V K S K . T h e n the algorithm is                             g(1,2)
+                                                                   X0(2) = - -     = 7.67/50.3 = .152
+   (initialize:} G[0] :-- 1                                                 g(2,2)
+   f o r k:= I to K do {compute kth column}                    which is the value obtained previously for
+                                                               the HST model of Figure 15. The mean
+        for n : f l t o N d o                                  queue length at device 1 when N = 2 is
+            { G [ n - 1]            contains g(n - 1, k);
+                                                                          ftl =
+                                                                                   2
+                                                                                  ~.    Y1 n g(2
+                                                                                           n, 2)
+                      G[n] c o n t a i n s g(n, k - 1)}                           .-1 g(2, 2)
+                                                                                                   -
+
+
+
+
+               G[n] := Gin] + Y[k]*G[n - 1]
+        end                                                                (6.33)(7.67) + (6.33)2(1.00)
+  end                                                                                  50.3
+W h e n this p r o c e d u r e terminates, G [ N ] con-                  = 1.762
+tains the normalizing constant.                                which is the same as the value obtained
+   T h e i m p o r t a n c e of this algorithm is not          previously. Observe that the model predicts
+only t h a t it c o m p u t e s g ( n , K ) = Gin]             that X0 saturates at 1/V1S1 = 0.158
+quickly, b u t t h a t the m e a n queue lengths               jobs/second for N ~ 4. The actual system is
+and the utilizations can be expressed as                       on the verge of saturation when N = 2, for
+simple functions o f g ( n , K ) [BvzE71b]. T h e               U1 = 0.95.
+results are shown below.
+                                                            Terminal Driven System with Homogeneous
+ Proportion                                                 Service Times
+   of time         Q,(n) = Y," g ( N - n, K)
+    n,>_n                          g(N, K)                  N o w we consider an i n t e r a c t i v e system of
+ Utilization       U,    = Q,(1) = Y, g ( N - 1, K)         the f o r m of Figure 17. E a c h of the M ter-
+                                           g i N , K)       minals has think time Z. T h e n u m b e r of
+ System                   = g ( N - 1, K)                   active jobs is d e n o t e d b y N, and the n u m b e r
+   through- Xo
+   put                         g(N, K)                      of thinking terminals by M - N . T h e central
+ Mean queue -
+                                N                           s u b s y s t e m has K devices with h o m o g e n e -
+   length   n,            = ~ y , , g ( N - n, K)           ous service times and visit ratios indepen-
+                            .-z         giN, K )
+                                                            d e n t of N.
+T h e formula for fz, can be rewritten as a                     B y treating the terminals as a "device"
+recursion,                                                  whose service function is Z / n w h e n there
+                                                            are n thinkers, we can e m p l o y efficient
+          fi,(N) = U,(N)(1 + f~,iN - 1)),
+                                                            c o m p u t a t i o n a l p r o c e d u r e s to c o m p u t e a
+w i t h i n i t i a l condition f~,(O) = O. T h i s shows   normalizing c o n s t a n t for this s y s t e m
+t h a t f~,(N) can be calculated i t e r a t i v e l y      [WILL76]. T h e algorithm fills in a m a t r i x h
+with 2 N a r i t h m e t i c operations.                    as suggested in Figure 18. T h e rows corre-
+                                                            spond to n u m b e r s of terminals, columns to
+  E x a m p l e : For the example of Figure 15, we          devices in the central subsystem. Initially
+  had:
+                                                            row 0 and column 0 are all ls. A typical
+        Y~ = VIS1 = 19/3 = 6.33 seconds                     interior e l e m e n t is c o m p u t e d f r o m
+        Y2 = V2S2 = 4/3 = 1.33 seconds.                                                                mY,
+  The table below shows the matrix g for                        h(m, k) = h(m, k -            1) + T          him-         1, k),
+  loads N = 1,  ,5:
+
+
+         0
+         1
+               0
+
+               0
+                         1
+                         1.00
+                         6.33
+                                        2
+                                        1.00 I
+                                        7.67
+                                                 Xo(N)
+
+                                                  .130
+                                                                    M-N    Thinkers                      N   Active Jobs
+                                                                                                                                    I
+                                                                                                                                    /
+
+
+
+
+    N
+         2
+         3
+         4
+               0
+               0
+               0
+                       40.1
+                      254.
+                     1609.
+                                       50.3 I .152
+                                      321. 1 . 1 5 7
+                                     2037.       .158
+                                                                                                                                    1
+         5     0    10190.          12906.       .158
+                                                                   M Termmaq$                          Centrol Subsystem
+  The numbers in the Xo column are com-                            Z Th~nk T~me
+
+  puted from the system throughput formula                  FmURE 17. T e r m i n a l - d r i v e n s y s t e m with central
+  for the given N. For example, when N = 2,                   s u b s y s t e m replaced by a n equivalent device.
+
+
+                                                                          ComputingSurveys, Vol. 10, No. 3, September 1978
+254                           P. J. D e n n i n g a n d J. P. B u z e n
+                                          D EV I C E S
+                                                                                                      pute h(M, K) for the system of Figure 11(a),
+                      0       t       2     *.,   ~-f    It    • ..    K
+                                                                                                      calculating the response time R(M) for
+                 0            I       I
+         N        I
+                                                                                                      M = 1, 2, .--, 50. The result is plotted in
+         0
+                 2
+                                                                                                      Figure 19. Note that the curve approaches
+                                                                                                      the asymptote M - 20, is predicted in Figure
+        T
+        E
+                  :
+                                                                                                      11(b). For M ffi 18, the formulae in the box
+        R                                                                                             yield these values:
+        M
+        I                                                                                                          X(18) = .715 jobs/second
+        N
+                 m
+        &                                                                                                          R(18) = 5.2 seconds
+        L
+         S
+                                                                                                                    p(0) = .062
+                                                                           n(M,K)
+                 t~                                                    0                                               N = 3.7 jobs
+FIGURE 18. Algorithm for computing h(m, k) of ter-                                                    We used these throughput and response
+  minal driven system with homogeneous service                                                        time values previously in our discussion of
+  times.                                                                                              Figure 11. The model calculates that the
+                                                                                                      central subsystem is idle for 6.2% of the time
+                                                                                                      and that there are 3.7 active jobs on average.
+                                                                                                      Figure 17 suggests t h a t the entire central
+where Yk = VkSk. W h e n this c o m p u t a t i o n                                               s u b s y s t e m can be replaced with an equiva-
+terminates, the p e r f o r m a n c e m e a s u r e s can                                         lent device whose service function is
+be c o m p u t e d f r o m the f o r m u l a e below.                                             S ( N ) = 1/Xo(N), Xo(N) being the through-
+  Proportion of                             p(0)        ffi 1/h(M, K)                             p u t of the central s u b s y s t e m u n d e r a con-
+    time central                                                                                  s t a n t load N. Only if the actual s y s t e m is
+    subsystem is                                                                                  h o m o g e n e o u s will this r e p l a c e m e n t be ex-
+    idle                                                                                          act. (We will explain w h y in the next sec-
+                                                                 1, K)
+                                                              M h(M -                             tion.) W i t h homogeneity, the distribution
+  Throughput                                X(M) ffi
+                                                      Z h(M, K)                                   of active loads, p ( N ) , satisfies the state-
+  Response time                              R(M) = M / X ( M ) - Z                               space balance equation
+  Mean active                                fV   ffi M - ZX(M)                                                                               -N+I
+    load                                                                                                    P(N)X°(N)=p(N-1) M Z
+
+   E x a m p l e : We used this algorithm to corn-                                                 Using the value of p(0) f r o m the box, we
+                                  J
+                          25"
+
+
+
+
+                      20-
+
+
+
+
+             (n
+
+             o
+
+             z
+
+             o            IO
+             (.3
+             tJJ
+
+             (n
+
+
+
+
+                          0
+                                  0                              IO                 I,~          20          Z2     ~        30    35         40
+                                                                                                 (M j)
+
+                                                                 NO.                      TERM           I        N AL   S    (M
+                                                        FIGURE 19. Response time for example network.
+
+
+ComputingSurveys,Vol. 10, No. 3, September1978
+                            The Operational Analysis of Queueing Network Models                                           255
+can calculate p ( N ) iteratively from this bal-                deal with open and closed networks, various
+ance equation. Note, however, that the                          queueing disciplines at the individual de-
+measures shown in the box do not require                        vices, and multiple classes of jobs (work-
+calculating Xo(N) o r p ( N ) first.                            loads) with class changes allowed. Some are
+  Example: Figure 20 shows the throughput                       available today as commercial queueing
+  function Xo(N) for the central subsystem of                   network evaluator packages [BuzE78b].
+  the example of Figure 11(a), computed as if                   Comprehensive treatments of these algo-
+  this subsystem were closed. The figure also                   rithms have been given by Shum [SHUM76]
+  displays p(N), computed for M = 18 using                      and by Reiser and Sauer [Rzxs78]. One of
+  the iterative formula. The straight line is                   the fastest algorithms has been reported by
+  the equation (M - N)/Z, which is the job                      Balbo, et al. [BALB77]. (See also [CHAN75a,
+  submission rate of the thinking terminals;                    GELE76a, HERZ75, REIS75, WILL76].) T he
+  this line crosses Xo(N) at N = 3, which is
+  19% less than the model's ,~ ffi 3.7. The                     remarkable speed with which the perform-
+  crossing point represents the most favored                    ance quantities of complex networks can be
+  value of N, the load that balances job sub-                   calculated is an important reason that
+  mission rate with job completion rate. In                     queueing network models have become so
+  many cases it is a good estimate of N (see                    widely used.
+  [CouR75, COUR77]). The tick-marks indi-                          Example: We have applied these algo-
+  cate crossing points for other values of M.                      rithms to the problem of Figure 13 under
+  In the case shown, the model estimates that                      the additional assumption that the average
+  the load does not exceed 6 jobs for 97% of                       batch multiprogramming level is 10. The
+  the time--nearly all the time at most 1/3 of                     results are summarized in Table IV. The
+  the terminals are awaiting a response. (The                      exact results confnTn the approximate anal-
+  tendency for p(N) to be a normal distribu-                       ysis given before: the faster CPU helps the
+  tion has been confirmed as long as the var-                      batch workload, as planned, but hurts the
+  iance of execution times is less than 10 times                   interactive workload. The disk queue is
+  the mean [BALB78].)                                              longer after the change because the CPU is
+                                                                   no longer the bottleneck for the batch work-
+General Systems                                                    load; but the longer disk queue interferes
+                                                                   with the I/O-bound interactive jobs,
+T h e computational procedures have been                           thereby increasing interactive response time
+studied and refined extensively. T h e y now                       from 4 to 10 seconds. Whereas the total
+
+
+
+                    "°t                                              X o (N)
+
+
+
+
+         o    ~
+
+         7-"
+         n,.
+             "0 3   .4t I ~ :                       \     m-N
+         o    m                                           '20
+         oo
+         ~ ""       .
+
+
+
+                                                                                                                 N
+                        0     2     4     6     8   I0   12     14     16      18   20    22     24    26   28
+
+
+                                        NUM    B E R     O F          ACTIVE                   J O B   S
+
+                                  FIGURE 20.    Load distribution in example network.
+
+
+                                                                               Computing Surveys, Vol. 10, No. 3, September 1978
+256              P. J. Denning a n d J. P. Buzen
+                           TABLE IV. EXACTRESULTS FOR EXAMPLEOF FIGURE 13
+                                                            Ortginal System                      CPU 5× Faster
+
+                                                     Int.       Batch.        Total      Int.       Batch        Total
+Throughput (job/sec)                                 .735         .926        1.66        .623       4.64         5.26
+Response Time (sec)                                 4.0         10.8         --         10.1         22          --
+CPU utihzation (%)                                  7.4         92.6        100.0        1.2        92.8         94.0
+CFU Queue Length (mean jobs)                         .9          9.8         10.7          1         5.2          53
+Disk Utilization (%)                               66,2          8.3         74.5       56.1        41,8         97,9
+Disk Queue Length (mean jobs)                       2.1           .3          2.4        6.3         4.8         11 1
+
+
+  throughput increased by a factor of 3.2
+  (from 1.66 to 5.26 jobs/second), the batch
+  throughput increased by a factor of 5.01
+  (from .926 to 4.64 jobs/second). The batch                         ORIGINAL
+                                                                     SYSTEM
+  throughput was speeded up by more than
+  the CPU speedup factor--at the expense of
+  the interactive workload.
+  This example illustrates why it is safer to
+employ the analytic tool than to trust one's
+untrained intuition. Many analysts find this                         EQUIVALENT
+                                                                     DEVtCE
+example surprising, until they realize that
+the ratios of throughputs for the different
+workloads are not invariant under the
+change of CPU.
+                                                                     OFF-LINE
+                                                                     EXPERIMENT
+8. DECOMPOSITION                                                     (Iood = N )
+
+
+The formulae derived from the product
+form solution will be more accurate when                             FIGURE 21.       Pnnclple of decomposition.
+used with the online service functions of
+devices, obtained by stratified sampling                           In an offline experiment, the subsystem
+while devices are in operation. However,                        is operated under a constant load of N jobs.
+for performance prediction, the analyst                         Immediately after each job completion, the
+must estimate the actual service functions                      analyst adds another job to keep the load
+from the data on request sizes, a task com-                     equal to N. If, during T seconds of such an
+plicated by the lack of a simple relationship                   experiment, the analyst counts C comple-
+between request sizes and intercompletion                       tions, he sets the conditional output rate to
+times. Decomposition is an important                            be X ( N ) = C/T. The subsystem is then
+method of establishing such a relation.                         replaced by an "equivalent device" whose
+Offline Experiments                                             load-dependent service function is S ( N ) ffi
+                                                                1/X(N). Note that arrivals and completions
+Figure 21 shows that decomposition can be                       are synchronized in this kind of experiment.
+applied to a subsystem of one or more de-                          A subsystem may be replaced exactly by
+vices. The principle is to study the subsys-                    an equivalent device only when the subsys-
+tem offline, that is, independently of any                      tem's output rate is completely determined
+interactions with its environment. To do                        by its given load (N) and is otherwise in-
+this, the analyst subjects the subsystem to                     dependent of the state of the whole system.
+a series of controlled experiments; each is                     In this case the distribution of jobs outside
+based on measuring the subsystem's output                       the subsystem cannot be influenced by the
+rate when put under constant load. The                          distribution of jobs inside, and the queue
+"experiment" may be conceptual rather                           distribution p,(n) of any external device is
+than physical, conducted with a model                           the same whether the equivalent device or
+rather than a measurement.                                      the real subsystem is online. It also means
+
+Computing Surveys, Vol. 10, No 3, September 1978
+                             The Operational Analysis of Queueing Network Models                                  •      257
+that the subsystem responds the same to                                SHUM76, SHUM77].) A detailed treatment
+any environment that subjects it to the                                of these topics has been given recently by
+given N and, hence, the offiine experiment                             Chandy and Sauer [CHAN78].
+must reveal the online service function. In
+other words, homogeneity asserts exact de-                             Applications
+composability for a device.
+   It is clear that any subnetwork of a sys-                           The major application of decomposition is
+tem whose devices and routing frequencies                              simplifying problems through modnlariza-
+are homogeneous is perfectly decomposable                              tion. In his definitive treatment, Courtois
+from the system. This has also been proved                             has shown that significant reductions in
+by Chandy, Herzog, and Woo, who showed                                 solution times can be obtained by employ-
+that, in a product form solution, the factors                          ing decomposition; indeed, for systems with
+corresponding to devices in the subnetwork                             very large state spaces, decomposition may
+can be coalesced into a single factor whose                            be the only computationally feasible ap-
+service function is obtained from an offiine                           proach to a solution whose accuracy can be
+experiment [CHAN75a]. ~ This result ex-                                guaranteed. [CouR77].
+plains why the decomposition used at Fig-                                 The most important applications of de-
+ure 17 (to replace the central subsystem of                            composition have been for virtual memory
+Figure 11) introduced no new error beyond                              systems, blocking, and other behaviors
+what already resulted from the homogene-                               which cannot be represented directly in the
+ity assumptions. The converse of this result                           queueing network model.
+is not true: a perfectly decomposable sub-                                The difficulty in virtual memory systems
+system need not comprise a network of                                  is that the fixed size of real memory causes
+homogeneous devices.                                                   the visit ratio at the swapping device to
+   Decomposition gives a good approxima-                               increase with the multiprogramming level.
+tion when the number of state changes                                  This effect was first treated in a queueing
+within the subsystem between interactions                              network model by Buzen [BuzE71b,
+with the environment is reasonably large                               BvzE71c]. Courtois made a significant con-
+[CouR77], for then the aggregated behavior                             tribution by using decomposition to treat
+dominates the possible influence of any in-                            systems whose multiprogramming level
+dividual subsystem state. In the example of                            varied during the observation period; he
+Figure 11, each job causes an average of V0                            also used decomposition to construct an
++ I11 + V2 + V4 = 40 state transitions in the                          elegant analysis of the dynamics of thrash-
+central subsystem; hence we could expect                               ing [CouR75, COUR77]. Others have ex-
+reasonable results from the decomposition                              tended the method to study optimal
+of Figure 17 even if the central subsystem                             multiprogrammed memory management
+were not internally homogeneous.                                       [BRAN74, BRAN77, DEI,~N75b, DEAN76].
+   The online service function may depend                              (For a survey, see [DENN78].)
+on the variance of the distribution of re-                                In systems where blocking occurs, the
+quest sizes: an occasional very long job will                          device homogeneity assumption may be se-
+cause a long queue to build, whereupon                                 riously violated. Blocking may occur when
+longer interdeparture times may be ob-                                 a load controller stops admitting new jobs
+served for longer queue lengths. By intro-                             to active status because memory is fully
+ducing the concept of stages of service, the                           committed [BRAN74, COUR75, DENN75b,
+effect of variance can be represented in the                           DENN76]; or when an I/O channel may be
+equivalent device. (See [BASK75, CHP~N75b,                             temporarily blocked by some of the devices
+GELE76a,b, KLEI75, LAzo77a,b, SEVC77,                                  it controls [BRow75, BROW77]; or when the
+                                                                       geometry of a rotating drum prevents it
+ In fact, ff n denotes a state of a s u b n e t w o r k contain-       from serving its separate sector queues si-
+ing N jobs, where t h e p ( n ) s u m to p ( N ) , t h e o u t p u t   multaneously [DENs72]. In such cases, an
+rate is
+           X0(N) = ~p(n)/p{N) ~ q,o/S,(n,),
+                                                                       offline experiment may be used to replace,
+                                                                       with an equivalent device, the subsystem in
+w h m h is completely d e t e r m i n e d by N                         which blocking occurs.
+
+                                                                              Computing Surveys, Vol. 10, No. 3, September 1978
+258               P. J. Denning and J. P. Buzen
+   Decomposition can be applied repeat- assumptions leading to the product form
+ edly: a system containing devices equiva- solution forp(n). By exploiting the product
+lent to subsystems may be replaced by an form of the solution, we can devise efficient
+ equivalent device. [BRow75, BROW77, methods for calculating performance quan-
+ COUR77]. Decomposition has been used to tities without having to compute the p(n)
+replace a subsystem of a simulation, explicitly. Indeed, the remarkable speed
+thereby speeding up the simulator with which performance quantities can be
+[ScHw78].                                          computed using queueing network formu-
+                                                   lae is an important reason that this tech-
+CONCLUSIONS                                        nology is so widely used.
+                                                      Most errors with these results arise from
+Operational queueing network theory is the homogeneity assumptions. Homogene-
+based on the premise of testability. All the ity asserts that there is no interaction be-
+basic performance quantities               (Table tween a device and the rest of the system,
+II)--utilizations, completion rates, mean except for dependence on the local queue
+queue sizes, mean response times, load dis- length. In a real system the service function
+tributions--are defined as they would be in will depend on the pattern by which the
+practice from data taken over a finite pe- rest of the system sends requests to a de-
+riod. The analyst can test whether the basic vice, and that pattern may depend on the
+assumptions--flow balance, one-step be- form of the request size distribution of that
+havior, and homogeneity--hold in any ob- device.
+servation period.                                    In practice, errors from these assump-
+   The operational laws (Tables I and III) tions are not serious. Even when the addi-
+are identities among operational quantities. tional assumption of homogeneous service
+They are a consistency check--a failure to times is used to simplify the analysis fur-
+satisfy an operational law reveals an error ther, these models estimate utilizations,
+in the data. They simplify data collection throughputs, and system response times
+by showing alternatives for computing per- typically to within 10%, and mean queue
+formance quantities.                               lengths and device response times typically
+   Job flow balance implies that the to within 30% [BuzE75, GIAM76, HUGH73,
+throughputs everywhere in a system are LIPS77]. Refining the model of devices to
+determined by the throughput at any one make explicit the effect of the request size
+point in the system. Since an increasing distribution increases the accuracy, espe-
+load will drive some device into saturation, cially in predicting queue length distribu-
+this assumption allows determining asymp- tions [BASK75, CHAN75b, LAZO77a, REIS76,
+totes on throughput and response time; the SEvc77]. Very little is known about re-
+only data needed for such a "bottleneck sponse time distributions for these sys-
+analysis" are the visit ratios and saturation tems. (However, see [CHOw77, LAzo77b,
+output rates at the devices.                       WOSG77].)
+   J o b flow analysis does not account for          To use these results for performance pre-
+the effects of queueing in the system at diction, the analyst must estimate the pa-
+intermediate loads, which must be studied rameter values for the projection period;
+in terms of the system's state space. Each then use these estimates in the equations
+state n •ffi (nl, • • ", nx) represents a possible to calculate the estimated performance
+distribution of jobs among the devices, and measures in the projection period. We have
+p(n) represents the proportion of time state offer~i no definitive treatment of the pa-
+n is occupied. The objective is to express rameter estimation problem. Nor can we: it
+thep(n) directly in terms of the operational is in the realm of inductive mathematics,
+parameters of the system.                          whereas operational analysis is a branch of
+   Under the additional assumptions of one- deductive mathematics. (See [GARD76].)
+step behavior and homogeneity, we can fred We have illustrated in the examples the
+balance equations relating the p(n) to the kinds of invariance assumptions analysts
+operational visit ratios and service time use to estimate parameters.
+functions. These appear to be the weakest            Stochastic queueing theory makes some
+
+ComputingSurveys, Vol. 10, No. 3, September 1978
+                        The Operational Analysis of Queueing Network Models                                 259
+analysts more comfortable when estimating                  G. Balbo; S. C. Bruell; J. C. Browne; K. M. Chandy; P.
+parameters, since the theory tells how to                  J. Courtois; M. A. Franklin; W. D. Frazer; E. Gelenbe;
+deduce confidence intervals to bound the                   R. P. Goldberg; G. S. Graham; D. L. Iglehart; K. C.
+uncertainty in estimates derived from data                 Kahn; R. M. Keller; L. Kleinrock; E. D. Lazowska; J.
+                                                           Leroudier; I. Mitrani; R. R. Muntz; D. Potier; M.
+taken in a finitebaseline period. However,                 Reiser; D. B. Rubin; A. Schroeder; H. S. Schwenk; H.
+the stochastic model employs a hidden in-                  D. Schwetman; K. C. Sevcik; J. Shore; A. W. C. Shum;
+ductive assumption: that the values of the                 J. W. Wong; and L. S. Wright. Special thanks go to
+stochastic parameters in the projection pe-                G. S. Graham and E. D. Lazowska for carefully reading
+riod are known functions of the correspond-                earlier versions of this manuscript.
+ing values in the baseline period. In fact,
+there is no way to know this for sure. Thus,                                 REFERENCES
+the stochastic analyst faces exactly the                   BALE77       BALBO,G.; BRUELL,S. C.; ANDSCHWET-
+same uncertainties as the operational ana-                              MAN, H. D. "Customer classes and
+lyst; both must estimate unknown values                                 closed network models--a solution tech-
+                                                                        nique," in Proc. IFIP Congress 77,
+for the projection period from values ob-                               North-Holland Publ. Co., Amsterdam,
+served in the baseline period. Dealing with                             The Netherlands, pp. 559-564.
+uncertainties in estimation is a very impor-               BALB78       BALBO, G.; AND DENNING, P. J.
+                                                                        Approxtmating load distributions m
+tant problem, but it is beyond the pale of                              time sharing systems, Tech. Rep. CSD-
+the deductive mathematical system in                                    TR-259, Computer Science Dept., Pur-
+which relationshipsamong variables are de-                              due Univ., W. Lafayette, Ind., March
+                                                                        1978.
+rived. (For a complete discussion of these                 BASK75       BASKETT, F.; CHANDY, K. M.; MUNTZ,
+points, see [BUzE77, BuzE78a, GARD76].)                                 R. R.; ANDPALACIO8,J. "Open, closed,
+                                                                        and mixed networks with different
+   With its weaker basis, operational                                   classes of customers," J. ACM 22, 2
+queueing network theory applies to a wider                              (April 1975), 248-260.
+class of computer systems than Markovian                   BouH78       BOUHANA, J. "Operational aspects of
+                                                                        centralized queuemg networks," PhD
+queueing network theory. Conversely, Mar-                               Thesis, Computer Science Dept., Univ.
+kovian theory includes assumptions not                                  Wisconsin, Madison, Jan. 1978.
+present in the operational framework of                    BRAN74       BRANDWAJN, A. "A model of a time
+                                                                        sharing system solved using equivalence
+this paper. Markovian queueing network                                  and decomposition methods," Acta Inf.
+theory, for example, allows deriving differ-                            4, 1 (1974), 11-47.
+ential equations relating time dependent                   BRAN77       BRANDWAJN,A.; ANDMOUNIEX,B. "A
+                                                                        study of a page-on-demand system," Inf.
+probabilities p(n, t) to their derivatives; in                          Process. Lett. 6, 4 (Aug. 1977), 125-132.
+principle, we can then solve for the tran-                 BRow77       BROWN, R. M.; BROWNE, J. C.; AND
+                                                                        CHANVY, K. M. "Memory manage-
+sient behavior of the system. As presented                              ment and response time," Commun.
+in this paper, operational analysis contains                            ACM 20, 3 (March 1977), 153-165.
+no concept like p(n, t). It gives no infor-                BRow75       BROWNE,J. C.; CHANDY,K. M.; BROWN,
+                                                                        R. M.; KELLER,T. W.; TOWSLEY,D. F.;
+mation about a system's transient behavior.                             ANDDlSSLY,C.W. "Hierarchical tech-
+   These limitations, however, apply only to                            niques for the development of realistic
+the formulation presented in this paper.                                models of complex computer systems,"
+                                                                        Proc. IEEE 63, 6 (June 1975), 966-976.
+Within the basic requirement of opera-                     BuzE71a      BUZEN, J.P. "Analysts of system bot-
+tional testability, it is possible to make fur-                         tlenecks using a queueing network
+                                                                        model," in Proc. ACM SIGOPS Work-
+ther assumptions to deal with transient be-                             shop System Performance Evaluation,
+havior. Transient behavior might be                                     1971, ACM, New York, pp. 82-103.
+modeled as job flows "diffusing" in a system               BuzE71b      BUZEN, J. P. "Queuemg network
+                                                                        models of multiprogramming," PhD
+[KLEI75], or as sequences of homogeneous                                Thests, Div. Eng. and Applied Physics,
+behaviors through successively higher                                   Harvard Univ., Cambridge, Mass., May
+levels of aggregation of system states                                  1971. (NTIS #AD 731 575, Aug. 1971.)
+                                                           BUZE71C      BUZEN,J.P. "Optimizing the degree of
+[CouR77].                                                               multiprogramming in demand paging
+   The path to further knowledge awaits                                 systems," in Proc. IEEE COMPCON,
+                                                                        1971, IEEE, New York, pp. 139-140.
+exploration.                                               BuzE73       BUZEN, J. P. "Computational algo-
+                                                                        rithms for closed queueing networks with
+              ACKNOWLEDGMENTS                                           exponentialservers," Commun. ACM 16,
+                                                                        9 (Sept. 1973), 527-531.
+We are grateful to the following individuals for their     BuzE75       BUZEN, J. P. "Cost effective analytic
+patience, constructive criticisms, wisdom, and insights:                tools for computer performance evalua-
+
+
+                                                                    ComputingSurveys,Vol. 10, No. 3, September1978
+260             P. J. Denning and J. P. Buzen
+             tion," in Proe. IEEE COMPCON, 1975,          DENN77a    DENNING, P. J.; AND BUZEN, J. P.
+             IEEE, New York, pp. 293-296.                            "Operational analysis of queueing net-
+BUZE76a      BUZEN,J.P. "Operational analysis: the                   works," in Proc. Third Int.Symp. Com-
+             key to the new generation of perform-                  puter Performance Modeling, Measure-
+             ance prediction tools," in Proc. IEEE                   ment, and Evaluatlon, 1977, North-Hol-
+             COMPCON, 1976, IEEE, New York.                         land Publ. Co., Amsterdam, The Neth-
+BuzE76b      BUZEN, J. P. "Fundamental opera-                       erlands.
+             tional laws of computer system perform-      DENN77b   DENNING, P J.; ANDBUZEN,J.P. "An
+             ance," Acta Inf. 7, 2 (1976), 167-182.                 operational overview of queueing net-
+BUZE77       BUZEN, J . P . "Principles of computer                 works," in Infotech state of the art report
+             performance modeling and prediction,"                  on performance modeling and predic-
+             in Infotech state of the art report on                  tion, Infotech Int. Ltd., Maidenhead,
+             performance modehng and prediction,                     UK, 1977, pp. 75-108.
+             Infotech Int. Ltd., Maidenhead, UK,          DENN78    DENNING, P. J. "Optimal multipro-
+             1977, pp. 3-18.                                        grammed memory management," in
+Buzz78a      BUZEN, J.P. "Operatlonal analysm: an                    Current trends m programming meth.
+             alternative to stochastic modeling," in                odology III, K. M. Chandy and R. Yeh
+             Proc. Int. Conf Performance Computer                    (Eds.), Prentice-Hall, Englewood Cliffs,
+             Installations, 1978,North-Holland Publ.                N.J., 1978, pp. 298-322.
+             Co., Amsterdam, The Netherlands, pp.         GARD76    GARDNER, M. "Mathematical games:
+             175-194.                                               On the fabric of inductive logic, and some
+BUZE78b      BUZEN, J. P., et al. "BEST/l--design                   probability paradoxes," Scz. Am 234, 3
+             of a tool for computer system capacity                  (March 1976), 119-122.
+             planning," in Proc." 1978 AFIPS Na.          GELE76a   GELENRE, E.; AND MUNTZ, R. R.
+             ttonal Computer Conf., Vol. 47, AFIPS                  "Probability models of computer sys-
+             Press, Montvale, N.J., pp. 447-455.                    tems I. exact results," Acta Inf. 7, 1 (May
+CHAN75a      CHANDY,K. M., HERZOG,U., AND Woo,                       1976), 35-60.
+             L. "Parametric analysis of queueing          GELE76b   GELENBE, E., AND PUJOLLE, G. "The
+             networks," IBM J. Res. Dev. 19, 1 (Jan.                behavior of a single queue in a general
+             1975), 36-42.                                          queueing network," Acta Inf. 7, 2 (1976),
+CHAN75b      CHANDY,K. M.; HERZOG,U.; ANDWoo,                       123-136.
+             L. "Approximate analysis of general          GIAM76    GIAMMO,T. "Validation of a computer
+             queueing networks," IBM J Res Dev.                     performance model of the exponential
+             19, 1 (Jan. 1975), 43-49.                              queueing network family," Acta Inf. 7, 2
+CHAN78       CHANDY, K. M., AND SAUER, C. H                         (1976), 137-152.
+             "Approximate methods for analyzing           GORD67    GORDON, W. J.; AND NEWELL, G. F.
+             queuelng network models of computer                    "Closed queueing systems with exponen-
+             systems," Comput. Surv. 10, 3 (Sept.                   tial servers," Oper. Res. 15 (1967),
+             1978), 281-317                                         254-265.
+CHAN74       CHANG,A.; ANDLAVENBERG,S. "Work              HERZ75    HERZOG, U.; Woo, L.; AND CHANDY,K.
+             rates in closed queueing networks with                 M. "Solution of queueingproblems by
+             general mdependent servers," Oper. Res.                a recursive technique," IBMJ. Res. Dev.
+             22, 4 (1974), 838-847.                                 19, 3 (May 1975), 295-300.
+CHOW77       CHow, W. The cycle time dtstr~but~on         HUGH73    HUGHES,P. H.; ANDMOE, G. "A struc-
+             of exponential central server queues,                  tural approach to computer performance
+             IBM Res. Rep. RC 6765, 1977.                           analysm," in Proc 1973 AFIPS National
+COEF73       COFFMAN,E G., JR., AND DENNING,P.                      Computer Conf, Vol. 42, AFIPS Press,
+             J. Operating systems theory, Prentice-                 Montvale, N.J., pp. 109-119.
+             Hall, Englewood Cliffs, N.J., 1973.          IGLE78    IGLEHART, D. L. "The regenerative
+COUR75       COURTOIS, P. J. "Decomposability,                      method for simulation analysis," in Cur.
+             instabilities, and saturation in multipro-             rent trends in programming methodol-
+             grammed systems," Commun. ACM 18,                      ogy III, K. M. Chandy and R. Yeh (Eds.),
+             7 (July 1975), 371-377.                                Prentice-Hall Englewood, Cliffs, N.J.,
+COUR77       COURTOIS, P. J. Decomposabihty.                        1978, pp. 52-71.
+             queueing and computer .system appl¢-         JACK57    JACKSON, J. R. "Networks of waiting
+             cations, Academic Press, New York,                     lines," Oper. Res. 5 (1957), 518-521.
+             1977.                                        JACK63    JACKSON,J.R. "Jobshop like queueing
+DENN72       DENNING, P. J. "A note on paging                       systems," Manage. Scl. 10 (1963),
+             drum efficiency," Comput. Surv. 4, 1                   131-142.
+             (March 1972), 1-3.                           KLE[68    KLEINROCK, L. "Certain analytic re-
+DENN75a      DENNING,P. J.; ANDKAHN,K.C. Some                       sults for time shared processors," in
+             distribution-free properties of through-               Proc. IFIP Congress 1968, North-Hol-
+             put and response ame, Tech. Rep. CSD-                  land Pubi. Co., Amsterdam, The Neth-
+             TR-159, Computer Science Dept., Pur-                   erlands, pp. 838-845.
+             due Univ., W. Lafayette, Ind., May 1975.     KLE175    KLEINROCK, L. Queuemg systems I,
+DENN75b      DENNING, P. J.; AND GRAHAM, G S.                       John Wiley, New York, 1975.
+             "Multlprogramrned memory manage-             KLEI76    KLEINROCK, L. Queuemg systems II,
+             ment," Proc IEEE 63, 6 (June 1975),                    John Wiley, New York, 1976.
+             924-939                                      LAZO77a   LAZOWSKA,E.D. "The use of percen-
+DENN76       DENNING, P. J.; KAHN, K. C., LEROU-                    tiles m modelingCPU service time dis-
+             DIER, J ; POTIER, D., AND SURI, S                      tributions," in Proc. Int. Syrup. Com-
+             "Optimal multiprogramming," Acta Inf.                  puter Performance Modeling, Measure-
+             7, 2 (1976), 197-216.                                  ment, and Evaluation, 1977, North-Hol-
+
+
+ComputingSurveys,Vol.10, No. 3, September1978
+                      The Operational Analysis of Queueing Network Models                                261
+            land Publ. Co., Amsterdam, The Neth-                    for queueing network models of com-
+            erlands, pp. 53-66.                                     puter systems," Comput Surv. 10, 3
+LAzo77b     LAZOWSKA,E.D. "Characterizing ser-                      (Sept. 1978), 263-280.
+            vice time and response time distributions   SCHE67      SCHERR, A. L An analysis of time
+            in queueing network models of computer                  shared computer systems, MIT Press,
+            systems," PhD Thesis, Univ. Toronto,                    Cambridge, Mass., 1967.
+            Toronto, Ont., Canada. (Computer Sys-       SCHW78      SCHWETMAN, H. D. "Hybrzd swnula-
+            terns Research Group, Tech. Rep.                        tlon models of computer systems," Com-
+            CSRG-85, Oct. 1977.)                                    mun. ACM 21 (1978), to appear.
+LIPS77      LIFSKY, L.; AND CHURCH, J. D.               Szvc77      SEVCIK,K.; LEVY,A. I., TRIPATHI,S. K.;
+            "Applications of a queuemg network                      AND ZAHORJAN,J. L. "Improving ap-
+            model for a computer system," Comput.                   proxtmations of aggregated queuemg
+            Surv. 9, 3 (Sept. 1977), 205-222.                       network subsystems," in Proc. Int.
+Mooa71      MOORE, C. G., III Network models for                    Symp. Computer Performance Model-
+            large-scale t,me sharing systems, Tech.                 rag, Measurement, and Evaluation,
+            Rep. 71-1, Dept. Industrial Eng., Univ.                 1977, North-Holland Publ. Co., Amster-
+            Michigan, Ann Arbor, April 1971, PhD                    dam, The Netherlands, pp. 1-22.
+            Thesm.                                      SHUM76      SHUM, A. W.C. "Queueing models for
+MUNT74      MUNTZ, R, R.; AND WONG, J. W.                           computer systems with general service
+            "Asymptotic properties of closed                        time distributions," PhD Thesis, Div.
+            queueing network models," m Proc. 8th                   Eng. and Applied Physms, Harvard
+            Princeton Conf. Informatmn Sciences                     Univ., Cambridge, Mass., Dec. 1976.
+            and Systems, 1974, Dept. EECS, Prince-      SHUM77      SHUM,A. W. C.; AND BUZEN, J.P. "The
+            ton Univ., Princeton, N.J., pp. 348-352.                EPF technique: a method for obtaining
+MUNT75      MUNTZ, R. R. "Analytic modeling of                      approximate     solutions to closed
+            interactive systems," Proc IEEE 63, 6                   queueing networks with general service
+            (June 1975), 946-953.                                   times," in Proc. Int. Symp. Computer
+REIS75      REISER, M.; AND KOBAYSHI, H.                            Performance Modeling, Measurement,
+            "Queueing networks with multiple                        and Evaluation, 1977, North-Holland
+            closed chains: theory and computation                   Publ. Co., Amsterdam, The Netherlands,
+            algorithms," IBM J. Res. Dev. 19 (May                   pp. 201-222.
+            1975), 283-294.                             WILL76      WILLIAMS, A. C.; AND BHANDIWAD, R.
+REIS78      REISER, M.; AND SAUER, C. H.                            A. "A generating function approach to
+            "Queuemg network models: methods of                     queueing network analysis of multipro-
+            solution and their program implementa-                  grammed computers," Networks 6, 1
+            tions," in Current trends in program-                   (1976), 1-22.
+            mmg methodology III, K. M. Chandy           WONG77      WONG, J.W. "Distribution of end-to-
+            and R. Yeh (Eds.), Prentice-Hall, Engle-                end delay in message-switched net-
+            wood Cliffs, N.J., 1978, pp. 115-167.                   works," Comput. Networks 2, 1 (Feb.
+RosE78      ROSE, C.A. "Measurement procedure                       1978), 44-49.
+RECEIVED AUGUST 30, 1977; FINAL REVISION ACCEPTED MAY 16, 1978.
+
+
+
+
+                                                                 ComputingSurveys,Vol. 10, No. 3, September1978
+

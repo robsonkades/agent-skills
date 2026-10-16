@@ -1,0 +1,671 @@
+{
+  "createdAt": "2026-10-16T16:12:53.541Z",
+  "policy": "Original stopped handoffs and coordinator helper sources preserved by bytes/hash. Helpers are historical tooling, not an instruction to replay baseline, actors or mutations.",
+  "handoffs": [
+    {
+      "skill": "architecture-characteristics",
+      "owner": "quality01",
+      "raw": "handoffs-raw/architecture-characteristics.json.txt",
+      "sha256": "07bb6e04f6c9139562ecd7db1a61cf1a9e6a446210cd9c353402d6e2c94e4231",
+      "diff": "diffs/architecture-characteristics.patch",
+      "reviewedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "skill": "architecture-coupling-and-quanta",
+      "owner": "quality02",
+      "raw": "handoffs-raw/architecture-coupling-and-quanta.json.txt",
+      "sha256": "cf24910a1ca8bc2802ead6fa9fd29393b369c30f10afff14e5ca16ad4249d123",
+      "diff": "diffs/architecture-coupling-and-quanta.patch",
+      "reviewedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "skill": "architecture-decision-making",
+      "owner": "quality03",
+      "raw": "handoffs-raw/architecture-decision-making.json.txt",
+      "sha256": "50abbe6d61e07e2bf6a64305e165838054e50e981f0128acf194fb3d1c126aad",
+      "diff": "diffs/architecture-decision-making.patch",
+      "reviewedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "skill": "architecture-fitness-functions",
+      "owner": "quality04",
+      "raw": "handoffs-raw/architecture-fitness-functions.json.txt",
+      "sha256": "64f1865d49ea52676572ec9fd4d1aff571c030af985bb0a4a60f30ff54a6944d",
+      "diff": "diffs/architecture-fitness-functions.patch",
+      "reviewedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "skill": "architecture-refactoring-paths",
+      "owner": "quality05",
+      "raw": "handoffs-raw/architecture-refactoring-paths.json.txt",
+      "sha256": "5579c68a32210246fc1f561f4e0e0e5266dacfc4680e00cb289a7b713abca89e",
+      "diff": "diffs/architecture-refactoring-paths.patch",
+      "reviewedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "skill": "architecture-testing",
+      "owner": "quality06",
+      "raw": "handoffs-raw/architecture-testing.json.txt",
+      "sha256": "b186e93465524c692878040b5d998a6d0950f24366daa6357ad136daad5d9905",
+      "diff": "diffs/architecture-testing.patch",
+      "reviewedDiffSha256": "902a49fded53576a65a7574abf3105143bf914a5050dfabe38e0ffc7f151b500"
+    },
+    {
+      "skill": "bounded-context-design",
+      "owner": "quality07",
+      "raw": "handoffs-raw/bounded-context-design.json.txt",
+      "sha256": "a706c5e67ef0d0778a524c061e9765e55e8dee9c0ea502d1ac85c8bee8a1be57",
+      "diff": "diffs/bounded-context-design.patch",
+      "reviewedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "skill": "component-and-release-boundaries",
+      "owner": "quality08",
+      "raw": "handoffs-raw/component-and-release-boundaries.json.txt",
+      "sha256": "678fbc02b93898993f3e0bc780bf11e7fbfd1a0a433ee691b0f95dbdad42aa84",
+      "diff": "diffs/component-and-release-boundaries.patch",
+      "reviewedDiffSha256": "7ae6e0d4725a05006cbd8041d9a4680a5c0748ee0b075539b4f57a578ee64606"
+    },
+    {
+      "skill": "data-source-patterns",
+      "owner": "quality09",
+      "raw": "handoffs-raw/data-source-patterns.json.txt",
+      "sha256": "f98b14c6d43ceeaaf97dc32fc263acb2cdcd661b7d1c33e5292ebab47adac89b",
+      "diff": "diffs/data-source-patterns.patch",
+      "reviewedDiffSha256": "502ffca01dff9508332f71d337416c5e2d30cd47c534b8f0c226cd40869a6736"
+    },
+    {
+      "skill": "domain-logic-organization",
+      "owner": "quality10",
+      "raw": "handoffs-raw/domain-logic-organization.json.txt",
+      "sha256": "6cf9e260d9b40dee4e5e9b15b9925658103f1eb47b7748d64b1e4bc26b46bfe5",
+      "diff": "diffs/domain-logic-organization.patch",
+      "reviewedDiffSha256": "c5329aecd2d541138ededd523dfb6564d4118b6c5b346dc1cd338eb141f94bcb"
+    },
+    {
+      "skill": "enterprise-application-architecture",
+      "owner": "quality11",
+      "raw": "handoffs-raw/enterprise-application-architecture.json.txt",
+      "sha256": "b1afba187e157f0a16a4511fbfc45be14a73f3fa383bd56dcbac53351a96726d",
+      "diff": "diffs/enterprise-application-architecture.patch",
+      "reviewedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "skill": "enterprise-architecture-smells",
+      "owner": "quality12",
+      "raw": "handoffs-raw/enterprise-architecture-smells.json.txt",
+      "sha256": "258b86d48b62bf7931da78b2c56d109b13c4941c461f04c0273d54cadf6608ee",
+      "diff": "diffs/enterprise-architecture-smells.patch",
+      "reviewedDiffSha256": "ed74754115b3e3bdaa0f328efb046b3b2d9cc44f5c54ca6712b90cbea9ffb9cc"
+    },
+    {
+      "skill": "enterprise-base-patterns",
+      "owner": "quality13",
+      "raw": "handoffs-raw/enterprise-base-patterns.json.txt",
+      "sha256": "20dbdc01e3741b0f4ebaac5efabd9606f24ee266535b20236786b4b5e48c76dd",
+      "diff": "diffs/enterprise-base-patterns.patch",
+      "reviewedDiffSha256": "30b915aa07a5407073ebcdf33a153f524e7873fd9c631162a2d2c90783078de5"
+    },
+    {
+      "skill": "enterprise-transactions",
+      "owner": "quality14",
+      "raw": "handoffs-raw/enterprise-transactions.json.txt",
+      "sha256": "6562e985a2db6f0c39276e91f82c30ea7b3ee34845a622e9b5f5065ff23aed7a",
+      "diff": "diffs/enterprise-transactions.patch",
+      "reviewedDiffSha256": "360aacc930f61b793b42b03443d9c3eebc7b12717b49d9d3962224b05ac872df"
+    },
+    {
+      "skill": "framework-coupling-and-independence",
+      "owner": "quality15",
+      "raw": "handoffs-raw/framework-coupling-and-independence.json.txt",
+      "sha256": "c4bf66c113519cbd33fa77b171a520bc097b54d747352a403789350829df5ec8",
+      "diff": "diffs/framework-coupling-and-independence.patch",
+      "reviewedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "skill": "gof-abstract-factory",
+      "owner": "quality16",
+      "raw": "handoffs-raw/gof-abstract-factory.json.txt",
+      "sha256": "5c8e966ded6b8bdcc797437afc6cb2caabebc30435a167e224643962e61dcf6e",
+      "diff": "diffs/gof-abstract-factory.patch",
+      "reviewedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "skill": "gof-adapter",
+      "owner": "quality17",
+      "raw": "handoffs-raw/gof-adapter.json.txt",
+      "sha256": "17d97475aa56203f7482ea2c35d00c1e18b2fc31c572017fca550312194433d6",
+      "diff": "diffs/gof-adapter.patch",
+      "reviewedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "skill": "gof-bridge",
+      "owner": "quality18",
+      "raw": "handoffs-raw/gof-bridge.json.txt",
+      "sha256": "9cfa74f6324f3a07d4cb6735653d9ec380b7e6e0ee2f239e4038189f4589c83d",
+      "diff": "diffs/gof-bridge.patch",
+      "reviewedDiffSha256": "a5cb3dae0056c15c1c39f27d71c0115bda8a4a9d27eebb2115afd48c87cadb1b"
+    },
+    {
+      "skill": "gof-builder",
+      "owner": "quality19",
+      "raw": "handoffs-raw/gof-builder.json.txt",
+      "sha256": "9e946faa6398f6853bca507261b894998421683024c4b46deaf1e05a23351c4a",
+      "diff": "diffs/gof-builder.patch",
+      "reviewedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "skill": "gof-chain-of-responsibility",
+      "owner": "quality20",
+      "raw": "handoffs-raw/gof-chain-of-responsibility.json.txt",
+      "sha256": "a8317063e87a6c20e1b6c04deed8b03e2986159e066576b3d0c1b7987b92ca0a",
+      "diff": "diffs/gof-chain-of-responsibility.patch",
+      "reviewedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "skill": "gof-command",
+      "owner": "quality11",
+      "raw": "handoffs-raw/gof-command.json.txt",
+      "sha256": "670dffaf366062ba6e401137731ef6d14dcd0cab4403830e3956d2d7a5db9023",
+      "diff": "diffs/gof-command.patch",
+      "reviewedDiffSha256": "e16477cd205e452033922e8ad6fda0dcb1234f52b85cf7f6af2c928023f189c3"
+    },
+    {
+      "skill": "gof-composite",
+      "owner": "quality03",
+      "raw": "handoffs-raw/gof-composite.json.txt",
+      "sha256": "f2764f7857694701c90e7fb250cd59096acaf81c3d0d77d9fe85b51281fcf982",
+      "diff": "diffs/gof-composite.patch",
+      "reviewedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "skill": "gof-decorator",
+      "owner": "quality01",
+      "raw": "handoffs-raw/gof-decorator.json.txt",
+      "sha256": "91a1fd8b08b39ff2aebf98af1fa6010cb597d2bb743b1dbe08ce4dcf47aceb83",
+      "diff": "diffs/gof-decorator.patch",
+      "reviewedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "skill": "gof-facade",
+      "owner": "quality07",
+      "raw": "handoffs-raw/gof-facade.json.txt",
+      "sha256": "bd7c9bc971cf6a6c43b4004abf7729ae2f6f3212fe487ae5a416c6ee1904f2da",
+      "diff": "diffs/gof-facade.patch",
+      "reviewedDiffSha256": "ca644202764364beaad307be7616d111f63a2a800e2c9bd2441469abfa19e5ad"
+    },
+    {
+      "skill": "gof-factory-method",
+      "owner": "quality19",
+      "raw": "handoffs-raw/gof-factory-method.json.txt",
+      "sha256": "d2eef757b1dea118176db34c6f8916210ba0af3622f7a4ff167df403168c0241",
+      "diff": "diffs/gof-factory-method.patch",
+      "reviewedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "skill": "gof-flyweight",
+      "owner": "quality10",
+      "raw": "handoffs-raw/gof-flyweight.json.txt",
+      "sha256": "4ffd1f750f2a7d9efacd0b2aa387df85a6b3d0890a874a13652ad4b6557130f6",
+      "diff": "diffs/gof-flyweight.patch",
+      "reviewedDiffSha256": "f0f4eff890504e597baeb31f814b564e2d848bd1aa12ff02dd32befbac0b7cfc"
+    },
+    {
+      "skill": "gof-interpreter",
+      "owner": "quality13",
+      "raw": "handoffs-raw/gof-interpreter.json.txt",
+      "sha256": "8922ab134f42c35048934b60b7af33c03c6132ed62fbb5756189916f1fcd9e07",
+      "diff": "diffs/gof-interpreter.patch",
+      "reviewedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "skill": "gof-iterator",
+      "owner": "quality15",
+      "raw": "handoffs-raw/gof-iterator.json.txt",
+      "sha256": "0488d77f0e4d1b9712ffdc0742526c65d80ff39ab1e5c5d12d2af88fad9484bb",
+      "diff": "diffs/gof-iterator.patch",
+      "reviewedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "skill": "gof-mediator",
+      "owner": "quality16",
+      "raw": "handoffs-raw/gof-mediator.json.txt",
+      "sha256": "62431580b6faac09a3554af5c6ea95a32c94f95d30d42b12e5fc0a5e54954476",
+      "diff": "diffs/gof-mediator.patch",
+      "reviewedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "skill": "gof-memento",
+      "owner": "quality02",
+      "raw": "handoffs-raw/gof-memento.json.txt",
+      "sha256": "f1a28a51711315610538e47307d6edc02ea9d4df33554fa4bb7080652b85183a",
+      "diff": "diffs/gof-memento.patch",
+      "reviewedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "skill": "gof-observer",
+      "owner": "quality08",
+      "raw": "handoffs-raw/gof-observer.json.txt",
+      "sha256": "bbbd114df5e72c013602931c0fb76107648e57f037b2013d9d24f2f80463e2e3",
+      "diff": "diffs/gof-observer.patch",
+      "reviewedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "skill": "gof-pattern-antipatterns",
+      "owner": "quality09",
+      "raw": "handoffs-raw/gof-pattern-antipatterns.json.txt",
+      "sha256": "1c32feb913a2f5656866634d08da9e3b5cf8ccef75080abdfdbee2b76426540c",
+      "diff": "diffs/gof-pattern-antipatterns.patch",
+      "reviewedDiffSha256": "1c1f7084861f7e9b3de50f40de1c9e9c41d36e672e9d1c70ce344832d84e234c"
+    },
+    {
+      "skill": "gof-pattern-confusion",
+      "owner": "quality04",
+      "raw": "handoffs-raw/gof-pattern-confusion.json.txt",
+      "sha256": "77680b9a1661336df8625ea8d019a6373f0a0227236d8aa55df4c82bbad6a505",
+      "diff": "diffs/gof-pattern-confusion.patch",
+      "reviewedDiffSha256": "1f16b1afba2fc29f5dabed38b65dccf14cf02107216e238ff4351ba901d9532c"
+    },
+    {
+      "skill": "gof-pattern-selection",
+      "owner": "quality05",
+      "raw": "handoffs-raw/gof-pattern-selection.json.txt",
+      "sha256": "ffbb7dd7bb612919766e014d9a19f25300b51e56b6aad68295d8e57fd78e2749",
+      "diff": "diffs/gof-pattern-selection.patch",
+      "reviewedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "skill": "gof-pattern-thinking",
+      "owner": "quality06",
+      "raw": "handoffs-raw/gof-pattern-thinking.json.txt",
+      "sha256": "9d76b06a5d6193d0557efc384a2ad693302b414f87fd4b1e9213d1a191963ca4",
+      "diff": "diffs/gof-pattern-thinking.patch",
+      "reviewedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "skill": "gof-patterns-in-modern-java",
+      "owner": "quality12",
+      "raw": "handoffs-raw/gof-patterns-in-modern-java.json.txt",
+      "sha256": "7ade9e4e5cbcd51be1268a1cd12ee3013ab766d080a1b8d839f7fe23791e429a",
+      "diff": "diffs/gof-patterns-in-modern-java.patch",
+      "reviewedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "skill": "gof-prototype",
+      "owner": "quality14",
+      "raw": "handoffs-raw/gof-prototype.json.txt",
+      "sha256": "f1b50e4657ca2d62c360e326d4c7fdf4c45780f8190dd1e992cdc4d417223f25",
+      "diff": "diffs/gof-prototype.patch",
+      "reviewedDiffSha256": "5af0552fbfcd9da7a48bd535f6ff9becda7b3171d4a2d5b037ba97f68da26ab5"
+    },
+    {
+      "skill": "gof-proxy",
+      "owner": "quality17",
+      "raw": "handoffs-raw/gof-proxy.json.txt",
+      "sha256": "8275521ee081e7817e385f06c42e98bed64bf48b173bf3f6a05f0c8591675c20",
+      "diff": "diffs/gof-proxy.patch",
+      "reviewedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "skill": "gof-singleton",
+      "owner": "quality18",
+      "raw": "handoffs-raw/gof-singleton.json.txt",
+      "sha256": "7a57c7e0104ad73ae3efb76502a02268cc2a783918fe61fa18e3d4146e9bb6a2",
+      "diff": "diffs/gof-singleton.patch",
+      "reviewedDiffSha256": "76251054f654dcdf7ca9dfa27300d9307b68e3301adf574b92b8be1c871a51c8"
+    },
+    {
+      "skill": "gof-state",
+      "owner": "quality20",
+      "raw": "handoffs-raw/gof-state.json.txt",
+      "sha256": "b74df17e440a2ea361cbbbc1be0992f6feb742abbaa15f9329fbe4ce5e44615e",
+      "diff": "diffs/gof-state.patch",
+      "reviewedDiffSha256": "a1168a63ba0a89f6be16dcf3b620d85575ec752bcbdd49e9176291e6ccd24003"
+    },
+    {
+      "skill": "gof-strategy",
+      "owner": "quality11",
+      "raw": "handoffs-raw/gof-strategy.json.txt",
+      "sha256": "d4404376fdc4d82f2ee5b2c82ff150f80bbb3793fa48e50c29c76488c657f874",
+      "diff": "diffs/gof-strategy.patch",
+      "reviewedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "skill": "gof-template-method",
+      "owner": "quality03",
+      "raw": "handoffs-raw/gof-template-method.json.txt",
+      "sha256": "5c1f7c953bc4fc8f8c845beeb0fde83087777bc24b3ba3b5777ee8057cf9b57f",
+      "diff": "diffs/gof-template-method.patch",
+      "reviewedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "skill": "gof-visitor",
+      "owner": "quality01",
+      "raw": "handoffs-raw/gof-visitor.json.txt",
+      "sha256": "00256043a4fbdd3801cd0b685421207217cef7f46dd4a6a907bda152bc1fbeb2",
+      "diff": "diffs/gof-visitor.patch",
+      "reviewedDiffSha256": "67a6baef8c1b1ab50d0314fcf4a438e308e93655fd578b4515b2a009727359d7"
+    },
+    {
+      "skill": "humble-objects-and-functional-core",
+      "owner": "quality19",
+      "raw": "handoffs-raw/humble-objects-and-functional-core.json.txt",
+      "sha256": "c88557d6c2a44a3bd2bddf0f1e2e6c201f9e5195028df2423a84aa307fedad3e",
+      "diff": "diffs/humble-objects-and-functional-core.patch",
+      "reviewedDiffSha256": "3b9b7428022e03efe33f1a60dc989e93d1e24afd2f747e8d94aa52266d897912"
+    },
+    {
+      "skill": "inheritance-mapping-strategies",
+      "owner": "quality10",
+      "raw": "handoffs-raw/inheritance-mapping-strategies.json.txt",
+      "sha256": "07d16de1e2f2fe3717bf93f43d5fda441b6f895e7cfeaa02b84c2aec66dad8d4",
+      "diff": "diffs/inheritance-mapping-strategies.patch",
+      "reviewedDiffSha256": "bce56f4086c98ab0c29ef6de502929d738f0d95afb14541c9d28e470e1caa183"
+    },
+    {
+      "skill": "java-ddd",
+      "owner": "quality16",
+      "raw": "handoffs-raw/java-ddd.json.txt",
+      "sha256": "25c90c76e66fe25708f9aa9e772016359f7bda208075cdfee252fc16fcdc71b1",
+      "diff": "diffs/java-ddd.patch",
+      "reviewedDiffSha256": "195c86471b5f5a4cce604ea15aea09564b9c80bc4ecd0b068d22e055bf042809"
+    },
+    {
+      "skill": "java-ddd-aggregates",
+      "owner": "quality07",
+      "raw": "handoffs-raw/java-ddd-aggregates.json.txt",
+      "sha256": "3271f441a5ecca42923f7133f3843b1a7768cfe170b6b1a0c3132bf7752625af",
+      "diff": "diffs/java-ddd-aggregates.patch",
+      "reviewedDiffSha256": "0cee9d17c498bda11a7303324ce8bd052efbe8c06e415dd4065de84a51cff58d"
+    },
+    {
+      "skill": "java-ddd-domain-events",
+      "owner": "quality13",
+      "raw": "handoffs-raw/java-ddd-domain-events.json.txt",
+      "sha256": "b56c56720bb9d997011b69bf67e262ee8ecf3146aae7a2ae7f9b566fbf98e364",
+      "diff": "diffs/java-ddd-domain-events.patch",
+      "reviewedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "skill": "java-ddd-domain-services",
+      "owner": "quality02",
+      "raw": "handoffs-raw/java-ddd-domain-services.json.txt",
+      "sha256": "288f56fded2393a96b70c1ca03e96c83b2e9135511a460755800c2a03eb4c170",
+      "diff": "diffs/java-ddd-domain-services.patch",
+      "reviewedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "skill": "java-ddd-repositories",
+      "owner": "quality15",
+      "raw": "handoffs-raw/java-ddd-repositories.json.txt",
+      "sha256": "e9fa0be7e0ad458e1b8e30c7414bcbbabfb218341c4f08579578a124cb608fad",
+      "diff": "diffs/java-ddd-repositories.patch",
+      "reviewedDiffSha256": "56f8c21c0945821e31bbf9bcea178482d1e54c5f2691b67f2e16229432bb28b4"
+    },
+    {
+      "skill": "java-ddd-testing",
+      "owner": "quality05",
+      "raw": "handoffs-raw/java-ddd-testing.json.txt",
+      "sha256": "ee14ba70dfc2ee0a64a6bead04666b426f868cf31082889eb32be93cbdac4830",
+      "diff": "diffs/java-ddd-testing.patch",
+      "reviewedDiffSha256": "9e066d23b46a2aaf03549e25237b38b5e76701f003f49f73e43d8bad9c2a09f5"
+    },
+    {
+      "skill": "java-ddd-use-cases",
+      "owner": "quality06",
+      "raw": "handoffs-raw/java-ddd-use-cases.json.txt",
+      "sha256": "f9740069eaa8a57aba3852edcdeb57756952e77b335da83c147ab251263a4d2b",
+      "diff": "diffs/java-ddd-use-cases.patch",
+      "reviewedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "skill": "java-ddd-value-objects",
+      "owner": "quality11",
+      "raw": "handoffs-raw/java-ddd-value-objects.json.txt",
+      "sha256": "e73fe7e266dfcda5a272b8ced23fa1fe004f48610d4f31ea7bc6984bc9b02a7e",
+      "diff": "diffs/java-ddd-value-objects.patch",
+      "reviewedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "skill": "layering-and-boundaries",
+      "owner": "quality08",
+      "raw": "handoffs-raw/layering-and-boundaries.json.txt",
+      "sha256": "9ba81df8b34ec277246570a0f1987eefcfb92cbd9b7c9c9baaa382896fc85c93",
+      "diff": "diffs/layering-and-boundaries.patch",
+      "reviewedDiffSha256": "1324a3cacf16b279a42c975bd347cd08761f8aad08caacc21800a3a5c3138e80"
+    },
+    {
+      "skill": "legacy-enterprise-modernization",
+      "owner": "quality12",
+      "raw": "handoffs-raw/legacy-enterprise-modernization.json.txt",
+      "sha256": "5b3c77b05e86d874b9035e1c9bee5d0bdb32755de2e0cfd96e953fed39fb476b",
+      "diff": "diffs/legacy-enterprise-modernization.patch",
+      "reviewedDiffSha256": "678e284dcafb78376c62975815b7ce9d6531a148137bdbd96a2a6d3e25ba02e6"
+    },
+    {
+      "skill": "metadata-mapping",
+      "owner": "quality09",
+      "raw": "handoffs-raw/metadata-mapping.json.txt",
+      "sha256": "85fb30c87a33369deb74c74aaf0010cf855e743e1d792d6fca849e37b4df2dc7",
+      "diff": "diffs/metadata-mapping.patch",
+      "reviewedDiffSha256": "f28b15b25886bf53bcb4524ebf916fd149d07797577f490d21a48d37be7cb00d"
+    },
+    {
+      "skill": "mvc-and-request-handling",
+      "owner": "quality04",
+      "raw": "handoffs-raw/mvc-and-request-handling.json.txt",
+      "sha256": "5706c86ba9c7d4bad41d51e779a0fd04ec834b3b39ebf8e8fb95536e21af2cdd",
+      "diff": "diffs/mvc-and-request-handling.patch",
+      "reviewedDiffSha256": "c48b0521c7100723956236e45b22a107856826283f35669f2f3eb426647c80bc"
+    },
+    {
+      "skill": "offline-concurrency-control",
+      "owner": "quality17",
+      "raw": "handoffs-raw/offline-concurrency-control.json.txt",
+      "sha256": "7f64f61a90ab202ba7ddc91d69349924a19ecd935bc54a0387261ba6ea1a3b17",
+      "diff": "diffs/offline-concurrency-control.patch",
+      "reviewedDiffSha256": "0e2abb2541bad9a64ec59cfa1a6d4c6c9b660f1a5a7fdee2231d541b97213b9b"
+    },
+    {
+      "skill": "orm-behavioral-patterns",
+      "owner": "quality20",
+      "raw": "handoffs-raw/orm-behavioral-patterns.json.txt",
+      "sha256": "a8e0c4f2bbed105352137210958b9639dcc1c26b5d8f6c682590c7076e695e79",
+      "diff": "diffs/orm-behavioral-patterns.patch",
+      "reviewedDiffSha256": "b058981400b2fde58f1ad31a0c16b1e416d4ac6992532ea16080e8825743cf41"
+    },
+    {
+      "skill": "orm-structural-mapping",
+      "owner": "quality14",
+      "raw": "handoffs-raw/orm-structural-mapping.json.txt",
+      "sha256": "f29879e07ced6069bff442058c9fc156aa70f612401c5a9dc37b715240d7291d",
+      "diff": "diffs/orm-structural-mapping.patch",
+      "reviewedDiffSha256": "33d377efab589e75bb6852b52d4a6ed934e8269852518b36bb8726c17c8564ce"
+    },
+    {
+      "skill": "pattern-selection-and-composition",
+      "owner": "quality18",
+      "raw": "handoffs-raw/pattern-selection-and-composition.json.txt",
+      "sha256": "b9dff3371f165cf12a0f9b5c02a2df28dd734ef0eaefd2d14b8e4f9f00672204",
+      "diff": "diffs/pattern-selection-and-composition.patch",
+      "reviewedDiffSha256": "dbdeb93a269b81fc82869118105ba8796529a72a4f8461290ce9464040f68845"
+    },
+    {
+      "skill": "patterns-and-modern-frameworks",
+      "owner": "quality03",
+      "raw": "handoffs-raw/patterns-and-modern-frameworks.json.txt",
+      "sha256": "8f1dda07956279cda7262544b9d4e336f728cd039595b403924697ce42de06f3",
+      "diff": "diffs/patterns-and-modern-frameworks.patch",
+      "reviewedDiffSha256": "1e28f027a3d149928470db6820e4e77ff2bef1541608222f7dc2f848981edf77"
+    },
+    {
+      "skill": "query-objects-and-specifications",
+      "owner": "quality10",
+      "raw": "handoffs-raw/query-objects-and-specifications.json.txt",
+      "sha256": "8cf3cd4f1cc1f964e0710315d113374d2f241432e6abd0b5c2a258055479c6e4",
+      "diff": "diffs/query-objects-and-specifications.patch",
+      "reviewedDiffSha256": "ea875ea216cb6fd62d3f4fa0532104d4948a0616c197663fa1e0d50e4c8c423e"
+    },
+    {
+      "skill": "remote-facade-and-dto",
+      "owner": "quality05",
+      "raw": "handoffs-raw/remote-facade-and-dto.json.txt",
+      "sha256": "59fd79699b551697715912a713e49b404fbcaf9175041d757de2077e61d38b90",
+      "diff": "diffs/remote-facade-and-dto.patch",
+      "reviewedDiffSha256": "40c756e329c6ae9e8538bed01233f57bfa5546aa58769fce58d9fb17536f70a2"
+    },
+    {
+      "skill": "repository-pattern",
+      "owner": "quality19",
+      "raw": "handoffs-raw/repository-pattern.json.txt",
+      "sha256": "076c17edae2fda0d40c16771004dba69b864ec98d301f7969f0266358d9513f6",
+      "diff": "diffs/repository-pattern.patch",
+      "reviewedDiffSha256": "6fa297b1f2d42d17a896cf6559881f8d2aaed1bc84b2e1a9febe0e8393e9f892"
+    },
+    {
+      "skill": "service-layer-design",
+      "owner": "quality15",
+      "raw": "handoffs-raw/service-layer-design.json.txt",
+      "sha256": "219eef08437d32415ce6c46029d879570310725817950e2d6cf8ed7314f5ffc9",
+      "diff": "diffs/service-layer-design.patch",
+      "reviewedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "skill": "technical-debt-decisions",
+      "owner": "quality11",
+      "raw": "handoffs-raw/technical-debt-decisions.json.txt",
+      "sha256": "5e9b0a476774e492a7b27dbdf338428cf6e76b5193a2cdc976705c4261b824b6",
+      "diff": "diffs/technical-debt-decisions.patch",
+      "reviewedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "skill": "view-and-representation-patterns",
+      "owner": "quality01",
+      "raw": "handoffs-raw/view-and-representation-patterns.json.txt",
+      "sha256": "b5078221a2f5f95db32097c22ec8816efb66b3472680d5e2d0dacd84ff832309",
+      "diff": "diffs/view-and-representation-patterns.patch",
+      "reviewedDiffSha256": "6355b28934e23c2f83776cf1a07fd7cdb21daad6946e6ef5957d4ae47793594d"
+    }
+  ],
+  "helpers": [
+    {
+      "name": "archive-behavior.mjs",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/archive-behavior.mjs",
+      "target": "helpers/archive-behavior.mjs.txt",
+      "bytes": 2791,
+      "sha256": "dcb88ab9a1096f09b3d10627e0571f2ad3695d4fd95245851254586aae8aa67f"
+    },
+    {
+      "name": "archive-evidence.mjs",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/archive-evidence.mjs",
+      "target": "helpers/archive-evidence.mjs.txt",
+      "bytes": 5042,
+      "sha256": "2bdbf700f6e54bf625066fa6c2916afe00f52a5790e2fc8c9dc5b5c514f3e701"
+    },
+    {
+      "name": "archive-provenance.mjs",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/archive-provenance.mjs",
+      "target": "helpers/archive-provenance.mjs.txt",
+      "bytes": 1695,
+      "sha256": "7c85c8079de241950a60cc6a2ca2d3ef1791f7a44571adebb8f1c044987e74e8"
+    },
+    {
+      "name": "audit-report.mjs",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/audit-report.mjs",
+      "target": "helpers/audit-report.mjs.txt",
+      "bytes": 3811,
+      "sha256": "ae74d56ae38ec64a2acf2ed1025bf699b192adb7e2fda7eaf2e953c4b017ae59"
+    },
+    {
+      "name": "audit-wave.mjs",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/audit-wave.mjs",
+      "target": "helpers/audit-wave.mjs.txt",
+      "bytes": 4794,
+      "sha256": "53bf92254a4b833e25d0321d8197511646513eaeb9dd1bdcf8a37e6363bf4202"
+    },
+    {
+      "name": "bootstrap.mjs",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/bootstrap.mjs",
+      "target": "helpers/bootstrap.mjs.txt",
+      "bytes": 2948,
+      "sha256": "c146a2c146f6496c6fa94918bd8a291b3d56ec88122258386070fbc6e0fa2864"
+    },
+    {
+      "name": "check-behavior.mjs",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/check-behavior.mjs",
+      "target": "helpers/check-behavior.mjs.txt",
+      "bytes": 4246,
+      "sha256": "fee83feed38af367b50a3d3b4c17b62c5c42aa1d4a5011fdf9b0ac386c1e7295"
+    },
+    {
+      "name": "coordinator.mjs",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/coordinator.mjs",
+      "target": "helpers/coordinator.mjs.txt",
+      "bytes": 3878,
+      "sha256": "2dead4fc9080ad1864dcebe5b479837af2d40298bcc3360e63c204b45ac016e3"
+    },
+    {
+      "name": "format-report.mjs",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/format-report.mjs",
+      "target": "helpers/format-report.mjs.txt",
+      "bytes": 1108,
+      "sha256": "b65ab9a9f4437801d605a249980da9adbd587485759678f7fe294925caa2f3c1"
+    },
+    {
+      "name": "inspect-handoff.mjs",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/inspect-handoff.mjs",
+      "target": "helpers/inspect-handoff.mjs.txt",
+      "bytes": 1876,
+      "sha256": "e7b439b067943fe42d2473808bcb09d41d8a548f6246e69b6a9dbb31f065d390"
+    },
+    {
+      "name": "prepare-behavior.mjs",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/prepare-behavior.mjs",
+      "target": "helpers/prepare-behavior.mjs.txt",
+      "bytes": 5980,
+      "sha256": "bd991bab6b45eaa5c62014e70e01f26150406feacf2182096ef782c98d3cfbd4"
+    },
+    {
+      "name": "prepare-report.mjs",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/prepare-report.mjs",
+      "target": "helpers/prepare-report.mjs.txt",
+      "bytes": 10662,
+      "sha256": "ad6888b14955428037ffbf2023ef638bf6ce2ae60ea4e99b11f1d8c086f2e04a"
+    },
+    {
+      "name": "record-dispatch.mjs",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/record-dispatch.mjs",
+      "target": "helpers/record-dispatch.mjs.txt",
+      "bytes": 1211,
+      "sha256": "4841e7cd8db36ae8a8e31f942c7fbafff52468817ff9d2c691354d05551636cc"
+    },
+    {
+      "name": "run-global.mjs",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/run-global.mjs",
+      "target": "helpers/run-global.mjs.txt",
+      "bytes": 1535,
+      "sha256": "f80f137a8979c3ae274b30c739211b29b8fc86e6b95f2899746beb351268f9b4"
+    },
+    {
+      "name": "terse-handoffs.mjs",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/terse-handoffs.mjs",
+      "target": "helpers/terse-handoffs.mjs.txt",
+      "bytes": 1429,
+      "sha256": "5742cb180ed2c0c816979457be4d589edfdf6673661e74cd368cb3bad72fb1a6"
+    },
+    {
+      "name": "view-handoffs.mjs",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/view-handoffs.mjs",
+      "target": "helpers/view-handoffs.mjs.txt",
+      "bytes": 888,
+      "sha256": "5e3b8dc1a9b304bf2e5039315e330d3c814e9ee21811f4ed3600c72a73122107"
+    },
+    {
+      "name": "write-behavior-results.mjs",
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/write-behavior-results.mjs",
+      "target": "helpers/write-behavior-results.mjs.txt",
+      "bytes": 6349,
+      "sha256": "491055a38f81ed6f07d47170efcc63346847c6781f19145a0dfc88616bb6672a"
+    }
+  ]
+}

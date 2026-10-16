@@ -1,0 +1,51 @@
+{
+  "pass": true,
+  "differences": [
+    "docs/release-contract.md"
+  ],
+  "caseFiles": [
+    "pom.xml",
+    "src/main/java/example/pricing/PricingRule.java",
+    "src/main/java/example/pricing/FlatRule.java",
+    "src/main/java/example/pricing/PriceCalculator.java",
+    "src/test/java/example/pricing/PriceCheck.java",
+    "docs/maintenance-notes.md",
+    "proposals/pricing-simplification.md",
+    "docs/release-contract.md"
+  ],
+  "criteriaReadback": "gof-pattern-thinking",
+  "commonFixtureCompileAndRun": [
+    {
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+      "args": [
+        "--release",
+        "17",
+        "-d",
+        "classes",
+        "src/main/java/example/pricing/PricingRule.java",
+        "src/main/java/example/pricing/FlatRule.java",
+        "src/main/java/example/pricing/PriceCalculator.java",
+        "src/test/java/example/pricing/PriceCheck.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-thinking-artifacts\\case-fixture-OPxp4c",
+      "actualExit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-ea",
+        "-Xmx64m",
+        "-cp",
+        "classes",
+        "example.pricing.PriceCheck"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-thinking-artifacts\\case-fixture-OPxp4c",
+      "actualExit": 0,
+      "stdout": "PriceCheck passed\r\n",
+      "stderr": ""
+    }
+  ],
+  "limitations": "Only the shared baseline fixture was compiled/executed; no actor or candidate refactor was run. Compiler --release17 on runtime Temurin25, not an actual Java17 runtime."
+}

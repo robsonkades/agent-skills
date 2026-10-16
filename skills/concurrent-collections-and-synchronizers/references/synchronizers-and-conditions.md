@@ -231,6 +231,31 @@ distinct objects to give the effect of having multiple wait-sets per object". Ob
 `lock.newCondition()`. Awaiting "atomically releases the associated lock and suspends the current
 thread".
 
+### Keep the predicate test and wait registration under one lock
+
+Trace the concrete waiter and signaler, including callbacks and early returns: which lock instance
+guards the predicate, where is it tested, and which paths change it? For the usual guarded-state
+protocol, acquire that lock before testing the predicate, call `await` inside its `while`, and
+change the state and signal while holding the same lock. `ReentrantLock.newCondition()` requires
+its lock for both waiting and signalling, otherwise it throws `IllegalMonitorStateException`.
+A different `Condition` implementation must document any different semantics. Signalling does
+not release the lock; an awakened waiter must reacquire it before proceeding.
+
+The loop alone is insufficient. Consider `while (!ready)` outside the lock, with acquisition and
+`await()` inside the loop body:
+
+1. The waiter reads `ready == false` and pauses before acquiring the lock.
+2. The signaler acquires the lock, sets `ready = true`, signals and unlocks; no waiter is registered.
+3. The waiter acquires the lock and calls `await()` without rechecking, although `ready` is true.
+
+With no further signal it can remain parked. Making `ready` volatile does not make its test and
+wait registration atomic, and `signalAll()` cannot notify a waiter that has not yet registered.
+Move the predicate test inside the locked region; do not add polling or repeated signals to mask
+the gap. Preserve the existing interruption and timeout policy when fixing the critical section.
+Validate both signal-before-wait and wait-before-signal schedules with bounded coordination and
+cleanup; record actual predicate/wait events rather than treating a sleep or one passing stress
+run as proof that the race is impossible.
+
 ### The `while` loop is mandatory — three independent reasons
 
 1. **Spurious wakeup**, permitted as a concession to platform semantics.
@@ -355,4 +380,5 @@ javadoc recommends never using a `Condition` that way.
 - [Java 25 `Phaser`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Phaser.html)
 - [Java 25 `Semaphore`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Semaphore.html)
 - [Java 25 `Condition`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/locks/Condition.html)
+- [Java 25 `ReentrantLock.newCondition`](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/locks/ReentrantLock.html#newCondition()>)
 - [Java 25 `ThreadPoolExecutor`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html)

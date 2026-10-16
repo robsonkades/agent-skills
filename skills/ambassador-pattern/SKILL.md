@@ -50,6 +50,8 @@ different restart consequences; name the actual update mechanism before promisin
    A dedicated TCP listener can select an upstream without parsing HTTP. Routing by path or `Host`/`:authority`
    requires visible HTTP; TLS pass-through cannot inspect those fields. Allowlist destinations
    and define missing/forged routing-key behavior. Locality alone does not authenticate callers.
+   For TCP or protocol detection, establish who sends the first message before deferring
+   upstream connection; see [Connection establishment](references/failure-and-policy-composition.md#connection-establishment-and-the-first-message).
 4. **Check cost and failure semantics.** Compare the maintained client-library baseline with
    independent policy rollout and operational ownership. Measure added latency under representative
    concurrency and payloads; no service-count or millisecond threshold alone decides adoption.

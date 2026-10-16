@@ -1,0 +1,392 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "adapter-sidecar-pattern",
+  "ownedPath": "skills/adapter-sidecar-pattern/**",
+  "reviewer": "/root/quality01",
+  "wave": 3,
+  "date": "2026-10-16",
+  "allWritesStopped": true,
+  "processState": "All local commands returned; no server, collector, cluster, background helper or installation was started. Package edits are finished; writes stop after saving this handoff.",
+  "versions": {
+    "committed": "2.3.3",
+    "assignment": "2.3.3",
+    "initial": "2.3.3",
+    "final": "2.3.4",
+    "preExistingBump": false,
+    "rationale": "One patch bump for supported documentation and verification guidance; no metadata description/dependency/runtime baseline changes."
+  },
+  "baseline": {
+    "status": "",
+    "staged": "",
+    "unstaged": "",
+    "untracked": [],
+    "files": [
+      {
+        "path": "skills/adapter-sidecar-pattern/references/adapter-or-node-agent.md",
+        "sha256": "a0d39e27a1ac5f2d7b89602ee7d4cef26005117d4e67b09cf7f3eb116d26bca4"
+      },
+      {
+        "path": "skills/adapter-sidecar-pattern/references/coupling-and-failure.md",
+        "sha256": "7e93b6a26987237dfc4660383b04db9ac40d6fcd55a071e5c99e85a799e5f85e"
+      },
+      {
+        "path": "skills/adapter-sidecar-pattern/references/validation-cases.md",
+        "sha256": "8f6d66028faec0619f0961e2bd50eae4e0c627fe10453a2a1e2266b1293ae28b"
+      },
+      {
+        "path": "skills/adapter-sidecar-pattern/SKILL.md",
+        "sha256": "e58080fc7b8f33ec67aa7cf002095cb1f873d77acf02f8fe106ff9fd63256533"
+      },
+      {
+        "path": "skills/adapter-sidecar-pattern/skill.yaml",
+        "sha256": "732d1ee9e5dc9ad2e289330636df4dd59050312a9c6e89b97da70934adc036bc"
+      }
+    ],
+    "baselineDocument": "docs/skill-validation/wave3-2026-10-16/baseline.json",
+    "finalAudit": "All five assignment hashes were preserved as the attribution baseline; exactly three expected files changed."
+  },
+  "files": {
+    "changedByReviewer": [
+      {
+        "path": "skills/adapter-sidecar-pattern/references/coupling-and-failure.md",
+        "assignmentSha256": "7e93b6a26987237dfc4660383b04db9ac40d6fcd55a071e5c99e85a799e5f85e",
+        "sha256": "441549f7fdb5609a2f066858edf899a1b617af6cbf0979be66a3f8a57d181501",
+        "changed": true
+      },
+      {
+        "path": "skills/adapter-sidecar-pattern/SKILL.md",
+        "assignmentSha256": "e58080fc7b8f33ec67aa7cf002095cb1f873d77acf02f8fe106ff9fd63256533",
+        "sha256": "55a6e16735eed3d3823c1eb42c819e092caabb42d1d2b6ec086ea8fb8d0b2072",
+        "changed": true
+      },
+      {
+        "path": "skills/adapter-sidecar-pattern/skill.yaml",
+        "assignmentSha256": "732d1ee9e5dc9ad2e289330636df4dd59050312a9c6e89b97da70934adc036bc",
+        "sha256": "1d2c8b7bf14c0a4d0db5a6ec172eaa4a2f6519327937cca7c6768f37dc898296",
+        "changed": true
+      }
+    ],
+    "preExistingChanges": [],
+    "unchanged": [
+      {
+        "path": "skills/adapter-sidecar-pattern/references/adapter-or-node-agent.md",
+        "assignmentSha256": "a0d39e27a1ac5f2d7b89602ee7d4cef26005117d4e67b09cf7f3eb116d26bca4",
+        "sha256": "a0d39e27a1ac5f2d7b89602ee7d4cef26005117d4e67b09cf7f3eb116d26bca4",
+        "changed": false
+      },
+      {
+        "path": "skills/adapter-sidecar-pattern/references/validation-cases.md",
+        "assignmentSha256": "8f6d66028faec0619f0961e2bd50eae4e0c627fe10453a2a1e2266b1293ae28b",
+        "sha256": "8f6d66028faec0619f0961e2bd50eae4e0c627fe10453a2a1e2266b1293ae28b",
+        "changed": false
+      }
+    ]
+  },
+  "findings": [
+    {
+      "location": "references/coupling-and-failure.md:16 and original 116-174",
+      "gap": "The existing record reconciliation/buffering guidance did not define the receiver acknowledgement boundary for direct push output. It could leave HTTP-level success conflated with acceptance of every exported record.",
+      "consequence": "OTLP/HTTP can return 200 while rejecting part of a batch; a status-only count hides loss. Treating any partialSuccess or warning as total failure and replaying the request can duplicate records already accepted.",
+      "evidence": "Official OTLP specification tag v1.11.1 HTTP response sections and the same tag's LogsService schema define partial rejections, warning-only responses, no retry for populated partial_success and count-only rejection reporting.",
+      "correction": "Add a conditional direct-push acknowledgement path at references/coupling-and-failure.md:149-165, with ten/two/eight count example, warning/full-acceptance distinction, JSON field names, no guessed rejected subset, no request replay, bounded/redacted diagnostics and separation from missing acknowledgement/downstream durability."
+    },
+    {
+      "location": "SKILL.md:42-45",
+      "gap": "The common verification examples named complete source/sink outage but did not name receiver partial rejection.",
+      "correction": "Add partial rejection to applicable failure injection; preserve the explicit distinction between executed results and proposed checks."
+    },
+    {
+      "location": "skill.yaml:4",
+      "correction": "Bump 2.3.3 to 2.3.4 for content integrity/version policy."
+    }
+  ],
+  "changes": [
+    "Conditional receiver acknowledgement guidance with version-pinned protocol/schema references.",
+    "Explicitly preserve warning-only full acceptance, avoiding the opposite false-loss/retry error.",
+    "Route partial rejection into existing verification workflow without adding a new generic review process or shipped helper.",
+    "One patch version bump."
+  ],
+  "preserved": [
+    "Role: choose/review telemetry translation, placement and failure semantics; no in-process GoF adapter or mandatory container implementation.",
+    "Least-cost adequate placement, actual collector capability/access/ownership evidence, pod trust boundary and no automatic stdout access.",
+    "Producer/consumer/mapping compatibility, actual sanitized fixtures, meaningful drift checks and explicit missing-evidence handling.",
+    "Enrichment provenance, no fabricated trace/request/tenant association, event versus observed time and bounded parser/redaction policies.",
+    "Current snapshot counters versus deltas/destructive reads, accumulation ownership and loss limits; source failure/freshness and concurrent scrapes.",
+    "Classic histogram temporal versus bucket accumulation, consistency/unit checks, percentile non-aggregability, series budgets and collision/reset semantics.",
+    "Health predicate/idle behavior distinctions, adapter versus target liveness scope and specialist handoffs.",
+    "Actual buffer/backpressure path, capacity/catch-up, disk versus tmpfs emptyDir behavior and pod-lifetime durability limits.",
+    "All eleven existing teaching/evaluation cases and their explicit unexecuted/known-example status.",
+    "No Java API baseline introduced; consumer-specific Java/runtime/framework inspection and no upgrade authorization preserved.",
+    "All six existing optional skill referrals and descriptions unchanged."
+  ],
+  "replacedOrRemoved": [],
+  "domainCriteria": [
+    "Trace emitted data through the actual consumer acknowledgement, including partial acceptance.",
+    "Count records at the stated observation point rather than transport success.",
+    "Follow protocol-specific retry rules and avoid guessing missing rejection identities.",
+    "Change the conclusion when a populated response contains zero rejected records.",
+    "Keep one receiver's acceptance separate from multi-hop persistence/durability claims.",
+    "Preserve existing placement, semantic translation and failure-path depth."
+  ],
+  "checks": [
+    {
+      "name": "strict-package-validation",
+      "cwd": "C:/git/agent-skills",
+      "command": "node packages/cli/bin/agent-skills.mjs --no-update-check validate skills/adapter-sidecar-pattern --strict --json",
+      "expectedExit": 0,
+      "result": {
+        "chunk_id": "b8a718",
+        "wall_time_seconds": 0.1992828,
+        "exit_code": 0,
+        "original_token_count": 42,
+        "output": "{\n  \"ok\": true,\n  \"directory\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\adapter-sidecar-pattern\",\n  \"name\": \"adapter-sidecar-pattern\",\n  \"version\": \"2.3.4\",\n  \"issues\": []\n}\n"
+      }
+    },
+    {
+      "name": "owned-format-check",
+      "cwd": "C:/git/agent-skills",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/adapter-sidecar-pattern/SKILL.md skills/adapter-sidecar-pattern/skill.yaml skills/adapter-sidecar-pattern/references/adapter-or-node-agent.md skills/adapter-sidecar-pattern/references/coupling-and-failure.md skills/adapter-sidecar-pattern/references/validation-cases.md",
+      "expectedExit": 0,
+      "result": {
+        "chunk_id": "151bb4",
+        "wall_time_seconds": 0.238466,
+        "exit_code": 0,
+        "original_token_count": 17,
+        "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+      }
+    },
+    {
+      "name": "owned-diff-check",
+      "cwd": "C:/git/agent-skills",
+      "command": "git diff --check -- skills/adapter-sidecar-pattern",
+      "expectedExit": 0,
+      "result": {
+        "chunk_id": "e587ef",
+        "wall_time_seconds": 0.0691813,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      }
+    },
+    {
+      "name": "owned-metadata-links-baseline-and-final-diff",
+      "cwd": "C:/git/agent-skills",
+      "command": "@'\nimport {readFileSync,readdirSync,statSync,existsSync} from 'node:fs';\nimport {resolve,dirname} from 'node:path';\nimport {execFileSync} from 'node:child_process';\nimport {createHash} from 'node:crypto';\nimport {parse} from 'yaml';\nconst root='skills/adapter-sidecar-pattern';\nconst walk=p=>readdirSync(p).flatMap(n=>{const path=p+'/'+n;return statSync(path).isDirectory()?walk(path):[path]});\nconst sha=p=>createHash('sha256').update(readFileSync(p)).digest('hex');\nconst manifest=parse(readFileSync(root+'/skill.yaml','utf8'));\nconst front=parse(readFileSync(root+'/SKILL.md','utf8').split('---')[1]);\nconst baseline=JSON.parse(readFileSync('docs/skill-validation/wave3-2026-10-16/baseline.json','utf8'));\nconst old=new Map(baseline.allFiles.map(f=>[f.path,f.sha256]));\nconst issues=[];\nconst files=walk(root).map(path=>({path,assignmentSha256:old.get(path),sha256:sha(path),changed:old.get(path)!==sha(path)}));\nconst expected=new Set([root+'/SKILL.md',root+'/skill.yaml',root+'/references/coupling-and-failure.md']);\nif(files.some(f=>f.changed!==expected.has(f.path))) issues.push('unexpected package changes');\nconst links=[];\nfor(const {path:file} of files.filter(f=>f.path.endsWith('.md'))){\n for(const match of readFileSync(file,'utf8').matchAll(/\\[[^\\]]*\\]\\((?:<([^>]+)>|([^\\s)]+))\\)/g)){\n  const href=match[1]??match[2];\n  if(/^(?:https?:|mailto:|#)/.test(href))continue;\n  links.push({file,href,exists:existsSync(resolve(dirname(file),decodeURIComponent(href.split('#')[0])))});\n }\n}\nconst status=execFileSync('git',['status','--short','--',root],{encoding:'utf8'});\nconst staged=execFileSync('git',['diff','--cached','--',root],{encoding:'utf8'});\nconst unstaged=execFileSync('git',['diff','--',root],{encoding:'utf8'});\nconst descriptionsMatch=front.description.trim()===manifest.description.trim();\nif(front.name!==manifest.name||!descriptionsMatch||manifest.version!=='2.3.4')issues.push('metadata mismatch');\nif(staged)issues.push('unexpected staged change');\nif(links.some(l=>!l.exists))issues.push('missing local link');\nconst peers=[...(manifest.dependencies??[]).map(d=>d.name),...(manifest.suggests??[])].map(name=>({name,exists:existsSync('skills/'+name+'/SKILL.md')}));\nif(peers.some(p=>!p.exists))issues.push('missing declared peer');\nconsole.log(JSON.stringify({nodeVersion:process.version,version:manifest.version,descriptionsMatch,status,staged,unstaged,files,localLinks:links,declaredPeers:peers,issues},null,2));\nif(issues.length)process.exitCode=1;\n'@ | node --input-type=module",
+      "expectedExit": 0,
+      "result": {
+        "chunk_id": "b95d2a",
+        "wall_time_seconds": 0.2931647,
+        "exit_code": 0,
+        "original_token_count": 1691,
+        "output": "{\n  \"nodeVersion\": \"v25.6.1\",\n  \"version\": \"2.3.4\",\n  \"descriptionsMatch\": true,\n  \"status\": \" M skills/adapter-sidecar-pattern/SKILL.md\\n M skills/adapter-sidecar-pattern/references/coupling-and-failure.md\\n M skills/adapter-sidecar-pattern/skill.yaml\\n\",\n  \"staged\": \"\",\n  \"unstaged\": \"diff --git a/skills/adapter-sidecar-pattern/SKILL.md b/skills/adapter-sidecar-pattern/SKILL.md\\nindex 7413ec9..2c31ce5 100644\\n--- a/skills/adapter-sidecar-pattern/SKILL.md\\n+++ b/skills/adapter-sidecar-pattern/SKILL.md\\n@@ -41,8 +41,8 @@ but incorrect output when either contract changes.\\n    and overload; never silently convert missing data to a successful zero or healthy state.\\n 5. **Verify semantics and the failure path.** Use producer-version fixtures and consumer\\n    tooling to check both valid output and its meaning. Include the relevant failure injection\\n-   (format drift, source outage, restart or sink outage). Record actual results separately\\n-   from proposed checks. Parser acceptance alone cannot prove correctness.\\n+   (format drift, source outage, restart, sink outage or partial rejection). Record actual\\n+   results separately from proposed checks. Parser acceptance alone cannot prove correctness.\\n \\n ## Rules\\n \\ndiff --git a/skills/adapter-sidecar-pattern/references/coupling-and-failure.md b/skills/adapter-sidecar-pattern/references/coupling-and-failure.md\\nindex ba787b2..ab96a9c 100644\\n--- a/skills/adapter-sidecar-pattern/references/coupling-and-failure.md\\n+++ b/skills/adapter-sidecar-pattern/references/coupling-and-failure.md\\n@@ -146,6 +146,24 @@ injection. For a pipe, a full blocking writer waits for its reader; a nonblockin\\n fail instead. See [Linux pipe behavior](https://man7.org/linux/man-pages/man7/pipe.7.html);\\n do not infer the application's failure policy from the IPC mechanism alone.\\n \\n+For direct push output, inspect the actual client/exporter and receiver acknowledgement before\\n+counting records as accepted. A successful send or HTTP status alone may be insufficient.\\n+With OTLP/HTTP, HTTP 200 can carry `partial_success.rejected_log_records`: in a ten-record\\n+fixture, two rejections mean eight accepted by that receiver, not ten. Zero rejections with\\n+an error message can instead be a warning with full acceptance. Decode the agreed binary or\\n+JSON Protobuf response; JSON uses `partialSuccess.rejectedLogRecords` and `partialSuccess.errorMessage`.\\n+The [OTLP response contract (specification v1.11.1)](https://github.com/open-telemetry/opentelemetry-proto/blob/v1.11.1/docs/specification.md#partial-success-1)\\n+forbids retrying a request with populated `partial_success`. Its\\n+[log response schema](https://github.com/open-telemetry/opentelemetry-proto/blob/v1.11.1/opentelemetry/proto/collector/logs/v1/logs_service.proto)\\n+gives a count, not rejected record identities: do not invent a subset to replay or resubmit\\n+the accepted records. Keep bounded, redacted rejection/warning diagnostics and test partial\\n+rejection, full acceptance and warning-only responses.\\n+\\n+Distinguish explicit rejection from a missing acknowledgement. For uncertain outcomes, follow\\n+the protocol's retry policy while recording duplicate/loss limits. Acceptance by a local\\n+collector does not establish durable delivery through the remaining hops; inspect its\\n+forwarding and queue boundary separately when the requirement is end-to-end delivery.\\n+\\n ## Validate the output contract\\n \\n Use the consumer's parser and semantic assertions. The following is a test specification,\\ndiff --git a/skills/adapter-sidecar-pattern/skill.yaml b/skills/adapter-sidecar-pattern/skill.yaml\\nindex 92200df..5e3031f 100644\\n--- a/skills/adapter-sidecar-pattern/skill.yaml\\n+++ b/skills/adapter-sidecar-pattern/skill.yaml\\n@@ -1,7 +1,7 @@\\n schemaVersion: 1\\n \\n name: adapter-sidecar-pattern\\n-version: 2.3.3\\n+version: 2.3.4\\n description: >-\\n   Choose and review Kubernetes telemetry adapters when a legacy or vendor process emits\\n   incompatible metrics, logs or health signals, when deciding between per-pod translation\\n\",\n  \"files\": [\n    {\n      \"path\": \"skills/adapter-sidecar-pattern/references/adapter-or-node-agent.md\",\n      \"assignmentSha256\": \"a0d39e27a1ac5f2d7b89602ee7d4cef26005117d4e67b09cf7f3eb116d26bca4\",\n      \"sha256\": \"a0d39e27a1ac5f2d7b89602ee7d4cef26005117d4e67b09cf7f3eb116d26bca4\",\n      \"changed\": false\n    },\n    {\n      \"path\": \"skills/adapter-sidecar-pattern/references/coupling-and-failure.md\",\n      \"assignmentSha256\": \"7e93b6a26987237dfc4660383b04db9ac40d6fcd55a071e5c99e85a799e5f85e\",\n      \"sha256\": \"441549f7fdb5609a2f066858edf899a1b617af6cbf0979be66a3f8a57d181501\",\n      \"changed\": true\n    },\n    {\n      \"path\": \"skills/adapter-sidecar-pattern/references/validation-cases.md\",\n      \"assignmentSha256\": \"8f6d66028faec0619f0961e2bd50eae4e0c627fe10453a2a1e2266b1293ae28b\",\n      \"sha256\": \"8f6d66028faec0619f0961e2bd50eae4e0c627fe10453a2a1e2266b1293ae28b\",\n      \"changed\": false\n    },\n    {\n      \"path\": \"skills/adapter-sidecar-pattern/SKILL.md\",\n      \"assignmentSha256\": \"e58080fc7b8f33ec67aa7cf002095cb1f873d77acf02f8fe106ff9fd63256533\",\n      \"sha256\": \"55a6e16735eed3d3823c1eb42c819e092caabb42d1d2b6ec086ea8fb8d0b2072\",\n      \"changed\": true\n    },\n    {\n      \"path\": \"skills/adapter-sidecar-pattern/skill.yaml\",\n      \"assignmentSha256\": \"732d1ee9e5dc9ad2e289330636df4dd59050312a9c6e89b97da70934adc036bc\",\n      \"sha256\": \"1d2c8b7bf14c0a4d0db5a6ec172eaa4a2f6519327937cca7c6768f37dc898296\",\n      \"changed\": true\n    }\n  ],\n  \"localLinks\": [\n    {\n      \"file\": \"skills/adapter-sidecar-pattern/references/adapter-or-node-agent.md\",\n      \"href\": \"coupling-and-failure.md\",\n      \"exists\": true\n    },\n    {\n      \"file\": \"skills/adapter-sidecar-pattern/references/coupling-and-failure.md\",\n      \"href\": \"adapter-or-node-agent.md\",\n      \"exists\": true\n    },\n    {\n      \"file\": \"skills/adapter-sidecar-pattern/SKILL.md\",\n      \"href\": \"references/adapter-or-node-agent.md\",\n      \"exists\": true\n    },\n    {\n      \"file\": \"skills/adapter-sidecar-pattern/SKILL.md\",\n      \"href\": \"references/coupling-and-failure.md\",\n      \"exists\": true\n    },\n    {\n      \"file\": \"skills/adapter-sidecar-pattern/SKILL.md\",\n      \"href\": \"references/validation-cases.md\",\n      \"exists\": true\n    }\n  ],\n  \"declaredPeers\": [\n    {\n      \"name\": \"sidecar-pattern\",\n      \"exists\": true\n    },\n    {\n      \"name\": \"gof-adapter\",\n      \"exists\": true\n    },\n    {\n      \"name\": \"distributed-tracing-design\",\n      \"exists\": true\n    },\n    {\n      \"name\": \"kubernetes-service-lifecycle\",\n      \"exists\": true\n    },\n    {\n      \"name\": \"metrics-and-cardinality\",\n      \"exists\": true\n    },\n    {\n      \"name\": \"structured-logging\",\n      \"exists\": true\n    }\n  ],\n  \"issues\": []\n}\n"
+      }
+    },
+    {
+      "name": "affected-format-check-final",
+      "cwd": "C:/git/agent-skills",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/adapter-sidecar-pattern/SKILL.md skills/adapter-sidecar-pattern/references/coupling-and-failure.md skills/adapter-sidecar-pattern/skill.yaml",
+      "expectedExit": 0,
+      "result": {
+        "chunk_id": "238448",
+        "wall_time_seconds": 0.259302,
+        "exit_code": 0,
+        "original_token_count": 17,
+        "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+      }
+    },
+    {
+      "name": "owned-diff-check-final",
+      "cwd": "C:/git/agent-skills",
+      "command": "git diff --check -- skills/adapter-sidecar-pattern",
+      "expectedExit": 0,
+      "result": {
+        "chunk_id": "e6ed26",
+        "wall_time_seconds": 0.1095875,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      }
+    }
+  ],
+  "validationClassification": {
+    "structuralExecuted": "Strict package validation, all-five-file Prettier check, final affected-file format check, diff checks, description/name/version/link/declared-peer audit, baseline/final hashes and diff inspection.",
+    "primarySourceReview": "Executed reading and comparison of version-pinned OTLP specification and LogsService schema against the new guidance.",
+    "technicalRuntime": "NOT_EXECUTED: no deployed adapter/client, OTLP collector, wire-protocol conformance or Kubernetes runtime exercised.",
+    "javaExamples": "NOT_APPLICABLE: this skill declares no executable Java example and this change adds none.",
+    "behavioralAgentRuns": 0,
+    "measuredBehavioralGain": "UNKNOWN",
+    "structuredWalkthroughs": [
+      {
+        "case": "ten records, HTTP 200, rejectedLogRecords=2",
+        "expected": "Eight accepted by this receiver, two rejected, diagnostic retained safely, no retry of that request; no rejected record identities inferred."
+      },
+      {
+        "case": "same response except rejectedLogRecords=0",
+        "expected": "Ten accepted, zero rejected, warning retained safely, no retry and no false data-loss classification."
+      },
+      {
+        "case": "missing acknowledgement",
+        "expected": "Unknown outcome is not explicit rejection; use actual protocol retry rules and disclose possible duplicates."
+      }
+    ]
+  },
+  "failures": [],
+  "prerequisitesAndLimitsObserved": [
+    "Node v25.6.1 used for repository-local validation/audit.",
+    "Get-Command found no promtool or otelcol on PATH. docker.exe was discoverable but was not started or used to pull images.",
+    "No dependency/toolchain installation, runtime upgrade, production contact or shared repository write."
+  ],
+  "sources": [
+    {
+      "url": "https://github.com/open-telemetry/opentelemetry-proto/blob/v1.11.1/docs/specification.md#partial-success-1",
+      "rawUrl": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-proto/v1.11.1/docs/specification.md",
+      "version": "Specification source tag v1.11.1; this is not an OTLP wire-version selector.",
+      "type": "Primary version-pinned OTLP specification",
+      "inspectedSections": [
+        "OTLP/HTTP JSON Protobuf Encoding",
+        "OTLP/HTTP Full Success and Partial Success",
+        "Protocol acknowledgement scope",
+        "Known Limitations / Duplicate Data"
+      ],
+      "supports": "HTTP 200 may accompany partial rejection; populated partial-success responses are not retried; JSON uses lowerCamelCase and int64 decimal strings; missing acknowledgements can lead to duplicate data, and acknowledgements do not establish a multi-hop end-to-end guarantee."
+    },
+    {
+      "url": "https://github.com/open-telemetry/opentelemetry-proto/blob/v1.11.1/opentelemetry/proto/collector/logs/v1/logs_service.proto",
+      "rawUrl": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-proto/v1.11.1/opentelemetry/proto/collector/logs/v1/logs_service.proto",
+      "version": "v1.11.1",
+      "type": "Primary version-pinned protocol schema",
+      "inspectedSections": ["ExportLogsServiceResponse", "ExportLogsPartialSuccess"],
+      "supports": "Rejection count and human diagnostic; warning allowed with zero rejected records; empty partial message equivalent to full success. No rejected-record identifier list exists in this response schema.",
+      "inference": "Because the response exposes only a count, selecting which original records were rejected is not justified by this acknowledgement alone."
+    },
+    {
+      "url": "https://opentelemetry.io/docs/specs/otlp/",
+      "version": "Page labelled OTLP Specification 1.11.1 at consultation",
+      "type": "Official rendered protocol",
+      "supports": "Cross-check of pinned source; material new skill citations use the pinned GitHub sources."
+    },
+    {
+      "url": "https://prometheus.io/docs/instrumenting/writing_exporters/",
+      "type": "Primary exporter guidance consulted during review",
+      "supports": "Existing snapshot/collector/freshness/source-scrape failure distinctions were retained; not the source for new OTLP rules."
+    }
+  ],
+  "cases": [
+    {
+      "id": "otlp-http-partial-rejection",
+      "actorInput": {
+        "request": "Review and, if necessary, correct this adapter's receiver-acceptance accounting and retry decision using the supplied response. Preserve behavior that is already correct, make diagnostics accurate, and keep the change focused. This is a local review/fix, not deployment approval; state what the evidence establishes and what it does not.",
+        "context": {
+          "role": "Per-pod adapter translates a legacy file format and directly pushes batches of OTLP log records to a collector. Placement, producer mapping and a ten-record batch are already agreed.",
+          "protocol": "OTLP/HTTP JSON Protobuf; use specification tag v1.11.1 as the contract reference, not a wire-level version negotiation. LogsService response schema applies. The caller has decoded the JSON body into a plain object.",
+          "implementation": "The supplied response-accounting seam accepts the batch record count and the decoded response. Other HTTP statuses, bounded response decoding, transport deadlines and upstream parsing are outside this fragment; do not silently change their accepted contracts.",
+          "provenance": "These are synthetic development fixtures, not production captures. No receiver logs or final-backend durability evidence are supplied.",
+          "runtime": "Node 25.6.1 is available for an isolated local seam check if needed; no third-party package or runtime upgrade is necessary."
+        },
+        "files": {
+          "account200.mjs": "// This seam is called only after the transport layer receives HTTP 200 and\n// decodes an OTLP/HTTP JSON Protobuf response. Other status codes are handled elsewhere.\nexport function account200(sentLogRecords, response) {\n  if (response.status !== 200) throw new Error(\"Expected HTTP 200\");\n  return {\n    accepted: sentLogRecords,\n    rejected: 0,\n    retryRequest: false,\n    diagnostic: null\n  };\n}\n",
+          "request-meta.json": "{\n  \"sentLogRecords\": 10\n}\n",
+          "response.json": "{\n  \"status\": 200,\n  \"headers\": {\n    \"content-type\": \"application/json\"\n  },\n  \"body\": {\n    \"partialSuccess\": {\n      \"rejectedLogRecords\": \"2\",\n      \"errorMessage\": \"Review the attribute mapping.\"\n    }\n  }\n}\n"
+        },
+        "prerequisites": "Materialize only actorInput files in a fresh isolated directory; present source/consumer contract links, not evaluator criteria or a prepared correction."
+      },
+      "evaluatorCriteria": {
+        "expectedBehavior": [
+          "Inspect the body/schema as well as status; HTTP 200 is compatible with rejection of two of the ten records.",
+          "Correct accounting to eight accepted by this receiver and two rejected; retain retryRequest=false for this populated partial-success response.",
+          "Keep a bounded/redacted diagnostic without using its free-form text as the count or a high-cardinality label.",
+          "Do not invent which two records were rejected or replay the whole request/accepted subset; the response has no per-record identifiers.",
+          "Verify the accounting seam with the partial-rejection fixture and legitimate zero-rejection/full-acceptance controls, while distinguishing a local fixture check from a real collector/deployment test.",
+          "Limit the acceptance claim to this receiver; do not infer final-backend durability or exactly-once delivery."
+        ],
+        "failureConditions": [
+          "Report ten accepted solely because status is 200.",
+          "Report zero accepted or retry all ten because partialSuccess is present.",
+          "Choose the last two input records or another guessed subset as the rejected records.",
+          "Claim that a local fixture or intermediate acknowledgement proves end-to-end durable delivery."
+        ],
+        "decisiveConstraint": "The receiver's rejectedLogRecords count is 2.",
+        "sourceRule": "Pinned OTLP/HTTP partial-success response contract and LogsService response schema.",
+        "executionStatus": "Structured walkthrough/development case only; no actor execution or technical receiver integration performed."
+      }
+    },
+    {
+      "id": "otlp-http-warning-with-full-acceptance",
+      "actorInput": {
+        "request": "Review and, if necessary, correct this adapter's receiver-acceptance accounting and retry decision using the supplied response. Preserve behavior that is already correct, make diagnostics accurate, and keep the change focused. This is a local review/fix, not deployment approval; state what the evidence establishes and what it does not.",
+        "context": {
+          "role": "Per-pod adapter translates a legacy file format and directly pushes batches of OTLP log records to a collector. Placement, producer mapping and a ten-record batch are already agreed.",
+          "protocol": "OTLP/HTTP JSON Protobuf; use specification tag v1.11.1 as the contract reference, not a wire-level version negotiation. LogsService response schema applies. The caller has decoded the JSON body into a plain object.",
+          "implementation": "The supplied response-accounting seam accepts the batch record count and the decoded response. Other HTTP statuses, bounded response decoding, transport deadlines and upstream parsing are outside this fragment; do not silently change their accepted contracts.",
+          "provenance": "These are synthetic development fixtures, not production captures. No receiver logs or final-backend durability evidence are supplied.",
+          "runtime": "Node 25.6.1 is available for an isolated local seam check if needed; no third-party package or runtime upgrade is necessary."
+        },
+        "files": {
+          "account200.mjs": "// This seam is called only after the transport layer receives HTTP 200 and\n// decodes an OTLP/HTTP JSON Protobuf response. Other status codes are handled elsewhere.\nexport function account200(sentLogRecords, response) {\n  if (response.status !== 200) throw new Error(\"Expected HTTP 200\");\n  return {\n    accepted: sentLogRecords,\n    rejected: 0,\n    retryRequest: false,\n    diagnostic: null\n  };\n}\n",
+          "request-meta.json": "{\n  \"sentLogRecords\": 10\n}\n",
+          "response.json": "{\n  \"status\": 200,\n  \"headers\": {\n    \"content-type\": \"application/json\"\n  },\n  \"body\": {\n    \"partialSuccess\": {\n      \"rejectedLogRecords\": \"0\",\n      \"errorMessage\": \"Review the attribute mapping.\"\n    }\n  }\n}\n"
+        },
+        "prerequisites": "Same inputs/toolchain as case one; only rejectedLogRecords changes from the string 2 to the string 0. Keep evaluatorCriteria hidden from the actor."
+      },
+      "evaluatorCriteria": {
+        "expectedBehavior": [
+          "Recognize the non-empty diagnostic with zero rejected records as a permitted warning with full receiver acceptance.",
+          "Preserve accepted=10, rejected=0 and retryRequest=false; make the warning visible without fabricating record loss.",
+          "Do not classify every populated partialSuccess or non-empty errorMessage as data rejection.",
+          "Use the body/count to distinguish this result from case one, retain applicable bounds/redaction and verify a partial-rejection control.",
+          "Keep the same scope limit: accepted by this receiver does not establish downstream durable delivery."
+        ],
+        "failureConditions": [
+          "Reduce accepted count, fabricate rejected records, or replay the batch solely because partialSuccess/errorMessage is present.",
+          "Suppress the diagnostic by declaring every 200 body irrelevant.",
+          "Require a sidecar/platform redesign, change the agreed producer mapping, or claim a production test without evidence."
+        ],
+        "decisiveConstraint": "Only rejectedLogRecords changes to 0; accounting remains full acceptance while the message is treated as a warning.",
+        "sourceRule": "Pinned LogsService response schema explicitly permits a zero rejection count with a warning message.",
+        "executionStatus": "Structured walkthrough/development case only; no actor execution or technical receiver integration performed."
+      }
+    }
+  ],
+  "artifacts": {
+    "handoffPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/adapter-sidecar-pattern.json",
+    "evidence": "This JSON retains exact validation commands, cwd, outputs/exits, final diff and assignment/final hashes, primary-source provenance, fixture inputs and separate evaluation criteria.",
+    "runtimeArtifacts": [],
+    "fixtureClassification": "Synthetic development fixtures embedded in cases; not actual producer/collector captures. No response classifier or mock server was implemented merely to restate the documented rule.",
+    "reproduction": "Coordinator can materialize each case's actorInput.files in a fresh directory and evaluate the account200 seam with independent tests. Keep evaluatorCriteria hidden. Actual collector/client integration requires a supplied implementation/version and isolated environment."
+  },
+  "assumptions": [
+    "For the worked count fixture, the request contains exactly ten log records and the peer's valid response truthfully reports its rejection count.",
+    "The new direct-push branch applies only where an adapter or its chosen client actually exports to a receiver; stdout/node-collector placement is unchanged.",
+    "Actual exporter libraries may expose partial-success diagnostics differently; applying the skill requires inspecting the chosen client/version and its response handling.",
+    "Receiver acceptance is the accounting boundary in the fixture, not proof of final durable storage."
+  ],
+  "limits": [
+    "No independent agent execution, original/revised comparison or incremental behavioral gain measured.",
+    "No real OTLP client/collector integration or Kubernetes deployment tested; no implementation guarantee inferred from protocol review.",
+    "Existing Prometheus, file/pipe and Kubernetes examples were reviewed and preserved, not re-executed on their target platforms.",
+    "No new Java/executable production snippet was added; compiler/runtime compatibility testing was therefore not applicable.",
+    "The cases are known development scenarios, not held-out evaluation.",
+    "Global registry generation and npm run verify remain pending with the coordinator."
+  ],
+  "remainingFindings": [],
+  "crossSkill": [],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Parallel review shared-write restriction.",
+      "prerequisite": "All reviewers stopped writing; reconcile versions/integrity across wave."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Repository-wide verification is coordinator-only.",
+      "prerequisite": "Index generated and all reviewers stopped writing."
+    }
+  ],
+  "coordinatorActions": [
+    "Archive this JSON and use its recorded hashes/diff for attribution.",
+    "Run required global checks after all writers stop.",
+    "Use independent execution/holdout cases before claiming behavioral improvement."
+  ]
+}

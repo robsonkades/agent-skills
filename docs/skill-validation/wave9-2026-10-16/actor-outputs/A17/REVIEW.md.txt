@@ -1,0 +1,23 @@
+# RetryEngine repair
+
+The supplied implementation changed the intent ID on each call, erased unresolved outcomes, used the smaller retry delay, ignored total-budget admission, and could leave replies open on refusal or interruption. The executable regression reproduced the identity defect before the repair.
+
+The repaired runner preserves the original intent and payload. Previously APPLIED/REJECTED snapshots return unchanged without dispatch. UNKNOWN is persisted when observed and survives subsequent TRANSIENT/PERMANENT replies, exhaustion, cancellation and admission refusal. Only authoritative OK supplies APPLIED and its original receipt; a normal stop with no unresolved attempt persists REJECTED. An interrupted call persists UNKNOWN before propagating InterruptedException. Interruption is propagated with the thread flag preserved.
+
+Retries retain the supplied policy: the initial call needs no token; each retry requires one admission token, an available attempt count, and enough fresh budget for the maximum of local wait and server minimum, the full attempt, and the reserve. Subtraction after bounds checks avoids signed-long overflow. After sleeping, the runner rechecks time, cancellation and interruption; oversleep may therefore consume a token without dispatch. Every returned reply closes once through try-with-resources, before sleep, another call or normal return. No delay is truncated or jitter redrawn.
+
+## Checks actually run
+
+- `node run.mjs Verification` against the original implementation: exit 1, expected assertion failure about stable intent identity and payload.
+- After repair, `node run.mjs Verification`: exit 0, 565 assertions passed. Cases cover terminal replay, UNKNOWN across attempts, authoritative recovery, initial/retry refusal, exact budget boundaries, fresh post-call budgets, local/server delay precedence, token denial, exhaustion, oversleep, large-long overflow, zero wait, cancellation and pre/call/sleep interruption. Assertions also track real call counts, propagated timeout, persisted state, receipts and reply closure.
+- `node run.mjs Smoke`: exit 0, `Smoke passed`.
+- Both runner invocations compile with `javac --release 17` and execute with assertions enabled. Each Java subprocess has the inspected runner's 20-second limit. Version probes reported Temurin JDK/javac 25.0.3.
+- A byte comparison confirmed all seven immutable output copies match their supplied input counterparts.
+
+## Evidence and limits
+
+This is a single-owner, synchronous local component exercise. Java 17 source/API compatibility was checked with `--release 17`; execution used JDK 25.0.3, not an installed Java 17 runtime. Store durability/atomicity and peer replay safety are supplied assumptions, not properties established by these fakes. The provided `Contract.REPLAY_SAFE` is true; the false-configuration guard exists but cannot be exercised without changing an immutable input. No provider, API version, account scope, retention horizon, framework or database/isolation implementation is supplied.
+
+There is no reconciliation operation. UNKNOWN remains a recovery obligation until authoritative OK; cancellation does not prove that dispatched remote work stopped. The tests measure deterministic policy behavior, not wall-clock bounds, physical cancellation, concurrent ownership, fleet behavior or actual external effects. Integration should verify the real operation's timeout/cancellation surface, peer identity/payload binding and replay-retention contract, plus the durable store's recovery behavior.
+
+Only the two supplied skill snapshots and their local key-selection/deadline-propagation references were used. Routes to other skills were outside the supplied context and were not followed. No browsing, delegation, real configuration changes or repository-wide checks were performed; this assignment restricts writes and validation to its local output directory.

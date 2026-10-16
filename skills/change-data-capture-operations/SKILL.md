@@ -101,9 +101,12 @@ the sink must interpret, and removes the tombstone. Choose a representation the 
 then verify its durable effect. Preserve the envelope if existing consumers need its semantics;
 flattening is not a recovery prerequisite. See [Debezium event flattening](https://debezium.io/documentation/reference/3.3/transformations/event-flattening.html).
 
-Exercise deletes and, if the application permits them, key changes through the full configured
-path. A connector restart or resnapshot cannot repair a transform that keeps discarding deletes.
-Use the engine reference when source identity or incomplete row values are involved.
+Exercise deletes, permitted key changes and any table-wide reset used by actual maintenance through
+the full configured path. PostgreSQL `TRUNCATE` has a different capture and ordering contract from
+row deletes; read [PostgreSQL continuity](references/postgresql-continuity.md) before reusing a
+delete check for it. A connector restart or resnapshot cannot repair a transform that keeps
+discarding required operations. Use the engine reference when source identity or incomplete row
+values are involved.
 
 ## Close the continuity claim
 

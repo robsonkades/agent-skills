@@ -247,4 +247,4 @@ source types alone do not establish a defect.
 - [RFC 9110: If-Match](https://www.rfc-editor.org/rfc/rfc9110.html#section-13.1.1) — strong comparison and precondition semantics.
 - [Spring Framework 6.0 release](https://spring.io/blog/2022/11/16/spring-framework-6-0-goes-ga) — Java 17 baseline; examples remain partial sketches.
 - [Spring MVC validation](https://docs.spring.io/spring-framework/reference/6.2/web/webmvc/mvc-controller/ann-validation.html) — argument versus method validation, root-container limitations and version-sensitive integration.
-- [Jakarta Bean Validation 3.0](https://jakarta.ee/specifications/bean-validation/3.0/jakarta-bean-validation-spec-3.0) — container-element constraints, cascaded validation and explicit Validator APIs.
+- [Jakarta Bean Validation 3.0](https://jakarta.ee/specifications/bean-validation/3.0/jakarta-bean-validation-spec-3.0.html) — container-element constraints, cascaded validation and explicit Validator APIs.

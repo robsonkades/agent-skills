@@ -1,0 +1,9 @@
+# Calibration SIMD decision
+
+The application targets JDK 25 and resolves jdk.incubator.vector at compile and runtime.
+Both implementations validate array lengths before allocating output and reading input elements.
+The candidate processes full batches and uses a scalar tail for remaining elements.
+
+Proposal: approve the candidate for deployment. FMA and multiply-then-add produce the same observable result for this caller, and passing the functional comparison establishes that the SIMD rewrite is faster.
+
+No production timings or decoded assembly have been recorded.

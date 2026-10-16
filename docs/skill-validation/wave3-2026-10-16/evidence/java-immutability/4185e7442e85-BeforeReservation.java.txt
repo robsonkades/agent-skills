@@ -1,0 +1,11 @@
+import java.util.*;
+import java.time.*;
+public final class BeforeReservation {
+    private final String id;
+    private final List<String> seatIds;
+    public BeforeReservation(String id, List<String> seatIds) {
+        this.id = id;
+        this.seatIds = seatIds;          // aliases the caller's list
+    }
+    public List<String> seatIds() { return seatIds; }   // leaks it
+}

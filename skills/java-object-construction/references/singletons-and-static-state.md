@@ -65,6 +65,15 @@ live outside class initialization or support another lifecycle; it carries more 
 surface. java-memory-model has the proof. Laziness helps only when deferred/unused work outweighs
 the first-use latency and sticky class-initialization failure risk.
 
+Trace initialization dependencies through constructors and factories before choosing a holder.
+Re-entry on the initializing thread does not wait for that initialization to finish: reading an
+as-yet-unassigned `INSTANCE` can return `null`. Two threads initializing mutually dependent classes
+can instead wait for each other. Remove dependencies on unfinished state or separate construction
+from later wiring; a `final` field or eager initialization does not by itself resolve the cycle.
+Exercise first access in a fresh JVM or defining loader, because an already initialized holder
+skips this path. Bound tests of suspected blocking cycles in a forked process and inspect thread
+stacks to distinguish a cycle from merely slow construction.
+
 Class initialization also has a sticky failure mode: a non-`Error` throwable is wrapped in
 `ExceptionInInitializerError`; an `Error` propagates directly. Later active uses in that class loader can fail with
 `NoClassDefFoundError` rather than retrying initialization. Do not hide recoverable network or
@@ -147,7 +156,7 @@ the port the JDK already ships.
 
 ## Authoritative references
 
-- [JLS §12.4.2: Detailed Initialization Procedure](https://docs.oracle.com/javase/specs/jls/se25/html/jls-12.html#jls-12.4.2)
+- [JLS 21 §12.4.2: Detailed Initialization Procedure](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.4.2) — same-thread recursion, waiting for another initializer and erroneous-class state.
 - [Java Object Serialization: enum constants](https://docs.oracle.com/en/java/javase/25/docs/specs/serialization/serial-arch.html#serialization-of-enum-constants)
 - [Serialization 21 §3.7: readResolve](https://docs.oracle.com/en/java/javase/21/docs/specs/serialization/input.html#the-readresolve-method) — graph references created before replacement are not repaired.
 - [JLS 21 §8.8.10: Preventing Instantiation](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.8.10)

@@ -136,6 +136,8 @@ Choose validation by the changed claim:
 
 - **Representation:** exercise old/new consumers, missing versus empty contributions,
   required failure and optional degradation; verify both payload and client behavior.
+  For conditional reads, check the final view's validators and 304 handling through the
+  effective filters; a downstream conditional response may describe only one contribution.
 - **Trust:** test forged user/tenant/proxy headers, wrong audience, cross-tenant object
   access, and direct service access. The receiving operation must enforce its policy.
 - **Resource bounds:** stall a dependency or exhaust its pool, exceed fan-out/body limits,

@@ -1,0 +1,55 @@
+{
+  "request": "An engineer says the small helper in FrequencyProbe is not being inlined and proposes lowering MinInlineFrequencyRatio to 0.001. Review that diagnosis and proposed change using the supplied bytecode, effective flags and compilation artifacts. Explain the smallest justified next action; preserve a no-change result when the premise is unsupported. Do not change a production JVM or claim a performance improvement without measurements.",
+  "context": {
+    "target": "Temurin 25.0.3+9-LTS, Windows amd64, HotSpot C1/C2",
+    "scope": "Diagnose the recorded caller/call site and policy. No application SLO, allocation profile or service benchmark is available.",
+    "availableTools": "Read supplied files; primary versioned OpenJDK source lookup is permitted. Optional reproduction must use an isolated copy with the already-installed JDK; no installation, global config changes or real process attachment."
+  },
+  "fixtureFiles": [
+    {
+      "actorPath": "FrequencyProbe.java",
+      "sourcePath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-inlining-and-escape-analysis-validation-quality18/FrequencyProbe.java"
+    },
+    {
+      "actorPath": "bytecode.txt",
+      "sourcePath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-inlining-and-escape-analysis-validation-quality18/bytecode.txt"
+    },
+    {
+      "actorPath": "runtime.log",
+      "sourcePath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-inlining-and-escape-analysis-validation-quality18/tiered-floor60.log"
+    },
+    {
+      "actorPath": "compilation.xml",
+      "sourcePath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-inlining-and-escape-analysis-validation-quality18/tiered-floor60.xml"
+    }
+  ],
+  "reproduction": {
+    "compiler": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+    "runtime": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+    "compileArgs": [
+      "--release",
+      "25",
+      "-d",
+      "classes",
+      "FrequencyProbe.java"
+    ],
+    "runtimeArgs": [
+      "-Xbatch",
+      "-XX:+TieredCompilation",
+      "-XX:Tier4MinInvocationThreshold=60",
+      "-XX:+UnlockDiagnosticVMOptions",
+      "-XX:MinInlineFrequencyRatio=0.0085",
+      "-XX:+PrintFlagsFinal",
+      "-XX:+LogCompilation",
+      "-XX:LogFile=compilation.xml",
+      "-XX:CompileCommand=quiet",
+      "-XX:CompileCommand=compileonly,FrequencyProbe::caller",
+      "-XX:CompileCommand=PrintInlining,FrequencyProbe::caller",
+      "-cp",
+      "classes",
+      "FrequencyProbe"
+    ]
+  },
+  "isolation": "The coordinator copies only the listed fixtures into the actor workspace. Do not expose evaluator criteria, sibling cases, observations summary or review handoff.",
+  "caseId": "c2-frequency-floor-02"
+}

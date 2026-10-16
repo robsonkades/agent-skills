@@ -26,13 +26,22 @@ timing/outcome evidence cannot pass the affected claim. A failed optional profil
 invalidate independently complete latency evidence, but it cannot establish the causal explanation
 that required that recording. Disclose the gap and qualify each conclusion separately.
 
-Choose a required sample population and confidence treatment before interpreting p99.99. For a
-fixed deadline and zero violations in n independent, identically distributed trials, the exact
-one-sided 95% binomial upper bound on violation probability is `1 - 0.05^(1/n)`. At n=10,000,
-it is about 0.000300, not evidence of a guaranteed 0.0001 violation rate. Correlated requests,
-changing load and repeated looks invalidate that simple calculation; use run-level analysis and
-the `latency-statistics` skill. This is deadline exceedance inference, not quantile interpolation.
+Choose the sample population, stopping rule and confidence treatment before interpreting p99.99.
+For a fixed deadline and a predeclared sample of n independent, identically distributed trials,
+zero violations give the exact one-sided 95% binomial upper bound `1 - 0.05^(1/n)` on violation
+probability. At n=10,000,
+it is about 0.000300, not evidence of a guaranteed 0.0001 violation rate. Correlated requests or
+changing load violate that model; use suitable run-level analysis and `latency-statistics`.
+This is deadline exceedance inference, not quantile interpolation.
 See [NIST binomial intervals](https://www.itl.nist.gov/div898/handbook/prc/section2/prc241.htm).
+
+Read the harness's stopping, counter-reset and window-selection logic before applying this bound.
+Stopping on a favorable interim result or publishing the best quiet window requires inference
+valid for that rule; ordinary fixed-n intervals do not provide simultaneous 95% coverage across
+all looks. Merely reporting progress while keeping the predeclared final sample and analysis
+unchanged does not invalidate that final interval. Preserve original outcomes and either retain
+the planned terminal decision or justify a sequential method, such as an applicable
+[confidence sequence](https://arxiv.org/abs/1810.08240), for decisions during sampling.
 
 Choose steady state, burst, saturation, recovery, restart/warm-up and duration coverage from the
 behavior changed or claimed. Existing matching evidence can suffice; a narrow inference review

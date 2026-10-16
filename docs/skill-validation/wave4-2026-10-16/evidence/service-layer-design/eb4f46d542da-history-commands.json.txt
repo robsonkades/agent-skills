@@ -1,0 +1,67 @@
+[
+  {
+    "id": "01-syntax",
+    "executable": "C:/Program Files/Git/bin/bash.exe",
+    "args": [
+      "--noprofile",
+      "--norc",
+      "-n",
+      "/c/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/service-layer-design-validation/history-example.sh"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\service-layer-design-validation",
+    "expectedExit": 0,
+    "actualExit": 0,
+    "signal": null,
+    "error": null,
+    "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\service-layer-design-validation\\01-syntax.stdout.txt",
+    "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\service-layer-design-validation\\01-syntax.stderr.txt"
+  },
+  {
+    "id": "02-numeric-binary",
+    "executable": "C:/Program Files/Git/bin/bash.exe",
+    "args": [
+      "--noprofile",
+      "--norc",
+      "/c/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/service-layer-design-validation/history-wrapper.sh"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\service-layer-design-validation",
+    "expectedExit": 0,
+    "actualExit": 0,
+    "signal": null,
+    "error": null,
+    "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\service-layer-design-validation\\02-numeric-binary.stdout.txt",
+    "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\service-layer-design-validation\\02-numeric-binary.stderr.txt"
+  },
+  {
+    "id": "03-empty",
+    "executable": "C:/Program Files/Git/bin/bash.exe",
+    "args": [
+      "--noprofile",
+      "--norc",
+      "/c/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/service-layer-design-validation/history-wrapper.sh"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\service-layer-design-validation",
+    "expectedExit": 0,
+    "actualExit": 0,
+    "signal": null,
+    "error": null,
+    "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\service-layer-design-validation\\03-empty.stdout.txt",
+    "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\service-layer-design-validation\\03-empty.stderr.txt"
+  },
+  {
+    "id": "04-failed-producer",
+    "executable": "C:/Program Files/Git/bin/bash.exe",
+    "args": [
+      "--noprofile",
+      "--norc",
+      "/c/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/service-layer-design-validation/history-wrapper.sh"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\service-layer-design-validation",
+    "expectedExit": 23,
+    "actualExit": 23,
+    "signal": null,
+    "error": null,
+    "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\service-layer-design-validation\\04-failed-producer.stdout.txt",
+    "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\service-layer-design-validation\\04-failed-producer.stderr.txt"
+  }
+]

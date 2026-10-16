@@ -1,0 +1,16 @@
+Recomendo usar o dia disponível na investigação A e decidir amanhã pelo custo futuro total de 12 meses. Até essa conferência, manter H é a direção provisória. As premissas abaixo vêm dos documentos fornecidos; não executei experimentos.
+
+As alternativas já atendem aos requisitos, inclusive a transição de J, e Diego não atribui preferência residual além do custo. Os 180 mil já pagos em H são irrecuperáveis e não entram na comparação.
+
+H custa 240 mil. Se a fatura mensal de J for **m**, em milhares, J custa **12 + 12m**: entre 180 e 312 mil na faixa atual. O ponto de equilíbrio é **m = 19 mil/mês**. Portanto, J pode economizar 60 mil ou custar 72 mil a mais que H; a faixa, sozinha, não determina qual será mais barato. Seu ponto médio não é um custo esperado demonstrado.
+
+Na investigação A, o analista deve conferir com financeiro a fatura completa de J, classificar todos os itens e documentar o total mensal recorrente para o volume contratado, separando-o dos 12 mil fixos. O entregável para Diego é o valor confirmado ou uma faixa revisada com pendências explícitas.
+
+A regra para amanhã é:
+
+- Abaixo de 19 mil/mês: recomendar J para os 12 meses, com aprovação específica da migração por Diego.
+- Acima de 19 mil/mês: manter H.
+- Exatamente 19 mil/mês: há empate econômico; manter H como desempate, sem alegar economia.
+- Se restar uma faixa inteiramente de um lado do limite, seguir a mesma regra. Se ela ainda cruzar 19 mil, manter H por critério conservador explícito: seu pior custo conhecido é 240 mil, contra 312 mil na faixa original de J. Isso não prova que H terá o menor custo realizado.
+
+A pode mudar a escolha, embora seu benefício esperado não seja quantificável sem probabilidades e precisão prevista. B não acrescenta informação relevante ao critério decisório. C excede o prazo e introduz custo não orçado. A não autoriza a migração.

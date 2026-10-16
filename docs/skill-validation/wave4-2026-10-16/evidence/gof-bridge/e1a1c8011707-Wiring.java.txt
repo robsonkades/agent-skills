@@ -1,0 +1,18 @@
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Properties;
+
+final class Wiring {
+    record Application(ReportPublisher publisher, DirectoryStore store, DirectoryStore importer) { }
+
+    static Application start(Path configuration, Path workspace) throws IOException {
+        Properties settings = new Properties();
+        try (var input = Files.newInputStream(configuration)) {
+            settings.load(input);
+        }
+        var store = new DirectoryStore(workspace.resolve(settings.getProperty("publisher.root")));
+        var importer = new DirectoryStore(workspace.resolve(settings.getProperty("importer.root")));
+        return new Application(new ReportPublisher(store), store, importer);
+    }
+}

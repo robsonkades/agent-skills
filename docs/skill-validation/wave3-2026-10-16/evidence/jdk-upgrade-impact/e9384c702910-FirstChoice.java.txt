@@ -1,0 +1,9 @@
+import java.util.List;
+
+public final class FirstChoice {
+    private FirstChoice() {}
+
+    public static String first(List<String> values) {
+        return values.getFirst();
+    }
+}

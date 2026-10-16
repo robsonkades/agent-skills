@@ -1,0 +1,1 @@
+Positive affordable withdrawals must atomically subtract the amount and return true. A busy gate may refuse with false; when the gate is free and balance sufficient, acceptance is required. No deposits or fees occur in this fixture. The holdGate hook supports controlled tests without changing production synchronization.

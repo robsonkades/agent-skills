@@ -1,0 +1,37 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+const root='C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d',repo='C:/git/agent-skills',report=repo+'/docs/skill-validation/wave7-2026-10-16';
+const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
+const json=p=>JSON.parse(fs.readFileSync(p,'utf8'));
+const freeze=json(report+'/freeze.json'),base=json(report+'/baseline.json'),actors=json(report+'/actors.frozen.json.txt');
+assert.equal(sha(fs.readFileSync(report+'/criteria.frozen.json.txt')),freeze.criteriaSha256);
+assert.equal(sha(fs.readFileSync(report+'/actors.frozen.json.txt')),freeze.actorsSha256);
+assert.deepEqual(json(report+'/criteria.json'),json(report+'/criteria.frozen.json.txt'));
+assert.deepEqual(json(report+'/actors.json'),actors);
+const gradeSeal=json(report+'/root-grades-seal.json');
+assert.equal(sha(fs.readFileSync(report+'/root-grades.frozen.json.txt')),gradeSeal.sha256);
+assert.deepEqual(json(report+'/root-grades.json'),json(report+'/root-grades.frozen.json.txt'));
+assert.equal(gradeSeal.independentGradesFileExisted,false);
+const independent=json(root+'/review/actor-grades.json');
+assert.equal(independent.allWritesStopped,true);
+assert.equal(independent.grades.length,16);
+assert.equal(new Set(independent.grades.map(g=>g.sampleId)).size,16);
+for(const f of independent.inputs)assert.equal(sha(fs.readFileSync(root+'/'+f.path)),f.sha256);
+const results=json(report+'/results.json');
+assert.equal(sha(fs.readFileSync(root+'/review/actor-grades.json')),results.evidence.independentGradesSha256);
+assert.equal(gradeSeal.sha256,results.evidence.rootGradesFrozenSha256);
+assert.equal(sha(fs.readFileSync(root+'/review/criteria-review.json')),freeze.criteriaReviewSha256);
+assert.equal(sha(fs.readFileSync(root+'/review/criteria-resolution.json')),freeze.criteriaResolutionSha256);
+assert.equal(sha(fs.readFileSync(root+'/review/calibration-grades.json')),freeze.calibrationGradesSha256);
+for(const f of freeze.caseFiles)assert.equal(sha(fs.readFileSync(root+'/cases/'+f.caseId+'/input/'+f.path)),f.sha256);
+for(const f of freeze.probes)assert.equal(sha(fs.readFileSync(root+'/'+f.path)),f.sha256);
+for(const f of base.skill.files){assert.equal(sha(fs.readFileSync(root+'/snapshot/'+f.path)),f.sha256);assert.equal(sha(fs.readFileSync(repo+'/skills/'+base.skill.name+'/'+f.path)),f.sha256);}
+let protectedFiles=0;
+for(const r of actors.runs){assert.equal(json(r.directory+'/output/execution.json').allWritesStopped,true);for(const f of r.inputs){assert.equal(sha(fs.readFileSync(r.directory+'/'+f.path)),f.sha256,r.id+'/'+f.path);protectedFiles++;}}
+const manifest=json(report+'/artifact-manifest.json');let archived=0;
+for(const e of manifest.entries){if(e.archived){assert.equal(sha(fs.readFileSync(report+'/'+e.target)),e.sha256,e.target);archived++;}}
+const checks=json(report+'/rechecks.json').records;assert.equal(checks.length,16);assert.equal(new Set(checks.map(r=>r.run)).size,16);
+assert.equal(sha(fs.readFileSync(repo+'/registry/skills.yaml')),sha(Buffer.from(base.registryBefore)),'Registry unchanged from wave start');
+const result={at:new Date().toISOString(),pass:true,attempts:16,protectedFiles,archivedRawArtifacts:archived,rootJudgmentSealedBeforeIndependentGrades:true,independentReviewInputsVerified:true,skillVersion:'1.1.0',skillUnchanged:true,registryUnchanged:true,limits:'Hashes establish identity and preservation, not semantic correctness or complete read-access isolation.'};
+fs.writeFileSync(report+'/integrity-final.json',JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify(result));

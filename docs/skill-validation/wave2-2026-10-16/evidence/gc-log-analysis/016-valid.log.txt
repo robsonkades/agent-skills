@@ -1,0 +1,11 @@
+[0.001s][info][gc,init] Heap Region Size: 2M
+[600.000s][info][gc,heap ] GC(10) Eden regions: 200->0(40)
+[600.000s][info][gc,heap ] GC(10) Old regions: 10->20
+[600.000s][info][gc ] GC(10) Pause Young (Normal) (G1 Evacuation Pause) 150M->100M(256M) 2ms
+[601.000s][info][gc] GC(11) Concurrent Mark Cycle 10.000ms
+[602.000s][info][gc,heap ] GC(12) Eden regions: 20->0(40)
+[602.000s][info][gc,heap ] GC(12) Old regions: 20->22
+[602.000s][info][gc ] GC(12) Pause Young (Normal) (G1 Evacuation Pause) 150M->100M(256M) 4ms
+[604.000s][info][gc,heap ] GC(13) Eden regions: 40->0(40)
+[604.000s][info][gc,heap ] GC(13) Old regions: 22->26
+[604.000s][info][gc ] GC(13) Pause Young (Normal) (G1 Evacuation Pause) 150M->100M(256M) 6ms

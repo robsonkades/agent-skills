@@ -189,13 +189,27 @@ Measure replica additions/removals separately: a stable primary can have changed
 If placement filters replicas by zone, capacity or residency, test those rules and their movement
 properties rather than assuming the unconstrained ring's primary-owner invariants still apply.
 
-Two more worth having. **Balance:** with the chosen V, count/byte/rate/cost ratios stay under
-the recorded tolerance across several node counts and key sets. **Cross-process agreement:**
-the positions for a fixed node list, held as a golden file, must be reproduced byte-for-byte
-by the current code — the
-regression test for someone "tidying" the `node + '#' + i` format or swapping the hash, both
-silent, and both of which split the cluster's view of ownership. Include algorithm variant,
-seed, encoding, normalization, malformed-input policy, framing, unsigned ordering and collision cases in those vectors.
+**Balance:** with the chosen V, count/byte/rate/cost ratios stay under the recorded tolerance
+across several node counts and key sets.
+
+**Cross-process agreement:** matching node positions is necessary but insufficient. One client
+can hash `key`, another `"cache:" + key`, and both can preserve join monotonicity while choosing
+different owners. The [Guava hash contract](https://guava.dev/releases/33.4.8-jre/api/docs/com/google/common/hash/HashFunction.html)
+depends on the exact input bytes; a correct ring helper does not validate its caller's serializer.
+
+Version a golden fixture with the placement contract and fixed topology (node IDs, weights, V,
+epoch and replica policy). Record raw key input, encoded bytes, hash, expected primary and
+ordered physical replicas, or the expected rejection for invalid input. Retain node-point vectors
+and cover algorithm variant, seed, normalization, malformed input, framing, unsigned order,
+collisions and wrap-around. Trace which implementation/configuration each client actually selects,
+then run the fixture through its request-to-owner path, including key construction and replica
+filtering. A helper-only test cannot establish agreement for an untested router.
+
+Freeze expected values from the accepted contract or a known-compatible implementation, recording
+their provenance and checking independently where available; do not regenerate them from the
+candidate during the test. As a negative control, change only one client's key prefix while keeping
+node points fixed and require the agreement check to fail. Restore the prefix and require agreement.
+These checks cover the fixture, not every key or the safety of a membership handoff.
 
 ## Membership handoff
 

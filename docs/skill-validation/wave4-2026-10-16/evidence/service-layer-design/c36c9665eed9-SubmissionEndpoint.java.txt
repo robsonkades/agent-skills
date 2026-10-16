@@ -1,0 +1,11 @@
+// Partial source; service is the injected Spring transactional proxy.
+class SubmissionEndpoint {
+    private final SubmissionService service;
+    public Receipt submit(SubmitCommand command) {
+        try {
+            return Receipt.committed(service.submit(command));
+        } catch (TransactionSystemException failure) {
+            return Receipt.unknown(command.operationId(), failure);
+        }
+    }
+}

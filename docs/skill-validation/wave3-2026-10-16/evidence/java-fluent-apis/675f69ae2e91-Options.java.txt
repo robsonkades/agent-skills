@@ -1,0 +1,11 @@
+package sample;
+
+public interface Options {
+    // Each method returns the configured state. Receiver mutation is implementation-specific.
+    Options withLabel(String label);
+    Options withAudit(boolean enabled);
+    // Subsequent changes to either branch must not affect the other's configuration.
+    // An immutable implementation may return this.
+    Options copy();
+    Product build();
+}

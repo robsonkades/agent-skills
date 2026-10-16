@@ -1,0 +1,212 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "consistency-models",
+  "ownedPath": "C:/git/agent-skills/skills/consistency-models",
+  "recordKind": "Retrospective archive of the previously completed handoff; no skill files reopened.",
+  "versions": {
+    "committed": "1.3.5",
+    "assignment": "1.3.5",
+    "final": "1.3.6",
+    "reason": "Patch for visibility-watermark guidance; clean assignment baseline."
+  },
+  "baseline": {
+    "preExistingChanges": [],
+    "files": [
+      {
+        "path": "skills/consistency-models/skill.yaml",
+        "sha256": "39F3A1E7CB4A5C6ED010E0DA10348BA2E8634E8D688953975D881EE4144709F7"
+      },
+      {
+        "path": "skills/consistency-models/SKILL.md",
+        "sha256": "D6A9938686261CECB062C821F3BE2E6F680E27AFA5FEE2F8E35AD8A68696A8AB"
+      },
+      {
+        "path": "skills/consistency-models/references/requirement-to-model.md",
+        "sha256": "E70106FC77E2AEEC7FFF668D9B174A2F98A15A35E3829023EBC84B7DCEA509D5"
+      },
+      {
+        "path": "skills/consistency-models/references/read-your-writes-in-java.md",
+        "sha256": "976CB2CA454EFD80C7EFEA10E273C8B0EFBC7AA4DCF13EAA1F0564E0FCFED4BD"
+      }
+    ]
+  },
+  "files": [
+    {
+      "path": "skills/consistency-models/skill.yaml",
+      "changedByReviewer": true,
+      "sha256": "9A8433720653DD5F1D1DC6699959968397D6507B3D43757D11EF3A0748496FDB"
+    },
+    {
+      "path": "skills/consistency-models/SKILL.md",
+      "changedByReviewer": true,
+      "sha256": "E932E26E7F4B8E0A6E657C0E61369C11D2F034C0561D9155D9010AC4BAB70071"
+    },
+    {
+      "path": "skills/consistency-models/references/requirement-to-model.md",
+      "changedByReviewer": true,
+      "sha256": "45F6E0669B75E3F14675F23CDC0149BFDCC4E648321FF979BB6C83BC08E97D61"
+    },
+    {
+      "path": "skills/consistency-models/references/read-your-writes-in-java.md",
+      "changedByReviewer": true,
+      "sha256": "FB058ECF2AA43F09ECF30E88E48960B94E96BF55C6A19115F219FA75E191082A"
+    }
+  ],
+  "changes": [
+    {
+      "location": "SKILL.md:52",
+      "implemented": "Route token-gated reads through inspection of watermark advancement and effect coverage."
+    },
+    {
+      "location": "references/requirement-to-model.md:117",
+      "implemented": "Distinguish transport progress from visible effects; verify partition/history scope, unfinished effects behind a maximum completed offset, actual reader/snapshot and narrower per-object proof."
+    },
+    {
+      "location": "references/read-your-writes-in-java.md:80",
+      "implemented": "Explain PostgreSQL receive versus replay LSN and specify a lag test that separates receipt from apply; require effective replay pause rather than only a pause request."
+    },
+    {
+      "location": "skill.yaml:4",
+      "implemented": "Patch version 1.3.6."
+    }
+  ],
+  "preserved": [
+    "CAP/PACELC qualifications and session versus global scope.",
+    "Causal coherent-view boundaries, snapshot timing and failover/durability conditions.",
+    "Authoritative invariant-preserving writes and Spring routing guidance.",
+    "All four Java blocks unchanged against assignment snapshot.",
+    "No technology upgrade, new dependency or global implementation work."
+  ],
+  "commands": [
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --write skills/consistency-models/SKILL.md skills/consistency-models/references/requirement-to-model.md skills/consistency-models/references/read-your-writes-in-java.md skills/consistency-models/skill.yaml",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "All four files formatted; no additional changes."
+    },
+    {
+      "command": "node --input-type=module",
+      "cwd": "C:/git/agent-skills",
+      "input": "Read-only inline checks using repository parseManifest and parseSkillDocument: strict parsing, names/descriptions/version, packaged paths, routing, local links and heading anchors.",
+      "exitCode": 0,
+      "result": {
+        "manifestIssues": 0,
+        "descriptionMatches": true,
+        "version": "1.3.6",
+        "packagedEntries": 3,
+        "routedResources": 2,
+        "localLinks": 5,
+        "anchors": 3
+      }
+    },
+    {
+      "command": "git diff --check -- skills/consistency-models",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "No whitespace errors."
+    },
+    {
+      "command": "git diff --stat -- skills/consistency-models; git diff -- skills/consistency-models",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "Four files; 49 insertions and 5 deletions; inspected final diff."
+    },
+    {
+      "command": "Assignment/final snapshot comparison in functions JS",
+      "cwd": "C:/git/agent-skills",
+      "result": "All four Java blocks identical; clean assignment baseline and intended files confirmed."
+    }
+  ],
+  "validation": {
+    "structural": "Executed; passed.",
+    "technical": "Consequential new claims checked against primary engine/client documentation. No code changed.",
+    "behavioral": "Not executed.",
+    "walkthroughs": [
+      "Received progress advances while replay remains behind.",
+      "A maximum completed offset can skip an unfinished required effect.",
+      "Compatible per-object evidence can satisfy a narrower contract without a global prefix."
+    ],
+    "failedChecks": [],
+    "pendingGlobal": ["npm run registry:build", "npm run verify"],
+    "pendingGlobalReason": "Coordinator-only shared validation after all writers stop."
+  },
+  "sources": [
+    {
+      "title": "PostgreSQL 18 recovery functions",
+      "url": "https://www.postgresql.org/docs/18/functions-admin.html#FUNCTIONS-RECOVERY-CONTROL",
+      "supports": "Receive/replay distinction and requested versus effective replay pause."
+    },
+    {
+      "title": "Kafka 4.1.2 consumer API",
+      "url": "https://kafka.apache.org/41/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html",
+      "supports": "Partition-scoped positions, polling progress, recovery checkpoints and coordination with external effects."
+    }
+  ],
+  "limits": [
+    "No PostgreSQL replication fixture, Kafka integration test, Java compilation or independent behavioral evaluation ran.",
+    "Existing Java blocks remain partial unchanged sketches.",
+    "Prefix-hole example is a reasoning counterexample, not an executed test.",
+    "No measured efficacy claim; cases are synthetic development cases, not unseen holdouts.",
+    "This retrospective archive transcribes the earlier handoff and does not rerun its checks."
+  ],
+  "cases": [
+    {
+      "id": "receive-progress-gate",
+      "kind": "development",
+      "actor": {
+        "task": "Review the read-your-writes claim using the project artifacts and update docs/consistency-decision.md. State whether the configured path supports the contract, identify any necessary change and give a discriminating verification. Do not change implementation or contact a live database.",
+        "files": {
+          "docs/contract.md": "The writer returns a verified commit-linked barrier. Subsequent session reads must include that write. Waiting is limited to 500 ms, then refusal is allowed. Cross-client linearizability is not required.",
+          "docs/environment.md": "PostgreSQL 18. One stable replication history; the selected replica does not change during a request. The query transaction starts after the freshness gate and uses a fresh snapshot.",
+          "sql/progress.sql": "SELECT pg_last_wal_receive_lsn();\n",
+          "src/read-path.txt": "The application repeatedly executes progress.sql on the selected replica. When progress covers the barrier, it opens the data transaction on that same replica. Otherwise it waits within the deadline or refuses.",
+          "evidence/replication.json": "{\n  \"syntheticFixture\": true,\n  \"barrier\": \"0/500\",\n  \"acknowledgedWriteRevision\": 2,\n  \"sampleA\": {\n    \"receive\": \"0/600\",\n    \"replay\": \"0/400\",\n    \"rowRevision\": 1\n  },\n  \"sampleB\": {\n    \"receive\": \"0/600\",\n    \"replay\": \"0/600\",\n    \"rowRevision\": 2\n  }\n}",
+          "docs/consistency-decision.md": "Existing read-your-writes decision awaiting review."
+        }
+      },
+      "evaluatorOnly": {
+        "expected": [
+          "Inspect the SQL actually used by the gate.",
+          "Identify receipt progress as insufficient to permit the read in sample A.",
+          "Preserve the valid deadline, stable routing and fresh-snapshot conditions.",
+          "Recommend applicable replay/visibility evidence and a test separating receipt from apply."
+        ],
+        "failure": [
+          "A longer fixed delay or global linearizability prescribed without need.",
+          "Dependency upgrade prescribed.",
+          "An unexecuted integration test claimed as executed.",
+          "Receive progress accepted as proof of the required visible write."
+        ]
+      }
+    },
+    {
+      "id": "replay-progress-gate",
+      "kind": "constraint-flip-development",
+      "actor": {
+        "task": "Review the read-your-writes claim using the project artifacts and update docs/consistency-decision.md. State whether the configured path supports the contract, identify any necessary change and give a discriminating verification. Do not change implementation or contact a live database.",
+        "baseCase": "receive-progress-gate",
+        "singleMaterialChange": "Only sql/progress.sql changes to replay progress.",
+        "replaceFiles": {
+          "sql/progress.sql": "SELECT pg_last_wal_replay_lsn();\n"
+        }
+      },
+      "evaluatorOnly": {
+        "expected": [
+          "Recognize the gate cannot pass in sample A and can pass in sample B under the supplied conditions.",
+          "Preserve the adequate mechanism instead of repeating the receipt-based defect.",
+          "Scope the conclusion to the documented barrier, history, reader and snapshot."
+        ],
+        "failure": [
+          "Same receipt-based diagnosis despite changed SQL.",
+          "Claims of general failover safety or executed runtime testing.",
+          "Unnecessary global ordering or delay added to the adequate path."
+        ]
+      }
+    }
+  ],
+  "crossSkill": {
+    "requiredActions": [],
+    "notes": ["Existing referrals retained; no cross-skill correction required."]
+  },
+  "allWritesStopped": true
+}

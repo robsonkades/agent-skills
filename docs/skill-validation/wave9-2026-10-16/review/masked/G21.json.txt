@@ -1,0 +1,61 @@
+{
+  "id": "G21",
+  "caseId": "R1",
+  "review": "The repair is confined to RetryEngine.java and retains the public signature and Java 17 API baseline.\n\nThe original loop generated a new intent ID on every attempt, ignored existing terminal/UNKNOWN state, converted unresolved effects into rejection, admitted calls without checking the remaining budget, used the smaller delay, and retained replies while sleeping. These behaviors violated the supplied component contract.\n\nThe repaired engine returns existing APPLIED/REJECTED snapshots unchanged. Every dispatched attempt uses the original immutable intent and configured attempt timeout. An authoritative OK is the only new APPLIED transition and its receipt is preserved. UNKNOWN is persisted before any further admission decision. Because the supplied Contract.REPLAY_SAFE is false and no reconciliation port exists, an initially or newly unknown operation stops without automatic redispatch. Known TRANSIENT outcomes still retry when count, time, cancellation and token admission allow it. PERMANENT and other normal stops become REJECTED only without unresolved effects.\n\nReplies are closed once with try-with-resources before persistence decisions, retry admission, sleep or normal return. Interrupted dispatch persists UNKNOWN and propagates InterruptedException. Pre-interruption and interruption after sleep prevent another call; interruption is not converted into a successful or rejected return. Cancellation is checked before dispatch and around backoff.\n\nAdmission uses comparison and subtraction instead of adding durations, so attempt, reserve and wait arithmetic cannot overflow. Each retry waits max(localWaitNanos, serverMinimumNanos), requires space for the full delay plus attempt and reserve, and obtains one token. The initial call needs no token. After sleeping the engine rechecks time and cancellation; an oversleep can consume a grant without authorizing a call. The chosen local delay is preserved without adding randomness.\n\nValidation used the actual output implementation through the inspected runner: node run.mjs Verification compiled with javac --release 17 and passed 29 named scenarios; node run.mjs Smoke passed. The verification covers stable identity/payload and timeout propagation, permitted retries, UNKNOWN across a second invocation, terminal replay, exact/insufficient/overflowing budgets, server/local minimum delays, attempt exhaustion, denied tokens, cancellation, interrupted dispatch/sleep and reply ownership. A BigInteger test oracle checks budget admission independently of the implementation's subtraction. All seven immutable project copies matched their inputs by SHA-256. Installed Java and javac reported 25.0.3; every Java subprocess had the runner's or version probe's 20-second timeout.\n\nThese are deterministic authored simulations. The store's durability and atomicity are supplied assumptions, not established by the in-memory fixture. There is no database/isolation, framework, provider endpoint/version, transport cancellation or recovery implementation to validate. The fixed false replay-safety contract is exercised; no alternate true contract was substituted. No result establishes physical cancellation, production latency, fleet amplification or a provider's replay/retention guarantee. A real integration would need contract-specific outcome classification, durable recovery and fault tests across dispatch/acknowledgement loss.\n\nThe supplied idempotency, timeouts-and-deadlines, retries-and-backoff skills and their six local references informed the repair. References to other skills and external providers were not followed: only the supplied snapshots were available/authorized, and browsing was forbidden.\n\n",
+  "result": {
+    "task": "G21",
+    "decision": "Repaired the supplied RetryEngine.java within the fixed component contract.",
+    "implementation": "RetryEngine.java",
+    "verification": "Verification.java",
+    "baseline": {
+      "sourceAndApi": "Java 17 (--release 17)",
+      "executedJdk": "Temurin 25.0.3+9",
+      "replaySafe": false
+    },
+    "behavior": [
+      "Stable intent identity and payload across allowed attempts; authoritative OK receipt persisted.",
+      "Terminal snapshots returned without mutation; unresolved state retained and unsafe redispatch refused.",
+      "Replies closed exactly once before retry wait, another call or normal return.",
+      "Overflow-safe deadline admission, max(local delay, server minimum), one token per retry admission, and rechecks after sleep.",
+      "Interrupted dispatch preserves UNKNOWN and propagates; pre-interruption and cancellation prevent new calls."
+    ],
+    "checks": [
+      {
+        "command": "node run.mjs Verification",
+        "exitCode": 0,
+        "result": "29 scenarios passed against the actual implementation; javac --release 17."
+      },
+      {
+        "command": "node run.mjs Smoke",
+        "exitCode": 0,
+        "result": "Smoke passed; javac --release 17."
+      },
+      {
+        "command": "SHA-256 comparison of the seven immutable project copies",
+        "exitCode": 0,
+        "result": "All unchanged."
+      },
+      {
+        "command": "20-second bounded java -version and javac -version probes",
+        "exitCode": 0,
+        "result": "Java and javac 25.0.3."
+      }
+    ],
+    "limits": [
+      "Authored deterministic simulation; durable atomic Store and reply semantics are supplied contracts.",
+      "REPLAY_SAFE=false is fixed; true-mode replay was not substituted or executed.",
+      "No real provider, database, transport, network latency, physical cancellation or fleet behavior was tested.",
+      "No authoritative reconciliation operation or provider retention guarantee is supplied.",
+      "References outside the supplied skill snapshots were not opened."
+    ],
+    "artifacts": [
+      "RetryEngine.java",
+      "Verification.java",
+      "REVIEW.md",
+      "result.json",
+      "execution.json"
+    ],
+    "scope": "Only output/ implementation and task artifacts written; no repository verify, global install, network or real configuration change."
+  },
+  "implementation": "public final class RetryEngine {\n    public static Ports.Result execute(Ports.Intent intent, Ports.Policy p, Ports.Store store,\n            Ports.Operation operation, Ports.Runtime runtime) throws InterruptedException {\n        int attempts = 0;\n        Ports.Snapshot initial = store.snapshot();\n        if (initial.state() == Ports.State.APPLIED || initial.state() == Ports.State.REJECTED) {\n            return new Ports.Result(initial, attempts);\n        }\n        boolean unresolved = initial.state() == Ports.State.UNKNOWN;\n        while (true) {\n            checkInterrupted();\n            if ((unresolved && !Contract.REPLAY_SAFE) || runtime.cancelled()\n                    || !fits(runtime.remainingNanos(), 0, p)) {\n                return stopped(store, unresolved, attempts);\n            }\n            checkInterrupted();\n            Ports.Reply response;\n            attempts++;\n            try {\n                response = operation.call(intent, p.attemptNanos());\n            } catch (InterruptedException interrupted) {\n                // Dispatch may have applied even though its caller was interrupted.\n                store.unknown();\n                throw interrupted;\n            }\n            Ports.Kind kind;\n            String receipt;\n            long serverMinimum;\n            try (Ports.Reply reply = response) {\n                kind = reply.kind();\n                receipt = kind == Ports.Kind.OK ? reply.receipt() : null;\n                serverMinimum = reply.serverMinimumNanos();\n            }\n            if (kind == Ports.Kind.OK) {\n                store.applied(receipt);\n                return new Ports.Result(store.snapshot(), attempts);\n            }\n            if (kind == Ports.Kind.UNKNOWN) {\n                unresolved = true;\n                store.unknown();\n            }\n            checkInterrupted();\n            if (kind == Ports.Kind.PERMANENT || attempts >= p.maxAttempts()\n                    || (unresolved && !Contract.REPLAY_SAFE) || runtime.cancelled()) {\n                return stopped(store, unresolved, attempts);\n            }\n            long wait = Math.max(p.localWaitNanos(), serverMinimum);\n            if (!fits(runtime.remainingNanos(), wait, p) || !runtime.acquireRetry()) {\n                return stopped(store, unresolved, attempts);\n            }\n            checkInterrupted();\n            if (runtime.cancelled() || !fits(runtime.remainingNanos(), wait, p)) {\n                return stopped(store, unresolved, attempts);\n            }\n            runtime.sleep(wait);\n        }\n    }\n\n    private static boolean fits(long remaining, long wait, Ports.Policy policy) {\n        // Subtract only after comparisons: sums may exceed Long.MAX_VALUE.\n        if (remaining < policy.attemptNanos()) return false;\n        remaining -= policy.attemptNanos();\n        if (remaining < policy.reserveNanos()) return false;\n        return wait <= remaining - policy.reserveNanos();\n    }\n\n    private static void checkInterrupted() throws InterruptedException {\n        if (Thread.currentThread().isInterrupted()) {\n            throw new InterruptedException(\"Retry execution interrupted\");\n        }\n    }\n\n    private static Ports.Result stopped(Ports.Store store, boolean unresolved, int attempts) {\n        if (unresolved) store.unknown();\n        else store.rejected();\n        return new Ports.Result(store.snapshot(), attempts);\n    }\n}\n"
+}

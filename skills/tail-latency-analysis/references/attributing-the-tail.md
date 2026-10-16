@@ -49,12 +49,13 @@ networks differ by configuration/version.
 ## JFR discipline
 
 - Inspect event metadata and recording settings on the exact JDK.
-- Verify event enablement, threshold, stack traces and sampling period.
+- Verify event enablement, threshold, stack traces, sampling period and event-rate throttle
+  where the target event supports it.
 - Use stable semantic groups in the skill; keep version-specific names in runbooks tested
   against that runtime.
-- Lower thresholds when missing coverage matters to the decision, in a controlled recording
-  that accounts for volume/overhead.
-- A JFR absence can mean disabled/thresholded data, not absence of the mechanism.
+- Adjust the filter limiting the required coverage in a controlled recording that accounts
+  for volume/overhead. Lowering a duration threshold does not remove an event-rate throttle.
+- A JFR absence can mean disabled, thresholded or throttled data, not absence of the mechanism.
 
 Use unified logs when they provide the authoritative phase timing, and correlate rather
 than estimating one signal from another.
@@ -64,6 +65,15 @@ defines native events; Java-side definitions include
 [SocketReadEvent](https://github.com/openjdk/jdk/blob/jdk-25%2B36/src/jdk.jfr/share/classes/jdk/jfr/events/SocketReadEvent.java).
 The `.jfc` files instead configure recording settings. Inspect the actual target's metadata
 and recording; these source examples neither prove enablement nor require a JDK upgrade.
+
+In JDK 25, [event throttling](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/Throttle.html)
+applies after other filters, including the duration threshold. The `SocketReadEvent` above
+supports it; the pinned [default configuration](https://github.com/openjdk/jdk/blob/jdk-25%2B36/src/jdk.jfr/share/conf/jfr/default.jfc)
+enables `jdk.SocketRead` with a 1 ms threshold and a `100/s` throttle. That is not exhaustive
+coverage of qualifying reads. Compare independent request/socket evidence and effective
+recording settings before excluding I/O as a contributor or estimating its frequency from
+event counts. Do not assume that older JDKs or other events expose the same setting, or
+disable throttling across the recording without a bounded capture and volume budget.
 
 ## Causal checks
 

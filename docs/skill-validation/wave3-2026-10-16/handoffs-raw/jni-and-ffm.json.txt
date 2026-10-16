@@ -1,0 +1,465 @@
+{
+  "status": "NO_CHANGES_NEEDED",
+  "skill": "jni-and-ffm",
+  "ownedPath": "skills/jni-and-ffm/**",
+  "allWritesStopped": true,
+  "scope": "Review existing specialist native-boundary diagnosis/design guidance and retain its role; no package-manager or neighboring changes.",
+  "assessmentSentBeforeWrites": true,
+  "baseline": {
+    "committedVersion": "1.3.4",
+    "assignmentVersion": "1.3.4",
+    "preExistingVersionBump": false,
+    "committedStagedUnstagedAndUntracked": "Assignment-time owned git status and both diffs were empty. All five package files read in full.",
+    "files": [
+      {
+        "path": "skills/jni-and-ffm/skill.yaml",
+        "sha256": "E90FEA8A73388ACDDC5E6C12C93BB0F2B0A9F60BCC401804F1740A66F69CD44F"
+      },
+      {
+        "path": "skills/jni-and-ffm/SKILL.md",
+        "sha256": "22BF94672FC864B8CA2D4005A59DA564DFCD83B9ABFC289F72CE85FE64EBD39C"
+      },
+      {
+        "path": "skills/jni-and-ffm/references/pinning-and-native-access.md",
+        "sha256": "904C3A4DF9B4C7FF6376A1979DAC22B03080EE7F3922918D4FD67375229E85A6"
+      },
+      {
+        "path": "skills/jni-and-ffm/references/critical-and-decision-matrix.md",
+        "sha256": "F52FEC2F508082D7E36E0864310F18ADABEA07C5D3A38868544F90E1767419C8"
+      },
+      {
+        "path": "skills/jni-and-ffm/references/arenas-upcalls-and-gc.md",
+        "sha256": "09E446335B65F9D5F1B040604362C9C45D7BEAABA4A5EF6BEF088094612FB176"
+      }
+    ]
+  },
+  "versions": {
+    "committed": "1.3.4",
+    "assignment": "1.3.4",
+    "final": "1.3.4",
+    "rationale": "No owned package content changed, so repository policy requires no bump."
+  },
+  "findingsCorrected": [],
+  "findingsReviewed": [
+    {
+      "id": "native-contract-and-critical",
+      "disposition": "PRESERVED",
+      "locations": [
+        "skills/jni-and-ffm/SKILL.md:34",
+        "skills/jni-and-ffm/SKILL.md:41",
+        "skills/jni-and-ffm/references/critical-and-decision-matrix.md:18",
+        "skills/jni-and-ffm/references/critical-and-decision-matrix.md:36"
+      ],
+      "finding": "Existing guidance obtains the actual project/native contract before selection, rejects percentile-only critical eligibility, and permits retaining an adequate audited path.",
+      "consequence": "Prevents unsafe optimization and a JNI-to-FFM rewrite being presented as a solution for blocking native frames. No supported defect was found."
+    },
+    {
+      "id": "arenas-upcalls-and-affinity",
+      "disposition": "PRESERVED",
+      "locations": [
+        "skills/jni-and-ffm/SKILL.md:54",
+        "skills/jni-and-ffm/references/arenas-upcalls-and-gc.md:6",
+        "skills/jni-and-ffm/references/arenas-upcalls-and-gc.md:19",
+        "skills/jni-and-ffm/references/arenas-upcalls-and-gc.md:59"
+      ],
+      "finding": "Existing instructions distinguish Java arena confinement, native OS-thread session affinity, shared-stub lifetime and actual completion after timeout/cancellation.",
+      "consequence": "Prevents wrong-thread calls, premature arena closure and incorrect pool-based affinity claims. Paired technical controls matched the documented confinement distinction."
+    },
+    {
+      "id": "runtime-and-observation",
+      "disposition": "PRESERVED",
+      "locations": [
+        "skills/jni-and-ffm/references/pinning-and-native-access.md:19",
+        "skills/jni-and-ffm/references/pinning-and-native-access.md:64",
+        "skills/jni-and-ffm/references/pinning-and-native-access.md:99",
+        "skills/jni-and-ffm/references/arenas-upcalls-and-gc.md:127"
+      ],
+      "finding": "Current content conditions diagnostics, module authorization, executor admission and collector claims on the deployed runtime rather than inferring them from API names.",
+      "consequence": "Preserves useful version/observation boundaries. No performance gain, collector completeness or carrier telemetry coverage is established by this review."
+    }
+  ],
+  "remainingFindings": [],
+  "noChangeRationale": "Primary contracts and the limited executable controls supported the existing consequential guidance. No domain-specific defect or necessary ergonomic improvement was identified; changing or expanding the package solely to create a revision would not be justified.",
+  "filesChangedByReviewer": [],
+  "preExistingChanges": [],
+  "filesUnchanged": [
+    "skills/jni-and-ffm/skill.yaml",
+    "skills/jni-and-ffm/SKILL.md",
+    "skills/jni-and-ffm/references/pinning-and-native-access.md",
+    "skills/jni-and-ffm/references/critical-and-decision-matrix.md",
+    "skills/jni-and-ffm/references/arenas-upcalls-and-gc.md"
+  ],
+  "capabilitiesPreserved": [
+    "Actual compiler/runtime/native-library/ABI inspection with final FFM baseline 22 and no implicit upgrades.",
+    "Separate transition, marshaling, checks, native work and queueing; same-function measurements and no service-gain inference from microbenchmarks.",
+    "Retain audited JNI/plain FFM, select generation or isolation conditionally, and consider batching costs.",
+    "All-cases critical eligibility, no Java callback, temporary heap-address lifetime and no universal duration threshold.",
+    "Carrier capture diagnostics with JFR absence limits and bounded platform, async-native or process alternatives.",
+    "Native OS-thread session affinity distinct from Java arena confinement and virtual-thread identity.",
+    "Confined/shared/automatic/global ownership, callback quiescence, bounded queues and actual-completion lifetime after abandonment.",
+    "JNI JNIEnv/local/global reference ownership and critical array-release modes.",
+    "Upcall Throwable containment, supported native error channels, captureCallState, varargs and per-target ABI layout checks.",
+    "JDK-specific native authorization, preview/tooling boundaries and collector caveats."
+  ],
+  "capabilitiesRemovedOrReplaced": [],
+  "checks": {
+    "structuralExecuted": [
+      {
+        "name": "package",
+        "cmd": "@'\nimport fs from 'node:fs';\nimport path from 'node:path';\nimport { parseManifest } from './packages/core/src/domain/manifest.ts';\nimport { buildSkillPackage } from './packages/core/src/domain/skill-package.ts';\nimport { validatePackage } from './packages/core/src/application/validate-package.ts';\nconst root = path.resolve('skills/jni-and-ffm');\nconst paths = [];\nfunction walk(dir) { for (const entry of fs.readdirSync(dir, {withFileTypes:true})) { const absolute = path.join(dir,entry.name); if(entry.isDirectory()) walk(absolute); else paths.push(absolute); } }\nwalk(root);\nconst files = paths.map(absolute=>({path:path.relative(root,absolute).split(path.sep).join('/'),bytes:fs.readFileSync(absolute)}));\nconst parsed = parseManifest(fs.readFileSync(path.join(root,'skill.yaml'),'utf8'),{strict:true,source:'skills/jni-and-ffm/skill.yaml'});\nconst pkg = buildSkillPackage(parsed.manifest,files);\nconst report = validatePackage(pkg,{directoryName:'jni-and-ffm'});\nconst brokenLinks = [];\nlet linksChecked = 0;\nfor (const file of files.filter(file=>file.path.endsWith('.md'))) {\n for (const match of Buffer.from(file.bytes).toString('utf8').matchAll(/\\[[^\\]]*\\]\\((<[^>]*>|[^)]+)\\)/g)) {\n  const destination = match[1].startsWith('<') ? match[1].slice(1,-1) : match[1];\n  const target = destination.split('#')[0];\n  if(!target || /^[a-z][a-z0-9+.-]*:/i.test(target)) continue;\n  linksChecked++;\n  if(!fs.existsSync(path.resolve(root,path.dirname(file.path),target))) brokenLinks.push({from:file.path,target});\n }\n}\nconst issues = [...parsed.issues,...report.issues];\nconsole.log(JSON.stringify({runtime:process.version,skill:parsed.manifest.name,version:parsed.manifest.version,files:files.map(f=>f.path),issues,linksChecked,brokenLinks},null,2));\nif(issues.length || brokenLinks.length) process.exitCode=1;\n\n'@ | node --input-type=module",
+        "chunk_id": "314787",
+        "wall_time_seconds": 0.1676598,
+        "exit_code": 0,
+        "original_token_count": 81,
+        "output": "{\n  \"runtime\": \"v25.6.1\",\n  \"skill\": \"jni-and-ffm\",\n  \"version\": \"1.3.4\",\n  \"files\": [\n    \"references/arenas-upcalls-and-gc.md\",\n    \"references/critical-and-decision-matrix.md\",\n    \"references/pinning-and-native-access.md\",\n    \"SKILL.md\",\n    \"skill.yaml\"\n  ],\n  \"issues\": [],\n  \"linksChecked\": 4,\n  \"brokenLinks\": []\n}\n",
+        "workingDirectory": "C:/git/agent-skills"
+      },
+      {
+        "name": "format",
+        "cmd": "node node_modules/prettier/bin/prettier.cjs --check skills/jni-and-ffm/SKILL.md skills/jni-and-ffm/skill.yaml skills/jni-and-ffm/references/*.md",
+        "chunk_id": "724ee1",
+        "wall_time_seconds": 0.2201838,
+        "exit_code": 0,
+        "original_token_count": 17,
+        "output": "Checking formatting...\nAll matched files use Prettier code style!\n",
+        "workingDirectory": "C:/git/agent-skills"
+      },
+      {
+        "name": "whitespace",
+        "cmd": "git diff --check -- skills/jni-and-ffm",
+        "chunk_id": "e0db0c",
+        "wall_time_seconds": 0.0602696,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": "",
+        "workingDirectory": "C:/git/agent-skills"
+      }
+    ],
+    "toolchainInspection": {
+      "name": "tools",
+      "cmd": "Get-Command java, javac, clang, gcc, cl -ErrorAction SilentlyContinue | Select-Object Name, Source; & 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -version",
+      "chunk_id": "224916",
+      "wall_time_seconds": 0.2162373,
+      "exit_code": 0,
+      "original_token_count": 89,
+      "output": "\r\nopenjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\nName      Source\r\n----      ------\r\njava.exe  C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe\r\njavac.exe C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe\r\n\r\n",
+      "workingDirectory": "C:/git/agent-skills"
+    },
+    "finalOwnedState": {
+      "command": "git status --short -- skills/jni-and-ffm; git diff --stat -- skills/jni-and-ffm; git diff --cached -- skills/jni-and-ffm; $nativeFinalFiles = rg --files skills/jni-and-ffm; $nativeFinalFiles | ForEach-Object { [pscustomobject]@{Path=$_;Sha256=(Get-FileHash -LiteralPath $_ -Algorithm SHA256).Hash} } | ConvertTo-Json -Depth 3",
+      "workingDirectory": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "Empty status/staged/unstaged diff; all five SHA-256 hashes match assignment baseline.",
+      "output": "[\r\n  {\r\n    \"Path\": \"skills/jni-and-ffm\\\\skill.yaml\",\r\n    \"Sha256\": \"E90FEA8A73388ACDDC5E6C12C93BB0F2B0A9F60BCC401804F1740A66F69CD44F\"\r\n  },\r\n  {\r\n    \"Path\": \"skills/jni-and-ffm\\\\SKILL.md\",\r\n    \"Sha256\": \"22BF94672FC864B8CA2D4005A59DA564DFCD83B9ABFC289F72CE85FE64EBD39C\"\r\n  },\r\n  {\r\n    \"Path\": \"skills/jni-and-ffm\\\\references\\\\pinning-and-native-access.md\",\r\n    \"Sha256\": \"904C3A4DF9B4C7FF6376A1979DAC22B03080EE7F3922918D4FD67375229E85A6\"\r\n  },\r\n  {\r\n    \"Path\": \"skills/jni-and-ffm\\\\references\\\\critical-and-decision-matrix.md\",\r\n    \"Sha256\": \"F52FEC2F508082D7E36E0864310F18ADABEA07C5D3A38868544F90E1767419C8\"\r\n  },\r\n  {\r\n    \"Path\": \"skills/jni-and-ffm\\\\references\\\\arenas-upcalls-and-gc.md\",\r\n    \"Sha256\": \"09E446335B65F9D5F1B040604362C9C45D7BEAABA4A5EF6BEF088094612FB176\"\r\n  }\r\n]\r\n"
+    },
+    "technicalExecuted": {
+      "exactRunnerCommand": "@'\nimport fs from 'node:fs';\nimport path from 'node:path';\nimport { spawnSync } from 'node:child_process';\nconst root = 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jni-and-ffm-validation';\nconst jdk = 'C:/Users/robso/.jdks/temurin-25.0.3/bin';\nconst results = [];\nfunction run(id, executable, args, cwd) {\n  const result = spawnSync(executable, args, {cwd, encoding:'utf8', timeout:15000, windowsHide:true});\n  fs.writeFileSync(path.join(root, id + '.stdout.txt'), result.stdout ?? '');\n  fs.writeFileSync(path.join(root, id + '.stderr.txt'), result.stderr ?? '');\n  const record = {id, executable, args, cwd, timeoutMs:15000, status:result.status, signal:result.signal, error:result.error ? String(result.error) : null, stdout:result.stdout, stderr:result.stderr};\n  results.push(record);\n  return record;\n}\nfor (const name of ['a','b']) {\n  const actor = JSON.parse(fs.readFileSync(path.join(root, 'actor-' + name + '.json'),'utf8'));\n  const dir = path.join(root, 'case-' + name);\n  fs.mkdirSync(path.join(dir,'classes'),{recursive:true});\n  for(const [file,source] of Object.entries(actor.files)) fs.writeFileSync(path.join(dir,file),source);\n  const compile = run('compile-' + name,path.join(jdk,'javac.exe'),['--release','22','-Xlint:all','-d','classes',...Object.keys(actor.files)],dir);\n  if(compile.status === 0) run('run-' + name,path.join(jdk,'java.exe'),['--enable-native-access=ALL-UNNAMED','--illegal-native-access=deny','-cp','classes','BoundaryTest'],dir);\n}\nconst bDir = path.join(root, 'case-b');\nconst compileControls = run('compile-controls',path.join(jdk,'javac.exe'),['--release','22','-Xlint:all','-cp','classes','-d','classes','../ScopeControls.java'],bDir);\nif(compileControls.status === 0) run('run-controls',path.join(jdk,'java.exe'),['--enable-native-access=ALL-UNNAMED','--illegal-native-access=deny','-cp','classes','ScopeControls'],bDir);\nrun('run-denied-access',path.join(jdk,'java.exe'),['--illegal-native-access=deny','-cp','classes','BoundaryTest'],bDir);\nconst byId = Object.fromEntries(results.map(result=>[result.id,result]));\nconst checks = {\n  compilationA:byId['compile-a']?.status === 0,\n  compilationB:byId['compile-b']?.status === 0,\n  confinedWorkerRejected:byId['run-a']?.status === 1 && byId['run-a']?.stderr.includes('WrongThreadException'),\n  sharedWorkerAccepted:byId['run-b']?.status === 0 && byId['run-b']?.stdout.includes('PASS one callback returned 7'),\n  scopeControlCompilation:byId['compile-controls']?.status === 0,\n  scopeControls:byId['run-controls']?.status === 0 && byId['run-controls']?.stdout.includes('PASS IllegalStateException before callback') && byId['run-controls']?.stdout.includes('PASS IllegalArgumentException before callback'),\n  deniedAccess:byId['run-denied-access']?.status === 1 && byId['run-denied-access']?.stderr.includes('IllegalCallerException'),\n  noTimeoutOrSpawnError:results.every(result=>!result.error && result.signal === null)\n};\nconst output = {compilerApiTarget:22,runtime:'Temurin 25.0.3+9',checks,results};\nfs.writeFileSync(path.join(root,'technical-results.json'),JSON.stringify(output,null,2)+'\\n');\nconsole.log(JSON.stringify(output,null,2));\nif(Object.values(checks).some(pass=>!pass)) process.exitCode=1;\n'@ | node --input-type=module",
+      "runnerWorkingDirectory": "C:/git/agent-skills",
+      "runnerExitCode": 0,
+      "resultsPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jni-and-ffm-validation/technical-results.json",
+      "checks": {
+        "compilationA": true,
+        "compilationB": true,
+        "confinedWorkerRejected": true,
+        "sharedWorkerAccepted": true,
+        "scopeControlCompilation": true,
+        "scopeControls": true,
+        "deniedAccess": true,
+        "noTimeoutOrSpawnError": true
+      },
+      "commandsAndOutputs": [
+        {
+          "id": "compile-a",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+          "args": [
+            "--release",
+            "22",
+            "-Xlint:all",
+            "-d",
+            "classes",
+            "NativeFixture.java",
+            "WorkerBoundary.java",
+            "BoundaryTest.java",
+            "RequestArenaFactory.java"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\jni-and-ffm-validation\\case-a",
+          "timeoutMs": 15000,
+          "status": 0,
+          "signal": null,
+          "error": null,
+          "stdout": "",
+          "stderr": "NativeFixture.java:26: warning: [restricted] Linker.upcallStub(MethodHandle,FunctionDescriptor,Arena,Option...) is a restricted method.\r\n        MemorySegment stub = linker.upcallStub(target, descriptor, stubArena);\r\n                                   ^\r\n  (Restricted methods are unsafe and, if used incorrectly, might crash the Java runtime or corrupt memory)\r\nNativeFixture.java:27: warning: [restricted] Linker.downcallHandle(MemorySegment,FunctionDescriptor,Option...) is a restricted method.\r\n        downcall = linker.downcallHandle(stub, descriptor);\r\n                         ^\r\n  (Restricted methods are unsafe and, if used incorrectly, might crash the Java runtime or corrupt memory)\r\n2 warnings\r\n"
+        },
+        {
+          "id": "run-a",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+          "args": [
+            "--enable-native-access=ALL-UNNAMED",
+            "--illegal-native-access=deny",
+            "-cp",
+            "classes",
+            "BoundaryTest"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\jni-and-ffm-validation\\case-a",
+          "timeoutMs": 15000,
+          "status": 1,
+          "signal": null,
+          "error": null,
+          "stdout": "",
+          "stderr": "Exception in thread \"main\" java.util.concurrent.ExecutionException: java.lang.WrongThreadException: Attempted access outside owning thread\r\n\tat java.base/java.util.concurrent.FutureTask.report(FutureTask.java:124)\r\n\tat java.base/java.util.concurrent.FutureTask.get(FutureTask.java:193)\r\n\tat WorkerBoundary.execute(WorkerBoundary.java:18)\r\n\tat BoundaryTest.main(BoundaryTest.java:4)\r\nCaused by: java.lang.WrongThreadException: Attempted access outside owning thread\r\n\tat java.base/jdk.internal.foreign.MemorySessionImpl.wrongThread(MemorySessionImpl.java:330)\r\n\tat java.base/jdk.internal.misc.ScopedMemoryAccess$ScopedAccessError.newRuntimeException(ScopedMemoryAccess.java:114)\r\n\tat java.base/jdk.internal.foreign.MemorySessionImpl.checkValidState(MemorySessionImpl.java:217)\r\n\tat java.base/jdk.internal.foreign.ConfinedSession.acquire0(ConfinedSession.java:53)\r\n\tat NativeFixture.call(NativeFixture.java:42)\r\n\tat WorkerBoundary.lambda$execute$0(WorkerBoundary.java:17)\r\n\tat java.base/java.util.concurrent.FutureTask.run(FutureTask.java:328)\r\n\tat java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1090)\r\n\tat java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:614)\r\n\tat java.base/java.lang.Thread.run(Thread.java:1474)\r\n"
+        },
+        {
+          "id": "compile-b",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+          "args": [
+            "--release",
+            "22",
+            "-Xlint:all",
+            "-d",
+            "classes",
+            "NativeFixture.java",
+            "WorkerBoundary.java",
+            "BoundaryTest.java",
+            "RequestArenaFactory.java"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\jni-and-ffm-validation\\case-b",
+          "timeoutMs": 15000,
+          "status": 0,
+          "signal": null,
+          "error": null,
+          "stdout": "",
+          "stderr": "NativeFixture.java:26: warning: [restricted] Linker.upcallStub(MethodHandle,FunctionDescriptor,Arena,Option...) is a restricted method.\r\n        MemorySegment stub = linker.upcallStub(target, descriptor, stubArena);\r\n                                   ^\r\n  (Restricted methods are unsafe and, if used incorrectly, might crash the Java runtime or corrupt memory)\r\nNativeFixture.java:27: warning: [restricted] Linker.downcallHandle(MemorySegment,FunctionDescriptor,Option...) is a restricted method.\r\n        downcall = linker.downcallHandle(stub, descriptor);\r\n                         ^\r\n  (Restricted methods are unsafe and, if used incorrectly, might crash the Java runtime or corrupt memory)\r\n2 warnings\r\n"
+        },
+        {
+          "id": "run-b",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+          "args": [
+            "--enable-native-access=ALL-UNNAMED",
+            "--illegal-native-access=deny",
+            "-cp",
+            "classes",
+            "BoundaryTest"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\jni-and-ffm-validation\\case-b",
+          "timeoutMs": 15000,
+          "status": 0,
+          "signal": null,
+          "error": null,
+          "stdout": "PASS one callback returned 7; worker completed before arena close\r\n",
+          "stderr": ""
+        },
+        {
+          "id": "compile-controls",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+          "args": [
+            "--release",
+            "22",
+            "-Xlint:all",
+            "-cp",
+            "classes",
+            "-d",
+            "classes",
+            "../ScopeControls.java"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\jni-and-ffm-validation\\case-b",
+          "timeoutMs": 15000,
+          "status": 0,
+          "signal": null,
+          "error": null,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "id": "run-controls",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+          "args": [
+            "--enable-native-access=ALL-UNNAMED",
+            "--illegal-native-access=deny",
+            "-cp",
+            "classes",
+            "ScopeControls"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\jni-and-ffm-validation\\case-b",
+          "timeoutMs": 15000,
+          "status": 0,
+          "signal": null,
+          "error": null,
+          "stdout": "PASS confined owner-thread downcall\r\nPASS IllegalStateException before callback\r\nPASS IllegalArgumentException before callback\r\n",
+          "stderr": ""
+        },
+        {
+          "id": "run-denied-access",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+          "args": [
+            "--illegal-native-access=deny",
+            "-cp",
+            "classes",
+            "BoundaryTest"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\jni-and-ffm-validation\\case-b",
+          "timeoutMs": 15000,
+          "status": 1,
+          "signal": null,
+          "error": null,
+          "stdout": "",
+          "stderr": "Exception in thread \"main\" java.lang.IllegalCallerException: Illegal native access from an unnamed module (file:/C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jni-and-ffm-validation/case-b/classes/)\r\n\tat java.base/java.lang.Module.ensureNativeAccess(Module.java:307)\r\n\tat java.base/java.lang.System$1.ensureNativeAccess(System.java:2107)\r\n\tat java.base/jdk.internal.reflect.Reflection.ensureNativeAccess(Reflection.java:123)\r\n\tat java.base/jdk.internal.foreign.abi.AbstractLinker.upcallStub(AbstractLinker.java:130)\r\n\tat NativeFixture.<init>(NativeFixture.java:26)\r\n\tat BoundaryTest.main(BoundaryTest.java:3)\r\n"
+        }
+      ],
+      "interpretation": "The one-line arena-policy change flips the worker downcall from WrongThreadException to a successful single callback. Additional controls exercised confined-owner access, closed and heap rejection before callback, and native authorization. These are technical Java/runtime tests, not skill-agent evaluations.",
+      "compileWarnings": "compile-a and compile-b each emitted two retained -Xlint:all restricted-method warnings for upcallStub/downcallHandle; compilation succeeded. No warning suppressed.",
+      "processState": "Seven synchronously monitored child javac/java processes exited; no timeout, signal or spawn error, no background process remains."
+    },
+    "failedAttempts": [
+      {
+        "command": "rg -n '^##|^###' skills/jni-and-ffm/SKILL.md skills/jni-and-ffm/references/*.md",
+        "workingDirectory": "C:/git/agent-skills",
+        "exitCode": 1,
+        "reason": "rg received a literal Windows wildcard path (OS error 123); rerun successfully as rg -n '^##|^###' skills/jni-and-ffm -g '*.md'. No file change."
+      },
+      {
+        "operation": "web open/find",
+        "url": "https://openjdk.org/jeps/491",
+        "result": "Tool returned Internal Error / no matching text; not counted as successfully consulted primary evidence for removal chronology."
+      },
+      {
+        "operation": "web open",
+        "url": "https://docs.oracle.com/en/java/javase/25/core/java-native-interface-jni.html",
+        "result": "Tool reported inaccessible URL; consulted JDK 25 JNI specification directly instead."
+      }
+    ],
+    "expectedNegativeResults": [
+      "Unmodified confined factory case exits 1 with ExecutionException caused by WrongThreadException.",
+      "Child JVM without native authorization under deny exits 1 with IllegalCallerException.",
+      "Both negative exits are recorded controls, not skill validation failures."
+    ]
+  },
+  "behavioralEvaluationsExecuted": [],
+  "behavioralEvaluationStatus": "NOT_RUN: no independent agent comparison, no with/without-skill run, no original/revised package difference; no incremental gain claimed.",
+  "structuredWalkthroughs": [
+    {
+      "caseId": "jni-and-ffm-arena-a",
+      "result": "Inspect factory, locate confined caller-owned scope, reject worker downcall, choose a minimal scope/ownership fix while keeping actual completion before close.",
+      "evidenceKind": "Expected-behavior walkthrough; technical unmodified fixture executed separately."
+    },
+    {
+      "caseId": "jni-and-ffm-arena-b",
+      "result": "Inspect shared allocation and shared stub; preserve the valid worker handoff and actual-completion lifetime; avoid unnecessary rewrite.",
+      "evidenceKind": "Expected-behavior walkthrough; technical unchanged fixture executed separately."
+    },
+    {
+      "caseId": "missing-factory-or-native-contract",
+      "result": "If the factory or retention/affinity contract is unavailable, inspect/obtain that material fact before asserting safe handoff or choosing critical/isolation.",
+      "evidenceKind": "Review walkthrough only, not an additional executed case."
+    }
+  ],
+  "cases": {
+    "kind": "Reproducible development cases, not unseen holdouts.",
+    "decisiveConstraint": "Only the implementation of RequestArenaFactory.open(): Arena.ofConfined() in A versus Arena.ofShared() in B. Actor request, native ABI/callback, source baseline, worker and lifecycle contract are otherwise identical.",
+    "actorInputs": [
+      {
+        "id": "jni-and-ffm-arena-a",
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jni-and-ffm-validation/actor-a.json",
+        "materializedSources": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jni-and-ffm-validation/case-a"
+      },
+      {
+        "id": "jni-and-ffm-arena-b",
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jni-and-ffm-validation/actor-b.json",
+        "materializedSources": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jni-and-ffm-validation/case-b"
+      }
+    ],
+    "evaluatorCriteriaPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jni-and-ffm-validation/evaluator-criteria.json",
+    "separation": "Each actor JSON contains only request, context, prerequisites, commands and complete source fixtures. Expected outcomes and failure criteria are only in the evaluator file and this handoff. Do not expose criteria or recorded technical results to an actor before evaluation."
+  },
+  "primarySources": [
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/foreign/Linker.Option.html",
+      "version": "Java SE 25",
+      "supports": "critical requires an extremely short function on all paths and no Java upcall; temporary heap addresses last for the call. captureCallState and firstVariadicArg have explicit ABI/argument contracts.",
+      "verification": "Consulted primary API, not performance measured."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/foreign/Linker.html",
+      "version": "Java SE 25",
+      "supports": "Address arguments must have a live, thread-accessible scope; active downcalls acquire scopes. Plain downcalls reject heap arguments. Escaping upcall exceptions terminate the JVM; upcall-stub lifetime follows its arena.",
+      "verification": "Consulted primary API. Safe owned-stub controls exercised only the specific scope, thread, heap and authorization conditions recorded."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/foreign/Arena.html",
+      "version": "Java SE 25; since 22",
+      "supports": "Confined segments require their Java owner thread; shared segments permit multiple threads. Closing invalidates scopes; automatic/global arenas do not allow manual close.",
+      "verification": "Consulted primary API; owner/shared/closed cases executed on 25.0.3."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/foreign/package-summary.html",
+      "version": "Java SE 25",
+      "supports": "Final foreign-memory model: arena-managed temporal/thread bounds and explicit layouts; restricted operations remain native interop obligations.",
+      "verification": "Consulted primary API; --release 22 compilation confirms used source/API surface, not execution on a Java 22 VM."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/core/restricted-methods.html",
+      "version": "JDK 25 native-access guide",
+      "supports": "Unauthorized restricted calls use allow/warn/deny policy; warn is current guide default, deny raises IllegalCallerException. Native authorization belongs to actual modules.",
+      "verification": "Consulted primary guide. Child JVM ran with explicit ALL-UNNAMED plus deny; separate ungranted control failed at upcallStub with IllegalCallerException."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/core/virtual-threads.html",
+      "version": "JDK 25 guide",
+      "supports": "Native/foreign frames pin virtual threads to their carriers; pinning may affect scalability. JFR events have thresholds and native execution requires complementary evidence.",
+      "verification": "Consulted primary guide for native pinning; no carrier or JFR behavior measured in this review."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/specs/jni/functions.html#getprimitivearraycritical-releaseprimitivearraycritical",
+      "version": "JNI specification JDK 25",
+      "supports": "JNI critical regions have restricted operations; array access may copy. JNI_COMMIT on copied elements requires final release; JNI_ABORT is not rollback for directly exposed storage.",
+      "verification": "Consulted primary specification. No JNI C library compiled or executed."
+    },
+    {
+      "url": "https://www.oracle.com/java/technologies/javase/25-relnote-issues.html#JDK-8192647",
+      "version": "JDK 25 release notes",
+      "supports": "Serial/Parallel GC waits for JNI critical regions and blocks new entrants before GC; old retry-related premature OOME mechanism and flag differ from earlier JDKs.",
+      "verification": "Consulted release notes; no collector/GC-latency experiment."
+    }
+  ],
+  "assumptionsAndLimits": [
+    "FFM technical controls used Temurin 25.0.3+9 on Windows with javac --release 22; no Java 22 VM or other ABI was exercised.",
+    "No C compiler was found by Get-Command clang,gcc,cl on the inspected PATH; this is not proof none exists elsewhere. No toolchain installed.",
+    "An owned Java upcall stub provided a synchronous native boundary. No external JNI library, production pointer, native-thread affinity or blocking C function was exercised.",
+    "No critical downcall was executed because the fixture upcalls Java. No deliberate callback escape, freed function pointer, crash, native leak or production capture was attempted.",
+    "No collector, safepoint, JFR, native pinning performance or throughput benchmark was run. Runtime results do not establish service performance.",
+    "Primary JDK 25 API/guide/specification and release-note claims were consulted selectively. The inaccessible JEP 491 removal chronology was not independently reverified through that page; no unsupported new claim was added.",
+    "Relative file links were existence-checked; fragment semantics and every external URL were not exhaustively validated.",
+    "Paired tests and walkthroughs are development evidence; independent behavioral efficacy remains unmeasured.",
+    "Global integration commands are reserved to the coordinator; no repository-wide verification claim."
+  ],
+  "evidencePaths": {
+    "root": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jni-and-ffm-validation",
+    "baselineAndChecks": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jni-and-ffm-validation/review-evidence.json",
+    "technicalResults": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jni-and-ffm-validation/technical-results.json",
+    "controlsSource": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jni-and-ffm-validation/ScopeControls.java",
+    "actorA": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jni-and-ffm-validation/actor-a.json",
+    "actorB": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jni-and-ffm-validation/actor-b.json",
+    "criteria": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jni-and-ffm-validation/evaluator-criteria.json",
+    "stdoutStderr": "Per-process *.stdout.txt and *.stderr.txt retained beside technical-results.json."
+  },
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Parallel review rule; no writer may run global generated-index writes. This skill needs no content/version update.",
+      "prerequisite": "All reviewers stopped writing."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Parallel review rule reserves repository-wide verification.",
+      "prerequisite": "Global index finalized and all reviewers stopped writing."
+    }
+  ],
+  "crossSkillIssues": [],
+  "coordinatorActions": [
+    "Optional independent evaluation can use actor-a.json/actor-b.json with evaluator-criteria.json kept separate.",
+    "Include this no-change outcome and limitations in wave reporting; preserve version 1.3.4."
+  ],
+  "repositoryWrites": "None during this assignment. Review artifacts exist only in the authorized temporary directory.",
+  "finalReadinessMeaning": "Local review complete; files unchanged and all review writes/processes stop at handoff. Does not mean repository-wide validation or behavioral improvement is established."
+}

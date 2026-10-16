@@ -1,0 +1,59 @@
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
+import org.junit.jupiter.api.*;
+import static org.junit.jupiter.api.Assertions.*;
+public class AccountTest {
+@Test
+@Timeout(5)
+void affordableWithdrawalsSucceedWhenGateIsFree() {
+    Account account = new Account(100);
+
+    // No other caller owns the gate, so refusing an affordable amount is not permitted.
+    assertTrue(account.withdraw(10), "an affordable uncontended withdrawal must succeed");
+    assertEquals(90, account.balance());
+    assertTrue(account.withdraw(90), "withdrawing the exact remaining balance must succeed");
+    assertEquals(0, account.balance());
+}
+
+@RepeatedTest(20)                       // more sampled executions, not exhaustive coverage
+@Timeout(30)
+void balanceConservesSuccessfulWithdrawalsAfterWorkersFinish() throws Exception {
+    Account account = new Account(10_000);
+    int threads = 32, opsPerThread = 1_000;
+
+    CyclicBarrier start = new CyclicBarrier(threads);
+    AtomicInteger succeeded = new AtomicInteger();
+    AtomicInteger refused = new AtomicInteger();
+
+    var exec = Executors.newVirtualThreadPerTaskExecutor();
+    List<Future<?>> tasks = new ArrayList<>();
+    assertAll("workers and teardown",
+        () -> {
+            try {
+                for (int t = 0; t < threads; t++) {
+                    tasks.add(exec.submit(() -> {
+                        start.await(5, TimeUnit.SECONDS); // overlap with a bounded barrier
+                        for (int i = 0; i < opsPerThread; i++) {
+                            if (account.withdraw(10)) succeeded.incrementAndGet();
+                            else refused.incrementAndGet();
+                        }
+                        return null;
+                    }));
+                }
+                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(20);
+                assertAll("worker outcomes", tasks.stream().map(task -> () ->
+                        task.get(Math.max(0, deadline - System.nanoTime()), TimeUnit.NANOSECONDS)));
+            } finally {
+                tasks.forEach(task -> task.cancel(true));
+                exec.shutdownNow();
+            }
+        },
+        () -> assertTrue(exec.awaitTermination(2, TimeUnit.SECONDS), "executor survived teardown"));
+
+    // Busy refusals are allowed, so contention does not imply a fixed success count.
+    assertTrue(account.balance() >= 0);
+    assertEquals(10_000 - succeeded.get() * 10, account.balance());       // conservation
+    assertEquals(threads * opsPerThread, succeeded.get() + refused.get()); // accounting
+}
+}

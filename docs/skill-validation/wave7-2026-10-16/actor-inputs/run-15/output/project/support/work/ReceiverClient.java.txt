@@ -1,0 +1,16 @@
+package work;
+import java.sql.*;
+// Local deterministic stand-in for the already contracted receiver; not a network implementation.
+public class ReceiverClient {
+ private final String url;public ReceiverClient(String url){this.url=url;try(var c=DriverManager.getConnection(url,"sa","");var s=c.createStatement()){s.execute("create table if not exists accepted(token varchar primary key,payload varchar)");}catch(SQLException e){throw new RuntimeException(e);}}
+ public void accept(String token,String payload){
+  if(payload.equals("reject"))throw new IllegalArgumentException("receiver rejected payload");
+  try(var c=DriverManager.getConnection(url,"sa","");var p=c.prepareStatement("insert into accepted values (?,?)")){
+   p.setString(1,token);p.setString(2,payload);p.executeUpdate();
+  }catch(SQLException e){
+   if(!"23505".equals(e.getSQLState()))throw new RuntimeException(e);
+   try(var c=DriverManager.getConnection(url,"sa","");var p=c.prepareStatement("select payload from accepted where token=?")){p.setString(1,token);try(var r=p.executeQuery()){if(!r.next()||!payload.equals(r.getString(1)))throw new IllegalArgumentException("identity reused for a different payload");}}catch(SQLException x){throw new RuntimeException(x);}
+  }
+ }
+ public int count(){try(var c=DriverManager.getConnection(url,"sa","");var s=c.createStatement();var r=s.executeQuery("select count(*) from accepted")){r.next();return r.getInt(1);}catch(SQLException e){throw new RuntimeException(e);}}
+}

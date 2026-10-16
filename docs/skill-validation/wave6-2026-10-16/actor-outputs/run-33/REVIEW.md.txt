@@ -1,0 +1,29 @@
+Conclusão: **unresolved**. O contrato aceito exige `-1` na ausência de snapshot e `91` quando presente. A garantia de produção depende do provider ausente; a alegação de que o `volatile` basta para qualquer entrega não está sustentada. Nenhuma falha de produção foi observada.
+
+Em [ResultBridge.java](project/src/work/ResultBridge.java), o callback de `attach` escreve a referência em `latest` (linha 4). `currentValue` lê essa referência volátil uma única vez, conserva-a em `observed` e só então consulta `Snapshot.value()` (linha 5). Esse caminho local está adequado. As localizações compartilhadas são a referência volátil `latest` e o `int value` ordinário de [Snapshot.java](project/src/work/Snapshot.java:2); não há operação composta de atualização nem múltiplos campos a combinar.
+
+Para uma leitura que obtém o snapshot publicado, o trecho conhecido é:
+
+```text
+callback: W(latest = snapshot)
+          -- synchronizes-with --> leitor: R(latest)
+                                           -- program order --> R(snapshot.value)
+
+produtor: W(snapshot.value = 91)
+          -- happens-before AUSENTE NA EVIDÊNCIA --> callback
+```
+
+A escrita do payload precisa preceder por happens-before a publicação. Isso acontece se `setValue(91)` e o callback forem executados nessa ordem pela mesma thread, ou se houver uma entrega sincronizada entre produtor e callback. A cadeia então alcança o leitor por transitividade. Um repasse de referência obtida sem essa ordem não ganha retroativamente a publicação do payload. Ordem de relógio e callback-at-most-once não fornecem a aresta ausente. [JLS 25, §§17.4.4–17.4.5](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.4.5).
+
+`Snapshot` ser uma classe `final` não torna seu campo `value` final. A escrita pelo setter ocorre fora do construtor; não há garantia especial de campo final para ela. A ausência aceita de mutações posteriores evita outro problema, mas não estabelece a entrega inicial. [JLS 25, §17.5](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.5).
+
+Os resultados contratuais são `-1` sem snapshot e `91` com snapshot. `0` com snapshot presente seria inaceitável e não é descartado pela especificação disponível do provider; não foi observado nem atribuído à implantação. Não se infere seu algoritmo, suas threads ou uma corrida real da falta de evidência.
+
+O [Smoke.java](project/test/work/Smoke.java) cria, modifica, entrega e lê o snapshot na mesma thread. Executei `node check.mjs` na cópia de saída: compilação com `--release 25` e execução passaram, imprimindo `synchronous provider PASS; deployed provider absent`. O ambiente observado foi Node 25.6.1 / Temurin 25.0.3, sem opções JVM herdadas nas três variáveis verificadas. Esse resultado confirma somente o cenário síncrono. Os oito arquivos fornecidos permaneceram idênticos nas duas cópias antes e depois do check.
+
+A menor evidência suficiente é o caminho efetivo de produção, da última escrita `setValue(91)` até a invocação do callback: identidade das threads e as operações que ordenam a entrega, verificáveis na implementação e no contrato da API usada. Uma entrega na mesma thread, comprovada para os caminhos pertinentes, também basta. O log temporal descrito no contrato não responde a isso.
+
+Se essa garantia ainda não estiver especificada, a menor cláusula necessária é: “As escritas que preparam o snapshot entregue, inclusive seu valor 91, acontecem-before a invocação do callback que o recebe.” A implementação deve sustentar essa cláusula; documentação isolada não corrige execução. Se já a cumprir, basta explicitar e demonstrar o contrato. Não há correção de produção local demonstrada: preservar `volatile latest`, a leitura única e a API de setter aceita.
+
+Não executei o provider implantado, testes de estresse, jcstress ou análise de seu ciclo de vida. Seu código/binário e sua entrega não foram fornecidos. Nenhuma fonte, dependência ou contrato foi alterado.
+

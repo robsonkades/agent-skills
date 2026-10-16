@@ -1,0 +1,22 @@
+{
+  "disposition": "violated",
+  "basis": "The accepted contract allows indefinite misses but requires every present result to equal 42 and lookup not to throw. BestEffortMemo.find reads entry once and invokes the safely pre-start-published reader. ReaderFactory.create selects PublishedEntry::legacyValue, so the effective payload path traverses the ordinary legacy field, not final primary. The producer's later ordinary entry write has no happens-before edge to independent consumers. A consumer may observe the installed entry but default-null legacy (NullPointerException), or observe legacy's payload but its default value 0. Final primary does not protect an ordinary alias path. Thread.start safely publishes the memo/reader construction, not the subsequent installation. The sequential smoke passed but does not exclude those JMM-permitted outcomes.",
+  "requiredChange": "Proposed only: change ReaderFactory.create's method reference from PublishedEntry::legacyValue to PublishedEntry::value. The latter reads final primary and its payload initialized before the constructor freeze. With the accepted no-escape/no-later-mutation contract, that path guarantees 42 whenever the single entry read is non-null, while retaining allowed misses. No production sources were changed.",
+  "missingEvidence": [],
+  "checked": [
+    "Read the complete local skill, both applicable references, TASK.md, and all eight supplied project files.",
+    "Reviewed every source access path, the selected method reference, accepted one-producer/one-entry lifecycle, and exclusion of constructor escape and post-construction mutation.",
+    "Consulted Java SE25 JLS 17.4.5 and 17.5.1, including final-field memory/dereference-chain rules.",
+    "Verified Node v25.6.1, Temurin Java 25.0.3+9-LTS, javac 25.0.3.",
+    "Compiled all three production sources and Smoke.java with javac --release 25; exit 0.",
+    "Ran memo.Smoke: sequential-controls=2 PASS; exit 0.",
+    "Inspected javap callback bootstrap target: REF_invokeVirtual memo/PublishedEntry.legacyValue:()I.",
+    "Verified all eight supplied output/project files match input/project before and after checks. All child processes exited."
+  ],
+  "limits": [
+    "The concurrency violation is a specification argument, not an observed concurrent failure.",
+    "No stress/jcstress, cross-architecture, performance, or corrected-code execution was performed.",
+    "The supplied check.mjs was read but not executed; equivalent explicit compile and smoke commands were executed and logged.",
+    "No production, contract, configuration, or dependency files were modified; all new files are under output."
+  ]
+}

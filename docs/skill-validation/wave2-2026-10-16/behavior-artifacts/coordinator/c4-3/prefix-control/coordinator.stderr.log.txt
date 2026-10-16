@@ -1,0 +1,3 @@
+Exception in thread "main" java.lang.AssertionError: Candidate epoch E: key=user:2, expected primary=n2, replicas=[n2, n3, n4]; actual primary=n1, replicas=[n1, n3, n2]
+	at RoutingAgreementCheck.agreement(RoutingAgreementCheck.java:24)
+	at RoutingAgreementCheck.main(RoutingAgreementCheck.java:46)

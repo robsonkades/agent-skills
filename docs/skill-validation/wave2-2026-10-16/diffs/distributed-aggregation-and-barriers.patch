@@ -1,0 +1,106 @@
+diff --git a/skills/distributed-aggregation-and-barriers/SKILL.md b/skills/distributed-aggregation-and-barriers/SKILL.md
+index db1d558..410170c 100644
+--- a/skills/distributed-aggregation-and-barriers/SKILL.md
++++ b/skills/distributed-aggregation-and-barriers/SKILL.md
+@@ -26,11 +26,12 @@ two of them, where adding workers changes nothing at all.
+ 
+ ## Workflow
+ 
+-Reuse the existing aggregate definition, input snapshot, engine commit protocol and measured
+-task profile before asking for missing context. Retain an adequate exact representation and
+-required barrier; introduce a sketch, repartitioning or speculation only for a demonstrated
+-constraint. Scale investigation and testing to whether the request is an explanation, design
+-review or implementation change.
++Start with the affected job's registration or execution plan: locate the selected accumulator,
++combiner/finalizer, intermediate-state codec and output consumer. Reuse its aggregate definition,
++input snapshot, commit protocol and measured task profile before asking for missing context.
++Retain an adequate exact representation and required barrier; introduce a sketch, repartitioning
++or speculation only for a demonstrated constraint. Scale investigation and testing to whether
++the request is an explanation, design review or implementation change.
+ 
+ 1. **Write the aggregate contract.** Define identity, accumulator, merge, finish, input
+    domain, units/window/population, overflow/error policy and whether encounter order matters.
+@@ -60,6 +61,9 @@ review or implementation change.
+    completeness record.
+ 8. **Check algebra and recovery.** Property-test regrouping/reordering allowed by the
+    contract, including accumulator/merge compatibility and serialized-state round trips.
++   Verify that tests exercise the selected merge/codec hooks, not only a sequential helper.
++   If precombination is optional or repeatable, test those invocation shapes too; correctness
++   must not depend on an optional hook running exactly once.
+    Test equivalent and distinct keys across workers. Inject duplicate attempts and crashes
+    at commit boundaries, and compare against
+    a trusted sequential oracle. Report the schedules and faults actually tested; finite trials
+@@ -179,7 +183,7 @@ Speculatively re-execute a straggler only when attempts satisfy the same result
+ - [HyperLogLog original analysis](https://algo.inria.fr/flajolet/Publications/FlFuGaMe07.pdf)
+ 
+ - [Aggregation correctness](references/aggregation-correctness.md) — identity,
+-  associativity, accumulator/merge compatibility, grouping-key semantics, conditional
++  associativity, accumulator/merge compatibility, engine hook invocation, grouping-key semantics, conditional
+   commutativity and duplicate-attempt separation, with the
+   safe/unsafe operation table and floating-point
+   non-associativity problem and its three fixes, non-reducible aggregates rewritten with
+diff --git a/skills/distributed-aggregation-and-barriers/references/aggregation-correctness.md b/skills/distributed-aggregation-and-barriers/references/aggregation-correctness.md
+index cadf3a1..878ccd5 100644
+--- a/skills/distributed-aggregation-and-barriers/references/aggregation-correctness.md
++++ b/skills/distributed-aggregation-and-barriers/references/aggregation-correctness.md
+@@ -42,6 +42,33 @@ independent state per partition and follow the engine's ownership/reuse rules; s
+ support does not make a shared accumulator thread-safe. A Java non-concurrent `Collector`
+ uses isolated mutable containers, whereas its concurrent form has a different contract.
+ 
++### Check which engine hooks actually run
++
++Follow job registration and the selected execution plan to the functions and state codec
++that production uses. A correct unregistered combiner, or a test of a different helper,
++does not validate that path. Check whether intermediate combination is optional/repeated
++before assigning required filtering, validation or finalization to it.
++
++For example, Hadoop 3.4.1 `mapred.JobConf.setCombinerClass` permits zero, one or multiple
++combiner invocations. Its combiner must preserve input/output key and value types and have
++no side effects. Keep required transformations on a guaranteed path. For a mean, upstream
++records can carry `(value, 1)`, optional combiners merge `(sum, count)`, and the final reducer
++divides. Both uncombined records and already-combined states must remain valid inputs.
++Test no precombination, one pass and repeated passes, including mixtures of raw and combined
++states. Registering the final scalar-average reducer as the combiner is not safe merely
++because both classes implement the same interface. These invocation rules are specific to
++the engine/API; do not presume every framework permits the same execution shapes.
++
++A sequential convenience method may also bypass the risky hook. In Beam 2.77.0,
++`CombineFn.apply(inputs)` calls accumulation and output extraction but **does not call
++`mergeAccumulators`**. The sum-accumulator/max-merge defect above can therefore pass a test
++using only `apply`. Accumulate partitions independently, pass their states through the
++selected codec where available, invoke the actual merge hook, then extract and compare with
++the independent oracle. A deliberately faulty merge should fail this path even when the
++sequential helper still passes. Preserve the engine's mutable-state ownership contract while
++doing so. Use a targeted runner test when available to check registration and transport;
++a local hook test does not establish that the deployed runner selected or serialized it.
++
+ ### Grouping keys are part of correctness
+ 
+ Specify which keys denote the same business group before selecting a partitioner: include
+@@ -222,6 +249,13 @@ and [Coder determinism](https://beam.apache.org/releases/javadoc/current/org/apa
+ support the encoded-key example (checked against the published 2.76.0 documentation on
+ 2026-09-25); verify the target engine/version rather than generalizing this equality mechanism.
+ 
++[Hadoop 3.4.1 JobConf](https://hadoop.apache.org/docs/r3.4.1/api/org/apache/hadoop/mapred/JobConf.html)
++documents optional/repeated combiner invocation and its type/side-effect constraints.
++[Beam 2.77.0 CombineFn](https://beam.apache.org/releases/javadoc/2.77.0/org/apache/beam/sdk/transforms/Combine.CombineFn.html)
++documents the sequential `apply` shortcut and merge ownership; its
++[implementation](https://github.com/apache/beam/blob/v2.77.0/sdks/java/core/src/main/java/org/apache/beam/sdk/transforms/Combine.java)
++shows the hooks called. These examples do not require adopting or upgrading either engine.
++
+ ## Decision rehearsals
+ 
+ These are teaching cases and structured walkthrough inputs, not measured agent evaluations.
+diff --git a/skills/distributed-aggregation-and-barriers/skill.yaml b/skills/distributed-aggregation-and-barriers/skill.yaml
+index e3e616e..0078c2c 100644
+--- a/skills/distributed-aggregation-and-barriers/skill.yaml
++++ b/skills/distributed-aggregation-and-barriers/skill.yaml
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: distributed-aggregation-and-barriers
+-version: 1.3.5
++version: 1.3.6
+ description: >-
+   Correct and recoverable aggregation across workers: algebraic laws, duplicate attempts,
+   numeric reproducibility, mergeable summaries, barriers, joins, skew, checkpointing and

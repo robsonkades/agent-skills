@@ -100,6 +100,41 @@ disposal on that path. Arrange deregistration/cleanup once, including races duri
 check how late callbacks release their values using the discard policy below. Test zero
 demand, controlled requests and each terminal/cancel path with the actual callback API.
 
+## Shared sinks and a slow subscriber
+
+For manual fan-out, inspect the actual `Sinks.Many` factory, emission method/result handling
+and each consumer's demand. In Reactor 3.7.5, these direct multicast variants behave differently
+when one subscribed consumer has demand and another has zero demand, without cancellation races:
+
+| Factory after `Sinks.many().multicast()` | `tryEmitNext(value)` outcome | Consumer observation                              |
+| ---------------------------------------- | ---------------------------- | ------------------------------------------------- |
+| `directBestEffort()`                     | `OK`                         | Only the consumer with demand receives this value |
+| `directAllOrNothing()`                   | `FAIL_OVERFLOW`              | Neither consumer receives this value              |
+
+Both direct variants have no replay: requesting later does not recover that missed value.
+With subscribers but no demand anywhere, both return `FAIL_OVERFLOW`; with no subscribers,
+both return `FAIL_ZERO_SUBSCRIBER`. Handle the result according to the producer's ownership
+and loss contract. Ignoring a failure does not retain or retry the value. `EmitResult.OK`
+describes emission state, not completed processing or durable acceptance; cancellation can
+also race with emission. All-or-nothing demand gating is not a transactional broadcast.
+
+The emission API matters too. A rejected `tryEmitNext` reports failure without itself
+terminating these sinks. In this version, `emitNext(value, FAIL_FAST)` on overflow instead
+signals an overflow error and terminates the sink. Distinguish capacity failure from producer
+contention (`FAIL_NON_SERIALIZED`); an unbounded retry loop can move overload to the producer.
+
+Keep best-effort fan-out when independent consumers may miss intermediate updates. If every
+consumer needs every record, changing the method name is insufficient: connect admission to
+the producer and choose bounded retention or durable replay with explicit consumer progress.
+A multicast buffering sink follows the lowest demand; its capacity and failure/last-cancel
+policy still need inspection. Per-consumer buffers isolate slow consumers only within their
+individual and aggregate byte budgets; unbounded replay is not a capacity plan.
+
+Verify with two controlled subscribers: give demand only to one, emit an identified value,
+then request on the other and emit a second value. Assert each received sequence and emission
+result, not just the producer's success count. Include zero demand and no subscribers, and
+check the chosen failure API and cancellation policy separately.
+
 ## Prefetch and concurrency limits
 
 Count demand in the element type at each boundary. With exact `buffer(100)`, a downstream
@@ -242,3 +277,7 @@ itself needs bounded waiters/deadlines, not an unbounded queue of waiting produc
 - [Reactor 3.7.5 batching and grouping](https://github.com/reactor/reactor-core/blob/v3.7.5/docs/modules/ROOT/pages/advancedFeatures/advanced-three-sorts-batching.adoc) — group consumption, key cardinality and prefetch can form a progress cycle.
 - [Reactor 3.7.5 callback-source guide](https://github.com/reactor/reactor-core/blob/v3.7.5/docs/modules/ROOT/pages/producing.adoc) — source overflow defaults and producer concurrency.
 - [Reactor 3.7.5 FluxSink contract](https://github.com/reactor/reactor-core/blob/v3.7.5/reactor-core/src/main/java/reactor/core/publisher/FluxSink.java) — `create` versus `push` request callbacks and disposal hooks.
+- [Reactor 3.7.5 sink choices](https://github.com/reactor/reactor-core/blob/v3.7.5/docs/modules/ROOT/pages/processors.adoc) — multicast slow-consumer policies, buffering and replay.
+- [Reactor 3.7.5 Sinks contract](https://github.com/reactor/reactor-core/blob/v3.7.5/reactor-core/src/main/java/reactor/core/publisher/Sinks.java) — emission results do not guarantee consumption; direct multicast and buffered demand contracts.
+- [Reactor 3.7.5 direct multicast implementation](https://github.com/reactor/reactor-core/blob/v3.7.5/reactor-core/src/main/java/reactor/core/publisher/SinkManyBestEffort.java) — demand gating and `tryEmitNext` outcomes.
+- [Reactor 3.7.5 emission failure handling](https://github.com/reactor/reactor-core/blob/v3.7.5/reactor-core/src/main/java/reactor/core/publisher/InternalManySink.java) — overflow and serialization failure differ between emission APIs.

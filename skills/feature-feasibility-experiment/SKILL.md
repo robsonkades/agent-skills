@@ -20,8 +20,10 @@ into a bounded experiment with a falsifiable hypothesis, threshold, evidence, co
 1. **Name one uncertainty.** Trace it to `U-*`, a solution option, `ED-*`, contract, `RISK-*`, or
    technical premise. State what supported, refuted and inconclusive results change. Reuse
    existing identifiers or source links; do not invent accepted criteria or authority.
-2. **Use existing evidence first.** Repository facts, vendor specifications, prior measurements, or a
-   smaller static check may settle it without a PoC.
+2. **Use existing evidence first.** Locate the accepted requirement or decision and the relevant
+   implementation path, build/runtime configuration, tests or prior runs. Record source paths and
+   what remains unproved; a failed search is not proof that no evidence exists. A version-matched
+   vendor specification or smaller static check may settle the question without a PoC.
 3. **Write the hypothesis and threshold before acting.** A result without a predeclared boundary is a
    useful exploratory observation, but does not validate a pass criterion selected afterwards.
    Derive the threshold from the decision/requirement, including units, population, window and
@@ -29,8 +31,12 @@ into a bounded experiment with a falsifiable hypothesis, threshold, evidence, co
    the candidate revision, configuration and input domain: testing one candidate is different from
    establishing whether any permitted approach could satisfy the feature.
 4. **Choose the cheapest valid experiment.** Minimize code, environment, data, duration, and side
-   effects while preserving the condition that matters. Read
-   [Experiment record](references/experiment-record.md) for the required fields.
+   effects while preserving the condition that matters. Name the observable difference that could
+   change the decision and where it will be checked. When execution is the question, inspect the
+   resulting artifact or system behavior, not only a description of what should happen. Control
+   competing causes when attributing an effect to one change. Read
+   [Experiment record](references/experiment-record.md) when defining result checks or comparisons,
+   recording the experiment, or retaining lessons for later decisions.
 5. **Separate prototype from production.** Name shortcuts, excluded qualities, disposal plan, and
    anything the experiment cannot establish.
 6. **Run only when authorized and safe.** Prefer isolated/local environments and synthetic or approved
@@ -45,8 +51,10 @@ into a bounded experiment with a falsifiable hypothesis, threshold, evidence, co
    a fast run that skips the required work is not a performance success. Separate execution
    status from `SUPPORTED`, `REFUTED`, or `INCONCLUSIVE`; no valid result means no pass/fail claim.
 8. **Feed the result back.** Update or reopen the affected option, decision, contract, risk, depth, and
-   Product question. If the result changes the viable options, pass the tested scope, fixed versus
-   negotiable constraints, evidence and remaining alternatives to `feature-solution-analysis`
+   Product question. Retain the prior premise and identify what the evidence changes; a finding
+   does not itself authorize changing an accepted requirement or decision. If the result changes
+   the viable options, pass the tested scope, fixed versus negotiable constraints, evidence and
+   remaining alternatives to `feature-solution-analysis`
    for a revised recommendation. If unavailable, report that bounded consequence and next
    discriminator directly. A conclusion never silently becomes production design.
 
@@ -66,11 +74,13 @@ THEN reject that scoped claim, not every possible solution. Broader infeasibilit
      one passing example does not establish that universal claim.
 
 IF a threshold is chosen after seeing results
-THEN label the result exploratory and run a confirmatory experiment before deciding.
+THEN label the resulting claim exploratory; predeclare a fresh check before claiming confirmation.
+     A decision under acknowledged uncertainty does not retroactively validate that claim.
 
 IF the result is inconclusive
-THEN identify the missing discriminator and next useful action. Preserve the unresolved item;
-     mark it an accepted GAP-* only when the appropriate authority actually accepts it.
+THEN identify the missing discriminator and whether a further check can change the decision at
+     justified cost; otherwise defer or stop testing with the uncertainty explicit. Preserve the
+     unresolved item; mark it an accepted GAP-* only when the appropriate authority accepts it.
 
 IF prototype code would enter production
 THEN it becomes a planned RES-* and must satisfy ordinary architecture, security, testing, and review.
@@ -105,7 +115,7 @@ Method         <environment, inputs, controls, repetitions, validity and stoppin
 Limits         <what this cannot establish>
 Evidence       <EV-* links, commands and raw results>
 Conclusion     <pending before evaluation; then SUPPORTED | REFUTED | INCONCLUSIVE>
-Consequences   <items confirmed, reopened, made stale, or added>
+Consequences   <prior premise, what changed, and items confirmed, reopened, made stale, or added>
 Cleanup        <disposed artefacts or promoted RES-*>
 ```
 
@@ -113,3 +123,5 @@ For a request to design an experiment, return the reviewable plan with execution
 do not invent results. For an authorized execution request, run the bounded experiment and
 report actual results or the concrete blocker. Preserve reproducible evidence before removing
 only identified experiment-owned artefacts; never delete unrelated workspace or user data.
+For a small deterministic check, a concise record with the same material criteria, evidence,
+limits and consequence suffices; a full template is not an extra approval gate.

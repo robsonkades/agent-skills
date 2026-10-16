@@ -1,0 +1,109 @@
+import java.util.ArrayList;
+import java.util.List;
+
+public final class ProbeRetry {
+    static int assertions, scenarios;
+    static void check(boolean value, String label) { assertions++; if (!value) throw new AssertionError(label); }
+    static final class Rig implements Ports.Store, Ports.Runtime, Ports.Operation {
+        Ports.Snapshot state = new Ports.Snapshot(Ports.State.PENDING, null);
+        final Ports.Kind[] kinds;
+        final long[] advice;
+        final List<Long> sleeps = new ArrayList<>();
+        final Ports.Intent intent = new Ports.Intent("same-intent", "immutable-payload");
+        Ports.Policy policy = new Ports.Policy(3, 10, 5, 4);
+        long remaining = 1000, oversleep;
+        int calls, closes, open, grants;
+        boolean allowGrant = true, cancelled, cancelAfterSleep, interruptSleep, interruptCall, observedUnknown;
+        Rig(Ports.Kind... kinds) { this.kinds = kinds; this.advice = new long[kinds.length]; }
+        public Ports.Snapshot snapshot() { return state; }
+        public void unknown() { state = new Ports.Snapshot(Ports.State.UNKNOWN, null); }
+        public void applied(String receipt) { state = new Ports.Snapshot(Ports.State.APPLIED, receipt); }
+        public void rejected() { state = new Ports.Snapshot(Ports.State.REJECTED, null); }
+        public long remainingNanos() { return remaining; }
+        public boolean cancelled() { return cancelled; }
+        public boolean acquireRetry() { grants++; return allowGrant; }
+        public void sleep(long nanos) throws InterruptedException {
+            check(open == 0, "reply released before backoff");
+            check(nanos >= 0, "nonnegative sleep");
+            if (observedUnknown) check(state.state() == Ports.State.UNKNOWN, "durable unknown before backoff");
+            sleeps.add(nanos);
+            if (interruptSleep) throw new InterruptedException("sleep cancelled");
+            remaining = Math.max(0, remaining - nanos - oversleep);
+            if (cancelAfterSleep) cancelled = true;
+        }
+        public Ports.Reply call(Ports.Intent value, long timeout) throws InterruptedException {
+            check(open == 0, "previous reply released before next attempt");
+            check(intent.equals(value), "stable identity and payload");
+            check(timeout == policy.attemptNanos(), "contract timeout propagated");
+            check(!cancelled && !Thread.currentThread().isInterrupted(), "no cancelled dispatch");
+            check(remaining >= policy.reserveNanos() && remaining - policy.reserveNanos() >= policy.attemptNanos(), "attempt fits remaining reserve");
+            int index = calls++;
+            if (interruptCall) throw new InterruptedException("dispatch outcome unknown");
+            check(index < kinds.length, "no surplus call");
+            remaining = Math.max(0, remaining - 10);
+            Ports.Kind kind = kinds[index];
+            if (kind == Ports.Kind.UNKNOWN) observedUnknown = true;
+            open++;
+            return new Ports.Reply() {
+                boolean closed;
+                public Ports.Kind kind() { return kind; }
+                public String receipt() { return kind == Ports.Kind.OK ? "original-receipt" : null; }
+                public long serverMinimumNanos() { return advice[index]; }
+                public void close() { check(!closed, "each response closed once"); closed = true; open--; closes++; }
+            };
+        }
+        Ports.Result run() throws InterruptedException { scenarios++; return RetryEngine.execute(intent, policy, this, this, this); }
+        void end(Ports.Result r, int count, Ports.State expected) {
+            check(r.attempts() == count && calls == count, "attempt accounting");
+            check(r.snapshot().state() == expected && state.state() == expected, "outcome "+expected);
+            check(open == 0 && closes == calls, "all returned replies released");
+            if (expected == Ports.State.APPLIED) check("original-receipt".equals(r.snapshot().receipt()), "authoritative original receipt");
+        }
+    }
+    public static void main(String[] args) throws Exception {
+        Rig r = new Rig(Ports.Kind.OK); r.end(r.run(),1,Ports.State.APPLIED);
+        r = new Rig(Ports.Kind.TRANSIENT, Ports.Kind.OK); r.advice[0]=20;
+        r.end(r.run(),2,Ports.State.APPLIED); check(r.sleeps.equals(List.of(20L)) && r.grants==1,"transient guidance and one retry grant");
+        r = new Rig(Ports.Kind.UNKNOWN, Ports.Kind.OK); r.advice[0]=30;
+        r.end(r.run(),Contract.REPLAY_SAFE?2:1,Contract.REPLAY_SAFE?Ports.State.APPLIED:Ports.State.UNKNOWN);
+        check(r.sleeps.equals(Contract.REPLAY_SAFE?List.of(30L):List.of()),"ambiguous server guidance or no unsafe replay");
+        check(r.grants==(Contract.REPLAY_SAFE?1:0),"unsafe outcome does not spend retry grant");
+        r = new Rig(Ports.Kind.UNKNOWN, Ports.Kind.PERMANENT); r.end(r.run(),Contract.REPLAY_SAFE?2:1,Ports.State.UNKNOWN);
+        r = new Rig(Ports.Kind.UNKNOWN); r.policy=new Ports.Policy(1,10,5,4); r.end(r.run(),1,Ports.State.UNKNOWN); check(r.grants==0&&r.sleeps.isEmpty(),"no work after attempt cap");
+        r = new Rig(Ports.Kind.UNKNOWN); r.allowGrant=false; r.end(r.run(),1,Ports.State.UNKNOWN); check(r.sleeps.isEmpty(),"denied budget does not sleep");
+        r = new Rig(Ports.Kind.OK); r.unknown(); r.end(r.run(),Contract.REPLAY_SAFE?1:0,Contract.REPLAY_SAFE?Ports.State.APPLIED:Ports.State.UNKNOWN);
+        r = new Rig(Ports.Kind.PERMANENT); r.unknown(); r.end(r.run(),Contract.REPLAY_SAFE?1:0,Ports.State.UNKNOWN);
+        r = new Rig(Ports.Kind.TRANSIENT); r.unknown(); r.policy=new Ports.Policy(1,10,5,4); r.end(r.run(),Contract.REPLAY_SAFE?1:0,Ports.State.UNKNOWN);
+        r = new Rig(Ports.Kind.OK); r.unknown(); r.remaining=0; r.end(r.run(),0,Ports.State.UNKNOWN);
+        r = new Rig(Ports.Kind.TRANSIENT); r.unknown(); r.allowGrant=false; r.end(r.run(),Contract.REPLAY_SAFE?1:0,Ports.State.UNKNOWN); check(r.sleeps.isEmpty(),"resumed unknown retains state on denied token");
+        r = new Rig(Ports.Kind.PERMANENT); r.end(r.run(),1,Ports.State.REJECTED); check(r.grants==0,"terminal no grant");
+        r = new Rig(Ports.Kind.TRANSIENT); r.advice[0]=1000; r.remaining=100; r.end(r.run(),1,Ports.State.REJECTED); check(r.grants==0&&r.sleeps.isEmpty(),"unfittable advice is not truncated");
+        r = new Rig(Ports.Kind.TRANSIENT,Ports.Kind.OK); r.advice[0]=20; r.remaining=60; r.oversleep=40;
+        r.end(r.run(),1,Ports.State.REJECTED); check(r.sleeps.equals(List.of(20L)),"recheck after oversleep");
+        r = new Rig(Ports.Kind.OK); Thread.currentThread().interrupt(); boolean interrupted=false;
+        try { r.run(); } catch (InterruptedException expected) { interrupted=true; } finally { Thread.interrupted(); }
+        check(interrupted&&r.calls==0&&r.grants==0,"pre-interruption propagates with no dispatch");
+        r = new Rig(Contract.REPLAY_SAFE?Ports.Kind.UNKNOWN:Ports.Kind.TRANSIENT); r.interruptSleep=true; interrupted=false;
+        try { r.run(); } catch (InterruptedException expected) { interrupted=true; } finally { Thread.interrupted(); }
+        check(interrupted&&r.calls==1&&r.open==0,"sleep interruption closes reply and stops");
+        if(Contract.REPLAY_SAFE)check(r.state.state()==Ports.State.UNKNOWN,"unknown persists through interruption");
+        r = new Rig(Ports.Kind.OK); r.interruptCall=true; interrupted=false;
+        try { r.run(); } catch (InterruptedException expected) { interrupted=true; } finally { Thread.interrupted(); }
+        check(interrupted&&r.calls==1&&r.state.state()==Ports.State.UNKNOWN,"call interruption leaves durable unknown");
+        r = new Rig(Ports.Kind.OK); r.cancelled=true;
+        try { r.run(); } catch (InterruptedException acceptable) { Thread.interrupted(); }
+        check(r.calls==0&&r.grants==0,"entry cancellation prevents dispatch");
+        r = new Rig(Ports.Kind.TRANSIENT,Ports.Kind.OK); r.cancelAfterSleep=true;
+        try { r.run(); } catch (InterruptedException acceptable) { Thread.interrupted(); }
+        check(r.calls==1&&r.open==0,"cancellation after sleep prevents next dispatch");
+        for(Ports.State terminal:List.of(Ports.State.APPLIED,Ports.State.REJECTED)){
+            r=new Rig(Ports.Kind.OK);r.state=new Ports.Snapshot(terminal,terminal==Ports.State.APPLIED?"original-receipt":null);r.end(r.run(),0,terminal);
+        }
+        r = new Rig(Ports.Kind.TRANSIENT,Ports.Kind.TRANSIENT); r.policy=new Ports.Policy(2,10,5,4);r.end(r.run(),2,Ports.State.REJECTED);check(r.grants==1,"maxAttempts includes initial");
+        r = new Rig(Ports.Kind.UNKNOWN);r.advice[0]=1000;r.remaining=100;r.end(r.run(),1,Ports.State.UNKNOWN);check(r.grants==0&&r.sleeps.isEmpty(),"unfittable ambiguous advice preserves unknown");
+        r = new Rig(Ports.Kind.OK);r.remaining=Long.MAX_VALUE;r.policy=new Ports.Policy(3,Long.MAX_VALUE-3,8,0);r.end(r.run(),0,Ports.State.REJECTED);
+        r = new Rig(Ports.Kind.OK);r.remaining=0;r.end(r.run(),0,Ports.State.REJECTED);
+        r = new Rig(Ports.Kind.OK);r.remaining=15;r.end(r.run(),1,Ports.State.APPLIED);
+        System.out.println("{\"status\":\"PASS\",\"scenarios\":"+scenarios+",\"assertions\":"+assertions+",\"replaySafe\":"+Contract.REPLAY_SAFE+"}");
+    }
+}

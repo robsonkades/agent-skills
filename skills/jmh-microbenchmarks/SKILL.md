@@ -26,6 +26,10 @@ JMH 1.37, not a required upgrade. Verify generated harness/benchmark discovery w
 version. A successful build or IDE launch alone does not establish that the intended benchmark
 ran. Prefer the standalone harness; an IDE-launched JMH Runner can run benchmarks, but inspect
 its generated code, discovered benchmarks, actual forks/arguments and competing host activity.
+Before interpreting scores, reconcile the requested cases with the completed results and failure
+log. JMH 1.37 defaults to continuing after benchmark errors; a successful exit or a nonempty
+result file need not mean complete coverage. See the validation reference for strict runs versus
+intentional partial sweeps.
 
 ## Ownership boundary
 

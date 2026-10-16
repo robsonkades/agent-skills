@@ -1,0 +1,16 @@
+{
+  "label": "default-old-consumer-run",
+  "command": [
+    "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+    "-cp",
+    "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v2-default\\classes;C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v1\\classes",
+    "NewMain"
+  ],
+  "workingDirectory": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v2-default",
+  "exitCode": 1,
+  "stdout": "OLD_PATH=4\r\n",
+  "stderr": "Exception in thread \"main\" java.lang.UnsupportedOperationException: Code unsupported\r\n\tat Model$Visitor.visitCode(Model.java:5)\r\n\tat Model$Code.accept(Model.java:11)\r\n\tat NewMain.main(NewMain.java:7)\r\n",
+  "signal": null,
+  "error": null,
+  "expectedExitCode": 1
+}

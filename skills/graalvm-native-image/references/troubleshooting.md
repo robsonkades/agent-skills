@@ -45,6 +45,11 @@ For embedded versus runtime JSSE stores and rotation, use
 
 ## Memory, GC, and latency
 
+If unexpectedly low native throughput follows a fast development build, first inspect the
+[effective optimization options](build-and-measurement.md#resolve-effective-build-options), including
+embedded JAR configuration and `quickBuild`. Confirm a mismatch before changing them; an already
+correct production setting leaves GC, workload, dependency and measurement explanations open.
+
 | Symptom                                  | Plausible causes                                                                                                       | What to measure                                                                                              | Remediation                                                                                                  |
 | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
 | RSS grows toward container limit         | heap grows toward default ceiling, GC transient copy headroom, native allocation, stacks, allocator retention, or leak | heap/live set after GC, RSS/PSS, NMT where available, thread count/stacks, cgroup events, allocation profile | set `-Xmx` with headroom; choose GC; reduce concurrency/stacks; isolate native leak before blaming Java heap |

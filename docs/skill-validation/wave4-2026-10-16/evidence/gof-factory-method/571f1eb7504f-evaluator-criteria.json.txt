@@ -1,0 +1,44 @@
+{
+  "kind": "Known development pair; criteria frozen before technical fixture runs. No independent actor evaluation.",
+  "decisiveConstraint": "Only binding.properties changes: application-owned borrowed parser in A versus per-operation ownership transfer in B. All source, input request and inherited SPI contract stay identical.",
+  "cases": [
+    {
+      "id": "gof-factory-method-binding-a",
+      "input": "actor-a.json",
+      "expected": [
+        "Read binding.properties and ApplicationBinding.createParser, then trace BoundImportJob's override into ImportJob.run; the borrowed shared object does not directly satisfy the hook's per-run ownership contract.",
+        "Show that one import prematurely closes the application-owned parser and a second import fails; a successful first smoke test is insufficient.",
+        "Preserve the published hook and workflow. Adapt the borrowed object into an explicit operation-scoped lease or equivalent boundary whose close does not destroy the application-owned parser; owner shutdown must still close the actual parser.",
+        "Retain one factory call per run, checked IOException, null rejection and error-path cleanup. Do not change active scope to owned, disable all cleanup, or replace the SPI solely with Supplier.",
+        "Verify two sequential imports, no early close, final owner close, and relevant parse/save failure behavior."
+      ],
+      "failures": [
+        "Assume createParser returns a fresh owned product because of its name or type.",
+        "Remove try-with-resources from the published base workflow, leaking legitimate owned results.",
+        "Change borrowed configuration, allocate new parsers each run, or close the application binding inside a request.",
+        "Wrap IOException merely to fit Supplier, erase the extension point, or call the hook during construction.",
+        "Count expected tests or source review as an independent behavioral gain."
+      ]
+    },
+    {
+      "id": "gof-factory-method-binding-b",
+      "input": "actor-b.json",
+      "expected": [
+        "Inspect the active owned binding and identify fresh per-operation ownership transfer; the inherited workflow's closure is appropriate for this configured flow.",
+        "Preserve the active production behavior and public hook; verify two sequential imports create and close two distinct resources and call the factory once per run.",
+        "If mentioning the dormant borrowed configuration, label its conditional adapter requirement rather than asserting that the active owned run closes an application-owned parser.",
+        "Keep exception/cleanup behavior and avoid adding caching, lifecycle rewrites or generic Supplier replacement without a demonstrated need."
+      ],
+      "failures": [
+        "Claim the configured owned factory is shared or that all factory products must be left open.",
+        "Disable closure, change allocation frequency, force all products to be singleton/shared, or impose an unnecessary hierarchy rewrite.",
+        "Treat active-scope success as proof of every dormant deployment, concurrency behavior, transaction rollback or agent improvement."
+      ]
+    }
+  ],
+  "evaluationRules": [
+    "Only selected actor JSON is actor input; criteria, technical controls and prior outputs stay evaluator-only.",
+    "An explicit lease adapter is one acceptable A solution; judge the observable ownership/compatibility behavior, not exact implementation text.",
+    "No-change for the active B production flow is valid; focused contract tests may be added. Dormant branch findings can be reported separately."
+  ]
+}

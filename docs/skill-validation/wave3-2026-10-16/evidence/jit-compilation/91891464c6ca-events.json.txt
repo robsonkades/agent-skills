@@ -1,0 +1,507 @@
+[
+  {
+    "type": "jdk.CompilerStatistics",
+    "values": {
+      "startTime": "2026-10-16T12:10:43.784305500-03:00",
+      "compileCount": 0,
+      "bailoutCount": 0,
+      "invalidatedCount": 0,
+      "osrCompileCount": 0,
+      "standardCompileCount": 0,
+      "osrBytesCompiled": 0,
+      "standardBytesCompiled": 0,
+      "nmethodsSize": 0,
+      "nmethodCodeSize": 0,
+      "peakTimeSpent": "PT0S",
+      "totalTimeSpent": "PT0S"
+    }
+  },
+  {
+    "type": "jdk.CompilerStatistics",
+    "values": {
+      "startTime": "2026-10-16T12:10:43.885130500-03:00",
+      "compileCount": 0,
+      "bailoutCount": 0,
+      "invalidatedCount": 0,
+      "osrCompileCount": 0,
+      "standardCompileCount": 0,
+      "osrBytesCompiled": 0,
+      "standardBytesCompiled": 0,
+      "nmethodsSize": 0,
+      "nmethodCodeSize": 0,
+      "peakTimeSpent": "PT0S",
+      "totalTimeSpent": "PT0S"
+    }
+  },
+  {
+    "type": "jdk.CompilerStatistics",
+    "values": {
+      "startTime": "2026-10-16T12:10:43.985413700-03:00",
+      "compileCount": 0,
+      "bailoutCount": 0,
+      "invalidatedCount": 0,
+      "osrCompileCount": 0,
+      "standardCompileCount": 0,
+      "osrBytesCompiled": 0,
+      "standardBytesCompiled": 0,
+      "nmethodsSize": 0,
+      "nmethodCodeSize": 0,
+      "peakTimeSpent": "PT0S",
+      "totalTimeSpent": "PT0S"
+    }
+  },
+  {
+    "type": "jdk.CompilerStatistics",
+    "values": {
+      "startTime": "2026-10-16T12:10:44.086695600-03:00",
+      "compileCount": 0,
+      "bailoutCount": 0,
+      "invalidatedCount": 0,
+      "osrCompileCount": 0,
+      "standardCompileCount": 0,
+      "osrBytesCompiled": 0,
+      "standardBytesCompiled": 0,
+      "nmethodsSize": 0,
+      "nmethodCodeSize": 0,
+      "peakTimeSpent": "PT0S",
+      "totalTimeSpent": "PT0S"
+    }
+  },
+  {
+    "type": "jdk.CompilerStatistics",
+    "values": {
+      "startTime": "2026-10-16T12:10:44.186886100-03:00",
+      "compileCount": 0,
+      "bailoutCount": 0,
+      "invalidatedCount": 0,
+      "osrCompileCount": 0,
+      "standardCompileCount": 0,
+      "osrBytesCompiled": 0,
+      "standardBytesCompiled": 0,
+      "nmethodsSize": 0,
+      "nmethodCodeSize": 0,
+      "peakTimeSpent": "PT0S",
+      "totalTimeSpent": "PT0S"
+    }
+  },
+  {
+    "type": "jdk.CompilerStatistics",
+    "values": {
+      "startTime": "2026-10-16T12:10:44.287754500-03:00",
+      "compileCount": 0,
+      "bailoutCount": 0,
+      "invalidatedCount": 0,
+      "osrCompileCount": 0,
+      "standardCompileCount": 0,
+      "osrBytesCompiled": 0,
+      "standardBytesCompiled": 0,
+      "nmethodsSize": 0,
+      "nmethodCodeSize": 0,
+      "peakTimeSpent": "PT0S",
+      "totalTimeSpent": "PT0S"
+    }
+  },
+  {
+    "type": "jdk.CompilerStatistics",
+    "values": {
+      "startTime": "2026-10-16T12:10:44.387786100-03:00",
+      "compileCount": 0,
+      "bailoutCount": 0,
+      "invalidatedCount": 0,
+      "osrCompileCount": 0,
+      "standardCompileCount": 0,
+      "osrBytesCompiled": 0,
+      "standardBytesCompiled": 0,
+      "nmethodsSize": 0,
+      "nmethodCodeSize": 0,
+      "peakTimeSpent": "PT0S",
+      "totalTimeSpent": "PT0S"
+    }
+  },
+  {
+    "type": "jdk.CompilerStatistics",
+    "values": {
+      "startTime": "2026-10-16T12:10:44.487783200-03:00",
+      "compileCount": 0,
+      "bailoutCount": 0,
+      "invalidatedCount": 0,
+      "osrCompileCount": 0,
+      "standardCompileCount": 0,
+      "osrBytesCompiled": 0,
+      "standardBytesCompiled": 0,
+      "nmethodsSize": 0,
+      "nmethodCodeSize": 0,
+      "peakTimeSpent": "PT0S",
+      "totalTimeSpent": "PT0S"
+    }
+  },
+  {
+    "type": "jdk.CompilerStatistics",
+    "values": {
+      "startTime": "2026-10-16T12:10:44.587915-03:00",
+      "compileCount": 0,
+      "bailoutCount": 0,
+      "invalidatedCount": 0,
+      "osrCompileCount": 0,
+      "standardCompileCount": 0,
+      "osrBytesCompiled": 0,
+      "standardBytesCompiled": 0,
+      "nmethodsSize": 0,
+      "nmethodCodeSize": 0,
+      "peakTimeSpent": "PT0S",
+      "totalTimeSpent": "PT0S"
+    }
+  },
+  {
+    "type": "jdk.CompilerStatistics",
+    "values": {
+      "startTime": "2026-10-16T12:10:44.888011500-03:00",
+      "compileCount": 0,
+      "bailoutCount": 0,
+      "invalidatedCount": 0,
+      "osrCompileCount": 0,
+      "standardCompileCount": 0,
+      "osrBytesCompiled": 0,
+      "standardBytesCompiled": 0,
+      "nmethodsSize": 0,
+      "nmethodCodeSize": 0,
+      "peakTimeSpent": "PT0S",
+      "totalTimeSpent": "PT0S"
+    }
+  },
+  {
+    "type": "jdk.CompilerStatistics",
+    "values": {
+      "startTime": "2026-10-16T12:10:44.989145900-03:00",
+      "compileCount": 0,
+      "bailoutCount": 0,
+      "invalidatedCount": 0,
+      "osrCompileCount": 0,
+      "standardCompileCount": 0,
+      "osrBytesCompiled": 0,
+      "standardBytesCompiled": 0,
+      "nmethodsSize": 0,
+      "nmethodCodeSize": 0,
+      "peakTimeSpent": "PT0S",
+      "totalTimeSpent": "PT0S"
+    }
+  },
+  {
+    "type": "jdk.CompilerStatistics",
+    "values": {
+      "startTime": "2026-10-16T12:10:45.089727400-03:00",
+      "compileCount": 0,
+      "bailoutCount": 0,
+      "invalidatedCount": 0,
+      "osrCompileCount": 0,
+      "standardCompileCount": 0,
+      "osrBytesCompiled": 0,
+      "standardBytesCompiled": 0,
+      "nmethodsSize": 0,
+      "nmethodCodeSize": 0,
+      "peakTimeSpent": "PT0S",
+      "totalTimeSpent": "PT0S"
+    }
+  },
+  {
+    "type": "jdk.CompilerStatistics",
+    "values": {
+      "startTime": "2026-10-16T12:10:45.190006100-03:00",
+      "compileCount": 0,
+      "bailoutCount": 0,
+      "invalidatedCount": 0,
+      "osrCompileCount": 0,
+      "standardCompileCount": 0,
+      "osrBytesCompiled": 0,
+      "standardBytesCompiled": 0,
+      "nmethodsSize": 0,
+      "nmethodCodeSize": 0,
+      "peakTimeSpent": "PT0S",
+      "totalTimeSpent": "PT0S"
+    }
+  },
+  {
+    "type": "jdk.Compilation",
+    "values": {
+      "startTime": "2026-10-16T12:10:45.189340200-03:00",
+      "duration": "PT0.001885S",
+      "eventThread": {
+        "osName": "C2 CompilerThread0",
+        "osThreadId": 4636,
+        "javaName": "C2 CompilerThread0",
+        "javaThreadId": 21,
+        "group": {
+          "parent": null,
+          "name": "system"
+        },
+        "virtual": false
+      },
+      "compileId": 61,
+      "compiler": "c2",
+      "method": {
+        "type": {
+          "classLoader": {
+            "type": {
+              "classLoader": {
+                "type": null,
+                "name": "bootstrap"
+              },
+              "name": "jdk/internal/loader/ClassLoaders$AppClassLoader",
+              "package": {
+                "name": "jdk/internal/loader",
+                "module": {
+                  "name": "java.base",
+                  "version": "25.0.3",
+                  "location": "jrt:/java.base",
+                  "classLoader": {
+                    "type": null,
+                    "name": "bootstrap"
+                  }
+                },
+                "exported": true
+              },
+              "modifiers": 10,
+              "hidden": false
+            },
+            "name": "app"
+          },
+          "name": "CompilerStatsLab",
+          "package": null,
+          "modifiers": 1,
+          "hidden": false
+        },
+        "name": "work",
+        "descriptor": "(I)I",
+        "modifiers": 8,
+        "hidden": false
+      },
+      "compileLevel": 4,
+      "succeded": true,
+      "isOsr": false,
+      "codeSize": 4936,
+      "inlinedBytes": 0,
+      "arenaBytes": 0
+    }
+  },
+  {
+    "type": "jdk.CompilerStatistics",
+    "values": {
+      "startTime": "2026-10-16T12:10:45.290861700-03:00",
+      "compileCount": 1,
+      "bailoutCount": 0,
+      "invalidatedCount": 0,
+      "osrCompileCount": 0,
+      "standardCompileCount": 1,
+      "osrBytesCompiled": 0,
+      "standardBytesCompiled": 0,
+      "nmethodsSize": 4936,
+      "nmethodCodeSize": 4872,
+      "peakTimeSpent": "PT0.001S",
+      "totalTimeSpent": "PT0.001S"
+    }
+  },
+  {
+    "type": "jdk.CompilerStatistics",
+    "values": {
+      "startTime": "2026-10-16T12:10:45.390939300-03:00",
+      "compileCount": 1,
+      "bailoutCount": 0,
+      "invalidatedCount": 0,
+      "osrCompileCount": 0,
+      "standardCompileCount": 1,
+      "osrBytesCompiled": 0,
+      "standardBytesCompiled": 0,
+      "nmethodsSize": 4936,
+      "nmethodCodeSize": 4872,
+      "peakTimeSpent": "PT0.001S",
+      "totalTimeSpent": "PT0.001S"
+    }
+  },
+  {
+    "type": "jdk.CompilerStatistics",
+    "values": {
+      "startTime": "2026-10-16T12:10:45.491084400-03:00",
+      "compileCount": 1,
+      "bailoutCount": 0,
+      "invalidatedCount": 0,
+      "osrCompileCount": 0,
+      "standardCompileCount": 1,
+      "osrBytesCompiled": 0,
+      "standardBytesCompiled": 0,
+      "nmethodsSize": 4936,
+      "nmethodCodeSize": 4872,
+      "peakTimeSpent": "PT0.001S",
+      "totalTimeSpent": "PT0.001S"
+    }
+  },
+  {
+    "type": "jdk.CompilerStatistics",
+    "values": {
+      "startTime": "2026-10-16T12:10:45.591395700-03:00",
+      "compileCount": 1,
+      "bailoutCount": 0,
+      "invalidatedCount": 0,
+      "osrCompileCount": 0,
+      "standardCompileCount": 1,
+      "osrBytesCompiled": 0,
+      "standardBytesCompiled": 0,
+      "nmethodsSize": 4936,
+      "nmethodCodeSize": 4872,
+      "peakTimeSpent": "PT0.001S",
+      "totalTimeSpent": "PT0.001S"
+    }
+  },
+  {
+    "type": "jdk.CompilerStatistics",
+    "values": {
+      "startTime": "2026-10-16T12:10:45.694150100-03:00",
+      "compileCount": 1,
+      "bailoutCount": 0,
+      "invalidatedCount": 0,
+      "osrCompileCount": 0,
+      "standardCompileCount": 1,
+      "osrBytesCompiled": 0,
+      "standardBytesCompiled": 0,
+      "nmethodsSize": 4936,
+      "nmethodCodeSize": 4872,
+      "peakTimeSpent": "PT0.001S",
+      "totalTimeSpent": "PT0.001S"
+    }
+  },
+  {
+    "type": "jdk.CompilerStatistics",
+    "values": {
+      "startTime": "2026-10-16T12:10:45.794837800-03:00",
+      "compileCount": 1,
+      "bailoutCount": 0,
+      "invalidatedCount": 0,
+      "osrCompileCount": 0,
+      "standardCompileCount": 1,
+      "osrBytesCompiled": 0,
+      "standardBytesCompiled": 0,
+      "nmethodsSize": 4936,
+      "nmethodCodeSize": 4872,
+      "peakTimeSpent": "PT0.001S",
+      "totalTimeSpent": "PT0.001S"
+    }
+  },
+  {
+    "type": "jdk.CompilerStatistics",
+    "values": {
+      "startTime": "2026-10-16T12:10:45.894948-03:00",
+      "compileCount": 1,
+      "bailoutCount": 0,
+      "invalidatedCount": 0,
+      "osrCompileCount": 0,
+      "standardCompileCount": 1,
+      "osrBytesCompiled": 0,
+      "standardBytesCompiled": 0,
+      "nmethodsSize": 4936,
+      "nmethodCodeSize": 4872,
+      "peakTimeSpent": "PT0.001S",
+      "totalTimeSpent": "PT0.001S"
+    }
+  },
+  {
+    "type": "jdk.CompilerStatistics",
+    "values": {
+      "startTime": "2026-10-16T12:10:45.995272600-03:00",
+      "compileCount": 1,
+      "bailoutCount": 0,
+      "invalidatedCount": 0,
+      "osrCompileCount": 0,
+      "standardCompileCount": 1,
+      "osrBytesCompiled": 0,
+      "standardBytesCompiled": 0,
+      "nmethodsSize": 4936,
+      "nmethodCodeSize": 4872,
+      "peakTimeSpent": "PT0.001S",
+      "totalTimeSpent": "PT0.001S"
+    }
+  },
+  {
+    "type": "jdk.CompilerStatistics",
+    "values": {
+      "startTime": "2026-10-16T12:10:46.096241600-03:00",
+      "compileCount": 1,
+      "bailoutCount": 0,
+      "invalidatedCount": 0,
+      "osrCompileCount": 0,
+      "standardCompileCount": 1,
+      "osrBytesCompiled": 0,
+      "standardBytesCompiled": 0,
+      "nmethodsSize": 4936,
+      "nmethodCodeSize": 4872,
+      "peakTimeSpent": "PT0.001S",
+      "totalTimeSpent": "PT0.001S"
+    }
+  },
+  {
+    "type": "jdk.CompilerStatistics",
+    "values": {
+      "startTime": "2026-10-16T12:10:46.207043800-03:00",
+      "compileCount": 1,
+      "bailoutCount": 0,
+      "invalidatedCount": 0,
+      "osrCompileCount": 0,
+      "standardCompileCount": 1,
+      "osrBytesCompiled": 0,
+      "standardBytesCompiled": 0,
+      "nmethodsSize": 4936,
+      "nmethodCodeSize": 4872,
+      "peakTimeSpent": "PT0.001S",
+      "totalTimeSpent": "PT0.001S"
+    }
+  },
+  {
+    "type": "jdk.CompilerStatistics",
+    "values": {
+      "startTime": "2026-10-16T12:10:46.306554900-03:00",
+      "compileCount": 1,
+      "bailoutCount": 0,
+      "invalidatedCount": 0,
+      "osrCompileCount": 0,
+      "standardCompileCount": 1,
+      "osrBytesCompiled": 0,
+      "standardBytesCompiled": 0,
+      "nmethodsSize": 4936,
+      "nmethodCodeSize": 4872,
+      "peakTimeSpent": "PT0.001S",
+      "totalTimeSpent": "PT0.001S"
+    }
+  },
+  {
+    "type": "jdk.CompilerStatistics",
+    "values": {
+      "startTime": "2026-10-16T12:10:46.406854900-03:00",
+      "compileCount": 1,
+      "bailoutCount": 0,
+      "invalidatedCount": 0,
+      "osrCompileCount": 0,
+      "standardCompileCount": 1,
+      "osrBytesCompiled": 0,
+      "standardBytesCompiled": 0,
+      "nmethodsSize": 4936,
+      "nmethodCodeSize": 4872,
+      "peakTimeSpent": "PT0.001S",
+      "totalTimeSpent": "PT0.001S"
+    }
+  },
+  {
+    "type": "jdk.CompilerStatistics",
+    "values": {
+      "startTime": "2026-10-16T12:10:46.507156700-03:00",
+      "compileCount": 1,
+      "bailoutCount": 0,
+      "invalidatedCount": 0,
+      "osrCompileCount": 0,
+      "standardCompileCount": 1,
+      "osrBytesCompiled": 0,
+      "standardBytesCompiled": 0,
+      "nmethodsSize": 4936,
+      "nmethodCodeSize": 4872,
+      "peakTimeSpent": "PT0.001S",
+      "totalTimeSpent": "PT0.001S"
+    }
+  }
+]

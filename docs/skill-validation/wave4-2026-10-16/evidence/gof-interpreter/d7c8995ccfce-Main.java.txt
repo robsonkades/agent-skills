@@ -1,0 +1,29 @@
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Properties;
+
+public final class Main {
+    public static void main(String[] args) throws Exception {
+        var config = new Properties();
+        try (var reader = Files.newBufferedReader(Path.of(args[0]))) { config.load(reader); }
+        String entryPoint = config.getProperty("entryPoint");
+        var inputs = switch (entryPoint) {
+            case "search" -> List.of("status eq ACTIVE", "status eq ACTIVE suffix");
+            case "workflow" -> List.of("when status eq ACTIVE then accept",
+                    "when status eq ACTIVE then accept suffix");
+            default -> throw new IllegalArgumentException("unknown entryPoint");
+        };
+        System.out.println("entryPoint=" + entryPoint);
+        for (String input : inputs) {
+            try {
+                Object result = entryPoint.equals("search")
+                        ? new SearchApi().matches(input, AtomParser.Status.ACTIVE)
+                        : new WorkflowApi().execute(input, AtomParser.Status.ACTIVE);
+                System.out.println(input + " => " + result);
+            } catch (IllegalArgumentException error) {
+                System.out.println(input + " => ERROR: " + error.getMessage());
+            }
+        }
+    }
+}

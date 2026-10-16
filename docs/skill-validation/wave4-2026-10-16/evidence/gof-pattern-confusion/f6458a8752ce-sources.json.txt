@@ -1,0 +1,73 @@
+[
+  {
+    "id": "fowler-event-notification",
+    "publisher": "Martin Fowler",
+    "url": "https://martinfowler.com/articles/201701-event-driven.html",
+    "version": "Article dated 2017-02-07, update noted 2017-02-08",
+    "consultedOn": "2026-10-16",
+    "section": "Event Notification",
+    "support": "Distinguishes notifications of domain changes from requests disguised as events and discusses indirect reactions and workflow coupling.",
+    "application": "Supports inspecting the actual fact/request and result protocol; the OrderValidated/credit counterexample is this review’s constructed application of the distinction.",
+    "limitation": "Authorial architectural reasoning, not a controlled efficacy experiment or a rule that every event reaction must become a command."
+  },
+  {
+    "id": "microsoft-choreography",
+    "publisher": "Microsoft Azure Architecture Center",
+    "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/saga#choreography",
+    "version": "Hosted guidance consulted 2026-10-16; no fixed library release",
+    "consultedOn": "2026-10-16",
+    "section": "Choreography",
+    "support": "Documents domain events triggering local transactions in other services, supporting the legitimate existence of subsequent business decisions.",
+    "limitation": "Used only for the event/reaction distinction; no saga adoption or distributed guarantees are implied by this review."
+  },
+  {
+    "id": "spring-interceptor",
+    "publisher": "Spring",
+    "url": "https://docs.spring.io/spring-framework/docs/6.1.21/javadoc-api/org/springframework/http/client/ClientHttpRequestInterceptor.html",
+    "version": "6.1.21",
+    "consultedOn": "2026-10-16",
+    "section": "intercept method",
+    "support": "Confirms optional continuation/blocking, response wrapping and response close responsibility when throwing after receipt. Existing content retained.",
+    "limitation": "No Spring HTTP client integration executed."
+  },
+  {
+    "id": "jdk-element-visitor",
+    "publisher": "Oracle / Java SE",
+    "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.compiler/javax/lang/model/element/ElementVisitor.html",
+    "version": "Java SE 17",
+    "consultedOn": "2026-10-16",
+    "section": "Interface contract",
+    "support": "Confirms element accept selects the appropriate visit operation, consistent with retained dispatch guidance.",
+    "limitation": "The review did not execute ElementVisitor or change the Visitor guidance."
+  },
+  {
+    "id": "gof-abstract-factory",
+    "publisher": "InformIT, original GoF authors",
+    "url": "https://www.informit.com/articles/article.aspx?p=1398599",
+    "version": "Publisher excerpt dated 2009-10-23 from Design Patterns",
+    "consultedOn": "2026-10-16",
+    "section": "Implementation and Sample Code",
+    "support": "The MazeFactory example combines product-family creation and overridable factory methods used by a separate MazeGame client. Existing coexistence guidance retained.",
+    "limitation": "An original pattern example, not evidence that a project needs a factory hierarchy."
+  },
+  {
+    "id": "spring-aop",
+    "publisher": "Spring",
+    "url": "https://docs.spring.io/spring-framework/reference/core/aop/proxying.html",
+    "version": "Page identifies Spring Framework 7.0.9",
+    "consultedOn": "2026-10-16",
+    "section": "Understanding AOP Proxies",
+    "support": "Confirms self-invocation bypass of proxy advice and the different behavior of AspectJ weaving. Existing conditional guidance retained.",
+    "limitation": "Actual project versions/mechanisms still must be inspected; no upgrade was made or authorized."
+  },
+  {
+    "id": "jakarta-servlet",
+    "publisher": "Eclipse Foundation / Jakarta EE",
+    "url": "https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/Filter.html",
+    "version": "Servlet 6.0",
+    "consultedOn": "2026-10-16",
+    "section": "doFilter",
+    "support": "The canonical page confirms that a filter can continue or block the chain. Direct fetch measured old lowercase extensionless link at HTTP 404 and corrected link at HTTP 200.",
+    "limitation": "Link/API-contract verification only; no servlet container executed."
+  }
+]

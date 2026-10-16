@@ -1,0 +1,10 @@
+// Partial source; imports/application types/wiring omitted.
+class SubmissionService {
+    private final Submissions submissions;
+    @Transactional(propagation = Propagation.REQUIRED)
+    public SubmissionId submit(SubmitCommand command) {
+        Submission submission = Submission.create(command);
+        submissions.save(submission);
+        return submission.id();
+    }
+}

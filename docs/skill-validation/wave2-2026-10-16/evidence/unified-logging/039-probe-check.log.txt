@@ -1,0 +1,18 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Owned JVM did not exit cleanly
+
+1 !== 0
+
+    at file:///C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/verify-command-scope.mjs:94:12 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 1,
+  expected: 0,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v25.6.1

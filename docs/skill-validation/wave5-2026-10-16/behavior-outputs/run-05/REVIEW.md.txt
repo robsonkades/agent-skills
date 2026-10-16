@@ -1,0 +1,49 @@
+# Revisão da exportação local
+
+A exportação foi corrigida em `project/launch.json`: `.build/app` agora precede `lib/compat.jar`. A biblioteca permanece no classpath e fornece `LegacyBanner`. Não houve alteração nas fontes Java, na biblioteca, no contrato, no fixture original ou no teste Java existente.
+
+## Causa e evidências
+
+O comando aceito é `node run.mjs export input output`, executado em `output/project`. A configuração original colocava `lib/compat.jar` primeiro. Esse JAR contém outra classe com o mesmo nome qualificado, `work.Normalizer`, e o carregador selecionava essa implementação antiga. Seu bytecode troca apenas CRLF por LF. A classe compilada da fonte atual contém ambas as substituições: CRLF e CR isolado.
+
+O `check` original executava `SelfTest` com `.build/app;.build/test`, sem o JAR ou `launch.json`. Por isso passava, apesar de a exportação efetiva carregar outra classe. O problema não era charset: `Main` já lê e escreve explicitamente em UTF-8. Repetir a substituição na fonte não mudaria a classe selecionada pela configuração anterior.
+
+Evidências preservadas em `logs/`:
+
+- `baseline-check.json`: `SelfTest PASS`, exit 0.
+- `baseline-export.json`: exportação aceita, exit 0 e banner de compatibilidade, mas resultado incorreto.
+- `baseline-classload.log`: `work.Main` vem de `.build/app`, enquanto `work.Normalizer` e `work.LegacyBanner` vêm de `lib/compat.jar`.
+- `jar-normalizer-runtime.json` e `app-normalizer.json`: desassemblagem das duas implementações; a primeira tem uma chamada a `String.replace`, a segunda tem duas.
+- `jar-entries.json`, `jar-banner.json` e `compat-manifest.txt`: conteúdo e metadados da biblioteca inspecionados sem modificá-la. O manifesto não declara selagem nem versões múltiplas; nenhuma mudança de metadados foi necessária.
+
+| Bytes UTF-8 | Hexadecimal |
+| --- | --- |
+| Fixture original: `a\rb\r\nc\n` | `610d620d0a630a` |
+| Exportação antes: `a\rb\nc\n` | `610d620a630a` |
+| Exportação final: `a\nb\nc\n` | `610a620a630a` |
+
+## Correção e cobertura
+
+Além da ordem do classpath, `project/run.mjs` passou a executar `test/export.test.mjs` no comando `check`. O teste Java existente foi preservado. O teste adicional invoca o comando aceito com a configuração real e confere os bytes de saída e o banner da biblioteca.
+
+Os seis casos cobrem o fixture original, combinações de CRLF/CR/LF, CR repetido e final, texto UTF-8 preservado (BOM, acentos, ideogramas, emoji, tabulação, NUL e separadores Unicode), ausência de quebra final, somente CR, somente CRLF e arquivo vazio. Entradas geradas e resultados ficam em `.build/`; o fixture original é somente lido.
+
+A regressão foi executada antes da correção: `regression-before-fix.json` registra exit 1 e a diferença entre CR (13) e LF (10) no fixture, enquanto `SelfTest` ainda passava. Depois da correção, os produtos antigos foram movidos para `before-fix-build/`, com validação prévia dos caminhos, permitindo uma reconstrução limpa e preservando a evidência.
+
+## Verificação executada
+
+- `node run.mjs check` após remover `.build` do caminho ativo: exit 0; teste Java e seis casos de exportação passaram (`clean-check.json`).
+- `node run.mjs export fixture/input.txt ../final-export.txt`: exit 0; saída exata `a\nb\nc\n` e `Exporter compatible mode` (`final-export.json`).
+- Rastreamento adicional com o mesmo classpath configurado: `work.Normalizer` vem de `.build/app` e `work.LegacyBanner` continua vindo de `lib/compat.jar` (`final-classload.log`). Os rastreamentos são execuções Java diagnósticas equivalentes; as exportações aceitas estão registradas separadamente.
+- Runtime confirmado por `java -version`: Temurin 25.0.3+9. Todas as compilações mantêm `--release 17`; os três classfiles finais têm major version 61.
+- `finalize.mjs` compara os arquivos originais e finais, valida os bytes e a origem das classes, confere resultados dos comandos e registra os hashes. Entre os arquivos preexistentes, somente `launch.json` e `run.mjs` mudaram; `test/export.test.mjs` foi acrescentado. O SHA-256 idêntico do JAR, do contrato, do fixture e dos demais arquivos preservados consta em `execution.json`.
+
+Os comandos completos, argumentos, diretórios, saídas, exits, arquivos lidos e conteúdos ou referências a logs completos estão em `execution.json`. `observe.mjs` limita seus processos filhos a 25 segundos; os testes de exportação limitam cada filho a 10 segundos, e o runner existente limita Java/javac a 30 segundos. Nenhuma execução atingiu timeout; nenhum processo de fundo foi iniciado.
+
+## Limites e escopo
+
+Não houve acesso a produção, rede, instalação, atualização de dependência/toolchain, agentes adicionais ou skills. A validação foi local, no runtime fornecido. Java 17 foi verificado como alvo de compilação e formato de bytecode; não foi executado um runtime Java 17.
+
+A primeira leitura absoluta de `TASK.md` herdou o diretório de trabalho `C:/git/agent-skills` porque a chamada não especificou `cwd`. Nenhum arquivo desse repositório foi lido ou alterado; todas as chamadas seguintes usaram explicitamente este run. Esse desvio de diretório inicial está registrado em `execution.json`. Todas as gravações ocorreram sob `output/`.
+
+As alterações e verificações descritas foram executadas; não há proposta de deploy ou operação pendente. Ao término de `finalize.mjs`, não restam processos próprios nem gravações em andamento: `allWritesStopped:true`.

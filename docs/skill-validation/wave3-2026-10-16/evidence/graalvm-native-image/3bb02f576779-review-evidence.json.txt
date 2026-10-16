@@ -1,0 +1,102 @@
+{
+  "baseline": {
+    "head": "bbb7d996a929e81baf735bbaab5b6e3fbf6e8503",
+    "files": [
+      {
+        "path": "skills/graalvm-native-image/references/build-and-measurement.md",
+        "sha256": "f308d88011c320c25c848aba356361c3b5b02b1039bdd06ab2a64d7d35f6c4e1"
+      },
+      {
+        "path": "skills/graalvm-native-image/references/closed-world-and-metadata.md",
+        "sha256": "31246983faba6ee76769e1738ca5ace037fe84e8a30099e5525cc489781f26c5"
+      },
+      {
+        "path": "skills/graalvm-native-image/references/troubleshooting.md",
+        "sha256": "4c3fb7ab8b832ec09f452d68d38b46beb17f5942b341a569f6cbe5492132368b"
+      },
+      {
+        "path": "skills/graalvm-native-image/SKILL.md",
+        "sha256": "233338c7a5e678acd902bc08790f78e94a65b1c2c54b243a6faed9a0b401ce4e"
+      },
+      {
+        "path": "skills/graalvm-native-image/skill.yaml",
+        "sha256": "c011f1675fc57b8a27b5f1c5000075eec276e9a69c49a5bb7d7db58d472b0037"
+      }
+    ]
+  },
+  "localChecks": {
+    "commands": [
+      {
+        "cmd": "@'\nimport assert from 'node:assert/strict';\nimport { readFileSync, readdirSync, existsSync } from 'node:fs';\nimport path from 'node:path';\nimport { parseManifest } from './packages/core/src/domain/manifest.ts';\nimport { buildSkillPackage } from './packages/core/src/domain/skill-package.ts';\nimport { validatePackage } from './packages/core/src/application/validate-package.ts';\nconst root = path.resolve('skills/graalvm-native-image');\nfunction gather(dir, prefix = '') {\n  return readdirSync(dir, { withFileTypes: true }).flatMap(e => {\n    const rel = prefix + e.name;\n    return e.isDirectory() ? gather(path.join(dir, e.name), rel + '/') : [{ path: rel, bytes: readFileSync(path.join(dir, e.name)) }];\n  });\n}\nconst files = gather(root);\nconst parsed = parseManifest(readFileSync(path.join(root, 'skill.yaml'), 'utf8'));\nconst pkg = buildSkillPackage(parsed.manifest, files);\nconst report = validatePackage(pkg, { directoryName: 'graalvm-native-image' });\nassert.deepEqual(parsed.issues, []);\nassert.deepEqual(report.issues, []);\nassert.equal(parsed.manifest.version, '2.0.5');\nlet linkCount = 0;\nfor (const file of files.filter(f => f.path.endsWith('.md'))) {\n  const text = file.bytes.toString('utf8');\n  for (const match of text.matchAll(/\\[[^\\]]+\\]\\(([^)]+)\\)/g)) {\n    const href = match[1];\n    if (/^(?:https?:|mailto:)/.test(href)) continue;\n    const [relative, fragment] = href.split('#');\n    const target = path.resolve(root, path.dirname(file.path), relative || path.basename(file.path));\n    assert.ok(target.startsWith(root + path.sep), href);\n    assert.ok(existsSync(target), href);\n    if (fragment) {\n      const headings = [...readFileSync(target, 'utf8').matchAll(/^#+\\s+(.+)$/gm)].map(m => m[1].toLowerCase().replace(/[^\\w\\s-]/g, '').trim().replace(/\\s+/g, '-'));\n      assert.ok(headings.includes(fragment), href);\n    }\n    linkCount++;\n  }\n}\nconst entry = readFileSync(path.join(root, 'SKILL.md'), 'utf8');\nfor (const file of files.filter(f => f.path.startsWith('references/'))) assert.ok(entry.includes(file.path), 'Unrouted reference: ' + file.path);\nconsole.log(JSON.stringify({ name: parsed.manifest.name, version: parsed.manifest.version, files: files.length, packageIssues: report.issues, manifestIssues: parsed.issues, relativeLinksChecked: linkCount, referencesRouted: files.filter(f => f.path.startsWith('references/')).length }));\n'@ | node --input-type=module",
+        "workdir": "C:/git/agent-skills",
+        "max_output_tokens": 2500
+      },
+      {
+        "cmd": "git diff --check -- skills/graalvm-native-image; git status --short -- skills/graalvm-native-image; git diff --stat -- skills/graalvm-native-image; git diff -- skills/graalvm-native-image",
+        "workdir": "C:/git/agent-skills",
+        "max_output_tokens": 6500
+      },
+      {
+        "cmd": "node node_modules/prettier/bin/prettier.cjs --check skills/graalvm-native-image/SKILL.md skills/graalvm-native-image/skill.yaml skills/graalvm-native-image/references/build-and-measurement.md skills/graalvm-native-image/references/troubleshooting.md",
+        "workdir": "C:/git/agent-skills",
+        "max_output_tokens": 2000
+      }
+    ],
+    "results": [
+      {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "8a40e4",
+          "wall_time_seconds": 0.1780759,
+          "exit_code": 0,
+          "original_token_count": 37,
+          "output": "{\"name\":\"graalvm-native-image\",\"version\":\"2.0.5\",\"files\":5,\"packageIssues\":[],\"manifestIssues\":[],\"relativeLinksChecked\":8,\"referencesRouted\":3}\n"
+        }
+      },
+      {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "0634c2",
+          "wall_time_seconds": 0.1306239,
+          "exit_code": 0,
+          "original_token_count": 1952,
+          "output": " M skills/graalvm-native-image/SKILL.md\n M skills/graalvm-native-image/references/build-and-measurement.md\n M skills/graalvm-native-image/references/troubleshooting.md\n M skills/graalvm-native-image/skill.yaml\n skills/graalvm-native-image/SKILL.md               |  3 +++\n .../references/build-and-measurement.md            | 31 ++++++++++++++++++++++\n .../references/troubleshooting.md                  |  5 ++++\n skills/graalvm-native-image/skill.yaml             |  2 +-\n 4 files changed, 40 insertions(+), 1 deletion(-)\ndiff --git a/skills/graalvm-native-image/SKILL.md b/skills/graalvm-native-image/SKILL.md\nindex b0c4e34..de7cb84 100644\n--- a/skills/graalvm-native-image/SKILL.md\n+++ b/skills/graalvm-native-image/SKILL.md\n@@ -84,6 +84,9 @@ new binary, capture or canary. Test and rollout gates apply when producing or pr\n    retain the build report, effective arguments, SBOM, target CPU, debug-symbol policy, binary\n    hash, build time, and peak builder RSS. Treat expert `-H:` flags as release-coupled and prove\n    that each is accepted and still needed.\n+   Trace applied JAR configuration and plugin/profile overrides before accepting the intended\n+   optimization level; use [effective-option inspection](references/build-and-measurement.md#resolve-effective-build-options)\n+   when the command or measured behavior contradicts it.\n 7. **Test the produced artifact against its supported contract.** Exercise relevant success,\n    invalid input, optional integrations,\n    reflection/serialization/JNI/FFM, resources, locales/time zones, TLS/security providers,\ndiff --git a/skills/graalvm-native-image/references/build-and-measurement.md b/skills/graalvm-native-image/references/build-and-measurement.md\nindex 556142d..dfe0aea 100644\n--- a/skills/graalvm-native-image/references/build-and-measurement.md\n+++ b/skills/graalvm-native-image/references/build-and-measurement.md\n@@ -25,6 +25,30 @@ builder heap with `-J-Xmx...` and parallelism with `--parallelism=...` from meas\n shell/container reporting, exit 137 commonly represents SIGKILL; it does not prove an OOM kill.\n Check cgroup/kernel events and orchestrator termination before changing memory or parallelism.\n \n+## Resolve effective build options\n+\n+Inspect the exact task/profile, generated argument file and applied\n+`META-INF/native-image/**/native-image.properties` in the packaged dependencies. A configuration\n+entry in source is not proof of the setting that reaches the builder. With the selected toolchain\n+and its platform prerequisites, `--verbose --dry-run` reports configuration origins and the\n+assembled builder command without compiling the image:\n+\n+```bash\n+# Example: app.jar embeds native-image.properties with Args = -O0\n+native-image --verbose --dry-run -O2 -cp app.jar com.example.Main\n+native-image --verbose --dry-run -cp app.jar -O2 com.example.Main\n+```\n+\n+For this scalar option, left-to-right evaluation leaves optimization at `0` in the first command\n+and `2` in the second. Confirm the expanded arguments, including their origins, on the target\n+release. Collection-valued options and class-initialization policies have their own rules; do not\n+generalize this into replacing every configuration with the last string seen.\n+\n+Repair the owning task/profile or intended override if it contradicts the release contract.\n+Preserve unrelated dependency metadata. If the effective setting already matches, retain it and\n+investigate the remaining performance evidence. A dry run proves neither build success nor native\n+runtime correctness; tie any subsequent measurement to the rebuilt artifact's hash and report.\n+\n ## Collect and review reachability metadata\n \n Prefer metadata already generated by the framework or shipped by the library. Use the tracing agent\n@@ -156,6 +180,12 @@ toward the wrong workload.\n in current releases. `-O3` is not automatically better in every distribution/workload. Measure\n binary size, startup, RSS, and performance before selecting an optimization level.\n \n+Before blaming AOT for low throughput, check whether `-Ob` or `-O0` entered the effective command\n+through a development profile, embedded configuration or Native Build Tools `quickBuild` setting.\n+Keep quick builds useful for development; use the intended production configuration for production\n+performance conclusions. A corrected configuration requires fresh measurements and does not itself\n+prove that the optimization level caused the regression.\n+\n Use the target platform's supported symbol stripping or splitting workflow according to incident\n and distribution policy; `--strip-debug` is not a documented Native Image builder option. Keep\n symbols in an access-controlled artifact store keyed by the binary build ID/hash. An executable\n@@ -205,6 +235,7 @@ histograms, environment metadata, errors, and uncertainty.\n \n ## Primary references\n \n+- [Build configuration and argument order, GraalVM 25.0.2](https://github.com/oracle/graal/blob/graal-25.0.2/docs/reference-manual/native-image/BuildConfiguration.md)\n - [Native Image options](https://www.graalvm.org/latest/reference-manual/native-image/overview/Options/)\n - [Native Image build output](https://www.graalvm.org/latest/reference-manual/native-image/overview/BuildOutput/)\n - [Profile-Guided Optimization](https://www.graalvm.org/latest/reference-manual/native-image/optimizations-and-performance/PGO/)\ndiff --git a/skills/graalvm-native-image/references/troubleshooting.md b/skills/graalvm-native-image/references/troubleshooting.md\nindex d2989b7..b639cf1 100644\n--- a/skills/graalvm-native-image/references/troubleshooting.md\n+++ b/skills/graalvm-native-image/references/troubleshooting.md\n@@ -45,6 +45,11 @@ For embedded versus runtime JSSE stores and rotation, use\n \n ## Memory, GC, and latency\n \n+If unexpectedly low native throughput follows a fast development build, first inspect the\n+[effective optimization options](build-and-measurement.md#resolve-effective-build-options), including\n+embedded JAR configuration and `quickBuild`. Confirm a mismatch before changing them; an already\n+correct production setting leaves GC, workload, dependency and measurement explanations open.\n+\n | Symptom                                  | Plausible causes                                                                                                       | What to measure                                                                                              | Remediation                                                                                                  |\n | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |\n | RSS grows toward container limit         | heap grows toward default ceiling, GC transient copy headroom, native allocation, stacks, allocator retention, or leak | heap/live set after GC, RSS/PSS, NMT where available, thread count/stacks, cgroup events, allocation profile | set `-Xmx` with headroom; choose GC; reduce concurrency/stacks; isolate native leak before blaming Java heap |\ndiff --git a/skills/graalvm-native-image/skill.yaml b/skills/graalvm-native-image/skill.yaml\nindex 3606bc8..2ca767d 100644\n--- a/skills/graalvm-native-image/skill.yaml\n+++ b/skills/graalvm-native-image/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: graalvm-native-image\n-version: 2.0.4\n+version: 2.0.5\n description: >-\n   GraalVM Native Image: closed-world reachability, dynamic-feature metadata,\n   class initialization and image-heap state, CPU targeting, GC and PGO choices,\n"
+        }
+      },
+      {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "0347eb",
+          "wall_time_seconds": 0.2187458,
+          "exit_code": 0,
+          "original_token_count": 17,
+          "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+        }
+      }
+    ]
+  },
+  "formatterScope": {
+    "chunk_id": "0e05c8",
+    "wall_time_seconds": 0.2364977,
+    "exit_code": 0,
+    "original_token_count": 84,
+    "output": "dist/\nnode_modules/\n*.tsbuildinfo\nCHANGELOG.md\n\n# Generated by scripts/build-registry-index.mjs; its formatting is our serialiser's, and\n# reformatting it here would fight `npm run registry:check` on every commit.\nregistry/skills.yaml\n\r\n{ \"ignored\": false, \"inferredParser\": \"markdown\" }\n{ \"ignored\": false, \"inferredParser\": \"yaml\" }\n"
+  },
+  "initialProbeFailure": {
+    "chunk_id": "df044c",
+    "wall_time_seconds": 0.9306661,
+    "exit_code": 1,
+    "original_token_count": 715,
+    "output": "node:internal/modules/run_main:107\r\n    triggerUncaughtException(\r\n    ^\r\n\r\nAssertionError [ERR_ASSERTION]: option-before-classpath: Error: Variable 'ProgramFiles(x86)' is not defined in the system environment.\r\r\nPlease make sure that Visual Studio 2022 version 17.6.0 or later is installed on your system. You can download it at https://visualstudio.microsoft.com/downloads/. If this error persists, please try and run GraalVM Native Image in an x64 Native Tools Command Prompt or file a ticket.\r\r\ncom.oracle.svm.driver.NativeImage$NativeImageError: Variable 'ProgramFiles(x86)' is not defined in the system environment.\r\r\nPlease make sure that Visual Studio 2022 version 17.6.0 or later is installed on your system. You can download it at https://visualstudio.microsoft.com/downloads/. If this error persists, please try and run GraalVM Native Image in an x64 Native Tools Command Prompt or file a ticket.\r\r\n\tat org.graalvm.nativeimage.driver/com.oracle.svm.driver.NativeImage.showError(NativeImage.java:2510)\r\r\n\tat org.graalvm.nativeimage.driver/com.oracle.svm.driver.WindowsBuildEnvironmentUtil.fail(WindowsBuildEnvironmentUtil.java:152)\r\r\n\tat org.graalvm.nativeimage.driver/com.oracle.svm.driver.WindowsBuildEnvironmentUtil.fail(WindowsBuildEnvironmentUtil.java:148)\r\r\n\tat org.graalvm.nativeimage.driver/com.oracle.svm.driver.WindowsBuildEnvironmentUtil.findVCVarsallWithVSWhereOrFail(WindowsBuildEnvironmentUtil.java:94)\r\r\n\tat org.graalvm.nativeimage.driver/com.oracle.svm.driver.WindowsBuildEnvironmentUtil.propagateEnv(WindowsBuildEnvironmentUtil.java:55)\r\r\n\tat org.graalvm.nativeimage.driver/com.oracle.svm.driver.NativeImage.buildImage(NativeImage.java:1828)\r\r\n\tat org.graalvm.nativeimage.driver/com.oracle.svm.driver.NativeImage.completeImageBuild(NativeImage.java:1460)\r\r\n\tat org.graalvm.nativeimage.driver/com.oracle.svm.driver.NativeImage.build(NativeImage.java:2083)\r\r\n\tat org.graalvm.nativeimage.driver/com.oracle.svm.driver.NativeImage.performBuild(NativeImage.java:2048)\r\r\n\tat org.graalvm.nativeimage.driver/com.oracle.svm.driver.NativeImage.main(NativeImage.java:2030)\r\r\n\tat java.base@25.0.2/java.lang.invoke.LambdaForm$DMH/sa346b79c.invokeStaticInit(LambdaForm$DMH)\r\r\n\r\n\r\n20 !== 0\r\n\r\n    at run (file:///C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/graalvm-native-image-evidence/probe.mjs:26:10)\r\n    at file:///C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/graalvm-native-image-evidence/probe.mjs:34:16\r\n    at ModuleJob.run (node:internal/modules/esm/module_job:430:25)\r\n    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:655:26)\r\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {\r\n  generatedMessage: false,\r\n  code: 'ERR_ASSERTION',\r\n  actual: 20,\r\n  expected: 0,\r\n  operator: 'strictEqual',\r\n  diff: 'simple'\r\n}\r\n\r\nNode.js v25.6.1\r\n"
+  },
+  "toolingFailures": [
+    {
+      "stage": "baseline helper",
+      "cause": "First helper assumed wave3 allFiles was a path-to-hash map; actual schema uses arrays. Corrected against packages[].files[]; all five hashes matched."
+    },
+    {
+      "stage": "evidence persistence",
+      "cause": "Attempt to serialize full accumulated reads in a Windows process command exceeded OS command-line limit (os error 206); no command ran. Retried through apply_patch for structured evidence and short Node commands."
+    }
+  ]
+}

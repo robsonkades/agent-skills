@@ -1,0 +1,125 @@
+CompileCommand: compileonly CallSiteProbe.dispatch bool compileonly = true
+[0.038s]    1     n       jdk.internal.vm.Continuation::enterSpecial (native)   (static)
+[0.042s]    2     n       jdk.internal.vm.Continuation::doYield (native)   (static)
+[0.048s]    3     n       java.lang.invoke.MethodHandle::linkToStatic(IL)I (native)   (static)
+[0.055s]    4     n       java.lang.invoke.MethodHandle::linkToVirtual(LL)L (native)   (static)
+[0.059s]    5     n       java.lang.invoke.MethodHandle::linkToStatic(LLL)L (native)   (static)
+[0.063s]    6     n       java.lang.invoke.MethodHandle::linkToStatic(LLLL)L (native)   (static)
+[0.064s]    7     n       java.lang.invoke.MethodHandle::invokeBasic(L)L (native)   
+[0.064s]    8     n       java.lang.invoke.MethodHandle::linkToSpecial(LLL)L (native)   (static)
+[0.064s]    9     n       java.lang.invoke.MethodHandle::linkToStatic(LLLLL)L (native)   (static)
+[0.064s]   10     n       java.lang.invoke.MethodHandle::invokeBasic(LLLL)L (native)   
+[0.065s]   11     n       java.lang.invoke.MethodHandle::invokeBasic(I)I (native)   
+[0.065s]   12     n       java.lang.invoke.MethodHandle::linkToSpecial(LIL)I (native)   (static)
+[0.065s]   13     n       java.lang.invoke.MethodHandle::invokeBasic(LI)I (native)   
+[0.066s]   14     n       java.lang.invoke.MethodHandle::linkToSpecial(LLIL)I (native)   (static)
+[0.066s]   15     n       java.lang.invoke.MethodHandle::invokeBasic()L (native)   
+[0.066s]   16     n       java.lang.invoke.MethodHandle::linkToSpecial(LL)L (native)   (static)
+[0.066s]   17     n       java.lang.invoke.MethodHandle::linkToStatic(LLLLLL)L (native)   (static)
+[0.067s]   18     n       java.lang.invoke.MethodHandle::invokeBasic(LLLLL)L (native)   
+[0.067s]   19     n       java.lang.invoke.MethodHandle::linkToSpecial(LLLLLLL)L (native)   (static)
+[0.067s]   20     n       java.lang.invoke.MethodHandle::invokeBasic(LL)L (native)   
+[0.067s]   21     n       java.lang.invoke.MethodHandle::linkToSpecial(LLLL)L (native)   (static)
+phase=begin mode=change
+[0.069s]   22    b        CallSiteProbe::dispatch (8 bytes)
+[0.072s]   23     n       java.lang.invoke.MethodHandle::linkToSpecial(LIL)L (native)   (static)
+[0.072s]   24     n       java.lang.invoke.MethodHandle::invokeBasic(LI)L (native)   
+[0.072s]   25     n       java.lang.invoke.MethodHandle::linkToSpecial(LLIL)L (native)   (static)
+[0.073s]   26     n       java.lang.invoke.MethodHandle::invokeBasic(I)L (native)   
+phase=before-set round=0
+[0.073s] Failed dependency of type call_site_target_value
+[0.073s]   object  = a 'java/lang/invoke/MutableCallSite'{0x00000006238308b0}
+[0.073s]   object  = a 'java/lang/invoke/DirectMethodHandle'{0x0000000623830708}
+[0.073s]   witness = java.lang.invoke.MutableCallSite
+[0.073s]   code: nmethod
+[0.073s] 
+[0.073s] Marked for deoptimization
+[0.073s] Compiled method (c2) 73   22             CallSiteProbe::dispatch (8 bytes)
+[0.073s]  total in heap  [0x0000025b35176508,0x0000025b351766a0] = 408
+[0.073s]  main code      [0x0000025b35176600,0x0000025b35176650] = 80
+[0.073s]  stub code      [0x0000025b35176650,0x0000025b35176668] = 24
+[0.074s]  oops           [0x0000025b35176668,0x0000025b351766a0] = 56
+[0.074s]  mutable data [0x0000025b42e4c260,0x0000025b42e4c2e8] = 136
+[0.074s]  relocation     [0x0000025b42e4c260,0x0000025b42e4c270] = 16
+[0.074s]  metadata       [0x0000025b42e4c270,0x0000025b42e4c2e8] = 120
+[0.074s]  immutable data [0x0000025b42e472d0,0x0000025b42e47320] = 80
+[0.074s]  dependencies   [0x0000025b42e472d0,0x0000025b42e472f8] = 40
+[0.074s]  scopes pcs     [0x0000025b42e472f8,0x0000025b42e47318] = 32
+[0.074s]  scopes data    [0x0000025b42e47318,0x0000025b42e47320] = 8
+[0.074s]   22             CallSiteProbe::dispatch (8 bytes)   made not entrant: marked for deoptimization
+phase=after-set round=0
+[0.074s]   27    b        CallSiteProbe::dispatch (8 bytes)
+phase=before-set round=1
+[0.077s] Failed dependency of type call_site_target_value
+[0.077s]   object  = a 'java/lang/invoke/MutableCallSite'{0x00000006238308b0}
+[0.077s]   object  = a 'java/lang/invoke/DirectMethodHandle'{0x00000006238307d8}
+[0.077s]   witness = java.lang.invoke.MutableCallSite
+[0.077s]   code: nmethod
+[0.077s] 
+[0.077s] Marked for deoptimization
+[0.077s] Compiled method (c2) 77   27             CallSiteProbe::dispatch (8 bytes)
+[0.077s]  total in heap  [0x0000025b35173788,0x0000025b35173918] = 400
+[0.077s]  main code      [0x0000025b35173880,0x0000025b351738d0] = 80
+[0.077s]  stub code      [0x0000025b351738d0,0x0000025b351738e8] = 24
+[0.077s]  oops           [0x0000025b351738e8,0x0000025b35173918] = 48
+[0.077s]  mutable data [0x0000025b42e4b450,0x0000025b42e4b4d8] = 136
+[0.078s]  relocation     [0x0000025b42e4b450,0x0000025b42e4b460] = 16
+[0.078s]  metadata       [0x0000025b42e4b460,0x0000025b42e4b4d8] = 120
+[0.078s]  immutable data [0x0000025b42e47270,0x0000025b42e472c0] = 80
+[0.078s]  dependencies   [0x0000025b42e47270,0x0000025b42e47298] = 40
+[0.078s]  scopes pcs     [0x0000025b42e47298,0x0000025b42e472b8] = 32
+[0.078s]  scopes data    [0x0000025b42e472b8,0x0000025b42e472c0] = 8
+[0.078s]   27             CallSiteProbe::dispatch (8 bytes)   made not entrant: marked for deoptimization
+phase=after-set round=1
+[0.078s]   28    b        CallSiteProbe::dispatch (8 bytes)
+phase=before-set round=2
+[0.080s] Failed dependency of type call_site_target_value
+[0.080s]   object  = a 'java/lang/invoke/MutableCallSite'{0x00000006238308b0}
+[0.080s]   object  = a 'java/lang/invoke/DirectMethodHandle'{0x0000000623830708}
+[0.080s]   witness = java.lang.invoke.MutableCallSite
+[0.080s]   code: nmethod
+[0.080s] 
+[0.080s] Marked for deoptimization
+[0.080s] Compiled method (c2) 80   28             CallSiteProbe::dispatch (8 bytes)
+[0.080s]  total in heap  [0x0000025b35173488,0x0000025b35173620] = 408
+[0.081s]  main code      [0x0000025b35173580,0x0000025b351735d0] = 80
+[0.081s]  stub code      [0x0000025b351735d0,0x0000025b351735e8] = 24
+[0.081s]  oops           [0x0000025b351735e8,0x0000025b35173620] = 56
+[0.081s]  mutable data [0x0000025b42e4cad0,0x0000025b42e4cb58] = 136
+[0.081s]  relocation     [0x0000025b42e4cad0,0x0000025b42e4cae0] = 16
+[0.081s]  metadata       [0x0000025b42e4cae0,0x0000025b42e4cb58] = 120
+[0.081s]  immutable data [0x0000025b42e47510,0x0000025b42e47560] = 80
+[0.081s]  dependencies   [0x0000025b42e47510,0x0000025b42e47538] = 40
+[0.081s]  scopes pcs     [0x0000025b42e47538,0x0000025b42e47558] = 32
+[0.081s]  scopes data    [0x0000025b42e47558,0x0000025b42e47560] = 8
+[0.081s]   28             CallSiteProbe::dispatch (8 bytes)   made not entrant: marked for deoptimization
+phase=after-set round=2
+[0.082s]   29    b        CallSiteProbe::dispatch (8 bytes)
+phase=before-set round=3
+[0.084s] Failed dependency of type call_site_target_value
+[0.084s]   object  = a 'java/lang/invoke/MutableCallSite'{0x00000006238308b0}
+[0.084s]   object  = a 'java/lang/invoke/DirectMethodHandle'{0x00000006238307d8}
+[0.084s]   witness = java.lang.invoke.MutableCallSite
+[0.084s]   code: nmethod
+[0.084s] 
+[0.084s] Marked for deoptimization
+[0.084s] Compiled method (c2) 84   29             CallSiteProbe::dispatch (8 bytes)
+[0.084s]  total in heap  [0x0000025b35172f88,0x0000025b35173120] = 408
+[0.084s]  main code      [0x0000025b35173080,0x0000025b351730d0] = 80
+[0.084s]  stub code      [0x0000025b351730d0,0x0000025b351730e8] = 24
+[0.084s]  oops           [0x0000025b351730e8,0x0000025b35173120] = 56
+[0.084s]  mutable data [0x0000025b42e4cf50,0x0000025b42e4cfd8] = 136
+[0.084s]  relocation     [0x0000025b42e4cf50,0x0000025b42e4cf60] = 16
+[0.084s]  metadata       [0x0000025b42e4cf60,0x0000025b42e4cfd8] = 120
+[0.085s]  immutable data [0x0000025b42e47090,0x0000025b42e470e0] = 80
+[0.085s]  dependencies   [0x0000025b42e47090,0x0000025b42e470b8] = 40
+[0.085s]  scopes pcs     [0x0000025b42e470b8,0x0000025b42e470d8] = 32
+[0.085s]  scopes data    [0x0000025b42e470d8,0x0000025b42e470e0] = 8
+[0.085s]   29             CallSiteProbe::dispatch (8 bytes)   made not entrant: marked for deoptimization
+phase=after-set round=3
+[0.086s]   30     n       java.lang.invoke.MethodHandle::linkToSpecial(LLL)V (native)   (static)
+[0.086s]   31     n       java.lang.invoke.MethodHandle::linkToSpecial(LLJL)L (native)   (static)
+[0.087s]   32     n       java.lang.invoke.MethodHandle::invokeBasic(LLJ)L (native)   
+[0.087s]   33     n       java.lang.invoke.MethodHandle::linkToSpecial(LLLJL)L (native)   (static)
+[0.088s]   34     n       java.lang.invoke.MethodHandle::invokeBasic(LJ)L (native)   
+PASS mode=change checksum=51231728

@@ -1,0 +1,37 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { dirname, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+const repository = 'C:/git/agent-skills';
+const skill = 'query-objects-and-specifications';
+const root = resolve(repository, 'skills', skill);
+const snapshot = 'C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/baseline/query-objects-and-specifications';
+const { loadPackageFromDirectory, validatePackage, decodeText } = await import(pathToFileURL(resolve(repository, 'packages/core/dist/index.js')).href);
+const { NodeFileSystem } = await import(pathToFileURL(resolve(repository, 'packages/node/dist/index.js')).href);
+const loaded = await loadPackageFromDirectory(new NodeFileSystem(), root, { strict: true });
+const issues = [...loaded.issues, ...validatePackage(loaded.pkg, { directoryName: skill }).issues];
+const baseline = JSON.parse(readFileSync(resolve(repository, 'docs/skill-validation/wave4-2026-10-16/baseline.json'), 'utf8')).packages.find(entry => entry.name === skill);
+const hash = data => createHash('sha256').update(data).digest('hex');
+const links = [];
+const examples = [];
+for (const file of loaded.pkg.files.filter(file => file.path.endsWith('.md'))) {
+  const contents = decodeText(file.bytes);
+  for (const match of contents.matchAll(/\[[^\]]*\]\(([^)]+)\)|`([^`\s]+\.md)`/g)) {
+    const target = match[1] ?? match[2];
+    if (/^(https?:|#|<https?:)/.test(target)) continue;
+    links.push({ from: file.path, target, exists: existsSync(resolve(dirname(resolve(root, file.path)), target.split('#')[0])) });
+  }
+  const blocks = text => [...text.replaceAll('\r\n', '\n').matchAll(/```([^\n]*)\n([\s\S]*?)```/g)].map(match => ({ language: match[1], body: match[2] }));
+  const prior = blocks(readFileSync(resolve(snapshot, file.path), 'utf8'));
+  const after = blocks(contents);
+  examples.push({ path: file.path, languages: after.map(block => block.language), count: after.length, unchanged: JSON.stringify(prior) === JSON.stringify(after) });
+}
+const hashes = loaded.pkg.files.map(file => {
+  const path = `skills/${skill}/${file.path}`;
+  const sha256 = hash(file.bytes);
+  const baselineSha256 = baseline.files.find(file => file.path === path)?.sha256;
+  const snapshotSha256 = hash(readFileSync(resolve(snapshot, file.path)));
+  return { path, sha256, baselineSha256, snapshotSha256, snapshotMatchesBaseline: snapshotSha256 === baselineSha256, unchangedFromAssignment: sha256 === baselineSha256 };
+});
+console.log(JSON.stringify({ skill, version: loaded.pkg.manifest.version, baselineVersion: baseline.initialVersion, fileCount: loaded.pkg.files.length, issues, links, hashes, examples }, null, 2));
+if (issues.length || links.some(link => !link.exists) || examples.some(entry => !entry.unchanged) || hashes.some(entry => !entry.snapshotMatchesBaseline)) process.exitCode = 1;

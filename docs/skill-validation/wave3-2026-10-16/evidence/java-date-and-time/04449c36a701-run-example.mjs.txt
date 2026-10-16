@@ -1,0 +1,50 @@
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+
+const root = 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-date-and-time-check';
+const repo = 'C:/git/agent-skills';
+const bin = 'C:/Users/robso/.jdks/temurin-25.0.3/bin';
+const document = readFileSync(resolve(repo, 'skills/java-date-and-time/references/clocks-and-tests.md'), 'utf8');
+const examples = [...document.matchAll(/```java\r?\n([\s\S]*?)\r?\n```/g)];
+if (examples.length !== 1) throw new Error('Expected exactly one complete Java example');
+const original = examples[0][1] + '\n';
+const method = /    static ZonedDateTime parseConsistent\(String text\) \{[\s\S]*?\n    \}/g;
+if ([...original.matchAll(method)].length !== 1) throw new Error('Expected exactly one parseConsistent method');
+const replacement = '    static ZonedDateTime parseConsistent(String text) {\n        return ZonedDateTime.parse(text);\n    }';
+const mutant = original.replace(method, replacement);
+const sha256 = text => createHash('sha256').update(text).digest('hex');
+const results = [];
+function run(id, executable, args, cwd, expectedExitCode) {
+  const result = spawnSync(executable, args, { cwd, encoding: 'utf8' });
+  const entry = { id, executable, args, cwd, expectedExitCode, exitCode: result.status,
+    signal: result.signal, stdout: result.stdout ?? '', stderr: result.stderr ?? '',
+    error: result.error ? String(result.error) : null };
+  results.push(entry);
+  writeFileSync(resolve(root, id + '.json'), JSON.stringify(entry, null, 2) + '\n');
+  if (entry.exitCode !== expectedExitCode) throw new Error(id + ' unexpected exit: ' + entry.exitCode);
+  return entry;
+}
+mkdirSync(root, { recursive: true });
+for (const [name, source] of [['original', original], ['normalizing-mutant', mutant]]) {
+  const cwd = resolve(root, name);
+  mkdirSync(resolve(cwd, 'classes'), { recursive: true });
+  writeFileSync(resolve(cwd, 'TemporalChecks.java'), source);
+  run(name + '-compile', resolve(bin, 'javac.exe'), ['--release', '17', '-Xlint:all', '-Werror', '-d', 'classes', 'TemporalChecks.java'], cwd, 0);
+}
+run('original-utc', resolve(bin, 'java.exe'), ['-Duser.timezone=UTC', '-cp', 'classes', 'TemporalChecks'], resolve(root, 'original'), 0);
+run('original-sao-paulo', resolve(bin, 'java.exe'), ['-Duser.timezone=America/Sao_Paulo', '-cp', 'classes', 'TemporalChecks'], resolve(root, 'original'), 0);
+const negative = run('normalizing-mutant-utc', resolve(bin, 'java.exe'), ['-Duser.timezone=UTC', '-cp', 'classes', 'TemporalChecks'], resolve(root, 'normalizing-mutant'), 1);
+if (!negative.stderr.includes('Expected temporal rejection')) throw new Error('Negative control did not fail at intended assertion');
+const environment = 'import java.time.zone.ZoneRulesProvider;\npublic class TemporalEnvironment {\n    public static void main(String[] args) {\n        System.out.println("runtime=" + Runtime.version());\n        System.out.println("vendor=" + System.getProperty("java.vendor"));\n        System.out.println("arch=" + System.getProperty("os.arch"));\n        System.out.println("Europe/Paris rules=" + ZoneRulesProvider.getVersions("Europe/Paris").keySet());\n    }\n}\n';
+mkdirSync(resolve(root, 'environment/classes'), { recursive: true });
+writeFileSync(resolve(root, 'environment/TemporalEnvironment.java'), environment);
+run('environment-compile', resolve(bin, 'javac.exe'), ['--release', '17', '-d', 'classes', 'TemporalEnvironment.java'], resolve(root, 'environment'), 0);
+run('environment-run', resolve(bin, 'java.exe'), ['-cp', 'classes', 'TemporalEnvironment'], resolve(root, 'environment'), 0);
+const report = { originalSource: 'skills/java-date-and-time/references/clocks-and-tests.md',
+  originalExampleSha256: sha256(original), mutantExampleSha256: sha256(mutant),
+  mutation: 'Only parseConsistent body replaced by return ZonedDateTime.parse(text); original checks retained.',
+  results, limitation: 'Java 17 API/source compatibility; executed on Temurin 25.0.3+9, not a Java 17 runtime. Existing example sensitivity only, not an agent evaluation.' };
+writeFileSync(resolve(root, 'results.json'), JSON.stringify(report, null, 2) + '\n');
+console.log(JSON.stringify(report, null, 2));

@@ -77,6 +77,11 @@ Parameterized messages avoid unnecessary formatting when disabled; adequate exis
 encoder mappings may stay when they already produce the required event contract. Plain
 formatted prose alone does not establish typed fields.
 
+When application events never appear, identify the factory/logger selected by the packaged launch
+and capture startup diagnostics independently. SLF4J 2.x can select a no-operation fallback when
+no provider is discoverable; a declared build dependency does not prove that the delivered process
+uses it. Distinguish this from a selected backend filtering the event before changing delivery policy.
+
 Choose synchronous, buffered/asynchronous or durable delivery from the loss/blocking
 contract. Queue capacity, discard/block policy, shutdown flush, sink failure, rotation and
 container stdout behavior are part of production semantics—not implementation details.
@@ -193,7 +198,8 @@ and costly cardinality in backend indexes.
 ## Cross-skill routing
 
 - Read [fields and levels](references/fields-and-levels.md) when defining or migrating schemas.
-- Read [Java logging mechanics](references/java-logging-mechanics.md) for API, context or encoder changes.
+- Read [Java logging mechanics](references/java-logging-mechanics.md) for provider selection, API,
+  context or encoder changes.
 - Read [appenders and cost](references/appenders-and-cost.md) for delivery, overload or cost decisions.
 - distributed-tracing-design/opentelemetry-performance for trace context.
 - metrics-and-cardinality for aggregates.

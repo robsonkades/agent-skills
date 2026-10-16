@@ -1,0 +1,1222 @@
+{
+  "schemaVersion": 1,
+  "status": "NO_CHANGES_NEEDED",
+  "skill": "gof-proxy",
+  "reviewer": "/root/quality17",
+  "wave": 4,
+  "reviewDate": "2026-10-16",
+  "ownedPath": "C:/git/agent-skills/skills/gof-proxy",
+  "handoffPath": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-proxy.json",
+  "allWritesStopped": true,
+  "noRunningWriterProcesses": true,
+  "summary": "Full local specialist review found no supported material defect requiring a change. Existing 1.2.4 correctly distinguishes consumer compatibility, actual interception, direct versus distinct fluent returns, framework behavior, publication/progress and target ownership. Four package files remain byte-for-byte equal to the supplied baseline and committed content. No measured agent improvement is claimed.",
+  "assignment": {
+    "scope": "Exactly skills/gof-proxy/**; no other package, shared repository, index, global build/verify, installation or subagent changes.",
+    "baselinePath": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/baseline/gof-proxy",
+    "preExistingChanges": {
+      "staged": [],
+      "unstaged": [],
+      "untracked": [],
+      "ignored": [],
+      "preExistingVersionBump": false
+    },
+    "baselineFiles": [
+      {
+        "path": "C:/git/agent-skills/skills/gof-proxy/SKILL.md",
+        "relative": "SKILL.md",
+        "bytes": 12681,
+        "sha256": "481A62E2320177F9CB28FF54496C60E27210D26EA27B2CF03EFA96BDE053F2E9",
+        "baselineSha256": "481A62E2320177F9CB28FF54496C60E27210D26EA27B2CF03EFA96BDE053F2E9",
+        "matchesBaseline": true
+      },
+      {
+        "path": "C:/git/agent-skills/skills/gof-proxy/skill.yaml",
+        "relative": "skill.yaml",
+        "bytes": 2311,
+        "sha256": "89FB2DED91051927C7EAD6215933B5A2F09C051552277F379539FF91A4F31A94",
+        "baselineSha256": "89FB2DED91051927C7EAD6215933B5A2F09C051552277F379539FF91A4F31A94",
+        "matchesBaseline": true
+      },
+      {
+        "path": "C:/git/agent-skills/skills/gof-proxy/references/proxy-kinds-and-hazards.md",
+        "relative": "references/proxy-kinds-and-hazards.md",
+        "bytes": 15010,
+        "sha256": "8277B602CB1747EE706397C9B567A0D752B3F5365F8D79B943428B5C324B7084",
+        "baselineSha256": "8277B602CB1747EE706397C9B567A0D752B3F5365F8D79B943428B5C324B7084",
+        "matchesBaseline": true
+      },
+      {
+        "path": "C:/git/agent-skills/skills/gof-proxy/references/worked-example.md",
+        "relative": "references/worked-example.md",
+        "bytes": 10035,
+        "sha256": "8B35F43857F84F48023DC97F422265B80BA3932D086B1D4710CDF1B808742C15",
+        "baselineSha256": "8B35F43857F84F48023DC97F422265B80BA3932D086B1D4710CDF1B808742C15",
+        "matchesBaseline": true
+      }
+    ],
+    "procedureRead": [
+      "AGENTS.md",
+      "docs/skill-review-prompt.md (complete; unchanged procedure reused and reread)",
+      "docs/parallel-skill-reviews.md",
+      "docs/skill-validation/wave4-2026-10-16/review-brief.md",
+      "skills/skill-engineering/SKILL.md",
+      "skills/skill-engineering/references/evidence-and-confidence.md (previously read unchanged)",
+      "skills/skill-engineering/references/evaluation.md (previously read unchanged)",
+      "skills/skill-engineering/references/resource-design.md (previously read unchanged)",
+      "skills/skill-engineering/references/anti-patterns.md (previously read unchanged)",
+      "docs/skill-validation/skills-comparative-research-2026-10-16.md and prior-wave lessons (previously read; reused unchanged)"
+    ],
+    "packageRead": [
+      "SKILL.md",
+      "skill.yaml",
+      "references/proxy-kinds-and-hazards.md",
+      "references/worked-example.md"
+    ],
+    "findingsSentBeforeAnyPackageEdits": true,
+    "scopeRisks": "None found. No package edits were made."
+  },
+  "skillPromise": {
+    "role": "Pattern design/review and supported implementation guidance, with concrete caller and boundary evidence; not mandatory code generation.",
+    "activates": [
+      "A proposed lazy wrapper",
+      "Remote behavior hidden behind a plain interface",
+      "Self-invoked annotations ineffective",
+      "Proxy-sensitive type/identity checks",
+      "Bypassable authorization wrappers"
+    ],
+    "excludes": [
+      "Stackable added behavior owned by Decorator",
+      "Changed-interface adaptation owned by Adapter",
+      "Shared-value footprint owned by Flyweight",
+      "ORM fetching strategy and client-side resilience policy"
+    ],
+    "minimumDeliverable": "Retain or revise contract based on actual receiver/wiring, state evidence and relevant checks, disclose unresolved limits; preserve an adequate direct object or existing proxy.",
+    "successCriteria": [
+      "Follow ordinary calls and a failure path to the effective receiver/advice.",
+      "Distinguish JDK interface proxies, subclass proxies and weaving with resolved framework versions.",
+      "Preserve return identity/state, equality, exceptions and protected access paths.",
+      "Treat async completion, target ownership and shutdown separately from invocation return.",
+      "Separate lazy publication, construction attempt policy, render safety and progress bounds.",
+      "Keep remote deadlines/failure vocabulary/batching explicit, without unsupported performance claims."
+    ]
+  },
+  "versions": {
+    "committed": "1.2.4",
+    "assignment": "1.2.4",
+    "final": "1.2.4",
+    "bump": "None: no content changed; no unpublished baseline bump existed.",
+    "javaExampleBaseline": "Java 17, partial application types explicitly declared",
+    "frameworkBaselines": [
+      "Spring 6.2.11 pinned direct-return implementation example",
+      "Spring actual target version/mode must be inspected",
+      "Hibernate 6.6 proxy/enhancement reference"
+    ],
+    "actualToolchain": "Temurin 25.0.3+9-LTS, compiling with --release 17. This is not execution on a Java 17 VM."
+  },
+  "findings": {
+    "corrected": [],
+    "confirmedAdequate": [
+      {
+        "id": "effective-interception",
+        "locations": [
+          "SKILL.md:105",
+          "references/proxy-kinds-and-hazards.md:90"
+        ],
+        "finding": "Ordinary proxy self-invocation is qualified by actual mode, outer transaction and required unit of work. It does not mandate bean splitting from syntax alone.",
+        "consequence": "Avoids introducing propagation/batch atomicity changes when existing outer enforcement is adequate.",
+        "evidence": [
+          "spring62-proxying"
+        ]
+      },
+      {
+        "id": "fluent-result-identity",
+        "locations": [
+          "SKILL.md:136",
+          "references/proxy-kinds-and-hazards.md:57",
+          "references/proxy-kinds-and-hazards.md:69"
+        ],
+        "finding": "Skill already separates raw JDK return behavior, compatible target-self substitution, distinct object state and Spring 6.2.11's conditional substitution.",
+        "consequence": "Prevents guard bypass and an overbroad fix that discards newly configured receiver state.",
+        "evidence": [
+          "java17-proxy",
+          "java17-handler",
+          "spring6211-jdk-proxy",
+          "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/06-proxy.log",
+          "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/case-technical-results.json"
+        ]
+      },
+      {
+        "id": "lazy-attempt-policy",
+        "locations": [
+          "SKILL.md:127",
+          "references/worked-example.md:14",
+          "references/worked-example.md:62",
+          "references/worked-example.md:77"
+        ],
+        "finding": "Extracted lazy implementation meets stated finite-run behavior: deferred creation, one factory invocation across 24 consumers, cached RuntimeException/null rejection, reentry rejection, uncached Error and independent render failures. The text explicitly limits progress, retry and resource claims.",
+        "consequence": "Preserves clear construction/failure contract without claiming deadline/cancellation or render thread safety.",
+        "evidence": [
+          "jls17-memory",
+          "java17-future",
+          "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/05-lazy.log"
+        ]
+      },
+      {
+        "id": "ownership-and-completion",
+        "locations": [
+          "SKILL.md:167",
+          "references/proxy-kinds-and-hazards.md:52",
+          "references/worked-example.md:5"
+        ],
+        "finding": "The body requires ownership/borrowing and initialization/use/disposal coordination. The partial lazy example explicitly delegates successful-engine closure and exclusion during disposal to the owner; it does not present itself as a complete closeable proxy.",
+        "consequence": "No absent close implementation is misreported as a defect in a declared partial sample, and safe publication is not treated as sufficient lifecycle control.",
+        "evidence": [
+          "spring6211-jdk-proxy",
+          "java17-future"
+        ],
+        "validation": "Structured ownership walkthrough only; no close-race implementation or async resource integration test was executed."
+      },
+      {
+        "id": "cache-hit-policy",
+        "locations": [
+          "SKILL.md:161",
+          "references/proxy-kinds-and-hazards.md:204"
+        ],
+        "finding": "Existing rules trace actual chain/hit paths and distinguish partitioned data from permission revocation, without forcing per-caller keys on public values.",
+        "consequence": "Avoids false confidence in inner method checks or user-specific cache keys.",
+        "evidence": [
+          "spring62-caching"
+        ],
+        "validation": "Source/contract review, not an integration run."
+      },
+      {
+        "id": "framework-type-and-constructor",
+        "locations": [
+          "references/proxy-kinds-and-hazards.md:74",
+          "references/proxy-kinds-and-hazards.md:131"
+        ],
+        "finding": "Non-sealed/non-hidden interface restrictions, final/private subclass limits, visible-constructor condition, and Hibernate proxy/enhancement cautions are source-supported.",
+        "consequence": "No speculative correction based only on CGLIB/Objenesis names or diagrams.",
+        "evidence": [
+          "java17-proxy",
+          "spring62-proxying",
+          "spring6211-enhancer",
+          "hibernate66"
+        ]
+      },
+      {
+        "id": "remote-cost-scope",
+        "locations": [
+          "references/worked-example.md:129",
+          "references/worked-example.md:165",
+          "references/worked-example.md:207"
+        ],
+        "finding": "2000×18 ms and four 500-ID application calls are explicitly hypothetical/conditional; examples distinguish application batching from HTTP count, response limits, retry and measured latency.",
+        "consequence": "No fabricated benchmark or upgrade was needed.",
+        "validation": "Arithmetic and contract walkthrough only; no remote service exercised."
+      }
+    ],
+    "remaining": [],
+    "unsupportedDefectCandidatesRejected": [
+      "Usable CGLIB constructor wording is supported by visible-constructor filtering, even though Objenesis can bypass invoking constructors.",
+      "Lazy sample lacks close(), but explicitly declares owner cleanup/exclusion and is a partial initialization example; body separately states lifecycle obligations.",
+      "Raw JDK handler exposes fluent target, but reference explicitly identifies that demonstration limit and explains contract-dependent correction."
+    ]
+  },
+  "changes": {
+    "filesChangedByReviewer": [],
+    "filesAddedByReviewer": [],
+    "filesRemovedByReviewer": [],
+    "preExistingPackageChanges": [],
+    "unrelatedChangesTouched": false,
+    "evidenceFilesOnly": "All new files are in the isolated temporary evidence directory or this assigned handoff JSON."
+  },
+  "capabilities": {
+    "preserved": [
+      "Activation/exclusion boundaries and task-appropriate review role",
+      "Four proxy kinds and Proxy/Decorator distinction",
+      "Explicit lazy accessor/direct-object alternatives",
+      "JDK/subclass/weaving restrictions and actual receiver inspection",
+      "Object equality/hash, declared checked exceptions and asynchronous completion caution",
+      "Fluent target/nested/callback alias checks and framework-specific return behavior",
+      "Self-invocation alternatives preserving required unit of work",
+      "Hibernate type/equality/lazy-session cautions with provider settings",
+      "Volatile publication versus duplicate initialization/progress and failure policy",
+      "Protection routes and cache-hit/revocation semantics",
+      "Owned/borrowed target lifecycle and post-close construction handling",
+      "Remote deadline/failure/retry/granularity contracts and bounded examples",
+      "Failure-path testing and interpretation limits"
+    ],
+    "replaced": [],
+    "removed": []
+  },
+  "validation": {
+    "structuralExecuted": [
+      {
+        "command": "node --input-type=module with existing package-loader and validatePackage sources; strict:true, both Codex and Claude adapters",
+        "inlineScript": "import {loadPackageFromDirectory} from './packages/core/src/application/package-loader.ts';\nimport {validatePackage} from './packages/core/src/application/validate-package.ts';\nimport {NodeFileSystem} from './packages/node/src/file-system.ts';\nimport {CodexAdapter} from './packages/adapter-codex/src/index.ts';\nimport {ClaudeCodeAdapter} from './packages/adapter-claude/src/index.ts';\nconst loaded=await loadPackageFromDirectory(new NodeFileSystem(),'C:/git/agent-skills/skills/gof-proxy',{strict:true});\nconst result=validatePackage(loaded.pkg,{strict:true,directoryName:'gof-proxy',adapters:[new CodexAdapter(),new ClaudeCodeAdapter()]});\nconst issues=[...loaded.issues,...result.issues];\nconsole.log(JSON.stringify({name:loaded.pkg.manifest.name,version:loaded.pkg.manifest.version,files:loaded.pkg.files.map(f=>f.path),issues},null,2));\nif(issues.length)process.exitCode=1;",
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "result": {
+          "name": "gof-proxy",
+          "version": "1.2.4",
+          "files": [
+            "SKILL.md",
+            "skill.yaml",
+            "references/proxy-kinds-and-hazards.md",
+            "references/worked-example.md"
+          ],
+          "issues": []
+        },
+        "scope": "Owned package, no global dependency/routing proof."
+      },
+      {
+        "command": "node node_modules/prettier/bin/prettier.cjs --check skills/gof-proxy/SKILL.md skills/gof-proxy/skill.yaml skills/gof-proxy/references/proxy-kinds-and-hazards.md skills/gof-proxy/references/worked-example.md",
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "stdout": "Checking formatting...\nAll matched files use Prettier code style!\n",
+        "writes": false
+      },
+      {
+        "command": "Inline Node Markdown link inspection, excluding fenced blocks, URL links and fragment-only links",
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "checked": [
+          {
+            "file": "SKILL.md",
+            "target": "references/proxy-kinds-and-hazards.md",
+            "exists": true
+          },
+          {
+            "file": "SKILL.md",
+            "target": "references/worked-example.md",
+            "exists": true
+          }
+        ],
+        "missing": []
+      },
+      {
+        "id": "status",
+        "command": "git",
+        "args": [
+          "status",
+          "--short",
+          "--untracked-files=all",
+          "--ignored",
+          "--",
+          "skills/gof-proxy"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "",
+        "error": null
+      },
+      {
+        "id": "diffAgainstHead",
+        "command": "git",
+        "args": [
+          "diff",
+          "HEAD",
+          "--",
+          "skills/gof-proxy"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "",
+        "error": null
+      },
+      {
+        "id": "staged",
+        "command": "git",
+        "args": [
+          "diff",
+          "--cached",
+          "--",
+          "skills/gof-proxy"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "",
+        "error": null
+      },
+      {
+        "id": "unstaged",
+        "command": "git",
+        "args": [
+          "diff",
+          "--",
+          "skills/gof-proxy"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "",
+        "error": null
+      },
+      {
+        "id": "headManifest",
+        "command": "git",
+        "args": [
+          "show",
+          "HEAD:skills/gof-proxy/skill.yaml"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "stdout": "schemaVersion: 1\n\nname: gof-proxy\nversion: 1.2.4\ndescription: >-\n  Proxy in modern Java: a stand-in that controls access to another object behind that object's own\n  interface — virtual (lazy), remote, protection and caching variants. Covers the central danger\n  of making a network call look like a method call, how a proxy differs from a decorator, the\n  self-invocation hole that silently disables @Transactional and @Cacheable, JPA lazy proxies and\n  LazyInitializationException, what CGLIB cannot proxy, and safe publication in a virtual proxy.\n  Use when a lazy-loading wrapper is proposed, when a remote call hides behind a plain interface,\n  when an annotation on a self-called method does nothing, when instanceof fails on an injected\n  bean or a JPA entity, or when authorisation is enforced by a wrapper the caller can bypass. Does\n  not cover adding stackable behaviour (gof-decorator), changing an interface (gof-adapter),\n  sharing instances to save memory (gof-flyweight), lazy loading strategy in JPA\n  (orm-behavioral-patterns), or client-side resilience policy (circuit-breakers).\n\nlicense: Apache-2.0\n\nauthors:\n  - name: agent-skills contributors\n    url: https://github.com/robsonkades/agent-skills\n\nhomepage: https://github.com/robsonkades/agent-skills/tree/main/skills/gof-proxy\nrepository:\n  type: git\n  url: https://github.com/robsonkades/agent-skills\n  directory: skills/gof-proxy\n\nkeywords:\n  - design-patterns\n  - gof\n  - structural\n  - proxy\n  - lazy-loading\n  - aop\n\nfiles:\n  - SKILL.md\n  - skill.yaml\n  - references/\n\ndependencies: []\n\nsuggests:\n  - architecture-testing\n  - circuit-breakers\n  - failure-models\n  - gof-adapter\n  - gof-decorator\n  - gof-flyweight\n  - gof-patterns-and-distribution\n  - idempotency\n  - inheritance-mapping-strategies\n  - java-dependency-inversion\n  - java-memory-model\n  - java-testing-strategy\n  - jit-inlining-and-escape-analysis\n  - kubernetes-service-lifecycle\n  - orm-behavioral-patterns\n  - orm-structural-mapping\n  - query-objects-and-specifications\n  - rpc-and-api-contracts\n  - timeouts-and-deadlines\n\ncapabilities:\n  - reads-source\n\nagentOverrides:\n  codex:\n    interface:\n      display_name: Proxy\n      short_description: A lie told for a reason; price the lie\n      default_prompt: Use Proxy to review this stand-in and what it hides.\n",
+        "stderr": "",
+        "error": null
+      },
+      {
+        "id": "diffCheck",
+        "command": "git",
+        "args": [
+          "diff",
+          "--check",
+          "--",
+          "skills/gof-proxy"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "",
+        "error": null
+      }
+    ],
+    "technicalExecuted": [
+      {
+        "id": "01-extract",
+        "command": "C:\\Program Files\\nodejs\\node.exe",
+        "args": [
+          "extract-examples.mjs",
+          "C:/git/agent-skills/skills/gof-proxy",
+          "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1"
+        ],
+        "cwd": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "{\n  \"status\": \"extracted\",\n  \"sourceRoot\": \"C:/git/agent-skills/skills/gof-proxy\",\n  \"sources\": [\n    \"references/worked-example.md:first Java block\",\n    \"references/proxy-kinds-and-hazards.md:first Java block\"\n  ],\n  \"adaptations\": [\n    \"Split exact public interface/class into separate files; added Supplier import\",\n    \"Added Report/ReportSpec record stubs\",\n    \"Placed exact Foo handler statement in a probe factory; Foo, target and loader supplied by harness\"\n  ],\n  \"generated\": [\n    \"ReportEngine.java\",\n    \"LazyReportEngine.java\",\n    \"Report.java\",\n    \"ReportSpec.java\",\n    \"ProxyProbe.java\"\n  ]\n}\n",
+        "stderr": ""
+      },
+      {
+        "id": "02-javac-version",
+        "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+        "args": [
+          "-version"
+        ],
+        "cwd": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "javac 25.0.3\r\n",
+        "stderr": ""
+      },
+      {
+        "id": "03-java-version",
+        "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+        "args": [
+          "-version"
+        ],
+        "cwd": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "",
+        "stderr": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n"
+      },
+      {
+        "id": "04-compile",
+        "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+        "args": [
+          "--release",
+          "17",
+          "-Xlint:all",
+          "-Werror",
+          "-XDrawDiagnostics",
+          "-d",
+          "classes",
+          "Report.java",
+          "ReportSpec.java",
+          "ReportEngine.java",
+          "LazyReportEngine.java",
+          "LazyProbe.java",
+          "ProxyProbe.java"
+        ],
+        "cwd": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "id": "05-lazy",
+        "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+        "args": [
+          "-cp",
+          "classes",
+          "LazyProbe"
+        ],
+        "cwd": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "PASS construction deferred until first use\r\nPASS factory entered with concurrent consumers\r\nPASS all concurrent calls observe initialized target in this run\r\nPASS one factory invocation across 24 consumers\r\nPASS all consumers reach target\r\nPASS initialization RuntimeException preserves instance\r\nPASS initialization RuntimeException cached without retry\r\nPASS null supplier rejected\r\nPASS null factory result rejected\r\nPASS null-result failure cached\r\nPASS same-thread recursive factory entry rejected\r\nPASS uncaught recursive runtime failure retained\r\nPASS Error propagated without conversion\r\nPASS Error not cached; later attempt allowed\r\nPASS target render failure propagated\r\nPASS render failure does not recreate target\r\nPASS lazy checks=16; executor terminated=true\r\n",
+        "stderr": ""
+      },
+      {
+        "id": "06-proxy",
+        "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+        "args": [
+          "-cp",
+          "classes",
+          "ProxyProbe"
+        ],
+        "cwd": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "PASS extracted handler equality is reflexive\r\nPASS proxy identity equality differs from target\r\nPASS proxy identity hash preserved\r\nPASS toString handled without target delegation\r\nPASS JDK proxy delegates final implementation\r\nPASS InvocationTargetException removed; declared cause preserved\r\nPASS raw fluent self-return exposes target as documented\r\nPASS guard intercepts direct denied invocation\r\nPASS negative control: raw fluent self-return bypasses second-call guard\r\nPASS identity-compatible self-return substitution\r\nPASS same-receiver substitution keeps guard on subsequent call\r\nPASS negative control: self-only policy cannot protect distinct returned object\r\nPASS negative control: replacing distinct result loses returned-object state\r\nPASS wrapping distinct child retains its state and receiver\r\nPASS wrapped distinct child enforces current permission\r\nPASS checked exception must fit every duplicate method declaration\r\nPASS null primitive handler result rejected\r\nPASS incompatible handler result rejected\r\nPASS proxy checks=18; no executor or owned external resource\r\n",
+        "stderr": ""
+      }
+    ],
+    "technicalSummary": {
+      "lazyChecks": 16,
+      "proxyChecks": 18,
+      "concurrencyFixtureConsumers": 24,
+      "compileFlags": [
+        "--release 17",
+        "-Xlint:all",
+        "-Werror",
+        "-XDrawDiagnostics"
+      ],
+      "runtime": "Temurin 25.0.3+9-LTS",
+      "firstAttemptAllPassed": true,
+      "scope": "Extracted implementation plus synthetic JDK negative/positive controls. No complete Spring/Hibernate/application integration test."
+    },
+    "caseBaselineExecuted": [
+      {
+        "id": "a",
+        "name": "compile",
+        "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+        "args": [
+          "--release",
+          "17",
+          "-Xlint:all",
+          "-Werror",
+          "-d",
+          "classes",
+          "ProxyCase.java"
+        ],
+        "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1\\cases\\a",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "id": "a",
+        "name": "baseline",
+        "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+        "args": [
+          "-cp",
+          "classes",
+          "ProxyCase"
+        ],
+        "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1\\cases\\a",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "allowed-format=summary\r\nrevoked-direct=DENIED\r\nrevoked-chain=detail\r\n",
+        "stderr": ""
+      },
+      {
+        "id": "b",
+        "name": "compile",
+        "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+        "args": [
+          "--release",
+          "17",
+          "-Xlint:all",
+          "-Werror",
+          "-d",
+          "classes",
+          "ProxyCase.java"
+        ],
+        "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1\\cases\\b",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "id": "b",
+        "name": "baseline",
+        "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+        "args": [
+          "-cp",
+          "classes",
+          "ProxyCase"
+        ],
+        "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1\\cases\\b",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "allowed-format=summary\r\nrevoked-direct=DENIED\r\nrevoked-chain=detail\r\n",
+        "stderr": ""
+      }
+    ],
+    "behavioralAgentEvaluations": {
+      "executed": [],
+      "count": 0,
+      "independentActorRun": false,
+      "withWithoutComparison": false,
+      "originalRevisedComparison": false,
+      "measuredSkillImprovement": false,
+      "pending": "Coordinator may run the separate actor inputs under matched conditions; known development cases are not held-out evidence."
+    },
+    "structuredWalkthroughs": [
+      {
+        "scenario": "Already adequate outer transaction",
+        "result": "Existing guidance asks which required advice/unit of work is missing before splitting beans; keep effective outer enforcement when it satisfies contract.",
+        "executed": false
+      },
+      {
+        "scenario": "Borrowed or owned lazy target during shutdown",
+        "result": "Ownership determines close responsibility; unused close must not instantiate and construction completion after closure needs cleanup. Example expressly delegates these concerns to owner.",
+        "executed": false
+      },
+      {
+        "scenario": "Authorization plus caching",
+        "result": "Trace actual advice order and cache hit after revocation. Partitioning alone cannot establish fresh permission; public values can remain shared.",
+        "executed": false
+      },
+      {
+        "scenario": "Hypothetical remote report enrichment",
+        "result": "Conditional application-call model is 36 seconds for 2000 sequential 18 ms calls and four 500-ID application batches; no transport performance inferred.",
+        "executed": false
+      },
+      {
+        "scenario": "Paired same versus distinct fluent receiver",
+        "result": "Both raw fixtures expose an unchecked second call. Self substitution repairs the same receiver; distinct receiver must retain selected state and gain appropriate enforcement.",
+        "executed": false,
+        "technicalSupport": "Separately executed synthetic controls and baseline fixture runs listed above."
+      }
+    ],
+    "failures": [
+      {
+        "first": "rg -n <patterns> skills/gof-proxy/SKILL.md skills/gof-proxy/references/*.md",
+        "exitCode": 1,
+        "reason": "PowerShell did not expand this glob for rg; path produced os error 123.",
+        "corrected": "rg -n <patterns> skills/gof-proxy -g '*.md'",
+        "correctedExitCode": 0,
+        "impact": "Read-only location lookup corrected; no package/test failure."
+      }
+    ],
+    "checksUnavailableOrDeferred": [
+      "No Java 17 VM runtime was used; --release 17 checks compile API/language compatibility only.",
+      "No Spring 6.2.11, Hibernate 6.6, actual database, cache/security chain, remote service or async resource lifecycle runtime integration.",
+      "No exhaustive concurrency/progress/close-race proof; synchronized/volatile semantics grounded in JLS plus finite controls.",
+      "No independent agent behavior evaluation or comparative gain measurement.",
+      "Catalog-wide routing/index/verify left to coordinator."
+    ],
+    "generatedEvidenceRetained": true
+  },
+  "sources": [
+    {
+      "id": "java17-proxy",
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/reflect/Proxy.html",
+      "section": "Java SE 17 Proxy API; newProxyInstance restrictions, Object methods, duplicate-method exceptions",
+      "consulted": "2026-10-16",
+      "verified": "Invocation goes through the handler only when the receiver is the proxy; handler results are returned. Object equals/hashCode/toString reach the handler. Interfaces must satisfy loader/module/non-sealed/non-hidden rules; checked duplicate-method exceptions must fit all applicable declarations.",
+      "limits": "API contract; compile target 17, execution below on 25.",
+      "rawArtifact": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/java17-proxy.html"
+    },
+    {
+      "id": "java17-handler",
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/reflect/InvocationHandler.html",
+      "section": "Java SE 17 InvocationHandler.invoke",
+      "consulted": "2026-10-16",
+      "verified": "Return must fit the declared return type; null primitive result is rejected; undeclared checked exceptions are wrapped. The API does not automatically rewrite a returned raw target to its proxy.",
+      "limits": "API contract, with focused JDK controls.",
+      "rawArtifact": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/java17-handler.html"
+    },
+    {
+      "id": "spring6211-jdk-proxy",
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.11/spring-aop/src/main/java/org/springframework/aop/framework/JdkDynamicAopProxy.java",
+      "section": "Spring Framework v6.2.11 JdkDynamicAopProxy.java invoke, lines 210–238",
+      "consulted": "2026-10-16",
+      "verified": "Compatible direct target self-return can be replaced with proxy, excluding Object return type and RawTargetAccess declarations. Embedded raw targets are not repaired. Dynamic target release occurs in the invocation finally block.",
+      "limits": "Pinned implementation, not a guarantee for every proxy/framework or a Spring runtime test.",
+      "rawArtifact": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/spring6211-jdk-proxy.java.txt"
+    },
+    {
+      "id": "spring62-proxying",
+      "url": "https://docs.spring.io/spring-framework/reference/6.2/core/aop/proxying.html",
+      "section": "Spring Framework 6.2 documentation: proxy mechanisms and self-invocation",
+      "consulted": "2026-10-16",
+      "verified": "Subclass advice cannot override final/private/inaccessible methods; normal target self-invocation bypasses proxy advice, while AspectJ weaving differs. Objenesis can avoid invoking a target constructor a second time.",
+      "limits": "Versioned documentation branch, not pinned minor implementation/runtime.",
+      "rawArtifact": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/spring62-proxying.html"
+    },
+    {
+      "id": "spring62-caching",
+      "url": "https://docs.spring.io/spring-framework/reference/6.2/integration/cache/annotations.html",
+      "section": "Spring Framework 6.2 documentation: @Cacheable and default key generation",
+      "consulted": "2026-10-16",
+      "verified": "A hit can return without target invocation; default keys derive from arguments. The skill's access-control consequence is an inference from this short circuit, contingent on required checks and actual advice order.",
+      "limits": "Cache-hit authorization/revocation guidance is a reasoned contract consequence; no Spring Security/cache integration run.",
+      "rawArtifact": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/spring62-caching.html"
+    },
+    {
+      "id": "hibernate66",
+      "url": "https://docs.hibernate.org/orm/6.6/javadocs/org/hibernate/Hibernate.html",
+      "section": "Hibernate ORM 6.6 Hibernate API intro and unproxy methods",
+      "consulted": "2026-10-16",
+      "verified": "Lazy association representation depends on enhancement and polymorphism. Unproxy may initialize and fail without an open session for an uninitialized proxy.",
+      "limits": "Versioned provider docs; no Hibernate/database runtime or query count captured.",
+      "rawArtifact": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/hibernate66.html"
+    },
+    {
+      "id": "jls17-memory",
+      "url": "https://docs.oracle.com/javase/specs/jls/se17/html/jls-17.html",
+      "section": "JLS 17 §§17.1,17.4.4,17.4.5",
+      "consulted": "2026-10-16",
+      "verified": "Monitor and volatile happens-before semantics support the lazy publication/guarding reasoning; correct synchronization alone does not establish application progress or lifecycle correctness.",
+      "limits": "Language contract; finite 24-consumer run is not a proof of all schedules.",
+      "rawArtifact": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/jls17-memory.html"
+    },
+    {
+      "id": "java17-future",
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/Future.html",
+      "section": "Java SE 17 Future get(timeout), cancellation methods",
+      "consulted": "2026-10-16",
+      "verified": "A timed get bounds the caller's wait. Cancellation is separate and does not itself establish interruption cooperation or a completed underlying operation.",
+      "limits": "API contract; no deliberately deadlocked process was created.",
+      "rawArtifact": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/java17-future.html"
+    },
+    {
+      "id": "spring6211-enhancer",
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.11/spring-core/src/main/java/org/springframework/cglib/proxy/Enhancer.java",
+      "section": "Spring Framework v6.2.11 repackaged CGLIB Enhancer.java generateClass/filterConstructors, lines 648–656 and 744–757",
+      "consulted": "2026-10-16",
+      "verified": "Enhancer rejects final superclass and a superclass with no visible constructors. This supports the existing usable-constructor condition without confusing it with whether Objenesis invokes that constructor.",
+      "limits": "Pinned source inspection only; constructor/source claim was challenged and confirmed, not edited.",
+      "rawArtifact": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/spring6211-enhancer.java.txt"
+    }
+  ],
+  "cases": {
+    "actorInputPath": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/case-inputs.json",
+    "evaluatorOnlyPath": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/case-criteria.json",
+    "actorInputs": {
+      "purpose": "Actor-facing inputs only; do not distribute case-criteria.json or evaluator control outputs to actors.",
+      "shared": {
+        "request": "Investigate this report client's inconsistent permission behavior from the attached project artifacts. Review the actual call paths and make the smallest justified correction, if one is needed. Preserve Java 17, the public method signatures, and the requested output format. All render operations reached by this caller must check current permission, including when a format is selected first. Do not add a framework or upgrade the toolchain.",
+        "prerequisites": "Available Java 17 or newer compiler/runtime; no external dependencies. Use an isolated copy of each fixture.",
+        "projectContract": "Report format must match withFormat argument. Permission is dynamic and may be revoked between client creation/configuration and render. These Clients are pure in-memory objects with no external resources. Java 17 public API must remain compatible.",
+        "reproduction": "javac --release 17 -Xlint:all -Werror -d classes ProxyCase.java; java -cp classes ProxyCase",
+        "incident": "After a permission revocation, a plain render is denied, but the UI's format-selection path still obtains a report. Preserve successful allowed report rendering."
+      },
+      "cases": [
+        {
+          "id": "proxy-a",
+          "title": "Reports incident A",
+          "sourcePath": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/cases/a/ProxyCase.java",
+          "providerContract": "withFormat changes this client and returns the same receiver.",
+          "fixture": "import java.lang.reflect.InvocationTargetException;\nimport java.lang.reflect.Proxy;\nimport java.util.concurrent.atomic.AtomicBoolean;\n\npublic final class ProxyCase {\n    public interface Reports {\n        Reports withFormat(String format);\n        String render();\n    }\n\n    public static final class Client implements Reports {\n        private String format;\n        public Client(String format) { this.format = format; }\n        public Reports withFormat(String next) {\n            this.format = next;\n            return this;\n        }\n        public String render() { return format; }\n    }\n\n    public static Reports forCaller(Reports target, AtomicBoolean allowed) {\n        return (Reports) Proxy.newProxyInstance(Reports.class.getClassLoader(),\n                new Class<?>[]{Reports.class}, (proxy, method, args) -> {\n                    if (method.getDeclaringClass() == Object.class) {\n                        return switch (method.getName()) {\n                            case \"equals\" -> proxy == args[0];\n                            case \"hashCode\" -> System.identityHashCode(proxy);\n                            case \"toString\" -> \"Reports\";\n                            default -> throw new AssertionError(method);\n                        };\n                    }\n                    if (method.getName().equals(\"render\") && !allowed.get()) {\n                        throw new SecurityException(\"denied\");\n                    }\n                    try { return method.invoke(target, args); }\n                    catch (InvocationTargetException e) { throw e.getCause(); }\n                });\n    }\n\n    private static String invokeRender(Reports client) {\n        try { return client.render(); }\n        catch (SecurityException e) { return \"DENIED\"; }\n    }\n\n    public static void main(String[] args) {\n        AtomicBoolean allowed = new AtomicBoolean(true);\n        Reports client = forCaller(new Client(\"full\"), allowed);\n        System.out.println(\"allowed-format=\" + client.withFormat(\"summary\").render());\n        allowed.set(false);\n        System.out.println(\"revoked-direct=\" + invokeRender(client));\n        System.out.println(\"revoked-chain=\" + invokeRender(client.withFormat(\"detail\")));\n    }\n}\n"
+        },
+        {
+          "id": "proxy-b",
+          "title": "Reports incident B",
+          "sourcePath": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/cases/b/ProxyCase.java",
+          "providerContract": "withFormat leaves this client unchanged and returns a distinct client using the selected format.",
+          "fixture": "import java.lang.reflect.InvocationTargetException;\nimport java.lang.reflect.Proxy;\nimport java.util.concurrent.atomic.AtomicBoolean;\n\npublic final class ProxyCase {\n    public interface Reports {\n        Reports withFormat(String format);\n        String render();\n    }\n\n    public static final class Client implements Reports {\n        private String format;\n        public Client(String format) { this.format = format; }\n        public Reports withFormat(String next) {\n            return new Client(next);\n        }\n        public String render() { return format; }\n    }\n\n    public static Reports forCaller(Reports target, AtomicBoolean allowed) {\n        return (Reports) Proxy.newProxyInstance(Reports.class.getClassLoader(),\n                new Class<?>[]{Reports.class}, (proxy, method, args) -> {\n                    if (method.getDeclaringClass() == Object.class) {\n                        return switch (method.getName()) {\n                            case \"equals\" -> proxy == args[0];\n                            case \"hashCode\" -> System.identityHashCode(proxy);\n                            case \"toString\" -> \"Reports\";\n                            default -> throw new AssertionError(method);\n                        };\n                    }\n                    if (method.getName().equals(\"render\") && !allowed.get()) {\n                        throw new SecurityException(\"denied\");\n                    }\n                    try { return method.invoke(target, args); }\n                    catch (InvocationTargetException e) { throw e.getCause(); }\n                });\n    }\n\n    private static String invokeRender(Reports client) {\n        try { return client.render(); }\n        catch (SecurityException e) { return \"DENIED\"; }\n    }\n\n    public static void main(String[] args) {\n        AtomicBoolean allowed = new AtomicBoolean(true);\n        Reports client = forCaller(new Client(\"full\"), allowed);\n        System.out.println(\"allowed-format=\" + client.withFormat(\"summary\").render());\n        allowed.set(false);\n        System.out.println(\"revoked-direct=\" + invokeRender(client));\n        System.out.println(\"revoked-chain=\" + invokeRender(client.withFormat(\"detail\")));\n    }\n}\n"
+        }
+      ]
+    },
+    "evaluatorOnly": {
+      "audience": "Evaluator only; do not include with actor inputs.",
+      "pairConstraint": "Only provider withFormat receiver semantics change: mutate/return same receiver versus create a distinct configured receiver. Interface, caller, dynamic permission rule, handler and observed baseline outputs are the same.",
+      "developmentStatus": "Known development cases, not held out. No independent actor has been run. Existing skill already explains the distinction; no measured incremental gain is claimed.",
+      "shared": {
+        "required": [
+          "Trace the actual result/receiver from withFormat and prove whether the next render traverses the guard.",
+          "Preserve allowed-format=summary and turn both revoked-direct and revoked-chain into DENIED under the declared contract.",
+          "Enforce dynamic permission at render; checking only configuration cannot cover later revocation.",
+          "Preserve current public Java 17 API and useful behavior, avoiding a new framework or gratuitous Proxy architecture.",
+          "State what was executed versus inferred; static receiver analysis plus a focused regression is adequate here."
+        ],
+        "failureConditions": [
+          "Declares protection effective merely because construction is hidden or the interface matches.",
+          "Fixes only initial configuration permission and leaves a stale allowed reference usable after revocation.",
+          "Unconditionally maps every Reports result back to original proxy, losing state for a distinct returned receiver.",
+          "Changes required permission policy, requested format or Java baseline to make tests pass.",
+          "Generalizes this raw JDK handler behavior to all Spring/CGLIB proxies without actual configuration/source evidence."
+        ]
+      },
+      "cases": [
+        {
+          "id": "proxy-a",
+          "expected": "The returned object is identical to target. For this declared same-receiver contract, substitute the existing proxy when result == target and declared return type accepts it, or an equally small enforcement at the protected operation preserving contract. A distinct-new-object wrapper is unnecessary here.",
+          "observable": "Authorized fluent result uses selected format; direct and fluent renders after revocation are denied; same-receiver proxy behavior preserved.",
+          "why": "Compatible identity substitution retains same target's mutated format and routes the following method through the same guard."
+        },
+        {
+          "id": "proxy-b",
+          "expected": "The returned object is a distinct Client with selected format. Preserve that receiver and enforce policy on it, e.g. create a guarded wrapper sharing the current permission source, or move required enforcement into the operation. Do not replace it with the original proxy merely because Reports is assignable.",
+          "observable": "Authorized chain returns summary rather than original full. Revoked direct and chained paths denied. Selecting another format does not mutate an earlier configured client's format.",
+          "why": "Blind replacement discards the new client's state; identity-only replacement leaves its render unchecked. A new guarded view (or equivalent operation enforcement) is needed."
+        }
+      ]
+    },
+    "distributionInstruction": "Give each actor only its fixture and actor-facing shared/case context. Withhold evaluator criteria, control source/logs and this review handoff.",
+    "casesKnownToReviewer": true,
+    "heldOut": false
+  },
+  "commandsAndArtifacts": {
+    "evidenceDirectory": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1",
+    "reproduceTechnical": "node C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/run-validation.mjs",
+    "reproduceCases": "node C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/run-cases.mjs",
+    "inspectFinalReadOnly": "node C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/inspect-final.mjs",
+    "rawResults": [
+      "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/technical-results.json",
+      "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/case-technical-results.json",
+      "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/review-evidence.json",
+      "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/final-inspection.json"
+    ],
+    "artifacts": [
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/01-extract.log",
+        "relative": "01-extract.log",
+        "bytes": 802,
+        "sha256": "92E1137E751186E34BFE6D2CF0CDD808B03C9EBC841267EA6ED807B4B30B2762"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/02-javac-version.log",
+        "relative": "02-javac-version.log",
+        "bytes": 73,
+        "sha256": "0F71605276A1036436EEBA2DD4830234FFF9209702D23F0E8DC818023EA1DA52"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/03-java-version.log",
+        "relative": "03-java-version.log",
+        "bytes": 251,
+        "sha256": "91CDD38FFCBA456100A9133BCF0FA4664C8149F66FF3C9BCDCE47661C90D6F92"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/04-compile.log",
+        "relative": "04-compile.log",
+        "bytes": 210,
+        "sha256": "1C5CC6640986F193994D75B589BA6947F2FFD7A34E0B12F0C63524DDE068ABC0"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/05-lazy.log",
+        "relative": "05-lazy.log",
+        "bytes": 845,
+        "sha256": "DC23AD5DE24328AAA4AB827F6783992E9EA6A4C756DE3E116C559580DAB3529C"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/06-proxy.log",
+        "relative": "06-proxy.log",
+        "bytes": 1156,
+        "sha256": "C30F3AFDFDB9535D8403C430C128F77119176E7DA94C9A6A9E2227E440E4E8AE"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/case-a-baseline.log",
+        "relative": "case-a-baseline.log",
+        "bytes": 445,
+        "sha256": "8089A32F1C83E695FAE801B7B6F2453B67696FA6A8F668236DF5D847555ABD83"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/case-a-compile.log",
+        "relative": "case-a-compile.log",
+        "bytes": 434,
+        "sha256": "8740409EDB0B7FC2B76F61CB652135A44876D97078F670776BEB89E8719DCBB9"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/case-b-baseline.log",
+        "relative": "case-b-baseline.log",
+        "bytes": 445,
+        "sha256": "F88B301B58AAE81C5F7447FCF160B1E4185831E1CFB1ACCBEAC07B13A2A4D5D1"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/case-b-compile.log",
+        "relative": "case-b-compile.log",
+        "bytes": 434,
+        "sha256": "06B31302F850CD24922ECDAD7EF53E05F56482995FE46FD62A6CD516B0238BF7"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/case-criteria.json",
+        "relative": "case-criteria.json",
+        "bytes": 3182,
+        "sha256": "A45565498AA44F22252D12EA8276A04E0D166395633A089CFCC96734EDA8A595"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/case-inputs.json",
+        "relative": "case-inputs.json",
+        "bytes": 6596,
+        "sha256": "EF5BC9759053173BEF8367654B08DE117AE443B9E213E2467561FE335E9F8092"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/case-technical-results.json",
+        "relative": "case-technical-results.json",
+        "bytes": 2180,
+        "sha256": "B84413C234094DC4A51DD13DD9F115BAA278AE906AF30C564E530189DD3299CB"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/extract-examples.mjs",
+        "relative": "extract-examples.mjs",
+        "bytes": 1930,
+        "sha256": "9EA136896897670EA69053398065FA9F03A488A7C60886831C3E1F0361C23531"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/final-inspection.json",
+        "relative": "final-inspection.json",
+        "bytes": 5599,
+        "sha256": "26AF9FB612D245B24A2AAA8049F20CB22ED90139DBEEBEA771AAB802B2199773"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/hibernate66.html",
+        "relative": "hibernate66.html",
+        "bytes": 57090,
+        "sha256": "4CAA22D5592118627E34A24D8EA9CA63145B01A8EB3EF4051F659C97CAF285CB"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/inspect-final.mjs",
+        "relative": "inspect-final.mjs",
+        "bytes": 1767,
+        "sha256": "1DA92C4F4213801508AD49F47D047BE85E142541FE4AA404C400950AD5195C4F"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/java17-future.html",
+        "relative": "java17-future.html",
+        "bytes": 21111,
+        "sha256": "19EF4D363FBCEC9BF8D145D46D8908FB6576287D7FCBA54C71589E7C211B9387"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/java17-handler.html",
+        "relative": "java17-handler.html",
+        "bytes": 24685,
+        "sha256": "F1642B9D42135AEF21961AB159935D4172750F00411647A9C924139F645D8048"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/java17-proxy.html",
+        "relative": "java17-proxy.html",
+        "bytes": 42699,
+        "sha256": "15D1EA8E03662BCF81F6CAEDEAF8F0E17A1EB4CEB34CE859582AA543A96AEB07"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/jls17-memory.html",
+        "relative": "jls17-memory.html",
+        "bytes": 174374,
+        "sha256": "F4531E1E559E5FEA8310947E85315FBDBA9B2FE044A8C1DA782F362451704E2D"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/LazyProbe.java",
+        "relative": "LazyProbe.java",
+        "bytes": 5475,
+        "sha256": "8A29271A894D74111373A30C98D8729B4CDB2D6D15EFC45738FAF90E1CC343FD"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/LazyReportEngine.java",
+        "relative": "LazyReportEngine.java",
+        "bytes": 1496,
+        "sha256": "9EF5BBD7BDF92FA686F2EEFC83FC3F15AB20705AA88DDE3E12BB222872E2085A"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/ProxyProbe.java",
+        "relative": "ProxyProbe.java",
+        "bytes": 7420,
+        "sha256": "9C790E1FCC393D4EADD996891C756685054CC738EA921200DF7D9ACEBB98FB62"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/ProxyProbe.template.java",
+        "relative": "ProxyProbe.template.java",
+        "bytes": 6798,
+        "sha256": "856A1D58FBD23644AB7DADF72EDE9E7D83EE0342D659B54D5C732FB10D8F1CC0"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/Report.java",
+        "relative": "Report.java",
+        "bytes": 35,
+        "sha256": "E77F9033DBEA44BDD32954D284F3F25FEA5426E195EC80441DA4CAE10C4E9018"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/ReportEngine.java",
+        "relative": "ReportEngine.java",
+        "bytes": 70,
+        "sha256": "5AAB3334D34C57A7373F698E02EE11B07CC38C8D5E10B8BCF06D662FE0D993FB"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/ReportSpec.java",
+        "relative": "ReportSpec.java",
+        "bytes": 39,
+        "sha256": "5DDC9A2AF250915FD4E843812D5E38B6FC8530D48BF16CB211CE0B6F86137266"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/review-evidence.json",
+        "relative": "review-evidence.json",
+        "bytes": 9321,
+        "sha256": "D2F699A667D131CA78753B7949E3B44CB3261D7C7AC8B77F7F0F2FB6946ADE1C"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/run-cases.mjs",
+        "relative": "run-cases.mjs",
+        "bytes": 1203,
+        "sha256": "250F166A4A545AD38DF7CFC377A85170BA00D2A340A0924D176801603EADD014"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/run-validation.mjs",
+        "relative": "run-validation.mjs",
+        "bytes": 1660,
+        "sha256": "85C61D885B467453D778B1B3FF2C3C8853EC45240FD82DD1B5FE857352FAFA74"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/spring62-caching.html",
+        "relative": "spring62-caching.html",
+        "bytes": 161943,
+        "sha256": "F6BEDAB865E6C345CA5D2FFB47FBA1D9B6143C107A08150EF6B0E666A5DBABB3"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/spring62-proxying.html",
+        "relative": "spring62-proxying.html",
+        "bytes": 122972,
+        "sha256": "F02B11C490A92EEF99D0F7E055DE107201DCD995E336974FE98D4827CED23383"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/spring6211-enhancer.java.txt",
+        "relative": "spring6211-enhancer.java.txt",
+        "bytes": 48882,
+        "sha256": "62A6523589E7277F7988E4F404B9D1BDA4BB6867508736181FA1D43C2A80B27B"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/spring6211-jdk-proxy.java.txt",
+        "relative": "spring6211-jdk-proxy.java.txt",
+        "bytes": 12628,
+        "sha256": "584042929918B22CFD085B6DA475B1DF28B5EE01A182B1EF4D5A84E1321B00C1"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/technical-results.json",
+        "relative": "technical-results.json",
+        "bytes": 5682,
+        "sha256": "544DBB8439BFBE7D3CBDA093BD86085F5DA831659D03A0BCC60999F258FF31E3"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/classes/LazyProbe$Action.class",
+        "relative": "classes/LazyProbe$Action.class",
+        "bytes": 248,
+        "sha256": "6000E45621D8922C537817793DC4524271482FC9FFA2C66F08D45EFD1926FD94"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/classes/LazyProbe.class",
+        "relative": "classes/LazyProbe.class",
+        "bytes": 9828,
+        "sha256": "0AC5C6130A6D82F2650972570951C152391F66CF22642606932D7EC68C2A243A"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/classes/LazyReportEngine.class",
+        "relative": "classes/LazyReportEngine.class",
+        "bytes": 1466,
+        "sha256": "E438E64CD16042B67F68CCAAE24077306F39218EDB6DEFD88B31B94BE7F0C216"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/classes/ProxyProbe$Action.class",
+        "relative": "classes/ProxyProbe$Action.class",
+        "bytes": 251,
+        "sha256": "CC68FB40D0AEA9CBF4CF6FDE46822B9C1939E371A1824795CAF03E06548C68AC"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/classes/ProxyProbe$Foo.class",
+        "relative": "classes/ProxyProbe$Foo.class",
+        "bytes": 356,
+        "sha256": "DEB275538C53F264C0967C56D4CCD8A5DB0CD485613D69A0BC185A9F17547C6A"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/classes/ProxyProbe$IntValue.class",
+        "relative": "classes/ProxyProbe$IntValue.class",
+        "bytes": 209,
+        "sha256": "89937708997034C1596D1C0E2A936BB772CFAB1958F92816C30CA953AAA9337D"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/classes/ProxyProbe$Narrow.class",
+        "relative": "classes/ProxyProbe$Narrow.class",
+        "bytes": 204,
+        "sha256": "A461980C7D32947E0D85AD9B2CEB6B0D6A2D6B41CB8CF820EDE62BDD5F687F7D"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/classes/ProxyProbe$ReturnPolicy.class",
+        "relative": "classes/ProxyProbe$ReturnPolicy.class",
+        "bytes": 1156,
+        "sha256": "429425129574844D4B638E34DC156F62F5EA51C7F563E0CAFE19FA1A932CCADB"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/classes/ProxyProbe$StringValue.class",
+        "relative": "classes/ProxyProbe$StringValue.class",
+        "bytes": 232,
+        "sha256": "76A455D413EBCFABF3F8607AAE0E7F88EEEF357E128A0562BCA1D52353407C83"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/classes/ProxyProbe$Target.class",
+        "relative": "classes/ProxyProbe$Target.class",
+        "bytes": 806,
+        "sha256": "0E9144E9CF422CA7504E6ECA63A0C95C696638BFA46870B04604E56D7160559E"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/classes/ProxyProbe$Wide.class",
+        "relative": "classes/ProxyProbe$Wide.class",
+        "bytes": 248,
+        "sha256": "841AFF1FD2192F182B8EAA4EBC7D633B0DF347767255973BD3653D3A80AF75EC"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/classes/ProxyProbe.class",
+        "relative": "classes/ProxyProbe.class",
+        "bytes": 8758,
+        "sha256": "55E359775D0AE5473EB9EB4F6546AA77515D836D42DD571405007E8D55989493"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/classes/Report.class",
+        "relative": "classes/Report.class",
+        "bytes": 1057,
+        "sha256": "21CE75F134BAF58F97F4898BA0131EF55DC645B47CCE404C8E33900DD89E2954"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/classes/ReportEngine.class",
+        "relative": "classes/ReportEngine.class",
+        "bytes": 147,
+        "sha256": "79614B8E3249B1978B0F5DDE59791533FEE2D745EC3CECE299DAE5850AC869E9"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/classes/ReportSpec.class",
+        "relative": "classes/ReportSpec.class",
+        "bytes": 1077,
+        "sha256": "CA9308017C9B9BB5C0F78A9FD619F8297C365E1BA32E620340E9850ABE4989E5"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/cases/a/ProxyCase.java",
+        "relative": "cases/a/ProxyCase.java",
+        "bytes": 2226,
+        "sha256": "EAB897ACFBE930F40057F300D93EFDF3512261CC21092D1F85B3CE3F5737BC22"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/cases/b/ProxyCase.java",
+        "relative": "cases/b/ProxyCase.java",
+        "bytes": 2206,
+        "sha256": "34DA83975DF494A7F63CD6C68B83C698ED8AF4DACEDD01716D91C7645FD04B7D"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/cases/a/classes/ProxyCase$Client.class",
+        "relative": "cases/a/classes/ProxyCase$Client.class",
+        "bytes": 572,
+        "sha256": "B34EF981A2C978AA36D014025393EC21BF67EB7A989DD401798E67F39CBFCD0B"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/cases/a/classes/ProxyCase$Reports.class",
+        "relative": "cases/a/classes/ProxyCase$Reports.class",
+        "bytes": 285,
+        "sha256": "AEAE6136521558D4593B38EC8CF1CA0764E225BFDF89E32643AB53329EC427E3"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/cases/a/classes/ProxyCase.class",
+        "relative": "cases/a/classes/ProxyCase.class",
+        "bytes": 3788,
+        "sha256": "ECADB5BE20AAEAF8571DD3252C535C5F421B3F5A6E44EBE03D5D7CD96EEAB857"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/cases/b/classes/ProxyCase$Client.class",
+        "relative": "cases/b/classes/ProxyCase$Client.class",
+        "bytes": 580,
+        "sha256": "7A542F4AC15764264A96ACF7BDD9D620F86F927A82B3DCE58C5D7914E7E86127"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/cases/b/classes/ProxyCase$Reports.class",
+        "relative": "cases/b/classes/ProxyCase$Reports.class",
+        "bytes": 285,
+        "sha256": "AEAE6136521558D4593B38EC8CF1CA0764E225BFDF89E32643AB53329EC427E3"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-proxy-eeee657b83294865a324d050771f52a1/cases/b/classes/ProxyCase.class",
+        "relative": "cases/b/classes/ProxyCase.class",
+        "bytes": 3788,
+        "sha256": "4CD61F0DA5BE3E3F9D4E975D543BB836CB16660C7B9DEE09710DE7D8C061D93E"
+      }
+    ]
+  },
+  "assumptionsAndLimits": [
+    "All hypothetical application/engine types remain explicitly partial, not production-ready libraries.",
+    "The method-reference/receiver controls exercise JDK semantics, not full access isolation against reflection/untrusted code.",
+    "Sources are versioned as listed; rolling Spring 6.2 documentation is not the pinned v6.2.11 implementation source.",
+    "No new source claims were inserted into the package; supported existing content was preserved.",
+    "No test demonstrates performance improvement or incremental skill behavior gain."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "cwd": "C:/git/agent-skills",
+      "reason": "Parallel workflow reserves shared generated index to coordinator after all writers stop. This unchanged package itself needs no index/version regeneration.",
+      "prerequisites": "All wave reviewers have stopped writing; inspect shared index baseline."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "cwd": "C:/git/agent-skills",
+      "reason": "Parallel workflow global verification requires stable full catalog and regenerated index.",
+      "prerequisites": "All writers stopped; coordinator registry build complete."
+    }
+  ],
+  "crossSkillIssues": [],
+  "coordinatorActions": [
+    "Optionally execute independent paired cases without revealing evaluator criteria.",
+    "Perform the reserved wave-wide index/global checks."
+  ],
+  "finalOwnedHashes": [
+    {
+      "path": "C:/git/agent-skills/skills/gof-proxy/SKILL.md",
+      "relative": "SKILL.md",
+      "bytes": 12681,
+      "sha256": "481A62E2320177F9CB28FF54496C60E27210D26EA27B2CF03EFA96BDE053F2E9",
+      "baselineSha256": "481A62E2320177F9CB28FF54496C60E27210D26EA27B2CF03EFA96BDE053F2E9",
+      "matchesBaseline": true
+    },
+    {
+      "path": "C:/git/agent-skills/skills/gof-proxy/skill.yaml",
+      "relative": "skill.yaml",
+      "bytes": 2311,
+      "sha256": "89FB2DED91051927C7EAD6215933B5A2F09C051552277F379539FF91A4F31A94",
+      "baselineSha256": "89FB2DED91051927C7EAD6215933B5A2F09C051552277F379539FF91A4F31A94",
+      "matchesBaseline": true
+    },
+    {
+      "path": "C:/git/agent-skills/skills/gof-proxy/references/proxy-kinds-and-hazards.md",
+      "relative": "references/proxy-kinds-and-hazards.md",
+      "bytes": 15010,
+      "sha256": "8277B602CB1747EE706397C9B567A0D752B3F5365F8D79B943428B5C324B7084",
+      "baselineSha256": "8277B602CB1747EE706397C9B567A0D752B3F5365F8D79B943428B5C324B7084",
+      "matchesBaseline": true
+    },
+    {
+      "path": "C:/git/agent-skills/skills/gof-proxy/references/worked-example.md",
+      "relative": "references/worked-example.md",
+      "bytes": 10035,
+      "sha256": "8B35F43857F84F48023DC97F422265B80BA3932D086B1D4710CDF1B808742C15",
+      "baselineSha256": "8B35F43857F84F48023DC97F422265B80BA3932D086B1D4710CDF1B808742C15",
+      "matchesBaseline": true
+    }
+  ],
+  "processState": {
+    "allCommandsCompleted": true,
+    "noBackgroundProcessStarted": true,
+    "javaExecutorsTerminated": true,
+    "evidence": "Node spawnSync recorded normal exits for all ten extraction/version/compile/control/fixture commands; LazyProbe releases factory latch in finally, shuts down executor and asserts bounded termination. No daemon/server was started.",
+    "writesAfterHandoff": "None authorized; reviewer remains read-only until reassignment."
+  },
+  "handoffReadback": {
+    "method": "Immediately parse this JSON and verify every finalOwnedHashes/commandsAndArtifacts.artifacts SHA-256 against disk, confirm two separate case IDs and stopped-write fields.",
+    "reportedInFinalMessage": true
+  }
+}

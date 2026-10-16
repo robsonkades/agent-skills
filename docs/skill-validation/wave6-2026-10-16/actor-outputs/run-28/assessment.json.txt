@@ -1,0 +1,20 @@
+{
+  "disposition": "violated",
+  "basis": "Job.java:8 ignores the outcome of timed join(2) and unconditionally reads ordinary result. The supplied controlled gate keeps the correctly started worker alive, and check.mjs observed DONE:0 with alive=true, violating docs/contract.md. A timed join return alone is not termination detection; the JLS termination-to-detector edge is absent on that path. After genuine termination the worker's write of 83 can be published through lifecycle detection.",
+  "requiredChange": "Preserve the bounded join(2), then return PENDING when this.isAlive() is true. Read result and return DONE only after this.isAlive() is false for the correct already-started worker. Preserve InterruptedException propagation. Do not replace the wait with an unbounded join or treat volatile result alone as a completion protocol.",
+  "missingEvidence": [],
+  "checked": [
+    "Read complete local skill, both conditional references, project README, request, accepted contract, source, controlled test and check runner.",
+    "Verified Java runtime Temurin 25.0.3+9 and javac 25.0.3.",
+    "Ran supplied node check.mjs: compilation --release 25 succeeded; controlled output was while-gate-closed=DONE:0, alive=true, after-termination=DONE:83; process exit 0.",
+    "Checked Java SE25 Thread.join(long), Thread.isAlive and JLS 17.4.4–17.4.5 primary documentation.",
+    "Compared SHA256 of all six supplied project files in input/project and output/project; all matched the reviewed files."
+  ],
+  "limits": [
+    "Remedy is a review proposal only: production files were not modified, and the proposed method was not compiled or executed.",
+    "The controlled smoke prints results rather than asserting accepted DONE/PENDING semantics; its zero exit is not contract success.",
+    "One controlled run is evidence of a concrete counterexample, not proof of all JMM executions.",
+    "No stress, load, cross-runtime, cancellation or latency measurement was executed.",
+    "Termination-based publication assumes the accepted initialized, already-started-once worker lifecycle and no requested cancellation; false isAlive on an unstarted thread is not completion evidence."
+  ]
+}

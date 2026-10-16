@@ -1,0 +1,1 @@
+Review deploy/rollout.yaml and deploy/analysis-template.yaml against release-policy.md. Make the smallest justified repository correction, if any, and give a concise verification plan with observable outcomes. Preserve the stated versions, timing, admission budget, metric contract and managed resources. Do not run cluster actions or claim a production release is verified.

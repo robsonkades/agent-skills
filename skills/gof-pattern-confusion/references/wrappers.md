@@ -147,7 +147,7 @@ raises transaction/partial-effect questions without supplying atomicity.
 
 Verify the actual mechanism: [Spring AOP proxying](https://docs.spring.io/spring-framework/reference/core/aop/proxying.html)
 documents self-invocation bypass for proxy advice (AspectJ weaving differs).
-[Jakarta Servlet 6 Filter](https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/filter)
+[Jakarta Servlet 6 Filter](https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/Filter.html)
 can invoke the chain or block it; do not infer that every layer must run from a decorator label.
 Likewise [Spring 6.1.21 ClientHttpRequestInterceptor](https://docs.spring.io/spring-framework/docs/6.1.21/javadoc-api/org/springframework/http/client/ClientHttpRequestInterceptor.html)
 may forward or block execution and wrap a response. If it throws after receiving a response, it

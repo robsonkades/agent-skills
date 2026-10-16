@@ -1,0 +1,159 @@
+{
+  "baseline": [
+    {
+      "path": "skills/jit-inlining-and-escape-analysis\\skill.yaml",
+      "sha256": "D7A5A1F02A88E2FB5E3CC8E9CE1795880C2E221E5645F2EA5D50EFE1972EF7A2"
+    },
+    {
+      "path": "skills/jit-inlining-and-escape-analysis\\SKILL.md",
+      "sha256": "693430B738C9BC0660783F2DBFF89EA0B1DC5B2929669FE27E7898033C62FCA3"
+    },
+    {
+      "path": "skills/jit-inlining-and-escape-analysis\\references\\verifying-escape-analysis.md",
+      "sha256": "34B106132F20CC4611FFE1CAC6791DA40E90F14F319C719B97F6290BD64FE831"
+    },
+    {
+      "path": "skills/jit-inlining-and-escape-analysis\\references\\inlining-verdicts-and-fixes.md",
+      "sha256": "344F40A40127F328311D30FA48AC17E7C2B1391ED51EDC23BA07D17BBCEEAB58"
+    }
+  ],
+  "sources": [
+    {
+      "title": "OpenJDK jdk-25-ga bytecodeInfo.cpp",
+      "url": "https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/opto/bytecodeInfo.cpp",
+      "checkedDate": "2026-10-16",
+      "support": "Original pinned source contains the positive-flag frequency gate, reciprocal floor and earlier exits.",
+      "limits": "Compiler implementation, not a Java contract; GA source alone does not establish update-build behavior."
+    },
+    {
+      "title": "OpenJDK jdk-25.0.3+9 bytecodeInfo.cpp",
+      "url": "https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/opto/bytecodeInfo.cpp",
+      "checkedDate": "2026-10-16",
+      "support": "Version-matched should_not_inline uses the max of the configured ratio and reciprocal min_invocations when that gate is reached.",
+      "limits": "Other gates still determine the final decision; the local probe exercises an ordinary non-trivial static callee."
+    },
+    {
+      "title": "OpenJDK jdk-25.0.3+9 compilationPolicy.hpp",
+      "url": "https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/compiler/compilationPolicy.hpp",
+      "checkedDate": "2026-10-16",
+      "support": "CompilationPolicy::min_invocations returns Tier4MinInvocationThreshold.",
+      "limits": "Read the effective configuration rather than an assumed default or literal launch argument."
+    },
+    {
+      "title": "OpenJDK jdk-25.0.3+9 compilerDefinitions.cpp",
+      "url": "https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/compiler/compilerDefinitions.cpp",
+      "checkedDate": "2026-10-16",
+      "support": "Legacy compiler-mode emulation sets tier-4 thresholds from CompileThreshold; threshold scaling also changes them.",
+      "limits": "The overwrite was reproduced with -TieredCompilation and CompileThreshold=10000 on the installed build."
+    }
+  ],
+  "commands": [
+    {
+      "name": "compile and inspect probe bytecode",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-inlining-and-escape-analysis-validation-quality18",
+      "command": "$ErrorActionPreference = 'Stop'\n& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' --release 25 -d classes FrequencyProbe.java *> javac.log\nif ($LASTEXITCODE -ne 0) { Get-Content javac.log; throw 'javac failed' }\n& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javap.exe' -p -c -classpath classes FrequencyProbe > bytecode.txt\nif ($LASTEXITCODE -ne 0) { throw 'javap failed' }\nGet-Content bytecode.txt",
+      "chunk_id": "85dfff",
+      "wall_time_seconds": 0.5120502,
+      "exit_code": 0,
+      "original_token_count": 559,
+      "output": "Compiled from \"FrequencyProbe.java\"\r\npublic final class FrequencyProbe {\r\n  public FrequencyProbe();\r\n    Code:\r\n         0: aload_0\r\n         1: invokespecial #1                  // Method java/lang/Object.\"<init>\":()V\r\n         4: return\r\n\r\n  static int occasional(int);\r\n    Code:\r\n         0: iload_0\r\n         1: bipush        17\r\n         3: imul\r\n         4: iconst_3\r\n         5: iadd\r\n         6: istore_1\r\n         7: iload_1\r\n         8: iload_1\r\n         9: iconst_3\r\n        10: iushr\r\n        11: ixor\r\n        12: ireturn\r\n\r\n  static int caller(int);\r\n    Code:\r\n         0: iload_0\r\n         1: bipush        63\r\n         3: iand\r\n         4: ifne          14\r\n         7: iload_0\r\n         8: invokestatic  #7                  // Method occasional:(I)I\r\n        11: goto          15\r\n        14: iload_0\r\n        15: ireturn\r\n\r\n  public static void main(java.lang.String[]);\r\n    Code:\r\n         0: lconst_0\r\n         1: lstore_1\r\n         2: iconst_0\r\n         3: istore_3\r\n         4: iload_3\r\n         5: ldc           #13                 // int 500000\r\n         7: if_icmpge     24\r\n        10: lload_1\r\n        11: iload_3\r\n        12: invokestatic  #14                 // Method caller:(I)I\r\n        15: i2l\r\n        16: ladd\r\n        17: lstore_1\r\n        18: iinc          3, 1\r\n        21: goto          4\r\n        24: getstatic     #17                 // Field java/lang/System.out:Ljava/io/PrintStream;\r\n        27: lload_1\r\n        28: invokedynamic #23,  0             // InvokeDynamic #0:makeConcatWithConstants:(J)Ljava/lang/String;\r\n        33: invokevirtual #27                 // Method java/io/PrintStream.println:(Ljava/lang/String;)V\r\n        36: getstatic     #17                 // Field java/lang/System.out:Ljava/io/PrintStream;\r\n        39: ldc           #33                 // String java.runtime.version\r\n        41: invokestatic  #35                 // Method java/lang/System.getProperty:(Ljava/lang/String;)Ljava/lang/String;\r\n        44: invokedynamic #39,  0             // InvokeDynamic #1:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;\r\n        49: invokevirtual #27                 // Method java/io/PrintStream.println:(Ljava/lang/String;)V\r\n        52: return\r\n}\r\n"
+    },
+    {
+      "name": "initial non-tiered exploratory forks",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-inlining-and-escape-analysis-validation-quality18",
+      "command": "$ErrorActionPreference = 'Stop'\n$probeVariants = @(\n    [pscustomobject]@{ Name = 'floor600'; MinimumInvocations = 600; Ratio = '0.0085' },\n    [pscustomobject]@{ Name = 'floor60'; MinimumInvocations = 60; Ratio = '0.0085' },\n    [pscustomobject]@{ Name = 'floor60-lowered-ratio'; MinimumInvocations = 60; Ratio = '0.001' }\n)\nforeach ($probeVariant in $probeVariants) {\n    $vmArgs = @('-Xbatch', '-XX:-TieredCompilation', '-XX:CompileThreshold=10000', \"-XX:Tier4MinInvocationThreshold=$($probeVariant.MinimumInvocations)\", '-XX:+UnlockDiagnosticVMOptions', \"-XX:MinInlineFrequencyRatio=$($probeVariant.Ratio)\", '-XX:+LogCompilation', \"-XX:LogFile=$($probeVariant.Name).xml\", '-XX:CompileCommand=quiet', '-XX:CompileCommand=compileonly,FrequencyProbe::caller', '-XX:CompileCommand=PrintInlining,FrequencyProbe::caller')\n    & 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' @vmArgs -cp classes FrequencyProbe *> \"$($probeVariant.Name).log\"\n    if ($LASTEXITCODE -ne 0) { Get-Content \"$($probeVariant.Name).log\"; throw \"Probe failed: $($probeVariant.Name)\" }\n    [pscustomobject]@{ Variant = $probeVariant.Name; Output = (Get-Content -Raw \"$($probeVariant.Name).log\") } | ConvertTo-Json\n}",
+      "chunk_id": "0a1ece",
+      "wall_time_seconds": 0.2548034,
+      "exit_code": 0,
+      "original_token_count": 144,
+      "output": "{\r\n  \"Variant\": \"floor600\",\r\n  \"Output\": \"                            @ 8   FrequencyProbe::occasional (13 bytes)   inline (hot)\\r\\nchecksum=156356445007\\r\\nruntime=25.0.3+9-LTS\\r\\n\"\r\n}\r\n{\r\n  \"Variant\": \"floor60\",\r\n  \"Output\": \"                            @ 8   FrequencyProbe::occasional (13 bytes)   inline (hot)\\r\\nchecksum=156356445007\\r\\nruntime=25.0.3+9-LTS\\r\\n\"\r\n}\r\n{\r\n  \"Variant\": \"floor60-lowered-ratio\",\r\n  \"Output\": \"                            @ 8   FrequencyProbe::occasional (13 bytes)   inline (hot)\\r\\nchecksum=156356445007\\r\\nruntime=25.0.3+9-LTS\\r\\n\"\r\n}\r\n"
+    },
+    {
+      "name": "inspect effective legacy-mode flags",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-inlining-and-escape-analysis-validation-quality18",
+      "command": "$ErrorActionPreference = 'Stop'\n& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -Xbatch -XX:-TieredCompilation -XX:CompileThreshold=10000 -XX:Tier4MinInvocationThreshold=60 -XX:+UnlockDiagnosticVMOptions -XX:MinInlineFrequencyRatio=0.0085 -XX:+PrintFlagsFinal -version *> legacy-effective-flags.log\nif ($LASTEXITCODE -ne 0) { throw 'Effective-flags inspection failed' }\nGet-Content legacy-effective-flags.log | Select-String '^\\s+(bool|intx|double)\\s+(Tier4MinInvocationThreshold|CompileThreshold|TieredCompilation|MinInlineFrequencyRatio)\\s|version|Runtime Environment|Server VM'",
+      "chunk_id": "0cb068",
+      "wall_time_seconds": 0.1623864,
+      "exit_code": 0,
+      "original_token_count": 203,
+      "output": "\r\n     intx CompileThreshold                         = 10000                                  {pd product} {command line}\r\n     bool LoopMultiversioning                      = true                                {C2 diagnostic} {default}\r\n   double MinInlineFrequencyRatio                  = 0.008500                               {diagnostic} {command line}\r\n     intx Tier4MinInvocationThreshold              = 10000                                     {product} {command \r\nline, ergonomic}\r\n     bool TieredCompilation                        = false                                  {pd product} {command line}\r\nopenjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n\r\n"
+    },
+    {
+      "name": "tiered controlled forks with effective flag capture",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-inlining-and-escape-analysis-validation-quality18",
+      "command": "$ErrorActionPreference = 'Stop'\n$probeVariants = @(\n    [pscustomobject]@{ Name = 'tiered-floor600'; MinimumInvocations = 600; Ratio = '0.0085' },\n    [pscustomobject]@{ Name = 'tiered-floor60'; MinimumInvocations = 60; Ratio = '0.0085' },\n    [pscustomobject]@{ Name = 'tiered-floor60-lowered-ratio'; MinimumInvocations = 60; Ratio = '0.001' }\n)\nforeach ($probeVariant in $probeVariants) {\n    $vmArgs = @('-Xbatch', '-XX:+TieredCompilation', \"-XX:Tier4MinInvocationThreshold=$($probeVariant.MinimumInvocations)\", '-XX:+UnlockDiagnosticVMOptions', \"-XX:MinInlineFrequencyRatio=$($probeVariant.Ratio)\", '-XX:+PrintFlagsFinal', '-XX:+LogCompilation', \"-XX:LogFile=$($probeVariant.Name).xml\", '-XX:CompileCommand=quiet', '-XX:CompileCommand=compileonly,FrequencyProbe::caller', '-XX:CompileCommand=PrintInlining,FrequencyProbe::caller')\n    & 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' @vmArgs -cp classes FrequencyProbe *> \"$($probeVariant.Name).log\"\n    if ($LASTEXITCODE -ne 0) { Get-Content \"$($probeVariant.Name).log\"; throw \"Probe failed: $($probeVariant.Name)\" }\n    [pscustomobject]@{ Variant = $probeVariant.Name; Output = ((Get-Content \"$($probeVariant.Name).log\" | Select-String '^\\s+(intx|double|bool)\\s+(Tier4MinInvocationThreshold|MinInlineFrequencyRatio|TieredCompilation)\\s|FrequencyProbe::occasional|checksum=|runtime=') -join \"`n\") } | ConvertTo-Json\n}",
+      "chunk_id": "c28920",
+      "wall_time_seconds": 0.3583246,
+      "exit_code": 0,
+      "original_token_count": 494,
+      "output": "{\r\n  \"Variant\": \"tiered-floor600\",\r\n  \"Output\": \"   double MinInlineFrequencyRatio                  = 0.008500                               {diagnostic} {command line}\\n     intx Tier4MinInvocationThreshold              = 600                                       {product} {command line}\\n     bool TieredCompilation                        = true                                   {pd product} {command line}\\n                              @ 8   FrequencyProbe::occasional (13 bytes)   inline\\n                              @ 8   FrequencyProbe::occasional (13 bytes)   inline (hot)\\nchecksum=156356445007\\nruntime=25.0.3+9-LTS\"\r\n}\r\n{\r\n  \"Variant\": \"tiered-floor60\",\r\n  \"Output\": \"   double MinInlineFrequencyRatio                  = 0.008500                               {diagnostic} {command line}\\n     intx Tier4MinInvocationThreshold              = 60                                        {product} {command line}\\n     bool TieredCompilation                        = true                                   {pd product} {command line}\\n                              @ 8   FrequencyProbe::occasional (13 bytes)   inline\\n                              @ 8   FrequencyProbe::occasional (13 bytes)   failed to inline: low call site frequency\\nchecksum=156356445007\\nruntime=25.0.3+9-LTS\"\r\n}\r\n{\r\n  \"Variant\": \"tiered-floor60-lowered-ratio\",\r\n  \"Output\": \"   double MinInlineFrequencyRatio                  = 0.001000                               {diagnostic} {command line}\\n     intx Tier4MinInvocationThreshold              = 60                                        {product} {command line}\\n     bool TieredCompilation                        = true                                   {pd product} {command line}\\n                              @ 8   FrequencyProbe::occasional (13 bytes)   inline\\n                              @ 8   FrequencyProbe::occasional (13 bytes)   failed to inline: low call site frequency\\nchecksum=156356445007\\nruntime=25.0.3+9-LTS\"\r\n}\r\n"
+    },
+    {
+      "name": "verify actual C2 task and nmethod observations",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-inlining-and-escape-analysis-validation-quality18",
+      "command": "$ErrorActionPreference = 'Stop'\n$expectations = @(\n    [pscustomobject]@{ Name = 'tiered-floor600'; Minimum = 600; Ratio = 0.0085; Reason = 'inline (hot)' },\n    [pscustomobject]@{ Name = 'tiered-floor60'; Minimum = 60; Ratio = 0.0085; Reason = 'low call site frequency' },\n    [pscustomobject]@{ Name = 'tiered-floor60-lowered-ratio'; Minimum = 60; Ratio = 0.001; Reason = 'low call site frequency' }\n)\n$observations = foreach ($expected in $expectations) {\n    [xml]$log = Get-Content -Raw -LiteralPath \"$($expected.Name).xml\"\n    $textLog = Get-Content -Raw -LiteralPath \"$($expected.Name).log\"\n    $nmethods = @($log.SelectNodes(\"//nmethod[@compiler='c2' and @method='FrequencyProbe caller (I)I']\"))\n    if ($nmethods.Count -ne 1) { throw \"Expected one C2 caller nmethod in this fixture: $($expected.Name)\" }\n    $compileId = $nmethods[0].compile_id\n    $tasks = @($log.SelectNodes(\"//task[@compile_id='$compileId']\"))\n    if ($tasks.Count -ne 1 -or $tasks[0].task_done.success -ne '1') { throw \"Expected one successful task in this fixture: $($expected.Name)\" }\n    $verdicts = @($tasks[0].SelectNodes(\".//inline_success | .//inline_fail\"))\n    if ($verdicts.Count -ne 1 -or $verdicts[0].reason -ne $expected.Reason) { throw \"Unexpected C2 verdict: $($expected.Name)\" }\n    $callee = $tasks[0].SelectSingleNode(\".//method[@name='occasional']\")\n    if ($callee.bytes -ne '13') { throw 'Expected non-trivial 13-byte callee' }\n    $minimum = [int]([regex]::Match($textLog, '(?m)^\\s+intx\\s+Tier4MinInvocationThreshold\\s+=\\s+(\\d+)').Groups[1].Value)\n    $ratio = [double]::Parse([regex]::Match($textLog, '(?m)^\\s+double\\s+MinInlineFrequencyRatio\\s+=\\s+([0-9.]+)').Groups[1].Value, [cultureinfo]::InvariantCulture)\n    if ($minimum -ne $expected.Minimum -or $ratio -ne $expected.Ratio) { throw \"Effective flags differ: $($expected.Name)\" }\n    $checksum = [regex]::Match($textLog, '(?m)^checksum=(\\d+)').Groups[1].Value\n    if ($checksum -ne '156356445007') { throw \"Workload checksum differs: $($expected.Name)\" }\n    [pscustomobject]@{\n        Variant = $expected.Name\n        EffectiveMinimumInvocations = $minimum\n        EffectiveRatio = $ratio\n        FrequencyFloor = [math]::Max($ratio, 1.0 / [math]::Max(1, $minimum))\n        C2CompilationIdWithinFork = $compileId\n        Compiler = $nmethods[0].compiler\n        Level = $nmethods[0].level\n        Root = $nmethods[0].method\n        CalleeBytes = $callee.bytes\n        Verdict = $verdicts[0].reason\n        TaskSucceeded = $tasks[0].task_done.success\n        Checksum = $checksum\n    }\n}\n$observations | ConvertTo-Json -Depth 4 | Tee-Object -FilePath observed-c2-results.json\n",
+      "chunk_id": "19c066",
+      "wall_time_seconds": 0.1713144,
+      "exit_code": 0,
+      "original_token_count": 309,
+      "output": "[\r\n  {\r\n    \"Variant\": \"tiered-floor600\",\r\n    \"EffectiveMinimumInvocations\": 600,\r\n    \"EffectiveRatio\": 0.0085,\r\n    \"FrequencyFloor\": 0.0085,\r\n    \"C2CompilationIdWithinFork\": \"4\",\r\n    \"Compiler\": \"c2\",\r\n    \"Level\": \"4\",\r\n    \"Root\": \"FrequencyProbe caller (I)I\",\r\n    \"CalleeBytes\": \"13\",\r\n    \"Verdict\": \"inline (hot)\",\r\n    \"TaskSucceeded\": \"1\",\r\n    \"Checksum\": \"156356445007\"\r\n  },\r\n  {\r\n    \"Variant\": \"tiered-floor60\",\r\n    \"EffectiveMinimumInvocations\": 60,\r\n    \"EffectiveRatio\": 0.0085,\r\n    \"FrequencyFloor\": 0.016666666666666666,\r\n    \"C2CompilationIdWithinFork\": \"4\",\r\n    \"Compiler\": \"c2\",\r\n    \"Level\": \"4\",\r\n    \"Root\": \"FrequencyProbe caller (I)I\",\r\n    \"CalleeBytes\": \"13\",\r\n    \"Verdict\": \"low call site frequency\",\r\n    \"TaskSucceeded\": \"1\",\r\n    \"Checksum\": \"156356445007\"\r\n  },\r\n  {\r\n    \"Variant\": \"tiered-floor60-lowered-ratio\",\r\n    \"EffectiveMinimumInvocations\": 60,\r\n    \"EffectiveRatio\": 0.001,\r\n    \"FrequencyFloor\": 0.016666666666666666,\r\n    \"C2CompilationIdWithinFork\": \"4\",\r\n    \"Compiler\": \"c2\",\r\n    \"Level\": \"4\",\r\n    \"Root\": \"FrequencyProbe caller (I)I\",\r\n    \"CalleeBytes\": \"13\",\r\n    \"Verdict\": \"low call site frequency\",\r\n    \"TaskSucceeded\": \"1\",\r\n    \"Checksum\": \"156356445007\"\r\n  }\r\n]\r\n"
+    },
+    {
+      "name": "strict metadata and links",
+      "cwd": "C:/git/agent-skills",
+      "command": "@'\nimport assert from 'node:assert/strict';\nimport { readFileSync, existsSync } from 'node:fs';\nimport { resolve, dirname } from 'node:path';\nimport { parseManifest } from './packages/core/src/domain/manifest.ts';\nimport { parseSkillDocument } from './packages/core/src/domain/skill-document.ts';\nconst root = resolve('skills/jit-inlining-and-escape-analysis');\nconst { manifest, issues } = parseManifest(readFileSync(resolve(root, 'skill.yaml'), 'utf8'), { strict: true });\nassert.deepEqual(issues, []);\nconst doc = parseSkillDocument(readFileSync(resolve(root, 'SKILL.md'), 'utf8'));\nassert.equal(manifest.name, 'jit-inlining-and-escape-analysis');\nassert.equal(doc.frontmatter.name, manifest.name);\nassert.equal(manifest.version, '2.1.4');\nconst norm = s => s.replace(/\\s+/g, ' ').trim();\nassert.equal(norm(doc.frontmatter.description), norm(manifest.description));\nfor (const path of manifest.files) assert.ok(existsSync(resolve(root, path)), path);\nconst refs = [...new Set(doc.body.match(/references\\/[A-Za-z0-9/-]+\\.md/g))];\nassert.equal(refs.length, 2);\nlet links = 0;\nfor (const name of ['SKILL.md', ...refs]) {\n  const source = resolve(root, name);\n  const content = readFileSync(source, 'utf8');\n  for (const match of content.matchAll(/\\]\\(([^)]+)\\)/g)) {\n    const target = match[1];\n    if (/^<?https?:\\/\\//.test(target)) continue;\n    const [file, anchor] = target.split('#');\n    const dest = file ? resolve(dirname(source), file) : source;\n    assert.ok(existsSync(dest), name + ': ' + target);\n    if (anchor) {\n      const headings = [...readFileSync(dest, 'utf8').matchAll(/^#+\\s+(.+)$/gm)].map(m => m[1].toLowerCase().replace(/[^\\w\\s-]/g, '').replace(/\\s/g, '-'));\n      assert.ok(headings.includes(anchor), name + ': anchor ' + target);\n    }\n    links++;\n  }\n}\nconsole.log(JSON.stringify({name:manifest.name, version:manifest.version, strictManifestIssues:issues.length, declaredPaths:manifest.files.length, routedReferences:refs.length, localLinksChecked:links, metadataAndLinks:'PASS'}));\n'@ | node --input-type=module",
+      "chunk_id": "c73a5b",
+      "wall_time_seconds": 0.1993855,
+      "exit_code": 0,
+      "original_token_count": 44,
+      "output": "{\"name\":\"jit-inlining-and-escape-analysis\",\"version\":\"2.1.4\",\"strictManifestIssues\":0,\"declaredPaths\":3,\"routedReferences\":2,\"localLinksChecked\":2,\"metadataAndLinks\":\"PASS\"}\n"
+    },
+    {
+      "name": "final owned-package formatting",
+      "cwd": "C:/git/agent-skills",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/jit-inlining-and-escape-analysis/SKILL.md skills/jit-inlining-and-escape-analysis/skill.yaml skills/jit-inlining-and-escape-analysis/references/inlining-verdicts-and-fixes.md skills/jit-inlining-and-escape-analysis/references/verifying-escape-analysis.md",
+      "chunk_id": "c360b8",
+      "wall_time_seconds": 0.2341148,
+      "exit_code": 0,
+      "original_token_count": 17,
+      "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+    },
+    {
+      "name": "final scoped whitespace check",
+      "cwd": "C:/git/agent-skills",
+      "command": "git diff --check -- skills/jit-inlining-and-escape-analysis",
+      "chunk_id": "192895",
+      "wall_time_seconds": 0.0656226,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    }
+  ],
+  "refutedInitialHypothesis": {
+    "expectation": "Changing the supplied Tier4MinInvocationThreshold between 600 and 60 in non-tiered forks would alter the reciprocal floor.",
+    "observation": "All three initial forks inlined. Effective-flags inspection showed Tier4MinInvocationThreshold=10000 with command-line/ergonomic origin despite the supplied value 60.",
+    "revision": "Retained initial logs, checked update-matched implementation source, and used tiered mode plus PrintFlagsFinal for the controlled comparison. Initial runs were not relabeled as confirmation."
+  },
+  "failuresCorrected": [
+    {
+      "phase": "formatting",
+      "commandResult": {
+        "chunk_id": "59dfe7",
+        "wall_time_seconds": 0.2536729,
+        "exit_code": 1,
+        "original_token_count": 49,
+        "output": "Checking formatting...\n[warn] skills/jit-inlining-and-escape-analysis/references/inlining-verdicts-and-fixes.md\n[warn] Code style issues found in the above file. Run Prettier with --write to fix.\n"
+      },
+      "cause": "One missing padding space in the edited Markdown table row.",
+      "resolution": "Focused apply_patch adjustment; final Prettier passes. Baseline stdin check exited 0."
+    },
+    {
+      "phase": "artifact assembly",
+      "error": "SyntaxError: Unexpected token '}'",
+      "effect": "One functions.exec script failed to parse before execution or file writes.",
+      "resolution": "Assembled the inputs/criteria and evidence in smaller calls; all resulting JSON was checked."
+    }
+  ],
+  "measuredAgentImprovement": false,
+  "servicePerformanceMeasured": false
+}

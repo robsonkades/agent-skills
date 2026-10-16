@@ -1,0 +1,22 @@
+{
+  "disposition": "violated",
+  "basis": "The accepted contract allows indefinite misses but requires every present value to be 42 and forbids lookup exceptions. BestEffortMemo.find snapshots plain entry, then invokes the reader selected by ReaderFactory.create: PublishedEntry::legacyValue. That path reads ordinary legacy and ordinary Payload.value, bypassing final primary. Pre-start publication safely publishes the memo and reader, not the later entry installation. JLS SE25 17.4.5 and 17.5.1 therefore permit a non-null entry with default legacy (NPE), or a visible legacy reference with default value 0. These are specification-permitted counterexamples, not failures observed in the sequential smoke.",
+  "requiredChange": "Change ReaderFactory.create's method reference from PublishedEntry::legacyValue to PublishedEntry::value. This uses the existing final-primary dereference path and its construction-time payload visibility guarantee. Preserve the local entry snapshot, accepted misses and other valid code. Proposal only; no production edits made.",
+  "missingEvidence": [],
+  "checked": [
+    "Read the complete task, review request, contract, README, all three production Java sources, sequential Smoke.java and check.mjs.",
+    "Consulted Oracle JLS SE25 17.4.5 and 17.5.1 for happens-before and final-field dereference semantics.",
+    "Compared SHA-256 for all eight supplied project files between input and output; identical.",
+    "Temurin 25.0.3 reported by java -version.",
+    "Compiled immutable output/project Java sources and original smoke with javac --release 25; exit 0.",
+    "Ran original memo.Smoke; exit 0, sequential-controls=2 PASS.",
+    "Inspected javap output for ReaderFactory; bootstrap method handle targets PublishedEntry.legacyValue."
+  ],
+  "limits": [
+    "The smoke is sequential and cannot prove concurrency correctness or rule out allowed default-field observations.",
+    "No concurrent stress, mechanized JMM proof, alternative implementation or proposed correction was executed.",
+    "One web open request for a line range was terminated after yielding without a response; subsequent find retrieved the pertinent SE25 text.",
+    "check.mjs was read, not executed; equivalent explicit javac/java commands were executed with bounded child-process timeouts.",
+    "Review is limited to the accepted single-install/no-later-mutation/pre-start-publication contract."
+  ]
+}

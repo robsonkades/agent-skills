@@ -1,0 +1,1088 @@
+{
+  "task": "Investigate the reported reload total against the accepted live report contract",
+  "status": "complete",
+  "scope": {
+    "runRoot": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-04",
+    "writableRoot": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-04\\output",
+    "targetJava": 17,
+    "networkUsed": false,
+    "delegationUsed": false
+  },
+  "filesRead": [
+    {
+      "file": "TASK.md",
+      "purpose": "Task instructions",
+      "fullFile": true,
+      "truncated": false,
+      "bytes": 1947,
+      "sha256": "1725e2c30717002ff509b0d0ac23578ac1aa0b417e7f89b875cf1c96c29ef522",
+      "content": "Investigue o relato em support.md usando os artefatos do projeto e o contrato aceito. Determine se existe defeito e sua causa. Corrija o projeto quando houver violação, com verificação relevante; preserve comportamento já adequado. Entregue o projeto final e REVIEW.md com evidências, conclusão, alterações e limitações. Não mude o contrato, a baseline Java ou dependências.\n\nTrabalhe exclusivamente em C:/Users/robso/AppData/Local/Temp/skills-wave5-actors-4tJ3OK/run-04. O projeto inicial está em input/project (somente leitura), e uma cópia de trabalho já está em output/project. Você não está sozinho: escreva somente dentro de output/. Não modifique input/, skill/, contract.md nem lib/compat.jar, se existir. Pode editar fontes, testes e configuração do projeto de trabalho quando sustentado pela investigação. Preserve as entradas originais e cobertura útil existente.\n\nAplique a skill local skill/SKILL.md. Leia o corpo completo e as referências relevantes conforme suas condições; registre o conteúdo efetivamente lido.\n\nNão leia o repositório C:/git/agent-skills, outros runs, critérios, handoffs, pastas de avaliações, skills globais ou conversas anteriores. Não use rede, instalações, outros agentes ou configuração real. Java, javac, javap e jar estão em C:/Users/robso/.jdks/temurin-25.0.3/bin. Node está disponível. Use alvo Java 17 e preserve o runtime disponível (Temurin25.0.3+9); cada processo deve ter limite de 30s.\n\nExecute verificações proporcionais e conserve logs/scripts. Salve output/REVIEW.md e output/execution.json. No JSON registre comandos exatos com argumentos, cwd, exit e saída ou caminho do log, arquivos/conteúdos efetivamente lidos (incluindo skill/referências e qualquer truncamento), limitações e qualquer acesso acidental fora do escopo. Diferencie execução de proposta. Ao terminar, encerre processos, pare as escritas e confirme allWritesStopped:true.\n"
+    },
+    {
+      "file": "skill/SKILL.md",
+      "purpose": "Complete applicable local debugging skill",
+      "fullFile": true,
+      "truncated": false,
+      "bytes": 7677,
+      "sha256": "169c722dcb37565038e7cf6301e844bab0a3418a06ee2a92b8e061d4cf44bac3",
+      "content": "---\nname: debugging\ndescription: >\n  Finding the cause of a fault instead of a change that makes the symptom go away:\n  reproducing before diagnosing, shrinking the reproduction until nothing is removable,\n  stating a hypothesis that predicts an observation, changing one variable at a time,\n  bisecting, and choosing which evidence to collect from a running production system before\n  it is destroyed. Use when a fix is being guessed at, when a change \"seems to work\", when\n  the same bug keeps coming back, when a fault cannot be reproduced, when a production\n  incident needs a cause rather than a restart, when print statements are being added\n  everywhere, or when several changes were made at once and it now works. Does not cover\n  JVM performance triage (java-performance), GC (jvm-gc-tuning), live thread diagnosis\n  (concurrency-diagnostics), heap dump mechanics (heap-dump-analysis), or deliberately\n  injecting failures (distributed-systems-testing).\n---\n\n# Debugging\n\n## Purpose\n\nTurn a report into a cause. The alternative — changing things until the symptom disappears —\nproduces code nobody understands, a bug that returns under a slightly different input, and no\nway to tell whether the change helped or moved the failure somewhere quieter.\n\n## Workflow\n\nStart with the requested outcome: diagnosis, mitigation or repair. Inspect the report, affected\ncall path, documented contract, existing tests and effective configuration before accepting the\nreport's explanation. Reuse adequate evidence; ask only about missing expectations or context\nthat could change the conclusion. Diagnosis can finish with a supported finding without editing\ncode. Behavior consistent with the accepted contract may call for clarification rather than a fix.\n\n1. **Restate the fault as an observation.** \"Customer 88123 saw a negative balance at 14:02\"\n   is an observation. \"The refund logic is broken\" is a hypothesis wearing a report's clothes,\n   and adopting it early is how the wrong subsystem gets investigated for a day.\n   State the expected behavior and its source too: an allowed overdraft is not evidence of a\n   violated invariant. Separate requirements and established contracts from assumptions.\n2. **Reproduce it.** Deterministically if possible, intermittently if not — but know which,\n   because \"I cannot reproduce it\" and \"it reproduces one time in ten\" lead to different work.\n   If it only happens in production, collect evidence within the mitigation budget\n   (`references/production-evidence.md`).\n3. **Shrink.** Remove inputs, steps, data and configuration until removing anything more makes\n   the fault disappear, while preserving the original failure signature. Stop when the next\n   reduction costs more than it helps; a minimal reproduction need not identify the full cause.\n4. **State a hypothesis that predicts something you have not yet looked at.** \"If the cause is\n   the missing time zone, then the row written at 23:30 local will carry yesterday's date.\"\n   Also name an observation that would refute it. Explaining existing evidence is useful;\n   a discriminating prediction makes the next experiment useful.\n5. **Run a controlled, discriminating experiment**, normally changing one variable. Preserve\n   comparable state and a baseline control; record confirming and refuting outcomes. When an\n   interaction is suspected, compare the relevant combinations deliberately instead of treating\n   a successful batch of changes as an isolated cause (`references/method.md`).\n6. **Check the explanation against the distribution** — frequency, timing, affected and unaffected\n   users. Record remaining contradictions and uncertainty instead of forcing one cause to explain\n   unrelated failures.\n7. **When repair is in scope, verify it against the original fault.** Turn the reproduction\n   into regression coverage when it earns lasting value (tdd); confirm it detects the original\n   failure before accepting the corrected result. Reuse existing adequate tests. A race may need\n   controlled scheduling or integration coverage. Record intermittent outcomes and relevant\n   unaffected cases; do not make extra changes merely to finish a diagnosis-only task.\n\nInspect deployed versus source JDK/toolchain, dependencies, JVM flags, configuration and data\nversions before version-sensitive diagnostics or changes. This workflow has no universal Java\nbaseline. Preserve the target environment; upgrading it is a separate decision. Return the fault,\nevidence, tested/refuted hypotheses, fix or mitigation, validation and unresolved gaps. Missing\naccess or reproduction permits an evidence plan, not an invented root cause.\n\n## Rules\n\n- Prefer a causal explanation before a permanent fix. During an incident, a reversible mitigation\n  may precede diagnosis; label it as mitigation, preserve the evidence the response budget allows,\n  and do not present symptom disappearance as root-cause proof.\n- Prefer one controlled variable per experiment. If a batch helps, it implicates the batch but\n  does not isolate a member or interaction; reduce/revert the batch in a controlled environment.\n- Read the whole stack trace, including cause and suppressed chains. The deepest application frame\n  is a useful boundary candidate, not a verdict: framework callbacks, generated code, reflection,\n  native frames, and library defects can move or hide the causal frame.\n- Balance evidence preservation against customer impact and the incident commander's authority.\n  Capture cheap, non-disruptive evidence first when the error budget permits; mitigate immediately\n  when delay is unsafe, and record which volatile evidence the action destroyed\n  (`references/production-evidence.md`).\n- Symptom disappearance is evidence of recovery, not proof of cause or durable correction.\n- Missing events refute a hypothesis only within verified collection coverage. Check enablement,\n  filters, sampling/thresholds and workload opportunity before interpreting an empty result.\n- Question the assumption that the fault is where the symptom is. Corrupted state is written\n  in one place and observed in another, often much later. Trace the first contract violation;\n  an incorrect write is one candidate, but valid data can also be misread or misinterpreted.\n- Consider `git bisect` when verified good/bad revisions and a reliable classifier exist.\n  It can narrow a monotone change in roughly log₂(n) classifications; build cost, skipped commits\n  and intermittent or nonmonotone outcomes affect that benefit. See the reference's exit protocol.\n- Delete the debugging output before the change ships, and if a log line was genuinely useful,\n  promote it deliberately with a level and structure (structured-logging) rather than leaving\n  a `System.out.println`.\n- Timebox according to incident severity and experiment cost. Repeated refutations are a signal\n  to revisit observations, harness assumptions and the system model or seek another perspective.\n\n## References\n\n- **The method in detail** — `references/method.md`. Shrinking a reproduction, differential\n  diagnosis (what changed — code, data, config, dependency, traffic, time), bisection over\n  commits and over data, reading exception chains, and the specific traps of intermittent and\n  heisenbug faults. Read when the fault resists the workflow above.\n- **Evidence from a running system** — `references/production-evidence.md`. What each source\n  can and cannot answer — logs, metrics, traces, thread dumps, heap dumps, JFR, database state,\n  deployment history — with volatility, cost and collection order during an incident. Read\n  before touching a production system that is currently faulty.\n"
+    },
+    {
+      "file": "input/project/support.md",
+      "purpose": "Original support observation",
+      "fullFile": true,
+      "truncated": false,
+      "bytes": 385,
+      "sha256": "f4ef0b98f197f68ef29edecc78177175f0a846ac4fb1cf8b5a619b71439c1c2b",
+      "content": "# Support observation\n\nAfter a reload, an already opened report displays a different total. The support ticket calls it a \"rounding regression\" after the last renderer update. A user remembers the first displayed total as 1000 and later saw 1200. No other application, database or production access is supplied.\n\nThe local Demo prints the reported sequence. The existing check passes.\n"
+    },
+    {
+      "file": "input/project/contract.md",
+      "purpose": "Accepted contract",
+      "fullFile": true,
+      "truncated": false,
+      "bytes": 576,
+      "sha256": "4c258b441552d64c3f625cab848dabac361c6c98e63b524efa47e55c46f47b38",
+      "content": "# Accepted report contract\n\nJava source target: 17. Execution is sequential; no concurrent callers in this task.\nEntries are immutable values. Keep order, duplicates and signed cent amounts.\nA report exposes a read-only list: callers must not add, remove or reorder entries.\n\nA report is a live read-only view of the catalog. Later load() calls must be visible through reports already open, including their entries and total. Opening a new report is not required to observe a load().\n\nThis contract is accepted by the product owner and applies to this work. Do not change it.\n"
+    },
+    {
+      "file": "input/project/check.mjs",
+      "purpose": "Build and verification configuration",
+      "fullFile": true,
+      "truncated": false,
+      "bytes": 738,
+      "sha256": "92f081d5b1eecdf1181f8adedb7249535535ad59d939a97774e9e3edecd67d10",
+      "content": "import fs from 'node:fs';\nimport path from 'node:path';\nimport {spawnSync} from 'node:child_process';\nconst jdk=\"C:/Users/robso/.jdks/temurin-25.0.3/bin\";\nconst walk=p=>fs.readdirSync(p,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(path.join(p,e.name)):e.name.endsWith('.java')?[path.join(p,e.name)]:[]);\nfs.mkdirSync('.build',{recursive:true});\nconst commands=[['javac.exe',['--release','17','-d','.build',...walk('src'),...walk('test')]],['java.exe',['-cp','.build','work.SelfTest']]];\nfor(const [tool,args] of commands){const r=spawnSync(path.join(jdk,tool),args,{encoding:'utf8',timeout:30000,windowsHide:true});process.stdout.write(r.stdout||'');process.stderr.write(r.stderr||'');if(r.status!==0)process.exit(r.status??1);}\n"
+    },
+    {
+      "file": "input/project/test/work/SelfTest.java",
+      "purpose": "Existing coverage",
+      "fullFile": true,
+      "truncated": false,
+      "bytes": 523,
+      "sha256": "e2aab235dff2a245a2035d9cfed97230f44925ff47f125f7babfc7b575b6fafc",
+      "content": "package work;\npublic final class SelfTest {\n    public static void main(String[] args) {\n        Catalog c = new Catalog();\n        c.load(new Entry(\"A\", 450), new Entry(\"B\", 550));\n        Report first = c.open();\n        if (first.total() != 1000 || first.entries().size() != 2) throw new AssertionError(\"initial report\");\n        try { first.entries().clear(); throw new AssertionError(\"writable report\"); }\n        catch (UnsupportedOperationException expected) { }\n        System.out.println(\"SelfTest PASS\");\n    }\n}\n"
+    },
+    {
+      "file": "input/project/src/work/Catalog.java",
+      "purpose": "Affected call path",
+      "fullFile": true,
+      "truncated": false,
+      "bytes": 293,
+      "sha256": "58327eee6170e52890210eaa97de21bb0c03f9f4e2fa6abf8b135593f4dabb7e",
+      "content": "package work;\nimport java.util.*;\npublic final class Catalog {\n    private final List<Entry> rows = new ArrayList<>();\n    public void load(Entry... next) { rows.clear(); rows.addAll(Arrays.asList(next)); }\n    public Report open() { return new Report(Collections.unmodifiableList(rows)); }\n}\n"
+    },
+    {
+      "file": "input/project/src/work/Report.java",
+      "purpose": "Affected call path",
+      "fullFile": true,
+      "truncated": false,
+      "bytes": 166,
+      "sha256": "9676fadef05537ae295341f08af1489c3552af8b51220c0d6a43cb70d4f40c4d",
+      "content": "package work;\nimport java.util.List;\npublic record Report(List<Entry> entries) {\n    public long total() { return entries.stream().mapToLong(Entry::cents).sum(); }\n}\n"
+    },
+    {
+      "file": "input/project/src/work/Entry.java",
+      "purpose": "Entry immutability and amount type",
+      "fullFile": true,
+      "truncated": false,
+      "bytes": 61,
+      "sha256": "de624a95a92e1417c259a49fc74f946b64edbfab74d5cad9413fb10769016eb9",
+      "content": "package work;\npublic record Entry(String sku, long cents) {}\n"
+    },
+    {
+      "file": "input/project/src/work/Demo.java",
+      "purpose": "Original reproducer",
+      "fullFile": true,
+      "truncated": false,
+      "bytes": 436,
+      "sha256": "7e220f46a6b7a0c2b1af55cde2cb5a0f3b6d8508cf04717a85a7ad9de255180b",
+      "content": "package work;\npublic final class Demo {\n    public static void main(String[] args) {\n        Catalog c = new Catalog();\n        c.load(new Entry(\"A\", 450), new Entry(\"B\", 550));\n        Report first = c.open();\n        System.out.println(\"first=\" + first.total());\n        c.load(new Entry(\"C\", 1200));\n        System.out.println(\"first-after-reload=\" + first.total());\n        System.out.println(\"latest=\" + c.open().total());\n    }\n}\n"
+    },
+    {
+      "file": "output/project/support.md",
+      "purpose": "Confirm the initial working copy matches the original",
+      "fullFile": true,
+      "truncated": false,
+      "bytes": 385,
+      "sha256": "f4ef0b98f197f68ef29edecc78177175f0a846ac4fb1cf8b5a619b71439c1c2b",
+      "content": "# Support observation\n\nAfter a reload, an already opened report displays a different total. The support ticket calls it a \"rounding regression\" after the last renderer update. A user remembers the first displayed total as 1000 and later saw 1200. No other application, database or production access is supplied.\n\nThe local Demo prints the reported sequence. The existing check passes.\n"
+    },
+    {
+      "file": "output/project/contract.md",
+      "purpose": "Confirm the initial working copy matches the original",
+      "fullFile": true,
+      "truncated": false,
+      "bytes": 576,
+      "sha256": "4c258b441552d64c3f625cab848dabac361c6c98e63b524efa47e55c46f47b38",
+      "content": "# Accepted report contract\n\nJava source target: 17. Execution is sequential; no concurrent callers in this task.\nEntries are immutable values. Keep order, duplicates and signed cent amounts.\nA report exposes a read-only list: callers must not add, remove or reorder entries.\n\nA report is a live read-only view of the catalog. Later load() calls must be visible through reports already open, including their entries and total. Opening a new report is not required to observe a load().\n\nThis contract is accepted by the product owner and applies to this work. Do not change it.\n"
+    },
+    {
+      "file": "output/project/check.mjs",
+      "purpose": "Confirm the initial working copy matches the original",
+      "fullFile": true,
+      "truncated": false,
+      "bytes": 738,
+      "sha256": "92f081d5b1eecdf1181f8adedb7249535535ad59d939a97774e9e3edecd67d10",
+      "content": "import fs from 'node:fs';\nimport path from 'node:path';\nimport {spawnSync} from 'node:child_process';\nconst jdk=\"C:/Users/robso/.jdks/temurin-25.0.3/bin\";\nconst walk=p=>fs.readdirSync(p,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(path.join(p,e.name)):e.name.endsWith('.java')?[path.join(p,e.name)]:[]);\nfs.mkdirSync('.build',{recursive:true});\nconst commands=[['javac.exe',['--release','17','-d','.build',...walk('src'),...walk('test')]],['java.exe',['-cp','.build','work.SelfTest']]];\nfor(const [tool,args] of commands){const r=spawnSync(path.join(jdk,tool),args,{encoding:'utf8',timeout:30000,windowsHide:true});process.stdout.write(r.stdout||'');process.stderr.write(r.stderr||'');if(r.status!==0)process.exit(r.status??1);}\n"
+    },
+    {
+      "file": "output/project/test/work/SelfTest.java",
+      "purpose": "Confirm the initial working copy matches the original",
+      "fullFile": true,
+      "truncated": false,
+      "bytes": 523,
+      "sha256": "e2aab235dff2a245a2035d9cfed97230f44925ff47f125f7babfc7b575b6fafc",
+      "content": "package work;\npublic final class SelfTest {\n    public static void main(String[] args) {\n        Catalog c = new Catalog();\n        c.load(new Entry(\"A\", 450), new Entry(\"B\", 550));\n        Report first = c.open();\n        if (first.total() != 1000 || first.entries().size() != 2) throw new AssertionError(\"initial report\");\n        try { first.entries().clear(); throw new AssertionError(\"writable report\"); }\n        catch (UnsupportedOperationException expected) { }\n        System.out.println(\"SelfTest PASS\");\n    }\n}\n"
+    },
+    {
+      "file": "output/project/src/work/Catalog.java",
+      "purpose": "Confirm the initial working copy matches the original",
+      "fullFile": true,
+      "truncated": false,
+      "bytes": 293,
+      "sha256": "58327eee6170e52890210eaa97de21bb0c03f9f4e2fa6abf8b135593f4dabb7e",
+      "content": "package work;\nimport java.util.*;\npublic final class Catalog {\n    private final List<Entry> rows = new ArrayList<>();\n    public void load(Entry... next) { rows.clear(); rows.addAll(Arrays.asList(next)); }\n    public Report open() { return new Report(Collections.unmodifiableList(rows)); }\n}\n"
+    },
+    {
+      "file": "output/project/src/work/Report.java",
+      "purpose": "Confirm the initial working copy matches the original",
+      "fullFile": true,
+      "truncated": false,
+      "bytes": 166,
+      "sha256": "9676fadef05537ae295341f08af1489c3552af8b51220c0d6a43cb70d4f40c4d",
+      "content": "package work;\nimport java.util.List;\npublic record Report(List<Entry> entries) {\n    public long total() { return entries.stream().mapToLong(Entry::cents).sum(); }\n}\n"
+    },
+    {
+      "file": "output/project/src/work/Entry.java",
+      "purpose": "Confirm the initial working copy matches the original",
+      "fullFile": true,
+      "truncated": false,
+      "bytes": 61,
+      "sha256": "de624a95a92e1417c259a49fc74f946b64edbfab74d5cad9413fb10769016eb9",
+      "content": "package work;\npublic record Entry(String sku, long cents) {}\n"
+    },
+    {
+      "file": "output/project/src/work/Demo.java",
+      "purpose": "Confirm the initial working copy matches the original",
+      "fullFile": true,
+      "truncated": false,
+      "bytes": 436,
+      "sha256": "7e220f46a6b7a0c2b1af55cde2cb5a0f3b6d8508cf04717a85a7ad9de255180b",
+      "content": "package work;\npublic final class Demo {\n    public static void main(String[] args) {\n        Catalog c = new Catalog();\n        c.load(new Entry(\"A\", 450), new Entry(\"B\", 550));\n        Report first = c.open();\n        System.out.println(\"first=\" + first.total());\n        c.load(new Entry(\"C\", 1200));\n        System.out.println(\"first-after-reload=\" + first.total());\n        System.out.println(\"latest=\" + c.open().total());\n    }\n}\n"
+    },
+    {
+      "file": "output/project/test/work/SelfTest.java",
+      "purpose": "Complete final contract test",
+      "fullFile": true,
+      "truncated": false,
+      "bytes": 2826,
+      "sha256": "245574a5f11f4fbac42e5ccbee757fd89fa852280b6986bb656d83fecee9a802",
+      "content": "package work;\nimport java.util.Collections;\nimport java.util.List;\npublic final class SelfTest {\n    public static void main(String[] args) {\n        Catalog c = new Catalog();\n        c.load(new Entry(\"A\", 450), new Entry(\"B\", 550));\n        Report first = c.open();\n        if (first.total() != 1000 || first.entries().size() != 2) throw new AssertionError(\"initial report\");\n        try { first.entries().clear(); throw new AssertionError(\"writable report\"); }\n        catch (UnsupportedOperationException expected) { }\n\n        List<Entry> retained = first.entries();\n        readOnly(() -> retained.add(new Entry(\"X\", 1)));\n        readOnly(() -> retained.remove(0));\n        readOnly(() -> retained.set(0, new Entry(\"X\", 1)));\n        readOnly(() -> Collections.reverse(retained));\n        if (!retained.equals(List.of(new Entry(\"A\", 450), new Entry(\"B\", 550))))\n            throw new AssertionError(\"mutation attempt changed the catalog\");\n\n        c.load(new Entry(\"C\", 1200));\n        Report latest = c.open();\n        if (first.total() != 1200 || latest.total() != 1200)\n            throw new AssertionError(\"reports must observe reload totals\");\n        if (!first.entries().equals(List.of(new Entry(\"C\", 1200)))\n                || !retained.equals(first.entries()))\n            throw new AssertionError(\"reports and retained entry views must observe reload entries\");\n\n        c.load(new Entry(\"D\", 1200));\n        if (first.total() != 1200 || !retained.equals(List.of(new Entry(\"D\", 1200))))\n            throw new AssertionError(\"equal totals must not hide changed entries\");\n\n        Entry duplicate = new Entry(\"credit\", -125);\n        List<Entry> signed = List.of(duplicate, new Entry(\"charge\", 25), duplicate);\n        c.load(signed.toArray(Entry[]::new));\n        if (first.total() != -225 || latest.total() != -225 || !retained.equals(signed))\n            throw new AssertionError(\"reload must preserve order, duplicates and signed cents\");\n        readOnly(() -> retained.clear());\n\n        c.load();\n        if (first.total() != 0 || latest.total() != 0 || !retained.isEmpty())\n            throw new AssertionError(\"empty reload must reach existing reports\");\n        readOnly(() -> retained.add(new Entry(\"X\", 1)));\n        c.load(new Entry(\"restored\", 7));\n        if (first.total() != 7 || latest.total() != 7\n                || !retained.equals(List.of(new Entry(\"restored\", 7))))\n            throw new AssertionError(\"reports must remain live after an empty reload\");\n        System.out.println(\"SelfTest PASS: initial report, read-only entries, live reloads, signed duplicates, empty reload\");\n    }\n\n    private static void readOnly(Runnable mutation) {\n        try { mutation.run(); throw new AssertionError(\"writable report\"); }\n        catch (UnsupportedOperationException expected) { }\n    }\n}\n"
+    },
+    {
+      "file": "output/project/src/work/Catalog.java",
+      "purpose": "Controlled alternative to the live view",
+      "fullFile": true,
+      "truncated": false,
+      "bytes": 293,
+      "sha256": "58327eee6170e52890210eaa97de21bb0c03f9f4e2fa6abf8b135593f4dabb7e",
+      "content": "package work;\nimport java.util.*;\npublic final class Catalog {\n    private final List<Entry> rows = new ArrayList<>();\n    public void load(Entry... next) { rows.clear(); rows.addAll(Arrays.asList(next)); }\n    public Report open() { return new Report(Collections.unmodifiableList(rows)); }\n}\n"
+    },
+    {
+      "file": "output/project/src/work/Catalog.java",
+      "purpose": "Confirm original sources, configuration and supplied documents are preserved",
+      "fullFile": true,
+      "truncated": false,
+      "bytes": 293,
+      "sha256": "58327eee6170e52890210eaa97de21bb0c03f9f4e2fa6abf8b135593f4dabb7e",
+      "content": "package work;\nimport java.util.*;\npublic final class Catalog {\n    private final List<Entry> rows = new ArrayList<>();\n    public void load(Entry... next) { rows.clear(); rows.addAll(Arrays.asList(next)); }\n    public Report open() { return new Report(Collections.unmodifiableList(rows)); }\n}\n"
+    },
+    {
+      "file": "output/project/src/work/Report.java",
+      "purpose": "Confirm original sources, configuration and supplied documents are preserved",
+      "fullFile": true,
+      "truncated": false,
+      "bytes": 166,
+      "sha256": "9676fadef05537ae295341f08af1489c3552af8b51220c0d6a43cb70d4f40c4d",
+      "content": "package work;\nimport java.util.List;\npublic record Report(List<Entry> entries) {\n    public long total() { return entries.stream().mapToLong(Entry::cents).sum(); }\n}\n"
+    },
+    {
+      "file": "output/project/src/work/Entry.java",
+      "purpose": "Confirm original sources, configuration and supplied documents are preserved",
+      "fullFile": true,
+      "truncated": false,
+      "bytes": 61,
+      "sha256": "de624a95a92e1417c259a49fc74f946b64edbfab74d5cad9413fb10769016eb9",
+      "content": "package work;\npublic record Entry(String sku, long cents) {}\n"
+    },
+    {
+      "file": "output/project/src/work/Demo.java",
+      "purpose": "Confirm original sources, configuration and supplied documents are preserved",
+      "fullFile": true,
+      "truncated": false,
+      "bytes": 436,
+      "sha256": "7e220f46a6b7a0c2b1af55cde2cb5a0f3b6d8508cf04717a85a7ad9de255180b",
+      "content": "package work;\npublic final class Demo {\n    public static void main(String[] args) {\n        Catalog c = new Catalog();\n        c.load(new Entry(\"A\", 450), new Entry(\"B\", 550));\n        Report first = c.open();\n        System.out.println(\"first=\" + first.total());\n        c.load(new Entry(\"C\", 1200));\n        System.out.println(\"first-after-reload=\" + first.total());\n        System.out.println(\"latest=\" + c.open().total());\n    }\n}\n"
+    },
+    {
+      "file": "output/project/check.mjs",
+      "purpose": "Confirm original sources, configuration and supplied documents are preserved",
+      "fullFile": true,
+      "truncated": false,
+      "bytes": 738,
+      "sha256": "92f081d5b1eecdf1181f8adedb7249535535ad59d939a97774e9e3edecd67d10",
+      "content": "import fs from 'node:fs';\nimport path from 'node:path';\nimport {spawnSync} from 'node:child_process';\nconst jdk=\"C:/Users/robso/.jdks/temurin-25.0.3/bin\";\nconst walk=p=>fs.readdirSync(p,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(path.join(p,e.name)):e.name.endsWith('.java')?[path.join(p,e.name)]:[]);\nfs.mkdirSync('.build',{recursive:true});\nconst commands=[['javac.exe',['--release','17','-d','.build',...walk('src'),...walk('test')]],['java.exe',['-cp','.build','work.SelfTest']]];\nfor(const [tool,args] of commands){const r=spawnSync(path.join(jdk,tool),args,{encoding:'utf8',timeout:30000,windowsHide:true});process.stdout.write(r.stdout||'');process.stderr.write(r.stderr||'');if(r.status!==0)process.exit(r.status??1);}\n"
+    },
+    {
+      "file": "output/project/contract.md",
+      "purpose": "Confirm original sources, configuration and supplied documents are preserved",
+      "fullFile": true,
+      "truncated": false,
+      "bytes": 576,
+      "sha256": "4c258b441552d64c3f625cab848dabac361c6c98e63b524efa47e55c46f47b38",
+      "content": "# Accepted report contract\n\nJava source target: 17. Execution is sequential; no concurrent callers in this task.\nEntries are immutable values. Keep order, duplicates and signed cent amounts.\nA report exposes a read-only list: callers must not add, remove or reorder entries.\n\nA report is a live read-only view of the catalog. Later load() calls must be visible through reports already open, including their entries and total. Opening a new report is not required to observe a load().\n\nThis contract is accepted by the product owner and applies to this work. Do not change it.\n"
+    },
+    {
+      "file": "output/project/support.md",
+      "purpose": "Confirm original sources, configuration and supplied documents are preserved",
+      "fullFile": true,
+      "truncated": false,
+      "bytes": 385,
+      "sha256": "f4ef0b98f197f68ef29edecc78177175f0a846ac4fb1cf8b5a619b71439c1c2b",
+      "content": "# Support observation\n\nAfter a reload, an already opened report displays a different total. The support ticket calls it a \"rounding regression\" after the last renderer update. A user remembers the first displayed total as 1000 and later saw 1200. No other application, database or production access is supplied.\n\nThe local Demo prints the reported sequence. The existing check passes.\n"
+    },
+    {
+      "file": "output/run-verification.mjs",
+      "purpose": "Retained executed verification script",
+      "fullFile": true,
+      "truncated": false,
+      "bytes": 7586,
+      "sha256": "eb29b156c08180dedc84e63e1c8cf33b8a959084a7e23bfba7c3b0dd674362f7",
+      "content": "import fs from 'node:fs';\nimport path from 'node:path';\nimport crypto from 'node:crypto';\nimport {spawnSync} from 'node:child_process';\n\nconst runRoot = path.resolve(import.meta.dirname, '..');\nconst outputRoot = path.join(runRoot, 'output');\nconst projectRoot = path.join(outputRoot, 'project');\nconst jdk = 'C:/Users/robso/.jdks/temurin-25.0.3/bin';\nconst logRoot = path.join(outputRoot, 'logs');\nfs.mkdirSync(logRoot, {recursive: true});\n\nconst execution = {\n  task: 'Investigate the reported reload total against the accepted live report contract',\n  status: 'in_progress',\n  scope: {runRoot, writableRoot: outputRoot, targetJava: 17, networkUsed: false, delegationUsed: false},\n  filesRead: [],\n  commands: [],\n  edits: [{file: 'output/run-verification.mjs', tool: 'apply_patch', purpose: 'Bounded verification and evidence capture'}],\n  referencesNotRead: [\n    {file: 'skill/references/method.md', reason: 'The deterministic observation does not resist the main workflow.'},\n    {file: 'skill/references/production-evidence.md', reason: 'No production system is available or touched.'}\n  ],\n  limitations: [],\n  accidentalOutOfScopeAccesses: [],\n  allWritesStopped: false\n};\n\nfunction readText(relative, purpose) {\n  const fullPath = path.join(runRoot, relative);\n  const content = fs.readFileSync(fullPath, 'utf8');\n  execution.filesRead.push({file: relative, purpose, fullFile: true, truncated: false,\n    bytes: Buffer.byteLength(content), sha256: crypto.createHash('sha256').update(content).digest('hex'), content});\n  return content;\n}\n\nconst initialReads = [\n  ['TASK.md', \"Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave5-actors-4tJ3OK/run-04/TASK.md'\", 'Task instructions'],\n  ['skill/SKILL.md', \"Get-Content -LiteralPath 'skill/SKILL.md' -Raw\", 'Complete applicable local debugging skill'],\n  ['input/project/support.md', \"Get-Content -LiteralPath 'input/project/support.md' -Raw\", 'Original support observation'],\n  ['input/project/contract.md', \"Get-Content -LiteralPath 'input/project/contract.md' -Raw\", 'Accepted contract'],\n  ['input/project/check.mjs', \"Get-Content -LiteralPath 'input/project/check.mjs' -Raw\", 'Build and verification configuration'],\n  ['input/project/test/work/SelfTest.java', \"Get-Content -LiteralPath 'input/project/test/work/SelfTest.java' -Raw\", 'Existing coverage'],\n  ['input/project/src/work/Catalog.java', \"Get-Content -LiteralPath 'input/project/src/work/Catalog.java' -Raw\", 'Affected call path'],\n  ['input/project/src/work/Report.java', \"Get-Content -LiteralPath 'input/project/src/work/Report.java' -Raw\", 'Affected call path'],\n  ['input/project/src/work/Entry.java', \"Get-Content -LiteralPath 'input/project/src/work/Entry.java' -Raw\", 'Entry immutability and amount type'],\n  ['input/project/src/work/Demo.java', \"Get-Content -LiteralPath 'input/project/src/work/Demo.java' -Raw\", 'Original reproducer']\n];\nfor (const [relative, command, purpose] of initialReads) {\n  const content = readText(relative, purpose);\n  execution.commands.push({phase: 'initial_inspection', kind: 'shell', shell: 'PowerShell',\n    exactCommand: command, cwd: runRoot, exit: 0, output: content,\n    outputNote: 'Full file content; shell-added final newline omitted. Command was observed before this recorder was created.',\n    truncated: false, executed: true, completedWithin30Seconds: true});\n}\nfor (const name of ['support.md', 'contract.md']) {\n  execution.commands.push({phase: 'initial_inspection', kind: 'shell', shell: 'PowerShell',\n    exactCommand: `Get-Content -LiteralPath '${name}' -Raw`, cwd: runRoot, exit: 1,\n    output: `Cannot find path '${name}' because it does not exist.`, truncated: false,\n    outputNote: 'Relevant error preserved; PowerShell display decoration omitted.',\n    executed: true, completedWithin30Seconds: true});\n}\nexecution.commands.push({phase: 'initial_inspection', kind: 'shell', shell: 'PowerShell',\n  exactCommand: 'rg --files input/project output/project skill', cwd: runRoot, exit: 0,\n  output: 'skill/skill.yaml\\nskill/SKILL.md\\nskill/references/production-evidence.md\\nskill/references/method.md\\noutput/project/test/work/SelfTest.java\\noutput/project/support.md\\noutput/project/src/work/Report.java\\noutput/project/src/work/Entry.java\\noutput/project/src/work/Demo.java\\noutput/project/src/work/Catalog.java\\noutput/project/contract.md\\noutput/project/check.mjs\\ninput/project/contract.md\\ninput/project/check.mjs\\ninput/project/test/work/SelfTest.java\\ninput/project/support.md\\ninput/project/src/work/Report.java\\ninput/project/src/work/Entry.java\\ninput/project/src/work/Demo.java\\ninput/project/src/work/Catalog.java\\n',\n  outputNote: 'Observed complete file inventory; path separators normalized.',\n  truncated: false, executed: true, completedWithin30Seconds: true});\n\nexecution.initialCopyComparison = [];\nfor (const [relative] of initialReads.filter(([relative]) => relative.startsWith('input/project/'))) {\n  const outputFile = relative.replace('input/', 'output/');\n  const copy = readText(outputFile, 'Confirm the initial working copy matches the original');\n  const original = execution.filesRead.find(item => item.file === relative);\n  const same = copy === original.content;\n  execution.initialCopyComparison.push({input: relative, output: outputFile, identical: same});\n  if (!same) throw new Error(`Unexpected initial working copy difference: ${outputFile}`);\n}\n\nfunction save() {\n  fs.writeFileSync(path.join(outputRoot, 'execution.json'), JSON.stringify(execution, null, 2) + '\\n');\n}\n\nfunction run(label, executable, args, cwd = projectRoot, expectedExit = 0) {\n  const started = Date.now();\n  const result = spawnSync(executable, args, {cwd, encoding: 'utf8', timeout: 30000, windowsHide: true});\n  const entry = {phase: label, executable, args, cwd, timeoutMs: 30000,\n    exit: result.status, signal: result.signal, elapsedMs: Date.now() - started,\n    error: result.error ? {code: result.error.code, message: result.error.message} : null,\n    stdout: result.stdout ?? '', stderr: result.stderr ?? '', executed: true, truncated: false,\n    log: `output/logs/${label}.json`};\n  fs.writeFileSync(path.join(logRoot, `${label}.json`), JSON.stringify(entry, null, 2) + '\\n');\n  execution.commands.push(entry);\n  save();\n  process.stdout.write(`${label}: exit=${entry.exit}\\n${entry.stdout}${entry.stderr}`);\n  if (entry.exit !== expectedExit) throw new Error(`${label}: expected exit ${expectedExit}, got ${entry.exit}`);\n}\n\nsave();\nrun('java-version', path.join(jdk, 'java.exe'), ['-version']);\nrun('javac-version', path.join(jdk, 'javac.exe'), ['-version']);\nrun('baseline-check', process.execPath, ['check.mjs']);\nrun('baseline-demo', path.join(jdk, 'java.exe'), ['-cp', '.build', 'work.Demo']);\nexecution.status = 'baseline_complete';\nexecution.hypotheses = [{\n  id: 'H1',\n  statement: 'Reload replaces the catalog contents in place; already-open reports expose the required live read-only view.',\n  prediction: 'Demo prints 1000 then 1200 for the first report and 1200 for the latest report. Retaining entries before load still exposes new entries; consumer mutation remains forbidden.',\n  refutation: 'An old report or retained entries view stays stale, its total differs from its visible entries, or consumer mutation succeeds.',\n  status: 'Demo prediction confirmed; focused contract experiment pending'\n}, {\n  id: 'H2', statement: 'The local change is caused by renderer rounding.',\n  status: 'Unsupported by the local call path; totals sum signed long cents and Demo changes the loaded entries. No renderer or update history was supplied.'\n}];\nsave();\n"
+    },
+    {
+      "file": "output/final-verification.mjs",
+      "purpose": "Retained executed verification script",
+      "fullFile": true,
+      "truncated": false,
+      "bytes": 5429,
+      "sha256": "758288407dca9a8840f9c411d938a1bda579fb0bceb0dff110a93887d145e84b",
+      "content": "import fs from 'node:fs';\nimport path from 'node:path';\nimport crypto from 'node:crypto';\nimport {spawnSync} from 'node:child_process';\n\nconst runRoot = path.resolve(import.meta.dirname, '..');\nconst outputRoot = path.join(runRoot, 'output');\nconst projectRoot = path.join(outputRoot, 'project');\nconst jdk = 'C:/Users/robso/.jdks/temurin-25.0.3/bin';\nconst executionFile = path.join(outputRoot, 'execution.json');\nconst execution = JSON.parse(fs.readFileSync(executionFile, 'utf8'));\nexecution.edits.push(\n  {file: 'output/project/test/work/SelfTest.java', tool: 'apply_patch', purpose: 'Preserve initial coverage and test the accepted live read-only contract'},\n  {file: 'output/final-verification.mjs', tool: 'apply_patch', purpose: 'Verify the final project and a controlled snapshot alternative in a separate output directory'}\n);\n\nfunction save() {\n  fs.writeFileSync(executionFile, JSON.stringify(execution, null, 2) + '\\n');\n}\nfunction read(relative, purpose) {\n  const content = fs.readFileSync(path.join(runRoot, relative), 'utf8');\n  execution.filesRead.push({file: relative, purpose, fullFile: true, truncated: false,\n    bytes: Buffer.byteLength(content), sha256: crypto.createHash('sha256').update(content).digest('hex'), content});\n  return content;\n}\nfunction run(label, executable, args, cwd = projectRoot, expectedExit = 0) {\n  const started = Date.now();\n  const result = spawnSync(executable, args, {cwd, encoding: 'utf8', timeout: 30000, windowsHide: true});\n  const entry = {phase: label, executable, args, cwd, timeoutMs: 30000,\n    exit: result.status, signal: result.signal, elapsedMs: Date.now() - started,\n    error: result.error ? {code: result.error.code, message: result.error.message} : null,\n    stdout: result.stdout ?? '', stderr: result.stderr ?? '', executed: true, truncated: false,\n    log: `output/logs/${label}.json`};\n  fs.writeFileSync(path.join(outputRoot, 'logs', `${label}.json`), JSON.stringify(entry, null, 2) + '\\n');\n  execution.commands.push(entry);\n  save();\n  process.stdout.write(`${label}: exit=${entry.exit}\\n${entry.stdout}${entry.stderr}`);\n  if (entry.exit !== expectedExit) throw new Error(`${label}: expected exit ${expectedExit}, got ${entry.exit}`);\n  return entry;\n}\n\nread('output/project/test/work/SelfTest.java', 'Complete final contract test');\nrun('final-check', process.execPath, ['check.mjs']);\nrun('final-demo', path.join(jdk, 'java.exe'), ['-cp', '.build', 'work.Demo']);\nrun('final-class-version', path.join(jdk, 'javap.exe'), ['-verbose', '-classpath', '.build', 'work.Catalog']);\n\n// A single-variable experiment: snapshot versus live view, never installed in the project.\nconst experimentRoot = path.join(outputRoot, 'experiments', 'snapshot');\nconst sourceRoot = path.join(experimentRoot, 'src', 'work');\nconst buildRoot = path.join(experimentRoot, 'classes');\nfs.mkdirSync(sourceRoot, {recursive: true});\nfs.mkdirSync(buildRoot, {recursive: true});\nconst catalog = read('output/project/src/work/Catalog.java', 'Controlled alternative to the live view');\nconst snapshotCatalog = catalog.replace('Collections.unmodifiableList(rows)', 'List.copyOf(rows)');\nif (catalog === snapshotCatalog) throw new Error('Snapshot experiment did not change the expected expression');\nconst mutantFile = path.join(sourceRoot, 'Catalog.java');\nfs.writeFileSync(mutantFile, snapshotCatalog);\nexecution.experiments = [{\n  name: 'snapshot-alternative',\n  purpose: 'Demonstrate that freezing the total would violate the accepted live-view contract',\n  prediction: 'The same final SelfTest must reject a Catalog.open() snapshot at the first reload assertion.',\n  controlledChange: 'Only Collections.unmodifiableList(rows) becomes List.copyOf(rows).',\n  path: 'output/experiments/snapshot/src/work/Catalog.java',\n  adoptedInProject: false\n}];\nsave();\nrun('snapshot-compile', path.join(jdk, 'javac.exe'), ['--release', '17', '-d', buildRoot,\n  mutantFile, path.join(projectRoot, 'src/work/Entry.java'), path.join(projectRoot, 'src/work/Report.java'),\n  path.join(projectRoot, 'test/work/SelfTest.java')], experimentRoot);\nconst snapshotResult = run('snapshot-test', path.join(jdk, 'java.exe'), ['-cp', buildRoot, 'work.SelfTest'], experimentRoot, 1);\nif (!snapshotResult.stderr.includes('reports must observe reload totals'))\n  throw new Error('Snapshot alternative failed for an unexpected reason');\nexecution.experiments[0].outcome = 'Prediction confirmed: AssertionError reports must observe reload totals; exit 1 expected.';\n\nexecution.finalOriginalComparison = [];\nfor (const relative of ['src/work/Catalog.java', 'src/work/Report.java', 'src/work/Entry.java',\n  'src/work/Demo.java', 'check.mjs', 'contract.md', 'support.md']) {\n  const initial = execution.filesRead.find(item => item.file === `input/project/${relative}`).content;\n  const final = read(`output/project/${relative}`, 'Confirm original sources, configuration and supplied documents are preserved');\n  execution.finalOriginalComparison.push({file: relative, identical: initial === final});\n  if (initial !== final) throw new Error(`Unexpected change: ${relative}`);\n}\nfor (const relative of ['output/run-verification.mjs', 'output/final-verification.mjs'])\n  read(relative, 'Retained executed verification script');\nexecution.hypotheses[0].status = 'Confirmed by Demo, retained-view and live-reload checks; snapshot alternative rejected by the same test.';\nexecution.status = 'verification_complete';\nsave();\n"
+    },
+    {
+      "file": "output/baseline-runner.stdout.log",
+      "purpose": "Full observed output of the bounded script process",
+      "fullFile": true,
+      "truncated": false,
+      "bytes": 360,
+      "sha256": "310c68850b366916d380de9a1f49a610336a7df09a9804c8ed756c2bdfc8ef5d",
+      "content": "java-version: exit=0\nopenjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\njavac-version: exit=0\njavac 25.0.3\r\nbaseline-check: exit=0\nSelfTest PASS\r\nbaseline-demo: exit=0\nfirst=1000\r\nfirst-after-reload=1200\r\nlatest=1200\r\n"
+    },
+    {
+      "file": "output/baseline-runner.stderr.log",
+      "purpose": "Full observed error output of the bounded script process",
+      "fullFile": true,
+      "truncated": false,
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": ""
+    },
+    {
+      "file": "output/final-runner.stdout.log",
+      "purpose": "Full observed output of the bounded script process",
+      "fullFile": true,
+      "truncated": false,
+      "bytes": 5967,
+      "sha256": "38cc57b4b96884cb3ee07a0d9d165b69f6c492699dd3c18d65b14718a5d996c4",
+      "content": "final-check: exit=0\nSelfTest PASS: initial report, read-only entries, live reloads, signed duplicates, empty reload\r\nfinal-demo: exit=0\nfirst=1000\r\nfirst-after-reload=1200\r\nlatest=1200\r\nfinal-class-version: exit=0\nClassfile /C:/Users/robso/AppData/Local/Temp/skills-wave5-actors-4tJ3OK/run-04/output/project/.build/work/Catalog.class\r\n  Last modified Oct 16, 2026; size 809 bytes\r\n  SHA-256 checksum 1517599f9d366770d4a453a1c88382017bec1364c1fe996b8376b78f6ccaec0b\r\n  Compiled from \"Catalog.java\"\r\npublic final class work.Catalog\r\n  minor version: 0\r\n  major version: 61\r\n  flags: (0x0031) ACC_PUBLIC, ACC_FINAL, ACC_SUPER\r\n  this_class: #11                         // work/Catalog\r\n  super_class: #2                         // java/lang/Object\r\n  interfaces: 0, fields: 1, methods: 3, attributes: 1\r\nConstant pool:\r\n   #1 = Methodref          #2.#3          // java/lang/Object.\"<init>\":()V\r\n   #2 = Class              #4             // java/lang/Object\r\n   #3 = NameAndType        #5:#6          // \"<init>\":()V\r\n   #4 = Utf8               java/lang/Object\r\n   #5 = Utf8               <init>\r\n   #6 = Utf8               ()V\r\n   #7 = Class              #8             // java/util/ArrayList\r\n   #8 = Utf8               java/util/ArrayList\r\n   #9 = Methodref          #7.#3          // java/util/ArrayList.\"<init>\":()V\r\n  #10 = Fieldref           #11.#12        // work/Catalog.rows:Ljava/util/List;\r\n  #11 = Class              #13            // work/Catalog\r\n  #12 = NameAndType        #14:#15        // rows:Ljava/util/List;\r\n  #13 = Utf8               work/Catalog\r\n  #14 = Utf8               rows\r\n  #15 = Utf8               Ljava/util/List;\r\n  #16 = InterfaceMethodref #17.#18        // java/util/List.clear:()V\r\n  #17 = Class              #19            // java/util/List\r\n  #18 = NameAndType        #20:#6         // clear:()V\r\n  #19 = Utf8               java/util/List\r\n  #20 = Utf8               clear\r\n  #21 = Methodref          #22.#23        // java/util/Arrays.asList:([Ljava/lang/Object;)Ljava/util/List;\r\n  #22 = Class              #24            // java/util/Arrays\r\n  #23 = NameAndType        #25:#26        // asList:([Ljava/lang/Object;)Ljava/util/List;\r\n  #24 = Utf8               java/util/Arrays\r\n  #25 = Utf8               asList\r\n  #26 = Utf8               ([Ljava/lang/Object;)Ljava/util/List;\r\n  #27 = InterfaceMethodref #17.#28        // java/util/List.addAll:(Ljava/util/Collection;)Z\r\n  #28 = NameAndType        #29:#30        // addAll:(Ljava/util/Collection;)Z\r\n  #29 = Utf8               addAll\r\n  #30 = Utf8               (Ljava/util/Collection;)Z\r\n  #31 = Class              #32            // work/Report\r\n  #32 = Utf8               work/Report\r\n  #33 = Methodref          #34.#35        // java/util/Collections.unmodifiableList:(Ljava/util/List;)Ljava/util/List;\r\n  #34 = Class              #36            // java/util/Collections\r\n  #35 = NameAndType        #37:#38        // unmodifiableList:(Ljava/util/List;)Ljava/util/List;\r\n  #36 = Utf8               java/util/Collections\r\n  #37 = Utf8               unmodifiableList\r\n  #38 = Utf8               (Ljava/util/List;)Ljava/util/List;\r\n  #39 = Methodref          #31.#40        // work/Report.\"<init>\":(Ljava/util/List;)V\r\n  #40 = NameAndType        #5:#41         // \"<init>\":(Ljava/util/List;)V\r\n  #41 = Utf8               (Ljava/util/List;)V\r\n  #42 = Utf8               Signature\r\n  #43 = Utf8               Ljava/util/List<Lwork/Entry;>;\r\n  #44 = Utf8               Code\r\n  #45 = Utf8               LineNumberTable\r\n  #46 = Utf8               load\r\n  #47 = Utf8               ([Lwork/Entry;)V\r\n  #48 = Utf8               open\r\n  #49 = Utf8               ()Lwork/Report;\r\n  #50 = Utf8               SourceFile\r\n  #51 = Utf8               Catalog.java\r\n{\r\n  public work.Catalog();\r\n    descriptor: ()V\r\n    flags: (0x0001) ACC_PUBLIC\r\n    Code:\r\n      stack=3, locals=1, args_size=1\r\n         0: aload_0\r\n         1: invokespecial #1                  // Method java/lang/Object.\"<init>\":()V\r\n         4: aload_0\r\n         5: new           #7                  // class java/util/ArrayList\r\n         8: dup\r\n         9: invokespecial #9                  // Method java/util/ArrayList.\"<init>\":()V\r\n        12: putfield      #10                 // Field rows:Ljava/util/List;\r\n        15: return\r\n      LineNumberTable:\r\n        line 3: 0\r\n        line 4: 4\r\n\r\n  public void load(work.Entry...);\r\n    descriptor: ([Lwork/Entry;)V\r\n    flags: (0x0081) ACC_PUBLIC, ACC_VARARGS\r\n    Code:\r\n      stack=2, locals=2, args_size=2\r\n         0: aload_0\r\n         1: getfield      #10                 // Field rows:Ljava/util/List;\r\n         4: invokeinterface #16,  1           // InterfaceMethod java/util/List.clear:()V\r\n         9: aload_0\r\n        10: getfield      #10                 // Field rows:Ljava/util/List;\r\n        13: aload_1\r\n        14: invokestatic  #21                 // Method java/util/Arrays.asList:([Ljava/lang/Object;)Ljava/util/List;\r\n        17: invokeinterface #27,  2           // InterfaceMethod java/util/List.addAll:(Ljava/util/Collection;)Z\r\n        22: pop\r\n        23: return\r\n      LineNumberTable:\r\n        line 5: 0\r\n\r\n  public work.Report open();\r\n    descriptor: ()Lwork/Report;\r\n    flags: (0x0001) ACC_PUBLIC\r\n    Code:\r\n      stack=3, locals=1, args_size=1\r\n         0: new           #31                 // class work/Report\r\n         3: dup\r\n         4: aload_0\r\n         5: getfield      #10                 // Field rows:Ljava/util/List;\r\n         8: invokestatic  #33                 // Method java/util/Collections.unmodifiableList:(Ljava/util/List;)Ljava/util/List;\r\n        11: invokespecial #39                 // Method work/Report.\"<init>\":(Ljava/util/List;)V\r\n        14: areturn\r\n      LineNumberTable:\r\n        line 6: 0\r\n}\r\nSourceFile: \"Catalog.java\"\r\nsnapshot-compile: exit=0\nsnapshot-test: exit=1\nException in thread \"main\" java.lang.AssertionError: reports must observe reload totals\r\n\tat work.SelfTest.main(SelfTest.java:24)\r\n"
+    },
+    {
+      "file": "output/final-runner.stderr.log",
+      "purpose": "Full observed error output of the bounded script process",
+      "fullFile": true,
+      "truncated": false,
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": ""
+    },
+    {
+      "file": "output/REVIEW.md",
+      "purpose": "Final artifact review",
+      "fullFile": true,
+      "truncated": false,
+      "bytes": 6985,
+      "sha256": "caec1bd44593533c35f4db74414a45c02bc0488089d9f8a510b42086b636f7f6",
+      "content": "# Investigação do relatório após recarga\n\n## Conclusão\n\nNão há defeito no comportamento relatado no fluxo `Catalog.load()` → `Catalog.open()` → `Report.total()`. O contrato aceito exige uma visão viva, somente para leitura: recargas posteriores devem aparecer nos relatórios já abertos, tanto nas entradas quanto no total. Portanto, o total passar de 1000 para 1200 depois de carregar uma entrada de 1200 é o resultado exigido. Não foi aplicada correção às fontes de produção.\n\nO projeto final está em `output/project`. A única alteração em seus arquivos fornecidos é a ampliação de `test/work/SelfTest.java`. Fontes de produção, `check.mjs`, `contract.md` e `support.md` permanecem idênticos aos originais. Nenhuma dependência ou baseline foi alterada.\n\n## Observação, expectativa e causa\n\n- Observação do suporte: um relatório previamente aberto exibiu 1000 e, após recarga, 1200. “Regressão de arredondamento” é a hipótese do chamado, não um diagnóstico comprovado.\n- Fonte da expectativa: `input/project/contract.md`, lido integralmente. O contrato também exige ordem, duplicados, valores assinados em centavos, entradas imutáveis e lista protegida contra adição, remoção e reordenação. A execução é sequencial.\n- `Catalog.java` mantém a mesma lista `rows`. `load()` limpa essa lista e adiciona os novos valores. `open()` retorna um relatório sobre `Collections.unmodifiableList(rows)`: o consumidor não pode alterá-la, mas a visão acompanha mudanças no catálogo.\n- `Report.total()` soma os `long` de `Entry.cents` a cada chamada. `Entry` é um record com componentes `String` e `long`. No caso reproduzido, não existe cálculo fracionário ou arredondamento: 450 + 550 = 1000; depois, a lista contém somente C/1200.\n- Assim, a causa da mudança observada é a substituição dos dados que sustentam a visão viva. Os artefatos não sustentam atribuir a mudança a um renderer.\n\n## Hipóteses e experimentos executados\n\n1. **Visão viva:** a hipótese prevê 1000 na primeira leitura, 1200 no mesmo relatório após `load(C/1200)`, e 1200 em um novo relatório. Uma lista retida antes da recarga também deve mostrar C/1200. Uma visão antiga, total divergente das entradas ou mutação bem-sucedida pelo consumidor refutaria a hipótese. A sequência original do Demo e os testes ampliados confirmaram as previsões.\n2. **Arredondamento:** não há renderer, histórico de atualização ou produção fornecidos. O Demo muda explicitamente as entradas e reproduz o sintoma só com soma de centavos inteiros. Isso explica o caso local sem a hipótese do chamado; não estabelece nada sobre um renderer externo ausente.\n3. **Alternativa controlada:** em `output/experiments/snapshot`, somente `Collections.unmodifiableList(rows)` foi substituído por `List.copyOf(rows)`. Todas as outras fontes usadas e o teste foram mantidos. A previsão era falhar na primeira exigência de atualização do relatório. A compilação passou e a execução falhou exatamente com `AssertionError: reports must observe reload totals`, exit 1 esperado. Essa alternativa não integra o projeto final.\n\nA reprodução local pequena já contém a sequência discriminante: abrir um relatório, recarregar, consultar o mesmo relatório. O teste adicional de C/1200 → D/1200 mantém o total e muda apenas a identidade da entrada; também passou. Isso verifica que observar o total isoladamente não seria suficiente para confirmar atualização das entradas.\n\n## Verificação\n\nTodos os processos de verificação tiveram limite de 30 segundos e terminaram normalmente. Logs completos e argumentos estão em `output/execution.json` e `output/logs/`; os scripts executados estão em `output/run-verification.mjs` e `output/final-verification.mjs`.\n\n| Verificação executada | Resultado |\n| --- | --- |\n| `java -version` | Temurin 25.0.3+9, preservado |\n| `javac -version` | 25.0.3 |\n| `node check.mjs` antes da alteração | Exit 0, `SelfTest PASS` |\n| Demo original | Exit 0, `first=1000`, `first-after-reload=1200`, `latest=1200` |\n| `node check.mjs` após ampliar o teste | Exit 0, todas as asserções executadas |\n| Demo final | Exit 0, mesma sequência original |\n| `javap -verbose -classpath .build work.Catalog` | Major version 61, alvo Java 17 |\n| Snapshot isolado: compilação `--release 17` | Exit 0 |\n| Snapshot isolado: mesmo SelfTest | Exit 1 esperado, falha na exigência de atualização após recarga |\n| Comparação das fontes/configuração/documentos preservados | Conteúdo idêntico às entradas originais |\n\nO `check.mjs` original continua compilando com `--release 17`. A cobertura inicial foi preservada. A cobertura adicionada verifica:\n\n- Bloqueio de adição, remoção, substituição e reordenação, sem corromper os dados.\n- Atualização de entradas e totais de relatórios antigos e de uma referência de lista já retida.\n- Alteração de entradas mesmo quando o total permanece igual.\n- Preservação da ordem e de duplicados com valores negativos; soma esperada de -225.\n- Recarga vazia e nova carga posterior, mantendo as visões vivas e somente para leitura.\n\n## Skill aplicada, escopo e limitações\n\nO corpo completo de `skill/SKILL.md` foi lido e aplicado: separação entre observação e explicação, contrato antes do diagnóstico, reprodução anterior às alterações, previsão refutável, experimento controlado e preservação do comportamento adequado. O conteúdo efetivamente lido está registrado em `execution.json`, sem truncamento.\n\nAs referências condicionais não foram abertas: a falha não resistiu ao fluxo principal (`references/method.md`), e nenhum sistema de produção foi tocado (`references/production-evidence.md`). O manifesto da skill foi apenas listado, não lido. A procura inicial por `support.md` e `contract.md` na raiz do run falhou; em seguida, os documentos corretos foram encontrados em `input/project/`. Essas tentativas permaneceram dentro do escopo e estão registradas.\n\nNão há acesso a produção, banco de dados, renderer, revisão anterior ou outro aplicativo; a conclusão se restringe ao fluxo local e ao contrato fornecido. Java 17 foi verificado como alvo de compilação, com execução no runtime disponível Temurin 25.0.3+9; não foi executado um runtime Java 17 separado. Concorrência está fora do contrato aceito. Não se afirma uma auditoria de todas as entradas possíveis de APIs.\n\nNão houve rede, instalação, delegação, leitura do repositório externo, leitura de outros runs ou acesso à configuração real de agentes. Todas as escritas ocorreram dentro de `output/`; os executáveis Java no caminho expressamente permitido e o Node disponível foram usados somente para verificação. Não houve acesso acidental fora do escopo. Todos os subprocessos foram aguardados; não há processo deixado em execução. As alternativas experimentais estão identificadas como experimentos executados, sem adoção no projeto.\n"
+    },
+    {
+      "file": "output/seal-execution.mjs",
+      "purpose": "Final artifact review",
+      "fullFile": true,
+      "truncated": false,
+      "bytes": 8890,
+      "sha256": "2c7045eb1a4dd50440bee5e9ae82faf2e68c56c053b6ac4b0b7783f8177d52bc",
+      "content": "import fs from 'node:fs';\nimport path from 'node:path';\nimport crypto from 'node:crypto';\n\nconst runRoot = path.resolve(import.meta.dirname, '..');\nconst outputRoot = path.join(runRoot, 'output');\nconst journalPath = path.join(outputRoot, 'execution.json');\nconst execution = JSON.parse(fs.readFileSync(journalPath, 'utf8'));\nconst digest = content => crypto.createHash('sha256').update(content).digest('hex');\nfunction read(relative, purpose) {\n  const content = fs.readFileSync(path.join(runRoot, relative), 'utf8');\n  execution.filesRead.push({file: relative, purpose, fullFile: true, truncated: false,\n    bytes: Buffer.byteLength(content), sha256: digest(content), content});\n  return content;\n}\n\nconst wrapper = (script, label) =>\n  `$verificationProcess = Start-Process -FilePath node -ArgumentList @('output/${script}') -WorkingDirectory 'C:/Users/robso/AppData/Local/Temp/skills-wave5-actors-4tJ3OK/run-04' -WindowStyle Hidden -RedirectStandardOutput 'output/${label}-runner.stdout.log' -RedirectStandardError 'output/${label}-runner.stderr.log' -PassThru\\n` +\n  `if (-not $verificationProcess.WaitForExit(30000)) { $verificationProcess.Kill($true); throw 'Verification exceeded 30 seconds' }\\n` +\n  `Get-Content -LiteralPath 'output/${label}-runner.stdout.log' -Raw\\n` +\n  `Get-Content -LiteralPath 'output/${label}-runner.stderr.log' -Raw\\n` +\n  'exit $verificationProcess.ExitCode';\n\nfor (const [script, label] of [['run-verification.mjs', 'baseline'], ['final-verification.mjs', 'final']]) {\n  const stdout = read(`output/${label}-runner.stdout.log`, 'Full observed output of the bounded script process');\n  const stderr = read(`output/${label}-runner.stderr.log`, 'Full observed error output of the bounded script process');\n  execution.commands.push({phase: `${label}-runner`, kind: 'shell', shell: 'PowerShell',\n    exactCommand: wrapper(script, label), cwd: runRoot, exit: 0, timeoutMs: 30000,\n    stdout, stderr, executed: true, truncated: false,\n    resultEvidence: 'The tool returned exit 0 after WaitForExit; stdout and stderr are retained.'});\n}\n\nconst childArgs = ['--release', '17', '-d', '.build', 'src\\\\work\\\\Catalog.java',\n  'src\\\\work\\\\Demo.java', 'src\\\\work\\\\Entry.java', 'src\\\\work\\\\Report.java', 'test\\\\work\\\\SelfTest.java'];\nfor (const phase of ['baseline-check', 'final-check']) {\n  const entry = execution.commands.find(command => command.phase === phase);\n  entry.childCommands = [\n    {executable: 'C:\\\\Users\\\\robso\\\\.jdks\\\\temurin-25.0.3\\\\bin\\\\javac.exe', args: childArgs,\n      cwd: entry.cwd, timeoutMs: 30000, exit: 0},\n    {executable: 'C:\\\\Users\\\\robso\\\\.jdks\\\\temurin-25.0.3\\\\bin\\\\java.exe', args: ['-cp', '.build', 'work.SelfTest'],\n      cwd: entry.cwd, timeoutMs: 30000, exit: 0}\n  ];\n  entry.childCommandEvidence = 'Reconstructed from the unchanged check.mjs and enumerated source files. Child exit 0 follows from the script continuing and returning 0; child output is the parent stdout/stderr. The child process API was not instrumented.';\n}\n\nfor (const relative of ['output/REVIEW.md', 'output/seal-execution.mjs',\n  'output/experiments/snapshot/src/work/Catalog.java'])\n  read(relative, 'Final artifact review');\n\nexecution.inputPreservation = [];\nfor (const original of execution.filesRead.filter(item => item.file.startsWith('input/project/'))) {\n  const actual = fs.readFileSync(path.join(runRoot, original.file), 'utf8');\n  const same = digest(actual) === original.sha256;\n  execution.inputPreservation.push({file: original.file, originalSha256: original.sha256,\n    finalSha256: digest(actual), identical: same, fullFileRead: true, truncated: false,\n    contentReference: 'Same content as the earlier filesRead entry for this path'});\n  if (!same) throw new Error(`Original input changed: ${original.file}`);\n}\nconst classVersion = execution.commands.find(item => item.phase === 'final-class-version').stdout;\nif (!classVersion.includes('major version: 61')) throw new Error('Java 17 class version not confirmed');\nconst expectedDemo = 'first=1000\\nfirst-after-reload=1200\\nlatest=1200\\n';\nfor (const phase of ['baseline-demo', 'final-demo']) {\n  const output = execution.commands.find(item => item.phase === phase).stdout.replaceAll('\\r\\n', '\\n');\n  if (output !== expectedDemo) throw new Error(`Unexpected Demo output in ${phase}`);\n}\nif (execution.commands.some(item => item.error || item.elapsedMs > 30000))\n  throw new Error('A process failed to meet the execution bounds');\n\nexecution.edits.push(\n  {file: 'output/REVIEW.md', tool: 'apply_patch', purpose: 'Evidence, conclusion, changes and limitations'},\n  {file: 'output/seal-execution.mjs', tool: 'apply_patch', purpose: 'Audit final artifacts and record observed wrapper results'}\n);\nexecution.generatedArtifacts = [\n  'output/execution.json', 'output/logs/*.json', 'output/*-runner.stdout.log', 'output/*-runner.stderr.log',\n  'output/project/.build/work/*.class', 'output/experiments/snapshot/src/work/Catalog.java',\n  'output/experiments/snapshot/classes/work/*.class'\n];\nexecution.limitations = [\n  'No production, database, external renderer, prior revision or deployment history was supplied.',\n  'Compiled with --release 17 and executed only on Temurin 25.0.3+9; no separate Java 17 runtime execution.',\n  'Sequential catalog/open report flow was investigated; this is not a comprehensive audit of every possible API input.',\n  'The original check.mjs captures combined child output; its child argv and exits are reconstructed as explicitly marked.',\n  'Two initial reads targeted missing support.md/contract.md at the run root, then the supplied input/project files were used. No out-of-scope path was touched.'\n];\nexecution.outcome = {\n  reportedBehaviorIsDefect: false,\n  reason: 'The accepted contract requires live updates of entries and total in already-open reports.',\n  productionCodeChanged: false,\n  testCodeChanged: true,\n  projectFilesChanged: ['test/work/SelfTest.java'],\n  contractChanged: false,\n  baselineChanged: false,\n  dependenciesChanged: false,\n  finalProjectVerificationPassed: true,\n  expectedExperimentalFailure: 'Snapshot alternative rejected at the first live reload assertion',\n  remainingProposedWork: []\n};\nexecution.skillApplied = {\n  file: 'skill/SKILL.md', fullyRead: true, referencesRead: [],\n  workflow: ['inspect contract and affected path', 'separate observation and explanation',\n    'reproduce before editing', 'test refutable predictions', 'change one variable in isolated experiment',\n    'preserve adequate production behavior', 'retain evidence and limitations']\n};\nexecution.accessSummary = {\n  readRoots: [runRoot], writeRoots: [outputRoot],\n  authorizedExecutableAccess: ['C:/Users/robso/.jdks/temurin-25.0.3/bin', 'available Node runtime'],\n  networkUsed: false, installsPerformed: false, globalSkillsRead: false, otherRunsRead: false,\n  repositoryRead: false, realAgentConfigurationAccessed: false,\n  accidentalOutOfScopeAccesses: []\n};\nexecution.processes = {detachedProcesses: [], runningChildren: [],\n  evidence: 'All Java/javac/javap calls used spawnSync with timeout 30000. Both recorded Node script runners were awaited by PowerShell with a 30000 ms bound and returned exit 0. No background server was launched.'};\nexecution.commands.push({phase: 'seal-execution', kind: 'process', executable: process.execPath,\n  args: ['output/seal-execution.mjs'], cwd: runRoot, executed: true, exit: 0,\n  resultEvidence: 'Reached final synchronous journal write after all assertions; the outer PowerShell runner waits for this process and enforces 30 seconds.',\n  stdout: 'Final artifacts audited; ready to seal\\n', stderr: '', truncated: false});\nexecution.commands.push({phase: 'seal-runner', kind: 'shell', shell: 'PowerShell',\n  exactCommand: \"$verificationProcess = Start-Process -FilePath node -ArgumentList @('output/seal-execution.mjs') -WorkingDirectory 'C:/Users/robso/AppData/Local/Temp/skills-wave5-actors-4tJ3OK/run-04' -WindowStyle Hidden -PassThru\\nif (-not $verificationProcess.WaitForExit(30000)) { $verificationProcess.Kill($true); throw 'Verification exceeded 30 seconds' }\\nif ($verificationProcess.ExitCode -ne 0) { throw 'Final artifact audit failed' }\\nWrite-Output 'Artifact audit passed; ready to seal'\\nexit $verificationProcess.ExitCode\",\n  cwd: runRoot, executed: true, timeoutMs: 30000,\n  exit: null, resultEvidence: 'This wrapper is still awaiting the current seal process; its actual exit is returned in the final tool result after the journal is sealed.',\n  output: 'Completion is reported by the outer tool; its result will be filled in by a final audit patch.', truncated: false});\nexecution.status = 'awaiting_seal_wrapper_result';\nexecution.allWritesStopped = false;\n// The outer wrapper result is filled only after its actual completion is observed.\nfs.writeFileSync(journalPath, JSON.stringify(execution, null, 2) + '\\n');\nprocess.stdout.write('Final artifacts audited; ready to seal\\n');\n"
+    },
+    {
+      "file": "output/experiments/snapshot/src/work/Catalog.java",
+      "purpose": "Final artifact review",
+      "fullFile": true,
+      "truncated": false,
+      "bytes": 276,
+      "sha256": "5ab330bac9f039b24914668a06839c0db8e4e9c4d8a6448be5d1500c0adc7b33",
+      "content": "package work;\nimport java.util.*;\npublic final class Catalog {\n    private final List<Entry> rows = new ArrayList<>();\n    public void load(Entry... next) { rows.clear(); rows.addAll(Arrays.asList(next)); }\n    public Report open() { return new Report(List.copyOf(rows)); }\n}\n"
+    }
+  ],
+  "commands": [
+    {
+      "phase": "initial_inspection",
+      "kind": "shell",
+      "shell": "PowerShell",
+      "exactCommand": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave5-actors-4tJ3OK/run-04/TASK.md'",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-04",
+      "exit": 0,
+      "output": "Investigue o relato em support.md usando os artefatos do projeto e o contrato aceito. Determine se existe defeito e sua causa. Corrija o projeto quando houver violação, com verificação relevante; preserve comportamento já adequado. Entregue o projeto final e REVIEW.md com evidências, conclusão, alterações e limitações. Não mude o contrato, a baseline Java ou dependências.\n\nTrabalhe exclusivamente em C:/Users/robso/AppData/Local/Temp/skills-wave5-actors-4tJ3OK/run-04. O projeto inicial está em input/project (somente leitura), e uma cópia de trabalho já está em output/project. Você não está sozinho: escreva somente dentro de output/. Não modifique input/, skill/, contract.md nem lib/compat.jar, se existir. Pode editar fontes, testes e configuração do projeto de trabalho quando sustentado pela investigação. Preserve as entradas originais e cobertura útil existente.\n\nAplique a skill local skill/SKILL.md. Leia o corpo completo e as referências relevantes conforme suas condições; registre o conteúdo efetivamente lido.\n\nNão leia o repositório C:/git/agent-skills, outros runs, critérios, handoffs, pastas de avaliações, skills globais ou conversas anteriores. Não use rede, instalações, outros agentes ou configuração real. Java, javac, javap e jar estão em C:/Users/robso/.jdks/temurin-25.0.3/bin. Node está disponível. Use alvo Java 17 e preserve o runtime disponível (Temurin25.0.3+9); cada processo deve ter limite de 30s.\n\nExecute verificações proporcionais e conserve logs/scripts. Salve output/REVIEW.md e output/execution.json. No JSON registre comandos exatos com argumentos, cwd, exit e saída ou caminho do log, arquivos/conteúdos efetivamente lidos (incluindo skill/referências e qualquer truncamento), limitações e qualquer acesso acidental fora do escopo. Diferencie execução de proposta. Ao terminar, encerre processos, pare as escritas e confirme allWritesStopped:true.\n",
+      "outputNote": "Full file content; shell-added final newline omitted. Command was observed before this recorder was created.",
+      "truncated": false,
+      "executed": true,
+      "completedWithin30Seconds": true
+    },
+    {
+      "phase": "initial_inspection",
+      "kind": "shell",
+      "shell": "PowerShell",
+      "exactCommand": "Get-Content -LiteralPath 'skill/SKILL.md' -Raw",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-04",
+      "exit": 0,
+      "output": "---\nname: debugging\ndescription: >\n  Finding the cause of a fault instead of a change that makes the symptom go away:\n  reproducing before diagnosing, shrinking the reproduction until nothing is removable,\n  stating a hypothesis that predicts an observation, changing one variable at a time,\n  bisecting, and choosing which evidence to collect from a running production system before\n  it is destroyed. Use when a fix is being guessed at, when a change \"seems to work\", when\n  the same bug keeps coming back, when a fault cannot be reproduced, when a production\n  incident needs a cause rather than a restart, when print statements are being added\n  everywhere, or when several changes were made at once and it now works. Does not cover\n  JVM performance triage (java-performance), GC (jvm-gc-tuning), live thread diagnosis\n  (concurrency-diagnostics), heap dump mechanics (heap-dump-analysis), or deliberately\n  injecting failures (distributed-systems-testing).\n---\n\n# Debugging\n\n## Purpose\n\nTurn a report into a cause. The alternative — changing things until the symptom disappears —\nproduces code nobody understands, a bug that returns under a slightly different input, and no\nway to tell whether the change helped or moved the failure somewhere quieter.\n\n## Workflow\n\nStart with the requested outcome: diagnosis, mitigation or repair. Inspect the report, affected\ncall path, documented contract, existing tests and effective configuration before accepting the\nreport's explanation. Reuse adequate evidence; ask only about missing expectations or context\nthat could change the conclusion. Diagnosis can finish with a supported finding without editing\ncode. Behavior consistent with the accepted contract may call for clarification rather than a fix.\n\n1. **Restate the fault as an observation.** \"Customer 88123 saw a negative balance at 14:02\"\n   is an observation. \"The refund logic is broken\" is a hypothesis wearing a report's clothes,\n   and adopting it early is how the wrong subsystem gets investigated for a day.\n   State the expected behavior and its source too: an allowed overdraft is not evidence of a\n   violated invariant. Separate requirements and established contracts from assumptions.\n2. **Reproduce it.** Deterministically if possible, intermittently if not — but know which,\n   because \"I cannot reproduce it\" and \"it reproduces one time in ten\" lead to different work.\n   If it only happens in production, collect evidence within the mitigation budget\n   (`references/production-evidence.md`).\n3. **Shrink.** Remove inputs, steps, data and configuration until removing anything more makes\n   the fault disappear, while preserving the original failure signature. Stop when the next\n   reduction costs more than it helps; a minimal reproduction need not identify the full cause.\n4. **State a hypothesis that predicts something you have not yet looked at.** \"If the cause is\n   the missing time zone, then the row written at 23:30 local will carry yesterday's date.\"\n   Also name an observation that would refute it. Explaining existing evidence is useful;\n   a discriminating prediction makes the next experiment useful.\n5. **Run a controlled, discriminating experiment**, normally changing one variable. Preserve\n   comparable state and a baseline control; record confirming and refuting outcomes. When an\n   interaction is suspected, compare the relevant combinations deliberately instead of treating\n   a successful batch of changes as an isolated cause (`references/method.md`).\n6. **Check the explanation against the distribution** — frequency, timing, affected and unaffected\n   users. Record remaining contradictions and uncertainty instead of forcing one cause to explain\n   unrelated failures.\n7. **When repair is in scope, verify it against the original fault.** Turn the reproduction\n   into regression coverage when it earns lasting value (tdd); confirm it detects the original\n   failure before accepting the corrected result. Reuse existing adequate tests. A race may need\n   controlled scheduling or integration coverage. Record intermittent outcomes and relevant\n   unaffected cases; do not make extra changes merely to finish a diagnosis-only task.\n\nInspect deployed versus source JDK/toolchain, dependencies, JVM flags, configuration and data\nversions before version-sensitive diagnostics or changes. This workflow has no universal Java\nbaseline. Preserve the target environment; upgrading it is a separate decision. Return the fault,\nevidence, tested/refuted hypotheses, fix or mitigation, validation and unresolved gaps. Missing\naccess or reproduction permits an evidence plan, not an invented root cause.\n\n## Rules\n\n- Prefer a causal explanation before a permanent fix. During an incident, a reversible mitigation\n  may precede diagnosis; label it as mitigation, preserve the evidence the response budget allows,\n  and do not present symptom disappearance as root-cause proof.\n- Prefer one controlled variable per experiment. If a batch helps, it implicates the batch but\n  does not isolate a member or interaction; reduce/revert the batch in a controlled environment.\n- Read the whole stack trace, including cause and suppressed chains. The deepest application frame\n  is a useful boundary candidate, not a verdict: framework callbacks, generated code, reflection,\n  native frames, and library defects can move or hide the causal frame.\n- Balance evidence preservation against customer impact and the incident commander's authority.\n  Capture cheap, non-disruptive evidence first when the error budget permits; mitigate immediately\n  when delay is unsafe, and record which volatile evidence the action destroyed\n  (`references/production-evidence.md`).\n- Symptom disappearance is evidence of recovery, not proof of cause or durable correction.\n- Missing events refute a hypothesis only within verified collection coverage. Check enablement,\n  filters, sampling/thresholds and workload opportunity before interpreting an empty result.\n- Question the assumption that the fault is where the symptom is. Corrupted state is written\n  in one place and observed in another, often much later. Trace the first contract violation;\n  an incorrect write is one candidate, but valid data can also be misread or misinterpreted.\n- Consider `git bisect` when verified good/bad revisions and a reliable classifier exist.\n  It can narrow a monotone change in roughly log₂(n) classifications; build cost, skipped commits\n  and intermittent or nonmonotone outcomes affect that benefit. See the reference's exit protocol.\n- Delete the debugging output before the change ships, and if a log line was genuinely useful,\n  promote it deliberately with a level and structure (structured-logging) rather than leaving\n  a `System.out.println`.\n- Timebox according to incident severity and experiment cost. Repeated refutations are a signal\n  to revisit observations, harness assumptions and the system model or seek another perspective.\n\n## References\n\n- **The method in detail** — `references/method.md`. Shrinking a reproduction, differential\n  diagnosis (what changed — code, data, config, dependency, traffic, time), bisection over\n  commits and over data, reading exception chains, and the specific traps of intermittent and\n  heisenbug faults. Read when the fault resists the workflow above.\n- **Evidence from a running system** — `references/production-evidence.md`. What each source\n  can and cannot answer — logs, metrics, traces, thread dumps, heap dumps, JFR, database state,\n  deployment history — with volatility, cost and collection order during an incident. Read\n  before touching a production system that is currently faulty.\n",
+      "outputNote": "Full file content; shell-added final newline omitted. Command was observed before this recorder was created.",
+      "truncated": false,
+      "executed": true,
+      "completedWithin30Seconds": true
+    },
+    {
+      "phase": "initial_inspection",
+      "kind": "shell",
+      "shell": "PowerShell",
+      "exactCommand": "Get-Content -LiteralPath 'input/project/support.md' -Raw",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-04",
+      "exit": 0,
+      "output": "# Support observation\n\nAfter a reload, an already opened report displays a different total. The support ticket calls it a \"rounding regression\" after the last renderer update. A user remembers the first displayed total as 1000 and later saw 1200. No other application, database or production access is supplied.\n\nThe local Demo prints the reported sequence. The existing check passes.\n",
+      "outputNote": "Full file content; shell-added final newline omitted. Command was observed before this recorder was created.",
+      "truncated": false,
+      "executed": true,
+      "completedWithin30Seconds": true
+    },
+    {
+      "phase": "initial_inspection",
+      "kind": "shell",
+      "shell": "PowerShell",
+      "exactCommand": "Get-Content -LiteralPath 'input/project/contract.md' -Raw",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-04",
+      "exit": 0,
+      "output": "# Accepted report contract\n\nJava source target: 17. Execution is sequential; no concurrent callers in this task.\nEntries are immutable values. Keep order, duplicates and signed cent amounts.\nA report exposes a read-only list: callers must not add, remove or reorder entries.\n\nA report is a live read-only view of the catalog. Later load() calls must be visible through reports already open, including their entries and total. Opening a new report is not required to observe a load().\n\nThis contract is accepted by the product owner and applies to this work. Do not change it.\n",
+      "outputNote": "Full file content; shell-added final newline omitted. Command was observed before this recorder was created.",
+      "truncated": false,
+      "executed": true,
+      "completedWithin30Seconds": true
+    },
+    {
+      "phase": "initial_inspection",
+      "kind": "shell",
+      "shell": "PowerShell",
+      "exactCommand": "Get-Content -LiteralPath 'input/project/check.mjs' -Raw",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-04",
+      "exit": 0,
+      "output": "import fs from 'node:fs';\nimport path from 'node:path';\nimport {spawnSync} from 'node:child_process';\nconst jdk=\"C:/Users/robso/.jdks/temurin-25.0.3/bin\";\nconst walk=p=>fs.readdirSync(p,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(path.join(p,e.name)):e.name.endsWith('.java')?[path.join(p,e.name)]:[]);\nfs.mkdirSync('.build',{recursive:true});\nconst commands=[['javac.exe',['--release','17','-d','.build',...walk('src'),...walk('test')]],['java.exe',['-cp','.build','work.SelfTest']]];\nfor(const [tool,args] of commands){const r=spawnSync(path.join(jdk,tool),args,{encoding:'utf8',timeout:30000,windowsHide:true});process.stdout.write(r.stdout||'');process.stderr.write(r.stderr||'');if(r.status!==0)process.exit(r.status??1);}\n",
+      "outputNote": "Full file content; shell-added final newline omitted. Command was observed before this recorder was created.",
+      "truncated": false,
+      "executed": true,
+      "completedWithin30Seconds": true
+    },
+    {
+      "phase": "initial_inspection",
+      "kind": "shell",
+      "shell": "PowerShell",
+      "exactCommand": "Get-Content -LiteralPath 'input/project/test/work/SelfTest.java' -Raw",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-04",
+      "exit": 0,
+      "output": "package work;\npublic final class SelfTest {\n    public static void main(String[] args) {\n        Catalog c = new Catalog();\n        c.load(new Entry(\"A\", 450), new Entry(\"B\", 550));\n        Report first = c.open();\n        if (first.total() != 1000 || first.entries().size() != 2) throw new AssertionError(\"initial report\");\n        try { first.entries().clear(); throw new AssertionError(\"writable report\"); }\n        catch (UnsupportedOperationException expected) { }\n        System.out.println(\"SelfTest PASS\");\n    }\n}\n",
+      "outputNote": "Full file content; shell-added final newline omitted. Command was observed before this recorder was created.",
+      "truncated": false,
+      "executed": true,
+      "completedWithin30Seconds": true
+    },
+    {
+      "phase": "initial_inspection",
+      "kind": "shell",
+      "shell": "PowerShell",
+      "exactCommand": "Get-Content -LiteralPath 'input/project/src/work/Catalog.java' -Raw",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-04",
+      "exit": 0,
+      "output": "package work;\nimport java.util.*;\npublic final class Catalog {\n    private final List<Entry> rows = new ArrayList<>();\n    public void load(Entry... next) { rows.clear(); rows.addAll(Arrays.asList(next)); }\n    public Report open() { return new Report(Collections.unmodifiableList(rows)); }\n}\n",
+      "outputNote": "Full file content; shell-added final newline omitted. Command was observed before this recorder was created.",
+      "truncated": false,
+      "executed": true,
+      "completedWithin30Seconds": true
+    },
+    {
+      "phase": "initial_inspection",
+      "kind": "shell",
+      "shell": "PowerShell",
+      "exactCommand": "Get-Content -LiteralPath 'input/project/src/work/Report.java' -Raw",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-04",
+      "exit": 0,
+      "output": "package work;\nimport java.util.List;\npublic record Report(List<Entry> entries) {\n    public long total() { return entries.stream().mapToLong(Entry::cents).sum(); }\n}\n",
+      "outputNote": "Full file content; shell-added final newline omitted. Command was observed before this recorder was created.",
+      "truncated": false,
+      "executed": true,
+      "completedWithin30Seconds": true
+    },
+    {
+      "phase": "initial_inspection",
+      "kind": "shell",
+      "shell": "PowerShell",
+      "exactCommand": "Get-Content -LiteralPath 'input/project/src/work/Entry.java' -Raw",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-04",
+      "exit": 0,
+      "output": "package work;\npublic record Entry(String sku, long cents) {}\n",
+      "outputNote": "Full file content; shell-added final newline omitted. Command was observed before this recorder was created.",
+      "truncated": false,
+      "executed": true,
+      "completedWithin30Seconds": true
+    },
+    {
+      "phase": "initial_inspection",
+      "kind": "shell",
+      "shell": "PowerShell",
+      "exactCommand": "Get-Content -LiteralPath 'input/project/src/work/Demo.java' -Raw",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-04",
+      "exit": 0,
+      "output": "package work;\npublic final class Demo {\n    public static void main(String[] args) {\n        Catalog c = new Catalog();\n        c.load(new Entry(\"A\", 450), new Entry(\"B\", 550));\n        Report first = c.open();\n        System.out.println(\"first=\" + first.total());\n        c.load(new Entry(\"C\", 1200));\n        System.out.println(\"first-after-reload=\" + first.total());\n        System.out.println(\"latest=\" + c.open().total());\n    }\n}\n",
+      "outputNote": "Full file content; shell-added final newline omitted. Command was observed before this recorder was created.",
+      "truncated": false,
+      "executed": true,
+      "completedWithin30Seconds": true
+    },
+    {
+      "phase": "initial_inspection",
+      "kind": "shell",
+      "shell": "PowerShell",
+      "exactCommand": "Get-Content -LiteralPath 'support.md' -Raw",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-04",
+      "exit": 1,
+      "output": "Cannot find path 'support.md' because it does not exist.",
+      "truncated": false,
+      "outputNote": "Relevant error preserved; PowerShell display decoration omitted.",
+      "executed": true,
+      "completedWithin30Seconds": true
+    },
+    {
+      "phase": "initial_inspection",
+      "kind": "shell",
+      "shell": "PowerShell",
+      "exactCommand": "Get-Content -LiteralPath 'contract.md' -Raw",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-04",
+      "exit": 1,
+      "output": "Cannot find path 'contract.md' because it does not exist.",
+      "truncated": false,
+      "outputNote": "Relevant error preserved; PowerShell display decoration omitted.",
+      "executed": true,
+      "completedWithin30Seconds": true
+    },
+    {
+      "phase": "initial_inspection",
+      "kind": "shell",
+      "shell": "PowerShell",
+      "exactCommand": "rg --files input/project output/project skill",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-04",
+      "exit": 0,
+      "output": "skill/skill.yaml\nskill/SKILL.md\nskill/references/production-evidence.md\nskill/references/method.md\noutput/project/test/work/SelfTest.java\noutput/project/support.md\noutput/project/src/work/Report.java\noutput/project/src/work/Entry.java\noutput/project/src/work/Demo.java\noutput/project/src/work/Catalog.java\noutput/project/contract.md\noutput/project/check.mjs\ninput/project/contract.md\ninput/project/check.mjs\ninput/project/test/work/SelfTest.java\ninput/project/support.md\ninput/project/src/work/Report.java\ninput/project/src/work/Entry.java\ninput/project/src/work/Demo.java\ninput/project/src/work/Catalog.java\n",
+      "outputNote": "Observed complete file inventory; path separators normalized.",
+      "truncated": false,
+      "executed": true,
+      "completedWithin30Seconds": true
+    },
+    {
+      "phase": "java-version",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-version"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-04\\output\\project",
+      "timeoutMs": 30000,
+      "exit": 0,
+      "signal": null,
+      "elapsedMs": 44,
+      "error": null,
+      "stdout": "",
+      "stderr": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n",
+      "executed": true,
+      "truncated": false,
+      "log": "output/logs/java-version.json"
+    },
+    {
+      "phase": "javac-version",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "-version"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-04\\output\\project",
+      "timeoutMs": 30000,
+      "exit": 0,
+      "signal": null,
+      "elapsedMs": 93,
+      "error": null,
+      "stdout": "javac 25.0.3\r\n",
+      "stderr": "",
+      "executed": true,
+      "truncated": false,
+      "log": "output/logs/javac-version.json"
+    },
+    {
+      "phase": "baseline-check",
+      "executable": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "check.mjs"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-04\\output\\project",
+      "timeoutMs": 30000,
+      "exit": 0,
+      "signal": null,
+      "elapsedMs": 511,
+      "error": null,
+      "stdout": "SelfTest PASS\r\n",
+      "stderr": "",
+      "executed": true,
+      "truncated": false,
+      "log": "output/logs/baseline-check.json",
+      "childCommands": [
+        {
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+          "args": [
+            "--release",
+            "17",
+            "-d",
+            ".build",
+            "src\\work\\Catalog.java",
+            "src\\work\\Demo.java",
+            "src\\work\\Entry.java",
+            "src\\work\\Report.java",
+            "test\\work\\SelfTest.java"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-04\\output\\project",
+          "timeoutMs": 30000,
+          "exit": 0
+        },
+        {
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+          "args": [
+            "-cp",
+            ".build",
+            "work.SelfTest"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-04\\output\\project",
+          "timeoutMs": 30000,
+          "exit": 0
+        }
+      ],
+      "childCommandEvidence": "Reconstructed from the unchanged check.mjs and enumerated source files. Child exit 0 follows from the script continuing and returning 0; child output is the parent stdout/stderr. The child process API was not instrumented."
+    },
+    {
+      "phase": "baseline-demo",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-cp",
+        ".build",
+        "work.Demo"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-04\\output\\project",
+      "timeoutMs": 30000,
+      "exit": 0,
+      "signal": null,
+      "elapsedMs": 51,
+      "error": null,
+      "stdout": "first=1000\r\nfirst-after-reload=1200\r\nlatest=1200\r\n",
+      "stderr": "",
+      "executed": true,
+      "truncated": false,
+      "log": "output/logs/baseline-demo.json"
+    },
+    {
+      "phase": "final-check",
+      "executable": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "check.mjs"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-04\\output\\project",
+      "timeoutMs": 30000,
+      "exit": 0,
+      "signal": null,
+      "elapsedMs": 524,
+      "error": null,
+      "stdout": "SelfTest PASS: initial report, read-only entries, live reloads, signed duplicates, empty reload\r\n",
+      "stderr": "",
+      "executed": true,
+      "truncated": false,
+      "log": "output/logs/final-check.json",
+      "childCommands": [
+        {
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+          "args": [
+            "--release",
+            "17",
+            "-d",
+            ".build",
+            "src\\work\\Catalog.java",
+            "src\\work\\Demo.java",
+            "src\\work\\Entry.java",
+            "src\\work\\Report.java",
+            "test\\work\\SelfTest.java"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-04\\output\\project",
+          "timeoutMs": 30000,
+          "exit": 0
+        },
+        {
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+          "args": [
+            "-cp",
+            ".build",
+            "work.SelfTest"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-04\\output\\project",
+          "timeoutMs": 30000,
+          "exit": 0
+        }
+      ],
+      "childCommandEvidence": "Reconstructed from the unchanged check.mjs and enumerated source files. Child exit 0 follows from the script continuing and returning 0; child output is the parent stdout/stderr. The child process API was not instrumented."
+    },
+    {
+      "phase": "final-demo",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-cp",
+        ".build",
+        "work.Demo"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-04\\output\\project",
+      "timeoutMs": 30000,
+      "exit": 0,
+      "signal": null,
+      "elapsedMs": 48,
+      "error": null,
+      "stdout": "first=1000\r\nfirst-after-reload=1200\r\nlatest=1200\r\n",
+      "stderr": "",
+      "executed": true,
+      "truncated": false,
+      "log": "output/logs/final-demo.json"
+    },
+    {
+      "phase": "final-class-version",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javap.exe",
+      "args": [
+        "-verbose",
+        "-classpath",
+        ".build",
+        "work.Catalog"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-04\\output\\project",
+      "timeoutMs": 30000,
+      "exit": 0,
+      "signal": null,
+      "elapsedMs": 154,
+      "error": null,
+      "stdout": "Classfile /C:/Users/robso/AppData/Local/Temp/skills-wave5-actors-4tJ3OK/run-04/output/project/.build/work/Catalog.class\r\n  Last modified Oct 16, 2026; size 809 bytes\r\n  SHA-256 checksum 1517599f9d366770d4a453a1c88382017bec1364c1fe996b8376b78f6ccaec0b\r\n  Compiled from \"Catalog.java\"\r\npublic final class work.Catalog\r\n  minor version: 0\r\n  major version: 61\r\n  flags: (0x0031) ACC_PUBLIC, ACC_FINAL, ACC_SUPER\r\n  this_class: #11                         // work/Catalog\r\n  super_class: #2                         // java/lang/Object\r\n  interfaces: 0, fields: 1, methods: 3, attributes: 1\r\nConstant pool:\r\n   #1 = Methodref          #2.#3          // java/lang/Object.\"<init>\":()V\r\n   #2 = Class              #4             // java/lang/Object\r\n   #3 = NameAndType        #5:#6          // \"<init>\":()V\r\n   #4 = Utf8               java/lang/Object\r\n   #5 = Utf8               <init>\r\n   #6 = Utf8               ()V\r\n   #7 = Class              #8             // java/util/ArrayList\r\n   #8 = Utf8               java/util/ArrayList\r\n   #9 = Methodref          #7.#3          // java/util/ArrayList.\"<init>\":()V\r\n  #10 = Fieldref           #11.#12        // work/Catalog.rows:Ljava/util/List;\r\n  #11 = Class              #13            // work/Catalog\r\n  #12 = NameAndType        #14:#15        // rows:Ljava/util/List;\r\n  #13 = Utf8               work/Catalog\r\n  #14 = Utf8               rows\r\n  #15 = Utf8               Ljava/util/List;\r\n  #16 = InterfaceMethodref #17.#18        // java/util/List.clear:()V\r\n  #17 = Class              #19            // java/util/List\r\n  #18 = NameAndType        #20:#6         // clear:()V\r\n  #19 = Utf8               java/util/List\r\n  #20 = Utf8               clear\r\n  #21 = Methodref          #22.#23        // java/util/Arrays.asList:([Ljava/lang/Object;)Ljava/util/List;\r\n  #22 = Class              #24            // java/util/Arrays\r\n  #23 = NameAndType        #25:#26        // asList:([Ljava/lang/Object;)Ljava/util/List;\r\n  #24 = Utf8               java/util/Arrays\r\n  #25 = Utf8               asList\r\n  #26 = Utf8               ([Ljava/lang/Object;)Ljava/util/List;\r\n  #27 = InterfaceMethodref #17.#28        // java/util/List.addAll:(Ljava/util/Collection;)Z\r\n  #28 = NameAndType        #29:#30        // addAll:(Ljava/util/Collection;)Z\r\n  #29 = Utf8               addAll\r\n  #30 = Utf8               (Ljava/util/Collection;)Z\r\n  #31 = Class              #32            // work/Report\r\n  #32 = Utf8               work/Report\r\n  #33 = Methodref          #34.#35        // java/util/Collections.unmodifiableList:(Ljava/util/List;)Ljava/util/List;\r\n  #34 = Class              #36            // java/util/Collections\r\n  #35 = NameAndType        #37:#38        // unmodifiableList:(Ljava/util/List;)Ljava/util/List;\r\n  #36 = Utf8               java/util/Collections\r\n  #37 = Utf8               unmodifiableList\r\n  #38 = Utf8               (Ljava/util/List;)Ljava/util/List;\r\n  #39 = Methodref          #31.#40        // work/Report.\"<init>\":(Ljava/util/List;)V\r\n  #40 = NameAndType        #5:#41         // \"<init>\":(Ljava/util/List;)V\r\n  #41 = Utf8               (Ljava/util/List;)V\r\n  #42 = Utf8               Signature\r\n  #43 = Utf8               Ljava/util/List<Lwork/Entry;>;\r\n  #44 = Utf8               Code\r\n  #45 = Utf8               LineNumberTable\r\n  #46 = Utf8               load\r\n  #47 = Utf8               ([Lwork/Entry;)V\r\n  #48 = Utf8               open\r\n  #49 = Utf8               ()Lwork/Report;\r\n  #50 = Utf8               SourceFile\r\n  #51 = Utf8               Catalog.java\r\n{\r\n  public work.Catalog();\r\n    descriptor: ()V\r\n    flags: (0x0001) ACC_PUBLIC\r\n    Code:\r\n      stack=3, locals=1, args_size=1\r\n         0: aload_0\r\n         1: invokespecial #1                  // Method java/lang/Object.\"<init>\":()V\r\n         4: aload_0\r\n         5: new           #7                  // class java/util/ArrayList\r\n         8: dup\r\n         9: invokespecial #9                  // Method java/util/ArrayList.\"<init>\":()V\r\n        12: putfield      #10                 // Field rows:Ljava/util/List;\r\n        15: return\r\n      LineNumberTable:\r\n        line 3: 0\r\n        line 4: 4\r\n\r\n  public void load(work.Entry...);\r\n    descriptor: ([Lwork/Entry;)V\r\n    flags: (0x0081) ACC_PUBLIC, ACC_VARARGS\r\n    Code:\r\n      stack=2, locals=2, args_size=2\r\n         0: aload_0\r\n         1: getfield      #10                 // Field rows:Ljava/util/List;\r\n         4: invokeinterface #16,  1           // InterfaceMethod java/util/List.clear:()V\r\n         9: aload_0\r\n        10: getfield      #10                 // Field rows:Ljava/util/List;\r\n        13: aload_1\r\n        14: invokestatic  #21                 // Method java/util/Arrays.asList:([Ljava/lang/Object;)Ljava/util/List;\r\n        17: invokeinterface #27,  2           // InterfaceMethod java/util/List.addAll:(Ljava/util/Collection;)Z\r\n        22: pop\r\n        23: return\r\n      LineNumberTable:\r\n        line 5: 0\r\n\r\n  public work.Report open();\r\n    descriptor: ()Lwork/Report;\r\n    flags: (0x0001) ACC_PUBLIC\r\n    Code:\r\n      stack=3, locals=1, args_size=1\r\n         0: new           #31                 // class work/Report\r\n         3: dup\r\n         4: aload_0\r\n         5: getfield      #10                 // Field rows:Ljava/util/List;\r\n         8: invokestatic  #33                 // Method java/util/Collections.unmodifiableList:(Ljava/util/List;)Ljava/util/List;\r\n        11: invokespecial #39                 // Method work/Report.\"<init>\":(Ljava/util/List;)V\r\n        14: areturn\r\n      LineNumberTable:\r\n        line 6: 0\r\n}\r\nSourceFile: \"Catalog.java\"\r\n",
+      "stderr": "",
+      "executed": true,
+      "truncated": false,
+      "log": "output/logs/final-class-version.json"
+    },
+    {
+      "phase": "snapshot-compile",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "--release",
+        "17",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-04\\output\\experiments\\snapshot\\classes",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-04\\output\\experiments\\snapshot\\src\\work\\Catalog.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-04\\output\\project\\src\\work\\Entry.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-04\\output\\project\\src\\work\\Report.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-04\\output\\project\\test\\work\\SelfTest.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-04\\output\\experiments\\snapshot",
+      "timeoutMs": 30000,
+      "exit": 0,
+      "signal": null,
+      "elapsedMs": 397,
+      "error": null,
+      "stdout": "",
+      "stderr": "",
+      "executed": true,
+      "truncated": false,
+      "log": "output/logs/snapshot-compile.json"
+    },
+    {
+      "phase": "snapshot-test",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-04\\output\\experiments\\snapshot\\classes",
+        "work.SelfTest"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-04\\output\\experiments\\snapshot",
+      "timeoutMs": 30000,
+      "exit": 1,
+      "signal": null,
+      "elapsedMs": 56,
+      "error": null,
+      "stdout": "",
+      "stderr": "Exception in thread \"main\" java.lang.AssertionError: reports must observe reload totals\r\n\tat work.SelfTest.main(SelfTest.java:24)\r\n",
+      "executed": true,
+      "truncated": false,
+      "log": "output/logs/snapshot-test.json"
+    },
+    {
+      "phase": "baseline-runner",
+      "kind": "shell",
+      "shell": "PowerShell",
+      "exactCommand": "$verificationProcess = Start-Process -FilePath node -ArgumentList @('output/run-verification.mjs') -WorkingDirectory 'C:/Users/robso/AppData/Local/Temp/skills-wave5-actors-4tJ3OK/run-04' -WindowStyle Hidden -RedirectStandardOutput 'output/baseline-runner.stdout.log' -RedirectStandardError 'output/baseline-runner.stderr.log' -PassThru\nif (-not $verificationProcess.WaitForExit(30000)) { $verificationProcess.Kill($true); throw 'Verification exceeded 30 seconds' }\nGet-Content -LiteralPath 'output/baseline-runner.stdout.log' -Raw\nGet-Content -LiteralPath 'output/baseline-runner.stderr.log' -Raw\nexit $verificationProcess.ExitCode",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-04",
+      "exit": 0,
+      "timeoutMs": 30000,
+      "stdout": "java-version: exit=0\nopenjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\njavac-version: exit=0\njavac 25.0.3\r\nbaseline-check: exit=0\nSelfTest PASS\r\nbaseline-demo: exit=0\nfirst=1000\r\nfirst-after-reload=1200\r\nlatest=1200\r\n",
+      "stderr": "",
+      "executed": true,
+      "truncated": false,
+      "resultEvidence": "The tool returned exit 0 after WaitForExit; stdout and stderr are retained."
+    },
+    {
+      "phase": "final-runner",
+      "kind": "shell",
+      "shell": "PowerShell",
+      "exactCommand": "$verificationProcess = Start-Process -FilePath node -ArgumentList @('output/final-verification.mjs') -WorkingDirectory 'C:/Users/robso/AppData/Local/Temp/skills-wave5-actors-4tJ3OK/run-04' -WindowStyle Hidden -RedirectStandardOutput 'output/final-runner.stdout.log' -RedirectStandardError 'output/final-runner.stderr.log' -PassThru\nif (-not $verificationProcess.WaitForExit(30000)) { $verificationProcess.Kill($true); throw 'Verification exceeded 30 seconds' }\nGet-Content -LiteralPath 'output/final-runner.stdout.log' -Raw\nGet-Content -LiteralPath 'output/final-runner.stderr.log' -Raw\nexit $verificationProcess.ExitCode",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-04",
+      "exit": 0,
+      "timeoutMs": 30000,
+      "stdout": "final-check: exit=0\nSelfTest PASS: initial report, read-only entries, live reloads, signed duplicates, empty reload\r\nfinal-demo: exit=0\nfirst=1000\r\nfirst-after-reload=1200\r\nlatest=1200\r\nfinal-class-version: exit=0\nClassfile /C:/Users/robso/AppData/Local/Temp/skills-wave5-actors-4tJ3OK/run-04/output/project/.build/work/Catalog.class\r\n  Last modified Oct 16, 2026; size 809 bytes\r\n  SHA-256 checksum 1517599f9d366770d4a453a1c88382017bec1364c1fe996b8376b78f6ccaec0b\r\n  Compiled from \"Catalog.java\"\r\npublic final class work.Catalog\r\n  minor version: 0\r\n  major version: 61\r\n  flags: (0x0031) ACC_PUBLIC, ACC_FINAL, ACC_SUPER\r\n  this_class: #11                         // work/Catalog\r\n  super_class: #2                         // java/lang/Object\r\n  interfaces: 0, fields: 1, methods: 3, attributes: 1\r\nConstant pool:\r\n   #1 = Methodref          #2.#3          // java/lang/Object.\"<init>\":()V\r\n   #2 = Class              #4             // java/lang/Object\r\n   #3 = NameAndType        #5:#6          // \"<init>\":()V\r\n   #4 = Utf8               java/lang/Object\r\n   #5 = Utf8               <init>\r\n   #6 = Utf8               ()V\r\n   #7 = Class              #8             // java/util/ArrayList\r\n   #8 = Utf8               java/util/ArrayList\r\n   #9 = Methodref          #7.#3          // java/util/ArrayList.\"<init>\":()V\r\n  #10 = Fieldref           #11.#12        // work/Catalog.rows:Ljava/util/List;\r\n  #11 = Class              #13            // work/Catalog\r\n  #12 = NameAndType        #14:#15        // rows:Ljava/util/List;\r\n  #13 = Utf8               work/Catalog\r\n  #14 = Utf8               rows\r\n  #15 = Utf8               Ljava/util/List;\r\n  #16 = InterfaceMethodref #17.#18        // java/util/List.clear:()V\r\n  #17 = Class              #19            // java/util/List\r\n  #18 = NameAndType        #20:#6         // clear:()V\r\n  #19 = Utf8               java/util/List\r\n  #20 = Utf8               clear\r\n  #21 = Methodref          #22.#23        // java/util/Arrays.asList:([Ljava/lang/Object;)Ljava/util/List;\r\n  #22 = Class              #24            // java/util/Arrays\r\n  #23 = NameAndType        #25:#26        // asList:([Ljava/lang/Object;)Ljava/util/List;\r\n  #24 = Utf8               java/util/Arrays\r\n  #25 = Utf8               asList\r\n  #26 = Utf8               ([Ljava/lang/Object;)Ljava/util/List;\r\n  #27 = InterfaceMethodref #17.#28        // java/util/List.addAll:(Ljava/util/Collection;)Z\r\n  #28 = NameAndType        #29:#30        // addAll:(Ljava/util/Collection;)Z\r\n  #29 = Utf8               addAll\r\n  #30 = Utf8               (Ljava/util/Collection;)Z\r\n  #31 = Class              #32            // work/Report\r\n  #32 = Utf8               work/Report\r\n  #33 = Methodref          #34.#35        // java/util/Collections.unmodifiableList:(Ljava/util/List;)Ljava/util/List;\r\n  #34 = Class              #36            // java/util/Collections\r\n  #35 = NameAndType        #37:#38        // unmodifiableList:(Ljava/util/List;)Ljava/util/List;\r\n  #36 = Utf8               java/util/Collections\r\n  #37 = Utf8               unmodifiableList\r\n  #38 = Utf8               (Ljava/util/List;)Ljava/util/List;\r\n  #39 = Methodref          #31.#40        // work/Report.\"<init>\":(Ljava/util/List;)V\r\n  #40 = NameAndType        #5:#41         // \"<init>\":(Ljava/util/List;)V\r\n  #41 = Utf8               (Ljava/util/List;)V\r\n  #42 = Utf8               Signature\r\n  #43 = Utf8               Ljava/util/List<Lwork/Entry;>;\r\n  #44 = Utf8               Code\r\n  #45 = Utf8               LineNumberTable\r\n  #46 = Utf8               load\r\n  #47 = Utf8               ([Lwork/Entry;)V\r\n  #48 = Utf8               open\r\n  #49 = Utf8               ()Lwork/Report;\r\n  #50 = Utf8               SourceFile\r\n  #51 = Utf8               Catalog.java\r\n{\r\n  public work.Catalog();\r\n    descriptor: ()V\r\n    flags: (0x0001) ACC_PUBLIC\r\n    Code:\r\n      stack=3, locals=1, args_size=1\r\n         0: aload_0\r\n         1: invokespecial #1                  // Method java/lang/Object.\"<init>\":()V\r\n         4: aload_0\r\n         5: new           #7                  // class java/util/ArrayList\r\n         8: dup\r\n         9: invokespecial #9                  // Method java/util/ArrayList.\"<init>\":()V\r\n        12: putfield      #10                 // Field rows:Ljava/util/List;\r\n        15: return\r\n      LineNumberTable:\r\n        line 3: 0\r\n        line 4: 4\r\n\r\n  public void load(work.Entry...);\r\n    descriptor: ([Lwork/Entry;)V\r\n    flags: (0x0081) ACC_PUBLIC, ACC_VARARGS\r\n    Code:\r\n      stack=2, locals=2, args_size=2\r\n         0: aload_0\r\n         1: getfield      #10                 // Field rows:Ljava/util/List;\r\n         4: invokeinterface #16,  1           // InterfaceMethod java/util/List.clear:()V\r\n         9: aload_0\r\n        10: getfield      #10                 // Field rows:Ljava/util/List;\r\n        13: aload_1\r\n        14: invokestatic  #21                 // Method java/util/Arrays.asList:([Ljava/lang/Object;)Ljava/util/List;\r\n        17: invokeinterface #27,  2           // InterfaceMethod java/util/List.addAll:(Ljava/util/Collection;)Z\r\n        22: pop\r\n        23: return\r\n      LineNumberTable:\r\n        line 5: 0\r\n\r\n  public work.Report open();\r\n    descriptor: ()Lwork/Report;\r\n    flags: (0x0001) ACC_PUBLIC\r\n    Code:\r\n      stack=3, locals=1, args_size=1\r\n         0: new           #31                 // class work/Report\r\n         3: dup\r\n         4: aload_0\r\n         5: getfield      #10                 // Field rows:Ljava/util/List;\r\n         8: invokestatic  #33                 // Method java/util/Collections.unmodifiableList:(Ljava/util/List;)Ljava/util/List;\r\n        11: invokespecial #39                 // Method work/Report.\"<init>\":(Ljava/util/List;)V\r\n        14: areturn\r\n      LineNumberTable:\r\n        line 6: 0\r\n}\r\nSourceFile: \"Catalog.java\"\r\nsnapshot-compile: exit=0\nsnapshot-test: exit=1\nException in thread \"main\" java.lang.AssertionError: reports must observe reload totals\r\n\tat work.SelfTest.main(SelfTest.java:24)\r\n",
+      "stderr": "",
+      "executed": true,
+      "truncated": false,
+      "resultEvidence": "The tool returned exit 0 after WaitForExit; stdout and stderr are retained."
+    },
+    {
+      "phase": "seal-execution",
+      "kind": "process",
+      "executable": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "output/seal-execution.mjs"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-04",
+      "executed": true,
+      "exit": 0,
+      "resultEvidence": "Reached final synchronous journal write after all assertions; the outer PowerShell runner waits for this process and enforces 30 seconds.",
+      "stdout": "Final artifacts audited; ready to seal\n",
+      "stderr": "",
+      "truncated": false
+    },
+    {
+      "phase": "seal-runner",
+      "kind": "shell",
+      "shell": "PowerShell",
+      "exactCommand": "$verificationProcess = Start-Process -FilePath node -ArgumentList @('output/seal-execution.mjs') -WorkingDirectory 'C:/Users/robso/AppData/Local/Temp/skills-wave5-actors-4tJ3OK/run-04' -WindowStyle Hidden -PassThru\nif (-not $verificationProcess.WaitForExit(30000)) { $verificationProcess.Kill($true); throw 'Verification exceeded 30 seconds' }\nif ($verificationProcess.ExitCode -ne 0) { throw 'Final artifact audit failed' }\nWrite-Output 'Artifact audit passed; ready to seal'\nexit $verificationProcess.ExitCode",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-04",
+      "executed": true,
+      "timeoutMs": 30000,
+      "exit": 0,
+      "resultEvidence": "Observed tool result 4cdc45: PowerShell completed in 0.16947 seconds, exit 0, after waiting for the seal process.",
+      "output": "Artifact audit passed; ready to seal\r\n",
+      "truncated": false
+    }
+  ],
+  "edits": [
+    {
+      "file": "output/run-verification.mjs",
+      "tool": "apply_patch",
+      "purpose": "Bounded verification and evidence capture"
+    },
+    {
+      "file": "output/project/test/work/SelfTest.java",
+      "tool": "apply_patch",
+      "purpose": "Preserve initial coverage and test the accepted live read-only contract"
+    },
+    {
+      "file": "output/final-verification.mjs",
+      "tool": "apply_patch",
+      "purpose": "Verify the final project and a controlled snapshot alternative in a separate output directory"
+    },
+    {
+      "file": "output/REVIEW.md",
+      "tool": "apply_patch",
+      "purpose": "Evidence, conclusion, changes and limitations"
+    },
+    {
+      "file": "output/seal-execution.mjs",
+      "tool": "apply_patch",
+      "purpose": "Audit final artifacts and record observed wrapper results"
+    },
+    {
+      "file": "output/execution.json",
+      "tool": "apply_patch",
+      "purpose": "Record the actual final wrapper exit after it completed and seal the journal; final filesystem mutation"
+    }
+  ],
+  "referencesNotRead": [
+    {
+      "file": "skill/references/method.md",
+      "reason": "The deterministic observation does not resist the main workflow."
+    },
+    {
+      "file": "skill/references/production-evidence.md",
+      "reason": "No production system is available or touched."
+    }
+  ],
+  "limitations": [
+    "No production, database, external renderer, prior revision or deployment history was supplied.",
+    "Compiled with --release 17 and executed only on Temurin 25.0.3+9; no separate Java 17 runtime execution.",
+    "Sequential catalog/open report flow was investigated; this is not a comprehensive audit of every possible API input.",
+    "The original check.mjs captures combined child output; its child argv and exits are reconstructed as explicitly marked.",
+    "Two initial reads targeted missing support.md/contract.md at the run root, then the supplied input/project files were used. No out-of-scope path was touched."
+  ],
+  "accidentalOutOfScopeAccesses": [],
+  "allWritesStopped": true,
+  "initialCopyComparison": [
+    {
+      "input": "input/project/support.md",
+      "output": "output/project/support.md",
+      "identical": true
+    },
+    {
+      "input": "input/project/contract.md",
+      "output": "output/project/contract.md",
+      "identical": true
+    },
+    {
+      "input": "input/project/check.mjs",
+      "output": "output/project/check.mjs",
+      "identical": true
+    },
+    {
+      "input": "input/project/test/work/SelfTest.java",
+      "output": "output/project/test/work/SelfTest.java",
+      "identical": true
+    },
+    {
+      "input": "input/project/src/work/Catalog.java",
+      "output": "output/project/src/work/Catalog.java",
+      "identical": true
+    },
+    {
+      "input": "input/project/src/work/Report.java",
+      "output": "output/project/src/work/Report.java",
+      "identical": true
+    },
+    {
+      "input": "input/project/src/work/Entry.java",
+      "output": "output/project/src/work/Entry.java",
+      "identical": true
+    },
+    {
+      "input": "input/project/src/work/Demo.java",
+      "output": "output/project/src/work/Demo.java",
+      "identical": true
+    }
+  ],
+  "hypotheses": [
+    {
+      "id": "H1",
+      "statement": "Reload replaces the catalog contents in place; already-open reports expose the required live read-only view.",
+      "prediction": "Demo prints 1000 then 1200 for the first report and 1200 for the latest report. Retaining entries before load still exposes new entries; consumer mutation remains forbidden.",
+      "refutation": "An old report or retained entries view stays stale, its total differs from its visible entries, or consumer mutation succeeds.",
+      "status": "Confirmed by Demo, retained-view and live-reload checks; snapshot alternative rejected by the same test."
+    },
+    {
+      "id": "H2",
+      "statement": "The local change is caused by renderer rounding.",
+      "status": "Unsupported by the local call path; totals sum signed long cents and Demo changes the loaded entries. No renderer or update history was supplied."
+    }
+  ],
+  "experiments": [
+    {
+      "name": "snapshot-alternative",
+      "purpose": "Demonstrate that freezing the total would violate the accepted live-view contract",
+      "prediction": "The same final SelfTest must reject a Catalog.open() snapshot at the first reload assertion.",
+      "controlledChange": "Only Collections.unmodifiableList(rows) becomes List.copyOf(rows).",
+      "path": "output/experiments/snapshot/src/work/Catalog.java",
+      "adoptedInProject": false,
+      "outcome": "Prediction confirmed: AssertionError reports must observe reload totals; exit 1 expected."
+    }
+  ],
+  "finalOriginalComparison": [
+    {
+      "file": "src/work/Catalog.java",
+      "identical": true
+    },
+    {
+      "file": "src/work/Report.java",
+      "identical": true
+    },
+    {
+      "file": "src/work/Entry.java",
+      "identical": true
+    },
+    {
+      "file": "src/work/Demo.java",
+      "identical": true
+    },
+    {
+      "file": "check.mjs",
+      "identical": true
+    },
+    {
+      "file": "contract.md",
+      "identical": true
+    },
+    {
+      "file": "support.md",
+      "identical": true
+    }
+  ],
+  "inputPreservation": [
+    {
+      "file": "input/project/support.md",
+      "originalSha256": "f4ef0b98f197f68ef29edecc78177175f0a846ac4fb1cf8b5a619b71439c1c2b",
+      "finalSha256": "f4ef0b98f197f68ef29edecc78177175f0a846ac4fb1cf8b5a619b71439c1c2b",
+      "identical": true,
+      "fullFileRead": true,
+      "truncated": false,
+      "contentReference": "Same content as the earlier filesRead entry for this path"
+    },
+    {
+      "file": "input/project/contract.md",
+      "originalSha256": "4c258b441552d64c3f625cab848dabac361c6c98e63b524efa47e55c46f47b38",
+      "finalSha256": "4c258b441552d64c3f625cab848dabac361c6c98e63b524efa47e55c46f47b38",
+      "identical": true,
+      "fullFileRead": true,
+      "truncated": false,
+      "contentReference": "Same content as the earlier filesRead entry for this path"
+    },
+    {
+      "file": "input/project/check.mjs",
+      "originalSha256": "92f081d5b1eecdf1181f8adedb7249535535ad59d939a97774e9e3edecd67d10",
+      "finalSha256": "92f081d5b1eecdf1181f8adedb7249535535ad59d939a97774e9e3edecd67d10",
+      "identical": true,
+      "fullFileRead": true,
+      "truncated": false,
+      "contentReference": "Same content as the earlier filesRead entry for this path"
+    },
+    {
+      "file": "input/project/test/work/SelfTest.java",
+      "originalSha256": "e2aab235dff2a245a2035d9cfed97230f44925ff47f125f7babfc7b575b6fafc",
+      "finalSha256": "e2aab235dff2a245a2035d9cfed97230f44925ff47f125f7babfc7b575b6fafc",
+      "identical": true,
+      "fullFileRead": true,
+      "truncated": false,
+      "contentReference": "Same content as the earlier filesRead entry for this path"
+    },
+    {
+      "file": "input/project/src/work/Catalog.java",
+      "originalSha256": "58327eee6170e52890210eaa97de21bb0c03f9f4e2fa6abf8b135593f4dabb7e",
+      "finalSha256": "58327eee6170e52890210eaa97de21bb0c03f9f4e2fa6abf8b135593f4dabb7e",
+      "identical": true,
+      "fullFileRead": true,
+      "truncated": false,
+      "contentReference": "Same content as the earlier filesRead entry for this path"
+    },
+    {
+      "file": "input/project/src/work/Report.java",
+      "originalSha256": "9676fadef05537ae295341f08af1489c3552af8b51220c0d6a43cb70d4f40c4d",
+      "finalSha256": "9676fadef05537ae295341f08af1489c3552af8b51220c0d6a43cb70d4f40c4d",
+      "identical": true,
+      "fullFileRead": true,
+      "truncated": false,
+      "contentReference": "Same content as the earlier filesRead entry for this path"
+    },
+    {
+      "file": "input/project/src/work/Entry.java",
+      "originalSha256": "de624a95a92e1417c259a49fc74f946b64edbfab74d5cad9413fb10769016eb9",
+      "finalSha256": "de624a95a92e1417c259a49fc74f946b64edbfab74d5cad9413fb10769016eb9",
+      "identical": true,
+      "fullFileRead": true,
+      "truncated": false,
+      "contentReference": "Same content as the earlier filesRead entry for this path"
+    },
+    {
+      "file": "input/project/src/work/Demo.java",
+      "originalSha256": "7e220f46a6b7a0c2b1af55cde2cb5a0f3b6d8508cf04717a85a7ad9de255180b",
+      "finalSha256": "7e220f46a6b7a0c2b1af55cde2cb5a0f3b6d8508cf04717a85a7ad9de255180b",
+      "identical": true,
+      "fullFileRead": true,
+      "truncated": false,
+      "contentReference": "Same content as the earlier filesRead entry for this path"
+    }
+  ],
+  "generatedArtifacts": [
+    "output/execution.json",
+    "output/logs/*.json",
+    "output/*-runner.stdout.log",
+    "output/*-runner.stderr.log",
+    "output/project/.build/work/*.class",
+    "output/experiments/snapshot/src/work/Catalog.java",
+    "output/experiments/snapshot/classes/work/*.class"
+  ],
+  "outcome": {
+    "reportedBehaviorIsDefect": false,
+    "reason": "The accepted contract requires live updates of entries and total in already-open reports.",
+    "productionCodeChanged": false,
+    "testCodeChanged": true,
+    "projectFilesChanged": [
+      "test/work/SelfTest.java"
+    ],
+    "contractChanged": false,
+    "baselineChanged": false,
+    "dependenciesChanged": false,
+    "finalProjectVerificationPassed": true,
+    "expectedExperimentalFailure": "Snapshot alternative rejected at the first live reload assertion",
+    "remainingProposedWork": []
+  },
+  "skillApplied": {
+    "file": "skill/SKILL.md",
+    "fullyRead": true,
+    "referencesRead": [],
+    "workflow": [
+      "inspect contract and affected path",
+      "separate observation and explanation",
+      "reproduce before editing",
+      "test refutable predictions",
+      "change one variable in isolated experiment",
+      "preserve adequate production behavior",
+      "retain evidence and limitations"
+    ]
+  },
+  "accessSummary": {
+    "readRoots": [
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-04"
+    ],
+    "writeRoots": [
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-04\\output"
+    ],
+    "authorizedExecutableAccess": [
+      "C:/Users/robso/.jdks/temurin-25.0.3/bin",
+      "available Node runtime"
+    ],
+    "networkUsed": false,
+    "installsPerformed": false,
+    "globalSkillsRead": false,
+    "otherRunsRead": false,
+    "repositoryRead": false,
+    "realAgentConfigurationAccessed": false,
+    "accidentalOutOfScopeAccesses": []
+  },
+  "processes": {
+    "detachedProcesses": [],
+    "runningChildren": [],
+    "evidence": "All Java/javac/javap calls used spawnSync with timeout 30000. Both recorded Node script runners were awaited by PowerShell with a 30000 ms bound and returned exit 0. No background server was launched."
+  }
+}

@@ -1,0 +1,20 @@
+import java.util.Objects;
+import java.util.regex.Pattern;
+
+public final class AtomParser {
+    public enum Status { ACTIVE, PAUSED }
+    public record Atom(Status expected) {
+        public boolean matches(Status actual) { return expected == actual; }
+    }
+    public record Parsed(Atom atom, int nextOffset) { }
+    private static final Pattern ATOM = Pattern.compile(
+            "\\s*status\\s+eq\\s+(ACTIVE|PAUSED)\\b");
+
+    public Parsed parse(String text) {
+        Objects.requireNonNull(text);
+        if (text.length() > 256) throw new IllegalArgumentException("input exceeds 256 characters");
+        var match = ATOM.matcher(text);
+        if (!match.lookingAt()) throw new IllegalArgumentException("expected status atom at position 0");
+        return new Parsed(new Atom(Status.valueOf(match.group(1))), match.end());
+    }
+}

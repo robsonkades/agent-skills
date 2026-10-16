@@ -1,0 +1,488 @@
+{
+  "at": "2026-10-16T19:50:09.319Z",
+  "rootSeal": "c1f805652102ab830e3dfae13620f3bf943dce21974bbb5e42213c02f35b3b61",
+  "scope": "Agreement only on the semantic/textual subset; independent grader did not reexecute C1 or delivered verifiers. Root actual execution remains separate evidence.",
+  "comparisons": [
+    {
+      "id": "A06",
+      "maskedId": "G01",
+      "caseId": "R2",
+      "condition": "dependencies",
+      "root": {
+        "C2": true,
+        "C3": true,
+        "C4": true
+      },
+      "independent": {
+        "C2": true,
+        "C3Text": true,
+        "C4Text": true
+      },
+      "agrees": true,
+      "exposureNotes": [
+        "O review menciona uso de skills fornecidas e rotas para retry-policy, consistência e recuperação distribuída; o result menciona pacotes fora do contexto. Isso expõe contexto, sem identificar condição."
+      ]
+    },
+    {
+      "id": "A13",
+      "maskedId": "G02",
+      "caseId": "R1",
+      "condition": "reference",
+      "root": {
+        "C2": true,
+        "C3": true,
+        "C4": true
+      },
+      "independent": {
+        "C2": true,
+        "C3Text": true,
+        "C4Text": true
+      },
+      "agrees": true,
+      "exposureNotes": [
+        "Review e result citam snapshots de skills, rotas de consistência/transportes/recuperação e referências externas ao contexto que não foram abertas. Nenhuma condição foi inferida."
+      ]
+    },
+    {
+      "id": "A20",
+      "maskedId": "G03",
+      "caseId": "R3",
+      "condition": "reference",
+      "root": {
+        "C2": true,
+        "C3": true,
+        "C4": true
+      },
+      "independent": {
+        "C2": true,
+        "C3Text": true,
+        "C4Text": true
+      },
+      "agrees": true,
+      "exposureNotes": [
+        "O review declara uso de snapshots e referências locais de retry/deadline, além de recusa de rotas para outros pacotes. Isso constitui exposição parcial de contexto."
+      ]
+    },
+    {
+      "id": "A03",
+      "maskedId": "G04",
+      "caseId": "R1",
+      "condition": "candidate",
+      "root": {
+        "C2": true,
+        "C3": true,
+        "C4": true
+      },
+      "independent": {
+        "C2": true,
+        "C3Text": true,
+        "C4Text": true
+      },
+      "agrees": true,
+      "exposureNotes": [
+        "O texto menciona skills fornecidas e rotas além dos snapshots que não foram seguidas. Não foi feita associação a uma condição experimental."
+      ]
+    },
+    {
+      "id": "A10",
+      "maskedId": "G05",
+      "caseId": "R4",
+      "condition": "dependencies",
+      "root": {
+        "C2": true,
+        "C3": true,
+        "C4": true
+      },
+      "independent": {
+        "C2": true,
+        "C3Text": true,
+        "C4Text": true
+      },
+      "agrees": true,
+      "exposureNotes": [
+        "O result nomeia idempotency e timeouts-and-deadlines, e o review menciona retry-policy indisponível. Registra-se a divulgação textual, sem inferir condição."
+      ]
+    },
+    {
+      "id": "A17",
+      "maskedId": "G06",
+      "caseId": "R2",
+      "condition": "dependencies",
+      "root": {
+        "C2": true,
+        "C3": true,
+        "C4": true
+      },
+      "independent": {
+        "C2": true,
+        "C3Text": true,
+        "C4Text": true
+      },
+      "agrees": true,
+      "exposureNotes": [
+        "O review declara 'two supplied skill snapshots' e referências de key-selection/deadline-propagation. A quantidade e os temas são exposição de contexto; não foram usados para identificar condição."
+      ]
+    },
+    {
+      "id": "A24",
+      "maskedId": "G07",
+      "caseId": "R4",
+      "condition": "dependencies",
+      "root": {
+        "C2": true,
+        "C3": true,
+        "C4": true
+      },
+      "independent": {
+        "C2": true,
+        "C3Text": true,
+        "C4Text": true
+      },
+      "agrees": true,
+      "exposureNotes": [
+        "O review nomeia idempotency, timeouts-and-deadlines e duas referências locais, e o result fala em common dependency skills. Essas palavras foram registradas sem deduzir condição."
+      ]
+    },
+    {
+      "id": "A07",
+      "maskedId": "G08",
+      "caseId": "R3",
+      "condition": "candidate",
+      "root": {
+        "C2": true,
+        "C3": true,
+        "C4": true
+      },
+      "independent": {
+        "C2": true,
+        "C3Text": true,
+        "C4Text": true
+      },
+      "agrees": true,
+      "exposureNotes": [
+        "O result lista idempotency, timeouts-and-deadlines, retries-and-backoff e referências retry-in-java/deadline-propagation. É exposição explícita de contexto, sem identificação de condição."
+      ]
+    },
+    {
+      "id": "A14",
+      "maskedId": "G09",
+      "caseId": "R1",
+      "condition": "candidate",
+      "root": {
+        "C2": true,
+        "C3": true,
+        "C4": true
+      },
+      "independent": {
+        "C2": true,
+        "C3Text": true,
+        "C4Text": true
+      },
+      "agrees": true,
+      "exposureNotes": [
+        "Há menção a snapshots fornecidos e skills mais amplas não carregadas. Nenhuma tentativa de associar essa exposição a condição foi feita."
+      ]
+    },
+    {
+      "id": "A21",
+      "maskedId": "G10",
+      "caseId": "R3",
+      "condition": "candidate",
+      "root": {
+        "C2": true,
+        "C3": true,
+        "C4": true
+      },
+      "independent": {
+        "C2": true,
+        "C3Text": true,
+        "C4Text": true
+      },
+      "agrees": true,
+      "exposureNotes": [
+        "O review declara três snapshots e o result lista caminhos de idempotency, timeouts-and-deadlines, retries-and-backoff e referências. Não se tentou reconstruir a condição a partir deles."
+      ]
+    },
+    {
+      "id": "A04",
+      "maskedId": "G11",
+      "caseId": "R2",
+      "condition": "reference",
+      "root": {
+        "C2": true,
+        "C3": true,
+        "C4": true
+      },
+      "independent": {
+        "C2": true,
+        "C3Text": true,
+        "C4Text": true
+      },
+      "agrees": true,
+      "exposureNotes": [
+        "O review declara três snapshots e referências de key, retry e deadline/client; o result menciona rotas externas não abertas. Registro de exposição apenas, sem inferência de condição."
+      ]
+    },
+    {
+      "id": "A11",
+      "maskedId": "G12",
+      "caseId": "R4",
+      "condition": "reference",
+      "root": {
+        "C2": true,
+        "C3": true,
+        "C4": true
+      },
+      "independent": {
+        "C2": true,
+        "C3Text": true,
+        "C4Text": true
+      },
+      "agrees": true,
+      "exposureNotes": [
+        "O review/result citam snapshots fornecidos e rotas entre skills fora do contexto. Não se inferiu qual condição os forneceu."
+      ]
+    },
+    {
+      "id": "A18",
+      "maskedId": "G13",
+      "caseId": "R2",
+      "condition": "reference",
+      "root": {
+        "C2": true,
+        "C3": true,
+        "C4": true
+      },
+      "independent": {
+        "C2": true,
+        "C3Text": true,
+        "C4Text": true
+      },
+      "agrees": true,
+      "exposureNotes": [
+        "Menciona snapshots e rotas como consistency-models e distributed-transactions-and-sagas não abertas. A divulgação foi registrada sem mapear condições."
+      ]
+    },
+    {
+      "id": "A01",
+      "maskedId": "G14",
+      "caseId": "R1",
+      "condition": "dependencies",
+      "root": {
+        "C2": true,
+        "C3": true,
+        "C4": true
+      },
+      "independent": {
+        "C2": true,
+        "C3Text": true,
+        "C4Text": true
+      },
+      "agrees": true,
+      "exposureNotes": [
+        "O texto diz 'two supplied snapshots' e 'two supplied skills', além de referências locais. Isso é exposição parcial; nenhuma condição foi atribuída."
+      ]
+    },
+    {
+      "id": "A08",
+      "maskedId": "G15",
+      "caseId": "R3",
+      "condition": "dependencies",
+      "root": {
+        "C2": true,
+        "C3": true,
+        "C4": true
+      },
+      "independent": {
+        "C2": true,
+        "C3Text": true,
+        "C4Text": true
+      },
+      "agrees": true,
+      "exposureNotes": [
+        "Nomeia idempotency e timeouts-and-deadlines e a referência local deadline-propagation; informa rotas não abertas. Nenhuma condição foi inferida desses nomes."
+      ]
+    },
+    {
+      "id": "A15",
+      "maskedId": "G16",
+      "caseId": "R1",
+      "condition": "dependencies",
+      "root": {
+        "C2": true,
+        "C3": true,
+        "C4": true
+      },
+      "independent": {
+        "C2": true,
+        "C3Text": true,
+        "C4Text": true
+      },
+      "agrees": true,
+      "exposureNotes": [
+        "O texto menciona dois snapshots/dois pacotes locais e referências relacionadas. Registra-se a exposição, sem identificar condição."
+      ]
+    },
+    {
+      "id": "A22",
+      "maskedId": "G17",
+      "caseId": "R4",
+      "condition": "reference",
+      "root": {
+        "C2": true,
+        "C3": true,
+        "C4": true
+      },
+      "independent": {
+        "C2": true,
+        "C3Text": true,
+        "C4Text": true
+      },
+      "agrees": true,
+      "exposureNotes": [
+        "O texto menciona snapshots e rotas para outros skills fora do contexto. Essa informação foi registrada sem tentar identificar condição."
+      ]
+    },
+    {
+      "id": "A05",
+      "maskedId": "G18",
+      "caseId": "R2",
+      "condition": "candidate",
+      "root": {
+        "C2": true,
+        "C3": true,
+        "C4": true
+      },
+      "independent": {
+        "C2": true,
+        "C3Text": true,
+        "C4Text": true
+      },
+      "agrees": true,
+      "exposureNotes": [
+        "O review cita snapshots e referências locais e rotas de consistência, reconciliação, RPC e resiliência de frota não abertas. Não houve inferência de condição."
+      ]
+    },
+    {
+      "id": "A12",
+      "maskedId": "G19",
+      "caseId": "R4",
+      "condition": "candidate",
+      "root": {
+        "C2": true,
+        "C3": true,
+        "C4": true
+      },
+      "independent": {
+        "C2": true,
+        "C3Text": true,
+        "C4Text": true
+      },
+      "agrees": true,
+      "exposureNotes": [
+        "Declara uso de skills e referências fornecidas, sem seguir links para outros skills ou contratos externos. Não foi atribuída condição."
+      ]
+    },
+    {
+      "id": "A19",
+      "maskedId": "G20",
+      "caseId": "R3",
+      "condition": "dependencies",
+      "root": {
+        "C2": true,
+        "C3": true,
+        "C4": true
+      },
+      "independent": {
+        "C2": true,
+        "C3Text": true,
+        "C4Text": true
+      },
+      "agrees": true,
+      "exposureNotes": [
+        "O review diz que dois skills foram fornecidos e que retries-and-backoff não estava no contexto; menciona deadline-propagation. Essa divulgação não foi usada para reconstruir condição."
+      ]
+    },
+    {
+      "id": "A02",
+      "maskedId": "G21",
+      "caseId": "R1",
+      "condition": "reference",
+      "root": {
+        "C2": true,
+        "C3": true,
+        "C4": true
+      },
+      "independent": {
+        "C2": true,
+        "C3Text": true,
+        "C4Text": true
+      },
+      "agrees": true,
+      "exposureNotes": [
+        "Nomeia idempotency, timeouts-and-deadlines e retries-and-backoff e diz ter usado seis referências locais. A exposição foi registrada sem inferência de condição."
+      ]
+    },
+    {
+      "id": "A09",
+      "maskedId": "G22",
+      "caseId": "R3",
+      "condition": "reference",
+      "root": {
+        "C2": true,
+        "C3": true,
+        "C4": true
+      },
+      "independent": {
+        "C2": true,
+        "C3Text": true,
+        "C4Text": true
+      },
+      "agrees": true,
+      "exposureNotes": [
+        "Menciona skills fornecidos, referências retry/deadline e referências endpoint/key/client fora do escopo. Não foi feita identificação de condição."
+      ]
+    },
+    {
+      "id": "A16",
+      "maskedId": "G23",
+      "caseId": "R2",
+      "condition": "candidate",
+      "root": {
+        "C2": true,
+        "C3": true,
+        "C4": true
+      },
+      "independent": {
+        "C2": true,
+        "C3Text": true,
+        "C4Text": true
+      },
+      "agrees": true,
+      "exposureNotes": [
+        "Review e result citam snapshots e referências locais, com rotas externas não seguidas. Registra-se exposição de contexto sem atribuir condição."
+      ]
+    },
+    {
+      "id": "A23",
+      "maskedId": "G24",
+      "caseId": "R4",
+      "condition": "candidate",
+      "root": {
+        "C2": true,
+        "C3": true,
+        "C4": true
+      },
+      "independent": {
+        "C2": true,
+        "C3Text": true,
+        "C4Text": true
+      },
+      "agrees": true,
+      "exposureNotes": [
+        "O result menciona 'three supplied skill snapshots' e referências condicionais locais; o review informa rotas/web links não abertos. Nenhuma condição foi inferida."
+      ]
+    }
+  ],
+  "discrepancies": []
+}

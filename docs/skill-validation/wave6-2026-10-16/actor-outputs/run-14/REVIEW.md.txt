@@ -1,0 +1,27 @@
+# Revisão de ResultBridge.currentValue()
+
+**Disposição: unresolved.** O contrato de produção depende do provider ausente. A afirmação de que o `volatile` basta independentemente da entrega não está sustentada; tampouco foi demonstrado defeito no provider implantado ou observado resultado incorreto de produção.
+
+O contrato aceito permite `-1` quando não há snapshot e exige `91` quando há. Ele admite `setValue` antes da entrega, proíbe mutações posteriores e não especifica publicação entre threads. Non-null, callback único/at-most-once e um log com horário anterior não estabelecem a relação de memória que falta (`docs/contract.md`).
+
+O caminho local é completo: `attach` registra `value -> latest=value` (`src/work/ResultBridge.java:4`); `latest` é uma referência volatile (linha 3); `currentValue` a lê uma única vez, retorna `-1` para null e, caso contrário, lê `Snapshot.value` pelo objeto selecionado (linha 5). `Snapshot.java:2` contém um `int` comum escrito pelo setter. Não há escrita concorrente posterior autorizada pelo contrato, operação composta ou múltiplas leituras de `latest` a corrigir.
+
+A prova necessária é:
+
+```text
+P: setValue(91)
+    -- happens-before ainda não comprovado -->
+C: callback -> escrita volatile latest
+    -- synchronizes-with -->
+R: leitura volatile latest -> leitura observed.value
+```
+
+A escrita volatile ordena o trecho C→R para a leitura que observa a publicação. Para concluir P→R por transitividade, P→C precisa existir: ordem de programa se setter e callback executam no mesmo thread, ou transferência sincronizada demonstrável entre eles. A aquisição de uma referência por uma corrida seguida de publicação volatile não cria retroativamente essa aresta. Tempo de relógio não a substitui. Essas regras são as da [JLS SE25 §17.4.4–17.4.5](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.4.5).
+
+O `final` da classe `Snapshot` não torna seu campo final. O setter ocorre depois da construção; não há proteção de final-field para essa escrita ([JLS §17.5](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.5)). Sem comprovar P→C, não se pode excluir uma leitura desatualizada, como o valor inicial `0`, em uma entrega racy hipotética. Esse cenário seria inaceitável pelo contrato; não foi atribuído ao provider real nem reproduzido.
+
+A menor evidência suficiente é o caminho de implementação do provider mostrando a escrita de `91` antes do callback no mesmo thread, ou as operações concretas de uma transferência com garantia de memória. Alternativamente, explicitar no contrato do provider que as escritas que preparam o snapshot acontecem-before a execução do callback, preservando a proibição existente de mutações posteriores, e verificar que sua implementação cumpre isso. Não se justifica mudar a API de `Snapshot`, adicionar locks ao bridge ou implementar outra correção de produção sem essa evidência.
+
+**Observado:** o `node check.mjs` fornecido compilou com `--release 25` e executou `work.Smoke` no Temurin 25.0.3, sem preview/dependências, saída `synchronous provider PASS; deployed provider absent`, exit 0. Nesse teste, construção, setter, callback e leitura são síncronos; a garantia local decorre da ordem de programa, não da frequência de sucesso. Hashes dos oito arquivos fornecidos em cada cópia permaneceram iguais.
+
+**Limites:** provider implantado, binário, identidade dos threads e transferência não fornecidos; sem execução em produção, stress/jcstress ou análise de outros ambientes. A revisão e o smoke não provam a integração ausente. Fontes, contratos e dependências foram preservados; os subprocessos terminaram.

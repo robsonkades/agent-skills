@@ -1,0 +1,20 @@
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public final class CaseProbe {
+    public static void main(String[] args) throws Exception {
+        Properties consumer = new Properties();
+        try (InputStream input = Files.newInputStream(Path.of(args[0]))) { consumer.load(input); }
+        AtomicInteger closes = new AtomicInteger();
+        FixtureFetcher fetcher = FixtureFetcher.threeEvents();
+        ExportJob.Receipt receipt = args[1].equals("original") ? ExportJob.run(fetcher, closes) : CompleteExportJob.run(fetcher, closes);
+        System.out.println("requested=" + consumer.getProperty("requestedTraversal") + " receipt=" + receipt + " closes=" + closes + " fetches=" + fetcher.fetches);
+        if (!receipt.recordedIds().equals(List.of(1, 2)) || closes.get() != 1 || fetcher.fetches.get() != 1) throw new AssertionError("order, effects, closure or fetch count");
+        String expectedStatus = consumer.getProperty("requestedTraversal").equals("prefix") ? "COMPLETE" : "INCOMPLETE";
+        if (!receipt.status().equals(expectedStatus)) throw new AssertionError("receipt violates requested traversal: expected " + expectedStatus);
+    }
+}

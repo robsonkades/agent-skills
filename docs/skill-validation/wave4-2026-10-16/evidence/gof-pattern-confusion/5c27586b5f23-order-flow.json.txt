@@ -1,0 +1,17 @@
+{
+  "label": "order-flow",
+  "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+  "args": [
+    "-cp",
+    "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-confusion\\classes",
+    "OrderFlow"
+  ],
+  "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-confusion",
+  "exitCode": 0,
+  "expectedExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "INPUT_ACCEPTED\r\nOrderValidated published\r\nCREDIT_REJECTED\r\nat-publication: inputAccepted=true, creditDecision=PENDING\r\n",
+  "stderr": "",
+  "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-confusion\\logs\\order-flow.json"
+}

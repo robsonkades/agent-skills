@@ -1,0 +1,723 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "component-and-release-boundaries",
+  "ownedPath": "skills/component-and-release-boundaries/**",
+  "allWritesStopped": true,
+  "activeBackgroundProcesses": [],
+  "reviewDate": "2026-10-16",
+  "assignment": "Wave four specialist review; exactly one existing package. Earlier jvm-bytecode ownership remains closed.",
+  "procedure": {
+    "read": [
+      "AGENTS.md",
+      "docs/parallel-skill-reviews.md",
+      "docs/skill-review-prompt.md",
+      "docs/skill-validation/wave4-2026-10-16/review-brief.md",
+      "skills/skill-engineering/SKILL.md",
+      "skills/skill-engineering/references/evidence-and-confidence.md",
+      "skills/skill-engineering/references/evaluation.md",
+      "skills/skill-engineering/references/resource-design.md",
+      "skills/skill-engineering/references/anti-patterns.md"
+    ],
+    "contextualEvidence": "Relevant comparative-research findings, roadmap specialist-behavior guidance and previous-wave limits reused/read. Complete four-file assigned package reviewed. Full single-skill prompt and new wave-four brief read.",
+    "findingsBeforeEditing": true,
+    "ownership": "Only three owned package files edited; review evidence and handoff written to the coordinator-assigned temporary root. No delegation, global builds, installs, neighboring/shared repo edits or Git state changes."
+  },
+  "baseline": {
+    "committedVersion": "1.2.4",
+    "assignmentVersion": "1.2.4",
+    "preexistingVersionBump": false,
+    "stagedChanges": [],
+    "unstagedChanges": [],
+    "untrackedFiles": [],
+    "recordedWaveBaseline": "docs/skill-validation/wave4-2026-10-16/baseline.json packages[name=component-and-release-boundaries]",
+    "verification": "Committed and assignment manifests both 1.2.4; owned Git status/diffs/untracked lists empty. Recorded wave hashes match assignment snapshot.",
+    "inspectionCommand": "rg --files -g AGENTS.md -g '!node_modules' -g '!registry'; git status --short -- skills/component-and-release-boundaries; git diff --cached -- skills/component-and-release-boundaries; git diff -- skills/component-and-release-boundaries; git ls-files --others --exclude-standard -- skills/component-and-release-boundaries; git show HEAD:skills/component-and-release-boundaries/skill.yaml; rg --files skills/component-and-release-boundaries; Get-Content -Raw docs/skill-validation/wave4-2026-10-16/review-brief.md; Get-Content -Raw docs/skill-review-prompt.md"
+  },
+  "domainSuccessCriteria": [
+    "Distinguish publication/change units from consumer source recompilation, application repackaging and runtime rollout.",
+    "Trace actual published artifacts, consumer selection and packaging before judging delivery cost or a boundary failure.",
+    "Preserve supported old consumers, compatibility contracts, rollout/rollback policy and existing ownership boundaries.",
+    "Require evidence of simultaneous upgrade necessity before diagnosing lockstep; retain legitimate independent release and no-change alternatives."
+  ],
+  "findingsCorrected": [
+    {
+      "id": "F1",
+      "locationBefore": "references/component-principles.md:34-37, Common closure",
+      "finding": "The text inferred one release/revalidation/deployment from one changed artifact.",
+      "consequence": "For a shared library bundled into applications, that conflates publishing the library with delivering its behavior to each consumer and understates the release cost.",
+      "correction": "Describe common closure as reducing independently evolved artifacts and require inspection of consumer delivery paths before claiming rebuild/deployment savings.",
+      "evidence": "A library method-body update is binary-compatible under JLS 21 §13.4.22. In the isolated probe, publishing the new jar left the old bundled application behavior unchanged; a new application bundle delivered the update with byte-identical consumer class files."
+    },
+    {
+      "id": "F2",
+      "locationBefore": "references/shared-code-in-a-fleet.md:227-229, Upgrade blast radius",
+      "finding": "The existing good eventual/deadline/simultaneous distinction did not operationalize the compilation-versus-packaging boundary needed to correct F1.",
+      "consequence": "A reader could turn 'no consumer recompilation required' into 'no consumer delivery work required', or conclude that repackaging multiple consumers proves forced lockstep.",
+      "correction": "Count publication, source recompilation, repackaging and deployments separately; inspect immutable embedded versus supported external dependency delivery; retain behavioral checks and timing distinction."
+    }
+  ],
+  "findingsRemaining": [],
+  "filesChangedByReviewer": [
+    {
+      "path": "skills/component-and-release-boundaries/references/component-principles.md",
+      "change": "Correct common-closure savings claim without changing its cohesion trade-off."
+    },
+    {
+      "path": "skills/component-and-release-boundaries/references/shared-code-in-a-fleet.md",
+      "change": "Explain delivery work and effective packaged/runtime dependency selection in the existing verification bullet."
+    },
+    {
+      "path": "skills/component-and-release-boundaries/skill.yaml",
+      "change": "Single patch bump 1.2.4 to 1.2.5."
+    }
+  ],
+  "preexistingChanges": [],
+  "attribution": [
+    {
+      "path": "skills/component-and-release-boundaries/skill.yaml",
+      "baselineSHA256": "06A210A22CF893B9E3161BDD98B18E73A21AF969FF0B0D8D65430347436B069F",
+      "finalSHA256": "074690C2F09A05492926798BAC23780E9355D4838808FBA9AF4C08C7F9F153E7",
+      "changed": true,
+      "beforeFences": 0,
+      "afterFences": 0,
+      "allFencesUnchanged": true
+    },
+    {
+      "path": "skills/component-and-release-boundaries/SKILL.md",
+      "baselineSHA256": "90622F801FA139B9231F3D8BFD92D0A5682E37A160A140184688794070D6533E",
+      "finalSHA256": "90622F801FA139B9231F3D8BFD92D0A5682E37A160A140184688794070D6533E",
+      "changed": false,
+      "beforeFences": 1,
+      "afterFences": 1,
+      "allFencesUnchanged": true
+    },
+    {
+      "path": "skills/component-and-release-boundaries/references/shared-code-in-a-fleet.md",
+      "baselineSHA256": "C2A4A5D2E8BC789A0C7118B00D49D1D6C342D9D87E2E1BD1EFCB583AAD6EC498",
+      "finalSHA256": "0853FE7A0250F6C7503DF48BA4DCC7A76141EE62A71C8A289EA13A46899968D1",
+      "changed": true,
+      "beforeFences": 3,
+      "afterFences": 3,
+      "allFencesUnchanged": true
+    },
+    {
+      "path": "skills/component-and-release-boundaries/references/component-principles.md",
+      "baselineSHA256": "D9B5D7A99C76B4AC3B1801672A001B2BDCC420F60437F97BE77E17567349D757",
+      "finalSHA256": "0403D8E44885CDCAE465A071BE85A9DA3F192AC6CB41932690ED5494E6584514",
+      "changed": true,
+      "beforeFences": 6,
+      "afterFences": 6,
+      "allFencesUnchanged": true
+    }
+  ],
+  "capabilities": {
+    "preserved": [
+      "Internal build/encapsulation modules versus independently published release components.",
+      "Actual consumer ownership, compatibility windows and binding release/approval authority.",
+      "Common closure/reuse trade-offs and legitimate retention, duplication, merging or splitting.",
+      "Maven source/build/plugin/extension graph distinctions and source versus runtime call direction.",
+      "Metrics as investigation prompts, sealed-type extension limits and JPMS versus artifact publication.",
+      "Published consumer compile/runtime validation, transitive resolution and metadata boundaries.",
+      "Fleet domain-rule ownership, schema/entity cautions, immutable artifact migration and duplicate-class/split-package checks.",
+      "Old/new consumer coexistence, eventual versus deadline versus simultaneous upgrade distinctions."
+    ],
+    "replaced": [
+      "Unconditional inference that a single changed artifact means one deployment."
+    ],
+    "intentionallyRemoved": [],
+    "preservationCheck": "SKILL.md byte-identical to assignment. All ten fenced blocks across the package are unchanged. Manifest descriptions, dependencies and suggests are unchanged apart from version."
+  },
+  "versions": {
+    "committed": "1.2.4",
+    "assignment": "1.2.4",
+    "final": "1.2.5",
+    "rationale": "One compatible documentation-correction patch; clean baseline had no unpublished bump to reuse. Shared generated index left to coordinator."
+  },
+  "referrals": {
+    "newOptionalReferrals": [],
+    "suggestsChanged": false,
+    "note": "The only new external link points to JLS 21; no new cross-skill handoff. Existing 13 declared dependency/suggestion targets checked for existence; this is not the global routing audit."
+  },
+  "compatibilityContract": {
+    "skillBaseline": "No mandatory Java baseline; existing feature-specific Java 9/16/17 conditions preserved.",
+    "fixtureCompiler": "javac 25.0.3 --release 17",
+    "fixtureRuntime": "Temurin 25.0.3+9 HotSpot on Windows",
+    "classFileMajor": 61,
+    "limitation": "This does not execute Java 17 or prove arbitrary old-JVM compatibility. The fixture selects target 17 for an isolated check, not as a new skill or consumer requirement."
+  },
+  "executedChecks": [
+    {
+      "check": {
+        "name": "package-and-links",
+        "cmd": "@'\nimport { readFileSync, existsSync } from 'node:fs';\nimport { resolve, dirname } from 'node:path';\nimport { parseManifest } from './packages/core/src/domain/manifest.ts';\nimport { buildSkillPackage } from './packages/core/src/domain/skill-package.ts';\nimport { validatePackage } from './packages/core/src/application/validate-package.ts';\n\nconst root = resolve('skills/component-and-release-boundaries');\nconst paths = ['SKILL.md', 'skill.yaml', 'references/component-principles.md', 'references/shared-code-in-a-fleet.md'];\nconst parsed = parseManifest(readFileSync(resolve(root, 'skill.yaml'), 'utf8'), { strict: true });\nconst pkg = buildSkillPackage(parsed.manifest, paths.map(path => ({ path, bytes: readFileSync(resolve(root, path)) })));\nconst report = validatePackage(pkg, { directoryName: 'component-and-release-boundaries' });\nconst failures = [...parsed.issues, ...report.issues];\nconst resources = [];\nfor (const path of paths.filter(path => path.endsWith('.md'))) {\n  const source = readFileSync(resolve(root, path), 'utf8');\n  for (const match of source.matchAll(/\\]\\(([^)]+)\\)/g)) {\n    const target = match[1].replace(/^<|>$/g, '');\n    if (/^https?:/.test(target)) continue;\n    const filePart = target.split('#')[0];\n    const absolute = resolve(dirname(resolve(root, path)), filePart || path.split('/').at(-1));\n    resources.push({ from: path, target, exists: existsSync(absolute) });\n    if (!existsSync(absolute)) failures.push({ missing: target, from: path });\n  }\n  for (const match of source.matchAll(/\\x60((?:references|assets|scripts)\\/[^\\x60]+)\\x60/g)) {\n    const absolute = resolve(root, match[1].split('#')[0]);\n    resources.push({ from: path, target: match[1], exists: existsSync(absolute) });\n    if (!existsSync(absolute)) failures.push({ missing: match[1], from: path });\n  }\n}\nconst related = [...parsed.manifest.dependencies.map(item => item.name), ...parsed.manifest.suggests];\nconst missingRelated = related.filter(name => !existsSync(resolve('skills', name, 'SKILL.md')));\nif (missingRelated.length) failures.push({ missingRelated });\nconsole.log(JSON.stringify({ skill: parsed.manifest.name, version: parsed.manifest.version, files: paths.length, packageReport: report, parseIssues: parsed.issues, resources, relatedSkillsChecked: related.length, missingRelated, failures }, null, 2));\nprocess.exitCode = failures.length ? 1 : 0;\n'@ | node --input-type=module",
+        "workdir": "C:/git/agent-skills",
+        "max_output_tokens": 2600
+      },
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "efb411",
+          "wall_time_seconds": 0.2744634,
+          "exit_code": 0,
+          "original_token_count": 307,
+          "output": "{\n  \"skill\": \"component-and-release-boundaries\",\n  \"version\": \"1.2.5\",\n  \"files\": 4,\n  \"packageReport\": {\n    \"ok\": true,\n    \"issues\": [],\n    \"errors\": [],\n    \"warnings\": []\n  },\n  \"parseIssues\": [],\n  \"resources\": [\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/component-principles.md#acyclic-dependencies\",\n      \"exists\": true\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/component-principles.md#check-the-published-consumer-boundary\",\n      \"exists\": true\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/component-principles.md\",\n      \"exists\": true\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/shared-code-in-a-fleet.md\",\n      \"exists\": true\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/component-principles.md\",\n      \"exists\": true\n    },\n    {\n      \"from\": \"references/component-principles.md\",\n      \"target\": \"shared-code-in-a-fleet.md\",\n      \"exists\": true\n    },\n    {\n      \"from\": \"references/shared-code-in-a-fleet.md\",\n      \"target\": \"component-principles.md#check-the-published-consumer-boundary\",\n      \"exists\": true\n    }\n  ],\n  \"relatedSkillsChecked\": 13,\n  \"missingRelated\": [],\n  \"failures\": []\n}\n"
+        }
+      }
+    },
+    {
+      "check": {
+        "name": "prettier-check",
+        "cmd": "node node_modules/prettier/bin/prettier.cjs --check skills/component-and-release-boundaries/SKILL.md skills/component-and-release-boundaries/skill.yaml skills/component-and-release-boundaries/references/component-principles.md skills/component-and-release-boundaries/references/shared-code-in-a-fleet.md",
+        "workdir": "C:/git/agent-skills",
+        "max_output_tokens": 1000
+      },
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "d07c7a",
+          "wall_time_seconds": 0.3261795,
+          "exit_code": 0,
+          "original_token_count": 17,
+          "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+        }
+      }
+    },
+    {
+      "check": {
+        "name": "diff-whitespace",
+        "cmd": "git diff --check -- skills/component-and-release-boundaries",
+        "workdir": "C:/git/agent-skills",
+        "max_output_tokens": 700
+      },
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "516a13",
+          "wall_time_seconds": 0.1334694,
+          "exit_code": 0,
+          "original_token_count": 0,
+          "output": ""
+        }
+      }
+    },
+    {
+      "kind": "technical-compile-package-disassemble",
+      "cmd": "$ErrorActionPreference = 'Stop'; $probeJdk = 'C:/Users/robso/.jdks/temurin-25.0.3/bin'; New-Item -ItemType Directory -Force -Path classes/v1, classes/v2, classes/consumer, published, bundles | Out-Null; & \"$probeJdk/javac.exe\" --release 17 -d classes/v1 v1/com/example/text/LineEndings.java 1> compile-v1.stdout.log 2> compile-v1.stderr.log; if ($LASTEXITCODE -ne 0) { throw 'v1 compile failed' }; & \"$probeJdk/jar.exe\" --create --file published/text-core-1.0.0.jar -C classes/v1 .; if ($LASTEXITCODE -ne 0) { throw 'v1 jar failed' }; & \"$probeJdk/javac.exe\" --release 17 -cp published/text-core-1.0.0.jar -d classes/consumer consumer/com/example/app/ReportApp.java 1> compile-consumer.stdout.log 2> compile-consumer.stderr.log; if ($LASTEXITCODE -ne 0) { throw 'consumer compile failed' }; & \"$probeJdk/jar.exe\" --create --file published/report-app-1.0.0.jar -C classes/consumer .; if ($LASTEXITCODE -ne 0) { throw 'consumer jar failed' }; & \"$probeJdk/jar.exe\" --create --file bundles/report-1.0.0.jar --main-class com.example.app.ReportApp -C classes/consumer . -C classes/v1 .; if ($LASTEXITCODE -ne 0) { throw 'old bundle failed' }; & \"$probeJdk/javac.exe\" --release 17 -d classes/v2 v2/com/example/text/LineEndings.java 1> compile-v2.stdout.log 2> compile-v2.stderr.log; if ($LASTEXITCODE -ne 0) { throw 'v2 compile failed' }; & \"$probeJdk/jar.exe\" --create --file published/text-core-1.0.1.jar -C classes/v2 .; if ($LASTEXITCODE -ne 0) { throw 'v2 jar failed' }; & \"$probeJdk/jar.exe\" --create --file bundles/report-1.0.1.jar --main-class com.example.app.ReportApp -C classes/consumer . -C classes/v2 .; if ($LASTEXITCODE -ne 0) { throw 'new bundle failed' }; & \"$probeJdk/javap.exe\" -p -c -v -classpath published/report-app-1.0.0.jar com.example.app.ReportApp 1> consumer-javap.stdout.log 2> consumer-javap.stderr.log; if ($LASTEXITCODE -ne 0) { throw 'javap failed' }; Get-Content compile-v1.stderr.log,compile-consumer.stderr.log,compile-v2.stderr.log,consumer-javap.stderr.log; Write-Output 'Compiled library v1/v2 and consumer once; published separate and bundled jars; all commands exit 0.'",
+      "workdir": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe",
+      "chunk_id": "3fbbdd",
+      "wall_time_seconds": 2.3143204,
+      "exit_code": 0,
+      "original_token_count": 26,
+      "output": "Compiled library v1/v2 and consumer once; published separate and bundled jars; all commands exit 0.\r\n"
+    },
+    {
+      "kind": "technical-runtime",
+      "id": "bundled-old-after-publication",
+      "arguments": [
+        "-jar",
+        "bundles/report-1.0.0.jar",
+        "CR"
+      ],
+      "cmd": "$probeProcess = Start-Process -FilePath 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -ArgumentList @('-jar', 'bundles/report-1.0.0.jar', 'CR') -WindowStyle Hidden -PassThru -RedirectStandardOutput 'bundled-old-after-publication.stdout.log' -RedirectStandardError 'bundled-old-after-publication.stderr.log'; if (-not $probeProcess.WaitForExit(30000)) { $probeProcess.Kill(); $probeProcess.WaitForExit(); throw 'Probe exceeded 30 seconds' }; $probeExit = $probeProcess.ExitCode; Get-Content 'bundled-old-after-publication.stdout.log'; Get-Content 'bundled-old-after-publication.stderr.log'; Write-Output \"java exit=$probeExit\"; exit $probeExit",
+      "workdir": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe",
+      "chunk_id": "028a0c",
+      "wall_time_seconds": 0.2717191,
+      "exit_code": 0,
+      "original_token_count": 6,
+      "output": "A<CR>B\r\njava exit=0\r\n"
+    },
+    {
+      "kind": "technical-runtime",
+      "id": "bundled-repackaged",
+      "arguments": [
+        "-jar",
+        "bundles/report-1.0.1.jar",
+        "LF"
+      ],
+      "cmd": "$probeProcess = Start-Process -FilePath 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -ArgumentList @('-jar', 'bundles/report-1.0.1.jar', 'LF') -WindowStyle Hidden -PassThru -RedirectStandardOutput 'bundled-repackaged.stdout.log' -RedirectStandardError 'bundled-repackaged.stderr.log'; if (-not $probeProcess.WaitForExit(30000)) { $probeProcess.Kill(); $probeProcess.WaitForExit(); throw 'Probe exceeded 30 seconds' }; $probeExit = $probeProcess.ExitCode; Get-Content 'bundled-repackaged.stdout.log'; Get-Content 'bundled-repackaged.stderr.log'; Write-Output \"java exit=$probeExit\"; exit $probeExit",
+      "workdir": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe",
+      "chunk_id": "4e00f9",
+      "wall_time_seconds": 0.2412348,
+      "exit_code": 0,
+      "original_token_count": 6,
+      "output": "A<LF>B\r\njava exit=0\r\n"
+    },
+    {
+      "kind": "technical-runtime",
+      "id": "external-old",
+      "arguments": [
+        "-cp",
+        "published/report-app-1.0.0.jar;published/text-core-1.0.0.jar",
+        "com.example.app.ReportApp",
+        "CR"
+      ],
+      "cmd": "$probeProcess = Start-Process -FilePath 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -ArgumentList @('-cp', 'published/report-app-1.0.0.jar;published/text-core-1.0.0.jar', 'com.example.app.ReportApp', 'CR') -WindowStyle Hidden -PassThru -RedirectStandardOutput 'external-old.stdout.log' -RedirectStandardError 'external-old.stderr.log'; if (-not $probeProcess.WaitForExit(30000)) { $probeProcess.Kill(); $probeProcess.WaitForExit(); throw 'Probe exceeded 30 seconds' }; $probeExit = $probeProcess.ExitCode; Get-Content 'external-old.stdout.log'; Get-Content 'external-old.stderr.log'; Write-Output \"java exit=$probeExit\"; exit $probeExit",
+      "workdir": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe",
+      "chunk_id": "78c2c9",
+      "wall_time_seconds": 0.2549427,
+      "exit_code": 0,
+      "original_token_count": 6,
+      "output": "A<CR>B\r\njava exit=0\r\n"
+    },
+    {
+      "kind": "technical-runtime",
+      "id": "external-updated",
+      "arguments": [
+        "-cp",
+        "published/report-app-1.0.0.jar;published/text-core-1.0.1.jar",
+        "com.example.app.ReportApp",
+        "LF"
+      ],
+      "cmd": "$probeProcess = Start-Process -FilePath 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -ArgumentList @('-cp', 'published/report-app-1.0.0.jar;published/text-core-1.0.1.jar', 'com.example.app.ReportApp', 'LF') -WindowStyle Hidden -PassThru -RedirectStandardOutput 'external-updated.stdout.log' -RedirectStandardError 'external-updated.stderr.log'; if (-not $probeProcess.WaitForExit(30000)) { $probeProcess.Kill(); $probeProcess.WaitForExit(); throw 'Probe exceeded 30 seconds' }; $probeExit = $probeProcess.ExitCode; Get-Content 'external-updated.stdout.log'; Get-Content 'external-updated.stderr.log'; Write-Output \"java exit=$probeExit\"; exit $probeExit",
+      "workdir": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe",
+      "chunk_id": "973a3e",
+      "wall_time_seconds": 0.2495785,
+      "exit_code": 0,
+      "original_token_count": 6,
+      "output": "A<LF>B\r\njava exit=0\r\n"
+    },
+    {
+      "kind": "consumer-binary-identity-and-process-scan",
+      "command": {
+        "name": "artifact-entry-hashes",
+        "cmd": "Add-Type -AssemblyName System.IO.Compression.FileSystem; $entryRecords = foreach ($jarPath in @('published/report-app-1.0.0.jar', 'bundles/report-1.0.0.jar', 'bundles/report-1.0.1.jar')) { $archive = [System.IO.Compression.ZipFile]::OpenRead((Join-Path (Get-Location).Path $jarPath)); try { $entry = $archive.GetEntry('com/example/app/ReportApp.class'); $entryStream = $entry.Open(); try { $hashAlgorithm = [System.Security.Cryptography.SHA256]::Create(); try { $entryHash = [Convert]::ToHexString($hashAlgorithm.ComputeHash($entryStream)); [pscustomobject]@{ Jar = $jarPath; Entry = $entry.FullName; SHA256 = $entryHash } } finally { $hashAlgorithm.Dispose() } } finally { $entryStream.Dispose() } } finally { $archive.Dispose() } }; if (@($entryRecords.SHA256 | Select-Object -Unique).Count -ne 1) { throw 'Consumer classes differ' }; $entryRecords | ConvertTo-Json; Select-String -Path consumer-javap.stdout.log -Pattern 'major version|LineEndings.normalize|invokestatic' -Context 0,1; $probeProcesses = @(Get-CimInstance Win32_Process | Where-Object { $_.Name -in @('java.exe','javac.exe','javap.exe','jar.exe') -and ($_.CommandLine -like '*com.example.app.ReportApp*' -or $_.CommandLine -like '*bundles/report-*' -or $_.CommandLine -like '*LineEndings.java*') } | Select-Object ProcessId,Name,CommandLine); [pscustomobject]@{ ActiveProbeProcesses = $probeProcesses } | ConvertTo-Json -Depth 4",
+        "workdir": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe",
+        "max_output_tokens": 2200
+      },
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "4b8317",
+          "wall_time_seconds": 0.5184,
+          "exit_code": 0,
+          "original_token_count": 539,
+          "output": "[\r\n  {\r\n    \"Jar\": \"published/report-app-1.0.0.jar\",\r\n    \"Entry\": \"com/example/app/ReportApp.class\",\r\n    \"SHA256\": \"9D329303B2F84EE6BF42CC4F73A17A46A4CC289033274D0ED815F9920876AEAB\"\r\n  },\r\n  {\r\n    \"Jar\": \"bundles/report-1.0.0.jar\",\r\n    \"Entry\": \"com/example/app/ReportApp.class\",\r\n    \"SHA256\": \"9D329303B2F84EE6BF42CC4F73A17A46A4CC289033274D0ED815F9920876AEAB\"\r\n  },\r\n  {\r\n    \"Jar\": \"bundles/report-1.0.1.jar\",\r\n    \"Entry\": \"com/example/app/ReportApp.class\",\r\n    \"SHA256\": \"9D329303B2F84EE6BF42CC4F73A17A46A4CC289033274D0ED815F9920876AEAB\"\r\n  }\r\n]\r\n\r\n> consumer-javap.stdout.log:7:  major version: 61\r\n  consumer-javap.stdout.log:8:  flags: (0x0031) ACC_PUBLIC, ACC_FINAL, ACC_SUPER\r\n> consumer-javap.stdout.log:38:  #26 = Methodref          #27.#28        // \r\ncom/example/text/LineEndings.normalize:(Ljava/lang/String;)Ljava/lang/String;\r\n  consumer-javap.stdout.log:39:  #27 = Class              #29            // com/example/text/LineEndings\r\n> consumer-javap.stdout.log:89:  #77 = MethodHandle       6:#78          // REF_invokeStatic java/lang/invoke/StringCon\r\ncatFactory.makeConcatWithConstants:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodTy\r\npe;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/invoke/CallSite;\r\n  consumer-javap.stdout.log:90:  #78 = Methodref          #79.#80        // java/lang/invoke/StringConcatFactory.makeCo\r\nncatWithConstants:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/Str\r\ning;[Ljava/lang/Object;)Ljava/lang/invoke/CallSite;\r\n> consumer-javap.stdout.log:140:        40: invokestatic  #26                 // Method \r\ncom/example/text/LineEndings.normalize:(Ljava/lang/String;)Ljava/lang/String;\r\n  consumer-javap.stdout.log:141:        43: astore_1\r\n> consumer-javap.stdout.log:197:  0: #77 REF_invokeStatic java/lang/invoke/StringConcatFactory.makeConcatWithConstants:\r\n(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/String;[Ljava/lang/Ob\r\nject;)Ljava/lang/invoke/CallSite;\r\n  consumer-javap.stdout.log:198:    Method arguments:\r\n{\r\n  \"ActiveProbeProcesses\": []\r\n}\r\n\r\n"
+        }
+      }
+    },
+    {
+      "kind": "owned-final-diff",
+      "command": {
+        "name": "owned-final-diff",
+        "cmd": "git status --short -- skills/component-and-release-boundaries; git diff --cached -- skills/component-and-release-boundaries; git diff -- skills/component-and-release-boundaries; git ls-files --others --exclude-standard -- skills/component-and-release-boundaries",
+        "workdir": "C:/git/agent-skills",
+        "max_output_tokens": 3000
+      },
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "695e39",
+          "wall_time_seconds": 0.2220909,
+          "exit_code": 0,
+          "original_token_count": 1067,
+          "output": " M skills/component-and-release-boundaries/references/component-principles.md\n M skills/component-and-release-boundaries/references/shared-code-in-a-fleet.md\n M skills/component-and-release-boundaries/skill.yaml\ndiff --git a/skills/component-and-release-boundaries/references/component-principles.md b/skills/component-and-release-boundaries/references/component-principles.md\nindex 7a1412c..8b3b079 100644\n--- a/skills/component-and-release-boundaries/references/component-principles.md\n+++ b/skills/component-and-release-boundaries/references/component-principles.md\n@@ -31,10 +31,11 @@ Classes that change for the same reason, at the same time, belong in the same co\n is the single-responsibility principle raised to component scale: a component should have one\n reason to change.\n \n-The payoff is that a business change touches one artefact, so one thing is released,\n-revalidated and deployed. The failure is the opposite: a change to VAT rules touching\n-`billing-core`, `billing-model`, `tax-common` and `reporting-shared`, each of which must be\n-released in dependency order.\n+The payoff is fewer independently evolved artefacts to change and publish for one reason.\n+That does not imply one consumer rebuild, validation or deployment: a shared library may be\n+packaged into several applications. Inspect those delivery paths before counting the savings.\n+The opposite cost is a change to VAT rules touching `billing-core`, `billing-model`,\n+`tax-common` and `reporting-shared`, each requiring its own publication and compatibility work.\n \n This is the principle to favour while a system is young. Maintainability dominates\n reusability when there are no external reusers.\ndiff --git a/skills/component-and-release-boundaries/references/shared-code-in-a-fleet.md b/skills/component-and-release-boundaries/references/shared-code-in-a-fleet.md\nindex c9900c5..91d7766 100644\n--- a/skills/component-and-release-boundaries/references/shared-code-in-a-fleet.md\n+++ b/skills/component-and-release-boundaries/references/shared-code-in-a-fleet.md\n@@ -224,6 +224,15 @@ believing:\n   metadata, then exercise its resolved runtime dependencies. Follow the\n   [consumer dependency checks](component-principles.md#check-the-published-consumer-boundary);\n   a passing producer build or converged dependency tree alone does not establish compatibility.\n-- **The upgrade blast radius.** Count consumers affected and distinguish upgrades required\n-  eventually, within a deadline, or simultaneously. Only the last establishes a lockstep\n-  deployment requirement for that change; record the contract that forces it.\n+- **The upgrade blast radius.** Count library publications, consumer source recompilations,\n+  application repackaging and deployments separately. An unchanged public API can let an\n+  already-built consumer link to a new library; this does not update a jar embedded in an\n+  immutable application distribution or image. Inspect the packaging recipe and deployed\n+  dependency set: those consumers need a new package and rollout to receive the fix, even\n+  when their class files can be reused. An externally supplied library may instead require\n+  a supported dependency/configuration update and restart, without repackaging the application.\n+  [Binary-compatible method-body changes](https://docs.oracle.com/javase/specs/jls/se21/html/jls-13.html#jls-13.4.22)\n+  illustrate why recompilation and delivery are different; compatibility still needs the\n+  behavioral checks above. Distinguish upgrades required eventually, within a deadline, or\n+  simultaneously. Only the last establishes a lockstep deployment requirement for that change;\n+  record the contract that forces it.\ndiff --git a/skills/component-and-release-boundaries/skill.yaml b/skills/component-and-release-boundaries/skill.yaml\nindex 6af5116..48e45ea 100644\n--- a/skills/component-and-release-boundaries/skill.yaml\n+++ b/skills/component-and-release-boundaries/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: component-and-release-boundaries\n-version: 1.2.4\n+version: 1.2.5\n description: >-\n   Deciding what becomes an independently releasable component — a Maven module, a JPMS module, a\n   published library — and what that costs: the tension between reusing code and being able to\n"
+        }
+      }
+    }
+  ],
+  "results": {
+    "structural": "Strict four-file package validation passed with zero issues; seven local resource references resolve and 13 declared related skills exist.",
+    "prettier": "PASS for all four owned files.",
+    "gitDiffCheck": "PASS.",
+    "compile": "Library v1 and v2 compiled separately; consumer compiled exactly once against v1. Jar assembly and javap exited zero; compiler/javap stderr empty.",
+    "runtime": [
+      {
+        "mode": "bundled-old-after-publication",
+        "result": "A<CR>B",
+        "exitCode": 0,
+        "meaning": "Publishing the candidate library did not update the existing bundled application."
+      },
+      {
+        "mode": "bundled-repackaged",
+        "result": "A<LF>B",
+        "exitCode": 0,
+        "meaning": "New bundle delivered corrected method body while reusing the old consumer class."
+      },
+      {
+        "mode": "external-old",
+        "result": "A<CR>B",
+        "exitCode": 0,
+        "meaning": "Pinned external runtime dependency retained old behavior."
+      },
+      {
+        "mode": "external-updated",
+        "result": "A<LF>B",
+        "exitCode": 0,
+        "meaning": "Selecting the candidate external jar in a fresh JVM delivered the change without rebuilding the application jar."
+      }
+    ],
+    "consumerIdentity": "SHA-256 9D329303B2F84EE6BF42CC4F73A17A46A4CC289033274D0ED815F9920876AEAB for ReportApp.class in the standalone app jar and both application bundles.",
+    "negativeControl": "Old immutable bundled artifact still produced the old result after candidate library publication; zero exit was a deliberate assertion of that negative outcome, not acceptance of the bug as fixed.",
+    "resourceBounds": "Each runtime process had a 30-second watchdog and exited in under one second. Scoped process scan found no active java/javac/javap/jar probe process."
+  },
+  "failedOrLimitedAttempts": [
+    {
+      "kind": "read-only search",
+      "command": "rg -n 'payoff|revalidated|deployed|binary|upgrade blast|publication test|Gradle|first three|saturat' skills/component-and-release-boundaries/SKILL.md skills/component-and-release-boundaries/references/*.md docs/skill-validation/skills-comparative-research-2026-10-16.md",
+      "exitCode": 1,
+      "result": "PowerShell/rg literal wildcard path failed with os error 123. Retried using rg -g '*.md' on the directory; retry exited 0."
+    },
+    {
+      "kind": "read-only output",
+      "result": "Initial wave-baseline/full-context reads exceeded output budget. The assigned package record was subsequently selected explicitly, and required skill-engineering references were read separately. No validation conclusion was drawn from the truncated bulk output."
+    },
+    {
+      "kind": "source retrieval",
+      "urls": [
+        "https://docs.gradle.org/9.7.1/userguide/java_library_plugin.html",
+        "https://docs.gradle.org/8.14.3/userguide/application_plugin.html"
+      ],
+      "result": "Web tool returned Internal Error. These pages were not treated as verified sources; current Java Library manual was available and identified itself as 9.8.1."
+    },
+    {
+      "kind": "source retrieval",
+      "url": "https://docs.gradle.org/current/userguide/application_plugin.html",
+      "result": "Supplementary request remained pending across several waits; the read-only orchestration cell was terminated. No returned application-plugin content was used. Packaging claims are supported by retained local artifacts rather than this unavailable page."
+    }
+  ],
+  "behavioralEvaluationsExecuted": [],
+  "structuredWalkthroughs": [
+    {
+      "caseId": "delivery-bundled",
+      "type": "Expected-behavior walkthrough",
+      "conclusion": "One library publication can require a new consumer bundle and rollout, without consumer source recompilation. That work does not establish a need to merge release schedules."
+    },
+    {
+      "caseId": "delivery-external",
+      "type": "Expected-behavior walkthrough",
+      "conclusion": "Retain the application artifact and update the supported external dependency selection plus process rollout; no application repackaging follows from this layout alone."
+    }
+  ],
+  "caseInputs": [
+    {
+      "id": "delivery-bundled",
+      "task": "Revise a entrega de text-core 1.0.1 para report-app usando os artefatos e a configuração do projeto. A equipe propôs unificar as versões e o calendário dos dois componentes para reduzir trabalho de release. Determine o que precisa mudar e ser verificado para a correção chegar ao consumidor, e se essa proposta de fronteira é sustentada. Produza uma recomendação curta com ordem de entrega, recuperação e limites; não implante nada.",
+      "context": "Projeto sintético pequeno, com artefatos reais gerados para este caso. ReportApp é um consumidor mínimo com asserção de resultado via argumento CR/LF, não um serviço completo. Não fornecemos saídas das validações do revisor.",
+      "toolchain": {
+        "compilerTarget": 17,
+        "runtime": "Temurin 25.0.3+9 HotSpot, Windows",
+        "tools": [
+          "javac",
+          "jar",
+          "javap",
+          "java"
+        ],
+        "dependencyInstallRequired": false
+      },
+      "fixtureFiles": [
+        {
+          "destination": "library/v1/com/example/text/LineEndings.java",
+          "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe/v1/com/example/text/LineEndings.java"
+        },
+        {
+          "destination": "library/v2/com/example/text/LineEndings.java",
+          "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe/v2/com/example/text/LineEndings.java"
+        },
+        {
+          "destination": "consumer/com/example/app/ReportApp.java",
+          "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe/consumer/com/example/app/ReportApp.java"
+        },
+        {
+          "destination": "published/text-core-1.0.0.jar",
+          "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe/published/text-core-1.0.0.jar"
+        },
+        {
+          "destination": "published/text-core-1.0.1.jar",
+          "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe/published/text-core-1.0.1.jar"
+        },
+        {
+          "destination": "published/report-app-1.0.0.jar",
+          "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe/published/report-app-1.0.0.jar"
+        },
+        {
+          "destination": "bundles/report-1.0.0.jar",
+          "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe/bundles/report-1.0.0.jar"
+        }
+      ],
+      "inlineFiles": {
+        "project/README.md": "# Report delivery\nThe text platform team owns text-core; the report team owns report-app. The candidate text-core 1.0.1 source is available alongside 1.0.0. Review the release work required to adopt the candidate in report-app using the deployed layout in delivery.json. The application owner is considering combining the library and application release schedules to reduce delivery work.",
+        "project/release-policy.md": "Published artifacts and application distributions are immutable. Each owner controls its releases. CR, LF and CRLF must normalize to LF; the lone-CR correction must reach report-app within 14 days. Existing and corrected normalized output remain acceptable to downstream storage during that interval. Java dependencies are selected at process start; the launcher does not dynamically reload them. Rollback uses a retained previous application distribution or runtime dependency selection. No live deployment is authorized by this review.",
+        "project/recipes.json": "{\n  \"bundled\": {\n    \"applicationContents\": [\n      \"compiled report-app classes\",\n      \"compiled text-core classes\"\n    ],\n    \"launch\": [\n      \"java\",\n      \"-jar\",\n      \"report-bundle.jar\"\n    ],\n    \"source\": \"jar --create --file report-bundle.jar --main-class com.example.app.ReportApp -C classes/consumer . -C classes/library .\"\n  },\n  \"external\": {\n    \"applicationContents\": [\n      \"compiled report-app classes\"\n    ],\n    \"runtimeDependencies\": [\n      \"published/text-core-${libraryVersion}.jar\"\n    ],\n    \"launch\": [\n      \"java\",\n      \"-cp\",\n      \"report-app.jar;published/text-core-${libraryVersion}.jar\",\n      \"com.example.app.ReportApp\"\n    ],\n    \"source\": \"jar --create --file report-app.jar -C classes/consumer .\"\n  }\n}",
+        "project/delivery.json": "{\n  \"application\": \"report-app\",\n  \"applicationVersion\": \"1.0.0\",\n  \"libraryVersion\": \"1.0.0\",\n  \"layout\": \"bundled\"\n}"
+      },
+      "reproduction": "Materialize only these input files in an isolated actor directory. Inspect source, jar contents and active layout; java -jar bundles/report-1.0.0.jar CR exercises the retained bundled artifact, while java -cp 'published/report-app-1.0.0.jar;published/text-core-1.0.0.jar' com.example.app.ReportApp CR exercises the external layout. Use the stated toolchain and a 30-second process limit. The CR/LF argument is only the probe's expected-output assertion. Never pass reviewer logs, case criteria or the handoff to the actor."
+    },
+    {
+      "id": "delivery-external",
+      "task": "Revise a entrega de text-core 1.0.1 para report-app usando os artefatos e a configuração do projeto. A equipe propôs unificar as versões e o calendário dos dois componentes para reduzir trabalho de release. Determine o que precisa mudar e ser verificado para a correção chegar ao consumidor, e se essa proposta de fronteira é sustentada. Produza uma recomendação curta com ordem de entrega, recuperação e limites; não implante nada.",
+      "context": "Projeto sintético pequeno, com artefatos reais gerados para este caso. ReportApp é um consumidor mínimo com asserção de resultado via argumento CR/LF, não um serviço completo. Não fornecemos saídas das validações do revisor.",
+      "toolchain": {
+        "compilerTarget": 17,
+        "runtime": "Temurin 25.0.3+9 HotSpot, Windows",
+        "tools": [
+          "javac",
+          "jar",
+          "javap",
+          "java"
+        ],
+        "dependencyInstallRequired": false
+      },
+      "fixtureFiles": [
+        {
+          "destination": "library/v1/com/example/text/LineEndings.java",
+          "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe/v1/com/example/text/LineEndings.java"
+        },
+        {
+          "destination": "library/v2/com/example/text/LineEndings.java",
+          "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe/v2/com/example/text/LineEndings.java"
+        },
+        {
+          "destination": "consumer/com/example/app/ReportApp.java",
+          "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe/consumer/com/example/app/ReportApp.java"
+        },
+        {
+          "destination": "published/text-core-1.0.0.jar",
+          "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe/published/text-core-1.0.0.jar"
+        },
+        {
+          "destination": "published/text-core-1.0.1.jar",
+          "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe/published/text-core-1.0.1.jar"
+        },
+        {
+          "destination": "published/report-app-1.0.0.jar",
+          "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe/published/report-app-1.0.0.jar"
+        },
+        {
+          "destination": "bundles/report-1.0.0.jar",
+          "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe/bundles/report-1.0.0.jar"
+        }
+      ],
+      "inlineFiles": {
+        "project/README.md": "# Report delivery\nThe text platform team owns text-core; the report team owns report-app. The candidate text-core 1.0.1 source is available alongside 1.0.0. Review the release work required to adopt the candidate in report-app using the deployed layout in delivery.json. The application owner is considering combining the library and application release schedules to reduce delivery work.",
+        "project/release-policy.md": "Published artifacts and application distributions are immutable. Each owner controls its releases. CR, LF and CRLF must normalize to LF; the lone-CR correction must reach report-app within 14 days. Existing and corrected normalized output remain acceptable to downstream storage during that interval. Java dependencies are selected at process start; the launcher does not dynamically reload them. Rollback uses a retained previous application distribution or runtime dependency selection. No live deployment is authorized by this review.",
+        "project/recipes.json": "{\n  \"bundled\": {\n    \"applicationContents\": [\n      \"compiled report-app classes\",\n      \"compiled text-core classes\"\n    ],\n    \"launch\": [\n      \"java\",\n      \"-jar\",\n      \"report-bundle.jar\"\n    ],\n    \"source\": \"jar --create --file report-bundle.jar --main-class com.example.app.ReportApp -C classes/consumer . -C classes/library .\"\n  },\n  \"external\": {\n    \"applicationContents\": [\n      \"compiled report-app classes\"\n    ],\n    \"runtimeDependencies\": [\n      \"published/text-core-${libraryVersion}.jar\"\n    ],\n    \"launch\": [\n      \"java\",\n      \"-cp\",\n      \"report-app.jar;published/text-core-${libraryVersion}.jar\",\n      \"com.example.app.ReportApp\"\n    ],\n    \"source\": \"jar --create --file report-app.jar -C classes/consumer .\"\n  }\n}",
+        "project/delivery.json": "{\n  \"application\": \"report-app\",\n  \"applicationVersion\": \"1.0.0\",\n  \"libraryVersion\": \"1.0.0\",\n  \"layout\": \"external\"\n}"
+      },
+      "reproduction": "Materialize only these input files in an isolated actor directory. Inspect source, jar contents and active layout; java -jar bundles/report-1.0.0.jar CR exercises the retained bundled artifact, while java -cp 'published/report-app-1.0.0.jar;published/text-core-1.0.0.jar' com.example.app.ReportApp CR exercises the external layout. Use the stated toolchain and a 30-second process limit. The CR/LF argument is only the probe's expected-output assertion. Never pass reviewer logs, case criteria or the handoff to the actor."
+    }
+  ],
+  "caseCriteria": [
+    {
+      "caseId": "delivery-bundled",
+      "expected": [
+        "Inspect delivery.json and the selected recipe plus actual jar/source artifacts; identify that library classes are inside the immutable application bundle.",
+        "Separate publishing text-core 1.0.1 from producing and rolling out an updated report distribution. Existing ReportApp.class may be reused if the observed/contractual compatibility is sufficient.",
+        "Verify the lone-CR behavior using the delivered candidate; preserve retained artifact rollback and the allowed migration interval.",
+        "Do not infer simultaneous release necessity or recommend merging ownership/release boundaries solely from one library change, repackaging work or an unchanged API."
+      ],
+      "failureConditions": [
+        "Concludes the deployed bundled consumer is fixed merely because text-core 1.0.1 is published or because recompilation is unnecessary.",
+        "Requires source recompilation without distinguishing it from packaging, or rewrites released artifact bytes in place.",
+        "Treats a 14-day deadline or ordinary consumer adoption work as proof of an atomic coordinated fleet release."
+      ]
+    },
+    {
+      "caseId": "delivery-external",
+      "expected": [
+        "Inspect the selected external layout; application jar contains consumer classes while versioned text-core is supplied separately at process start.",
+        "Reuse the existing application artifact where compatible; update the pinned external dependency selection and perform supported restart/rollout rather than demand a new application package.",
+        "Test changed runtime behavior and preserve rollback to previous dependency selection; publication alone does not change the process's selected or loaded dependency.",
+        "Keep the release boundary unless another concrete constraint supports changing it; preserve the time-window and compatibility conclusions common to both cases."
+      ],
+      "failureConditions": [
+        "Unconditionally requires repackaging the app despite the inspected external dependency layout.",
+        "Assumes replacing a repository artifact mutates running JVM behavior or allows overwriting immutable released versions.",
+        "Recommends a shared release unit or simultaneous deployment without a contract requiring it."
+      ]
+    }
+  ],
+  "caseDesign": {
+    "decisiveConstraint": "Only project/delivery.json layout differs: bundled versus external. Source, binary artifacts available for inspection, target/runtime, owner policy, deadline and proposed boundary change are otherwise identical.",
+    "exposure": "Known synthetic development fixtures derived from the technical probe; not held-out tasks. Project metadata/recipes are written evaluation fixtures, not a claim of a real production repository or executed deployment.",
+    "separation": "Actor receives one caseInputs entry plus only its mapped and inline fixtures. caseCriteria, reviewer outputs and this handoff remain evaluator-only.",
+    "executionStatus": "No independent agent run or original/revised comparison. Technical jar executions are not behavioral evaluation or proof of operational rollout."
+  },
+  "primarySources": [
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se21/html/jls-13.html#jls-13.4.22",
+      "version": "Java Language Specification, Java SE 21",
+      "section": "13.4.22 Method and Constructor Body",
+      "consulted": "2026-10-16",
+      "supports": "Changing method/constructor bodies preserves binary compatibility; recompilation is distinct from adopting new implementation bytes.",
+      "limit": "Does not establish behavioral compatibility, packaging or fleet rollout completion."
+    },
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se21/html/jls-13.html#jls-13.2",
+      "version": "Java Language Specification, Java SE 21",
+      "section": "13.2 What Binary Compatibility Is and Is Not",
+      "consulted": "2026-10-16",
+      "supports": "Binary compatibility concerns previously linked binaries continuing to link; it is not source compatibility or a deployment guarantee.",
+      "limit": "Not a producer/consumer integration test."
+    },
+    {
+      "url": "https://docs.gradle.org/current/userguide/java_library_plugin.html",
+      "version": "Manual identified itself as Gradle 9.8.1 when consulted",
+      "section": "API and implementation separation; Dependency configurations",
+      "consulted": "2026-10-16",
+      "supports": "Implementation dependencies remain present at consumer runtime and implementation changes can avoid consumer recompilation.",
+      "limit": "Current documentation only; Gradle was not executed and no build-tool upgrade is prescribed. The original historical 9.7.1 citation was not independently reverified."
+    }
+  ],
+  "evidencePaths": [
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe/bundled-old-after-publication.stderr.log",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe/bundled-old-after-publication.stdout.log",
+      "bytes": 8,
+      "sha256": "CDDBC38DD32E89E2F7838F56531CB0433EF2E0AD54E2CBF3212312BC1D9A91B8"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe/bundled-repackaged.stderr.log",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe/bundled-repackaged.stdout.log",
+      "bytes": 8,
+      "sha256": "02989B593ED66549D3EA07EF0FD56712ADF3DC203ACB59EF6D1976DCBAD679A2"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe/compile-consumer.stderr.log",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe/compile-consumer.stdout.log",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe/compile-v1.stderr.log",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe/compile-v1.stdout.log",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe/compile-v2.stderr.log",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe/compile-v2.stdout.log",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe/consumer-javap.stderr.log",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe/consumer-javap.stdout.log",
+      "bytes": 11294,
+      "sha256": "25C56175B5B7F59D8D1AEE7F3135172D7BDCB0A23402F3BD2CA8E57B0443A7C5"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe/external-old.stderr.log",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe/external-old.stdout.log",
+      "bytes": 8,
+      "sha256": "CDDBC38DD32E89E2F7838F56531CB0433EF2E0AD54E2CBF3212312BC1D9A91B8"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe/external-updated.stderr.log",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe/external-updated.stdout.log",
+      "bytes": 8,
+      "sha256": "02989B593ED66549D3EA07EF0FD56712ADF3DC203ACB59EF6D1976DCBAD679A2"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe/bundles/report-1.0.0.jar",
+      "bytes": 2180,
+      "sha256": "BE3AA29F9DFE404B448615531E2AEF02ACECBF9CC43102B90216DAD69B74BE38"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe/bundles/report-1.0.1.jar",
+      "bytes": 2197,
+      "sha256": "4317ADDC92D15D85084564AD26BFE37B5037EDD1399FDB3A09FEFA00C5DC3B85"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe/classes/consumer/com/example/app/ReportApp.class",
+      "bytes": 1461,
+      "sha256": "9D329303B2F84EE6BF42CC4F73A17A46A4CC289033274D0ED815F9920876AEAB"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe/classes/v1/com/example/text/LineEndings.class",
+      "bytes": 441,
+      "sha256": "624A89185FA802CC65E96A054046C2957BA0A6179F6C7C6E63D57EEC5E46375D"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe/classes/v2/com/example/text/LineEndings.class",
+      "bytes": 483,
+      "sha256": "B13872F94971ADFFCCD3B017CBC75F633A27F9F06FA9DE423765DC4A8E7C7FDF"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe/consumer/com/example/app/ReportApp.java",
+      "bytes": 622,
+      "sha256": "06439C0329E35B50310BCDB118E1BEB3CD004994BD025A3922A97FD71E8676BC"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe/published/report-app-1.0.0.jar",
+      "bytes": 1593,
+      "sha256": "80E7634BCCF323B7949FDDAF5C90A7CC856B1AD305E7B7A0485B9EBED3E24CE8"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe/published/text-core-1.0.0.jar",
+      "bytes": 1057,
+      "sha256": "BE8E720B908BFC0125350343E21CA4ABAF93C17B0FC9757880DA1AEF044B1954"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe/published/text-core-1.0.1.jar",
+      "bytes": 1074,
+      "sha256": "5063BDAA4D9818BB69E59D2BF52409086F6FDF78BC0010923CA42D762D7EFBBB"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe/v1/com/example/text/LineEndings.java",
+      "bytes": 192,
+      "sha256": "3144C01BE063C380F1133468C55A485F180F96095465AC0018F0BB9303791031"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe/v2/com/example/text/LineEndings.java",
+      "bytes": 212,
+      "sha256": "3B9828905DB8D2C349C0E19F841C246F6960F26BB27E43E7F4724D7E3A04E9C0"
+    }
+  ],
+  "assumptionsAndLimits": [
+    "The focused probe uses plain Java jars and four fresh JVMs. No Maven/Gradle publish resolution, container image, orchestrator or real fleet rollout was executed.",
+    "Method-body binary compatibility and byte-identical consumer classes do not prove all behavioral contracts; the probe exercises only the declared line-ending case.",
+    "The skill does not mandate the fixture's Java target/runtime or force a source rebuild, application repackage, external-library architecture or new component.",
+    "There is no measured latency, throughput, release-time saving or incremental agent benefit.",
+    "Existing unchanged Java snippets and ArchUnit illustration were inspected/preserved, not recompiled in this assignment. No dependencies were installed.",
+    "Local package/resource validation cannot prove catalog-wide cross-skill routing or version/dependency range consistency."
+  ],
+  "crossSkillFindings": [],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Shared index/integrity/version and cross-skill routing validation; wait until all reviewers have stopped writing."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Repository-wide validation including version policy; not permitted during reviewer ownership."
+    }
+  ],
+  "coordinatorActions": [
+    "Run global checks after all writers stop; optionally execute the paired cases with isolated actor inputs and criteria withheld."
+  ],
+  "readinessMeaning": "All authorized local edits and relevant local checks complete; writes stop with this handoff. Global validation and independent behavioral comparison remain pending."
+}

@@ -1,0 +1,69 @@
+[
+  {
+    "id": "java-version",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+    "arguments": [
+      "--version"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d",
+    "expectedExit": 0,
+    "actualExit": 0,
+    "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d\\java-version.log"
+  },
+  {
+    "id": "javac-version",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+    "arguments": [
+      "--version"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d",
+    "expectedExit": 0,
+    "actualExit": 0,
+    "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d\\javac-version.log"
+  },
+  {
+    "id": "compile",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+    "arguments": [
+      "--release",
+      "17",
+      "-Xlint:all",
+      "-Werror",
+      "-XDrawDiagnostics",
+      "-d",
+      "classes",
+      "ChannelContractProbe.java",
+      "StatusMappingProbe.java"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d",
+    "expectedExit": 0,
+    "actualExit": 0,
+    "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d\\compile.log"
+  },
+  {
+    "id": "channel-contract",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+    "arguments": [
+      "-cp",
+      "classes",
+      "ChannelContractProbe"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d",
+    "expectedExit": 0,
+    "actualExit": 0,
+    "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d\\channel-contract.log"
+  },
+  {
+    "id": "status-mapping",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+    "arguments": [
+      "-cp",
+      "classes",
+      "StatusMappingProbe"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d",
+    "expectedExit": 0,
+    "actualExit": 0,
+    "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d\\status-mapping.log"
+  }
+]

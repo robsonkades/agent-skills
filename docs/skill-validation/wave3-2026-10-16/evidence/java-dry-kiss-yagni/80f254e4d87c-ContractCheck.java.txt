@@ -1,0 +1,26 @@
+package example;
+import example.web.WebForm;
+import example.api.RequestHandler;
+import java.util.function.IntPredicate;
+public final class ContractCheck {
+    private static int checks;
+    private static void check(String name, IntPredicate accepts, int value, boolean expected) {
+        checks++;
+        if (accepts.test(value) != expected) {
+            throw new AssertionError(name + " count=" + value + " expected=" + expected);
+        }
+    }
+    public static void main(String[] args) {
+        int maximum = Integer.parseInt(args[0]);
+        for (String name : new String[]{"web", "api"}) {
+            IntPredicate accepts = name.equals("web") ? WebForm::canSubmit : RequestHandler::accepts;
+            check(name, accepts, -1, false);
+            check(name, accepts, 0, false);
+            check(name, accepts, 1, true);
+            check(name, accepts, maximum - 1, true);
+            check(name, accepts, maximum, true);
+            check(name, accepts, maximum + 1, false);
+        }
+        System.out.println("PASS checks=" + checks + " maximum=" + maximum);
+    }
+}

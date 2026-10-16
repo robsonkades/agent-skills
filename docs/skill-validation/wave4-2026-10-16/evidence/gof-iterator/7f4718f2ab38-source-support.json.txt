@@ -1,0 +1,80 @@
+{
+  "consultedOn": "2026-10-16",
+  "changesJustified": false,
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Iterator.html",
+      "version": "Java SE 17",
+      "sections": [
+        "next",
+        "remove",
+        "forEachRemaining"
+      ],
+      "supports": "Exhaustion, optional removal of the last returned element, unspecified recovery/mutation cases; no close contract.",
+      "limits": "API contract; runtime tests used JDK25."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Spliterator.html",
+      "version": "Java SE 17",
+      "sections": [
+        "characteristics",
+        "binding and structural interference",
+        "trySplit"
+      ],
+      "supports": "Truthful characteristics, best-effort interference detection, and thread-confinement of individual traversal state.",
+      "limits": "No promise that parallel decomposition provides speedup."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/stream/BaseStream.html",
+      "version": "Java SE 17",
+      "sections": [
+        "iterator",
+        "onClose",
+        "close"
+      ],
+      "supports": "iterator is a terminal escape hatch; close handlers belong to stream close and retain an owner obligation.",
+      "limits": "Does not define transport cancellation or server-cursor cleanup."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/ArrayList.html",
+      "version": "Java SE 17",
+      "sections": [
+        "fail-fast iterator class contract"
+      ],
+      "supports": "ConcurrentModificationException is best effort and cannot provide synchronization or correctness.",
+      "limits": "The retained runtime counterexample is build-specific."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/stream/Stream.html#limit(long)",
+      "version": "Java SE 17",
+      "sections": [
+        "limit"
+      ],
+      "supports": "A short-circuiting prefix operation can return normally without traversing all source elements.",
+      "limits": "Completeness requirements come from the consumer; the API alone does not define a business receipt."
+    },
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se17/html/jls-14.html#jls-14.14.2",
+      "version": "JLS SE 17",
+      "sections": [
+        "14.14.2 enhanced for"
+      ],
+      "supports": "Translation calls iterator/hasNext/next and does not introduce a resource-closing scope.",
+      "limits": "A provider may have its own resource lifecycle, which still must be inspected."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/24/docs/api/java.base/java/util/stream/Gatherer.html",
+      "version": "Java SE 24",
+      "sections": [
+        "Since 24"
+      ],
+      "supports": "Existing optional Gatherer referral is correctly scoped to Java24+.",
+      "limits": "No Gatherer implementation or JDK24 runtime exercised; no baseline upgrade proposed."
+    }
+  ],
+  "evidenceKinds": {
+    "source": "Primary API/JLS documentation",
+    "technical": "Compiled extracted Java17-compatible example on existing JDK25.0.3; controlled fixtures and negative controls",
+    "behavioral": "No independent actor outputs; no measured skill gain."
+  }
+}

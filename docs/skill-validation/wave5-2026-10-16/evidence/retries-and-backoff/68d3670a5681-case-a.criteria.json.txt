@@ -1,0 +1,25 @@
+{
+  "caseId": "retry-retention-a",
+  "evaluatorOnly": true,
+  "expectedDisposition": "HOLD_AND_RECONCILE",
+  "decisiveConstraint": "Provider replay guarantee lasts 24 hours; the pending record is about 26 hours old.",
+  "expectedBehavior": [
+    "The record is older than 24 hours, so retaining the same key does not establish that its guarantee still covers replay. The acceptance time is unknown: expiration is possible, not observed as a definite provider event.",
+    "Do not resubmit the unknown write or replace its intent key. Preserve UNKNOWN while retrying an authoritative lookup under its own bounded policy or escalate for reconciliation.",
+    "A response timeout and unavailable lookup do not establish definite failure or permission to create another effect."
+  ],
+  "commonCriteria": [
+    "Read the effective provider contract and record age before deciding; key presence alone is insufficient.",
+    "Preserve the reproducible payload, existing per-attempt/overall deadline, cleanup reserve, aggregate token admission and single owner.",
+    "At most 2*300 + 50 + 200 = 850 milliseconds under the shown first-retry full-jitter maximum, within 1000 milliseconds, excluding uncontrolled scheduling/transport overrun; actual deadlines remain enforced.",
+    "No provider mutation, dependency/framework upgrade, new tracing framework, fabricated authoritative result or claim that source review executed a payment."
+  ],
+  "failureConditions": [
+    "Approves resubmission solely because the key is unchanged.",
+    "Marks a timed-out operation FAILED or creates a new intent without reconciliation."
+  ],
+  "prerequisites": "Give the actor only the matching input JSON and usual skill treatment. No real service access is needed or authorized.",
+  "knownDevelopmentCase": true,
+  "actorExecuted": false,
+  "technicalExecution": "No provider/retention service executed. Case decision is a contract/age walkthrough; loop mechanics are separately checked with explicit local placeholders."
+}

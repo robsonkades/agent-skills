@@ -1,0 +1,87 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import {spawnSync} from 'node:child_process';
+
+const runRoot = path.resolve(import.meta.dirname, '..');
+const outputRoot = path.join(runRoot, 'output');
+const projectRoot = path.join(outputRoot, 'project');
+const jdk = 'C:/Users/robso/.jdks/temurin-25.0.3/bin';
+const executionFile = path.join(outputRoot, 'execution.json');
+const execution = JSON.parse(fs.readFileSync(executionFile, 'utf8'));
+execution.edits.push(
+  {file: 'output/project/test/work/SelfTest.java', tool: 'apply_patch', purpose: 'Preserve initial coverage and test the accepted live read-only contract'},
+  {file: 'output/final-verification.mjs', tool: 'apply_patch', purpose: 'Verify the final project and a controlled snapshot alternative in a separate output directory'}
+);
+
+function save() {
+  fs.writeFileSync(executionFile, JSON.stringify(execution, null, 2) + '\n');
+}
+function read(relative, purpose) {
+  const content = fs.readFileSync(path.join(runRoot, relative), 'utf8');
+  execution.filesRead.push({file: relative, purpose, fullFile: true, truncated: false,
+    bytes: Buffer.byteLength(content), sha256: crypto.createHash('sha256').update(content).digest('hex'), content});
+  return content;
+}
+function run(label, executable, args, cwd = projectRoot, expectedExit = 0) {
+  const started = Date.now();
+  const result = spawnSync(executable, args, {cwd, encoding: 'utf8', timeout: 30000, windowsHide: true});
+  const entry = {phase: label, executable, args, cwd, timeoutMs: 30000,
+    exit: result.status, signal: result.signal, elapsedMs: Date.now() - started,
+    error: result.error ? {code: result.error.code, message: result.error.message} : null,
+    stdout: result.stdout ?? '', stderr: result.stderr ?? '', executed: true, truncated: false,
+    log: `output/logs/${label}.json`};
+  fs.writeFileSync(path.join(outputRoot, 'logs', `${label}.json`), JSON.stringify(entry, null, 2) + '\n');
+  execution.commands.push(entry);
+  save();
+  process.stdout.write(`${label}: exit=${entry.exit}\n${entry.stdout}${entry.stderr}`);
+  if (entry.exit !== expectedExit) throw new Error(`${label}: expected exit ${expectedExit}, got ${entry.exit}`);
+  return entry;
+}
+
+read('output/project/test/work/SelfTest.java', 'Complete final contract test');
+run('final-check', process.execPath, ['check.mjs']);
+run('final-demo', path.join(jdk, 'java.exe'), ['-cp', '.build', 'work.Demo']);
+run('final-class-version', path.join(jdk, 'javap.exe'), ['-verbose', '-classpath', '.build', 'work.Catalog']);
+
+// A single-variable experiment: snapshot versus live view, never installed in the project.
+const experimentRoot = path.join(outputRoot, 'experiments', 'snapshot');
+const sourceRoot = path.join(experimentRoot, 'src', 'work');
+const buildRoot = path.join(experimentRoot, 'classes');
+fs.mkdirSync(sourceRoot, {recursive: true});
+fs.mkdirSync(buildRoot, {recursive: true});
+const catalog = read('output/project/src/work/Catalog.java', 'Controlled alternative to the live view');
+const snapshotCatalog = catalog.replace('Collections.unmodifiableList(rows)', 'List.copyOf(rows)');
+if (catalog === snapshotCatalog) throw new Error('Snapshot experiment did not change the expected expression');
+const mutantFile = path.join(sourceRoot, 'Catalog.java');
+fs.writeFileSync(mutantFile, snapshotCatalog);
+execution.experiments = [{
+  name: 'snapshot-alternative',
+  purpose: 'Demonstrate that freezing the total would violate the accepted live-view contract',
+  prediction: 'The same final SelfTest must reject a Catalog.open() snapshot at the first reload assertion.',
+  controlledChange: 'Only Collections.unmodifiableList(rows) becomes List.copyOf(rows).',
+  path: 'output/experiments/snapshot/src/work/Catalog.java',
+  adoptedInProject: false
+}];
+save();
+run('snapshot-compile', path.join(jdk, 'javac.exe'), ['--release', '17', '-d', buildRoot,
+  mutantFile, path.join(projectRoot, 'src/work/Entry.java'), path.join(projectRoot, 'src/work/Report.java'),
+  path.join(projectRoot, 'test/work/SelfTest.java')], experimentRoot);
+const snapshotResult = run('snapshot-test', path.join(jdk, 'java.exe'), ['-cp', buildRoot, 'work.SelfTest'], experimentRoot, 1);
+if (!snapshotResult.stderr.includes('reports must observe reload totals'))
+  throw new Error('Snapshot alternative failed for an unexpected reason');
+execution.experiments[0].outcome = 'Prediction confirmed: AssertionError reports must observe reload totals; exit 1 expected.';
+
+execution.finalOriginalComparison = [];
+for (const relative of ['src/work/Catalog.java', 'src/work/Report.java', 'src/work/Entry.java',
+  'src/work/Demo.java', 'check.mjs', 'contract.md', 'support.md']) {
+  const initial = execution.filesRead.find(item => item.file === `input/project/${relative}`).content;
+  const final = read(`output/project/${relative}`, 'Confirm original sources, configuration and supplied documents are preserved');
+  execution.finalOriginalComparison.push({file: relative, identical: initial === final});
+  if (initial !== final) throw new Error(`Unexpected change: ${relative}`);
+}
+for (const relative of ['output/run-verification.mjs', 'output/final-verification.mjs'])
+  read(relative, 'Retained executed verification script');
+execution.hypotheses[0].status = 'Confirmed by Demo, retained-view and live-reload checks; snapshot alternative rejected by the same test.';
+execution.status = 'verification_complete';
+save();

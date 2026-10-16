@@ -1,0 +1,168 @@
+diff --git a/skills/spring-boot-jpa/SKILL.md b/skills/spring-boot-jpa/SKILL.md
+index 2a370e2..5db62e1 100644
+--- a/skills/spring-boot-jpa/SKILL.md
++++ b/skills/spring-boot-jpa/SKILL.md
+@@ -114,8 +114,10 @@ pool sizing or property reviews, including the SQL Server scheduler case.
+ 
+ - For an edit conditioned on an earlier client read, compare `expectedVersion`/`If-Match`
+   with the loaded authorized entity before mutation; reloading current state alone loses
+-  that precondition. Never assign client input to managed `@Version`; retain its commit-time
+-  race protection. See the mapping reference for the API boundary and fixture cases.
++  that precondition. Never assign client input to managed `@Version`; retain its check for
++  actual writes. A same-value edit may produce no update or additional version check.
++  If unchanged/read-only participants also require optimistic validation, choose an explicit
++  lock mode under that contract; see the mapping reference for the decision and fixture limits.
+ - `flush` synchronizes pending changes and can reveal constraints; it does not commit.
+   A successful `save` can fail later at flush/commit. Check the result outside the first
+   persistence context or transaction when durability/visibility is the assertion.
+diff --git a/skills/spring-boot-jpa/assets/persistence-fixture/README.md b/skills/spring-boot-jpa/assets/persistence-fixture/README.md
+index a8f73a7..32ab46d 100644
+--- a/skills/spring-boot-jpa/assets/persistence-fixture/README.md
++++ b/skills/spring-boot-jpa/assets/persistence-fixture/README.md
+@@ -16,8 +16,11 @@ service.changeNote("A", clientVersion, null); // conditional edit; null clears t
+ 
+ `reserve` updates available stock and adds an owned movement in the same transaction.
+ `changeNote` checks the client's earlier version before changing the current managed
+-entity; Hibernate's `@Version` still protects a race after that check. Neither operation
+-reconstructs a detached entity or overwrites omitted description/stock fields.
++entity; Hibernate's `@Version` checks the version when an update is written. A same-value
++edit may emit no UPDATE: this example accepts its initial comparison and does not request
++an additional optimistic read check. If that stronger validation is required, use the
++[mapping reference's lock-mode decision](../../references/mapping-and-identifiers.md).
++Neither operation reconstructs a detached entity or overwrites omitted description/stock fields.
+ 
+ [InventoryException](src/main/java/example/persistence/InventoryException.java) gives
+ the expected business failures a common code contract. Its specific
+@@ -25,7 +28,7 @@ the expected business failures a common code contract. Its specific
+ and [stale client version](src/main/java/example/persistence/InventoryVersionConflictException.java)
+ failures retain the SKU and, for conflicts, expected/current versions. Their diagnostic
+ messages are not an HTTP response contract. The latter is distinct from Hibernate's
+-optimistic exception when two database transactions race after the initial check;
++optimistic exception when two database transactions update the row after the initial check;
+ both paths remain protected. The base has no cause constructor because these failures
+ originate here; an adapter translating infrastructure failures must preserve their cause.
+ 
+diff --git a/skills/spring-boot-jpa/assets/persistence-fixture/src/main/java/example/persistence/InventoryService.java b/skills/spring-boot-jpa/assets/persistence-fixture/src/main/java/example/persistence/InventoryService.java
+index 029c81c..374898a 100644
+--- a/skills/spring-boot-jpa/assets/persistence-fixture/src/main/java/example/persistence/InventoryService.java
++++ b/skills/spring-boot-jpa/assets/persistence-fixture/src/main/java/example/persistence/InventoryService.java
+@@ -26,7 +26,7 @@ public class InventoryService {
+         if (!expectedVersion.equals(item.getVersion())) {
+             throw new InventoryVersionConflictException(sku, expectedVersion, item.getVersion());
+         }
+-        // Never assign expectedVersion to @Version. Hibernate still detects a race at commit.
++        // Never assign expectedVersion to @Version. Actual writes check it; a no-op may not.
+         item.changeNote(note);
+     }
+ 
+diff --git a/skills/spring-boot-jpa/references/mapping-and-identifiers.md b/skills/spring-boot-jpa/references/mapping-and-identifiers.md
+index 7983930..97eb4ff 100644
+--- a/skills/spring-boot-jpa/references/mapping-and-identifiers.md
++++ b/skills/spring-boot-jpa/references/mapping-and-identifiers.md
+@@ -43,8 +43,8 @@ or defaults when documented and verified. A complete review reconciles that inve
+ schema and boundaries; it does not mechanically set every annotation parameter. Test optional
+ null and present values, size/range edges and mutable/generated field behavior. Do not apply
+ runtime HTTP schema annotations to entities as a substitute for persistence contracts.
+-[Jakarta Column](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/column),
+-[Jakarta Basic](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/basic).
++[Jakarta Column](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/Column.html),
++[Jakarta Basic](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/Basic.html).
+ 
+ For an optional unique value, decide whether multiple missing values are allowed. SQL
+ Server's ordinary single-column unique index permits only one NULL; a filtered unique
+@@ -244,7 +244,7 @@ state-dependent rule. `existsById` followed by a write does not remove races; co
+ and the selected consistency mechanism still matter. Reference creation can defer
+ missing-row exceptions; initialization needs an appropriate persistence context. Some
+ providers/call paths can query early, so there is no unconditional zero-SELECT promise.
+-[EntityManager contract](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/entitymanager).
++[EntityManager contract](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/EntityManager.html).
+ 
+ For Spring Data `save`, inspect newness detection: nullable version first where supported,
+ then identifier, or an explicit `Persistable.isNew()` contract. Assigned non-null IDs
+@@ -256,18 +256,30 @@ and apply only present fields, preserving omitted values and version conflict be
+ For a conditional edit based on an earlier client read, carry `expectedVersion` (or an
+ HTTP `If-Match` value translated at the API boundary). After loading the authorized entity,
+ compare that expectation with its current version **before** applying the patch. Reloading
+-current state and relying only on `@Version` loses the client's older observation: it guards
+-the database race after this load, not the interval since the client's original read.
+-Never assign the received version into the managed `@Version` field. Preserve the provider's
+-version check through flush/commit to cover a writer racing after the comparison. Missing
++current state and relying only on `@Version` loses the client's older observation: its
++write check guards a database race after this load, not the interval since the client's
++original read. Never assign the received version into the managed `@Version` field.
++Preserve the provider's version predicate and flush/commit failure handling for writes. Missing
+ preconditions and stale values need an explicit API policy; do not retry a stale human edit
+ automatically with a freshly loaded version. An unconditional business command may have a
+ different contract and need no client version.
+ 
++An unchanged entity may have no write to check. With Hibernate **7.4.5**, assigning an
++already-held note can produce no UPDATE, so a concurrent commit after the initial comparison
++need not cause a conflict. If the contract also requires optimistic verification of unchanged
++or read-only participants, request `LockModeType.OPTIMISTIC` on the authorized load or with
++`EntityManager.lock` inside the transaction. Do not substitute `flush` or `save` as a universal
++read-validation mechanism. This is not a blocking lock or a cross-row invariant protocol;
++choose force-increment only when its additional version/invalidation semantics are required.
++Retain the ordinary path when validation at the initial read is sufficient for a no-op.
++Test a writer committing between that read and reader completion, with changed and unchanged
++values, plus an uncontended case. [Hibernate optimistic lock modes](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/LockMode.html#OPTIMISTIC).
++
+ The fixture's `InventoryService.changeNote` and stale/current/missing-version tests demonstrate
+-this persistence boundary. They do not implement HTTP header parsing or status mapping. If
++the initial comparison and checks on actual updates; the fixture does not request additional
++optimistic validation for a same-value edit. It does not implement HTTP header parsing or status mapping. If
+ using `If-Match`, implement its HTTP semantics at that boundary rather than assuming Spring
+ Data REST's behavior applies automatically to a custom controller. Test both a stale client
+ request arriving after another commit and overlapping database transactions.
+-[Jakarta optimistic locking](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2#optimistic-locking),
++[Jakarta Persistence 3.2, sections 3.5.2 and 3.5.4.1](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html),
+ [Spring Data REST conditional operations](https://docs.spring.io/spring-data/rest/reference/etags-and-other-conditionals.html).
+diff --git a/skills/spring-boot-jpa/references/queries-and-transactions.md b/skills/spring-boot-jpa/references/queries-and-transactions.md
+index 46f06fd..c228bcc 100644
+--- a/skills/spring-boot-jpa/references/queries-and-transactions.md
++++ b/skills/spring-boot-jpa/references/queries-and-transactions.md
+@@ -135,7 +135,7 @@ Choose from the invariant:
+   protocol, such as a justified force-increment/lock on the root. Do not impose root-wide
+   conflicts on independent children. Test concurrent edits to different children under
+   the shared invariant; hand off broader protocol design to offline-concurrency-control.
+-  [Jakarta versioned state and lock modes](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2#optimistic-locking).
++  [Jakarta versioned state and lock modes](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html).
+ - `@Lock(LockModeType.PESSIMISTIC_WRITE)` requests a persistence lock for the repository
+   query. It needs an active transaction that covers the protected decision and update.
+   Inspect emitted SQL and lock scope under the real dialect/isolation. JPA lock modes,
+@@ -148,7 +148,7 @@ may change fairness or which rows are observed; they are conditional queue seman
+ not interchangeable performance hints. A row lock alone does not prove exactly-once
+ outbox delivery, worker crash recovery or consumer idempotency.
+ [Spring Data locking](https://docs.spring.io/spring-data/jpa/reference/jpa/locking.html),
+-[Jakarta EntityManager locking contract](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/entitymanager).
++[Jakarta EntityManager locking contract](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/EntityManager.html).
+ 
+ Retry only failures identified as transient/retryable under the operation's contract.
+ Start the next attempt in a fresh transaction, reread required state, bound the entire
+diff --git a/skills/spring-boot-jpa/references/verification.md b/skills/spring-boot-jpa/references/verification.md
+index 97aca70..63842b9 100644
+--- a/skills/spring-boot-jpa/references/verification.md
++++ b/skills/spring-boot-jpa/references/verification.md
+@@ -121,6 +121,11 @@ Use these as review prompts when an implementation touches the relevant contract
+   version from before another committed edit. The service must reject the stale expectation
+   even if it loads a fresh managed entity. Never overwrite `@Version` or silently retry
+   with the current version; preserve the unrelated fields and the winning edit.
++- A same-value edit accepts validation at the initial read; then require explicit optimistic
++  verification for that unchanged participant. Keep the simple path for the first contract;
++  for the second, coordinate a writer before transaction completion and verify the chosen
++  lock mode detects it. A dirty-update test alone does not cover this case. Check an
++  uncontended no-op too; do not add forced version increments without a consumer requirement.
+ - A registration service has two replicas and must reject a duplicate canonical identifier.
+   Compare a pre-insert check plus JVM lock with a database constraint and classification
+   outside the transaction owner. Then move failure from explicit flush to commit: catching
+diff --git a/skills/spring-boot-jpa/skill.yaml b/skills/spring-boot-jpa/skill.yaml
+index ccf9a28..36e893f 100644
+--- a/skills/spring-boot-jpa/skill.yaml
++++ b/skills/spring-boot-jpa/skill.yaml
+@@ -1,6 +1,6 @@
+ schemaVersion: 1
+ name: spring-boot-jpa
+-version: 1.2.0
++version: 1.2.1
+ description: >-
+   Implement, diagnose and review Spring Boot 4 persistence with Spring Data JPA when
+   creating a durable service or verifying entity state, mappings, identifiers, fetching,

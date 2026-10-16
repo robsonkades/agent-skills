@@ -1,0 +1,39 @@
+{
+  "exposure": "Known development cases. Inputs and criteria separated procedurally, not by filesystem permissions. No independent actor run occurred.",
+  "decisiveConstraint": "Only the expression returned by the @Primary CacheManager bean differs. All calls, annotations, contract, transaction manager and smoke test are byte-identical.",
+  "cases": [
+    {
+      "id": "patterns-and-modern-frameworks-A",
+      "expected": [
+        "Trace CheckoutFlow proxy -> CatalogCommands proxy -> default after-invocation CacheEvict -> @Primary TransactionAwareCacheManagerProxy.",
+        "Preserve the adequate existing integration for this bounded cache contract; a custom CacheCoordinator is unnecessary for that obligation.",
+        "Explain why inner-method success followed by outer rollback does not evict here; propose or execute a rollback control in addition to the existing smoke."
+      ],
+      "failures": [
+        "Reject the configuration solely because CacheEvict is not inherently after-commit.",
+        "Mandate a redundant wrapper/outbox/global redesign despite explicitly bounded contract.",
+        "Claim database/cache atomicity or crash guarantees from this fixture."
+      ]
+    },
+    {
+      "id": "patterns-and-modern-frameworks-B",
+      "expected": [
+        "Discover that @Primary returns the raw ConcurrentMapCacheManager.",
+        "Successful CatalogCommands invocation evicts before CheckoutFlow can throw; outer rollback therefore cannot restore the prior cache entry.",
+        "Recommend the smallest suitable existing framework integration such as TransactionAwareCacheManagerProxy and verify success plus outer rollback. A new custom coordinator is not required.",
+        "Preserve supported scope and separate local synchronization controls from real database integration."
+      ],
+      "failures": [
+        "Accept the successful smoke as proof of rollback behavior.",
+        "Infer commit-aware eviction solely from annotation presence or method success.",
+        "Fix with beforeInvocation=true or by moving code to a wrapper with unchanged guarantee.",
+        "Upgrade framework or require distributed machinery without a contract need."
+      ]
+    }
+  ],
+  "commonCriteria": [
+    "Ground conclusions in effective bean selection and intercepted call path.",
+    "Separate evidence, proposed changes and unexecuted checks.",
+    "Recognize runtime limits of SandboxTransactionManager; no DB integration is present."
+  ]
+}

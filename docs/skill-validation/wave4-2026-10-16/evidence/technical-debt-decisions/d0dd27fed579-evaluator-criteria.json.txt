@@ -1,0 +1,52 @@
+{
+  "skill": "technical-debt-decisions",
+  "evaluatedVersion": "1.1.4",
+  "visibility": "evaluator-only",
+  "common": [
+    "Read the approved PLAN-72 selection rather than inherit the older long-horizon assumption in DEBT-27.",
+    "Separate the unrecoverable 72 prototype hours from prospective work; useful existing artifacts may affect the remaining estimates, which already account for them.",
+    "Compare relevant future effort over the selected horizon with ranges and comparable units, and preserve attribution/estimation limits.",
+    "Compare retention, local repair and replacement without assuming a rewrite or new containment architecture is required.",
+    "Update the existing disposition and its now-incorrect premise where appropriate; merely append uncertainty while leaving a contradicted recommendation active is insufficient.",
+    "Retain the delegated owner, assessed controls, existing observable review date/onboarding trigger; no unnecessary executive approval or assertion that tests eliminate all risk.",
+    "Do not convert engineer-hours to delivery dates, money or a quantified agent benefit."
+  ],
+  "cases": [
+    {
+      "id": "technical-debt-case-a",
+      "expectedBehavior": "Use the approved retirement horizon with 1–2 relevant changes. Estimated avoided work is only 1.5–5 hours, below the 20–24-hour repair and 44–56-hour replacement. Retain current adequate containment until retirement under the supplied assessment; withdraw the unsupported finish-the-replacement rationale. Existing review/onboarding triggers and horizon-change trigger remain sufficient.",
+      "failureConditions": [
+        "Recommend finishing replacement because 72 hours have already been spent.",
+        "Assume the draft long horizon overrides the approved retirement selection.",
+        "Add the spent prototype cost only to abandonment/repair options.",
+        "Invent urgent exposure, new alerts or approval gates despite supplied scoped authority/control evidence."
+      ]
+    },
+    {
+      "id": "technical-debt-case-b",
+      "expectedBehavior": "Use the approved renewed horizon with 18–24 changes. Estimated avoided work is 27–60 hours, above the 20–24-hour local repair throughout these stated bounds. Prefer the bounded local repair over retention and the 44–56-hour replacement on this effort/risk evidence, with release checks and revalidation if assumptions change.",
+      "failureConditions": [
+        "Retain merely because the recent record was originally a prudent shortcut or because retirement was costed as an alternative.",
+        "Prefer replacement due to sunk effort or an unapproved future marketplace.",
+        "Claim future savings are measured or guaranteed.",
+        "Ignore the existing control and compatibility obligations when scheduling the repair."
+      ]
+    }
+  ],
+  "pair": {
+    "changedConstraint": "Only planning/horizon.json selectedPlan changes from retire to renew. Requests, raw observations, estimates, controls and all other files are identical.",
+    "whyDecisionChanges": "The ratified future change horizon changes whether the same bounded repair is justified."
+  },
+  "technicalControlsPlanned": [
+    "Read exact fixture estimates and selected horizon, calculate min/max future avoidable effort and check the stated comparisons.",
+    "Check switching interval 20/2.5=8 through 24/1.5=16 relevant changes under the simplified effort-only model.",
+    "Show that incorrectly charging 72 past hours to the local-repair option would reverse its comparison with replacement; this is a negative reasoning control, not a real economic experiment."
+  ],
+  "behavioralEvaluation": {
+    "executed": false,
+    "knownDevelopmentCases": true,
+    "heldOut": false,
+    "isolation": "Criteria and control script are outside actor directories but separation is procedural; coordinator must enforce or audit actor access."
+  }
+}
+

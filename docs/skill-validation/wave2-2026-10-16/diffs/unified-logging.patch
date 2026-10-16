@@ -1,0 +1,91 @@
+diff --git a/skills/unified-logging/SKILL.md b/skills/unified-logging/SKILL.md
+index 45468ee..c1a03dc 100644
+--- a/skills/unified-logging/SKILL.md
++++ b/skills/unified-logging/SKILL.md
+@@ -122,9 +122,10 @@ Within existing operational authorization, snapshot before/after effective confi
+ make the smallest change, trigger a known event and restore only owned changes after checking
+ for intervening edits. Runtime reconfiguration cannot be assumed equivalent to every startup
+ directive; test async/global behavior on the exact JDK.
+-Help/list are read-only discovery; they do not authorize configuring, disabling or rotating
+-outputs. Respect existing authorization for the specific inspection or change without adding
+-a new approval gate merely because it uses jcmd.
++The standalone help/list commands above are read-only discovery. `output=...` configures an
++output; appending `list` does not make that combined command read-only. Inspection does not
++authorize configuring, disabling or rotating outputs. Respect existing authorization for
++the specific inspection or change without adding a new approval gate merely because it uses jcmd.
+ 
+ ### 7. Migrate legacy flags from official mapping
+ 
+diff --git a/skills/unified-logging/references/outputs-and-rotation.md b/skills/unified-logging/references/outputs-and-rotation.md
+index 134931c..c2875f7 100644
+--- a/skills/unified-logging/references/outputs-and-rotation.md
++++ b/skills/unified-logging/references/outputs-and-rotation.md
+@@ -46,7 +46,10 @@ slots rapidly. Unique pid/start-time names reduce collision but require cleanup/
+ policies.
+ 
+ Manual rotation and filesize zero behavior are version-documented. Verify via VM.log help
+-and a test process before relying on operator-triggered capture.
++and a test process before relying on operator-triggered capture. JDK 25's `VM.log rotate`
++is not limited by an `output=...` argument; check the global action scope in
++[Runtime reconfiguration](runtime-reconfiguration.md#command-composition-and-action-scope)
++before using it when other outputs must be preserved.
+ 
+ ## Parsing
+ 
+diff --git a/skills/unified-logging/references/runtime-reconfiguration.md b/skills/unified-logging/references/runtime-reconfiguration.md
+index 2755756..c082f17 100644
+--- a/skills/unified-logging/references/runtime-reconfiguration.md
++++ b/skills/unified-logging/references/runtime-reconfiguration.md
+@@ -2,8 +2,9 @@
+ 
+ ## Safe procedure
+ 
+-For authorized discovery, identify the process and inspect its version/help/list; these reads
+-do not change the logging configuration. Use the subsequent change/trigger/restoration steps
++For authorized discovery, identify the process and inspect its version and standalone
++`help VM.log` / `VM.log list`; these reads do not change the logging configuration.
++Use the subsequent change/trigger/restoration steps
+ only for an authorized capture or configuration change. Existing authorization for that scope
+ persists; do not ask again solely because the tool is jcmd.
+ 
+@@ -25,6 +26,27 @@ of shared outputs and do not replay an old global configuration over another ope
+ change. Runtime changes normally end with the JVM; persistence belongs in the actual launch
+ configuration only when the retained change is intended and authorized.
+ 
++## Command composition and action scope
++
++In [JDK 25's diagnostic command implementation](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/logging/logDiagnosticCommand.cpp),
++configuration and action options are not mutually exclusive subcommands:
++
++- `VM.log output=... list` configures the selected output before listing. `output` is not
++  a list filter; omitted selection/decorators can apply defaults and broaden logging.
++  Use standalone `VM.log list` and filter its captured text locally to inspect one output.
++- `VM.log rotate` rotates all outputs eligible for rotation. Supplying `output=...` does
++  not restrict rotation to that file and can also reconfigure it. If only one output may
++  change, this command cannot satisfy that scope.
++- The `jdk-25-ga` implementation dispatches `disable` and `rotate` by option presence:
++  `disable=false` and `rotate=false` still invoke their actions. Omit unused action options
++  from generated commands; a false-valued field is not a read-only guard. Verify the target
++  build rather than extrapolating these parser semantics to another runtime.
++
++When checking a wrapper, use an isolated JVM with two distinct file outputs: compare the
++standalone listing path with any composed command, and inspect both configurations and
++archive files. A command returning the requested listing or exit zero does not establish
++that it preserved configuration or unrelated retention slots.
++
+ ## What changes on an existing output
+ 
+ In [HotSpot JDK 25's configuration implementation](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/logging/logConfiguration.cpp),
+diff --git a/skills/unified-logging/skill.yaml b/skills/unified-logging/skill.yaml
+index eee5d65..1829fa1 100644
+--- a/skills/unified-logging/skill.yaml
++++ b/skills/unified-logging/skill.yaml
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: unified-logging
+-version: 1.2.3
++version: 1.2.4
+ description: >-
+   Constructing, validating and operating HotSpot unified JVM logging: exact versus
+   wildcard tag-set selection, levels, outputs, decorators, file rotation, asynchronous

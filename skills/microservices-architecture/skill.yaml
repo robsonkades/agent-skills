@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: microservices-architecture
-version: 1.0.0
+version: 1.0.1
 description: >-
   Coordinate interdependent architecture decisions when a microservices initiative spans
   domain, data, interaction and operation, or specialist proposals conflict. Build an
@@ -66,6 +66,7 @@ suggests:
   - enterprise-application-architecture
   - distributed-systems
   - timeouts-and-deadlines
+  - retries-and-backoff
   - distribution-boundaries
   - architecture-characteristics
   - architecture-trade-off-analysis

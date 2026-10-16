@@ -1,0 +1,28 @@
+{
+  "classification": "Development cases with ordinary source/configuration/document fixtures; not executed agent evaluations and not unseen holdouts.",
+  "actorInput": "Review docs/checkout-flow.md against the selected request and read path. Correct that document and propose the smallest compatible adjustment if its guarantee is not supported. Preserve Java 17, Kafka 4.1 and the existing interaction topology. This is a focused architecture-document review: do not change application code/configuration, add dependencies, or claim a broker test ran. The supplied source fragments and storage contracts define this path.",
+  "sharedFixtures": {
+    "pom.xml": "<project><properties><maven.compiler.release>17</maven.compiler.release><kafka.version>4.1.2</kafka.version></properties></project>\n",
+    "src/main/java/example/CheckoutWiring.java": "// Wiring fragment for the reviewed application path.\nOrderReader reader = switch (configuration.get(\"checkout.query-source\")) {\n    case \"projection\" -> new ProjectionOrderReader(projectionDatabase);\n    case \"primary\" -> new PrimaryOrderReader(ordersDatabase);\n    default -> throw new IllegalArgumentException(\"unknown query source\");\n};\nCheckoutController controller = new CheckoutController(ordersWriter, reader);\n",
+    "src/main/java/example/CheckoutController.java": "// Controller fragment; HTTP response is sent only after createAndCommit returns.\nReceipt create(CreateOrder command) {\n    return ordersWriter.createAndCommit(command);\n}\nOptional<OrderView> get(String orderId) {\n    return reader.findById(orderId);\n}\n",
+    "src/main/java/example/OutboxRelay.java": "// Independent relay worker; this is not called by CheckoutController.\nRecordMetadata publish(ProducerRecord<String, byte[]> record) throws Exception {\n    return kafkaProducer.send(record).get();\n}\n",
+    "docs/storage-contracts.md": "OrdersWriter.createAndCommit returns a receipt containing orderId and aggregateRevision only after committing one transaction in ordersDatabase that inserts the created order and its outbox record. HTTP maps the receipt to 201 Created. No inventory, payment or shipping work is promised by this operation. OutboxRelay publishes retained intent independently with acks=all. ProjectionConsumer later reads OrderCreated and commits a row with the same revision to projectionDatabase.orders_view; this consumer may be paused without stopping the writer or relay. ProjectionOrderReader queries that table. PrimaryOrderReader issues a new transaction against the same authoritative ordersDatabase primary used by the writer; this route has no cache, replica, or pre-existing transaction snapshot. Its read contract includes the previously committed creation. Notifications and analytics have independent subscriptions. The retained outbox, duplicate handling and relay recovery are established existing components outside this document review.\n",
+    "docs/checkout-flow.md": "# Checkout completion\n\nPOST /orders commits order creation and returns 201 with orderId and aggregateRevision. The UI then calls GET /orders/{id}; this read must include the newly created order. Waiting for a Kafka publication acknowledgement ensures that the query data is fresh. Requests have a 250 ms response budget and must not wait indefinitely. Pending notifications and analytics do not affect successful order creation.\n"
+  },
+  "cases": [
+    {
+      "id": "EDA-A-projection-query",
+      "files": {
+        "src/main/resources/application.properties": "checkout.query-source=projection\nproducer.acks=all\nhttp.response-budget-ms=250\n"
+      }
+    },
+    {
+      "id": "EDA-B-primary-query",
+      "files": {
+        "src/main/resources/application.properties": "checkout.query-source=primary\nproducer.acks=all\nhttp.response-budget-ms=250\n"
+      }
+    }
+  ],
+  "materialization": "Create two isolated fixture directories. Copy sharedFixtures verbatim into each, then overlay the case files. Give only that case's directory and actorInput to the actor. Source fragments intentionally form a document-review fixture, not a runnable server.",
+  "soleChangedConstraint": "checkout.query-source selects the asynchronous projection in A and the authoritative primary in B."
+}

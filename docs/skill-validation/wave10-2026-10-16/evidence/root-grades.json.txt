@@ -1,0 +1,2335 @@
+{
+  "at": "2026-10-16T20:08:28.847Z",
+  "evaluator": "coordinator; arm-aware manual read of all48answers before independent grader receives packets",
+  "basis": "Frozen criteria, with each decision tied to full artifact hash and a semantic reason. Grouped notes describe common observed behavior after individually reading each response; no phrase matcher or actor self-score.",
+  "samples": [
+    {
+      "id": "A01",
+      "case": "T1",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A01/output/answer1.md",
+                  "sha256": "1cf2268c93aacf00ec295c0a72569c88aecfb99297b018890058fad7b8bc761f"
+                }
+              ],
+              "reason": "Cada resposta recomenda N pelo caminho P como direção, com R viável e mais caro."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A01/output/answer1.md",
+                  "sha256": "1cf2268c93aacf00ec295c0a72569c88aecfb99297b018890058fad7b8bc761f"
+                }
+              ],
+              "reason": "Cada resposta confronta os20 minutos demonstrados com25 permitidos, cita obrigações de leitura/preservação/recuperação e não impõe zero downtime."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A01/output/answer1.md",
+                  "sha256": "1cf2268c93aacf00ec295c0a72569c88aecfb99297b018890058fad7b8bc761f"
+                }
+              ],
+              "reason": "Cada resposta usa410 versus520, economia110 em24meses, excluindo90 irrecuperáveis."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A01/output/answer1.md",
+                  "sha256": "1cf2268c93aacf00ec295c0a72569c88aecfb99297b018890058fad7b8bc761f"
+                }
+              ],
+              "reason": "Cada resposta encaminha o planejamento ao processo separado de rollout e conserva as obrigações; não alega ensaios próprios ou liberação de produção."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A01/output/answer2.md",
+                  "sha256": "1fadb2a59fa1dd7d2c769d6108ac0b109cc9fc6216336a2dae500d3c0d84072d"
+                }
+              ],
+              "reason": "Cada atualização retira N viaP e recomenda reterR agora sob o contrato atualizado."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A01/output/answer2.md",
+                  "sha256": "1fadb2a59fa1dd7d2c769d6108ac0b109cc9fc6216336a2dae500d3c0d84072d"
+                }
+              ],
+              "reason": "Cada atualização confronta18–20/limite20 com6 imediato e distingue caminhoP inviável de destinoN sem caminho demonstrado."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A01/output/answer2.md",
+                  "sha256": "1fadb2a59fa1dd7d2c769d6108ac0b109cc9fc6216336a2dae500d3c0d84072d"
+                }
+              ],
+              "reason": "Cada atualização impede economia110, gasto90 ou pressão de compensar a obrigação; outros caminhos exigem prova própria."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A01/output/answer2.md",
+                  "sha256": "1fadb2a59fa1dd7d2c769d6108ac0b109cc9fc6216336a2dae500d3c0d84072d"
+                }
+              ],
+              "reason": "Cada atualização determina manutenção deR/retirada deP e condiciona futura análise a caminho compatível com6 e custos completos, sem implementar nem inventar ensaio."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "A02",
+      "case": "T1",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A02/output/answer1.md",
+                  "sha256": "5d1d3f68c12680f986418d0f347c4d733bdcad5d75bb6c316933f57ca81dd597"
+                }
+              ],
+              "reason": "Cada resposta recomenda N pelo caminho P como direção, com R viável e mais caro."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A02/output/answer1.md",
+                  "sha256": "5d1d3f68c12680f986418d0f347c4d733bdcad5d75bb6c316933f57ca81dd597"
+                }
+              ],
+              "reason": "Cada resposta confronta os20 minutos demonstrados com25 permitidos, cita obrigações de leitura/preservação/recuperação e não impõe zero downtime."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A02/output/answer1.md",
+                  "sha256": "5d1d3f68c12680f986418d0f347c4d733bdcad5d75bb6c316933f57ca81dd597"
+                }
+              ],
+              "reason": "Cada resposta usa410 versus520, economia110 em24meses, excluindo90 irrecuperáveis."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A02/output/answer1.md",
+                  "sha256": "5d1d3f68c12680f986418d0f347c4d733bdcad5d75bb6c316933f57ca81dd597"
+                }
+              ],
+              "reason": "Cada resposta encaminha o planejamento ao processo separado de rollout e conserva as obrigações; não alega ensaios próprios ou liberação de produção."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A02/output/answer2.md",
+                  "sha256": "ac0e4afeae5d5bcf67f0df14a5820dfb922db6b4ae833b3571518a67325bf5fc"
+                }
+              ],
+              "reason": "Cada atualização retira N viaP e recomenda reterR agora sob o contrato atualizado."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A02/output/answer2.md",
+                  "sha256": "ac0e4afeae5d5bcf67f0df14a5820dfb922db6b4ae833b3571518a67325bf5fc"
+                }
+              ],
+              "reason": "Cada atualização confronta18–20/limite20 com6 imediato e distingue caminhoP inviável de destinoN sem caminho demonstrado."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A02/output/answer2.md",
+                  "sha256": "ac0e4afeae5d5bcf67f0df14a5820dfb922db6b4ae833b3571518a67325bf5fc"
+                }
+              ],
+              "reason": "Cada atualização impede economia110, gasto90 ou pressão de compensar a obrigação; outros caminhos exigem prova própria."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A02/output/answer2.md",
+                  "sha256": "ac0e4afeae5d5bcf67f0df14a5820dfb922db6b4ae833b3571518a67325bf5fc"
+                }
+              ],
+              "reason": "Cada atualização determina manutenção deR/retirada deP e condiciona futura análise a caminho compatível com6 e custos completos, sem implementar nem inventar ensaio."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "A03",
+      "case": "T1",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A03/output/answer1.md",
+                  "sha256": "9102676978c1c41a7d2c5c4a9af2a17f1f5d82879edfc99dbf56a28cf47b94ed"
+                }
+              ],
+              "reason": "Cada resposta recomenda N pelo caminho P como direção, com R viável e mais caro."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A03/output/answer1.md",
+                  "sha256": "9102676978c1c41a7d2c5c4a9af2a17f1f5d82879edfc99dbf56a28cf47b94ed"
+                }
+              ],
+              "reason": "Cada resposta confronta os20 minutos demonstrados com25 permitidos, cita obrigações de leitura/preservação/recuperação e não impõe zero downtime."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A03/output/answer1.md",
+                  "sha256": "9102676978c1c41a7d2c5c4a9af2a17f1f5d82879edfc99dbf56a28cf47b94ed"
+                }
+              ],
+              "reason": "Cada resposta usa410 versus520, economia110 em24meses, excluindo90 irrecuperáveis."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A03/output/answer1.md",
+                  "sha256": "9102676978c1c41a7d2c5c4a9af2a17f1f5d82879edfc99dbf56a28cf47b94ed"
+                }
+              ],
+              "reason": "Cada resposta encaminha o planejamento ao processo separado de rollout e conserva as obrigações; não alega ensaios próprios ou liberação de produção."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A03/output/answer2.md",
+                  "sha256": "52b0f8bf83d56209f40be6102d298b9b38c2dc5749f919d41fcf09f15e5234d1"
+                }
+              ],
+              "reason": "Cada atualização retira N viaP e recomenda reterR agora sob o contrato atualizado."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A03/output/answer2.md",
+                  "sha256": "52b0f8bf83d56209f40be6102d298b9b38c2dc5749f919d41fcf09f15e5234d1"
+                }
+              ],
+              "reason": "Cada atualização confronta18–20/limite20 com6 imediato e distingue caminhoP inviável de destinoN sem caminho demonstrado."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A03/output/answer2.md",
+                  "sha256": "52b0f8bf83d56209f40be6102d298b9b38c2dc5749f919d41fcf09f15e5234d1"
+                }
+              ],
+              "reason": "Cada atualização impede economia110, gasto90 ou pressão de compensar a obrigação; outros caminhos exigem prova própria."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A03/output/answer2.md",
+                  "sha256": "52b0f8bf83d56209f40be6102d298b9b38c2dc5749f919d41fcf09f15e5234d1"
+                }
+              ],
+              "reason": "Cada atualização determina manutenção deR/retirada deP e condiciona futura análise a caminho compatível com6 e custos completos, sem implementar nem inventar ensaio."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "A04",
+      "case": "T1",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A04/output/answer1.md",
+                  "sha256": "814a7e15e5b26d10f9b4c19c2adb16ec76844224f3ac494c57f06035295e46f7"
+                }
+              ],
+              "reason": "Cada resposta recomenda N pelo caminho P como direção, com R viável e mais caro."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A04/output/answer1.md",
+                  "sha256": "814a7e15e5b26d10f9b4c19c2adb16ec76844224f3ac494c57f06035295e46f7"
+                }
+              ],
+              "reason": "Cada resposta confronta os20 minutos demonstrados com25 permitidos, cita obrigações de leitura/preservação/recuperação e não impõe zero downtime."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A04/output/answer1.md",
+                  "sha256": "814a7e15e5b26d10f9b4c19c2adb16ec76844224f3ac494c57f06035295e46f7"
+                }
+              ],
+              "reason": "Cada resposta usa410 versus520, economia110 em24meses, excluindo90 irrecuperáveis."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A04/output/answer1.md",
+                  "sha256": "814a7e15e5b26d10f9b4c19c2adb16ec76844224f3ac494c57f06035295e46f7"
+                }
+              ],
+              "reason": "Cada resposta encaminha o planejamento ao processo separado de rollout e conserva as obrigações; não alega ensaios próprios ou liberação de produção."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A04/output/answer2.md",
+                  "sha256": "ee2e528ebe6ab22f67609acfb6da37ebfc6707929aaf1287f7c8419abadec4b5"
+                }
+              ],
+              "reason": "Cada atualização retira N viaP e recomenda reterR agora sob o contrato atualizado."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A04/output/answer2.md",
+                  "sha256": "ee2e528ebe6ab22f67609acfb6da37ebfc6707929aaf1287f7c8419abadec4b5"
+                }
+              ],
+              "reason": "Cada atualização confronta18–20/limite20 com6 imediato e distingue caminhoP inviável de destinoN sem caminho demonstrado."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A04/output/answer2.md",
+                  "sha256": "ee2e528ebe6ab22f67609acfb6da37ebfc6707929aaf1287f7c8419abadec4b5"
+                }
+              ],
+              "reason": "Cada atualização impede economia110, gasto90 ou pressão de compensar a obrigação; outros caminhos exigem prova própria."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A04/output/answer2.md",
+                  "sha256": "ee2e528ebe6ab22f67609acfb6da37ebfc6707929aaf1287f7c8419abadec4b5"
+                }
+              ],
+              "reason": "Cada atualização determina manutenção deR/retirada deP e condiciona futura análise a caminho compatível com6 e custos completos, sem implementar nem inventar ensaio."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "A05",
+      "case": "T1",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A05/output/answer1.md",
+                  "sha256": "b120cee776c9473724d6c3a23402609619c47b0ac5912effe1ebcb362e1282f8"
+                }
+              ],
+              "reason": "Cada resposta recomenda N pelo caminho P como direção, com R viável e mais caro."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A05/output/answer1.md",
+                  "sha256": "b120cee776c9473724d6c3a23402609619c47b0ac5912effe1ebcb362e1282f8"
+                }
+              ],
+              "reason": "Cada resposta confronta os20 minutos demonstrados com25 permitidos, cita obrigações de leitura/preservação/recuperação e não impõe zero downtime."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A05/output/answer1.md",
+                  "sha256": "b120cee776c9473724d6c3a23402609619c47b0ac5912effe1ebcb362e1282f8"
+                }
+              ],
+              "reason": "Cada resposta usa410 versus520, economia110 em24meses, excluindo90 irrecuperáveis."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A05/output/answer1.md",
+                  "sha256": "b120cee776c9473724d6c3a23402609619c47b0ac5912effe1ebcb362e1282f8"
+                }
+              ],
+              "reason": "Cada resposta encaminha o planejamento ao processo separado de rollout e conserva as obrigações; não alega ensaios próprios ou liberação de produção."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A05/output/answer2.md",
+                  "sha256": "3885ca2e5b7b0052422196150b4e63aaa0883e8b8516e018a33859822062dd93"
+                }
+              ],
+              "reason": "Cada atualização retira N viaP e recomenda reterR agora sob o contrato atualizado."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A05/output/answer2.md",
+                  "sha256": "3885ca2e5b7b0052422196150b4e63aaa0883e8b8516e018a33859822062dd93"
+                }
+              ],
+              "reason": "Cada atualização confronta18–20/limite20 com6 imediato e distingue caminhoP inviável de destinoN sem caminho demonstrado."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A05/output/answer2.md",
+                  "sha256": "3885ca2e5b7b0052422196150b4e63aaa0883e8b8516e018a33859822062dd93"
+                }
+              ],
+              "reason": "Cada atualização impede economia110, gasto90 ou pressão de compensar a obrigação; outros caminhos exigem prova própria."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A05/output/answer2.md",
+                  "sha256": "3885ca2e5b7b0052422196150b4e63aaa0883e8b8516e018a33859822062dd93"
+                }
+              ],
+              "reason": "Cada atualização determina manutenção deR/retirada deP e condiciona futura análise a caminho compatível com6 e custos completos, sem implementar nem inventar ensaio."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "A06",
+      "case": "T1",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A06/output/answer1.md",
+                  "sha256": "e12df6a7e678a5f2dbd4c2d375971ddfd3a4a6ce2a61fbf26d978f6c21b19854"
+                }
+              ],
+              "reason": "Cada resposta recomenda N pelo caminho P como direção, com R viável e mais caro."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A06/output/answer1.md",
+                  "sha256": "e12df6a7e678a5f2dbd4c2d375971ddfd3a4a6ce2a61fbf26d978f6c21b19854"
+                }
+              ],
+              "reason": "Cada resposta confronta os20 minutos demonstrados com25 permitidos, cita obrigações de leitura/preservação/recuperação e não impõe zero downtime."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A06/output/answer1.md",
+                  "sha256": "e12df6a7e678a5f2dbd4c2d375971ddfd3a4a6ce2a61fbf26d978f6c21b19854"
+                }
+              ],
+              "reason": "Cada resposta usa410 versus520, economia110 em24meses, excluindo90 irrecuperáveis."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A06/output/answer1.md",
+                  "sha256": "e12df6a7e678a5f2dbd4c2d375971ddfd3a4a6ce2a61fbf26d978f6c21b19854"
+                }
+              ],
+              "reason": "Cada resposta encaminha o planejamento ao processo separado de rollout e conserva as obrigações; não alega ensaios próprios ou liberação de produção."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A06/output/answer2.md",
+                  "sha256": "d1582ba0a45a427664bdaaf9806f428992ff26d6de3c3214605bf4c74e77ce7a"
+                }
+              ],
+              "reason": "Cada atualização retira N viaP e recomenda reterR agora sob o contrato atualizado."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A06/output/answer2.md",
+                  "sha256": "d1582ba0a45a427664bdaaf9806f428992ff26d6de3c3214605bf4c74e77ce7a"
+                }
+              ],
+              "reason": "Cada atualização confronta18–20/limite20 com6 imediato e distingue caminhoP inviável de destinoN sem caminho demonstrado."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A06/output/answer2.md",
+                  "sha256": "d1582ba0a45a427664bdaaf9806f428992ff26d6de3c3214605bf4c74e77ce7a"
+                }
+              ],
+              "reason": "Cada atualização impede economia110, gasto90 ou pressão de compensar a obrigação; outros caminhos exigem prova própria."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A06/output/answer2.md",
+                  "sha256": "d1582ba0a45a427664bdaaf9806f428992ff26d6de3c3214605bf4c74e77ce7a"
+                }
+              ],
+              "reason": "Cada atualização determina manutenção deR/retirada deP e condiciona futura análise a caminho compatível com6 e custos completos, sem implementar nem inventar ensaio."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "A07",
+      "case": "T2",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A07/output/answer1.md",
+                  "sha256": "84bfbe88f350e328fa916dbebc23e6b2e4b1e4aa5519be5bfd46078bc6bbc71d"
+                }
+              ],
+              "reason": "Aplica o modelo aceito com L=30+60w e M=80−25w;66 versus65 em0,60."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A07/output/answer1.md",
+                  "sha256": "84bfbe88f350e328fa916dbebc23e6b2e4b1e4aa5519be5bfd46078bc6bbc71d"
+                }
+              ],
+              "reason": "Calcula limiar10/17 e extremos63/66,25 e69/63,75, demonstrando inversão no intervalo."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A07/output/answer1.md",
+                  "sha256": "84bfbe88f350e328fa916dbebc23e6b2e4b1e4aa5519be5bfd46078bc6bbc71d"
+                }
+              ],
+              "reason": "Rejeita vitória inequívoca e preserva ramosL/M conforme peso ainda em aberto."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A07/output/answer1.md",
+                  "sha256": "84bfbe88f350e328fa916dbebc23e6b2e4b1e4aa5519be5bfd46078bc6bbc71d"
+                }
+              ],
+              "reason": "Encaminha peso aBruno/área usuária, dispensa benchmark para resolver preferência e não trata os valores como desempenho."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A07/output/answer2.md",
+                  "sha256": "b3882fca2f2d06581d5bdd0cedb4f05f890c11473259ac0a44261ce88a4dc00c"
+                }
+              ],
+              "reason": "Calcula63,6 paraL e66 paraM, diferença2,4 em0,56."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A07/output/answer2.md",
+                  "sha256": "b3882fca2f2d06581d5bdd0cedb4f05f890c11473259ac0a44261ce88a4dc00c"
+                }
+              ],
+              "reason": "RecomendaM sob peso autorizado e não concede veto ao colega0,65."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A07/output/answer2.md",
+                  "sha256": "b3882fca2f2d06581d5bdd0cedb4f05f890c11473259ac0a44261ce88a4dc00c"
+                }
+              ],
+              "reason": "Reconhece preferência aprovada, mesma viabilidade e troca90/55 em operação por30/80 em mudanças, não performance."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A07/output/answer2.md",
+                  "sha256": "b3882fca2f2d06581d5bdd0cedb4f05f890c11473259ac0a44261ce88a4dc00c"
+                }
+              ],
+              "reason": "A recomendação é proporcional e sem benchmark; autorização do peso é explicitamente separada da implementação."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "A08",
+      "case": "T2",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A08/output/answer1.md",
+                  "sha256": "1fd73b6f91c70bc7a6adaab25c3bd06c71c85a6294dd512e75ec2fb75c537cd5"
+                }
+              ],
+              "reason": "Aplica o modelo aceito com L=30+60w e M=80−25w;66 versus65 em0,60."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A08/output/answer1.md",
+                  "sha256": "1fd73b6f91c70bc7a6adaab25c3bd06c71c85a6294dd512e75ec2fb75c537cd5"
+                }
+              ],
+              "reason": "Calcula limiar10/17 e extremos63/66,25 e69/63,75, demonstrando inversão no intervalo."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A08/output/answer1.md",
+                  "sha256": "1fd73b6f91c70bc7a6adaab25c3bd06c71c85a6294dd512e75ec2fb75c537cd5"
+                }
+              ],
+              "reason": "Rejeita vitória inequívoca e preserva ramosL/M conforme peso ainda em aberto."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A08/output/answer1.md",
+                  "sha256": "1fd73b6f91c70bc7a6adaab25c3bd06c71c85a6294dd512e75ec2fb75c537cd5"
+                }
+              ],
+              "reason": "Encaminha peso aBruno/área usuária, dispensa benchmark para resolver preferência e não trata os valores como desempenho."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A08/output/answer2.md",
+                  "sha256": "2bced2623e8bd032fe40f3a7c361df2c299de6f5180e6eeb22806e964113ed98"
+                }
+              ],
+              "reason": "Calcula63,6 paraL e66 paraM, diferença2,4 em0,56."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A08/output/answer2.md",
+                  "sha256": "2bced2623e8bd032fe40f3a7c361df2c299de6f5180e6eeb22806e964113ed98"
+                }
+              ],
+              "reason": "RecomendaM sob peso autorizado e não concede veto ao colega0,65."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A08/output/answer2.md",
+                  "sha256": "2bced2623e8bd032fe40f3a7c361df2c299de6f5180e6eeb22806e964113ed98"
+                }
+              ],
+              "reason": "Reconhece preferência aprovada, mesma viabilidade e troca90/55 em operação por30/80 em mudanças, não performance."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A08/output/answer2.md",
+                  "sha256": "2bced2623e8bd032fe40f3a7c361df2c299de6f5180e6eeb22806e964113ed98"
+                }
+              ],
+              "reason": "A recomendação é proporcional e sem benchmark; autorização do peso é explicitamente separada da implementação."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "A09",
+      "case": "T2",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A09/output/answer1.md",
+                  "sha256": "30e288776f35a64071c5028568ef0df6a4bcae8e74bb7255e07bb89c36220247"
+                }
+              ],
+              "reason": "Aplica modelo aditivo aceito e calcula66 paraL,65 paraM em0,60."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A09/output/answer1.md",
+                  "sha256": "30e288776f35a64071c5028568ef0df6a4bcae8e74bb7255e07bb89c36220247"
+                }
+              ],
+              "reason": "Calcula limiar10/17 e extremos do intervalo, demonstrando reversão entreM eL."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A09/output/answer1.md",
+                  "sha256": "30e288776f35a64071c5028568ef0df6a4bcae8e74bb7255e07bb89c36220247"
+                }
+              ],
+              "reason": "Rejeita vitória inequívoca, conserva condição sobre peso e não inventa preferência aprovada."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A09/output/answer1.md",
+                  "sha256": "30e288776f35a64071c5028568ef0df6a4bcae8e74bb7255e07bb89c36220247"
+                }
+              ],
+              "reason": "Resolve comBruno e área usuária a preferência; não usa benchmark técnico nem interpreta valor como percentual de desempenho."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A09/output/answer2.md",
+                  "sha256": "b48adf6928db531ea1de10845476369005b3e9e5e1a3762775233fad422e7c1d"
+                }
+              ],
+              "reason": "Calcula63,6 versus66 sob0,56, vantagemM2,4."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A09/output/answer2.md",
+                  "sha256": "b48adf6928db531ea1de10845476369005b3e9e5e1a3762775233fad422e7c1d"
+                }
+              ],
+              "reason": "RecomendaM e distingue autoridade deBruno da preferência0,65 do colega."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A09/output/answer2.md",
+                  "sha256": "b48adf6928db531ea1de10845476369005b3e9e5e1a3762775233fad422e7c1d"
+                }
+              ],
+              "reason": "Mantém dados/viabilidade e trata aprovação como preferência; a troca entre as duas escalas está explícita nesta ou na primeira resposta."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A09/output/answer2.md",
+                  "sha256": "b48adf6928db531ea1de10845476369005b3e9e5e1a3762775233fad422e7c1d"
+                }
+              ],
+              "reason": "Conclui proporcionalmente sem novo benchmark e sem converter aprovação do peso em execução."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "A10",
+      "case": "T2",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A10/output/answer1.md",
+                  "sha256": "025a17c760cfc17be1b79557fe0771dc6d215213a111a24bd961d1e5aba93a8e"
+                }
+              ],
+              "reason": "Aplica modelo aditivo aceito e calcula66 paraL,65 paraM em0,60."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A10/output/answer1.md",
+                  "sha256": "025a17c760cfc17be1b79557fe0771dc6d215213a111a24bd961d1e5aba93a8e"
+                }
+              ],
+              "reason": "Calcula limiar10/17 e extremos do intervalo, demonstrando reversão entreM eL."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A10/output/answer1.md",
+                  "sha256": "025a17c760cfc17be1b79557fe0771dc6d215213a111a24bd961d1e5aba93a8e"
+                }
+              ],
+              "reason": "Rejeita vitória inequívoca, conserva condição sobre peso e não inventa preferência aprovada."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A10/output/answer1.md",
+                  "sha256": "025a17c760cfc17be1b79557fe0771dc6d215213a111a24bd961d1e5aba93a8e"
+                }
+              ],
+              "reason": "Resolve comBruno e área usuária a preferência; não usa benchmark técnico nem interpreta valor como percentual de desempenho."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A10/output/answer2.md",
+                  "sha256": "43742841c992b1509bdb7d00e64e0421bd2f1d39b49319ec4d86d874ac942a91"
+                }
+              ],
+              "reason": "Calcula63,6 versus66 sob0,56, vantagemM2,4."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A10/output/answer2.md",
+                  "sha256": "43742841c992b1509bdb7d00e64e0421bd2f1d39b49319ec4d86d874ac942a91"
+                }
+              ],
+              "reason": "RecomendaM e distingue autoridade deBruno da preferência0,65 do colega."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A10/output/answer2.md",
+                  "sha256": "43742841c992b1509bdb7d00e64e0421bd2f1d39b49319ec4d86d874ac942a91"
+                }
+              ],
+              "reason": "Mantém dados/viabilidade e trata aprovação como preferência; a troca entre as duas escalas está explícita nesta ou na primeira resposta."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A10/output/answer2.md",
+                  "sha256": "43742841c992b1509bdb7d00e64e0421bd2f1d39b49319ec4d86d874ac942a91"
+                }
+              ],
+              "reason": "Conclui proporcionalmente sem novo benchmark e sem converter aprovação do peso em execução."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "A11",
+      "case": "T2",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A11/output/answer1.md",
+                  "sha256": "043c39aea532a0426bf92d7023bf78c6f4b0cd05ccca80b30c0b23b78e893ab0"
+                }
+              ],
+              "reason": "Aplica modelo aditivo aceito e calcula66 paraL,65 paraM em0,60."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A11/output/answer1.md",
+                  "sha256": "043c39aea532a0426bf92d7023bf78c6f4b0cd05ccca80b30c0b23b78e893ab0"
+                }
+              ],
+              "reason": "Calcula limiar10/17 e extremos do intervalo, demonstrando reversão entreM eL."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A11/output/answer1.md",
+                  "sha256": "043c39aea532a0426bf92d7023bf78c6f4b0cd05ccca80b30c0b23b78e893ab0"
+                }
+              ],
+              "reason": "Rejeita vitória inequívoca, conserva condição sobre peso e não inventa preferência aprovada."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A11/output/answer1.md",
+                  "sha256": "043c39aea532a0426bf92d7023bf78c6f4b0cd05ccca80b30c0b23b78e893ab0"
+                }
+              ],
+              "reason": "Resolve comBruno e área usuária a preferência; não usa benchmark técnico nem interpreta valor como percentual de desempenho."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A11/output/answer2.md",
+                  "sha256": "07ae3d614c9c6315eca3e35299007c6c52bd07509bf4f4552dfbc24ec1fee600"
+                }
+              ],
+              "reason": "Calcula63,6 versus66 sob0,56, vantagemM2,4."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A11/output/answer2.md",
+                  "sha256": "07ae3d614c9c6315eca3e35299007c6c52bd07509bf4f4552dfbc24ec1fee600"
+                }
+              ],
+              "reason": "RecomendaM e distingue autoridade deBruno da preferência0,65 do colega."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A11/output/answer2.md",
+                  "sha256": "07ae3d614c9c6315eca3e35299007c6c52bd07509bf4f4552dfbc24ec1fee600"
+                }
+              ],
+              "reason": "Mantém dados/viabilidade e trata aprovação como preferência; a troca entre as duas escalas está explícita nesta ou na primeira resposta."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A11/output/answer2.md",
+                  "sha256": "07ae3d614c9c6315eca3e35299007c6c52bd07509bf4f4552dfbc24ec1fee600"
+                }
+              ],
+              "reason": "Conclui proporcionalmente sem novo benchmark e sem converter aprovação do peso em execução."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "A12",
+      "case": "T2",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A12/output/answer1.md",
+                  "sha256": "ef3fae1734ad0dc43af3c8c0c2d4f3f477be26dc9494c42b3e3a812b834f07b9"
+                }
+              ],
+              "reason": "Aplica modelo aditivo aceito e calcula66 paraL,65 paraM em0,60."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A12/output/answer1.md",
+                  "sha256": "ef3fae1734ad0dc43af3c8c0c2d4f3f477be26dc9494c42b3e3a812b834f07b9"
+                }
+              ],
+              "reason": "Calcula limiar10/17 e extremos do intervalo, demonstrando reversão entreM eL."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A12/output/answer1.md",
+                  "sha256": "ef3fae1734ad0dc43af3c8c0c2d4f3f477be26dc9494c42b3e3a812b834f07b9"
+                }
+              ],
+              "reason": "Rejeita vitória inequívoca, conserva condição sobre peso e não inventa preferência aprovada."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A12/output/answer1.md",
+                  "sha256": "ef3fae1734ad0dc43af3c8c0c2d4f3f477be26dc9494c42b3e3a812b834f07b9"
+                }
+              ],
+              "reason": "Resolve comBruno e área usuária a preferência; não usa benchmark técnico nem interpreta valor como percentual de desempenho."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A12/output/answer2.md",
+                  "sha256": "87f4592a3710b8cbf26ede440a0a9202c23b2eb5fc9f3f7ac52943bb8b90efcf"
+                }
+              ],
+              "reason": "Calcula63,6 versus66 sob0,56, vantagemM2,4."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A12/output/answer2.md",
+                  "sha256": "87f4592a3710b8cbf26ede440a0a9202c23b2eb5fc9f3f7ac52943bb8b90efcf"
+                }
+              ],
+              "reason": "RecomendaM e distingue autoridade deBruno da preferência0,65 do colega."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A12/output/answer2.md",
+                  "sha256": "87f4592a3710b8cbf26ede440a0a9202c23b2eb5fc9f3f7ac52943bb8b90efcf"
+                }
+              ],
+              "reason": "Mantém dados/viabilidade e trata aprovação como preferência; a troca entre as duas escalas está explícita nesta ou na primeira resposta."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A12/output/answer2.md",
+                  "sha256": "87f4592a3710b8cbf26ede440a0a9202c23b2eb5fc9f3f7ac52943bb8b90efcf"
+                }
+              ],
+              "reason": "Conclui proporcionalmente sem novo benchmark e sem converter aprovação do peso em execução."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "A13",
+      "case": "T3",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A13/output/answer1.md",
+                  "sha256": "e8ea1a1b60246a871fc1a32273cfcd0b120aed7034d11d1cf149fa9e6e1bf42b"
+                }
+              ],
+              "reason": "Distingue perda validada do831 emU/u1 de geradorV sem envio, limitando falha à configuração observada."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A13/output/answer1.md",
+                  "sha256": "e8ea1a1b60246a871fc1a32273cfcd0b120aed7034d11d1cf149fa9e6e1bf42b"
+                }
+              ],
+              "reason": "Distingue3200ms atéresultado de80ms atéconfirmação e recusa40x de conclusão/confiabilidade."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A13/output/answer1.md",
+                  "sha256": "e8ea1a1b60246a871fc1a32273cfcd0b120aed7034d11d1cf149fa9e6e1bf42b"
+                }
+              ],
+              "reason": "Nenhum candidato é recomendado para lançamento real; não inventa retenção qualificada nem transforma prazo em dispensa."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A13/output/answer1.md",
+                  "sha256": "e8ea1a1b60246a871fc1a32273cfcd0b120aed7034d11d1cf149fa9e6e1bf42b"
+                }
+              ],
+              "reason": "Propõe corrigir geradorV e verificar preservação/recuperação/conclusão sob carga, mantendo lançamento adiado até evidência."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A13/output/answer2.md",
+                  "sha256": "2411a5d84b6dcd16cf436bba231aff3d707768ff1bebff145d2068eadb8207c5"
+                }
+              ],
+              "reason": "Mantém negativa de lançamento real sob prazo antecipado, sem nova evidência ou waiver."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A13/output/answer2.md",
+                  "sha256": "2411a5d84b6dcd16cf436bba231aff3d707768ff1bebff145d2068eadb8207c5"
+                }
+              ],
+              "reason": "Explica que100 lotes reduzem exposição mas binário anterior não recupera trabalhos reconhecidos/estado."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A13/output/answer2.md",
+                  "sha256": "2411a5d84b6dcd16cf436bba231aff3d707768ff1bebff145d2068eadb8207c5"
+                }
+              ],
+              "reason": "Admite ensaio isolado com lotes sintéticos, mantendo trabalho real excluído até obrigações demonstradas."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A13/output/answer2.md",
+                  "sha256": "2411a5d84b6dcd16cf436bba231aff3d707768ff1bebff145d2068eadb8207c5"
+                }
+              ],
+              "reason": "Ação hoje é corrigir gerador e reconciliar confirmações, quedas, recuperação e conclusão<=60s; não alega teste próprio ou fallback qualificado."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "A14",
+      "case": "T3",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A14/output/answer1.md",
+                  "sha256": "cc830d761a50d622650c2d6f6a0d7782bab068b8cbeaa98029f74308cc410d6d"
+                }
+              ],
+              "reason": "Distingue perda validada do831 emU/u1 de geradorV sem envio, limitando falha à configuração observada."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A14/output/answer1.md",
+                  "sha256": "cc830d761a50d622650c2d6f6a0d7782bab068b8cbeaa98029f74308cc410d6d"
+                }
+              ],
+              "reason": "Distingue3200ms atéresultado de80ms atéconfirmação e recusa40x de conclusão/confiabilidade."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A14/output/answer1.md",
+                  "sha256": "cc830d761a50d622650c2d6f6a0d7782bab068b8cbeaa98029f74308cc410d6d"
+                }
+              ],
+              "reason": "Nenhum candidato é recomendado para lançamento real; não inventa retenção qualificada nem transforma prazo em dispensa."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A14/output/answer1.md",
+                  "sha256": "cc830d761a50d622650c2d6f6a0d7782bab068b8cbeaa98029f74308cc410d6d"
+                }
+              ],
+              "reason": "Propõe corrigir geradorV e verificar preservação/recuperação/conclusão sob carga, mantendo lançamento adiado até evidência."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A14/output/answer2.md",
+                  "sha256": "624cdd64044a6e7c52d0fabf44c13572fe3658fd0ed69b9ace97a54c1accf973"
+                }
+              ],
+              "reason": "Mantém negativa de lançamento real sob prazo antecipado, sem nova evidência ou waiver."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A14/output/answer2.md",
+                  "sha256": "624cdd64044a6e7c52d0fabf44c13572fe3658fd0ed69b9ace97a54c1accf973"
+                }
+              ],
+              "reason": "Explica que100 lotes reduzem exposição mas binário anterior não recupera trabalhos reconhecidos/estado."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A14/output/answer2.md",
+                  "sha256": "624cdd64044a6e7c52d0fabf44c13572fe3658fd0ed69b9ace97a54c1accf973"
+                }
+              ],
+              "reason": "Admite ensaio isolado com lotes sintéticos, mantendo trabalho real excluído até obrigações demonstradas."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A14/output/answer2.md",
+                  "sha256": "624cdd64044a6e7c52d0fabf44c13572fe3658fd0ed69b9ace97a54c1accf973"
+                }
+              ],
+              "reason": "Ação hoje é corrigir gerador e reconciliar confirmações, quedas, recuperação e conclusão<=60s; não alega teste próprio ou fallback qualificado."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "A15",
+      "case": "T3",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A15/output/answer1.md",
+                  "sha256": "d620dadd5ae5a5970739e596ffc8624dfd950fa8b8484a2d4b12509e5888f4b0"
+                }
+              ],
+              "reason": "Distingue perda validada do831 emU/u1 de geradorV sem envio, limitando falha à configuração observada."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A15/output/answer1.md",
+                  "sha256": "d620dadd5ae5a5970739e596ffc8624dfd950fa8b8484a2d4b12509e5888f4b0"
+                }
+              ],
+              "reason": "Distingue3200ms atéresultado de80ms atéconfirmação e recusa40x de conclusão/confiabilidade."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A15/output/answer1.md",
+                  "sha256": "d620dadd5ae5a5970739e596ffc8624dfd950fa8b8484a2d4b12509e5888f4b0"
+                }
+              ],
+              "reason": "Nenhum candidato é recomendado para lançamento real; não inventa retenção qualificada nem transforma prazo em dispensa."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A15/output/answer1.md",
+                  "sha256": "d620dadd5ae5a5970739e596ffc8624dfd950fa8b8484a2d4b12509e5888f4b0"
+                }
+              ],
+              "reason": "Propõe corrigir geradorV e verificar preservação/recuperação/conclusão sob carga, mantendo lançamento adiado até evidência."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A15/output/answer2.md",
+                  "sha256": "29ad0bdb6e7902584e0ae9b753f5198eb08ec322f4bafbfc3dd37e6a07e611f7"
+                }
+              ],
+              "reason": "Mantém negativa de lançamento real sob prazo antecipado, sem nova evidência ou waiver."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A15/output/answer2.md",
+                  "sha256": "29ad0bdb6e7902584e0ae9b753f5198eb08ec322f4bafbfc3dd37e6a07e611f7"
+                }
+              ],
+              "reason": "Explica que100 lotes reduzem exposição mas binário anterior não recupera trabalhos reconhecidos/estado."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A15/output/answer2.md",
+                  "sha256": "29ad0bdb6e7902584e0ae9b753f5198eb08ec322f4bafbfc3dd37e6a07e611f7"
+                }
+              ],
+              "reason": "Admite ensaio isolado com lotes sintéticos, mantendo trabalho real excluído até obrigações demonstradas."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A15/output/answer2.md",
+                  "sha256": "29ad0bdb6e7902584e0ae9b753f5198eb08ec322f4bafbfc3dd37e6a07e611f7"
+                }
+              ],
+              "reason": "Ação hoje é corrigir gerador e reconciliar confirmações, quedas, recuperação e conclusão<=60s; não alega teste próprio ou fallback qualificado."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "A16",
+      "case": "T3",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A16/output/answer1.md",
+                  "sha256": "70bb53bd1dfc487e3e2d1ab1888ef4e4786824a88aab5947eedb64ec02bbcda6"
+                }
+              ],
+              "reason": "Distingue perda validada do831 emU/u1 de geradorV sem envio, limitando falha à configuração observada."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A16/output/answer1.md",
+                  "sha256": "70bb53bd1dfc487e3e2d1ab1888ef4e4786824a88aab5947eedb64ec02bbcda6"
+                }
+              ],
+              "reason": "Distingue3200ms atéresultado de80ms atéconfirmação e recusa40x de conclusão/confiabilidade."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A16/output/answer1.md",
+                  "sha256": "70bb53bd1dfc487e3e2d1ab1888ef4e4786824a88aab5947eedb64ec02bbcda6"
+                }
+              ],
+              "reason": "Nenhum candidato é recomendado para lançamento real; não inventa retenção qualificada nem transforma prazo em dispensa."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A16/output/answer1.md",
+                  "sha256": "70bb53bd1dfc487e3e2d1ab1888ef4e4786824a88aab5947eedb64ec02bbcda6"
+                }
+              ],
+              "reason": "Propõe corrigir geradorV e verificar preservação/recuperação/conclusão sob carga, mantendo lançamento adiado até evidência."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A16/output/answer2.md",
+                  "sha256": "ab81d28a510dd7b6f869153b97b079a1c06f7dac3d721f2a0647c12f5affc55e"
+                }
+              ],
+              "reason": "Mantém negativa de lançamento real sob prazo antecipado, sem nova evidência ou waiver."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A16/output/answer2.md",
+                  "sha256": "ab81d28a510dd7b6f869153b97b079a1c06f7dac3d721f2a0647c12f5affc55e"
+                }
+              ],
+              "reason": "Explica que100 lotes reduzem exposição mas binário anterior não recupera trabalhos reconhecidos/estado."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A16/output/answer2.md",
+                  "sha256": "ab81d28a510dd7b6f869153b97b079a1c06f7dac3d721f2a0647c12f5affc55e"
+                }
+              ],
+              "reason": "Admite ensaio isolado com lotes sintéticos, mantendo trabalho real excluído até obrigações demonstradas."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A16/output/answer2.md",
+                  "sha256": "ab81d28a510dd7b6f869153b97b079a1c06f7dac3d721f2a0647c12f5affc55e"
+                }
+              ],
+              "reason": "Ação hoje é corrigir gerador e reconciliar confirmações, quedas, recuperação e conclusão<=60s; não alega teste próprio ou fallback qualificado."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "A17",
+      "case": "T3",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A17/output/answer1.md",
+                  "sha256": "cc07aa46e97fbee20ed198017945ce17f41beabe6f0abd6ba560bd819603221b"
+                }
+              ],
+              "reason": "ClassificaU/u1 reprovado pela perda831 auditada eV/v1 desconhecido por falta de envio."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A17/output/answer1.md",
+                  "sha256": "cc07aa46e97fbee20ed198017945ce17f41beabe6f0abd6ba560bd819603221b"
+                }
+              ],
+              "reason": "Rejeita40x pontaaponta de3200 versus80 com marcos distintos e não inventa conclusão/durabilidadeV."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A17/output/answer1.md",
+                  "sha256": "cc07aa46e97fbee20ed198017945ce17f41beabe6f0abd6ba560bd819603221b"
+                }
+              ],
+              "reason": "Nãoaprova candidatos hoje nem presume fallback qualificado ou dispensa pela ausênciaCarla."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A17/output/answer1.md",
+                  "sha256": "cc07aa46e97fbee20ed198017945ce17f41beabe6f0abd6ba560bd819603221b"
+                }
+              ],
+              "reason": "Propõe consertar gerador e ensaio isolado com reconciliação por identificador, recuperação e conclusão sob perfil acordado; liberação condicional à evidência."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A17/output/answer2.md",
+                  "sha256": "cb07f124e0f01cb6a95674e524686dcde100113958150287c159635ef8432b43"
+                }
+              ],
+              "reason": "Mantém não liberaçãoV para100lotes reais; antecipação da reunião não altera obrigações/evidência."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A17/output/answer2.md",
+                  "sha256": "cb07f124e0f01cb6a95674e524686dcde100113958150287c159635ef8432b43"
+                }
+              ],
+              "reason": "Explica ausência de recuperação de estado/replay apesar de cópia binária e exposição menor."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A17/output/answer2.md",
+                  "sha256": "cb07f124e0f01cb6a95674e524686dcde100113958150287c159635ef8432b43"
+                }
+              ],
+              "reason": "Permite ensaio isolado sintético antes de tráfego real, sem supor retorno qualificado."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A17/output/answer2.md",
+                  "sha256": "cb07f124e0f01cb6a95674e524686dcde100113958150287c159635ef8432b43"
+                }
+              ],
+              "reason": "Propõe açãohoje com gerador/envio/queda/reconciliação, critérios de reprovação e revisão; não inventa execução nem solução operacional conforme."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "A18",
+      "case": "T3",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A18/output/answer1.md",
+                  "sha256": "8c72a20e6ca7250602894f7667feb878f3f71272acaf40f53f5526a20f2adf30"
+                }
+              ],
+              "reason": "ClassificaU/u1 reprovado pela perda831 auditada eV/v1 desconhecido por falta de envio."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A18/output/answer1.md",
+                  "sha256": "8c72a20e6ca7250602894f7667feb878f3f71272acaf40f53f5526a20f2adf30"
+                }
+              ],
+              "reason": "Rejeita40x pontaaponta de3200 versus80 com marcos distintos e não inventa conclusão/durabilidadeV."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A18/output/answer1.md",
+                  "sha256": "8c72a20e6ca7250602894f7667feb878f3f71272acaf40f53f5526a20f2adf30"
+                }
+              ],
+              "reason": "Nãoaprova candidatos hoje nem presume fallback qualificado ou dispensa pela ausênciaCarla."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A18/output/answer1.md",
+                  "sha256": "8c72a20e6ca7250602894f7667feb878f3f71272acaf40f53f5526a20f2adf30"
+                }
+              ],
+              "reason": "Propõe consertar gerador e ensaio isolado com reconciliação por identificador, recuperação e conclusão sob perfil acordado; liberação condicional à evidência."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A18/output/answer2.md",
+                  "sha256": "d580ec9aa1795bd0d3dd473a21897503bab639f8e234d8f386541d0b297aaefd"
+                }
+              ],
+              "reason": "Mantém não liberaçãoV para100lotes reais; antecipação da reunião não altera obrigações/evidência."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A18/output/answer2.md",
+                  "sha256": "d580ec9aa1795bd0d3dd473a21897503bab639f8e234d8f386541d0b297aaefd"
+                }
+              ],
+              "reason": "Explica ausência de recuperação de estado/replay apesar de cópia binária e exposição menor."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A18/output/answer2.md",
+                  "sha256": "d580ec9aa1795bd0d3dd473a21897503bab639f8e234d8f386541d0b297aaefd"
+                }
+              ],
+              "reason": "Permite ensaio isolado sintético antes de tráfego real, sem supor retorno qualificado."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A18/output/answer2.md",
+                  "sha256": "d580ec9aa1795bd0d3dd473a21897503bab639f8e234d8f386541d0b297aaefd"
+                }
+              ],
+              "reason": "Propõe açãohoje com gerador/envio/queda/reconciliação, critérios de reprovação e revisão; não inventa execução nem solução operacional conforme."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "A19",
+      "case": "T4",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A19/output/answer1.md",
+                  "sha256": "7eb43d06d79945734cfe4d4ee2b761f201a9c62ea54e3ee52465fd5ae8d4166a"
+                }
+              ],
+              "reason": "UsaJ=12+12m, faixa180–312, H240 e limiar19; exclui180irrecuperáveis."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A19/output/answer1.md",
+                  "sha256": "7eb43d06d79945734cfe4d4ee2b761f201a9c62ea54e3ee52465fd5ae8d4166a"
+                }
+              ],
+              "reason": "EscolheA, mantémH provisório ou seleção condicional. A19/A24 propõem critério conservador explícito se incerteza persistir, sem alegar menor custo demonstrado/esperado."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A19/output/answer1.md",
+                  "sha256": "7eb43d06d79945734cfe4d4ee2b761f201a9c62ea54e3ee52465fd5ae8d4166a"
+                }
+              ],
+              "reason": "DispensaB porque nenhum resultado plausível muda requisito/preferência eC porque não resolve proporcionalmente a incerteza no dia disponível."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A19/output/answer1.md",
+                  "sha256": "7eb43d06d79945734cfe4d4ee2b761f201a9c62ea54e3ee52465fd5ae8d4166a"
+                }
+              ],
+              "reason": "ApresentaJ abaixo19/H acima/empate19, com analista-financeiro eDiego amanhã; não inventa valor medido ou autorização de migrar."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A19/output/answer2.md",
+                  "sha256": "6bb8585323d56e487a66b504febdaa9559d2611e508625c19622fda511b42cd2"
+                }
+              ],
+              "reason": "RecomendaJ após total216 frente240, economia24."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A19/output/answer2.md",
+                  "sha256": "6bb8585323d56e487a66b504febdaa9559d2611e508625c19622fda511b42cd2"
+                }
+              ],
+              "reason": "Encerra investigação decisória e rejeita quatrosemanas/necessidade de desvantagem inventada."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A19/output/answer2.md",
+                  "sha256": "6bb8585323d56e487a66b504febdaa9559d2611e508625c19622fda511b42cd2"
+                }
+              ],
+              "reason": "Limita vantagem aos12meses/volume/condições fornecidas e inclui12fixos, sem alegar superioridade universal."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A19/output/answer2.md",
+                  "sha256": "6bb8585323d56e487a66b504febdaa9559d2611e508625c19622fda511b42cd2"
+                }
+              ],
+              "reason": "Encaminha decisão aDiego; pode recomendar autorização explícita, mas não afirma que já existe nem executa. Fonte do novo dado é financeiro, não medição própria."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "A20",
+      "case": "T4",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A20/output/answer1.md",
+                  "sha256": "9bc01c3d811d2e43a997cb058e4bb06ae3cbba81c1425bd97029bb219f12f85a"
+                }
+              ],
+              "reason": "UsaJ=12+12m, faixa180–312, H240 e limiar19; exclui180irrecuperáveis."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A20/output/answer1.md",
+                  "sha256": "9bc01c3d811d2e43a997cb058e4bb06ae3cbba81c1425bd97029bb219f12f85a"
+                }
+              ],
+              "reason": "EscolheA, mantémH provisório ou seleção condicional. A19/A24 propõem critério conservador explícito se incerteza persistir, sem alegar menor custo demonstrado/esperado."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A20/output/answer1.md",
+                  "sha256": "9bc01c3d811d2e43a997cb058e4bb06ae3cbba81c1425bd97029bb219f12f85a"
+                }
+              ],
+              "reason": "DispensaB porque nenhum resultado plausível muda requisito/preferência eC porque não resolve proporcionalmente a incerteza no dia disponível."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A20/output/answer1.md",
+                  "sha256": "9bc01c3d811d2e43a997cb058e4bb06ae3cbba81c1425bd97029bb219f12f85a"
+                }
+              ],
+              "reason": "ApresentaJ abaixo19/H acima/empate19, com analista-financeiro eDiego amanhã; não inventa valor medido ou autorização de migrar."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A20/output/answer2.md",
+                  "sha256": "a0f484f6aea8f4bda25868d7299daaa7f6b9f5749719bbd61220e78e6bb287a6"
+                }
+              ],
+              "reason": "RecomendaJ após total216 frente240, economia24."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A20/output/answer2.md",
+                  "sha256": "a0f484f6aea8f4bda25868d7299daaa7f6b9f5749719bbd61220e78e6bb287a6"
+                }
+              ],
+              "reason": "Encerra investigação decisória e rejeita quatrosemanas/necessidade de desvantagem inventada."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A20/output/answer2.md",
+                  "sha256": "a0f484f6aea8f4bda25868d7299daaa7f6b9f5749719bbd61220e78e6bb287a6"
+                }
+              ],
+              "reason": "Limita vantagem aos12meses/volume/condições fornecidas e inclui12fixos, sem alegar superioridade universal."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A20/output/answer2.md",
+                  "sha256": "a0f484f6aea8f4bda25868d7299daaa7f6b9f5749719bbd61220e78e6bb287a6"
+                }
+              ],
+              "reason": "Encaminha decisão aDiego; pode recomendar autorização explícita, mas não afirma que já existe nem executa. Fonte do novo dado é financeiro, não medição própria."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "A21",
+      "case": "T4",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A21/output/answer1.md",
+                  "sha256": "cf893605fa5cd4649071efa128ce71307341bb1290208481a3ae0937281272ee"
+                }
+              ],
+              "reason": "UsaJ=12+12m, faixa180–312, H240 e limiar19; exclui180irrecuperáveis."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A21/output/answer1.md",
+                  "sha256": "cf893605fa5cd4649071efa128ce71307341bb1290208481a3ae0937281272ee"
+                }
+              ],
+              "reason": "EscolheA, mantémH provisório ou seleção condicional. A19/A24 propõem critério conservador explícito se incerteza persistir, sem alegar menor custo demonstrado/esperado."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A21/output/answer1.md",
+                  "sha256": "cf893605fa5cd4649071efa128ce71307341bb1290208481a3ae0937281272ee"
+                }
+              ],
+              "reason": "DispensaB porque nenhum resultado plausível muda requisito/preferência eC porque não resolve proporcionalmente a incerteza no dia disponível."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A21/output/answer1.md",
+                  "sha256": "cf893605fa5cd4649071efa128ce71307341bb1290208481a3ae0937281272ee"
+                }
+              ],
+              "reason": "ApresentaJ abaixo19/H acima/empate19, com analista-financeiro eDiego amanhã; não inventa valor medido ou autorização de migrar."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A21/output/answer2.md",
+                  "sha256": "e0ae1e86bb15111b8c724bbb4a4d05e8855a660e21b9e9d273b623c80c832c7f"
+                }
+              ],
+              "reason": "RecomendaJ após total216 frente240, economia24."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A21/output/answer2.md",
+                  "sha256": "e0ae1e86bb15111b8c724bbb4a4d05e8855a660e21b9e9d273b623c80c832c7f"
+                }
+              ],
+              "reason": "Encerra investigação decisória e rejeita quatrosemanas/necessidade de desvantagem inventada."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A21/output/answer2.md",
+                  "sha256": "e0ae1e86bb15111b8c724bbb4a4d05e8855a660e21b9e9d273b623c80c832c7f"
+                }
+              ],
+              "reason": "Limita vantagem aos12meses/volume/condições fornecidas e inclui12fixos, sem alegar superioridade universal."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A21/output/answer2.md",
+                  "sha256": "e0ae1e86bb15111b8c724bbb4a4d05e8855a660e21b9e9d273b623c80c832c7f"
+                }
+              ],
+              "reason": "Encaminha decisão aDiego; pode recomendar autorização explícita, mas não afirma que já existe nem executa. Fonte do novo dado é financeiro, não medição própria."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "A22",
+      "case": "T4",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A22/output/answer1.md",
+                  "sha256": "587a8e16e2a67f36b7ccefde07ccf3fa12e5c2ce5c1b0449eb85c4629fc76951"
+                }
+              ],
+              "reason": "UsaJ=12+12m, faixa180–312, H240 e limiar19; exclui180irrecuperáveis."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A22/output/answer1.md",
+                  "sha256": "587a8e16e2a67f36b7ccefde07ccf3fa12e5c2ce5c1b0449eb85c4629fc76951"
+                }
+              ],
+              "reason": "EscolheA, mantémH provisório ou seleção condicional. A19/A24 propõem critério conservador explícito se incerteza persistir, sem alegar menor custo demonstrado/esperado."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A22/output/answer1.md",
+                  "sha256": "587a8e16e2a67f36b7ccefde07ccf3fa12e5c2ce5c1b0449eb85c4629fc76951"
+                }
+              ],
+              "reason": "DispensaB porque nenhum resultado plausível muda requisito/preferência eC porque não resolve proporcionalmente a incerteza no dia disponível."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A22/output/answer1.md",
+                  "sha256": "587a8e16e2a67f36b7ccefde07ccf3fa12e5c2ce5c1b0449eb85c4629fc76951"
+                }
+              ],
+              "reason": "ApresentaJ abaixo19/H acima/empate19, com analista-financeiro eDiego amanhã; não inventa valor medido ou autorização de migrar."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A22/output/answer2.md",
+                  "sha256": "25dd4229aa7275f8d8ab2a7c37ba60cdfc62aec3a9314681dfdefb8d934e7f38"
+                }
+              ],
+              "reason": "RecomendaJ após total216 frente240, economia24."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A22/output/answer2.md",
+                  "sha256": "25dd4229aa7275f8d8ab2a7c37ba60cdfc62aec3a9314681dfdefb8d934e7f38"
+                }
+              ],
+              "reason": "Encerra investigação decisória e rejeita quatrosemanas/necessidade de desvantagem inventada."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A22/output/answer2.md",
+                  "sha256": "25dd4229aa7275f8d8ab2a7c37ba60cdfc62aec3a9314681dfdefb8d934e7f38"
+                }
+              ],
+              "reason": "Limita vantagem aos12meses/volume/condições fornecidas e inclui12fixos, sem alegar superioridade universal."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A22/output/answer2.md",
+                  "sha256": "25dd4229aa7275f8d8ab2a7c37ba60cdfc62aec3a9314681dfdefb8d934e7f38"
+                }
+              ],
+              "reason": "Encaminha decisão aDiego; pode recomendar autorização explícita, mas não afirma que já existe nem executa. Fonte do novo dado é financeiro, não medição própria."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "A23",
+      "case": "T4",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A23/output/answer1.md",
+                  "sha256": "29aac46e326b4f05b572e57322e5984f16db6cce7e1799617a90c6a7811b19f4"
+                }
+              ],
+              "reason": "UsaJ=12+12m, faixa180–312, H240 e limiar19; exclui180irrecuperáveis."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A23/output/answer1.md",
+                  "sha256": "29aac46e326b4f05b572e57322e5984f16db6cce7e1799617a90c6a7811b19f4"
+                }
+              ],
+              "reason": "EscolheA, mantémH provisório ou seleção condicional. A19/A24 propõem critério conservador explícito se incerteza persistir, sem alegar menor custo demonstrado/esperado."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A23/output/answer1.md",
+                  "sha256": "29aac46e326b4f05b572e57322e5984f16db6cce7e1799617a90c6a7811b19f4"
+                }
+              ],
+              "reason": "DispensaB porque nenhum resultado plausível muda requisito/preferência eC porque não resolve proporcionalmente a incerteza no dia disponível."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A23/output/answer1.md",
+                  "sha256": "29aac46e326b4f05b572e57322e5984f16db6cce7e1799617a90c6a7811b19f4"
+                }
+              ],
+              "reason": "ApresentaJ abaixo19/H acima/empate19, com analista-financeiro eDiego amanhã; não inventa valor medido ou autorização de migrar."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A23/output/answer2.md",
+                  "sha256": "742917ecded535461ec55b7845c870a88e0a5dbb294efe7fffbd6daf7993a502"
+                }
+              ],
+              "reason": "RecomendaJ após total216 frente240, economia24."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A23/output/answer2.md",
+                  "sha256": "742917ecded535461ec55b7845c870a88e0a5dbb294efe7fffbd6daf7993a502"
+                }
+              ],
+              "reason": "Encerra investigação decisória e rejeita quatrosemanas/necessidade de desvantagem inventada."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A23/output/answer2.md",
+                  "sha256": "742917ecded535461ec55b7845c870a88e0a5dbb294efe7fffbd6daf7993a502"
+                }
+              ],
+              "reason": "Limita vantagem aos12meses/volume/condições fornecidas e inclui12fixos, sem alegar superioridade universal."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A23/output/answer2.md",
+                  "sha256": "742917ecded535461ec55b7845c870a88e0a5dbb294efe7fffbd6daf7993a502"
+                }
+              ],
+              "reason": "Encaminha decisão aDiego; pode recomendar autorização explícita, mas não afirma que já existe nem executa. Fonte do novo dado é financeiro, não medição própria."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    {
+      "id": "A24",
+      "case": "T4",
+      "stages": {
+        "1": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A24/output/answer1.md",
+                  "sha256": "484717e98587acf18169ddae0144f426686e3f9b2af5712e7c00d910cd91dc0f"
+                }
+              ],
+              "reason": "UsaJ=12+12m, faixa180–312, H240 e limiar19; exclui180irrecuperáveis."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A24/output/answer1.md",
+                  "sha256": "484717e98587acf18169ddae0144f426686e3f9b2af5712e7c00d910cd91dc0f"
+                }
+              ],
+              "reason": "EscolheA, mantémH provisório ou seleção condicional. A19/A24 propõem critério conservador explícito se incerteza persistir, sem alegar menor custo demonstrado/esperado."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A24/output/answer1.md",
+                  "sha256": "484717e98587acf18169ddae0144f426686e3f9b2af5712e7c00d910cd91dc0f"
+                }
+              ],
+              "reason": "DispensaB porque nenhum resultado plausível muda requisito/preferência eC porque não resolve proporcionalmente a incerteza no dia disponível."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A24/output/answer1.md",
+                  "sha256": "484717e98587acf18169ddae0144f426686e3f9b2af5712e7c00d910cd91dc0f"
+                }
+              ],
+              "reason": "ApresentaJ abaixo19/H acima/empate19, com analista-financeiro eDiego amanhã; não inventa valor medido ou autorização de migrar."
+            }
+          },
+          "pass": true
+        },
+        "2": {
+          "criteria": {
+            "C1": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A24/output/answer2.md",
+                  "sha256": "ea561343859b829db8d84ca8ee84d17e60d8e4abed75911b72602c9d48502210"
+                }
+              ],
+              "reason": "RecomendaJ após total216 frente240, economia24."
+            },
+            "C2": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A24/output/answer2.md",
+                  "sha256": "ea561343859b829db8d84ca8ee84d17e60d8e4abed75911b72602c9d48502210"
+                }
+              ],
+              "reason": "Encerra investigação decisória e rejeita quatrosemanas/necessidade de desvantagem inventada."
+            },
+            "C3": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A24/output/answer2.md",
+                  "sha256": "ea561343859b829db8d84ca8ee84d17e60d8e4abed75911b72602c9d48502210"
+                }
+              ],
+              "reason": "Limita vantagem aos12meses/volume/condições fornecidas e inclui12fixos, sem alegar superioridade universal."
+            },
+            "C4": {
+              "pass": true,
+              "evidence": [
+                {
+                  "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A24/output/answer2.md",
+                  "sha256": "ea561343859b829db8d84ca8ee84d17e60d8e4abed75911b72602c9d48502210"
+                }
+              ],
+              "reason": "Encaminha decisão aDiego; pode recomendar autorização explícita, mas não afirma que já existe nem executa. Fonte do novo dado é financeiro, não medição própria."
+            }
+          },
+          "pass": true
+        }
+      },
+      "pass": true
+    }
+  ]
+}

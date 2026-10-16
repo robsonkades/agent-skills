@@ -97,6 +97,23 @@ does not need a batch API merely because it is remote. When batching is justifie
 partial-result and deadline semantics rather than assuming a loop is equivalent
 (`rpc-and-api-contracts`).
 
+**Atomicity.** Trace one consumer operation through its implementor calls. If `createIfAbsent`
+is implemented as `exists` followed by `write`, another writer can intervene even when each
+method is thread-safe. Put the indivisible condition and effect in the backend contract, or use
+an existing coordination protocol that covers every writer. Locking one abstraction instance does
+not by itself coordinate other instances or processes: Java monitors exclude only threads acquiring
+the same monitor ([JLS 17 section 17.1](https://docs.oracle.com/javase/specs/jls/se17/html/jls-17.html#jls-17.1)).
+Retain ordinary reads/writes when the consumer allows independent operations; do not add a
+transaction or another hierarchy merely because there are several calls.
+
+For a Java 17 example, [`Files.exists`](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/nio/file/Files.html#exists(java.nio.file.Path,java.nio.file.LinkOption...)>)
+does not reserve the name; `false` can also mean existence could not be determined. Opening with
+[`CREATE_NEW`](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/nio/file/StandardOpenOption.html#CREATE_NEW)
+combines the absence check and creation atomically. That protects name creation, not atomic
+publication of all subsequent bytes, rollback or durability. Define partial-write outcomes and
+cleanup separately. Test a competing writer between the former primitive calls and assert both
+the returned outcome and the winning content; also retain a case where replacement is allowed.
+
 **Failure.** A method that returns `void` and "cannot fail" locally will fail remotely. Decide up
 front whether failure is an exception (with a documented transient/permanent split) or a result
 type, and keep it uniform across backends (`java-exception-design`).

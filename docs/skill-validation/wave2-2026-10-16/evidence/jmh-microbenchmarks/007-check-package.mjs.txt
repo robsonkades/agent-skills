@@ -1,0 +1,32 @@
+import path from 'node:path';
+import { readFile, access } from 'node:fs/promises';
+import { pathToFileURL } from 'node:url';
+const root = 'C:/git/agent-skills';
+const { loadPackageFromDirectory } = await import(pathToFileURL(path.join(root, 'packages/core/src/application/package-loader.ts')));
+const { validatePackage } = await import(pathToFileURL(path.join(root, 'packages/core/src/application/validate-package.ts')));
+const { NodeFileSystem } = await import(pathToFileURL(path.join(root, 'packages/node/src/file-system.ts')));
+const packageRoot = path.join(root, 'skills/jmh-microbenchmarks');
+const loaded = await loadPackageFromDirectory(new NodeFileSystem(), packageRoot, { strict: true });
+const issues = [...loaded.issues, ...validatePackage(loaded.pkg, { directoryName: 'jmh-microbenchmarks' }).issues];
+const localLinks = [];
+const brokenLinks = [];
+for (const file of loaded.pkg.files.filter(f => f.path.endsWith('.md'))) {
+  const body = await readFile(path.join(packageRoot, file.path), 'utf8');
+  for (const match of body.matchAll(/\[[^\]]+\]\(([^)]+)\)/g)) {
+    const raw = match[1].replace(/^<|>$/g, '');
+    if (/^[a-z][a-z0-9+.-]*:/i.test(raw) || raw.startsWith('#')) continue;
+    const target = raw.split('#')[0];
+    const resolved = path.resolve(packageRoot, path.dirname(file.path), target);
+    const item = { file: file.path, target, resolved };
+    localLinks.push(item);
+    try { await access(resolved); } catch { brokenLinks.push(item); }
+  }
+}
+console.log(JSON.stringify({
+  name: loaded.pkg.manifest.name,
+  version: loaded.pkg.manifest.version,
+  files: loaded.pkg.files.map(f => f.path),
+  issues, localLinks, brokenLinks,
+  limitations: 'Package-local generic validation only; no adapter, global index or benchmark execution checks.'
+}, null, 2));
+if (issues.length || brokenLinks.length) process.exitCode = 1;

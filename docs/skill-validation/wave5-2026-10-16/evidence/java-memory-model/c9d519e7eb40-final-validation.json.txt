@@ -1,0 +1,87 @@
+{
+  "status": " M skills/java-memory-model/references/happens-before.md\n M skills/java-memory-model/skill.yaml\n",
+  "finalFiles": [
+    {
+      "path": "C:/git/agent-skills/skills/java-memory-model/SKILL.md",
+      "relativePath": "SKILL.md",
+      "baselineSha256": "a9f6dab4bf513019bf245efc9cd8757a5edcc9b212ec507e3545fa59573c2a1a",
+      "finalSha256": "a9f6dab4bf513019bf245efc9cd8757a5edcc9b212ec507e3545fa59573c2a1a",
+      "changed": false
+    },
+    {
+      "path": "C:/git/agent-skills/skills/java-memory-model/skill.yaml",
+      "relativePath": "skill.yaml",
+      "baselineSha256": "1e2323798bd80080cf698cd1f8cc7085aa712c4e96f2113cb15c09eb97fe8c9b",
+      "finalSha256": "ebf7fdd7cf14ed7c51f1627d4cbfc022d264de515840da97004fa13531e53cab",
+      "changed": true
+    },
+    {
+      "path": "C:/git/agent-skills/skills/java-memory-model/references/happens-before.md",
+      "relativePath": "references/happens-before.md",
+      "baselineSha256": "ffb7b4955709d039d02549f7730d85b8bad661f22d9de908d14e741c6df5a076",
+      "finalSha256": "bf3c0632c5a2643752fa2ad160a9694b8cc98696474bb14fc6c67499bc33865c",
+      "changed": true
+    },
+    {
+      "path": "C:/git/agent-skills/skills/java-memory-model/references/review-checklist.md",
+      "relativePath": "references/review-checklist.md",
+      "baselineSha256": "a9e6f00a8e7e26fcbe4b6d2a7a430198042acc7905025bb661772dd29b73b8a8",
+      "finalSha256": "a9e6f00a8e7e26fcbe4b6d2a7a430198042acc7905025bb661772dd29b73b8a8",
+      "changed": false
+    }
+  ],
+  "finalCommands": [
+    {
+      "command": "git",
+      "args": [
+        "status",
+        "--short",
+        "--untracked-files=all",
+        "--",
+        "skills/java-memory-model"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": " M skills/java-memory-model/references/happens-before.md\n M skills/java-memory-model/skill.yaml\n",
+      "stderr": ""
+    },
+    {
+      "command": "git",
+      "args": [
+        "diff",
+        "--",
+        "skills/java-memory-model"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "diff --git a/skills/java-memory-model/references/happens-before.md b/skills/java-memory-model/references/happens-before.md\nindex 4d06037..b3a9506 100644\n--- a/skills/java-memory-model/references/happens-before.md\n+++ b/skills/java-memory-model/references/happens-before.md\n@@ -97,7 +97,11 @@ Prefer eager or holder initialization when lifecycle permits.\n \n Final-field semantics provide special visibility for correctly constructed objects even in some\n racy publication executions. They do not create a generic synchronizes-with/happens-before edge.\n-They do not guarantee non-final fields, later mutations, or that a reader sees a non-null reference.\n+They do not guarantee unrelated non-final fields on the containing object, later mutations, or\n+that a reader sees a non-null reference. Initialization writes to object/array state reached through\n+a final field can be covered by JLS 17.5.1's freeze/dereference rules even when that reachable state\n+is non-final. Follow the actual read path; an ordinary alias pointing to the same object does not\n+by itself establish that protection.\n \n Review reachable mutable objects separately:\n \ndiff --git a/skills/java-memory-model/skill.yaml b/skills/java-memory-model/skill.yaml\nindex cf77233..b4d073a 100644\n--- a/skills/java-memory-model/skill.yaml\n+++ b/skills/java-memory-model/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: java-memory-model\n-version: 1.3.5\n+version: 1.3.6\n description: >-\n   Proving inter-thread visibility, ordering and atomicity under the Java Memory Model. Covers\n   actions/executions, synchronization order, synchronizes-with and happens-before, data races,\n",
+      "stderr": ""
+    },
+    {
+      "command": "git",
+      "args": [
+        "diff",
+        "--cached",
+        "--",
+        "skills/java-memory-model"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": "git",
+      "args": [
+        "diff",
+        "--check",
+        "--",
+        "skills/java-memory-model"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ]
+}

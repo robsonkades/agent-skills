@@ -1,0 +1,3 @@
+# Catálogo / conselho de produto
+Responsável pela decisão: diretora Ana. Horizonte aprovado: 24 meses, carga e capacidade já contratadas. Hoje escolhemos uma direção; o rollout exige outro processo. O custo total é a única preferência que diferencia alternativas depois de satisfeitas as obrigações. Retenção R e destino N passam os contratos de leitura, integridade, capacidade, recuperação sem perda e operação nos seus estados finais. R continua viável durante os 24 meses. Não existe necessidade de abandonar R.
+O arquivo operacao.md registra as obrigações de transição. A proposta P é o único caminho de migração ensaiado até agora. Outros caminhos podem ser pesquisados, mas não foram analisados nem estimados.

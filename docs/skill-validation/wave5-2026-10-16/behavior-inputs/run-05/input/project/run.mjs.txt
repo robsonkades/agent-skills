@@ -1,0 +1,8 @@
+import fs from 'node:fs';import path from 'node:path';import {spawnSync} from 'node:child_process';
+const jdk="C:/Users/robso/.jdks/temurin-25.0.3/bin";const walk=p=>fs.readdirSync(p,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(path.join(p,e.name)):e.name.endsWith('.java')?[path.join(p,e.name)]:[]);
+const invoke=(tool,args)=>{const r=spawnSync(path.join(jdk,tool),args,{encoding:'utf8',timeout:30000,windowsHide:true});process.stdout.write(r.stdout||'');process.stderr.write(r.stderr||'');if(r.status!==0)process.exit(r.status??1);};
+fs.mkdirSync('.build/app',{recursive:true});fs.mkdirSync('.build/test',{recursive:true});
+invoke('javac.exe',['--release','17','-cp','lib/compat.jar','-d','.build/app',...walk('src')]);
+if(process.argv[2]==='check'){invoke('javac.exe',['--release','17','-cp','.build/app','-d','.build/test',...walk('test')]);invoke('java.exe',['-cp',['.build/app','.build/test'].join(path.delimiter),'work.SelfTest']);}
+else if(process.argv[2]==='export'){const c=JSON.parse(fs.readFileSync('launch.json','utf8'));invoke('java.exe',['-cp',c.classpath.join(path.delimiter),c.main,...process.argv.slice(3)]);}
+else throw new Error('Usage: node run.mjs check | export input output');

@@ -114,8 +114,10 @@ pool sizing or property reviews, including the SQL Server scheduler case.
 
 - For an edit conditioned on an earlier client read, compare `expectedVersion`/`If-Match`
   with the loaded authorized entity before mutation; reloading current state alone loses
-  that precondition. Never assign client input to managed `@Version`; retain its commit-time
-  race protection. See the mapping reference for the API boundary and fixture cases.
+  that precondition. Never assign client input to managed `@Version`; retain its check for
+  actual writes. A same-value edit may produce no update or additional version check.
+  If unchanged/read-only participants also require optimistic validation, choose an explicit
+  lock mode under that contract; see the mapping reference for the decision and fixture limits.
 - `flush` synchronizes pending changes and can reveal constraints; it does not commit.
   A successful `save` can fail later at flush/commit. Check the result outside the first
   persistence context or transaction when durability/visibility is the assertion.

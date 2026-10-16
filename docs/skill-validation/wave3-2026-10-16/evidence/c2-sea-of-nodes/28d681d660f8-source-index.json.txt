@@ -1,0 +1,170 @@
+[
+  {
+    "file": "compilerOracle.cpp",
+    "url": "https://raw.githubusercontent.com/openjdk/jdk25u/jdk-25.0.3%2B9/src/hotspot/share/compiler/compilerOracle.cpp",
+    "purpose": "Command-option parsing, validation and startup error handling",
+    "status": 200,
+    "bytes": 42963,
+    "sha256": "36699bbda68f9c3546272fe2f5751b4a04d462a5493c9762fdab66ef1060cc1a"
+  },
+  {
+    "file": "compilerOracle.hpp",
+    "url": "https://raw.githubusercontent.com/openjdk/jdk25u/jdk-25.0.3%2B9/src/hotspot/share/compiler/compilerOracle.hpp",
+    "purpose": "Supported per-method option list",
+    "status": 200,
+    "bytes": 8484,
+    "sha256": "a2ed341b1d1675ff25b7f54869bd485a09b45be26648739b3d6f03fa3a166881"
+  },
+  {
+    "file": "compilerDefinitions.cpp",
+    "url": "https://raw.githubusercontent.com/openjdk/jdk25u/jdk-25.0.3%2B9/src/hotspot/share/compiler/compilerDefinitions.cpp",
+    "purpose": "Mode-dependent legacy threshold initialization",
+    "status": 200,
+    "bytes": 25243,
+    "sha256": "33d690c3d87a7d891b4d69d8adda3a3077d5893f65f2cc5c9ee94ae5924aca81"
+  },
+  {
+    "file": "compilerDefinitions.inline.hpp",
+    "url": "https://raw.githubusercontent.com/openjdk/jdk25u/jdk-25.0.3%2B9/src/hotspot/share/compiler/compilerDefinitions.inline.hpp",
+    "purpose": "Compiler mode predicates",
+    "status": 200,
+    "bytes": 5689,
+    "sha256": "136cf33b66fd31e1cd3b82279d4d2e59a45de6bcc4ec54e40599a08942a85740"
+  },
+  {
+    "file": "compilationPolicy.cpp",
+    "url": "https://raw.githubusercontent.com/openjdk/jdk25u/jdk-25.0.3%2B9/src/hotspot/share/compiler/compilationPolicy.cpp",
+    "purpose": "Tier threshold and queue feedback decisions",
+    "status": 200,
+    "bytes": 60413,
+    "sha256": "ddf53e16008e95be0758c891599220bc5910c4cf55fd27b585cb07d8c00ad3e6"
+  },
+  {
+    "file": "c2_globals.hpp",
+    "url": "https://raw.githubusercontent.com/openjdk/jdk25u/jdk-25.0.3%2B9/src/hotspot/share/opto/c2_globals.hpp",
+    "purpose": "Product, diagnostic, develop flag declarations",
+    "status": 200,
+    "bytes": 66290,
+    "sha256": "2b218c4aa38ba21663e9f8ae84be4b3517c2c67657ed854ee6b95225d2af2f4a"
+  },
+  {
+    "file": "globals.hpp",
+    "url": "https://raw.githubusercontent.com/openjdk/jdk25u/jdk-25.0.3%2B9/src/hotspot/share/runtime/globals.hpp",
+    "purpose": "Tier and compiler flag declarations",
+    "status": 200,
+    "bytes": 153678,
+    "sha256": "a0f4a4babed1489d58b78e5aba26c25eb23a40e8a3e675d224434d7f08de15dd"
+  },
+  {
+    "file": "bytecodeInfo.cpp",
+    "url": "https://raw.githubusercontent.com/openjdk/jdk25u/jdk-25.0.3%2B9/src/hotspot/share/opto/bytecodeInfo.cpp",
+    "purpose": "Inlining reason strings, allowance selection, accessor exception",
+    "status": 200,
+    "bytes": 26814,
+    "sha256": "9af0671589fecc5c6e9041c72210061ea254cfc074673c5fcfe9bc5d5e8e3c3f"
+  },
+  {
+    "file": "doCall.cpp",
+    "url": "https://raw.githubusercontent.com/openjdk/jdk25u/jdk-25.0.3%2B9/src/hotspot/share/opto/doCall.cpp",
+    "purpose": "Call generator and intrinsic paths",
+    "status": 200,
+    "bytes": 54223,
+    "sha256": "e273ca6363136a8b755a06e333c6ed4d833c03221f5cf046aa1a4e5955b8828c"
+  },
+  {
+    "file": "ciMethod.cpp",
+    "url": "https://raw.githubusercontent.com/openjdk/jdk25u/jdk-25.0.3%2B9/src/hotspot/share/ci/ciMethod.cpp",
+    "purpose": "InlineSmallCode adjusted instruction-size metric",
+    "status": 200,
+    "bytes": 54145,
+    "sha256": "a0da79ac453e175b3bf5dda643d4d642902530337f13d0dbb3cbc7079ee8c38b"
+  },
+  {
+    "file": "escape.hpp",
+    "url": "https://raw.githubusercontent.com/openjdk/jdk25u/jdk-25.0.3%2B9/src/hotspot/share/opto/escape.hpp",
+    "purpose": "Escape states versus scalar-replaceable property",
+    "status": 200,
+    "bytes": 27389,
+    "sha256": "8430155eb63f8fdc7e6a2cb3d3357da6b2f1285e570d7245e23db89c5bf3c49f"
+  },
+  {
+    "file": "macro.cpp",
+    "url": "https://raw.githubusercontent.com/openjdk/jdk25u/jdk-25.0.3%2B9/src/hotspot/share/opto/macro.cpp",
+    "purpose": "Allocation elimination records, preconditions and expansion",
+    "status": 200,
+    "bytes": 111814,
+    "sha256": "cbd46b05f86dd55ee8b4f1ef827853caf383c39f28c05d80bf21f25f14e51729"
+  },
+  {
+    "file": "node.hpp",
+    "url": "https://raw.githubusercontent.com/openjdk/jdk25u/jdk-25.0.3%2B9/src/hotspot/share/opto/node.hpp",
+    "purpose": "Required/precedence inputs and node identity",
+    "status": 200,
+    "bytes": 79271,
+    "sha256": "3f2650a686162282d95a5e05da6256773aac847b2ff17e8b73e5527b3daa19d5"
+  },
+  {
+    "file": "cfgnode.hpp",
+    "url": "https://raw.githubusercontent.com/openjdk/jdk25u/jdk-25.0.3%2B9/src/hotspot/share/opto/cfgnode.hpp",
+    "purpose": "Region/Phi input correspondence",
+    "status": 200,
+    "bytes": 29351,
+    "sha256": "187232c52082c59699ee3efa6de5061246f3a5e7d0159ceaf26910a5120edcaa"
+  },
+  {
+    "file": "memnode.cpp",
+    "url": "https://raw.githubusercontent.com/openjdk/jdk25u/jdk-25.0.3%2B9/src/hotspot/share/opto/memnode.cpp",
+    "purpose": "MergeMem alias slicing",
+    "status": 200,
+    "bytes": 245732,
+    "sha256": "f2e637baf738b0cf3db635c10910c402590e82ac6eaa9bdc240b4543fd81143f"
+  },
+  {
+    "file": "gcm.cpp",
+    "url": "https://raw.githubusercontent.com/openjdk/jdk25u/jdk-25.0.3%2B9/src/hotspot/share/opto/gcm.cpp",
+    "purpose": "Global code motion and dominance/loop-depth decisions",
+    "status": 200,
+    "bytes": 93418,
+    "sha256": "3dc3dce115174d3b6abc7892029cff51de5c6d88703c42ad704138d0cf443036"
+  },
+  {
+    "file": "parse1.cpp",
+    "url": "https://raw.githubusercontent.com/openjdk/jdk25u/jdk-25.0.3%2B9/src/hotspot/share/opto/parse1.cpp",
+    "purpose": "OSR interpreter-state import",
+    "status": 200,
+    "bytes": 91735,
+    "sha256": "0c310afa306c914bb7f159234289499d4fc7028611575ce8283a0935fb0f836b"
+  },
+  {
+    "file": "compile.cpp",
+    "url": "https://raw.githubusercontent.com/openjdk/jdk25u/jdk-25.0.3%2B9/src/hotspot/share/opto/compile.cpp",
+    "purpose": "Compilation phase ordering",
+    "status": 200,
+    "bytes": 192393,
+    "sha256": "18089064aa811102d3852ff8b755370e0c709a549baa0784c08a52040865310b"
+  },
+  {
+    "file": "chaitin.cpp",
+    "url": "https://raw.githubusercontent.com/openjdk/jdk25u/jdk-25.0.3%2B9/src/hotspot/share/opto/chaitin.cpp",
+    "purpose": "Graph coloring register allocation",
+    "status": 200,
+    "bytes": 99382,
+    "sha256": "8a6222ea064a77e0256a6c5795927f06cd5087b3d582fc13e4ea932119e40a2c"
+  },
+  {
+    "file": "nmethod.cpp",
+    "url": "https://raw.githubusercontent.com/openjdk/jdk25u/jdk-25.0.3%2B9/src/hotspot/share/code/nmethod.cpp",
+    "purpose": "Not-entrant reasons and nmethod lifecycle",
+    "status": 200,
+    "bytes": 147908,
+    "sha256": "be8e9821979ed9cd9b1de056b56d8d6eca228c671fa47c2785a1396aa7b5b8ad"
+  },
+  {
+    "file": "README.md",
+    "url": "https://raw.githubusercontent.com/openjdk/jdk25u/jdk-25.0.3%2B9/src/utils/IdealGraphVisualizer/README.md",
+    "purpose": "Graph dump levels and tooling prerequisites",
+    "status": 200,
+    "bytes": 4739,
+    "sha256": "f1be8f38d081da7b7c933e61328d42c8bc0683650917e05b6a4b338b972f18b6"
+  }
+]

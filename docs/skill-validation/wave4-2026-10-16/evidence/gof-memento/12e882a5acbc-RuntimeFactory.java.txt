@@ -1,0 +1,16 @@
+import java.util.Properties;
+
+final class RuntimeFactory {
+    static DeliveryAction create(Properties configuration, DeliverySink sink) {
+        return switch (configuration.getProperty("delivery.mode")) {
+            case "LOCAL_PREPARE" -> DraftSession::markReady;
+            case "PUBLISH_DURABLE" -> draft -> {
+                sink.publish(draft.message());
+                draft.markReady();
+            };
+            default -> throw new IllegalArgumentException("unsupported delivery.mode");
+        };
+    }
+}
+interface DeliveryAction { void confirm(DraftSession draft); }
+interface DeliverySink { String publish(Message message); }

@@ -1,0 +1,69 @@
+{
+  "classification": "Evaluator-only expectations, stored separately from case inputs.",
+  "cases": [
+    {
+      "id": "subpath-delivery",
+      "expected": [
+        "Trace both mounts: the reloader has a directory projection, while the application has a ConfigMap subPath binding.",
+        "Identify that the application mount will not receive ConfigMap updates under the versioned contract even if the reloader sees new content.",
+        "Do not fix the delivery mismatch by increasing startup waits, sending more reloads or restarting only the reloader.",
+        "Propose an appropriate directory projection/read path via the Deployment template and required Pod replacement, or explain a changed rollout contract as an explicit alternative.",
+        "Distinguish API-object version, mounted application bytes, queued reload acceptance and effective application config-status.",
+        "Keep cache/sync delay unknown until configured evidence exists; do not invent a fixed convergence deadline.",
+        "Verify valid blue-to-green adoption and rejection/recovery of invalid configuration without claiming a cluster run."
+      ],
+      "failureConditions": [
+        "Declares success from ConfigMap patch or HTTP 202 alone.",
+        "Assumes one shared volume name makes each container observe the same mounted version.",
+        "Treats a subPath ConfigMap mount as a merely slow directory projection.",
+        "Claims a local YAML parse or hypothetical sequence proves kubelet propagation/admission.",
+        "Deploys, restarts, upgrades or contacts a cluster despite task constraints."
+      ]
+    },
+    {
+      "id": "projected-directory-control",
+      "expected": [
+        "Recognize that both containers use whole-directory ConfigMap projections and that this supports eventual file delivery.",
+        "Preserve adequate mount/watcher wiring; do not propose mandatory Pod rollout or removal of the reloader solely because projections are asynchronous.",
+        "Do not infer immediate synchronization across containers or active application adoption from valid mounts.",
+        "Use the mounted application file and config-status to distinguish projection delay, queued reload and adoption/rejection.",
+        "Retain unknown sync/cache timing and the supplied consumer contracts; verify a controlled valid and invalid update without claiming execution."
+      ],
+      "failureConditions": [
+        "Misclassifies the normal directory mount as a pinned subPath.",
+        "Replaces an adequate live-reload design with forced rollout without a concrete constraint.",
+        "Treats HTTP 202, sidecar readiness or API resourceVersion as proof of effective configuration.",
+        "Invents a watcher bug despite the provided replacement-handling contract.",
+        "Claims a fixed one/two-minute bound or live cluster validation without evidence."
+      ]
+    }
+  ],
+  "walkthroughs": [
+    {
+      "scenario": "Mount constraint pair",
+      "expected": "subPath requires a delivery/design correction for live reload; whole-directory projection can remain while propagation/adoption are verified.",
+      "classification": "Structured walkthrough, not executed behavior"
+    },
+    {
+      "scenario": "Environment variable only",
+      "expected": "A signal to an existing process does not replace its ConfigMap-derived environment; use a supported fresh-process/Pod rollout contract instead of claiming in-process reload.",
+      "classification": "Source-supported walkthrough, not a runtime test"
+    },
+    {
+      "scenario": "Versioned immutable config with intentional Pod replacement",
+      "expected": "Retain the rollout design when live reload is not required; no reloader mandate.",
+      "classification": "Structured negative-control walkthrough"
+    },
+    {
+      "scenario": "API patch and reload HTTP 202 succeed but active version remains blue",
+      "expected": "Separate source, mount and consumer stages using supplied status endpoint; do not call the change adopted.",
+      "classification": "Structured failure-observation walkthrough"
+    },
+    {
+      "scenario": "Probe or graceful-termination semantics become the question",
+      "expected": "Handoff to kubernetes-service-lifecycle with versions, probe origin, effective mount/consumer evidence; do not duplicate its lifecycle procedure.",
+      "classification": "Scope-boundary walkthrough"
+    }
+  ],
+  "validationLimit": "Only local syntax/fixture-contract checks are executed. No Kubernetes admission, mount, cache, file watcher, reload, rollout or integration behavior was executed."
+}

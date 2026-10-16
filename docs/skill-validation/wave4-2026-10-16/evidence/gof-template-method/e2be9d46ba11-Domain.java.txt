@@ -1,0 +1,15 @@
+import java.time.*;
+record RunId(String value) {}
+record Deadline(long value) {}
+record RunContext(LocalDate date, RunId runId, Instant started, Deadline deadline) {}
+record Batch(String data) {}
+record ValidatedBatch(String data) {}
+record Results(String data) {}
+record RunReport(String data, RunContext context) {
+    static RunReport of(Results results, RunContext context) { return new RunReport(results.data(), context); }
+}
+interface AuditLog {
+    void runStarted(RunContext context);
+    void runFinished(RunContext context, RunReport report);
+    void runFailed(RunContext context, RuntimeException failure);
+}

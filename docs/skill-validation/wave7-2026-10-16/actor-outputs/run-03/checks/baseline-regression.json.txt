@@ -1,0 +1,15 @@
+{
+  "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave7-a765972c5d\\actors\\run-03\\output\\project",
+  "argv": [
+    "node",
+    "check.mjs",
+    "work.Regression"
+  ],
+  "startedAt": "2026-10-16T18:06:50.114Z",
+  "finishedAt": "2026-10-16T18:06:51.755Z",
+  "exit": 1,
+  "signal": null,
+  "error": null,
+  "stdout": "valid: booking=1, receipt=1, detail=1\r\ninvalid caller failure=org.springframework.dao.DataIntegrityViolationException: PreparedStatementCallback; SQL [insert into receipt_detail(id,body) values (?,?)]; Value too long for column \"BODY CHARACTER VARYING(12)\": \"'1234567890123' (13)\"; SQL statement:\ninsert into receipt_detail(id,body) values (?,?) [22001-240]\r\ninvalid: booking=0, receipt=0, detail=0\r\nunavailable: booking=0, receipt=0, detail=0\r\noutside: booking=0, receipt=0, detail=0\r\nowner-rollback: booking=0, receipt=0, detail=0\r\nlate-rollback: booking=0, receipt=0, detail=0\r\nowner-valid: booking=0, receipt=0, detail=0\r\nowner-invalid: booking=0, receipt=0, detail=0\r\nobserver=Observation[id=valid, visibleBooking=0, headerBeforeWrite=0, thread=Thread[#3,main,5,main], error=null]\r\nobserver=Observation[id=invalid, visibleBooking=0, headerBeforeWrite=0, thread=Thread[#3,main,5,main], error=null]\r\nobserver=Observation[id=late-rollback, visibleBooking=0, headerBeforeWrite=0, thread=Thread[#3,main,5,main], error=null]\r\nobserver=Observation[id=owner-valid, visibleBooking=0, headerBeforeWrite=0, thread=Thread[#3,main,5,main], error=null]\r\nobserver=Observation[id=owner-invalid, visibleBooking=0, headerBeforeWrite=0, thread=Thread[#3,main,5,main], error=null]\r\nfinal ready stock=19\r\n",
+  "stderr": "Exception in thread \"main\" java.lang.AssertionError: invalid optional receipt must not fail business command; persisted state for invalid; invalid receipt retains mandatory reservation; owner rollback restores stock; completion failure restores stock; no receipt before failing owner commit; invalid receipt does not fail owner completion; persisted state for owner-valid; persisted state for owner-invalid; successful owner commits two reservations; writer invoked exactly for four committed bookings; source committed before writer for valid; source committed before writer for invalid; source committed before writer for late-rollback; source committed before writer for owner-valid; source committed before writer for owner-invalid\r\n\tat work.Regression.main(Regression.java:117)\r\n"
+}

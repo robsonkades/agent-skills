@@ -172,7 +172,7 @@ views when adding a subtype; providers normally derive hierarchy queries from th
 
 ## Primary sources
 
-- [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2),
+- [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html),
   section 4.11 and the EntityManager contract: bulk DML, versions and managed-instance state.
 - [Hibernate ORM 6.6 caching](https://docs.hibernate.org/orm/6.6/userguide/html_single/#caching):
   cache visibility limits for changes made by other applications.

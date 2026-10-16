@@ -1,0 +1,2 @@
+Observed first access: ExceptionInInitializerError caused by NullPointerException
+Observed later access: NoClassDefFoundError

@@ -1,0 +1,32 @@
+package fixture;
+import java.util.*;
+import com.example.domain.order.*;
+import com.example.domain.tenant.TenantID;
+public class FakeGateway implements OrderGateway {
+    public enum Mode { NORMAL, LOAD_OUTAGE, UPDATE_OUTAGE, ADVANCE_BEFORE_UPDATE, DELETE_BEFORE_UPDATE }
+    public final Map<String, Order> rows = new HashMap<>();
+    public int reads, updates, writes;
+    public Mode mode = Mode.NORMAL;
+    public static String key(TenantID tenant, OrderID id) { return tenant.value() + ":" + id.value(); }
+    public void put(Order order) { rows.put(key(order.getTenant(), order.getId()), order.copy()); }
+    public Order stored(TenantID tenant, OrderID id) { return rows.get(key(tenant, id)); }
+    public Optional<Order> findById(TenantID tenant, OrderID id) {
+        reads++;
+        if (mode == Mode.LOAD_OUTAGE) throw new Unavailable();
+        return Optional.ofNullable(rows.get(key(tenant, id))).map(Order::copy);
+    }
+    public Order update(Order order, long expected) {
+        updates++;
+        if (mode == Mode.UPDATE_OUTAGE) throw new Unavailable();
+        String key = key(order.getTenant(), order.getId());
+        if (mode == Mode.ADVANCE_BEFORE_UPDATE) rows.computeIfPresent(key, (k, old) -> old.withVersion(old.getVersion() + 1));
+        if (mode == Mode.DELETE_BEFORE_UPDATE) rows.remove(key);
+        Order current = rows.get(key);
+        if (current == null || current.getVersion() != expected) throw new StaleOrderException("conditional write rejected");
+        Order saved = order.withVersion(expected + 1);
+        rows.put(key, saved.copy());
+        writes++;
+        return saved.copy();
+    }
+    public static class Unavailable extends RuntimeException {}
+}

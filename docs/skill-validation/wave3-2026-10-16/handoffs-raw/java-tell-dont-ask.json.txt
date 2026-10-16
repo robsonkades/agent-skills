@@ -1,0 +1,308 @@
+{
+  "status": "NO_CHANGES_NEEDED",
+  "skill": "java-tell-dont-ask",
+  "ownedPath": "skills/java-tell-dont-ask/",
+  "allWritesStopped": true,
+  "versions": {
+    "committed": "1.2.4",
+    "assignmentTime": "1.2.4",
+    "final": "1.2.4",
+    "preexistingBump": false,
+    "rationale": "All four package files remain byte-identical to assignment; no version bump is warranted."
+  },
+  "baseline": {
+    "staged": [],
+    "unstaged": [],
+    "untracked": [],
+    "lastPackageCommit": "9ecadfd357387c857b7a4760a8c90d11f0775090",
+    "fileHashes": [
+      {
+        "path": "SKILL.md",
+        "sha256": "7e3a60eb2193ae4320c29f46f1a5b36c6693db5b553d0a3a51980935a6973035"
+      },
+      {
+        "path": "skill.yaml",
+        "sha256": "9afdd62949d041c012146bf76ac15811b903c0be3bc7203a56434762281b1720"
+      },
+      {
+        "path": "references/placement-decision.md",
+        "sha256": "6c3c68f97d6868fdc1489ca78d0a8530d242bcd156287b288291a5594795f496"
+      },
+      {
+        "path": "references/worked-example.md",
+        "sha256": "f304d098b5908bf56fc44bed441f07a23ebd55aaa7dec1aa6ade0deb783841c6"
+      }
+    ]
+  },
+  "findings": [
+    {
+      "status": "adequate",
+      "location": "SKILL.md Purpose, Workflow 1–5 and Rules",
+      "assessment": "The skill treats ask-decide-mutate as a candidate, establishes authority/change ownership and preserves CRUD, external policies, legitimate queries and binder/API contracts. No supported replacement was needed."
+    },
+    {
+      "status": "adequate",
+      "location": "references/placement-decision.md:40–66",
+      "assessment": "Both alias directions, shallow membership copying, mutable elements, live-view versus snapshot semantics and lack of concurrent-snapshot guarantees are already explicit.",
+      "evidence": "Java 17 List/Collections contracts and the executed QueryAliasCheck agree."
+    },
+    {
+      "status": "adequate",
+      "location": "references/worked-example.md Account and fee analysis",
+      "assessment": "The object enforces its owned floor and preserves refusal state. Fee eligibility is deliberately not inferred from withdrawal eligibility. The changed public refusal/invalid-input policy is called out.",
+      "evidence": "Account extracted from the third Java fence compiles with --release 17 and passes focused contract checks."
+    },
+    {
+      "status": "adequate",
+      "location": "SKILL.md:34,68 and references/worked-example.md service/Trade-offs",
+      "assessment": "Java 17 domain versus Java 21 service patterns, synchronization versus persistence isolation, rollback state and event publication limits are separated. No unsupported atomicity or delivery promise was found."
+    }
+  ],
+  "correctedFindings": [],
+  "remainingFindings": [],
+  "changes": [],
+  "files": {
+    "changedByReviewer": [],
+    "preexistingChanges": [],
+    "preserved": [
+      "SKILL.md",
+      "skill.yaml",
+      "references/placement-decision.md",
+      "references/worked-example.md"
+    ],
+    "finalHashes": [
+      {
+        "path": "SKILL.md",
+        "sha256": "7e3a60eb2193ae4320c29f46f1a5b36c6693db5b553d0a3a51980935a6973035"
+      },
+      {
+        "path": "skill.yaml",
+        "sha256": "9afdd62949d041c012146bf76ac15811b903c0be3bc7203a56434762281b1720"
+      },
+      {
+        "path": "references/placement-decision.md",
+        "sha256": "6c3c68f97d6868fdc1489ca78d0a8530d242bcd156287b288291a5594795f496"
+      },
+      {
+        "path": "references/worked-example.md",
+        "sha256": "f304d098b5908bf56fc44bed441f07a23ebd55aaa7dec1aa6ade0deb783841c6"
+      }
+    ]
+  },
+  "preserved": [
+    "Concrete activation around misplaced invariant/policy decisions, with Law of Demeter excluded.",
+    "Evidence-driven placement, legitimate queries, simple CRUD and cross-aggregate policy alternatives.",
+    "Strict and pragmatic command/query conventions with observable-state semantics.",
+    "Input/output alias analysis and deliberate live-view versus snapshot contracts.",
+    "Mutation, construction, binder and compatibility boundaries.",
+    "Thread confinement/synchronization distinguished from independent persistence contexts.",
+    "Full before/analysis/after Account example, expected refusal result and caller contract migration.",
+    "Fee-versus-withdrawal policy difference, domain-versus-JPA distinction and transaction/event recovery handoffs."
+  ],
+  "intentionallyRemoved": [],
+  "domainSuccessCriteria": [
+    "Locate the actual owner and authority before relocating a decision.",
+    "Retain responsible reporting/boundary queries; refuse getter elimination as a universal objective.",
+    "Find real state mutation paths rather than count setters.",
+    "Preserve independently owned fee or policy semantics and public outcome mappings.",
+    "Do not imply method extraction supplies atomicity, database rollback or reliable event delivery.",
+    "Match examples to declared Java 17/21 requirements without upgrading consumers."
+  ],
+  "checks": [
+    {
+      "kind": "structural",
+      "command": "node --input-type=module",
+      "stdin": "import assert from 'node:assert/strict';\nimport { existsSync, readFileSync } from 'node:fs';\nimport { dirname, resolve } from 'node:path';\nimport { loadPackageFromDirectory, validatePackage } from '@jvm-expert/core';\nimport { NodeFileSystem } from '@jvm-expert/node';\nconst root = 'skills/java-tell-dont-ask';\nconst loaded = await loadPackageFromDirectory(new NodeFileSystem(), root, { strict: true });\nconst report = validatePackage(loaded.pkg, { directoryName: 'java-tell-dont-ask' });\nassert.deepEqual([...loaded.issues, ...report.issues], []);\nconst links = [];\nfor (const file of loaded.pkg.files.filter(file => file.path.endsWith('.md'))) {\n const source = readFileSync(resolve(root, file.path), 'utf8');\n for (const match of source.matchAll(/\\[[^\\]]*\\]\\(([^)]+)\\)/g)) {\n  const target = match[1].replace(/^<|>$/g, '');\n  if (/^(https?:|#)/.test(target)) continue;\n  const path = resolve(root, dirname(file.path), target.split('#')[0]);\n  assert.ok(existsSync(path), path);\n  links.push({ from: file.path, target });\n }\n}\nconsole.log(JSON.stringify({ status: 'PASS', issues: 0, files: loaded.pkg.files.length, markdown: loaded.pkg.files.filter(file => file.path.endsWith('.md')).length, links, version: loaded.pkg.manifest.version }, null, 2));",
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS: zero loader/validator issues; four distributed files, three Markdown files, two existing local reference links; version 1.2.4.",
+      "evidence": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-tell-dont-ask-artifacts/local-evidence.json"
+    },
+    {
+      "kind": "formatting",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/java-tell-dont-ask/SKILL.md skills/java-tell-dont-ask/skill.yaml 'skills/java-tell-dont-ask/references/*.md'",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "All matched files use Prettier code style."
+    },
+    {
+      "kind": "git-and-baseline",
+      "commands": [
+        "git diff --check -- skills/java-tell-dont-ask",
+        "git diff --numstat -- skills/java-tell-dont-ask",
+        "git diff --cached --numstat -- skills/java-tell-dont-ask",
+        "git status --short --untracked-files=all -- skills/java-tell-dont-ask",
+        "Get-ChildItem -LiteralPath 'skills/java-tell-dont-ask' -Recurse -File | ForEach-Object { [pscustomobject]@{ path = $_.FullName; sha256 = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant() } } | ConvertTo-Json"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS: clean scoped staged/unstaged/untracked output; all four hashes match assignment."
+    },
+    {
+      "kind": "technical-example",
+      "command": "node 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-tell-dont-ask-artifacts/check-examples.mjs'",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "Three successful commands: compile literal Account with declared imports under --release 17; execute Account floor/refusal/invalid-input/constructor checks; execute snapshot/view/alias/null contracts.",
+      "exactChildCommands": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-tell-dont-ask-artifacts/technical-results.json",
+      "negativeControls": "Invalid/refused inputs and list mutators are rejected with unchanged relevant state; expected exceptions are checked."
+    },
+    {
+      "kind": "technical-case-fixtures",
+      "command": "node 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-tell-dont-ask-artifacts/check-cases.mjs'",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "Seven commands met expectations. Both source sets compile and report A:40,B:60. Identical alias mutation fails to compile for immutable Line (expected exit 1); mutable Line compiles and exposes 101 total units. Task/Order/Report equality checked.",
+      "exactChildCommands": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-tell-dont-ask-artifacts/case-technical-results.json",
+      "negativeControls": "Case A rejects nonexistent setQuantity; case B demonstrates the materially different alias path."
+    },
+    {
+      "kind": "toolchain",
+      "commands": [
+        "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -version",
+        "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' -version"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "result": "Temurin 25.0.3+9 compiler and runtime. --release 17 used for compilation; Java 17 VM not executed."
+    }
+  ],
+  "failures": [
+    {
+      "kind": "recovered-inspection",
+      "detail": "Initial Get-Content used nonexistent packages/core/src/domain/validate-package.ts despite rg locating application/validate-package.ts. Correct application file then read fully. The earlier PowerShell command's exit 0 did not hide the logged error.",
+      "impact": "No files modified; validator inspected before use."
+    },
+    {
+      "kind": "recovered-artifact-write",
+      "detail": "Combined raw tool output exceeded Windows command-line size when passed through exec_command, rejected before process creation with os error 206. Saved the same generated evidence via apply_patch instead.",
+      "impact": "No process ran or partial file was written on the rejected attempt; retry succeeded."
+    },
+    {
+      "kind": "expected-negative",
+      "detail": "Case A alias probe javac returned 1 because immutable Line has no setQuantity(int); this is a successful negative control, not a package failure."
+    }
+  ],
+  "behavioralEvaluationsExecuted": [],
+  "structuredWalkthroughs": [
+    "Case A: existing query preserves readable reporting and the supplied immutable element type leaves no demonstrated mutation bypass. No forced change.",
+    "Case B: same query signature and List.copyOf still expose a mutable element; close the actual parent-invariant bypass while retaining reporting and Java 17."
+  ],
+  "twoCases": {
+    "inputs": [
+      {
+        "id": "a",
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-tell-dont-ask-artifacts/case-a-input/task.json",
+        "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-tell-dont-ask-artifacts/case-a-input/"
+      },
+      {
+        "id": "b",
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-tell-dont-ask-artifacts/case-b-input/task.json",
+        "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-tell-dont-ask-artifacts/case-b-input/"
+      }
+    ],
+    "criteriaPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-tell-dont-ask-artifacts/evaluator-criteria.json",
+    "decisiveConstraint": "Only Line's element mutability changes. Task, Order, Report, ownership, target and requirements are identical.",
+    "status": "Known development cases, technical fixtures executed; no actor/evaluator run.",
+    "exposureLimit": "Actor inputs contain ordinary task/source only. Shared filesystem does not enforce isolation; coordinator must supply only the selected input snapshot and applicable skill, excluding criteria, sibling cases, probes and prior results."
+  },
+  "sources": [
+    {
+      "url": "https://martinfowler.com/bliki/TellDontAsk.html",
+      "version": "Author article, 2013-09-05",
+      "supports": "Responsible query methods and layering are legitimate design trade-offs; getter elimination is not the objective."
+    },
+    {
+      "url": "https://martinfowler.com/bliki/CommandQuerySeparation.html",
+      "version": "Author article, 2005-12-05",
+      "supports": "Strict command/query distinction is about observable effects, and pragmatic exceptions exist."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html#copyOf(java.util.Collection)",
+      "version": "Java 17",
+      "supports": "Unmodifiable membership copy, null rejection and mutable-element caveat."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collections.html#unmodifiableList(java.util.List)",
+      "version": "Java 17",
+      "supports": "Read-through view and rejected list mutators; not deep copying."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/math/BigDecimal.html",
+      "version": "Java 17",
+      "supports": "Immutable value arithmetic; existing example treats currency and scale as external contract requirements."
+    },
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.11.3",
+      "version": "Java 21",
+      "supports": "Pattern-switch language semantics; not a test on a Java 21 runtime."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/MatchException.html",
+      "version": "Java 21",
+      "supports": "Separate-compilation changes in sealed hierarchy can cause exhaustive pattern constructs to fail at runtime."
+    },
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se21/html/jls-13.html#jls-13.4.12",
+      "version": "Java 21",
+      "supports": "Deleting a referenced method may break existing binaries; inherited matching methods affect the outcome."
+    },
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html#jls-17.4.5",
+      "version": "Java 21",
+      "supports": "Happens-before and data-race distinctions support explicit synchronization/confinement guidance."
+    },
+    {
+      "url": "https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/context/ApplicationEventPublisher.html",
+      "version": "Current URL resolved to Spring Framework 7.0.9 during this review",
+      "supports": "Publication is a hand-off; synchronous/asynchronous/immediate execution is not guaranteed by this interface.",
+      "limit": "Existing skill requires inspecting actual project version and publisher contract. No Spring version was installed or selected for a consumer."
+    },
+    {
+      "url": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html",
+      "version": "Jakarta Persistence 3.2",
+      "supports": "Entity mapping, transaction enlistment, rollback/detachment and version-based consistency limits.",
+      "limit": "Documentation check only; no ORM/database execution, and the Account is explicitly not presented as a portable JPA entity."
+    }
+  ],
+  "limits": [
+    "No measured agent behavior, automatic selection result or incremental improvement is claimed.",
+    "No package edits were justified; this review does not prove absence of every possible defect.",
+    "Compiler and runtime were 25.0.3; --release 17 verifies target syntax/API use, not execution on a Java 17 VM.",
+    "Service/job snippets are explicitly partial; Spring/JPA/service switch, database isolation, event delivery and failure recovery were not executed.",
+    "The technical fixtures are deterministic single-thread checks; they do not prove concurrency behavior.",
+    "Current Spring reference resolved to 7.0.9; no consumer target version or framework upgrade is inferred.",
+    "Evaluation cases are known development cases and are not unseen holdouts; separation remains procedural unless coordinator provides controlled snapshots.",
+    "Read-only existing package validator was used without rebuilding shared packages; global integration/agent-specific checks remain coordinator-owned."
+  ],
+  "crossSkill": {
+    "issues": [],
+    "coordinatorActions": [
+      "Optionally evaluate the two separated development cases with controlled input snapshots.",
+      "Run final registry:build and verify after all reviewers stop."
+    ]
+  },
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "cwd": "C:/git/agent-skills",
+      "owner": "coordinator",
+      "reason": "Parallel review rule; no generation by this reviewer. No hash/version changes from this package.",
+      "prerequisite": "All reviewers stopped writing."
+    },
+    {
+      "command": "npm run verify",
+      "cwd": "C:/git/agent-skills",
+      "owner": "coordinator",
+      "reason": "Repository-wide verification reserved for coordinator after integration.",
+      "prerequisite": "Registry step complete and working tree stable."
+    }
+  ],
+  "evidencePaths": [
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-tell-dont-ask-artifacts/local-evidence.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-tell-dont-ask-artifacts/technical-results.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-tell-dont-ask-artifacts/check-examples.mjs",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-tell-dont-ask-artifacts/case-technical-results.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-tell-dont-ask-artifacts/check-cases.mjs",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-tell-dont-ask-artifacts/evaluator-criteria.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-tell-dont-ask-artifacts/final-checks.json"
+  ],
+  "writesStoppedStatement": "All owned-package files unchanged. All started compiler/runtime processes exited. Temporary evidence writes complete at handoff; remain read-only until reassigned."
+}

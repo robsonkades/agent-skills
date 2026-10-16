@@ -1,0 +1,22 @@
+Reject the proposed index and global custom-plan change on this evidence. The packet is an authored PostgreSQL 17 serial-execution fixture, not a production capture. It supports investigating repeated inner-index work; it does not establish the optimal replacement plan or a 2 ms remedy.
+
+| Metric | Value | Interpretation |
+| --- | ---: | --- |
+| `innerExecutions` | 12,000 | Inner scan's reported loops. |
+| `innerEmittedRows` | 48,000 | 4 emitted rows per loop × 12,000; not rows examined or distinct rows. |
+| `innerInclusiveWorkMs` | 780 | 0.065 ms per loop × 12,000; approximate accumulated inclusive node time. |
+| `capturedExecutionTimeMs` | 991 | Supplied execution-time field; not a new measurement or the 1,320 ms request latency. |
+
+PostgreSQL reports actual node time and rows as per-loop averages. Parent timing includes child work: do not add 780 ms to the parent’s 980 ms or to 991 ms. Rounded node measurements are not an exclusive CPU-time breakdown. [PostgreSQL 17 EXPLAIN guide](https://www.postgresql.org/docs/17/using-explain.html)
+
+The inner work is approximately 79% of supplied execution time and cannot be dismissed as 0.065 ms. The orders scan takes 90 ms and emits 12,000 while removing 3,000 rows: 80% of observed rows pass the combined predicate. This does not isolate `state` selectivity, but it gives no basis to blame the sequential scan or prescribe `orders(state)`. Whether another join or access path wins remains unmeasured.
+
+Cost 605000 is a planner estimate in arbitrary units, not 605 seconds. Incident estimates are 13,000 versus 12,000 orders and 52,000 versus 48,000 joined rows (both about 8.3% high); the inner estimate of four matches its observed average. The separate preview stops its child after 20 rows because of `LIMIT 20`; 52,000 describes completion, so that comparison cannot establish a statistics failure. Do not add preview work to incident time. [PostgreSQL 17 EXPLAIN guide](https://www.postgresql.org/docs/17/using-explain.html)
+
+The 90,000 shared hits and 32,000 shared reads describe accumulated buffer activity, not per-loop averages or counts of unique pages. Do not multiply them by 12,000. Reads indicate blocks unavailable in PostgreSQL's shared buffers; OS cache may satisfy them. Without I/O timings and device evidence, physical-disk trouble is unknown. Parent buffer totals would include children. The 329 ms request/execution difference is unattributed, not proof of network latency; EXPLAIN does not measure result transmission. [PostgreSQL 17 EXPLAIN reference](https://www.postgresql.org/docs/17/sql-explain.html)
+
+The literal run changes tenant 71 to 72, processes four tenant rows and returns 16 rows, versus 48,000 in the incident. Its cache state is unknown, and no same-parameter prepared comparison exists. A 2 ms run therefore cannot prove a bad generic plan or predict tenant 71 latency. Prepared statements can use either generic or custom plans; the packet records neither. [PostgreSQL 17 PREPARE reference](https://www.postgresql.org/docs/17/sql-prepare.html)
+
+One bounded next experiment: have the owner collect exactly two planning-only JSON plans on the same PostgreSQL 17 data/statistics and session: `EXPLAIN (VERBOSE, SETTINGS, FORMAT JSON) EXECUTE <existing_statement>(71::bigint)`, and plain EXPLAIN with those options for the identical SELECT using literal `71::bigint`. Use no ANALYZE, setting changes, statistics refresh, or DDL; cancel each planning request after five seconds externally. Record statement identity, parameter type, preparation history, schema/index definitions and session context. Parameter placeholders versus substituted constants distinguish generic/custom plans here. If the original session is gone, label the result a reconstruction. [PostgreSQL 17 PREPARE reference](https://www.postgresql.org/docs/17/sql-prepare.html)
+
+A confirmed generic prepared plan with a materially different literal plan supports a subsequent runtime hypothesis; similar plans weaken that explanation. Neither result alone authorizes a global change or establishes speed. This review executed only local artifact checks: arithmetic, JSON/report validation and byte preservation. No database connection, workload SQL, settings change or index creation occurred; PostgreSQL performance remains unverified.

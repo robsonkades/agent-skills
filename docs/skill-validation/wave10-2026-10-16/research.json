@@ -1,0 +1,28 @@
+{
+  "date": "2026-10-16",
+  "scope": "Primary-source checks for the retained decision method; no source establishes the effectiveness of this skill or the outcomes of the authored cases.",
+  "sources": [
+    {
+      "url": "https://www.nasa.gov/reference/6-8-decision-analysis/",
+      "consulted": "Sections6.8.1 decision uncertainty and6.8.1.2.5 reporting",
+      "supports": "Match analysis effort to decision-relevant uncertainty and information cost; report closely ranked alternatives and limitations when uncertainty can change preference."
+    },
+    {
+      "url": "https://assets.publishing.service.gov.uk/media/5a790545e5274a2acd18b975/1132618.pdf",
+      "consulted": "Swing weighting, printedpage63 / PDFpage65 and glossary",
+      "supports": "Weights compare value swings over defined criterion ranges, rather than context-free importance labels. Numerical aggregation needs meaningful preference scales."
+    },
+    {
+      "url": "https://www.sei.cmu.edu/documents/629/2000_005_001_13706.pdf",
+      "consulted": "Section7.2 sensitivity/tradeoff points, PDFpage35",
+      "supports": "Architectural properties can be sensitive for multiple quality responses. Scenario analysis can identify decision consequences; this pilot is not a full ATAM exercise."
+    },
+    {
+      "url": "https://docs.aws.amazon.com/whitepapers/latest/blue-green-deployments/best-practices-for-managing-data-synchronization-and-schema-changes.html",
+      "consulted": "Schema removal and compatibility",
+      "supports": "Deletive state/schema changes can make the former application incompatible. Binary rollback alone does not establish restoration of subsequently acknowledged data."
+    }
+  ],
+  "derived_case_rules": "T1–T4 operational obligations, preferences and numbers are stipulated authored inputs, not factual assertions about a production system. Arithmetic was checked locally. Source guidance informs interpretation, not case provenance.",
+  "limits": "No popularity/success inference, production outcome study, statistical significance, cost/token efficiency or automatic selection claim. Actors use local data; external research is coordinator/reviewer work."
+}

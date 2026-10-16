@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "manifestIssues": [],
+  "version": "1.4.4",
+  "descriptionMatch": true,
+  "packageFiles": 4,
+  "relativeLinks": 2,
+  "allAssignmentHashesUnchanged": true
+}

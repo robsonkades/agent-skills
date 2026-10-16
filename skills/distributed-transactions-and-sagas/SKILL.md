@@ -56,8 +56,11 @@ For a findings-only review, report corrections and their verification without ch
    on restart, silently. Preserve the plan definition and stable step identities across
    deployments; a row's concurrency version does not identify which business plan it runs.
 6. **Design execute, status, compensation and completion protocols.** Each is repeat-safe and
-   keyed by saga/step identity. Define terminal business rejection, ambiguous outcome,
-   transient failure and permanent/manual-repair states separately.
+   keyed by saga/step identity. Trace the selected client/handler and its response mapping to the
+   participant's contract: command acceptance or an in-progress operation is not a completed effect.
+   Identify the observation that permits advancing or marking compensation complete. Keep known
+   pending work, terminal business rejection, ambiguous outcome, transient failure and permanent/
+   manual-repair states distinct; the saga reference covers asynchronous acceptance.
 7. **Give every step a timeout and every instance a query.** Define "stuck" numerically, and
    make "which step is saga X on" answerable from a datastore, not from logs.
 

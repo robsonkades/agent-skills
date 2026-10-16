@@ -1,0 +1,455 @@
+{
+  "schemaVersion": 1,
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "virtual-thread-migration",
+  "reviewer": "/root/quality14",
+  "ownedPath": "skills/virtual-thread-migration/**",
+  "handoffPath": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/virtual-thread-migration.json",
+  "allWritesStopped": true,
+  "outstandingWriterProcesses": [],
+  "reviewScope": {
+    "rolePreserved": "Review/plan staged virtual-thread adoption while preserving limits, task lifecycle, context, ordering, observability and rollback. No redesign into a generic executor implementation workflow.",
+    "successCriteria": [
+      "Distinguish thread-factory replacement from a new per-call executor ownership boundary.",
+      "Preserve the method's required return boundary and task's allowed lifetime.",
+      "Avoid treating a timed Future wait or cancellation status as a bound on ExecutorService.close or proof of actual task termination.",
+      "Retain lexical ownership when completion before scope exit is the contract; retain or establish component/framework ownership when work may outlive the call.",
+      "Keep Java 21 standard virtual-thread baseline and existing JDK/locking-mode, downstream limit, socket cancellation and rollout caveats.",
+      "Verify the exact illustrative snippet and controlled return/termination observations without claiming a general liveness or performance result."
+    ],
+    "findingsSentBeforeFirstEdit": true,
+    "requiredProcedure": [
+      "AGENTS.md and docs/parallel-skill-reviews.md",
+      "Complete docs/skill-review-prompt.md",
+      "docs/skill-validation/wave2-2026-10-16/review-brief.md",
+      "Previously read unchanged skills/skill-engineering/SKILL.md and relevant evidence/evaluation/resource-design/anti-pattern references",
+      "All four assigned skill files"
+    ],
+    "noSharedRepositoryWrites": true,
+    "noGlobalCommands": true,
+    "noDelegation": true
+  },
+  "baseline": {
+    "committedVersion": "1.3.4",
+    "assignmentVersion": "1.3.4",
+    "finalVersion": "1.3.5",
+    "preExistingVersionBump": false,
+    "preExistingChanges": [],
+    "assignmentStatus": "",
+    "assignmentUnstagedDiff": "",
+    "assignmentStagedDiff": "",
+    "packageInventory": "skills/virtual-thread-migration\\skill.yaml\nskills/virtual-thread-migration\\SKILL.md\nskills/virtual-thread-migration\\references\\what-breaks.md\nskills/virtual-thread-migration\\references\\migration-playbook.md\n",
+    "assignmentHashes": [
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\virtual-thread-migration\\SKILL.md",
+        "Hash": "DBA53219470D7136C8C3B02A482C83CB099727ED6C443FA3E64151D9397451DD"
+      },
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\virtual-thread-migration\\skill.yaml",
+        "Hash": "EE185099F43F17FFF437BC5F713D187E08F2277BD4842E0EB2A35CD4E8106DAE"
+      },
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\virtual-thread-migration\\references\\migration-playbook.md",
+        "Hash": "4AF223DE2856D8AD8115D2587970B4A4F3D3B9639AC5FBC8CFA4A98F973A47A3"
+      },
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\virtual-thread-migration\\references\\what-breaks.md",
+        "Hash": "025B207AE1BA63F93284B4398F8D8ED0115642AED2B4E59E158274A40B1D4F39"
+      }
+    ],
+    "finalHashes": [
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\virtual-thread-migration\\SKILL.md",
+        "Hash": "E012AA446EBB2221D41B38E3260CEA75B76AA4B19471859F09442D9894CC9815"
+      },
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\virtual-thread-migration\\skill.yaml",
+        "Hash": "F248A191E6A203076AC0985D77B277E212CDFD766406F00F218D55F61BE875B3"
+      },
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\virtual-thread-migration\\references\\migration-playbook.md",
+        "Hash": "4AF223DE2856D8AD8115D2587970B4A4F3D3B9639AC5FBC8CFA4A98F973A47A3"
+      },
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\virtual-thread-migration\\references\\what-breaks.md",
+        "Hash": "A6250A3ECE7DC360A6E983B93B66D1BCADA88CEBB613FC6F00B561415BD21148"
+      }
+    ],
+    "finalStatus": " M skills/virtual-thread-migration/SKILL.md\n M skills/virtual-thread-migration/references/what-breaks.md\n M skills/virtual-thread-migration/skill.yaml\n",
+    "bumpRationale": "One patch bump for substantive skill guidance. Assignment and committed versions were equal, with no pre-existing unpublished bump. Shared generated registry remains coordinator-owned."
+  },
+  "findingsCorrected": [
+    {
+      "id": "VT-EXECUTOR-SCOPE-RETURN",
+      "location": "skills/virtual-thread-migration/references/what-breaks.md:116, new Executor scope can change when a call returns section",
+      "baselineFinding": "Existing guidance required lifecycle ownership and noted cancellation/resource boundaries, but did not explain the silent method-return change introduced by wrapping a per-call virtual executor in try-with-resources.",
+      "consequence": "Returning a Future from the block can cease to be asynchronous, and a timed get can expire while the caller remains in close waiting for actual task completion. An owner migration may therefore violate response/return semantics even though the virtual-thread factory is correct.",
+      "evidence": [
+        "Java 21 ExecutorService.close contract explicitly waits for executing tasks to finish, including after interruption-triggered cancellation.",
+        "The exact added snippet compiled with --release 21 and withheld its Future while a latch-held task remained active.",
+        "A controlled timed-get/cancel(true) case observed Future done/cancelled with task still active and caller not returned; after task release close returned and restored caller interrupt status.",
+        "A component-owned executor returned its Future while the task remained active and drained later."
+      ],
+      "correction": "Add the ownership/return boundary, a labeled partial Java 21 counterexample, request-deadline versus cleanup distinction, proportionate lexical versus component ownership alternatives, and controlled validation criteria."
+    },
+    {
+      "id": "VT-ENTRY-GUARD",
+      "location": "skills/virtual-thread-migration/SKILL.md:108",
+      "baselineFinding": "Main rules did not surface that a new lexical executor scope can change when the calling API returns.",
+      "correction": "Add a concise return-boundary rule with routing to the existing what-breaks reference."
+    }
+  ],
+  "remainingFindings": [],
+  "filesChangedByReviewer": [
+    {
+      "path": "skills/virtual-thread-migration/SKILL.md",
+      "change": "Three-line return-boundary ownership rule."
+    },
+    {
+      "path": "skills/virtual-thread-migration/references/what-breaks.md",
+      "change": "Focused executor-scope section, compilable partial counterexample, lifecycle alternatives, validation boundary and Java 21 close source."
+    },
+    {
+      "path": "skills/virtual-thread-migration/skill.yaml",
+      "change": "Version only: 1.3.4 to 1.3.5."
+    }
+  ],
+  "filesPreserved": [
+    {
+      "path": "skills/virtual-thread-migration/references/migration-playbook.md",
+      "result": "Inspected completely and unchanged byte-for-byte; assignment and final hashes match."
+    }
+  ],
+  "capabilities": {
+    "preserved": [
+      "Java 21 standard API baseline, no implicit Java/framework upgrade or preview enablement.",
+      "Version/effective-locking-specific monitor pinning, residual native/foreign pinning, removed pin diagnostics and capture coverage caveats.",
+      "Affected execution paths and implicit pool limits, bounded waiters/admission, real resource completion before permit release.",
+      "Ordering guarantees and detached-effect boundary; context propagation and ThreadLocal population/lifetime.",
+      "Evidence-based workload selection, canary objectives and controlled-demand comparisons.",
+      "Measured connection-pool capacity, no forced resize or universal virtual migration.",
+      "Socket interruption versus read-timeout connection lifetime and ownership-aware cancellation.",
+      "Runtime metric producers, unknown scheduler values, protected thread-dump capture, daemon keep-alive and shutdown.",
+      "Existing valid lexical executor scope when the API requires completion before return.",
+      "Rollback/drain compatibility and preservation of adequate framework/component ownership."
+    ],
+    "replaced": [],
+    "intentionallyRemoved": []
+  },
+  "executedChecks": [
+    {
+      "kind": "compile",
+      "command": "javac --release 21 MigrationSnippet.java CloseScopeEvidence.java Launcher.java Smoke.java",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/virtual-thread-migration-quality14-ec041ea0eb284dc0917197c984f058b2",
+      "exitCode": 0,
+      "output": "",
+      "result": "Compiled exact reference method wrapper, controlled evidence harness, and exact actor code fixtures against standard Java 21."
+    },
+    {
+      "kind": "technical-execution",
+      "command": "java -cp . CloseScopeEvidence | Tee-Object -FilePath results.txt\nif ($LASTEXITCODE -ne 0) { throw 'Executor scope evidence failed' }",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/virtual-thread-migration-quality14-ec041ea0eb284dc0917197c984f058b2",
+      "exitCode": 0,
+      "output": "lexical-return: task active, Future not delivered to caller\r\nlexical-return: after release, method returns completed Future\r\ntimeout-close: timeout caught; Future done/cancelled; task active; caller not returned\r\ntimeout-close: after task release, close returns and owner interrupt is restored\r\ncomponent-owner: Future delivered while task remains active\r\nPASS: method return, Future state and actual task termination are distinct boundaries\r\n",
+      "interpretation": "Bounded controlled lifetime observations, not an agent evaluation, benchmark or universal termination guarantee."
+    },
+    {
+      "kind": "fixture-smoke",
+      "command": "java -cp . Smoke",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/virtual-thread-migration-quality14-ec041ea0eb284dc0917197c984f058b2",
+      "exitCode": 0,
+      "output": "ok\r\n",
+      "interpretation": "Original exact actor fixture completes on a trivial successful callable. This does not discriminate the two return contracts."
+    },
+    {
+      "kind": "environment",
+      "command": "java -version",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/virtual-thread-migration-quality14-ec041ea0eb284dc0917197c984f058b2",
+      "exitCode": 0,
+      "output": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n"
+    },
+    {
+      "kind": "structural",
+      "command": "@'\nimport assert from 'node:assert/strict';\nimport {readFileSync, readdirSync, existsSync} from 'node:fs';\nimport path from 'node:path';\nimport {loadPackageFromDirectory} from './packages/core/src/application/package-loader.ts';\nimport {validatePackage} from './packages/core/src/application/validate-package.ts';\nimport {NodeFileSystem} from './packages/node/src/file-system.ts';\nimport {ClaudeCodeAdapter} from './packages/adapter-claude/src/index.ts';\nimport {CodexAdapter} from './packages/adapter-codex/src/index.ts';\nconst root='skills/virtual-thread-migration';\nconst loaded=await loadPackageFromDirectory(new NodeFileSystem(),root,{strict:true});\nconst report=validatePackage(loaded.pkg,{directoryName:'virtual-thread-migration',adapters:[new ClaudeCodeAdapter(),new CodexAdapter()]});\nconst issues=[...loaded.issues,...report.issues];\nassert.equal(issues.length,0,JSON.stringify(issues));\nconst entry=readFileSync(path.join(root,'SKILL.md'),'utf8');\nconst refs=readdirSync(path.join(root,'references'));\nfor(const ref of refs) assert.ok(entry.includes('references/'+ref),'unrouted '+ref);\nlet links=0;\nfor(const file of ['SKILL.md',...refs.map(f=>'references/'+f)]) {\n const body=readFileSync(path.join(root,file),'utf8');\n for(const m of body.matchAll(/\\]\\(([^)]+)\\)/g)) {\n  const href=m[1];\n  if(/^(?:<)?[a-z]+:\\/\\//i.test(href)) continue;\n  const [target,anchor]=href.split('#');\n  const resolved=target?path.resolve(root,path.dirname(file),target):path.resolve(root,file);\n  assert.ok(existsSync(resolved),file+': '+href);\n  if(anchor) {\n   const targetText=readFileSync(resolved,'utf8');\n   const anchors=[...targetText.matchAll(/^#+ (.+)$/gm)].map(m=>m[1].toLowerCase().replace(/[^a-z0-9\\s-]/g,'').trim().replace(/\\s+/g,'-'));\n   assert.ok(anchors.includes(anchor),file+': '+href);\n  }\n  links++;\n }\n}\nconsole.log(JSON.stringify({skill:'virtual-thread-migration',version:loaded.pkg.manifest.version,issues,referenceFilesRouted:refs.length,localLinksAndAnchorsChecked:links},null,2));\n\n'@ | node --input-type=module -",
+      "workingDirectory": "C:/git/agent-skills",
+      "exitCode": 0,
+      "output": "{\n  \"skill\": \"virtual-thread-migration\",\n  \"version\": \"1.3.5\",\n  \"issues\": [],\n  \"referenceFilesRouted\": 2,\n  \"localLinksAndAnchorsChecked\": 2\n}\n",
+      "actualEffects": "Official read-only package load/validation with both adapters, plus local references/links. No registry writes or global checks.",
+      "timing": "Repeated after final URL formatting correction."
+    },
+    {
+      "kind": "snippet-provenance",
+      "command": "$referenceText = Get-Content -Raw -LiteralPath 'C:/git/agent-skills/skills/virtual-thread-migration/references/what-breaks.md'\n$wrapperText = Get-Content -Raw -LiteralPath 'C:/Users/robso/AppData/Local/Temp/virtual-thread-migration-quality14-ec041ea0eb284dc0917197c984f058b2/MigrationSnippet.java'\n$methodText = [regex]::Match($wrapperText, '(?s)static <T> Future<T> start\\(Callable<T> task\\) \\{.*?\\n\\}').Value\nif (-not $methodText -or -not $referenceText.Contains($methodText)) { throw 'Compiled method differs from shipped counterexample' }\n'Compiled method is identical to the shipped counterexample'",
+      "workingDirectory": "C:/git/agent-skills",
+      "exitCode": 0,
+      "output": "Compiled method is identical to the shipped counterexample\r\n"
+    },
+    {
+      "kind": "format",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/virtual-thread-migration/SKILL.md skills/virtual-thread-migration/skill.yaml skills/virtual-thread-migration/references/what-breaks.md",
+      "workingDirectory": "C:/git/agent-skills",
+      "exitCode": 0,
+      "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+    },
+    {
+      "kind": "structural",
+      "command": "git diff --check -- skills/virtual-thread-migration",
+      "workingDirectory": "C:/git/agent-skills",
+      "exitCode": 0,
+      "output": ""
+    },
+    {
+      "kind": "inspection",
+      "command": "git diff -- skills/virtual-thread-migration; scoped git status; Get-FileHash for all four owned files",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "Final diff reviewed, exactly three modified files, no assignment-time changes and no unrelated package edits.",
+      "finalDiff": "diff --git a/skills/virtual-thread-migration/SKILL.md b/skills/virtual-thread-migration/SKILL.md\nindex 6258a94..2d76101 100644\n--- a/skills/virtual-thread-migration/SKILL.md\n+++ b/skills/virtual-thread-migration/SKILL.md\n@@ -105,6 +105,9 @@ already authorized recovery through a validated rollback/drain path.\n   a system-default socket read closes that socket; a read timeout has different semantics.\n   Audit pool reuse, shared-resource ownership and retry classification before widening;\n   see `references/what-breaks.md`.\n+- **Preserve when the calling method returns.** A new per-call executor in try-with-resources\n+  waits at `close()` even after a timed wait or a `return` of its Future. Match executor ownership\n+  to the task's permitted lifetime — `references/what-breaks.md`.\n - **Rollback should be fast and rehearsed.** A per-workload runtime/configuration switch is ideal;\n   where architecture prevents it, staged deployment rollback must still preserve task ordering,\n   drain and compatibility.\ndiff --git a/skills/virtual-thread-migration/references/what-breaks.md b/skills/virtual-thread-migration/references/what-breaks.md\nindex 430565a..f071b1e 100644\n--- a/skills/virtual-thread-migration/references/what-breaks.md\n+++ b/skills/virtual-thread-migration/references/what-breaks.md\n@@ -113,6 +113,39 @@ the enabling property and bean selection/backoff; custom executors can change th\n Virtual threads are daemon threads, so verify application keep-alive and shutdown ownership\n for scheduler/batch-only applications. Keep these checks distinct from choosing a framework flag.\n \n+## Executor scope can change when a call returns\n+\n+Trace who creates, borrows and closes each executor, and whether work may outlive the submitting\n+call. Introducing per-call ownership changes behavior independently of the thread factory.\n+The Java 21 `ExecutorService.close()` contract waits for actual task termination; a timeout or\n+cancelled Future does not establish that termination.\n+\n+```java\n+// Partial Java 21+ counterexample; requires java.util.concurrent imports.\n+// This does not return the Future to its caller while the submitted task is still running.\n+static <T> Future<T> start(Callable<T> task) {\n+    try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {\n+        return executor.submit(task);\n+    } // close runs before the method returns\n+}\n+```\n+\n+Similarly, `Future.get(timeout, unit)` limits that wait, not the following executor close.\n+Interruption during close requests cancellation but still waits for executing tasks to finish;\n+an interrupt-insensitive operation can keep the caller waiting. Distinguish the response deadline\n+from cleanup completion instead of promising both from a timed `get`.\n+\n+Keep lexical ownership when completion before scope exit is required and its waiting contract\n+fits. If tasks may outlive the call, retain or establish an appropriate component/framework owner\n+that tracks completion and drains at shutdown; do not close a borrowed executor in the request.\n+Preserve admission limits and error observation. Simply omitting shutdown, abandoning tasks or\n+releasing their resource permits on Future cancellation does not repair the lifecycle.\n+\n+Use controlled task completion to check the required return boundary: hold a task open, observe\n+the method's return or timeout handling, then allow cleanup to finish. Include cancellation that\n+has been requested while the task remains active. A test that only checks the Future's status\n+misses a caller still blocked in close.\n+\n ## Cancellation can change connection lifetime\n \n The Java 21 and 25 `Socket.getInputStream()` contracts make reads on a system-default socket\n@@ -186,6 +219,7 @@ them from scheduler, allocation or provider effects; this ordering is not a freq\n - [Java 25 `Thread` contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Thread.html)\n - [Java 25 `Socket` contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/net/Socket.html) — stream interruption and read-timeout effects on socket lifetime.\n - [Java 25 executor factory contracts](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Executors.html)\n+- [Java 21 `ExecutorService.close()`](<https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ExecutorService.html#close()>) — termination waiting, including after interruption.\n - [Java 25 `ScheduledThreadPoolExecutor`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ScheduledThreadPoolExecutor.html)\n - [Java 25 thread-local variables](https://docs.oracle.com/en/java/javase/25/core/thread-local-variables.html)\n - [JEP 444](https://openjdk.org/jeps/444)\ndiff --git a/skills/virtual-thread-migration/skill.yaml b/skills/virtual-thread-migration/skill.yaml\nindex c3d7d12..339c11b 100644\n--- a/skills/virtual-thread-migration/skill.yaml\n+++ b/skills/virtual-thread-migration/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: virtual-thread-migration\n-version: 1.3.4\n+version: 1.3.5\n description: >-\n   Migrating an existing service to virtual threads as a staged programme rather than a flag:\n   inventorying what each thread pool was implicitly limiting, auditing for pinning, file I/O\n"
+    },
+    {
+      "kind": "artifact-preservation",
+      "command": "Get-ChildItem -File -LiteralPath . | Get-FileHash | Select-Object Path, Hash | ConvertTo-Json",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/virtual-thread-migration-quality14-ec041ea0eb284dc0917197c984f058b2",
+      "exitCode": 0,
+      "result": "Ten evidence/source/class/output artifacts retained; hashes listed in technicalEvidence."
+    }
+  ],
+  "failures": [
+    {
+      "kind": "resolved-format-failure",
+      "command": "Narrow Prettier --check of changed files",
+      "introducedByReviewer": true,
+      "originalExitCode": 1,
+      "originalOutput": "Checking formatting...\n[warn] skills/virtual-thread-migration/references/what-breaks.md\n[warn] Code style issues found in the above file. Run Prettier with --write to fix.\n",
+      "diagnosis": "Only the new Java API URL containing #close() required angle-bracket Markdown destination syntax.",
+      "correction": "Applied one-line <URL> correction via apply_patch; final Prettier, package/link and diff checks passed.",
+      "unresolved": false
+    }
+  ],
+  "researchToolLimitations": [
+    "An initial JEP 444 open returned Internal Error. This existing reference was not the basis of the correction.",
+    "A supplementary combined open of Java 21 close/cancel URL anchors was stopped after repeated waits with no response. The completed base ExecutorService page had already returned the full close contract at lines 327–337; the correction and source link rely on that successful primary-source read."
+  ],
+  "behavioralEvidence": {
+    "executedAgentEvaluations": [],
+    "measuredSkillGain": false,
+    "technicalExecutionIsNotAgentEvaluation": true,
+    "walkthroughs": [
+      {
+        "caseId": "virtual-thread-migration-return-before-completion",
+        "expectedDecision": "Current per-call close delays handle delivery; move ownership to the existing Launcher/component lifecycle or another contract-conforming owner, preserving cleanup and bounded admission assumptions."
+      },
+      {
+        "caseId": "virtual-thread-migration-finish-before-return",
+        "expectedDecision": "Current lexical close enforces the required no-escape boundary. Preserve it; an asynchronous component-owned submit would violate the changed contract unless launch still joins actual termination."
+      }
+    ],
+    "independentEvaluationPending": true,
+    "caseClassification": "Reviewer-authored development pair, not held-out cases.",
+    "decisiveConstraint": "Only CONTRACT.md changes: whether launch must return a handle while the task may remain active, or must wait for actual task completion.",
+    "differingInputFiles": ["CONTRACT.md"]
+  },
+  "actorInputs": [
+    {
+      "id": "virtual-thread-migration-return-before-completion",
+      "request": "Use virtual-thread-migration to review Launcher.java against CONTRACT.md. Implement the smallest justified correction if the migration violates the contract; preserve an adequate design if it does not. Keep Java 21 and the existing public component lifecycle, verify the relevant method-return/task-completion boundary with controlled coordination, and report exact commands and limits. Do not install dependencies, change real configuration, or claim performance gains.",
+      "prerequisites": {
+        "workspace": "Fresh isolated workspace with the three input files below; provide the candidate skill through its normal mechanism.",
+        "toolchain": "JDK 21 or newer with javac/java; compile using --release 21. Reviewer used Temurin 25.0.3+9, so a Java 21 runtime run is not claimed.",
+        "initialCommands": ["javac --release 21 Launcher.java Smoke.java", "java -cp . Smoke"],
+        "knownInitialSmokeOutput": "ok\\n",
+        "actorSeparation": "Do not supply evaluatorOnly, technicalEvidence, previous outputs, or the other case's contract."
+      },
+      "files": {
+        "CONTRACT.md": "# Launcher contract\n\nThe project targets standard Java 21, with no preview features or third-party dependencies. Launcher is an application component retained across calls and closed by its existing outer lifecycle owner. Smoke.java shows that owner. Admission is already bounded before launch; there is no required ordering between submitted tasks, and callers observe failures through their returned Future. Preserve these scope assumptions rather than building a service-wide migration framework.\n\nLauncher.close() must leave no work accepted by this component still executing when it returns. Some tasks cooperate with interruption; others can remain active until a dependency explicitly releases them. The component lifecycle owner can wait for cleanup at shutdown. Do not discard accepted work, suppress its failures, or claim that Future cancellation alone proves cleanup has completed. Public API compatibility and the Java 21 baseline should be preserved where practical; focused internal changes are allowed when the return contract requires them.\n\n## Return boundary\n\nlaunch must return its Future without waiting for the submitted task to finish. The task is allowed to remain active after launch returns, under the component's lifecycle owner. A caller must be able to obtain the handle while work is still blocked.\n",
+        "Launcher.java": "import java.util.concurrent.Callable;\nimport java.util.concurrent.ExecutorService;\nimport java.util.concurrent.Executors;\nimport java.util.concurrent.Future;\n\npublic final class Launcher implements AutoCloseable {\n    public <T> Future<T> launch(Callable<T> task) {\n        try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {\n            return executor.submit(task);\n        }\n    }\n\n    @Override\n    public void close() {\n        // Each launch currently owns and closes its executor.\n    }\n}\n",
+        "Smoke.java": "public final class Smoke {\n    public static void main(String[] args) throws Exception {\n        try (Launcher launcher = new Launcher()) {\n            var result = launcher.launch(() -> \"ok\");\n            System.out.println(result.get());\n        }\n    }\n}\n"
+      }
+    },
+    {
+      "id": "virtual-thread-migration-finish-before-return",
+      "request": "Use virtual-thread-migration to review Launcher.java against CONTRACT.md. Implement the smallest justified correction if the migration violates the contract; preserve an adequate design if it does not. Keep Java 21 and the existing public component lifecycle, verify the relevant method-return/task-completion boundary with controlled coordination, and report exact commands and limits. Do not install dependencies, change real configuration, or claim performance gains.",
+      "prerequisites": {
+        "workspace": "Fresh isolated workspace with the three input files below; provide the candidate skill through its normal mechanism.",
+        "toolchain": "JDK 21 or newer with javac/java; compile using --release 21. Reviewer used Temurin 25.0.3+9, so a Java 21 runtime run is not claimed.",
+        "initialCommands": ["javac --release 21 Launcher.java Smoke.java", "java -cp . Smoke"],
+        "knownInitialSmokeOutput": "ok\\n",
+        "actorSeparation": "Do not supply evaluatorOnly, technicalEvidence, previous outputs, or the other case's contract."
+      },
+      "files": {
+        "CONTRACT.md": "# Launcher contract\n\nThe project targets standard Java 21, with no preview features or third-party dependencies. Launcher is an application component retained across calls and closed by its existing outer lifecycle owner. Smoke.java shows that owner. Admission is already bounded before launch; there is no required ordering between submitted tasks, and callers observe failures through their returned Future. Preserve these scope assumptions rather than building a service-wide migration framework.\n\nLauncher.close() must leave no work accepted by this component still executing when it returns. Some tasks cooperate with interruption; others can remain active until a dependency explicitly releases them. The component lifecycle owner can wait for cleanup at shutdown. Do not discard accepted work, suppress its failures, or claim that Future cancellation alone proves cleanup has completed. Public API compatibility and the Java 21 baseline should be preserved where practical; focused internal changes are allowed when the return contract requires them.\n\n## Return boundary\n\nlaunch must not return until its submitted task has finished executing. The returned Future may already be completed. Work must not escape this call's execution scope, and no prompt-return deadline is promised while the task remains active.\n",
+        "Launcher.java": "import java.util.concurrent.Callable;\nimport java.util.concurrent.ExecutorService;\nimport java.util.concurrent.Executors;\nimport java.util.concurrent.Future;\n\npublic final class Launcher implements AutoCloseable {\n    public <T> Future<T> launch(Callable<T> task) {\n        try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {\n            return executor.submit(task);\n        }\n    }\n\n    @Override\n    public void close() {\n        // Each launch currently owns and closes its executor.\n    }\n}\n",
+        "Smoke.java": "public final class Smoke {\n    public static void main(String[] args) throws Exception {\n        try (Launcher launcher = new Launcher()) {\n            var result = launcher.launch(() -> \"ok\");\n            System.out.println(result.get());\n        }\n    }\n}\n"
+      }
+    }
+  ],
+  "evaluatorOnly": [
+    {
+      "caseId": "virtual-thread-migration-return-before-completion",
+      "expectedOutcomes": [
+        "Identify that the implicit close executes before the return reaches the caller, preventing handle delivery while the task is still running.",
+        "Attribute the regression to the new per-call ownership boundary, not a general inability of virtual threads to execute asynchronously.",
+        "Implement a proportionate lifecycle solution using the existing component close contract or an equivalently justified owner, keeping the public launch/close API where practical.",
+        "Ensure the returned Future can be observed while a controlled task remains active.",
+        "Ensure component close/drain does not return while its accepted controlled task remains active, including after Future cancellation.",
+        "Preserve Java 21, bounded-admission assumptions, failure observation and orderly shutdown; no dependency/preview upgrade or abandoned daemon task.",
+        "Report compiler target separately from runtime and use bounded coordinated checks instead of inferring correctness from a fast smoke task."
+      ],
+      "controlledChecks": [
+        "Hold a Callable on a release latch after it signals entry.",
+        "Invoke launch on a helper thread so a broken implementation cannot freeze the evaluator.",
+        "With the task held open, require launch to deliver a Future; use a bounded test guard, not a throughput claim.",
+        "Request Future.cancel(true) while a test callable deliberately remains active until a separate release signal.",
+        "Invoke component close on an owned helper; it must wait for actual task completion.",
+        "Release task, then join all helpers and observe cleanup/error/interrupt outcomes; keep a finite watchdog."
+      ],
+      "observableFailures": [
+        "Leaves per-call try-with-resources unchanged and claims returning Future makes it asynchronous.",
+        "Only increases get timeout, changes virtual thread naming/pinning flags, or replaces virtual threads without addressing ownership.",
+        "Removes close entirely or detaches task execution with no lifecycle owner/drain.",
+        "Releases resources or declares cleanup complete solely because Future.isDone/isCancelled is true.",
+        "Changes to preview structured concurrency or a newer JDK solely to repair this Java 21 fixture."
+      ]
+    },
+    {
+      "caseId": "virtual-thread-migration-finish-before-return",
+      "expectedOutcomes": [
+        "Read the changed return contract and recognize that per-call close preserves its required no-escape behavior.",
+        "Preserve adequate lexical ownership; do not apply the asynchronous-owner redesign merely by preference.",
+        "If any refactor is made, prove launch still waits for actual execution completion, including cancellation-insensitive cleanup, rather than just a Future terminal state.",
+        "Use a held task to observe no method return before release and a completed result after release.",
+        "Retain Java 21 compatibility, exception observation and lifecycle ownership without a performance claim."
+      ],
+      "controlledChecks": [
+        "Hold a Callable active and invoke launch on a helper.",
+        "After task entry, require the method-return signal to remain absent while execution is deliberately held.",
+        "Release the callable; require method return, completed Future/result and no surviving task.",
+        "Keep the check bounded and distinguish the contractual no-escape property from a measured latency improvement."
+      ],
+      "observableFailures": [
+        "Returns a Future while the controlled task is still active, contradicting the contract.",
+        "Demands a long-lived executor or unbounded detached work although lexical waiting is explicitly required.",
+        "Treats lack of prompt return as a defect despite the supplied completion-before-return rule.",
+        "Claims tests or an independent agent comparison ran when only writing a proposed check."
+      ]
+    }
+  ],
+  "technicalEvidence": {
+    "fixtureDirectory": "C:/Users/robso/AppData/Local/Temp/virtual-thread-migration-quality14-ec041ea0eb284dc0917197c984f058b2",
+    "exactReferenceMethod": "static <T> Future<T> start(Callable<T> task) {\n    try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {\n        return executor.submit(task);\n    } // close runs before the method returns\n}",
+    "referenceWrapperSource": "import java.util.concurrent.*;\n\npublic final class MigrationSnippet {\nstatic <T> Future<T> start(Callable<T> task) {\n    try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {\n        return executor.submit(task);\n    } // close runs before the method returns\n}\n}\n",
+    "exactHarnessSource": "import java.util.concurrent.*;\nimport java.util.concurrent.atomic.*;\n\npublic final class CloseScopeEvidence {\n    private static final class GateTask implements Callable<String> {\n        final CountDownLatch entered = new CountDownLatch(1);\n        final CountDownLatch mayFinish = new CountDownLatch(1);\n        final CountDownLatch interrupted = new CountDownLatch(1);\n        final CountDownLatch finished = new CountDownLatch(1);\n        volatile boolean virtual;\n        public String call() {\n            virtual = Thread.currentThread().isVirtual();\n            entered.countDown();\n            boolean wasInterrupted = false;\n            try {\n                for (;;) {\n                    try {\n                        mayFinish.await();\n                        return \"done\";\n                    } catch (InterruptedException expected) {\n                        // Deliberately model a dependency that does not stop at interruption.\n                        wasInterrupted = true;\n                        interrupted.countDown();\n                    }\n                }\n            } finally {\n                finished.countDown();\n                if (wasInterrupted) Thread.currentThread().interrupt();\n            }\n        }\n    }\n\n    private static void require(boolean condition, String message) {\n        if (!condition) throw new AssertionError(message);\n    }\n\n    private static void await(CountDownLatch latch, String label) throws InterruptedException {\n        require(latch.await(5, TimeUnit.SECONDS), \"Timed out waiting for \" + label);\n    }\n\n    private static void join(Thread owner, AtomicReference<Throwable> failure) throws Exception {\n        owner.join(5_000);\n        require(!owner.isAlive(), \"Owner did not terminate after controlled release\");\n        if (failure.get() != null) throw new AssertionError(\"Owner failed\", failure.get());\n    }\n\n    private static void snippetReturnBoundary() throws Exception {\n        GateTask gate = new GateTask();\n        AtomicReference<Future<String>> result = new AtomicReference<>();\n        AtomicReference<Throwable> failure = new AtomicReference<>();\n        CountDownLatch returned = new CountDownLatch(1);\n        Thread owner = Thread.ofPlatform().name(\"snippet-owner\").start(() -> {\n            try {\n                result.set(MigrationSnippet.start(gate));\n            } catch (Throwable error) {\n                failure.set(error);\n            } finally {\n                returned.countDown();\n            }\n        });\n        try {\n            await(gate.entered, \"snippet task entry\");\n            require(gate.virtual, \"Snippet did not run a virtual task\");\n            require(gate.finished.getCount() == 1, \"Task unexpectedly finished\");\n            require(returned.getCount() == 1 && result.get() == null,\n                    \"Method returned its Future before the held task terminated\");\n            System.out.println(\"lexical-return: task active, Future not delivered to caller\");\n        } finally {\n            gate.mayFinish.countDown();\n            join(owner, failure);\n        }\n        require(\"done\".equals(result.get().get()), \"Unexpected completed result\");\n        require(gate.finished.getCount() == 0, \"Missing task cleanup\");\n        System.out.println(\"lexical-return: after release, method returns completed Future\");\n    }\n\n    private static void timeoutThenCloseBoundary() throws Exception {\n        GateTask gate = new GateTask();\n        AtomicReference<Future<String>> handle = new AtomicReference<>();\n        AtomicReference<Throwable> failure = new AtomicReference<>();\n        AtomicBoolean interruptRestored = new AtomicBoolean();\n        CountDownLatch timeoutCaught = new CountDownLatch(1);\n        CountDownLatch returned = new CountDownLatch(1);\n        Thread owner = Thread.ofPlatform().name(\"timed-owner\").start(() -> {\n            try {\n                try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {\n                    Future<String> future = executor.submit(gate);\n                    handle.set(future);\n                    await(gate.entered, \"timed task entry\");\n                    try {\n                        future.get(20, TimeUnit.MILLISECONDS);\n                        throw new AssertionError(\"Gated task completed before release\");\n                    } catch (TimeoutException expected) {\n                        require(future.cancel(true), \"Cancellation was not accepted\");\n                        timeoutCaught.countDown();\n                    }\n                }\n                interruptRestored.set(Thread.currentThread().isInterrupted());\n            } catch (Throwable error) {\n                failure.set(error);\n            } finally {\n                returned.countDown();\n            }\n        });\n        try {\n            await(timeoutCaught, \"timed get timeout\");\n            await(gate.interrupted, \"task cancellation request\");\n            require(handle.get().isCancelled() && handle.get().isDone(), \"Future not cancelled/done\");\n            require(gate.finished.getCount() == 1, \"Cancellation unexpectedly ended task\");\n            require(returned.getCount() == 1, \"Method escaped close before task termination\");\n            owner.interrupt(); // close must still await actual execution termination.\n            require(returned.getCount() == 1, \"Interrupted close returned while task active\");\n            System.out.println(\"timeout-close: timeout caught; Future done/cancelled; task active; caller not returned\");\n        } finally {\n            gate.mayFinish.countDown();\n            join(owner, failure);\n        }\n        require(interruptRestored.get(), \"Close did not restore owner interrupt status\");\n        System.out.println(\"timeout-close: after task release, close returns and owner interrupt is restored\");\n    }\n\n    private static void componentOwnerBoundary() throws Exception {\n        GateTask gate = new GateTask();\n        try (var componentExecutor = Executors.newVirtualThreadPerTaskExecutor()) {\n            Future<String> future = componentExecutor.submit(gate);\n            try {\n                await(gate.entered, \"component task entry\");\n                require(!future.isDone() && gate.finished.getCount() == 1,\n                        \"Task did not remain active after Future was delivered\");\n                System.out.println(\"component-owner: Future delivered while task remains active\");\n            } finally {\n                gate.mayFinish.countDown();\n            }\n            require(\"done\".equals(future.get(5, TimeUnit.SECONDS)), \"Unexpected component result\");\n        }\n        require(gate.finished.getCount() == 0, \"Component did not drain task\");\n    }\n\n    public static void main(String[] args) throws Exception {\n        Thread.ofPlatform().daemon().name(\"validation-watchdog\").start(() -> {\n            try {\n                Thread.sleep(30_000);\n                System.err.println(\"FAIL: validation exceeded watchdog bound\");\n                Runtime.getRuntime().halt(2);\n            } catch (InterruptedException ignored) { }\n        });\n        snippetReturnBoundary();\n        timeoutThenCloseBoundary();\n        componentOwnerBoundary();\n        System.out.println(\"PASS: method return, Future state and actual task termination are distinct boundaries\");\n    }\n}\n",
+    "stdoutFile": "C:/Users/robso/AppData/Local/Temp/virtual-thread-migration-quality14-ec041ea0eb284dc0917197c984f058b2/results.txt",
+    "retainedArtifactsAndHashes": [
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\virtual-thread-migration-quality14-ec041ea0eb284dc0917197c984f058b2\\CloseScopeEvidence.class",
+        "Hash": "F880F7C35C210474BD954DF3F1EE628A369B2D2CE1F1D2D4870551E63C180D91"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\virtual-thread-migration-quality14-ec041ea0eb284dc0917197c984f058b2\\CloseScopeEvidence.java",
+        "Hash": "77D73611848ECBA77E97119FE86DFF8C9A5E7A0E7A71934F81D96A97D444C5D4"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\virtual-thread-migration-quality14-ec041ea0eb284dc0917197c984f058b2\\CloseScopeEvidence$GateTask.class",
+        "Hash": "ED22467C3F6A1DED7D723689574B0D3CE8B88FA700D192CBDD8C8BBA4D292DDE"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\virtual-thread-migration-quality14-ec041ea0eb284dc0917197c984f058b2\\Launcher.class",
+        "Hash": "998B2F2306E8BA9925CB1CC62F35B7963B477C629C3BF466B790547341288CC3"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\virtual-thread-migration-quality14-ec041ea0eb284dc0917197c984f058b2\\Launcher.java",
+        "Hash": "FAD04FFCFEC587954E0EF85707BB7506BE42CB1C29BD30B468756671AB7E8CAC"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\virtual-thread-migration-quality14-ec041ea0eb284dc0917197c984f058b2\\MigrationSnippet.class",
+        "Hash": "43C2DB6EB4040E04DA6EAC5DC6BE95B5C74D21EA46583B69B23DDC5C3199EB74"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\virtual-thread-migration-quality14-ec041ea0eb284dc0917197c984f058b2\\MigrationSnippet.java",
+        "Hash": "40D3131F87808D856846807B73BA7961204E1339085A329E053527B339E60F90"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\virtual-thread-migration-quality14-ec041ea0eb284dc0917197c984f058b2\\results.txt",
+        "Hash": "6AE23367AB7BCBAFB0DF3107EA31AE99DC80F6955CC9BBCFE7C0E0E8C7D8EA9A"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\virtual-thread-migration-quality14-ec041ea0eb284dc0917197c984f058b2\\Smoke.class",
+        "Hash": "82360C55C805F529356100F9852CFB408B1C1CB24623136084697E2080B90D15"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\virtual-thread-migration-quality14-ec041ea0eb284dc0917197c984f058b2\\Smoke.java",
+        "Hash": "3BAE696FB113CF881860949F6EAD0AA76B8828C9C4966E95E8AB5554CA369FBF"
+      }
+    ],
+    "observedBoundaries": [
+      "Lexical-return: task active and Future not delivered; after release method returns completed Future.",
+      "Timed get expiry plus accepted cancellation: Future done/cancelled while task stays active and caller has not returned.",
+      "Interruption of the closing owner does not bypass actual task termination; interrupt status is restored when close returns.",
+      "Component owner: Future delivered while task active; later completion/drain succeeds."
+    ],
+    "controlMechanism": "CountDownLatch gates determine task lifetime and positive observations. Timeouts bound the test and trigger the timed-get case; no sleeping task duration is used as a performance oracle.",
+    "compilerTarget": "--release 21, no preview flags",
+    "runtime": "Temurin OpenJDK 25.0.3+9-LTS",
+    "processState": "All javac/java commands finished. The daemon watchdog terminated with its JVM; no process remains able to write.",
+    "limits": [
+      "Not executed on a Java 21 runtime; source compatibility was checked with --release 21 and the contract verified in Java 21 primary documentation.",
+      "The intentionally interrupt-insensitive callable is a controlled lifecycle case, not a claim that every I/O client ignores cancellation.",
+      "No real network/client/resource pool, framework shutdown, production deployment, benchmark or broad concurrency proof was executed.",
+      "The exact actor fixture only received a trivial smoke execution; the two agent tasks remain pending independent evaluation."
+    ]
+  },
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ExecutorService.html",
+      "title": "Java 21 ExecutorService, close()",
+      "primary": true,
+      "verified": true,
+      "supports": "close waits for task execution/termination; interruption initiates cancellation and continues waiting before restoring interrupt status.",
+      "evidenceLocation": "Successfully opened base page, close detail lines 327–337.",
+      "conclusionType": "Versioned API contract plus separately executed lifetime controls; no inferred automatic kill of interrupt-insensitive work."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/Executors.html",
+      "title": "Java 21 Executors",
+      "primary": true,
+      "verified": true,
+      "supports": "Standard virtual-thread-per-task executor factory and existing executor factory distinctions.",
+      "role": "Compatibility/context check; no new universal performance claim."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/core/virtual-threads.html",
+      "title": "Java 25 virtual-thread guide",
+      "primary": true,
+      "verified": true,
+      "role": "Consulted for current runtime context; the correction is grounded in the Java 21 executor contract rather than an upgrade requirement."
+    }
+  ],
+  "assumptionsAndLimits": [
+    "Completion-before-return and prompt handle delivery are different valid API contracts; the correct ownership recommendation depends on the supplied contract.",
+    "A close wait is a consequence of the chosen lifecycle scope, not an inherent virtual-thread performance regression.",
+    "A caller response deadline cannot establish task cleanup completion when the actual operation does not stop at cancellation.",
+    "Existing canary, sizing, pinning and framework guidance was preserved; no evidence supports reopening it in this focused change.",
+    "No measured behavioral skill gain or broad superiority claim is made."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Shared generated registry reserved for coordinator during parallel review.",
+      "prerequisites": "All reviewers stopped writing."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Repository-wide validation reserved for coordinator.",
+      "prerequisites": "All writers stopped and registry regenerated."
+    }
+  ],
+  "crossSkillIssues": [],
+  "coordinatorActions": [
+    "Run independent actors with actorInputs only; retain evaluatorOnly/technicalEvidence outside actor access.",
+    "Keep these labeled development cases and record any baseline/candidate comparison before making gain claims.",
+    "Run global registry/verification after all write phases stop."
+  ],
+  "writesStoppedAfter": "Final focused URL fix, affected local checks, owned diff/hash inspection and this authorized temporary JSON handoff write. Remain read-only after handoff."
+}

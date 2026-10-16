@@ -1,0 +1,74 @@
+[
+  {
+    "url": "https://www.rfc-editor.org/rfc/rfc9110.txt",
+    "version": "RFC 9110, June 2022",
+    "sections": "9.2.2 Idempotent Methods; 10.2.3 Retry-After",
+    "supports": "Idempotency is method/operation semantics rather than an identical response guarantee; server wait guidance accepts HTTP-date or nonnegative decimal seconds.",
+    "limits": "The specification does not establish whether a particular server applied an individual timed-out write. The skill requires operation evidence.",
+    "consultedAt": "2026-10-16",
+    "evidenceType": "Primary specification/API/versioned source inspected"
+  },
+  {
+    "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.net.http/java/net/http/HttpRequest.BodyPublisher.html",
+    "version": "Java SE 17",
+    "sections": "Interface contract",
+    "supports": "Resending makes a new subscription that is expected to generate the same request data.",
+    "limits": "No network replay or application idempotency was executed here.",
+    "consultedAt": "2026-10-16",
+    "evidenceType": "Primary specification/API/versioned source inspected"
+  },
+  {
+    "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.net.http/java/net/http/HttpResponse.BodySubscribers.html#ofInputStream()",
+    "version": "Java SE 17",
+    "sections": "ofInputStream API note",
+    "supports": "The response can be available before its body finishes; EOF or closing the stream releases exchange resources, and early closing may prevent connection reuse.",
+    "limits": "Source/API confirmation, not an HTTP pool or stalled-body integration test.",
+    "consultedAt": "2026-10-16",
+    "evidenceType": "Primary specification/API/versioned source inspected"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/resilience4j/resilience4j/v2.3.0/resilience4j-retry/src/main/java/io/github/resilience4j/retry/RetryConfig.java",
+    "version": "Resilience4j 2.3.0",
+    "sections": "Builder.build; createExceptionPredicate; createRetryOnExceptionPredicate",
+    "supports": "Configured retry predicates/classes are combined, then ignore rules constrain the result; attempts and schedule belong to this Retry configuration.",
+    "limits": "No Resilience4j runtime execution or fleet budget claim.",
+    "consultedAt": "2026-10-16",
+    "evidenceType": "Primary specification/API/versioned source inspected"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/resilience4j/resilience4j/v2.3.0/resilience4j-core/src/main/java/io/github/resilience4j/core/predicate/PredicateCreator.java",
+    "version": "Resilience4j 2.3.0",
+    "sections": "createExceptionsPredicate(Predicate, Class...)",
+    "supports": "The class predicate and supplied predicate combine with OR. A narrow predicate does not turn a broad retry class list into a whitelist.",
+    "limits": "Pinned implementation, not a rule for every resilience library or release.",
+    "consultedAt": "2026-10-16",
+    "evidenceType": "Primary specification/API/versioned source inspected"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/spring-projects/spring-retry/v2.0.12/src/main/java/org/springframework/retry/annotation/AnnotationAwareRetryOperationsInterceptor.java",
+    "version": "Spring Retry 2.0.12",
+    "sections": "getRetryPolicy; getRecoverer; getBackoffPolicy",
+    "supports": "Retry exclusions and notRecoverable are distinct policy settings; annotation metadata is applied by the interceptor and recovery is configured separately.",
+    "limits": "No actual proxy, transaction advice order, or ambient transaction execution in this review.",
+    "consultedAt": "2026-10-16",
+    "evidenceType": "Primary specification/API/versioned source inspected"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/spring-projects/spring-retry/v2.0.12/src/main/java/org/springframework/retry/annotation/RecoverAnnotationRecoveryHandler.java",
+    "version": "Spring Retry 2.0.12",
+    "sections": "recover; findClosestMatch",
+    "supports": "An active annotation recovery handler that cannot match a method throws ExhaustedRetryException with the original cause.",
+    "limits": "Matches the skill conditional wording; it is not a claim that all exhausted calls always use this handler.",
+    "consultedAt": "2026-10-16",
+    "evidenceType": "Primary specification/API/versioned source inspected"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/spring-projects/spring-retry/v2.0.12/src/main/java/org/springframework/retry/backoff/ExponentialRandomBackOffPolicy.java",
+    "version": "Spring Retry 2.0.12",
+    "sections": "class contract; getSleepAndIncrement",
+    "supports": "Randomization multiplies an exponential interval and caps it; it is not a draw from zero over the full window.",
+    "limits": "Source confirmation; distribution and real fleet arrivals were not measured.",
+    "consultedAt": "2026-10-16",
+    "evidenceType": "Primary specification/API/versioned source inspected"
+  }
+]

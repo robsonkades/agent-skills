@@ -1,0 +1,71 @@
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+
+final class Reports {
+    record Viewer(String id) {
+        boolean canRead(Report report) { return Objects.equals(id, report.owner()); }
+    }
+    record Request(String userId, Viewer snapshot) {
+        Request { Objects.requireNonNull(snapshot); }
+    }
+    record Report(String id, boolean restricted, String owner, String title) { }
+    record Response(int status, String body) { }
+    interface Repository { Optional<Report> find(String id); }
+    interface ViewerSource { Viewer current(Request request); }
+    static final class DirectoryViewer implements ViewerSource {
+        public Viewer current(Request request) {
+            if (request.userId() == null) throw new IllegalStateException("No directory identity");
+            return new Viewer(request.userId());
+        }
+    }
+    static final class RequestSnapshot implements ViewerSource {
+        public Viewer current(Request request) { return request.snapshot(); }
+    }
+    static ViewerSource configured() throws IOException {
+        var settings = new java.util.Properties();
+        try (var reader = Files.newBufferedReader(Path.of("runtime.properties"))) { settings.load(reader); }
+        return switch (settings.getProperty("viewer")) {
+            case "directory" -> new DirectoryViewer();
+            case "snapshot" -> new RequestSnapshot();
+            default -> throw new IllegalArgumentException("Unknown viewer provider");
+        };
+    }
+    static final class ExistingEndpoint {
+        private final Repository reports;
+        private final ViewerSource viewers;
+        ExistingEndpoint(Repository reports, ViewerSource viewers) {
+            this.reports = reports; this.viewers = viewers;
+        }
+        Response get(String id, Request request) {
+            Optional<Report> found = reports.find(id);
+            if (found.isEmpty()) return new Response(404, "not found");
+            Report report = found.get();
+            if (report.restricted() && !viewers.current(request).canRead(report))
+                return new Response(403, "forbidden");
+            return new Response(200, report.title());
+        }
+    }
+    static final class Presenter {
+        Response present(Optional<Report> found, Viewer viewer) {
+            if (found.isEmpty()) return new Response(404, "not found");
+            Report report = found.get();
+            if (report.restricted() && !viewer.canRead(report)) return new Response(403, "forbidden");
+            return new Response(200, report.title());
+        }
+    }
+    static final class ProposedEndpoint {
+        private final Repository reports;
+        private final ViewerSource viewers;
+        private final Presenter presenter = new Presenter();
+        ProposedEndpoint(Repository reports, ViewerSource viewers) {
+            this.reports = reports; this.viewers = viewers;
+        }
+        Response get(String id, Request request) {
+            return presenter.present(reports.find(id), viewers.current(request));
+        }
+    }
+}

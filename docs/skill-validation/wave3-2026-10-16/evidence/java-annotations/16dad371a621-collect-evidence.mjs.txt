@@ -1,0 +1,26 @@
+import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import {spawnSync} from 'node:child_process';import {fileURLToPath} from 'node:url';
+const root=path.dirname(fileURLToPath(import.meta.url)),repo='C:/git/agent-skills';
+const files=['SKILL.md','skill.yaml','references/retention-targets-and-processing.md','references/markers-and-custom-annotations.md'];
+const sha=b=>crypto.createHash('sha256').update(b).digest('hex').toUpperCase();
+const owned=[];
+for(const file of files) {
+ const rel='skills/java-annotations/'+file,final=fs.readFileSync(path.join(repo,rel));
+ const r=spawnSync('git',['show','HEAD:'+rel],{cwd:repo});
+ if(r.status!==0) throw new Error(r.stderr.toString());
+ for(const [label,bytes]of [['baseline-committed',r.stdout],['final',final]]) {
+  const out=path.join(root,label,file);fs.mkdirSync(path.dirname(out),{recursive:true});fs.writeFileSync(out,bytes);
+ }
+ owned.push({path:rel,committedSha256:sha(r.stdout),finalSha256:sha(final)});
+}
+const diff=spawnSync('git',['diff','--','skills/java-annotations'],{cwd:repo});
+if(diff.status!==0) throw new Error(diff.stderr.toString());
+fs.writeFileSync(path.join(root,'owned.diff'),diff.stdout);
+fs.mkdirSync(path.join(root,'case-runs'),{recursive:true});
+for(const [label,dir]of Object.entries({
+ processor:'C:/Users/robso/AppData/Local/Temp/annotation-reader-case-tKnzPI',
+ runtime:'C:/Users/robso/AppData/Local/Temp/annotation-reader-case-5AzY1L',
+ correctedProcessorControl:'C:/Users/robso/AppData/Local/Temp/annotation-reader-case-TL291H'
+})) fs.copyFileSync(path.join(dir,'results.json'),path.join(root,'case-runs',label+'.json'));
+const artifacts=fs.readdirSync(root,{recursive:true}).filter(f=>f!=='artifact-manifest.json'&&fs.statSync(path.join(root,f)).isFile()).sort().map(file=>({file:file.replaceAll('\\','/'),sha256:sha(fs.readFileSync(path.join(root,file)))}));
+fs.writeFileSync(path.join(root,'artifact-manifest.json'),JSON.stringify({owned,artifacts},null,2)+'\n');
+console.log(JSON.stringify({owned,retainedArtifacts:artifacts.length}));

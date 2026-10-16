@@ -1,0 +1,66 @@
+diff --git a/skills/concurrency-testing/SKILL.md b/skills/concurrency-testing/SKILL.md
+index 270e9ea..318ce59 100644
+--- a/skills/concurrency-testing/SKILL.md
++++ b/skills/concurrency-testing/SKILL.md
+@@ -49,6 +49,9 @@ do not upgrade Java or enable preview merely to use this skill.
+ 4. **Assert invariants, not schedules.** After owned work terminates, account for every
+    submission as success, failure, cancellation or rejection with disjoint definitions;
+    check resource bounds and recovered permit counts at their specified observation points.
++   Check whether doing no required work would also satisfy the oracle. Derive success/refusal
++   conditions from the actual contract and add a positive operation or a deliberately faulty
++   control when conservation or zero-active-work assertions could pass vacuously.
+ 5. **Add budgeted stress where competing accesses remain a material risk**, retaining worker
+    outcomes and varying relevant contention shapes. A shared field alone does not require a soak.
+ 6. **Check resource recovery after quiescence.** Owned permits/connections should return;
+diff --git a/skills/concurrency-testing/references/stress-and-soak.md b/skills/concurrency-testing/references/stress-and-soak.md
+index e5d047a..5d92107 100644
+--- a/skills/concurrency-testing/references/stress-and-soak.md
++++ b/skills/concurrency-testing/references/stress-and-soak.md
+@@ -6,6 +6,11 @@ types and existing assertion library. Pin the target build and retain all worker
+ 
+ ## The stress harness
+ 
++This illustrative `Account` contract atomically accepts an affordable positive withdrawal and
++returns `false` only for insufficient funds; there are no deposits, fees or contention refusals.
++The starting balance and number of attempts therefore determine the total successful withdrawals,
++without determining which workers succeed. Verify that this is the target API's contract first.
++
+ ```java
+ @RepeatedTest(20)                       // more sampled executions, not exhaustive coverage
+ @Timeout(30)
+@@ -46,6 +51,7 @@ void balanceConservesSuccessfulWithdrawalsAfterWorkersFinish() throws Exception
+     assertTrue(account.balance() >= 0);
+     assertEquals(10_000 - succeeded.get() * 10, account.balance());       // conservation
+     assertEquals(threads * opsPerThread, succeeded.get() + refused.get()); // accounting
++    assertEquals(1_000, succeeded.get()); // required affordable withdrawals actually happened
+ }
+ ```
+ 
+@@ -58,6 +64,14 @@ quiescent conservation, not whether the balance was negative transiently. For th
+ the relevant transitions/history and check it against the operation's specification without
+ adding synchronization that accidentally fixes the race.
+ 
++Conservation and accounting alone also pass if `withdraw` always returns `false` and never
++changes the balance. Use that faulty implementation as a control: it must fail the required-success
++assertion, while a conforming implementation passes. This checks the oracle's sensitivity to that
++defect, not its coverage of all races. If the API instead permits refusal when busy, as an operation
++using [`Lock.tryLock()`](<https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/locks/Lock.html#tryLock()>)
++might, do not require complete depletion under contention. Test an affordable, uncontended success
++separately and retain the applicable conservation/accounting checks for concurrent attempts.
++
+ ## Choosing the invariant
+ 
+ The invariant is the whole design of the test. Good ones:
+diff --git a/skills/concurrency-testing/skill.yaml b/skills/concurrency-testing/skill.yaml
+index cd69ffa..caaa602 100644
+--- a/skills/concurrency-testing/skill.yaml
++++ b/skills/concurrency-testing/skill.yaml
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: concurrency-testing
+-version: 1.1.4
++version: 1.1.5
+ description: >-
+   Testing concurrent Java so failures appear in CI rather than in an incident: what a passing
+   concurrency test does and does not prove, replacing sleeps with latches and deterministic

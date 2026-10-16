@@ -1,0 +1,5 @@
+# Startup scan and readiness
+The scanner only loads class metadata and never executes Plugin.connect.
+The dependency is available before active use, so the same definition will initialize successfully then.
+If an earlier scan touched it while unavailable, retrying after recovery is sufficient.
+No initialization/lifecycle change is needed.

@@ -146,9 +146,30 @@ java.lang.IllegalArgumentException: Class is not found: Layout$AllTypes.
 ```
 
 `[executed]`, 25.0.3, when the program was launched with the single-file source launcher
-(`java -cp jol.jar Layout.java`). `toPrintable` reads the class **file** to recover field
-names, and a source-launched class has no file on the classpath. `instanceSize()` still works;
-only the printable listing fails. **Fix:** `javac -d classes` first and run from `classes`.
+(`java -cp jol.jar Layout.java`). JOL 0.17's instance-reporting path reloads the type through
+`ClassUtils.loadClass` to check assignability. Its loader cannot see this source-launcher's
+class. Field names and offsets are already in the layout; this is a class-loader visibility
+failure, not a missing class-file parser step. `instanceSize()` still works.
+
+If only offsets, field names and size are required, pass no instance to the reporting method:
+
+```java
+var layout = ClassLayout.parseInstance(obj);
+System.out.println(layout.toPrintable(null)); // values and object-header contents are N/A
+```
+
+This skips instance validation and value/header reads; it does not inspect the object's actual
+field values or mark bits. When those are required, keep the instance-reporting path and make
+the same classes visible to JOL: compile with `javac -d classes` and launch from that classpath.
+Adding module opens does not fix class-loader visibility.
+
+A bounded check with JOL 0.17 on Temurin 25.0.3+9 reproduced the failure for a source-launched
+ordinary class and record in both header modes. `toPrintable(null)` retained field names,
+offsets and sizes; compiling and launching the same probe made instance-value reporting work.
+This verifies the reporting paths, not a new VM-independent size guarantee.
+
+Sources: [JOL 0.17 ClassLayout reporting](https://github.com/openjdk/jol/blob/0.17/jol-core/src/main/java/org/openjdk/jol/info/ClassLayout.java)
+and [ClassUtils loader selection](https://github.com/openjdk/jol/blob/0.17/jol-core/src/main/java/org/openjdk/jol/util/ClassUtils.java).
 
 ### 2.4 A boxed population can model the wrong sharing
 

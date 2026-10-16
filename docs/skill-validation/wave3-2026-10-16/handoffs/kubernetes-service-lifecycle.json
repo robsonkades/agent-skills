@@ -1,0 +1,431 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "kubernetes-service-lifecycle",
+  "ownedPath": "skills/kubernetes-service-lifecycle/**",
+  "repository": "C:/git/agent-skills",
+  "reviewer": "/root/quality14",
+  "date": "2026-10-16",
+  "allWritesStopped": true,
+  "backgroundProcessesRemaining": 0,
+  "scope": "Focused specialist review of lifecycle configuration decisions. Repository writes limited to the assigned package; review-only evidence is in the authorized temporary locations.",
+  "procedure": {
+    "read": [
+      "AGENTS.md",
+      "docs/skill-review-prompt.md (complete)",
+      "docs/parallel-skill-reviews.md",
+      "docs/skill-validation/wave3-2026-10-16/review-brief.md",
+      "skills/skill-engineering/SKILL.md",
+      "skill-engineering evidence/confidence, evaluation, resource-design and anti-pattern references",
+      "Entire four-file assigned package"
+    ],
+    "reuse": "Unchanged procedure/reference readings from the preceding wave-3 assignments reused as allowed by the brief; wave-3 brief re-read during this assignment.",
+    "findingsSentBeforeFirstEdit": true,
+    "noSubdelegation": true
+  },
+  "baseline": {
+    "committedVersion": "1.3.4",
+    "assignmentVersion": "1.3.4",
+    "preExistingVersionBump": false,
+    "committedStagedUnstagedAndUntracked": "Owned package clean at assignment; git status, git diff and git diff --cached were empty. No pre-existing owned changes.",
+    "preExistingChanges": [],
+    "assignmentFileHashes": [
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\kubernetes-service-lifecycle\\SKILL.md",
+        "Hash": "8DE2F5D190E5B327C3CE77CFAD02CC8E7E3939A6E800DED7C0B7B645FA06067E"
+      },
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\kubernetes-service-lifecycle\\skill.yaml",
+        "Hash": "2E76D46117564CF8713AE2E6673C2F8E51F697C5F1F25C13743E35018F53DBC7"
+      },
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\kubernetes-service-lifecycle\\references\\draining-non-http-work.md",
+        "Hash": "8E92CB5D567FFE5EABD1AFBFD4E85AFCB83EF6F6C89F34CF6BC616B0A595781B"
+      },
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\kubernetes-service-lifecycle\\references\\probe-and-shutdown-configuration.md",
+        "Hash": "F6091BE24B0F2FF64D7DA00922D0A2B7C22E24640B0A968BD766453ACECD015F"
+      }
+    ],
+    "attribution": "All three final owned diffs are this reviewer’s changes relative to a clean assignment baseline; unchanged draining resource hash matches assignment."
+  },
+  "domainCriteria": [
+    "Resolve actual workload replica count, desired scale, selectors/owners and health observation point before claiming a disruption budget protects capacity.",
+    "Distinguish PDB Eviction API behavior from Deployment rollout behavior and from request availability.",
+    "Apply Kubernetes versioned percentage rounding and paired rollout budget fallback, without making percent-to-integer rewrites mandatory.",
+    "Preserve adequate configurations and the existing probe, termination-budget, non-HTTP drain, lifecycle and evidence limits."
+  ],
+  "findingsCorrected": [
+    {
+      "location": "skills/kubernetes-service-lifecycle/SKILL.md:144",
+      "finding": "No operational cue to resolve percentage budgets at actual replica counts before judging the already-covered PDB and Deployment decisions.",
+      "consequence": "A small-looking percentage can be misread as protecting the only healthy replica, or Deployment rounding can be copied to PDB.",
+      "change": "Added a short trigger into the existing PDB rule and routed details to the existing configuration reference."
+    },
+    {
+      "location": "skills/kubernetes-service-lifecycle/references/probe-and-shutdown-configuration.md:170",
+      "finding": "Existing rollout guidance did not explain distinct percentage rounding or the zero/zero resolution fallback.",
+      "evidence": "Kubernetes v1.34.0 ResolveFenceposts uses ceil for surge and floor for unavailable, then sets unavailable=1 if both resolve to zero.",
+      "consequence": "At desired replicas 1, maxUnavailable 25% with maxSurge 0 can remove the only serving pod despite naive floor arithmetic.",
+      "change": "Documented pair resolution, the v1.34 fallback, the surge-25% alternative and checking the smallest supported scale."
+    },
+    {
+      "location": "skills/kubernetes-service-lifecycle/references/probe-and-shutdown-configuration.md:206",
+      "finding": "Existing disruption section did not state both PDB percentage fields round up against owning controllers' desired scale.",
+      "evidence": "Kubernetes v1.34.0 getExpectedPodCount/getExpectedScale and GetScaledValueFromIntOrPercent.",
+      "consequence": "At desired scale 1 with its pod healthy, maxUnavailable 25% permits a last-healthy-pod eviction under stable healthy status; at desired scale 4 with all four healthy it permits one unavailable, preserving three.",
+      "change": "Added explicit desired-scale/health preconditions, paired examples, relevant PDB status fields, owner/selector checks and a static-versus-live evidence limit."
+    }
+  ],
+  "findingsRemaining": [],
+  "filesChangedByReviewer": [
+    "skills/kubernetes-service-lifecycle/SKILL.md",
+    "skills/kubernetes-service-lifecycle/references/probe-and-shutdown-configuration.md",
+    "skills/kubernetes-service-lifecycle/skill.yaml"
+  ],
+  "filesUnchanged": ["skills/kubernetes-service-lifecycle/references/draining-non-http-work.md"],
+  "capabilitiesPreserved": [
+    "Role as Java-on-Kubernetes lifecycle diagnosis and configuration review; no forced deployment or implementation workflow.",
+    "Actual image, entrypoint, JDK/Boot/Kafka/cluster and feature-gate selection.",
+    "Distinct liveness, readiness and startup semantics, dependency readiness alternatives, approximate probe timing, real HTTP status/security and Boot custom health mappings.",
+    "Endpoint convergence versus local termination, preStop inside shared grace, versioned sleep and native sidecar handling, total drain budgeting and effective Boot graceful shutdown.",
+    "Deployment capacity/availability, minReadySeconds, progress deadline, terminating resource usage and PDB Eviction API-only boundaries.",
+    "Non-HTTP Kafka, scheduler and executor draining, ownership, cancellation and bounded shutdown examples.",
+    "Preserve adequate configurations; keep runtime diagnosis conditional without evidence; no universal zero-error claim."
+  ],
+  "capabilitiesReplacedOrRemoved": [],
+  "version": {
+    "committed": "1.3.4",
+    "assignment": "1.3.4",
+    "final": "1.3.5",
+    "rationale": "One patch bump for focused content additions according to repository policy. No earlier bump existed; repeated local wording correction reused the same unpublished patch.",
+    "descriptionChanged": false,
+    "sharedGeneratedVersions": "Not edited; coordinator must regenerate registry."
+  },
+  "localValidation": {
+    "technicalAndStructural": [
+      {
+        "check": "Official package loader + validatePackage with Claude/Codex adapters, resource routing, local link/anchor checks",
+        "result": "PASS: zero issues, two references routed, two local links/anchors checked",
+        "sourceFile": "C:/Users/robso/AppData/Local/Temp/kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a/evaluator/structural-source.txt",
+        "stdout": "C:/Users/robso/AppData/Local/Temp/kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a/evidence/structural.stdout.txt",
+        "stderr": "C:/Users/robso/AppData/Local/Temp/kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a/evidence/structural.stderr.txt"
+      },
+      {
+        "check": "Prettier --check on exactly four owned files",
+        "result": "PASS",
+        "stdout": "C:/Users/robso/AppData/Local/Temp/kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a/evidence/format.stdout.txt",
+        "stderr": "C:/Users/robso/AppData/Local/Temp/kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a/evidence/format.stderr.txt"
+      },
+      {
+        "check": "git diff --check -- skills/kubernetes-service-lifecycle",
+        "result": "PASS; no whitespace errors",
+        "stdout": "C:/Users/robso/AppData/Local/Temp/kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a/evidence/diff-check.stdout.txt",
+        "stderr": "C:/Users/robso/AppData/Local/Temp/kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a/evidence/diff-check.stderr.txt"
+      },
+      {
+        "check": "Budget arithmetic model, paired-fixture identity, selector identity, syntax parsing",
+        "result": "PASS: 25 counted assertions; six fixture YAML documents and two documentation YAML blocks parsed",
+        "runtime": "Node v25.6.1; existing yaml 2.9.1",
+        "stdout": "C:/Users/robso/AppData/Local/Temp/kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a/evidence/model.stdout.txt",
+        "stderr": "C:/Users/robso/AppData/Local/Temp/kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a/evidence/model.stderr.txt",
+        "limitation": "A manually written arithmetic model based on inspected versioned source, not Kubernetes/controller/API-server execution, API schema validation or integration evidence."
+      },
+      {
+        "check": "Final diff/status/staged diff and final owned hashes inspected",
+        "result": "Exactly three owned files modified, no staged owned changes; non-HTTP drain file unchanged",
+        "evidenceDirectory": "C:/Users/robso/AppData/Local/Temp/kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a/evidence"
+      }
+    ],
+    "negativeControls": [
+      "PDB floor-rounding model falsely protects one replica and is distinguished from expected ceil behavior.",
+      "Ignoring Deployment zero/zero fallback falsely reports zero unavailable and is distinguished from expected fallback behavior."
+    ],
+    "adequateControls": [
+      "Integer PDB minAvailable 1 protects one healthy replica but blocks its compliant drain.",
+      "Integer maxUnavailable 0 is an adequate alternate protection under the same assumptions.",
+      "With two desired/healthy replicas minAvailable 1 permits one eviction.",
+      "Four desired/healthy replicas with the original percentage PDB remain adequate for the supplied at-least-one policy."
+    ],
+    "commands": [
+      {
+        "label": "structural",
+        "executable": "C:\\Program Files\\nodejs\\node.exe",
+        "args": [
+          "--input-type=module",
+          "--eval",
+          "import assert from 'node:assert/strict';\nimport {readFileSync, readdirSync, existsSync} from 'node:fs';\nimport path from 'node:path';\nimport {loadPackageFromDirectory} from './packages/core/src/application/package-loader.ts';\nimport {validatePackage} from './packages/core/src/application/validate-package.ts';\nimport {NodeFileSystem} from './packages/node/src/file-system.ts';\nimport {ClaudeCodeAdapter} from './packages/adapter-claude/src/index.ts';\nimport {CodexAdapter} from './packages/adapter-codex/src/index.ts';\nconst root='skills/kubernetes-service-lifecycle';\nconst loaded=await loadPackageFromDirectory(new NodeFileSystem(),root,{strict:true});\nconst report=validatePackage(loaded.pkg,{directoryName:'kubernetes-service-lifecycle',adapters:[new ClaudeCodeAdapter(),new CodexAdapter()]});\nconst issues=[...loaded.issues,...report.issues];\nassert.equal(issues.length,0,JSON.stringify(issues));\nconst entry=readFileSync(path.join(root,'SKILL.md'),'utf8');\nconst refs=readdirSync(path.join(root,'references'));\nfor(const ref of refs) assert.ok(entry.includes('references/'+ref),'unrouted '+ref);\nlet links=0;\nfor(const file of ['SKILL.md',...refs.map(f=>'references/'+f)]) {\n const body=readFileSync(path.join(root,file),'utf8');\n for(const m of body.matchAll(/\\]\\(([^)]+)\\)/g)) {\n  const href=m[1];\n  if(/^(?:<)?[a-z]+:\\/\\//i.test(href)) continue;\n  const [target,anchor]=href.split('#');\n  const resolved=target?path.resolve(root,path.dirname(file),target):path.resolve(root,file);\n  assert.ok(existsSync(resolved),file+': '+href);\n  if(anchor) {\n   const targetText=readFileSync(resolved,'utf8');\n   const anchors=[...targetText.matchAll(/^#+ (.+)$/gm)].map(m=>m[1].toLowerCase().replace(/[^a-z0-9\\s-]/g,'').trim().replace(/\\s+/g,'-'));\n   assert.ok(anchors.includes(anchor),file+': '+href);\n  }\n  links++;\n }\n}\nconsole.log(JSON.stringify({skill:'kubernetes-service-lifecycle',version:loaded.pkg.manifest.version,issues,referenceFilesRouted:refs.length,localLinksAndAnchorsChecked:links},null,2));\n"
+        ],
+        "workingDirectory": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a\\evidence\\structural.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a\\evidence\\structural.stderr.txt"
+      },
+      {
+        "label": "format",
+        "executable": "C:\\Program Files\\nodejs\\node.exe",
+        "args": [
+          "node_modules/prettier/bin/prettier.cjs",
+          "--check",
+          "skills/kubernetes-service-lifecycle/SKILL.md",
+          "skills/kubernetes-service-lifecycle/skill.yaml",
+          "skills/kubernetes-service-lifecycle/references/probe-and-shutdown-configuration.md",
+          "skills/kubernetes-service-lifecycle/references/draining-non-http-work.md"
+        ],
+        "workingDirectory": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a\\evidence\\format.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a\\evidence\\format.stderr.txt"
+      },
+      {
+        "label": "model",
+        "executable": "C:\\Program Files\\nodejs\\node.exe",
+        "args": [
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a\\evaluator\\budget-model.mjs"
+        ],
+        "workingDirectory": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a\\evidence\\model.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a\\evidence\\model.stderr.txt"
+      },
+      {
+        "label": "diff-check",
+        "executable": "git",
+        "args": ["diff", "--check", "--", "skills/kubernetes-service-lifecycle"],
+        "workingDirectory": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a\\evidence\\diff-check.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a\\evidence\\diff-check.stderr.txt"
+      },
+      {
+        "label": "final-diff",
+        "executable": "git",
+        "args": ["diff", "--", "skills/kubernetes-service-lifecycle"],
+        "workingDirectory": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a\\evidence\\final-diff.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a\\evidence\\final-diff.stderr.txt"
+      },
+      {
+        "label": "final-status",
+        "executable": "git",
+        "args": ["status", "--short", "--", "skills/kubernetes-service-lifecycle"],
+        "workingDirectory": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a\\evidence\\final-status.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a\\evidence\\final-status.stderr.txt"
+      },
+      {
+        "label": "final-staged-diff",
+        "executable": "git",
+        "args": ["diff", "--cached", "--", "skills/kubernetes-service-lifecycle"],
+        "workingDirectory": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a\\evidence\\final-staged-diff.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a\\evidence\\final-staged-diff.stderr.txt"
+      },
+      {
+        "label": "committed-SKILL.md",
+        "executable": "git",
+        "args": ["show", "HEAD:skills/kubernetes-service-lifecycle/SKILL.md"],
+        "workingDirectory": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a\\evidence\\committed-SKILL.md.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a\\evidence\\committed-SKILL.md.stderr.txt"
+      },
+      {
+        "label": "committed-skill.yaml",
+        "executable": "git",
+        "args": ["show", "HEAD:skills/kubernetes-service-lifecycle/skill.yaml"],
+        "workingDirectory": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a\\evidence\\committed-skill.yaml.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a\\evidence\\committed-skill.yaml.stderr.txt"
+      },
+      {
+        "label": "committed-references_draining-non-http-work.md",
+        "executable": "git",
+        "args": [
+          "show",
+          "HEAD:skills/kubernetes-service-lifecycle/references/draining-non-http-work.md"
+        ],
+        "workingDirectory": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a\\evidence\\committed-references_draining-non-http-work.md.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a\\evidence\\committed-references_draining-non-http-work.md.stderr.txt"
+      },
+      {
+        "label": "committed-references_probe-and-shutdown-configuration.md",
+        "executable": "git",
+        "args": [
+          "show",
+          "HEAD:skills/kubernetes-service-lifecycle/references/probe-and-shutdown-configuration.md"
+        ],
+        "workingDirectory": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a\\evidence\\committed-references_probe-and-shutdown-configuration.md.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a\\evidence\\committed-references_probe-and-shutdown-configuration.md.stderr.txt"
+      }
+    ],
+    "outerCaptureCommand": {
+      "command": "node 'C:/Users/robso/AppData/Local/Temp/kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a/evaluator/capture-local.mjs'",
+      "workingDirectory": "C:/git/agent-skills",
+      "chunk_id": "b48484",
+      "wall_time_seconds": 0.7784689,
+      "exit_code": 0,
+      "original_token_count": 239,
+      "output": "{\n  \"executedCommands\": 11,\n  \"artifactsHashed\": 48,\n  \"finalHashes\": [\n    {\n      \"file\": \"skills/kubernetes-service-lifecycle/SKILL.md\",\n      \"sha256\": \"b4cff48411ea66056456d9f8320c7b124560d6512e605901b19fc82f7216a8b7\"\n    },\n    {\n      \"file\": \"skills/kubernetes-service-lifecycle/skill.yaml\",\n      \"sha256\": \"f5eedd7b5a5deaf14d4a3662f0cbd46bcdd905d53375ec005bf541ce4be6b2d8\"\n    },\n    {\n      \"file\": \"skills/kubernetes-service-lifecycle/references/draining-non-http-work.md\",\n      \"sha256\": \"8e92cb5d567ffe5eabd1afbfd4e85afcb83ef6f6c89f34cf6bc616b0a595781b\"\n    },\n    {\n      \"file\": \"skills/kubernetes-service-lifecycle/references/probe-and-shutdown-configuration.md\",\n      \"sha256\": \"7494c754150027717be5c5d6c8614547bb0c0bff3d9c02bd1e4ec1cec5d793b5\"\n    }\n  ],\n  \"evidenceDirectory\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a\\\\evidence\",\n  \"subprocessesRemaining\": 0\n}\n"
+    },
+    "initialInspectionAndChecksFile": "C:/Users/robso/AppData/Local/Temp/kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a/evaluator/review-record.json",
+    "allCapturedStderrFilesEmpty": true,
+    "executedBehavioralEvaluations": [],
+    "walkthroughsPerformed": [
+      "One-replica case: separate PDB ceil risk from rollout ceil/floor; focus correction on healthy-pod protection; acknowledge compliant drain block until capacity is provided or the contract explicitly changes.",
+      "Four-replica case: original percentage budgets satisfy the stated policy under fixture conditions; preserve configuration; name absent live PDB and traffic evidence.",
+      "Counterexamples: rollout maxSurge 0 activates fallback, unhealthy pods consume allowance, and minAvailable percentage also rounds up."
+    ],
+    "measuredAgentImprovement": false,
+    "comparisonStatus": "Not evaluated. Cases are development fixtures, not unseen holdouts. Coordinator alone may run independent actor comparisons."
+  },
+  "cases": {
+    "inputRoot": "C:/Users/robso/AppData/Local/Temp/kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a/inputs",
+    "criteriaFile": "C:/Users/robso/AppData/Local/Temp/kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a/evaluator/criteria.json",
+    "modelFile": "C:/Users/robso/AppData/Local/Temp/kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a/evaluator/budget-model.mjs",
+    "decisiveConstraint": "Only Deployment.spec.replicas: 1 versus 4",
+    "verifiedSeparation": "Each actor input contains exactly TASK.md, CONTRACT.md, deployment.yaml, pdb.yaml and service.yaml. The model verified identical file sets and identical contents except the replicas line in deployment.yaml.",
+    "entries": [
+      {
+        "id": "one-replica",
+        "inputDirectory": "C:/Users/robso/AppData/Local/Temp/kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a/inputs/one-replica",
+        "taskFile": "C:/Users/robso/AppData/Local/Temp/kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a/inputs/one-replica/TASK.md",
+        "criteriaKey": "cases[0]",
+        "expectedOutcomeSummary": "Focused configuration correction or justified capacity alternative, with drain tradeoff and no unsupported availability guarantee."
+      },
+      {
+        "id": "four-replicas",
+        "inputDirectory": "C:/Users/robso/AppData/Local/Temp/kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a/inputs/four-replicas",
+        "taskFile": "C:/Users/robso/AppData/Local/Temp/kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a/inputs/four-replicas/TASK.md",
+        "criteriaKey": "cases[1]",
+        "expectedOutcomeSummary": "Preserve adequate percentage configuration for the supplied contract; state live-evidence limits."
+      }
+    ],
+    "evaluationInstructions": "Copy one inputs directory to an isolated actor workspace. Give only that directory and the chosen skill variant. Withhold evaluator criteria/model/source notes and this handoff. Inspect reasoning, artifact diff and validation claims. No cluster or deployment is required."
+  },
+  "sources": [
+    {
+      "url": "https://github.com/kubernetes/kubernetes/blob/v1.34.0/pkg/controller/disruption/disruption.go",
+      "version": "Kubernetes v1.34.0",
+      "verifiedSymbols": [
+        "getExpectedPodCount",
+        "getExpectedScale",
+        "countHealthyPods",
+        "updatePdbStatus"
+      ],
+      "supports": "PDB percentage ceil, desired-scale denominator, health/deletion/disruption accounting and allowance status",
+      "limit": "Source inspection does not observe a live cluster, admission chain, current PDB status or routing."
+    },
+    {
+      "url": "https://github.com/kubernetes/kubernetes/blob/v1.34.0/pkg/controller/deployment/util/deployment_util.go",
+      "version": "Kubernetes v1.34.0",
+      "verifiedSymbols": ["ResolveFenceposts", "MaxUnavailable"],
+      "supports": "Deployment surge ceil/unavailable floor, joint zero/zero fallback and replica cap",
+      "limit": "Positive-replica fixture arithmetic only; not a rollout or schedulability experiment."
+    },
+    {
+      "url": "https://github.com/kubernetes/kubernetes/blob/v1.34.0/staging/src/k8s.io/apimachinery/pkg/util/intstr/intstr.go",
+      "version": "Kubernetes v1.34.0",
+      "verifiedSymbols": ["GetScaledValueFromIntOrPercent"],
+      "supports": "Ceil/floor percentage helper used by controllers",
+      "limit": "Local model supports only bounded fixture forms; it is not the Kubernetes parser or schema."
+    }
+  ],
+  "failuresAndUnavailable": [
+    "Initial artifact-creation functions.exec script had a JavaScript template-string syntax error before any tool or file write; fixed fence regex escaping and reran successfully.",
+    "A raw GitHub/documentation web batch remained pending and was cancelled. Its unreturned content was not used. Versioned GitHub source pages were inspected successfully separately.",
+    "Go executable was not found during local prerequisite inspection; no Go toolchain installed, source tests or controller tests executed.",
+    "Versioned docs/policy types pages were opened but phrase searches did not yield relevant rounding text; corrections rely on inspected versioned implementation source."
+  ],
+  "assumptionsAndLimits": [
+    "Material additions specifically verify Kubernetes v1.34.0 behavior; consumers must check the actual deployed version.",
+    "Paired fixture assumes one supported owning Deployment, exact matching selectors, fixed desired replica count, no competing PDB or admission rewrite, all desired pods initially healthy/Ready/available, no pending disruptions, and spare scheduling capacity.",
+    "Static budget arithmetic identifies a configuration risk or adequacy under stated assumptions; actual eviction decisions depend on reconciled status and API/controller state.",
+    "Request continuity, data-plane convergence, real probe behavior, image signal forwarding, SIGTERM handling and shutdown integration were not exercised.",
+    "Existing Java sketches were preserved and not recompiled in this focused arithmetic/configuration review.",
+    "No production/real cluster access, deployment, installation, global build/check, registry generation or real agent configuration writes.",
+    "No empirical gain in agent outcomes is asserted."
+  ],
+  "evidence": {
+    "root": "C:/Users/robso/AppData/Local/Temp/kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a",
+    "artifactCount": 48,
+    "artifactHashManifest": "C:/Users/robso/AppData/Local/Temp/kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a/evidence/artifact-hashes.json",
+    "ownedFinalHashFile": "C:/Users/robso/AppData/Local/Temp/kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a/evidence/owned-final-hashes.json",
+    "ownedFinalHashes": [
+      {
+        "file": "skills/kubernetes-service-lifecycle/SKILL.md",
+        "sha256": "b4cff48411ea66056456d9f8320c7b124560d6512e605901b19fc82f7216a8b7"
+      },
+      {
+        "file": "skills/kubernetes-service-lifecycle/skill.yaml",
+        "sha256": "f5eedd7b5a5deaf14d4a3662f0cbd46bcdd905d53375ec005bf541ce4be6b2d8"
+      },
+      {
+        "file": "skills/kubernetes-service-lifecycle/references/draining-non-http-work.md",
+        "sha256": "8e92cb5d567ffe5eabd1afbfd4e85afcb83ef6f6c89f34cf6bc616b0a595781b"
+      },
+      {
+        "file": "skills/kubernetes-service-lifecycle/references/probe-and-shutdown-configuration.md",
+        "sha256": "7494c754150027717be5c5d6c8614547bb0c0bff3d9c02bd1e4ec1cec5d793b5"
+      }
+    ],
+    "baselineAndFinalSnapshots": "C:/Users/robso/AppData/Local/Temp/kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a/evidence",
+    "finalDiff": "C:/Users/robso/AppData/Local/Temp/kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a/evidence/final-diff.stdout.txt",
+    "exactCommandsAndExitStatuses": "C:/Users/robso/AppData/Local/Temp/kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a/evidence/commands.json",
+    "sourceNotes": "C:/Users/robso/AppData/Local/Temp/kubernetes-service-lifecycle-quality14-22d88a1ff0224953851223b6bfb0715a/evaluator/SOURCES.md"
+  },
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Parallel ownership forbids shared generated writes by reviewers",
+      "prerequisite": "All reviewers stopped writing"
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Final repository-wide validation is coordinator-only",
+      "prerequisite": "Registry rebuilt after all reviewers stopped writing"
+    }
+  ],
+  "otherDeferredChecks": [
+    "Independent baseline/revised agent comparisons with the separated cases, if coordinator chooses.",
+    "Any live PDB/eviction/rollout/request availability validation requires a separately authorized environment and is outside this documentation review."
+  ],
+  "crossSkillIssues": [],
+  "coordinatorActions": [
+    "Inspect the focused three-file diff and retain the evidence directory.",
+    "Keep actor inputs separate from hidden evaluator criteria/model/source notes if evaluating.",
+    "Neighbor sidecar-pattern reviewer informed that no ConfigMap/probe/lifecycle-order changes overlap; no cross-skill edit needed."
+  ],
+  "handoffPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/kubernetes-service-lifecycle.json"
+}

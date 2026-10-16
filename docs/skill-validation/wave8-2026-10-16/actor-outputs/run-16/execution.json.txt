@@ -1,0 +1,91 @@
+{
+  "scope": "C:/Users/robso/AppData/Local/Temp/skills-wave8-6b5d18c2/actors/run-16",
+  "journalKind": "Concise actor report of actual reads, commands and outcomes; not a complete tool trace.",
+  "filesRead": [
+    "TASK.md",
+    "input/README.md",
+    "input/REQUEST.md",
+    "input/schema.sql",
+    "input/seed.sql",
+    "input/current.sql",
+    "input/proposed.sql",
+    "input/fixture.mjs",
+    "skill/SKILL.md",
+    "skill/references/query-shapes.md",
+    "skill/references/index-decisions.md",
+    "output/README.md",
+    "output/REQUEST.md",
+    "output/schema.sql",
+    "output/seed.sql",
+    "output/current.sql",
+    "output/proposed.sql",
+    "output/fixture.mjs",
+    "output/solution.sql",
+    "output/verify.mjs",
+    "output/verification.log",
+    "output/REVIEW.md",
+    "output/result.json",
+    "output/audit.mjs"
+  ],
+  "commands": [
+    {
+      "operation": "Get-Content -LiteralPath TASK.md, using the task's absolute path",
+      "exitCode": 0,
+      "result": "Read isolated task instructions."
+    },
+    {
+      "operation": "Get-Content for input/README.md, input/REQUEST.md, skill/SKILL.md; separately rg --files input output skill",
+      "exitCodes": [0, 0],
+      "result": "Read constraints and supplied skill; enumerated only permitted run directories."
+    },
+    {
+      "operation": "Get-Content for input/schema.sql, seed.sql, current.sql, proposed.sql, fixture.mjs and output/solution.sql; separately Get-Content skill/references/query-shapes.md and index-decisions.md",
+      "exitCodes": [0, 0],
+      "result": "Inspected all SQL and helper code before execution; loaded routed rewrite/index references."
+    },
+    {
+      "operation": "node -e wrapper: spawnSync(process.execPath, ['verify.mjs'], {cwd:'output', encoding:'utf8', timeout:20000}); capture output/verification.log",
+      "exitCode": 0,
+      "result": "Node v25.6.1 / SQLite 3.51.2: 2168 cursor checks, 51 complete pagination walks, 2823 candidate query executions passed. SQLite experimental warning recorded."
+    },
+    {
+      "operation": "PowerShell Get-FileHash -Algorithm SHA256 for each of the seven input files and its output counterpart",
+      "exitCode": 0,
+      "result": "All seven pairs equal."
+    },
+    {
+      "operation": "node -e wrapper: spawnSync(process.execPath, ['audit.mjs'], {cwd:'output', encoding:'utf8', timeout:20000}); capture output/audit.log",
+      "exitCode": 0,
+      "result": "Seven original/copy byte comparisons passed; REVIEW.md 552 words; result counters match verification log; no OFFSET or ROW_NUMBER in solution."
+    }
+  ],
+  "research": {
+    "tool": "web.run open",
+    "result": "Successfully read PostgreSQL 17 primary documentation for comparisons, index ordering, multicolumn bounds and covering/visibility.",
+    "urls": [
+      "https://www.postgresql.org/docs/17/functions-comparisons.html",
+      "https://www.postgresql.org/docs/17/indexes-ordering.html",
+      "https://www.postgresql.org/docs/17/indexes-multicolumn.html",
+      "https://www.postgresql.org/docs/17/indexes-index-only-scans.html"
+    ]
+  },
+  "filesAuthoredOrEdited": [
+    "output/solution.sql",
+    "output/verify.mjs",
+    "output/verification.log",
+    "output/REVIEW.md",
+    "output/result.json",
+    "output/audit.mjs",
+    "output/audit.log",
+    "output/execution.json"
+  ],
+  "editMethod": "apply_patch for authored source, report and JSON files; bounded Node wrappers captured logs.",
+  "limitations": [
+    "No PostgreSQL server or connection was supplied; none was used.",
+    "No PostgreSQL plan, timing, coercion or concurrency claim is made.",
+    "No installs, globals, real configuration, schema/seed file edits or delegation occurred.",
+    "Supplementary data existed only in the in-memory SQLite verification database."
+  ],
+  "pendingProcesses": [],
+  "allWritesStopped": true
+}

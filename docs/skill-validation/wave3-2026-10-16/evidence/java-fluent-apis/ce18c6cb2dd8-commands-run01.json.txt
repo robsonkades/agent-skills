@@ -1,0 +1,166 @@
+[
+  {
+    "id": "01-java-version",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+    "args": [
+      "-version"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation",
+    "expectedExit": 0,
+    "actualExit": 0,
+    "error": null,
+    "stdout": "",
+    "stderr": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n"
+  },
+  {
+    "id": "02-javac-version",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+    "args": [
+      "-version"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation",
+    "expectedExit": 0,
+    "actualExit": 0,
+    "error": null,
+    "stdout": "javac 25.0.3\r\n",
+    "stderr": ""
+  },
+  {
+    "id": "03-compile",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+    "args": [
+      "--release",
+      "25",
+      "-d",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\compiled\\run01",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\actor-fixtures\\shared\\src\\sample\\ActorMain.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\actor-fixtures\\shared\\src\\sample\\Options.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\actor-fixtures\\shared\\src\\sample\\OptionsFactory.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\actor-fixtures\\shared\\src\\sample\\Product.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\actor-fixtures\\shared\\src\\sample\\Variants.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\controls\\src\\sample\\JdkContractChecks.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\controls\\src\\sample\\TechnicalMain.java"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation",
+    "expectedExit": 0,
+    "actualExit": 0,
+    "error": null,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "id": "04-candidate-a-negative",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+    "args": [
+      "-cp",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\compiled\\run01",
+      "sample.ActorMain",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\actor-fixtures\\config-a.properties"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation",
+    "expectedExit": 1,
+    "actualExit": 1,
+    "error": null,
+    "stdout": "actual=[Product[label=right, audit=true], Product[label=right, audit=true]]\r\n",
+    "stderr": "Exception in thread \"main\" java.lang.AssertionError: Both independent variants must retain audit=true: [Product[label=right, audit=true], Product[label=right, audit=true]]\r\n\tat sample.ActorMain.verify(ActorMain.java:15)\r\n\tat sample.ActorMain.main(ActorMain.java:8)\r\n"
+  },
+  {
+    "id": "05-candidate-b-negative",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+    "args": [
+      "-cp",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\compiled\\run01",
+      "sample.ActorMain",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\actor-fixtures\\config-b.properties"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation",
+    "expectedExit": 1,
+    "actualExit": 1,
+    "error": null,
+    "stdout": "actual=[Product[label=left, audit=false], Product[label=right, audit=false]]\r\n",
+    "stderr": "Exception in thread \"main\" java.lang.AssertionError: Both independent variants must retain audit=true: [Product[label=left, audit=false], Product[label=right, audit=false]]\r\n\tat sample.ActorMain.verify(ActorMain.java:15)\r\n\tat sample.ActorMain.main(ActorMain.java:8)\r\n"
+  },
+  {
+    "id": "06-copy-branches-a-positive",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+    "args": [
+      "-cp",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\compiled\\run01",
+      "sample.TechnicalMain",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\actor-fixtures\\config-a.properties",
+      "copy-branches"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation",
+    "expectedExit": 0,
+    "actualExit": 0,
+    "error": null,
+    "stdout": "actual=[Product[label=left, audit=true], Product[label=right, audit=true]]\r\n",
+    "stderr": ""
+  },
+  {
+    "id": "07-retain-return-b-positive",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+    "args": [
+      "-cp",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\compiled\\run01",
+      "sample.TechnicalMain",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\actor-fixtures\\config-b.properties",
+      "retain-return"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation",
+    "expectedExit": 0,
+    "actualExit": 0,
+    "error": null,
+    "stdout": "actual=[Product[label=left, audit=true], Product[label=right, audit=true]]\r\n",
+    "stderr": ""
+  },
+  {
+    "id": "08-copy-branches-b-negative",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+    "args": [
+      "-cp",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\compiled\\run01",
+      "sample.TechnicalMain",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\actor-fixtures\\config-b.properties",
+      "copy-branches"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation",
+    "expectedExit": 1,
+    "actualExit": 1,
+    "error": null,
+    "stdout": "actual=[Product[label=left, audit=false], Product[label=right, audit=false]]\r\n",
+    "stderr": "Exception in thread \"main\" java.lang.AssertionError: Both independent variants must retain audit=true: [Product[label=left, audit=false], Product[label=right, audit=false]]\r\n\tat sample.ActorMain.verify(ActorMain.java:15)\r\n\tat sample.TechnicalMain.main(TechnicalMain.java:14)\r\n"
+  },
+  {
+    "id": "09-retain-return-a-negative",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+    "args": [
+      "-cp",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\compiled\\run01",
+      "sample.TechnicalMain",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\actor-fixtures\\config-a.properties",
+      "retain-return"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation",
+    "expectedExit": 1,
+    "actualExit": 1,
+    "error": null,
+    "stdout": "actual=[Product[label=right, audit=true], Product[label=right, audit=true]]\r\n",
+    "stderr": "Exception in thread \"main\" java.lang.AssertionError: Both independent variants must retain audit=true: [Product[label=right, audit=true], Product[label=right, audit=true]]\r\n\tat sample.ActorMain.verify(ActorMain.java:15)\r\n\tat sample.TechnicalMain.main(TechnicalMain.java:14)\r\n"
+  },
+  {
+    "id": "10-jdk-contracts",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+    "args": [
+      "-cp",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation\\compiled\\run01",
+      "sample.JdkContractChecks"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-fluent-apis-validation",
+    "expectedExit": 0,
+    "actualExit": 0,
+    "error": null,
+    "stdout": "PASS: immutable results, mutable identity, snapshots, copy isolation, repeated options and failed-chain state\r\nNo HTTP request was sent.\r\n",
+    "stderr": ""
+  }
+]

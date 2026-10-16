@@ -1,0 +1,5 @@
+package work;
+import java.util.List;
+public record Report(List<Entry> entries) {
+    public long total() { return entries.stream().mapToLong(Entry::cents).sum(); }
+}

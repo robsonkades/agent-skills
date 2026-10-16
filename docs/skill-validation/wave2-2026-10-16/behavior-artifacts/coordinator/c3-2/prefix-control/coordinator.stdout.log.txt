@@ -1,0 +1,9 @@
+Existing point and join checks passed; moved=2094
+epoch=E config=accepted.properties requestKey=user:2 keyPrefix=
+expected primary=n2 replicas=[n2, n3, n4]
+actual   primary=n2 replicas=[n2, n3, n4]
+Routing compatibility passed for accepted.properties
+epoch=E config=candidate.properties requestKey=user:2 keyPrefix=
+expected primary=n2 replicas=[n2, n3, n4]
+actual   primary=n2 replicas=[n2, n3, n4]
+Routing compatibility passed for candidate.properties

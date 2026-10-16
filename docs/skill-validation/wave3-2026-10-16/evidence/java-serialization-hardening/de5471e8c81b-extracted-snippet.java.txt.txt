@@ -1,0 +1,11 @@
+private void readObject(ObjectInputStream s) throws IOException, ClassNotFoundException {
+    ObjectInputStream.GetField fields = s.readFields();
+    if (fields.defaulted("maxRetries")) {
+        throw new InvalidObjectException("missing maxRetries");
+    }
+    int candidate = fields.get("maxRetries", 0);
+    if (candidate < 0 || candidate > 10) {
+        throw new InvalidObjectException("invalid maxRetries");
+    }
+    maxRetries = candidate;
+}

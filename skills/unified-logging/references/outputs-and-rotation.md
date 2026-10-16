@@ -46,7 +46,10 @@ slots rapidly. Unique pid/start-time names reduce collision but require cleanup/
 policies.
 
 Manual rotation and filesize zero behavior are version-documented. Verify via VM.log help
-and a test process before relying on operator-triggered capture.
+and a test process before relying on operator-triggered capture. JDK 25's `VM.log rotate`
+is not limited by an `output=...` argument; check the global action scope in
+[Runtime reconfiguration](runtime-reconfiguration.md#command-composition-and-action-scope)
+before using it when other outputs must be preserved.
 
 ## Parsing
 

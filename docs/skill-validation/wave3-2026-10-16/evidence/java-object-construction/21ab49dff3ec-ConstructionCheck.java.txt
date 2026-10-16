@@ -1,0 +1,14 @@
+public final class ConstructionCheck {
+    public static void main(String[] args) {
+        Catalog first = Catalog.instance();
+        if (first == null) throw new AssertionError("first access must return a catalog");
+        if (!RegionConfig.REGION.equals(first.region())) {
+            throw new AssertionError("catalog must use configured region");
+        }
+        if (first != Catalog.instance()) {
+            throw new AssertionError("identity must remain stable within this defining loader");
+        }
+        System.out.println("PASS first access: region=" + first.region() + ", same identity=true");
+    }
+}
+

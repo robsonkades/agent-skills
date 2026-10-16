@@ -271,22 +271,45 @@ way, which is the entire subject of the test (`architecture-testing`).
 
 ## Death mid-flight
 
-The claim: _work is not lost or duplicated if the process dies between the write and the
-acknowledgement._
+The claim: _a consumer crash after commit but before acknowledgement causes recovery without
+an extra protected effect._ First inspect the actual subscription/listener, effective acknowledgement
+mode, transaction completion and any framework acknowledgement callback. A method named `save`
+or a handler returning does not itself establish the durable commit/acknowledgement boundary.
+
+For example, RabbitMQ AMQP 0-9-1 manual acknowledgements leave a delivery outstanding until
+acknowledged; connection loss requeues unacknowledged deliveries after failure detection.
+Automatic acknowledgement considers a delivery handled on sending, so the same post-commit
+crash does not exercise that redelivery path. Publisher confirms establish a different boundary.
+Derive the equivalent conditions from the actual broker/client version and accepted delivery
+contract; do not silently switch modes only in the test to make production appear covered.
+
+For a consumer whose accepted contract requires this recovery, use this controlled fixture:
 
 ```text
-1. Start consuming a message.
-2. Let the database write commit.
-3. Kill -9 the process before the acknowledgement.
-4. Restart. Assert: the message is redelivered AND the effect is
-   applied exactly once.
+1. Publish one uniquely identified message to an isolated real broker/store fixture.
+2. At a test-only hook after confirmed commit and before acknowledgement, signal
+   the controller and block; no other callback may acknowledge that delivery.
+3. The controller waits for that signal and queries the committed protected effect
+   through a separate authoritative store connection. If the boundary is not reached,
+   record missing coverage.
+4. Hard-kill that consumer while it remains held; verify that process has exited.
+   Keep the broker/store alive. Restart the consumer without the blocking hook.
+5. Within the declared recovery budget, observe broker redelivery of the same
+   logical message, its legal completion/acknowledgement and exactly one protected
+   effect. Record attempts separately from the business outcome.
 ```
 
-This cannot be simulated with a mock, because the point is that the JVM does not run its
-shutdown hooks. Use an explicit hard-kill in an isolated container. This tests consumer crash
-recovery; an outbox additionally needs producer commit and relay publish/mark crash tests.
-It can find an "idempotent" consumer that only deduplicates
-in-memory (`distributed-transactions-and-sagas`).
+Bound the hook wait, kill, recovery and cleanup independently; a sleep followed by a kill does
+not establish this order. Do not manually republish or call the handler to manufacture redelivery:
+that tests duplicate handling, not crash recovery. Use a no-crash control, and check that the
+coverage assertion rejects a run which acknowledged before the kill. A final row count of one
+can pass in that run without exercising deduplication at all. Missing boundary evidence is an
+inconclusive test; a reached boundary followed by a contract violation is a system finding.
+
+A policy mock can test branching, but it cannot establish actual process termination without
+shutdown hooks or the broker's recovery path. Keep the existing before-commit crash case as a
+separate cut; an outbox also needs producer commit and relay publish/mark cuts. This consumer
+case can expose in-memory-only deduplication (`distributed-transactions-and-sagas`).
 
 A related pair worth running on the same harness:
 
@@ -330,3 +353,5 @@ turning it into one of the deterministic tests above (`references/chaos-experime
 - [WireMock fault simulation](https://wiremock.org/docs/simulating-faults/) — supported socket faults and the platform caveat for connection reset.
 - [Resilience4j circuit breaker](https://resilience4j.readme.io/docs/circuitbreaker) — shared sliding-window history, minimum recorded calls and concurrent execution; verify the installed library.
 - [JDK 25 Socket read timeout](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/net/Socket.html) — timeout leaves the socket valid; ownership and close are separate.
+- [RabbitMQ acknowledgements](https://www.rabbitmq.com/docs/confirms) — 4.3 documentation: manual versus automatic acknowledgement, connection-loss requeue and the separate publisher-confirm boundary for AMQP 0-9-1.
+- [RabbitMQ Java client guide](https://www.rabbitmq.com/client-libraries/java-api-guide) — `basicConsume` acknowledgement mode and explicit `basicAck`; inspect the application's actual registration and framework wiring.

@@ -1,0 +1,277 @@
+{
+  "at": "2026-10-16T19:43:34.034Z",
+  "id": "A18",
+  "caseId": "R2",
+  "scope": "Actual delivered implementation and verifier reexecuted in isolated copies; no production/VM17/fleet proof",
+  "inputChecks": [
+    {
+      "path": "TASK.md",
+      "sha256": "0dcb641007f47a2d21f1082f4d62d7706a99dd062ffa59e2168dc719c9a3c9fe",
+      "actual": "0dcb641007f47a2d21f1082f4d62d7706a99dd062ffa59e2168dc719c9a3c9fe"
+    },
+    {
+      "path": "input/project/Contract.java",
+      "sha256": "bd83211dff4e16d7cf8814074ee46d883e6700a259e03a79bd3bc781fa3bdcf9",
+      "actual": "bd83211dff4e16d7cf8814074ee46d883e6700a259e03a79bd3bc781fa3bdcf9"
+    },
+    {
+      "path": "input/project/Ports.java",
+      "sha256": "21d10c20819d3ddb796ff1081d53efc63664e1a1c768de1d1c627a3dcd36ae6a",
+      "actual": "21d10c20819d3ddb796ff1081d53efc63664e1a1c768de1d1c627a3dcd36ae6a"
+    },
+    {
+      "path": "input/project/README.md",
+      "sha256": "0a082fc19eafaaa6457ed4a4e130b1f2bf3d3383c5cf38b7b6d8b58f18dd69db",
+      "actual": "0a082fc19eafaaa6457ed4a4e130b1f2bf3d3383c5cf38b7b6d8b58f18dd69db"
+    },
+    {
+      "path": "input/project/REQUEST.md",
+      "sha256": "e4e2cfed9376cfc24406348415cdaa28f75a0d731e7a9eacba0902216592774d",
+      "actual": "e4e2cfed9376cfc24406348415cdaa28f75a0d731e7a9eacba0902216592774d"
+    },
+    {
+      "path": "input/project/RetryEngine.java",
+      "sha256": "95112d157ed07d87e94478edc48b94f6b11e2695c1209b7ef5f6fcaec80bfe35",
+      "actual": "95112d157ed07d87e94478edc48b94f6b11e2695c1209b7ef5f6fcaec80bfe35"
+    },
+    {
+      "path": "input/project/Smoke.java",
+      "sha256": "3e242bbcbe7b25a644aaf6d14d2c6c885ad217ed06686782bead18572c983425",
+      "actual": "3e242bbcbe7b25a644aaf6d14d2c6c885ad217ed06686782bead18572c983425"
+    },
+    {
+      "path": "input/project/contract.md",
+      "sha256": "5d38ae3410aed98f10dd2f358c4737db753a6d06a49f40f055efb7a045787fe7",
+      "actual": "5d38ae3410aed98f10dd2f358c4737db753a6d06a49f40f055efb7a045787fe7"
+    },
+    {
+      "path": "input/project/run.mjs",
+      "sha256": "bb2c9544993bb4128564af264cc0f5719ce2d237f3a5e710027c062fecf1007c",
+      "actual": "bb2c9544993bb4128564af264cc0f5719ce2d237f3a5e710027c062fecf1007c"
+    },
+    {
+      "path": "input/skills/idempotency/SKILL.md",
+      "sha256": "60201c4851368bb97820efbe1ffc7a2cb3acdc5c4338693be3697e0a6842eb08",
+      "actual": "60201c4851368bb97820efbe1ffc7a2cb3acdc5c4338693be3697e0a6842eb08"
+    },
+    {
+      "path": "input/skills/idempotency/references/idempotency-key-filter.md",
+      "sha256": "a28e7743b5ed3083a0be7b7b1ac391aee9703d2502c564bb91fa03661b998a03",
+      "actual": "a28e7743b5ed3083a0be7b7b1ac391aee9703d2502c564bb91fa03661b998a03"
+    },
+    {
+      "path": "input/skills/idempotency/references/key-selection.md",
+      "sha256": "1759159ef38e13a2566f2634cc2c9cfe7772238589445509008f5f06c2c98f0c",
+      "actual": "1759159ef38e13a2566f2634cc2c9cfe7772238589445509008f5f06c2c98f0c"
+    },
+    {
+      "path": "input/skills/idempotency/skill.yaml",
+      "sha256": "c214d57330bcf1b03de02f27738160d0852c9612222ea4202c3ac99b44e954b3",
+      "actual": "c214d57330bcf1b03de02f27738160d0852c9612222ea4202c3ac99b44e954b3"
+    },
+    {
+      "path": "input/skills/retries-and-backoff/SKILL.md",
+      "sha256": "214c6fc717590bbb425b624f0b3ea31de843ab4b8251a5b1e23897bd2235eb42",
+      "actual": "214c6fc717590bbb425b624f0b3ea31de843ab4b8251a5b1e23897bd2235eb42"
+    },
+    {
+      "path": "input/skills/retries-and-backoff/references/retry-failure-modes.md",
+      "sha256": "1f8cb4addb8592f4c8cb2767a4afd6362fd0f9c19f640ac1831cc233fe943e24",
+      "actual": "1f8cb4addb8592f4c8cb2767a4afd6362fd0f9c19f640ac1831cc233fe943e24"
+    },
+    {
+      "path": "input/skills/retries-and-backoff/references/retry-in-java.md",
+      "sha256": "dbf3fb4bdef23956b4382b011f7dfaf861dd4daa3675871153a15dff947830f8",
+      "actual": "dbf3fb4bdef23956b4382b011f7dfaf861dd4daa3675871153a15dff947830f8"
+    },
+    {
+      "path": "input/skills/retries-and-backoff/skill.yaml",
+      "sha256": "01e351a22ac96a47537af74f2ba0c6a2912eff069bdf97e10c743f23295ae468",
+      "actual": "01e351a22ac96a47537af74f2ba0c6a2912eff069bdf97e10c743f23295ae468"
+    },
+    {
+      "path": "input/skills/timeouts-and-deadlines/SKILL.md",
+      "sha256": "ee9a435a6004ac96d1c991a0110ef6205aebaa2c6fc4f68b4d33ce660f2dc29f",
+      "actual": "ee9a435a6004ac96d1c991a0110ef6205aebaa2c6fc4f68b4d33ce660f2dc29f"
+    },
+    {
+      "path": "input/skills/timeouts-and-deadlines/references/deadline-propagation.md",
+      "sha256": "a2cb2fbd6733e2ec1649cedae206c82ec83ad83a3ef3e5cb8f200272ff3b312f",
+      "actual": "a2cb2fbd6733e2ec1649cedae206c82ec83ad83a3ef3e5cb8f200272ff3b312f"
+    },
+    {
+      "path": "input/skills/timeouts-and-deadlines/references/java-timeout-surface.md",
+      "sha256": "ce67e676b63eee0fe821e5e5407ed48b12194ca04cacbc0de8a501948789106a",
+      "actual": "ce67e676b63eee0fe821e5e5407ed48b12194ca04cacbc0de8a501948789106a"
+    },
+    {
+      "path": "input/skills/timeouts-and-deadlines/skill.yaml",
+      "sha256": "ec2c2602056b0fcf0076d65ebefba6d4da86d47020d6ffabd08ad483f8e6e0fb",
+      "actual": "ec2c2602056b0fcf0076d65ebefba6d4da86d47020d6ffabd08ad483f8e6e0fb"
+    }
+  ],
+  "protectedCopies": [
+    {
+      "path": "Contract.java",
+      "expected": "bd83211dff4e16d7cf8814074ee46d883e6700a259e03a79bd3bc781fa3bdcf9",
+      "actual": "bd83211dff4e16d7cf8814074ee46d883e6700a259e03a79bd3bc781fa3bdcf9"
+    },
+    {
+      "path": "contract.md",
+      "expected": "5d38ae3410aed98f10dd2f358c4737db753a6d06a49f40f055efb7a045787fe7",
+      "actual": "5d38ae3410aed98f10dd2f358c4737db753a6d06a49f40f055efb7a045787fe7"
+    },
+    {
+      "path": "Ports.java",
+      "expected": "21d10c20819d3ddb796ff1081d53efc63664e1a1c768de1d1c627a3dcd36ae6a",
+      "actual": "21d10c20819d3ddb796ff1081d53efc63664e1a1c768de1d1c627a3dcd36ae6a"
+    },
+    {
+      "path": "README.md",
+      "expected": "0a082fc19eafaaa6457ed4a4e130b1f2bf3d3383c5cf38b7b6d8b58f18dd69db",
+      "actual": "0a082fc19eafaaa6457ed4a4e130b1f2bf3d3383c5cf38b7b6d8b58f18dd69db"
+    },
+    {
+      "path": "REQUEST.md",
+      "expected": "e4e2cfed9376cfc24406348415cdaa28f75a0d731e7a9eacba0902216592774d",
+      "actual": "e4e2cfed9376cfc24406348415cdaa28f75a0d731e7a9eacba0902216592774d"
+    },
+    {
+      "path": "run.mjs",
+      "expected": "bb2c9544993bb4128564af264cc0f5719ce2d237f3a5e710027c062fecf1007c",
+      "actual": "bb2c9544993bb4128564af264cc0f5719ce2d237f3a5e710027c062fecf1007c"
+    },
+    {
+      "path": "Smoke.java",
+      "expected": "3e242bbcbe7b25a644aaf6d14d2c6c885ad217ed06686782bead18572c983425",
+      "actual": "3e242bbcbe7b25a644aaf6d14d2c6c885ad217ed06686782bead18572c983425"
+    }
+  ],
+  "outputHashes": [
+    {
+      "path": "Contract.java",
+      "sha256": "bd83211dff4e16d7cf8814074ee46d883e6700a259e03a79bd3bc781fa3bdcf9"
+    },
+    {
+      "path": "Ports.java",
+      "sha256": "21d10c20819d3ddb796ff1081d53efc63664e1a1c768de1d1c627a3dcd36ae6a"
+    },
+    {
+      "path": "README.md",
+      "sha256": "0a082fc19eafaaa6457ed4a4e130b1f2bf3d3383c5cf38b7b6d8b58f18dd69db"
+    },
+    {
+      "path": "REQUEST.md",
+      "sha256": "e4e2cfed9376cfc24406348415cdaa28f75a0d731e7a9eacba0902216592774d"
+    },
+    {
+      "path": "REVIEW.md",
+      "sha256": "51f6c29d17d5bbd3efc0c830773ab09c912c8c81d0974d1e0381a328c1b00f1a"
+    },
+    {
+      "path": "RetryEngine.java",
+      "sha256": "fe2e340e0cd6a5f20f5bfd7f3789c8df11bcccd59a953790e4e0edcf88c157ea"
+    },
+    {
+      "path": "Smoke.java",
+      "sha256": "3e242bbcbe7b25a644aaf6d14d2c6c885ad217ed06686782bead18572c983425"
+    },
+    {
+      "path": "Verification.java",
+      "sha256": "92d66e0b539fd69186238bd370369bf3073d2d76dffea7613c5e4ebfb73c8242"
+    },
+    {
+      "path": "contract.md",
+      "sha256": "5d38ae3410aed98f10dd2f358c4737db753a6d06a49f40f055efb7a045787fe7"
+    },
+    {
+      "path": "execution.json",
+      "sha256": "f3431e53c428df8fb80ea04b62930a7b17193c7a9d043eb42f14c5674b650249"
+    },
+    {
+      "path": "result.json",
+      "sha256": "b89ccea4761d747507477ecf4af8bead714f1c5b46c067c5753d66de0a27d826"
+    },
+    {
+      "path": "run.mjs",
+      "sha256": "bb2c9544993bb4128564af264cc0f5719ce2d237f3a5e710027c062fecf1007c"
+    }
+  ],
+  "allWritesStopped": true,
+  "probe": {
+    "compile": {
+      "cmd": "javac",
+      "args": [
+        "--release",
+        "17",
+        "-d",
+        "classes",
+        "Contract.java",
+        "Ports.java",
+        "ProbeRetry.java",
+        "RetryEngine.java"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/rechecks/A18/private",
+      "exit": 0,
+      "error": null,
+      "elapsedMs": 593,
+      "stdout": "",
+      "stderr": ""
+    },
+    "run": {
+      "cmd": "java",
+      "args": ["-ea", "-cp", "classes", "ProbeRetry"],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/rechecks/A18/private",
+      "exit": 0,
+      "error": null,
+      "elapsedMs": 69,
+      "stdout": "{\"status\":\"PASS\",\"scenarios\":26,\"assertions\":262,\"replaySafe\":true}\r\n",
+      "stderr": ""
+    }
+  },
+  "verification": {
+    "cmd": "C:\\Program Files\\nodejs\\node.exe",
+    "args": ["run.mjs", "Verification"],
+    "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/rechecks/A18/positive/output",
+    "exit": 0,
+    "error": null,
+    "elapsedMs": 706,
+    "stdout": "Verification passed: 27 scenarios\r\n",
+    "stderr": ""
+  },
+  "counterfactual": {
+    "compile": {
+      "cmd": "javac",
+      "args": [
+        "--release",
+        "17",
+        "-d",
+        "classes",
+        "Contract.java",
+        "Ports.java",
+        "RetryEngine.java",
+        "Smoke.java",
+        "Verification.java"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/rechecks/A18/negative/output",
+      "exit": 0,
+      "error": null,
+      "elapsedMs": 532,
+      "stdout": "",
+      "stderr": ""
+    },
+    "run": {
+      "cmd": "java",
+      "args": ["-ea", "-cp", "classes", "Verification"],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/rechecks/A18/negative/output",
+      "exit": 1,
+      "error": null,
+      "elapsedMs": 68,
+      "stdout": "",
+      "stderr": "Exception in thread \"main\" java.lang.AssertionError: intent identity or payload changed\r\n\tat Verification.check(Verification.java:9)\r\n\tat Verification$Harness.call(Verification.java:64)\r\n\tat RetryEngine.execute(RetryEngine.java:6)\r\n\tat Verification$Harness.run(Verification.java:89)\r\n\tat Verification$Harness.expect(Verification.java:96)\r\n\tat Verification.main(Verification.java:119)\r\n"
+    }
+  },
+  "probePass": true,
+  "verificationPass": true,
+  "counterfactualSensitive": true
+}

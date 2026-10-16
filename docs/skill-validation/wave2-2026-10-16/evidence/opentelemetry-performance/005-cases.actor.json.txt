@@ -1,0 +1,28 @@
+{
+  "classification": "Development cases; not independent actor evaluations or held-out cases.",
+  "actorInput": "Review CallbackService's tracing parentage against the repository's tracing contract. Make a focused correction only if that contract is violated, and specify a regression check. Preserve Java 17, OpenTelemetry 1.62.0, the existing executor and span count; do not add an agent or change sampling/export configuration.",
+  "sharedFixtures": {
+    "pom.xml constraints": "Java release 17; io.opentelemetry API/Context/SDK/test artifacts 1.62.0. No Java agent or bytecode instrumentation is loaded.",
+    "src/CallbackService.java": "// Relevant production method; the callback is registered while request A is current.\nCompletableFuture<Price> attach(CompletableFuture<Value> source) {\n    return source.thenApplyAsync(this::process, tracedExecutor);\n}\n// process creates exactly one span named postprocess with tracer.spanBuilder(...).startSpan(),\n// makes it current, runs synchronous work, records expected errors and ends the span in finally.\n",
+    "src/ExecutorConfiguration.java": "// One shared executor, reused across unrelated requests.\nExecutor tracedExecutor = Context.taskWrapping(workerExecutor);\n",
+    "src/Provider.java contract": "The final provider returns a pending base CompletableFuture; it never returns an already-completed/cached result. It completes that future later while provider-operation B is current. A controlled queued worker executes the continuation with pre-existing worker context C. A, B and C have distinct valid trace/span IDs.",
+    "test/ExistingCallbackTest.java coverage": "Asserts one ended postprocess span and correct business result. It currently does not assert parentSpanId/traceId or restored worker context.",
+    "docs/tracing-contract-common.md": "Inspect the selected code path and configured instrumentation. Exactly one postprocess span should be emitted when the callback runs; C must be restored after success or failure. Rejected work must not produce a callback span. Keep existing owner-defined parentage when correct."
+  },
+  "cases": [
+    {
+      "id": "OTEL-A-request-owned",
+      "files": {
+        "docs/tracing-contract.md": "The postprocess callback is part of the initiating request A. Its span must be a child of A and share A's trace, even when the provider completes the pending future under its own operation B.\n"
+      }
+    },
+    {
+      "id": "OTEL-B-provider-owned",
+      "files": {
+        "docs/tracing-contract.md": "The postprocess callback is provider completion bookkeeping. Its span must be a child of provider-operation B and share B's trace; the requesting operation A only registers the observer and is not the callback's tracing owner.\n"
+      }
+    }
+  ],
+  "decisiveConstraint": "Only the tracing contract's logical parent changes (request A versus provider B). Code, deferred completion and executor/context wiring are identical.",
+  "materialization": "Create a fresh directory per case with shared fixtures plus that tracing contract. Source fragments/contracts define the relevant path; adapt to a runnable fixture only if the evaluator chooses an implementation evaluation. Do not expose expected criteria or the other case."
+}

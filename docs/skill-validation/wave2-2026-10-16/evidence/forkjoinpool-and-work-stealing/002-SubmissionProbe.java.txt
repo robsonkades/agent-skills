@@ -1,0 +1,100 @@
+import java.util.concurrent.*;
+
+/** Controlled review experiment. No production resources or global pools are used. */
+public final class SubmissionProbe {
+    private static void require(boolean condition, String message) {
+        if (!condition) throw new AssertionError(message);
+    }
+
+    private static void await(CountDownLatch latch, String message) throws InterruptedException {
+        require(latch.await(5, TimeUnit.SECONDS), message);
+    }
+
+    private static void checkSubmission(boolean workerContext, boolean explicitAdapter,
+                                        boolean expectInterruption) throws Exception {
+        ForkJoinPool target = new ForkJoinPool(1);
+        ForkJoinPool submitter = new ForkJoinPool(1);
+        CountDownLatch entered = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        CountDownLatch interrupted = new CountDownLatch(1);
+        CountDownLatch exited = new CountDownLatch(1);
+        Callable<Void> body = () -> {
+            entered.countDown();
+            try {
+                for (;;) {
+                    try {
+                        release.await();
+                        break;
+                    } catch (InterruptedException expected) {
+                        interrupted.countDown();
+                        // Deliberately remain active to test cancellation status versus body exit.
+                    }
+                }
+                return null;
+            } finally {
+                exited.countDown();
+            }
+        };
+
+        String label = "submitter=" + (workerContext ? "other-pool-worker" : "external")
+                + ", explicitAdapter=" + explicitAdapter;
+        try {
+            ForkJoinTask<Void> future;
+            if (workerContext) {
+                future = submitter.submit(() -> {
+                    require(ForkJoinTask.getPool() == submitter, "submission did not run in source pool");
+                    return explicitAdapter
+                            ? target.submit(ForkJoinTask.adaptInterruptible(body))
+                            : target.submit(body);
+                }).get(5, TimeUnit.SECONDS);
+            } else {
+                require(ForkJoinTask.getPool() == null, "external submission unexpectedly in pool");
+                future = target.submit(body);
+            }
+
+            await(entered, "body did not enter");
+            require(future.cancel(true), "cancellation did not succeed");
+            require(future.isCancelled(), "cancelled state missing");
+            if (expectInterruption) await(interrupted, "expected interruption not observed");
+            require(exited.getCount() == 1, "cancelled state was incorrectly treated as body exit");
+            release.countDown();
+            await(exited, "independent release did not allow exit");
+            require((interrupted.getCount() == 0) == expectInterruption, "unexpected interruption result");
+            System.out.println("PASS " + label + ", observedInterrupt=" + expectInterruption
+                    + ", cancelledBeforeBodyExit=true, independentReleaseCompleted=true");
+        } finally {
+            release.countDown();
+            target.shutdown();
+            submitter.shutdown();
+            require(target.awaitTermination(5, TimeUnit.SECONDS), "target did not terminate");
+            require(submitter.awaitTermination(5, TimeUnit.SECONDS), "submitter did not terminate");
+        }
+    }
+
+    private static void checkAwaitLatch() throws Exception {
+        AwaitLatch open = new AwaitLatch(new CountDownLatch(0));
+        require(!open.isReleasable(), "open latch skipped documented await boundary");
+        ForkJoinPool.managedBlock(open);
+        require(open.isReleasable() && open.isReleasable(), "successful await not retained");
+
+        AwaitLatch interrupted = new AwaitLatch(new CountDownLatch(0));
+        Thread.currentThread().interrupt();
+        try {
+            ForkJoinPool.managedBlock(interrupted);
+            throw new AssertionError("interruption did not propagate");
+        } catch (InterruptedException expected) {
+            require(!interrupted.isReleasable(), "interrupted await claimed completion");
+        } finally {
+            Thread.interrupted();
+        }
+        System.out.println("PASS unchanged AwaitLatch: open-latch await path, repeated release, interrupted path");
+    }
+
+    public static void main(String[] args) throws Exception {
+        checkAwaitLatch();
+        checkSubmission(false, false, true);
+        checkSubmission(true, false, false);
+        checkSubmission(true, true, true);
+        System.out.println("PASS all four groups on " + System.getProperty("java.runtime.version"));
+    }
+}

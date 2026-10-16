@@ -1,0 +1,124 @@
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+
+const root = 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening';
+const reference = readFileSync('C:/git/agent-skills/skills/java-serialization-hardening/references/implementing-serializable.md', 'utf8');
+const snippet = reference.split('### Missing field versus legitimate default')[1].match(/```java\n([\s\S]*?)\n```/)[1];
+const write = (name, value) => { const path = resolve(root, name); mkdirSync(dirname(path), { recursive: true }); writeFileSync(path, value); };
+const header = `package fixture;
+import java.io.*;
+public final class RetryPolicy implements Serializable {
+    @Serial private static final long serialVersionUID = 1L;
+    private int maxRetries;
+    public RetryPolicy(int value) { maxRetries = value; }
+    public int maxRetries() { return maxRetries; }
+`;
+const baseline = `    @Serial private void readObject(ObjectInputStream s) throws IOException, ClassNotFoundException {
+        s.defaultReadObject();
+        if (maxRetries < 0 || maxRetries > 10) throw new InvalidObjectException("invalid maxRetries");
+    }
+`;
+const compat = `    @Serial private void readObject(ObjectInputStream s) throws IOException, ClassNotFoundException {
+        ObjectInputStream.GetField fields = s.readFields();
+        int candidate = fields.defaulted("maxRetries") ? 3 : fields.get("maxRetries", 0);
+        if (candidate < 0 || candidate > 10) throw new InvalidObjectException("invalid maxRetries");
+        maxRetries = candidate;
+    }
+`;
+const denied = `package fixture;
+import java.io.*;
+public final class DeniedPayload implements Serializable {
+    @Serial private static final long serialVersionUID = 1L;
+    public static int readHooks;
+    @Serial private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        readHooks++;
+        in.defaultReadObject();
+    }
+}
+`;
+const writer = `import fixture.*;
+import java.io.*;
+import java.nio.file.*;
+public final class Writer {
+    public static void main(String[] args) throws Exception {
+        Path output = Path.of(args[0]);
+        for (int value : new int[] {0, 5, 10, -1, 11}) write(output.resolve("value-" + value + ".ser"), new RetryPolicy(value));
+        write(output.resolve("denied.ser"), new DeniedPayload());
+        write(output.resolve("null.ser"), null);
+        System.out.println("Wrote seven bounded synthetic streams, including invalid scalar and denied-hook controls");
+    }
+    private static void write(Path path, Object value) throws Exception {
+        try (ObjectOutputStream out = new ObjectOutputStream(Files.newOutputStream(path))) { out.writeObject(value); }
+    }
+}
+`;
+const missingWriter = `import fixture.RetryPolicy;
+import java.io.*;
+import java.nio.file.*;
+public final class MissingWriter {
+    public static void main(String[] args) throws Exception {
+        try (ObjectOutputStream out = new ObjectOutputStream(Files.newOutputStream(Path.of(args[0])))) { out.writeObject(new RetryPolicy()); }
+        System.out.println("Wrote RetryPolicy with UID 1 and omitted maxRetries descriptor");
+    }
+}
+`;
+const reader = `import fixture.*;
+import java.io.*;
+import java.nio.file.*;
+public final class Reader {
+    private static int assertions;
+    public static void main(String[] args) throws Exception {
+        String mode = args[0];
+        Path inputs = Path.of(args[1]);
+        equal(0, read(inputs.resolve("value-0.ser")).maxRetries(), "explicit zero retained");
+        equal(5, read(inputs.resolve("value-5.ser")).maxRetries(), "ordinary value retained");
+        equal(10, read(inputs.resolve("value-10.ser")).maxRetries(), "upper bound retained");
+        rejects(InvalidObjectException.class, () -> read(inputs.resolve("value--1.ser")), "negative value rejected");
+        rejects(InvalidObjectException.class, () -> read(inputs.resolve("value-11.ser")), "over-limit value rejected");
+        if (mode.equals("required")) rejects(InvalidObjectException.class, () -> read(inputs.resolve("missing.ser")), "omitted required field rejected");
+        else equal(mode.equals("legacy") ? 3 : 0, read(inputs.resolve("missing.ser")).maxRetries(), mode + " omitted-field control");
+        rejects(InvalidClassException.class, () -> read(inputs.resolve("denied.ser")), "unlisted class rejected before hook");
+        equal(0, DeniedPayload.readHooks, "denied hook did not execute");
+        rejects(InvalidObjectException.class, () -> read(inputs.resolve("null.ser")), "null root rejected");
+        System.out.println("PASS: mode=" + mode + ", assertions=" + assertions + ", runtime=" + Runtime.version());
+    }
+    public static RetryPolicy read(Path path) throws Exception {
+        if (Files.size(path) > 4096) throw new InvalidObjectException("input too large");
+        byte[] bytes = Files.readAllBytes(path);
+        try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bytes))) {
+            in.setObjectInputFilter(ObjectInputFilter.Config.createFilter("maxdepth=6;maxrefs=20;maxarray=16;maxbytes=4096;fixture.RetryPolicy;!*"));
+            Object value = in.readObject();
+            if (!(value instanceof RetryPolicy)) throw new InvalidObjectException("unexpected root");
+            return (RetryPolicy) value;
+        }
+    }
+    private static void equal(int expected, int actual, String name) {
+        if (expected != actual) throw new AssertionError(name + ": " + expected + " != " + actual);
+        assertions++;
+        System.out.println("PASS: " + name);
+    }
+    private static void rejects(Class<? extends Exception> expected, Action action, String name) throws Exception {
+        try { action.run(); } catch (Exception failure) {
+            if (!expected.isInstance(failure)) throw failure;
+            assertions++;
+            System.out.println("PASS: " + name + " -> " + failure.getClass().getSimpleName());
+            return;
+        }
+        throw new AssertionError("Expected rejection: " + name);
+    }
+    @FunctionalInterface private interface Action { void run() throws Exception; }
+}
+`;
+write('writer/src/fixture/RetryPolicy.java', header + '}\n');
+write('writer/src/fixture/DeniedPayload.java', denied);
+write('writer/src/Writer.java', writer);
+write('missing-writer/src/fixture/RetryPolicy.java', 'package fixture;\nimport java.io.*;\npublic final class RetryPolicy implements Serializable { @Serial private static final long serialVersionUID = 1L; }\n');
+write('missing-writer/src/MissingWriter.java', missingWriter);
+for (const [name, code] of Object.entries({ baseline, required: snippet, legacy: compat })) {
+  write(`${name}/src/fixture/RetryPolicy.java`, header + code + '\n}\n');
+  write(`${name}/src/fixture/DeniedPayload.java`, denied);
+  write(`${name}/src/Reader.java`, reader);
+}
+write('extracted-snippet.java.txt', snippet + '\n');
+mkdirSync(resolve(root, 'streams'), { recursive: true });
+console.log('Prepared five isolated classpaths and the exact changed readObject snippet; all writes are review-local.');

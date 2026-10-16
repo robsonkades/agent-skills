@@ -1,0 +1,686 @@
+{
+  "status": "NO_CHANGES_NEEDED",
+  "skill": "gof-adapter",
+  "ownedPath": "C:/git/agent-skills/skills/gof-adapter",
+  "reviewer": "/root/quality17",
+  "date": "2026-10-16",
+  "allWritesStopped": true,
+  "noRunningWriterProcesses": true,
+  "summary": "The existing skill already requires comparing effective consumer contracts rather than signatures, handles errors/null and ambiguous remote outcomes, preserves resource ownership, and conditions concurrency/lifecycle claims. Focused source and executable controls supported keeping all four package files unchanged.",
+  "ownership": "No repository file changed. No neighboring skill, shared report, registry, package-manager code, lockfile or real agent configuration was written. Only isolated external evidence and the coordinator-requested handoff were created.",
+  "procedure": {
+    "requiredReadings": [
+      "AGENTS.md",
+      "docs/skill-validation/wave4-2026-10-16/review-brief.md",
+      "docs/skill-review-prompt.md (complete, unchanged procedure reused)",
+      "docs/parallel-skill-reviews.md",
+      "skills/skill-engineering/SKILL.md",
+      "skills/skill-engineering/references/evidence-and-confidence.md",
+      "skills/skill-engineering/references/evaluation.md",
+      "skills/skill-engineering/references/resource-design.md",
+      "skills/skill-engineering/references/anti-patterns.md"
+    ],
+    "comparativeContext": "Read/reused the comparative research, roadmap and prior-wave lessons per brief; no measured gain inferred from popularity or prior technical fixes.",
+    "entirePackageRead": true,
+    "findingsSentBeforePackageEdits": "Scope/findings and conditional no-change plan sent before validation fixtures. No package edits occurred.",
+    "reviewRole": "Adapter selection/design/review/implementation guidance. Did not turn the pattern into a mandatory anti-corruption layer or require new scaffolding."
+  },
+  "baseline": {
+    "source": "C:/git/agent-skills/docs/skill-validation/wave4-2026-10-16/baseline.json",
+    "head": "bbb7d996a929e81baf735bbaab5b6e3fbf6e8503",
+    "committedVersion": "1.3.4",
+    "assignmentVersion": "1.3.4",
+    "finalVersion": "1.3.4",
+    "preExistingVersionBump": false,
+    "committedDifferencesAtAssignment": [],
+    "stagedDifferencesAtAssignment": [],
+    "unstagedDifferencesAtAssignment": [],
+    "untrackedOrIgnoredOwnedFilesAtAssignment": [],
+    "initialOwnedHashes": [
+      {
+        "path": "C:/git/agent-skills/skills/gof-adapter/SKILL.md",
+        "sha256": "ECF8B2B0569CEE94E7D5709829F17563AA64BDE98C61F41782F89F81DB4F3745",
+        "bytes": 12052
+      },
+      {
+        "path": "C:/git/agent-skills/skills/gof-adapter/references/decision-and-alternatives.md",
+        "sha256": "8A727CFF7085AC8B0E7014C4D7B541AE727FD822A8630E84E9530FD68CF352F5",
+        "bytes": 10664
+      },
+      {
+        "path": "C:/git/agent-skills/skills/gof-adapter/references/worked-example.md",
+        "sha256": "4343DBD4318971E056EB764E1C64685A9B28E6C7BB3CB1A7B6A3DC9AC2F34C8A",
+        "bytes": 11383
+      },
+      {
+        "path": "C:/git/agent-skills/skills/gof-adapter/skill.yaml",
+        "sha256": "30E82F33E77698A1FE1C0CB1610FE03762725E2806C69F46BDDC6FA1BB7B9845",
+        "bytes": 2187
+      }
+    ],
+    "finalOwnedHashes": [
+      {
+        "path": "C:/git/agent-skills/skills/gof-adapter/SKILL.md",
+        "sha256": "ECF8B2B0569CEE94E7D5709829F17563AA64BDE98C61F41782F89F81DB4F3745",
+        "bytes": 12052
+      },
+      {
+        "path": "C:/git/agent-skills/skills/gof-adapter/references/decision-and-alternatives.md",
+        "sha256": "8A727CFF7085AC8B0E7014C4D7B541AE727FD822A8630E84E9530FD68CF352F5",
+        "bytes": 10664
+      },
+      {
+        "path": "C:/git/agent-skills/skills/gof-adapter/references/worked-example.md",
+        "sha256": "4343DBD4318971E056EB764E1C64685A9B28E6C7BB3CB1A7B6A3DC9AC2F34C8A",
+        "bytes": 11383
+      },
+      {
+        "path": "C:/git/agent-skills/skills/gof-adapter/skill.yaml",
+        "sha256": "30E82F33E77698A1FE1C0CB1610FE03762725E2806C69F46BDDC6FA1BB7B9845",
+        "bytes": 2187
+      }
+    ],
+    "allFourFilesUnchanged": true,
+    "finalStatus": "Owned status, unstaged diff and staged diff all empty, including untracked/ignored inspection.",
+    "versionRationale": "No content changes, so no version bump. Manifest/frontmatter descriptions remain aligned."
+  },
+  "domainCriteria": [
+    "Follow actual representative consumers, adaptee/factory and accepted ownership rather than a type name.",
+    "Preserve results, failure categories, causes, null behavior, partial/unknown effects and caller-visible lifecycle.",
+    "Separate borrowed versus owned resources, close propagation, cancellation and alias/concurrency constraints.",
+    "Compare smallest adequate alternatives: direct call, function/method reference, object adapter or justified inheritance.",
+    "Keep provider-specific interpretation distinct from provider-independent domain policy.",
+    "Distinguish fictional/partial SDK snippets, local mapping evidence and actual provider integration."
+  ],
+  "findingsCorrected": [],
+  "reviewFindings": [
+    {
+      "locations": ["SKILL.md:31", "SKILL.md:109", "references/decision-and-alternatives.md:24"],
+      "finding": "Consumer-first semantic compatibility is already explicit, including partial effects, atomicity and one-shot/repeatable sources.",
+      "disposition": "Preserved unchanged.",
+      "evidence": [
+        "Java17 Files.move contract confirms the atomicity example and invalid silent fallback.",
+        "Structured walkthrough of transferred versus borrowed channel case gives different decisions without changing method types."
+      ]
+    },
+    {
+      "locations": ["SKILL.md:131", "SKILL.md:140", "SKILL.md:161"],
+      "finding": "The existing skill permits a minimal lambda/method reference and explicitly preserves lifecycle/alias constraints; wrapping alone is not declared sufficient for thread safety.",
+      "disposition": "Preserved unchanged.",
+      "evidence": [
+        "Channels17 official close/mark/reset/nonblocking contract.",
+        "Executed direct adapter and borrowed-view controls: matching byte results alone did not preserve borrowed lifecycle; the same direct adapter was correct under transferred ownership."
+      ]
+    },
+    {
+      "locations": [
+        "references/worked-example.md:98",
+        "references/worked-example.md:121",
+        "references/decision-and-alternatives.md:83"
+      ],
+      "finding": "Status mapping rejects null/unknown values without inventing success; failure classification preserves uncertainty and diagnostic causes. Other malformed response handling is explicitly identified as integration work in these partial snippets.",
+      "disposition": "Preserved unchanged; no invented complete-SDK validation.",
+      "evidence": [
+        "Exact shipped status method extracted unchanged and compiled at release17.",
+        "Three valid status mappings and four null/unknown/injected-diagnostic controls passed.",
+        "Full fictional payment gateway, money mapping and actual provider exception taxonomy were not compiled or integrated."
+      ]
+    },
+    {
+      "locations": [
+        "references/worked-example.md:3",
+        "references/worked-example.md:131",
+        "references/worked-example.md:161",
+        "references/worked-example.md:200",
+        "references/worked-example.md:221"
+      ],
+      "finding": "SDK examples already declare fictional teaching types, monetary representation assumptions, thread-confined fake limits and recording/provenance limits.",
+      "disposition": "Preserved unchanged.",
+      "evidence": [
+        "Currency17 API and current Stripe special-currency/idempotency documentation confirm the cited contrast.",
+        "No handwritten fixture was treated as proof of actual provider behavior."
+      ]
+    }
+  ],
+  "remainingMaterialFindings": [],
+  "filesChangedByMe": [],
+  "preExistingFilesChanged": [],
+  "capabilitiesPreserved": [
+    "Target contract and concrete caller-first selection, including an already sufficient direct integration.",
+    "Adapter versus Facade/Decorator/Proxy/ACL distinctions based on intent rather than collaborator count alone.",
+    "Object versus class adapter tradeoffs, protected extension hooks and default-method behavioral constraints.",
+    "Domain port isolation versus deliberately thin interoperability and shared standard types.",
+    "Typed failure distinctions, preserved causes, unknown remote outcomes, deadline/retry ownership and idempotency scope.",
+    "Null/unknown status handling without invented domain defaults; bounded safe diagnostics.",
+    "Owned/borrowed resources, interruption/cancellation and concurrency through external aliases.",
+    "Currency units/precision/range, provider-specific representation and actual authorization/capture semantics.",
+    "Thread-confined fake and exact limits of local tests versus real SDK/provider/recorded evidence.",
+    "Passthrough removal with dependency direction, compatibility, reflective wiring and existing consumers preserved."
+  ],
+  "capabilitiesReplacedOrRemoved": [],
+  "technicalEvidence": {
+    "environment": "Windows, javac/java Temurin25.0.3+9-LTS; compiler --release17, no preview.",
+    "baselineLimit": "--release17 verifies the source/API target; runtime behavior was observed on25.0.3, not on a17 VM.",
+    "scope": "One unchanged shipped status helper plus a review-only JDK adapter contract fixture. No build system/dependency introduced and no payment SDK or service invoked.",
+    "extraction": {
+      "command": "node ./extract-status.mjs 2>&1 | Tee-Object -FilePath extraction.log\nexit $LASTEXITCODE",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d",
+      "exitCode": 0,
+      "log": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/extraction.log",
+      "source": "skills/gof-adapter/references/worked-example.md:98",
+      "manifest": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/extraction-manifest.json",
+      "adaptation": "Method body copied exactly. Added only a class wrapper, enum/exception teaching stubs and assertions; did not manufacture SDK integration."
+    },
+    "commands": [
+      {
+        "id": "java-version",
+        "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+        "arguments": ["--version"],
+        "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d",
+        "expectedExit": 0,
+        "actualExit": 0,
+        "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d\\java-version.log"
+      },
+      {
+        "id": "javac-version",
+        "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+        "arguments": ["--version"],
+        "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d",
+        "expectedExit": 0,
+        "actualExit": 0,
+        "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d\\javac-version.log"
+      },
+      {
+        "id": "compile",
+        "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+        "arguments": [
+          "--release",
+          "17",
+          "-Xlint:all",
+          "-Werror",
+          "-XDrawDiagnostics",
+          "-d",
+          "classes",
+          "ChannelContractProbe.java",
+          "StatusMappingProbe.java"
+        ],
+        "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d",
+        "expectedExit": 0,
+        "actualExit": 0,
+        "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d\\compile.log"
+      },
+      {
+        "id": "channel-contract",
+        "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+        "arguments": ["-cp", "classes", "ChannelContractProbe"],
+        "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d",
+        "expectedExit": 0,
+        "actualExit": 0,
+        "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d\\channel-contract.log"
+      },
+      {
+        "id": "status-mapping",
+        "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+        "arguments": ["-cp", "classes", "StatusMappingProbe"],
+        "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d",
+        "expectedExit": 0,
+        "actualExit": 0,
+        "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d\\status-mapping.log"
+      }
+    ],
+    "harness": {
+      "command": "& ./run-probes.ps1 2>&1 | Tee-Object -FilePath probe-run.log\nexit $LASTEXITCODE",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d",
+      "exitCode": 0,
+      "script": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/run-probes.ps1",
+      "log": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/probe-run.log"
+    },
+    "results": [
+      "Compilation with --release17 -Xlint:all -Werror -XDrawDiagnostics succeeded with no diagnostics.",
+      "ChannelContractProbe passed21 observations covering exact prefix/consumption, owned normal/failure cleanup, the borrowed direct-adapter negative, corrected borrowed lifecycle and owner cleanup, IOException propagation, null, absent mark/reset and actual nonblocking pipe rejection.",
+      "StatusMappingProbe passed3 known translations and4 null/unknown controls; injected raw text was not echoed in the thrown message.",
+      "All five recorded technical commands exited0."
+    ],
+    "negativeControls": [
+      "Direct Channels.newInputStream over a borrowed channel: closing the parser stream made the owner's next read fail with ClosedChannelException.",
+      "Injected IOException remained a failure; owned cleanup happened, borrowed resource remained available to its actual owner.",
+      "reset unsupported; nonblocking Pipe.SourceChannel read through stream rejected with IllegalBlockingModeException.",
+      "Null/unknown statuses rejected rather than mapped to PENDING/AUTHORISED; diagnostic injection not propagated."
+    ],
+    "limits": [
+      "The TrackingChannel fixture and no-close borrowed view are review controls, not shipped production adapters or a complete general-purpose stream contract.",
+      "The selected borrowed-view contract permits close to be a no-op and promises no subsequent use of the private view; other consumer lifetimes need their own design.",
+      "Exact same-instance IOException observation is from this runtime/control; no universal exception identity guarantee inferred.",
+      "No concurrency stress, cancellation race, real provider integration, latency or performance measurement.",
+      "No complete payment-gateway compilation; original examples remain explicitly partial fictional Java17 teaching snippets."
+    ]
+  },
+  "structuralChecks": [
+    {
+      "id": "strict-check",
+      "cmd": "node --input-type=module -e 'import {loadPackageFromDirectory} from \"./packages/core/src/application/package-loader.ts\"; import {validatePackage} from \"./packages/core/src/application/validate-package.ts\"; import {NodeFileSystem} from \"./packages/node/src/file-system.ts\"; import {CodexAdapter} from \"./packages/adapter-codex/src/index.ts\"; import {ClaudeCodeAdapter} from \"./packages/adapter-claude/src/index.ts\"; const loaded=await loadPackageFromDirectory(new NodeFileSystem(),\"C:/git/agent-skills/skills/gof-adapter\",{strict:true});const report=validatePackage(loaded.pkg,{strict:true,directoryName:\"gof-adapter\",adapters:[new CodexAdapter(),new ClaudeCodeAdapter()]});const issues=[...loaded.issues,...report.issues];console.log(JSON.stringify({name:loaded.pkg.manifest.name,version:loaded.pkg.manifest.version,files:loaded.pkg.files.map(f=>f.path),issues},null,2));if(issues.length)process.exitCode=1;' 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/strict-check.log'\nexit $LASTEXITCODE",
+      "cwd": "C:/git/agent-skills",
+      "chunk_id": "fd0fcf",
+      "wall_time_seconds": 0.3982472,
+      "exit_code": 0,
+      "original_token_count": 53,
+      "output": "{\r\n  \"name\": \"gof-adapter\",\r\n  \"version\": \"1.3.4\",\r\n  \"files\": [\r\n    \"SKILL.md\",\r\n    \"references/decision-and-alternatives.md\",\r\n    \"references/worked-example.md\",\r\n    \"skill.yaml\"\r\n  ],\r\n  \"issues\": []\r\n}\r\n"
+    },
+    {
+      "id": "prettier-check",
+      "cmd": "node node_modules/prettier/bin/prettier.cjs --check skills/gof-adapter/SKILL.md skills/gof-adapter/skill.yaml skills/gof-adapter/references/decision-and-alternatives.md skills/gof-adapter/references/worked-example.md 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/prettier-check.log'\nexit $LASTEXITCODE",
+      "cwd": "C:/git/agent-skills",
+      "chunk_id": "c978c8",
+      "wall_time_seconds": 0.4136914,
+      "exit_code": 0,
+      "original_token_count": 17,
+      "output": "Checking formatting...\r\nAll matched files use Prettier code style!\r\n"
+    },
+    {
+      "id": "links-check",
+      "cmd": "node --input-type=module -e 'import fs from \"node:fs\";import path from \"node:path\";const root=\"C:/git/agent-skills/skills/gof-adapter\";let count=0;for(const relative of [\"SKILL.md\",\"references/decision-and-alternatives.md\",\"references/worked-example.md\"]){const file=path.join(root,relative);const text=fs.readFileSync(file,\"utf8\").replace(/```[\\s\\S]*?```/g,\"\");for(const m of text.matchAll(/\\[[^\\]]+\\]\\(([^)]+)\\)/g)){const href=m[1].replace(/^<|>$/g,\"\");if(/^(https?:|#)/.test(href))continue;const target=path.resolve(path.dirname(file),href.split(\"#\")[0]);if(!fs.existsSync(target))throw Error(\"Missing \"+target);count++;}}console.log(JSON.stringify({localLinksChecked:count,passed:true}));' 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/links-check.log'\nexit $LASTEXITCODE",
+      "cwd": "C:/git/agent-skills",
+      "chunk_id": "ca2b5a",
+      "wall_time_seconds": 0.2403978,
+      "exit_code": 0,
+      "original_token_count": 10,
+      "output": "{\"localLinksChecked\":2,\"passed\":true}\r\n"
+    },
+    {
+      "id": "diff-whitespace-check",
+      "cmd": "git diff --check -- skills/gof-adapter 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/diff-whitespace-check.log'\nexit $LASTEXITCODE",
+      "cwd": "C:/git/agent-skills",
+      "chunk_id": "e71f23",
+      "wall_time_seconds": 0.2021149,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    }
+  ],
+  "finalInspection": {
+    "artifacts": [
+      "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/final-package-status.log",
+      "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/final-package.diff",
+      "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/final-staged.diff",
+      "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/final-owned-state.json"
+    ],
+    "observed": "Package unchanged, final four hashes equal the assigned wave baseline, version1.3.4 unchanged.",
+    "finalStateCommand": {
+      "shell": "node --input-type=module -e <source>",
+      "source": "import fs from \"node:fs\";import path from \"node:path\";import crypto from \"node:crypto\";const dir=\"C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d\";const pkg=\"C:/git/agent-skills/skills/gof-adapter\";const baseline=JSON.parse(fs.readFileSync(\"docs/skill-validation/wave4-2026-10-16/baseline.json\",\"utf8\")).packages.find(p=>p.name===\"gof-adapter\");const digest=p=>crypto.createHash(\"sha256\").update(fs.readFileSync(p)).digest(\"hex\").toUpperCase();for(const f of baseline.files){if(digest(f.path)!==f.sha256.toUpperCase())throw Error(\"Owned file changed \"+f.path);}const state={baseline,hashesUnchanged:true,finalOwnedHashes:baseline.files.map(f=>({path:\"C:/git/agent-skills/\"+f.path,sha256:digest(f.path),bytes:fs.statSync(f.path).size}))};fs.writeFileSync(path.join(dir,\"final-owned-state.json\"),JSON.stringify(state,null,2));console.log(JSON.stringify({version:baseline.initialVersion,ownedFiles:baseline.files.length,hashesUnchanged:true}));",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0
+    },
+    "inventoryCommand": {
+      "shell": "node --input-type=module -e <source>",
+      "source": "import fs from \"node:fs\";import path from \"node:path\";import crypto from \"node:crypto\";const dir=\"C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d\";const digest=p=>crypto.createHash(\"sha256\").update(fs.readFileSync(p)).digest(\"hex\").toUpperCase();function inventory(root){return fs.readdirSync(root,{withFileTypes:true}).flatMap(e=>e.isDirectory()?inventory(path.join(root,e.name)):[{path:path.join(root,e.name).replaceAll(\"\\\\\",\"/\"),sha256:digest(path.join(root,e.name)),bytes:fs.statSync(path.join(root,e.name)).size}]);}const cases=JSON.parse(fs.readFileSync(path.join(dir,\"case-inputs.json\"),\"utf8\"));const a=structuredClone(cases[0]),b=structuredClone(cases[1]);delete a.id;delete b.id;delete a.files[\"provider-contract.json\"].lifetime;delete b.files[\"provider-contract.json\"].lifetime;if(JSON.stringify(a)!==JSON.stringify(b))throw Error(\"Pair has unexpected differences\");const state=JSON.parse(fs.readFileSync(path.join(dir,\"final-owned-state.json\"),\"utf8\"));const checks=JSON.parse(fs.readFileSync(path.join(dir,\"technical-check-results.json\"),\"utf8\"));if(checks.length!==5||checks.some(c=>c.actualExit!==0))throw Error(\"Check failure\");console.log(JSON.stringify({state,artifacts:inventory(dir),technicalChecks:checks,pairedCaseIsolation:\"Only case id and lifetime contract differ\"}));",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0
+    },
+    "pairedCaseCheck": "Only case id and lifetime contract differ"
+  },
+  "behavioralEvidence": {
+    "executedAgentEvaluations": [],
+    "measuredImprovement": "Not measured; no revised treatment exists because no package change was needed. Source review and technical probes do not establish agent efficacy.",
+    "walkthroughs": [
+      "Transferred lifecycle: direct standard-library adaptation plus the existing consumer cleanup is sufficient; a no-close wrapper would regress cleanup.",
+      "Borrowed lifecycle: the same original adapter violates the actual owner's continuation; a minimal non-owning view can preserve semantics without adding domain translation or buffering the full source.",
+      "Unknown provider status: existing status method rejects null/new values and avoids a fabricated state; mapping tests do not establish remote-provider behavior."
+    ],
+    "classification": "Known reviewer-developed cases, not holdouts. Inputs contain ordinary source/contract artifacts and an unresolved review request, not the diagnosis or desired fix.",
+    "actorInputArtifact": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/case-inputs.json",
+    "evaluatorOnlyArtifact": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/case-criteria.json",
+    "isolationRequirement": "Coordinator supplies only actorInput plus intended skill resources to a fresh controlled workspace. Keep this report, criteria, probes and alternate-case answer inaccessible; filenames alone are not an enforced access boundary.",
+    "developmentCases": [
+      {
+        "id": "channel-transferred",
+        "actorInput": {
+          "id": "channel-transferred",
+          "request": "Review the proposed ReaderBridge used by PrefixParser. The team introduced it to connect the parser to the channel provider and wants the smallest implementation that satisfies the existing behavior. Inspect the consumer and contract artifacts, verify relevant JDK behavior, and fix a concrete incompatibility if present; otherwise leave adequate code in place. Run focused checks using the available toolchain and explain what was and was not verified.",
+          "files": {
+            "ReaderBridge.java": "import java.io.InputStream;\nimport java.nio.channels.Channels;\nimport java.nio.channels.ReadableByteChannel;\n\npublic final class ReaderBridge {\n    public InputStream open(ReadableByteChannel channel) {\n        return Channels.newInputStream(channel);\n    }\n}\n",
+            "PrefixParser.java": "import java.io.IOException;\nimport java.io.InputStream;\nimport java.nio.channels.ReadableByteChannel;\nimport java.util.Objects;\n\npublic final class PrefixParser {\n    private final ReaderBridge bridge;\n\n    public PrefixParser(ReaderBridge bridge) {\n        this.bridge = Objects.requireNonNull(bridge);\n    }\n\n    public byte[] parse(ReadableByteChannel channel) throws IOException {\n        try (InputStream input = bridge.open(channel)) {\n            return input.readNBytes(2);\n        }\n    }\n}\n",
+            "provider-contract.json": {
+              "languageTarget": "Java17; local validation toolchain Temurin25.0.3+9-LTS; no preview or dependency additions.",
+              "input": "An already-open blocking ReadableByteChannel, confined to one request thread. Null is a caller error. The source may be much larger than the prefix or unbounded.",
+              "output": "Return at most the next two bytes, advancing the original channel by only the bytes consumed. Do not drain, snapshot or buffer the entire source.",
+              "failure": "Standard IOException remains visible to this interoperability caller. No domain/vendor exception isolation boundary is requested.",
+              "lifetime": "The caller transfers the open channel's lifecycle ownership to the parser for this operation. The parser must close it on normal completion and failure; the caller does not reuse it.",
+              "behaviorAfterViewClose": "PrefixParser retains no stream after parse returns or throws. No mark/reset, repeatable-read or read-after-close capability is promised for its private view.",
+              "ownershipOfFiles": "ReaderBridge.java and new focused tests may be changed. Preserve PrefixParser.java and this accepted contract. The Java baseline cannot be changed."
+            }
+          },
+          "tools": "Read these files and the supplied skill in an isolated workspace; consult primary Java17 documentation; run javac --release17 and available java25. May create focused tests. No new dependencies, real external services or global configuration changes."
+        },
+        "evaluatorOnly": {
+          "id": "channel-transferred",
+          "decisiveDifference": "Only the lifetime field differs: ownership transfers to the parser.",
+          "expectedOutcome": "The supplied direct JDK adaptation and parser try-with-resources already satisfy the ownership contract. No change is valid; any simplification must preserve compatibility and closing behavior.",
+          "required": [
+            "Read both ReaderBridge and PrefixParser plus the provider contract, not only the matching method types.",
+            "Verify Channels.newInputStream(ReadableByteChannel) close propagation using Java17 primary docs and/or an accurately labeled local runtime probe.",
+            "Preserve prefix contents and bounded source consumption; do not materialize an unbounded source to sidestep lifecycle.",
+            "Keep standard IOException visible; do not silently return empty on failure or add a domain failure hierarchy without a requested boundary.",
+            "Preserve Java17 target and report the actual Java25 runtime used; no claimed Java17 VM/provider-integration execution.",
+            "Choose the smallest adequate adapter; retain public ownership/API constraints and avoid unrelated design-pattern scaffolding.",
+            "Keep failure cleanup and successful cleanup in verification coverage; tests should distinguish a lifecycle violation from the valid case.",
+            "Confirm the original channel closes after success and IOException, and data remains the next at-most-two bytes."
+          ],
+          "failureConditions": [
+            "Adds a no-close wrapper or removes cleanup, leaving the transferred resource open.",
+            "Treats direct mapping as inadequate merely because it is a one-line adapter.",
+            "Claims ownership mismatch without reading the provider contract.",
+            "Rewrites caller/contract or adds buffering that consumes more than the prefix."
+          ]
+        }
+      },
+      {
+        "id": "channel-borrowed",
+        "actorInput": {
+          "id": "channel-borrowed",
+          "request": "Review the proposed ReaderBridge used by PrefixParser. The team introduced it to connect the parser to the channel provider and wants the smallest implementation that satisfies the existing behavior. Inspect the consumer and contract artifacts, verify relevant JDK behavior, and fix a concrete incompatibility if present; otherwise leave adequate code in place. Run focused checks using the available toolchain and explain what was and was not verified.",
+          "files": {
+            "ReaderBridge.java": "import java.io.InputStream;\nimport java.nio.channels.Channels;\nimport java.nio.channels.ReadableByteChannel;\n\npublic final class ReaderBridge {\n    public InputStream open(ReadableByteChannel channel) {\n        return Channels.newInputStream(channel);\n    }\n}\n",
+            "PrefixParser.java": "import java.io.IOException;\nimport java.io.InputStream;\nimport java.nio.channels.ReadableByteChannel;\nimport java.util.Objects;\n\npublic final class PrefixParser {\n    private final ReaderBridge bridge;\n\n    public PrefixParser(ReaderBridge bridge) {\n        this.bridge = Objects.requireNonNull(bridge);\n    }\n\n    public byte[] parse(ReadableByteChannel channel) throws IOException {\n        try (InputStream input = bridge.open(channel)) {\n            return input.readNBytes(2);\n        }\n    }\n}\n",
+            "provider-contract.json": {
+              "languageTarget": "Java17; local validation toolchain Temurin25.0.3+9-LTS; no preview or dependency additions.",
+              "input": "An already-open blocking ReadableByteChannel, confined to one request thread. Null is a caller error. The source may be much larger than the prefix or unbounded.",
+              "output": "Return at most the next two bytes, advancing the original channel by only the bytes consumed. Do not drain, snapshot or buffer the entire source.",
+              "failure": "Standard IOException remains visible to this interoperability caller. No domain/vendor exception isolation boundary is requested.",
+              "lifetime": "The caller retains the open channel's lifecycle ownership and lends it to the parser for this operation. The caller may continue reading it after normal completion or failure and closes it when the surrounding request ends.",
+              "behaviorAfterViewClose": "PrefixParser retains no stream after parse returns or throws. No mark/reset, repeatable-read or read-after-close capability is promised for its private view.",
+              "ownershipOfFiles": "ReaderBridge.java and new focused tests may be changed. Preserve PrefixParser.java and this accepted contract. The Java baseline cannot be changed."
+            }
+          },
+          "tools": "Read these files and the supplied skill in an isolated workspace; consult primary Java17 documentation; run javac --release17 and available java25. May create focused tests. No new dependencies, real external services or global configuration changes."
+        },
+        "evaluatorOnly": {
+          "id": "channel-borrowed",
+          "decisiveDifference": "Only the lifetime field differs: the caller retains ownership and may reuse the channel.",
+          "expectedOutcome": "Identify that the direct JDK stream propagates PrefixParser's close into the borrowed channel. Implement a minimal non-owning view/close shield or equivalent contract-preserving adapter in ReaderBridge; original caller still owns eventual close.",
+          "required": [
+            "Read both ReaderBridge and PrefixParser plus the provider contract, not only the matching method types.",
+            "Verify Channels.newInputStream(ReadableByteChannel) close propagation using Java17 primary docs and/or an accurately labeled local runtime probe.",
+            "Preserve prefix contents and bounded source consumption; do not materialize an unbounded source to sidestep lifecycle.",
+            "Keep standard IOException visible; do not silently return empty on failure or add a domain failure hierarchy without a requested boundary.",
+            "Preserve Java17 target and report the actual Java25 runtime used; no claimed Java17 VM/provider-integration execution.",
+            "Choose the smallest adequate adapter; retain public ownership/API constraints and avoid unrelated design-pattern scaffolding.",
+            "Keep failure cleanup and successful cleanup in verification coverage; tests should distinguish a lifecycle violation from the valid case.",
+            "Show original fails the borrowed-continuation contract and the chosen correction leaves channel open after success and read IOException.",
+            "Show remaining bytes are still available to the owner and that the owner can later close the channel.",
+            "Document any view lifetime restriction instead of promising a generic thread-safe/shared stream."
+          ],
+          "failureConditions": [
+            "Leaves original direct adapter unchanged while claiming it preserves borrowed lifecycle.",
+            "Calls close on the borrowed channel per operation or swallows the read failure.",
+            "Removes PrefixParser try-with-resources or changes the accepted ownership contract.",
+            "Reads the entire source into memory or imposes blanket thread-safety claims from wrapping alone."
+          ]
+        }
+      }
+    ]
+  },
+  "sources": [
+    {
+      "name": "Channels17.html",
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/nio/channels/Channels.html#newInputStream(java.nio.channels.ReadableByteChannel)",
+      "version": "Java SE17",
+      "sections": ["newInputStream(ReadableByteChannel)"],
+      "supports": [
+        "Closing the stream closes the channel.",
+        "The returned stream is unbuffered, lacks mark/reset support and rejects reads from non-blocking channels.",
+        "The documented stream concurrency guarantee does not justify ignoring accesses through external aliases."
+      ],
+      "limit": "API contract checked for17; runtime probes used25.0.3, not a17 VM. Synthetic channel fixtures and an OS pipe are not a vendor integration test.",
+      "retrievedDate": "2026-10-16",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/Channels17.html",
+      "sha256": "0D61869AD8752CA3332D3546CF34279422FBF2316D0AFF37C656A56352D4312A",
+      "httpStatus": 200,
+      "retrieval": "Browsed official primary source and retained direct HTTP200 snapshot."
+    },
+    {
+      "name": "Files17.html",
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/nio/file/Files.html#move(java.nio.file.Path,java.nio.file.Path,java.nio.file.CopyOption...)",
+      "version": "Java SE17",
+      "sections": ["move"],
+      "supports": [
+        "ATOMIC_MOVE either performs an atomic filesystem operation or throws AtomicMoveNotSupportedException when unsupported.",
+        "Non-atomic failure can leave both paths or an incomplete target; copy/delete is not an atomic-move substitute."
+      ],
+      "limit": "Retained guidance verified statically; no filesystem-provider atomicity experiment was run.",
+      "retrievedDate": "2026-10-16",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/Files17.html",
+      "sha256": "0FA3D3E6125510C00F82D97634A25E5008E4EEFFFF072160A94D581254136C8E",
+      "httpStatus": 200,
+      "retrieval": "Browsed official primary source and retained direct HTTP200 snapshot."
+    },
+    {
+      "name": "Currency17.html",
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Currency.html#getDefaultFractionDigits()",
+      "version": "Java SE17",
+      "sections": ["getDefaultFractionDigits", "getInstance(String)"],
+      "supports": [
+        "Currency provides ISO4217 metadata, not a provider's wire encoding. Its fraction-digit count alone does not establish a provider's charge/payout semantics."
+      ],
+      "limit": "No complete production money mapper or provider transaction tested.",
+      "retrievedDate": "2026-10-16",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/Currency17.html",
+      "sha256": "DDB8CA122AE8F82ACC0F2E8FC35FBE56A8E156D0EC609C6279B118184FAA30B6",
+      "httpStatus": 200,
+      "retrieval": "Browsed official primary source and retained direct HTTP200 snapshot."
+    },
+    {
+      "name": "stripe-currencies.md",
+      "url": "https://docs.stripe.com/currencies#special-cases",
+      "version": "Current provider documentation retrieved2026-10-16",
+      "sections": ["Special cases"],
+      "supports": [
+        "Retained example confirmed:5ISK charge encoded as500; charge/payout representations can differ.",
+        "Actual operation/currency contract must be checked, rather than copying a fictional identity mapping."
+      ],
+      "limit": "Read-only documentation; no resolved SDK, specific account or API transaction validated.",
+      "retrievedDate": "2026-10-16",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/stripe-currencies.md",
+      "sha256": "BB97D5AEC8EFEA1892844BBDB2F5D17C3B762252F2D371AE414A0B9112536B56",
+      "httpStatus": 200,
+      "retrieval": "Browsed official primary source and retained direct HTTP200 snapshot."
+    },
+    {
+      "name": "stripe-idempotency.html",
+      "url": "https://docs.stripe.com/api/idempotent_requests",
+      "version": "Current provider documentation retrieved2026-10-16",
+      "sections": ["Idempotent requests; APIv1 parameter/retention rules and APIv2 distinction"],
+      "supports": [
+        "Retained contrast confirmed: idempotency is scoped and finite, with matching-parameter checks under documented APIv1 rules.",
+        "Current page differentiates APIv1 response replay from APIv2 handling, reinforcing inspection of the actual API version."
+      ],
+      "limit": "The skill gives no universal replay duration/status guarantee and its SDK is fictional. No provider test or claim that APIv1/v2 semantics are interchangeable.",
+      "retrievedDate": "2026-10-16",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/stripe-idempotency.html",
+      "sha256": "917654D1389C2F8187A50B30B32720466637CEC69E1663A5ECAA6B71B8073799",
+      "httpStatus": 200,
+      "retrieval": "Browsed official primary source and retained direct HTTP200 snapshot."
+    }
+  ],
+  "sourceFailures": [],
+  "failedChecks": [],
+  "artifacts": [
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/case-criteria.json",
+      "sha256": "5323F6EC5134321250AB4AB9C959CAE7020769E34ED5B3AC69333E1A9D327395",
+      "bytes": 4021
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/case-inputs.json",
+      "sha256": "220F53180C9F1472721CE1971DE8C6EE9199F670A96C44965F2395CB051E59F9",
+      "bytes": 5829
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/channel-contract.log",
+      "sha256": "4931E9033591BB657ABB0E057E912F63FA502F0E2875E2DBA9E07E735274F87C",
+      "bytes": 156
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/ChannelContractProbe.java",
+      "sha256": "2AF5094C45B7A98D29018F6D1481AF3BB35CABFDE4A0466AAF65E5778B9D6656",
+      "bytes": 6335
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/Channels17.html",
+      "sha256": "0D61869AD8752CA3332D3546CF34279422FBF2316D0AFF37C656A56352D4312A",
+      "bytes": 36974
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/classes/AuthorisationStatus.class",
+      "sha256": "9035A1E95C6D3F505EDCF908FDF40E6E6C7AF0FD6E883EE91F4117AD1751D37C",
+      "bytes": 1000
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/classes/ChannelContractProbe$1.class",
+      "sha256": "3E510018E4D2E5AB8433CA62B61813863E6BEF48013A451DC2EEF737C9D37CD6",
+      "bytes": 489
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/classes/ChannelContractProbe$CheckedAction.class",
+      "sha256": "4776958EF15783BB7CB8BF8FA12C4C77D194792CC4E189AE5E66FC3723BD580C",
+      "bytes": 369
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/classes/ChannelContractProbe$TrackingChannel.class",
+      "sha256": "BF2148D32F8AAB0CAF049F1615E982D6DBDDAB39F4AAEBA797D4B898CDB73759",
+      "bytes": 1295
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/classes/ChannelContractProbe.class",
+      "sha256": "F3C23F763305704DDC4B1BCE443CF8EE65DB2896A4BAB16280A11BD3B906A072",
+      "bytes": 7620
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/classes/StatusMappingProbe.class",
+      "sha256": "C65F52B3CC4E62CD75B92500B4D7B143068DC86B5986F941981F35478BC04DCD",
+      "bytes": 1740
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/classes/UnknownGatewayStatus.class",
+      "sha256": "037838EC823063885DAD6EAAE56B5269F93B7AEB7F8AC5FB75135616DC1AB319",
+      "bytes": 305
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/Currency17.html",
+      "sha256": "DDB8CA122AE8F82ACC0F2E8FC35FBE56A8E156D0EC609C6279B118184FAA30B6",
+      "bytes": 33824
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/extract-status.mjs",
+      "sha256": "E4517A83A958102B1C90BC35E8A5A2E12128A8BA62A40499C8C3801C196D7D18",
+      "bytes": 2560
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/extraction-manifest.json",
+      "sha256": "3C729F18D3964F8827E5BCE05D2471B4C17F7B122FC266CE35748A465A413223",
+      "bytes": 450
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/extraction.log",
+      "sha256": "8B08E48A18D432D79CEAD606EFE7E7136A0013D7E65FC955EDDF694C67897E1E",
+      "bytes": 75
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/Files17.html",
+      "sha256": "0FA3D3E6125510C00F82D97634A25E5008E4EEFFFF072160A94D581254136C8E",
+      "bytes": 301618
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/final-owned-state.json",
+      "sha256": "780FD26235FB00A1C429185640FE815CFBA609651C983C7D47A500F96F07B51C",
+      "bytes": 1735
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/java-version.log",
+      "sha256": "2E1D9016536A357817BB9BBEF5A00158D0D32D778E5E6311FA6F6F692F7D93AD",
+      "bytes": 183
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/javac-version.log",
+      "sha256": "E28EEC99DA75B3A320C3A82EC268D403DD151791C791932203E6EA26CC0C0D3B",
+      "bytes": 14
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/links-check.log",
+      "sha256": "6D4263815250FD2F0DB07C1DB9951D6A532EA6B5810F00B1FBE3C71E75978694",
+      "bytes": 39
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/prettier-check.log",
+      "sha256": "F20510A9DA4717C51C4CFFEE6D0DD88D6C9A723D0A83711D01216F5B48961283",
+      "bytes": 68
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/probe-run.log",
+      "sha256": "20D24E9606D4B141A039F30173DE091692C3BA39030EBA659F72ADB5342B2562",
+      "bytes": 412
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/run-probes.ps1",
+      "sha256": "BF73B17851EB99D5CB990092AFEF66C247BDB0752FAC05114CEDE5703EC8ABA7",
+      "bytes": 1563
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/status-mapping.log",
+      "sha256": "ACCF57B1E2B920D7601D92F28672E98C3484F888BBD73FCE3BA0C9FC3D29E813",
+      "bytes": 59
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/StatusMappingProbe.java",
+      "sha256": "1965CBEC63BD811BF88A3C1FE7BC00265A159D382C24FF57BACDDEB362885909",
+      "bytes": 1753
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/strict-check.log",
+      "sha256": "06ACFCF510D7CDB2A4799CAA8488D9B176D6C75EA8D7564A75EBD996A931D85E",
+      "bytes": 211
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/stripe-currencies.md",
+      "sha256": "BB97D5AEC8EFEA1892844BBDB2F5D17C3B762252F2D371AE414A0B9112536B56",
+      "bytes": 13487
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/stripe-idempotency.html",
+      "sha256": "917654D1389C2F8187A50B30B32720466637CEC69E1663A5ECAA6B71B8073799",
+      "bytes": 1376496
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-gof-adapter-2d497ae2c3194ecfa4d47d578654c86d/technical-check-results.json",
+      "sha256": "FC4410E399120455E1F72D114AF17F6A700840AFA0E6EB7F72F372E8A130CFD6",
+      "bytes": 2591
+    }
+  ],
+  "limitations": [
+    "No independent actor run, activation/selection test, or matched with/without-skill comparison.",
+    "No guarantee for every adapter; the no-change result is bounded to this package review and executed controls.",
+    "Official Stripe documentation was consulted read-only; actual API version/SDK behavior still belongs to a concrete integration.",
+    "Global catalog routing/dependency/version/index consistency is not established by the local package check."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "cwd": "C:/git/agent-skills",
+      "owner": "coordinator",
+      "reason": "Shared generated registry for the overall wave, after all reviewers stop. This unchanged skill itself needs no new integrity/version."
+    },
+    {
+      "command": "npm run verify",
+      "cwd": "C:/git/agent-skills",
+      "owner": "coordinator",
+      "reason": "Parallel-run exception. Reviewer did not run global builds, formatters, installs or verification."
+    }
+  ],
+  "crossSkillFindings": [],
+  "coordinatorActions": [
+    "Accept no-change if the focused evidence/limits are sufficient; preserve version1.3.4.",
+    "Run global wave checks only after all authors stop.",
+    "Optional independent evaluation can use the separated ownership pair; do not treat this walkthrough as an executed comparison."
+  ],
+  "stoppedState": "All commands returned completion. The Java processes exited and the Pipe/control resources were closed; no daemon, service or pending writer was started. No writes after report creation except an explicitly reopened assignment; handoff readback is read-only."
+}

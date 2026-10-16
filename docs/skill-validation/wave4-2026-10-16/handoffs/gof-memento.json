@@ -1,0 +1,429 @@
+{
+  "skill": "gof-memento",
+  "status": "NO_CHANGES_NEEDED",
+  "ownedPath": "skills/gof-memento",
+  "reviewer": "/root/quality02",
+  "reviewDate": "2026-10-16",
+  "allWritesStopped": true,
+  "activeBackgroundProcesses": [],
+  "versions": {
+    "committed": "1.2.4",
+    "assignment": "1.2.4",
+    "final": "1.2.4",
+    "preExistingBump": false,
+    "rationale": "No skill content changed. All four files match assignment and coordinator wave baseline; no version bump is appropriate."
+  },
+  "files": {
+    "changedByReviewer": [],
+    "preExistingChanges": [],
+    "untrackedInOwnedPackage": [],
+    "reviewed": [
+      "skills/gof-memento/SKILL.md",
+      "skills/gof-memento/references/memento-snapshot-eventsourcing.md",
+      "skills/gof-memento/references/worked-example.md",
+      "skills/gof-memento/skill.yaml"
+    ],
+    "baseline": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-memento\\baseline.json",
+    "finalDiff": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-memento\\final.diff",
+    "finalHashes": [
+      {
+        "path": "SKILL.md",
+        "sha256": "7e6b2f60fbf967a52241a8fcd8361884a55624645bb3cb963d8371672f2e81da"
+      },
+      {
+        "path": "references/memento-snapshot-eventsourcing.md",
+        "sha256": "1272007a951b0b8e0ba8ab6e6e310c361e4f1f28150cd8618d4d9a7f19d67a1f"
+      },
+      {
+        "path": "references/worked-example.md",
+        "sha256": "b6fa3b36bd0d3d72a2176ccb1bb9c54672f5b8d14ba998085a869f7c330ec3cd"
+      },
+      {
+        "path": "skill.yaml",
+        "sha256": "e96e660da448f2c26eca19cc003855f9c871a09d88a79a5e97e06c01368b8119"
+      }
+    ]
+  },
+  "changes": [],
+  "findings": {
+    "corrected": [],
+    "remainingMaterialDefects": [],
+    "assessment": "The existing skill already provides the requested owner/invariant/alias/concurrency/durability boundaries and meaningful simpler alternatives. Complete inspection, targeted primary contracts and extracted-snippet controls did not justify an edit.",
+    "evidence": [
+      {
+        "location": "SKILL.md:28-35, 113-139, 151-165, 197-202",
+        "finding": "Consumer operation, state ownership, overwrite policy and project toolchain precede the API decision. Owner-checked snapshots prepare replacements before publication; mutable isolation is required at capture and restore.",
+        "consequence": "The skill already prevents foreign snapshots, retained-capture aliasing and unsupported all-or-nothing claims. Partial snippets explicitly retain domain validation obligations."
+      },
+      {
+        "location": "references/worked-example.md:58-96; references/memento-snapshot-eventsourcing.md:82-115",
+        "finding": "Round trips use independent semantic observation; omitted fields and restore-introduced aliases receive distinct checks. History operations prepare before removing entries; no-op/rejected edits and redo/branch policies are separated.",
+        "consequence": "Capture equality cannot hide a missing field, and a rejected restore must not silently consume undo history."
+      },
+      {
+        "location": "references/memento-snapshot-eventsourcing.md:149-184; references/worked-example.md:143-152",
+        "finding": "Atomic reference publication is separated from read-modify-write semantics. ABA is explicitly covered with a non-restored generation compared and advanced together with state when the conflict policy requires it.",
+        "consequence": "No need to add concurrency boilerplate; identity-only acceptance remains valid only for the stated weaker policy, not as proof that no intervening edit occurred."
+      },
+      {
+        "location": "SKILL.md:80-91, 167-187; references/memento-snapshot-eventsourcing.md:186-223",
+        "finding": "Immutable references, small bounded copies and exact inverses remain alternatives. Durable captures require schema/evolution semantics; restoring local state is explicitly distinct from compensation and irreversible effects.",
+        "consequence": "Avoids forced event sourcing/persistent structures and prevents a restored flag from being treated as a reversal of an already durable external action."
+      },
+      {
+        "location": "references/worked-example.md:154-208",
+        "finding": "Checkpoint decoding is a qualified Jackson 2.x partial sketch checked against 2.17.3, with integral/range version checks, adapters, post-migration validation and bounded parsing obligations. Local transaction ownership is distinguished from remote effects.",
+        "consequence": "No unsupported dependency upgrade or durable exactly-once guarantee is introduced."
+      }
+    ]
+  },
+  "preserved": [
+    "Opaque caretaker contract and explicit distinction from a readable DTO, durable snapshot and authoritative event log.",
+    "Java 17 partial-snippet baseline without preview, plus inspection of the target project toolchain.",
+    "Owner token, record rendering redaction and observable equality/hashCode caveats; encapsulation is not a reflection security boundary.",
+    "Deep immutability prerequisite and isolation during both capture and repeated restore.",
+    "Failure preparation, invariants and coordination between live state and undo/redo history.",
+    "Torn-capture prevention, single-reference publication limits, pure CAS updates and non-restored ABA generation.",
+    "Independent semantic round-trip observation and no-op/rejected-edit versus successful-edit histories.",
+    "Small bounded copies or retained immutable references when adequate; measured retention instead of a universal depth-times-size heap bound.",
+    "Versioned checkpoint semantics, Jackson coercion/range guard, recovery completeness and external-effect boundaries.",
+    "Twelve existing declared optional skill referrals and conditionally routed references."
+  ],
+  "replacedOrRemovedCapabilities": [],
+  "checks": [
+    {
+      "kind": "executed structural",
+      "command": "node C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-memento\\check-local.mjs",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": {
+        "strictManifestIssues": 0,
+        "metadataAgreement": true,
+        "packageFiles": 4,
+        "relativeLinks": 4,
+        "directReferrals": 12,
+        "assignmentAndWaveBaselineByteIdentical": true
+      },
+      "fullResult": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-memento\\structure-results.json"
+    },
+    {
+      "kind": "executed formatting, read-only",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/gof-memento/SKILL.md skills/gof-memento/skill.yaml skills/gof-memento/references/worked-example.md skills/gof-memento/references/memento-snapshot-eventsourcing.md",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "Checking formatting...\nAll matched files use Prettier code style!\n",
+      "stderr": ""
+    },
+    {
+      "kind": "executed example and API controls",
+      "command": "node C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-memento\\check-examples.mjs",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "fullResult": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-memento\\java-results.json",
+      "result": {
+        "status": "PASS",
+        "checks": [
+          {
+            "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe -version",
+            "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-memento\\java",
+            "exitCode": 0,
+            "stdout": "javac 25.0.3\r\n",
+            "stderr": "",
+            "error": null
+          },
+          {
+            "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe -version",
+            "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-memento\\java",
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n",
+            "error": null
+          },
+          {
+            "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe --release 17 -Xlint:all -d C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-memento\\java\\classes C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-memento\\java\\MementoChecks.java",
+            "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-memento\\java",
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": "",
+            "error": null
+          },
+          {
+            "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe -cp C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-memento\\java\\classes MementoChecks",
+            "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-memento\\java",
+            "exitCode": 0,
+            "stdout": "PASS 24 assertions; three extracted originator snippets; two alias controls and deterministic ABA controls\r\n",
+            "stderr": "",
+            "error": null
+          }
+        ],
+        "extractedSnippets": 3,
+        "assertions": 24,
+        "adaptations": "Added omitted imports, immutable fixture domain records, test edit/observation methods and append helper. Renamed/wrapped the two ClaimDraft variants. Capture/restore bodies are extracted without semantic edits.",
+        "limits": "Compiled with javac 25.0.3 --release 17; executed on Temurin 25.0.3, not JDK 17. Thread-confined example checks and deterministic ABA ordering only. No linearizability/stress, property-generator, caretaker transaction, broker, database, performance or Jackson integration test."
+      }
+    },
+    {
+      "kind": "executed primary-source capture",
+      "command": "node C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-memento\\capture-sources.mjs",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "Eight targeted primary sources previously consulted through the web tool captured with HTTP 200 and SHA-256 hashes.",
+      "fullResult": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-memento\\source-evidence.json"
+    },
+    {
+      "kind": "executed fixture consistency",
+      "command": "node C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-memento\\create-cases.mjs",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": {
+        "status": "PASS",
+        "cases": [
+          {
+            "id": "MM-C1",
+            "input": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-memento\\cases\\case-a\\input.json",
+            "workspace": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-memento\\cases\\case-a"
+          },
+          {
+            "id": "MM-C2",
+            "input": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-memento\\cases\\case-b\\input.json",
+            "workspace": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-memento\\cases\\case-b"
+          }
+        ],
+        "evaluatorCriteria": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-memento\\case-criteria.json",
+        "commonFilesByteIdentical": 7,
+        "decisiveDifference": "runtime.properties delivery.mode only",
+        "agentEvaluationsExecuted": 0
+      },
+      "note": "Seven common artifacts are byte-identical; only active delivery mode changes. This did not execute an actor or contact a broker."
+    },
+    {
+      "kind": "executed final scoped git inspection",
+      "command": "git status --short -- skills/gof-memento",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "kind": "executed final scoped git inspection",
+      "command": "git diff -- skills/gof-memento",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "kind": "executed final scoped git inspection",
+      "command": "git diff --cached -- skills/gof-memento",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "kind": "executed final scoped git inspection",
+      "command": "git diff --check -- skills/gof-memento",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "kind": "executed final byte comparison",
+      "command": "node C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-memento\\finalize-handoff.mjs",
+      "cwd": "C:/git/agent-skills",
+      "result": "All four package files still equal assignment; version 1.2.4 unchanged; eight retained source hashes verified."
+    }
+  ],
+  "javaCompatibility": {
+    "authoredBaseline": "Java 17 partial snippets; no preview; Jackson sketch refers to 2.17.3 API",
+    "compiler": "javac 25.0.3 --release 17 -Xlint:all",
+    "runtime": "Temurin 25.0.3+9",
+    "runtime17Executed": false,
+    "installsOrUpgrades": false,
+    "note": "Imports, immutable domain fixtures, edit/observation helpers and append helper complete three extracted snippets. Actual capture/restore bodies are unchanged. Other fragments remain illustrative; no Jackson/jqwik/AssertJ dependencies were installed."
+  },
+  "behavioralEvaluationsExecuted": [],
+  "walkthroughs": [
+    {
+      "case": "MM-C1",
+      "type": "Structured review of synthetic artifacts, not an actor run",
+      "outcome": "The active LOCAL_PREPARE factory branch only changes originator-owned immutable ready state. The bounded owner-checked memento is sufficient for this configured local undo. Broker existence alone does not prove an external effect. Scope the review conclusion and preserve the current representation."
+    },
+    {
+      "case": "MM-C2",
+      "type": "Structured review of synthetic artifacts, not an actor run",
+      "outcome": "The same caller now chooses PUBLISH_DURABLE and calls the durable sink before setting ready. Draft restoration cannot revoke the acknowledged request. Correct the existing cancellation claim and propose a narrow post-commit undo boundary/status rule while retaining valid local mementos. No recall API or compensation authority is supplied."
+    }
+  ],
+  "cases": {
+    "kind": "Development cases, not holdouts",
+    "inputs": [
+      {
+        "id": "MM-C1",
+        "input": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-memento\\cases\\case-a\\input.json",
+        "workspace": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-memento\\cases\\case-a"
+      },
+      {
+        "id": "MM-C2",
+        "input": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-memento\\cases\\case-b\\input.json",
+        "workspace": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-memento\\cases\\case-b"
+      }
+    ],
+    "evaluatorCriteria": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-memento\\case-criteria.json",
+    "criteriaPhysicallySeparateFromInputs": true,
+    "decisiveDifference": "runtime.properties delivery.mode only",
+    "actorStatus": "No agents executed; awaiting coordinator selection/evaluation.",
+    "prerequisites": "Copy the synthetic source/config/contract workspace and expose input artifacts without evaluator criteria. Review may edit review.md only; no live broker, install or real configuration.",
+    "separationLimit": "Filesystem separation is procedural, not an enforced actor sandbox; coordinator must control exposure for a comparative run."
+  },
+  "sources": [
+    {
+      "id": "java17-list",
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html",
+      "section": "Java SE 17 List: Unmodifiable Lists and copyOf",
+      "supports": "List structure is unmodifiable; mutable elements remain mutable.",
+      "consulted": "2026-10-16",
+      "primary": true,
+      "status": "CAPTURED",
+      "httpStatus": 200,
+      "evidence": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-memento\\sources\\java17-list.html",
+      "bytes": 113331,
+      "sha256": "976eeba5b8d75a702ca65eed816e0ec190559400909ed3a8271d9b9de923c6ed"
+    },
+    {
+      "id": "jls17-records",
+      "url": "https://docs.oracle.com/javase/specs/jls/se17/html/jls-8.html",
+      "section": "JLS 17 section 8.10.3",
+      "supports": "Generated accessors and Object methods have observable component-based behavior; private nesting alone does not redact rendering.",
+      "consulted": "2026-10-16",
+      "primary": true,
+      "status": "CAPTURED",
+      "httpStatus": 200,
+      "evidence": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-memento\\sources\\jls17-records.html",
+      "bytes": 581514,
+      "sha256": "5a7941c1fbbc32590962a291cb221b22fdc6b87091bf7a604013434649fdc3bc"
+    },
+    {
+      "id": "jls17-memory",
+      "url": "https://docs.oracle.com/javase/specs/jls/se17/html/jls-17.html",
+      "section": "JLS 17 sections 17.4.5 and 17.7",
+      "supports": "Volatile publication has happens-before semantics; reference reads/writes are atomic, not multi-operation updates.",
+      "consulted": "2026-10-16",
+      "primary": true,
+      "status": "CAPTURED",
+      "httpStatus": 200,
+      "evidence": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-memento\\sources\\jls17-memory.html",
+      "bytes": 174374,
+      "sha256": "f4531e1e559e5fea8310947e85315fbdba9b2fe044a8c1da782f362451704e2d"
+    },
+    {
+      "id": "java17-atomic-reference",
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/atomic/AtomicReference.html",
+      "section": "Java SE 17 AtomicReference compareAndSet/getAndUpdate",
+      "supports": "CAS compares expected reference identity; update callbacks may repeat and should be side-effect-free.",
+      "consulted": "2026-10-16",
+      "primary": true,
+      "status": "CAPTURED",
+      "httpStatus": 200,
+      "evidence": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-memento\\sources\\java17-atomic-reference.html",
+      "bytes": 62557,
+      "sha256": "5bc51ba0139a18135b4081c1320f7bac20c6fc4ed732e316b98d4fe447a9ea8e"
+    },
+    {
+      "id": "java17-stamped-reference",
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/atomic/AtomicStampedReference.html",
+      "section": "Java SE 17 AtomicStampedReference compareAndSet/get",
+      "supports": "Reference and stamp can be compared/updated together; stamp advancement policy is application-owned.",
+      "consulted": "2026-10-16",
+      "primary": true,
+      "status": "CAPTURED",
+      "httpStatus": 200,
+      "evidence": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-memento\\sources\\java17-stamped-reference.html",
+      "bytes": 24048,
+      "sha256": "b13d8d6f22e77042ada0ec14cacd585c6d6bbe70c601f67b18ffe6e1de95fb35"
+    },
+    {
+      "id": "java17-undo-manager",
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/undo/UndoManager.html",
+      "section": "Java SE 17 UndoManager class description",
+      "supports": "Adding an edit after undo removes the abandoned redo suffix for this linear history contract.",
+      "consulted": "2026-10-16",
+      "primary": true,
+      "status": "CAPTURED",
+      "httpStatus": 200,
+      "evidence": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-memento\\sources\\java17-undo-manager.html",
+      "bytes": 56059,
+      "sha256": "a38df0118f8c6d3f5303d31921669278a32ff4862cd23948f1a52a4162fd4464"
+    },
+    {
+      "id": "jackson-2173-json-node",
+      "url": "https://raw.githubusercontent.com/FasterXML/jackson-databind/jackson-databind-2.17.3/src/main/java/com/fasterxml/jackson/databind/JsonNode.java",
+      "section": "jackson-databind-2.17.3 JsonNode isIntegralNumber/canConvertToInt",
+      "supports": "An integer/range version guard avoids the coercions accepted by a bare int conversion.",
+      "consulted": "2026-10-16",
+      "primary": true,
+      "status": "CAPTURED",
+      "httpStatus": 200,
+      "evidence": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-memento\\sources\\jackson-2173-json-node.txt",
+      "bytes": 59621,
+      "sha256": "b8ba82bd62725ebeb9db8de5c25a9288640563c6d3e484779fa2a2f46e01b0ef"
+    },
+    {
+      "id": "azure-compensation",
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/compensating-transaction",
+      "section": "Microsoft Azure Architecture Center: Context and problem; Solution",
+      "supports": "External compensation is business-specific, can fail and cannot in general be replaced by restoring prior local state.",
+      "consulted": "2026-10-16",
+      "primary": true,
+      "status": "CAPTURED",
+      "httpStatus": 200,
+      "evidence": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-memento\\sources\\azure-compensation.html",
+      "bytes": 65308,
+      "sha256": "fbfcd16549e56f203e3b10cdb35bd5f8ebf0afd514434bdd477a159bca256910"
+    }
+  ],
+  "limitations": [
+    "No measured agent improvement, baseline/final comparison, selection measurement or independent actor evaluation; unchanged package is a justified preservation decision.",
+    "JDK 17 API/source compilation target was checked with JDK 25; there was no execution on a JDK 17 runtime.",
+    "Twenty-four checks exercise three thread-confined originator snippets and deliberately ordered alias/ABA controls. They are not a linearizability proof, stress test or full application validation.",
+    "No jqwik generation, caretaker transaction implementation, Jackson integration, schema migration round trip, crash recovery, actual broker delivery, database transaction or memory benchmark was executed.",
+    "Source contracts support their specific Java/API properties. The Azure compensation discussion is design guidance, not proof of a particular business compensation operation.",
+    "Primary-source research was targeted, not a systematic pattern-literature review. No claim is made that all possible application invariants or formats were evaluated.",
+    "Some batched reading output was truncated; both supporting package references were subsequently read separately in full and primary contracts were inspected through targeted retrievals.",
+    "Local metadata/referral checks do not establish catalog-wide routing, dependency resolution or global repository validity."
+  ],
+  "failures": {
+    "materialLocalFailures": [],
+    "preExistingProductFailures": [],
+    "introducedFailures": []
+  },
+  "evidence": {
+    "directory": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-memento",
+    "baseline": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-memento\\baseline.json",
+    "finalChecks": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-memento\\final-check-results.json",
+    "exampleSource": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-memento\\java\\MementoChecks.java",
+    "exampleResults": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-memento\\java-results.json",
+    "sourceEvidence": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-memento\\source-evidence.json"
+  },
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Parallel-review exception; only coordinator writes the generated shared index.",
+      "prerequisite": "All reviewers stopped writing."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Global checks are deferred by reviewer ownership rules.",
+      "prerequisite": "Coordinator index build and stable working tree after all reviewers stop."
+    }
+  ],
+  "crossSkill": [],
+  "coordinatorActions": [
+    "Inspect/archive handoff and small relevant evidence; do not vendor primary-source HTML or upstream Java source into the shipped package.",
+    "Optional independent behavior evaluation must receive case inputs without evaluator criteria and retain actual outputs.",
+    "Run shared registry build and final verification after all reviewers stop."
+  ]
+}

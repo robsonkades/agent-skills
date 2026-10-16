@@ -53,9 +53,11 @@ Adding an ELEMENT TYPE
   methods on elements   → one new class. Cheap.
   Visitor / switch      → every operation needs valid specialized or fallback handling.
 
-Choose by which change your domain actually produces. A stable set of
-types with growing operations wants Visitor; a growing set of types
-with stable operations wants polymorphism.
+Compare actual change with operation ownership and required coverage.
+Growing operations over stable types favour Visitor; growing types can
+favour methods on elements when those operations belong in the model.
+Reviewing every operation for each new type can be an intentional
+coverage requirement, even when type additions are frequent.
 ```
 
 The sealed-plus-`switch` form improves the second row: adding an element type is still expensive,
@@ -82,13 +84,15 @@ short-circuit
           explicit fold. A switch alone does not carry traversal.
 ```
 
-## When it is not
+## When another form may be clearer
 
 - **One intrinsic operation over the structure.** A method on elements may be clearer. One
   external operation can still justify Visitor when an established traversal/API requires it.
-- **Growth requires new behavior in most operations.** Compare the actual update cost with
-  polymorphism. Frequent new kinds alone do not invalidate an established Visitor whose extension
-  or fallback contract already meets those operations.
+- **Type additions make operation updates costly.** Compare that cost with polymorphism and
+  the required per-operation review. Updating every Visitor is not by itself evidence of a wrong
+  design: it can expose missing billing, validation or rendering semantics before release. Preserve
+  that deliberate coverage; do not add a generic fallback merely to silence expected compile errors.
+  An established extension or fallback contract can also remain adequate when new kinds are frequent.
 - **The operation belongs to an element you control.** Prefer `area()` on a shape when the
   model owns that behaviour and its API can support it (`java-tell-dont-ask`). Library-owned
   types or an established external operation API can justify Visitor; inspect ownership and

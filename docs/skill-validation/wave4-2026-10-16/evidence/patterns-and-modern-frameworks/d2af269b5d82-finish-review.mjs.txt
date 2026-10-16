@@ -1,0 +1,124 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+import assert from 'node:assert/strict';
+
+const repo = 'C:/git/agent-skills';
+const skill = 'patterns-and-modern-frameworks';
+const root = 'C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9';
+const dir = `${root}/${skill}`;
+const read = p => JSON.parse(fs.readFileSync(`${dir}/${p}`, 'utf8'));
+const hash = b => crypto.createHash('sha256').update(b).digest('hex');
+const baseline = read('assignment-baseline.json');
+const validation = read('local-validation.json');
+const sourceIndex = read('sources/source-index.json');
+const commands = read('commands.json');
+const finishCommands = [];
+const run = (exe, args) => {
+  const p = spawnSync(exe, args, { cwd: repo, encoding: 'utf8', timeout: 20000 });
+  const result = { exe, args, cwd: repo, exitCode: p.status, stdout: p.stdout, stderr: p.stderr, error: p.error?.message };
+  finishCommands.push(result);
+  assert.equal(p.status, 0, JSON.stringify(result));
+  return p.stdout;
+};
+const jarScript = String.raw`Add-Type -AssemblyName System.IO.Compression.FileSystem
+$names = @('spring-core','spring-jcl','spring-beans','spring-aop','spring-context','spring-expression','spring-context-support','spring-tx')
+foreach ($name in $names) {
+  $archivePath = 'C:/Users/robso/.m2/repository/org/springframework/' + $name + '/6.2.10/' + $name + '-6.2.10.jar'
+  $archive = [System.IO.Compression.ZipFile]::OpenRead($archivePath)
+  try {
+    $reader = [System.IO.StreamReader]::new($archive.GetEntry('META-INF/MANIFEST.MF').Open())
+    try { $body = $reader.ReadToEnd() } finally { $reader.Dispose() }
+    if ($body -notmatch '(?m)^Implementation-Version: 6\.2\.10\r?$') { throw ('Unexpected implementation version: ' + $name) }
+    Write-Output ($name + ' Implementation-Version=6.2.10 PASS')
+  } finally { $archive.Dispose() }
+}`;
+run('powershell', ['-NoProfile', '-Command', jarScript]);
+const finalFiles = baseline.files.map(f => {
+  const absolutePath = `${repo}/skills/${skill}/${f.name}`;
+  const bytes = fs.readFileSync(absolutePath);
+  let expected = f.content;
+  if (f.name === 'references/modern-java-idioms.md') expected = expected.replaceAll('jakarta-persistence-spec-3.2#', 'jakarta-persistence-spec-3.2.html#').replaceAll('jakarta-persistence-spec-3.2)', 'jakarta-persistence-spec-3.2.html)');
+  if (f.name === 'skill.yaml') expected = expected.replace('version: 1.2.4\n', 'version: 1.2.5\n');
+  assert.equal(bytes.toString('utf8'), expected, `Unexpected or overlapping change: ${f.name}`);
+  return { path: absolutePath, relativePath: f.name, assignmentSha256: f.sha256, finalSha256: hash(bytes), changedByReviewer: hash(bytes) !== f.sha256 };
+});
+const status = run('git', ['status', '--short', '--untracked-files=all', '--', `skills/${skill}`]);
+const diff = run('git', ['diff', '--', `skills/${skill}`]);
+assert.equal(run('git', ['diff', '--cached', '--', `skills/${skill}`]), '');
+run('git', ['diff', '--check', '--', `skills/${skill}`]);
+assert.equal(status.trim().split('\n').length, 2);
+fs.writeFileSync(`${dir}/final-diff.patch`, diff);
+fs.writeFileSync(`${dir}/final-validation.json`, JSON.stringify({ status, finalFiles, finishCommands }, null, 2));
+
+const sources = sourceIndex.map(s => ({ ...s, observedVersion: s.id === 'jakarta-persistence-3.2' ? 'Jakarta Persistence 3.2, April 10 2024' : s.id === 'hibernate-6.2-introduction' ? 'HTML header 6.2.52.Final; EmbeddedId limitation text explicitly dated May 2023' : s.id.startsWith('spring-6.2.10') ? 'Git tag v6.2.10; local binary MANIFEST Implementation-Version 6.2.10' : s.id.startsWith('jls-21') || s.id === 'java-21-switch' ? 'Java SE21' : s.id === 'jep-491' ? 'Delivered in JDK24' : 'HTTP404 original endpoint' }));
+const handoff = {
+  status: 'READY_FOR_GLOBAL_VALIDATION',
+  skill,
+  ownedPath: `${repo}/skills/${skill}`,
+  completedAt: new Date().toISOString(),
+  scope: 'Review existing framework-mechanism/modern-Java specialist skill; no application implementation or generic pattern selection. Full package reviewed. Only in-scope supported edit restores two broken primary-source links.',
+  procedure: ['AGENTS.md', 'docs/skill-review-prompt.md (complete)', 'docs/parallel-skill-reviews.md', 'docs/skill-validation/wave4-2026-10-16/review-brief.md', 'skills/skill-engineering/SKILL.md and evidence/evaluation/resource-design/anti-patterns references', 'Relevant comparative research, roadmap and previous wave outcomes reused/read; no claim of incremental behavioral gain'],
+  versions: { committed: '1.2.4', assignment: '1.2.4', preExistingBump: false, final: '1.2.5', rationale: 'One patch because owned content changed; published content integrity policy applies to link-only fixes too. No entrypoint version field exists.' },
+  preExistingChanges: [],
+  baseline: { clean: true, matchedCoordinatorSnapshot: true, snapshot: `${dir}/assignment-baseline.json`, staged: '', unstaged: '', untracked: [], files: 4 },
+  correctedFindings: [{
+    id: 'broken-jakarta-source-links',
+    locations: ['references/modern-java-idioms.md:26', 'references/modern-java-idioms.md:253'],
+    evidence: ['Original endpoint returns HTTP404 in browser and retained fetch.', 'Canonical .html endpoint returns HTTP200, identifies Persistence3.2, and contains composite-primary-keys anchor.', 'Sections2.1/2.2/2.4.1/2.7 support the unchanged scoped claims about entities, access, record key classes and embeddables.'],
+    consequence: 'Reader could not follow the authoritative support for two consequential compatibility claims.',
+    change: 'Append .html to both targets, preserving original version and composite-key fragment.',
+    sourceIds: ['jakarta-original-404', 'jakarta-persistence-3.2'],
+    measuredBenefit: 'Source access restored under recorded fetch conditions. No agent quality/behavior improvement measured.'
+  }],
+  remainingFindings: [],
+  findingsRetainedAfterReview: [
+    { location: 'SKILL.md Workflow/Decision rules/Rules; framework-equivalents.md', conclusion: 'Mechanism versus application responsibility, effective configuration, valid wrappers and adequate no-change outcomes already explicit; no generic discovery checklist or layer added.' },
+    { location: 'framework-equivalents.md Caching', conclusion: 'Existing composition guidance matches Spring6.2.10: success of an intercepted method does not necessarily mean outer commit; transaction-aware decorator defers evict/put/clear under active synchronization and immediate operations remain immediate. Real local Spring controls confirm the selected paths.' },
+    { location: 'modern-java-idioms.md Records and JPA sections', conclusion: 'Already distinguishes ordinary embedded records, key mapping/provider/version, mutable JPA entities, field access and defensive-copy limits. Official Persistence3.2 and Hibernate6.2 documentation support these distinctions.' },
+    { location: 'modern-java-idioms.md Sealed/virtual-thread sections', conclusion: 'Preserves non-sealed plugin branch, recompilation/null requirements, framework compatibility, downstream bounds and JDK24 monitor-pinning qualification; no unsupported performance claim added.' }
+  ],
+  filesChangedByReviewer: finalFiles.filter(f => f.changedByReviewer),
+  filesUnchanged: finalFiles.filter(f => !f.changedByReviewer),
+  capabilities: { preserved: ['Activation and scope boundaries', 'Framework supplied/partial/absent mechanism map', 'Real contract-based wrapper justification and sufficient integration', 'JPA lifetime/identity/access/optimistic-lock distinctions', 'Spring proxy, transaction, cache composition and recovery limits', 'Java version constraints, partial examples, Money policy, plugin extension and immutable-data caveats', 'Targeted evidence/output and optional referrals'], replaced: [], removed: [], new: ['Two accessible primary-source destinations only'] },
+  commands: [...baseline.commands, ...commands, ...finishCommands],
+  commandArtifacts: [`${dir}/commands.json`, `${dir}/final-validation.json`, `${dir}/dependency-evidence.json`, `${dir}/final-diff.patch`],
+  validation: {
+    structural: validation.structural,
+    technical: validation.technicalControls,
+    executedAssertions: 28,
+    countingLimit: 'Ten common controls executed in both variants plus eight decorator-specific checks: 28 executions, not 28 independent mechanisms.',
+    smokeExecutions: 2,
+    originalAndFixedHttp: { original: 404, fixed: 200, compositePrimaryKeysAnchor: true },
+    behavioralEvaluationsExecuted: [],
+    measuredComparativeImprovement: 'unavailable',
+    structuredWalkthroughs: ['A: actual primary manager decorates eviction; bounded rollback contract is already satisfied, so preserve integration.', 'B: actual primary manager is raw; inner method success evicts before outer rollback, so a focused framework integration adjustment is justified.'],
+    sourceCoverage: 'Nine successfully retrieved selected primary sources plus retained HTTP404 endpoint; not an exhaustive audit of every external URL.',
+    issuesEncountered: [{ check: 'prepare-review.mjs first run', result: 'exit1', attribution: 'Reviewer probe assumed two extra human-readable fragment IDs not used by the skill; actual entity/embeddable anchors are a18/a487.', correction: 'Inspected actual HTML and restricted the link criterion to composite-primary-keys, the fragment actually shipped. Retained first source-index result; corrected rerun passed.', artifact: `${dir}/sources/source-index-first-attempt.json` }, { check: 'Initial broad dependency enumeration', result: 'Tool output truncated', attribution: 'Read-only discovery was too broad', correction: 'All eight exact6.2.10 jar paths subsequently checked, SHA256 recorded, used successfully and MANIFEST versions verified.' }]
+  },
+  sources,
+  evidenceDirectory: dir,
+  cases: validation.casePair,
+  casesAwaitingCoordinatorEvaluation: true,
+  caseDesignLimitations: ['Known development examples, not held-out cases.', 'Criteria are separate from input fixtures; directory separation is procedural, not an access-control boundary.', 'Only CacheConfiguration.java return expression differs; all other fixture files byte-identical.', 'The pair evaluates existing decision guidance; a link-only patch is not expected to change an already-correct decision automatically.'],
+  limitations: validation.limitations,
+  pendingGlobalChecks: [
+    { command: 'npm run registry:build', cwd: repo, purpose: 'Regenerate shared registry integrity/version after approved owned change.', prerequisite: 'All reviewers have stopped writes; coordinator ownership only.' },
+    { command: 'npm run verify', cwd: repo, purpose: 'Full repository integration, versions, routing and required checks.', prerequisite: 'Coordinator runs after registry build and all writers stop.' }
+  ],
+  crossSkillFindings: [],
+  coordinatorActions: ['Review two-link/version diff against baseline, archive local evidence/cases and run global checks after writers stop.', 'Independent behavioral evaluation optional for these known cases; no reviewer actor was run.'],
+  allWritesStopped: true,
+  activeBackgroundProcesses: [],
+  processAssurance: 'All child processes were synchronous with timeouts, completed exit0 on final checks. No service, watcher, actor, install or background process was started.'
+};
+const output = `${root}/${skill}.json`;
+fs.writeFileSync(output, JSON.stringify(handoff, null, 2));
+const verified = JSON.parse(fs.readFileSync(output, 'utf8'));
+assert.equal(verified.skill, skill);
+assert.equal(verified.status, 'READY_FOR_GLOBAL_VALIDATION');
+assert.equal(verified.filesChangedByReviewer.length, 2);
+assert.equal(verified.allWritesStopped, true);
+assert.equal(verified.cases.inputs.length, 2);
+assert.ok(verified.commands.every(c => c.exitCode === 0));
+console.log(JSON.stringify({ handoff: output, status: verified.status, versions: verified.versions, changedFiles: verified.filesChangedByReviewer.map(f => f.relativePath), assertionExecutions: 28, smokes: 2, cases: verified.cases.inputs.map(c => c.input), criteria: verified.cases.criteria, allWritesStopped: true, activeBackgroundProcesses: [] }, null, 2));

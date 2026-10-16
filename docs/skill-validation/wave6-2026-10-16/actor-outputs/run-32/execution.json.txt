@@ -1,0 +1,482 @@
+{
+  "schemaVersion": 1,
+  "taskRoot": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-32",
+  "startedAt": null,
+  "firstObservedTimestamp": "2026-10-16T17:33:56.0730838Z",
+  "timestampNote": "Exact beginning was not captured; firstObservedTimestamp was returned by Get-Date after initial reads. Individual Java/Node commands include actual start/end timestamps. finishedAt records completion of artifact validation, before persisting this final execution-log append.",
+  "finishedAt": "2026-10-16T17:37:38.7809252Z",
+  "commands": [
+    {
+      "program": "PowerShell (configured exec_command shell)",
+      "arguments": {
+        "command": "Get-Content -LiteralPath TASK.md -Raw"
+      },
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-32",
+      "exit": 0,
+      "stdoutExcerpt": "# Revisão local\n\nRevise o projeto e o pedido em docs/review-request.md.",
+      "stdoutStored": "excerpt; complete tool output was read",
+      "timestamp": null
+    },
+    {
+      "program": "PowerShell (configured exec_command shell)",
+      "arguments": {
+        "command": "Get-Content -LiteralPath skill/SKILL.md -Raw"
+      },
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-32",
+      "exit": 0,
+      "stdoutExcerpt": "---\nname: java-memory-model\ndescription: >",
+      "stdoutStored": "excerpt; complete tool output was read",
+      "timestamp": null
+    },
+    {
+      "program": "rg",
+      "arguments": [
+        "--files",
+        "input",
+        "output",
+        "skill"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-32",
+      "exit": 0,
+      "stdout": "skill\\skill.yaml\nskill\\SKILL.md\nskill\\references\\review-checklist.md\nskill\\references\\happens-before.md\ninput\\project\\test\\work\\Smoke.java\noutput\\project\\test\\work\\Smoke.java\ninput\\project\\src\\work\\Snapshot.java\ninput\\project\\src\\work\\ResultBridge.java\ninput\\project\\src\\work\\Provider.java\ninput\\project\\README.md\noutput\\project\\src\\work\\Snapshot.java\noutput\\project\\src\\work\\ResultBridge.java\noutput\\project\\src\\work\\Provider.java\noutput\\project\\README.md\ninput\\project\\docs\\review-request.md\ninput\\project\\docs\\contract.md\ninput\\project\\check.mjs\noutput\\project\\check.mjs\noutput\\project\\docs\\review-request.md\noutput\\project\\docs\\contract.md\n",
+      "access": "listing_only"
+    },
+    {
+      "program": "PowerShell (configured exec_command shell)",
+      "arguments": {
+        "command": "Get-Date -AsUTC -Format o\nGet-Content -LiteralPath input/project/docs/review-request.md -Raw"
+      },
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-32",
+      "exit": 0,
+      "stdout": "2026-10-16T17:33:56.0730838Z\r\n# Review request\nReview the production guarantee of ResultBridge.currentValue(). The team says its volatile field is sufficient regardless of how the provider delivers the snapshot and points to the passing synchronous smoke. State what can be established locally, what depends on the missing provider, and the smallest evidence or contract change needed. Do not claim a production failure was observed.\n"
+    },
+    {
+      "program": "PowerShell (configured exec_command shell)",
+      "arguments": {
+        "command": "$paths = @('input/project/README.md', 'input/project/docs/contract.md', 'input/project/src/work/Snapshot.java', 'input/project/src/work/ResultBridge.java', 'input/project/src/work/Provider.java', 'input/project/test/work/Smoke.java', 'input/project/check.mjs')\nforeach ($path in $paths) {\n  [pscustomobject]@{ path = $path; sha256 = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash; content = Get-Content -LiteralPath $path -Raw } | ConvertTo-Json -Compress\n}"
+      },
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-32",
+      "exit": 0,
+      "stdout": "{\"path\":\"input/project/README.md\",\"sha256\":\"0DD7A087E22DBB2A44AE0D508763A26F3FD829EFD12F8FBCD2958E9618E01758\",\"content\":\"# Result bridge review\\nTarget Java SE25, no preview/dependencies. node check.mjs uses a synchronous test provider. The deployed provider implementation/binary is not included; only its documented interface contract is available.\\n\"}\r\n{\"path\":\"input/project/docs/contract.md\",\"sha256\":\"0E2EBC05B6296EC6BFBA592160B83ACDFAF118F3A52B80160955A4E32470D0BA\",\"content\":\"# Accepted contract and available provider specification\\nReaders may return -1 when no snapshot is available. A present snapshot must have value 91. Each provider instance issues one callback. Provider contract guarantees only non-null Snapshot and callback-at-most-once; it documents no cross-thread publication or memory consistency effect. Its log says value assignment happened earlier in wall-clock time, but no trace of thread identity or handoff is available. Snapshot's API permits setValue before handing it to the callback, with no later mutations. No guarantee about synchronization from the producer to the callback thread is supplied. Treat this as an unresolved integration contract, not permission to invent provider behavior.\\n\"}\r\n{\"path\":\"input/project/src/work/Snapshot.java\",\"sha256\":\"7804DBEB51B652D02623B9DF39A8207B47D3A971BEDB23A64ADE34A9B06D7800\",\"content\":\"package work;\\npublic final class Snapshot { private int value; public void setValue(int value) { this.value=value; } public int value() { return value; } }\\n\"}\r\n{\"path\":\"input/project/src/work/ResultBridge.java\",\"sha256\":\"3F0959C157D38290C15F6BB58FBB5D7E0C9FD04AD20455BB3C4C7FFA53A91D70\",\"content\":\"package work;\\npublic final class ResultBridge {\\n private volatile Snapshot latest;\\n public void attach(Provider provider) { provider.register(value -> latest=value); }\\n public int currentValue() { Snapshot observed=latest; return observed==null?-1:observed.value(); }\\n}\\n\"}\r\n{\"path\":\"input/project/src/work/Provider.java\",\"sha256\":\"1B2604204F5F97EC472F1A1B981D09290D2DE91447E4DE0D7469B62DBF527721\",\"content\":\"package work;\\nimport java.util.function.Consumer;\\npublic interface Provider { void register(Consumer<Snapshot> callback); }\\n\"}\r\n{\"path\":\"input/project/test/work/Smoke.java\",\"sha256\":\"FE141DF22AA0153217AC2501D48C1F1A9DEE87ED57E1960FB74E4B409373076B\",\"content\":\"package work;\\npublic final class Smoke { public static void main(String[] args) {\\n ResultBridge bridge=new ResultBridge();\\n bridge.attach(callback -> { Snapshot snapshot=new Snapshot(); snapshot.setValue(91); callback.accept(snapshot); });\\n if(bridge.currentValue()!=91) throw new AssertionError();\\n System.out.println(\\\"synchronous provider PASS; deployed provider absent\\\");\\n} }\\n\"}\r\n{\"path\":\"input/project/check.mjs\",\"sha256\":\"01C7F729F0BD4F5CA17BC727272EA87C9310180EE17ECE398817CF5C6EB46973\",\"content\":\"import fs from 'node:fs';import path from 'node:path';import {spawnSync} from 'node:child_process';\\nconst jdk=\\\"C:/Users/robso/.jdks/temurin-25.0.3/bin\\\";const walk=p=>fs.readdirSync(p,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(path.join(p,e.name)):e.name.endsWith('.java')?[path.join(p,e.name)]:[]);\\nconst run=(tool,args)=>{const r=spawnSync(path.join(jdk,tool),args,{encoding:'utf8',timeout:15000,windowsHide:true});process.stdout.write(r.stdout||'');process.stderr.write(r.stderr||'');if(r.status!==0)process.exit(r.status??1);};\\nfs.mkdirSync('.build',{recursive:true});run('javac.exe',['--release','25','-d','.build',...walk('src'),...walk('test')]);run('java.exe',['-cp','.build',\\\"work.Smoke\\\"]);\\n\"}\r\n"
+    },
+    {
+      "program": "PowerShell (configured exec_command shell)",
+      "arguments": {
+        "command": "$paths = @('skill/references/happens-before.md', 'skill/references/review-checklist.md')\nforeach ($path in $paths) {\n  [pscustomobject]@{ path = $path; sha256 = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash; content = Get-Content -LiteralPath $path -Raw } | ConvertTo-Json -Compress\n}"
+      },
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-32",
+      "exit": 0,
+      "stdout": "{\"path\":\"skill/references/happens-before.md\",\"sha256\":\"FFB7B4955709D039D02549F7730D85B8BAD661F22D9DE908D14E741C6DF5A076\",\"content\":\"# Happens-before and publication proofs\\n\\n## Build the graph\\n\\nFor each execution sketch:\\n\\n1. Name actions: ordinary/volatile reads/writes, locks/unlocks, start/join, interrupts, external\\n   actions, and API synchronization actions.\\n2. Add program-order edges within each thread.\\n3. Add only synchronization edges guaranteed by JLS or exact API documentation.\\n4. Take transitive closure where needed.\\n5. For every read, enumerate candidate writes under JLS allowed-to-see rules.\\n6. Check the state invariant, not only individual values.\\n\\nDo not infer an edge from real time, thread names, executor choice, CPU coherence, safepoints, method\\ncalls, logging, exceptions, or “the writer finished first” unless a specified lifecycle action\\ncommunicates that fact.\\n\\nInstrumentation may itself acquire shared locks and introduce incidental edges; include its\\nactual actions when explaining a measured execution, then prove the production protocol without\\ndepending on optional logging. Absence of a named JMM edge does not authorize every imagined\\nvalue: happens-before consistency is necessary but the full execution/causality rules also apply.\\n\\n## Publication patterns\\n\\n### Volatile immutable snapshot\\n\\n```java\\nprivate volatile State state = State.empty();\\n\\nvoid replace(Input input) {\\n    State next = buildImmutable(input);\\n    state = next;\\n}\\n\\nResult read() {\\n    State snapshot = state;\\n    return snapshot.result();\\n}\\n```\\n\\nOne volatile read selects one internally consistent immutable version. This can replace a lock for\\nread-dominated replace-whole-state semantics; writes may still need serialization/CAS to avoid lost\\nupdates.\\n\\n### Lock-guarded invariant\\n\\n```java\\nsynchronized (lock) {\\n    balance -= amount;\\n    sequence++;\\n}\\n```\\n\\nEvery access participating in the invariant—including reads—must follow the same guard protocol.\\nEscaping a mutable reference allows access outside the lock and breaks the proof.\\n\\n### Concurrent handoff\\n\\nQueues, futures, executors and concurrent collections publish according to their documented\\nmemory-consistency effects. Quote the exact API clause and ensure the operations used are the ones\\nforming the handoff. For example, a side channel that reads a field before obtaining the queued\\nelement does not benefit retroactively.\\n\\n### Class initialization\\n\\nStatic holder initialization is synchronized by JVM class-initialization rules. It is useful for\\nlazy static state when initialization failure/recursive initialization/class-loader scope are\\nacceptable. “No hot-path lock” is not “zero cost”; class init and first use still have lifecycle\\ncost/failure semantics.\\n\\n## Double-checked initialization\\n\\n```java\\nprivate volatile Resource resource;\\n\\nResource resource() {\\n    Resource r = resource;\\n    if (r == null) {\\n        synchronized (lock) {\\n            r = resource;\\n            if (r == null) {\\n                r = create();\\n                resource = r;\\n            }\\n        }\\n    }\\n    return r;\\n}\\n```\\n\\nThe volatile publication is required. Also define initialization exception/retry, reentrancy,\\nshutdown and whether duplicate speculative construction is permitted in alternative CAS designs.\\nPrefer eager or holder initialization when lifecycle permits.\\n\\n## Final-field freeze versus publication\\n\\nFinal-field semantics provide special visibility for correctly constructed objects even in some\\nracy publication executions. They do not create a generic synchronizes-with/happens-before edge.\\nThey do not guarantee non-final fields, later mutations, or that a reader sees a non-null reference.\\n\\nReview reachable mutable objects separately:\\n\\n```java\\nfinal List<String> values;\\n```\\n\\nThe final reference is fixed. If the list mutates after construction, those mutations need a\\nconcurrency protocol. Use an immutable copy when immutable semantics are intended.\\n\\n## Common litmus shapes\\n\\n### Message passing\\n\\n```text\\nWriter: data = 1; volatileReady = true\\nReader: if (volatileReady) observe data\\n```\\n\\nAssume zero/false initial state, one writer performing this sequence once and no later data writes.\\nWith volatile access on the anchor and order as shown, observing ready true establishes the chain to\\nthe earlier data write. Plain anchor accesses do not.\\n\\nInitial false may be read before publication; true with data zero is forbidden under those\\nassumptions. Reusing the flag for successive payloads invalidates this one-shot argument.\\n\\n### Store buffering\\n\\n```text\\nT1: x = 1; r1 = y\\nT2: y = 1; r2 = x\\n```\\n\\nAllowed outcomes depend on access modes and JMM rules. Acquire/release operations that do not pair\\nthrough an observed synchronization may not establish the total ordering the algorithm expects.\\nUse `varhandles-and-memory-ordering` and a jcstress test; do not reason solely from x86 instructions.\\n\\n### Check-then-act\\n\\n```java\\nif (!map.containsKey(k)) map.put(k, create());\\n```\\n\\nThread-safe individual methods do not make the sequence atomic. Use an operation whose contract\\nmatches the semantics (`putIfAbsent`, `computeIfAbsent`, lock, immutable update), noting that mapping\\nfunctions may run under library-specific contention/retry constraints and must obey their contract.\\n\\n## Authoritative references\\n\\n- [JLS 17.4.5: Happens-before order](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.4.5)\\n- [JLS 17.5: Final field semantics](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.5)\\n- [Java concurrency package memory-consistency properties](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/package-summary.html#MemoryVisibility)\\n- [OpenJDK jcstress](https://github.com/openjdk/jcstress)\\n\"}\r\n{\"path\":\"skill/references/review-checklist.md\",\"sha256\":\"A9E6F00A8E7E26FCBE4B6D2A7A430198042ACC7905025BB661772DD29B73B8A8\",\"content\":\"# Concurrency review and incident checklist\\n\\n## Correctness review\\n\\n- [ ] Shared variables and conflicting accesses are inventoried, including callbacks and mutable\\n      objects reachable through fields.\\n- [ ] Required state invariants and atomic transitions/snapshots are stated.\\n- [ ] Each access follows the same guard/publication/access-mode protocol.\\n- [ ] Read-modify-write and check-then-act use one atomic operation or lock/protocol.\\n- [ ] Safe publication is explicit; final-field freeze is not mistaken for later mutation safety.\\n- [ ] No constructor escape, unsafe listener registration or overridable call exposes partial state.\\n- [ ] Executor/queue/future handoff relies on documented API memory effects.\\n- [ ] Wait/condition code loops on predicates and defines spurious wakeup, interrupt and timeout.\\n- [ ] Shutdown/cancel/error paths preserve ordering and do not publish partial state.\\n- [ ] Long/double nonvolatile atomicity and word-tearing concerns are checked against JLS when\\n      relevant, not assumed from one VM.\\n- [ ] Reflection/serialization/native/unsafe mechanisms that mutate finals or bypass construction\\n      are identified.\\n\\nStatic analyzers can find suspicious inconsistent synchronization, volatile increments, escape and\\nlock patterns, but rule availability/names change. Record tool/version/configuration and review\\nsuppression rationale; no analyzer proves the whole JMM contract.\\n\\n## Incident workflow\\n\\n```text\\nwrong outcome/invariant\\n  -> preserve exact values, request/task identity, version, inputs and timing\\n  -> separate visibility/order/atomic compound operation/lifecycle ownership hypotheses\\n  -> map conflicting actions and synchronization edges\\n  -> minimize to a litmus/jcstress model\\n  -> fix protocol and validate integration under target schedules/load\\n\\nno progress/latency only\\n  -> likely liveness/contention/queueing path; route to concurrency-diagnostics\\n  -> still inspect state race if progress predicate/publication may be stale\\n```\\n\\nThread dumps can identify where threads are parked/blocked, not which ordinary write a read\\nobserved. JFR can show events/contention with configured thresholds, not general data races. Hardware\\nrace detectors and sanitizers have coverage/runtime limitations in managed/native mixed code.\\n\\n## jcstress outcome design\\n\\nBefore writing annotations, enumerate:\\n\\n```text\\nacceptable: permitted by the required application contract\\nacceptable-interesting: permitted but merits attention\\nforbidden: prohibited by the intended application/protocol contract\\nunknown/unmodeled: requires expanding actors/arbiter/state\\n```\\n\\nUse enough actors to represent the minimal relation, an arbiter for final state when appropriate,\\nand avoid adding synchronization through test infrastructure. A result not observed is not proven\\nforbidden; jcstress evidence complements the JMM proof.\\n\\nTrack JMM legality separately from application acceptability: a broken racy implementation can\\nlegally produce an outcome marked forbidden by the intended contract. Conversely, marking an\\noutcome forbidden in a test does not establish that the specification forbids it. Record initial\\nstate, writer count, one-shot/repeated operation, and access modes alongside each classification.\\n\\n## Fix validation\\n\\nSelect checks for the changed protocol and unresolved integration risks; record actual executions\\nand unexecuted checks. A straightforward review of an unchanged documented handoff may need only\\nits proof and relevant existing checks.\\n\\n- run a minimized jcstress test when a custom or changed primitive protocol warrants schedule\\n  exploration, using supported JDKs/architectures/configurations;\\n- run semantic concurrency tests and production-like load/failure/shutdown;\\n- verify no new deadlock/starvation/contention or allocation regression;\\n- review compatibility/serialization/public API if state representation changed;\\n- preserve the proof/outcome model with the code so later “optimizations” do not remove the edge.\\n\\nArchitecture diversity is useful integration coverage, not a mandatory two-machine proof. Correct\\nJava code is portable by specification; racy code may fail nowhere in finite tests.\\n\\n## Authoritative references\\n\\n- [JLS 17](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html)\\n- [OpenJDK jcstress repository and samples](https://github.com/openjdk/jcstress)\\n- [Java concurrency APIs](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/package-summary.html)\\n\"}\r\n"
+    },
+    {
+      "program": "PowerShell (configured exec_command shell)",
+      "arguments": {
+        "command": "node -e 'const {spawnSync}=require(\"node:child_process\"); for (const [program,args] of [[\"C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe\",[\"-version\"]],[\"C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe\",[\"-version\"]],[process.execPath,[\"check.mjs\"]]]) { const startedAt=new Date().toISOString(); const r=spawnSync(program,args,{encoding:\"utf8\",timeout:30000,windowsHide:true}); console.log(JSON.stringify({program,args,cwd:process.cwd(),startedAt,finishedAt:new Date().toISOString(),exit:r.status,signal:r.signal,error:r.error?.message,stdout:r.stdout,stderr:r.stderr})); if(r.status!==0) process.exit(r.status??1); }' "
+      },
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-32/output/project",
+      "exit": 0,
+      "stdout": "{\"program\":\"C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe\",\"args\":[\"-version\"],\"cwd\":\"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave6-0tHxwh\\\\actors\\\\run-32\\\\output\\\\project\",\"startedAt\":\"2026-10-16T17:34:29.445Z\",\"finishedAt\":\"2026-10-16T17:34:29.486Z\",\"exit\":0,\"signal\":null,\"stdout\":\"\",\"stderr\":\"openjdk version \\\"25.0.3\\\" 2026-04-21 LTS\\r\\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\\r\\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\\r\\n\"}\n{\"program\":\"C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe\",\"args\":[\"-version\"],\"cwd\":\"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave6-0tHxwh\\\\actors\\\\run-32\\\\output\\\\project\",\"startedAt\":\"2026-10-16T17:34:29.487Z\",\"finishedAt\":\"2026-10-16T17:34:29.578Z\",\"exit\":0,\"signal\":null,\"stdout\":\"javac 25.0.3\\r\\n\",\"stderr\":\"\"}\n{\"program\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"check.mjs\"],\"cwd\":\"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave6-0tHxwh\\\\actors\\\\run-32\\\\output\\\\project\",\"startedAt\":\"2026-10-16T17:34:29.578Z\",\"finishedAt\":\"2026-10-16T17:34:29.999Z\",\"exit\":0,\"signal\":null,\"stdout\":\"synchronous provider PASS; deployed provider absent\\r\\n\",\"stderr\":\"\"}\n"
+    },
+    {
+      "program": "PowerShell (configured exec_command shell)",
+      "arguments": {
+        "command": "$paths = @('TASK.md', 'skill/SKILL.md', 'input/project/docs/review-request.md')\nforeach ($path in $paths) {\n [pscustomobject]@{ path=$path; sha256=(Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash } | ConvertTo-Json -Compress\n}\n$inputFiles = @(rg --files input/project)\nforeach ($path in $inputFiles) {\n $other = $path -replace '^input', 'output'\n [pscustomobject]@{ input=$path; output=$other; inputSha256=(Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash; outputSha256=(Get-FileHash -LiteralPath $other -Algorithm SHA256).Hash } | ConvertTo-Json -Compress\n}"
+      },
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-32",
+      "exit": 0,
+      "stdout": "{\"path\":\"TASK.md\",\"sha256\":\"5F89214A9AC67AF03E132E074A92980E253773BAA9A12CAE3341E9F13350FB77\"}\r\n{\"path\":\"skill/SKILL.md\",\"sha256\":\"A9F6DAB4BF513019BF245EFC9CD8757A5EDCC9B212EC507E3545FA59573C2A1A\"}\r\n{\"path\":\"input/project/docs/review-request.md\",\"sha256\":\"5BAA0DAA5BDDC25E48DF9D052A02B1C062BFC7A5086599EEEE09F7377C139BE8\"}\r\n{\"input\":\"input/project\\\\test\\\\work\\\\Smoke.java\",\"output\":\"output/project\\\\test\\\\work\\\\Smoke.java\",\"inputSha256\":\"FE141DF22AA0153217AC2501D48C1F1A9DEE87ED57E1960FB74E4B409373076B\",\"outputSha256\":\"FE141DF22AA0153217AC2501D48C1F1A9DEE87ED57E1960FB74E4B409373076B\"}\r\n{\"input\":\"input/project\\\\src\\\\work\\\\Snapshot.java\",\"output\":\"output/project\\\\src\\\\work\\\\Snapshot.java\",\"inputSha256\":\"7804DBEB51B652D02623B9DF39A8207B47D3A971BEDB23A64ADE34A9B06D7800\",\"outputSha256\":\"7804DBEB51B652D02623B9DF39A8207B47D3A971BEDB23A64ADE34A9B06D7800\"}\r\n{\"input\":\"input/project\\\\src\\\\work\\\\ResultBridge.java\",\"output\":\"output/project\\\\src\\\\work\\\\ResultBridge.java\",\"inputSha256\":\"3F0959C157D38290C15F6BB58FBB5D7E0C9FD04AD20455BB3C4C7FFA53A91D70\",\"outputSha256\":\"3F0959C157D38290C15F6BB58FBB5D7E0C9FD04AD20455BB3C4C7FFA53A91D70\"}\r\n{\"input\":\"input/project\\\\src\\\\work\\\\Provider.java\",\"output\":\"output/project\\\\src\\\\work\\\\Provider.java\",\"inputSha256\":\"1B2604204F5F97EC472F1A1B981D09290D2DE91447E4DE0D7469B62DBF527721\",\"outputSha256\":\"1B2604204F5F97EC472F1A1B981D09290D2DE91447E4DE0D7469B62DBF527721\"}\r\n{\"input\":\"input/project\\\\README.md\",\"output\":\"output/project\\\\README.md\",\"inputSha256\":\"0DD7A087E22DBB2A44AE0D508763A26F3FD829EFD12F8FBCD2958E9618E01758\",\"outputSha256\":\"0DD7A087E22DBB2A44AE0D508763A26F3FD829EFD12F8FBCD2958E9618E01758\"}\r\n{\"input\":\"input/project\\\\docs\\\\review-request.md\",\"output\":\"output/project\\\\docs\\\\review-request.md\",\"inputSha256\":\"5BAA0DAA5BDDC25E48DF9D052A02B1C062BFC7A5086599EEEE09F7377C139BE8\",\"outputSha256\":\"5BAA0DAA5BDDC25E48DF9D052A02B1C062BFC7A5086599EEEE09F7377C139BE8\"}\r\n{\"input\":\"input/project\\\\docs\\\\contract.md\",\"output\":\"output/project\\\\docs\\\\contract.md\",\"inputSha256\":\"0E2EBC05B6296EC6BFBA592160B83ACDFAF118F3A52B80160955A4E32470D0BA\",\"outputSha256\":\"0E2EBC05B6296EC6BFBA592160B83ACDFAF118F3A52B80160955A4E32470D0BA\"}\r\n{\"input\":\"input/project\\\\check.mjs\",\"output\":\"output/project\\\\check.mjs\",\"inputSha256\":\"01C7F729F0BD4F5CA17BC727272EA87C9310180EE17ECE398817CF5C6EB46973\",\"outputSha256\":\"01C7F729F0BD4F5CA17BC727272EA87C9310180EE17ECE398817CF5C6EB46973\"}\r\n"
+    },
+    {
+      "program": "PowerShell (configured exec_command shell)",
+      "arguments": {
+        "command": "$inputFiles = @(rg --files input/project)\nforeach ($path in $inputFiles) {\n $other = $path -replace '^input', 'output'\n $inputHash=(Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash\n $outputHash=(Get-FileHash -LiteralPath $other -Algorithm SHA256).Hash\n if ($inputHash -ne $outputHash) { throw \"Immutable copy mismatch: $path\" }\n [pscustomobject]@{input=$path; output=$other; sha256=$inputHash; equal=$true} | ConvertTo-Json -Compress\n}\nGet-Date -AsUTC -Format o"
+      },
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-32",
+      "exit": 0,
+      "stdout": "{\"input\":\"input/project\\\\test\\\\work\\\\Smoke.java\",\"output\":\"output/project\\\\test\\\\work\\\\Smoke.java\",\"sha256\":\"FE141DF22AA0153217AC2501D48C1F1A9DEE87ED57E1960FB74E4B409373076B\",\"equal\":true}\r\n{\"input\":\"input/project\\\\src\\\\work\\\\Snapshot.java\",\"output\":\"output/project\\\\src\\\\work\\\\Snapshot.java\",\"sha256\":\"7804DBEB51B652D02623B9DF39A8207B47D3A971BEDB23A64ADE34A9B06D7800\",\"equal\":true}\r\n{\"input\":\"input/project\\\\src\\\\work\\\\ResultBridge.java\",\"output\":\"output/project\\\\src\\\\work\\\\ResultBridge.java\",\"sha256\":\"3F0959C157D38290C15F6BB58FBB5D7E0C9FD04AD20455BB3C4C7FFA53A91D70\",\"equal\":true}\r\n{\"input\":\"input/project\\\\src\\\\work\\\\Provider.java\",\"output\":\"output/project\\\\src\\\\work\\\\Provider.java\",\"sha256\":\"1B2604204F5F97EC472F1A1B981D09290D2DE91447E4DE0D7469B62DBF527721\",\"equal\":true}\r\n{\"input\":\"input/project\\\\README.md\",\"output\":\"output/project\\\\README.md\",\"sha256\":\"0DD7A087E22DBB2A44AE0D508763A26F3FD829EFD12F8FBCD2958E9618E01758\",\"equal\":true}\r\n{\"input\":\"input/project\\\\docs\\\\review-request.md\",\"output\":\"output/project\\\\docs\\\\review-request.md\",\"sha256\":\"5BAA0DAA5BDDC25E48DF9D052A02B1C062BFC7A5086599EEEE09F7377C139BE8\",\"equal\":true}\r\n{\"input\":\"input/project\\\\docs\\\\contract.md\",\"output\":\"output/project\\\\docs\\\\contract.md\",\"sha256\":\"0E2EBC05B6296EC6BFBA592160B83ACDFAF118F3A52B80160955A4E32470D0BA\",\"equal\":true}\r\n{\"input\":\"input/project\\\\check.mjs\",\"output\":\"output/project\\\\check.mjs\",\"sha256\":\"01C7F729F0BD4F5CA17BC727272EA87C9310180EE17ECE398817CF5C6EB46973\",\"equal\":true}\r\n2026-10-16T17:35:59.4813580Z\r\n"
+    },
+    {
+      "program": "PowerShell (configured exec_command shell)",
+      "arguments": {
+        "command": "Get-Content -LiteralPath output/REVIEW.md -Raw\n$assessment = Get-Content -LiteralPath output/assessment.json -Raw | ConvertFrom-Json\n$execution = Get-Content -LiteralPath output/execution.json -Raw | ConvertFrom-Json\n$review = Get-Content -LiteralPath output/REVIEW.md -Raw\nif ($assessment.disposition -ne 'unresolved') { throw 'Unexpected disposition' }\nif (($review -split '\\s+').Count -gt 800) { throw 'Review exceeds 800 words' }\nif ($execution.commands.Count -lt 9) { throw 'Missing command records' }\nforeach ($path in @('output/REVIEW.md','output/assessment.json','output/execution.json')) {\n [pscustomobject]@{path=$path; sha256=(Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash; bytes=(Get-Item -LiteralPath $path).Length} | ConvertTo-Json -Compress\n}\n[pscustomobject]@{validation='PASS'; reviewWords=($review -split '\\s+').Count; disposition=$assessment.disposition; finishedAt=(Get-Date -AsUTC -Format o)} | ConvertTo-Json -Compress"
+      },
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-32",
+      "exit": 0,
+      "stdout": "# Revisão de ResultBridge.currentValue()\n\n**Conclusão: unresolved.** O contrato aceito exige `-1` sem snapshot e `91` quando presente. O código local e o smoke sustentam o caminho síncrono; não sustentam a afirmação de que `volatile` basta independentemente da entrega do provedor. A implementação implantada está ausente e `docs/contract.md` declara explicitamente desconhecida a sincronização produtor–callback. Nenhuma falha de produção foi observada.\n\nEm `src/work/ResultBridge.java:3-5`, o callback escreve a referência em `volatile latest`. `currentValue()` lê essa referência uma única vez, guarda-a em `observed` e retorna `-1` ou `observed.value()`. Essa seleção deve ser preservada. `src/work/Snapshot.java:2` contém um `int value` comum; a classe ser `final` não torna esse campo final. A escrita do setter e a leitura do getter são os acessos ao payload que precisam ser ordenados.\n\nA prova necessária, para o snapshot selecionado, é:\n\n```text\nP: setValue(91)\n       -- happens-before AINDA NÃO DEMONSTRADO -->\nC: callback / escrita volatile latest = snapshot\n       -- synchronizes-with -->\nR: leitura volatile latest que observa snapshot\n       -- ordem de programa -->\nR: leitura comum snapshot.value\n```\n\nA metade callback–leitor está presente. Se a escrita de `91` ocorrer na própria thread do callback antes da publicação, ou chegar a ela por um handoff com happens-before demonstrado, a cadeia fica completa. Com a ausência de mutações posteriores já aceita, o leitor obtém `91`. Repassar uma referência recebida sem essa garantia não cria retroativamente a aresta do produtor. Tempo de relógio e o log relatado não fornecem essa prova. Estas são aplicações das regras de ordem de programa, sincronização e transitividade da [JLS SE25 §17.4.4–5](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.4.5).\n\n`-1` sem publicação e `91` com snapshot são resultados aceitos. Em uma integração hipotética com entrega sem ordenação, o valor inicial `0` não fica excluído pelo contrato disponível, embora seja inaceitável para a aplicação. Isso é uma lacuna de garantia, não uma afirmação sobre a execução do provedor ausente. O código disponível não demonstra corrida no provedor nem exige mudança de representação.\n\nA menor evidência faltante é o caminho efetivamente implantado, incluindo a escrita `setValue(91)` e a entrega ao callback, mostrando a ordem na mesma thread ou os pares de sincronização que ligam essas ações em todos os caminhos. Um adendo mínimo ao contrato de integração seria: “As escritas de inicialização e setters que estabelecem o valor entregue happen-before a execução do callback.” A restrição existente de não mutar após a entrega permanece suficiente para a etapa posterior. O provedor precisa cumprir essa cláusula; apenas escrevê-la não prova a implementação. Não foi determinada correção em `ResultBridge`; não é necessário substituir o snapshot por campo final nem adicionar bloqueio local.\n\nExecutado: compilação com `javac --release 25` e smoke existente via `node check.mjs`, na cópia `output/project`, com Java/Javac Temurin 25.0.3. Saída: `synchronous provider PASS; deployed provider absent`, exit 0. No teste, criação, setter, callback e leitura ocorrem na mesma thread; o resultado não exercita a aresta desconhecida. Os oito arquivos fornecidos continuaram com hashes iguais entre input e output após o check.\n\nNão executados: integração com provedor implantado, stress/jcstress, análise de binário ou validação de outras arquiteturas. Um stress do stub não preencheria a evidência ausente. A skill local e suas duas referências condicionais foram lidas integralmente. Nenhum fonte, contrato ou dependência foi alterado; os subprocessos de compilação e execução terminaram.\n\n\r\n{\"path\":\"output/REVIEW.md\",\"sha256\":\"8356809F7B572E7EBCDF7278610862BE805D212C5D40818AEB7FCEE29334ADCC\",\"bytes\":3879}\r\n{\"path\":\"output/assessment.json\",\"sha256\":\"8D1FA9CCFF9F97603606FA5DAFCAF39A47ACB0E8547B6FCC0EA41BCC77CFD50A\",\"bytes\":2136}\r\n{\"path\":\"output/execution.json\",\"sha256\":\"22D4D7C380C2395E138FBBCCF7F9C09B5E2D070B66EA07817F170E9594725D39\",\"bytes\":39703}\r\n{\"validation\":\"PASS\",\"reviewWords\":533,\"disposition\":\"unresolved\",\"finishedAt\":\"2026-10-16T17:37:38.7809252Z\"}\r\n"
+    }
+  ],
+  "childCommands": [
+    {
+      "program": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-version"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave6-0tHxwh\\actors\\run-32\\output\\project",
+      "startedAt": "2026-10-16T17:34:29.445Z",
+      "finishedAt": "2026-10-16T17:34:29.486Z",
+      "exit": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n",
+      "timeoutMs": 30000
+    },
+    {
+      "program": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+      "args": [
+        "-version"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave6-0tHxwh\\actors\\run-32\\output\\project",
+      "startedAt": "2026-10-16T17:34:29.487Z",
+      "finishedAt": "2026-10-16T17:34:29.578Z",
+      "exit": 0,
+      "signal": null,
+      "stdout": "javac 25.0.3\r\n",
+      "stderr": "",
+      "timeoutMs": 30000
+    },
+    {
+      "program": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "check.mjs"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave6-0tHxwh\\actors\\run-32\\output\\project",
+      "startedAt": "2026-10-16T17:34:29.578Z",
+      "finishedAt": "2026-10-16T17:34:29.999Z",
+      "exit": 0,
+      "signal": null,
+      "stdout": "synchronous provider PASS; deployed provider absent\r\n",
+      "stderr": "",
+      "timeoutMs": 30000
+    }
+  ],
+  "nestedCommands": [
+    {
+      "program": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+      "arguments": [
+        "--release",
+        "25",
+        "-d",
+        ".build",
+        "src\\work\\Provider.java",
+        "src\\work\\ResultBridge.java",
+        "src\\work\\Snapshot.java",
+        "test\\work\\Smoke.java"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-32/output/project",
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "timeoutMs": 15000,
+      "provenance": "Arguments reconstructed from the fully read check.mjs and supplied source tree; source enumeration order was not separately traced. Exit 0 follows from successful continuation of check.mjs."
+    },
+    {
+      "program": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "arguments": [
+        "-cp",
+        ".build",
+        "work.Smoke"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-32/output/project",
+      "exit": 0,
+      "stdout": "synchronous provider PASS; deployed provider absent\r\n",
+      "stderr": "",
+      "timeoutMs": 15000,
+      "provenance": "check.mjs forwards child stdout and exits on nonzero status; parent command finished with exit 0."
+    }
+  ],
+  "filesRead": [
+    {
+      "path": "TASK.md",
+      "sha256": "5F89214A9AC67AF03E132E074A92980E253773BAA9A12CAE3341E9F13350FB77",
+      "access": "content",
+      "contentRead": "complete",
+      "hashOperation": "separate later SHA-256 pass"
+    },
+    {
+      "path": "skill/SKILL.md",
+      "sha256": "A9F6DAB4BF513019BF245EFC9CD8757A5EDCC9B212EC507E3545FA59573C2A1A",
+      "access": "content",
+      "contentRead": "complete",
+      "hashOperation": "separate later SHA-256 pass"
+    },
+    {
+      "path": "input/project/docs/review-request.md",
+      "sha256": "5BAA0DAA5BDDC25E48DF9D052A02B1C062BFC7A5086599EEEE09F7377C139BE8",
+      "access": "content",
+      "contentRead": "complete",
+      "hashOperation": "separate later SHA-256 pass"
+    },
+    {
+      "path": "input/project/README.md",
+      "sha256": "0DD7A087E22DBB2A44AE0D508763A26F3FD829EFD12F8FBCD2958E9618E01758",
+      "access": "content",
+      "contentRead": "complete"
+    },
+    {
+      "path": "input/project/docs/contract.md",
+      "sha256": "0E2EBC05B6296EC6BFBA592160B83ACDFAF118F3A52B80160955A4E32470D0BA",
+      "access": "content",
+      "contentRead": "complete"
+    },
+    {
+      "path": "input/project/src/work/Snapshot.java",
+      "sha256": "7804DBEB51B652D02623B9DF39A8207B47D3A971BEDB23A64ADE34A9B06D7800",
+      "access": "content",
+      "contentRead": "complete"
+    },
+    {
+      "path": "input/project/src/work/ResultBridge.java",
+      "sha256": "3F0959C157D38290C15F6BB58FBB5D7E0C9FD04AD20455BB3C4C7FFA53A91D70",
+      "access": "content",
+      "contentRead": "complete"
+    },
+    {
+      "path": "input/project/src/work/Provider.java",
+      "sha256": "1B2604204F5F97EC472F1A1B981D09290D2DE91447E4DE0D7469B62DBF527721",
+      "access": "content",
+      "contentRead": "complete"
+    },
+    {
+      "path": "input/project/test/work/Smoke.java",
+      "sha256": "FE141DF22AA0153217AC2501D48C1F1A9DEE87ED57E1960FB74E4B409373076B",
+      "access": "content",
+      "contentRead": "complete"
+    },
+    {
+      "path": "input/project/check.mjs",
+      "sha256": "01C7F729F0BD4F5CA17BC727272EA87C9310180EE17ECE398817CF5C6EB46973",
+      "access": "content",
+      "contentRead": "complete"
+    },
+    {
+      "path": "skill/references/happens-before.md",
+      "sha256": "FFB7B4955709D039D02549F7730D85B8BAD661F22D9DE908D14E741C6DF5A076",
+      "access": "content",
+      "contentRead": "complete"
+    },
+    {
+      "path": "skill/references/review-checklist.md",
+      "sha256": "A9E6F00A8E7E26FCBE4B6D2A7A430198042ACC7905025BB661772DD29B73B8A8",
+      "access": "content",
+      "contentRead": "complete"
+    },
+    {
+      "path": "output/REVIEW.md",
+      "sha256": "8356809F7B572E7EBCDF7278610862BE805D212C5D40818AEB7FCEE29334ADCC",
+      "access": "content",
+      "contentRead": "complete",
+      "purpose": "Final report read back and word-count validated."
+    }
+  ],
+  "hashOnly": [
+    {
+      "path": "output/project/test/work/Smoke.java",
+      "sha256": "FE141DF22AA0153217AC2501D48C1F1A9DEE87ED57E1960FB74E4B409373076B",
+      "access": "hash_only",
+      "contentRead": "not read by reviewer; source/script files subsequently consumed by javac/node as applicable"
+    },
+    {
+      "path": "output/project/src/work/Snapshot.java",
+      "sha256": "7804DBEB51B652D02623B9DF39A8207B47D3A971BEDB23A64ADE34A9B06D7800",
+      "access": "hash_only",
+      "contentRead": "not read by reviewer; source/script files subsequently consumed by javac/node as applicable"
+    },
+    {
+      "path": "output/project/src/work/ResultBridge.java",
+      "sha256": "3F0959C157D38290C15F6BB58FBB5D7E0C9FD04AD20455BB3C4C7FFA53A91D70",
+      "access": "hash_only",
+      "contentRead": "not read by reviewer; source/script files subsequently consumed by javac/node as applicable"
+    },
+    {
+      "path": "output/project/src/work/Provider.java",
+      "sha256": "1B2604204F5F97EC472F1A1B981D09290D2DE91447E4DE0D7469B62DBF527721",
+      "access": "hash_only",
+      "contentRead": "not read by reviewer; source/script files subsequently consumed by javac/node as applicable"
+    },
+    {
+      "path": "output/project/README.md",
+      "sha256": "0DD7A087E22DBB2A44AE0D508763A26F3FD829EFD12F8FBCD2958E9618E01758",
+      "access": "hash_only",
+      "contentRead": "not read by reviewer; source/script files subsequently consumed by javac/node as applicable"
+    },
+    {
+      "path": "output/project/docs/review-request.md",
+      "sha256": "5BAA0DAA5BDDC25E48DF9D052A02B1C062BFC7A5086599EEEE09F7377C139BE8",
+      "access": "hash_only",
+      "contentRead": "not read by reviewer; source/script files subsequently consumed by javac/node as applicable"
+    },
+    {
+      "path": "output/project/docs/contract.md",
+      "sha256": "0E2EBC05B6296EC6BFBA592160B83ACDFAF118F3A52B80160955A4E32470D0BA",
+      "access": "hash_only",
+      "contentRead": "not read by reviewer; source/script files subsequently consumed by javac/node as applicable"
+    },
+    {
+      "path": "output/project/check.mjs",
+      "sha256": "01C7F729F0BD4F5CA17BC727272EA87C9310180EE17ECE398817CF5C6EB46973",
+      "access": "hash_only",
+      "contentRead": "not read by reviewer; source/script files subsequently consumed by javac/node as applicable"
+    }
+  ],
+  "listings": [
+    {
+      "command": "rg --files input output skill",
+      "contentRead": false,
+      "note": "Includes skill/skill.yaml; that manifest was listed only and its contents were not read."
+    }
+  ],
+  "primaryUrls": [
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.4.5",
+      "status": "consulted",
+      "scope": "Returned excerpts covering synchronization order and happens-before; follow-up open at line 340 included read-allowed writes and well-formed executions."
+    },
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html",
+      "status": "consulted_excerpt",
+      "openLines": [
+        340,
+        480
+      ],
+      "scope": "Supplementary excerpts of 17.4.5–8. Whole document was not copied to disk."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/package-summary.html#MemoryVisibility",
+      "status": "opened",
+      "scope": "Tool returned page metadata; follow-up at line 210 returned API type listings. No exact memory-consistency clause from this page was used in the proof."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/package-summary.html",
+      "status": "consulted_excerpt",
+      "openLines": [
+        210
+      ],
+      "scope": "API type listing only; not evidence of deployed provider behavior."
+    }
+  ],
+  "webOperations": [
+    {
+      "tool": "web.run",
+      "operation": "open",
+      "requests": [
+        {
+          "url": "https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.4.5"
+        },
+        {
+          "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/package-summary.html#MemoryVisibility"
+        }
+      ],
+      "result": "completed"
+    },
+    {
+      "tool": "web.run",
+      "operation": "open",
+      "requests": [
+        {
+          "url": "https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html",
+          "lineno": 340
+        },
+        {
+          "url": "https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html",
+          "lineno": 480
+        },
+        {
+          "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/package-summary.html",
+          "lineno": 210
+        }
+      ],
+      "result": "completed"
+    },
+    {
+      "tool": "web.run",
+      "operation": "find",
+      "requests": [
+        {
+          "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/package-summary.html",
+          "pattern": "Memory Consistency"
+        },
+        {
+          "url": "https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html",
+          "pattern": "17.5. final"
+        }
+      ],
+      "result": "No result returned; functions exec cell 6 terminated after two waits. No content from this request was used."
+    }
+  ],
+  "writes": [
+    {
+      "tool": "check.mjs",
+      "paths": [
+        "output/project/.build"
+      ],
+      "type": "compilation artifacts only"
+    },
+    {
+      "tool": "apply_patch",
+      "paths": [
+        "output/REVIEW.md",
+        "output/assessment.json"
+      ],
+      "result": "completed"
+    },
+    {
+      "tool": "apply_patch",
+      "paths": [
+        "output/execution.json"
+      ],
+      "result": "record created by this finalization sequence"
+    },
+    {
+      "tool": "apply_patch",
+      "path": "output/execution.json",
+      "operation": "Append completed validation command, set observed finish timestamp and terminal flags.",
+      "result": "Final synchronous write; no further writes planned."
+    }
+  ],
+  "sourceIntegrity": {
+    "filesCompared": 8,
+    "result": "All supplied input/project and output/project pairs matched SHA-256 after compilation.",
+    "finalCheckTimestamp": "2026-10-16T17:35:59.4813580Z"
+  },
+  "limits": [
+    "Production provider source/binary and handoff evidence absent.",
+    "No jcstress, production integration, architecture matrix or bytecode analysis executed.",
+    "No sources/contracts/dependencies altered, no installs, no repository or other-run access.",
+    "First two command stdout values are retained as excerpts; reviewer read their complete output.",
+    "Exact shell executable path and internal shell launch arguments were not exposed by exec_command; recorded script text is exact.",
+    "javac source argument order is reconstructed, not separately traced.",
+    "One supplementary web find was terminated without returning content.",
+    "No token/cost/exact total-duration measurement is claimed."
+  ],
+  "subprocessesStopped": true,
+  "subprocessEvidence": "All shell invocations returned exit 0; Java/Javac and node spawnSync calls completed with status 0, signal null. check.mjs waits synchronously for each Java child. No background process was started. Web wait cell was terminated.",
+  "allWritesStopped": true,
+  "validationReads": [
+    {
+      "path": "output/assessment.json",
+      "sha256": "8D1FA9CCFF9F97603606FA5DAFCAF39A47ACB0E8547B6FCC0EA41BCC77CFD50A",
+      "access": "complete content consumed by JSON parser",
+      "reviewerOutput": "parse outcome and hash; full file was not echoed"
+    },
+    {
+      "path": "output/execution.json",
+      "sha256": "22D4D7C380C2395E138FBBCCF7F9C09B5E2D070B66EA07817F170E9594725D39",
+      "access": "complete content consumed by JSON parser",
+      "reviewerOutput": "parse outcome and hash; full file was not echoed",
+      "note": "Hash refers to log before this final append."
+    }
+  ],
+  "artifactValidation": {
+    "result": "PASS",
+    "reviewWords": 533,
+    "assessmentDisposition": "unresolved"
+  },
+  "toolErrors": [
+    {
+      "tool": "apply_patch",
+      "operation": "Attempt to replace output/execution.json using Delete File and Add File in one patch",
+      "result": "Rejected before mutation: invalid patch, multiple operations target the same path. Retried with Update File."
+    }
+  ]
+}
+

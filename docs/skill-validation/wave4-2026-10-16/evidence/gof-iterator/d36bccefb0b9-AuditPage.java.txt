@@ -1,0 +1,11 @@
+import java.util.*;
+import java.util.function.*;
+import java.util.concurrent.CancellationException;
+public record AuditPage(List<AuditEvent> items, Cursor nextCursor) {
+    public AuditPage {
+        items = List.copyOf(items);
+        nextCursor = Objects.requireNonNull(nextCursor);
+        if (items.size() > 500) throw new IllegalArgumentException("oversized page");
+    }
+    public boolean isLast() { return nextCursor.equals(Cursor.END); }
+}

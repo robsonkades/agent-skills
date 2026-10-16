@@ -1,0 +1,6 @@
+{
+  "cases": 2,
+  "filesPerCase": 7,
+  "decisiveDifference": "read-stock.sql only",
+  "actorsRun": 0
+}

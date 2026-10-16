@@ -1,0 +1,20 @@
+{
+  "label": "prettier-check",
+  "command": "C:\\Program Files\\nodejs\\node.exe",
+  "args": [
+    "C:\\git\\agent-skills\\node_modules\\prettier\\bin\\prettier.cjs",
+    "--check",
+    "C:\\git\\agent-skills\\skills\\retries-and-backoff\\SKILL.md",
+    "C:\\git\\agent-skills\\skills\\retries-and-backoff\\references\\retry-failure-modes.md",
+    "C:\\git\\agent-skills\\skills\\retries-and-backoff\\references\\retry-in-java.md",
+    "C:\\git\\agent-skills\\skills\\retries-and-backoff\\skill.yaml"
+  ],
+  "cwd": "C:/git/agent-skills",
+  "exitCode": 0,
+  "expectedExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "Checking formatting...\nAll matched files use Prettier code style!\n",
+  "stderr": "",
+  "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-validation-ujPBF2\\retries-and-backoff\\logs\\prettier-check.json"
+}

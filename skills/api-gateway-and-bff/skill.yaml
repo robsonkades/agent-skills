@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: api-gateway-and-bff
-version: 1.0.0
+version: 1.0.1
 description: >-
   Design or review an API gateway or backend for frontend when client journeys need
   different representations, too many round trips, an entry policy, or explicit

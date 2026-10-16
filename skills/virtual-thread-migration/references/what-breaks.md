@@ -113,6 +113,39 @@ the enabling property and bean selection/backoff; custom executors can change th
 Virtual threads are daemon threads, so verify application keep-alive and shutdown ownership
 for scheduler/batch-only applications. Keep these checks distinct from choosing a framework flag.
 
+## Executor scope can change when a call returns
+
+Trace who creates, borrows and closes each executor, and whether work may outlive the submitting
+call. Introducing per-call ownership changes behavior independently of the thread factory.
+The Java 21 `ExecutorService.close()` contract waits for actual task termination; a timeout or
+cancelled Future does not establish that termination.
+
+```java
+// Partial Java 21+ counterexample; requires java.util.concurrent imports.
+// This does not return the Future to its caller while the submitted task is still running.
+static <T> Future<T> start(Callable<T> task) {
+    try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+        return executor.submit(task);
+    } // close runs before the method returns
+}
+```
+
+Similarly, `Future.get(timeout, unit)` limits that wait, not the following executor close.
+Interruption during close requests cancellation but still waits for executing tasks to finish;
+an interrupt-insensitive operation can keep the caller waiting. Distinguish the response deadline
+from cleanup completion instead of promising both from a timed `get`.
+
+Keep lexical ownership when completion before scope exit is required and its waiting contract
+fits. If tasks may outlive the call, retain or establish an appropriate component/framework owner
+that tracks completion and drains at shutdown; do not close a borrowed executor in the request.
+Preserve admission limits and error observation. Simply omitting shutdown, abandoning tasks or
+releasing their resource permits on Future cancellation does not repair the lifecycle.
+
+Use controlled task completion to check the required return boundary: hold a task open, observe
+the method's return or timeout handling, then allow cleanup to finish. Include cancellation that
+has been requested while the task remains active. A test that only checks the Future's status
+misses a caller still blocked in close.
+
 ## Cancellation can change connection lifetime
 
 The Java 21 and 25 `Socket.getInputStream()` contracts make reads on a system-default socket
@@ -186,6 +219,7 @@ them from scheduler, allocation or provider effects; this ordering is not a freq
 - [Java 25 `Thread` contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Thread.html)
 - [Java 25 `Socket` contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/net/Socket.html) — stream interruption and read-timeout effects on socket lifetime.
 - [Java 25 executor factory contracts](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Executors.html)
+- [Java 21 `ExecutorService.close()`](<https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ExecutorService.html#close()>) — termination waiting, including after interruption.
 - [Java 25 `ScheduledThreadPoolExecutor`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ScheduledThreadPoolExecutor.html)
 - [Java 25 thread-local variables](https://docs.oracle.com/en/java/javase/25/core/thread-local-variables.html)
 - [JEP 444](https://openjdk.org/jeps/444)

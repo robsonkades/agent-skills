@@ -1,0 +1,61 @@
+[
+  {
+    "id": "java-code-smells-dead-code-a",
+    "evaluator": {
+      "criteria": [
+        "Read the actual declared type, callback signatures, ArchiveClient and archive contract; direct-call absence alone is not a reachability proof.",
+        "Keep the pass diagnostic: report the justified decision and route, without modifying application files or migrating serialization formats.",
+        "Use the exact ordinary Java object-serialization contract; do not generalize from a familiar method name alone.",
+        "If executing, retain a targeted positive check and meaningful counterexample and report actual javac/java versions. --release 21 under JDK 25 is not execution on a JDK 21 VM.",
+        "Do not invent production incidence, co-change history or quantitative severity."
+      ],
+      "failureConditions": [
+        "Deletes or proposes removal solely because the methods are private and text search has no callers.",
+        "Treats every method named writeObject/readObject as active without inspecting the effective protocol.",
+        "Claims a successful round trip proves all historical wire compatibility or universal unreachability.",
+        "Upgrades the project, enables preview or expands the detection task into unrequested implementation."
+      ],
+      "prerequisites": [
+        "Provide only actorInput or its corresponding actor JSON to the evaluating actor; withhold criteria, handoff, technical negative controls and prior results.",
+        "Materialize the ordinary fixture files in an isolated directory. JDK 21+ can compile with --release 21; report the runtime actually used.",
+        "These are development cases derived from the current review, not unseen holdouts. Shared filesystem isolation is not enforced by file naming."
+      ],
+      "expectedOutcome": [
+        "Reject Dead Code for the two private object-stream hooks: ordinary Serializable processing invokes the exact private hooks despite no explicit source callers.",
+        "Connect the methods to preserving transient note. In this fixture, removing both hooks leaves note null after default serialization and violates the supplied round-trip check.",
+        "A valid result may report no findings for these methods, retaining evidence and the tested scope."
+      ],
+      "decisiveConstraint": "ArchiveEntry implements Serializable."
+    }
+  },
+  {
+    "id": "java-code-smells-dead-code-b",
+    "evaluator": {
+      "criteria": [
+        "Read the actual declared type, callback signatures, ArchiveClient and archive contract; direct-call absence alone is not a reachability proof.",
+        "Keep the pass diagnostic: report the justified decision and route, without modifying application files or migrating serialization formats.",
+        "Use the exact ordinary Java object-serialization contract; do not generalize from a familiar method name alone.",
+        "If executing, retain a targeted positive check and meaningful counterexample and report actual javac/java versions. --release 21 under JDK 25 is not execution on a JDK 21 VM.",
+        "Do not invent production incidence, co-change history or quantitative severity."
+      ],
+      "failureConditions": [
+        "Deletes or proposes removal solely because the methods are private and text search has no callers.",
+        "Treats every method named writeObject/readObject as active without inspecting the effective protocol.",
+        "Claims a successful round trip proves all historical wire compatibility or universal unreachability.",
+        "Upgrades the project, enables preview or expands the detection task into unrequested implementation."
+      ],
+      "prerequisites": [
+        "Provide only actorInput or its corresponding actor JSON to the evaluating actor; withhold criteria, handoff, technical negative controls and prior results.",
+        "Materialize the ordinary fixture files in an isolated directory. JDK 21+ can compile with --release 21; report the runtime actually used.",
+        "These are development cases derived from the current review, not unseen holdouts. Shared filesystem isolation is not enforced by file naming."
+      ],
+      "expectedOutcome": [
+        "Identify Externalizable as the effective protocol. Its public writeExternal/readExternal supersede the private writeObject/readObject hooks, even though Externalizable itself extends Serializable.",
+        "Within the supplied complete internal module, classify the private methods as an unused-code candidate/finding and give the supported removal route, or explicitly defer cleanup for proportionality while correctly identifying their inactive status.",
+        "Preserve public writeExternal/readExternal and the public no-arg constructor. The existing check still retains id/note after only the two private hooks are removed.",
+        "If compiler warnings are cited, attribute them to the compiler actually used; javac25 -Xlint:all emitted ineffective-hook warnings in the technical run."
+      ],
+      "decisiveConstraint": "Only the implemented interface changes from Serializable to Externalizable."
+    }
+  }
+]

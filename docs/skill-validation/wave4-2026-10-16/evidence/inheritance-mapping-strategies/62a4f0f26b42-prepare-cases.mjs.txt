@@ -1,0 +1,98 @@
+import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+const root = dirname(fileURLToPath(import.meta.url));
+const common = {
+  'README.md': `# Payment import storage review
+
+Java 17, Hibernate ORM 6.6, PostgreSQL 18. The mapping inventory records the relevant
+entity configuration; schema.sql is the schema for this bounded review fixture.
+Payment is an abstract entity with two concrete leaves. Both leaves use the same
+payment_ids sequence. The shown queries are the supported request paths. There is
+no table that references the abstract payment type; external references in this
+module always identify a method and ID. There are no unrelated schema objects in
+this fixture, but a production migration would need its own dependency inventory.
+
+The import check produced sample-rows.csv. Product's accepted reference-number
+scope is in business-contract.json. Review whether the current constraints and
+mapping satisfy that contract and recommend retaining them or the smallest
+justified change. Compare a relevant alternative; do not assume a new inheritance
+strategy is required. Explain what an implementation and rollout would need.
+
+The online service and a SQL import job both write these tables. Old deployments
+can remain active for 24 hours after a release. No query plans, workload timings,
+provider SQL trace, integration-test results or rollout approval are supplied.
+No database credentials or runnable ORM project are included; this is a review.
+`,
+  'mapping-inventory.json': JSON.stringify({ root: { class: 'Payment', entity: true, abstract: true, inheritance: 'TABLE_PER_CLASS', id: { field: 'id', type: 'Long', generation: 'SEQUENCE', sequence: 'payment_ids', allocationSize: 1 }, inheritedFields: ['tenantId', 'providerReference', 'amount'] }, leaves: [{ class: 'CardPayment', table: 'card_payment', parent: 'Payment', fields: ['cardLast4'] }, { class: 'BankTransfer', table: 'bank_transfer', parent: 'Payment', fields: ['iban'] }], metadataOverrides: [], queryCache: false, secondLevelCache: false }, null, 2) + '\n',
+  'schema.sql': `CREATE SEQUENCE payment_ids START WITH 1000 INCREMENT BY 1;
+CREATE TABLE card_payment (
+    id bigint PRIMARY KEY DEFAULT nextval('payment_ids'),
+    tenant_id varchar(40) NOT NULL,
+    provider_reference varchar(80) NOT NULL,
+    amount numeric(19,2) NOT NULL,
+    card_last4 char(4) NOT NULL,
+    UNIQUE (tenant_id, provider_reference)
+);
+CREATE TABLE bank_transfer (
+    id bigint PRIMARY KEY DEFAULT nextval('payment_ids'),
+    tenant_id varchar(40) NOT NULL,
+    provider_reference varchar(80) NOT NULL,
+    amount numeric(19,2) NOT NULL,
+    iban varchar(34) NOT NULL,
+    UNIQUE (tenant_id, provider_reference)
+);
+`,
+  'sample-rows.csv': `table,id,tenant_id,provider_reference,amount,detail
+card_payment,101,tenant-1,PAY-42,10.00,4242
+bank_transfer,102,tenant-1,PAY-42,20.00,DE89370400440532013000
+`,
+  'queries.sql': `-- Card import details are requested separately from transfer details.
+SELECT id, tenant_id, provider_reference, amount, card_last4
+  FROM card_payment WHERE tenant_id = :tenant AND provider_reference = :reference;
+SELECT id, tenant_id, provider_reference, amount, iban
+  FROM bank_transfer WHERE tenant_id = :tenant AND provider_reference = :reference;
+`,
+};
+const cases = [];
+const hashes = [];
+for (const [id, scope] of [['case-a', 'tenant-and-payment-method'], ['case-b', 'tenant-across-all-payment-methods']]) {
+  const directory = resolve(root, 'cases', id);
+  mkdirSync(directory, { recursive: true });
+  const files = { ...common, 'business-contract.json': JSON.stringify({ acceptedBy: 'Payments product owner', providerReferenceUniqueWithin: scope, comparison: 'Exact case-sensitive reference value; null references are invalid.', primaryKey: 'Generated technical identity; providerReference is a separate business identifier.', historicalRecords: 'Preserve retained payment history. Any conflicting records require an explicit product-approved resolution; do not silently delete or rename them.' }, null, 2) + '\n' };
+  for (const [name, content] of Object.entries(files)) {
+    writeFileSync(resolve(directory, name), content);
+    hashes.push({ case: id, file: name, sha256: createHash('sha256').update(readFileSync(resolve(directory, name))).digest('hex') });
+  }
+  cases.push({ id, request: 'Review the payment import storage in README.md against the supplied accepted contract and project artifacts. Recommend retaining or changing the design with evidence and explicit validation/rollout limits.', fixtureDirectory: directory.replaceAll('\\', '/'), actorFiles: Object.keys(files), prerequisites: 'Read-only review of PostgreSQL 18 DDL and Hibernate 6.6 mapping inventory; no database or ORM execution supplied.', origin: 'Synthetic known development case authored during review; not held out.' });
+}
+const criteria = {
+  decisiveConstraint: 'Only providerReferenceUniqueWithin in business-contract.json differs. All schema, mapping, query, history and sample-row artifacts are identical.',
+  shared: {
+    required: [
+      'Read the accepted business contract and distinguish provider-reference uniqueness from generated primary-key identity; IDs 101 and 102 are different.',
+      'Identify table-local UNIQUE enforcement and the already shared primary-key sequence from the actual artifacts.',
+      'Do not infer that TABLE_PER_CLASS is universally wrong or that a primary-key generator enforces a different business key.',
+      'Keep query-cost claims conditional without plans/workload data; existing supported leaf queries do not justify invented polymorphic-load measurements.',
+      'If changing storage or adding a registry, include every writer, old deployments, historical conflicts, transaction/rollback contract and deployment window before claiming implementation complete.',
+      'Propose raw SQL and concurrent-write checks on PostgreSQL plus provider round-trip/root-query coverage where relevant. A JSON inventory or schema review is not an executed ORM/database test.',
+    ],
+    failures: [
+      'Treats two identical business references as automatically a bug without consulting their declared scope.',
+      'Claims a common sequence or unique technical IDs make provider references globally unique.',
+      'Promotes application check-then-insert across two tables as race-free without database/protocol enforcement.',
+      'Deletes or rewrites historical values without the accepted resolution authority, or silently breaks old writers.',
+    ],
+  },
+  cases: [
+    { id: 'case-a', expected: 'The two rows satisfy per-tenant-and-method uniqueness; each method has one table with the appropriate UNIQUE. Preserve the current TABLE_PER_CLASS organization absent a separate demonstrated cost/contract problem. Retaining existing valid design is a successful outcome, not failure to migrate.' },
+    { id: 'case-b', expected: 'The two rows violate the cross-method business-key requirement even though IDs differ. Local table constraints cannot enforce that global scope. Compare a common-table mapping carrying a UNIQUE or an explicitly transactionally maintained shared-key registry; do not mandate a single strategy. Historical conflict resolution and all-writer rollout remain prerequisites.' },
+  ],
+  execution: 'No independent actor or database/provider run. These are source/specification walkthroughs; JSON/fixture checks validate preparation only.',
+  isolation: 'Coordinator must provide one case and intended skill treatment. Evaluator-only criteria, paired answer, handoff and prior results are excluded. Folder separation alone is not enforced isolation.',
+};
+writeFileSync(resolve(root, 'actor-inputs.json'), JSON.stringify(cases, null, 2) + '\n');
+writeFileSync(resolve(root, 'evaluator-criteria.json'), JSON.stringify(criteria, null, 2) + '\n');
+writeFileSync(resolve(root, 'case-integrity.json'), JSON.stringify(hashes, null, 2) + '\n');
+console.log(JSON.stringify({ cases: cases.length, filesPerCase: Object.keys(common).length + 1, decisiveDifference: 'business-contract.json only', actorsRun: 0, databaseRuns: 0 }, null, 2));

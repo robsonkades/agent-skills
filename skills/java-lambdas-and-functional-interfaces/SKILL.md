@@ -37,7 +37,10 @@ and performance conclusions can be made.
 1. **Check the contract first.** Check the target function type: a generic abstract method may
    require a method reference or named implementation rather than a lambda. Identity, lifecycle,
    serialization, annotations, diagnostic naming, extra protocol methods and state may justify a
-   named implementation even with one abstract method.
+   named implementation even with one abstract method. Follow the actual consumer and wrappers:
+   the function type alone does not establish invocation count or make captured effects atomic.
+   For retrying consumers, read `references/standard-interfaces-and-cost.md` before moving effects
+   into the callback.
 2. **Write it as a lambda, then try the method reference.** Keep whichever reads better; a
    method reference that forces the reader to work out which of the four kinds it is has not
    paid for itself.

@@ -80,6 +80,38 @@ checking the thrown type. Do not add blanket `catch (Throwable)` rollback to cla
 from arbitrary VM failure. The recovery mechanism belongs to java-exception-design; this review
 establishes the promise it must satisfy.
 
+## Completion is a separate contract boundary
+
+A method returning `CompletionStage<Receipt>` can return normally before its work completes.
+State the immediate promise (such as a non-null stage), the successful-completion promise
+(such as a validated receipt), and exceptional-completion effects separately. Distinguish
+synchronous rejection from a failure delivered through the returned stage; changing that
+channel can break callers even when the exception class is unchanged.
+
+Trace which stage the caller actually receives. In this partial Java 25 snippet, `load()`
+returns a `CompletableFuture<Receipt>` and `checkReceipt` throws for an invalid receipt:
+
+```java
+CompletableFuture<Receipt> loaded = load();
+loaded.thenAccept(this::checkReceipt);
+return loaded;
+```
+
+The check belongs to a new dependent stage. Its failure does not turn the original future's
+successful result into failure, including when `loaded` was already complete when the check
+was attached. If successful completion promises a checked receipt, return a dependent stage
+that performs the check and returns the receipt. If required work itself returns a stage,
+compose that completion rather than merely starting it. Do not add blocking `join()` to the
+API just to make the postcondition appear synchronous; graph construction and execution
+policy belong to completablefuture-composition.
+
+An API promising only acceptance may legitimately complete before later work. Preserve that
+contract and its separate failure owner rather than silently strengthening it to completed
+processing. Likewise, a checker failing after a write cannot promise that the write was undone.
+Test the exact caller-visible stage with pending and already-completed upstream futures,
+valid and invalid results, and upstream failure. Observe whether failure is thrown at the call
+or reported at completion; asserting only that the method returned a future misses the promise.
+
 ## Behavioural subtyping — the rules and their concrete violations
 
 An override stands in for the supertype's contract wherever the supertype is expected.
@@ -164,6 +196,8 @@ Violations that compile cleanly:
 - [JLS §8.8.7: constructor bodies](https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html#jls-8.8.7)
 - [JLS §14.10: assertions](https://docs.oracle.com/javase/specs/jls/se25/html/jls-14.html#jls-14.10)
 - [JLS §17.1: monitor reentrancy](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.1)
+- [CompletionStage: dependency and exceptional-completion contracts](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletionStage.html)
+- [CompletableFuture: completion and dependent-stage behavior](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html)
 - [System.arraycopy: unchanged destination versus copied prefix on failure](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/System.html#arraycopy(java.lang.Object,int,java.lang.Object,int,int)>)
 - [JLS §11.2.3: exception checking](https://docs.oracle.com/javase/specs/jls/se25/html/jls-11.html#jls-11.2.3)
 - [JLS §8.4.8.3: overriding requirements](https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html#jls-8.4.8.3)

@@ -1,0 +1,189 @@
+---
+name: idempotency
+description: >
+  Making an operation safe to apply more than once: natural idempotency versus an
+  idempotency key plus durable operation state; choosing and scoping the key, distinguishing
+  stable message identity from delivery tags; handling concurrent in-flight
+  duplicates; replaying the stored response instead of returning a conflict; and why
+  idempotent is not commutative. Use when a retry produces a second row, charge or email,
+  when a handler starts with an exists() check before a write, when an Idempotency-Key
+  header is being added or ignored, when two identical requests arrive concurrently, or when
+  a dedup table has no TTL. Does not cover why duplicates arrive (delivery-semantics),
+  compensating actions (distributed-transactions-and-sagas), what the dedup store's own
+  consistency must be (consistency-models), or caching (caching-strategies).
+---
+
+# Idempotency
+
+## Purpose
+
+Make an operation preserve its declared state, effect and response invariants whether it is
+attempted once or five times. Choose natural state idempotence, a conditional domain
+transition, a durable operation key, or a combination. Duplicates are a given; why they
+arrive is `delivery-semantics`. This skill is only about surviving them.
+
+The failure this prevents is the almost-idempotent handler: a dedup check written as a read
+followed by a write, which passes every sequential test and duplicates under the exact
+condition it exists for — two copies of the same request in flight at the same time. The
+second failure is the handler that detects the duplicate correctly and then returns an
+error, so a client that retried after a timeout is told its request conflicts with itself.
+
+## Establish the contract first
+
+Inspect the handler, business uniqueness constraints, actual transaction boundaries, retry/SDK
+configuration, retention jobs, tests and documented API/provider contracts. Trace one intent
+from caller through every durable mutation and external effect. Establish the target
+Java/framework and database/isolation versions from build/runtime evidence; the reference's
+Java 17 schema sketch does not authorize an upgrade or prove transaction behavior.
+Resolve remote calls to the actual HTTP method/path, account/sandbox scope and API version
+from client wiring/configuration or redacted request evidence. A provider name or SDK version
+alone does not select its replay contract.
+
+Separate the requested guarantee and documented contract from incidental code patterns. If
+identity, acceptable duplicate effects, replay horizon or provider recovery guarantees remain
+unknown, ask only about the gap that changes the decision. State provisional assumptions and
+the evidence needed to confirm them; continue independent review or reversible local work.
+Respect the task: design alternatives for a design request, evidence-backed findings for a
+review, and changes only when implementation or fixes are requested.
+
+## Workflow
+
+1. **Define the equivalence contract.** Separate final business state, external effects and
+   protocol response. A full-representation PUT or delete can be state-idempotent while the
+   second response has a different version/status. An insert guarded by a natural unique key
+   prevents a second row but still needs duplicate recognition if retries must receive the
+   original result. `balance = 100` is naturally state-idempotent; `balance += 10` is not.
+2. **Choose state predicate, operation key, or both.** A conditional transition
+   (`PENDING → CONFIRMED`) may satisfy the contract on its own. Add an operation key when
+   the contract also requires distinguishing a retry from a competing command, replaying
+   its result, or associating external effects with that intent; reuse a suitable domain ID.
+3. **Choose the key source, namespace and lifetime** before writing code. Prefer a stable
+   business-operation identifier or a caller-generated identifier created once per intent.
+   Payload hashes identify content, not intent. Use a transport message identity only if it
+   remains stable and unique within the promised redelivery scope; delivery tags/attempt IDs
+   are not such keys. See `references/key-selection.md`.
+4. **Make the claim and local mutation one atomic state transition.** A conditional insert
+   or compare-and-set chooses one owner under concurrency. When the business mutation is in
+   the same database, commit claim, mutation and response atomically. For an external effect,
+   persist intent first and reuse that effect's downstream key across retries. If one command
+   produces several effects, give each a distinct stable identity and recovery state; do not
+   copy one parent key onto different downstream operations. A crash can still leave an
+   ambiguous outcome requiring status lookup/reconciliation.
+5. **Persist the stable outcome needed by the contract.** It may be the exact status/body,
+   a resource identifier and version from which a response is rebuilt, or a terminal
+   business rejection. Do not persist secrets, one-time credentials or unbounded bodies.
+6. **Set the retention from the client's retry horizon and the business record**, and say
+   what happens after it expires. See `references/idempotency-key-filter.md`.
+7. **Test the concurrent case specifically** — synchronized contenders with one key must
+   produce one effect within the stated guarantee window. Allow the documented processing
+   response for an in-flight duplicate, then verify the eventual original semantic outcome.
+   A sequential duplicate test proves nothing about the race.
+
+## Rules
+
+- State idempotence means repeating the operation does not change the resulting state after
+  the first application. API retry equivalence is stronger: it may require the same resource
+  identity and semantically equivalent response, not necessarily byte-for-byte replay.
+  State which guarantee the interface offers.
+- **Idempotent is not commutative.** Idempotency says `f(f(x)) = f(x)`; commutativity says
+  `f(g(x)) = g(f(x))`. At-least-once delivery permits duplicates but does not itself define
+  ordering. Respect the transport's actual order scope: a path that repeats safely can still
+  converge wrongly when two different
+  operations arrive out of order. Ordering guarantees are
+  `message-ordering-and-partitioning`; a last-writer-wins field needs a version or a
+  timestamp, not an idempotency key.
+- Never write the guard as `if (repo.existsById(key)) return;` followed by an insert. Two
+  concurrent copies both read absent, both proceed, both apply the side effect. The check
+  and the claim must be one atomic operation.
+- The conditional claim must be **in the same transaction as the side effect** when both
+  are in the same store. Claim-then-crash-before-side-effect otherwise leaves a key that
+  suppresses the retry forever — a lost operation with no error anywhere.
+- Return or reconstruct the original semantic outcome for a completed duplicate. Reject the
+  same key with a materially different operation fingerprint without revealing another
+  tenant's result. Canonicalization must include every field that changes semantics and the
+  relevant API/tenant scope.
+- A stable transport message identity can cover its documented redelivery scope; do not
+  confuse it with a delivery/acknowledgement handle. If republication assigns
+  a new message identity for the same business intent, transport dedup misses it. A producer
+  can instead preserve a suitable business-operation ID; verify that contract rather than
+  inferring it from the field name.
+- A key retained for less than the maximum replay horizon can re-enable old operations unless
+  another authority still enforces their uniqueness. Longer
+  retention costs storage and may retain sensitive data, but does not suppress a legitimate
+  new intent when clients generate a new key per intent. Define post-expiry semantics,
+  archival/DLQ replay limits and legal retention explicitly.
+- Increment and append are not naturally idempotent, but an atomic dedup record plus mutation
+  can make an operation keyed by intent idempotent. Alternatives are a uniquely keyed delta,
+  conditional version transition or absolute target write when it preserves the intended
+  business operation; replacing independent increments with a stale target can lose work.
+- **Deduplication memory must survive the failures covered by the contract.** An evictable
+  cache alone cannot prevent a forbidden repeated effect across eviction/restart. Natural
+  repeat-safety may need no separate record; process-local suppression is also valid when
+  loss of that suppression is explicitly acceptable. Keep that weaker scope clear. A cache
+  in front of authoritative durable state is fine; `caching-strategies` for that.
+
+## State machine for external effects
+
+```text
+ABSENT --atomic claim--> PENDING(attempt, fingerprint)
+PENDING --downstream confirms terminal effect outcome--> COMPLETED/REJECTED
+PENDING --pre-dispatch rejection; no unresolved earlier attempts--> RETRYABLE/REJECTED
+PENDING --timeout/disconnect/crash--> UNKNOWN --status lookup/reconcile--> COMPLETED/RETRYABLE/REJECTED
+PENDING --response with indeterminate effect outcome--> UNKNOWN
+UNKNOWN --later attempt rejected before dispatch--> UNKNOWN
+```
+
+Track uncertainty for the whole operation, including earlier SDK/proxy attempts. A new
+attempt epoch must retain that evidence: proving the latest attempt was not dispatched does
+not prove that an earlier attempt never applied or cannot still apply.
+
+A repeatable HTTP response is not necessarily a resolved business effect. For example, a
+provider may replay an original `500` while the effect remains indeterminate. Preserve that
+uncertainty and reconciliation; neither terminal rejection nor a fresh key follows from the
+status code alone. Provider response replay policies differ; inspect the actual API contract.
+
+Never delete or reopen `PENDING` merely because the caller received an exception. Cancellation
+and timeout describe the caller, not the effect. If a lease allows a new worker to take over,
+use an attempt epoch for ownership of local completion and still reuse the stable downstream
+operation key. A lease alone cannot prevent the first external attempt from completing late.
+Confirm downstream key scope and retention: replaying the same key after its deduplication
+window expires can apply again. A negative status lookup permits redispatch only when the
+provider also guarantees that the prior attempt cannot subsequently apply; otherwise retain
+`UNKNOWN` and reconcile. Compensation is a weaker business recovery contract, not proof of
+at-most-once effects.
+
+If an irreversible peer offers neither repeat safety nor authoritative recovery evidence,
+stop automatic redispatch of an unknown operation. Preserve its identity and escalate the
+unresolved business outcome; a local dedup table cannot make that remote retry safe.
+
+For implementation work, record the target Java/framework, database/isolation and downstream
+API version. Report the key/fingerprint scope, effect boundary, retention/recovery contract and
+checks actually run; do not claim exactly-once behavior from a mock or a successful local claim.
+
+Finish with the guarantee supported by the available evidence, the decisive alternative or
+finding, and remaining uncertainty. For changes, exercise concurrency, crash/replay and
+fingerprint/tenant boundaries relevant to that guarantee; if the real store/provider cannot be
+tested, name the unverified boundary and the next discriminating check. An unresolved external
+outcome is a recovery obligation, not evidence that the operation failed without effects.
+
+## Security and abuse controls
+
+- authenticate before idempotency lookup and namespace by principal/tenant plus operation;
+- cap key/body lengths and validate the documented key format; require uniqueness within
+  the chosen namespace from the key source, not an entropy test on one supplied token;
+- never reveal whether another tenant used a key; authorize replayed resource/result again;
+- encrypt or minimize stored response data and apply retention/redaction requirements;
+- rate-limit new claims separately from cheap completed replays, and protect one key from an
+  unbounded number of in-flight waiters.
+
+## References
+
+- [The idempotency-key filter](references/idempotency-key-filter.md) — a Java schema sketch
+  and application pseudocode for an HTTP API: the conditional-insert claim, the in-flight duplicate,
+  response replay, retention, and an explicit fail-closed/fail-open decision for when the
+  dedup store is unavailable. Read when implementing or reviewing an idempotent endpoint or
+  message handler.
+- [Choosing and scoping the key](references/key-selection.md) — a decision table over key
+  source, scope, retention and payload binding, with the specific failure each choice
+  produces. Read before deciding what the key is, or when a dedup store is deduplicating
+  too much or too little.

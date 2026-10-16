@@ -1,0 +1,5 @@
+java=25.0.3+9-LTS
+factory=org.slf4j.helpers.NOPLoggerFactory
+logger=org.slf4j.helpers.NOPLogger
+infoEnabled=false
+loggingCallReturned=true

@@ -1,0 +1,12 @@
+bailoutCount
+compileCount
+invalidatedCount
+nmethodCodeSize
+nmethodsSize
+osrBytesCompiled
+osrCompileCount
+peakTimeSpent
+standardBytesCompiled
+standardCompileCount
+startTime
+totalTimeSpent

@@ -1,0 +1,2 @@
+Fixture capture: every current consumer/GC/compiler thread in PID 4242 has effective CPU affinity 0-7. No thread creation occurred within this recorded interval. No PMU access capture was taken.
+

@@ -1,0 +1,19 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+process.chdir(import.meta.dirname);
+const jars = ["C:/Users/robso/.m2/repository/com/google/guava/guava/33.5.0-jre/guava-33.5.0-jre.jar"];
+fs.mkdirSync('classes', { recursive: true });
+const sources = ['src','test','tools'].filter(p=>fs.existsSync(p)).flatMap(p=>fs.readdirSync(p).filter(f=>f.endsWith('.java')).map(f=>path.join(p,f)));
+const run = (exe,args) => { const r=spawnSync(exe,args,{encoding:'utf8',timeout:60000,windowsHide:true}); process.stdout.write(r.stdout||''); process.stderr.write(r.stderr||''); if(r.error) throw r.error; if(r.status!==0) process.exit(r.status||1); };
+run("C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",['--release','16','-cp',jars.join(';'),'-d','classes',...sources]);
+run("C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",['-cp',['classes',...jars].join(';'),'CurrentChecks']);
+// Expectations come from the frozen accepted fixture, never from the candidate router.
+const vector = JSON.parse(fs.readFileSync('accepted-vectors.json', 'utf8'));
+for (const config of ['accepted.properties', 'candidate.properties']) {
+  run("C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",[
+    '-cp', ['classes', ...jars].join(';'), 'RoutingCompatibilityCheck',
+    config, vector.epoch, String(vector.V), vector.nodes.join(','),
+    vector.weights.join(','), vector.key, vector.primary, vector.replicas.join(',')
+  ]);
+}

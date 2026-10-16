@@ -1,0 +1,65 @@
+import one.convert.Arguments;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.TimeZone;
+
+public class ParserProbe {
+    private static int checks;
+
+    private static void equal(String name, long expected, long actual) {
+        if (expected != actual) {
+            throw new AssertionError(name + ": expected " + expected + ", actual " + actual);
+        }
+        System.out.println("PASS " + name + ": " + actual);
+        checks++;
+    }
+
+    private static void rejects(String value) {
+        try {
+            new Arguments("--from", value);
+            throw new AssertionError("Expected timestamp rejection: " + value);
+        } catch (NumberFormatException expected) {
+            System.out.println("PASS rejected timestamp: " + value);
+            checks++;
+        }
+    }
+
+    public static void main(String[] ignored) {
+        TimeZone original = TimeZone.getDefault();
+        try {
+            long epoch = Instant.parse("2026-10-16T12:00:00.125Z").toEpochMilli();
+            TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+            long utc = new Arguments("--from", "2026-10-16T12:00:00.125").from;
+            equal("UTC calendar timestamp", epoch, utc);
+
+            TimeZone.setDefault(TimeZone.getTimeZone("America/Sao_Paulo"));
+            long saoPaulo = new Arguments("--from", "2026-10-16T12:00:00.125").from;
+            equal("same text with Sao Paulo default timezone", epoch + 10_800_000L, saoPaulo);
+            equal("numeric epoch is timezone independent", epoch,
+                    new Arguments("--from", Long.toString(epoch)).from);
+            equal("numeric offset milliseconds preserved", 10_000L,
+                    new Arguments("--from", "10000").from);
+            equal("negative offset milliseconds preserved", -1_000L,
+                    new Arguments("--to", "-1000").to);
+            equal("latency seconds are duration nanoseconds", 10_000_000_000L,
+                    new Arguments("--latency", "10s").latency);
+            rejects("10s");
+            rejects("2026-10-16T12:00:00.125Z");
+
+            ZoneId zone = ZoneId.systemDefault();
+            LocalDate before = LocalDate.now(zone);
+            long timeOnly = new Arguments("--from", "12:00:00.125").from;
+            LocalDate actualDay = Instant.ofEpochMilli(timeOnly).atZone(zone).toLocalDate();
+            LocalDate after = LocalDate.now(zone);
+            if (!actualDay.equals(before) && !actualDay.equals(after)) {
+                throw new AssertionError("Time-only selector did not use conversion-day date");
+            }
+            System.out.println("PASS time-only selector uses conversion-day date: " + actualDay);
+            checks++;
+            System.out.println("Checks passed: " + checks);
+        } finally {
+            TimeZone.setDefault(original);
+        }
+    }
+}

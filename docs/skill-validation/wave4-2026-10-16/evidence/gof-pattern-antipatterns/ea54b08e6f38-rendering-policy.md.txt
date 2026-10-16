@@ -1,0 +1,5 @@
+# Rendering policy
+
+Status: accepted. Owner: document output team.
+
+New-kind acceptance: the Node.label() contract is approved for all current and future kinds in these two operations. Plain displays it unchanged and Upper applies Locale.ROOT uppercasing; no per-kind handling decision is required.

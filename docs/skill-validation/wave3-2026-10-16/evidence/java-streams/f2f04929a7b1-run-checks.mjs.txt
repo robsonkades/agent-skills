@@ -1,0 +1,162 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { parseManifest } from 'file:///C:/git/agent-skills/packages/core/src/domain/manifest.ts';
+import { parseSkillDocument, documentName, documentDescription } from 'file:///C:/git/agent-skills/packages/core/src/domain/skill-document.ts';
+const root = path.dirname(fileURLToPath(import.meta.url));
+const repo = 'C:/git/agent-skills';
+const owned = path.join(repo, 'skills/java-streams');
+const java = 'C:/Users/robso/.jdks/temurin-25.0.3/bin';
+const commands = [], checks = [];
+fs.mkdirSync(path.join(root, 'logs'), { recursive: true });
+function run(label, executable, args, expectedExit = 0) {
+  const result = spawnSync(executable, args, { cwd: repo, encoding: 'utf8', timeout: 30000 });
+  const record = { label, executable, args, cwd: repo, exitCode: result.status, signal: result.signal, stdout: result.stdout ?? '', stderr: result.stderr ?? '', error: result.error?.message ?? null, expectedExit };
+  commands.push(record);
+  fs.writeFileSync(path.join(root, 'logs', `${label}.json`), JSON.stringify(record, null, 2) + '\n');
+  assert.equal(result.error, undefined, label);
+  assert.equal(result.status, expectedExit, label);
+  return record;
+}
+function write(relative, content) {
+  const filename = path.join(root, relative);
+  fs.mkdirSync(path.dirname(filename), { recursive: true });
+  fs.writeFileSync(filename, content.trim() + '\n');
+  return filename;
+}
+try {
+  const files = fs.readdirSync(owned, { recursive: true }).filter(p => fs.statSync(path.join(owned, p)).isFile()).sort();
+  assert.equal(files.length, 4);
+  const hashes = files.map(relative => ({ path: relative.replaceAll('\\', '/'), sha256: createHash('sha256').update(fs.readFileSync(path.join(owned, relative))).digest('hex').toUpperCase() }));
+  const { manifest, issues } = parseManifest(fs.readFileSync(path.join(owned, 'skill.yaml'), 'utf8'), { source: path.join(owned, 'skill.yaml'), strict: true });
+  const skill = parseSkillDocument(fs.readFileSync(path.join(owned, 'SKILL.md'), 'utf8'));
+  assert.deepEqual(issues, []);
+  assert.equal(documentName(skill), manifest.name);
+  assert.equal(documentDescription(skill), manifest.description);
+  assert.equal(manifest.version, '1.2.5');
+  for (const declared of manifest.files) assert.ok(fs.existsSync(path.join(owned, declared)), declared);
+  for (const suggestion of manifest.suggests) assert.ok(fs.existsSync(path.join(repo, 'skills', suggestion, 'SKILL.md')), suggestion);
+  let localLinks = 0;
+  for (const relative of files.filter(p => p.endsWith('.md'))) {
+    const text = fs.readFileSync(path.join(owned, relative), 'utf8');
+    for (const match of text.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)) {
+      const target = match[1].replace(/^<|>$/g, '');
+      if (/^[a-z]+:\/\//i.test(target) || target.startsWith('#')) continue;
+      assert.ok(fs.existsSync(path.resolve(owned, path.dirname(relative), target.split('#')[0])), `${relative}: ${target}`);
+      localLinks++;
+    }
+  }
+  for (const ref of files.filter(p => p.startsWith('references'))) assert.ok(skill.body.includes(ref.replaceAll('\\', '/')), ref);
+  checks.push({ name: 'local-package-structure', passed: true, version: manifest.version, files: hashes, manifestIssues: issues, localLinks, routedReferences: 2, suggestions: manifest.suggests });
+  run('node-version', process.execPath, ['--version']);
+  run('java-version', path.join(java, 'java.exe'), ['-version']);
+  run('javac-version', path.join(java, 'javac.exe'), ['-version']);
+  run('prettier-owned', process.execPath, [path.join(repo, 'node_modules/prettier/bin/prettier.cjs'), '--check', ...files.map(p => path.join(owned, p))]);
+  run('diff-check-owned', 'git', ['diff', '--check', '--', 'skills/java-streams']);
+
+  const reference = fs.readFileSync(path.join(owned, 'references/parallel-and-gatherers.md'), 'utf8');
+  const snippet = [...reference.matchAll(/```java\r?\n([\s\S]*?)```/g)][0][1];
+  assert.ok(snippet.includes('List<List<Integer>> prefixes'));
+  const snippetSource = write('technical/SnippetCheck.java', `import java.util.*;
+import java.util.stream.*;
+public final class SnippetCheck {
+    static List<List<Integer>> prefixes(Stream<Integer> input) {
+        ${snippet.replace('Stream.of(1, 2, 3)', 'input')}
+        return prefixes;
+    }
+    static void check(boolean condition, String label) { if (!condition) throw new AssertionError(label); }
+    public static void main(String[] args) {
+        var expected = List.of(List.of(1), List.of(1, 2), List.of(1, 2, 3));
+        var first = prefixes(Stream.of(1, 2, 3));
+        check(first.equals(expected), "sequential history");
+        check(prefixes(Stream.of(1, 2, 3).parallel()).equals(expected), "parallel history");
+        check(prefixes(Stream.empty()).isEmpty(), "empty input");
+        check(prefixes(Stream.of(9)).equals(List.of(List.of(9))), "single input");
+        check(first.equals(expected), "separate evaluation does not mutate old prefixes");
+        try { first.get(0).add(7); throw new AssertionError("mutable prefix"); }
+        catch (UnsupportedOperationException expectedFailure) {}
+        System.out.println("PASS exact added snippet, sequential/parallel, empty/single input, independent evaluations, stable unmodifiable prefixes");
+    }
+}`);
+  const gatherClasses = path.join(root, 'technical/gather-classes');
+  run('compile-gather-release24', path.join(java, 'javac.exe'), ['--release', '24', '-d', gatherClasses, snippetSource, path.join(root, 'ScanAliasProbe.java')]);
+  run('run-added-snippet', path.join(java, 'java.exe'), ['-cp', gatherClasses, 'SnippetCheck']);
+  run('run-alias-controls', path.join(java, 'java.exe'), ['-cp', gatherClasses, 'ScanAliasProbe']);
+  const oldTarget = run('reject-gather-release21', path.join(java, 'javac.exe'), ['--release', '21', '-d', path.join(root, 'technical/release21-negative'), snippetSource], 1);
+  assert.match(oldTarget.stderr, /Gatherers/);
+  checks.push({ name: 'added-gatherer-example', passed: true, sourceRelease: 24, actualRuntime: 'Temurin 25.0.3+9', oldReleaseNegativeControl: 'Gatherers unavailable under --release21, expected compiler rejection', scope: 'Compiled the new Markdown block with imports/enclosure and a substituted input parameter; tested actual retention after traversal, two execution modes, empty/single input and separate evaluations.' });
+
+  const coreSource = write('technical/CoreStreamControls.java', `import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.*;
+public final class CoreStreamControls {
+    static void check(boolean condition, String label) { if (!condition) throw new AssertionError(label); }
+    public static void main(String[] args) {
+        AtomicInteger peek = new AtomicInteger(), terminal = new AtomicInteger();
+        long count = List.of(1, 2, 3).stream().peek(x -> peek.incrementAndGet()).count();
+        check(count == 3 && peek.get() == 0, "observed sized count elision on this build");
+        List.of(1, 2, 3).stream().forEach(x -> terminal.incrementAndGet());
+        check(terminal.get() == 3, "required terminal actions");
+        try { Stream.of("a", "a").collect(Collectors.toMap(x -> x, x -> 1)); throw new AssertionError("duplicate accepted"); }
+        catch (IllegalStateException expected) {}
+        var removedThenInserted = Stream.of(1, 2, 3).collect(Collectors.toMap(x -> "k", x -> x, (a, b) -> null));
+        check(removedThenInserted.equals(Map.of("k", 3)), "null merge removes, third reinserts");
+        AtomicInteger outerClosed = new AtomicInteger(), opened = new AtomicInteger(), innerClosed = new AtomicInteger();
+        try (Stream<Integer> outer = Stream.of(1, 2).onClose(outerClosed::incrementAndGet)) {
+            var value = outer.flatMap(i -> { opened.incrementAndGet(); return Stream.of(i).onClose(innerClosed::incrementAndGet); }).findFirst();
+            check(value.orElseThrow() == 1 && opened.get() == 1 && innerClosed.get() == 1, "mapped closure and lazy opening");
+            check(outerClosed.get() == 0, "terminal does not close outer");
+        }
+        check(outerClosed.get() == 1, "explicit outer owner closes");
+        AtomicInteger failureInner = new AtomicInteger(), failureOuter = new AtomicInteger();
+        try (Stream<Integer> outer = Stream.of(1).onClose(failureOuter::incrementAndGet)) {
+            outer.flatMap(i -> Stream.of(i).onClose(failureInner::incrementAndGet)).forEach(i -> { throw new IllegalArgumentException("fixture"); });
+        } catch (IllegalArgumentException expected) { check(expected.getMessage().equals("fixture"), "expected failure"); }
+        check(failureInner.get() == 1 && failureOuter.get() == 1, "close under terminal failure");
+        System.out.println("PASS sized-count elision observed; forEach=3; duplicate and null-merge controls; inner/outer closure and failure cleanup");
+    }
+}`);
+  const coreClasses = path.join(root, 'technical/core-classes');
+  run('compile-core-release21', path.join(java, 'javac.exe'), ['--release', '21', '-d', coreClasses, coreSource]);
+  run('run-core-controls', path.join(java, 'java.exe'), ['-cp', coreClasses, 'CoreStreamControls']);
+  checks.push({ name: 'preserved-core-controls', passed: true, sourceRelease: 21, actualRuntime: 'Temurin 25.0.3+9', scope: 'Deterministic elision/terminal/duplicate/merge/flatMap close-handler checks. Close counters are synthetic stream-handler evidence, not JDBC/file-provider validation.' });
+
+  const producer = `import java.util.*;
+import java.util.stream.*;
+final class PrefixEngine {
+    static List<ArrayList<Integer>> states(List<Integer> input) {
+        return input.stream().gather(Gatherers.scan(ArrayList<Integer>::new, (state, value) -> {
+            state.add(value);
+            return state;
+        })).toList();
+    }
+}`;
+  const consumer = `import java.util.*;
+public final class ReportJob {
+    public static String render(List<Integer> input) {
+        var states = PrefixEngine.states(input);
+        return /*RESULT*/;
+    }
+    public static void main(String[] args) {
+        System.out.println(render(List.of(1, 2, 3)));
+        System.out.println(render(List.of()));
+    }
+}`;
+  for (const mode of ['a', 'b']) {
+    const producerPath = write('case-' + mode + '/src/PrefixEngine.java', producer);
+    const consumerPath = write('case-' + mode + '/src/ReportJob.java', consumer.replace('/*RESULT*/', mode === 'a' ? 'states.toString()' : '(states.isEmpty() ? List.of() : states.getLast()).toString()'));
+    const classes = path.join(root, 'case-' + mode + '/classes');
+    run('compile-case-' + mode, path.join(java, 'javac.exe'), ['--release', '24', '-d', classes, producerPath, consumerPath]);
+    const observed = run('run-case-' + mode, path.join(java, 'java.exe'), ['-cp', classes, 'ReportJob']);
+    assert.equal(observed.stdout.trim().replaceAll('\r', ''), mode === 'a' ? '[[1, 2, 3], [1, 2, 3], [1, 2, 3]]\n[]' : '[1, 2, 3]\n[]');
+  }
+  checks.push({ name: 'case-fixture-observations', passed: true, scope: 'Exploratory fixture validation only: full-history consumer exposes lost prefixes; final-only consumer sees the correct final result. Same producer, only the consumer observation changes.' });
+  fs.writeFileSync(path.join(root, 'results.json'), JSON.stringify({ passed: true, checks, commands, allProcessesExited: true }, null, 2) + '\n');
+  console.log(JSON.stringify({ passed: true, checks: checks.map(c => c.name), commands: commands.length, result: path.join(root, 'results.json') }, null, 2));
+} catch (error) {
+  fs.writeFileSync(path.join(root, 'results.json'), JSON.stringify({ passed: false, error: error.stack, checks, commands }, null, 2) + '\n');
+  throw error;
+}

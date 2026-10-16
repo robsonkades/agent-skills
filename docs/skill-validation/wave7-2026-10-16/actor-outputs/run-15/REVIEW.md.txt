@@ -1,0 +1,15 @@
+# Revisão
+
+Foi corrigida a identidade enviada pelo dispatcher: `ReceiverClient.accept` agora recebe o `event_id` imutável da linha do outbox, junto com seu payload original. Antes, cada tentativa gerava um UUID diferente. Assim, após confirmação independente do receptor e falha local no checkpoint, o retry parecia um evento novo e causava outro efeito.
+
+A alteração de produção remove a importação de UUID e substitui somente o argumento do token. Mantém a transação de `replayOne`, a seleção de no máximo uma linha pendente, a posição de `Checkpoint.afterAccepted` depois da confirmação e antes de `done=true`, os métodos públicos e a atomicidade de `Publisher.create`. Não altera o receptor congelado nem os contratos.
+
+`RecoveryRegression` usa os beans reais de Spring e consulta estado persistido por conexões independentes. Uma JVM publica um evento, recebe confirmação e lança uma exceção no checkpoint. O teste confirma propagação da exceção, um efeito remoto, uma ordem e a linha original ainda pendente. Após essa JVM terminar normalmente, outra JVM abre os mesmos bancos H2 em arquivos e repete o trabalho retido sem chamar o publicador. Confirma um único efeito, progresso concluído e ausência de novo replay.
+
+Antes da correção, o smoke passou, mas a regressão falhou na segunda JVM com `Replay must preserve one receiver effect`. Após a correção, as duas fases e os controles passaram. Os controles verificam rollback da ordem quando a inserção do outbox falha; rejeição repetida do receptor sem checkpoint ou conclusão; rejeição de payload diferente para uma identidade já aceita; eventos distintos com payload igual; e processamento de apenas uma linha por chamada. O smoke também passou novamente. Os logs em `checks/logs` preservam a execução malsucedida e as execuções posteriores.
+
+O RUNBOOK explica o retry da linha original, o token estável e os limites operacionais. Os arquivos congelados de output foram comparados byte a byte por hash com input. Nenhuma dependência foi instalada e nenhum serviço externo foi usado.
+
+A evidência demonstra recuperação após recriação da aplicação em uma JVM diferente, usando armazenamento local retido e o contrato idempotente do receptor fornecido. Não demonstra resistência a desligamento abrupto, perda física de dados, garantia de produção do provedor, coordenação de múltiplos workers nem uma transação distribuída. A durabilidade ordinária do banco e o replay sequencial continuam sendo premissas.
+
+Uma leitura inicial procurou README/REQUEST/CONTRACT na raiz da tarefa e recebeu “arquivo não encontrado”; a localização correta em `input/project` foi então lida. Essa tentativa está registrada em `execution.json`.

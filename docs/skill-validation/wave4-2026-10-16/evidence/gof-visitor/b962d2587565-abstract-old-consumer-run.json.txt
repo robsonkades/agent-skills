@@ -1,0 +1,16 @@
+{
+  "label": "abstract-old-consumer-run",
+  "command": [
+    "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+    "-cp",
+    "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v2-abstract\\classes;C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v1\\classes",
+    "NewMain"
+  ],
+  "workingDirectory": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v2-abstract",
+  "exitCode": 1,
+  "stdout": "OLD_PATH=4\r\n",
+  "stderr": "Exception in thread \"main\" java.lang.AbstractMethodError: Receiver class OldOp does not define or inherit an implementation of the resolved method 'abstract java.lang.Object visitCode(Model$Code)' of interface Model$Visitor.\r\n\tat Model$Code.accept(Model.java:11)\r\n\tat NewMain.main(NewMain.java:7)\r\n",
+  "signal": null,
+  "error": null,
+  "expectedExitCode": 1
+}

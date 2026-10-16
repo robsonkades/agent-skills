@@ -1,0 +1,763 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "jvm-bytecode",
+  "ownedPath": "skills/jvm-bytecode/**",
+  "allWritesStopped": true,
+  "reviewDate": "2026-10-16",
+  "scope": "Read and improve the existing bytecode-reading/diagnosis skill; no package-manager or neighboring/shared repository changes.",
+  "procedure": {
+    "documents": [
+      "AGENTS.md",
+      "docs/parallel-skill-reviews.md",
+      "docs/skill-review-prompt.md",
+      "docs/skill-validation/wave3-2026-10-16/review-brief.md",
+      "skills/skill-engineering/SKILL.md",
+      "skills/skill-engineering/references/evidence-and-confidence.md",
+      "skills/skill-engineering/references/evaluation.md",
+      "skills/skill-engineering/references/resource-design.md",
+      "skills/skill-engineering/references/anti-patterns.md"
+    ],
+    "note": "Full unchanged procedure and engineering references reused from preceding assignments as permitted; wave-three brief and the entire assigned five-file package reviewed for this assignment. Findings sent to coordinator before first edit."
+  },
+  "baseline": {
+    "committedVersion": "2.1.5",
+    "assignmentVersion": "2.1.5",
+    "preexistingVersionBump": false,
+    "committedVsAssignment": "Owned package clean at assignment.",
+    "stagedChanges": [],
+    "unstagedChanges": [],
+    "untrackedFiles": [],
+    "inspectionCommand": "git status --short -- skills/jvm-bytecode; git diff --cached -- skills/jvm-bytecode; git diff -- skills/jvm-bytecode; git ls-files --others --exclude-standard -- skills/jvm-bytecode; git show HEAD:skills/jvm-bytecode/skill.yaml; rg --files skills/jvm-bytecode"
+  },
+  "domainSuccessCriteria": [
+    "Keep class-file facts distinct from compiler/JIT policy and measured performance.",
+    "Use the actual target/runtime/build and evidence-producing logging level.",
+    "Prevent an accepted but ineffective command or empty capture from proving absence of runtime events.",
+    "Preserve bounded handoff from bytecode inspection into specialized runtime diagnosis without duplicating that skill."
+  ],
+  "findingsCorrected": [
+    {
+      "id": "F1",
+      "locationBefore": "references/dispatch-and-abstraction-cost.md:234-235, Where the bytecode stops answering",
+      "problem": "The recommended -Xlog:deoptimization=info command is accepted on HotSpot 25.0.3 but filters out debug-level uncommon-trap records.",
+      "consequence": "A reader could accept a zero-byte file as evidence that no deoptimization happened.",
+      "evidence": "Pinned HotSpot 25.0.3+9 Deoptimization::log_deopt uses LogTarget(Debug,deoptimization). Local info-change run produced zero deopt bytes while compilation log recorded made not entrant: uncommon trap; matching debug run captured unstable_if/reinterpret at hot(ZI)I bci 1.",
+      "correction": "Use deoptimization=debug; explicitly distinguish accepted configuration from event coverage."
+    },
+    {
+      "id": "F2",
+      "locationBefore": "references/dispatch-and-abstraction-cost.md:223-247",
+      "problem": "The cross-domain diagnostic examples did not state the uncommon-trap coverage boundary or constrain the absence/cost inference.",
+      "consequence": "Even corrected empty logging/JFR could be treated as excluding all compiled-code invalidation, or one trap could be mistaken for proven application latency cost.",
+      "evidence": "Pinned source emits UL log_deopt and JFR post_deoptimization_event in uncommon_trap_inner; an additional local debug-stable control produced an empty log with no observed hot-method invalidation.",
+      "correction": "Add focused coverage/window/settings explanation, route invalidation/compilation-history work to deoptimization, bound new captures and reserve detailed trace output for focused sessions."
+    }
+  ],
+  "findingsRemaining": [],
+  "filesChangedByReviewer": [
+    {
+      "path": "skills/jvm-bytecode/references/dispatch-and-abstraction-cost.md",
+      "change": "Correct logging level, bound interpretation/capture and add versioned primary source."
+    },
+    {
+      "path": "skills/jvm-bytecode/skill.yaml",
+      "change": "Patch version 2.1.5 to 2.1.6; after coordinator-reported registry failure, declare deoptimization as an optional suggestion without a second version bump."
+    }
+  ],
+  "preexistingChanges": [],
+  "attribution": [
+    {
+      "path": "skills/jvm-bytecode/skill.yaml",
+      "baselineSHA256": "C967CB8A2CE1EFD35F7EB545D6A435F8FA49455BE2ED1D90547183840E97942D",
+      "finalSHA256": "AB7D5B2A7A0B1B1228337A7EDD20D0A9A0008C929346653D459E6F61060CBB3A",
+      "changed": true,
+      "beforeFences": 0,
+      "afterFences": 0,
+      "changedFences": []
+    },
+    {
+      "path": "skills/jvm-bytecode/SKILL.md",
+      "baselineSHA256": "E1E27FABFC06A2D2CCE06E5D4BEDDB16476C6BB96E23E23C007CB1BD95094E83",
+      "finalSHA256": "E1E27FABFC06A2D2CCE06E5D4BEDDB16476C6BB96E23E23C007CB1BD95094E83",
+      "changed": false,
+      "beforeFences": 0,
+      "afterFences": 0,
+      "changedFences": []
+    },
+    {
+      "path": "skills/jvm-bytecode/references/limits-and-failure-catalogue.md",
+      "baselineSHA256": "7415DB0D4041186FF49A1817DB02A4B4CA00CBD2C8D444ADF5A0DCC87CACF42F",
+      "finalSHA256": "7415DB0D4041186FF49A1817DB02A4B4CA00CBD2C8D444ADF5A0DCC87CACF42F",
+      "changed": false,
+      "beforeFences": 0,
+      "afterFences": 0,
+      "changedFences": []
+    },
+    {
+      "path": "skills/jvm-bytecode/references/javap-and-class-file-anatomy.md",
+      "baselineSHA256": "F4CD4FC68EA47A904D64239E1C716495B0AFF1FC4DA2AD0A90702E60DF253190",
+      "finalSHA256": "F4CD4FC68EA47A904D64239E1C716495B0AFF1FC4DA2AD0A90702E60DF253190",
+      "changed": false,
+      "beforeFences": 16,
+      "afterFences": 16,
+      "changedFences": []
+    },
+    {
+      "path": "skills/jvm-bytecode/references/dispatch-and-abstraction-cost.md",
+      "baselineSHA256": "9CBE2DB6A6D9BEA21C24BB103EFD8A9782165CF6F528B7E353B827192C00F29A",
+      "finalSHA256": "1E49493FF672C27DFBF698A7B91B8C7F96A522FECEB2BE62DE50B6B0AFBA03CE",
+      "changed": true,
+      "beforeFences": 9,
+      "afterFences": 9,
+      "changedFences": [
+        7
+      ]
+    }
+  ],
+  "capabilities": {
+    "preserved": [
+      "Exact artifact identity, multi-release JAR selection and target/runtime distinctions.",
+      "Descriptors, slots, operand stack, method resolution/selection and invoke semantics.",
+      "Verifier/StackMapTable guidance, bridge methods and loader-sensitive transformation.",
+      "Class-file limits, parser/agent version compatibility and no-false-instrumentation-success controls.",
+      "Compiler-specific lowering examples, hidden lambdas, records, sealed types and pattern switches.",
+      "No cycles-per-bytecode or unmeasured abstraction-cost claims; JMH routing where quantitative evidence is needed."
+    ],
+    "replaced": [
+      "Ineffective info-level uncommon-trap capture example replaced by debug-level capture."
+    ],
+    "removed": [],
+    "preservationCheck": "All three unedited package files are byte-identical to assignment. Of 25 fenced blocks, only the one diagnostics block changed (comment and logging level); the other 24 are identical. Unchanged snippets were not reexecuted in this assignment."
+  },
+  "versions": {
+    "committed": "2.1.5",
+    "assignment": "2.1.5",
+    "final": "2.1.6",
+    "rationale": "Single patch for a focused compatible documentation correction; no pre-existing bump to reuse. Generated shared version data left to coordinator. Reopened consistency repair reuses 2.1.6 as instructed."
+  },
+  "technicalEnvironment": {
+    "compiler": "javac 25.0.3",
+    "releaseTarget": 25,
+    "classFileMajor": 69,
+    "runtime": "OpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)",
+    "vm": "OpenJDK 64-Bit Server VM Temurin-25.0.3+9-LTS, mixed mode, sharing",
+    "platform": "Windows",
+    "javaPath": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+    "javacPath": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe"
+  },
+  "executedChecks": [
+    {
+      "kind": "structural",
+      "check": {
+        "name": "package-and-links",
+        "cmd": "@'\nimport { readFileSync, existsSync } from 'node:fs';\nimport { resolve, dirname } from 'node:path';\nimport { parseManifest } from './packages/core/src/domain/manifest.ts';\nimport { buildSkillPackage } from './packages/core/src/domain/skill-package.ts';\nimport { validatePackage } from './packages/core/src/application/validate-package.ts';\n\nconst root = resolve('skills/jvm-bytecode');\nconst paths = ['SKILL.md', 'skill.yaml', 'references/dispatch-and-abstraction-cost.md', 'references/javap-and-class-file-anatomy.md', 'references/limits-and-failure-catalogue.md'];\nconst parsed = parseManifest(readFileSync(resolve(root, 'skill.yaml'), 'utf8'), { strict: true });\nconst pkg = buildSkillPackage(parsed.manifest, paths.map(path => ({ path, bytes: readFileSync(resolve(root, path)) })));\nconst report = validatePackage(pkg, { directoryName: 'jvm-bytecode' });\nconst failures = [...parsed.issues, ...report.issues];\nconst resources = [];\nfor (const path of paths.filter(path => path.endsWith('.md'))) {\n  const source = readFileSync(resolve(root, path), 'utf8');\n  for (const match of source.matchAll(/\\]\\(([^)]+)\\)/g)) {\n    const target = match[1].replace(/^<|>$/g, '');\n    if (/^https?:/.test(target)) continue;\n    const filePart = target.split('#')[0];\n    const absolute = resolve(dirname(resolve(root, path)), filePart || path.split('/').at(-1));\n    resources.push({ from: path, target, exists: existsSync(absolute) });\n    if (!existsSync(absolute)) failures.push({ missing: target, from: path });\n  }\n  for (const match of source.matchAll(/\\x60((?:references|assets|scripts)\\/[^\\x60]+)\\x60/g)) {\n    const absolute = resolve(root, match[1].split('#')[0]);\n    resources.push({ from: path, target: match[1], exists: existsSync(absolute) });\n    if (!existsSync(absolute)) failures.push({ missing: match[1], from: path });\n  }\n}\nconst related = [...parsed.manifest.dependencies.map(item => item.name), ...parsed.manifest.suggests];\nconst missingRelated = related.filter(name => !existsSync(resolve('skills', name, 'SKILL.md')));\nif (missingRelated.length) failures.push({ missingRelated });\nconsole.log(JSON.stringify({ skill: parsed.manifest.name, version: parsed.manifest.version, files: paths.length, packageReport: report, parseIssues: parsed.issues, resources, relatedSkillsChecked: related.length, missingRelated, failures }, null, 2));\nprocess.exitCode = failures.length ? 1 : 0;\n'@ | node --input-type=module",
+        "workdir": "C:/git/agent-skills",
+        "max_output_tokens": 3000
+      },
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "3a7289",
+          "wall_time_seconds": 0.1878963,
+          "exit_code": 0,
+          "original_token_count": 284,
+          "output": "{\n  \"skill\": \"jvm-bytecode\",\n  \"version\": \"2.1.6\",\n  \"files\": 5,\n  \"packageReport\": {\n    \"ok\": true,\n    \"issues\": [],\n    \"errors\": [],\n    \"warnings\": []\n  },\n  \"parseIssues\": [],\n  \"resources\": [\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/javap-and-class-file-anatomy.md\",\n      \"exists\": true\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/dispatch-and-abstraction-cost.md\",\n      \"exists\": true\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/limits-and-failure-catalogue.md\",\n      \"exists\": true\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/javap-and-class-file-anatomy.md\",\n      \"exists\": true\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/limits-and-failure-catalogue.md\",\n      \"exists\": true\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/dispatch-and-abstraction-cost.md\",\n      \"exists\": true\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/dispatch-and-abstraction-cost.md\",\n      \"exists\": true\n    }\n  ],\n  \"relatedSkillsChecked\": 5,\n  \"missingRelated\": [],\n  \"failures\": []\n}\n"
+        }
+      },
+      "summary": "Strict parse/build/validate of this five-file package: zero issues; seven local resource occurrences resolve; five declared related skills exist. No catalog-wide dependency resolution or global version check."
+    },
+    {
+      "kind": "format",
+      "check": {
+        "name": "prettier-check",
+        "cmd": "node node_modules/prettier/bin/prettier.cjs --check skills/jvm-bytecode/SKILL.md skills/jvm-bytecode/skill.yaml skills/jvm-bytecode/references/dispatch-and-abstraction-cost.md skills/jvm-bytecode/references/javap-and-class-file-anatomy.md skills/jvm-bytecode/references/limits-and-failure-catalogue.md",
+        "workdir": "C:/git/agent-skills",
+        "max_output_tokens": 1500
+      },
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "cad251",
+          "wall_time_seconds": 0.2656217,
+          "exit_code": 0,
+          "original_token_count": 17,
+          "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+        }
+      },
+      "summary": "Read-only Prettier check passed for all five owned files."
+    },
+    {
+      "kind": "whitespace",
+      "check": {
+        "name": "diff-whitespace",
+        "cmd": "git diff --check -- skills/jvm-bytecode",
+        "workdir": "C:/git/agent-skills",
+        "max_output_tokens": 1500
+      },
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "6e514f",
+          "wall_time_seconds": 0.0716305,
+          "exit_code": 0,
+          "original_token_count": 0,
+          "output": ""
+        }
+      },
+      "summary": "Owned git diff --check passed."
+    },
+    {
+      "kind": "technical-compilation",
+      "command": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' --release 25 -g TrapLevelProbe.java 1> compile.stdout.log 2> compile.stderr.log",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-bytecode-probe",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "summary": "Compiled isolated fixture for release 25; no diagnostics."
+    },
+    {
+      "kind": "technical-runtime",
+      "command": "$probeProcess = Start-Process -FilePath 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -ArgumentList @('-Xbatch', '-XX:-TieredCompilation', '-XX:CompileThreshold=1000', '-XX:CompileCommand=compileonly,TrapLevelProbe::hot', '-Xlog:deoptimization=info:file=info-change.deopt.log:time,uptime', '-Xlog:jit+compilation=debug:file=info-change.jit.log:uptime', 'TrapLevelProbe', 'change') -WindowStyle Hidden -PassThru -RedirectStandardOutput 'info-change.stdout.log' -RedirectStandardError 'info-change.stderr.log'; if (-not $probeProcess.WaitForExit(30000)) { $probeProcess.Kill(); $probeProcess.WaitForExit(); throw 'Probe exceeded 30 seconds' }; $probeExit = $probeProcess.ExitCode; Get-Content 'info-change.stdout.log'; Get-Content 'info-change.stderr.log'; Get-Content 'info-change.deopt.log'; Select-String -Path 'info-change.jit.log' -Pattern 'TrapLevelProbe::hot'; Write-Output \"java exit=$probeExit\"; exit $probeExit",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-bytecode-probe",
+      "exitCode": 0,
+      "output": "CompileCommand: compileonly TrapLevelProbe.hot bool compileonly = true\r\nWARM checksum=5000050000\r\nRESULT mode=change value=6\r\n\r\ninfo-change.jit.log:3:[0.062s]    3    b        TrapLevelProbe::hot (12 bytes)\r\ninfo-change.jit.log:15:[0.078s]    3             TrapLevelProbe::hot (12 bytes)   made not entrant: uncommon trap\r\njava exit=0\r\n",
+      "wallTimeSeconds": 0.238784,
+      "mode": "info-change"
+    },
+    {
+      "kind": "technical-runtime",
+      "command": "$probeProcess = Start-Process -FilePath 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -ArgumentList @('-Xbatch', '-XX:-TieredCompilation', '-XX:CompileThreshold=1000', '-XX:CompileCommand=compileonly,TrapLevelProbe::hot', '-Xlog:deoptimization=debug:file=debug-change.deopt.log:time,uptime', '-Xlog:jit+compilation=debug:file=debug-change.jit.log:uptime', 'TrapLevelProbe', 'change') -WindowStyle Hidden -PassThru -RedirectStandardOutput 'debug-change.stdout.log' -RedirectStandardError 'debug-change.stderr.log'; if (-not $probeProcess.WaitForExit(30000)) { $probeProcess.Kill(); $probeProcess.WaitForExit(); throw 'Probe exceeded 30 seconds' }; $probeExit = $probeProcess.ExitCode; Get-Content 'debug-change.stdout.log'; Get-Content 'debug-change.stderr.log'; Get-Content 'debug-change.deopt.log'; Select-String -Path 'debug-change.jit.log' -Pattern 'TrapLevelProbe::hot'; Write-Output \"java exit=$probeExit\"; exit $probeExit",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-bytecode-probe",
+      "exitCode": 0,
+      "output": "CompileCommand: compileonly TrapLevelProbe.hot bool compileonly = true\r\nWARM checksum=5000050000\r\nRESULT mode=change value=6\r\n[2026-10-16T12:08:35.995-0300][0.082s] cid=   3     level=4 TrapLevelProbe.hot(ZI)I trap_bci=1 unstable_if reinterpret pc=0x0000018a11945844 relative_pc=0x0000000000000044\r\n\r\ndebug-change.jit.log:3:[0.063s]    3    b        TrapLevelProbe::hot (12 bytes)\r\ndebug-change.jit.log:15:[0.082s]    3             TrapLevelProbe::hot (12 bytes)   made not entrant: uncommon trap\r\njava exit=0\r\n",
+      "wallTimeSeconds": 0.2285912,
+      "mode": "debug-change"
+    },
+    {
+      "kind": "technical-runtime",
+      "command": "$probeProcess = Start-Process -FilePath 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -ArgumentList @('-Xbatch', '-XX:-TieredCompilation', '-XX:CompileThreshold=1000', '-XX:CompileCommand=compileonly,TrapLevelProbe::hot', '-Xlog:deoptimization=debug:file=debug-stable.deopt.log:time,uptime', '-Xlog:jit+compilation=debug:file=debug-stable.jit.log:uptime', 'TrapLevelProbe', 'stable') -WindowStyle Hidden -PassThru -RedirectStandardOutput 'debug-stable.stdout.log' -RedirectStandardError 'debug-stable.stderr.log'; if (-not $probeProcess.WaitForExit(30000)) { $probeProcess.Kill(); $probeProcess.WaitForExit(); throw 'Probe exceeded 30 seconds' }; $probeExit = $probeProcess.ExitCode; Get-Content 'debug-stable.stdout.log'; Get-Content 'debug-stable.stderr.log'; Get-Content 'debug-stable.deopt.log'; Select-String -Path 'debug-stable.jit.log' -Pattern 'TrapLevelProbe::hot'; Write-Output \"java exit=$probeExit\"; exit $probeExit",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-bytecode-probe",
+      "exitCode": 0,
+      "output": "CompileCommand: compileonly TrapLevelProbe.hot bool compileonly = true\r\nWARM checksum=5000050000\r\nRESULT mode=stable value=8\r\n\r\ndebug-stable.jit.log:3:[0.064s]    3    b        TrapLevelProbe::hot (12 bytes)\r\njava exit=0\r\n",
+      "wallTimeSeconds": 0.2271197,
+      "mode": "debug-stable"
+    },
+    {
+      "kind": "technical-disassembly",
+      "check": {
+        "name": "javap",
+        "cmd": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javap.exe' -v -c -p TrapLevelProbe 1> javap.stdout.log 2> javap.stderr.log; $probeJavapExit = $LASTEXITCODE; Get-Content javap.stdout.log | Select-Object -First 132; Get-Content javap.stderr.log; Write-Output \"javap exit=$probeJavapExit\"; exit $probeJavapExit",
+        "workdir": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-bytecode-probe",
+        "max_output_tokens": 2200
+      },
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "da51ba",
+          "wall_time_seconds": 0.2596041,
+          "exit_code": 0,
+          "original_token_count": 1930,
+          "output": "Classfile /C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-bytecode-probe/TrapLevelProbe.class\r\n  Last modified Oct 16, 2026; size 1912 bytes\r\n  SHA-256 checksum 721a3eddc2a07fb3c77cf04849825aaea11380b99bf7172816224a46a2a9a1ca\r\n  Compiled from \"TrapLevelProbe.java\"\r\npublic final class TrapLevelProbe\r\n  minor version: 0\r\n  major version: 69\r\n  flags: (0x0031) ACC_PUBLIC, ACC_FINAL, ACC_SUPER\r\n  this_class: #26                         // TrapLevelProbe\r\n  super_class: #2                         // java/lang/Object\r\n  interfaces: 0, fields: 0, methods: 3, attributes: 3\r\nConstant pool:\r\n    #1 = Methodref          #2.#3         // java/lang/Object.\"<init>\":()V\r\n    #2 = Class              #4            // java/lang/Object\r\n    #3 = NameAndType        #5:#6         // \"<init>\":()V\r\n    #4 = Utf8               java/lang/Object\r\n    #5 = Utf8               <init>\r\n    #6 = Utf8               ()V\r\n    #7 = String             #8            // change\r\n    #8 = Utf8               change\r\n    #9 = Methodref          #10.#11       // java/lang/String.equals:(Ljava/lang/Object;)Z\r\n   #10 = Class              #12           // java/lang/String\r\n   #11 = NameAndType        #13:#14       // equals:(Ljava/lang/Object;)Z\r\n   #12 = Utf8               java/lang/String\r\n   #13 = Utf8               equals\r\n   #14 = Utf8               (Ljava/lang/Object;)Z\r\n   #15 = String             #16           // stable\r\n   #16 = Utf8               stable\r\n   #17 = Class              #18           // java/lang/IllegalArgumentException\r\n   #18 = Utf8               java/lang/IllegalArgumentException\r\n   #19 = String             #20           // Expected change or stable\r\n   #20 = Utf8               Expected change or stable\r\n   #21 = Methodref          #17.#22       // java/lang/IllegalArgumentException.\"<init>\":(Ljava/lang/String;)V\r\n   #22 = NameAndType        #5:#23        // \"<init>\":(Ljava/lang/String;)V\r\n   #23 = Utf8               (Ljava/lang/String;)V\r\n   #24 = Integer            100000\r\n   #25 = Methodref          #26.#27       // TrapLevelProbe.hot:(ZI)I\r\n   #26 = Class              #28           // TrapLevelProbe\r\n   #27 = NameAndType        #29:#30       // hot:(ZI)I\r\n   #28 = Utf8               TrapLevelProbe\r\n   #29 = Utf8               hot\r\n   #30 = Utf8               (ZI)I\r\n   #31 = Long               5000050000l\r\n   #33 = Class              #34           // java/lang/AssertionError\r\n   #34 = Utf8               java/lang/AssertionError\r\n   #35 = InvokeDynamic      #0:#36        // #0:makeConcatWithConstants:(J)Ljava/lang/String;\r\n   #36 = NameAndType        #37:#38       // makeConcatWithConstants:(J)Ljava/lang/String;\r\n   #37 = Utf8               makeConcatWithConstants\r\n   #38 = Utf8               (J)Ljava/lang/String;\r\n   #39 = Methodref          #33.#40       // java/lang/AssertionError.\"<init>\":(Ljava/lang/Object;)V\r\n   #40 = NameAndType        #5:#41        // \"<init>\":(Ljava/lang/Object;)V\r\n   #41 = Utf8               (Ljava/lang/Object;)V\r\n   #42 = Fieldref           #43.#44       // java/lang/System.out:Ljava/io/PrintStream;\r\n   #43 = Class              #45           // java/lang/System\r\n   #44 = NameAndType        #46:#47       // out:Ljava/io/PrintStream;\r\n   #45 = Utf8               java/lang/System\r\n   #46 = Utf8               out\r\n   #47 = Utf8               Ljava/io/PrintStream;\r\n   #48 = InvokeDynamic      #1:#36        // #1:makeConcatWithConstants:(J)Ljava/lang/String;\r\n   #49 = Methodref          #50.#51       // java/io/PrintStream.println:(Ljava/lang/String;)V\r\n   #50 = Class              #52           // java/io/PrintStream\r\n   #51 = NameAndType        #53:#23       // println:(Ljava/lang/String;)V\r\n   #52 = Utf8               java/io/PrintStream\r\n   #53 = Utf8               println\r\n   #54 = InvokeDynamic      #2:#55        // #2:makeConcatWithConstants:(II)Ljava/lang/String;\r\n   #55 = NameAndType        #37:#56       // makeConcatWithConstants:(II)Ljava/lang/String;\r\n   #56 = Utf8               (II)Ljava/lang/String;\r\n   #57 = InvokeDynamic      #3:#58        // #3:makeConcatWithConstants:(Ljava/lang/String;I)Ljava/lang/String;\r\n   #58 = NameAndType        #37:#59       // makeConcatWithConstants:(Ljava/lang/String;I)Ljava/lang/String;\r\n   #59 = Utf8               (Ljava/lang/String;I)Ljava/lang/String;\r\n   #60 = Utf8               Code\r\n   #61 = Utf8               LineNumberTable\r\n   #62 = Utf8               LocalVariableTable\r\n   #63 = Utf8               this\r\n   #64 = Utf8               LTrapLevelProbe;\r\n   #65 = Utf8               positive\r\n   #66 = Utf8               Z\r\n   #67 = Utf8               value\r\n   #68 = Utf8               I\r\n   #69 = Utf8               StackMapTable\r\n   #70 = Utf8               main\r\n   #71 = Utf8               ([Ljava/lang/String;)V\r\n   #72 = Utf8               i\r\n   #73 = Utf8               args\r\n   #74 = Utf8               [Ljava/lang/String;\r\n   #75 = Utf8               checksum\r\n   #76 = Utf8               J\r\n   #77 = Utf8               result\r\n   #78 = Utf8               expected\r\n   #79 = Utf8               SourceFile\r\n   #80 = Utf8               TrapLevelProbe.java\r\n   #81 = Utf8               BootstrapMethods\r\n   #82 = String             #83           // Warm-up result: \\u0001\r\n   #83 = Utf8               Warm-up result: \\u0001\r\n   #84 = String             #85           // WARM checksum=\\u0001\r\n   #85 = Utf8               WARM checksum=\\u0001\r\n   #86 = String             #87           // Expected \\u0001, got \\u0001\r\n   #87 = Utf8               Expected \\u0001, got \\u0001\r\n   #88 = String             #89           // RESULT mode=\\u0001 value=\\u0001\r\n   #89 = Utf8               RESULT mode=\\u0001 value=\\u0001\r\n   #90 = MethodHandle       6:#91         // REF_invokeStatic java/lang/invoke/StringConcatFactory.makeConcatWithConstants:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/invoke/CallSite;\r\n   #91 = Methodref          #92.#93       // java/lang/invoke/StringConcatFactory.makeConcatWithConstants:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/invoke/CallSite;\r\n   #92 = Class              #94           // java/lang/invoke/StringConcatFactory\r\n   #93 = NameAndType        #37:#95       // makeConcatWithConstants:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/invoke/CallSite;\r\n   #94 = Utf8               java/lang/invoke/StringConcatFactory\r\n   #95 = Utf8               (Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/invoke/CallSite;\r\n   #96 = Utf8               InnerClasses\r\n   #97 = Class              #98           // java/lang/invoke/MethodHandles$Lookup\r\n   #98 = Utf8               java/lang/invoke/MethodHandles$Lookup\r\n   #99 = Class              #100          // java/lang/invoke/MethodHandles\r\n  #100 = Utf8               java/lang/invoke/MethodHandles\r\n  #101 = Utf8               Lookup\r\n{\r\n  public TrapLevelProbe();\r\n    descriptor: ()V\r\n    flags: (0x0001) ACC_PUBLIC\r\n    Code:\r\n      stack=1, locals=1, args_size=1\r\n         0: aload_0\r\n         1: invokespecial #1                  // Method java/lang/Object.\"<init>\":()V\r\n         4: return\r\n      LineNumberTable:\r\n        line 1: 0\r\n      LocalVariableTable:\r\n        Start  Length  Slot  Name   Signature\r\n            0       5     0  this   LTrapLevelProbe;\r\n\r\n  static int hot(boolean, int);\r\n    descriptor: (ZI)I\r\n    flags: (0x0008) ACC_STATIC\r\n    Code:\r\n      stack=2, locals=2, args_size=2\r\njavap exit=0\r\n"
+        }
+      },
+      "summary": "javap passed; major 69, hot descriptor (ZI)I, 12-byte method, branch at bci 1, consistent with trap record. Full output retained."
+    },
+    {
+      "kind": "ownership-and-process",
+      "command": {
+        "name": "owned-final-diff",
+        "cmd": "git status --short -- skills/jvm-bytecode; git diff --cached -- skills/jvm-bytecode; git diff -- skills/jvm-bytecode; git ls-files --others --exclude-standard -- skills/jvm-bytecode",
+        "workdir": "C:/git/agent-skills",
+        "max_output_tokens": 3000
+      },
+      "exitCode": 0,
+      "output": " M skills/jvm-bytecode/references/dispatch-and-abstraction-cost.md\n M skills/jvm-bytecode/skill.yaml\ndiff --git a/skills/jvm-bytecode/references/dispatch-and-abstraction-cost.md b/skills/jvm-bytecode/references/dispatch-and-abstraction-cost.md\nindex fbdc615..854a9b9 100644\n--- a/skills/jvm-bytecode/references/dispatch-and-abstraction-cost.md\n+++ b/skills/jvm-bytecode/references/dispatch-and-abstraction-cost.md\n@@ -224,20 +224,29 @@ site between a backward `goto` and its target.\n \n The JIT compiles against a **runtime type profile**. Bytecode records only the declared type,\n so it cannot tell you whether a speculation held or was invalidated. That question belongs to\n-the compilation logs, but two corrections are worth carrying across:\n+runtime compilation and deoptimization diagnostics, matched to the deployed build:\n \n ```bash\n # -XX:+TraceDeoptimization is a DIAGNOSTIC flag: without -XX:+UnlockDiagnosticVMOptions\n # the JVM refuses the command line (verified: \"must be enabled via -XX:+UnlockDiagnosticVMOptions\").\n java -XX:+UnlockDiagnosticVMOptions -XX:+PrintCompilation -XX:+TraceDeoptimization MyApp\n \n-# Cleaner in production — unified logging, no diagnostic flags:\n-java -Xlog:deoptimization=info:file=deopt.log:time,uptime MyApp\n+# HotSpot 25.0.3 uncommon traps: debug level, no diagnostic flags:\n+java -Xlog:deoptimization=debug:file=deopt.log:time,uptime MyApp\n \n # Or via JFR, correlated with the rest of the recording:\n jfr print --events jdk.Deoptimization rec.jfr\n ```\n \n+On HotSpot 25.0.3, `deoptimization=info` is accepted but excludes these `debug`-level\n+records. Both this log and `jdk.Deoptimization` cover **uncommon traps**, not every cause of\n+compiled-code invalidation. Check the settings and covered workload/window before interpreting\n+an empty capture; even a valid empty capture does not rule out dependency invalidation.\n+Use `deoptimization` for that investigation and for joining the trapping method/descriptor,\n+bci and compile ID to compilation history. Reuse adequate recordings; bound new captures by\n+time, disk and overhead budget, and reserve detailed `TraceDeoptimization` output for a focused\n+session. A trap identifies a failed assumption, not its contribution to application latency.\n+\n `-XX:+PrintDeoptimizationInfo` is not a HotSpot flag: `Unrecognized VM option\n 'PrintDeoptimizationInfo'`, with the JVM suggesting `PrintDeoptimizationDetails` — itself a\n debug-build flag. Check any suspicious flag with\n@@ -261,6 +270,7 @@ validate any optimization on the production objective, especially tail latency a\n \n - [JVMS 25, instruction set](https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html)\n - [JVMS 25, method and dynamic-call-site resolution](https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-5.html#jvms-5.4.3)\n+- [HotSpot 25.0.3+9: trap logging level and JFR emission in `uncommon_trap_inner`](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/runtime/deoptimization.cpp#L1889-L2004)\n - [JEP 181: Nest-Based Access Control](https://openjdk.org/jeps/181)\n - [JEP 280: Indify String Concatenation](https://openjdk.org/jeps/280)\n - [JEP 371: Hidden Classes](https://openjdk.org/jeps/371)\ndiff --git a/skills/jvm-bytecode/skill.yaml b/skills/jvm-bytecode/skill.yaml\nindex 077c896..e1730c1 100644\n--- a/skills/jvm-bytecode/skill.yaml\n+++ b/skills/jvm-bytecode/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: jvm-bytecode\n-version: 2.1.5\n+version: 2.1.6\n description: >-\n   Reading and reasoning about JVM bytecode: javap -c -p -v, operand stack and local slots, the\n   constant pool and resolution timing, descriptors versus Signature, the invoke* family with\n",
+      "summary": "Exactly two changed owned files; no staged/untracked owned files. Final hash comparison attributes changes to reviewer. Scoped CIM process query found zero active TrapLevelProbe java/javac/javap processes."
+    }
+  ],
+  "technicalObservations": {
+    "infoChange": {
+      "deoptBytes": 0,
+      "compilationId": 3,
+      "compilationEvidence": "hot (12 bytes) made not entrant: uncommon trap",
+      "result": 6
+    },
+    "debugChange": {
+      "deoptBytes": 173,
+      "trapCount": 1,
+      "compilationId": 3,
+      "level": 4,
+      "method": "TrapLevelProbe.hot(ZI)I",
+      "bci": 1,
+      "reason": "unstable_if",
+      "action": "reinterpret",
+      "result": 6
+    },
+    "debugStable": {
+      "deoptBytes": 0,
+      "compiledHot": true,
+      "observedHotInvalidations": 0,
+      "result": 8
+    },
+    "common": "All three runs exited 0; stderr empty; warm checksum 5000050000. Every child process had a 30-second watchdog and completed in under one second."
+  },
+  "failedAttempts": [],
+  "behavioralEvaluationsExecuted": [],
+  "structuredWalkthroughs": [
+    {
+      "caseId": "capture-a",
+      "status": "Expected-behavior walkthrough only",
+      "observation": "Empty info log conflicts with actual compilation evidence of a trap; fix logging level when trap details are needed, do not erase observed event or alter code on this basis."
+    },
+    {
+      "caseId": "capture-b",
+      "status": "Expected-behavior walkthrough only",
+      "observation": "Debug record joins compile ID 3 to hot(ZI)I bci 1 and the actual ifeq instruction; no logging-level fix or gratuitous new capture is required to establish this trap."
+    },
+    {
+      "caseId": "debug-stable-negative-control",
+      "status": "Technical control plus expected-behavior walkthrough; not an independent agent case",
+      "observation": "Valid debug capture can be empty; do not manufacture traps or automatically escalate tracing. This bounded observation does not rule out all invalidation mechanisms."
+    }
+  ],
+  "caseInputs": [
+    {
+      "id": "capture-a",
+      "task": "Analise os artefatos deste replay local de JVM. Determine o que é possível concluir sobre a execução de TrapLevelProbe.hot e quais alterações, se alguma, são necessárias no diagnóstico antes de considerar uma mudança na aplicação. Entregue a menor ação sustentada pelos artefatos, os limites da conclusão e qualquer evidência adicional realmente necessária. Não trate os controles de compilação deste replay como opções para produção.",
+      "prerequisites": "Os arquivos fornecidos podem ser analisados sem executar. Para reproduzir, use Temurin 25.0.3+9 em um diretório temporário isolado; não é necessário instalar dependências ou acessar produção.",
+      "runtime": {
+        "compiler": "javac 25.0.3",
+        "releaseTarget": 25,
+        "classFileMajor": 69,
+        "runtime": "OpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)",
+        "vm": "OpenJDK 64-Bit Server VM Temurin-25.0.3+9-LTS, mixed mode, sharing",
+        "platform": "Windows",
+        "javaPath": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+        "javacPath": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe"
+      },
+      "compileCommand": "javac --release 25 -g TrapLevelProbe.java",
+      "launchArguments": [
+        "-Xbatch",
+        "-XX:-TieredCompilation",
+        "-XX:CompileThreshold=1000",
+        "-XX:CompileCommand=compileonly,TrapLevelProbe::hot",
+        "-Xlog:deoptimization=info:file=deopt.log:time,uptime",
+        "-Xlog:jit+compilation=debug:file=jit.log:uptime",
+        "TrapLevelProbe",
+        "change"
+      ],
+      "fixtureFiles": [
+        {
+          "destination": "TrapLevelProbe.java",
+          "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-bytecode-probe/TrapLevelProbe.java"
+        },
+        {
+          "destination": "TrapLevelProbe.class",
+          "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-bytecode-probe/TrapLevelProbe.class"
+        },
+        {
+          "destination": "bytecode.txt",
+          "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-bytecode-probe/javap.stdout.log"
+        },
+        {
+          "destination": "deopt.log",
+          "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-bytecode-probe/info-change.deopt.log"
+        },
+        {
+          "destination": "jit.log",
+          "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-bytecode-probe/info-change.jit.log"
+        },
+        {
+          "destination": "stdout.txt",
+          "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-bytecode-probe/info-change.stdout.log"
+        },
+        {
+          "destination": "stderr.txt",
+          "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-bytecode-probe/info-change.stderr.log"
+        }
+      ],
+      "reproduction": "Copy only this input's fixture files and metadata to an isolated evaluator directory. To rerun, use the specified javac/java binaries, compile first, execute launchArguments with a 30-second watchdog, and retain all streams. Do not give evaluator criteria or the reviewer handoff to the acting agent."
+    },
+    {
+      "id": "capture-b",
+      "task": "Analise os artefatos deste replay local de JVM. Determine o que é possível concluir sobre a execução de TrapLevelProbe.hot e quais alterações, se alguma, são necessárias no diagnóstico antes de considerar uma mudança na aplicação. Entregue a menor ação sustentada pelos artefatos, os limites da conclusão e qualquer evidência adicional realmente necessária. Não trate os controles de compilação deste replay como opções para produção.",
+      "prerequisites": "Os arquivos fornecidos podem ser analisados sem executar. Para reproduzir, use Temurin 25.0.3+9 em um diretório temporário isolado; não é necessário instalar dependências ou acessar produção.",
+      "runtime": {
+        "compiler": "javac 25.0.3",
+        "releaseTarget": 25,
+        "classFileMajor": 69,
+        "runtime": "OpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)",
+        "vm": "OpenJDK 64-Bit Server VM Temurin-25.0.3+9-LTS, mixed mode, sharing",
+        "platform": "Windows",
+        "javaPath": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+        "javacPath": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe"
+      },
+      "compileCommand": "javac --release 25 -g TrapLevelProbe.java",
+      "launchArguments": [
+        "-Xbatch",
+        "-XX:-TieredCompilation",
+        "-XX:CompileThreshold=1000",
+        "-XX:CompileCommand=compileonly,TrapLevelProbe::hot",
+        "-Xlog:deoptimization=debug:file=deopt.log:time,uptime",
+        "-Xlog:jit+compilation=debug:file=jit.log:uptime",
+        "TrapLevelProbe",
+        "change"
+      ],
+      "fixtureFiles": [
+        {
+          "destination": "TrapLevelProbe.java",
+          "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-bytecode-probe/TrapLevelProbe.java"
+        },
+        {
+          "destination": "TrapLevelProbe.class",
+          "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-bytecode-probe/TrapLevelProbe.class"
+        },
+        {
+          "destination": "bytecode.txt",
+          "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-bytecode-probe/javap.stdout.log"
+        },
+        {
+          "destination": "deopt.log",
+          "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-bytecode-probe/debug-change.deopt.log"
+        },
+        {
+          "destination": "jit.log",
+          "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-bytecode-probe/debug-change.jit.log"
+        },
+        {
+          "destination": "stdout.txt",
+          "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-bytecode-probe/debug-change.stdout.log"
+        },
+        {
+          "destination": "stderr.txt",
+          "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-bytecode-probe/debug-change.stderr.log"
+        }
+      ],
+      "reproduction": "Copy only this input's fixture files and metadata to an isolated evaluator directory. To rerun, use the specified javac/java binaries, compile first, execute launchArguments with a 30-second watchdog, and retain all streams. Do not give evaluator criteria or the reviewer handoff to the acting agent."
+    }
+  ],
+  "caseCriteria": [
+    {
+      "caseId": "capture-a",
+      "expected": [
+        "Inspect actual launch flags, JIT log and disassembly rather than infer no event from deopt.log size.",
+        "Identify the recorded uncommon-trap invalidation despite empty info capture; on the stated build info excludes debug trap records.",
+        "Recommend debug only if a further capture is necessary for missing trap detail or for correcting the runbook; reuse the existing compilation evidence for what it already proves.",
+        "Preserve the distinction between observed trap/invalidation and unmeasured application cost; do not tune compiler settings or refactor the branch based solely on this replay."
+      ],
+      "failureConditions": [
+        "Concludes there was no deoptimization because the command succeeded and the deopt file is empty.",
+        "Repeats deoptimization=info as a useful trap capture, disables speculation or changes application code without evidence of harm."
+      ]
+    },
+    {
+      "caseId": "capture-b",
+      "expected": [
+        "Read the nonempty debug record: compile ID 3, level 4, hot(ZI)I, bci 1, unstable_if/reinterpret.",
+        "Join same-JVM compilation evidence and locate bci 1 in the supplied class-file disassembly.",
+        "Recognize the already-correct logging level and sufficient evidence for this trap; avoid demanding a new capture by default.",
+        "Do not extrapolate to all invalidation mechanisms, deployment frequency, production performance or a need to rewrite bytecode."
+      ],
+      "failureConditions": [
+        "Changes an already-correct level or insists the sample proves production latency.",
+        "Treats method bytecode shape alone as proof of final machine code/performance or treats this event channel as complete invalidation coverage."
+      ]
+    }
+  ],
+  "evaluationDesign": {
+    "status": "Two reproducible development cases awaiting coordinator evaluation; not holdouts, not agent outputs.",
+    "decisiveConstraint": "Only the deoptimization logging level changes, info versus debug, with identical source/class/target/runtime/workload/compiler controls. Different retained log filenames isolate the runs; output differences are observed consequences.",
+    "comparisonClaim": "No original/revised agent comparison was performed and no measured skill effectiveness gain is claimed."
+  },
+  "primarySources": [
+    {
+      "url": "https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/runtime/deoptimization.cpp#L1889-L2004",
+      "version": "OpenJDK jdk25u tag jdk-25.0.3+9",
+      "supports": "Debug level in log_deopt and UL/JFR emission through uncommon_trap_inner; compiler diagnostic implementation, not a general JVMS contract.",
+      "inspection": "Browsed raw tagged source and inspected lines 1862-2004."
+    }
+  ],
+  "evidencePaths": [
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-bytecode-probe/compile.stderr.log",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-bytecode-probe/compile.stdout.log",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-bytecode-probe/debug-change.deopt.log",
+      "bytes": 173,
+      "sha256": "8469249A10A11D4082EC65DD42B5E96F5A29533E826CA8D0AC938BD1F538372D"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-bytecode-probe/debug-change.jit.log",
+      "bytes": 1928,
+      "sha256": "D9A364EE82988CE55CFEFA3BED2195824D5A2E6B2EDF218211D4828F2FED6D7D"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-bytecode-probe/debug-change.stderr.log",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-bytecode-probe/debug-change.stdout.log",
+      "bytes": 125,
+      "sha256": "B07788660C169F1CA8B2F2EE76EE1CCAF9595372A4CFD678C74375DFAEF93E25"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-bytecode-probe/debug-stable.deopt.log",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-bytecode-probe/debug-stable.jit.log",
+      "bytes": 1836,
+      "sha256": "F8BDAE07F15E868D2CB87A8671E8340B9FB2B6B67F1DD989A3F697C2BF3F3617"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-bytecode-probe/debug-stable.stderr.log",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-bytecode-probe/debug-stable.stdout.log",
+      "bytes": 125,
+      "sha256": "807D0EB7ED37A024F332E18279EC3C78C531DA34F683CEBD02FF04816FD76963"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-bytecode-probe/info-change.deopt.log",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-bytecode-probe/info-change.jit.log",
+      "bytes": 1928,
+      "sha256": "9CC211793D1C04F8610F993152A0B6C079064A65422AD3549909C4B595564D11"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-bytecode-probe/info-change.stderr.log",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-bytecode-probe/info-change.stdout.log",
+      "bytes": 125,
+      "sha256": "B07788660C169F1CA8B2F2EE76EE1CCAF9595372A4CFD678C74375DFAEF93E25"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-bytecode-probe/javap.stderr.log",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-bytecode-probe/javap.stdout.log",
+      "bytes": 15160,
+      "sha256": "E486E8B84551CEE925FA37082D5CCA98B841AEB924257855EC304FD9B1FDBA6E"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-bytecode-probe/TrapLevelProbe.class",
+      "bytes": 1912,
+      "sha256": "721A3EDDC2A07FB3C77CF04849825AAEA11380B99BF7172816224A46A2A9A1CA"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-bytecode-probe/TrapLevelProbe.java",
+      "bytes": 1040,
+      "sha256": "5E7D6FF81D780183E603D9B64DE404C5D8A7A09C5507B67ED16701A6DA728B2B"
+    }
+  ],
+  "assumptionsAndLimits": [
+    "Runtime observations are specific to Windows Temurin 25.0.3+9 HotSpot C2 with deliberate local compiler controls; other builds/tiers/architectures were not executed.",
+    "The source was compiled for Java 25 and ran on that Java 25 VM. No older target/runtime compatibility result is claimed.",
+    "This review did not run JFR, dependency invalidation, class redefinition, instrumentation, JMH or production captures. The added coverage limitation is backed by the pinned primary source; prior specialized skill remains a read-only handoff.",
+    "No application latency/throughput/allocation or logging-overhead benchmark was performed. Trap presence/absence is not causal performance evidence.",
+    "Unchanged package examples were preserved and inspected, not all reexecuted.",
+    "Local validation cannot replace shared registry/version/dependency-range validation.",
+    "Development cases expose expected outcomes only in the separate caseCriteria field; an evaluator must receive only selected caseInputs and fixtures."
+  ],
+  "crossSkillFindings": [
+    {
+      "skill": "deoptimization",
+      "status": "Existing specialized guidance already states correct debug level and uncommon-trap coverage; content remained read-only. Optional handoff is now declared in suggests after the coordinator-reported global registry failure."
+    }
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Regenerate shared registry/version/integrity data and validate catalog constraints after all reviewers stop writing.",
+      "prerequisites": "All parallel authors stopped writing."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Required repository-wide checks including version policy; forbidden to individual reviewers during parallel work.",
+      "prerequisites": "Shared registry rebuilt and all authors stopped writing."
+    }
+  ],
+  "coordinatorActions": [
+    "Run global checks when the wave is ready; evaluate paired cases independently if comparison is desired."
+  ],
+  "consistencyRepair": {
+    "reopenedScope": "Only missing optional handoff declaration in skills/jvm-bytecode/skill.yaml; authorized by coordinator after global registry build failed.",
+    "baseline": {
+      "version": "2.1.6",
+      "ownedPreexistingDiffs": [
+        "skills/jvm-bytecode/references/dispatch-and-abstraction-cost.md",
+        "skills/jvm-bytecode/skill.yaml"
+      ],
+      "staged": [],
+      "untracked": [],
+      "manifestSHA256": "7C1207C9EE2FDF097D01BBC1AB82DE430598CC4C7F923A4253206830337AC80D"
+    },
+    "globalFailure": {
+      "reportedBy": "coordinator",
+      "command": "npm run registry:build",
+      "result": "FAILED on first global attempt",
+      "error": "jvm-bytecode points at \"deoptimization\" without declaring or suggesting it",
+      "exitCode": "Not supplied in coordinator message",
+      "cause": "This reviewer added an optional cross-skill handoff in references/dispatch-and-abstraction-cost.md:245 but omitted the corresponding suggests declaration.",
+      "localCheckLimitation": "The earlier package validation checked declared relationships and resource existence but did not detect undeclared cross-skill references. Its passing result did not establish global registry consistency.",
+      "preserved": true
+    },
+    "correction": {
+      "file": "skills/jvm-bytecode/skill.yaml",
+      "change": "Added deoptimization exactly once to suggests, between compilation-and-inlining-logs and java-reflection-and-method-handles.",
+      "version": "2.1.6",
+      "versionRationale": "Reuse existing unpublished patch for this wave, as coordinator instructed; no second bump.",
+      "mandatoryDependencyAdded": false
+    },
+    "executedLocalChecks": [
+      {
+        "check": {
+          "name": "package-and-links",
+          "cmd": "@'\nimport { readFileSync, existsSync } from 'node:fs';\nimport { resolve, dirname } from 'node:path';\nimport { parseManifest } from './packages/core/src/domain/manifest.ts';\nimport { buildSkillPackage } from './packages/core/src/domain/skill-package.ts';\nimport { validatePackage } from './packages/core/src/application/validate-package.ts';\n\nconst root = resolve('skills/jvm-bytecode');\nconst paths = ['SKILL.md', 'skill.yaml', 'references/dispatch-and-abstraction-cost.md', 'references/javap-and-class-file-anatomy.md', 'references/limits-and-failure-catalogue.md'];\nconst parsed = parseManifest(readFileSync(resolve(root, 'skill.yaml'), 'utf8'), { strict: true });\nconst pkg = buildSkillPackage(parsed.manifest, paths.map(path => ({ path, bytes: readFileSync(resolve(root, path)) })));\nconst report = validatePackage(pkg, { directoryName: 'jvm-bytecode' });\nconst failures = [...parsed.issues, ...report.issues];\nconst resources = [];\nfor (const path of paths.filter(path => path.endsWith('.md'))) {\n  const source = readFileSync(resolve(root, path), 'utf8');\n  for (const match of source.matchAll(/\\]\\(([^)]+)\\)/g)) {\n    const target = match[1].replace(/^<|>$/g, '');\n    if (/^https?:/.test(target)) continue;\n    const filePart = target.split('#')[0];\n    const absolute = resolve(dirname(resolve(root, path)), filePart || path.split('/').at(-1));\n    resources.push({ from: path, target, exists: existsSync(absolute) });\n    if (!existsSync(absolute)) failures.push({ missing: target, from: path });\n  }\n  for (const match of source.matchAll(/\\x60((?:references|assets|scripts)\\/[^\\x60]+)\\x60/g)) {\n    const absolute = resolve(root, match[1].split('#')[0]);\n    resources.push({ from: path, target: match[1], exists: existsSync(absolute) });\n    if (!existsSync(absolute)) failures.push({ missing: match[1], from: path });\n  }\n}\nconst related = [...parsed.manifest.dependencies.map(item => item.name), ...parsed.manifest.suggests];\nconst missingRelated = related.filter(name => !existsSync(resolve('skills', name, 'SKILL.md')));\nif (missingRelated.length) failures.push({ missingRelated });\nconsole.log(JSON.stringify({ skill: parsed.manifest.name, version: parsed.manifest.version, files: paths.length, packageReport: report, parseIssues: parsed.issues, resources, relatedSkillsChecked: related.length, missingRelated, failures }, null, 2));\nprocess.exitCode = failures.length ? 1 : 0;\n'@ | node --input-type=module",
+          "workdir": "C:/git/agent-skills",
+          "max_output_tokens": 2800
+        },
+        "result": {
+          "status": "fulfilled",
+          "value": {
+            "chunk_id": "a9a27e",
+            "wall_time_seconds": 0.1816443,
+            "exit_code": 0,
+            "original_token_count": 284,
+            "output": "{\n  \"skill\": \"jvm-bytecode\",\n  \"version\": \"2.1.6\",\n  \"files\": 5,\n  \"packageReport\": {\n    \"ok\": true,\n    \"issues\": [],\n    \"errors\": [],\n    \"warnings\": []\n  },\n  \"parseIssues\": [],\n  \"resources\": [\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/javap-and-class-file-anatomy.md\",\n      \"exists\": true\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/dispatch-and-abstraction-cost.md\",\n      \"exists\": true\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/limits-and-failure-catalogue.md\",\n      \"exists\": true\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/javap-and-class-file-anatomy.md\",\n      \"exists\": true\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/limits-and-failure-catalogue.md\",\n      \"exists\": true\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/dispatch-and-abstraction-cost.md\",\n      \"exists\": true\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/dispatch-and-abstraction-cost.md\",\n      \"exists\": true\n    }\n  ],\n  \"relatedSkillsChecked\": 6,\n  \"missingRelated\": [],\n  \"failures\": []\n}\n"
+          }
+        }
+      },
+      {
+        "check": {
+          "name": "prettier-check",
+          "cmd": "node node_modules/prettier/bin/prettier.cjs --check skills/jvm-bytecode/SKILL.md skills/jvm-bytecode/skill.yaml skills/jvm-bytecode/references/dispatch-and-abstraction-cost.md skills/jvm-bytecode/references/javap-and-class-file-anatomy.md skills/jvm-bytecode/references/limits-and-failure-catalogue.md",
+          "workdir": "C:/git/agent-skills",
+          "max_output_tokens": 1300
+        },
+        "result": {
+          "status": "fulfilled",
+          "value": {
+            "chunk_id": "9dec0e",
+            "wall_time_seconds": 0.257857,
+            "exit_code": 0,
+            "original_token_count": 17,
+            "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+          }
+        }
+      },
+      {
+        "check": {
+          "name": "diff-whitespace",
+          "cmd": "git diff --check -- skills/jvm-bytecode",
+          "workdir": "C:/git/agent-skills",
+          "max_output_tokens": 1300
+        },
+        "result": {
+          "status": "fulfilled",
+          "value": {
+            "chunk_id": "067f04",
+            "wall_time_seconds": 0.0642333,
+            "exit_code": 0,
+            "original_token_count": 0,
+            "output": ""
+          }
+        }
+      },
+      {
+        "command": {
+          "name": "optional-handoff-declaration",
+          "cmd": "@'\nimport { readFileSync } from 'node:fs';\nimport assert from 'node:assert/strict';\nimport { parseManifest } from './packages/core/src/domain/manifest.ts';\nconst { manifest, issues } = parseManifest(readFileSync('skills/jvm-bytecode/skill.yaml', 'utf8'), { strict: true });\nassert.equal(issues.length, 0);\nassert.equal(manifest.version, '2.1.6');\nassert.equal(manifest.suggests.filter(name => name === 'deoptimization').length, 1);\nassert.equal(manifest.dependencies.some(dependency => dependency.name === 'deoptimization'), false);\nconsole.log(JSON.stringify({ version: manifest.version, optionalHandoff: 'deoptimization', declaredExactlyOnce: true, mandatoryDependencyAdded: false }));\n'@ | node --input-type=module",
+          "workdir": "C:/git/agent-skills",
+          "max_output_tokens": 1200
+        },
+        "result": {
+          "status": "fulfilled",
+          "value": {
+            "chunk_id": "9f9b4f",
+            "wall_time_seconds": 0.1721165,
+            "exit_code": 0,
+            "original_token_count": 29,
+            "output": "{\"version\":\"2.1.6\",\"optionalHandoff\":\"deoptimization\",\"declaredExactlyOnce\":true,\"mandatoryDependencyAdded\":false}\n"
+          }
+        }
+      },
+      {
+        "command": {
+          "name": "final-diff-and-hashes",
+          "cmd": "git status --short -- skills/jvm-bytecode; git diff --cached -- skills/jvm-bytecode; git diff -- skills/jvm-bytecode; git ls-files --others --exclude-standard -- skills/jvm-bytecode; $ownedRecords = foreach ($ownedFile in (rg --files skills/jvm-bytecode)) { [pscustomobject]@{ Path = $ownedFile.Replace('\\', '/'); Hash = (Get-FileHash -LiteralPath $ownedFile -Algorithm SHA256).Hash } }; $ownedRecords | ConvertTo-Json -Depth 5",
+          "workdir": "C:/git/agent-skills",
+          "max_output_tokens": 3200
+        },
+        "result": {
+          "status": "fulfilled",
+          "value": {
+            "chunk_id": "7759df",
+            "wall_time_seconds": 0.1920462,
+            "exit_code": 0,
+            "original_token_count": 1163,
+            "output": " M skills/jvm-bytecode/references/dispatch-and-abstraction-cost.md\n M skills/jvm-bytecode/skill.yaml\ndiff --git a/skills/jvm-bytecode/references/dispatch-and-abstraction-cost.md b/skills/jvm-bytecode/references/dispatch-and-abstraction-cost.md\nindex fbdc615..854a9b9 100644\n--- a/skills/jvm-bytecode/references/dispatch-and-abstraction-cost.md\n+++ b/skills/jvm-bytecode/references/dispatch-and-abstraction-cost.md\n@@ -224,20 +224,29 @@ site between a backward `goto` and its target.\n \n The JIT compiles against a **runtime type profile**. Bytecode records only the declared type,\n so it cannot tell you whether a speculation held or was invalidated. That question belongs to\n-the compilation logs, but two corrections are worth carrying across:\n+runtime compilation and deoptimization diagnostics, matched to the deployed build:\n \n ```bash\n # -XX:+TraceDeoptimization is a DIAGNOSTIC flag: without -XX:+UnlockDiagnosticVMOptions\n # the JVM refuses the command line (verified: \"must be enabled via -XX:+UnlockDiagnosticVMOptions\").\n java -XX:+UnlockDiagnosticVMOptions -XX:+PrintCompilation -XX:+TraceDeoptimization MyApp\n \n-# Cleaner in production — unified logging, no diagnostic flags:\n-java -Xlog:deoptimization=info:file=deopt.log:time,uptime MyApp\n+# HotSpot 25.0.3 uncommon traps: debug level, no diagnostic flags:\n+java -Xlog:deoptimization=debug:file=deopt.log:time,uptime MyApp\n \n # Or via JFR, correlated with the rest of the recording:\n jfr print --events jdk.Deoptimization rec.jfr\n ```\n \n+On HotSpot 25.0.3, `deoptimization=info` is accepted but excludes these `debug`-level\n+records. Both this log and `jdk.Deoptimization` cover **uncommon traps**, not every cause of\n+compiled-code invalidation. Check the settings and covered workload/window before interpreting\n+an empty capture; even a valid empty capture does not rule out dependency invalidation.\n+Use `deoptimization` for that investigation and for joining the trapping method/descriptor,\n+bci and compile ID to compilation history. Reuse adequate recordings; bound new captures by\n+time, disk and overhead budget, and reserve detailed `TraceDeoptimization` output for a focused\n+session. A trap identifies a failed assumption, not its contribution to application latency.\n+\n `-XX:+PrintDeoptimizationInfo` is not a HotSpot flag: `Unrecognized VM option\n 'PrintDeoptimizationInfo'`, with the JVM suggesting `PrintDeoptimizationDetails` — itself a\n debug-build flag. Check any suspicious flag with\n@@ -261,6 +270,7 @@ validate any optimization on the production objective, especially tail latency a\n \n - [JVMS 25, instruction set](https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html)\n - [JVMS 25, method and dynamic-call-site resolution](https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-5.html#jvms-5.4.3)\n+- [HotSpot 25.0.3+9: trap logging level and JFR emission in `uncommon_trap_inner`](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/runtime/deoptimization.cpp#L1889-L2004)\n - [JEP 181: Nest-Based Access Control](https://openjdk.org/jeps/181)\n - [JEP 280: Indify String Concatenation](https://openjdk.org/jeps/280)\n - [JEP 371: Hidden Classes](https://openjdk.org/jeps/371)\ndiff --git a/skills/jvm-bytecode/skill.yaml b/skills/jvm-bytecode/skill.yaml\nindex 077c896..35cfbe9 100644\n--- a/skills/jvm-bytecode/skill.yaml\n+++ b/skills/jvm-bytecode/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: jvm-bytecode\n-version: 2.1.5\n+version: 2.1.6\n description: >-\n   Reading and reasoning about JVM bytecode: javap -c -p -v, operand stack and local slots, the\n   constant pool and resolution timing, descriptors versus Signature, the invoke* family with\n@@ -48,6 +48,7 @@ dependencies:\n \n suggests:\n   - compilation-and-inlining-logs\n+  - deoptimization\n   - java-reflection-and-method-handles\n   - jit-compilation\n   - jmh-microbenchmarks\n[\r\n  {\r\n    \"Path\": \"skills/jvm-bytecode/skill.yaml\",\r\n    \"Hash\": \"AB7D5B2A7A0B1B1228337A7EDD20D0A9A0008C929346653D459E6F61060CBB3A\"\r\n  },\r\n  {\r\n    \"Path\": \"skills/jvm-bytecode/SKILL.md\",\r\n    \"Hash\": \"E1E27FABFC06A2D2CCE06E5D4BEDDB16476C6BB96E23E23C007CB1BD95094E83\"\r\n  },\r\n  {\r\n    \"Path\": \"skills/jvm-bytecode/references/limits-and-failure-catalogue.md\",\r\n    \"Hash\": \"7415DB0D4041186FF49A1817DB02A4B4CA00CBD2C8D444ADF5A0DCC87CACF42F\"\r\n  },\r\n  {\r\n    \"Path\": \"skills/jvm-bytecode/references/javap-and-class-file-anatomy.md\",\r\n    \"Hash\": \"F4CD4FC68EA47A904D64239E1C716495B0AFF1FC4DA2AD0A90702E60DF253190\"\r\n  },\r\n  {\r\n    \"Path\": \"skills/jvm-bytecode/references/dispatch-and-abstraction-cost.md\",\r\n    \"Hash\": \"1E49493FF672C27DFBF698A7B91B8C7F96A522FECEB2BE62DE50B6B0AFBA03CE\"\r\n  }\r\n]\r\n"
+          }
+        }
+      }
+    ],
+    "outcomes": {
+      "strictPackageIssues": 0,
+      "ownedFilesChecked": 5,
+      "localResourceOccurrences": 7,
+      "declaredRelatedSkills": 6,
+      "missingRelatedSkills": 0,
+      "optionalDeclarationCount": 1,
+      "prettier": "PASS",
+      "diffCheck": "PASS",
+      "allOtherOwnedFileHashesUnchanged": true
+    },
+    "finalHashes": [
+      {
+        "Path": "skills/jvm-bytecode/skill.yaml",
+        "Hash": "AB7D5B2A7A0B1B1228337A7EDD20D0A9A0008C929346653D459E6F61060CBB3A"
+      },
+      {
+        "Path": "skills/jvm-bytecode/SKILL.md",
+        "Hash": "E1E27FABFC06A2D2CCE06E5D4BEDDB16476C6BB96E23E23C007CB1BD95094E83"
+      },
+      {
+        "Path": "skills/jvm-bytecode/references/limits-and-failure-catalogue.md",
+        "Hash": "7415DB0D4041186FF49A1817DB02A4B4CA00CBD2C8D444ADF5A0DCC87CACF42F"
+      },
+      {
+        "Path": "skills/jvm-bytecode/references/javap-and-class-file-anatomy.md",
+        "Hash": "F4CD4FC68EA47A904D64239E1C716495B0AFF1FC4DA2AD0A90702E60DF253190"
+      },
+      {
+        "Path": "skills/jvm-bytecode/references/dispatch-and-abstraction-cost.md",
+        "Hash": "1E49493FF672C27DFBF698A7B91B8C7F96A522FECEB2BE62DE50B6B0AFBA03CE"
+      }
+    ],
+    "preservedEvidence": "All original technical source/runtime results, artifacts, cases and criteria are retained unchanged. No new technical research, JVM execution or evaluation was performed.",
+    "globalValidationAfterRepair": "PENDING coordinator rerun; reviewer did not execute registry:build or verify.",
+    "allWritesStopped": true
+  },
+  "readinessMeaning": "Local owned work and checks are complete, all child processes exited and writes stop with this handoff. Global catalog verification and independent behavioral comparison remain pending."
+}

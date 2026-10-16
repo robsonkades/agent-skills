@@ -1,0 +1,30 @@
+public final class Ports {
+    private Ports() {}
+    public enum Kind { OK, TRANSIENT, PERMANENT, UNKNOWN }
+    public enum State { PENDING, APPLIED, REJECTED, UNKNOWN }
+    public record Intent(String id, String payload) {}
+    public record Snapshot(State state, String receipt) {}
+    public record Result(Snapshot snapshot, int attempts) {}
+    public record Policy(int maxAttempts, long attemptNanos, long reserveNanos, long localWaitNanos) {}
+    public interface Store {
+        Snapshot snapshot();
+        void unknown();
+        void applied(String receipt);
+        void rejected();
+    }
+    public interface Reply extends AutoCloseable {
+        Kind kind();
+        String receipt();
+        long serverMinimumNanos();
+        void close();
+    }
+    public interface Operation {
+        Reply call(Intent intent, long timeoutNanos) throws InterruptedException;
+    }
+    public interface Runtime {
+        long remainingNanos();
+        boolean cancelled();
+        boolean acquireRetry();
+        void sleep(long nanos) throws InterruptedException;
+    }
+}

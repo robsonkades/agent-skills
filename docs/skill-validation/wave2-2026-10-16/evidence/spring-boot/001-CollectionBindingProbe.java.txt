@@ -1,0 +1,81 @@
+import java.nio.file.Path;
+import java.time.Duration;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
+import org.springframework.boot.Banner;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.SpringBootVersion;
+import org.springframework.boot.WebApplicationType;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.SpringVersion;
+
+public class CollectionBindingProbe {
+    @Configuration(proxyBeanMethods = false)
+    @EnableConfigurationProperties(Settings.class)
+    static class Config {
+    }
+
+    @ConfigurationProperties(prefix = "demo")
+    public record Settings(List<Client> clients, Map<String, Client> clientsByName) {
+    }
+
+    public record Client(String url, Duration timeout) {
+    }
+
+    public static void main(String[] args) {
+        if (args.length < 2) {
+            throw new IllegalArgumentException("Usage: CollectionBindingProbe <config-directory> <base|partial|complete> [--require-complete-list]");
+        }
+        String profile = args[1];
+        if (!List.of("base", "partial", "complete").contains(profile)) {
+            throw new IllegalArgumentException("Unknown profile: " + profile);
+        }
+        SpringApplication app = new SpringApplication(Config.class);
+        app.setWebApplicationType(WebApplicationType.NONE);
+        app.setBannerMode(Banner.Mode.OFF);
+        app.setLogStartupInfo(false);
+        app.setRegisterShutdownHook(false);
+        try (ConfigurableApplicationContext context = app.run(
+                "--spring.config.location=" + Path.of(args[0]).toAbsolutePath().toUri(),
+                "--spring.profiles.active=" + profile)) {
+            Settings settings = context.getBean(Settings.class);
+            System.out.println("Boot=" + SpringBootVersion.getVersion()
+                    + " Framework=" + SpringVersion.getVersion()
+                    + " Java=" + Runtime.version() + " profile=" + profile);
+            System.out.println("raw second URL=" + context.getEnvironment().getProperty("demo.clients[1].url"));
+            System.out.println("bound list=" + settings.clients());
+            System.out.println("bound map=" + new java.util.TreeMap<>(settings.clientsByName()));
+            boolean partial = profile.equals("partial");
+            requireEquals(partial ? 1 : 2, settings.clients().size(), "bound list size");
+            requireEquals(partial ? null : "https://primary.invalid", settings.clients().getFirst().url(), "first list URL");
+            requireEquals(Duration.ofSeconds(profile.equals("base") ? 1 : 2), settings.clients().getFirst().timeout(), "first list timeout");
+            requireEquals(2, settings.clientsByName().size(), "map size");
+            requireEquals("https://primary.invalid", settings.clientsByName().get("primary").url(), "primary map URL");
+            requireEquals(Duration.ofSeconds(profile.equals("base") ? 1 : 2), settings.clientsByName().get("primary").timeout(), "primary map timeout");
+            requireEquals(new Client("https://secondary.invalid", Duration.ofSeconds(1)), settings.clientsByName().get("secondary"), "secondary map entry");
+            if (!partial) {
+                requireEquals(new Client("https://secondary.invalid", Duration.ofSeconds(1)), settings.clients().get(1), "secondary list entry");
+            }
+            if (args.length == 3 && args[2].equals("--require-complete-list")) {
+                requireEquals(2, settings.clients().size(), "complete ordered-list contract");
+                for (Client client : settings.clients()) {
+                    if (client.url() == null) {
+                        throw new AssertionError("required list URL is absent");
+                    }
+                }
+            }
+            System.out.println("PASS: observed collection binding matches the selected profile");
+        }
+    }
+
+    private static void requireEquals(Object expected, Object actual, String label) {
+        if (!Objects.equals(expected, actual)) {
+            throw new AssertionError(label + ": expected=" + expected + ", actual=" + actual);
+        }
+    }
+}

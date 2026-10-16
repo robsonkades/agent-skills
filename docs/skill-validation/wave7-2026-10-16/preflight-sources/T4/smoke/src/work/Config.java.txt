@@ -1,0 +1,17 @@
+package work;
+import javax.sql.DataSource;
+import org.springframework.context.annotation.*;
+import org.springframework.jdbc.datasource.*;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
+@Configuration @EnableTransactionManagement(proxyTargetClass=true)
+public class Config {
+ @Bean public DataSource dataSource(){return new DriverManagerDataSource(System.getProperty("work.businessUrl","jdbc:h2:mem:dispatch;DB_CLOSE_DELAY=-1"),"sa","");}
+ @Bean public JdbcTemplate jdbc(DataSource ds){return new JdbcTemplate(ds);}
+ @Bean public PlatformTransactionManager transactionManager(DataSource ds){return new DataSourceTransactionManager(ds);}
+ @Bean public ReceiverClient receiver(){return new ReceiverClient(System.getProperty("work.receiverUrl","jdbc:h2:mem:receiver;DB_CLOSE_DELAY=-1"));}
+ @Bean public Checkpoint checkpoint(){return id->{};}
+ @Bean public Publisher publisher(JdbcTemplate jdbc){return new Publisher(jdbc);}
+ @Bean public Dispatcher dispatcher(JdbcTemplate jdbc,ReceiverClient receiver,Checkpoint checkpoint){return new Dispatcher(jdbc,receiver,checkpoint);}
+}

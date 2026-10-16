@@ -1,0 +1,6 @@
+PASS: cohort reconciles: 9800 known good + 0 known bad + 200 unknown = 10000 eligible logical operations.
+PASS: accepted SLO requires at least 9900 good operations (99%).
+PASS: guaranteed good fraction = 98%; possible good fraction = 100%.
+PASS: at least 100 of 200 unknown operations must be good to meet the SLO.
+PASS: both compliant and noncompliant outcomes remain possible; dashboard PASS is unsupported.
+No load test, deployment, dependency installation or production contact was performed.

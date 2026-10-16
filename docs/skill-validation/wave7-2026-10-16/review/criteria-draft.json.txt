@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "skill": "spring-transactions-and-events",
+  "version": "1.1.0",
+  "status": "DRAFT_AWAITING_INDEPENDENT_REVIEW",
+  "cases": [
+    {
+      "id": "T1",
+      "required": "Preserve required atomic booking/stock/receipt and owner rollback; no mandatory REQUIRES_NEW repair. Useful regression rejects independent receipt commit before owner failure.",
+      "baselineExpected": "pass",
+      "decisivePair": "T2 has identical production sources; accepted receipt contract differs."
+    },
+    {
+      "id": "T2",
+      "required": "Normal receipt persists after actual source commit, independent receipt failure does not undo/fail business; no effect on rollback/no tx; retain accepted best-effort synchronous policy. Receipt header/detail must remain atomic on body failure; a phase-only change is tested against partial persistence, not prohibited by annotation name.",
+      "baselineExpected": "fail"
+    },
+    {
+      "id": "T3",
+      "required": "Identify wrong manager/resource, repair orders unit while preserving default metrics transactions. Failure at stock and later notifier leave no partial orders state.",
+      "baselineExpected": "fail"
+    },
+    {
+      "id": "T4",
+      "required": "Stable event identity for receiver retry, pending recovery after checkpoint failure, preserve publisher atomicity and distinct identities despite equal payload. Do not claim physical crash or multiworker guarantees from context recreation.",
+      "baselineExpected": "fail"
+    }
+  ],
+  "criteria": {
+    "C1": "Persisted-state contract passes independent deterministic probe; compile/start failure is not a pass.",
+    "C2": "Explanation traces actual Spring bean/manager/resource/event/recovery path with observations distinct from inference; no false guarantee.",
+    "C3": "Useful actor regression or equivalent executable check exercises disputed behavior, rejects original defect or invalid blanket alternative, and reported executions match artifacts. No fabrication.",
+    "C4": "Preserve frozen inputs, toolchain/dependencies, existing operations and unaffected behavior; fixes remain within selected contract, without unnecessary infrastructure."
+  },
+  "equivalences": [
+    "Equivalent application boundaries are accepted if the full contract passes and source inspection supports it. No exact prose/annotation requirement.",
+    "Diagnostic fields do not prove database enlistment.",
+    "T1 can make no production change and supply regression coverage.",
+    "T4 can use an injective stable key derived from event_id, not only the literal raw event_id.",
+    "C1 accepts wrappers retaining the original semantic failure in their cause chain. The T3 probe checks the known original cause type/message; any different but contract-equivalent failure is explicitly adjudicated with source evidence, not silently rejected by immediate exception type."
+  ],
+  "conditions": [
+    "none",
+    "skill"
+  ],
+  "repetitions": 2,
+  "attempts": 16,
+  "limits": [
+    "Four cases include a related pair; three problem families, not sixteen independent problems.",
+    "Skill snapshot authored before these projects, but shipped teaching examples and concepts are ordinary treatment content, not hidden from actors.",
+    "Explicit loading with fresh conversations; filesystem isolation procedural, not OS enforced.",
+    "Actor journals self-record tools; root independently compiles/runs candidate artifacts and hashes protected paths.",
+    "Java25/Framework7.0.9/JDBC/H2 only; no Boot/JPA, real network provider, hard process crash, concurrent replay, automatic activation or second runtime."
+  ],
+  "preFreezeRefinement": {
+    "reason": "Initial one-insert T2 control accepted phase-only fix on this H2/JDBC cleanup path. Broaden receipt unit to header+detail and expose partial-write failure before freezing actor criteria.",
+    "evidence": "preflight-initial.json",
+    "actorOutputsSeen": 0
+  },
+  "preFreezeIndependentRefinements": [
+    "T4 two pending rows distinguish bounded one-row replay from draining.",
+    "T4 checkpoint observes transactional done=false to verify prescribed order.",
+    "T3 catches permit wrappers and check the retained original failure cause; controls accept cause-preserving wrappers and reject cause loss."
+  ]
+}

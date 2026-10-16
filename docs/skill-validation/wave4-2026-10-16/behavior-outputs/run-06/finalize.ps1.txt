@@ -1,0 +1,34 @@
+$ErrorActionPreference = 'Stop'
+$reviewOutput = [IO.Path]::GetFullPath($PSScriptRoot)
+$recordPath = Join-Path $reviewOutput 'execution.json'
+$record = Get-Content -Raw -LiteralPath $recordPath | ConvertFrom-Json -AsHashtable
+if ($record.executions.Count -ne 21) { throw 'Missing execution records.' }
+if ($record.unexpectedResults.Count -ne 0) { throw 'Unexpected child execution result.' }
+foreach ($run in $record.executions) {
+    if ($run.timedOut -or -not $run.matchedExpectedExitCode) { throw ('Unsuccessful check: ' + $run.id) }
+    if ([IO.File]::ReadAllText((Join-Path $reviewOutput $run.stdoutLog)) -cne $run.stdout) { throw ('stdout mismatch: ' + $run.id) }
+    if ([IO.File]::ReadAllText((Join-Path $reviewOutput $run.stderrLog)) -cne $run.stderr) { throw ('stderr mismatch: ' + $run.id) }
+}
+foreach ($before in $record.artifactInventoryBefore) {
+    $after = @($record.artifactInventoryAfter | Where-Object { $_.path -ceq $before.path })
+    if ($after.Count -ne 1 -or $after[0].sha256 -cne $before.sha256) { throw ('Artifact changed: ' + $before.path) }
+}
+$byId = @{}
+foreach ($run in $record.executions) { $byId[$run.id] = $run }
+if ($byId['existing-app-new-library-LF'].stdout.Trim() -cne 'A<LF>B') { throw 'Missing corrected consumer output.' }
+if ($byId['existing-app-old-library-CR'].stdout.Trim() -cne 'A<CR>B') { throw 'Missing old consumer output.' }
+if ($byId['retained-app-old-library-CR'].stdout.Trim() -cne 'A<CR>B') { throw 'Missing rollback selection output.' }
+if ($byId['contract-new-library'].stdout -notmatch 'failures=0') { throw 'Contract probe did not report zero failures.' }
+if ($byId['contract-old-library'].stdout -notmatch 'failures=2') { throw 'Contract baseline did not expose the expected defect.' }
+if ($byId['existing-app-old-library-LF'].stderr -notmatch 'AssertionError: Expected LF') { throw 'Wrong negative-control failure.' }
+if ($byId['existing-app-new-library-CR'].stderr -notmatch 'AssertionError: Expected CR') { throw 'Wrong negative-control failure.' }
+if (-not (Test-Path -LiteralPath (Join-Path $reviewOutput 'decision.md'))) { throw 'Missing decision.' }
+$record['finalAudit'] = [ordered]@{
+    script = 'output/finalize.ps1'
+    checked = @('21 child-process records', '42 logs equal stored stdout/stderr', 'all expected exits', 'no timeouts', 'unchanged input JAR hashes', 'actual corrected and rollback outputs', 'contract probe summary', 'negative-control assertion types', 'decision exists')
+    result = 'passed'
+}
+$record['allChildProcessesStopped'] = $true
+$record['allWritesStopped'] = $true
+[IO.File]::WriteAllText($recordPath, ($record | ConvertTo-Json -Depth 15), [Text.UTF8Encoding]::new($false))
+Write-Output 'Final audit passed: 21 child processes, 42 raw logs, unchanged JARs, expected behaviors verified. allWritesStopped=true.'

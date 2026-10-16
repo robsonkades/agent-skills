@@ -1,0 +1,25 @@
+{
+  "cases": [
+    {
+      "name": "list-only",
+      "assertions": "PASS"
+    },
+    {
+      "name": "list-with-output",
+      "assertions": "PASS"
+    },
+    {
+      "name": "rotate-with-output",
+      "assertions": "PASS"
+    },
+    {
+      "name": "rotate-false",
+      "assertions": "PASS"
+    },
+    {
+      "name": "disable-false",
+      "assertions": "PASS"
+    }
+  ],
+  "allOwnedJvmsStopped": true
+}

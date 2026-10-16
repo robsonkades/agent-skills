@@ -1,0 +1,141 @@
+import assert from 'node:assert/strict';
+import { readFileSync, writeFileSync, readdirSync, mkdirSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+import path from 'node:path';
+
+const repo = 'C:/git/agent-skills';
+const evidence = 'C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-decision-making';
+const handoffFile = 'C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-decision-making.json';
+const read = file => JSON.parse(readFileSync(file, 'utf8'));
+const validation = read(`${evidence}/local-validation.json`);
+const baseline = read(`${evidence}/assignment-baseline.json`);
+const sources = read(`${evidence}/sources/source-index.json`);
+
+const fixtureFiles = {
+  'README.md': '# Order pricing\n\nPricing decisions live in [docs/adr](docs/adr/README.md). The current documentation update follows the [October review](notes/2026-10-13-checkout-review.md). Deployment coordination is tracked in [PC-8](delivery/PC-8.md).\n',
+  'docs/adr/README.md': '# Architecture decisions\n\nUse numbered Markdown records in this directory. Preserve accepted context, decision and rationale. Status and relationship metadata may be updated. Accepted decisions name the target; current guidance remains in force until the replacement activation condition is verified. Use a scoped `Planned replacement` link while a gate is pending. Never reuse an ID.\n\nDecision rights are in [the effective delegation table](../governance/decision-rights.csv). The named decision-maker for the scope may accept the outcome; consulted roles give advice. A signed meeting note is the evidence of an outcome when its signer has that right.\n\n| Record | Status | Scope |\n| --- | --- | --- |\n| [ADR-0012](0012-pricing-execution.md) | accepted | checkout and batch |\n| [ADR-0033](0033-checkout-pricing.md) | proposed | checkout |\n',
+  'docs/adr/0012-pricing-execution.md': '# ADR-0012: Execute pricing in the database\n\nStatus: accepted\nDecision date: 2022-06-08\nScope: checkout and batch pricing\n\n## Context\nBoth clients need the same rounding and tax behavior. The batch writer calls the database pricing routine directly. The 2022 team chose a shared routine rather than independent client implementations to preserve equivalent results.\n\n## Decision\nKeep the authoritative pricing calculation in the database routine for both clients.\n\n## Consequences\nThe routine is one owner of the shared rules. Checkout pricing releases require coordination with the database release window. No comparative latency result was recorded.\n',
+  'docs/adr/0033-checkout-pricing.md': '# ADR-0033: Move checkout calculation into the Order module\n\nStatus: proposed\nDate: 2026-10-10\nScope: checkout pricing\nProposed replacement for checkout: [ADR-0012](0012-pricing-execution.md)\n\n## Context\nFour checkout rule changes in the last quarter waited for the database release window. The batch team has no migration planned. The pricing-equivalence gate PC-8 covers the checkout path before it changes.\n\n## Proposed decision\nUse the Order module for checkout calculations after PC-8 passes. Batch continues with the database routine.\n\n## Alternatives considered\nKeep checkout in the database: preserves the current release coordination. Move checkout into the Order module: changes release ownership but requires equivalent pricing and recovery checks. A new remote pricing service: adds network and operational dependencies without a second remote consumer in the supplied inventory.\n\n## Consequences\nThe Order team will maintain checkout pricing. Rule compatibility between checkout and batch remains an obligation during coexistence. The proposal does not claim the migration has happened.\n\n## Confirmation\nLink PC-8 results before activation; the Order release lead records the gate outcome.\n',
+  'notes/2026-10-13-checkout-review.md': '# Checkout pricing review\n\n2026-10-13\n\nADR-0033 was reviewed with the alternatives and coexistence requirements recorded in its draft. Bruno provided comments on batch compatibility, incorporated in the current text.\n\nOutcome: accept the Order-module option for checkout only. Activation waits for PC-8; the batch decision stays unchanged.\n\nSigned: Ada\n',
+  'delivery/PC-8.md': '# PC-8\n\nOwner: Order release lead\nStatus: pending\n\nCompare checkout results with the database routine for the approved tax and rounding fixtures; exercise reversal to the database path before switching checkout. No execution result is attached yet.\n',
+  'config/pricing.properties': 'checkout.calculator=database\nbatch.calculator=database\n'
+};
+const table = decisionMaker => `scope,decision_maker,consulted,informed,effective_from\npricing/checkout,${decisionMaker},${decisionMaker === 'Ada' ? 'Bruno' : 'Ada'},Order team,2026-10-01\npricing/batch,Bruno,Ada,Batch team,2026-10-01\n`;
+const task = 'Atualize os ADRs e o índice para refletir a revisão de checkout de 13 de outubro. Use os documentos do projeto para conferir o que pode ser registrado. Entregue as alterações documentais e um resumo do que permanece pendente. Não altere a aplicação.';
+const inputs = [];
+for (const [id, decisionMaker] of [['A', 'Ada'], ['B', 'Bruno']]) {
+  const root = `${evidence}/case-inputs/${id}/project`;
+  const files = { ...fixtureFiles, 'docs/governance/decision-rights.csv': table(decisionMaker) };
+  for (const [file, content] of Object.entries(files)) {
+    const target = path.join(root, file);
+    mkdirSync(path.dirname(target), { recursive: true });
+    writeFileSync(target, content);
+  }
+  const input = { id: `architecture-decision-making-${id}`, task, fixtureRoot: root, actorFiles: Object.keys(files), allowedWrites: ['docs/adr/**'], deliverable: 'Document changes and concise pending-items report', setup: 'Copy only this project and this task to an isolated task snapshot. No dependency installation, network, application execution or deployment is necessary. Keep sibling cases, criteria, handoff, baseline snapshot and review evidence outside actor access.' };
+  writeFileSync(`${evidence}/case-inputs/${id}/input.json`, JSON.stringify(input, null, 2) + '\n');
+  inputs.push({ id: input.id, input: `${evidence}/case-inputs/${id}/input.json`, fixtureRoot: root, fileCount: Object.keys(files).length });
+}
+
+const criteria = {
+  classification: 'New synthetic development cases with ordinary project artifacts. They were walked through by this reviewer, not independently executed, and overlap existing lifecycle teaching rules; they are not claimed as unseen holdouts.',
+  decisiveConstraint: 'Only the checkout decision-rights CSV row differs: Ada has the decision right in A; Bruno has it in B. The signed outcome, draft, alternatives, activation gate, batch scope and application configuration are identical.',
+  shared: [
+    'Inspect the effective decision-rights table, signed review note, current and proposed ADRs, and PC-8 before updating the outcome.',
+    'Preserve the accepted ADR-0012 rationale and batch scope. The checkout activation condition is still pending; do not report rollout complete or retire current guidance for all scopes.',
+    'Keep proposed/accepted target and currently effective guidance distinct. Maintain valid forward/back links and an index consistent with the supported status.',
+    'Do not reopen the documented technical comparison without contrary material evidence; do not fabricate rejected alternatives, performance measurements, a passed gate or new approval.',
+    'Do not edit application configuration, execute a migration, install a tool, or ask questions whose answers are already present.'
+  ],
+  cases: [
+    { id: 'architecture-decision-making-A', required: ['Record ADR-0033 as accepted for checkout using Ada\'s dated outcome and scoped decision right.', 'Record pending activation and a scoped planned replacement of ADR-0012; preserve currently effective guidance while PC-8 is pending.', 'Do not request the same authorization again.'], failure: ['Leave the accepted target merely proposed because PC-8 is pending.', 'Request fresh approval despite matching scope/date/decision right.', 'Claim batch superseded or checkout already migrated.'] },
+    { id: 'architecture-decision-making-B', required: ['Do not treat Ada\'s note as sufficient acceptance authority for checkout under the effective delegation table.', 'Keep the target proposed; record the specific authority discrepancy and the missing decision from Bruno or documented valid delegation.', 'Continue useful record work and report the unresolved decision without falsely rejecting the proposal.'], failure: ['Mark accepted solely because the note says accept or bears a signature.', 'Invent Bruno approval or infer approval from code, ADR authorship or advice.', 'Retire ADR-0012 or change the target architecture without authority.'] }
+  ],
+  evaluationProtocol: 'Use matched fresh sessions and the same model/tools/budget. Compare no-skill with unchanged 2.1.4 only if isolation and resources are controlled. Retain full treatment including teaching references; never expose these criteria or the other case. Record reads, edits, questions, output and cost. Audit actual diffs and references. Report saturation or equal outcomes honestly; no original/revised comparison exists because no revision was made.'
+};
+mkdirSync(`${evidence}/evaluator-only`, { recursive: true });
+writeFileSync(`${evidence}/evaluator-only/criteria.json`, JSON.stringify(criteria, null, 2) + '\n');
+
+const pairDiffs = [];
+const fixtureHashes = [];
+for (const file of [...Object.keys(fixtureFiles), 'docs/governance/decision-rights.csv']) {
+  const a = readFileSync(`${evidence}/case-inputs/A/project/${file}`);
+  const b = readFileSync(`${evidence}/case-inputs/B/project/${file}`);
+  if (!a.equals(b)) pairDiffs.push(file);
+  fixtureHashes.push({ path: file, A: createHash('sha256').update(a).digest('hex'), B: createHash('sha256').update(b).digest('hex') });
+}
+assert.deepEqual(pairDiffs, ['docs/governance/decision-rights.csv']);
+const fixtureCheck = { exitCode: 0, fileCountPerCase: 8, differingFiles: pairDiffs, fixtureHashes, meaning: 'Only fixture construction and pair isolation were checked; no actor outputs or ADR checker were executed.' };
+writeFileSync(`${evidence}/fixture-check.json`, JSON.stringify(fixtureCheck, null, 2) + '\n');
+
+const finalHashes = baseline.files.map(file => {
+  const bytes = readFileSync(path.join(repo, file.path));
+  const sha256 = createHash('sha256').update(bytes).digest('hex');
+  assert.equal(sha256, file.sha256, file.path);
+  return { path: file.path, sha256, unchanged: true };
+});
+const finalCommands = [['status', '--short', '--untracked-files=all', '--', 'skills/architecture-decision-making'], ['diff', '--', 'skills/architecture-decision-making'], ['diff', '--cached', '--', 'skills/architecture-decision-making']].map(args => {
+  const r = spawnSync('git', args, { cwd: repo, encoding: 'utf8', windowsHide: true });
+  assert.equal(r.status, 0);
+  assert.equal(r.stdout, '');
+  return { command: 'git', args, cwd: repo, exitCode: r.status, stdout: r.stdout, stderr: r.stderr };
+});
+
+const handoff = {
+  status: 'NO_CHANGES_NEEDED',
+  skill: 'architecture-decision-making',
+  ownedPath: 'skills/architecture-decision-making/**',
+  completedAt: new Date().toISOString(),
+  scope: 'Full six-file package review focused on faithful ADR rationale, alternatives, authority, lifecycle, applicability, dependency premises and validation. Candidate discovery was considered against the documented composition boundary.',
+  baseline: { cleanAtAssignment: true, committed: '2.1.4', assignment: '2.1.4', final: '2.1.4', existingBump: false, waveBaselineMatched: true, preExistingChanges: [], snapshot: `${evidence}/assignment-baseline.json`, finalHashes },
+  versions: { committed: '2.1.4', assignment: '2.1.4', final: '2.1.4', rationale: 'No package content changed; no version bump.' },
+  findingsCorrected: [],
+  findingsRetained: [
+    { location: 'SKILL.md:36-47,80-88; references/writing-the-record.md:44-60', finding: 'The package already records credible considered options, distinguishes new suggestions from historical alternatives, permits a single feasible choice, and routes actual option comparison with evidence and limits.', consequence: 'Importing candidate discovery or interface design as a mandatory ADR stage would widen scope and could reopen already authorized choices.', decision: 'Preserve existing role and bounded handoff.' },
+    { location: 'SKILL.md:49-67; references/templates-and-lifecycle.md:39-148', finding: 'Authority, accepted risk, partial supersession, future activation and dependent premises are distinguished. Changed evidence triggers scoped review rather than automatic reversal; unrelated rationale remains intact.', consequence: 'Existing rules directly protect accepted decisions, avoid duplicate approval and prevent a proposal or accepted target being reported as deployed.', decision: 'No additional approval or lifecycle checklist.' },
+    { location: 'references/evidence-and-tooling.md:7-18,42-112', finding: 'Record integrity, implementation and outcomes have separate evidence; checker discovery, incoming links, graph cycles, scope precedence and required-check skip behavior are already bounded.', consequence: 'A passing linter or zero-record run cannot certify architecture correctness under the guidance.', decision: 'Retain existing validation limits; no new checker justified for this review.' },
+    { location: 'references/writing-the-record.md:5-14; references/templates-and-lifecycle.md:150-162', finding: 'No Java runtime is asserted for this documentation method; source/runtime conflicts must be recorded for Java-dependent decisions. ISO overview is explicitly insufficient for conformance.', consequence: 'No Java build or normative-standard compliance test is applicable to this unchanged skill.', decision: 'Preserve explicit compatibility and conformance limits.' }
+  ],
+  remainingFindings: [],
+  filesChangedByReviewer: [],
+  preExistingFilesChanged: [],
+  preserved: ['All six package files byte-for-byte.', 'Proportionate record depths and local conventions; no ADR quota.', 'Worked pricing proposal with unknown writers, compatibility and performance limits.', 'Historical reconstruction with distinct creation/decision dates and unknown motives.', 'Authorized decisions without duplicate approval; proposed, accepted, effective and implemented states remain distinct.', 'Partial and future-effective supersession; stable history and incoming dependency review.', 'Three validation layers and checker controls.', 'All ten teaching sections, including paired dependent-premise case; routed resources and declared referrals.'],
+  replacedOrRemovedCapabilities: [],
+  commands: [
+    { command: `node ${evidence}/inspect-local.mjs`, cwd: repo, exitCode: 0, result: 'Strict manifest parse passed with zero issues; names/descriptions match; six referrals declared; four local resource links exist; six files match wave baseline; version and scoped git state unchanged; Prettier and diff check passed.', log: `${evidence}/local-validation.json` },
+    ...validation.commands,
+    { command: `node ${evidence}/retain-sources.mjs`, cwd: repo, exitCode: 0, result: 'Six primary source artifacts retained with HTTP 200, timestamps and SHA-256. ISO public overview separately consulted in browser; normative text not inspected.', log: `${evidence}/sources/source-index.json` },
+    { command: `node ${evidence}/finish-review.mjs`, cwd: repo, exitCode: 0, result: 'Eight ordinary fixture files per case created; only the decision-rights CSV differs; criteria separated; final six owned hashes unchanged and scoped Git status/diffs empty.', log: `${evidence}/fixture-check.json` },
+    ...finalCommands
+  ],
+  relevantFailures: [
+    { command: 'rg -n -C 4 candidate/candidat/alternativ/grill/architecture/escolha/descob/compar docs/skill-validation/skills-comparative-research-2026-10-16.md docs/skill-validation/skills-quality-roadmap-2026-10-16.md', result: 'Exit 1 because the guessed roadmap path did not exist. Discovered and read relevant sections of docs/skills-evolution-roadmap.md. Not a package failure.' },
+    { command: 'Batched Get-Content and web reads', result: 'Some combined outputs truncated. Entire owned references were subsequently read without truncation; relevant source sections were read via targeted browser find. Large wave baseline was parsed programmatically, not inferred from truncated text.' }
+  ],
+  structuralValidation: validation,
+  executableExampleTests: { status: 'NOT_APPLICABLE', reason: 'Package contains guidance and a Markdown ADR illustration, no executable Java/script example changed or newly supplied.' },
+  behavioralEvaluations: { executed: false, actorRuns: 0, measuredImprovement: false, reason: 'Reviewer does not run actors. No revision exists for before/after comparison. Cases are ready for coordinator-controlled evaluation.' },
+  walkthroughs: [
+    { case: 'A', observedOutput: null, expectedReasoning: 'Read the delegation row and signed note; the authority matches, so record accepted target without duplicate approval; gate pending preserves current guidance.' },
+    { case: 'B', observedOutput: null, expectedReasoning: 'The delegation row no longer gives the signer authority; retain proposed target, surface missing authorized outcome and continue bounded documentation.' },
+    { scope: 'Existing teaching cases 1-10', result: 'Reviewed for lifecycle/authority/evidence/scope contradictions; none identified. This is content inspection, not a behavioral pass.' }
+  ],
+  reproducibleCases: { inputs, evaluatorCriteria: `${evidence}/evaluator-only/criteria.json`, fixtureCheck: `${evidence}/fixture-check.json`, decisiveConstraint: criteria.decisiveConstraint, prerequisites: 'Fresh isolated project snapshots; matched agent/model/tools/permissions; actor cannot access criteria, sibling case or review findings. No installations or production access needed.', limitations: criteria.classification },
+  sources,
+  evidencePaths: [evidence, `${evidence}/assignment-baseline.json`, `${evidence}/local-validation.json`, `${evidence}/sources/source-index.json`, `${evidence}/fixture-check.json`],
+  assumptionsAndLimitations: ['No-change means no supported content defect found within this review; it is not a guarantee of completeness or behavioral effectiveness.', 'Primary ADR sources establish conventions and process models, not superiority or quantitative performance benefits.', 'No independent actor evaluation or automatic catalog selection measurement executed.', 'Local link, metadata and declaration checks do not establish catalog-wide dependency resolution.', 'Full normative ISO standard not consulted; no conformance claim.', 'Current documentation pages are mutable; retained copies and retrieval dates bound the review.', 'No architectural implementation, migration, runtime or outcome claim was tested.'],
+  pendingGlobalChecks: [{ command: 'npm run registry:build', owner: 'coordinator', reason: 'Shared generated index; run after all assigned writers stop. This skill has no content change.' }, { command: 'npm run verify', owner: 'coordinator', reason: 'Parallel-review exception; repository-wide verification is not claimed.' }],
+  crossSkillFindings: [{ scope: 'architecture-trade-off-analysis', actionRequired: false, finding: 'Read-only boundary inspection: options are compared on actual artifacts, mandatory constraints, mechanisms, uncertainty and counterexamples in that skill. Candidate discovery should not be duplicated wholesale inside this ADR-recording package.' }],
+  coordinatorActions: ['Archive this handoff/evidence and optionally run the separated pair under controlled actor access.', 'Keep architecture-decision-making version 2.1.4; no patch to integrate.', 'Perform final shared registry build and verify when all reviewers stop.'],
+  allWritesStopped: true,
+  activeBackgroundProcesses: [],
+  writeBoundary: 'No repository writes during this assignment. Only this assigned temporary evidence tree and handoff were written; all spawned child commands completed synchronously.'
+};
+writeFileSync(handoffFile, JSON.stringify(handoff, null, 2) + '\n');
+const checked = read(handoffFile);
+assert.equal(checked.status, 'NO_CHANGES_NEEDED');
+assert.equal(checked.allWritesStopped, true);
+assert.equal(checked.reproducibleCases.inputs.length, 2);
+assert.equal(checked.filesChangedByReviewer.length, 0);
+assert.equal(checked.baseline.finalHashes.length, 6);
+console.log(JSON.stringify({ handoff: handoffFile, status: checked.status, version: checked.versions.final, unchangedFiles: checked.baseline.finalHashes.length, caseInputs: checked.reproducibleCases.inputs, criteria: checked.reproducibleCases.evaluatorCriteria, sources: checked.sources.length, allWritesStopped: checked.allWritesStopped, activeBackgroundProcesses: checked.activeBackgroundProcesses }, null, 2));

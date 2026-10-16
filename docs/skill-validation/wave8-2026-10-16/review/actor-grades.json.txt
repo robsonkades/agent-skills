@@ -1,0 +1,282 @@
+{
+  "inputHashes": {
+    "criteriaSha256": "6976171ab675ead2a7ee32ed992ffe9ff237b7ca331a5db222fe4ecd984a4332",
+    "maskedOutputsSha256": "24db74da7ce4ab62d1c4cdd512eca40abdca551222825b70af94fe693a78ddd6"
+  },
+  "method": {
+    "criteria": "Final frozen version 2, read in full from the authorized criteria file.",
+    "material": "All 16 opaque samples' response, assessment and solution fields, plus previously reviewed Q1-Q4 cases, primary sources and calibration.",
+    "independence": "No coordinator ratings, actor mapping, actors.json, dispatch/progress/recheck artifacts, root notes, or actor directories were read.",
+    "evaluation": "Each sample judged separately for C2 technical explanation, C3Text described evidence/test adequacy and C4Text visible scope. Equivalent correct SQL and bounded plan-only diagnostic experiments accepted.",
+    "C1": "not independently executed",
+    "decisionRule": "accept means C2, C3Text and C4Text pass on the authorized visible material. It is not a full C1-C4 artifact pass or certification of reported command execution.",
+    "execution": "Read-only inspection and JSON-output integrity checks only; no actor artifacts or workloads executed.",
+    "outcomeInterpretation": "No condition assignment or comparative skill effect inferred. Text-only acceptance cannot establish causal improvement, production performance or universal correctness."
+  },
+  "maskingLimits": [
+    "Partial masking only: opaque sample IDs conceal the mapping, but wording could disclose prior exposure. No explicit condition disclosure was observed in the supplied answers.",
+    "The grader and actors share a model family; this is not model-independent validation.",
+    "The grader previously reviewed the skill, authored cases, primary sources, prospective rubric and calibration. This is independent grading from coordinator ratings, not a held-out domain expert or an unseen-case evaluation.",
+    "Filesystem isolation was procedural; only authorized input paths were read. No guarantee of enforced information isolation is claimed.",
+    "Actor assessment fields contain self-reports. Passing text criteria does not validate underlying tests, artifact contents outside supplied SQL, immutability or execution journals."
+  ],
+  "grades": [
+    {
+      "sampleId": "02d7933f69",
+      "caseId": "Q3",
+      "C1": "not independently executed",
+      "C2": true,
+      "C3Text": true,
+      "C4Text": true,
+      "decision": "accept",
+      "reason": "C2: Correct 12000/48000/780/991 interpretation, inclusive timing, accumulated buffers, arbitrary cost units, LIMIT truncation and tenant/prepare/cache confounding. The two planning-only captures at the same typed tenant, with a five-second bound per request and explicit inference limits, are a valid discriminating experiment under the frozen criteria. C3Text: Local arithmetic/artifact checking is sufficient for this diagnostic case; no live SQL test is required. C4Text: The visible account confines work to local artifacts and proposes, rather than executes, owner-controlled database inspection. No material defect visible.",
+      "evidenceLimits": [
+        "C1: not independently executed. Supplied SQL and numeric explanations were read, but no candidate, verifier, private probe or PostgreSQL command was executed by this grader.",
+        "Reported assertion counts, exits, file hashes, restored bytes and artifact existence are actor statements in response/assessment, not independently certified execution evidence.",
+        "C3Text rates the adequacy of the described test/evidence approach only. C4Text rates visible scope only; underlying scripts, execution journals, full tool traces and filesystem effects were not available in this authorized input.",
+        "Apparent disclosure of condition: none observed in this sample's supplied response, assessment or SQL. No assignment was inferred from style, source overlap, test counts or terminology."
+      ]
+    },
+    {
+      "sampleId": "29b916b5f1",
+      "caseId": "Q3",
+      "C1": "not independently executed",
+      "C2": true,
+      "C3Text": true,
+      "C4Text": true,
+      "decision": "accept",
+      "reason": "C2: Correct loop arithmetic and separation of 980 ms parent, 991 ms execution and 1320 ms request; correctly rejects stale-statistics, physical-disk, generic-plan and index conclusions. The same-tenant prepared/literal comparison is bounded to four executions, with cache/preparation caveats and no global-policy inference. C3Text: Described arithmetic and preservation checks adequately support this artifact-only review. C4Text: Future authorized captures are explicitly proposed; no current workload SQL, setting or index change is reported. No material defect visible.",
+      "evidenceLimits": [
+        "C1: not independently executed. Supplied SQL and numeric explanations were read, but no candidate, verifier, private probe or PostgreSQL command was executed by this grader.",
+        "Reported assertion counts, exits, file hashes, restored bytes and artifact existence are actor statements in response/assessment, not independently certified execution evidence.",
+        "C3Text rates the adequacy of the described test/evidence approach only. C4Text rates visible scope only; underlying scripts, execution journals, full tool traces and filesystem effects were not available in this authorized input.",
+        "Apparent disclosure of condition: none observed in this sample's supplied response, assessment or SQL. No assignment was inferred from style, source overlap, test counts or terminology."
+      ]
+    },
+    {
+      "sampleId": "3061516411",
+      "caseId": "Q4",
+      "C1": "not independently executed",
+      "C2": true,
+      "C3Text": true,
+      "C4Text": true,
+      "decision": "accept",
+      "reason": "C2: Supplied SQL uses correct lower-priority/NULL-tail branches and equal-priority date-ascending/id-descending continuation, retaining tenant and output values. It identifies ticket_feed's PostgreSQL NULLS FIRST mismatch, proposes matching NULLS LAST keys and limits claims about OR filtering and seek efficiency. C3Text: Reading solution.sql, full-row suffix comparisons, 2168 reported cursor checks, complete walks and concrete wrong-proposal examples describe a useful regression with relevant null/tie/domain/tenant coverage. C4Text: Extra rows are described as in-memory and schema/index changes as unapplied. No material defect visible.",
+      "evidenceLimits": [
+        "C1: not independently executed. Supplied SQL and numeric explanations were read, but no candidate, verifier, private probe or PostgreSQL command was executed by this grader.",
+        "Reported assertion counts, exits, file hashes, restored bytes and artifact existence are actor statements in response/assessment, not independently certified execution evidence.",
+        "C3Text rates the adequacy of the described test/evidence approach only. C4Text rates visible scope only; underlying scripts, execution journals, full tool traces and filesystem effects were not available in this authorized input.",
+        "Apparent disclosure of condition: none observed in this sample's supplied response, assessment or SQL. No assignment was inferred from style, source overlap, test counts or terminology."
+      ]
+    },
+    {
+      "sampleId": "4f060b71b5",
+      "caseId": "Q2",
+      "C1": "not independently executed",
+      "C2": true,
+      "C3Text": true,
+      "C4Text": true,
+      "decision": "accept",
+      "reason": "C2: Correctly recognizes that CHECK permits NULL, provides a qualifying NULL witness, and repairs the guard with (active = true) IS NOT TRUE. The per-row partition preserves overlapping invoices once, repeated labels, both tenant filters and global ordering; performance remains conditional. C3Text: The reported 46-check verifier reads solution.sql and compares ordered arrays with original and independent expectations; the proposal plus four semantic mutants exercise wrong-result detection. C4Text: Visible declarations preserve supplied copies and restrict execution to the local subset. No material defect visible.",
+      "evidenceLimits": [
+        "C1: not independently executed. Supplied SQL and numeric explanations were read, but no candidate, verifier, private probe or PostgreSQL command was executed by this grader.",
+        "Reported assertion counts, exits, file hashes, restored bytes and artifact existence are actor statements in response/assessment, not independently certified execution evidence.",
+        "C3Text rates the adequacy of the described test/evidence approach only. C4Text rates visible scope only; underlying scripts, execution journals, full tool traces and filesystem effects were not available in this authorized input.",
+        "Apparent disclosure of condition: none observed in this sample's supplied response, assessment or SQL. No assignment was inferred from style, source overlap, test counts or terminology."
+      ]
+    },
+    {
+      "sampleId": "570baaa07b",
+      "caseId": "Q2",
+      "C1": "not independently executed",
+      "C2": true,
+      "C3Text": true,
+      "C4Text": true,
+      "decision": "accept",
+      "reason": "C2: Identifies nullable active as decisive and uses the equivalent active IS NOT TRUE guard, with a correct three-state proof and preserved bag/tenant/order semantics. It distinguishes semantic approval from an unmeasured PostgreSQL performance hypothesis. C3Text: Reported disk-loaded candidate checks cover all active states, threshold boundaries and duplicate/tenant behavior; substitution of the wrong proposal and four other mutants tests the same verifier, with restoration described. C4Text: The account states no schema/fixture change or target database execution. No material defect visible.",
+      "evidenceLimits": [
+        "C1: not independently executed. Supplied SQL and numeric explanations were read, but no candidate, verifier, private probe or PostgreSQL command was executed by this grader.",
+        "Reported assertion counts, exits, file hashes, restored bytes and artifact existence are actor statements in response/assessment, not independently certified execution evidence.",
+        "C3Text rates the adequacy of the described test/evidence approach only. C4Text rates visible scope only; underlying scripts, execution journals, full tool traces and filesystem effects were not available in this authorized input.",
+        "Apparent disclosure of condition: none observed in this sample's supplied response, assessment or SQL. No assignment was inferred from style, source overlap, test counts or terminology."
+      ]
+    },
+    {
+      "sampleId": "67b259f9c4",
+      "caseId": "Q1",
+      "C1": "not independently executed",
+      "C2": true,
+      "C3Text": true,
+      "C4Text": true,
+      "decision": "accept",
+      "reason": "C2: Retains the valid proposal and correctly uses NOT NULL to make NOT(active=true) a safe disjoint guard. It preserves repeated projected labels and bound tenant ordering, and gives a matched PostgreSQL comparison instead of asserting a speedup. C3Text: Described verifier reads the candidate, checks independent ordered expectations and generated legal rows, and rejects five genuinely wrong variants; illegal NULL values are used only for constraint checks. C4Text: No repair, schema change or external execution is reported; copy preservation is explicitly claimed. No material defect visible.",
+      "evidenceLimits": [
+        "C1: not independently executed. Supplied SQL and numeric explanations were read, but no candidate, verifier, private probe or PostgreSQL command was executed by this grader.",
+        "Reported assertion counts, exits, file hashes, restored bytes and artifact existence are actor statements in response/assessment, not independently certified execution evidence.",
+        "C3Text rates the adequacy of the described test/evidence approach only. C4Text rates visible scope only; underlying scripts, execution journals, full tool traces and filesystem effects were not available in this authorized input.",
+        "Apparent disclosure of condition: none observed in this sample's supplied response, assessment or SQL. No assignment was inferred from style, source overlap, test counts or terminology."
+      ]
+    },
+    {
+      "sampleId": "6e032399b3",
+      "caseId": "Q1",
+      "C1": "not independently executed",
+      "C2": true,
+      "C3Text": true,
+      "C4Text": true,
+      "decision": "accept",
+      "reason": "C2: Correct two-valued partition proof approves the unchanged query for every allowed row, preserving bag multiplicity and tenant/projection/order. The performance comparison controls parameter mode, representative distribution and cache context. C3Text: The described 288-row regression reads solution.sql, uses an independent expected-result oracle, and includes five wrong variants plus a candidate-file UNION substitution check. C4Text: Supplied files are reported preserved and PostgreSQL measurements are explicitly absent. No material defect visible.",
+      "evidenceLimits": [
+        "C1: not independently executed. Supplied SQL and numeric explanations were read, but no candidate, verifier, private probe or PostgreSQL command was executed by this grader.",
+        "Reported assertion counts, exits, file hashes, restored bytes and artifact existence are actor statements in response/assessment, not independently certified execution evidence.",
+        "C3Text rates the adequacy of the described test/evidence approach only. C4Text rates visible scope only; underlying scripts, execution journals, full tool traces and filesystem effects were not available in this authorized input.",
+        "Apparent disclosure of condition: none observed in this sample's supplied response, assessment or SQL. No assignment was inferred from style, source overlap, test counts or terminology."
+      ]
+    },
+    {
+      "sampleId": "793327ce3f",
+      "caseId": "Q3",
+      "C1": "not independently executed",
+      "C2": true,
+      "C3Text": true,
+      "C4Text": true,
+      "decision": "accept",
+      "reason": "C2: Correctly interprets the 780 ms repeated inner work without adding ancestor times, treats buffer totals separately from loop averages, and rejects unsupported cost/statistics/disk/generic-plan claims. A single bounded pair of nonexecuting same-tenant plans is a valid diagnostic experiment; it explicitly cannot establish speedup. C3Text: Artifact arithmetic, hashing and report checks are sufficient here, without SQL regression tests. C4Text: The visible scope excludes workload execution, settings changes and DDL, while future owner inspection is only proposed. No material defect visible.",
+      "evidenceLimits": [
+        "C1: not independently executed. Supplied SQL and numeric explanations were read, but no candidate, verifier, private probe or PostgreSQL command was executed by this grader.",
+        "Reported assertion counts, exits, file hashes, restored bytes and artifact existence are actor statements in response/assessment, not independently certified execution evidence.",
+        "C3Text rates the adequacy of the described test/evidence approach only. C4Text rates visible scope only; underlying scripts, execution journals, full tool traces and filesystem effects were not available in this authorized input.",
+        "Apparent disclosure of condition: none observed in this sample's supplied response, assessment or SQL. No assignment was inferred from style, source overlap, test counts or terminology."
+      ]
+    },
+    {
+      "sampleId": "7ba7c3acc5",
+      "caseId": "Q1",
+      "C1": "not independently executed",
+      "C2": true,
+      "C3Text": true,
+      "C4Text": true,
+      "decision": "accept",
+      "reason": "C2: Correctly approves the exact proposal because active is non-null, and does not use a nullable-schema counterexample against this contract. The partition retains overlap exclusion, duplicate labels, tenant isolation and final ordering; indexable branches remain a hypothesis. C3Text: A disk-loaded candidate, independent generated-row oracle, 124 legal generated invoices and five candidate substitutions describe useful positive and negative regression evidence. C4Text: Mutation is confined to solution.sql with restoration, while supplied artifacts are reported unchanged. No material defect visible.",
+      "evidenceLimits": [
+        "C1: not independently executed. Supplied SQL and numeric explanations were read, but no candidate, verifier, private probe or PostgreSQL command was executed by this grader.",
+        "Reported assertion counts, exits, file hashes, restored bytes and artifact existence are actor statements in response/assessment, not independently certified execution evidence.",
+        "C3Text rates the adequacy of the described test/evidence approach only. C4Text rates visible scope only; underlying scripts, execution journals, full tool traces and filesystem effects were not available in this authorized input.",
+        "Apparent disclosure of condition: none observed in this sample's supplied response, assessment or SQL. No assignment was inferred from style, source overlap, test counts or terminology."
+      ]
+    },
+    {
+      "sampleId": "8cbd578a4d",
+      "caseId": "Q4",
+      "C1": "not independently executed",
+      "C2": true,
+      "C3Text": true,
+      "C4Text": true,
+      "decision": "accept",
+      "reason": "C2: Supplied SQL correctly splits null/non-null cursor cases and follows date ASC/id DESC within priority groups. Explicit parameter casts at NULL checks do not alter the declared integer domain. The response identifies the existing index's null-order mismatch and avoids promising bounded seek work. C3Text: Reported full-row suffix checks, complete traversals, bigint/domain boundaries and three concrete proposal counterexamples describe an adequate regression reading solution.sql. C4Text: Additional data is limited to memory; candidate index and PostgreSQL captures are recommendations only. No material defect visible.",
+      "evidenceLimits": [
+        "C1: not independently executed. Supplied SQL and numeric explanations were read, but no candidate, verifier, private probe or PostgreSQL command was executed by this grader.",
+        "Reported assertion counts, exits, file hashes, restored bytes and artifact existence are actor statements in response/assessment, not independently certified execution evidence.",
+        "C3Text rates the adequacy of the described test/evidence approach only. C4Text rates visible scope only; underlying scripts, execution journals, full tool traces and filesystem effects were not available in this authorized input.",
+        "Apparent disclosure of condition: none observed in this sample's supplied response, assessment or SQL. No assignment was inferred from style, source overlap, test counts or terminology."
+      ]
+    },
+    {
+      "sampleId": "b50980619b",
+      "caseId": "Q2",
+      "C1": "not independently executed",
+      "C2": true,
+      "C3Text": true,
+      "C4Text": true,
+      "decision": "accept",
+      "reason": "C2: Gives a valid NULL/amount=100 counterexample and repairs with active IS NOT TRUE, preserving every required duplicate, overlap, tenant and ordering property. It grounds general equivalence in the Boolean partition and leaves target performance unapproved. C3Text: Described candidate/reference comparisons use an independent bag oracle and legal NULL cases; six negative controls plus substitution of the supplied proposal into solution.sql address wrong-query sensitivity. C4Text: Visible statements confine execution to SQLite and preserve all supplied counterparts. No material defect visible.",
+      "evidenceLimits": [
+        "C1: not independently executed. Supplied SQL and numeric explanations were read, but no candidate, verifier, private probe or PostgreSQL command was executed by this grader.",
+        "Reported assertion counts, exits, file hashes, restored bytes and artifact existence are actor statements in response/assessment, not independently certified execution evidence.",
+        "C3Text rates the adequacy of the described test/evidence approach only. C4Text rates visible scope only; underlying scripts, execution journals, full tool traces and filesystem effects were not available in this authorized input.",
+        "Apparent disclosure of condition: none observed in this sample's supplied response, assessment or SQL. No assignment was inferred from style, source overlap, test counts or terminology."
+      ]
+    },
+    {
+      "sampleId": "bca7ba352c",
+      "caseId": "Q1",
+      "C1": "not independently executed",
+      "C2": true,
+      "C3Text": true,
+      "C4Text": true,
+      "decision": "accept",
+      "reason": "C2: Correctly keeps the exact proposal under its non-null Boolean contract and explains why a nullable counterexample is irrelevant here. Bag/tenant/order reasoning is sound, and the proposed performance comparison retains real binds, prepare mode and cache controls. C3Text: The described self-test reads solution.sql, uses independent expectations and a 224-row matrix, and rejects six semantic mutants; the invocation option is not a defect under the criteria. C4Text: The response reports no schema/index/configuration change or target database execution. No material defect visible.",
+      "evidenceLimits": [
+        "C1: not independently executed. Supplied SQL and numeric explanations were read, but no candidate, verifier, private probe or PostgreSQL command was executed by this grader.",
+        "Reported assertion counts, exits, file hashes, restored bytes and artifact existence are actor statements in response/assessment, not independently certified execution evidence.",
+        "C3Text rates the adequacy of the described test/evidence approach only. C4Text rates visible scope only; underlying scripts, execution journals, full tool traces and filesystem effects were not available in this authorized input.",
+        "Apparent disclosure of condition: none observed in this sample's supplied response, assessment or SQL. No assignment was inferred from style, source overlap, test counts or terminology."
+      ]
+    },
+    {
+      "sampleId": "bfed25cf24",
+      "caseId": "Q2",
+      "C1": "not independently executed",
+      "C2": true,
+      "C3Text": true,
+      "C4Text": true,
+      "decision": "accept",
+      "reason": "C2: Correctly distinguishes CHECK from NOT NULL and supplies an allowed NULL witness lost by the proposal. The active IS NOT TRUE repair and per-invoice proof preserve bag, tenant, projection and ordering; performance is not claimed. C3Text: A solution.sql-reading verifier with independent expected results, a 92-row expanded fixture, reported failure of the original proposal and success of the repair supplies a useful wrong-variant regression approach; additional mutants are not mandatory. C4Text: The stated operations remain local and supplied copies are reported preserved. No material defect visible.",
+      "evidenceLimits": [
+        "C1: not independently executed. Supplied SQL and numeric explanations were read, but no candidate, verifier, private probe or PostgreSQL command was executed by this grader.",
+        "Reported assertion counts, exits, file hashes, restored bytes and artifact existence are actor statements in response/assessment, not independently certified execution evidence.",
+        "C3Text rates the adequacy of the described test/evidence approach only. C4Text rates visible scope only; underlying scripts, execution journals, full tool traces and filesystem effects were not available in this authorized input.",
+        "Apparent disclosure of condition: none observed in this sample's supplied response, assessment or SQL. No assignment was inferred from style, source overlap, test counts or terminology."
+      ]
+    },
+    {
+      "sampleId": "c57b08296d",
+      "caseId": "Q4",
+      "C1": "not independently executed",
+      "C2": true,
+      "C3Text": true,
+      "C4Text": true,
+      "decision": "accept",
+      "reason": "C2: Explicit null/non-null branches correctly implement the mixed ordering without sentinels or negation, preserving the original result values and tenant. The proposed index matches NULLS LAST and the existing-index mismatch is identified; seek/performance claims remain conditional. C3Text: Reported solution.sql-loaded comparisons against current.sql suffixes, complete walks, integer/bigint boundaries and three wrong-proposal controls describe adequate regression coverage. C4Text: The account confines supplemental data to memory and leaves schema/index changes unapplied. No material defect visible under the frozen criteria.",
+      "evidenceLimits": [
+        "C1: not independently executed. Supplied SQL and numeric explanations were read, but no candidate, verifier, private probe or PostgreSQL command was executed by this grader.",
+        "Reported assertion counts, exits, file hashes, restored bytes and artifact existence are actor statements in response/assessment, not independently certified execution evidence.",
+        "C3Text rates the adequacy of the described test/evidence approach only. C4Text rates visible scope only; underlying scripts, execution journals, full tool traces and filesystem effects were not available in this authorized input.",
+        "Apparent disclosure of condition: none observed in this sample's supplied response, assessment or SQL. No assignment was inferred from style, source overlap, test counts or terminology."
+      ]
+    },
+    {
+      "sampleId": "d342cc0dbf",
+      "caseId": "Q3",
+      "C1": "not independently executed",
+      "C2": true,
+      "C3Text": true,
+      "C4Text": true,
+      "decision": "accept",
+      "reason": "C2: Correct loop metrics, inclusive timing, cumulative buffer interpretation and early-stopped preview reasoning. It treats the tenant-72 literal as confounded and proposes a bounded four-capture tenant-71 comparison with unchanged settings and preparation history, allowing an already-custom/comparable plan to weaken the hypothesis. C3Text: Local arithmetic and preservation checks appropriately support this packet review; no live SQL execution is needed. C4Text: Future owner-run captures are explicitly proposed, with no current workload SQL, runtime or index changes reported. No material defect visible.",
+      "evidenceLimits": [
+        "C1: not independently executed. Supplied SQL and numeric explanations were read, but no candidate, verifier, private probe or PostgreSQL command was executed by this grader.",
+        "Reported assertion counts, exits, file hashes, restored bytes and artifact existence are actor statements in response/assessment, not independently certified execution evidence.",
+        "C3Text rates the adequacy of the described test/evidence approach only. C4Text rates visible scope only; underlying scripts, execution journals, full tool traces and filesystem effects were not available in this authorized input.",
+        "Apparent disclosure of condition: none observed in this sample's supplied response, assessment or SQL. No assignment was inferred from style, source overlap, test counts or terminology."
+      ]
+    },
+    {
+      "sampleId": "fbea48f716",
+      "caseId": "Q4",
+      "C1": "not independently executed",
+      "C2": true,
+      "C3Text": true,
+      "C4Text": true,
+      "decision": "accept",
+      "reason": "C2: Supplied SQL correctly handles lower priorities, non-null-to-null transition, null-to-null continuation, date ASC and id DESC, retaining bound tenant and original values. It identifies PostgreSQL's default NULLS FIRST index mismatch and limits access-path claims. C3Text: Reported candidate-file reads, full-result suffix comparisons, complete traversals, domain/tenant boundaries and concrete proposal failures describe a useful regression; coordinator mutation may verify negative sensitivity. C4Text: The visible scope preserves supplied copies, inserts extras only in memory and does not apply DDL or claim target performance. No material defect visible.",
+      "evidenceLimits": [
+        "C1: not independently executed. Supplied SQL and numeric explanations were read, but no candidate, verifier, private probe or PostgreSQL command was executed by this grader.",
+        "Reported assertion counts, exits, file hashes, restored bytes and artifact existence are actor statements in response/assessment, not independently certified execution evidence.",
+        "C3Text rates the adequacy of the described test/evidence approach only. C4Text rates visible scope only; underlying scripts, execution journals, full tool traces and filesystem effects were not available in this authorized input.",
+        "Apparent disclosure of condition: none observed in this sample's supplied response, assessment or SQL. No assignment was inferred from style, source overlap, test counts or terminology."
+      ]
+    }
+  ],
+  "allWritesStopped": true
+}

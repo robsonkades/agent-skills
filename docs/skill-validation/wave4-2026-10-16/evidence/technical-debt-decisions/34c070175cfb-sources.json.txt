@@ -1,0 +1,57 @@
+[
+  {
+    "id": "S1",
+    "url": "https://martinfowler.com/bliki/TechnicalDebtQuadrant.html",
+    "version": "Article dated 2009-10-14, reposted 2014-11-19",
+    "consulted": "2026-10-16",
+    "section": "Prudent/reckless and deliberate/inadvertent distinctions",
+    "supports": "The debt metaphor can describe different origins and repayment can be uneconomic when carrying cost is small. The skill correctly avoids treating a label as permission or inferring intent from the resulting code.",
+    "locations": [
+      "SKILL.md:21-23, 61-63",
+      "references/deciding.md:3-28"
+    ],
+    "evidenceKind": "Primary author explanation, not empirical measurement of this catalog."
+  },
+  {
+    "id": "S2",
+    "url": "https://martinfowler.com/bliki/TechnicalDebt.html",
+    "version": "Article dated 2019-05-21",
+    "consulted": "2026-10-16",
+    "section": "Carrying effort, future changes, repayment and estimate uncertainty",
+    "supports": "Debt can increase change effort; future relevant work affects the payoff of repair. Estimates are uncertain, and gradual work is a valid alternative to replacement. This supports the skill's proportionate future-cost comparison, without proving local numerical attribution.",
+    "locations": [
+      "SKILL.md:43-54",
+      "references/recording-and-repaying.md:57-97, 99-121"
+    ],
+    "evidenceKind": "Primary author explanation; no target project's carrying cost measured."
+  },
+  {
+    "id": "S3",
+    "requestedUrl": "https://www.gov.uk/government/publications/the-green-book-appraisal-and-evaluation-in-central-government/the-green-book-2026#sunk-costs",
+    "url": "https://www.gov.uk/government/publications/the-green-book--2/the-green-book-2026#sunk-costs",
+    "version": "HM Treasury Green Book 2026",
+    "consulted": "2026-10-16",
+    "section": "Sunk costs",
+    "supports": "Exclude unrecoverable expenditure from the decision among future options, while considering future opportunity costs of resources already owned. The skill explicitly keeps remaining effort and useful artifacts relevant.",
+    "locations": [
+      "SKILL.md:46-47",
+      "references/recording-and-repaying.md:76-81"
+    ],
+    "evidenceKind": "Primary government appraisal explanation, used only for the decision principle; no government procedure imported."
+  },
+  {
+    "id": "S4",
+    "requestedUrl": "https://www.gov.uk/government/publications/the-green-book-appraisal-and-evaluation-in-central-government/the-green-book-2026#sensitivity-analysis-and-switching-values",
+    "url": "https://www.gov.uk/government/publications/the-green-book--2/the-green-book-2026#sensitivity-analysis-and-switching-values",
+    "version": "HM Treasury Green Book 2026",
+    "consulted": "2026-10-16",
+    "section": "Sensitivity analysis and switching values",
+    "supports": "Vary important uncertain assumptions and identify where a preferred option changes. This supports conditional choices and bounded evidence gathering; it does not require elaborate financial appraisal for a local debt decision.",
+    "locations": [
+      "SKILL.md:48-50",
+      "references/recording-and-repaying.md:83-97"
+    ],
+    "evidenceKind": "Primary decision-analysis guidance; fixture arithmetic is separate synthetic evidence."
+  }
+]
+

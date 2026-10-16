@@ -82,6 +82,8 @@ chunk or prevents staged publication. See the recovery reference for format and 
    remove a saturated shared log or lock bottleneck. Stop when CPU/I/O/log, lock waits, replica lag,
    or online latency reaches its guardrail.
 7. Commit the destination checkpoint with the data wherever they share a transaction resource.
+   Confirm that the data backing that checkpoint survives the required failures; a committed
+   checkpoint is insufficient for disposable staging.
    Acknowledge an external source only after destination commit, with idempotent replay across
    that gap. Reconcile unknown commit outcomes before retrying; see the recovery reference.
 8. Finish by checking accepted/rejected/warning counts, constraints, samples or checksums, target

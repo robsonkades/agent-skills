@@ -1,0 +1,2 @@
+PASS 36 checks of extracted AST/structure/validation/evaluation/closure code
+Scope: fixture domain types; no parser, SQL, SpEL runtime, concurrency or performance validation.

@@ -1,0 +1,266 @@
+{
+  "root": "C:/Users/robso/AppData/Local/Temp/domain-events-quality13-526a906044334cb18c03191a95c00a5e",
+  "files": [
+    {
+      "path": "aws-idempotent-apis.html",
+      "bytes": 455504,
+      "sha256": "96CD176E01A7328F2B2B171C3F446DF65B48077F04551822F04C955C78A7FE5F"
+    },
+    {
+      "path": "case-criteria.json",
+      "bytes": 3331,
+      "sha256": "5A97F84100C130CEEB5622E8D30E69617AF43962724B009F8B267ECF72DECEF2"
+    },
+    {
+      "path": "case-inputs.json",
+      "bytes": 10557,
+      "sha256": "303E0ABBE8E0C31AF19EFD25E29626F144CDCDC697C82A7DE5C42D20D2652BB2"
+    },
+    {
+      "path": "case-integrity.log",
+      "bytes": 534,
+      "sha256": "2B14CBAA825A64F825FC8D41331D7FE60CB3E5E1CFBC43027A4B4A92D161FA15"
+    },
+    {
+      "path": "case-trace.log",
+      "bytes": 349,
+      "sha256": "A356C9BCBD13EAA6D5313E419B13C9AB9D77791177085AE8A8C919F9B26A9770"
+    },
+    {
+      "path": "check-cases.mjs",
+      "bytes": 1633,
+      "sha256": "F87826327DB9CCA6AA6C7AE304DA56ECF7FCDA05B0FF1E3C78814F6E2BAEC4EF"
+    },
+    {
+      "path": "check-package.mjs",
+      "bytes": 1860,
+      "sha256": "048D219FCE77D7DE71E5E39179879B38D4BE205DBEB6BDD830C9E796488E2B43"
+    },
+    {
+      "path": "evans-ddd-reference-2015.pdf",
+      "bytes": 483985,
+      "sha256": "CF82DC7B4736BB24F4A1B69A3213C25CBD38AA98E37B99C2FACFB94FF5CACB99"
+    },
+    {
+      "path": "final-baseline-check.json",
+      "bytes": 1259,
+      "sha256": "67B9479962A05204B23B65049EAB70A3C5CAA9AA0F2ABC8A5E4501CD8658CD0F"
+    },
+    {
+      "path": "fowler-domain-event.html",
+      "bytes": 21106,
+      "sha256": "2E345066F8566F42014B81249624C66C44ADF361B789E45E6EA6999ECD12C44B"
+    },
+    {
+      "path": "java17-collections.html",
+      "bytes": 193183,
+      "sha256": "26615EEE25B4876F7DE176FB374DA504F84AB74A12EB3560C2A5A8CB274D6EDE"
+    },
+    {
+      "path": "java17-list.html",
+      "bytes": 113331,
+      "sha256": "976EEBA5B8D75A702CA65EED816E0EC190559400909ED3A8271D9B9DE923C6ED"
+    },
+    {
+      "path": "java17-record.html",
+      "bytes": 22883,
+      "sha256": "A07E4F1E8610ACFBE0006F749D4D5CD6CD73C0A39BA93C541D3B882F897B6D42"
+    },
+    {
+      "path": "negative-control.log",
+      "bytes": 263,
+      "sha256": "2946FC97CEEEB5E61166EAF0D30D5E8A9DC0DD053DAD75ED6475217D2A537F4F"
+    },
+    {
+      "path": "package-check.log",
+      "bytes": 775,
+      "sha256": "6E568AAAF886E2BD4A6A37A035ACB9EE3EF070E254390076DB48B2910B394EA9"
+    },
+    {
+      "path": "prettier.log",
+      "bytes": 68,
+      "sha256": "F20510A9DA4717C51C4CFFEE6D0DD88D6C9A723D0A83711D01216F5B48961283"
+    },
+    {
+      "path": "probe.log",
+      "bytes": 1355,
+      "sha256": "D8BA8A484C08622A3D857B9B8F601F87B85155D2B69221DA458A1B9AE80318C0"
+    },
+    {
+      "path": "runtime.log",
+      "bytes": 193,
+      "sha256": "E33F6CFDF4D70CB8BF63CAE1ED026B89A77539348B7AC97535E20D32D7C1D010"
+    },
+    {
+      "path": "spring62-transactional-event-listener.html",
+      "bytes": 19911,
+      "sha256": "C680DB0D51282C318F3F033E6FDF21150DB80136B5F9992DD1707459DD3E1498"
+    },
+    {
+      "path": "toolchain.log",
+      "bytes": 14,
+      "sha256": "E28EEC99DA75B3A320C3A82EC268D403DD151791C791932203E6EA26CC0C0D3B"
+    },
+    {
+      "path": "transactional-outbox.html",
+      "bytes": 25474,
+      "sha256": "7B9D9B224D9B985BF03D581DCDEF5C94A21F49A93F3AC1E74C6BC2104A48B3EB"
+    },
+    {
+      "path": "case-classes\\PreviewTrace.class",
+      "bytes": 2376,
+      "sha256": "BC51EDF9286C5C5C4DE9297801E2CC7BFA1B98D9CDAF9B51D2762A29DC81AC48"
+    },
+    {
+      "path": "case-classes\\PreviewTrace$MemoryRepository.class",
+      "bytes": 898,
+      "sha256": "D28B8119BBC162A7A4AEFC04C317209FCC3F604E492C1381FC3FCCF21EDEB8E6"
+    },
+    {
+      "path": "case-classes\\PreviewTrace$Preview.class",
+      "bytes": 1642,
+      "sha256": "6A34E6CD6E8D3036EDB7432DFFF791A39393CA0AA29B02EC9B4A19CD9E7EECBD"
+    },
+    {
+      "path": "case-classes\\PreviewTrace$PreviewConsumer.class",
+      "bytes": 1019,
+      "sha256": "2523BDE81BEC425A990E73436B590498ECB99A226E86DC36E4DA7D89C3376A62"
+    },
+    {
+      "path": "case-classes\\PreviewTrace$Quote.class",
+      "bytes": 1686,
+      "sha256": "3195D1E8A3ED63434633929EF07ACFBA960DA3D51033A147374201055EEEBF7C"
+    },
+    {
+      "path": "case-classes\\PreviewTrace$QuoteAccepted.class",
+      "bytes": 1554,
+      "sha256": "1FE3FC25913BA7FA6DA2A3F5CF759BD4B6B421AAD7A8A223E1DD2F9F5DAF9481"
+    },
+    {
+      "path": "case-classes\\PreviewTrace$QuoteRow.class",
+      "bytes": 1359,
+      "sha256": "4E975E80A3521FE9FED666598154F8D9BE95E053FABEF1D75188E32456EFB173"
+    },
+    {
+      "path": "cases\\current-preview\\input\\preview-contract.md",
+      "bytes": 692,
+      "sha256": "B1FACD23CC745701A28362383FBAF966BD311B53EEC8C33378DE08250B904C68"
+    },
+    {
+      "path": "cases\\current-preview\\input\\PreviewTrace.java",
+      "bytes": 2996,
+      "sha256": "04E05618CFD0618337DC39F4D977221AC6506C23A60FFD608CC47E9F20B9E0D0"
+    },
+    {
+      "path": "cases\\current-preview\\input\\README.md",
+      "bytes": 577,
+      "sha256": "25BFD41AF70F1CC694308D05E8BE268D0D294FDDA664EF7A9CB9418A37A56335"
+    },
+    {
+      "path": "cases\\occurrence-preview\\input\\preview-contract.md",
+      "bytes": 686,
+      "sha256": "2313E635159E23A25AACE88703D9E9AED05A5661031971F795FA718706815BF1"
+    },
+    {
+      "path": "cases\\occurrence-preview\\input\\PreviewTrace.java",
+      "bytes": 2996,
+      "sha256": "04E05618CFD0618337DC39F4D977221AC6506C23A60FFD608CC47E9F20B9E0D0"
+    },
+    {
+      "path": "cases\\occurrence-preview\\input\\README.md",
+      "bytes": 577,
+      "sha256": "25BFD41AF70F1CC694308D05E8BE268D0D294FDDA664EF7A9CB9418A37A56335"
+    },
+    {
+      "path": "negative-control-classes\\com\\example\\domain\\order\\Order.class",
+      "bytes": 3709,
+      "sha256": "01FCF64333B340DAC0B7B6F1ACCD0A6A572A9DD8E578377948F38F253FACFF48"
+    },
+    {
+      "path": "negative-control-src\\com\\example\\domain\\order\\Order.java",
+      "bytes": 1986,
+      "sha256": "165F67484C70036CE7B47B42ECB50644A87B13976CBA3AE0400AD4CDEC6C773D"
+    },
+    {
+      "path": "probe-classes\\DomainEventsProbe.class",
+      "bytes": 8074,
+      "sha256": "D3C123A4EE747E3E0C48F5AD1B0336F1AE8887B40FB1337A6C9654E3D6867B3B"
+    },
+    {
+      "path": "probe-classes\\DomainEventsProbe$ShallowFact.class",
+      "bytes": 1441,
+      "sha256": "E3712E5A910CE1026EFCC5A57A17CC73E32565461B135D460EA50EAB50CC0E2C"
+    },
+    {
+      "path": "probe-classes\\DomainEventsProbe$ValueOnlyFact.class",
+      "bytes": 1512,
+      "sha256": "448391EA1E2B3CCA554F8DC7701F80608C5DBCA06C1B4CFC161358935F89ACBA"
+    },
+    {
+      "path": "probe-classes\\com\\example\\domain\\events\\DomainEvent.class",
+      "bytes": 213,
+      "sha256": "EC43C3EDDC8FD4BB35B04BC4413F36FD2DB1F32855E7B8DEA7C3141810764C57"
+    },
+    {
+      "path": "probe-classes\\com\\example\\domain\\order\\DomainException.class",
+      "bytes": 258,
+      "sha256": "F89EF3493DD8F3D7BDFADED1BDC825E3F73FF2DDDBFF3BF32101A2D7F0568C32"
+    },
+    {
+      "path": "probe-classes\\com\\example\\domain\\order\\Order.class",
+      "bytes": 3709,
+      "sha256": "99BED5C9FE240DCDB5309C4D544C8CD0B87F8BA917A4EC496E2102A7FF7D7514"
+    },
+    {
+      "path": "probe-classes\\com\\example\\domain\\order\\OrderID.class",
+      "bytes": 1292,
+      "sha256": "A0CD03CE1EFDA107B9899205638AB4F8C948C14824317B40FDEFB64549A2FF87"
+    },
+    {
+      "path": "probe-classes\\com\\example\\domain\\order\\OrderStatus.class",
+      "bytes": 1043,
+      "sha256": "C4ABE3704EFF289DC02E2C3026B6EBAF1D6688779B89327A63A6390D4C49943F"
+    },
+    {
+      "path": "probe-classes\\com\\example\\domain\\order\\event\\OrderSubmitted.class",
+      "bytes": 1836,
+      "sha256": "FBA6DE89DE9A66F2DF22A05E218255CAA5536377281661064521E69F1A6435D5"
+    },
+    {
+      "path": "probe-src\\DomainEventsProbe.java",
+      "bytes": 5792,
+      "sha256": "CCE4F9CDB3F2F2D788A807EEF2FF501A6AB8E66C631021EC5228BA75537E8FDD"
+    },
+    {
+      "path": "probe-src\\com\\example\\domain\\events\\DomainEvent.java",
+      "bytes": 155,
+      "sha256": "C8BF09984D62C948B0C46E745BB584E15836E071E91A99870AA68D733581373E"
+    },
+    {
+      "path": "probe-src\\com\\example\\domain\\order\\DomainException.java",
+      "bytes": 151,
+      "sha256": "25BBAD1E269B66BCDF2ED1DF3BF60DE9D16480318186F2118E9749B274664F35"
+    },
+    {
+      "path": "probe-src\\com\\example\\domain\\order\\Order.java",
+      "bytes": 1986,
+      "sha256": "C79A97581A73419B7DBA1018D7DB5357B4C937CC43ACCAB748BA181DC36E3DB8"
+    },
+    {
+      "path": "probe-src\\com\\example\\domain\\order\\OrderID.java",
+      "bytes": 150,
+      "sha256": "64E5F6F6BB7357868F369C2DFAD7AC754AA65C8696064040AA5D5ED625DE1040"
+    },
+    {
+      "path": "probe-src\\com\\example\\domain\\order\\OrderStatus.java",
+      "bytes": 79,
+      "sha256": "DF150038B4670F7BF1EBB0E89A77990DCDBE6C40E5E9625910068D1EB3CB0AB2"
+    },
+    {
+      "path": "probe-src\\com\\example\\domain\\order\\event\\OrderSubmitted.java",
+      "bytes": 497,
+      "sha256": "22E2A59449377C83206BBA14C6A073AE9C927EDA8481B1A5816F86CDF7BF3E25"
+    }
+  ],
+  "coverage": "Artifacts retained before this index and final handoff; empty compiler/diff stdout does not create a log."
+}

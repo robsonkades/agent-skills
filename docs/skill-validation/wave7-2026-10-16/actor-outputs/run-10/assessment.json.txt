@@ -1,0 +1,30 @@
+{
+  "decision": "unchanged",
+  "cause": "No application defect was demonstrated: the existing REQUIRED service, BEFORE_COMMIT listener and JDBC writer already keep the booking, receipt header/body and stock reservation in the completion owner's local transaction. Rejected bodies and owner failures must leave no receipt under this contract.",
+  "changes": [
+    "Preserved every application source file without modification.",
+    "Added test/work/ReceiptContractRegression.java with eight scenarios through actual Spring beans and final persisted-state assertions.",
+    "Documented retained failure and completion behavior in RUNBOOK.md.",
+    "Added an isolated REQUIRES_NEW mutation control under output/checks."
+  ],
+  "verification": [
+    "node check.mjs: exit 0, original normal booking and receipt smoke test passed.",
+    "node check.mjs work.ReceiptContractRegression: exit 0, eight scenarios passed.",
+    "Valid 12-character body persisted booking/header/body=1/1/1 and reduced ready stock from 20 to 19.",
+    "13-character body raised DataIntegrityViolationException; booking/header/body=0/0/0 and ready stock=20 after completion.",
+    "Stock rejection, nontransactional publication, owner failure before completion, owner failure after both receipt writes, and rollback-only all left zero business rows and no reservation.",
+    "Observer inside writer saw uncommitted booking=1 and stock=19 while an independent connection saw booking=0 and stock=20.",
+    "Isolated REQUIRES_NEW variant compiled, then the regression failed as expected because the writer saw booking=0. Control runner exited 0."
+  ],
+  "limits": [
+    "Disposable H2 2.4.240, Spring 7.0.9 and Java 25; no claims about other database isolation or crash behavior.",
+    "No concurrency, distributed deduplication, broker, JPA or external-provider guarantees were tested.",
+    "Execution records are actor reports; early shell read output is retained as explicitly marked excerpts, not an independent complete trace.",
+    "Two initial path errors and failed version-specific documentation opens were preserved in execution.json."
+  ],
+  "regressionCommands": [
+    ["node", "check.mjs"],
+    ["node", "check.mjs", "work.ReceiptContractRegression"],
+    ["node", "../checks/requires-new-control.mjs"]
+  ]
+}

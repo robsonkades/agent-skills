@@ -1,0 +1,22 @@
+{
+  "classification": "Known development cases; no independent actor run.",
+  "task": "Review the export boundary and proposed conclusion in decision-note.md using the actual source, configuration and dependency. Investigate whether the current consumer is supported. Correct only conclusions and implementation that the evidence refutes in an isolated copy. Preserve accepted decisions and report validation coverage. No library/JDK upgrade or installation.",
+  "sharedInputs": [
+    "actor/common/src",
+    "actor/common/build.json",
+    "actor/common/decision-note.md"
+  ],
+  "cases": [
+    {
+      "id": "single-read",
+      "input": "actor/case-a/consumer.properties"
+    },
+    {
+      "id": "two-reads",
+      "input": "actor/case-b/consumer.properties"
+    }
+  ],
+  "decisiveDifference": "readsPerBody=1 versus2; sources, provider, accepted placement, content bound and all other contracts are identical.",
+  "prerequisites": "Use existing Spring Core6.2.10 and Temurin25.0.3. Compile with --release17; actual runtime remains25.",
+  "isolation": "Provide actor directory and task only; do not expose evaluator criteria, corrected factory, controls, logs or handoff. Isolation is procedural, not filesystem enforcement."
+}

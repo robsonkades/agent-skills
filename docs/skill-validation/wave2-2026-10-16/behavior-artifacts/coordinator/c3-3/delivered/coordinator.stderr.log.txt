@@ -1,0 +1,2 @@
+Exception in thread "main" java.lang.AssertionError: Placement contract mismatch: expected primary=n2, ordered replicas=[n2, n3, n4]; actual primary=n1, ordered replicas=[n1, n3, n2]
+	at ClientRouterCompatibility.main(ClientRouterCompatibility.java:31)

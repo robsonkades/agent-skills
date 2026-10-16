@@ -1,0 +1,88 @@
+package work;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+public final class SelfTest {
+    public static void main(String[] args) {
+        Catalog c = new Catalog();
+        c.load(new Entry("A", 450), new Entry("B", 550));
+        Report first = c.open();
+        if (first.total() != 1000 || first.entries().size() != 2) throw new AssertionError("initial report");
+        try { first.entries().clear(); throw new AssertionError("writable report"); }
+        catch (UnsupportedOperationException expected) { }
+
+        c.load(new Entry("C", 1200));
+        if (first.total() != 1000
+                || !first.entries().equals(List.of(new Entry("A", 450), new Entry("B", 550)))) {
+            throw new AssertionError("opened report changed after reload: " + first);
+        }
+        Report latest = c.open();
+        if (latest.total() != 1200 || !latest.entries().equals(List.of(new Entry("C", 1200)))) {
+            throw new AssertionError("latest report must reflect reload");
+        }
+        c.load();
+        if (first.total() != 1000 || latest.total() != 1200 || !c.open().entries().isEmpty()) {
+            throw new AssertionError("empty reload changed an older report");
+        }
+
+        verifyEmptySnapshot();
+        verifyOrderDuplicatesAndSignedCents();
+        verifyDirectReportIsReadOnly();
+        System.out.println("SelfTest PASS");
+    }
+
+    private static void verifyEmptySnapshot() {
+        Catalog catalog = new Catalog();
+        Report empty = catalog.open();
+        catalog.load(new Entry("later", -5));
+        if (!empty.entries().isEmpty() || empty.total() != 0 || catalog.open().total() != -5) {
+            throw new AssertionError("empty report must remain empty after a load");
+        }
+        expectReadOnly(() -> empty.entries().add(new Entry("forbidden", 1)));
+    }
+
+    private static void verifyOrderDuplicatesAndSignedCents() {
+        Entry duplicate = new Entry("B", 450);
+        List<Entry> expected = List.of(duplicate, new Entry("A", -250), duplicate, new Entry("zero", 0));
+        Catalog catalog = new Catalog();
+        Entry[] input = expected.toArray(Entry[]::new);
+        catalog.load(input);
+        Report first = catalog.open();
+        input[0] = new Entry("external-array-change", 999);
+        if (!first.entries().equals(expected) || first.total() != 650
+                || !catalog.open().entries().equals(expected)) {
+            throw new AssertionError("order, duplicates, signed cents, or copied load input changed");
+        }
+        verifyReadOnly(first);
+        catalog.load(new Entry("later", -100));
+        if (!first.entries().equals(expected) || first.total() != 650
+                || catalog.open().total() != -100) {
+            throw new AssertionError("reload must preserve exact earlier entries and total");
+        }
+    }
+
+    private static void verifyDirectReportIsReadOnly() {
+        Report report = new Report(new ArrayList<>(List.of(new Entry("B", 2), new Entry("A", -1))));
+        verifyReadOnly(report);
+        if (!report.entries().equals(List.of(new Entry("B", 2), new Entry("A", -1))) || report.total() != 1) {
+            throw new AssertionError("read-only attempts changed the report");
+        }
+    }
+
+    private static void verifyReadOnly(Report report) {
+        expectReadOnly(() -> report.entries().add(new Entry("forbidden", 1)));
+        expectReadOnly(() -> report.entries().remove(0));
+        expectReadOnly(() -> report.entries().set(0, new Entry("forbidden", 1)));
+        expectReadOnly(() -> report.entries().sort(Comparator.comparing(Entry::sku)));
+        expectReadOnly(() -> Collections.reverse(report.entries()));
+    }
+
+    private static void expectReadOnly(Runnable mutation) {
+        try {
+            mutation.run();
+            throw new AssertionError("writable report");
+        } catch (UnsupportedOperationException expected) {
+        }
+    }
+}

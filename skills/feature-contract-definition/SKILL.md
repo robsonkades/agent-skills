@@ -25,6 +25,9 @@ shape.
    responsible Product or Engineering stage for that decision. Reuse existing repository/session
    references and accepted revisions; do not invent IDs or require a new dossier merely to draft
    a contract. Record missing mappings explicitly and continue unaffected surfaces.
+   Inspect existing decisions, specifications and consumer evidence before asking. If a material
+   gap remains, state the competing observable outcomes and ask the accountable role which is
+   required; keep the dependent clause provisional instead of silently choosing a guarantee.
 2. **Name the parties and authority.** Identify provider, every known consumer, contract owner,
    approver, and independently deployed parties. Reuse authority already established in the
    accepted inputs; do not request it again. An unresolved owner blocks acceptance of that
@@ -33,10 +36,16 @@ shape.
 3. **Select only the applicable surfaces.** API/RPC, event/message, persisted/shared data, external
    integration, security, or operational/SLO. Read the matching sections of
    [Contract surfaces](references/contract-surfaces.md).
-4. **Start with consumer interactions.** Walk ordinary use, plus recovery/version-skew and
-   invalid or unauthorized use where those risks exist. State what the provider guarantees and
-   what the consumer must do, then define inputs, outputs, invariants, errors, timeouts, retries,
+4. **Start with consumer interactions.** Trace the changed boundary through available producer
+   and consumer artifacts; record uninspected parties instead of treating search results as a
+   complete inventory. When deriving clauses from existing behavior or ambiguous terms, use
+   [From evidence to clauses](references/contract-surfaces.md#from-evidence-to-clauses).
+   Walk ordinary use, plus recovery/version-skew and invalid or unauthorized use where those
+   risks exist. State what the provider guarantees and what the consumer must do, then define
+   inputs, outputs, invariants, errors, timeouts, retries,
    duplication, ordering, partial success, authorization, and observability where applicable.
+   For mutations, use [Failure and recovery](references/contract-surfaces.md#failure-and-recovery)
+   to distinguish a recoverable condition from a safe repeat of the operation.
    When an interaction crosses several surfaces, check their promises together: what a success
    response means for subsequent reads, emitted events and downstream effects. Follow
    [Interacting surfaces](references/contract-surfaces.md#interacting-surfaces); separate valid
@@ -45,6 +54,8 @@ shape.
    coexistence window, migration/deprecation, rollout order, rollback limit, and consumer evidence.
    Name exact producer/consumer/schema revisions and retained data that remain supported;
    syntactic compatibility alone does not establish unchanged meaning or failure behaviour.
+   Use [Compatibility evidence](references/contract-surfaces.md#compatibility-evidence) for the
+   applicable wire, behavioral and client-library checks.
 6. **Maintain one source of truth.** Amend and link the authoritative OpenAPI, AsyncAPI, schema,
    protocol, or equivalent artefact within the project's established ownership and authority.
    For an externally owned contract, link its applicable revision and keep local integration
@@ -55,10 +66,20 @@ shape.
    publication or messaging requires authorization for that action.
 7. **Make it verifiable.** Add `TC-*` contract criteria and planned `EV-*` evidence such as contract,
    compatibility, serialization, migration, security-negative, or consumer tests.
-   Each criterion names stimulus/precondition, observable result and failure condition. Mark
+   Each criterion names stimulus/precondition, observation point, observable result and failure
+   condition; include the agreed time bound when timing matters, or flag the missing bound.
+   If required observations or fixtures are unavailable, the result remains inconclusive,
+   not passed; record the missing evidence.
+   Keep an unknown operation outcome separate from an unknown verification result. Mark
    evidence as planned, executed-pass, executed-fail or unavailable, tied to exact revisions
    and environment; a schema linter cannot prove behavioral compatibility. Run applicable
    existing specification checks now, and identify runtime checks that belong to implementation.
+8. **Reconcile new evidence.** Record the counterexample or changed authoritative revision and
+   revisit the affected clauses, compatibility assumptions and `TC-*`/`EV-*`. An implementation
+   violating an accepted contract is a conformance gap, not permission to weaken the promise.
+   If the promise itself must change, return the choice to the responsible Product or Engineering
+   stage, preserve the accepted `CT-*` revision and track the proposed revision's status
+   separately. Reuse unaffected evidence only while its premises and tested revisions still apply.
 
 ## Decision rules
 
@@ -92,7 +113,7 @@ THEN return that decision to Product instead of resolving it as an engineering d
   have a recorded status under the established authority/support policy. Record consultations,
   required approvals and unresolved parties separately; a recorded rejection is not acceptance.
 - Contract acceptance approves a specification revision; it does not prove implementation
-  conformance. New semantic changes require impact review and supersede only affected evidence.
+  conformance. New semantic changes require impact review under the established authority policy.
 - Do not require all surface sections. Mark only applicable surfaces; absence follows from the impact
   map, not convenience.
 - Keep implementation tasks out. The contract states what parties may rely on; resources implement it
@@ -107,7 +128,7 @@ Owner          <accountable role>
 Parties        <providers, consumers, operators>
 Authority      <approver and consulted roles>
 Specification  <authoritative link and version>
-Semantics      <success, failures and invariants>
+Semantics      <success, failures and invariants; clause sources and unresolved meanings>
 Evolution      <compatibility, coexistence, migration, deprecation>
 Security       <identity, authorization, data exposure>
 Operations     <SLO, telemetry, support/recovery obligations>

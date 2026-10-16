@@ -1,0 +1,48 @@
+public final class CallbackCheck {
+    static int checks;
+    static void check(boolean value, String label) {
+        if (!value) throw new AssertionError(label);
+        checks++;
+        System.out.println("PASS " + label);
+    }
+    public static void main(String[] args) {
+        boolean inline = args[0].equals("inline");
+        boolean corrected = args[1].equals("corrected");
+        Delivery delivery = Assembly.completion();
+        int[] captures = {0}, views = {0};
+        CaptureCoordinator coordinator = new CaptureCoordinator(
+                completed -> { captures[0]++; completed.run(); },
+                delivery, () -> views[0]++);
+        coordinator.request();
+        CaptureCoordinator.Phase beforeDrain = inline && corrected
+                ? CaptureCoordinator.Phase.DONE : CaptureCoordinator.Phase.RUNNING;
+        check(coordinator.phase() == beforeDrain, "phase-before-drain");
+        delivery.drain();
+        CaptureCoordinator.Phase expected = inline && !corrected
+                ? CaptureCoordinator.Phase.RUNNING : CaptureCoordinator.Phase.DONE;
+        check(coordinator.phase() == expected, "phase-after-drain");
+        check(views[0] == 1, "view-once");
+        coordinator.request();
+        delivery.drain();
+        check(captures[0] == 1, "no-duplicate-capture");
+        int[] attempts = {0}, failedViews = {0};
+        RuntimeException original = new IllegalStateException("device outcome unknown");
+        CaptureCoordinator failing = new CaptureCoordinator(
+                completed -> { attempts[0]++; throw original; },
+                delivery, () -> failedViews[0]++);
+        try {
+            failing.request();
+            throw new AssertionError("failure swallowed");
+        } catch (RuntimeException actual) {
+            check(actual == original, "original-failure-preserved");
+        }
+        check(failing.phase() == CaptureCoordinator.Phase.UNKNOWN, "failure-unknown");
+        failing.request();
+        delivery.drain();
+        check(attempts[0] == 1, "no-blind-retry");
+        check(failedViews[0] == 0, "no-fabricated-completion");
+        System.out.println("OBSERVATION mode=" + args[0] + " variant=" + args[1]
+                + " finalPhase=" + coordinator.phase() + " views=" + views[0]);
+        System.out.println("SUMMARY checks=" + checks);
+    }
+}

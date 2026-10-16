@@ -1,0 +1,68 @@
+{
+  "run": "c2-3",
+  "condition": "revised",
+  "at": "2026-10-16T12:49:06.723Z",
+  "classification": "Coordinator artifact execution; rubric decisions recorded separately",
+  "fixtureComparisons": [
+    {
+      "path": "src/Account.java",
+      "originalSha256": "41b2b6911d4310bb9d989bdb98101f65fe55f2433c1b20a993083df5f99b4f4a",
+      "finalSha256": "41b2b6911d4310bb9d989bdb98101f65fe55f2433c1b20a993083df5f99b4f4a"
+    },
+    {
+      "path": "test/AccountTest.java",
+      "originalSha256": "b14a83a38201445c977b689e887c861d46b133e747c724b6cd11676552f74459",
+      "finalSha256": "30083e2bfb9aec336fd16addbd6ddda8dddbef393f6c147c46ba60dd6849c8f8"
+    },
+    {
+      "path": "tools/TestRunner.java",
+      "originalSha256": "e4bcfd0796d0b87d5b86a50768a95ab70e126fec427b35ebbfb294e3ab66973f",
+      "finalSha256": "e4bcfd0796d0b87d5b86a50768a95ab70e126fec427b35ebbfb294e3ab66973f"
+    },
+    {
+      "path": "check.mjs",
+      "originalSha256": "2c2a0c1b712eb664372784cd946eb63821d037105cabc1651e0b29621b06b6d2",
+      "finalSha256": "2c2a0c1b712eb664372784cd946eb63821d037105cabc1651e0b29621b06b6d2"
+    },
+    {
+      "path": "docs/account-contract.md",
+      "originalSha256": "6d53eee2d1a8c27f952b4c02cd946d50d0a244f9e1546993315739b585eef376",
+      "finalSha256": "6d53eee2d1a8c27f952b4c02cd946d50d0a244f9e1546993315739b585eef376"
+    },
+    {
+      "path": "README.md",
+      "originalSha256": "ca13180d9c49e09a0d00a7f527be89fefc252de6918c5b54fc9699fa5990c1c3",
+      "finalSha256": "ca13180d9c49e09a0d00a7f527be89fefc252de6918c5b54fc9699fa5990c1c3"
+    }
+  ],
+  "checks": [
+    {
+      "label": "conforming implementation",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "check.mjs"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-behavior-6orq6B\\grader\\c2-3\\conforming",
+      "startedAt": "2026-10-16T12:49:06.753Z",
+      "finishedAt": "2026-10-16T12:49:07.868Z",
+      "exit": 0,
+      "signal": null,
+      "stdout": "\r\nTest run finished after 195 ms\r\n[         3 containers found      ]\r\n[         0 containers skipped    ]\r\n[         3 containers started    ]\r\n[         0 containers aborted    ]\r\n[         3 containers successful ]\r\n[         0 containers failed     ]\r\n[        21 tests found           ]\r\n[         0 tests skipped         ]\r\n[        21 tests started         ]\r\n[         0 tests aborted         ]\r\n[        21 tests successful      ]\r\n[         0 tests failed          ]\r\n\r\n",
+      "stderr": ""
+    },
+    {
+      "label": "always-refuse mutation; must compile and fail relevant assertion",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "check.mjs"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-behavior-6orq6B\\grader\\c2-3\\always-refuse",
+      "startedAt": "2026-10-16T12:49:07.894Z",
+      "finishedAt": "2026-10-16T12:49:09.091Z",
+      "exit": 1,
+      "signal": null,
+      "stdout": "\r\nTest run finished after 139 ms\r\n[         3 containers found      ]\r\n[         0 containers skipped    ]\r\n[         3 containers started    ]\r\n[         0 containers aborted    ]\r\n[         3 containers successful ]\r\n[         0 containers failed     ]\r\n[        21 tests found           ]\r\n[         0 tests skipped         ]\r\n[        21 tests started         ]\r\n[         0 tests aborted         ]\r\n[        20 tests successful      ]\r\n[         1 tests failed          ]\r\n\r\n\r\nFailures (1):\r\n  JUnit Jupiter:AccountTest:affordableWithdrawalsSucceedWhenGateIsFree()\r\n    MethodSource [className = 'AccountTest', methodName = 'affordableWithdrawalsSucceedWhenGateIsFree', methodParameterTypes = '']\r\n    => org.opentest4j.AssertionFailedError: an affordable uncontended withdrawal must succeed ==> expected: <true> but was: <false>\r\n       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)\r\n       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)\r\n       org.junit.jupiter.api.AssertTrue.failNotTrue(AssertTrue.java:63)\r\n       org.junit.jupiter.api.AssertTrue.assertTrue(AssertTrue.java:36)\r\n       org.junit.jupiter.api.Assertions.assertTrue(Assertions.java:214)\r\n       AccountTest.affordableWithdrawalsSucceedWhenGateIsFree(AccountTest.java:13)\r\n       java.base/java.lang.reflect.Method.invoke(Method.java:565)\r\n       java.base/java.util.ArrayList.forEach(ArrayList.java:1604)\r\n       java.base/java.util.ArrayList.forEach(ArrayList.java:1604)\r\n",
+      "stderr": ""
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+import fs from 'node:fs';
+const p='C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/root-notes.json';
+const notes=JSON.parse(fs.readFileSync(p,'utf8'));
+for(const id of process.argv.slice(2)){if(!notes[id])throw Error('No prior code/review note '+id);notes[id].resultRead=true;notes[id].journalDeclarationsRead=true;notes[id].metadataReadRecordedAt=new Date().toISOString();}
+fs.writeFileSync(p,JSON.stringify(notes,null,2)+'\n');

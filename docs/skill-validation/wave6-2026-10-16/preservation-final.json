@@ -1,0 +1,33 @@
+{
+  "at": "2026-10-16T17:48:25.734Z",
+  "baselineFiles": 9560,
+  "preserved": 9556,
+  "changes": [
+    {
+      "path": "docs/skills-evolution-inventory.md",
+      "allowed": true,
+      "before": "98c40a84ad72bdbada7c01e3ac2b74a22f3611a238fe11a5c6a4cec9bf4aa8e0",
+      "after": "aacf602244aee68a6f312db414f36560e414d3199c721aaf196c3ad860878d62"
+    },
+    {
+      "path": "registry/skills.yaml",
+      "allowed": true,
+      "before": "950a1d7dc1ccdb94cfb672cbb3d1220eb0759ec0da4c47063f203d067712f4af",
+      "after": "6b189aacd967b93daca24231b7232bd9701c980359b0f77c7a861393c7cc2d00"
+    },
+    {
+      "path": "skills/java-memory-model/references/happens-before.md",
+      "allowed": true,
+      "before": "bf3c0632c5a2643752fa2ad160a9694b8cc98696474bb14fc6c67499bc33865c",
+      "after": "87425bc99872b8b3f0cabff48db69e2846d342a243272411aceb3293e5906169"
+    },
+    {
+      "path": "skills/java-memory-model/skill.yaml",
+      "allowed": true,
+      "before": "ebf7fdd7cf14ed7c51f1627d4cbfc022d264de515840da97004fa13531e53cab",
+      "after": "758011ac5b70727647e1607ee70dcc32075f53729fbfa6afd202199f23801f3a"
+    }
+  ],
+  "addedFiles": 1138,
+  "unexpected": []
+}

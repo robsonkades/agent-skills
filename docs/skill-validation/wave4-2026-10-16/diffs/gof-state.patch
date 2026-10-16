@@ -1,0 +1,26 @@
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\gof-state/references/modelling-transitions.md" "b/C:\\git\\agent-skills\\skills\\gof-state/references/modelling-transitions.md"
+index f7301d8..ec4bc6e 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\gof-state/references/modelling-transitions.md"
++++ "b/C:\\git\\agent-skills\\skills\\gof-state/references/modelling-transitions.md"
+@@ -301,6 +301,6 @@ Primary sources: [Java 21 pattern switch](https://docs.oracle.com/en/java/javase
+ [JLS 17.1 monitor reentrancy](https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html#jls-17.1),
+ [CompletableFuture cancellation](<https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CompletableFuture.html#cancel(boolean)>),
+ [AtomicReference](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/atomic/AtomicReference.html),
+-[Jakarta Persistence 3.2 bulk updates/versioning](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2),
+-[Jakarta Persistence 3.2 enum value mapping](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/enumeratedvalue),
++[Jakarta Persistence 3.2 bulk updates/versioning](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html),
++[Jakarta Persistence 3.2 enum value mapping](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/EnumeratedValue.html),
+ and [ShedLock lock duration](https://github.com/lukas-krecan/ShedLock).
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\gof-state/skill.yaml" "b/C:\\git\\agent-skills\\skills\\gof-state/skill.yaml"
+index 3db01bf..5163bb6 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\gof-state/skill.yaml"
++++ "b/C:\\git\\agent-skills\\skills\\gof-state/skill.yaml"
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: gof-state
+-version: 1.2.4
++version: 1.2.5
+ description: >-
+   State in modern Java: making an object's behaviour depend on an explicit state, with the
+   transitions themselves modelled rather than implied by scattered flags. Covers the intent

@@ -1,0 +1,54 @@
+{
+  "strictPackageIssues": [],
+  "packageFiles": 6,
+  "version": "1.3.6",
+  "routedReferences": [
+    "references/before-after.md",
+    "references/password-policy.md",
+    "references/password-storage.md",
+    "references/review.md"
+  ],
+  "byteIdenticalPreservedFiles": [
+    "references/before-after.md",
+    "references/password-policy.md",
+    "references/password-storage.md"
+  ],
+  "processes": [
+    {
+      "label": "prettier-final",
+      "command": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "node_modules/prettier/bin/prettier.cjs",
+        "--check",
+        "skills/java-application-security-basics/SKILL.md",
+        "skills/java-application-security-basics/skill.yaml",
+        "skills/java-application-security-basics/references/before-after.md",
+        "skills/java-application-security-basics/references/password-policy.md",
+        "skills/java-application-security-basics/references/password-storage.md",
+        "skills/java-application-security-basics/references/review.md"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\prettier-final.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\prettier-final.stderr.log"
+    },
+    {
+      "label": "diff-check-final",
+      "command": "git",
+      "args": [
+        "diff",
+        "--check",
+        "--",
+        "skills/java-application-security-basics"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\diff-check-final.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\diff-check-final.stderr.log"
+    }
+  ]
+}

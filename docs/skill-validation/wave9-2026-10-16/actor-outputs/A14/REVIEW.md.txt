@@ -1,0 +1,16 @@
+# Repair review
+
+The original runner changed the intent ID per attempt, ignored stored terminal/unknown state, retried without deadline admission, used the smaller delay and could sleep or exit with an open reply. It also converted ambiguous outcomes to REJECTED. The executable regression failed against that original implementation (0 passed, 27 failed); the identity guard was the first failing assertion in most cases, so those failures do not independently reproduce every defect.
+
+RetryEngine.java now uses the supplied immutable intent on every attempt. It returns existing APPLIED/REJECTED snapshots unchanged with zero calls. UNKNOWN is inherited from the durable snapshot and persisted immediately when observed. With the supplied Contract.REPLAY_SAFE=false, an unknown intent is never automatically redispatched, including across invocations. An interrupted operation call persists UNKNOWN before propagating InterruptedException. Only an authoritative OK supplies APPLIED and its original receipt; normal stops without uncertainty persist REJECTED.
+
+Every returned reply is closed exactly once through try-with-resources before sleeping, another call or normal return. Initial and subsequent call admission require the full attempt allowance plus reserve. Retry admission uses max(localWaitNanos, serverMinimumNanos), requires room for that wait plus a new attempt and reserve, and obtains one token. Comparisons followed by subtraction avoid signed-long overflow. The final permitted attempt does not consume another token or wait. After sleep, time, cancellation and interruption are checked again; an admitted token remains consumed when oversleep or cancellation prevents the next call. The chosen local delay is preserved without another jitter draw.
+
+Validation used the unchanged run.mjs, whose javac and java subprocesses each have a 20-second timeout. Both commands succeeded after the repair:
+
+- node run.mjs Verification: 27 passed, 0 failed.
+- node run.mjs Smoke: Smoke passed.
+
+The verification exercises stable identity/payload and timeout propagation, receipt preservation, terminal replay, unknown retention across invocations, interruption after a simulated effect, exact and insufficient budgets, overflow, server/local delay minima, attempt exhaustion, token denial, oversleep, cancellation and reply lifetime. All seven immutable project copies matched their input SHA-256 hashes.
+
+The installed tools report Temurin JDK/javac 25.0.3; compilation used --release 17 as required. No library, transport, database, API version or provider endpoint is supplied. Store durability/atomicity and the single-owner execution contract are assumptions, not properties established by these in-memory tests. There is no authoritative reconciliation operation: UNKNOWN remains a recovery obligation. The immutable false replay flag means safe-replay branches are not exercised by this deliverable's executable configuration. Provider retention, tenant/fingerprint enforcement, physical cancellation, real resource-release latency, process crashes and fleet amplification remain integration checks. Broader skills referenced by the supplied snapshots were not loaded; no browsing, delegation or external work occurred.

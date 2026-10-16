@@ -1,0 +1,24 @@
+{
+  "id": "baseline-probe-compile",
+  "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+  "args": [
+    "--release",
+    "17",
+    "-cp",
+    ".build",
+    "-d",
+    "../probe-classes",
+    "../probe/work/MinimalProbe.java"
+  ],
+  "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-02\\output\\project",
+  "timeoutMs": 30000,
+  "started": "2026-10-16T16:55:08.095Z",
+  "executed": true,
+  "exit": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "",
+  "stderr": "",
+  "expectedExit": 0,
+  "expectationMet": true
+}

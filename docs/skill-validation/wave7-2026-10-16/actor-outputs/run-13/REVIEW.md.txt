@@ -1,0 +1,64 @@
+# Repair outcome
+
+Changed `OrderService.place` to select `ordersTx` explicitly. Its order insert,
+stock reservation and synchronous local notifier now share the orders database
+transaction. `MetricsService`, `metricsTx` and its `@Primary` designation remain
+unchanged. No additional dependency or infrastructure was introduced.
+
+## Supported cause
+
+The original smoke invocation obtained the actual Spring bean and reported
+`active=true committed orders=1` after stock rejection. The transaction interceptor
+was present: this was not a self-invocation path. The unqualified annotation chose
+the primary `metricsTx`, but `OrderService` uses `ordersJdbc`, backed by a different
+datasource. Orders writes therefore ran with auto-commit.
+
+A test-only implementation of the existing `OrderNotifier` observed the actual
+connections after both writes. Before repair it reported
+`ordersAutoCommit=true metricsAutoCommit=false`, one rejected order and stock
+reduced from 3 to 2. The rejection is unchecked, so adding `rollbackFor` would
+not enlist the orders connection.
+
+This diagnosis matches Framework 7.0.9's
+[manager selection implementation](https://github.com/spring-projects/spring-framework/blob/v7.0.9/spring-tx/src/main/java/org/springframework/transaction/interceptor/TransactionAspectSupport.java)
+and its
+[transaction qualifier and rollback contract](https://github.com/spring-projects/spring-framework/blob/v7.0.9/spring-tx/src/main/java/org/springframework/transaction/annotation/Transactional.java).
+
+## Verification
+
+The new regression ran against the original application before the one-line
+repair: three scenarios failed and two passed (exit 1). This unsuccessful run is
+preserved in `checks/baseline-regression.json`.
+
+After repair, `node check.mjs work.Regression` compiled and passed five scenarios:
+
+- Sold-out stock leaves no rejected order and no stock change.
+- Notifier rejection after both writes restores stock, removes the order and
+  preserves the original exception instance and nested cause.
+- Success persists exactly one order, reserves one unit and calls the notifier.
+- Duplicate-order insertion preserves the existing order and stock.
+- Successful metrics persist; a rejected sample rolls back only metrics, while
+  orders rollback preserves a prior metrics sample.
+
+The fixed notifier probe showed `ordersAutoCommit=false`,
+`metricsAutoCommit=true`, zero rejected orders and stock restored to 3. Persisted
+state assertions run after calls through Spring proxies finish, without an
+enclosing test transaction. The original smoke also ran again and reported
+`active=true committed orders=0` (exit 0).
+
+Byte comparisons against input found only `RUNBOOK.md` and
+`src/work/OrderService.java` changed among existing files; all 18 frozen project
+files remained identical. `test/work/Regression.java` is new.
+
+## Scope and limits
+
+The runbook explains transaction ownership, caller behavior, diagnostic limits and
+the regression command. Reads and commands are listed in `execution.json`;
+these are actor records, not independent auditing. The routed skill references
+on interception/rollback and verification were read in full. Event recovery
+guidance was unnecessary for this synchronous local collaborator.
+
+Validation used the declared Java 25 toolchain, Spring 7.0.9 and local H2 2.4.240.
+It does not establish production database crash durability, distributed atomicity,
+concurrency guarantees or JPA behavior. No repository-wide check was run because
+the authorized task is this isolated application snapshot.

@@ -1,0 +1,182 @@
+package work;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import javax.sql.DataSource;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.transaction.support.TransactionTemplate;
+
+public class ReceiptContractRegression {
+    public static void main(String[] args) {
+        Probe probe = new Probe();
+        try (var context = new AnnotationConfigApplicationContext()) {
+            context.registerBean("contractObserver", ReceiptObserver.class, () -> probe,
+                    definition -> definition.setPrimary(true));
+            context.register(Config.class);
+            context.refresh();
+            var jdbc = context.getBean(JdbcTemplate.class);
+            probe.jdbc = jdbc;
+            probe.dataSource = context.getBean(DataSource.class);
+            var service = context.getBean(BookingService.class);
+            var owner = new TransactionTemplate(context.getBean("businessTx", PlatformTransactionManager.class));
+
+            reset(jdbc, probe);
+            service.place("normal", "ready", "123456789012");
+            state(jdbc, 1, 19, "normal success");
+            equal(jdbc.queryForObject("select body from receipt_detail where id='normal'", String.class),
+                    "123456789012", "boundary body preserved");
+            observed(probe);
+
+            reset(jdbc, probe);
+            expect(DataAccessException.class, () -> service.place("invalid", "ready", "1234567890123"));
+            state(jdbc, 0, 20, "13-character body rejected, header rolled back");
+            observed(probe);
+
+            reset(jdbc, probe);
+            expect(IllegalStateException.class, () -> service.place("unavailable", "sold-out", "valid"));
+            state(jdbc, 0, 20, "unavailable stock");
+            equal(probe.observations.size(), 0, "no writer on rollback before commit");
+
+            reset(jdbc, probe);
+            context.publishEvent(new BookingRecorded("outside", "valid"));
+            state(jdbc, 0, 20, "nontransactional publication ignored");
+            equal(probe.observations.size(), 0, "no fallback execution");
+
+            reset(jdbc, probe);
+            owner.executeWithoutResult(status -> {
+                service.place("joined", "ready", "valid");
+                equal(count(jdbc, "booking"), 1, "publisher visible to owner");
+                equal(count(jdbc, "receipt"), 0, "receipt waits for completion owner");
+                equal(probe.observations.size(), 0, "service return does not complete caller transaction");
+            });
+            state(jdbc, 1, 19, "existing owner commits");
+            observed(probe);
+
+            reset(jdbc, probe);
+            var earlyFailure = new IllegalStateException("owner fails after place returns");
+            sameFailure(earlyFailure, () -> owner.executeWithoutResult(status -> {
+                service.place("early", "ready", "valid");
+                throw earlyFailure;
+            }));
+            state(jdbc, 0, 20, "owner aborts after place returns");
+            equal(probe.observations.size(), 0, "receipt never independently committed");
+
+            reset(jdbc, probe);
+            var lateFailure = new IllegalStateException("owner fails after receipt writes");
+            sameFailure(lateFailure, () -> owner.executeWithoutResult(status -> {
+                service.place("late", "ready", "valid");
+                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                    @Override public void beforeCommit(boolean readOnly) {
+                        // Registered after the event: both default-order synchronizations run in registration order.
+                        observed(probe);
+                        equal(count(jdbc, "receipt"), 1, "header written before owner failure");
+                        equal(count(jdbc, "receipt_detail"), 1, "body written before owner failure");
+                        equal(probe.externalCount("receipt"), 0, "receipt not independently durable");
+                        equal(probe.externalCount("receipt_detail"), 0, "body not independently durable");
+                        throw lateFailure;
+                    }
+                });
+            }));
+            state(jdbc, 0, 20, "owner aborts after header and body were written");
+
+            reset(jdbc, probe);
+            owner.executeWithoutResult(status -> {
+                service.place("rollback-only", "ready", "valid");
+                status.setRollbackOnly();
+            });
+            state(jdbc, 0, 20, "owner marks rollback-only");
+            equal(probe.observations.size(), 0, "rollback-only skips writer");
+            System.out.println("PASS 8 mandatory-receipt scenarios through real Spring beans");
+        }
+    }
+
+    private static void reset(JdbcTemplate jdbc, Probe probe) {
+        if (TransactionSynchronizationManager.isActualTransactionActive()) throw new AssertionError("transaction leaked");
+        jdbc.execute("drop all objects");
+        jdbc.execute("create table booking(id varchar(80) primary key,sku varchar(80))");
+        jdbc.execute("create table receipt(id varchar(80) primary key)");
+        jdbc.execute("create table receipt_detail(id varchar(80) primary key,body varchar(12))");
+        jdbc.execute("create table stock(sku varchar(80) primary key,available int)");
+        jdbc.update("insert into stock values ('ready',20),('sold-out',0)");
+        probe.observations.clear();
+    }
+
+    private static void state(JdbcTemplate jdbc, int records, int available, String scenario) {
+        if (TransactionSynchronizationManager.isActualTransactionActive()) throw new AssertionError("state read before completion");
+        equal(count(jdbc, "booking"), records, scenario + " booking");
+        equal(count(jdbc, "receipt"), records, scenario + " receipt header");
+        equal(count(jdbc, "receipt_detail"), records, scenario + " receipt body");
+        equal(jdbc.queryForObject("select available from stock where sku='ready'", Integer.class), available, scenario + " reservation");
+        equal(jdbc.queryForObject("select available from stock where sku='sold-out'", Integer.class), 0, "sold-out stock unchanged");
+        System.out.println("PASS " + scenario + ": booking/header/body=" + records + "/" + records + "/" + records + ", ready=" + available);
+    }
+
+    private static int count(JdbcTemplate jdbc, String table) {
+        return jdbc.queryForObject("select count(*) from " + table, Integer.class);
+    }
+
+    private static void observed(Probe probe) {
+        equal(probe.observations.size(), 1, "writer called once");
+        Observation o = probe.observations.get(0);
+        equal(o.active(), true, "writer uses active transaction");
+        equal(o.booking(), 1, "writer sees uncommitted publisher booking");
+        equal(o.header(), 0, "observer immediately precedes header write");
+        equal(o.body(), 0, "observer precedes body write");
+        equal(o.stock(), 19, "writer sees reservation in same unit");
+        equal(o.externalBooking(), 0, "publisher booking remains uncommitted");
+        equal(o.externalStock(), 20, "reservation remains uncommitted");
+    }
+
+    private static void sameFailure(RuntimeException expected, Runnable action) {
+        try { action.run(); } catch (RuntimeException actual) {
+            if (actual != expected) throw new AssertionError("unexpected owner failure", actual);
+            return;
+        }
+        throw new AssertionError("expected owner failure");
+    }
+
+    private static void expect(Class<? extends RuntimeException> expected, Runnable action) {
+        try { action.run(); } catch (RuntimeException actual) {
+            if (!expected.isInstance(actual)) throw new AssertionError("unexpected failure", actual);
+            System.out.println("Observed rejection: " + actual.getClass().getSimpleName());
+            return;
+        }
+        throw new AssertionError("expected " + expected.getSimpleName());
+    }
+
+    private static void equal(Object actual, Object expected, String label) {
+        if (!expected.equals(actual)) throw new AssertionError(label + ": expected=" + expected + ", actual=" + actual);
+    }
+
+    private record Observation(boolean active, int booking, int header, int body, int stock,
+                               int externalBooking, int externalStock) {}
+
+    private static class Probe implements ReceiptObserver {
+        JdbcTemplate jdbc;
+        DataSource dataSource;
+        final List<Observation> observations = new ArrayList<>();
+
+        @Override public void beforeWrite(String bookingId) {
+            observations.add(new Observation(TransactionSynchronizationManager.isActualTransactionActive(),
+                    jdbc.queryForObject("select count(*) from booking where id=?", Integer.class, bookingId),
+                    count(jdbc, "receipt"), count(jdbc, "receipt_detail"),
+                    jdbc.queryForObject("select available from stock where sku='ready'", Integer.class),
+                    externalCount("booking"), externalScalar("select available from stock where sku='ready'")));
+        }
+
+        int externalCount(String table) { return externalScalar("select count(*) from " + table); }
+
+        int externalScalar(String sql) {
+            try (var connection = dataSource.getConnection(); var statement = connection.createStatement(); var rows = statement.executeQuery(sql)) {
+                if (!rows.next()) throw new AssertionError("missing external query row");
+                return rows.getInt(1);
+            } catch (SQLException failure) { throw new AssertionError("independent read failed", failure); }
+        }
+    }
+}

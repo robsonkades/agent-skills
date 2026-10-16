@@ -18,13 +18,10 @@ description: >
 
 ## Purpose
 
-Most feature designs are the first idea, defended. That is not always wrong — the first idea is
-often right — but it leaves nothing to re-open when the context changes, and it hides the fact
-that a simpler option existed and was never priced.
-
-This phase costs little and buys two things: a recommendation with a reason that can be checked,
-and a record of what else was possible, so the choice can be reversed on evidence instead of on
-regret.
+Produce a feature-level recommendation whose alternatives, decisive evidence and limits can be
+checked. Include the simplest feasible approach so an assumed mechanism does not hide a cheaper
+or less complex way to meet the same obligation. Match analysis effort to the consequence of the
+choice and the uncertainty that could change it; a comparison is not automatically cheap to make.
 
 ## When there is nothing to analyse
 
@@ -40,12 +37,17 @@ identify the smallest check that could settle it and keep dependent selection co
    required mechanism from an example or preference. "How does the caller learn the work
    finished?" opens the choice; if webhooks are already mandated, compare designs within that
    boundary. Revisit a settled premise only for material new evidence or an authorized scope change.
+   Ask only for unavailable information that could change feasibility, ranking or the transition;
+   state which options the answer separates. Continue independent comparison while it is unresolved.
 2. **Generate options including the floor.** The floor is the simplest thing that satisfies the
    stated requirements — often "extend what already exists", sometimes "do nothing here". It is
    included when feasible; if it is only a candidate, label its unresolved constraints.
    Treat supplied examples as seeds unless the option set is explicitly fixed. Consider materially
    different placement, staged adoption or composed approaches when they meet the same obligation;
-   avoid adding variants that cannot affect the decision.
+   avoid adding variants that cannot affect the decision. Tie each candidate to the responsibility
+   it changes and the existing extension point or proposed boundary that would carry it. When the
+   option set consists of technology names or lacks an evidenced reuse candidate, read
+   [deriving candidates from project findings](references/evaluation-axes.md#deriving-candidates-from-project-findings).
 3. **Keep the options comparable.** Describe complete alternatives for the same behavior, boundary
    and operating conditions. A library, pattern and service label alone are not comparable,
    but complete solutions using different technologies can be; split choices that can coexist.
@@ -63,7 +65,7 @@ identify the smallest check that could settle it and keep dependent selection co
    a feasible release; unknown transition feasibility keeps dependent selection conditional.
 5. **Evaluate only the axes this feature is sensitive to.** Load
    [evaluation axes](references/evaluation-axes.md) to choose discriminating criteria or check
-   comparisons that change consumer outcomes or transition obligations.
+   comparisons that change consumer outcomes, cost boundaries or transition obligations.
    Scoring every axis for every option produces a table that reads the same at every company.
 6. **Recommend one when supported**, with the decisive trade-off and evidence. Otherwise return
    a conditional recommendation or unresolved choice with its next check; do not manufacture a winner.
@@ -132,7 +134,7 @@ Choice           <the question>
 Constraints      <what any option must satisfy, with source>
 
 Option A  <name>   the floor
-  How it works     <two lines>
+  How it works     <mechanism, change location and source; mark unproved premises>
   Fits because     <axis: consequence>
   Costs            <axis: consequence>
 Option B  <name>
@@ -153,5 +155,7 @@ Experiment       <EXP-* when a bounded experiment is warranted; otherwise next c
 Hand the block to the decision phase; a small choice can use a concise paragraph with the same
 material evidence and limits. This skill produces the analysis; it does not record acceptance.
 When a premise changes, retain the earlier comparison and identify the changed evidence and
-affected recommendation for the decision phase. Do not silently replace an accepted decision
-or require unrelated analysis to restart.
+affected recommendation for the decision phase. Reuse supplied option identifiers; update affected
+feasibility checks and comparisons, and say whether the recommendation changes or survives the new
+evidence. Preserve unaffected conclusions. Do not silently replace an accepted decision or require
+unrelated analysis to restart.

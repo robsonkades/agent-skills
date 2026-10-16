@@ -1,0 +1,37 @@
+{
+  "skill": "technical-debt-decisions",
+  "ownedPath": "skills/technical-debt-decisions",
+  "assignmentBaseline": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/baseline/technical-debt-decisions",
+  "headVersion": "1.1.4",
+  "assignmentVersion": "1.1.4",
+  "status": "",
+  "unstagedDiff": "",
+  "stagedDiff": "",
+  "files": [
+    {
+      "file": "SKILL.md",
+      "sha256": "361b9fd03f328866c30efca2840a5cc1547a0684bbf49368c9b2f144d208e384",
+      "assignmentBaselineSha256": "361b9fd03f328866c30efca2840a5cc1547a0684bbf49368c9b2f144d208e384",
+      "matchesAssignment": true
+    },
+    {
+      "file": "references/deciding.md",
+      "sha256": "f6d38b1cb880b5f4fc43c4784cb2552c057aab6bdc96646443a4c560aba75f86",
+      "assignmentBaselineSha256": "f6d38b1cb880b5f4fc43c4784cb2552c057aab6bdc96646443a4c560aba75f86",
+      "matchesAssignment": true
+    },
+    {
+      "file": "references/recording-and-repaying.md",
+      "sha256": "436fb10edbdbb38e7409d6f367fa86a0dd3b793f13ed53436a29835a89c3724e",
+      "assignmentBaselineSha256": "436fb10edbdbb38e7409d6f367fa86a0dd3b793f13ed53436a29835a89c3724e",
+      "matchesAssignment": true
+    },
+    {
+      "file": "skill.yaml",
+      "sha256": "d744ae3fbdcdabb096edf865d33f269095111e1c79298bd72bcc1f6a0f79a597",
+      "assignmentBaselineSha256": "d744ae3fbdcdabb096edf865d33f269095111e1c79298bd72bcc1f6a0f79a597",
+      "matchesAssignment": true
+    }
+  ]
+}
+

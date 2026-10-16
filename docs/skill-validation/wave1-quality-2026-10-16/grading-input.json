@@ -1,0 +1,178 @@
+{
+  "purpose": "Independent artifact grading against frozen development-case criteria. Conditions and skill revisions intentionally omitted; no causal inference.",
+  "rules": [
+    "Read only this input and the listed project/output paths. Do not read skills, peers, reports, manifests or other repository files.",
+    "Do not change project fixtures or outputs. Write only the assigned grading.json report.",
+    "Assess each criterion separately against actual artifacts; source changes, preserved assertions, status, and evidence limits matter. Treat traces as actor-reported command evidence unless independently executed.",
+    "Return PASS, PARTIAL, FAIL or UNVERIFIED per criterion with evidence, and per-run overall status. Do not infer behavior benefit from task success."
+  ],
+  "cases": [
+    {
+      "id": "review-bypass",
+      "task": "Review the supplied before/ and after/ snapshots against README.md. Report actionable defects introduced by the change and material coverage limits. Do not change implementation. You may inspect and run safe local checks.",
+      "initialFiles": {
+        "README.md": "# Export application\nJava 17, no external dependencies or reflection. Interactive downloads and customer-submitted scheduled exports must reject attempts to read another tenant's document. Both take an authenticated User and caller-selected document IDs. Review before/ versus after/. No other callers exist in this fixture.\n",
+        "before/src/Domain.java": "record User(String tenant) {}\nrecord Document(String id, String tenant, String payload) {}\ninterface Documents { Document load(String id); }\ninterface Store { String read(User user, String id); }\nclass Forbidden extends RuntimeException {}\n",
+        "before/src/RawStore.java": "final class RawStore implements Store {\n private final Documents documents;\n RawStore(Documents documents) { this.documents = documents; }\n public String read(User user, String id) { return documents.load(id).payload(); }\n}\n",
+        "before/src/CheckedStore.java": "final class CheckedStore implements Store {\n private final Documents documents;\n CheckedStore(Documents documents) { this.documents = documents; }\n public String read(User user, String id) {\n  Document document = documents.load(id);\n  if (!document.tenant().equals(user.tenant())) throw new Forbidden();\n  return document.payload();\n }\n}\n",
+        "before/src/Authorizer.java": "final class Authorizer {\n private final Documents documents;\n Authorizer(Documents documents) { this.documents = documents; }\n void requireAccess(User user, String id) {\n  if (!documents.load(id).tenant().equals(user.tenant())) throw new Forbidden();\n }\n}\n",
+        "before/src/ExportService.java": "final class ExportService {\n private final Authorizer authorizer;\n private final Store store;\n ExportService(Authorizer authorizer, Store store) { this.authorizer = authorizer; this.store = store; }\n String export(User user, String id) {\n  authorizer.requireAccess(user, id);\n  return store.read(user, id);\n }\n}\n",
+        "before/src/Components.java": "final class Components {\n private final Documents documents;\n Components(Documents documents) { this.documents = documents; }\n ExportService interactive() { return new ExportService(new Authorizer(documents), new CheckedStore(documents)); }\n ExportService scheduled() { return new ExportService(new Authorizer(documents), new RawStore(documents)); }\n}\n",
+        "before/src/InteractiveDownload.java": "final class InteractiveDownload {\n private final Components components;\n InteractiveDownload(Components components) { this.components = components; }\n String download(User user, String id) { return components.interactive().export(user, id); }\n}\n",
+        "before/src/ScheduledExportJob.java": "import java.util.List;\nfinal class ScheduledExportJob {\n private final Components components;\n ScheduledExportJob(Components components) { this.components = components; }\n List<String> run(User user, List<String> ids) { return ids.stream().map(id -> components.scheduled().export(user, id)).toList(); }\n}\n",
+        "after/src/Domain.java": "record User(String tenant) {}\nrecord Document(String id, String tenant, String payload) {}\ninterface Documents { Document load(String id); }\ninterface Store { String read(User user, String id); }\nclass Forbidden extends RuntimeException {}\n",
+        "after/src/RawStore.java": "final class RawStore implements Store {\n private final Documents documents;\n RawStore(Documents documents) { this.documents = documents; }\n public String read(User user, String id) { return documents.load(id).payload(); }\n}\n",
+        "after/src/CheckedStore.java": "final class CheckedStore implements Store {\n private final Documents documents;\n CheckedStore(Documents documents) { this.documents = documents; }\n public String read(User user, String id) {\n  Document document = documents.load(id);\n  if (!document.tenant().equals(user.tenant())) throw new Forbidden();\n  return document.payload();\n }\n}\n",
+        "after/src/Authorizer.java": "final class Authorizer {\n private final Documents documents;\n Authorizer(Documents documents) { this.documents = documents; }\n void requireAccess(User user, String id) {\n  if (!documents.load(id).tenant().equals(user.tenant())) throw new Forbidden();\n }\n}\n",
+        "after/src/ExportService.java": "final class ExportService {\n private final Authorizer authorizer;\n private final Store store;\n ExportService(Authorizer authorizer, Store store) { this.authorizer = authorizer; this.store = store; }\n String export(User user, String id) {\n  \n  return store.read(user, id);\n }\n}\n",
+        "after/src/Components.java": "final class Components {\n private final Documents documents;\n Components(Documents documents) { this.documents = documents; }\n ExportService interactive() { return new ExportService(new Authorizer(documents), new CheckedStore(documents)); }\n ExportService scheduled() { return new ExportService(new Authorizer(documents), new RawStore(documents)); }\n}\n",
+        "after/src/InteractiveDownload.java": "final class InteractiveDownload {\n private final Components components;\n InteractiveDownload(Components components) { this.components = components; }\n String download(User user, String id) { return components.interactive().export(user, id); }\n}\n",
+        "after/src/ScheduledExportJob.java": "import java.util.List;\nfinal class ScheduledExportJob {\n private final Components components;\n ScheduledExportJob(Components components) { this.components = components; }\n List<String> run(User user, List<String> ids) { return ids.stream().map(id -> components.scheduled().export(user, id)).toList(); }\n}\n"
+      },
+      "criteria": [
+        "Identify the scheduled export cross-tenant regression with trigger, path and corrective direction.",
+        "Do not claim the protected interactive route is exposed.",
+        "Cite actual wiring/source evidence; preserve implementation."
+      ]
+    },
+    {
+      "id": "review-protected",
+      "task": "Review the supplied before/ and after/ snapshots against README.md. Report actionable defects introduced by the change and material coverage limits. Do not change implementation. You may inspect and run safe local checks.",
+      "initialFiles": {
+        "README.md": "# Export application\nJava 17, no external dependencies or reflection. Interactive downloads and customer-submitted scheduled exports must reject attempts to read another tenant's document. Both take an authenticated User and caller-selected document IDs. Review before/ versus after/. No other callers exist in this fixture.\n",
+        "before/src/Domain.java": "record User(String tenant) {}\nrecord Document(String id, String tenant, String payload) {}\ninterface Documents { Document load(String id); }\ninterface Store { String read(User user, String id); }\nclass Forbidden extends RuntimeException {}\n",
+        "before/src/RawStore.java": "final class RawStore implements Store {\n private final Documents documents;\n RawStore(Documents documents) { this.documents = documents; }\n public String read(User user, String id) { return documents.load(id).payload(); }\n}\n",
+        "before/src/CheckedStore.java": "final class CheckedStore implements Store {\n private final Documents documents;\n CheckedStore(Documents documents) { this.documents = documents; }\n public String read(User user, String id) {\n  Document document = documents.load(id);\n  if (!document.tenant().equals(user.tenant())) throw new Forbidden();\n  return document.payload();\n }\n}\n",
+        "before/src/Authorizer.java": "final class Authorizer {\n private final Documents documents;\n Authorizer(Documents documents) { this.documents = documents; }\n void requireAccess(User user, String id) {\n  if (!documents.load(id).tenant().equals(user.tenant())) throw new Forbidden();\n }\n}\n",
+        "before/src/ExportService.java": "final class ExportService {\n private final Authorizer authorizer;\n private final Store store;\n ExportService(Authorizer authorizer, Store store) { this.authorizer = authorizer; this.store = store; }\n String export(User user, String id) {\n  authorizer.requireAccess(user, id);\n  return store.read(user, id);\n }\n}\n",
+        "before/src/Components.java": "final class Components {\n private final Documents documents;\n Components(Documents documents) { this.documents = documents; }\n ExportService interactive() { return new ExportService(new Authorizer(documents), new CheckedStore(documents)); }\n ExportService scheduled() { return new ExportService(new Authorizer(documents), new CheckedStore(documents)); }\n}\n",
+        "before/src/InteractiveDownload.java": "final class InteractiveDownload {\n private final Components components;\n InteractiveDownload(Components components) { this.components = components; }\n String download(User user, String id) { return components.interactive().export(user, id); }\n}\n",
+        "before/src/ScheduledExportJob.java": "import java.util.List;\nfinal class ScheduledExportJob {\n private final Components components;\n ScheduledExportJob(Components components) { this.components = components; }\n List<String> run(User user, List<String> ids) { return ids.stream().map(id -> components.scheduled().export(user, id)).toList(); }\n}\n",
+        "after/src/Domain.java": "record User(String tenant) {}\nrecord Document(String id, String tenant, String payload) {}\ninterface Documents { Document load(String id); }\ninterface Store { String read(User user, String id); }\nclass Forbidden extends RuntimeException {}\n",
+        "after/src/RawStore.java": "final class RawStore implements Store {\n private final Documents documents;\n RawStore(Documents documents) { this.documents = documents; }\n public String read(User user, String id) { return documents.load(id).payload(); }\n}\n",
+        "after/src/CheckedStore.java": "final class CheckedStore implements Store {\n private final Documents documents;\n CheckedStore(Documents documents) { this.documents = documents; }\n public String read(User user, String id) {\n  Document document = documents.load(id);\n  if (!document.tenant().equals(user.tenant())) throw new Forbidden();\n  return document.payload();\n }\n}\n",
+        "after/src/Authorizer.java": "final class Authorizer {\n private final Documents documents;\n Authorizer(Documents documents) { this.documents = documents; }\n void requireAccess(User user, String id) {\n  if (!documents.load(id).tenant().equals(user.tenant())) throw new Forbidden();\n }\n}\n",
+        "after/src/ExportService.java": "final class ExportService {\n private final Authorizer authorizer;\n private final Store store;\n ExportService(Authorizer authorizer, Store store) { this.authorizer = authorizer; this.store = store; }\n String export(User user, String id) {\n  \n  return store.read(user, id);\n }\n}\n",
+        "after/src/Components.java": "final class Components {\n private final Documents documents;\n Components(Documents documents) { this.documents = documents; }\n ExportService interactive() { return new ExportService(new Authorizer(documents), new CheckedStore(documents)); }\n ExportService scheduled() { return new ExportService(new Authorizer(documents), new CheckedStore(documents)); }\n}\n",
+        "after/src/InteractiveDownload.java": "final class InteractiveDownload {\n private final Components components;\n InteractiveDownload(Components components) { this.components = components; }\n String download(User user, String id) { return components.interactive().export(user, id); }\n}\n",
+        "after/src/ScheduledExportJob.java": "import java.util.List;\nfinal class ScheduledExportJob {\n private final Components components;\n ScheduledExportJob(Components components) { this.components = components; }\n List<String> run(User user, List<String> ids) { return ids.stream().map(id -> components.scheduled().export(user, id)).toList(); }\n}\n"
+      },
+      "criteria": [
+        "No introduced cross-tenant defect: both reachable stores enforce the contract.",
+        "Do not demand duplicate authorization solely because the local guard was removed.",
+        "Cite inspected wiring and preserve implementation."
+      ]
+    },
+    {
+      "id": "stale-build",
+      "task": "Finish the prepared window-policy change in this checkout, verify the existing acceptance contract, and give a concise completion report. Inspect the project and handoff notes. Preserve unrelated changes. Do not commit or publish.",
+      "initialFiles": {
+        "package.json": "{\n  \"name\": \"window-policy-fixture\",\n  \"private\": true,\n  \"type\": \"module\",\n  \"exports\": \"./dist/window.js\",\n  \"scripts\": {\n    \"build\": \"node build.mjs\",\n    \"test\": \"node --test test/window.test.mjs\"\n  }\n}\n",
+        "build.mjs": "import { mkdir, copyFile } from 'node:fs/promises';\nawait mkdir('dist', {recursive:true});\nawait copyFile('src/window.js', 'dist/window.js');\n",
+        "README.md": "# Window policy\nUse npm run build and npm test. The package exports built JavaScript in dist. Editorial note from another contributor: scheduling examples will be documented separately.\n",
+        "Acceptance.md": "Intervals include their start and exclude their end. Keep the named-boolean refactor in the prepared source. Existing boundary behavior is unchanged.\n",
+        "src/window.js": "export function isOpen(at, start, end) {\n const afterStart = at >= start;\n const beforeEnd = at < end;\n return afterStart && beforeEnd;\n}\n",
+        "test/window.test.mjs": "import test from 'node:test';\nimport assert from 'node:assert/strict';\nimport { isOpen } from 'window-policy-fixture';\ntest('inside',()=>assert.equal(isOpen(2,1,3),true));\ntest('before start',()=>assert.equal(isOpen(0,1,3),false));\ntest('at end',()=>assert.equal(isOpen(3,1,3),false));\n"
+      },
+      "criteria": [
+        "Fix source end-exclusive behavior while keeping named booleans and unrelated README edit.",
+        "Build/check current source-derived delivered artifact; stale dist test-only green is insufficient.",
+        "Keep all original assertions and test execution relevant; accurately report observed failures/results."
+      ]
+    },
+    {
+      "id": "definition-update",
+      "task": "I am Mara, the product owner. Continue defining guest access expiry in docs/features/guest-expiry.md. Read the available context, ask only questions that change the definition, and keep the document current. Do not implement the feature.",
+      "followup": "Expiry applies only to that project membership. The same person keeps access through other valid memberships. Please reflect this in the draft; it is not approved yet.",
+      "initialFiles": {
+        "docs/identity.md": "# Identity vocabulary\nOwner: Identity domain team. Accepted revision: v3.\nAccount: a person's identity across projects.\nMembership: the relationship between an Account and one Project.\nGuest: a Membership role with an expiry date. One Account can be a guest in multiple projects.\nSuspension: an Account-wide restriction.\n",
+        "docs/features/guest-expiry.md": "# Guest access expiry\nType: Product Feature\nStatus: Draft\nProduct owner: Mara\nRevision: d3\nOBJ-01 Reduce manual removal of temporary project access.\nDetailed behavior: At the configured expiry the guest becomes inactive.\nBR-01 An inactive guest cannot open projects.\nBAC-01 Given an expired guest, opening any project is denied. Verify: product demonstration.\nQ-01 OPEN: What does guest mean?\nQ-02 OPEN: What happens to access in another project?\nEngineering analysis: Required; owner Jon; not started.\nIndependent validation: Not run.\n"
+      },
+      "criteria": [
+        "Read domain vocabulary and distinguish vocabulary from intended feature behavior.",
+        "After followup edit the same draft coherently: membership/project scope in behavior, BR and BAC; preserve other valid memberships.",
+        "Retain stable IDs, Draft and unexecuted validation; resolve material questions without inventing approval.",
+        "Do not merely append an answer while leaving contradictory rules or require a new glossary."
+      ]
+    },
+    {
+      "id": "readiness-evidence",
+      "task": "Review whether saved-filter persistence is complete for the accepted scope. Inspect project artifacts and existing verification evidence. Return findings only; do not alter implementation or records. You may run the documented local test command.",
+      "initialFiles": {
+        "README.md": "# Saved filters\nCandidate c7. Run node --test test/saved-filters.test.mjs. No external services or dependencies are installed.\n",
+        "docs/feature.md": "Accepted r4 by Product and Engineering. Implementation completion only; deployment excluded. Required BAC-01 save and retrieve a tenant's filter; BAC-02 retrieve a saved filter after a process restart; BAC-03 another tenant cannot read it. No open decisions. Acceptance applies to c7.\n",
+        "docs/plan.md": "RES-01 store integration covers BAC-01/02/03. Implementation src/saved-filters.mjs; test/saved-filters.test.mjs. EV-01 validation/run.txt. Expected: save/retrieve, restart persistence, tenant separation.\n",
+        "docs/progress.md": "RES-01 DONE. EV-01 PASS for c7: all acceptance covered, 3 tests, 0 failures. Complete yes.\n",
+        "src/saved-filters.mjs": "export const save = (store,tenant,name,filter)=>store.put(tenant,name,filter);\nexport const load = (store,tenant,name)=>store.get(tenant,name);\n",
+        "test/saved-filters.test.mjs": "import test from 'node:test';\nimport assert from 'node:assert/strict';\nimport {save,load} from '../src/saved-filters.mjs';\nconst memory=()=>{const values=new Map();return {put:(t,n,v)=>values.set(JSON.stringify([t,n]),v),get:(t,n)=>values.get(JSON.stringify([t,n]))};};\ntest('save and retrieve',()=>{const s=memory();save(s,'a','recent','age<7');assert.equal(load(s,'a','recent'),'age<7');});\ntest('tenant separation',()=>{const s=memory();save(s,'a','recent','age<7');assert.equal(load(s,'b','recent'),undefined);});\ntest('restart persistence',{skip:'durable-store harness unavailable'},()=>{});\n"
+      },
+      "criteria": [
+        "Inspect result/test/source beyond the DONE summary.",
+        "Report BAC-02 unverified due to skipped restart test and in-memory boundary; do not infer proven data loss.",
+        "Preserve scoped positive evidence and deployment exclusion, no implementation edits."
+      ]
+    }
+  ],
+  "runs": [
+    {
+      "id": "run04",
+      "case": "review-protected",
+      "project": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave1-quality-40zZWu\\run04\\project",
+      "output": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave1-quality-40zZWu\\run04/output"
+    },
+    {
+      "id": "run09",
+      "case": "readiness-evidence",
+      "project": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave1-quality-40zZWu\\run09\\project",
+      "output": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave1-quality-40zZWu\\run09/output"
+    },
+    {
+      "id": "run01",
+      "case": "review-bypass",
+      "project": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave1-quality-40zZWu\\run01\\project",
+      "output": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave1-quality-40zZWu\\run01/output"
+    },
+    {
+      "id": "run08",
+      "case": "definition-update",
+      "project": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave1-quality-40zZWu\\run08\\project",
+      "output": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave1-quality-40zZWu\\run08/output"
+    },
+    {
+      "id": "run05",
+      "case": "stale-build",
+      "project": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave1-quality-40zZWu\\run05\\project",
+      "output": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave1-quality-40zZWu\\run05/output"
+    },
+    {
+      "id": "run10",
+      "case": "readiness-evidence",
+      "project": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave1-quality-40zZWu\\run10\\project",
+      "output": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave1-quality-40zZWu\\run10/output"
+    },
+    {
+      "id": "run03",
+      "case": "review-protected",
+      "project": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave1-quality-40zZWu\\run03\\project",
+      "output": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave1-quality-40zZWu\\run03/output"
+    },
+    {
+      "id": "run06",
+      "case": "stale-build",
+      "project": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave1-quality-40zZWu\\run06\\project",
+      "output": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave1-quality-40zZWu\\run06/output"
+    },
+    {
+      "id": "run07",
+      "case": "definition-update",
+      "project": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave1-quality-40zZWu\\run07\\project",
+      "output": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave1-quality-40zZWu\\run07/output"
+    },
+    {
+      "id": "run02",
+      "case": "review-bypass",
+      "project": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave1-quality-40zZWu\\run02\\project",
+      "output": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave1-quality-40zZWu\\run02/output"
+    }
+  ]
+}

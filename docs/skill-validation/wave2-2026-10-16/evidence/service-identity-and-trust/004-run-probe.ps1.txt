@@ -1,0 +1,49 @@
+$ErrorActionPreference = 'Stop'
+$fixtureDirectory = Join-Path $PSScriptRoot 'fixtures'
+$fixturePassword = 'synthetic-test-only'
+function Invoke-FixtureKeytool {
+    param([string[]]$Arguments)
+    & keytool @Arguments
+    if ($LASTEXITCODE -ne 0) { throw "Fixture keytool failed: $LASTEXITCODE" }
+}
+if (-not (Test-Path -LiteralPath (Join-Path $fixtureDirectory 'complete.txt'))) {
+    if (Test-Path -LiteralPath $fixtureDirectory) { throw 'Partial fixture artifacts exist; preserve them and use a fresh isolated fixture directory.' }
+    New-Item -ItemType Directory -Path $fixtureDirectory | Out-Null
+    $certificates = @(
+        @{ Name='server'; Subject='CN=localhost'; Extensions=@('-ext','SAN=dns:localhost','-ext','EKU=serverAuth') },
+        @{ Name='registered-a'; Subject='CN=payments'; Extensions=@('-ext','EKU=clientAuth') },
+        @{ Name='lookalike-b'; Subject='CN=payments'; Extensions=@('-ext','EKU=clientAuth') },
+        @{ Name='fixture-ca'; Subject='CN=Fixture CA'; Extensions=@('-ext','BC=ca:true','-ext','KU=keyCertSign,cRLSign') },
+        @{ Name='pki-client'; Subject='CN=payments'; Extensions=@('-ext','EKU=clientAuth') }
+    )
+    foreach ($certificate in $certificates) {
+        $arguments = @('-genkeypair','-alias',$certificate.Name,'-dname',$certificate.Subject,
+            '-keyalg','RSA','-keysize','2048','-validity','2','-storetype','PKCS12',
+            '-keystore',(Join-Path $fixtureDirectory ($certificate.Name + '.p12')),
+            '-storepass',$fixturePassword,'-keypass',$fixturePassword,'-noprompt') + $certificate.Extensions
+        Invoke-FixtureKeytool -Arguments $arguments
+    }
+    foreach ($certificateName in @('server','registered-a','lookalike-b','fixture-ca')) {
+        Invoke-FixtureKeytool -Arguments @('-exportcert','-rfc','-alias',$certificateName,
+            '-keystore',(Join-Path $fixtureDirectory ($certificateName + '.p12')),
+            '-storepass',$fixturePassword,'-file',(Join-Path $fixtureDirectory ($certificateName + '.pem')))
+    }
+    Invoke-FixtureKeytool -Arguments @('-certreq','-alias','pki-client',
+        '-keystore',(Join-Path $fixtureDirectory 'pki-client.p12'),'-storepass',$fixturePassword,
+        '-file',(Join-Path $fixtureDirectory 'pki-client.csr'))
+    Invoke-FixtureKeytool -Arguments @('-gencert','-alias','fixture-ca',
+        '-keystore',(Join-Path $fixtureDirectory 'fixture-ca.p12'),'-storepass',$fixturePassword,
+        '-infile',(Join-Path $fixtureDirectory 'pki-client.csr'),
+        '-outfile',(Join-Path $fixtureDirectory 'pki-issued.pem'),'-rfc','-validity','2',
+        '-ext','EKU=clientAuth','-ext','KU=digitalSignature')
+    Invoke-FixtureKeytool -Arguments @('-importcert','-alias','fixture-ca',
+        '-keystore',(Join-Path $fixtureDirectory 'pki-client.p12'),'-storepass',$fixturePassword,
+        '-file',(Join-Path $fixtureDirectory 'fixture-ca.pem'),'-noprompt')
+    Invoke-FixtureKeytool -Arguments @('-importcert','-alias','pki-client',
+        '-keystore',(Join-Path $fixtureDirectory 'pki-client.p12'),'-storepass',$fixturePassword,
+        '-file',(Join-Path $fixtureDirectory 'pki-issued.pem'),'-noprompt')
+    'Synthetic localhost fixture generation completed.' | Set-Content -LiteralPath (Join-Path $fixtureDirectory 'complete.txt')
+}
+& node (Join-Path $PSScriptRoot 'certificate-profile-probe.mjs') $fixtureDirectory
+if ($LASTEXITCODE -ne 0) { throw "Certificate-profile probe failed: $LASTEXITCODE" }
+

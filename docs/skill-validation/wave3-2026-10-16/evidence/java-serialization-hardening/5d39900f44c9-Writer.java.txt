@@ -1,0 +1,15 @@
+import fixture.*;
+import java.io.*;
+import java.nio.file.*;
+public final class Writer {
+    public static void main(String[] args) throws Exception {
+        Path output = Path.of(args[0]);
+        for (int value : new int[] {0, 5, 10, -1, 11}) write(output.resolve("value-" + value + ".ser"), new RetryPolicy(value));
+        write(output.resolve("denied.ser"), new DeniedPayload());
+        write(output.resolve("null.ser"), null);
+        System.out.println("Wrote seven bounded synthetic streams, including invalid scalar and denied-hook controls");
+    }
+    private static void write(Path path, Object value) throws Exception {
+        try (ObjectOutputStream out = new ObjectOutputStream(Files.newOutputStream(path))) { out.writeObject(value); }
+    }
+}

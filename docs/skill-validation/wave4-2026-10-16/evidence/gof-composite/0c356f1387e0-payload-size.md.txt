@@ -1,0 +1,5 @@
+# Payload bytes
+
+The report describes the payload of entry objects loaded in the catalog. A loaded entry object contributes once, even when several paths refer to it. Separately loaded entry objects contribute independently even if their names and contents are equal.
+
+Leaf bytes are exact nonnegative payload sizes. Totals beyond long must fail. This is a payload accounting figure, not a measurement of JVM object overhead, latency or deduplicated storage.

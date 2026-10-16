@@ -1,0 +1,309 @@
+
+Test run finished after 368 ms
+[         3 containers found      ]
+[         0 containers skipped    ]
+[         3 containers started    ]
+[         0 containers aborted    ]
+[         3 containers successful ]
+[         0 containers failed     ]
+[        21 tests found           ]
+[         0 tests skipped         ]
+[        21 tests started         ]
+[         0 tests aborted         ]
+[         0 tests successful      ]
+[        21 tests failed          ]
+
+
+Failures (21):
+  JUnit Jupiter:AccountTest:affordableWithdrawalSucceedsDespiteContention()
+    MethodSource [className = 'AccountTest', methodName = 'affordableWithdrawalSucceedsDespiteContention', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: the successful withdrawal must subtract exactly once ==> expected: <70> but was: <71>
+       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+       org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:563)
+       AccountTest.affordableWithdrawalSucceedsDespiteContention(AccountTest.java:102)
+       java.base/java.lang.reflect.Method.invoke(Method.java:565)
+       java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+       java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+  JUnit Jupiter:AccountTest:balanceConservesSuccessfulWithdrawalsAfterWorkersFinish():repetition 1 of 20
+    MethodSource [className = 'AccountTest', methodName = 'balanceConservesSuccessfulWithdrawalsAfterWorkersFinish', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: expected: <-1110> but was: <1>
+       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+       org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+       AccountTest.balanceConservesSuccessfulWithdrawalsAfterWorkersFinish(AccountTest.java:44)
+       java.base/java.lang.reflect.Method.invoke(Method.java:565)
+       java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+       java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+       [...]
+  JUnit Jupiter:AccountTest:balanceConservesSuccessfulWithdrawalsAfterWorkersFinish():repetition 2 of 20
+    MethodSource [className = 'AccountTest', methodName = 'balanceConservesSuccessfulWithdrawalsAfterWorkersFinish', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: expected: <-1110> but was: <1>
+       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+       org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+       AccountTest.balanceConservesSuccessfulWithdrawalsAfterWorkersFinish(AccountTest.java:44)
+       java.base/java.lang.reflect.Method.invoke(Method.java:565)
+       java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+       java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+       [...]
+  JUnit Jupiter:AccountTest:balanceConservesSuccessfulWithdrawalsAfterWorkersFinish():repetition 3 of 20
+    MethodSource [className = 'AccountTest', methodName = 'balanceConservesSuccessfulWithdrawalsAfterWorkersFinish', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: expected: <-1110> but was: <1>
+       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+       org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+       AccountTest.balanceConservesSuccessfulWithdrawalsAfterWorkersFinish(AccountTest.java:44)
+       java.base/java.lang.reflect.Method.invoke(Method.java:565)
+       java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+       java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+       [...]
+  JUnit Jupiter:AccountTest:balanceConservesSuccessfulWithdrawalsAfterWorkersFinish():repetition 4 of 20
+    MethodSource [className = 'AccountTest', methodName = 'balanceConservesSuccessfulWithdrawalsAfterWorkersFinish', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: expected: <-1110> but was: <1>
+       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+       org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+       AccountTest.balanceConservesSuccessfulWithdrawalsAfterWorkersFinish(AccountTest.java:44)
+       java.base/java.lang.reflect.Method.invoke(Method.java:565)
+       java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+       java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+       [...]
+  JUnit Jupiter:AccountTest:balanceConservesSuccessfulWithdrawalsAfterWorkersFinish():repetition 5 of 20
+    MethodSource [className = 'AccountTest', methodName = 'balanceConservesSuccessfulWithdrawalsAfterWorkersFinish', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: expected: <-1110> but was: <1>
+       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+       org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+       AccountTest.balanceConservesSuccessfulWithdrawalsAfterWorkersFinish(AccountTest.java:44)
+       java.base/java.lang.reflect.Method.invoke(Method.java:565)
+       java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+       java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+       [...]
+  JUnit Jupiter:AccountTest:balanceConservesSuccessfulWithdrawalsAfterWorkersFinish():repetition 6 of 20
+    MethodSource [className = 'AccountTest', methodName = 'balanceConservesSuccessfulWithdrawalsAfterWorkersFinish', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: expected: <-1110> but was: <1>
+       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+       org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+       AccountTest.balanceConservesSuccessfulWithdrawalsAfterWorkersFinish(AccountTest.java:44)
+       java.base/java.lang.reflect.Method.invoke(Method.java:565)
+       java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+       java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+       [...]
+  JUnit Jupiter:AccountTest:balanceConservesSuccessfulWithdrawalsAfterWorkersFinish():repetition 7 of 20
+    MethodSource [className = 'AccountTest', methodName = 'balanceConservesSuccessfulWithdrawalsAfterWorkersFinish', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: expected: <-1110> but was: <1>
+       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+       org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+       AccountTest.balanceConservesSuccessfulWithdrawalsAfterWorkersFinish(AccountTest.java:44)
+       java.base/java.lang.reflect.Method.invoke(Method.java:565)
+       java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+       java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+       [...]
+  JUnit Jupiter:AccountTest:balanceConservesSuccessfulWithdrawalsAfterWorkersFinish():repetition 8 of 20
+    MethodSource [className = 'AccountTest', methodName = 'balanceConservesSuccessfulWithdrawalsAfterWorkersFinish', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: expected: <-1110> but was: <1>
+       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+       org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+       AccountTest.balanceConservesSuccessfulWithdrawalsAfterWorkersFinish(AccountTest.java:44)
+       java.base/java.lang.reflect.Method.invoke(Method.java:565)
+       java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+       java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+       [...]
+  JUnit Jupiter:AccountTest:balanceConservesSuccessfulWithdrawalsAfterWorkersFinish():repetition 9 of 20
+    MethodSource [className = 'AccountTest', methodName = 'balanceConservesSuccessfulWithdrawalsAfterWorkersFinish', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: expected: <-1110> but was: <1>
+       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+       org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+       AccountTest.balanceConservesSuccessfulWithdrawalsAfterWorkersFinish(AccountTest.java:44)
+       java.base/java.lang.reflect.Method.invoke(Method.java:565)
+       java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+       java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+       [...]
+  JUnit Jupiter:AccountTest:balanceConservesSuccessfulWithdrawalsAfterWorkersFinish():repetition 10 of 20
+    MethodSource [className = 'AccountTest', methodName = 'balanceConservesSuccessfulWithdrawalsAfterWorkersFinish', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: expected: <-1110> but was: <1>
+       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+       org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+       AccountTest.balanceConservesSuccessfulWithdrawalsAfterWorkersFinish(AccountTest.java:44)
+       java.base/java.lang.reflect.Method.invoke(Method.java:565)
+       java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+       java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+       [...]
+  JUnit Jupiter:AccountTest:balanceConservesSuccessfulWithdrawalsAfterWorkersFinish():repetition 11 of 20
+    MethodSource [className = 'AccountTest', methodName = 'balanceConservesSuccessfulWithdrawalsAfterWorkersFinish', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: expected: <-1110> but was: <1>
+       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+       org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+       AccountTest.balanceConservesSuccessfulWithdrawalsAfterWorkersFinish(AccountTest.java:44)
+       java.base/java.lang.reflect.Method.invoke(Method.java:565)
+       java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+       java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+       [...]
+  JUnit Jupiter:AccountTest:balanceConservesSuccessfulWithdrawalsAfterWorkersFinish():repetition 12 of 20
+    MethodSource [className = 'AccountTest', methodName = 'balanceConservesSuccessfulWithdrawalsAfterWorkersFinish', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: expected: <-1110> but was: <1>
+       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+       org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+       AccountTest.balanceConservesSuccessfulWithdrawalsAfterWorkersFinish(AccountTest.java:44)
+       java.base/java.lang.reflect.Method.invoke(Method.java:565)
+       java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+       java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+       [...]
+  JUnit Jupiter:AccountTest:balanceConservesSuccessfulWithdrawalsAfterWorkersFinish():repetition 13 of 20
+    MethodSource [className = 'AccountTest', methodName = 'balanceConservesSuccessfulWithdrawalsAfterWorkersFinish', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: expected: <-1110> but was: <1>
+       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+       org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+       AccountTest.balanceConservesSuccessfulWithdrawalsAfterWorkersFinish(AccountTest.java:44)
+       java.base/java.lang.reflect.Method.invoke(Method.java:565)
+       java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+       java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+       [...]
+  JUnit Jupiter:AccountTest:balanceConservesSuccessfulWithdrawalsAfterWorkersFinish():repetition 14 of 20
+    MethodSource [className = 'AccountTest', methodName = 'balanceConservesSuccessfulWithdrawalsAfterWorkersFinish', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: expected: <-1110> but was: <1>
+       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+       org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+       AccountTest.balanceConservesSuccessfulWithdrawalsAfterWorkersFinish(AccountTest.java:44)
+       java.base/java.lang.reflect.Method.invoke(Method.java:565)
+       java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+       java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+       [...]
+  JUnit Jupiter:AccountTest:balanceConservesSuccessfulWithdrawalsAfterWorkersFinish():repetition 15 of 20
+    MethodSource [className = 'AccountTest', methodName = 'balanceConservesSuccessfulWithdrawalsAfterWorkersFinish', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: expected: <-1110> but was: <1>
+       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+       org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+       AccountTest.balanceConservesSuccessfulWithdrawalsAfterWorkersFinish(AccountTest.java:44)
+       java.base/java.lang.reflect.Method.invoke(Method.java:565)
+       java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+       java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+       [...]
+  JUnit Jupiter:AccountTest:balanceConservesSuccessfulWithdrawalsAfterWorkersFinish():repetition 16 of 20
+    MethodSource [className = 'AccountTest', methodName = 'balanceConservesSuccessfulWithdrawalsAfterWorkersFinish', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: expected: <-1110> but was: <1>
+       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+       org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+       AccountTest.balanceConservesSuccessfulWithdrawalsAfterWorkersFinish(AccountTest.java:44)
+       java.base/java.lang.reflect.Method.invoke(Method.java:565)
+       java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+       java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+       [...]
+  JUnit Jupiter:AccountTest:balanceConservesSuccessfulWithdrawalsAfterWorkersFinish():repetition 17 of 20
+    MethodSource [className = 'AccountTest', methodName = 'balanceConservesSuccessfulWithdrawalsAfterWorkersFinish', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: expected: <-1110> but was: <1>
+       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+       org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+       AccountTest.balanceConservesSuccessfulWithdrawalsAfterWorkersFinish(AccountTest.java:44)
+       java.base/java.lang.reflect.Method.invoke(Method.java:565)
+       java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+       java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+       [...]
+  JUnit Jupiter:AccountTest:balanceConservesSuccessfulWithdrawalsAfterWorkersFinish():repetition 18 of 20
+    MethodSource [className = 'AccountTest', methodName = 'balanceConservesSuccessfulWithdrawalsAfterWorkersFinish', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: expected: <-1110> but was: <1>
+       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+       org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+       AccountTest.balanceConservesSuccessfulWithdrawalsAfterWorkersFinish(AccountTest.java:44)
+       java.base/java.lang.reflect.Method.invoke(Method.java:565)
+       java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+       java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+       [...]
+  JUnit Jupiter:AccountTest:balanceConservesSuccessfulWithdrawalsAfterWorkersFinish():repetition 19 of 20
+    MethodSource [className = 'AccountTest', methodName = 'balanceConservesSuccessfulWithdrawalsAfterWorkersFinish', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: expected: <-1110> but was: <1>
+       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+       org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+       AccountTest.balanceConservesSuccessfulWithdrawalsAfterWorkersFinish(AccountTest.java:44)
+       java.base/java.lang.reflect.Method.invoke(Method.java:565)
+       java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+       java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+       [...]
+  JUnit Jupiter:AccountTest:balanceConservesSuccessfulWithdrawalsAfterWorkersFinish():repetition 20 of 20
+    MethodSource [className = 'AccountTest', methodName = 'balanceConservesSuccessfulWithdrawalsAfterWorkersFinish', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: expected: <-1110> but was: <1>
+       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+       org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+       AccountTest.balanceConservesSuccessfulWithdrawalsAfterWorkersFinish(AccountTest.java:44)
+       java.base/java.lang.reflect.Method.invoke(Method.java:565)
+       java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+       java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+       [...]

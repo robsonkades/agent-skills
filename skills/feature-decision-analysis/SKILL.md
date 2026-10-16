@@ -33,7 +33,8 @@ prevent documenting a proposal or continuing independent work.
    entry. Do not inventory every naming alternative; the categories are below.
 2. **Assign provenance** from the four classes. This is a question of fact and it is checkable.
    Read [provenance and authority](references/provenance-and-authority.md) when establishing
-   sources, resolving conflicting claims, or reconstructing a historical decision.
+   sources, resolving conflicting claims, reconstructing history, reusing an earlier decision,
+   or preparing a record for another session.
 3. **Assign accountable authority** from the consequence: Product, Engineering, Architecture,
    Security, Data, Operations, Compliance, Finance, or another named role. Participation is not
    approval.
@@ -93,7 +94,8 @@ naming, private structure, file placement within an established convention, or s
 Explicit task authorization can delegate broader implementation choices; record its scope rather
 than inventing an additional approver or treating role labels as proof of authority.
 
-Everything else names the role authorised for its consequence. Product owns behavior and value;
+Everything else names the role authorised for its consequence in the project's responsibility model.
+The following roles are examples, not a required approval chain: Product owns behavior and value;
 Engineering/Architecture own solution and system boundaries; Security/Privacy/Compliance own their
 obligations; Data owns shared semantics/retention where established; Operations owns support/SLO
 commitments; Finance owns material spend. One person may hold several roles, but the record names the
@@ -120,7 +122,8 @@ THEN check whether existing authorization covers that consequence; do not infer 
      from its being a small code change or a configurable number.
 
 IF a decision is taken under time pressure or with a known unknown
-THEN record the unknown alongside it, so the decision is re-openable when it closes.
+THEN record the unknown, the observable evidence or event that would change the choice,
+     who will check it and which commitment it affects. A review date alone does not prove failure.
 
 IF implementation reveals the decision was wrong
 THEN identify the invalidated premise and supported replacement, supersede with links and update
@@ -163,7 +166,8 @@ The examples below are illustrative, not claims about the current repository:
 ```text
 ED-04 Dispatch events are published to the existing Kafka cluster
       Category:    messaging
-      Provenance:  USER_MANDATED  (round 2: "reuse the cluster we already run")
+      Provenance:  USER_MANDATED — "reuse the cluster we already run"; attributed source
+                   retained in ADR-002, Context, 2026-09-03
       Owner:       Architecture — accepted 2026-09-03
       Status:      ACCEPTED; authority/acceptance linked in ADR-002
       Consulted:   Product, Operations
@@ -189,9 +193,18 @@ vocabulary. Keep unknown historical provenance
 explicit without discarding independently evidenced acceptance or its scope. An unsupported outcome
 remains pending; never invent a mandate or relabel someone else's choice as yours.
 
-Before handoff, check IDs, source/revision links, authority and status consistency. Decision acceptance
-and implementation verification are separate: an authorized choice is not proof that it works, and a
-passing test does not supply approval. Material feasibility gaps keep dependent commitment blocked
+For a consequential choice with discretion, retain the option analysis's decisive constraint,
+strongest viable alternative (including retaining the current approach when viable), separating
+evidence and accepted disadvantage. Link that analysis rather than duplicating it. A mandate fixes
+only its stated choice; record remaining discretion separately. Do not fabricate rejected options
+or historical rationale to complete a record; missing analysis is a named gap, not lost acceptance.
+
+Before handoff, open material source/revision links and compare the recorded commitment with its
+source, including scope, limits and exclusions; a valid link alone does not establish faithful
+meaning. Preserve a recoverable source for conversation-only decisions as described in the reference.
+Check IDs, authority and status consistency. Decision acceptance and implementation verification
+are separate: an authorized choice is not proof that it works, and a passing test does not supply
+approval. Material feasibility gaps keep dependent commitment blocked
 unless valid accepted-gap authority covers it. Report the missing evidence, next check and affected
 work; record observed validation separately from planned checks.
 

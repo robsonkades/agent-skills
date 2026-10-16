@@ -1,0 +1,11 @@
+import java.nio.file.Path;
+
+public final class SmokeTest {
+    public static void main(String[] args) throws Exception {
+        try (ApplicationBinding binding = new ApplicationBinding(Path.of("binding.properties"))) {
+            int result = new BoundImportJob(binding).run("row", rows -> {});
+            if (result != 3) throw new AssertionError("Unexpected row count");
+            System.out.println("PASS one configured import");
+        }
+    }
+}

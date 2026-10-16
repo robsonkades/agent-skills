@@ -1,0 +1,257 @@
+{
+  "skill": "ambassador-pattern",
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "ownedPath": "skills/ambassador-pattern/**",
+  "allWritesStopped": true,
+  "versions": {
+    "committed": "1.3.4",
+    "assignment": "1.3.4",
+    "final": "1.3.5",
+    "preExistingBump": false,
+    "rationale": "One patch for an additive, supported protocol-compatibility decision rule. No unrelated metadata change or further increments."
+  },
+  "baseline": {
+    "staged": [],
+    "unstaged": [],
+    "untracked": [],
+    "committedManifest": "git show HEAD:skills/ambassador-pattern/skill.yaml",
+    "sha256": {
+      "SKILL.md": "B343DA8E71CC065CE50EDF5D910EFC46F5CC84162E342DB657CEC724D48DF930",
+      "skill.yaml": "DC11D5E17FDA477BA95E4F8FCD11CAC39D34FE771A797B651B19BBDA847B9D46",
+      "references/failure-and-policy-composition.md": "FB63312C3CE2D44083470988B72B83BEF35E5DDCE8A6522B6A7008140D4D8E07",
+      "references/routing-and-experiments.md": "10510BB91C940BEB877ACA611B973A028449B1D89A842D767A9FE63F59AC6944",
+      "references/validation-cases.md": "8E6E130650BBA7AA1E5B3A65A606401030001E4703B58ED02B9D20E8C2D29C98"
+    }
+  },
+  "reviewCriteria": [
+    "Preserve ambassador's design/review scope and identify effective client, proxy and upstream contracts rather than pattern labels.",
+    "Check initial handshake direction and availability of routing metadata before selecting a deferred connection mechanism.",
+    "Preserve address/authority/SNI/verified identity, attempt and deadline ownership, shard ownership, selection unit, live-stream cutover and shadow isolation.",
+    "Require actual version/configuration and an observation point that proves protocol progress; distinguish local fixture, source review and deployed behavior."
+  ],
+  "findings": [
+    {
+      "location": "SKILL.md:45-54; references/failure-and-policy-composition.md:63-83",
+      "before": "Protocol compatibility was required, but no instruction identified the circular wait when upstream connection is gated on client bytes while the client waits for the server's greeting.",
+      "evidence": "Envoy TCP proxy documentation excludes waiting-for-downstream-data mode for server-first protocols. MySQL 8.0.46 source documentation places server greeting before client response and optional TLS negotiation. Existing package search found no first-speaker/handshake-order decision.",
+      "consequence": "A connected local TCP listener can still leave the operation unable to start; increasing a timeout or retrying the same dependency cycle does not repair it.",
+      "correction": "Add a short route from local-contract workflow to a focused conditional subsection. Inspect actual first speaker and metadata availability; preserve a route able to connect before greeting or require a supported protocol-aware contract. Retain deferred connection as a valid client-first alternative.",
+      "validation": "Synthetic loopback probe exercised adverse server-first/deferred path plus server-first/immediate and client-first/deferred controls. No real proxy/DB/TLS execution."
+    }
+  ],
+  "remainingFindings": [],
+  "files": {
+    "readCompletely": [
+      "SKILL.md",
+      "skill.yaml",
+      "references/failure-and-policy-composition.md",
+      "references/routing-and-experiments.md",
+      "references/validation-cases.md"
+    ],
+    "changedByReviewer": [
+      "skills/ambassador-pattern/SKILL.md",
+      "skills/ambassador-pattern/references/failure-and-policy-composition.md",
+      "skills/ambassador-pattern/skill.yaml"
+    ],
+    "preExistingChanges": [],
+    "removed": [],
+    "unchangedFromAssignment": [
+      "references/routing-and-experiments.md",
+      "references/validation-cases.md"
+    ]
+  },
+  "changes": [
+    "Route TCP/protocol-detection decisions to first-message and connection-establishment checks.",
+    "Explain server-first circular wait, MySQL greeting-before-TLS ordering, valid immediate/handshake-aware alternatives, and the legitimate client-first deferred case.",
+    "Require actual handshake completion and upstream-connect/byte observations; preserve TLS/authentication and bounded inspection assumptions.",
+    "Add primary source references and one patch bump."
+  ],
+  "preserved": [
+    "Review/design role; no blanket implementation or infrastructure rollout workflow.",
+    "Client-library and existing-mesh alternatives, independent rollout conditions and measured proxy cost.",
+    "Separate connection address, HTTP authority, TLS SNI and verified identity; no bypass of mandatory security.",
+    "Retry owner, total attempts, replayability, server deduplication, shrinking deadline and unknown effects.",
+    "Authoritative shard ownership despite host ejection/failover; mixed-map migration constraints.",
+    "Connection/request/stream selection unit; accepted config versus new routing and retirement of old sessions.",
+    "Shadow side-effect isolation, resource bounds, measurement denominators and fleet config visibility.",
+    "Java compatibility inspection without imposed baseline or new Java examples.",
+    "All existing ten shipped teaching cases and their exposure/evaluation limitations."
+  ],
+  "compatibility": {
+    "skillBaseline": "Protocol-level design/review; no Java execution baseline or executable Java added.",
+    "validationRuntime": "Node v25.6.1 on Windows",
+    "javaCompilerTarget": "Not applicable; no Java example changed or executed.",
+    "proxyBaseline": "No deployed Envoy/image was supplied. New source check is moving 1.41 development documentation, not runtime compatibility proof.",
+    "protocolEvidence": "MySQL 8.0.46 source documentation; no MySQL executable used."
+  },
+  "checks": [
+    {
+      "category": "executed technical",
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/ambassador-pattern/handshake-probe.mjs",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "PASS, 3 scenarios and 20 assertions. Server-first/deferred: local TCP connected, no client bytes, zero upstream connections, guard timeout. Server-first/immediate: handshake complete, one upstream. Client-first/deferred: handshake complete, one upstream. All owned sockets and listeners closed.",
+      "stdout": "{\n  \"status\": \"PASS\",\n  \"runtime\": \"v25.6.1\",\n  \"assertions\": 20,\n  \"cases\": 3,\n  \"observations\": [\n    {\n      \"name\": \"server-first-deferred\",\n      \"outcome\": \"timeout\",\n      \"upstreamConnections\": 0,\n      \"socketsRemaining\": 0,\n      \"listenersClosed\": true\n    },\n    {\n      \"name\": \"server-first-immediate\",\n      \"outcome\": \"complete\",\n      \"upstreamConnections\": 1,\n      \"socketsRemaining\": 0,\n      \"listenersClosed\": true\n    },\n    {\n      \"name\": \"client-first-deferred\",\n      \"outcome\": \"complete\",\n      \"upstreamConnections\": 1,\n      \"socketsRemaining\": 0,\n      \"listenersClosed\": true\n    }\n  ]\n}\n",
+      "stderr": "",
+      "evidence": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/ambassador-pattern/handshake-results.json",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/ambassador-pattern/handshake-summary.json"
+      ]
+    },
+    {
+      "category": "executed structural",
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/ambassador-pattern/validate-local.mjs C:/git/agent-skills",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "Strict manifest zero issues; name/description agreement; 1.3.5; 3 declared paths; 6 relative links and 3 anchors; exactly 3 expected changed files, 2 unchanged.",
+      "stdout": "{\n  \"status\": \"PASS\",\n  \"skill\": \"ambassador-pattern\",\n  \"strictManifestIssues\": 0,\n  \"metadataAgreement\": true,\n  \"version\": \"1.3.5\",\n  \"declaredPaths\": 3,\n  \"relativeLinks\": 6,\n  \"anchors\": 3,\n  \"changedFromAssignment\": [\n    \"SKILL.md\",\n    \"references/failure-and-policy-composition.md\",\n    \"skill.yaml\"\n  ],\n  \"unchangedFiles\": 2\n}\n",
+      "stderr": ""
+    },
+    {
+      "category": "executed structural",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/ambassador-pattern/SKILL.md skills/ambassador-pattern/skill.yaml skills/ambassador-pattern/references/failure-and-policy-composition.md skills/ambassador-pattern/references/routing-and-experiments.md skills/ambassador-pattern/references/validation-cases.md",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "All matched files use Prettier code style.",
+      "stdout": "Checking formatting...\nAll matched files use Prettier code style!\n",
+      "stderr": ""
+    },
+    {
+      "category": "executed attribution",
+      "command": "git diff --check -- skills/ambassador-pattern; git diff -- skills/ambassador-pattern; git diff --cached --stat -- skills/ambassador-pattern; git status --short -- skills/ambassador-pattern",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "Whitespace check clean. Full final diff inspected: main guard, focused reference subsection/sources, manifest patch only. Staged diff empty; status has exactly the three owned changed files."
+    },
+    {
+      "category": "environment inspection",
+      "command": "Get-Command envoy,docker,kubectl -ErrorAction SilentlyContinue | Select-Object Name,Source",
+      "cwd": "C:/git/agent-skills",
+      "result": "Envoy not on PATH. Docker and kubectl executables were present; no daemon, cluster, image or deployment command invoked. Combined inspection command returned 1 due to missing envoy; not a failed protocol test.",
+      "exitCode": 1
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://www.envoyproxy.io/docs/envoy/latest/configuration/listeners/network_filters/tcp_proxy_filter",
+      "version": "Moving Envoy 1.41.0-dev documentation, accessed 2026-10-16 (page revision changed from bc3dc7 to cb9848 during browsing)",
+      "supports": "Delayed upstream establishment based on downstream data is unsuitable for server-first protocols; connection trigger and inspection timing are real choices. No configuration flag is prescribed for an unspecified deployed version.",
+      "use": "Material correction"
+    },
+    {
+      "url": "https://dev.mysql.com/doc/dev/mysql-server/8.0.46/page_protocol_connection_phase.html",
+      "version": "MySQL 8.0.46 source documentation",
+      "supports": "Initial server greeting precedes client handshake response, including optional SSLRequest and TLS exchange.",
+      "use": "Material correction"
+    },
+    {
+      "url": "https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/http/http_routing",
+      "version": "Envoy 1.41 development, moving docs",
+      "supports": "Router selects cluster per HTTP request; route acquisition is stable within a particular request.",
+      "use": "Preserved decision"
+    },
+    {
+      "url": "https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/operations/draining",
+      "version": "Envoy 1.41 development, moving docs",
+      "supports": "Filter-dependent graceful draining and existing stream lifetime; configuration acceptance alone is not session migration proof.",
+      "use": "Preserved decision"
+    },
+    {
+      "url": "https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/core/v3/protocol.proto#envoy-v3-api-msg-config-core-v3-upstreamhttpprotocoloptions",
+      "version": "Envoy 1.41 development, moving docs",
+      "supports": "auto_sni and auto_san_validation are distinct controls, potentially using downstream header-derived inputs.",
+      "use": "Preserved decision"
+    }
+  ],
+  "failedOrUnavailableEvidence": [
+    {
+      "kind": "primary source fetch",
+      "targets": [
+        "https://dev.mysql.com/doc/dev/mysql-server/8.4.0/page_protocol_connection_phase.html",
+        "https://dev.mysql.com/doc/dev/mysql-server/8.4.0/page_protocol_connection_phase_packets_protocol_handshake.html",
+        "https://dev.mysql.com/doc/dev/mysql-server/9.7.0/page_protocol_connection_phase_packets_protocol_handshake.html"
+      ],
+      "result": "Web tool reported inaccessible/internal error. Accessible official 8.0.46 Connection Phase page was used; unavailable pages were not treated as verified."
+    },
+    {
+      "kind": "real-proxy prerequisite",
+      "result": "Envoy not on PATH and no deployed-version fixture supplied. No installation, container image pull or cluster access was attempted."
+    }
+  ],
+  "behavioralEvaluations": {
+    "executed": [],
+    "status": "No actual agent execution, with/without-skill comparison or held-out evaluation. No measured incremental gain claimed."
+  },
+  "walkthroughs": [
+    {
+      "case": "C1-server-greeting",
+      "classification": "Structured expected-behavior walkthrough only",
+      "result": "Evidence requires rejecting circular dependency and correcting local policy/proposal; increasing timeout is not a repair."
+    },
+    {
+      "case": "C2-client-first",
+      "classification": "Structured expected-behavior walkthrough only",
+      "result": "Only first-message constraint changes; deferred connection can be preserved, while TCP-only approval remains unsupported."
+    }
+  ],
+  "twoCases": [
+    {
+      "id": "C1-server-greeting",
+      "taskInputPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/ambassador-pattern/cases/C1-server-greeting-input.json",
+      "criteriaPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/ambassador-pattern/case-criteria.json",
+      "criteriaKey": "cases[0]",
+      "status": "Pending coordinator execution"
+    },
+    {
+      "id": "C2-client-first",
+      "taskInputPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/ambassador-pattern/cases/C2-client-first-input.json",
+      "criteriaPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/ambassador-pattern/case-criteria.json",
+      "criteriaKey": "cases[1]",
+      "changedConstraint": "Only protocol.json first_message changes server → client.",
+      "status": "Pending coordinator execution"
+    }
+  ],
+  "caseSeparation": "Task inputs and criteria are physically separate files. This is procedural separation, not an enforced sandbox. Coordinator must provide actor task files only and withhold criteria and previous probe results. These are development cases derived from the reviewed mechanism, not unseen holdouts.",
+  "limitations": [
+    "Synthetic HELLO/PING/PONG byte protocol over loopback demonstrates the circular dependency and valid alternative only; it does not implement Envoy, MySQL, JDBC, TLS or production authentication.",
+    "No real proxy configuration validation, application integration, Kubernetes lifecycle, resource-exhaustion, latency benchmark or production fault test was run.",
+    "Inspection timeout values are bounded test guards, not supported production timeout recommendations or hard scheduling guarantees.",
+    "Existing security controls were preserved; no TLS verifier or authorization implementation was changed or exercised by the probe.",
+    "Moving Envoy documentation is not proof of field support or semantics in an unspecified deployed proxy. MySQL source page is version 8.0.46, not an executed server/client combination.",
+    "All material claims of improved decision quality remain expected benefits; only structural and technical checks were executed.",
+    "Existing shipped teaching cases remain answer-exposed regression material and were not reclassified as holdouts.",
+    "Global verification remains coordinator work after every writer stops."
+  ],
+  "artifacts": {
+    "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/ambassador-pattern",
+    "retained": [
+      "handshake-probe.mjs",
+      "handshake-results.json",
+      "handshake-summary.json",
+      "validate-local.mjs",
+      "cases/C1-server-greeting-input.json",
+      "cases/C2-client-first-input.json",
+      "case-criteria.json"
+    ],
+    "shippedReviewArtifacts": []
+  },
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "purpose": "Regenerate registry integrity/version for 1.3.5 after all reviewers stop."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "purpose": "Validate full catalog/repository only once concurrent writers have stopped; no global verification claimed."
+    }
+  ],
+  "crossSkill": {
+    "findings": [],
+    "requiredActions": [
+      "Coordinator archives temp handoff/evidence, optionally executes separated development cases, then performs global checks."
+    ]
+  },
+  "processState": "The Node technical probe exited. It asserted every tracked socket and both listeners closed in all three scenarios. No started server, background process or writer remains."
+}

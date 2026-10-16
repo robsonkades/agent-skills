@@ -24,8 +24,10 @@ reopened when evidence makes a downstream artefact stale.
 
 ## Workflow
 
-1. **Run definition intake before depth.** Establish the requested endpoint and existing
-   authorization from the request and session: analysis, a plan, implementation, or a review.
+1. **Run definition intake from the current state.** Follow a supplied feature record or the
+   repository's existing feature index before creating another dossier. On resumption, start with
+   its progress entry and the authoritative inputs for the next work. Establish the endpoint and
+   existing authorization from the request and session: analysis, a plan, implementation, or a review.
    A planning-only or findings-only task ends with that deliverable; the lifecycle does not
    authorize subsequent implementation. Reuse authorization already supplied for full delivery.
    Identify the accepted Product intent and available
@@ -38,10 +40,13 @@ reopened when evidence makes a downstream artefact stale.
 2. **Classify depth and persistence separately** — Light, Standard or Deep; Inline or Dossier
    ([depth and phases](references/depth-and-phases.md)). State every driver; the highest evidenced
    driver wins.
-3. **Follow the forward spine to the authorized endpoint, with explicit returns.** A phase may be
-   skipped by the depth rule; it may never be faked. When evidence changes an accepted baseline,
+3. **Select the next necessary phase, not the first unfinished heading.** Use the entry routes in
+   [depth and phases](references/depth-and-phases.md) to find the missing result needed for the
+   authorized endpoint. Reuse applicable outputs; omission requires an applicability reason, not
+   a fabricated result. When evidence changes an accepted baseline,
    apply the artefact contract's
-   invalidation rules and return to the owner of the affected stage.
+   invalidation rules and return to the owner of the affected stage. On resumption, check that the
+   evidence and gate results still apply before continuing dependent work.
 4. **Hold the gates.** A BLOCKING question prevents dependent implementation. Continue independent
    analysis or resources only when their own readiness is satisfied and they do not prejudge the
    unresolved choice. Readiness covers only the stated scope; completion requires observed passing
@@ -112,12 +117,25 @@ The spine is not a one-way checklist. Use these returns:
 | Contract changes compatibility or rollout           | Architecture, risk, decomposition, and plan     |
 | Implementation departs from an accepted decision    | Impact, decision, contract/plan, then readiness |
 
-Only traced downstream artefacts are invalidated. A return is focused, not a restart.
+Invalidate affected downstream artefacts, following and repairing trace links. Missing links do not
+prove independence; inspect the potentially affected boundary before continuing that scope. A return
+is focused, not a restart.
 
-Route a phase with its bounded question, accepted revisions, relevant evidence and expected output;
-inspect the returned artefact before using it downstream. Naming another skill does not mean a
-different reviewer performed the work. Unless the request or local policy requires a distinct
-reviewer, the current agent can perform a separate readiness pass; state its actual provenance.
+Use the responsibility table to select the phase that can produce the missing result. Load its
+instructions and applicable references when needed, using the available client mechanism. A dependency
+being installed or named does not establish that its procedure was loaded or performed.
+
+Route a phase with its bounded question, accepted revisions, canonical input locations, relevant
+evidence and expected output. Inspect the return against those inputs before using it downstream:
+does it answer the question, preserve the decisive constraints, and leave unsupported conclusions
+unresolved? For Dossier work, integrate the result into the existing authoritative record using
+[the handoff procedure](references/dossier-layout.md); a chat summary or a file's existence does not
+close the phase. Record the next valid phase and why its inputs suffice. Combine applicable Light
+checks inline rather than making every phase a separate gate.
+
+Naming another skill does not mean a different reviewer performed the work. Unless the request or
+local policy requires a distinct reviewer, the current agent can perform a separate readiness pass;
+state its actual provenance.
 If a specialist is unavailable, use the available criteria only where the phase can still be
 performed responsibly. A missing mandatory review blocks
 its dependent transition; report what is needed and continue independently ready work. Do not invent
@@ -170,7 +188,8 @@ THEN persistence is Dossier and the resumption artefact is current before handof
 
 When persistence is Dossier, use [the dossier layout](references/dossier-layout.md), adapted to the
 repository's existing convention. The dossier is a working resumption and audit artefact, not a
-ceremonial deliverable assembled at the end.
+ceremonial deliverable assembled at the end. At completion or a material return, use its bounded
+lesson guidance only when an observed outcome could change a future decision.
 
 When reviewing or evolving the lifecycle itself, use
 [the worked lifecycle cases](references/validation-cases.md) to check consequential transitions.

@@ -1,0 +1,94 @@
+[
+  {
+    "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.7/spring-webmvc/src/main/java/org/springframework/web/servlet/HandlerInterceptor.java",
+    "status": 200,
+    "consultedAt": "2026-10-16T15:56:32.894Z",
+    "artifact": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\mvc-and-request-handling\\primary-sources\\HandlerInterceptor.java",
+    "sha256": "90f1a90c1e5b05800279b1a01656e16e48211f059472def0a482a27ddcfd99f9",
+    "bytes": 8140,
+    "version": "Spring Framework 6.2.7",
+    "sections": "preHandle; afterCompletion",
+    "supports": "A false return owns the response and stops the chain; this interceptor must return true before its ordinary completion callback is eligible.",
+    "limitations": "Version-specific source/API evidence. It does not prove an arbitrary target deployment, container, or agent behavior."
+  },
+  {
+    "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.7/spring-webmvc/src/main/java/org/springframework/web/servlet/HandlerExecutionChain.java",
+    "status": 200,
+    "consultedAt": "2026-10-16T15:56:32.892Z",
+    "artifact": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\mvc-and-request-handling\\primary-sources\\HandlerExecutionChain.java",
+    "sha256": "e4c73bc2f4659de1ee1ce2ca08ecc0d641618df12836ce8f233fc4ac20c8520f",
+    "bytes": 6849,
+    "version": "Spring Framework 6.2.7",
+    "sections": "applyPreHandle; triggerAfterCompletion; applyAfterConcurrentHandlingStarted",
+    "supports": "The completed index advances only after true, and previous accepted interceptors are unwound in reverse.",
+    "limitations": "Version-specific source/API evidence. It does not prove an arbitrary target deployment, container, or agent behavior."
+  },
+  {
+    "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.7/spring-webmvc/src/main/java/org/springframework/web/servlet/AsyncHandlerInterceptor.java",
+    "status": 200,
+    "consultedAt": "2026-10-16T15:56:32.913Z",
+    "artifact": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\mvc-and-request-handling\\primary-sources\\AsyncHandlerInterceptor.java",
+    "sha256": "ee64e928996a921535b83b3b47ece10d17ed89954dc7cf20ea7a83aa24a2ee05",
+    "bytes": 3906,
+    "version": "Spring Framework 6.2.7",
+    "sections": "class contract; afterConcurrentHandlingStarted",
+    "supports": "Initial concurrent dispatch release uses a separate callback; ordinary completion callbacks do not cover every async ending.",
+    "limitations": "Version-specific source/API evidence. It does not prove an arbitrary target deployment, container, or agent behavior."
+  },
+  {
+    "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.7/spring-webmvc/src/main/java/org/springframework/web/servlet/DispatcherServlet.java",
+    "status": 200,
+    "consultedAt": "2026-10-16T15:56:32.895Z",
+    "artifact": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\mvc-and-request-handling\\primary-sources\\DispatcherServlet.java",
+    "sha256": "9466008747736c193e07c8348a6a676f8a9d99e2608d9d0929774b7f2455314b",
+    "bytes": 63281,
+    "version": "Spring Framework 6.2.7",
+    "sections": "doDispatch; processDispatchResult; triggerAfterCompletion",
+    "supports": "Actual dispatch invokes chain pre-handling, the selected adapter, post-handling and eligible completion; exception and concurrent paths differ.",
+    "limitations": "Version-specific source/API evidence. It does not prove an arbitrary target deployment, container, or agent behavior."
+  },
+  {
+    "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.7/framework-docs/modules/ROOT/pages/web/webmvc/mvc-ann-async.adoc",
+    "status": 200,
+    "consultedAt": "2026-10-16T15:56:32.904Z",
+    "artifact": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\mvc-and-request-handling\\primary-sources\\mvc-ann-async.adoc",
+    "sha256": "a5a26ac9c34faacd9adee7cc3eb1abbe88db00056cd3e5c0755c11dc8bc30536",
+    "bytes": 20323,
+    "version": "Spring Framework 6.2.7",
+    "sections": "Processing; Interception; Context Propagation; Servlet Container",
+    "supports": "Servlet threads may return with the response open; async callbacks, dispatch coverage and context propagation have distinct roles.",
+    "limitations": "Version-specific source/API evidence. It does not prove an arbitrary target deployment, container, or agent behavior."
+  },
+  {
+    "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.7/framework-docs/modules/ROOT/pages/web/webmvc/mvc-servlet/handlermapping-interceptor.adoc",
+    "status": 200,
+    "consultedAt": "2026-10-16T15:56:32.940Z",
+    "artifact": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\mvc-and-request-handling\\primary-sources\\handlermapping-interceptor.adoc",
+    "sha256": "1f3e2aa56f32f8484000da348210ff03c2d351eccca0510f4061c939952f8141",
+    "bytes": 1600,
+    "version": "Spring Framework 6.2.7",
+    "sections": "Interception",
+    "supports": "Existing guidance correctly separates response writing before postHandle and warns that MVC interception alone is not the security boundary.",
+    "limitations": "Version-specific source/API evidence. It does not prove an arbitrary target deployment, container, or agent behavior."
+  },
+  {
+    "url": "https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/AsyncListener.html",
+    "status": 200,
+    "consultedAt": "2026-10-16T15:56:33.282Z",
+    "artifact": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\mvc-and-request-handling\\primary-sources\\AsyncListener.html",
+    "sha256": "57ba4564c821e4146d64e79d1f5e49612312bbd10da1e4fa5d3001cd9bdca35f",
+    "bytes": 19252,
+    "version": "Jakarta Servlet 6.0",
+    "sections": "onComplete; onError; onTimeout; onStartAsync",
+    "supports": "The Servlet async lifecycle supplies distinct callbacks; a new async cycle requires listener registration for that cycle.",
+    "limitations": "Version-specific source/API evidence. It does not prove an arbitrary target deployment, container, or agent behavior."
+  },
+  {
+    "url": "https://martinfowler.com/eaaCatalog/applicationController.html",
+    "consultedAt": "2026-10-16",
+    "version": "Author catalog entry dated 2003-03-05",
+    "sections": "Application Controller",
+    "supports": "Shared or complex screen-navigation decisions justify a flow owner; the preserved skill distinguishes these from universal business legality.",
+    "limitations": "Pattern description, not runtime evidence, performance evidence, or a mandate to extract every redirect."
+  }
+]

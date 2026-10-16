@@ -1,0 +1,4 @@
+PASS no precombination: 10.00
+Exception in thread "main" java.lang.AssertionError: one precombination pass: expected 10.00 but got 7.50
+	at AggregationInvocationCheck.assertAverage(AggregationInvocationCheck.java:26)
+	at AggregationInvocationCheck.main(AggregationInvocationCheck.java:53)

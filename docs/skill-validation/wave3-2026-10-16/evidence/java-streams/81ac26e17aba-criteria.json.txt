@@ -1,0 +1,52 @@
+{
+  "kind": "evaluator-only development case criteria",
+  "doNotProvideToActor": true,
+  "measuredBehavioralGain": false,
+  "decisiveConstraint": "O consumidor observa todos os prefixos após a travessia ou somente o estado final. Os arquivos PrefixEngine.java são idênticos; ReportJob.java muda apenas a expressão retornada.",
+  "cases": [
+    {
+      "id": "streams-history",
+      "expectedDecision": "Identificar e corrigir perda do histórico por retenção de referências ao mesmo estado mutado.",
+      "requiredEvidence": [
+        "Ler tanto PrefixEngine.states quanto ReportJob.render e identificar o ponto de observação depois da travessia.",
+        "Mostrar que o resultado original é [[1, 2, 3], [1, 2, 3], [1, 2, 3]], embora a lista externa seja não modificável.",
+        "Produzir prefixos independentes e estáveis quando retidos: scan com novo estado por emissão, gatherer que mantém estado privado e emite snapshots, ou loop equivalente são alternativas válidas.",
+        "Validar o primeiro prefixo depois do processamento completo, vazio, ordem e independência entre avaliações; compilar para Java 24."
+      ],
+      "acceptableAlternatives": [
+        "Uma cópia rasa basta para Integer não nulo e imutável neste caso; não generalizar para elementos mutáveis.",
+        "Uma implementação sem Stream é válida se preserva o contrato e permanece simples."
+      ],
+      "observableFailures": [
+        "Preservar apenas o resultado final ou usar fold para produzir somente um prefixo.",
+        "Copiar cada alias somente depois de toList e afirmar que isso recupera os prefixos perdidos.",
+        "Adicionar locks, parallel(), upgrades ou cópias profundas indiscriminadas sem necessidade.",
+        "Apresentar validação apenas no instante da emissão, sem verificar a história retida depois da travessia."
+      ]
+    },
+    {
+      "id": "streams-final-only",
+      "expectedDecision": "Reconhecer que o consumidor atual observa o resultado final correto; no-change é válido. Não exigir snapshots de todos os prefixos para esse contrato.",
+      "requiredEvidence": [
+        "Ler o consumidor real e demonstrar [1, 2, 3] e [] com a implementação atual.",
+        "Distinguir a existência de aliases internos da violação de um contrato observado; o histórico intermediário não é exposto por essa API.",
+        "Preservar ordem, vazio e independência entre invocações; não alegar que estado mutável confinado é sempre incorreto."
+      ],
+      "acceptableAlternatives": [
+        "Manter o código com justificativa proporcional.",
+        "Simplificar para fold com acumulador privado e emissão final única, ou loop/coleta equivalente, somente com justificativa e preservação da API; não é obrigatório otimizar."
+      ],
+      "observableFailures": [
+        "Diagnosticar saída errada apenas porque scan retorna o mesmo acumulador, ignorando que apenas o estado final é observado.",
+        "Forçar cópia a cada prefixo como requisito de correção.",
+        "Usar reduce com identidade mutável compartilhada ou trocar o formato do relatório por uma lista de prefixos.",
+        "Alegar ganho de desempenho ou garantia sobre concorrência sem medição/evidência."
+      ]
+    }
+  ],
+  "limitations": [
+    "São casos de desenvolvimento derivados da descoberta, não holdouts inéditos.",
+    "As fixtures foram compiladas e executadas tecnicamente; nenhum agente avaliador foi executado.",
+    "Critérios foram separados antes de qualquer avaliação de agente, mas os resultados técnicos exploratórios já eram conhecidos."
+  ]
+}

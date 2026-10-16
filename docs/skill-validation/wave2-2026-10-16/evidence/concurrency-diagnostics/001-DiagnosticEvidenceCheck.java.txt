@@ -1,0 +1,124 @@
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class DiagnosticEvidenceCheck {
+    static final class ObservedPool extends ThreadPoolExecutor {
+        final AtomicInteger hooks = new AtomicInteger();
+        final AtomicInteger hookFailures = new AtomicInteger();
+
+        ObservedPool(RejectedExecutionHandler handler) {
+            super(1, 1, 0L, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(1), handler);
+        }
+
+        @Override
+        protected void afterExecute(Runnable runnable, Throwable failure) {
+            hooks.incrementAndGet();
+            if (failure != null) hookFailures.incrementAndGet();
+        }
+    }
+
+    static void require(boolean condition, String message) {
+        if (!condition) throw new AssertionError(message);
+    }
+
+    static void stop(ObservedPool pool) throws InterruptedException {
+        pool.shutdown();
+        if (!pool.awaitTermination(5, TimeUnit.SECONDS)) {
+            for (Runnable task : pool.shutdownNow()) {
+                if (task instanceof Future<?> future) future.cancel(true);
+            }
+            require(pool.awaitTermination(5, TimeUnit.SECONDS), "executor did not terminate");
+        }
+    }
+
+    static void rejectionBoundary(boolean callerRuns) throws Exception {
+        ObservedPool pool = new ObservedPool(callerRuns
+                ? new ThreadPoolExecutor.CallerRunsPolicy()
+                : new ThreadPoolExecutor.DiscardPolicy());
+        CountDownLatch started = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        AtomicInteger bodies = new AtomicInteger();
+        List<Future<?>> futures = new ArrayList<>();
+        Thread submitter = Thread.currentThread();
+        try {
+            Future<String> first = pool.submit(() -> {
+                started.countDown();
+                require(release.await(5, TimeUnit.SECONDS), "fixture release missing");
+                bodies.incrementAndGet();
+                return "first";
+            });
+            futures.add(first);
+            require(started.await(5, TimeUnit.SECONDS), "first task did not start");
+            Future<String> second = pool.submit(() -> {
+                bodies.incrementAndGet();
+                return "second";
+            });
+            futures.add(second);
+            Future<Thread> third = pool.submit(() -> {
+                bodies.incrementAndGet();
+                return Thread.currentThread();
+            });
+            futures.add(third);
+            require(!pool.getQueue().contains(third), "third unexpectedly queued");
+            if (callerRuns) {
+                require(third.isDone(), "caller-runs did not finish inline");
+                require(third.get(1, TimeUnit.SECONDS) == submitter, "wrong execution context");
+            } else {
+                require(!third.isDone(), "discard unexpectedly settled its Future");
+                require(bodies.get() == 0, "discarded body ran");
+            }
+            release.countDown();
+            require(first.get(5, TimeUnit.SECONDS).equals("first"), "first result");
+            require(second.get(5, TimeUnit.SECONDS).equals("second"), "second result");
+            stop(pool);
+            require(pool.hooks.get() == 2, "worker hook count differs");
+            require(pool.getCompletedTaskCount() == 2, "worker completion count differs");
+            require(bodies.get() == (callerRuns ? 3 : 2), "logical execution count differs");
+            require(third.isDone() == callerRuns, "third terminal state differs");
+            System.out.printf("PASS %s: submitted=3 bodies=%d workerHooks=%d poolCompleted=%d thirdDone=%s%n",
+                    callerRuns ? "CallerRuns" : "Discard", bodies.get(), pool.hooks.get(),
+                    pool.getCompletedTaskCount(), third.isDone());
+        } finally {
+            release.countDown();
+            for (Future<?> future : futures) future.cancel(true);
+            stop(pool);
+        }
+    }
+
+    static void futureFailure() throws Exception {
+        ObservedPool pool = new ObservedPool(new ThreadPoolExecutor.AbortPolicy());
+        Future<?> failed = null;
+        try {
+            failed = pool.submit(() -> { throw new IllegalStateException("controlled failure"); });
+            try {
+                failed.get(5, TimeUnit.SECONDS);
+                throw new AssertionError("Future hid controlled failure from get");
+            } catch (ExecutionException expected) {
+                require(expected.getCause() instanceof IllegalStateException, "wrong cause");
+            }
+            stop(pool);
+            require(failed.isDone(), "failed Future not terminal");
+            require(pool.hooks.get() == 1, "missing worker hook");
+            require(pool.hookFailures.get() == 0, "wrapped failure reached hook Throwable");
+            System.out.println("PASS submitted failure: future=FAILED afterExecuteThrowable=null");
+        } finally {
+            if (failed != null) failed.cancel(true);
+            stop(pool);
+        }
+    }
+
+    public static void main(String[] args) throws Exception {
+        rejectionBoundary(true);
+        rejectionBoundary(false);
+        futureFailure();
+        System.out.println("PASS 3 bounded mechanism checks");
+    }
+}

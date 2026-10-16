@@ -1,0 +1,18 @@
+{
+  "id": "compile-case-a",
+  "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+  "args": [
+    "--release",
+    "25",
+    "-d",
+    "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-null-safety-evidence\\case-classes\\a",
+    "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-null-safety-evidence\\cases\\a\\CatalogLookup.java",
+    "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-null-safety-evidence\\CaseContractCheck.java"
+  ],
+  "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-null-safety-evidence",
+  "exitCode": 0,
+  "expectedExit": 0,
+  "signal": null,
+  "stdout": "",
+  "stderr": ""
+}

@@ -32,8 +32,11 @@ conditional design and the measurement/contract needed before choosing a product
 1. Name the constrained unit: calls, connections, bytes, file handles, CPU tasks, tenant share, or a
    provider quota.
 2. Decide whether the requirement is simultaneous work, arrivals per time, or waiting backlog.
-3. Inventory existing gates and queues from ingress to resource. Avoid accidental serial limits and
-   double queueing.
+3. Trace relevant callers and runtime wiring from ingress to resource, including fallback/batch paths.
+   Inventory gates and queues and identify which limiter instance each path uses. Concurrent calls
+   in the protected scope must share a gate or have explicitly budgeted separate allocations;
+   constructing a fresh gate per request does not enforce a shared cap. Avoid accidental serial
+   limits and double queueing.
 4. Establish a capacity envelope from measurement/provider tests, required throughput, service-time
    distribution, replicas and safety headroom.
 5. Place a resource-local gate before costly allocation/launch. Add hierarchical ingress/tenant
@@ -100,6 +103,8 @@ composition and cancellation cases.
   once when protected resource use ends. For async work, transfer the lease to the real operation's
   completion/cleanup path; returning a future or timing out its observer must not release early.
   Streaming results can outlive successful response-future completion; cover their resource use too.
+  A future that a caller can independently complete is not a reliable cleanup signal; see the
+  implementation reference before attaching release to a timeout/cancellation chain.
 - A semaphore has no owner: any thread can release and over-release silently raises capacity. Wrap it
   behind an API that makes the permit a scoped capability.
 - `Semaphore(1)` is not a reentrant/owned mutex. Use a lock when mutual exclusion and ownership are

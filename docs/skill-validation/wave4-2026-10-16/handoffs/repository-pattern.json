@@ -1,0 +1,529 @@
+{
+  "skill": "repository-pattern",
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "ownedPath": "skills/repository-pattern/**",
+  "reviewDate": "2026-10-16",
+  "allWritesStopped": true,
+  "activeProcesses": [],
+  "processStatement": "All commands returned normally; no background, JVM, database or actor process started. All repository/evidence writes stop after saving this handoff.",
+  "baseline": {
+    "cleanAtAssignment": true,
+    "preExistingChanges": [],
+    "preExistingVersionBump": false,
+    "committedVersion": "1.3.4",
+    "assignmentVersion": "1.3.4",
+    "coordinatorRecord": "docs/skill-validation/wave4-2026-10-16/baseline.json",
+    "snapshotDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/baseline/repository-pattern",
+    "hashes": [
+      {
+        "path": "skills/repository-pattern/skill.yaml",
+        "sha256": "B3BEA6CB6EE785AE0A989A419AB8FEBDA36B7F60ABE910A06ADCD3D5AF6459B9"
+      },
+      {
+        "path": "skills/repository-pattern/SKILL.md",
+        "sha256": "3C73390727820A6D2D59348260172E44311C6EBB8DD9C6A83917344B8E06A394"
+      },
+      {
+        "path": "skills/repository-pattern/references/repository-misuse.md",
+        "sha256": "417979F242BCE400B0E1448C779573B90B1E05D9EC98DFD75533381EFED424BE"
+      },
+      {
+        "path": "skills/repository-pattern/references/repository-boundaries.md",
+        "sha256": "0CD0CF1A6F25C4AF4F8E55540A8A2D1A346437F1A7DF55708FCD8C5B63B9F8F0"
+      }
+    ],
+    "comparison": "All four assignment hashes match both coordinator snapshot and initial baseline record; owned staged/unstaged/untracked inspection empty."
+  },
+  "versions": {
+    "committed": "1.3.4",
+    "assignment": "1.3.4",
+    "final": "1.3.5",
+    "rationale": "One patch bump for two source-link corrections because every changed package content changes integrity. No Java/framework or manifest description changes."
+  },
+  "review": {
+    "procedure": "Complete docs/skill-review-prompt.md and wave4 brief reread for this assignment. Unchanged root AGENTS, parallel workflow, skill-engineering plus evidence/evaluation/resource-design/anti-patterns and cumulative lessons reused as permitted.",
+    "packageRead": [
+      "skills/repository-pattern/skill.yaml",
+      "skills/repository-pattern/SKILL.md",
+      "skills/repository-pattern/references/repository-misuse.md",
+      "skills/repository-pattern/references/repository-boundaries.md"
+    ],
+    "findingsSentBeforeFirstEdit": true,
+    "role": "Design/review repository contracts and data-access boundaries; preserve existing adequate designs rather than imposing a new implementation workflow.",
+    "criteria": [
+      "Distinguish Fowler Repository from DDD aggregate write boundaries and read gateways.",
+      "Follow actual consumers, framework coupling, metadata handling, transaction owner and managed/detached lifetime.",
+      "Keep operational failure separate from absence; inspect freshness/topology and the consumer's required visibility.",
+      "Validate constraints, bulk invariants/versioning, complete transaction commit/rollback scope and stream resource lifetime.",
+      "Retain useful forwarding/capability/testing seams and reject labels/names as evidence of safety or redundancy."
+    ],
+    "baselineTechnology": "Partial Java17 shapes; Spring Data JPA4.1.1 metadata/transaction documentation; Jakarta Persistence3.2 references. Examples not upgraded."
+  },
+  "findingsCorrected": [
+    {
+      "id": "RP-LINK-1",
+      "location": "skills/repository-pattern/references/repository-misuse.md:206",
+      "finding": "The cited Jakarta Persistence3.2 specification URL omitted .html and returned HTTP404.",
+      "consequence": "Readers could not reach the primary evidence behind lifecycle, flush and bulk-update guidance.",
+      "correction": "Use the official same-version .html document, checked for the cited sections.",
+      "evidence": "Web retrieval and direct Node fetch agree on 404 for old URL; replacement returns200 with Jakarta Persistence content."
+    },
+    {
+      "id": "RP-LINK-2",
+      "location": "skills/repository-pattern/references/repository-boundaries.md:243",
+      "finding": "The Query API URL used lowercase query with no .html and returned HTTP404.",
+      "consequence": "The cited evidence for getResultStream's materializing default was inaccessible.",
+      "correction": "Use Query.html at the same Jakarta Persistence3.2 API location.",
+      "evidence": "Direct HTTP old404/new200; new page explicitly documents default getResultList().stream() and possible provider override."
+    }
+  ],
+  "remainingFindings": [],
+  "technicalAssessment": "The reviewed contract guidance already handles the material alternatives and conditions. No supported additional behavioral/API defect was found; no instructional expansion was forced.",
+  "filesChangedByReviewer": [
+    {
+      "path": "skills/repository-pattern/references/repository-boundaries.md",
+      "change": "One Jakarta API URL corrected."
+    },
+    {
+      "path": "skills/repository-pattern/references/repository-misuse.md",
+      "change": "One Jakarta specification URL corrected."
+    },
+    {
+      "path": "skills/repository-pattern/skill.yaml",
+      "change": "Version1.3.4 to1.3.5."
+    }
+  ],
+  "filesUnchanged": ["skills/repository-pattern/SKILL.md"],
+  "attribution": "Three single-line replacements only; final owned diff3 insertions/3 deletions. No staged changes or untracked package files; no prior contributor changes altered.",
+  "finalHashes": [
+    {
+      "path": "skills/repository-pattern/skill.yaml",
+      "sha256": "857DDC5B7CE844A0B974BCC51EA497A81A7AB69AAA3AE63CE39004AE6325DE6C"
+    },
+    {
+      "path": "skills/repository-pattern/SKILL.md",
+      "sha256": "3C73390727820A6D2D59348260172E44311C6EBB8DD9C6A83917344B8E06A394"
+    },
+    {
+      "path": "skills/repository-pattern/references/repository-misuse.md",
+      "sha256": "D428D90F9CCE42AC606B5FEB741832870ECE4BE042ED51CB2BAE792C866FFA59"
+    },
+    {
+      "path": "skills/repository-pattern/references/repository-boundaries.md",
+      "sha256": "AA12877814FAEFF85E27027D0D60922EE1283FF624DCEA70A3840B5A1769237B"
+    }
+  ],
+  "capabilitiesPreserved": [
+    "Collection-like Repository and contextual DDD aggregate boundary, read projections, managed or mapped domain alternatives.",
+    "Narrow domain port and deliberately framework-coupled API alternatives; value of forwarding wrappers/capability limits.",
+    "Save return identity, assigned-ID new detection, package-private reconstruction accessibility and persistence-context lifetime.",
+    "Absence/failure/freshness distinction and actual topology verification.",
+    "Database stream ownership versus materialized values, transaction lifetime, close and memory limitations.",
+    "Bulk operation eligibility, event/version/context semantics; constraint-backed uniqueness and exact exception translation outside owning transaction.",
+    "Actual metadata dispatch, provider/database evidence limits and adequate no-change decisions."
+  ],
+  "capabilitiesReplaced": [],
+  "capabilitiesRemoved": [],
+  "validation": {
+    "structural": {
+      "executed": true,
+      "result": "PASS",
+      "details": "Actual repository parseManifest/buildSkillPackage/validatePackage: no issues before/after; two local Markdown links resolve. Four package files pass Prettier --check; git diff --check passes."
+    },
+    "sourceLinks": {
+      "executed": true,
+      "result": "Two confirmed old404/new200 fixes",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/repository-pattern-validation/jakarta-http-check.json",
+      "details": "Official document/API content was inspected at retained3.2 version. A raw-HTML literal version marker in the exploratory HTTP output was false due to markup; version is supported by the official page header/path, not that literal match."
+    },
+    "codeCompilation": {
+      "executed": false,
+      "status": "NOT_APPLICABLE_TO_CHANGE",
+      "reason": "No executable skill code added or materially changed. Case sources are explicit source-review excerpts, not a standalone Spring build."
+    },
+    "databaseIntegration": {
+      "executed": false,
+      "status": "NOT_EXECUTED",
+      "reason": "No database provisioned or used. Static source/API review does not establish actual provider SQL, commit/rollback translation, concurrency outcome frequency or wire behavior."
+    },
+    "behavioral": {
+      "executed": false,
+      "actorRuns": 0,
+      "actualAgentOutputs": [],
+      "claim": "No comparative or incremental agent-quality gain measured."
+    },
+    "walkthroughs": [
+      {
+        "case": "customer-registration-a",
+        "type": "Structured source/schema walkthrough only",
+        "observations": "READ_COMMITTED transactions on two replicas with a nonunique uq_-named index; precheck alone has no durable uniqueness mechanism.",
+        "expectedDecision": "Add an appropriate database-owned unique safeguard; synchronized is insufficient across replicas; retain targeted translation around complete transaction."
+      },
+      {
+        "case": "customer-registration-b",
+        "type": "Structured source/schema walkthrough only",
+        "observations": "Same code/config with UNIQUE added to effective schema; stale precheck does not imply duplicate committed keys under this safeguard.",
+        "expectedDecision": "Preserve adequate uniqueness/error-boundary design; do not add a redundant index/lock or report proven duplicate rows. Still require actual integration evidence for the adapter outcome."
+      }
+    ],
+    "caseArtifactIntegrity": {
+      "executed": true,
+      "result": "PASS",
+      "details": "Both JSON inputs parse, same task, same fixture files except one UNIQUE keyword in db/schema.sql; criteria in a separate file."
+    }
+  },
+  "commands": [
+    {
+      "purpose": "Assignment Git/committed manifest inspection",
+      "cwd": "C:/git/agent-skills",
+      "name": "baseline",
+      "cmd": "git status --short -- skills/repository-pattern; git diff -- skills/repository-pattern; git diff --cached -- skills/repository-pattern; git show HEAD:skills/repository-pattern/skill.yaml",
+      "chunk_id": "7ab172",
+      "wall_time_seconds": 0.1335237,
+      "exit_code": 0,
+      "original_token_count": 582,
+      "output": "schemaVersion: 1\n\nname: repository-pattern\nversion: 1.3.4\ndescription: >-\n  The repository as a collection-like boundary over domain objects, with aggregate-root\n  write boundaries in DDD: what belongs behind it, where queries and read models fit,\n  and when a redundant CRUD wrapper can be removed without losing a useful contract.\n  Use when a repository is being added for a child entity, when a generic or base repository\n  is proposed, when repository methods carry business verbs (cancelExpired,\n  activateEligible), when a managed entity escapes through the repository interface, when\n  reads and writes both go through the same interface and reads are slow, when a repository\n  interface wraps a Spring Data interface that wraps the ORM, or when someone argues that\n  Spring Data repositories make the pattern unnecessary. Does not cover query composition\n  (query-objects-and-specifications), ORM runtime behaviour (orm-behavioral-patterns), which\n  data-access pattern underlies it (data-source-patterns), or aggregate design itself\n  (domain-logic-organization).\n\nlicense: Apache-2.0\n\nauthors:\n  - name: agent-skills contributors\n    url: https://github.com/robsonkades/agent-skills\n\nhomepage: https://github.com/robsonkades/agent-skills/tree/main/skills/repository-pattern\nrepository:\n  type: git\n  url: https://github.com/robsonkades/agent-skills\n  directory: skills/repository-pattern\n\nkeywords:\n  - repository\n  - aggregate\n  - spring-data\n  - dao\n  - read-model\n  - persistence\n\nfiles:\n  - SKILL.md\n  - skill.yaml\n  - references/\n\ndependencies: []\n\nsuggests:\n  - architecture-and-performance\n  - architecture-decision-making\n  - architecture-refactoring-paths\n  - architecture-testing\n  - consistency-models\n  - data-source-patterns\n  - domain-logic-organization\n  - enterprise-architecture-smells\n  - enterprise-transactions\n  - layering-and-boundaries\n  - offline-concurrency-control\n  - orm-behavioral-patterns\n  - orm-structural-mapping\n  - query-objects-and-specifications\n  - remote-facade-and-dto\n  - service-layer-design\n\ncapabilities:\n  - reads-source\n\nagentOverrides:\n  codex:\n    interface:\n      display_name: Repository Pattern\n      short_description: Repository contracts and aggregate write boundaries\n      default_prompt: Use Repository Pattern to review or design this data-access boundary.\n"
+    },
+    {
+      "purpose": "Compare assignment snapshot hashes",
+      "cwd": "C:/git/agent-skills",
+      "cmd": "$repositoryRoot = 'C:/git/agent-skills/skills/repository-pattern'; $repositoryBase = 'C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/baseline/repository-pattern'; rg --files $repositoryRoot | ForEach-Object { $relative = [System.IO.Path]::GetRelativePath($repositoryRoot,$_); [pscustomobject]@{Path=$relative;Current=(Get-FileHash -LiteralPath $_ -Algorithm SHA256).Hash;Baseline=(Get-FileHash -LiteralPath (Join-Path $repositoryBase $relative) -Algorithm SHA256).Hash} } | ConvertTo-Json",
+      "chunk_id": "746cf3",
+      "wall_time_seconds": 0.1535184,
+      "exit_code": 0,
+      "original_token_count": 219,
+      "output": "[\r\n  {\r\n    \"Path\": \"skill.yaml\",\r\n    \"Current\": \"B3BEA6CB6EE785AE0A989A419AB8FEBDA36B7F60ABE910A06ADCD3D5AF6459B9\",\r\n    \"Baseline\": \"B3BEA6CB6EE785AE0A989A419AB8FEBDA36B7F60ABE910A06ADCD3D5AF6459B9\"\r\n  },\r\n  {\r\n    \"Path\": \"SKILL.md\",\r\n    \"Current\": \"3C73390727820A6D2D59348260172E44311C6EBB8DD9C6A83917344B8E06A394\",\r\n    \"Baseline\": \"3C73390727820A6D2D59348260172E44311C6EBB8DD9C6A83917344B8E06A394\"\r\n  },\r\n  {\r\n    \"Path\": \"references\\\\repository-misuse.md\",\r\n    \"Current\": \"417979F242BCE400B0E1448C779573B90B1E05D9EC98DFD75533381EFED424BE\",\r\n    \"Baseline\": \"417979F242BCE400B0E1448C779573B90B1E05D9EC98DFD75533381EFED424BE\"\r\n  },\r\n  {\r\n    \"Path\": \"references\\\\repository-boundaries.md\",\r\n    \"Current\": \"0CD0CF1A6F25C4AF4F8E55540A8A2D1A346437F1A7DF55708FCD8C5B63B9F8F0\",\r\n    \"Baseline\": \"0CD0CF1A6F25C4AF4F8E55540A8A2D1A346437F1A7DF55708FCD8C5B63B9F8F0\"\r\n  }\r\n]\r\n"
+    },
+    {
+      "purpose": "Coordinator baseline metadata",
+      "cwd": "C:/git/agent-skills",
+      "cmd": "@'\nimport fs from 'node:fs';\nconst baseline=JSON.parse(fs.readFileSync('docs/skill-validation/wave4-2026-10-16/baseline.json','utf8'));\nconsole.log(JSON.stringify(baseline.packages.filter(row=>row.name==='repository-pattern'),null,2));\n'@ | node --input-type=module",
+      "chunk_id": "0077a9",
+      "wall_time_seconds": 0.0960349,
+      "exit_code": 0,
+      "original_token_count": 230,
+      "output": "[\n  {\n    \"name\": \"repository-pattern\",\n    \"initialVersion\": \"1.3.4\",\n    \"committedVersion\": \"1.3.4\",\n    \"status\": \"\",\n    \"files\": [\n      {\n        \"path\": \"skills/repository-pattern/SKILL.md\",\n        \"sha256\": \"3c73390727820a6d2d59348260172e44311c6ebb8dd9c6a83917344b8e06a394\",\n        \"bytes\": 11943\n      },\n      {\n        \"path\": \"skills/repository-pattern/references/repository-boundaries.md\",\n        \"sha256\": \"0cd0cf1a6f25c4af4f8e55540a8a2d1a346437f1a7df55708fcd8c5b63b9f8f0\",\n        \"bytes\": 13133\n      },\n      {\n        \"path\": \"skills/repository-pattern/references/repository-misuse.md\",\n        \"sha256\": \"417979f242bce400b0e1448c779573b90b1e05d9ec98dfd75533381efed424be\",\n        \"bytes\": 10227\n      },\n      {\n        \"path\": \"skills/repository-pattern/skill.yaml\",\n        \"sha256\": \"b3bea6cb6ee785ae0a989a419ab8febda36b7f60abe910a06adcd3d5af6459b9\",\n        \"bytes\": 2326\n      }\n    ]\n  }\n]\n"
+    },
+    {
+      "purpose": "Initial local check",
+      "cwd": "C:/git/agent-skills",
+      "cmd": "@'\nimport fs from 'node:fs';\nimport path from 'node:path';\nimport { parseManifest } from './packages/core/src/domain/manifest.ts';\nimport { buildSkillPackage } from './packages/core/src/domain/skill-package.ts';\nimport { validatePackage } from './packages/core/src/application/validate-package.ts';\nconst root = path.resolve('skills/repository-pattern');\nconst paths = [];\nfunction walk(dir) { for (const entry of fs.readdirSync(dir, {withFileTypes:true})) { const absolute = path.join(dir,entry.name); if(entry.isDirectory()) walk(absolute); else paths.push(absolute); } }\nwalk(root);\nconst files = paths.map(absolute=>({path:path.relative(root,absolute).split(path.sep).join('/'),bytes:fs.readFileSync(absolute)}));\nconst parsed = parseManifest(fs.readFileSync(path.join(root,'skill.yaml'),'utf8'),{strict:true,source:'skills/repository-pattern/skill.yaml'});\nconst pkg = buildSkillPackage(parsed.manifest,files);\nconst report = validatePackage(pkg,{directoryName:'repository-pattern'});\nconst brokenLinks = [];\nlet linksChecked = 0;\nfor (const file of files.filter(file=>file.path.endsWith('.md'))) {\n for (const match of Buffer.from(file.bytes).toString('utf8').matchAll(/\\[[^\\]]*\\]\\((<[^>]*>|[^)]+)\\)/g)) {\n  const destination = match[1].startsWith('<') ? match[1].slice(1,-1) : match[1];\n  const target = destination.split('#')[0];\n  if(!target || /^[a-z][a-z0-9+.-]*:/i.test(target)) continue;\n  linksChecked++;\n  if(!fs.existsSync(path.resolve(root,path.dirname(file.path),target))) brokenLinks.push({from:file.path,target});\n }\n}\nconst issues = [...parsed.issues,...report.issues];\nconsole.log(JSON.stringify({runtime:process.version,skill:parsed.manifest.name,version:parsed.manifest.version,files:files.map(f=>f.path),issues,linksChecked,brokenLinks},null,2));\nif(issues.length || brokenLinks.length) process.exitCode=1;\n\n'@ | node --input-type=module",
+      "chunk_id": "e0073f",
+      "wall_time_seconds": 0.2130405,
+      "exit_code": 0,
+      "original_token_count": 69,
+      "output": "{\n  \"runtime\": \"v25.6.1\",\n  \"skill\": \"repository-pattern\",\n  \"version\": \"1.3.4\",\n  \"files\": [\n    \"references/repository-boundaries.md\",\n    \"references/repository-misuse.md\",\n    \"SKILL.md\",\n    \"skill.yaml\"\n  ],\n  \"issues\": [],\n  \"linksChecked\": 2,\n  \"brokenLinks\": []\n}\n"
+    },
+    {
+      "purpose": "Initial local check",
+      "cwd": "C:/git/agent-skills",
+      "cmd": "node node_modules/prettier/bin/prettier.cjs --check skills/repository-pattern/SKILL.md skills/repository-pattern/skill.yaml skills/repository-pattern/references/*.md",
+      "chunk_id": "4d871a",
+      "wall_time_seconds": 0.2244067,
+      "exit_code": 0,
+      "original_token_count": 17,
+      "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+    },
+    {
+      "purpose": "Direct HTTP/source destination verification",
+      "cwd": "C:/git/agent-skills",
+      "cmd": "@'\nconst urls=[\n'https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2',\n'https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html',\n'https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/query',\n'https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/Query.html'\n];\nconst results=await Promise.all(urls.map(async url=>{try{const response=await fetch(url,{signal:AbortSignal.timeout(15000)});const body=await response.text();return {requested:url,finalUrl:response.url,status:response.status,title:body.match(/<title[^>]*>([\\s\\S]*?)<\\/title>/i)?.[1],queryContract:body.includes('getResultList().stream()'),specVersion32:body.includes('3.2, April 10, 2024')};}catch(e){return{requested:url,error:e.message}}}));\nconsole.log(JSON.stringify(results,null,2));\n'@ | node --input-type=module",
+      "chunk_id": "435d38",
+      "wall_time_seconds": 1.2958075,
+      "exit_code": 0,
+      "original_token_count": 372,
+      "output": "[\n  {\n    \"requested\": \"https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2\",\n    \"finalUrl\": \"https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2\",\n    \"status\": 404,\n    \"title\": \"404 Page Not Found | Jakarta EE | The Eclipse Foundation\",\n    \"queryContract\": false,\n    \"specVersion32\": false\n  },\n  {\n    \"requested\": \"https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html\",\n    \"finalUrl\": \"https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html\",\n    \"status\": 200,\n    \"title\": \"Jakarta Persistence\",\n    \"queryContract\": true,\n    \"specVersion32\": false\n  },\n  {\n    \"requested\": \"https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/query\",\n    \"finalUrl\": \"https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/query\",\n    \"status\": 404,\n    \"title\": \"404 Page Not Found | Jakarta EE | The Eclipse Foundation\",\n    \"queryContract\": false,\n    \"specVersion32\": false\n  },\n  {\n    \"requested\": \"https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/Query.html\",\n    \"finalUrl\": \"https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/Query.html\",\n    \"status\": 200,\n    \"title\": \"Query (Jakarta Persistence API documentation)\",\n    \"queryContract\": true,\n    \"specVersion32\": false\n  }\n]\n"
+    },
+    {
+      "purpose": "Final local check",
+      "cwd": "C:/git/agent-skills",
+      "cmd": "@'\nimport fs from 'node:fs';\nimport path from 'node:path';\nimport { parseManifest } from './packages/core/src/domain/manifest.ts';\nimport { buildSkillPackage } from './packages/core/src/domain/skill-package.ts';\nimport { validatePackage } from './packages/core/src/application/validate-package.ts';\nconst root = path.resolve('skills/repository-pattern');\nconst paths = [];\nfunction walk(dir) { for (const entry of fs.readdirSync(dir, {withFileTypes:true})) { const absolute = path.join(dir,entry.name); if(entry.isDirectory()) walk(absolute); else paths.push(absolute); } }\nwalk(root);\nconst files = paths.map(absolute=>({path:path.relative(root,absolute).split(path.sep).join('/'),bytes:fs.readFileSync(absolute)}));\nconst parsed = parseManifest(fs.readFileSync(path.join(root,'skill.yaml'),'utf8'),{strict:true,source:'skills/repository-pattern/skill.yaml'});\nconst pkg = buildSkillPackage(parsed.manifest,files);\nconst report = validatePackage(pkg,{directoryName:'repository-pattern'});\nconst brokenLinks = [];\nlet linksChecked = 0;\nfor (const file of files.filter(file=>file.path.endsWith('.md'))) {\n for (const match of Buffer.from(file.bytes).toString('utf8').matchAll(/\\[[^\\]]*\\]\\((<[^>]*>|[^)]+)\\)/g)) {\n  const destination = match[1].startsWith('<') ? match[1].slice(1,-1) : match[1];\n  const target = destination.split('#')[0];\n  if(!target || /^[a-z][a-z0-9+.-]*:/i.test(target)) continue;\n  linksChecked++;\n  if(!fs.existsSync(path.resolve(root,path.dirname(file.path),target))) brokenLinks.push({from:file.path,target});\n }\n}\nconst issues = [...parsed.issues,...report.issues];\nconsole.log(JSON.stringify({runtime:process.version,skill:parsed.manifest.name,version:parsed.manifest.version,files:files.map(f=>f.path),issues,linksChecked,brokenLinks},null,2));\nif(issues.length || brokenLinks.length) process.exitCode=1;\n\n'@ | node --input-type=module",
+      "chunk_id": "792d43",
+      "wall_time_seconds": 0.1645166,
+      "exit_code": 0,
+      "original_token_count": 69,
+      "output": "{\n  \"runtime\": \"v25.6.1\",\n  \"skill\": \"repository-pattern\",\n  \"version\": \"1.3.5\",\n  \"files\": [\n    \"references/repository-boundaries.md\",\n    \"references/repository-misuse.md\",\n    \"SKILL.md\",\n    \"skill.yaml\"\n  ],\n  \"issues\": [],\n  \"linksChecked\": 2,\n  \"brokenLinks\": []\n}\n"
+    },
+    {
+      "purpose": "Final local check",
+      "cwd": "C:/git/agent-skills",
+      "cmd": "node node_modules/prettier/bin/prettier.cjs --check skills/repository-pattern/SKILL.md skills/repository-pattern/skill.yaml skills/repository-pattern/references/*.md",
+      "chunk_id": "bc817f",
+      "wall_time_seconds": 0.2001091,
+      "exit_code": 0,
+      "original_token_count": 17,
+      "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+    },
+    {
+      "purpose": "Final local check",
+      "cwd": "C:/git/agent-skills",
+      "cmd": "git diff --check -- skills/repository-pattern",
+      "chunk_id": "b99787",
+      "wall_time_seconds": 0.0680063,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    },
+    {
+      "purpose": "Inspect final owned diff/status/staged/untracked state",
+      "cwd": "C:/git/agent-skills",
+      "name": "final-diff",
+      "cmd": "git diff --stat -- skills/repository-pattern; git diff -- skills/repository-pattern; git status --short -- skills/repository-pattern; git diff --cached --name-only -- skills/repository-pattern; git ls-files --others --exclude-standard -- skills/repository-pattern",
+      "chunk_id": "ccae57",
+      "wall_time_seconds": 0.1512713,
+      "exit_code": 0,
+      "original_token_count": 848,
+      "output": " skills/repository-pattern/references/repository-boundaries.md | 2 +-\n skills/repository-pattern/references/repository-misuse.md     | 2 +-\n skills/repository-pattern/skill.yaml                          | 2 +-\n 3 files changed, 3 insertions(+), 3 deletions(-)\ndiff --git a/skills/repository-pattern/references/repository-boundaries.md b/skills/repository-pattern/references/repository-boundaries.md\nindex 8583921..986ded2 100644\n--- a/skills/repository-pattern/references/repository-boundaries.md\n+++ b/skills/repository-pattern/references/repository-boundaries.md\n@@ -240,4 +240,4 @@ existing evidence without adding a full database test campaign.\n - [Spring Data JPA 4.1.1: transactionality](https://github.com/spring-projects/spring-data-jpa/blob/4.1.1/src/main/antora/modules/ROOT/pages/jpa/transactions.adoc)\n - [Spring Data JPA 4.1.1: streaming execution](https://github.com/spring-projects/spring-data-jpa/blob/4.1.1/spring-data-jpa/src/main/java/org/springframework/data/jpa/repository/query/JpaQueryExecution.java) — `StreamExecution` requires a surrounding transaction.\n - [Spring Data JPA: streaming query results](https://docs.spring.io/spring-data/jpa/reference/repositories/query-methods-details.html#repositories.query-streaming) — resource ownership and closing.\n-- [Jakarta Persistence 3.2: Query](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/query) — default `getResultStream()` behavior.\n+- [Jakarta Persistence 3.2: Query](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/Query.html) — default `getResultStream()` behavior.\ndiff --git a/skills/repository-pattern/references/repository-misuse.md b/skills/repository-pattern/references/repository-misuse.md\nindex 4fdd2a7..83d8a43 100644\n--- a/skills/repository-pattern/references/repository-misuse.md\n+++ b/skills/repository-pattern/references/repository-misuse.md\n@@ -203,4 +203,4 @@ a supported no-change conclusion or a named evidence gap (`architecture-refactor\n \n - [Spring Data JPA 4.1.1 transaction boundaries](https://github.com/spring-projects/spring-data-jpa/blob/4.1.1/src/main/antora/modules/ROOT/pages/jpa/transactions.adoc)\n - [Spring Data JPA 4.1.1 lock metadata](https://github.com/spring-projects/spring-data-jpa/blob/4.1.1/src/main/antora/modules/ROOT/pages/jpa/locking.adoc)\n-- [Jakarta Persistence 3.2 specification](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2) — entity lifecycle, flush and bulk-update semantics.\n+- [Jakarta Persistence 3.2 specification](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html) — entity lifecycle, flush and bulk-update semantics.\ndiff --git a/skills/repository-pattern/skill.yaml b/skills/repository-pattern/skill.yaml\nindex f2ee9ab..f8dacc9 100644\n--- a/skills/repository-pattern/skill.yaml\n+++ b/skills/repository-pattern/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: repository-pattern\n-version: 1.3.4\n+version: 1.3.5\n description: >-\n   The repository as a collection-like boundary over domain objects, with aggregate-root\n   write boundaries in DDD: what belongs behind it, where queries and read models fit,\n M skills/repository-pattern/references/repository-boundaries.md\n M skills/repository-pattern/references/repository-misuse.md\n M skills/repository-pattern/skill.yaml\n"
+    },
+    {
+      "purpose": "Case artifact integrity",
+      "cwd": "C:/git/agent-skills",
+      "name": "case-integrity",
+      "cmd": "@'\nimport fs from 'node:fs';\nconst root='C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/repository-pattern-validation';\nconst a=JSON.parse(fs.readFileSync(root+'/case-a-input.json','utf8'));\nconst b=JSON.parse(fs.readFileSync(root+'/case-b-input.json','utf8'));\nconst criteria=JSON.parse(fs.readFileSync(root+'/evaluator-criteria.json','utf8'));\nconst changed=Object.keys(a.files).filter(key=>a.files[key]!==b.files[key]);\nconsole.log(JSON.stringify({ids:[a.id,b.id],sameRequest:a.request===b.request,changedFiles:changed,singleKeywordDifference:a.files['db/schema.sql'].replace('CREATE INDEX','CREATE UNIQUE INDEX')===b.files['db/schema.sql'],criteriaIds:criteria.cases.map(c=>c.id),actorContainsCriteria:('evaluatorOnlyCriteria' in a)||('expected' in a)||('expected' in b)},null,2));\nif(changed.join()!=='db/schema.sql'||a.request!==b.request)process.exitCode=1;\n'@ | node --input-type=module",
+      "chunk_id": "f8568b",
+      "wall_time_seconds": 0.0843668,
+      "exit_code": 0,
+      "original_token_count": 76,
+      "output": "{\n  \"ids\": [\n    \"customer-registration-a\",\n    \"customer-registration-b\"\n  ],\n  \"sameRequest\": true,\n  \"changedFiles\": [\n    \"db/schema.sql\"\n  ],\n  \"singleKeywordDifference\": true,\n  \"criteriaIds\": [\n    \"customer-registration-a\",\n    \"customer-registration-b\"\n  ],\n  \"actorContainsCriteria\": false\n}\n"
+    }
+  ],
+  "failuresAndRecoveries": [
+    "Old Jakarta source URLs returned404; both corrected and replacements inspected.",
+    "Raw-link web clicks for two Spring Data GitHub pages returned internal tool errors; tagged GitHub HTML content remained readable and was used. They were not declared broken links or modified."
+  ],
+  "sources": [
+    {
+      "url": "https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/Query.html",
+      "version": "Jakarta Persistence 3.2",
+      "section": "getResultStream()",
+      "supports": "Correct replacement for broken lowercase/no-extension URL; default delegates to result-list streaming and permits provider overrides.",
+      "status": "HTTP 200 and primary content verified",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html",
+      "version": "Jakarta Persistence 3.2 (document header April 10, 2024)",
+      "section": "3.3.4 synchronization; 3.3.7.1 merge; 4.11 bulk update/delete",
+      "supports": "Correct .html destination; existing flush, managed-copy and bulk version/context caveats are supported.",
+      "status": "HTTP 200 and primary content verified",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://martinfowler.com/eaaCatalog/repository.html",
+      "version": "Author's Repository catalog page",
+      "section": "Repository",
+      "supports": "Collection-like mediation between domain and data mapping; does not define all Repository uses as one DDD aggregate per type.",
+      "status": "Primary page consulted",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://github.com/spring-projects/spring-data-jpa/blob/4.1.1/src/main/antora/modules/ROOT/pages/jpa/entity-persistence.adoc",
+      "version": "Spring Data JPA 4.1.1",
+      "section": "Saving Entities / Entity State-detection Strategies",
+      "supports": "Existing persist/merge and new-entity detection guidance.",
+      "status": "Primary tagged documentation consulted; raw-link retrieval attempt failed but GitHub HTML content accessible.",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://github.com/spring-projects/spring-data-jpa/blob/4.1.1/src/main/antora/modules/ROOT/pages/jpa/transactions.adoc",
+      "version": "Spring Data JPA 4.1.1",
+      "section": "Transactionality / Transactional query methods",
+      "supports": "Existing repository defaults, outer transaction boundary and declared-query transaction distinctions.",
+      "status": "Primary tagged documentation consulted; raw-link retrieval attempt failed but GitHub HTML content accessible.",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://github.com/spring-projects/spring-data-jpa/blob/4.1.1/spring-data-jpa/src/main/java/org/springframework/data/jpa/repository/query/JpaQueryExecution.java",
+      "version": "Spring Data JPA 4.1.1",
+      "section": "StreamExecution.doExecute",
+      "supports": "Source explicitly tests surrounding transaction before constructing/executing streaming query; supports retained lifetime warning.",
+      "status": "Tagged implementation inspected",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://github.com/spring-projects/spring-data-jpa/blob/4.1.1/src/main/antora/modules/ROOT/pages/jpa/locking.adoc",
+      "version": "Spring Data JPA 4.1.1",
+      "section": "Locking",
+      "supports": "Repository query/CRUD lock metadata is framework handling, not arbitrary custom-method behavior.",
+      "status": "Primary tagged documentation consulted",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://github.com/spring-projects/spring-data-commons/blob/4.1.1/src/main/java/org/springframework/data/repository/CrudRepository.java",
+      "version": "Spring Data Commons 4.1.1",
+      "section": "save / findById",
+      "supports": "Retained save-result and lookup-absence contract; ordinary API/source evidence only.",
+      "status": "Primary tagged API source consulted",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://www.postgresql.org/docs/17/indexes-unique.html",
+      "version": "PostgreSQL 17",
+      "section": "11.6 Unique Indexes",
+      "supports": "Case distinction: UNIQUE is the effective safeguard, not the index name. Nullable-key nuance avoided by non-null fixture.",
+      "status": "Primary documentation consulted",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://www.postgresql.org/docs/17/transaction-iso.html",
+      "version": "PostgreSQL 17",
+      "section": "13.2.1 Read Committed",
+      "supports": "Separate absence reads can precede concurrent inserts; READ_COMMITTED alone does not provide the accepted uniqueness invariant.",
+      "status": "Primary documentation consulted",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://www.postgresql.org/docs/17/index-unique-checks.html",
+      "version": "PostgreSQL 17",
+      "section": "62.5 Index Uniqueness Checks",
+      "supports": "Unique checking handles conflicting concurrent insertion by waiting/rechecking; preserves adequate case B despite stale advisory check.",
+      "status": "Primary documentation consulted",
+      "consulted": "2026-10-16"
+    }
+  ],
+  "cases": {
+    "classification": "Known development pair; not held out.",
+    "actorInputArtifacts": [
+      "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/repository-pattern-validation/case-a-input.json",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/repository-pattern-validation/case-b-input.json"
+    ],
+    "evaluatorCriteriaArtifact": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/repository-pattern-validation/evaluator-criteria.json",
+    "actorInputs": [
+      {
+        "id": "customer-registration-a",
+        "request": "Review this repository-backed registration flow and the proposed synchronized modifier. Determine which findings the supplied evidence supports, preserve adequate safeguards, and give the smallest justified changes plus a reproducible validation plan. You may edit supplied source/schema fixtures for review; do not provision services or apply production migrations. Separate source-level conclusions from unexecuted integration claims.",
+        "context": "Known development case with ordinary source/config/schema artifacts; not a recorded production incident.",
+        "files": {
+          "README.md": "# Customer registration review fixture\nThis is a source-and-schema review fixture, not a standalone Spring build.\nTarget: Java 17, Spring Data JPA 4.1.1, Jakarta Persistence 3.2, PostgreSQL 17.\nThe existing PostgreSQL JDBC driver exposes PSQLException; retain the project's installed driver.\n\nTwo independent application replicas use this database, with no inter-process lock.\nThe supplied schema is the effective schema for a disposable empty test database.\nRequests enter register() without an ambient transaction. The supplied transaction configuration is used by both replicas; repositories and the transaction manager share the same EntityManagerFactory.\nemailKey is validated upstream as non-null lowercase ASCII; exact equality of that normalized key is the accepted uniqueness rule.\nThe requirement is at most one committed customer per emailKey. An existing key returns DUPLICATE; other storage failures remain failures.\nUUID primary keys are generated independently per attempt. The ORM uses the nullable version property to detect new Customer instances.\n\nThe source excerpts omit framework wiring/build files. Do not treat their presence as proof of deployed database behavior.\nReview the proposed Java-local locking suggestion against the actual persistence contract. A complete database test needs the normal project dependencies and an isolated PostgreSQL 17 database.\n",
+          "db/schema.sql": "CREATE TABLE customer (\n  id uuid PRIMARY KEY,\n  email_key text NOT NULL,\n  version bigint NOT NULL DEFAULT 0\n);\nCREATE INDEX uq_customer_email_key ON customer(email_key);\n",
+          "src/Customer.java": "import jakarta.persistence.Column;\nimport jakarta.persistence.Entity;\nimport jakarta.persistence.Id;\nimport jakarta.persistence.Table;\nimport jakarta.persistence.Version;\nimport java.util.UUID;\n\n@Entity\n@Table(name = \"customer\")\nclass Customer {\n    @Id private UUID id;\n    @Column(name = \"email_key\", nullable = false) private String emailKey;\n    @Version private Long version;\n    protected Customer() { }\n    Customer(UUID id, String emailKey) { this.id = id; this.emailKey = emailKey; }\n}\n",
+          "src/Customers.java": "import java.util.UUID;\nimport org.springframework.data.jpa.repository.JpaRepository;\n\ninterface Customers extends JpaRepository<Customer, UUID> {\n    boolean existsByEmailKey(String emailKey);\n}\n",
+          "src/Registration.java": "import java.util.UUID;\nimport org.springframework.transaction.support.TransactionTemplate;\n\nfinal class Registration {\n    enum Result { CREATED, DUPLICATE }\n    private final Customers customers;\n    private final TransactionTemplate transactions;\n    Registration(Customers customers, TransactionTemplate transactions) {\n        this.customers = customers; this.transactions = transactions;\n    }\n    Result register(String emailKey) {\n        try {\n            return transactions.execute(status -> {\n                if (customers.existsByEmailKey(emailKey)) return Result.DUPLICATE;\n                customers.save(new Customer(UUID.randomUUID(), emailKey));\n                return Result.CREATED;\n            });\n        } catch (RuntimeException failure) {\n            if (PostgreSqlFailures.isDuplicateEmail(failure)) return Result.DUPLICATE;\n            throw failure;\n        }\n    }\n}\n",
+          "src/RuntimeConfiguration.java": "import jakarta.persistence.EntityManagerFactory;\nimport org.springframework.orm.jpa.JpaTransactionManager;\nimport org.springframework.transaction.TransactionDefinition;\nimport org.springframework.transaction.support.TransactionTemplate;\n\nfinal class RuntimeConfiguration {\n    static TransactionTemplate registrationTransactions(EntityManagerFactory entityManagerFactory) {\n        var manager = new JpaTransactionManager(entityManagerFactory);\n        var template = new TransactionTemplate(manager);\n        template.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);\n        template.setIsolationLevel(TransactionDefinition.ISOLATION_READ_COMMITTED);\n        return template;\n    }\n}\n",
+          "src/PostgreSqlFailures.java": "import java.util.Collections;\nimport java.util.IdentityHashMap;\nimport java.util.Set;\nimport org.postgresql.util.PSQLException;\n\nfinal class PostgreSqlFailures {\n    static boolean isDuplicateEmail(Throwable failure) {\n        Set<Throwable> visited = Collections.newSetFromMap(new IdentityHashMap<>());\n        for (Throwable cause = failure; cause != null && visited.add(cause); cause = cause.getCause()) {\n            if (cause instanceof PSQLException postgres\n                    && \"23505\".equals(postgres.getSQLState())\n                    && postgres.getServerErrorMessage() != null\n                    && \"uq_customer_email_key\".equals(postgres.getServerErrorMessage().getConstraint())) {\n                return true;\n            }\n        }\n        return false;\n    }\n}\n",
+          "review-note.md": "The sequential acceptance scenario is: register the same normalized emailKey twice, receiving CREATED then DUPLICATE.\nOne reviewer proposes adding synchronized to Registration.register because it contains an existence query followed by save.\nBefore changing the method, review the schema, transaction setup and exception boundary. Preserve the accepted at-most-one-committed-row requirement across both replicas.\n"
+        },
+        "prerequisites": [
+          "Source review requires no running service.",
+          "For an integration run, use only a disposable empty PostgreSQL17 database and the existing Java17/SpringDataJPA4.1.1 project toolchain. No installation or upgrade is implied."
+        ]
+      },
+      {
+        "id": "customer-registration-b",
+        "request": "Review this repository-backed registration flow and the proposed synchronized modifier. Determine which findings the supplied evidence supports, preserve adequate safeguards, and give the smallest justified changes plus a reproducible validation plan. You may edit supplied source/schema fixtures for review; do not provision services or apply production migrations. Separate source-level conclusions from unexecuted integration claims.",
+        "context": "Known development case with ordinary source/config/schema artifacts; not a recorded production incident.",
+        "files": {
+          "README.md": "# Customer registration review fixture\nThis is a source-and-schema review fixture, not a standalone Spring build.\nTarget: Java 17, Spring Data JPA 4.1.1, Jakarta Persistence 3.2, PostgreSQL 17.\nThe existing PostgreSQL JDBC driver exposes PSQLException; retain the project's installed driver.\n\nTwo independent application replicas use this database, with no inter-process lock.\nThe supplied schema is the effective schema for a disposable empty test database.\nRequests enter register() without an ambient transaction. The supplied transaction configuration is used by both replicas; repositories and the transaction manager share the same EntityManagerFactory.\nemailKey is validated upstream as non-null lowercase ASCII; exact equality of that normalized key is the accepted uniqueness rule.\nThe requirement is at most one committed customer per emailKey. An existing key returns DUPLICATE; other storage failures remain failures.\nUUID primary keys are generated independently per attempt. The ORM uses the nullable version property to detect new Customer instances.\n\nThe source excerpts omit framework wiring/build files. Do not treat their presence as proof of deployed database behavior.\nReview the proposed Java-local locking suggestion against the actual persistence contract. A complete database test needs the normal project dependencies and an isolated PostgreSQL 17 database.\n",
+          "db/schema.sql": "CREATE TABLE customer (\n  id uuid PRIMARY KEY,\n  email_key text NOT NULL,\n  version bigint NOT NULL DEFAULT 0\n);\nCREATE UNIQUE INDEX uq_customer_email_key ON customer(email_key);\n",
+          "src/Customer.java": "import jakarta.persistence.Column;\nimport jakarta.persistence.Entity;\nimport jakarta.persistence.Id;\nimport jakarta.persistence.Table;\nimport jakarta.persistence.Version;\nimport java.util.UUID;\n\n@Entity\n@Table(name = \"customer\")\nclass Customer {\n    @Id private UUID id;\n    @Column(name = \"email_key\", nullable = false) private String emailKey;\n    @Version private Long version;\n    protected Customer() { }\n    Customer(UUID id, String emailKey) { this.id = id; this.emailKey = emailKey; }\n}\n",
+          "src/Customers.java": "import java.util.UUID;\nimport org.springframework.data.jpa.repository.JpaRepository;\n\ninterface Customers extends JpaRepository<Customer, UUID> {\n    boolean existsByEmailKey(String emailKey);\n}\n",
+          "src/Registration.java": "import java.util.UUID;\nimport org.springframework.transaction.support.TransactionTemplate;\n\nfinal class Registration {\n    enum Result { CREATED, DUPLICATE }\n    private final Customers customers;\n    private final TransactionTemplate transactions;\n    Registration(Customers customers, TransactionTemplate transactions) {\n        this.customers = customers; this.transactions = transactions;\n    }\n    Result register(String emailKey) {\n        try {\n            return transactions.execute(status -> {\n                if (customers.existsByEmailKey(emailKey)) return Result.DUPLICATE;\n                customers.save(new Customer(UUID.randomUUID(), emailKey));\n                return Result.CREATED;\n            });\n        } catch (RuntimeException failure) {\n            if (PostgreSqlFailures.isDuplicateEmail(failure)) return Result.DUPLICATE;\n            throw failure;\n        }\n    }\n}\n",
+          "src/RuntimeConfiguration.java": "import jakarta.persistence.EntityManagerFactory;\nimport org.springframework.orm.jpa.JpaTransactionManager;\nimport org.springframework.transaction.TransactionDefinition;\nimport org.springframework.transaction.support.TransactionTemplate;\n\nfinal class RuntimeConfiguration {\n    static TransactionTemplate registrationTransactions(EntityManagerFactory entityManagerFactory) {\n        var manager = new JpaTransactionManager(entityManagerFactory);\n        var template = new TransactionTemplate(manager);\n        template.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);\n        template.setIsolationLevel(TransactionDefinition.ISOLATION_READ_COMMITTED);\n        return template;\n    }\n}\n",
+          "src/PostgreSqlFailures.java": "import java.util.Collections;\nimport java.util.IdentityHashMap;\nimport java.util.Set;\nimport org.postgresql.util.PSQLException;\n\nfinal class PostgreSqlFailures {\n    static boolean isDuplicateEmail(Throwable failure) {\n        Set<Throwable> visited = Collections.newSetFromMap(new IdentityHashMap<>());\n        for (Throwable cause = failure; cause != null && visited.add(cause); cause = cause.getCause()) {\n            if (cause instanceof PSQLException postgres\n                    && \"23505\".equals(postgres.getSQLState())\n                    && postgres.getServerErrorMessage() != null\n                    && \"uq_customer_email_key\".equals(postgres.getServerErrorMessage().getConstraint())) {\n                return true;\n            }\n        }\n        return false;\n    }\n}\n",
+          "review-note.md": "The sequential acceptance scenario is: register the same normalized emailKey twice, receiving CREATED then DUPLICATE.\nOne reviewer proposes adding synchronized to Registration.register because it contains an existence query followed by save.\nBefore changing the method, review the schema, transaction setup and exception boundary. Preserve the accepted at-most-one-committed-row requirement across both replicas.\n"
+        },
+        "prerequisites": [
+          "Source review requires no running service.",
+          "For an integration run, use only a disposable empty PostgreSQL17 database and the existing Java17/SpringDataJPA4.1.1 project toolchain. No installation or upgrade is implied."
+        ]
+      }
+    ],
+    "evaluatorOnlyCriteria": {
+      "audience": "Evaluator only; do not provide to actors",
+      "classification": "Known development pair, not held out. Neither actor has been run.",
+      "decisiveConstraint": "Only CREATE INDEX versus CREATE UNIQUE INDEX differs in db/schema.sql. The index name itself is identical and does not establish uniqueness.",
+      "sharedExpected": [
+        "Inspect deployed-schema fixture, callers, two-replica scope, READ_COMMITTED transaction and catch outside TransactionTemplate.execute.",
+        "Distinguish a precheck interleaving from violation of the persisted invariant under the effective constraint.",
+        "Preserve normalized non-null key scope, exact duplicate-email exception classification, and rollback/commit boundary.",
+        "Do not rely on synchronized to coordinate independent application replicas.",
+        "Keep Java/framework baseline and avoid provisioning/installing services or claiming unexecuted checks."
+      ],
+      "cases": [
+        {
+          "id": "customer-registration-a",
+          "expected": [
+            "Identify that the named uq_customer_email_key is a nonunique index; no effective cross-replica protection is provided by the existence check or READ_COMMITTED alone.",
+            "Recommend a database unique safeguard for the accepted normalized key, with appropriate existing-data/migration considerations if promoted beyond the empty fixture.",
+            "Retain the precheck as advisory if desired and keep error translation around the complete owning transaction.",
+            "Propose a two-connection concurrent test that pauses both after absence checks and verifies one committed row, correct loser result and no failed-transaction continuation."
+          ],
+          "failures": [
+            "Infers uniqueness from the uq_ name.",
+            "Treats @Transactional/TransactionTemplate or synchronized as sufficient cross-replica uniqueness.",
+            "Suppresses arbitrary integrity/storage errors as duplicates.",
+            "Declares a database integration test passed without running it."
+          ]
+        },
+        {
+          "id": "customer-registration-b",
+          "expected": [
+            "Recognize the existing unique index enforces the key invariant despite a possible stale precheck.",
+            "Do not report duplicate committed rows as a confirmed defect under the supplied schema; reject the synchronized change as unnecessary for that invariant.",
+            "Preserve existing targeted translation around a transaction whose commit occurs before execute returns.",
+            "Request or propose a real concurrent integration test to confirm adapter translation and outcome handling; source guarantees do not establish observed production frequency."
+          ],
+          "failures": [
+            "Reports the same missing-uniqueness defect as case A without inspecting UNIQUE.",
+            "Adds a redundant second index, global lock or framework redesign to satisfy an already-protected invariant.",
+            "Removes exact exception translation or broadens it to all integrity violations.",
+            "Claims the unique index serializes all business logic or makes every repository operation atomic."
+          ]
+        }
+      ],
+      "reproduction": {
+        "setup": "Use isolated input files for each actor. Expose no evaluator criteria, handoff or prior output.",
+        "sourceComparison": "All actor files identical except the UNIQUE keyword in db/schema.sql.",
+        "suggestedDatabaseSchedule": [
+          "Two independent READ_COMMITTED connections begin and each checks the same absent normalized email.",
+          "Each attempts INSERT with a distinct UUID.",
+          "Commit the winner and resolve the other transaction; inspect row count and concrete SQLSTATE/constraint identity.",
+          "At application level verify classification happens after transaction completion/rollback."
+        ],
+        "expectedObservations": "Case A can commit two rows; case B permits at most one same-key row and rejects the conflicting insert. These are source-grounded expectations, not executed results."
+      }
+    },
+    "onlyDecisiveDifference": "CREATE INDEX versus CREATE UNIQUE INDEX on the normalized non-null emailKey. Same misleading uq_ name, source, request and runtime contract.",
+    "actorExposure": "No actor ran. Coordinator should materialize only actor input files into isolated workspaces, without handoff/criteria/prior outputs.",
+    "reproducibilityLimit": "A future actual integration run needs the existing project wiring/dependencies and an isolated PostgreSQL17 database; excerpts do not claim to be a complete build."
+  },
+  "assumptions": [
+    "The source-review fixture explicitly declares its effective schema and transaction manager/repository EntityManagerFactory agreement; this is case input, not observed production evidence.",
+    "Source/API facts justify retaining existing technical guidance; no operational measurements were inferred.",
+    "The link repair restores access to the intended same-version source and does not change the underlying recommendation."
+  ],
+  "limitations": [
+    "No code/SQL/provider/database integration or agent behavior run was performed.",
+    "No benchmark, performance gain, broad absence-of-defects guarantee or measured agent improvement claimed.",
+    "HTTP evidence describes retrieval on2026-10-16; external hosting can change.",
+    "Local validation does not establish catalog-wide dependencies, optional referral routing or generated index consistency.",
+    "Case/criteria separation is artifact organization, not enforced filesystem isolation; coordinator must control actor access."
+  ],
+  "evidencePaths": [
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/repository-pattern-validation/jakarta-http-check.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/repository-pattern-validation/case-a-input.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/repository-pattern-validation/case-b-input.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/repository-pattern-validation/evaluator-criteria.json"
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Parallel-run rule reserves shared generated index writes.",
+      "prerequisites": "All review writers stopped; preserve unrelated index changes."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Global checks/build writes are prohibited for reviewers.",
+      "prerequisites": "After registry build and all writers stopped."
+    }
+  ],
+  "crossSkillIssues": [],
+  "coordinatorActions": [
+    "Inspect the three-line owned change against clean assignment baseline.",
+    "Run reserved index/global verification after all writers stop.",
+    "Use separated cases only if scheduling future behavioral evaluation; do not interpret their expected outcomes as observed results."
+  ],
+  "completionMeaning": "Local source-link repair complete, verified and all writes stopped; repository-wide validation pending."
+}

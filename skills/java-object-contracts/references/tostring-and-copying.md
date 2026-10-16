@@ -68,19 +68,19 @@ assert on, and then adding a component changes every such assertion. Assert on c
 `Object.clone` does. Preserve a correct existing contract when consumers require it; audit these
 limitations before introducing or replacing one:
 
-- `Object.clone` creates a **shallow** copy by field-by-field assignment. Every mutable
-  referenced object is shared with the original — the standard source of "modifying the copy
-  changed the original".
+- `Object.clone` creates a new instance of the same runtime class and makes a **shallow**
+  copy by field-by-field assignment, without rerunning constructors. Every mutable referenced
+  object is shared with the original — the standard source of "modifying the copy changed
+  the original". Independent resources/lifecycle still need review.
 - `final` reference fields cannot be reassigned by ordinary Java clone code, so a shallow clone
   shares their referents. That is safe for deeply immutable referents and wrong when “copy” means
   independent mutable state; immutability and cloning are not structurally incompatible, but an
   immutable object normally needs no copy.
-- `super.clone()` conventionally preserves the runtime subtype. A replacement constructor or
-  factory must separately honor any subtype contract. Object cloning does not rerun constructors;
-  copied valid state may preserve invariants, but independent resources/lifecycle need review.
-- The `clone` contract itself is stated in terms of "no constructor is called" conventions
-  rather than semantics, and `x.clone() != x`, `x.clone().getClass() == x.getClass()`,
-  `x.clone().equals(x)` are described as "not absolute requirements".
+- `super.clone()` follows the superclass implementation, which may itself override `clone`.
+  The general API describes fresh identity, matching runtime type and equality as intent, not
+  absolute requirements; that flexibility for overrides does not weaken `Object.clone`'s
+  specified copying behavior. Inspect the implementation chain and the class's public promises
+  before replacing it with a constructor or factory, which must honor any required subtype contract.
 
 The replacements, in the order to prefer them:
 

@@ -1,0 +1,264 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "caching-strategies",
+  "ownedPath": "skills/caching-strategies/**",
+  "reportType": "retrospective handoff requested by coordinator",
+  "recorded": "2026-10-16",
+  "assignmentBaseline": {
+    "committedVersion": "1.2.4",
+    "assignmentVersion": "1.2.4",
+    "preExistingChanges": [],
+    "hashes": [
+      {
+        "path": "skills/caching-strategies/skill.yaml",
+        "sha256": "0C0313AE704E2B34D1E104BEC4C1396CFFF5E76C3251EFC2E1E1256C276077BF"
+      },
+      {
+        "path": "skills/caching-strategies/SKILL.md",
+        "sha256": "B4052DB07527301B14ACAD510F35C90CD41FA0769C3A2AF936311CA40A9BA1AF"
+      },
+      {
+        "path": "skills/caching-strategies/references/incident-triage.md",
+        "sha256": "3162B0E65E5768B6AB89BD81F4E15EA3312DE1EC2A2FAED2BEA8D4F916931A66"
+      },
+      {
+        "path": "skills/caching-strategies/references/configuring-a-cache.md",
+        "sha256": "04A0FF1230ACCFAD6B233E6D6FDE58ACE9A1C38B435FF686F42D117388CA3FD7"
+      }
+    ]
+  },
+  "versions": {
+    "committed": "1.2.4",
+    "initial": "1.2.4",
+    "final": "1.2.5",
+    "rationale": "Single patch for clarified cache selection, load coordination and incident diagnosis; no pre-existing bump."
+  },
+  "filesChangedByReviewer": [
+    {
+      "path": "skills/caching-strategies/skill.yaml",
+      "sha256": "EF9AB8EE7E3C8F1459E7181CFE295115D4147E81E2EB994EA783D5A00667DDB5"
+    },
+    {
+      "path": "skills/caching-strategies/SKILL.md",
+      "sha256": "B282F003794688D65D270FDB9C516B0FE75F66367EB2AEEC9E6C6D8198BD07D1"
+    },
+    {
+      "path": "skills/caching-strategies/references/incident-triage.md",
+      "sha256": "01FA2CBAA4FBE58EFE7F5E177113D70359D7CCB5335E3217DD4A40AFDCEA6FC2"
+    },
+    {
+      "path": "skills/caching-strategies/references/configuring-a-cache.md",
+      "sha256": "E74A23EBAA7D29DDC001BCC31A859B8E961771BF91442C8D08F4DBB82AE219E4"
+    }
+  ],
+  "filesChangedBeforeAssignment": [],
+  "changes": [
+    {
+      "location": "SKILL.md: execution protocol and stampede guidance",
+      "change": "Trace selected manager/resolver or direct instance and actual read/load operation; same-key protection requires using the coordinating operation.",
+      "consequence": "A configured LoadingCache or Caffeine bean alone is no longer treated as proof of origin-load coordination."
+    },
+    {
+      "location": "references/configuring-a-cache.md: Verify the active cache and load path",
+      "change": "Added version-pinned distinctions among Cache.get, LoadingCache.get, split lookup/load/put, independent instances, provider-specific Spring sync and failed/null fills; targeted origin-attempt checks.",
+      "consequence": "Reviewer can acquire the decisive runtime path and select a bounded correction without inferring cross-instance or exactly-once guarantees."
+    },
+    {
+      "location": "references/incident-triage.md: repeated-origin row and hot-key diagnosis",
+      "change": "Diagnose actual selected instance and origin attempts; distinguish split loading, separate caches and failed fills; route to the active-load guidance.",
+      "consequence": "Idle counters on an unused bean and LoadingCache type labels cannot stand in for the invoked load path."
+    },
+    {
+      "location": "skill.yaml: version",
+      "change": "1.2.4 to 1.2.5",
+      "consequence": "Package version reflects immutable-content policy."
+    }
+  ],
+  "preserved": [
+    "Cache/no-cache and saved-work/latency decisions; size and weight bounds; mutable-value ownership.",
+    "Freshness budgets, TTL jitter, refresh, staged warming, probabilistic refresh constraints and invalidation races/generation.",
+    "Authorization on hits, tenant isolation negative cases and absence-versus-failure handling.",
+    "Origin admission/concurrency/timeout budgets, distinct-key limits, Redis pub/sub and serializers, query dependency invalidation.",
+    "Existing Java 11 snippet baseline and dependency/description contracts; no executable shipped snippet changed.",
+    "Existing specialist scope and cross-skill boundaries."
+  ],
+  "commands": [
+    {
+      "command": "Node inline read-only local validation using parseManifest({strict:true}), buildSkillPackage and validatePackage for skills/caching-strategies; relative Markdown target/anchor traversal",
+      "cwd": "C:/git/agent-skills",
+      "exit_code": 0,
+      "output": "4 package files, 0 validation issues; 7 relative links/anchors resolve.",
+      "precision": "Command implementation and result retained in prior turn; no persistent checker file was created."
+    },
+    {
+      "command": "git diff --check -- skills/caching-strategies",
+      "cwd": "C:/git/agent-skills",
+      "exit_code": 0,
+      "output": "No whitespace errors."
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/caching-strategies/SKILL.md skills/caching-strategies/skill.yaml skills/caching-strategies/references/configuring-a-cache.md skills/caching-strategies/references/incident-triage.md",
+      "cwd": "C:/git/agent-skills",
+      "initialResult": "Failed for edited incident-triage tables only.",
+      "exit_code": 0,
+      "output": "Final check: all matched files use Prettier code style; repeated after final wording correction."
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --write skills/caching-strategies/references/incident-triage.md",
+      "cwd": "C:/git/agent-skills",
+      "exit_code": 0,
+      "output": "Formatted only owned edited reference."
+    },
+    {
+      "command": "javac --release 11 -cp C:/Users/robso/.m2/repository/com/github/ben-manes/caffeine/caffeine/3.2.2/caffeine-3.2.2.jar -d C:/Users/robso/AppData/Local/Temp/agent-skills-caching-a664ed30eaf4442191b61f3faaa5b2da C:/Users/robso/AppData/Local/Temp/agent-skills-caching-a664ed30eaf4442191b61f3faaa5b2da/LoadPathCheck.java",
+      "cwd": "C:/git/agent-skills",
+      "exit_code": 0,
+      "output": "Compiler emitted no output; no compile.log exists.",
+      "precision": "Paths normalized to forward slashes; compiler command reconstructed from executed invocation."
+    },
+    {
+      "command": "java -cp \"C:/Users/robso/AppData/Local/Temp/agent-skills-caching-a664ed30eaf4442191b61f3faaa5b2da;C:/Users/robso/.m2/repository/com/github/ben-manes/caffeine/caffeine/3.2.2/caffeine-3.2.2.jar\" LoadPathCheck",
+      "cwd": "C:/git/agent-skills",
+      "exit_code": 0,
+      "output": "PASS LoadingCache.get, cache instances=1, origin attempts=1\nPASS split lookup/load/put, cache instances=1, origin attempts=2\nPASS LoadingCache.get, cache instances=2, origin attempts=2\nPASS failure propagates, recovery loads again, null does not populate",
+      "precision": "Paths normalized to forward slashes."
+    }
+  ],
+  "technicalChecks": [
+    {
+      "classification": "Executed Java technical contract/interleaving check, not an agent behavioral evaluation",
+      "artifactDirectory": "C:/Users/robso/AppData/Local/Temp/agent-skills-caching-a664ed30eaf4442191b61f3faaa5b2da",
+      "source": "C:/Users/robso/AppData/Local/Temp/agent-skills-caching-a664ed30eaf4442191b61f3faaa5b2da/LoadPathCheck.java",
+      "outputLog": "C:/Users/robso/AppData/Local/Temp/agent-skills-caching-a664ed30eaf4442191b61f3faaa5b2da/run.log",
+      "classFiles": [
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-caching-a664ed30eaf4442191b61f3faaa5b2da/LoadPathCheck.class",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-caching-a664ed30eaf4442191b61f3faaa5b2da/LoadPathCheck$Origin.class"
+      ],
+      "dependency": "Existing local Caffeine 3.2.2 JAR; no installation/download/upgrade.",
+      "compiler": "Temurin javac 25.0.3; --release 11",
+      "runtime": "Temurin Java 25.0.3; no Java 11 runtime was executed.",
+      "exercised": [
+        "Same-instance LoadingCache.get returns one origin attempt in this schedule.",
+        "Forced both-miss negative control demonstrates two origin attempts through split lookup/load/put.",
+        "Two independently constructed LoadingCache instances load independently.",
+        "Failed and null fills do not establish a value; recovery can invoke the loader again."
+      ],
+      "mechanism": "Two workers, latches/barriers, bounded 5-second waits, counters on origin calls, explicit finally cleanup and worker termination.",
+      "limitations": [
+        "The schedules exercised are not a universal concurrency proof. Version-pinned provider contracts support the claimed load-operation semantics.",
+        "The positive schedule is not a guarantee that both workers overlapped while origin was blocked; the forced negative schedule explicitly overlaps misses.",
+        "No Spring runtime integration or distributed coordinator was exercised."
+      ]
+    }
+  ],
+  "behavioralEvaluation": {
+    "status": "No actual agent outputs generated; not executed.",
+    "walkthroughs": [
+      "Case A split path: expected minimal correction to the coordinating get operation.",
+      "Case B only invoked method changes: expected recognition of existing same-instance coordination."
+    ],
+    "measuredImprovement": false
+  },
+  "sources": [
+    {
+      "url": "https://github.com/ben-manes/caffeine/blob/v3.2.2/caffeine/src/main/java/com/github/benmanes/caffeine/cache/Cache.java",
+      "version": "Caffeine 3.2.2",
+      "checked": "2026-10-16",
+      "supports": "Atomic get mapping; exception/null non-population; preferred get over split lookup/create/put."
+    },
+    {
+      "url": "https://github.com/ben-manes/caffeine/blob/v3.2.2/caffeine/src/main/java/com/github/benmanes/caffeine/cache/LoadingCache.java",
+      "version": "Caffeine 3.2.2",
+      "checked": "2026-10-16",
+      "supports": "Same-key load waiting when callers invoke LoadingCache.get; no general bulk-load claim added."
+    },
+    {
+      "url": "https://github.com/spring-projects/spring-framework/blob/v6.2.11/spring-context/src/main/java/org/springframework/cache/annotation/Cacheable.java",
+      "version": "Spring Framework 6.2.11",
+      "checked": "2026-10-16",
+      "supports": "Manager/resolver selection; sync is provider-dependent with documented restrictions, not proof of distributed exclusion."
+    }
+  ],
+  "limits": [
+    "Retrospective report; artifact source/run.log and baseline/final hashes retained. No compile.log was generated.",
+    "No measured skill-behavior gain, holdout or independent evaluation.",
+    "No production systems accessed; no Spring selected-manager integration test.",
+    "Global index regeneration and verification are coordinator-owned and pending at this handoff."
+  ],
+  "cases": [
+    {
+      "id": "cache-path-split",
+      "classification": "Proposed reproducible development case; not executed by an agent or an unseen holdout",
+      "input": {
+        "task": "Use caching-strategies to inspect whether this request path supplies the intended same-key origin protection during cold bursts. Write cache-review.md with evidence, any minimal correction and a targeted verification plan. Do not change application code.",
+        "fixtureFiles": {
+          "pom.xml": "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"><modelVersion>4.0.0</modelVersion><groupId>review.fixture</groupId><artifactId>cache-path</artifactId><version>1.0.0</version><properties><maven.compiler.release>11</maven.compiler.release></properties><dependencies><dependency><groupId>com.github.ben-manes.caffeine</groupId><artifactId>caffeine</artifactId><version>3.2.2</version></dependency></dependencies><build><sourceDirectory>src</sourceDirectory><testSourceDirectory>test</testSourceDirectory></build></project>\n",
+          "README.md": "One App instance is shared by request threads in each process; App owns one ProductLookup. Public catalogue values may be cached for ten minutes. Origin calls have independent timeout/admission protection. Review only; preserve this contract and dependency versions.\n",
+          "src/ProductLookup.java": "import com.github.benmanes.caffeine.cache.*;\nimport java.time.Duration;\nimport java.util.function.Function;\npublic final class ProductLookup {\n  private final Function<String,String> origin;\n  private final LoadingCache<String,String> cache;\n  public ProductLookup(Function<String,String> origin) {\n    this.origin=origin;\n    this.cache=Caffeine.newBuilder().maximumSize(100).expireAfterWrite(Duration.ofMinutes(10)).build(origin::apply);\n  }\n  public String find(String key) {\n    String value=cache.getIfPresent(key);\n    if(value==null) { value=origin.apply(key); cache.put(key,value); }\n    return value;\n  }\n}\n",
+          "src/App.java": "import java.util.function.Function;\npublic final class App {\n  private final ProductLookup products;\n  public App(Function<String,String> origin) { products=new ProductLookup(origin); }\n  public String lookup(String key) { return products.find(key); }\n}\n",
+          "test/CacheSmoke.java": "import java.util.concurrent.atomic.AtomicInteger;\npublic class CacheSmoke {\n  public static void main(String[] args) {\n    var calls=new AtomicInteger();\n    var app=new App(k -> { calls.incrementAndGet(); return \"product:\"+k; });\n    app.lookup(\"7\"); app.lookup(\"7\");\n    if(calls.get()!=1) throw new AssertionError(calls.get());\n  }\n}\n"
+        },
+        "prerequisites": "Create an isolated fixture with these files. Make the current skill available. Java execution is optional; reuse cached Caffeine 3.2.2 and existing compiler if running checks. Do not expose this report, validation harness/logs or criteria to the actor."
+      },
+      "criteria": {
+        "expected": [
+          "Read App to shared ProductLookup and the actual invoked getIfPresent/external-origin/put path.",
+          "Identify the duplicate-load interleaving despite the LoadingCache field and passing serial smoke.",
+          "Recommend the minimal coordinating get operation for same-key, same-instance protection while preserving TTL/size/failure/admission contracts.",
+          "Propose a bounded forced-both-miss check counting actual origin attempts and contrast the coordinating path."
+        ],
+        "failureConditions": [
+          "Infers protection from the LoadingCache type or serial smoke alone.",
+          "Introduces distributed locks, upgrades or broad refactoring without evidence.",
+          "Claims the correction provides cross-instance exclusion or suppresses retries after failed/null loads."
+        ]
+      }
+    },
+    {
+      "id": "cache-path-coordinating",
+      "classification": "Proposed paired development case; only find body differs",
+      "input": {
+        "task": "Use caching-strategies to inspect whether this request path supplies the intended same-key origin protection during cold bursts. Write cache-review.md with evidence, any minimal correction and a targeted verification plan. Do not change application code.",
+        "fixtureFiles": {
+          "pom.xml": "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"><modelVersion>4.0.0</modelVersion><groupId>review.fixture</groupId><artifactId>cache-path</artifactId><version>1.0.0</version><properties><maven.compiler.release>11</maven.compiler.release></properties><dependencies><dependency><groupId>com.github.ben-manes.caffeine</groupId><artifactId>caffeine</artifactId><version>3.2.2</version></dependency></dependencies><build><sourceDirectory>src</sourceDirectory><testSourceDirectory>test</testSourceDirectory></build></project>\n",
+          "README.md": "One App instance is shared by request threads in each process; App owns one ProductLookup. Public catalogue values may be cached for ten minutes. Origin calls have independent timeout/admission protection. Review only; preserve this contract and dependency versions.\n",
+          "src/ProductLookup.java": "import com.github.benmanes.caffeine.cache.*;\nimport java.time.Duration;\nimport java.util.function.Function;\npublic final class ProductLookup {\n  private final Function<String,String> origin;\n  private final LoadingCache<String,String> cache;\n  public ProductLookup(Function<String,String> origin) {\n    this.origin=origin;\n    this.cache=Caffeine.newBuilder().maximumSize(100).expireAfterWrite(Duration.ofMinutes(10)).build(origin::apply);\n  }\n  public String find(String key) {\n    return cache.get(key);\n  }\n}\n",
+          "src/App.java": "import java.util.function.Function;\npublic final class App {\n  private final ProductLookup products;\n  public App(Function<String,String> origin) { products=new ProductLookup(origin); }\n  public String lookup(String key) { return products.find(key); }\n}\n",
+          "test/CacheSmoke.java": "import java.util.concurrent.atomic.AtomicInteger;\npublic class CacheSmoke {\n  public static void main(String[] args) {\n    var calls=new AtomicInteger();\n    var app=new App(k -> { calls.incrementAndGet(); return \"product:\"+k; });\n    app.lookup(\"7\"); app.lookup(\"7\");\n    if(calls.get()!=1) throw new AssertionError(calls.get());\n  }\n}\n"
+        },
+        "prerequisites": "Same isolated setup and exclusions as cache-path-split."
+      },
+      "criteria": {
+        "expected": [
+          "Read the invoked LoadingCache.get operation and connect it to the shared instance.",
+          "Revise the diagnosis: version-matched same-instance same-key coordination already exists; no extra lock or replacement for this issue.",
+          "Keep limitations for independent instances, distinct keys, eviction and failed/null fills.",
+          "Do not elevate a successful serial or concurrency check to a universal guarantee."
+        ],
+        "failureConditions": [
+          "Repeats the split-path duplicate-load diagnosis despite the changed method.",
+          "Adds unnecessary locking or removes existing origin limits.",
+          "Claims global exactly-once origin invocation."
+        ]
+      }
+    }
+  ],
+  "crossSkill": {
+    "findings": "No neighboring skill edits or blocking cross-skill issue identified.",
+    "actions": []
+  },
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "prerequisite": "All reviewers have stopped writing."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "prerequisite": "All reviewers have stopped writing and registry regenerated."
+    }
+  ],
+  "allWritesStopped": true,
+  "processesStillWriting": false
+}

@@ -1,0 +1,85 @@
+{
+  "decision": "reject_proposed_remedy_pending_matched_evidence",
+  "metrics": {
+    "innerExecutions": 12000,
+    "innerEmittedRows": 48000,
+    "innerInclusiveWorkMs": 780,
+    "capturedExecutionTimeMs": 991
+  },
+  "metricInterpretations": {
+    "innerExecutions": "The supplied inner node loops, not inferred from output cardinality.",
+    "innerEmittedRows": "Supplied per-loop actualRows 4 times 12000 loops; emitted rows, not examined rows or unique rows.",
+    "innerInclusiveWorkMs": "Supplied per-loop actualTotalTimeMs 0.065 times 12000 loops; approximate inclusive work from rounded instrumented averages, not additional request latency.",
+    "capturedExecutionTimeMs": "The executionTimeMs field in the authored incident fixture; no PostgreSQL execution was performed in this review."
+  },
+  "derivedMetrics": {
+    "ordersScanMs": 90,
+    "ordersRetainedFraction": 0.8,
+    "joinEstimateToActualRatio": 1.0833333333333333,
+    "ordersEstimateToActualRatio": 1.0833333333333333,
+    "endToEndRequestMs": 1320,
+    "unattributedRequestGapMs": 329,
+    "incidentToLiteralResultVolumeRatio": 3000
+  },
+  "evidence": [
+    {
+      "artifact": "incident.json",
+      "finding": "The repeated inner index scan accumulates about 780 ms, compared with 90 ms for the orders scan. The parent node's 980 ms includes child work; its timing must not be summed with children or the 991 ms execution total."
+    },
+    {
+      "artifact": "incident.json",
+      "finding": "Orders retains 12000/(12000+3000)=80% of tested visible rows under the combined filter. An index on state has no established benefit; selectivity alone cannot prove the optimum access path."
+    },
+    {
+      "artifact": "incident.json",
+      "finding": "Full-run join and outer estimates exceed actuals by about 8.3%; inner estimate matches the per-loop actual. No catastrophic cardinality error is demonstrated."
+    },
+    {
+      "artifact": "preview-plan.json",
+      "finding": "LIMIT 20 stopped the nested loop. Its actual 20 is partial output, not a completed result of 20 against estimated 52000. This separate workload is excluded from incident timing."
+    },
+    {
+      "artifact": "incident.json",
+      "finding": "Cost 605000 is not measured milliseconds or seconds. Shared hit/read counters are accumulated accesses, not per-loop averages or unique physical reads. OS-cache and device behavior remain unknown."
+    },
+    {
+      "artifact": "literal-comparison.json",
+      "finding": "Tenant 72 returns 16 rows from 4 orders; tenant 71 returns 48000 rows from 12000 orders. Parameter, volume and unrecorded cache state differ. Prepared mode and same-parameter comparison are absent; 2 ms does not predict tenant 71 or prove a generic-plan defect."
+    }
+  ],
+  "nextExperiment": {
+    "status": "proposed_not_executed",
+    "environment": "Separately authorized PostgreSQL 17 environment with representative data and actual prepared-session history.",
+    "comparison": "Existing prepared query at bigint 71 versus identical full SQL with literal 71::bigint; two pairs in opposite order.",
+    "maxWorkloadExecutions": 4,
+    "perExecutionCancellationMs": 5000,
+    "overallDeadlineMs": 20000,
+    "runtimeSettingChanges": false,
+    "addIndexes": false,
+    "addLimit": false,
+    "flushCaches": false,
+    "controls": "Same schema, role, search_path, snapshot and instrumentation; preserve and record prepared history; cancel through client and stop on any error or timeout.",
+    "capture": [
+      "EXPLAIN (ANALYZE, BUFFERS, SETTINGS, FORMAT JSON)",
+      "Prepared plan mode and history, including parameter symbols versus substituted values",
+      "Planning time, execution time, node rows, loops, inclusive times and buffer activity",
+      "Cache state and existing I/O timings when already enabled"
+    ],
+    "decisionRule": "A repeatably slower confirmed generic execution with comparable cache conditions and a different costly access path supports scoped investigation of reuse. Matching plans/work or custom execution weakens it. Missing history/cache comparability leaves it inconclusive. No result alone justifies a global setting or a 2 ms promise."
+  },
+  "limits": [
+    "Authored exercise fixture; neither incident timings nor comparison timings were measured here.",
+    "No PostgreSQL server or connection supplied, and workload SQL, indexes and runtime changes were prohibited.",
+    "No schema/index definitions, statistics freshness, write rates, row widths, wait samples or device/OS cache data supplied.",
+    "Node timing is inclusive and rounded; it is not an exclusive CPU or I/O attribution.",
+    "The 329 ms request/execution gap is arithmetic only and cannot be assigned to a cause.",
+    "Local verification checks arithmetic, report constraints and byte preservation, not PostgreSQL performance, concurrency or production behavior."
+  ],
+  "sources": [
+    "https://www.postgresql.org/docs/17/using-explain.html",
+    "https://www.postgresql.org/docs/17/sql-explain.html",
+    "https://www.postgresql.org/docs/17/sql-prepare.html",
+    "https://www.postgresql.org/docs/17/runtime-config-query.html",
+    "https://www.postgresql.org/docs/17/monitoring-stats.html"
+  ]
+}

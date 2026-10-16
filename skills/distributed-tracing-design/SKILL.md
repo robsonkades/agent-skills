@@ -39,6 +39,12 @@ independently actionable or required by a semantic convention. Crossing a proces
 often earns protocol spans, but automatic instrumentation may already supply them and some
 boundaries are intentionally summarized.
 
+When changing an instrumented journey, follow the actual caller/consumer through enabled
+agent, library and manual instrumentation. Where records exist, match a representative raw
+span's resource and instrumentation scope/version to that path; a configuration entry or
+backend display name alone does not establish its creator. Apparent duplicates require the
+[identity and origin check](references/traces-in-incidents.md#apparent-duplicate-spans).
+
 Use attributes for properties of a span, events for notable points within it, and logs for
 detailed records. Avoid a span for every trivial method or loop item unless per-item timing
 is the explicit question and sampling/cost support it.
@@ -174,10 +180,10 @@ Prefer same-trace parentage when:
 
 ## Failure modes
 
-| Symptom                                   | Likely modeling issue                            | Response                                   |
+| Symptom                                   | Candidate cause                                  | Response                                   |
 | ----------------------------------------- | ------------------------------------------------ | ------------------------------------------ |
 | operation view has one row per request    | ID/raw path in span name                         | stable template name                       |
-| duplicate HTTP/DB spans                   | manual plus automatic instrumentation            | suppress one owner                         |
+| apparent duplicate HTTP/DB spans          | multiple creators or repeated delivery           | compare identities and origins first       |
 | missing service edge                      | absent/wrong kind or semantic attributes         | fixture-test pinned instrumentation        |
 | consumer attached to unrelated batch item | arbitrary single parent                          | links to all creation contexts             |
 | send span ends before broker callback     | synchronous boundary on async operation          | end on defined completion                  |
@@ -209,7 +215,7 @@ and retain business/request correlation appropriate to logs.
 
 - [Span modelling](references/span-modelling.md) — read when choosing parent/link topology, retries, batches or long-running units.
 - [Semantic conventions](references/semantic-conventions.md) — read before selecting protocol kind/name/status or migrating instrumentation.
-- [Traces in incidents](references/traces-in-incidents.md) — read when interpreting missing/biased trace evidence or testing backend queries.
+- [Traces in incidents](references/traces-in-incidents.md) — read when interpreting missing/biased evidence, investigating apparent duplicates or testing backend queries.
 - opentelemetry-performance for sampling, propagation and cost.
 - structured-logging for event/correlation fields.
 - metrics-and-cardinality for aggregate schemas.

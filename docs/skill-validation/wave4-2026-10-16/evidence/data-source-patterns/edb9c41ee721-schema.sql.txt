@@ -1,0 +1,2 @@
+create table operator_availability (id int primary key, available boolean not null, version bigint not null);
+insert into operator_availability values (1, true, 0), (2, true, 0);

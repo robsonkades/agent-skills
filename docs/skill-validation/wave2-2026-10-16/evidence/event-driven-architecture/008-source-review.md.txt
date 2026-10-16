@@ -1,0 +1,9 @@
+# Event-driven architecture source review
+
+Checked 2026-10-16. These are API/specification/design-source checks, not executed broker behavior.
+
+- Kafka 4.1.x KafkaProducer Javadoc: https://kafka.apache.org/41/javadoc/org/apache/kafka/clients/producer/KafkaProducer.html — send returns a Future<RecordMetadata> for the producer request; acks=0 does not wait for broker acknowledgement. That contract supplies no consumer-completion guarantee. Official indexed page consulted; direct multi-page web open stalled and was terminated.
+- RFC 9110 section 15.3.3: https://www.rfc-editor.org/rfc/rfc9110.html#section-15.3.3 — 202 denotes accepted but not completed processing and describes a status-monitor representation. Full normative section retrieved through Invoke-WebRequest from https://www.rfc-editor.org/rfc/rfc9110.txt after a web query stalled.
+- Microsoft Azure Architecture Center CQRS: https://learn.microsoft.com/en-us/azure/architecture/patterns/cqrs — distinguishes separate models in one store from separate asynchronously updated read stores; documents stale-read risk. Guidance page last updated 2025-02-21 per consulted result.
+
+The choices to return an existing committed result, retain an authoritative read, bound a projection wait, or expose pending status are design recommendations conditioned on the caller's required observation. The source facts do not establish this catalog's behavioral improvement or a particular deployment's latency/consistency.

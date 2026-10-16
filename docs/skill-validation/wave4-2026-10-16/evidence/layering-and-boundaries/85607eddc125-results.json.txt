@@ -1,0 +1,121 @@
+[
+  {
+    "label": "version",
+    "tool": "java.exe",
+    "arguments": [
+      "-version"
+    ],
+    "exitCode": 0,
+    "expectedExit": 0,
+    "stdout": null,
+    "stderr": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n"
+  },
+  {
+    "label": "compile-original",
+    "tool": "javac.exe",
+    "arguments": [
+      "--release",
+      "17",
+      "-d",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\classes-original",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\case-fixtures\\src\\com\\acme\\orders\\domain\\OrderService.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\case-fixtures\\src\\com\\acme\\orders\\integration\\LocalNotifier.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\case-fixtures\\src\\com\\acme\\orders\\web\\OrderController.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\case-fixtures\\src\\com\\acme\\orders\\Bootstrap.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\BoundaryProbe.java"
+    ],
+    "exitCode": 0,
+    "expectedExit": 0,
+    "stdout": null,
+    "stderr": null
+  },
+  {
+    "label": "compile-isolated-original",
+    "tool": "javac.exe",
+    "arguments": [
+      "--release",
+      "17",
+      "-classpath",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\empty",
+      "-sourcepath",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\empty",
+      "-d",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\classes-isolated-original",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\case-fixtures\\src\\com\\acme\\orders\\domain\\OrderService.java"
+    ],
+    "exitCode": 1,
+    "expectedExit": 1,
+    "stdout": null,
+    "stderr": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\case-fixtures\\src\\com\\acme\\orders\\domain\\OrderService.java:3: error: package com.acme.orders.integration does not exist\r\nimport com.acme.orders.integration.LocalNotifier;\r\n                                  ^\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\case-fixtures\\src\\com\\acme\\orders\\domain\\OrderService.java:7: error: cannot find symbol\r\n    private final LocalNotifier notifier;\r\n                  ^\r\n  symbol:   class LocalNotifier\r\n  location: class OrderService\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\case-fixtures\\src\\com\\acme\\orders\\domain\\OrderService.java:9: error: cannot find symbol\r\n    public OrderService(LocalNotifier notifier) {\r\n                        ^\r\n  symbol:   class LocalNotifier\r\n  location: class OrderService\r\n3 errors\r\n"
+  },
+  {
+    "label": "compile-inverted-core",
+    "tool": "javac.exe",
+    "arguments": [
+      "--release",
+      "17",
+      "-classpath",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\empty",
+      "-sourcepath",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\empty",
+      "-d",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\classes-core",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\counterfactual\\com\\acme\\orders\\domain\\NotificationPort.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\counterfactual\\com\\acme\\orders\\domain\\OrderService.java"
+    ],
+    "exitCode": 0,
+    "expectedExit": 0,
+    "stdout": null,
+    "stderr": null
+  },
+  {
+    "label": "compile-inverted-complete",
+    "tool": "javac.exe",
+    "arguments": [
+      "--release",
+      "17",
+      "-d",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\classes-inverted",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\counterfactual\\com\\acme\\orders\\domain\\NotificationPort.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\counterfactual\\com\\acme\\orders\\domain\\OrderService.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\counterfactual\\com\\acme\\orders\\integration\\LocalNotifier.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\case-fixtures\\src\\com\\acme\\orders\\web\\OrderController.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\case-fixtures\\src\\com\\acme\\orders\\Bootstrap.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\BoundaryProbe.java"
+    ],
+    "exitCode": 0,
+    "expectedExit": 0,
+    "stdout": null,
+    "stderr": null
+  },
+  {
+    "label": "run-original",
+    "tool": "java.exe",
+    "arguments": [
+      "--limit-modules",
+      "java.base",
+      "-cp",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\classes-original",
+      "BoundaryProbe"
+    ],
+    "exitCode": 0,
+    "expectedExit": 0,
+    "stdout": "PASS: JDK wall-clock access without framework classes\r\nPASS: fixed clock before/at/after deadline without DI framework\r\nPASS: confirmation, invalid-ID control and composition\r\n",
+    "stderr": null
+  },
+  {
+    "label": "run-inverted",
+    "tool": "java.exe",
+    "arguments": [
+      "--limit-modules",
+      "java.base",
+      "-cp",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\classes-inverted",
+      "BoundaryProbe"
+    ],
+    "exitCode": 0,
+    "expectedExit": 0,
+    "stdout": "PASS: JDK wall-clock access without framework classes\r\nPASS: fixed clock before/at/after deadline without DI framework\r\nPASS: confirmation, invalid-ID control and composition\r\n",
+    "stderr": null
+  }
+]

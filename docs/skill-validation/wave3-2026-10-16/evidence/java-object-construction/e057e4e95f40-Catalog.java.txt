@@ -1,0 +1,20 @@
+public final class Catalog {
+    private final String region;
+
+    private Catalog() {
+        region = Defaults.region();
+    }
+
+    private static final class Holder {
+        static final Catalog INSTANCE = new Catalog();
+    }
+
+    public static Catalog instance() {
+        return Holder.INSTANCE;
+    }
+
+    public String region() {
+        return region;
+    }
+}
+

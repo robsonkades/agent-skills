@@ -1,0 +1,37 @@
+# Revisão local
+
+Revise o projeto e o pedido em docs/review-request.md. Decida se o contrato aceito está sustentado, violado ou depende de evidência ausente. Explique o caminho efetivo e as garantias pertinentes. Preserve comportamento adequado; proponha correção somente para uma lacuna demonstrada. Entregue REVIEW.md e assessment.json; não altere fontes, contratos ou dependências. Checks próprios podem ficar em output/checks/. Diferencie prova de contrato, resultados observados e trabalho não executado.
+
+O projeto está em input/project; output/project é sua cópia de trabalho para compilar e executar os checks. Os arquivos fornecidos de fontes/contratos/configuração permanecem imutáveis em ambas as cópias. Não implemente correções na produção desta tarefa de revisão; snippets, propostas e verificadores próprios podem ficar em output/checks.
+
+Entregue output/REVIEW.md, output/assessment.json e output/execution.json. O formato mínimo de assessment.json é:
+
+```json
+{
+  "disposition": "supported | violated | unresolved",
+  "basis": "Your reasoning tied to concrete code and accepted contract",
+  "requiredChange": "Necessary correction, or null",
+  "missingEvidence": [],
+  "checked": [],
+  "limits": []
+}
+```
+
+execution.json deve registrar comandos reais (programa/argumentos/cwd/exit/saída ou log), arquivos efetivamente lidos (nome, hash e se a leitura foi completa/truncada), URLs primárias consultadas, limites e allWritesStopped:true ao terminar. Diferencie leitura de conteúdo, listagem e mero hash. Registre timestamps reais de início/fim se disponíveis; não invente custo, tokens, duração ou execução. Não exponha raciocínio privado; basta a justificativa técnica e as evidências utilizadas.
+
+Há uma skill local em skill/SKILL.md. Leia seu corpo completo e consulte referências condicionais quando pertinentes. Registre o conteúdo efetivamente consultado; a mera presença do arquivo não conta como leitura. Não busque outras skills.
+
+## Escopo de execução
+
+- Seu único diretório de trabalho é C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-12. Nas chamadas de shell, sempre informe esse workdir (ou um filho dentro de output).
+- Leia somente TASK.md, input/**, output/** e skill/** deste run. Não leia repositório externo, outros runs, critérios, resultados anteriores, config de agentes ou arquivos globais de skills. Você não está sozinho no filesystem; não reverta trabalho de outros.
+- Pode usar o Node disponível e executáveis Java em C:/Users/robso/.jdks/temurin-25.0.3/bin. O alvo é Java SE25, sem preview/dependências/instalações. Comandos filhos devem ter timeout de no máximo 30 segundos; não deixe processos ativos.
+- Consultas web somente para especificações/API/documentação primária pertinente (docs.oracle.com, openjdk.org, fontes do OpenJDK e SEI CERT). Registre URLs e falhas, sem copiar documentos inteiros. Não consulte catálogos de skills, este repositório remoto, respostas de terceiros, outros experimentos ou pessoas.
+- Toda escrita fica em output/**. Não faça commits, instalações, deploys ou alterações de configuração real. Não delegue nem abra agentes adicionais.
+- Esta é uma revisão: perguntas materiais sem resposta devem ficar como lacunas em REVIEW.md; não bloqueie esperando contato com alguém. Não reabra requisitos já aceitos.
+- Limite planejado por tentativa: 8 minutos. Prefira a menor investigação suficiente; registre indisponibilidades sem trocar por afirmações inventadas.
+- Ao terminar, declare allWritesStopped:true e confirme que subprocessos terminaram.
+
+Artefatos novos de compilação em output/project/.build são permitidos. Os arquivos fornecidos continuam protegidos; para controles que alterem código, crie uma cópia separada em output/checks.
+
+Mantenha REVIEW.md conciso (até 800 palavras). Não crie um framework de auditoria: um JSON com os comandos observados, leituras e limites é suficiente.

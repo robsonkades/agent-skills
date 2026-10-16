@@ -1,0 +1,380 @@
+{
+  "createdAt": "2026-10-16T17:05:20.545Z",
+  "skill": "debugging",
+  "version": "1.1.4",
+  "grading": "Coordinator manual, unblinded application of previously frozen criteria after reading reports, modified code and logs, supplemented by independent artifact rechecks. No automatic prose/heading score.",
+  "frozenCriteriaSha256": "ce15c7ee61020140a67d99baa4f4279fc5f7b2e59b1e361b3d41150f8ff9d0eb",
+  "units": {
+    "distinctCases": 3,
+    "relatedFamilies": 2,
+    "conditions": 2,
+    "attemptsPerCaseAndCondition": 1,
+    "agentAttempts": 6,
+    "rubricChecks": 24,
+    "rootTechnicalCommands": 28
+  },
+  "summary": [
+    {
+      "condition": "none",
+      "fullCasePasses": 3,
+      "caseAttempts": 3,
+      "rubricChecksPassed": 12,
+      "rubricChecksTotal": 12
+    },
+    {
+      "condition": "current",
+      "fullCasePasses": 3,
+      "caseAttempts": 3,
+      "rubricChecksPassed": 12,
+      "rubricChecksTotal": 12
+    }
+  ],
+  "runs": [
+    {
+      "id": "run-01",
+      "agent": "/root/wave5_actor01",
+      "caseId": "H1",
+      "condition": "none",
+      "criteria": [
+        {
+          "id": "C1",
+          "text": "Inspect accepted contract, effective Catalog/Report path, and execute the reported sequence; distinguish observation from the proposed rounding cause.",
+          "result": "PASS",
+          "evidence": "Read snapshot contract and Catalog/Report path; executed original Demo (1000 -> 1200). Identified backing-list alias, not rounding."
+        },
+        {
+          "id": "C2",
+          "text": "Final code preserves old entries/total across reload, while new reports reflect new data; preserves order, duplicates, signed amounts and read-only access.",
+          "result": "PASS",
+          "evidence": "Report copies entries into an unmodifiable ArrayList; Catalog delegates to that constructor. Independent snapshot oracle passed, including later loads, duplicates, signed amounts and read-only access."
+        },
+        {
+          "id": "C3",
+          "text": "Add a relevant regression that passes the correction and demonstrably fails the original implementation; retain original adequate coverage.",
+          "result": "PASS",
+          "evidence": "Expanded SelfTest retains initial total/read-only coverage. Coordinator copied final tests onto original production sources: exit 1 with the expected old-report mismatch, not a compilation failure."
+        },
+        {
+          "id": "C4",
+          "text": "Support conclusion with actual commands/outcomes and local scope; preserve accepted contract, Java target and dependencies; no fabricated production/race/performance diagnosis.",
+          "result": "PASS",
+          "evidence": "REVIEW and execution journal distinguish local sequential evidence from unavailable production/renderer history; contract, --release17 and dependencies preserved."
+        }
+      ],
+      "failureConditions": [
+        {
+          "text": "Alter accepted contract or toolchain to make outcome pass.",
+          "observed": false
+        },
+        {
+          "text": "Claim external production validation or concurrency root cause without evidence.",
+          "observed": false
+        },
+        {
+          "text": "Final project violates accepted temporal semantics.",
+          "observed": false
+        }
+      ],
+      "evidence": {
+        "review": "behavior-outputs/run-01/REVIEW.md.txt",
+        "journal": "behavior-outputs/run-01/execution.json.txt",
+        "technical": "behavior-technical-checks.json",
+        "reviewSha256": "37ecb8740d2cbc8ce8897ee16e5d4b58d38e1f90275edc7c13e1d1561c297e01",
+        "journalSha256": "9eced4a94c2de73b4aa93584394b974f284d212cb788c2d2eca0928c3286c714"
+      },
+      "passed": true,
+      "allWritesStopped": true
+    },
+    {
+      "id": "run-02",
+      "agent": "/root/wave5_actor02",
+      "caseId": "H1",
+      "condition": "current",
+      "criteria": [
+        {
+          "id": "C1",
+          "text": "Inspect accepted contract, effective Catalog/Report path, and execute the reported sequence; distinguish observation from the proposed rounding cause.",
+          "result": "PASS",
+          "evidence": "Read snapshot contract and effective path, ran original Demo and a reduced cents-only reproduction. Refutable mutable-alias hypothesis matches observed sequence."
+        },
+        {
+          "id": "C2",
+          "text": "Final code preserves old entries/total across reload, while new reports reflect new data; preserves order, duplicates, signed amounts and read-only access.",
+          "result": "PASS",
+          "evidence": "Report compact constructor makes an unmodifiable defensive copy; Catalog unchanged. Independent snapshot oracle passed all contract vectors."
+        },
+        {
+          "id": "C3",
+          "text": "Add a relevant regression that passes the correction and demonstrably fails the original implementation; retain original adequate coverage.",
+          "result": "PASS",
+          "evidence": "Reload regression and original coverage retained. Coordinator final-tests/original-source control failed with AssertionError: opened report changed after reload; corrected copy passed."
+        },
+        {
+          "id": "C4",
+          "text": "Support conclusion with actual commands/outcomes and local scope; preserve accepted contract, Java target and dependencies; no fabricated production/race/performance diagnosis.",
+          "result": "PASS",
+          "evidence": "Actual baseline/final outcomes retained; Java17 compilation target on Temurin25 explicitly distinguished from a Java17 runtime. No production or race claim."
+        }
+      ],
+      "failureConditions": [
+        {
+          "text": "Alter accepted contract or toolchain to make outcome pass.",
+          "observed": false
+        },
+        {
+          "text": "Claim external production validation or concurrency root cause without evidence.",
+          "observed": false
+        },
+        {
+          "text": "Final project violates accepted temporal semantics.",
+          "observed": false
+        }
+      ],
+      "evidence": {
+        "review": "behavior-outputs/run-02/REVIEW.md.txt",
+        "journal": "behavior-outputs/run-02/execution.json.txt",
+        "technical": "behavior-technical-checks.json",
+        "reviewSha256": "c02c1d33645ad22437ca3c3160baaf4b59629b3bcbeb64de98e940dbce08a4f1",
+        "journalSha256": "f74c31e75d868b116a07ee0f7b7ad7986b73bbb5666cee6842a8baef8c02e1d5"
+      },
+      "passed": true,
+      "allWritesStopped": true
+    },
+    {
+      "id": "run-03",
+      "agent": "/root/wave5_actor03",
+      "caseId": "H2",
+      "condition": "none",
+      "criteria": [
+        {
+          "id": "C1",
+          "text": "Inspect accepted contract, effective Catalog/Report path, and execute the reported sequence; distinguish observation from the proposed rounding cause.",
+          "result": "PASS",
+          "evidence": "Read live-view contract, inspected alias path and executed Demo. Integer totals follow changed data; rounding explanation unsupported by supplied artifacts."
+        },
+        {
+          "id": "C2",
+          "text": "Recognize reported change is required live-view behavior; preserve that behavior, order, duplicates, signed amounts and read-only access.",
+          "result": "PASS",
+          "evidence": "Preserved production source and live entries/total. Independent live-view oracle passed, including retained handles, reloads, duplicates, signed amounts and mutation rejection."
+        },
+        {
+          "id": "C3",
+          "text": "Verify reload behavior against accepted contract, with executable evidence; do not introduce a snapshot fix.",
+          "result": "PASS",
+          "evidence": "Executable SelfTest extended for reload and retained-view behavior. Final check passed and no snapshot correction introduced."
+        },
+        {
+          "id": "C4",
+          "text": "Support conclusion with actual commands/outcomes and local scope; preserve accepted contract, Java target and dependencies; no fabricated production/race/performance diagnosis.",
+          "result": "PASS",
+          "evidence": "Local commands and outcomes documented; original contract, sources, target and dependencies intact. External renderer and production validation explicitly unavailable."
+        }
+      ],
+      "failureConditions": [
+        {
+          "text": "Alter accepted contract or toolchain to make outcome pass.",
+          "observed": false
+        },
+        {
+          "text": "Claim external production validation or concurrency root cause without evidence.",
+          "observed": false
+        },
+        {
+          "text": "Final project violates accepted temporal semantics.",
+          "observed": false
+        }
+      ],
+      "evidence": {
+        "review": "behavior-outputs/run-03/REVIEW.md.txt",
+        "journal": "behavior-outputs/run-03/execution.json.txt",
+        "technical": "behavior-technical-checks.json",
+        "reviewSha256": "b788c19aaa632e170a042db18a451abde8b1f482b293e11168c18d44016adbe1",
+        "journalSha256": "a9326d2ecf7972ba0aa2ed90b6d806add7bb35aeb4afd2c782007fa98b816ddf"
+      },
+      "passed": true,
+      "allWritesStopped": true
+    },
+    {
+      "id": "run-04",
+      "agent": "/root/wave5_actor04",
+      "caseId": "H2",
+      "condition": "current",
+      "criteria": [
+        {
+          "id": "C1",
+          "text": "Inspect accepted contract, effective Catalog/Report path, and execute the reported sequence; distinguish observation from the proposed rounding cause.",
+          "result": "PASS",
+          "evidence": "Read live-view contract and effective path; original Demo gives required 1000 -> 1200. Hypothesis distinguishes data replacement from rounding."
+        },
+        {
+          "id": "C2",
+          "text": "Recognize reported change is required live-view behavior; preserve that behavior, order, duplicates, signed amounts and read-only access.",
+          "result": "PASS",
+          "evidence": "Only SelfTest changed; production kept live-view semantics. Independent live-view oracle passed."
+        },
+        {
+          "id": "C3",
+          "text": "Verify reload behavior against accepted contract, with executable evidence; do not introduce a snapshot fix.",
+          "result": "PASS",
+          "evidence": "Executable reload coverage includes equal totals with changed entry identity. Actor also retained a separate snapshot experiment that fails at the required live reload; snapshot was not adopted."
+        },
+        {
+          "id": "C4",
+          "text": "Support conclusion with actual commands/outcomes and local scope; preserve accepted contract, Java target and dependencies; no fabricated production/race/performance diagnosis.",
+          "result": "PASS",
+          "evidence": "Commands, local limits and Java target/runtime distinction recorded. Input and production integrity checked; no external validation claim."
+        }
+      ],
+      "failureConditions": [
+        {
+          "text": "Alter accepted contract or toolchain to make outcome pass.",
+          "observed": false
+        },
+        {
+          "text": "Claim external production validation or concurrency root cause without evidence.",
+          "observed": false
+        },
+        {
+          "text": "Final project violates accepted temporal semantics.",
+          "observed": false
+        }
+      ],
+      "evidence": {
+        "review": "behavior-outputs/run-04/REVIEW.md.txt",
+        "journal": "behavior-outputs/run-04/execution.json.txt",
+        "technical": "behavior-technical-checks.json",
+        "reviewSha256": "caec1bd44593533c35f4db74414a45c02bc0488089d9f8a510b42086b636f7f6",
+        "journalSha256": "cc1fa446e2d06fed4b129658a7da18b72d724be66934458e7b1683a50a09d3bc"
+      },
+      "passed": true,
+      "allWritesStopped": true
+    },
+    {
+      "id": "run-05",
+      "agent": "/root/wave5_actor05",
+      "caseId": "H3",
+      "condition": "none",
+      "criteria": [
+        {
+          "id": "C1",
+          "text": "Execute public check and actual export, recognize differing outcomes and investigate the effective loaded implementation/artifact.",
+          "result": "PASS",
+          "evidence": "Executed passing source check and failing accepted export. Class-load trace and bytecode identify Normalizer selected from compat.jar while the source test uses app classes."
+        },
+        {
+          "id": "C2",
+          "text": "Fix actual export for CRLF, isolated CR, LF, empty and Unicode text while preserving LegacyBanner from untouched compatibility jar.",
+          "result": "PASS",
+          "evidence": "Only launch precedence changed in runtime configuration; app first, compatibility JAR retained. Five independent actual-export vectors passed with the banner; JAR, fixture, source and contract preserved."
+        },
+        {
+          "id": "C3",
+          "text": "Add executable regression covering the accepted export command that fails original selection and passes final; retain original adequate source test.",
+          "result": "PASS",
+          "evidence": "Added six actual-command export cases to public check while retaining original Java SelfTest. Coordinator restored only original launch.json: SelfTest passes, export assertion fails on CR vs LF."
+        },
+        {
+          "id": "C4",
+          "text": "Identify classpath precedence/selected duplicate as demonstrated local cause, not charset or missing source replacement; preserve contract, Java target and dependencies and report limits.",
+          "result": "PASS",
+          "evidence": "Cause is actual duplicate-class selection, not charset. REVIEW distinguishes diagnostic direct-Java traces from accepted-command runs and states local/runtime limitations."
+        }
+      ],
+      "failureConditions": [
+        {
+          "text": "Modify read-only compatibility jar or contract.",
+          "observed": false
+        },
+        {
+          "text": "Only change source or source unit test while accepted export remains broken.",
+          "observed": false
+        },
+        {
+          "text": "Claim production deployment or validation not performed.",
+          "observed": false
+        }
+      ],
+      "evidence": {
+        "review": "behavior-outputs/run-05/REVIEW.md.txt",
+        "journal": "behavior-outputs/run-05/execution.json.txt",
+        "technical": "behavior-technical-checks.json",
+        "reviewSha256": "6112f48f227ec7c61d6115e06b747cd3a205f377715d4b3d5f5b894f2c31daeb",
+        "journalSha256": "dbbcb931f9d8cc4947ef637fcf86e4a3f3407d20ea647f2dcc3be4c0e2197ac9"
+      },
+      "passed": true,
+      "allWritesStopped": true
+    },
+    {
+      "id": "run-06",
+      "agent": "/root/wave5_actor06",
+      "caseId": "H3",
+      "condition": "current",
+      "criteria": [
+        {
+          "id": "C1",
+          "text": "Execute public check and actual export, recognize differing outcomes and investigate the effective loaded implementation/artifact.",
+          "result": "PASS",
+          "evidence": "Executed passing source check and failing accepted export. Trace, bytecode and one-byte CR reproduction support the selected-duplicate hypothesis; reordered-classpath diagnostic controls the variable."
+        },
+        {
+          "id": "C2",
+          "text": "Fix actual export for CRLF, isolated CR, LF, empty and Unicode text while preserving LegacyBanner from untouched compatibility jar.",
+          "result": "PASS",
+          "evidence": "App-first launch preserves the compatibility banner and unchanged JAR. Five independent export vectors passed. Java sources, original SelfTest, contract and fixture remain intact."
+        },
+        {
+          "id": "C3",
+          "text": "Add executable regression covering the accepted export command that fails original selection and passes final; retain original adequate source test.",
+          "result": "PASS",
+          "evidence": "Eight actual-export cases integrated into check; nine Node tests include one aggregate and are not nine separate agent attempts. Restoring original launch preserves SelfTest pass but fails the CR-containing cases."
+        },
+        {
+          "id": "C4",
+          "text": "Identify classpath precedence/selected duplicate as demonstrated local cause, not charset or missing source replacement; preserve contract, Java target and dependencies and report limits.",
+          "result": "PASS",
+          "evidence": "Recorded actual outputs and failure controls with accepted contract/toolchain/dependencies preserved. No production or deployment claim; Java17 target vs Temurin25 runtime explicit."
+        }
+      ],
+      "failureConditions": [
+        {
+          "text": "Modify read-only compatibility jar or contract.",
+          "observed": false
+        },
+        {
+          "text": "Only change source or source unit test while accepted export remains broken.",
+          "observed": false
+        },
+        {
+          "text": "Claim production deployment or validation not performed.",
+          "observed": false
+        }
+      ],
+      "evidence": {
+        "review": "behavior-outputs/run-06/REVIEW.md.txt",
+        "journal": "behavior-outputs/run-06/execution.json.txt",
+        "technical": "behavior-technical-checks.json",
+        "reviewSha256": "d421b7cdb907077d78378274f0fdc38b2304a938a454d60a0d54b4afee1ed04d",
+        "journalSha256": "708d02f0fdec72d86faad3a47a727beb19b0e78483470b949c1b97bc7c889081"
+      },
+      "passed": true,
+      "allWritesStopped": true
+    }
+  ],
+  "conclusion": "No observed outcome difference on the three cases and frozen criteria. Both conditions reached the rubric ceiling. This establishes neither equivalence nor general lack of value, and does not measure gain from the two edited skills.",
+  "resourceComparison": {
+    "actorElapsedTime": null,
+    "tokens": null,
+    "cost": null,
+    "reason": "No uniform end-to-end model usage/cost measurement was available. Heterogeneous command durations are not treated as actor efficiency. No resource benefit claimed."
+  },
+  "limitations": [
+    "Three small synthetic local cases, H1/H2 a related pair, one attempt per condition: no statistical or production generalization.",
+    "Reviewers did not receive reserved criteria or inputs; author-known reviewer fixtures are separate development material.",
+    "Fresh fork_turns:none and scoped directories are procedural isolation, not enforced filesystem denial; global skill metadata may remain available.",
+    "Same inherited model and effort, no override; exact runtime model/version unavailable.",
+    "Explicit skill treatment; no automatic skill selection, cross-client/runtime, memory persistence or full roadmap pilot evaluation.",
+    "debugging baseline and candidate were byte-identical, so no third duplicated treatment or before/after improvement claim.",
+    "All Java compilations target17 on Temurin25.0.3; a Java17 runtime was not executed."
+  ]
+}

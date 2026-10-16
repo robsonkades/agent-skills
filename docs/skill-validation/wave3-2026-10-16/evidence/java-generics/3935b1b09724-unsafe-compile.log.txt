@@ -1,0 +1,7 @@
+UnsafeBoundaryProbe.java:5:39: compiler.warn.unchecked.varargs.non.reifiable.type: java.util.List<T>
+UnsafeBoundaryProbe.java:10:49: compiler.warn.prob.found.req: (compiler.misc.unchecked.cast.to.type), java.lang.Object[], T[]
+UnsafeBoundaryProbe.java:14:9: compiler.warn.raw.class.use: java.lang.Class, java.lang.Class<T>
+UnsafeBoundaryProbe.java:16:27: compiler.warn.unchecked.meth.invocation.applied: kindname.method, put, java.lang.Class<T>,T, java.lang.Class,int, kindname.class, Attributes
+UnsafeBoundaryProbe.java:16:28: compiler.warn.prob.found.req: (compiler.misc.unchecked.assign), java.lang.Class, java.lang.Class<T>
+UnsafeBoundaryProbe.java:25:37: compiler.warn.unchecked.generic.array.creation: java.util.List<java.lang.String>[]
+6 warnings

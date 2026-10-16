@@ -1,0 +1,258 @@
+{
+  "task": "A12",
+  "scopeRoot": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A12",
+  "writeRoot": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A12/output",
+  "status": "finished",
+  "allWritesStopped": true,
+  "skillContext": "Only the three supplied SKILL.md files and their six local reference files; no global skills, catalog, other sessions, browser, network services or sub-agents.",
+  "meaningfulReads": [
+    "TASK.md",
+    "input/project/README.md",
+    "input/project/REQUEST.md",
+    "input/project/proposal.md",
+    "input/project/incident.json",
+    "input/skills/idempotency/SKILL.md",
+    "input/skills/timeouts-and-deadlines/SKILL.md",
+    "input/skills/retries-and-backoff/SKILL.md",
+    "input/skills/idempotency/references/key-selection.md",
+    "input/skills/idempotency/references/idempotency-key-filter.md",
+    "input/skills/timeouts-and-deadlines/references/deadline-propagation.md",
+    "input/skills/timeouts-and-deadlines/references/java-timeout-surface.md",
+    "input/skills/retries-and-backoff/references/retry-in-java.md",
+    "input/skills/retries-and-backoff/references/retry-failure-modes.md"
+  ],
+  "commands": [
+    {
+      "tool": "exec_command",
+      "workingDirectory": "C:/git/agent-skills",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A12/TASK.md'",
+      "exitCode": 0,
+      "result": "Read complete task scope, immutable inputs, permitted artifact writes, no browsing/delegation, duration limit and final journal requirement."
+    },
+    {
+      "tool": "exec_command",
+      "workingDirectory": "C:/git/agent-skills",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A12/input/skills/idempotency/SKILL.md'",
+      "exitCode": 0,
+      "result": "Read local idempotency skill; stable operation identity, ambiguity, recovery and external-effect limitations."
+    },
+    {
+      "tool": "exec_command",
+      "workingDirectory": "C:/git/agent-skills",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A12/input/skills/timeouts-and-deadlines/SKILL.md'",
+      "exitCode": 0,
+      "result": "Read requested timeout skill. Combined tool display truncated part of the output; reread complete file below."
+    },
+    {
+      "tool": "exec_command",
+      "workingDirectory": "C:/git/agent-skills",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A12/input/skills/retries-and-backoff/SKILL.md'",
+      "exitCode": 0,
+      "result": "Read local retry skill; layered attempts, bucket scope and ambiguous-effect rules."
+    },
+    {
+      "tool": "exec_command",
+      "workingDirectory": "C:/git/agent-skills",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A12/input/project/README.md'; Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A12/input/project/REQUEST.md'; rg --files 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A12/input/project' 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A12/output'",
+      "exitCode": 0,
+      "result": "Read README and REQUEST; inventory contained only README.md, REQUEST.md, proposal.md and incident.json in each project/output directory. No Java sources or run.mjs supplied. Java requirements are conditional on a Java case."
+    },
+    {
+      "tool": "exec_command",
+      "workingDirectory": "C:/git/agent-skills",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A12/input/project/proposal.md'",
+      "exitCode": 0,
+      "result": "Read proposed 1.1 wire cap, broken-bucket claim, eight-attempt claim, definitive failure/fresh intent and cancellation claims."
+    },
+    {
+      "tool": "exec_command",
+      "workingDirectory": "C:/git/agent-skills",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A12/input/project/incident.json'",
+      "exitCode": 0,
+      "result": "Read full authored fixture: 1000 logical, 1060 outer, 1600 wire, 900 successes, 60 grants, four local buckets, nested maxima and 0/50/52/80-ms effect trace."
+    },
+    {
+      "tool": "exec_command",
+      "workingDirectory": "C:/git/agent-skills",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A12/input/skills/timeouts-and-deadlines/SKILL.md'",
+      "exitCode": 0,
+      "result": "Complete reread; bounded wait differs from cancellation/effect completion, and configured maxima require deadline clipping."
+    },
+    {
+      "tool": "exec_command",
+      "workingDirectory": "C:/git/agent-skills",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A12/input/skills/retries-and-backoff/references/retry-in-java.md'",
+      "exitCode": 0,
+      "result": "Requested full reference; combined tool display truncated its middle. Full content recovered by subsequent first-160 and skip-160 reads."
+    },
+    {
+      "tool": "exec_command",
+      "workingDirectory": "C:/git/agent-skills",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A12/input/skills/retries-and-backoff/references/retry-failure-modes.md'",
+      "exitCode": 0,
+      "result": "Read complete reference: layered multiplication, scoped budgets, matching cohorts, unknown writes, narrow review validation."
+    },
+    {
+      "tool": "exec_command",
+      "workingDirectory": "C:/git/agent-skills",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A12/input/skills/retries-and-backoff/references/retry-in-java.md' | Select-Object -First 160",
+      "exitCode": 0,
+      "result": "Read first 160 lines, including safety decision, ambiguity persistence, deadline admission and process-local token bucket."
+    },
+    {
+      "tool": "exec_command",
+      "workingDirectory": "C:/git/agent-skills",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A12/input/skills/idempotency/references/key-selection.md'",
+      "exitCode": 0,
+      "result": "Read complete key-selection reference: preserve intent identity, namespace/retention/fingerprint limitations, no retry-key reset."
+    },
+    {
+      "tool": "exec_command",
+      "workingDirectory": "C:/git/agent-skills",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A12/input/skills/timeouts-and-deadlines/references/deadline-propagation.md'",
+      "exitCode": 0,
+      "result": "Read complete propagation reference: shrinking budgets, reserve, bounded cancellation observation, configured versus operational bounds."
+    },
+    {
+      "tool": "exec_command",
+      "workingDirectory": "C:/git/agent-skills",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A12/input/skills/idempotency/references/idempotency-key-filter.md'",
+      "exitCode": 0,
+      "result": "Read complete external-effect recovery reference: UNKNOWN state, negative lookup insufficient against late application, no invented replay guarantee."
+    },
+    {
+      "tool": "exec_command",
+      "workingDirectory": "C:/git/agent-skills",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A12/input/skills/timeouts-and-deadlines/references/java-timeout-surface.md'",
+      "exitCode": 0,
+      "result": "Read complete timeout/cancellation reference; no concrete client or provider version is supplied for applying API-specific settings."
+    },
+    {
+      "tool": "exec_command",
+      "workingDirectory": "C:/git/agent-skills",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A12/input/skills/retries-and-backoff/references/retry-in-java.md' | Select-Object -Skip 160",
+      "exitCode": 0,
+      "result": "Read remaining reference; completed recovery of prior truncated display. No external reference links followed."
+    },
+    {
+      "tool": "exec_command",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A12/output",
+      "command": "@'\nimport fs from \"node:fs\";\nimport crypto from \"node:crypto\";\nconst incident = JSON.parse(fs.readFileSync(\"incident.json\", \"utf8\"));\nconst result = JSON.parse(fs.readFileSync(\"result.json\", \"utf8\"));\nconst expected = {\n  configuredBeforeMax: incident.configuration.outerMaxAttemptsIncludingInitial * incident.configuration.sdkMaxAttemptsIncludingInitial * incident.configuration.gatewayCurrentAttempts,\n  configuredAfterMax: incident.configuration.outerMaxAttemptsIncludingInitial * incident.configuration.sdkMaxAttemptsIncludingInitial * incident.configuration.gatewayProposedAttempts,\n  outerAttemptsPerLogical: incident.cohort.outerAttempts / incident.cohort.logicalCalls,\n  wireAttemptsPerLogical: incident.cohort.wireAttempts / incident.cohort.logicalCalls,\n  aggregateGrantUpperBound: incident.deployment.processes * incident.deployment.initialTokensPerProcess + incident.deployment.refillPerSuccess * incident.cohort.successesThatRefill\n};\nfor (const [key, value] of Object.entries(expected)) {\n  if (result[key] !== value) throw new Error(key + \": mismatched deliverable metric\");\n}\nif (incident.cohort.outerAttempts - incident.cohort.logicalCalls !== result.observedCounters.outerExtraAttempts) throw new Error(\"outer count mismatch\");\nif (incident.cohort.wireAttempts - incident.cohort.outerAttempts !== result.observedCounters.sdkExtraWireAttempts) throw new Error(\"SDK count mismatch\");\nif (incident.cohort.outerRetryGrants > expected.aggregateGrantUpperBound) throw new Error(\"grant bound exceeded\");\nconst times = incident.effectTrace.events.map(event => event.atMs);\nif (JSON.stringify(times) !== \"[0,50,52,80]\") throw new Error(\"trace timing changed\");\nif (times[3] - times[1] !== result.effectAssessment.minimumPostTimeoutWorkMs) throw new Error(\"residual work mismatch\");\nconst review = fs.readFileSync(\"REVIEW.md\", \"utf8\");\nconst reviewWordCount = review.trim().split(/\\s+/u).length;\nif (reviewWordCount > 750) throw new Error(\"review exceeds 750 words\");\nconst hash = file => crypto.createHash(\"sha256\").update(fs.readFileSync(file)).digest(\"hex\");\nconst immutableCopyHashes = {};\nfor (const name of [\"README.md\", \"REQUEST.md\", \"proposal.md\", \"incident.json\"]) {\n  const value = hash(name);\n  if (value !== hash(\"../input/project/\" + name)) throw new Error(\"immutable copy changed: \" + name);\n  immutableCopyHashes[name] = value;\n}\nconst files = fs.readdirSync(\".\");\nconst allowed = new Set([\"README.md\", \"REQUEST.md\", \"proposal.md\", \"incident.json\", \"REVIEW.md\", \"result.json\", \"execution.json\"]);\nfor (const file of files) if (!allowed.has(file)) throw new Error(\"unexpected artifact: \" + file);\nconsole.log(JSON.stringify({ checksPassed: true, expected, reviewWordCount, immutableCopyHashes, sdkExtraWireAttempts: result.observedCounters.sdkExtraWireAttempts, traceTimesMs: times, javaSourcesOrRunnerPresent: false, files }, null, 2));\n'@ | node --input-type=module",
+      "exitCode": 0,
+      "stdout": "{\n  \"checksPassed\": true,\n  \"expected\": {\n    \"configuredBeforeMax\": 6,\n    \"configuredAfterMax\": 18,\n    \"outerAttemptsPerLogical\": 1.06,\n    \"wireAttemptsPerLogical\": 1.6,\n    \"aggregateGrantUpperBound\": 130\n  },\n  \"reviewWordCount\": 624,\n  \"immutableCopyHashes\": {\n    \"README.md\": \"0a082fc19eafaaa6457ed4a4e130b1f2bf3d3383c5cf38b7b6d8b58f18dd69db\",\n    \"REQUEST.md\": \"7dd644bf4411edc116c859953b0972780a1dd7ab6b5ca9f4fbab9e403e2167da\",\n    \"proposal.md\": \"86ee8bc99f8a7684662305b0a3e7250fe6db9bb03fdb2f879ca45bd40384caa9\",\n    \"incident.json\": \"025cfcb39ab16fc0a0d508183c6d30377c35445d1e334a1c55b146572e801181\"\n  },\n  \"sdkExtraWireAttempts\": 540,\n  \"traceTimesMs\": [\n    0,\n    50,\n    52,\n    80\n  ],\n  \"javaSourcesOrRunnerPresent\": false,\n  \"files\": [\n    \"incident.json\",\n    \"proposal.md\",\n    \"README.md\",\n    \"REQUEST.md\",\n    \"result.json\",\n    \"REVIEW.md\"\n  ]\n}\n",
+      "result": "Validated actual REVIEW.md/result.json and immutable supplied copies."
+    },
+    {
+      "tool": "exec_command",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A12/output",
+      "command": "@'\nimport fs from \"node:fs\";\nimport crypto from \"node:crypto\";\nconst journal = JSON.parse(fs.readFileSync(\"execution.json\", \"utf8\"));\nconst result = JSON.parse(fs.readFileSync(\"result.json\", \"utf8\"));\nconst incident = JSON.parse(fs.readFileSync(\"incident.json\", \"utf8\"));\nconst expected = {\n  configuredBeforeMax: incident.configuration.outerMaxAttemptsIncludingInitial * incident.configuration.sdkMaxAttemptsIncludingInitial * incident.configuration.gatewayCurrentAttempts,\n  configuredAfterMax: incident.configuration.outerMaxAttemptsIncludingInitial * incident.configuration.sdkMaxAttemptsIncludingInitial * incident.configuration.gatewayProposedAttempts,\n  outerAttemptsPerLogical: incident.cohort.outerAttempts / incident.cohort.logicalCalls,\n  wireAttemptsPerLogical: incident.cohort.wireAttempts / incident.cohort.logicalCalls,\n  aggregateGrantUpperBound: incident.deployment.processes * incident.deployment.initialTokensPerProcess + incident.deployment.refillPerSuccess * incident.cohort.successesThatRefill\n};\nfor (const [key, value] of Object.entries(expected)) if (result[key] !== value) throw new Error(key + \" mismatch\");\nconst wordCount = fs.readFileSync(\"REVIEW.md\", \"utf8\").trim().split(/\\s+/u).length;\nif (wordCount > 750) throw new Error(\"review word limit\");\nconst hash = file => crypto.createHash(\"sha256\").update(fs.readFileSync(file)).digest(\"hex\");\nfor (const name of [\"README.md\", \"REQUEST.md\", \"proposal.md\", \"incident.json\"]) {\n  if (hash(name) !== hash(\"../input/project/\" + name)) throw new Error(\"immutable file changed\");\n}\nif (result.decision !== \"reject\" || result.observedCounters.sdkExtraWireAttempts !== 540) throw new Error(\"review consistency\");\nif (result.effectAssessment.minimumPostTimeoutWorkMs !== 30) throw new Error(\"trace consistency\");\nif (journal.commands.length !== 18) throw new Error(\"command journal incomplete\");\nresult.validation = {\n  status: \"passed\",\n  checks: [\"Required metrics recomputed from incident.json\", \"Extra-attempt counters and event ordering checked\", \"result.json and execution.json parsed\", \"REVIEW.md within 750 words\", \"Four immutable copies match input/project SHA-256\", \"Only permitted files present\"],\n  reviewWordCount: wordCount,\n  javaExecution: \"Not applicable: no Java sources or run.mjs supplied\",\n  externalCalls: false\n};\nJSON.parse(JSON.stringify(result));\nfs.writeFileSync(\"result.json\", JSON.stringify(result, null, 2) + \"\\n\");\nconst actual = JSON.parse(fs.readFileSync(\"result.json\", \"utf8\"));\nif (actual.validation.status !== \"passed\") throw new Error(\"final result not persisted\");\nconst files = fs.readdirSync(\".\").sort();\nconst expectedFiles = [\"README.md\", \"REQUEST.md\", \"proposal.md\", \"incident.json\", \"REVIEW.md\", \"result.json\", \"execution.json\"].sort();\nif (JSON.stringify(files) !== JSON.stringify(expectedFiles)) throw new Error(\"unexpected output files\");\nconst finalSummary = { checksPassed: true, reviewWordCount: wordCount, metrics: expected, immutableCopiesUnchanged: 4, journalCommands: journal.commands.length, javaSubprocesses: 0, backgroundProcessesStarted: 0, allWritesStopped: true };\njournal.commands[journal.commands.length - 1].result = finalSummary;\njournal.commands[journal.commands.length - 1].exitCode = null;\njournal.commands[journal.commands.length - 1].exitNote = \"Final journal is written during this synchronous command; the tool reports its exit status after return.\";\njournal.status = \"finished\";\njournal.allWritesStopped = true;\njournal.finalValidation = finalSummary;\njournal.finalWriteNote = \"The following synchronous execution.json write is the final task write. No background processes were started and no further writes are scheduled.\";\nJSON.parse(JSON.stringify(journal));\nfs.writeFileSync(\"execution.json\", JSON.stringify(journal, null, 2) + \"\\n\");\nconsole.log(JSON.stringify(finalSummary, null, 2));\n'@ | node --input-type=module",
+      "exitCode": null,
+      "result": {
+        "checksPassed": true,
+        "reviewWordCount": 624,
+        "metrics": {
+          "configuredBeforeMax": 6,
+          "configuredAfterMax": 18,
+          "outerAttemptsPerLogical": 1.06,
+          "wireAttemptsPerLogical": 1.6,
+          "aggregateGrantUpperBound": 130
+        },
+        "immutableCopiesUnchanged": 4,
+        "journalCommands": 18,
+        "javaSubprocesses": 0,
+        "backgroundProcessesStarted": 0,
+        "allWritesStopped": true
+      },
+      "exitNote": "Final journal is written during this synchronous command; the tool reports its exit status after return."
+    }
+  ],
+  "writeActions": [
+    {
+      "tool": "apply_patch",
+      "paths": [
+        "REVIEW.md",
+        "result.json"
+      ],
+      "result": "Created review and metric/evidence artifact successfully; tool returned without error."
+    },
+    {
+      "tool": "apply_patch",
+      "paths": [
+        "execution.json"
+      ],
+      "result": "This initial execution journal records all reads/commands plus the finalizer command before execution."
+    },
+    {
+      "tool": "exec_command",
+      "paths": [
+        "result.json",
+        "execution.json"
+      ],
+      "result": "Finalizer updates validation status and writes the journal last; its result is recorded in commands."
+    }
+  ],
+  "checksExecuted": {
+    "checksPassed": true,
+    "expected": {
+      "configuredBeforeMax": 6,
+      "configuredAfterMax": 18,
+      "outerAttemptsPerLogical": 1.06,
+      "wireAttemptsPerLogical": 1.6,
+      "aggregateGrantUpperBound": 130
+    },
+    "reviewWordCount": 624,
+    "immutableCopyHashes": {
+      "README.md": "0a082fc19eafaaa6457ed4a4e130b1f2bf3d3383c5cf38b7b6d8b58f18dd69db",
+      "REQUEST.md": "7dd644bf4411edc116c859953b0972780a1dd7ab6b5ca9f4fbab9e403e2167da",
+      "proposal.md": "86ee8bc99f8a7684662305b0a3e7250fe6db9bb03fdb2f879ca45bd40384caa9",
+      "incident.json": "025cfcb39ab16fc0a0d508183c6d30377c35445d1e334a1c55b146572e801181"
+    },
+    "sdkExtraWireAttempts": 540,
+    "traceTimesMs": [
+      0,
+      50,
+      52,
+      80
+    ],
+    "javaSourcesOrRunnerPresent": false,
+    "files": [
+      "incident.json",
+      "proposal.md",
+      "README.md",
+      "REQUEST.md",
+      "result.json",
+      "REVIEW.md"
+    ]
+  },
+  "notExecuted": [
+    "Java or javac: no Java implementation or run.mjs in this document-only task",
+    "Repository npm verification: unrelated to this isolated supplied exercise",
+    "Proposed two-second acceptance replay: described next verification only",
+    "External services, production fault injection, network workloads and runtime changes"
+  ],
+  "limitations": [
+    "Skill routes to packages outside the supplied context were not followed.",
+    "All operational counters/timestamps are authored fixture evidence, not production captures.",
+    "Runtime/provider contracts and fleet behavior were not verified.",
+    "Initial combined read displays were truncated; the affected timeout/retry reference content was reread."
+  ],
+  "backgroundProcessesStarted": 0,
+  "javaSubprocesses": 0,
+  "finalValidation": {
+    "checksPassed": true,
+    "reviewWordCount": 624,
+    "metrics": {
+      "configuredBeforeMax": 6,
+      "configuredAfterMax": 18,
+      "outerAttemptsPerLogical": 1.06,
+      "wireAttemptsPerLogical": 1.6,
+      "aggregateGrantUpperBound": 130
+    },
+    "immutableCopiesUnchanged": 4,
+    "journalCommands": 18,
+    "javaSubprocesses": 0,
+    "backgroundProcessesStarted": 0,
+    "allWritesStopped": true
+  },
+  "finalWriteNote": "The following synchronous execution.json write is the final task write. No background processes were started and no further writes are scheduled."
+}

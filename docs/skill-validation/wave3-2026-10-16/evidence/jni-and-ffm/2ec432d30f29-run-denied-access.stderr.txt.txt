@@ -1,0 +1,7 @@
+Exception in thread "main" java.lang.IllegalCallerException: Illegal native access from an unnamed module (file:/C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jni-and-ffm-validation/case-b/classes/)
+	at java.base/java.lang.Module.ensureNativeAccess(Module.java:307)
+	at java.base/java.lang.System$1.ensureNativeAccess(System.java:2107)
+	at java.base/jdk.internal.reflect.Reflection.ensureNativeAccess(Reflection.java:123)
+	at java.base/jdk.internal.foreign.abi.AbstractLinker.upcallStub(AbstractLinker.java:130)
+	at NativeFixture.<init>(NativeFixture.java:26)
+	at BoundaryTest.main(BoundaryTest.java:3)

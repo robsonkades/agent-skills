@@ -1,0 +1,73 @@
+diff --git a/skills/cancellation-and-interruption/SKILL.md b/skills/cancellation-and-interruption/SKILL.md
+index d54e8d9..944a267 100644
+--- a/skills/cancellation-and-interruption/SKILL.md
++++ b/skills/cancellation-and-interruption/SKILL.md
+@@ -118,6 +118,11 @@ threads and JDK/provider implementations have evolved. Read the exact API contra
+ control on the target, and prefer owner-initiated close only when close semantics and connection
+ reuse are acceptable.
+ 
++Check the resource consequences of interruption as well as explicit close. Interrupting blocking
++I/O on an `InterruptibleChannel` closes that channel; a task-owned `cancel(true)` can therefore
++disrupt other users of a borrowed channel. Task ownership alone does not establish resource
++isolation. Read the blocking-operations reference before choosing that cancellation path.
++
+ ## Futures and stages
+ 
+ - `Future.cancel(false)` can prevent execution before start; if already running, it does not request
+@@ -194,6 +199,7 @@ process so a failing termination assertion cannot hang the test suite.
+ - swallowed/cleared interrupt and task/framework boundary translation;
+ - noninterruptible provider/native call and owner close/abort;
+ - resource released/reusable versus deliberately closed;
++- borrowed-channel effects on other users, including interrupt status already set before I/O;
+ - partial write/transaction/message/remote unknown outcome;
+ - executor/scope shutdown and process grace expiry;
+ - virtual/platform thread and supported JDK/provider variants;
+diff --git a/skills/cancellation-and-interruption/references/uninterruptible-operations.md b/skills/cancellation-and-interruption/references/uninterruptible-operations.md
+index 5204d56..3af446e 100644
+--- a/skills/cancellation-and-interruption/references/uninterruptible-operations.md
++++ b/skills/cancellation-and-interruption/references/uninterruptible-operations.md
+@@ -102,6 +102,22 @@ For pooled/shared/multiplexed resources, close can abort unrelated work. Prefer
+ cancel. Test completion racing close, close failure, return-to-pool before old work exits, and remote
+ commit after local close.
+ 
++Interruption can close a channel without application code calling `close()`. Under JDK 25's
++`InterruptibleChannel` contract, interrupting a thread blocked in I/O closes the channel and
++throws `ClosedByInterruptException` with interrupt status set. Entering blocking I/O with status
++already set also closes the channel and throws that exception, leaving status set. An interrupt
++check immediately before the call does not eliminate the race with a later interrupt.
++
++Trace resource ownership separately from the task's Future. If two readers borrow one cached
++`FileChannel`, cancelling one by interrupting its I/O can invalidate the channel for the other.
++A separately opened, request-owned channel confines that closure to its owner; verify the other
++reader remains usable. Check whether a request-level cancellation mechanism exists or independent
++resources fit the actual sharing/consistency contract before changing the design. A token alone
++does not wake an already blocked read, and clearing status silently loses the cancellation signal.
++If no isolated stop mechanism is available, report the residual-work/latency constraint rather
++than treating caller abandonment as an isolated abort. Cancelling all users requires the shared
++resource owner's policy.
++
+ ## JDBC and remote calls
+ 
+ JDBC behavior is driver/database-specific. Retain handles, configure deadlines at the owning layer,
+@@ -129,6 +145,8 @@ only exceptional completion of the caller future.
+ - [CompletableFuture execution and timeout contracts](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html)
+   — non-async callback execution, receiver mutation and derived-future construction; checked 2026-09-19.
+ - [InterruptibleChannel](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/nio/channels/InterruptibleChannel.html)
++- [FileChannel](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/nio/channels/FileChannel.html)
++  — interrupt-driven closure and operation-specific exceptions; inspect the exact method.
+ - [JDBC `Statement.cancel`](<https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Statement.html#cancel()>)
+ - [Java HTTP client](https://docs.oracle.com/en/java/javase/25/docs/api/java.net.http/java/net/http/HttpClient.html)
+ - [OpenJDK 25.0.3 cancelable future](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/java.net.http/share/classes/jdk/internal/net/http/common/MinimalFuture.java)
+diff --git a/skills/cancellation-and-interruption/skill.yaml b/skills/cancellation-and-interruption/skill.yaml
+index 663bd46..1a1bab1 100644
+--- a/skills/cancellation-and-interruption/skill.yaml
++++ b/skills/cancellation-and-interruption/skill.yaml
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: cancellation-and-interruption
+-version: 1.1.4
++version: 1.1.5
+ description: >-
+   Designing cooperative cancellation in Java across interruption, Future/CompletableFuture,
+   executor/scope shutdown, deadlines, resource close/abort, CPU loops, blocking APIs, native calls,

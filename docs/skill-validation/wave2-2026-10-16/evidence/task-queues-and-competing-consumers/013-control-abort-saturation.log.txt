@@ -1,0 +1,2 @@
+policy=abort phase=saturation normalReturns=2 received=[first, second, third] completed=[first, second] recovered=[third] unresolved=[] permits=3 executorTerminated=true threads=[first@pool-1-thread-1, second@pool-1-thread-1]
+exit=0 expected=0

@@ -1,0 +1,37 @@
+[
+  {
+    "file": "README.md",
+    "sha256": "A9E61238B03C45B3A034C72ADDD0F73E9C36880D023C3149B497D4A9B03C988D",
+    "copyMatches": true
+  },
+  {
+    "file": "REQUEST.md",
+    "sha256": "E00BDDC7DA551CB680825DB8A682002FEC7A26BD80212BDC2A0E9ED7ACBF81BD",
+    "copyMatches": true
+  },
+  {
+    "file": "schema.sql",
+    "sha256": "8D3BB884DD3EFC9B3F6419C9ED7259CDB95F94D6AF385A1ED97F52B6E9665718",
+    "copyMatches": true
+  },
+  {
+    "file": "seed.sql",
+    "sha256": "BB2404BC6C875BAB75DF324B9BDA8EFE402F671CB3A2DCF13E722E66F8037B31",
+    "copyMatches": true
+  },
+  {
+    "file": "current.sql",
+    "sha256": "6B359FC8D3FB98E936A77AFB73F331AD3955E347A1C4B9E371D3F2720D2D0770",
+    "copyMatches": true
+  },
+  {
+    "file": "proposed.sql",
+    "sha256": "3E28C96E76CEC40B332729CD90C147C03A9C6D3929AEF976A8590778F99ADEBD",
+    "copyMatches": true
+  },
+  {
+    "file": "fixture.mjs",
+    "sha256": "8FF06A6157C9D865EF4B7F2CB5B88CBEA2969575B7EF551B9ACC1D8D36353BD6",
+    "copyMatches": true
+  }
+]

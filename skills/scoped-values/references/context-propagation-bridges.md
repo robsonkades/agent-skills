@@ -73,13 +73,17 @@ That two-line preamble is worth wrapping in one helper used by every fork in the
 
 ## Spring Security
 
-`SecurityContextHolder` is `ThreadLocal`-based (or `InheritableThreadLocal` with
-`MODE_INHERITABLETHREADLOCAL`). Do not try to replace it — the framework reads it from
-places you do not control, including expression-based access control. Two rules:
+`SecurityContextHolder` defaults to `MODE_THREADLOCAL`, but its storage strategy is configurable.
+Inspect the effective `SecurityContextHolderStrategy` and the executor's existing context
+decorators before adding a bridge; preserve custom strategies and the framework's authoritative
+read path, including expression-based access control. Do not change the JVM-wide strategy during
+request handling to propagate one task. Two rules:
 
 - Do not switch it to `MODE_INHERITABLETHREADLOCAL` to "fix" missing context in child
-  threads under virtual threads. It copies per child thread and reintroduces exactly the
-  footprint problem, while still not covering executor submissions.
+  threads under virtual threads. Inheritable maps add per-child state. When inheritance is
+  enabled, the standard strategy passes a `setContext` value by reference rather than cloning
+  it. A child's `getContext().setAuthentication(...)` can therefore change its parent's
+  authentication. It still does not capture context at executor submission.
 - In a `StructuredTaskScope`, set it inside the subtask from the inherited scoped value, or
   use `DelegatingSecurityContextExecutor` when submitting to an executor. Restore prior
   context in finally for manual bridges; use a fresh context and do not share mutable
@@ -88,6 +92,11 @@ places you do not control, including expression-based access control. Two rules:
 The same reasoning applies to any framework context whose read path you do not own: the
 authoritative context may be the framework's, with ScopedValue as an application projection.
 Do not treat a tenant header or a bound object as proof of authorization.
+
+See [Spring Security 6.4.3 holder strategy selection](https://github.com/spring-projects/spring-security/blob/6.4.3/core/src/main/java/org/springframework/security/core/context/SecurityContextHolder.java)
+and its [inheritable strategy](https://github.com/spring-projects/spring-security/blob/6.4.3/core/src/main/java/org/springframework/security/core/context/InheritableThreadLocalSecurityContextHolderStrategy.java).
+Verify the resolved version/custom strategy; test child mutation and normal/exceptional restoration
+of an existing outer context, not just whether the child can read a principal.
 
 ## OpenTelemetry
 

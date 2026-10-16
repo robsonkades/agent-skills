@@ -1,0 +1,56 @@
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\component-and-release-boundaries/references/component-principles.md" "b/C:\\git\\agent-skills\\skills\\component-and-release-boundaries/references/component-principles.md"
+index 7a1412c..8b3b079 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\component-and-release-boundaries/references/component-principles.md"
++++ "b/C:\\git\\agent-skills\\skills\\component-and-release-boundaries/references/component-principles.md"
+@@ -31,10 +31,11 @@ Classes that change for the same reason, at the same time, belong in the same co
+ is the single-responsibility principle raised to component scale: a component should have one
+ reason to change.
+ 
+-The payoff is that a business change touches one artefact, so one thing is released,
+-revalidated and deployed. The failure is the opposite: a change to VAT rules touching
+-`billing-core`, `billing-model`, `tax-common` and `reporting-shared`, each of which must be
+-released in dependency order.
++The payoff is fewer independently evolved artefacts to change and publish for one reason.
++That does not imply one consumer rebuild, validation or deployment: a shared library may be
++packaged into several applications. Inspect those delivery paths before counting the savings.
++The opposite cost is a change to VAT rules touching `billing-core`, `billing-model`,
++`tax-common` and `reporting-shared`, each requiring its own publication and compatibility work.
+ 
+ This is the principle to favour while a system is young. Maintainability dominates
+ reusability when there are no external reusers.
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\component-and-release-boundaries/references/shared-code-in-a-fleet.md" "b/C:\\git\\agent-skills\\skills\\component-and-release-boundaries/references/shared-code-in-a-fleet.md"
+index c9900c5..91d7766 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\component-and-release-boundaries/references/shared-code-in-a-fleet.md"
++++ "b/C:\\git\\agent-skills\\skills\\component-and-release-boundaries/references/shared-code-in-a-fleet.md"
+@@ -224,6 +224,15 @@ believing:
+   metadata, then exercise its resolved runtime dependencies. Follow the
+   [consumer dependency checks](component-principles.md#check-the-published-consumer-boundary);
+   a passing producer build or converged dependency tree alone does not establish compatibility.
+-- **The upgrade blast radius.** Count consumers affected and distinguish upgrades required
+-  eventually, within a deadline, or simultaneously. Only the last establishes a lockstep
+-  deployment requirement for that change; record the contract that forces it.
++- **The upgrade blast radius.** Count library publications, consumer source recompilations,
++  application repackaging and deployments separately. An unchanged public API can let an
++  already-built consumer link to a new library; this does not update a jar embedded in an
++  immutable application distribution or image. Inspect the packaging recipe and deployed
++  dependency set: those consumers need a new package and rollout to receive the fix, even
++  when their class files can be reused. An externally supplied library may instead require
++  a supported dependency/configuration update and restart, without repackaging the application.
++  [Binary-compatible method-body changes](https://docs.oracle.com/javase/specs/jls/se21/html/jls-13.html#jls-13.4.22)
++  illustrate why recompilation and delivery are different; compatibility still needs the
++  behavioral checks above. Distinguish upgrades required eventually, within a deadline, or
++  simultaneously. Only the last establishes a lockstep deployment requirement for that change;
++  record the contract that forces it.
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\component-and-release-boundaries/skill.yaml" "b/C:\\git\\agent-skills\\skills\\component-and-release-boundaries/skill.yaml"
+index 6af5116..48e45ea 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\component-and-release-boundaries/skill.yaml"
++++ "b/C:\\git\\agent-skills\\skills\\component-and-release-boundaries/skill.yaml"
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: component-and-release-boundaries
+-version: 1.2.4
++version: 1.2.5
+ description: >-
+   Deciding what becomes an independently releasable component — a Maven module, a JPMS module, a
+   published library — and what that costs: the tension between reusing code and being able to

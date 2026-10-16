@@ -1,0 +1,2 @@
+Exception in thread "main" java.lang.AssertionError: 5 of 6 compatibility cases failed
+	at ConsumerContract.main(ConsumerContract.java:29)

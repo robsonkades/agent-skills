@@ -1,0 +1,11 @@
+# Accepted architecture decision
+
+Target: Java 17, no preview and no third-party dependencies.
+The module is a synchronous single-process application. The local notifier records messages in memory;
+this is the current implementation, not a broker or a promise of durable delivery.
+Each valid confirmation returns its order ID and records one confirmation message.
+Invalid IDs must fail before any message is recorded. Concurrency and retry behavior are outside this API.
+Keep the current web, domain and integration responsibilities; there is one implementation of notification.
+Domain code must remain independent of the web entrypoint and frameworks.
+The chosen dependency policy permits domain -> integration; independent compilation without integration
+is not required.

@@ -1,0 +1,66 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+
+const actor=path.resolve('../..');
+const project=process.cwd();
+const readCommands=[
+  {
+    cwd:actor, argv:['pwsh','-Command',"Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-15/TASK.md' -Raw"],
+    exit:0, stdout:'Printed TASK.md, including the authorized boundaries and the no-skills condition.',stderr:'', outputRepresentation:'actor summary'
+  },
+  {
+    cwd:actor, argv:['pwsh','-Command',"Get-Content -LiteralPath 'README.md','REQUEST.md','CONTRACT.md' -Raw\nGet-ChildItem -LiteralPath 'input/project' -Force | Select-Object Name,Mode"],
+    exit:0, stdout:'Listed lib, src, support, test, check.mjs, CONTRACT.md, dependencies.json, README.md, REQUEST.md, RUNBOOK.md and toolchain.json in input/project.',
+    stderr:"Get-Content: Cannot find path 'README.md' because it does not exist.\nGet-Content: Cannot find path 'REQUEST.md' because it does not exist.\nGet-Content: Cannot find path 'CONTRACT.md' because it does not exist.",
+    outputRepresentation:'actor summary; nonterminating PowerShell read errors preserved despite final exit 0'
+  },
+  {
+    cwd:actor,argv:['pwsh','-Command',"Get-Content -LiteralPath 'input/project/README.md','input/project/REQUEST.md','input/project/CONTRACT.md','input/project/dependencies.json','input/project/toolchain.json','input/project/check.mjs','input/project/RUNBOOK.md' -Raw\nrg --files input/project/src input/project/test input/project/support\nGet-ChildItem -LiteralPath 'output' -Force | Select-Object Name,Mode"],
+    exit:0,stdout:'Printed the seven requested project files, enumerated six Java source/test/support files, and observed the preexisting output/project directory.',stderr:'',outputRepresentation:'actor summary'
+  },
+  {
+    cwd:actor,argv:['pwsh','-Command',"Get-Content -LiteralPath 'input/project/src/work/Publisher.java','input/project/src/work/Dispatcher.java','input/project/src/work/Config.java','input/project/src/work/Checkpoint.java','input/project/test/work/Smoke.java','input/project/support/work/ReceiverClient.java' -Raw\nGet-ChildItem -LiteralPath 'output/project' -Force | Select-Object Name,Mode"],
+    exit:0,stdout:'Printed all six Java files and confirmed the output project contains the expected frozen files and directories.',stderr:'',outputRepresentation:'actor summary'
+  }
+];
+const checks=['baseline-smoke','baseline-recovery','repaired-recovery','repaired-smoke','frozen-files'].map(label=>({label,...JSON.parse(fs.readFileSync('../checks/logs/'+label+'.json','utf8')),log:'checks/logs/'+label+'.json'}));
+const walk=directory=>fs.readdirSync(directory,{withFileTypes:true}).flatMap(entry=>entry.isDirectory()?walk(path.join(directory,entry.name)):[path.join(directory,entry.name)]);
+const hash=file=>crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const changes=[...walk('src'),...walk('test'),'RUNBOOK.md'].filter(file=>!fs.existsSync(path.join('../../input/project',file))||hash(file)!==hash(path.join('../../input/project',file)));
+const assessment=JSON.parse(fs.readFileSync('../assessment.json','utf8'));
+if(assessment.decision!=='changed')throw new Error('Unexpected decision');
+const words=fs.readFileSync('../REVIEW.md','utf8').trim().split(/\s+/).length;
+if(words>800)throw new Error('Review exceeds word limit');
+if(checks.map(check=>check.exit).join(',')!=='0,1,0,0,0')throw new Error('Unexpected check results');
+const execution={
+  recordingNotes:'Actor-reported execution record, not an independent complete trace. Initial read-command outputs are explicitly summarized; check logs preserve exact captured stdout/stderr. No skills or catalog were read, no delegation, dependency installation, external application connection, or repository-wide verification was performed because the assigned task confines work to this fixture.',
+  actorDirectory:actor,
+  reads:[
+    'TASK.md','input/project/README.md','input/project/REQUEST.md','input/project/CONTRACT.md','input/project/dependencies.json','input/project/toolchain.json','input/project/check.mjs','input/project/RUNBOOK.md',
+    'input/project/src/work/Publisher.java','input/project/src/work/Dispatcher.java','input/project/src/work/Config.java','input/project/src/work/Checkpoint.java','input/project/test/work/Smoke.java','input/project/support/work/ReceiverClient.java',
+    'input/project/lib/** (frozen hash comparison only)','output/project/** (compilation, tests, byte comparison and final change inventory)',
+    'output/checks/logs/*.json','output/assessment.json','output/REVIEW.md',
+    'Declared Java 25 toolchain and its runtime resources; local node/PowerShell tooling'
+  ],
+  commands:[...readCommands,...checks,{
+    cwd:project,argv:['node','../checks/finalize.mjs'],exit:0,
+    stdout:'Validated assessment JSON, review word limit, exact expected check exit sequence and change inventory; wrote execution.json as the final artifact.',stderr:'',outputRepresentation:'actor completion summary'
+  }],
+  modifications:[
+    {tool:'apply_patch',files:['output/checks/run-check.mjs','output/project/test/work/RecoveryRegression.java'],result:'success'},
+    {tool:'apply_patch',files:['output/project/src/work/Dispatcher.java','output/project/RUNBOOK.md'],result:'success'},
+    {tool:'apply_patch',files:['output/checks/verify-frozen.mjs','output/REVIEW.md','output/assessment.json'],result:'success'},
+    {tool:'apply_patch',files:['output/checks/finalize.mjs'],result:'success'},
+    {operation:'Compiler/test output and records',paths:['output/project/.build/**','output/checks/logs/*.json','output/execution.json']}
+  ],
+  projectChanges:changes,
+  sources:[{kind:'local contract',path:'input/project/CONTRACT.md'},{kind:'local implementation',path:'input/project/src/work/Dispatcher.java'},{kind:'frozen receiver surrogate',path:'input/project/support/work/ReceiverClient.java'},{kind:'runtime evidence',path:'output/checks/logs'}],
+  externalSources:[],
+  verification:{baselineSmoke:'passed',baselineRecovery:'failed as intended on duplicate receiver effect after retained replay',repairedRecovery:'passed',repairedSmoke:'passed',frozenFiles:'19 files identical to input',reviewWordCount:words},
+  time:{checkStart:checks[0].startedAt,checkEnd:checks.at(-1).finishedAt,recordedAt:new Date().toISOString()},
+  processStatus:'All check subprocesses returned and each recovery child JVM was waited for to completion. No background processes were started. This finalizer performs the last synchronous artifact write and exits.',
+  allWritesStopped:true
+};
+fs.writeFileSync('../execution.json',JSON.stringify(execution,null,2)+'\n');
+console.log('Final artifacts complete; '+words+' review words; '+changes.length+' changed/added project files; all checks stopped.');

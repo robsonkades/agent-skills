@@ -1,0 +1,48 @@
+{
+  "status": "passed",
+  "verificationScope": "Local artifact arithmetic, required fields, report length, and immutable-copy preservation; no SQL or performance validation.",
+  "runtime": "v25.6.1",
+  "reportWords": 613,
+  "metrics": {
+    "innerExecutions": 12000,
+    "innerEmittedRows": 48000,
+    "innerInclusiveWorkMs": 780,
+    "capturedExecutionTimeMs": 991
+  },
+  "ordersSelectedFraction": 0.8,
+  "requestMinusExecutionMs": 329,
+  "outerEstimateToActualRatio": 1.0833333333333333,
+  "joinEstimateToActualRatio": 1.0833333333333333,
+  "preservation": [
+    {
+      "file": "README.md",
+      "byteIdentical": true,
+      "sha256": "a9e61238b03c45b3a034c72addd0f73e9c36880d023c3149b497d4a9b03c988d"
+    },
+    {
+      "file": "REQUEST.md",
+      "byteIdentical": true,
+      "sha256": "7e86d95a3335d6907a3aaa905405b1ad0898cc73ec11ba9e2cc40841c825320e"
+    },
+    {
+      "file": "proposal.md",
+      "byteIdentical": true,
+      "sha256": "a7317eb222658a804d180562730f9f2125b2897f9fd7a4c703b88f1025e571d0"
+    },
+    {
+      "file": "preview-plan.json",
+      "byteIdentical": true,
+      "sha256": "7c7cd3c51ea1b938bf926d84861f21c15941ff7711ee2e49ff74f4bba5d5f925"
+    },
+    {
+      "file": "literal-comparison.json",
+      "byteIdentical": true,
+      "sha256": "ad72430b1e7d57d2a758361950de4a10b1bb6e55987c465c52dac94750eb79da"
+    },
+    {
+      "file": "incident.json",
+      "byteIdentical": true,
+      "sha256": "22c5c37213651ebdf0fe2a6580e5c500f30594ed9972f91457dd3e9a9bd79a5c"
+    }
+  ]
+}

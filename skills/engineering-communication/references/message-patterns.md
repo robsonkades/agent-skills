@@ -6,6 +6,34 @@ left for them to discover. All numbers, dates and roles below are illustrative s
 inputs, not benchmarks or reusable commitments. Replace them only with supplied evidence;
 leave missing facts explicit. Times within each incident example use UTC on the same day.
 
+## Shortening an update without changing its claim
+
+Suppose the release checklist requires a migration rehearsal before full rollout. The CI
+summary shows passing unit tests and skipped migration checks. The release owner's note
+approves a canary only and commits to another update at 16:00 UTC. Inspect those artifacts
+when drafting from them; a green run summary alone does not establish the checklist's result.
+
+**Fails:**
+
+> Ready to launch: all tests passed and rollout is approved.
+
+This sounds concise and decisive, but expands both the validation and the approval scope.
+
+**Works:**
+
+> Canary rollout is approved. Full rollout still requires the migration rehearsal;
+> CI passed unit tests but skipped migration checks. The release owner's next update
+> is at 16:00 UTC; a full-rollout time is not confirmed.
+
+Keep links to the checklist, run and owner note where the channel permits. The short message
+needs the distinction that changes the reader's action, not a separate evidence report.
+
+If the user asks for a shorter, more positive version, retain that distinction: "Canary
+approved; full rollout awaits migration validation. Next update: 16:00 UTC." A tone request
+does not supply new validation. If a later rehearsal result and owner decision instead
+establish full-rollout readiness, update the headline and next action to match; do not leave
+the old blocker attached to a new conclusion. Approval alone does not demonstrate deployment.
+
 ## Raising a risk before it materialises
 
 **Fails:**
@@ -121,6 +149,13 @@ Say "rolled back" or "mitigated" plainly when it happens, and do not declare res
 agreed recovery criteria hold: name the affected metrics, observation window and any
 remaining backlog or integrity checks. A mitigation is not necessarily a permanent fix.
 
+For an incident handoff, distinguish a request from an acknowledged transfer. Include current
+state, open actions, the next update due and the proposed receiving owner. "I asked Priya to
+take over" does not establish that Priya accepted; a read receipt does not establish it either.
+Report the handoff as complete only with explicit acknowledgment of responsibility. If none
+arrives, state that it is pending and follow the established incident escalation path rather
+than implying coverage. An awareness-only update does not need an acknowledgment ritual.
+
 ## Correcting a material claim
 
 Distinguish new conditions from an error in the earlier message. Different time windows or
@@ -200,5 +235,6 @@ often omitted because the incident feels over.
 
 ## Sources
 
-- [Google SRE: Managing Incidents](https://sre.google/sre-book/managing-incidents/): communication ownership, periodic updates and a shared incident record.
+- [Google Technical Writing: Audience](https://developers.google.com/tech-writing/one/audience): choose detail from the reader's task and existing knowledge, not role alone. The compression example applies that principle while preserving the supplied evidence boundaries; it is not a measured claim about reader outcomes.
+- [Google SRE: Managing Incidents](https://sre.google/sre-book/managing-incidents/): communication ownership, periodic updates, a shared incident record and explicit acknowledgment of command handoff.
 - [Google SRE: Postmortem Culture](https://sre.google/sre-book/postmortem-culture/): blameless causal analysis and follow-up actions. These practices support the patterns; the examples above are invented teaching scenarios.

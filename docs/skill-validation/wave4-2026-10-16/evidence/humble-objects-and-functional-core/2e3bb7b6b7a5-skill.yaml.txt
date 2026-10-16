@@ -1,0 +1,82 @@
+schemaVersion: 1
+
+name: humble-objects-and-functional-core
+version: 1.2.4
+description: >-
+  Isolating decisions from hard-to-test effects with Humble Objects, or a pure functional
+  core and imperative shell when explicit data inputs fit the contract. Use when a rule can
+  only be exercised by standing up the framework, when controller, scheduler, listener or UI
+  logic makes focused tests difficult, or when retry, fallback or routing policy is entangled
+  with the call it governs. Inspect heavy mocking as a possible symptom, not proof that a
+  refactor is needed. Preserve adequate direct tests and boundary contracts. Does not cover
+  which test level to use (architecture-testing,
+  java-testing-strategy), choosing and writing the doubles themselves (java-test-doubles), where
+  business rules belong across layers (domain-logic-organization), the mechanics of immutable
+  types (java-immutability), or module dependency direction (layering-and-boundaries).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/humble-objects-and-functional-core
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/humble-objects-and-functional-core
+
+keywords:
+  - architecture
+  - testability
+  - humble-object
+  - functional-core
+  - purity
+  - java
+  - sealed-types
+  - design
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: java-immutability
+    version: ^1.0.0
+  - name: architecture-testing
+    version: ^1.0.0
+  - name: architecture-and-performance
+    version: ^1.0.0
+  - name: enterprise-transactions
+    version: ^1.0.0
+
+suggests:
+  - allocation-profiling
+  - caching-strategies
+  - cascading-failures
+  - circuit-breakers
+  - delivery-semantics
+  - distributed-locks-and-leases
+  - distributed-systems-testing
+  - domain-logic-organization
+  - enterprise-architecture-smells
+  - idempotency
+  - java-composition-over-inheritance
+  - java-dependency-inversion
+  - java-exception-design
+  - java-memory-model
+  - java-test-doubles
+  - java-testing-strategy
+  - jit-inlining-and-escape-analysis
+  - layering-and-boundaries
+  - patterns-and-modern-frameworks
+  - poison-messages-and-dlq
+  - retries-and-backoff
+  - structured-concurrency
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Humble Objects & Functional Core
+      short_description: Split the part that decides from the part that acts

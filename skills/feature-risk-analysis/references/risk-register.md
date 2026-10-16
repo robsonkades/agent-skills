@@ -2,7 +2,7 @@
 
 ## Deriving candidates mechanically
 
-Start with four artefacts; each produces traceable candidates of a known shape:
+Use these artefacts when available; each produces traceable candidates of a known shape:
 
 | Artefact                                                                          | Candidate shape                                                        |
 | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
@@ -14,6 +14,54 @@ Start with four artefacts; each produces traceable candidates of a known shape:
 Then challenge the concrete failure paths for omissions. Categories are prompts, not rows to
 fill or proof of completeness. Without these artefacts, identify the inspected scope and
 evidence directly rather than inventing identifiers or requiring a full feature workflow.
+
+### Follow and challenge the path
+
+For each material candidate, inspect enough of the actual path to support the control or exposure
+decision. Link the relevant code, configuration, contract or operational evidence:
+
+1. Start at the changed operation and find its callers/producers and affected readers/consumers.
+   Include unchanged code when it can exercise the changed behavior. Check scheduled, bulk or
+   replay paths when they use that operation; do not assume the interactive route is the only one.
+2. Connect trigger and preconditions to the failing operation, resulting state or external effect,
+   and harm. Distinguish rollout, mixed-version and steady-state conditions where they differ.
+   Unconfirmed reachability remains a conditional path with a specific missing check.
+3. Try to disprove the path through an existing control. Inspect its enforcement point and
+   applicable configuration: a guard at one caller does not establish protection for another.
+   Conversely, a verified shared invariant may rule out this bounded path. Record that evidence
+   instead of retaining a generic risk just because the technology can fail.
+
+For example, a request-level batch limit does not bound a scheduled import that calls the writer
+directly. If both routes enforce a shared limit before the same effect, reassess that specific
+over-limit path; do not insist on another identical guard. A declared limit or test of only the
+interactive route leaves the scheduled route unresolved. This is an illustrative reasoning pair,
+not a claim about any particular framework or an executed test.
+
+Keep a short scope note beside the register: paths checked, material paths not assessed and why,
+and what would resolve them. Expand investigation when a discovered dependency changes the
+failure or control decision; do not turn a feature review into a repository-wide audit. An absent
+search match, inaccessible consumer or unavailable runtime evidence limits the conclusion.
+
+## Evidence and decision-changing uncertainty
+
+For a consequential rating or control claim, link the supporting artefact and its applicable
+revision, environment and exposure. A code path can establish how failure is possible; its
+production frequency needs evidence about how often that path is exercised. A test establishes
+the conditions it exercised, not every deployment. Distinguish the observed fact, inferred
+consequence and untested premise without requiring separate columns for each.
+
+Check that versions, configuration, data shape and workload still match before reusing evidence.
+For Java-specific risks, inspect the project's compiler/runtime and dependency configuration;
+do not infer its baseline from these examples or propose an upgrade as an assumed mitigation.
+Conflicting evidence is a reason to identify the differing conditions, not to average labels.
+
+Prioritize an unknown by the decision it can change. For example, if rollback has been verified
+against state written by the new version, it can support recovery for that tested path. If only
+the old version's state was tested, recovery remains unverified; inspect the format contract or
+exercise rollback with new state before crediting it. Ask about an unresolved retention or
+recovery requirement only when repository evidence cannot supply it and the answer changes the
+choice. If the same bounded action is appropriate under either answer, continue that action and
+record the limit instead of blocking on irrelevant precision.
 
 ## The four fields, precisely
 
@@ -28,7 +76,11 @@ Detection   nothing emits this; it is found when a customer reports a missing
 ```
 
 **Mitigation** happens before the failure and reduces its probability or its cost. It is
-tracked as work: a resource in the feature workflow, or a task in a standalone review.
+tracked as work: a resource in the feature workflow, or a task in a standalone review. Specify
+the failure condition to check and the observable result that would establish the control:
+for example, the over-limit scheduled batch produces no writes, or the response stops exposure
+within the required window. Reuse sufficient existing evidence; "add tests" or "monitor it"
+alone is not a verification condition. State what remains exposed even if that check passes.
 
 **Fallback** happens after and is what someone actually does. "Roll back" is only a fallback if
 rolling back is possible after the schema change — say whether it is.
@@ -87,7 +139,8 @@ Separate vague concerns from concrete events, while preserving links to upstream
 
 ```text
 RISK-01 NULL dispatch states reach a reader that dereferences them
-      Impact        HIGH   legacy-order reads fail on the inspected reader path
+      Impact        HIGH   illustrative project rule: failure of these legacy-order reads
+                    stops critical fulfillment; verify that premise in the actual project
       Probability   UNKNOWN until NULL population, continuing NULL writes and
                     affected read exposure during the rollout are established
       Detection     pre-release fixture with NULL rows exercises that reader;
@@ -102,7 +155,8 @@ RISK-01 NULL dispatch states reach a reader that dereferences them
       Accepted by   pending residual-risk review by the authorized owner
 
 RISK-04 Billing consumer rejects the event once the new field is added
-      Impact        HIGH   affected events fail processing until recovered
+      Impact        UNKNOWN affected events fail processing; backlog, recovery delay and
+                    affected business obligations not yet bounded
       Probability   UNKNOWN: ignoring unknown fields is one verified property
                     (BillingConsumerConfig.java:22), not end-to-end compatibility
       Detection     existing DLQ alert; verify routing, notification and delay
@@ -127,7 +181,12 @@ producer does not remove events already delivered.
 
 ## Reviewing the register at completion
 
-Revisit each row against the delivered revision and actual evidence:
+Revisit each row against the delivered revision and actual evidence. Name triggers in terms of
+its premises: a larger exposed population, changed data format, longer replay window, expired
+provider guarantee or changed response coverage. When one changes, reopen the affected rating,
+control or acceptance and its dependent work; preserve unaffected evidence and the prior judgment.
+
+Use these statuses:
 
 - **Avoided or eliminated** — the failure path is removed; cite the change and evidence.
 - **Mitigated** — controls are implemented and verified; cite the resource and validation, and
@@ -137,8 +196,24 @@ Revisit each row against the delivered revision and actual evidence:
 - **Open** — controls, evidence or acceptance are pending. Identify the affected exposure and
   next action; independently ready and authorized work can continue.
 
-Also record whether a risk **materialised**, the response and whether detection worked. An incident
-does not itself close the risk: reassess recurrence and residual exposure under the statuses above.
+Record the outcome against the expected failure path and control: what **materialised**, what was
+intercepted, whether the signal reached its responder, and whether containment/recovery happened
+within the required window. Link the observed consequence and explain which rating, control or
+assumption it confirms or changes. An incident does not itself close the risk: reassess recurrence.
+
+For "not observed", record the observation window, relevant exposure and signal coverage; distinguish
+no failure from no opportunity to exercise the path or no ability to detect it. A quiet canary
+does not establish rare-path safety or full-rollout capacity. If the feature has not run yet, leave
+runtime outcomes pending and identify the existing operational owner/check that will revisit them,
+or the ownership gap. Do not make an arbitrary waiting period a new completion gate.
+
+This adapts [NIST SP 800-30 Rev. 1](https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-30r1.pdf),
+sections 2.3, 3.1, 3.2 (Tasks 2-2 through 2-5) and 3.4, on scope, relevant events, conditions,
+defined scales, occurrence versus conditional harm, impact, uncertainty and changed risk factors;
+it does not import that security framework's
+authorization process. For rollout evidence,
+[Google SRE's canary guidance](https://sre.google/workbook/canarying-releases/) explains why population,
+traffic, duration and metric sensitivity affect what a successful observation supports.
 
 ## Technical sources for the examples
 

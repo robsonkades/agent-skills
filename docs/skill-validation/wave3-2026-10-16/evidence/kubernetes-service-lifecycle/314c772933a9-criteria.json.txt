@@ -1,0 +1,59 @@
+{
+  "purpose": "Development cases for an independent coordinator evaluation; do not send this file or evaluator artifacts to the actor. No actual agent evaluation has run.",
+  "sharedTask": "TASK.md",
+  "decisiveConstraint": "Only Deployment.spec.replicas differs: 1 versus 4. Every other input byte is identical.",
+  "prerequisites": [
+    "Read files from a fresh isolated copy of exactly one inputs directory; use Kubernetes 1.34 as supplied target.",
+    "No cluster, deployment, image pull, tool installation or network access to a service is required.",
+    "Do not provide arithmetic model, expected outcomes, baseline/final diffs, source notes or this criteria file to the actor."
+  ],
+  "cases": [
+    {
+      "id": "one-replica",
+      "inputDirectory": "inputs/one-replica",
+      "expected": [
+        "Identify a configuration-level violation: PDB maxUnavailable 25% rounds up to 1 at desired scale 1, so desiredHealthy can be 0 and a compliant healthy-pod eviction is permitted under the supplied stable healthy assumptions.",
+        "Do not apply Deployment floor rounding to PDB; distinguish its maxUnavailable=0/maxSurge=1 resolution for this manifest.",
+        "Make a focused correction protecting at least one healthy pod, for example replace PDB maxUnavailable with integer minAvailable: 1, never set both mutually exclusive fields.",
+        "Explain that this correction blocks compliant drain with one healthy replica. To drain while retaining service requires sufficient healthy capacity/replicas, or an explicitly accepted changed availability contract. Existing Deployment surge alone does not create spare pods for a drain.",
+        "Preserve unrelated valid rollout, selector and Service configuration. Do not claim request continuity or a live eviction result from static files; name current PDB status/ownership/readiness and actual traffic/routing evidence as appropriate."
+      ],
+      "acceptableAlternatives": [
+        "Integer maxUnavailable: 0 protects healthy-pod eviction for this stable one-controller fixture, with the same drain block.",
+        "An explicit justified replica-capacity change that satisfies the stated objective and clearly explains scope/tradeoffs can be accepted; do not demand a single canned patch."
+      ],
+      "failureConditions": [
+        "Says PDB 25% floors to 0 and protects the last replica.",
+        "Says PDB governs Deployment rollout.",
+        "Changes probe/grace timing as the fix for this budget arithmetic without evidence.",
+        "Proposes both PDB minAvailable and maxUnavailable.",
+        "Promises zero request loss from manifests or presents a model as cluster integration."
+      ]
+    },
+    {
+      "id": "four-replicas",
+      "inputDirectory": "inputs/four-replicas",
+      "expected": [
+        "Resolve PDB maxUnavailable 25% to 1 with desiredHealthy 3 under the supplied scale/health assumptions; one healthy eviction is permitted while the budget protects at least one.",
+        "Resolve Deployment maxUnavailable/maxSurge to 1/1 independently; preserve adequate percentages unless explaining an actual additional contract or runtime constraint.",
+        "Choose no required manifest change for the supplied contract. Do not force an integer PDB or demand one-replica protection for a configuration explicitly fixed at four replicas.",
+        "State static analysis limits and the need to inspect live PDB status/owners and observe traffic when making an operational availability claim."
+      ],
+      "failureConditions": [
+        "Treats all percentage budgets as defective.",
+        "Changes the declared contract to require four healthy replicas without evidence.",
+        "Claims PDB permits zero healthy pods here based on the one-replica case.",
+        "Promises zero request loss or claims executed cluster tests."
+      ]
+    }
+  ],
+  "pairChecks": [
+    "Assert exactly one actor input file differs and only replicas: 1 versus replicas: 4.",
+    "Run model arithmetic only as a reproducible calculation, not agent evaluation or Kubernetes controller execution."
+  ],
+  "observableOutputs": [
+    "Actor final reasoning",
+    "Any actor-produced manifest diff",
+    "Truthful executed versus deferred validation statement"
+  ]
+}

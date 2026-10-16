@@ -6,8 +6,9 @@ from code review rather than requiring a duplicate investigation.
 
 ## 1. Requirements
 
-Take each Required `SC-*` and each `BAC-*`/`TC-*` and name the `RES-*` that satisfy it. Anything with no resource
-is the finding: the feature is incomplete and nothing in the build says so.
+Start from the accepted requirements themselves, not only the rows copied into the progress report.
+Take each Required `SC-*` and each `BAC-*`/`TC-*` and name the `RES-*` that satisfy it. Anything with no
+resource is the finding: the feature is incomplete and nothing in the build says so.
 
 Then the reverse: take each `RES-*` and name the scope/criterion it traces to. Anything tracing to
 nothing entered without a decision.
@@ -39,15 +40,35 @@ Both outcomes are acceptable; the unacceptable one is not noticing.
 
 ## 3. Acceptance criteria
 
-Each criterion, and the observed `EV-*` that checked it — a test identifier, command output, or manual step
-someone performed. Record the outcome, covered assertion, implementation/contract revision and
-relevant environment. Executed-but-failed or merely planned evidence does not satisfy a criterion;
-results for an older revision require a justified applicability check or rerun. An unsupported
-assertion that "the implementation does this" is unchecked. Direct inspection can establish a
-static criterion, such as required documentation or an accepted dependency boundary, when the
-report names the inspected locations, assertion and result. Code presence alone cannot establish
-successful deployment or recovery in a target environment. Match the evidence to the criterion
-instead of demanding execution for every static obligation or treating every passing test as proof.
+Follow each criterion's `RES-*` and `EV-*` to the supporting source. Open the retained result or
+manual verification record and inspect the relevant assertion, inspected artifact or procedure:
+what property did it check, for which inputs and paths, and what was actually observed? Record the
+source locator, outcome, covered assertion, implementation/contract revision and relevant environment.
+A valid ID, existing file or PASS label alone does not establish its claimed coverage. Resolve stale
+locators using available project evidence. If the supporting result remains unavailable, report the
+affected criterion as unverified; do not infer a product defect.
+
+Executed-but-failed or merely planned evidence does not satisfy a criterion; results for an older
+revision require a justified applicability check or rerun. Direct inspection can establish a static
+criterion, such as required documentation or an accepted dependency boundary, when the report names
+the inspected locations, assertion and result. Code presence alone cannot establish successful
+deployment or recovery in a target environment. Reuse sufficient, applicable results without
+rerunning every check; match the evidence to the criterion rather than demanding execution for every
+static obligation or treating every passing test as proof.
+
+For a criterion spanning resources, check that the evidence covers the required interaction and
+observable outcome. Passing producer and consumer tests separately may leave the actual delivery
+path unverified. Reuse sufficient integration evidence, inspection or analysis where appropriate;
+do not mandate a new end-to-end suite merely because several resources participate.
+
+Check conditions that can invalidate an EV without changing the candidate revision: configuration
+and feature flags, dependency versions, permissions, data shape, workload and observation window,
+where relevant to the criterion. Record the material difference and why evidence transfers, or
+identify the affected assertion that needs new evidence. For example, a recovery drill within the
+agreed time limit can support the tested data volume; if the reviewed volume has grown beyond that
+coverage, the recovery criterion is unverified until supported at that volume or by justified
+analysis. Unchanged, applicable conditions allow reuse; time elapsed alone does not invalidate
+every result. A deliberate narrowing of scope needs an accepted baseline change.
 
 ## 4. Decisions
 
@@ -78,6 +99,12 @@ Every DONE resource names relevant passing evidence, not just what ran. Check fo
 selected nothing, a test that does not exercise its claimed new behavior, and a build that skipped
 an affected module. Existing regression tests may legitimately pass before and after; they support
 preservation of covered behavior, not proof that the new behavior exists.
+
+When results conflict, retain the contrary evidence and compare assertions, revisions, inputs and
+conditions. A later green rerun does not by itself resolve a relevant failure. Identify whether
+the discrepancy is in the product, the check or its environment, and what evidence resolves it;
+return defect investigation to code review when needed. Until resolved, keep the affected criterion
+failed or unverified as supported by the evidence, even if unrelated checks pass.
 
 Anything that could not be validated is listed with what it does not cover. A valid accepted gap
 records authority and residual consequence; it does not turn unavailable evidence into a pass.
@@ -112,8 +139,17 @@ state, not a snapshot from three days ago.
 
 ## 12. The claim
 
-Finally, the report itself. Every claim in it maps to something observed — a command that ran,
-output that was read, a file that was opened. Everything else is marked unverified.
+Before a clean verdict, challenge the support most likely to hide a material gap: an exclusion,
+skipped resource, boundary interaction or check covering only part of a Required criterion. Follow
+that claim to its source and look for a concrete counterexample within the agreed scope. For
+example, a passing request-submission test does not establish the separately required downstream
+completion; inspect the assertion and delivery-path evidence before accepting that mapping.
+Reuse sufficient contrary-case coverage already examined. This is a focused scrutiny step, not a
+requirement for another reviewer, a new test suite or an expansion of the accepted requirements.
+
+Every final claim maps to inspected evidence. State which material paths or obligations remain
+unexamined when access or review limits prevent a full result. A sampled check cannot stand in for
+the complete Required-criterion mapping; a partial review supports only its explicitly reviewed scope.
 
 ## Report shape
 
@@ -155,3 +191,14 @@ Remaining
 Lead with the completion result and material gaps that determine it. Report unavailable or failed
 checks with their actual effect on that result; keep non-blocking limitations visible without
 presenting them as unmet Required criteria.
+
+## Evidence basis
+
+- [NASA Systems Engineering Handbook, Product Verification](https://www.nasa.gov/reference/5-3-product-verification/)
+  supports recording requirement/product versions, verification conditions and discrepancies, and
+  checking interactions for system-level outcomes. Use these evidence principles proportionately;
+  this skill does not impose NASA approval procedures on a project.
+- [Google SRE Workbook, Canarying Releases](https://sre.google/workbook/canarying-releases/)
+  explains why configuration, representative traffic, duration and metric attribution affect a
+  release observation. These limits inform evidence applicability when operational acceptance is
+  in scope; canary deployment is not a requirement of this review.

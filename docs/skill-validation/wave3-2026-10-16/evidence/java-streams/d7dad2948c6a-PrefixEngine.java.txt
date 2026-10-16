@@ -1,0 +1,10 @@
+import java.util.*;
+import java.util.stream.*;
+final class PrefixEngine {
+    static List<ArrayList<Integer>> states(List<Integer> input) {
+        return input.stream().gather(Gatherers.scan(ArrayList<Integer>::new, (state, value) -> {
+            state.add(value);
+            return state;
+        })).toList();
+    }
+}

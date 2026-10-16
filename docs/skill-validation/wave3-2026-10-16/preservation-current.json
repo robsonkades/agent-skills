@@ -1,0 +1,1078 @@
+{
+  "at": "2026-10-16T15:17:25.303Z",
+  "classification": "Coordinator preservation/version audit; not behavioral evaluation",
+  "baselineHead": "bbb7d996a929e81baf735bbaab5b6e3fbf6e8503",
+  "total": 63,
+  "implemented": 61,
+  "changed": 46,
+  "unchanged": 17,
+  "unexpected": [],
+  "indexChanges": [],
+  "indexMatchesPackageChanges": false,
+  "indexChangesOutsideWave": [],
+  "lostIndexEntries": [],
+  "packages": [
+    {
+      "name": "adapter-sidecar-pattern",
+      "initialVersion": "2.3.3",
+      "finalVersion": "2.3.4",
+      "changedFiles": [
+        "skills/adapter-sidecar-pattern/references/coupling-and-failure.md",
+        "skills/adapter-sidecar-pattern/SKILL.md",
+        "skills/adapter-sidecar-pattern/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "ambassador-pattern",
+      "initialVersion": "1.3.4",
+      "finalVersion": "1.3.5",
+      "changedFiles": [
+        "skills/ambassador-pattern/references/failure-and-policy-composition.md",
+        "skills/ambassador-pattern/SKILL.md",
+        "skills/ambassador-pattern/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "c2-sea-of-nodes",
+      "initialVersion": "1.4.5",
+      "finalVersion": "1.4.6",
+      "changedFiles": [
+        "skills/c2-sea-of-nodes/references/c2-phases-and-ir.md",
+        "skills/c2-sea-of-nodes/references/jit-diagnosis-recipes.md",
+        "skills/c2-sea-of-nodes/SKILL.md",
+        "skills/c2-sea-of-nodes/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "code-cache-segments",
+      "initialVersion": "2.1.4",
+      "finalVersion": "2.1.5",
+      "changedFiles": [
+        "skills/code-cache-segments/references/diagnosing-exhaustion.md",
+        "skills/code-cache-segments/SKILL.md",
+        "skills/code-cache-segments/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "compilation-and-inlining-logs",
+      "initialVersion": "2.0.4",
+      "finalVersion": "2.0.5",
+      "changedFiles": [
+        "skills/compilation-and-inlining-logs/references/inlining-diagnosis.md",
+        "skills/compilation-and-inlining-logs/references/printcompilation-format.md",
+        "skills/compilation-and-inlining-logs/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "container-awareness",
+      "initialVersion": "1.2.4",
+      "finalVersion": "1.2.4",
+      "changedFiles": [],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "NO_CHANGES_NEEDED",
+      "status": "implemented"
+    },
+    {
+      "name": "cpu-cache-and-numa",
+      "initialVersion": "1.3.4",
+      "finalVersion": "1.3.4",
+      "changedFiles": [],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "NO_CHANGES_NEEDED",
+      "status": "implemented"
+    },
+    {
+      "name": "deoptimization",
+      "initialVersion": "2.1.4",
+      "finalVersion": "2.1.5",
+      "changedFiles": [
+        "skills/deoptimization/references/deopt-tooling.md",
+        "skills/deoptimization/references/production-patterns.md",
+        "skills/deoptimization/SKILL.md",
+        "skills/deoptimization/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "escape-analysis-internals",
+      "initialVersion": "2.0.4",
+      "finalVersion": "2.0.5",
+      "changedFiles": [
+        "skills/escape-analysis-internals/references/diagnosing-elimination.md",
+        "skills/escape-analysis-internals/SKILL.md",
+        "skills/escape-analysis-internals/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "graalvm-jit",
+      "initialVersion": "2.1.4",
+      "finalVersion": "2.1.5",
+      "changedFiles": [
+        "skills/graalvm-jit/references/enabling-and-comparing.md",
+        "skills/graalvm-jit/references/troubleshooting-and-timeline.md",
+        "skills/graalvm-jit/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "graalvm-native-image",
+      "initialVersion": "2.0.4",
+      "finalVersion": "2.0.5",
+      "changedFiles": [
+        "skills/graalvm-native-image/references/build-and-measurement.md",
+        "skills/graalvm-native-image/references/troubleshooting.md",
+        "skills/graalvm-native-image/SKILL.md",
+        "skills/graalvm-native-image/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "grpc-http2-service-mesh-performance",
+      "initialVersion": "1.0.4",
+      "finalVersion": "1.0.5",
+      "changedFiles": [
+        "skills/grpc-http2-service-mesh-performance/references/service-mesh.md",
+        "skills/grpc-http2-service-mesh-performance/SKILL.md",
+        "skills/grpc-http2-service-mesh-performance/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "io-uring-and-zero-copy",
+      "initialVersion": "1.2.4",
+      "finalVersion": "1.2.5",
+      "changedFiles": [
+        "skills/io-uring-and-zero-copy/references/choosing-the-mechanism.md",
+        "skills/io-uring-and-zero-copy/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "java-annotations",
+      "initialVersion": "1.2.4",
+      "finalVersion": "1.2.5",
+      "changedFiles": [
+        "skills/java-annotations/references/retention-targets-and-processing.md",
+        "skills/java-annotations/SKILL.md",
+        "skills/java-annotations/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "java-api-design",
+      "initialVersion": "1.2.5",
+      "finalVersion": "1.2.5",
+      "changedFiles": [],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "NO_CHANGES_NEEDED",
+      "status": "implemented"
+    },
+    {
+      "name": "java-application-security-basics",
+      "initialVersion": "1.3.5",
+      "finalVersion": "1.3.6",
+      "changedFiles": [
+        "skills/java-application-security-basics/references/review.md",
+        "skills/java-application-security-basics/SKILL.md",
+        "skills/java-application-security-basics/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "java-build-and-dependencies",
+      "initialVersion": "1.0.1",
+      "finalVersion": "1.0.2",
+      "changedFiles": [
+        "skills/java-build-and-dependencies/references/gradle.md",
+        "skills/java-build-and-dependencies/SKILL.md",
+        "skills/java-build-and-dependencies/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "java-clean-code",
+      "initialVersion": "2.2.4",
+      "finalVersion": "2.2.5",
+      "changedFiles": [
+        "skills/java-clean-code/references/structure-and-coupling.md",
+        "skills/java-clean-code/SKILL.md",
+        "skills/java-clean-code/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "java-code-smells",
+      "initialVersion": "1.4.4",
+      "finalVersion": "1.4.5",
+      "changedFiles": [
+        "skills/java-code-smells/references/catalogue-within.md",
+        "skills/java-code-smells/references/smell-to-refactoring.md",
+        "skills/java-code-smells/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "java-cohesion-coupling",
+      "initialVersion": "1.2.4",
+      "finalVersion": "1.2.4",
+      "changedFiles": [],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "NO_CHANGES_NEEDED",
+      "status": "implemented"
+    },
+    {
+      "name": "java-composition-over-inheritance",
+      "initialVersion": "1.2.5",
+      "finalVersion": "1.2.5",
+      "changedFiles": [],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "NO_CHANGES_NEEDED",
+      "status": "implemented"
+    },
+    {
+      "name": "java-date-and-time",
+      "initialVersion": "1.0.1",
+      "finalVersion": "1.0.1",
+      "changedFiles": [],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "NO_CHANGES_NEEDED",
+      "status": "implemented"
+    },
+    {
+      "name": "java-defensive-programming",
+      "initialVersion": "1.2.4",
+      "finalVersion": "1.2.5",
+      "changedFiles": [
+        "skills/java-defensive-programming/references/hardening-example.md",
+        "skills/java-defensive-programming/references/trust-boundaries.md",
+        "skills/java-defensive-programming/SKILL.md",
+        "skills/java-defensive-programming/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "java-dependency-inversion",
+      "initialVersion": "1.2.4",
+      "finalVersion": "1.2.5",
+      "changedFiles": [
+        "skills/java-dependency-inversion/references/worked-example.md",
+        "skills/java-dependency-inversion/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "java-design-by-contract",
+      "initialVersion": "1.2.4",
+      "finalVersion": "1.2.5",
+      "changedFiles": [
+        "skills/java-design-by-contract/references/contracts-in-java.md",
+        "skills/java-design-by-contract/SKILL.md",
+        "skills/java-design-by-contract/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "java-dry-kiss-yagni",
+      "initialVersion": "1.2.3",
+      "finalVersion": "1.2.4",
+      "changedFiles": [
+        "skills/java-dry-kiss-yagni/references/decision-heuristics.md",
+        "skills/java-dry-kiss-yagni/SKILL.md",
+        "skills/java-dry-kiss-yagni/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "java-enums",
+      "initialVersion": "1.2.4",
+      "finalVersion": "1.2.5",
+      "changedFiles": [
+        "skills/java-enums/references/enums-across-boundaries.md",
+        "skills/java-enums/SKILL.md",
+        "skills/java-enums/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "java-exception-design",
+      "initialVersion": "1.3.4",
+      "finalVersion": "1.3.5",
+      "changedFiles": [
+        "skills/java-exception-design/references/design-decisions.md",
+        "skills/java-exception-design/SKILL.md",
+        "skills/java-exception-design/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "java-fluent-apis",
+      "initialVersion": "1.2.5",
+      "finalVersion": "1.2.5",
+      "changedFiles": [],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "NO_CHANGES_NEEDED",
+      "status": "implemented"
+    },
+    {
+      "name": "java-generics",
+      "initialVersion": "1.2.4",
+      "finalVersion": "1.2.4",
+      "changedFiles": [],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "NO_CHANGES_NEEDED",
+      "status": "implemented"
+    },
+    {
+      "name": "java-immutability",
+      "initialVersion": "1.2.4",
+      "finalVersion": "1.2.4",
+      "changedFiles": [],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "NO_CHANGES_NEEDED",
+      "status": "implemented"
+    },
+    {
+      "name": "java-lambdas-and-functional-interfaces",
+      "initialVersion": "1.3.5",
+      "finalVersion": "1.3.6",
+      "changedFiles": [
+        "skills/java-lambdas-and-functional-interfaces/references/standard-interfaces-and-cost.md",
+        "skills/java-lambdas-and-functional-interfaces/SKILL.md",
+        "skills/java-lambdas-and-functional-interfaces/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "java-law-of-demeter",
+      "initialVersion": "1.2.4",
+      "finalVersion": "1.2.4",
+      "changedFiles": [],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "NO_CHANGES_NEEDED",
+      "status": "implemented"
+    },
+    {
+      "name": "java-null-safety",
+      "initialVersion": "1.2.4",
+      "finalVersion": "1.2.5",
+      "changedFiles": [
+        "skills/java-null-safety/references/nullability-contracts.md",
+        "skills/java-null-safety/SKILL.md",
+        "skills/java-null-safety/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "java-numeric-types",
+      "initialVersion": "1.2.4",
+      "finalVersion": "1.2.5",
+      "changedFiles": [
+        "skills/java-numeric-types/references/decimals-and-money.md",
+        "skills/java-numeric-types/SKILL.md",
+        "skills/java-numeric-types/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "java-object-construction",
+      "initialVersion": "1.3.5",
+      "finalVersion": "1.3.6",
+      "changedFiles": [
+        "skills/java-object-construction/references/singletons-and-static-state.md",
+        "skills/java-object-construction/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "java-object-contracts",
+      "initialVersion": "1.2.4",
+      "finalVersion": "1.2.5",
+      "changedFiles": [
+        "skills/java-object-contracts/references/equals-and-hashcode.md",
+        "skills/java-object-contracts/references/tostring-and-copying.md",
+        "skills/java-object-contracts/SKILL.md",
+        "skills/java-object-contracts/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "java-optional",
+      "initialVersion": "1.2.4",
+      "finalVersion": "1.2.4",
+      "changedFiles": [],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "NO_CHANGES_NEEDED",
+      "status": "implemented"
+    },
+    {
+      "name": "java-refactoring",
+      "initialVersion": "1.4.4",
+      "finalVersion": "1.4.5",
+      "changedFiles": [
+        "skills/java-refactoring/references/catalogue-conditionals.md",
+        "skills/java-refactoring/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "java-reflection-and-method-handles",
+      "initialVersion": "1.4.5",
+      "finalVersion": "1.4.6",
+      "changedFiles": [
+        "skills/java-reflection-and-method-handles/references/method-handles-and-encapsulation.md",
+        "skills/java-reflection-and-method-handles/SKILL.md",
+        "skills/java-reflection-and-method-handles/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "java-resource-management",
+      "initialVersion": "1.2.4",
+      "finalVersion": "1.2.5",
+      "changedFiles": [
+        "skills/java-resource-management/references/closeable-design.md",
+        "skills/java-resource-management/SKILL.md",
+        "skills/java-resource-management/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "java-serialization-hardening",
+      "initialVersion": "1.2.4",
+      "finalVersion": "1.2.5",
+      "changedFiles": [
+        "skills/java-serialization-hardening/references/implementing-serializable.md",
+        "skills/java-serialization-hardening/SKILL.md",
+        "skills/java-serialization-hardening/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "java-solid",
+      "initialVersion": "1.2.4",
+      "finalVersion": "1.2.4",
+      "changedFiles": [],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "NO_CHANGES_NEEDED",
+      "status": "implemented"
+    },
+    {
+      "name": "java-streams",
+      "initialVersion": "1.2.4",
+      "finalVersion": "1.2.5",
+      "changedFiles": [
+        "skills/java-streams/references/parallel-and-gatherers.md",
+        "skills/java-streams/SKILL.md",
+        "skills/java-streams/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "java-strings-and-text",
+      "initialVersion": "1.2.3",
+      "finalVersion": "1.2.4",
+      "changedFiles": [
+        "skills/java-strings-and-text/references/building-text-safely.md",
+        "skills/java-strings-and-text/SKILL.md",
+        "skills/java-strings-and-text/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "java-tell-dont-ask",
+      "initialVersion": "1.2.4",
+      "finalVersion": "1.2.4",
+      "changedFiles": [],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "NO_CHANGES_NEEDED",
+      "status": "implemented"
+    },
+    {
+      "name": "jdk-upgrade-impact",
+      "initialVersion": "1.2.5",
+      "finalVersion": "1.2.6",
+      "changedFiles": [
+        "skills/jdk-upgrade-impact/references/verification-and-rollout.md",
+        "skills/jdk-upgrade-impact/SKILL.md",
+        "skills/jdk-upgrade-impact/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "jit-compilation",
+      "initialVersion": "1.3.4",
+      "finalVersion": "1.3.5",
+      "changedFiles": [
+        "skills/jit-compilation/references/tiered-compilation-model.md",
+        "skills/jit-compilation/references/warmup-and-cold-start.md",
+        "skills/jit-compilation/SKILL.md",
+        "skills/jit-compilation/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "jit-inlining-and-escape-analysis",
+      "initialVersion": "2.1.3",
+      "finalVersion": "2.1.4",
+      "changedFiles": [
+        "skills/jit-inlining-and-escape-analysis/references/inlining-verdicts-and-fixes.md",
+        "skills/jit-inlining-and-escape-analysis/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "jni-and-ffm",
+      "initialVersion": "1.3.4",
+      "finalVersion": "1.3.4",
+      "changedFiles": [],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "NO_CHANGES_NEEDED",
+      "status": "implemented"
+    },
+    {
+      "name": "jvm-bytecode",
+      "initialVersion": "2.1.5",
+      "finalVersion": "2.1.6",
+      "changedFiles": [
+        "skills/jvm-bytecode/references/dispatch-and-abstraction-cost.md",
+        "skills/jvm-bytecode/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "jvm-class-loading",
+      "initialVersion": "1.4.4",
+      "finalVersion": "1.4.4",
+      "changedFiles": [],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "NO_CHANGES_NEEDED",
+      "status": "implemented"
+    },
+    {
+      "name": "kubernetes-service-lifecycle",
+      "initialVersion": "1.3.4",
+      "finalVersion": "1.3.5",
+      "changedFiles": [
+        "skills/kubernetes-service-lifecycle/references/probe-and-shutdown-configuration.md",
+        "skills/kubernetes-service-lifecycle/SKILL.md",
+        "skills/kubernetes-service-lifecycle/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "linux-for-jvm",
+      "initialVersion": "1.3.4",
+      "finalVersion": "1.3.5",
+      "changedFiles": [
+        "skills/linux-for-jvm/references/host-configuration.md",
+        "skills/linux-for-jvm/SKILL.md",
+        "skills/linux-for-jvm/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "numa-and-cpu-affinity",
+      "initialVersion": "1.2.4",
+      "finalVersion": "1.2.5",
+      "changedFiles": [
+        "skills/numa-and-cpu-affinity/references/numactl-and-numastat.md",
+        "skills/numa-and-cpu-affinity/SKILL.md",
+        "skills/numa-and-cpu-affinity/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "project-valhalla",
+      "initialVersion": "1.0.4",
+      "finalVersion": "1.0.5",
+      "changedFiles": [
+        "skills/project-valhalla/references/status-and-experiments.md",
+        "skills/project-valhalla/SKILL.md",
+        "skills/project-valhalla/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "reading-jit-assembly",
+      "initialVersion": "1.2.4",
+      "finalVersion": "1.2.5",
+      "changedFiles": [
+        "skills/reading-jit-assembly/references/reading-the-output.md",
+        "skills/reading-jit-assembly/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "refactoring-automation",
+      "initialVersion": "1.1.5",
+      "finalVersion": "1.1.6",
+      "changedFiles": [
+        "skills/refactoring-automation/references/openrewrite-recipes.md",
+        "skills/refactoring-automation/SKILL.md",
+        "skills/refactoring-automation/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": false,
+      "reviewedDiffStillMatches": false,
+      "handoffPresent": false,
+      "allWritesStopped": false,
+      "status": "running"
+    },
+    {
+      "name": "serialization-performance",
+      "initialVersion": "1.1.4",
+      "finalVersion": "1.1.4",
+      "changedFiles": [],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "NO_CHANGES_NEEDED",
+      "status": "implemented"
+    },
+    {
+      "name": "sidecar-pattern",
+      "initialVersion": "1.3.5",
+      "finalVersion": "1.3.6",
+      "changedFiles": [
+        "skills/sidecar-pattern/references/lifecycle-and-composition.md",
+        "skills/sidecar-pattern/SKILL.md",
+        "skills/sidecar-pattern/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "simd-and-vector-api",
+      "initialVersion": "1.2.5",
+      "finalVersion": "1.2.5",
+      "changedFiles": [],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "NO_CHANGES_NEEDED",
+      "status": "implemented"
+    },
+    {
+      "name": "startup-cds-crac-leyden",
+      "initialVersion": "2.1.4",
+      "finalVersion": "2.1.5",
+      "changedFiles": [
+        "skills/startup-cds-crac-leyden/references/technique-selection.md",
+        "skills/startup-cds-crac-leyden/SKILL.md",
+        "skills/startup-cds-crac-leyden/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": false,
+      "reviewedDiffStillMatches": false,
+      "handoffPresent": true,
+      "allWritesStopped": true,
+      "reviewStatus": "READY_FOR_GLOBAL_VALIDATION",
+      "status": "implemented"
+    },
+    {
+      "name": "tcp-tuning",
+      "initialVersion": "1.2.4",
+      "finalVersion": "1.2.5",
+      "changedFiles": [
+        "skills/tcp-tuning/references/sysctl-and-socket-options.md",
+        "skills/tcp-tuning/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": false,
+      "reviewedDiffStillMatches": false,
+      "handoffPresent": false,
+      "allWritesStopped": false,
+      "status": "running"
+    }
+  ]
+}

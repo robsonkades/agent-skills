@@ -117,6 +117,67 @@ red. Prefer the narrowest point that still sees the whole effect.
 For characterising at a **system** boundary — the HTTP contract, the batch output — rather than a
 class-level pinch point, the owner is `legacy-enterprise-modernization`.
 
+## Trusting the first reachable test
+
+The seam makes an experiment possible; it does not supply the oracle. Before calling the first
+assertion useful, identify what it establishes:
+
+- **Observed behavior:** run the real target for named inputs and controlled collaborator
+  responses. Record the result as characterization, not proof of intended behavior. If the
+  original target could not run, do not call a post-seam result a before/after comparison;
+  retain the preservation argument and state that limit.
+- **Required behavior:** an authorized requirement or established contract supplies the expected
+  result. A disagreement is evidence to investigate, not a reason to replace the expectation
+  with whatever ran. Keep an approved behavior correction distinct from the seam-only step.
+- **Substituted behavior:** a double's configured answer is an input to the experiment. Keep
+  the legacy decision path real and check its result or relevant effects. A constant stub can
+  conceal a wrong lookup key, duplicate acquisition or unexpected call; record arguments/counts
+  or fail on unexpected calls where those effects are the preservation risk. Do not assert
+  every internal interaction merely because it is observable.
+
+The renewal fixture illustrates this distinction: returning rate `1.0` for every ID lets a
+wrong-ID lookup return the expected policy list. Its recording double rejects that lookup;
+the verifier compiles a deliberately wrong-ID variant and requires that specific failure.
+This demonstrates sensitivity to that fault, not complete coverage or fidelity to the real
+gateway. Characterization mechanics and broader case selection remain with `java-refactoring`.
+
+**Keep the production selection observable too.** Trace an existing caller to the retained
+constructor, factory or provider selection. An injected test can pass even if that entry now
+chooses a dummy collaborator, acquires a resource later or swallows an initialization failure.
+Check the retained path when safe; if it requires an unavailable real service, retain the source
+comparison and state what was not executed rather than contacting production for a test.
+In the synthetic renewal fixture, the no-argument constructor can safely be checked: it still
+fails on gateway construction, while the injected constructor reaches policy assertions.
+The verifier rejects a second variant that silently replaces the original gateway with a stub.
+These assertions cover the fixture's acquisition failure; they do not establish successful
+database integration or all initialization effects. Both test points matter; an extra constructor
+signature alone protects neither.
+
+## Isolation and changing evidence
+
+Prefer per-test collaborators and inputs. When a legacy seam changes a singleton, system
+property, default locale/time zone or provider registry, inventory all readers and writers.
+Restore prior values in guaranteed cleanup, including exceptional paths; resetting only before
+the next test is insufficient. Await or cancel owned asynchronous work and confirm the underlying
+task has stopped before restoring shared state or closing the seam. A fixed delay is not evidence
+it finished.
+
+Cleanup prevents later leakage but does not prevent simultaneous tests from seeing the
+override. With compatible JUnit Jupiter versions, a shared `@ResourceLock` can coordinate tests
+that declare the same resource; `@Isolated` can prevent other Jupiter test classes running
+concurrently with a class. These scheduling controls do not restore values, stop application
+threads or coordinate separate JVMs. Use an existing isolated process when the state cannot be
+reset safely; protect external resources independently. Mockito's static mock is scoped to its
+creating thread: serializing tests cannot make it intercept a worker-thread call.
+
+If a test passes alone but fails in the suite, preserve the failing evidence and compare order,
+parallelism, state, thread and fixture setup before changing production logic. Reproduce the
+smallest relevant sequence or overlap; do not make retries or longer sleeps the proof of a fix.
+When evidence shows the seam never intercepted the actual call, revise the seam choice or
+enabling point and rerun the real path. When evidence shows a cleanup/isolation fault, repair
+that boundary and rerun the previously failing execution mode. Remaining variation is an
+unresolved limit, not a stable characterization result or a reason to approve a new snapshot.
+
 ## Sources
 
 - Michael Feathers, _Working Effectively with Legacy Code_ (2004), ch. 4 (pp. 29–44), ch. 11
@@ -126,3 +187,11 @@ class-level pinch point, the owner is `legacy-enterprise-modernization`.
 - [Martin Fowler, _LegacySeam_](https://martinfowler.com/bliki/LegacySeam.html)
 - [Java 21 ServiceLoader](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/ServiceLoader.html)
 - [Java 21 javac annotation-processing options](https://docs.oracle.com/en/java/javase/21/docs/specs/man/javac.html)
+- [Michael Feathers, Characterization Testing](https://michaelfeathers.silvrback.com/characterization-testing):
+  characterization describes observed behavior; discovering a surprise does not settle correctness.
+- [JUnit 5.13.4 ResourceLock](https://docs.junit.org/5.13.4/api/org.junit.jupiter.api/org/junit/jupiter/api/parallel/ResourceLock.html)
+  and [Isolated](https://docs.junit.org/5.13.4/api/org.junit.jupiter.api/org/junit/jupiter/api/parallel/Isolated.html):
+  scheduling guarantees, including lifecycle-method coverage for resource locks. Check support
+  in the project's JUnit version; this is not a reason to upgrade its harness.
+- [Mockito 5.23.0 MockedStatic](https://javadoc.io/static/org.mockito/mockito-core/5.23.0/org.mockito/org/mockito/MockedStatic.html):
+  creating-thread scope and required release of the mock.

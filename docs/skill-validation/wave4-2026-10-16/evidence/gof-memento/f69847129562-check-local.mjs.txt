@@ -1,0 +1,83 @@
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { readFileSync, writeFileSync, readdirSync, mkdirSync, existsSync } from 'node:fs';
+import { dirname, resolve, relative } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { spawnSync } from 'node:child_process';
+const here = dirname(fileURLToPath(import.meta.url));
+const repo = 'C:/git/agent-skills';
+const skillName = 'gof-memento';
+const owned = 'skills/' + skillName;
+const skill = resolve(repo, owned);
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const gitChecks = [];
+function git(args) {
+  const r = spawnSync('git', args, { cwd: repo, encoding: 'utf8', windowsHide: true });
+  gitChecks.push({ command: 'git ' + args.join(' '), cwd: repo, exitCode: r.status, stdout: r.stdout, stderr: r.stderr });
+  assert.equal(r.status, 0);
+  return r.stdout;
+}
+assert.equal(git(['status', '--short', '--', owned]).trim(), '');
+assert.equal(git(['diff', '--', owned]).trim(), '');
+assert.equal(git(['diff', '--cached', '--', owned]).trim(), '');
+assert.equal(git(['diff', '--check', '--', owned]).trim(), '');
+const committed = git(['show', 'HEAD:' + owned + '/skill.yaml']);
+const manifestText = readFileSync(resolve(skill, 'skill.yaml'), 'utf8');
+const version = manifestText.match(/^version:\s*(\S+)/m)[1];
+assert.equal(committed.match(/^version:\s*(\S+)/m)[1], '1.2.4');
+assert.equal(version, '1.2.4');
+const files = readdirSync(skill, { recursive: true, withFileTypes: true }).filter(e => e.isFile())
+  .map(e => relative(skill, resolve(e.parentPath, e.name)).replaceAll('\\', '/')).sort();
+const fileHashes = files.map(path => ({ path, sha256: sha(readFileSync(resolve(skill, path))) }));
+const wave = JSON.parse(readFileSync(resolve(repo, 'docs/skill-validation/wave4-2026-10-16/baseline.json'), 'utf8'));
+const packageBaseline = wave.packages.find(p => p.name === skillName);
+assert.equal(packageBaseline.initialVersion, version);
+for (const file of packageBaseline.files) assert.equal(sha(readFileSync(resolve(repo, file.path))), file.sha256);
+const baselinePath = resolve(here, 'baseline.json');
+if (!existsSync(baselinePath)) {
+  for (const file of files) {
+    const path = resolve(here, 'baseline', file);
+    mkdirSync(dirname(path), { recursive: true });
+    writeFileSync(path, readFileSync(resolve(skill, file)));
+  }
+  writeFileSync(baselinePath, JSON.stringify({ skill: skillName, committedVersion: version,
+    assignmentVersion: version, preExistingChanges: [], files: fileHashes }, null, 2) + '\n');
+}
+assert.deepEqual(JSON.parse(readFileSync(baselinePath, 'utf8')).files, fileHashes);
+const { parseManifest } = await import(pathToFileURL(resolve(repo, 'packages/core/src/domain/manifest.ts')));
+const { parseSkillDocument, documentName, documentDescription } = await import(pathToFileURL(resolve(repo, 'packages/core/src/domain/skill-document.ts')));
+const { manifest, issues } = parseManifest(manifestText, { strict: true });
+const doc = parseSkillDocument(readFileSync(resolve(skill, 'SKILL.md'), 'utf8'));
+assert.deepEqual(issues, []);
+assert.equal(documentName(doc), skillName);
+assert.equal(documentDescription(doc), manifest.description);
+for (const path of manifest.files) assert.ok(existsSync(resolve(skill, path)), path);
+let links = 0;
+for (const file of files.filter(f => f.endsWith('.md'))) {
+  const text = readFileSync(resolve(skill, file), 'utf8');
+  for (const m of text.matchAll(/\]\(([^\s)]+)\)/g)) {
+    const target = m[1].replace(/^<|>$/g, '');
+    if (/^(https?:|#)/.test(target)) continue;
+    const [path, fragment] = target.split('#');
+    const destination = resolve(skill, dirname(file), path);
+    assert.ok(existsSync(destination), target);
+    if (fragment) {
+      const anchors = [...readFileSync(destination, 'utf8').matchAll(/^#{1,6} (.+)$/gm)]
+        .map(h => h[1].toLowerCase().replace(/[^\p{L}\p{N}_\- ]/gu, '').replaceAll(' ', '-'));
+      assert.ok(anchors.includes(fragment), target);
+    }
+    links++;
+  }
+}
+const referrals = ['java-serialization-hardening', 'architecture-decision-making', 'distributed-aggregation-and-barriers',
+  'distributed-transactions-and-sagas', 'event-sourcing', 'gof-command', 'gof-iterator', 'gof-prototype',
+  'heap-dump-analysis', 'idempotency', 'java-immutability', 'java-memory-model'];
+for (const name of referrals) {
+  assert.ok(manifest.suggests.includes(name), name);
+  assert.ok(existsSync(resolve(repo, 'skills', name, 'SKILL.md')), name);
+}
+const result = { status: 'PASS', skill: skillName, version, metadataAgreement: true, strictManifestIssues: issues.length,
+  packageFiles: files.length, relativeLinks: links, directReferrals: referrals.length,
+  assignmentAndWaveBaselineByteIdentical: true, gitChecks, files: fileHashes };
+writeFileSync(resolve(here, 'structure-results.json'), JSON.stringify(result, null, 2) + '\n');
+console.log(JSON.stringify({ ...result, gitChecks: gitChecks.map(c => ({ command: c.command, exitCode: c.exitCode })) }, null, 2));

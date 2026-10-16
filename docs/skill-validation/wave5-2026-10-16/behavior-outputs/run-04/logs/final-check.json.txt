@@ -1,0 +1,18 @@
+{
+  "phase": "final-check",
+  "executable": "C:\\Program Files\\nodejs\\node.exe",
+  "args": [
+    "check.mjs"
+  ],
+  "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-04\\output\\project",
+  "timeoutMs": 30000,
+  "exit": 0,
+  "signal": null,
+  "elapsedMs": 524,
+  "error": null,
+  "stdout": "SelfTest PASS: initial report, read-only entries, live reloads, signed duplicates, empty reload\r\n",
+  "stderr": "",
+  "executed": true,
+  "truncated": false,
+  "log": "output/logs/final-check.json"
+}

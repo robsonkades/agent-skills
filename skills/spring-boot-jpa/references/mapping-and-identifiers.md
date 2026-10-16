@@ -43,8 +43,8 @@ or defaults when documented and verified. A complete review reconciles that inve
 schema and boundaries; it does not mechanically set every annotation parameter. Test optional
 null and present values, size/range edges and mutable/generated field behavior. Do not apply
 runtime HTTP schema annotations to entities as a substitute for persistence contracts.
-[Jakarta Column](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/column),
-[Jakarta Basic](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/basic).
+[Jakarta Column](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/Column.html),
+[Jakarta Basic](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/Basic.html).
 
 For an optional unique value, decide whether multiple missing values are allowed. SQL
 Server's ordinary single-column unique index permits only one NULL; a filtered unique
@@ -244,7 +244,7 @@ state-dependent rule. `existsById` followed by a write does not remove races; co
 and the selected consistency mechanism still matter. Reference creation can defer
 missing-row exceptions; initialization needs an appropriate persistence context. Some
 providers/call paths can query early, so there is no unconditional zero-SELECT promise.
-[EntityManager contract](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/entitymanager).
+[EntityManager contract](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/EntityManager.html).
 
 For Spring Data `save`, inspect newness detection: nullable version first where supported,
 then identifier, or an explicit `Persistable.isNew()` contract. Assigned non-null IDs
@@ -256,18 +256,30 @@ and apply only present fields, preserving omitted values and version conflict be
 For a conditional edit based on an earlier client read, carry `expectedVersion` (or an
 HTTP `If-Match` value translated at the API boundary). After loading the authorized entity,
 compare that expectation with its current version **before** applying the patch. Reloading
-current state and relying only on `@Version` loses the client's older observation: it guards
-the database race after this load, not the interval since the client's original read.
-Never assign the received version into the managed `@Version` field. Preserve the provider's
-version check through flush/commit to cover a writer racing after the comparison. Missing
+current state and relying only on `@Version` loses the client's older observation: its
+write check guards a database race after this load, not the interval since the client's
+original read. Never assign the received version into the managed `@Version` field.
+Preserve the provider's version predicate and flush/commit failure handling for writes. Missing
 preconditions and stale values need an explicit API policy; do not retry a stale human edit
 automatically with a freshly loaded version. An unconditional business command may have a
 different contract and need no client version.
 
+An unchanged entity may have no write to check. With Hibernate **7.4.5**, assigning an
+already-held note can produce no UPDATE, so a concurrent commit after the initial comparison
+need not cause a conflict. If the contract also requires optimistic verification of unchanged
+or read-only participants, request `LockModeType.OPTIMISTIC` on the authorized load or with
+`EntityManager.lock` inside the transaction. Do not substitute `flush` or `save` as a universal
+read-validation mechanism. This is not a blocking lock or a cross-row invariant protocol;
+choose force-increment only when its additional version/invalidation semantics are required.
+Retain the ordinary path when validation at the initial read is sufficient for a no-op.
+Test a writer committing between that read and reader completion, with changed and unchanged
+values, plus an uncontended case. [Hibernate optimistic lock modes](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/LockMode.html#OPTIMISTIC).
+
 The fixture's `InventoryService.changeNote` and stale/current/missing-version tests demonstrate
-this persistence boundary. They do not implement HTTP header parsing or status mapping. If
+the initial comparison and checks on actual updates; the fixture does not request additional
+optimistic validation for a same-value edit. It does not implement HTTP header parsing or status mapping. If
 using `If-Match`, implement its HTTP semantics at that boundary rather than assuming Spring
 Data REST's behavior applies automatically to a custom controller. Test both a stale client
 request arriving after another commit and overlapping database transactions.
-[Jakarta optimistic locking](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2#optimistic-locking),
+[Jakarta Persistence 3.2, sections 3.5.2 and 3.5.4.1](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html),
 [Spring Data REST conditional operations](https://docs.spring.io/spring-data/rest/reference/etags-and-other-conditionals.html).

@@ -1,0 +1,81 @@
+{
+  "runtime": "v25.6.1",
+  "rows": [
+    {
+      "case": "case-a",
+      "selectedPlan": "retire",
+      "relevantChanges": [
+        1,
+        2
+      ],
+      "estimatedAvoidableHours": [
+        1.5,
+        5
+      ],
+      "repairHours": [
+        20,
+        24
+      ],
+      "replacementHours": [
+        44,
+        56
+      ],
+      "repairNetAvoidedHours": [
+        -22.5,
+        -15
+      ],
+      "switchingIntervalChanges": [
+        8,
+        16
+      ],
+      "supportedEffortChoice": "retain",
+      "negativeControl": {
+        "misallocatedPastHours": 72,
+        "falseRepairCost": [
+          92,
+          96
+        ],
+        "wronglyMakesReplacementAppearCheaper": true
+      }
+    },
+    {
+      "case": "case-b",
+      "selectedPlan": "renew",
+      "relevantChanges": [
+        18,
+        24
+      ],
+      "estimatedAvoidableHours": [
+        27,
+        60
+      ],
+      "repairHours": [
+        20,
+        24
+      ],
+      "replacementHours": [
+        44,
+        56
+      ],
+      "repairNetAvoidedHours": [
+        3,
+        40
+      ],
+      "switchingIntervalChanges": [
+        8,
+        16
+      ],
+      "supportedEffortChoice": "localRepair",
+      "negativeControl": {
+        "misallocatedPastHours": 72,
+        "falseRepairCost": [
+          92,
+          96
+        ],
+        "wronglyMakesReplacementAppearCheaper": true
+      }
+    }
+  ],
+  "interpretation": "Deterministic arithmetic control over supplied synthetic assumptions. Not a measured carrying cost, validated business forecast, performance test or agent behavior evaluation."
+}
+

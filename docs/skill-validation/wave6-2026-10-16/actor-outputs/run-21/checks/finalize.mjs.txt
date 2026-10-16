@@ -1,0 +1,52 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+const root = process.cwd();
+const hash = p => crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
+const results = JSON.parse(fs.readFileSync('output/checks/results.json', 'utf8'));
+const assessment = JSON.parse(fs.readFileSync('output/assessment.json', 'utf8'));
+const review = fs.readFileSync('output/REVIEW.md', 'utf8');
+const words = review.trim().split(/\s+/).length;
+if (words > 800 || assessment.disposition !== 'supported' || assessment.requiredChange !== null) throw new Error('Invalid deliverable');
+for (const file of results.protectedFiles) {
+  if (hash(`input/project/${file.path}`) !== file.inputSha256 || hash(`output/project/${file.path}`) !== file.outputSha256) throw new Error(`Protected file changed: ${file.path}`);
+}
+if (!results.allChildProcessesExited) throw new Error('Unfinished child process');
+const contentReads = ['TASK.md', 'skill/SKILL.md', 'skill/references/happens-before.md', 'skill/references/review-checklist.md', ...results.protectedFiles.map(f => `input/project/${f.path}`), 'output/checks/results.json', 'output/REVIEW.md', 'output/assessment.json'];
+const readRecords = contentReads.map(p => ({ path: p, sha256: hash(p), kind: 'content', completeness: 'complete', via: p === 'output/REVIEW.md' || p === 'output/assessment.json' ? 'authored and fully read by finalization process' : 'complete Get-Content output inspected by reviewer' }));
+for (const file of results.protectedFiles) readRecords.push({ path: `output/project/${file.path}`, sha256: hash(`output/project/${file.path}`), kind: 'hash-only comparison; .java files also consumed by javac', completeness: 'full bytes hashed; no separate reviewer content read', matchesInspectedInput: true });
+for (const p of ['output/checks/run.mjs', 'output/checks/finalize.mjs']) readRecords.push({ path: p, sha256: hash(p), kind: 'authored and executed by Node; hash-only verification', completeness: 'entire authored script executed; no Get-Content read' });
+const shellCommands = [
+  { cmd: "Get-Content -Raw -LiteralPath 'TASK.md'", stdout: { kind: 'complete file content', path: 'TASK.md' } },
+  { cmd: "Get-Date -AsUTC -Format o; Get-Content -Raw -LiteralPath 'skill/SKILL.md'; Get-Content -Raw -LiteralPath 'input/project/docs/review-request.md'; rg --files input output skill", stdout: { recordedTimestamp: '2026-10-16T17:32:54.9754996Z', completeFileContents: ['skill/SKILL.md', 'input/project/docs/review-request.md'], listing: '20 paths: 8 input/project, 8 output/project and 4 skill; skill/skill.yaml was listed only' } },
+  { cmd: "Get-Content -Raw -LiteralPath 'input/project/README.md'; Get-Content -Raw -LiteralPath 'input/project/docs/contract.md'; Get-Content -Raw -LiteralPath 'input/project/src/memo/BestEffortMemo.java'; Get-Content -Raw -LiteralPath 'input/project/src/memo/PublishedEntry.java'; Get-Content -Raw -LiteralPath 'input/project/src/memo/ReaderFactory.java'; Get-Content -Raw -LiteralPath 'input/project/test/memo/Smoke.java'; Get-Content -Raw -LiteralPath 'input/project/check.mjs'; Get-Content -Raw -LiteralPath 'skill/references/happens-before.md'; Get-Content -Raw -LiteralPath 'skill/references/review-checklist.md'", stdout: { kind: 'complete content of all nine named files', truncated: false } },
+  { cmd: 'node output/checks/run.mjs', stdout: { excerpt: 'All six JDK commands exited 0; javac 25.0.3; sequential-controls=2 PASS', childOutputLog: 'output/checks/results.json' } },
+  { cmd: "Get-Content -Raw -LiteralPath 'output/checks/results.json'; Get-FileHash -Algorithm SHA256 -LiteralPath 'TASK.md','skill/SKILL.md','skill/references/happens-before.md','skill/references/review-checklist.md'; Get-Date -AsUTC -Format o", stdout: { completeFileContent: 'output/checks/results.json', hashes: 'Recorded in filesRead; PowerShell displayed shortened Path cells but full hashes.', recordedTimestamp: '2026-10-16T17:33:55.0482858Z' } }
+].map(item => ({ program: 'PowerShell through exec_command', arguments: { cmd: item.cmd }, cwd: root, exit: 0, stdout: item.stdout, note: 'Full shell executable path and wrapper argv were not inspected; cmd is the exact tool argument.' }));
+const finalization = { program: process.execPath, arguments: ['output/checks/finalize.mjs'], cwd: root, exit: null, stdout: `deliverables-valid words=${words}; protected-files=8 unchanged; checks-children=6 exited; allWritesStopped=true`, note: 'This command is in progress while the manifest is written; caller observes its final exit. No subprocesses are spawned by it.' };
+const execution = {
+  scope: root,
+  firstRecordedTimestamp: '2026-10-16T17:32:54.9754996Z',
+  firstRecordedTimestampMeaning: 'Get-Date from the second shell call, after the initial TASK.md read; exact task start was not captured.',
+  artifactFinalizedAt: new Date().toISOString(),
+  target: 'Java SE25, no preview and no external dependencies',
+  runtime: results.node,
+  inheritedJvmFlags: results.inheritedJvmFlags,
+  commands: [...shellCommands, ...results.commands, finalization],
+  filesRead: readRecords,
+  listings: [{ command: 'rg --files input output skill', kind: 'path listing only', unopenedFile: 'skill/skill.yaml' }],
+  primaryUrls: [
+    { url: 'https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.4.5', status: 'success', scope: 'Happens-before and Thread.start rules; rendered excerpt, not an entire saved document' },
+    { url: 'https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.5', status: 'success', scope: 'Final fields and construction-time reachable state' },
+    { url: 'https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.7', status: 'success', scope: 'Reference atomicity; visible in follow-up open at line 666' },
+    { url: 'https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html', status: 'success', openLineNumbers: [480, 666], scope: 'Follow-up excerpts exposing JLS 17.5.1 freeze/dereference rules and 17.7; no full-page reading claimed' }
+  ],
+  webFailures: [],
+  fileMutations: ['apply_patch created output/checks/run.mjs', 'JDK compilation wrote output/project/.build/**', 'run.mjs wrote output/checks/results.json', 'apply_patch created output/REVIEW.md and output/assessment.json', 'apply_patch updated only output/assessment.json and created output/checks/finalize.mjs', 'apply_patch corrected one line reference in output/REVIEW.md and updated this finalizer log', 'finalize.mjs wrote output/execution.json'],
+  protectedFiles: results.protectedFiles,
+  validation: { reviewWordCount: words, assessmentParsed: true, protectedFilesRechecked: true },
+  limits: ['No concurrency stress, jcstress, static analysis or cross-VM/architecture testing.', 'Sequential smoke and bytecode inspection are observations; contract proof relies on accepted premises and JLS.', 'Input project check.mjs was read but not executed; its compile-and-smoke operations were run directly with explicit command logging.', 'No exact initial task timestamp, cost or token usage was measured.', 'Finalization exit is observed outside this self-written manifest; all JDK subprocesses exited 0 and the finalizer launches none.'],
+  allChildProcessesExited: results.allChildProcessesExited,
+  allWritesStopped: true
+};
+fs.writeFileSync('output/execution.json', JSON.stringify(execution, null, 2) + '\n');
+console.log(finalization.stdout);

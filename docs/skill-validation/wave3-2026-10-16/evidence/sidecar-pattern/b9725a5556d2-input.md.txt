@@ -1,0 +1,5 @@
+Review the ConfigMap delivery and reload path in pod.yaml and consumer-contracts.md for Kubernetes 1.34 on Linux.
+
+Operators need configuration updates to become effective in running Pods and must be able to tell when the application adopted the intended version. The Pod shown is representative of a Deployment's template. Determine whether the wiring can meet that contract, identify the smallest justified change if needed, and give an observable verification sequence. Preserve adequate controls and distinguish a documented guarantee from evidence we still need.
+
+Do not contact a cluster, deploy, restart workloads or download images. The image names are illustrative. Retain the existing runtime and Kubernetes baseline. Explain when changing the rollout contract would be an alternative rather than silently claiming it provides live reload.

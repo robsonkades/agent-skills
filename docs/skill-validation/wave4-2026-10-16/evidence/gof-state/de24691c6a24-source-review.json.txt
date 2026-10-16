@@ -1,0 +1,111 @@
+{
+  "sources": [
+    {
+      "url": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html",
+      "version": "Jakarta Persistence 3.2, April 10 2024",
+      "sections": [
+        "4.11 Bulk Update and Delete Operations",
+        "6.3 Criteria bulk updates"
+      ],
+      "support": "Bulk writes bypass automatic optimistic-lock checks and do not synchronize the active persistence context; existing manual version/precondition and refresh/clear caveats remain appropriate.",
+      "verifiedBy": "HTTP200 plus content review",
+      "limitation": "Specification evidence, not provider/database integration.",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/EnumeratedValue.html",
+      "version": "Jakarta Persistence API 3.2.0",
+      "sections": [
+        "EnumeratedValue type contract"
+      ],
+      "support": "Final field with distinct non-null values; numeric byte/short/int for ordinal mapping or String for string mapping. Confirms existing explicit-code guidance and provider-version qualification.",
+      "verifiedBy": "HTTP200 and document content via Invoke-WebRequest; browser extraction failed",
+      "limitation": "No provider support test or annotation integration executed.",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/21/language/pattern-matching-switch.html",
+      "version": "Java SE21",
+      "sections": [
+        "Type coverage and exhaustive switch expressions"
+      ],
+      "support": "Closed-state type coverage is compiler-checked; this does not validate payload guards, legal event combinations or business effects.",
+      "verifiedBy": "Official language guide; compile and deliberate new-state rejection",
+      "limitation": "Compilation used javac25 --release21, not execution on JVM21.",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html#jls-17.1",
+      "version": "JLS SE21",
+      "sections": [
+        "17.1 Synchronization"
+      ],
+      "support": "A thread can acquire the same monitor repeatedly, so synchronized alone does not reject callback-driven reentry.",
+      "verifiedBy": "Primary specification",
+      "limitation": "No new reentrancy runtime test in this assignment; existing guidance retained.",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/atomic/AtomicReference.html",
+      "version": "Java SE21",
+      "sections": [
+        "compareAndSet",
+        "getAndUpdate/updateAndGet"
+      ],
+      "support": "Expected-reference atomic update and retry-sensitive update functions support the existing pure transition/re-evaluation distinction.",
+      "verifiedBy": "Primary API and controlled single-thread interleaving using actual AtomicReference",
+      "limitation": "Controlled interleaving is not a concurrency stress test or proof of all histories.",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CompletableFuture.html#cancel(boolean)",
+      "version": "Java SE21",
+      "sections": [
+        "Class policies and cancel"
+      ],
+      "support": "Cancellation completes the result exceptionally and does not itself control the computation; state adoption must remain guarded and resource ownership explicit.",
+      "verifiedBy": "Primary API",
+      "limitation": "No actual network cancellation or task-stop integration executed.",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://github.com/lukas-krecan/ShedLock",
+      "version": "Maintainer README as served 2026-10-16; dependency example 7.10.1",
+      "sections": [
+        "Behavior",
+        "Caveats"
+      ],
+      "support": "Tasks exceeding lockAtMostFor can overlap; the existing state predicate/atomicity guidance must remain the correctness boundary.",
+      "verifiedBy": "Maintainer documentation",
+      "limitation": "README is not a pinned deployment version. No scheduler/lock-provider test, and skill still requires inspecting the project's actual framework/version.",
+      "consulted": "2026-10-16"
+    }
+  ],
+  "http": [
+    {
+      "url": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2",
+      "status": 404,
+      "finalUrl": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2",
+      "contentBytes": 211891
+    },
+    {
+      "url": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html",
+      "status": 200,
+      "finalUrl": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html",
+      "contentBytes": 2531021
+    },
+    {
+      "url": "https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/enumeratedvalue",
+      "status": 404,
+      "finalUrl": "https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/enumeratedvalue",
+      "contentBytes": 211891
+    },
+    {
+      "url": "https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/EnumeratedValue.html",
+      "status": 200,
+      "finalUrl": "https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/EnumeratedValue.html",
+      "contentBytes": 6741
+    }
+  ],
+  "notes": "Paraphrased source support; no third-party implementation sources vendored."
+}

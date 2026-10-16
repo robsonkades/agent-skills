@@ -1,0 +1,14 @@
+# ADR-0012: Execute pricing in the database
+
+Status: accepted
+Decision date: 2022-06-08
+Scope: checkout and batch pricing
+
+## Context
+Both clients need the same rounding and tax behavior. The batch writer calls the database pricing routine directly. The 2022 team chose a shared routine rather than independent client implementations to preserve equivalent results.
+
+## Decision
+Keep the authoritative pricing calculation in the database routine for both clients.
+
+## Consequences
+The routine is one owner of the shared rules. Checkout pricing releases require coordination with the database release window. No comparative latency result was recorded.

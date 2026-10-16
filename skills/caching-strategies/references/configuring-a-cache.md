@@ -6,6 +6,35 @@ These are partial snippets, not standalone applications. Caffeine snippets targe
 `ProductDto` and a bounded `loadFromSource` implementation. The Redis snippet separately requires
 Spring Data Redis 4/Jackson 3 and its supported Java baseline; inspect the project's versions.
 
+## Verify the active cache and load path
+
+Before attributing behavior to a configured cache, follow one real operation to the cache it uses.
+In Spring, inspect cache names, `cacheManager`/`cacheResolver`, class-level defaults and effective
+bean/profile selection. A bounded Caffeine bean does not protect a method resolved to another
+manager. For direct caching, check where the instance is constructed and shared; identical names
+or settings do not make independently constructed caches one coordination domain.
+
+In Caffeine 3.2.2, `Cache.get(key, mappingFunction)` computes/populates atomically for that key;
+`LoadingCache.get(key)` uses its loader. A separate `getIfPresent`, external load and `put` sequence
+does not acquire that guarantee, even on a `LoadingCache`. Prefer the coordinating operation when
+same-key work should be shared, respecting its loader restrictions, including no recursive updates
+to other mappings in that cache. Null results and failures do not establish a stored value, so
+later attempts can load again; this is not an exactly-once effect or a cross-instance guarantee.
+Spring's `@Cacheable(sync = true)` likewise requires support from the selected provider; it is not
+proof of distributed exclusion. Check the target version and permitted annotation combinations.
+
+Verify with a controlled same-key cold burst: hold the origin operation open, start competing
+readers, record actual origin attempts, then release the load and inspect returned/stored values.
+Keep a split lookup/load/put variant as a negative control, forcing both lookups to miss before
+either fills. Repeat with independent cache instances and with a failed load followed by recovery;
+do not classify every later attempt as a broken lock. Use latches/barriers rather than sleep-based
+ordering. These checks exercise the integration; provider contracts establish its guarantees, and
+separate distinct-key admission and invalidation checks still apply.
+
+Sources: [Caffeine 3.2.2 Cache](https://github.com/ben-manes/caffeine/blob/v3.2.2/caffeine/src/main/java/com/github/benmanes/caffeine/cache/Cache.java),
+[LoadingCache](https://github.com/ben-manes/caffeine/blob/v3.2.2/caffeine/src/main/java/com/github/benmanes/caffeine/cache/LoadingCache.java),
+and [Spring 6.2.11 Cacheable](https://github.com/spring-projects/spring-framework/blob/v6.2.11/spring-context/src/main/java/org/springframework/cache/annotation/Cacheable.java).
+
 ## Bounded by weight when entry sizes vary
 
 ```java

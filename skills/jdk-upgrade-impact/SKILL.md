@@ -30,7 +30,8 @@ mistaken for cause.
 
 ## Workflow
 
-Inspect exact source/target vendor builds, compiler `--release`, Maven/Gradle toolchains,
+Inspect exact current/target runtime vendor builds, the compiler executable and effective
+`--release` or `-source`/`-target` with its platform classes, Maven/Gradle toolchains,
 CI/runtime images, dependency/agent support and deployment constraints. The concrete examples
 cover JDK 17–25; they do not authorize another upgrade, preview use or unrelated dependency
 changes. A JEP's delivery/target release does not establish what is active in the deployed
@@ -66,7 +67,10 @@ within the requested scope.
 ## Rules
 
 - **Compiling is not the test.** `--release` constrains language, class-file version and the
-  documented platform API for that release; it does not validate third-party binaries or what
+  documented platform API for that release. `-source`/`-target` alone do not restrict the
+  platform API: a class-file major version is not proof of the consumer's minimum runtime.
+  Check the API selection as described in `references/verification-and-rollout.md`.
+  Neither form validates third-party binaries or what
   the runtime encapsulates, removes or refuses at startup. A green build on the new JDK proves
   very little — and a _degraded_ API proves nothing at all: `Thread.stop()` (JDK 20),
   `Subject.getSubject` (23) and `System.setSecurityManager` (24) still compile and throw

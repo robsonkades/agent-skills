@@ -1,0 +1,50 @@
+[
+  {
+    "name": "supplier-se17",
+    "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/Supplier.html",
+    "status": 200,
+    "path": "C:/Users/robso/AppData/Local/Temp/codex-gof-abstract-factory-20261016-190d0fd289814acfa16e3482d1564f74/supplier-se17.html",
+    "sha256": "3E4B89A73204CD861414D5E841C373F9C063AC8434DFCE1D97D01826558AC77F",
+    "consulted": "2026-10-16"
+  },
+  {
+    "name": "jls17-types",
+    "url": "https://docs.oracle.com/javase/specs/jls/se17/html/jls-4.html",
+    "status": 200,
+    "path": "C:/Users/robso/AppData/Local/Temp/codex-gof-abstract-factory-20261016-190d0fd289814acfa16e3482d1564f74/jls17-types.html",
+    "sha256": "5E4CFE7610E0ECBA31BF934F52C3266CECF71D2CDAB8984A4B10DF5DFE3CE5C1",
+    "consulted": "2026-10-16"
+  },
+  {
+    "name": "jls17-statements",
+    "url": "https://docs.oracle.com/javase/specs/jls/se17/html/jls-14.html",
+    "status": 200,
+    "path": "C:/Users/robso/AppData/Local/Temp/codex-gof-abstract-factory-20261016-190d0fd289814acfa16e3482d1564f74/jls17-statements.html",
+    "sha256": "51F5FCEA8D5D078E8413B95639F30F537B02E2BE3C5540336B0741E5CC9091C0",
+    "consulted": "2026-10-16"
+  },
+  {
+    "name": "serviceloader-se17",
+    "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/ServiceLoader.html",
+    "status": 200,
+    "path": "C:/Users/robso/AppData/Local/Temp/codex-gof-abstract-factory-20261016-190d0fd289814acfa16e3482d1564f74/serviceloader-se17.html",
+    "sha256": "7D9912193C053EC7AA1CC1D20714FB4F3E532B4521F29F71CE516E794BABD5EF",
+    "consulted": "2026-10-16"
+  },
+  {
+    "name": "records-se17",
+    "url": "https://docs.oracle.com/en/java/javase/17/language/records.html",
+    "status": 200,
+    "path": "C:/Users/robso/AppData/Local/Temp/codex-gof-abstract-factory-20261016-190d0fd289814acfa16e3482d1564f74/records-se17.html",
+    "sha256": "19FFD04756C0051294D798DDE95528243DAD7ECD37F2FEAE112D46B5F848E376",
+    "consulted": "2026-10-16"
+  },
+  {
+    "name": "mockitobean-spring6.2.0",
+    "url": "https://docs.spring.io/spring-framework/docs/6.2.0/javadoc-api/org/springframework/test/context/bean/override/mockito/MockitoBean.html",
+    "status": 200,
+    "path": "C:/Users/robso/AppData/Local/Temp/codex-gof-abstract-factory-20261016-190d0fd289814acfa16e3482d1564f74/mockitobean-spring6.2.0.html",
+    "sha256": "8B4AA1BD597B29BDEB6F4D7D6BD63F88465BB51B67465C3BC8C623464A700B48",
+    "consulted": "2026-10-16"
+  }
+]

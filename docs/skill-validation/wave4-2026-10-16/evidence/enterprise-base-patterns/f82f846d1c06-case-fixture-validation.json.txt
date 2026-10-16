@@ -1,0 +1,5 @@
+{
+  "checks": 12,
+  "result": "PASS",
+  "scope": "Only accepted scale significance differs; all seven ordinary task/source artifacts are byte-identical. This is fixture consistency, not agent behavior."
+}

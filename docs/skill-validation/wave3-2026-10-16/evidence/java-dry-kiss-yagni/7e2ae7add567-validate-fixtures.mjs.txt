@@ -1,0 +1,93 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+
+const root = fileURLToPath(new URL('.', import.meta.url));
+const cases = JSON.parse(fs.readFileSync(path.join(root, 'case-inputs.json'), 'utf8')).cases;
+const differences = [];
+function compare(a, b, name = '') {
+  if (Object.is(a, b)) return;
+  if (a && b && typeof a === 'object' && typeof b === 'object') {
+    for (const key of new Set([...Object.keys(a), ...Object.keys(b)])) {
+      compare(a[key], b[key], name ? name + '.' + key : key);
+    }
+  } else differences.push(name);
+}
+compare(cases[0].input, cases[1].input);
+assert.deepEqual(differences, ['files.build-config.json']);
+assert.deepEqual(JSON.parse(cases[0].input.files['build-config.json']), { generatePolicies: true });
+assert.deepEqual(JSON.parse(cases[1].input.files['build-config.json']), { generatePolicies: false });
+
+function materialize(name, input, change) {
+  const directory = path.join(root, name);
+  if (fs.existsSync(directory)) throw Error('Preserve existing fixture: ' + directory);
+  fs.mkdirSync(directory);
+  for (const [relative, content] of Object.entries(input.files)) {
+    const absolute = path.resolve(directory, relative);
+    assert.ok(absolute.startsWith(directory + path.sep));
+    fs.mkdirSync(path.dirname(absolute), { recursive: true });
+    fs.writeFileSync(absolute, content, { flag: 'wx' });
+  }
+  if (change === 'input') {
+    fs.writeFileSync(path.join(directory, 'policy.json'), '{"maxItems":200}\n');
+  }
+  if (change === 'source') {
+    for (const name of ['UiLimit', 'ApiLimit']) {
+      const file = path.join(directory, 'src/example/limits', name + '.java');
+      const text = fs.readFileSync(file, 'utf8');
+      assert.ok(text.includes('count <= 100'));
+      fs.writeFileSync(file, text.replace('count <= 100', 'count <= 200'));
+    }
+  }
+  return directory;
+}
+
+const records = [];
+function run(name, directory, maximum, expectedPass) {
+  const result = spawnSync(process.execPath, ['build.mjs', String(maximum)], {
+    cwd: directory, encoding: 'utf8', timeout: 45000,
+  });
+  const record = { name, command: process.execPath, args: ['build.mjs', String(maximum)], cwd: directory,
+    expectedPass, exitCode: result.status, stdout: result.stdout ?? '', stderr: result.stderr ?? '' };
+  records.push(record);
+  fs.writeFileSync(path.join(root, name + '.result.json'), JSON.stringify(record, null, 2) + '\n');
+  if (result.error) throw result.error;
+  if (expectedPass) {
+    assert.equal(result.status, 0, record.stderr);
+    assert.ok(record.stdout.includes('PASS checks=12 maximum=' + maximum));
+    const build = JSON.parse(record.stdout.trim().split(/\r?\n/).at(-1));
+    assert.equal(build.compilerTarget, 17);
+    assert.equal(build.sourceFiles, 5);
+    const classFile = fs.readFileSync(path.join(build.output, 'example', 'ContractCheck.class'));
+    assert.equal(classFile.readUInt16BE(6), 61, 'Java 17 class-file target');
+  } else {
+    assert.equal(result.status, 1);
+    assert.ok(record.stderr.includes('AssertionError: web count=199 expected=true'), record.stderr);
+  }
+  return record;
+}
+
+run('baseline-active', materialize('baseline-active', cases[0].input), 100, true);
+run('baseline-inactive', materialize('baseline-inactive', cases[1].input), 100, true);
+run('active-output-only', materialize('active-output-only', cases[0].input, 'source'), 200, false);
+const activeInput = materialize('active-input', cases[0].input, 'input');
+run('active-input', activeInput, 200, true);
+const outputPath = path.join(activeInput, 'src/example/limits/UiLimit.java');
+const firstHash = crypto.createHash('sha256').update(fs.readFileSync(outputPath)).digest('hex');
+run('active-input-repeat', activeInput, 200, true);
+assert.equal(crypto.createHash('sha256').update(fs.readFileSync(outputPath)).digest('hex'), firstHash);
+run('inactive-input-only', materialize('inactive-input-only', cases[1].input, 'input'), 200, false);
+run('inactive-source', materialize('inactive-source', cases[1].input, 'source'), 200, true);
+
+const result = {
+  technicalFixtureValidation: true, behavioralEvaluation: false,
+  decisiveDifference: differences, compilerTarget: 17, verifiedClassFileMajor: 61,
+  runtime: 'Temurin 25.0.3+9-LTS', noJava17VmExecuted: true,
+  checksPerSuccessfulRun: 12, successfulRuns: 5, expectedNegativeControls: 2,
+  generationRepeatPreserved: true, allChildProcessesStopped: true, records,
+};
+fs.writeFileSync(path.join(root, 'fixture-results.json'), JSON.stringify(result, null, 2) + '\n');
+console.log(JSON.stringify({ ...result, records: records.map(({ name, exitCode, expectedPass }) => ({ name, exitCode, expectedPass })) }, null, 2));

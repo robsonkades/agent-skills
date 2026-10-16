@@ -1,0 +1,19 @@
+{
+  "label": "prettier-owned",
+  "executable": "C:\\Program Files\\nodejs\\node.exe",
+  "args": [
+    "C:\\git\\agent-skills\\node_modules\\prettier\\bin\\prettier.cjs",
+    "--check",
+    "C:\\git\\agent-skills\\skills\\java-cohesion-coupling\\SKILL.md",
+    "C:\\git\\agent-skills\\skills\\java-cohesion-coupling\\references\\dependency-graphs.md",
+    "C:\\git\\agent-skills\\skills\\java-cohesion-coupling\\references\\metrics-and-limits.md",
+    "C:\\git\\agent-skills\\skills\\java-cohesion-coupling\\references\\taxonomy.md",
+    "C:\\git\\agent-skills\\skills\\java-cohesion-coupling\\skill.yaml"
+  ],
+  "cwd": "C:/git/agent-skills",
+  "exitCode": 0,
+  "signal": null,
+  "stdout": "Checking formatting...\nAll matched files use Prettier code style!\n",
+  "stderr": "",
+  "error": null
+}

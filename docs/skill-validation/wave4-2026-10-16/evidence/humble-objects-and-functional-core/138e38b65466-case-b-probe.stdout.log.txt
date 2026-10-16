@@ -1,0 +1,19 @@
+PASS missing-anonymous
+existing=Response[status=404, body=not found]
+proposed=Response[status=404, body=not found]
+PASS public-anonymous
+existing=Response[status=200, body=Published]
+proposed=Response[status=200, body=Published]
+PASS restricted-owner
+existing=Response[status=200, body=Internal]
+proposed=Response[status=200, body=Internal]
+PASS restricted-nonowner
+existing=Response[status=403, body=forbidden]
+proposed=Response[status=403, body=forbidden]
+PASS restricted-anonymous
+existing=Response[status=403, body=forbidden]
+proposed=Response[status=403, body=forbidden]
+PASS repository-failure
+existing=IllegalStateException:Repository unavailable
+proposed=IllegalStateException:Repository unavailable
+checks=6 failed=0

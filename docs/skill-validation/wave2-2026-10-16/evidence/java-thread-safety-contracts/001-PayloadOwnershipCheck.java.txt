@@ -1,0 +1,76 @@
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+
+/**
+ * Isolated Java 25 technical check, not a stress test or an agent evaluation.
+ * The read gate deliberately orders the producer's reuse before the consumer's
+ * read. It exposes wrong record contents without relying on a data race.
+ */
+public final class PayloadOwnershipCheck {
+    public static void main(String[] args) throws Exception {
+        check("retained alias reused after dequeue", false, true, 9);
+        check("stable copy before publication", true, true, 7);
+        check("exclusive use until consumer completion", false, false, 7);
+        System.out.println("PASS: three deterministic ownership schedules; not a general JMM proof");
+    }
+
+    private static void check(String name, boolean copy, boolean reuseEarly, int expected)
+            throws Exception {
+        var queue = new ArrayBlockingQueue<byte[]>(1);
+        var taken = new CountDownLatch(1);
+        var mayRead = new CountDownLatch(1);
+        var observed = new AtomicInteger(-1);
+        var error = new AtomicReference<Throwable>();
+        byte[] source = {7};
+        byte[] submitted = copy ? source.clone() : source;
+        Thread consumer = new Thread(() -> {
+            try {
+                byte[] payload = queue.take();
+                taken.countDown();
+                if (!mayRead.await(5, TimeUnit.SECONDS)) {
+                    throw new AssertionError("consumer read gate timed out");
+                }
+                observed.set(payload[0]);
+            } catch (Throwable failure) {
+                error.set(failure);
+            }
+        }, "ownership-check-consumer");
+        consumer.setDaemon(true);
+        consumer.start();
+        try {
+            queue.put(submitted);
+            if (!taken.await(5, TimeUnit.SECONDS)) {
+                throw new AssertionError("consumer did not remove element");
+            }
+            if (reuseEarly) {
+                source[0] = 9;
+            }
+            mayRead.countDown();
+            consumer.join(5000);
+            if (consumer.isAlive()) {
+                throw new AssertionError("consumer did not finish");
+            }
+            if (error.get() != null) {
+                throw new AssertionError("consumer failed", error.get());
+            }
+            if (observed.get() != expected) {
+                throw new AssertionError(name + ": expected " + expected
+                        + " but observed " + observed.get());
+            }
+            source[0] = 11; // Reuse after the consumer has completed its last access.
+            String outcome = expected == 7 ? "accepted bytes preserved"
+                    : "counterexample: accepted=7, consumed=9";
+            System.out.println(name + ": " + outcome);
+        } finally {
+            mayRead.countDown();
+            consumer.interrupt();
+            consumer.join(1000);
+            if (consumer.isAlive()) {
+                throw new AssertionError("consumer cleanup failed");
+            }
+        }
+    }
+}

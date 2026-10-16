@@ -1,0 +1,109 @@
+diff --git a/skills/distributed-tracing-design/SKILL.md b/skills/distributed-tracing-design/SKILL.md
+index 40baaf4..cbdfee9 100644
+--- a/skills/distributed-tracing-design/SKILL.md
++++ b/skills/distributed-tracing-design/SKILL.md
+@@ -39,6 +39,12 @@ independently actionable or required by a semantic convention. Crossing a proces
+ often earns protocol spans, but automatic instrumentation may already supply them and some
+ boundaries are intentionally summarized.
+ 
++When changing an instrumented journey, follow the actual caller/consumer through enabled
++agent, library and manual instrumentation. Where records exist, match a representative raw
++span's resource and instrumentation scope/version to that path; a configuration entry or
++backend display name alone does not establish its creator. Apparent duplicates require the
++[identity and origin check](references/traces-in-incidents.md#apparent-duplicate-spans).
++
+ Use attributes for properties of a span, events for notable points within it, and logs for
+ detailed records. Avoid a span for every trivial method or loop item unless per-item timing
+ is the explicit question and sampling/cost support it.
+@@ -174,10 +180,10 @@ Prefer same-trace parentage when:
+ 
+ ## Failure modes
+ 
+-| Symptom                                   | Likely modeling issue                            | Response                                   |
++| Symptom                                   | Candidate cause                                  | Response                                   |
+ | ----------------------------------------- | ------------------------------------------------ | ------------------------------------------ |
+ | operation view has one row per request    | ID/raw path in span name                         | stable template name                       |
+-| duplicate HTTP/DB spans                   | manual plus automatic instrumentation            | suppress one owner                         |
++| apparent duplicate HTTP/DB spans          | multiple creators or repeated delivery           | compare identities and origins first       |
+ | missing service edge                      | absent/wrong kind or semantic attributes         | fixture-test pinned instrumentation        |
+ | consumer attached to unrelated batch item | arbitrary single parent                          | links to all creation contexts             |
+ | send span ends before broker callback     | synchronous boundary on async operation          | end on defined completion                  |
+@@ -209,7 +215,7 @@ and retain business/request correlation appropriate to logs.
+ 
+ - [Span modelling](references/span-modelling.md) — read when choosing parent/link topology, retries, batches or long-running units.
+ - [Semantic conventions](references/semantic-conventions.md) — read before selecting protocol kind/name/status or migrating instrumentation.
+-- [Traces in incidents](references/traces-in-incidents.md) — read when interpreting missing/biased trace evidence or testing backend queries.
++- [Traces in incidents](references/traces-in-incidents.md) — read when interpreting missing/biased evidence, investigating apparent duplicates or testing backend queries.
+ - opentelemetry-performance for sampling, propagation and cost.
+ - structured-logging for event/correlation fields.
+ - metrics-and-cardinality for aggregate schemas.
+diff --git a/skills/distributed-tracing-design/references/traces-in-incidents.md b/skills/distributed-tracing-design/references/traces-in-incidents.md
+index 0e62b55..e59a92b 100644
+--- a/skills/distributed-tracing-design/references/traces-in-incidents.md
++++ b/skills/distributed-tracing-design/references/traces-in-incidents.md
+@@ -59,18 +59,50 @@ processors can observe it while standard export paths normally omit it. Neither
+ `isRecording` nor a sampled flag is an export acknowledgment or backend retention guarantee.
+ Inspect the pinned SDK and pipeline before treating an empty exporter as propagation loss.
+ 
++## Apparent duplicate spans
++
++Two rows with the same operation name are not enough to remove instrumentation. Obtain a
++representative raw record with trace/span IDs, parent, kind, timestamps, resource and
++instrumentation scope/version, where available. Follow the actual caller, enabled agent or
++library and manual span creation; scope identifies the emitting software unit, but does
++not prove which deployed path ran. Compare records at SDK export and backend ingestion when
++available to locate where repetition first appears.
++
++- **Same `(traceId, spanId)`:** compare normalized IDs and payloads before counting distinct
++  operations. OTLP permits duplicate delivery when acknowledgment is lost. Retransmission,
++  multiple export paths or a backend display/query can explain repetition; investigate the
++  observed path before suppressing a creator. ID equality alone does not prove retransmission;
++  conflicting payloads can also require checking transformations or erroneous ID reuse.
++- **Different IDs:** check whether the records represent client/server sides, retries or
++  independently actionable stages. Same names and overlapping timing do not make them
++  redundant. Map each to the operation/attempt and its actual creator.
++- **Redundant creators for the same protocol role and attempt:** select one owner that
++  preserves the required kind, attributes, parentage and completion semantics. Recheck the
++  changed operation and affected backend query; do not remove legitimate attempt or
++  business-stage spans to force a lower count.
++
++If records or origin evidence are unavailable, retain that uncertainty and identify the
++smallest capture that distinguishes creation from delivery/display duplication. Keep the
++span model unchanged until evidence justifies suppression; hand pipeline mechanics to
++`opentelemetry-performance` with the observed IDs and export path.
++
++The identity rule comes from the [Trace API](https://opentelemetry.io/docs/specs/otel/trace/api/#spancontext);
++emitter metadata from [instrumentation scope](https://opentelemetry.io/docs/concepts/instrumentation-scope/).
++The delivery limitation was checked against [OTLP specification v1.11.1](https://github.com/open-telemetry/opentelemetry-proto/blob/v1.11.1/docs/specification.md#duplicate-data).
++These sources do not establish a particular backend's storage or deduplication behavior.
++
+ ## Contract tests
+ 
+ For local model assertions, use an isolated SDK and an in-memory exporter with known
+ recording/export settings. Select assertions relevant to the changed operation:
+ 
+-- expected number and class of spans;
++- expected distinct span identities and operation classes, separate from delivered record counts;
+ - stable name and kind;
+ - parent trace/span IDs;
+ - links for batch/messaging causes;
+ - logical timestamps for async completion;
+ - status/outcome for success/error/cancel/retry;
+-- no duplicate auto/manual spans;
++- no redundant creators for the same protocol role/attempt, preserving legitimate stages;
+ - truncation and sensitive-data policy.
+ 
+ These assertions prove only what the exercised fixture records. Test actual broker/executor
+diff --git a/skills/distributed-tracing-design/skill.yaml b/skills/distributed-tracing-design/skill.yaml
+index 349498d..ea6fbda 100644
+--- a/skills/distributed-tracing-design/skill.yaml
++++ b/skills/distributed-tracing-design/skill.yaml
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: distributed-tracing-design
+-version: 1.3.4
++version: 1.3.5
+ description: >-
+   Designing trace topology and semantics: selecting actionable span boundaries, stable
+   operation names, kinds, status and attributes; modelling synchronous, asynchronous,

@@ -1,0 +1,259 @@
+{
+  "skill": "gof-visitor",
+  "fixture": "Reviewer-written minimal reproduction of new-kind source/binary coverage; not copied from or a full execution of shipped partial examples.",
+  "targetRelease": 21,
+  "runtime": "Temurin 25.0.3+9-LTS",
+  "expectedControls": "Abstract visitCode exposes missing source handling; old binary still handles Text but new Code dispatch throws AbstractMethodError. Explicit UpdatedOp handles both. A default rejection preserves the old implementation at runtime/recompilation but does not implement Code semantics.",
+  "records": [
+    {
+      "label": "runtime-version",
+      "command": [
+        "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+        "-version"
+      ],
+      "workingDirectory": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n",
+      "signal": null,
+      "error": null,
+      "expectedExitCode": 0
+    },
+    {
+      "label": "v1-compile",
+      "command": [
+        "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+        "--release",
+        "21",
+        "-Xlint:all",
+        "-Werror",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v1\\classes",
+        "Model.java",
+        "OldOp.java",
+        "OldMain.java"
+      ],
+      "workingDirectory": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v1",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "signal": null,
+      "error": null,
+      "expectedExitCode": 0
+    },
+    {
+      "label": "v1-run",
+      "command": [
+        "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v1\\classes",
+        "OldMain"
+      ],
+      "workingDirectory": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v1",
+      "exitCode": 0,
+      "stdout": "OLD_PATH=4\r\n",
+      "stderr": "",
+      "signal": null,
+      "error": null,
+      "expectedExitCode": 0
+    },
+    {
+      "label": "abstract-api-compile",
+      "command": [
+        "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+        "--release",
+        "21",
+        "-Xlint:all",
+        "-Werror",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v2-abstract\\classes",
+        "Model.java"
+      ],
+      "workingDirectory": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v2-abstract",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "signal": null,
+      "error": null,
+      "expectedExitCode": 0
+    },
+    {
+      "label": "abstract-new-caller-compile",
+      "command": [
+        "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+        "--release",
+        "21",
+        "-Xlint:all",
+        "-Werror",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v2-abstract\\classes",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v2-abstract\\classes;C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v1\\classes",
+        "NewMain.java"
+      ],
+      "workingDirectory": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v2-abstract",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "signal": null,
+      "error": null,
+      "expectedExitCode": 0
+    },
+    {
+      "label": "abstract-old-consumer-run",
+      "command": [
+        "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v2-abstract\\classes;C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v1\\classes",
+        "NewMain"
+      ],
+      "workingDirectory": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v2-abstract",
+      "exitCode": 1,
+      "stdout": "OLD_PATH=4\r\n",
+      "stderr": "Exception in thread \"main\" java.lang.AbstractMethodError: Receiver class OldOp does not define or inherit an implementation of the resolved method 'abstract java.lang.Object visitCode(Model$Code)' of interface Model$Visitor.\r\n\tat Model$Code.accept(Model.java:11)\r\n\tat NewMain.main(NewMain.java:7)\r\n",
+      "signal": null,
+      "error": null,
+      "expectedExitCode": 1
+    },
+    {
+      "label": "abstract-old-consumer-recompile",
+      "command": [
+        "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+        "--release",
+        "21",
+        "-Xlint:all",
+        "-Werror",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v2-abstract\\classes",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v2-abstract\\classes",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v1\\OldOp.java"
+      ],
+      "workingDirectory": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v2-abstract",
+      "exitCode": 1,
+      "stdout": "",
+      "stderr": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v1\\OldOp.java:1: error: OldOp is not abstract and does not override abstract method visitCode(Code) in Visitor\r\npublic final class OldOp implements Model.Visitor<Integer> {\r\n             ^\r\n1 error\r\n",
+      "signal": null,
+      "error": null,
+      "expectedExitCode": 1
+    },
+    {
+      "label": "explicit-operation-compile",
+      "command": [
+        "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+        "--release",
+        "21",
+        "-Xlint:all",
+        "-Werror",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v2-abstract\\classes",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v2-abstract\\classes",
+        "UpdatedOp.java"
+      ],
+      "workingDirectory": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v2-abstract",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "signal": null,
+      "error": null,
+      "expectedExitCode": 0
+    },
+    {
+      "label": "explicit-operation-run",
+      "command": [
+        "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v2-abstract\\classes",
+        "UpdatedOp"
+      ],
+      "workingDirectory": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v2-abstract",
+      "exitCode": 0,
+      "stdout": "EXPLICIT_HANDLING: OLD_PATH=4; NEW_PATH=7\r\n",
+      "stderr": "",
+      "signal": null,
+      "error": null,
+      "expectedExitCode": 0
+    },
+    {
+      "label": "default-api-compile",
+      "command": [
+        "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+        "--release",
+        "21",
+        "-Xlint:all",
+        "-Werror",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v2-default\\classes",
+        "Model.java"
+      ],
+      "workingDirectory": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v2-default",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "signal": null,
+      "error": null,
+      "expectedExitCode": 0
+    },
+    {
+      "label": "default-new-caller-compile",
+      "command": [
+        "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+        "--release",
+        "21",
+        "-Xlint:all",
+        "-Werror",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v2-default\\classes",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v2-default\\classes;C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v1\\classes",
+        "NewMain.java"
+      ],
+      "workingDirectory": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v2-default",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "signal": null,
+      "error": null,
+      "expectedExitCode": 0
+    },
+    {
+      "label": "default-old-consumer-run",
+      "command": [
+        "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v2-default\\classes;C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v1\\classes",
+        "NewMain"
+      ],
+      "workingDirectory": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v2-default",
+      "exitCode": 1,
+      "stdout": "OLD_PATH=4\r\n",
+      "stderr": "Exception in thread \"main\" java.lang.UnsupportedOperationException: Code unsupported\r\n\tat Model$Visitor.visitCode(Model.java:5)\r\n\tat Model$Code.accept(Model.java:11)\r\n\tat NewMain.main(NewMain.java:7)\r\n",
+      "signal": null,
+      "error": null,
+      "expectedExitCode": 1
+    },
+    {
+      "label": "default-old-consumer-recompile",
+      "command": [
+        "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+        "--release",
+        "21",
+        "-Xlint:all",
+        "-Werror",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v2-default\\classes",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v2-default\\classes",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v1\\OldOp.java"
+      ],
+      "workingDirectory": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v2-default",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "signal": null,
+      "error": null,
+      "expectedExitCode": 0
+    }
+  ]
+}

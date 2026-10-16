@@ -111,6 +111,30 @@ if you intend the exactness assertion. `MathContext` controls significant-digit 
 `setScale` controls decimal places. Scientific algorithms often emphasize the former and ledger
 posting the latter, but a domain may legitimately need both at different, explicitly named stages.
 
+### A rounding mode alone does not choose the quotient's scale
+
+`divide(divisor, roundingMode)` uses the dividend's scale. Numerically equal operands can
+therefore produce different quotient values, not just different trailing zeros:
+
+```java
+BigDecimal three = BigDecimal.valueOf(3);
+BigDecimal coarse = new BigDecimal("2").divide(three, RoundingMode.HALF_UP);     // 1
+BigDecimal finer = new BigDecimal("2.00").divide(three, RoundingMode.HALF_UP);   // 0.67
+BigDecimal fixed = new BigDecimal("2").divide(three, 2, RoundingMode.HALF_UP);   // 0.67
+```
+
+`coarse.setScale(2, RoundingMode.HALF_UP)` yields `1.00`; it cannot restore the lost fraction.
+Inspect callers and constructors: a proven fixed-scale input invariant may already make the
+two-argument overload correct. If the quotient contract specifies a result scale independent of
+input representation, apply that scale at division. Do not round the input first merely to force
+the desired result scale; that can change a permitted operand's value.
+
+Check equal values written with different trailing zeros or exponents, and the actual values
+after any factory, parser or `stripTrailingZeros()` call. A negative scale can round to tens or
+hundreds: `new BigDecimal("2E+2").divide(three, RoundingMode.HALF_UP)` is `1E+2`.
+Keep input-scale rounding when it is an intentional contract. Also retain required staged
+rounding; moving all rounding to the end is a policy change, not a universally safe correction.
+
 ## Splitting and allocating
 
 The classic bug: dividing a total into parts and having them not sum back.
@@ -206,6 +230,7 @@ representations honestly.
 
 - [Comparable total-order contract, Java 17](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Comparable.html)
 - [BigDecimal API, Java SE 17](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/math/BigDecimal.html)
+  specifies the distinct scale contracts of the `divide` overloads and scale-changing operations.
 - [RoundingMode API, Java SE 17](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/math/RoundingMode.html)
 - [Currency API, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Currency.html)
 - [RFC 8259: JSON number interoperability](https://www.rfc-editor.org/rfc/rfc8259#section-6)

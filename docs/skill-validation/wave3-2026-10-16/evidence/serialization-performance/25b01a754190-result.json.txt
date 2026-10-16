@@ -1,0 +1,84 @@
+{
+  "kind": "technical fixture validation, not agent or performance evaluation",
+  "compilerRelease": 17,
+  "results": [
+    {
+      "name": "toolchain",
+      "exe": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-version"
+      ],
+      "expectedExit": 0,
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\serialization-performance-check",
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n"
+    },
+    {
+      "name": "compile",
+      "exe": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "--release",
+        "17",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\serialization-performance-check\\classes",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\serialization-performance-check\\CompressionReview.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\serialization-performance-check\\FixtureChecks.java"
+      ],
+      "expectedExit": 0,
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\serialization-performance-check",
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "controls",
+      "exe": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\serialization-performance-check\\classes",
+        "FixtureChecks"
+      ],
+      "expectedExit": 0,
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\serialization-performance-check",
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "PASS continuous-consumer accepts completed session\r\nPASS Independent consumer must reject unfinished members [EOFException]\r\nPASS Continuous consumer must reject truncated final trailer [EOFException]\r\nPASS independent-consumer accepts complete members\r\n",
+      "stderr": ""
+    },
+    {
+      "name": "stream-case",
+      "exe": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\serialization-performance-check\\classes",
+        "CompressionReview",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\serialization-performance-check\\stream.properties"
+      ],
+      "expectedExit": 0,
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\serialization-performance-check",
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "[order-17:USD:1200, order-18:EUR:2500]\r\n",
+      "stderr": ""
+    },
+    {
+      "name": "frame-case",
+      "exe": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\serialization-performance-check\\classes",
+        "CompressionReview",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\serialization-performance-check\\frame.properties"
+      ],
+      "expectedExit": 1,
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\serialization-performance-check",
+      "exitCode": 1,
+      "signal": null,
+      "stdout": "",
+      "stderr": "Exception in thread \"main\" java.io.EOFException: Unexpected end of ZLIB input stream\r\n\tat java.base/java.util.zip.InflaterInputStream.fill(InflaterInputStream.java:310)\r\n\tat java.base/java.util.zip.InflaterInputStream.read(InflaterInputStream.java:208)\r\n\tat java.base/java.util.zip.GZIPInputStream.read(GZIPInputStream.java:155)\r\n\tat java.base/java.io.InputStream.readNBytes(InputStream.java:411)\r\n\tat java.base/java.io.InputStream.readAllBytes(InputStream.java:348)\r\n\tat CompressionReview.decompress(CompressionReview.java:74)\r\n\tat CompressionReview$FrameReceiver.receive(CompressionReview.java:63)\r\n\tat CompressionReview.main(CompressionReview.java:97)\r\n"
+    }
+  ]
+}

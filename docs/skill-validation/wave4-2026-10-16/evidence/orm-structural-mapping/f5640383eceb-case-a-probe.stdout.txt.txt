@@ -1,0 +1,23 @@
+Java=25.0.3
+Hibernate=6.6.33.Final
+Database=H2 2.3.232 (2024-08-11)
+Hibernate: select m1_0.id,m1_0.name from access_member m1_0 where m1_0.id=?
+Hibernate: insert into access_badge (label,member_id,version,id) values (?,?,?,?)
+Hibernate: select b1_0.id,b1_0.label,b1_0.member_id,b1_0.version from access_badge b1_0 where b1_0.id=?
+Hibernate: select m1_0.id,m1_0.name from access_member m1_0 where m1_0.id=?
+Hibernate: select m1_0.id,m1_0.name from access_member m1_0 where m1_0.id=?
+Hibernate: insert into access_badge (label,member_id,version,id) values (?,?,?,?)
+duplicateViaOrmRejected=false, sqlState=null
+Hibernate: select b1_0.id,b1_0.label,b1_0.member_id,b1_0.version from access_badge b1_0 where b1_0.member_id=?
+Hibernate: select b1_0.id,b1_0.label,b1_0.member_id,b1_0.version from access_badge b1_0 where b1_0.member_id=?
+directoryAmbiguous=true
+nullMemberRejected=23502
+missingMemberRejected=23506
+constraintCannotIgnoreExistingDuplicates=23505
+Hibernate: select b1_0.id,b1_0.label,b1_0.member_id,b1_0.version from access_badge b1_0 where b1_0.id=?
+Hibernate: delete from access_badge where id=? and version=?
+Hibernate: select b1_0.id,b1_0.label,b1_0.member_id,b1_0.version from access_badge b1_0 where b1_0.id=?
+Hibernate: select m1_0.id,m1_0.name from access_member m1_0 where m1_0.id=?
+originalContract=violated: missing upper-cardinality enforcement
+assertions=20
+LIMIT: actual Hibernate/H2 fixture; not PostgreSQL, provider-general, production-migration or agent-evaluation evidence.

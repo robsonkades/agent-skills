@@ -1,0 +1,171 @@
+package work;
+
+import java.sql.SQLException;
+import java.util.Objects;
+import javax.sql.DataSource;
+import org.springframework.aop.support.AopUtils;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DataSourceUtils;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+
+public class Regression {
+    private static int failures;
+
+    public static void main(String[] args) {
+        try (var ctx = new AnnotationConfigApplicationContext(Config.class, Probes.class)) {
+            var orders = ctx.getBean("ordersJdbc", JdbcTemplate.class);
+            var metrics = ctx.getBean("metricsJdbc", JdbcTemplate.class);
+            var service = ctx.getBean(OrderService.class);
+            var samples = ctx.getBean(MetricsService.class);
+            var notifier = ctx.getBean(ProbeNotifier.class);
+            check(AopUtils.isAopProxy(service), "OrderService must be called through Spring advice");
+            check(AopUtils.isAopProxy(samples), "MetricsService must be called through Spring advice");
+            orders.execute("drop all objects");
+            orders.execute("create table orders(id varchar primary key,sku varchar)");
+            orders.execute("create table stock(sku varchar primary key,available int)");
+            metrics.execute("drop all objects");
+            metrics.execute("create table sample(id varchar primary key)");
+
+            scenario("sold-out order rolls back", () -> {
+                orders.update("insert into stock values ('sold-out',0)");
+                var failure = expect(IllegalStateException.class, () -> service.place("sold", "sold-out"));
+                equal("Unavailable stock", failure.getMessage(), "stock rejection cause");
+                equal(0, count(orders, "orders", "sold"), "rejected order count");
+                equal(0, stock(orders, "sold-out"), "sold-out stock");
+                equal(0, notifier.calls, "notifier must not run after stock failure");
+            });
+
+            scenario("notifier rejection rolls back both writes and preserves exception", () -> {
+                orders.update("insert into stock values ('reject-stock',3)");
+                var cause = new IllegalArgumentException("validation detail");
+                var rejection = new IllegalStateException("notifier rejected", cause);
+                notifier.failure = rejection;
+                var observed = expect(IllegalStateException.class, () -> service.place("reject", "reject-stock"));
+                notifier.failure = null;
+                check(observed == rejection && observed.getCause() == cause, "original notifier cause must escape");
+                System.out.println("diagnostic: active=" + service.lastObservedActive()
+                        + " ordersAutoCommit=" + notifier.ordersAutoCommit
+                        + " metricsAutoCommit=" + notifier.metricsAutoCommit
+                        + " rejectedOrders=" + count(orders, "orders", "reject")
+                        + " stock=" + stock(orders, "reject-stock"));
+                equal(0, count(orders, "orders", "reject"), "notifier-rejected order count");
+                equal(3, stock(orders, "reject-stock"), "stock restored after notifier rejection");
+            });
+
+            scenario("success commits one order and reserves one unit", () -> {
+                orders.update("insert into stock values ('success-stock',3)");
+                int before = notifier.calls;
+                service.place("success", "success-stock");
+                equal(1, count(orders, "orders", "success"), "successful order count");
+                equal(2, stock(orders, "success-stock"), "successful stock reservation");
+                equal(before + 1, notifier.calls, "successful notifier invocation");
+                check(!notifier.ordersAutoCommit, "orders connection must participate");
+                check(notifier.metricsAutoCommit, "orders must not open a metrics transaction");
+            });
+
+            scenario("insert failure preserves existing order and stock", () -> {
+                int before = notifier.calls;
+                expect(DuplicateKeyException.class, () -> service.place("success", "success-stock"));
+                equal(1, count(orders, "orders", "success"), "existing order preserved");
+                equal(2, stock(orders, "success-stock"), "stock unchanged after insert failure");
+                equal(before, notifier.calls, "notifier not reached after insert failure");
+            });
+
+            scenario("metrics retains primary manager and independent rollback", () -> {
+                samples.sample("good-sample");
+                var failure = expect(IllegalArgumentException.class, () -> samples.sample(""));
+                equal("blank sample", failure.getMessage(), "metrics exception");
+                equal(1, count(metrics, "sample", "good-sample"), "successful sample persisted");
+                equal(0, count(metrics, "sample", ""), "failed sample rolled back");
+                equal(1, count(orders, "orders", "success"), "metrics rollback preserves order");
+                equal(2, stock(orders, "success-stock"), "metrics rollback preserves stock");
+                expect(IllegalStateException.class, () -> service.place("later-reject", "sold-out"));
+                equal(1, count(metrics, "sample", "good-sample"), "orders rollback preserves metric");
+            });
+        }
+        if (failures != 0) throw new AssertionError(failures + " regression scenario(s) failed");
+        System.out.println("PASS: 5 persisted-state scenarios");
+    }
+
+    private static void scenario(String name, Runnable body) {
+        try {
+            check(!TransactionSynchronizationManager.isActualTransactionActive(), "test must start outside a transaction");
+            body.run();
+            check(!TransactionSynchronizationManager.isActualTransactionActive(), "transaction must complete before assertions return");
+            System.out.println("PASS: " + name);
+        } catch (AssertionError failure) {
+            failures++;
+            System.out.println("FAIL: " + name + ": " + failure.getMessage());
+        }
+    }
+
+    private static int count(JdbcTemplate jdbc, String table, String id) {
+        check(!TransactionSynchronizationManager.isActualTransactionActive(), "read must be outside completed transaction");
+        return jdbc.queryForObject("select count(*) from " + table + " where id=?", Integer.class, id);
+    }
+
+    private static int stock(JdbcTemplate jdbc, String sku) {
+        check(!TransactionSynchronizationManager.isActualTransactionActive(), "stock read must be outside completed transaction");
+        return jdbc.queryForObject("select available from stock where sku=?", Integer.class, sku);
+    }
+
+    private static <T extends Throwable> T expect(Class<T> type, Runnable action) {
+        try { action.run(); }
+        catch (Throwable failure) {
+            if (type.isInstance(failure)) return type.cast(failure);
+            throw new AssertionError("Expected " + type.getSimpleName() + ", got " + failure, failure);
+        }
+        throw new AssertionError("Expected " + type.getSimpleName());
+    }
+
+    private static void equal(Object expected, Object actual, String message) {
+        check(Objects.equals(expected, actual), message + ": expected=" + expected + " actual=" + actual);
+    }
+
+    private static void check(boolean condition, String message) {
+        if (!condition) throw new AssertionError(message);
+    }
+
+    @Configuration
+    public static class Probes {
+        @Bean @Primary
+        public ProbeNotifier probeNotifier(@Qualifier("ordersDataSource") DataSource orders,
+                                           @Qualifier("metricsDataSource") DataSource metrics) {
+            return new ProbeNotifier(orders, metrics);
+        }
+    }
+
+    public static class ProbeNotifier implements OrderNotifier {
+        private final DataSource orders;
+        private final DataSource metrics;
+        int calls;
+        RuntimeException failure;
+        boolean ordersAutoCommit;
+        boolean metricsAutoCommit;
+
+        ProbeNotifier(DataSource orders, DataSource metrics) {
+            this.orders = orders;
+            this.metrics = metrics;
+        }
+
+        public void accepted(String id) {
+            calls++;
+            ordersAutoCommit = autoCommit(orders);
+            metricsAutoCommit = autoCommit(metrics);
+            if (failure != null) throw failure;
+        }
+
+        private static boolean autoCommit(DataSource dataSource) {
+            var connection = DataSourceUtils.getConnection(dataSource);
+            try { return connection.getAutoCommit(); }
+            catch (SQLException failure) { throw new AssertionError(failure); }
+            finally { DataSourceUtils.releaseConnection(connection, dataSource); }
+        }
+    }
+}

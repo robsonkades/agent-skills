@@ -1,0 +1,60 @@
+{
+  "id": "G22",
+  "caseId": "R3",
+  "review": "# RetryPlan repair\n\nThe repair preserves `RetryPlan.next` and `Plan`, Java 17 compatibility, and the fixed scheduling policy in `contract.md`. Only the authorized implementation was changed; `Verification.java` and reporting artifacts were added.\n\n## Findings and decisions\n\nThe original code admitted a call when `completed == maxAttempts`, doubled the first retry's jitter window, allowed signed overflow and masked shifts in exponential growth, selected the smaller of server advice and the local draw, compared an overflow-prone sum, and allocated attempt time without deducting wait and reserve.\n\nThe repaired planner rejects when `completed >= maxAttempts`. It computes elapsed time as `now - start`, which supports negative readings and signed wrap under the contract's elapsed duration below 2^63 nanoseconds. The former `start + total - now` also has the correct modular result within that contract; the elapsed form makes the assumption explicit rather than claiming a separate demonstrated defect there.\n\nBudget arithmetic subtracts only after comparisons establish nonnegative values. After checking expiry and reserve, `available = total - elapsed - reserve`. It rejects when `available < minimumWork`. On retries, `maximumWait = available - minimumWork` safely detects server advice that cannot fit without adding large durations. The initial call ignores server advice and never invokes the draw.\n\nFor retries, the exponent is `completed - 1`. Before shifting, the implementation checks both `exponent >= 63` and whether the multiplication would exceed `Long.MAX_VALUE`; saturation followed by the delay cap computes the exact mathematical window. The supplied draw receives that positive half-open bound. The selected wait is exactly `max(draw, serverMinimum)`, without extra jitter or truncating server advice. A wait above `maximumWait` rejects; otherwise the attempt is exactly `min(attemptCap, available - wait)`. Equality admits. Rejections have both durations zero. No narrower input limit or arbitrary duration cap was introduced.\n\n## Validation executed\n\n`node run.mjs Verification` compiled all three Java files with `javac --release 17 -d classes` and ran `java -ea -cp classes Verification`: **112,350 plans checked**, exit 0. Named cases and a deterministic matrix exercise the actual implementation against an independent `BigInteger` arithmetic oracle. They cover attempt limits, first-call behavior, exact fits, one-nanosecond shortages, maximum durations/reserves/advice, negative and wrapped clock readings, delay caps, shift boundaries and very large attempt counts. Draws at zero, midpoint and upper bound minus one check the full allowed window; this is not a statistical randomness test.\n\n`node run.mjs Smoke` compiled the same files and printed `Smoke passed`, exit 0. Runtime checks reported Temurin OpenJDK 25.0.3+9 and javac 25.0.3. The inspected runner sets a 20-second timeout per Java subprocess. SHA-256 comparisons confirmed `README.md`, `REQUEST.md`, `contract.md`, `Smoke.java` and `run.mjs` unchanged.\n\n## Boundary and limitations\n\nThis pure planner enforces arithmetic admission at the supplied `now`; it neither sleeps nor dispatches, cancels work, releases resources, interprets failure evidence, validates raw server headers, or enforces a fleet retry budget. Callers must recheck the remaining budget after actual waiting and intervening work, apply the per-attempt bound, coordinate hidden retries, and own cancellation. Scheduling and cleanup can overrun a planned duration.\n\nAdmission does not establish that a remote effect is safe to repeat. Callers need operation-specific replay safety or authoritative reconciliation, preserve unresolved prior outcomes, and reproduce the same intent. No provider, database, client or framework contract is supplied or tested here; local arithmetic checks establish no durable remote guarantee, production wall-clock bound, cancellation behavior, fleet amplification or randomness quality.\n\nOnly supplied skills and relevant local retry/deadline arithmetic references were used. Routes to other skills and external primary sources were not followed because this exercise forbids browsing and broader skill context. The endpoint/key and client-configuration references are outside this planner's scope. No network workload, repository-wide verification, installation or real configuration change was performed.\n",
+  "result": {
+    "task": "G22",
+    "decision": "Repaired RetryPlan.next to implement the exact checked-in scheduling contract while preserving its public signature and Plan record.",
+    "implementation": "RetryPlan.java",
+    "verification": "Verification.java",
+    "review": "REVIEW.md",
+    "journal": "execution.json",
+    "baseline": {
+      "sourceAndApi": "Java 17",
+      "runtime": "Temurin OpenJDK 25.0.3+9-LTS",
+      "compiler": "javac 25.0.3",
+      "compileRelease": 17
+    },
+    "changes": [
+      "Reject at completed >= maxAttempts, including the first call in the limit.",
+      "Compute elapsed by monotonic subtraction and compare before deducting reserve, wait and minimum useful work.",
+      "Skip advice and randomness on the first call.",
+      "Use min(delayCap, saturated(base * 2^(completed - 1))) for the retry draw bound.",
+      "Choose exactly max(localDraw, serverMinimum), rejecting advice or draws that cannot fit.",
+      "Allocate exactly min(attemptCap, remaining - wait - reserve), admitting exact fit and zeroing rejected plans."
+    ],
+    "checks": [
+      {
+        "command": "node run.mjs Verification",
+        "exitCode": 0,
+        "output": "Verification passed: 112350 plans checked",
+        "scope": "Actual implementation, deterministic named cases and BigInteger oracle matrix."
+      },
+      {
+        "command": "node run.mjs Smoke",
+        "exitCode": 0,
+        "output": "Smoke passed"
+      },
+      {
+        "check": "SHA-256 equality of immutable output copies and input/project originals",
+        "files": [
+          "README.md",
+          "REQUEST.md",
+          "contract.md",
+          "Smoke.java",
+          "run.mjs"
+        ],
+        "result": "All unchanged."
+      }
+    ],
+    "limits": [
+      "Valid inputs are assumed exactly as contract.md states; no narrower limits were added.",
+      "The planner does not sleep, dispatch, cancel, recheck after real waiting, or enforce runtime timeout/resource release.",
+      "Retry safety, stable intent and payload, prior unknown effects, validated server advice and hidden retry coordination belong to callers.",
+      "No provider, database, client or framework guarantee was supplied or verified.",
+      "Deterministic local checks do not establish production timing, randomness quality, cancellation behavior or fleet effects.",
+      "Only supplied skill context and local evidence were read; no browsing, delegation, external dependency or repository-wide verification was performed."
+    ]
+  },
+  "implementation": "import java.util.function.LongUnaryOperator;\npublic final class RetryPlan {\n    public record Plan(boolean admitted, long waitNanos, long attemptNanos) {}\n    public static Plan next(long start, long now, long total, long reserve, long minimumWork,\n            long attemptCap, long base, long delayCap, int completed, int maxAttempts,\n            long serverMinimum, LongUnaryOperator draw) {\n        if (completed >= maxAttempts) return new Plan(false, 0, 0);\n\n        // Elapsed subtraction tolerates signed nanoTime wrap for lifetimes below 2^63 ns.\n        long elapsed = now - start;\n        if (elapsed >= total) return new Plan(false, 0, 0);\n        long available = total - elapsed;\n        if (reserve > available) return new Plan(false, 0, 0);\n        available -= reserve;\n        if (available < minimumWork) return new Plan(false, 0, 0);\n\n        long wait = 0;\n        if (completed > 0) {\n            // Compare before subtracting: adding delay, reserve and work could overflow.\n            long maximumWait = available - minimumWork;\n            if (serverMinimum > maximumWait) return new Plan(false, 0, 0);\n\n            int exponent = completed - 1;\n            long exponential = exponent >= 63 || base > (Long.MAX_VALUE >> exponent)\n                    ? Long.MAX_VALUE : base << exponent;\n            long window = Math.min(delayCap, exponential);\n            wait = Math.max(draw.applyAsLong(window), serverMinimum);\n            if (wait > maximumWait) return new Plan(false, 0, 0);\n        }\n        return new Plan(true, wait, Math.min(attemptCap, available - wait));\n    }\n}\n"
+}

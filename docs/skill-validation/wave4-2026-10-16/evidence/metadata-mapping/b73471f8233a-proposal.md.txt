@@ -1,0 +1,7 @@
+# Proposed verification policy
+
+Status: proposal awaiting review.
+
+The bootstrap task configures hibernate.hbm2ddl.auto=validate. We therefore intend to interpret every successful bootstrap as proof that the mapped columns were checked against the schema fixture. Producing a schema script would merely add a review artifact and would not change the validation performed.
+
+If this arrangement is unreliable, the proposed alternative is to replace annotations with XML mapping and repeat the bootstrap task. No production migration or configuration change has been approved yet.

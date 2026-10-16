@@ -1,0 +1,52 @@
+// Local packet checks only: this script never connects to a database or runs SQL.
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+
+const output = new URL('./', import.meta.url);
+const input = new URL('../input/', import.meta.url);
+const supplied = ['README.md', 'REQUEST.md', 'proposal.md', 'preview-plan.json', 'literal-comparison.json', 'incident.json'];
+const preservation = supplied.map((name) => {
+  const original = readFileSync(new URL(name, input));
+  const copied = readFileSync(new URL(name, output));
+  assert.ok(original.equals(copied), `${name}: supplied copy must remain byte-identical`);
+  return { file: name, byteIdentical: true, sha256: createHash('sha256').update(original).digest('hex') };
+});
+const incident = JSON.parse(readFileSync(new URL('incident.json', input), 'utf8'));
+const preview = JSON.parse(readFileSync(new URL('preview-plan.json', input), 'utf8'));
+const literal = JSON.parse(readFileSync(new URL('literal-comparison.json', input), 'utf8'));
+const result = JSON.parse(readFileSync(new URL('result.json', output), 'utf8'));
+const review = readFileSync(new URL('REVIEW.md', output), 'utf8');
+const outer = incident.plan.children[0];
+const inner = incident.plan.children[1];
+const calculated = {
+  innerExecutions: inner.loops,
+  innerEmittedRows: inner.actualRows * inner.loops,
+  innerInclusiveWorkMs: inner.actualTotalTimeMs * inner.loops,
+  capturedExecutionTimeMs: incident.executionTimeMs,
+};
+assert.deepEqual(result.metrics, calculated);
+for (const [name, value] of Object.entries(result.metrics)) {
+  assert.ok(Number.isFinite(value), `${name} must be numeric`);
+  assert.ok(result.metricInterpretation[name]?.length > 30, `${name} needs interpretation`);
+}
+assert.equal(inner.actualRows * inner.loops, incident.plan.actualRows);
+assert.equal(preview.plan.child.stoppedByParent, true);
+assert.equal(preview.plan.actualRows, 20);
+assert.equal(literal.preparedStatementSameParameterCaptured, false);
+assert.ok(result.decision.length > 0 && result.evidence.length > 0 && result.limits.length > 0);
+assert.equal(result.nextExperiment.status, 'proposed_only_not_executed');
+const reportWords = review.trim().split(/\s+/u).length;
+assert.ok(reportWords <= 750, `Report has ${reportWords} words, exceeding 750`);
+console.log(JSON.stringify({
+  status: 'passed',
+  verificationScope: 'Local artifact arithmetic, required fields, report length, and immutable-copy preservation; no SQL or performance validation.',
+  runtime: process.version,
+  reportWords,
+  metrics: calculated,
+  ordersSelectedFraction: outer.actualRows / (outer.actualRows + outer.rowsRemovedByFilter),
+  requestMinusExecutionMs: incident.endToEndRequestMs - incident.executionTimeMs,
+  outerEstimateToActualRatio: outer.estimatedRows / outer.actualRows,
+  joinEstimateToActualRatio: incident.plan.estimatedRows / incident.plan.actualRows,
+  preservation,
+}, null, 2));

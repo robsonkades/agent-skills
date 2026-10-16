@@ -1,0 +1,2 @@
+package com.example.domain.order;
+public class StaleOrderException extends RuntimeException { public StaleOrderException(String message) { super(message); } }

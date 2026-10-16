@@ -1,0 +1,20 @@
+{
+  "disposition": "violated",
+  "basis": "Accepted contract permits recycling the producer's int[2] after construction while requiring the message to retain its original words. Message.java:4 stores the producer's original array; checksum() at line 5 rereads that mutable array. The single-thread Smoke execution returned 30 before recycling and 300 afterwards, decisively violating the snapshot requirement. Final-field initialization semantics protect initialized state under their specified conditions, not post-construction array mutation; concurrent element accesses also lack a snapshot protocol.",
+  "requiredChange": "After the existing null/length guard, replace this.words=words with this.words=words.clone(). Retain the private final field, unchanged checksum(), validation and producer ownership/recycling rights. This copies the primitive elements before permitted recycling; the copy does not escape or mutate. Proposal only; production sources were not changed.",
+  "missingEvidence": [],
+  "checked": [
+    "Read complete accepted contract, request, README, source, Smoke and check.mjs.",
+    "Read the complete local java-memory-model skill and both conditional references.",
+    "Consulted Java SE 25 JLS 17.4.5, 17.5/17.5.1 and 10.7.",
+    "Ran provided node check.mjs in output/project: Java SE25 compilation succeeded; before-recycle=30 and after-recycle=300; exit 0 is not a contract assertion.",
+    "Confirmed Node 25.6.1, java/javac Temurin 25.0.3; relevant JVM option environment variables are unset.",
+    "Checked validation and lack of constructor escape statically; compared SHA-256 of supplied input/output project copies."
+  ],
+  "limits": [
+    "No production correction was implemented or executed.",
+    "No stress/jcstress/concurrent-consumer or invalid-input execution was performed.",
+    "Asynchronous handoff/liveness is outside the supplied code; no broader delivery guarantee is claimed. This does not leave the demonstrated snapshot violation unresolved.",
+    "The proposed copy relies on the accepted ownership rule permitting recycling only after construction returns; no concurrent construction-time mutation requirement was added."
+  ]
+}

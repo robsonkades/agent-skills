@@ -100,12 +100,21 @@ Check controls before `strip()`: tabs and line breaks at the edges would otherwi
 Verify these policies against the actual contract before copying them; `Locale.ROOT` uppercasing
 is not an ASCII-only validation step. Do not transform opaque or signed identifiers this way.
 
+This sketch also declares an exact-representation policy for amounts: only instances whose
+runtime class is `BigDecimal` are accepted. `BigDecimal` is extensible; a subclass can override
+`signum()` and behave differently during validation and later use. Reject it before invoking
+that method. Do not copy this restriction into an API that already supports subclasses without
+a compatibility decision; a documented conversion to a stable trusted value is another option.
+
 ```java
 
 public record Money(BigDecimal amount, Currency currency) {
     public Money {
         if (amount == null) throw new RefundInputException("amount", "required");
         if (currency == null) throw new RefundInputException("currency", "required");
+        if (amount.getClass() != BigDecimal.class) {
+            throw new RefundInputException("amount", "unsupported_representation");
+        }
         if (amount.signum() <= 0) {
             throw new RefundInputException("amount", "must_be_positive");
         }
@@ -137,7 +146,7 @@ raw values/stack traces stay internal. Then the interior sheds its armour:
 Perform this conversion explicitly after DTO binding, or handle the configured mapper's
 documented wrapping exceptions narrowly. Verify malformed JSON and constructor failures with
 an HTTP integration test. Enforce body/nesting/numeric token limits before DTO allocation;
-the shown `Money` check enforces positivity only, not currency scale, precision or maximum
+the shown `Money` checks enforce representation and positivity, not currency scale, precision or maximum
 refund amount. Those domain bounds require an explicit contract before adding them.
 
 ```java
@@ -198,6 +207,11 @@ charge-limit check atomically with posting under the ledger's concurrency protoc
 - Construct domain records directly to verify constructor invariants, and keep public
   null-entry tests or move equivalent coverage to the owning boundary. Delete a duplicate
   test only after tracing the same invariant and failure contract to retained coverage.
+- Exercise a `BigDecimal` subclass whose `signum()` changes between validation and use.
+  Under the example's exact-representation policy, reject it with
+  `amount` / `unsupported_representation` before calling the override or posting an effect;
+  keep a positive control using an ordinary positive `BigDecimal`. This tests the declared
+  representation policy, not a rule that every public API must reject subclasses.
 
 These are acceptance checks to execute on the concrete endpoint, not recorded HTTP or
 ledger test results from the sketches.
@@ -206,5 +220,6 @@ For normalization order, see [String.strip](<https://docs.oracle.com/en/java/jav
 [Java whitespace](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Character.html#isWhitespace(int)>)
 and [ISO control characters](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Character.html#isISOControl(int)>).
 For reconstruction semantics, see [Java SE 25 serialization input](https://docs.oracle.com/en/java/javase/25/docs/specs/serialization/input.html).
+For the extensible decimal class and its methods, see [BigDecimal, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html).
 For validator activation and groups, see [Jakarta Validation 3.1](https://jakarta.ee/specifications/bean-validation/3.1/jakarta-validation-spec-3.1);
 use the project's actual framework and version when verifying the HTTP path.

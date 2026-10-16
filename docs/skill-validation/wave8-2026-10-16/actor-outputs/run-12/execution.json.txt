@@ -1,0 +1,44 @@
+{
+  "scope": "C:/Users/robso/AppData/Local/Temp/skills-wave8-6b5d18c2/actors/run-12",
+  "journalType": "Concise actor report of actual reads, commands and results; not a full tool trace",
+  "filesRead": [
+    "TASK.md",
+    "input/README.md", "input/REQUEST.md", "input/schema.sql", "input/seed.sql", "input/current.sql", "input/proposed.sql", "input/fixture.mjs",
+    "skill/SKILL.md", "skill/references/query-shapes.md",
+    "output/README.md", "output/REQUEST.md", "output/schema.sql", "output/seed.sql", "output/current.sql", "output/proposed.sql", "output/fixture.mjs",
+    "output/solution.sql", "output/verify.mjs", "output/check-candidates.mjs",
+    "output/check-candidates.log", "output/check-candidates.stderr.log",
+    "output/verification-approved.log", "output/verification-original-proposal.log", "output/verification-deduplicating-union.log", "output/verification-overlapping-union-all.log", "output/verification-tenant-leak.log", "output/verification-missing-ordering.log",
+    "output/REVIEW.md", "output/result.json"
+  ],
+  "commands": [
+    {"command": "Get-Content -LiteralPath <run-12>/TASK.md -Raw", "exit": 0, "result": "Read isolated task instructions"},
+    {"command": "Get-Content -LiteralPath input/README.md,input/REQUEST.md,skill/SKILL.md -Raw", "exit": 0, "result": "Read environment, request and assigned skill"},
+    {"command": "rg --files input output skill", "exit": 0, "result": "Listed only authorized run files"},
+    {"command": "Get-Content -LiteralPath input/schema.sql,input/seed.sql,input/current.sql,input/proposed.sql,input/fixture.mjs,output/solution.sql -Raw", "exit": 0, "result": "Inspected all SQL and fixture helper before running it"},
+    {"command": "Get-Content -LiteralPath skill/references/query-shapes.md -Raw", "exit": 0, "result": "Read rewrite, multiplicity and three-valued-logic guidance"},
+    {"command": "Start-Process node check-candidates.mjs in output/ with redirected logs and WaitForExit(20000)", "exit": 0, "result": "Approved candidate passed 46 assertions; original proposal and four mutants each exited 1 on semantic assertions; restored approved solution"},
+    {"command": "node verify.mjs via spawnSync for six candidates, timeout 3000 ms each", "exitByCandidate": {"approved": 0, "original-proposal": 1, "deduplicating-union": 1, "overlapping-union-all": 1, "tenant-leak": 1, "missing-ordering": 1}, "result": "No child timeouts or signals; all regressions read on-disk solution.sql"},
+    {"command": "Get-FileHash SHA256 for seven input/output pairs; write output/preserved-files.json", "exit": 0, "result": "All seven immutable copied files matched input bytes"},
+    {"command": "Get-Content verification-approved.log; Select-String negative-control logs for assertion failures; Get-Content solution.sql", "exit": 0, "result": "Read actual passing checks, failing assertions, runtime versions and restored candidate"},
+    {"command": "Read REVIEW.md and count words; ConvertFrom-Json result.json; check restored solution; compare seven immutable input/output SHA256 pairs", "exit": 0, "result": "478 words; valid result JSON with decision/evidence/limits; approved solution restored; all copies still match"}
+  ],
+  "webResearch": [
+    "https://www.postgresql.org/docs/17/functions-comparison.html",
+    "https://www.postgresql.org/docs/17/ddl-constraints.html",
+    "https://www.postgresql.org/docs/17/queries-union.html",
+    "https://www.postgresql.org/docs/17/using-explain.html"
+  ],
+  "authoredFiles": [
+    "output/solution.sql", "output/verify.mjs", "output/check-candidates.mjs", "output/REVIEW.md", "output/result.json", "output/execution.json",
+    "output/preserved-files.json", "output/check-candidates.log", "output/check-candidates.stderr.log",
+    "output/verification-approved.log", "output/verification-original-proposal.log", "output/verification-deduplicating-union.log", "output/verification-overlapping-union-all.log", "output/verification-tenant-leak.log", "output/verification-missing-ordering.log"
+  ],
+  "finalSolutionSha256": "6161D74B45DC4AC361E5CC7D28383A82E901426D0F472A99077A126545C22C42",
+  "limits": [
+    "No PostgreSQL server execution or performance timings; only the supplied portable SQLite semantic runner was executed.",
+    "No repository, sibling run, evaluator, other agent artifact, global installation or real configuration was accessed."
+  ],
+  "allProcessesStopped": true,
+  "allWritesStopped": true
+}

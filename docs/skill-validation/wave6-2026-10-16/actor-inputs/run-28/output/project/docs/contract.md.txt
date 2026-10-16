@@ -1,0 +1,2 @@
+# Accepted contract
+A Job is initialized before start. start() starts it exactly once. collect() may be called while it runs and should spend at most its configured bounded wait plus scheduling overhead. It may return "PENDING" until termination. A returned "DONE:83" must reflect completed job work; "DONE:0" is unacceptable. Successful result publication may rely on detecting termination of the correct started worker. No polling sleep or ignored timeout may be treated as successful completion. Cancellation is not requested.

@@ -1,0 +1,143 @@
+{
+  "date": "2026-10-16",
+  "purpose": "Technical contract evidence, not agent evaluation",
+  "baseline": [
+    {
+      "path": "skills/java-code-smells\\skill.yaml",
+      "sha256": "9F94A8134E94843CFD637B54CE44C5B1874DFA17920B809F8F22E9C42DDEBA97"
+    },
+    {
+      "path": "skills/java-code-smells\\SKILL.md",
+      "sha256": "9BF6D4AD5BC3026772502028109A8117091A78CD7395F8F9305A47F014F91B42"
+    },
+    {
+      "path": "skills/java-code-smells\\scripts\\primitive-obsession\\verify.sh",
+      "sha256": "21FA86A14AE0600C0DE0586A15FBCB564A30CAF71322CEA434E35FE62A6ADDCF"
+    },
+    {
+      "path": "skills/java-code-smells\\scripts\\primitive-obsession\\Before.java",
+      "sha256": "46676E498061481AF2CFBA42561C54DEBCB32272F6059B0506E74EBB9B5BA513"
+    },
+    {
+      "path": "skills/java-code-smells\\scripts\\primitive-obsession\\AfterTransposed.java",
+      "sha256": "3E38C2F9E6AA767FBF4047FF9C83657C1D64C21BC86E50AB1669EDDD1F2201AC"
+    },
+    {
+      "path": "skills/java-code-smells\\scripts\\primitive-obsession\\After.java",
+      "sha256": "05A880568A22BDEC00A09295FF14E938F769E5D145AA30F8A9303BF30B809220"
+    },
+    {
+      "path": "skills/java-code-smells\\references\\worked-pass.md",
+      "sha256": "C24D47028D34AA7E5A706E94BE028168ED910AE0F2227FA42AA68D65684DC1DA"
+    },
+    {
+      "path": "skills/java-code-smells\\references\\smell-to-refactoring.md",
+      "sha256": "389B6A1FF686DE4F5DE4E92E626CF8D99F5693CEEF1CF281A1F3F0956A0879E4"
+    },
+    {
+      "path": "skills/java-code-smells\\references\\modern-java.md",
+      "sha256": "AFDB7FF528997F55B773F71433FCFF37ACFDFB97C9B4A9EE1A3A6434B88EF4DF"
+    },
+    {
+      "path": "skills/java-code-smells\\references\\catalogue-within.md",
+      "sha256": "C78E4C5865544D53024E902ED1E73C459224A68C3B31788E21F405BE8716918C"
+    },
+    {
+      "path": "skills/java-code-smells\\references\\catalogue-between.md",
+      "sha256": "97AC55CE64A0B853A47F2ABA568267A1B694D80752A4448FED9655F4A35D612F"
+    }
+  ],
+  "compileResults": [
+    {
+      "name": "serializable",
+      "cmd": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' --release 21 -Xlint:all -d 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-code-smells-validation/serializable/classes' 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-code-smells-validation/serializable/ArchiveEntry.java' 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-code-smells-validation/serializable/ArchiveClient.java'",
+      "chunk_id": "ea4e24",
+      "wall_time_seconds": 0.5001247,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    },
+    {
+      "name": "externalizable",
+      "cmd": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' --release 21 -Xlint:all -d 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-code-smells-validation/externalizable/classes' 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-code-smells-validation/externalizable/ArchiveEntry.java' 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-code-smells-validation/externalizable/ArchiveClient.java'",
+      "chunk_id": "cb92c7",
+      "wall_time_seconds": 0.5111156,
+      "exit_code": 0,
+      "original_token_count": 173,
+      "output": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-code-smells-validation\\externalizable\\ArchiveEntry.java:16: warning: [serial] serialization-related method writeObject is not effective in an Externalizable class\r\n    private void writeObject(ObjectOutputStream out) throws IOException {\r\n                 ^\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-code-smells-validation\\externalizable\\ArchiveEntry.java:21: warning: [serial] serialization-related method readObject is not effective in an Externalizable class\r\n    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {\r\n                 ^\r\n2 warnings\r\n"
+    },
+    {
+      "name": "serializable-without-hooks",
+      "cmd": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' --release 21 -Xlint:all -d 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-code-smells-validation/serializable-without-hooks/classes' 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-code-smells-validation/serializable-without-hooks/ArchiveEntry.java' 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-code-smells-validation/serializable-without-hooks/ArchiveClient.java'",
+      "chunk_id": "31dc6a",
+      "wall_time_seconds": 0.4885854,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    },
+    {
+      "name": "externalizable-without-hooks",
+      "cmd": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' --release 21 -Xlint:all -d 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-code-smells-validation/externalizable-without-hooks/classes' 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-code-smells-validation/externalizable-without-hooks/ArchiveEntry.java' 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-code-smells-validation/externalizable-without-hooks/ArchiveClient.java'",
+      "chunk_id": "a32fca",
+      "wall_time_seconds": 0.499927,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    }
+  ],
+  "runtimeResults": [
+    {
+      "name": "serializable",
+      "cmd": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -cp 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-code-smells-validation/serializable/classes' ArchiveClient 1> 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-code-smells-validation/serializable/stdout.txt' 2> 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-code-smells-validation/serializable/stderr.txt'\n$smellRunExit = $LASTEXITCODE\n[pscustomobject]@{Variant='serializable';ExitCode=$smellRunExit;Stdout=(Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-code-smells-validation/serializable/stdout.txt' -Raw);Stderr=(Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-code-smells-validation/serializable/stderr.txt' -Raw)} | ConvertTo-Json\nexit $smellRunExit",
+      "chunk_id": "fd2639",
+      "wall_time_seconds": 0.1994848,
+      "exit_code": 0,
+      "original_token_count": 38,
+      "output": "{\r\n  \"Variant\": \"serializable\",\r\n  \"ExitCode\": 0,\r\n  \"Stdout\": \"PASS round trip: id=INV-27, note=customer requested email\\r\\n\",\r\n  \"Stderr\": null\r\n}\r\n"
+    },
+    {
+      "name": "externalizable",
+      "cmd": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -cp 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-code-smells-validation/externalizable/classes' ArchiveClient 1> 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-code-smells-validation/externalizable/stdout.txt' 2> 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-code-smells-validation/externalizable/stderr.txt'\n$smellRunExit = $LASTEXITCODE\n[pscustomobject]@{Variant='externalizable';ExitCode=$smellRunExit;Stdout=(Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-code-smells-validation/externalizable/stdout.txt' -Raw);Stderr=(Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-code-smells-validation/externalizable/stderr.txt' -Raw)} | ConvertTo-Json\nexit $smellRunExit",
+      "chunk_id": "c9eb87",
+      "wall_time_seconds": 0.1661661,
+      "exit_code": 0,
+      "original_token_count": 38,
+      "output": "{\r\n  \"Variant\": \"externalizable\",\r\n  \"ExitCode\": 0,\r\n  \"Stdout\": \"PASS round trip: id=INV-27, note=customer requested email\\r\\n\",\r\n  \"Stderr\": null\r\n}\r\n"
+    },
+    {
+      "name": "serializable-without-hooks",
+      "cmd": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -cp 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-code-smells-validation/serializable-without-hooks/classes' ArchiveClient 1> 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-code-smells-validation/serializable-without-hooks/stdout.txt' 2> 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-code-smells-validation/serializable-without-hooks/stderr.txt'\n$smellRunExit = $LASTEXITCODE\n[pscustomobject]@{Variant='serializable-without-hooks';ExitCode=$smellRunExit;Stdout=(Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-code-smells-validation/serializable-without-hooks/stdout.txt' -Raw);Stderr=(Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-code-smells-validation/serializable-without-hooks/stderr.txt' -Raw)} | ConvertTo-Json\nexit $smellRunExit",
+      "chunk_id": "ac0be6",
+      "wall_time_seconds": 0.2271453,
+      "exit_code": 1,
+      "original_token_count": 66,
+      "output": "{\r\n  \"Variant\": \"serializable-without-hooks\",\r\n  \"ExitCode\": 1,\r\n  \"Stdout\": null,\r\n  \"Stderr\": \"Exception in thread \\\"main\\\" java.lang.AssertionError: archive must retain id and note: restored note=null\\r\\n\\tat ArchiveClient.main(ArchiveClient.java:15)\\r\\n\"\r\n}\r\n"
+    },
+    {
+      "name": "externalizable-without-hooks",
+      "cmd": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -cp 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-code-smells-validation/externalizable-without-hooks/classes' ArchiveClient 1> 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-code-smells-validation/externalizable-without-hooks/stdout.txt' 2> 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-code-smells-validation/externalizable-without-hooks/stderr.txt'\n$smellRunExit = $LASTEXITCODE\n[pscustomobject]@{Variant='externalizable-without-hooks';ExitCode=$smellRunExit;Stdout=(Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-code-smells-validation/externalizable-without-hooks/stdout.txt' -Raw);Stderr=(Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-code-smells-validation/externalizable-without-hooks/stderr.txt' -Raw)} | ConvertTo-Json\nexit $smellRunExit",
+      "chunk_id": "7bdb64",
+      "wall_time_seconds": 0.1901377,
+      "exit_code": 0,
+      "original_token_count": 42,
+      "output": "{\r\n  \"Variant\": \"externalizable-without-hooks\",\r\n  \"ExitCode\": 0,\r\n  \"Stdout\": \"PASS round trip: id=INV-27, note=customer requested email\\r\\n\",\r\n  \"Stderr\": null\r\n}\r\n"
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/Serializable.html",
+      "verified": "2026-10-16",
+      "supports": "Ordinary Serializable class private writeObject/readObject hooks have exact signatures and are invoked by serialization."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/Externalizable.html",
+      "verified": "2026-10-16",
+      "supports": "Externalizable extends Serializable; its writeExternal/readExternal supersede customized private writeObject/readObject."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/21/docs/specs/serialization/output.html#the-writeobject-method",
+      "verified": "2026-10-16",
+      "supports": "Serialization selects the relevant protocol and permits ordinary Serializable custom writeObject to append data after default fields."
+    }
+  ]
+}

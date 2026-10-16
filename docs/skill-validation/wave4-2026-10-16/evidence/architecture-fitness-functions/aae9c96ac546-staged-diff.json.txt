@@ -1,0 +1,17 @@
+{
+  "label": "staged-diff",
+  "command": "git",
+  "args": [
+    "diff",
+    "--cached",
+    "--",
+    "skills/architecture-fitness-functions"
+  ],
+  "cwd": "C:/git/agent-skills",
+  "exitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "",
+  "stderr": "",
+  "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-fitness-functions\\logs\\staged-diff.json"
+}

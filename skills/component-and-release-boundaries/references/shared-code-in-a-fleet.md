@@ -224,6 +224,15 @@ believing:
   metadata, then exercise its resolved runtime dependencies. Follow the
   [consumer dependency checks](component-principles.md#check-the-published-consumer-boundary);
   a passing producer build or converged dependency tree alone does not establish compatibility.
-- **The upgrade blast radius.** Count consumers affected and distinguish upgrades required
-  eventually, within a deadline, or simultaneously. Only the last establishes a lockstep
-  deployment requirement for that change; record the contract that forces it.
+- **The upgrade blast radius.** Count library publications, consumer source recompilations,
+  application repackaging and deployments separately. An unchanged public API can let an
+  already-built consumer link to a new library; this does not update a jar embedded in an
+  immutable application distribution or image. Inspect the packaging recipe and deployed
+  dependency set: those consumers need a new package and rollout to receive the fix, even
+  when their class files can be reused. An externally supplied library may instead require
+  a supported dependency/configuration update and restart, without repackaging the application.
+  [Binary-compatible method-body changes](https://docs.oracle.com/javase/specs/jls/se21/html/jls-13.html#jls-13.4.22)
+  illustrate why recompilation and delivery are different; compatibility still needs the
+  behavioral checks above. Distinguish upgrades required eventually, within a deadline, or
+  simultaneously. Only the last establishes a lockstep deployment requirement for that change;
+  record the contract that forces it.

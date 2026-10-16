@@ -40,6 +40,12 @@ the chain even though the request never calls it.
   outside HTTP. Include the MVC path with global exception advice enabled: a denied method
   call must retain the agreed security status/challenge and must not become a generic 500.
   Permission to read another user's record is a separate instance-policy test.
+- **Issuer/principal mapping changes:** use two validated identities with the same `sub`
+  from different trusted issuers through the actual converter and caller/account mapping.
+  Equal names must not transfer one account's permissions or ownership to the other caller.
+  Honor an explicit trusted account link where policy allows it. Include the original owner
+  as a permitted control and a missing required identity claim. A converter-only test does
+  not prove token validation or the application's account/query isolation.
 - **Instance-policy integration:** wrong owner/tenant and missing identity across detail,
   list/count, secondary lookup and write operations. Try a payload that assigns another
   tenant/owner or an elevated privilege. Assert unchanged protected state, no foreign records

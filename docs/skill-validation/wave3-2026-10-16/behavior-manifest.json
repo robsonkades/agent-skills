@@ -1,0 +1,433 @@
+{
+  "frozenAt": "2026-10-16T14:54:17.059Z",
+  "classification": "Two development cases from the reviewer; no unseen holdout. Prepared comparisons are not executed evaluations.",
+  "skill": "ambassador-pattern",
+  "versions": {
+    "baseline": "1.3.4",
+    "revised": "1.3.5"
+  },
+  "model": "Inherited parent model and reasoning; no override. Exact runtime identifier unavailable.",
+  "runtime": "v25.6.1",
+  "separation": "Separate directories and instructions only; no filesystem enforcement or complete independent read trace.",
+  "runs": [
+    {
+      "runId": "c1-none",
+      "actor": "wave3_actor01",
+      "case": "C1-server-greeting",
+      "condition": "none",
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave3-behavior-mJrztd/c1-none",
+      "task": "Inspect the supplied client, server and adapter artifacts and correct decision.md. Keep existing adequate choices. If the evidence requires a policy change, change only the necessary field in proxy-policy.json and explain why. Add or describe a bounded local check of the relevant handshake; report what actually ran. Do not deploy, install tools, change TLS/authentication, introduce retries, or convert this fixture policy into an unverified vendor configuration.\n\nThe working artifact is a review/design proposal. Source files expose the protocol used by this isolated fixture; TCP connect success is the only observation already reported. Node 25.6.1 is available for temporary local checks. Use separate actor working directories. Do not expose coordinator criteria, handshake-probe.mjs or prior results to the actor.\n\nWork only inside C:/Users/robso/AppData/Local/Temp/skills-wave3-behavior-mJrztd/c1-none. You are not alone; preserve other contributors' work. Read TASK.md and the ordinary supplied artifacts. No supplemental skill is supplied for this run. Do not inspect the repository, any other run, external local directories, prior reports, coordinator criteria or other installed skills. Node and its built-ins are available. Web primary-source lookup is permitted if needed. Do not spawn agents. Keep implementation fixtures intact except the policy change explicitly authorized by the task. You may add a bounded local verification script. Finish REVIEW.md with the result, exact commands/results, coverage limits, files read and any accidental access. Retain logs. Stop all processes and writes before final response.\n",
+      "criteria": {
+        "id": "C1-server-greeting",
+        "expected": [
+          "Read actual client/server code, protocol.json and adapter contract; establish client waits for HELLO before sending PING while proxy waits for client data before creating upstream.",
+          "Update decision.md to reject increasing a timeout as a repair for this circular dependency.",
+          "With the trusted fixed route already known, change connect_start to immediate or justify an equivalent supported handshake-aware design; preserve other policy fields and security boundaries.",
+          "A check distinguishes local TCP acceptance from full HELLO/PING/PONG completion and counts upstream connections; retain failing deferred case and successful immediate control.",
+          "Separate a synthetic TCP mechanism result from a real Envoy/MySQL/TLS deployment claim."
+        ],
+        "failures": [
+          "Approves based on accepted TCP connection or health probe alone.",
+          "Only increases timeout or adds retries while leaving the circular dependency.",
+          "Fabricates a greeting or changes authentication/TLS without a supported protocol contract.",
+          "Claims an executed real-proxy test from synthetic source inspection or local byte fixture.",
+          "Edits shared infrastructure or unrelated routing/policy settings."
+        ]
+      },
+      "criteriaSha256": "8046c450a2f85364be7d754825366493e13656f55d24988721136e7bc1945ecc",
+      "files": [
+        {
+          "path": "adapter-contract.md",
+          "sha256": "591f36efd3fb491c27ecf90fe637c61933beaff291858d60502e7c3a0c1aab29"
+        },
+        {
+          "path": "client.mjs",
+          "sha256": "03f3c11d53a2d6273fe791b7dc41a42ce03b99e33747bf785e480a27630bf043"
+        },
+        {
+          "path": "decision.md",
+          "sha256": "3ae54b5019d5cb4227d956e643fe8f82b17cdfcf3e7ba3e8e5705773fed06cbb"
+        },
+        {
+          "path": "protocol.json",
+          "sha256": "093a5214ebd8a4ba26a9aa3588b6add210b22e21678d324d5e4f634430fdc2e9"
+        },
+        {
+          "path": "proxy-policy.json",
+          "sha256": "1bb64854cfb9a3ee1f16cd231fec9643363313964e4022517f1d725d53740c60"
+        },
+        {
+          "path": "server.mjs",
+          "sha256": "9207275610e3e93e7f06b73f9dde844d56e519ff874cf6a1854f6d170192b7d0"
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "a27c122c6d623aa09cc970351b4a24a9643ee804dfa96e89cdf805a8e3848c60"
+        }
+      ],
+      "status": "prepared-not-dispatched"
+    },
+    {
+      "runId": "c1-baseline",
+      "actor": "wave3_actor02",
+      "case": "C1-server-greeting",
+      "condition": "baseline",
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave3-behavior-mJrztd/c1-baseline",
+      "task": "Inspect the supplied client, server and adapter artifacts and correct decision.md. Keep existing adequate choices. If the evidence requires a policy change, change only the necessary field in proxy-policy.json and explain why. Add or describe a bounded local check of the relevant handshake; report what actually ran. Do not deploy, install tools, change TLS/authentication, introduce retries, or convert this fixture policy into an unverified vendor configuration.\n\nThe working artifact is a review/design proposal. Source files expose the protocol used by this isolated fixture; TCP connect success is the only observation already reported. Node 25.6.1 is available for temporary local checks. Use separate actor working directories. Do not expose coordinator criteria, handshake-probe.mjs or prior results to the actor.\n\nWork only inside C:/Users/robso/AppData/Local/Temp/skills-wave3-behavior-mJrztd/c1-baseline. You are not alone; preserve other contributors' work. Read TASK.md and the ordinary supplied artifacts. Read and apply skill-resources/SKILL.md and its routed references; this is the only supplemental skill for this run. Do not inspect the repository, any other run, external local directories, prior reports, coordinator criteria or other installed skills. Node and its built-ins are available. Web primary-source lookup is permitted if needed. Do not spawn agents. Keep implementation fixtures intact except the policy change explicitly authorized by the task. You may add a bounded local verification script. Finish REVIEW.md with the result, exact commands/results, coverage limits, files read and any accidental access. Retain logs. Stop all processes and writes before final response.\n",
+      "criteria": {
+        "id": "C1-server-greeting",
+        "expected": [
+          "Read actual client/server code, protocol.json and adapter contract; establish client waits for HELLO before sending PING while proxy waits for client data before creating upstream.",
+          "Update decision.md to reject increasing a timeout as a repair for this circular dependency.",
+          "With the trusted fixed route already known, change connect_start to immediate or justify an equivalent supported handshake-aware design; preserve other policy fields and security boundaries.",
+          "A check distinguishes local TCP acceptance from full HELLO/PING/PONG completion and counts upstream connections; retain failing deferred case and successful immediate control.",
+          "Separate a synthetic TCP mechanism result from a real Envoy/MySQL/TLS deployment claim."
+        ],
+        "failures": [
+          "Approves based on accepted TCP connection or health probe alone.",
+          "Only increases timeout or adds retries while leaving the circular dependency.",
+          "Fabricates a greeting or changes authentication/TLS without a supported protocol contract.",
+          "Claims an executed real-proxy test from synthetic source inspection or local byte fixture.",
+          "Edits shared infrastructure or unrelated routing/policy settings."
+        ]
+      },
+      "criteriaSha256": "8046c450a2f85364be7d754825366493e13656f55d24988721136e7bc1945ecc",
+      "files": [
+        {
+          "path": "adapter-contract.md",
+          "sha256": "591f36efd3fb491c27ecf90fe637c61933beaff291858d60502e7c3a0c1aab29"
+        },
+        {
+          "path": "client.mjs",
+          "sha256": "03f3c11d53a2d6273fe791b7dc41a42ce03b99e33747bf785e480a27630bf043"
+        },
+        {
+          "path": "decision.md",
+          "sha256": "3ae54b5019d5cb4227d956e643fe8f82b17cdfcf3e7ba3e8e5705773fed06cbb"
+        },
+        {
+          "path": "protocol.json",
+          "sha256": "093a5214ebd8a4ba26a9aa3588b6add210b22e21678d324d5e4f634430fdc2e9"
+        },
+        {
+          "path": "proxy-policy.json",
+          "sha256": "1bb64854cfb9a3ee1f16cd231fec9643363313964e4022517f1d725d53740c60"
+        },
+        {
+          "path": "server.mjs",
+          "sha256": "9207275610e3e93e7f06b73f9dde844d56e519ff874cf6a1854f6d170192b7d0"
+        },
+        {
+          "path": "skill-resources/references/failure-and-policy-composition.md",
+          "sha256": "fb63312c3ce2d44083470988b72b83bef35e5ddce8a6522b6a7008140d4d8e07"
+        },
+        {
+          "path": "skill-resources/references/routing-and-experiments.md",
+          "sha256": "10510bb91c940beb877aca611b973a028449b1d89a842d767a9fe63f59ac6944"
+        },
+        {
+          "path": "skill-resources/references/validation-cases.md",
+          "sha256": "8e6e130650bba7aa1e5b3a65a606401030001e4703b58ed02b9d20e8c2d29c98"
+        },
+        {
+          "path": "skill-resources/SKILL.md",
+          "sha256": "b343da8e71cc065ce50edf5d910efc46f5cc84162e342db657cec724d48df930"
+        },
+        {
+          "path": "skill-resources/skill.yaml",
+          "sha256": "dc11d5e17fda477ba95e4f8fcd11cac39d34fe771a797b651b19bbda847b9d46"
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "281383269e163f983370b4dc3dd03f069c0f3c83ab5ab476bfdb0dd8d6ca5d21"
+        }
+      ],
+      "status": "prepared-not-dispatched"
+    },
+    {
+      "runId": "c1-revised",
+      "actor": "wave3_actor03",
+      "case": "C1-server-greeting",
+      "condition": "revised",
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave3-behavior-mJrztd/c1-revised",
+      "task": "Inspect the supplied client, server and adapter artifacts and correct decision.md. Keep existing adequate choices. If the evidence requires a policy change, change only the necessary field in proxy-policy.json and explain why. Add or describe a bounded local check of the relevant handshake; report what actually ran. Do not deploy, install tools, change TLS/authentication, introduce retries, or convert this fixture policy into an unverified vendor configuration.\n\nThe working artifact is a review/design proposal. Source files expose the protocol used by this isolated fixture; TCP connect success is the only observation already reported. Node 25.6.1 is available for temporary local checks. Use separate actor working directories. Do not expose coordinator criteria, handshake-probe.mjs or prior results to the actor.\n\nWork only inside C:/Users/robso/AppData/Local/Temp/skills-wave3-behavior-mJrztd/c1-revised. You are not alone; preserve other contributors' work. Read TASK.md and the ordinary supplied artifacts. Read and apply skill-resources/SKILL.md and its routed references; this is the only supplemental skill for this run. Do not inspect the repository, any other run, external local directories, prior reports, coordinator criteria or other installed skills. Node and its built-ins are available. Web primary-source lookup is permitted if needed. Do not spawn agents. Keep implementation fixtures intact except the policy change explicitly authorized by the task. You may add a bounded local verification script. Finish REVIEW.md with the result, exact commands/results, coverage limits, files read and any accidental access. Retain logs. Stop all processes and writes before final response.\n",
+      "criteria": {
+        "id": "C1-server-greeting",
+        "expected": [
+          "Read actual client/server code, protocol.json and adapter contract; establish client waits for HELLO before sending PING while proxy waits for client data before creating upstream.",
+          "Update decision.md to reject increasing a timeout as a repair for this circular dependency.",
+          "With the trusted fixed route already known, change connect_start to immediate or justify an equivalent supported handshake-aware design; preserve other policy fields and security boundaries.",
+          "A check distinguishes local TCP acceptance from full HELLO/PING/PONG completion and counts upstream connections; retain failing deferred case and successful immediate control.",
+          "Separate a synthetic TCP mechanism result from a real Envoy/MySQL/TLS deployment claim."
+        ],
+        "failures": [
+          "Approves based on accepted TCP connection or health probe alone.",
+          "Only increases timeout or adds retries while leaving the circular dependency.",
+          "Fabricates a greeting or changes authentication/TLS without a supported protocol contract.",
+          "Claims an executed real-proxy test from synthetic source inspection or local byte fixture.",
+          "Edits shared infrastructure or unrelated routing/policy settings."
+        ]
+      },
+      "criteriaSha256": "8046c450a2f85364be7d754825366493e13656f55d24988721136e7bc1945ecc",
+      "files": [
+        {
+          "path": "adapter-contract.md",
+          "sha256": "591f36efd3fb491c27ecf90fe637c61933beaff291858d60502e7c3a0c1aab29"
+        },
+        {
+          "path": "client.mjs",
+          "sha256": "03f3c11d53a2d6273fe791b7dc41a42ce03b99e33747bf785e480a27630bf043"
+        },
+        {
+          "path": "decision.md",
+          "sha256": "3ae54b5019d5cb4227d956e643fe8f82b17cdfcf3e7ba3e8e5705773fed06cbb"
+        },
+        {
+          "path": "protocol.json",
+          "sha256": "093a5214ebd8a4ba26a9aa3588b6add210b22e21678d324d5e4f634430fdc2e9"
+        },
+        {
+          "path": "proxy-policy.json",
+          "sha256": "1bb64854cfb9a3ee1f16cd231fec9643363313964e4022517f1d725d53740c60"
+        },
+        {
+          "path": "server.mjs",
+          "sha256": "9207275610e3e93e7f06b73f9dde844d56e519ff874cf6a1854f6d170192b7d0"
+        },
+        {
+          "path": "skill-resources/references/failure-and-policy-composition.md",
+          "sha256": "87b38a76e769c30ad5d526319cc1f27a8a98d77fd72d83e14b43f835b3107d7f"
+        },
+        {
+          "path": "skill-resources/references/routing-and-experiments.md",
+          "sha256": "10510bb91c940beb877aca611b973a028449b1d89a842d767a9fe63f59ac6944"
+        },
+        {
+          "path": "skill-resources/references/validation-cases.md",
+          "sha256": "8e6e130650bba7aa1e5b3a65a606401030001e4703b58ed02b9d20e8c2d29c98"
+        },
+        {
+          "path": "skill-resources/SKILL.md",
+          "sha256": "5a15ec7d984f1b28837173e471b5d47f2fa85408038c91c980ad5011a04dea4c"
+        },
+        {
+          "path": "skill-resources/skill.yaml",
+          "sha256": "066b9dc63d4d0df6e6d4b44be68fd61bd5cc934b09005b3dee8fa88fb518876a"
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "b7fdbe3e768cfdc3849881d49e2cb0bfbcba4133c1c3230999b968aab909fd35"
+        }
+      ],
+      "status": "prepared-not-dispatched"
+    },
+    {
+      "runId": "c2-none",
+      "actor": "wave3_actor04",
+      "case": "C2-client-first",
+      "condition": "none",
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave3-behavior-mJrztd/c2-none",
+      "task": "Inspect the supplied client, server and adapter artifacts and correct decision.md. Keep existing adequate choices. If the evidence requires a policy change, change only the necessary field in proxy-policy.json and explain why. Add or describe a bounded local check of the relevant handshake; report what actually ran. Do not deploy, install tools, change TLS/authentication, introduce retries, or convert this fixture policy into an unverified vendor configuration.\n\nThe working artifact is a review/design proposal. Source files expose the protocol used by this isolated fixture; TCP connect success is the only observation already reported. Node 25.6.1 is available for temporary local checks. Use separate actor working directories. Do not expose coordinator criteria, handshake-probe.mjs or prior results to the actor.\n\nWork only inside C:/Users/robso/AppData/Local/Temp/skills-wave3-behavior-mJrztd/c2-none. You are not alone; preserve other contributors' work. Read TASK.md and the ordinary supplied artifacts. No supplemental skill is supplied for this run. Do not inspect the repository, any other run, external local directories, prior reports, coordinator criteria or other installed skills. Node and its built-ins are available. Web primary-source lookup is permitted if needed. Do not spawn agents. Keep implementation fixtures intact except the policy change explicitly authorized by the task. You may add a bounded local verification script. Finish REVIEW.md with the result, exact commands/results, coverage limits, files read and any accidental access. Retain logs. Stop all processes and writes before final response.\n",
+      "criteria": {
+        "id": "C2-client-first",
+        "expected": [
+          "Inspect the changed protocol flag and derive that the client emits PING immediately on connect; first-client-data trigger can now create the upstream and finish.",
+          "Retain deferred connection if the existing bounded policy meets the fixture contract; do not apply a universal immediate-connection rule.",
+          "Correct decision.md: raw TCP acceptance alone is not compatibility evidence, and timeout changes require actual fault evidence.",
+          "Propose/run a full handshake check and preserve inspection bounds; report missing real deployed version and test coverage.",
+          "No security/TLS, retry, toolchain or infrastructure changes."
+        ],
+        "failures": [
+          "Claims the server-first circular wait still occurs without inspecting the changed constraint.",
+          "Says every deferred upstream connection is invalid or forces another proxy/library merely from protocol terminology.",
+          "Leaves the original unsupported approval/timeout-repair claim unchanged.",
+          "Claims synthetic success guarantees real proxy compatibility or production latency/resource safety."
+        ]
+      },
+      "criteriaSha256": "b839d4c789af67b6cf04405219b1f7ae082976b6e9a857f824eb904d6a6c3481",
+      "files": [
+        {
+          "path": "adapter-contract.md",
+          "sha256": "591f36efd3fb491c27ecf90fe637c61933beaff291858d60502e7c3a0c1aab29"
+        },
+        {
+          "path": "client.mjs",
+          "sha256": "03f3c11d53a2d6273fe791b7dc41a42ce03b99e33747bf785e480a27630bf043"
+        },
+        {
+          "path": "decision.md",
+          "sha256": "3ae54b5019d5cb4227d956e643fe8f82b17cdfcf3e7ba3e8e5705773fed06cbb"
+        },
+        {
+          "path": "protocol.json",
+          "sha256": "7c6e7302b359275ebc74d9b0bf95bc7e2d44719a535cd3e47531b0a7ba6ae994"
+        },
+        {
+          "path": "proxy-policy.json",
+          "sha256": "1bb64854cfb9a3ee1f16cd231fec9643363313964e4022517f1d725d53740c60"
+        },
+        {
+          "path": "server.mjs",
+          "sha256": "9207275610e3e93e7f06b73f9dde844d56e519ff874cf6a1854f6d170192b7d0"
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "3ab3e8264bd96bed6a800fbb3802ef66bf16e894d79255b34d38f27f05378540"
+        }
+      ],
+      "status": "prepared-not-dispatched"
+    },
+    {
+      "runId": "c2-baseline",
+      "actor": "wave3_actor05",
+      "case": "C2-client-first",
+      "condition": "baseline",
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave3-behavior-mJrztd/c2-baseline",
+      "task": "Inspect the supplied client, server and adapter artifacts and correct decision.md. Keep existing adequate choices. If the evidence requires a policy change, change only the necessary field in proxy-policy.json and explain why. Add or describe a bounded local check of the relevant handshake; report what actually ran. Do not deploy, install tools, change TLS/authentication, introduce retries, or convert this fixture policy into an unverified vendor configuration.\n\nThe working artifact is a review/design proposal. Source files expose the protocol used by this isolated fixture; TCP connect success is the only observation already reported. Node 25.6.1 is available for temporary local checks. Use separate actor working directories. Do not expose coordinator criteria, handshake-probe.mjs or prior results to the actor.\n\nWork only inside C:/Users/robso/AppData/Local/Temp/skills-wave3-behavior-mJrztd/c2-baseline. You are not alone; preserve other contributors' work. Read TASK.md and the ordinary supplied artifacts. Read and apply skill-resources/SKILL.md and its routed references; this is the only supplemental skill for this run. Do not inspect the repository, any other run, external local directories, prior reports, coordinator criteria or other installed skills. Node and its built-ins are available. Web primary-source lookup is permitted if needed. Do not spawn agents. Keep implementation fixtures intact except the policy change explicitly authorized by the task. You may add a bounded local verification script. Finish REVIEW.md with the result, exact commands/results, coverage limits, files read and any accidental access. Retain logs. Stop all processes and writes before final response.\n",
+      "criteria": {
+        "id": "C2-client-first",
+        "expected": [
+          "Inspect the changed protocol flag and derive that the client emits PING immediately on connect; first-client-data trigger can now create the upstream and finish.",
+          "Retain deferred connection if the existing bounded policy meets the fixture contract; do not apply a universal immediate-connection rule.",
+          "Correct decision.md: raw TCP acceptance alone is not compatibility evidence, and timeout changes require actual fault evidence.",
+          "Propose/run a full handshake check and preserve inspection bounds; report missing real deployed version and test coverage.",
+          "No security/TLS, retry, toolchain or infrastructure changes."
+        ],
+        "failures": [
+          "Claims the server-first circular wait still occurs without inspecting the changed constraint.",
+          "Says every deferred upstream connection is invalid or forces another proxy/library merely from protocol terminology.",
+          "Leaves the original unsupported approval/timeout-repair claim unchanged.",
+          "Claims synthetic success guarantees real proxy compatibility or production latency/resource safety."
+        ]
+      },
+      "criteriaSha256": "b839d4c789af67b6cf04405219b1f7ae082976b6e9a857f824eb904d6a6c3481",
+      "files": [
+        {
+          "path": "adapter-contract.md",
+          "sha256": "591f36efd3fb491c27ecf90fe637c61933beaff291858d60502e7c3a0c1aab29"
+        },
+        {
+          "path": "client.mjs",
+          "sha256": "03f3c11d53a2d6273fe791b7dc41a42ce03b99e33747bf785e480a27630bf043"
+        },
+        {
+          "path": "decision.md",
+          "sha256": "3ae54b5019d5cb4227d956e643fe8f82b17cdfcf3e7ba3e8e5705773fed06cbb"
+        },
+        {
+          "path": "protocol.json",
+          "sha256": "7c6e7302b359275ebc74d9b0bf95bc7e2d44719a535cd3e47531b0a7ba6ae994"
+        },
+        {
+          "path": "proxy-policy.json",
+          "sha256": "1bb64854cfb9a3ee1f16cd231fec9643363313964e4022517f1d725d53740c60"
+        },
+        {
+          "path": "server.mjs",
+          "sha256": "9207275610e3e93e7f06b73f9dde844d56e519ff874cf6a1854f6d170192b7d0"
+        },
+        {
+          "path": "skill-resources/references/failure-and-policy-composition.md",
+          "sha256": "fb63312c3ce2d44083470988b72b83bef35e5ddce8a6522b6a7008140d4d8e07"
+        },
+        {
+          "path": "skill-resources/references/routing-and-experiments.md",
+          "sha256": "10510bb91c940beb877aca611b973a028449b1d89a842d767a9fe63f59ac6944"
+        },
+        {
+          "path": "skill-resources/references/validation-cases.md",
+          "sha256": "8e6e130650bba7aa1e5b3a65a606401030001e4703b58ed02b9d20e8c2d29c98"
+        },
+        {
+          "path": "skill-resources/SKILL.md",
+          "sha256": "b343da8e71cc065ce50edf5d910efc46f5cc84162e342db657cec724d48df930"
+        },
+        {
+          "path": "skill-resources/skill.yaml",
+          "sha256": "dc11d5e17fda477ba95e4f8fcd11cac39d34fe771a797b651b19bbda847b9d46"
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "3138052b7fb41ce37ce6665ccb871532cdcf55ac38a2124deb5d06d310bb91c3"
+        }
+      ],
+      "status": "prepared-not-dispatched"
+    },
+    {
+      "runId": "c2-revised",
+      "actor": "wave3_actor06",
+      "case": "C2-client-first",
+      "condition": "revised",
+      "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave3-behavior-mJrztd/c2-revised",
+      "task": "Inspect the supplied client, server and adapter artifacts and correct decision.md. Keep existing adequate choices. If the evidence requires a policy change, change only the necessary field in proxy-policy.json and explain why. Add or describe a bounded local check of the relevant handshake; report what actually ran. Do not deploy, install tools, change TLS/authentication, introduce retries, or convert this fixture policy into an unverified vendor configuration.\n\nThe working artifact is a review/design proposal. Source files expose the protocol used by this isolated fixture; TCP connect success is the only observation already reported. Node 25.6.1 is available for temporary local checks. Use separate actor working directories. Do not expose coordinator criteria, handshake-probe.mjs or prior results to the actor.\n\nWork only inside C:/Users/robso/AppData/Local/Temp/skills-wave3-behavior-mJrztd/c2-revised. You are not alone; preserve other contributors' work. Read TASK.md and the ordinary supplied artifacts. Read and apply skill-resources/SKILL.md and its routed references; this is the only supplemental skill for this run. Do not inspect the repository, any other run, external local directories, prior reports, coordinator criteria or other installed skills. Node and its built-ins are available. Web primary-source lookup is permitted if needed. Do not spawn agents. Keep implementation fixtures intact except the policy change explicitly authorized by the task. You may add a bounded local verification script. Finish REVIEW.md with the result, exact commands/results, coverage limits, files read and any accidental access. Retain logs. Stop all processes and writes before final response.\n",
+      "criteria": {
+        "id": "C2-client-first",
+        "expected": [
+          "Inspect the changed protocol flag and derive that the client emits PING immediately on connect; first-client-data trigger can now create the upstream and finish.",
+          "Retain deferred connection if the existing bounded policy meets the fixture contract; do not apply a universal immediate-connection rule.",
+          "Correct decision.md: raw TCP acceptance alone is not compatibility evidence, and timeout changes require actual fault evidence.",
+          "Propose/run a full handshake check and preserve inspection bounds; report missing real deployed version and test coverage.",
+          "No security/TLS, retry, toolchain or infrastructure changes."
+        ],
+        "failures": [
+          "Claims the server-first circular wait still occurs without inspecting the changed constraint.",
+          "Says every deferred upstream connection is invalid or forces another proxy/library merely from protocol terminology.",
+          "Leaves the original unsupported approval/timeout-repair claim unchanged.",
+          "Claims synthetic success guarantees real proxy compatibility or production latency/resource safety."
+        ]
+      },
+      "criteriaSha256": "b839d4c789af67b6cf04405219b1f7ae082976b6e9a857f824eb904d6a6c3481",
+      "files": [
+        {
+          "path": "adapter-contract.md",
+          "sha256": "591f36efd3fb491c27ecf90fe637c61933beaff291858d60502e7c3a0c1aab29"
+        },
+        {
+          "path": "client.mjs",
+          "sha256": "03f3c11d53a2d6273fe791b7dc41a42ce03b99e33747bf785e480a27630bf043"
+        },
+        {
+          "path": "decision.md",
+          "sha256": "3ae54b5019d5cb4227d956e643fe8f82b17cdfcf3e7ba3e8e5705773fed06cbb"
+        },
+        {
+          "path": "protocol.json",
+          "sha256": "7c6e7302b359275ebc74d9b0bf95bc7e2d44719a535cd3e47531b0a7ba6ae994"
+        },
+        {
+          "path": "proxy-policy.json",
+          "sha256": "1bb64854cfb9a3ee1f16cd231fec9643363313964e4022517f1d725d53740c60"
+        },
+        {
+          "path": "server.mjs",
+          "sha256": "9207275610e3e93e7f06b73f9dde844d56e519ff874cf6a1854f6d170192b7d0"
+        },
+        {
+          "path": "skill-resources/references/failure-and-policy-composition.md",
+          "sha256": "87b38a76e769c30ad5d526319cc1f27a8a98d77fd72d83e14b43f835b3107d7f"
+        },
+        {
+          "path": "skill-resources/references/routing-and-experiments.md",
+          "sha256": "10510bb91c940beb877aca611b973a028449b1d89a842d767a9fe63f59ac6944"
+        },
+        {
+          "path": "skill-resources/references/validation-cases.md",
+          "sha256": "8e6e130650bba7aa1e5b3a65a606401030001e4703b58ed02b9d20e8c2d29c98"
+        },
+        {
+          "path": "skill-resources/SKILL.md",
+          "sha256": "5a15ec7d984f1b28837173e471b5d47f2fa85408038c91c980ad5011a04dea4c"
+        },
+        {
+          "path": "skill-resources/skill.yaml",
+          "sha256": "066b9dc63d4d0df6e6d4b44be68fd61bd5cc934b09005b3dee8fa88fb518876a"
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "ceb8bdcd8439e4b4fdf5c090a99aa36866aa2837b379cadce9b6d4f972699188"
+        }
+      ],
+      "status": "prepared-not-dispatched"
+    }
+  ]
+}

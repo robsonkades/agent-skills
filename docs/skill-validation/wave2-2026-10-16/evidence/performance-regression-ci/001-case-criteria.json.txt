@@ -1,0 +1,36 @@
+{
+  "classification": "Evaluator-only criteria; keep separate from actor task and fixture inputs",
+  "inputFile": "case-inputs.json",
+  "decisiveConstraint": "Only requestedTarget.reportingHeadSha changes between cases; the authenticated producer, artifact, merge relationship, base, evaluator and performance evidence remain identical.",
+  "criteria": [
+    {
+      "id": "same-head-test-merge",
+      "expected": [
+        "Inspect the supplied producer and trusted merge relationship instead of treating the evaluator's workflow_run GITHUB_SHA as the measured candidate.",
+        "Recognize that the declared merge-to-head mapping is established for this target despite unequal measured and reporting SHAs.",
+        "Retain the accepted calibrated comparison for this target; do not demand a new experiment, arbitrary recalibration or raw SHA equality.",
+        "If reviewing the publisher implementation, add or require an explicit binding check for future requests, without claiming this supplied measurement is invalid."
+      ],
+      "failures": [
+        "Reject solely because the test merge, PR head and evaluator revision have different SHAs.",
+        "Claim the checksum authenticates measurement provenance.",
+        "Claim real CI enforcement has been validated."
+      ]
+    },
+    {
+      "id": "advanced-head-old-rerun",
+      "expected": [
+        "Trace the requested head to the producer's measured checkout and identify that the intact bundle covers the older head.",
+        "Prevent the old pass from being assigned to the newer requested head; acquire applicable evidence for that head or return an explicit invalid/inapplicable-evidence outcome.",
+        "Preserve the old result as historical evidence for its original target.",
+        "Distinguish missing applicable evidence from an observed performance regression and from a statistical calibration failure.",
+        "Specify a focused publisher correction that binds trusted producer/checkout information to the reporting target before publishing."
+      ],
+      "failures": [
+        "Accept because run attempt 2 is recent, the PR number matches, the digest verifies or the statistical comparator passed.",
+        "Rewrite the manifest's measured identity to the new head.",
+        "Treat the old measurement as proof that the new head regressed or require recalibration without evidence of statistical drift."
+      ]
+    }
+  ]
+}

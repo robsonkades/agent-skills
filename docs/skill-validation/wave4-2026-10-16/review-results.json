@@ -1,0 +1,693 @@
+{
+  "at": "2026-10-16T16:12:53.241Z",
+  "classification": "Coordinator synthesis from full semantic diffs and reviewer evidence. Changed count includes source-link repair; not an efficacy metric.",
+  "counts": {
+    "reviewed": 68,
+    "changed": 36,
+    "unchanged": 32,
+    "sourceLinkRepairOnly": 12,
+    "guidanceOrFactualCorrection": 24
+  },
+  "skills": [
+    {
+      "name": "architecture-characteristics",
+      "owner": "quality01",
+      "before": "1.2.3",
+      "after": "1.2.3",
+      "changed": false,
+      "classification": "preserved",
+      "decision": "Preservada: cenários observáveis, obrigações, autoridade de exceções e limites de métricas já controlam as decisões.",
+      "evidenceAndLimit": "Fontes SEI/ISO público e checks estruturais; seis arquivos intactos. Sem conformidade normativa, execução de aplicação ou avaliação de agente."
+    },
+    {
+      "name": "architecture-coupling-and-quanta",
+      "owner": "quality02",
+      "before": "1.1.5",
+      "after": "1.1.5",
+      "changed": false,
+      "classification": "preserved",
+      "decision": "Preservada: co-mudança, obrigação de coordenação, dependência operacional e contagem de quanta já têm evidências e limites distintos.",
+      "evidenceAndLimit": "Fontes primárias e definição original consultadas; seis arquivos e checks locais preservados. Sem deployment, mineração real ou avaliação de agente."
+    },
+    {
+      "name": "architecture-decision-making",
+      "owner": "quality03",
+      "before": "2.1.4",
+      "after": "2.1.4",
+      "changed": false,
+      "classification": "preserved",
+      "decision": "Preservada: distingue alternativas históricas de propostas novas, autoridade, vigência e implementação; composição existente evita reabrir decisões sem motivo.",
+      "evidenceAndLimit": "Sete fontes e checks estruturais; seis arquivos intactos. Casos escritos separados, sem avaliação de agente ou conformidade ISO alegada."
+    },
+    {
+      "name": "architecture-fitness-functions",
+      "owner": "quality04",
+      "before": "1.3.3",
+      "after": "1.3.3",
+      "changed": false,
+      "classification": "preserved",
+      "decision": "Preservada: distingue propriedade observada, seleção/cobertura, controle sensível e exceção autorizada; sete arquivos idênticos.",
+      "evidenceAndLimit": "25 testes do checker passaram sem skips, além dos checks estruturais. Node 25; sem execução de aplicação/Java ou avaliação comportamental."
+    },
+    {
+      "name": "architecture-refactoring-paths",
+      "owner": "quality05",
+      "before": "1.4.3",
+      "after": "1.4.3",
+      "changed": false,
+      "classification": "preserved",
+      "decision": "Preservada: contratos intermediários, autoridade, reversibilidade limitada e abandono já estão cobertos. Hipótese sobre referral ddd-style rejeitada após conferir contexto.",
+      "evidenceAndLimit": "As três linhas provisórias do revisor foram retiradas; cinco hashes iguais ao baseline e checks locais passaram. Casos sintéticos, sem migração ou agente executado."
+    },
+    {
+      "name": "architecture-testing",
+      "owner": "quality06",
+      "before": "1.3.4",
+      "after": "1.3.5",
+      "changed": true,
+      "classification": "technical-guidance-or-factual-correction",
+      "decision": "Alinha nome e conclusão do teste aos quatro grupos proibidos; ensina controle JDBC condicional sem impor proibição nova. Dois links Jakarta reparados.",
+      "evidenceAndLimit": "Seis controles ArchUnit 1.5.0 antes e depois, um teste Jupiter efetivamente executado por cenário, com três falhas esperadas. JDK 25 release 17, sem banco ou agente."
+    },
+    {
+      "name": "bounded-context-design",
+      "owner": "quality07",
+      "before": "1.0.0",
+      "after": "1.0.0",
+      "changed": false,
+      "classification": "preserved",
+      "decision": "Preservada: linguagem, autoridade e consistência são investigadas antes de inferir contextos, agregados ou deploys.",
+      "evidenceAndLimit": "Evans/Fowler/Modulith e checks locais; quatro arquivos intactos. Casos de negócio sintéticos, sem execução Spring ou entrevista real."
+    },
+    {
+      "name": "component-and-release-boundaries",
+      "owner": "quality08",
+      "before": "1.2.4",
+      "after": "1.2.5",
+      "changed": true,
+      "classification": "technical-guidance-or-factual-correction",
+      "decision": "Corrige a inferência de uma publicação para um único rebuild/deploy; separa compilação, empacotamento e entrega conforme o consumidor real.",
+      "evidenceAndLimit": "Controles JVM com classes idênticas do consumidor e comparação de seis agentes nos dois casos. Todos acertaram, inclusive sem skill: nenhum ganho incremental observado. Sem Maven/Gradle ou rollout real."
+    },
+    {
+      "name": "data-source-patterns",
+      "owner": "quality09",
+      "before": "1.3.4",
+      "after": "1.3.5",
+      "changed": true,
+      "classification": "technical-guidance-or-factual-correction",
+      "decision": "Exige rastrear leitura, predicados de escrita e isolamento: versões de entidades distintas não protegem automaticamente uma regra entre linhas. Três links Jakarta reparados.",
+      "evidenceAndLimit": "H2 2.2.224 confirmou três controles e oito asserções, com critérios separados. Sem integração JPA/PostgreSQL ou avaliação comportamental de agente."
+    },
+    {
+      "name": "domain-logic-organization",
+      "owner": "quality10",
+      "before": "1.3.5",
+      "after": "1.3.6",
+      "changed": true,
+      "classification": "technical-guidance-or-factual-correction",
+      "decision": "Distingue organização de um caso de uso de atomicidade/isolamento; repara duas citações JPA e fixa a referência JdbcClient 6.1.0.",
+      "evidenceAndLimit": "Checks locais e disponibilidade das fontes passaram; quatro blocos Java intactos. Fixtures compiladas para 17, sem execução PostgreSQL/Spring ou agente."
+    },
+    {
+      "name": "enterprise-application-architecture",
+      "owner": "quality11",
+      "before": "1.2.6",
+      "after": "1.2.6",
+      "changed": false,
+      "classification": "preserved",
+      "decision": "Preservada: o fluxo efetivo já distingue transação local, intenção durável e efeitos de donos separados, com composição e alternativas condicionais.",
+      "evidenceAndLimit": "Fontes Spring 6.2.19/Fowler/padrões outbox-saga e checks estruturais; quatro hashes intactos. Sem execução Spring/database ou avaliação de agente."
+    },
+    {
+      "name": "enterprise-architecture-smells",
+      "owner": "quality12",
+      "before": "1.2.4",
+      "after": "1.2.5",
+      "changed": true,
+      "classification": "technical-guidance-or-factual-correction",
+      "decision": "Um record próprio ainda pode expor tipos do framework; segue componentes/accessors até o consumidor e seu contrato, sem inferir custo de um mapa de dependências.",
+      "evidenceAndLimit": "Compilações e javap confirmaram exposição de Sort e falha esperada sem a dependência; reabertura corrigiu apenas URL Jakarta 404 mantendo o mesmo patch. Sem execução de aplicação ou agente."
+    },
+    {
+      "name": "enterprise-base-patterns",
+      "owner": "quality13",
+      "before": "1.2.5",
+      "after": "1.2.6",
+      "changed": true,
+      "classification": "technical-guidance-or-factual-correction",
+      "decision": "Separa igualdade de componentes, propriedade defensiva e equivalência do domínio, preservando escala decimal quando seu significado é contratual.",
+      "evidenceAndLimit": "24 checks técnicos e dois controles negativos esperados no JDK 25 com release 17. Sem ORM/cache de produção ou avaliação comportamental."
+    },
+    {
+      "name": "enterprise-transactions",
+      "owner": "quality14",
+      "before": "1.3.4",
+      "after": "1.3.5",
+      "changed": true,
+      "classification": "technical-guidance-or-factual-correction",
+      "decision": "Separa conexão participante, propagação do timeout ao statement e prazo do método, preservando caminhos já adequados e limites por manager/provider.",
+      "evidenceAndLimit": "47 asserções com Spring 6.2.12 e doubles JDBC; fontes 6.2.19. Não prova cancelamento no banco, liberação de locks ou deadline de parede. Sem agente."
+    },
+    {
+      "name": "framework-coupling-and-independence",
+      "owner": "quality15",
+      "before": "1.2.5",
+      "after": "1.2.5",
+      "changed": false,
+      "classification": "preserved",
+      "decision": "Preservada: uma interface própria não estabelece independência sem verificar o contrato efetivo do recurso e do consumidor.",
+      "evidenceAndLimit": "Spring Core 6.2.10 confirmou leitura única versus repetida e alternativa ByteArrayResource; quatro arquivos intactos. Sem container/ORM ou agente."
+    },
+    {
+      "name": "gof-abstract-factory",
+      "owner": "quality16",
+      "before": "1.2.4",
+      "after": "1.2.4",
+      "changed": false,
+      "classification": "preserved",
+      "decision": "Preservada: tipo da família, identidade do owner, fronteira pública e responsabilidade de aquisição já são distintos.",
+      "evidenceAndLimit": "13 controles Java e rejeição esperada de tipos incompatíveis; quatro arquivos intactos. Release 17 no JDK 25; sem integração de framework ou agente."
+    },
+    {
+      "name": "gof-adapter",
+      "owner": "quality17",
+      "before": "1.3.4",
+      "after": "1.3.4",
+      "changed": false,
+      "classification": "preserved",
+      "decision": "Preservada: já compara contratos efetivos, resultados ambíguos, ownership e lifetime, além de assinaturas; quatro arquivos intactos.",
+      "evidenceAndLimit": "21 controles de ownership/canal e sete de status passaram, além dos checks estruturais. Sem integração de API, seleção automática ou comparação de agentes."
+    },
+    {
+      "name": "gof-bridge",
+      "owner": "quality18",
+      "before": "1.2.4",
+      "after": "1.2.5",
+      "changed": true,
+      "classification": "technical-guidance-or-factual-correction",
+      "decision": "Distingue atomicidade da operação composta e segurança de chamadas isoladas, com escritores reais e limites de CREATE_NEW. Clarifica empréstimo do Channel no exemplo.",
+      "evidenceAndLimit": "21 asserções com interleaving controlado, namespace privado e escrita parcial. Release 17 no JDK 25; não prova durabilidade, corrida geral ou ganho de agente."
+    },
+    {
+      "name": "gof-builder",
+      "owner": "quality19",
+      "before": "1.2.5",
+      "after": "1.2.5",
+      "changed": false,
+      "classification": "preserved",
+      "decision": "Preservada: snapshot do produto, aliases, reutilização e invariantes já são distinguidos de fluent/staged APIs opcionais.",
+      "evidenceAndLimit": "Controle da visão mutável falhou nos dois casos de alias; snapshot passou em oito checks, compilado para 17 e executado no JDK 25. Sem avaliação de agente."
+    },
+    {
+      "name": "gof-chain-of-responsibility",
+      "owner": "quality20",
+      "before": "1.2.4",
+      "after": "1.2.4",
+      "changed": false,
+      "classification": "preserved",
+      "decision": "Preservada: negação presente encerra seleção; abstinência, falha, forwarding e conclusão assíncrona têm contratos distintos, com efeitos e cleanup limitados.",
+      "evidenceAndLimit": "19 controles de seleção e 30 de continuação passaram; exemplos extraídos para release 17/JDK 25. Sem Spring/Netty/banco ou avaliação comportamental."
+    },
+    {
+      "name": "gof-command",
+      "owner": "quality11",
+      "before": "1.2.4",
+      "after": "1.2.5",
+      "changed": true,
+      "classification": "technical-guidance-or-factual-correction",
+      "decision": "Distingue receiver vinculado na criação de campo lido na execução; nenhum congela estado. Preserva ambos os contratos e diferenças de nulidade.",
+      "evidenceAndLimit": "16 asserções e matriz de quatro execuções passaram com duas falhas esperadas nas substituições incompatíveis. Release 17/JDK 25; sem concorrência, broker ou agente."
+    },
+    {
+      "name": "gof-composite",
+      "owner": "quality03",
+      "before": "1.2.4",
+      "after": "1.2.4",
+      "changed": false,
+      "classification": "preserved",
+      "decision": "Preservada: a política por ocorrência versus identidade, multiplicidade de pais e igualdade é decidida pelo domínio; não torna visited uma correção universal.",
+      "evidenceAndLimit": "16 controles dos trechos reais e três checks de fixtures passaram, release 21/JDK 25. Quatro arquivos intactos, sem concorrência/segurança de aplicação ou agente."
+    },
+    {
+      "name": "gof-decorator",
+      "owner": "quality01",
+      "before": "1.2.4",
+      "after": "1.2.4",
+      "changed": false,
+      "classification": "preserved",
+      "decision": "Preservada: contrato do consumidor, ordem observável, aliases, auto-retorno e ownership já determinam adequação da composição; quatro arquivos intactos.",
+      "evidenceAndLimit": "Retry extraído passou 28 checks; mutante que remove rethrow falhou como esperado. Release 17/JDK 25, sem integração framework ou comparação de agentes."
+    },
+    {
+      "name": "gof-facade",
+      "owner": "quality07",
+      "before": "1.2.4",
+      "after": "1.2.5",
+      "changed": true,
+      "classification": "technical-guidance-or-factual-correction",
+      "decision": "Qualifica FailedException da falha de filho, inclusive InterruptedException, versus interrupção direta do owner; chama atenção ao consumidor sem impor unwrap genérico.",
+      "evidenceAndLimit": "Oito controles do método extraído passaram no Java 25 preview; código preservado. Sem transporte, Spring, banco ou wall-clock garantido; casos escritos não executados por agentes."
+    },
+    {
+      "name": "gof-factory-method",
+      "owner": "quality19",
+      "before": "1.2.4",
+      "after": "1.2.4",
+      "changed": false,
+      "classification": "preserved",
+      "decision": "Preservada: extensão legítima, frequência da fábrica, construção segura e transferência versus empréstimo do produto já são explícitos.",
+      "evidenceAndLimit": "Dois bindings e sete controles confirmaram cleanup, falhas e dispatch no construtor. PDF GoF indisponível por timeout, primárias alternativas consultadas; sem framework/agent runtime."
+    },
+    {
+      "name": "gof-flyweight",
+      "owner": "quality10",
+      "before": "1.2.4",
+      "after": "1.2.5",
+      "changed": true,
+      "classification": "technical-guidance-or-factual-correction",
+      "decision": "Corrige somente a data implícita de depreciação para remoção dos construtores Boolean: estado confirmado na baseline Java 17, sem confundir since=9 com forRemoval.",
+      "evidenceAndLimit": "Decisões de compartilhamento e exemplos preservados; cinco asserções nos fixtures de locale. Sem benchmark, perfil de memória ou ganho comportamental medido."
+    },
+    {
+      "name": "gof-interpreter",
+      "owner": "quality13",
+      "before": "1.2.4",
+      "after": "1.2.4",
+      "changed": false,
+      "classification": "preserved",
+      "decision": "Preservada: consumo completo, limites de AST, validação de todos os ramos e propagação de erro/budget já são explícitos, mantendo parser e capabilities distintos.",
+      "evidenceAndLimit": "36 checks dos trechos extraídos, 13 dos casos e negativo de erro convertido em false. Release 21/JDK 25; sem parser/SpEL/SQL real, fuzzing ou agente."
+    },
+    {
+      "name": "gof-iterator",
+      "owner": "quality15",
+      "before": "1.2.4",
+      "after": "1.2.4",
+      "changed": false,
+      "classification": "preserved",
+      "decision": "Preservada: prefixo solicitado e exaustão da origem são contratos distintos; ownership, lookahead, fail-fast e fechamento já têm limites claros.",
+      "evidenceAndLimit": "28 checks e controles de conclusão/prefixo passaram. Contagem inicial errada do driver foi corrigida com tentativa preservada; release 17/JDK 25, sem transporte real ou agente."
+    },
+    {
+      "name": "gof-mediator",
+      "owner": "quality16",
+      "before": "1.2.4",
+      "after": "1.2.4",
+      "changed": false,
+      "classification": "preserved",
+      "decision": "Preservada: o fluxo real determina reentrância, estado antes do efeito, dono do protocolo e recuperação; callback por si não justifica Mediator.",
+      "evidenceAndLimit": "Quatro condições inline/queued, nove checks de estado e três da ordem de conclusão passaram com contratos distintos. Quatro arquivos intactos, sem concorrência real, integração ou agente."
+    },
+    {
+      "name": "gof-memento",
+      "owner": "quality02",
+      "before": "1.2.4",
+      "after": "1.2.4",
+      "changed": false,
+      "classification": "preserved",
+      "decision": "Preservada: owner, invariantes, alias em captura e restauração, história e geração não restaurada já delimitam o protocolo; quatro arquivos intactos.",
+      "evidenceAndLimit": "24 asserções sobre três snippets, aliases e ABA determinístico passaram; release 17/JDK 25. Sem linearizabilidade, broker, DB, recuperação durável ou avaliação de agente."
+    },
+    {
+      "name": "gof-observer",
+      "owner": "quality08",
+      "before": "1.2.4",
+      "after": "1.2.4",
+      "changed": false,
+      "classification": "preserved",
+      "decision": "Preservada: remoção de membership difere de quiescência, com reentrância, registro e políticas de falha já delimitados; quatro arquivos intactos.",
+      "evidenceAndLimit": "Sete controles passaram; erro inicial de normalização de caminho foi preservado e corrigido. Release 17/JDK 25; sem broker/GUI/Spring runtime ou comparação de agentes."
+    },
+    {
+      "name": "gof-pattern-antipatterns",
+      "owner": "quality09",
+      "before": "1.2.4",
+      "after": "1.2.5",
+      "changed": true,
+      "classification": "technical-guidance-or-factual-correction",
+      "decision": "Visitor com novos tipos pode exigir cobertura deliberada; qualifica o custo e decide fallback por operação, preservando contratos e checagem de dispatch.",
+      "evidenceAndLimit": "Cinco controles distinguem implementação incompleta, fallback válido e omissão que compila mas falha no resultado. Release17/JDK25; sem ganho comportamental medido."
+    },
+    {
+      "name": "gof-pattern-confusion",
+      "owner": "quality04",
+      "before": "1.2.4",
+      "after": "1.2.5",
+      "changed": true,
+      "classification": "technical-guidance-or-factual-correction",
+      "decision": "Distingue fato já estabelecido que inicia decisão posterior de pedido disfarçado de fato; não classifica só pela rejeição downstream. URL Servlet reparada.",
+      "evidenceAndLimit": "Fluxo local confirmou validação concluída antes de crédito rejeitado; controle de fato prematuro falhou. Release17/JDK25; sem broker, DB ou agente."
+    },
+    {
+      "name": "gof-pattern-selection",
+      "owner": "quality05",
+      "before": "1.3.4",
+      "after": "1.3.4",
+      "changed": false,
+      "classification": "preserved",
+      "decision": "Preservada: forças, consumidores, extensão, lifecycle e alternativas simples já orientam seleção; quatro arquivos intactos.",
+      "evidenceAndLimit": "Dois contratos any/all e implementações first/all tiveram 5/5 nos pares válidos e três falhas nos incompatíveis. Release 17/JDK 25, sem framework/DB ou agente."
+    },
+    {
+      "name": "gof-pattern-thinking",
+      "owner": "quality06",
+      "before": "1.3.4",
+      "after": "1.3.4",
+      "changed": false,
+      "classification": "preserved",
+      "decision": "Preservada: forças/callers, API de extensão, identidade, lifecycle e alternativas já condicionam a simplificação; quatro arquivos intactos.",
+      "evidenceAndLimit": "16 checks Discount/State e dois negativos, alvos 17/21 no JDK 25. JEPs indisponíveis conferidos pelo guia oficial; sem runtime17/21, cliente publicado ou agente."
+    },
+    {
+      "name": "gof-patterns-in-modern-java",
+      "owner": "quality12",
+      "before": "1.3.4",
+      "after": "1.3.4",
+      "changed": false,
+      "classification": "preserved",
+      "decision": "Preservada: sintaxe moderna não elimina contratos de evolução, extensão, nulidade, lifecycle e versões; quatro arquivos intactos.",
+      "evidenceAndLimit": "15 processos e quatro asserções distinguiram fonte/ligação/execução de consumidor antigo e atualizado. Compilação alvo21/JDK25; sem rollout, integração ou agente."
+    },
+    {
+      "name": "gof-prototype",
+      "owner": "quality14",
+      "before": "1.2.3",
+      "after": "1.2.4",
+      "changed": true,
+      "classification": "source-link-repair-only",
+      "decision": "Repara a URL Jakarta do lifecycle da entidade; restante técnico e exemplos preservados, com patch único desde1.2.3.",
+      "evidenceAndLimit": "26 asserções por caso distinguem contexto de cópia por campo versus por operação; release17/JDK25. Sem ORM, concorrência, benchmark ou ganho de agente."
+    },
+    {
+      "name": "gof-proxy",
+      "owner": "quality17",
+      "before": "1.2.4",
+      "after": "1.2.4",
+      "changed": false,
+      "classification": "preserved",
+      "decision": "Preservada: interceptação efetiva, retorno do próprio alvo versus novo objeto, publicação/progresso e ownership já delimitam a substituição; quatro arquivos intactos.",
+      "evidenceAndLimit": "16 controles lazy e 18 handler/JDK passaram, incluindo 24 consumidores concorrentes em execução finita. Release17/JDK25; sem Spring/Hibernate runtime ou avaliação de agente."
+    },
+    {
+      "name": "gof-singleton",
+      "owner": "quality18",
+      "before": "1.2.4",
+      "after": "1.2.5",
+      "changed": true,
+      "classification": "technical-guidance-or-factual-correction",
+      "decision": "Segue chamadas diretas a fábricas Bean e receiver/modo de configuração; uma definição singleton não impede objetos extras fora do lifecycle gerenciado.",
+      "evidenceAndLimit": "54 asserções com Spring6.2.7 real e FileChannel descartável confirmam identidades/fechamentos; preserve full configuration e injeção adequada. Release17/JDK25, sem agente."
+    },
+    {
+      "name": "gof-state",
+      "owner": "quality20",
+      "before": "1.2.4",
+      "after": "1.2.5",
+      "changed": true,
+      "classification": "source-link-repair-only",
+      "decision": "Repara duas URLs Jakarta confirmadas404, preservando as decisões de estado, precondição de CAS e propriedade de resultados tardios.",
+      "evidenceAndLimit": "67 controles de transição/armazenamento e controles negativos de cobertura e cleanup passaram. Release21/JDK25; sem ORM, banco ou agente."
+    },
+    {
+      "name": "gof-strategy",
+      "owner": "quality11",
+      "before": "1.2.4",
+      "after": "1.2.4",
+      "changed": false,
+      "classification": "preserved",
+      "decision": "Preservada: contrato do consumidor, seleção válida e lifecycle/freshness do produto real são explícitos; quatro hashes intactos.",
+      "evidenceAndLimit": "Smokes passam ambos os bindings; reutilização falha no segundo uso e factory fresh passa sete checks. Release 17/JDK 25; sem Spring, concorrência ou agente."
+    },
+    {
+      "name": "gof-template-method",
+      "owner": "quality03",
+      "before": "1.2.4",
+      "after": "1.2.4",
+      "changed": false,
+      "classification": "preserved",
+      "decision": "Preservada: SPI, reentrância, falha primária, reporting e conclusão efetiva já condicionam template/composição; quatro arquivos intactos.",
+      "evidenceAndLimit": "20 controles do trecho extraído e dois da fixture passaram. Release17/JDK25, sem provider, auditoria durável, integração ou agente."
+    },
+    {
+      "name": "gof-visitor",
+      "owner": "quality01",
+      "before": "1.2.4",
+      "after": "1.2.5",
+      "changed": true,
+      "classification": "technical-guidance-or-factual-correction",
+      "decision": "Qualifica a heurística de frequência de tipos: exigir revisão de cada operação pode ser uma cobertura deliberada. Preserva fallback válido e alinhamento com gof-pattern-antipatterns.",
+      "evidenceAndLimit": "Controles confirmaram incompatibilidade de fonte, AbstractMethodError em consumidor antigo e fallback que compila mas falha. Fontes Java17/21; execução JDK25, sem ganho comportamental medido."
+    },
+    {
+      "name": "humble-objects-and-functional-core",
+      "owner": "quality19",
+      "before": "1.2.4",
+      "after": "1.2.5",
+      "changed": true,
+      "classification": "technical-guidance-or-factual-correction",
+      "decision": "Preserva a demanda de efeitos por ramo: extrair apresentação não deve consultar identidade antes de um retorno 404 ou público. Mantém o presenter puro recebendo uma decisão já obtida apenas quando necessária.",
+      "evidenceAndLimit": "Baseline teve cinco divergências; revisão passou em 13 controles. Java21/JDK25 com stubs Spring explícitos, sem integração ou agente. Casos contrastam diretório efetivo e snapshot estável."
+    },
+    {
+      "name": "inheritance-mapping-strategies",
+      "owner": "quality10",
+      "before": "1.3.4",
+      "after": "1.3.5",
+      "changed": true,
+      "classification": "source-link-repair-only",
+      "decision": "Repara somente duas referências Jakarta confirmadas404; identidade, consultas, constraints e migração já têm distinções adequadas.",
+      "evidenceAndLimit": "17 blocos de exemplo preservados; checks locais e fontes JPA/Hibernate/PostgreSQL. Casos escritos sem execução ORM/SQL, benchmark ou agente."
+    },
+    {
+      "name": "java-ddd",
+      "owner": "quality16",
+      "before": "1.0.0",
+      "after": "1.0.1",
+      "changed": true,
+      "classification": "technical-guidance-or-factual-correction",
+      "decision": "A referência agora exige resolver bean/profile e transação efetiva antes de atribuir envio Rabbit ou momento do commit à chamada de publicação.",
+      "evidenceAndLimit": "Código local identificado por hashes e fontes Spring5.3.24/Boot2.7.7 sustentam a correção; sem build da referência, integração Spring/DB/broker ou avaliação de agente."
+    },
+    {
+      "name": "java-ddd-aggregates",
+      "owner": "quality07",
+      "before": "1.0.0",
+      "after": "1.0.1",
+      "changed": true,
+      "classification": "technical-guidance-or-factual-correction",
+      "decision": "Explicita a associação entre estado e token: versão nova lida após dados antigos pode permitir CAS de decisão inválida. Alternativa exige todos os writers e leituras autoritativas; URL Jakarta reparada.",
+      "evidenceAndLimit": "Fixture compilada para17/JDK25, sem PostgreSQL/JPA ou ator. Evidência H2 externa do revisor de offline-concurrency-control é atribuída separadamente e não extrapolada."
+    },
+    {
+      "name": "java-ddd-domain-events",
+      "owner": "quality13",
+      "before": "1.0.0",
+      "after": "1.0.0",
+      "changed": false,
+      "classification": "preserved",
+      "decision": "Preservada: fato aceito, payload histórico versus consulta atual, ownership de lote e intenção durável já têm decisões e limites distintos; quatro arquivos intactos.",
+      "evidenceAndLimit": "21 controles Java passaram e mutação antes de validação falhou como esperado. Release17/JDK25; sem Spring/DB/broker ou avaliação comportamental."
+    },
+    {
+      "name": "java-ddd-domain-services",
+      "owner": "quality02",
+      "before": "1.0.0",
+      "after": "1.0.0",
+      "changed": false,
+      "classification": "preserved",
+      "decision": "Preservada: distingue avaliação, autoridade para efetivar a decisão, orquestração e restauração; três arquivos intactos e seis fontes primárias confirmadas.",
+      "evidenceAndLimit": "Checks estruturais e compilação de fixtures release17/JDK25 passaram. Sem execução runtime, reserva em provider, isolamento de banco ou agente."
+    },
+    {
+      "name": "java-ddd-repositories",
+      "owner": "quality15",
+      "before": "1.0.0",
+      "after": "1.0.1",
+      "changed": true,
+      "classification": "source-link-repair-only",
+      "decision": "Repara somente uma URL Jakarta confirmada404; reconstituição, projeção, coerência de leitura, cobertura dos writers e save versus commit já estão adequados.",
+      "evidenceAndLimit": "Cinco arquivos revisados e checks locais passaram. Casos RR/RC separados dos critérios, sem execução ORM/banco ou avaliação de agente."
+    },
+    {
+      "name": "java-ddd-testing",
+      "owner": "quality05",
+      "before": "1.0.0",
+      "after": "1.0.1",
+      "changed": true,
+      "classification": "source-link-repair-only",
+      "decision": "Repara duas URLs Jakarta com anchors de locking/sincronização conferidos, mantendo a orientação técnica existente.",
+      "evidenceAndLimit": "Seis controles de fake/save/UoW incluem dois negativos esperados; release17/JDK25. Não substituem teste ORM/DB ou demonstram ganho de agente."
+    },
+    {
+      "name": "java-ddd-use-cases",
+      "owner": "quality06",
+      "before": "1.0.0",
+      "after": "1.0.0",
+      "changed": false,
+      "classification": "preserved",
+      "decision": "Preservada: autorização, atualização condicional, conflito e resultado provisório versus commit já estão explícitos; quatro arquivos intactos.",
+      "evidenceAndLimit": "Seis trechos Java exercitados em15 cenários/43 asserções; três controles negativos detectaram autorização removida, aliasing e herança proibida. Release17/JDK25, sem Spring/DB ou agente."
+    },
+    {
+      "name": "java-ddd-value-objects",
+      "owner": "quality11",
+      "before": "1.0.0",
+      "after": "1.0.0",
+      "changed": false,
+      "classification": "preserved",
+      "decision": "Preservada: normalização depende da equivalência contratual, inclusive escala, aliases e constructor canônico; sete arquivos intactos.",
+      "evidenceAndLimit": "55 checks distribuídos na skill passaram. Controles privados de resolução e equivalência numérica têm 16 checks por contrato e falhas esperadas cruzadas. Release17/JDK25; sem ORM/JSON ou agente."
+    },
+    {
+      "name": "layering-and-boundaries",
+      "owner": "quality08",
+      "before": "1.2.4",
+      "after": "1.2.5",
+      "changed": true,
+      "classification": "technical-guidance-or-factual-correction",
+      "decision": "Separa contexto implícito de dependência de framework e condiciona inversão à política aceita; preserva Clock e port existente sem interface adicional obrigatória.",
+      "evidenceAndLimit": "Java com apenas java.base confirmou controle temporal; compilação isolada rejeitou dependência externa e aceitou inversão. Oito blocos preservados; release17/JDK25, sem framework ou agente."
+    },
+    {
+      "name": "legacy-enterprise-modernization",
+      "owner": "quality12",
+      "before": "1.2.3",
+      "after": "1.2.4",
+      "changed": true,
+      "classification": "technical-guidance-or-factual-correction",
+      "decision": "Explicita owner versus invoker na compatibilidade de views PostgreSQL17, com grants, RLS, funções e preservação de delegação aprovada.",
+      "evidenceAndLimit": "Fontes primárias e15 links conferidos; fixtures SQL adversariais e critérios separados. PostgreSQL indisponível: SQL não executado nem parser-validado, sem alegação de RLS testado ou ganho de agente."
+    },
+    {
+      "name": "metadata-mapping",
+      "owner": "quality09",
+      "before": "1.3.4",
+      "after": "1.3.5",
+      "changed": true,
+      "classification": "technical-guidance-or-factual-correction",
+      "decision": "Segue ações efetivas de schema: exportar script ou selecionar ação JPA pode impedir o fallback validate do Hibernate. Mantém exportação legítima com validação demonstrada separadamente; três links reparados.",
+      "evidenceAndLimit": "Hibernate6.6.18/H2 executaram cinco controles/65 asserções e casos com coluna ausente. Doze blocos preservados; sem Spring Boot, JPA3.2 runtime, banco de produção ou agente."
+    },
+    {
+      "name": "mvc-and-request-handling",
+      "owner": "quality04",
+      "before": "1.3.5",
+      "after": "1.3.6",
+      "changed": true,
+      "classification": "technical-guidance-or-factual-correction",
+      "decision": "afterCompletion exige preHandle bem-sucedido do próprio interceptor; liberação inicial de thread async é distinta de conclusão. Orienta cleanup nos caminhos de interrupção e falha.",
+      "evidenceAndLimit": "Oito cenários na cadeia/DispatcherServlet Spring6.2.7 e par de fixtures reproduziram retenção versus cleanup. Mocks Servlet e adapters explícitos; sem container/async real ou agente."
+    },
+    {
+      "name": "offline-concurrency-control",
+      "owner": "quality17",
+      "before": "1.2.4",
+      "after": "1.2.5",
+      "changed": true,
+      "classification": "technical-guidance-or-factual-correction",
+      "decision": "Associa estado e versão, inclui dependências de leitura e interleaving durante o carregamento. Preserva protocolos adequados sob all-writers/freshness/isolation; dois links reparados e alinhamento com DDD.",
+      "evidenceAndLimit": "Cinco cenários/nove checks JDBC em H2 2.4.240 e dois casos confirmaram CAS indevido com token tardio e rejeição com token inicial. Sem PostgreSQL/JPA, phantoms, réplica ou avaliação de agente."
+    },
+    {
+      "name": "orm-behavioral-patterns",
+      "owner": "quality20",
+      "before": "1.3.4",
+      "after": "1.3.5",
+      "changed": true,
+      "classification": "source-link-repair-only",
+      "decision": "Repara somente URL Jakarta; lifecycle de contexto, merge, rollback, bulk e lazy loading já têm distinções adequadas.",
+      "evidenceAndLimit": "32 asserções Hibernate6.6.33/JPA3.1/H2 2.3.232 e par de adapters distinguiram coleção não carregada de coleção reconstruída vazia; versões obsoletas rejeitadas. Sem Spring/JTA, JPA3.2 runtime ou agente."
+    },
+    {
+      "name": "orm-structural-mapping",
+      "owner": "quality14",
+      "before": "1.3.4",
+      "after": "1.3.5",
+      "changed": true,
+      "classification": "source-link-repair-only",
+      "decision": "Repara duas URLs da especificação Jakarta e MapsId, mantendo conteúdo e exemplos de identidade, associações e representação.",
+      "evidenceAndLimit": "Dois casos Hibernate6.6.33/JPA3.1/H2 2.3.232 passaram com20 e21 checks; só a constraint UNIQUE varia. Sem PostgreSQL, concorrência, JPA3.2 runtime ou agente."
+    },
+    {
+      "name": "pattern-selection-and-composition",
+      "owner": "quality18",
+      "before": "1.3.5",
+      "after": "1.3.6",
+      "changed": true,
+      "classification": "technical-guidance-or-factual-correction",
+      "decision": "Separa supressão de duplicatas de ordenação dos efeitos de eventos distintos; mantém consulta/merge insensível à ordem e limita guardas de versão a snapshots completos adequados.",
+      "evidenceAndLimit": "56 asserções H2 2.4.240 com interleaving controlado confirmaram projeção regressiva apesar da deduplicação e alternativa adequada. Sem broker, outbox de produção, benchmark ou agente."
+    },
+    {
+      "name": "patterns-and-modern-frameworks",
+      "owner": "quality03",
+      "before": "1.2.4",
+      "after": "1.2.5",
+      "changed": true,
+      "classification": "source-link-repair-only",
+      "decision": "Repara duas URLs Jakarta; mecanismo versus responsabilidade, wrapper válido e compatibilidade por papel/versão já estão adequados.",
+      "evidenceAndLimit": "28 verificações Spring6.2.10 e dois smokes confirmaram a diferença do CacheManager sob rollback externo. Transaction manager sem banco; release17/JDK25, sem ORM ou agente."
+    },
+    {
+      "name": "query-objects-and-specifications",
+      "owner": "quality10",
+      "before": "1.3.4",
+      "after": "1.3.5",
+      "changed": true,
+      "classification": "source-link-repair-only",
+      "decision": "Repara somente URL Jakarta; NULL, predicado ausente, quantificadores, escopo obrigatório e paginação já estão qualificados. Onze blocos preservados.",
+      "evidenceAndLimit": "Checks locais e fontes JPA/Spring Data/PostgreSQL; casos com dados adversariais e critérios separados, sem JDBC/ORM/banco ou teste de segurança executado."
+    },
+    {
+      "name": "remote-facade-and-dto",
+      "owner": "quality05",
+      "before": "1.3.4",
+      "after": "1.3.5",
+      "changed": true,
+      "classification": "source-link-repair-only",
+      "decision": "Repara somente URL Bean Validation3.0; contratos do consumidor, precisão numérica, validação e efeitos de lote já estão qualificados.",
+      "evidenceAndLimit": "Quatro controles JSON.parse/Map/Number tiveram dois sucessos e duas falhas esperadas. Casos diferem só no limite do ID; sem HTTP, serialização JVM, ORM ou agente."
+    },
+    {
+      "name": "repository-pattern",
+      "owner": "quality19",
+      "before": "1.3.4",
+      "after": "1.3.5",
+      "changed": true,
+      "classification": "source-link-repair-only",
+      "decision": "Repara duas URLs Jakarta, incluindo Query.html. Mantém coleção de domínio, save/merge, transação externa e lifetime de stream já qualificados.",
+      "evidenceAndLimit": "Checks locais e fontes JPA/Spring Data/PostgreSQL; par difere só na unicidade efetiva do índice. Sem execução SQL/provider/ORM ou avaliação de agente."
+    },
+    {
+      "name": "service-layer-design",
+      "owner": "quality15",
+      "before": "1.2.4",
+      "after": "1.2.4",
+      "changed": false,
+      "classification": "preserved",
+      "decision": "Preservada: forwarding útil, Transaction Script, autorização, dono da transação e resultado desconhecido já têm distinções adequadas; quatro arquivos intactos.",
+      "evidenceAndLimit": "Fontes Fowler/Spring6.2.12 e quatro controles Bash, incluindo produtor falhando com exit23. Dois manuais GNU retornaram403; casos escritos, sem Java/Spring/banco ou agente."
+    },
+    {
+      "name": "technical-debt-decisions",
+      "owner": "quality11",
+      "before": "1.1.4",
+      "after": "1.1.4",
+      "changed": false,
+      "classification": "preserved",
+      "decision": "Preservada: custo incremental futuro, horizonte, incerteza, autoridade e retenção adequada já controlam a decisão; quatro arquivos intactos.",
+      "evidenceAndLimit": "Fowler e duas seções do Green Book2026 confirmadas após fallback HTTP; aritmética sintética e integridade dos casos conferidas. Sem estimativa validada em equipe real, benchmark ou agente."
+    },
+    {
+      "name": "view-and-representation-patterns",
+      "owner": "quality01",
+      "before": "1.3.3",
+      "after": "1.3.4",
+      "changed": true,
+      "classification": "source-link-repair-only",
+      "decision": "Repara somente URL ServletResponse; escolhas de apresentação, escaping por contexto, variantes de cache e lifetime de streaming já estão qualificados.",
+      "evidenceAndLimit": "Controle da referência reproduziu 404 no baseline e200 no destino correto; checks locais passaram. Sem Java/framework, browser, cache real ou avaliação comportamental."
+    }
+  ]
+}

@@ -66,7 +66,9 @@ every tool step or configure future capture during the incident.
    native launcher embedding HotSpot. For relocated/container archives, also resolve the
    target loader and libraries using the command reference's archived-rootfs guidance;
    `--exe` alone does not relocate them. Add GDB when native registers/memory can resolve
-   the question.
+   the question. Match the report and core to the same process instance and capture event;
+   distinguish the original fault context from later fatal-report/abort state as described
+   in the command reference.
 6. **Name the gaps in the evidence.** Unmounted virtual threads appear in neither
    `jstack` nor `jhsdb jstack`; say so rather than concluding from their absence.
 7. **Size from measurement, not a rule of thumb.** Before concluding "the container was

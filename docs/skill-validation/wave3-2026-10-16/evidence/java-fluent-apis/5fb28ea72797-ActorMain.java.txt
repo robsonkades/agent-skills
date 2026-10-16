@@ -1,0 +1,18 @@
+package sample;
+
+import java.nio.file.Path;
+import java.util.List;
+
+public final class ActorMain {
+    public static void main(String[] args) throws Exception {
+        verify(Variants.build(OptionsFactory.create(Path.of(args[0])), true));
+    }
+
+    public static void verify(List<Product> actual) {
+        List<Product> expected = List.of(new Product("left", true), new Product("right", true));
+        System.out.println("actual=" + actual);
+        if (!expected.equals(actual)) {
+            throw new AssertionError("Both independent variants must retain audit=true: " + actual);
+        }
+    }
+}

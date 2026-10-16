@@ -1,0 +1,87 @@
+diff --git a/skills/load-balancing-and-routing/SKILL.md b/skills/load-balancing-and-routing/SKILL.md
+index 4a9a2ac..5b2d030 100644
+--- a/skills/load-balancing-and-routing/SKILL.md
++++ b/skills/load-balancing-and-routing/SKILL.md
+@@ -147,7 +147,8 @@ Prefer routing by key (sharding-and-partitioning) instead when:
+   expresses lifecycle and ability to serve the declared contract, which can deliberately
+   fail closed on a required shared dependency; passive ejection sees path- and request-specific
+   failures. Document all-unready behavior, precedence and recovery so disagreement is diagnosable.
+-  Distinguish detected outliers from enforced removal, and check whether an active probe's
++  Distinguish detected outliers, enforced unhealthy state and actual new host selections:
++  fail-open panic routing can select an ejected member. Check whether an active probe's
+   success can clear passive ejection early. A probe that does not exercise the failing path
+   cannot establish that path's recovery; inspect the deployed implementation before changing policy.
+ - Draining is a sequence with overlapping control/data planes: stop advertising, wait for
+diff --git a/skills/load-balancing-and-routing/references/routing-modes.md b/skills/load-balancing-and-routing/references/routing-modes.md
+index e6ddc0e..bb7d1b4 100644
+--- a/skills/load-balancing-and-routing/references/routing-modes.md
++++ b/skills/load-balancing-and-routing/references/routing-modes.md
+@@ -127,6 +127,32 @@ control-plane overrides before applying it:
+ Correlate probe results, request outcomes and ejection/unejection timestamps. Increasing the
+ ejection duration alone will not fix an active check that keeps clearing the ejection.
+ 
++### When an enforced ejection still receives new selections
++
++An ejected host remains a cluster member marked unhealthy. In Envoy 1.35.0, round-robin and
++least-request can select it through **fail-open panic**, without an unejection. Inspect the
++effective policy, runtime override of `healthy_panic_threshold` (default 50%), and availability
++across priorities. When normalized total availability is 100%, sufficient capacity in other
++priorities prevents panic; a low healthy fraction in one priority alone is not proof of panic.
++Below that total availability, a priority below its panic threshold may use all its hosts.
++
++Correlate the observing proxy/cluster, current host flags, `lb_healthy_panic` counter deltas and
++actual upstream selections in the same window. The counter can increase in both fail-open and
++fail-closed panic; it does not prove an unhealthy host received work. Distinguish a **new
++attempt's selection** from completion of work selected before ejection or an existing stream.
++Traffic through another proxy, route or cluster does not establish this proxy ignored its state.
++
++If panic explains the new selections, increasing ejection duration does not change the selection
++rule. Retain fail-open when degraded attempts satisfy the service's contract. Otherwise compare
++setting `healthy_panic_threshold` to 0%, which disables panic and retains normal health-based selection,
++with the applicable policy's `fail_traffic_on_panic: true`, which selects no host from a priority
++in panic even when some hosts remain available. In the legacy cluster API the latter is under
++`common_lb_config.zone_aware_lb_config`; verify the deployed policy's configuration surface.
++Disabling panic can concentrate load on survivors; failing traffic on panic sacrifices those
++remaining attempts. Neither creates capacity, and zero available hosts still requires an
++explicit rejection/fallback contract. Confirm the chosen behavior with actual destinations and
++request outcomes before claiming exclusion or availability.
++
+ ## The drain sequence
+ 
+ Coordinate these phases against the real control/data planes. Some overlap; choose ordering
+@@ -190,8 +216,10 @@ coverage limits before interpreting a test as success.
+   first. Fault-inject into one backend and compare detection with the expected removal or
+   observation-only behavior; then inject into all backends and confirm the chosen cap,
+   admission and fail-open/closed contract. Include a failing request path whose active probe
+-  still passes, followed by genuine recovery, to check early unejection. Assert survivor
+-  saturation and recovery hysteresis, not merely that traffic kept flowing.
++  still passes, followed by genuine recovery, to check early unejection. For a panic-policy
++  change, include below-threshold pools with some available hosts and with none; check new
++  attempt destinations or intentional rejection, not just enforced-ejection counters. Assert
++  survivor saturation and recovery hysteresis, not merely that traffic kept flowing.
+ 
+ ## Primary references
+ 
+@@ -200,6 +228,9 @@ coverage limits before interpreting a test as success.
+ - [Envoy outlier detection](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/outlier)
+ - [Envoy 1.35.0 outlier configuration](https://github.com/envoyproxy/envoy/blob/v1.35.0/api/envoy/config/cluster/v3/outlier_detection.proto) — enforcement defaults, statistical prerequisites and active-check unejection option.
+ - [Envoy 1.35.0 outlier implementation](https://github.com/envoyproxy/envoy/blob/v1.35.0/source/common/upstream/outlier_detection_impl.cc) — detected versus enforced counters and active-health recovery precedence.
++- [Envoy 1.35.0 panic routing](https://github.com/envoyproxy/envoy/blob/v1.35.0/docs/root/intro/arch_overview/upstream/load_balancing/panic_threshold.rst) — priority availability, panic thresholds and all-host versus no-host behavior.
++- [Envoy 1.35.0 cluster configuration](https://github.com/envoyproxy/envoy/blob/v1.35.0/api/envoy/config/cluster/v3/cluster.proto) — panic defaults and the legacy configuration fields.
++- [Envoy 1.35.0 host selection](https://github.com/envoyproxy/envoy/blob/v1.35.0/source/extensions/load_balancing_policies/common/load_balancer_impl.cc) — priority panic calculation, counter increment and all-host/no-host selection.
+ - [Kubernetes Services networking](https://kubernetes.io/docs/concepts/services-networking/service/)
+ - [The Power of Two Random Choices](https://www.eecs.harvard.edu/~michaelm/postscripts/handbook2001.pdf)
+ - [k6 open and closed workload models](https://grafana.com/docs/k6/latest/using-k6/scenarios/concepts/open-vs-closed/)
+diff --git a/skills/load-balancing-and-routing/skill.yaml b/skills/load-balancing-and-routing/skill.yaml
+index 0504332..5e39fe1 100644
+--- a/skills/load-balancing-and-routing/skill.yaml
++++ b/skills/load-balancing-and-routing/skill.yaml
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: load-balancing-and-routing
+-version: 1.2.4
++version: 1.2.5
+ description: >-
+   Getting a request to a replica that can serve it: L4 versus L7 by capability rather than
+   layer number, why an L4 balancer in front of long-lived HTTP/2 or gRPC connections

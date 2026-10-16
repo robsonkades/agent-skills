@@ -84,6 +84,15 @@ serving state even if retained in the source log. Durable logging alone is not r
 Illustrative single-authority protocol; use the store's supported migration mechanism and
 verify equivalent guarantees rather than layering an incompatible custom epoch scheme.
 
+Define read routing at each phase too: inspect client/proxy map caches, read replicas and
+direct source endpoints. A write fence does not stop a retained source from returning old
+values after target activation. Preserve the accepted contract (`consistency-models`): use
+supported redirection or freshness/session-position checks where required. Serving an older
+copy can remain valid for a permitted stale-read contract, but establish its data freshness,
+not just the age of the routing map. Retention alone supplies no evidence of post-cutover
+progress; route elsewhere or reject when the required freshness or session position cannot
+be established.
+
 Sequence:
 
 1. **Bump the shard map to version v+1**, with the partition marked _migrating_, old owner
@@ -149,6 +158,11 @@ restartable, idempotent transition.
 - For the migration path, inject the failure that matters: pause a client between reading the
   shard map and issuing its write, complete the cut-over, then release it. Assert it cannot commit under stale authority: reject it or safely reroute with epoch and
   idempotency checks. A migration test that does not include a stale writer has not tested the fencing.
+- Exercise stale read routing separately using an isolated key with no competing writes:
+  cache the old route, complete cutover, acknowledge a changed value at the target, then begin
+  the read. A linearizable read must see that value; an overlapping read is a different case.
+  For permitted bounded-stale reads, check
+  both allowed and expired freshness, including the supported redirect/rejection behavior.
 - Crash and restart the controller after every state transition. Resume from a durable
   migration record without repeating destructive steps; verify that source and target
   checksums use a stable snapshot/cut position rather than racing live writes.
@@ -161,6 +175,11 @@ restartable, idempotent transition.
 - [Vitess 22 topology service](https://vitess.io/docs/archive/22.0/reference/features/topology-service/)
   — distinguishes per-query serving from startup/background discovery and metadata recovery;
   global and local outage guarantees differ.
+- [Vitess 22 MoveTables traffic switching](https://vitess.io/docs/archive/22.0/reference/vreplication/movetables/)
+  — traffic switches can select tablet types; read lag and write cutover are separate checks.
+- [Spanner read types](https://docs.cloud.google.com/spanner/docs/reads)
+  — distinguishes reads observing prior committed writes from explicitly stale reads; use
+  the target store's contract rather than assuming this guarantee for every shard or replica.
 - [Apache Kafka 4.3 operations: partition reassignment throttling and cleanup](https://kafka.apache.org/43/operations/basic-kafka-operations/)
 - [Amazon DynamoDB adaptive capacity and hot-item limits](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/burst-adaptive-capacity.html)
 - [Google Cloud Spanner: schema design and hotspot avoidance](https://cloud.google.com/spanner/docs/schema-design)

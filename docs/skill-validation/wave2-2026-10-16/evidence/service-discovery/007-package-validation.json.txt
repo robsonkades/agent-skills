@@ -1,0 +1,36 @@
+{
+  "name": "service-discovery",
+  "version": "1.0.0",
+  "files": [
+    "SKILL.md",
+    "assets/SnapshotResolverExample.java",
+    "references/java-snapshot-resolver.md",
+    "references/source-and-client-semantics.md",
+    "skill.yaml"
+  ],
+  "issues": [],
+  "localLinks": [
+    {
+      "file": "SKILL.md",
+      "target": "references/source-and-client-semantics.md",
+      "resolved": "C:\\git\\agent-skills\\skills\\service-discovery\\references\\source-and-client-semantics.md"
+    },
+    {
+      "file": "SKILL.md",
+      "target": "references/java-snapshot-resolver.md",
+      "resolved": "C:\\git\\agent-skills\\skills\\service-discovery\\references\\java-snapshot-resolver.md"
+    },
+    {
+      "file": "references/java-snapshot-resolver.md",
+      "target": "../assets/SnapshotResolverExample.java",
+      "resolved": "C:\\git\\agent-skills\\skills\\service-discovery\\assets\\SnapshotResolverExample.java"
+    },
+    {
+      "file": "references/java-snapshot-resolver.md",
+      "target": "source-and-client-semantics.md",
+      "resolved": "C:\\git\\agent-skills\\skills\\service-discovery\\references\\source-and-client-semantics.md"
+    }
+  ],
+  "brokenLinks": [],
+  "limitations": "Package-local generic validation only; no adapter, global index or runtime messaging checks."
+}

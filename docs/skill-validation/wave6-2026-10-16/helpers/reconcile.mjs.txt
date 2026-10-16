@@ -1,0 +1,50 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+const root='C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh';
+const report='C:/git/agent-skills/docs/skill-validation/wave6-2026-10-16';
+const read=p=>JSON.parse(fs.readFileSync(p,'utf8'));
+const sha=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
+const actors=read(report+'/actors.frozen.json.txt'),coordinator=read(report+'/coordinator-grades.frozen.json.txt');
+const freeze=read(report+'/grading-freeze.json'),criteriaFreeze=read(report+'/freeze.json');
+assert.equal(sha(report+'/coordinator-grades.frozen.json.txt'),freeze.sha256);
+assert.equal(freeze.independentGradesReadByCoordinator,false);
+const rows=[],batches=[];
+for(const batch of [1,2]){
+ const inputPath=root+'/review/masked-outputs-batch'+batch+'.json';
+ const gradePath=root+'/review/output-grades-batch'+batch+'.json';
+ const input=read(inputPath),grade=read(gradePath),map=read(report+'/grading-map-batch'+batch+'.json');
+ assert.equal(grade.input.sha256,sha(inputPath));
+ assert.equal(grade.criteria.sha256,criteriaFreeze.criteriaSha256);
+ assert.equal(grade.allWritesStopped,true);
+ assert.equal(grade.entries.length,18);assert.equal(map.length,18);
+ for(const e of grade.entries){
+  const m=map.find(x=>x.sampleId===e.sampleId);assert.ok(m);
+  const actor=actors.runs.find(x=>x.id===m.run),sample=input.entries.find(x=>x.sampleId===e.sampleId);
+  const g=coordinator.entries.find(x=>x.run===m.run);
+  assert.ok(actor&&sample&&g);assert.equal(e.caseId,actor.caseId);assert.equal(e.caseId,sample.caseId);
+  const checks=['C1','C2','C3','C4'].map(k=>{
+   const c=e.grades[k];assert.ok(['pass','fail','unresolved'].includes(c.grade));
+   const text=c.source==='review'?sample.review:JSON.stringify(sample.assessment);
+   assert.ok(text.includes(c.excerpt),'Nonliteral excerpt '+m.run+'/'+k);
+   return {criterion:k,coordinator:g.grades[k],independent:c.grade,agree:g.grades[k]===c.grade,reason:c.reason,source:c.source,excerpt:c.excerpt};
+  });
+  rows.push({run:m.run,caseId:e.caseId,batch,sampleId:e.sampleId,checks,materialFailures:e.materialFailures});
+ }
+ batches.push({batch,inputSha256:sha(inputPath),gradesSha256:sha(gradePath),samples:18,scope:grade.scope});
+}
+assert.equal(new Set(rows.map(r=>r.run)).size,36);
+const disagreements=rows.flatMap(r=>r.checks.filter(c=>!c.agree).map(c=>({run:r.run,...c})));
+const materialFailures=rows.flatMap(r=>(r.materialFailures??[]).map(f=>({run:r.run,finding:f})));
+const data={at:new Date().toISOString(),status:disagreements.length||materialFailures.length?'ADJUDICATION_REQUIRED':'AGREEMENT',coordinatorGradesFrozenBeforeIndependentRead:true,coordinatorGradesSha256:freeze.sha256,attempts:36,criterionChecks:144,agreeingChecks:144-disagreements.length,batches,disagreements,materialFailures,rows:rows.sort((a,b)=>a.run.localeCompare(b.run)),limits:['Partial masking only: treatment/run labels withheld, but response wording may reveal skill exposure.','Independent review assesses semantic proof and reported scope. Root separately checked protected file hashes and actor-produced execution records, not complete native transcripts.']};
+fs.writeFileSync(report+'/reconciliation.json',JSON.stringify(data,null,2)+'\n');
+if(!disagreements.length&&!materialFailures.length){
+ const results=read(report+'/results.json');
+ results.status='COMPLETED_WITH_INDEPENDENT_SEMANTIC_AGREEMENT';
+ results.independentReview={attempts:36,criterionChecks:144,agreeingChecks:144,materialFailures:0,evidence:'reconciliation.json',scope:data.limits};
+ fs.writeFileSync(report+'/results.json',JSON.stringify(results,null,2)+'\n');
+}
+console.log(JSON.stringify({status:data.status,attempts:data.attempts,agreeingChecks:data.agreeingChecks,disagreements,materialFailures}));
+const batchToPrint=Number(process.argv[2]??1);
+for(const r of data.rows.filter(r=>r.batch===batchToPrint))console.log(JSON.stringify({run:r.run,caseId:r.caseId,criteria:r.checks.map(c=>({id:c.criterion,grade:c.independent,reason:c.reason}))}));
+process.exitCode=disagreements.length||materialFailures.length?1:0;

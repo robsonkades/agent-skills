@@ -1,0 +1,21 @@
+$ErrorActionPreference = 'Stop'
+$evidence = 'C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-singleton-validation-quality18'
+$dependencies = Get-Content -Raw -LiteralPath "$evidence/common/fixture-dependencies.json" | ConvertFrom-Json
+$classpath = ($dependencies.jars | ForEach-Object { if (-not (Test-Path -LiteralPath $_.path)) { throw "Missing cached JAR: $($_.path)" }; $_.path }) -join ';'
+foreach ($case in @('01','02')) {
+    $scenario = "$evidence/technical-case-$case"
+    New-Item -ItemType Directory -Force -Path $scenario, "$evidence/probe-data-case-$case" | Out-Null
+    Get-ChildItem -LiteralPath "$evidence/common" | Copy-Item -Destination $scenario -Recurse -Force
+    Copy-Item -LiteralPath "$evidence/case-$case/StorageConfiguration.java" -Destination "$scenario/src/StorageConfiguration.java" -Force
+    & "$scenario/run-smoke.ps1" 2>&1 | Tee-Object -FilePath "$evidence/smoke-$case.log"
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    $runClasspath = "$scenario/run-output/classes;$classpath"
+    $compilerOutput = @(& "$($dependencies.jdk)/bin/javac.exe" --release 17 -cp $runClasspath -d "$scenario/run-output/classes" "$evidence/technical-probe/SingletonWiringProbe.java" 2>&1)
+    $compilerExit = $LASTEXITCODE
+    [IO.File]::WriteAllText("$evidence/probe-javac-$case.log", ($compilerOutput -join [Environment]::NewLine))
+    $compilerOutput | Write-Output
+    if ($compilerExit -ne 0) { exit $compilerExit }
+    $expected = if ($case -eq '01') { 3 } else { 1 }
+    & "$($dependencies.jdk)/bin/java.exe" -cp $runClasspath SingletonWiringProbe "$evidence/probe-data-case-$case" $expected 2>&1 | Tee-Object -FilePath "$evidence/probe-$case.log"
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+}

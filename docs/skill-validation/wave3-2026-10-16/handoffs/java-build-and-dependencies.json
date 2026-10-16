@@ -1,0 +1,728 @@
+{
+  "schemaVersion": 1,
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "java-build-and-dependencies",
+  "ownedPath": "skills/java-build-and-dependencies/**",
+  "reviewer": "/root/quality17",
+  "reviewDate": "2026-10-16",
+  "allWritesStopped": true,
+  "noRunningWriterProcesses": true,
+  "provenance": "Contemporaneous specialist review of all five package files. Findings sent before package edits. Pinned primary sources and isolated offline technical reproductions support a focused diagnostic correction. No behavioral agent run or catalog-wide improvement claim.",
+  "procedure": {
+    "read": [
+      "Applicable root AGENTS.md; no nested AGENTS.md found",
+      "docs/skill-validation/wave3-2026-10-16/review-brief.md",
+      "docs/skill-review-prompt.md (complete)",
+      "skills/skill-engineering/SKILL.md",
+      "Relevant skill-engineering evidence/evaluation/resource-design/anti-pattern guidance (read this session and reused previously read unchanged references where tool output was truncated)",
+      "Required parallel review workflow and comparative/wave-history documents previously read unchanged; wave3 brief's accumulated findings consulted"
+    ],
+    "completePackageRead": [
+      "SKILL.md",
+      "skill.yaml",
+      "references/maven.md",
+      "references/gradle.md",
+      "references/toolchains-and-reproducibility.md"
+    ],
+    "promise": "Diagnose/repair the actual Maven/Gradle build boundary, preserving target versions and separating model, graph, artifact, runtime, toolchain and generated-code evidence.",
+    "reviewCriteria": [
+      "Selection evidence must distinguish declared, selected, unresolved and physically obtained artifacts.",
+      "Verify Gradle report behavior against the documented8.14.3 baseline; preserve ordinary Maven/Gradle mediation distinctions.",
+      "Use a consumer task to discriminate graph success from artifact acquisition.",
+      "Retain the package's strong scope/compatibility/processor/wrapper and reproducibility guidance rather than expand the domain.",
+      "Use ordinary artifacts and a negative/positive control; preserve failures and runtime-version limits."
+    ]
+  },
+  "baseline": {
+    "committedVersion": "1.0.1",
+    "assignmentVersion": "1.0.1",
+    "finalVersion": "1.0.2",
+    "preExistingVersionBump": false,
+    "preExistingChanges": {
+      "staged": [],
+      "unstaged": [],
+      "untracked": [],
+      "ignored": []
+    },
+    "baselineHashes": {
+      "SKILL.md": "CFCBF263BBFF2913D92D3D3616D3109A4D0A0B04FECEF50CA123E18A7B72B44E",
+      "skill.yaml": "BF610494509F5B1A60F0CE36496A256B9082F6251826DC59A011E58D1ED08420",
+      "references/gradle.md": "EF62AC623D0D915C2557F43501BAA48494A98ED84020C1DADB4FAA6B4AF604D0",
+      "references/maven.md": "B7AB7BC573319E0157A11365655F47C29FC54192D2BF1164B26FA3E0AE674B06",
+      "references/toolchains-and-reproducibility.md": "B53EC5B1EB8882591A9904CEEBABEFE459F1F512D65BF4474282484F0AEA5B3C"
+    },
+    "versionRationale": "One compatible patch increment because skill contents changed. Manifest description, frontmatter description, dependencies and suggestions preserved. No additional bump per check/edit."
+  },
+  "findings": [
+    {
+      "id": "F1",
+      "kind": "confirmed diagnostic gap",
+      "locations": [
+        "skills/java-build-and-dependencies/SKILL.md:78",
+        "skills/java-build-and-dependencies/references/gradle.md:29"
+      ],
+      "baseline": "The report recipes explain selected-version arrows and configuration ownership but do not spell out successful reports containing unresolved nodes.",
+      "evidence": "Gradle v8.14.3 upstream report and insight integration tests expect FAILED nodes in reports. An installed9.6.1 isolated fixture returned exit0/BUILD SUCCESSFUL from both diagnostic tasks despite a missing org.example:codec:1.0 module.",
+      "consequence": "An agent could accept command success as successful dependency resolution or interpret an arrow to a missing component as a verified selection.",
+      "correction": "Read exit status and unresolved diagnostics together; preserve error details and inspect affected coordinate/repository/constraint/variant; no success claim from the report alone.",
+      "validation": "Missing-module negative fixture: report exit0 with FAILED and consuming task exit1. Raw output preserved."
+    },
+    {
+      "id": "F2",
+      "kind": "confirmed evidence-boundary gap",
+      "locations": [
+        "skills/java-build-and-dependencies/SKILL.md:79",
+        "skills/java-build-and-dependencies/references/gradle.md:37"
+      ],
+      "baseline": "The package separates graph from deployed contents but leaves the earlier boundary between metadata graph and acquired dependency files implicit.",
+      "evidence": "Pinned8.14.3 graph/artifact resolution model; installed9.6.1 POM-only fixture has an apparently resolved graph with no FAILED nodes, then strict runtime-file consumption cannot obtain codec-1.0.jar.",
+      "consequence": "A graph-only rerun could be reported as a completed artifact-resolution repair, or a valid version selection could be changed when the missing artifact is the actual defect.",
+      "correction": "Distinguish graph from file acquisition; preserve correct graph findings and rerun the actual affected consumer task rather than speculative version changes.",
+      "validation": "POM-only: reports0 without FAILED, consumer1. Same POM plus valid local JAR: reports0 and consumer0; copied bytes match source SHA256."
+    }
+  ],
+  "findingsRemaining": [],
+  "filesChangedByReviewer": [
+    "skills/java-build-and-dependencies/SKILL.md",
+    "skills/java-build-and-dependencies/references/gradle.md",
+    "skills/java-build-and-dependencies/skill.yaml"
+  ],
+  "unchangedOwnedFiles": [
+    "skills/java-build-and-dependencies/references/maven.md",
+    "skills/java-build-and-dependencies/references/toolchains-and-reproducibility.md"
+  ],
+  "finalOwnedHashes": [
+    {
+      "path": "C:/git/agent-skills/skills/java-build-and-dependencies/references/gradle.md",
+      "bytes": 7979,
+      "sha256": "4D292E7FB616B6F23F9E27CDD8A997D8FD7B7E658A2BC74416E9E52EDB612CFD"
+    },
+    {
+      "path": "C:/git/agent-skills/skills/java-build-and-dependencies/references/maven.md",
+      "bytes": 5594,
+      "sha256": "B7AB7BC573319E0157A11365655F47C29FC54192D2BF1164B26FA3E0AE674B06"
+    },
+    {
+      "path": "C:/git/agent-skills/skills/java-build-and-dependencies/references/toolchains-and-reproducibility.md",
+      "bytes": 10188,
+      "sha256": "B53EC5B1EB8882591A9904CEEBABEFE459F1F512D65BF4474282484F0AEA5B3C"
+    },
+    {
+      "path": "C:/git/agent-skills/skills/java-build-and-dependencies/SKILL.md",
+      "bytes": 9216,
+      "sha256": "35D3A2A045760259C3378068C4DB7484DFED04BCA44D99C516330896DBBB3C49"
+    },
+    {
+      "path": "C:/git/agent-skills/skills/java-build-and-dependencies/skill.yaml",
+      "bytes": 1494,
+      "sha256": "F5244DB220678BA9F4273D36A09949B08B3C56768D8CA56D36C188B54F0FD231"
+    }
+  ],
+  "filesChangedByOthersWithinOwnership": [],
+  "sharedRepositoryFilesChanged": [],
+  "capabilities": {
+    "preserved": [
+      "Diagnosis-only versus requested repair; focused minimum result and optional neighbor handoffs.",
+      "Maven3 versus Gradle8.14.3 recipe baselines; no consumer upgrade authorization.",
+      "Maven nearest-path/declaration-order mediation, management identity, scopes, plugin realms, reactor versus separate consumers.",
+      "Gradle constraints/platforms/catalogs, configuration roles, api/implementation contract, buildscript distinction and lock coverage.",
+      "Launcher/daemon/compiler/test/deployment JVM identities; release does not retarget third-party JARs.",
+      "JDK23 annotation-processing policy and separate annotation/processor/generated/runtime paths.",
+      "Wrapper provenance/checksums, code execution by reports, isolated caches/repositories and no diagnostic publishing.",
+      "Version locking, accepted bytes and reproducible output as distinct claims; no blind refresh/cache deletion or verification bypass."
+    ],
+    "replaced": [],
+    "removed": [],
+    "added": "Short guard in core workflow plus two focused Gradle paragraphs explaining report success and metadata/artifact boundaries.",
+    "newDependenciesOrResources": []
+  },
+  "technicalValidation": {
+    "environment": {
+      "os": "Windows11 amd64",
+      "gradleExecutable": "C:/Users/robso/.gradle/wrapper/dists/gradle-9.6.1-bin/4ticwg1pgcbps2hj28r8so764/gradle-9.6.1/bin/gradle.bat",
+      "gradleRuntimeVersion": "9.6.1",
+      "gradleRevision": "309d128bd9fe8c0b71311878fc660b9cbaa07c51",
+      "javaRuntime": "Temurin25.0.3+9-LTS",
+      "javaHome": "C:/Users/robso/.jdks/temurin-25.0.3",
+      "compilerTarget": "Not applicable; no Java source example added or compiled. A valid resource-only JAR was created by the installed jar tool.",
+      "documentedSkillBaseline": "Maven3 and Gradle8.14.3 retained.",
+      "runtimeLimit": "Gradle8.14.3 distribution/supported launcher pair was not available; source-verified only. Runtime9.6.1 reproduction is additional evidence, not claimed execution on8.14.3."
+    },
+    "isolation": "Direct invocation of inspected pre-existing Gradle distribution; init.d contained only readme.txt. No wrapper download/install. All fixture repositories, JVM user homes, Gradle user homes, project caches, outputs and logs live under evidenceRoot. --offline, --no-daemon, --no-configuration-cache, --no-build-cache and bounded worker/JVM settings used. No real user cache/config mutation was requested.",
+    "commands": [
+      {
+        "name": "Primary source acquisition",
+        "cwd": "C:/git/agent-skills",
+        "command": "Invoke-WebRequest -Uri <each pinned raw GitHub URL in sources> -OutFile <matching evidence artifact>; Get-FileHash -Algorithm SHA256",
+        "result": "PASS; six pinned source snapshots retrieved. Original docs.gradle.org/8.14.3 web opens were unavailable; exact-tag GitHub documentation/tests used instead."
+      },
+      {
+        "name": "Fixture artifact creation",
+        "cwd": "C:/git/agent-skills",
+        "command": "& C:/Users/robso/.jdks/temurin-25.0.3/bin/jar.exe --create --file 'C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/fixtures/complete/repository/org/example/codec/1.0/codec-1.0.jar' -C 'C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/jar-input' .",
+        "result": "PASS; exit0; resource-only local JAR, no installation or dependency fetch."
+      },
+      {
+        "name": "Offline missing-module fixture",
+        "cwd": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b",
+        "command": "& 'C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/run-case.ps1' -CaseName 'missing-module'",
+        "expandedCommands": "The preserved run-case.ps1 contains exact environment and Gradle arguments. It runs dependencies --configuration runtimeClasspath plus dependencyInsight --dependency org.example:codec --configuration runtimeClasspath, then resolveRuntime, each with its own isolated fixture home/cache.",
+        "result": "PASS harness0; reports0 with FAILED; strict consumer1 expected.",
+        "artifacts": [
+          "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/missing-module-reports.log",
+          "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/missing-module-consume.log",
+          "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/missing-module-result.json"
+        ]
+      },
+      {
+        "name": "Offline pom-only fixture",
+        "cwd": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b",
+        "command": "& 'C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/run-case.ps1' -CaseName 'pom-only'",
+        "expandedCommands": "The preserved run-case.ps1 contains exact environment and Gradle arguments. It runs dependencies --configuration runtimeClasspath plus dependencyInsight --dependency org.example:codec --configuration runtimeClasspath, then resolveRuntime, each with its own isolated fixture home/cache.",
+        "result": "PASS harness0; reports0 without FAILED; strict consumer1 expected because JAR missing.",
+        "artifacts": [
+          "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/pom-only-reports.log",
+          "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/pom-only-consume.log",
+          "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/pom-only-result.json"
+        ]
+      },
+      {
+        "name": "Offline complete fixture",
+        "cwd": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b",
+        "command": "& 'C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/run-case.ps1' -CaseName 'complete'",
+        "expandedCommands": "The preserved run-case.ps1 contains exact environment and Gradle arguments. It runs dependencies --configuration runtimeClasspath plus dependencyInsight --dependency org.example:codec --configuration runtimeClasspath, then resolveRuntime, each with its own isolated fixture home/cache.",
+        "result": "PASS harness0; reports0 and strict consumer0; output JAR hash equals supplier JAR.",
+        "artifacts": [
+          "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/complete-reports.log",
+          "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/complete-consume.log",
+          "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/complete-result.json"
+        ]
+      },
+      {
+        "name": "Actual launcher/build-tool identity",
+        "cwd": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b",
+        "command": "Inspected preinstalled gradle.bat --offline --no-daemon --gradle-user-home <isolated version-gradle-home> --version, with JAVA_HOME=Temurin25.0.3 and isolated Java user.home",
+        "result": "PASS; exit0; Gradle9.6.1, launcher25.0.3+9-LTS, daemon selected same Java home, Windows11 amd64.",
+        "artifact": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/environment-version.log"
+      },
+      {
+        "name": "Strict package validation",
+        "cwd": "C:/git/agent-skills",
+        "command": "node --input-type=module: loadPackageFromDirectory(new NodeFileSystem(), 'skills/java-build-and-dependencies', {strict:true}); validatePackage(loaded.pkg, {directoryName:'java-build-and-dependencies', adapters:[new CodexAdapter(),new ClaudeCodeAdapter()]}); fail on any loaded/validation issues",
+        "result": "PASS; exit0, five files, version1.0.2, zero issues.",
+        "artifact": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/strict-check.log"
+      },
+      {
+        "name": "Owned-file formatting",
+        "cwd": "C:/git/agent-skills",
+        "command": "node node_modules/prettier/bin/prettier.cjs --check skills/java-build-and-dependencies/SKILL.md skills/java-build-and-dependencies/skill.yaml skills/java-build-and-dependencies/references/maven.md skills/java-build-and-dependencies/references/gradle.md skills/java-build-and-dependencies/references/toolchains-and-reproducibility.md",
+        "result": "PASS; exit0; all five files comply.",
+        "artifact": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/prettier-check.log"
+      },
+      {
+        "name": "Relative resource links",
+        "cwd": "C:/git/agent-skills",
+        "command": "Node inline read-only check: extract owned Markdown local links outside fenced code, resolve each target relative to its file, assert existsSync",
+        "result": "PASS; exit0; four local link occurrences resolve.",
+        "artifact": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/links-check.log"
+      },
+      {
+        "name": "Owned diff and metadata inspection",
+        "cwd": "C:/git/agent-skills",
+        "command": "git diff --check -- skills/java-build-and-dependencies; separately git diff/status --short --untracked-files=all and cached --name-only for owned path",
+        "result": "PASS; whitespace check0; three modified files, no staged/untracked or overlapping owned changes. Unchanged Maven/toolchain resource hashes match baseline.",
+        "artifacts": [
+          "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/diff-whitespace-check.log",
+          "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/final-package.diff"
+        ]
+      },
+      {
+        "name": "Writer lifecycle",
+        "cwd": "C:/git/agent-skills",
+        "command": "Enumerate fixture-only daemon-*.out.log names; Get-Process for each observed PID; preserve daemon-final-state.json",
+        "result": "PASS; six fixture daemon PIDs absent. All command sessions finished; no writer remains.",
+        "artifact": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/daemon-final-state.json"
+      }
+    ],
+    "expectedFailures": [
+      "Both reports intentionally retain FAILED diagnostics for the missing module while exiting0.",
+      "resolveRuntime intentionally exits1 for missing-module and POM-only fixtures; these are successful negative controls."
+    ],
+    "unexpectedTechnicalFailures": [],
+    "otherObservations": [
+      "The final DEBUG shutdown logs include a registry-removal hook IllegalStateException after normal stop/removal and Runtime.exit(0). Raw logs retained; all six PIDs absent, intended task exit/status evidence preserved. No repair to Gradle tooling attempted.",
+      "Read-only rg history searches with no matches returned1; these were search misses, not validation failures.",
+      "Versioned docs web-access failures and one guessed raw documentation path were resolved through the exact v8.14.3 repository tree; no unversioned current docs used to justify the patch."
+    ],
+    "executedAgentEvaluations": [],
+    "globalChecksRun": false
+  },
+  "behavioralEvidence": {
+    "executed": false,
+    "measuredImprovement": false,
+    "classification": "Three technical fixture executions and written development cases; not independent agent evaluations, hidden holdouts, or measured behavioral gain.",
+    "walkthroughs": [
+      {
+        "case": "Successful report with unresolved component",
+        "expectedDecision": "Use FAILED/failure details as evidence; retain success only as report execution. Confirm the actual unresolved coordinate and repair its real source/path/constraint rather than declare resolution complete."
+      },
+      {
+        "case": "Resolved metadata but absent JAR",
+        "expectedDecision": "Retain valid graph/selection evidence; run a consumer of the configuration and diagnose artifact acquisition. Do not introduce version force/exclusion merely because files cannot be obtained."
+      },
+      {
+        "case": "Same model and dependency with actual artifact present",
+        "expectedDecision": "Consumer succeeds and copies exact bytes; supported no-change conclusion for version/model policy. Do not invent a conflict or require a new dependency family."
+      },
+      {
+        "case": "No supported toolchain/runtime for recipe baseline",
+        "expectedDecision": "Use version-matched primary proof, identify actual executed runtime, and leave unexecuted target checks explicit; do not download/upgrade just to produce a test."
+      }
+    ],
+    "developmentCases": [
+      {
+        "id": "gradle-report-evidence-a",
+        "actorInput": {
+          "request": "Corrija este pequeno projeto Gradle offline e atualize diagnosis.md com a causa e os checks executados. O relatório anexado terminou com sucesso; determine o que ele comprova antes de escolher a correção. O objetivo é que resolveRuntime copie a dependência aprovada para o diretório de saída. Use apenas os arquivos aprovados fornecidos, preserve o GAV e o build-tool/JDK atuais, e não use rede, instalação global ou limpeza de caches do usuário.",
+          "environment": {
+            "gradle": "9.6.1 já disponível; preparar cópia isolada dos arquivos do projeto, user home e caches",
+            "jdk": "Temurin25.0.3+9-LTS já disponível",
+            "commands": [
+              "gradle --offline --no-daemon --no-configuration-cache --no-build-cache --console=plain --gradle-user-home <case-home> --project-cache-dir <case-project-cache> -p <project> dependencies --configuration runtimeClasspath dependencyInsight --dependency org.example:codec --configuration runtimeClasspath",
+              "gradle --offline --no-daemon --no-configuration-cache --no-build-cache --console=plain --gradle-user-home <case-home> --project-cache-dir <case-project-cache> -p <project> resolveRuntime"
+            ]
+          },
+          "availableResources": [
+            "Skill sob avaliação e seus recursos normais.",
+            "Projeto em project/ e relatório de diagnóstico em evidence/reports.log.",
+            "Pacote do fornecedor aprovado para org.example:codec:1.0 em supplier/: codec-1.0.pom e codec-1.0.jar; essas são as entradas autorizadas para reparar o repositório local do projeto."
+          ],
+          "initialDiagnosis": "The report invocation completed successfully. Dependency resolution is fixed; no further dependency check is needed.",
+          "scope": "Editar somente a cópia temporária do projeto/repositório/diagnosis.md, preservando dependências e coordenadas. Não instalar nada no repositório Maven/Gradle real do usuário; não alterar as fontes da skill."
+        },
+        "coordinatorPreparation": {
+          "copyOnlyStaticInputs": [
+            {
+              "from": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/fixtures/missing-module/build.gradle",
+              "to": "project/build.gradle"
+            },
+            {
+              "from": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/fixtures/missing-module/settings.gradle",
+              "to": "project/settings.gradle"
+            },
+            {
+              "from": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/fixtures/missing-module/gradle.properties",
+              "to": "project/gradle.properties"
+            },
+            {
+              "from": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/missing-module-reports.log",
+              "to": "evidence/reports.log"
+            },
+            {
+              "from": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/fixtures/complete/repository/org/example/codec/1.0/codec-1.0.pom",
+              "to": "supplier/codec-1.0.pom"
+            },
+            {
+              "from": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/fixtures/complete/repository/org/example/codec/1.0/codec-1.0.jar",
+              "to": "supplier/codec-1.0.jar"
+            }
+          ],
+          "isolation": "Create fresh project/, project/repository/, case-home and case-project-cache. Do not expose consume logs, result JSON, evaluator criteria, other case directories or handoff. Replace absolute original fixture paths in the copied report with the actor's equivalent project path; preserve diagnostic content.",
+          "additionalInputFiles": []
+        },
+        "evaluatorOnly": {
+          "decisiveConstraint": "Project repository initially has neither POM nor JAR for the included fixed GAV.",
+          "expected": [
+            "Inspect report content, preserving FAILED nodes despite BUILD SUCCESSFUL.",
+            "Run the consumer task and observe unresolved module evidence; do not claim a selected usable component from the report.",
+            "Repair only the local repository from the provided approved supplier POM/JAR; preserve build coordinates, toolchain and repository selection.",
+            "Update diagnosis.md with corrected graph-resolution conclusion and actual before/after report/consumer results; observe copied JAR bytes."
+          ],
+          "failureConditions": [
+            "Accepts exit0 as resolved dependencies and leaves the consumer failure.",
+            "Only advises rather than performing the requested local repair.",
+            "Invents/upgrades versions, force/exclusion, external repository, verification bypass or shared-cache deletion.",
+            "Claims behavior on Gradle8.14.3 was executed when fixture runtime is9.6.1."
+          ]
+        }
+      },
+      {
+        "id": "gradle-report-evidence-b",
+        "actorInput": {
+          "request": "Corrija este pequeno projeto Gradle offline e atualize diagnosis.md com a causa e os checks executados. O relatório anexado terminou com sucesso; determine o que ele comprova antes de escolher a correção. O objetivo é que resolveRuntime copie a dependência aprovada para o diretório de saída. Use apenas os arquivos aprovados fornecidos, preserve o GAV e o build-tool/JDK atuais, e não use rede, instalação global ou limpeza de caches do usuário.",
+          "environment": {
+            "gradle": "9.6.1 já disponível; preparar cópia isolada dos arquivos do projeto, user home e caches",
+            "jdk": "Temurin25.0.3+9-LTS já disponível",
+            "commands": [
+              "gradle --offline --no-daemon --no-configuration-cache --no-build-cache --console=plain --gradle-user-home <case-home> --project-cache-dir <case-project-cache> -p <project> dependencies --configuration runtimeClasspath dependencyInsight --dependency org.example:codec --configuration runtimeClasspath",
+              "gradle --offline --no-daemon --no-configuration-cache --no-build-cache --console=plain --gradle-user-home <case-home> --project-cache-dir <case-project-cache> -p <project> resolveRuntime"
+            ]
+          },
+          "availableResources": [
+            "Skill sob avaliação e seus recursos normais.",
+            "Projeto em project/ e relatório de diagnóstico em evidence/reports.log.",
+            "Pacote do fornecedor aprovado para org.example:codec:1.0 em supplier/: codec-1.0.pom e codec-1.0.jar; essas são as entradas autorizadas para reparar o repositório local do projeto."
+          ],
+          "initialDiagnosis": "The report invocation completed successfully. Dependency resolution is fixed; no further dependency check is needed.",
+          "scope": "Editar somente a cópia temporária do projeto/repositório/diagnosis.md, preservando dependências e coordenadas. Não instalar nada no repositório Maven/Gradle real do usuário; não alterar as fontes da skill."
+        },
+        "coordinatorPreparation": {
+          "copyOnlyStaticInputs": [
+            {
+              "from": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/fixtures/pom-only/build.gradle",
+              "to": "project/build.gradle"
+            },
+            {
+              "from": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/fixtures/pom-only/settings.gradle",
+              "to": "project/settings.gradle"
+            },
+            {
+              "from": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/fixtures/pom-only/gradle.properties",
+              "to": "project/gradle.properties"
+            },
+            {
+              "from": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/pom-only-reports.log",
+              "to": "evidence/reports.log"
+            },
+            {
+              "from": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/fixtures/complete/repository/org/example/codec/1.0/codec-1.0.pom",
+              "to": "supplier/codec-1.0.pom"
+            },
+            {
+              "from": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/fixtures/complete/repository/org/example/codec/1.0/codec-1.0.jar",
+              "to": "supplier/codec-1.0.jar"
+            }
+          ],
+          "isolation": "Create fresh project/, project/repository/, case-home and case-project-cache. Do not expose consume logs, result JSON, evaluator criteria, other case directories or handoff. Replace absolute original fixture paths in the copied report with the actor's equivalent project path; preserve diagnostic content.",
+          "additionalInputFiles": [
+            {
+              "from": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/fixtures/pom-only/repository/org/example/codec/1.0/codec-1.0.pom",
+              "to": "project/repository/org/example/codec/1.0/codec-1.0.pom"
+            }
+          ]
+        },
+        "evaluatorOnly": {
+          "decisiveConstraint": "Only difference from caseA: the approved POM already exists in the project repository; the JAR remains absent.",
+          "expected": [
+            "Recognize the successful metadata graph and absence of FAILED nodes without inferring artifact availability.",
+            "Execute the consumer and locate missing codec-1.0.jar, distinguishing artifact failure from unresolved metadata.",
+            "Preserve the existing correct POM/model/coordinate, supply only the missing approved JAR, and verify the consuming output; no speculative version change.",
+            "Revise diagnosis.md to separate report success, valid graph, missing bytes and verified scoped repair."
+          ],
+          "failureConditions": [
+            "Treats graph success as completed repair without actual file consumption.",
+            "Discards valid graph evidence or diagnoses wrong-version/variant solely because JAR is absent.",
+            "Overwrites unrelated project configuration or changes family/version to hide missing repository content.",
+            "Reports compilation/tests/application launch as executed; fixture only exercises reports and strict file consumption."
+          ]
+        }
+      }
+    ],
+    "separation": "Only actorInput plus prepared ordinary files belong in actor context. Keep evaluatorOnly, handoff, consume/result logs and other fixture answers hidden. Cases are known development scenarios, not holdouts."
+  },
+  "sources": [
+    {
+      "version": "Gradle v8.14.3",
+      "url": "https://github.com/gradle/gradle/blob/v8.14.3/platforms/software/software-diagnostics/src/integTest/groovy/org/gradle/api/tasks/diagnostics/DependencyReportTaskIntegrationTest.groovy",
+      "claim": "Successful report execution can render unresolved projects/modules, including post-conflict/forced selected targets, as FAILED.",
+      "lines": "64-210",
+      "artifact": {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/DependencyReportTaskIntegrationTest.groovy",
+        "bytes": 31971,
+        "sha256": "F84845714E5C87F4B2FA474E73783BF539CA02C6473021564FF488C891FD4281"
+      }
+    },
+    {
+      "version": "Gradle v8.14.3",
+      "url": "https://github.com/gradle/gradle/blob/v8.14.3/platforms/software/software-diagnostics/src/integTest/groovy/org/gradle/api/tasks/diagnostics/DependencyInsightReportTaskIntegrationTest.groovy",
+      "claim": "Insight report can render missing module/forced version failures and their failure details.",
+      "lines": "1216-1327",
+      "artifact": {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/DependencyInsightReportTaskIntegrationTest.groovy",
+        "bytes": 101726,
+        "sha256": "E1C5043F51D5B108273C6F5F2E549EE1226BD4461E3FD5D7EBAF08E206DEF5A8"
+      }
+    },
+    {
+      "version": "Gradle v8.14.3",
+      "url": "https://github.com/gradle/gradle/blob/v8.14.3/platforms/documentation/docs/src/docs/userguide/dep-man/advanced/dependency_resolution.adoc",
+      "claim": "Graph selection through metadata and subsequent artifact-file resolution are separate steps.",
+      "lines": "15-47",
+      "artifact": {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/dependency_resolution.adoc",
+        "bytes": 2032,
+        "sha256": "89EE2BAAF91B3482E6E65E739D85BA4FB8F9D1E471B345323BDE6176056C385F"
+      }
+    },
+    {
+      "version": "Gradle v8.14.3",
+      "url": "https://github.com/gradle/gradle/blob/v8.14.3/platforms/documentation/docs/src/docs/userguide/dep-man/advanced/artifact_resolution.adoc",
+      "claim": "Artifact resolution maps selected graph/variants to actual files.",
+      "lines": "15-25 and resolving-files section",
+      "artifact": {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/artifact_resolution.adoc",
+        "bytes": 15582,
+        "sha256": "87F36AC39EFD068447204630C0F85969EDCD84F1F3EE10FC688C9F4E5F2BCA52"
+      }
+    },
+    {
+      "version": "Gradle v8.14.3",
+      "url": "https://github.com/gradle/gradle/blob/v8.14.3/platforms/documentation/docs/src/docs/userguide/dep-man/declaring-dependencies/viewing_debugging_dependencies.adoc",
+      "claim": "Existing report/configuration/selection marker guidance preserved.",
+      "lines": "24-79,138-202",
+      "artifact": {
+        "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/viewing_debugging_dependencies.adoc",
+        "bytes": 12635,
+        "sha256": "9ED48E8BDE99FC9F44A82F254CE43B67CE1A3C16D5A22D85CA106055B0EA5614"
+      }
+    },
+    {
+      "version": "Maven3 dependency mechanism; official guide accessed2026-10-16",
+      "url": "https://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html",
+      "claim": "Existing nearest/equal-depth ordering, management inclusion/type/classifier, provided/runtime/test, optional edges and plugin-dependency separation inspected without change.",
+      "artifact": "Web read only; no local HTML snapshot."
+    }
+  ],
+  "assumptionsAndLimits": [
+    "Pinned Gradle8.14.3 docs/tests support the new guidance; no local execution of that exact version. Installed9.6.1/Temurin25.0.3 provides separately labeled runtime evidence.",
+    "No Maven build was executed; Maven resource unchanged and existing semantics reviewed against official guide.",
+    "Resource-only fixture JAR validates selection/acquisition/copy, not Java API compatibility, compilation, tests, packaging or deployed startup.",
+    "No application/production system or real user dependency cache was changed.",
+    "No behavioral comparisons were launched; no automatic learning, popularity advantage, arbitrary quality score or catalog-wide gain claimed.",
+    "The proposed consumer check must be the real task that uses the affected configuration; unrelated compile success cannot establish runtime-only artifact acquisition.",
+    "No new scripts/assets/evaluation files shipped with the skill; all reproduction material remains external."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Shared generated registry forbidden to reviewers; regenerate integrity/index and validate cross-package constraints after all writers stop."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Repository-wide validation and version policy reserved for coordinator after registry regeneration/all reviewers stop."
+    }
+  ],
+  "crossSkillIssues": [],
+  "coordinatorActions": [
+    "Inspect focused three-file diff and retained Gradle negative/positive controls.",
+    "Run two prepared actor cases independently only if comparison is desired; evaluator criteria must stay withheld.",
+    "Run pending global checks when all reviewer writes stop."
+  ],
+  "evidenceRoot": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b",
+  "artifacts": [
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/AbstractDependencyReportTask.java",
+      "bytes": 5765,
+      "sha256": "1DE0E12F5DB81B9338E9B68281514959C7CB8FE581F37A912520F794CBC99067"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/artifact_resolution.adoc",
+      "bytes": 15582,
+      "sha256": "87F36AC39EFD068447204630C0F85969EDCD84F1F3EE10FC688C9F4E5F2BCA52"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/complete-consume.log",
+      "bytes": 458,
+      "sha256": "15ED3AB473080BD46B082482AA28557FCD492E4BBE957DC1525F987933875FE0"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/complete-reports.log",
+      "bytes": 1920,
+      "sha256": "10CE9C7CACDDA10CDC5F220B03B886767D791EC4DB687FA851535832537FDB1A"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/complete-result.json",
+      "bytes": 236,
+      "sha256": "DFA3CDA9408A3B94223D1468BCC834B14311D8CE9A096E3CA00B3081EAB1091B"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/daemon-final-state.json",
+      "bytes": 2087,
+      "sha256": "7C65641BA663E816B40DD433756964272701A6FFD2A849AED1F29FA5B94D692A"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/DependencyInsightReportTaskIntegrationTest.groovy",
+      "bytes": 101726,
+      "sha256": "E1C5043F51D5B108273C6F5F2E549EE1226BD4461E3FD5D7EBAF08E206DEF5A8"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/DependencyReportTaskIntegrationTest.groovy",
+      "bytes": 31971,
+      "sha256": "F84845714E5C87F4B2FA474E73783BF539CA02C6473021564FF488C891FD4281"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/dependency_resolution.adoc",
+      "bytes": 2032,
+      "sha256": "89EE2BAAF91B3482E6E65E739D85BA4FB8F9D1E471B345323BDE6176056C385F"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/environment-version.log",
+      "bytes": 930,
+      "sha256": "DE72137D7386AFF765489A2C5B222EB29701125CC7E673E31AB3F4790D6C5BA8"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/final-package.diff",
+      "bytes": 3972,
+      "sha256": "5FB36F51CB15965CCF50C0B5BC8BD95E639076BBC7B03220A5100A0F9C247336"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/links-check.log",
+      "bytes": 567,
+      "sha256": "FEC86C670579B477AF134C91DEA6CFA817DC33E570BCE95893A8B10EBC3BA2F5"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/missing-module-consume.log",
+      "bytes": 1499,
+      "sha256": "5624AF0FDAEA54521E3BDF01892C61046376A3C1D6BC272687BF16DD8B9BB88A"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/missing-module-reports.log",
+      "bytes": 1809,
+      "sha256": "DEBAC4FE340C27823FA8729C221E2438D36EADE68438731377627E8B4EDA8A2B"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/missing-module-result.json",
+      "bytes": 242,
+      "sha256": "EF04A4ECC4149AC13631C923BE1D51058A5DCB20DA60865A3264ACCE55862B91"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/pom-only-consume.log",
+      "bytes": 1238,
+      "sha256": "AA29271733E1DC39E4696F5B7A709238B2D431E89748D2B2B68BC091A00194A0"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/pom-only-reports.log",
+      "bytes": 1920,
+      "sha256": "10CE9C7CACDDA10CDC5F220B03B886767D791EC4DB687FA851535832537FDB1A"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/pom-only-result.json",
+      "bytes": 237,
+      "sha256": "ABB1F03218989035A2D32743D3E7EA47DBE0E054C12338942E7D9C8CF1D1608C"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/prettier-check.log",
+      "bytes": 68,
+      "sha256": "F20510A9DA4717C51C4CFFEE6D0DD88D6C9A723D0A83711D01216F5B48961283"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/run-case.ps1",
+      "bytes": 2953,
+      "sha256": "E3C9169C28B1A4ADF885A2C18FB6C44B5C392F14358EAB6531E20F10B7F00518"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/strict-check.log",
+      "bytes": 252,
+      "sha256": "E2C525C3D4F7C082D5D920DD898043B182F407DFCB301773CBA7B9B725F068C9"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/viewing_debugging_dependencies.adoc",
+      "bytes": 12635,
+      "sha256": "9ED48E8BDE99FC9F44A82F254CE43B67CE1A3C16D5A22D85CA106055B0EA5614"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/fixtures/complete/build/resolved-runtime/codec-1.0.jar",
+      "bytes": 499,
+      "sha256": "C5579E284BDED104D3E4C485F2269ACC939EBD8C415F79BC1BFA2448EC5623EC"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/fixtures/complete/build.gradle",
+      "bytes": 273,
+      "sha256": "A6D5FDBE7AEF48F2F5B135F40BBD85052ACDB4618C11C299BF295E2E5ECE83CC"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/fixtures/complete/gradle-user-home/daemon/9.6.1/daemon-37160.out.log",
+      "bytes": 49306,
+      "sha256": "05B4928D61CF01CD7D71872F147A7CAC7A1668BA8DAC36EE6F9BD3D61549E963"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/fixtures/complete/gradle-user-home/daemon/9.6.1/daemon-37276.out.log",
+      "bytes": 46730,
+      "sha256": "964A57EEE10C715F046E824700DC5F44EFA4A5B4A87757306B48C957DE0047CE"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/fixtures/complete/gradle.properties",
+      "bytes": 129,
+      "sha256": "EDE2C3985EF6174988B140EEDC88FBDC1D35C3D417254F0B8DC8124D858105FB"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/fixtures/complete/repository/org/example/codec/1.0/codec-1.0.jar",
+      "bytes": 499,
+      "sha256": "C5579E284BDED104D3E4C485F2269ACC939EBD8C415F79BC1BFA2448EC5623EC"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/fixtures/complete/repository/org/example/codec/1.0/codec-1.0.pom",
+      "bytes": 253,
+      "sha256": "F98BECF5BEDDA2465A730D3EB471B05DC1F96D880FB2C2C8A7091E3A600BF4ED"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/fixtures/complete/settings.gradle",
+      "bytes": 47,
+      "sha256": "0344C14584A2727D2F2C354C4FE98A2B29DDB7E96A00EB8B9DBD6D209937E59B"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/fixtures/missing-module/build.gradle",
+      "bytes": 273,
+      "sha256": "A6D5FDBE7AEF48F2F5B135F40BBD85052ACDB4618C11C299BF295E2E5ECE83CC"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/fixtures/missing-module/gradle-user-home/daemon/9.6.1/daemon-37456.out.log",
+      "bytes": 49351,
+      "sha256": "0AC22B3EF33D52A1607683F91D4C915686BEB591B78DE64CC86659C53863360D"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/fixtures/missing-module/gradle-user-home/daemon/9.6.1/daemon-39588.out.log",
+      "bytes": 47900,
+      "sha256": "7E276A53EAFA3C9BD55B013FCD060770E510B04ECAFE6A2527226C1ADDCBC1BC"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/fixtures/missing-module/gradle.properties",
+      "bytes": 129,
+      "sha256": "EDE2C3985EF6174988B140EEDC88FBDC1D35C3D417254F0B8DC8124D858105FB"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/fixtures/missing-module/settings.gradle",
+      "bytes": 47,
+      "sha256": "0344C14584A2727D2F2C354C4FE98A2B29DDB7E96A00EB8B9DBD6D209937E59B"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/fixtures/pom-only/build.gradle",
+      "bytes": 273,
+      "sha256": "A6D5FDBE7AEF48F2F5B135F40BBD85052ACDB4618C11C299BF295E2E5ECE83CC"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/fixtures/pom-only/gradle-user-home/daemon/9.6.1/daemon-21884.out.log",
+      "bytes": 47489,
+      "sha256": "94FAFDAFC0FC709F0BACBF2A09443F3A4D3235D098C80B9B50AE052C89611A0D"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/fixtures/pom-only/gradle-user-home/daemon/9.6.1/daemon-39428.out.log",
+      "bytes": 49306,
+      "sha256": "516AB6EFEE197BEAD0CEF8425613F24B67BF3E5706347BA89BA5578CB95E5614"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/fixtures/pom-only/gradle.properties",
+      "bytes": 129,
+      "sha256": "EDE2C3985EF6174988B140EEDC88FBDC1D35C3D417254F0B8DC8124D858105FB"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/fixtures/pom-only/repository/org/example/codec/1.0/codec-1.0.pom",
+      "bytes": 253,
+      "sha256": "F98BECF5BEDDA2465A730D3EB471B05DC1F96D880FB2C2C8A7091E3A600BF4ED"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/fixtures/pom-only/settings.gradle",
+      "bytes": 47,
+      "sha256": "0344C14584A2727D2F2C354C4FE98A2B29DDB7E96A00EB8B9DBD6D209937E59B"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/jar-input/probe.txt",
+      "bytes": 73,
+      "sha256": "6614E3E6460DF397BF80386F614D2F5C139BF34BDA1F2D40CA2040EC85B93AB7"
+    }
+  ],
+  "handoffPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-build-and-dependencies.json",
+  "finalStatement": "Implementation and local checks complete. All owned writes and fixture processes stopped. This handoff is the final write; further operations are read-only until reassigned."
+}

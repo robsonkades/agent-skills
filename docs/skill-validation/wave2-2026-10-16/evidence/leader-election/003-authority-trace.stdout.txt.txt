@@ -1,0 +1,47 @@
+{
+  "classification": "Executed synthetic counterexample traces; no live store or agent evaluation",
+  "assumptions": {
+    "sink": "atomic highest-seen-term acceptance, equal terms allowed",
+    "term41": "previously acquired by A",
+    "term42": "candidate revision of B; activation allowed only after acquisition",
+    "header100": "store read revision unrelated to a new application grant"
+  },
+  "pendingCandidate": {
+    "legacyPendingActivation": {
+      "accepted": true,
+      "highestTerm": 42
+    },
+    "legacyCurrentLeaderWrite": {
+      "accepted": false,
+      "highestTerm": 42
+    },
+    "guardedCurrentLeaderWrite": {
+      "accepted": true,
+      "highestTerm": 41
+    }
+  },
+  "acquiredCandidate": {
+    "accepted": true,
+    "highestTerm": 42
+  },
+  "invalidatedAcquisitionAccepted": false,
+  "delayedOldCommand": {
+    "unboundOldWrite": {
+      "accepted": true,
+      "highestTerm": 100
+    },
+    "successorAfterUnboundOldWrite": {
+      "accepted": false,
+      "highestTerm": 100
+    },
+    "boundOldWrite": {
+      "accepted": false,
+      "highestTerm": 42
+    },
+    "successorAfterBoundOldWrite": {
+      "accepted": true,
+      "highestTerm": 42
+    }
+  },
+  "assertionsPassed": 10
+}

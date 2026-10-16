@@ -1,0 +1,32 @@
+import assert from 'node:assert/strict';
+import { readFileSync, writeFileSync } from 'node:fs';
+const dir = new URL('.', import.meta.url);
+const fixture = JSON.parse(readFileSync(new URL('namespace-fixture.json', dir), 'utf8'));
+const selected = (membershipKey, field) => fixture.events.filter(event => event[field] === membershipKey).map(event => event.id);
+const targetEvents = ['target-switch-1', 'target-switch-2'];
+assert.deepEqual(selected(fixture.target.hostTid, 'subjectHostTid'), targetEvents);
+assert.deepEqual(selected(fixture.target.collectorNamespaceTid, 'subjectHostTid'), ['non-target-switch-1']);
+assert.notDeepEqual(selected(fixture.target.collectorNamespaceTid, 'subjectHostTid'), targetEvents);
+assert.deepEqual(selected(fixture.target.hostTid, 'currentHostTid'), ['non-target-switch-1']);
+const sched = readFileSync(new URL('linux-v6.12-sched.h', dir), 'utf8');
+const pid = readFileSync(new URL('linux-v6.12-pid.h', dir), 'utf8');
+const fork = readFileSync(new URL('linux-v6.12-fork.c', dir), 'utf8');
+const docs = readFileSync(new URL('bpftrace-0.24-stdlib.html', dir), 'utf8').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+assert.match(sched, /__entry->next_pid\s*=\s*next->pid/);
+assert.match(sched, /__entry->prev_pid\s*=\s*prev->pid/);
+assert.match(sched, /__entry->pid\s*=\s*p->pid/);
+assert.match(pid, /task_xid_nr\(\)\s*:\s*global id, i\.e\. the id seen from the init namespace/);
+assert.match(pid, /task_pid_nr\(struct task_struct \*tsk\)[\s\S]{0,80}return tsk->pid/);
+assert.match(fork, /p->pid\s*=\s*pid_nr\(pid\)/);
+assert.match(docs, /tid\(curr_ns\)[\s\S]{0,80}The thread ID as seen from the PID namespace of bpftrace/);
+assert.match(docs, /tid\(init\)[\s\S]{0,80}The thread ID as seen from the initial PID namespace/);
+const output = [
+  'PASS: initial-namespace membership selects the two target subject events.',
+  'PASS: mixed namespace membership selects the hostile/non-target host-TID collision and excludes both target events.',
+  'PASS: normalizing membership to the host/initial ID restores the intended population in this fixture.',
+  'PASS: current-task IDs still select the wrong subject in this fixture; namespace normalization alone does not change event subject.',
+  'PASS: retained bpftrace 0.24 and Linux v6.12 sources contain the verified identity contracts.',
+  'LIMIT: finite JavaScript identity model and source checks only; no bpftrace compile/load, live trace, overhead, dynamic lifecycle or agent evaluation.'
+].join('\n') + '\n';
+writeFileSync(new URL('controls.log', dir), output, { encoding:'utf8', flag:'wx' });
+process.stdout.write(output);

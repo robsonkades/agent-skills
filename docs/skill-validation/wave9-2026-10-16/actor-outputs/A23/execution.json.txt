@@ -1,0 +1,227 @@
+{
+  "task": "A23",
+  "scope": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A23/output",
+  "commandShell": "PowerShell; complete shell command strings are recorded. Read results summarize content rather than duplicating entire skill files.",
+  "commands": [
+    {
+      "command": "Get-Content -Raw -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A23/TASK.md'",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "status": "completed",
+      "result": "Read task scope: review only in output, three supplied skill snapshots, immutable evidence, no browsing/delegation; required REVIEW.md, result.json, execution.json."
+    },
+    {
+      "command": "Get-Content -Raw -LiteralPath 'input/skills/idempotency/SKILL.md'",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A23",
+      "exitCode": 0,
+      "status": "completed",
+      "result": "Reviewed stable intent identity, durable UNKNOWN, negative lookup limits and no safe replay guarantee."
+    },
+    {
+      "command": "Get-Content -Raw -LiteralPath 'input/skills/timeouts-and-deadlines/SKILL.md'",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A23",
+      "exitCode": 0,
+      "status": "completed",
+      "result": "Reviewed deadline versus caller wait and resource lifetime; cancellation signal does not establish termination."
+    },
+    {
+      "command": "Get-Content -Raw -LiteralPath 'input/skills/retries-and-backoff/SKILL.md'",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A23",
+      "exitCode": 0,
+      "status": "completed",
+      "result": "Reviewed scoped retry grants, multiplicative nested total-attempt limits and outcome-based retry safety."
+    },
+    {
+      "command": "Get-Content -Raw -LiteralPath 'input/project/README.md', 'input/project/REQUEST.md'; rg --files input/project output",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A23",
+      "exitCode": 0,
+      "status": "completed",
+      "result": "README baseline Java 17/JDK 25.0.3 applies only to Java cases. REQUEST is review-only with five required numeric metrics. Inventory found only README.md, REQUEST.md, proposal.md, incident.json in each project/copy tree; no implementation or runner."
+    },
+    {
+      "command": "Get-Content -Raw -LiteralPath 'input/project/proposal.md'",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A23",
+      "exitCode": 0,
+      "status": "completed",
+      "result": "Read five erroneous claims: 1.1 fleet wire cap; bucket broken at 1.6; after maximum eight; fresh intent after timeout/absence; cancellation proves no work.",
+      "aggregateOutputTruncated": true
+    },
+    {
+      "command": "Get-Content -Raw -LiteralPath 'input/project/incident.json'",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A23",
+      "exitCode": 0,
+      "status": "completed",
+      "result": "Read authored counters, four process-local outer-retry buckets, 2x3x1 and proposed 2x3x3 limits, missing numeric deadline and dispatch/timeout/absence/commit trace.",
+      "aggregateOutputTruncated": true
+    },
+    {
+      "command": "Get-Content -Raw -LiteralPath 'input/skills/retries-and-backoff/references/retry-in-java.md'",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A23",
+      "exitCode": 0,
+      "status": "completed",
+      "result": "Read relevant classification, retry budget, cumulative startup/refill bounds, process-local scope and combined deadline guidance; Java examples not implemented.",
+      "aggregateOutputTruncated": true
+    },
+    {
+      "command": "Get-Content -Raw -LiteralPath 'input/skills/retries-and-backoff/references/retry-failure-modes.md'",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A23",
+      "exitCode": 0,
+      "status": "completed",
+      "result": "Content returned in aggregate truncated tool response; reread below.",
+      "aggregateOutputTruncated": true
+    },
+    {
+      "command": "Get-Content -Raw -LiteralPath 'input/skills/idempotency/references/key-selection.md'",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A23",
+      "exitCode": 0,
+      "status": "completed",
+      "result": "Content returned in aggregate truncated tool response; reread below.",
+      "aggregateOutputTruncated": true
+    },
+    {
+      "command": "Get-Content -Raw -LiteralPath 'input/skills/idempotency/references/idempotency-key-filter.md'",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A23",
+      "exitCode": 0,
+      "status": "completed",
+      "result": "Content returned in aggregate truncated tool response; reread below.",
+      "aggregateOutputTruncated": true
+    },
+    {
+      "command": "Get-Content -Raw -LiteralPath 'input/skills/timeouts-and-deadlines/references/deadline-propagation.md'",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A23",
+      "exitCode": 0,
+      "status": "completed",
+      "result": "Content returned in aggregate truncated tool response; reread below.",
+      "aggregateOutputTruncated": true
+    },
+    {
+      "command": "Get-Content -Raw -LiteralPath 'input/skills/timeouts-and-deadlines/references/java-timeout-surface.md'",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A23",
+      "exitCode": 0,
+      "status": "completed",
+      "result": "Read timeout layers, cancellation races, release observation requirements and deployed-version limits. No client configuration is supplied.",
+      "aggregateOutputTruncated": true
+    },
+    {
+      "command": "Get-Content -Raw -LiteralPath 'input/skills/retries-and-backoff/references/retry-failure-modes.md'",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A23",
+      "exitCode": 0,
+      "status": "completed",
+      "result": "Full reread: nested layer multiplication, matched cohorts, source attribution and scoped grant ratios; narrow arithmetic review does not require fault campaign."
+    },
+    {
+      "command": "Get-Content -Raw -LiteralPath 'input/skills/idempotency/references/key-selection.md'",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A23",
+      "exitCode": 0,
+      "status": "completed",
+      "result": "Full reread: original intent identity, missing remote guarantees, retention and stable namespace; no invented provider behavior."
+    },
+    {
+      "command": "Get-Content -Raw -LiteralPath 'input/skills/idempotency/references/idempotency-key-filter.md'",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A23",
+      "exitCode": 0,
+      "status": "completed",
+      "result": "Full reread: point-in-time absence cannot rule out later application; UNKNOWN must retain recovery and no fresh key on timeout."
+    },
+    {
+      "command": "Get-Content -Raw -LiteralPath 'input/skills/timeouts-and-deadlines/references/deadline-propagation.md'",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A23",
+      "exitCode": 0,
+      "status": "completed",
+      "result": "Full reread: shrinking budget, remaining-work observation, no fabricated SLA or hard return/resource bound."
+    },
+    {
+      "command": "$taskRoot = (Get-Location).Path\n$packet = Get-Content -Raw -LiteralPath 'input/project/incident.json' | ConvertFrom-Json\n$metrics = [ordered]@{\n  configuredBeforeMax = $packet.configuration.outerMaxAttemptsIncludingInitial * $packet.configuration.sdkMaxAttemptsIncludingInitial * $packet.configuration.gatewayCurrentAttempts\n  configuredAfterMax = $packet.configuration.outerMaxAttemptsIncludingInitial * $packet.configuration.sdkMaxAttemptsIncludingInitial * $packet.configuration.gatewayProposedAttempts\n  outerAttemptsPerLogical = $packet.cohort.outerAttempts / $packet.cohort.logicalCalls\n  wireAttemptsPerLogical = $packet.cohort.wireAttempts / $packet.cohort.logicalCalls\n  aggregateGrantUpperBound = $packet.deployment.processes * $packet.deployment.initialTokensPerProcess + $packet.cohort.successesThatRefill * $packet.deployment.refillPerSuccess\n  extraSdkWireAttempts = $packet.cohort.wireAttempts - $packet.cohort.outerAttempts\n  observedOuterRetryGrants = $packet.cohort.outerRetryGrants\n}\nif ($metrics.configuredBeforeMax -ne 6 -or $metrics.configuredAfterMax -ne 18 -or $metrics.outerAttemptsPerLogical -ne 1.06 -or $metrics.wireAttemptsPerLogical -ne 1.6 -or $metrics.aggregateGrantUpperBound -ne 130 -or $metrics.extraSdkWireAttempts -ne 540) { throw 'Unexpected fixture arithmetic' }\n$metrics | ConvertTo-Json\n$copies = foreach ($name in @('README.md', 'REQUEST.md', 'proposal.md', 'incident.json')) {\n  $source = Get-FileHash -Algorithm SHA256 -LiteralPath (Join-Path $taskRoot ('input/project/' + $name))\n  $copy = Get-FileHash -Algorithm SHA256 -LiteralPath (Join-Path $taskRoot ('output/' + $name))\n  if ($source.Hash -ne $copy.Hash) { throw ('Evidence differs: ' + $name) }\n  [pscustomobject]@{file=$name; matches=$true; sha256=$copy.Hash}\n}\n$copies | ConvertTo-Json\n[pscustomobject]@{javaRunnerPresent=(Test-Path -LiteralPath 'output/run.mjs'); verification='Review-only fixture; no Java source or runner supplied'} | ConvertTo-Json",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A23",
+      "exitCode": 0,
+      "status": "completed",
+      "result": "All assertions passed. Metrics: configuredBeforeMax=6, configuredAfterMax=18, outerAttemptsPerLogical=1.06, wireAttemptsPerLogical=1.6, aggregateGrantUpperBound=130, extraSdkWireAttempts=540, observedOuterRetryGrants=60. All four input/output SHA-256 hashes match. javaRunnerPresent=false.",
+      "measuredMetrics": {
+        "configuredBeforeMax": 6,
+        "configuredAfterMax": 18,
+        "outerAttemptsPerLogical": 1.06,
+        "wireAttemptsPerLogical": 1.6,
+        "aggregateGrantUpperBound": 130,
+        "extraSdkWireAttempts": 540,
+        "observedOuterRetryGrants": 60
+      },
+      "immutableHashes": {
+        "README.md": "0A082FC19EAFAAA6457ED4A4E130B1F2BF3D3383C5CF38B7B6D8B58F18DD69DB",
+        "REQUEST.md": "7DD644BF4411EDC116C859953B0972780A1DD7AB6B5CA9F4FBAB9E403E2167DA",
+        "proposal.md": "86EE8BC99F8A7684662305B0A3E7250FE6DB9BB03FDB2F879CA45BD40384CAA9",
+        "incident.json": "025CFCB39AB16FC0A0D508183C6D30377C35445D1E334A1C55B146572E801181"
+      }
+    },
+    {
+      "command": "$ErrorActionPreference = 'Stop'\n$reviewText = Get-Content -Raw -LiteralPath 'REVIEW.md'\n$result = Get-Content -Raw -LiteralPath 'result.json' | ConvertFrom-Json\n$journal = Get-Content -Raw -LiteralPath 'execution.json' | ConvertFrom-Json\n$packet = Get-Content -Raw -LiteralPath 'incident.json' | ConvertFrom-Json\n$wordCount = ([regex]::Matches($reviewText, '\\S+')).Count\nif ($wordCount -gt 750) { throw ('Review exceeds 750 words: ' + $wordCount) }\n$expected = [ordered]@{\n  configuredBeforeMax = $packet.configuration.outerMaxAttemptsIncludingInitial * $packet.configuration.sdkMaxAttemptsIncludingInitial * $packet.configuration.gatewayCurrentAttempts\n  configuredAfterMax = $packet.configuration.outerMaxAttemptsIncludingInitial * $packet.configuration.sdkMaxAttemptsIncludingInitial * $packet.configuration.gatewayProposedAttempts\n  outerAttemptsPerLogical = $packet.cohort.outerAttempts / $packet.cohort.logicalCalls\n  wireAttemptsPerLogical = $packet.cohort.wireAttempts / $packet.cohort.logicalCalls\n  aggregateGrantUpperBound = $packet.deployment.processes * $packet.deployment.initialTokensPerProcess + $packet.cohort.successesThatRefill * $packet.deployment.refillPerSuccess\n}\nforeach ($entry in $expected.GetEnumerator()) {\n  $actual = $result.($entry.Key)\n  if ($actual -is [string] -or $actual -ne $entry.Value) { throw ('Invalid numeric metric: ' + $entry.Key) }\n}\nif ($result.decision -ne 'reject' -or $result.effect.stateAt52Ms -ne 'UNKNOWN' -or $result.counters.extraSdkWireAttempts -ne 540 -or $result.nextVerification.count -ne 1) { throw 'Review/result invariant mismatch' }\nforeach ($name in @('README.md', 'REQUEST.md', 'proposal.md', 'incident.json')) {\n  $source = Get-FileHash -Algorithm SHA256 -LiteralPath (Join-Path '../input/project' $name)\n  $copy = Get-FileHash -Algorithm SHA256 -LiteralPath $name\n  if ($source.Hash -ne $copy.Hash) { throw ('Immutable evidence changed: ' + $name) }\n}\n$journal.commands[-1].status = 'passed'\n$journal.commands[-1].exitCode = 0\n$journal.commands[-1].result = ('PASS: review word count=' + $wordCount + '; result and execution JSON parsed; five numeric metrics and recovery/result invariants match; all four immutable copies match SHA-256; no Java or external service launched.')\n$journal.validation.reviewWordCount = $wordCount\n$journal.validation.actualArtifactsValidated = @('REVIEW.md', 'result.json', 'execution.json')\n$journal.validation.status = 'passed'\n$journal.allWritesStopped = $true\n$journal.activeSubprocesses = 0\n$journal.completed = $true\n$journalText = $journal | ConvertTo-Json -Depth 40\n$roundTrip = $journalText | ConvertFrom-Json\nif (-not $roundTrip.allWritesStopped -or -not $roundTrip.completed -or $roundTrip.commands[-1].status -ne 'passed') { throw 'Journal roundtrip failed' }\nSet-Content -LiteralPath 'execution.json' -Value $journalText -Encoding utf8\nWrite-Output $journal.commands[-1].result",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A23/output",
+      "exitCode": 0,
+      "status": "passed",
+      "result": "PASS: review word count=636; result and execution JSON parsed; five numeric metrics and recovery/result invariants match; all four immutable copies match SHA-256; no Java or external service launched."
+    }
+  ],
+  "meaningfulReads": [
+    "TASK.md",
+    "input/project/README.md",
+    "input/project/REQUEST.md",
+    "input/project/proposal.md",
+    "input/project/incident.json",
+    "input/skills/idempotency/SKILL.md",
+    "input/skills/timeouts-and-deadlines/SKILL.md",
+    "input/skills/retries-and-backoff/SKILL.md",
+    "input/skills/idempotency/references/key-selection.md",
+    "input/skills/idempotency/references/idempotency-key-filter.md",
+    "input/skills/timeouts-and-deadlines/references/deadline-propagation.md",
+    "input/skills/timeouts-and-deadlines/references/java-timeout-surface.md",
+    "input/skills/retries-and-backoff/references/retry-in-java.md",
+    "input/skills/retries-and-backoff/references/retry-failure-modes.md",
+    "output/README.md, REQUEST.md, proposal.md, incident.json (SHA-256 comparisons)"
+  ],
+  "artifactWrites": [
+    {
+      "tool": "apply_patch",
+      "operation": "Add REVIEW.md and result.json",
+      "status": "completed",
+      "result": "Files created; no supplied file modified."
+    },
+    {
+      "tool": "apply_patch",
+      "operation": "Add execution.json",
+      "status": "completed",
+      "result": "Journal created with final validation pending."
+    },
+    {
+      "tool": "exec_command",
+      "operation": "Final command validates actual artifacts, roundtrips journal JSON and serializes the completed execution.json as the final write.",
+      "status": "See last commands entry"
+    }
+  ],
+  "validation": {
+    "status": "passed",
+    "reviewWordCount": 636,
+    "actualArtifactsValidated": [
+      "REVIEW.md",
+      "result.json",
+      "execution.json"
+    ]
+  },
+  "omittedChecks": {
+    "java": "No Java implementation/source/run.mjs supplied; Java compilation and node run.mjs Verification not applicable and not executed.",
+    "repositoryVerify": "No repository change; task is isolated review, not repository/package work. npm verification not executed.",
+    "prospectiveReplay": "The one next verification in REVIEW.md/result.json was proposed, not executed; no handler is supplied.",
+    "production": "No provider calls, runtime configuration changes, installations, network workloads or production claims."
+  },
+  "contextLimits": [
+    "Only task-specific input/project evidence and the supplied skill snapshots/resources were opened.",
+    "Skill routes to consistency-models, circuit-breakers, cascading-failures, distributed transactions and other absent packages were not followed.",
+    "Web reference links were not opened; no browsing or delegation.",
+    "Aggregate return of the eight independent reads was truncated; four obscured resources were reread in smaller batches."
+  ],
+  "policyChangesImplemented": false,
+  "writesOutsideOutput": false,
+  "delegated": false,
+  "externalServicesCalled": false,
+  "activeSubprocesses": 0,
+  "allWritesStopped": true,
+  "completed": true
+}

@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+grep -E '\]\[jit,compilation\] +[0-9]+ [ %s!bn]{5} 4 ' "$1"

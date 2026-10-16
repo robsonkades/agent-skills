@@ -1,0 +1,3 @@
+releases: 9
+
+No root module descriptor, specify --release

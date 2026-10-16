@@ -1,0 +1,17 @@
+{
+  "disposition": "supported",
+  "basis": "O contrato permite misses indefinidos. find lê entry uma vez e o leitor criado por ReaderFactory chama PublishedEntry.value, que usa primary final. Construção completa, freeze e acesso ao payload por esse campo sustentam o hit 42; legacyValue não é chamado. Memo/leitor são entregues antes de Thread.start conforme premissa aceita.",
+  "requiredChange": null,
+  "missingEvidence": [],
+  "checked": [
+    "Leitura completa do contrato, pedido, README, três fontes Java, smoke e check.mjs.",
+    "Skill local e suas duas referências lidas integralmente; JLS SE25 17.4.5 e 17.5/17.5.1 consultadas.",
+    "Java e javac Temurin 25.0.3 confirmados; compilação --release 25 e memo.Smoke concluídos com exit 0 e sequential-controls=2 PASS.",
+    "Hashes dos oito arquivos fornecidos em output/project iguais aos de input/project antes e depois dos checks."
+  ],
+  "limits": [
+    "Smoke sequencial é observação, não prova de todas as execuções concorrentes.",
+    "Sem stress/jcstress, análise estática, assembly ou execução em outras arquiteturas/JVMs.",
+    "Conclusão limitada às premissas aceitas: uma instalação de 42, publicação privada do memo/leitor antes de start, ausência de escape, outros caminhos e mutações posteriores."
+  ]
+}

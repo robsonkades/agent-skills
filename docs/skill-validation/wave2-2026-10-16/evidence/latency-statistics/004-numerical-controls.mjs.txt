@@ -1,0 +1,109 @@
+// Numerical controls only: no Prometheus engine or statistical package is run.
+// Rate arithmetic follows the ordinary float-counter branch of the retained
+// Prometheus v3.8.0 functions.go; it is restricted to this no-reset fixture.
+// Event-ledger oracles independently show what the same scrapes fail to identify.
+import assert from 'node:assert/strict';
+
+const sampleTimes = [30, 90, 150, 210, 270, 330];
+const sampleValues = [1000, 1050, 1100, 1150, 1200, 1250];
+const range = { start: 0, end: 360 };
+const sampledSeconds = sampleTimes.at(-1) - sampleTimes[0];
+const observedIncrements = sampleValues.at(-1) - sampleValues[0];
+const averageSampleInterval = sampledSeconds / (sampleTimes.length - 1);
+const leftGap = sampleTimes[0] - range.start;
+const rightGap = range.end - sampleTimes.at(-1);
+assert(leftGap < 1.1 * averageSampleInterval);
+assert(rightGap < 1.1 * averageSampleInterval);
+assert(sampledSeconds * sampleValues[0] / observedIncrements > leftGap);
+const extrapolationFactor = (sampledSeconds + leftGap + rightGap) / sampledSeconds;
+const increase = observedIncrements * extrapolationFactor;
+assert.equal(observedIncrements, 250);
+assert.equal(increase, 300);
+
+const observedEvents = Array.from({ length: 5 }, (_, block) =>
+  Array.from({ length: 50 }, (_, i) => ({
+    time: 30 + block * 60 + (i + 1) * 60 / 51,
+    durationMs: 100,
+  })),
+).flat();
+const hiddenEvents = Array.from({ length: 50 }, (_, i) => ({
+  time: 330 + (i + 1) * 30 / 51,
+  durationMs: 100,
+}));
+const ledgers = {
+  onlyObserved: observedEvents,
+  hiddenCompliant: [...observedEvents, ...hiddenEvents],
+  hiddenSlow: [
+    ...observedEvents,
+    ...hiddenEvents.map(e => ({ ...e, durationMs: 500 })),
+  ],
+};
+const ledgerResults = {};
+for (const [name, events] of Object.entries(ledgers)) {
+  const counts = sampleTimes.map(t => 1000 + events.filter(e => e.time <= t).length);
+  const buckets = sampleTimes.map(t =>
+    1000 + events.filter(e => e.time <= t && e.durationMs <= 300).length,
+  );
+  assert.deepEqual(counts, sampleValues);
+  assert.deepEqual(buckets, sampleValues);
+  const inWindow = events.filter(e => e.time > range.start && e.time <= range.end);
+  ledgerResults[name] = {
+    actualN: inWindow.length,
+    actualCompliant: inWindow.filter(e => e.durationMs <= 300).length,
+    queryIncrease: increase,
+    queryCompliantIncrease: increase,
+  };
+}
+assert.equal(ledgerResults.onlyObserved.actualN, 250);
+assert.equal(ledgerResults.hiddenCompliant.actualN, 300);
+assert.equal(ledgerResults.hiddenSlow.actualCompliant, 250);
+
+const alpha = 0.05;
+const allSuccessLower = n => Math.exp(Math.log(alpha) / n);
+const lowerObserved = allSuccessLower(250);
+const lowerExtrapolated = allSuccessLower(300);
+assert(lowerObserved < 0.99);
+assert(lowerExtrapolated > 0.99);
+assert(Math.abs(lowerObserved ** 250 - alpha) < 1e-12);
+assert(Math.abs(lowerExtrapolated ** 300 - alpha) < 1e-12);
+// At p=0.99, passing on 250/250 alone already occurs more often than alpha.
+const nullAllSuccessProbability = 0.99 ** 250;
+assert(nullAllSuccessProbability > alpha);
+
+// Preserve the existing mixture-CDF and finite-sample teaching controls.
+const type1 = (values, p) => values.toSorted((a, b) => a - b)[Math.ceil(values.length * p) - 1];
+const mixA = [...Array(9950).fill(10), ...Array(50).fill(500)];
+const mixB = [...Array(9800).fill(10), ...Array(200).fill(500)];
+assert.equal(type1(mixA, 0.99), 10);
+assert.equal(type1(mixB, 0.99), 500);
+assert.equal(type1(Array.from({ length: 200 }, (_, i) => i + 1), 0.99), 198);
+const weightedQuantileAverage = 0.98 * 10 + 0.02 * 500;
+assert.equal(weightedQuantileAverage, 19.8);
+assert.notEqual(weightedQuantileAverage, type1(mixB, 0.99));
+
+console.log(JSON.stringify({
+  classification: 'source-backed arithmetic and independent event-ledger controls; no PromQL runtime',
+  node: process.version,
+  range,
+  sampleTimes,
+  sampleValues,
+  observedIncrements,
+  extrapolationFactor,
+  increase,
+  ledgerResults,
+  exactBinomialAllSuccess: {
+    assumptions: 'fixed n independent Bernoulli trials, one-sided 95% lower bound',
+    n250Lower: lowerObserved,
+    n300Lower: lowerExtrapolated,
+    fabricatedNChanges99PercentDecision: true,
+    probabilityOf250SuccessesAtP99: nullAllSuccessProbability,
+  },
+  regressionControls: {
+    type1MixtureP99A: type1(mixA, 0.99),
+    type1MixtureP99B: type1(mixB, 0.99),
+    type1RankN200: 198,
+    weightedQuantileAverage,
+  },
+  checksPassed: true,
+}, null, 2));
+

@@ -1,0 +1,1190 @@
+{
+  "skill": "gof-iterator",
+  "ownedPath": "C:/git/agent-skills/skills/gof-iterator",
+  "status": "NO_CHANGES_NEEDED",
+  "consultationDate": "2026-10-16",
+  "allWritesStopped": true,
+  "activeBackgroundProcesses": [],
+  "ownership": "Only the assigned package was eligible for edits. No repository files changed; review-only artifacts were retained under the coordinator-authorized temporary evidence directory.",
+  "baseline": {
+    "committedVersion": "1.2.4",
+    "assignmentVersion": "1.2.4",
+    "stagedDifferences": [],
+    "unstagedDifferences": [],
+    "untrackedFiles": [],
+    "ignoredUntrackedFiles": [],
+    "preExistingChanges": [],
+    "preExistingVersionBump": false,
+    "matchedCoordinatorWave4Baseline": true,
+    "assignmentHashes": [
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\gof-iterator\\SKILL.md",
+        "SHA256": "3168CAADAAAF253CFF4057D01E12BBF40B1B4417D3D9D81A1BBC8489189789CC",
+        "Bytes": 12294
+      },
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\gof-iterator\\skill.yaml",
+        "SHA256": "C2D4F2C5E96B83816943D69B8BBE641BC4739B8B3CA481D54FE879A5D77EC3D4",
+        "Bytes": 1937
+      },
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\gof-iterator\\references\\iterator-stream-spliterator.md",
+        "SHA256": "5433BF1FAD102230718CAAF4A7D54E7044D72BF655F66BAE46C0888B31A23102",
+        "Bytes": 12425
+      },
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\gof-iterator\\references\\worked-example.md",
+        "SHA256": "008CC0F79C91A41EA47042D8D33A335F009F883E8435D47B3C642FCCA7B7A140",
+        "Bytes": 10326
+      }
+    ],
+    "finalFiles": [
+      {
+        "path": "C:\\git\\agent-skills\\skills\\gof-iterator\\SKILL.md",
+        "bytes": 12294,
+        "sha256": "3168CAADAAAF253CFF4057D01E12BBF40B1B4417D3D9D81A1BBC8489189789CC"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\gof-iterator\\skill.yaml",
+        "bytes": 1937,
+        "sha256": "C2D4F2C5E96B83816943D69B8BBE641BC4739B8B3CA481D54FE879A5D77EC3D4"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\gof-iterator\\references\\iterator-stream-spliterator.md",
+        "bytes": 12425,
+        "sha256": "5433BF1FAD102230718CAAF4A7D54E7044D72BF655F66BAE46C0888B31A23102"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\gof-iterator\\references\\worked-example.md",
+        "bytes": 10326,
+        "sha256": "008CC0F79C91A41EA47042D8D33A335F009F883E8435D47B3C642FCCA7B7A140"
+      }
+    ]
+  },
+  "versions": {
+    "committed": "1.2.4",
+    "assignment": "1.2.4",
+    "final": "1.2.4",
+    "rationale": "No skill content changed; no version bump is warranted."
+  },
+  "reviewCriteria": [
+    "Follow the concrete consumer request, source and resource owner before choosing Iterator, Stream or Spliterator.",
+    "Distinguish replay, materialization, live views and snapshots; mutation detection is not synchronization.",
+    "Preserve correct pull/removal semantics with lookahead, optional removal, exhaustion and failures.",
+    "Distinguish requested prefix, proven source exhaustion and incomplete traversal under fixed event/time budgets.",
+    "Preserve already-visible consumer effects and explicit cleanup on early exit/failure without inventing rollback or cancellation.",
+    "Keep characteristics and splitting claims true, preserve Java17 examples and qualify optional Java24 Gatherers."
+  ],
+  "findingsCorrected": [],
+  "findingsAdequatelyCovered": [
+    {
+      "location": "SKILL.md:26-34,77-93",
+      "finding": "The workflow inspects actual callers and source constraints, preserves an adequate iterator/loop and distinguishes snapshot/view/null behavior.",
+      "consequence": "No forced Stream abstraction, materialization or baseline upgrade is prescribed."
+    },
+    {
+      "location": "SKILL.md:99-131; references/iterator-stream-spliterator.md:75-165",
+      "finding": "Resource ownership, optional removal, lookahead interference, fail-fast limitations and weak/snapshot semantics are already explicit.",
+      "consequence": "The tested best-effort fail-fast and delegated-removal counterexamples are anticipated by existing guidance."
+    },
+    {
+      "location": "references/worked-example.md:39-115",
+      "finding": "Unknown-size bounded traversal uses ORDERED|NONNULL, trySplit null, explicit deadline/interruption/fetch failure, and throws when an event cap cannot establish exhaustion.",
+      "consequence": "The source cap does not falsely signal normal end-of-source. A requested prefix remains a legitimate distinct contract."
+    },
+    {
+      "location": "references/worked-example.md:137-175; references/iterator-stream-spliterator.md:127-165",
+      "finding": "Remote cursor consistency, close scope, close-versus-cancellation and iterator-owner obligations are qualified.",
+      "consequence": "No snapshot, rollback or transport cancellation guarantee is inferred from a wrapper or terminal operation."
+    },
+    {
+      "location": "SKILL.md:27-28,150; references/iterator-stream-spliterator.md:33-73",
+      "finding": "Java17 baseline, optional Java24 Gatherers and truthful Spliterator sizing/splitting contracts are correctly stated.",
+      "consequence": "No version-sensitive correction was substantiated."
+    }
+  ],
+  "findingsRemaining": [],
+  "noChangeRationale": "Primary API/JLS evidence and focused adversarial controls support the existing guidance. The paired consumer-contract case is already resolved by the skill's distinction between source cap and explicit prefix; adding more instructions would duplicate adequate coverage.",
+  "filesChangedByReviewer": [],
+  "capabilitiesPreserved": [
+    "Iterator as an adequate first-class pull contract, including interleaving and resumable ownership.",
+    "Comparison with Stream/Spliterator/Gatherer without requiring them.",
+    "Snapshot/live/mutable-element distinctions and honest fail-fast/concurrency limits.",
+    "Removal correctness, repeated hasNext, prefetch and cached-next caveats.",
+    "Bounded remote example, truthful characteristics, unknown completeness and failed/early-exit cleanup.",
+    "Review role and useful examples; no infrastructure or consumer toolchain changes."
+  ],
+  "capabilitiesReplaced": [],
+  "capabilitiesRemoved": [],
+  "checks": {
+    "structural": {
+      "executed": true,
+      "strictManifestIssues": 0,
+      "descriptionMatches": true,
+      "shippedFileCount": 4,
+      "allReferencesRouted": true,
+      "localLinks": [
+        {
+          "source": "C:\\git\\agent-skills\\skills\\gof-iterator\\SKILL.md",
+          "href": "references/iterator-stream-spliterator.md",
+          "target": "C:\\git\\agent-skills\\skills\\gof-iterator\\references\\iterator-stream-spliterator.md"
+        },
+        {
+          "source": "C:\\git\\agent-skills\\skills\\gof-iterator\\SKILL.md",
+          "href": "references/worked-example.md",
+          "target": "C:\\git\\agent-skills\\skills\\gof-iterator\\references\\worked-example.md"
+        },
+        {
+          "source": "C:\\git\\agent-skills\\skills\\gof-iterator\\references\\iterator-stream-spliterator.md",
+          "href": "worked-example.md",
+          "target": "C:\\git\\agent-skills\\skills\\gof-iterator\\references\\worked-example.md"
+        }
+      ],
+      "prettier": "All matched files use Prettier code style.",
+      "hashesUnchanged": true,
+      "gitScopeClean": true,
+      "catalogWideRoutingVerified": false
+    },
+    "technical": {
+      "executed": true,
+      "exampleExtraction": {
+        "source": "C:/git/agent-skills/skills/gof-iterator/references/worked-example.md",
+        "sourceSHA256": "008cc0f79c91a41ea47042d8d33a335f009f883e8435d47b3c642fcca7b7a140",
+        "scope": "First two Java fences only; imports added and public top-level types split into files; no logic edits.",
+        "files": [
+          "AuditPageFetcher.java",
+          "AuditPage.java",
+          "AuditSpliterator.java"
+        ]
+      },
+      "toolchain": {
+        "java": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)",
+        "javac": "javac 25.0.3",
+        "sourceAndAPIRelease": 17,
+        "actualRuntime": 25,
+        "java17VMRun": false
+      },
+      "finalRun": {
+        "javaVersion": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)",
+        "javacVersion": "javac 25.0.3",
+        "sourceAndApiTarget": 17,
+        "actualRuntime": 25,
+        "executedChildCommands": 8,
+        "expectedNegativeExits": 2,
+        "unexpectedFailures": [],
+        "sourceCompilation": "Unchanged extracted first two Java fences; imports and top-level files adapted only.",
+        "focusedChecks": "PASS 28 focused checks\r\nunknown size is not SIZED\r\nunsplittable does not prefetch\r\nexact final page at cap is exhausted\r\nnull action still rejected after exhaustion\r\ncap with buffered event is incomplete\r\nbudget failure does not undo delivered effects\r\nzero active budget fails\r\nzero budget does not fetch\r\nexpired before fetch\r\nexpired source does not fetch\r\nexpiry after fetch is failure\r\nbuffered source checks deadline\r\nrepeated hasNext fetches once\r\nlookahead does not skip first element\r\nsecond event prefetched\r\ncached next is not a new source deadline check\r\nempty progressing page continues\r\nnonadvancing cursor rejected\r\ninterruption is not exhaustion\r\nprefix stops source\r\nterminal operation does not invoke close\r\nscope closes after early exit\r\nconsumer exception propagates\r\nscope closes after consumer failure\r\nfresh unsplittable sequential/parallel result agreement only\r\nobserved ArrayList interference without CME on this build\r\nordinary iterator preserves last-returned removal\r\nnegative control removes prefetched rather than returned element\r\nLIMIT: controlled deadline/fetcher, onClose notification, no real transport/cleanup integration or speedup.",
+        "cases": {
+          "originalPrefix": "requested=prefix receipt=Receipt[status=COMPLETE, recordedIds=[1, 2]] closes=1 fetches=1",
+          "originalComplete": "requested=complete receipt=Receipt[status=COMPLETE, recordedIds=[1, 2]] closes=1 fetches=1",
+          "completeControl": "requested=complete receipt=Receipt[status=INCOMPLETE, recordedIds=[1, 2]] closes=1 fetches=1",
+          "overbroadPrefixControl": "requested=prefix receipt=Receipt[status=INCOMPLETE, recordedIds=[1, 2]] closes=1 fetches=1"
+        },
+        "limits": [
+          "No agent evaluation or measured incremental gain.",
+          "Controlled provider and deadline state; no HTTP, monotonic-time/transport or server-cursor integration.",
+          "onClose notification observed; no real resource acquisition/release tested.",
+          "Sequential/parallel agreement is on an unsplittable source and does not prove decomposition or speedup.",
+          "--release17 compilation used JDK25; no JDK17 VM execution.",
+          "ArrayList non-detection is a build-specific counterexample, not a future behavior guarantee."
+        ]
+      },
+      "totalChildCommandsAcrossAttempts": 12,
+      "finalAttemptChildCommands": 8,
+      "finalAttemptExpectedNegativeExits": 2,
+      "initialAttempt": {
+        "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-iterator-validation/technical-checks.mjs",
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 1,
+        "failure": "Driver bookkeeping error: expected output PASS 30 focused checks, but the Java control program contains and successfully executed 28 checks. All four child commands exited 0; the parent assertion then failed before the paired-case runs.",
+        "rawChildLogs": "logs/",
+        "exactChildCommands": "commands.json",
+        "originalDriver": "attempt1-driver.mjs",
+        "fix": "Corrected only the driver's expected check count from 30 to 28; no Java checks or evaluator criteria were removed or changed. Re-run uses separate log/class/command paths to preserve this attempt."
+      },
+      "limits": [
+        "No agent evaluation or measured incremental gain.",
+        "Controlled provider and deadline state; no HTTP, monotonic-time/transport or server-cursor integration.",
+        "onClose notification observed; no real resource acquisition/release tested.",
+        "Sequential/parallel agreement is on an unsplittable source and does not prove decomposition or speedup.",
+        "--release17 compilation used JDK25; no JDK17 VM execution.",
+        "ArrayList non-detection is a build-specific counterexample, not a future behavior guarantee."
+      ]
+    },
+    "behavioral": {
+      "executed": false,
+      "actualAgentOutputs": [],
+      "incrementalGainMeasured": false,
+      "reason": "Reviewers do not run actors; cases are supplied for separate coordinator evaluation."
+    },
+    "structuredWalkthroughs": [
+      {
+        "case": "requested-prefix",
+        "outcome": "The existing limit2 and COMPLETE receipt satisfy the request for a two-event prefix. Applying the full-export failure behavior here is an overbroad regression.",
+        "evidence": "Technical probe observes COMPLETE, ids1/2, one close notification and one fetch; the overbroad control fails its receipt oracle."
+      },
+      {
+        "case": "requested-complete",
+        "outcome": "The same limit2 is insufficient for a complete export when event3 remains. The bounded incomplete control preserves delivered ids1/2 and cleanup without pretending completion.",
+        "evidence": "Original full case fails the receipt oracle; removing short circuit and recording source-cap failure yields INCOMPLETE. This is a fixture control, not production integration or an agent output."
+      }
+    ],
+    "failuresAndCorrections": [
+      {
+        "kind": "Review-only read command",
+        "failure": "rg was given a literal Windows references/*.md path, producing OS123.",
+        "correction": "Repeated read with -g '*.md' and the references directory.",
+        "packageDefect": false,
+        "evidence": "local-command-results.json/readOnlySearchCorrection"
+      },
+      {
+        "kind": "Review-only test-driver bookkeeping",
+        "failure": "First driver asserted PASS30 while the unchanged Java controls successfully ran28 checks; parent exited1 before paired cases.",
+        "correction": "Only expected count changed30→28; preserved original driver and first logs, then reran in separate logs/classes paths.",
+        "packageDefect": false,
+        "evidence": "attempt1-failure.json,attempt1-driver.mjs,commands.json,logs/,commands-attempt2.json,logs-attempt2/"
+      },
+      {
+        "kind": "Expected negative controls",
+        "failure": "Original full-export receipt and overbroad full-export correction on the prefix request each exit1.",
+        "correction": "No weakening or changing acceptance criteria; these failures discriminate the consumer contracts.",
+        "packageDefect": false,
+        "evidence": "logs-attempt2/06-original-complete.*,logs-attempt2/08-overbroad-control-prefix.*"
+      }
+    ],
+    "unavailable": [
+      "Real remote API/transport/server cursor integration",
+      "JDK17 runtime",
+      "Independent agent evaluation",
+      "Parallel decomposition/speedup measurement"
+    ]
+  },
+  "commands": {
+    "validationCwd": "C:/git/agent-skills",
+    "preparation": {
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-iterator-validation/prepare-example.mjs",
+      "exitCode": 0,
+      "purpose": "Extract unchanged example Java fences into isolated compile fixtures."
+    },
+    "technicalDriver": {
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-iterator-validation/technical-checks.mjs",
+      "firstExitCode": 1,
+      "finalExitCode": 0,
+      "firstChildCommands": [
+        {
+          "id": "01-java-version",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+          "args": [
+            "-version"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation",
+          "expectedExit": 0,
+          "actualExit": 0,
+          "signal": null,
+          "error": null,
+          "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs\\01-java-version.stdout.txt",
+          "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs\\01-java-version.stderr.txt"
+        },
+        {
+          "id": "02-javac-version",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+          "args": [
+            "-version"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation",
+          "expectedExit": 0,
+          "actualExit": 0,
+          "signal": null,
+          "error": null,
+          "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs\\02-javac-version.stdout.txt",
+          "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs\\02-javac-version.stderr.txt"
+        },
+        {
+          "id": "03-compile-release17",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+          "args": [
+            "--release",
+            "17",
+            "-d",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\classes",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\actor\\common\\src\\AuditPage.java",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\actor\\common\\src\\AuditPageFetcher.java",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\actor\\common\\src\\AuditSpliterator.java",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\actor\\common\\src\\ExportJob.java",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\actor\\common\\src\\FixtureTypes.java",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\controls\\CaseProbe.java",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\controls\\CompleteExportJob.java",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\controls\\TraversalChecks.java"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation",
+          "expectedExit": 0,
+          "actualExit": 0,
+          "signal": null,
+          "error": null,
+          "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs\\03-compile-release17.stdout.txt",
+          "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs\\03-compile-release17.stderr.txt"
+        },
+        {
+          "id": "04-traversal-checks",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+          "args": [
+            "-cp",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\classes",
+            "TraversalChecks"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation",
+          "expectedExit": 0,
+          "actualExit": 0,
+          "signal": null,
+          "error": null,
+          "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs\\04-traversal-checks.stdout.txt",
+          "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs\\04-traversal-checks.stderr.txt"
+        }
+      ],
+      "finalChildCommands": [
+        {
+          "id": "01-java-version",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+          "args": [
+            "-version"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation",
+          "expectedExit": 0,
+          "actualExit": 0,
+          "signal": null,
+          "error": null,
+          "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs-attempt2\\01-java-version.stdout.txt",
+          "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs-attempt2\\01-java-version.stderr.txt"
+        },
+        {
+          "id": "02-javac-version",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+          "args": [
+            "-version"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation",
+          "expectedExit": 0,
+          "actualExit": 0,
+          "signal": null,
+          "error": null,
+          "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs-attempt2\\02-javac-version.stdout.txt",
+          "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs-attempt2\\02-javac-version.stderr.txt"
+        },
+        {
+          "id": "03-compile-release17",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+          "args": [
+            "--release",
+            "17",
+            "-d",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\classes-attempt2",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\actor\\common\\src\\AuditPage.java",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\actor\\common\\src\\AuditPageFetcher.java",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\actor\\common\\src\\AuditSpliterator.java",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\actor\\common\\src\\ExportJob.java",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\actor\\common\\src\\FixtureTypes.java",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\controls\\CaseProbe.java",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\controls\\CompleteExportJob.java",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\controls\\TraversalChecks.java"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation",
+          "expectedExit": 0,
+          "actualExit": 0,
+          "signal": null,
+          "error": null,
+          "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs-attempt2\\03-compile-release17.stdout.txt",
+          "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs-attempt2\\03-compile-release17.stderr.txt"
+        },
+        {
+          "id": "04-traversal-checks",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+          "args": [
+            "-cp",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\classes-attempt2",
+            "TraversalChecks"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation",
+          "expectedExit": 0,
+          "actualExit": 0,
+          "signal": null,
+          "error": null,
+          "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs-attempt2\\04-traversal-checks.stdout.txt",
+          "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs-attempt2\\04-traversal-checks.stderr.txt"
+        },
+        {
+          "id": "05-original-prefix",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+          "args": [
+            "-cp",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\classes-attempt2",
+            "CaseProbe",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\actor\\case-a\\consumer.properties",
+            "original"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation",
+          "expectedExit": 0,
+          "actualExit": 0,
+          "signal": null,
+          "error": null,
+          "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs-attempt2\\05-original-prefix.stdout.txt",
+          "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs-attempt2\\05-original-prefix.stderr.txt"
+        },
+        {
+          "id": "06-original-complete",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+          "args": [
+            "-cp",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\classes-attempt2",
+            "CaseProbe",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\actor\\case-b\\consumer.properties",
+            "original"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation",
+          "expectedExit": 1,
+          "actualExit": 1,
+          "signal": null,
+          "error": null,
+          "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs-attempt2\\06-original-complete.stdout.txt",
+          "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs-attempt2\\06-original-complete.stderr.txt"
+        },
+        {
+          "id": "07-control-complete",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+          "args": [
+            "-cp",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\classes-attempt2",
+            "CaseProbe",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\actor\\case-b\\consumer.properties",
+            "complete"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation",
+          "expectedExit": 0,
+          "actualExit": 0,
+          "signal": null,
+          "error": null,
+          "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs-attempt2\\07-control-complete.stdout.txt",
+          "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs-attempt2\\07-control-complete.stderr.txt"
+        },
+        {
+          "id": "08-overbroad-control-prefix",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+          "args": [
+            "-cp",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\classes-attempt2",
+            "CaseProbe",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\actor\\case-a\\consumer.properties",
+            "complete"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation",
+          "expectedExit": 1,
+          "actualExit": 1,
+          "signal": null,
+          "error": null,
+          "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs-attempt2\\08-overbroad-control-prefix.stdout.txt",
+          "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs-attempt2\\08-overbroad-control-prefix.stderr.txt"
+        }
+      ]
+    },
+    "localResults": [
+      {
+        "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-iterator-validation/local-checks.mjs",
+        "result": {
+          "status": "fulfilled",
+          "value": {
+            "chunk_id": "c25055",
+            "wall_time_seconds": 0.1867579,
+            "exit_code": 0,
+            "original_token_count": 490,
+            "output": "{\n  \"scope\": \"Read-only package-local checks using existing repository parsers; no catalog-wide routing verification.\",\n  \"strictManifestIssues\": 0,\n  \"descriptionMatches\": true,\n  \"version\": \"1.2.4\",\n  \"shippedFiles\": 4,\n  \"localLinks\": [\n    {\n      \"source\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\gof-iterator\\\\SKILL.md\",\n      \"href\": \"references/iterator-stream-spliterator.md\",\n      \"target\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\gof-iterator\\\\references\\\\iterator-stream-spliterator.md\"\n    },\n    {\n      \"source\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\gof-iterator\\\\SKILL.md\",\n      \"href\": \"references/worked-example.md\",\n      \"target\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\gof-iterator\\\\references\\\\worked-example.md\"\n    },\n    {\n      \"source\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\gof-iterator\\\\references\\\\iterator-stream-spliterator.md\",\n      \"href\": \"worked-example.md\",\n      \"target\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\gof-iterator\\\\references\\\\worked-example.md\"\n    }\n  ],\n  \"allReferencesRouted\": true,\n  \"changedFilesFromAssignment\": [],\n  \"matchesCoordinatorWaveBaseline\": true,\n  \"casesDifferOnlyInRequestedTraversal\": true,\n  \"finalFiles\": [\n    {\n      \"path\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\gof-iterator\\\\SKILL.md\",\n      \"bytes\": 12294,\n      \"sha256\": \"3168CAADAAAF253CFF4057D01E12BBF40B1B4417D3D9D81A1BBC8489189789CC\"\n    },\n    {\n      \"path\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\gof-iterator\\\\skill.yaml\",\n      \"bytes\": 1937,\n      \"sha256\": \"C2D4F2C5E96B83816943D69B8BBE641BC4739B8B3CA481D54FE879A5D77EC3D4\"\n    },\n    {\n      \"path\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\gof-iterator\\\\references\\\\iterator-stream-spliterator.md\",\n      \"bytes\": 12425,\n      \"sha256\": \"5433BF1FAD102230718CAAF4A7D54E7044D72BF655F66BAE46C0888B31A23102\"\n    },\n    {\n      \"path\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\gof-iterator\\\\references\\\\worked-example.md\",\n      \"bytes\": 10326,\n      \"sha256\": \"008CC0F79C91A41EA47042D8D33A335F009F883E8435D47B3C642FCCA7B7A140\"\n    }\n  ]\n}\n"
+          }
+        }
+      },
+      {
+        "command": "node node_modules/prettier/bin/prettier.cjs --check skills/gof-iterator/SKILL.md skills/gof-iterator/skill.yaml skills/gof-iterator/references/*.md",
+        "result": {
+          "status": "fulfilled",
+          "value": {
+            "chunk_id": "8555fb",
+            "wall_time_seconds": 0.2350768,
+            "exit_code": 0,
+            "original_token_count": 17,
+            "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+          }
+        }
+      },
+      {
+        "command": "git status --short --untracked-files=all -- skills/gof-iterator; git diff --check -- skills/gof-iterator; git diff --numstat -- skills/gof-iterator; git diff --cached --numstat -- skills/gof-iterator; git ls-files --others --ignored --exclude-standard -- skills/gof-iterator",
+        "result": {
+          "status": "fulfilled",
+          "value": {
+            "chunk_id": "dfa857",
+            "wall_time_seconds": 0.1678857,
+            "exit_code": 0,
+            "original_token_count": 0,
+            "output": ""
+          }
+        },
+        "note": "Read-only PowerShell sequence; final exit0, empty stdout/stderr. No isolated exit codes were captured for intermediate commands."
+      },
+      {
+        "command": "rg -n -g '*.md' '^#{1,4} |List.copyOf|Gatherer|fail-fast|lookahead|fail rather|trySplit|limit\\(|maxEvents|count\\(|Closing|SIZED|ownership|close' skills/gof-iterator",
+        "result": {
+          "status": "fulfilled",
+          "value": {
+            "chunk_id": "876df1",
+            "wall_time_seconds": 0.0748208,
+            "exit_code": 0,
+            "original_token_count": 2651,
+            "output": "skills/gof-iterator\\SKILL.md:6:  parallel decomposition primitive. Covers when a Spliterator can adapt to both, what fail-fast\nskills/gof-iterator\\SKILL.md:8:  must be closed, remote pagination as iteration with page drift, and the characteristics that\nskills/gof-iterator\\SKILL.md:17:# Iterator\nskills/gof-iterator\\SKILL.md:19:## Purpose\nskills/gof-iterator\\SKILL.md:26:Inspect compiler release/toolchains, source ownership, null/mutation contracts and resource lifetime\nskills/gof-iterator\\SKILL.md:27:before choosing. Examples use Java 17 (partial domain types/imports omitted); Gatherers are\nskills/gof-iterator\\SKILL.md:33:ownership before asking about gaps. Keep an adequate loop, collection view or iterator; add a new\nskills/gof-iterator\\SKILL.md:36:## Iterator, Stream, Spliterator\nskills/gof-iterator\\SKILL.md:49:                  element, trySplit for parallel decomposition, plus\nskills/gof-iterator\\SKILL.md:59:## When it is the answer\nskills/gof-iterator\\SKILL.md:74:        → Spliterator with an honest trySplit and correct characteristics.\nskills/gof-iterator\\SKILL.md:77:## When it is not\nskills/gof-iterator\\SKILL.md:79:- **The collection is already a `List` you can expose.** `List.copyOf` gives an unmodifiable\nskills/gof-iterator\\SKILL.md:96:## Decision rules\nskills/gof-iterator\\SKILL.md:101:     A resource-backed Stream must be closed with try-with-resources;\nskills/gof-iterator\\SKILL.md:102:     plain Iterator/Iterable have no close contract. Keep an enclosing\nskills/gof-iterator\\SKILL.md:103:     owner scope or expose an explicitly closeable pull cursor.\nskills/gof-iterator\\SKILL.md:106:THEN fail-fast is best effort, not a guarantee: ConcurrentModification-\nskills/gof-iterator\\SKILL.md:122:THEN its characteristics must be true. Claiming SIZED or DISTINCT when\nskills/gof-iterator\\SKILL.md:125:IF trySplit cannot split evenly, or the source is a linked structure\nskills/gof-iterator\\SKILL.md:138:## Modern Java expression\nskills/gof-iterator\\SKILL.md:141:Expose a collection safely           List.copyOf(...) for non-null elements;\nskills/gof-iterator\\SKILL.md:150:Stateful pipeline transformation     Consider Gatherers (Java 24+); a pull\nskills/gof-iterator\\SKILL.md:160:## Cross-cutting checks\nskills/gof-iterator\\SKILL.md:164:  fail-fast (best-effort interference detection), weakly consistent (no\nskills/gof-iterator\\SKILL.md:178:  representation. Correct `Spliterator` characteristics matter: `SIZED` can let the\nskills/gof-iterator\\SKILL.md:179:  pipeline pre-allocate, `SUBSIZED` promises sized descendant splits, `SORTED` and `DISTINCT` let\nskills/gof-iterator\\SKILL.md:184:  `next()` between, supported removal before/after next and after lookahead, and — for\nskills/gof-iterator\\SKILL.md:189:## Review checklist\nskills/gof-iterator\\SKILL.md:191:Return the chosen traversal contract, ownership/closing obligation, observed failure or\nskills/gof-iterator\\SKILL.md:193:resource ownership is unknown, inspect the provider contract before promising complete traversal.\nskills/gof-iterator\\SKILL.md:196:- [ ] A resource-backed stream is closed by every caller, and this is documented\nskills/gof-iterator\\SKILL.md:205:## References\nskills/gof-iterator\\SKILL.md:209:  what each enables; fail-fast versus weakly consistent versus snapshot semantics; and when a\nskills/gof-iterator\\SKILL.md:213:  `trySplit` returns `null`, and the tests including sequential/parallel agreement. Read when\nskills/gof-iterator\\references\\worked-example.md:1:# Worked example: a paged remote API as a Stream\nskills/gof-iterator\\references\\worked-example.md:11:monotonic deadline in its transport and bounds response bytes. It closes each response before\nskills/gof-iterator\\references\\worked-example.md:14:## The fetcher — the honest, unhidden layer\nskills/gof-iterator\\references\\worked-example.md:27:        items = List.copyOf(items);\nskills/gof-iterator\\references\\worked-example.md:39:## The Spliterator\nskills/gof-iterator\\references\\worked-example.md:46:    private final long maxEvents;\nskills/gof-iterator\\references\\worked-example.md:52:    AuditSpliterator(AuditPageFetcher fetcher, Cursor from, Deadline deadline, long maxEvents) {\nskills/gof-iterator\\references\\worked-example.md:57:        if (maxEvents < 0) throw new IllegalArgumentException(\"negative event budget\");\nskills/gof-iterator\\references\\worked-example.md:58:        this.maxEvents = maxEvents;\nskills/gof-iterator\\references\\worked-example.md:66:        if (emitted >= maxEvents) {\nskills/gof-iterator\\references\\worked-example.md:91:    public Spliterator<AuditEvent> trySplit() {\nskills/gof-iterator\\references\\worked-example.md:99:- **`Long.MAX_VALUE` as the estimate, and no `SIZED`.** The total is genuinely unknown. Claiming a\nskills/gof-iterator\\references\\worked-example.md:101:- **`trySplit` returns `null`.** Fetching the cursor chain is sequential. Batching fetched events\nskills/gof-iterator\\references\\worked-example.md:103:- **A hard `maxEvents` bound on source events.** Filtering may emit fewer downstream results.\nskills/gof-iterator\\references\\worked-example.md:107:  then unconfirmed. An explicit caller `limit(n)` requests a prefix instead.\nskills/gof-iterator\\references\\worked-example.md:117:## Exposing it\nskills/gof-iterator\\references\\worked-example.md:137:## Verify cursor semantics\nskills/gof-iterator\\references\\worked-example.md:160:## Closing and cancellation\nskills/gof-iterator\\references\\worked-example.md:162:Under the stateless-cursor and closed-response assumptions above, this spliterator owns no\nskills/gof-iterator\\references\\worked-example.md:172:Registering the closer with `onClose` is what makes `close()` mean anything. A stream that holds a\nskills/gof-iterator\\references\\worked-example.md:173:resource and does not register a closer leaks whether or not the caller writes try-with-resources.\nskills/gof-iterator\\references\\worked-example.md:174:Terminal operations and short-circuiting do not automatically close a stream. Closing is not\nskills/gof-iterator\\references\\worked-example.md:175:in-flight cancellation: concurrent close/traversal needs a separately designed protocol. Here\nskills/gof-iterator\\references\\worked-example.md:178:## Tests\nskills/gof-iterator\\references\\worked-example.md:192:        assertThat(events.limit(10).toList()).hasSize(10);\nskills/gof-iterator\\references\\worked-example.md:203:        try (var events = client.eventsSince(EPOCH, expired)) { events.count(); }\nskills/gof-iterator\\references\\worked-example.md:221:## What was rejected\nskills/gof-iterator\\references\\iterator-stream-spliterator.md:1:# Iterator, Stream and Spliterator\nskills/gof-iterator\\references\\iterator-stream-spliterator.md:3:## Side by side\nskills/gof-iterator\\references\\iterator-stream-spliterator.md:21:## Adapting a traversal\nskills/gof-iterator\\references\\iterator-stream-spliterator.md:24:These adapters do not invent resource ownership or cancellation. For a bounded remote example,\nskills/gof-iterator\\references\\iterator-stream-spliterator.md:25:read [the worked example](worked-example.md); it overrides batching `trySplit` to avoid prefetch.\nskills/gof-iterator\\references\\iterator-stream-spliterator.md:26:A sequential `limit(10)` needs as many pages as provide ten events, potentially more with empty\nskills/gof-iterator\\references\\iterator-stream-spliterator.md:33:## Characteristics, and why lying is expensive\nskills/gof-iterator\\references\\iterator-stream-spliterator.md:37:| `SIZED`        | Exact before traversal/splitting absent structural change | Pre-sizes arrays and collectors; enables `count()` elision |\nskills/gof-iterator\\references\\iterator-stream-spliterator.md:38:| `SUBSIZED`     | Every descendant is SIZED and SUBSIZED                    | Exact sizing of descendant splits, not balance             |\nskills/gof-iterator\\references\\iterator-stream-spliterator.md:43:| `IMMUTABLE`    | The source cannot change during traversal                 | No need for fail-fast checks                               |\nskills/gof-iterator\\references\\iterator-stream-spliterator.md:55:`SIZED` when the count is unknown. Sizing optimisations follow characteristics. If `SIZED`\nskills/gof-iterator\\references\\iterator-stream-spliterator.md:57:`count()` may trust that false size without traversing. The sentinel alone does not remove\nskills/gof-iterator\\references\\iterator-stream-spliterator.md:60:## trySplit\nskills/gof-iterator\\references\\iterator-stream-spliterator.md:65:and workload determine benefit. `SUBSIZED` promises sized descendants, not balanced partitions.\nskills/gof-iterator\\references\\iterator-stream-spliterator.md:70:public Spliterator<T> trySplit() {\nskills/gof-iterator\\references\\iterator-stream-spliterator.md:75:## Fail-fast, weakly consistent, snapshot\nskills/gof-iterator\\references\\iterator-stream-spliterator.md:106:## Removal and lookahead\nskills/gof-iterator\\references\\iterator-stream-spliterator.md:110:removal throws `UnsupportedOperationException`. A lookahead call must not change the removal\nskills/gof-iterator\\references\\iterator-stream-spliterator.md:127:## Closing\nskills/gof-iterator\\references\\iterator-stream-spliterator.md:140:Two rules for authors: if your stream holds a resource, register the closer with\nskills/gof-iterator\\references\\iterator-stream-spliterator.md:141:`Stream.onClose(...)` so `close()` actually releases it, and say so in the Javadoc — callers cannot\nskills/gof-iterator\\references\\iterator-stream-spliterator.md:142:tell from the type. Terminal operations do not call close automatically. Establish cleanup even\nskills/gof-iterator\\references\\iterator-stream-spliterator.md:145:consume within the required scope and close it (`repository-pattern`).\nskills/gof-iterator\\references\\iterator-stream-spliterator.md:147:For resource-owning pull APIs, neither `Iterator` nor `Iterable` supplies `close()`, and the\nskills/gof-iterator\\references\\iterator-stream-spliterator.md:149:does not close a cursor on exhaustion, `break` or failure. Keep traversal inside the resource\nskills/gof-iterator\\references\\iterator-stream-spliterator.md:152:closes it and whether it owns or borrows the underlying resource. A scoped callback API can keep\nskills/gof-iterator\\references\\iterator-stream-spliterator.md:153:ownership in the provider when callers do not need interleaved/resumable pull. Do not add closing\nskills/gof-iterator\\references\\iterator-stream-spliterator.md:156:## When a hand-written Iterator is right\nskills/gof-iterator\\references\\iterator-stream-spliterator.md:165:`Stream.iterator()` supplies a cursor as a terminal escape hatch; keep and close the original\n"
+          }
+        }
+      }
+    ],
+    "evidenceCollector": {
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-iterator-validation/collect-evidence.mjs",
+      "exitCode": 0,
+      "scope": "Read-only inventory/hash/JSON parsing within the assigned evidence directory."
+    },
+    "finalReadback": {
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-iterator-validation/verify-handoff.mjs",
+      "purpose": "Read-only parse/hash all retained artifacts and four owned files; rerun five scoped Git reads with individual exit status. Its actual result is reported with final handoff."
+    }
+  },
+  "evaluationCases": {
+    "classification": "Known development pair; criteria fixed before technical runs; no independent actor outputs.",
+    "taskInputsPath": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-iterator-validation/cases-inputs.json",
+    "expectedCriteriaPath": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-iterator-validation/evaluator-criteria.json",
+    "sharedActorInputs": [
+      "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-iterator-validation/actor/common/src",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-iterator-validation/actor/common/build.json",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-iterator-validation/actor/common/decision-note.md"
+    ],
+    "cases": [
+      {
+        "id": "requested-prefix",
+        "input": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-iterator-validation/actor/case-a/consumer.properties"
+      },
+      {
+        "id": "requested-complete",
+        "input": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-iterator-validation/actor/case-b/consumer.properties"
+      }
+    ],
+    "decisiveDifference": "Only requestedTraversal changes from prefix to complete. Source files, event data, prefixLength2 and maxEvents2 are identical.",
+    "actorIsolation": "Give the evaluator only the task from cases-inputs.json, common actor artifacts and one case property file per isolated run. Do not give controls, logs, expected criteria or this handoff. This is procedural separation, not a filesystem access barrier.",
+    "evaluatorNote": "Keep the source budget fixed and preserve already-recorded effects. Requesting a full export does not authorize pretending that the budget can fulfill it.",
+    "prerequisites": "Existing Temurin25.0.3, compile --release17; no new dependencies or installations. Use isolated copies."
+  },
+  "primarySources": [
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Iterator.html",
+      "version": "Java SE 17",
+      "sections": [
+        "next",
+        "remove",
+        "forEachRemaining"
+      ],
+      "supports": "Exhaustion, optional removal of the last returned element, unspecified recovery/mutation cases; no close contract.",
+      "limits": "API contract; runtime tests used JDK25."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Spliterator.html",
+      "version": "Java SE 17",
+      "sections": [
+        "characteristics",
+        "binding and structural interference",
+        "trySplit"
+      ],
+      "supports": "Truthful characteristics, best-effort interference detection, and thread-confinement of individual traversal state.",
+      "limits": "No promise that parallel decomposition provides speedup."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/stream/BaseStream.html",
+      "version": "Java SE 17",
+      "sections": [
+        "iterator",
+        "onClose",
+        "close"
+      ],
+      "supports": "iterator is a terminal escape hatch; close handlers belong to stream close and retain an owner obligation.",
+      "limits": "Does not define transport cancellation or server-cursor cleanup."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/ArrayList.html",
+      "version": "Java SE 17",
+      "sections": [
+        "fail-fast iterator class contract"
+      ],
+      "supports": "ConcurrentModificationException is best effort and cannot provide synchronization or correctness.",
+      "limits": "The retained runtime counterexample is build-specific."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/stream/Stream.html#limit(long)",
+      "version": "Java SE 17",
+      "sections": [
+        "limit"
+      ],
+      "supports": "A short-circuiting prefix operation can return normally without traversing all source elements.",
+      "limits": "Completeness requirements come from the consumer; the API alone does not define a business receipt."
+    },
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se17/html/jls-14.html#jls-14.14.2",
+      "version": "JLS SE 17",
+      "sections": [
+        "14.14.2 enhanced for"
+      ],
+      "supports": "Translation calls iterator/hasNext/next and does not introduce a resource-closing scope.",
+      "limits": "A provider may have its own resource lifecycle, which still must be inspected."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/24/docs/api/java.base/java/util/stream/Gatherer.html",
+      "version": "Java SE 24",
+      "sections": [
+        "Since 24"
+      ],
+      "supports": "Existing optional Gatherer referral is correctly scoped to Java24+.",
+      "limits": "No Gatherer implementation or JDK24 runtime exercised; no baseline upgrade proposed."
+    }
+  ],
+  "assumptionsAndLimits": [
+    "No agent evaluation or measured incremental gain.",
+    "Controlled provider and deadline state; no HTTP, monotonic-time/transport or server-cursor integration.",
+    "onClose notification observed; no real resource acquisition/release tested.",
+    "Sequential/parallel agreement is on an unsplittable source and does not prove decomposition or speedup.",
+    "--release17 compilation used JDK25; no JDK17 VM execution.",
+    "ArrayList non-detection is a build-specific counterexample, not a future behavior guarantee.",
+    "The example's fetcher response-byte and remaining-deadline obligations are assumptions supplied by a provider contract; the controlled fixture does not establish them.",
+    "Only the first two Java fences were extracted unchanged; surrounding partial test/client snippets were reviewed but not compiled as a real client integration.",
+    "Case failure behavior is a controlled receipt test, not an observed production defect.",
+    "No global registry regeneration, repository verification or catalog-wide routing check was run.",
+    "No guarantee of behavioral improvement or absence of all defects is claimed."
+  ],
+  "evidence": {
+    "root": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-iterator-validation",
+    "artifacts": [
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\actor\\case-a\\consumer.properties",
+        "relativePath": "actor\\case-a\\consumer.properties",
+        "bytes": 41,
+        "sha256": "3EE4426AC4230654191AFFFC2AA0A8EF47F57F0BBD94D2275BEDD3DA01D146A4"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\actor\\case-b\\consumer.properties",
+        "relativePath": "actor\\case-b\\consumer.properties",
+        "bytes": 43,
+        "sha256": "185FE3820B6DA2716439AAFF2E71C07E1B225025374E80A9892FAE8FBDCFC213"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\actor\\common\\build.json",
+        "relativePath": "actor\\common\\build.json",
+        "bytes": 512,
+        "sha256": "FF4A7A0F108AE4101E69B678A657A241FA307CB1F051F65C529C11D12AB03A35"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\actor\\common\\decision-note.md",
+        "relativePath": "actor\\common\\decision-note.md",
+        "bytes": 435,
+        "sha256": "7BF9C81B6EF4FB0667449205BAF98F6A75ABFBA70084A399DD14E6A447929028"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\actor\\common\\src\\AuditPage.java",
+        "relativePath": "actor\\common\\src\\AuditPage.java",
+        "bytes": 449,
+        "sha256": "9001648FF092CE74D7E4CE03296F5F56CA0B7094D82584220F1EC549E185912A"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\actor\\common\\src\\AuditPageFetcher.java",
+        "relativePath": "actor\\common\\src\\AuditPageFetcher.java",
+        "bytes": 320,
+        "sha256": "C10E336E48B754113C1A2045E5241719D0540D38D315ABD457F98381953031DE"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\actor\\common\\src\\AuditSpliterator.java",
+        "relativePath": "actor\\common\\src\\AuditSpliterator.java",
+        "bytes": 2168,
+        "sha256": "B3DFE997DA7F10DB4AFD61FCEF9CC282DF8749EA944C9B505FC9FE32071D37EF"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\actor\\common\\src\\ExportJob.java",
+        "relativePath": "actor\\common\\src\\ExportJob.java",
+        "bytes": 710,
+        "sha256": "0F3CCCEC25CF35EAB089FA181BC745DFC21FEFD93820359159096FF963984916"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\actor\\common\\src\\FixtureTypes.java",
+        "relativePath": "actor\\common\\src\\FixtureTypes.java",
+        "bytes": 1338,
+        "sha256": "AE42C3B3021B80007F327E4DC46E481B557BC572D7B4B188025EB2B5C8FF95A4"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\attempt1-driver.mjs",
+        "relativePath": "attempt1-driver.mjs",
+        "bytes": 3855,
+        "sha256": "3474A7DEBD8BB092AB29E221246E3F0F75B5ACC6E007F2C9C97DFA5893D41B31"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\attempt1-failure.json",
+        "relativePath": "attempt1-failure.json",
+        "bytes": 756,
+        "sha256": "1EFDFE7A96E242D9CE8581245DCEC78B67A72F1A04586DDBCAC4A703529040E2"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\baseline-hashes.json",
+        "relativePath": "baseline-hashes.json",
+        "bytes": 775,
+        "sha256": "85FC4BDAABF75C22D7751F78D8F2C2E13F92D36BB7723D25D6F98F4921DF4D5C"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\cases-inputs.json",
+        "relativePath": "cases-inputs.json",
+        "bytes": 1214,
+        "sha256": "2488766A084CD1C624F8A226AC546693F7698492150AC9E3BF653DE5E7AC163E"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\classes\\AuditDeadline.class",
+        "relativePath": "classes\\AuditDeadline.class",
+        "bytes": 809,
+        "sha256": "49CAD2CF20C2047E5EDB706264CA47333A943BBF84ABBDF7A5586434C07051E5"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\classes\\AuditEvent.class",
+        "relativePath": "classes\\AuditEvent.class",
+        "bytes": 1076,
+        "sha256": "C3033B4CD5498692B86E6F6AB6062E9F0CD63266833FF322B109E850B25BC344"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\classes\\AuditPage.class",
+        "relativePath": "classes\\AuditPage.class",
+        "bytes": 1906,
+        "sha256": "7B37BC3DCCC04DBDE21C9A1183266BEFB71BA49BBF8453126765B7934CCE5828"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\classes\\AuditPageFetcher.class",
+        "relativePath": "classes\\AuditPageFetcher.class",
+        "bytes": 163,
+        "sha256": "8836718A91A9637979F4CD1326947138F1179409FD7A8E9C70C6B84C5FED84A9"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\classes\\AuditSpliterator.class",
+        "relativePath": "classes\\AuditSpliterator.class",
+        "bytes": 2658,
+        "sha256": "F8904E6F1D190CFC3CF65CB7F3C231B144ADB4B97B95750651163C4E0B098848"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\classes\\AuditUnavailable.class",
+        "relativePath": "classes\\AuditUnavailable.class",
+        "bytes": 212,
+        "sha256": "76DF083CABA8A1102B1F2CEF54EF6FE4E4FD02AF0221CDA899202B736A3DB6B4"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\classes\\CaseProbe.class",
+        "relativePath": "classes\\CaseProbe.class",
+        "bytes": 2924,
+        "sha256": "9106E0B728EAFCD5B0EF2B901F38CFE61E7CACED536FAF34C78F4E60AC0EA356"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\classes\\CompleteExportJob.class",
+        "relativePath": "classes\\CompleteExportJob.class",
+        "bytes": 2509,
+        "sha256": "4502F3CEC79CB09D025798E8EFD9C09E9F175B1EC513DF6D19B4DE54B47D1AE9"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\classes\\Cursor.class",
+        "relativePath": "classes\\Cursor.class",
+        "bytes": 1266,
+        "sha256": "F7FC6CE2ECBFB12405E5B0F962BF55952AD9A25D871D4AD31BC1394201899B0B"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\classes\\Deadline.class",
+        "relativePath": "classes\\Deadline.class",
+        "bytes": 288,
+        "sha256": "A4BFA64D417EF22AB1B46FBAFCCFFFFCE26753DAB5F2B5B79110BA35513ED07A"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\classes\\ExportJob$Receipt.class",
+        "relativePath": "classes\\ExportJob$Receipt.class",
+        "bytes": 1551,
+        "sha256": "6905530DC3AEFCB5E730DC2D35D034BA0B9E44211EDCCCC66A084F6865425E19"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\classes\\ExportJob.class",
+        "relativePath": "classes\\ExportJob.class",
+        "bytes": 2462,
+        "sha256": "99DBEC76D17437894695C61B6E5B10320F190EC98EA26071C5947C6B04AFC33E"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\classes\\FixtureFetcher.class",
+        "relativePath": "classes\\FixtureFetcher.class",
+        "bytes": 1991,
+        "sha256": "C52C1E524E1DD6BE19E5C139872C79D958CA7E6A4B3B6D20B1A682DD0142638F"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\classes\\TraversalChecks$PrefetchWithWrongRemove.class",
+        "relativePath": "classes\\TraversalChecks$PrefetchWithWrongRemove.class",
+        "bytes": 1173,
+        "sha256": "875EBF258737CCBAC171D88E916518D5B78903E1DB5A57892E130EA6EA7944CA"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\classes\\TraversalChecks.class",
+        "relativePath": "classes\\TraversalChecks.class",
+        "bytes": 12265,
+        "sha256": "3240A5C1E416F1929F96B3C2112EA14CA98F26D8073A41E85C936DB606943FAB"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\classes-attempt2\\AuditDeadline.class",
+        "relativePath": "classes-attempt2\\AuditDeadline.class",
+        "bytes": 809,
+        "sha256": "49CAD2CF20C2047E5EDB706264CA47333A943BBF84ABBDF7A5586434C07051E5"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\classes-attempt2\\AuditEvent.class",
+        "relativePath": "classes-attempt2\\AuditEvent.class",
+        "bytes": 1076,
+        "sha256": "C3033B4CD5498692B86E6F6AB6062E9F0CD63266833FF322B109E850B25BC344"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\classes-attempt2\\AuditPage.class",
+        "relativePath": "classes-attempt2\\AuditPage.class",
+        "bytes": 1906,
+        "sha256": "7B37BC3DCCC04DBDE21C9A1183266BEFB71BA49BBF8453126765B7934CCE5828"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\classes-attempt2\\AuditPageFetcher.class",
+        "relativePath": "classes-attempt2\\AuditPageFetcher.class",
+        "bytes": 163,
+        "sha256": "8836718A91A9637979F4CD1326947138F1179409FD7A8E9C70C6B84C5FED84A9"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\classes-attempt2\\AuditSpliterator.class",
+        "relativePath": "classes-attempt2\\AuditSpliterator.class",
+        "bytes": 2658,
+        "sha256": "F8904E6F1D190CFC3CF65CB7F3C231B144ADB4B97B95750651163C4E0B098848"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\classes-attempt2\\AuditUnavailable.class",
+        "relativePath": "classes-attempt2\\AuditUnavailable.class",
+        "bytes": 212,
+        "sha256": "76DF083CABA8A1102B1F2CEF54EF6FE4E4FD02AF0221CDA899202B736A3DB6B4"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\classes-attempt2\\CaseProbe.class",
+        "relativePath": "classes-attempt2\\CaseProbe.class",
+        "bytes": 2924,
+        "sha256": "9106E0B728EAFCD5B0EF2B901F38CFE61E7CACED536FAF34C78F4E60AC0EA356"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\classes-attempt2\\CompleteExportJob.class",
+        "relativePath": "classes-attempt2\\CompleteExportJob.class",
+        "bytes": 2509,
+        "sha256": "4502F3CEC79CB09D025798E8EFD9C09E9F175B1EC513DF6D19B4DE54B47D1AE9"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\classes-attempt2\\Cursor.class",
+        "relativePath": "classes-attempt2\\Cursor.class",
+        "bytes": 1266,
+        "sha256": "F7FC6CE2ECBFB12405E5B0F962BF55952AD9A25D871D4AD31BC1394201899B0B"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\classes-attempt2\\Deadline.class",
+        "relativePath": "classes-attempt2\\Deadline.class",
+        "bytes": 288,
+        "sha256": "A4BFA64D417EF22AB1B46FBAFCCFFFFCE26753DAB5F2B5B79110BA35513ED07A"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\classes-attempt2\\ExportJob$Receipt.class",
+        "relativePath": "classes-attempt2\\ExportJob$Receipt.class",
+        "bytes": 1551,
+        "sha256": "6905530DC3AEFCB5E730DC2D35D034BA0B9E44211EDCCCC66A084F6865425E19"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\classes-attempt2\\ExportJob.class",
+        "relativePath": "classes-attempt2\\ExportJob.class",
+        "bytes": 2462,
+        "sha256": "99DBEC76D17437894695C61B6E5B10320F190EC98EA26071C5947C6B04AFC33E"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\classes-attempt2\\FixtureFetcher.class",
+        "relativePath": "classes-attempt2\\FixtureFetcher.class",
+        "bytes": 1991,
+        "sha256": "C52C1E524E1DD6BE19E5C139872C79D958CA7E6A4B3B6D20B1A682DD0142638F"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\classes-attempt2\\TraversalChecks$PrefetchWithWrongRemove.class",
+        "relativePath": "classes-attempt2\\TraversalChecks$PrefetchWithWrongRemove.class",
+        "bytes": 1173,
+        "sha256": "875EBF258737CCBAC171D88E916518D5B78903E1DB5A57892E130EA6EA7944CA"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\classes-attempt2\\TraversalChecks.class",
+        "relativePath": "classes-attempt2\\TraversalChecks.class",
+        "bytes": 12265,
+        "sha256": "3240A5C1E416F1929F96B3C2112EA14CA98F26D8073A41E85C936DB606943FAB"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\collect-evidence.mjs",
+        "relativePath": "collect-evidence.mjs",
+        "bytes": 1102,
+        "sha256": "FC90231E6DFB445E93A1695A3A4DA6E2F4AD4ABFB98335BF6D185749566E463E"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\commands-attempt2.json",
+        "relativePath": "commands-attempt2.json",
+        "bytes": 8023,
+        "sha256": "4D96FEA908EF9E0ABA1BE99DA6FE92041C19A9727AD5F5EF451D49A99F110D4F"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\commands.json",
+        "relativePath": "commands.json",
+        "bytes": 4021,
+        "sha256": "1532D60F86D42EC2C73A88AA59335F87B2A2EB3AC19DA9C030B7BF4B4F688E1B"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\controls\\CaseProbe.java",
+        "relativePath": "controls\\CaseProbe.java",
+        "bytes": 1298,
+        "sha256": "B10FDF091C1AFBC9F8DB876A44D4C6ED577BDE47E9890253F79B12C22F65533A"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\controls\\CompleteExportJob.java",
+        "relativePath": "controls\\CompleteExportJob.java",
+        "bytes": 789,
+        "sha256": "694A4D03666308865D2D068E8D5E2B16D13ED25AA7855373C81900AD90EF8677"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\controls\\TraversalChecks.java",
+        "relativePath": "controls\\TraversalChecks.java",
+        "bytes": 8208,
+        "sha256": "89D25BF1319911DB4A8AC76C779211173E3E40C949CA95C6FCB6819D20B7244A"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\evaluator-criteria.json",
+        "relativePath": "evaluator-criteria.json",
+        "bytes": 2529,
+        "sha256": "A4FEF8050F644C4A35BF1E235EF6E9A84A9D500BC5309CE7E34E7DF307F04FF9"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\extraction.json",
+        "relativePath": "extraction.json",
+        "bytes": 387,
+        "sha256": "0B766367328BB77775FADFD0FC9C17AE1248BAC3C72D5192CD18B59F24BCF5D8"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\local-checks-result.json",
+        "relativePath": "local-checks-result.json",
+        "bytes": 1959,
+        "sha256": "F528BE15B89C5082EEC707CB139EA753AB8A0C0E3430B3BCF66710E602FF7584"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\local-checks.mjs",
+        "relativePath": "local-checks.mjs",
+        "bytes": 4196,
+        "sha256": "E9F40EC6B1629B59291BDFEA1BBA1A3A9C9443EAD7A5906DEB49EC17E4AEAB85"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\local-command-results.json",
+        "relativePath": "local-command-results.json",
+        "bytes": 78061,
+        "sha256": "63B851B712F7EFE4FD832A320A2815A00DC96A2919E55EB3A83A8597C5E64842"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs\\01-java-version.stderr.txt",
+        "relativePath": "logs\\01-java-version.stderr.txt",
+        "bytes": 193,
+        "sha256": "E33F6CFDF4D70CB8BF63CAE1ED026B89A77539348B7AC97535E20D32D7C1D010"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs\\01-java-version.stdout.txt",
+        "relativePath": "logs\\01-java-version.stdout.txt",
+        "bytes": 0,
+        "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs\\02-javac-version.stderr.txt",
+        "relativePath": "logs\\02-javac-version.stderr.txt",
+        "bytes": 0,
+        "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs\\02-javac-version.stdout.txt",
+        "relativePath": "logs\\02-javac-version.stdout.txt",
+        "bytes": 14,
+        "sha256": "E28EEC99DA75B3A320C3A82EC268D403DD151791C791932203E6EA26CC0C0D3B"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs\\03-compile-release17.stderr.txt",
+        "relativePath": "logs\\03-compile-release17.stderr.txt",
+        "bytes": 0,
+        "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs\\03-compile-release17.stdout.txt",
+        "relativePath": "logs\\03-compile-release17.stdout.txt",
+        "bytes": 0,
+        "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs\\04-traversal-checks.stderr.txt",
+        "relativePath": "logs\\04-traversal-checks.stderr.txt",
+        "bytes": 0,
+        "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs\\04-traversal-checks.stdout.txt",
+        "relativePath": "logs\\04-traversal-checks.stdout.txt",
+        "bytes": 1172,
+        "sha256": "760A8411DD1E0C236909A579E11A5D24C04F5605846DAEAC6D265FCBB10FB673"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs-attempt2\\01-java-version.stderr.txt",
+        "relativePath": "logs-attempt2\\01-java-version.stderr.txt",
+        "bytes": 193,
+        "sha256": "E33F6CFDF4D70CB8BF63CAE1ED026B89A77539348B7AC97535E20D32D7C1D010"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs-attempt2\\01-java-version.stdout.txt",
+        "relativePath": "logs-attempt2\\01-java-version.stdout.txt",
+        "bytes": 0,
+        "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs-attempt2\\02-javac-version.stderr.txt",
+        "relativePath": "logs-attempt2\\02-javac-version.stderr.txt",
+        "bytes": 0,
+        "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs-attempt2\\02-javac-version.stdout.txt",
+        "relativePath": "logs-attempt2\\02-javac-version.stdout.txt",
+        "bytes": 14,
+        "sha256": "E28EEC99DA75B3A320C3A82EC268D403DD151791C791932203E6EA26CC0C0D3B"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs-attempt2\\03-compile-release17.stderr.txt",
+        "relativePath": "logs-attempt2\\03-compile-release17.stderr.txt",
+        "bytes": 0,
+        "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs-attempt2\\03-compile-release17.stdout.txt",
+        "relativePath": "logs-attempt2\\03-compile-release17.stdout.txt",
+        "bytes": 0,
+        "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs-attempt2\\04-traversal-checks.stderr.txt",
+        "relativePath": "logs-attempt2\\04-traversal-checks.stderr.txt",
+        "bytes": 0,
+        "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs-attempt2\\04-traversal-checks.stdout.txt",
+        "relativePath": "logs-attempt2\\04-traversal-checks.stdout.txt",
+        "bytes": 1172,
+        "sha256": "760A8411DD1E0C236909A579E11A5D24C04F5605846DAEAC6D265FCBB10FB673"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs-attempt2\\05-original-prefix.stderr.txt",
+        "relativePath": "logs-attempt2\\05-original-prefix.stderr.txt",
+        "bytes": 0,
+        "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs-attempt2\\05-original-prefix.stdout.txt",
+        "relativePath": "logs-attempt2\\05-original-prefix.stdout.txt",
+        "bytes": 90,
+        "sha256": "4873685E36F2CED3ED3E81923EB27CDE718B520F9E36AC8AF33F8B4377FBB15D"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs-attempt2\\06-original-complete.stderr.txt",
+        "relativePath": "logs-attempt2\\06-original-complete.stderr.txt",
+        "bytes": 151,
+        "sha256": "9EC465A0E6DDA2AA1D4A3B93A77AA1B87D9FBCD9992A0EAA6E9534A455C02A3C"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs-attempt2\\06-original-complete.stdout.txt",
+        "relativePath": "logs-attempt2\\06-original-complete.stdout.txt",
+        "bytes": 92,
+        "sha256": "E5669FD7738E8B357D41280A95EFD1ECAB0DE3971FB274795441770D14AF8414"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs-attempt2\\07-control-complete.stderr.txt",
+        "relativePath": "logs-attempt2\\07-control-complete.stderr.txt",
+        "bytes": 0,
+        "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs-attempt2\\07-control-complete.stdout.txt",
+        "relativePath": "logs-attempt2\\07-control-complete.stdout.txt",
+        "bytes": 94,
+        "sha256": "30F5EB328236E3D11327BC17F3AF932FED23DA77B6A13A337A23871C81E9EB1E"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs-attempt2\\08-overbroad-control-prefix.stderr.txt",
+        "relativePath": "logs-attempt2\\08-overbroad-control-prefix.stderr.txt",
+        "bytes": 149,
+        "sha256": "8DF05CBB6729F73E1556331E261B0A52302CB81F9E9C0A7BB1988E0D1C3E8473"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\logs-attempt2\\08-overbroad-control-prefix.stdout.txt",
+        "relativePath": "logs-attempt2\\08-overbroad-control-prefix.stdout.txt",
+        "bytes": 92,
+        "sha256": "36423D35530BD21A1326CFA50F2EA327A8AE86FBDD74FD711D52B915419655B6"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\prepare-example.mjs",
+        "relativePath": "prepare-example.mjs",
+        "bytes": 1681,
+        "sha256": "9A1B987B28783B39C03D89FCFAA9030CECD33A199BAF3FA5B11D2E725B3A159D"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\source-support.json",
+        "relativePath": "source-support.json",
+        "bytes": 3365,
+        "sha256": "7E66E014E256425E47532DBE74464D43FF938EA53499A77B2EBBFFE096B12DB2"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\technical-checks.mjs",
+        "relativePath": "technical-checks.mjs",
+        "bytes": 3882,
+        "sha256": "B709CEC1D384456FEF117EA68052AFE84286FDFC44E6E6F0147C1E670888E6EA"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\technical-results.json",
+        "relativePath": "technical-results.json",
+        "bytes": 2794,
+        "sha256": "EFCE236BD665095FADF72D3C8691F75A0CD4A60C32E7F4FAB6E07E43C4D30441"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-iterator-validation\\verify-handoff.mjs",
+        "relativePath": "verify-handoff.mjs",
+        "bytes": 2172,
+        "sha256": "B3DBB3C172DB161A0655B7BC525DADAB0DB7EF0416B701F70FAF2AF0F26E6534"
+      }
+    ],
+    "sourceSupport": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-iterator-validation/source-support.json",
+    "rawTechnicalLogs": [
+      "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-iterator-validation/logs",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-iterator-validation/logs-attempt2"
+    ],
+    "retention": "Keep both attempts, fixtures, control source, extraction provenance and separated case/criteria files. No third-party implementation source or dependency cache was vendored."
+  },
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Parallel-review restriction; run after all reviewers stop writing.",
+      "prerequisites": "All owned handoffs accepted and writers stopped."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Repository-wide completion requires the coordinator's final validation.",
+      "prerequisites": "Registry regenerated after all content changes; all writers stopped."
+    }
+  ],
+  "crossSkillIssues": [],
+  "coordinatorActions": [
+    "Review this no-change handoff and retained negative controls.",
+    "Optionally run the separated actor cases; report behavior independently from technical checks.",
+    "Run pending global commands at the end of the wave."
+  ]
+}

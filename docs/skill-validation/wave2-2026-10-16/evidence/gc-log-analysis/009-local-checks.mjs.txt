@@ -1,0 +1,96 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import { parseManifest } from 'file:///C:/git/agent-skills/packages/core/src/domain/manifest.ts';
+import { parseSkillDocument, documentName, documentDescription } from 'file:///C:/git/agent-skills/packages/core/src/domain/skill-document.ts';
+
+const root = 'C:/git/agent-skills';
+const owned = 'skills/gc-log-analysis';
+const temp = 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/gc-log-analysis';
+const read = (relative) => fs.readFileSync(path.join(root, relative), 'utf8');
+const sha256 = (value) => crypto.createHash('sha256').update(value).digest('hex');
+const baseline = JSON.parse(read('docs/skill-validation/wave2-2026-10-16/baseline.json')).skills.find((s) => s.name === 'gc-log-analysis');
+assert.ok(baseline);
+const parsed = parseManifest(read(`${owned}/skill.yaml`), { strict: true });
+assert.deepEqual(parsed.issues, []);
+assert.ok(parsed.manifest);
+assert.equal(String(parsed.manifest.version), '1.4.5');
+const doc = parseSkillDocument(read(`${owned}/SKILL.md`));
+assert.equal(documentName(doc), parsed.manifest.name);
+assert.equal(documentDescription(doc), parsed.manifest.description);
+const committedManifest = execFileSync('git', ['show', `HEAD:${owned}/skill.yaml`], { cwd: root, encoding: 'utf8' });
+assert.match(committedManifest, /^version: 1\.4\.4$/m);
+
+const files = fs.readdirSync(path.join(root, owned), { recursive: true, withFileTypes: true })
+  .filter((entry) => entry.isFile())
+  .map((entry) => path.relative(root, path.join(entry.parentPath, entry.name)).replaceAll('\\', '/'))
+  .sort();
+assert.equal(files.length, 5);
+const attribution = files.map((file) => {
+  const actual = fs.readFileSync(path.join(root, file));
+  const base = baseline.files[file];
+  assert.ok(base, `missing baseline for ${file}`);
+  return { file, assignmentSha256: base.sha256, finalSha256: sha256(actual), changed: sha256(actual) !== base.sha256 };
+});
+assert.deepEqual(attribution.filter((file) => file.changed).map((file) => file.file), [
+  `${owned}/references/cause-field.md`, `${owned}/skill.yaml`,
+]);
+
+const links = [];
+for (const file of files.filter((file) => file.endsWith('.md'))) {
+  for (const match of read(file).matchAll(/\]\(([^)]+)\)/g)) {
+    const target = match[1].split('#')[0];
+    if (!target || /^[a-z][a-z0-9+.-]*:/i.test(target)) continue;
+    const resolved = path.resolve(root, path.dirname(file), target);
+    assert.ok(fs.existsSync(resolved), `${file} -> ${target}`);
+    links.push({ from: file, to: target, status: 'exists' });
+  }
+}
+
+const printer = fs.readFileSync(path.join(temp, 'sources/zGCIdPrinter.cpp'), 'utf8');
+const driver = fs.readFileSync(path.join(temp, 'sources/zDriver.cpp'), 'utf8');
+assert.ok(printer.includes('"GC(%u) y: "'));
+assert.ok(printer.includes('"GC(%u) %c: "'));
+assert.ok(printer.includes('"GC(%u) "'));
+assert.match(driver, /void ZDriverMajor::collect_young\([^)]*\) \{\s+ZGCIdMajor major_id\(gc_id\(\), 'Y'\)/);
+assert.match(driver, /void ZDriverMajor::collect_old\(\) \{\s+ZGCIdMajor major_id\(gc_id\(\), 'O'\)/);
+
+const fixtureA = `[100.000s][info][gc] GC(17) Major Collection (Warmup)
+[100.010s][info][gc,phases] GC(17) Y: Pause Mark Start (Major) 0.100ms
+[100.100s][info][gc,phases] GC(17) Y: Pause Mark End 0.200ms
+[100.110s][info][gc,phases] GC(17) Y: Pause Relocate Start 0.100ms
+[100.800s][info][gc,phases] GC(17) O: Pause Mark End 0.200ms
+[100.810s][info][gc,phases] GC(17) O: Pause Relocate Start 0.100ms
+[101.000s][info][gc] GC(17) Major Collection (Warmup) 2048M(50%)->1024M(25%) 1.000s
+`;
+const fixtureB = fixtureA.split('\n').filter((line) => !line.includes('[gc,phases]')).join('\n');
+fs.writeFileSync(path.join(temp, 'case-a.log'), fixtureA);
+fs.writeFileSync(path.join(temp, 'case-b.log'), fixtureB);
+const legacyFilter = /GC\([0-9]+\) [yo]: Pause /;
+const expectedFormatFilter = /GC\([0-9]+\) ([yYO]): (Pause .*) ([0-9.]+)ms$/;
+const legacyMatches = fixtureA.split('\n').filter((line) => legacyFilter.test(line));
+const phaseMatches = fixtureA.split('\n').map((line) => line.match(expectedFormatFilter)).filter(Boolean);
+assert.equal(legacyMatches.length, 0);
+assert.equal(phaseMatches.length, 5);
+assert.equal(phaseMatches.filter((match) => match[1] === 'Y').length, 3);
+assert.equal(phaseMatches.filter((match) => match[1] === 'O').length, 2);
+const phaseTotalMs = phaseMatches.reduce((sum, match) => sum + Number(match[3]), 0);
+assert.ok(Math.abs(phaseTotalMs - 0.7) < 1e-9);
+assert.equal(fixtureB.split('\n').filter((line) => expectedFormatFilter.test(line)).length, 0);
+assert.ok(expectedFormatFilter.test('[99.000s][info][gc,phases] GC(16) y: Pause Mark Start 0.100ms'));
+
+const result = {
+  status: 'PASS',
+  runtime: process.version,
+  cwd: process.cwd(),
+  repositoryWrites: false,
+  metadata: { strictManifestIssues: parsed.issues, descriptionMatches: true, nameMatches: true, committedVersion: '1.4.4', assignmentVersion: '1.4.4', finalVersion: '1.4.5' },
+  files: attribution,
+  localLinks: links,
+  primarySourceChecks: { printerPrefixes: ['y:', 'major tag', 'unprefixed'], driverMajorTags: { young: 'Y', old: 'O' } },
+  syntheticZgcControl: { oldFilter: legacyFilter.source, oldFilterMatches: legacyMatches.length, caseAPhaseCount: phaseMatches.length, caseAPhaseTotalMs: phaseTotalMs, caseBPhaseCount: 0, minorPrefixAccepted: true, limitation: 'Synthetic strings based on primary source; no actual JVM capture, exhaustive ZGC parser or behavioral agent execution. Case B has no phase capture, so the absence of matched records is not a measured zero pause count.' },
+};
+fs.writeFileSync(path.join(temp, 'local-checks.json'), JSON.stringify(result, null, 2) + '\n');
+console.log(JSON.stringify(result, null, 2));

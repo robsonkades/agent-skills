@@ -29,10 +29,14 @@ public final class OrderConfirmer {
 
 ## Analysis
 
-- The edge `shop.orders → shop.smtp` points from policy to mechanism. If the mail relay, SDK or
-  SMTP representation changes, the _order policy_ recompiles and redeploys. Adding SMS is a
-  separate product decision: this contract currently contains an email destination, so a truly
-  multi-channel policy may honestly require its own contract change.
+- The edge `shop.orders → shop.smtp` points from policy to mechanism. An incompatible change
+  to the SMTP types or API can force policy-source changes; a
+  [binary-compatible implementation change](https://docs.oracle.com/javase/specs/jls/se17/html/jls-13.html#jls-13.4.22)
+  need not require policy recompilation. Binary compatibility does not establish unchanged
+  behavior. Inspect packaging and runtime wiring before claiming independent deployment;
+  adding an interface alone does not provide it. Adding SMS is a separate product decision:
+  this contract contains an email destination, so a multi-channel policy may require its own
+  contract change.
 - `new SmtpClient(...)` inside the class hides the dependency and hardcodes the
   endpoint; under the assumed directly connecting client, a test needs a mail server or
   interception. Inspect the actual client's existing test hooks before concluding a new
@@ -154,9 +158,9 @@ thread safety, and a synchronous `send` call does not serialize calls from diffe
 
 ## Trade-offs
 
-- Three types now exist where one did: port, adapter, root. Navigation from
-  `confirm` to actual SMTP takes one extra jump. This is the price; it is paid
-  because the seam is real.
+- The policy now has a port and a confirmation value, plus an adapter and composition
+  root. Navigation from `confirm` to actual SMTP takes one extra jump. This is the price;
+  it is paid because the seam is real.
 - `Confirmation` duplicates shape the SMTP message also has. That duplication is
   the decoupling — collapsing them would re-leak transport vocabulary into policy.
 - The composition root becomes a coupling hotspot by design. It is the one file

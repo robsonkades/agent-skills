@@ -1,0 +1,11 @@
+import java.io.IOException;
+import java.io.InputStream;
+
+final class StreamPayloadReader implements PayloadReader {
+    @Override
+    public byte[] read(InputStream input) throws IOException {
+        try (input) {
+            return input.readAllBytes();
+        }
+    }
+}

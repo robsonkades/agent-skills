@@ -1,0 +1,178 @@
+{
+  "skill": "architecture-fitness-functions",
+  "checkedAt": "2026-10-16T15:39:15.689Z",
+  "node": "v25.6.1",
+  "platform": "win32",
+  "commands": [
+    {
+      "label": "register-tests",
+      "command": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "--test",
+        "scripts/check-governance-register.test.mjs"
+      ],
+      "cwd": "C:\\git\\agent-skills\\skills\\architecture-fitness-functions",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "✔ monthly grace boundary passes as metadata, not proof of execution (90.6755ms)\n✔ null root (43.5886ms)\n✔ array root (42.3245ms)\n✔ empty register (44.4379ms)\n✔ null entry (44.132ms)\n✔ array entry (51.5271ms)\n✔ unnamed entry (42.0015ms)\n✔ hostile name object (43.1419ms)\n✔ blank owner (41.8935ms)\n✔ object metric (43.352ms)\n✔ missing consequence (42.6986ms)\n✔ impossible review (43.2265ms)\n✔ expired review (40.7099ms)\n✔ future verdict (41.7784ms)\n✔ missing verdict (42.6813ms)\n✔ impossible verdict (43.553ms)\n✔ prototype cadence (43.6452ms)\n✔ unknown mode (43.9169ms)\n✔ future reviewed (42.5477ms)\n✔ invalid reviewed (42.6485ms)\n✔ stale reviewed (42.0608ms)\n✔ automated and uncovered entries validate their distinct required fields (173.3944ms)\n✔ invalid invocation and invalid JSON return exit 2 (315.8212ms)\n✔ documented register is valid at its stated example date (95.1895ms)\n✔ UTC review deadlines are inclusive and elapsed-age limits have explicit boundaries (131.9642ms)\nℹ tests 25\nℹ suites 0\nℹ pass 25\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 1739.1149\n",
+      "stderr": "",
+      "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-fitness-functions\\logs\\register-tests.json"
+    },
+    {
+      "label": "prettier-check",
+      "command": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "C:\\git\\agent-skills\\node_modules\\prettier\\bin\\prettier.cjs",
+        "--check",
+        "C:\\git\\agent-skills\\skills\\architecture-fitness-functions\\references\\catalogue.md",
+        "C:\\git\\agent-skills\\skills\\architecture-fitness-functions\\references\\disagreements-and-evidence.md",
+        "C:\\git\\agent-skills\\skills\\architecture-fitness-functions\\references\\ungoverned.md",
+        "C:\\git\\agent-skills\\skills\\architecture-fitness-functions\\scripts\\check-governance-register.mjs",
+        "C:\\git\\agent-skills\\skills\\architecture-fitness-functions\\scripts\\check-governance-register.test.mjs",
+        "C:\\git\\agent-skills\\skills\\architecture-fitness-functions\\SKILL.md",
+        "C:\\git\\agent-skills\\skills\\architecture-fitness-functions\\skill.yaml"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "Checking formatting...\nAll matched files use Prettier code style!\n",
+      "stderr": "",
+      "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-fitness-functions\\logs\\prettier-check.json"
+    },
+    {
+      "label": "diff-check",
+      "command": "git",
+      "args": [
+        "diff",
+        "--check",
+        "--",
+        "skills/architecture-fitness-functions"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": "",
+      "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-fitness-functions\\logs\\diff-check.json"
+    },
+    {
+      "label": "status",
+      "command": "git",
+      "args": [
+        "status",
+        "--short",
+        "--",
+        "skills/architecture-fitness-functions"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": "",
+      "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-fitness-functions\\logs\\status.json"
+    },
+    {
+      "label": "diff",
+      "command": "git",
+      "args": [
+        "diff",
+        "--",
+        "skills/architecture-fitness-functions"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": "",
+      "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-fitness-functions\\logs\\diff.json"
+    },
+    {
+      "label": "staged-diff",
+      "command": "git",
+      "args": [
+        "diff",
+        "--cached",
+        "--",
+        "skills/architecture-fitness-functions"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": "",
+      "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-fitness-functions\\logs\\staged-diff.json"
+    }
+  ],
+  "strictValidation": {
+    "issues": [],
+    "shippedFiles": 7
+  },
+  "internalLinks": [
+    {
+      "from": "skills/architecture-fitness-functions/SKILL.md",
+      "target": "references/catalogue.md"
+    },
+    {
+      "from": "skills/architecture-fitness-functions/SKILL.md",
+      "target": "references/ungoverned.md"
+    },
+    {
+      "from": "skills/architecture-fitness-functions/SKILL.md",
+      "target": "references/catalogue.md"
+    },
+    {
+      "from": "skills/architecture-fitness-functions/SKILL.md",
+      "target": "references/ungoverned.md"
+    },
+    {
+      "from": "skills/architecture-fitness-functions/SKILL.md",
+      "target": "references/disagreements-and-evidence.md"
+    }
+  ],
+  "optionalReferrals": [
+    "architecture-characteristics",
+    "architecture-testing",
+    "architecture-trade-off-analysis",
+    "performance-regression-ci",
+    "quality-gates",
+    "slo-and-alerting"
+  ],
+  "finalHashes": [
+    {
+      "path": "skills/architecture-fitness-functions/references/catalogue.md",
+      "sha256": "0ee5f5f3782f63bb9a9077cf14d4aa4b95f4272d5b1baf35579a77bb76afb31e"
+    },
+    {
+      "path": "skills/architecture-fitness-functions/references/disagreements-and-evidence.md",
+      "sha256": "e09bb92df62506b2450d6f3547fd23c98c353bca72af15102e26b1cd477959b7"
+    },
+    {
+      "path": "skills/architecture-fitness-functions/references/ungoverned.md",
+      "sha256": "82e8e5a6408cfbd46e8203c1cef666fddf8bb50372abaefcdc615644d93fdb63"
+    },
+    {
+      "path": "skills/architecture-fitness-functions/scripts/check-governance-register.mjs",
+      "sha256": "16ad140629f103fb20654270b615a58dc2727dbe890b27c7321f5551beafa070"
+    },
+    {
+      "path": "skills/architecture-fitness-functions/scripts/check-governance-register.test.mjs",
+      "sha256": "488dfa563e652897738773f801985a1f69abacb3f7ee8a4d731460dc76e8c7cf"
+    },
+    {
+      "path": "skills/architecture-fitness-functions/SKILL.md",
+      "sha256": "d4800f538e509653cf72855e6aaadd066125190d46705294e4d895f92de86126"
+    },
+    {
+      "path": "skills/architecture-fitness-functions/skill.yaml",
+      "sha256": "4109c74ced8ab5df116e5b82ecf23610a92cee4e446ac2c827535cb0ddd5d418"
+    }
+  ],
+  "changedSinceAssignment": [],
+  "noActiveChildren": true
+}

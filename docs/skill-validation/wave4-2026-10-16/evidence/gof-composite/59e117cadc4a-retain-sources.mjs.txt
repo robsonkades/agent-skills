@@ -1,0 +1,27 @@
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+const out = 'C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-composite/sources';
+mkdirSync(out, { recursive: true });
+const api = 'https://docs.oracle.com/en/java/javase/21/docs/api/java.base/';
+const sources = [
+  { id: 'list-21', url: `${api}java/util/List.html`, version: 'Java SE 21', sections: ['Unmodifiable Lists', 'remove(Object)', 'copyOf'], supports: 'List membership is unmodifiable but elements may be mutable; remove selects first equal element.' },
+  { id: 'identity-map-21', url: `${api}java/util/IdentityHashMap.html`, version: 'Java SE 21', sections: ['class contract', 'put'], supports: 'Reference identity distinguishes equal-but-distinct keys; repeated same key replaces its mapped value.' },
+  { id: 'record-21', url: `${api}java/lang/Record.html`, version: 'Java SE 21', sections: ['class invariant', 'equals', 'hashCode', 'toString'], supports: 'Reconstruction from accessors preserves equality; synthesized methods depend on components.' },
+  { id: 'match-exception-21', url: `${api}java/lang/MatchException.html`, version: 'Java SE 21', sections: ['class documentation'], supports: 'Separate compilation can leave exhaustive type switch without matching subtype.' },
+  { id: 'deque-21', url: `${api}java/util/Deque.html`, version: 'Java SE 21', sections: ['Stack and Deque methods', 'push', 'pop'], supports: 'Stack push/pop operate at the front; forward pushes reverse sibling order.' },
+  { id: 'math-21', url: `${api}java/lang/Math.html`, version: 'Java SE 21', sections: ['addExact(long,long)'], supports: 'Exact addition rejects long overflow.' },
+  { id: 'collection-21', url: `${api}java/util/Collection.html`, version: 'Java SE 21', sections: ['Destructive methods', 'optional operations'], supports: 'Optional mutation may reject by contract, so a throwing leaf is not inherently a contract violation.' },
+  { id: 'arraylist-21', url: `${api}java/util/ArrayList.html`, version: 'Java SE 21', sections: ['synchronization and fail-fast iterator notes'], supports: 'Fail-fast detection is best effort; exceptions must not be synchronization or correctness guarantees.' },
+  { id: 'jep-444', url: 'https://openjdk.org/jeps/444', version: 'JEP 444, delivered in JDK 21', sections: ['Memory use and interaction with garbage collection'], supports: 'Virtual-thread stacks use heap stack chunks; this does not make arbitrary recursion safe.' }
+];
+const results = await Promise.all(sources.map(async source => {
+  try {
+    const response = await fetch(source.url, { signal: AbortSignal.timeout(20000) });
+    const bytes = Buffer.from(await response.arrayBuffer());
+    const file = `${out}/${source.id}.html`;
+    writeFileSync(file, bytes);
+    return { ...source, consultedAt: new Date().toISOString(), status: response.status, finalUrl: response.url, bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex'), file, limits: 'Contract or mechanism only; not proof of the application policy, all runtimes, performance or agent quality.' };
+  } catch (error) { return { ...source, error: String(error), consultedAt: new Date().toISOString() }; }
+}));
+writeFileSync(`${out}/source-index.json`, JSON.stringify(results, null, 2) + '\n');
+console.log(JSON.stringify(results.map(({ supports, limits, ...r }) => r), null, 2));

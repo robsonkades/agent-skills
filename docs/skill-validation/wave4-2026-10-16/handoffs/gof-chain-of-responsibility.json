@@ -1,0 +1,788 @@
+{
+  "schemaVersion": 1,
+  "status": "NO_CHANGES_NEEDED",
+  "skill": "gof-chain-of-responsibility",
+  "ownedPath": "C:/git/agent-skills/skills/gof-chain-of-responsibility",
+  "reviewDate": "2026-10-16",
+  "reviewer": "/root/quality20",
+  "allWritesStopped": true,
+  "noActiveBackgroundProcess": true,
+  "scope": {
+    "role": "Selection/review/implementation guidance for first-match domain handlers and pipeline/middleware continuations.",
+    "criteria": [
+      "First-match versus eligible-stage forwarding, handled denial versus abstention versus execution failure.",
+      "Actual configured precedence, tie policy, catch-all position and consumer wiring.",
+      "Defined unhandled outcome and mandatory checks before dependent effects.",
+      "Zero/one continuation calls, terminal counts, resource ownership on rejection, throw and asynchronous completion.",
+      "Cancellation/result completion distinguished from computation termination.",
+      "Java 17 baseline retained; framework-specific guarantees version-qualified; adequate loops and framework chains preserved."
+    ],
+    "procedure": "Read entire four-file package; root AGENTS.md, complete review prompt, parallel workflow, skill-engineering plus evidence/evaluation/resource/anti-pattern references, wave4 brief and relevant prior-wave findings. Reviewed the wave4 baseline's selected row and compared actual files.",
+    "assignmentBaseline": "docs/skill-validation/wave4-2026-10-16/baseline.json, packages[name=gof-chain-of-responsibility]",
+    "noStructuralChanges": true
+  },
+  "baseline": {
+    "committedVersion": "1.2.4",
+    "assignmentVersion": "1.2.4",
+    "preExistingVersionBump": false,
+    "stagedChanges": [],
+    "unstagedChanges": [],
+    "untrackedFiles": [],
+    "snapshot": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-chain-of-responsibility-validation/assignment-baseline.json",
+    "hashes": [
+      {
+        "path": "C:\\git\\agent-skills\\skills\\gof-chain-of-responsibility\\SKILL.md",
+        "sha256": "CE271E6EB0C99CD8C02E2F4214822FD60E7012C9A486BB36238CFD231F40B58B"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\gof-chain-of-responsibility\\skill.yaml",
+        "sha256": "7D75083D851E115D88F282CD53F0E08119CE8F866978BC9D3C9E2BDF218EC952"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\gof-chain-of-responsibility\\references\\chain-vs-pipeline.md",
+        "sha256": "5ACD175F10552E1D5AC9F9ADB910CCEA193C279259945B2FB5F9602B42E69977"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\gof-chain-of-responsibility\\references\\worked-example.md",
+        "sha256": "6C5285B317AA3DFB54D0BF11848F0E469576FCF36F17E212F95DECFABCBFEE94"
+      }
+    ],
+    "waveBaselineMatchesAssignment": true
+  },
+  "versions": {
+    "committed": "1.2.4",
+    "initial": "1.2.4",
+    "final": "1.2.4",
+    "rationale": "No skill content changes; no version bump permitted or needed."
+  },
+  "findings": [
+    {
+      "id": "first-match-contract",
+      "status": "adequate-preserved",
+      "locations": ["SKILL.md:89-120", "SKILL.md:151-158", "references/worked-example.md:43-83"],
+      "observation": "Non-null Optional separates abstention from any present decision, including denial; exception fails the attempt. The ordered owner stops at first present result and throws a domain-specific unhandled exception.",
+      "evidence": "Exact AuthorisationRule/AuthorisationRules blocks compiled with minimal fixtures; tests confirm first rejection stops later approval, absent and empty chains fail visibly, exception identity is preserved and null results are not treated as abstention.",
+      "decision": "No correction. A generic extra result taxonomy or new linked hierarchy would add no missing decision."
+    },
+    {
+      "id": "continuation-and-cleanup",
+      "status": "adequate-preserved",
+      "locations": [
+        "references/chain-vs-pipeline.md:32-67",
+        "SKILL.md continuation decision rule and review checklist"
+      ],
+      "observation": "Forwarding count, rejection ownership, synchronous throws, primary exception and actual async completion are explicit. The skill already warns against result cancellation being mistaken for computation termination.",
+      "evidence": "JLS17 and CompletableFuture17 contracts; synthetic success/rejection/pre-next throw/terminal throw traces, suppressed close error, duplicate-forwarding negative control, cancelled-result versus work-completion controls.",
+      "decision": "No correction. Preserve the synchronous and asynchronous distinction without requiring all chains to become async."
+    },
+    {
+      "id": "effective-framework-contract",
+      "status": "adequate-preserved",
+      "locations": [
+        "references/chain-vs-pipeline.md:89-104",
+        "references/chain-vs-pipeline.md:177-191",
+        "references/worked-example.md:86-114"
+      ],
+      "observation": "Inspect actual consumer assembly and framework callback eligibility. Spring preHandle=false cannot rely on that interceptor's afterCompletion, async thread exit is distinct, and Netty event direction affects traversal.",
+      "evidence": "Spring 6.2.12 API/pinned dependency-resolution source and Netty 4.1 documentation confirm the existing caveats.",
+      "decision": "No correction. No Spring/Netty integration execution claimed."
+    },
+    {
+      "id": "state-effects-and-simplicity",
+      "status": "adequate-preserved",
+      "locations": [
+        "SKILL.md:69-83",
+        "SKILL.md:112-176",
+        "references/chain-vs-pipeline.md error propagation and validation sections",
+        "references/worked-example.md:151-207"
+      ],
+      "observation": "Frozen list membership is not deep immutability/thread safety; deferred effects do not make the final commit atomic or idempotent. Independent validation differs from prerequisite-dependent work, and a fixed ordered loop can remain adequate.",
+      "evidence": "List/payload fixture controls, existing explicit transactional/idempotency limits, outbox author's source and code/contract review.",
+      "decision": "No expansion or forced pattern change."
+    },
+    {
+      "id": "java-compatibility",
+      "status": "adequate-preserved",
+      "locations": [
+        "SKILL.md Java baseline paragraph",
+        "SKILL.md:163-168",
+        "references/worked-example.md introductory prerequisites"
+      ],
+      "observation": "Partial examples target Java 17. Pattern switch and ScopedValue availability are separately qualified; framework fragments require the project's dependencies.",
+      "evidence": "javac --release 17 and actual Temurin25 runtime recorded; Oracle language/API documentation confirms version distinctions.",
+      "decision": "No baseline upgrade, preview flags or dependency installation."
+    }
+  ],
+  "correctedFindings": [],
+  "remainingFindings": [],
+  "noChangeBasis": "No material omission or incorrect recommendation was found in the reviewed paths. The requested lenses are already actionable and supported. Local controls corroborate the exercised contracts, without proving absence of all defects or effectiveness of the skill on agents.",
+  "files": {
+    "changedByReviewer": [],
+    "preExistingChanges": [],
+    "unchanged": [
+      "skills/gof-chain-of-responsibility/SKILL.md",
+      "skills/gof-chain-of-responsibility/references/chain-vs-pipeline.md",
+      "skills/gof-chain-of-responsibility/references/worked-example.md",
+      "skills/gof-chain-of-responsibility/skill.yaml"
+    ],
+    "finalHashes": [
+      {
+        "path": "SKILL.md",
+        "sha256": "CE271E6EB0C99CD8C02E2F4214822FD60E7012C9A486BB36238CFD231F40B58B"
+      },
+      {
+        "path": "references/chain-vs-pipeline.md",
+        "sha256": "5ACD175F10552E1D5AC9F9ADB910CCEA193C279259945B2FB5F9602B42E69977"
+      },
+      {
+        "path": "references/worked-example.md",
+        "sha256": "6C5285B317AA3DFB54D0BF11848F0E469576FCF36F17E212F95DECFABCBFEE94"
+      },
+      {
+        "path": "skill.yaml",
+        "sha256": "7D75083D851E115D88F282CD53F0E08119CE8F866978BC9D3C9E2BDF218EC952"
+      }
+    ],
+    "finalDiff": "Empty against HEAD and assignment. No package untracked or staged files.",
+    "reviewArtifacts": "Only unique coordinator-authorized isolated temp directory and handoff were written."
+  },
+  "preservedCapabilities": [
+    "Activation for missing fallthrough policy, independently contributed handlers, unexplained ordering and chains proposed for fixed cases.",
+    "Classical first-match versus middleware variants, caller-defined handled outcomes and preservation of simple conditionals/loops.",
+    "Explicit unhandled policy, rejection distinct from abstention, no implicit fallback on exceptions and no speculative parallel invocation.",
+    "Reviewable precedence/ties, catch-all placement, actual DI consumer assembly and framework-native chain reuse.",
+    "Continuation count, response ownership, entry/completion traces, throwing before forwarding and suppression-aware resource cleanup.",
+    "Async work lifetime, cancellation/deadline propagation, supported continuation lifetime and no shared mutable cursor.",
+    "Shared-handler/request-state ownership and copied-list versus mutable payload caveats.",
+    "Partial-state failure, final effect application, applicable transaction/compensation, redelivery and outbox/idempotency boundaries.",
+    "Configurable assembly lifetime with bounded cache/measurement rather than assumed cost.",
+    "Independent collect-all validation versus structural prerequisites and execution-failure classification.",
+    "Worked payment rule example with authorized-override caveat, mandatory-check placement, default outcome tests and effective factory wiring.",
+    "Java17 baseline, Java21 switch/Java25 ScopedValue qualifications, Spring6.2 and Netty4.1 versioned examples.",
+    "Two routed references and all sixteen optional neighboring referrals retained."
+  ],
+  "replacedCapabilities": [],
+  "removedCapabilities": [],
+  "localValidation": {
+    "overall": "passed",
+    "runner": {
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-chain-of-responsibility-validation/run-checks.mjs",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "checks": 3,
+      "childCommands": 16,
+      "resultPath": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-chain-of-responsibility-validation/results.json",
+      "effects": "Reads only owned package/shared parser sources and declared suggestion existence; writes fixtures/classes/logs only in the authorized isolated temp evidence directory."
+    },
+    "checks": [
+      {
+        "name": "local-structure-and-preservation",
+        "passed": true,
+        "version": "1.2.4",
+        "fileHashes": [
+          {
+            "path": "SKILL.md",
+            "sha256": "CE271E6EB0C99CD8C02E2F4214822FD60E7012C9A486BB36238CFD231F40B58B"
+          },
+          {
+            "path": "references/chain-vs-pipeline.md",
+            "sha256": "5ACD175F10552E1D5AC9F9ADB910CCEA193C279259945B2FB5F9602B42E69977"
+          },
+          {
+            "path": "references/worked-example.md",
+            "sha256": "6C5285B317AA3DFB54D0BF11848F0E469576FCF36F17E212F95DECFABCBFEE94"
+          },
+          {
+            "path": "skill.yaml",
+            "sha256": "7D75083D851E115D88F282CD53F0E08119CE8F866978BC9D3C9E2BDF218EC952"
+          }
+        ],
+        "manifestIssues": [],
+        "localLinks": 2,
+        "routedReferences": 2,
+        "suggestions": 16,
+        "unchangedAgainstAssignment": true
+      },
+      {
+        "name": "java17-examples-and-contract-controls",
+        "passed": true,
+        "sourceRelease": 17,
+        "actualRuntime": "Temurin 25.0.3+9",
+        "scope": "Exact AuthorisationRule, AuthorisationRules and Decision Markdown blocks, imports/minimal domain fixtures; plus synthetic continuation/resource/cancellation controls. No Spring, Netty, database or broker integration."
+      },
+      {
+        "name": "paired-fixture-technical-observations",
+        "passed": true,
+        "onlyInputDifference": "execution.mode property: inline versus queued",
+        "actorEvaluation": false,
+        "observations": "Unchanged original passes inline and exposes closed-session failure queued. Separate completion-owned control passes both. The control assumes the shown non-cancelled minimal stage; it is not a universal cancel-safe recipe."
+      }
+    ],
+    "commands": [
+      {
+        "label": "node-version",
+        "executable": "C:\\Program Files\\nodejs\\node.exe",
+        "args": ["--version"],
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "v25.6.1\r\n",
+        "stderr": "",
+        "error": null
+      },
+      {
+        "label": "java-version",
+        "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+        "args": ["-version"],
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "",
+        "stderr": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n",
+        "error": null
+      },
+      {
+        "label": "javac-version",
+        "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+        "args": ["-version"],
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "javac 25.0.3\r\n",
+        "stderr": "",
+        "error": null
+      },
+      {
+        "label": "prettier-owned",
+        "executable": "C:\\Program Files\\nodejs\\node.exe",
+        "args": [
+          "C:\\git\\agent-skills\\node_modules\\prettier\\bin\\prettier.cjs",
+          "--check",
+          "C:\\git\\agent-skills\\skills\\gof-chain-of-responsibility\\SKILL.md",
+          "C:\\git\\agent-skills\\skills\\gof-chain-of-responsibility\\references\\chain-vs-pipeline.md",
+          "C:\\git\\agent-skills\\skills\\gof-chain-of-responsibility\\references\\worked-example.md",
+          "C:\\git\\agent-skills\\skills\\gof-chain-of-responsibility\\skill.yaml"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "Checking formatting...\nAll matched files use Prettier code style!\n",
+        "stderr": "",
+        "error": null
+      },
+      {
+        "label": "diff-check-owned",
+        "executable": "git",
+        "args": ["diff", "--check", "--", "skills/gof-chain-of-responsibility"],
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "",
+        "stderr": "",
+        "error": null
+      },
+      {
+        "label": "diff-against-head",
+        "executable": "git",
+        "args": ["diff", "--exit-code", "HEAD", "--", "skills/gof-chain-of-responsibility"],
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "",
+        "stderr": "",
+        "error": null
+      },
+      {
+        "label": "compile-extracted-and-controls-release17",
+        "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+        "args": [
+          "--release",
+          "17",
+          "-d",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-chain-of-responsibility-validation\\technical\\classes",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-chain-of-responsibility-validation\\technical\\extracted\\AuthorisationRule.java",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-chain-of-responsibility-validation\\technical\\extracted\\AuthorisationRules.java",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-chain-of-responsibility-validation\\technical\\extracted\\Decision.java",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-chain-of-responsibility-validation\\technical\\RuleControls.java",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-chain-of-responsibility-validation\\technical\\ContinuationControls.java"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "",
+        "stderr": "",
+        "error": null
+      },
+      {
+        "label": "rule-controls",
+        "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+        "args": [
+          "-cp",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-chain-of-responsibility-validation\\technical\\classes",
+          "RuleControls"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "PASS 19 rule controls: first denial, abstention, unhandled, failure propagation, null contract, membership ownership, shallow payload limit\r\n",
+        "stderr": "",
+        "error": null
+      },
+      {
+        "label": "continuation-controls",
+        "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+        "args": [
+          "-cp",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-chain-of-responsibility-validation\\technical\\classes",
+          "ContinuationControls"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "PASS 30 continuation controls: zero/one/two forwarding, success/failure cleanup, suppressed close error, cancellation versus actual work completion\r\n",
+        "stderr": "",
+        "error": null
+      },
+      {
+        "label": "compile-case-a",
+        "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+        "args": [
+          "--release",
+          "17",
+          "-d",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-chain-of-responsibility-validation\\case-a\\classes",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-chain-of-responsibility-validation\\case-a\\src\\ExportApp.java"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "",
+        "stderr": "",
+        "error": null
+      },
+      {
+        "label": "run-case-a",
+        "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+        "args": [
+          "-cp",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-chain-of-responsibility-validation\\case-a\\classes",
+          "ExportApp",
+          "app.properties"
+        ],
+        "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-chain-of-responsibility-validation\\case-a",
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "report\r\n[open, read, close]\r\n",
+        "stderr": "",
+        "error": null
+      },
+      {
+        "label": "compile-case-b",
+        "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+        "args": [
+          "--release",
+          "17",
+          "-d",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-chain-of-responsibility-validation\\case-b\\classes",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-chain-of-responsibility-validation\\case-b\\src\\ExportApp.java"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "",
+        "stderr": "",
+        "error": null
+      },
+      {
+        "label": "run-case-b",
+        "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+        "args": [
+          "-cp",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-chain-of-responsibility-validation\\case-b\\classes",
+          "ExportApp",
+          "app.properties"
+        ],
+        "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-chain-of-responsibility-validation\\case-b",
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "FAILED: IllegalStateException: session closed\r\n[open, close]\r\n",
+        "stderr": "",
+        "error": null
+      },
+      {
+        "label": "compile-completion-control",
+        "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+        "args": [
+          "--release",
+          "17",
+          "-d",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-chain-of-responsibility-validation\\technical\\completion-control\\classes",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-chain-of-responsibility-validation\\technical\\completion-control\\ExportApp.java"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "",
+        "stderr": "",
+        "error": null
+      },
+      {
+        "label": "run-completion-control-a",
+        "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+        "args": [
+          "-cp",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-chain-of-responsibility-validation\\technical\\completion-control\\classes",
+          "ExportApp",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-chain-of-responsibility-validation\\case-a\\app.properties"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "report\r\n[open, read, close]\r\n",
+        "stderr": "",
+        "error": null
+      },
+      {
+        "label": "run-completion-control-b",
+        "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+        "args": [
+          "-cp",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-chain-of-responsibility-validation\\technical\\completion-control\\classes",
+          "ExportApp",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-chain-of-responsibility-validation\\case-b\\app.properties"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "report\r\n[open, read, close]\r\n",
+        "stderr": "",
+        "error": null
+      }
+    ],
+    "observations": {
+      "extractedExamples": "Three original Markdown blocks compiled unchanged apart from imports; omitted Payment/Outcome/DomainEvent/exception collaborators supplied as minimal domain fixtures.",
+      "ruleControls": "19 assertions passed: first rejection, no later invocation, abstention/unhandled, exception identity, non-null contract, membership snapshot and shallow event payload.",
+      "continuationControls": "30 assertions passed: zero/one/two forwarding, success/rejection/throws cleanup ordering, primary/close exceptions, cancelled response versus computation completion.",
+      "pairedCases": "Original inline fixture reports report and [open, read, close]. Original queued fixture intentionally reports FAILED: IllegalStateException: session closed and [open, close]. Separate completion-owned control reports success in both.",
+      "countsLimitation": "Assertion counts describe local technical controls, not independent agent evaluations or a quality score."
+    },
+    "additionalReadOnlyCommands": [
+      {
+        "command": "git status --short --untracked-files=all -- skills/gof-chain-of-responsibility",
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "stdout": "",
+        "result": "Clean at assignment and final inspection."
+      },
+      {
+        "command": "git diff --cached -- skills/gof-chain-of-responsibility",
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "stdout": "",
+        "result": "No staged changes."
+      },
+      {
+        "command": "git show HEAD:skills/gof-chain-of-responsibility/skill.yaml",
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "result": "Committed manifest version 1.2.4; complete manifest read and compared at assignment."
+      },
+      {
+        "command": "Get-FileHash -Algorithm SHA256 'skills/gof-chain-of-responsibility/SKILL.md','skills/gof-chain-of-responsibility/skill.yaml','skills/gof-chain-of-responsibility/references/chain-vs-pipeline.md','skills/gof-chain-of-responsibility/references/worked-example.md'",
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "result": [
+          {
+            "path": "SKILL.md",
+            "sha256": "CE271E6EB0C99CD8C02E2F4214822FD60E7012C9A486BB36238CFD231F40B58B"
+          },
+          {
+            "path": "references/chain-vs-pipeline.md",
+            "sha256": "5ACD175F10552E1D5AC9F9ADB910CCEA193C279259945B2FB5F9602B42E69977"
+          },
+          {
+            "path": "references/worked-example.md",
+            "sha256": "6C5285B317AA3DFB54D0BF11848F0E469576FCF36F17E212F95DECFABCBFEE94"
+          },
+          {
+            "path": "skill.yaml",
+            "sha256": "7D75083D851E115D88F282CD53F0E08119CE8F866978BC9D3C9E2BDF218EC952"
+          }
+        ]
+      }
+    ],
+    "failures": [
+      {
+        "type": "authoring-tool parse error, corrected before execution",
+        "details": "An initial functions.exec JavaScript payload used an unescaped Markdown backtick fence inside a raw template literal. The tool rejected it at parse time with SyntaxError: Invalid or unexpected token; no files or commands from that call ran. Replaced fence construction with String.fromCharCode(96).repeat(3) before retry."
+      },
+      {
+        "type": "primary source unavailable",
+        "url": "https://openjdk.org/jeps/506",
+        "result": "web.open returned 403 Forbidden; used Java SE25 ScopedValue API as primary fallback."
+      },
+      {
+        "type": "primary source unavailable",
+        "url": "https://openjdk.org/jeps/441",
+        "result": "web.open returned 403 Forbidden; used Java SE21 language changes page as primary fallback."
+      },
+      {
+        "type": "source lookup returned no match",
+        "details": "web.find searches for Permanent and Pattern Matching on the redirected language-page reference returned no match. Direct open of the final release-page URL exposed the relevant Java21 and Java17 rows; no inference was based on empty find results."
+      }
+    ],
+    "unexpectedTechnicalCheckFailures": [],
+    "expectedNegativeControls": "Queued original intentionally demonstrates early session closure; duplicate continuation and cancelled-result cleanup controls demonstrate incorrect designs. Their observations are asserted as negative controls, not treated as valid implementations."
+  },
+  "behavioralEvidence": {
+    "executedActorEvaluations": [],
+    "measuredImprovement": false,
+    "structuredWalkthroughs": [
+      {
+        "caseId": "chain-inline",
+        "conclusion": "Factory selects immediate execution. Terminal uses session before handle returns, so lexical cleanup already satisfies this caller; retain simple flow."
+      },
+      {
+        "caseId": "chain-queued",
+        "conclusion": "Factory queues terminal until caller drains after handle returns. Lexical close occurs too early; existing skill directs ownership to actual downstream completion, including synchronous launch failure."
+      }
+    ],
+    "technicalExecutions": "Both cases and a private completion-owned control executed; these are fixture/code checks, not agent outputs.",
+    "pending": "Coordinator owns any independent actor evaluation. Since package is unchanged, do not imply a revised version improves behavior."
+  },
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se17/html/jls-14.html#jls-14.20.2",
+      "version": "Java Language Specification SE 17",
+      "section": "14.20.2 and 14.20.3",
+      "supports": "Lexical finally can replace a pending abrupt completion; try-with-resources preserves the primary exception with close failures suppressed. Supports existing cleanup guidance.",
+      "limitation": "Language control-flow contract, not evidence that asynchronous work has finished.",
+      "accessed": "2026-10-16"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/CompletableFuture.html",
+      "version": "Java SE 17",
+      "section": "Class policies; cancel; minimalCompletionStage",
+      "supports": "Cancellation is exceptional completion, not control over the computation; the stage surface and actual completion owner matter.",
+      "limitation": "Synthetic custom work producer tested here; no claim that all cancelled supplyAsync tasks execute.",
+      "accessed": "2026-10-16"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/Executor.html",
+      "version": "Java SE 17",
+      "section": "Class contract and execute",
+      "supports": "Executor permits immediate execution in the submitting thread, supporting the legitimate inline member of the case pair.",
+      "limitation": "Actual scheduling must follow the supplied implementation; no production executor benchmark.",
+      "accessed": "2026-10-16"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/stream/Stream.html",
+      "version": "Java SE 17",
+      "section": "Sequential/parallel execution and findFirst",
+      "supports": "Existing sequential first-result expression and distinction between selected encounter-order result and exclusive invocation.",
+      "limitation": "Only sequential expression control run; no empirical parallel scheduling guarantee claimed.",
+      "accessed": "2026-10-16"
+    },
+    {
+      "url": "https://docs.spring.io/spring-framework/docs/6.2.12/javadoc-api/org/springframework/web/servlet/HandlerInterceptor.html",
+      "version": "Spring Framework 6.2.12",
+      "section": "preHandle, postHandle, afterCompletion",
+      "supports": "Early response belongs to rejecting interceptor; afterCompletion requires that interceptor's successful true preHandle and runs in reverse order.",
+      "limitation": "API/source review only; no servlet container or Spring application context launched.",
+      "accessed": "2026-10-16"
+    },
+    {
+      "url": "https://docs.spring.io/spring-framework/docs/6.2.12/javadoc-api/org/springframework/web/servlet/AsyncHandlerInterceptor.html",
+      "version": "Spring Framework 6.2.12",
+      "section": "Async handling, redispatch, timeout/network-error callbacks",
+      "supports": "Initial async thread exit differs from request completion, with documented redispatch and no-redispatch paths.",
+      "limitation": "No async servlet integration test; the skill already qualifies these paths.",
+      "accessed": "2026-10-16"
+    },
+    {
+      "url": "https://docs.spring.io/spring-framework/reference/6.2/core/beans/annotation-config/autowired.html",
+      "version": "Spring Framework 6.2",
+      "section": "Typed collections and ordering",
+      "supports": "Collection injection and ordering depend on the effective consumer and registration.",
+      "limitation": "Reference-line documentation combined with exact 6.2.12 implementation; no matrix of DI configurations executed.",
+      "accessed": "2026-10-16"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.12/spring-beans/src/main/java/org/springframework/beans/factory/support/DefaultListableBeanFactory.java",
+      "version": "Spring Framework v6.2.12",
+      "section": "doResolveDependency steps 3, 4a and 4b, lines 1582-1613 in fetched source",
+      "supports": "Name/qualifier shortcut may resolve first; multi-bean collection resolution precedes the direct collection-bean branch. Confirms existing effective-consumer caveat.",
+      "limitation": "Implementation-specific resolution order for the pinned version; source not vendored into skill/evidence.",
+      "accessed": "2026-10-16"
+    },
+    {
+      "url": "https://netty.io/4.1/api/io/netty/channel/ChannelPipeline.html",
+      "version": "Netty 4.1.139.Final, as served 2026-10-16",
+      "section": "Event flow and eligible-handler traversal",
+      "supports": "Inbound/outbound directions differ and handlers lacking the relevant direction are skipped; forwarding follows event methods.",
+      "limitation": "API review only; no Netty channel execution.",
+      "accessed": "2026-10-16"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/ScopedValue.html",
+      "version": "Java SE 25",
+      "section": "Class contract, inheritance and Since 25",
+      "supports": "Existing version qualification and dynamically scoped context guidance; shared value safety needs immutable data or synchronization.",
+      "limitation": "Fallback primary API after JEP endpoint returned 403; no ScopedValue example executed in this assignment.",
+      "accessed": "2026-10-16"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/21/language/java-language-changes-release.html",
+      "version": "Java SE 21",
+      "section": "Java Language Changes for Java SE 21 and Java SE 17",
+      "supports": "Pattern matching for switch is permanent in 21 and preview in 17, preserving the existing no-preview-upgrade caveat.",
+      "limitation": "Fallback primary language documentation after JEP endpoint returned 403.",
+      "accessed": "2026-10-16"
+    },
+    {
+      "url": "https://microservices.io/patterns/data/transactional-outbox.html",
+      "version": "Author-maintained pattern page consulted 2026-10-16",
+      "section": "Solution and Result context",
+      "supports": "State/event intent atomic persistence and possible relay duplicates support the worked-example outbox/idempotency caveat.",
+      "limitation": "Pattern-author primary source; no database/broker integration or exactly-once guarantee inferred.",
+      "accessed": "2026-10-16"
+    }
+  ],
+  "evidencePaths": [
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-chain-of-responsibility-validation/assignment-baseline.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-chain-of-responsibility-validation/run-checks.mjs",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-chain-of-responsibility-validation/results.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-chain-of-responsibility-validation/logs",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-chain-of-responsibility-validation/technical/RuleControls.java",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-chain-of-responsibility-validation/technical/ContinuationControls.java",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-chain-of-responsibility-validation/technical/extracted/AuthorisationRule.java",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-chain-of-responsibility-validation/technical/extracted/AuthorisationRules.java",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-chain-of-responsibility-validation/technical/extracted/Decision.java",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-chain-of-responsibility-validation/technical/completion-control/ExportApp.java",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-chain-of-responsibility-validation/case-a/README.md",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-chain-of-responsibility-validation/case-a/app.properties",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-chain-of-responsibility-validation/case-a/src/ExportApp.java",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-chain-of-responsibility-validation/case-b/README.md",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-chain-of-responsibility-validation/case-b/app.properties",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-chain-of-responsibility-validation/case-b/src/ExportApp.java",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-chain-of-responsibility-validation/inputs.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-chain-of-responsibility-validation/criteria.json"
+  ],
+  "cases": {
+    "inputsPath": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-chain-of-responsibility-validation/inputs.json",
+    "criteriaPath": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-chain-of-responsibility-validation/criteria.json",
+    "inputs": {
+      "kind": "development case inputs",
+      "behavioralEvaluationExecuted": false,
+      "commonTask": "Revise o middleware de exportação deste pequeno projeto. Verifique se a composição realmente entrega o resultado e o ciclo de vida prometidos pelos artefatos. Corrija apenas um defeito demonstrado, preservando a configuração aceita e a compatibilidade Java 17. Se o fluxo existente já cumpre o contrato, mantenha-o e explique a evidência. Registre o que foi executado e o que continua sem cobertura.",
+      "cases": [
+        {
+          "id": "chain-inline",
+          "fixtureDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-chain-of-responsibility-validation/case-a",
+          "visibleFiles": ["README.md", "app.properties", "src/ExportApp.java"]
+        },
+        {
+          "id": "chain-queued",
+          "fixtureDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-chain-of-responsibility-validation/case-b",
+          "visibleFiles": ["README.md", "app.properties", "src/ExportApp.java"]
+        }
+      ],
+      "prerequisites": "JDK 17+ disponível; compilar com javac --release 17. Esta revisão usa o JDK 25.0.3 para compilar e executar, sem alegar VM 17.",
+      "isolation": "Copiar apenas os três arquivos visíveis do caso selecionado para workspace isolado. Não fornecer o outro caso, critérios, logs, controles técnicos, handoff, assignment-baseline ou runner. Separação procedural por diretórios não representa controle de acesso imposto."
+    },
+    "criteria": {
+      "kind": "evaluator-only criteria",
+      "doNotProvideToActor": true,
+      "decisiveConstraint": "Somente app.properties muda execution.mode=inline para execution.mode=queued. Código, consumidor e contrato de resultado/ciclo de vida são idênticos.",
+      "cases": [
+        {
+          "id": "chain-inline",
+          "expectedDecision": "Preservar o middleware simples quando a fábrica efetiva executa o terminal inline antes de retornar.",
+          "requiredEvidence": [
+            "Rastrear app.properties até executor(config, queue), o Next render e o consumidor real; não inferir execução adiada apenas do nome supplyAsync.",
+            "Demonstrar resultado report e ordem open/read/close, com uma leitura terminal e um fechamento.",
+            "Justificar por que try-with-resources cobre o uso síncrono mostrado mesmo com retorno CompletionStage; não generalizar para outras fábricas ou cancelamento externo."
+          ],
+          "acceptableAlternatives": [
+            "No-change é a decisão mínima adequada.",
+            "Uma mudança mínima equivalente pode ser aceita somente se houver requisito demonstrado nos artefatos; preferência por mais infraestrutura não é justificativa."
+          ],
+          "failureConditions": [
+            "Inventar use-after-close na execução inline exibida.",
+            "Trocar a configuração aceita, bloquear um fluxo antes assíncrono, habilitar preview ou subir o target Java.",
+            "Exigir framework, cadeia encadeada ou tratamento assíncrono indiscriminado só porque o retorno é CompletionStage."
+          ]
+        },
+        {
+          "id": "chain-queued",
+          "expectedDecision": "Corrigir encerramento prematuro da sessão quando a fábrica efetiva enfileira o terminal para depois de SessionStage.handle retornar.",
+          "requiredEvidence": [
+            "Ler configuração, fábrica, estágio, terminal e drain do consumidor; demonstrar que o fechamento lexical ocorre antes de read.",
+            "Preservar execution.mode=queued e a API de conclusão, mantendo a sessão válida até o terminal parar de usá-la.",
+            "Verificar sucesso, falha do terminal e lançamento síncrono antes de obter um estágio; a sessão fecha exatamente uma vez e a falha continua visível.",
+            "Evitar join dentro do middleware: o caller só drena depois do retorno, portanto bloquear ali impede progresso."
+          ],
+          "acceptableAlternatives": [
+            "Mover posse para a tarefa terminal, ou amarrar cleanup à conclusão efetiva do trabalho usando o contrato concreto do estágio.",
+            "Neste caso o terminal retorna minimalCompletionStage e o único consumidor não cancela/completa externamente; uma composição whenComplete pode ser válida. Não exigir protocolo de cancelamento inexistente, mas não afirmar que isso resolve qualquer futuro cancelável."
+          ],
+          "failureConditions": [
+            "Deixar a sessão fechar antes do terminal ou apenas engolir a falha.",
+            "Mudar a configuração para inline ou fazer join antes de o caller poder drenar a fila.",
+            "Encerrar só no caminho de sucesso ou perder cleanup se next.handle lançar antes de retornar.",
+            "Reimplementar a cadeia inteira sem necessidade, invocar terminal duas vezes, ou tratar conclusão de um futuro arbitrariamente cancelável como prova universal de fim do trabalho."
+          ]
+        }
+      ],
+      "limitations": [
+        "Casos conhecidos de desenvolvimento, não holdouts; nenhum ator independente executado.",
+        "A fila é adaptador local determinístico; não valida agendamento concorrente de produção, Spring ou Netty.",
+        "Critérios foram registrados antes das execuções técnicas confirmatórias e antes de qualquer possível avaliação de agente."
+      ],
+      "observablePair": "A execução original inline deve mostrar report com [open, read, close]; a original queued expõe session closed com [open, close]. O controle corrigido fora dos inputs deve passar nos dois modos."
+    },
+    "status": "Known development cases; inputs/criteria separated before technical confirmation; no actor run.",
+    "oneChangedConstraint": "Only effective execution.mode=inline versus queued changes; identical source and README hashes checked.",
+    "isolation": "Copy only selected case visible files and corresponding task. Keep evaluator criteria, other case, logs, technical controls and handoff outside actor access; directory separation alone is not enforcement."
+  },
+  "assumptions": [
+    "The case's visible caller does not externally complete/cancel the stage; criteria explicitly preserve this decisive ownership limit.",
+    "TaskQueue is a deterministic scheduling adapter, not a claim about production thread pools.",
+    "Temporary raw logs and fixtures remain available for coordinator archival."
+  ],
+  "limits": [
+    "Compilation targets Java17 using javac25.0.3; execution is Temurin25.0.3+9, not an older VM.",
+    "No Spring context, servlet container, Netty transport, database, broker or cross-service integration executed.",
+    "Custom deterministic cancellation/queue controls do not establish general race freedom, task termination or interrupt propagation.",
+    "The private completion-owned ExportApp control ran success in both modes; generic failure/cleanup paths were exercised separately in ContinuationControls, not a full framework matrix.",
+    "Partial Spring/JUnit/property-test snippets and the domain-specific before-method were reviewed, not compiled against fabricated framework dependencies.",
+    "No performance benchmark; no quantitative performance claim added.",
+    "No behavioral actor comparison, unseen holdout or automatic skill-selection measurement.",
+    "Local manifest/reference/suggestion existence checks do not establish catalog-wide routing or version integrity.",
+    "No-change describes this evidence-bounded review, not proof of universal correctness."
+  ],
+  "crossSkill": [],
+  "pendingGlobals": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "cwd": "C:/git/agent-skills",
+      "purpose": "Combined wave index/integrity and cross-package checks.",
+      "prerequisites": "All reviewers stop writing; this package requires no index/version change."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "cwd": "C:/git/agent-skills",
+      "purpose": "Repository-wide final CI checks.",
+      "prerequisites": "Index regenerated after all writers stop."
+    },
+    {
+      "command": "independent actor evaluation, if selected by coordinator",
+      "owner": "coordinator",
+      "purpose": "Evaluate decisions from separated case inputs; source/technical controls are not substitutes.",
+      "prerequisites": "Isolate inputs from criteria and retain actual outputs."
+    }
+  ],
+  "coordinatorActions": "Archive evidence and inspect empty package diff. No ownership conflict, blocker, neighbor correction or shared edit required."
+}

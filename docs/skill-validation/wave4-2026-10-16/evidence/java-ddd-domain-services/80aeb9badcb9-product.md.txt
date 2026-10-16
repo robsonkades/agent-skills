@@ -1,0 +1,3 @@
+# Accepted product contract
+
+PREVIEW reports present eligibility under source observations at most 30 seconds old and is explicitly provisional. A preview neither consumes stock nor promises later acceptance. SUBMIT accepts a customer order; accepted submissions must be backed by capacity reserved by the inventory owner. A request is tenant/order/SKU/quantity-specific. This small rule and one-shot assessment have no independent algorithm variations. Existing Order guards own its local lifecycle; no requirement asks for a new policy interface or factory.

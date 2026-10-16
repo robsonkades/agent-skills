@@ -1,0 +1,34 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
+
+const candidatePath = new URL('./solution.sql', import.meta.url);
+const originalBytes = fs.readFileSync(candidatePath);
+const candidate = originalBytes.toString('utf8');
+const variants = [
+  ['deduplicate distinct invoices', candidate.replace('UNION ALL', 'UNION')],
+  ['count overlapping invoice twice', candidate.replace(' AND NOT (active = true)', '')],
+  ['leak other tenants through second branch', candidate.replace('WHERE tenant_id = :tenant AND amount', 'WHERE amount')],
+  ['exclude exact threshold', candidate.replace('amount >= 100', 'amount > 100')],
+  ['omit global ordering', candidate.replace('ORDER BY customer_label', '')]
+];
+const results = [];
+try {
+  for (const [name, sql] of variants) {
+    assert.notEqual(sql, candidate, `Mutation did not apply: ${name}`);
+    fs.writeFileSync(candidatePath, sql);
+    const result = spawnSync(process.execPath, [fileURLToPath(new URL('./verify.mjs', import.meta.url))], {
+      cwd: new URL('.', import.meta.url), encoding: 'utf8', timeout: 20000
+    });
+    assert.ifError(result.error);
+    assert.equal(result.status, 1, `Expected regression failure: ${name}`);
+    assert.match(result.stderr, /AssertionError/, `Expected semantic assertion failure: ${name}`);
+    results.push({name, exitCode: result.status, rejected: true, failure: result.stderr.match(/AssertionError[^\r\n]*/)?.[0]});
+  }
+} finally {
+  fs.writeFileSync(candidatePath, originalBytes);
+}
+assert.deepEqual(fs.readFileSync(candidatePath), originalBytes, 'Original candidate restored byte for byte');
+fs.writeFileSync(new URL('./mutation-check.log', import.meta.url), JSON.stringify(results, null, 2) + '\n');
+console.log(JSON.stringify({status: 'passed', rejectedVariants: results.length, candidateRestored: true}, null, 2));

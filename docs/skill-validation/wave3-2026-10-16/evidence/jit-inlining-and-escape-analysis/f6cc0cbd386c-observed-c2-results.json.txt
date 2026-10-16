@@ -1,0 +1,44 @@
+[
+  {
+    "Variant": "tiered-floor600",
+    "EffectiveMinimumInvocations": 600,
+    "EffectiveRatio": 0.0085,
+    "FrequencyFloor": 0.0085,
+    "C2CompilationIdWithinFork": "4",
+    "Compiler": "c2",
+    "Level": "4",
+    "Root": "FrequencyProbe caller (I)I",
+    "CalleeBytes": "13",
+    "Verdict": "inline (hot)",
+    "TaskSucceeded": "1",
+    "Checksum": "156356445007"
+  },
+  {
+    "Variant": "tiered-floor60",
+    "EffectiveMinimumInvocations": 60,
+    "EffectiveRatio": 0.0085,
+    "FrequencyFloor": 0.016666666666666666,
+    "C2CompilationIdWithinFork": "4",
+    "Compiler": "c2",
+    "Level": "4",
+    "Root": "FrequencyProbe caller (I)I",
+    "CalleeBytes": "13",
+    "Verdict": "low call site frequency",
+    "TaskSucceeded": "1",
+    "Checksum": "156356445007"
+  },
+  {
+    "Variant": "tiered-floor60-lowered-ratio",
+    "EffectiveMinimumInvocations": 60,
+    "EffectiveRatio": 0.001,
+    "FrequencyFloor": 0.016666666666666666,
+    "C2CompilationIdWithinFork": "4",
+    "Compiler": "c2",
+    "Level": "4",
+    "Root": "FrequencyProbe caller (I)I",
+    "CalleeBytes": "13",
+    "Verdict": "low call site frequency",
+    "TaskSucceeded": "1",
+    "Checksum": "156356445007"
+  }
+]

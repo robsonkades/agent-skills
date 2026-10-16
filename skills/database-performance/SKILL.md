@@ -32,9 +32,17 @@ existing authority. Carry those checks and their limits into the handoff so the 
 not repeat intake. During an incident, collection must fit the recovery deadline and must not delay
 already authorized mitigation merely to complete the packet.
 
+For an existing request/job, follow an affected example through its actual transaction manager or
+DataSource selection to the physical pool and database target. Inspect caller/wiring, routing rules,
+effective configuration and available trace/session identifiers; a default property or a healthy
+fleet-wide dashboard may describe a different pool, tenant database or replica. Separate configured
+selection from observed execution when runtime routing remains unknown. Carry the mapping and its
+source locators into the handoff; do not require a new capture if existing evidence establishes it.
+
 ```text
 business symptom, SLO impact, and exact time window:
 engine, exact version/edition/service tier, topology, and recent changes:
+affected caller -> selected pool/DataSource -> database/replica and matching capture labels:
 operation/query/job and representative parameters/data distribution:
 offered/completed rate, concurrency, errors/timeouts, and transaction p50/p99:
 application statement count, pool acquire/usage/pending, and connection count:
@@ -46,8 +54,12 @@ affected cohort and comparable healthy control:
 evidence gaps, collection risk, rollback window, and success measure:
 ```
 
-Do not infer an engine mechanism from an application symptom. Align clocks and workload before
-correlating layers. Identify metric boundaries: pool usage is connection checkout-to-return,
+Do not infer an engine mechanism from an application symptom. Match the target, cohort and time
+window before correlating layers. A SQL fingerprint groups statements; it is not an individual
+execution or proof of the same parameters/plan. PostgreSQL 18 `pg_stat_statements` rows are scoped
+by database, user, query ID and top-level status; retaining only `queryid` discards that context.
+Keep capture identity alongside those keys, and do not assume IDs are portable across databases
+or versions. Identify metric boundaries: pool usage is connection checkout-to-return,
 not SQL execution, and cumulative engine counters need interval deltas with resets accounted for.
 Check which executions each summary includes before treating an absent slow query as evidence.
 Means do not establish tail latency, and total execution time can grow from call count, per-call
@@ -142,12 +154,16 @@ Support and limits: why the conclusion is justified and what remains untested
 
 When evidence is unavailable, state the gap and what would discriminate the hypotheses. Never turn
 a vendor default, a folklore threshold, or a lab result into a production prescription.
+If tracing reveals that a capture belongs to another target or cohort, remove it as support for
+the affected conclusion and revise that routing/next check. Preserve still-applicable findings;
+an irrelevant healthy capture neither proves the intended target healthy nor proves it faulty.
 
 ## Definition of done
 
 - Relevant symptom/workload, engine/version, cohort and time window are explicit or marked
   unknown/not applicable; missing fields do not block an otherwise clear handoff.
-- Application, pool, statement, engine, and host signals are not mixed without aligned evidence.
+- Application, pool, statement, engine, and host signals refer to the affected target and aligned
+  window/cohort, or their unresolved association is explicit.
 - Materially plausible alternatives are retained until existing or new evidence distinguishes them;
   do not invent a rival for an already-established question.
 - The established question is handed to one primary owner, with adjacent skills only when needed,
@@ -159,7 +175,8 @@ a vendor default, a folklore threshold, or a lab result into a production prescr
 
 ## Sources for collection boundaries
 
-- [PostgreSQL 18 pg_stat_statements](https://www.postgresql.org/docs/18/pgstatstatements.html) — execution-summary coverage and update timing; failed or unfinished execution is not represented as a successful completed call.
+- [PostgreSQL 18 pg_stat_statements](https://www.postgresql.org/docs/18/pgstatstatements.html) — row identity, query normalization and identifier stability, execution-summary coverage and update timing; failed or unfinished execution is not represented as a successful completed call.
+- [Spring 6.2.11 AbstractRoutingDataSource](https://docs.spring.io/spring-framework/docs/6.2.11/javadoc-api/org/springframework/jdbc/datasource/lookup/AbstractRoutingDataSource.html) — connection requests can select different target DataSources by lookup key; inspect the actual routing implementation and effective target map.
 - [PostgreSQL 18 activity statistics](https://www.postgresql.org/docs/18/monitoring-stats.html#MONITORING-PG-STAT-ACTIVITY-VIEW) — session state, transaction/query start, current versus last SQL, and wait events.
 - [PostgreSQL 18 EXPLAIN](https://www.postgresql.org/docs/18/sql-explain.html) — ANALYZE executes the statement, adds overhead and excludes client network transfer costs.
 - [pgJDBC result processing](https://jdbc.postgresql.org/documentation/query/) — eager result collection versus cursor fetching; verify the installed driver and cursor prerequisites.

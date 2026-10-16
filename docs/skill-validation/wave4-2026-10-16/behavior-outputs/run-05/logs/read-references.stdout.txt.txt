@@ -1,0 +1,540 @@
+# The Component Principles Applied
+
+The six classical component principles split into two groups: three about **what goes inside
+a component** (cohesion) and three about **how components may depend on each other**
+(coupling). They come from Robert C. Martin's granularity and stability papers of the
+mid-1990s, written when a component meant a linkable binary; the reasoning survives because
+the underlying constraint - a released artefact is consumed at a version - has not changed.
+The mapping to a modern Java build is direct: a component is a Maven module that is
+published, or a JPMS module that is released.
+
+## Cohesion: what belongs in one component
+
+### Reuse/release equivalence
+
+The granule of reuse is the granule of release. If a consumer is to reuse part of a
+component, the whole component must be tracked, versioned and released as a unit, because
+that is the granularity at which the consumer can depend on it.
+
+The practical consequences are unglamorous and are the ones teams skip:
+
+- Everything in the component shares one version number and one release note.
+- A release needs compatibility notes so consumers can decide whether and when to upgrade.
+- The component needs an owner who can answer "is this change breaking?".
+
+A proposed independently published component needs someone to own these obligations.
+An internal build/encapsulation module can remain useful without its own external release notes.
+
+### Common closure
+
+Classes that change for the same reason, at the same time, belong in the same component. This
+is the single-responsibility principle raised to component scale: a component should have one
+reason to change.
+
+The payoff is that a business change touches one artefact, so one thing is released,
+revalidated and deployed. The failure is the opposite: a change to VAT rules touching
+`billing-core`, `billing-model`, `tax-common` and `reporting-shared`, each of which must be
+released in dependency order.
+
+This is the principle to favour while a system is young. Maintainability dominates
+reusability when there are no external reusers.
+
+### Common reuse
+
+Classes that are not reused together should not be in the same component. Stated as its
+contrapositive it becomes the useful rule: **depending on a component means depending on
+everything in it.**
+
+Everything means:
+
+- its resolved transitive dependencies, subject to scopes, optionality and exclusions;
+- its support/security policy, which can constrain upgrade timing;
+- defects relevant to reachable code, initialization or the shipped artifact's risk profile;
+- its removals, because a major bump you do not need still blocks the one you do.
+
+This is the principle that argues components smaller, and the one that indicts `commons`
+modules.
+
+### The tension is structural
+
+```text
+                    REUSE/RELEASE
+                   (larger, versioned)
+                        ?      ?
+                       ?        ?
+     too many          ?          ?       too many
+     components       ?            ?      unneeded classes
+     to release      ?              ?     pulled in
+                    ?                ?
+        COMMON CLOSURE ����������� COMMON REUSE
+        (grouped by change)      (split by usage)
+                        too hard to reuse
+```
+
+The diagram highlights costs when change and reuse needs conflict; it does not prove that
+every component has such a conflict. Where they do, decide which cost this system can afford
+now. Aligned needs can justify retaining the component, and the answer can change over its life.
+
+**Read the diagram as a trajectory, not a target.** Young system with no external consumers:
+sit near common closure. Mature component library with many independent consumers: consider moving
+toward common reuse. Moving is a refactor, not a failure.
+
+## Coupling: how components may depend on each other
+
+### Acyclic dependencies
+
+Establish which graph contains the alleged cycle before changing code. Record each edge's
+origin, scope and artifact version from the effective build under the failing profiles, source
+imports or module descriptor. A runtime callback or a diagram of repository/module membership
+does not establish a source/build dependency.
+
+For Maven, include instantiated project, plugin, plugin-dependency and build-extension references;
+the latter can constrain reactor order even without an application import. Entries solely in
+`dependencyManagement` or `pluginManagement` do not create reactor ordering edges. Follow the
+[Maven reactor rules](https://maven.apache.org/guides/mini/guide-multiple-modules.html) for the
+project's Maven version; the linked guide describes Maven 3 and routes Maven 4 separately.
+If the cycle comes from a build tool depending on the project it builds, inspect that bootstrap
+relationship and supported tool versions. Adding an application interface cannot remove a
+build-only edge. Removing a real dependency declaration just to make the graph acyclic can hide
+required compilation or runtime inputs; validate the resulting build and consumer behavior.
+
+The current source/build dependency graph between components must be a directed acyclic graph for
+Maven or JPMS to build it. Release-time dependencies across separately published versions are a
+different graph and may temporarily point both ways, though that makes coordinated breaking change
+expensive.
+
+Maven refuses a reactor cycle outright. With previously published versions, A can sometimes release
+against old B and vice versa, so "no release order exists" is too strong; the failure appears when a
+change requires both new contracts at once. That is evidence to invert an edge, introduce a stable
+protocol, or acknowledge one release unit.
+
+Three mechanical ways, in the order to consider them.
+
+**0. Consider merging the release units.** Appropriate when separate release capability has
+no demonstrated value and ownership/encapsulation does not require the split. A cycle or
+shared history prompts that assessment; it does not settle it.
+
+**1. Move the offending classes into a third component.** If `orders` depends on `billing` for
+`InvoiceNumber`, and `billing` depends on `orders` for `OrderId`, extract both identifiers
+into a third component that both depend on and that depends on neither of them.
+
+```text
+Before:   orders ? billing            (current reactor/source cycle)
+
+After:    orders �� identifiers �� billing
+```
+
+The new component needs coherent ownership and an evolution policy acceptable to both consumers.
+Identifiers and value objects are candidates, not proof of stability: meanings, validation rules
+or representations may evolve independently. Inspect those change reasons before extracting;
+moving disputed vocabulary into `shared` only relocates the disagreement. The acyclic graph proves
+that these build edges were removed, not that the new release boundary is worthwhile.
+
+**2. Invert the edge.** If `billing` needs to notify `orders`, `billing` declares the
+interface it needs and `orders` implements it. The source dependency now points from `orders`
+to `billing`, against the direction of the call (`java-dependency-inversion`).
+
+Partial Java snippets: `InvoiceIssued`, package declarations, imports and assembly wiring are
+omitted. Put the event contract on the same policy side as `InvoiceListener`; the composition
+root supplies the implementation without making billing depend on orders.
+
+```java
+// in component: billing - billing owns the interface it needs
+public interface InvoiceListener {
+    void invoiceIssued(InvoiceIssued event);
+}
+```
+
+```java
+// in component: orders - orders depends on billing, not the reverse
+final class OrderInvoiceListener implements InvoiceListener {
+    @Override
+    public void invoiceIssued(InvoiceIssued event) { /* ... */ }
+}
+```
+
+Merging fits a deliberate shared release unit. Inversion fits a policy-to-implementation
+boundary that must preserve the runtime call direction. Moving classes fits genuinely
+shared vocabulary, with its ownership and evolution policy established. An interface does
+not remove disagreement about vocabulary simply by existing
+(`enterprise-architecture-smells`).
+
+### Stable dependencies
+
+Depend in the direction of stability. "Stable" here means **hard to change**, and it is a
+property of position in the graph, not of quality: a component that many others depend on is
+hard to change because changing it obliges all of them.
+
+The metric usually quoted is instability, `I = Ce / (Ca + Ce)` - outgoing over total
+dependencies, from 0 (depended on by many, depends on nothing; maximally rigid) to 1 (depends
+on many, depended on by nothing; freely changeable). `java-cohesion-coupling` covers computing
+it over packages.
+
+When `Ca + Ce = 0`, the ratio is undefined; record an isolated component instead of dividing
+by zero or assigning stability arbitrarily. State whether edges count classes, packages or
+artifacts before comparing values.
+
+Used as a design prompt, an edge from a low-I component to a high-I component deserves examination:
+a widely consumed component may import another component's churn. It is not automatically a defect;
+runtime adapters, platform contracts and compatible evolution can make the edge appropriate. As a
+target - "no module may exceed I = 0.6" - it is numerology.
+
+### Stable abstractions
+
+A classical heuristic says a component's abstractness should rise with its stability. If a component is hard to change
+because many consumers depend on its contract, extension points can allow new behavior
+without changing that contract. An ordinary interface can be implemented in another module.
+A sealed type deliberately restricts direct subtypes: in a named JPMS module they must be
+in that same module (or the same package in the unnamed module). Do not propose a sealed
+root as an unrestricted cross-module plugin interface.
+
+The two failure positions have names worth knowing because both are common:
+
+```text
+   abstract
+      
+      � ?  a port / policy component:                        ZONE OF
+      �    stable AND abstract - depended on              USELESSNESS
+      �    by many, extended not edited                  (abstract, and
+      �      ?                                            nothing depends
+      �        ?                                          on it)
+      �          ?
+      �            ?   the "main sequence" - a balanced
+      �              ? component sits near this diagonal
+      �                ?
+      �  ZONE OF         ?
+      �  PAIN              ?
+      �  (concrete, and      ?
+      �  everything            ?  a leaf adapter or an application:
+      �  depends on it)           unstable AND concrete - free to
+      �                           change, nothing depends on it
+   concrete ��������������������������������������������� unstable
+```
+
+The diagonal runs from the top-left (stable and abstract) to the bottom-right (unstable and
+concrete). The corners away from it are investigation prompts, not proof of failure.
+
+- **Zone of pain** - bottom-left: concrete and heavily depended upon. Investigate incompatible
+  churn and missing extension points; a stable immutable value type may be appropriate here.
+- **Zone of uselessness** - top-right: abstract and with no observed dependents. Check external
+  plugins, reflection and planned public obligations before deleting an apparently unused API.
+
+Treat the diagonal as a hypothesis-generating diagnostic, never as a score to optimise. It ignores
+semantic stability, generated APIs, compatibility policy, ownership and change frequency. A leaf
+application module is legitimately concrete and unstable; a port module is legitimately
+abstract and stable. Both sit on the line, and neither got there by measuring.
+
+## Mapping to a Java build
+
+| Concept            | Maven                                                             | JPMS                                                                                                        |
+| ------------------ | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Component boundary | a module with its own artifactId                                  | `module-info.java`                                                                                          |
+| What is public     | Java access rules still apply; Maven itself adds no encapsulation | readability plus exports and Java access rules; opens controls reflective access                            |
+| Release unit       | the published artifact + version                                  | version metadata can be recorded; selecting compatible artifact versions remains a build/deployment concern |
+| Cycle prevention   | enforced: reactor rejects cycles                                  | enforced: `requires` cycles rejected                                                                        |
+| Consumer pins to   | a version                                                         | nothing - version is the build's job                                                                        |
+
+JPMS enforces module access rules; Maven resolves and publishes artifacts but does not
+enforce independent release policy. A JPMS module can be independently published and
+versioned, or remain internal. Its descriptor alone establishes neither consumer ownership
+nor compatibility support. Check reflection and service loading when introducing it.
+
+Enforce the acyclic rule mechanically. The reactor already rejects module cycles; add an
+ArchUnit rule for package cycles inside a module so they are caught before an extraction turns
+them into module cycles:
+
+Partial test snippet, requiring the project's compatible ArchUnit/JUnit dependencies and
+imports. The wildcard groups direct subpackages; confirm all intended packages were
+imported and that the slices cover the relevant edges. Do not add dependencies merely to
+use this illustration when an existing architecture check covers the same risk.
+
+```java
+@Test
+void noPackageCycles() {
+    JavaClasses classes = new ClassFileImporter().importPackages("com.example.billing");
+    slices().matching("com.example.billing.(*)..")
+            .should().beFreeOfCycles()
+            .check(classes);
+}
+```
+
+### Check the published consumer boundary
+
+Inspect the candidate artifact and its published POM or Gradle module metadata, not only
+the producer's build. Compile a separate consumer against that publication in an isolated
+repository; avoid workspace substitutions that silently supply project outputs or extra
+dependencies. Test the actual consumer compile and runtime configurations.
+
+With Gradle's Java Library plugin, `api` exposes dependencies on the consumer compile
+classpath; `implementation` hides them there but still supplies them at runtime. A type in
+a public signature can therefore require an API dependency even if the producer compiles
+successfully. Maven scopes differ; inspect the published POM rather than translating labels
+literally. Reconsider an unnecessarily exposed third-party type with `java-api-design`.
+
+Consumer resolution can also select a different transitive version from the one used by
+the library's CI. Inspect Maven mediation/dependency management or the target Gradle
+configuration's constraints and selection reasons. For example, a library compiled against
+a newly added method can fail with `NoSuchMethodError` if the consumer selects an older
+dependency. Compile the consumer and exercise the affected paths with the resolved runtime
+set; successful compilation alone misses that case.
+
+A BOM or lockfile can constrain selection; a dependency-convergence rule checks version
+agreement. Neither proves the selected version works for every dependent. Verify a compatible
+combination before forcing a version or excluding a dependency. Record supported dependency
+versions and tested combinations in the support policy rather than assuming independent library
+releases imply arbitrary mixing.
+
+## What these principles do not decide
+
+- **Whether a component should be a separate process.** Nothing here implies distribution;
+  every one of these boundaries can live in one deployable (`distribution-boundaries`).
+- **What the component's API should look like** once you have decided it is one
+  (`java-api-design`).
+- **Whether the code should be shared at all**, as opposed to duplicated - see
+  [shared code in a fleet](shared-code-in-a-fleet.md).
+
+## Primary references
+
+- [Maven dependency mechanism](https://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html):
+  scopes, mediation, optional dependencies and exclusions.
+- [Gradle Java Library plugin](https://docs.gradle.org/current/userguide/java_library_plugin.html):
+  API/implementation separation and consumer compile/runtime configurations. The reference
+  served version 9.7.1 when checked on 2026-09-19; verify behavior against the target wrapper.
+- [Maven dependency convergence](https://maven.apache.org/enforcer/enforcer-rules/dependencyConvergence.html):
+  version agreement within the checked graph, not proof of binary or behavioral compatibility.
+- [JLS 21 binary compatibility](https://docs.oracle.com/javase/specs/jls/se21/html/jls-13.html):
+  linking pre-existing binaries against changed types and members.
+- [JLS 21 modules](https://docs.oracle.com/javase/specs/jls/se21/html/jls-7.html#jls-7.7):
+  requires/exports/opens and module rules.
+- [JLS 21 permitted subclasses](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.1.6):
+  sealed hierarchy location constraints.
+- [Semantic Versioning 2.0.0](https://semver.org/): public API and compatibility conditions.
+# Shared Code Across a Service Fleet
+
+Independent deployment means a supported service change need not require simultaneous peer
+deployment. Shared libraries create compatibility obligations; whether they force lockstep
+depends on version policy, runtime contracts and support windows.
+
+## A shared library creates build-time and release coupling
+
+The reasoning teams apply to runtime calls stops at the build boundary, and it should not.
+
+```text
+Runtime coupling                    Build-time coupling
+�����������������������������       �����������������������������
+A calls B synchronously             A compiles against lib v2
+     B's failure may affect A           affected A versions may need a security update
+     visible in a trace                 invisible in a trace
+     everybody prices it                priced at zero
+```
+
+Unlike a synchronous RPC, a pinned library does not make a consumer unavailable when its producer
+or publisher is down. The useful analogy is coordinated evolution, not runtime failure propagation.
+The failure mode is a **lockstep release**: a change to the shared library that everyone must
+take on the same schedule becomes a coordinated release. Distinguish genuinely simultaneous
+compatibility requirements from rolling upgrades within a security deadline, or a voluntary
+release train. A common deadline does not by itself require atomic fleet deployment.
+
+The severity depends on whether consumers may lag:
+
+- **May lag freely** (library is versioned, old versions keep working, no shared state): the
+  coupling is real but cheap. This is the acceptable case.
+- **Must upgrade in step** (a required change has no supported mixed-version state or staged
+  transition): the affected consumers need coordinated evolution. Name the incompatible
+  contract and the versions affected; encoding a wire format or schema alone does not prove
+  lockstep. Record a binding release policy separately from technical necessity.
+
+## The four kinds of shared code
+
+Not all sharing is equal. Classify before deciding.
+
+### 1. Generic technical utilities - usually safe, rarely worth writing
+
+String/date helpers may be stable, but locale/time-zone assumptions and retry semantics can
+encode policy. Inspect behavior and consumers before treating a helper as domain-neutral;
+retry wrappers especially need deadlines, idempotency and load-amplification review.
+
+They are also the category most likely to be redundant. Before writing one, check whether the
+JDK or an existing dependency already provides it - a hand-rolled retry helper in a shared jar
+competes with `retries-and-backoff` guidance and with the resilience library the team already
+has.
+
+**Verdict:** share if genuinely stable and not already available; expect little value.
+
+### 2. Cross-cutting platform code - useful with an explicit compatibility policy
+
+Logging setup, tracing propagation, authentication filters, metric conventions, health
+endpoints. Real value: consistency across the fleet is the whole point
+(`structured-logging`, `distributed-tracing-design`, `metrics-and-cardinality`).
+
+Two conditions make it work:
+
+- Additions and defaults must preserve the supported observable contract; an additive API
+  or new default alone does not establish safe behavior or skipped-version compatibility.
+- It must not encode business meaning, or it silently becomes category 4.
+
+**Security fixes can shorten the support window.** Assess affected versions and exposure,
+then set a remediation deadline with the security owner. A compatible fix or backport can
+often roll out independently; protocol changes may need staged compatibility. Track deployed
+versions and exceptions, verify the hostile case is rejected after upgrading, and consider
+separating security code when it reduces unrelated upgrade burden. Do not infer that every
+consumer must deploy at the same instant.
+
+**Verdict:** the best case for a shared library. Version it strictly and let consumers lag,
+with the security carve-out above.
+
+### 3. Wire contracts - share the schema, not the implementation
+
+Request and response types, event payloads.
+
+Generated types from a schema (OpenAPI, Protobuf, Avro) can keep the authoritative contract
+explicit, but generator/runtime versions and schema changes still affect source, binary and
+wire compatibility. Apply the format's compatibility rules and old/new peer tests
+(`rpc-and-api-contracts`).
+
+Hand-written DTO classes need the same explicit wire contract and compatibility checks.
+Neither Java signatures nor generation alone establish them. Partial Java 16+ illustration
+(requires `java.math.BigDecimal`; not an executable program):
+
+```java
+// producer module: shared-contracts
+public record OrderCreated(String orderId, BigDecimal total) { }
+```
+
+Adding a record component changes the canonical constructor signature. Callers using the
+old constructor break unless it is retained through an explicit overload; existing accessor
+calls may remain valid. Deserialization of old/new payloads depends on the serializer,
+configuration, defaults and required-field semantics, not on successful Java compilation.
+
+Adding `totalWithTax()` also distributes business logic to consumers at independently
+pinned versions. Treat that as a domain-rule ownership decision and state supported versions;
+it does not become unsafe merely because a DTO has a method.
+
+**Verdict:** prefer an explicit schema where the transport supports it. If shipping types,
+keep them data-focused and versioned, with supported old/new peers tested. Separately
+deployed consumers may pin different jar versions; do not assume two versions of the same
+classes coexist safely in one classloader.
+
+### 4. Domain logic - share only for a genuinely shared invariant
+
+A tax calculation, an eligibility rule, a pricing model.
+
+Sharing this creates a need to govern rule versions and effective dates. Independently pinned
+jars can diverge; a shared source repository does not ensure runtime agreement. Determine
+whether historical/versioned rules may coexist or whether one authoritative service/data
+contract must resolve the decision for both consumers.
+
+Legitimate cases exist and are narrow: a regulatory calculation with one correct answer, a
+canonical identifier format, a checksum algorithm. The test is whether the two services would
+be _wrong_ to diverge. If they would merely be _inconsistent_, they should own their own copy.
+
+**Verdict:** default to duplication. Share only where divergence is a defect, and expect to
+own the compatibility burden.
+
+### The shared entity - almost always the boundary being wrong
+
+A shared JPA `@Entity` couples mappings and may signal shared database ownership; it does not
+prove that processes use the same database or require simultaneous deployment. Inspect actual
+schemas, writers and supported migration states before concluding that a column change
+requires fleet-wide coordination
+(`distribution-boundaries`, `metadata-mapping`).
+
+Where two independently owned services share an entity, independent schema evolution and incident
+ownership become difficult. Prefer one data owner with an API/event contract. A consciously shared
+database can still work under joint ownership, backward-compatible migrations and explicit write
+authority, but it is not independent data ownership. (Two processes
+deployed from one service - an API and its batch worker - are a single owner and are not this
+case; they legitimately share the entity and the schema.)
+
+## Deciding: duplication or a library
+
+Duplicating one rule can require repeating fixes and tests. Across independently released
+services, compare that maintenance cost with a library's compatibility and upgrade obligations.
+Keep independently owned domain policies separate as described above. For stable technical or
+platform code, reuse can be worthwhile even when divergence would be allowed; the absence of a
+mandatory shared invariant does not by itself settle the economics.
+
+```text
+Do consumers need the same stable abstraction, rather than coincidentally similar code?
+        no   keep independent copies and record the ownership/change reasons.
+        yes 
+
+Does reuse avoid enough maintenance cost or correctness risk to justify a release unit?
+        no   keep it local; name the evidence that would justify extraction later.
+        yes 
+
+Can supported old consumers coexist for the agreed upgrade window?
+        no   identify the compatibility or remediation constraint. A schema
+              with compatible evolution, supported backports, or one owning
+              service may help; generation alone does not permit coexistence.
+        yes 
+
+Is there an owner who will version it, write release notes, and
+support the declared compatibility window?
+        no   do not create the library. An unowned shared jar
+              becomes the commons module.
+        yes  create it, versioned, with a compatibility policy.
+```
+
+A useful default is to wait for evidence of a stable abstraction before extracting. Consumer count
+alone is not a threshold: two high-risk implementations may justify one governed library, while ten
+tiny coincidental helpers may remain duplicated. Price divergence defects, release coupling,
+ownership and compatibility support explicitly.
+
+## Migrating off a `commons` jar
+
+The goal is to reduce unwanted consumer obligations while retaining supported artifacts.
+Removing classes from a new major release need not move all consumers at once if their old
+versions remain supported. Do not mistake deleting published artifacts for completing migration.
+
+1. **Stop unrelated growth.** Agree an owner and scope for new work; retain required fixes
+   and compatibility bridges during migration. A freeze has delivery/support costs too.
+2. **Inventory by consumer and supported version.** Combine source/bytecode analysis with
+   reflection, service-loader metadata, configuration, serialization and external consumer
+   evidence. Missing search hits do not prove an unused public class.
+3. **Move single-consumer code into its owner** while keeping old published versions intact.
+   Deprecate or retain compatibility bridges in supported release lines; removing public
+   classes is a separate breaking change. Check duplicate classes, package names and JPMS
+   split packages if old and extracted artifacts coexist in a consumer.
+4. **Split the rest by reason to change**, not by layer. Platform concerns into a platform
+   library; domain vocabulary into a vocabulary library; wire types into generated contracts.
+   Each new component gets an owner and a version policy before it gets code.
+5. **Keep existing releases immutable and available.** Publish a new compatibility version if
+   the old coordinates need to delegate to extracted code; do not replace bytes or dependency
+   metadata under an already released version. Deprecation notices can identify the migration
+   path without rewriting the artifact. Consumers migrate within the support window. Retire
+   maintenance only after supported consumers migrate; retain artifacts needed for reproducible
+   builds. This follows the released-version immutability rule in [SemVer](https://semver.org/).
+
+For any compatibility bridge, inspect the assembled consumer classpath/module path: each moved
+class must have the intended provider, and required resources, service registrations and reflective
+access must survive. Merely adding the extracted jar beside an unchanged `commons` jar can create
+duplicate classes or split packages. Validate supported intermediate dependency combinations and
+their published metadata before calling the move compatible; a new version number alone proves
+neither class identity nor binary compatibility.
+
+This sequence can avoid simultaneous releases when supported versions and intermediate contracts
+can coexist. Check each checkpoint and recovery path; where coexistence is impossible, retain the
+constraint and assess a bounded coordinated cutover rather than promising independent rollout
+(`architecture-refactoring-paths`).
+
+## Verifying independence
+
+The claim "our services are independently deployable" is testable, and worth testing before
+believing:
+
+- **Release-history evidence.** If release tags cluster, inspect why: shared campaigns or
+  tooling can batch releases without a technical constraint. Confirm the required edge.
+- **The coexistence test.** Keep an existing supported consumer artifact with its original
+  dependency set unchanged while upgrading another consumer/provider. Exercise their actual
+  shared protocol/schema and rollout/rollback combinations. Separately rebuild old consumer
+  sources against a candidate compatible library and test already-built old binaries with it
+  when that deployment mode is supported. Recompiling today's source against an arbitrarily
+  old library tests the wrong direction: using a newly added API does not imply lockstep.
+- **The publication test.** Build a separate consumer from the candidate artifact and
+  metadata, then exercise its resolved runtime dependencies. Follow the
+  [consumer dependency checks](component-principles.md#check-the-published-consumer-boundary);
+  a passing producer build or converged dependency tree alone does not establish compatibility.
+- **The upgrade blast radius.** Count consumers affected and distinguish upgrades required
+  eventually, within a deadline, or simultaneously. Only the last establishes a lockstep
+  deployment requirement for that change; record the contract that forces it.

@@ -6,7 +6,9 @@ This recipe reserves capacity **before** the fetch, acknowledges after a repeat-
 and stops intake before draining work. Other bounded intake mechanisms can be valid; choose
 acknowledgement placement from the required loss/duplicate policy (`delivery-semantics`).
 
-Pseudocode for a pull consumer; receive/renew/ack operations are broker-specific:
+Pseudocode for a pull consumer; receive/renew/ack operations are broker-specific. Dispatch
+must report acceptance or rejection and must not run a handler inline while holding the
+lifecycle gate needed to close intake:
 
 ```text
 poller owns each permit until a handler explicitly accepts it
@@ -17,7 +19,7 @@ while intake is open:
   unknown receive outcome may leave a broker-side delivery hidden until recovery
   under lifecycle gate shared with shutdown:
     if intake closed: retain delivery for bounded return/recovery; release permit
-    otherwise transfer delivery + permit only after successful handler submission
+    otherwise transfer delivery + permit through the verified dispatch ownership protocol
   on submission rejection: try bounded recovery; release permit exactly once in finally
 
 handler owns accepted delivery + permit:
@@ -42,6 +44,17 @@ The permit above counts local active work. An unknown receive or failed return c
 broker-side work outstanding after that permit is released. Track that uncertainty under a
 separate finite recovery budget and pause further intake when the budget is exhausted; a
 local permit count alone does not bound all broker-side in-flight deliveries.
+
+**Verify the dispatch boundary.** Read the actual executor factory/configuration, queue,
+rejection handler and wrappers. A normal return from `ThreadPoolExecutor.execute` need not
+mean acceptance: `DiscardPolicy` drops the new task, `DiscardOldestPolicy` can evict a previously
+accepted delivery, and `CallerRunsPolicy` discards after shutdown. Use visible rejection with
+caller-owned recovery (for example, `AbortPolicy`) or a protocol that explicitly recovers
+every discarded delivery and releases its permit once. Logging or cancelling a `Future`
+does not by itself return a broker delivery or release application capacity. Inline execution
+also needs compatible poller-thread affinity and shutdown ownership; otherwise use a dispatch
+path that cannot run the handler inside the lifecycle gate. `executors-and-task-lifecycle`
+owns the general executor contract; this boundary must account for the broker delivery too.
 
 Reserve one permit per delivered item for batch receive. For push consumers, align broker
 credit/prefetch with bounded dispatch instead. Serialize ack on its owning channel/session where
@@ -169,6 +182,9 @@ do not assert exactly one handler invocation when the contract only promises one
 For changed worker ownership paths, inject relevant receive exceptions, submission rejection, shutdown during receive, renewal failure,
 ack-success followed by cleanup failure, and cancellation-resistant handlers. Assert no leaked
 permit, no unowned delivery and no false claim of handler termination.
+For an executor handoff, force saturation and post-shutdown submission with the actual rejection
+policy. Reconcile every received ID, including any older queued delivery evicted by the policy,
+and its permit; a bounded queue or a normally returning submission does not establish ownership.
 
 ## Primary references
 

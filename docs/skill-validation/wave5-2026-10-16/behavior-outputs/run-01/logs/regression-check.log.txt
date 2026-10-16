@@ -1,0 +1,16 @@
+{
+  "phase": "regression",
+  "executable": "C:\\Program Files\\nodejs\\node.exe",
+  "args": [
+    "check.mjs"
+  ],
+  "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-01\\output\\project",
+  "timeoutMs": 28999,
+  "exit": 1,
+  "signal": null,
+  "error": null,
+  "stdout": "",
+  "stderr": "Exception in thread \"main\" java.lang.AssertionError: first after reload: expected [Entry[sku=A, cents=450], Entry[sku=B, cents=550]] / 1000, got [Entry[sku=C, cents=1200]] / 1200\r\n\tat work.SelfTest.check(SelfTest.java:71)\r\n\tat work.SelfTest.reloadKeepsEarlierReports(SelfTest.java:28)\r\n\tat work.SelfTest.main(SelfTest.java:14)\r\n",
+  "log": "output/logs/regression-check.log",
+  "expectedExit": 1
+}

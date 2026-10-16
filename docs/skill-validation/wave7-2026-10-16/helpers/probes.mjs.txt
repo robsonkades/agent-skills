@@ -1,0 +1,88 @@
+import fs from 'node:fs';
+import path from 'node:path';
+const root='C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d';
+const put=(p,s)=>{fs.mkdirSync(path.dirname(p),{recursive:true});fs.writeFileSync(p,s);};
+for(const id of ['T1','T2']){
+ const file=root+'/cases/'+id+'/input/CONTRACT.md';fs.appendFileSync(file,'\nWhen called within an existing business transaction, the service joins that unit; its caller remains completion owner. Preserve this REQUIRED participation. A later owner failure must roll back the mandatory state; no receipt may survive a rollback of its booking.\n');
+ const atomic=id==='T1';
+ put(root+'/evaluator/'+id+'/ContractProbe.java',`package work;
+import java.sql.*;
+import java.util.*;
+import java.util.concurrent.atomic.*;
+import javax.sql.DataSource;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.*;
+public class ContractProbe {
+ static int checks; static void eq(String name,Object expected,Object actual){if(!Objects.equals(expected,actual))throw new AssertionError(name+" expected="+expected+" actual="+actual);checks++;System.out.println("PASS "+name+"="+actual);}
+ static void reset(JdbcTemplate j){j.execute("drop all objects");j.execute("create table booking(id varchar(80) primary key,sku varchar(80))");j.execute("create table receipt(id varchar(80) primary key,body varchar(12))");j.execute("create table stock(sku varchar(80) primary key,available int)");j.update("insert into stock values ('ready',20),('sold-out',0)");}
+ static int n(JdbcTemplate j,String t){return j.queryForObject("select count(*) from "+t,Integer.class);}
+ public static void main(String[]args){
+  var phases=new ArrayList<Integer>();var datasource=new AtomicReference<DataSource>();
+  ReceiptObserver observer=id->{try(var c=datasource.get().getConnection();var p=c.prepareStatement("select count(*) from booking where id=?")){if(c.getTransactionIsolation()!=Connection.TRANSACTION_READ_COMMITTED)throw new AssertionError("isolation");p.setString(1,id);try(var r=p.executeQuery()){r.next();phases.add(r.getInt(1));}}catch(SQLException e){throw new RuntimeException(e);}};
+  try(var ctx=new AnnotationConfigApplicationContext()){
+   ctx.register(Config.class);ctx.addBeanFactoryPostProcessor(f->f.registerSingleton("receiptObserver",observer));ctx.refresh();datasource.set(ctx.getBean(DataSource.class));
+   var j=ctx.getBean(JdbcTemplate.class);var service=ctx.getBean(BookingService.class);reset(j);
+   service.place("normal-734","ready","receipt");eq("normal booking",1,n(j,"booking"));eq("normal receipt",1,n(j,"receipt"));eq("normal reservation",19,j.queryForObject("select available from stock where sku='ready'",Integer.class));eq("callback independent visibility",List.of(${atomic?0:1}),phases);
+   reset(j);phases.clear();boolean failed=false;try{service.place("long-921","ready","receipt-is-too-long");}catch(RuntimeException e){failed=true;}
+   eq("receipt failure reaches caller",${atomic},failed);eq("booking after receipt failure",${atomic?0:1},n(j,"booking"));eq("failed receipt absent",0,n(j,"receipt"));eq("stock after receipt failure",${atomic?20:19},j.queryForObject("select available from stock where sku='ready'",Integer.class));
+   reset(j);phases.clear();failed=false;try{service.place("declined-493","sold-out","receipt");}catch(RuntimeException e){failed=true;}
+   eq("stock rejection reaches caller",true,failed);eq("declined booking absent",0,n(j,"booking"));eq("declined receipt absent",0,n(j,"receipt"));${atomic?'':'eq("no callback on stock rollback",List.of(),phases);'}
+   reset(j);phases.clear();ctx.publishEvent(new BookingRecorded("standalone-2","receipt"));eq("no nontransactional receipt",0,n(j,"receipt"));eq("no nontransactional writer",List.of(),phases);
+   reset(j);phases.clear();failed=false;
+   try{new TransactionTemplate(ctx.getBean("businessTx",PlatformTransactionManager.class)).execute(s->{service.place("owner-508","ready","receipt");TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization(){public void beforeCommit(boolean readOnly){throw new IllegalStateException("owner completion rejected");}});return null;});}catch(RuntimeException e){failed=true;}
+   eq("owner failure propagates",true,failed);eq("owner rollback booking",0,n(j,"booking"));eq("owner rollback receipt",0,n(j,"receipt"));eq("owner rollback stock",20,j.queryForObject("select available from stock where sku='ready'",Integer.class));
+   System.out.println("CONTRACT-PASS checks="+checks);
+  }
+ }
+}
+`);
+}
+put(root+'/evaluator/T3/ContractProbe.java',`package work;
+import java.util.*;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.jdbc.core.JdbcTemplate;
+public class ContractProbe {
+ static int checks;static void eq(String label,Object a,Object b){if(!Objects.equals(a,b))throw new AssertionError(label+" expected="+a+" actual="+b);checks++;System.out.println("PASS "+label+"="+b);}
+ public static void main(String[]args){try(var ctx=new AnnotationConfigApplicationContext()){
+  ctx.register(Config.class);ctx.addBeanFactoryPostProcessor(f->f.registerSingleton("orderNotifier",(OrderNotifier)id->{if(id.equals("n-731"))throw new IllegalArgumentException("local validation failed");}));ctx.refresh();
+  var j=ctx.getBean("ordersJdbc",JdbcTemplate.class);var m=ctx.getBean("metricsJdbc",JdbcTemplate.class);
+  j.execute("drop all objects");m.execute("drop all objects");j.execute("create table orders(id varchar primary key,sku varchar)");j.execute("create table stock(sku varchar primary key,available int)");j.update("insert into stock values ('ready',20),('sold-out',0)");m.execute("create table sample(id varchar primary key)");
+  var service=ctx.getBean(OrderService.class);service.place("ok-482","ready");eq("successful order",1,j.queryForObject("select count(*) from orders",Integer.class));eq("successful stock",19,j.queryForObject("select available from stock where sku='ready'",Integer.class));
+  boolean failed=false;try{service.place("decline-194","sold-out");}catch(IllegalStateException e){failed=true;}eq("stock failure propagated",true,failed);eq("no rejected order",1,j.queryForObject("select count(*) from orders",Integer.class));
+  failed=false;try{service.place("n-731","ready");}catch(IllegalArgumentException e){failed=true;}eq("notifier failure propagated",true,failed);eq("no notifier-rejected order",1,j.queryForObject("select count(*) from orders",Integer.class));eq("reservation restored",19,j.queryForObject("select available from stock where sku='ready'",Integer.class));
+  var metrics=ctx.getBean(MetricsService.class);metrics.sample("valid");failed=false;try{metrics.sample("");}catch(IllegalArgumentException e){failed=true;}eq("metrics failure propagated",true,failed);eq("metrics default still rolls back",1,m.queryForObject("select count(*) from sample",Integer.class));eq("orders unaffected",1,j.queryForObject("select count(*) from orders",Integer.class));
+  System.out.println("CONTRACT-PASS checks="+checks);
+ }}
+}
+`);
+put(root+'/evaluator/T4/ContractProbe.java',`package work;
+import java.util.*;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.jdbc.core.JdbcTemplate;
+public class ContractProbe {
+ static int checks;static void eq(String label,Object a,Object b){if(!Objects.equals(a,b))throw new AssertionError(label+" expected="+a+" actual="+b);checks++;System.out.println("PASS "+label+"="+b);}
+ static AnnotationConfigApplicationContext open(Checkpoint checkpoint){var ctx=new AnnotationConfigApplicationContext();ctx.register(Config.class);ctx.addBeanFactoryPostProcessor(f->f.registerSingleton("checkpoint",checkpoint));ctx.refresh();return ctx;}
+ static int count(JdbcTemplate j,String where){return j.queryForObject("select count(*) from outbox "+where,Integer.class);}
+ public static void main(String[]args){
+  try(var ctx=open(id->{throw new IllegalStateException("local progress unavailable");})){
+   var j=ctx.getBean(JdbcTemplate.class);j.execute("drop all objects");j.execute("create table orders(id varchar primary key,payload varchar)");j.execute("create table outbox(event_id varchar primary key,payload varchar check(payload<>'blocked'),done boolean)");
+   var pub=ctx.getBean(Publisher.class);boolean failed=false;try{pub.create("blocked-832","blocked");}catch(RuntimeException e){failed=true;}eq("outbox write failure",true,failed);eq("publisher atomic rollback",0,j.queryForObject("select count(*) from orders",Integer.class));eq("no failed intent",0,count(j,""));
+   pub.create("pending-105","same fact");eq("one business row",1,j.queryForObject("select count(*) from orders",Integer.class));eq("retained intent",1,count(j,"where done=false"));
+   failed=false;try{ctx.getBean(Dispatcher.class).replayOne();}catch(IllegalStateException e){failed=true;}eq("checkpoint error propagated",true,failed);eq("receiver accepted before error",1,ctx.getBean(ReceiverClient.class).count());eq("intent still retryable",1,count(j,"where done=false"));
+  }
+  // Orderly context recreation, not a killed process or physical crash experiment.
+  try(var ctx=open(id->{})){
+   var j=ctx.getBean(JdbcTemplate.class);var dispatcher=ctx.getBean(Dispatcher.class);var receiver=ctx.getBean(ReceiverClient.class);
+   eq("new context finds retained work",true,dispatcher.replayOne());eq("no duplicate receiver effect",1,receiver.count());eq("original intent completed",1,count(j,"where done=true"));eq("business command not replayed",1,j.queryForObject("select count(*) from orders",Integer.class));eq("no unbounded replay",false,dispatcher.replayOne());
+   ctx.getBean(Publisher.class).create("distinct-640","same fact");eq("distinct event dispatched",true,dispatcher.replayOne());eq("identity is not payload",2,receiver.count());
+   ctx.getBean(Publisher.class).create("rejected-927","reject");boolean failed=false;try{dispatcher.replayOne();}catch(IllegalArgumentException e){failed=true;}eq("receiver rejection propagated",true,failed);eq("rejection stays pending",1,count(j,"where done=false"));eq("rejection creates no effect",2,receiver.count());
+   System.out.println("CONTRACT-PASS checks="+checks);
+  }
+ }
+}
+`);
+const criteria={schemaVersion:1,skill:'spring-transactions-and-events',version:'1.1.0',status:'DRAFT_AWAITING_INDEPENDENT_REVIEW',cases:[{id:'T1',required:'Preserve required atomic booking/stock/receipt and owner rollback; no mandatory REQUIRES_NEW repair. Useful regression rejects independent receipt commit before owner failure.',baselineExpected:'pass',decisivePair:'T2 has identical production sources; accepted receipt contract differs.'},{id:'T2',required:'Normal receipt persists after actual source commit, independent receipt failure does not undo/fail business; no effect on rollback/no tx; retain accepted best-effort synchronous policy.',baselineExpected:'fail'},{id:'T3',required:'Identify wrong manager/resource, repair orders unit while preserving default metrics transactions. Failure at stock and later notifier leave no partial orders state.',baselineExpected:'fail'},{id:'T4',required:'Stable event identity for receiver retry, pending recovery after checkpoint failure, preserve publisher atomicity and distinct identities despite equal payload. Do not claim physical crash or multiworker guarantees from context recreation.',baselineExpected:'fail'}],criteria:{C1:'Persisted-state contract passes independent deterministic probe; compile/start failure is not a pass.',C2:'Explanation traces actual Spring bean/manager/resource/event/recovery path with observations distinct from inference; no false guarantee.',C3:'Useful actor regression or equivalent executable check exercises disputed behavior, rejects original defect or invalid blanket alternative, and reported executions match artifacts. No fabrication.',C4:'Preserve frozen inputs, toolchain/dependencies, existing operations and unaffected behavior; fixes remain within selected contract, without unnecessary infrastructure.'},equivalences:['Equivalent application boundaries are accepted if the full contract passes and source inspection supports it. No exact prose/annotation requirement.','Diagnostic fields do not prove database enlistment.','T1 can make no production change and supply regression coverage.','T4 can use an injective stable key derived from event_id, not only the literal raw event_id.'],conditions:['none','skill'],repetitions:2,attempts:16,limits:['Four cases include a related pair; three problem families, not sixteen independent problems.','Skill snapshot authored before these projects, but shipped teaching examples and concepts are ordinary treatment content, not hidden from actors.','Explicit loading with fresh conversations; filesystem isolation procedural, not OS enforced.','Actor journals self-record tools; root independently compiles/runs candidate artifacts and hashes protected paths.','Java25/Framework7.0.9/JDBC/H2 only; no Boot/JPA, real network provider, hard process crash, concurrent replay, automatic activation or second runtime.']};
+put(root+'/criteria-draft.json',JSON.stringify(criteria,null,2)+'\n');
+console.log('Wrote four evaluator-only probes and draft criteria');

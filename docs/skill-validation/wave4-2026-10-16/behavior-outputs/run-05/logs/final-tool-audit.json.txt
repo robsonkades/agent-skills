@@ -1,0 +1,9 @@
+{
+  "command": "$auditRecord = Get-Content -LiteralPath output/execution.json -Raw | ConvertFrom-Json; $auditErrors = @(); foreach ($auditRun in $auditRecord.executions) { if (-not $auditRun.expectationMet) { $auditErrors += $auditRun.id }; if ((Get-Content -LiteralPath ('output/logs/' + $auditRun.id + '.stdout.txt') -Raw) -cne $auditRun.stdout -and $auditRun.stdout -ne '') { $auditErrors += ($auditRun.id + ': stdout mismatch') }; if ((Get-Content -LiteralPath ('output/logs/' + $auditRun.id + '.stderr.txt') -Raw) -cne $auditRun.stderr -and $auditRun.stderr -ne '') { $auditErrors += ($auditRun.id + ': stderr mismatch') } }; $proposedDelivery = Get-Content -LiteralPath output/proposed-delivery.json -Raw | ConvertFrom-Json; if ($proposedDelivery.libraryVersion -ne '1.0.1' -or $proposedDelivery.applicationVersion -ne '1.0.0' -or $proposedDelivery.layout -ne 'external') { $auditErrors += 'Proposed delivery mismatch' }; if (-not (Test-Path -LiteralPath output/decision.md)) { $auditErrors += 'Missing decision' }; if ($auditErrors.Count) { throw ($auditErrors -join ', ') }; [pscustomobject]@{ executions = $auditRecord.executions.Count; allExpectedOutcomes = $true; logsMatchRecord = $true; proposedDelivery = $proposedDelivery; decisionWords = ((Get-Content -LiteralPath output/decision.md -Raw) -split '\\s+').Count; unfinishedChildSessions = 0 } | ConvertTo-Json",
+  "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-actors-HoLlUY/run-05",
+  "chunk_id": "097237",
+  "wall_time_seconds": 0.2863374,
+  "exit_code": 0,
+  "original_token_count": 76,
+  "output": "{\r\n  \"executions\": 34,\r\n  \"allExpectedOutcomes\": true,\r\n  \"logsMatchRecord\": true,\r\n  \"proposedDelivery\": {\r\n    \"application\": \"report-app\",\r\n    \"applicationVersion\": \"1.0.0\",\r\n    \"libraryVersion\": \"1.0.1\",\r\n    \"layout\": \"external\"\r\n  },\r\n  \"decisionWords\": 610,\r\n  \"unfinishedChildSessions\": 0\r\n}\r\n"
+}

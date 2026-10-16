@@ -1,0 +1,74 @@
+import java.util.ArrayList;
+import java.util.List;
+
+public final class OrderFlow {
+    record Order(String id, int creditScore) {}
+    record OrderValidated(String orderId) {}
+    record Publication(OrderValidated message, boolean inputAccepted, String creditDecision) {}
+    record Result(List<Publication> publications, String creditDecision, List<String> trace) {}
+
+    static final class OrderRecord {
+        final Order order;
+        boolean inputAccepted;
+        String creditDecision = "PENDING";
+
+        OrderRecord(Order order) {
+            this.order = order;
+        }
+    }
+
+    static final class Intake {
+        final List<Publication> publications;
+        final List<String> trace;
+
+        Intake(List<Publication> publications, List<String> trace) {
+            this.publications = publications;
+            this.trace = trace;
+        }
+
+        void submit(OrderRecord record) {
+            if (record.order.id() == null || record.order.id().isBlank()) {
+                trace.add("INPUT_REJECTED");
+                return;
+            }
+            record.inputAccepted = true;
+            trace.add("INPUT_ACCEPTED");
+            publications.add(new Publication(
+                    new OrderValidated(record.order.id()),
+                    record.inputAccepted,
+                    record.creditDecision));
+            trace.add("OrderValidated published");
+        }
+    }
+
+    static final class CreditSubscriber {
+        void on(OrderValidated message, OrderRecord record, List<String> trace) {
+            if (!message.orderId().equals(record.order.id())) {
+                throw new IllegalArgumentException("Unknown order");
+            }
+            record.creditDecision = record.order.creditScore() >= 600 ? "APPROVED" : "REJECTED";
+            trace.add("CREDIT_" + record.creditDecision);
+        }
+    }
+
+    static Result run(String id, int creditScore) {
+        List<Publication> publications = new ArrayList<>();
+        List<String> trace = new ArrayList<>();
+        OrderRecord record = new OrderRecord(new Order(id, creditScore));
+        new Intake(publications, trace).submit(record);
+        CreditSubscriber subscriber = new CreditSubscriber();
+        for (Publication publication : publications) {
+            subscriber.on(publication.message(), record, trace);
+        }
+        return new Result(List.copyOf(publications), record.creditDecision, List.copyOf(trace));
+    }
+
+    public static void main(String[] args) {
+        Result result = run("O-17", 400);
+        result.trace().forEach(System.out::println);
+        for (Publication publication : result.publications()) {
+            System.out.println("at-publication: inputAccepted=" + publication.inputAccepted()
+                    + ", creditDecision=" + publication.creditDecision());
+        }
+    }
+}

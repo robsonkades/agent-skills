@@ -33,7 +33,9 @@ request produces findings and alternatives; it does not by itself authorize code
 
 0. **Establish the target and authority.** Inspect compiler release/toolchains, callers,
    published APIs, resource/failure contracts, tests and change history; identify who owns
-   the rule and its effective version/date.
+   the rule and its effective version/date. For generated representations, trace the active
+   schema/template/processor and selected build configuration before choosing the edit point;
+   a generated marker alone does not prove that producer still runs.
    Examples use Java 17-compatible syntax (records need Java 16+ without preview); on older
    targets use existing classes, without an implicit upgrade. Distinguish explicit requirements
    from conventions and assumptions. If authority or caller behavior remains unknown after

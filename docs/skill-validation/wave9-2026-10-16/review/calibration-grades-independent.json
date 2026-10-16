@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "scope": "Calibração independente de quatro controles autorais de prosa e decisão; não é julgamento de atores nem verificação de execução.",
+  "filesRead": [
+    "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/review/calibration-inputs.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/frozen/criteria.json"
+  ],
+  "priorContextUsed": "Contratos R1–R4 já lidos na revisão prospectiva. Nenhum relatório de resultados foi consultado nesta etapa.",
+  "grades": [
+    {
+      "sampleId": "K1",
+      "caseId": "R2",
+      "decision": "reject",
+      "reason": "REPLAY_SAFE permite repetir o mesmo intento com segurança, mas não transforma UNKNOWN em não aplicação conhecida. Uma recusa da tentativa seguinte não resolve a incerteza anterior nem autoriza REJECTED. O mínimo do servidor em uma resposta ambígua continua obrigatório antes do replay.",
+      "criteria": ["C2", "cases.R2"]
+    },
+    {
+      "sampleId": "K2",
+      "caseId": "R3",
+      "decision": "accept",
+      "reason": "A explicação cobre duração monotônica, expiração e limite de chamadas, saturação, full jitter, mínimo do servidor, reserva, clipping e encaixe exato. Aceita a expressão modular equivalente sob o domínio declarado, sem impor preferência de grafia. Reconhece que planejar não executa timer nem libera recursos.",
+      "criteria": ["C2", "cases.R3"],
+      "evidenceLimit": "Aceitação da explicação; não demonstra compilação, correção de uma implementação ou sensibilidade de Verification.java."
+    },
+    {
+      "sampleId": "K3",
+      "caseId": "R4",
+      "decision": "accept",
+      "reason": "Os valores 6, 18, 1.06, 1.6 e 130 são consistentes com a fixture. A resposta distingue máximos nominais, contadores observados e concessões externas, sem atribuir ao bucket um limite de wire retries. Reconhece que 60 concessões são compatíveis e que o commit posterior invalida a alegação de falha definitiva após timeout/not-found. Propõe verificação limitada de contadores e commit tardio sem alegar execução ou medição de produção.",
+      "criteria": ["C2", "C3", "cases.R4"],
+      "evidenceLimit": "O limite 130 é interpretado como teto, não como quantidade alcançável garantida; a proposta de experimento não foi executada."
+    },
+    {
+      "sampleId": "K4",
+      "caseId": "R1",
+      "decision": "reject",
+      "reason": "REPLAY_SAFE=false impede redispatch quando existe efeito não resolvido. Não proíbe recuperar uma falha transitória cuja não aplicação é conhecida. A política fornecida exige admitir nova tentativa quando resultado e verificações permitem; recusa incondicional de todo retry não é uma implementação equivalente.",
+      "criteria": ["C2", "cases.R1"]
+    }
+  ],
+  "limitations": [
+    "As decisões avaliam somente o conteúdo fornecido como controle de prosa/decisão. Ausência de código, JSON completo ou journal nestes controles não foi tratada como falha de uma entrega.",
+    "C1, C3 executável dos casos Java e C4 não podem ser comprovados por estes exemplos. Não executei comandos de teste, atores ou experimentos.",
+    "Não consultei calibration-expected.json, calibration-grades.json, root-notes/root-grades, outputs dos atores ou outros relatórios de resultados nesta etapa.",
+    "A calibração não demonstra generalização do julgamento nem eficácia de uma skill."
+  ],
+  "actorsExecuted": false,
+  "actorsGraded": false,
+  "subagentsSpawned": false,
+  "allWritesStopped": true
+}

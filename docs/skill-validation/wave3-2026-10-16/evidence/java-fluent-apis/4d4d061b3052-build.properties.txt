@@ -1,0 +1,1 @@
+java.release=25

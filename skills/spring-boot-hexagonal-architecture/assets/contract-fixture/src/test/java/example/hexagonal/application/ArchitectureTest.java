@@ -4,6 +4,7 @@ import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.lang.ArchRule;
+import com.tngtech.archunit.lang.CompositeArchRule;
 import example.hexagonal.adapter.JdbcOrders;
 import example.hexagonal.domain.Order;
 import org.junit.jupiter.api.Test;
@@ -12,10 +13,13 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ArchitectureTest {
-    private static final ArchRule CORE_IS_PLAIN_JAVA = noClasses()
+    private static final ArchRule CORE_IS_PLAIN_JAVA = CompositeArchRule.of(noClasses()
             .that().resideInAnyPackage("example.hexagonal.domain..", "example.hexagonal.application..")
             .should().dependOnClassesThat().resideOutsideOfPackages(
-                    "java..", "example.hexagonal.domain..", "example.hexagonal.application..");
+                    "java..", "example.hexagonal.domain..", "example.hexagonal.application.."))
+            .and(noClasses()
+                    .that().resideInAnyPackage("example.hexagonal.domain..", "example.hexagonal.application..")
+                    .should().dependOnClassesThat().resideInAnyPackage("java.sql..", "javax.sql.."));
 
     @Test
     void productionCoreHasNoExternalMechanismsAndDomainDoesNotDependOnApplication() {
@@ -27,6 +31,7 @@ class ArchitectureTest {
         assertTrue(production.contain(CreateOrder.class), "Application package must be selected");
         assertTrue(production.contain(JdbcOrders.class), "Adapter package must be selected");
         assertFalse(production.contain(ForbiddenDependency.class), "Test fixtures must be excluded");
+        assertFalse(production.contain(ForbiddenJdbcDependency.class), "Test fixtures must be excluded");
         CORE_IS_PLAIN_JAVA.check(production);
         noClasses().that().resideInAPackage("example.hexagonal.domain..")
                 .should().dependOnClassesThat().resideInAPackage("example.hexagonal.application..")
@@ -40,7 +45,18 @@ class ArchitectureTest {
         assertTrue(failure.getMessage().contains("org.springframework.http.ResponseEntity"));
     }
 
+    @Test
+    void theSameCoreRuleRejectsJdbcEvenThoughItIsPartOfTheJdk() {
+        JavaClasses hostile = new ClassFileImporter().importClasses(ForbiddenJdbcDependency.class);
+        AssertionError failure = assertThrows(AssertionError.class, () -> CORE_IS_PLAIN_JAVA.check(hostile));
+        assertTrue(failure.getMessage().contains("java.sql.Connection"));
+    }
+
     private static final class ForbiddenDependency {
         private ResponseEntity<String> leakedHttpType;
+    }
+
+    private static final class ForbiddenJdbcDependency {
+        private java.sql.Connection leakedJdbcType;
     }
 }

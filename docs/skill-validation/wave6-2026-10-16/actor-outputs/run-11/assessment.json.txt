@@ -1,0 +1,19 @@
+{
+  "disposition": "violated",
+  "basis": "Job.collect(), src/work/Job.java:8, chama join(2) e anuncia DONE sem detectar término. O contrato aceita PENDING durante execução e proíbe DONE:0. O check fornecido observou while-gate-closed=DONE:0, alive=true e after-termination=DONE:83. O retorno por timeout de join(long) não estabelece a publicação por término; JLS 17.4.4 exige detecção de terminação do worker correto.",
+  "requiredChange": "Manter join(2); imediatamente depois, retornar PENDING se isAlive() for true; ler result somente quando isAlive() for false para o worker já iniciado exatamente uma vez. Preservar InterruptedException e a espera limitada. Não é necessária mudança para volatile. Proposta não implementada.",
+  "missingEvidence": [],
+  "checked": [
+    "Leitura integral do pedido, contrato, README, Job.java, Smoke.java, check.mjs e skill local com ambas as referências condicionais.",
+    "Cópias fornecidas em input/project e output/project comparadas por SHA-256 antes da compilação: seis arquivos iguais.",
+    "Java SE 25: consulta às especificações JLS 17.4.4/17.4.5, Thread.join(long)/isAlive() e CountDownLatch.",
+    "Node v25.6.1; javac 25.0.3; Temurin 25.0.3+9-LTS.",
+    "node check.mjs na cópia output/project: compilação --release 25 e execução concluídas, exit 0; saída reproduz DONE:0 com alive=true e DONE:83 após término."
+  ],
+  "limits": [
+    "A proposta é um snippet de revisão, não uma alteração nem um teste executado.",
+    "Uma execução controlada; sem jcstress, análise estática, medições de latência ou matriz de arquiteturas/JITs.",
+    "A garantia de leitura após isAlive()==false usa a premissa aceita de worker correto já iniciado exatamente uma vez, sem cancelamento.",
+    "O Smoke somente imprime os resultados funcionais; exit 0 confirma término do check e cleanup, não satisfação do contrato."
+  ]
+}

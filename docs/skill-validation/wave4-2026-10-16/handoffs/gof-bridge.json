@@ -1,0 +1,467 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "gof-bridge",
+  "assignedSkill": "gof-bridge",
+  "ownedPath": "skills/gof-bridge/**",
+  "date": "2026-10-16",
+  "allWritesStopped": true,
+  "noActiveBackgroundProcess": true,
+  "scope": "Review and focused improvement of Bridge decision guidance, real variation, valid pairings, lifecycle ownership and contracts crossing the abstraction/implementor boundary. No shared files or neighboring packages edited.",
+  "requiredReadings": [
+    "AGENTS.md (only applicable file found)",
+    "docs/skill-review-prompt.md (complete; reread applicable full procedure)",
+    "docs/parallel-skill-reviews.md",
+    "docs/skill-validation/wave4-2026-10-16/review-brief.md",
+    "docs/skill-validation/wave4-2026-10-16/baseline.json (gof-bridge package)",
+    "skills/skill-engineering/SKILL.md",
+    "skills/skill-engineering/references/evidence-and-confidence.md",
+    "skills/skill-engineering/references/evaluation.md",
+    "skills/skill-engineering/references/resource-design.md",
+    "skills/skill-engineering/references/anti-patterns.md",
+    "docs/skill-validation/skills-comparative-research-2026-10-16.md",
+    "Relevant roadmap and prior wave reports: bounded evidence, saturated behavior comparisons, preserved negative results",
+    "Entire assigned package (four files)"
+  ],
+  "baseline": {
+    "committedVersion": "1.2.4",
+    "assignmentVersion": "1.2.4",
+    "preExistingVersionBump": false,
+    "committedStagedUnstagedUntracked": "Owned package matched HEAD and wave4 baseline; scoped status, staged diff and unstaged diff empty; no untracked owned files.",
+    "preExistingChanges": [],
+    "hashes": [
+      {
+        "path": "skills/gof-bridge/skill.yaml",
+        "sha256": "A31FD6436045D06C14CE23C10B183C48DC47F30ECA2AF7696451CB029CE212AA"
+      },
+      {
+        "path": "skills/gof-bridge/SKILL.md",
+        "sha256": "9FCF4C2063653569CA23E18365F1B3D367D5B8FBA782CD6171C62A99833D8D30"
+      },
+      {
+        "path": "skills/gof-bridge/references/worked-example.md",
+        "sha256": "370F63D9A687E7E8593334A5D7A43024A023EB21361444911F958C1B1136076E"
+      },
+      {
+        "path": "skills/gof-bridge/references/decision-and-alternatives.md",
+        "sha256": "54BC28C6DA8EE99438478E8269F9BA53690000FC11C3E94910B341DBB6F4C627"
+      }
+    ],
+    "snapshot": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-bridge-validation-quality18/baseline-package.json"
+  },
+  "version": {
+    "committed": "1.2.4",
+    "assignment": "1.2.4",
+    "final": "1.2.5",
+    "rationale": "One patch bump because skill content changed, required by immutable published integrity policy; no previous bump to reuse. Only manifest has the version field."
+  },
+  "findingsCorrected": [
+    {
+      "id": "BRIDGE-ATOMICITY",
+      "originalLocations": [
+        "references/decision-and-alternatives.md:93 (granularity)",
+        "SKILL.md:146 (concurrency)"
+      ],
+      "finalLocations": ["references/decision-and-alternatives.md:100", "SKILL.md:150"],
+      "observation": "The existing implementor guidance discussed exists/read/write granularity by cost and backend thread safety without a concrete rule for a consumer operation requiring an indivisible condition and effect.",
+      "consequence": "An abstraction can promise create-if-absent while composing individually safe operations whose interleaving overwrites an earlier creator; per-abstraction synchronization need not include the actual competing writer.",
+      "implemented": "Short guard at concurrency decision point; conditional reference guidance tracing operation/invariant to actual writers, backend conditional operation or complete coordination, preserving simpler independent operations. Java17 Files.exists/CREATE_NEW counterexample states name-creation versus payload/rollback/durability limits and focused interference checks.",
+      "evidence": [
+        "Java17 Files/StandardOpenOption contracts",
+        "JLS17 section17.1",
+        "Local two-thread controlled schedule and conditional-create controls"
+      ],
+      "limitation": "Focused instruction gap, not a claim that every use of the baseline skill produced this defect."
+    },
+    {
+      "id": "BRIDGE-OWNERSHIP",
+      "originalLocations": ["SKILL.md:97"],
+      "finalLocations": ["SKILL.md:97"],
+      "observation": "The prose called the injected Channel owned by Notifier, while the example simply retained the reference and the package already distinguished borrowed shared providers.",
+      "consequence": "The word could be read as transferring shutdown responsibility solely through injection.",
+      "implemented": "States the worked example borrows its Channel; application owner manages any backend shutdown. Holds versus cleanup ownership is explicit.",
+      "evidence": [
+        "Existing constructor, absence of close in Notifier, and existing lifecycle guidance; no resource API/runtime change"
+      ],
+      "limitation": "Clarifies the illustrative contract. Does not claim injection can never transfer ownership; actual consumers must declare their ownership contract."
+    }
+  ],
+  "remainingFindings": [],
+  "crossSkillIssues": [],
+  "filesChangedByReviewer": [
+    {
+      "path": "skills/gof-bridge/SKILL.md",
+      "purpose": "Clarifies borrowed provider ownership and routes compound-operation atomicity guard."
+    },
+    {
+      "path": "skills/gof-bridge/references/decision-and-alternatives.md",
+      "purpose": "Adds conditional atomicity decision and Java17 primary-source counterexample with limits."
+    },
+    {
+      "path": "skills/gof-bridge/skill.yaml",
+      "purpose": "Version only, 1.2.4 to 1.2.5."
+    }
+  ],
+  "filesChangedBeforeAssignment": [],
+  "finalHashes": [
+    {
+      "Path": "skills/gof-bridge/skill.yaml",
+      "SHA256": "CCB28A64016184B874204EEB5D49DD1BCB08A2517B26C5E71732A740ABD9E630"
+    },
+    {
+      "Path": "skills/gof-bridge/SKILL.md",
+      "SHA256": "35053FF19C59C51BA036C08E8B50CDEB27A4ADDF20BE8B8AD09C3D38137EDC0A"
+    },
+    {
+      "Path": "skills/gof-bridge/references/worked-example.md",
+      "SHA256": "370F63D9A687E7E8593334A5D7A43024A023EB21361444911F958C1B1136076E"
+    },
+    {
+      "Path": "skills/gof-bridge/references/decision-and-alternatives.md",
+      "SHA256": "BC6990AEE89E3DE45A08BDC36C7FD2729BDA0569873A2D56720B5BFA15AAF95B"
+    }
+  ],
+  "capabilitiesPreserved": [
+    "Evidence-based two-axis/public-provider boundary test with Strategy/plain-composition/no-change alternatives; no extra hierarchy just for a diagram.",
+    "Static and per-input illegal pairings; truthful optional capabilities; stale capability snapshots and authoritative backend validation.",
+    "Java17 baseline, sealed/content versus abstraction hierarchy distinction, no preview or dependency upgrade.",
+    "Remote cost/failure/deadline and batch partial-result semantics.",
+    "Shared/confined/session lifetimes, returned stream ownership, provider-bound state and live replacement/failover limits.",
+    "Contract tests plus pair interactions; fake versus actual provider evidence.",
+    "Complete worked-example.md remained byte-identical.",
+    "Descriptions, dependencies, suggests and agent metadata retained."
+  ],
+  "capabilitiesReplacedOrRemoved": [],
+  "validation": {
+    "structural": [
+      {
+        "command": "@'\nimport assert from 'node:assert/strict';\nimport { readFileSync, existsSync } from 'node:fs';\nimport { resolve, dirname } from 'node:path';\nimport { parseManifest } from './packages/core/src/domain/manifest.ts';\nimport { parseSkillDocument } from './packages/core/src/domain/skill-document.ts';\nconst root = resolve('skills/gof-bridge');\nconst { manifest, issues } = parseManifest(readFileSync(resolve(root, 'skill.yaml'), 'utf8'), { strict: true });\nassert.deepEqual(issues, []);\nconst doc = parseSkillDocument(readFileSync(resolve(root, 'SKILL.md'), 'utf8'));\nassert.equal(manifest.name, 'gof-bridge');\nassert.equal(doc.frontmatter.name, manifest.name);\nassert.equal(manifest.version, '1.2.5');\nconst norm = s => s.replace(/\\s+/g, ' ').trim();\nassert.equal(norm(doc.frontmatter.description), norm(manifest.description));\nfor (const path of manifest.files) assert.ok(existsSync(resolve(root, path)), path);\nconst refs = [...new Set(doc.body.match(/references\\/[A-Za-z0-9/-]+\\.md/g))];\nassert.equal(refs.length, 2);\nlet links = 0;\nfor (const name of ['SKILL.md', ...refs]) {\n  const source = resolve(root, name);\n  const content = readFileSync(source, 'utf8');\n  for (const match of content.matchAll(/\\]\\(([^)]+)\\)/g)) {\n    const target = match[1];\n    if (/^<?https?:\\/\\//.test(target)) continue;\n    const [file, anchor] = target.split('#');\n    const dest = file ? resolve(dirname(source), file) : source;\n    assert.ok(existsSync(dest), name + ': ' + target);\n    if (anchor) {\n      const headings = [...readFileSync(dest, 'utf8').matchAll(/^#+\\s+(.+)$/gm)].map(m => m[1].toLowerCase().replace(/[^\\w\\s-]/g, '').replace(/\\s/g, '-'));\n      assert.ok(headings.includes(anchor), name + ': anchor ' + target);\n    }\n    links++;\n  }\n}\nconsole.log(JSON.stringify({name:manifest.name, version:manifest.version, strictManifestIssues:issues.length, declaredPaths:manifest.files.length, routedReferences:refs.length, localLinksChecked:links, metadataAndLinks:'PASS'}));\n'@ | node --input-type=module",
+        "workingDirectory": "C:/git/agent-skills",
+        "status": "fulfilled",
+        "chunk_id": "92712b",
+        "wall_time_seconds": 0.2338608,
+        "exit_code": 0,
+        "original_token_count": 38,
+        "output": "{\"name\":\"gof-bridge\",\"version\":\"1.2.5\",\"strictManifestIssues\":0,\"declaredPaths\":3,\"routedReferences\":2,\"localLinksChecked\":4,\"metadataAndLinks\":\"PASS\"}\n"
+      },
+      {
+        "command": "node node_modules/prettier/bin/prettier.cjs --check skills/gof-bridge/SKILL.md skills/gof-bridge/skill.yaml skills/gof-bridge/references/decision-and-alternatives.md skills/gof-bridge/references/worked-example.md",
+        "workingDirectory": "C:/git/agent-skills",
+        "status": "fulfilled",
+        "chunk_id": "238f7c",
+        "wall_time_seconds": 0.2942591,
+        "exit_code": 0,
+        "original_token_count": 17,
+        "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+      },
+      {
+        "command": "git diff --check -- skills/gof-bridge",
+        "workingDirectory": "C:/git/agent-skills",
+        "status": "fulfilled",
+        "chunk_id": "65cdd1",
+        "wall_time_seconds": 0.1324429,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      }
+    ],
+    "technical": {
+      "command": "$ErrorActionPreference = 'Stop'\n$evidence = 'C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-bridge-validation-quality18'\nNew-Item -ItemType Directory -Force -Path \"$evidence/classes\", \"$evidence/test-data\" | Out-Null\n$src = @(Get-ChildItem -LiteralPath \"$evidence/common/src\" -Filter '*.java' | ForEach-Object { $_.FullName })\n& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' --release 17 -d \"$evidence/classes\" @src \"$evidence/common/test/SequentialTest.java\" \"$evidence/technical-probe/BridgeAtomicityProbe.java\" 2>&1 | Tee-Object -FilePath \"$evidence/javac.log\"\nif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }\n& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' \"-Djava.io.tmpdir=$evidence/test-data\" -cp \"$evidence/classes\" SequentialTest 2>&1 | Tee-Object -FilePath \"$evidence/sequential-test.log\"\nif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }\n& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -cp \"$evidence/classes\" BridgeAtomicityProbe \"$evidence\" 2>&1 | Tee-Object -FilePath \"$evidence/atomicity-probe.log\"\nexit $LASTEXITCODE",
+      "workingDirectory": "C:/git/agent-skills",
+      "chunk_id": "26b688",
+      "wall_time_seconds": 0.9969277,
+      "exit_code": 0,
+      "original_token_count": 218,
+      "output": "PASS sequential file + memory; 5 assertions\r\nretained=C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-bridge-validation-quality18\\test-data\\bridge-sequential-17509043090797370243\r\nshared-root: importer created first; publisher returned true and replaced imported content (defect reproduced)\r\nprivate-root: publisher and importer both preserved under stated writer scope\r\nconditional-create: existing winner preserved; FileAlreadyExistsException observed on this provider\r\npartial-write: injected failure left prefix; no atomic-payload or rollback claim\r\nreplacement-allowed: ordinary write retained as valid alternate contract\r\nPASS checks=16\r\nruntime=25.0.3+9-LTS\r\nprovider=sun.nio.fs.WindowsFileSystemProvider\r\nretained=C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-bridge-validation-quality18\\probe-run-13366559981724943826\r\n",
+      "compilerTarget": "javac --release 17",
+      "executionRuntime": "Temurin 25.0.3+9-LTS, Windows amd64",
+      "provider": "sun.nio.fs.WindowsFileSystemProvider",
+      "assertions": {
+        "sequential": 5,
+        "controlled": 16
+      },
+      "mechanism": "A two-thread CountDownLatch schedule pauses publisher after exists while the separately wired importer creates. Then the publisher resumes with the original result.",
+      "observations": [
+        "Shared namespace reproduced overwriting an earlier creator despite synchronized publish.",
+        "Only importer.root changed: disjoint namespace preserved both values under the stated writer inventory.",
+        "CREATE_NEW refused an existing name and preserved earlier bytes; fresh name succeeded.",
+        "Injected application exception after a first stream write left a prefix after close.",
+        "Ordinary replacement remains valid when explicitly allowed."
+      ],
+      "limits": [
+        "No JDK 17 runtime execution: --release 17 was compiled by JDK 25.",
+        "One controlled schedule on Windows local filesystem, not a stress proof or remote storage integration.",
+        "Partial-write probe injects an application exception after a write; no disk failure or crash tested.",
+        "Passing private-root example is bounded by the declared writer inventory and stable permission assumptions."
+      ]
+    },
+    "initialFailures": [
+      {
+        "command": "node node_modules/prettier/bin/prettier.cjs --check skills/gof-bridge/SKILL.md skills/gof-bridge/skill.yaml skills/gof-bridge/references/decision-and-alternatives.md skills/gof-bridge/references/worked-example.md",
+        "chunk_id": "ef068b",
+        "wall_time_seconds": 0.3298458,
+        "exit_code": 1,
+        "original_token_count": 43,
+        "output": "Checking formatting...\n[warn] skills/gof-bridge/references/decision-and-alternatives.md\n[warn] Code style issues found in the above file. Run Prettier with --write to fix.\n",
+        "cause": "Prettier required angle brackets around the Files.exists URL containing parentheses.",
+        "resolution": "Focused apply_patch added the brackets; final explicit package check passed. Baseline HEAD was already formatter-clean."
+      },
+      {
+        "command": "$ErrorActionPreference = 'Stop'\n$evidence = 'C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-bridge-validation-quality18'\n$input1 = Get-Content -Raw -LiteralPath \"$evidence/case-01-input.json\" | ConvertFrom-Json\n$input2 = Get-Content -Raw -LiteralPath \"$evidence/case-02-input.json\" | ConvertFrom-Json\n$criteria = Get-Content -Raw -LiteralPath \"$evidence/evaluator-criteria.json\" | ConvertFrom-Json\n$observed = Get-Content -Raw -LiteralPath \"$evidence/evidence.json\" | ConvertFrom-Json\nforeach ($item in @($input1, $input2)) { foreach ($resource in $item.resources) { if (-not (Test-Path -LiteralPath $resource.source)) { throw \"Missing fixture $($resource.source)\" } } }\n$config1 = @(Get-Content -LiteralPath \"$evidence/case-01/config.properties\")\n$config2 = @(Get-Content -LiteralPath \"$evidence/case-02/config.properties\")\nif ($config1.Count -ne 2 -or $config2.Count -ne 2 -or $config1[0] -ne $config2[0] -or $config1[1] -eq $config2[1]) { throw 'Pair is not the expected single-property change' }\nforeach ($file in @('javac.log','sequential-test.log','atomicity-probe.log','run-technical-checks.ps1','baseline-package.json')) { if (-not (Test-Path -LiteralPath \"$evidence/$file\")) { throw \"Missing evidence $file\" } }\nif ($observed.technical.exit_code -ne 0 -or $criteria.cases.Count -ne 2) { throw 'Invalid result or case count' }\n[pscustomobject]@{ jsonsParsed=4; cases=2; differingProperty='importer.root'; fixtureSourcesExist=$true; rawLogsRetained=$true; technicalExit=$observed.technical.exit_code; assertions=21; actorRuns=0 } | ConvertTo-Json -Compress\nrg -n 'borrowed|compound abstraction|Atomicity|CREATE_NEW|version:' skills/gof-bridge\n",
+        "workingDirectory": "C:/git/agent-skills",
+        "chunk_id": "472e4d",
+        "wall_time_seconds": 0.25739,
+        "exit_code": 1,
+        "original_token_count": 54,
+        "output": "Exception: \r\nLine |\r\n  12 |  … -LiteralPath \"$evidence/$file\")) { throw \"Missing evidence $file\" } }\r\n     |                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\r\n     | Missing evidence javac.log\r\n",
+        "cause": "Tee-Object did not create javac.log when the successful compiler emitted no output.",
+        "resolution": "Preserved initial command/result; changed evidence helper to explicitly capture zero-length compiler output and reran only compilation. New capture exit0, zero lines, zero-byte log. Artifact validation reran successfully."
+      }
+    ],
+    "compilerRecapture": {
+      "command": "$ErrorActionPreference = 'Stop'\n$evidence = 'C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-bridge-validation-quality18'\n$src = @(Get-ChildItem -LiteralPath \"$evidence/common/src\" -Filter '*.java' | ForEach-Object { $_.FullName })\n$compilerOutput = @(& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' --release 17 -d \"$evidence/classes\" @src \"$evidence/common/test/SequentialTest.java\" \"$evidence/technical-probe/BridgeAtomicityProbe.java\" 2>&1)\n$compilerExit = $LASTEXITCODE\n[IO.File]::WriteAllText(\"$evidence/javac.log\", ($compilerOutput -join [Environment]::NewLine))\n$compilerOutput | Write-Output\n[pscustomobject]@{compilerExit=$compilerExit; capturedLines=$compilerOutput.Count; logBytes=(Get-Item -LiteralPath \"$evidence/javac.log\").Length} | ConvertTo-Json -Compress\nexit $compilerExit",
+      "workingDirectory": "C:/git/agent-skills",
+      "chunk_id": "10e116",
+      "wall_time_seconds": 0.7562667,
+      "exit_code": 0,
+      "original_token_count": 13,
+      "output": "{\"compilerExit\":0,\"capturedLines\":0,\"logBytes\":0}\r\n"
+    },
+    "artifactCheck": {
+      "command": "$ErrorActionPreference = 'Stop'\n$evidence = 'C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-bridge-validation-quality18'\n$input1 = Get-Content -Raw -LiteralPath \"$evidence/case-01-input.json\" | ConvertFrom-Json\n$input2 = Get-Content -Raw -LiteralPath \"$evidence/case-02-input.json\" | ConvertFrom-Json\n$criteria = Get-Content -Raw -LiteralPath \"$evidence/evaluator-criteria.json\" | ConvertFrom-Json\n$observed = Get-Content -Raw -LiteralPath \"$evidence/evidence.json\" | ConvertFrom-Json\nforeach ($item in @($input1, $input2)) { foreach ($resource in $item.resources) { if (-not (Test-Path -LiteralPath $resource.source)) { throw \"Missing fixture $($resource.source)\" } } }\n$config1 = @(Get-Content -LiteralPath \"$evidence/case-01/config.properties\")\n$config2 = @(Get-Content -LiteralPath \"$evidence/case-02/config.properties\")\nif ($config1.Count -ne 2 -or $config2.Count -ne 2 -or $config1[0] -ne $config2[0] -or $config1[1] -eq $config2[1]) { throw 'Pair is not the expected single-property change' }\nforeach ($file in @('javac.log','sequential-test.log','atomicity-probe.log','run-technical-checks.ps1','baseline-package.json')) { if (-not (Test-Path -LiteralPath \"$evidence/$file\")) { throw \"Missing evidence $file\" } }\nif ($observed.technical.exit_code -ne 0 -or $criteria.cases.Count -ne 2) { throw 'Invalid result or case count' }\n[pscustomobject]@{ jsonsParsed=4; cases=2; differingProperty='importer.root'; fixtureSourcesExist=$true; rawLogsRetained=$true; technicalExit=$observed.technical.exit_code; assertions=21; actorRuns=0 } | ConvertTo-Json -Compress\nrg -n 'borrowed|compound abstraction|Atomicity|CREATE_NEW|version:' skills/gof-bridge\n",
+      "workingDirectory": "C:/git/agent-skills",
+      "chunk_id": "a7a725",
+      "wall_time_seconds": 0.1706167,
+      "exit_code": 0,
+      "original_token_count": 334,
+      "output": "{\"jsonsParsed\":4,\"cases\":2,\"differingProperty\":\"importer.root\",\"fixtureSourcesExist\":true,\"rawLogsRetained\":true,\"technicalExit\":0,\"assertions\":21,\"actorRuns\":0}\r\nskills/gof-bridge\\skill.yaml:4:version: 1.2.5\nskills/gof-bridge\\skill.yaml:45:    version: ^1.0.0\nskills/gof-bridge\\skill.yaml:47:    version: ^1.0.0\nskills/gof-bridge\\SKILL.md:97:In the worked example, `Notifier` holds a borrowed `Channel`; the application owner manages any\nskills/gof-bridge\\SKILL.md:151:  compound abstraction operation atomic. Trace its promised invariant through the calls and\nskills/gof-bridge\\SKILL.md:154:  including close responsibility on failure or cancellation. A borrowed shared backend is not\nskills/gof-bridge\\references\\decision-and-alternatives.md:71:    // Closing it does not close this borrowed, potentially shared channel.\nskills/gof-bridge\\references\\decision-and-alternatives.md:100:**Atomicity.** Trace one consumer operation through its implementor calls. If `createIfAbsent`\nskills/gof-bridge\\references\\decision-and-alternatives.md:111:[`CREATE_NEW`](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/nio/file/StandardOpenOption.html#CREATE_NEW)\nskills/gof-bridge\\references\\decision-and-alternatives.md:197:attempt/lifetime checks. Test the declared promises, not a stronger contract borrowed from this example.\n"
+    },
+    "finalDiff": "Inspected complete scoped diff plus final wording; 3 changed files, 26 insertions and 6 deletions. Final git diff --check passed. No staged/untracked owned changes.",
+    "localFilesGenerated": "Only assigned package edits and coordinator-authorized unique temporary evidence/handoff. No real configuration, installs, shared outputs or running processes."
+  },
+  "behavioralEvaluations": {
+    "executed": [],
+    "actualAgentOutputs": [],
+    "count": 0,
+    "measuredImprovement": false,
+    "pending": "Coordinator may run independent actors on separated inputs."
+  },
+  "walkthroughs": [
+    "Paired namespace condition: required correction when importer shares the effective root; retain no-change under declared disjoint roots, single publisher and writer scope.",
+    "Alternative replacement permission: ordinary writes can be appropriate when replacement is an accepted contract (also exercised by technical control).",
+    "Existing Bridge axes, capability holes and lifetime/binding paths retained; no need for a second Publisher hierarchy."
+  ],
+  "reproducibleCases": {
+    "classification": "Known development cases, not held-out and not independently executed.",
+    "inputPaths": [
+      "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-bridge-validation-quality18/case-01-input.json",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-bridge-validation-quality18/case-02-input.json"
+    ],
+    "inputs": [
+      {
+        "id": "gof-bridge-01",
+        "classification": "Known development case; no actor execution",
+        "request": "Review this report-publishing Bridge extraction before release. Inspect the accepted contract, source, tests and deployment wiring. Report required changes with file evidence and perform a focused check for any material finding. Preserve an adequate design and the Java 17 target; do not turn a review into a hierarchy rewrite.",
+        "prerequisites": [
+          "Available JDK able to compile --release 17; no external dependencies",
+          "Disposable workspace with write access for fixture outputs; no real configuration"
+        ],
+        "resources": [
+          {
+            "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-bridge-validation-quality18/common",
+            "target": "."
+          },
+          {
+            "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-bridge-validation-quality18/case-01/config.properties",
+            "target": "config.properties"
+          }
+        ],
+        "exclude": [
+          "evaluator-criteria.json",
+          "technical-probe/",
+          "evidence.json",
+          "case-02",
+          "other actor outputs",
+          "revised skill in control condition"
+        ],
+        "baselineCommand": "javac --release 17 -d classes src/*.java test/*.java; java -cp classes SequentialTest",
+        "inputDifference": "Only importer.root in config.properties differs between the pair.",
+        "isolation": "Procedural until the coordinator creates an actor workspace containing only listed resources and the chosen treatment. No agent runs performed."
+      },
+      {
+        "id": "gof-bridge-02",
+        "classification": "Known development case; no actor execution",
+        "request": "Review this report-publishing Bridge extraction before release. Inspect the accepted contract, source, tests and deployment wiring. Report required changes with file evidence and perform a focused check for any material finding. Preserve an adequate design and the Java 17 target; do not turn a review into a hierarchy rewrite.",
+        "prerequisites": [
+          "Available JDK able to compile --release 17; no external dependencies",
+          "Disposable workspace with write access for fixture outputs; no real configuration"
+        ],
+        "resources": [
+          {
+            "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-bridge-validation-quality18/common",
+            "target": "."
+          },
+          {
+            "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-bridge-validation-quality18/case-02/config.properties",
+            "target": "config.properties"
+          }
+        ],
+        "exclude": [
+          "evaluator-criteria.json",
+          "technical-probe/",
+          "evidence.json",
+          "case-01",
+          "other actor outputs",
+          "revised skill in control condition"
+        ],
+        "baselineCommand": "javac --release 17 -d classes src/*.java test/*.java; java -cp classes SequentialTest",
+        "inputDifference": "Only importer.root in config.properties differs between the pair.",
+        "isolation": "Procedural until the coordinator creates an actor workspace containing only listed resources and the chosen treatment. No agent runs performed."
+      }
+    ],
+    "evaluatorCriteriaPath": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-bridge-validation-quality18/evaluator-criteria.json",
+    "evaluatorCriteria": {
+      "skill": "gof-bridge",
+      "definedBeforeBehavioralRuns": true,
+      "commonExpected": [
+        "Inspect ReportPublisher.publish, DirectoryStore methods, Wiring.start, config.properties and the accepted contract before asserting a finding.",
+        "Keep Report input and Store provider variation. No additional Publisher class hierarchy is needed; pattern naming alone is not a defect.",
+        "Maintain create-only behavior, propagated I/O failure and borrowed application-lifetime stores; do not add per-call backend close.",
+        "Distinguish name-creation atomicity from whole-payload publication, rollback, durability and actual-provider coverage.",
+        "Separate executed technical checks from recommendations and from unperformed agent comparisons."
+      ],
+      "cases": [
+        {
+          "id": "gof-bridge-01",
+          "decisiveConstraint": "The importer resolves to the publisher's same directory and does not participate in the ReportPublisher monitor.",
+          "expected": [
+            "Find that synchronization on the one publisher cannot protect its exists/write sequence against the separately wired importer.",
+            "Demonstrate or explain a supported interleaving: publisher observes absence; importer successfully creates; publisher overwrites and returns true.",
+            "Require a contract-preserving conditional create operation at the Store boundary, or a fully justified coordination mechanism that includes every writer. File CREATE_NEW and memory atomic insertion are possible implementations; a lock only on the publisher does not fix the importer path.",
+            "Preserve an already imported file, report conflict, propagate unrelated I/O errors rather than treating every IOException as 'already exists', and state partial-write limits."
+          ],
+          "failureConditions": [
+            "Approve existing behavior as correct merely because publish is synchronized or each primitive is safe.",
+            "Ignore effective root collision or alter the accepted no-overwrite contract.",
+            "Claim CREATE_NEW makes all bytes atomically visible/durable, or recommend unconditional deletion on any failed create.",
+            "Force a second hierarchy, distributed transaction, or broad architecture rewrite without need."
+          ]
+        },
+        {
+          "id": "gof-bridge-02",
+          "decisiveConstraint": "Only importer.root changes to a disjoint directory; the contract's one publisher and writer inventory now put all report-directory writers under the existing monitor.",
+          "expected": [
+            "Trace the configured disjoint paths and retain the current design as adequate for the stated writer/permission scope.",
+            "Do not report an observed external-writer race against the report directory when the declared deployment excludes it.",
+            "A conditional-create simplification may be proposed with its motivation, but is not a required fix for the same-namespace race under this fixture's scope.",
+            "State that new writers, another publisher instance or a changed namespace contract would require reconsideration; keep the legitimate existing no-change result."
+          ],
+          "failureConditions": [
+            "Reuse the shared-root diagnosis despite the changed effective path.",
+            "Invent external writers, permissions or replication not in evidence to force a finding.",
+            "Weaken create-only behavior or remove synchronization without an alternative guarantee.",
+            "Claim that sequential tests prove arbitrary concurrency or remote provider correctness."
+          ]
+        }
+      ],
+      "optionalTechnicalControl": "If the accepted consumer operation explicitly permits replacing a value, ordinary write may remain appropriate. This is a separate walkthrough/control, not a third actor case.",
+      "limits": [
+        "Cases are authored during revision and not held out.",
+        "Neither case has been run by an independent actor.",
+        "Directory roots are fixture-authoritative; no production deployment or distributed storage is tested."
+      ]
+    },
+    "changedConstraint": "Only importer.root in the fixture deployment configuration: reports versus imports.",
+    "proceduralIsolationLimit": "Coordinator must copy only common fixture files and one config plus assigned skill treatment into an isolated actor workspace. Parent/evidence directory separation alone does not enforce access isolation."
+  },
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/nio/file/Files.html#exists(java.nio.file.Path,java.nio.file.LinkOption...)",
+      "title": "Java SE 17 Files.exists",
+      "consulted": "2026-10-16",
+      "version": "Java SE 17",
+      "status": "consulted",
+      "supports": "Existence observation can be stale; false includes inability to determine existence. A separate check does not reserve the file name.",
+      "limit": "API contract, not a production filesystem measurement."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/nio/file/StandardOpenOption.html#CREATE_NEW",
+      "title": "Java SE 17 StandardOpenOption.CREATE_NEW",
+      "consulted": "2026-10-16",
+      "version": "Java SE 17",
+      "status": "consulted",
+      "supports": "Absence check and file creation are atomic relative to other filesystem operations; existing name causes failure.",
+      "limit": "Name creation is the guaranteed operation; subsequent payload writes and crash durability are distinct."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/nio/file/Files.html#write(java.nio.file.Path,byte%5B%5D,java.nio.file.OpenOption...)",
+      "title": "Java SE 17 Files.write and newOutputStream",
+      "consulted": "2026-10-16",
+      "version": "Java SE 17",
+      "status": "consulted",
+      "supports": "Default write opens with CREATE/TRUNCATE_EXISTING/WRITE; write failures can occur after file creation or some writes; optional specific FileAlreadyExistsException.",
+      "limit": "Our probe observed that specific exception on the Windows default provider. Other providers and I/O fault mechanisms were not tested."
+    },
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se17/html/jls-17.html#jls-17.1",
+      "title": "Java Language Specification 17 section 17.1",
+      "consulted": "2026-10-16",
+      "version": "Java SE 17",
+      "status": "consulted",
+      "supports": "Monitor exclusion applies to threads acquiring the same monitor; an instance synchronized method locks its receiver.",
+      "limit": "Does not establish that every deployment writer participates in a local monitor; fixture wiring supplies that boundary."
+    },
+    {
+      "url": "https://www.dre.vanderbilt.edu/~schmidt/PDF/GoF.pdf",
+      "title": "John Vlissides, An Introduction to Design Patterns",
+      "consulted": "2026-10-16",
+      "version": "Existing package citation; edition unavailable in this consultation",
+      "status": "unavailable",
+      "supports": "Existing role/intent citation retained without changes.",
+      "limit": "Browser returned Internal Error on repeated opens. Did not claim re-verification of slides 44–50 or substitute a secondary source for the new Java corrections."
+    }
+  ],
+  "assumptionsAndLimitations": [
+    "No measured behavioral gain, automatic selection evaluation, stress proof, production deployment or remote backend test.",
+    "Compiled with --release17 using installed Temurin25.0.3+9; execution was on JDK25 Windows, not JDK17.",
+    "Controlled import schedule exercises one meaningful interleaving. The private-root conclusion also depends on fixture-authoritative writer inventory and stable permissions.",
+    "Partial-write control injects application failure after a stream write; it is not a disk fault/crash/durability test.",
+    "Existing Vlissides PDF source could not be reopened through web tool (Internal Error); unchanged citation and pattern material retained, new corrections grounded in accessible Java17 primary sources.",
+    "Existing partial illustrative Java/JUnit notification snippets were not materially changed or promoted to executable/tested source.",
+    "Local package checks do not validate global dependency/routing/index consistency."
+  ],
+  "evidencePaths": {
+    "root": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-bridge-validation-quality18",
+    "evidence": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-bridge-validation-quality18/evidence.json",
+    "baseline": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-bridge-validation-quality18/baseline-package.json",
+    "probeSource": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-bridge-validation-quality18/technical-probe/BridgeAtomicityProbe.java",
+    "replayScript": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-bridge-validation-quality18/run-technical-checks.ps1",
+    "packageCheck": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-bridge-validation-quality18/check-package.ps1",
+    "logs": [
+      "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-bridge-validation-quality18/javac.log",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-bridge-validation-quality18/sequential-test.log",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-bridge-validation-quality18/atomicity-probe.log"
+    ],
+    "fixtureRoot": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-bridge-validation-quality18/common"
+  },
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "purpose": "Regenerate integrity/version index and validate catalog constraints.",
+      "prerequisites": "All reviewers stop writing.",
+      "reason": "Parallel-review ownership rule."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "purpose": "Repository-wide verification.",
+      "prerequisites": "All reviewers stop writing; registry generation complete.",
+      "reason": "Parallel-review ownership rule."
+    }
+  ],
+  "coordinatorActions": [
+    "Inspect owned diff against baseline; run global commands after all writers stop.",
+    "Independent actor evaluation optional/pending; keep criteria and probe outside actor input."
+  ],
+  "readinessMeaning": "Local skill review complete; writes stopped. Not a claim of catalog-wide verification."
+}

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: progressive-service-delivery
-version: 1.0.0
+version: 1.0.1
 description: >-
   Plan and verify gradual service releases when cohorts, mixed versions and persisted effects affect promotion or recovery. Choose valid cohort signals and explicit promote, pause or abort criteria.
 

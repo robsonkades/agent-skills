@@ -1,0 +1,8 @@
+change_id,total_engineer_hours,duplicate_table_work_hours,notes
+RULE-101,6,2,maintainer time note
+RULE-108,8,3,maintainer time note
+RULE-113,5,2,maintainer time note
+RULE-121,7,3,maintainer time note
+RULE-129,6,2,maintainer time note
+RULE-134,8,3,maintainer time note
+

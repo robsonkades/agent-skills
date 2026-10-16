@@ -1,0 +1,5 @@
+SELECT count(*)
+  FROM customer_order o
+ WHERE o.tenant_id = :tenantId
+   AND o.customer_id IN (:allowedCustomers)
+   AND o.status NOT IN ('SETTLED', 'VOID');

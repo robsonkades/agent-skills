@@ -1,0 +1,6 @@
+Existing point and join checks passed; moved=2082
+Frozen ClientRouter vector passed: accepted.properties key=user:2 primary=n2 replicas=[n2, n3, n4]
+Exception in thread "main" java.lang.AssertionError: candidate.properties key=user:2 replicas=[n2, n3, n1] expected=[n2, n3, n4]
+	at CurrentChecks.verifyRouting(CurrentChecks.java:17)
+	at CurrentChecks.main(CurrentChecks.java:35)
+Observed prefix-control exit: 1 (expected nonzero)

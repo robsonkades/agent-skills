@@ -1,0 +1,33 @@
+{
+  "classification": "Investigative development pair; no actor executions. The skill already teaches same-transaction versus after-commit/recovery decisions, so this is not a held-out mechanism.",
+  "decisiveConstraint": "Only docs/decision.md changes the accepted success/atomicity contract. Code, versions, incident observations and operated recovery remain identical.",
+  "actorIsolation": "Provide one input only with normal skill resources. Withhold sibling input, criteria, native control source/results and handoff. Folder separation alone is not access isolation.",
+  "common": [
+    "Trace the actual proxied publisher and registered synchronous transaction-bound listener, not an unobserved self-call or disabled async executor.",
+    "Distinguish successful publisher commit from failed independent listener work and delayed successful reconciliation.",
+    "Use the version-specific AFTER_COMMIT/afterCompletion failure path to explain why normal return can coexist with a missing receipt.",
+    "Preserve Java 25/Boot 4.1.1/Framework 7.0.9 and the one-datasource application; do not add a broker or Modulith by default.",
+    "Bound claims to supplied evidence; no restart/crash/multi-replica guarantee is established."
+  ],
+  "caseA": {
+    "expected": "Current split violates atomic success. Recommend one effective business transaction containing the receipt write, using a direct collaborator or a justified before-commit path with participating transaction semantics. Verify receipt failure rolls back both writes and reaches the appropriate caller boundary. Recovery of an already committed order is not proof the original atomic contract was met.",
+    "failureConditions": [
+      "Keeps the independent post-commit split because reconciliation eventually filled the gap.",
+      "Changes only the annotation phase while leaving an independent REQUIRES_NEW boundary and claims atomicity.",
+      "Retries the whole already committed command to repair the receipt.",
+      "Treats active-transaction logging or a repository mock as proof both writes share the same physical transaction."
+    ]
+  },
+  "caseB": {
+    "expected": "Observed temporary gap and subsequent two-minute reconciliation fit the accepted asynchronous completion contract. Preserve the adequate listener split and existing recovery, qualify its coverage, and investigate only any remaining concrete recovery/failure-policy concern. A new bus, registry or mandatory receipt-in-command transaction is not justified by this evidence.",
+    "failureConditions": [
+      "Forces the receipt into the original transaction despite the accepted decoupled success policy.",
+      "Declares the listener missing or not proxied despite the observed registered callback and data-access exception.",
+      "Adds durable publication infrastructure while ignoring the retained immutable order and operated reconciler.",
+      "Claims once-only delivery, crash survival or replica coordination from the two-minute sequential outcome."
+    ]
+  },
+  "prerequisites": "Synthetic source fragments and ordinary project/runbook artifacts, not a complete build. An evaluator may materialize them in an isolated workspace. Native framework controls are separate and use existing cached dependencies only.",
+  "nativeEvidenceLimit": "The technical probe uses a real H2 length-constraint failure rather than reproducing the incident's temporary resource failure; it checks transaction/failure propagation, not the incident's database outage.",
+  "behaviorRunCount": 0
+}

@@ -1,0 +1,17 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import {execFileSync} from 'node:child_process';
+const repo='C:/git/agent-skills',root='C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23',report=repo+'/docs/skill-validation/wave10-2026-10-16';
+if(fs.existsSync(report))throw Error('Existing report; inspect before writing');
+const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
+const git=args=>execFileSync('git',args,{cwd:repo,encoding:'utf8',maxBuffer:64*1024*1024});
+const files=[...new Set(git(['ls-files','-z','--cached','--others','--exclude-standard']).split('\0').filter(Boolean))].sort();
+const allFiles=files.filter(p=>fs.existsSync(repo+'/'+p)&&fs.statSync(repo+'/'+p).isFile()).map(path=>({path,sha256:sha(fs.readFileSync(repo+'/'+path))}));
+const skillName='architecture-trade-off-analysis';
+fs.mkdirSync(report,{recursive:true});fs.mkdirSync(root+'/review',{recursive:true});
+fs.cpSync(repo+'/skills/'+skillName,root+'/snapshot',{recursive:true});
+fs.copyFileSync(repo+'/registry/skills.yaml',root+'/registry-before.yaml');
+fs.copyFileSync(repo+'/docs/skills-evolution-inventory.md',root+'/inventory-before.md');
+const b={at:new Date().toISOString(),repo,root,head:git(['rev-parse','HEAD']).trim(),node:process.version,allFiles,gitStatus:git(['status','--porcelain=v1','-z']).split('\0').filter(Boolean),skill:{name:skillName,version:'1.2.4',files:allFiles.filter(f=>f.path.startsWith('skills/'+skillName+'/')),stagedDiff:git(['diff','--cached','--','skills/'+skillName]),unstagedDiff:git(['diff','--','skills/'+skillName])},plan:'Wave10: final comparative pilot. Freeze task inputs and criteria before actors. Preserve package-manager code and real configuration.'};
+fs.writeFileSync(report+'/baseline.json',JSON.stringify(b,null,2)+'\n');
+console.log(JSON.stringify({report,root,files:allFiles.length,skillFiles:b.skill.files.length,skillVersion:b.skill.version,skillDirty:Boolean(b.skill.stagedDiff||b.skill.unstagedDiff),gitStatusEntries:b.gitStatus.length}));

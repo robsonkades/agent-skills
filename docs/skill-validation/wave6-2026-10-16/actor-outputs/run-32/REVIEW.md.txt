@@ -1,0 +1,28 @@
+# Revisão de ResultBridge.currentValue()
+
+**Conclusão: unresolved.** O contrato aceito exige `-1` sem snapshot e `91` quando presente. O código local e o smoke sustentam o caminho síncrono; não sustentam a afirmação de que `volatile` basta independentemente da entrega do provedor. A implementação implantada está ausente e `docs/contract.md` declara explicitamente desconhecida a sincronização produtor–callback. Nenhuma falha de produção foi observada.
+
+Em `src/work/ResultBridge.java:3-5`, o callback escreve a referência em `volatile latest`. `currentValue()` lê essa referência uma única vez, guarda-a em `observed` e retorna `-1` ou `observed.value()`. Essa seleção deve ser preservada. `src/work/Snapshot.java:2` contém um `int value` comum; a classe ser `final` não torna esse campo final. A escrita do setter e a leitura do getter são os acessos ao payload que precisam ser ordenados.
+
+A prova necessária, para o snapshot selecionado, é:
+
+```text
+P: setValue(91)
+       -- happens-before AINDA NÃO DEMONSTRADO -->
+C: callback / escrita volatile latest = snapshot
+       -- synchronizes-with -->
+R: leitura volatile latest que observa snapshot
+       -- ordem de programa -->
+R: leitura comum snapshot.value
+```
+
+A metade callback–leitor está presente. Se a escrita de `91` ocorrer na própria thread do callback antes da publicação, ou chegar a ela por um handoff com happens-before demonstrado, a cadeia fica completa. Com a ausência de mutações posteriores já aceita, o leitor obtém `91`. Repassar uma referência recebida sem essa garantia não cria retroativamente a aresta do produtor. Tempo de relógio e o log relatado não fornecem essa prova. Estas são aplicações das regras de ordem de programa, sincronização e transitividade da [JLS SE25 §17.4.4–5](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.4.5).
+
+`-1` sem publicação e `91` com snapshot são resultados aceitos. Em uma integração hipotética com entrega sem ordenação, o valor inicial `0` não fica excluído pelo contrato disponível, embora seja inaceitável para a aplicação. Isso é uma lacuna de garantia, não uma afirmação sobre a execução do provedor ausente. O código disponível não demonstra corrida no provedor nem exige mudança de representação.
+
+A menor evidência faltante é o caminho efetivamente implantado, incluindo a escrita `setValue(91)` e a entrega ao callback, mostrando a ordem na mesma thread ou os pares de sincronização que ligam essas ações em todos os caminhos. Um adendo mínimo ao contrato de integração seria: “As escritas de inicialização e setters que estabelecem o valor entregue happen-before a execução do callback.” A restrição existente de não mutar após a entrega permanece suficiente para a etapa posterior. O provedor precisa cumprir essa cláusula; apenas escrevê-la não prova a implementação. Não foi determinada correção em `ResultBridge`; não é necessário substituir o snapshot por campo final nem adicionar bloqueio local.
+
+Executado: compilação com `javac --release 25` e smoke existente via `node check.mjs`, na cópia `output/project`, com Java/Javac Temurin 25.0.3. Saída: `synchronous provider PASS; deployed provider absent`, exit 0. No teste, criação, setter, callback e leitura ocorrem na mesma thread; o resultado não exercita a aresta desconhecida. Os oito arquivos fornecidos continuaram com hashes iguais entre input e output após o check.
+
+Não executados: integração com provedor implantado, stress/jcstress, análise de binário ou validação de outras arquiteturas. Um stress do stub não preencheria a evidência ausente. A skill local e suas duas referências condicionais foram lidas integralmente. Nenhum fonte, contrato ou dependência foi alterado; os subprocessos de compilação e execução terminaram.
+

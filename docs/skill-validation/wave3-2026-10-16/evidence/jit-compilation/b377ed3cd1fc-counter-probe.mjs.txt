@@ -1,0 +1,33 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+
+const root = path.dirname(new URL(import.meta.url).pathname).replace(/^\/(.:\/)/, '$1');
+const jdk = 'C:/Users/robso/.jdks/temurin-25.0.3';
+const env = { ...process.env };
+for (const key of ['JDK_JAVA_OPTIONS', 'JAVA_TOOL_OPTIONS', '_JAVA_OPTIONS']) delete env[key];
+const results = [];
+function run(label, bin, args, cwd) {
+  const r = spawnSync(`${jdk}/bin/${bin}.exe`, args, { cwd, env, encoding: 'utf8', timeout: 25000, maxBuffer: 4 * 1024 * 1024, windowsHide: true });
+  fs.writeFileSync(`${root}/${label}.stdout.txt`, r.stdout ?? '');
+  fs.writeFileSync(`${root}/${label}.stderr.txt`, r.stderr ?? '');
+  const result = { label, executable: `${jdk}/bin/${bin}.exe`, args, cwd, status: r.status, signal: r.signal, error: r.error?.message ?? null, stdout: `${root}/${label}.stdout.txt`, stderr: `${root}/${label}.stderr.txt` };
+  results.push(result);
+  fs.writeFileSync(`${root}/commands-v2.json`, JSON.stringify(results, null, 2) + '\n');
+  console.log(JSON.stringify(result));
+  if (r.error || r.status !== 0) throw new Error(`${label} failed: ${r.stderr ?? r.error}`);
+  return r.stdout;
+}
+
+for (const [label, nodes] of [['restricted-v2', 1000], ['normal-v2', 80000]]) {
+  const cwd = `${root}/${label}`;
+  fs.mkdirSync(cwd, { recursive: true });
+  const args = ['-Xbatch', '-XX:-TieredCompilation', '-XX:CompileThreshold=100', '-XX:+UnlockDiagnosticVMOptions', `-XX:MaxNodeLimit=${nodes}`, '-XX:NodeLimitFudgeFactor=200', '-XX:CompileCommand=compileonly,CompilerStatsLab::work', `-XX:StartFlightRecording=filename=${cwd}/capture.jfr,settings=default,dumponexit=true,jdk.CompilerStatistics#period=100ms,jdk.Compilation#enabled=true,jdk.Compilation#threshold=0ms,jdk.CompilationFailure#enabled=true`, '-cp', `${root}/classes`, 'CompilerStatsLab'];
+  run(label, 'java', args, cwd);
+  run(`${label}-summary`, 'jfr', ['summary', `${cwd}/capture.jfr`], cwd);
+  const output = run(`${label}-events`, 'jfr', ['print', '--json', '--events', 'jdk.CompilerStatistics,jdk.Compilation,jdk.CompilationFailure', `${cwd}/capture.jfr`], cwd);
+  const events = JSON.parse(output).recording.events;
+  const samples = events.filter(e => e.type === 'jdk.CompilerStatistics').map(e => e.values);
+  fs.writeFileSync(`${cwd}/events.json`, JSON.stringify(events, null, 2) + '\n');
+  console.log(JSON.stringify({ label, samples: samples.length, first: samples[0], last: samples.at(-1), outcomes: events.filter(e => e.type !== 'jdk.CompilerStatistics') }));
+}

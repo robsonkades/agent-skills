@@ -1,0 +1,73 @@
+$ErrorActionPreference = 'Stop'
+$validationRoot = $PSScriptRoot
+$matRoot = 'C:/dev/mat'
+$jdkRoot = 'C:/Users/robso/.jdks/temurin-25.0.3'
+$configRoot = Join-Path $validationRoot 'configuration'
+$configBundles = Join-Path $configRoot 'org.eclipse.equinox.simpleconfigurator'
+foreach ($dir in @($configBundles, "$validationRoot/workspace", "$validationRoot/user", "$validationRoot/home", "$validationRoot/tmp", "$validationRoot/classes")) {
+    New-Item -ItemType Directory -Path $dir -Force | Out-Null
+}
+$config = Get-Content "$matRoot/configuration/config.ini" -Raw
+$config = $config.Replace('eclipse.p2.data.area=@config.dir/../p2/', 'eclipse.p2.data.area=@config.dir/../p2/')
+[System.IO.File]::WriteAllText("$configRoot/config.ini", $config)
+Copy-Item -LiteralPath "$matRoot/configuration/org.eclipse.equinox.simpleconfigurator/bundles.info" -Destination "$configBundles/bundles.info"
+
+function Invoke-IsolatedJava([string]$name, [string[]]$arguments) {
+    $start = [System.Diagnostics.ProcessStartInfo]::new("$jdkRoot/bin/java.exe")
+    $start.UseShellExecute = $false
+    $start.CreateNoWindow = $true
+    $start.WindowStyle = [System.Diagnostics.ProcessWindowStyle]::Hidden
+    $start.WorkingDirectory = $validationRoot
+    $start.RedirectStandardOutput = $true
+    $start.RedirectStandardError = $true
+    foreach ($argument in $arguments) { $start.ArgumentList.Add($argument) }
+    $start.Environment['USERPROFILE'] = "$validationRoot/home"
+    $start.Environment['HOME'] = "$validationRoot/home"
+    $start.Environment['TEMP'] = "$validationRoot/tmp"
+    $start.Environment['TMP'] = "$validationRoot/tmp"
+    $process = [System.Diagnostics.Process]::new()
+    $process.StartInfo = $start
+    [void]$process.Start()
+    $output = $process.StandardOutput.ReadToEndAsync()
+    $errors = $process.StandardError.ReadToEndAsync()
+    if (-not $process.WaitForExit(60000)) {
+        $process.Kill($true)
+        $process.WaitForExit()
+        throw "$name exceeded 60 seconds"
+    }
+    [System.IO.File]::WriteAllText("$validationRoot/$name.stdout.txt", $output.GetAwaiter().GetResult())
+    [System.IO.File]::WriteAllText("$validationRoot/$name.stderr.txt", $errors.GetAwaiter().GetResult())
+    $exitCode = $process.ExitCode
+    $process.Dispose()
+    if ($exitCode -ne 0) { throw "$name exit code $exitCode; inspect retained output" }
+    Write-Output "$name exited successfully."
+}
+
+& "$jdkRoot/bin/javac.exe" --release 21 -d "$validationRoot/classes" "$validationRoot/DumpFixture.java"
+if ($LASTEXITCODE -ne 0) { throw 'Fixture compilation failed' }
+Invoke-IsolatedJava 'capture' @('-Xmx64m', "-Duser.home=$validationRoot/home", "-Djava.io.tmpdir=$validationRoot/tmp", '-cp', "$validationRoot/classes", 'DumpFixture', "$validationRoot/source.hprof")
+
+$baseArguments = @('-Xmx512m', "-Duser.home=$validationRoot/home", "-Djava.io.tmpdir=$validationRoot/tmp", '-Dosgi.install.area.readOnly=true',
+    '-jar', "$matRoot/plugins/org.eclipse.equinox.launcher_1.7.100.v20251111-0406.jar",
+    '-install', $matRoot, '-configuration', $configRoot, '-data', "$validationRoot/workspace",
+    '-user', "$validationRoot/user", '-consoleLog', '-nosplash', '-application', 'org.eclipse.mat.api.parse')
+$conditions = @(
+    @{Name='complete'; Options=@()},
+    @{Name='discard'; Options=@('-discard_ratio=100', '-discard_pattern=DumpFixture\$Payload')},
+    @{Name='discard-keep'; Options=@('-discard_ratio=100', '-discard_pattern=DumpFixture\$Payload', '-keep_unreachable_objects')}
+)
+foreach ($condition in $conditions) {
+    $name = $condition.Name
+    $dump = "$validationRoot/$name.hprof"
+    Copy-Item -LiteralPath "$validationRoot/source.hprof" -Destination $dump
+    foreach ($query in @(@{Name='histogram'; Command='histogram DumpFixture.*'}, @{Name='unreachable'; Command='unreachable_objects'})) {
+        $arguments = $baseArguments + @($dump) + $condition.Options + @("-command=$($query.Command)", '-format=csv', 'org.eclipse.mat.api:query')
+        Invoke-IsolatedJava "$name-$($query.Name)" $arguments
+        $report = Get-ChildItem -LiteralPath $validationRoot -Filter "$($name)_Query*.zip" | Select-Object -First 1
+        if ($null -eq $report) { throw "No query report found for $name-$($query.Name)" }
+        $savedReport = "$validationRoot/$name-$($query.Name).zip"
+        Copy-Item -LiteralPath $report.FullName -Destination $savedReport
+        Expand-Archive -LiteralPath $savedReport -DestinationPath "$validationRoot/$name-$($query.Name)"
+    }
+}
+Write-Output 'Completed three parses and six query reports. Inspect CSVs before asserting behavior.'

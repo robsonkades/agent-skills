@@ -1,0 +1,440 @@
+{
+  "status": "NO_CHANGES_NEEDED",
+  "skill": "jvm-class-loading",
+  "ownedPath": "C:/git/agent-skills/skills/jvm-class-loading",
+  "allWritesStopped": true,
+  "reviewDate": "2026-10-16",
+  "procedure": {
+    "readings": [
+      "Root AGENTS.md",
+      "Complete docs/skill-review-prompt.md (previously read unchanged)",
+      "docs/parallel-skill-reviews.md (previously read unchanged)",
+      "docs/skill-validation/wave3-2026-10-16/review-brief.md",
+      "skills/skill-engineering/SKILL.md and evidence/evaluation/resource-design/anti-pattern references (previously read unchanged)",
+      "Comparative research and preceding-wave lessons (previously read)"
+    ],
+    "entirePackageRead": [
+      "SKILL.md",
+      "skill.yaml",
+      "references/class-initialisation.md",
+      "references/classloader-leaks.md",
+      "references/module-access.md",
+      "references/startup-and-aot-cache.md"
+    ],
+    "findingsSent": true,
+    "delegation": false,
+    "rolePreserved": "Diagnosis/design of class identity, initialization, loader lifetime, access and startup caching."
+  },
+  "baseline": {
+    "committedVersion": "1.4.4",
+    "assignmentVersion": "1.4.4",
+    "stagedChanges": [],
+    "unstagedChanges": [],
+    "untrackedFiles": [],
+    "preexistingVersionBump": false,
+    "hashes": [
+      {
+        "path": "C:\\git\\agent-skills\\skills\\jvm-class-loading\\SKILL.md",
+        "hash": "7C2785A8C8BF0B05E3EA12A9FF4FF014B181A9C003029D1195D23D7E1982290B"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\jvm-class-loading\\skill.yaml",
+        "hash": "74CA48ADD452C9F2F09F871CF2B4C146FC578E8FC0763021B2576CDFD7113D13"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\jvm-class-loading\\references\\class-initialisation.md",
+        "hash": "DA0B08A33100096A1D2B9CBE3CCEDCBD823CFEFB8A02BFE72BD8F7D590FD85EC"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\jvm-class-loading\\references\\classloader-leaks.md",
+        "hash": "04DDDC2867BCE3804E7573EA21F84A85BF80D25E1D5ADDB10291D82D7BB1D00B"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\jvm-class-loading\\references\\module-access.md",
+        "hash": "755D09447CEB0333B05AF8A0E0E029E8F2C3BE52772B50E731422E7FEF81F783"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\jvm-class-loading\\references\\startup-and-aot-cache.md",
+        "hash": "404DEB8B1E58025D351140576D2A4FE7A5C2D11A83412FD7264836E30DB5BB29"
+      }
+    ]
+  },
+  "version": {
+    "committed": "1.4.4",
+    "initial": "1.4.4",
+    "final": "1.4.4",
+    "rationale": "No package content changed, so no version bump."
+  },
+  "findings": [
+    {
+      "id": "R1",
+      "location": "SKILL.md/Rules; references/class-initialisation.md/Procedure, Recursion and NoClassDefFoundError",
+      "result": "Adequate",
+      "evidence": "Same-thread recursive initialization/default fields and persistent erroneous state are already explicit, including first non-Error wrapping and safe new-definition limits.",
+      "decision": "Preserve. The coordinator's holder/reentry finding is covered by these mechanisms; no automatic duplicate addition."
+    },
+    {
+      "id": "R2",
+      "location": "SKILL.md/Rules and Workflow; references/classloader-leaks.md",
+      "result": "Adequate",
+      "evidence": "Defining versus initiating loader, full member descriptors, lifecycle retention, weak hidden-class exception and close-versus-unloading boundaries are distinguished.",
+      "decision": "Preserve. No unsupported new capture or loader architecture is required."
+    },
+    {
+      "id": "R3",
+      "location": "references/module-access.md and references/startup-and-aot-cache.md",
+      "result": "Adequate",
+      "evidence": "Actual lookup API/caller module, qualified versus unconditional opening, launcher scope, cache acceptance and performance attribution are conditional and version-scoped.",
+      "decision": "Preserve. Verified sensitive API/launcher contracts without broadening access or asserting performance."
+    }
+  ],
+  "findingsCorrected": [],
+  "remainingDefects": [],
+  "filesChangedByReviewer": [],
+  "preexistingFilesChanged": [],
+  "finalHashes": [
+    {
+      "path": "C:\\git\\agent-skills\\skills\\jvm-class-loading\\SKILL.md",
+      "hash": "7C2785A8C8BF0B05E3EA12A9FF4FF014B181A9C003029D1195D23D7E1982290B"
+    },
+    {
+      "path": "C:\\git\\agent-skills\\skills\\jvm-class-loading\\skill.yaml",
+      "hash": "74CA48ADD452C9F2F09F871CF2B4C146FC578E8FC0763021B2576CDFD7113D13"
+    },
+    {
+      "path": "C:\\git\\agent-skills\\skills\\jvm-class-loading\\references\\class-initialisation.md",
+      "hash": "DA0B08A33100096A1D2B9CBE3CCEDCBD823CFEFB8A02BFE72BD8F7D590FD85EC"
+    },
+    {
+      "path": "C:\\git\\agent-skills\\skills\\jvm-class-loading\\references\\classloader-leaks.md",
+      "hash": "04DDDC2867BCE3804E7573EA21F84A85BF80D25E1D5ADDB10291D82D7BB1D00B"
+    },
+    {
+      "path": "C:\\git\\agent-skills\\skills\\jvm-class-loading\\references\\module-access.md",
+      "hash": "755D09447CEB0333B05AF8A0E0E029E8F2C3BE52772B50E731422E7FEF81F783"
+    },
+    {
+      "path": "C:\\git\\agent-skills\\skills\\jvm-class-loading\\references\\startup-and-aot-cache.md",
+      "hash": "404DEB8B1E58025D351140576D2A4FE7A5C2D11A83412FD7264836E30DB5BB29"
+    }
+  ],
+  "allSixPackageHashesUnchanged": true,
+  "capabilities": {
+    "preserved": [
+      "Separate loading, linkage and initialization diagnoses with earliest error/cause evidence",
+      "Defining-loader identity, loader constraints and deployed member-descriptor comparison",
+      "Version-aware module access, resource lookup and launcher option scope",
+      "Reload-cohort and root-path evidence before attributing a Metaspace leak",
+      "URLClassLoader ownership, drain/shutdown and unloading distinctions",
+      "Hidden-class lifetime and native-resource caveats",
+      "Reentry, two-thread initialization deadlock and persistent initialization failure",
+      "CDS/AOT cache acceptance versus initialization, compilation and measured startup benefit",
+      "Narrow evidence requests, no-change outcomes and proportional output"
+    ],
+    "replaced": [],
+    "removed": []
+  },
+  "domainSuccessCriteria": [
+    "Identify the definition, trigger and observation point rather than infer from an error name or pattern label.",
+    "Preserve loader/consumer boundaries and actual deployed configuration.",
+    "Separate a successful lookup from initialization and readiness.",
+    "Distinguish same-definition retry from an explicitly managed fresh definition.",
+    "Retain scope and uncertainty without forcing a production capture or architectural change."
+  ],
+  "commandsExecuted": [
+    {
+      "label": "structural",
+      "command": "@'\nimport assert from 'node:assert/strict';\nimport { existsSync, readFileSync } from 'node:fs';\nimport { dirname, resolve } from 'node:path';\nimport { loadPackageFromDirectory, validatePackage } from '@jvm-expert/core';\nimport { NodeFileSystem } from '@jvm-expert/node';\nimport { ClaudeCodeAdapter } from '@jvm-expert/adapter-claude';\nimport { CodexAdapter } from '@jvm-expert/adapter-codex';\nconst directory = resolve('skills/jvm-class-loading');\nconst loaded = await loadPackageFromDirectory(new NodeFileSystem(), directory, { strict: true });\nconst report = validatePackage(loaded.pkg, {\n  strict: true, directoryName: 'jvm-class-loading',\n  adapters: [new ClaudeCodeAdapter(), new CodexAdapter()],\n});\nconst issues = [...loaded.issues, ...report.issues];\nassert.deepEqual(issues, []);\nassert.equal(loaded.pkg.manifest.version, '1.4.4');\nconst declared = new Set([\n  ...(loaded.pkg.manifest.dependencies ?? []).map(item => item.name),\n  ...(loaded.pkg.manifest.suggests ?? []),\n]);\nconst referrals = new Set();\nlet localMarkdownLinks = 0;\nfor (const file of loaded.pkg.files.filter(file => file.path.endsWith('.md'))) {\n  const content = readFileSync(resolve(directory, file.path), 'utf8');\n  for (const match of content.matchAll(/\\[[^\\]]+\\]\\(([^)]+)\\)/g)) {\n    if (/^<?https?:/.test(match[1])) continue;\n    const [target, anchor] = match[1].split('#');\n    const absolute = resolve(directory, dirname(file.path), target);\n    assert.ok(existsSync(absolute), file.path + ': ' + match[1]);\n    if (anchor === 'one-incoming-intent-several-downstream-effects') {\n      assert.ok(readFileSync(absolute, 'utf8').includes('## One incoming intent, several downstream effects'));\n    }\n    localMarkdownLinks++;\n  }\n  for (const match of content.matchAll(/`([a-z][a-z0-9]*-[a-z0-9-]+)`/g)) {\n    const name = match[1];\n    if (!existsSync(resolve('skills', name, 'SKILL.md'))) continue;\n    assert.ok(declared.has(name), 'Undeclared referral: ' + name);\n    referrals.add(name);\n  }\n}\nconsole.log(JSON.stringify({\n  status: 'PASS', name: loaded.pkg.manifest.name, version: loaded.pkg.manifest.version,\n  files: loaded.pkg.files.length, issues: issues.length, localMarkdownLinks,\n  declaredSkillReferrals: referrals.size, adapters: ['claude', 'codex'],\n}));\n'@ | node --input-type=module",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": {
+        "chunk_id": "fc65bf",
+        "wall_time_seconds": 0.1982643,
+        "exit_code": 0,
+        "original_token_count": 41,
+        "output": "{\"status\":\"PASS\",\"name\":\"jvm-class-loading\",\"version\":\"1.4.4\",\"files\":6,\"issues\":0,\"localMarkdownLinks\":4,\"declaredSkillReferrals\":1,\"adapters\":[\"claude\",\"codex\"]}\n"
+      },
+      "status": "fulfilled"
+    },
+    {
+      "label": "format",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/jvm-class-loading/SKILL.md skills/jvm-class-loading/skill.yaml skills/jvm-class-loading/references/class-initialisation.md skills/jvm-class-loading/references/classloader-leaks.md skills/jvm-class-loading/references/module-access.md skills/jvm-class-loading/references/startup-and-aot-cache.md",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": {
+        "chunk_id": "3cbfb6",
+        "wall_time_seconds": 0.2965994,
+        "exit_code": 0,
+        "original_token_count": 17,
+        "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+      },
+      "status": "fulfilled"
+    },
+    {
+      "label": "diff-check",
+      "command": "git diff --check -- skills/jvm-class-loading",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": {
+        "chunk_id": "9f1127",
+        "wall_time_seconds": 0.1086896,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      },
+      "status": "fulfilled"
+    }
+  ],
+  "technicalValidation": {
+    "structural": "Existing strict loader/validator passed for six package files, Claude/Codex adapters, zero issues and four internal links. One backtick referral checked; other declared neighboring references reviewed manually.",
+    "formatting": "Prettier --check passed for all six package files.",
+    "git": "Owned diff --check passed; staged/unstaged/untracked state remained empty; all six hashes match assignment.",
+    "fixtureCompilation": {
+      "cmd": "$classCaseRoot = 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-class-loading'\nforeach ($classEnvName in @('JAVA_TOOL_OPTIONS','JDK_JAVA_OPTIONS','_JAVA_OPTIONS','CLASSPATH')) { [Environment]::SetEnvironmentVariable($classEnvName, $null, 'Process') }\nNew-Item -ItemType Directory -Path \"$classCaseRoot/technical-checks/classes\" -Force | Out-Null\n& C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe --release 17 -d \"$classCaseRoot/technical-checks/classes\" \"$classCaseRoot/case-a/src/Gate.java\" \"$classCaseRoot/case-a/src/Plugin.java\" \"$classCaseRoot/case-a/src/ScanProbe.java\" 2>&1 | Tee-Object -FilePath \"$classCaseRoot/technical-checks/compile.log\"\nexit $LASTEXITCODE",
+      "chunk_id": "72c4e6",
+      "wall_time_seconds": 0.4664217,
+      "exit_code": 0,
+      "original_token_count": 15,
+      "output": "Picked up JAVA_TOOL_OPTIONS: \r\nPicked up _JAVA_OPTIONS: \r\n",
+      "workingDirectory": "C:/git/agent-skills",
+      "compiler": "Temurin javac 25.0.3 --release 17"
+    },
+    "fixtureExecutions": [
+      {
+        "id": "a",
+        "cmd": "foreach ($classEnvName in @('JAVA_TOOL_OPTIONS','JDK_JAVA_OPTIONS','_JAVA_OPTIONS','CLASSPATH')) { [Environment]::SetEnvironmentVariable($classEnvName, $null, 'Process') }\n& C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe -cp C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-class-loading/technical-checks/classes fixture.ScanProbe 2>&1 | Tee-Object -FilePath C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-class-loading/technical-checks/case-a.log\nexit $LASTEXITCODE",
+        "workdir": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-class-loading/case-a",
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "a912a0",
+          "wall_time_seconds": 0.136305,
+          "exit_code": 0,
+          "original_token_count": 67,
+          "output": "NOTE: Picked up JDK_JAVA_OPTIONS: \r\nPicked up JAVA_TOOL_OPTIONS: \r\nPicked up _JAVA_OPTIONS: \r\nscan=ExceptionInInitializerError attempts=1 cause=IllegalStateException\r\nactive-use=NoClassDefFoundError attempts=1 cause=ExceptionInInitializerError\r\nruntime=25.0.3+9-LTS\r\n"
+        }
+      },
+      {
+        "id": "b",
+        "cmd": "foreach ($classEnvName in @('JAVA_TOOL_OPTIONS','JDK_JAVA_OPTIONS','_JAVA_OPTIONS','CLASSPATH')) { [Environment]::SetEnvironmentVariable($classEnvName, $null, 'Process') }\n& C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe -cp C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-class-loading/technical-checks/classes fixture.ScanProbe 2>&1 | Tee-Object -FilePath C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-class-loading/technical-checks/case-b.log\nexit $LASTEXITCODE",
+        "workdir": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-class-loading/case-b",
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "6f1c87",
+          "wall_time_seconds": 0.129945,
+          "exit_code": 0,
+          "original_token_count": 48,
+          "output": "NOTE: Picked up JDK_JAVA_OPTIONS: \r\nPicked up JAVA_TOOL_OPTIONS: \r\nPicked up _JAVA_OPTIONS: \r\nscan=OK attempts=0 state=not-read\r\nactive-use=OK attempts=1 state=ready\r\nruntime=25.0.3+9-LTS\r\n"
+        }
+      }
+    ],
+    "fixtureOutcomeCheck": {
+      "cmd": "@'\nimport assert from 'node:assert/strict';\nimport {readFileSync,readdirSync} from 'node:fs';\nimport {resolve,relative} from 'node:path';\nconst root='C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-class-loading';\nfunction files(dir){return readdirSync(dir,{withFileTypes:true}).flatMap(entry=>entry.isDirectory()?files(resolve(dir,entry.name)):[resolve(dir,entry.name)]);}\nconst a=resolve(root,'case-a'),b=resolve(root,'case-b');\nconst changed=files(a).map(path=>relative(a,path)).filter(path=>readFileSync(resolve(a,path),'utf8')!==readFileSync(resolve(b,path),'utf8')).sort();\nassert.deepEqual(changed,['config.properties','input.json']);\nconst ia=JSON.parse(readFileSync(resolve(a,'input.json'),'utf8')),ib=JSON.parse(readFileSync(resolve(b,'input.json'),'utf8'));\ndelete ia.caseId;delete ib.caseId;assert.deepEqual(ia,ib);\nJSON.parse(readFileSync(resolve(root,'evaluator-criteria.json'),'utf8'));\nconst logs=['a','b'].map(id=>readFileSync(resolve(root,'technical-checks','case-'+id+'.log'),'utf8'));\nassert.ok(logs[0].includes('scan=ExceptionInInitializerError attempts=1 cause=IllegalStateException'));\nassert.ok(logs[0].includes('active-use=NoClassDefFoundError attempts=1'));\nassert.ok(logs[1].includes('scan=OK attempts=0 state=not-read'));\nassert.ok(logs[1].includes('active-use=OK attempts=1 state=ready'));\nconsole.log(JSON.stringify({status:'PASS',fixtureFiles:files(a).length,decisiveDifference:'initializeDuringScan=true versus false',technicalOutcomeChecks:4,agentEvaluation:false}));\n'@ | node --input-type=module",
+      "chunk_id": "46b422",
+      "wall_time_seconds": 0.1069654,
+      "exit_code": 0,
+      "original_token_count": 37,
+      "output": "{\"status\":\"PASS\",\"fixtureFiles\":7,\"decisiveDifference\":\"initializeDuringScan=true versus false\",\"technicalOutcomeChecks\":4,\"agentEvaluation\":false}\n"
+    },
+    "outcomes": [
+      "initializeDuringScan=true: scan ExceptionInInitializerError caused by IllegalStateException; later active use NoClassDefFoundError; attempts remains one.",
+      "initializeDuringScan=false: scan succeeds with attempts zero; later active use returns ready with attempts one."
+    ],
+    "executedRuntime": "Temurin 25.0.3+9-LTS; both cases ran in fresh bounded processes.",
+    "checksPassed": 4,
+    "failures": [],
+    "warnings": [
+      "Launchers printed notifications for emptied JAVA_TOOL_OPTIONS/_JAVA_OPTIONS/JDK_JAVA_OPTIONS; no injected option values were used.",
+      "The fixture intentionally catches errors and exits zero; outcomes were inspected and separately asserted, not inferred from exit code."
+    ],
+    "notExecuted": [
+      "No Java 17 VM run.",
+      "No production capture, heap dump, unloading/GC experiment, deadlock process, native plugin or AOT benchmark.",
+      "No unchanged partial example was relabeled as newly executed."
+    ]
+  },
+  "finalInspection": {
+    "commands": [
+      "git diff --stat -- skills/jvm-class-loading",
+      "git diff --cached -- skills/jvm-class-loading",
+      "git status --porcelain=v1 --untracked-files=all -- skills/jvm-class-loading",
+      "Get-ChildItem -LiteralPath skills/jvm-class-loading -File -Recurse | ForEach-Object { [PSCustomObject]@{path=$_.FullName;hash=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash} } | ConvertTo-Json"
+    ],
+    "workingDirectory": "C:/git/agent-skills",
+    "result": "No changes; six file hashes unchanged. All started processes exited.",
+    "evidence": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-class-loading/validation.json"
+  },
+  "behavioralEvaluations": {
+    "executed": false,
+    "actualAgentOutputs": [],
+    "measuredGain": false,
+    "walkthroughs": [
+      {
+        "caseId": "class-init-a",
+        "expected": "Correct the metadata-only/retry claim after inspecting initialize=true and the first failure; retain the first cause and explain same-definition failure."
+      },
+      {
+        "caseId": "class-init-b",
+        "expected": "Preserve the supported successful sequence under initialize=false while removing the unconditional recovery/readiness promise."
+      }
+    ],
+    "distinction": "Executed Java fixture observations validate the technical case, not an agent's decisions or this skill's incremental effectiveness.",
+    "pending": "Coordinator owns any independent actor comparison."
+  },
+  "cases": {
+    "singleDecisiveConstraint": "Only initializeDuringScan in config.properties changes: true in A, false in B. Source, dependency timing, loader identity and initial note are identical.",
+    "actorInputs": [
+      {
+        "caseId": "class-init-a",
+        "inputPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-class-loading/case-a/input.json",
+        "fixturePath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-class-loading/case-a",
+        "input": {
+          "caseId": "class-init-a",
+          "task": "Review the exact startup sequence and correct startup-note.md using the supplied source and selected configuration. Explain which operation runs initialization, whether active use after dependency recovery succeeds for this definition, and the smallest justified next step. Preserve supported observations. Do not add jars, global module flags or fresh loaders as speculative fixes, and do not change the Java baseline.",
+          "fixtureDirectory": ".",
+          "prerequisites": [
+            "Read/edit local files.",
+            "Existing JDK supporting --release 17 for optional execution; no services, installations or production capture."
+          ],
+          "evaluationStatus": "not executed"
+        }
+      },
+      {
+        "caseId": "class-init-b",
+        "inputPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-class-loading/case-b/input.json",
+        "fixturePath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-class-loading/case-b",
+        "input": {
+          "caseId": "class-init-b",
+          "task": "Review the exact startup sequence and correct startup-note.md using the supplied source and selected configuration. Explain which operation runs initialization, whether active use after dependency recovery succeeds for this definition, and the smallest justified next step. Preserve supported observations. Do not add jars, global module flags or fresh loaders as speculative fixes, and do not change the Java baseline.",
+          "fixtureDirectory": ".",
+          "prerequisites": [
+            "Read/edit local files.",
+            "Existing JDK supporting --release 17 for optional execution; no services, installations or production capture."
+          ],
+          "evaluationStatus": "not executed"
+        }
+      }
+    ],
+    "evaluatorCriteriaPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-class-loading/evaluator-criteria.json",
+    "evaluatorCriteria": {
+      "classification": "Author-designed development pair; not unseen holdouts or independent agent evaluation.",
+      "isolation": "Provide only a fresh copy of one case directory and the chosen skill version. Hide this criteria file, technical-check output and reviewer handoff.",
+      "singleDecisiveConstraint": "Only initializeDuringScan in config.properties changes: true in A, false in B. Source, dependency timing, loader identity and initial note are identical.",
+      "common": [
+        "Inspect config.properties and the actual three-argument Class.forName calls; do not infer semantics from the word scan.",
+        "Correct startup-note.md rather than only asking questions; preserve classpath/loader facts and avoid speculative jar/access-flag changes.",
+        "Distinguish loading success, initialization and readiness; retain the first initialization failure when present.",
+        "Do not generalize a successful sequence to arbitrary transient-failure recovery, and distinguish compiler release from executed JVM."
+      ],
+      "cases": {
+        "class-init-a": {
+          "expected": [
+            "Scan invokes initialization while unavailable, producing ExceptionInInitializerError with IllegalStateException as its cause; Gate.attempts becomes one.",
+            "After Gate becomes available, the same definition remains erroneous; active use throws NoClassDefFoundError and attempts stays one.",
+            "Reject same-definition retry as recovery. Explain explicit fallible initialization/lifecycle as the design direction, or a separately justified restart/reload policy; do not create loaders merely to hide failure."
+          ],
+          "failureConditions": [
+            "Claims scan only loaded metadata or that active use reruns connect after recovery.",
+            "Treats the later NoClassDefFoundError as proof that a jar is absent.",
+            "Retains the note's unconditional compatibility/recovery approval."
+          ]
+        },
+        "class-init-b": {
+          "expected": [
+            "The scan with initialize=false does not execute connect; scan returns with attempts zero.",
+            "Active use after Gate becomes available initializes successfully once and returns ready.",
+            "Preserve the supported successful sequence/no required immediate change while removing the note's unsupported general retry promise. Loading alone does not establish readiness or recovery after a future initialization failure."
+          ],
+          "failureConditions": [
+            "Diagnoses a poisoned definition in this sequence despite no earlier initialization.",
+            "Requires a restart/new loader or changes the classpath to fix a failure the fixture does not have.",
+            "Treats scan success as proof that fallible initialization already ran or will always recover."
+          ]
+        }
+      }
+    },
+    "isolation": "Give fresh copies of individual actor directories; keep criteria, probe results and this handoff unavailable. Directory separation alone is not enforced isolation.",
+    "classification": "Development pair, not unseen holdouts."
+  },
+  "primarySources": [
+    {
+      "url": "https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-5.html#jvms-5.5",
+      "version": "JVMS 25",
+      "section": "5.5 steps 3, 5, 6, 11 and 12",
+      "supports": "Reentry, initialization order and persistent failure coverage; inspected with loading/member-resolution context.",
+      "limit": "Normative contract; implementation message text still requires version context."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html",
+      "version": "Java SE 25",
+      "section": "forName(String,boolean,ClassLoader) and getResource",
+      "supports": "Explicit initialization control and resource visibility relative to calling module.",
+      "limit": "The fixture exercises only a standard application loader and initialization control."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/net/URLClassLoader.html#close()",
+      "version": "Java SE 25",
+      "supports": "Already loaded/parent classes remain accessible, owned URL loading stops and concurrent close/load behavior is undefined.",
+      "limit": "No loader resource-lifecycle runtime test in this review."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/invoke/MethodHandles.Lookup.ClassOption.html#STRONG",
+      "version": "Java SE 25",
+      "supports": "Strong versus default weak hidden-class loader lifetime.",
+      "limit": "No GC/unloading measurement or timing guarantee."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/ClassLoader.html",
+      "version": "Java SE 17",
+      "section": "Resource lookup",
+      "supports": "Loader-based lookup requires unconditional opening for encapsulated non-class resources.",
+      "limit": "No packaged module fixture was rerun."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html#ahead-of-time-cache",
+      "version": "JDK 25 launcher",
+      "section": "AOTMode behavior",
+      "supports": "auto fallback and on failure behavior underlying the existing cache-verification advice.",
+      "limit": "No cache creation or performance claim tested."
+    }
+  ],
+  "evidencePaths": [
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-class-loading/validation.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-class-loading/technical-checks/compile.log",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-class-loading/technical-checks/case-a.log",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-class-loading/technical-checks/case-b.log",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-class-loading/case-a/input.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-class-loading/case-b/input.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-class-loading/evaluator-criteria.json"
+  ],
+  "assumptionsAndLimits": [
+    "Java 17-compatible sources were compiled using --release 17 and executed on JDK 25; this is not an older-VM validation.",
+    "The same-thread holder boundary was assessed from existing rules and primary initialization procedure; no neighboring package was edited or its work duplicated.",
+    "No code/content change or measured behavioral gain is claimed.",
+    "Review checks are targeted, not exhaustive certification of every vendor/build, classloader implementation, diagnostic message or AOT option combination.",
+    "Global catalog verification remains pending with the coordinator."
+  ],
+  "crossSkillIssues": [
+    {
+      "skill": "java-object-construction",
+      "status": "Covered within current skill",
+      "action": "Coordinator notice about holder reentry/default null and persistent failure was examined; existing mechanisms already describe both. No neighboring edit or additional handoff required."
+    }
+  ],
+  "coordinatorActions": [
+    "Accept no-change review if consistent with final empty diff.",
+    "Use separate case inputs/criteria for any actor comparisons.",
+    "Run wave-wide globals after all reviewers stop."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Wave-wide shared generation reserved to coordinator; this skill itself is unchanged.",
+      "prerequisite": "All writers stopped."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Global build/index/version/test checks reserved to coordinator.",
+      "prerequisite": "All writers stopped and registry regenerated as needed."
+    }
+  ],
+  "handoffPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jvm-class-loading.json"
+}

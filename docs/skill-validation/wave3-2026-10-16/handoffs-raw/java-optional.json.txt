@@ -1,0 +1,411 @@
+{
+  "status": "NO_CHANGES_NEEDED",
+  "skill": "java-optional",
+  "ownedPath": "skills/java-optional",
+  "reviewer": "/root/quality01",
+  "wave": 3,
+  "allWritesStopped": true,
+  "processState": "All synchronous commands/children completed. No pending writer or background process. Owned package never edited; temp artifacts retained.",
+  "findings": [
+    {
+      "location": "SKILL.md: Workflow steps 1–5; Rules",
+      "classification": "existing adequate guidance",
+      "evidence": "Separates normal absence from source failure and invariant violation; preserves suitable nullable APIs, unconditional effects, single-observation guards and target compatibility.",
+      "consequence": "No supported contract or activation defect established; no forced rewrite."
+    },
+    {
+      "location": "references/semantics.md: Unwrapping; When a chain loses to an if",
+      "classification": "existing adequate specialist safeguards",
+      "evidence": "Distinguishes lazy callback invocation from eager callback/receiver expression evaluation, null mapper validation, selected branch evaluation and source observation count. Documents legitimate null fallback results and non-null Optional contract.",
+      "consequence": "A mechanical preference for chaining or laziness is already rejected when it changes effects, failures or absence meaning."
+    },
+    {
+      "location": "references/lookup-refactoring.md: After; Where null stays; Trade-offs; Verification",
+      "classification": "existing adequate example and caveats",
+      "evidence": "Partial snippets declare Java21/scaffolding/invariant prerequisites. Existing method and adapter passed 19 isolated technical checks with required scaffolding; original source/failure and snapshot caveats match API documentation.",
+      "consequence": "No correction warranted. Public-port migration remains explicit; local nullable adapter and snapshot choice remain legitimate alternatives."
+    }
+  ],
+  "correctedFindings": [],
+  "remainingFindings": [],
+  "filesChangedByReviewer": [],
+  "preExistingChanges": [],
+  "changedSinceAssignment": [],
+  "preservedCapabilities": [
+    "All four original files byte-for-byte.",
+    "Optional as an explicit return contract, with justified alternatives for nullable APIs, fields/parameters and collection states.",
+    "Eager/lazy evaluation, callback construction, null contract differences, guarded observation and checked-exception guidance.",
+    "Java21 baseline plus older API introduction constraints; no upgrade or added dependencies.",
+    "Pricing tiers, failure/absence boundary, compatible nullable-port alternative, public API migration caveat, Price invariant, Map.copyOf snapshot caveat and qualified performance claims."
+  ],
+  "replacedCapabilities": [],
+  "intentionallyRemovedCapabilities": [],
+  "versions": {
+    "committed": "1.2.4",
+    "assignment": "1.2.4",
+    "final": "1.2.4",
+    "rationale": "No skill content changed; version remains 1.2.4."
+  },
+  "baseline": {
+    "source": "docs/skill-validation/wave3-2026-10-16/baseline.json",
+    "assignmentStatus": "Clean, including staged/unstaged/untracked inspection.",
+    "finalStatus": "Clean within owned package.",
+    "hashes": [
+      {
+        "path": "skills/java-optional/references/lookup-refactoring.md",
+        "sha256": "4a6c2ce8877100c106868e7bae5027dd8b547dcd972119434d9f572938024743"
+      },
+      {
+        "path": "skills/java-optional/references/semantics.md",
+        "sha256": "b46d88f1f596140420233962c0abdadbd94c6d2b547ea3bda0ae348350e9e83c"
+      },
+      {
+        "path": "skills/java-optional/SKILL.md",
+        "sha256": "35208e681b5a0fe5a997fe8e97a5af3d5511d58b5338ca2855307dd83c69767e"
+      },
+      {
+        "path": "skills/java-optional/skill.yaml",
+        "sha256": "3ca6ae866afcfbfc95751082f776e748cc30d1ef41b073503a5be7c40120e51a"
+      }
+    ]
+  },
+  "commandsAndResults": [
+    {
+      "command": "node packages/cli/bin/agent-skills.mjs --no-update-check validate skills/java-optional --strict --json; node node_modules/prettier/bin/prettier.cjs --check skills/java-optional/SKILL.md skills/java-optional/skill.yaml skills/java-optional/references/semantics.md skills/java-optional/references/lookup-refactoring.md; git diff --check -- skills/java-optional",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "output": "{\n  \"ok\": true,\n  \"directory\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\java-optional\",\n  \"name\": \"java-optional\",\n  \"version\": \"1.2.4\",\n  \"issues\": []\n}\nChecking formatting...\nAll matched files use Prettier code style!\n",
+      "result": "Strict validator ok=true, version1.2.4, zero issues; all matched files formatted; diff-check clean."
+    },
+    {
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-optional-check/run-pricing.mjs",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "purpose": "Extract current partial example and adapter, provide declared scaffolding, compile and execute observational checks plus eager-mutation control.",
+      "childCommands": [
+        {
+          "id": "original-compile",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+          "args": [
+            "--release",
+            "21",
+            "-Xlint:all",
+            "-Werror",
+            "-d",
+            "classes",
+            "PricingChecks.java"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-optional-check\\original",
+          "expectedExitCode": 0,
+          "exitCode": 0,
+          "signal": null,
+          "stdout": "",
+          "stderr": "",
+          "error": null
+        },
+        {
+          "id": "eager-mutant-compile",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+          "args": [
+            "--release",
+            "21",
+            "-Xlint:all",
+            "-Werror",
+            "-d",
+            "classes",
+            "PricingChecks.java"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-optional-check\\eager-mutant",
+          "expectedExitCode": 0,
+          "exitCode": 0,
+          "signal": null,
+          "stdout": "",
+          "stderr": "",
+          "error": null
+        },
+        {
+          "id": "original-run",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+          "args": [
+            "-cp",
+            "classes",
+            "PricingChecks"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-optional-check\\original",
+          "expectedExitCode": 0,
+          "exitCode": 0,
+          "signal": null,
+          "stdout": "Passed 19 pricing checks\r\nruntime=25.0.3+9-LTS\r\n",
+          "stderr": "",
+          "error": null
+        },
+        {
+          "id": "eager-mutant-run",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+          "args": [
+            "-cp",
+            "classes",
+            "PricingChecks"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-optional-check\\eager-mutant",
+          "expectedExitCode": 1,
+          "exitCode": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Exception in thread \"main\" java.lang.AssertionError: consulted sources: expected=[promotion], actual=[promotion, contract, catalogue]\r\n\tat PricingChecks.equal(PricingChecks.java:63)\r\n\tat PricingChecks.tier(PricingChecks.java:81)\r\n\tat PricingChecks.main(PricingChecks.java:84)\r\n",
+          "error": null
+        }
+      ],
+      "artifact": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-optional-check/results.json"
+    },
+    {
+      "command": "@'\nimport { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';\nimport { resolve, dirname } from 'node:path';\nimport { createHash } from 'node:crypto';\nimport { spawnSync } from 'node:child_process';\nimport { parse } from 'yaml';\nconst owned = 'skills/java-optional';\nconst baseline = JSON.parse(readFileSync('docs/skill-validation/wave3-2026-10-16/baseline.json','utf8'));\nconst initial = baseline.packages.find(p=>p.name==='java-optional');\nconst before = new Map(baseline.allFiles.map(f=>[f.path,f.sha256]));\nfunction walk(p) { return readdirSync(p).flatMap(n=>{const q=p+'/'+n;return statSync(q).isDirectory()?walk(q):[q];}); }\nconst files = walk(owned);\nconst hashes = files.map(path=>({path,sha256:createHash('sha256').update(readFileSync(path)).digest('hex')}));\nconst changedSinceAssignment = hashes.filter(f=>f.sha256!==before.get(f.path));\nconst markdown = readFileSync(owned+'/SKILL.md','utf8');\nconst front = parse(markdown.split('---')[1]);\nconst manifest = parse(readFileSync(owned+'/skill.yaml','utf8'));\nconst links=[];\nfor (const file of files.filter(f=>f.endsWith('.md'))) {\n  for (const m of readFileSync(file,'utf8').matchAll(/\\[[^\\]]*\\]\\((?:<([^>]+)>|([^\\s)]+))\\)/g)) {\n    const href=m[1]??m[2];\n    if (/^(https?:|mailto:|#)/.test(href)) continue;\n    const target=resolve(dirname(file),href.split('#')[0]);\n    links.push({file,href,exists:existsSync(target)});\n  }\n}\nconst references=files.filter(f=>f.includes('/references/')).map(file=>({file,routed:markdown.includes(file.slice(owned.length+1))}));\nconst peers=[...(manifest.dependencies??[]),...(manifest.suggests??[])].map(name=>({name,exists:existsSync('skills/'+name+'/SKILL.md')}));\nconst git=[];\nfor(const args of [['status','--porcelain=v1','--untracked-files=all','--',owned],['diff','--',owned],['diff','--cached','--',owned],['diff','--check','--',owned]]) {\n  const r=spawnSync('git',args,{encoding:'utf8'});git.push({command:'git '+args.join(' '),cwd:process.cwd(),exitCode:r.status,stdout:r.stdout,stderr:r.stderr});\n}\nconst report={committedVersion:initial.committedVersion,assignmentVersion:initial.initialVersion,finalVersion:manifest.version,assignmentStatus:initial.initialStatus,assignmentDiff:initial.initialDiff,hashes,changedSinceAssignment,descriptionsMatch:front.description.trim()===manifest.description.trim(),nameMatch:front.name===manifest.name,links,references,peers,git};\nconsole.log(JSON.stringify(report,null,2));\nif(changedSinceAssignment.length||!report.descriptionsMatch||!report.nameMatch||links.some(l=>!l.exists)||references.some(r=>!r.routed)||peers.some(p=>!p.exists)||git.some(g=>g.exitCode!==0||g.stdout))process.exitCode=1;\n'@ | node --input-type=module",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": {
+        "committedVersion": "1.2.4",
+        "assignmentVersion": "1.2.4",
+        "finalVersion": "1.2.4",
+        "assignmentStatus": "",
+        "assignmentDiff": "",
+        "hashes": [
+          {
+            "path": "skills/java-optional/references/lookup-refactoring.md",
+            "sha256": "4a6c2ce8877100c106868e7bae5027dd8b547dcd972119434d9f572938024743"
+          },
+          {
+            "path": "skills/java-optional/references/semantics.md",
+            "sha256": "b46d88f1f596140420233962c0abdadbd94c6d2b547ea3bda0ae348350e9e83c"
+          },
+          {
+            "path": "skills/java-optional/SKILL.md",
+            "sha256": "35208e681b5a0fe5a997fe8e97a5af3d5511d58b5338ca2855307dd83c69767e"
+          },
+          {
+            "path": "skills/java-optional/skill.yaml",
+            "sha256": "3ca6ae866afcfbfc95751082f776e748cc30d1ef41b073503a5be7c40120e51a"
+          }
+        ],
+        "changedSinceAssignment": [],
+        "descriptionsMatch": true,
+        "nameMatch": true,
+        "links": [
+          {
+            "file": "skills/java-optional/SKILL.md",
+            "href": "references/semantics.md",
+            "exists": true
+          },
+          {
+            "file": "skills/java-optional/SKILL.md",
+            "href": "references/lookup-refactoring.md",
+            "exists": true
+          }
+        ],
+        "references": [
+          {
+            "file": "skills/java-optional/references/lookup-refactoring.md",
+            "routed": true
+          },
+          {
+            "file": "skills/java-optional/references/semantics.md",
+            "routed": true
+          }
+        ],
+        "peers": [
+          {
+            "name": "java-null-safety",
+            "exists": true
+          }
+        ],
+        "git": [
+          {
+            "command": "git status --porcelain=v1 --untracked-files=all -- skills/java-optional",
+            "cwd": "C:\\git\\agent-skills",
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": ""
+          },
+          {
+            "command": "git diff -- skills/java-optional",
+            "cwd": "C:\\git\\agent-skills",
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": ""
+          },
+          {
+            "command": "git diff --cached -- skills/java-optional",
+            "cwd": "C:\\git\\agent-skills",
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": ""
+          },
+          {
+            "command": "git diff --check -- skills/java-optional",
+            "cwd": "C:\\git\\agent-skills",
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": ""
+          }
+        ]
+      }
+    }
+  ],
+  "failedChecks": [],
+  "intentionalNegativeControl": {
+    "sourceSkillVersion": "1.2.4, unchanged",
+    "referenceSha256": "4a6c2ce8877100c106868e7bae5027dd8b547dcd972119434d9f572938024743",
+    "extractedMethodSha256": "4cae4dad1fd1626b79d9e564a84285509c5842ea71359484a94e645cd5e39a69",
+    "originalFixtureSha256": "78f4e64ac5809cba42fb15704bdd8be27c2b7ecb4d64806cf233318dab25a0e6",
+    "mutatedFixtureSha256": "7aec17088a3fab7c56a47d7f6ec36b5b5a839e29aa1678e757d3363b2a72e96e",
+    "provenance": "Existing after-method and catalogue adapter extracted unchanged into a handwritten scratch scaffold supplying the documented imports, ports, Price invariant, runtime exception, annotation and observational checks.",
+    "mutation": "Replace only the two lazy or suppliers with eager(expression) factories. Factory returns a Supplier, but lookup expressions evaluate before or invocation. Original checks retained.",
+    "reproduction": "Run retained run-pricing.mjs with Node. It extracts the original After effectivePrice method and CatalogueAdapter, supplies the stated prerequisite types, then creates original and eager-mutant scratch fixtures and executes identical assertions.",
+    "original": {
+      "exitCode": 0,
+      "stdout": "Passed 19 pricing checks\nruntime=25.0.3+9-LTS"
+    },
+    "mutant": {
+      "exitCode": 1,
+      "stderr": "Exception in thread \"main\" java.lang.AssertionError: consulted sources: expected=[promotion], actual=[promotion, contract, catalogue]\n\tat PricingChecks.equal(PricingChecks.java:63)\n\tat PricingChecks.tier(PricingChecks.java:81)\n\tat PricingChecks.main(PricingChecks.java:84)"
+    },
+    "interpretation": "New scratch technical verifier observes source call count/order, not only returned price. Existing snippet is correct for its declared policy. This is not a pre-existing test, independent agent evaluation, benchmark or measured skill gain."
+  },
+  "behavioralEvaluationsExecuted": [],
+  "walkthroughsPerformed": [
+    {
+      "scenario": "Eager fallback expression with identical code and two product contracts: refresh only on absence versus refresh required on every resolution.",
+      "classification": "Structured walkthrough only",
+      "result": "Existing workflow selects lazy fallback for conditional work but retains or separates mandatory unconditional effects. A value-only assertion would miss the contract difference."
+    }
+  ],
+  "cases": [
+    {
+      "id": "refresh-only-on-absence",
+      "pairKey": "when-refresh-is-required",
+      "input": {
+        "request": "Revise o uso de Optional neste resolver segundo o contrato do projeto. Faça apenas a correção necessária, se houver, mantendo assinatura e comportamento público. Mostre verificações de valor retornado, chamadas e falhas nos caminhos presente e vazio.",
+        "fixtureFiles": {
+          "build.properties": "java.release=21\n",
+          "Resolver.java": "import java.util.Optional;\nimport java.util.function.Supplier;\npublic final class Resolver {\n    private final Supplier<String> refreshAndDefault;\n    public Resolver(Supplier<String> refreshAndDefault) {\n        this.refreshAndDefault = refreshAndDefault;\n    }\n    public String resolve(Optional<String> override) {\n        return override.orElse(refreshAndDefault.get());\n    }\n}\n",
+          "context.md": "Os argumentos e o Supplier são não-null. O Supplier atualiza um registro de refresh, devolve o default e pode lançar IllegalStateException; seu resultado String pode ser null. Não há autorização para modificar a política de refresh, introduzir cache ou alterar a API. O override presente deve determinar o valor retornado."
+        },
+        "prerequisites": "Diretório temporário, Java 21 APIs, sem bibliotecas ou serviços externos. Use Supplier instrumentado com contador/registro de chamadas e falha controlável; informe compiler release e runtime reais.",
+        "contract": "Refresh is permitted only when no override exists. A present override must be usable even if the default source is unavailable. The empty path uses the Supplier result, including null if returned."
+      },
+      "criteria": {
+        "expected": [
+          "Inspect resolve and stated side-effect policy, rather than treating orElse as only a performance issue.",
+          "Use orElseGet(refreshAndDefault), a lambda invoking it only when absent, or an equivalent clear conditional.",
+          "Present override returns it with zero Supplier invocations; a throwing Supplier must not affect this path.",
+          "Empty override invokes Supplier exactly once; return its value/null and propagate its failure.",
+          "Preserve Java21 target and public signature, with no new dependency or unmeasured performance claim."
+        ],
+        "failures": [
+          "Retain eager get() in the argument.",
+          "Use orElseGet(makeSupplier()) that still performs the refresh eagerly.",
+          "Suppress selected-path failure or reject a legitimate null fallback.",
+          "Test only returned values and overlook calls/failures."
+        ],
+        "observableArtifacts": "Minimal patch plus present/empty invocation and exception checks."
+      },
+      "evaluationStatus": "Pending coordinator agent evaluation; only structured walkthrough performed."
+    },
+    {
+      "id": "refresh-always-required",
+      "pairKey": "when-refresh-is-required",
+      "input": {
+        "request": "Revise o uso de Optional neste resolver segundo o contrato do projeto. Faça apenas a correção necessária, se houver, mantendo assinatura e comportamento público. Mostre verificações de valor retornado, chamadas e falhas nos caminhos presente e vazio.",
+        "fixtureFiles": {
+          "build.properties": "java.release=21\n",
+          "Resolver.java": "import java.util.Optional;\nimport java.util.function.Supplier;\npublic final class Resolver {\n    private final Supplier<String> refreshAndDefault;\n    public Resolver(Supplier<String> refreshAndDefault) {\n        this.refreshAndDefault = refreshAndDefault;\n    }\n    public String resolve(Optional<String> override) {\n        return override.orElse(refreshAndDefault.get());\n    }\n}\n",
+          "context.md": "Os argumentos e o Supplier são não-null. O Supplier atualiza um registro de refresh, devolve o default e pode lançar IllegalStateException; seu resultado String pode ser null. Não há autorização para modificar a política de refresh, introduzir cache ou alterar a API. O override presente deve determinar o valor retornado."
+        },
+        "prerequisites": "Diretório temporário, Java 21 APIs, sem bibliotecas ou serviços externos. Use Supplier instrumentado com contador/registro de chamadas e falha controlável; informe compiler release e runtime reais.",
+        "contract": "Every resolution must refresh exactly once, including when an override exists. If refresh fails the resolution fails. The override still selects the returned String when refresh succeeds; the empty path uses the Supplier result, including null if returned."
+      },
+      "criteria": {
+        "expected": [
+          "Recognize the existing eager evaluation implements the required unconditional effect; no forced laziness rewrite.",
+          "Retain adequate code or make refresh explicit before selecting override/default.",
+          "Present and empty overrides each invoke Supplier exactly once; both propagate its failure.",
+          "Present path returns override and empty path returns Supplier value/null when refresh succeeds.",
+          "State the policy basis and preserve public signature/Java21 without benchmark claims."
+        ],
+        "failures": [
+          "Replace with lazy orElseGet and drop required refresh on present path.",
+          "Swallow required refresh failure.",
+          "Refresh twice or run it after returning override.",
+          "Declare every computed orElse fallback incorrect independent of contract."
+        ],
+        "observableArtifacts": "Evidence-backed no-change decision or minimal equivalent clarification, with call-count/failure tests."
+      },
+      "evaluationStatus": "Pending coordinator agent evaluation; only structured walkthrough performed."
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html",
+      "version": "Java SE21",
+      "supports": "Return-type intent, value-based class, null mapper/Optional supplier contracts, or/orElseGet distinctions and method introduction versions.",
+      "limitation": "API review, not every framework serialization contract or allocation measurement."
+    },
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.12.4.2",
+      "version": "JLS21",
+      "supports": "Method argument expressions evaluate left-to-right before invocation; explains eager fallback and supplier-factory effects.",
+      "limitation": "Language contract; the scratch run covers selected lookup effects, not every callback scenario."
+    },
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.13.3",
+      "version": "JLS21",
+      "supports": "Bound method-reference receiver expression is evaluated immediately and null receiver fails during method-reference evaluation.",
+      "limitation": "Source confirmation of existing guidance; no separate receiver-null runtime probe executed."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Map.html#copyOf(java.util.Map)",
+      "version": "Java SE21",
+      "supports": "Map.copyOf rejects null keys/values and later changes in source mappings are not reflected; snapshot caveat in existing example is warranted.",
+      "limitation": "Supplied Price scaffold enforces its documented non-null amount; map copy alone cannot establish payload invariants."
+    }
+  ],
+  "evidencePaths": [
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-optional-check/run-pricing.mjs",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-optional-check/results.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-optional-check/original/PricingChecks.java",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-optional-check/eager-mutant/PricingChecks.java",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-optional-check/original-compile.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-optional-check/eager-mutant-compile.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-optional-check/original-run.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-optional-check/eager-mutant-run.json"
+  ],
+  "assumptions": [
+    "The example is explicitly fictional and partial; test scaffolding supplies its documented Price/port/exception/annotation prerequisites.",
+    "Recorded source order and failure propagation are the observable policy, not production repository/serialization behavior."
+  ],
+  "limits": [
+    "No skill edit or revision comparison; no independent agent output or measured behavioral gain.",
+    "Compilation used javac25.0.3 --release21 -Xlint:all -Werror; execution used Temurin25.0.3+9-LTS, not a JDK21 runtime.",
+    "19 checks cover supplied pricing fixture, source calls, failures, invalid inputs and snapshot behavior; no real persistence/JSON framework or allocation profile ran.",
+    "Negative mutation validates sensitivity of a scratch verifier authored during this review, not a previously shipped test."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Shared generated data and parallel-review ownership; unchanged package alone needs no index update.",
+      "prerequisites": "All wave authors stopped writing."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Repository-wide validation reserved for coordinator.",
+      "prerequisites": "All authors stopped and index regenerated for changed packages."
+    }
+  ],
+  "crossSkill": [],
+  "coordinatorActions": [
+    "Archive handoff/evidence; evaluate paired cases separately from criteria if chosen.",
+    "Run wave-wide checks after writers stop."
+  ],
+  "readinessMeaning": "Local no-change review complete; repository-wide checks remain pending."
+}

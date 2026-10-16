@@ -1,0 +1,68 @@
+diff --git a/skills/microservices-architecture/SKILL.md b/skills/microservices-architecture/SKILL.md
+index 9f8028f..798ff97 100644
+--- a/skills/microservices-architecture/SKILL.md
++++ b/skills/microservices-architecture/SKILL.md
+@@ -91,6 +91,11 @@ cached balance does not establish permission to spend it, and moving work behind
+ does not establish authorization at the operation. Route the unresolved mechanism instead
+ of filling the gap with a framework annotation.
+ 
++Reconcile time and load across the whole call path too: separately accepted timeout/retry
++policies can exhaust the caller's budget or multiply downstream attempts. Inspect effective
++gateway, client and SDK policies before accepting a composed guarantee. The integration
++reference identifies the evidence to pass to the timeout/retry specialists.
++
+ If two binding constraints cannot both hold under the proposed design, expose the conflict
+ and the options to its decision authority. Do not silently weaken an invariant or label
+ an unapproved compromise accepted. Read [Integrating decisions](references/integrating-decisions.md)
+diff --git a/skills/microservices-architecture/references/integrating-decisions.md b/skills/microservices-architecture/references/integrating-decisions.md
+index bb869df..a829810 100644
+--- a/skills/microservices-architecture/references/integrating-decisions.md
++++ b/skills/microservices-architecture/references/integrating-decisions.md
+@@ -17,6 +17,7 @@ show whether an edge carries stale data, delegated authority or an uncertain out
+ | A cached cross-service view authorizes an irreversible operation               | Allowed staleness/revocation, authoritative check at the effect                          | Separate display from authorization; protect the effect or obtain an explicit change to its contract.       |
+ | Independent deployments, but old consumers require the previous payload/schema | Consumer contracts, deployed versions, migration sequence                                | Establish compatible coexistence or record the coordinated release dependency.                              |
+ | Caller can stop waiting, therefore retry is harmless                           | Remote commit point, retry identity and result lookup                                    | Resolve unknown outcome and duplicate effects; timeout alone is no evidence of non-execution.               |
++| Each hop has bounded waits/retries, therefore the request is within budget     | Sequential/parallel path, deadline propagation, gateway/client/SDK attempts and backoff  | Reconcile the caller's total budget and downstream attempt load; local limits do not establish either.      |
+ | A local commit guarantees a required downstream effect will be attempted       | Persisted intent or reconstructible work, dispatch path and crash recovery               | Close the commit-to-dispatch gap and identify who recovers stranded work; deduplication alone cannot do so. |
+ | Gateway authenticates traffic, but jobs or services bypass the edge            | All entry paths, identity provenance and operation authorization                         | Enforce the operation's policy on each permitted path; do not trust a header merely because it is present.  |
+ | Separate processes, therefore failures are isolated                            | Shared database/connection limits, identity/discovery dependencies and failure injection | State the demonstrated failure boundary and unresolved common failure paths.                                |
+@@ -27,6 +28,18 @@ it does not prove that the proposed design failed. Resolve the binding requireme
+ then adjust its dependent choices. Do not add a resilience mechanism to hide an unresolved
+ business invariant.
+ 
++For a time/load conflict, send the traced path and remaining-budget behavior to
++`timeouts-and-deadlines`, and retry locations, total attempts (including the first) and
++failure eligibility to `retries-and-backoff`. A fresh timeout at each hop is not a propagated
++budget; independent nested retry loops can multiply attempts. Name the owner of the composed
++policy, then count downstream calls and residual work for one logical request under the
++selected failure fixture. Preserve existing policies when they already satisfy that contract.
++The [gRPC deadline guide](https://grpc.io/docs/guides/deadlines/) demonstrates elapsed-time
++deduction and implementation-specific propagation; verify the actual transport instead of
++assuming this behavior. [Amazon's retry analysis](https://aws.amazon.com/builders-library/timeouts-retries-and-backoff-with-jitter/)
++explains layered amplification and the trade-off of choosing a retry location. Neither source
++requires adopting its platform or adding retries to every hop.
++
+ ## Worked constraint change: invoice issuance
+ 
+ This is an illustrative design walkthrough, not a tested system or benchmark.
+diff --git a/skills/microservices-architecture/skill.yaml b/skills/microservices-architecture/skill.yaml
+index 4edc88a..5ba925a 100644
+--- a/skills/microservices-architecture/skill.yaml
++++ b/skills/microservices-architecture/skill.yaml
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: microservices-architecture
+-version: 1.0.0
++version: 1.0.1
+ description: >-
+   Coordinate interdependent architecture decisions when a microservices initiative spans
+   domain, data, interaction and operation, or specialist proposals conflict. Build an
+@@ -66,6 +66,7 @@ suggests:
+   - enterprise-application-architecture
+   - distributed-systems
+   - timeouts-and-deadlines
++  - retries-and-backoff
+   - distribution-boundaries
+   - architecture-characteristics
+   - architecture-trade-off-analysis

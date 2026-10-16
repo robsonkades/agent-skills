@@ -1,0 +1,198 @@
+package work;
+
+import java.nio.file.Path;
+import java.sql.DriverManager;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.jdbc.core.JdbcTemplate;
+
+public class Regression {
+    public static void main(String[] args) throws Exception {
+        if (args.length > 0) {
+            String root = Path.of(args[1]).toAbsolutePath().toString().replace('\\', '/');
+            System.setProperty("work.businessUrl", "jdbc:h2:file:" + root + "/business");
+            System.setProperty("work.receiverUrl", "jdbc:h2:file:" + root + "/receiver");
+            if (args[0].equals("prepare")) prepareFailure();
+            else if (args[0].equals("resume")) resume();
+            else throw new IllegalArgumentException("unknown phase");
+            return;
+        }
+        database("checkpoint");
+        prepareFailure();
+        resume();
+        System.out.println("PASS context recreation replays retained work without a duplicate");
+        rejection();
+        conflictingIdentity();
+        publisherAtomicity();
+        oneRowPerCall();
+    }
+
+    private static void database(String scenario) {
+        String suffix = scenario + System.nanoTime();
+        System.setProperty("work.businessUrl", "jdbc:h2:mem:business" + suffix + ";DB_CLOSE_DELAY=-1");
+        System.setProperty("work.receiverUrl", "jdbc:h2:mem:receiver" + suffix + ";DB_CLOSE_DELAY=-1");
+    }
+
+    private static AnnotationConfigApplicationContext context(Checkpoint checkpoint) {
+        var ctx = new AnnotationConfigApplicationContext();
+        ctx.registerBean("testCheckpoint", Checkpoint.class, () -> checkpoint, bean -> bean.setPrimary(true));
+        ctx.register(Config.class);
+        ctx.refresh();
+        return ctx;
+    }
+
+    private static void schema(JdbcTemplate jdbc) {
+        jdbc.execute("create table orders(id varchar primary key,payload varchar)");
+        jdbc.execute("create table outbox(event_id varchar primary key,payload varchar,done boolean)");
+    }
+
+    private static void prepareFailure() throws Exception {
+        var failure = new IllegalStateException("local checkpoint failed after receiver acknowledgment");
+        var calls = new AtomicInteger();
+        try (var ctx = context(id -> {
+            equal("event:kept", id, "checkpoint identity");
+            equal(1, receiverCount(), "receiver committed before checkpoint");
+            calls.incrementAndGet();
+            throw failure;
+        })) {
+            var jdbc = ctx.getBean(JdbcTemplate.class);
+            schema(jdbc);
+            ctx.getBean(Publisher.class).create("kept", "original fact");
+            jdbc.update("update orders set payload='later state' where id='kept'");
+            try {
+                ctx.getBean(Dispatcher.class).replayOne();
+                throw new AssertionError("checkpoint failure must propagate");
+            } catch (IllegalStateException actual) {
+                check(actual == failure, "original checkpoint failure must escape");
+            }
+            equal(1, calls.get(), "checkpoint invoked exactly once");
+            equal(1, count(jdbc, "orders"), "business commit survives checkpoint failure");
+            equal(1, pending(jdbc), "failed progress remains pending");
+            equal("original fact", jdbc.queryForObject("select payload from outbox", String.class), "retained immutable payload");
+            equal(1, receiverCount(), "acknowledged effect survives local failure");
+        }
+        System.out.println("PASS acknowledgment/checkpoint failure: one receiver effect, one pending row");
+    }
+
+    private static void resume() throws Exception {
+        var calls = new AtomicInteger();
+        try (var ctx = context(id -> {
+            equal("event:kept", id, "replayed checkpoint identity");
+            calls.incrementAndGet();
+        })) {
+            var jdbc = ctx.getBean(JdbcTemplate.class);
+            equal(1, count(jdbc, "orders"), "retained order");
+            equal(1, pending(jdbc), "retained pending work");
+            equal(1, receiverCount(), "retained receiver acknowledgment");
+            check(ctx.getBean(Dispatcher.class).replayOne(), "retained row replayed");
+            equal(1, receiverCount(), "replay must not duplicate the receiver effect");
+            equal(0, pending(jdbc), "progress commits after checkpoint success");
+            equal(1, count(jdbc, "outbox"), "same outbox row retained");
+            equal(1, calls.get(), "checkpoint also runs on acknowledged retry");
+            check(!ctx.getBean(Dispatcher.class).replayOne(), "completed work is not replayed");
+            equal(1, calls.get(), "empty replay does not invoke checkpoint");
+            try (var c = DriverManager.getConnection(System.getProperty("work.receiverUrl"), "sa", "");
+                 var s = c.createStatement(); var r = s.executeQuery("select token,payload from accepted")) {
+                check(r.next(), "receiver row exists");
+                equal("event:kept", r.getString(1), "stable persisted identity");
+                equal("original fact", r.getString(2), "original outbox fact delivered");
+            }
+        }
+        System.out.println("PASS retained replay: one receiver effect, no pending work, original payload");
+    }
+
+    private static void rejection() {
+        database("rejection");
+        var calls = new AtomicInteger();
+        try (var ctx = context(id -> calls.incrementAndGet())) {
+            var jdbc = ctx.getBean(JdbcTemplate.class);
+            schema(jdbc);
+            ctx.getBean(Publisher.class).create("rejected", "reject");
+            for (int attempt = 0; attempt < 2; attempt++) {
+                expect(IllegalArgumentException.class, () -> ctx.getBean(Dispatcher.class).replayOne());
+                equal(1, pending(jdbc), "rejection remains pending");
+                equal(0, receiverCount(), "rejection has no effect");
+            }
+            equal(0, calls.get(), "rejection does not invoke checkpoint");
+            equal(1, count(jdbc, "orders"), "rejection does not undo publisher");
+        }
+        System.out.println("PASS receiver rejection propagates and retains work");
+    }
+
+    private static void conflictingIdentity() {
+        database("conflict");
+        var calls = new AtomicInteger();
+        try (var ctx = context(id -> calls.incrementAndGet())) {
+            var jdbc = ctx.getBean(JdbcTemplate.class);
+            schema(jdbc);
+            ctx.getBean(ReceiverClient.class).accept("event:conflict", "old fact");
+            ctx.getBean(Publisher.class).create("conflict", "new fact");
+            expect(IllegalArgumentException.class, () -> ctx.getBean(Dispatcher.class).replayOne());
+            equal(1, pending(jdbc), "incompatible payload stays pending");
+            equal(1, receiverCount(), "conflict creates no second effect");
+            equal(0, calls.get(), "conflict does not reach checkpoint");
+        }
+        System.out.println("PASS reused identity with different payload is rejected");
+    }
+
+    private static void publisherAtomicity() {
+        database("atomicity");
+        try (var ctx = context(id -> {})) {
+            var jdbc = ctx.getBean(JdbcTemplate.class);
+            schema(jdbc);
+            jdbc.update("insert into outbox values ('event:collision','existing fact',false)");
+            expect(DuplicateKeyException.class, () -> ctx.getBean(Publisher.class).create("collision", "new fact"));
+            equal(0, count(jdbc, "orders"), "second insert failure rolls back first insert");
+            equal(1, count(jdbc, "outbox"), "existing work unchanged");
+            equal("existing fact", jdbc.queryForObject("select payload from outbox", String.class), "existing payload unchanged");
+        }
+        System.out.println("PASS publisher rollback preserves atomicity");
+    }
+
+    private static void oneRowPerCall() {
+        database("singleworker");
+        var calls = new AtomicInteger();
+        try (var ctx = context(id -> calls.incrementAndGet())) {
+            var jdbc = ctx.getBean(JdbcTemplate.class);
+            schema(jdbc);
+            var publisher = ctx.getBean(Publisher.class);
+            publisher.create("one", "same fact");
+            publisher.create("two", "same fact");
+            var dispatcher = ctx.getBean(Dispatcher.class);
+            check(dispatcher.replayOne(), "first row completes");
+            equal(1, pending(jdbc), "only one row per call");
+            equal(1, receiverCount(), "first effect");
+            check(dispatcher.replayOne(), "second row completes");
+            equal(0, pending(jdbc), "second row completed");
+            equal(2, receiverCount(), "different event identities have independent effects");
+            check(!dispatcher.replayOne(), "empty queue returns false");
+            equal(2, calls.get(), "one checkpoint per delivery");
+        }
+        System.out.println("PASS one row per call and distinct event identities");
+    }
+
+    private static int receiverCount() {
+        return new ReceiverClient(System.getProperty("work.receiverUrl")).count();
+    }
+    private static int count(JdbcTemplate jdbc, String table) {
+        return jdbc.queryForObject("select count(*) from " + table, Integer.class);
+    }
+    private static int pending(JdbcTemplate jdbc) {
+        return jdbc.queryForObject("select count(*) from outbox where done=false", Integer.class);
+    }
+    private static void expect(Class<? extends RuntimeException> type, Runnable operation) {
+        try { operation.run(); }
+        catch (RuntimeException failure) {
+            if (type.isInstance(failure)) return;
+            throw failure;
+        }
+        throw new AssertionError("Expected " + type.getSimpleName());
+    }
+    private static void check(boolean condition, String message) {
+        if (!condition) throw new AssertionError(message);
+    }
+    private static void equal(Object expected, Object actual, String message) {
+        if (!expected.equals(actual)) throw new AssertionError(message + ": expected=" + expected + ", actual=" + actual);
+    }
+}

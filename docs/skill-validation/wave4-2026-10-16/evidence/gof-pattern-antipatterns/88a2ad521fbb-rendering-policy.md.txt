@@ -1,0 +1,5 @@
+# Rendering policy
+
+Status: accepted. Owner: document output team.
+
+New-kind acceptance: each operation requires an explicit reviewed handling decision for every new kind. A missing decision must stop the build before release; matching today's example labels does not approve future kinds implicitly.

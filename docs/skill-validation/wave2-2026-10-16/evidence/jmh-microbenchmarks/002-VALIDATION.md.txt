@@ -1,0 +1,36 @@
+# JMH coverage/failure controls
+
+Purpose: resolve whether JMH 1.37 CLI exit success/result-file presence establish complete
+measurement coverage. These controls do not estimate useful execution time or compare implementations.
+
+Compiler target: Java 17, no preview. Actual JDK/compiler/runtime: Temurin 25.0.3+9-LTS.
+JMH core + annotation processor 1.37, jopt-simple 5.0.4 and commons-math3 3.6.1 were already
+cached. Cached parent POM confirms these transitive versions. Nothing installed or upgraded.
+
+Compile (from C:/git/agent-skills):
+    javac --release 17 -cp 'C:/Users/robso/.m2/repository/org/openjdk/jmh/jmh-core/1.37/jmh-core-1.37.jar;C:/Users/robso/.m2/repository/net/sf/jopt-simple/jopt-simple/5.0.4/jopt-simple-5.0.4.jar;C:/Users/robso/.m2/repository/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar' -processorpath 'C:/Users/robso/.m2/repository/org/openjdk/jmh/jmh-generator-annprocess/1.37/jmh-generator-annprocess-1.37.jar;C:/Users/robso/.m2/repository/org/openjdk/jmh/jmh-core/1.37/jmh-core-1.37.jar' -processor org.openjdk.jmh.generators.BenchmarkProcessor -d 'C:/Users/robso/AppData/Local/Temp/jmh-quality13-bacfcc4fe31346b09017178462ac473f/classes' -s 'C:/Users/robso/AppData/Local/Temp/jmh-quality13-bacfcc4fe31346b09017178462ac473f/generated' 'C:/Users/robso/AppData/Local/Temp/jmh-quality13-bacfcc4fe31346b09017178462ac473f/CoverageProbe.java'
+
+Discovery:
+    java -Djava.io.tmpdir=C:/Users/robso/AppData/Local/Temp/jmh-quality13-bacfcc4fe31346b09017178462ac473f -cp "C:/Users/robso/AppData/Local/Temp/jmh-quality13-bacfcc4fe31346b09017178462ac473f/classes;C:/Users/robso/.m2/repository/org/openjdk/jmh/jmh-core/1.37/jmh-core-1.37.jar;C:/Users/robso/.m2/repository/net/sf/jopt-simple/jopt-simple/5.0.4/jopt-simple-5.0.4.jar;C:/Users/robso/.m2/repository/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar" org.openjdk.jmh.Main probe.CoverageProbe.operation -lp
+Observed: probe.CoverageProbe.operation, input={good, broken}.
+
+Run and assertion commands: run-controls.ps1 records the exact three executed launches.
+The host and fork use an isolated java.io.tmpdir, keeping JMH's lock and temporary files here.
+Default: exit 0, selected good+broken, one completed JSON row (good), deliberate exception in log.
+Strict -foe true: exit 1 and intended exception propagated as RunnerException.
+Explicit -p input=good: exit 0, one selected/completed row, no deliberate exception.
+
+JMH printed terminally deprecated sun.misc.Unsafe warnings on JDK 25. No warnings were suppressed.
+They did not prevent the intended checks. Java 17 runtime behavior was not executed.
+Generated classes/harness, all raw JSON/logs, failures, source contracts and output checks remain here.
+
+Sources pinned to tag 1.37:
+- Defaults.java: default failure policy.
+- Runner.java: failed-fork result handling and option check.
+- Main.java: CLI RunnerException exit behavior.
+- CommandLineOptions.java: -foe option and discovery.
+Programmatic shouldFailOnError(boolean) confirmed with javap on the same cached JMH jar.
+
+No agent behavioral evaluation was executed. The fixture pair in cases.actor.json/cases.expected.json
+is development material, with grading data separated procedurally. Global registry/verify belongs
+to the coordinator after all reviewers stop writing.

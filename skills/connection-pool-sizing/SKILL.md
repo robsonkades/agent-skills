@@ -32,6 +32,11 @@ Start from the requested sizing, diagnosis or review and reuse adequate evidence
 missing workload, deadline or database-budget inputs that change the decision. A review can retain
 a sound configuration; it does not require changing pool settings or database access code.
 
+First trace the affected endpoint or job to its selected transaction manager/DataSource, physical
+pool, runtime configuration and database target. Match that pool and replica to the captured metric
+labels before sizing it; a default property or fleet-wide dashboard may describe a different pool.
+Use the identity checks in `references/sizing-and-configuration.md` when that mapping is unclear.
+
 1. **Measure `W`**, the mean connection **hold** time, with `hikaricp.connections.usage`;
    inspect p50/p99 separately for tails. Hold time runs from successful checkout until return to
    the pool, which can include time before the first statement and after commit. Verify the metric
@@ -79,7 +84,10 @@ a sound configuration; it does not require changing pool settings or database ac
   An acquisition timeout alone does not prove the database is unavailable. Immediate retries
   against the same exhausted pool can amplify overload; prefer bounded rejection/degradation
   unless a retry has remaining deadline, safe operation semantics and a bounded retry budget.
-  This timeout is pool-wide and covers acquisition, not query execution or the whole request.
+  This timeout is pool-wide and covers ordinary acquisition, not query execution or the whole request.
+  If pool suspension is enabled and active, HikariCP can wait outside this timeout and its ordinary
+  pending/acquisition metrics. Inspect the suspension branch in `references/incident-triage.md`
+  before treating a finite setting or quiet dashboard as proof of a bounded wait.
   For shorter remaining budgets than the supported minimum, use deadline-aware upstream admission
   and a client cancellation policy; do not assume setting a sub-minimum value works.
 - Set `max-lifetime` a few seconds **below** an enforced database or infrastructure connection
@@ -128,7 +136,8 @@ a sound configuration; it does not require changing pool settings or database ac
 
 ## References
 
-Return the measurement interval/population, mean and tail hold times, completed borrow rate and
+Return the affected operation, identified pool/replica and effective configuration source,
+measurement interval/population, mean and tail hold times, completed borrow rate and
 offered/failed demand, candidate pool and aggregate database budget, competing diagnosis, and
 validation/rollback bounds. State which checks ran and which claims remain conditional.
 

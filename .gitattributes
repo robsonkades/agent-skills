@@ -3,3 +3,7 @@
 # overrides core.autocrlf on the user's machine; without this, a Windows clone checks out
 # CRLF and every install fails its integrity check.
 * text=auto eol=lf
+
+# Validation captures are hashed as recorded, including their original line endings.
+# Preserve their bytes when staging and checking out the archived evidence.
+docs/skill-validation/**/*.txt -text

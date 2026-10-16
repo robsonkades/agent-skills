@@ -64,8 +64,25 @@ public class After {
     }
 
     public static void main(String[] args) {
-        // Stands in for the test: a hand-written stub, no mocking framework.
-        Rates stub = policyId -> 1.0;
+        // The injected test path must not replace the original callers' acquisition path.
+        try {
+            new RenewalCheck();
+            throw new AssertionError("default constructor bypassed RateGateway");
+        } catch (IllegalStateException actual) {
+            if (!"RateGateway: cannot connect to policy-db".equals(actual.getMessage())) {
+                throw new AssertionError("default constructor changed the acquisition failure", actual);
+            }
+        }
+
+        // Keep due() real. A constant answer alone would hide a wrong lookup key.
+        var requestedIds = new ArrayList<String>();
+        Rates stub = policyId -> {
+            requestedIds.add(policyId);
+            if (!policyId.equals("P1")) {
+                throw new AssertionError("unexpected rate lookup: " + policyId);
+            }
+            return 1.0;
+        };
         var clock = Clock.fixed(Instant.parse("2026-05-04T00:00:00Z"), ZoneOffset.UTC);
 
         var service = new RenewalCheck(stub, clock);
@@ -78,8 +95,11 @@ public class After {
         if (!due.equals(List.of("P1"))) {
             throw new AssertionError("expected [P1] but got " + due);
         }
+        if (!requestedIds.equals(List.of("P1"))) {
+            throw new AssertionError("expected one P1 lookup and no late-policy lookup: " + requestedIds);
+        }
         var today = LocalDate.now(clock);
-        var boundary = service.due(List.of(
+        var boundary = new RenewalCheck(id -> 1.0, clock).due(List.of(
                 new Policy("CUT", today.plusDays(30)),
                 new Policy("LATE", today.plusDays(31))));
         if (!boundary.equals(List.of("CUT"))) {
@@ -89,6 +109,22 @@ public class After {
                 .due(List.of(new Policy("ZERO", today))).isEmpty()) {
             throw new AssertionError("zero-rate policy must not be due");
         }
-        System.out.println("same answer on every machine, on every date");
+
+        var failure = new IllegalStateException("rate lookup unavailable");
+        Rates unavailable = id -> { throw failure; };
+        var failingService = new RenewalCheck(unavailable, clock);
+        if (!failingService.due(List.of(new Policy("LATE", today.plusDays(31)))).isEmpty()) {
+            throw new AssertionError("late policy must be excluded without a rate lookup");
+        }
+        try {
+            failingService.due(List.of(new Policy("DUE", today)));
+            throw new AssertionError("expected the original rate lookup failure");
+        } catch (IllegalStateException actual) {
+            if (actual != failure) {
+                throw new AssertionError("rate lookup failure was replaced", actual);
+            }
+        }
+        System.out.println("OK: original construction failure, fixed-clock results, "
+                + "lookup effects and failure propagation");
     }
 }

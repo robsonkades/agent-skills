@@ -6,6 +6,11 @@ types and existing assertion library. Pin the target build and retain all worker
 
 ## The stress harness
 
+This illustrative `Account` contract atomically accepts an affordable positive withdrawal and
+returns `false` only for insufficient funds; there are no deposits, fees or contention refusals.
+The starting balance and number of attempts therefore determine the total successful withdrawals,
+without determining which workers succeed. Verify that this is the target API's contract first.
+
 ```java
 @RepeatedTest(20)                       // more sampled executions, not exhaustive coverage
 @Timeout(30)
@@ -46,6 +51,7 @@ void balanceConservesSuccessfulWithdrawalsAfterWorkersFinish() throws Exception 
     assertTrue(account.balance() >= 0);
     assertEquals(10_000 - succeeded.get() * 10, account.balance());       // conservation
     assertEquals(threads * opsPerThread, succeeded.get() + refused.get()); // accounting
+    assertEquals(1_000, succeeded.get()); // required affordable withdrawals actually happened
 }
 ```
 
@@ -57,6 +63,14 @@ The final balance assertions run only after successful workers and termination. 
 quiescent conservation, not whether the balance was negative transiently. For that stronger contract, record
 the relevant transitions/history and check it against the operation's specification without
 adding synchronization that accidentally fixes the race.
+
+Conservation and accounting alone also pass if `withdraw` always returns `false` and never
+changes the balance. Use that faulty implementation as a control: it must fail the required-success
+assertion, while a conforming implementation passes. This checks the oracle's sensitivity to that
+defect, not its coverage of all races. If the API instead permits refusal when busy, as an operation
+using [`Lock.tryLock()`](<https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/locks/Lock.html#tryLock()>)
+might, do not require complete depletion under contention. Test an affordable, uncontended success
+separately and retain the applicable conservation/accounting checks for concurrent attempts.
 
 ## Choosing the invariant
 

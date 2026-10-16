@@ -1,0 +1,20 @@
+The accepted lookup contract is **violated**. A concurrent lookup can observe the installed entry yet throw `NullPointerException`, or return a present `0`. These are specification-permitted failures, not failures reproduced by the sequential smoke.
+
+The effective path is `BestEffortMemo.find()` (`src/memo/BestEffortMemo.java:9`) → `reader.applyAsInt(observed)` → the callback returned by `ReaderFactory.create()` (`src/memo/ReaderFactory.java:5`) → `PublishedEntry.legacyValue()` (`src/memo/PublishedEntry.java:12`) → ordinary `legacy` → ordinary `Payload.value`. The unused `value()` method reads through final `primary`; the active callback does not. Compiled bootstrap metadata also identifies `PublishedEntry.legacyValue`.
+
+The accepted lifecycle safely hands the memo and its reader to each worker before `Thread.start()`. That orders their construction before worker accesses. It does not order the producer's later installation before independent consumers. The final `reader` reference does not publish subsequently supplied callback arguments. Ordinary `entry` publication supplies no synchronization edge for `legacy` or its payload. Final-field protection follows the final-field dereference path; an ordinary alias to the same payload does not inherit it. These conclusions use [JLS 17.4.5](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.4.5) and [JLS 17.5.1](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.5.1).
+
+Concretely, the producer writes payload value `42`, assigns both aliases, completes construction, then writes `entry`. A consumer can read that entry while reading the default `null` from `legacy`; dereferencing it throws. It can instead see the payload reference while reading its default `0`. No final `primary` read participates in this path. These candidate values come from actual initialization writes, not invented values or a timing assumption.
+
+| Outcome | JMM status for current code | Accepted contract |
+| --- | --- | --- |
+| Empty, including indefinitely | Permitted | Allowed |
+| Present `42` | Permitted | Allowed |
+| Present `0` | Permitted | Forbidden |
+| `NullPointerException` through `legacy` | Permitted | Forbidden |
+
+The focused proposed correction is to return `PublishedEntry::value` from `ReaderFactory.create()`. Keep `find()`'s single local read and null branch. For that corrected path, `payload.value = 42` precedes the freeze of `primary`; publication follows construction; the consumer reaches the payload through its read of final `primary`. JLS 17.5.1 therefore protects the initialized reference and reachable payload value. This is final-field freeze/dereference protection, not a general publication happens-before edge. The accepted absence of constructor escape and later mutation is sufficient; permanent misses remain acceptable. No stronger eventual-hit requirement or validation of unsupported installer inputs is needed. The proposal was not applied.
+
+Observed checks: Temurin Java and javac `25.0.3`; compilation with `--release 25`, without preview or dependencies; existing smoke printed `sequential-controls=2 PASS`; `javap` confirmed the callback target. All six child commands exited `0`, with 15-second timeouts. All eight supplied project files in the work copy remained byte-identical to their input counterparts.
+
+No concurrent failure was reproduced, and no stress test, jcstress run, architecture comparison, or corrected implementation was executed. The smoke establishes its two sequential controls only. The contract failure and proposed correction rest on the source path and specification argument. There is no material missing contract evidence. Detailed commands, hashes, and limits are in `execution.json` and its referenced logs.

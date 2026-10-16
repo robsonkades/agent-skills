@@ -1,0 +1,354 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "skill-engineering",
+  "ownedPath": "skills/skill-engineering/**",
+  "phase": "wave5 isolated skill-engineering review",
+  "allWritesStopped": true,
+  "processes": {
+    "allStartedCommandsExited": true,
+    "persistentProcesses": [],
+    "fixtureChildCommands": 4,
+    "fixtureChildrenAllExited": true
+  },
+  "versions": {
+    "committed": "1.0.3",
+    "assignment": "1.0.3",
+    "final": "1.0.4",
+    "preExistingBump": false,
+    "rationale": "One patch bump for focused evaluation guidance. No repeated bump or generated index edits."
+  },
+  "assignmentVersion": "1.0.3",
+  "finalVersion": "1.0.4",
+  "baseline": {
+    "head": "bbb7d996a929e81baf735bbaab5b6e3fbf6e8503",
+    "committedVersion": "1.0.3",
+    "assignmentVersion": "1.0.3",
+    "committedToAssignmentDiff": "none",
+    "stagedDiff": "none",
+    "unstagedDiff": "none",
+    "untrackedFiles": [],
+    "preExistingVersionBump": false,
+    "files": [
+      {
+        "path": "skills/skill-engineering/SKILL.md",
+        "sha256": "5B3B3F9FA40C5B13051F501B4B7A58D0D0AD83C3836EFEDE2AD714A3A85582D6"
+      },
+      {
+        "path": "skills/skill-engineering/skill.yaml",
+        "sha256": "C040A7F5F938ECF66C265A96595999D5FDBDB74201F03A3616E048C4EFF51BD6"
+      },
+      {
+        "path": "skills/skill-engineering/references/anti-patterns.md",
+        "sha256": "269274D782F0AF5CE830A0DAA99283210F4C586F083E0F82479C1D77C7211E02"
+      },
+      {
+        "path": "skills/skill-engineering/references/evaluation.md",
+        "sha256": "81F3C9853321BA2F4CAA828AFF5C0482CCF4D06E7FF28148A8F4F0A7068B761A"
+      },
+      {
+        "path": "skills/skill-engineering/references/evidence-and-confidence.md",
+        "sha256": "2A03FD347628B27704663DB09AF08A8A86BCD097A5A2D822E98E6A79BE3C6E69"
+      },
+      {
+        "path": "skills/skill-engineering/references/resource-design.md",
+        "sha256": "D8E5911D26319AAB030ACD9647ED7FAD82B453ACEA72866B15E282C47C94509C"
+      }
+    ]
+  },
+  "scopeAndCriteria": [
+    "Review the complete runtime-neutral skill and all four references; preserve intended author/reviewer role and useful decision depth.",
+    "Verify consequential format, client and evaluation claims against primary guidance/local implementation without asserting causal benefits.",
+    "Improve only supported gaps; preserve established ownership, authorization, isolation limits, no-change path and proportionate evaluation.",
+    "Do not inspect reserved evaluation/behavior material or actor directories."
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "decision-quality gap",
+      "location": "references/evaluation.md:107",
+      "baselineLocation": "references/evaluation.md:101",
+      "finding": "Outcome evidence was required, but there was no concrete instruction to verify that the actual grader recognizes consequential failures and valid alternatives.",
+      "consequence": "A score can reward a convincing completion statement while overlooking an incorrect artifact, or reject an equivalent correct result.",
+      "fix": "Added a short risk-qualified grader-control rule with artifact/trace inspection and primary guidance link.",
+      "evidence": [
+        "source-support.json#grading",
+        "fixture-preflight.json: A narrative mode passes beta with incorrect total and rejects valid gamma; B contract mode discriminates correctly."
+      ],
+      "claimLimit": "The deterministic fixture demonstrates this failure mode only; no agent performance gain measured."
+    },
+    {
+      "id": "F2",
+      "severity": "interpretation gap",
+      "location": "references/evaluation.md:112",
+      "baselineLocation": "references/evaluation.md:19",
+      "finding": "Controlled comparisons were specified, but task/trial/check units and an explicit ceiling-tie interpretation were absent.",
+      "consequence": "Multiple assertions can be reported as independent attempts; a saturated result can be overread as equivalence or lack of value.",
+      "fix": "Distinguish units, retain per-case outcomes and relevant measured costs, limit the ceiling claim, choose future cases prospectively from coverage gaps and preserve regression guards.",
+      "evidence": [
+        "source-support.json#eval-structure",
+        "source-support.json#grading",
+        "Required comparative research and wave5 brief describe earlier ceiling comparisons; no reserved files were accessed."
+      ],
+      "claimLimit": "This adds reasoning guidance, not a measured causal effectiveness result."
+    }
+  ],
+  "remainingFindings": [],
+  "filesChangedByReviewer": [
+    {
+      "path": "skills/skill-engineering/references/evaluation.md",
+      "change": "Nineteen added lines and relocation of the existing regression-preservation guard; no new file or framework in the shipped package."
+    },
+    {
+      "path": "skills/skill-engineering/skill.yaml",
+      "change": "Version 1.0.3 -> 1.0.4 only."
+    }
+  ],
+  "preExistingChangesWithinOwnership": [],
+  "preservedCapabilities": [
+    "SKILL.md, resource-design.md, evidence-and-confidence.md and anti-patterns.md are byte-identical to assignment.",
+    "Frontmatter selection contract, runtime/client qualification, conditional resource routing and short critical guards.",
+    "Scope/role preservation, respect for existing authorization, no forced clarifications and evidence-supported no-change outcomes.",
+    "Evidence/inference/hypothesis separation and contextual alternatives; technical correctness does not require invented causal measurements.",
+    "Structural versus technical versus behavioral proof; exact treatment exposure; selection versus explicit loading.",
+    "Fresh sessions do not isolate files; keep evaluator-only material outside actor access, preserve ordinary shipped treatment resources and disclose procedural limits.",
+    "Frozen criteria, exploratory versus confirmatory runs, holdouts, case-pair reasoning and valid safety/regression checks.",
+    "Proportionate validation, no mandatory evaluation framework or new runtime/dependency for a trivial edit."
+  ],
+  "replacedOrRemovedCapabilities": [],
+  "commands": [
+    {
+      "label": "package-validation",
+      "command": "$ErrorActionPreference = 'Stop'\n@'\nimport {readFileSync,readdirSync,existsSync} from 'node:fs';\nimport {resolve,relative,dirname} from 'node:path';\nimport {parseManifest} from './packages/core/src/domain/manifest.ts';\nimport {buildSkillPackage} from './packages/core/src/domain/skill-package.ts';\nimport {validatePackage} from './packages/core/src/application/validate-package.ts';\nconst root=resolve('skills/skill-engineering');\nconst paths=readdirSync(root,{recursive:true,withFileTypes:true}).filter(e=>e.isFile()).map(e=>resolve(e.parentPath,e.name));\nconst files=paths.map(p=>({path:relative(root,p).replaceAll('\\\\','/'),bytes:readFileSync(p)}));\nconst parsed=parseManifest(readFileSync(resolve(root,'skill.yaml'),'utf8'),{strict:true});\nconst report=validatePackage(buildSkillPackage(parsed.manifest,files),{directoryName:'skill-engineering'});\nconst issues=[...parsed.issues,...report.issues];\nconst links=[];\nconst body=readFileSync(resolve(root,'SKILL.md'),'utf8');\nconst routes=[...body.matchAll(/`(references\\/[^`]+\\.md)`/g)].map(m=>m[1]);\nfor(const route of routes) if(!existsSync(resolve(root,route))) throw new Error('Missing routed resource '+route);\nfor(const path of paths.filter(p=>p.endsWith('.md'))) {\n const text=readFileSync(path,'utf8');\n for(const match of text.matchAll(/\\[[^\\]]*\\]\\((<[^>]+>|[^\\s)]+)(?:\\s+[^)]*)?\\)/g)) {\n  const target=match[1].replace(/^<|>$/g,'');\n  if(/^[a-z][a-z0-9+.-]*:/i.test(target)) continue;\n  const [file,anchor]=target.split('#');\n  const dest=file?resolve(dirname(path),decodeURIComponent(file)):path;\n  if(!existsSync(dest)) throw new Error('Missing link '+target+' from '+path);\n  if(anchor) {\n   const headings=[...readFileSync(dest,'utf8').matchAll(/^#{1,6}\\s+(.+)$/gm)].map(m=>m[1].toLowerCase().replace(/[^\\w\\s-]/g,'').replace(/\\s/g,'-'));\n   if(!headings.includes(anchor)) throw new Error('Missing anchor '+target);\n  }\n  links.push({from:relative(root,path).replaceAll('\\\\','/'),target});\n }\n}\nconsole.log(JSON.stringify({skill:'skill-engineering',files:files.map(f=>f.path),manifestVersion:parsed.manifest.version,issues,relativeLinks:links,routedResources:[...new Set(routes)]},null,2));\nif(issues.length) process.exitCode=1;\n'@ | node --input-type=module -",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "output": "{\n  \"skill\": \"skill-engineering\",\n  \"files\": [\n    \"SKILL.md\",\n    \"skill.yaml\",\n    \"references/anti-patterns.md\",\n    \"references/evaluation.md\",\n    \"references/evidence-and-confidence.md\",\n    \"references/resource-design.md\"\n  ],\n  \"manifestVersion\": \"1.0.4\",\n  \"issues\": [],\n  \"relativeLinks\": [],\n  \"routedResources\": [\n    \"references/resource-design.md\",\n    \"references/anti-patterns.md\",\n    \"references/evidence-and-confidence.md\",\n    \"references/evaluation.md\"\n  ]\n}\n"
+    },
+    {
+      "label": "format-check",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/skill-engineering/SKILL.md skills/skill-engineering/skill.yaml skills/skill-engineering/references/resource-design.md skills/skill-engineering/references/evidence-and-confidence.md skills/skill-engineering/references/evaluation.md skills/skill-engineering/references/anti-patterns.md",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+    },
+    {
+      "label": "diff-check",
+      "command": "git diff --check -- skills/skill-engineering",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "output": ""
+    },
+    {
+      "label": "owned-diff",
+      "command": "git diff -- skills/skill-engineering",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "output": "diff --git a/skills/skill-engineering/references/evaluation.md b/skills/skill-engineering/references/evaluation.md\nindex 87af43f..f4100f4 100644\n--- a/skills/skill-engineering/references/evaluation.md\n+++ b/skills/skill-engineering/references/evaluation.md\n@@ -104,6 +104,25 @@ or trace evidence. A model's unsupported self-score is not independent verificat\n For example, identify which missing evidence made a diagnosis unsupported, rather than\n assigning a number without explanation or requiring one tool for every diagnosis.\n \n+For consequential criteria, check the actual grader against a known failure and a valid\n+alternative. Compare its judgements with artifacts or traces: a required heading can appear\n+while the underlying result is wrong. Investigate disagreement before trusting totals; see\n+the [Agent Skills grading guidance](https://agentskills.io/skill-creation/evaluating-skills#grading-principles).\n+\n+## Interpreting a comparison\n+\n+Report distinct tasks, repeated trials and checks separately; several assertions on one\n+output are not independent attempts. Retain per-case outcomes and relevant measured time\n+or token costs so an aggregate does not hide a consequential regression or trade-off.\n+\n+If both configurations reach the ceiling, report no observed difference on those cases and\n+criteria. A tie establishes neither equivalence nor general lack of value. Preserve valid\n+safety and regression criteria even when both configurations pass; they can protect a\n+contract without discriminating the comparison. If improvement remains the question, add\n+cases from real coverage gaps prospectively, not by selecting only cases where the revision\n+wins. See [Anthropic's evaluation guidance](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents)\n+for the task/trial distinction and capability versus regression evaluation.\n+\n ## Where evaluation material lives\n \n Use the repository's existing evaluation location and authorized write scope. An `evals/`\n@@ -127,9 +146,7 @@ rerun affected comparisons, recording the change; do not silently redefine succe\n the output.\n \n Check first whether the actor received the context and tools the criterion requires. Missing\n-coverage must be reported rather than relabeled as an end-to-end pass. Preserve valid safety\n-and regression criteria even if both configurations pass them; a criterion can protect a\n-contract without discriminating the current comparison.\n+coverage must be reported rather than relabeled as an end-to-end pass.\n \n If the fix is \"add more instructions\", check first whether the real problem is scope: a\n skill that needs ever more rules to cover its cases usually has a boundary that is too\ndiff --git a/skills/skill-engineering/skill.yaml b/skills/skill-engineering/skill.yaml\nindex aee979e..6193013 100644\n--- a/skills/skill-engineering/skill.yaml\n+++ b/skills/skill-engineering/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: skill-engineering\n-version: 1.0.3\n+version: 1.0.4\n description: >-\n   Designing and reviewing agent skills: scope boundaries, the SKILL.md frontmatter\n   contract, progressive disclosure across references and scripts, explicit decision rules,\n"
+    },
+    {
+      "label": "package-validation-final",
+      "command": "$ErrorActionPreference = 'Stop'\n@'\nimport {readFileSync,readdirSync,existsSync} from 'node:fs';\nimport {resolve,relative,dirname} from 'node:path';\nimport {parseManifest} from './packages/core/src/domain/manifest.ts';\nimport {buildSkillPackage} from './packages/core/src/domain/skill-package.ts';\nimport {validatePackage} from './packages/core/src/application/validate-package.ts';\nconst root=resolve('skills/skill-engineering');\nconst paths=readdirSync(root,{recursive:true,withFileTypes:true}).filter(e=>e.isFile()).map(e=>resolve(e.parentPath,e.name));\nconst files=paths.map(p=>({path:relative(root,p).replaceAll('\\\\','/'),bytes:readFileSync(p)}));\nconst parsed=parseManifest(readFileSync(resolve(root,'skill.yaml'),'utf8'),{strict:true});\nconst report=validatePackage(buildSkillPackage(parsed.manifest,files),{directoryName:'skill-engineering'});\nconst issues=[...parsed.issues,...report.issues];\nconst links=[];\nconst body=readFileSync(resolve(root,'SKILL.md'),'utf8');\nconst routes=[...body.matchAll(/`(references\\/[^`]+\\.md)`/g)].map(m=>m[1]);\nfor(const route of routes) if(!existsSync(resolve(root,route))) throw new Error('Missing routed resource '+route);\nfor(const path of paths.filter(p=>p.endsWith('.md'))) {\n const text=readFileSync(path,'utf8');\n for(const match of text.matchAll(/\\[[^\\]]*\\]\\((<[^>]+>|[^\\s)]+)(?:\\s+[^)]*)?\\)/g)) {\n  const target=match[1].replace(/^<|>$/g,'');\n  if(/^[a-z][a-z0-9+.-]*:/i.test(target)) continue;\n  const [file,anchor]=target.split('#');\n  const dest=file?resolve(dirname(path),decodeURIComponent(file)):path;\n  if(!existsSync(dest)) throw new Error('Missing link '+target+' from '+path);\n  if(anchor) {\n   const headings=[...readFileSync(dest,'utf8').matchAll(/^#{1,6}\\s+(.+)$/gm)].map(m=>m[1].toLowerCase().replace(/[^\\w\\s-]/g,'').replace(/\\s/g,'-'));\n   if(!headings.includes(anchor)) throw new Error('Missing anchor '+target);\n  }\n  links.push({from:relative(root,path).replaceAll('\\\\','/'),target});\n }\n}\nconsole.log(JSON.stringify({skill:'skill-engineering',files:files.map(f=>f.path),manifestVersion:parsed.manifest.version,issues,relativeLinks:links,routedResources:[...new Set(routes)]},null,2));\nif(issues.length) process.exitCode=1;\n'@ | node --input-type=module -",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "output": "{\n  \"skill\": \"skill-engineering\",\n  \"files\": [\n    \"SKILL.md\",\n    \"skill.yaml\",\n    \"references/anti-patterns.md\",\n    \"references/evaluation.md\",\n    \"references/evidence-and-confidence.md\",\n    \"references/resource-design.md\"\n  ],\n  \"manifestVersion\": \"1.0.4\",\n  \"issues\": [],\n  \"relativeLinks\": [],\n  \"routedResources\": [\n    \"references/resource-design.md\",\n    \"references/anti-patterns.md\",\n    \"references/evidence-and-confidence.md\",\n    \"references/evaluation.md\"\n  ]\n}\n"
+    },
+    {
+      "label": "format-check-final",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/skill-engineering/references/evaluation.md skills/skill-engineering/skill.yaml",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+    },
+    {
+      "label": "diff-check-final",
+      "command": "git diff --check -- skills/skill-engineering",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "output": ""
+    },
+    {
+      "label": "owned-diff-final",
+      "command": "git diff -- skills/skill-engineering",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "output": "diff --git a/skills/skill-engineering/references/evaluation.md b/skills/skill-engineering/references/evaluation.md\nindex 87af43f..38de538 100644\n--- a/skills/skill-engineering/references/evaluation.md\n+++ b/skills/skill-engineering/references/evaluation.md\n@@ -104,6 +104,25 @@ or trace evidence. A model's unsupported self-score is not independent verificat\n For example, identify which missing evidence made a diagnosis unsupported, rather than\n assigning a number without explanation or requiring one tool for every diagnosis.\n \n+For consequential criteria, check the actual grader against a known failure and a valid\n+alternative. Compare its judgements with artifacts or traces: a required heading can appear\n+while the underlying result is wrong. Investigate disagreement before trusting totals; see\n+the [Agent Skills grading guidance](https://agentskills.io/skill-creation/evaluating-skills#grading-principles).\n+\n+## Interpreting a comparison\n+\n+Report distinct tasks, repeated trials and checks separately; several assertions on one\n+output are not independent attempts. Retain per-case outcomes and relevant measured time\n+or token costs so an aggregate does not hide a consequential regression or trade-off.\n+\n+If both configurations reach the ceiling, report no observed difference on those cases and\n+criteria. A tie alone establishes neither equivalence nor general lack of value. Preserve valid\n+safety and regression criteria even when both configurations pass; they can protect a\n+contract without discriminating the comparison. If improvement remains the question, add\n+cases from real coverage gaps prospectively, not by selecting only cases where the revision\n+wins. See [Anthropic's evaluation guidance](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents)\n+for the task/trial distinction and capability versus regression evaluation.\n+\n ## Where evaluation material lives\n \n Use the repository's existing evaluation location and authorized write scope. An `evals/`\n@@ -127,9 +146,7 @@ rerun affected comparisons, recording the change; do not silently redefine succe\n the output.\n \n Check first whether the actor received the context and tools the criterion requires. Missing\n-coverage must be reported rather than relabeled as an end-to-end pass. Preserve valid safety\n-and regression criteria even if both configurations pass them; a criterion can protect a\n-contract without discriminating the current comparison.\n+coverage must be reported rather than relabeled as an end-to-end pass.\n \n If the fix is \"add more instructions\", check first whether the real problem is scope: a\n skill that needs ever more rules to cover its cases usually has a boundary that is too\ndiff --git a/skills/skill-engineering/skill.yaml b/skills/skill-engineering/skill.yaml\nindex aee979e..6193013 100644\n--- a/skills/skill-engineering/skill.yaml\n+++ b/skills/skill-engineering/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: skill-engineering\n-version: 1.0.3\n+version: 1.0.4\n description: >-\n   Designing and reviewing agent skills: scope boundaries, the SKILL.md frontmatter\n   contract, progressive disclosure across references and scripts, explicit decision rules,\n"
+    },
+    {
+      "label": "hashes-final",
+      "command": "Get-ChildItem -File -Recurse skills/skill-engineering | ForEach-Object { [PSCustomObject]@{path=(Resolve-Path -Relative $_.FullName).Substring(2); sha256=(Get-FileHash -Algorithm SHA256 -LiteralPath $_.FullName).Hash} } | ConvertTo-Json",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "output": "[\r\n  {\r\n    \"path\": \"skills\\\\skill-engineering\\\\SKILL.md\",\r\n    \"sha256\": \"5B3B3F9FA40C5B13051F501B4B7A58D0D0AD83C3836EFEDE2AD714A3A85582D6\"\r\n  },\r\n  {\r\n    \"path\": \"skills\\\\skill-engineering\\\\skill.yaml\",\r\n    \"sha256\": \"8F74EE5B0DDD63F124297DE81C508C53D08E9B11C49EBA7F80BB44054369AEA9\"\r\n  },\r\n  {\r\n    \"path\": \"skills\\\\skill-engineering\\\\references\\\\anti-patterns.md\",\r\n    \"sha256\": \"269274D782F0AF5CE830A0DAA99283210F4C586F083E0F82479C1D77C7211E02\"\r\n  },\r\n  {\r\n    \"path\": \"skills\\\\skill-engineering\\\\references\\\\evaluation.md\",\r\n    \"sha256\": \"6CD7CDCB91444849849919570F06BA64FD701C424ACC87A5F379B4D03B601AFF\"\r\n  },\r\n  {\r\n    \"path\": \"skills\\\\skill-engineering\\\\references\\\\evidence-and-confidence.md\",\r\n    \"sha256\": \"2A03FD347628B27704663DB09AF08A8A86BCD097A5A2D822E98E6A79BE3C6E69\"\r\n  },\r\n  {\r\n    \"path\": \"skills\\\\skill-engineering\\\\references\\\\resource-design.md\",\r\n    \"sha256\": \"D8E5911D26319AAB030ACD9647ED7FAD82B453ACEA72866B15E282C47C94509C\"\r\n  }\r\n]\r\n"
+    }
+  ],
+  "technicalChecks": [
+    {
+      "command": "node 'C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/skill-engineering-quality07-20261016/fixture-preflight.mjs'",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "runtime": "Node.js v25.6.1",
+      "result": "PASS: identical case project file sets; only evaluation/config.json bytes differ. All archived synthetic outputs pass both modes. Alpha passes both; beta incorrectly passes narrative and fails contract; gamma valid alternative fails narrative and passes contract.",
+      "details": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/skill-engineering-quality07-20261016/fixture-preflight.json"
+    }
+  ],
+  "checksSummary": {
+    "packageValidation": "PASS; 0 issues; version 1.0.4; 6 files",
+    "relativeMarkdownLinks": "No relative Markdown links; all four backtick-routed resources exist.",
+    "format": "PASS, all six files initially and changed files after final one-word precision edit.",
+    "diffCheck": "PASS",
+    "finalDiff": "Inspected; only two owned files changed.",
+    "primaryLinks": "New official grading page/section and dated Anthropic article consulted successfully.",
+    "globals": "NOT RUN; coordinator-only",
+    "behavior": "NOT EXECUTED"
+  },
+  "behavioralEvaluationsExecuted": [],
+  "structuredWalkthroughs": [
+    {
+      "case": "A",
+      "result": "Expected branch is grader correction before trusting the comparison; deterministic sample controls support the written expectation. Actual agent review/edit behavior remains unexecuted."
+    },
+    {
+      "case": "B",
+      "result": "Expected branch preserves the adequate grader and skill guard while correcting overclaimed interpretation. Actual agent review/edit behavior remains unexecuted."
+    }
+  ],
+  "reproducibleCases": {
+    "inputsFile": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/skill-engineering-quality07-20261016/case-inputs.json",
+    "criteriaFile": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/skill-engineering-quality07-20261016/case-criteria.json",
+    "caseDirectories": [
+      "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/skill-engineering-quality07-20261016/case-a",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/skill-engineering-quality07-20261016/case-b"
+    ],
+    "decisiveDifference": "evaluation/config.json completionMode only: narrative versus contract.",
+    "caseCount": 2,
+    "status": "READY_FOR_COORDINATOR_EVALUATION; NOT_EXECUTED",
+    "exposure": "Author-known development cases; not independent holdouts. Synthetic archive is declared as such and is not actual model output.",
+    "actorIsolation": "Give actors only one copied case project, task input and selected skill treatment. Keep criteria, preflight code/results and reviewer notes outside accessible resources. Separate folders alone do not enforce access control."
+  },
+  "sources": [
+    {
+      "id": "format",
+      "kind": "primary specification",
+      "title": "Agent Skills specification",
+      "url": "https://agentskills.io/specification",
+      "version": "Live unversioned specification accessed 2026-10-16",
+      "sections": [
+        "Directory structure",
+        "Frontmatter",
+        "Optional directories",
+        "Progressive disclosure"
+      ],
+      "support": "Supports required SKILL.md/name/description and optional resource conventions. Existing skill correctly qualifies actual client loading; no format change needed.",
+      "limits": "Specification describes intended format, not proof of every client implementation or local runtime behavior."
+    },
+    {
+      "id": "expertise",
+      "kind": "primary author guidance",
+      "title": "Best practices for skill creators",
+      "url": "https://agentskills.io/skill-creation/best-practices",
+      "version": "Live documentation accessed 2026-10-16",
+      "sections": [
+        "Start from real expertise",
+        "Refine with real execution",
+        "Structure large skills with progressive disclosure"
+      ],
+      "support": "Relevant to artifact-grounded instructions, trace inspection and resource routing. Existing references already cover these decisions.",
+      "limits": "Author guidance and claims of efficacy do not establish a measured benefit for this catalog."
+    },
+    {
+      "id": "grading",
+      "kind": "primary author guidance",
+      "title": "Evaluating skill output quality",
+      "url": "https://agentskills.io/skill-creation/evaluating-skills#grading-principles",
+      "version": "Live documentation accessed 2026-10-16",
+      "sections": ["Grading principles", "Aggregating results", "Analyzing patterns"],
+      "support": "Calls for evidence-grounded grades and inspection of weak, incorrect or uncheckable assertions. Aggregates and resource costs need context.",
+      "limits": "Did not adopt blanket removal of always-passing checks; valid regression guards remain. No claim that this guidance experimentally improved the current skill."
+    },
+    {
+      "id": "eval-structure",
+      "kind": "primary engineering guidance",
+      "title": "Demystifying evals for AI agents",
+      "url": "https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents",
+      "version": "Published 2026-01-09; accessed 2026-10-16",
+      "sections": [
+        "The structure of an evaluation",
+        "Capability vs. regression evals",
+        "Step 5: Design graders thoughtfully",
+        "Step 6: Check the transcripts",
+        "Step 7: Monitor for capability eval saturation"
+      ],
+      "support": "Distinguishes tasks, trials, graders and checks; discusses calibration and ceiling-limited capability comparisons while retaining regression coverage.",
+      "limits": "Not a controlled causal study of this repository. Concrete controls are a proportionate application of the guidance, validated only in the authored deterministic fixture."
+    },
+    {
+      "id": "repository-adapter",
+      "kind": "primary local implementation inspection",
+      "path": "packages/adapter-codex/src/index.ts",
+      "relatedPath": "packages/adapter-codex/test/adapter.test.ts",
+      "support": "Read-only scoped source inspection confirms this repository projects Codex-specific agents/openai.yaml UI metadata.",
+      "limits": "No adapter mutation, installation or real client execution; this confirms repository projection rather than actual universal runtime loading."
+    }
+  ],
+  "sourceFailures": [],
+  "evidenceRoot": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/skill-engineering-quality07-20261016",
+  "evidenceFiles": [
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/skill-engineering-quality07-20261016/case-a/README.md",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/skill-engineering-quality07-20261016/case-a/skill/SKILL.md",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/skill-engineering-quality07-20261016/case-a/evaluation/original-skill.md",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/skill-engineering-quality07-20261016/case-a/review.md",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/skill-engineering-quality07-20261016/case-a/evaluation/tasks.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/skill-engineering-quality07-20261016/case-a/evaluation/archive.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/skill-engineering-quality07-20261016/case-a/evaluation/samples.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/skill-engineering-quality07-20261016/case-a/evaluation/grade.mjs",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/skill-engineering-quality07-20261016/case-a/evaluation/config.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/skill-engineering-quality07-20261016/case-b/README.md",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/skill-engineering-quality07-20261016/case-b/skill/SKILL.md",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/skill-engineering-quality07-20261016/case-b/evaluation/original-skill.md",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/skill-engineering-quality07-20261016/case-b/review.md",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/skill-engineering-quality07-20261016/case-b/evaluation/tasks.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/skill-engineering-quality07-20261016/case-b/evaluation/archive.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/skill-engineering-quality07-20261016/case-b/evaluation/samples.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/skill-engineering-quality07-20261016/case-b/evaluation/grade.mjs",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/skill-engineering-quality07-20261016/case-b/evaluation/config.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/skill-engineering-quality07-20261016/case-inputs.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/skill-engineering-quality07-20261016/case-criteria.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/skill-engineering-quality07-20261016/fixture-preflight.mjs",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/skill-engineering-quality07-20261016/inspection.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/skill-engineering-quality07-20261016/source-support.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/skill-engineering-quality07-20261016/local-validation.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/skill-engineering-quality07-20261016/fixture-preflight.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/skill-engineering-quality07-20261016/owned.diff"
+  ],
+  "inspectionFile": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/skill-engineering-quality07-20261016/inspection.json",
+  "fullValidationLog": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/skill-engineering-quality07-20261016/local-validation.json",
+  "limitations": [
+    "No behavioral evaluation or original-versus-revised agent comparison was executed; no measured improvement claim.",
+    "Technical preflight tests only the small authored deterministic grader fixture; synthetic archives are not real model runs.",
+    "Client runtime/automatic skill selection, integration and cross-runtime matrix were not executed; local adapter source inspection supports only repository metadata projection.",
+    "Official Agent Skills documentation is live/unversioned and was checked on 2026-10-16; implementation behavior remains client-specific.",
+    "No global validation or registry regeneration was run by this reviewer.",
+    "Reserved debugging evaluation material, behavior reports and actor directories were not inspected.",
+    "Only supported focused changes were made; the rest of the skill was preserved rather than expanded into a mandatory review framework."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "purpose": "Regenerate integrity/version index for changed skill contents.",
+      "prerequisite": "All reviewers stopped writing."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "purpose": "Repository-wide validation including version and registry consistency.",
+      "prerequisite": "Registry regenerated and all reviewers stopped writing."
+    }
+  ],
+  "crossSkill": [],
+  "coordinatorActions": [
+    "Archive the authored evidence and handoff; inspect scoped diff.",
+    "Run global checks after confirming all writers stopped.",
+    "If independent behavior evidence is desired, execute separated case inputs with actual outputs and report known-development exposure; do not treat preflight as such an evaluation."
+  ],
+  "writeBoundary": "Only the assigned repository package plus explicitly authorized exclusive temporary evidence/handoff paths were written. No further writes without reopening ownership."
+}

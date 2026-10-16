@@ -1,0 +1,92 @@
+{
+  "status": "PASS",
+  "node": "v25.6.1",
+  "cwd": "C:\\git\\agent-skills",
+  "metadata": {
+    "issues": [],
+    "nameMatches": true,
+    "descriptionMatches": true,
+    "version": "1.2.4"
+  },
+  "files": [
+    {
+      "file": "skills/poison-messages-and-dlq/SKILL.md",
+      "assignmentSha256": "6276face4a45768663c15e887d4935ffc59c1fe83d6d0285abcb26e74cdab9d6",
+      "finalSha256": "6276face4a45768663c15e887d4935ffc59c1fe83d6d0285abcb26e74cdab9d6",
+      "changed": false
+    },
+    {
+      "file": "skills/poison-messages-and-dlq/references/classification-and-routing.md",
+      "assignmentSha256": "de9a0e3161b27959e540f162c331e97ddc3e19ddf982db70a2fba6a8ef722564",
+      "finalSha256": "de9a0e3161b27959e540f162c331e97ddc3e19ddf982db70a2fba6a8ef722564",
+      "changed": false
+    },
+    {
+      "file": "skills/poison-messages-and-dlq/references/dlq-operations.md",
+      "assignmentSha256": "af9438dd47260e28d5a94d67f8fd45b3636fd2ceab6e09304b1b9a6fcd0fc476",
+      "finalSha256": "af9438dd47260e28d5a94d67f8fd45b3636fd2ceab6e09304b1b9a6fcd0fc476",
+      "changed": false
+    },
+    {
+      "file": "skills/poison-messages-and-dlq/skill.yaml",
+      "assignmentSha256": "e23f9053fa7516ecefe7df57b412ebcab62f4da68723574fcea5cc23ac834d4b",
+      "finalSha256": "e23f9053fa7516ecefe7df57b412ebcab62f4da68723574fcea5cc23ac834d4b",
+      "changed": false
+    }
+  ],
+  "localLinks": [
+    {
+      "from": "skills/poison-messages-and-dlq/SKILL.md",
+      "to": "references/classification-and-routing.md",
+      "status": "exists"
+    },
+    {
+      "from": "skills/poison-messages-and-dlq/SKILL.md",
+      "to": "references/dlq-operations.md",
+      "status": "exists"
+    }
+  ],
+  "git": {
+    "status": "",
+    "diff": "",
+    "staged": "",
+    "untracked": ""
+  },
+  "sources": {
+    "count": 11,
+    "statuses200": true,
+    "hashesVerified": true
+  },
+  "conceptualJavaSchema": {
+    "source": "skills/poison-messages-and-dlq/references/dlq-operations.md",
+    "extractedSourceSha256": "5c2ad70e3abf7fb18084f451ee7a708ca9ed96a2efeaa26b848f8bf8de2d4230",
+    "compiler": "javac 25.0.3",
+    "runtimeUsedForCompilation": "Temurin JDK 25.0.3",
+    "targetRelease": 17,
+    "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+    "args": [
+      "--release",
+      "17",
+      "-d",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/poison-messages-and-dlq/classes",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/poison-messages-and-dlq/DeadLetter.java"
+    ],
+    "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/poison-messages-and-dlq",
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": "",
+    "classFileMajorVersion": 61,
+    "limitation": "Compilation of the unchanged conceptual schema only. It intentionally omits validation, defensive copying and serializer implementation; no claim of immutable DTO or broker/runtime safety."
+  },
+  "syntheticRetentionArithmetic": {
+    "originalEnqueuedAt": "2026-10-12T10:00:00Z",
+    "movedToDlqAt": "2026-10-14T10:00:00Z",
+    "observedAt": "2026-10-14T12:00:00Z",
+    "ttlHours": 96,
+    "requiredRemainingHours": 84,
+    "standardRemainingHours": 46,
+    "fifoRemainingHours": 94,
+    "limitation": "Source-defined clock arithmetic on development fixtures; no SQS API or delivery/expiry execution."
+  },
+  "behavioralExecutions": 0
+}

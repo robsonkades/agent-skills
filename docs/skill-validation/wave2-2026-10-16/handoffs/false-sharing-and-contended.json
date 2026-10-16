@@ -1,0 +1,393 @@
+{
+  "status": "NO_CHANGES_NEEDED",
+  "skill": "false-sharing-and-contended",
+  "ownedPath": "skills/false-sharing-and-contended/**",
+  "baseline": {
+    "head": "bbb7d996a929e81baf735bbaab5b6e3fbf6e8503",
+    "preExistingChanges": [],
+    "stagedChangesAtAssignment": [],
+    "untrackedFilesAtAssignment": [],
+    "allFourFilesMatchedCoordinatorSnapshot": true
+  },
+  "versions": {
+    "committed": "1.1.4",
+    "assignment": "1.1.4",
+    "final": "1.1.4",
+    "rationale": "No package content changed; no version bump required."
+  },
+  "files": [
+    {
+      "path": "skills/false-sharing-and-contended/references/contended-mechanics.md",
+      "assignmentSha256": "e35d117de8fc4d5981b5d515343208bc3691dfae761e938fafcb31fb970daedc",
+      "finalSha256": "e35d117de8fc4d5981b5d515343208bc3691dfae761e938fafcb31fb970daedc",
+      "changedByReviewer": false
+    },
+    {
+      "path": "skills/false-sharing-and-contended/references/proving-and-fixing.md",
+      "assignmentSha256": "2dcc981546f813125be643c5ef3f1a78bb00bb7ffd57c80afd0526db204f4546",
+      "finalSha256": "2dcc981546f813125be643c5ef3f1a78bb00bb7ffd57c80afd0526db204f4546",
+      "changedByReviewer": false
+    },
+    {
+      "path": "skills/false-sharing-and-contended/SKILL.md",
+      "assignmentSha256": "b2c9159a6075d42d43943ed74ebb97092b9c158eaa03f99b05f2e592f2397387",
+      "finalSha256": "b2c9159a6075d42d43943ed74ebb97092b9c158eaa03f99b05f2e592f2397387",
+      "changedByReviewer": false
+    },
+    {
+      "path": "skills/false-sharing-and-contended/skill.yaml",
+      "assignmentSha256": "52a73700adc40d3d27ec6fa92fe0290344417363b80b63097a49755e3d05c10d",
+      "finalSha256": "52a73700adc40d3d27ec6fa92fe0290344417363b80b63097a49755e3d05c10d",
+      "changedByReviewer": false
+    }
+  ],
+  "changes": [],
+  "findings": [
+    {
+      "location": "references/contended-mechanics.md / Annotation and grouping",
+      "assessment": "Existing content already distinguishes identical tags, distinct tags, class-level grouping, inheritance and static-field behavior.",
+      "support": "OpenJDK 25 annotation and field-layout sources; local distinct/same/class/static offset controls confirmed the relevant implementation on Temurin 25.0.3."
+    },
+    {
+      "location": "references/contended-mechanics.md / Module access",
+      "assessment": "Existing guidance correctly separates compiler exports, VM metadata recognition, EnableContended/RestrictContended and the --release restriction.",
+      "support": "javac 25 documentation and executed positive/negative compiler/runtime controls."
+    },
+    {
+      "location": "references/proving-and-fixing.md / JMH shape",
+      "assessment": "Existing guidance already handles JMH state-wrapper padding, payload objects, equivalent memory ordering, fork flags, role mapping and per-role results.",
+      "support": "JMH 1.37's own false-sharing sample confirms automatic State padding does not extend to its internal fields."
+    },
+    {
+      "location": "SKILL.md / Evidence ladder, Layout and placement, Definition of done",
+      "assessment": "Existing guidance distinguishes same-variable contention from false sharing, admits mixed mechanisms, limits PMU/relative-address evidence and supports narrow contract or no-change outcomes.",
+      "support": "Complete package inspection; no supported omission requiring another generic safeguard was identified."
+    }
+  ],
+  "preserved": [
+    "All four package files remain byte-for-byte identical to the assignment snapshot.",
+    "Ownership/access-pair diagnosis; true contention and false sharing can coexist; padding does not supply memory ordering or atomicity.",
+    "Relative layout versus absolute adjacency, array stride/alignment limitations and GC/header assumptions.",
+    "Contended grouping/static/reference behavior; module access and actual HotSpot flags; footprint calculations.",
+    "JMH state/payload/fork/role controls, PMU limitations, production metric validation and no-change decisions.",
+    "Existing Java target preservation and separate owners for cache/NUMA fundamentals, logical contention and general object sizing."
+  ],
+  "checks": [
+    {
+      "name": "compile-layout-probe",
+      "category": "executed-technical-check",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/false-sharing-and-contended-check",
+      "command": "& 'C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe' -source 25 -target 25 --add-exports java.base/jdk.internal.vm.annotation=ALL-UNNAMED -d . LayoutProbe.java",
+      "exitCode": 0,
+      "outputSummary": "9 warnings: sun.misc.Unsafe is internal proprietary API; objectFieldOffset/staticFieldOffset are deprecated and marked for removal.",
+      "compiler": "javac 25.0.3",
+      "compilerTarget": "-source 25 -target 25; --release intentionally not used for the positive internal-annotation probe.",
+      "runtime": "Temurin 25.0.3+9-LTS, amd64",
+      "exampleClassification": "Executable, review-only diagnostic in an isolated temporary directory; no Java example added to the skill."
+    },
+    {
+      "name": "restricted-default",
+      "cmd": "& 'C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe' -Xmx64m -cp . LayoutProbe ignored",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\false-sharing-and-contended-check",
+      "result": {
+        "chunk_id": "d99595",
+        "wall_time_seconds": 0.1665878,
+        "exit_code": 0,
+        "original_token_count": 227,
+        "output": "runtime=25.0.3+9-LTS arch=amd64\r\nEnableContended=true\r\nRestrictContended=true\r\nContendedPaddingWidth=128\r\nUseCompactObjectHeaders=false\r\nObjectAlignmentInBytes=8\r\nWARNING: A terminally deprecated method in sun.misc.Unsafe has been called\nWARNING: sun.misc.Unsafe::objectFieldOffset has been called by LayoutProbe (file:/C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/false-sharing-and-contended-check/)\nWARNING: Please consider reporting this to the maintainers of class LayoutProbe\nWARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release\r\nPlain produced=16 consumed=24 gap=8\r\nDistinct produced=16 consumed=24 gap=8\r\nTogether produced=16 consumed=24 gap=8\r\nWhole produced=16 consumed=24 gap=8\r\nStaticAnnotated produced=120 consumed=128 gap=8\r\nStaticPlain produced=120 consumed=128 gap=8\r\nPASS: ignored layout controls; runtime export for Contended was not supplied\r\n"
+      },
+      "category": "executed-layout-check",
+      "expectedExitCode": 0
+    },
+    {
+      "name": "distinct-enabled",
+      "cmd": "& 'C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe' -Xmx64m -XX:-RestrictContended -cp . LayoutProbe enabled",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\false-sharing-and-contended-check",
+      "result": {
+        "chunk_id": "4afc9c",
+        "wall_time_seconds": 0.1426207,
+        "exit_code": 0,
+        "original_token_count": 230,
+        "output": "runtime=25.0.3+9-LTS arch=amd64\r\nEnableContended=true\r\nRestrictContended=false\r\nContendedPaddingWidth=128\r\nUseCompactObjectHeaders=false\r\nObjectAlignmentInBytes=8\r\nWARNING: A terminally deprecated method in sun.misc.Unsafe has been called\nWARNING: sun.misc.Unsafe::objectFieldOffset has been called by LayoutProbe (file:/C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/false-sharing-and-contended-check/)\nWARNING: Please consider reporting this to the maintainers of class LayoutProbe\nWARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release\r\nPlain produced=16 consumed=24 gap=8\r\nDistinct produced=144 consumed=280 gap=136\r\nTogether produced=144 consumed=152 gap=8\r\nWhole produced=144 consumed=152 gap=8\r\nStaticAnnotated produced=120 consumed=128 gap=8\r\nStaticPlain produced=120 consumed=128 gap=8\r\nPASS: enabled layout controls; runtime export for Contended was not supplied\r\n"
+      },
+      "category": "executed-layout-check",
+      "expectedExitCode": 0
+    },
+    {
+      "name": "disabled-control",
+      "cmd": "& 'C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe' -Xmx64m -XX:-RestrictContended -XX:-EnableContended -cp . LayoutProbe ignored",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\false-sharing-and-contended-check",
+      "result": {
+        "chunk_id": "2c487b",
+        "wall_time_seconds": 0.1277118,
+        "exit_code": 0,
+        "original_token_count": 228,
+        "output": "runtime=25.0.3+9-LTS arch=amd64\r\nEnableContended=false\r\nRestrictContended=false\r\nContendedPaddingWidth=128\r\nUseCompactObjectHeaders=false\r\nObjectAlignmentInBytes=8\r\nWARNING: A terminally deprecated method in sun.misc.Unsafe has been called\nWARNING: sun.misc.Unsafe::objectFieldOffset has been called by LayoutProbe (file:/C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/false-sharing-and-contended-check/)\nWARNING: Please consider reporting this to the maintainers of class LayoutProbe\nWARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release\r\nPlain produced=16 consumed=24 gap=8\r\nDistinct produced=16 consumed=24 gap=8\r\nTogether produced=16 consumed=24 gap=8\r\nWhole produced=16 consumed=24 gap=8\r\nStaticAnnotated produced=120 consumed=128 gap=8\r\nStaticPlain produced=120 consumed=128 gap=8\r\nPASS: ignored layout controls; runtime export for Contended was not supplied\r\n"
+      },
+      "category": "executed-layout-check",
+      "expectedExitCode": 0
+    },
+    {
+      "name": "wrong-expectation-negative-control",
+      "cmd": "& 'C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe' -Xmx64m -XX:-RestrictContended -XX:-EnableContended -cp . LayoutProbe enabled",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\false-sharing-and-contended-check",
+      "result": {
+        "chunk_id": "4c087b",
+        "wall_time_seconds": 0.110296,
+        "exit_code": 1,
+        "original_token_count": 252,
+        "output": "runtime=25.0.3+9-LTS arch=amd64\r\nEnableContended=false\r\nRestrictContended=false\r\nContendedPaddingWidth=128\r\nUseCompactObjectHeaders=false\r\nObjectAlignmentInBytes=8\r\nWARNING: A terminally deprecated method in sun.misc.Unsafe has been called\nWARNING: sun.misc.Unsafe::objectFieldOffset has been called by LayoutProbe (file:/C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/false-sharing-and-contended-check/)\nWARNING: Please consider reporting this to the maintainers of class LayoutProbe\nWARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release\r\nPlain produced=16 consumed=24 gap=8\r\nDistinct produced=16 consumed=24 gap=8\r\nTogether produced=16 consumed=24 gap=8\r\nWhole produced=16 consumed=24 gap=8\r\nStaticAnnotated produced=120 consumed=128 gap=8\r\nStaticPlain produced=120 consumed=128 gap=8\r\nException in thread \"main\" java.lang.AssertionError: distinct groups were not separated\r\n\tat LayoutProbe.check(LayoutProbe.java:83)\r\n\tat LayoutProbe.main(LayoutProbe.java:61)\r\n"
+      },
+      "category": "expected-failure-control",
+      "expectedExitCode": 1
+    },
+    {
+      "name": "release-negative-control",
+      "cmd": "& 'C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe' --release 25 --add-exports java.base/jdk.internal.vm.annotation=ALL-UNNAMED -d release-rejected LayoutProbe.java",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\false-sharing-and-contended-check",
+      "result": {
+        "chunk_id": "366b5d",
+        "wall_time_seconds": 0.3241679,
+        "exit_code": 1,
+        "original_token_count": 24,
+        "output": "error: exporting a package from system module java.base is not allowed with --release\r\n1 error\r\n"
+      },
+      "category": "expected-failure-control",
+      "expectedExitCode": 1
+    },
+    {
+      "name": "strict-validation",
+      "cmd": "node packages/cli/bin/agent-skills.mjs --no-update-check validate skills/false-sharing-and-contended --strict --json",
+      "cwd": "C:\\git\\agent-skills",
+      "result": {
+        "chunk_id": "8f0c26",
+        "wall_time_seconds": 0.1622928,
+        "exit_code": 0,
+        "original_token_count": 44,
+        "output": "{\n  \"ok\": true,\n  \"directory\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\false-sharing-and-contended\",\n  \"name\": \"false-sharing-and-contended\",\n  \"version\": \"1.1.4\",\n  \"issues\": []\n}\n"
+      },
+      "category": "structural"
+    },
+    {
+      "name": "format-check",
+      "cmd": "node node_modules/prettier/bin/prettier.cjs --check skills/false-sharing-and-contended/SKILL.md skills/false-sharing-and-contended/skill.yaml skills/false-sharing-and-contended/references/contended-mechanics.md skills/false-sharing-and-contended/references/proving-and-fixing.md",
+      "cwd": "C:\\git\\agent-skills",
+      "result": {
+        "chunk_id": "6b9399",
+        "wall_time_seconds": 0.201001,
+        "exit_code": 0,
+        "original_token_count": 17,
+        "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+      },
+      "category": "structural"
+    },
+    {
+      "name": "owned-diff-check",
+      "cmd": "git diff --check -- skills/false-sharing-and-contended",
+      "cwd": "C:\\git\\agent-skills",
+      "result": {
+        "chunk_id": "db0eff",
+        "wall_time_seconds": 0.0672391,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      },
+      "category": "structural"
+    },
+    {
+      "name": "resource-links-and-baseline-audit",
+      "category": "structural",
+      "command": "PowerShell here-string | node --input-type=module: local Markdown destinations/anchors, SHA-256 comparison against the assigned wave2 snapshot and temporary-artifact inventory.",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "PASS: 2 local resource links; all 4 package hashes unchanged; no owned-path git status entries.",
+      "fileHashes": [
+        {
+          "path": "skills/false-sharing-and-contended/references/contended-mechanics.md",
+          "assignmentSha256": "e35d117de8fc4d5981b5d515343208bc3691dfae761e938fafcb31fb970daedc",
+          "finalSha256": "e35d117de8fc4d5981b5d515343208bc3691dfae761e938fafcb31fb970daedc"
+        },
+        {
+          "path": "skills/false-sharing-and-contended/references/proving-and-fixing.md",
+          "assignmentSha256": "2dcc981546f813125be643c5ef3f1a78bb00bb7ffd57c80afd0526db204f4546",
+          "finalSha256": "2dcc981546f813125be643c5ef3f1a78bb00bb7ffd57c80afd0526db204f4546"
+        },
+        {
+          "path": "skills/false-sharing-and-contended/SKILL.md",
+          "assignmentSha256": "b2c9159a6075d42d43943ed74ebb97092b9c158eaa03f99b05f2e592f2397387",
+          "finalSha256": "b2c9159a6075d42d43943ed74ebb97092b9c158eaa03f99b05f2e592f2397387"
+        },
+        {
+          "path": "skills/false-sharing-and-contended/skill.yaml",
+          "assignmentSha256": "52a73700adc40d3d27ec6fa92fe0290344417363b80b63097a49755e3d05c10d",
+          "finalSha256": "52a73700adc40d3d27ec6fa92fe0290344417363b80b63097a49755e3d05c10d"
+        }
+      ]
+    }
+  ],
+  "observations": {
+    "enabledDistinctGroups": "produced=144, consumed=280, gap=136 bytes",
+    "enabledSameTag": "produced=144, consumed=152, gap=8 bytes",
+    "enabledClassAnnotation": "produced=144, consumed=152, gap=8 bytes",
+    "restrictedOrDisabled": "Distinct group fields: produced=16, consumed=24, gap=8 bytes",
+    "staticAnnotatedVersusPlain": "Both gaps=8 bytes (offsets 120 and 128) in the tested build.",
+    "positiveRuntimeExports": "No runtime export of the Contended package supplied; annotation metadata remained discoverable.",
+    "wrongExpectationControl": "EnableContended=false with expected separation failed exit 1: AssertionError: distinct groups were not separated.",
+    "compilerNegativeControl": "--release 25 with --add-exports failed exit 1: exporting a package from system module java.base is not allowed with --release.",
+    "significance": "The existing layout/flag guidance has source and local implementation support. These results establish neither cache-line adjacency, concurrent correctness nor a performance benefit."
+  },
+  "sources": [
+    {
+      "url": "https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/share/classes/jdk/internal/vm/annotation/Contended.java",
+      "version": "OpenJDK 25 GA",
+      "support": "Anonymous/named groups, class-level grouping and inheritance contract."
+    },
+    {
+      "url": "https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/classfile/fieldLayoutBuilder.cpp",
+      "version": "OpenJDK 25 GA",
+      "support": "Static fields bypass contention grouping; regular_field_sorting distinguishes static fields and named/anonymous groups."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/specs/man/javac.html",
+      "version": "Java 25",
+      "support": "--release cannot enlarge exports from the documented system-module set using --add-exports."
+    },
+    {
+      "url": "https://github.com/openjdk/jmh/blob/1.37/jmh-samples/src/main/java/org/openjdk/jmh/samples/JMHSample_22_FalseSharing.java",
+      "version": "JMH 1.37",
+      "support": "State objects are padded, without padding their internal fields."
+    }
+  ],
+  "evaluations": {
+    "agentRunsExecuted": [],
+    "structuredWalkthroughs": [
+      "Disabled layout handling despite relaxed restrictions: change the flag hypothesis, not blanket runtime export advice.",
+      "Enabled layout handling with separated fields: reject the stale ignored-annotation premise; performance attribution remains unresolved."
+    ],
+    "measuredBehavioralImprovement": false,
+    "measuredPerformanceImprovement": false,
+    "scope": "Technical VM/compiler controls only; cases below are development inputs and not held-out behavioral executions."
+  },
+  "cases": [
+    {
+      "id": "layout-disabled",
+      "input": {
+        "task": "Inspect the supplied source/build/runtime artifacts and revise findings.md to resolve the claim that @Contended is ignored. Preserve the project compatibility contract, identify the smallest justified next step, and separate layout evidence from a performance diagnosis.",
+        "prerequisites": "Isolated actor workspace with the supplied files; static review requires no new benchmark or runtime.",
+        "fixtures": {
+          "Counters.java": "final class Counters {\n    @jdk.internal.vm.annotation.Contended(\"producer\")\n    volatile long produced;\n    @jdk.internal.vm.annotation.Contended(\"consumer\")\n    volatile long consumed;\n}\n",
+          "build.txt": "Synthetic task fixture, not a production capture.\nCompiler and runtime: Temurin 25.0.3+9-LTS amd64.\nReference compilation: javac -source 25 -target 25 --add-exports java.base/jdk.internal.vm.annotation=ALL-UNNAMED Counters.java\nNo project Java/driver/dependency upgrade is requested.\nThe runtime only uses the fields and does not directly access or invoke the internal annotation type.\n",
+          "ownership.txt": "One producer writes produced; one consumer writes consumed. Existing volatile semantics must be preserved. No absolute object address, PMU capture, or matched service performance comparison is available.",
+          "findings.md": "The runtime has no --add-exports for jdk.internal.vm.annotation. Therefore the VM ignored @Contended. Add that runtime export to separate the fields and resolve the slowdown.",
+          "runtime.txt": "Synthetic layout artifact; numerical offsets reproduce the corresponding configuration in the review-only local probe.\nruntime=25.0.3+9-LTS arch=amd64\nEnableContended=false\nRestrictContended=false\nContendedPaddingWidth=128\nUseCompactObjectHeaders=false\nObjectAlignmentInBytes=8\nfield annotations present in class metadata: produced=producer, consumed=consumer\nproduced offset=16; consumed offset=24; gap=8\nRuntime module export for jdk.internal.vm.annotation was not supplied."
+        }
+      },
+      "criteria": {
+        "expected": [
+          "Read actual EnableContended=false even though RestrictContended=false and named groups differ.",
+          "Revise findings.md to attribute unchanged layout to disabled HotSpot layout handling; inspect/adjust the actual target launch policy if authorized.",
+          "Do not require a blanket runtime module export merely for VM annotation recognition.",
+          "Preserve volatile semantics, project target and the distinction between a layout check and a proven slowdown cause."
+        ],
+        "failureConditions": [
+          "Recommend only -XX:-RestrictContended when it is already false.",
+          "Insist that missing runtime --add-exports caused the disabled padding.",
+          "Treat separation as a proven performance fix or replace volatile with plain fields."
+        ]
+      }
+    },
+    {
+      "id": "layout-enabled",
+      "decisiveChange": "Only effective EnableContended changes false→true; the dependent observed offsets reflect that configuration. Source, groups, restrictions, module export, ownership and compatibility remain the same.",
+      "input": {
+        "task": "Inspect the supplied source/build/runtime artifacts and revise findings.md to resolve the claim that @Contended is ignored. Preserve the project compatibility contract, identify the smallest justified next step, and separate layout evidence from a performance diagnosis.",
+        "prerequisites": "Same isolated artifact-review setup.",
+        "fixtures": {
+          "Counters.java": "final class Counters {\n    @jdk.internal.vm.annotation.Contended(\"producer\")\n    volatile long produced;\n    @jdk.internal.vm.annotation.Contended(\"consumer\")\n    volatile long consumed;\n}\n",
+          "build.txt": "Synthetic task fixture, not a production capture.\nCompiler and runtime: Temurin 25.0.3+9-LTS amd64.\nReference compilation: javac -source 25 -target 25 --add-exports java.base/jdk.internal.vm.annotation=ALL-UNNAMED Counters.java\nNo project Java/driver/dependency upgrade is requested.\nThe runtime only uses the fields and does not directly access or invoke the internal annotation type.\n",
+          "ownership.txt": "One producer writes produced; one consumer writes consumed. Existing volatile semantics must be preserved. No absolute object address, PMU capture, or matched service performance comparison is available.",
+          "findings.md": "The runtime has no --add-exports for jdk.internal.vm.annotation. Therefore the VM ignored @Contended. Add that runtime export to separate the fields and resolve the slowdown.",
+          "runtime.txt": "Synthetic layout artifact; numerical offsets reproduce the corresponding configuration in the review-only local probe.\nruntime=25.0.3+9-LTS arch=amd64\nEnableContended=true\nRestrictContended=false\nContendedPaddingWidth=128\nUseCompactObjectHeaders=false\nObjectAlignmentInBytes=8\nfield annotations present in class metadata: produced=producer, consumed=consumer\nproduced offset=144; consumed offset=280; gap=136\nRuntime module export for jdk.internal.vm.annotation was not supplied."
+        }
+      },
+      "criteria": {
+        "expected": [
+          "Revise the ignored-annotation diagnosis because offsets show separation in the supplied build.",
+          "Retain adequate flags/layout and avoid adding runtime export as a supposed layout fix.",
+          "Identify missing performance/address/coherence evidence before attributing the slowdown to false sharing; no compulsory broad study for this narrow layout answer."
+        ],
+        "failureConditions": [
+          "Repeat the prior disabled/ignored-annotation conclusion despite EnableContended=true and changed offsets.",
+          "Invent PMU, absolute-address or service throughput evidence.",
+          "Claim universal layout or performance guarantees from these build-specific offsets."
+        ]
+      }
+    }
+  ],
+  "artifacts": {
+    "root": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/false-sharing-and-contended-check",
+    "files": [
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/false-sharing-and-contended-check/LayoutProbe$Distinct.class",
+        "sha256": "b5c9ab4c41905eca2ba8ac7c188cb59260d33706e4e079f3393b95b687d93d38"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/false-sharing-and-contended-check/LayoutProbe$Plain.class",
+        "sha256": "546b5970ab9f5e6b5b64fb6c7e92f34abf9fca58a8adfe8b274a4b84989b63b4"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/false-sharing-and-contended-check/LayoutProbe$StaticAnnotated.class",
+        "sha256": "1d197e5ebe6413e5beced85e5cb8a1b786d5cc3c45315c32f0dd61f887bb1229"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/false-sharing-and-contended-check/LayoutProbe$StaticPlain.class",
+        "sha256": "a1d65632a8b8436e82cc838c54cb2e8433e91c6f794284ce4604676135221031"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/false-sharing-and-contended-check/LayoutProbe$Together.class",
+        "sha256": "17230f9a86042f20b9e742ba577e5b6a6562092623d58ba0545a79f825ee789c"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/false-sharing-and-contended-check/LayoutProbe$Whole.class",
+        "sha256": "0dad3debeb0473a10f53b1e69520e55034fd55afc13e6438fd9aa01d36885c34"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/false-sharing-and-contended-check/LayoutProbe.class",
+        "sha256": "a979ec28fced0a574daea0eea4220864800f56b435bf869a4f934830e72a61c4"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/false-sharing-and-contended-check/LayoutProbe.java",
+        "sha256": "df0c287b132265d30863a7af17c35b042ce087874a75bc386a557d3c083059c7"
+      }
+    ],
+    "retainedForCoordinator": true,
+    "notes": "Source and compiled classes remain isolated for reproducibility. Runtime command outputs, including expected failures, are embedded in this JSON. No process remains active."
+  },
+  "limits": [
+    "No performance benchmark, PMU collection, absolute-address verification, cross-socket test or agent evaluation was run.",
+    "Offsets are observed on Temurin 25.0.3+9-LTS amd64 with the recorded header/alignment/padding options; they are not a Java specification guarantee.",
+    "The diagnostic uses deprecated internal Unsafe offset APIs and emitted warnings; it is a review artifact, not a production API recommendation.",
+    "Primary source is pinned to OpenJDK 25 GA; the available runtime was the later Temurin 25.0.3 build.",
+    "No supported content gap found within this review's examined decisions; this is not a guarantee that every application will be diagnosed correctly."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Wave-wide operation after all writers stop; this unchanged package introduces no index change."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Wave-wide integration verification belongs to the coordinator."
+    }
+  ],
+  "crossSkill": {
+    "issues": [],
+    "actionsRequired": [
+      "Archive this JSON and optional probe artifacts; no neighboring edits or metadata changes needed."
+    ]
+  },
+  "allWritesStopped": true,
+  "pendingProcesses": []
+}

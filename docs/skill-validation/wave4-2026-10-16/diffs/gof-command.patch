@@ -1,0 +1,61 @@
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\gof-command/SKILL.md" "b/C:\\git\\agent-skills\\skills\\gof-command/SKILL.md"
+index a802dad..eb4181b 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\gof-command/SKILL.md"
++++ "b/C:\\git\\agent-skills\\skills\\gof-command/SKILL.md"
+@@ -149,8 +149,9 @@ THEN the handler needs idempotent effects, deduplication, or an explicitly toler
+      (idempotency, delivery-semantics).
+ 
+ IF a command captures a mutable object and executes later
+-THEN it holds a live reference, not a creation-time snapshot; unsynchronised changes
+-     need not be observed reliably. Choose snapshot values, an identifier to re-load,
++THEN check receiver binding too: () -> this.order.cancel() reads the field when run,
++     while this.order::cancel binds its current object. Neither freezes that object's state;
++     unsynchronised changes need not be observed reliably. Choose snapshot values, an identifier to re-load,
+      or an explicit confined live-receiver lifetime. A record does not freeze its
+      components: copy mutable state to the required depth under consistent ownership.
+ 
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\gof-command/references/command-vs-event.md" "b/C:\\git\\agent-skills\\skills\\gof-command/references/command-vs-event.md"
+index fda02db..c736025 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\gof-command/references/command-vs-event.md"
++++ "b/C:\\git\\agent-skills\\skills\\gof-command/references/command-vs-event.md"
+@@ -153,8 +153,9 @@ can make it simple; being command values alone does not establish it.
+ ## Captured state
+ 
+ ```java
+-// Live receiver: valid for a confined callback, not a snapshot for later/remote work.
+-Runnable command = () -> order.cancel();
++// Inside an instance method; order is a reassignable field, execution is thread-confined.
++Runnable selectedNow = this.order::cancel;                 // bind this object now
++Runnable selectedWhenRun = () -> this.order.cancel();      // read the field when run
+ 
+ // Unsafe if execution outlives the managed session or violates its thread ownership.
+ record CancelOrder(Order order) implements Command { }
+@@ -164,6 +165,15 @@ record CancelOrder(CommandId id, OrderId orderId, Reason reason, Instant issuedA
+         implements Command { }
+ ```
+ 
++Receiver identity and receiver state are separate choices. If `this.order` changes from A to B
++before execution, `selectedNow` still calls A, while `selectedWhenRun` calls B. Binding A does
++not snapshot its state: later confined edits to A remain visible. Choose from the caller's
++intent, not a blanket preference for lambdas or method references; an effectively final local
++receiver also keeps its original object. The [Java 17 method-reference rules](https://docs.oracle.com/javase/specs/jls/se17/html/jls-15.html#jls-15.13.3)
++bind the target when the reference is evaluated; the [lambda body runs on invocation](https://docs.oracle.com/javase/specs/jls/se17/html/jls-15.html#jls-15.27.4).
++A null bound receiver fails at callback creation; the lambda's field dereference occurs when
++run. Test receiver replacement and mutation separately, including null timing if supported.
++
+ A [record is only shallowly immutable](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Record.html).
+ For creation-time intent, arrays, collections and mutable elements must not remain writable through
+ aliases. A collection copy alone does not copy its mutable elements; use immutable component
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\gof-command/skill.yaml" "b/C:\\git\\agent-skills\\skills\\gof-command/skill.yaml"
+index 0f5b1a6..053724a 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\gof-command/skill.yaml"
++++ "b/C:\\git\\agent-skills\\skills\\gof-command/skill.yaml"
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: gof-command
+-version: 1.2.4
++version: 1.2.5
+ description: >-
+   Command in modern Java: turning an invocation into an object so it can be queued, logged,
+   scheduled, retried or undone — and the distinction from an event, which is a fact rather than a

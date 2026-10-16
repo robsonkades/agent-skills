@@ -1,0 +1,64 @@
+{
+  "version": "1.0.1",
+  "packageFiles": [
+    "SKILL.md",
+    "references/behavioral-checks.md",
+    "references/evaluation-cases.md",
+    "references/persistence-and-delivery.md",
+    "skill.yaml"
+  ],
+  "issues": [],
+  "resourceLinks": [
+    {
+      "from": "SKILL.md",
+      "target": "references/behavioral-checks.md"
+    },
+    {
+      "from": "SKILL.md",
+      "target": "references/persistence-and-delivery.md"
+    },
+    {
+      "from": "SKILL.md",
+      "target": "references/evaluation-cases.md"
+    }
+  ],
+  "declaredTargetsChecked": 11,
+  "remoteAnchorsChecked": [
+    "a2052",
+    "a1955"
+  ],
+  "originalSourceStatus": 404,
+  "correctedSourceStatus": 200,
+  "changedFiles": [
+    "skills/java-ddd-testing/references/persistence-and-delivery.md",
+    "skills/java-ddd-testing/skill.yaml"
+  ],
+  "ownedHashes": [
+    {
+      "path": "skills/java-ddd-testing/SKILL.md",
+      "sha256": "ae49602f23da6de17e6cbaabb7a8329f6eb7f66b395c723624e9dfe05b13f0a3",
+      "matchesBaseline": true
+    },
+    {
+      "path": "skills/java-ddd-testing/skill.yaml",
+      "sha256": "d992c05b774fd3a744b79ec2d02df933ff580917e0aef5301fba40b247a7ab0e",
+      "matchesBaseline": false
+    },
+    {
+      "path": "skills/java-ddd-testing/references/behavioral-checks.md",
+      "sha256": "8493fdd6d7c7b6efafab63c146e3ab56a1e49233725635ef19f4032037178a2a",
+      "matchesBaseline": true
+    },
+    {
+      "path": "skills/java-ddd-testing/references/evaluation-cases.md",
+      "sha256": "6a157626af727eff493b5d9f32347ee24e754c738cc1e86f2df0537e331c3e42",
+      "matchesBaseline": true
+    },
+    {
+      "path": "skills/java-ddd-testing/references/persistence-and-delivery.md",
+      "sha256": "7ee95cff527fb0e87040152aa21921366b9c468aa7dfcddf0ade73b2a62cce94",
+      "matchesBaseline": false
+    }
+  ],
+  "limits": "Local structural and retained-source checks, not global catalog validation or ORM/agent evaluation."
+}

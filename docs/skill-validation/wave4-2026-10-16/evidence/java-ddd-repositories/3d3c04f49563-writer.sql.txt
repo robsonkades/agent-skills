@@ -1,0 +1,8 @@
+-- Authored writer protocol; case schedule coordinates this with the gateway read.
+BEGIN;
+UPDATE budget
+SET spending_limit = 80, version = version + 1, updated_at = '2026-10-16 12:00:00+00'
+WHERE id = 'B1' AND version = 7;
+-- Application checks exactly one changed row; otherwise ROLLBACK, no child write.
+UPDATE allocation SET amount = 70 WHERE budget_id = 'B1' AND id = 'A1';
+COMMIT;

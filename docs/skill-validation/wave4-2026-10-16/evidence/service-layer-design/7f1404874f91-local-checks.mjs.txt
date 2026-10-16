@@ -1,0 +1,64 @@
+import assert from 'node:assert/strict';
+import { readFileSync, writeFileSync, existsSync, readdirSync, statSync } from 'node:fs';
+import { join, resolve, dirname } from 'node:path';
+import { pathToFileURL, fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
+
+const repo = resolve('C:/git/agent-skills');
+const skill = join(repo, 'skills/service-layer-design');
+const root = dirname(fileURLToPath(import.meta.url));
+const { parseManifest } = await import(pathToFileURL(join(repo, 'packages/core/src/domain/manifest.ts')));
+const { parseSkillDocument, documentName, documentDescription } = await import(pathToFileURL(join(repo, 'packages/core/src/domain/skill-document.ts')));
+const manifestText = readFileSync(join(skill, 'skill.yaml'), 'utf8');
+const { manifest, issues } = parseManifest(manifestText, { strict: true });
+assert.deepEqual(issues, []);
+const doc = parseSkillDocument(readFileSync(join(skill, 'SKILL.md'), 'utf8'));
+assert.equal(documentName(doc), 'service-layer-design');
+assert.equal(documentName(doc), manifest.name);
+assert.equal(documentDescription(doc), manifest.description);
+assert.equal(manifest.version, '1.2.4');
+for (const entry of manifest.files) assert.ok(existsSync(join(skill, entry)), entry);
+const files = [join(skill, 'SKILL.md'), join(skill, 'skill.yaml'), ...readdirSync(join(skill, 'references')).map(file => join(skill, 'references', file))];
+assert.equal(files.length, 4);
+const localLinks = [];
+for (const file of files.filter(file => file.endsWith('.md'))) {
+    for (const match of readFileSync(file, 'utf8').matchAll(/\[[^\]]*\]\(([^)]+)\)/g)) {
+        const href = match[1].replace(/^<|>$/g, '');
+        if (/^[a-z][a-z\d+.-]*:/i.test(href)) continue;
+        const [relative, anchor] = href.split('#');
+        const target = relative ? resolve(dirname(file), relative) : file;
+        assert.ok(existsSync(target), href);
+        if (anchor) {
+            const headings = [...readFileSync(target, 'utf8').matchAll(/^#+\s+(.+)$/gm)]
+                .map(match => match[1].trim().toLowerCase().replace(/[^\p{L}\p{N}_\s-]/gu, '').replace(/\s/g, '-'));
+            assert.ok(headings.includes(anchor), href);
+        }
+        localLinks.push({ source: file, href, target });
+    }
+}
+for (const ref of readdirSync(join(skill, 'references'))) assert.ok(doc.body.includes('references/' + ref), ref);
+const baseline = JSON.parse(readFileSync(join(root, 'baseline-hashes.json'), 'utf8'));
+const finalFiles = files.map(path => ({ path, bytes: statSync(path).size, sha256: createHash('sha256').update(readFileSync(path)).digest('hex').toUpperCase() }));
+for (const file of finalFiles) {
+    assert.equal(file.sha256, baseline.find(old => resolve(old.Path) === resolve(file.path)).SHA256, file.path);
+}
+const waveBaseline = JSON.parse(readFileSync(join(repo, 'docs/skill-validation/wave4-2026-10-16/baseline.json'), 'utf8'))
+    .packages.find(p => p.name === manifest.name);
+assert.equal(waveBaseline.initialVersion, manifest.version);
+assert.equal(waveBaseline.committedVersion, manifest.version);
+for (const file of finalFiles) {
+    assert.equal(file.sha256.toLowerCase(), waveBaseline.files.find(old => resolve(repo, old.path) === resolve(file.path)).sha256);
+}
+const a = readFileSync(join(root, 'actor/case-a/entry.properties'), 'utf8');
+const b = readFileSync(join(root, 'actor/case-b/entry.properties'), 'utf8');
+assert.equal(a.replace('outerTransaction=false', 'outerTransaction=true'), b);
+const cases = JSON.parse(readFileSync(join(root, 'cases-inputs.json'), 'utf8'));
+for (const fixture of cases.sharedInputs) assert.ok(existsSync(join(root, fixture)), fixture);
+const result = {
+    scope: 'Read-only package-local checks using existing repository parsers; no catalog-wide routing verification.',
+    strictManifestIssues: 0, descriptionMatches: true, version: manifest.version, shippedFiles: files.length,
+    localLinks, allReferencesRouted: true, changedFilesFromAssignment: [], matchesCoordinatorWaveBaseline: true,
+    casesDifferOnlyInTransactionOwner: true, finalFiles
+};
+writeFileSync(join(root, 'local-checks-result.json'), JSON.stringify(result, null, 2) + '\n');
+console.log(JSON.stringify(result, null, 2));

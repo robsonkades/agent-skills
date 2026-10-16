@@ -1,0 +1,20 @@
+{
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se17/html/jls-15.html#jls-15.13.3",
+      "version": "Java Language Specification, Java SE 17",
+      "section": "15.13.3 Run-Time Evaluation of Method References",
+      "supports": "Bound target evaluation and null failure occur when the reference expression is evaluated.",
+      "consulted": "2026-10-16",
+      "limit": "Language contract; no claim of state copying, thread safety or domain idempotency."
+    },
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se17/html/jls-15.html#jls-15.27.4",
+      "version": "Java Language Specification, Java SE 17",
+      "section": "15.27.4 Run-Time Evaluation of Lambda Expressions",
+      "supports": "Lambda creation and body invocation are separate, supporting deferred field evaluation in the illustrated body.",
+      "consulted": "2026-10-16",
+      "limit": "The later field value is reliable in the example's confined execution; arbitrary unsynchronised mutation is outside that contract."
+    }
+  ]
+}

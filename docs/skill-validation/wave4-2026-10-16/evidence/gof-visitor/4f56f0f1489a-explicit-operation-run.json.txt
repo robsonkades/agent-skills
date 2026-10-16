@@ -1,0 +1,16 @@
+{
+  "label": "explicit-operation-run",
+  "command": [
+    "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+    "-cp",
+    "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v2-abstract\\classes",
+    "UpdatedOp"
+  ],
+  "workingDirectory": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-visitor-check\\v2-abstract",
+  "exitCode": 0,
+  "stdout": "EXPLICIT_HANDLING: OLD_PATH=4; NEW_PATH=7\r\n",
+  "stderr": "",
+  "signal": null,
+  "error": null,
+  "expectedExitCode": 0
+}

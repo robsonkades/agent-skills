@@ -1,0 +1,314 @@
+{
+  "task": "A19",
+  "workspace": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A19/output",
+  "meaningfulReads": [
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A19/TASK.md",
+      "purpose": "Assignment scope, immutable inputs, allowed outputs, skill limits, and runner requirements."
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A19/input/skills/idempotency/SKILL.md",
+      "purpose": "Required supplied skill; operation uncertainty, durable repeat-safety scope, and no provider guarantees from local tests."
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A19/input/skills/timeouts-and-deadlines/SKILL.md",
+      "purpose": "Required supplied skill; remaining-budget arithmetic, overflow safety, cancellation boundary, and target baseline."
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A19/input/project/README.md",
+      "purpose": "Java 17 baseline, 20-second subprocess bound, artifact requirements, and isolated exercise limits."
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A19/input/project/REQUEST.md",
+      "purpose": "Only RetryPlan.java may be repaired; preserve signature and add actual-implementation verification."
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A19/output/RetryPlan.java",
+      "purpose": "Original implementation and defects in count, backoff, server advice, admission sum, and attempt allocation."
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A19/output/contract.md",
+      "purpose": "Authoritative fixed scheduling policy and full valid numeric domain."
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A19/output/Smoke.java",
+      "purpose": "Existing minimal acceptance check, preserved unchanged."
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A19/output/run.mjs",
+      "purpose": "Inspected before execution: compiles all Java files with --release 17, writes local classes, and enforces 20-second javac/java timeouts."
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A19/input/skills/timeouts-and-deadlines/references/deadline-propagation.md",
+      "purpose": "Local reference on modular nanoTime subtraction, shrinking budgets, safe subtraction, and caller/callee bounds."
+    }
+  ],
+  "commands": [
+    {
+      "id": "read-1",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A19/TASK.md' -Raw",
+      "exitCode": 0,
+      "result": "Read complete file successfully. Assignment scope, immutable inputs, allowed outputs, skill limits, and runner requirements.",
+      "outputTreatment": "Complete content inspected; concise result recorded here."
+    },
+    {
+      "id": "read-2",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A19/input/skills/idempotency/SKILL.md' -Raw",
+      "exitCode": 0,
+      "result": "Read complete file successfully. Required supplied skill; operation uncertainty, durable repeat-safety scope, and no provider guarantees from local tests.",
+      "outputTreatment": "Complete content inspected; concise result recorded here."
+    },
+    {
+      "id": "read-3",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A19/input/skills/timeouts-and-deadlines/SKILL.md' -Raw",
+      "exitCode": 0,
+      "result": "Read complete file successfully. Required supplied skill; remaining-budget arithmetic, overflow safety, cancellation boundary, and target baseline.",
+      "outputTreatment": "Complete content inspected; concise result recorded here."
+    },
+    {
+      "id": "read-4",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A19/input/project/README.md' -Raw",
+      "exitCode": 0,
+      "result": "Read complete file successfully. Java 17 baseline, 20-second subprocess bound, artifact requirements, and isolated exercise limits.",
+      "outputTreatment": "Complete content inspected; concise result recorded here."
+    },
+    {
+      "id": "read-5",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A19/input/project/REQUEST.md' -Raw",
+      "exitCode": 0,
+      "result": "Read complete file successfully. Only RetryPlan.java may be repaired; preserve signature and add actual-implementation verification.",
+      "outputTreatment": "Complete content inspected; concise result recorded here."
+    },
+    {
+      "id": "inventory-before",
+      "command": "rg --files 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A19/input/project' 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A19/output'",
+      "exitCode": 0,
+      "result": {
+        "files": [
+          "README.md",
+          "REQUEST.md",
+          "RetryPlan.java",
+          "contract.md",
+          "Smoke.java",
+          "run.mjs"
+        ],
+        "locations": [
+          "input/project",
+          "output"
+        ],
+        "fileCount": 12
+      }
+    },
+    {
+      "id": "read-6",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A19/output/RetryPlan.java' -Raw",
+      "exitCode": 0,
+      "result": "Read complete file successfully. Original implementation and defects in count, backoff, server advice, admission sum, and attempt allocation.",
+      "outputTreatment": "Complete content inspected; concise result recorded here."
+    },
+    {
+      "id": "read-7",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A19/output/contract.md' -Raw",
+      "exitCode": 0,
+      "result": "Read complete file successfully. Authoritative fixed scheduling policy and full valid numeric domain.",
+      "outputTreatment": "Complete content inspected; concise result recorded here."
+    },
+    {
+      "id": "read-8",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A19/output/Smoke.java' -Raw",
+      "exitCode": 0,
+      "result": "Read complete file successfully. Existing minimal acceptance check, preserved unchanged.",
+      "outputTreatment": "Complete content inspected; concise result recorded here."
+    },
+    {
+      "id": "read-9",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A19/output/run.mjs' -Raw",
+      "exitCode": 0,
+      "result": "Read complete file successfully. Inspected before execution: compiles all Java files with --release 17, writes local classes, and enforces 20-second javac/java timeouts.",
+      "outputTreatment": "Complete content inspected; concise result recorded here."
+    },
+    {
+      "id": "read-10",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A19/input/skills/timeouts-and-deadlines/references/deadline-propagation.md' -Raw",
+      "exitCode": 0,
+      "result": "Read complete file successfully. Local reference on modular nanoTime subtraction, shrinking budgets, safe subtraction, and caller/callee bounds.",
+      "outputTreatment": "Complete content inspected; concise result recorded here."
+    },
+    {
+      "id": "baseline-verification",
+      "command": "node run.mjs Verification",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A19/output",
+      "exitCode": 1,
+      "wallTimeSeconds": 0.5171455,
+      "output": "Exception in thread \"main\" java.lang.AssertionError: initial ignores server advice and keeps reserve: expected Plan[admitted=true, waitNanos=0, attemptNanos=80], got Plan[admitted=true, waitNanos=0, attemptNanos=90]\r\n\tat Verification.expect(Verification.java:147)\r\n\tat Verification.examples(Verification.java:19)\r\n\tat Verification.main(Verification.java:12)\r\n"
+    },
+    {
+      "id": "repaired-verification",
+      "command": "node run.mjs Verification",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A19/output",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.5545478,
+      "output": "Verification passed: 13634 cases\r\n"
+    },
+    {
+      "id": "smoke",
+      "command": "node run.mjs Smoke",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A19/output",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.5155639,
+      "output": "Smoke passed\r\n"
+    },
+    {
+      "id": "runtime-version",
+      "command": "node -p \"JSON.stringify(require('node:child_process').spawnSync('java',['-version'],{timeout:20000,encoding:'utf8',windowsHide:true}))\"",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A19/output",
+      "exitCode": 0,
+      "wallTimeSeconds": 0.1053153,
+      "result": {
+        "status": 0,
+        "signal": null,
+        "pid": 2788,
+        "stdout": "",
+        "stderr": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n"
+      }
+    },
+    {
+      "id": "artifact-validation",
+      "command": "$taskOutput = 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A19/output'\n$taskInput = 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A19/input/project'\n$immutableFiles = @('README.md', 'REQUEST.md', 'contract.md', 'Smoke.java', 'run.mjs')\n$comparison = foreach ($name in $immutableFiles) {\n    $inputHash = (Get-FileHash -LiteralPath (Join-Path $taskInput $name) -Algorithm SHA256).Hash\n    $outputHash = (Get-FileHash -LiteralPath (Join-Path $taskOutput $name) -Algorithm SHA256).Hash\n    if ($inputHash -ne $outputHash) { throw \"Immutable file changed: $name\" }\n    [pscustomobject]@{ file = $name; unchanged = $true; sha256 = $outputHash }\n}\n$result = Get-Content -LiteralPath (Join-Path $taskOutput 'result.json') -Raw | ConvertFrom-Json -ErrorAction Stop\n$reviewText = Get-Content -LiteralPath (Join-Path $taskOutput 'REVIEW.md') -Raw\n$reviewWords = ($reviewText.Trim() -split '\\s+').Count\nif ($reviewWords -gt 750) { throw \"Review exceeds 750 words: $reviewWords\" }\n[pscustomobject]@{ immutable = @($comparison); resultJsonValid = ($result.task -eq 'A19'); reviewWords = $reviewWords } | ConvertTo-Json -Depth 4",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A19/output",
+      "exitCode": 0,
+      "result": {
+        "immutable": [
+          {
+            "file": "README.md",
+            "unchanged": true,
+            "sha256": "0A082FC19EAFAAA6457ED4A4E130B1F2BF3D3383C5CF38B7B6D8B58F18DD69DB"
+          },
+          {
+            "file": "REQUEST.md",
+            "unchanged": true,
+            "sha256": "56945DB46D190C1B8386060331A4646D5EABBF08ED2FC7836ABA1989014B9E70"
+          },
+          {
+            "file": "contract.md",
+            "unchanged": true,
+            "sha256": "29A67D073D332265B2ABB4B7FBEA3AD033A0E66DCAE2B91E97CA4F4580BB80B8"
+          },
+          {
+            "file": "Smoke.java",
+            "unchanged": true,
+            "sha256": "634FA20018B52731E3B900D9B2BFDE1F6020D12D39911956C4A76425559CD28F"
+          },
+          {
+            "file": "run.mjs",
+            "unchanged": true,
+            "sha256": "BB2C9544993BB4128564AF264CC0F5719CE2D237F3A5E710027C062FECF1007C"
+          }
+        ],
+        "resultJsonValid": true,
+        "reviewWords": 469
+      }
+    },
+    {
+      "id": "final-implementation-read-and-inventory",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A19/output/RetryPlan.java' -Raw\nrg --files 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A19/output'",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A19/output",
+      "exitCode": 0,
+      "result": {
+        "implementationRead": "Full repaired RetryPlan.java reviewed after successful checks; no further implementation or verification changes.",
+        "files": [
+          "Verification.java",
+          "Smoke.java",
+          "run.mjs",
+          "REVIEW.md",
+          "RetryPlan.java",
+          "result.json",
+          "REQUEST.md",
+          "README.md",
+          "contract.md",
+          "classes/Verification.class",
+          "classes/Smoke.class",
+          "classes/RetryPlan.class",
+          "classes/RetryPlan$Plan.class"
+        ]
+      },
+      "outputTreatment": "Complete implementation content inspected; final file inventory recorded."
+    }
+  ],
+  "mutations": [
+    {
+      "tool": "apply_patch",
+      "files": [
+        "Verification.java"
+      ],
+      "result": "Added main-method verification with focused examples, BigInteger oracle, jitter boundary matrix, and reproducible generated cases before the baseline run."
+    },
+    {
+      "tool": "run.mjs",
+      "files": [
+        "classes/RetryPlan.class",
+        "classes/RetryPlan$Plan.class",
+        "classes/Smoke.class",
+        "classes/Verification.class"
+      ],
+      "result": "Runner compiled classes locally on each of the three recorded verification/smoke invocations."
+    },
+    {
+      "tool": "apply_patch",
+      "files": [
+        "RetryPlan.java"
+      ],
+      "result": "Repaired fixed policy using guarded subtraction and pre-shift saturation; public signature and Plan record preserved."
+    },
+    {
+      "tool": "apply_patch",
+      "files": [
+        "REVIEW.md",
+        "result.json"
+      ],
+      "result": "Created decision, evidence, actual checks, and scope limitations."
+    },
+    {
+      "tool": "apply_patch",
+      "files": [
+        "execution.json"
+      ],
+      "result": "Final journal write; JSON serialized and parsed in memory before submission. No file changes or running processes remain afterward."
+    }
+  ],
+  "verificationSummary": {
+    "baselineFailureObserved": true,
+    "afterRepairCasesPassed": 13634,
+    "focusedExamples": 17,
+    "jitterBoundaryCases": 1617,
+    "generatedCases": 12000,
+    "smokePassed": true,
+    "immutableCopiesVerified": true,
+    "reviewWordCount": 469,
+    "sourceApiRelease": 17,
+    "javaRuntime": "Temurin OpenJDK 25.0.3+9-LTS",
+    "subprocessTimeoutMillis": 20000,
+    "repositoryNpmVerify": "Not run: this assignment is an isolated Java exercise and authorizes work only in this output directory; its required runner was used."
+  },
+  "limitations": [
+    "Planning arithmetic only; runtime waiting, deadline rechecks, cancellation and resource release are caller responsibilities.",
+    "No remote, database or provider behavior was exercised or inferred.",
+    "No production wall-clock, fleet or provider durability guarantee follows from the local tests.",
+    "The routed retries-and-backoff package was outside the supplied context and was not loaded."
+  ],
+  "scopeCompliance": {
+    "writesOnlyWithinOutput": true,
+    "existingFilesChanged": [
+      "RetryPlan.java"
+    ],
+    "inputsAndImmutableCopiesUnmodified": true,
+    "externalSkillsRead": false,
+    "otherSessionsRead": false,
+    "browsingUsed": false,
+    "delegationUsed": false,
+    "realConfigurationChanged": false,
+    "dependenciesAdded": false
+  },
+  "allProcessesStopped": true,
+  "allWritesStopped": true
+}

@@ -1,0 +1,172 @@
+[
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\baseline-hashes.json",
+    "bytes": 813,
+    "sha256": "2F3083D01C9B5C32ABAB8AD0C75F5145D6FDAF892B98E3D7455D1A8A27AC680D"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\baseline-staged.diff",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\baseline-status.txt",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\baseline.diff",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\case-criteria.json",
+    "bytes": 4609,
+    "sha256": "00DBADF85ADE235609E05223E112B83D7CFEDDAC7079C5DA27F6069613E11EB4"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\case-inputs.json",
+    "bytes": 636,
+    "sha256": "93E17DF5C33ABD2DAD140AC06BE10B675036BFF0A298804EE70D582AB297A8F2"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\committed-skill.yaml",
+    "bytes": 2008,
+    "sha256": "EBB5D4C3CF19341F8DD5ABF3EE5A2E591950BA29D47130F5BCC4065D70C5FCF4"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\diff-check.stderr.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\diff-check.stdout.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\final-hashes.json",
+    "bytes": 813,
+    "sha256": "B110D49A36EAE13BF1FD248166C412A120E00C8D0F2810F5ADBC9339C8CCEAD2"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\final-owned-diff.stderr.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\final-owned-diff.stdout.log",
+    "bytes": 6295,
+    "sha256": "6F2D5EE72F81A0E883164583D1AE03C90F4CC3C23407E09F34F9391629121B6E"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\final-owned-status.stderr.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\final-owned-status.stdout.log",
+    "bytes": 138,
+    "sha256": "ABF87CB4073796D0262A303265FF4D7E16DD285E24D2A4D917D942E5BC47344B"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\final-staged-diff.stderr.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\final-staged-diff.stdout.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\kubernetes-1.34-configmap-task.html",
+    "bytes": 579188,
+    "sha256": "619DA3D16FF2C9B60F5A0617B6C6F72683FFD3ADF72E1CC81C4958D4B6ED69DF"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\kubernetes-1.34-configmap.html",
+    "bytes": 511128,
+    "sha256": "14337616288116EF86BC710E53E04A970C5F16C7B1CBD786013E4DE3B0F51AA3"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\kubernetes-v1.34.0-atomic_writer.go.txt",
+    "bytes": 16982,
+    "sha256": "EB5F473227D4F90DCE481FD0E0CFA679DF1C559FB6B8343954A84F5FF86693A2"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\prettier.stderr.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\prettier.stdout.log",
+    "bytes": 66,
+    "sha256": "17AA973D3F004560237D9A95171210B0671DEFF23D61628EECF7322FF5938F20"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\source-fetch.json",
+    "bytes": 1121,
+    "sha256": "1AD05C6AC5249570079E65CA37E682F40E31AB024E4B297D21F6DDE1159A8DCE"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\validate.mjs",
+    "bytes": 6763,
+    "sha256": "23D5FE7E067E15892B179F5356ADAB440D511D170D8C3B2080210549C9BCACBB"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\validation-results.json",
+    "bytes": 4164,
+    "sha256": "9AD8541C8397456C431B2BCE2658C96CCE03B307355CEB126516FD1C989476C5"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\baseline\\sidecar-pattern\\SKILL.md",
+    "bytes": 11056,
+    "sha256": "B0108C879C716B0D0F0A4A3738BEA5E54A90261562F1CAA228EF40A7A482E549"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\baseline\\sidecar-pattern\\skill.yaml",
+    "bytes": 2008,
+    "sha256": "EBB5D4C3CF19341F8DD5ABF3EE5A2E591950BA29D47130F5BCC4065D70C5FCF4"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\baseline\\sidecar-pattern\\references\\lifecycle-and-composition.md",
+    "bytes": 18829,
+    "sha256": "95566CBA8DC0B2D81A3CF59CDD81BDBAB02C4D7D7E07A4AA793188503C411EB5"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\baseline\\sidecar-pattern\\references\\sidecar-or-node-agent.md",
+    "bytes": 6956,
+    "sha256": "78D602B0EF71E3FFB4ECFE8A3C29A910681B534F9E5E193B0BFFD4E27C10E530"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\cases\\projected-directory\\consumer-contracts.md",
+    "bytes": 1184,
+    "sha256": "48DD9BE8FDB93CB0DCD79BBFB9CD1D916038C768E6910DA568157432628D00C1"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\cases\\projected-directory\\input.md",
+    "bytes": 850,
+    "sha256": "4CF3A6A6EAAB3D2CF35603018E2401A03AF3C1D725C3616C8741354D44D85974"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\cases\\projected-directory\\pod.yaml",
+    "bytes": 746,
+    "sha256": "DB45736D0E0285F79368D3D3B9AB0F44209BDDC98F28796C7424F2C299500F24"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\cases\\subpath\\consumer-contracts.md",
+    "bytes": 1184,
+    "sha256": "48DD9BE8FDB93CB0DCD79BBFB9CD1D916038C768E6910DA568157432628D00C1"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\cases\\subpath\\input.md",
+    "bytes": 850,
+    "sha256": "4CF3A6A6EAAB3D2CF35603018E2401A03AF3C1D725C3616C8741354D44D85974"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-sidecar-pattern-20261016-e429f91e17154220b54686c2cf6e8c41\\cases\\subpath\\pod.yaml",
+    "bytes": 799,
+    "sha256": "219FFF8F650BE714C19296E1578ABF1BC53E7E47C38F9B563F563E7779E81734"
+  }
+]

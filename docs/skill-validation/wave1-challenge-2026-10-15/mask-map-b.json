@@ -1,0 +1,131 @@
+{
+  "createdAt": "2026-10-16T01:54:01.590Z",
+  "mapping": [
+    {
+      "responseId": "response19",
+      "trialId": "trial20",
+      "caseId": "feature-risk-analysis-long-hold",
+      "condition": "original",
+      "responseSha256": "71b0c9c916e6e6d742a3a3c2bbc8ac40feb8cf3dd636e16c89f4fa89ed22f92b"
+    },
+    {
+      "responseId": "response20",
+      "trialId": "trial19",
+      "caseId": "feature-risk-analysis-long-hold",
+      "condition": "revised",
+      "responseSha256": "dad37a400218c838b740c0ed738188e6fac3f0130ff860a4d81909fa4cbd20e8"
+    },
+    {
+      "responseId": "response21",
+      "trialId": "trial21",
+      "caseId": "feature-risk-analysis-long-hold",
+      "condition": "none",
+      "responseSha256": "90cf3971a296592ecc2e29965f65de07ffb4456e58909becc1901f3067137dc8"
+    },
+    {
+      "responseId": "response22",
+      "trialId": "trial24",
+      "caseId": "feature-risk-analysis-short-hold",
+      "condition": "none",
+      "responseSha256": "2b5de97346d2aa3d9ded912ac55b6354144003468c0628b6db20c4814fb3b0fd"
+    },
+    {
+      "responseId": "response23",
+      "trialId": "trial22",
+      "caseId": "feature-risk-analysis-short-hold",
+      "condition": "revised",
+      "responseSha256": "7255411862323709b51643250b38387e8e2e5d0a1cb5f3e74678c8deb335ec96"
+    },
+    {
+      "responseId": "response24",
+      "trialId": "trial23",
+      "caseId": "feature-risk-analysis-short-hold",
+      "condition": "original",
+      "responseSha256": "d2d514f7a027387ffe00257265eb24c9ffdbc2de10087385c3295d5a99acaa19"
+    },
+    {
+      "responseId": "response25",
+      "trialId": "trial26",
+      "caseId": "java-test-design-ordered-result",
+      "condition": "original",
+      "responseSha256": "d455936fb5ca527993fb8e7179ca1dd5cb0f98921e070b0d8b337cdb46ca9838"
+    },
+    {
+      "responseId": "response26",
+      "trialId": "trial25",
+      "caseId": "java-test-design-ordered-result",
+      "condition": "revised",
+      "responseSha256": "729c95f9e265154d40baa1f0c8ed03e191dfee34fad00392bb938f3ad0dc61a8"
+    },
+    {
+      "responseId": "response27",
+      "trialId": "trial27",
+      "caseId": "java-test-design-ordered-result",
+      "condition": "none",
+      "responseSha256": "0f043281af39f5b4ca9b7cb6a465e7a24918c4ebae152825f76daaf61ed0113c"
+    },
+    {
+      "responseId": "response28",
+      "trialId": "trial28",
+      "caseId": "java-test-design-unordered-result",
+      "condition": "original",
+      "responseSha256": "4c920b42c16af0d23ba40043939ef269fc1f4cb5dea5dd984b1c10ac49a131d4"
+    },
+    {
+      "responseId": "response29",
+      "trialId": "trial29",
+      "caseId": "java-test-design-unordered-result",
+      "condition": "none",
+      "responseSha256": "77ad6caa075be58c35e2b68196dd01e17b08183f31d68a4c132d305f4481260b"
+    },
+    {
+      "responseId": "response30",
+      "trialId": "trial30",
+      "caseId": "java-test-design-unordered-result",
+      "condition": "revised",
+      "responseSha256": "e5b0a8e1f8086b0a5582b389a96f88dbee16fe16eb3da3b6cdbf50a9b00a605b"
+    },
+    {
+      "responseId": "response31",
+      "trialId": "trial31",
+      "caseId": "quality-gates-current-exception",
+      "condition": "original",
+      "responseSha256": "f053c7e95a76bab668adcc6763f65a6bc5ca327f835c7691fe412e90e389a917"
+    },
+    {
+      "responseId": "response32",
+      "trialId": "trial33",
+      "caseId": "quality-gates-current-exception",
+      "condition": "revised",
+      "responseSha256": "4c7852c327b043337c1fe1106341f19a746d44f07c828de48c73ce69ec7b4c22"
+    },
+    {
+      "responseId": "response33",
+      "trialId": "trial32",
+      "caseId": "quality-gates-current-exception",
+      "condition": "none",
+      "responseSha256": "4fa0f86462be4df558de95ed3e0171869d0bbbbd2d3ae3941b1f5bfdf9f24c49"
+    },
+    {
+      "responseId": "response34",
+      "trialId": "trial35",
+      "caseId": "quality-gates-other-candidate-exception",
+      "condition": "revised",
+      "responseSha256": "e44b7f077e331f56d6b5de12019f512aa8e6ff767202ad55a63f3ae3ddee8d30"
+    },
+    {
+      "responseId": "response35",
+      "trialId": "trial36",
+      "caseId": "quality-gates-other-candidate-exception",
+      "condition": "original",
+      "responseSha256": "7b528901e052dbd1339e2cc26808e2480b40f4b132b0be6c76d6476b37b6561f"
+    },
+    {
+      "responseId": "response36",
+      "trialId": "trial34",
+      "caseId": "quality-gates-other-candidate-exception",
+      "condition": "none",
+      "responseSha256": "2982fbe2a016f7cbcbaba0d7ea21bebd7ad0fdf442b1f4b0cc1519519f0021c5"
+    }
+  ]
+}

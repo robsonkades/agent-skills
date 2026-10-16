@@ -1,0 +1,1 @@
+public final class Contract { public static final boolean REPLAY_SAFE = true; private Contract() {} }

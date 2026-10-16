@@ -1,0 +1,12 @@
+{
+  "name": "java-generics",
+  "version": "1.2.4",
+  "files": [
+    "SKILL.md",
+    "references/erasure-and-arrays.md",
+    "references/typesafe-heterogeneous-containers.md",
+    "references/wildcards-and-api-design.md",
+    "skill.yaml"
+  ],
+  "issues": []
+}

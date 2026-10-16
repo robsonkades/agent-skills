@@ -1,0 +1,447 @@
+{
+  "algorithm": "SHA-256",
+  "artifacts": [
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\README.md",
+      "relativePath": "README.md",
+      "sha256": "e4f9729fc095d9c9b18ead468758abb0af9ae1c8fccd0db4d349c7fa877500ee",
+      "bytes": 2010
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\classes\\case-a\\CopyProbe$Child.class",
+      "relativePath": "classes/case-a/CopyProbe$Child.class",
+      "sha256": "33825f45d6cee41aff7f0b4eadf7f52cc48e54968145b0e47c303565e311c86c",
+      "bytes": 288
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\classes\\case-a\\CopyProbe$Parent.class",
+      "relativePath": "classes/case-a/CopyProbe$Parent.class",
+      "sha256": "fd9821c94f074fa4a59e7cac113528b95b769c51210417c0071a23c00e139e97",
+      "bytes": 865
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\classes\\case-a\\CopyProbe.class",
+      "relativePath": "classes/case-a/CopyProbe.class",
+      "sha256": "9a2bdb562b6fa9b5f40c992206b33542014edc1ca2f7fdd0dbe5d85309060f23",
+      "bytes": 6928
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\classes\\case-a\\DraftEditor.class",
+      "relativePath": "classes/case-a/DraftEditor.class",
+      "sha256": "37a2e8940d9d7f067f458212f304ad90624851dfb2068715396228191d10be47",
+      "bytes": 1085
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\classes\\case-a\\GraphCopier$Copier.class",
+      "relativePath": "classes/case-a/GraphCopier$Copier.class",
+      "sha256": "876302dce1fd810cd0064e70a57174dded1642ceefc6188c4c1375fb728d0033",
+      "bytes": 283
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\classes\\case-a\\GraphCopier$Draft.class",
+      "relativePath": "classes/case-a/GraphCopier$Draft.class",
+      "sha256": "c8903f3021157c97fbfaaadd402d4a61667c3535d09cd9a5101742617f6064ae",
+      "bytes": 1372
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\classes\\case-a\\GraphCopier$Node.class",
+      "relativePath": "classes/case-a/GraphCopier$Node.class",
+      "sha256": "1bd79d4afac8fab5ac7aa4666e8eacbbde4b123c6296d188d839dbde25df4cd4",
+      "bytes": 1128
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\classes\\case-a\\GraphCopier.class",
+      "relativePath": "classes/case-a/GraphCopier.class",
+      "sha256": "8af8023b7bdbefeae20d40d7cb4312702c8e5d8786687a31fcd78f711bdeb2b7",
+      "bytes": 3001
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\classes\\case-b\\CopyProbe$Child.class",
+      "relativePath": "classes/case-b/CopyProbe$Child.class",
+      "sha256": "33825f45d6cee41aff7f0b4eadf7f52cc48e54968145b0e47c303565e311c86c",
+      "bytes": 288
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\classes\\case-b\\CopyProbe$Parent.class",
+      "relativePath": "classes/case-b/CopyProbe$Parent.class",
+      "sha256": "fd9821c94f074fa4a59e7cac113528b95b769c51210417c0071a23c00e139e97",
+      "bytes": 865
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\classes\\case-b\\CopyProbe.class",
+      "relativePath": "classes/case-b/CopyProbe.class",
+      "sha256": "9a2bdb562b6fa9b5f40c992206b33542014edc1ca2f7fdd0dbe5d85309060f23",
+      "bytes": 6928
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\classes\\case-b\\DraftEditor.class",
+      "relativePath": "classes/case-b/DraftEditor.class",
+      "sha256": "37a2e8940d9d7f067f458212f304ad90624851dfb2068715396228191d10be47",
+      "bytes": 1085
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\classes\\case-b\\GraphCopier$Copier.class",
+      "relativePath": "classes/case-b/GraphCopier$Copier.class",
+      "sha256": "876302dce1fd810cd0064e70a57174dded1642ceefc6188c4c1375fb728d0033",
+      "bytes": 283
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\classes\\case-b\\GraphCopier$Draft.class",
+      "relativePath": "classes/case-b/GraphCopier$Draft.class",
+      "sha256": "c8903f3021157c97fbfaaadd402d4a61667c3535d09cd9a5101742617f6064ae",
+      "bytes": 1372
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\classes\\case-b\\GraphCopier$Node.class",
+      "relativePath": "classes/case-b/GraphCopier$Node.class",
+      "sha256": "1bd79d4afac8fab5ac7aa4666e8eacbbde4b123c6296d188d839dbde25df4cd4",
+      "bytes": 1128
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\classes\\case-b\\GraphCopier.class",
+      "relativePath": "classes/case-b/GraphCopier.class",
+      "sha256": "8af8023b7bdbefeae20d40d7cb4312702c8e5d8786687a31fcd78f711bdeb2b7",
+      "bytes": 3001
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evaluator\\CopyProbe.java",
+      "relativePath": "evaluator/CopyProbe.java",
+      "sha256": "2be20620b310b5b1c604b3aaa2db9c95db692956b6f63d1b6da94a51ffa7dbea",
+      "bytes": 6192
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evaluator\\SOURCES.json",
+      "relativePath": "evaluator/SOURCES.json",
+      "sha256": "50679979b205c1022a9a688597d8225c47fa3a0589c9b9c3c0853f3a10edfe21",
+      "bytes": 3408
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evaluator\\criteria.json",
+      "relativePath": "evaluator/criteria.json",
+      "sha256": "517b545d37c23ff75da49506eb7475c9a16feb33844436af19c5ec5c70a4d440",
+      "bytes": 3084
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evaluator\\finalize-handoff.mjs",
+      "relativePath": "evaluator/finalize-handoff.mjs",
+      "sha256": "db20ab9449c076fef7b4aa79895804f4df2195d548e699696969edcae7261fc8",
+      "bytes": 13274
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evaluator\\review-record.json",
+      "relativePath": "evaluator/review-record.json",
+      "sha256": "fa935129d10d4b03655b226cfd979c2b70720c948422a044bc36e001a2d45881",
+      "bytes": 7687
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evaluator\\run-local.mjs",
+      "relativePath": "evaluator/run-local.mjs",
+      "sha256": "bf5c63e6e6a10d1748c91ecab6b884bb83dc32c0b5bfe60ad394677be4e7ec95",
+      "bytes": 4395
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evaluator\\structural-source.txt",
+      "relativePath": "evaluator/structural-source.txt",
+      "sha256": "fab62a0453ba5569da1e1f6d1f146f4df444cb66ffa9f1fdba25ae96bd92a0e8",
+      "bytes": 1963
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\case-a-compile.stderr.txt",
+      "relativePath": "evidence/case-a-compile.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\case-a-compile.stdout.txt",
+      "relativePath": "evidence/case-a-compile.stdout.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\case-a-probe.stderr.txt",
+      "relativePath": "evidence/case-a-probe.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\case-a-probe.stdout.txt",
+      "relativePath": "evidence/case-a-probe.stdout.txt",
+      "sha256": "593bc8d0e5760d6b06e3acf4c79bef709bbeefbf394c20f8161266733bc35389",
+      "bytes": 230
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\case-b-compile.stderr.txt",
+      "relativePath": "evidence/case-b-compile.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\case-b-compile.stdout.txt",
+      "relativePath": "evidence/case-b-compile.stdout.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\case-b-probe.stderr.txt",
+      "relativePath": "evidence/case-b-probe.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\case-b-probe.stdout.txt",
+      "relativePath": "evidence/case-b-probe.stdout.txt",
+      "sha256": "cd19b44e8aacb158fc2a7bcc1506f2d5d859b53b822fbc1aca96b30c951afc6a",
+      "bytes": 214
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\commands.json",
+      "relativePath": "evidence/commands.json",
+      "sha256": "a6ba40721bd30c2199e9828b2ba6053c7f07a90be1681aa5b70305cd44aa6b19",
+      "bytes": 11913
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed-SKILL.md.stderr.txt",
+      "relativePath": "evidence/committed-SKILL.md.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed-SKILL.md.stdout.txt",
+      "relativePath": "evidence/committed-SKILL.md.stdout.txt",
+      "sha256": "770fb030b4e562737abb4de91bb98d819666f57d6612ef4132ab23198d94e1e2",
+      "bytes": 11934
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed-references_copying-in-java.md.stderr.txt",
+      "relativePath": "evidence/committed-references_copying-in-java.md.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed-references_copying-in-java.md.stdout.txt",
+      "relativePath": "evidence/committed-references_copying-in-java.md.stdout.txt",
+      "sha256": "2a440d1dfc6a389050baa63e9f12abacd2fb49ddc9e10a2fe334f13a7f49bf69",
+      "bytes": 13467
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed-references_worked-example.md.stderr.txt",
+      "relativePath": "evidence/committed-references_worked-example.md.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed-references_worked-example.md.stdout.txt",
+      "relativePath": "evidence/committed-references_worked-example.md.stdout.txt",
+      "sha256": "11a11c4c51c4515d1108b5fcbd041d6356b05fc462f375540434235d9f7dd531",
+      "bytes": 11127
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed-skill.yaml.stderr.txt",
+      "relativePath": "evidence/committed-skill.yaml.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed-skill.yaml.stdout.txt",
+      "relativePath": "evidence/committed-skill.yaml.stdout.txt",
+      "sha256": "71fb78682e6267fd392d1f9be57e6daa28a695dc34ab45394348a37bd7a62852",
+      "bytes": 1999
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed\\SKILL.md",
+      "relativePath": "evidence/committed/SKILL.md",
+      "sha256": "770fb030b4e562737abb4de91bb98d819666f57d6612ef4132ab23198d94e1e2",
+      "bytes": 11934
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed\\references\\copying-in-java.md",
+      "relativePath": "evidence/committed/references/copying-in-java.md",
+      "sha256": "2a440d1dfc6a389050baa63e9f12abacd2fb49ddc9e10a2fe334f13a7f49bf69",
+      "bytes": 13467
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed\\references\\worked-example.md",
+      "relativePath": "evidence/committed/references/worked-example.md",
+      "sha256": "11a11c4c51c4515d1108b5fcbd041d6356b05fc462f375540434235d9f7dd531",
+      "bytes": 11127
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed\\skill.yaml",
+      "relativePath": "evidence/committed/skill.yaml",
+      "sha256": "71fb78682e6267fd392d1f9be57e6daa28a695dc34ab45394348a37bd7a62852",
+      "bytes": 1999
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\diff-check.stderr.txt",
+      "relativePath": "evidence/diff-check.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\diff-check.stdout.txt",
+      "relativePath": "evidence/diff-check.stdout.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\final-diff.stderr.txt",
+      "relativePath": "evidence/final-diff.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\final-diff.stdout.txt",
+      "relativePath": "evidence/final-diff.stdout.txt",
+      "sha256": "c573baca524c52a8e0059328b17759731001dd2f988023372b1de24742dae292",
+      "bytes": 1544
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\final-hashes.json",
+      "relativePath": "evidence/final-hashes.json",
+      "sha256": "c0f06b230a2ae30991b629cb26b85171b390501ddb17294bacf49b2c9327e1a9",
+      "bytes": 586
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\final-status.stderr.txt",
+      "relativePath": "evidence/final-status.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\final-status.stdout.txt",
+      "relativePath": "evidence/final-status.stdout.txt",
+      "sha256": "68c5ee6d20052116a459fe3f296e019f108321b0a537edd8a93901e2d57ca41f",
+      "bytes": 89
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\final\\SKILL.md",
+      "relativePath": "evidence/final/SKILL.md",
+      "sha256": "770fb030b4e562737abb4de91bb98d819666f57d6612ef4132ab23198d94e1e2",
+      "bytes": 11934
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\final\\references\\copying-in-java.md",
+      "relativePath": "evidence/final/references/copying-in-java.md",
+      "sha256": "ce70157d35bf8fd1be30ab513cf5bfb03bc55e581dddb077ae6ef340ed90bb00",
+      "bytes": 13472
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\final\\references\\worked-example.md",
+      "relativePath": "evidence/final/references/worked-example.md",
+      "sha256": "11a11c4c51c4515d1108b5fcbd041d6356b05fc462f375540434235d9f7dd531",
+      "bytes": 11127
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\final\\skill.yaml",
+      "relativePath": "evidence/final/skill.yaml",
+      "sha256": "cf1d01a53a7d653c300ff5d03f2773c1818ba74d9204fd2ec3b3db6394c0b76e",
+      "bytes": 1999
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\format.stderr.txt",
+      "relativePath": "evidence/format.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\format.stdout.txt",
+      "relativePath": "evidence/format.stdout.txt",
+      "sha256": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20",
+      "bytes": 66
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\pair-and-snippet-check.json",
+      "relativePath": "evidence/pair-and-snippet-check.json",
+      "sha256": "522ec40b172ed434e2904ff7ed437756bdbc095231056d0242ed42420f97a792",
+      "bytes": 184
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\staged-diff.stderr.txt",
+      "relativePath": "evidence/staged-diff.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\staged-diff.stdout.txt",
+      "relativePath": "evidence/staged-diff.stdout.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\structural.stderr.txt",
+      "relativePath": "evidence/structural.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\structural.stdout.txt",
+      "relativePath": "evidence/structural.stdout.txt",
+      "sha256": "d83fc23e74695a1459aa8e8433fdb59364c915d9080dbba92054d59a5ffa8265",
+      "bytes": 134
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-a\\CONTRACT.md",
+      "relativePath": "inputs/case-a/CONTRACT.md",
+      "sha256": "601f13589e28c8738248ee32011fe771b615c88155aa20857c265134295712e6",
+      "bytes": 885
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-a\\DraftEditor.java",
+      "relativePath": "inputs/case-a/DraftEditor.java",
+      "sha256": "a0228e85846262abd81a85313f1c42819d7cb4d5ad3de22c5cad89d2b534c7fa",
+      "bytes": 788
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-a\\GraphCopier.java",
+      "relativePath": "inputs/case-a/GraphCopier.java",
+      "sha256": "dd9ab3daa35819b4422dca21bbfc8b2c118bc3c1bab7c2815b759295dc71a9d6",
+      "bytes": 2132
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-a\\TASK.md",
+      "relativePath": "inputs/case-a/TASK.md",
+      "sha256": "cff408ac93f99184cc5c052f6fe898ebea955be2c702175d3adce2da060cbbe9",
+      "bytes": 329
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-a\\application.properties",
+      "relativePath": "inputs/case-a/application.properties",
+      "sha256": "a198379f361bdc229c0275c7eb9a4f32dc015ff43f5311645d3187df2b9f224d",
+      "bytes": 19
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-b\\CONTRACT.md",
+      "relativePath": "inputs/case-b/CONTRACT.md",
+      "sha256": "601f13589e28c8738248ee32011fe771b615c88155aa20857c265134295712e6",
+      "bytes": 885
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-b\\DraftEditor.java",
+      "relativePath": "inputs/case-b/DraftEditor.java",
+      "sha256": "a0228e85846262abd81a85313f1c42819d7cb4d5ad3de22c5cad89d2b534c7fa",
+      "bytes": 788
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-b\\GraphCopier.java",
+      "relativePath": "inputs/case-b/GraphCopier.java",
+      "sha256": "dd9ab3daa35819b4422dca21bbfc8b2c118bc3c1bab7c2815b759295dc71a9d6",
+      "bytes": 2132
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-b\\TASK.md",
+      "relativePath": "inputs/case-b/TASK.md",
+      "sha256": "cff408ac93f99184cc5c052f6fe898ebea955be2c702175d3adce2da060cbbe9",
+      "bytes": 329
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-b\\application.properties",
+      "relativePath": "inputs/case-b/application.properties",
+      "sha256": "c91ca734668f0d303fb5167b0dead4cb1f299756292a708eb826f906bec44710",
+      "bytes": 23
+    }
+  ],
+  "exclusions": [
+    "artifact-hashes.json (self)",
+    "Coordinator handoff outside this evidence root"
+  ]
+}

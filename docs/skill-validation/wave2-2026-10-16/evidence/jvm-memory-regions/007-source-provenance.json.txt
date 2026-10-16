@@ -1,0 +1,37 @@
+[
+  {
+    "url": "https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/java.base/share/classes/java/nio/Bits.java",
+    "file": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave2-jvm-memory-regions-832c882c6bf14dae9d632c576fa1b4f8/Bits.java",
+    "lines": "109–178, 188–229",
+    "supports": "Capacity enforcement uses TOTAL_CAPACITY; backing reservation counter uses size; direct-pool TotalCapacity and MemoryUsed expose distinct counters; OOME allocated field is RESERVED_MEMORY.",
+    "sha256": "4255611C577491AB13CE81493E1B481957B48CC73D066B8782CFF7C9D6D432A1"
+  },
+  {
+    "url": "https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/java.base/share/classes/java/nio/Direct-X-Buffer.java.template",
+    "file": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave2-jvm-memory-regions-832c882c6bf14dae9d632c576fa1b4f8/Direct-X-Buffer.java.template",
+    "lines": "102–129",
+    "supports": "Byte-buffer constructor derives backing size using capacity and page-alignment policy, reserves size and capacity separately, allocates backing memory and rolls back failed allocations.",
+    "sha256": "132335F43AC824C04A3D709EDA284370B08D3B9465C0D02BE35470ED7AA1A173"
+  },
+  {
+    "url": "https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/java.base/share/classes/jdk/internal/misc/VM.java",
+    "file": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave2-jvm-memory-regions-832c882c6bf14dae9d632c576fa1b4f8/VM.java",
+    "lines": "248–264",
+    "supports": "Preserved implicit default Runtime.maxMemory; verified internal page-alignment property for the local control only.",
+    "sha256": "3F55494C225F159CAE079418BB81149F81D54D2CD345190DB0ACDBB18EA2254D"
+  },
+  {
+    "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.management/java/lang/management/BufferPoolMXBean.html",
+    "file": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave2-jvm-memory-regions-832c882c6bf14dae9d632c576fa1b4f8/BufferPoolMXBean25.html",
+    "section": "getTotalCapacity / getMemoryUsed",
+    "supports": "API estimates differ due to alignment/allocator/implementation reasons; -1 means memory-usage estimate unavailable.",
+    "sha256": "0EE80D344ED2EFE0C75338DBF33B08C9C600658124ADBAC489D19E1F3EFDFFA1"
+  },
+  {
+    "url": "https://docs.kernel.org/filesystems/proc.html",
+    "file": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave2-jvm-memory-regions-832c882c6bf14dae9d632c576fa1b4f8/linux-proc.html",
+    "section": "Table 1-2 /proc/PID/status fields, VmHWM and VmRSS",
+    "supports": "VmHWM is peak resident set, distinct from current RSS; no timestamp for the peak follows merely from reading the value now.",
+    "sha256": "AD0292734B0DE2B92EBCD0CC147367BD3CC88A20AC08395584E4E2244A2AE0E0"
+  }
+]

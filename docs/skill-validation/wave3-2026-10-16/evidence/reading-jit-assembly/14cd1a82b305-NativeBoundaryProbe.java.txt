@@ -1,0 +1,13 @@
+public class NativeBoundaryProbe {
+    public static void main(String[] args) {
+        String name = "";
+        for (int i = 0; i < 20_000; i++) {
+            name = System.mapLibraryName("assembly_probe");
+        }
+        if (!"assembly_probe.dll".equals(name)) {
+            throw new AssertionError("Unexpected Windows library mapping: " + name);
+        }
+        System.out.println("mapped=" + name);
+        System.out.println("runtime=" + Runtime.version());
+    }
+}

@@ -1,0 +1,4 @@
+Exception in thread "main" java.lang.AssertionError: writer sees publisher state: normal: expected=1, actual=0
+	at work.Regression.equal(Regression.java:186)
+	at work.Regression.observations(Regression.java:170)
+	at work.Regression.main(Regression.java:54)

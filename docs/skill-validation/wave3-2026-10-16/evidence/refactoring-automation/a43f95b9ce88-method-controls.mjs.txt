@@ -1,0 +1,172 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+
+const out = 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/refactoring-automation';
+const src = `${out}/method-harness/src`;
+const classes = `${out}/method-harness/classes`;
+const javaBin = 'C:/Users/robso/.jdks/temurin-25.0.3/bin';
+const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const files = {
+  'org/apache/maven/plugin/MojoExecutionException.java': `package org.apache.maven.plugin; public class MojoExecutionException extends Exception { public MojoExecutionException(String s) { super(s); } public MojoExecutionException(String s, Throwable t) { super(s,t); } }`,
+  'org/apache/maven/plugin/MojoFailureException.java': `package org.apache.maven.plugin; public class MojoFailureException extends Exception { public MojoFailureException(String s) { super(s); } }`,
+  'org/apache/maven/plugins/annotations/Parameter.java': `package org.apache.maven.plugins.annotations; public @interface Parameter { String property() default ""; String defaultValue() default ""; }`,
+  'org/jspecify/annotations/Nullable.java': `package org.jspecify.annotations; public @interface Nullable { }`,
+  'org/openrewrite/ExecutionContext.java': `package org.openrewrite; public interface ExecutionContext { }`,
+  'org/openrewrite/PrintOutputCapture.java': `package org.openrewrite; public class PrintOutputCapture<T> { public PrintOutputCapture(T context, Object printer) { } }`,
+  'org/openrewrite/FileAttributes.java': `package org.openrewrite; public class FileAttributes { public boolean isReadable(){return true;} public boolean isWritable(){return true;} public boolean isExecutable(){return false;} }`,
+  'org/openrewrite/SourceFile.java': `package org.openrewrite; import java.nio.file.Path; import java.nio.charset.Charset; public interface SourceFile { Path getSourcePath(); Charset getCharset(); FileAttributes getFileAttributes(); String printAll(PrintOutputCapture<?> capture); }`,
+  'org/openrewrite/Result.java': `package org.openrewrite; public class Result { private final SourceFile before,after; public Result(SourceFile b,SourceFile a){before=b;after=a;} public SourceFile getBefore(){return before;} public SourceFile getAfter(){return after;} public String diff(){return "fixture diff for " + after.getSourcePath();} }`,
+  'org/openrewrite/binary/Binary.java': `package org.openrewrite.binary; public abstract class Binary implements org.openrewrite.SourceFile { public abstract byte[] getBytes(); }`,
+  'org/openrewrite/quark/Quark.java': `package org.openrewrite.quark; public abstract class Quark implements org.openrewrite.SourceFile { }`,
+  'org/openrewrite/remote/Remote.java': `package org.openrewrite.remote; public abstract class Remote implements org.openrewrite.SourceFile { public abstract java.io.InputStream getInputStream(org.openrewrite.ExecutionContext ctx); }`,
+  'org/openrewrite/maven/AbstractRewriteBaseRunMojo.java': `package org.openrewrite.maven;
+import java.nio.file.*; import java.time.Duration; import java.util.*; import org.openrewrite.*; import org.apache.maven.plugin.*;
+public abstract class AbstractRewriteBaseRunMojo {
+  protected boolean rewriteSkip, exportDatatables; protected boolean runPerSubmodule = true;
+  protected String recipeChangeLogLevel = "WARN"; protected FakeProject project = new FakeProject(); protected FakeSession mavenSession = new FakeSession();
+  protected ResultsContainer supplied; protected final FakeLog logger = new FakeLog(); protected State state;
+  public abstract void execute() throws MojoExecutionException, MojoFailureException;
+  protected enum State { SKIPPED, TO_BE_PROCESSED, PROCESSED }
+  protected void putState(State value){state=value;} protected boolean allProjectsMarked(){return true;}
+  protected FakeLog getLog(){return logger;} protected void log(String level,String message){logger.lines.add(level+" "+message);}
+  protected void logRecipesThatMadeChanges(Result result){} protected String formatDuration(Duration value){return value.toString();}
+  protected Duration estimateTimeSavedSum(Result result,Duration value){return value;}
+  protected ExecutionContext executionContext(List<Throwable> throwables){return new ExecutionContext(){};}
+  protected ResultsContainer listResults(ExecutionContext ctx){return supplied;}
+  protected static class SanitizedMarkerPrinter {}
+  public static class FakeProject { public String directory; public String getGroupId(){return "fixture";} public String getArtifactId(){return "fixture";} public String getVersion(){return "1";} public FakeProject getBuild(){return this;} public String getDirectory(){return directory;} }
+  public static class FakeSession { public FakeProject getTopLevelProject(){return new FakeProject();} }
+  public static class FakeLog { public final List<String> lines = new ArrayList<>(); public void info(String s){lines.add("INFO "+s);} public void warn(String s){lines.add("WARN "+s);} public void warn(String s,Throwable t){warn(s+" "+t);} public void error(String s){lines.add("ERROR "+s);} public boolean isDebugEnabled(){return false;} }
+  public static class ResultsContainer {
+    final List<Result> generated=new ArrayList<>(),deleted=new ArrayList<>(),moved=new ArrayList<>(),refactoredInPlace=new ArrayList<>();
+    final Path root; RuntimeException firstException; ResultsContainer(Path root){this.root=root;}
+    RuntimeException getFirstException(){return firstException;} boolean isNotEmpty(){return !(generated.isEmpty()&&deleted.isEmpty()&&moved.isEmpty()&&refactoredInPlace.isEmpty());}
+    Path getProjectRoot(){return root;} List<Path> newlyEmptyDirectories(){return Collections.emptyList();}
+  }
+}`,
+  'org/openrewrite/maven/MethodControls.java': `package org.openrewrite.maven;
+import java.nio.file.*; import java.nio.charset.*; import java.util.*; import java.lang.reflect.*;
+import org.openrewrite.*;
+public final class MethodControls {
+  static int checks;
+  static final String A="class A {}\n", B="class B {}\n", LOCAL="keep this unrelated local work\n";
+  static void check(boolean ok,String label){if(!ok)throw new AssertionError(label);checks++;System.out.println("PASS "+label);}
+  static String read(Path p)throws Exception{return new String(Files.readAllBytes(p),StandardCharsets.UTF_8);}
+  static void write(Path p,String s)throws Exception{Files.write(p,s.getBytes(StandardCharsets.UTF_8));}
+  static Path setup(Path root,String name)throws Exception{Path p=root.resolve(name);Files.createDirectories(p);write(p.resolve("local-notes.txt"),LOCAL);return p;}
+  static final class Text implements SourceFile {
+    final Path path; final String text; Text(String p,String t){path=Paths.get(p);text=t;}
+    public Path getSourcePath(){return path;} public Charset getCharset(){return StandardCharsets.UTF_8;}
+    public FileAttributes getFileAttributes(){return null;} public String printAll(PrintOutputCapture<?> capture){return text;}
+  }
+  static AbstractRewriteBaseRunMojo.ResultsContainer changes(Path root){
+    AbstractRewriteBaseRunMojo.ResultsContainer r=new AbstractRewriteBaseRunMojo.ResultsContainer(root);
+    r.generated.add(new Result(null,new Text("A.java",A)));r.generated.add(new Result(null,new Text("B.java",B)));return r;
+  }
+  static void snapshot(Path root,AbstractRewriteBaseRunMojo mojo,Throwable failure)throws Exception{
+    List<String> lines=new ArrayList<>(mojo.logger.lines);lines.add("OBSERVED state="+mojo.state);
+    lines.add("OBSERVED failure="+(failure==null?"none":failure.getClass().getName()+": "+failure.getMessage()));
+    lines.add("OBSERVED A.exists="+Files.isRegularFile(root.resolve("A.java")));
+    lines.add("OBSERVED B.regularFile="+Files.isRegularFile(root.resolve("B.java")));
+    lines.add("OBSERVED B.directory="+Files.isDirectory(root.resolve("B.java")));
+    lines.add("OBSERVED localNotes="+read(root.resolve("local-notes.txt")).trim());
+    Files.write(root.resolve("capture.log"),lines,StandardCharsets.UTF_8);
+  }
+  public static void main(String[] args)throws Exception{
+    Path root=Paths.get(args[0]);
+    System.out.println("CONTROL ONLY: unchanged pinned mojo methods with supplied Result objects and stubbed collaborators; no Maven or recipe engine executed.");
+    Path success=setup(root,"success"); AbstractRewriteRunMojo good=new AbstractRewriteRunMojo();good.supplied=changes(success);good.execute();
+    check(read(success.resolve("A.java")).equals(A)&&read(success.resolve("B.java")).equals(B),"successful application writes both generated files");
+    check(good.state==AbstractRewriteBaseRunMojo.State.PROCESSED,"successful application reaches processed");
+    check(read(success.resolve("local-notes.txt")).equals(LOCAL),"success preserves unrelated local file");snapshot(success,good,null);
+
+    Path early=setup(root,"early-error"); AbstractRewriteRunMojo before=new AbstractRewriteRunMojo();before.supplied=changes(early);
+    before.supplied.firstException=new IllegalStateException("injected result error before file application");Throwable earlyFailure=null;
+    try{before.execute();}catch(RuntimeException e){earlyFailure=e;}
+    check(earlyFailure!=null,"result error surfaces before file application");
+    check(!Files.exists(early.resolve("A.java"))&&!Files.exists(early.resolve("B.java")),"early error creates neither result file");
+    check(read(early.resolve("local-notes.txt")).equals(LOCAL),"early error preserves local file");snapshot(early,before,earlyFailure);
+
+    Path late=setup(root,"write-error"); Files.createDirectory(late.resolve("B.java"));write(late.resolve("B.java/keep.txt"),LOCAL);
+    AbstractRewriteRunMojo after=new AbstractRewriteRunMojo();after.supplied=changes(late);Throwable lateFailure=null;
+    try{after.execute();}catch(RuntimeException e){lateFailure=e;}
+    check(lateFailure!=null,"later target conflict surfaces a file-application failure");
+    check(Files.isRegularFile(late.resolve("A.java"))&&read(late.resolve("A.java")).equals(A),"earlier generated file remains after failure");
+    check(Files.isDirectory(late.resolve("B.java"))&&!Files.isRegularFile(late.resolve("B.java")),"later result was not written as a source file");
+    check(after.logger.lines.stream().anyMatch(s->s.contains("Generated new file B.java")),"log announces later file before its write fails");
+    check(after.state!=AbstractRewriteBaseRunMojo.State.PROCESSED,"failed application does not reach processed");
+    check(read(late.resolve("local-notes.txt")).equals(LOCAL)&&read(late.resolve("B.java/keep.txt")).equals(LOCAL),"failure preserves unrelated local files");snapshot(late,after,lateFailure);
+
+    Field fail=AbstractRewriteDryRunMojo.class.getDeclaredField("failOnDryRunResults");fail.setAccessible(true);
+    Field output=AbstractRewriteDryRunMojo.class.getDeclaredField("reportOutputDirectory");output.setAccessible(true);
+    Path preview=setup(root,"preview-changes");AbstractRewriteDryRunMojo dry=new AbstractRewriteDryRunMojo();dry.supplied=changes(preview);
+    output.set(dry,preview.resolve("reports").toString());fail.setBoolean(dry,true);Throwable gateFailure=null;
+    try{dry.execute();}catch(Exception e){gateFailure=e;}
+    check(gateFailure!=null&&gateFailure.getMessage().contains("would make changes"),"positive preview gate fails for detected results");
+    check(Files.isRegularFile(preview.resolve("reports/rewrite.patch")),"positive preview retains report despite expected gate failure");
+    check(!Files.exists(preview.resolve("A.java"))&&!Files.exists(preview.resolve("B.java")),"positive preview does not apply source results");snapshot(preview,dry,gateFailure);
+
+    Path clean=setup(root,"preview-clean");AbstractRewriteDryRunMojo noChange=new AbstractRewriteDryRunMojo();noChange.supplied=new AbstractRewriteBaseRunMojo.ResultsContainer(clean);
+    output.set(noChange,clean.resolve("reports").toString());fail.setBoolean(noChange,true);noChange.execute();
+    check(!Files.exists(clean.resolve("reports/rewrite.patch")),"clean preview creates no patch");
+    check(noChange.state==AbstractRewriteBaseRunMojo.State.PROCESSED,"clean preview completes with gate enabled");snapshot(clean,noChange,null);
+
+    Path stale=setup(root,"preview-stale");Files.createDirectory(stale.resolve("reports"));write(stale.resolve("reports/rewrite.patch"),"stale report\n");
+    AbstractRewriteDryRunMojo reused=new AbstractRewriteDryRunMojo();reused.supplied=new AbstractRewriteBaseRunMojo.ResultsContainer(stale);
+    output.set(reused,stale.resolve("reports").toString());fail.setBoolean(reused,true);reused.execute();
+    check(read(stale.resolve("reports/rewrite.patch")).equals("stale report\n"),"clean invocation does not delete a pre-existing report");snapshot(stale,reused,null);
+    System.out.println("SUMMARY checks="+checks);
+  }
+}`,
+};
+await fs.mkdir(classes, { recursive: true });
+const compiled = [];
+for (const [name, content] of Object.entries(files)) {
+  const target = `${src}/${name}`;
+  await fs.mkdir(path.dirname(target), { recursive: true });
+  await fs.writeFile(target, content + '\n');
+  compiled.push(target);
+}
+const unchangedSources = [];
+for (const name of ['AbstractRewriteRunMojo.java', 'AbstractRewriteDryRunMojo.java']) {
+  const original = await fs.readFile(`${out}/sources/${name}`);
+  const target = `${src}/org/openrewrite/maven/${name}`;
+  await fs.writeFile(target, original);
+  assert.equal(hash(await fs.readFile(target)), hash(original));
+  unchangedSources.push({ file: name, sha256: hash(original), compiledPath: target });
+  compiled.push(target);
+}
+await fs.mkdir(`${out}/logs`, { recursive: true });
+const fixtureRoot = await fs.mkdtemp(`${out}/method-controls-`);
+const commands = [];
+async function run(name, executable, args, expected) {
+  const result = spawnSync(executable, args, { cwd: out, encoding: 'utf8', timeout: 30000 });
+  const stdout = result.stdout ?? ''; const stderr = result.stderr ?? '';
+  const command = { name, executable, args, cwd: out, actualExit: result.status, signal: result.signal,
+    error: result.error?.message, expectedExit: expected, stdoutPath: `${out}/logs/${name}.stdout.txt`, stderrPath: `${out}/logs/${name}.stderr.txt` };
+  await fs.writeFile(command.stdoutPath, stdout); await fs.writeFile(command.stderrPath, stderr);
+  commands.push(command);
+  assert.equal(result.status, expected, `${name}: ${stderr}`);
+  return stdout;
+}
+let result;
+try {
+  await run('java-version', `${javaBin}/java.exe`, ['-version'], 0);
+  await run('compile-method-controls', `${javaBin}/javac.exe`, ['--release', '8', '-d', classes, ...compiled], 0);
+  const output = await run('run-method-controls', `${javaBin}/java.exe`, ['-cp', classes, 'org.openrewrite.maven.MethodControls', fixtureRoot], 0);
+  assert.match(output, /SUMMARY checks=18/);
+  await fs.mkdir(`${fixtureRoot}/success-classes`);
+  await run('compile-success-fixture', `${javaBin}/javac.exe`, ['--release', '8', '-d', `${fixtureRoot}/success-classes`, `${fixtureRoot}/success/A.java`, `${fixtureRoot}/success/B.java`], 0);
+  result = { status: 'PASS', checks: 18, fixtureRoot, commands, unchangedSources,
+    scope: 'Source-level controls of unchanged pinned mojo methods with supplied Result objects and stubbed collaborators. No Maven integration, parser, recipe execution or semantic Java transformation validated.',
+    compileRelease: 8, runtime: 'Temurin 25.0.3+9', cases: ['success', 'early-error', 'write-error', 'preview-changes', 'preview-clean', 'preview-stale'] };
+} catch (error) {
+  result = { status: 'FAIL', error: String(error), fixtureRoot, commands, unchangedSources };
+  throw error;
+} finally {
+  await fs.writeFile(`${out}/method-controls.json`, JSON.stringify(result, null, 2) + '\n');
+}
+console.log(JSON.stringify({ status: result.status, checks: result.checks, fixtureRoot, scope: result.scope }, null, 2));

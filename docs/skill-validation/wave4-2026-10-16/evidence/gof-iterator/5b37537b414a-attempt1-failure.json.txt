@@ -1,0 +1,10 @@
+{
+  "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-iterator-validation/technical-checks.mjs",
+  "cwd": "C:/git/agent-skills",
+  "exitCode": 1,
+  "failure": "Driver bookkeeping error: expected output PASS 30 focused checks, but the Java control program contains and successfully executed 28 checks. All four child commands exited 0; the parent assertion then failed before the paired-case runs.",
+  "rawChildLogs": "logs/",
+  "exactChildCommands": "commands.json",
+  "originalDriver": "attempt1-driver.mjs",
+  "fix": "Corrected only the driver's expected check count from 30 to 28; no Java checks or evaluator criteria were removed or changed. Re-run uses separate log/class/command paths to preserve this attempt."
+}

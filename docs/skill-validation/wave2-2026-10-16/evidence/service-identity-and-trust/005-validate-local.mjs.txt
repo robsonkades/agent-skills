@@ -1,0 +1,51 @@
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { readFileSync, existsSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { pathToFileURL } from 'node:url';
+
+const repo = resolve(process.argv[2] ?? 'C:/git/agent-skills');
+const skill = resolve(repo, 'skills/service-identity-and-trust');
+const { parseManifest } = await import(pathToFileURL(resolve(repo, 'packages/core/src/domain/manifest.ts')));
+const { parseSkillDocument, documentName, documentDescription } = await import(pathToFileURL(resolve(repo, 'packages/core/src/domain/skill-document.ts')));
+const { manifest, issues } = parseManifest(readFileSync(resolve(skill, 'skill.yaml'), 'utf8'), { strict: true });
+const document = parseSkillDocument(readFileSync(resolve(skill, 'SKILL.md'), 'utf8'));
+assert.deepEqual(issues, []);
+assert.equal(documentName(document), manifest.name);
+assert.equal(documentDescription(document), manifest.description);
+assert.equal(manifest.name, 'service-identity-and-trust');
+assert.equal(manifest.version, '1.0.1');
+for (const entry of manifest.files) assert.ok(existsSync(resolve(skill, entry)), `Missing declared path ${entry}`);
+const baseline = {
+  "SKILL.md": "63860bc615801a75021439486c3148f5c0111d80d7a12f8b7279b53a4c1cc95f",
+  "skill.yaml": "2ebc0bea3e8e2a6131719dda56c2e50536437be9644d3d8bec16038a14859de9",
+  "references/protocol-and-lifecycle.md": "99a5eb087cf5df2d5808f45e3b75f4a523c8f642118125ddefa88075eb8510d0"
+};
+const changed = [];
+let relativeLinks = 0;
+let anchors = 0;
+for (const [file, hash] of Object.entries(baseline)) {
+  const path = resolve(skill, file);
+  const bytes = readFileSync(path);
+  if (createHash('sha256').update(bytes).digest('hex') !== hash) changed.push(file);
+  if (!file.endsWith('.md')) continue;
+  for (const match of bytes.toString('utf8').matchAll(/\]\(([^\s)]+)\)/g)) {
+    const target = match[1].replace(/^<|>$/g, '');
+    if (/^(https?:|#)/.test(target)) continue;
+    const [resource, fragment] = target.split('#');
+    const resourcePath = resolve(dirname(path), resource);
+    assert.ok(existsSync(resourcePath), `Missing resource ${target}`);
+    relativeLinks++;
+    if (fragment) {
+      const headings = [...readFileSync(resourcePath, 'utf8').matchAll(/^#{1,6}\s+(.+)$/gm)]
+        .map(value => value[1].trim().toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s/g, '-'));
+      assert.ok(headings.includes(fragment), `Missing heading ${target}`);
+      anchors++;
+    }
+  }
+}
+assert.deepEqual(changed.sort(), ['SKILL.md', 'references/protocol-and-lifecycle.md', 'skill.yaml'].sort());
+console.log(JSON.stringify({ status: 'PASS', scope: manifest.name, manifestIssues: issues.length,
+  metadataAgreement: true, version: manifest.version, declaredPaths: manifest.files.length,
+  relativeLinks, anchors, changedFromAssignment: changed }, null, 2));
+

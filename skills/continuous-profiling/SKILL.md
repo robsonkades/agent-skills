@@ -209,7 +209,9 @@ they do not estimate user impact without business metrics and a controlled compa
 
 Prefer deploy-aware repeated before/after blocks or matched windows. Preserve total weights,
 not only normalized percentages. If a backend exposes only normalized flame graphs, retrieve
-raw sample/weight counts and collection health before quantitative conclusions.
+raw weights, units, sample counts and collection health before quantitative conclusions. Trace
+[weight conversion through export and query](references/setup-and-queries.md#preserve-weights-through-export)
+before interpreting a graph or stored field labeled CPU as CPU-time cost.
 
 ## Security and trust
 

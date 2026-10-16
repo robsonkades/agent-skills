@@ -1,0 +1,11 @@
+{
+  "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave7-a765972c5d\\actors\\run-12\\output\\project",
+  "argv": [
+    "node",
+    "../checks/verify-frozen.mjs"
+  ],
+  "exit": 0,
+  "stdout": "{\n  \"compared\": 26,\n  \"frozen\": 18,\n  \"frozenMismatches\": 0,\n  \"changed\": [\n    \"RUNBOOK.md\",\n    \"src/work/BookingListener.java\",\n    \"src/work/ReceiptWriter.java\"\n  ]\n}\n",
+  "stderr": "",
+  "error": null
+}

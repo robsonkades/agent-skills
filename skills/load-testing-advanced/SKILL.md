@@ -138,6 +138,8 @@ retention across cycles, failure to plateau, ownership paths, time-to-limit and 
 ## Automation and output contracts
 
 - Pin tool/version/extensions and output/summary mode; validate output against a real fixture.
+- Before trusting a CI pass, trace the executed script and effective options; confirm that
+  the gate evaluated the declared predicate and propagated failure.
 - Treat raw event output and aggregated summaries as different schemas.
 - Fail loudly on missing required fields, unknown coverage, histogram overflow or changed units.
   A confirmed-empty optional outcome cohort (for example, zero rejections) is valid evidence of
@@ -151,7 +153,7 @@ retention across cycles, failure to plateau, ownership paths, time-to-limit and 
 
 Tool-specific commands and current caveats belong in
 [generator configuration](references/generator-configuration.md); read it when configuring
-a generator or output parser. Read [test profiles](references/test-profiles.md) when selecting
+a generator, output parser or CI gate. Read [test profiles](references/test-profiles.md) when selecting
 phase duration, refining a boundary, or designing spike, soak and recovery acceptance.
 Inspect the project's actual JDK, collector, framework, build and deployed topology before
 choosing diagnostic commands. The k6 options are partial JavaScript configuration, not a

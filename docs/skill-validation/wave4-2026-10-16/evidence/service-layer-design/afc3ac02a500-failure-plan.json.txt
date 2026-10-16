@@ -1,0 +1,10 @@
+{
+  "classification": "Authored injection specification, not a runtime log.",
+  "plan": [
+    "The target creates the aggregate and save returns.",
+    "The transaction owner attempts completion after the target returns.",
+    "The owner's commit operation raises TransactionSystemException with no evidence establishing committed or rolled back outcome.",
+    "Observe the receipt already emitted, or the completion mapping that prevents an unsupported receipt."
+  ],
+  "control": "Also test successful completion. A database/manager harness is needed for an actual observation."
+}

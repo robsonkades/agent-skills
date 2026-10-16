@@ -240,4 +240,4 @@ existing evidence without adding a full database test campaign.
 - [Spring Data JPA 4.1.1: transactionality](https://github.com/spring-projects/spring-data-jpa/blob/4.1.1/src/main/antora/modules/ROOT/pages/jpa/transactions.adoc)
 - [Spring Data JPA 4.1.1: streaming execution](https://github.com/spring-projects/spring-data-jpa/blob/4.1.1/spring-data-jpa/src/main/java/org/springframework/data/jpa/repository/query/JpaQueryExecution.java) — `StreamExecution` requires a surrounding transaction.
 - [Spring Data JPA: streaming query results](https://docs.spring.io/spring-data/jpa/reference/repositories/query-methods-details.html#repositories.query-streaming) — resource ownership and closing.
-- [Jakarta Persistence 3.2: Query](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/query) — default `getResultStream()` behavior.
+- [Jakarta Persistence 3.2: Query](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/Query.html) — default `getResultStream()` behavior.

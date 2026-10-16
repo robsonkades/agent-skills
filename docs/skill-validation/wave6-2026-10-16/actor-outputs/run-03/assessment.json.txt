@@ -1,0 +1,21 @@
+{
+  "disposition": "supported",
+  "basis": "The accepted contract permits indefinitely missing the single installation. find() reads entry once and, on a hit, uses the safely handed-off reader created as PublishedEntry::value. That method dereferences final primary, not ordinary legacy. Payload.value=42 precedes the primary freeze; the completed constructor precedes the publication write. The publication/read memory chain and primary-to-value dereference chain satisfy JLS 17.5.1 for the initialization write despite the ordinary entry race. Pre-Thread.start handoff initializes the memo and reader; it is not an edge publishing the later entry. Under the accepted no-escape/no-mutation conditions a hit is 42 without a partial-initialization exception.",
+  "requiredChange": null,
+  "missingEvidence": [],
+  "checked": [
+    "Read TASK.md, the full local skill and both relevant references, and all eight supplied project files.",
+    "Traced find -> ToIntFunction.applyAsInt -> PublishedEntry::value -> final primary -> Payload.value; legacyValue is not selected.",
+    "Verified Java SE 25 JLS 17.4.5 and 17.5.1 primary documentation.",
+    "Temurin javac 25.0.3: --release 25 compilation exited 0.",
+    "Temurin Java 25.0.3+9: memo.Smoke exited 0 with sequential-controls=2 PASS.",
+    "SHA-256 comparison: all eight provided output/project files match input/project and remained unchanged through checks."
+  ],
+  "limits": [
+    "Sequential smoke is observed evidence only, not proof of JMM behavior.",
+    "No stress/jcstress, static analyzer, or cross-JVM/architecture matrix executed.",
+    "Conclusion is scoped to accepted one producer, one installation of 42, private pre-start memo/reader handoff, no constructor escape and no subsequent mutations.",
+    "No requirement for eventual hit, replacement updates, or callers selecting legacyValue was introduced."
+  ]
+}
+

@@ -1,0 +1,480 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "pause-attribution",
+  "ownedPath": "skills/pause-attribution/**",
+  "reviewer": "/root/quality17",
+  "date": "2026-10-16",
+  "allWritesStopped": true,
+  "writesStopped": true,
+  "activeWriterProcesses": [],
+  "scope": "Specialist diagnosis of observed pauses across safepoint synchronization, VM operation, cleanup/leaving and host effects; no package-manager changes.",
+  "procedure": {
+    "requiredReadings": [
+      "AGENTS.md",
+      "docs/skill-review-prompt.md (complete)",
+      "docs/parallel-skill-reviews.md",
+      "docs/skill-validation/wave2-2026-10-16/review-brief.md",
+      "skills/skill-engineering/SKILL.md and relevant evidence/evaluation/resource-design/anti-pattern references"
+    ],
+    "inheritedReadings": "Unchanged skill-engineering/history/comparative-research readings were reused as allowed by the wave-two brief. Current complete package read; complete prompt and brief also reread.",
+    "noDelegation": true,
+    "noSharedRepositoryWrites": true,
+    "findingsReportedBeforeEdits": true
+  },
+  "baseline": {
+    "committedVersion": "1.4.4",
+    "assignmentVersion": "1.4.4",
+    "finalVersion": "1.4.5",
+    "preExistingVersionBump": false,
+    "preExistingCommittedCapabilities": "Current committed package, including earlier wave work, was the assignment baseline and preserved.",
+    "preExistingStagedChanges": [],
+    "preExistingUnstagedChanges": [],
+    "preExistingUntrackedFiles": [],
+    "baselineStatus": "Clean assigned directory; git scoped status/diff/cached inspected before edits.",
+    "hashes": {
+      "SKILL.md": "6017F38A3230642D0778CF08B1C69E66C144707C9741A0CB06F19C4AEE696898",
+      "skill.yaml": "B921952BAD6E6ACBF2F9ADD0E5FFBD0E8D247D7420331A34C191C33172A1F7C1",
+      "references/layer-decision-table.md": "045B8AC5269F12205BC801B3020E6434CC85288D91B4E2B166EDF763AD25BB6E",
+      "references/correlating-the-evidence.md": "1E588FDD2BEE4C3838EBF1CFF6FC06E76D4F3D9BE3F2DD15627DDF024AD64C65",
+      "references/attributing-time-to-safepoint.md": "93BB412795CD51653D9A8BBAD50D8129E9E55C17972237C9E19BBBA90A868A9E"
+    }
+  },
+  "reviewCriteria": [
+    "Preserve the attribution role and evidence boundaries; do not make unrelated captures mandatory.",
+    "Respect actual HotSpot timer boundaries and distinguish elapsed coordination from individual-thread measurements.",
+    "Do not confuse the JFR event producer or VM-operation requester with an identified non-arrived application thread.",
+    "Change the next action when aligned non-arrival identity becomes available; retain uncertainty about the cause without stack/scheduling evidence.",
+    "Keep target-version constraints, capture side effects, incomplete events, parser coverage, total arithmetic and host alternatives."
+  ],
+  "findingsCorrected": [
+    {
+      "location": "references/correlating-the-evidence.md:5,20,26; SKILL.md:60",
+      "original": "The diagram called synchronization a thread-side problem and the table equated Reaching with the slowest thread's TTSP.",
+      "evidence": "HotSpot 25.0.3+9 SafepointTracing::begin precedes the collector synchronization hook, Threads_lock acquisition, poll arming and synchronization; the Reaching log field is sync_timestamp - begin_timestamp.",
+      "consequence": "A large Reaching interval alone could be mistaken for a measured poll-free delay on one thread, encouraging an unsupported loop-strip change.",
+      "correction": "Use elapsed synchronization including VM coordination; explain the timer envelope and require a demonstrated polling component before targeting strip size."
+    },
+    {
+      "location": "SKILL.md:60; references/correlating-the-evidence.md:111,276",
+      "original": "The existing workflow required finding non-arrived identities but did not distinguish them from readily available global JFR eventThread or ExecuteVMOperation.caller.",
+      "evidence": "Pinned event creation paths run on VM Thread; ExecuteVMOperation records op->calling_thread as caller. The Java 25.0.3 fixture observed the VM producer and separate requester-control caller.",
+      "consequence": "An analyst could blame the producer/requester for delaying synchronization without a non-arrival observation.",
+      "correction": "Explain producer/requester roles, disallow culprit attribution from those fields alone, and retain the aligned timeout/state then stack/scheduling path."
+    }
+  ],
+  "remainingFindings": [],
+  "filesChangedByReviewer": [
+    {
+      "path": "skills/pause-attribution/SKILL.md",
+      "change": "Add coordination and producer/requester evidence constraints to the existing TTSP workflow."
+    },
+    {
+      "path": "skills/pause-attribution/references/correlating-the-evidence.md",
+      "change": "Correct synchronization diagram/table; explain measured envelope and JFR identities; add version-pinned primary links."
+    },
+    {
+      "path": "skills/pause-attribution/skill.yaml",
+      "change": "One patch bump, 1.4.4 to 1.4.5."
+    }
+  ],
+  "unchangedFiles": [
+    "skills/pause-attribution/references/layer-decision-table.md",
+    "skills/pause-attribution/references/attributing-time-to-safepoint.md"
+  ],
+  "versionRationale": "Skill content changed from a clean committed 1.4.4. Reuse one unpublished patch 1.4.5 for all current edits; no second bump after wording refinement. Description unchanged and validated against manifest.",
+  "capabilities": {
+    "preserved": [
+      "Decompose tested JDK25 Total into Reaching, At, Leaving; retain JDK24 At-includes-leaving caveat and direct Total parsing.",
+      "Validate decorator/schema coverage and event loss before interpreting zero events or a gap.",
+      "JFR Begin/End correlation by safepointId, unknown operation labels, unmatched events and one JVM lifetime; no false independent-impact claim.",
+      "Distinguish endpoint percentiles from aligned individual intervals and avoid additive/double-counted host time.",
+      "Identity/state from SafepointTimeout is not a Java stack; Thread.print itself needs a safepoint and may return post-stall.",
+      "Effective flag and compiled-loop evidence, collector-specific historical defaults, native-safe states and competing host/no-poll explanations.",
+      "Distinct JEP518 sample-request latency versus global synchronization and JEP509 sampling trigger semantics.",
+      "Version-aware cadence/default explanation, scoped capture budgets, no-change paths and specialist handoffs."
+    ],
+    "replaced": [
+      "Misleading slowest-thread timer and exclusively thread-side synchronization labels."
+    ],
+    "intentionallyRemoved": [],
+    "examplesChanged": false,
+    "exampleClassification": "Existing Java17+ method-body correlation snippet, partial Python regex snippet and shell capture examples remain unchanged. The isolated Java25 probe is validation evidence, not shipped skill content."
+  },
+  "executedChecks": [
+    {
+      "kind": "technical executable probe",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave2-pause-attribution-f060ee5c4d484d0895e48304e2e3c529",
+      "compiler": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe --release 25 ProducerRequesterProbe.java",
+      "runtime": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe -Xms32m -Xmx64m -XX:+UseG1GC -XX:ActiveProcessorCount=2 -XX:-DisableExplicitGC -XX:-ExplicitGCInvokesConcurrent -Xlog:safepoint=info:file=safepoints.log:uptime,level,tags ProducerRequesterProbe",
+      "compilerVersion": "javac 25.0.3",
+      "runtimeVersion": "25.0.3+9-LTS",
+      "platform": "Windows x64",
+      "exitCode": 0,
+      "result": "G1CollectFull safepointId=3 observed. ExecuteVMOperation.eventThread plus matching Begin/StateSynchronization/End eventThread all had osName=VM Thread, osId=16412, Java thread id=-1. Caller had javaName=requester-control, Java thread id=3, osId=8616. Assertions passed.",
+      "limits": "No delayed-thread or high-TTSP reproduction; no performance comparison. Explicit GC and recording were confined to an isolated 64 MiB test JVM. Producer identity is a version-pinned implementation observation, not an API guarantee across all JDKs."
+    },
+    {
+      "kind": "structural",
+      "purpose": "Strict skill package and adapter validation",
+      "workingDirectory": "C:/git/agent-skills",
+      "command": "node --input-type=module -e 'import {loadPackageFromDirectory,validatePackage} from \"@jvm-expert/core\"; import {NodeFileSystem} from \"@jvm-expert/node\"; import {CodexAdapter} from \"@jvm-expert/adapter-codex\"; import {ClaudeCodeAdapter} from \"@jvm-expert/adapter-claude\"; const loaded=await loadPackageFromDirectory(new NodeFileSystem(),\"skills/pause-attribution\",{strict:true}); const report=validatePackage(loaded.pkg,{directoryName:\"pause-attribution\",adapters:[new CodexAdapter(),new ClaudeCodeAdapter()]}); const issues=[...loaded.issues,...report.issues]; console.log(JSON.stringify({name:loaded.pkg.manifest.name,version:loaded.pkg.manifest.version,files:loaded.pkg.files.map(f=>f.path),issues},null,2)); if(issues.length)process.exitCode=1;' 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/agent-skills-wave2-pause-attribution-f060ee5c4d484d0895e48304e2e3c529/strict-validation.log'; exit $LASTEXITCODE",
+      "result": "{\r\n  \"name\": \"pause-attribution\",\r\n  \"version\": \"1.4.5\",\r\n  \"files\": [\r\n    \"SKILL.md\",\r\n    \"references/attributing-time-to-safepoint.md\",\r\n    \"references/correlating-the-evidence.md\",\r\n    \"references/layer-decision-table.md\",\r\n    \"skill.yaml\"\r\n  ],\r\n  \"issues\": []\r\n}",
+      "exitCode": 0
+    },
+    {
+      "kind": "structural",
+      "purpose": "Owned-file formatting check",
+      "workingDirectory": "C:/git/agent-skills",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/pause-attribution/SKILL.md skills/pause-attribution/skill.yaml skills/pause-attribution/references/layer-decision-table.md skills/pause-attribution/references/correlating-the-evidence.md skills/pause-attribution/references/attributing-time-to-safepoint.md 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/agent-skills-wave2-pause-attribution-f060ee5c4d484d0895e48304e2e3c529/format.log'; exit $LASTEXITCODE",
+      "result": "Checking formatting...\r\nAll matched files use Prettier code style!",
+      "exitCode": 0
+    },
+    {
+      "kind": "structural",
+      "purpose": "Local Markdown link targets",
+      "workingDirectory": "C:/git/agent-skills",
+      "command": "node --input-type=module -e 'import fs from \"node:fs\"; import path from \"node:path\"; const root=path.resolve(\"skills/pause-attribution\"); let checked=0; const failed=[]; function visit(dir){for(const entry of fs.readdirSync(dir,{withFileTypes:true})){const full=path.join(dir,entry.name);if(entry.isDirectory())visit(full); else if(entry.name.endsWith(\".md\")){const text=fs.readFileSync(full,\"utf8\").replace(/\\x60\\x60\\x60[\\s\\S]*?\\x60\\x60\\x60/g,\"\");for(const match of text.matchAll(/\\[[^\\]]*\\]\\(([^)]+)\\)/g)){const target=match[1];if(/^[a-z]+:/i.test(target)||target.startsWith(\"#\"))continue;checked++;const file=target.split(\"#\")[0];if(!fs.existsSync(path.resolve(path.dirname(full),file)))failed.push({file:full,target});}}}}visit(root); console.log(JSON.stringify({checkedLocalMarkdownLinks:checked,failed},null,2));if(failed.length)process.exitCode=1;' 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/agent-skills-wave2-pause-attribution-f060ee5c4d484d0895e48304e2e3c529/links.log'; exit $LASTEXITCODE",
+      "result": "{\r\n  \"checkedLocalMarkdownLinks\": 4,\r\n  \"failed\": []\r\n}",
+      "exitCode": 0
+    },
+    {
+      "kind": "structural and authorship",
+      "workingDirectory": "C:/git/agent-skills",
+      "commands": [
+        "git diff --check -- skills/pause-attribution",
+        "git status --short -- skills/pause-attribution",
+        "git diff --cached --name-only -- skills/pause-attribution",
+        "git diff --stat -- skills/pause-attribution",
+        "git show HEAD:skills/pause-attribution/skill.yaml",
+        "Get-ChildItem -LiteralPath skills/pause-attribution -File -Recurse | Get-FileHash -Algorithm SHA256",
+        "git diff -- skills/pause-attribution"
+      ],
+      "result": "Whitespace check clean; 3 modified files, 28 insertions/6 deletions; no staged/untracked assigned files; final diff reviewed against clean assignment baseline. Two untouched reference hashes equal baseline."
+    }
+  ],
+  "relevantFailures": [
+    {
+      "check": "Web open of JEP 518",
+      "result": "403 response in this review",
+      "resolution": "Unchanged sampling guidance was preserved; it was not treated as newly verified. Current corrections rely on successfully fetched tag-pinned implementation sources and the isolated runtime probe."
+    }
+  ],
+  "primarySources": [
+    {
+      "url": "https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/runtime/safepoint.cpp",
+      "rawUrl": "https://raw.githubusercontent.com/openjdk/jdk25u/jdk-25.0.3%2B9/src/hotspot/share/runtime/safepoint.cpp",
+      "version": "OpenJDK 25.0.3+9",
+      "inspectedLines": "329-416,467-480,945-999",
+      "supports": "VM-thread begin/end production; tracing begin precedes heap synchronization hook, Threads_lock, poll arming and thread synchronization; logged Reaching measures sync minus begin.",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave2-pause-attribution-f060ee5c4d484d0895e48304e2e3c529/safepoint.cpp",
+      "sha256": "47C04B4E6C1DC955ACA89D698FFDB50A2CFEAB6E3EF56FD973CE1767752CC7FB"
+    },
+    {
+      "url": "https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/runtime/vmThread.cpp",
+      "rawUrl": "https://raw.githubusercontent.com/openjdk/jdk25u/jdk-25.0.3%2B9/src/hotspot/share/runtime/vmThread.cpp",
+      "version": "OpenJDK 25.0.3+9",
+      "inspectedLines": "260-293,419-432",
+      "supports": "ExecuteVMOperation construction/commit on VM Thread and caller populated from op->calling_thread; synchronization wraps operation execution.",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave2-pause-attribution-f060ee5c4d484d0895e48304e2e3c529/vmThread.cpp",
+      "sha256": "227EF484B53CA124DB9C768CADF9D027934053D64800F41D5A26C594EB60825A"
+    },
+    {
+      "url": "https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/jfr/metadata/metadata.xml",
+      "rawUrl": "https://raw.githubusercontent.com/openjdk/jdk25u/jdk-25.0.3%2B9/src/hotspot/share/jfr/metadata/metadata.xml",
+      "version": "OpenJDK 25.0.3+9",
+      "inspectedLines": "695-725",
+      "supports": "Global safepoint and VM-operation events have thread metadata; caller means requesting thread; SafepointLatency has different per-thread payload and no safepointId.",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave2-pause-attribution-f060ee5c4d484d0895e48304e2e3c529/metadata.xml",
+      "sha256": "61BB3354BB5949E8A099ACB5773B8970E8ADFFDCF37F7C86606B9450A2D5817F"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/specs/man/jfr.html",
+      "version": "Java SE 25",
+      "supports": "Tool metadata behavior and event-configuration commands; secondary verification of unchanged capture workflow.",
+      "accessed": true
+    }
+  ],
+  "behavioralEvaluation": {
+    "executedAgentRuns": [],
+    "measuredGain": false,
+    "walkthroughs": [
+      {
+        "caseId": "producer-requester-without-nonarrived-identity",
+        "result": "The revised wording supports keeping the completed 210 ms cycle/9 ms operation while rejecting the caller-based delayed-thread and missing-polls claims. Next action seeks non-arrival evidence or VM/host coordination evidence within budget, without changing a flag."
+      },
+      {
+        "caseId": "producer-requester-with-nonarrived-identity",
+        "result": "The extra aligned timeout identity changes the next target to report-worker's stack/state/scheduling; it does not prove that all 200 ms were its poll-free execution or authorize a strip change."
+      }
+    ],
+    "label": "These are structured reviewer walkthroughs, not actual behavioral evaluations, unseen holdouts or measured improvement."
+  },
+  "reproducibleDevelopmentCases": {
+    "prerequisites": "Coordinator can materialize each actorInput.fixtures map in an isolated case directory or provide the normalized files directly. Use the same agent/model/tools/conditions if comparing baseline vs revised instructions. Do not expose evaluatorCriteria to the actor.",
+    "fixtureProvenance": "All case timings, thread names and normalized events are synthetic interpretation fixtures. The separate producer-requester.jfr artifact is actual executed runtime evidence; these case inputs are not represented as a production incident.",
+    "decisiveConstraintChanged": "Only timeout-thread-evidence.json changes from unavailable to an aligned non-arrived identity, report-worker.",
+    "actorInputs": [
+      {
+        "id": "producer-requester-without-nonarrived-identity",
+        "request": "Review the draft incident-notes.md against the supplied artifacts using pause-attribution. Return corrected incident text and the next concrete diagnostic action, preserving conclusions already supported. Assess the proposed flag change.",
+        "fixtures": {
+          "runtime.json": {
+            "jvm": "Eclipse Temurin HotSpot 25.0.3+9-LTS",
+            "collector": "G1",
+            "effectiveFlags": {
+              "UseCountedLoopSafepoints": true,
+              "LoopStripMiningIter": 1000
+            },
+            "clock": "All timestamps and uptime anchors below belong to the same JVM lifetime; UTC."
+          },
+          "safepoint.log": "[2026-10-16T15:00:00.210Z][10.210s][info][safepoint] Safepoint \"G1CollectFull\", Time since last: 800000000 ns, Reaching safepoint: 200000000 ns, At safepoint: 9000000 ns, Leaving safepoint: 1000000 ns, Total: 210000000 ns, Threads: 1 runnable, 13 total",
+          "jfr-extract.json": {
+            "extraction": "Normalized selected fields from one completed cycle; this is a synthetic interpretation fixture.",
+            "recordingCoverage": "All four specified event types enabled at zero threshold; the selected cycle is complete. No recorded loss for this window.",
+            "events": [
+              {
+                "type": "jdk.SafepointBegin",
+                "safepointId": 41,
+                "start": "2026-10-16T15:00:00.000Z",
+                "end": "2026-10-16T15:00:00.200Z",
+                "eventThread": {
+                  "osName": "VM Thread",
+                  "javaName": null
+                }
+              },
+              {
+                "type": "jdk.SafepointStateSynchronization",
+                "safepointId": 41,
+                "start": "2026-10-16T15:00:00.000Z",
+                "end": "2026-10-16T15:00:00.200Z",
+                "eventThread": {
+                  "osName": "VM Thread",
+                  "javaName": null
+                },
+                "initialThreadCount": 1,
+                "runningThreadCount": 0,
+                "iterations": 20
+              },
+              {
+                "type": "jdk.ExecuteVMOperation",
+                "safepointId": 41,
+                "operation": "G1CollectFull",
+                "safepoint": true,
+                "blocking": true,
+                "start": "2026-10-16T15:00:00.200Z",
+                "end": "2026-10-16T15:00:00.209Z",
+                "eventThread": {
+                  "osName": "VM Thread",
+                  "javaName": null
+                },
+                "caller": {
+                  "javaName": "requester-main",
+                  "osName": "requester-main"
+                }
+              },
+              {
+                "type": "jdk.SafepointEnd",
+                "safepointId": 41,
+                "start": "2026-10-16T15:00:00.209Z",
+                "end": "2026-10-16T15:00:00.210Z",
+                "eventThread": {
+                  "osName": "VM Thread",
+                  "javaName": null
+                }
+              }
+            ]
+          },
+          "incident-notes.md": "The 210 ms safepoint contained 200 ms waiting for requester-main. JFR identifies requester-main as the delayed thread. Its counted loop must be missing polls, so reduce LoopStripMiningIter from 1000 to 100 now. The GC operation took 9 ms.",
+          "diagnostic-budget.md": "Review available files first. No production configuration changes or live commands are authorized in this exercise. Propose the next bounded capture if necessary; no aligned stack or host scheduling capture is available.",
+          "timeout-thread-evidence.json": {
+            "available": false,
+            "reason": "No timeout or other per-thread non-arrival capture was retained."
+          }
+        }
+      },
+      {
+        "id": "producer-requester-with-nonarrived-identity",
+        "request": "Review the draft incident-notes.md against the supplied artifacts using pause-attribution. Return corrected incident text and the next concrete diagnostic action, preserving conclusions already supported. Assess the proposed flag change.",
+        "fixtures": {
+          "runtime.json": {
+            "jvm": "Eclipse Temurin HotSpot 25.0.3+9-LTS",
+            "collector": "G1",
+            "effectiveFlags": {
+              "UseCountedLoopSafepoints": true,
+              "LoopStripMiningIter": 1000
+            },
+            "clock": "All timestamps and uptime anchors below belong to the same JVM lifetime; UTC."
+          },
+          "safepoint.log": "[2026-10-16T15:00:00.210Z][10.210s][info][safepoint] Safepoint \"G1CollectFull\", Time since last: 800000000 ns, Reaching safepoint: 200000000 ns, At safepoint: 9000000 ns, Leaving safepoint: 1000000 ns, Total: 210000000 ns, Threads: 1 runnable, 13 total",
+          "jfr-extract.json": {
+            "extraction": "Normalized selected fields from one completed cycle; this is a synthetic interpretation fixture.",
+            "recordingCoverage": "All four specified event types enabled at zero threshold; the selected cycle is complete. No recorded loss for this window.",
+            "events": [
+              {
+                "type": "jdk.SafepointBegin",
+                "safepointId": 41,
+                "start": "2026-10-16T15:00:00.000Z",
+                "end": "2026-10-16T15:00:00.200Z",
+                "eventThread": {
+                  "osName": "VM Thread",
+                  "javaName": null
+                }
+              },
+              {
+                "type": "jdk.SafepointStateSynchronization",
+                "safepointId": 41,
+                "start": "2026-10-16T15:00:00.000Z",
+                "end": "2026-10-16T15:00:00.200Z",
+                "eventThread": {
+                  "osName": "VM Thread",
+                  "javaName": null
+                },
+                "initialThreadCount": 1,
+                "runningThreadCount": 0,
+                "iterations": 20
+              },
+              {
+                "type": "jdk.ExecuteVMOperation",
+                "safepointId": 41,
+                "operation": "G1CollectFull",
+                "safepoint": true,
+                "blocking": true,
+                "start": "2026-10-16T15:00:00.200Z",
+                "end": "2026-10-16T15:00:00.209Z",
+                "eventThread": {
+                  "osName": "VM Thread",
+                  "javaName": null
+                },
+                "caller": {
+                  "javaName": "requester-main",
+                  "osName": "requester-main"
+                }
+              },
+              {
+                "type": "jdk.SafepointEnd",
+                "safepointId": 41,
+                "start": "2026-10-16T15:00:00.209Z",
+                "end": "2026-10-16T15:00:00.210Z",
+                "eventThread": {
+                  "osName": "VM Thread",
+                  "javaName": null
+                }
+              }
+            ]
+          },
+          "incident-notes.md": "The 210 ms safepoint contained 200 ms waiting for requester-main. JFR identifies requester-main as the delayed thread. Its counted loop must be missing polls, so reduce LoopStripMiningIter from 1000 to 100 now. The GC operation took 9 ms.",
+          "diagnostic-budget.md": "Review available files first. No production configuration changes or live commands are authorized in this exercise. Propose the next bounded capture if necessary; no aligned stack or host scheduling capture is available.",
+          "timeout-thread-evidence.json": {
+            "available": true,
+            "provenance": "Normalized selected identity/state from the target's SafepointTimeout output within the same synchronization interval; synthetic fixture, not literal parser input.",
+            "observations": [
+              {
+                "uptimeSeconds": 10.1,
+                "threadName": "report-worker",
+                "osThreadId": "0x3a7c",
+                "hotspotState": "_thread_in_Java",
+                "condition": "Listed as not having reached the safepoint"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "evaluatorCriteria": [
+      {
+        "caseId": "producer-requester-without-nonarrived-identity",
+        "required": [
+          "Correct the incident artifact itself, preserving the 210 ms completed cycle, 200 ms Reaching and 9 ms At/operation observations.",
+          "Explain eventThread as VM producer and caller as operation requester; neither field establishes the delaying application thread.",
+          "Reject missing-polls and immediate strip-size claims for lack of per-thread/compiled-loop evidence; the existing enabled setting is not evidence that a particular loop's polling cost caused this interval.",
+          "Select a concrete bounded evidence acquisition step for non-arrival identity and/or unexplained VM/host coordination; distinguish absence of identity evidence from evidence that no thread was late.",
+          "Respect no live changes/captures in the fixture, and do not demand a guaranteed in-stall Thread.print stack."
+        ],
+        "failures": [
+          "Blames requester-main or VM Thread for being the identified late application thread.",
+          "Calls 200 ms an individually measured slowest-thread poll-free delay.",
+          "Approves the flag change without supporting thread/loop evidence.",
+          "Replaces all supported observations with uncertainty, or claims measured latency improvement."
+        ]
+      },
+      {
+        "caseId": "producer-requester-with-nonarrived-identity",
+        "required": [
+          "Apply the same producer/requester interpretation and preserve supported cycle/operation facts.",
+          "Update the incident to record report-worker as observed non-arrived at uptime 10.100, without declaring it the full causal explanation.",
+          "Change the next diagnostic target to time-aligned report-worker stack and scheduling/state evidence, rather than claiming identity remains wholly unknown or requiring a duplicate identity capture by default.",
+          "Keep polling, VM coordination and scheduling explanations conditional until the next evidence discriminates them; no unconditional strip-size change."
+        ],
+        "failures": [
+          "Ignores the new identity evidence or repeats the case-A unresolved-identity conclusion unchanged.",
+          "Treats timeout identity/state alone as a Java stack, complete duration attribution or proof of a no-poll loop.",
+          "Uses caller/eventThread as the culprit despite conflicting non-arrival evidence.",
+          "Claims a guaranteed in-stall Thread.print stack, or performs unauthorized live changes."
+        ]
+      }
+    ]
+  },
+  "artifacts": {
+    "directory": "C:/Users/robso/AppData/Local/Temp/agent-skills-wave2-pause-attribution-f060ee5c4d484d0895e48304e2e3c529",
+    "actualRawFiles": [
+      "C:/Users/robso/AppData/Local/Temp/agent-skills-wave2-pause-attribution-f060ee5c4d484d0895e48304e2e3c529/ProducerRequesterProbe.java",
+      "C:/Users/robso/AppData/Local/Temp/agent-skills-wave2-pause-attribution-f060ee5c4d484d0895e48304e2e3c529/ProducerRequesterProbe.class",
+      "C:/Users/robso/AppData/Local/Temp/agent-skills-wave2-pause-attribution-f060ee5c4d484d0895e48304e2e3c529/producer-requester.jfr",
+      "C:/Users/robso/AppData/Local/Temp/agent-skills-wave2-pause-attribution-f060ee5c4d484d0895e48304e2e3c529/probe.log",
+      "C:/Users/robso/AppData/Local/Temp/agent-skills-wave2-pause-attribution-f060ee5c4d484d0895e48304e2e3c529/safepoints.log",
+      "C:/Users/robso/AppData/Local/Temp/agent-skills-wave2-pause-attribution-f060ee5c4d484d0895e48304e2e3c529/safepoint.cpp",
+      "C:/Users/robso/AppData/Local/Temp/agent-skills-wave2-pause-attribution-f060ee5c4d484d0895e48304e2e3c529/vmThread.cpp",
+      "C:/Users/robso/AppData/Local/Temp/agent-skills-wave2-pause-attribution-f060ee5c4d484d0895e48304e2e3c529/metadata.xml",
+      "C:/Users/robso/AppData/Local/Temp/agent-skills-wave2-pause-attribution-f060ee5c4d484d0895e48304e2e3c529/strict-validation.log",
+      "C:/Users/robso/AppData/Local/Temp/agent-skills-wave2-pause-attribution-f060ee5c4d484d0895e48304e2e3c529/format.log",
+      "C:/Users/robso/AppData/Local/Temp/agent-skills-wave2-pause-attribution-f060ee5c4d484d0895e48304e2e3c529/links.log",
+      "C:/Users/robso/AppData/Local/Temp/agent-skills-wave2-pause-attribution-f060ee5c4d484d0895e48304e2e3c529/review-evidence.json"
+    ],
+    "note": "javac emitted no output; the compiler pipeline did not create compile.log. No nonexistent compilation log is claimed. Actual assertions/output are retained in probe.log; compiler version is in review-evidence.json.",
+    "keyHashes": {
+      "ProducerRequesterProbe.java": "725C57166A7ED4D3A5D9C2ADB4CBF2D426ADE38BC6A5BE19746D74E661F3F766",
+      "producer-requester.jfr": "63BAE7D2DA71A99D56BF468FA36A7B1287006299B234876613D1A5D8469D8034",
+      "probe.log": "7D0BACFEE4069416025D6B09E7A1A5A52637CCE66379ED4CBA8233B88C31FCEC",
+      "safepoints.log": "7E149E49AF00D0F585317E6B3F2F4DFED8095AD925CD2D63C76A9B36195A752E"
+    }
+  },
+  "finalFileHashes": {
+    "skills/pause-attribution/SKILL.md": "E98D6591A46592CF8634BEC5E6F1C74854AD660E2B835FD7F180DE12A62DC0F7",
+    "skills/pause-attribution/skill.yaml": "E043549E67117EDA69013B7D2FE081F34E6D1B727A1ABC6B9071CDE0206466A2",
+    "skills/pause-attribution/references/attributing-time-to-safepoint.md": "93BB412795CD51653D9A8BBAD50D8129E9E55C17972237C9E19BBBA90A868A9E",
+    "skills/pause-attribution/references/correlating-the-evidence.md": "AC6ECECD928E24A98FE564329F04A5BB7921F39DF386301D3203C69500118887",
+    "skills/pause-attribution/references/layer-decision-table.md": "045B8AC5269F12205BC801B3020E6434CC85288D91B4E2B166EDF763AD25BB6E"
+  },
+  "limitations": [
+    "The producer/requester probe covers one Windows x64 HotSpot 25.0.3 G1 explicit-GC cycle; it does not measure thread synchronization causality, Linux scheduling, target production cost or application impact.",
+    "Timer-envelope correctness comes from the matched implementation source, not a claim that this probe separated coordination costs experimentally.",
+    "No new historical arithmetic, loop-polling default, sampler or cadence experiments were performed; existing useful caveats retained.",
+    "No baseline/revised agent runs, unseen holdouts or measured behavioral gain.",
+    "No repository-wide validation or registry generation performed by this reviewer."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Shared generated index write; run after all reviewers stop writing."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Global integration check, including version constraints, after registry generation and all writers stop."
+    }
+  ],
+  "crossSkillIssues": [
+    {
+      "skill": "safepoints",
+      "action": "None required",
+      "note": "Read-only neighbor already correctly describes elapsed VM coordination; this patch aligns pause-attribution with it. No neighboring files changed."
+    }
+  ],
+  "coordinatorActions": [
+    "Archive the actual raw JFR, log, probe source/class and source snapshots if durable evidence is needed.",
+    "Run independently selected behavioral cases; the supplied pair is development material only.",
+    "Regenerate registry and run global verification after all assigned writers stop."
+  ],
+  "completion": "Owned final diff inspected; all tool-started compile/runtime processes exited. This JSON is the final write. Subsequent operations are read-only."
+}

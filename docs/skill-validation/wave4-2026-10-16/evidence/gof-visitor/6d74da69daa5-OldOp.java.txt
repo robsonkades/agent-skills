@@ -1,0 +1,3 @@
+public final class OldOp implements Model.Visitor<Integer> {
+    @Override public Integer visitText(Model.Text text) { return text.value().length(); }
+}

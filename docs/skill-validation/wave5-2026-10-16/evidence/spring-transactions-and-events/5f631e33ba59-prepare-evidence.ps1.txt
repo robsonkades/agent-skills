@@ -1,0 +1,31 @@
+$ErrorActionPreference = 'Stop'
+$evidenceRoot = 'C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/spring-transactions-and-events'
+$skillRoot = 'C:/git/agent-skills/skills/spring-transactions-and-events'
+$baselineRoot = 'C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/baseline/spring-transactions-and-events'
+New-Item -ItemType Directory -Path "$evidenceRoot/sources","$evidenceRoot/logs","$evidenceRoot/controls","$evidenceRoot/cases/inputs" -Force | Out-Null
+$files = Get-ChildItem -LiteralPath $skillRoot -Recurse -File | ForEach-Object {
+  $relative = $_.FullName.Substring($skillRoot.Length + 1).Replace('\','/')
+  $hash = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+  $baselineHash = (Get-FileHash -LiteralPath "$baselineRoot/$relative" -Algorithm SHA256).Hash.ToLowerInvariant()
+  if ($hash -ne $baselineHash) { throw "Baseline mismatch: $relative" }
+  [pscustomobject]@{ path = "skills/spring-transactions-and-events/$relative"; sha256 = $hash; baselineSha256 = $baselineHash; bytes = $_.Length }
+}
+$baseline = [ordered]@{ skill = 'spring-transactions-and-events'; committedVersion = '1.1.0'; assignmentVersion = '1.1.0'; assignmentStatus = @(git status --porcelain=v1 --untracked-files=all -- skills/spring-transactions-and-events); stagedDiff = @(git diff --cached --numstat -- skills/spring-transactions-and-events); unstagedDiff = @(git diff --numstat -- skills/spring-transactions-and-events); baselineDirectory = $baselineRoot; files = @($files) }
+$baseline | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath "$evidenceRoot/baseline.json" -Encoding utf8
+$sources = @(
+  @{ name = 'RestrictedTransactionalEventListenerFactory.java'; url = 'https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.9/spring-tx/src/main/java/org/springframework/transaction/annotation/RestrictedTransactionalEventListenerFactory.java' },
+  @{ name = 'TransactionalApplicationListenerSynchronization.java'; url = 'https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.9/spring-tx/src/main/java/org/springframework/transaction/event/TransactionalApplicationListenerSynchronization.java' },
+  @{ name = 'TransactionSynchronizationUtils.java'; url = 'https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.9/spring-tx/src/main/java/org/springframework/transaction/support/TransactionSynchronizationUtils.java' },
+  @{ name = 'ResubmissionOptions.java'; url = 'https://raw.githubusercontent.com/spring-projects/spring-modulith/2.1.1/spring-modulith-events/spring-modulith-events-api/src/main/java/org/springframework/modulith/events/ResubmissionOptions.java' },
+  @{ name = 'ApplicationModuleListener.java'; url = 'https://raw.githubusercontent.com/spring-projects/spring-modulith/2.1.1/spring-modulith-events/spring-modulith-events-api/src/main/java/org/springframework/modulith/events/ApplicationModuleListener.java' },
+  @{ name = 'modulith-2.1.1-pom.xml'; url = 'https://raw.githubusercontent.com/spring-projects/spring-modulith/2.1.1/pom.xml' }
+)
+$results = foreach ($source in $sources) {
+  $response = Invoke-WebRequest -Uri $source.url -SkipHttpErrorCheck
+  $path = "$evidenceRoot/sources/$($source.name)"
+  [System.IO.File]::WriteAllText($path, $response.Content, [System.Text.UTF8Encoding]::new($false))
+  [pscustomobject]@{ url = $source.url; status = [int]$response.StatusCode; path = $path; sha256 = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant() }
+}
+$results | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath "$evidenceRoot/sources/retrieval.json" -Encoding utf8
+$results | Select-Object status,url | ConvertTo-Json -Depth 3
+if (@($results | Where-Object status -ne 200).Count -gt 0) { throw 'Source retrieval failure' }

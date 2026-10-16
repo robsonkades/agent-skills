@@ -1,0 +1,44 @@
+package probe;
+import example.*;
+import java.util.*;
+import javax.annotation.processing.*;
+import javax.lang.model.SourceVersion;
+import javax.lang.model.element.*;
+import javax.lang.model.type.TypeMirror;
+import javax.tools.Diagnostic;
+
+@SupportedAnnotationTypes("example.UseCodec")
+@SupportedSourceVersion(SourceVersion.RELEASE_17)
+public final class MirrorProcessor extends AbstractProcessor {
+    @Override public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment round) {
+        var types = processingEnv.getTypeUtils();
+        var elements = processingEnv.getElementUtils();
+        var annotationType = elements.getTypeElement("example.UseCodec").asType();
+        for (Element element : round.getElementsAnnotatedWith(UseCodec.class)) {
+            for (AnnotationMirror annotation : element.getAnnotationMirrors()) {
+                if (!types.isSameType(annotation.getAnnotationType(), annotationType)) continue;
+                var values = elements.getElementValuesWithDefaults(annotation);
+                processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE,
+                    "VALUES " + element.getSimpleName() + " explicit=" + annotation.getElementValues().size()
+                    + " withDefaults=" + values.size());
+                for (var member : values.entrySet()) {
+                    String name = member.getKey().getSimpleName().toString();
+                    Object value = member.getValue().getValue();
+                    if (name.equals("value")) check((TypeMirror) value, element, name);
+                    if (name.equals("alternatives")) {
+                        for (Object item : (List<?>) value) {
+                            check((TypeMirror) ((AnnotationValue) item).getValue(), element, name);
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+    private void check(TypeMirror type, Element element, String member) {
+        TypeMirror contract = processingEnv.getElementUtils().getTypeElement("example.Codec").asType();
+        boolean valid = processingEnv.getTypeUtils().isAssignable(type, contract);
+        processingEnv.getMessager().printMessage(valid ? Diagnostic.Kind.NOTE : Diagnostic.Kind.ERROR,
+            (valid ? "CODEC_OK: " : "CODEC_REQUIRED: ") + type + " in " + member, element);
+    }
+}

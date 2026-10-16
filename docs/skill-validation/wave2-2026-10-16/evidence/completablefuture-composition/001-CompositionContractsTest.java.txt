@@ -1,0 +1,178 @@
+import io.opentelemetry.context.Context;
+import io.opentelemetry.context.ContextKey;
+import io.opentelemetry.context.Scope;
+import org.slf4j.MDC;
+import java.util.ArrayDeque;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Queue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+
+public final class CompositionContractsTest {
+    private static final ContextKey<String> OWNER = ContextKey.named("test-owner");
+    private static int cases;
+
+    static final class QueueExecutor implements Executor {
+        final Queue<Runnable> tasks = new ArrayDeque<>();
+        int submitted;
+        public void execute(Runnable task) {
+            submitted++;
+            tasks.add(task);
+        }
+        void drain() {
+            Runnable task;
+            while ((task = tasks.poll()) != null) task.run();
+        }
+    }
+
+    static final class CustomFuture<T> extends CompletableFuture<T> {
+        private final Executor defaultExecutor;
+        CustomFuture(Executor executor) { this.defaultExecutor = executor; }
+        @Override public Executor defaultExecutor() { return defaultExecutor; }
+        @Override public <U> CompletableFuture<U> newIncompleteFuture() {
+            return new CustomFuture<>(defaultExecutor);
+        }
+    }
+
+    private static void equal(Object expected, Object actual, String message) {
+        if (!Objects.equals(expected, actual)) {
+            throw new AssertionError(message + ": expected=" + expected + ", actual=" + actual);
+        }
+    }
+
+    private static void inContext(String owner, Runnable action) {
+        Map<String, String> previous = MDC.getCopyOfContextMap();
+        try (Scope ignored = Context.root().with(OWNER, owner).makeCurrent()) {
+            MDC.put("owner", owner);
+            action.run();
+            equal(owner, Context.current().get(OWNER), "outer OTel context restored");
+            equal(owner, MDC.get("owner"), "outer MDC restored");
+        } finally {
+            if (previous == null) MDC.clear(); else MDC.setContextMap(previous);
+        }
+    }
+
+    private static void recipe(boolean alreadyComplete, boolean queued, boolean actionFails)
+            throws Exception {
+        CompletableFuture<String> source = alreadyComplete
+                ? CompletableFuture.completedFuture("payload") : new CompletableFuture<>();
+        QueueExecutor queue = new QueueExecutor();
+        Executor executor = queued ? queue : Runnable::run;
+        AtomicReference<CompletableFuture<String>> visible = new AtomicReference<>();
+        ContextRecipe recipe = new ContextRecipe(value -> {
+            equal("request", Context.current().get(OWNER), "continuation OTel owner");
+            equal("request", MDC.get("owner"), "continuation MDC owner");
+            if (actionFails) throw new IllegalStateException("planned failure");
+            return value + ":ok";
+        });
+        inContext("request", () -> visible.set(recipe.apply(source, executor)));
+        if (!alreadyComplete) inContext("provider", () -> source.complete("payload"));
+        if (queued) inContext("worker", queue::drain);
+        try {
+            String value = visible.get().get(2, TimeUnit.SECONDS);
+            if (actionFails) throw new AssertionError("action failure disappeared");
+            equal("payload:ok", value, "completed value");
+        } catch (ExecutionException failure) {
+            if (!actionFails) throw new AssertionError("expected success", failure);
+            equal(IllegalStateException.class, failure.getCause().getClass(), "action failure type");
+            equal("planned failure", failure.getCause().getMessage(), "action failure message");
+        }
+        equal(null, Context.current().get(OWNER), "no OTel leak after scope");
+        equal(null, MDC.get("owner"), "no MDC leak after scope");
+        cases++;
+        System.out.println("PASS recipe already=" + alreadyComplete + " queued=" + queued
+                + " failure=" + actionFails);
+    }
+
+    private static void taskWrapperCounterexample(boolean alreadyComplete) throws Exception {
+        QueueExecutor queue = new QueueExecutor();
+        Executor wrapped = Context.taskWrapping(queue);
+        CompletableFuture<String> source = alreadyComplete
+                ? CompletableFuture.completedFuture("payload") : new CompletableFuture<>();
+        AtomicReference<CompletableFuture<String>> visible = new AtomicReference<>();
+        inContext("request", () -> visible.set(source.thenApplyAsync(
+                value -> Context.current().get(OWNER), wrapped)));
+        if (!alreadyComplete) inContext("provider", () -> source.complete("payload"));
+        inContext("worker", queue::drain);
+        String actualOwner = visible.get().get(2, TimeUnit.SECONDS);
+        equal(alreadyComplete ? "request" : "provider", actualOwner, "capture at execute");
+        cases++;
+        System.out.println("CONTROL taskWrapping already=" + alreadyComplete + " observed="
+                + actualOwner + (alreadyComplete ? " (cache-hit case)" : " (wrong request owner)"));
+    }
+
+    private static void executorEdges() throws Exception {
+        QueueExecutor io = new QueueExecutor();
+        CompletableFuture<String> implicit = CompletableFuture.supplyAsync(() -> "value", io)
+                .thenApplyAsync(value -> value + ":rendered");
+        io.drain();
+        equal("value:rendered", implicit.get(2, TimeUnit.SECONDS), "default edge result");
+        equal(1, io.submitted, "explicit executor was not inherited");
+
+        QueueExecutor explicit = new QueueExecutor();
+        CompletableFuture<String> everyEdge = CompletableFuture.supplyAsync(() -> "value", explicit)
+                .thenApplyAsync(value -> value + ":rendered", explicit);
+        explicit.drain();
+        equal("value:rendered", everyEdge.get(2, TimeUnit.SECONDS), "explicit edge result");
+        equal(2, explicit.submitted, "both explicit edges submitted");
+        cases += 2;
+        System.out.println("PASS base executor edges (one versus two explicit submissions)");
+    }
+
+    private static void subclassDefault() throws Exception {
+        QueueExecutor first = new QueueExecutor();
+        QueueExecutor customDefault = new QueueExecutor();
+        CustomFuture<Integer> source = new CustomFuture<>(customDefault);
+        CompletableFuture<Integer> visible = source.thenApplyAsync(value -> value + 1, first)
+                .thenApplyAsync(value -> value + 1);
+        source.complete(1);
+        first.drain();
+        equal(1, first.submitted, "explicit first edge");
+        equal(1, customDefault.submitted, "subclass default second edge");
+        equal(false, visible.isDone(), "custom default is queued");
+        customDefault.drain();
+        equal(3, visible.get(2, TimeUnit.SECONDS), "subclass result");
+        cases++;
+        System.out.println("PASS subclass preserves its configured default, not prior edge's executor");
+    }
+
+    private static void rejected(boolean alreadyComplete) throws Exception {
+        CompletableFuture<String> source = alreadyComplete
+                ? CompletableFuture.completedFuture("payload") : new CompletableFuture<>();
+        Executor rejecting = task -> { throw new RejectedExecutionException("test rejection"); };
+        AtomicReference<CompletableFuture<String>> visible = new AtomicReference<>();
+        ContextRecipe recipe = new ContextRecipe(value -> {
+            throw new AssertionError("rejected action must not run");
+        });
+        inContext("request", () -> visible.set(recipe.apply(source, rejecting)));
+        if (!alreadyComplete) inContext("provider", () -> source.complete("payload"));
+        try {
+            visible.get().get(2, TimeUnit.SECONDS);
+            throw new AssertionError("rejection must settle the returned stage exceptionally");
+        } catch (ExecutionException failure) {
+            equal(RejectedExecutionException.class, failure.getCause().getClass(), "rejection cause");
+        }
+        cases++;
+        System.out.println("PASS rejected scheduling already=" + alreadyComplete);
+    }
+
+    public static void main(String[] args) throws Exception {
+        for (boolean alreadyComplete : new boolean[]{true, false}) {
+            for (boolean queued : new boolean[]{false, true}) {
+                for (boolean actionFails : new boolean[]{false, true}) {
+                    recipe(alreadyComplete, queued, actionFails);
+                }
+            }
+            taskWrapperCounterexample(alreadyComplete);
+            rejected(alreadyComplete);
+        }
+        executorEdges();
+        subclassDefault();
+        System.out.println("PASS " + cases + " contract cases/controls");
+    }
+}

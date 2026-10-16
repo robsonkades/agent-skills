@@ -1,0 +1,6 @@
+{
+  "skill": "feature-feasibility-experiment",
+  "common": "Assess EXP9 only; do not execute anything. The fixed, accepted set contains 120 supplier messages, and all decimal amounts must be exact. The predefined criterion is that all 120 match independently determined expected values. EV9 is real integration evidence with pinned versions: SDK v1 with strict parsing rejects the messages; SDK v2 with permissive parsing passes all 120. Commands and raw results are retained. The prior assumption was that an SDK-only change would suffice. Give a conclusion, the next useful action, and a scoped lesson; do not assess production readiness.",
+  "scenarioA": "Changes to both the SDK and the server mode are permitted; the question is their combined feasibility.",
+  "scenarioB": "Only the SDK may change; strict server parsing is mandatory."
+}

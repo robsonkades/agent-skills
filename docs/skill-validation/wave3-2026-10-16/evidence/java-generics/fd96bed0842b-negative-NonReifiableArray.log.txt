@@ -1,0 +1,2 @@
+NonReifiableArray.java:2:51: compiler.err.generic.array.creation
+1 error

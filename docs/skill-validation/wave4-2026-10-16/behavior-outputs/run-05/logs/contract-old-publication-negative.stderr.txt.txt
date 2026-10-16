@@ -1,0 +1,2 @@
+Exception in thread "main" java.lang.AssertionError: Normalization contract failures=3
+	at NormalizeContract.main(NormalizeContract.java:23)

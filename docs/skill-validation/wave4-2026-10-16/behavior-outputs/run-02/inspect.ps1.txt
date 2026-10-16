@@ -1,0 +1,31 @@
+. (Join-Path $PSScriptRoot 'runner.ps1')
+
+foreach ($tool in @('java', 'javac', 'jar', 'javap')) {
+    if ($script:Execution.versions.Contains($tool)) { continue }
+    $option = if ($tool -eq 'javap') { '-version' } else { '--version' }
+    $id = if ($tool -eq 'javap') { 'javap-version-corrected-option' } else { "$tool-version" }
+    Invoke-JavaTool -Id $id -Tool $tool -CommandArguments @($option)
+    $versionRun = $script:Execution.executions[-1]
+    $script:Execution.versions[$tool] = ($versionRun.stdout + $versionRun.stderr).Trim()
+    Save-Execution
+}
+
+$artifacts = @(
+    @{ id = 'library-old'; path = 'input/published/text-core-1.0.0.jar' },
+    @{ id = 'library-candidate'; path = 'input/published/text-core-1.0.1.jar' },
+    @{ id = 'consumer-published'; path = 'input/published/report-app-1.0.0.jar' },
+    @{ id = 'bundle-old'; path = 'input/bundles/report-1.0.0.jar' }
+)
+foreach ($artifact in $artifacts) {
+    Invoke-JavaTool -Id ($artifact.id + '-contents') -Tool 'jar' -CommandArguments @('--list', '--file', $artifact.path)
+}
+foreach ($artifact in @($artifacts[0], $artifacts[1], $artifacts[3])) {
+    Invoke-JavaTool -Id ($artifact.id + '-bytecode') -Tool 'javap' -CommandArguments @('-classpath', $artifact.path, '-public', '-c', '-verbose', 'com.example.text.LineEndings')
+}
+Invoke-JavaTool -Id 'consumer-published-bytecode' -Tool 'javap' -CommandArguments @('-classpath', $artifacts[2].path, '-public', '-c', '-verbose', 'com.example.app.ReportApp')
+
+$script:Execution.artifactHashes = @($artifacts | ForEach-Object {
+    $hash = Get-FileHash -LiteralPath (Join-Path $script:TaskRoot $_.path) -Algorithm SHA256
+    [ordered]@{ path = $_.path; sha256 = $hash.Hash }
+})
+Add-LocalAction 'Read-only SHA-256 inspection of all four input JARs using Get-FileHash; no artifact was changed.'

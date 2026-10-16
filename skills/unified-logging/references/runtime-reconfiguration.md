@@ -2,8 +2,9 @@
 
 ## Safe procedure
 
-For authorized discovery, identify the process and inspect its version/help/list; these reads
-do not change the logging configuration. Use the subsequent change/trigger/restoration steps
+For authorized discovery, identify the process and inspect its version and standalone
+`help VM.log` / `VM.log list`; these reads do not change the logging configuration.
+Use the subsequent change/trigger/restoration steps
 only for an authorized capture or configuration change. Existing authorization for that scope
 persists; do not ask again solely because the tool is jcmd.
 
@@ -24,6 +25,27 @@ A list snapshot is evidence, not an automatically safe rollback script. Coordina
 of shared outputs and do not replay an old global configuration over another operator's
 change. Runtime changes normally end with the JVM; persistence belongs in the actual launch
 configuration only when the retained change is intended and authorized.
+
+## Command composition and action scope
+
+In [JDK 25's diagnostic command implementation](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/logging/logDiagnosticCommand.cpp),
+configuration and action options are not mutually exclusive subcommands:
+
+- `VM.log output=... list` configures the selected output before listing. `output` is not
+  a list filter; omitted selection/decorators can apply defaults and broaden logging.
+  Use standalone `VM.log list` and filter its captured text locally to inspect one output.
+- `VM.log rotate` rotates all outputs eligible for rotation. Supplying `output=...` does
+  not restrict rotation to that file and can also reconfigure it. If only one output may
+  change, this command cannot satisfy that scope.
+- The `jdk-25-ga` implementation dispatches `disable` and `rotate` by option presence:
+  `disable=false` and `rotate=false` still invoke their actions. Omit unused action options
+  from generated commands; a false-valued field is not a read-only guard. Verify the target
+  build rather than extrapolating these parser semantics to another runtime.
+
+When checking a wrapper, use an isolated JVM with two distinct file outputs: compare the
+standalone listing path with any composed command, and inspect both configurations and
+archive files. A command returning the requested listing or exit zero does not establish
+that it preserved configuration or unrelated retention slots.
 
 ## What changes on an existing output
 

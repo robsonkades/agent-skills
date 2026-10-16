@@ -1,0 +1,19 @@
+public final class InlineGate {
+    private static volatile long observed;
+
+    static int callee(int value) {
+        return (value * 31) ^ (value >>> 5);
+    }
+
+    static int caller(int value) {
+        return callee(value) + 1;
+    }
+
+    public static void main(String[] args) {
+        long sum = 0;
+        for (int index = 0; index < 20_000; index++) sum += callee(index);
+        for (int index = 0; index < 20_000; index++) sum += caller(index);
+        observed = sum;
+        System.out.println(observed);
+    }
+}

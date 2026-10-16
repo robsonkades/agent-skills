@@ -1,0 +1,55 @@
+{
+  "decision": "reject_exact_proposal_and_approve_repaired_candidate_semantically",
+  "candidate": "solution.sql",
+  "exactProposalPreservesContract": false,
+  "repair": "Use active IS NOT TRUE in the amount branch, preserving UNION ALL, bound tenant predicates, projection and final ordering.",
+  "counterexample": {
+    "boundTenant": 71,
+    "invoice": { "id": 10, "tenant_id": 71, "customer_label": "Only", "active": null, "amount": 100 },
+    "expected": [{ "customer_label": "Only" }],
+    "originalProposal": [],
+    "reason": "NULL is allowed by the nullable boolean CHECK; NOT (NULL = TRUE) remains UNKNOWN and is filtered out."
+  },
+  "semanticArgument": {
+    "activeTrue": "First branch includes the invoice once; second excludes it regardless of amount.",
+    "activeFalseOrNull": "Only the second branch can include the invoice, exactly when amount >= 100.",
+    "bag": "Disjoint branches prevent overlap duplication; UNION ALL retains separate invoices sharing a label.",
+    "tenantProjectionOrdering": "Both branches require tenant_id = :tenant, return customer_label only, and share final ORDER BY customer_label."
+  },
+  "evidence": [
+    "Inspected schema.sql, seed.sql, current.sql, proposed.sql and fixture.mjs without modifying them.",
+    "node verify.mjs loads solution.sql from disk; 63 semantic checks passed on both initial and restored candidate.",
+    "Original proposal failed active=null, amount=100; four additional incorrect variants failed assertions.",
+    "mutation-check.log records all seven child runs and confirms candidate bytes restored.",
+    "PostgreSQL 17 primary documentation verifies CHECK null acceptance, Boolean truth tables, IS NOT TRUE, and UNION ALL semantics."
+  ],
+  "regression": {
+    "command": "node verify.mjs",
+    "checks": 63,
+    "passed": true,
+    "node": "v25.6.1",
+    "sqlite": "3.51.2",
+    "mutationCommand": "node mutation-check.mjs",
+    "rejectedWrongVariants": 5,
+    "restoredCandidatePassed": true,
+    "processTimeoutMilliseconds": 19000
+  },
+  "performance": {
+    "decision": "not_approved_without_target_evidence",
+    "reason": "No PostgreSQL server, plans, or performance captures were supplied; OR may already use combined indexes.",
+    "comparison": "On PostgreSQL 17, compare current.sql with solution.sql using the same realistic data, indexes, fresh statistics, settings and snapshot. Exercise representative tenant sizes, selectivities, null rates and overlap via the actual bound/prepared path. Alternate repeated EXPLAIN (ANALYZE, BUFFERS, SETTINGS, FORMAT JSON) captures with controlled cache state; inspect estimated/actual rows, scans, filters, buffer and heap reads, sort/spill behavior and execution time; also measure complete export latency and verify ordered bag equality."
+  },
+  "limits": [
+    "No PostgreSQL execution, server connection, query plan or benchmark was performed.",
+    "SQLite checks cover the portable subset only, not PostgreSQL coercions, special numeric values, collation equivalence, concurrency or production performance.",
+    "Finite tests supplement the documented three-valued-logic proof; they do not enumerate every possible database."
+  ],
+  "sources": [
+    "https://www.postgresql.org/docs/17/ddl-constraints.html",
+    "https://www.postgresql.org/docs/17/functions-logical.html",
+    "https://www.postgresql.org/docs/17/functions-comparison.html",
+    "https://www.postgresql.org/docs/17/queries-union.html",
+    "https://www.postgresql.org/docs/17/indexes-bitmap-scans.html",
+    "https://www.postgresql.org/docs/17/using-explain.html"
+  ]
+}

@@ -1,0 +1,22 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
+import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
+const root=path.dirname(fileURLToPath(import.meta.url));
+const jdk=process.env.REVIEW_JAVA_BIN||'C:/Users/robso/.jdks/temurin-25.0.3/bin';
+const work=fs.mkdtempSync(path.join(os.tmpdir(),'numeric-reader-case-'));
+const classes=path.join(work,'classes');fs.mkdirSync(classes);
+const results=[];
+function run(label,exe,args) {
+ const executable=path.join(jdk,exe+(process.platform==='win32'?'.exe':''));
+ const r=spawnSync(executable,args,{cwd:root,encoding:'utf8',timeout:30000});
+ results.push({label,executable,args,cwd:root,status:r.status,stdout:r.stdout,stderr:r.stderr,error:r.error?.message??null});
+ fs.writeFileSync(path.join(work,'results.json'),JSON.stringify(results,null,2)+'\n');
+ if(r.stdout)process.stdout.write(r.stdout);if(r.stderr)process.stderr.write(r.stderr);
+ assert.equal(r.status,0,label+' failed');
+}
+console.log('Evidence: '+work);
+run('compile','javac',['--release','17','-d',classes,...fs.readdirSync(path.join(root,'src')).filter(f=>f.endsWith('.java')).map(f=>path.join(root,'src',f))]);
+run('contract','java',['-cp',classes,'Check',path.join(root,'project.properties')]);

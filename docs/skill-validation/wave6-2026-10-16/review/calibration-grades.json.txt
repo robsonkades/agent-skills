@@ -1,0 +1,217 @@
+{
+  "kind": "Independent semantic grading of deliberately authored controls; not agent attempts",
+  "reviewer": "/root/wave6_review",
+  "gradedAt": "2026-10-16T17:27:37Z",
+  "inputs": {
+    "path": "review/calibration-inputs.json",
+    "sha256": "834012f2a479496b7b07820a952e22abb4eeaa359913b70845be9ed68ebd09cc"
+  },
+  "criteria": {
+    "path": "C:/git/agent-skills/docs/skill-validation/wave6-2026-10-16/criteria.json",
+    "sha256": "bdb8083f28085d0bfb6167f0769d6afed767b29e673618292c5493c3dd775218",
+    "statusRead": "APPROVED_FOR_FREEZE"
+  },
+  "scope": {
+    "expectedCalibrationAnswersRead": false,
+    "actorsOrFutureOutputsRead": false,
+    "reviewedEvidence": "Authored review text, frozen criteria, and previously authorized fixture code/contracts. Selected fixture source files were reread for this grading.",
+    "checksOrActorsExecuted": 0,
+    "filePreservationAssessment": "Not applicable to these authored text controls. C4 below grades the proposed behavior and scope, not a nonexistent tool trace or filesystem attempt."
+  },
+  "gradingInterpretation": {
+    "C3": "C3 requires an adequately supported source/contract argument as well as truthful execution reporting. An explicit statement that no tests ran satisfies the reporting component, but does not make an invalid categorical proof pass. A C3 failure below does not allege fabricated tests or fabricated citations.",
+    "C4": "C4 includes preserving the accepted behavioral contract and providing a valid focused remedy when a demonstrated gap needs one. Avoiding upgrades or file mutations alone is insufficient. Where the contract is adequate, unnecessary mandatory changes fail its restraint requirement.",
+    "overlap": "The criteria are conjunctive and partly overlapping: an invalid central proof may fail more than one criterion. The 24 criterion records are not 24 independent attempts.",
+    "semanticEquivalence": "No exact vocabulary, enum spelling, JLS citation format, or preferred repair technology is required."
+  },
+  "entries": [
+    {
+      "id": "cal-a",
+      "caseId": "D1",
+      "overall": "pass",
+      "grades": {
+        "C1": {
+          "grade": "pass",
+          "reason": "Reconhece o contrato sustentado, os misses permitidos e a diferença entre reparo e preferência de manutenção.",
+          "evidence": "Misses indefinidos são aceitos. Um holder volatile seria uma preferência de manutenção, não reparo obrigatório."
+        },
+        "C2": {
+          "grade": "pass",
+          "reason": "Segue a referência capturada e o método selecionado até primary e Payload.value, com o alcance correto da proteção de construção.",
+          "evidence": "ReaderFactory seleciona value, que alcança Payload.value pelo primary final.",
+          "fixtureSupport": "D1 ReaderFactory.create retorna PublishedEntry::value; value() retorna primary.value."
+        },
+        "C3": {
+          "grade": "pass",
+          "reason": "A prova está vinculada às condições fornecidas e não confunde execução finita com garantia nem inventa checks.",
+          "evidence": "Não executei checks; a conclusão é sobre o contrato e o código completos, não frequência empírica."
+        },
+        "C4": {
+          "grade": "pass",
+          "reason": "Preserva o comportamento adequado sem exigir publicação mais forte ou reabrir o contrato de misses.",
+          "evidence": "preferência de manutenção, não reparo obrigatório"
+        }
+      }
+    },
+    {
+      "id": "cal-b",
+      "caseId": "D1",
+      "overall": "fail",
+      "grades": {
+        "C1": {
+          "grade": "fail",
+          "reason": "Declara violado um contrato sustentado e exige reparo com base em uma exclusão incorreta de estado alcançado por final.",
+          "evidence": "A implementação viola o contrato. Payload.value não é final"
+        },
+        "C2": {
+          "grade": "fail",
+          "reason": "Ignora que o caminho efetivamente selecionado lê primary final antes de Payload.value.",
+          "evidence": "nenhum campo final no caminho pode proteger sua inicialização",
+          "fixtureSupport": "D1 seleciona PublishedEntry::value; o construtor atribui payload.value antes de publicar primary, sem mutação posterior."
+        },
+        "C3": {
+          "grade": "fail",
+          "reason": "A admissão de não executar o smoke é honesta, mas a propriedade isolada de value ser não final não sustenta a conclusão categórica.",
+          "evidence": "Payload.value não é final, logo nenhum campo final no caminho pode proteger sua inicialização. Não executei o smoke.",
+          "limitation": "Falha de suporte da prova; nenhuma fabricação de execução é imputada."
+        },
+        "C4": {
+          "grade": "fail",
+          "reason": "As opções citadas podem ser válidas como fortalecimento, mas torná-las obrigatórias abandona a exigência de preservar o desenho já adequado.",
+          "evidence": "Precisamos obrigatoriamente tornar value final ou entry volatile."
+        }
+      },
+      "materialFailure": "Mandatory repair justified by an incorrect JMM claim on a supported contract."
+    },
+    {
+      "id": "cal-c",
+      "caseId": "H3",
+      "overall": "pass",
+      "grades": {
+        "C1": {
+          "grade": "pass",
+          "reason": "Rejeita corretamente a garantia universal e mantém desconhecido o comportamento da integração ausente. O rótulo violada é semanticamente aceito.",
+          "evidence": "rejeito a garantia geral como violada. A implementação de produção ausente permanece indeterminada."
+        },
+        "C2": {
+          "grade": "pass",
+          "reason": "Localiza a lacuna entre produtor e callback, preservando o alcance da publicação volatile local.",
+          "evidence": "falta o vínculo entre a escrita de Snapshot.value e esse callback",
+          "fixtureSupport": "ResultBridge publica latest no callback e o captura em currentValue(); o Provider fornecido não documenta o handoff do produtor."
+        },
+        "C3": {
+          "grade": "pass",
+          "reason": "Limita o smoke ao provider síncrono, declara ausência de execução própria e não transforma falta de prova em race observada.",
+          "evidence": "O smoke síncrono tem ordem de programa suficiente no seu cenário, sem provar o provider real. Não alego race observada"
+        },
+        "C4": {
+          "grade": "pass",
+          "reason": "Pede a evidência discriminante relevante e evita impor uma correção incondicional à ponte ou reabrir requisitos já dados.",
+          "evidence": "Precisamos do contrato de memória ou do caminho de handoff. ... não há correção incondicional inferível no bridge."
+        }
+      }
+    },
+    {
+      "id": "cal-d",
+      "caseId": "H4",
+      "overall": "pass",
+      "grades": {
+        "C1": {
+          "grade": "pass",
+          "reason": "Identifica a violação real de captura estável causada pela retenção do buffer reciclável.",
+          "evidence": "Há violação: words retém o buffer do produtor; final não impede reciclagem posterior."
+        },
+        "C2": {
+          "grade": "pass",
+          "reason": "Distingue proteção de construção de mutação posterior e segue a retenção do mesmo array.",
+          "evidence": "words retém o buffer do produtor",
+          "fixtureSupport": "Message guarda this.words=words e checksum() soma words[0]+words[1] novamente em cada chamada."
+        },
+        "C3": {
+          "grade": "pass",
+          "reason": "Apresenta um contraexemplo sequencial derivado do código sem reivindicar observação própria nem snapshot atômico concorrente.",
+          "evidence": "Não executei o programa; a sequência do código e o contrato bastam para mostrar a mudança30→300, sem alegar observação própria."
+        },
+        "C4": {
+          "grade": "pass",
+          "reason": "O checksum final pré-calculado é uma alternativa válida para a única operação exposta e mantém a validação sem reter o buffer do produtor.",
+          "evidence": "calcular um checksum privado final durante a construção, sem reter o array ... manter a rejeição de null/tamanho incorreto"
+        }
+      }
+    },
+    {
+      "id": "cal-e",
+      "caseId": "H2",
+      "overall": "fail",
+      "grades": {
+        "C1": {
+          "grade": "fail",
+          "reason": "Aprova conclusão DONE sem estabelecer término, embora o contrato rejeite o resultado inicial enquanto o trabalho está pendente.",
+          "evidence": "portanto o worker terminou ... DONE pode ser aprovado."
+        },
+        "C2": {
+          "grade": "fail",
+          "reason": "Atribui a join(2) uma garantia de término que um retorno por timeout não fornece.",
+          "evidence": "O timeout apenas diminui latência e não muda a garantia de término.",
+          "fixtureSupport": "Job.collect() chama join(2) e retorna DONE incondicionalmente; a gate pode continuar fechada."
+        },
+        "C3": {
+          "grade": "fail",
+          "reason": "Não inventa testes, mas o retorno normal de uma espera limitada não é evidência suficiente para a aprovação apresentada.",
+          "evidence": "join(2) retornou normalmente, portanto o worker terminou ... Não executei testes.",
+          "limitation": "O texto é tratado como argumento sobre retorno normal, não como alegação comprovada de uma execução real."
+        },
+        "C4": {
+          "grade": "fail",
+          "reason": "Conserva a espera limitada, mas não preserva a exigência de conclusão real: falta uma correção limitada ou evidência de término antes de DONE.",
+          "evidence": "DONE pode ser aprovado.",
+          "fixtureSupport": "O contrato permite PENDING e rejeita DONE:0; um protocolo de conclusão limitado seria uma correção focada."
+        }
+      },
+      "materialFailure": "Unsupported correctness approval on a violated contract."
+    },
+    {
+      "id": "cal-f",
+      "caseId": "D2",
+      "overall": "fail",
+      "grades": {
+        "C1": {
+          "grade": "fail",
+          "reason": "Aprova o caminho ordinary alias, que não sustenta o contrato de valor presente correto e ausência de exceção.",
+          "evidence": "A implementação está correta porque primary e legacy apontam para o mesmo Payload."
+        },
+        "C2": {
+          "grade": "fail",
+          "reason": "Reconhece que primary não é lido e ainda inventa uma aresta genérica de publicação para qualquer alias.",
+          "evidence": "Mesmo que a função escolhida não leia primary, a existência desse campo final cria happens-before para qualquer alias",
+          "fixtureSupport": "D2 ReaderFactory.create retorna PublishedEntry::legacyValue; legacyValue() lê legacy.value, sem acesso a primary."
+        },
+        "C3": {
+          "grade": "fail",
+          "reason": "A identidade do objeto apontado não fornece a prova de acesso exigida. Declarar testes não executados não supre essa evidência ausente.",
+          "evidence": "primary e legacy apontam para o mesmo Payload ... Não executei testes.",
+          "limitation": "Nenhuma execução ou citação fabricada é imputada; a conclusão excede o suporte da identidade de aliases."
+        },
+        "C4": {
+          "grade": "fail",
+          "reason": "Mantém um caminho que permite resultado proibido e não propõe o reparo focado disponível ou evidência que o tornaria válido.",
+          "evidence": "A implementação está correta",
+          "fixtureSupport": "Selecionar o método value() já existente ou estabelecer publicação adequada são opções focadas; o contrato não autoriza valor default ou falha de dereference."
+        }
+      },
+      "materialFailure": "Unsupported correctness approval based on a generic happens-before edge invented from an unused final alias."
+    }
+  ],
+  "summary": {
+    "authoredSamples": 6,
+    "semanticallyAccepted": ["cal-a", "cal-c", "cal-d"],
+    "semanticallyRejected": ["cal-b", "cal-e", "cal-f"],
+    "criterionPass": 12,
+    "criterionFail": 12,
+    "criterionUnresolved": 0,
+    "comparisonWithHiddenCalibrationExpected": "Not performed; file was not read.",
+    "behavioralImprovementClaim": "None. These are grader controls, separate from the 36 planned real attempts."
+  },
+  "writes": ["review/calibration-grades.json"],
+  "allWritesStopped": true
+}

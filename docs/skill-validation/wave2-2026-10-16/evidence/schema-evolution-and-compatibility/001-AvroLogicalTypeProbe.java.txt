@@ -1,0 +1,86 @@
+import java.io.ByteArrayOutputStream;
+import java.time.Instant;
+import java.util.HexFormat;
+import org.apache.avro.Schema;
+import org.apache.avro.SchemaCompatibility;
+import org.apache.avro.SchemaNormalization;
+import org.apache.avro.data.TimeConversions;
+import org.apache.avro.generic.GenericData;
+import org.apache.avro.generic.GenericDatumReader;
+import org.apache.avro.generic.GenericDatumWriter;
+import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.io.DecoderFactory;
+import org.apache.avro.io.EncoderFactory;
+
+public class AvroLogicalTypeProbe {
+  private static Schema schema(String logicalType) {
+    return new Schema.Parser().parse("""
+        {"type":"record","name":"Event","fields":[
+          {"name":"occurredAt","type":{"type":"long","logicalType":"%s"}}]}
+        """.formatted(logicalType));
+  }
+
+  private static byte[] write(Schema schema, long value) throws Exception {
+    GenericRecord record = new GenericData.Record(schema);
+    record.put("occurredAt", value);
+    ByteArrayOutputStream output = new ByteArrayOutputStream();
+    var encoder = EncoderFactory.get().binaryEncoder(output, null);
+    new GenericDatumWriter<GenericRecord>(schema).write(record, encoder);
+    encoder.flush();
+    return output.toByteArray();
+  }
+
+  private static Object read(Schema writer, Schema reader, byte[] bytes, GenericData data)
+      throws Exception {
+    return new GenericDatumReader<GenericRecord>(writer, reader, data)
+        .read(null, DecoderFactory.get().binaryDecoder(bytes, null)).get("occurredAt");
+  }
+
+  private static void equal(Object expected, Object actual) {
+    if (!expected.equals(actual)) throw new AssertionError(expected + " != " + actual);
+  }
+
+  public static void main(String[] args) throws Exception {
+    Schema millis = schema("timestamp-millis");
+    Schema micros = schema("timestamp-micros");
+    GenericData logical = new GenericData();
+    logical.addLogicalTypeConversion(new TimeConversions.TimestampMillisConversion());
+    logical.addLogicalTypeConversion(new TimeConversions.TimestampMicrosConversion());
+    System.out.println("java=" + System.getProperty("java.runtime.version"));
+    System.out.println("avro=" + Schema.class.getPackage().getImplementationVersion());
+    System.out.println("fastReaderEnabled=" + logical.isFastReaderEnabled());
+    for (Schema reader : new Schema[] {millis, micros}) {
+      for (Schema writer : new Schema[] {millis, micros}) {
+        var result = SchemaCompatibility.checkReaderWriterCompatibility(reader, writer).getType();
+        equal(SchemaCompatibility.SchemaCompatibilityType.COMPATIBLE, result);
+        System.out.println("reader=" + reader.getField("occurredAt").schema().getLogicalType()
+            + " writer=" + writer.getField("occurredAt").schema().getLogicalType()
+            + " verdict=" + result);
+      }
+    }
+    long millisFingerprint = SchemaNormalization.parsingFingerprint64(millis);
+    long microsFingerprint = SchemaNormalization.parsingFingerprint64(micros);
+    equal(millisFingerprint, microsFingerprint);
+    System.out.println("sameParsingFingerprint=" + (millisFingerprint == microsFingerprint));
+    for (long value : new long[] {0L, 1000L, -1000L}) {
+      byte[] bytes = write(millis, value);
+      Object oldRead = read(millis, millis, bytes, logical);
+      Object changedRead = read(millis, micros, bytes, logical);
+      Object rawRead = read(millis, micros, bytes, new GenericData());
+      equal(Instant.ofEpochMilli(value), oldRead);
+      equal(Instant.ofEpochSecond(0, value * 1000L), changedRead);
+      equal(value, rawRead);
+      equal(value == 0L, oldRead.equals(changedRead));
+      System.out.println("writerMillis=" + value + " bytes=" + HexFormat.of().formatHex(bytes)
+          + " readerMillis=" + oldRead + " readerMicros=" + changedRead
+          + " raw=" + rawRead + " rawClass=" + rawRead.getClass().getSimpleName());
+    }
+    byte[] newBytes = write(micros, 1_000_000L);
+    equal(Instant.ofEpochSecond(1), read(micros, micros, newBytes, logical));
+    equal(Instant.ofEpochSecond(1000), read(micros, millis, newBytes, logical));
+    System.out.println("writerMicros=1000000 readerMillis="
+        + read(micros, millis, newBytes, logical) + " readerMicros="
+        + read(micros, micros, newBytes, logical));
+    System.out.println("PASS: all assertions (writer-selected reader preserves both units).");
+  }
+}

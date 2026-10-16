@@ -1,0 +1,114 @@
+[
+  {
+    "file": "java25-launcher.html",
+    "url": "https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html",
+    "status": 200,
+    "bytes": 236668,
+    "sha256": "ec11b8ca0d227c1a93a964d5bcde71131a473797ffb7e809d35258fabe84eedd"
+  },
+  {
+    "file": "kernel-cgroup-v2.html",
+    "url": "https://docs.kernel.org/admin-guide/cgroup-v2.html",
+    "status": 200,
+    "bytes": 172971,
+    "sha256": "1b3fb47df6a5f03bb431cec15455c531369ce76502ff68dd039ae9dbc304026b"
+  },
+  {
+    "file": "kernel-cfs-bandwidth.html",
+    "url": "https://docs.kernel.org/scheduler/sched-bwc.html",
+    "status": 200,
+    "bytes": 23172,
+    "sha256": "bc7540d1da7a57772c9ade2305ae096db7e5745a33c49dc63c0d6a4ced5398f2"
+  },
+  {
+    "file": "jdk25-cgroup-util.cpp",
+    "url": "https://raw.githubusercontent.com/openjdk/jdk/jdk-25%2B36/src/hotspot/os/linux/cgroupUtil_linux.cpp",
+    "status": 200,
+    "bytes": 7072,
+    "sha256": "0331c5e56bf4800fa21fdd53cbf0cd218069bb169c08325065c972385088a3f6"
+  },
+  {
+    "file": "jdk25-launcher-helper.java",
+    "url": "https://raw.githubusercontent.com/openjdk/jdk/jdk-25%2B36/src/java.base/share/classes/sun/launcher/LauncherHelper.java",
+    "status": 200,
+    "bytes": 50211,
+    "sha256": "4e29c2889053ed19d19a4ec05deaa2c515cb3d753a64cde86544632782aebce8"
+  },
+  {
+    "file": "jdk25-cgroup-v2.java",
+    "url": "https://raw.githubusercontent.com/openjdk/jdk/jdk-25%2B36/src/java.base/linux/classes/jdk/internal/platform/cgroupv2/CgroupV2Subsystem.java",
+    "status": 200,
+    "bytes": 13688,
+    "sha256": "348280e7fbde2addc5e4505f9ac960b703139c818ff3ec9682f8161d9b95bcb7"
+  },
+  {
+    "file": "jdk25-gc-globals.hpp",
+    "url": "https://raw.githubusercontent.com/openjdk/jdk/jdk-25%2B36/src/hotspot/share/gc/shared/gc_globals.hpp",
+    "status": 200,
+    "bytes": 45911,
+    "sha256": "5ad92ee10f586bba15b80df29ffb68c8099b1ea3566ca9ef399af10aa0a5fa7a"
+  },
+  {
+    "file": "jdk26-gc-globals.hpp",
+    "url": "https://raw.githubusercontent.com/openjdk/jdk/jdk-26%2B35/src/hotspot/share/gc/shared/gc_globals.hpp",
+    "status": 200,
+    "bytes": 40685,
+    "sha256": "3967d56ce25e655b850c6cd76bf883312f0c92d9eda2d440b2052457085a668b"
+  },
+  {
+    "file": "jdk26-arguments.cpp",
+    "url": "https://raw.githubusercontent.com/openjdk/jdk/jdk-26%2B35/src/hotspot/share/runtime/arguments.cpp",
+    "status": 200,
+    "bytes": 157563,
+    "sha256": "ca248b0884c5fc37e41ebfafc79152c915ebc74fe9b87dce5790885fee53befa"
+  },
+  {
+    "file": "jdk26-ops.html",
+    "url": "https://inside.java/2026/03/02/jdk-26-rn-ops/",
+    "status": 200,
+    "bytes": 17710,
+    "sha256": "dccc19747c6b2ade16aed6c48cfcebacf09d9590e6cdbca8431d3994dd9ed0ca"
+  },
+  {
+    "file": "jdk19-cgroup-subsystem.cpp",
+    "url": "https://raw.githubusercontent.com/openjdk/jdk/jdk-19%2B36/src/hotspot/os/linux/cgroupSubsystem_linux.cpp",
+    "status": 200,
+    "bytes": 23390,
+    "sha256": "f4c3863c40dfd53335561f0198efaffe3a536480cba63f41c7b96ea54a336ec8"
+  },
+  {
+    "file": "jdk19-linux-globals.hpp",
+    "url": "https://raw.githubusercontent.com/openjdk/jdk/jdk-19%2B36/src/hotspot/os/linux/globals_linux.hpp",
+    "status": 200,
+    "bytes": 6011,
+    "sha256": "7e5339444e7ffd96bb4d132ec03cbde52bd8ac9f63f9f2222fa253f391842804"
+  },
+  {
+    "file": "kubernetes-resources.html",
+    "url": "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+    "status": 200,
+    "bytes": 563507,
+    "sha256": "8eee4a66c18acfd2ad9798686ad1bec7831deaae5f71691e33217bc06e2c870e"
+  },
+  {
+    "file": "kubernetes-volumes.html",
+    "url": "https://kubernetes.io/docs/concepts/storage/volumes/",
+    "status": 200,
+    "bytes": 640831,
+    "sha256": "c3fb7b2057fdad40977fa5cdfc78becb56b4dc0a3e107c4e1e2022e800ff013e"
+  },
+  {
+    "file": "jdk25-nmt.html",
+    "url": "https://docs.oracle.com/en/java/javase/25/vm/native-memory-tracking.html",
+    "status": 200,
+    "bytes": 20987,
+    "sha256": "38c26463315bbee49457609b3f2857b894563647230143a69ed82c1f01a4ce2c"
+  },
+  {
+    "file": "jdk11-0-16-fixes.html",
+    "url": "https://www.oracle.com/java/technologies/javase/11-0-16-bugfixes.html",
+    "status": 200,
+    "bytes": 44464,
+    "sha256": "82761aba8699cbc0e8cc2bba9f99cd9b35b9df478dd8e2a8b8dc6efde2c0bfa1"
+  }
+]

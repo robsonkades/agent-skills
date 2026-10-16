@@ -1,0 +1,95 @@
+{
+  "status": "PASS",
+  "scope": "Coordinator-authorized narrow repair of Jakarta Persistence 3.2 citation only.",
+  "version": "1.2.5 reused",
+  "priorPackageHashesMatchedAcceptedHandoff": true,
+  "packageDelta": "Only the single .html URL suffix changed after the previous handoff; reversal hash check passed, all other owned hashes unchanged.",
+  "sourceResolution": {
+    "oldUrl": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2",
+    "oldStatus": 404,
+    "newUrl": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html",
+    "newStatus": 200,
+    "title": "Jakarta Persistence",
+    "header": "3.2, April 10, 2024"
+  },
+  "sources": [
+    {
+      "url": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html",
+      "version": "Jakarta Persistence 3.2; document identifies April 10, 2024",
+      "consulted": "2026-10-16",
+      "supports": "Restored the existing authoritative specification reference after confirming the extensionless URL returns 404 and the .html document returns 200.",
+      "method": "web open and PowerShell Invoke-WebRequest; normalized visible document title/version/date confirmed",
+      "limitation": "This reopening verifies source resolution/identity; it does not repeat provider, Java fixture or behavioral validation."
+    }
+  ],
+  "commands": [
+    {
+      "purpose": "Reopening source status verification",
+      "cwd": "C:/git/agent-skills",
+      "command": "$smellsUrls = @(\n  'https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2',\n  'https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html'\n)\n$smellsUrlResults = foreach ($smellsUrl in $smellsUrls) {\n  try {\n    $smellsResponse = Invoke-WebRequest -Uri $smellsUrl -UseBasicParsing\n    [PSCustomObject]@{Url=$smellsUrl;Status=[int]$smellsResponse.StatusCode;Spec32=($smellsResponse.Content -match '3.2, April 10, 2024')}\n  } catch {\n    [PSCustomObject]@{Url=$smellsUrl;Status=[int]$_.Exception.Response.StatusCode;Error=$_.Exception.Message}\n  }\n}\n$smellsUrlResults | ConvertTo-Json\nif ($smellsUrlResults[0].Status -ne 404 -or $smellsUrlResults[1].Status -ne 200 -or -not $smellsUrlResults[1].Spec32) { throw 'Unexpected source resolution' }",
+      "chunk_id": "405e70",
+      "wall_time_seconds": 2.530624,
+      "exit_code": 1,
+      "original_token_count": 146,
+      "output": "[\r\n  {\r\n    \"Url\": \"https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2\",\r\n    \"Status\": 404,\r\n    \"Error\": \"Response status code does not indicate success: 404 (Not Found).\"\r\n  },\r\n  {\r\n    \"Url\": \"https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html\",\r\n    \"Status\": 200,\r\n    \"Spec32\": false\r\n  }\r\n]\r\nException: \r\nLine |\r\n  15 |  … $smellsUrlResults[1].Spec32) { throw 'Unexpected source resolution' }\r\n     |                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\r\n     | Unexpected source resolution\r\n"
+    },
+    {
+      "purpose": "Correct HTML-aware specification identity verification",
+      "cwd": "C:/git/agent-skills",
+      "command": "$smellsUrl = 'https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html'\n$smellsResponse = Invoke-WebRequest -Uri $smellsUrl -UseBasicParsing\n$smellsVisibleText = [System.Net.WebUtility]::HtmlDecode(($smellsResponse.Content -replace '<[^>]+>', ' ')) -replace '\\s+', ' '\n$smellsHeader = [regex]::Match($smellsVisibleText, '3\\.2,.{0,40}April 10, 2024').Value\n[PSCustomObject]@{Url=$smellsUrl;Status=[int]$smellsResponse.StatusCode;SpecHeader=$smellsHeader;Title=($smellsResponse.Content -match '<title>Jakarta Persistence</title>')} | ConvertTo-Json\nif ($smellsResponse.StatusCode -ne 200 -or $smellsHeader -eq '' -or -not ($smellsResponse.Content -match '<title>Jakarta Persistence</title>')) { throw 'Unexpected specification identity' }",
+      "chunk_id": "45f6dd",
+      "wall_time_seconds": 1.5610475,
+      "exit_code": 0,
+      "original_token_count": 45,
+      "output": "{\r\n  \"Url\": \"https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html\",\r\n  \"Status\": 200,\r\n  \"SpecHeader\": \"3.2, April 10, 2024\",\r\n  \"Title\": true\r\n}\r\n"
+    },
+    {
+      "purpose": "Reopening strict local package check",
+      "cwd": "C:/git/agent-skills",
+      "command": "@'\nimport assert from 'node:assert/strict';\nimport { existsSync, readFileSync } from 'node:fs';\nimport { dirname, resolve } from 'node:path';\nimport { loadPackageFromDirectory, validatePackage } from '@jvm-expert/core';\nimport { NodeFileSystem } from '@jvm-expert/node';\nimport { ClaudeCodeAdapter } from '@jvm-expert/adapter-claude';\nimport { CodexAdapter } from '@jvm-expert/adapter-codex';\nconst directory = resolve('skills/enterprise-architecture-smells');\nconst loaded = await loadPackageFromDirectory(new NodeFileSystem(), directory, { strict: true });\nconst report = validatePackage(loaded.pkg, {\n  strict: true, directoryName: 'enterprise-architecture-smells',\n  adapters: [new ClaudeCodeAdapter(), new CodexAdapter()],\n});\nconst issues = [...loaded.issues, ...report.issues];\nassert.deepEqual(issues, []);\nassert.equal(loaded.pkg.manifest.version, '1.2.5');\nconst declared = new Set([\n  ...(loaded.pkg.manifest.dependencies ?? []).map(item => item.name),\n  ...(loaded.pkg.manifest.suggests ?? []),\n]);\nconst referrals = new Set();\nlet localMarkdownLinks = 0;\nfor (const file of loaded.pkg.files.filter(file => file.path.endsWith('.md'))) {\n  const content = readFileSync(resolve(directory, file.path), 'utf8');\n  for (const match of content.matchAll(/\\[[^\\]]+\\]\\(([^)]+)\\)/g)) {\n    if (/^https?:/.test(match[1])) continue;\n    const [target, anchor] = match[1].split('#');\n    const absolute = resolve(directory, dirname(file.path), target);\n    assert.ok(existsSync(absolute), file.path + ': ' + match[1]);\n    if (anchor === 'one-incoming-intent-several-downstream-effects') {\n      assert.ok(readFileSync(absolute, 'utf8').includes('## One incoming intent, several downstream effects'));\n    }\n    localMarkdownLinks++;\n  }\n  for (const match of content.matchAll(/`([a-z][a-z0-9]*-[a-z0-9-]+)`/g)) {\n    const name = match[1];\n    if (!existsSync(resolve('skills', name, 'SKILL.md'))) continue;\n    assert.ok(declared.has(name), 'Undeclared referral: ' + name);\n    referrals.add(name);\n  }\n}\nconsole.log(JSON.stringify({\n  status: 'PASS', name: loaded.pkg.manifest.name, version: loaded.pkg.manifest.version,\n  files: loaded.pkg.files.length, issues: issues.length, localMarkdownLinks,\n  declaredSkillReferrals: referrals.size, adapters: ['claude', 'codex'],\n}));\n'@ | node --input-type=module",
+      "chunk_id": "b718c4",
+      "wall_time_seconds": 0.2422706,
+      "exit_code": 0,
+      "original_token_count": 45,
+      "output": "{\"status\":\"PASS\",\"name\":\"enterprise-architecture-smells\",\"version\":\"1.2.5\",\"files\":4,\"issues\":0,\"localMarkdownLinks\":2,\"declaredSkillReferrals\":14,\"adapters\":[\"claude\",\"codex\"]}\n"
+    },
+    {
+      "purpose": "Reopening reference formatting and owned whitespace",
+      "cwd": "C:/git/agent-skills",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/enterprise-architecture-smells/references/smell-catalogue.md\ngit diff --check -- skills/enterprise-architecture-smells",
+      "chunk_id": "49ed00",
+      "wall_time_seconds": 0.2721302,
+      "exit_code": 0,
+      "original_token_count": 17,
+      "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+    },
+    {
+      "purpose": "Prove reopening changed only the URL and reused version",
+      "cwd": "C:/git/agent-skills",
+      "command": "@'\nimport assert from 'node:assert/strict';\nimport {readFileSync} from 'node:fs';\nimport {createHash} from 'node:crypto';\nconst handoff=JSON.parse(readFileSync('C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/enterprise-architecture-smells.json','utf8'));\nconst oldUrl='https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2';\nconst newUrl=oldUrl+'.html';\nconst target='skills/enterprise-architecture-smells/references/smell-catalogue.md';\nconst text=readFileSync(target,'utf8');\nassert.equal(text.split(newUrl).length-1,1);\nassert.equal(createHash('sha256').update(text.replace(newUrl,oldUrl)).digest('hex'),handoff.finalHashes[target]);\nconst finalHashes={};\nfor(const [path,hash] of Object.entries(handoff.finalHashes)){\n  finalHashes[path]=createHash('sha256').update(readFileSync(path)).digest('hex');\n  if(path!==target)assert.equal(finalHashes[path],hash);\n}\nassert.match(readFileSync('skills/enterprise-architecture-smells/skill.yaml','utf8'),/^version: 1\\.2\\.5$/m);\nconsole.log(JSON.stringify({status:'PASS',onlyReopenedChange:'one URL suffix .html',version:'1.2.5',finalHashes}));\n'@ | node --input-type=module\nif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }\ngit diff --check -- skills/enterprise-architecture-smells\ngit diff --stat -- skills/enterprise-architecture-smells",
+      "chunk_id": "70552e",
+      "wall_time_seconds": 0.2147062,
+      "exit_code": 0,
+      "original_token_count": 201,
+      "output": "{\"status\":\"PASS\",\"onlyReopenedChange\":\"one URL suffix .html\",\"version\":\"1.2.5\",\"finalHashes\":{\"skills/enterprise-architecture-smells/SKILL.md\":\"7ec32a3f81927e61b70f86ce66a937642dccf31b8596a199f255918057625227\",\"skills/enterprise-architecture-smells/references/pattern-overuse.md\":\"7d7a27d37bdef0c46a8d01b1811b12ab68dd2e25380e180d0cad4b52e14549e5\",\"skills/enterprise-architecture-smells/references/smell-catalogue.md\":\"6d9c1e23c9d9d69be424eb011cd98ff9d9f54a174391b4c12ec3a3de4e810c80\",\"skills/enterprise-architecture-smells/skill.yaml\":\"ef069be3767d64771aadff6cfb527682562a471091e4fd4a55040291bca1f264\"}}\n .../references/smell-catalogue.md                           | 13 +++++++++----\n skills/enterprise-architecture-smells/skill.yaml            |  2 +-\n 2 files changed, 10 insertions(+), 5 deletions(-)\n"
+    }
+  ],
+  "failures": [
+    {
+      "stage": "reopened URL verification assertion",
+      "result": "Initial PowerShell check observed HTTP 404/200 as expected but exited 1 because it searched the version/date as contiguous raw HTML.",
+      "resolution": "Preserved the failure; reran the same document identity requirement after removing HTML tags and normalizing whitespace. Title Jakarta Persistence and header 3.2, April 10, 2024 passed with HTTP 200."
+    }
+  ],
+  "technicalEvidenceReused": "Prior five compilation cases and two signature inspections retained without rerun, as directed.",
+  "actorCasesChanged": false,
+  "globalChecksExecuted": false,
+  "finalHashes": {
+    "skills/enterprise-architecture-smells/SKILL.md": "7ec32a3f81927e61b70f86ce66a937642dccf31b8596a199f255918057625227",
+    "skills/enterprise-architecture-smells/references/pattern-overuse.md": "7d7a27d37bdef0c46a8d01b1811b12ab68dd2e25380e180d0cad4b52e14549e5",
+    "skills/enterprise-architecture-smells/references/smell-catalogue.md": "6d9c1e23c9d9d69be424eb011cd98ff9d9f54a174391b4c12ec3a3de4e810c80",
+    "skills/enterprise-architecture-smells/skill.yaml": "ef069be3767d64771aadff6cfb527682562a471091e4fd4a55040291bca1f264"
+  },
+  "allWritesStopped": true,
+  "backgroundProcesses": "None"
+}

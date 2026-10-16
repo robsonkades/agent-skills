@@ -1,0 +1,52 @@
+[
+  {
+    "id": "case-native-gate",
+    "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+    "args": [
+      "-Xbatch",
+      "-XX:-TieredCompilation",
+      "-XX:CompileThreshold=1000",
+      "-XX:+UnlockDiagnosticVMOptions",
+      "-XX:InlineFrequencyRatio=2.0",
+      "-XX:MaxInlineSize=8",
+      "-XX:InlineSmallCode=128",
+      "-XX:+LogCompilation",
+      "-XX:LogFile=C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/c2-sea-of-nodes/logs/case-native-gate.xml",
+      "-XX:CompileCommand=exclude,InlineGate::main",
+      "-XX:CompileCommand=PrintInlining,InlineGate::caller",
+      "-cp",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/c2-sea-of-nodes/classes",
+      "InlineGate"
+    ],
+    "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/c2-sea-of-nodes",
+    "status": 0,
+    "expected": "already compiled into a medium method",
+    "stdout": "CompileCommand: exclude InlineGate.main bool exclude = true\nCompileCommand: PrintInlining InlineGate.caller bool PrintInlining = true\n                            @ 1   InlineGate::callee (9 bytes)   failed to inline: already compiled into a medium method\n12399400384\r\n",
+    "stderr": ""
+  },
+  {
+    "id": "case-bytecode-gate",
+    "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+    "args": [
+      "-Xbatch",
+      "-XX:-TieredCompilation",
+      "-XX:CompileThreshold=1000",
+      "-XX:+UnlockDiagnosticVMOptions",
+      "-XX:InlineFrequencyRatio=2.0",
+      "-XX:MaxInlineSize=8",
+      "-XX:InlineSmallCode=512",
+      "-XX:+LogCompilation",
+      "-XX:LogFile=C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/c2-sea-of-nodes/logs/case-bytecode-gate.xml",
+      "-XX:CompileCommand=exclude,InlineGate::main",
+      "-XX:CompileCommand=PrintInlining,InlineGate::caller",
+      "-cp",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/c2-sea-of-nodes/classes",
+      "InlineGate"
+    ],
+    "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/c2-sea-of-nodes",
+    "status": 0,
+    "expected": "too big",
+    "stdout": "CompileCommand: exclude InlineGate.main bool exclude = true\nCompileCommand: PrintInlining InlineGate.caller bool PrintInlining = true\n                            @ 1   InlineGate::callee (9 bytes)   failed to inline: too big\n12399400384\r\n",
+    "stderr": ""
+  }
+]

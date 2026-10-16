@@ -1,0 +1,37 @@
+package probe;
+import example.*;
+import java.util.*;
+import javax.annotation.processing.*;
+import javax.lang.model.SourceVersion;
+import javax.lang.model.element.*;
+import javax.lang.model.type.*;
+import javax.tools.Diagnostic;
+
+@SupportedAnnotationTypes("example.UseCodec")
+@SupportedSourceVersion(SourceVersion.RELEASE_17)
+public final class CatchingProcessor extends AbstractProcessor {
+    @Override public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment round) {
+        for (Element element : round.getElementsAnnotatedWith(UseCodec.class)) {
+            UseCodec config = element.getAnnotation(UseCodec.class);
+            try {
+                config.value();
+                throw new AssertionError("Expected a compiler-model mirror");
+            } catch (MirroredTypeException expected) {
+                check(expected.getTypeMirror(), element, "value");
+            }
+            try {
+                config.alternatives();
+                throw new AssertionError("Expected compiler-model mirrors");
+            } catch (MirroredTypesException expected) {
+                for (TypeMirror type : expected.getTypeMirrors()) check(type, element, "alternatives");
+            }
+        }
+        return false;
+    }
+    private void check(TypeMirror type, Element element, String member) {
+        TypeMirror contract = processingEnv.getElementUtils().getTypeElement("example.Codec").asType();
+        boolean valid = processingEnv.getTypeUtils().isAssignable(type, contract);
+        processingEnv.getMessager().printMessage(valid ? Diagnostic.Kind.NOTE : Diagnostic.Kind.ERROR,
+            (valid ? "CAUGHT_OK: " : "CODEC_REQUIRED: ") + type + " in " + member, element);
+    }
+}

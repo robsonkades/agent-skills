@@ -1,0 +1,457 @@
+{
+  "status": "NO_CHANGES_NEEDED",
+  "skill": "cpu-cache-and-numa",
+  "wave": 3,
+  "ownedPath": "C:/git/agent-skills/skills/cpu-cache-and-numa",
+  "recorded": "2026-10-16",
+  "assignmentBaseline": {
+    "committedVersion": "1.3.4",
+    "assignmentVersion": "1.3.4",
+    "preExistingVersionBump": false,
+    "stagedChanges": [],
+    "unstagedChanges": [],
+    "untrackedFiles": [],
+    "files": [
+      {
+        "path": "skills\\cpu-cache-and-numa\\SKILL.md",
+        "sha256": "B05B5177875E747F744CB405C3442AB22158DB08B554A442B92012AA1F438D98"
+      },
+      {
+        "path": "skills\\cpu-cache-and-numa\\skill.yaml",
+        "sha256": "928F6716F6CEC059219B1A877A08E96CC09513B1BBF1232B508F2C41A8B37053"
+      },
+      {
+        "path": "skills\\cpu-cache-and-numa\\references\\false-sharing.md",
+        "sha256": "297FF2D2038191988E4F9780E21302A7C165C2C18D9BC85CC059C8A4991E8941"
+      },
+      {
+        "path": "skills\\cpu-cache-and-numa\\references\\numa.md",
+        "sha256": "23EFB6ECA673E26BBB2CA4DA7490706959255E172575B8BD10E1C408627D9C4D"
+      }
+    ],
+    "note": "Complete four-file package read. No nested AGENTS.md found. Current assignment baseline retained, including prior published improvements."
+  },
+  "versions": {
+    "committed": "1.3.4",
+    "assignment": "1.3.4",
+    "final": "1.3.4",
+    "rationale": "No supported present gap within this skill's promise; no content edit and therefore no version bump."
+  },
+  "filesChangedByReviewer": [],
+  "filesChangedBeforeAssignment": [],
+  "changes": [],
+  "findingsReviewed": [
+    {
+      "location": "SKILL.md:25-58,60-73; references/false-sharing.md:3-57",
+      "finding": "Existing workflow requires named access-pair ownership and competing lock/CPU/bandwidth/GC hypotheses; cache misses, no JFR lock event and scaling collapse are not treated as proof of false sharing.",
+      "consequence": "Avoids prescribing padding or lock rewrites from nondiscriminating symptoms.",
+      "disposition": "Preserved; Linux kernel writer/reader and lock/data examples support the distinction."
+    },
+    {
+      "location": "SKILL.md:74-103; references/false-sharing.md:59-114",
+      "finding": "JOL relative offsets, actual VM/header mode, relocation/alignment, separate-object adjacency and Contended controls are already qualified. Counter advice audits reads/resets and the consuming contract.",
+      "consequence": "Avoids treating layout estimates as physical isolation or LongAdder as an atomic counter transition.",
+      "disposition": "No supported correction; Java 25 LongAdder API confirms snapshot/reset limits."
+    },
+    {
+      "location": "SKILL.md:79-86; references/false-sharing.md:67-83",
+      "finding": "Compact-header guidance distinguishes experimental JDK 24, product opt-in 25/26, and upstream JDK 27 default, with vendor/build qualification.",
+      "consequence": "An upgrade without an explicit header flag can change layout; no false promise of universal footprint/coherence benefit.",
+      "disposition": "Official JDK 27 release notes freshly confirm JEP 534/default and September 15, 2026 release. No update needed."
+    },
+    {
+      "location": "SKILL.md:110-115; references/numa.md:3-40",
+      "finding": "NUMA behavior is collector/generation/platform scoped, including Parallel Eden locality versus old-generation interleaving, ZGC's UseNUMA selection, and Linux topology disablement.",
+      "consequence": "Enabled or requested UseNUMA is not proof all promoted objects stay local, nor a reason to tune a disabled policy.",
+      "disposition": "Confirmed against exact jdk-25-ga Parallel, ZGC and Linux source."
+    },
+    {
+      "location": "references/numa.md:42-78",
+      "finding": "Per-process page residence is distinguished from access traffic and system allocation counters; pinning requires allowed topology and whole-workload CPU/memory/bandwidth capacity.",
+      "consequence": "Avoids inventing a remote-access percentage from numastat or sacrificing capacity based on a matching core-count knee.",
+      "disposition": "Confirmed with numactl manual and Linux memory-policy documentation; detailed affinity implementation remains neighboring ownership."
+    }
+  ],
+  "preserved": [
+    "Hardware-locality explanatory/diagnostic role, meaningful activation triggers and optional deeper false-sharing/affinity handoffs.",
+    "Java baseline preservation with Java 25 default reference and actual vendor/collector/layout/topology evidence.",
+    "Coherence versus JMM semantics; same-variable contention versus independent writer/writer and writer/reader interference.",
+    "JOL caveats, compact-header release boundaries, internal Contended recognition/module conditions and relocation/alignment limits.",
+    "LongAdder versus AtomicLong, reset/cutover semantics and consumers; footprint/read costs alongside writer throughput.",
+    "Primitive/reference array tradeoffs and representation correctness.",
+    "Collector-specific NUMA, physical residence versus accesses, local-preference versus strict binding, capacity loss and no-change option.",
+    "All four files and metadata remain byte-identical to baseline."
+  ],
+  "reviewCriteria": [
+    "Does the agent acquire actual writer/reader/reset and active-consumer evidence before changing a counter or layout?",
+    "Does it keep miss/coherence/residency signals at their true observation level?",
+    "Does it inspect target build/header/collector/allowed topology rather than treating API/flag names as guarantees?",
+    "Does it preserve atomic transitions and other application semantics despite an attractive update benchmark?",
+    "Does it recommend retention or a bounded discriminating experiment when causal evidence is insufficient?"
+  ],
+  "commands": [
+    {
+      "command": "$ErrorActionPreference = 'Stop'\n@'\nimport {readFileSync,readdirSync,existsSync} from 'node:fs';\nimport {resolve,relative,dirname} from 'node:path';\nimport {parseManifest} from './packages/core/src/domain/manifest.ts';\nimport {buildSkillPackage} from './packages/core/src/domain/skill-package.ts';\nimport {validatePackage} from './packages/core/src/application/validate-package.ts';\nconst root=resolve('skills/cpu-cache-and-numa');\nconst paths=readdirSync(root,{recursive:true,withFileTypes:true}).filter(e=>e.isFile()).map(e=>resolve(e.parentPath,e.name));\nconst files=paths.map(p=>({path:relative(root,p).replaceAll('\\\\','/'),bytes:readFileSync(p)}));\nconst parsed=parseManifest(readFileSync(resolve(root,'skill.yaml'),'utf8'),{strict:true});\nconst report=validatePackage(buildSkillPackage(parsed.manifest,files),{directoryName:'cpu-cache-and-numa'});\nconst issues=[...parsed.issues,...report.issues];\nconst links=[];\nfor(const path of paths.filter(p=>p.endsWith('.md'))) {\n const text=readFileSync(path,'utf8');\n for(const match of text.matchAll(/\\[[^\\]]*\\]\\((<[^>]+>|[^\\s)]+)(?:\\s+[^)]*)?\\)/g)) {\n  const target=match[1].replace(/^<|>$/g,'');\n  if(/^[a-z][a-z0-9+.-]*:/i.test(target)) continue;\n  const [file,anchor]=target.split('#');\n  const dest=file?resolve(dirname(path),decodeURIComponent(file)):path;\n  if(!existsSync(dest)) throw new Error('Missing link '+target+' from '+path);\n  if(anchor) {\n   const headings=[...readFileSync(dest,'utf8').matchAll(/^#{1,6}\\s+(.+)$/gm)].map(m=>m[1].toLowerCase().replace(/[^\\w\\s-]/g,'').replace(/\\s/g,'-'));\n   if(!headings.includes(anchor)) throw new Error('Missing anchor '+target);\n  }\n  links.push({from:relative(root,path).replaceAll('\\\\','/'),target});\n }\n}\nconsole.log(JSON.stringify({skill:'cpu-cache-and-numa',files:files.map(f=>f.path),manifestVersion:parsed.manifest.version,issues,relativeLinks:links},null,2));\nif(issues.length) process.exitCode=1;\n'@ | node --input-type=module -",
+      "cwd": "C:/git/agent-skills",
+      "classification": "executed read-only skill-local check",
+      "chunk_id": "6a9b6a",
+      "wall_time_seconds": 0.1954489,
+      "exit_code": 0,
+      "original_token_count": 95,
+      "output": "{\n  \"skill\": \"cpu-cache-and-numa\",\n  \"files\": [\n    \"SKILL.md\",\n    \"skill.yaml\",\n    \"references/false-sharing.md\",\n    \"references/numa.md\"\n  ],\n  \"manifestVersion\": \"1.3.4\",\n  \"issues\": [],\n  \"relativeLinks\": [\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/false-sharing.md\"\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/numa.md\"\n    }\n  ]\n}\n"
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/cpu-cache-and-numa/SKILL.md skills/cpu-cache-and-numa/skill.yaml skills/cpu-cache-and-numa/references/false-sharing.md skills/cpu-cache-and-numa/references/numa.md",
+      "cwd": "C:/git/agent-skills",
+      "classification": "executed read-only skill-local check",
+      "chunk_id": "13d698",
+      "wall_time_seconds": 0.2308416,
+      "exit_code": 0,
+      "original_token_count": 17,
+      "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+    },
+    {
+      "command": "git diff --check -- skills/cpu-cache-and-numa; git status --short -- skills/cpu-cache-and-numa; git diff -- skills/cpu-cache-and-numa; git diff --cached -- skills/cpu-cache-and-numa",
+      "cwd": "C:/git/agent-skills",
+      "classification": "executed read-only skill-local check",
+      "chunk_id": "7498fd",
+      "wall_time_seconds": 0.1318686,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    }
+  ],
+  "structuralResults": {
+    "strictPackageValidation": {
+      "status": "PASS",
+      "files": 4,
+      "version": "1.3.4",
+      "issues": []
+    },
+    "relativeLinksAndAnchors": {
+      "status": "PASS",
+      "checked": 2
+    },
+    "scopedPrettier": {
+      "status": "PASS",
+      "files": 4
+    },
+    "scopedDiffCheck": {
+      "status": "PASS"
+    },
+    "finalScopedGit": {
+      "stagedChanges": [],
+      "unstagedChanges": [],
+      "untrackedFiles": []
+    },
+    "assignmentToFinalHashComparison": {
+      "status": "PASS",
+      "allFourUnchanged": true,
+      "finalFiles": [
+        {
+          "path": "skills\\cpu-cache-and-numa\\SKILL.md",
+          "sha256": "B05B5177875E747F744CB405C3442AB22158DB08B554A442B92012AA1F438D98"
+        },
+        {
+          "path": "skills\\cpu-cache-and-numa\\skill.yaml",
+          "sha256": "928F6716F6CEC059219B1A877A08E96CC09513B1BBF1232B508F2C41A8B37053"
+        },
+        {
+          "path": "skills\\cpu-cache-and-numa\\references\\false-sharing.md",
+          "sha256": "297FF2D2038191988E4F9780E21302A7C165C2C18D9BC85CC059C8A4991E8941"
+        },
+        {
+          "path": "skills\\cpu-cache-and-numa\\references\\numa.md",
+          "sha256": "23EFB6ECA673E26BBB2CA4DA7490706959255E172575B8BD10E1C408627D9C4D"
+        }
+      ]
+    }
+  },
+  "technicalChecks": {
+    "executed": [
+      {
+        "type": "primary API inspection",
+        "target": "Java 25 LongAdder",
+        "result": "Concurrent sum is not an atomic snapshot; reset requires quiescent updates for reliable use; concurrent sumThenReset does not promise the atomic pre-reset value."
+      },
+      {
+        "type": "primary documentation inspection",
+        "target": "Linux kernel false-sharing guide",
+        "result": "Independent write/read interference and lock/data coexistence are supported; mitigation trades space/complexity and need not help application performance."
+      },
+      {
+        "type": "primary implementation inspection",
+        "target": "jdk-25-ga Parallel GC",
+        "result": "Eden selects MutableNUMASpace; old-generation growth/page setup uses interleaved/global placement."
+      },
+      {
+        "type": "primary implementation inspection",
+        "target": "jdk-25-ga Linux NUMA",
+        "result": "Single node, single bound memory node and CPU/memory node mismatch can disable support; local placement uses a preferred policy."
+      },
+      {
+        "type": "primary implementation inspection",
+        "target": "jdk-25-ga ZGC",
+        "result": "ZArguments enables default UseNUMA, with ZFakeNUMA special handling; Linux ZNUMA reads the effective flag."
+      },
+      {
+        "type": "primary documentation inspection",
+        "target": "numastat manual and Linux memory policy",
+        "result": "Per-process output reports resident allocation by node; local_node/other_node are allocation counters; cpusets constrain policy."
+      },
+      {
+        "type": "primary release-note inspection",
+        "target": "Oracle JDK 27",
+        "result": "Release dated September 15, 2026; compact object headers default (JEP 534), matching existing skill."
+      }
+    ],
+    "notExecuted": [
+      "No Linux numactl/numastat, perf/c2c or target PMU capture.",
+      "No JOL layout, JMH benchmark or application performance experiment.",
+      "No JDK 27 runtime or other toolchain downloaded/executed.",
+      "No Java snippet compiled; all existing partial sketches remain unchanged."
+    ],
+    "environmentLimit": "Reviewer environment is Windows; no target Linux/NUMA workload was supplied. Documentation/source inspection is not target-hardware execution proof."
+  },
+  "behavioralEvaluation": {
+    "status": "NOT_EXECUTED",
+    "actualAgentOutputs": [],
+    "measuredImprovement": false,
+    "walkthroughs": [
+      {
+        "caseId": "cpu-cache-numa-counter-a",
+        "type": "structured reviewer walkthrough",
+        "result": "Existing read/reset/consumer guidance permits LongAdder only as a measured statistics candidate; it refutes proven-false-sharing and universal application-gain claims."
+      },
+      {
+        "caseId": "cpu-cache-numa-counter-b",
+        "type": "structured reviewer walkthrough",
+        "result": "Active exact-cutover consumer blocks the direct substitution despite the identical writer-only evidence; preserve atomic semantics."
+      }
+    ],
+    "caveat": "Cases and walkthroughs are proposed development evidence, not actual agent outputs, unseen holdouts or comparative improvement. Wave2's saturated comparisons were not generalized to this skill."
+  },
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/atomic/LongAdder.html",
+      "version": "Java SE 25",
+      "checked": "2026-10-16",
+      "kind": "primary API",
+      "supports": "Aggregate/reset/cutover distinctions."
+    },
+    {
+      "url": "https://docs.kernel.org/kernel-hacking/false-sharing.html",
+      "version": "Live kernel documentation as retrieved 2026-10-16",
+      "checked": "2026-10-16",
+      "kind": "primary documentation",
+      "supports": "False sharing including writer/reader and lock/data; evidence and mitigation limits."
+    },
+    {
+      "url": "https://www.oracle.com/java/technologies/javase/27-relnote-issues.html",
+      "version": "JDK 27 release notes, September 15 2026",
+      "checked": "2026-10-16",
+      "kind": "primary release notes",
+      "supports": "Compact headers default/JEP 534; does not establish a measured workload benefit."
+    },
+    {
+      "url": "https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/parallel/psYoungGen.cpp",
+      "version": "jdk-25-ga",
+      "checked": "2026-10-16",
+      "kind": "tagged primary implementation",
+      "supports": "NUMA-aware Eden space selection."
+    },
+    {
+      "url": "https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/parallel/psOldGen.cpp",
+      "version": "jdk-25-ga",
+      "checked": "2026-10-16",
+      "kind": "tagged primary implementation",
+      "supports": "Old-generation round-robin page allocation setup."
+    },
+    {
+      "url": "https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/parallel/mutableSpace.cpp",
+      "version": "jdk-25-ga",
+      "checked": "2026-10-16",
+      "kind": "tagged primary implementation",
+      "supports": "NUMA global/interleaved page setup."
+    },
+    {
+      "url": "https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/os/linux/os_linux.cpp",
+      "version": "jdk-25-ga Linux",
+      "checked": "2026-10-16",
+      "kind": "tagged primary implementation",
+      "supports": "Local preference, topology/binding constraints and effective flag disablement."
+    },
+    {
+      "url": "https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/z/zArguments.cpp",
+      "version": "jdk-25-ga",
+      "checked": "2026-10-16",
+      "kind": "tagged primary implementation",
+      "supports": "Default UseNUMA selection and special fake-NUMA branch."
+    },
+    {
+      "url": "https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/os/linux/gc/z/zNUMA_linux.cpp",
+      "version": "jdk-25-ga Linux",
+      "checked": "2026-10-16",
+      "kind": "tagged primary implementation",
+      "supports": "Effective UseNUMA consumed by ZGC platform initialization."
+    },
+    {
+      "url": "https://github.com/numactl/numactl/blob/master/numastat.8",
+      "version": "Live upstream manual retrieved 2026-10-16; not pinned to a local binary",
+      "checked": "2026-10-16",
+      "kind": "primary tool documentation",
+      "supports": "Per-process residency/allocation units and local_node/other_node meaning."
+    },
+    {
+      "url": "https://www.kernel.org/doc/html/latest/admin-guide/mm/numa_memory_policy.html",
+      "version": "Live kernel documentation retrieved 2026-10-16; target kernel unspecified",
+      "checked": "2026-10-16",
+      "kind": "primary platform documentation",
+      "supports": "Policy versus cpuset constraints; not measured current page traffic."
+    }
+  ],
+  "evidencePaths": {
+    "handoff": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/cpu-cache-and-numa.json",
+    "runtimeArtifacts": [],
+    "note": "Executed structural stdout and all source/version conclusions retained in this handoff; no runtime artifact or measured output invented."
+  },
+  "evidenceFailures": [
+    {
+      "action": "Scoped search for nested AGENTS.md",
+      "result": "Exit 1 with no match, as final command of initial inventory call.",
+      "resolution": "Repository AGENTS.md remains applicable; not a package-validation failure."
+    },
+    {
+      "action": "Initial broad read-only history search",
+      "result": "Output exceeded tool output budget because wave2 artifacts include large embedded baselines.",
+      "resolution": "Narrowed to comparative/roadmap sections and wave2 README summary. No completeness claim about the broad search."
+    },
+    {
+      "action": "Combined web output for several primary pages",
+      "result": "Large first page occupied the returned content window.",
+      "resolution": "Reopened relevant LongAdder and kernel sections with explicit line/find requests. No inference from missing initial output."
+    }
+  ],
+  "limits": [
+    "No supported edit means no new measured quality gain; no score or broad correctness guarantee assigned.",
+    "Primary implementation details are scoped to jdk-25-ga and stated platform; actual vendor/update/collector flags still require inspection when applying the skill.",
+    "Live Linux/numactl documentation was not paired with execution on a specific target kernel or numactl binary.",
+    "No proof of false sharing, current absolute alignment, remote-access traffic or performance can be derived from this repository review.",
+    "Synthetic case writer-only numbers are task fixtures; they were not produced in this review.",
+    "No shared file, prior-wave package, real agent configuration or repository-wide generated data changed."
+  ],
+  "cases": [
+    {
+      "id": "cpu-cache-numa-counter-a",
+      "classification": "proposed development case; not executed; not an unseen holdout",
+      "input": {
+        "task": "Use cpu-cache-and-numa to review the proposed counter optimization. Inspect the active consumer wiring and supplied evidence, then update counter-review.md with the supported classification, keep/change decision, and smallest useful verification plan. Preserve the deployed baseline and consumer contract. This is a findings-only source review: do not edit Java/configuration, install tools, run a benchmark or change CPU/NUMA placement.",
+        "prerequisites": [
+          "Materialize this case's exact fixture files in a fresh isolated workspace and provide the current cpu-cache-and-numa skill with both routed references.",
+          "Give the actor task and fixtures only. Keep evaluator criteria, the other case and review handoff out of actor input.",
+          "File inspection and editing counter-review.md are sufficient; version-matched primary API lookup is allowed. No runnable application, Linux PMU host, JOL installation or benchmark execution is required."
+        ],
+        "fixtureFiles": {
+          "README.md": "# Counter review fixture\nSynthetic review fixtures; the timing values are supplied task data, not results executed by this reviewer.\nTarget: HotSpot 25.0.3, G1, conventional headers, object alignment 8. The selected benchmark environment exposes one NUMA node and CPUs 0-7. No target PMU or object-address evidence is supplied.\nSeveral request threads call IntervalCounter.record(). One exporter thread calls CounterPublisher.publish() once per second concurrently with those updates. There are no other reads/resets or control paths. AppWiring selects exactly one consumer from application.properties. Source snippets show the relevant path; no runnable build is supplied.\n",
+          "src/IntervalCounter.java": "import java.util.concurrent.atomic.AtomicLong;\n\npublic final class IntervalCounter {\n    private final AtomicLong value = new AtomicLong();\n\n    public void record() {\n        value.incrementAndGet();\n    }\n\n    public long drain() {\n        return value.getAndSet(0);\n    }\n}\n",
+          "src/CounterPublisher.java": "import java.util.function.LongConsumer;\n\npublic final class CounterPublisher {\n    private final IntervalCounter counter;\n    private final LongConsumer sink;\n\n    public CounterPublisher(IntervalCounter counter, LongConsumer sink) {\n        this.counter = counter;\n        this.sink = sink;\n    }\n\n    public void publish() {\n        sink.accept(counter.drain());\n    }\n}\n",
+          "src/AppWiring.java": "import java.util.Properties;\nimport java.util.function.LongConsumer;\n\npublic final class AppWiring {\n    public static CounterPublisher create(Properties settings, IntervalCounter counter,\n            LongConsumer dashboard, LongConsumer settlement) {\n        LongConsumer selected = switch (settings.getProperty(\"counter.consumer\")) {\n            case \"dashboard\" -> dashboard;\n            case \"settlement\" -> settlement;\n            default -> throw new IllegalArgumentException(\"Unknown consumer\");\n        };\n        return new CounterPublisher(counter, selected);\n    }\n}\n",
+          "consumer-contracts.md": "# Deployed consumer contracts\ndashboard: advisory throughput display. Approximate concurrent samples and an approximate boundary between display intervals are accepted. No admission, billing, alert threshold or recovery decision uses these numbers; an exact cumulative total is not promised.\nsettlement: requires a single atomic interval cutover concurrent with updates. Every increment must belong to exactly one adjacent interval according to that cutover. Replacing it with an approximate display or coordinating writers through a new gate changes the accepted contract and is outside this request.\n",
+          "evidence/writer-only.csv": "writers,atomic_long_updates_per_second\n1,8000000\n8,3000000\n",
+          "evidence/coverage.md": "The supplied comparison exercises record() only. It excludes concurrent drain(), the selected sink, retained striped state and application-level throughput/latency. The same JVM, workload and visible CPUs were used at each writer count. There is no cache-to-cache/HITM capture or absolute cache-line mapping. Adding padding has not been tested.\n",
+          "counter-review.md": "# Proposed optimization\nThroughput declines with writer count, so this is proven false sharing. Replace AtomicLong with LongAdder and getAndSet(0) with sumThenReset(); both provide the same interval contract. Padding the counter would be an equivalent fix. The writer-only result proves the application will improve.\n",
+          "application.properties": "counter.consumer=dashboard\n"
+        }
+      },
+      "criteria": {
+        "expected": [
+          "Follow AppWiring and application.properties to the active consumer; inspect the concurrent drain/reset path instead of considering only increments.",
+          "Update counter-review.md with the affected conclusions and preserve valid evidence that writer throughput declines under the supplied conditions.",
+          "Identify many writers updating the same logical AtomicLong as true contention; do not label the whole regression proven false sharing from that curve. Padding does not eliminate same-variable contention.",
+          "Explain that LongAdder aggregate/reset semantics differ from the existing atomic cutover, and apply the active consumer's accepted contract.",
+          "Require update-plus-read/reset and representative application validation before claiming a benefit, including aggregation cost and footprint; keep missing PMU/layout evidence explicit.",
+          "Do not infer a cross-node traffic cause from this one-visible-node fixture or recommend topology changes from counter throughput alone.",
+          "Recognize that the active dashboard accepts approximate interval boundaries; LongAdder may be a candidate, subject to its read/reset semantics and measured total cost.",
+          "Do not reject all adder use merely because another inactive settlement consumer has a stronger contract. Preserve the simple AtomicLong baseline and compare rather than promising superiority.",
+          "If proposing another aggregation design, state its consistency/interval behavior and why it fits the dashboard; do not add coordination or infrastructure without need."
+        ],
+        "failureConditions": [
+          "Declares false sharing proved solely by declining update throughput.",
+          "Ignores the active consumer, concurrent drain() or reset semantics.",
+          "Claims LongAdder.sumThenReset is a drop-in linearizable equivalent of AtomicLong.getAndSet(0).",
+          "Claims padding fixes same-variable contention, or announces an application performance gain from the writer-only data.",
+          "Edits Java/configuration, runs forbidden captures/benchmarks, installs tools or changes hardware placement.",
+          "Treats an inactive settlement contract as the effective constraint without reading selection.",
+          "Guarantees bounded numerical error or exact accumulated totals not promised by the proposed concurrent aggregation."
+        ]
+      }
+    },
+    {
+      "id": "cpu-cache-numa-counter-b",
+      "classification": "proposed development case; not executed; not an unseen holdout",
+      "input": {
+        "task": "Use cpu-cache-and-numa to review the proposed counter optimization. Inspect the active consumer wiring and supplied evidence, then update counter-review.md with the supported classification, keep/change decision, and smallest useful verification plan. Preserve the deployed baseline and consumer contract. This is a findings-only source review: do not edit Java/configuration, install tools, run a benchmark or change CPU/NUMA placement.",
+        "prerequisites": [
+          "Materialize this case's exact fixture files in a fresh isolated workspace and provide the current cpu-cache-and-numa skill with both routed references.",
+          "Give the actor task and fixtures only. Keep evaluator criteria, the other case and review handoff out of actor input.",
+          "File inspection and editing counter-review.md are sufficient; version-matched primary API lookup is allowed. No runnable application, Linux PMU host, JOL installation or benchmark execution is required."
+        ],
+        "fixtureFiles": {
+          "README.md": "# Counter review fixture\nSynthetic review fixtures; the timing values are supplied task data, not results executed by this reviewer.\nTarget: HotSpot 25.0.3, G1, conventional headers, object alignment 8. The selected benchmark environment exposes one NUMA node and CPUs 0-7. No target PMU or object-address evidence is supplied.\nSeveral request threads call IntervalCounter.record(). One exporter thread calls CounterPublisher.publish() once per second concurrently with those updates. There are no other reads/resets or control paths. AppWiring selects exactly one consumer from application.properties. Source snippets show the relevant path; no runnable build is supplied.\n",
+          "src/IntervalCounter.java": "import java.util.concurrent.atomic.AtomicLong;\n\npublic final class IntervalCounter {\n    private final AtomicLong value = new AtomicLong();\n\n    public void record() {\n        value.incrementAndGet();\n    }\n\n    public long drain() {\n        return value.getAndSet(0);\n    }\n}\n",
+          "src/CounterPublisher.java": "import java.util.function.LongConsumer;\n\npublic final class CounterPublisher {\n    private final IntervalCounter counter;\n    private final LongConsumer sink;\n\n    public CounterPublisher(IntervalCounter counter, LongConsumer sink) {\n        this.counter = counter;\n        this.sink = sink;\n    }\n\n    public void publish() {\n        sink.accept(counter.drain());\n    }\n}\n",
+          "src/AppWiring.java": "import java.util.Properties;\nimport java.util.function.LongConsumer;\n\npublic final class AppWiring {\n    public static CounterPublisher create(Properties settings, IntervalCounter counter,\n            LongConsumer dashboard, LongConsumer settlement) {\n        LongConsumer selected = switch (settings.getProperty(\"counter.consumer\")) {\n            case \"dashboard\" -> dashboard;\n            case \"settlement\" -> settlement;\n            default -> throw new IllegalArgumentException(\"Unknown consumer\");\n        };\n        return new CounterPublisher(counter, selected);\n    }\n}\n",
+          "consumer-contracts.md": "# Deployed consumer contracts\ndashboard: advisory throughput display. Approximate concurrent samples and an approximate boundary between display intervals are accepted. No admission, billing, alert threshold or recovery decision uses these numbers; an exact cumulative total is not promised.\nsettlement: requires a single atomic interval cutover concurrent with updates. Every increment must belong to exactly one adjacent interval according to that cutover. Replacing it with an approximate display or coordinating writers through a new gate changes the accepted contract and is outside this request.\n",
+          "evidence/writer-only.csv": "writers,atomic_long_updates_per_second\n1,8000000\n8,3000000\n",
+          "evidence/coverage.md": "The supplied comparison exercises record() only. It excludes concurrent drain(), the selected sink, retained striped state and application-level throughput/latency. The same JVM, workload and visible CPUs were used at each writer count. There is no cache-to-cache/HITM capture or absolute cache-line mapping. Adding padding has not been tested.\n",
+          "counter-review.md": "# Proposed optimization\nThroughput declines with writer count, so this is proven false sharing. Replace AtomicLong with LongAdder and getAndSet(0) with sumThenReset(); both provide the same interval contract. Padding the counter would be an equivalent fix. The writer-only result proves the application will improve.\n",
+          "application.properties": "counter.consumer=settlement\n"
+        }
+      },
+      "criteria": {
+        "expected": [
+          "Follow AppWiring and application.properties to the active consumer; inspect the concurrent drain/reset path instead of considering only increments.",
+          "Update counter-review.md with the affected conclusions and preserve valid evidence that writer throughput declines under the supplied conditions.",
+          "Identify many writers updating the same logical AtomicLong as true contention; do not label the whole regression proven false sharing from that curve. Padding does not eliminate same-variable contention.",
+          "Explain that LongAdder aggregate/reset semantics differ from the existing atomic cutover, and apply the active consumer's accepted contract.",
+          "Require update-plus-read/reset and representative application validation before claiming a benefit, including aggregation cost and footprint; keep missing PMU/layout evidence explicit.",
+          "Do not infer a cross-node traffic cause from this one-visible-node fixture or recommend topology changes from counter throughput alone.",
+          "Recognize the active settlement requirement for a single atomic concurrent cutover and reject the proposed direct LongAdder.sumThenReset substitution.",
+          "Retain AtomicLong.getAndSet(0) or explicitly defer a separate, authorized semantics-preserving coordinated design; do not change the accepted contract to achieve writer throughput.",
+          "Use the same-variable contention finding to frame further work without presenting LongAdder/padding as automatically correct."
+        ],
+        "failureConditions": [
+          "Declares false sharing proved solely by declining update throughput.",
+          "Ignores the active consumer, concurrent drain() or reset semantics.",
+          "Claims LongAdder.sumThenReset is a drop-in linearizable equivalent of AtomicLong.getAndSet(0).",
+          "Claims padding fixes same-variable contention, or announces an application performance gain from the writer-only data.",
+          "Edits Java/configuration, runs forbidden captures/benchmarks, installs tools or changes hardware placement.",
+          "Accepts the substitution because the value is called a metric despite its active settlement use.",
+          "Weakens exact cutover to approximate statistics or adds a writer gate as if that contract change were already authorized."
+        ]
+      }
+    }
+  ],
+  "pairedCaseConstraint": "Only application.properties changes, selecting dashboard versus settlement. All other actor fixtures and task text are identical. The active consumer contract changes suitability of the proposed LongAdder reset substitution; the throughput observation and incomplete causality evidence remain unchanged.",
+  "crossSkill": {
+    "findings": [],
+    "actions": [],
+    "boundary": "Keep proving/fixing false sharing and detailed topology/affinity implementation with their existing optional neighboring owners."
+  },
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Shared generated index is coordinator-only during parallel review.",
+      "prerequisites": "All reviewers have stopped writes."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Repository-wide completion remains pending locally.",
+      "prerequisites": "All reviewers stopped writes and generated index prepared."
+    }
+  ],
+  "allWritesStopped": true,
+  "processesStillWriting": false
+}

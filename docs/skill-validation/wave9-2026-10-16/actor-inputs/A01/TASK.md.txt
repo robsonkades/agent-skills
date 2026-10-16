@@ -1,0 +1,9 @@
+# Independent component task A01
+
+Your entire assignment is the supplied local exercise. Work only in C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A01/output. Read input/project/README.md, REQUEST.md and the ordinary supplied project evidence before editing.
+
+First load input/skills/idempotency/SKILL.md and input/skills/timeouts-and-deadlines/SKILL.md. Their local resources are available when relevant. The two common dependency skills are the only skill packages provided. These snapshots are your complete skill context; do not load global skills, repository catalog files, other sessions, siblings, evaluator files or prior outputs. Do not browse or delegate. If a skill routes beyond the supplied context, record that limitation without opening other packages.
+
+All files under input/ and TASK.md are immutable. The copies under output/ are immutable except the implementation named in REQUEST.md. Add only task artifacts (Verification.java for Java cases, REVIEW.md, result.json, execution.json, optional local logs/classes). No writes outside output/. Inspect run.mjs before executing it. Java baseline and all operational limits are stated in the project README. Each Java subprocess has a 20-second limit; finish within approximately 10 minutes.
+
+Perform the requested repair or review, validate the actual deliverable, and report precisely what you executed. Record meaningful reads and complete commands/results in execution.json, including allWritesStopped=true only after work is finished. Do not invent a provider guarantee or claim that simulation proves production behavior. Do not self-grade. Your final message should name the deliverables, actual checks, limitations and stopped writes.

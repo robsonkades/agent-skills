@@ -55,6 +55,8 @@ means check removal remains conditional, not proven safe.
    null; mutable components and unverified construction paths need separate evidence.
    For mutable input, validate the stable owned value that will be used, not the caller's
    object followed by a later copy or reread. Establish the source's snapshot/ownership policy.
+   For extensible input types, verify the concrete implementation too: overridden accessors
+   can invalidate a guarantee inferred from the declared type.
 4. **Delete only proven-redundant checks.** Keep constructor invariants, authorization,
    concurrency/transaction rechecks and checks protecting a different state transition.
 5. **Use assertions diagnostically, never as required enforcement.** If disabling a check could

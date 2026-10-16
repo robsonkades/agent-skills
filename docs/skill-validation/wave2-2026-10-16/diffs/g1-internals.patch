@@ -1,0 +1,99 @@
+diff --git a/skills/g1-internals/SKILL.md b/skills/g1-internals/SKILL.md
+index 48167b4..7b4397e 100644
+--- a/skills/g1-internals/SKILL.md
++++ b/skills/g1-internals/SKILL.md
+@@ -109,7 +109,9 @@ question. An explanation or a justified unchanged configuration can complete the
+   sequence. Read the actual CSet and reclaimed bytes.
+ - Legacy `To-space exhausted` and current `Evacuation Failure: Allocation` indicate copy
+   allocation could not complete; `Evacuation Failure: Pinned` names a distinct pinned-region
+-  cause. G1 may retain failed regions, expand when possible, retry young collections or eventually
++  cause. JDK 25 can report `Allocation / Pinned` together: investigate both rather than treating
++  the reasons as exclusive or every failure as a heap-sizing problem. G1 may retain failed regions,
++  expand when possible, retry young collections or eventually
+   compact. Reconstruct the following events; none of these labels alone means a full GC occurred.
+ - "Initial Mark" does not appear in a modern log. The phase is
+   `Pause Young (Concurrent Start)`; searching for the old name returns nothing.
+diff --git a/skills/g1-internals/references/phase-diagnostics.md b/skills/g1-internals/references/phase-diagnostics.md
+index 6067cbb..3882e63 100644
+--- a/skills/g1-internals/references/phase-diagnostics.md
++++ b/skills/g1-internals/references/phase-diagnostics.md
+@@ -166,25 +166,43 @@ The string `To-space exhausted` no longer exists in the JDK 25 binary; a grep fo
+ current log is empty even while the failures are happening. The failure is a third
+ parenthesis on the summary line — `Allocation` when a copy destination cannot be allocated
+ in Survivor or Old, `Pinned` when the region held an object pinned by a JNI critical section
+-(JEP 423, JDK 22, which replaced the GC locker for G1). Objects that could not be copied stay
++(JEP 423, JDK 22, which replaced the GC locker for G1), or `Allocation / Pinned` when both
++causes occurred in that pause. Objects that could not be copied stay
+ where they are, temporarily self-forwarded during recovery; the region is kept as an old region.
+ Retaining it as a collection candidate is a separate policy decision: on JDK 25 its live bytes
+ must be strictly below the region capacity times `G1RetainRegionLiveThresholdPercent` / 100
+ (experimental). Do not infer candidate retention merely from the failure. `gc+phases=debug` reports
+-`Evacuation Failed Regions` / `Allocation Failed Regions` under `Restore Evacuation Failed
++`Evacuation Failed Regions`, `Pinned Regions` and `Allocation Failed Regions` under `Restore Evacuation Failed
+ Regions`. Allocation pressure may lead to expansion or full compaction; explicit/external GC requests
+ and humongous contiguous-space failure can also cause Full GC without repeated young failures.
+ 
+-Causes, in the order worth checking:
+-
+-1. Heap too small for the observed allocation and promotion rate — `G1ReservePercent`
+-   (default 10) is a policy reserve intended to reduce evacuation failure, not an inaccessible
+-   dedicated memory partition or guaranteed capacity; increasing it trades usable headroom.
+-2. Humongous objects consuming regions that evacuation needed (`gc+humongous=debug`).
+-3. Promotion rate high enough to keep the old generation near capacity — check the
+-   `Old regions` delta per young pause and whether marking started late
+-   (g1-concurrent-marking).
+-4. A pinned region, if the suffix says so — the JNI critical section, not the heap.
++On JDK 25, retained old candidates can be selected outside `Mixed`, including `Normal` and
++`Prepare Mixed` pauses. Inspect `gc+ergo+cset=debug` for marking versus retained candidates;
++the pause label alone does not establish a young-only collection set or show that recovery
++must wait for a mixed/full collection.
++
++Choose the investigation from all reported reasons, matching the process, GC ID and time window:
++
++- **`Pinned`:** follow the deployed native library and actual call path to the critical
++  acquire/release pair, such as `GetPrimitiveArrayCritical` / `ReleasePrimitiveArrayCritical`.
++  Inspect how long the critical region lasts and whether every normal/error exit releases it;
++  a native frame alone does not establish use of a pinning API. The JNI contract restricts work
++  inside critical regions, including blocking while waiting for another Java thread. Shorten or
++  remove a demonstrated critical-region problem while preserving native-data lifetime and results.
++  Pinning alone does not show that increasing heap or reserve removes this cause. If the native
++  implementation is unavailable, report the responsible caller/duration as unresolved and request
++  that focused evidence rather than naming a library from its presence in the dependency list.
++- **`Allocation`:** inspect destination-space demand against available heap, allocation and
++  promotion rates; check humongous-region consumption (`gc+humongous=debug`), the `Old regions`
++  delta and whether marking started late (`g1-concurrent-marking`). `G1ReservePercent`
++  (default 10) is a policy reserve intended to reduce evacuation failure, not an inaccessible
++  dedicated memory partition or guaranteed capacity; increasing it trades usable headroom.
++- **`Allocation / Pinned`:** retain both branches. A pinning fix does not establish that
++  destination-space pressure disappeared; compare the separate failure counts and subsequent
++  recovery under the same workload. Do not discard either reason or infer Full GC from the suffix.
++
++If an extractor drops the reason or the relevant counters were not captured, recover the raw
++summary or request the missing detail; absence from a filtered report is not evidence of absence.
+ 
+ ```bash
+ grep -n "Evacuation Failure" gc.log | head      # every failing pause, with its reason
+@@ -229,6 +247,10 @@ When measuring and validating:
+ - [OpenJDK 25 humongous logging and failed-region recovery](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/g1/g1YoungGCPostEvacuateTasks.cpp)
+ - [OpenJDK 25 retained-candidate policy](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/g1/g1Policy.cpp)
+ - [OpenJDK 25 copy-allocation destinations](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/g1/g1ParScanThreadState.cpp)
++- [OpenJDK 25 combined evacuation-failure reasons](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/g1/g1YoungCollector.cpp)
++- [OpenJDK 25 marking and retained collection-set selection](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/g1/g1CollectionSet.cpp)
++- [OpenJDK 25 JNI critical acquire/release paths](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/prims/jni.cpp)
++- [Java 25 JNI critical-region contract](https://docs.oracle.com/en/java/javase/25/docs/specs/jni/functions.html#getprimitivearraycritical-releaseprimitivearraycritical)
+ 
+ An isolated Temurin 25.0.3 G1 process confirmed that default `GC.class_histogram` requested a
+ `Heap Inspection Initiated GC`, while `-all` did not request that collection. This is a runtime
+diff --git a/skills/g1-internals/skill.yaml b/skills/g1-internals/skill.yaml
+index f4e4658..867aad3 100644
+--- a/skills/g1-internals/skill.yaml
++++ b/skills/g1-internals/skill.yaml
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: g1-internals
+-version: 1.3.4
++version: 1.3.5
+ description: >-
+   How G1 actually works: uniform regions and the ergonomic sizing formula, remembered sets
+   and the card table with its write barrier, SATB and the pre-write barrier, the phases of

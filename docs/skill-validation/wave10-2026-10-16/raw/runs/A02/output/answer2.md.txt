@@ -1,0 +1,11 @@
+Recomendo que Ana escolha **reter R no horizonte de 24 meses**. Substituo a recomendação anterior de N via P: a atualização autenticada torna esse caminho inadmissível.
+
+O contrato limita **qualquer pausa planejada de escrita a 6 minutos**, imediatamente e inclusive nas migrações, sem exceção. Os ensaios documentados de P continuam em 18 a 20 minutos, com limite operacional demonstrado de 20. Portanto, **P viola uma obrigação conhecida**; não se trata de mera falta de evidência. A economia e o prazo citados pelo patrocinador não autorizam compensar essa violação.
+
+R continua viável durante os 24 meses, e não existe necessidade de abandoná-lo. R e N seguem atendendo aos contratos nos estados finais; leitura, preservação e recuperação de P também permanecem verificadas. Isso não corrige sua pausa excessiva. A conclusão limita-se a **N via P**: não demonstra que N seja inviável por todo caminho possível. Outros caminhos permanecem sem análise, ensaio e estimativa.
+
+O custo futuro aceito de R é **520 mil**. Os 410 mil e a diferença de 110 mil pertencem a N via P, agora excluído por inviabilidade contratual; não podem ser atribuídos a um novo caminho. Os 90 mil já gastos no protótipo continuam irrecuperáveis e fora da comparação.
+
+O responsável técnico deve manter R em operação e retirar P do encaminhamento para rollout. A escolha de hoje não depende de nova pesquisa. Caso se investigue uma alternativa para N, limitar inicialmente o trabalho a estabelecer um caminho que preserve leitura e dados reconhecidos, cumpra recuperação e demais obrigações e demonstre pausas de no máximo 6 minutos na escala contratada. Reabrir a decisão somente com essa viabilidade demonstrada e custo completo de 24 meses, incluindo migração, sobreposição, operação, saída e recuperação: abaixo de 520 mil favorece a alternativa; acima favorece R; empate não estabelece vantagem econômica.
+
+Esta recomendação usa os documentos locais e a atualização como premissas; não executei ensaios nem implementei migração.

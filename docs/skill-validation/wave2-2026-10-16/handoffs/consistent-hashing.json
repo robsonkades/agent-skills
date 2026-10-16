@@ -1,0 +1,180 @@
+{
+  "skill": "consistent-hashing",
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "ownedPath": "skills/consistent-hashing/**",
+  "versions": {
+    "committed": "1.2.4",
+    "assignmentTime": "1.2.4",
+    "final": "1.2.5",
+    "rationale": "One patch for skill-content edits; no pre-existing bump or changes."
+  },
+  "files": {
+    "changedByReviewer": [
+      "skills/consistent-hashing/SKILL.md",
+      "skills/consistent-hashing/references/ring-in-java.md",
+      "skills/consistent-hashing/skill.yaml"
+    ],
+    "preExistingChanges": [],
+    "unchanged": ["skills/consistent-hashing/references/mapping-functions.md"],
+    "validationOnly": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/consistent-hashing/"
+  },
+  "changes": [
+    {
+      "location": "SKILL.md Workflow step 3; references/ring-in-java.md Cross-process agreement",
+      "finding": "Node-point golden vectors and join monotonicity do not check caller key serialization or final routing. A different prefix can retain both properties yet split ownership.",
+      "correction": "Trace the runtime-selected caller/configuration; freeze raw-key/bytes/hash/primary/ordered-replica vectors with topology and provenance, run them through the request-to-owner path, and require a key-prefix negative control to fail."
+    },
+    {
+      "location": "SKILL.md Purpose and Workflow step 5",
+      "finding": "Categorical imbalance and an unsupported claim that wrap-around is the most commonly omitted line were stronger than the evidence.",
+      "correction": "Express random-point imbalance as possible high variance and replace the frequency claim with a targeted wrap-around check."
+    }
+  ],
+  "preserved": [
+    "All ring, rendezvous, jump, bounded-load and fixed-partition choices and scope boundaries.",
+    "Weighted resource-normalized balance, movement expectations versus invariants, hot-key caveat, V/rebuild/migration budgets.",
+    "Complete collision-safe synchronized Java16+ HashRing example and all partial Java snippets unchanged.",
+    "Distinct physical replicas, failure-domain restrictions, malformed-input/encoding contracts.",
+    "Authoritative-state epoch/fencing/write handoff and disposable-cache refill exception.",
+    "Descriptions, dependencies, suggestions and resources remain unchanged except manifest patch version."
+  ],
+  "checks": [
+    {
+      "type": "baseline",
+      "command": "git status --short -- skills/consistent-hashing; git show HEAD:skills/consistent-hashing/skill.yaml; assignment-time SHA256 capture of all four files",
+      "cwd": "C:/git/agent-skills",
+      "result": "Clean scoped assignment state; HEAD and initial version 1.2.4; unchanged hashes rechecked before editing."
+    },
+    {
+      "type": "structural",
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/consistent-hashing/validate-local.mjs C:/git/agent-skills",
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS: repository strict manifest parser 0 issues; name/description equal; version1.2.5; 3 declared paths and 2 relative links exist; complete Java example unchanged; mapping reference byte hash unchanged."
+    },
+    {
+      "type": "format",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/consistent-hashing/SKILL.md skills/consistent-hashing/skill.yaml skills/consistent-hashing/references/ring-in-java.md",
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS: All matched files use Prettier code style."
+    },
+    {
+      "type": "diff",
+      "command": "git diff --check -- skills/consistent-hashing; git diff -- skills/consistent-hashing",
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS: no whitespace errors; three-file focused diff inspected against the clean assignment baseline."
+    },
+    {
+      "type": "Java compilation",
+      "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe --release 16 -cp C:/Users/robso/.m2/repository/com/google/guava/guava/33.5.0-jre/guava-33.5.0-jre.jar HashRing.java RoutingAgreementControl.java",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/consistent-hashing",
+      "result": "PASS. Compiler Temurin25.0.3; target Java16; cached Guava33.5.0-jre. HashRing.java extracted unchanged from the skill."
+    },
+    {
+      "type": "technical negative control",
+      "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe -cp .;C:/Users/robso/.m2/repository/com/google/guava/guava/33.5.0-jre/guava-33.5.0-jre.jar RoutingAgreementControl",
+      "shellNote": "Quote the complete classpath string in PowerShell: '.;C:/Users/robso/.m2/repository/com/google/guava/guava/33.5.0-jre/guava-33.5.0-jre.jar'.",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/consistent-hashing",
+      "result": "PASS on Temurin25.0.3. V1024, 10000 keys: equal node points and matching positive routing with reversed insertion order; distinct ordered replicas. Both raw/prefixed clients preserve join monotonicity and 20% +/-2% sampled movement: 2094/10000 and2075/10000. Key-prefix control exposed7570 primary and9596 ordered-replica mismatches. Witness user:2 primary n2->n1; replicas [n2,n3,n4]->[n1,n3,n2].",
+      "output": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/consistent-hashing/experiment-output.txt"
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://guava.dev/releases/33.4.8-jre/api/docs/com/google/common/hash/HashFunction.html",
+      "version": "Guava33.4.8-jre documentation",
+      "supports": "HashFunction is determined by exact ordered input bytes; hashString encodes with the selected Charset. Consequence that node-only agreement does not establish key routing was confirmed with the local mutation experiment."
+    },
+    {
+      "url": "https://guava.dev/releases/33.4.8-jre/api/docs/com/google/common/hash/Hashing.html",
+      "version": "Guava33.4.8-jre documentation",
+      "supports": "Pinned Murmur3 x64 128-bit little-endian seed-zero contract; goodFastHash is process-seeded/unspecified."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/16/docs/api/java.base/java/lang/String.html",
+      "version": "Java16 documentation",
+      "supports": "Reviewed existing string encoding/ordering and malformed-input caveats; no executable change."
+    }
+  ],
+  "limitations": [
+    "No independent agent evaluation or before/after agent comparison executed; no measured behavioral improvement claimed.",
+    "Executed experiment demonstrates one verifier gap on a synthetic deterministic fixture; it is not a workload, full keyspace, concurrency or membership-handoff guarantee.",
+    "Compiler target16 was checked on JDK25.0.3, not a Java16 runtime. Cached Guava33.5.0 was used; no Guava33.4.8 runtime execution or cross-language execution was performed. No dependency installed or upgraded.",
+    "No project deployment or production-system contact. No global commands run by reviewer."
+  ],
+  "behavior": {
+    "executedAgentEvaluations": [],
+    "structuredWalkthroughs": [
+      "Changed runtime key prefix: investigate actual configuration, reject unchanged-contract compatibility, retain algorithm and frozen expected output.",
+      "Unchanged runtime key prefix: verify final request routing, retain current mapping; no migration inferred from an unchanged compatible path."
+    ],
+    "casesAre": "Proposed development cases, not unseen holdouts or executed agent evaluations."
+  },
+  "cases": [
+    {
+      "id": "routing-prefix-changed",
+      "input": {
+        "task": "Review whether this client update may roll out against authoritative stored state without changing the placement contract or migrating data. Inspect the actual routing and configuration, make the smallest justified compatibility check, and decide whether to retain or revise the rollout recommendation. Do not change the hash algorithm, V, weights, Java baseline, or data model.",
+        "context": "Java compiler target 16; cached Guava 33.5.0-jre; HashRing is the unchanged complete class in skills/consistent-hashing/references/ring-in-java.md. Four nodes n1,n2,n3,n4, weight 1 each, V=1024, epoch E, three distinct physical replicas. Prior tests compare ring-point maps and assert that adding n5 moves keys only to n5; both are green. A previous accepted client records user:2 -> primary n2, replicas [n2,n3,n4]. The contract hashes the request key as UTF-8 with no extra prefix.",
+        "fixtures": {
+          "ClientRouter.java": "import java.util.List;\nimport java.util.Properties;\nfinal class ClientRouter {\n  private final HashRing ring;\n  private final String prefix;\n  ClientRouter(HashRing ring, Properties config) { this.ring = ring; this.prefix = config.getProperty(\"keyPrefix\", \"\"); }\n  String owner(String requestKey) { return ring.owner(prefix + requestKey); }\n  List<String> owners(String requestKey) { return ring.owners(prefix + requestKey, 3); }\n}\n",
+          "accepted.properties": "keyPrefix=\n",
+          "accepted-vectors.json": "{\"epoch\":\"E\",\"V\":1024,\"nodes\":[\"n1\",\"n2\",\"n3\",\"n4\"],\"weights\":[1,1,1,1],\"key\":\"user:2\",\"primary\":\"n2\",\"replicas\":[\"n2\",\"n3\",\"n4\"],\"provenance\":\"Accepted unmodified Java HashRing, Guava33.5.0-jre; verified by retained RoutingAgreementControl output\"}",
+          "candidate.properties": "keyPrefix=cache:\n"
+        }
+      },
+      "expectedOutcomeCriteria": {
+        "must": [
+          "Inspect ClientRouter and selected candidate.properties instead of accepting node-point/monotonicity tests as sufficient.",
+          "Run or specify a fixed request-to-owner/ordered-replica check using the accepted vector; detect user:2 -> n1 and [n1,n3,n2].",
+          "Reject an unchanged-contract rollout; restore compatible serialization or treat deliberate prefix adoption as coordinated contract/migration work.",
+          "Preserve algorithm, V, Java and weights; keep existing golden output rather than regenerating it from the candidate."
+        ],
+        "failureConditions": [
+          "Approve rollout from the two green helper tests alone.",
+          "Increase V or change hashing to address caller serialization.",
+          "Rewrite expected vectors to the candidate output while claiming compatibility."
+        ]
+      }
+    },
+    {
+      "id": "routing-prefix-unchanged",
+      "input": {
+        "task": "Review whether this client update may roll out against authoritative stored state without changing the placement contract or migrating data. Inspect the actual routing and configuration, make the smallest justified compatibility check, and decide whether to retain or revise the rollout recommendation. Do not change the hash algorithm, V, weights, Java baseline, or data model.",
+        "context": "Java compiler target 16; cached Guava 33.5.0-jre; HashRing is the unchanged complete class in skills/consistent-hashing/references/ring-in-java.md. Four nodes n1,n2,n3,n4, weight 1 each, V=1024, epoch E, three distinct physical replicas. Prior tests compare ring-point maps and assert that adding n5 moves keys only to n5; both are green. A previous accepted client records user:2 -> primary n2, replicas [n2,n3,n4]. The contract hashes the request key as UTF-8 with no extra prefix.",
+        "fixtures": {
+          "ClientRouter.java": "import java.util.List;\nimport java.util.Properties;\nfinal class ClientRouter {\n  private final HashRing ring;\n  private final String prefix;\n  ClientRouter(HashRing ring, Properties config) { this.ring = ring; this.prefix = config.getProperty(\"keyPrefix\", \"\"); }\n  String owner(String requestKey) { return ring.owner(prefix + requestKey); }\n  List<String> owners(String requestKey) { return ring.owners(prefix + requestKey, 3); }\n}\n",
+          "accepted.properties": "keyPrefix=\n",
+          "accepted-vectors.json": "{\"epoch\":\"E\",\"V\":1024,\"nodes\":[\"n1\",\"n2\",\"n3\",\"n4\"],\"weights\":[1,1,1,1],\"key\":\"user:2\",\"primary\":\"n2\",\"replicas\":[\"n2\",\"n3\",\"n4\"],\"provenance\":\"Accepted unmodified Java HashRing, Guava33.5.0-jre; verified by retained RoutingAgreementControl output\"}",
+          "candidate.properties": "keyPrefix=\n"
+        }
+      },
+      "changedConstraint": "Only candidate.properties keyPrefix changes from cache: to empty; all other input identical.",
+      "expectedOutcomeCriteria": {
+        "must": [
+          "Inspect actual router/configuration and add or execute the same final-routing check.",
+          "Observe agreement with accepted user:2 primary/replicas; retain the sound placement implementation and rollout recommendation within tested scope.",
+          "Use a changed-prefix negative control to verify that the compatibility check can detect the case-1 defect."
+        ],
+        "failureConditions": [
+          "Assert a serialization defect despite identical effective input bytes.",
+          "Demand rehash/migration or a new algorithm without evidence.",
+          "Treat one passing fixture as proof of every runtime path or membership transition."
+        ]
+      }
+    }
+  ],
+  "crossSkill": [],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Shared generated index, prohibited during parallel review; run after all reviewers stop writes."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Repository-wide verification reserved to coordinator after index regeneration and all reviewer writes stopped."
+    }
+  ],
+  "allWritesStopped": true
+}

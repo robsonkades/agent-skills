@@ -80,7 +80,7 @@ framework contracts and external consumers. Examples target Java 17 terminology;
 | **Opaque decorator stack**          | Order and observable policy cannot be explained        | Unclear composed semantics                         |
 | **Proxy hiding a network**          | A getter that makes a call                             | Per-item remote calls hidden in an innocent loop   |
 | **Flyweight contention**            | A shared pool on a hot path without measurements       | Lookup/retention may outweigh saved work           |
-| **Visitor over a growing type set** | Every release breaks every visitor                     | The expression problem, chosen backwards           |
+| **Visitor over a growing type set** | Every release breaks every visitor                     | Repeated updates; may be required coverage         |
 | **Template Method with 9 hooks**    | A base class nobody can subclass correctly             | Fragile base; unreviewable changes                 |
 | **Strategy class for a lambda**     | One method, no state, no key                           | Five files for five expressions                    |
 | **Prototype with `clone()`**        | `implements Cloneable`                                 | Shallow copies sharing mutable state               |

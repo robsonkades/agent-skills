@@ -1,0 +1,214 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "database-performance",
+  "ownedPath": "skills/database-performance/**",
+  "assignmentBaseline": {
+    "committed": "1.0.5",
+    "assignment": "1.0.5",
+    "preExistingChanges": "None: clean staged, unstaged and untracked state in the assigned two-file package.",
+    "hashes": [
+      {
+        "path": "skills/database-performance\\skill.yaml",
+        "sha256": "2DE82601AE3E50D74B010311F97D9BDD35931448F45563F09C3D48C708DA4E26"
+      },
+      {
+        "path": "skills/database-performance\\SKILL.md",
+        "sha256": "F7243BD91BCB7FC3583560C6C4745E4CD3F28FAD06DDBF5908F72C63CD3C6966"
+      }
+    ]
+  },
+  "versions": {
+    "committed": "1.0.5",
+    "initial": "1.0.5",
+    "final": "1.0.6",
+    "rationale": "One patch bump for justified procedural/documentation changes; no subsequent increments."
+  },
+  "filesChangedByReviewer": [
+    "skills/database-performance/SKILL.md",
+    "skills/database-performance/skill.yaml"
+  ],
+  "changes": [
+    {
+      "location": "SKILL.md Triage contract",
+      "change": "Trace the affected caller through effective DataSource selection to the physical pool/database target and preserve source/capture identity.",
+      "consequence": "Avoid treating a healthy capture for another pool, tenant database or replica as evidence about the affected request."
+    },
+    {
+      "location": "SKILL.md measurement boundaries",
+      "change": "Distinguish normalized statement identity from individual execution/parameter/plan identity; retain PostgreSQL 18 database/user/query/top-level scope and capture target.",
+      "consequence": "Avoid invalid joins and unsupported cross-target comparisons from matching SQL or queryid alone."
+    },
+    {
+      "location": "SKILL.md Evidence discipline and Definition of done",
+      "change": "Revoke only the conclusions whose supporting capture is shown to belong elsewhere; retain supported findings and revise routing/next checks.",
+      "consequence": "Avoid both stale diagnoses and unjustified reversal to a new fault claim when evidence becomes irrelevant."
+    },
+    {
+      "location": "skill.yaml",
+      "change": "1.0.5 -> 1.0.6",
+      "consequence": "Publish the content change with a new immutable version."
+    }
+  ],
+  "preserved": [
+    "Router role, early stop once one established question has an owner and bounded next check, and supported no-change outcomes.",
+    "Optional/proportional evidence packet and authorized incident-mitigation priority.",
+    "Capture censoring, timing boundaries, source-versus-materialization distinctions, and counter resets.",
+    "Active versus last SQL, pool occupancy versus completed usage, unsafe EXPLAIN replay, and Java/driver/version inspection.",
+    "All existing specialist routes, engine-specific caveats and dependencies; no Java baseline or dependency upgrade."
+  ],
+  "commands": [
+    {
+      "command": "@'\nimport { readFileSync, readdirSync } from 'node:fs';\nimport { resolve, relative } from 'node:path';\nimport { parseManifest } from './packages/core/src/domain/manifest.ts';\nimport { buildSkillPackage } from './packages/core/src/domain/skill-package.ts';\nimport { validatePackage } from './packages/core/src/application/validate-package.ts';\nconst root = resolve('skills/database-performance');\nconst paths = readdirSync(root, { recursive: true, withFileTypes: true }).filter(e => e.isFile()).map(e => resolve(e.parentPath, e.name));\nconst files = paths.map(p => ({ path: relative(root, p).replaceAll('\\\\', '/'), bytes: readFileSync(p) }));\nconst parsed = parseManifest(readFileSync(resolve(root, 'skill.yaml'), 'utf8'), { strict: true });\nconst report = validatePackage(buildSkillPackage(parsed.manifest, files), { directoryName: 'database-performance' });\nconst issues = [...parsed.issues, ...report.issues];\nconst relativeLinks = [...readFileSync(resolve(root, 'SKILL.md'), 'utf8').matchAll(/\\[[^\\]]+\\]\\(([^)]+)\\)/g)].map(m => m[1]).filter(target => !/^https?:\\/\\//.test(target));\nconsole.log(JSON.stringify({ version: parsed.manifest.version, shippedFiles: files.length, issues, relativeLinks }, null, 2));\nif (issues.length || relativeLinks.length) process.exitCode = 1;\n'@ | node --input-type=module",
+      "cwd": "C:\\git\\agent-skills",
+      "chunk_id": "49446d",
+      "wall_time_seconds": 0.1795734,
+      "exit_code": 0,
+      "original_token_count": 22,
+      "output": "{\n  \"version\": \"1.0.6\",\n  \"shippedFiles\": 2,\n  \"issues\": [],\n  \"relativeLinks\": []\n}\n"
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/database-performance/SKILL.md skills/database-performance/skill.yaml",
+      "cwd": "C:\\git\\agent-skills",
+      "chunk_id": "c4992c",
+      "wall_time_seconds": 0.185421,
+      "exit_code": 0,
+      "original_token_count": 17,
+      "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+    },
+    {
+      "command": "git diff --check -- skills/database-performance",
+      "cwd": "C:\\git\\agent-skills",
+      "chunk_id": "4fc0b9",
+      "wall_time_seconds": 0.080587,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    },
+    {
+      "command": "git diff -- skills/database-performance",
+      "cwd": "C:\\git\\agent-skills",
+      "chunk_id": "a6f3ef",
+      "wall_time_seconds": 0.0726937,
+      "exit_code": 0,
+      "original_token_count": 1530,
+      "output": "diff --git a/skills/database-performance/SKILL.md b/skills/database-performance/SKILL.md\nindex 00d00c1..9dcab90 100644\n--- a/skills/database-performance/SKILL.md\n+++ b/skills/database-performance/SKILL.md\n@@ -32,9 +32,17 @@ existing authority. Carry those checks and their limits into the handoff so the\n not repeat intake. During an incident, collection must fit the recovery deadline and must not delay\n already authorized mitigation merely to complete the packet.\n \n+For an existing request/job, follow an affected example through its actual transaction manager or\n+DataSource selection to the physical pool and database target. Inspect caller/wiring, routing rules,\n+effective configuration and available trace/session identifiers; a default property or a healthy\n+fleet-wide dashboard may describe a different pool, tenant database or replica. Separate configured\n+selection from observed execution when runtime routing remains unknown. Carry the mapping and its\n+source locators into the handoff; do not require a new capture if existing evidence establishes it.\n+\n ```text\n business symptom, SLO impact, and exact time window:\n engine, exact version/edition/service tier, topology, and recent changes:\n+affected caller -> selected pool/DataSource -> database/replica and matching capture labels:\n operation/query/job and representative parameters/data distribution:\n offered/completed rate, concurrency, errors/timeouts, and transaction p50/p99:\n application statement count, pool acquire/usage/pending, and connection count:\n@@ -46,8 +54,12 @@ affected cohort and comparable healthy control:\n evidence gaps, collection risk, rollback window, and success measure:\n ```\n \n-Do not infer an engine mechanism from an application symptom. Align clocks and workload before\n-correlating layers. Identify metric boundaries: pool usage is connection checkout-to-return,\n+Do not infer an engine mechanism from an application symptom. Match the target, cohort and time\n+window before correlating layers. A SQL fingerprint groups statements; it is not an individual\n+execution or proof of the same parameters/plan. PostgreSQL 18 `pg_stat_statements` rows are scoped\n+by database, user, query ID and top-level status; retaining only `queryid` discards that context.\n+Keep capture identity alongside those keys, and do not assume IDs are portable across databases\n+or versions. Identify metric boundaries: pool usage is connection checkout-to-return,\n not SQL execution, and cumulative engine counters need interval deltas with resets accounted for.\n Check which executions each summary includes before treating an absent slow query as evidence.\n Means do not establish tail latency, and total execution time can grow from call count, per-call\n@@ -142,12 +154,16 @@ Support and limits: why the conclusion is justified and what remains untested\n \n When evidence is unavailable, state the gap and what would discriminate the hypotheses. Never turn\n a vendor default, a folklore threshold, or a lab result into a production prescription.\n+If tracing reveals that a capture belongs to another target or cohort, remove it as support for\n+the affected conclusion and revise that routing/next check. Preserve still-applicable findings;\n+an irrelevant healthy capture neither proves the intended target healthy nor proves it faulty.\n \n ## Definition of done\n \n - Relevant symptom/workload, engine/version, cohort and time window are explicit or marked\n   unknown/not applicable; missing fields do not block an otherwise clear handoff.\n-- Application, pool, statement, engine, and host signals are not mixed without aligned evidence.\n+- Application, pool, statement, engine, and host signals refer to the affected target and aligned\n+  window/cohort, or their unresolved association is explicit.\n - Materially plausible alternatives are retained until existing or new evidence distinguishes them;\n   do not invent a rival for an already-established question.\n - The established question is handed to one primary owner, with adjacent skills only when needed,\n@@ -159,7 +175,8 @@ a vendor default, a folklore threshold, or a lab result into a production prescr\n \n ## Sources for collection boundaries\n \n-- [PostgreSQL 18 pg_stat_statements](https://www.postgresql.org/docs/18/pgstatstatements.html) — execution-summary coverage and update timing; failed or unfinished execution is not represented as a successful completed call.\n+- [PostgreSQL 18 pg_stat_statements](https://www.postgresql.org/docs/18/pgstatstatements.html) — row identity, query normalization and identifier stability, execution-summary coverage and update timing; failed or unfinished execution is not represented as a successful completed call.\n+- [Spring 6.2.11 AbstractRoutingDataSource](https://docs.spring.io/spring-framework/docs/6.2.11/javadoc-api/org/springframework/jdbc/datasource/lookup/AbstractRoutingDataSource.html) — connection requests can select different target DataSources by lookup key; inspect the actual routing implementation and effective target map.\n - [PostgreSQL 18 activity statistics](https://www.postgresql.org/docs/18/monitoring-stats.html#MONITORING-PG-STAT-ACTIVITY-VIEW) — session state, transaction/query start, current versus last SQL, and wait events.\n - [PostgreSQL 18 EXPLAIN](https://www.postgresql.org/docs/18/sql-explain.html) — ANALYZE executes the statement, adds overhead and excludes client network transfer costs.\n - [pgJDBC result processing](https://jdbc.postgresql.org/documentation/query/) — eager result collection versus cursor fetching; verify the installed driver and cursor prerequisites.\ndiff --git a/skills/database-performance/skill.yaml b/skills/database-performance/skill.yaml\nindex d8f3a97..e19827b 100644\n--- a/skills/database-performance/skill.yaml\n+++ b/skills/database-performance/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: database-performance\n-version: 1.0.5\n+version: 1.0.6\n description: >-\n   Evidence-first triage and routing for database performance questions across SQL Server,\n   MySQL/InnoDB, PostgreSQL, JDBC pools, ORM behavior, index portfolios, and bulk loading. Use\n"
+    }
+  ],
+  "structuralResults": {
+    "strictManifestAndPackage": "PASS: two shipped files, zero issues",
+    "relativeLinks": "None in package; no new local resource introduced",
+    "format": "PASS on both owned files",
+    "diffWhitespace": "PASS",
+    "finalDiff": "Inspected against assignment/HEAD; only two assigned files changed."
+  },
+  "technicalExamples": {
+    "status": "NOT_APPLICABLE",
+    "reason": "No executable SQL/Java examples added or changed. Version-sensitive statements checked against primary documentation."
+  },
+  "behavioralEvaluation": {
+    "status": "NOT_EXECUTED",
+    "walkthroughs": "Two proposed development cases reasoned through; no actual agent output or measured comparison.",
+    "measuredImprovement": false
+  },
+  "sources": [
+    {
+      "url": "https://www.postgresql.org/docs/18/pgstatstatements.html",
+      "version": "PostgreSQL 18",
+      "checked": "2026-10-16",
+      "supports": "Row scope (dbid, userid, queryid, toplevel), normalization, identifier stability and successful-execution summary coverage."
+    },
+    {
+      "url": "https://docs.spring.io/spring-framework/docs/6.2.11/javadoc-api/org/springframework/jdbc/datasource/lookup/AbstractRoutingDataSource.html",
+      "version": "Spring Framework 6.2.11",
+      "checked": "2026-10-16",
+      "supports": "getConnection selects a target DataSource from a lookup key; effective target selection must be established from the implementation and configuration."
+    }
+  ],
+  "limits": [
+    "No live database, JDBC runtime or production metric integration was exercised; no production access was needed.",
+    "Structural validation and source verification do not measure whether agents follow the revised router better.",
+    "Fixture cases are development cases, not unseen holdouts; keep evaluator criteria separate from actor input.",
+    "Configured target selection can still differ from observed execution when the runtime mapping is unavailable; the revised skill preserves that uncertainty."
+  ],
+  "cases": [
+    {
+      "id": "database-performance-unmatched-target",
+      "classification": "development; not executed",
+      "input": {
+        "task": "Use database-performance to inspect this repository and offline incident packet. Update triage.md with the established question, one primary specialist owner, evidence limits and the next discriminating check. Assess the existing suggestion to raise the pool. Do not change application code/settings or replay SQL.",
+        "fixtureFiles": {
+          "README.md": "Captured checkout-service artifact revision fixture-a, Java 17, PostgreSQL 18. CheckoutDatabase is constructed once at startup from ops/effective-config.json; the supplied source matches that artifact. This packet contains offline evidence only. Do not connect to a database, change configuration, or replay SQL.",
+          "src/CheckoutDatabase.java": "import java.sql.Connection;\nimport java.sql.SQLException;\nimport java.util.Map;\nimport javax.sql.DataSource;\npublic final class CheckoutDatabase {\n  private final Map<String, DataSource> targets;\n  private final String checkoutTarget;\n  public CheckoutDatabase(Map<String, DataSource> targets, String checkoutTarget) {\n    this.targets = targets;\n    this.checkoutTarget = checkoutTarget;\n  }\n  public Connection open() throws SQLException {\n    return targets.get(checkoutTarget).getConnection();\n  }\n}\n",
+          "ops/effective-config.json": "{\n  \"capturedAt\": \"2026-10-16T12:02:00Z\",\n  \"artifact\": \"fixture-a\",\n  \"checkoutTarget\": \"reader\",\n  \"targets\": {\n    \"reader\": {\n      \"pool\": \"checkout-ro\",\n      \"server\": \"orders-reader-1\",\n      \"database\": \"orders\",\n      \"role\": \"orders_app\"\n    },\n    \"primary\": {\n      \"pool\": \"checkout-rw\",\n      \"server\": \"orders-primary-1\",\n      \"database\": \"orders\",\n      \"role\": \"orders_app\"\n    }\n  }\n}",
+          "incident.md": "Window 2026-10-16T12:00:00Z to 12:05:00Z. Checkout p99 rose from 80 ms to 2 seconds. Earlier operator note: database looks healthy; consider raising the pool limit from 20 to 100. Need a bounded triage handoff before changing settings.",
+          "evidence/request.json": "{\n  \"request\": \"req-42\",\n  \"artifact\": \"fixture-a\",\n  \"at\": \"2026-10-16T12:02:01Z\",\n  \"operation\": \"checkout\",\n  \"timersMs\": {\n    \"getConnection\": 1880,\n    \"execute\": 4,\n    \"consume\": 2\n  },\n  \"sql\": \"select price from products where id = ?\",\n  \"parameters\": {\n    \"id\": 7\n  },\n  \"poolMetricLabel\": null\n}",
+          "evidence/pool-summary.json": "{\n  \"window\": [\n    \"2026-10-16T12:00:00Z\",\n    \"2026-10-16T12:05:00Z\"\n  ],\n  \"server\": \"orders-primary-1\",\n  \"pool\": \"checkout-rw\",\n  \"maximumPoolSize\": 20,\n  \"active\": 20,\n  \"idle\": 0,\n  \"pending\": 8,\n  \"meanCompletedUsageMs\": 5,\n  \"includesActiveBorrowDurations\": false\n}",
+          "evidence/statement-summary.json": "{\n  \"server\": \"orders-primary-1\",\n  \"window\": [\n    \"2026-10-16T12:00:00Z\",\n    \"2026-10-16T12:05:00Z\"\n  ],\n  \"source\": \"pg_stat_statements interval deltas\",\n  \"dbid\": 42,\n  \"userid\": 6,\n  \"toplevel\": true,\n  \"queryid\": \"1234\",\n  \"query\": \"select price from products where id = $1\",\n  \"calls\": 25000,\n  \"meanExecTimeMs\": 4,\n  \"coverage\": \"successful completed executions; no in-flight or failed execution inventory\",\n  \"resetWithinWindow\": false\n}"
+        }
+      },
+      "criteria": {
+        "expected": [
+          "Inspect the source, effective configuration and evidence capture labels rather than identify the target from the default pool or normalized SQL alone.",
+          "Retain the directly observed long getConnection span and route the bounded pool-admission question primarily to connection-pool-sizing; do not equate routing with proved root cause.",
+          "Do not prescribe pool growth to 100 from acquisition delay alone; require matching capacity and hold-time evidence.",
+          "Keep successful statement summary coverage and completed-borrow usage limits; neither establishes absence of failed/in-flight work or long active borrows.",
+          "Do not access a database or execute a SQL replay. Produce/update triage.md rather than only suggest further analysis.",
+          "Resolve the configured affected path to checkout-ro/orders-reader-1; the supplied pool and statement summaries describe checkout-rw/orders-primary-1, so they cannot exclude reader-side delay or size the reader pool.",
+          "Preserve the valid getConnection observation, qualify configuration-versus-runtime evidence, and hand off a targeted check of matching reader-pool active/pending/hold and origin-capacity evidence."
+        ],
+        "failureConditions": [
+          "Treat primary captures as measurements of the reader or conclude the reader is healthy/faulty from them.",
+          "Treat equal normalized SQL/query IDs as sufficient execution identity.",
+          "Increase the pool or add an index without supporting evidence.",
+          "Withhold all triage until the entire optional packet is complete."
+        ]
+      }
+    },
+    {
+      "id": "database-performance-matched-target",
+      "classification": "constraint flip; development; not executed",
+      "input": {
+        "task": "Use database-performance to inspect this repository and offline incident packet. Update triage.md with the established question, one primary specialist owner, evidence limits and the next discriminating check. Assess the existing suggestion to raise the pool. Do not change application code/settings or replay SQL.",
+        "baseFixture": "database-performance-unmatched-target",
+        "replaceFiles": {
+          "ops/effective-config.json": "{\n  \"capturedAt\": \"2026-10-16T12:02:00Z\",\n  \"artifact\": \"fixture-a\",\n  \"checkoutTarget\": \"primary\",\n  \"targets\": {\n    \"reader\": {\n      \"pool\": \"checkout-ro\",\n      \"server\": \"orders-reader-1\",\n      \"database\": \"orders\",\n      \"role\": \"orders_app\"\n    },\n    \"primary\": {\n      \"pool\": \"checkout-rw\",\n      \"server\": \"orders-primary-1\",\n      \"database\": \"orders\",\n      \"role\": \"orders_app\"\n    }\n  }\n}"
+        }
+      },
+      "criteria": {
+        "expected": [
+          "Inspect the source, effective configuration and evidence capture labels rather than identify the target from the default pool or normalized SQL alone.",
+          "Retain the directly observed long getConnection span and route the bounded pool-admission question primarily to connection-pool-sizing; do not equate routing with proved root cause.",
+          "Do not prescribe pool growth to 100 from acquisition delay alone; require matching capacity and hold-time evidence.",
+          "Keep successful statement summary coverage and completed-borrow usage limits; neither establishes absence of failed/in-flight work or long active borrows.",
+          "Do not access a database or execute a SQL replay. Produce/update triage.md rather than only suggest further analysis.",
+          "Changing only checkoutTarget to primary makes the supplied capture target match the selected path; do not repeat the reader-mismatch diagnosis.",
+          "Use the active=max, pending-work evidence for the primary pool while recognizing completed usage excludes current long holds. Next check should discriminate active hold/transaction time, load and DB capacity, rather than ask for an unrelated reader capture.",
+          "Do not infer complete database health from a 4 ms successful-completion average; retain that existing coverage limit."
+        ],
+        "failureConditions": [
+          "Keep claiming the primary capture belongs to a different target after reading the changed configuration.",
+          "Invent a mandatory index, larger pool or engine fault from the matched identity alone.",
+          "Mistake the two cases' same primary owner for failure to revise the evidence applicability."
+        ]
+      }
+    }
+  ],
+  "crossSkill": {
+    "findings": "No blocker or neighboring edit needed. connection-pool-sizing already owns deeper physical-pool/target identity checks; sql-query-performance owns actual plan/parameter analysis. This router retains only the short prerequisite needed for correct handoff.",
+    "actions": []
+  },
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "prerequisite": "All reviewers stop writing."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "prerequisite": "Regenerated registry and stable working tree."
+    }
+  ],
+  "allWritesStopped": true,
+  "processesStillWriting": false
+}

@@ -1,0 +1,8 @@
+PASS success: booking/header/body=1/1/1, stock=19; writer sees uncommitted booking, independent reader=0
+PASS 13-character rejection: booking/header/body=0/0/0, stock=20; call fails
+PASS unavailable stock: booking/header/body=0/0/0, sold-out stock=0; call fails
+PASS nontransactional publication: no receipt or writer invocation
+PASS REQUIRED participation: inner return is uncommitted; owner commit persists booking/header/body and stock
+PASS owner failure after inner return: booking/header/body=0/0/0, stock=20
+PASS late completion failure after both receipt writes: booking/header/body=0/0/0, stock=20
+PASS all 7 mandatory-receipt regression scenarios

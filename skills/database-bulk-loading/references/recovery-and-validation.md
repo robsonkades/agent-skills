@@ -30,6 +30,17 @@ A restartable chunk commits these together:
 3. source checkpoint or high-water mark;
 4. accepted/rejected counts needed for reconciliation.
 
+Co-commit does not make a checkpoint valid after every failure. Inspect the table's persistence
+in schema/runtime metadata, not its `staging` name. PostgreSQL 18 `UNLOGGED` data is truncated after
+a crash or unclean shutdown and is not replicated to standbys; a logged checkpoint can survive
+without the staged rows it describes. For disposable staging, retain a replayable source and
+rebuild the staging generation with its staging-only checkpoint, deduplication and counts;
+surviving claims must not suppress reconstruction of lost rows. Preserve evidence of already
+published target effects. Otherwise use staging that survives the required failures, or advance
+the durable completion checkpoint only with durable target promotion. A loader-process restart
+alone does not test server-crash or failover recovery; exercise those paths in an isolated
+environment when they belong to the contract.
+
 When the checkpoint shares the destination transaction, advancing it separately creates a crash
 gap. External broker/file checkpoints often cannot join that commit: persist a destination-side
 chunk/source identity with the data, then acknowledge externally. A crash in between causes replay,
@@ -114,3 +125,5 @@ should preserve the same final state and repeat no protected effects under the d
 - [PostgreSQL unique-index checks](https://www.postgresql.org/docs/17/index-unique-checks.html)
   — a concrete engine's wait/recheck behavior for conflicting in-flight claims; verify the chosen
   engine and transaction boundary rather than inferring completion from a missing row.
+- [PostgreSQL 18 table persistence](https://www.postgresql.org/docs/18/sql-createtable.html)
+  — unlogged data loss after a crash/unclean shutdown and absence from standby replication.

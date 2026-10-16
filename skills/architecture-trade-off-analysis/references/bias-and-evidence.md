@@ -88,8 +88,9 @@ different questions. The primary SEI, NASA and multi-criteria guidance linked in
 `qualitative-and-quantitative.md` supports using explicit criteria, assumptions and
 uncertainty; it does not demonstrate the performance of this skill.
 
-No system-outcome study or paired agent evaluation was executed for this revision. This is
-a limitation of the evidence supplied here, not a claim that no such study exists anywhere.
+The sources and illustrative examples supplied here do not constitute a paired agent
+evaluation or evidence of this skill's effects on production systems. Claims of improvement
+require an identified execution report with comparison conditions and observed outcomes.
 Book quotations and edition-specific claims from the previous revision were not independently
 verified against full book texts and are not retained as executable rules or asserted proof.
 The worked example is this package's illustration, not an empirical result or a reproduction

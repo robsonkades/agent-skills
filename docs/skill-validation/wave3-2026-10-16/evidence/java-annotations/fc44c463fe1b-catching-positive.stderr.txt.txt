@@ -1,0 +1,15 @@
+C:\Users\robso\AppData\Local\Temp\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\src\app\example\DefaultUse.java:3: Note: CAUGHT_OK: example.DefaultCodec in value
+public final class DefaultUse {}
+             ^
+C:\Users\robso\AppData\Local\Temp\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\src\app\example\DefaultUse.java:3: Note: CAUGHT_OK: example.DefaultCodec in alternatives
+public final class DefaultUse {}
+             ^
+C:\Users\robso\AppData\Local\Temp\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\src\app\example\ExplicitUse.java:3: Note: CAUGHT_OK: example.LocalCodec in value
+public final class ExplicitUse {}
+             ^
+C:\Users\robso\AppData\Local\Temp\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\src\app\example\ExplicitUse.java:3: Note: CAUGHT_OK: example.LocalCodec in alternatives
+public final class ExplicitUse {}
+             ^
+C:\Users\robso\AppData\Local\Temp\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\src\app\example\ExplicitUse.java:3: Note: CAUGHT_OK: example.DefaultCodec in alternatives
+public final class ExplicitUse {}
+             ^

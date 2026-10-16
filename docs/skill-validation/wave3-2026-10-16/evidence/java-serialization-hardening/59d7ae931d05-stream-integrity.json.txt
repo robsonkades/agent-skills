@@ -1,0 +1,42 @@
+[
+  {
+    "name": "denied.ser",
+    "bytes": 42,
+    "sha256": "332aa7422a6f17482778062fd1eebec68300d813e3f979aa8058246f3df1b779"
+  },
+  {
+    "name": "missing.ser",
+    "bytes": 40,
+    "sha256": "fa069c8979b5b284b95b824a6d7f9a7e804ab705a93dcf8a9ecebe2e3caeae67"
+  },
+  {
+    "name": "null.ser",
+    "bytes": 5,
+    "sha256": "4e68143408826326220a32d6bff59e1cca3dd85f74b018aebd6723c5686c54e5"
+  },
+  {
+    "name": "value--1.ser",
+    "bytes": 57,
+    "sha256": "15f9d50a8c028e923eb0066ff3195b682b8771a456134234de98a5caa8914ad5"
+  },
+  {
+    "name": "value-0.ser",
+    "bytes": 57,
+    "sha256": "0d3aec945ebb4f296007eddb0e35684361da3d251a10f965a1ceecd1c386c93b"
+  },
+  {
+    "name": "value-10.ser",
+    "bytes": 57,
+    "sha256": "67e5c33cc5d456932a458468736351bdec7fc654895effea46bbaf732e53f5ed"
+  },
+  {
+    "name": "value-11.ser",
+    "bytes": 57,
+    "sha256": "9cb976c98cf6dbe3b959554980892bd2a91ad94a63e87db30a4e50cc4d784380"
+  },
+  {
+    "name": "value-5.ser",
+    "bytes": 57,
+    "sha256": "9486d9bf5c6ba3d3e24f270a4b7f1c63465e602b38e9acf71ec476fad68286b8"
+  }
+]

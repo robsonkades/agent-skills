@@ -1,0 +1,138 @@
+param([switch]$FinalizeOnly)
+$ErrorActionPreference = 'Stop'
+$runRoot = 'C:/Users/robso/AppData/Local/Temp/skills-wave4-actors-HoLlUY/run-05'
+$outputRoot = Join-Path $runRoot 'output'
+$javaRoot = 'C:/Users/robso/.jdks/temurin-25.0.3/bin'
+$runs = [System.Collections.Generic.List[object]]::new()
+if ($FinalizeOnly) {
+    $previousRecord = Get-Content -LiteralPath (Join-Path $outputRoot 'execution.json') -Raw | ConvertFrom-Json -AsHashtable
+    foreach ($previousRun in $previousRecord.executions) { $runs.Add($previousRun) }
+}
+$utf8 = [System.Text.UTF8Encoding]::new($false)
+foreach ($relative in @('logs', 'classes/library', 'classes/consumer', 'classes/probe', 'artifacts')) {
+    [System.IO.Directory]::CreateDirectory((Join-Path $outputRoot $relative)) | Out-Null
+}
+function Save-Record {
+    $document = [ordered]@{
+        task = 'text-core 1.0.1 delivery review for report-app; external layout'
+        generatedUtc = [DateTime]::UtcNow.ToString('o')
+        cwd = $runRoot
+        processTimeoutMilliseconds = 30000
+        versions = [ordered]@{ compilerTarget = 17; java = 'OpenJDK Temurin 25.0.3+9-LTS, Windows 64-bit'; javac = '25.0.3'; jar = '25.0.3'; javap = '25.0.3'; powershell = $PSVersionTable.PSVersion.ToString(); evidence = @('java-version', 'javac-version', 'jar-version', 'javap-version') }
+        executions = @($runs.ToArray())
+        limitations = @('Local synthetic artifacts only; no live deployment or storage checks.', 'Execution uses Temurin 25; --release 17 output is inspected, but no Java 17 runtime is available in the allowed inputs.', 'No Maven/Gradle metadata or release history is supplied.', 'CR and LF are ReportApp expected-result assertions, not input-selection arguments.', 'Initial tool-based TASK/skill/input reads preceded this recorded validation; input and skill reads relevant to the decision are repeated here with captured output.')
+    }
+    [System.IO.File]::WriteAllText((Join-Path $outputRoot 'execution.json'), ($document | ConvertTo-Json -Depth 12), $utf8)
+}
+function Run-Check {
+    param([string]$Id, [string]$Executable, [string[]]$Arguments, [int]$ExpectedExit = 0)
+    $start = [DateTime]::UtcNow
+    $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
+    $startInfo.FileName = $Executable
+    $startInfo.WorkingDirectory = $runRoot
+    $startInfo.UseShellExecute = $false
+    $startInfo.CreateNoWindow = $true
+    $startInfo.RedirectStandardOutput = $true
+    $startInfo.RedirectStandardError = $true
+    foreach ($argValue in $Arguments) { $startInfo.ArgumentList.Add($argValue) }
+    $child = [System.Diagnostics.Process]::new()
+    $child.StartInfo = $startInfo
+    $timedOut = $false
+    try {
+        $child.Start() | Out-Null
+        $outTask = $child.StandardOutput.ReadToEndAsync()
+        $errTask = $child.StandardError.ReadToEndAsync()
+        if (-not $child.WaitForExit(30000)) {
+            $timedOut = $true
+            $child.Kill($true)
+            $child.WaitForExit()
+        }
+        $stdout = $outTask.GetAwaiter().GetResult()
+        $stderr = $errTask.GetAwaiter().GetResult()
+        $exitCode = $child.ExitCode
+        $entry = [ordered]@{
+            id = $Id; executable = $Executable; arguments = $Arguments; cwd = $runRoot
+            startedUtc = $start.ToString('o'); durationMilliseconds = ([DateTime]::UtcNow - $start).TotalMilliseconds
+            exitCode = $exitCode; expectedExitCode = $ExpectedExit; timedOut = $timedOut
+            stdout = $stdout; stderr = $stderr
+            expectationMet = (-not $timedOut -and $exitCode -eq $ExpectedExit)
+        }
+        $runs.Add($entry)
+        [System.IO.File]::WriteAllText((Join-Path $outputRoot "logs/$Id.stdout.txt"), $stdout, $utf8)
+        [System.IO.File]::WriteAllText((Join-Path $outputRoot "logs/$Id.stderr.txt"), $stderr, $utf8)
+        Save-Record
+        Write-Output ("{0}: exit={1}, expected={2}, timeout={3}" -f $Id, $exitCode, $ExpectedExit, $timedOut)
+        if ($timedOut) { throw "Timed out: $Id" }
+    } finally {
+        if (-not $child.HasExited) { $child.Kill($true); $child.WaitForExit() }
+        $child.Dispose()
+    }
+}
+
+$shellExe = (Get-Process -Id $PID).Path
+if (-not $FinalizeOnly) {
+Run-Check -Id 'read-task-and-skill' -Executable $shellExe -Arguments @('-NoProfile', '-Command', 'Get-Content -LiteralPath TASK.md,skill/SKILL.md')
+Run-Check -Id 'read-project' -Executable $shellExe -Arguments @('-NoProfile', '-Command', 'Get-ChildItem -LiteralPath input/project -File | ForEach-Object { Write-Output ("FILE: " + $_.Name); Get-Content -LiteralPath $_.FullName }')
+Run-Check -Id 'read-sources' -Executable $shellExe -Arguments @('-NoProfile', '-Command', 'Get-Content -LiteralPath input/library/v1/com/example/text/LineEndings.java,input/library/v2/com/example/text/LineEndings.java,input/consumer/com/example/app/ReportApp.java')
+Run-Check -Id 'read-references' -Executable $shellExe -Arguments @('-NoProfile', '-Command', 'Get-Content -LiteralPath skill/references/component-principles.md,skill/references/shared-code-in-a-fleet.md')
+Run-Check -Id 'input-hashes-before' -Executable $shellExe -Arguments @('-NoProfile', '-Command', 'Get-ChildItem -LiteralPath input -File -Recurse | Sort-Object FullName | Get-FileHash -Algorithm SHA256 | Select-Object Path,Hash | ConvertTo-Json')
+Run-Check -Id 'java-version' -Executable "$javaRoot/java.exe" -Arguments @('-version')
+Run-Check -Id 'javac-version' -Executable "$javaRoot/javac.exe" -Arguments @('-version')
+Run-Check -Id 'jar-version' -Executable "$javaRoot/jar.exe" -Arguments @('--version')
+Run-Check -Id 'javap-version' -Executable "$javaRoot/javap.exe" -Arguments @('-version')
+foreach ($artifact in @('text-core-1.0.0', 'text-core-1.0.1', 'report-app-1.0.0')) {
+    Run-Check -Id "list-$artifact" -Executable "$javaRoot/jar.exe" -Arguments @('--list', '--file', "input/published/$artifact.jar")
+}
+Run-Check -Id 'list-existing-bundle' -Executable "$javaRoot/jar.exe" -Arguments @('--list', '--file', 'input/bundles/report-1.0.0.jar')
+foreach ($version in @('1.0.0', '1.0.1')) {
+    Run-Check -Id "bytecode-text-core-$version" -Executable "$javaRoot/javap.exe" -Arguments @('-classpath', "input/published/text-core-$version.jar", '-public', '-c', '-verbose', 'com.example.text.LineEndings')
+}
+Run-Check -Id 'bytecode-report-app' -Executable "$javaRoot/javap.exe" -Arguments @('-classpath', 'input/published/report-app-1.0.0.jar', '-public', '-c', '-verbose', 'com.example.app.ReportApp')
+
+$oldClasspath = 'input/published/report-app-1.0.0.jar;input/published/text-core-1.0.0.jar'
+$newClasspath = 'input/published/report-app-1.0.0.jar;input/published/text-core-1.0.1.jar'
+Run-Check -Id 'old-binary-old-library-CR' -Executable "$javaRoot/java.exe" -Arguments @('-cp', $oldClasspath, 'com.example.app.ReportApp', 'CR')
+Run-Check -Id 'old-binary-old-library-LF-negative' -Executable "$javaRoot/java.exe" -Arguments @('-cp', $oldClasspath, 'com.example.app.ReportApp', 'LF') -ExpectedExit 1
+Run-Check -Id 'old-binary-new-library-LF' -Executable "$javaRoot/java.exe" -Arguments @('-Xlog:class+load=info:file=output/logs/class-load-new.log', '-cp', $newClasspath, 'com.example.app.ReportApp', 'LF')
+Run-Check -Id 'old-binary-new-library-CR-negative' -Executable "$javaRoot/java.exe" -Arguments @('-cp', $newClasspath, 'com.example.app.ReportApp', 'CR') -ExpectedExit 1
+Run-Check -Id 'rollback-old-selection-CR' -Executable "$javaRoot/java.exe" -Arguments @('-cp', $oldClasspath, 'com.example.app.ReportApp', 'CR')
+Run-Check -Id 'read-class-origins' -Executable $shellExe -Arguments @('-NoProfile', '-Command', 'Select-String -LiteralPath output/logs/class-load-new.log -Pattern "com.example.app.ReportApp|com.example.text.LineEndings" | ForEach-Object { $_.Line }')
+
+Run-Check -Id 'compile-candidate-target17' -Executable "$javaRoot/javac.exe" -Arguments @('--release', '17', '-d', 'output/classes/library', 'input/library/v2/com/example/text/LineEndings.java')
+Run-Check -Id 'package-local-candidate' -Executable "$javaRoot/jar.exe" -Arguments @('--create', '--file', 'output/artifacts/text-core-candidate-local.jar', '-C', 'output/classes/library', '.')
+Run-Check -Id 'bytecode-local-candidate' -Executable "$javaRoot/javap.exe" -Arguments @('-classpath', 'output/artifacts/text-core-candidate-local.jar', '-public', '-c', '-verbose', 'com.example.text.LineEndings')
+Run-Check -Id 'old-binary-locally-built-candidate-LF' -Executable "$javaRoot/java.exe" -Arguments @('-cp', 'input/published/report-app-1.0.0.jar;output/artifacts/text-core-candidate-local.jar', 'com.example.app.ReportApp', 'LF')
+Run-Check -Id 'compile-separate-consumer-target17' -Executable "$javaRoot/javac.exe" -Arguments @('--release', '17', '-cp', 'input/published/text-core-1.0.1.jar', '-d', 'output/classes/consumer', 'input/consumer/com/example/app/ReportApp.java')
+Run-Check -Id 'rebuilt-consumer-new-publication-LF' -Executable "$javaRoot/java.exe" -Arguments @('-cp', 'output/classes/consumer;input/published/text-core-1.0.1.jar', 'com.example.app.ReportApp', 'LF')
+Run-Check -Id 'compile-contract-probe-target17' -Executable "$javaRoot/javac.exe" -Arguments @('--release', '17', '-cp', 'input/published/text-core-1.0.0.jar', '-d', 'output/classes/probe', 'output/NormalizeContract.java')
+Run-Check -Id 'contract-old-publication-negative' -Executable "$javaRoot/java.exe" -Arguments @('-cp', 'output/classes/probe;input/published/text-core-1.0.0.jar', 'NormalizeContract') -ExpectedExit 1
+Run-Check -Id 'contract-new-publication' -Executable "$javaRoot/java.exe" -Arguments @('-cp', 'output/classes/probe;input/published/text-core-1.0.1.jar', 'NormalizeContract')
+Run-Check -Id 'input-hashes-after' -Executable $shellExe -Arguments @('-NoProfile', '-Command', 'Get-ChildItem -LiteralPath input -File -Recurse | Sort-Object FullName | Get-FileHash -Algorithm SHA256 | Select-Object Path,Hash | ConvertTo-Json')
+}
+Run-Check -Id 'read-artifact-manifests' -Executable $shellExe -Arguments @('-NoProfile', '-Command', @'
+foreach ($relative in @('input/published/text-core-1.0.0.jar', 'input/published/text-core-1.0.1.jar', 'input/published/report-app-1.0.0.jar', 'input/bundles/report-1.0.0.jar')) {
+    $archive = [System.IO.Compression.ZipFile]::OpenRead((Join-Path (Get-Location) $relative))
+    try {
+        Write-Output ('FILE: ' + $relative)
+        $reader = [System.IO.StreamReader]::new($archive.GetEntry('META-INF/MANIFEST.MF').Open())
+        try { Write-Output $reader.ReadToEnd() } finally { $reader.Dispose() }
+    } finally { $archive.Dispose() }
+}
+'@)
+Run-Check -Id 'validate-recorded-results' -Executable $shellExe -Arguments @('-NoProfile', '-Command', @'
+$r = Get-Content -LiteralPath output/execution.json -Raw | ConvertFrom-Json
+function Result([string]$name) { return $r.executions | Where-Object id -eq $name }
+if ((Result 'input-hashes-before').stdout -cne (Result 'input-hashes-after').stdout) { throw 'Input bytes changed.' }
+if ((Result 'old-binary-old-library-CR').stdout.Trim() -cne 'A<CR>B') { throw 'Old runtime mismatch.' }
+if ((Result 'old-binary-new-library-LF').stdout.Trim() -cne 'A<LF>B') { throw 'New runtime mismatch.' }
+if ((Result 'rollback-old-selection-CR').stdout.Trim() -cne 'A<CR>B') { throw 'Rollback mismatch.' }
+if ((Result 'contract-new-publication').stdout -notmatch 'Cases=7; failures=0') { throw 'Candidate contract was not fully exercised.' }
+if ((Result 'contract-old-publication-negative').stdout -notmatch 'Cases=7; failures=3') { throw 'Negative control mismatch.' }
+foreach ($name in @('bytecode-text-core-1.0.0', 'bytecode-text-core-1.0.1', 'bytecode-report-app', 'bytecode-local-candidate')) {
+    if ((Result $name).stdout -notmatch 'major version: 61') { throw ('Wrong class version: ' + $name) }
+}
+if (@($r.executions | Where-Object { -not $_.expectationMet }).Count -gt 0) { throw 'Unexpected execution outcome.' }
+Write-Output 'Verified recorded outcomes, 7 candidate contract cases, Java 17 class versions, old/new/rollback results, and unchanged input hashes.'
+'@)
+Save-Record
+if ($runs.Where({ -not $_.expectationMet }).Count -gt 0) { throw 'At least one check had an unexpected outcome; inspect execution.json.' }

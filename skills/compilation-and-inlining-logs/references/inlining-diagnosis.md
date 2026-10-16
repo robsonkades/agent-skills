@@ -63,24 +63,25 @@ C2's strings come from `bytecodeInfo.cpp`, C1's from `c1_GraphBuilder.cpp`; the 
 implementation detail and confirm it on the exact runtime before automating. The
 limit-to-flag mapping in depth is `c2-sea-of-nodes`'s; this is the reading list.
 
-| Printed                                                 | Compiler | Meaning                                                                                    |
-| ------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------ |
-| `inline`                                                | C1       | Inlined under the applicable C1 policy                                                     |
-| `inline (hot)`                                          | C2       | Inlined; generic success text, not proof the larger size allowance was needed              |
-| `intrinsic`                                             | both     | Replaced by an intrinsic, no bytecode inlined                                              |
-| `failed to inline: callee is too large`                 | C1       | Over the applicable C1 size allowance. **Says nothing about C2**                           |
-| `failed to inline: too big`                             | C2       | Over the base size allowance (`MaxInlineSize`, default 35)                                 |
-| `failed to inline: hot method too big`                  | C2       | Over the selected larger allowance (`FreqInlineSize`, default 325)                         |
-| `failed to inline: already compiled into a big method`  | C2       | Callee's adjusted compiled instruction size exceeds `InlineSmallCode` (2500 on this build) |
-| `failed to inline: inlining too deep`                   | C2       | `MaxInlineLevel` (15 since JDK 14, JDK-8234863) reached                                    |
-| `failed to inline: recursive inlining is too deep`      | C2       | `MaxRecursiveInlineLevel` (1)                                                              |
-| `failed to inline: virtual call`                        | C2       | No profitable/safe speculative target was selected at this virtual site                    |
-| `failed to inline: no static binding`                   | both     | Interface/virtual target was not statically bindable at this compilation                   |
-| `failed to inline: not inlineable` after `(not loaded)` | both     | Callee class not loaded or resolved at compile time; usual for cold paths                  |
-| `failed to inline: native method`                       | both     | JNI target                                                                                 |
-| `failed to inline: disallowed by CompileCommand`        | both     | `dontinline` or `exclude`, from a `CompileCommand` **or a directive**                      |
-| `force inline by CompileCommand`                        | both     | `inline` from a `CompileCommand` or a directive `inline` list                              |
-| `failed to inline: callee uses too much stack`          | C1       | Non-recursive callee exceeds the `C1InlineStackLimit` heuristic                            |
+| Printed                                                   | Compiler | Meaning                                                                                    |
+| --------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------ |
+| `inline`                                                  | C1       | Inlined under the applicable C1 policy                                                     |
+| `inline (hot)`                                            | C2       | Inlined; generic success text, not proof the larger size allowance was needed              |
+| `intrinsic`                                               | both     | Replaced by an intrinsic, no bytecode inlined                                              |
+| `failed to inline: callee is too large`                   | C1       | Over the applicable C1 size allowance. **Says nothing about C2**                           |
+| `failed to inline: too big`                               | C2       | Over the base size allowance (`MaxInlineSize`, default 35)                                 |
+| `failed to inline: hot method too big`                    | C2       | Over the selected larger allowance (`FreqInlineSize`, default 325)                         |
+| `failed to inline: already compiled into a big method`    | C2       | Callee's adjusted compiled instruction size exceeds `InlineSmallCode` (2500 on this build) |
+| `failed to inline: already compiled into a medium method` | C2       | Cold-policy branch: adjusted compiled instruction size exceeds `InlineSmallCode / 4`       |
+| `failed to inline: inlining too deep`                     | C2       | `MaxInlineLevel` (15 since JDK 14, JDK-8234863) reached                                    |
+| `failed to inline: recursive inlining is too deep`        | C2       | `MaxRecursiveInlineLevel` (1)                                                              |
+| `failed to inline: virtual call`                          | C2       | No profitable/safe speculative target was selected at this virtual site                    |
+| `failed to inline: no static binding`                     | both     | Interface/virtual target was not statically bindable at this compilation                   |
+| `failed to inline: not inlineable` after `(not loaded)`   | both     | Callee class not loaded or resolved at compile time; usual for cold paths                  |
+| `failed to inline: native method`                         | both     | JNI target                                                                                 |
+| `failed to inline: disallowed by CompileCommand`          | both     | `dontinline` or `exclude`, from a `CompileCommand` **or a directive**                      |
+| `force inline by CompileCommand`                          | both     | `inline` from a `CompileCommand` or a directive `inline` list                              |
+| `failed to inline: callee uses too much stack`            | C1       | Non-recursive callee exceeds the `C1InlineStackLimit` heuristic                            |
 
 The strings are exact on 25.0.3 and safe to grep for **on that build**; confirm them on the
 runtime you are reading with a two-minute run of a lab before a script depends on one.
@@ -110,21 +111,27 @@ Other gates to inspect independently of the size band (not a complete compiler e
 - **Nesting depth**, `MaxInlineLevel` — 15 on JDK 14 and later (JDK-8234863), 9 before.
 - **Existing code size**, `InlineSmallCode` — uses `ciMethod::inline_instructions_size()`:
   on this build, the eligible nmethod's instruction end minus its verified entry and skipped
-  instructions. A larger compiled callee can block later inlining; the total nmethod or
-  `Compiler.codelist` address span is not this metric.
+  instructions. `already compiled into a big method` compares that metric with the full limit.
+  When the frequency/unboxing/eligible-constructor branch does not select the larger allowance,
+  `already compiled into a medium method` uses `InlineSmallCode / 4` before the bytecode-size
+  test (625 with this build's default 2500). This derived threshold is not a separate flag.
+  Even a tiny bytecode callee can fail it; raising `MaxInlineSize` alone does not remove this
+  refusal. Inspect the call-site frequency and existing compiled code, not just bytecode size.
+  The total nmethod or `Compiler.codelist` address span is not this metric.
 
 ## Refusal categories
 
-| Category                            | Printed                               | What to do                                                                                 |
-| ----------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------ |
-| Above `FreqInlineSize`              | `hot method too big`                  | If the cost matters, consider extracting rare work while preserving semantics              |
-| Above `MaxInlineSize`               | `too big`                             | Inspect frequency and compilation maturity; a cold, immaterial call may need no change     |
-| Unloaded/unresolved at this attempt | `not inlineable` after `(not loaded)` | Correlate later class loading, invocation and compilation; not proof it never executes     |
-| No selected inline target           | `virtual call`                        | Inspect receiver profile and unresolved targets; change dispatch only with causal evidence |
-| Depth exceeded                      | `inlining too deep`                   | Rarely worth changing; usually a symptom of something else                                 |
-| Callee already large                | `already compiled into a big method`  | Shrink the callee, or accept; raising `InlineSmallCode` is global                          |
-| Excluded                            | `disallowed by CompileCommand`        | Find the `CompileCommand` or directive; `Compiler.directives_print`                        |
-| Refused by C1 only                  | `callee is too large` on a C1 tree    | Inspect C2 only if it is the relevant enabled compiler; otherwise investigate C1 policy    |
+| Category                            | Printed                                 | What to do                                                                                 |
+| ----------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Above `FreqInlineSize`              | `hot method too big`                    | If the cost matters, consider extracting rare work while preserving semantics              |
+| Above `MaxInlineSize`               | `too big`                               | Inspect frequency and compilation maturity; a cold, immaterial call may need no change     |
+| Unloaded/unresolved at this attempt | `not inlineable` after `(not loaded)`   | Correlate later class loading, invocation and compilation; not proof it never executes     |
+| No selected inline target           | `virtual call`                          | Inspect receiver profile and unresolved targets; change dispatch only with causal evidence |
+| Depth exceeded                      | `inlining too deep`                     | Rarely worth changing; usually a symptom of something else                                 |
+| Callee already large                | `already compiled into a big method`    | Shrink the callee, or accept; raising `InlineSmallCode` is global                          |
+| Compiled callee at a cold site      | `already compiled into a medium method` | Inspect frequency and the quarter-limit gate; raising bytecode limits does not address it  |
+| Excluded                            | `disallowed by CompileCommand`          | Find the `CompileCommand` or directive; `Compiler.directives_print`                        |
+| Refused by C1 only                  | `callee is too large` on a C1 tree      | Inspect C2 only if it is the relevant enabled compiler; otherwise investigate C1 policy    |
 
 ## Two decision flows
 
@@ -154,12 +161,13 @@ Suspect method
 **Why was this specific call not inlined?**
 
 ```
-Tier-4 tree shows a refusal for a hot call
+Tier-4 tree shows a refusal at the relevant call
 ├── 1. Read the string — it names the limit
 │      too big / hot method too big  → size band; measure the callee (javap -c, or the printed number)
 │      virtual call                  → no selected inline target; inspect receiver profile before naming megamorphism
 │      inlining too deep             → depth; look at the chain above it
-│      already compiled into a big method → InlineSmallCode; the callee's nmethod is large
+│      already compiled into a big method → adjusted compiled instruction size > InlineSmallCode
+│      already compiled into a medium method → cold branch; same metric > InlineSmallCode / 4
 │      disallowed by CompileCommand  → a flag or directive, not the compiler
 ├── 2. Is it really the tier-4 tree?
 │      "callee is too large" → that is C1; find the tier-4 compilation of the same caller

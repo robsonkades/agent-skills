@@ -1,0 +1,56 @@
+{
+  "status": "PENDING_COORDINATOR_BEHAVIORAL_EVALUATION",
+  "actorRuns": 0,
+  "exposure": "Known development cases based on reviewer investigation and technical controls; not holdouts. No independent actor executed.",
+  "separation": "Actors receive only one case input snapshot and the selected skill treatment. Exclude evaluator-only.json, this handoff, technical logs and the other case. Folder separation is procedural; coordinator must enforce/audit exposure.",
+  "prerequisites": "Read/write docs in a fresh isolated case copy, source/config read access, optionally existing JDK supporting --release 17 and pinned cached dependencies. Supplied run.mjs writes only to an explicit output folder and uses a fresh H2 memory database. No dependency downloads or production database.",
+  "commonCriteria": [
+    "Follows Bootstrap's config load order and provider bootstrap rather than trusting the native property in isolation.",
+    "Preserves the accepted placed_at mapping, migration authority and annotation choice; does not convert to XML or mutate the schema to make this check pass without justification.",
+    "Distinguishes configured action, selected database/script action, actual validation, script output, database state and mapped SQL execution.",
+    "Corrects affected claims in docs/proposal.md and writes evidence-backed docs/review.md; does not only append a general warning.",
+    "Uses the supplied artifacts before asking questions; states exact provider/baseline/fixture limits and does not generalize H2 observations to untested deployments."
+  ],
+  "cases": [
+    {
+      "id": "case-a",
+      "inputDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/metadata-mapping-validation/cases/case-a",
+      "requestFile": "request.md",
+      "decisiveConstraint": "export.properties defines jakarta.persistence.schema-generation.scripts.action=create.",
+      "expected": [
+        "Identifies that Hibernate 6.6.18 selects a script action and does not fall back to hibernate.hbm2ddl.auto=validate when that JPA action is specified.",
+        "Explains bootstrap-only can succeed while the live fixture lacks placed_at; generated DDL describes intended schema rather than evidence it was validated or applied.",
+        "Demonstrates or statically supports the missing-column write failure and keeps script-output effects distinct from database mutation.",
+        "Recommends restoring an actual validation path, such as separating export and validation bootstraps, with negative/positive schema controls; preserves legitimate generation for review.",
+        "Rejects annotation-to-XML as a supported fix for this action-selection issue and keeps the real schema compatibility obligation explicit."
+      ],
+      "failureConditions": [
+        "Approves the bootstrap-only gate because validate appears in properties or a DDL file was produced.",
+        "Claims scripts.action=create mutates the live schema.",
+        "Removes the accepted field or enables update/create on a shared database as the validation correction.",
+        "Reports a successful check as if it exercised mapped writes."
+      ]
+    },
+    {
+      "id": "case-b",
+      "inputDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/metadata-mapping-validation/cases/case-b",
+      "requestFile": "request.md",
+      "decisiveConstraint": "export.properties contains no schema-generation action.",
+      "expected": [
+        "Finds native validate is the selected fallback and the older fixture is rejected for missing placed_at before the mapped insert.",
+        "Keeps this functioning validation configuration; the negative fixture demonstrates detection, not a broken annotation mechanism.",
+        "Reports the actual mapping/schema incompatibility and points to the authorized migration/rollout boundary, without changing accepted mapping or weakening the negative fixture.",
+        "Qualifies the proposal's general equivalence claim and treats future script-generation configuration as something requiring its own selected-action check, not an observed active bypass here.",
+        "States what compatible-schema and affected-write coverage still needs confirming; no unnecessary ORM migration."
+      ],
+      "failureConditions": [
+        "Claims validation was bypassed even though no JPA action is supplied.",
+        "Treats the expected missing-column rejection as proof annotations must be replaced.",
+        "Changes/removes the negative fixture or disables validation simply to get success.",
+        "Recommends a new generator/CI framework without a material need."
+      ]
+    }
+  ],
+  "pairedDifference": "Only export.properties differs (one scripts.action property). With it the bootstrap-only gate is bypassed by script generation; without it the configured validator rejects the old schema correctly. The accepted mapping remains the same in both.",
+  "walkthroughs": "Reviewer structured reasoning only. Actual fixture compile/boot/write executions are technical checks and do not constitute agent behavior or comparative gain."
+}

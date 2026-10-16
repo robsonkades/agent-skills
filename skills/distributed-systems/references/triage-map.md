@@ -25,14 +25,24 @@ not establish it.
 
 ## The data is wrong or stale
 
-**Separating question:** is an old value being served, do readers disagree, or did a stale
-write replace the authoritative value?
+**Separating question:** has the relevant write completed, is an old value being served,
+do readers disagree, or did a stale write replace the authoritative value?
+
+Read the response/acknowledgement contract and correlate the operation's progress or durable
+effect with the serving path. [HTTP 202](https://www.rfc-editor.org/rfc/rfc9110.html#section-15.3.3)
+establishes acceptance, not completed processing. Likewise,
+[RabbitMQ 4.2 publisher confirms](https://www.rabbitmq.com/docs/4.2/confirms#are-publisher-confirms-related-to-consumer-delivery-acknowledgements)
+do not establish consumer processing. Neither alone proves the business value was written.
+If only acceptance is established, inspect application progress before diagnosing stale reads:
+known queued work routes to `task-queues-and-competing-consumers` (or `kafka-consumers-in-java`
+for Kafka); an unclear completion contract routes to `rpc-and-api-contracts`. A missing effect
+log leaves completion unknown unless its coverage can establish absence.
 
 - Old everywhere, converges later → test replication lag, cached snapshots and delayed
   invalidation; route to `consistency-models` or `caching-strategies` based on the serving path.
 - Different per replica or per instance, does not converge → `cache-sharding-and-replication` if a
   cache is involved, otherwise `consistency-models` for the model actually in force.
-- The writer cannot read its own write → read-your-writes: `consistency-models`.
+- The writer cannot read its confirmed completed write → read-your-writes: `consistency-models`.
 - Correct stored value overwritten by an older one → inspect the original read/version,
   update path and enforced write precondition. Replayed or reordered messages route to
   `message-ordering-and-partitioning`; stale client read/edit/save across transactions routes
@@ -90,7 +100,8 @@ capture before prescribing a replacement executor.
 - Slow (timeouts, threads held) → inspect elapsed budgets and actual work lifetime;
   `timeouts-and-deadlines` owns ineffective bounds/cancellation, while
   `concurrency-limiting-and-bulkheads` owns local capacity isolation. A slow response does not
-  prove the timeout was missing; breaker choice depends on failure samples and fallback.
+  prove the timeout was missing; breaker choice depends on failure samples and the caller's
+  fast-failure contract. A successful fallback is optional; a defined typed error can suffice.
 - Rejecting with 429 → inspect the named quota/scope and `Retry-After`; it may be valid
   admission control, quota misconfiguration or unexpected workload. Route to
   `retries-and-backoff` and `rate-limiting-and-load-shedding`.
@@ -118,7 +129,7 @@ handlers, retries/redrive, producer epochs and gaps before calling the broker un
 - "Circuit breaker or bulkhead?" — a breaker stops calling a failing dependency; a bulkhead stops
   one dependency consuming all your capacity. Route to `circuit-breakers` and
   `concurrency-limiting-and-bulkheads` respectively. Under a slow dependency, a bulkhead often protects caller capacity while
-  a breaker may reduce futile calls; select from measured saturation and fallback semantics.
+  a breaker may reduce futile calls; select from measured saturation and the fast-failure contract.
 - "Saga or outbox?" — an outbox atomically records a database change and publication intent;
   relay publication can repeat. A saga tracks local transactions, compensation and forward
   recovery; it may use an outbox and can expose intermediate state. `distributed-transactions-and-sagas` decides, and

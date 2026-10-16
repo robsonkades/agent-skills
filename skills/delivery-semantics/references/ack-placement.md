@@ -135,6 +135,18 @@ handler nor fences its effects; that protection must be enforced where the effec
 - Heartbeat and extend a long-running SQS lease with `ChangeMessageVisibility`, with a maximum
   execution deadline and handling for extension failure. SQS Standard can still redeliver
   within the visibility interval, so lease tuning never replaces idempotency.
+- Keep SQS `ReceiptHandle` separate from durable business/event identity: each receive gets
+  a new handle. Trace the handle from the current delivery through the actual completion path;
+  do not reuse one cached from an earlier delivery. With
+  [DeleteMessage](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/APIReference/API_DeleteMessage.html),
+  an old handle can return success without removing the message. Standard queues can also
+  redeliver after a successful delete, so deletion does not establish duplicate freedom.
+- [DeleteMessageBatch](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/APIReference/API_DeleteMessageBatch.html)
+  reports `Successful` and `Failed` entries even on HTTP 200; correlate them by request-entry
+  `Id`, not list position. Track deletion separately from known business completion. Recover
+  failed or unresolved deletion under the current receipt/lease, or allow repeat-safe
+  redelivery; do not mark the whole batch deleted or reapply a confirmed business effect
+  solely because deletion failed.
 - Read the redelivery signal and treat it as information, not noise: JMS exposes
   `JMSRedelivered` and a `JMSXDeliveryCount` property; other providers may expose a flag or
   approximate counter instead. None is a substitute for durable event identity. These signals help

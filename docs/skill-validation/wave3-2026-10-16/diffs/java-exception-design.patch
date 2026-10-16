@@ -1,0 +1,68 @@
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\java-exception-design/SKILL.md" "b/C:\\git\\agent-skills\\skills\\java-exception-design/SKILL.md"
+index cd6306c..0c553dd 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\java-exception-design/SKILL.md"
++++ "b/C:\\git\\agent-skills\\skills\\java-exception-design/SKILL.md"
+@@ -70,10 +70,13 @@ evidence explicitly; do not invent handlers or retry guarantees from a type name
+   does not make `catch` clauses exhaustive, though it can still control extension/document variants.
+ - Do not accidentally swallow: `catch (Exception e) { log.warn(...); }` followed by a
+   normal return converts a failure into a false success. Handle, translate, or let fly.
+-- Prefer try-with-resources for owned `AutoCloseable` resources. If work and closing both fail,
+-  the work failure remains primary and closing failures are suppressed; if work succeeds,
++- Prefer try-with-resources for owned `AutoCloseable` resources. If work and closing throw
++  distinct failures, the work failure remains primary and closing failures are suppressed; if work succeeds,
+   closing can still be the primary failure. For manual cleanup, preserve the primary failure
+-  and attach secondary failures with `addSuppressed`. A `return` or escaping failure from
++  and attach secondary failures with `addSuppressed` only when they are different objects.
++  If `close()` rethrows the same throwable as the work, even try-with-resources can replace it
++  with an `IllegalArgumentException` from self-suppression; inspect cached/reused exceptions
++  as described in `references/design-decisions.md`. A `return` or escaping failure from
+   `finally` can replace the original outcome; it does not automatically preserve suppression.
+   Inspect both paths before claiming that cleanup preserves the exception contract, and check
+   that custom exceptions have suppression enabled when cleanup evidence is required.
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\java-exception-design/references/design-decisions.md" "b/C:\\git\\agent-skills\\skills\\java-exception-design/references/design-decisions.md"
+index dafbdb5..f3443b0 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\java-exception-design/references/design-decisions.md"
++++ "b/C:\\git\\agent-skills\\skills\\java-exception-design/references/design-decisions.md"
+@@ -66,6 +66,23 @@ remaining deadline/attempt budget and current load. “Transient” does not mea
+ “permanent” may change after operator/configuration action. Never parse a message or classify all
+ `IOException`s alike.
+ 
++## Cleanup failures and throwable identity
++
++When reviewing manual suppression or a resource that rethrows a stored failure, check object
++identity as well as type/message. `primary.addSuppressed(primary)` throws
++`IllegalArgumentException`; disabling suppression still validates the argument and does not
++avoid this failure. Java 21 try-with-resources invokes `addSuppressed` when both work and
++closing fail, so a resource propagating the same throwable from both paths can mask the original
++caller-visible failure. Distinct exceptions with identical messages do not have this problem.
++
++Prefer correcting an owned resource's stored-failure policy while preserving real cleanup
++failures. If that contract cannot change, an owned manual-cleanup adapter can retain the original
++failure and add a caught secondary failure only when `secondary != primary`. Keep cleanup
++attempts, propagate a cleanup failure when work succeeded, and retain distinct secondary
++failures. Test all three paths; skipping cleanup, dropping every secondary failure, or catching
++every `IllegalArgumentException` is not a preservation strategy. Ordinary resources with distinct
++failures still fit try-with-resources; this edge case does not justify rewriting them.
++
+ ## Detection heuristics
+ 
+ Grep-able signals that this skill applies:
+@@ -121,4 +138,5 @@ Grep-able signals that this skill applies:
+ - [JLS 21 §14.20.2–3: finally and try-with-resources](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.20.2) — abrupt cleanup can replace the original outcome; try-with-resources defines primary and suppressed failures.
+ - [JLS §11: Exceptions](https://docs.oracle.com/javase/specs/jls/se25/html/jls-11.html)
+ - [Throwable cause and suppressed-exception API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html)
++- [Java 21 suppression argument contract](<https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Throwable.html#addSuppressed(java.lang.Throwable)>) and [OpenJDK 21 implementation](https://github.com/openjdk/jdk/blob/jdk-21%2B35/src/java.base/share/classes/java/lang/Throwable.java) — self-suppression is rejected even when suppression is disabled.
+ - [InterruptedException API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/InterruptedException.html)
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\java-exception-design/skill.yaml" "b/C:\\git\\agent-skills\\skills\\java-exception-design/skill.yaml"
+index 1c1b646..1cab511 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\java-exception-design/skill.yaml"
++++ "b/C:\\git\\agent-skills\\skills\\java-exception-design/skill.yaml"
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: java-exception-design
+-version: 1.3.4
++version: 1.3.5
+ description: >-
+   Exceptions as API design in Java: checked versus unchecked as a deliberate decision,
+   hierarchy sizing, translation at layer boundaries with cause preservation, typed failure

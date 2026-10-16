@@ -1,0 +1,84 @@
+import java.time.Duration;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.StructuredTaskScope;
+import java.util.concurrent.StructuredTaskScope.Joiner;
+import java.util.concurrent.StructuredTaskScope.Subtask;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Stream;
+
+public class AllUntilJdk25Check {
+    public static void main(String[] args) throws Exception {
+        try (var scope = StructuredTaskScope.open(Joiner.<String>allUntil(task -> false))) {
+            scope.fork(() -> "alpha");
+            scope.fork(() -> "beta");
+            Stream<Subtask<String>> joined = scope.join();
+            List<Subtask<String>> tasks = joined.toList();
+            require(tasks.size() == 2, "normal join should retain two subtasks");
+            require(tasks.stream().allMatch(t -> t.state() == Subtask.State.SUCCESS),
+                    "normal join should contain successful subtasks");
+            require(tasks.stream().map(Subtask::get).sorted().toList().equals(List.of("alpha", "beta")),
+                    "normal results should match");
+        }
+
+        var completed = new ConcurrentHashMap<String, String>();
+        var fastRecorded = new CountDownLatch(1);
+        var slowStarted = new CountDownLatch(1);
+        var neverReleased = new CountDownLatch(1);
+        var interrupted = new AtomicBoolean();
+        var cleanedUp = new AtomicBoolean();
+        boolean sawTimeout = false;
+        boolean ownerGetRejected = false;
+        var joiner = Joiner.<String>allUntil(task -> {
+            if (task.state() == Subtask.State.SUCCESS) {
+                completed.put("fast", task.get());
+                fastRecorded.countDown();
+            }
+            return false;
+        });
+        try (var scope = StructuredTaskScope.open(
+                joiner, config -> config.withTimeout(Duration.ofSeconds(5)))) {
+            Subtask<String> fast = scope.fork(() -> "ready");
+            scope.fork(() -> {
+                slowStarted.countDown();
+                try {
+                    neverReleased.await();
+                    return "unexpected";
+                } catch (InterruptedException ex) {
+                    interrupted.set(true);
+                    throw ex;
+                } finally {
+                    cleanedUp.set(true);
+                }
+            });
+            require(fastRecorded.await(2, TimeUnit.SECONDS), "fast result must be recorded before timeout");
+            require(slowStarted.await(2, TimeUnit.SECONDS), "slow task must start before timeout");
+            try {
+                scope.join();
+                throw new AssertionError("JDK 25 allUntil join should throw on timeout");
+            } catch (StructuredTaskScope.TimeoutException expected) {
+                sawTimeout = true;
+                require(fast.state() == Subtask.State.SUCCESS, "fast task should already be successful");
+                try {
+                    fast.get();
+                    throw new AssertionError("owner get inside scope must reject incomplete join");
+                } catch (IllegalStateException expectedGetFailure) {
+                    ownerGetRejected = true;
+                }
+            }
+        }
+        require(sawTimeout, "timeout must be observed");
+        require(ownerGetRejected, "owner get guard must be observed");
+        require("ready".equals(completed.get("fast")), "callback capture must retain completed result");
+        require(interrupted.get(), "unfinished interruptible task must receive cancellation");
+        require(cleanedUp.get(), "close must wait for task cleanup");
+        System.out.println("PASS JDK25: Stream result; timeout throws; owner get rejected before close; callback result retained; interruption and cleanup observed");
+    }
+
+    private static void require(boolean condition, String message) {
+        if (!condition) throw new AssertionError(message);
+    }
+}
+

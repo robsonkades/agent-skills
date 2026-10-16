@@ -1,0 +1,9 @@
+# Deferred PostgreSQL 17 checks
+
+Status: NOT EXECUTED. The review environment has no psql/PostgreSQL server, and Docker cannot reach its daemon. Do not install a database or substitute H2 for PostgreSQL RLS semantics for this review.
+
+Use the commands in criteria.json only with an already available disposable PostgreSQL 17 database/cluster and psql. The connection must be an administrator able to create the three fixture roles and SET ROLE. Do not use production or existing application roles. Role names must be absent; a collision fails rather than replacing or dropping someone else's role.
+
+probe.sql opens one transaction, creates all roles/objects there and rolls back. With ON_ERROR_STOP, a failing psql invocation closes the connection and its uncommitted transaction is rolled back. Preserve logs and distinguish a reproduction of case A's overexposure from a safe-access result. Check command output and absence of skipped assertions before recording a pass.
+
+The fixture is source-reviewed only. It has not been SQL-parser checked or run against a database. Even a successful run would cover the stated roles, grants and simple SELECT view only; it would not establish production grants, function-security behavior, concurrent migration locks, replication, recovery timing or application integration.

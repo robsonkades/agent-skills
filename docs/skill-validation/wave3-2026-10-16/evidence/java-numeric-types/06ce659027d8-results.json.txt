@@ -1,0 +1,36 @@
+[
+  {
+    "label": "compile",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+    "args": [
+      "--release",
+      "17",
+      "-d",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\numeric-reader-case-IxgMg4\\classes",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-numeric-types-quality14-00e7fc8878124684ac1b4da1ee72375a\\cases\\ledger\\input\\src\\AmountParser.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-numeric-types-quality14-00e7fc8878124684ac1b4da1ee72375a\\cases\\ledger\\input\\src\\AmountParsers.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-numeric-types-quality14-00e7fc8878124684ac1b4da1ee72375a\\cases\\ledger\\input\\src\\Check.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-numeric-types-quality14-00e7fc8878124684ac1b4da1ee72375a\\cases\\ledger\\input\\src\\Quotation.java"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\java-numeric-types-quality14-00e7fc8878124684ac1b4da1ee72375a\\cases\\ledger\\input",
+    "status": 0,
+    "stdout": "",
+    "stderr": "",
+    "error": null
+  },
+  {
+    "label": "contract",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+    "args": [
+      "-cp",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\numeric-reader-case-IxgMg4\\classes",
+      "Check",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-numeric-types-quality14-00e7fc8878124684ac1b4da1ee72375a\\cases\\ledger\\input\\project.properties"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\java-numeric-types-quality14-00e7fc8878124684ac1b4da1ee72375a\\cases\\ledger\\input",
+    "status": 0,
+    "stdout": "parser=ledger checks=16 failures=0\r\n",
+    "stderr": "",
+    "error": null
+  }
+]

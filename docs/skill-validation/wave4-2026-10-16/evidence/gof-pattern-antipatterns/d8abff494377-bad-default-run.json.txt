@@ -1,0 +1,15 @@
+{
+  "label": "bad-default-run",
+  "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+  "args": [
+    "-cp",
+    "classes",
+    "RenderDemo"
+  ],
+  "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-antipatterns-validation\\technical\\bad-default",
+  "status": 1,
+  "signal": null,
+  "stdout": "",
+  "stderr": "Exception in thread \"main\" java.lang.AssertionError: expected=staging actual=\r\n\tat RenderDemo.eq(RenderDemo.java:29)\r\n\tat RenderDemo.main(RenderDemo.java:37)\r\n",
+  "error": null
+}

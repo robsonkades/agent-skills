@@ -29,9 +29,9 @@ The compiler is the cheapest analyser you own and the most under-used.
 `List` produces `warning: [rawtypes] found raw type: List`, and with `-Werror` the build stops
 with `error: warnings found and -Werror specified`.
 
-Turning it on for an existing codebase produces hundreds of findings at once. Ratchet: enable
-per module as each is cleaned, or enable specific categories (`-Xlint:rawtypes,unchecked`)
-and add categories over time.
+If enabling it exposes a large existing backlog, ratchet per module as each is cleaned, or
+enable specific categories (`-Xlint:rawtypes,unchecked`) and add categories over time.
+Do not create a baseline when the existing code already passes or the findings can be fixed safely.
 
 **Error Prone** hooks into javac and adds several hundred bug patterns — `==` on boxed types,
 format-string mismatches, misused `Optional`, ignored return values. Triage a representative sample
@@ -124,6 +124,35 @@ runtime classpath, nor does satisfying it prove binary compatibility.
 4. Batch fixes by independent behavior and verification. A deterministic mechanical rewrite may
    be reviewable at scale; separate semantic repairs and preserve generated-change provenance
    rather than deciding solely by finding count (java-refactoring).
+
+## Updating gates from observed failures
+
+Start with the escaped change, intended contract and retained run evidence. A production incident
+does not by itself show that another tool is needed; locate where prevention failed:
+
+| Evidence                                                             | Adjustment to investigate                                                                                                                        |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Relevant check was excluded or never triggered                       | Repair selection, dependency mapping or event configuration; test that the escaped change selects it.                                            |
+| Checker found the defect, but merge/release proceeded                | Repair result propagation or required-check enforcement; adding more assertions cannot fix a swallowed exit status.                              |
+| Check ran successfully with the intended scope but missed the defect | Identify the missing rule, assertion, input state or environment; choose targeted detection evidence rather than automatically raising coverage. |
+| Passing result described different code, artifacts or tool inputs    | Repair revision/provenance and input freshness before relying on the result.                                                                     |
+| A claimed failure is not reproducible with comparable inputs         | Preserve each attempt and investigate flakiness, infrastructure and changed inputs before weakening the rule.                                    |
+
+Choose a focused repair and its owner. Reproduce the relevant failure with a safe fixture or
+historical change, then verify the repaired gate rejects it and still accepts a legitimate case.
+Record unavailable reproduction conditions rather than claiming the production defect is now
+prevented. Route test design, debugging and performance threshold work to their existing owners.
+
+For subsequent changes, review invalid runs, confirmed useful findings, bypasses and queue/runtime
+under comparable scope and inputs. Raw finding counts and absence of recent incidents alone do
+not establish detection quality. Revisit baselines and suppressions after rule, dependency or
+toolchain changes; do not silently regenerate them to absorb newly visible defects. Treat fewer
+escapes or lower feedback cost as hypotheses until later evidence supports them.
+
+This feedback procedure applies the follow-through principle in
+[Google SRE postmortems](https://sre.google/sre-book/postmortem-culture/): corrective actions must
+be reviewed and followed up. The gate-specific diagnosis and validation above are workflow
+guidance, not a claim that one gate set guarantees incident prevention.
 
 Primary references: [Maven dependency convergence](https://maven.apache.org/enforcer/enforcer-rules/dependencyConvergence.html),
 [Maven reproducible builds](https://maven.apache.org/guides/mini/guide-reproducible-builds.html), and

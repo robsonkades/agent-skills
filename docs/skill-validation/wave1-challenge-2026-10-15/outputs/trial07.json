@@ -1,0 +1,10 @@
+{
+  "trialId": "trial07",
+  "caseId": "estimation-under-uncertainty-one-specialist",
+  "filesRead": [
+    "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/actor-protocol.md",
+    "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/inputs/estimation-under-uncertainty-one-specialist.json"
+  ],
+  "unexpectedExposure": [],
+  "response": "The model probability of deployment acceptance by time 8 is 64%. The project's P80 is time 12: that is the earliest completion time with cumulative probability at least 80%. I would not promise time 8 on this evidence.\n\nStart A at origin 0, then start B immediately when A finishes. Either order gives the same forecast. The single specialist prevents overlap, so adapter durations add. After both finish, schedule the independent team's one-day combined acceptance, then use the next eligible deployment slot, including a slot reached exactly.\n\n| Adapter durations | Probability | Combined acceptance finishes | Deployment acceptance |\n| --- | --- | --- | --- |\n| Both 2 days | 64% | Time 5 | Time 8 |\n| One 2 days, one 6 days | 32% | Time 9 | Time 12 |\n| Both 6 days | 4% | Time 13 | Time 16 |\n\nThus cumulative completion probability is 64% at time 8, 96% at time 12, and 100% at time 16 within this model. Each task's two-day P80 does not make time 8 an 80% project outcome: meeting that target requires both short draws, with probability 0.8 × 0.8.\n\nUse time 12 as the P80 planning forecast, with its actual modeled coverage of 96%. A commitment requires explicit agreement about acceptable risk; these elicited probabilities are not calibrated historical reliability.\n\nUpdate the forecast when the first adapter finishes. A two-day result raises the conditional chance of meeting time 8 to 80%; a six-day result makes that target impossible under the supplied schedule."
+}

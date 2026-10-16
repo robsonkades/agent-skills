@@ -1,13 +1,13 @@
 schemaVersion: 1
 
 name: feature-progress-tracking
-version: 1.2.5
+version: 1.2.6
 description: >-
   Keeping a feature's state true while it is being built: one status per resource with defined
   transitions, a validation line required before anything reaches done, and a persisted record
-  current enough that another agent or another session can resume from it without asking. Use when
-  a feature spans more than one sitting, when someone else may pick the work up, when the answer
-  to "where are we" is a summary of the conversation, when resources are marked done because code
+  current enough that another agent or another session can resume without reconstructing the
+  conversation. Use when a feature spans more than one sitting, when someone else may pick the
+  work up, when the answer to "where are we" is a summary of the conversation, when resources are marked done because code
   was written for them, when a blocker has been open long enough that nobody remembers what it
   needs, or when a plan and the code have silently diverged. Does not implement the resources
   (feature-execution), does not decide what counts as a resource (feature-decomposition), and does

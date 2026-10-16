@@ -1,0 +1,3 @@
+PASS: raw key mismatch rejected before mutation
+PASS: unsafe varargs caught at caller String cast
+PASS: Object[] consumer works, String[] consumer rejects exposed array

@@ -1,0 +1,4 @@
+{
+  "checkedLocalMarkdownLinks": 4,
+  "failed": []
+}

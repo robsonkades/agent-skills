@@ -1,0 +1,78 @@
+diff --git a/skills/sharding-and-partitioning/SKILL.md b/skills/sharding-and-partitioning/SKILL.md
+index 2b917c7..9856007 100644
+--- a/skills/sharding-and-partitioning/SKILL.md
++++ b/skills/sharding-and-partitioning/SKILL.md
+@@ -63,7 +63,8 @@ measurement campaign. For a material topology commitment, establish the affected
+ 7. **Before committing to a topology change, establish its migration and recovery path.**
+    Choose a measured offline freeze or a supported online protocol. Preserve version-aware copy,
+    verification, enforced ownership transitions and rollback data, including post-cutover deltas
+-   when writes resume — `references/what-sharding-forbids.md`.
++   when writes resume. Online capture must locate the previous target for deletes and key changes,
++   not only route the new row — `references/what-sharding-forbids.md`.
+ 
+ Inspect the target datastore/version, partitioner, driver/ORM and transaction configuration;
+ logical partition, physical node and failure domain are not interchangeable. This skill has no
+diff --git a/skills/sharding-and-partitioning/references/what-sharding-forbids.md b/skills/sharding-and-partitioning/references/what-sharding-forbids.md
+index 7cb27e0..a405fb7 100644
+--- a/skills/sharding-and-partitioning/references/what-sharding-forbids.md
++++ b/skills/sharding-and-partitioning/references/what-sharding-forbids.md
+@@ -117,6 +117,7 @@ only where the actual datastore and migration protocol need it; managed tooling
+    datastore and every writer support it. Two independent local transactions are not equivalent.
+    Verify inserts, updates, deletes, ordering, abort/retry and ambiguous commit behavior. Logging
+    only after an independent second write fails cannot recover a crash before that log.
++   Check that captured identity can route deletes and key changes as described below.
+ 3. **Backfill from a stable snapshot in bounded resumable batches.** Persist cursor and
+    snapshot/change-log position. Apply rows by source version/watermark so an old backfill
+    cannot overwrite a newer streamed change; insert-if-absent alone can preserve stale partial
+@@ -141,6 +142,29 @@ only where the actual datastore and migration protocol need it; managed tooling
+    schema semantics; never reactivate the old epoch. Stop replication and decommission after
+    the rollback/replay/backup horizon and restore test pass.
+ 
++### Routing deletes and changed keys
++
++Inspect captured event keys and before/after values after connector transformations; the source
++primary key need not be the target partition key. For example, the Debezium 3.3 PostgreSQL
++connector documents delete events with only primary-key values under `REPLICA IDENTITY DEFAULT`.
++If `id` is the source primary key but targets route by `tenant_id`, that delete does not itself
++identify the old tenant. Looking up the current source row cannot recover a deleted row or
++reliably recover a previous routing value after an update.
++
++Preserve adequate managed routing, a supported bounded lookup across owners, or durable
++identity-to-placement state. Otherwise compare capturing the required old values through
++supported replica identity/outbox configuration with a durable lookup whose ordering, replay
++and rebuild are defined. Do not require full-row capture
++when the existing identity is sufficient; price the additional capture/log load when changing it.
++Unknown placement must hold application of the event and cutover, not become an acknowledged no-op.
++
++A changed routing value can require removing the old location as well as writing the new one;
++upserting only by the new value leaves a ghost copy. Exercise a key change across two owners and
++a later delete, then duplicate delivery and a delayed snapshot row. At the same applied watermark,
++check both locations for correct presence/absence and retained version/deletion knowledge. This
++checks the routing dependency; it does not prove the whole migration or replace its transaction,
++fencing and rollback controls.
++
+ For a migration that needs further failure evidence, test the consequential crash/restart,
+ stale-client and abort/resume transitions in a bounded authorized environment. Reuse valid
+ existing controls and record untested states. Track relevant source/target watermarks, apply lag,
+@@ -160,7 +184,7 @@ example does not authorize running them or establish a live migration's correctn
+ - [PostgreSQL 18 LIMIT and OFFSET](https://www.postgresql.org/docs/18/queries-limit.html) — unique ordering for stable limited results; offset work.
+ - [PostgreSQL 18 row comparisons](https://www.postgresql.org/docs/18/functions-comparisons.html#ROW-WISE-COMPARISON) — tuple comparison and null semantics underlying resume predicates; a distributed merge still needs matching ordering and read semantics.
+ - [Kleppmann, Beresford and Svingen, Online Event Processing (2019)](https://martin.kleppmann.com/2019/05/01/olep-cacm.html) — background on event-log coordination, not a validation of this migration sequence.
+-- [Debezium 3.3 PostgreSQL connector](https://debezium.io/documentation/reference/3.3/connectors/postgresql.html)
++- [Debezium 3.3 PostgreSQL connector](https://debezium.io/documentation/reference/3.3/connectors/postgresql.html) — replica identity and delete-event contents, in addition to snapshot/change capture.
+ - [PostgreSQL 18 logical decoding concepts](https://www.postgresql.org/docs/18/logicaldecoding-explanation.html)
+ - [PostgreSQL 18 transaction atomicity](https://www.postgresql.org/docs/18/tutorial-transactions.html) — within its actual transaction domain, not across independently committed stores.
+ - [Vitess 22 routing through VTGate](https://vitess.io/docs/archive/22.0/concepts/vtgate/)
+diff --git a/skills/sharding-and-partitioning/skill.yaml b/skills/sharding-and-partitioning/skill.yaml
+index 3059ccb..0217046 100644
+--- a/skills/sharding-and-partitioning/skill.yaml
++++ b/skills/sharding-and-partitioning/skill.yaml
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: sharding-and-partitioning
+-version: 1.3.4
++version: 1.3.5
+ description: >-
+   Whether to split data across owners at all, and on which key: what sharding buys — write
+   capacity, locality, data volume and isolation — against distributed transactions/indexes,

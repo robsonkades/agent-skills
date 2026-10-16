@@ -20,6 +20,7 @@ The two rules that follow:
 
 The accessor sketch needs `java.lang.invoke` imports and accessible `Order`/`Money` types.
 It assumes `Order.total()` declares no checked failures; adapt the catch policy if it does.
+Its static initializer runs on first active use, which may be the first request, not startup.
 
 ```java
 public final class Accessors {
@@ -56,8 +57,13 @@ Details that matter:
   `asType`; if types already match it follows the exact path. Cost is not specified.
 - Handle methods declare `throws Throwable`. Preserve `Error`, cancellation/interruption and
   domain-declared failures according to the target contract; do not blindly wrap everything.
-- Resolve mandatory application-lifetime members during explicit startup or a static initializer.
-  Resolve optional/reloadable plugins in their owned lifecycle so one failure does not poison an
+- Resolve mandatory application-lifetime members before the owner advertises readiness. For the
+  sketch, call an explicit resolver from bootstrap or initialize `Accessors` there with an
+  authorized lookup's `ensureInitialized(Accessors.class)` (Java 15+). A class literal,
+  `Class.forName(name, false, loader)` or member enumeration does not run that initializer.
+  Resolution validates the member, not the behavior or initialization of every future target;
+  do not invoke side-effectful business operations merely to trigger this check. Resolve
+  optional/reloadable plugins in their owned lifecycle so one failure does not poison an
   unrelated class for the lifetime of its loader.
 - For fields, use `VarHandle` (`lookup.findVarHandle`), which additionally offers the access
   modes — plain, opaque, acquire/release, volatile — see varhandles-and-memory-ordering.
@@ -225,6 +231,8 @@ injection can make dependencies explicit without proving native reachability. Se
 
 ## Primary references
 
+- [JLS 17 class initialization triggers and failure state](https://docs.oracle.com/javase/specs/jls/se17/html/jls-12.html#jls-12.4)
+- [Java 17 `Lookup.ensureInitialized`](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/invoke/MethodHandles.Lookup.html#ensureInitialized(java.lang.Class)>)
 - [Java 17 Class member lookup](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html)
 - [Java 17 Method invocation contracts](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/reflect/Method.html)
 - [Java 17 MethodHandle varargs and fixed arity](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/invoke/MethodHandle.html)

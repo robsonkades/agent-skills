@@ -1,0 +1,18 @@
+{
+  "label": "new-state-coverage-negative",
+  "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+  "args": [
+    "--release",
+    "21",
+    "-d",
+    "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-state-validation\\technical\\new-state\\classes",
+    "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-state-validation\\technical\\new-state\\StateControls.java"
+  ],
+  "cwd": "C:/git/agent-skills",
+  "expectedExit": 1,
+  "exitCode": 1,
+  "signal": null,
+  "stdout": "",
+  "stderr": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-state-validation\\technical\\new-state\\StateControls.java:28: error: the switch expression does not cover all possible input values\r\n    return switch (current) {\r\n           ^\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-state-validation\\technical\\new-state\\StateControls.java:52: error: the switch expression does not cover all possible input values\r\n    return switch (current) {\r\n           ^\r\n2 errors\r\n",
+  "error": null
+}

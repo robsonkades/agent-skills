@@ -1,0 +1,8 @@
+CompileCommand: An error occurred during parsing
+Error: Method pattern uses '/' together with '::' (tips: replace '/' with '+' for hidden classes)
+Line: 'print,java/lang/System::mapLibraryName'
+
+Usage: '-XX:CompileCommand=<option>,<method pattern>' - to set boolean option to true
+Usage: '-XX:CompileCommand=<option>,<method pattern>,<value>'
+Use:   '-XX:CompileCommand=help' for more information and to list all option.
+

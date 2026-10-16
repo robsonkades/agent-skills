@@ -1,0 +1,3 @@
+Exception in thread "main" java.lang.IllegalArgumentException: CODEC_REQUIRED: java.lang.String in value
+	at example.RuntimeReader.check(RuntimeReader.java:16)
+	at example.RuntimeReader.main(RuntimeReader.java:8)

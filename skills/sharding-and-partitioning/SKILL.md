@@ -63,7 +63,8 @@ measurement campaign. For a material topology commitment, establish the affected
 7. **Before committing to a topology change, establish its migration and recovery path.**
    Choose a measured offline freeze or a supported online protocol. Preserve version-aware copy,
    verification, enforced ownership transitions and rollback data, including post-cutover deltas
-   when writes resume — `references/what-sharding-forbids.md`.
+   when writes resume. Online capture must locate the previous target for deletes and key changes,
+   not only route the new row — `references/what-sharding-forbids.md`.
 
 Inspect the target datastore/version, partitioner, driver/ORM and transaction configuration;
 logical partition, physical node and failure domain are not interchangeable. This skill has no

@@ -1,0 +1,20 @@
+{
+  "disposition": "supported",
+  "basis": "SettingsRegistry.java:7-14 captures one local reference, rechecks current under a shared monitor on null, and returns the local value. The monitor serializes the only build/publication, so no reset, throw or reentry permits a second build. In Settings.java:3-6, the write of 64 to Record.limit precedes construction's freeze of final Settings.record; limit() reaches the value through that final reference. JLS SE25 17.5/17.5.1 therefore supplies initialization safety even through racy publication. The accepted contract excludes later mutation, aliases and constructor escape, and supplies the registry before Thread.start. Nonvolatile current admits a stale null and an extra lock acquisition, not a contract failure.",
+  "requiredChange": null,
+  "missingEvidence": [],
+  "checked": [
+    "Read the complete request, accepted contract, README, both production Java files, Smoke.java and check.mjs.",
+    "Compared SHA-256 of every supplied input/project file with its output/project counterpart.",
+    "Consulted Oracle JLS SE25 sections 17.4.5, 17.5 and 17.5.1.",
+    "Observed java and javac version 25.0.3.",
+    "Ran node check.mjs in output/project: release 25 compilation and sequential identity/value/build check PASS, exit 0."
+  ],
+  "limits": [
+    "The supplied smoke is sequential and is not a concurrency proof.",
+    "No concurrent stress test, benchmark or mechanized proof was executed.",
+    "The conclusion relies on the accepted no-escape, no-mutation, no-reset, no-reentry, no-build-failure and before-Thread.start premises.",
+    "No production correction was implemented or required; volatile remains an optional maintenance choice.",
+    "No performance, fairness or wait-free guarantee is claimed."
+  ]
+}

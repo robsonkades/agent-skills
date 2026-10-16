@@ -227,6 +227,14 @@ public OrderView view(OrderId id, Deadline deadline) throws InterruptedException
 }
 ```
 
+This sketch exposes `StructuredTaskScope.FailedException` when a subtask failure determines
+the joiner's outcome, retaining that failure as its cause. A child's `InterruptedException`
+is wrapped too; interruption of the owner waiting in `join()` propagates directly as
+`InterruptedException`. Existing caller branches for specific port exceptions may now be bypassed;
+parallelization does not preserve exception transparency automatically. Preserve the agreed public
+failure contract with narrow translation after scope cleanup, or explicitly adopt the wrapper
+contract. Test both interruption origins; do not treat every child failure as caller cancellation.
+
 Three decisions made explicitly, none of which the sequential version made:
 
 - **Concurrent branches**, with order→customer sequential within the required branch. Latency
@@ -237,8 +245,8 @@ Three decisions made explicitly, none of which the sequential version made:
   Required failures still fail the view. Multiplying availability assumes independent failures;
   shared dependencies and this fallback policy change the result
   (`failure-models`).
-- **One deadline is passed down and a scope timeout cancels outstanding tasks.** InterruptedException
-  propagates; scope timeout/failure remains visible. Scope close waits for child termination, so
+- **One deadline is passed down and a scope timeout cancels outstanding tasks.** Scope
+  timeout/failure remains visible. Scope close waits for child termination, so
   uncooperative clients can exceed the budget. Require transport deadlines and cancellation tests.
 
 If this aggregation moves out of process, it becomes a remote boundary with its own scaling,

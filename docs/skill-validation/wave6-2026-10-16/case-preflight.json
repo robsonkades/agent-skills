@@ -1,0 +1,71 @@
+{
+  "at": "2026-10-16T17:20:01.088Z",
+  "node": "v25.6.1",
+  "records": [
+    {
+      "case": "D1",
+      "command": "C:\\Program Files\\nodejs\\node.exe",
+      "args": ["check.mjs"],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/preflight/D1",
+      "exit": 0,
+      "stdout": "sequential-controls=2 PASS\r\n",
+      "stderr": "",
+      "elapsedMs": 474
+    },
+    {
+      "case": "D2",
+      "command": "C:\\Program Files\\nodejs\\node.exe",
+      "args": ["check.mjs"],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/preflight/D2",
+      "exit": 0,
+      "stdout": "sequential-controls=2 PASS\r\n",
+      "stderr": "",
+      "elapsedMs": 453
+    },
+    {
+      "case": "H1",
+      "command": "C:\\Program Files\\nodejs\\node.exe",
+      "args": ["check.mjs"],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/preflight/H1",
+      "exit": 0,
+      "stdout": "sequential identity/value/build check PASS; no concurrency proof\r\n",
+      "stderr": "",
+      "elapsedMs": 468
+    },
+    {
+      "case": "H2",
+      "command": "C:\\Program Files\\nodejs\\node.exe",
+      "args": ["check.mjs"],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/preflight/H2",
+      "exit": 0,
+      "stdout": "while-gate-closed=DONE:0\r\nalive=true\r\nafter-termination=DONE:83\r\n",
+      "stderr": "",
+      "elapsedMs": 438
+    },
+    {
+      "case": "H3",
+      "command": "C:\\Program Files\\nodejs\\node.exe",
+      "args": ["check.mjs"],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/preflight/H3",
+      "exit": 0,
+      "stdout": "synchronous provider PASS; deployed provider absent\r\n",
+      "stderr": "",
+      "elapsedMs": 457
+    },
+    {
+      "case": "H4",
+      "command": "C:\\Program Files\\nodejs\\node.exe",
+      "args": ["check.mjs"],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/preflight/H4",
+      "exit": 0,
+      "stdout": "before-recycle=30\r\nafter-recycle=300\r\n",
+      "stderr": "",
+      "elapsedMs": 421
+    }
+  ],
+  "pairedDifference": ["src/memo/ReaderFactory.java"],
+  "limitations": [
+    "Sequential/controlled lifecycle runs only; no general race-freedom proof or jcstress run.",
+    "Two scenarios intentionally display a contract violation while the command exits0; exit0 is not a passing contract."
+  ]
+}

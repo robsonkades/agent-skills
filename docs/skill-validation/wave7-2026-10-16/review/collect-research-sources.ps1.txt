@@ -1,0 +1,29 @@
+$ErrorActionPreference = 'Stop'
+$reviewRoot = 'C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/review'
+$sourceRoot = Join-Path $reviewRoot 'sources'
+New-Item -ItemType Directory -Path $sourceRoot -Force | Out-Null
+$sourceRequests = @(
+    @{ file = 'RestrictedTransactionalEventListenerFactory.java'; url = 'https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.9/spring-tx/src/main/java/org/springframework/transaction/annotation/RestrictedTransactionalEventListenerFactory.java' },
+    @{ file = 'TransactionalApplicationListenerSynchronization.java'; url = 'https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.9/spring-tx/src/main/java/org/springframework/transaction/event/TransactionalApplicationListenerSynchronization.java' },
+    @{ file = 'TransactionSynchronizationUtils.java'; url = 'https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.9/spring-tx/src/main/java/org/springframework/transaction/support/TransactionSynchronizationUtils.java' },
+    @{ file = 'TransactionalEventListener.html'; url = 'https://docs.spring.io/spring-framework/docs/7.0.9/javadoc-api/org/springframework/transaction/event/TransactionalEventListener.html' },
+    @{ file = 'DataSourceTransactionManager.java'; url = 'https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.9/spring-jdbc/src/main/java/org/springframework/jdbc/datasource/DataSourceTransactionManager.java' },
+    @{ file = 'DataSourceUtils.java'; url = 'https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.9/spring-jdbc/src/main/java/org/springframework/jdbc/datasource/DataSourceUtils.java' },
+    @{ file = 'AbstractPlatformTransactionManager.java'; url = 'https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.9/spring-tx/src/main/java/org/springframework/transaction/support/AbstractPlatformTransactionManager.java' },
+    @{ file = 'TransactionSynchronizationManager.java'; url = 'https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.9/spring-tx/src/main/java/org/springframework/transaction/support/TransactionSynchronizationManager.java' },
+    @{ file = 'transactional-outbox-pattern.html'; url = 'https://microservices.io/patterns/data/transactional-outbox.html' },
+    @{ file = 'aws-transactional-outbox.html'; url = 'https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/transactional-outbox.html' }
+)
+$retrieved = foreach ($request in $sourceRequests) {
+    $target = Join-Path $sourceRoot $request.file
+    $response = Invoke-WebRequest -Uri $request.url -OutFile $target -PassThru -TimeoutSec 30
+    [pscustomobject]@{
+        url = $request.url
+        path = $target
+        status = [int]$response.StatusCode
+        sha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $target).Hash.ToLowerInvariant()
+        retrievedAtUtc = [DateTime]::UtcNow.ToString('o')
+    }
+}
+$retrieved | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $sourceRoot 'retrieval.json') -Encoding utf8
+$retrieved | Select-Object status, path, sha256 | ConvertTo-Json

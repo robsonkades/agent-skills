@@ -45,7 +45,8 @@ headroom factor.
    times an unweighted average of their mean latencies can misstate total occupancy.
 2. **Classify state.** In steady operation, reconcile long-run averages. During ramp, drain or
    overload, report inventory change and finite-window edge effects; do not force a stationary
-   formula onto a growing queue.
+   formula onto a growing queue. Inspect the occupancy exporter and query: `L` is a time average;
+   averaging event-triggered or irregular gauge samples does not automatically measure it.
 3. **Separate demands.** For resource `k`, measure visits `V_k`, service demand `D_k` (resource
    time per completed transaction), residence `R_k = Q_k + S_k`, queue length and saturation.
    Wall time, CPU demand and downstream occupancy are different quantities.
@@ -114,7 +115,7 @@ Decision:        configured workers/queue/rejection; SLO and recovery validation
 
 - [Sizing worksheet](references/sizing-worksheet.md) — boundary-consistent demand calculations,
   CPU and downstream constraints, queue budgets, `ThreadPoolExecutor` admission order and
-  overload policy. Read when choosing or reviewing a pool size.
+  overload policy. Read when reconciling measured occupancy or choosing/reviewing a pool size.
 - [Reading the utilisation curve](references/utilisation-curve.md) — M/M/1, M/G/1 and Erlang-C
   assumptions, variability, demand law and evidence-based saturation diagnosis. Read when latency
   is high and the cause is not yet known to be code.

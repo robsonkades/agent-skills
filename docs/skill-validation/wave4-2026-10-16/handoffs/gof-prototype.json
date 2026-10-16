@@ -1,0 +1,1151 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "gof-prototype",
+  "ownedPath": "skills/gof-prototype/**",
+  "reviewer": "/root/quality14",
+  "wave": 4,
+  "allWritesStopped": true,
+  "activeBackgroundProcesses": [],
+  "noProcessesStartedByReviewerCanStillWrite": true,
+  "readinessMeaning": "Local review and justified changes are complete; this is not repository-wide verification.",
+  "changeSummary": "Repaired confirmed 404 Jakarta Persistence 3.2 source URL by using the verified .html document. Existing technical guidance and examples remain unchanged.",
+  "findingsCorrected": [
+    {
+      "status": "corrected",
+      "location": "skills/gof-prototype/references/copying-in-java.md:200",
+      "finding": "Jakarta Persistence 3.2 entity-lifecycle link returned 404.",
+      "consequence": "Reader could not inspect the primary contract behind persistence-identity guidance.",
+      "change": "Added the verified .html extension; retained same spec version and intended target.",
+      "evidence": ["jakarta-old", "jakarta-3.2"]
+    }
+  ],
+  "remainingFindings": [],
+  "rejectedOrAlreadyCoveredCandidates": [
+    "Cross-field aliases already require a single identity context for the entire copy operation, not separate per-field maps.",
+    "Distinct equals-equal nodes, register-before-recursion cycle handling and depth/node bounds are explicit.",
+    "Caller requirements, concrete subtype and correctly specified clone compatibility are already covered.",
+    "Comparator/equality/cardinality, source stability, resources and entity identity already have decision-dependent guidance."
+  ],
+  "assignmentBaseline": {
+    "head": "bbb7d996a929e81baf735bbaab5b6e3fbf6e8503",
+    "committedVersion": "1.2.3",
+    "assignmentVersion": "1.2.3",
+    "preExistingChanges": [],
+    "preExistingVersionBump": false,
+    "sharedRecord": "docs/skill-validation/wave4-2026-10-16/baseline.json",
+    "snapshot": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/baseline/gof-prototype",
+    "assignmentHashes": [
+      {
+        "path": "skills/gof-prototype/SKILL.md",
+        "sha256": "770fb030b4e562737abb4de91bb98d819666f57d6612ef4132ab23198d94e1e2",
+        "bytes": 11934
+      },
+      {
+        "path": "skills/gof-prototype/references/copying-in-java.md",
+        "sha256": "2a440d1dfc6a389050baa63e9f12abacd2fb49ddc9e10a2fe334f13a7f49bf69",
+        "bytes": 13467
+      },
+      {
+        "path": "skills/gof-prototype/references/worked-example.md",
+        "sha256": "11a11c4c51c4515d1108b5fcbd041d6356b05fc462f375540434235d9f7dd531",
+        "bytes": 11127
+      },
+      {
+        "path": "skills/gof-prototype/skill.yaml",
+        "sha256": "71fb78682e6267fd392d1f9be57e6daa28a695dc34ab45394348a37bd7a62852",
+        "bytes": 1999
+      }
+    ],
+    "inspectionEvidence": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evaluator\\review-record.json",
+    "confirmation": "Assignment status, staged and unstaged diffs were empty. Four owned file hashes matched the coordinator baseline snapshot."
+  },
+  "versions": {
+    "committed": "1.2.3",
+    "assignment": "1.2.3",
+    "final": "1.2.4",
+    "rationale": "One patch increment for the changed source link under repository immutability policy; no pre-existing bump to reuse."
+  },
+  "filesChangedByReviewer": [
+    {
+      "path": "skills/gof-prototype/references/copying-in-java.md",
+      "line": 200,
+      "change": "Add .html to the verified Jakarta Persistence 3.2 lifecycle specification URL."
+    },
+    {
+      "path": "skills/gof-prototype/skill.yaml",
+      "line": 4,
+      "change": "Bump 1.2.3 to 1.2.4 once."
+    }
+  ],
+  "preExistingChanges": [],
+  "untouchedOwnedFiles": [
+    "skills/gof-prototype/SKILL.md",
+    "skills/gof-prototype/references/worked-example.md"
+  ],
+  "finalOwnedFileHashes": [
+    {
+      "path": "skills/gof-prototype/SKILL.md",
+      "sha256": "770fb030b4e562737abb4de91bb98d819666f57d6612ef4132ab23198d94e1e2"
+    },
+    {
+      "path": "skills/gof-prototype/skill.yaml",
+      "sha256": "cf1d01a53a7d653c300ff5d03f2773c1818ba74d9204fd2ec3b3db6394c0b76e"
+    },
+    {
+      "path": "skills/gof-prototype/references/copying-in-java.md",
+      "sha256": "ce70157d35bf8fd1be30ab513cf5bfb03bc55e581dddb077ae6ef340ed90bb00"
+    },
+    {
+      "path": "skills/gof-prototype/references/worked-example.md",
+      "sha256": "11a11c4c51c4515d1108b5fcbd041d6356b05fc462f375540434235d9f7dd531"
+    }
+  ],
+  "preservedCapabilities": [
+    "Per-field ownership decisions and immutable sharing.",
+    "One identity context across fields, fresh per complete copy operation.",
+    "Runtime subtype/clone and collection equality/comparator decisions.",
+    "Stable source and publication caveats.",
+    "Resource owner/cleanup and listener-registration caveats.",
+    "Persistence identity/lazy mappings/managed merge outcome.",
+    "Registry-owned prototypes, immutable style and deliberate concurrent metrics sharing.",
+    "Measurement-dependent performance claims and no-change alternative."
+  ],
+  "replacedOrIntentionallyRemovedCapabilities": [],
+  "domainSpecificReviewCriteria": [
+    "Repair source without changing technology baseline or weakening source qualifications.",
+    "Preserve caller/ownership/identity contract and known no-change paths.",
+    "Verify graph-copy sample mechanisms with bounded technical controls without treating them as agent or ORM evidence.",
+    "Keep actor case inputs separate from evaluator criteria and retain complete reproducer."
+  ],
+  "procedure": "Complete docs/skill-review-prompt.md, docs/parallel-skill-reviews.md, skill-engineering SKILL.md and evidence/evaluation/resource-design/anti-pattern references were read earlier in this wave and reused unchanged as allowed. Wave4 brief was read for this assignment. Entire assigned package and examples were read.",
+  "baselineContract": {
+    "intendedJava": "Java 17 compatible examples; no upgrade introduced.",
+    "compiler": "Existing Temurin 25.0.3 javac with --release 17.",
+    "runtime": "Existing Temurin 25.0.3 VM, not execution on Java 17 VM.",
+    "scope": "Bounded in-memory copy graph fixtures without frameworks, provider, database, concurrent source mutation or external resources."
+  },
+  "localValidation": {
+    "runnerCommand": "node \"C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evaluator\\run-local.mjs\"",
+    "workingDirectory": "C:/git/agent-skills",
+    "runnerExitCode": 0,
+    "commandsExecuted": [
+      {
+        "label": "case-a-compile",
+        "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+        "args": [
+          "--release",
+          "17",
+          "-d",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\classes\\case-a",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-a\\GraphCopier.java",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-a\\DraftEditor.java",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evaluator\\CopyProbe.java"
+        ],
+        "workingDirectory": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\case-a-compile.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\case-a-compile.stderr.txt"
+      },
+      {
+        "label": "case-a-probe",
+        "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+        "args": [
+          "-cp",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\classes\\case-a",
+          "CopyProbe",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-a"
+        ],
+        "workingDirectory": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\case-a-probe.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\case-a-probe.stderr.txt"
+      },
+      {
+        "label": "case-b-compile",
+        "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+        "args": [
+          "--release",
+          "17",
+          "-d",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\classes\\case-b",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-b\\GraphCopier.java",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-b\\DraftEditor.java",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evaluator\\CopyProbe.java"
+        ],
+        "workingDirectory": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\case-b-compile.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\case-b-compile.stderr.txt"
+      },
+      {
+        "label": "case-b-probe",
+        "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+        "args": [
+          "-cp",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\classes\\case-b",
+          "CopyProbe",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-b"
+        ],
+        "workingDirectory": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\case-b-probe.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\case-b-probe.stderr.txt"
+      },
+      {
+        "label": "structural",
+        "executable": "C:\\Program Files\\nodejs\\node.exe",
+        "args": [
+          "--input-type=module",
+          "--eval",
+          "import assert from 'node:assert/strict';\nimport {readFileSync, readdirSync, existsSync} from 'node:fs';\nimport path from 'node:path';\nimport {loadPackageFromDirectory} from './packages/core/src/application/package-loader.ts';\nimport {validatePackage} from './packages/core/src/application/validate-package.ts';\nimport {NodeFileSystem} from './packages/node/src/file-system.ts';\nimport {ClaudeCodeAdapter} from './packages/adapter-claude/src/index.ts';\nimport {CodexAdapter} from './packages/adapter-codex/src/index.ts';\nconst root='skills/gof-prototype';\nconst loaded=await loadPackageFromDirectory(new NodeFileSystem(),root,{strict:true});\nconst report=validatePackage(loaded.pkg,{directoryName:'gof-prototype',adapters:[new ClaudeCodeAdapter(),new CodexAdapter()]});\nconst issues=[...loaded.issues,...report.issues];\nassert.equal(issues.length,0,JSON.stringify(issues));\nconst entry=readFileSync(path.join(root,'SKILL.md'),'utf8');\nconst refs=readdirSync(path.join(root,'references'));\nfor(const ref of refs) assert.ok(entry.includes('references/'+ref),'unrouted '+ref);\nlet links=0;\nfor(const file of ['SKILL.md',...refs.map(f=>'references/'+f)]) {\n const body=readFileSync(path.join(root,file),'utf8');\n for(const m of body.matchAll(/\\]\\(([^)]+)\\)/g)) {\n  const href=m[1];\n  if(/^(?:<)?[a-z]+:\\/\\//i.test(href)) continue;\n  const [target,anchor]=href.split('#');\n  const resolved=target?path.resolve(root,path.dirname(file),target):path.resolve(root,file);\n  assert.ok(existsSync(resolved),file+': '+href);\n  if(anchor) {\n   const targetText=readFileSync(resolved,'utf8');\n   const anchors=[...targetText.matchAll(/^#+ (.+)$/gm)].map(m=>m[1].toLowerCase().replace(/[^a-z0-9\\s-]/g,'').trim().replace(/\\s+/g,'-'));\n   assert.ok(anchors.includes(anchor),file+': '+href);\n  }\n  links++;\n }\n}\nconsole.log(JSON.stringify({skill:'gof-prototype',version:loaded.pkg.manifest.version,issues,referenceFilesRouted:refs.length,localLinksAndAnchorsChecked:links},null,2));\n"
+        ],
+        "workingDirectory": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\structural.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\structural.stderr.txt"
+      },
+      {
+        "label": "format",
+        "executable": "C:\\Program Files\\nodejs\\node.exe",
+        "args": [
+          "node_modules/prettier/bin/prettier.cjs",
+          "--check",
+          "skills/gof-prototype/SKILL.md",
+          "skills/gof-prototype/skill.yaml",
+          "skills/gof-prototype/references/copying-in-java.md",
+          "skills/gof-prototype/references/worked-example.md"
+        ],
+        "workingDirectory": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\format.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\format.stderr.txt"
+      },
+      {
+        "label": "diff-check",
+        "executable": "git",
+        "args": ["diff", "--check", "--", "skills/gof-prototype"],
+        "workingDirectory": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\diff-check.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\diff-check.stderr.txt"
+      },
+      {
+        "label": "final-diff",
+        "executable": "git",
+        "args": ["diff", "--", "skills/gof-prototype"],
+        "workingDirectory": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\final-diff.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\final-diff.stderr.txt"
+      },
+      {
+        "label": "final-status",
+        "executable": "git",
+        "args": ["status", "--short", "--", "skills/gof-prototype"],
+        "workingDirectory": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\final-status.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\final-status.stderr.txt"
+      },
+      {
+        "label": "staged-diff",
+        "executable": "git",
+        "args": ["diff", "--cached", "--", "skills/gof-prototype"],
+        "workingDirectory": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\staged-diff.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\staged-diff.stderr.txt"
+      },
+      {
+        "label": "committed-SKILL.md",
+        "executable": "git",
+        "args": ["show", "HEAD:skills/gof-prototype/SKILL.md"],
+        "workingDirectory": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed-SKILL.md.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed-SKILL.md.stderr.txt"
+      },
+      {
+        "label": "committed-skill.yaml",
+        "executable": "git",
+        "args": ["show", "HEAD:skills/gof-prototype/skill.yaml"],
+        "workingDirectory": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed-skill.yaml.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed-skill.yaml.stderr.txt"
+      },
+      {
+        "label": "committed-references_copying-in-java.md",
+        "executable": "git",
+        "args": ["show", "HEAD:skills/gof-prototype/references/copying-in-java.md"],
+        "workingDirectory": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed-references_copying-in-java.md.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed-references_copying-in-java.md.stderr.txt"
+      },
+      {
+        "label": "committed-references_worked-example.md",
+        "executable": "git",
+        "args": ["show", "HEAD:skills/gof-prototype/references/worked-example.md"],
+        "workingDirectory": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed-references_worked-example.md.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed-references_worked-example.md.stderr.txt"
+      }
+    ],
+    "fullCommandResults": {
+      "case-a-compile": {
+        "stdout": "",
+        "stderr": "",
+        "exitCode": 0,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\case-a-compile.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\case-a-compile.stderr.txt"
+      },
+      "case-a-probe": {
+        "stdout": "Java=25.0.3\r\ncontext=field\r\ncrossRootAlias=false\r\noriginalContract=violated: shared node duplicated across roots\r\nassertions=26\r\nLIMIT: bounded in-memory Java checks; no concurrency/ORM/persistence execution or agent evaluation.\r\n",
+        "stderr": "",
+        "exitCode": 0,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\case-a-probe.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\case-a-probe.stderr.txt"
+      },
+      "case-b-compile": {
+        "stdout": "",
+        "stderr": "",
+        "exitCode": 0,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\case-b-compile.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\case-b-compile.stderr.txt"
+      },
+      "case-b-probe": {
+        "stdout": "Java=25.0.3\r\ncontext=operation\r\ncrossRootAlias=true\r\noriginalContract=satisfied for tested graph\r\nassertions=26\r\nLIMIT: bounded in-memory Java checks; no concurrency/ORM/persistence execution or agent evaluation.\r\n",
+        "stderr": "",
+        "exitCode": 0,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\case-b-probe.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\case-b-probe.stderr.txt"
+      },
+      "structural": {
+        "stdout": "{\n  \"skill\": \"gof-prototype\",\n  \"version\": \"1.2.4\",\n  \"issues\": [],\n  \"referenceFilesRouted\": 2,\n  \"localLinksAndAnchorsChecked\": 4\n}\n",
+        "stderr": "",
+        "exitCode": 0,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\structural.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\structural.stderr.txt"
+      },
+      "format": {
+        "stdout": "Checking formatting...\nAll matched files use Prettier code style!\n",
+        "stderr": "",
+        "exitCode": 0,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\format.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\format.stderr.txt"
+      },
+      "diff-check": {
+        "stdout": "",
+        "stderr": "",
+        "exitCode": 0,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\diff-check.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\diff-check.stderr.txt"
+      },
+      "final-diff": {
+        "stdout": "diff --git a/skills/gof-prototype/references/copying-in-java.md b/skills/gof-prototype/references/copying-in-java.md\nindex 79c8476..d0d49cf 100644\n--- a/skills/gof-prototype/references/copying-in-java.md\n+++ b/skills/gof-prototype/references/copying-in-java.md\n@@ -197,5 +197,5 @@ Primary sources: [Object.clone](<https://docs.oracle.com/en/java/javase/17/docs/\n [TreeMap constructor contracts](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/TreeMap.html),\n [resource cleanup on abrupt completion](https://docs.oracle.com/javase/specs/jls/se17/html/jls-14.html#jls-14.20.3),\n [Java serialization architecture](https://docs.oracle.com/en/java/javase/17/docs/specs/serialization/serial-arch.html),\n-and [Jakarta Persistence 3.2 entity lifecycle](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2).\n+and [Jakarta Persistence 3.2 entity lifecycle](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html).\n Check the deployed provider/version and mappings for concrete persistence behavior.\ndiff --git a/skills/gof-prototype/skill.yaml b/skills/gof-prototype/skill.yaml\nindex b024357..ad1f5bfb 100644\n--- a/skills/gof-prototype/skill.yaml\n+++ b/skills/gof-prototype/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: gof-prototype\n-version: 1.2.3\n+version: 1.2.4\n description: >-\n   Prototype in modern Java: producing a new object from an existing instance's state, when the\n   configuration is expensive or the concrete type is unknown to the caller. Covers why\n",
+        "stderr": "",
+        "exitCode": 0,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\final-diff.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\final-diff.stderr.txt"
+      },
+      "final-status": {
+        "stdout": " M skills/gof-prototype/references/copying-in-java.md\n M skills/gof-prototype/skill.yaml\n",
+        "stderr": "",
+        "exitCode": 0,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\final-status.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\final-status.stderr.txt"
+      },
+      "staged-diff": {
+        "stdout": "",
+        "stderr": "",
+        "exitCode": 0,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\staged-diff.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\staged-diff.stderr.txt"
+      },
+      "committed-SKILL.md": {
+        "stdout": "---\nname: gof-prototype\ndescription: >\n  Prototype in modern Java: producing a new object from an existing instance's state, when the\n  configuration is expensive or the concrete type is unknown to the caller. Covers why\n  Cloneable/clone() needs an explicit contract and what replaces it, the deep-versus-shallow decision\n  on graphs with identity and cycles, when immutable values can be shared, the\n  torn-copy hazard under concurrency, and the identity rules when copying persisted objects. Use\n  when clone() or Cloneable appears, when an object is duplicated by serialising and\n  deserialising it, when a configured template must be instantiated many times, when a JPA entity\n  is copied with its id still set, or when a \"copy\" turns out to share a mutable list with its\n  original. Does not cover constructing from parameters (gof-builder), selecting a type to create\n  (gof-factory-method), sharing rather than copying (gof-flyweight), or snapshot semantics for\n  undo (gof-memento).\n---\n\n# Prototype\n\n## Purpose\n\nCreate a new object by copying a configured one. The pattern applies when the state that makes\nan object useful was assembled at runtime and is costly or undesirable to re-derive — a document\ntemplate, a pre-wired processing pipeline, a scenario fixture — or when the copier does not know\nthe concrete class it is duplicating.\n\nIn modern Java the pattern is often a warning. Immutable values usually can be shared, and\nJava's built-in copying mechanism (`Cloneable`) has a weak contract. What survives should\nnormally use explicit copy constructors or copy factories; interoperability with a hierarchy\nthat already has a correct `clone()` contract is a constrained exception, not a reason to spread\nthat API.\n\nJava 17 is the baseline for these partial examples; no preview features are required. Inspect\ncompiler settings, copy APIs, persistence mappings/provider and ownership before applying them.\nDo not upgrade Java or persistence libraries merely to fit an example. Deliver the copy purpose,\nper-field ownership/identity policy, concurrency precondition and relevant validation or gaps.\n\nStart with ordinary callers, supported subtype extensions and failure paths. Reuse source, tests,\nownership and mapping evidence before asking whether the operation creates a fresh object/entity,\nshares a value or captures state. Ask only unresolved questions that change that contract; continue\nindependent field-policy review and keep uncertain recommendations conditional. Retain an adequate\ncopy or sharing implementation. A concise decision with validation and revisit conditions is enough;\na review does not require a replacement API or completed implementation.\n\n## When it is the answer\n\n```text\nAn object's configuration is assembled at runtime and duplicating it\nis cheaper or more reliable than re-deriving it\n        → Prototype, via a copy factory.\n\nConfigured instances are registered by name at runtime and each new\nobject must inherit their selected state, without knowing their classes\n        → a registry of prototypes, each able to copy itself.\n          A registry of creators may suffice when no existing state must be copied.\n\nA mutable working object must be duplicated so two paths can diverge\n(a scenario, a draft, a what-if calculation)\n        → Prototype — and consider making the type immutable instead,\n          which may allow sharing when distinct identity/ownership is unnecessary.\n```\n\n## When it is not\n\n- **The object is an immutable value and reference identity is irrelevant.** Share the instance.\n  A distinct identity, lifecycle, ownership token, or native resource can still require a new\n  object even when exposed state is immutable (`java-immutability`).\n- **Only specified parameters should be inherited.** Compare a factory or builder with the existing\n  copy; reconstruction must preserve required state, extension contracts and operational constraints.\n  Being able to reconstruct the state alone does not make a correct copy unnecessary.\n- **Only polymorphic discovery is unnecessary.** A known concrete type can use a copy constructor\n  or named factory; that may still implement Prototype intent without a copy interface.\n- **Only a few fields differ from the original.** Hand-written or generated `withX` methods can\n  express \"the same but for X\" directly; Java records do not generate withers themselves.\n- **The object is an entity with identity.** Name whether this is a new entity or a snapshot; see\n  the identity rules below before duplicating anything with an id, a version or a lifecycle.\n\n## Modern Java expression\n\n```text\nDo not                              Do\n──────────────────────────────────  ─────────────────────────────────────\nimplements Cloneable                a copy constructor:\nObject clone()                        Config(Config other)\n                                    or a static copy factory:\n                                      static Config copyOf(Config other)\n\ndeep copy via serialise/deserialise an explicit copy that names each\n                                    field policy, with construction and\n                                    semantic tests for omissions\n\npolymorphic clone() on a hierarchy  an abstract copy() returning the\n                                    interface type, implemented per\n                                    subtype — a covariant, documented\n                                    contract you control\n\n\"copy then mutate two fields\"       record + withX(), or a builder seeded\n                                    from the original\n```\n\nCloneable declares no copy method, Object.clone performs shallow field copying without constructor\nvalidation, and independently owned final mutable fields complicate repair of a super.clone result.\nThese are limitations to audit, not proof that every clone implementation is invalid. Preserve a\ncorrect inherited contract when compatibility requires it; see\n[references/copying-in-java.md](references/copying-in-java.md).\n\n## Decision rules\n\n```text\nIF the type is transitively immutable and identity/ownership permits sharing\nTHEN share the reference; distinct lifecycle or logical identity may still require a new object.\n\nIF the copy shares any mutable substructure with the original\nTHEN classify the operation as shallow/selective/deep. Shared fields retain aliases;\n     decide whether that sharing is intended and compatible with ownership.\n\nIF a field is a collection\nTHEN preserve required key/element equality, comparator and iteration order as well as\n     ownership. A different container can change lookups or collapse distinct entries;\n     require an explicit normalization contract and collision policy before doing so.\n\nIF callers require a fresh object or preservation of runtime subtype\nTHEN state and test that contract across supported subclasses. A constructor or static\n     factory does not automatically preserve an unknown subtype. Sharing or a deliberate\n     base-type projection is valid only when the requested contract permits it.\n\nIF the graph contains cycles or object identity is meaningful\nTHEN a naive deep copy either loops forever or duplicates shared nodes.\n     Use a per-operation identity map keyed by the original node. Bound depth/nodes/work;\n     a visited map alone does not stop stack overflow on a deep acyclic chain.\n\nIF the source can be mutated while it is being copied\nTHEN the copy can be internally inconsistent. Copy under the same lock\n     the mutators use, or snapshot into an immutable value first.\n\nIF the object has persistent identity (@Id, a version, a natural key)\nTHEN first name the operation: clone-as-new-entity resets generated identity,\n     version and creation lifecycle; snapshot/copy-for-transfer may preserve identity.\n     Never pass a copied detached entity to persist/merge without defining semantics.\n\nIF copying is done by serialising and deserialising\nTHEN account for format-specific cost, graph/identity semantics, transient or ignored\n     fields, constructors and compatibility. Native Java deserialization of untrusted\n     bytes can enable gadget attacks; not every serialization format has that failure mode.\n\nIF a new field is added to the type\nTHEN tests or construction structure must expose an omitted copy policy. A constructor\n     call may fail to compile when its signature changes, but mutable classes and defaulted\n     components can still omit fields silently; use semantic copy-contract tests.\n```\n\n## Cross-cutting checks\n\n- **Concurrency.** Copying mutable state is not inherently an atomic multi-field read. Another\n  thread mutating the source mid-copy can yield a \"copy\" that never existed — fields from before\n  and after the change. Either copy while holding whatever lock guards the source, or have the\n  source expose an immutable snapshot and copy that. A `copy()` documented as thread-safe with\n  no explanation of immutability, locking or snapshot publication is not evidence of safety (`java-memory-model`).\n- **Distribution.** Copying a DTO can preserve logical IDs and versions but does not duplicate\n  the server entity or its lifecycle. Where a prototype is transmitted, the receiving\n  process reconstructs it from bytes — which is deserialisation, with its own trust boundary,\n  not this pattern. Never build a prototype registry keyed by class names supplied by a remote\n  peer.\n- **Performance.** \"Copying is faster than constructing\" is an assumption, not a fact: a deep\n  copy may traverse and allocate a large graph; escape analysis depends on the call context,\n  not the pattern name. Justify a prototype by the\n  _configuration_ being expensive to reproduce, not by allocation cost — and if the claim is\n  about cost, measure it (`allocation-profiling`).\n- **Testing.** A shared mutable prototype used as a test fixture is a cross-test dependency: one\n  test mutating the copy's shared substructure changes another test's data. Prototype fixtures\n  must isolate state whose mutation could affect another test. Selective copying can preserve\n  deliberate immutable or safe collaborator sharing; full deep copying is not always required.\n\n## Review checklist\n\n- [ ] New code prefers an explicit constructor/factory; any retained `clone()` contract is\n      inherited, documented and tested across subtypes\n- [ ] Every field is accounted for: copied, deliberately shared, or deliberately reset\n- [ ] Adding a field is caught by construction structure, generated code, or copy-contract tests\n- [ ] Independently owned mutable containers and elements are copied; intentional sharing is explicit\n- [ ] Collection equality, comparator, order and cardinality follow the copy contract\n- [ ] Identity, version, lifecycle and correlation fields follow an explicit\n      clone-as-new versus snapshot/transfer policy\n- [ ] Copying under concurrency is either locked or performed on an immutable snapshot\n- [ ] Any retained serialization copy has a justified format, graph, trust and resource contract\n- [ ] Immutable values are shared when identity and ownership permit it\n\n## References\n\n- [Copying in Java](references/copying-in-java.md) — Cloneable limitations and compatibility, copy\n  constructors against copy factories against wither methods, the deep-versus-shallow decision\n  table, cycles and identity maps, the serialisation round-trip's costs and security surface,\n  and the rules for copying JPA entities. Read before implementing any copy.\n- [Worked example](references/worked-example.md) — a registry of configured document templates\n  instantiated per request: the Cloneable version and its ownership risks, the copy-factory\n  version, identity reset when the copy is persisted, and the snapshot that makes copying safe\n  under concurrency. Read when implementing.\n",
+        "stderr": "",
+        "exitCode": 0,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed-SKILL.md.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed-SKILL.md.stderr.txt"
+      },
+      "committed-skill.yaml": {
+        "stdout": "schemaVersion: 1\n\nname: gof-prototype\nversion: 1.2.3\ndescription: >-\n  Prototype in modern Java: producing a new object from an existing instance's state, when the\n  configuration is expensive or the concrete type is unknown to the caller. Covers why\n  Cloneable/clone() needs an explicit contract and what replaces it, the deep-versus-shallow decision\n  on graphs with identity and cycles, when immutable values can be shared, the\n  torn-copy hazard under concurrency, and the identity rules when copying persisted objects. Use\n  when clone() or Cloneable appears, when an object is duplicated by serialising and\n  deserialising it, when a configured template must be instantiated many times, when a JPA entity\n  is copied with its id still set, or when a \"copy\" turns out to share a mutable list with its\n  original. Does not cover constructing from parameters (gof-builder), selecting a type to create\n  (gof-factory-method), sharing rather than copying (gof-flyweight), or snapshot semantics for\n  undo (gof-memento).\n\nlicense: Apache-2.0\n\nauthors:\n  - name: agent-skills contributors\n    url: https://github.com/robsonkades/agent-skills\n\nhomepage: https://github.com/robsonkades/agent-skills/tree/main/skills/gof-prototype\nrepository:\n  type: git\n  url: https://github.com/robsonkades/agent-skills\n  directory: skills/gof-prototype\n\nkeywords:\n  - design-patterns\n  - gof\n  - creational\n  - clone\n  - copying\n  - immutability\n\nfiles:\n  - SKILL.md\n  - skill.yaml\n  - references/\n\ndependencies:\n  - name: gof-observer\n    version: ^1.0.0\n\nsuggests:\n  - allocation-profiling\n  - gof-builder\n  - gof-factory-method\n  - gof-flyweight\n  - java-immutability\n  - java-memory-model\n  - offline-concurrency-control\n  - orm-behavioral-patterns\n  - gof-memento\n\ncapabilities:\n  - reads-source\n\nagentOverrides:\n  codex:\n    interface:\n      display_name: Prototype\n      short_description: Copying with explicit identity and ownership\n      default_prompt: Use Prototype to review how this object is copied.\n",
+        "stderr": "",
+        "exitCode": 0,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed-skill.yaml.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed-skill.yaml.stderr.txt"
+      },
+      "committed-references_copying-in-java.md": {
+        "stdout": "# Copying in Java\n\nJava 17 partial snippets: imports, domain types and persistence infrastructure are omitted.\nVerify the target copy API and provider rather than assuming the illustrative policies fit all types.\n\n## Cloneable limitations\n\n- Cloneable is a marker, not a public copy interface. Object.clone is protected; a public override\n  may be inherited, but a Cloneable reference itself exposes no clone method.\n- Object.clone copies fields without running constructors. A valid source may still yield a valid\n  clone; constructor bypass does not by itself violate invariants. Audit identity, ownership and\n  any mutable state changed since construction.\n- The default copy aliases reference fields. Repairing independently owned final mutable fields\n  in a super.clone result is awkward because normal Java code cannot reassign them. Explicit\n  construction can apply a deep/selective policy; being a final class is not itself a clone defect.\n- Calling super.clone is the conventional way to preserve runtime subtype. An extensible hierarchy\n  must maintain its contract in subclasses; compatible existing implementations may be retained.\n- Arrays support a useful shallow clone (nested arrays/elements are still shared). Records do not\n  generate withers, and their components are not necessarily deeply immutable.\n\nPrefer explicit construction for new APIs when it exposes the policy more clearly. Do not break an\ninherited public clone contract just because another spelling is preferred.\n\n## Copy constructor, copy factory, wither\n\n```java\n// copy constructor — best when the concrete type is known\npublic Config(Config other) {\n    this.name = other.name;                       // immutable: share\n    this.limits = new EnumMap<>(other.limits);    // mutable: copy\n    this.listeners = new ArrayList<>();          // subscriptions do not transfer\n}\n\n// copy factory — best when the return type should be an interface,\n// or when the copy may return the same instance for immutable inputs\npublic static Config copyOf(Config other) {\n    return other.isImmutable() ? other : new Config(other);\n}\n\n// wither — best when \"the same, but for one field\"\npublic Retry withMaxAttempts(int maxAttempts) {\n    return new Retry(maxAttempts, this.backoff, this.jitter);\n}\n\n// polymorphic copy — when the concrete type is genuinely unknown\npublic interface Template {\n    Template copy();          // your contract, your documentation, public\n}\n```\n\nThe polymorphic copy interface is useful when runtime type preservation is required; copy\nconstructors/factories may express Prototype intent for known types too. Declare **which fields are\nshared, duplicated or reset**, whether the result must be fresh, and which subtype and failure\ncontracts callers may rely on. An inherited `copy()` that constructs the base class can lose a\nsubclass's state even though its return type compiles. A documented base projection or immutable\nsame-instance result may be valid; preserve an existing public clone contract where required.\n\n## Deep or shallow, per field\n\n| Field kind                                                 | Copy?                                                                    | Reasoning                                                                            |\n| ---------------------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |\n| Primitive, `String`, `Instant`, record of these            | Share                                                                    | Immutable; copying wastes allocation                                                 |\n| List/Map/Set of immutable values                           | Copy mutable container if independently owned; share immutable container | Unmodifiable views can still reflect mutable backing data                            |\n| Array                                                      | `clone()` or `Arrays.copyOf`                                             | Always mutable                                                                       |\n| Mutable domain object owned by this one                    | Copy                                                                     | Otherwise two owners mutate one object                                               |\n| Mutable object shared by design (a cache, a pool, a clock) | Share                                                                    | Copying it would create a second cache, which is a bug                               |\n| Back-reference to a parent                                 | Rewire, not copy                                                         | Copying follows the graph upward and duplicates the world                            |\n| Identity (@Id, version, created-at)                        | Reset for new entity; preserve where snapshot contract requires          | JVM object identity and persistent identity are different                            |\n| Listener/observer registration                             | Usually drop or explicitly recreate                                      | Copying a subject list and copying an external subscription are different operations |\n| Open resource (stream, connection, lock)                   | Do not copy — refuse                                                     | Two owners, one resource, undefined close semantics                                  |\n\nA copied subject listener list may notify the original subscribers from another subject; it does\nnot automatically register the new object with external publishers. A copied closeable may share\none underlying resource. Reopen or share only with an explicit lifecycle/ownership protocol.\nIf an attempted copy acquires resources and later fails, release only its newly owned resources\naccording to that protocol; leave source/shared ownership intact and preserve failure evidence.\nDiscarding an unpublished object or copy map does not close external resources.\n\nContainer independence does not guarantee equivalent behavior. Preserve required equality,\ncomparator, iteration order and cardinality separately from copying keys/elements/values.\n`IdentityHashMap` can hold distinct keys that are equal by `equals`; moving them to an ordinary\nmap can collapse entries. A set can similarly lose elements when its equality policy changes.\nIf normalization is intentional, name the target policy and reject collisions or define an\nexplicit domain merge; silently keeping one value is not a faithful copy.\n\nFor sorted maps, constructor overload selection matters: `new TreeMap<>(sortedSource)` preserves\nthe comparator when the argument's static type is `SortedMap`; the `TreeMap(Map)` overload instead\nuses natural key ordering. Widening the same source to `Map` can therefore change lookup/order\nsemantics or fail for keys lacking a compatible natural ordering. Neither constructor deep-copies\nkeys or values. Test representative lookups, order and entry count, plus intended mutation isolation.\n\n## Cycles and identity\n\nA naive depth-first copy of a graph with cycles does not terminate, and one with shared nodes\nduplicates them — so `a.child == b.child` in the original becomes two distinct objects in the\ncopy, and any logic depending on that identity changes behaviour.\n\n```java\nNode copy(Node n, IdentityHashMap<Node, Node> seen, int depth) {\n    if (n == null) return null;\n    if (depth > 64) throw new IllegalArgumentException(\"copy depth exceeded\");\n    Node existing = seen.get(n);\n    if (existing != null) return existing;\n    if (seen.size() >= 10_000) throw new IllegalArgumentException(\"copy node budget exceeded\");\n    Node copy = new Node(n.value()); // value must be immutable or copied by its own policy\n    seen.put(n, copy);                    // register BEFORE recursing\n    n.children().forEach(c -> copy.add(copy(c, seen, depth + 1)));\n    return copy;\n}\n```\n\n`IdentityHashMap`, not `HashMap`: `equals`-equal nodes that are distinct objects must stay\ndistinct. Start each operation with a fresh map and depth 0. Registering before recursing handles\ncycles; illustrative depth/node limits reject large graphs instead of claiming arbitrary graph\nsupport. Also bound edges, payload sizes and total work for untrusted graphs; these two counters\nalone do not bound a node with huge fan-out. On failure discard the partial result/map.\n\nIf this code is needed, compare copying with reconstruction from a description or sharing an\nimmutable graph. Preserve required aliasing and identity in either design; cycles alone do not\nmake reconstruction better or justify replacing an adequate copier.\n\n## The serialisation round-trip\n\n```java\n// do not do this\nvar copy = (Config) new ObjectInputStream(\n        new ByteArrayInputStream(toBytes(original))).readObject();\n```\n\nFour problems:\n\n1. **Cost.** Encoding, decoding and buffers can dominate a selective copy; measure representative\n   graphs before claiming a multiplier.\n2. **Graph policy.** Java serialization preserves references/cycles for serialized objects by\n   handles, but transient/static fields, custom hooks, readResolve and non-serializable references\n   alter the result or fail. It does not blindly copy every reachable object.\n3. **Transient state.** Default serialization omits transient fields; custom hooks can handle them\n   differently. Wire representation and copy policy are separate concerns.\n4. **Security.** Native deserialization invokes class-defined behavior; untrusted or tampered\n   streams can exploit reachable gadget classes and resource exhaustion. Inspect provenance,\n   allowed types and limits; self-produced bytes do not replace a copy contract.\n\nJSON graph, polymorphic-type and constructor behavior depends on the mapper/configuration. It can\nlose aliases/cycles or unmapped state; it is not a universal safe or deep-copy guarantee.\n\n## Copying JPA entities\n\n```java\npublic static Order copyAsDraft(Order source, Clock clock) {\n    var copy = new Order(OrderId.newId(), source.customerId(), clock.instant());\n    source.lines().forEach(l -> copy.addLine(l.sku(), l.quantity(), l.unitPrice()));\n    return copy;   // illustrative application-assigned ID; source version/audit not inherited\n}\n```\n\nFor clone-as-new, inspect mappings and entity-state detection:\n\n- Generated IDs are normally left unset; application-assigned IDs must be distinct. Natural keys\n  may also require changes. A new Java object with an old ID does not automatically become managed;\n  persist may reject detached identity, while merge copies state onto a managed identity and can\n  update an existing row. Use the returned managed object when merging intentionally.\n- Do not carry an old optimistic-lock version into a new entity. Let the provider initialize it\n  according to mapping; null versus zero can affect repository new-entity detection.\n- Recreate owned children and set both sides as required; share only intended referenced entities.\n  Reparenting/orphan removal consequences depend on owning side, mapping and actual mutations,\n  not merely placing a reference in another Java collection.\n- Fetch required associations within a defined persistence context/transaction before constructing\n  the draft. Lazy traversal can issue queries or fail after detachment; check SQL shape and count.\n- Apply new-entity audit rules. A snapshot/export may intentionally retain source identity/audit;\n  do not conflate that with inserting a new row.\n\nPrefer a named domain factory (`Order.draftFrom(other)`) over a generic `copy()` here: the\ndomain, not a copying utility, decides which parts of an order a duplicate inherits.\n\n## Copying under concurrency\n\nA copy constructor reading five fields performs five separate reads. If the source is mutated\nbetween the first and the last, the copy can hold a state the source never had — for example an\norder whose `total` predates the line item it also copied.\n\n```java\n// safe: copy under the same lock the mutators use\nsynchronized (source) { return new Config(source); }\n\n// safer: the source publishes an immutable snapshot\nConfigSnapshot snapshot = source.snapshot();   // built under the lock, immutable\nreturn Config.from(snapshot);\n```\n\nThe second form is preferable because it puts the atomicity requirement in the type that owns\nthe state, rather than in every caller that copies it. A `volatile` reference to an immutable\nconfig, replaced wholesale on change, removes the problem altogether — which is once again the\nobservation that immutability is the real alternative to this pattern.\n\nPrimary sources: [Object.clone](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#clone()>),\n[IdentityHashMap](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/IdentityHashMap.html),\n[TreeMap constructor contracts](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/TreeMap.html),\n[resource cleanup on abrupt completion](https://docs.oracle.com/javase/specs/jls/se17/html/jls-14.html#jls-14.20.3),\n[Java serialization architecture](https://docs.oracle.com/en/java/javase/17/docs/specs/serialization/serial-arch.html),\nand [Jakarta Persistence 3.2 entity lifecycle](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2).\nCheck the deployed provider/version and mappings for concrete persistence behavior.\n",
+        "stderr": "",
+        "exitCode": 0,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed-references_copying-in-java.md.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed-references_copying-in-java.md.stderr.txt"
+      },
+      "committed-references_worked-example.md": {
+        "stdout": "# Worked example: a registry of configured document templates\n\nIllustrative Java 17 partial examples, not a production benchmark. Domain types, imports and\nrendering/persistence operations are omitted. Import java.util collections, Objects and static\nCollectors.toCollection/toMap. Style is deeply immutable; MetricsRecorder supports concurrent use;\nSection.copy and MergeRule.copy must duplicate owned mutable state.\nRule keys and registry names use non-null `String.equals` semantics. Rules preserve insertion\norder; registry iteration order is not part of its API. Inputs using identity equality or custom\ncomparators need a separate, explicit conversion policy before entering this model.\n\nA reporting service holds document templates configured at startup from a CMS: sections, a\nheader, a style, a set of merge rules. Rendering a document mutates a working copy — sections\nare filtered, placeholders substituted — so each request needs its own instance, and rebuilding\none from the CMS per request is a network call the service cannot afford.\n\nThis is the shape Prototype exists for: expensive-to-assemble configuration, cheap to duplicate,\nand callers need independently mutable working state. This example uses a known final concrete\ntype; heterogeneous templates would additionally need a subtype-preserving copy interface.\n\n## Before — `Cloneable`\n\n```java\npublic class DocumentTemplate implements Cloneable {\n    private String name;\n    private Style style;\n    private List<Section> sections;\n    private Map<String, MergeRule> rules;\n\n    @Override\n    public DocumentTemplate clone() {\n        try {\n            return (DocumentTemplate) super.clone();\n        } catch (CloneNotSupportedException e) {\n            throw new AssertionError(e);\n        }\n    }\n}\n```\n\nTwo risks to inspect:\n\n- `sections` and `rules` are **shared** with the original. A request that filters sections\n  mutates the registry's template, and every subsequent request sees the filtered version. This\n  is a shallow-copy ownership defect.\n- super.clone does not revalidate through a constructor. A valid unchanged source can preserve\n  its invariants; an empty source produced by later mutation stays empty. Independently owned\n  final mutable references cannot be repaired by ordinary assignment in the cloned instance.\n\nIf requests mutate the shared `ArrayList` concurrently, they can lose updates or observe\ninconsistent data. Iteration may throw `ConcurrentModificationException`, but\n[fail-fast detection is best-effort](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/ArrayList.html);\nabsence of that exception does not establish isolation or thread safety.\n\n## After — a copy factory, with each field decided\n\n```java\npublic final class DocumentTemplate {\n    private final String name;\n    private final Style style;                    // immutable value\n    private final List<Section> sections;         // owned, mutable\n    private final Map<String, MergeRule> rules;   // owned, mutable\n    private final MetricsRecorder metrics;        // shared by design\n\n    // Transfer fresh owned containers/elements; rules use String.equals and insertion order.\n    private DocumentTemplate(String name, Style style, List<Section> sections,\n                             Map<String, MergeRule> rules, MetricsRecorder metrics) {\n        if (sections.isEmpty()) throw new IllegalArgumentException(\"template needs a section\");\n        this.name = Objects.requireNonNull(name);\n        this.style = Objects.requireNonNull(style);\n        this.sections = sections;\n        this.rules = Objects.requireNonNull(rules);\n        this.metrics = Objects.requireNonNull(metrics);\n    }\n\n    /**\n     * A working copy. Sections and merge rules are duplicated; the style is immutable and\n     * shared; the metrics recorder is shared deliberately, so copies report to one place.\n     */\n    public DocumentTemplate workingCopy() {\n        return new DocumentTemplate(\n            name,\n            style,\n            sections.stream().map(Section::copy).collect(toCollection(ArrayList::new)),\n            rules.entrySet().stream()\n                 .collect(toMap(Map.Entry::getKey, e -> e.getValue().copy(),\n                                (a, b) -> { throw new IllegalArgumentException(\"duplicate rule key\"); },\n                                LinkedHashMap::new)),\n            metrics);\n    }\n}\n```\n\nAll construction paths must honor the ownership-transfer precondition; external mutable input\nmust first be copied, or later aliases could mutate registry prototypes. Section/rule copies here\nassume a tree of independently owned values; a graph requiring shared-node identity needs one\ncopy context across fields. workingCopy requires a stable source, and failures publish no partial copy.\nThe throwing merge rejects unexpected key collisions instead of dropping a rule. It does not\nvalidate every source map policy: construction must enforce the declared equality/order contract.\nPreserve a required comparator or identity policy in a different model; allocating a new map alone\ndoes not preserve it. See [collection copy semantics](copying-in-java.md#deep-or-shallow-per-field).\n\nThree things this version fixes. The copy runs the constructor, so the invariant holds. Every\nfield is a deliberate decision, and the Javadoc states which are shared. And adding a field to\nthe constructor signature can expose missing arguments. Merely adding a field does not necessarily\nchange that signature; tests must still exercise each copied/shared/reset field.\n\n## The registry\n\n```java\npublic final class TemplateRegistry {\n    private final Map<String, DocumentTemplate> prototypes;   // immutable map, built at startup\n\n    public TemplateRegistry(Map<String, DocumentTemplate> sources) {\n        var owned = new LinkedHashMap<String, DocumentTemplate>();\n        sources.forEach((key, value) -> {\n            Objects.requireNonNull(key);\n            if (owned.containsKey(key)) throw new IllegalArgumentException(\"duplicate template name\");\n            owned.put(key, Objects.requireNonNull(value).workingCopy());\n        });\n        this.prototypes = Map.copyOf(owned);\n    }\n\n    public DocumentTemplate instantiate(String name) {\n        var prototype = prototypes.get(name);\n        if (prototype == null) throw new UnknownTemplate(name); // do not expose the full registry to an untrusted caller\n        return prototype.workingCopy();\n    }\n}\n```\n\nThe registry constructor requires a stable input map and source values while it copies them. It takes owned\ncopies so retaining the input map or source objects cannot later mutate its prototypes.\nThe registry holds prototypes it never mutates and never hands out directly. That last part is\nthe discipline the pattern needs: if any code path can obtain the prototype itself, the\nregistry's copies stop being independent, and the failure appears in an unrelated request.\n\nWhere templates may be reloaded from the CMS at runtime, replace the whole map behind a\n`volatile` reference rather than mutating it — readers then see either the old map or the new\none, never a partially updated one. Build the entire owned map privately before assigning it;\nMap.copyOf and volatile publication do not make mutable values or shared collaborators immutable.\n\n## Concurrency: copying while the source changes\n\nIf prototypes are reloaded in place instead of replaced, `workingCopy()` reads five fields while\na reloader mutates their reachable state. In this final-field version it cannot replace name/style\nnormally, but it can race on sections/rules and produce inconsistent working state. The two acceptable\nanswers:\n\n```java\n// (a) copy under the lock the mutators use\nsynchronized (prototype) { return prototype.workingCopy(); }\n\n// (b) never mutate a prototype; replace the map wholesale\nprivate volatile Map<String, DocumentTemplate> prototypes;\n```\n\n(b) avoids locking readers only if the published prototype graph is never mutated again and shared\ncollaborators satisfy their own concurrency contract. Capture the map once per operation if several\nlookups must use one generation; volatile alone is not a multi-read snapshot.\n\n## When the copy is persisted\n\nIf a working copy is saved as a new document, identity must be created rather than inherited:\n\n```java\npublic static Document draftFrom(DocumentTemplate template, UserId author, Clock clock) {\n    return new Document(\n        DocumentId.newId(),          // new identity\n        /* version */ null,          // illustrative nullable generated @Version; inspect mapping\n        template.name(),\n        template.workingCopy().sections(),\n        author,                      // not the template's author\n        clock.instant());            // re-stamped\n}\n```\n\nThis sketch assumes application-assigned DocumentId and a nullable provider-managed version.\nGenerated IDs should instead remain unset. Persist/merge and repository new-entity detection\nmust be tested against actual mappings; old IDs can cause rejection or update an existing row. Note also that this is a **named domain factory**, not a generic `copy()` — the domain\ndecides what a draft inherits from a template, and that decision does not belong in a copying\nutility.\n\n## What was considered and rejected\n\n- **Serialisation round-trip.** Its treatment of metrics depends on serializability, ignored fields\n  and replacement hooks: duplication, omission or failure are all possible. Explicit sharing better\n  states the desired policy; no cost multiplier is claimed without measurement.\n- **Rebuild from the CMS each time.** The correct answer if the CMS call were cheap. It is not;\n  that is the force justifying the pattern, and it is worth restating in the code comment so a\n  future reader can re-check it if the CMS gets a cache.\n- **Make `DocumentTemplate` immutable and never copy.** The right answer if rendering could\n  produce rendered output from an immutable template, with request-local buffers. A large section\n  count alone does not reject that design. Compare it with copying using representative rendering,\n  allocation and latency measurements; this example supplies none.\n\nSuggested checks (not executed integration tests): mutate an input template after registry creation;\nmutate two instantiated documents independently; verify deliberate Style/MetricsRecorder sharing;\npreserve rule lookup, insertion order and count; reject equal-name collisions from identity-keyed\nrule/registry inputs rather than silently losing entries; verify comparator behavior in any variant\nthat supports sorted inputs;\nreject invalid/unknown templates without leaking registry contents; publish a reload generation and\ncheck each request uses coherent state. For persistence, insert a draft alongside the source and\nverify distinct IDs, provider version initialization, child ownership and unchanged source rows.\n\nPrimary source: [Collectors.toMap](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/stream/Collectors.html)\nuses the supplied merge function to resolve equal-key collisions; that function is part of the copy policy.\n",
+        "stderr": "",
+        "exitCode": 0,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed-references_worked-example.md.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed-references_worked-example.md.stderr.txt"
+      }
+    },
+    "commandEvidence": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\commands.json",
+    "structuralResult": {
+      "skill": "gof-prototype",
+      "version": "1.2.4",
+      "issues": [],
+      "referenceFilesRouted": 2,
+      "localLinksAndAnchorsChecked": 4
+    },
+    "pairAndSnippetCheck": {
+      "identicalFiles": 4,
+      "changedFile": "application.properties",
+      "difference": "copy.context=field versus operation",
+      "shippedGraphMethodByteEquivalentAfterIndentation": true
+    },
+    "technicalResult": "Two Java compilations and two probe executions; 26 assertions per case (52 assertion executions, not 52 distinct properties). Negative case deliberately observes the existing configured defect; adequate case satisfies the tested contract.",
+    "technicalCoverage": [
+      "Fresh mutable graph ownership and separate invocation graphs.",
+      "Cross-root alias preservation versus per-field context duplication.",
+      "Cycle support and register-before-recursion behavior.",
+      "Distinct equals-equal nodes and IdentityHashMap versus HashMap negative control.",
+      "Immutable String payload sharing.",
+      "Node/depth guards and null handling for bounded fixtures.",
+      "TreeMap constructor overload affects comparator preservation.",
+      "Shallow super.clone behavior, constructor bypass and compatible subtype-preserving clone repair."
+    ],
+    "noLocalValidationFailures": true,
+    "nonValidationAcquisitionIssues": [
+      "A guessed temporary-root baseline.json read failed because the baseline record lives in docs/skill-validation/wave4-2026-10-16/baseline.json; that record and the assigned temporary snapshot were read successfully.",
+      "One pending multi-find web request was cancelled; subsequent completed requests supplied the primary-source checks. No result from the cancelled request is claimed."
+    ],
+    "noGlobalChecksRunByReviewer": true
+  },
+  "behavioralEvidence": {
+    "independentAgentRunsExecuted": 0,
+    "actualAgentOutputs": [],
+    "measuredIncrementalGain": false,
+    "status": "No independent actor or baseline-versus-current behavioral comparison was executed.",
+    "walkthroughs": [
+      {
+        "case": "case-a",
+        "classification": "Structured expected-behavior walkthrough plus executed technical characterization",
+        "result": "Inspect selected field strategy; one map per root duplicates a shared source node and breaks the caller-visible alias contract. A focused switch to the existing operation strategy is justified."
+      },
+      {
+        "case": "case-b",
+        "classification": "Structured expected-behavior walkthrough plus executed technical characterization",
+        "result": "Inspect selected operation strategy; one fresh context spans both roots and preserves the supplied contract. No production change is required."
+      }
+    ],
+    "reproducibleCases": [
+      {
+        "id": "case-a",
+        "inputDirectory": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-a",
+        "taskFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-a\\TASK.md",
+        "files": [
+          {
+            "name": "CONTRACT.md",
+            "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-a\\CONTRACT.md",
+            "sha256": "601f13589e28c8738248ee32011fe771b615c88155aa20857c265134295712e6"
+          },
+          {
+            "name": "DraftEditor.java",
+            "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-a\\DraftEditor.java",
+            "sha256": "a0228e85846262abd81a85313f1c42819d7cb4d5ad3de22c5cad89d2b534c7fa"
+          },
+          {
+            "name": "GraphCopier.java",
+            "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-a\\GraphCopier.java",
+            "sha256": "dd9ab3daa35819b4422dca21bbfc8b2c118bc3c1bab7c2815b759295dc71a9d6"
+          },
+          {
+            "name": "TASK.md",
+            "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-a\\TASK.md",
+            "sha256": "cff408ac93f99184cc5c052f6fe898ebea955be2c702175d3adce2da060cbbe9"
+          },
+          {
+            "name": "application.properties",
+            "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-a\\application.properties",
+            "sha256": "a198379f361bdc229c0275c7eb9a4f32dc015ff43f5311645d3187df2b9f224d"
+          }
+        ],
+        "expectedOutcomeCriteriaFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evaluator\\criteria.json",
+        "expectedOutcomeCriteriaId": "case-a",
+        "classification": "Known development case; no independent actor executed",
+        "actorVisibility": "Expose this input directory and selected skill only; withhold evaluator, evidence, other case, README and handoff."
+      },
+      {
+        "id": "case-b",
+        "inputDirectory": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-b",
+        "taskFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-b\\TASK.md",
+        "files": [
+          {
+            "name": "CONTRACT.md",
+            "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-b\\CONTRACT.md",
+            "sha256": "601f13589e28c8738248ee32011fe771b615c88155aa20857c265134295712e6"
+          },
+          {
+            "name": "DraftEditor.java",
+            "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-b\\DraftEditor.java",
+            "sha256": "a0228e85846262abd81a85313f1c42819d7cb4d5ad3de22c5cad89d2b534c7fa"
+          },
+          {
+            "name": "GraphCopier.java",
+            "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-b\\GraphCopier.java",
+            "sha256": "dd9ab3daa35819b4422dca21bbfc8b2c118bc3c1bab7c2815b759295dc71a9d6"
+          },
+          {
+            "name": "TASK.md",
+            "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-b\\TASK.md",
+            "sha256": "cff408ac93f99184cc5c052f6fe898ebea955be2c702175d3adce2da060cbbe9"
+          },
+          {
+            "name": "application.properties",
+            "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-b\\application.properties",
+            "sha256": "c91ca734668f0d303fb5167b0dead4cb1f299756292a708eb826f906bec44710"
+          }
+        ],
+        "expectedOutcomeCriteriaFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evaluator\\criteria.json",
+        "expectedOutcomeCriteriaId": "case-b",
+        "classification": "Known development case; no independent actor executed",
+        "actorVisibility": "Expose this input directory and selected skill only; withhold evaluator, evidence, other case, README and handoff."
+      }
+    ],
+    "separatePrivateCriteria": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evaluator\\criteria.json",
+    "criteriaSha256": "517b545d37c23ff75da49506eb7475c9a16feb33844436af19c5ec5c70a4d440",
+    "decisiveConstraint": "Only application.properties copy.context changes from field to operation; source, caller, requirement and limits identical.",
+    "expectedOutcomes": [
+      {
+        "id": "case-a",
+        "inputs": "inputs/case-a",
+        "expected": [
+          "Trace application.properties through GraphCopier.configured; selected per-field identity maps duplicate shared nodes across Draft roots.",
+          "Demonstrate the caller-observable alias break despite each per-root recursive copy using IdentityHashMap and supporting cycles.",
+          "Use one identity context for the complete copy operation, e.g. select the already present operation implementation, preserving separate contexts for later copy operations.",
+          "Preserve fresh mutable ownership, cycles, distinct equals-equal nodes and immutable payload sharing.",
+          "Retain current bounded graph scope and avoid unnecessary API or persistence redesign."
+        ],
+        "failureConditions": [
+          "Concludes that presence of IdentityHashMap alone proves alias preservation.",
+          "Only inspects inactive operation strategy.",
+          "Reuses a global map across requests.",
+          "Replaces IdentityHashMap with HashMap or merges distinct equals-equal nodes.",
+          "Claims ORM, resource cleanup under real failures or concurrent mutation guarantees from these controls."
+        ]
+      },
+      {
+        "id": "case-b",
+        "inputs": "inputs/case-b",
+        "expected": [
+          "Resolve active operation strategy and recognize shared context spans both roots and is fresh for each copy invocation.",
+          "Choose no required production change under the supplied ownership/alias contract.",
+          "Verify caller-observable shared-node behavior, source isolation and separate operations without treating deliberate immutable payload sharing as a defect.",
+          "Do not flag the inactive per-field strategy as the selected-path failure or force replacing an adequate copier."
+        ],
+        "failureConditions": [
+          "Recommends per-field fresh maps to avoid all sharing, breaking within-copy alias semantics.",
+          "Mandatory deep-copying of immutable Strings.",
+          "Forces a new pattern/API despite adequate selected implementation.",
+          "Treats active configuration as field without inspecting input."
+        ]
+      }
+    ],
+    "prerequisites": [
+      "Fresh isolated actor directory per case/skill variant",
+      "Only one input directory and selected skill visible to actor",
+      "Java 17 compatible source; compile can use an available modern JDK --release 17 with runtime caveat",
+      "No installation or database is needed"
+    ],
+    "technicalOracle": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evaluator\\CopyProbe.java",
+    "oracleCaveat": "The existing probe characterizes original fixture states. After an actor repairs case-a, evaluate the repaired contract against criteria rather than requiring the original negative-control expectation to persist.",
+    "inputSeparationVerified": true,
+    "classification": "Known development cases, not held-out; no skill-quality improvement is inferred from technical probe success or a repaired source link."
+  },
+  "sources": [
+    {
+      "id": "jakarta-old",
+      "url": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2",
+      "version": "Jakarta Persistence 3.2",
+      "result": "404 Not Found returned by web open.",
+      "supports": "Confirmed dead source link; no assumption that all extensionless Jakarta URLs fail."
+    },
+    {
+      "id": "jakarta-3.2",
+      "url": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html",
+      "version": "Jakarta Persistence 3.2, April 10 2024",
+      "sections": [
+        "3.3.1 Entity Instance Creation",
+        "3.3.2 Persisting an Entity Instance",
+        "3.3.4 Synchronization to the Database",
+        "3.3.7.1 Merging Detached Entity State"
+      ],
+      "result": "Opened corrected document and inspected lifecycle contracts.",
+      "supports": [
+        "New instance is not made persistent merely by constructing it.",
+        "Detached persist may fail at persist or later flush/commit; merge copies state into a managed instance and must honor identity, version and mapping rules.",
+        "Owning-side relationship changes determine persistence; application keeps both sides consistent."
+      ],
+      "limits": "Specification confirmation is not integration execution against an ORM/provider/database."
+    },
+    {
+      "id": "object-clone-17",
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html",
+      "version": "Java SE 17 API",
+      "sections": ["clone()"],
+      "result": "Opened and found shallow-copy contract.",
+      "supports": [
+        "Object.clone copies field values without recursively cloning referenced objects.",
+        "Correct public clone contracts can preserve runtime subtype by using super.clone and repair mutable owned fields; no mandatory replacement of an adequate contract."
+      ]
+    },
+    {
+      "id": "identity-map-17",
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/IdentityHashMap.html",
+      "version": "Java SE 17 API",
+      "sections": ["class description"],
+      "result": "Opened and inspected topology-preserving graph transformation use case.",
+      "supports": [
+        "Reference identity compares nodes rather than merging distinct equals-equal objects.",
+        "Map is not generally synchronized; no concurrent graph snapshot is implied."
+      ]
+    },
+    {
+      "id": "treemap-17",
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/TreeMap.html",
+      "version": "Java SE 17 API",
+      "sections": ["TreeMap(Map)", "TreeMap(SortedMap)"],
+      "result": "Opened and inspected both constructor contracts.",
+      "supports": [
+        "Map overload uses natural ordering, whereas SortedMap overload retains source ordering.",
+        "Static argument type and overload choice can change copied collection semantics."
+      ]
+    }
+  ],
+  "sourceConsultationDate": "2026-10-16",
+  "sourceEvidence": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evaluator\\SOURCES.json",
+  "limitations": [
+    "The change repairs access to evidence. It does not add a copying algorithm or workflow, and no incremental agent gain was measured.",
+    "Java API and persistence specifications support static contracts; there is no actual ORM/provider/database integration execution.",
+    "Compilation with --release 17 on JDK 25 does not establish runtime execution on Java 17.",
+    "Bounded graph tests do not prove behavior for arbitrary hostile graph sizes, concurrent mutation, resource cleanup failures or performance.",
+    "Unchanged worked-example sketches were inspected; not every illustrative class was compiled end-to-end.",
+    "External links were checked selectively for material claims; this is not a catalog-wide link audit.",
+    "Global routing/version/integrity consistency remains for the coordinator."
+  ],
+  "artifacts": {
+    "root": "C:/Users/robso/AppData/Local/Temp/gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa",
+    "evaluatorDirectory": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evaluator",
+    "inputsDirectory": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs",
+    "evidenceDirectory": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence",
+    "readme": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\README.md",
+    "hashManifest": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\artifact-hashes.json",
+    "hashManifestSha256": "58f1153cbe323b32740d105bf8c42f336fb80eb21ead9e08e945dfc1d74dad30",
+    "retainedArtifactCount": 73,
+    "retainedArtifacts": [
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\README.md",
+        "relativePath": "README.md",
+        "sha256": "e4f9729fc095d9c9b18ead468758abb0af9ae1c8fccd0db4d349c7fa877500ee",
+        "bytes": 2010
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\classes\\case-a\\CopyProbe$Child.class",
+        "relativePath": "classes/case-a/CopyProbe$Child.class",
+        "sha256": "33825f45d6cee41aff7f0b4eadf7f52cc48e54968145b0e47c303565e311c86c",
+        "bytes": 288
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\classes\\case-a\\CopyProbe$Parent.class",
+        "relativePath": "classes/case-a/CopyProbe$Parent.class",
+        "sha256": "fd9821c94f074fa4a59e7cac113528b95b769c51210417c0071a23c00e139e97",
+        "bytes": 865
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\classes\\case-a\\CopyProbe.class",
+        "relativePath": "classes/case-a/CopyProbe.class",
+        "sha256": "9a2bdb562b6fa9b5f40c992206b33542014edc1ca2f7fdd0dbe5d85309060f23",
+        "bytes": 6928
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\classes\\case-a\\DraftEditor.class",
+        "relativePath": "classes/case-a/DraftEditor.class",
+        "sha256": "37a2e8940d9d7f067f458212f304ad90624851dfb2068715396228191d10be47",
+        "bytes": 1085
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\classes\\case-a\\GraphCopier$Copier.class",
+        "relativePath": "classes/case-a/GraphCopier$Copier.class",
+        "sha256": "876302dce1fd810cd0064e70a57174dded1642ceefc6188c4c1375fb728d0033",
+        "bytes": 283
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\classes\\case-a\\GraphCopier$Draft.class",
+        "relativePath": "classes/case-a/GraphCopier$Draft.class",
+        "sha256": "c8903f3021157c97fbfaaadd402d4a61667c3535d09cd9a5101742617f6064ae",
+        "bytes": 1372
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\classes\\case-a\\GraphCopier$Node.class",
+        "relativePath": "classes/case-a/GraphCopier$Node.class",
+        "sha256": "1bd79d4afac8fab5ac7aa4666e8eacbbde4b123c6296d188d839dbde25df4cd4",
+        "bytes": 1128
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\classes\\case-a\\GraphCopier.class",
+        "relativePath": "classes/case-a/GraphCopier.class",
+        "sha256": "8af8023b7bdbefeae20d40d7cb4312702c8e5d8786687a31fcd78f711bdeb2b7",
+        "bytes": 3001
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\classes\\case-b\\CopyProbe$Child.class",
+        "relativePath": "classes/case-b/CopyProbe$Child.class",
+        "sha256": "33825f45d6cee41aff7f0b4eadf7f52cc48e54968145b0e47c303565e311c86c",
+        "bytes": 288
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\classes\\case-b\\CopyProbe$Parent.class",
+        "relativePath": "classes/case-b/CopyProbe$Parent.class",
+        "sha256": "fd9821c94f074fa4a59e7cac113528b95b769c51210417c0071a23c00e139e97",
+        "bytes": 865
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\classes\\case-b\\CopyProbe.class",
+        "relativePath": "classes/case-b/CopyProbe.class",
+        "sha256": "9a2bdb562b6fa9b5f40c992206b33542014edc1ca2f7fdd0dbe5d85309060f23",
+        "bytes": 6928
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\classes\\case-b\\DraftEditor.class",
+        "relativePath": "classes/case-b/DraftEditor.class",
+        "sha256": "37a2e8940d9d7f067f458212f304ad90624851dfb2068715396228191d10be47",
+        "bytes": 1085
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\classes\\case-b\\GraphCopier$Copier.class",
+        "relativePath": "classes/case-b/GraphCopier$Copier.class",
+        "sha256": "876302dce1fd810cd0064e70a57174dded1642ceefc6188c4c1375fb728d0033",
+        "bytes": 283
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\classes\\case-b\\GraphCopier$Draft.class",
+        "relativePath": "classes/case-b/GraphCopier$Draft.class",
+        "sha256": "c8903f3021157c97fbfaaadd402d4a61667c3535d09cd9a5101742617f6064ae",
+        "bytes": 1372
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\classes\\case-b\\GraphCopier$Node.class",
+        "relativePath": "classes/case-b/GraphCopier$Node.class",
+        "sha256": "1bd79d4afac8fab5ac7aa4666e8eacbbde4b123c6296d188d839dbde25df4cd4",
+        "bytes": 1128
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\classes\\case-b\\GraphCopier.class",
+        "relativePath": "classes/case-b/GraphCopier.class",
+        "sha256": "8af8023b7bdbefeae20d40d7cb4312702c8e5d8786687a31fcd78f711bdeb2b7",
+        "bytes": 3001
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evaluator\\CopyProbe.java",
+        "relativePath": "evaluator/CopyProbe.java",
+        "sha256": "2be20620b310b5b1c604b3aaa2db9c95db692956b6f63d1b6da94a51ffa7dbea",
+        "bytes": 6192
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evaluator\\SOURCES.json",
+        "relativePath": "evaluator/SOURCES.json",
+        "sha256": "50679979b205c1022a9a688597d8225c47fa3a0589c9b9c3c0853f3a10edfe21",
+        "bytes": 3408
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evaluator\\criteria.json",
+        "relativePath": "evaluator/criteria.json",
+        "sha256": "517b545d37c23ff75da49506eb7475c9a16feb33844436af19c5ec5c70a4d440",
+        "bytes": 3084
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evaluator\\finalize-handoff.mjs",
+        "relativePath": "evaluator/finalize-handoff.mjs",
+        "sha256": "db20ab9449c076fef7b4aa79895804f4df2195d548e699696969edcae7261fc8",
+        "bytes": 13274
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evaluator\\review-record.json",
+        "relativePath": "evaluator/review-record.json",
+        "sha256": "fa935129d10d4b03655b226cfd979c2b70720c948422a044bc36e001a2d45881",
+        "bytes": 7687
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evaluator\\run-local.mjs",
+        "relativePath": "evaluator/run-local.mjs",
+        "sha256": "bf5c63e6e6a10d1748c91ecab6b884bb83dc32c0b5bfe60ad394677be4e7ec95",
+        "bytes": 4395
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evaluator\\structural-source.txt",
+        "relativePath": "evaluator/structural-source.txt",
+        "sha256": "fab62a0453ba5569da1e1f6d1f146f4df444cb66ffa9f1fdba25ae96bd92a0e8",
+        "bytes": 1963
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\case-a-compile.stderr.txt",
+        "relativePath": "evidence/case-a-compile.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\case-a-compile.stdout.txt",
+        "relativePath": "evidence/case-a-compile.stdout.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\case-a-probe.stderr.txt",
+        "relativePath": "evidence/case-a-probe.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\case-a-probe.stdout.txt",
+        "relativePath": "evidence/case-a-probe.stdout.txt",
+        "sha256": "593bc8d0e5760d6b06e3acf4c79bef709bbeefbf394c20f8161266733bc35389",
+        "bytes": 230
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\case-b-compile.stderr.txt",
+        "relativePath": "evidence/case-b-compile.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\case-b-compile.stdout.txt",
+        "relativePath": "evidence/case-b-compile.stdout.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\case-b-probe.stderr.txt",
+        "relativePath": "evidence/case-b-probe.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\case-b-probe.stdout.txt",
+        "relativePath": "evidence/case-b-probe.stdout.txt",
+        "sha256": "cd19b44e8aacb158fc2a7bcc1506f2d5d859b53b822fbc1aca96b30c951afc6a",
+        "bytes": 214
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\commands.json",
+        "relativePath": "evidence/commands.json",
+        "sha256": "a6ba40721bd30c2199e9828b2ba6053c7f07a90be1681aa5b70305cd44aa6b19",
+        "bytes": 11913
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed-SKILL.md.stderr.txt",
+        "relativePath": "evidence/committed-SKILL.md.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed-SKILL.md.stdout.txt",
+        "relativePath": "evidence/committed-SKILL.md.stdout.txt",
+        "sha256": "770fb030b4e562737abb4de91bb98d819666f57d6612ef4132ab23198d94e1e2",
+        "bytes": 11934
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed-references_copying-in-java.md.stderr.txt",
+        "relativePath": "evidence/committed-references_copying-in-java.md.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed-references_copying-in-java.md.stdout.txt",
+        "relativePath": "evidence/committed-references_copying-in-java.md.stdout.txt",
+        "sha256": "2a440d1dfc6a389050baa63e9f12abacd2fb49ddc9e10a2fe334f13a7f49bf69",
+        "bytes": 13467
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed-references_worked-example.md.stderr.txt",
+        "relativePath": "evidence/committed-references_worked-example.md.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed-references_worked-example.md.stdout.txt",
+        "relativePath": "evidence/committed-references_worked-example.md.stdout.txt",
+        "sha256": "11a11c4c51c4515d1108b5fcbd041d6356b05fc462f375540434235d9f7dd531",
+        "bytes": 11127
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed-skill.yaml.stderr.txt",
+        "relativePath": "evidence/committed-skill.yaml.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed-skill.yaml.stdout.txt",
+        "relativePath": "evidence/committed-skill.yaml.stdout.txt",
+        "sha256": "71fb78682e6267fd392d1f9be57e6daa28a695dc34ab45394348a37bd7a62852",
+        "bytes": 1999
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed\\SKILL.md",
+        "relativePath": "evidence/committed/SKILL.md",
+        "sha256": "770fb030b4e562737abb4de91bb98d819666f57d6612ef4132ab23198d94e1e2",
+        "bytes": 11934
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed\\references\\copying-in-java.md",
+        "relativePath": "evidence/committed/references/copying-in-java.md",
+        "sha256": "2a440d1dfc6a389050baa63e9f12abacd2fb49ddc9e10a2fe334f13a7f49bf69",
+        "bytes": 13467
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed\\references\\worked-example.md",
+        "relativePath": "evidence/committed/references/worked-example.md",
+        "sha256": "11a11c4c51c4515d1108b5fcbd041d6356b05fc462f375540434235d9f7dd531",
+        "bytes": 11127
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\committed\\skill.yaml",
+        "relativePath": "evidence/committed/skill.yaml",
+        "sha256": "71fb78682e6267fd392d1f9be57e6daa28a695dc34ab45394348a37bd7a62852",
+        "bytes": 1999
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\diff-check.stderr.txt",
+        "relativePath": "evidence/diff-check.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\diff-check.stdout.txt",
+        "relativePath": "evidence/diff-check.stdout.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\final-diff.stderr.txt",
+        "relativePath": "evidence/final-diff.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\final-diff.stdout.txt",
+        "relativePath": "evidence/final-diff.stdout.txt",
+        "sha256": "c573baca524c52a8e0059328b17759731001dd2f988023372b1de24742dae292",
+        "bytes": 1544
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\final-hashes.json",
+        "relativePath": "evidence/final-hashes.json",
+        "sha256": "c0f06b230a2ae30991b629cb26b85171b390501ddb17294bacf49b2c9327e1a9",
+        "bytes": 586
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\final-status.stderr.txt",
+        "relativePath": "evidence/final-status.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\final-status.stdout.txt",
+        "relativePath": "evidence/final-status.stdout.txt",
+        "sha256": "68c5ee6d20052116a459fe3f296e019f108321b0a537edd8a93901e2d57ca41f",
+        "bytes": 89
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\final\\SKILL.md",
+        "relativePath": "evidence/final/SKILL.md",
+        "sha256": "770fb030b4e562737abb4de91bb98d819666f57d6612ef4132ab23198d94e1e2",
+        "bytes": 11934
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\final\\references\\copying-in-java.md",
+        "relativePath": "evidence/final/references/copying-in-java.md",
+        "sha256": "ce70157d35bf8fd1be30ab513cf5bfb03bc55e581dddb077ae6ef340ed90bb00",
+        "bytes": 13472
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\final\\references\\worked-example.md",
+        "relativePath": "evidence/final/references/worked-example.md",
+        "sha256": "11a11c4c51c4515d1108b5fcbd041d6356b05fc462f375540434235d9f7dd531",
+        "bytes": 11127
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\final\\skill.yaml",
+        "relativePath": "evidence/final/skill.yaml",
+        "sha256": "cf1d01a53a7d653c300ff5d03f2773c1818ba74d9204fd2ec3b3db6394c0b76e",
+        "bytes": 1999
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\format.stderr.txt",
+        "relativePath": "evidence/format.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\format.stdout.txt",
+        "relativePath": "evidence/format.stdout.txt",
+        "sha256": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20",
+        "bytes": 66
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\pair-and-snippet-check.json",
+        "relativePath": "evidence/pair-and-snippet-check.json",
+        "sha256": "522ec40b172ed434e2904ff7ed437756bdbc095231056d0242ed42420f97a792",
+        "bytes": 184
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\staged-diff.stderr.txt",
+        "relativePath": "evidence/staged-diff.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\staged-diff.stdout.txt",
+        "relativePath": "evidence/staged-diff.stdout.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\structural.stderr.txt",
+        "relativePath": "evidence/structural.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\evidence\\structural.stdout.txt",
+        "relativePath": "evidence/structural.stdout.txt",
+        "sha256": "d83fc23e74695a1459aa8e8433fdb59364c915d9080dbba92054d59a5ffa8265",
+        "bytes": 134
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-a\\CONTRACT.md",
+        "relativePath": "inputs/case-a/CONTRACT.md",
+        "sha256": "601f13589e28c8738248ee32011fe771b615c88155aa20857c265134295712e6",
+        "bytes": 885
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-a\\DraftEditor.java",
+        "relativePath": "inputs/case-a/DraftEditor.java",
+        "sha256": "a0228e85846262abd81a85313f1c42819d7cb4d5ad3de22c5cad89d2b534c7fa",
+        "bytes": 788
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-a\\GraphCopier.java",
+        "relativePath": "inputs/case-a/GraphCopier.java",
+        "sha256": "dd9ab3daa35819b4422dca21bbfc8b2c118bc3c1bab7c2815b759295dc71a9d6",
+        "bytes": 2132
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-a\\TASK.md",
+        "relativePath": "inputs/case-a/TASK.md",
+        "sha256": "cff408ac93f99184cc5c052f6fe898ebea955be2c702175d3adce2da060cbbe9",
+        "bytes": 329
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-a\\application.properties",
+        "relativePath": "inputs/case-a/application.properties",
+        "sha256": "a198379f361bdc229c0275c7eb9a4f32dc015ff43f5311645d3187df2b9f224d",
+        "bytes": 19
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-b\\CONTRACT.md",
+        "relativePath": "inputs/case-b/CONTRACT.md",
+        "sha256": "601f13589e28c8738248ee32011fe771b615c88155aa20857c265134295712e6",
+        "bytes": 885
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-b\\DraftEditor.java",
+        "relativePath": "inputs/case-b/DraftEditor.java",
+        "sha256": "a0228e85846262abd81a85313f1c42819d7cb4d5ad3de22c5cad89d2b534c7fa",
+        "bytes": 788
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-b\\GraphCopier.java",
+        "relativePath": "inputs/case-b/GraphCopier.java",
+        "sha256": "dd9ab3daa35819b4422dca21bbfc8b2c118bc3c1bab7c2815b759295dc71a9d6",
+        "bytes": 2132
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-b\\TASK.md",
+        "relativePath": "inputs/case-b/TASK.md",
+        "sha256": "cff408ac93f99184cc5c052f6fe898ebea955be2c702175d3adce2da060cbbe9",
+        "bytes": 329
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\gof-prototype-quality14-6f1dd22593744f7baa7112bb2eab60aa\\inputs\\case-b\\application.properties",
+        "relativePath": "inputs/case-b/application.properties",
+        "sha256": "c91ca734668f0d303fb5167b0dead4cb1f299756292a708eb826f906bec44710",
+        "bytes": 23
+      }
+    ]
+  },
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "purpose": "Regenerate shared integrity/version index after all reviewers stop writing.",
+      "prerequisite": "All wave writers stopped."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "purpose": "Repository-wide CI checks including version/routing integration.",
+      "prerequisite": "Shared registry rebuilt and all wave writers stopped."
+    }
+  ],
+  "crossSkillIssues": [
+    {
+      "status": "resolved locally only",
+      "note": "Coordinator reported possible extensionless Jakarta URLs. This exact occurrence returned 404 and was repaired. No neighboring files were edited; no assumption about untested URLs."
+    }
+  ],
+  "coordinatorActionsRequired": [
+    "Review the tiny owned diff, archive evidence as desired, and run global checks after all writers stop. Independent actor comparison is optional and must not receive private criteria."
+  ],
+  "finalInspection": {
+    "ownedDiff": "diff --git a/skills/gof-prototype/references/copying-in-java.md b/skills/gof-prototype/references/copying-in-java.md\nindex 79c8476..d0d49cf 100644\n--- a/skills/gof-prototype/references/copying-in-java.md\n+++ b/skills/gof-prototype/references/copying-in-java.md\n@@ -197,5 +197,5 @@ Primary sources: [Object.clone](<https://docs.oracle.com/en/java/javase/17/docs/\n [TreeMap constructor contracts](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/TreeMap.html),\n [resource cleanup on abrupt completion](https://docs.oracle.com/javase/specs/jls/se17/html/jls-14.html#jls-14.20.3),\n [Java serialization architecture](https://docs.oracle.com/en/java/javase/17/docs/specs/serialization/serial-arch.html),\n-and [Jakarta Persistence 3.2 entity lifecycle](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2).\n+and [Jakarta Persistence 3.2 entity lifecycle](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html).\n Check the deployed provider/version and mappings for concrete persistence behavior.\ndiff --git a/skills/gof-prototype/skill.yaml b/skills/gof-prototype/skill.yaml\nindex b024357..ad1f5bfb 100644\n--- a/skills/gof-prototype/skill.yaml\n+++ b/skills/gof-prototype/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: gof-prototype\n-version: 1.2.3\n+version: 1.2.4\n description: >-\n   Prototype in modern Java: producing a new object from an existing instance's state, when the\n   configuration is expensive or the concrete type is unknown to the caller. Covers why\n",
+    "ownedStatus": " M skills/gof-prototype/references/copying-in-java.md\n M skills/gof-prototype/skill.yaml\n",
+    "stagedDiffEmpty": true,
+    "expectedOwnedFilesChanged": 2,
+    "finalHashesVerified": true,
+    "noSharedOrNeighborWrites": true,
+    "noInstallations": true,
+    "noGitStateMutations": true
+  }
+}

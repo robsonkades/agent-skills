@@ -1,0 +1,333 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "heap-dump-analysis",
+  "ownedPath": "C:/git/agent-skills/skills/heap-dump-analysis",
+  "reviewer": "/root/quality16",
+  "date": "2026-10-16",
+  "allWritesStopped": true,
+  "processesStopped": true,
+  "baseline": {
+    "committedVersion": "1.3.5",
+    "assignmentVersion": "1.3.5",
+    "stagedChanges": [],
+    "unstagedChanges": [],
+    "untrackedFiles": [],
+    "initialHashes": [
+      {
+        "path": "C:\\git\\agent-skills\\skills\\heap-dump-analysis\\SKILL.md",
+        "sha256": "819AD29CCA025EA4419902B8DC8696E47A482964E64123597F3C62AD4DB6AC4A"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\heap-dump-analysis\\skill.yaml",
+        "sha256": "7FF2B8BBE1C2941CDB236B4E9F4055666C479066FAF694E55EFDE4193CCC5D0A"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\heap-dump-analysis\\references\\capture-recipes.md",
+        "sha256": "B1587C3046A90F5DB162034C326F2102D03EBB1737AE27B4D8E714CF6438DF3A"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\heap-dump-analysis\\references\\mat-workflow-and-oql.md",
+        "sha256": "EACEAC20B64B88131ED01F4F72CE6A382A26C93DAA4B482F7C5961BE6CF676B0"
+      }
+    ]
+  },
+  "finalVersion": "1.3.6",
+  "bumpRationale": "One patch for focused diagnostic guidance and primary-source addition; initial package was clean and had no unpublished bump.",
+  "findingsCorrected": [
+    {
+      "location": "SKILL.md workflow 5, lines 57-63; references/mat-workflow-and-oql.md parsed-population guidance, lines 27-45",
+      "finding": "Experimental MAT discard was mentioned only as a setting to record. The guidance did not explain that intentionally discarded, possibly reachable objects share the Unreachable Objects Histogram with actual garbage, disappear from retained totals and lack indexed root paths.",
+      "consequence": "An analyst can misread the histogram label or a reduced graph as evidence against retention, or attempt to repair the omission with Keep unreachable objects alone.",
+      "implemented": "Explicitly distinguish discard from natural unreachability; inspect actual parse options/logs and discarded populations; record pattern/percentage/offset/seed; reparse an artifact copy without discard or preserve the question's objects/links; otherwise bound conclusions. New production capture is not needed solely for an analysis-side filter.",
+      "evidenceKind": "Primary MAT documentation plus executed synthetic MAT 1.17.0 experiment. No agent behavioral evaluation."
+    }
+  ],
+  "remainingFindings": [],
+  "changedByReviewer": [
+    "skills/heap-dump-analysis/SKILL.md",
+    "skills/heap-dump-analysis/references/mat-workflow-and-oql.md",
+    "skills/heap-dump-analysis/skill.yaml"
+  ],
+  "preExistingChanges": [],
+  "finalHashes": [
+    {
+      "Path": "C:\\git\\agent-skills\\skills\\heap-dump-analysis\\SKILL.md",
+      "Hash": "1927B8BA587EBB0DF6C9F0F0DB8C738063EC428CE7B194D61FAC92D0921D6DD8"
+    },
+    {
+      "Path": "C:\\git\\agent-skills\\skills\\heap-dump-analysis\\skill.yaml",
+      "Hash": "536D834A42513991555B5F71CD95C90AE6394366C367318711CB834308A1F98C"
+    },
+    {
+      "Path": "C:\\git\\agent-skills\\skills\\heap-dump-analysis\\references\\capture-recipes.md",
+      "Hash": "B1587C3046A90F5DB162034C326F2102D03EBB1737AE27B4D8E714CF6438DF3A"
+    },
+    {
+      "Path": "C:\\git\\agent-skills\\skills\\heap-dump-analysis\\references\\mat-workflow-and-oql.md",
+      "Hash": "235897EB2CC0E0B1047D63B17B28746AA8C02A70E2F9C3181FB5E843949C4583"
+    }
+  ],
+  "preservedCapabilities": [
+    "Diagnosis role, activation scope and existing description/manifest agreement.",
+    "Capture authority, full-GC/filter trade-offs, safepoints, attach completion uncertainty, sensitive-data handling and cgroup/disk budgets.",
+    "OOME once-only capture, runtime-specific options, compact-header comparability and artifact provenance.",
+    "Dominator versus real-edge semantics, alternative strong paths, reference strengths, retained-set arithmetic and OQL.",
+    "Two-dump population comparisons, lifecycle/growth evidence, ThreadLocal, WeakHashMap, classloader, virtual-thread and off-heap boundaries.",
+    "Entire capture-recipes.md unchanged byte-for-byte."
+  ],
+  "removedCapabilities": [],
+  "structuralChecks": [
+    {
+      "cwd": "C:/git/agent-skills",
+      "command": "Node inline module: loadPackageFromDirectory(new NodeFileSystem(), 'C:/git/agent-skills/skills/heap-dump-analysis', {strict:true}); validatePackage(...,{directoryName:'heap-dump-analysis'}); assert zero combined issues and version 1.3.6",
+      "result": "PASS: 4 files, zero issues. Rerun after final prose qualification."
+    },
+    {
+      "cwd": "C:/git/agent-skills",
+      "command": "Read only local Markdown link existence check over SKILL.md and both references",
+      "result": "PASS: both routed local references exist; external sources checked separately."
+    },
+    {
+      "cwd": "C:/git/agent-skills",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/heap-dump-analysis/SKILL.md skills/heap-dump-analysis/references/mat-workflow-and-oql.md skills/heap-dump-analysis/skill.yaml",
+      "result": "PASS, final content."
+    },
+    {
+      "cwd": "C:/git/agent-skills",
+      "command": "git diff --check -- skills/heap-dump-analysis; git diff -- skills/heap-dump-analysis; git status --short --untracked-files=all -- skills/heap-dump-analysis",
+      "result": "PASS: no whitespace errors; only three intended modified files. Final focused edit adds 'by themselves' to avoid overstating limits of multiple partial parses."
+    },
+    {
+      "cwd": "C:/git/agent-skills",
+      "command": "Get-CimInstance Win32_Process -Filter \"Name='java.exe'\" | Where-Object command line contains isolated validation root",
+      "result": "No remaining validation JVMs; all seven launched Java processes completed."
+    }
+  ],
+  "technicalValidation": {
+    "type": "Executed tool-semantics validation, not agent behavioral evaluation or proof of application leak absence.",
+    "root": "C:/Users/robso/AppData/Local/Temp/codex-heap-dump-analysis-20261016-6f12719aaecf4c57b1883b270accc0d3",
+    "commands": [
+      "& 'C:/Users/robso/AppData/Local/Temp/codex-heap-dump-analysis-20261016-6f12719aaecf4c57b1883b270accc0d3/run-validation.ps1' *> 'C:/Users/robso/AppData/Local/Temp/codex-heap-dump-analysis-20261016-6f12719aaecf4c57b1883b270accc0d3/validation.log'",
+      "& 'C:/Users/robso/AppData/Local/Temp/codex-heap-dump-analysis-20261016-6f12719aaecf4c57b1883b270accc0d3/check-results.ps1' *> 'C:/Users/robso/AppData/Local/Temp/codex-heap-dump-analysis-20261016-6f12719aaecf4c57b1883b270accc0d3/assertions.log'"
+    ],
+    "cwd": "C:/git/agent-skills; child JVM working directories explicitly set to isolated temp validation root",
+    "compiler": "javac 25.0.3 --release 21",
+    "runtime": "Temurin OpenJDK 25.0.3+9-LTS, Windows x64",
+    "matVersion": "1.17.0; plugins 1.17.0.202606011933",
+    "setup": "Existing installed MAT/JDK only. Synthetic fixture retains 128 Payload objects via a static array. HotSpotDiagnosticMXBean.dumpHeap(path,true) captures only that local test JVM. Three byte-identical artifact copies parsed; no existing/private dumps read. MAT configuration, workspace, user area, user.home, temp and p2 data redirected into temp; existing installation used read-only.",
+    "captureBytes": 4374244,
+    "captureSha256": "DFD56A323C42DDC7DF46124F2EE70A49EA37EF3B0C76D900F9AFB214BD948AF6",
+    "conditions": [
+      {
+        "name": "complete",
+        "options": [],
+        "indexedPayloads": 128,
+        "unreachableHistogramPayloads": 0,
+        "indexedPayloadArrays": 1,
+        "result": "PASS"
+      },
+      {
+        "name": "discard",
+        "options": ["-discard_ratio=100", "-discard_pattern=DumpFixture\\$Payload"],
+        "indexedPayloads": 0,
+        "unreachableHistogramPayloads": 128,
+        "indexedPayloadArrays": 1,
+        "result": "PASS"
+      },
+      {
+        "name": "discard-keep",
+        "options": [
+          "-discard_ratio=100",
+          "-discard_pattern=DumpFixture\\$Payload",
+          "-keep_unreachable_objects"
+        ],
+        "indexedPayloads": 0,
+        "unreachableHistogramPayloads": 128,
+        "indexedPayloadArrays": 1,
+        "result": "PASS"
+      }
+    ],
+    "assertions": "SHA-256 equality across source and all three copies; exact candidate counts and array positive-control count in six CSV reports; zero nonzero child exits; no stderr output.",
+    "rawArtifacts": {
+      "source": "C:/Users/robso/AppData/Local/Temp/codex-heap-dump-analysis-20261016-6f12719aaecf4c57b1883b270accc0d3/DumpFixture.java",
+      "runner": "C:/Users/robso/AppData/Local/Temp/codex-heap-dump-analysis-20261016-6f12719aaecf4c57b1883b270accc0d3/run-validation.ps1",
+      "assertionScript": "C:/Users/robso/AppData/Local/Temp/codex-heap-dump-analysis-20261016-6f12719aaecf4c57b1883b270accc0d3/check-results.ps1",
+      "results": "C:/Users/robso/AppData/Local/Temp/codex-heap-dump-analysis-20261016-6f12719aaecf4c57b1883b270accc0d3/results.json",
+      "runLog": "C:/Users/robso/AppData/Local/Temp/codex-heap-dump-analysis-20261016-6f12719aaecf4c57b1883b270accc0d3/validation.log",
+      "assertionsLog": "C:/Users/robso/AppData/Local/Temp/codex-heap-dump-analysis-20261016-6f12719aaecf4c57b1883b270accc0d3/assertions.log",
+      "capture": "C:/Users/robso/AppData/Local/Temp/codex-heap-dump-analysis-20261016-6f12719aaecf4c57b1883b270accc0d3/source.hprof",
+      "queryArtifacts": "For each condition complete, discard, discard-keep: <condition>-histogram.stdout.txt/.stderr.txt, <condition>-unreachable.stdout.txt/.stderr.txt, saved <condition>-<query>.zip and extracted <condition>-<query>/pages/Query_Command2.csv; copies and index files retained.",
+      "captureOutput": "C:/Users/robso/AppData/Local/Temp/codex-heap-dump-analysis-20261016-6f12719aaecf4c57b1883b270accc0d3/capture.stdout.txt"
+    },
+    "limitations": [
+      "One small synthetic graph and installed MAT build; no large-dump capacity/performance or production capture measurement.",
+      "Experiment directly asserts histogram population movement and Keep unreachable objects behavior. Root-path absence and retained-size semantics additionally rely on official MAT documentation, not separate numeric root/retained-size assertions.",
+      "No shipped Java or OQL example changed. Existing unrelated capture commands and OQL snippets were reviewed but not all executed.",
+      "No before/after agent evaluation, no measured gain in skill behavior."
+    ]
+  },
+  "behavioralEvaluation": {
+    "executed": false,
+    "walkthroughs": [
+      "Discard-enabled fixture: label cannot settle reachability; analysis-side omission changes next evidence acquisition.",
+      "Same capture with discard disabled: candidate indexed; use existing ownership/lifecycle evidence without a discard-repair ritual."
+    ],
+    "cases": [
+      {
+        "id": "heap-discard-population",
+        "actorInput": {
+          "request": "Revise investigation.md using the available heap-analysis artifacts and source. Does the MAT evidence justify closing the retention investigation for DumpFixture.Payload? Correct the observed counts and ownership claims, state the supported scope of the conclusion and the next useful action. Analyze existing artifacts only. Any necessary reparse must use a new copy under work/ with isolated MAT configuration; do not capture a running application, change application code, upload data or alter services.",
+          "fixtures": [
+            {
+              "path": "src/DumpFixture.java",
+              "copyFrom": "C:/Users/robso/AppData/Local/Temp/codex-heap-dump-analysis-20261016-6f12719aaecf4c57b1883b270accc0d3/DumpFixture.java",
+              "note": "Ordinary source of the synthetic reproducer, not an evaluator mutant."
+            },
+            {
+              "path": "artifacts/incident.hprof",
+              "copyFrom": "C:/Users/robso/AppData/Local/Temp/codex-heap-dump-analysis-20261016-6f12719aaecf4c57b1883b270accc0d3/discard.hprof"
+            },
+            {
+              "path": "artifacts/histogram.csv",
+              "copyFrom": "C:/Users/robso/AppData/Local/Temp/codex-heap-dump-analysis-20261016-6f12719aaecf4c57b1883b270accc0d3/discard-histogram/pages/Query_Command2.csv"
+            },
+            {
+              "path": "artifacts/unreachable.csv",
+              "copyFrom": "C:/Users/robso/AppData/Local/Temp/codex-heap-dump-analysis-20261016-6f12719aaecf4c57b1883b270accc0d3/discard-unreachable/pages/Query_Command2.csv"
+            },
+            {
+              "path": "artifacts/parse.log",
+              "copyFrom": "C:/Users/robso/AppData/Local/Temp/codex-heap-dump-analysis-20261016-6f12719aaecf4c57b1883b270accc0d3/discard-histogram.stdout.txt"
+            },
+            {
+              "path": "artifacts/parse-options.txt",
+              "content": "MAT 1.17.0.202606011933\n-discard_ratio=100\n-discard_pattern=DumpFixture\\$Payload\nkeep_unreachable_objects=false\n"
+            },
+            {
+              "path": "artifacts/capture.txt",
+              "content": "Synthetic local JVM capture; HotSpot Temurin 25.0.3+9. Captured with HotSpotDiagnosticMXBean.dumpHeap(path,true); source compilation target Java 21. SHA-256 DFD56A323C42DDC7DF46124F2EE70A49EA37EF3B0C76D900F9AFB214BD948AF6. Capture completed. No growth history or production workload is supplied.\n"
+            },
+            {
+              "path": "investigation.md",
+              "content": "# Heap investigation\n\nCandidate: DumpFixture.Payload. A previous summary treated rows in MAT's Unreachable Objects Histogram as objects no longer held by the application and proposed closing the retention investigation. Verify the conclusion from the supplied artifacts and code before finalizing it.\n"
+            }
+          ],
+          "toolsAndPermissions": "Existing MAT 1.17.0 and JDK 25.0.3 may be used with an isolated configuration/workspace/home. Can read fixtures and write investigation.md plus work/ only. Do not expose sibling condition artifacts, evaluator expectations, this handoff or the entire raw validation directory."
+        },
+        "evaluatorOnly": {
+          "expected": [
+            "Read the actual parse options/log and relevant histogram rows instead of assuming the label denotes JVM-unreachable objects.",
+            "Explain that 128 Payload instances were intentionally omitted from the indexed graph and appear in the Unreachable Objects Histogram despite the static ownership visible in source.",
+            "Correct investigation.md so absence from the indexed histogram/root evidence does not exonerate retention. Distinguish this from independent bounded-array/lifecycle conclusions supported by source.",
+            "If graph attribution remains necessary, reparse an artifact copy without discard, or preserve the relevant population; Keep unreachable objects alone is not a repair for the discard.",
+            "Bound claims to the reproducer and supplied snapshot; no measured growth, universal leak verdict or complete application-health claim.",
+            "Preserve original capture and existing indexes; no new live capture or upload."
+          ],
+          "observableFailures": [
+            "Treats the 128 discarded objects as proof they are collectible.",
+            "Concludes no strong owner merely from the reduced graph or claims Keep unreachable objects will restore explicitly discarded instances.",
+            "Requests a new production dump solely to fix the parser filter.",
+            "Edits only a question log, leaves the incorrect investigation unchanged, or claims an unexecuted reparse occurred."
+          ]
+        },
+        "executionStatus": "Not executed as an agent behavioral evaluation; development case only."
+      },
+      {
+        "id": "heap-complete-population",
+        "decisiveConstraintChanged": "Same capture, source, task, permissions and candidate; experimental discard is disabled. Substitute only the parser configuration and its resulting exports/log.",
+        "actorInput": {
+          "request": "Revise investigation.md using the available heap-analysis artifacts and source. Does the MAT evidence justify closing the retention investigation for DumpFixture.Payload? Correct the observed counts and ownership claims, state the supported scope of the conclusion and the next useful action. Analyze existing artifacts only. Any necessary reparse must use a new copy under work/ with isolated MAT configuration; do not capture a running application, change application code, upload data or alter services.",
+          "fixturesSharedFrom": "heap-discard-population, except replacements below",
+          "replacements": [
+            {
+              "path": "artifacts/incident.hprof",
+              "copyFrom": "C:/Users/robso/AppData/Local/Temp/codex-heap-dump-analysis-20261016-6f12719aaecf4c57b1883b270accc0d3/complete.hprof"
+            },
+            {
+              "path": "artifacts/histogram.csv",
+              "copyFrom": "C:/Users/robso/AppData/Local/Temp/codex-heap-dump-analysis-20261016-6f12719aaecf4c57b1883b270accc0d3/complete-histogram/pages/Query_Command2.csv"
+            },
+            {
+              "path": "artifacts/unreachable.csv",
+              "copyFrom": "C:/Users/robso/AppData/Local/Temp/codex-heap-dump-analysis-20261016-6f12719aaecf4c57b1883b270accc0d3/complete-unreachable/pages/Query_Command2.csv"
+            },
+            {
+              "path": "artifacts/parse.log",
+              "copyFrom": "C:/Users/robso/AppData/Local/Temp/codex-heap-dump-analysis-20261016-6f12719aaecf4c57b1883b270accc0d3/complete-histogram.stdout.txt"
+            },
+            {
+              "path": "artifacts/parse-options.txt",
+              "content": "MAT 1.17.0.202606011933\nExperimental discard disabled; no discard options\nkeep_unreachable_objects=false\n"
+            }
+          ],
+          "toolsAndPermissions": "Same as first case. Provide only this condition's ordinary fixtures, never the full validation directory or evaluator criteria."
+        },
+        "evaluatorOnly": {
+          "expected": [
+            "Recognize 128 candidate instances in the normal indexed histogram and no such candidate row in the unreachable histogram; do not attribute this result to experimental omission.",
+            "Use available source/graph evidence to discuss the static bounded array and the scope of the retention question, without forcing a discard-repair reparse.",
+            "Retain the limitations of one snapshot and absent workload/growth history; legitimate retained state is not by itself a leak or proof of whole-application safety.",
+            "Update investigation.md and keep capture/authorization constraints unchanged."
+          ],
+          "observableFailures": [
+            "Invents experimental discard despite the parse log/options or asks to repair an omission that is not present.",
+            "Equates static retention or an indexed instance count alone with a confirmed leak.",
+            "Concludes absence of all leaks from this single bounded fixture."
+          ]
+        },
+        "executionStatus": "Not executed as an agent behavioral evaluation; development case only."
+      }
+    ]
+  },
+  "sources": [
+    {
+      "url": "https://help.eclipse.org/latest/topic/org.eclipse.mat.ui.help/tasks/configure_mat.html",
+      "version": "Unversioned current Eclipse help consulted 2026-10-16; material discard behavior additionally tested in installed MAT 1.17.0",
+      "supports": "Discarded objects share unreachable histogram, are not indexed, do not contribute retained size, have no GC root data; class pattern/ratio/offset/seed and partial-graph limitations."
+    },
+    {
+      "url": "https://help.eclipse.org/latest/topic/org.eclipse.mat.ui.help/reference/inspections/unreachable_objects.html",
+      "version": "Current Eclipse help consulted 2026-10-16",
+      "supports": "Natural unreachable filtering versus experimental discard, summary-only histogram and ordinary Keep unreachable objects/reparse workflow."
+    },
+    {
+      "url": "https://help.eclipse.org/latest/topic/org.eclipse.mat.ui.help/tasks/batch.html",
+      "version": "Current Eclipse help and installed MAT 1.17.0",
+      "supports": "Batch query report and discard/keep parse options used by isolated experiment."
+    },
+    {
+      "url": "https://help.eclipse.org/latest/topic/org.eclipse.platform.doc.isv/reference/misc/runtime-options.html",
+      "version": "Eclipse runtime reference, cross-checked with installed launcher/configuration",
+      "supports": "Explicit install/configuration/instance/user locations used for isolated MAT launch."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/27/migrate/significant-changes-jdk-27-release.html",
+      "version": "JDK 27",
+      "supports": "Spot check of preserved compact-object-headers-by-default claim. Direct JEP 534 fetch returned 403; official Oracle release migration guide provided the primary-source fallback."
+    }
+  ],
+  "assumptionsAndLimits": [
+    "No package code changes or arbitrary quality scoring.",
+    "Development cases are known and derived from this investigation, not unseen holdouts.",
+    "Actor/evaluator separation requires coordinator to copy only the listed condition's fixtures; placing files in sibling directories alone is not access isolation.",
+    "Repository-wide validity remains pending coordinator checks.",
+    "No cross-skill corrections required."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Shared generated registry; run after all reviewers stop."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Repository-wide validation deferred by parallel review rules; run after registry generation and all writes stop."
+    }
+  ],
+  "coordinatorActions": [
+    "Archive the full technical validation directory if preserving raw experiment evidence.",
+    "Run selected actor cases independently with expected outcomes withheld, if behavioral evidence is desired."
+  ],
+  "crossSkillIssues": []
+}

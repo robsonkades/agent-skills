@@ -1,0 +1,77 @@
+{
+  "decision": "changed",
+  "cause": "Dispatcher.replayOne generated a fresh UUID for every acceptance. Receiver acknowledgment survived a subsequent local checkpoint failure; replay of the retained row used a different identity and created a second receiver effect.",
+  "changes": [
+    "Dispatcher passes the immutable retained event_id as acceptance token and removes the unused UUID import.",
+    "Added actual-Spring-bean regressions for checkpoint failure and retained replay, original payload, rejection, identity conflict, publisher atomicity, and single-row dispatch.",
+    "Added a separate-JVM, file-backed H2 restart check under output/checks.",
+    "Updated RUNBOOK.md with stable identity, recovery ownership, procedure and evidence limits."
+  ],
+  "verification": [
+    {
+      "command": [
+        "node",
+        "check.mjs"
+      ],
+      "phase": "before and after",
+      "exit": 0,
+      "result": "Ordinary publisher/replay smoke passed."
+    },
+    {
+      "command": [
+        "node",
+        "check.mjs",
+        "work.Regression"
+      ],
+      "phase": "before repair",
+      "exit": 1,
+      "result": "Failure window reproduced; replay expected one receiver effect but observed two."
+    },
+    {
+      "command": [
+        "node",
+        "check.mjs",
+        "work.Regression"
+      ],
+      "phase": "after repair",
+      "exit": 0,
+      "result": "All regression scenarios passed through actual Spring beans with persisted-state observations."
+    },
+    {
+      "command": [
+        "node",
+        "../checks/restart.mjs"
+      ],
+      "phase": "after repair",
+      "exit": 0,
+      "result": "Two separate JVMs completed retained work from file-backed H2 with exactly one observed receiver effect."
+    },
+    {
+      "command": "PowerShell SHA-256 comparison of each input/project file with output/project counterpart",
+      "exit": 0,
+      "result": "All frozen files equal; only Dispatcher.java and RUNBOOK.md differ among pre-existing files."
+    }
+  ],
+  "limits": [
+    "The restart check exercises orderly separate JVM exits and recreation, not forced termination or physical storage failure.",
+    "Evidence uses local H2 and the frozen deterministic ReceiverClient, not a production provider or production database.",
+    "Sequential retries and one operated replay worker only; no concurrent-worker guarantee.",
+    "Ordinary database durability and the specified stable-token receiver idempotency contract are assumed.",
+    "Execution records are actor-authored reports; exec_command merged stdout and stderr where indicated."
+  ],
+  "regressionCommands": [
+    [
+      "node",
+      "check.mjs"
+    ],
+    [
+      "node",
+      "check.mjs",
+      "work.Regression"
+    ],
+    [
+      "node",
+      "../checks/restart.mjs"
+    ]
+  ]
+}

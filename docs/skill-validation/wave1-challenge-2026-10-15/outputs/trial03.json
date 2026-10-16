@@ -1,0 +1,13 @@
+{
+  "trialId": "trial03",
+  "caseId": "code-review-borrowed-session",
+  "filesRead": [
+    "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/actor-protocol.md",
+    "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/inputs/code-review-borrowed-session.json",
+    "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/revised/code-review/SKILL.md",
+    "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/revised/code-review/references/what-to-look-for.md",
+    "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/revised/code-review/references/giving-and-receiving.md"
+  ],
+  "unexpectedExposure": [],
+  "response": "Request changes for H relative to B, scoped to the supplied Java 17 lifecycle change and its production caller.\n\n**Blocking — ReportReader.java:41 closes a caller-owned session before its last use.** The accepted contract requires the borrowed Session to remain usable. At B, ReportReader leaves it open; H's try-with-resources closes it before returning. On a successful read and close, ExportJob.java:19 receives the correct rows, but line 20 calls writeAudit on the invalidated session, throws ClosedSessionException, and fails the export. This is a reachable regression established by the supplied contract and call sequence. Idempotent close only makes the later cleanup harmless; it does not restore usability. Remove session ownership from ReportReader and retain cleanup in ExportJob's finally at line 22.\n\nThe author's leak argument does not justify approval: the supplied caller already owns and closes the session, including on failure. Closing earlier violates that ownership boundary.\n\nThe second reviewer's exception claim is incorrect and should be withdrawn. Under the supplied Java rule, if the body and close both throw, the body exception remains primary and the close exception is suppressed. If the body succeeds and close throws, the close failure propagates. Neither rule resolves the premature-close defect.\n\nValidation is static and fixture-based; I ran no tests or commands against the scenario. Supplied H reports establish isolated results and closure, but miss caller reuse and assert closure contrary to the contract. Add regression coverage for ExportJob's read-then-audit sequence and owner cleanup, plus borrowed-session usability after successful and failed reader calls. Mapping correctness is supplied as unchanged; no broader style review was performed."
+}

@@ -1,0 +1,12 @@
+{
+  "status": "PASS",
+  "purpose": "Validate synthetic case distinction against uncached API behavior; not a benchmark or actor evaluation.",
+  "assertions": 5,
+  "outputs": {
+    "case-a-cached": "en-US,2026-03-01\nfr-FR,REJECTED\n",
+    "case-a-uncached": "en-US,2026-03-01\nfr-FR,REJECTED\n",
+    "case-b-cached": "en-US,2026-03-01\nfr-FR,REJECTED\n",
+    "case-b-uncached": "en-US,2026-03-01\nfr-FR,2026-03-01\n"
+  },
+  "limits": "Only the two ordered rows and current runtime locale data were executed. No concurrency, cap/bypass, retained-memory or reverse-order test."
+}

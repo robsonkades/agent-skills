@@ -1,0 +1,74 @@
+diff --git a/skills/object-layout-and-footprint/references/compact-object-headers.md b/skills/object-layout-and-footprint/references/compact-object-headers.md
+index be36b23..21ed8b0 100644
+--- a/skills/object-layout-and-footprint/references/compact-object-headers.md
++++ b/skills/object-layout-and-footprint/references/compact-object-headers.md
+@@ -302,12 +302,12 @@ costs, and what else on that command line to distrust, are all `jvm-performance-
+ `-XX:+UseCompactObjectHeaders` is a trade to evaluate from the target class/object mix.
+ This section covers only the **footprint** side of that trade.
+ 
+-**Nothing on this page is a performance measurement; every number here is footprint.** What
+-the flag costs in throughput and latency, the published SPECjbb figures and why they carry no
+-provenance, its prerequisites and its per-release defaults are all in
+-`jvm-performance-review/references/flag-cost-and-defaults.md` — read that before recommending
+-the flag to anyone. That it raises object adjacency density, and what that does to false
+-sharing, is `false-sharing-and-contended`'s.
++**Nothing on this page is a performance measurement; every number here is footprint.** Use
++`jvm-performance-review` and its `references/flag-cost-and-defaults.md` to evaluate the
++throughput/latency trade and target configuration before recommending the flag. That reference
++provides decision criteria, not a measured compact-header speedup for this workload.
++Changes in object adjacency density and their false-sharing consequences belong to
++`false-sharing-and-contended`.
+ 
+ **For an empirical footprint-benefit claim**, compare the relevant population under matched
+ conditions on the same build, using existing adequate evidence or a justified new check:
+diff --git a/skills/object-layout-and-footprint/references/jol-operating-procedure.md b/skills/object-layout-and-footprint/references/jol-operating-procedure.md
+index 8ad1b31..268b223 100644
+--- a/skills/object-layout-and-footprint/references/jol-operating-procedure.md
++++ b/skills/object-layout-and-footprint/references/jol-operating-procedure.md
+@@ -146,9 +146,30 @@ java.lang.IllegalArgumentException: Class is not found: Layout$AllTypes.
+ ```
+ 
+ `[executed]`, 25.0.3, when the program was launched with the single-file source launcher
+-(`java -cp jol.jar Layout.java`). `toPrintable` reads the class **file** to recover field
+-names, and a source-launched class has no file on the classpath. `instanceSize()` still works;
+-only the printable listing fails. **Fix:** `javac -d classes` first and run from `classes`.
++(`java -cp jol.jar Layout.java`). JOL 0.17's instance-reporting path reloads the type through
++`ClassUtils.loadClass` to check assignability. Its loader cannot see this source-launcher's
++class. Field names and offsets are already in the layout; this is a class-loader visibility
++failure, not a missing class-file parser step. `instanceSize()` still works.
++
++If only offsets, field names and size are required, pass no instance to the reporting method:
++
++```java
++var layout = ClassLayout.parseInstance(obj);
++System.out.println(layout.toPrintable(null)); // values and object-header contents are N/A
++```
++
++This skips instance validation and value/header reads; it does not inspect the object's actual
++field values or mark bits. When those are required, keep the instance-reporting path and make
++the same classes visible to JOL: compile with `javac -d classes` and launch from that classpath.
++Adding module opens does not fix class-loader visibility.
++
++A bounded check with JOL 0.17 on Temurin 25.0.3+9 reproduced the failure for a source-launched
++ordinary class and record in both header modes. `toPrintable(null)` retained field names,
++offsets and sizes; compiling and launching the same probe made instance-value reporting work.
++This verifies the reporting paths, not a new VM-independent size guarantee.
++
++Sources: [JOL 0.17 ClassLayout reporting](https://github.com/openjdk/jol/blob/0.17/jol-core/src/main/java/org/openjdk/jol/info/ClassLayout.java)
++and [ClassUtils loader selection](https://github.com/openjdk/jol/blob/0.17/jol-core/src/main/java/org/openjdk/jol/util/ClassUtils.java).
+ 
+ ### 2.4 A boxed population can model the wrong sharing
+ 
+diff --git a/skills/object-layout-and-footprint/skill.yaml b/skills/object-layout-and-footprint/skill.yaml
+index d64287f..3b741ab 100644
+--- a/skills/object-layout-and-footprint/skill.yaml
++++ b/skills/object-layout-and-footprint/skill.yaml
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: object-layout-and-footprint
+-version: 1.4.4
++version: 1.4.5
+ description: >-
+   Sizing a data structure in bytes before it exists. Use when a shape is chosen for millions
+   of instances — record, class, primitive array, parallel arrays or boxed collection; when

@@ -50,11 +50,24 @@ and `ResponseEntity`, writing occurs inside the handler adapter, before intercep
 stage before writing begins. For a view-rendering handler, `postHandle` can still adjust
 the `ModelAndView` before rendering. Verify the actual response path, especially for streaming.
 
+Pair acquired state with the callbacks that actually run. Spring calls an interceptor's
+`afterCompletion` only if its own `preHandle` completed with `true`. If `preHandle` acquires
+context or a resource and then returns `false` or throws, release what it acquired on that
+path; its own `afterCompletion` will not do so. Returning `false` skips the handler and later
+interceptors and assumes the stopping interceptor handled the response. Exercise success,
+short-circuit and exception paths, checking both the response and cleanup; acquiring state
+only after a decision that can stop processing may avoid unnecessary cleanup paths.
+
 For async requests, a filter returning does not mean the response is complete. Configure
 REQUEST/ASYNC/ERROR dispatch coverage deliberately, restore logging context in `finally`,
-and propagate it explicitly across thread changes. Measure completion through the supported
-async lifecycle, avoiding duplicate observations on redispatch. A tenant from an untrusted
-header is a claim, not authorization to access that tenant.
+and propagate it explicitly across thread changes. Spring invokes
+`AsyncHandlerInterceptor.afterConcurrentHandlingStarted` instead of `postHandle` and
+`afterCompletion` when the initial dispatch exits for concurrent handling: use it to release
+interceptor-owned thread context, not to declare the response complete. Redispatch runs the
+chain again; timeout or network failure can complete without that MVC redispatch. Track
+final outcomes through the applicable Spring async callbacks or Servlet async lifecycle,
+avoiding duplicate observations. A tenant from an untrusted header is a claim, not
+authorization to access that tenant.
 
 ## Binding surface before validation
 
@@ -220,7 +233,8 @@ being idempotent (`idempotency`, `delivery-semantics`).
 - [Spring MVC 6.2.7 binding model design](https://github.com/spring-projects/spring-framework/blob/v6.2.7/framework-docs/modules/ROOT/partials/web/web-data-binding-model-design.adoc): dedicated inputs, constructor/property binding and allowed fields.
 - [Spring MVC 6.2.7 request-body processing](https://github.com/spring-projects/spring-framework/blob/v6.2.7/spring-webmvc/src/main/java/org/springframework/web/servlet/mvc/method/annotation/RequestResponseBodyMethodProcessor.java): message conversion precedes binder validation; property binding is not the JSON deserialization mechanism.
 - [Spring MVC 6.2.7 interception](https://github.com/spring-projects/spring-framework/blob/v6.2.7/framework-docs/modules/ROOT/pages/web/webmvc/mvc-servlet/handlermapping-interceptor.adoc): interceptor security limitations and response writing before `postHandle`.
-- [Spring MVC 6.2.7 HandlerInterceptor](https://github.com/spring-projects/spring-framework/blob/v6.2.7/spring-webmvc/src/main/java/org/springframework/web/servlet/HandlerInterceptor.java): `postHandle` can adjust `ModelAndView` before rendering.
+- [Spring MVC 6.2.7 HandlerInterceptor](https://github.com/spring-projects/spring-framework/blob/v6.2.7/spring-webmvc/src/main/java/org/springframework/web/servlet/HandlerInterceptor.java): response ownership on short-circuit, `postHandle` before view rendering and the successful-`preHandle` prerequisite for `afterCompletion`.
+- [Spring MVC 6.2.7 AsyncHandlerInterceptor](https://github.com/spring-projects/spring-framework/blob/v6.2.7/spring-webmvc/src/main/java/org/springframework/web/servlet/AsyncHandlerInterceptor.java): initial thread release, redispatch and async paths without ordinary completion callbacks.
 - [Spring MVC 6.2.7 validation](https://github.com/spring-projects/spring-framework/blob/v6.2.7/framework-docs/modules/ROOT/pages/web/webmvc/mvc-controller/ann-validation.adoc): argument versus method validation and class-level `@Validated`.
 - [Spring 6.2.7 HandlerMethodValidationException](https://github.com/spring-projects/spring-framework/blob/v6.2.7/spring-web/src/main/java/org/springframework/web/method/annotation/HandlerMethodValidationException.java): input versus return-value status codes.
 - [Spring MVC 6.2.7 ResponseEntityExceptionHandler](https://github.com/spring-projects/spring-framework/blob/v6.2.7/spring-webmvc/src/main/java/org/springframework/web/servlet/mvc/method/annotation/ResponseEntityExceptionHandler.java): validation error handling and committed-response guard.

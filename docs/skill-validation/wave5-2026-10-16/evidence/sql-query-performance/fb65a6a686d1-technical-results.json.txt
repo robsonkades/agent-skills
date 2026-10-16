@@ -1,0 +1,121 @@
+{
+  "status": "PASS",
+  "runtime": {
+    "node": "v25.6.1",
+    "sqlite": "3.51.2"
+  },
+  "scope": "Portable SQL-subset semantics only; not PostgreSQL execution plans, performance, concurrency, JDBC binding or index behavior.",
+  "databases": "All SQLite databases were in-memory and closed before output.",
+  "assertions": 43,
+  "checks": [
+    {
+      "family": "paired-input-a",
+      "result": "PASS",
+      "evidence": "declared domain rejects null counterexample; seed preserves overlap and repeated labels"
+    },
+    {
+      "family": "paired-input-b",
+      "result": "PASS",
+      "negativeControl": "proposed query loses allowed NULL-active row",
+      "correction": "IS NOT TRUE retains it"
+    },
+    {
+      "family": "OR-union",
+      "result": "PASS",
+      "truthCombinations": 9,
+      "negativeControls": [
+        "NOT p",
+        "unguarded UNION ALL",
+        "UNION deduplication"
+      ]
+    },
+    {
+      "family": "anti-membership",
+      "result": "PASS",
+      "combinations": 12,
+      "rows": [
+        {
+          "set": "empty",
+          "x": null,
+          "notIn": 1,
+          "notExists": 1
+        },
+        {
+          "set": "empty",
+          "x": 1,
+          "notIn": 1,
+          "notExists": 1
+        },
+        {
+          "set": "empty",
+          "x": 2,
+          "notIn": 1,
+          "notExists": 1
+        },
+        {
+          "set": "null",
+          "x": null,
+          "notIn": null,
+          "notExists": 1
+        },
+        {
+          "set": "null",
+          "x": 1,
+          "notIn": null,
+          "notExists": 1
+        },
+        {
+          "set": "null",
+          "x": 2,
+          "notIn": null,
+          "notExists": 1
+        },
+        {
+          "set": "duplicate",
+          "x": null,
+          "notIn": null,
+          "notExists": 1
+        },
+        {
+          "set": "duplicate",
+          "x": 1,
+          "notIn": 0,
+          "notExists": 0
+        },
+        {
+          "set": "duplicate",
+          "x": 2,
+          "notIn": 1,
+          "notExists": 1
+        },
+        {
+          "set": "mixed",
+          "x": null,
+          "notIn": null,
+          "notExists": 1
+        },
+        {
+          "set": "mixed",
+          "x": 1,
+          "notIn": 0,
+          "notExists": 0
+        },
+        {
+          "set": "mixed",
+          "x": 2,
+          "notIn": null,
+          "notExists": 1
+        }
+      ]
+    },
+    {
+      "family": "EXISTS exact example",
+      "result": "PASS",
+      "negativeControls": [
+        "drop projected deduplication",
+        "drop tenant correlation"
+      ]
+    }
+  ],
+  "behavioralActorsExecuted": 0
+}

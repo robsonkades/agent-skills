@@ -147,7 +147,8 @@ Prefer routing by key (sharding-and-partitioning) instead when:
   expresses lifecycle and ability to serve the declared contract, which can deliberately
   fail closed on a required shared dependency; passive ejection sees path- and request-specific
   failures. Document all-unready behavior, precedence and recovery so disagreement is diagnosable.
-  Distinguish detected outliers from enforced removal, and check whether an active probe's
+  Distinguish detected outliers, enforced unhealthy state and actual new host selections:
+  fail-open panic routing can select an ejected member. Check whether an active probe's
   success can clear passive ejection early. A probe that does not exercise the failing path
   cannot establish that path's recovery; inspect the deployed implementation before changing policy.
 - Draining is a sequence with overlapping control/data planes: stop advertising, wait for

@@ -134,6 +134,15 @@ the same response still reaches the caller; an exception-only fallback is not pr
 degraded handling for that path. Exercise the chosen result-aware fallback or typed mapping
 separately, preserving the primary failure measurement.
 
+For CompletionStage timeouts, hold the supplied source future pending and use an explicit
+failure predicate that records `TimeoutException`. Compare two placements: timeout the
+decorator's returned promise, then timeout the source stage the decorator observes. Assert
+caller outcome, source completion and breaker counts separately. In Resilience4j 2.3.0 the
+first placement leaves counts unchanged until the source completes; a late source success is
+still recorded. The second supplies the timeout to the breaker. Bound test waits, clean up
+pending stages and avoid claiming that future completion proves transport cancellation. This
+contrast checks the observed completion boundary, not the network client's timeout wiring.
+
 Finally, exercise the breaker in a load test: inject dependency latency at capacity and assert
 goodput on unrelated endpoints stays within its agreed isolation bound. That is the property the breaker exists for, and
 the one no unit test observes (`cascading-failures`, `load-testing`).

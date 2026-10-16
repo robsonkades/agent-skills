@@ -1,0 +1,40 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {createHash} from 'node:crypto';
+import {spawnSync} from 'node:child_process';
+
+const start = new Date().toISOString();
+const cwd = process.cwd();
+const jdk = 'C:/Users/robso/.jdks/temurin-25.0.3/bin';
+const commands = [];
+const reads = [];
+const read = file => {
+  const bytes = fs.readFileSync(file);
+  reads.push({path: path.relative(cwd, file), operation:'content', complete:true,
+    sha256:createHash('sha256').update(bytes).digest('hex')});
+  return bytes.toString('utf8');
+};
+const run = (program, args, expectedExit = 0) => {
+  const startedAt = new Date().toISOString();
+  const result = spawnSync(program, args, {cwd, encoding:'utf8', timeout:15000, windowsHide:true});
+  const entry = {program, args, cwd, startedAt, endedAt:new Date().toISOString(),
+    exit:result.status, signal:result.signal, stdout:result.stdout ?? '', stderr:result.stderr ?? '',
+    error:result.error?.message ?? null, timeoutMs:15000, expectedExit};
+  commands.push(entry);
+  console.log(JSON.stringify(entry));
+  return result.status === expectedExit && !result.error;
+};
+
+const original = read('../project/src/work/Message.java');
+read('SnapshotCheck.java');
+if (!original.includes('this.words=words;')) throw new Error('Unexpected source; no control generated');
+fs.mkdirSync('candidate/work', {recursive:true});
+fs.mkdirSync('baseline-build', {recursive:true});
+fs.mkdirSync('candidate-build', {recursive:true});
+fs.writeFileSync('candidate/work/Message.java', original.replace('this.words=words;', 'this.words=words.clone();'));
+let ok = run(path.join(jdk, 'javac.exe'), ['--release','25','-cp','../project/.build','-d','baseline-build','SnapshotCheck.java']);
+if (ok) ok = run(path.join(jdk, 'java.exe'), ['-cp',`baseline-build${path.delimiter}../project/.build`,'SnapshotCheck'], 1);
+if (ok) ok = run(path.join(jdk, 'javac.exe'), ['--release','25','-d','candidate-build','candidate/work/Message.java','SnapshotCheck.java']);
+if (ok) ok = run(path.join(jdk, 'java.exe'), ['-cp','candidate-build','SnapshotCheck']);
+fs.writeFileSync('checks-execution.json', JSON.stringify({startedAt:start, endedAt:new Date().toISOString(),commands,reads,ok,allChildProcessesExited:commands.every(c=>c.exit!==null)},null,2));
+process.exitCode = ok ? 0 : 1;

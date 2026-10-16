@@ -1,0 +1,5 @@
+# Export review
+
+Accepted: events retain provider order; the source event budget is2; callers must distinguish an unfinished requested traversal from a completed one. Already recorded event effects are not rolled back by a traversal failure.
+
+Current job returns a COMPLETE receipt after its terminal operation returns normally. Review whether that result satisfies the supplied consumer request, and preserve existing valid behavior.

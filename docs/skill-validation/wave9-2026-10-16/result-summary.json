@@ -1,0 +1,107 @@
+{
+  "at": "2026-10-16T19:50:09.323Z",
+  "actorSessions": 24,
+  "cases": 4,
+  "repetitions": 2,
+  "unit": "Fresh actor session; internal probe/assertion counts are not independent sessions",
+  "conditions": [
+    {
+      "condition": "dependencies",
+      "passed": 8,
+      "total": 8,
+      "byCase": [
+        {
+          "caseId": "R1",
+          "passed": 2,
+          "total": 2
+        },
+        {
+          "caseId": "R2",
+          "passed": 2,
+          "total": 2
+        },
+        {
+          "caseId": "R3",
+          "passed": 2,
+          "total": 2
+        },
+        {
+          "caseId": "R4",
+          "passed": 2,
+          "total": 2
+        }
+      ]
+    },
+    {
+      "condition": "reference",
+      "passed": 8,
+      "total": 8,
+      "byCase": [
+        {
+          "caseId": "R1",
+          "passed": 2,
+          "total": 2
+        },
+        {
+          "caseId": "R2",
+          "passed": 2,
+          "total": 2
+        },
+        {
+          "caseId": "R3",
+          "passed": 2,
+          "total": 2
+        },
+        {
+          "caseId": "R4",
+          "passed": 2,
+          "total": 2
+        }
+      ]
+    },
+    {
+      "condition": "candidate",
+      "passed": 8,
+      "total": 8,
+      "byCase": [
+        {
+          "caseId": "R1",
+          "passed": 2,
+          "total": 2
+        },
+        {
+          "caseId": "R2",
+          "passed": 2,
+          "total": 2
+        },
+        {
+          "caseId": "R3",
+          "passed": 2,
+          "total": 2
+        },
+        {
+          "caseId": "R4",
+          "passed": 2,
+          "total": 2
+        }
+      ]
+    }
+  ],
+  "execution": {
+    "javaDeliveries": 18,
+    "privateProbePass": 18,
+    "deliveredVerifierPass": 18,
+    "incorrectReplacementDetected": 18,
+    "diagnosticDeliveries": 6,
+    "diagnosticMetricsPass": 6
+  },
+  "independentReview": {
+    "packets": 24,
+    "semanticSubsets": 72,
+    "agreements": 72,
+    "disagreements": 0,
+    "packetsWithExposureNotes": 24,
+    "masking": "partial; skill references in prose can expose context"
+  },
+  "conclusion": "No marginal behavioral gain observed in these authored, contract-rich tasks. Technical example correction is supported independently; no held-out, full-catalog, automatic-routing or production claim."
+}

@@ -1,0 +1,54 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+const temp='C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL';
+const report='C:/git/agent-skills/docs/skill-validation/wave3-2026-10-16';
+const read=p=>JSON.parse(fs.readFileSync(p,'utf8'));
+const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
+const manifest=read(report+'/behavior-manifest.frozen.json.txt');
+const freeze=read(report+'/behavior-freeze.json');
+assert.equal(sha(fs.readFileSync(report+'/behavior-manifest.frozen.json.txt')),freeze.manifestSha256);
+assert.deepEqual(manifest,read(report+'/behavior-manifest.json'));
+const technical=read(report+'/behavior-technical-checks.json');
+assert.ok(technical.records.length===6&&technical.records.every(r=>r.exit===0&&r.inputAndResourceIntegrityPassed&&r.policyContractPassed));
+const walk=d=>fs.readdirSync(d,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(path.join(d,e.name)):[path.join(d,e.name)]);
+const artifacts=[];
+function archive(bytes,relative,source,kind){const out=report+'/'+relative;fs.mkdirSync(path.dirname(out),{recursive:true});fs.writeFileSync(out,bytes);assert.equal(sha(fs.readFileSync(out)),sha(bytes));artifacts.push({path:relative,source,kind,sha256:sha(bytes),bytes:bytes.length});return relative;}
+const runs=[];
+for(const run of manifest.runs){
+ assert.equal(sha(JSON.stringify(run.criteria)),run.criteriaSha256);
+ const sourceInput=read(temp+'/ambassador-pattern/cases/'+run.case+'-input.json');
+ for(const f of run.files){
+  const bytes=Object.hasOwn(sourceInput.files,f.path)?Buffer.from(sourceInput.files[f.path]+'\n'):f.path==='TASK.md'?Buffer.from(run.task):fs.readFileSync(run.directory+'/'+f.path);
+  assert.equal(sha(bytes),f.sha256,'Frozen input '+run.runId+'/'+f.path);
+  archive(bytes,'behavior-artifacts/'+run.runId+'/initial/'+f.path+'.txt',f.path==='TASK.md'?'behavior-manifest.json task':Object.hasOwn(sourceInput.files,f.path)?temp+'/ambassador-pattern/cases/'+run.case+'-input.json':run.directory+'/'+f.path,'frozen-input');
+ }
+ const outputs=walk(run.directory);
+ for(const f of outputs){const relative=path.relative(run.directory,f).replaceAll('\\','/');archive(fs.readFileSync(f),'behavior-artifacts/'+run.runId+'/final/'+relative+'.txt',f,'actor-final');}
+ const tc=technical.records.find(r=>r.runId===run.runId);
+ const script=tc.command.substring(tc.command.lastIndexOf(' ')+1);
+ const prefix='behavior-artifacts/'+run.runId+'/final/';
+ const c1=run.case==='C1-server-greeting';
+ const rationales=c1?[
+  'The corrected decision traces protocol.json, client HELLO wait, server greeting on upstream connection and the adapter first-client-data gate. This derives the circular dependency from supplied artifacts.',
+  'The corrected decision explicitly rejects a ten-second timeout as a repair; it does not substitute retries or a fabricated greeting.',
+  'The only policy change is connect_start=immediate. The coordinator independently verified all other fields and fixture/resource bytes.',
+  'The delivered bounded script executes the unchanged fixture client/server, asserts full completion and upstream counts, and retains a deferred negative and immediate positive control. The coordinator inspected and reran the script successfully.',
+  'The decision and REVIEW distinguish the synthetic TCP adapter model from actual Envoy/MySQL/TLS/version/configuration or production guarantees.'
+ ]:[
+  'The corrected decision follows first_message=client to PING on connect and the deferred trigger opening upstream, followed by PONG.',
+  'The policy remains byte-identical, including deferred connection and both bounds; no universal immediate-connection rule is imposed.',
+  'The corrected decision retracts TCP-only compatibility evidence and the unsupported timeout-repair claim.',
+  'The delivered bounded check runs the full supplied PING/PONG exchange. REVIEW states that no actual adapter/version was tested; policy bounds remain unchanged. The coordinator inspected and reran the script successfully.',
+  'Fixture/resource integrity and the final policy show no TLS/security/retry/infrastructure change. The actor reports no installation/deployment or outside access; the access boundary was procedural rather than independently enforced.'
+ ];
+ const judgments=run.criteria.expected.map((criterion,i)=>({criterion,result:'pass',reason:rationales[i],evidence:[prefix+'decision.md.txt',prefix+'REVIEW.md.txt',...(i===3?[prefix+script+'.txt',tc.log]:[]),...(i===2&&c1||i===1&&!c1?[prefix+'proxy-policy.json.txt','behavior-technical-checks.json']:[])]}));
+ const forbidden=run.criteria.failures.map(criterion=>({criterion,observed:false,evidence:[prefix+'decision.md.txt',prefix+'REVIEW.md.txt','behavior-technical-checks.json']}));
+ runs.push({runId:run.runId,actor:run.actor,case:run.case,condition:run.condition,passed:true,criteriaSha256:run.criteriaSha256,judgments,forbidden,technicalCheck:tc,access:'Actor reports no accidental/prohibited access. No enforced filesystem isolation or complete independent read trace.',observedScenarioGroups:({'c1-none':3,'c1-baseline':3,'c1-revised':4,'c2-none':1,'c2-baseline':2,'c2-revised':4})[run.runId]});
+}
+const result={gradedAt:new Date().toISOString(),classification:'Executed development-case comparison, manually graded by coordinator against criteria frozen before dispatch; not blind and not held out.',skill:manifest.skill,versions:manifest.versions,model:manifest.model,runtime:manifest.runtime,frozenManifestSha256:freeze.manifestSha256,criteriaUnchanged:true,runs,conclusion:{none:{passed:2,cases:2},baseline:{passed:2,cases:2},revised:{passed:2,cases:2},incrementalGainObserved:false,interpretation:'All three conditions passed both development cases. The sample does not demonstrate benefit from skill presence or revision. It also does not establish general equivalence or absence of benefit.',exploratory:'Revised actors executed four protocol/mode controls each; other runs executed one to three. This breadth was not a predeclared scoring dimension and is not counted as an improvement.',limits:['Two development cases, selected from one changed skill, one fresh actor per condition/case; no unseen holdout or repeated trials.','Same inherited model/reasoning settings, exact runtime model identifier unavailable; no token/cost or statistical variance measurement.','Full packages supplied in skill conditions; actual reference use differs (revised actors read the existing validation-cases reference, baseline actors did not).','Procedural isolation only; access inventories are actor reports and are not a complete independently enforced read audit.','Local Node TCP models, not actual Envoy, MySQL, TLS, Kubernetes, production traffic or latency benchmarks.','The 30 criterion judgments are nested within six actor runs on two cases, not 30 independent evaluations.','Activation/discovery, all other skills and catalog-wide quality are not evaluated by this comparison.']}};
+fs.writeFileSync(report+'/behavior-results.json',JSON.stringify(result,null,2)+'\n');
+fs.writeFileSync(report+'/behavior-artifact-manifest.json',JSON.stringify({createdAt:new Date().toISOString(),frozenManifestSha256:freeze.manifestSha256,allArchiveHashesVerified:true,artifacts},null,2)+'\n');
+const execution=read(report+'/behavior-execution.json');for(const r of execution.runs)Object.assign(r,{status:'completed-graded',allWritesStopped:true});execution.updatedAt=new Date().toISOString();fs.writeFileSync(report+'/behavior-execution.json',JSON.stringify(execution,null,2)+'\n');
+console.log(JSON.stringify({runs:runs.length,passed:runs.filter(r=>r.passed).length,archivedFiles:artifacts.length,bytes:artifacts.reduce((n,a)=>n+a.bytes,0),incrementalGainObserved:false},null,2));

@@ -1,0 +1,35 @@
+{
+  "files": [
+    {
+      "path": "SKILL.md",
+      "currentHash": "E1F52F9A571192CDE672E45389C68E6846DD5096367CFD0E38121EBFD47DD608",
+      "baselineHash": "E1F52F9A571192CDE672E45389C68E6846DD5096367CFD0E38121EBFD47DD608",
+      "equal": true
+    },
+    {
+      "path": "skill.yaml",
+      "currentHash": "E144B55E3A2534E193531A7106667CA7F5A6E65D012D975642F256E0947B5AE7",
+      "baselineHash": "E144B55E3A2534E193531A7106667CA7F5A6E65D012D975642F256E0947B5AE7",
+      "equal": true
+    },
+    {
+      "path": "references\\event-lifecycle.md",
+      "currentHash": "ED03F5BF117ECB42905BB24ABAB1E18B1922558A86D5CCB142433D675B8FBED5",
+      "baselineHash": "ED03F5BF117ECB42905BB24ABAB1E18B1922558A86D5CCB142433D675B8FBED5",
+      "equal": true
+    },
+    {
+      "path": "references\\verification.md",
+      "currentHash": "CB7403247DD0DFA1192846F3655706FA470C670BC945172DE852D84DA34C8D59",
+      "baselineHash": "CB7403247DD0DFA1192846F3655706FA470C670BC945172DE852D84DA34C8D59",
+      "equal": true
+    }
+  ],
+  "baselineFileCount": 4,
+  "committedVersion": "version: 1.0.0",
+  "assignmentVersion": "version: 1.0.0",
+  "currentVersion": "version: 1.0.0",
+  "scopedStatus": [],
+  "unstagedDiff": [],
+  "stagedDiff": []
+}

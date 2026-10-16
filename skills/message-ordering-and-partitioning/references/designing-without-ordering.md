@@ -36,6 +36,31 @@ UPDATE customer
 - The version must be monotonic per key at the producer. A broker offset is not (it moves on a
   partition change) and a publish timestamp is not (see below).
 
+### Live convergence is not cold rebuild correctness
+
+Inspect the recovery source before relaxing publication order. Kafka 4.1 compaction selects
+the last log occurrence of a key, not the maximum version inside its payload. For one stable
+key/partition, consider appended snapshots `v2, v3, v2` after an application resend. A running
+sink that saw all three keeps v3 under the newer-version guard. After eligible compaction,
+only the final v2 may remain; an empty sink cannot infer the removed v3. A passing shuffle
+test over the full history does not establish correctness of this retained-history rebuild.
+
+If cold rebuild depends solely on that compacted topic, preserve nondecreasing authoritative
+versions in the canonical published stream, or supply a verified authoritative snapshot/
+checkpoint plus its replay boundary. Keep required delete/epoch metadata. Merely enabling
+producer idempotence or adding a sink-side version guard does not fix the recovery source.
+Changing cleanup policy also cannot restore records already removed; retain adequate history
+or reconcile from the authority before declaring recovery safe. If rebuild instead uses an
+independently sufficient source, keep that accepted contract and assess arrival order against
+the live sink's required outcome.
+
+Test a fresh sink from the records actually retained after cleanup, alongside the continuously
+updated sink. Compaction runs asynchronously and need not leave exactly one record immediately;
+inspect retained offsets/values in an isolated broker test rather than treating a sleep or a
+model's last-value map as proof. The counterexample follows from
+[Kafka 4.1 compaction's last-offset rule](https://kafka.apache.org/41/design/design/#log-compaction-details)
+and its [cleanup policies](https://kafka.apache.org/41/configuration/topic-configs/#cleanup.policy).
+
 ## 2 — Commutative handlers
 
 Operations whose composition does not depend on order include:

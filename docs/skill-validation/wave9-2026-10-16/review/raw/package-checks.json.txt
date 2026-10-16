@@ -1,0 +1,129 @@
+{
+  "checks": [
+    {
+      "name": "repository manifest parser, strict mode",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "frontmatter matches manifest",
+      "pass": true
+    },
+    {
+      "name": "version increased exactly once",
+      "pass": true,
+      "details": {
+        "assignment": "1.1.4",
+        "final": "1.1.5"
+      }
+    },
+    {
+      "name": "only original four shipped files",
+      "pass": true,
+      "details": [
+        "C:\\git\\agent-skills\\skills\\retries-and-backoff\\SKILL.md",
+        "C:\\git\\agent-skills\\skills\\retries-and-backoff\\skill.yaml",
+        "C:\\git\\agent-skills\\skills\\retries-and-backoff\\references\\retry-failure-modes.md",
+        "C:\\git\\agent-skills\\skills\\retries-and-backoff\\references\\retry-in-java.md"
+      ]
+    },
+    {
+      "name": "starting snapshot matches recorded hash: SKILL.md",
+      "pass": true
+    },
+    {
+      "name": "main skill remains byte-identical",
+      "pass": true
+    },
+    {
+      "name": "starting snapshot matches recorded hash: references/retry-failure-modes.md",
+      "pass": true
+    },
+    {
+      "name": "starting snapshot matches recorded hash: references/retry-in-java.md",
+      "pass": true
+    },
+    {
+      "name": "starting snapshot matches recorded hash: skill.yaml",
+      "pass": true
+    },
+    {
+      "name": "local link references/retry-in-java.md",
+      "pass": true
+    },
+    {
+      "name": "local link references/retry-failure-modes.md",
+      "pass": true
+    },
+    {
+      "name": "reference routed from main: references/retry-in-java.md",
+      "pass": true
+    },
+    {
+      "name": "reference routed from main: references/retry-failure-modes.md",
+      "pass": true
+    },
+    {
+      "name": "prettier API: SKILL.md",
+      "pass": true,
+      "details": {
+        "baselineFormatted": true,
+        "normalizedCurrent": true,
+        "normalizedBaseline": true
+      }
+    },
+    {
+      "name": "prettier API: references/retry-failure-modes.md",
+      "pass": true,
+      "details": {
+        "baselineFormatted": true,
+        "normalizedCurrent": true,
+        "normalizedBaseline": true
+      }
+    },
+    {
+      "name": "prettier API: references/retry-in-java.md",
+      "pass": true,
+      "details": {
+        "baselineFormatted": true,
+        "normalizedCurrent": true,
+        "normalizedBaseline": true
+      }
+    },
+    {
+      "name": "prettier API: skill.yaml",
+      "pass": true,
+      "details": {
+        "baselineFormatted": true,
+        "normalizedCurrent": true,
+        "normalizedBaseline": true
+      }
+    }
+  ],
+  "hashes": [
+    {
+      "path": "SKILL.md",
+      "beforeSha256": "214c6fc717590bbb425b624f0b3ea31de843ab4b8251a5b1e23897bd2235eb42",
+      "afterSha256": "214c6fc717590bbb425b624f0b3ea31de843ab4b8251a5b1e23897bd2235eb42",
+      "changed": false
+    },
+    {
+      "path": "references/retry-failure-modes.md",
+      "beforeSha256": "1f8cb4addb8592f4c8cb2767a4afd6362fd0f9c19f640ac1831cc233fe943e24",
+      "afterSha256": "957550428a69ae025518aad78363732d6afa6fd349fd2c1f79f58a692eaaa711",
+      "changed": true
+    },
+    {
+      "path": "references/retry-in-java.md",
+      "beforeSha256": "dbf3fb4bdef23956b4382b011f7dfaf861dd4daa3675871153a15dff947830f8",
+      "afterSha256": "d4b069771ec515ab6ae729759c3e443979aeac287db91413a7f113515a923b71",
+      "changed": true
+    },
+    {
+      "path": "skill.yaml",
+      "beforeSha256": "01e351a22ac96a47537af74f2ba0c6a2912eff069bdf97e10c743f23295ae468",
+      "afterSha256": "51c1d38c801f9286740ddcf2ee6a9c680b8cbbf2679f8e877a28c4c80e428049",
+      "changed": true
+    }
+  ]
+}

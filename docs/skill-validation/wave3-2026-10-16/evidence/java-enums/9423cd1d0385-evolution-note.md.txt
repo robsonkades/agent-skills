@@ -1,0 +1,4 @@
+# Rename decision
+The planned change is APPROVED -> ACCEPTED, preserving code A.
+The code field is stable and writeReplace returns that code, so the planned rename preserves stored identity.
+Proceed with the rename; no retained-data migration should be needed.

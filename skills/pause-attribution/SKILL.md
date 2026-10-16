@@ -57,8 +57,11 @@ limits the claims that depend on it, not independently supported findings.
 5. **When JFR correlation is needed and available, cross-check `Total`** using `jdk.SafepointBegin` and
    `jdk.SafepointEnd` on `safepointId`. Agreement detects parser/window mistakes, but both
    expose the same JVM mechanism and are not independent proof of user-visible impact.
-6. **For unexplained high TTSP, connect delayed threads to the waiting operation.** If existing
-   evidence is insufficient, scoped `-XX:+SafepointTimeout` diagnostics can identify non-arrived
+6. **For unexplained high TTSP, connect delayed threads to the waiting operation.** The sync
+   interval includes VM coordination; it is not one thread's timer. Global safepoint JFR
+   `eventThread` identifies the producer, and `ExecuteVMOperation.caller` the requester;
+   neither field identifies a thread delaying synchronization. If evidence is insufficient, scoped
+   `-XX:+SafepointTimeout` diagnostics can identify non-arrived
    threads by name/state, not supply their Java stacks. Use aligned stack evidence to investigate
    their paths and VM-operation evidence to name the waiting work; report any remaining gap.
    Check the capture method's own progress requirements: classic `Thread.print` needs a

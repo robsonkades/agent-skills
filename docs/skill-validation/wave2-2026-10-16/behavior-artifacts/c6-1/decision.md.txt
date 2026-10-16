@@ -1,0 +1,92 @@
+Candidate: 4 replicas, image digest fixture-v1, 1000 offered operations/s.
+
+**Normal-peak decision: PASS, supported by a conservative 98% good-fraction lower bound.** The dashboard's 100% rate is not the accepted SLO rate. The demonstrated margin above the requirement is zero.
+
+## Accepted SLO and evidence
+
+The population is all 10,000 eligible logical operations started in the fixed measured cohort, with no exclusions. A good event means the caller receives the required successful result within 100 ms. The required good fraction is at least 0.98. Counts represent logical operations, not retry attempts.
+
+The complete start-side census contains 9,800 known good operations, zero known bad operations, and 200 operations whose terminal records were lost. Their outcomes cannot be reconstructed. They remain unknown: record loss does not establish a timeout, deadline miss, or other unsuccessful result.
+
+| Quantity | Calculation | Result |
+| --- | --- | --- |
+| Required good operations | 0.98 × 10,000 | 9,800 |
+| Conservative good fraction | 9,800 / 10,000 | 98% |
+| Maximum possible good fraction | (9,800 + 200) / 10,000 | 100% |
+| Demonstrated margin above requirement | 9,800 − 9,800 | 0 operations |
+
+The true cohort good fraction lies in the inclusive interval [98%, 100%]. Even if all 200 unknown operations were non-good, the cohort would still meet the accepted threshold exactly. This worst-case calculation does not relabel the unknown outcomes as known bad. The supplied evidence therefore supports the normal-peak point without another load test.
+
+The dashboard divides 9,800 timely successful terminal events by 9,800 recorded terminal events. Its 100% describes the recorded subset and omits 200 eligible operations from the denominator. The capacity decision instead uses the complete eligible cohort as its denominator and reports 98% as a guaranteed lower bound, not as the exact observed success rate.
+
+The configuration record states that all selected instances served image fixture-v1 with the tested resource settings. This decision applies to the stated candidate and measured cohort; it establishes neither spare capacity nor a higher sustainable offered rate. No statistical confidence or future-load guarantee is inferred from these counts.
+
+## Preserved decisions and scope
+
+Other required scenarios and resource/dependency guardrails have existing applicable evidence; preserve those decisions. No new deployment is requested.
+
+Only the normal-peak rationale is corrected; the supplied accepted decisions for the other scenarios and guardrails remain in force. No new load test, deployment, dependency installation, production contact, global installation, or real agent configuration change was performed.
+
+## Commands, observed results, and access record
+
+All commands ran with working directory `C:/Users/robso/AppData/Local/Temp/skills-wave2-behavior-6orq6B/c6-1`.
+
+The following read commands each completed with exit code 0:
+
+```powershell
+Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave2-behavior-6orq6B/c6-1/TASK.md'
+rg --files --hidden -g '!node_modules/**' -g '!.git/**' .
+Get-Content -LiteralPath 'slo.json'
+Get-Content -LiteralPath 'decision.md'
+Get-Content -LiteralPath 'dashboard-query.txt'
+Get-Content -LiteralPath 'cohort.json'
+```
+
+The inventory initially returned exactly those five task files. The reads established the accepted SLO, original normal-peak PASS, dashboard denominator, complete start census, unknown-outcome explanation, and configuration applicability. No supplemental skill or external documentation was used.
+
+The following arithmetic and cohort-consistency check completed with exit code 0; its output is retained in `checks.log`:
+
+```powershell
+$ErrorActionPreference = 'Stop'
+$slo = Get-Content -Raw -LiteralPath 'slo.json' | ConvertFrom-Json
+$cohort = Get-Content -Raw -LiteralPath 'cohort.json' | ConvertFrom-Json
+if ($cohort.eligibleOperations -le 0) { throw 'Eligible cohort must be positive.' }
+if ($cohort.knownGood -lt 0 -or $cohort.knownBad -lt 0 -or $cohort.missingTerminalRecords -lt 0) { throw 'Counts must be nonnegative.' }
+if (($cohort.knownGood + $cohort.knownBad + $cohort.missingTerminalRecords) -ne $cohort.eligibleOperations) { throw 'Cohort counts do not reconcile.' }
+$lower = [decimal]$cohort.knownGood / [decimal]$cohort.eligibleOperations
+$upper = [decimal]($cohort.knownGood + $cohort.missingTerminalRecords) / [decimal]$cohort.eligibleOperations
+$required = [decimal]$slo.requiredGoodFraction
+$requiredGood = $required * [decimal]$cohort.eligibleOperations
+$lines = @(
+    "Cohort reconciliation: $($cohort.knownGood) known good + $($cohort.knownBad) known bad + $($cohort.missingTerminalRecords) unknown = $($cohort.eligibleOperations) eligible logical operations."
+    "Required good fraction: $required"
+    "Required good operations: $requiredGood"
+    "Supported good fraction interval: [$lower, $upper]"
+    "Conservative bound meets requirement: $($lower -ge $required)"
+    "Demonstrated good-operation margin: $($cohort.knownGood - $requiredGood)"
+)
+$lines | Tee-Object -FilePath 'checks.log'
+if ($lower -lt $required) { throw 'Conservative bound does not support PASS.' }
+```
+
+Observed output:
+
+```text
+Cohort reconciliation: 9800 known good + 0 known bad + 200 unknown = 10000 eligible logical operations.
+Required good fraction: 0.98
+Required good operations: 9800.00
+Supported good fraction interval: [0.98, 1]
+Conservative bound meets requirement: True
+Demonstrated good-operation margin: 0.00
+```
+
+Hand edits used `apply_patch` to update only `decision.md`, including the final readback outcome below. Both readback commands completed with exit code 0 and displayed the corrected decision and the expected calculation log:
+
+```powershell
+Get-Content -LiteralPath 'decision.md'
+Get-Content -LiteralPath 'checks.log'
+```
+
+Validation is limited to the supplied records, cohort reconciliation, exact decimal bounds, and artifact readback. No telemetry reconstruction or new workload measurement was attempted. The exact good fraction remains unknown within the stated interval.
+
+Files read: `TASK.md`, `slo.json`, original and updated `decision.md`, `dashboard-query.txt`, `cohort.json`, and the generated `checks.log`. Files written: `decision.md` and `checks.log`. No accidental access outside the permitted task directory occurred. All writes are stopped and the task is ready for handoff.

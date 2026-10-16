@@ -1,0 +1,87 @@
+import { readFileSync, writeFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+const root = dirname(fileURLToPath(import.meta.url));
+const repository = 'C:/git/agent-skills';
+const skill = 'gof-flyweight';
+const read = name => readFileSync(resolve(root, name), 'utf8');
+const parse = name => JSON.parse(read(name));
+const validation = parse('local-validation.stdout.txt');
+const commands = parse('commands.json').map(command => ({ ...command, stdoutText: read(command.stdout), stderrText: read(command.stderr) }));
+const sources = [
+  { id: 'boolean-9', url: 'https://docs.oracle.com/javase/9/docs/api/java/lang/Boolean.html', version: 'Java SE 9', section: 'Constructor Detail', support: 'Both constructors carry @Deprecated(since="9") and ordinary Deprecated documentation; the entry does not show forRemoval=true. This contradicts the original statement that they were deprecated for removal since 9.' },
+  { id: 'boolean-17', url: 'https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Boolean.html', version: 'Java SE 17', section: 'Constructor Details and valueOf(boolean)', support: 'Shows @Deprecated(since="9", forRemoval=true) on the constructors and the TRUE/FALSE factory return contract. Supports the corrected baseline-specific wording.' },
+  { id: 'deprecated-17', url: 'https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Deprecated.html', version: 'Java SE 17', section: 'since and forRemoval elements', support: 'since records first deprecation; forRemoval is a distinct removal-intent flag. The since string alone is not a timestamp for later changes to that flag.' },
+  { id: 'pattern-17', url: 'https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/regex/Pattern.html', version: 'Java SE 17', section: 'Class contract, compile(String,int), matcher', support: 'Confirms existing immutable shared Pattern/confined Matcher guidance and expression/flags as behavior-changing inputs.' },
+  { id: 'weak-map-17', url: 'https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/WeakHashMap.html', version: 'Java SE 17', section: 'Class implementation note on value-to-key references', support: 'Confirms the existing strong-value-to-key retention caveat. No GC experiment or prompt collection claim was made.' },
+  { id: 'string-17', url: 'https://raw.githubusercontent.com/openjdk/jdk/jdk-17-ga/src/java.base/share/classes/java/lang/String.java', version: 'OpenJDK jdk-17-ga', section: 'String(String) constructor', support: 'Confirms existing backing-array sharing for this implementation. This is a source fact, not a portable memory-size guarantee or a heap measurement.' },
+  { id: 'string-table-17', url: 'https://raw.githubusercontent.com/openjdk/jdk/jdk-17-ga/src/hotspot/share/classfile/stringTable.cpp', version: 'OpenJDK jdk-17-ga', section: 'StringTableConfig, local table insertion and weak handles', support: 'Confirms the existing implementation-qualified weak local StringTable explanation; does not establish prompt cleanup or bounded memory.' },
+  { id: 'formatter-17', url: 'https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/format/DateTimeFormatter.html', version: 'Java SE 17', section: 'Implementation Requirements, ofPattern(String,Locale), withResolverStyle', support: 'Grounds the case pair: immutable thread-safe formatters can still differ in behavior by locale. Cache-key completeness depends on effective factory configuration; map thread safety is a separate responsibility.' },
+].map(source => ({ ...source, consulted: '2026-10-16', kind: 'primary' }));
+const handoff = {
+  status: 'READY_FOR_GLOBAL_VALIDATION', skill, ownedPath: `skills/${skill}/`, allWritesStopped: true,
+  versions: { committed: '1.2.4', assignment: '1.2.4', final: '1.2.5', preExistingBump: false, rationale: 'One patch for corrected skill contents and added primary citation; no changes to metadata descriptions, dependencies or capability scope.' },
+  baseline: { source: 'docs/skill-validation/wave4-2026-10-16/baseline.json', initialStatus: '', initialStagedDiff: '', initialUnstagedDiff: '', initialUntracked: [], initialHashesMatched: true, preExistingChanges: [] },
+  files: { changedByReviewer: validation.hashes.filter(file => !file.unchangedFromAssignment).map(file => file.path), unchanged: validation.hashes.filter(file => file.unchangedFromAssignment).map(file => file.path), preExistingChanges: [], finalHashes: validation.hashes },
+  correctedFindings: [
+    { location: 'references/when-sharing-pays.md:44 and 192', finding: 'The table conflated Boolean constructor deprecation since Java 9 with deprecation for removal since Java 9.', correction: 'States that constructors are deprecated for removal on the declared Java 17 baseline and cites that API. Keeps the factory recommendation without adding unnecessary version history.', consequence: 'Corrects a factual compatibility statement; no error in the existing sharing decision paths or measured actor effect was established.', sources: ['boolean-9', 'boolean-17', 'deprecated-17'] },
+  ],
+  remainingFindings: [],
+  preserved: [
+    'SKILL.md and worked-example.md unchanged byte-for-byte; all three Java fences unchanged.',
+    'Intrinsic/extrinsic state, complete effective semantic keys, stable equality/hash, actual hash collision handling and no unjustified normalization.',
+    'Deep immutability, reachable aliases, publication, library contracts, per-occurrence identity and independent monitor ownership.',
+    'Admission/byte budgets, operation-scoped peak retention, caller-held values after eviction, parser-thread confinement and resource-owner lifecycle.',
+    'WeakHashMap value-to-key trap, weak local StringTable versus application strong maps and implementation-qualified backing-array sharing.',
+    'Net retained-byte accounting including map/key overhead and existing sharing, construction versus retained-memory costs, real workload/CPU evidence, no mandatory benchmark or collector migration.',
+    'Simple values, enums/static tables, existing adequate caches, retained no-change design, applicable deduplication and compact-layout alternatives.',
+  ],
+  replacedOrRemoved: { capabilities: [], text: 'Only the incorrect historical wording was replaced with baseline-specific wording; no code/example or decision rule was removed.' },
+  checks: {
+    commands,
+    package: { status: 'PASS', files: validation.fileCount, issues: validation.issues, relativeLinks: validation.links.length, details: validation },
+    formatting: { status: 'PASS_AFTER_FIX', initial: 'Prettier found one missing alignment space in the changed table cell.', correction: 'Applied the one-space hand edit; reran exact-file Prettier, local validator, scoped diff/check/status only. Unaffected Java checks were not rerun.', initialArtifacts: 'initial-checks/' },
+    examplePreservation: { changedExecutableExamples: 0, details: validation.examples, limitation: 'Unchanged illustrative skill snippets were read but not recompiled during this assignment.' },
+    caseControl: { ...parse('case-control.json'), compiler: 'Temurin javac 25.0.3', release: '17', runtime: 'Temurin 25.0.3+9-LTS, Windows x64', sourceFiles: ['cases/case-a/FormatterFactory.java', 'cases/case-a/Bootstrap.java', 'cases/case-a/ImportPreview.java', 'UncachedControl.java'], casesShareIdenticalJavaSources: true, actualExecution: 'Four short JVM runs: cached and uncached control under each configuration. Five predefined assertions passed.' },
+    finalDiff: { status: 'PASS', inspected: true, artifact: 'scoped-diff.stdout.txt', stagedDiffEmpty: read('staged-diff.stdout.txt') === '' },
+  },
+  failures: {
+    resolvedLocal: [{ command: 'Exact-file Prettier --check', cause: 'One table-padding space introduced by the manual wording edit.', initialExitCode: 1, finalExitCode: 0, preserved: 'initial-checks/prettier.stderr.txt and initial-checks/commands.json' }],
+    unavailableSources: [{ url: 'https://openjdk.org/jeps/390', outcome: 'HTTP 403 in web tool; not cited as successfully read.', alternative: 'Versioned Java 9 and 17 Boolean API plus Deprecated contract resolved the narrower corrected statement.' }],
+  },
+  behavioralEvaluations: {
+    actorsExecuted: 0, measuredImprovement: false, comparisonsExecuted: [],
+    walkthroughs: [
+      'Case-a: Bootstrap disables request locale overrides; locale and strictness are fixed per factory. Pattern-only keys are sufficient for the supported constructor inputs. Retain the confined bounded factory if adequate and do not approve an unmeasured cross-thread expansion.',
+      'Case-b: Bootstrap enables request locale overrides; same pattern can require different immutable formatters. An English first request then French input exposes the missing key dimension. A composite effective-locale key or appropriate factory scoping preserves semantics.',
+    ],
+    technicalExecutionDistinction: 'The raw parsing outputs validate the synthetic cases against an uncached API control. They are not independent agent outputs, a performance benchmark or evidence that this small documentation correction improved behavior.',
+  },
+  cases: {
+    inputs: resolve(root, 'actor-inputs.json').replaceAll('\\', '/'), evaluatorCriteria: resolve(root, 'evaluator-criteria.json').replaceAll('\\', '/'), fixtureIntegrity: resolve(root, 'case-integrity.json').replaceAll('\\', '/'), count: 2, knownDevelopmentCases: true, heldOut: false,
+    decisiveConstraint: 'Only allowLocaleOverride in import.properties differs; all five other fixture files are identical.',
+    expectedDifference: 'Pattern-only key is valid for fixed effective locale but invalid when effective locale varies; both must reject unsupported broad sharing/cap expansion without ownership and workload evidence.',
+    isolation: 'Procedural only. Coordinator must expose one case directory and intended skill treatment; exclude evaluator criteria, UncachedControl, paired results and handoff.',
+  },
+  sources,
+  limits: [
+    'The revision corrects a small factual statement. No new gap in the central Flyweight decision guidance was established, and no broad rewrite or claim of incremental skill gain is justified.',
+    'No heap dump, allocation/GC profile, concurrency test, memory/CPU benchmark or comparison of actual application designs was executed.',
+    'Case execution used JDK 25.0.3 with sources compiled --release 17. This is not Java 17 JVM execution; locale text behavior was observed under the available runtime data.',
+    'Technical case runs cover only the two ordered sample rows. Reverse order, cap/admission bypass, high cardinality, collision, mutable aliases and concurrent factory use remain proposed checks, not executed outcomes.',
+    'Versioned API/source inspection establishes the selected contracts and source facts, not every runtime/collector implementation or end-to-end memory saving.',
+    'Local loader/validator does not validate catalog-wide optional routing or the generated registry. Shared checks remain coordinator-owned.',
+  ],
+  crossSkill: { requiredActions: [], neighboringFilesEdited: false },
+  pendingGlobalChecks: [
+    { command: 'npm run registry:build', owner: 'coordinator', reason: 'Regenerate index and integrity after all reviewers stop writing.' },
+    { command: 'npm run verify', owner: 'coordinator', reason: 'Parallel-review constraint; global verification after registry generation and stable shared tree.' },
+  ],
+  pendingBehavioralEvaluation: 'Coordinator may run matched actors with frozen separate inputs/criteria. No actor run was performed by this reviewer.',
+  evidenceDirectory: root.replaceAll('\\', '/'),
+  evidence: ['local-validation.mjs', 'local-validation.stdout.txt', 'commands.json', 'run-local.mjs', 'initial-checks/', 'scoped-diff.stdout.txt', 'scoped-status.stdout.txt', 'staged-diff.stdout.txt', 'prepare-cases.mjs', 'actor-inputs.json', 'evaluator-criteria.json', 'case-integrity.json', 'case-control.json', 'cases/case-a/', 'cases/case-b/', 'UncachedControl.java', 'case-compiled/', 'case-a-cached.stdout.txt', 'case-a-uncached.stdout.txt', 'case-b-cached.stdout.txt', 'case-b-uncached.stdout.txt'],
+  writeState: { noActiveBackgroundProcess: true, allProcessesWaited: true, repositoryWritesRestrictedToOwnedPath: true, reviewArtifactsRestrictedToAssignedTempDirectory: true, stoppedBeforeHandoff: true },
+};
+const output = resolve(root, '..', `${skill}.json`);
+writeFileSync(output, JSON.stringify(handoff, null, 2) + '\n');
+console.log(JSON.stringify({ output: output.replaceAll('\\', '/'), status: handoff.status, changedFiles: handoff.files.changedByReviewer, allWritesStopped: handoff.allWritesStopped }, null, 2));

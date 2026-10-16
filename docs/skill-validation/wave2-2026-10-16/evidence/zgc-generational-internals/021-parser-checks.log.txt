@@ -1,0 +1,5 @@
+{"name":"actual","exitCode":0,"expected":0,"output":"p99: 0.010 ms over 73 samples"}
+{"name":"empty","exitCode":0,"expected":0,"output":"count: 0; p99: undefined (no matched completed phases)"}
+{"name":"malformed","exitCode":1,"expected":1,"output":"unsupported or malformed pause record: [info][gc,phases] GC(99) Y: Pause Unsupported 1.0ms\r\npause extraction failed; retain inputs and diagnostics"}
+{"name":"unknown-prefix","exitCode":1,"expected":1,"output":"unsupported or malformed pause record: [info][gc,phases] GC(99) o: Pause Mark End 1.0ms\r\npause extraction failed; retain inputs and diagnostics"}
+{"name":"missing","exitCode":1,"expected":1,"output":"awk: fatal: cannot open file `missing.log' for reading: No such file or directory\r\npause extraction failed; retain inputs and diagnostics"}

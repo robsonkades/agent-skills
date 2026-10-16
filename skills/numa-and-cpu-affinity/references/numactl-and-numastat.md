@@ -11,7 +11,7 @@ flag. Check support and permissions before attaching to an owned or authorized t
 | ----------------------- | ----- | ------ | --------------------------------------------------------------------------------- |
 | `--cpunodebind=<nodes>` | `-N`  | CPU    | Restrict execution to the CPUs of the given node(s)                               |
 | `--physcpubind=<cpus>`  | `-C`  | CPU    | Restrict execution to specific CPUs, not whole nodes                              |
-| `--membind=<nodes>`     | `-m`  | Memory | Allocate **only** from the given node(s); fails when exhausted                    |
+| `--membind=<nodes>`     | `-m`  | Memory | Covered allocations use **only** the given node(s); fails when exhausted          |
 | `--interleave=<nodes>`  | `-i`  | Memory | Interleave allocation across nodes, with fallback if a target cannot satisfy it   |
 | `--preferred=<node>`    | `-p`  | Memory | Prefer one node, fall back to another when exhausted (one node)                   |
 | `--localalloc`          | `-l`  | Memory | Prefer the current node, with fallback; more-specific policy may override         |
@@ -23,12 +23,19 @@ selection and `--physcpubind` for CPU selection. Check installed help/source and
 allowed masks; affinity and memory policy remain constrained by cpusets.
 
 ```bash
-# Confine the whole process to one node — both axes together:
+# Request CPU-node affinity and task memory binding at launch:
 numactl --cpunodebind=0 --membind=0 java -jar app.jar
 
 # Memory interleaving, independent of CPU binding:
 numactl --interleave=all java -jar app.jar
 ```
+
+For a launched program, `--membind` sets task memory policy, not `cpuset.mems`. A later
+application/native-library VMA policy can override it for the covered range within the allowed
+nodes; a later task-policy change can also replace it. Distinguish this placement request from
+an administrative allocation restriction. If that restriction is required, involve the platform
+owner and inspect effective cpusets; neither a requested mask nor a new policy proves that all
+existing/shared pages now reside there. See the policy/residence distinction below.
 
 ## The two `numastat` modes
 
@@ -142,6 +149,15 @@ java <same-collector-and-options> -XX:+PrintFlagsFinal -version 2>&1 | grep UseN
 jcmd <pid> VM.flags -all | grep -i numa
 ```
 
+`Mems_allowed_list` reports permitted allocation nodes, not the active task/VMA policy.
+When launch flags and residence appear to disagree, inspect a matching
+`/proc/<pid>/numa_maps` capture and correlate its starting addresses with `/proc/<pid>/maps`
+and JVM/native-region evidence. For an anonymous range, an explicit `bind:1` policy can override
+the launch task's `bind:0` when both nodes are allowed. The policy field describes current
+allocation policy; `N0=...`/`N1=...` count currently mapped pages. A new policy without migration
+can coexist with pages on the old node. Do not infer either a failed launch binding or completed
+page migration from those counts alone; see [the numa_maps fields](https://man7.org/linux/man-pages/man7/numa.7.html).
+
 ## Mapping GC threads to nodes
 
 The G1 example below reports worker counts and NUMA support at JVM initialization,
@@ -173,6 +189,7 @@ node.
 ## Sources
 
 - [numactl 2.0.19 options](https://github.com/numactl/numactl/blob/v2.0.19/numactl.c): deprecated cpubind retained.
+- [libnuma 2.0.19 memory-policy setters](https://github.com/numactl/numactl/blob/v2.0.19/libnuma.c): `numa_set_membind` sets task policy; range binding uses `mbind`.
 - [numastat 2.0.19](https://github.com/numactl/numactl/blob/v2.0.19/numastat.c): mapping categories, units and sorting.
 - [Linux 6.10 NUMA memory policy](https://github.com/torvalds/linux/blob/v6.10/Documentation/admin-guide/mm/numa_memory_policy.rst): task/VMA policy, allowed nodes and allocation behavior.
 - [Linux perf 6.10 generic cache aliases](https://github.com/torvalds/linux/blob/v6.10/tools/perf/util/evsel.c): node/load/store/miss names do not establish target PMU support.

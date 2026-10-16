@@ -1,0 +1,17 @@
+CREATE SEQUENCE payment_ids START WITH 1000 INCREMENT BY 1;
+CREATE TABLE card_payment (
+    id bigint PRIMARY KEY DEFAULT nextval('payment_ids'),
+    tenant_id varchar(40) NOT NULL,
+    provider_reference varchar(80) NOT NULL,
+    amount numeric(19,2) NOT NULL,
+    card_last4 char(4) NOT NULL,
+    UNIQUE (tenant_id, provider_reference)
+);
+CREATE TABLE bank_transfer (
+    id bigint PRIMARY KEY DEFAULT nextval('payment_ids'),
+    tenant_id varchar(40) NOT NULL,
+    provider_reference varchar(80) NOT NULL,
+    amount numeric(19,2) NOT NULL,
+    iban varchar(34) NOT NULL,
+    UNIQUE (tenant_id, provider_reference)
+);

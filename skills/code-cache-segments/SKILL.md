@@ -120,6 +120,8 @@ JFR or source access is unavailable, state the gap and keep the diagnosis condit
   JVM can never compact code.
 - `jcmd Compiler.codecache` reports total `free` per heap, not its distribution.
   `Compiler.CodeHeap_Analytics` lists reclaimed free blocks — run `aggregate`, then `FreeSpace`.
+  On tested 25.0.3+9, repeat `aggregate` before each `FreeSpace`: printing mutates the saved
+  free-block lengths, so repeated output can overstate contiguous space. See the diagnosis reference.
   Its largest listed block excludes unused tail space and possible heap expansion; compare
   those and applicable fallback heaps before attributing an allocation failure to fragmentation.
 - External fragmentation grows with allocate/free/reallocate cycles, not with raw volume. Frequent

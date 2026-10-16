@@ -1,0 +1,88 @@
+PASS after-success-source = 1
+PASS after-success-receipt = 1
+PASS after-phase-independent-read = 1
+Oct 16, 2026 1:49:47 PM org.springframework.transaction.support.TransactionSynchronizationUtils invokeAfterCompletion
+SEVERE: TransactionSynchronization.afterCompletion threw exception
+org.springframework.dao.DataIntegrityViolationException: PreparedStatementCallback; SQL [insert into receipt values (?, ?)]; Value too long for column "REFERENCE CHARACTER VARYING(8)": "'REFERENCE-TOO-LONG' (18)"; SQL statement:
+insert into receipt values (?, ?) [22001-240]
+	at org.springframework.jdbc.support.SQLExceptionSubclassTranslator.doTranslate(SQLExceptionSubclassTranslator.java:100)
+	at org.springframework.jdbc.support.AbstractFallbackSQLExceptionTranslator.translate(AbstractFallbackSQLExceptionTranslator.java:102)
+	at org.springframework.jdbc.core.JdbcTemplate.translateException(JdbcTemplate.java:1549)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:689)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:966)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1010)
+	at org.springframework.jdbc.core.JdbcTemplate.update(JdbcTemplate.java:1020)
+	at ListenerContractProbe$ReceiptWork.write(ListenerContractProbe.java:79)
+	at ListenerContractProbe$AfterCommitReceipt.on(ListenerContractProbe.java:88)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565)
+	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:359)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.invokeJoinpoint(ReflectiveMethodInvocation.java:190)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:158)
+	at org.springframework.transaction.interceptor.TransactionInterceptor$1.proceedWithInvocation(TransactionInterceptor.java:133)
+	at org.springframework.transaction.interceptor.TransactionAspectSupport.invokeWithinTransaction(TransactionAspectSupport.java:371)
+	at org.springframework.transaction.interceptor.TransactionInterceptor.invoke(TransactionInterceptor.java:130)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:179)
+	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:719)
+	at ListenerContractProbe$AfterCommitReceipt$$SpringCGLIB$$0.on(<generated>)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565)
+	at org.springframework.context.event.ApplicationListenerMethodAdapter.doInvoke(ApplicationListenerMethodAdapter.java:392)
+	at org.springframework.context.event.ApplicationListenerMethodAdapter.processEvent(ApplicationListenerMethodAdapter.java:270)
+	at org.springframework.transaction.event.TransactionalApplicationListenerSynchronization.processEventWithCallbacks(TransactionalApplicationListenerSynchronization.java:65)
+	at org.springframework.transaction.event.TransactionalApplicationListenerSynchronization$PlatformSynchronization.afterCompletion(TransactionalApplicationListenerSynchronization.java:118)
+	at org.springframework.transaction.support.TransactionSynchronizationUtils.invokeAfterCompletion(TransactionSynchronizationUtils.java:202)
+	at org.springframework.transaction.support.AbstractPlatformTransactionManager.invokeAfterCompletion(AbstractPlatformTransactionManager.java:1046)
+	at org.springframework.transaction.support.AbstractPlatformTransactionManager.triggerAfterCompletion(AbstractPlatformTransactionManager.java:1021)
+	at org.springframework.transaction.support.AbstractPlatformTransactionManager.processCommit(AbstractPlatformTransactionManager.java:838)
+	at org.springframework.transaction.support.AbstractPlatformTransactionManager.commit(AbstractPlatformTransactionManager.java:757)
+	at org.springframework.transaction.interceptor.TransactionAspectSupport.commitTransactionAfterReturning(TransactionAspectSupport.java:687)
+	at org.springframework.transaction.interceptor.TransactionAspectSupport.invokeWithinTransaction(TransactionAspectSupport.java:408)
+	at org.springframework.transaction.interceptor.TransactionInterceptor.invoke(TransactionInterceptor.java:130)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:179)
+	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:719)
+	at ListenerContractProbe$OrderService$$SpringCGLIB$$0.place(<generated>)
+	at ListenerContractProbe.main(ListenerContractProbe.java:134)
+Caused by: org.h2.jdbc.JdbcSQLDataException: Value too long for column "REFERENCE CHARACTER VARYING(8)": "'REFERENCE-TOO-LONG' (18)"; SQL statement:
+insert into receipt values (?, ?) [22001-240]
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:518)
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:489)
+	at org.h2.message.DbException.get(DbException.java:223)
+	at org.h2.message.DbException.getValueTooLongException(DbException.java:334)
+	at org.h2.value.Value.getValueTooLongException(Value.java:2617)
+	at org.h2.value.Value.convertToVarchar(Value.java:1292)
+	at org.h2.value.Value.convertTo(Value.java:1148)
+	at org.h2.value.Value.convertForAssignTo(Value.java:1123)
+	at org.h2.table.Column.validateConvertUpdateSequence(Column.java:410)
+	at org.h2.table.Table.convertInsertRow(Table.java:948)
+	at org.h2.command.dml.Insert.insertRows(Insert.java:167)
+	at org.h2.command.dml.Insert.update(Insert.java:135)
+	at org.h2.command.dml.DataChangeStatement.update(DataChangeStatement.java:77)
+	at org.h2.command.CommandContainer.update(CommandContainer.java:139)
+	at org.h2.command.Command.executeUpdate(Command.java:306)
+	at org.h2.command.Command.executeUpdate(Command.java:250)
+	at org.h2.jdbc.JdbcPreparedStatement.executeUpdateInternal(JdbcPreparedStatement.java:213)
+	at org.h2.jdbc.JdbcPreparedStatement.executeUpdate(JdbcPreparedStatement.java:172)
+	at org.springframework.jdbc.core.JdbcTemplate.lambda$update$0(JdbcTemplate.java:971)
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:670)
+	... 34 more
+
+PASS after-failure-caller-returned = true
+PASS after-failure-source-still-committed = 1
+PASS after-failure-receipt-absent = 0
+PASS outer-rollback-source-absent = 0
+PASS outer-rollback-receipt-absent = 0
+PASS outer-rollback-callback-skipped = 2
+PASS no-transaction-callback-skipped = 2
+PASS no-transaction-receipt-absent = 0
+PASS before-success-source = 1
+PASS before-success-receipt = 1
+PASS before-phase-independent-read = 0
+PASS before-failure-reaches-caller = true
+PASS before-failure-source-absent = 0
+PASS before-failure-receipt-absent = 0
+Oct 16, 2026 1:49:47 PM org.springframework.context.annotation.AnnotationConfigApplicationContext refresh
+WARNING: Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.BeanInitializationException: Failed to process @EventListener annotation on bean with name 'listenerContractProbe.InvalidAfterCommitReceipt': @TransactionalEventListener method must not be annotated with @Transactional unless when declared as REQUIRES_NEW or NOT_SUPPORTED: public void ListenerContractProbe$InvalidAfterCommitReceipt.on(ListenerContractProbe$ReceiptRequested)
+PASS after-required-registration-rejected = true
+RESULT assertions=18 runtime=25.0.3+9-LTS
+

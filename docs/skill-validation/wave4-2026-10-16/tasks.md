@@ -1,0 +1,74 @@
+# Onda 4 — fila concluída
+
+68 revisões com ownership exclusivo. Escritas encerradas e validação global concluída.
+
+| Skill                               | Responsável | Estado    | Validação                                                                       |
+| ----------------------------------- | ----------- | --------- | ------------------------------------------------------------------------------- |
+| architecture-characteristics        | quality01   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| architecture-coupling-and-quanta    | quality02   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| architecture-decision-making        | quality03   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| architecture-fitness-functions      | quality04   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| architecture-refactoring-paths      | quality05   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| architecture-testing                | quality06   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| bounded-context-design              | quality07   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| component-and-release-boundaries    | quality08   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| data-source-patterns                | quality09   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| domain-logic-organization           | quality10   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| enterprise-application-architecture | quality11   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| enterprise-architecture-smells      | quality12   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| enterprise-base-patterns            | quality13   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| enterprise-transactions             | quality14   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| framework-coupling-and-independence | quality15   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| gof-abstract-factory                | quality16   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| gof-adapter                         | quality17   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| gof-bridge                          | quality18   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| gof-builder                         | quality19   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| gof-chain-of-responsibility         | quality20   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| gof-command                         | quality11   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| gof-composite                       | quality03   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| gof-decorator                       | quality01   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| gof-facade                          | quality07   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| gof-factory-method                  | quality19   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| gof-flyweight                       | quality10   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| gof-interpreter                     | quality13   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| gof-iterator                        | quality15   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| gof-mediator                        | quality16   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| gof-memento                         | quality02   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| gof-observer                        | quality08   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| gof-pattern-antipatterns            | quality09   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| gof-pattern-confusion               | quality04   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| gof-pattern-selection               | quality05   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| gof-pattern-thinking                | quality06   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| gof-patterns-in-modern-java         | quality12   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| gof-prototype                       | quality14   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| gof-proxy                           | quality17   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| gof-singleton                       | quality18   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| gof-state                           | quality20   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| gof-strategy                        | quality11   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| gof-template-method                 | quality03   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| gof-visitor                         | quality01   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| humble-objects-and-functional-core  | quality19   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| inheritance-mapping-strategies      | quality10   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| java-ddd                            | quality16   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| java-ddd-aggregates                 | quality07   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| java-ddd-domain-events              | quality13   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| java-ddd-domain-services            | quality02   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| java-ddd-repositories               | quality15   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| java-ddd-testing                    | quality05   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| java-ddd-use-cases                  | quality06   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| java-ddd-value-objects              | quality11   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| layering-and-boundaries             | quality08   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| legacy-enterprise-modernization     | quality12   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| metadata-mapping                    | quality09   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| mvc-and-request-handling            | quality04   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| offline-concurrency-control         | quality17   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| orm-behavioral-patterns             | quality20   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| orm-structural-mapping              | quality14   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| pattern-selection-and-composition   | quality18   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| patterns-and-modern-frameworks      | quality03   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| query-objects-and-specifications    | quality10   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| remote-facade-and-dto               | quality05   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| repository-pattern                  | quality19   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| service-layer-design                | quality15   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| technical-debt-decisions            | quality11   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |
+| view-and-representation-patterns    | quality01   | validated | local checks, coordinator diff review, registry:build and npm run verify passed |

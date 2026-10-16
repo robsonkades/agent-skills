@@ -1,0 +1,6 @@
+package example.web;
+import example.limits.UiLimit;
+public final class WebForm {
+    private WebForm() {}
+    public static boolean canSubmit(int count) { return UiLimit.accepts(count); }
+}

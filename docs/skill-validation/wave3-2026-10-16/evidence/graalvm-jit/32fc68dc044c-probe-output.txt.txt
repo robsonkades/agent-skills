@@ -1,0 +1,3 @@
+CompileCommand: compileonly CompilerStatisticsProbe.hot bool compileonly = true
+Error: Could not find or load main class .graal.ShowConfiguration=info
+Caused by: java.lang.ClassNotFoundException: /graal/ShowConfiguration=info

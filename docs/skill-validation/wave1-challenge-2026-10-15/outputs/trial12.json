@@ -1,0 +1,10 @@
+{
+  "trialId": "trial12",
+  "caseId": "estimation-under-uncertainty-two-specialists",
+  "filesRead": [
+    "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/actor-protocol.md",
+    "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/inputs/estimation-under-uncertainty-two-specialists.json"
+  ],
+  "unexpectedExposure": [],
+  "response": "The model probability of deployment acceptance by time 8 is 100%, and the project's P80 is time 8. These are conditional forecasts under the supplied assumptions.\n\nBoth adapters start at time 0, each with its own full-time specialist. Their durations already include coding, tests and review. Combined acceptance starts only after both finish:\n\n- Both take 2 days: probability 0.8 × 0.8 = 64%. They finish at time 2, combined acceptance finishes at time 3, and deployment acceptance occurs at slot 4.\n- At least one takes 6 days: probability 1 − 0.64 = 36%. Both are finished at time 6, combined acceptance finishes at time 7, and deployment acceptance occurs at slot 8.\n\nThus cumulative completion probability is 64% at time 4 and 100% at time 8. Time 8 is the earliest completion time with cumulative probability at least 80%.\n\nEach task's P80 of 2 days does not establish the project's P80: only 64% of modeled outcomes finish both adapters within 2 days. The target succeeds because even the longest modeled parallel schedule catches slot 8.\n\nI would use time 8 for conditional planning, without making an unconditional promise. The probabilities are elicited inputs, not calibrated delivery frequencies; 100% within this bounded model is not proof of real-world certainty. Update the forecast when completions become known at time 2, and immediately if evidence suggests either task could exceed 6 days, a specialist becomes unavailable, or a deployment slot changes."
+}

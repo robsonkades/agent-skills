@@ -302,12 +302,12 @@ costs, and what else on that command line to distrust, are all `jvm-performance-
 `-XX:+UseCompactObjectHeaders` is a trade to evaluate from the target class/object mix.
 This section covers only the **footprint** side of that trade.
 
-**Nothing on this page is a performance measurement; every number here is footprint.** What
-the flag costs in throughput and latency, the published SPECjbb figures and why they carry no
-provenance, its prerequisites and its per-release defaults are all in
-`jvm-performance-review/references/flag-cost-and-defaults.md` — read that before recommending
-the flag to anyone. That it raises object adjacency density, and what that does to false
-sharing, is `false-sharing-and-contended`'s.
+**Nothing on this page is a performance measurement; every number here is footprint.** Use
+`jvm-performance-review` and its `references/flag-cost-and-defaults.md` to evaluate the
+throughput/latency trade and target configuration before recommending the flag. That reference
+provides decision criteria, not a measured compact-header speedup for this workload.
+Changes in object adjacency density and their false-sharing consequences belong to
+`false-sharing-and-contended`.
 
 **For an empirical footprint-benefit claim**, compare the relevant population under matched
 conditions on the same build, using existing adequate evidence or a justified new check:

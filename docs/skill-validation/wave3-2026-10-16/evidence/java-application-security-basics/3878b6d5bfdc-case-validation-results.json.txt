@@ -1,0 +1,41 @@
+{
+  "onlyConstraintDifference": "Cipher.DECRYPT_MODE vs Cipher.ENCRYPT_MODE",
+  "taskInputsByteIdentical": true,
+  "classification": "Fixture compilation only; no agent evaluated",
+  "runs": [
+    {
+      "mode": "decrypt",
+      "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+      "args": [
+        "--release",
+        "21",
+        "-d",
+        "classes",
+        "StreamCodec.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\cases\\decrypt",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\case-decrypt-compile.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\case-decrypt-compile.stderr.log"
+    },
+    {
+      "mode": "encrypt",
+      "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+      "args": [
+        "--release",
+        "21",
+        "-d",
+        "classes",
+        "StreamCodec.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\cases\\encrypt",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\case-encrypt-compile.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\case-encrypt-compile.stderr.log"
+    }
+  ]
+}

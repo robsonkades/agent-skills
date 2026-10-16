@@ -46,7 +46,8 @@ decision. Missing cancellation/close guarantees must remain explicit unknowns.
    the wrapper owns it; verify idempotence or use an explicit success-transfer/failure-cleanup
    protocol for resources that cannot be released twice.
 4. **Decide what a failing `close` means.** If the body already failed, try-with-resources
-   suppresses cleanup failure; if the body succeeded, close failure propagates, for readers too.
+   normally suppresses cleanup failure; check the suppression constraints below. If the body
+   succeeded, close failure propagates, for readers too.
    A writer's failed flush/close can leave partial or complete writes with uncertain durability.
    Do not report success or infer that retrying is safe merely because close threw.
 5. **Check every escape route.** A resource captured by a lambda submitted to an executor,
@@ -63,10 +64,13 @@ decision. Missing cancellation/close guarantees must remain explicit unknowns.
 
 - Prefer `try`-with-resources for lexically owned `AutoCloseable`s. Application-lifecycle,
   conditional-transfer and asynchronous ownership may need an explicit state machine/finally.
-  Resources close in reverse declaration order,
-  and an exception from `close` is _suppressed_ onto the body's exception rather than
-  replacing it—`getSuppressed()` recovers it. A naive `finally { close(); }` can replace the body
-  exception unless it manually implements equivalent suppression.
+  Resources close in reverse declaration order. With distinct throwable objects and suppression
+  enabled, a close failure is suppressed onto the body's exception; `getSuppressed()` exposes it. If `close`
+  rethrows that same object, self-suppression instead throws `IllegalArgumentException`; disabled
+  suppression drops distinct cleanup failures from the list. Inspect cached/reused failures and
+  custom exception constructors before promising complete diagnostics; see closeable-design.
+  A naive `finally { close(); }` can replace the body exception unless it implements an explicit
+  failure-preservation protocol.
 - Since Java 9 an existing effectively-final variable can be used directly:
   `try (existingResource)`. This does not transfer aliases or make ownership obvious; choose a
   local name/Javadoc when it clarifies that the scope closes a borrowed-looking value.

@@ -32,7 +32,8 @@ versions and do not enable preview features or upgrade dependencies to fit an ex
 freshness requirements or measurements are absent, identify the gap and offer a conditional
 decision and measurement plan rather than inventing a hit rate or safe TTL.
 
-Trace the actual caller, key generator, loader, write/commit path and existing tests. Establish
+Trace the actual caller through the selected cache manager/resolver or direct cache instance,
+key generator, read/load operation, write/commit path and existing tests. Establish
 who can change the source (including other services), what a reader must observe after a write,
 and what may be served during an outage. Reuse documented requirements; an existing TTL is
 configuration evidence, not proof of an accepted stale-data window. Ask only for unresolved
@@ -90,9 +91,11 @@ freshness or failure requirements that change the decision; continue independent
   For idempotency that must survive eviction, restart and retries, use a durable record with an
   atomic relationship to the effect; a unique key alone does not supply that relationship.
   Delegate the operation contract to `idempotency`.
-- Stampede has several scopes: jitter desynchronizes bulk expiry; singleflight/`LoadingCache`
-  coalesces per key only within its process/cache instance unless backed by distributed
-  coordination; `refreshAfterWrite` serves an old value while a hot-key refresh runs; staged
+- Stampede has several scopes: jitter desynchronizes bulk expiry; a coordinating load operation
+  coalesces per key within its cache instance unless backed by distributed coordination.
+  A `LoadingCache` type alone does not prove the caller uses that operation; verify the
+  [active cache and load path](references/configuring-a-cache.md#verify-the-active-cache-and-load-path).
+  `refreshAfterWrite` serves an old value while a hot-key refresh runs; staged
   warm-up avoids a
   global cold cache. Probabilistic early expiration reduces the spike, it does not remove
   it — and the correct form is `P = exp(−(expiry − now) / (β · δ))`, with β in the

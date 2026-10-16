@@ -75,6 +75,8 @@ the compiler's processing policy is separate from the application's release targ
    selected versions, introducing path, scope/configuration and selection rule.
    A BOM, dependency-management entry, version catalog or constraint alone does
    not establish that an artifact is present.
+   Inspect unresolved nodes and diagnostics even when a report exits successfully;
+   a selected metadata graph does not prove that its artifact files can be obtained.
 3. **Form a discriminating explanation.** Connect the observed graph or toolchain
    to the error. Compare compile, test and runtime evidence only where the failure
    requires it. For packaged applications inspect the produced distribution/image

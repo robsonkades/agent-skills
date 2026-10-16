@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-test-design
-version: 1.0.4
+version: 1.0.5
 description: >-
   Writing a Java test that survives refactoring and says why it failed: naming the behaviour
   rather than the method, one reason to fail, test data builders over shared mutable setup,
@@ -10,9 +10,10 @@ description: >-
   Use when a test name does not say what broke, when a failure message has to be decoded by
   reading the test, when setup is shared across unrelated tests, when a test sleeps, when
   tests pass alone and fail together, when a flaky test is about to be retried or disabled,
-  or when the same assertions are being copied across cases. Does not cover which level to
-  test at (java-testing-strategy), stubs and mocks (java-test-doubles), the
-  red-green-refactor loop (tdd), or threading (concurrency-testing).
+  when the same assertions are being copied across cases, or when intended behaviour changes
+  and old expectations fail. Does not cover which level to test at (java-testing-strategy),
+  stubs and mocks (java-test-doubles), the red-green-refactor loop (tdd), or threading
+  (concurrency-testing).
 
 license: Apache-2.0
 

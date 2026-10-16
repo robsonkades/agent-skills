@@ -1,0 +1,57 @@
+diff --git a/skills/spring-http-clients/references/failure-and-response-bounds.md b/skills/spring-http-clients/references/failure-and-response-bounds.md
+index d579a48..2b684f0 100644
+--- a/skills/spring-http-clients/references/failure-and-response-bounds.md
++++ b/skills/spring-http-clients/references/failure-and-response-bounds.md
+@@ -43,8 +43,19 @@ value just because the call crosses HTTP. Establish what bounds actually hold; a
+ provider's size promise is an assumption, not a locally enforced cap.
+ 
+ An untrusted peer, large export or explicit memory limit changes that choice. Prefer
+-an existing enforced codec/transport limit. When the selected imperative path lacks the
+-required cap, finite bounded extraction inside `exchange` is one conditional option:
++an existing enforced codec/transport limit. Locate the first aggregation step before
++placing a cap: factory wrappers and body-logging interceptors can consume the response
++before application extraction. `BufferingClientHttpRequestFactory`, or Framework 7's
++`RestClient.Builder.bufferContent(...)`, can enable whole-response buffering. In 7.0.9,
++the [buffering response wrapper](https://github.com/spring-projects/spring-framework/blob/v7.0.9/spring-web/src/main/java/org/springframework/http/client/BufferingClientHttpResponseWrapper.java)
++copies the underlying body when `getBody()` first runs, before returning the stream.
++A later `readNBytes(limit + 1)` can reject excess without preventing that allocation.
++Restrict buffering for the affected operation, replace unnecessary full-body logging,
++or enforce the required limit before that aggregation; preserve unrelated builder,
++TLS and observation configuration. Do not claim a cap from rejection alone.
++
++When no earlier layer performs unbounded aggregation and the selected imperative path
++lacks the required cap, finite bounded extraction inside `exchange` is one option:
+ check status before copying diagnostic bodies; reject a declared excessive length;
+ read at most `limit + 1` bytes and reject excess before decoding. Use an appropriate
+ representation/decoder rather than turning this into a generic text/JSON client.
+diff --git a/skills/spring-http-clients/references/verification.md b/skills/spring-http-clients/references/verification.md
+index e80f45e..d9729b2 100644
+--- a/skills/spring-http-clients/references/verification.md
++++ b/skills/spring-http-clients/references/verification.md
+@@ -77,6 +77,14 @@ under investigation.
+ | Pool/cancellation        | Exhaust a small pool on the deployed transport, cancel body consumption, and observe release/acquisition metrics and subsequent progress.                                                  |
+ | TLS/destination policy   | Exercise trusted identity, wrong hostname, untrusted issuer, required client certificate and forbidden redirect destinations as applicable.                                                |
+ 
++For a memory-bound claim, keep the active buffering predicate, wrappers and logging
++interceptors in the check. A callback throwing for an oversized body can still pass
++after an earlier layer buffered it all. Use an unknown-length oversized response and
++observe consumption at the layer before aggregation; include a buffering-enabled
++negative control when that is the suspected bypass. A counted test stream can expose
++this wrapper behavior, but does not establish an exact wire-byte limit or socket
++cleanup; transport prefetch and decoding buffers have separate costs.
++
+ A close invocation is evidence of close ownership, not proof of socket reuse or immediate
+ release of every operating-system resource. Caller timeout does not prove server work
+ stopped. Timing tolerances detect missing limits; they are not latency measurements or
+diff --git a/skills/spring-http-clients/skill.yaml b/skills/spring-http-clients/skill.yaml
+index 704aa14..47b99d3 100644
+--- a/skills/spring-http-clients/skill.yaml
++++ b/skills/spring-http-clients/skill.yaml
+@@ -1,6 +1,6 @@
+ schemaVersion: 1
+ name: spring-http-clients
+-version: 1.1.0
++version: 1.1.1
+ description: >-
+   Implement outbound Spring integrations or diagnose RestClient, WebClient and
+   HttpExchange proxies that lose Boot configuration, stall, buffer oversized responses

@@ -1,0 +1,28 @@
+package fixture;
+import java.nio.file.*;
+import java.util.Properties;
+
+public final class ScanProbe {
+    private static void observe(String stage, boolean initialize, boolean readState, ClassLoader loader) {
+        try {
+            Class<?> type = Class.forName("fixture.Plugin", initialize, loader);
+            Object state = readState ? type.getField("STATE").get(null) : "not-read";
+            System.out.println(stage + "=OK attempts=" + Gate.attempts + " state=" + state);
+        } catch (Throwable failure) {
+            Throwable cause = failure.getCause();
+            System.out.println(stage + "=" + failure.getClass().getSimpleName()
+                    + " attempts=" + Gate.attempts
+                    + " cause=" + (cause == null ? "none" : cause.getClass().getSimpleName()));
+        }
+    }
+    public static void main(String[] args) throws Exception {
+        Properties config = new Properties();
+        try (var reader = Files.newBufferedReader(Path.of("config.properties"))) { config.load(reader); }
+        ClassLoader loader = ScanProbe.class.getClassLoader();
+        Gate.available = false;
+        observe("scan", Boolean.parseBoolean(config.getProperty("initializeDuringScan")), false, loader);
+        Gate.available = true;
+        observe("active-use", true, true, loader);
+        System.out.println("runtime=" + Runtime.version());
+    }
+}

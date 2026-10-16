@@ -1,0 +1,37 @@
+{
+  "skill": "remote-facade-and-dto",
+  "committedVersion": "1.3.4",
+  "assignmentVersion": "1.3.4",
+  "assignmentStatus": "",
+  "baselineDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/baseline/remote-facade-and-dto",
+  "files": [
+    {
+      "path": "skills/remote-facade-and-dto/SKILL.md",
+      "sha256": "8e04f4276890ee8f8792dca9365cafeab1e159c2cb7eb4e038c968d33becbbba",
+      "baselineSha256": "8e04f4276890ee8f8792dca9365cafeab1e159c2cb7eb4e038c968d33becbbba",
+      "matchesBaseline": true,
+      "bytes": 12684
+    },
+    {
+      "path": "skills/remote-facade-and-dto/skill.yaml",
+      "sha256": "81481636dc23a861ce5263b9335fc791a9165ff460087ac0ab7c16643ccec459",
+      "baselineSha256": "81481636dc23a861ce5263b9335fc791a9165ff460087ac0ab7c16643ccec459",
+      "matchesBaseline": true,
+      "bytes": 2084
+    },
+    {
+      "path": "skills/remote-facade-and-dto/references/dto-vs-domain-object.md",
+      "sha256": "a5cbd9ed9822e38ef8a0cf7c5c7cc3b19e28f06d4b623cf6fe591bc675d8c723",
+      "baselineSha256": "a5cbd9ed9822e38ef8a0cf7c5c7cc3b19e28f06d4b623cf6fe591bc675d8c723",
+      "matchesBaseline": true,
+      "bytes": 13245
+    },
+    {
+      "path": "skills/remote-facade-and-dto/references/remote-facade.md",
+      "sha256": "814c7796e38870f26fe79a37b6568ed93c5edc05d5aa7f1c542c55b28aab7587",
+      "baselineSha256": "814c7796e38870f26fe79a37b6568ed93c5edc05d5aa7f1c542c55b28aab7587",
+      "matchesBaseline": true,
+      "bytes": 13670
+    }
+  ]
+}

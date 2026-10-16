@@ -1,0 +1,22 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import {spawnSync} from 'node:child_process';
+const dir='C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/c2-sea-of-nodes';
+const executable='C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe';
+const results=[];
+for(const [id,limit,expected] of [
+ ['case-native-gate',128,'already compiled into a medium method'],
+ ['case-bytecode-gate',512,'too big'],
+]) {
+ const args=['-Xbatch','-XX:-TieredCompilation','-XX:CompileThreshold=1000','-XX:+UnlockDiagnosticVMOptions','-XX:InlineFrequencyRatio=2.0','-XX:MaxInlineSize=8',`-XX:InlineSmallCode=${limit}`,'-XX:+LogCompilation',`-XX:LogFile=${dir}/logs/${id}.xml`,'-XX:CompileCommand=exclude,InlineGate::main','-XX:CompileCommand=PrintInlining,InlineGate::caller','-cp',`${dir}/classes`,'InlineGate'];
+ const r=spawnSync(executable,args,{cwd:dir,encoding:'utf8',timeout:30000,maxBuffer:5_000_000});
+ fs.writeFileSync(`${dir}/logs/${id}.stdout.txt`,r.stdout??'');
+ fs.writeFileSync(`${dir}/logs/${id}.stderr.txt`,r.stderr??'');
+ results.push({id,executable,args,cwd:dir,status:r.status,expected,stdout:r.stdout,stderr:r.stderr});
+}
+fs.writeFileSync(`${dir}/case-captures.json`,JSON.stringify(results,null,2));
+for(const r of results) {
+ assert.equal(r.status,0,r.id);
+ assert.ok(r.stdout.includes(`failed to inline: ${r.expected}\n`),r.id);
+ console.log(JSON.stringify({id:r.id,status:r.status,output:r.stdout}));
+}

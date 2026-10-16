@@ -1,0 +1,7 @@
+{
+  "status": "passed",
+  "wrongCandidate": "proposed.sql substituted into solution.sql",
+  "verifierExitCode": 1,
+  "rejectedAt": "nullable witness: solution.sql violates ordered bag contract; tenant=71",
+  "restore": "finally restores the original solution.sql bytes"
+}

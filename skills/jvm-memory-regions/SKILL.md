@@ -107,8 +107,10 @@ thread` require different evidence; raising `-Xmx` is not a general repair and c
   uses carrier/native stack state. Millions of tasks can therefore shift context/stack
   retention into GC-visible objects; measure mounted/unmounted state and in-flight
   concurrency before adjusting heap or `-Xss`.
-- `MaxDirectMemorySize` is a separate ceiling. On the verified HotSpot implementation its
-  absent value resolves to `Runtime.maxMemory()`, so choosing a large `-Xmx` can implicitly
+- `MaxDirectMemorySize` caps accounted direct-buffer capacity, not all native bytes or RSS.
+  Compare the direct pool's `TotalCapacity` with that limit; `MemoryUsed` can differ because
+  of alignment/accounting and is not a resident-memory measurement. On the verified HotSpot
+  implementation its absent value resolves to `Runtime.maxMemory()`, so choosing a large `-Xmx` can implicitly
   authorize a similarly large direct-buffer budget; it does not reserve that memory or make
   the combined process fit.
 

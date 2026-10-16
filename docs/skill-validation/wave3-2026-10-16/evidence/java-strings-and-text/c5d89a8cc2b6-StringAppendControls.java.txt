@@ -1,0 +1,95 @@
+import java.util.Objects;
+
+public final class StringAppendControls {
+    private static int checks;
+
+    private static void equal(String label, Object expected, Object actual) {
+        checks++;
+        if (!Objects.equals(expected, actual)) {
+            throw new AssertionError(label + ": expected " + expected + ", got " + actual);
+        }
+    }
+
+    private static void notEqual(String label, Object left, Object right) {
+        checks++;
+        if (Objects.equals(left, right)) throw new AssertionError(label);
+    }
+
+    private static void throwsNullPointer(String label, Runnable action) {
+        checks++;
+        try {
+            action.run();
+            throw new AssertionError(label + ": missing NullPointerException");
+        } catch (NullPointerException expected) {
+            // A documented, observable difference from string concatenation.
+        }
+    }
+
+    private static String concatenated(char[] value) {
+        return "" + value;
+    }
+
+    private static String preserved(char[] value) {
+        return new StringBuilder().append((Object) value).toString();
+    }
+
+    private static String objectOperand(Object value) {
+        return new StringBuilder().append(value).toString();
+    }
+
+    private static String objectRepresentation(char[] value) {
+        // Independent oracle: array inherits Object.toString, not the builder under test.
+        return value == null ? "null" :
+            value.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(value));
+    }
+
+    private static String previous(char[][] chunks) {
+        String out = "";
+        for (char[] chunk : chunks) out += chunk + "|";
+        return out;
+    }
+
+    private static String objectLoop(char[][] chunks) {
+        StringBuilder out = new StringBuilder();
+        for (Object chunk : chunks) out.append(chunk).append('|');
+        return out.toString();
+    }
+
+    private static String charArrayLoop(char[][] chunks) {
+        StringBuilder out = new StringBuilder();
+        for (char[] chunk : chunks) out.append(chunk).append('|');
+        return out.toString();
+    }
+
+    public static void main(String[] args) {
+        char[][] inputs = {
+            {'A', 'B'}, {}, {'\uD83D', '\uDC4D', 'e', '\u0301'},
+            "not-for-output".toCharArray(), null
+        };
+        for (char[] input : inputs) {
+            String expected = objectRepresentation(input);
+            equal("concatenation follows object conversion", expected, concatenated(input));
+            equal("explicit object overload preserves conversion", expected, preserved(input));
+            equal("already-Object operand needs no cast", expected, objectOperand(input));
+            if (input != null) {
+                equal("legitimate content contract", new String(input),
+                    new StringBuilder().append(input).toString());
+                notEqual("content overload is not old conversion", expected,
+                    new StringBuilder().append(input).toString());
+                equal("String.valueOf array overload is content too", new String(input),
+                    String.valueOf(input));
+            }
+        }
+        throwsNullPointer("null char[] append", () -> new StringBuilder().append((char[]) null));
+        throwsNullPointer("null char[] String.valueOf", () -> String.valueOf((char[]) null));
+        equal("String.valueOf Object null", "null", String.valueOf((Object) (char[]) null));
+
+        equal("Object loop retains full consumer output", previous(inputs), objectLoop(inputs));
+        throwsNullPointer("char[] loop changes accepted null", () -> charArrayLoop(inputs));
+        char[][] nonNull = { "not-for-output".toCharArray(), {} };
+        notEqual("char[] loop changes non-null output", previous(nonNull), charArrayLoop(nonNull));
+        equal("empty Object loop", "", objectLoop(new char[0][]));
+        equal("empty char[] loop", "", charArrayLoop(new char[0][]));
+        System.out.println("PASS " + checks + " semantic checks; no performance measured");
+    }
+}

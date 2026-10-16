@@ -1,0 +1,75 @@
+{
+  "caseA": [
+    {
+      "path": "docs/architecture.md",
+      "sha256": "898971e9ed4315481db37a7a809b32602935ca3e2e82d14e81d8f7976beecb3f"
+    },
+    {
+      "path": "docs/change-history.csv",
+      "sha256": "9a91610d29847a5f134fd00694ef155532a6b808670fcb3385a4372b2908eeb6"
+    },
+    {
+      "path": "docs/change-note.md",
+      "sha256": "909a4a88dd3fe2ea411b66d62fa7c99e4b560e67cd3da67655d145a2fa2e723e"
+    },
+    {
+      "path": "docs/rendering-policy.md",
+      "sha256": "8bbceb3afa889719f40566b6e0b0c872d2e3efccbd87dc71fa4e0dd76207f2b5"
+    },
+    {
+      "path": "prototype/RenderDemo.java",
+      "sha256": "7fc509b1f82ced6e135c85016d8fed368f9b511bca440f69eec663773e6b02eb"
+    },
+    {
+      "path": "README.md",
+      "sha256": "663a9c16690a7ed7e6eca73b955ccb0abcda6c10b4690ed648d7715e28701935"
+    },
+    {
+      "path": "request.md",
+      "sha256": "e288c625220627d8854ea0cb838ab7e33417c5cea561c3f9d35828b8fd4b9b55"
+    },
+    {
+      "path": "src/RenderDemo.java",
+      "sha256": "74038b8603b2a23be94fc952007faab6318911dbe44f39cdb22c2a478729fae6"
+    }
+  ],
+  "caseB": [
+    {
+      "path": "docs/architecture.md",
+      "sha256": "898971e9ed4315481db37a7a809b32602935ca3e2e82d14e81d8f7976beecb3f"
+    },
+    {
+      "path": "docs/change-history.csv",
+      "sha256": "9a91610d29847a5f134fd00694ef155532a6b808670fcb3385a4372b2908eeb6"
+    },
+    {
+      "path": "docs/change-note.md",
+      "sha256": "909a4a88dd3fe2ea411b66d62fa7c99e4b560e67cd3da67655d145a2fa2e723e"
+    },
+    {
+      "path": "docs/rendering-policy.md",
+      "sha256": "d80ecd36b81c0d0596cb180c60cf41f2796248ca82c83d51ddec302099a8dcc8"
+    },
+    {
+      "path": "prototype/RenderDemo.java",
+      "sha256": "7fc509b1f82ced6e135c85016d8fed368f9b511bca440f69eec663773e6b02eb"
+    },
+    {
+      "path": "README.md",
+      "sha256": "663a9c16690a7ed7e6eca73b955ccb0abcda6c10b4690ed648d7715e28701935"
+    },
+    {
+      "path": "request.md",
+      "sha256": "e288c625220627d8854ea0cb838ab7e33417c5cea561c3f9d35828b8fd4b9b55"
+    },
+    {
+      "path": "src/RenderDemo.java",
+      "sha256": "74038b8603b2a23be94fc952007faab6318911dbe44f39cdb22c2a478729fae6"
+    }
+  ],
+  "onlyDifference": [
+    "docs/rendering-policy.md"
+  ],
+  "technicalFixtureHashesMatch": true,
+  "actorRunsExecuted": 0
+}

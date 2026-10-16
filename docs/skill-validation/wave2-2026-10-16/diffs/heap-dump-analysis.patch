@@ -1,0 +1,62 @@
+diff --git a/skills/heap-dump-analysis/SKILL.md b/skills/heap-dump-analysis/SKILL.md
+index 737e6d2..15fdf66 100644
+--- a/skills/heap-dump-analysis/SKILL.md
++++ b/skills/heap-dump-analysis/SKILL.md
+@@ -58,7 +58,9 @@ missing consequential scope, and continue analysis that does not depend on a new
+    starting point, not a universal 30% leak threshold; caches and immutable indexes can
+    legitimately dominate, while a distributed leak may have no single large owner. Check MAT's
+    unreachable/discard settings: an unfiltered file and its indexed graph can contain different
+-   populations. Reparse existing evidence when that resolves the gap; see the MAT reference.
++   populations. Experimental discard can put reachable objects in the Unreachable Objects
++   Histogram and remove their ownership evidence. Reparse existing evidence when that resolves
++   the gap; see the MAT reference.
+ 6. **Run Path to GC Roots on the suspect with reference strengths made explicit.** Start
+    by excluding weak/soft/phantom paths to expose strong ownership, then inspect excluded
+    strengths when a soft cache or reference-processing policy is itself the question. A
+diff --git a/skills/heap-dump-analysis/references/mat-workflow-and-oql.md b/skills/heap-dump-analysis/references/mat-workflow-and-oql.md
+index 5ba1ac3..286f71e 100644
+--- a/skills/heap-dump-analysis/references/mat-workflow-and-oql.md
++++ b/skills/heap-dump-analysis/references/mat-workflow-and-oql.md
+@@ -29,8 +29,19 @@ discards unreachable objects while indexing and retains their class/count/size s
+ the Unreachable Objects Histogram, without their reference graph. If that graph answers
+ the question, reparse a copy of the existing dump with **Keep unreachable objects** after
+ removing that copy's index files. MAT's resulting UNREACHABLE roots are artificial analysis
+-roots, not proof of JVM liveness or a leak. Record this setting and any experimental discard
+-settings when comparing snapshots; reparsing cannot recover objects absent from the file.
++roots, not proof of JVM liveness or a leak; reparsing cannot recover objects absent from the file.
++
++**Enable discard (experimental)** is different: MAT deliberately omits matching objects to fit
++its analysis budget, even if reachable. These objects also enter the Unreachable Objects
++Histogram, but have no indexed root paths and do not contribute to retained sizes. Inspect the
++parse options/logs and that histogram before calling its rows garbage or treating missing paths
++and reduced retained totals as evidence against a leak. Record the discard pattern, percentage,
++offset and seed; **Keep unreachable objects** alone does not undo this separate omission.
++If the suspect population was discarded, reparse an artifact copy without discard when capacity
++permits, or revise the pattern to preserve the objects/links needed for that question. Otherwise
++report the graph coverage limit; repeated partial parses do not by themselves establish complete
++ownership or exact retention. Do not request a new production dump merely to correct an
++analysis-side filter.
+ 
+ ## Shallow versus retained, concretely
+ 
+@@ -205,6 +216,7 @@ third-party allocations and some JDK-library memory are outside NMT's coverage.
+ - [Retained sets and minimum versus exact size](https://help.eclipse.org/latest/topic/org.eclipse.mat.ui.help/concepts/shallowretainedheap.html)
+ - [MAT thread stacks and locals](https://help.eclipse.org/latest/topic/org.eclipse.mat.ui.help/tasks/analyzingthreads.html)
+ - [MAT unreachable-object population and reparsing](https://help.eclipse.org/latest/topic/org.eclipse.mat.ui.help/reference/inspections/unreachable_objects.html)
++- [MAT experimental discard: omitted objects, graph coverage and retained sizes](https://help.eclipse.org/latest/topic/org.eclipse.mat.ui.help/tasks/configure_mat.html)
+ - [ThreadLocalMap weak keys, strong values and cleanup, OpenJDK 25.0.3](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3-ga/src/java.base/share/classes/java/lang/ThreadLocal.java)
+ - [NMT coverage, JDK 25](https://docs.oracle.com/en/java/javase/25/vm/native-memory-tracking.html)
+ - [JEP 444: thread-dump syntax and virtual-thread tracking coverage](https://openjdk.org/jeps/444)
+diff --git a/skills/heap-dump-analysis/skill.yaml b/skills/heap-dump-analysis/skill.yaml
+index 32d365c..7ea8d72 100644
+--- a/skills/heap-dump-analysis/skill.yaml
++++ b/skills/heap-dump-analysis/skill.yaml
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: heap-dump-analysis
+-version: 1.3.5
++version: 1.3.6
+ description: >-
+   Taking and analysing a JVM heap dump: capturing without making the incident worse,
+   dominator tree versus shallow and retained size, path to GC roots excluding weak

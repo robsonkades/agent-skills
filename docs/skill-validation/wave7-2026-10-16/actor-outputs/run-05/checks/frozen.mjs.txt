@@ -1,0 +1,20 @@
+import fs from 'node:fs';
+import path from 'node:path';
+
+const input = path.resolve('../../input/project');
+const output = process.cwd();
+const walk = directory => fs.readdirSync(directory, {withFileTypes: true}).flatMap(entry =>
+  entry.isDirectory() ? walk(path.join(directory, entry.name)) : [path.join(directory, entry.name)]);
+const allowed = new Set(['src/work/OrderService.java', 'RUNBOOK.md']);
+const changed = [];
+let preserved = 0;
+for (const file of walk(input)) {
+  const relative = path.relative(input, file).replaceAll('\\', '/');
+  if (!fs.readFileSync(file).equals(fs.readFileSync(path.join(output, relative)))) {
+    changed.push(relative);
+    if (!allowed.has(relative)) throw new Error('Unexpected modification: ' + relative);
+  } else preserved++;
+}
+if (changed.length !== 2) throw new Error('Expected only the service annotation and runbook to change');
+console.log(JSON.stringify({preservedInputCopies: preserved, changedExistingFiles: changed,
+  addedRegression: fs.existsSync(path.join(output, 'test/work/Regression.java'))}, null, 2));

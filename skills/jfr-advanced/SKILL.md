@@ -73,6 +73,10 @@ Programmatically inspect `FlightRecorder.getFlightRecorder().getEventTypes()`, `
 without proving a matching event is currently registered or will emit. Validate registration,
 effective active settings, and a positive-control event count.
 
+An event name can select several registered types, including class-loader copies. Do not treat
+a name match as unique producer or schema identity. Use the [same-name type checks](references/event-catalogue.md#same-name-event-types)
+when scoping a recording or choosing a reader's schema adapter.
+
 Metadata in one file/build is not a contract for another vendor/update. Keep a schema snapshot
 or generated extractor tests per supported JDK epoch.
 

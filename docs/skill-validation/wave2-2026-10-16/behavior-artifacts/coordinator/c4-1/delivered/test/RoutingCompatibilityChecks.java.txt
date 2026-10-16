@@ -1,0 +1,38 @@
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Properties;
+
+/** Expected placement comes from the frozen accepted-vectors.json via check.mjs. */
+public final class RoutingCompatibilityChecks {
+  public static void main(String[] args) throws Exception {
+    if (args.length != 5) throw new IllegalArgumentException("key primary replica1 replica2 replica3");
+    String key = args[0], expectedPrimary = args[1];
+    List<String> expectedReplicas = List.of(args[2], args[3], args[4]);
+    check("accepted.properties", CurrentChecks.ring("n1", "n2", "n3", "n4"),
+        key, expectedPrimary, expectedReplicas);
+    check("candidate.properties", CurrentChecks.ring("n4", "n3", "n2", "n1"),
+        key, expectedPrimary, expectedReplicas);
+  }
+
+  private static void check(String configFile, HashRing ring, String key,
+      String expectedPrimary, List<String> expectedReplicas) throws Exception {
+    Properties config = new Properties();
+    try (var in = Files.newInputStream(Path.of(configFile))) {
+      config.load(in);
+    }
+    ClientRouter router = new ClientRouter(ring, config);
+    String actualPrimary = router.owner(key);
+    List<String> actualReplicas = router.owners(key);
+    if (!expectedPrimary.equals(actualPrimary) || !expectedReplicas.equals(actualReplicas)) {
+      throw new AssertionError(configFile + " key=" + key
+          + " expected primary=" + expectedPrimary + " replicas=" + expectedReplicas
+          + " actual primary=" + actualPrimary + " replicas=" + actualReplicas);
+    }
+    if (!config.getProperty("keyPrefix", "").isEmpty()) {
+      throw new AssertionError(configFile + " violates the raw request key contract");
+    }
+    System.out.println("Frozen placement passed: " + configFile + " key=" + key
+        + " primary=" + actualPrimary + " replicas=" + actualReplicas);
+  }
+}

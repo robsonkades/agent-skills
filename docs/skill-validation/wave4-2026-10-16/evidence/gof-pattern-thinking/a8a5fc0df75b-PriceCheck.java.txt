@@ -1,0 +1,12 @@
+package example.pricing;
+import java.math.BigDecimal;
+public final class PriceCheck {
+    public static void main(String[] args) {
+        PriceCalculator calculator = new PriceCalculator(new FlatRule(new BigDecimal("2.50")));
+        if (calculator.quote(4).compareTo(new BigDecimal("10.00")) != 0) throw new AssertionError();
+        if (calculator.quote(0).signum() != 0) throw new AssertionError();
+        try { calculator.quote(-1); throw new AssertionError(); }
+        catch (IllegalArgumentException expected) { }
+        System.out.println("PriceCheck passed");
+    }
+}

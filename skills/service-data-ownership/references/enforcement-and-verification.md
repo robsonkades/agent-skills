@@ -106,6 +106,7 @@ not evidence that any scenario has already run.
 | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
 | Dedicated report principal                                          | Supported view/export read, then direct private-table read                                | Supported result succeeds with permitted fields; the private path fails for the expected authorisation reason   |
 | Same report principal                                               | Valid update against an existing source row, and any reachable mutating routine           | Mutation denied; authoritative row unchanged; failure is not a syntax error or missing row                      |
+| Hostile report role with column `UPDATE` but no base-table `SELECT` | Compare a read-dependent update with a literal-only update in the disposable fixture      | The literal update exposes the write grant even when the read-dependent statement returns `42501`               |
 | Same report principal, tempting owner membership in hostile fixture | Attempt `SET ROLE` or inherited access to the owner/writer                                | Boundary test catches the reachable privilege; after removing the path, both escalation and mutation are denied |
 | Runtime writer                                                      | Valid business command, then prohibited DDL/foreign-service access                        | Ordinary operation succeeds; only the prohibited capability is denied                                           |
 | Actual migration creator                                            | Create a representative new object, then retry disallowed access                          | New-object privileges preserve the contract; an old-object-only grant test is insufficient                      |
@@ -114,17 +115,33 @@ not evidence that any scenario has already run.
 
 With SQL probes, first confirm the intended database and session identity. The following
 is a **partial PostgreSQL 17 probe**, to adapt only inside the disposable fixture with
-existing `orders.order_line(order_id, quantity)` and a report principal connected directly.
-It deliberately omits provisioning/authentication and does not prove the whole boundary:
+`orders.order_line(order_id, quantity)` containing exactly one synthetic row `(42, 3)`.
+For this table-privilege check, `7` must be valid, schema `USAGE` must be available, and the
+fixture has no row policies, triggers or external effects. Connect the report principal
+directly. The snippet omits provisioning/authentication and does not prove the whole boundary:
 
 ```sql
 SELECT current_database(), session_user, current_user;
 BEGIN;
-UPDATE orders.order_line SET quantity = quantity WHERE order_id = 42;
+UPDATE orders.order_line SET quantity = 7;
 ROLLBACK;
 ```
 
-For this probe's missing table privilege, expect an insufficient-privilege error
+The literal-only assignment deliberately has no `WHERE` or `RETURNING`: it needs no
+column `SELECT` privilege. PostgreSQL requires `SELECT` for columns read by update
+expressions/conditions. Thus `SET quantity = quantity WHERE order_id = 42` could fail for
+missing `SELECT` even if the principal still has `UPDATE(quantity)` and can perform a blind
+write. Do not interpret that failure as proof that writes are denied. See the
+[PostgreSQL 17 UPDATE privilege contract](https://www.postgresql.org/docs/17/sql-update.html).
+
+Use an adverse control in the disposable fixture: grant `UPDATE(quantity)` without base-table
+`SELECT`, show that the read-dependent statement fails but the literal update changes the
+synthetic row within its transaction, then roll back. Remove the unwanted grant and require
+the literal probe to fail while the supported view still succeeds. This checks whether the
+test detects the reachable capability rather than merely some missing prerequisite. Inspect
+other granted write columns and mutation paths separately; one denied column proves no more.
+
+For this probe's missing `UPDATE` privilege, expect an insufficient-privilege error
 ([PostgreSQL SQLSTATE `42501`](https://www.postgresql.org/docs/17/errcodes-appendix.html))
 and verify the row through an independent authorised connection. Configure the
 test runner to inspect that exact failure and clean up even when a statement errors.

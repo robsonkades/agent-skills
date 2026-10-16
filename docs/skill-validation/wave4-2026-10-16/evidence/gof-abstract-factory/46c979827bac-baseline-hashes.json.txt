@@ -1,0 +1,22 @@
+[
+  {
+    "path": "C:\\git\\agent-skills\\skills\\gof-abstract-factory\\SKILL.md",
+    "bytes": 11046,
+    "sha256": "EADF7E91299D8882B00C3406035220DBEAAB9AE11EC223F696F1EA0FDD78F834"
+  },
+  {
+    "path": "C:\\git\\agent-skills\\skills\\gof-abstract-factory\\skill.yaml",
+    "bytes": 2095,
+    "sha256": "3DB92DB215A15AF486AB8BACC4A5D5BC0512F65E34AAC81CD80CB30E6354A6BF"
+  },
+  {
+    "path": "C:\\git\\agent-skills\\skills\\gof-abstract-factory\\references\\decision-and-alternatives.md",
+    "bytes": 11513,
+    "sha256": "C2D7EF058A503F33E08E246804E3E54BA40A6DC7D229636E97F9849B456D963B"
+  },
+  {
+    "path": "C:\\git\\agent-skills\\skills\\gof-abstract-factory\\references\\worked-example.md",
+    "bytes": 8328,
+    "sha256": "D6A64548BBC14AC7410DC4AB5BA647FAE63A35F8896B6DFCEA2FD76530C0665D"
+  }
+]

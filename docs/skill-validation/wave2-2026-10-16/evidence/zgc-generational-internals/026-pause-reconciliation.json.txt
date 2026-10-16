@@ -1,0 +1,38 @@
+{
+  "completedPauses": 73,
+  "byPrefixAndPhase": {
+    "Y:Mark Start (Major)": 6,
+    "Y:Mark End": 8,
+    "Y:Relocate Start": 8,
+    "O:Mark End": 5,
+    "O:Relocate Start": 5,
+    "Y:Mark Start": 2,
+    "y:Mark Start": 13,
+    "y:Mark End": 13,
+    "y:Relocate Start": 13
+  },
+  "uniqueGCIds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18
+  ],
+  "nearestRankP99Ms": 0.01,
+  "parserOutput": "p99: 0.010 ms over 73 samples",
+  "interpretation": "Per-completed-phase samples, not per-cycle or request latency; log and custom JFR have different start windows."
+}

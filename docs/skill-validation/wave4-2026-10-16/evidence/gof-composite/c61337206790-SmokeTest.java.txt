@@ -1,0 +1,13 @@
+import java.util.List;
+
+public final class SmokeTest {
+    public static void main(String[] args) {
+        Node single = new Leaf("note", 4);
+        if (PayloadSummary.total(single) != 4) throw new AssertionError("single");
+        Node flat = new Branch("flat", List.of(new Leaf("note", 4), new Leaf("note", 4)));
+        if (PayloadSummary.total(flat) != 8) throw new AssertionError("flat independent entries");
+        Node empty = new Branch("empty", List.of());
+        if (PayloadSummary.total(empty) != 0) throw new AssertionError("empty");
+        System.out.println("smoke=3 PASS");
+    }
+}

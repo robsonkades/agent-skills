@@ -1,0 +1,34 @@
+{
+  "status": "COMPLETE",
+  "scope": "Independent prose/decision calibration against the supplied fixture contracts. These judgments do not establish implementation correctness, execution or agent treatment effects.",
+  "input": "calibration-inputs.json",
+  "inputSha256": "e32ff026cddbd45b77305fc000af17c8db730ac136f5a6cd136c03da622d1dbc",
+  "expectedLabelsAccessed": false,
+  "actorDirectoriesAccessed": false,
+  "grades": [
+    {
+      "sampleId": "K1",
+      "caseId": "R2",
+      "decision": "REJECT",
+      "reason": "The supplied peer guarantee authorizes replay without resolving the earlier unknown outcome. The contract says non-OK later responses cannot resolve that uncertainty and serverMinimum applies to any reply kind. Reclassifying UNKNOWN as TRANSIENT, erasing the unknown bit and discarding its delay violate three explicit requirements. A later current-attempt rejection does not establish failure of the entire intent."
+    },
+    {
+      "sampleId": "K2",
+      "caseId": "R3",
+      "decision": "ACCEPT",
+      "reason": "The stated policy preserves count/elapsed-domain checks, saturation, full jitter, server advice, reserve and exact-fit admission, and acknowledges planner limits. Under the declared nonnegative true elapsed duration below 2^63, start+total-now is modularly equivalent to total-(now-start); after elapsed/expiry checks it must not be rejected for spelling. No code is supplied here, so this accepts the reasoning only, not an implementation or its tests."
+    },
+    {
+      "sampleId": "K3",
+      "caseId": "R4",
+      "decision": "ACCEPT",
+      "reason": "The five deductions match the authored packet: 2*3=6, 3*2*3=18, 1060/1000=1.06, 1600/1000=1.6 and 4*10+0.1*900=130 outer grants as an upper bound. The local outer budget cannot by itself constrain hidden SDK sends; 60 grants is compatible. The late original commit defeats the timeout/not-found proof of non-application. The proposed isolated check and explicit fixture-only limitation are appropriate."
+    },
+      {
+      "sampleId": "K4",
+      "caseId": "R1",
+      "decision": "REJECT",
+      "reason": "REPLAY_SAFE=false prohibits redispatch when an effect is unresolved; it does not prohibit retry of a reliable current-attempt non-application/transient result with no earlier uncertainty. The fixture explicitly requires its chosen policy to admit a retry when outcome and count/time/cancellation/budget checks pass. Unconditional refusal changes that behavior and fails the decisive paired constraint."
+    }
+  ]
+}

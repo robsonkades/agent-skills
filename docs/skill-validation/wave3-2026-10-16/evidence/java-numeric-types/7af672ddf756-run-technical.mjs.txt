@@ -1,0 +1,77 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
+const root=path.dirname(fileURLToPath(import.meta.url));
+const repo='C:/git/agent-skills',jdk='C:/Users/robso/.jdks/temurin-25.0.3/bin';
+const ref=fs.readFileSync(path.join(repo,'skills/java-numeric-types/references/decimals-and-money.md'),'utf8');
+const blocks=[...ref.matchAll(/```java\r?\n([\s\S]*?)```/g)].map(m=>m[1]);
+const snippet=blocks.find(b=>b.includes('BigDecimal coarse ='));
+const money=blocks.find(b=>b.includes('public record Money'));
+assert.ok(snippet&&money,'Material examples must be read from current skill');
+fs.mkdirSync(path.join(root,'src'),{recursive:true});
+fs.mkdirSync(path.join(root,'classes'),{recursive:true});
+fs.writeFileSync(path.join(root,'src/Money.java'),'import java.math.*;\nimport java.util.*;\n'+money);
+const probe=`import java.math.*;
+import java.util.*;
+public final class RoundingProbe {
+    private static int checks;
+    private static void equal(String label, String expected, BigDecimal actual) {
+        if (!new BigDecimal(expected).equals(actual)) throw new AssertionError(label + ": " + actual + " scale=" + actual.scale());
+        System.out.println(label + "=" + actual.toString() + " scale=" + actual.scale());
+        checks++;
+    }
+    private static void rejects(String label, Runnable action) {
+        try { action.run(); throw new AssertionError(label + " accepted"); }
+        catch (ArithmeticException expected) { checks++; System.out.println(label + "=ArithmeticException"); }
+    }
+    public static void main(String[] args) {
+`+snippet+`
+        equal("documented coarse", "1", coarse);
+        equal("documented finer", "0.67", finer);
+        equal("documented fixed", "0.67", fixed);
+        equal("post-division padding", "1.00", coarse.setScale(2, RoundingMode.HALF_UP));
+        for (String text : List.of("2","2.0","2.00","2.000","2E+0")) {
+            equal("fixed " + text, "0.67", new BigDecimal(text).divide(three, 2, RoundingMode.HALF_UP));
+        }
+        equal("coarse negative", "-1", new BigDecimal("-2").divide(three, RoundingMode.HALF_UP));
+        equal("fixed negative", "-0.67", new BigDecimal("-2").divide(three, 2, RoundingMode.HALF_UP));
+        equal("fixed zero", "0.00", BigDecimal.ZERO.divide(three, 2, RoundingMode.HALF_UP));
+        equal("negative-scale division", "1E+2", new BigDecimal("2E+2").divide(three, RoundingMode.HALF_UP));
+        equal("fixed exponent", "66.67", new BigDecimal("2E+2").divide(three, 2, RoundingMode.HALF_UP));
+        equal("fixed ordinary", "66.67", new BigDecimal("200.00").divide(three, 2, RoundingMode.HALF_UP));
+        BigDecimal stripped = new BigDecimal("200.00").stripTrailingZeros();
+        equal("stripped operand", "2E+2", stripped);
+        equal("stripped coarse division", "1E+2", stripped.divide(three, RoundingMode.HALF_UP));
+        rejects("divide zero", () -> new BigDecimal("2").divide(BigDecimal.ZERO,2,RoundingMode.HALF_UP));
+        rejects("exact-only nonterminating", () -> new BigDecimal("2").divide(three));
+        rejects("exact-only insufficient scale", () -> new BigDecimal("2").divide(three,2,RoundingMode.UNNECESSARY));
+        Money normalized = new Money(new BigDecimal("2.000"),Currency.getInstance("USD"));
+        equal("existing Money invariant", "2.00", normalized.amount());
+        equal("invariant makes overload adequate", "0.67", normalized.amount().divide(three,RoundingMode.HALF_UP));
+        rejects("Money rejects fractional loss", () -> new Money(new BigDecimal("2.005"),Currency.getInstance("USD")));
+        BigDecimal permittedFineOperand = new BigDecimal("2.689");
+        equal("direct quotient from fine operand", "1.34", permittedFineOperand.divide(BigDecimal.valueOf(2),2,RoundingMode.HALF_UP));
+        equal("premature operand rounding changes result", "1.35", permittedFineOperand.setScale(2,RoundingMode.HALF_UP).divide(BigDecimal.valueOf(2),2,RoundingMode.HALF_UP));
+        BigDecimal staged = new BigDecimal("1.2449");
+        equal("final-only", "1.24", staged.setScale(2,RoundingMode.HALF_UP));
+        equal("intentional two-stage", "1.25", staged.round(new MathContext(4,RoundingMode.HALF_UP)).setScale(2,RoundingMode.HALF_UP));
+        System.out.println("CHECKS="+checks);
+    }
+}
+`;
+fs.writeFileSync(path.join(root,'src/RoundingProbe.java'),probe);
+const results=[];
+function run(name,exe,args) {
+ const r=spawnSync(path.join(jdk,exe+'.exe'),args,{cwd:root,encoding:'utf8',timeout:30000});
+ results.push({name,executable:path.join(jdk,exe+'.exe'),args,cwd:root,status:r.status,stdout:r.stdout,stderr:r.stderr,error:r.error?.message??null});
+ fs.writeFileSync(path.join(root,'results.json'),JSON.stringify(results,null,2)+'\n');
+ assert.equal(r.status,0,name+': '+r.stderr);
+ console.log(name+': PASS');
+ if(name==='probe')console.log(r.stdout);
+}
+run('java-version','java',['-version']);
+run('javac-version','javac',['-version']);
+run('compile-doc-examples','javac',['--release','17','-d',path.join(root,'classes'),path.join(root,'src/Money.java'),path.join(root,'src/RoundingProbe.java')]);
+run('probe','java',['-cp',path.join(root,'classes'),'RoundingProbe']);

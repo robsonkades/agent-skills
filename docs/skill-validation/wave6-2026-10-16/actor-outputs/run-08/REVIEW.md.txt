@@ -1,0 +1,15 @@
+**Decisão: supported.** O contrato aceito está sustentado. O comentário que exige `volatile` apenas por sua ausência não demonstra uma falha; nenhuma correção de produção é necessária.
+
+Em `src/work/SettingsRegistry.java:7–14`, `current` tem uma leitura sem sincronização, portanto existe uma corrida. O caminho efetivo, porém, preserva as garantias contratadas:
+
+- A referência é capturada uma vez em `observed`. Quando não nula, essa mesma referência local é devolvida; não há nova leitura desprotegida no retorno.
+- Se a leitura vê `null`, inclusive um valor desatualizado, a chamada adquire `lock` e relê `current`. A liberação desse monitor pelo inicializador precede a aquisição posterior, garantindo a visibilidade da atribuição. Sem inicialização anterior, a chamada constrói e publica o valor ainda sob o monitor.
+- O teste interno e `build()` ficam na mesma seção crítica. Sem exceções, reentrada ou reset, conforme o contrato, a primeira inicialização executa `build()` uma vez; as demais chamadas reutilizam a única referência. Cada retorno é não nulo e mantém identidade. A entrega do registry antes de `Thread.start` também assegura sua inicialização aos chamadores. [JLS SE25 §17.4.5](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.4.5).
+
+O caminho rápido exige uma garantia adicional para o conteúdo. Em `Settings.java:3–6`, o construtor escreve `next.limit = 64`, atribui `record` (`final`) e termina sem escape. A referência de `Settings` só é publicada depois. O freeze de `record` protege tanto sua inicialização quanto a escrita anterior alcançada por `record.limit`, mesmo sendo esse inteiro não-final. Logo, `limit()` observa 64 também no caminho sem monitor. Essa é uma aplicação da regra de cadeia de desreferência, não uma suposição de que qualquer referência final torna todo o grafo imutável. [JLS SE25 §17.5 e §17.5.1](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.5.1).
+
+O contrato e o código excluem alterações posteriores e aliases externos de `Record`. A garantia de inicialização não cobriria futuras mutações. Ela também não transforma a leitura de `current` em leitura volatile nem promete um caminho rápido sempre atualizado. Não há requisito de desempenho ou ausência de bloqueio. Acrescentar `volatile` poderia ser uma preferência de manutenção; não é reparo obrigatório deste contrato.
+
+**Observado:** os sete arquivos fornecidos na cópia de execução tinham os mesmos SHA-256 dos arquivos de entrada. `node check.mjs`, em `output/project`, compilou com `--release 25` e terminou com código 0: `sequential identity/value/build check PASS; no concurrency proof`. Java e javac informaram 25.0.3.
+
+**Limites:** o teste é sequencial; não executei stress concorrente, benchmarks ou verificador formal. A sustentação concorrente é a análise normativa acima, condicionada às premissas já aceitas, sem lacuna material de evidência identificada. Fontes, contratos e dependências foram preservados. Não há correção proposta.

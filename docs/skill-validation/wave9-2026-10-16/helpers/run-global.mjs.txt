@@ -1,0 +1,9 @@
+import fs from 'node:fs';
+import {spawnSync} from 'node:child_process';
+const repo='C:/git/agent-skills',report=repo+'/docs/skill-validation/wave9-2026-10-16';
+const kind=process.argv[2];if(!['registry-build','verify'].includes(kind))throw Error('Known command required');
+const command=kind==='verify'?'npm run verify':'npm run registry:build';
+const log=report+'/'+kind+'.log.txt',result=report+'/'+kind+'-result.json';if(fs.existsSync(log)||fs.existsSync(result))throw Error('Preserve earlier global result');
+const start=new Date().toISOString();const r=spawnSync('cmd.exe',['/d','/s','/c',command],{cwd:repo,encoding:'utf8',timeout:600000,maxBuffer:16*1024*1024,windowsHide:true});
+fs.writeFileSync(log,(r.stdout??'')+(r.stderr??''));fs.writeFileSync(result,JSON.stringify({command,cwd:repo,start,end:new Date().toISOString(),exit:r.status,error:r.error?.message??null,log:log.slice(report.length+1)},null,2)+'\n');
+console.log(JSON.stringify({command,exit:r.status,error:r.error?.message??null,log}));console.log((r.stdout??'').slice(-1800));if(r.status!==0||r.error)process.exitCode=1;

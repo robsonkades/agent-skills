@@ -1,0 +1,10 @@
+WARN Generated new file A.java by:
+WARN Generated new file B.java by:
+WARN Please review and commit the results.
+WARN Estimate time saved: PT0S
+OBSERVED state=TO_BE_PROCESSED
+OBSERVED failure=java.io.UncheckedIOException: Unable to rewrite source files
+OBSERVED A.exists=true
+OBSERVED B.regularFile=false
+OBSERVED B.directory=true
+OBSERVED localNotes=keep this unrelated local work

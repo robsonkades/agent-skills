@@ -1,0 +1,478 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "spring-http-clients",
+  "ownedPath": "C:/git/agent-skills/skills/spring-http-clients",
+  "recorded": "2026-10-16",
+  "assignmentBaseline": {
+    "committedVersion": "1.1.0",
+    "assignmentVersion": "1.1.0",
+    "preExistingVersionBump": false,
+    "stagedChanges": [],
+    "unstagedChanges": [],
+    "untrackedFiles": [],
+    "files": [
+      {
+        "path": "skills\\spring-http-clients\\SKILL.md",
+        "sha256": "C364467B63861AB796475519F3E08AAD56CCDD1D015E1ABA91778EFE62E7CC05"
+      },
+      {
+        "path": "skills\\spring-http-clients\\skill.yaml",
+        "sha256": "EE6914664BD5DA9409DD5F3626713D3B2379FC43B0C597E159A805F6C07B673F"
+      },
+      {
+        "path": "skills\\spring-http-clients\\references\\failure-and-response-bounds.md",
+        "sha256": "A8D3EF105B23A524800F3EF59626A9D577152B0B5054185C7F85C50890F86534"
+      },
+      {
+        "path": "skills\\spring-http-clients\\references\\verification.md",
+        "sha256": "12B89D8A50A87E99C345BAF52AE9CB8DE184612354DDAEE850F2E68EC3B9BB35"
+      },
+      {
+        "path": "skills\\spring-http-clients\\references\\wiring-and-transports.md",
+        "sha256": "A728C6E750D6834504D00D85470962101638ADEBE7925D897F66C3B51FBB0BAE"
+      }
+    ],
+    "note": "Complete five-file package read; only repository AGENTS.md applies. All changes below are attributable to this reviewer."
+  },
+  "versions": {
+    "committed": "1.1.0",
+    "assignment": "1.1.0",
+    "final": "1.1.1",
+    "rationale": "One patch bump for the focused content clarification and validation guard; no repeated bump."
+  },
+  "filesChangedByReviewer": [
+    "skills/spring-http-clients/references/failure-and-response-bounds.md",
+    "skills/spring-http-clients/references/verification.md",
+    "skills/spring-http-clients/skill.yaml"
+  ],
+  "filesChangedBeforeAssignment": [],
+  "changes": [
+    {
+      "location": "references/failure-and-response-bounds.md:45-60",
+      "problem": "A cap inside exchange could be treated as a memory bound although an earlier Spring response wrapper had already aggregated the complete body.",
+      "correction": "Require locating the first aggregation, explain BufferingClientHttpRequestFactory / Framework 7 bufferContent and the v7.0.9 first-getBody copy, and choose a scoped buffering/logging adjustment or an enforced earlier limit. Preserve builder/TLS/observations.",
+      "evidence": "Tagged primary Spring source plus executed actual RestClient counted-source control."
+    },
+    {
+      "location": "references/verification.md:80-86",
+      "problem": "An oversized-body exception test can pass in both bounded and fully buffered configurations.",
+      "correction": "Retain real active buffering/interceptors in validation, observe before aggregation, and use a buffering-enabled negative control; separate wrapper evidence from network and total-memory claims.",
+      "evidence": "Six technical cases reproduced the rejection-versus-consumption distinction."
+    },
+    {
+      "location": "skill.yaml:3",
+      "problem": "Changed package contents need immutable-release identity.",
+      "correction": "Patch 1.1.0 -> 1.1.1; shared generated data left to coordinator."
+    }
+  ],
+  "preserved": [
+    "Java 25 / Spring Boot 4.1.1 / Spring Framework 7.0.9 authoring baseline and version-matched project inspection.",
+    "Existing imperative/reactive/interface selection, Boot injected builders and group registration; no client migration or new dependencies.",
+    "Timeout-phase and deadline limits; unknown mutation outcomes, retry ownership and provider semantics.",
+    "DTO/body versus custom decoder decisions, empty/malformed response contracts, response closure and special streaming-result behavior.",
+    "TLS/destination/context rules, SSL/transport replacement ordering, URI encoding and status translation.",
+    "Actual-path verification, mocking-versus-transport limits, documentation and optional neighboring ownership.",
+    "SKILL.md and wiring-and-transports.md remain byte-identical to assignment baseline; no capability, example or contract removed."
+  ],
+  "reviewCriteria": [
+    "Follow the active caller, Boot builder, selected transport and response wrappers to the first body aggregation.",
+    "Distinguish rejection after buffering from prevention of whole-response allocation.",
+    "Change only the affected operation's unnecessary buffering while retaining valid configuration and caller semantics.",
+    "Validate the boundary with a negative control and classify wrapper versus transport evidence.",
+    "Retain valid existing behavior when the decisive buffering constraint is false."
+  ],
+  "commands": [
+    {
+      "command": "$ErrorActionPreference = 'Stop'\n@'\nimport {readFileSync,readdirSync,existsSync} from 'node:fs';\nimport {resolve,relative,dirname} from 'node:path';\nimport {parseManifest} from './packages/core/src/domain/manifest.ts';\nimport {buildSkillPackage} from './packages/core/src/domain/skill-package.ts';\nimport {validatePackage} from './packages/core/src/application/validate-package.ts';\nconst root=resolve('skills/spring-http-clients');\nconst paths=readdirSync(root,{recursive:true,withFileTypes:true}).filter(e=>e.isFile()).map(e=>resolve(e.parentPath,e.name));\nconst files=paths.map(p=>({path:relative(root,p).replaceAll('\\\\','/'),bytes:readFileSync(p)}));\nconst parsed=parseManifest(readFileSync(resolve(root,'skill.yaml'),'utf8'),{strict:true});\nconst report=validatePackage(buildSkillPackage(parsed.manifest,files),{directoryName:'spring-http-clients'});\nconst issues=[...parsed.issues,...report.issues];\nconst links=[];\nfor(const path of paths.filter(p=>p.endsWith('.md'))) {\n const text=readFileSync(path,'utf8');\n for(const match of text.matchAll(/\\[[^\\]]*\\]\\((<[^>]+>|[^\\s)]+)(?:\\s+[^)]*)?\\)/g)) {\n  const target=match[1].replace(/^<|>$/g,'');\n  if(/^[a-z][a-z0-9+.-]*:/i.test(target)) continue;\n  const [file,anchor]=target.split('#');\n  const dest=file?resolve(dirname(path),decodeURIComponent(file)):path;\n  if(!existsSync(dest)) throw new Error('Missing link '+target+' from '+path);\n  if(anchor) {\n   const headings=[...readFileSync(dest,'utf8').matchAll(/^#{1,6}\\s+(.+)$/gm)].map(m=>m[1].toLowerCase().replace(/[^\\w\\s-]/g,'').replace(/\\s/g,'-'));\n   if(!headings.includes(anchor)) throw new Error('Missing anchor '+target);\n  }\n  links.push({from:relative(root,path).replaceAll('\\\\','/'),target});\n }\n}\nconsole.log(JSON.stringify({skill:'spring-http-clients',files:files.map(f=>f.path),manifestVersion:parsed.manifest.version,issues,relativeLinks:links},null,2));\nif(issues.length) process.exitCode=1;\n'@ | node --input-type=module -",
+      "cwd": "C:/git/agent-skills",
+      "classification": "executed skill-local check",
+      "chunk_id": "d76860",
+      "wall_time_seconds": 0.1997752,
+      "exit_code": 0,
+      "original_token_count": 235,
+      "output": "{\n  \"skill\": \"spring-http-clients\",\n  \"files\": [\n    \"SKILL.md\",\n    \"skill.yaml\",\n    \"references/failure-and-response-bounds.md\",\n    \"references/verification.md\",\n    \"references/wiring-and-transports.md\"\n  ],\n  \"manifestVersion\": \"1.1.1\",\n  \"issues\": [],\n  \"relativeLinks\": [\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/wiring-and-transports.md\"\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/failure-and-response-bounds.md\"\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/verification.md\"\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/wiring-and-transports.md#document-the-integration-that-was-delivered\"\n    },\n    {\n      \"from\": \"references/verification.md\",\n      \"target\": \"wiring-and-transports.md#a-finite-customer-lookup\"\n    },\n    {\n      \"from\": \"references/wiring-and-transports.md\",\n      \"target\": \"failure-and-response-bounds.md\"\n    }\n  ]\n}\n"
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/spring-http-clients/SKILL.md skills/spring-http-clients/skill.yaml skills/spring-http-clients/references/failure-and-response-bounds.md skills/spring-http-clients/references/verification.md skills/spring-http-clients/references/wiring-and-transports.md",
+      "cwd": "C:/git/agent-skills",
+      "classification": "executed skill-local check",
+      "chunk_id": "9c919a",
+      "wall_time_seconds": 0.2844337,
+      "exit_code": 0,
+      "original_token_count": 17,
+      "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+    },
+    {
+      "command": "git diff --check -- skills/spring-http-clients; git diff --stat -- skills/spring-http-clients; git diff -- skills/spring-http-clients",
+      "cwd": "C:/git/agent-skills",
+      "classification": "executed skill-local check",
+      "chunk_id": "937f4f",
+      "wall_time_seconds": 0.1727496,
+      "exit_code": 0,
+      "original_token_count": 1129,
+      "output": " .../references/failure-and-response-bounds.md             | 15 +++++++++++++--\n skills/spring-http-clients/references/verification.md     |  8 ++++++++\n skills/spring-http-clients/skill.yaml                     |  2 +-\n 3 files changed, 22 insertions(+), 3 deletions(-)\ndiff --git a/skills/spring-http-clients/references/failure-and-response-bounds.md b/skills/spring-http-clients/references/failure-and-response-bounds.md\nindex d579a48..2b684f0 100644\n--- a/skills/spring-http-clients/references/failure-and-response-bounds.md\n+++ b/skills/spring-http-clients/references/failure-and-response-bounds.md\n@@ -43,8 +43,19 @@ value just because the call crosses HTTP. Establish what bounds actually hold; a\n provider's size promise is an assumption, not a locally enforced cap.\n \n An untrusted peer, large export or explicit memory limit changes that choice. Prefer\n-an existing enforced codec/transport limit. When the selected imperative path lacks the\n-required cap, finite bounded extraction inside `exchange` is one conditional option:\n+an existing enforced codec/transport limit. Locate the first aggregation step before\n+placing a cap: factory wrappers and body-logging interceptors can consume the response\n+before application extraction. `BufferingClientHttpRequestFactory`, or Framework 7's\n+`RestClient.Builder.bufferContent(...)`, can enable whole-response buffering. In 7.0.9,\n+the [buffering response wrapper](https://github.com/spring-projects/spring-framework/blob/v7.0.9/spring-web/src/main/java/org/springframework/http/client/BufferingClientHttpResponseWrapper.java)\n+copies the underlying body when `getBody()` first runs, before returning the stream.\n+A later `readNBytes(limit + 1)` can reject excess without preventing that allocation.\n+Restrict buffering for the affected operation, replace unnecessary full-body logging,\n+or enforce the required limit before that aggregation; preserve unrelated builder,\n+TLS and observation configuration. Do not claim a cap from rejection alone.\n+\n+When no earlier layer performs unbounded aggregation and the selected imperative path\n+lacks the required cap, finite bounded extraction inside `exchange` is one option:\n check status before copying diagnostic bodies; reject a declared excessive length;\n read at most `limit + 1` bytes and reject excess before decoding. Use an appropriate\n representation/decoder rather than turning this into a generic text/JSON client.\ndiff --git a/skills/spring-http-clients/references/verification.md b/skills/spring-http-clients/references/verification.md\nindex e80f45e..d9729b2 100644\n--- a/skills/spring-http-clients/references/verification.md\n+++ b/skills/spring-http-clients/references/verification.md\n@@ -77,6 +77,14 @@ under investigation.\n | Pool/cancellation        | Exhaust a small pool on the deployed transport, cancel body consumption, and observe release/acquisition metrics and subsequent progress.                                                  |\n | TLS/destination policy   | Exercise trusted identity, wrong hostname, untrusted issuer, required client certificate and forbidden redirect destinations as applicable.                                                |\n \n+For a memory-bound claim, keep the active buffering predicate, wrappers and logging\n+interceptors in the check. A callback throwing for an oversized body can still pass\n+after an earlier layer buffered it all. Use an unknown-length oversized response and\n+observe consumption at the layer before aggregation; include a buffering-enabled\n+negative control when that is the suspected bypass. A counted test stream can expose\n+this wrapper behavior, but does not establish an exact wire-byte limit or socket\n+cleanup; transport prefetch and decoding buffers have separate costs.\n+\n A close invocation is evidence of close ownership, not proof of socket reuse or immediate\n release of every operating-system resource. Caller timeout does not prove server work\n stopped. Timing tolerances detect missing limits; they are not latency measurements or\ndiff --git a/skills/spring-http-clients/skill.yaml b/skills/spring-http-clients/skill.yaml\nindex 704aa14..47b99d3 100644\n--- a/skills/spring-http-clients/skill.yaml\n+++ b/skills/spring-http-clients/skill.yaml\n@@ -1,6 +1,6 @@\n schemaVersion: 1\n name: spring-http-clients\n-version: 1.1.0\n+version: 1.1.1\n description: >-\n   Implement outbound Spring integrations or diagnose RestClient, WebClient and\n   HttpExchange proxies that lose Boot configuration, stall, buffer oversized responses\n"
+    },
+    {
+      "command": "& 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-http-clients-check/run-check.ps1'",
+      "cwd": "C:/git/agent-skills",
+      "classification": "executed technical contract check using cached actual Spring libraries; counted transport double",
+      "chunk_id": "a0c958",
+      "wall_time_seconds": 0.7376093,
+      "exit_code": 0,
+      "original_token_count": 157,
+      "output": "buffering=false status=200 size=65536 rejected=true sourceRead=1025 closed=true requests=1\r\nbuffering=true status=200 size=65536 rejected=true sourceRead=65536 closed=true requests=1\r\nbuffering=false status=500 size=65536 rejected=true sourceRead=1025 closed=true requests=1\r\nbuffering=true status=500 size=65536 rejected=true sourceRead=65536 closed=true requests=1\r\nbuffering=false status=200 size=8 rejected=false sourceRead=8 closed=true requests=1\r\nbuffering=true status=200 size=8 rejected=false sourceRead=8 closed=true requests=1\r\nPASS: six actual RestClient cases; counted source is a transport double, not a socket.\r\n"
+    }
+  ],
+  "structuralResults": {
+    "strictPackage": {
+      "status": "PASS",
+      "files": 5,
+      "version": "1.1.1",
+      "issues": []
+    },
+    "relativeLinksAndAnchors": {
+      "status": "PASS",
+      "checked": 6
+    },
+    "scopedPrettier": {
+      "status": "PASS",
+      "files": 5
+    },
+    "scopedDiffCheck": {
+      "status": "PASS"
+    },
+    "finalInspection": {
+      "status": "PASS",
+      "changedFiles": 3,
+      "insertions": 22,
+      "deletions": 3,
+      "stagedChanges": [],
+      "untrackedOwnedFiles": [],
+      "finalFiles": [
+        {
+          "path": "skills\\spring-http-clients\\SKILL.md",
+          "sha256": "C364467B63861AB796475519F3E08AAD56CCDD1D015E1ABA91778EFE62E7CC05"
+        },
+        {
+          "path": "skills\\spring-http-clients\\skill.yaml",
+          "sha256": "27D528FC7C4C6B4E2DA993F61234A145360E1CD805724473A592D4E5308DBC20"
+        },
+        {
+          "path": "skills\\spring-http-clients\\references\\failure-and-response-bounds.md",
+          "sha256": "CBDD9DBE66B0FEFBF9DA0FC2B3B18D58198885EEF3CED414A2F94E287164FCFE"
+        },
+        {
+          "path": "skills\\spring-http-clients\\references\\verification.md",
+          "sha256": "592E2800696E310D685AF8BD41530C70CE2BB4A1DA0283CEE370B6D7AA00911E"
+        },
+        {
+          "path": "skills\\spring-http-clients\\references\\wiring-and-transports.md",
+          "sha256": "A728C6E750D6834504D00D85470962101638ADEBE7925D897F66C3B51FBB0BAE"
+        }
+      ]
+    },
+    "unchangedFiles": ["SKILL.md", "references/wiring-and-transports.md"]
+  },
+  "technicalChecks": {
+    "artifactRoot": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-http-clients-check",
+    "source": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-http-clients-check/BufferingBoundaryCheck.java",
+    "reproduction": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-http-clients-check/run-check.ps1",
+    "output": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-http-clients-check/run.log",
+    "compileLog": "Not created: javac produced no output; compile exit was checked before execution.",
+    "compiler": "javac 25.0.3 --release 25",
+    "runtime": "OpenJDK Temurin 25.0.3+9-LTS",
+    "libraries": [
+      "spring-web 7.0.9",
+      "spring-core 7.0.9",
+      "spring-beans 7.0.9",
+      "spring-test 7.0.9",
+      "micrometer-observation 1.16.7",
+      "micrometer-commons 1.16.7",
+      "commons-logging 1.3.5",
+      "jspecify 1.0.0"
+    ],
+    "dependencySource": "Existing C:/Users/robso/.m2/repository cache; no Maven build/install, dependency download or version upgrade.",
+    "results": [
+      {
+        "buffering": false,
+        "status": 200,
+        "bodyBytes": 65536,
+        "cap": 1024,
+        "rejected": true,
+        "sourceRead": 1025,
+        "closed": true,
+        "requests": 1
+      },
+      {
+        "buffering": true,
+        "status": 200,
+        "bodyBytes": 65536,
+        "cap": 1024,
+        "rejected": true,
+        "sourceRead": 65536,
+        "closed": true,
+        "requests": 1
+      },
+      {
+        "buffering": false,
+        "status": 500,
+        "bodyBytes": 65536,
+        "cap": 1024,
+        "rejected": true,
+        "sourceRead": 1025,
+        "closed": true,
+        "requests": 1
+      },
+      {
+        "buffering": true,
+        "status": 500,
+        "bodyBytes": 65536,
+        "cap": 1024,
+        "rejected": true,
+        "sourceRead": 65536,
+        "closed": true,
+        "requests": 1
+      },
+      {
+        "buffering": false,
+        "status": 200,
+        "bodyBytes": 8,
+        "cap": 1024,
+        "rejected": false,
+        "sourceRead": 8,
+        "closed": true,
+        "requests": 1
+      },
+      {
+        "buffering": true,
+        "status": 200,
+        "bodyBytes": 8,
+        "cap": 1024,
+        "rejected": false,
+        "sourceRead": 8,
+        "closed": true,
+        "requests": 1
+      }
+    ],
+    "additionalAssertions": [
+      "Unknown Content-Length in all cases.",
+      "Distinctive configured header retained on actual request.",
+      "One outgoing request per case.",
+      "Response body close observed in success and rejection."
+    ],
+    "interpretation": "Actual RestClient bufferContent path and Spring buffering wrapper executed. The source stream generates bytes; its read counter reveals aggregation before the callback. Equal rejection is not an adequate verifier for the claimed memory boundary.",
+    "limits": [
+      "Transport is a Spring MockClientHttpRequest/MockClientHttpResponse backed by a counted stream, not a socket.",
+      "No Boot application context or live JDK/Apache/Reactor transport tested.",
+      "No total allocation, prefetch, TLS, socket reuse, cancellation or performance claim follows.",
+      "Existing shipped examples unchanged and not recompiled in this review."
+    ]
+  },
+  "behavioralEvaluation": {
+    "status": "NOT_EXECUTED",
+    "actualAgentOutputs": [],
+    "measuredImprovement": false,
+    "walkthroughs": [
+      {
+        "caseId": "spring-http-buffering-a",
+        "type": "structured reviewer walkthrough",
+        "result": "Following active configuration finds an earlier buffer, so retain useful callback cap but withdraw the proof claim and select a peer-specific buffering correction."
+      },
+      {
+        "caseId": "spring-http-buffering-b",
+        "type": "structured reviewer walkthrough",
+        "result": "False predicate and supplied absence of other body readers support retaining the configured path while strengthening verification and qualifying certainty."
+      }
+    ],
+    "caveat": "Technical controls are not independent agent behavior evaluations. These proposed cases exercise the newly clarified mechanism and are known development cases, not unseen holdouts."
+  },
+  "sources": [
+    {
+      "url": "https://github.com/spring-projects/spring-framework/blob/v7.0.9/spring-web/src/main/java/org/springframework/http/client/BufferingClientHttpResponseWrapper.java",
+      "checked": "2026-10-16",
+      "kind": "tagged primary implementation",
+      "version": "Framework 7.0.9",
+      "supports": "First getBody aggregates the underlying source before returning a replayable stream; central correction."
+    },
+    {
+      "url": "https://docs.spring.io/spring-framework/docs/7.0.9/javadoc-api/org/springframework/http/client/BufferingClientHttpRequestFactory.html",
+      "checked": "2026-10-16",
+      "kind": "primary API",
+      "version": "Framework 7.0.9",
+      "supports": "Request/response buffering and predicate; Framework 7 bufferContent route."
+    },
+    {
+      "url": "https://github.com/spring-projects/spring-framework/blob/v7.0.9/spring-web/src/main/java/org/springframework/web/client/RestClient.java",
+      "checked": "2026-10-16",
+      "kind": "tagged primary API source",
+      "version": "Framework 7.0.9",
+      "supports": "bufferContent introduced in 7.0; buffers request and response for repeatable body reads."
+    },
+    {
+      "url": "https://github.com/spring-projects/spring-framework/blob/v7.0.9/spring-web/src/main/java/org/springframework/web/client/DefaultRestClient.java",
+      "checked": "2026-10-16",
+      "kind": "tagged primary implementation",
+      "version": "Framework 7.0.9",
+      "supports": "Existing special streaming-result lifecycle guidance remains scoped and supported."
+    },
+    {
+      "url": "https://github.com/spring-projects/spring-framework/blob/v7.0.9/spring-web/src/main/java/org/springframework/http/client/JdkClientHttpRequest.java",
+      "checked": "2026-10-16",
+      "kind": "tagged primary implementation",
+      "version": "Framework 7.0.9",
+      "supports": "Existing additional Spring timeout timer/stream closure statement; raw JDK request behavior alone is insufficient."
+    },
+    {
+      "url": "https://docs.spring.io/spring-framework/docs/7.0.9/javadoc-api/org/springframework/web/client/RestClient.ResponseSpec.html",
+      "checked": "2026-10-16",
+      "kind": "primary API",
+      "version": "Framework 7.0.9",
+      "supports": "Existing requiredBody since 7.0.4 and empty-body semantics."
+    },
+    {
+      "url": "https://docs.spring.io/spring-framework/docs/7.0.9/javadoc-api/org/springframework/web/client/RestClient.RequestHeadersSpec.html",
+      "checked": "2026-10-16",
+      "kind": "primary API",
+      "version": "Framework 7.0.9",
+      "supports": "Existing retrieve dispatch and exchange ownership guidance; source consulted for streaming implementation nuance."
+    },
+    {
+      "url": "https://github.com/spring-projects/spring-boot/blob/v4.1.1/module/spring-boot-restclient/src/main/java/org/springframework/boot/restclient/autoconfigure/service/RestClientCustomizerHttpServiceGroupConfigurer.java",
+      "checked": "2026-10-16",
+      "kind": "tagged primary implementation",
+      "version": "Boot 4.1.1",
+      "supports": "Existing group client builders receive ordered RestClientCustomizer beans."
+    }
+  ],
+  "evidenceFailures": [
+    {
+      "action": "web open RestClient.Builder 7.0.9 API",
+      "result": "Tool reported the URL inaccessible.",
+      "resolution": "Exact tagged RestClient.java source retrieved; BufferingClientHttpRequestFactory versioned API also documents bufferContent since 7.0."
+    },
+    {
+      "action": "Initial apply_patch",
+      "result": "Rejected because the version-file path accidentally omitted skills/spring-http-clients.",
+      "resolution": "No files were modified by the failed patch; scoped git diff confirmed empty. Reapplied with the correct owned manifest path."
+    },
+    {
+      "action": "Broad cache inventory",
+      "result": "Output truncated due many cached versions.",
+      "resolution": "Exact required jar paths and POMs were checked separately; all eight dependencies existed and the actual compilation/execution passed."
+    }
+  ],
+  "limits": [
+    "No overall or behavioral quality gain measured.",
+    "New technical proof is limited to the checked Spring 7.0.9 wrapper/client path with a controlled source; runtime/transport-specific memory and network behavior remains project validation.",
+    "Body-logging interceptor warning is conditional on an interceptor actually consuming/aggregating the body; mere interceptor presence is not a defect.",
+    "No production system, peer credentials, real agent configuration, global repository command or neighbor package changed.",
+    "Global validation belongs to the coordinator after all reviewers stop."
+  ],
+  "cases": [
+    {
+      "id": "spring-http-buffering-a",
+      "classification": "proposed development case; not executed; not a holdout",
+      "input": {
+        "task": "Use spring-http-clients to review the existing export response-size claim. Follow the active caller and configuration in the supplied files, then update review.md with the supported conclusion, smallest justified adjustment or no change, and a discriminating verification plan. Preserve the current Java/Spring baseline, provider contract, Boot TLS/observation configuration and error semantics. This is a source/configuration review: do not contact a peer, start a server, download dependencies or edit application code.",
+        "prerequisites": [
+          "Materialize the exact fixture files in a fresh isolated workspace. Provide the current spring-http-clients skill and its routed references.",
+          "Give the actor task and fixture files only. Hide this handoff, evaluator criteria, prior outputs and the other case.",
+          "These are source/configuration review fixtures. File reading and writing review.md are sufficient; primary-source lookup is allowed. They are not a complete runnable Boot application and no runtime execution is required."
+        ],
+        "fixtureFiles": {
+          "project-context.md": "# Export client review fixture\nThis is a synthetic source/configuration review, not a running application or measured incident.\nTarget: Java 25, Spring Boot 4.1.1, Spring Framework 7.0.9.\nThe managed imperative REST client starter is present. The application uses Boot's injected RestClient.Builder. Its selected JdkClientHttpRequestFactory, named SSL bundle and observations are correctly configured; there are no other request-factory wrappers or body-reading interceptors on this client. The files below show its complete peer-specific customization and caller. Diagnostics require status, duration and request identifiers only, not a retained body.\nThe peer can return an unknown-length binary download larger than 64 KiB. It makes no finite-size promise. The consumed contract accepts at most 1024 body bytes; oversized success must fail before any application/client layer aggregates the whole body. This is not a 1024-byte total JVM memory or network-traffic guarantee. Error status must remain ExportPeer.PeerFailure, and no retry is authorized. Keep the existing 500 ms transport configuration; full deadline/TLS/pooling behavior is outside this review.\n",
+          "src/ExportClientConfiguration.java": "import org.springframework.boot.context.properties.ConfigurationProperties;\nimport org.springframework.boot.context.properties.EnableConfigurationProperties;\nimport org.springframework.context.annotation.Bean;\nimport org.springframework.context.annotation.Configuration;\nimport org.springframework.web.client.RestClient;\n\n@Configuration(proxyBeanMethods = false)\n@EnableConfigurationProperties(ExportClientConfiguration.ExportProperties.class)\npublic class ExportClientConfiguration {\n    @ConfigurationProperties(\"exports\")\n    public record ExportProperties(String baseUrl, boolean bufferForDiagnostics) {}\n\n    @Bean\n    ExportPeer exportPeer(RestClient.Builder builder, ExportProperties settings) {\n        return new ExportPeer(builder.clone()\n                .baseUrl(settings.baseUrl())\n                .bufferContent((uri, method) -> settings.bufferForDiagnostics())\n                .build());\n    }\n}\n",
+          "src/ExportPeer.java": "import org.springframework.web.client.RestClient;\n\npublic final class ExportPeer {\n    private static final int LIMIT = 1024;\n    private final RestClient client;\n\n    public ExportPeer(RestClient client) {\n        this.client = client;\n    }\n\n    public byte[] download() {\n        return client.get().uri(\"/export\").exchange((request, response) -> {\n            if (!response.getStatusCode().is2xxSuccessful()) {\n                throw new PeerFailure(response.getStatusCode().value());\n            }\n            if (response.getHeaders().getContentLength() > LIMIT) {\n                throw new TooLarge();\n            }\n            byte[] body = response.getBody().readNBytes(LIMIT + 1);\n            if (body.length > LIMIT) {\n                throw new TooLarge();\n            }\n            return body;\n        });\n    }\n\n    public static final class TooLarge extends RuntimeException {}\n    public static final class PeerFailure extends RuntimeException {\n        public final int status;\n        public PeerFailure(int status) {\n            this.status = status;\n        }\n    }\n}\n",
+          "src/ExportService.java": "public final class ExportService {\n    private final ExportPeer peer;\n\n    public ExportService(ExportPeer peer) {\n        this.peer = peer;\n    }\n\n    public byte[] loadExport() {\n        return peer.download();\n    }\n}\n",
+          "existing-test-notes.md": "# Existing narrow checks\nA mock request test returns an unknown-length 65536-byte successful response and observes ExportPeer.TooLarge. It asserts only the exception type. Another test returns 8 bytes and compares the result; a 500 response produces ExportPeer.PeerFailure. No test observes reads before a response wrapper or measures allocation, transport cancellation, socket reuse or TLS.\n",
+          "review.md": "# Current export size-bound claim\nThe download reads only LIMIT + 1 bytes and the oversized-response test passes. The whole-response aggregation bound is therefore established.\n",
+          "application.properties": "exports.base-url=https://exports.example\nexports.buffer-for-diagnostics=true\nspring.http.clients.imperative.factory=jdk\nspring.http.clients.read-timeout=500ms\nspring.http.clients.redirects=dont-follow\n"
+        }
+      },
+      "criteria": {
+        "expected": [
+          "Follow ExportService -> ExportPeer -> ExportClientConfiguration -> application.properties rather than reviewing readNBytes in isolation.",
+          "Update review.md with evidence-linked conclusions, a narrow adjustment or explicit no-change decision, and concrete verification; do not leave only a question log.",
+          "Preserve injected Boot builder cloning, configured factory/TLS/observations, status mapping, successful small-byte results, timeout baseline and no-retry contract.",
+          "Distinguish the exception-only mock result from proof of bounded aggregation. Propose an unknown-length generated/counted source before the suspected buffering layer, with a buffering-enabled negative control, and retain the actual active customization.",
+          "Keep source/wrapper evidence separate from actual socket, wire-byte, TLS, latency, or total-allocation guarantees. State unexecuted checks honestly.",
+          "Identify exports.buffer-for-diagnostics=true as the material active constraint: bufferContent selects whole-response buffering, and the 7.0.9 wrapper reads the source body before returning the stream to readNBytes.",
+          "Reject the current aggregation-bound claim even though TooLarge is thrown; recommend limiting/disabling buffering for this peer/operation because diagnostics do not require body retention, or another proven bound before aggregation.",
+          "Avoid changing the already useful callback size cap or error mapping merely to hide the prior buffering issue."
+        ],
+        "failureConditions": [
+          "Accepts an exception-only oversized-response test as proof of bounded aggregation without inspecting the active configuration.",
+          "Replaces the configured client with RestClient.create or drops TLS/observation settings.",
+          "Changes Java/Spring, adds WebFlux/resilience machinery, retries the call, or changes failure semantics without need.",
+          "Claims exact network consumption, immediate resource release or total memory bounded to LIMIT from source analysis.",
+          "Contacts a peer, starts a server, downloads dependencies, edits application code, or claims an executed verification not performed.",
+          "Says the callback's 1025-byte read prevents the earlier complete-body buffer.",
+          "Recommends only truncating logs or shortening an exception after buffering, or simply increasing the cap."
+        ]
+      }
+    },
+    {
+      "id": "spring-http-buffering-b",
+      "classification": "proposed development case; not executed; not a holdout",
+      "input": {
+        "task": "Use spring-http-clients to review the existing export response-size claim. Follow the active caller and configuration in the supplied files, then update review.md with the supported conclusion, smallest justified adjustment or no change, and a discriminating verification plan. Preserve the current Java/Spring baseline, provider contract, Boot TLS/observation configuration and error semantics. This is a source/configuration review: do not contact a peer, start a server, download dependencies or edit application code.",
+        "prerequisites": [
+          "Materialize the exact fixture files in a fresh isolated workspace. Provide the current spring-http-clients skill and its routed references.",
+          "Give the actor task and fixture files only. Hide this handoff, evaluator criteria, prior outputs and the other case.",
+          "These are source/configuration review fixtures. File reading and writing review.md are sufficient; primary-source lookup is allowed. They are not a complete runnable Boot application and no runtime execution is required."
+        ],
+        "fixtureFiles": {
+          "project-context.md": "# Export client review fixture\nThis is a synthetic source/configuration review, not a running application or measured incident.\nTarget: Java 25, Spring Boot 4.1.1, Spring Framework 7.0.9.\nThe managed imperative REST client starter is present. The application uses Boot's injected RestClient.Builder. Its selected JdkClientHttpRequestFactory, named SSL bundle and observations are correctly configured; there are no other request-factory wrappers or body-reading interceptors on this client. The files below show its complete peer-specific customization and caller. Diagnostics require status, duration and request identifiers only, not a retained body.\nThe peer can return an unknown-length binary download larger than 64 KiB. It makes no finite-size promise. The consumed contract accepts at most 1024 body bytes; oversized success must fail before any application/client layer aggregates the whole body. This is not a 1024-byte total JVM memory or network-traffic guarantee. Error status must remain ExportPeer.PeerFailure, and no retry is authorized. Keep the existing 500 ms transport configuration; full deadline/TLS/pooling behavior is outside this review.\n",
+          "src/ExportClientConfiguration.java": "import org.springframework.boot.context.properties.ConfigurationProperties;\nimport org.springframework.boot.context.properties.EnableConfigurationProperties;\nimport org.springframework.context.annotation.Bean;\nimport org.springframework.context.annotation.Configuration;\nimport org.springframework.web.client.RestClient;\n\n@Configuration(proxyBeanMethods = false)\n@EnableConfigurationProperties(ExportClientConfiguration.ExportProperties.class)\npublic class ExportClientConfiguration {\n    @ConfigurationProperties(\"exports\")\n    public record ExportProperties(String baseUrl, boolean bufferForDiagnostics) {}\n\n    @Bean\n    ExportPeer exportPeer(RestClient.Builder builder, ExportProperties settings) {\n        return new ExportPeer(builder.clone()\n                .baseUrl(settings.baseUrl())\n                .bufferContent((uri, method) -> settings.bufferForDiagnostics())\n                .build());\n    }\n}\n",
+          "src/ExportPeer.java": "import org.springframework.web.client.RestClient;\n\npublic final class ExportPeer {\n    private static final int LIMIT = 1024;\n    private final RestClient client;\n\n    public ExportPeer(RestClient client) {\n        this.client = client;\n    }\n\n    public byte[] download() {\n        return client.get().uri(\"/export\").exchange((request, response) -> {\n            if (!response.getStatusCode().is2xxSuccessful()) {\n                throw new PeerFailure(response.getStatusCode().value());\n            }\n            if (response.getHeaders().getContentLength() > LIMIT) {\n                throw new TooLarge();\n            }\n            byte[] body = response.getBody().readNBytes(LIMIT + 1);\n            if (body.length > LIMIT) {\n                throw new TooLarge();\n            }\n            return body;\n        });\n    }\n\n    public static final class TooLarge extends RuntimeException {}\n    public static final class PeerFailure extends RuntimeException {\n        public final int status;\n        public PeerFailure(int status) {\n            this.status = status;\n        }\n    }\n}\n",
+          "src/ExportService.java": "public final class ExportService {\n    private final ExportPeer peer;\n\n    public ExportService(ExportPeer peer) {\n        this.peer = peer;\n    }\n\n    public byte[] loadExport() {\n        return peer.download();\n    }\n}\n",
+          "existing-test-notes.md": "# Existing narrow checks\nA mock request test returns an unknown-length 65536-byte successful response and observes ExportPeer.TooLarge. It asserts only the exception type. Another test returns 8 bytes and compares the result; a 500 response produces ExportPeer.PeerFailure. No test observes reads before a response wrapper or measures allocation, transport cancellation, socket reuse or TLS.\n",
+          "review.md": "# Current export size-bound claim\nThe download reads only LIMIT + 1 bytes and the oversized-response test passes. The whole-response aggregation bound is therefore established.\n",
+          "application.properties": "exports.base-url=https://exports.example\nexports.buffer-for-diagnostics=false\nspring.http.clients.imperative.factory=jdk\nspring.http.clients.read-timeout=500ms\nspring.http.clients.redirects=dont-follow\n"
+        }
+      },
+      "criteria": {
+        "expected": [
+          "Follow ExportService -> ExportPeer -> ExportClientConfiguration -> application.properties rather than reviewing readNBytes in isolation.",
+          "Update review.md with evidence-linked conclusions, a narrow adjustment or explicit no-change decision, and concrete verification; do not leave only a question log.",
+          "Preserve injected Boot builder cloning, configured factory/TLS/observations, status mapping, successful small-byte results, timeout baseline and no-retry contract.",
+          "Distinguish the exception-only mock result from proof of bounded aggregation. Propose an unknown-length generated/counted source before the suspected buffering layer, with a buffering-enabled negative control, and retain the actual active customization.",
+          "Keep source/wrapper evidence separate from actual socket, wire-byte, TLS, latency, or total-allocation guarantees. State unexecuted checks honestly.",
+          "Identify exports.buffer-for-diagnostics=false; on the explicitly supplied path no earlier unbounded aggregation is evidenced. Retain the active client and callback cap rather than inventing a buffering defect.",
+          "Qualify the review's proof claim: the current exception-only test alone is insufficient, but the provided nonbuffering source/configuration supports the intended bounded extraction mechanism. Recommend strengthening the relevant test without a production client rewrite.",
+          "Keep the useful Content-Length early rejection but continue relying on the bounded actual read for unknown or misleading lengths."
+        ],
+        "failureConditions": [
+          "Accepts an exception-only oversized-response test as proof of bounded aggregation without inspecting the active configuration.",
+          "Replaces the configured client with RestClient.create or drops TLS/observation settings.",
+          "Changes Java/Spring, adds WebFlux/resilience machinery, retries the call, or changes failure semantics without need.",
+          "Claims exact network consumption, immediate resource release or total memory bounded to LIMIT from source analysis.",
+          "Contacts a peer, starts a server, downloads dependencies, edits application code, or claims an executed verification not performed.",
+          "Claims bufferContent is enabled merely because the method appears in source despite the false predicate.",
+          "Requires removing all customizers, replacing the transport or rewriting the decoder without an evidenced problem."
+        ]
+      }
+    }
+  ],
+  "pairedCaseConstraint": "Only application.properties changes: exports.buffer-for-diagnostics=true in A versus false in B. Task and all other actor fixture files are byte-identical. A requires correcting the earlier buffering configuration; B retains it and improves evidence rather than inventing a production defect.",
+  "crossSkill": {
+    "findings": [],
+    "actions": []
+  },
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Shared generated index and integrity/version updates; prohibited to reviewers during parallel work.",
+      "prerequisites": "All reviewers have stopped writes."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Repository-wide validation not performed by this reviewer.",
+      "prerequisites": "All reviewers stopped writes and generated index prepared."
+    }
+  ],
+  "allWritesStopped": true,
+  "processesStillWriting": false
+}

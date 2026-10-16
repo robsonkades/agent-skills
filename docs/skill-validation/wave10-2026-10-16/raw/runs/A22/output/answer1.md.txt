@@ -1,0 +1,17 @@
+Recomendo destinar o único dia à investigação A e decidir os próximos 12 meses pelo custo total, com uma regra previamente fixada. Diego pode aprovar amanhã essa direção condicional; o material atual não sustenta um vencedor incondicional.
+
+Trato os documentos locais como premissas do caso: H e J atendem às mesmas obrigações de correção, prazo contratado, segurança, suporte e recuperação; a transição de J também passou. Não há preferência restante além de minimizar o custo futuro. Os 180 mil já pagos em H são irrecuperáveis e não entram na comparação.
+
+Em milhares, para uma fatura mensal de J igual a **m**:
+
+- **H: 240** nos 12 meses.
+- **J: 12 + 12m**, incluindo migração/saída; com m entre 14 e 25, total entre **180 e 312**.
+- O empate ocorre em **m = 19**. Abaixo de 19, escolher J; acima, continuar H; exatamente 19, há indiferença pelo critério declarado.
+
+A incerteza é decisiva: J pode economizar 60 mil ou custar 72 mil a mais. Não há distribuição de probabilidades que permita transformar o ponto médio em custo esperado.
+
+Na investigação A, o analista e o financeiro devem conferir todos os itens da fatura de J para o volume contratado, separar cobranças recorrentes e únicas e entregar amanhã o valor mensal confirmado ou uma faixa revisada, com pendências explícitas. A hipótese útil é que esse custo fique de um lado do limite de 19 mil. Uma faixa inteiramente abaixo favorece J; inteiramente acima favorece H. Se ainda atravessar o limite, comunicar a inconclusão a Diego e manter H provisoriamente, reabrindo a escolha quando o financeiro resolver as pendências. Isso não prova que H seja o mais barato.
+
+A oferece informação potencialmente decisiva em um dia; seu benefício não é garantido nem quantificável como valor esperado com os dados disponíveis. B não pode mudar a escolha, apesar dos gráficos. C exige quatro semanas e custo desconhecido, sem necessidade demonstrada. A investigação não autoriza despesas de migração.
+
+Executei apenas leitura e análise aritmética; nenhuma investigação ou experimento foi realizado.

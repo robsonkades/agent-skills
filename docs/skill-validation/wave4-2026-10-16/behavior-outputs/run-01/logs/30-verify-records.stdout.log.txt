@@ -1,0 +1,1 @@
+{"javaJdkCommandsVerified":29,"expectedNegativeControls":3,"distinctNormalizationCases":6,"artifactAssertionsPassed":4,"logStreamsMatchRecords":true,"inputArtifactsUnchanged":true,"maximumChildDurationMs":334.0,"decisionWordCount":485}

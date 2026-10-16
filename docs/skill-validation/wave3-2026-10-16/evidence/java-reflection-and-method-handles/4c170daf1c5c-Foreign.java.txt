@@ -1,0 +1,4 @@
+package target;
+public final class Foreign {
+    private static String secret() { return "foreign"; }
+}

@@ -1,0 +1,24 @@
+import assert from 'node:assert/strict';
+import { readdir, readFile } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+const root=path.dirname(fileURLToPath(import.meta.url));
+let checks=0;
+const eq=(a,b)=>{assert.deepEqual(a,b);checks++;};
+async function names(dir,prefix=''){
+  const items=[];
+  for(const ent of await readdir(dir,{withFileTypes:true})){
+    if(ent.isDirectory())items.push(...await names(path.join(dir,ent.name),prefix+ent.name+'/'));
+    else items.push(prefix+ent.name);
+  }
+  return items.sort();
+}
+const a=path.join(root,'cases/search'),b=path.join(root,'cases/workflow');
+const af=await names(a),bf=await names(b);
+eq(af,bf);eq(af.length,9);
+for(const f of af.filter(f=>f!=='app.properties'))eq(await readFile(path.join(a,f),'utf8'),await readFile(path.join(b,f),'utf8'));
+eq((await readFile(path.join(a,'app.properties'),'utf8')).trim(),'entryPoint=search');
+eq((await readFile(path.join(b,'app.properties'),'utf8')).trim(),'entryPoint=workflow');
+eq(JSON.parse(await readFile(path.join(root,'case-criteria.json'),'utf8')).map(c=>c.id),
+   ['complete-search-input','embedded-workflow-input']);
+console.log(JSON.stringify({checks,result:'PASS',scope:'Only active entryPoint differs; eight ordinary source/task/grammar artifacts are byte-identical. No agent evaluation.'},null,2));

@@ -1,0 +1,2 @@
+Extracted the existing SumCount block verbatim, adding omitted imports only.
+Scope: local numeric/invocation-shape checks; no distributed engine execution.

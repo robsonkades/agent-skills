@@ -1,0 +1,37 @@
+[
+  {
+    "url": "https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1.html",
+    "status": 200,
+    "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/sources/jakarta-persistence-3.1.html",
+    "sha256": "985fc6ce8318387545aee26c22efb8a4e9ba7c7a10be4ef17f93518c15dd71fc",
+    "bytes": 2199315
+  },
+  {
+    "url": "https://jakarta.ee/specifications/persistence/3.1/apidocs/jakarta.persistence/jakarta/persistence/EntityManager.html",
+    "status": 200,
+    "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/sources/EntityManager-3.1.html",
+    "sha256": "bd667b27e64894cae21cce09ca56101ea3b5f28d5d67671a73d3295fd1e284b1",
+    "bytes": 124314
+  },
+  {
+    "url": "https://www.postgresql.org/docs/17/transaction-iso.html",
+    "status": 200,
+    "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/sources/postgresql-17-isolation.html",
+    "sha256": "e3475df0c76b214dbda0bc681015099763b83778e1355e17ee7b908e6fd38a26",
+    "bytes": 47618
+  },
+  {
+    "url": "https://martinfowler.com/eaaCatalog/dataMapper.html",
+    "status": 200,
+    "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/sources/fowler-data-mapper.html",
+    "sha256": "a4440509cc16103c58cf49ad689577191bbc27435956886b78fe5d562b52461d",
+    "bytes": 13882
+  },
+  {
+    "url": "https://martinfowler.com/eaaCatalog/unitOfWork.html",
+    "status": 200,
+    "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/sources/fowler-unit-of-work.html",
+    "sha256": "7f0d022783927ff6037bfbbdd9c48ce7b374db855e28ad7e5161aacd1852a477",
+    "bytes": 13600
+  }
+]

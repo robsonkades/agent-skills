@@ -142,6 +142,8 @@ that trade must be made deliberately and recorded, not inherited from a `catch` 
       end-to-end attempt budget rather than an accidental multiplier.
 - [ ] Per-call attempt/deadline caps and an aggregate retry budget are both defined.
 - [ ] Every queue and executor is bounded, with a rejection mapped to a real response.
+- [ ] The deployed rejection path avoids the protected work; its own cost and caller retry
+      reaction remain bounded under overload (`cascade-response.md`).
 - [ ] Each dependency has an active-work limit and bounded waiting admission; event loops do not block on acquisition.
 - [ ] Aggregate live demand includes fan-out, rollout surge, surviving work and recovery callers
       outside the same controls, and fits measured capacity.

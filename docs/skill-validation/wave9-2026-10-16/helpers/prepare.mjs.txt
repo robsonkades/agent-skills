@@ -1,0 +1,152 @@
+import fs from 'node:fs';
+import path from 'node:path';
+const root='C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4';
+const put=(p,s)=>{fs.mkdirSync(path.dirname(p),{recursive:true});fs.writeFileSync(p,s);};
+if(fs.existsSync(root+'/cases'))throw Error('Preserve existing cases');
+const runner=`import fs from 'node:fs';
+import {spawnSync} from 'node:child_process';
+const main=process.argv[2]??'Smoke';
+if(!/^[A-Za-z][A-Za-z0-9_]*$/.test(main))throw Error('Simple main class required');
+const files=fs.readdirSync('.').filter(p=>p.endsWith('.java'));
+fs.mkdirSync('classes',{recursive:true});
+for(const [command,args] of [['javac',['--release','17','-d','classes',...files]],['java',['-ea','-cp','classes',main]]]){
+ const r=spawnSync(command,args,{encoding:'utf8',timeout:20000,windowsHide:true});
+ process.stdout.write(r.stdout??'');process.stderr.write(r.stderr??'');
+ if(r.error||r.status!==0){if(r.error)console.error(r.error.message);process.exit(r.status??1);}
+}
+`;
+const readme=`# Local retry component exercise
+
+These are authored exercise inputs, not production captures. Baseline: Java 17 source/API; JDK 25.0.3 is available and javac --release 17 is required. No preview, new dependencies, installation, network workload, real config or runtime setting changes. A local simulation cannot establish a provider's durable guarantees, wall-clock latency or fleet behavior.
+
+All input files and the provided copies in output/ are immutable except the implementation file named in REQUEST.md. Work in output/. For Java cases add Verification.java with a main method exercising the actual implementation and run node run.mjs Verification after inspecting the runner. Smoke is intentionally small, not comprehensive acceptance. Put the review in REVIEW.md (at most 750 words), a decision/evidence/limits summary in result.json and an honest read/command journal in execution.json. Do not self-grade. Finish writes/processes and set allWritesStopped=true. Keep generated class files local; no real service is involved.
+`;
+const ports=`public final class Ports {
+    private Ports() {}
+    public enum Kind { OK, TRANSIENT, PERMANENT, UNKNOWN }
+    public enum State { PENDING, APPLIED, REJECTED, UNKNOWN }
+    public record Intent(String id, String payload) {}
+    public record Snapshot(State state, String receipt) {}
+    public record Result(Snapshot snapshot, int attempts) {}
+    public record Policy(int maxAttempts, long attemptNanos, long reserveNanos, long localWaitNanos) {}
+    public interface Store {
+        Snapshot snapshot();
+        void unknown();
+        void applied(String receipt);
+        void rejected();
+    }
+    public interface Reply extends AutoCloseable {
+        Kind kind();
+        String receipt();
+        long serverMinimumNanos();
+        void close();
+    }
+    public interface Operation {
+        Reply call(Intent intent, long timeoutNanos) throws InterruptedException;
+    }
+    public interface Runtime {
+        long remainingNanos();
+        boolean cancelled();
+        boolean acquireRetry();
+        void sleep(long nanos) throws InterruptedException;
+    }
+}
+`;
+const retry=`public final class RetryEngine {
+    public static Ports.Result execute(Ports.Intent intent, Ports.Policy p, Ports.Store store,
+            Ports.Operation operation, Ports.Runtime runtime) throws InterruptedException {
+        int attempts = 0;
+        while (attempts < p.maxAttempts()) {
+            Ports.Reply reply = operation.call(new Ports.Intent(intent.id() + "-" + attempts, intent.payload()), p.attemptNanos());
+            attempts++;
+            if (reply.kind() == Ports.Kind.OK) {
+                store.applied(reply.receipt());
+                reply.close();
+                return new Ports.Result(store.snapshot(), attempts);
+            }
+            if (reply.kind() == Ports.Kind.PERMANENT) {
+                store.rejected(); reply.close();
+                return new Ports.Result(store.snapshot(), attempts);
+            }
+            long wait = Math.min(p.localWaitNanos(), reply.serverMinimumNanos());
+            if (!runtime.acquireRetry()) break;
+            runtime.sleep(wait);
+            reply.close();
+        }
+        store.rejected();
+        return new Ports.Result(store.snapshot(), attempts);
+    }
+}
+`;
+const retryContract=`# Component contract
+
+This single-owner synchronous runner controls sequential attempts of one intent. Ports.Store is already durable and atomic; implementing that store is outside this change. Initially PENDING means no unresolved prior dispatch, UNKNOWN means an earlier attempt may still have applied. APPLIED/REJECTED are terminal and should be returned without another call.
+
+Reply meanings: OK is the authoritative original same-intent receipt; TRANSIENT establishes only that THIS attempt did not apply and retrying may help; PERMANENT establishes only that THIS attempt did not apply and unchanged replay will not help; UNKNOWN establishes no effect outcome. The initial store may be UNKNOWN. Contract.REPLAY_SAFE is the peer guarantee for this stable intent/payload throughout this exercise. When false, an unresolved effect cannot be automatically redispatched. When true, replay preserves the effect and returns its authoritative receipt on OK; any non-OK response still does not resolve an earlier uncertainty. No authoritative reconciliation operation is supplied.
+
+On every normal stop, APPLIED requires OK, and REJECTED requires no unresolved attempt anywhere in this intent. Persist observed UNKNOWN before sleeping or attempting again; later refusal, budget denial, exhaustion or interruption must not erase it. An InterruptedException thrown during operation.call has an unknown effect outcome and must preserve UNKNOWN before propagation. Cancellation and pre-interruption must prevent a new call; do not swallow interruption. Do not invent a receipt or a new intent ID. Each returned Reply must be closed exactly once before any sleep/next call/normal return. Its accessor and close methods do not throw and consume no clock time in this model.
+
+Policy inputs are valid: maxAttempts>=1 counts calls in THIS invocation, attemptNanos>0, reserveNanos/localWaitNanos>=0, all within signed long nanoseconds. Runtime.remainingNanos is a fresh nonnegative remaining total budget. A call may start only if at least attemptNanos+reserveNanos fits; propagate attemptNanos as its timeout. Reply.serverMinimumNanos is a validated nonnegative minimum before another attempt, for ANY reply kind. A retry must satisfy both that minimum and localWaitNanos, leave room for the next attempt and reserve, obtain one retry token (initial call needs none), and recheck time/cancellation after sleep. Refuse a wait that cannot fit; do not truncate the minimum. Runtime.sleep may oversleep or throw InterruptedException. Runtime.acquireRetry is atomic and returns immediately without elapsed time; successful grants are not refundable. A token is admission, not proof another attempt happened.
+
+The implementation need not parse HTTP headers, design a dedup store, handle concurrent workers or promise physical cancellation. These contracts are supplied, not established by the local test.
+`;
+const smoke=`public final class Smoke {
+    public static void main(String[] args) throws Exception {
+        Ports.Store store = new Ports.Store() {
+            Ports.Snapshot s = new Ports.Snapshot(Ports.State.PENDING, null);
+            public Ports.Snapshot snapshot() { return s; }
+            public void unknown() { s = new Ports.Snapshot(Ports.State.UNKNOWN, null); }
+            public void applied(String r) { s = new Ports.Snapshot(Ports.State.APPLIED, r); }
+            public void rejected() { s = new Ports.Snapshot(Ports.State.REJECTED, null); }
+        };
+        Ports.Runtime rt = new Ports.Runtime() {
+            public long remainingNanos() { return 1000; }
+            public boolean cancelled() { return false; }
+            public boolean acquireRetry() { return true; }
+            public void sleep(long n) {}
+        };
+        Ports.Operation op = (intent, timeout) -> new Ports.Reply() {
+            public Ports.Kind kind() { return Ports.Kind.OK; }
+            public String receipt() { return "receipt-1"; }
+            public long serverMinimumNanos() { return 0; }
+            public void close() {}
+        };
+        Ports.Result r = RetryEngine.execute(new Ports.Intent("intent-1", "payload"), new Ports.Policy(3, 10, 5, 4), store, op, rt);
+        if (r.snapshot().state() != Ports.State.APPLIED || r.attempts() != 1) throw new AssertionError(r);
+        System.out.println("Smoke passed");
+    }
+}
+`;
+for(const [caseId,safe] of [['R1',false],['R2',true]]){
+ const d=root+'/cases/'+caseId+'/input/';
+ put(d+'README.md',readme);put(d+'REQUEST.md','Repair RetryEngine.java to satisfy the supplied component contract while retaining its public signature and Java baseline. Inspect the ordinary project files, add a useful executable regression in Verification.java, and explain the observed repair and remaining integration limits. Do not change Ports.java, Contract.java, Smoke.java, contract.md or run.mjs.\n');
+ put(d+'Ports.java',ports);put(d+'RetryEngine.java',retry);put(d+'Contract.java','public final class Contract { public static final boolean REPLAY_SAFE = '+safe+'; private Contract() {} }\n');put(d+'contract.md',retryContract);put(d+'Smoke.java',smoke);put(d+'run.mjs',runner);
+}
+const planner=`import java.util.function.LongUnaryOperator;
+public final class RetryPlan {
+    public record Plan(boolean admitted, long waitNanos, long attemptNanos) {}
+    public static Plan next(long start, long now, long total, long reserve, long minimumWork,
+            long attemptCap, long base, long delayCap, int completed, int maxAttempts,
+            long serverMinimum, LongUnaryOperator draw) {
+        long remaining = start + total - now;
+        long window = Math.min(delayCap, base << completed);
+        long wait = completed == 0 ? 0 : Math.min(draw.applyAsLong(window), serverMinimum);
+        if (completed > maxAttempts || remaining < wait + minimumWork + reserve) return new Plan(false, 0, 0);
+        return new Plan(true, wait, Math.min(attemptCap, remaining));
+    }
+}
+`;
+const planContract=`# Retry scheduling contract
+
+RetryPlan.next is a pure planning function, not a sleeper or cancellation mechanism. Preserve the public method and Plan record. start and now are readings from one monotonic nanoTime source with true elapsed duration in [0,2^63); readings may be negative and may cross signed wrap. total is positive and fits long; reserve>=0; minimumWork, attemptCap, base, delayCap are positive and fit long; minimumWork<=attemptCap. completed>=0 counts calls already completed and maxAttempts>=1 includes the first call. serverMinimum>=0 is validated advice in nanoseconds. All these inputs are contract-valid, including large values. Do not add narrower limits.
+
+Stop if completed has reached maxAttempts or remaining budget cannot fit the requested work. A rejected Plan has both durations zero. On the initial call (completed=0), do not sleep or draw randomness; serverMinimum applies only between attempts. On a retry use full jitter: the supplied uniform half-open draw [0,bound) spans min(delayCap, base*2^(completed-1)), with mathematical saturation instead of signed overflow. The supplied draw always respects its positive bound. It is not necessary to draw when already known unable to admit. The wait must be at least the larger of this local draw and the server minimum. Do not truncate server advice. Keep reserve after wait, and allocate at most attemptCap from what remains, provided minimumWork fits. Exact fit is admitted. No wall-clock conversion, sleeping, real randomness, server calls or dependency changes belong here. Callers must recheck admission after actual wait/elapsed work; a plan does not promise a wall-clock return bound.
+`;
+const p=root+'/cases/R3/input/';put(p+'README.md',readme);put(p+'REQUEST.md','Fix RetryPlan.java against the checked-in scheduling contract, preserve its signature, and add Verification.java exercising the actual implementation. Explain the arithmetic and the boundary this helper does not enforce. Do not modify contract.md, Smoke.java or run.mjs.\n');put(p+'RetryPlan.java',planner);put(p+'contract.md',planContract);put(p+'run.mjs',runner);
+put(p+'Smoke.java','public final class Smoke { public static void main(String[] args) { RetryPlan.Plan p = RetryPlan.next(0,0,100,0,10,10,2,8,0,3,0,b -> 0); if (!p.admitted()) throw new AssertionError(p); System.out.println("Smoke passed"); } }\n');
+const r=root+'/cases/R4/input/';put(r+'README.md',readme.replace('For Java cases add Verification.java','For Java cases add Verification.java'));
+put(r+'REQUEST.md','Review proposal.md against the supplied incident packet. Deliver a justified accept/revise/reject decision and one bounded next verification that would change the decision. Do not implement policy changes or call external services. In result.json include numeric metrics configuredBeforeMax, configuredAfterMax, outerAttemptsPerLogical, wireAttemptsPerLogical, aggregateGrantUpperBound; distinguish configured limits, observed counters and unknown effects.\n');
+put(r+'incident.json',JSON.stringify({provenance:'Authored fixture, not production capture',cohort:{logicalCalls:1000,outerAttempts:1060,wireAttempts:1600,successesThatRefill:900,outerRetryGrants:60,scope:'Same completed cohort/window/dependency; every outer attempt invokes exactly one SDK operation. All wire attempts in this cohort are attributed to SDK retries; no fanout, hedging or unrelated traffic.'},deployment:{processes:4,initialTokensPerProcess:10,refillPerSuccess:0.1,maxTokensPerProcess:20,noRestartsOrOtherRefills:true,budgetScope:'One local bucket per process admits outer retries, not SDK wire sends'},configuration:{outerMaxAttemptsIncludingInitial:2,sdkMaxAttemptsIncludingInitial:3,gatewayCurrentAttempts:1,gatewayProposedAttempts:3,combinedDeadline:'No numerical bound supplied; nominal attempt maxima need not be reachable under deadline.'},effectTrace:{intent:'operation-41',peerReplayGuarantee:'None for this operation; a lookup reports current state only, with no guarantee against later application.',events:[{atMs:0,event:'write dispatched'},{atMs:50,event:'caller timeout, cancel signal sent'},{atMs:52,event:'lookup reports not found'},{atMs:80,event:'original write commits'}],pendingWork:'A cancellation signal is recorded; no cancellation acknowledgement or release timestamp before commit.'}},null,2)+'\n');
+put(r+'proposal.md','The 0.1 refill ratio proves a fleet-wide wire amplification cap of 1.1. The observed 1.6 wire ratio means the token bucket is broken. Adding gateway maxAttempts=3 adds only two attempts to the previous maximum, so the new maximum is eight. Since the caller timed out and the lookup said not found, mark operation-41 definitively failed and issue a fresh intent. Cancellation proves no original work remains. Ship these changes without further evidence.\n');
+for(const name of ['idempotency','timeouts-and-deadlines'])fs.cpSync('C:/git/agent-skills/skills/'+name,root+'/common-skills/'+name,{recursive:true});
+console.log(JSON.stringify({cases:['R1','R2','R3','R4'],pairedDifference:'Contract.REPLAY_SAFE only',dependencySnapshots:['idempotency','timeouts-and-deadlines']}));

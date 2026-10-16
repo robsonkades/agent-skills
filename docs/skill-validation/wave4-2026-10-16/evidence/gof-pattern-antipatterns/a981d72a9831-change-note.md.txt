@@ -1,0 +1,7 @@
+# Proposal: simplify rendering
+
+Status: proposed, awaiting review.
+
+The Badge addition has again required changes to both rendering implementations. The prototype replaces the Visitor protocol with direct operations on Node.label(). It compiles and produces the same labels on the supplied examples. We expect fewer repeated edits as new kinds arrive.
+
+Proposed conclusion: all this Visitor update work is needless, and the passing prototype checks establish that it can be removed without affecting the module's contracts. Use the prototype as the next implementation once this note is accepted. No other module changes are proposed.

@@ -1,0 +1,272 @@
+Compiled from "ExtractionProbe.java"
+public final class ExtractionProbe {
+  public ExtractionProbe();
+    Code:
+         0: aload_0
+         1: invokespecial #1                  // Method java/lang/Object."<init>":()V
+         4: return
+
+  static java.lang.String original(char[]);
+    Code:
+         0: new           #7                  // class java/lang/StringBuilder
+         3: dup
+         4: invokespecial #9                  // Method java/lang/StringBuilder."<init>":()V
+         7: aload_0
+         8: invokevirtual #10                 // Method java/lang/StringBuilder.append:([C)Ljava/lang/StringBuilder;
+        11: invokevirtual #14                 // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+        14: areturn
+
+  static java.lang.String widened(char[]);
+    Code:
+         0: aload_0
+         1: invokestatic  #18                 // Method renderObject:(Ljava/lang/Object;)Ljava/lang/String;
+         4: areturn
+
+  static java.lang.String renderObject(java.lang.Object);
+    Code:
+         0: new           #7                  // class java/lang/StringBuilder
+         3: dup
+         4: invokespecial #9                  // Method java/lang/StringBuilder."<init>":()V
+         7: aload_0
+         8: invokevirtual #24                 // Method java/lang/StringBuilder.append:(Ljava/lang/Object;)Ljava/lang/StringBuilder;
+        11: invokevirtual #14                 // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+        14: areturn
+
+  static java.lang.String renderChars(char[]);
+    Code:
+         0: new           #7                  // class java/lang/StringBuilder
+         3: dup
+         4: invokespecial #9                  // Method java/lang/StringBuilder."<init>":()V
+         7: aload_0
+         8: invokevirtual #10                 // Method java/lang/StringBuilder.append:([C)Ljava/lang/StringBuilder;
+        11: invokevirtual #14                 // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+        14: areturn
+
+  static java.lang.String originalObject(java.lang.Object);
+    Code:
+         0: new           #7                  // class java/lang/StringBuilder
+         3: dup
+         4: invokespecial #9                  // Method java/lang/StringBuilder."<init>":()V
+         7: aload_0
+         8: invokevirtual #24                 // Method java/lang/StringBuilder.append:(Ljava/lang/Object;)Ljava/lang/StringBuilder;
+        11: invokevirtual #14                 // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+        14: areturn
+
+  static void originalAudit(ExtractionProbe$Audit, ExtractionProbe$Receipt);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: invokevirtual #27                 // Method ExtractionProbe$Audit.record:(LExtractionProbe$Receipt;)V
+         5: return
+
+  static void originalGenericAudit(ExtractionProbe$Audit, java.lang.Object);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: invokevirtual #33                 // Method ExtractionProbe$Audit.record:(Ljava/lang/Object;)V
+         5: return
+
+  static void extractedAudit(ExtractionProbe$Audit, java.lang.Object);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: invokevirtual #33                 // Method ExtractionProbe$Audit.record:(Ljava/lang/Object;)V
+         5: return
+
+  static void extractedTypedAudit(ExtractionProbe$Audit, ExtractionProbe$Receipt);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: invokevirtual #27                 // Method ExtractionProbe$Audit.record:(LExtractionProbe$Receipt;)V
+         5: return
+
+  static void equal(java.lang.Object, java.lang.Object);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: invokestatic  #36                 // Method java/util/Objects.equals:(Ljava/lang/Object;Ljava/lang/Object;)Z
+         5: ifne          29
+         8: new           #42                 // class java/lang/AssertionError
+        11: dup
+        12: aload_0
+        13: invokestatic  #44                 // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+        16: aload_1
+        17: invokestatic  #44                 // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+        20: invokedynamic #49,  0             // InvokeDynamic #0:makeConcatWithConstants:(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+        25: invokespecial #53                 // Method java/lang/AssertionError."<init>":(Ljava/lang/Object;)V
+        28: athrow
+        29: return
+
+  public static void main(java.lang.String[]);
+    Code:
+         0: getstatic     #55                 // Field java/lang/System.out:Ljava/io/PrintStream;
+         3: ldc           #61                 // String java.runtime.version
+         5: invokestatic  #63                 // Method java/lang/System.getProperty:(Ljava/lang/String;)Ljava/lang/String;
+         8: invokedynamic #67,  0             // InvokeDynamic #1:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+        13: invokevirtual #69                 // Method java/io/PrintStream.println:(Ljava/lang/String;)V
+        16: iconst_2
+        17: anewarray     #75                 // class "[C"
+        20: dup
+        21: iconst_0
+        22: iconst_2
+        23: newarray       char
+        25: dup
+        26: iconst_0
+        27: bipush        79
+        29: castore
+        30: dup
+        31: iconst_1
+        32: bipush        75
+        34: castore
+        35: aastore
+        36: dup
+        37: iconst_1
+        38: iconst_0
+        39: newarray       char
+        41: aastore
+        42: astore_1
+        43: aload_1
+        44: arraylength
+        45: istore_2
+        46: iconst_0
+        47: istore_3
+        48: iload_3
+        49: iload_2
+        50: if_icmpge     185
+        53: aload_1
+        54: iload_3
+        55: aaload
+        56: astore        4
+        58: new           #45                 // class java/lang/String
+        61: dup
+        62: aload         4
+        64: invokespecial #77                 // Method java/lang/String."<init>":([C)V
+        67: aload         4
+        69: invokestatic  #80                 // Method original:([C)Ljava/lang/String;
+        72: invokestatic  #84                 // Method equal:(Ljava/lang/Object;Ljava/lang/Object;)V
+        75: aload         4
+        77: invokestatic  #80                 // Method original:([C)Ljava/lang/String;
+        80: aload         4
+        82: invokestatic  #88                 // Method renderChars:([C)Ljava/lang/String;
+        85: invokestatic  #84                 // Method equal:(Ljava/lang/Object;Ljava/lang/Object;)V
+        88: aload         4
+        90: invokevirtual #91                 // Method java/lang/Object.toString:()Ljava/lang/String;
+        93: aload         4
+        95: invokestatic  #92                 // Method widened:([C)Ljava/lang/String;
+        98: invokestatic  #84                 // Method equal:(Ljava/lang/Object;Ljava/lang/Object;)V
+       101: iconst_0
+       102: invokestatic  #95                 // Method java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+       105: aload         4
+       107: invokestatic  #80                 // Method original:([C)Ljava/lang/String;
+       110: aload         4
+       112: invokestatic  #92                 // Method widened:([C)Ljava/lang/String;
+       115: invokevirtual #100                // Method java/lang/String.equals:(Ljava/lang/Object;)Z
+       118: invokestatic  #95                 // Method java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+       121: invokestatic  #84                 // Method equal:(Ljava/lang/Object;Ljava/lang/Object;)V
+       124: aload         4
+       126: invokestatic  #103                // Method originalObject:(Ljava/lang/Object;)Ljava/lang/String;
+       129: aload         4
+       131: invokestatic  #18                 // Method renderObject:(Ljava/lang/Object;)Ljava/lang/String;
+       134: invokestatic  #84                 // Method equal:(Ljava/lang/Object;Ljava/lang/Object;)V
+       137: getstatic     #55                 // Field java/lang/System.out:Ljava/io/PrintStream;
+       140: aload         4
+       142: arraylength
+       143: aload         4
+       145: invokestatic  #80                 // Method original:([C)Ljava/lang/String;
+       148: aload         4
+       150: invokestatic  #92                 // Method widened:([C)Ljava/lang/String;
+       153: aload         4
+       155: invokestatic  #88                 // Method renderChars:([C)Ljava/lang/String;
+       158: aload         4
+       160: invokestatic  #103                // Method originalObject:(Ljava/lang/Object;)Ljava/lang/String;
+       163: aload         4
+       165: invokestatic  #18                 // Method renderObject:(Ljava/lang/Object;)Ljava/lang/String;
+       168: invokevirtual #100                // Method java/lang/String.equals:(Ljava/lang/Object;)Z
+       171: invokedynamic #106,  0            // InvokeDynamic #2:makeConcatWithConstants:(ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)Ljava/lang/String;
+       176: invokevirtual #69                 // Method java/io/PrintStream.println:(Ljava/lang/String;)V
+       179: iinc          3, 1
+       182: goto          48
+       185: ldc           #109                // String OK
+       187: ldc           #109                // String OK
+       189: invokestatic  #103                // Method originalObject:(Ljava/lang/Object;)Ljava/lang/String;
+       192: invokestatic  #84                 // Method equal:(Ljava/lang/Object;Ljava/lang/Object;)V
+       195: ldc           #109                // String OK
+       197: invokestatic  #103                // Method originalObject:(Ljava/lang/Object;)Ljava/lang/String;
+       200: ldc           #109                // String OK
+       202: invokestatic  #18                 // Method renderObject:(Ljava/lang/Object;)Ljava/lang/String;
+       205: invokestatic  #84                 // Method equal:(Ljava/lang/Object;Ljava/lang/Object;)V
+       208: new           #111                // class ExtractionProbe$Receipt
+       211: dup
+       212: ldc           #113                // String r-7
+       214: invokespecial #115                // Method ExtractionProbe$Receipt."<init>":(Ljava/lang/String;)V
+       217: astore_1
+       218: new           #28                 // class ExtractionProbe$Audit
+       221: dup
+       222: invokespecial #117                // Method ExtractionProbe$Audit."<init>":()V
+       225: astore_2
+       226: new           #28                 // class ExtractionProbe$Audit
+       229: dup
+       230: invokespecial #117                // Method ExtractionProbe$Audit."<init>":()V
+       233: astore_3
+       234: new           #28                 // class ExtractionProbe$Audit
+       237: dup
+       238: invokespecial #117                // Method ExtractionProbe$Audit."<init>":()V
+       241: astore        4
+       243: new           #28                 // class ExtractionProbe$Audit
+       246: dup
+       247: invokespecial #117                // Method ExtractionProbe$Audit."<init>":()V
+       250: astore        5
+       252: aload_2
+       253: aload_1
+       254: invokestatic  #118                // Method originalAudit:(LExtractionProbe$Audit;LExtractionProbe$Receipt;)V
+       257: aload_3
+       258: aload_1
+       259: invokestatic  #122                // Method extractedAudit:(LExtractionProbe$Audit;Ljava/lang/Object;)V
+       262: aload         4
+       264: aload_1
+       265: invokestatic  #126                // Method extractedTypedAudit:(LExtractionProbe$Audit;LExtractionProbe$Receipt;)V
+       268: aload         5
+       270: aload_1
+       271: invokestatic  #129                // Method originalGenericAudit:(LExtractionProbe$Audit;Ljava/lang/Object;)V
+       274: ldc           #132                // String receipt:r-7
+       276: invokestatic  #134                // InterfaceMethod java/util/List.of:(Ljava/lang/Object;)Ljava/util/List;
+       279: aload_2
+       280: getfield      #140                // Field ExtractionProbe$Audit.events:Ljava/util/List;
+       283: invokestatic  #84                 // Method equal:(Ljava/lang/Object;Ljava/lang/Object;)V
+       286: aload_1
+       287: invokestatic  #44                 // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+       290: invokedynamic #144,  0            // InvokeDynamic #3:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+       295: invokestatic  #134                // InterfaceMethod java/util/List.of:(Ljava/lang/Object;)Ljava/util/List;
+       298: aload_3
+       299: getfield      #140                // Field ExtractionProbe$Audit.events:Ljava/util/List;
+       302: invokestatic  #84                 // Method equal:(Ljava/lang/Object;Ljava/lang/Object;)V
+       305: aload_2
+       306: getfield      #140                // Field ExtractionProbe$Audit.events:Ljava/util/List;
+       309: aload         4
+       311: getfield      #140                // Field ExtractionProbe$Audit.events:Ljava/util/List;
+       314: invokestatic  #84                 // Method equal:(Ljava/lang/Object;Ljava/lang/Object;)V
+       317: aload         5
+       319: getfield      #140                // Field ExtractionProbe$Audit.events:Ljava/util/List;
+       322: aload_3
+       323: getfield      #140                // Field ExtractionProbe$Audit.events:Ljava/util/List;
+       326: invokestatic  #84                 // Method equal:(Ljava/lang/Object;Ljava/lang/Object;)V
+       329: getstatic     #55                 // Field java/lang/System.out:Ljava/io/PrintStream;
+       332: aload_2
+       333: getfield      #140                // Field ExtractionProbe$Audit.events:Ljava/util/List;
+       336: invokestatic  #44                 // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+       339: aload_3
+       340: getfield      #140                // Field ExtractionProbe$Audit.events:Ljava/util/List;
+       343: invokestatic  #44                 // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+       346: aload         4
+       348: getfield      #140                // Field ExtractionProbe$Audit.events:Ljava/util/List;
+       351: invokestatic  #44                 // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+       354: aload         5
+       356: getfield      #140                // Field ExtractionProbe$Audit.events:Ljava/util/List;
+       359: invokestatic  #44                 // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+       362: invokedynamic #145,  0            // InvokeDynamic #4:makeConcatWithConstants:(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+       367: invokevirtual #69                 // Method java/io/PrintStream.println:(Ljava/lang/String;)V
+       370: getstatic     #55                 // Field java/lang/System.out:Ljava/io/PrintStream;
+       373: ldc           #148                // String PASS: widened helper changes typed overload; typed helper preserves it; original Object contract stays generic.
+       375: invokevirtual #69                 // Method java/io/PrintStream.println:(Ljava/lang/String;)V
+       378: return
+}

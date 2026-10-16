@@ -1,0 +1,10 @@
+{
+  "modelVersion": "2",
+  "rendererVersion": "1",
+  "launcherVersion": "1",
+  "inputs": [
+    "text",
+    "section",
+    "note"
+  ]
+}

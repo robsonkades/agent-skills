@@ -1,0 +1,19 @@
+# Approved gauge-reading contract
+
+The bounded context stores nonnegative gauge readings up to 1000 inclusive. Supported
+units are `bar` and `kPa`; this value type performs no unit conversion. Two readings
+with different units remain distinct. Number text uses ASCII digits, one to four
+integer digits, and optionally one to three fractional digits. No exponent, sign,
+whitespace or thousands separators are accepted. Leading integer zeroes are only
+formatting. The grammar constrains text parsing, not the precision of a directly
+constructed BigDecimal value. Import rows retain raw input for audit outside the domain value.
+
+Decimal scale records measurement resolution in this context. For the same unit,
+equal numerical values with different scales express distinct readings.
+
+The import deduplicates by this value contract. The record's public canonical
+constructor is also in use, so required invariants cannot rely only on `parse`.
+No natural ordering, normalization of units, or new framework is required. The value
+and its hash must remain stable after insertion into a hash collection. An invalid
+input is rejected explicitly; a failed row must not become a valid zero reading.
+

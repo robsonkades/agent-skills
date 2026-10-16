@@ -1,0 +1,2 @@
+root;stable 80
+root;removed 20

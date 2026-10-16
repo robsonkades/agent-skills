@@ -163,12 +163,18 @@ discovered live credentials, for verification.
     retirement criterion. Plaintext data keys must not accompany ciphertext; wrapped data keys
     may, provided the wrapping key remains separately protected.
 36. **Does authentication failure reach the caller before any plaintext is accepted?** Inspect
-    `CipherInputStream` as well as `Cipher`: the [Java 21 stream contract](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/javax/crypto/CipherInputStream.html)
-    warns that integrity-check exceptions may be caught without informing the caller. Prefer the
-    direct `Cipher` API or a vetted authenticated-encryption facility with verified failure
-    semantics. Do not publish output from `update` before successful authentication completion.
+    the cipher's operation mode as well as its wrapper: both Java 21
+    [`CipherInputStream`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/javax/crypto/CipherInputStream.html)
+    and [`CipherOutputStream`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/javax/crypto/CipherOutputStream.html)
+    warn that integrity-check exceptions can be hidden during decryption. Successful `close()`
+    is not proof that an uploaded ciphertext authenticated; neither is an empty result, since
+    empty plaintext can be valid. Prefer direct `Cipher.doFinal` or a vetted authenticated-encryption
+    facility with verified failure semantics. Do not publish output from `update` or report
+    success before authentication completes. This finding is about decryption: using
+    `CipherOutputStream` for encryption is not itself this defect, but still finish encryption,
+    including the tag, before publishing its result.
     Large encrypted objects need bounded handling or an established streaming-AEAD protocol,
-    not an unbounded buffer or invented chunk framing. This contract was checked **2026-09-25**.
+    not an unbounded buffer or invented chunk framing. Both contracts were checked **2026-10-16**.
 
 ## What not to raise
 

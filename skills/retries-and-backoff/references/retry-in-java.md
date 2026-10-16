@@ -61,16 +61,19 @@ public sealed interface Outcome<T> {
     record Ok<T>(T value) implements Outcome<T> {}
     record Transient<T>(String code, Duration advisedDelay) implements Outcome<T> {}  // ZERO = none
     record Permanent<T>(String code) implements Outcome<T> {}
-    record Ambiguous<T>(String code) implements Outcome<T> {}   // may or may not have been applied
+    record Ambiguous<T>(String code, Duration advisedDelay) implements Outcome<T> {} // may have applied
 }
 ```
 
 The HTTP/gRPC adapter combines transport evidence with the operation contract when mapping to
 this type. Everything above switches exhaustively, so a new class becomes a compile error
 rather than silently falling through to retry.
-`Transient` must certify that another attempt is safe from the phase/intent evidence, not merely
-that failure might clear. Validate nonnegative
-advice and bounded policy durations/counts before the loop. `Op`, `Policy`, `Deadline`, budget
+Here, `Transient` means a retryable failure with reliable non-application/rejection evidence.
+Use `Ambiguous` when the effect is unknown even if a replay guarantee permits another attempt;
+replay permission does not resolve the previous outcome. Both variants carry server advice
+(`Duration.ZERO` when absent): an ambiguous 503 can still have a valid `Retry-After`.
+Validate nonnegative advice and bounded policy durations/counts before the loop.
+`Op`, `Policy`, `Deadline`, budget
 and exception types below are integration placeholders, not a complete retry library.
 The adapter/operation owner records ambiguous state against the stable intent ID before returning
 it; a local boolean is not durable storage. `maxAttempts` includes the first call and must be >= 1.
@@ -98,6 +101,7 @@ effect does not qualify. Duplicate-effect prevention alone need not recover the 
             case Outcome.Ambiguous<T> a -> {
                 unresolved = true;
                 if (!replaySafe) throw stopped(a.code(), true); // pending/unknown, not definite failure
+                advised = a.advisedDelay();
             }
             case Outcome.Transient<T> t -> advised = t.advisedDelay();
         }
@@ -241,6 +245,8 @@ The successful streaming response's owner and the no-retry-after-delivery rule s
 ## Primary references
 
 - [RFC 9110 §9.2.2: idempotent methods and automatic retry](https://www.rfc-editor.org/rfc/rfc9110#section-9.2.2)
+- [RFC 9110 §10.2.3: Retry-After](https://www.rfc-editor.org/rfc/rfc9110#section-10.2.3)
+- [AWS Builders Library: timeouts, retries, and side-effect uncertainty](https://aws.amazon.com/builders-library/timeouts-retries-and-backoff-with-jitter/)
 - [AWS Architecture Blog: exponential backoff and jitter](https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/)
 - [gRPC A6 retry design at dc9fd4f](https://github.com/grpc/proposal/blob/dc9fd4fe5b94b90b82fe2833ad1d80938e6a49c1/A6-client-retries.md) — design reference; verify the deployed client's implementation/version
 - [Spring Retry 2.0.12 `@Backoff` source](https://github.com/spring-projects/spring-retry/blob/v2.0.12/src/main/java/org/springframework/retry/annotation/Backoff.java)

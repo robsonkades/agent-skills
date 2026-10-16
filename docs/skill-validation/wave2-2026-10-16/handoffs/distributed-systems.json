@@ -1,0 +1,225 @@
+{
+  "schemaVersion": 1,
+  "skill": "distributed-systems",
+  "wave": "wave2-2026-10-16",
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "ownedPath": "skills/distributed-systems",
+  "allWritesStopped": true,
+  "scope": "Preserve this skill as a triage/router; discriminate acceptance from completed business effects and reader visibility, and align breaker routing with optional fallback semantics.",
+  "baseline": {
+    "gitState": "Clean assigned package; no staged, unstaged or untracked files",
+    "committedVersion": "1.3.4",
+    "assignmentVersion": "1.3.4",
+    "files": [
+      {
+        "path": "C:\\git\\agent-skills\\skills\\distributed-systems\\SKILL.md",
+        "sha256": "6EE2E7BBD87384EEACB94BCD2BA58F1EB3DCD3ACC41D7A156BBCBB044840C968"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\distributed-systems\\skill.yaml",
+        "sha256": "D08E1FB9275D21A825A5A00A2EBEDD30E2AEAAFC45CC4C85AAC309732733905D"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\distributed-systems\\references\\design-review.md",
+        "sha256": "E7182F1A47A644B6B719861E00BBA4AC704BA88886E9D3ACB1F591D5791D1132"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\distributed-systems\\references\\triage-map.md",
+        "sha256": "9B65053A2DCDD36EEED66E3F6FBA259AE97EAF4BE66E1C50E1FAC1BF30ED3ED0"
+      }
+    ]
+  },
+  "version": {
+    "committed": "1.3.4",
+    "assignment": "1.3.4",
+    "final": "1.3.5",
+    "rationale": "One patch for the combined unpublished documentation corrections"
+  },
+  "findings": [
+    {
+      "location": "SKILL.md:39; references/triage-map.md:28",
+      "problem": "The stale-data discriminator selected cache/consistency owners before establishing whether a successful acknowledgement represented an applied business write.",
+      "consequence": "Queued but unapplied work can be diagnosed as replica lag or a read-your-writes failure.",
+      "change": "Trace acknowledgement, durable effect and serving path; use response contract and correlated operation progress, preserve unknown completion where evidence coverage is inadequate, and route pending work versus visibility appropriately."
+    },
+    {
+      "location": "references/design-review.md:39",
+      "problem": "The design contract questions did not identify the acknowledgement milestone or compare it with the consumer's expected observation.",
+      "consequence": "A named guarantee can conceal a mismatch between acceptance, application and visibility.",
+      "change": "Add a scoped acknowledgement-milestone question with existing contract/delivery/consistency owners."
+    },
+    {
+      "location": "references/triage-map.md:104,132; references/design-review.md:70",
+      "problem": "Breaker routing referred to fallback without explicitly preserving the validity of an honest fast error.",
+      "consequence": "Could imply a successful fallback is required before circuit-breaker protection is useful.",
+      "change": "Use the caller's fast-failure contract; explicitly allow a typed error and keep successful fallback optional."
+    }
+  ],
+  "filesChanged": [
+    "skills/distributed-systems/SKILL.md",
+    "skills/distributed-systems/references/triage-map.md",
+    "skills/distributed-systems/references/design-review.md",
+    "skills/distributed-systems/skill.yaml"
+  ],
+  "preExistingChanges": [],
+  "diffSummary": {
+    "insertions": 26,
+    "deletions": 8,
+    "files": 4
+  },
+  "capabilitiesPreserved": [
+    "Triage/router scope without implementing specialist protocols",
+    "All existing specialist routes and scoped design review",
+    "Provisional routes under missing evidence and unavailable specialists",
+    "Incident authority and time-critical mitigation",
+    "Repeat-safety before retries and unknown outcomes",
+    "Duplicate identity, stale overwrites, causal-order limits, capacity and lifecycle checks",
+    "No Java minimum for the router; no project upgrade authorization",
+    "Evidence-backed no-change outcome"
+  ],
+  "capabilitiesRemoved": [],
+  "validation": [
+    {
+      "kind": "structural",
+      "command": "Existing loadPackageFromDirectory(new NodeFileSystem(), directory, {strict:true}) plus validatePackage(strict, directoryName, ClaudeCodeAdapter and CodexAdapter)",
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS: distributed-systems 1.3.5, 4 files, 0 issues"
+    },
+    {
+      "kind": "structural",
+      "command": "Read-only Node assertions for local Markdown references and catalog referrals against manifest dependencies/suggests",
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS: 2 local Markdown links and 48 declared catalog referrals"
+    },
+    {
+      "kind": "format",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/distributed-systems/SKILL.md skills/distributed-systems/references/triage-map.md skills/distributed-systems/references/design-review.md skills/distributed-systems/skill.yaml",
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS: all matched files use Prettier code style"
+    },
+    {
+      "kind": "diff",
+      "command": "git diff --check -- skills/distributed-systems; git diff -- skills/distributed-systems; git status --short -- skills/distributed-systems",
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS: all four owned changes inspected; no added package files"
+    },
+    {
+      "kind": "handoff",
+      "command": "JSON.parse on the coordinator-requested circuit-breakers.json retrospective",
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS: prior handoff saved, two separated cases and allWritesStopped:true"
+    }
+  ],
+  "technicalExecutions": [],
+  "behavioralEvaluationsExecuted": [],
+  "walkthroughs": [
+    "Accepted operation still QUEUED versus the same operation APPLIED before the read: queue-progress owner versus consistency/read-path owner",
+    "Missing completion event with insufficient log coverage remains unknown rather than proving non-application",
+    "Correlated dependency failures with a documented typed fast error remain eligible for breaker review without fabricating a successful fallback"
+  ],
+  "sources": [
+    {
+      "url": "https://www.rfc-editor.org/rfc/rfc9110.html#section-15.3.3",
+      "version": "RFC 9110, June 2022",
+      "supports": "202 accepts processing without establishing completed application",
+      "method": "Primary normative source inspection"
+    },
+    {
+      "url": "https://www.rabbitmq.com/docs/4.2/confirms#are-publisher-confirms-related-to-consumer-delivery-acknowledgements",
+      "version": "RabbitMQ 4.2",
+      "supports": "Publisher confirms and consumer acknowledgements concern distinct boundaries; publisher confirmation does not establish consumer processing",
+      "method": "Primary official documentation inspection"
+    },
+    {
+      "url": "https://github.com/resilience4j/resilience4j/blob/v2.3.0/resilience4j-circuitbreaker/src/main/java/io/github/resilience4j/circuitbreaker/CircuitBreaker.java#L86-L119",
+      "version": "Resilience4j 2.3.0",
+      "supports": "Local admission rejection completes with CallNotPermittedException without requiring a successful fallback",
+      "method": "Primary tagged source inspected during the preceding circuit-breakers assignment"
+    },
+    {
+      "path": "skills/circuit-breakers/SKILL.md",
+      "supports": "Existing catalog owner explicitly separates fast-failure resource protection from optional successful fallback",
+      "method": "Read-only catalog contract review during preceding assignment; accepted locally by coordinator"
+    }
+  ],
+  "limitations": [
+    "No executable Java or script was added or changed; no runtime check was required for this router-only documentation change",
+    "No live HTTP, RabbitMQ, database, replication or production access",
+    "Walkthroughs and written cases are not executed agent evaluations",
+    "No measured comparative improvement or universal guarantee claimed"
+  ],
+  "validationArtifactPath": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/distributed-systems.json",
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "prerequisite": "All reviewers have stopped writing"
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "prerequisite": "Registry regenerated and all reviewers have stopped writing"
+    }
+  ],
+  "crossSkillActions": [],
+  "cases": {
+    "classification": "Reproducible development cases; not behavioral executions or unseen holdouts",
+    "actorInstructions": "Create only each case's actorInput fixture files in an isolated workspace. Do not give the actor evaluatorOnly fields or this handoff.",
+    "cases": [
+      {
+        "id": "accepted-work-not-applied",
+        "actorInput": {
+          "task": "Use distributed-systems to triage the reported profile rename: the user calls the update successful, but a subsequent read still shows the old name. Read docs/ack-contract.md, deployment.yaml and packet.json. Return a concise triage.md naming the primary owner, separating evidence and next concrete check. Do not implement a fix or change production settings.",
+          "files": {
+            "docs/ack-contract.md": "Current release contract: PATCH /profiles/{id} publishes RenameProfile and returns HTTP 202 with an operationId after publisher confirmation. That response is an acceptance receipt. GET /operations/{operationId} reads primary P; QUEUED means application work is pending, APPLIED means the profile write and its appliedVersion committed in the same transaction on P. GET /profiles/{id} reads replica R. No immediate read-your-writes guarantee is documented for that endpoint.",
+            "deployment.yaml": "broker: RabbitMQ 4.2\nwriteStore: P\noperationStatusStore: P\nprofileReadStore: R\nreplication: asynchronous\ncache: none\n",
+            "packet.json": "{\n  \"capture\": \"Sequential requests from one caller, in the listed order; no cross-host clock ordering is inferred.\",\n  \"steps\": [\n    {\n      \"operation\": \"PATCH /profiles/42\",\n      \"payload\": {\n        \"name\": \"B\"\n      },\n      \"response\": {\n        \"status\": 202,\n        \"operationId\": \"op-17\"\n      }\n    },\n    {\n      \"operation\": \"GET /operations/op-17\",\n      \"store\": \"P\",\n      \"response\": {\n        \"state\": \"QUEUED\"\n      }\n    },\n    {\n      \"operation\": \"GET /profiles/42\",\n      \"store\": \"R\",\n      \"response\": {\n        \"name\": \"A\",\n        \"version\": 7\n      }\n    }\n  ]\n}"
+          }
+        },
+        "evaluatorOnly": {
+          "expected": [
+            "Actually read the provided contract, topology and operation evidence",
+            "Distinguish HTTP/broker acceptance from application; the supplied progress is QUEUED",
+            "Route the immediate progress investigation to task-queues-and-competing-consumers, with contract clarification only if a remaining consumer expectation requires it",
+            "Propose a concrete queue/consumer progress check correlated to op-17 and relevant processing expectations",
+            "Do not call the old profile value proof of a consistency fault or recommend changing replicas/cache settings"
+          ],
+          "failureConditions": [
+            "Treats 202 or publisher confirmation as business-write completion",
+            "Diagnoses replica lag as established despite the pending operation",
+            "Blindly retries the update or adds a new protocol",
+            "Claims no application occurred solely because an effect log is missing",
+            "Repeats general intake instead of carrying the supplied operation identity and evidence"
+          ]
+        }
+      },
+      {
+        "id": "applied-write-not-visible",
+        "actorInput": {
+          "task": "Use distributed-systems to triage the reported profile rename: the user calls the update successful, but a subsequent read still shows the old name. Read docs/ack-contract.md, deployment.yaml and packet.json. Return a concise triage.md naming the primary owner, separating evidence and next concrete check. Do not implement a fix or change production settings.",
+          "files": {
+            "docs/ack-contract.md": "Current release contract: PATCH /profiles/{id} publishes RenameProfile and returns HTTP 202 with an operationId after publisher confirmation. That response is an acceptance receipt. GET /operations/{operationId} reads primary P; QUEUED means application work is pending, APPLIED means the profile write and its appliedVersion committed in the same transaction on P. GET /profiles/{id} reads replica R. No immediate read-your-writes guarantee is documented for that endpoint.",
+            "deployment.yaml": "broker: RabbitMQ 4.2\nwriteStore: P\noperationStatusStore: P\nprofileReadStore: R\nreplication: asynchronous\ncache: none\n",
+            "packet.json": "{\n  \"capture\": \"Sequential requests from one caller, in the listed order; no cross-host clock ordering is inferred.\",\n  \"steps\": [\n    {\n      \"operation\": \"PATCH /profiles/42\",\n      \"payload\": {\n        \"name\": \"B\"\n      },\n      \"response\": {\n        \"status\": 202,\n        \"operationId\": \"op-17\"\n      }\n    },\n    {\n      \"operation\": \"GET /operations/op-17\",\n      \"store\": \"P\",\n      \"response\": {\n        \"state\": \"APPLIED\",\n        \"appliedVersion\": 8\n      }\n    },\n    {\n      \"operation\": \"GET /profiles/42\",\n      \"store\": \"R\",\n      \"response\": {\n        \"name\": \"A\",\n        \"version\": 7\n      }\n    }\n  ]\n}"
+          }
+        },
+        "evaluatorOnly": {
+          "changedConstraint": "Only the authoritative operation progress record changes from QUEUED to APPLIED at version 8 before the read.",
+          "expected": [
+            "Read the same artifacts and recognize the changed completion milestone",
+            "Route primarily to consistency-models for the read path/visibility contract, since R returned version 7 after application version 8 was established",
+            "Propose checking R's applied position/version and the reader's required visibility guarantee",
+            "Do not claim automatic contract violation: the fixture documents no immediate read-your-writes guarantee",
+            "Keep the acknowledgement-versus-application distinction without continuing to diagnose this observed operation as merely queued"
+          ],
+          "failureConditions": [
+            "Returns the same queue-only diagnosis as case A",
+            "Infers that every 202 means work remains unapplied despite subsequent completion evidence",
+            "Prescribes stronger consistency or replica changes without the required read contract",
+            "Claims an exact replication failure mechanism or global corruption without evidence"
+          ]
+        }
+      }
+    ]
+  }
+}

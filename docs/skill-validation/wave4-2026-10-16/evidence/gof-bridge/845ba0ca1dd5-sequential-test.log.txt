@@ -1,0 +1,2 @@
+PASS sequential file + memory; 5 assertions
+retained=C:\Users\robso\AppData\Local\Temp\skills-wave4-validation-Ceekn9\gof-bridge-validation-quality18\test-data\bridge-sequential-17509043090797370243

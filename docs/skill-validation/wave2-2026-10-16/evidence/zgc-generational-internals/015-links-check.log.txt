@@ -1,0 +1,17 @@
+{
+  "checkedLocalLinks": 3,
+  "links": [
+    {
+      "file": "skills/zgc-generational-internals/SKILL.md",
+      "target": "references/cycles-logs-and-events.md"
+    },
+    {
+      "file": "skills/zgc-generational-internals/SKILL.md",
+      "target": "references/cycles-logs-and-events.md"
+    },
+    {
+      "file": "skills/zgc-generational-internals/SKILL.md",
+      "target": "references/barriers-and-remembered-set.md"
+    }
+  ]
+}

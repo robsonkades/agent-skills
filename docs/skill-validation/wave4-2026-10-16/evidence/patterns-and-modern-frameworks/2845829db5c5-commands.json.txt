@@ -1,0 +1,142 @@
+[
+  {
+    "exe": "C:\\Program Files\\nodejs\\node.exe",
+    "args": [
+      "C:/git/agent-skills/node_modules/prettier/bin/prettier.cjs",
+      "--check",
+      "C:/git/agent-skills/skills/patterns-and-modern-frameworks/SKILL.md",
+      "C:/git/agent-skills/skills/patterns-and-modern-frameworks/skill.yaml",
+      "C:/git/agent-skills/skills/patterns-and-modern-frameworks/references/framework-equivalents.md",
+      "C:/git/agent-skills/skills/patterns-and-modern-frameworks/references/modern-java-idioms.md"
+    ],
+    "cwd": "C:/git/agent-skills",
+    "exitCode": 0,
+    "stdout": "Checking formatting...\nAll matched files use Prettier code style!\n",
+    "stderr": ""
+  },
+  {
+    "exe": "git",
+    "args": [
+      "diff",
+      "--check",
+      "--",
+      "skills/patterns-and-modern-frameworks"
+    ],
+    "cwd": "C:/git/agent-skills",
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "exe": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+    "args": [
+      "-version"
+    ],
+    "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks",
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n"
+  },
+  {
+    "exe": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+    "args": [
+      "-version"
+    ],
+    "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks",
+    "exitCode": 0,
+    "stdout": "javac 25.0.3\r\n",
+    "stderr": ""
+  },
+  {
+    "exe": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+    "args": [
+      "--release",
+      "17",
+      "-cp",
+      "C:/Users/robso/.m2/repository/org/springframework/spring-core/6.2.10/spring-core-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-jcl/6.2.10/spring-jcl-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-beans/6.2.10/spring-beans-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-aop/6.2.10/spring-aop-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-context/6.2.10/spring-context-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-expression/6.2.10/spring-expression-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-context-support/6.2.10/spring-context-support-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-tx/6.2.10/spring-tx-6.2.10.jar",
+      "-d",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/evaluator-only/classes-0",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/case-inputs/A/project/src/main/java/app/CacheConfiguration.java",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/case-inputs/A/project/src/main/java/app/CatalogCommands.java",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/case-inputs/A/project/src/main/java/app/CheckoutFlow.java",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/case-inputs/A/project/src/main/java/app/SandboxTransactionManager.java",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/case-inputs/A/project/src/test/java/app/Smoke.java",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/evaluator-only/IntegrationChecks.java"
+    ],
+    "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks",
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "exe": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+    "args": [
+      "-cp",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/evaluator-only/classes-0;C:/Users/robso/.m2/repository/org/springframework/spring-core/6.2.10/spring-core-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-jcl/6.2.10/spring-jcl-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-beans/6.2.10/spring-beans-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-aop/6.2.10/spring-aop-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-context/6.2.10/spring-context-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-expression/6.2.10/spring-expression-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-context-support/6.2.10/spring-context-support-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-tx/6.2.10/spring-tx-6.2.10.jar",
+      "app.Smoke"
+    ],
+    "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks",
+    "exitCode": 0,
+    "stdout": "smoke=1 PASS\r\n",
+    "stderr": ""
+  },
+  {
+    "exe": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+    "args": [
+      "-cp",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/evaluator-only/classes-0;C:/Users/robso/.m2/repository/org/springframework/spring-core/6.2.10/spring-core-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-jcl/6.2.10/spring-jcl-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-beans/6.2.10/spring-beans-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-aop/6.2.10/spring-aop-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-context/6.2.10/spring-context-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-expression/6.2.10/spring-expression-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-context-support/6.2.10/spring-context-support-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-tx/6.2.10/spring-tx-6.2.10.jar",
+      "app.IntegrationChecks",
+      "true"
+    ],
+    "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks",
+    "exitCode": 0,
+    "stdout": "PASS outer transaction bean is proxied\r\nPASS cache command bean is proxied\r\nPASS effective primary manager matches fixture\r\nPASS successful outer transaction invalidates\r\nPASS outer failure propagated\r\nPASS outer rollback executed\r\nPASS rollback cache retention depends on manager\r\nPASS method failure propagated\r\nPASS method failure skips default eviction\r\nPASS without transaction eviction is immediate\r\nPASS put deferred while synchronization active\r\nPASS put omitted on rollback\r\nPASS clear deferred while synchronization active\r\nPASS clear omitted on rollback\r\nPASS evictIfPresent immediate\r\nPASS putIfAbsent immediate\r\nPASS immediate operations not restored by rollback\r\nPASS invalidate immediate despite rollback\r\ncontrols=18 PASS\r\n",
+    "stderr": ""
+  },
+  {
+    "exe": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+    "args": [
+      "--release",
+      "17",
+      "-cp",
+      "C:/Users/robso/.m2/repository/org/springframework/spring-core/6.2.10/spring-core-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-jcl/6.2.10/spring-jcl-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-beans/6.2.10/spring-beans-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-aop/6.2.10/spring-aop-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-context/6.2.10/spring-context-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-expression/6.2.10/spring-expression-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-context-support/6.2.10/spring-context-support-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-tx/6.2.10/spring-tx-6.2.10.jar",
+      "-d",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/evaluator-only/classes-1",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/case-inputs/B/project/src/main/java/app/CacheConfiguration.java",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/case-inputs/B/project/src/main/java/app/CatalogCommands.java",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/case-inputs/B/project/src/main/java/app/CheckoutFlow.java",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/case-inputs/B/project/src/main/java/app/SandboxTransactionManager.java",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/case-inputs/B/project/src/test/java/app/Smoke.java",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/evaluator-only/IntegrationChecks.java"
+    ],
+    "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks",
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "exe": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+    "args": [
+      "-cp",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/evaluator-only/classes-1;C:/Users/robso/.m2/repository/org/springframework/spring-core/6.2.10/spring-core-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-jcl/6.2.10/spring-jcl-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-beans/6.2.10/spring-beans-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-aop/6.2.10/spring-aop-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-context/6.2.10/spring-context-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-expression/6.2.10/spring-expression-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-context-support/6.2.10/spring-context-support-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-tx/6.2.10/spring-tx-6.2.10.jar",
+      "app.Smoke"
+    ],
+    "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks",
+    "exitCode": 0,
+    "stdout": "smoke=1 PASS\r\n",
+    "stderr": ""
+  },
+  {
+    "exe": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+    "args": [
+      "-cp",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/evaluator-only/classes-1;C:/Users/robso/.m2/repository/org/springframework/spring-core/6.2.10/spring-core-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-jcl/6.2.10/spring-jcl-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-beans/6.2.10/spring-beans-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-aop/6.2.10/spring-aop-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-context/6.2.10/spring-context-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-expression/6.2.10/spring-expression-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-context-support/6.2.10/spring-context-support-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-tx/6.2.10/spring-tx-6.2.10.jar",
+      "app.IntegrationChecks",
+      "false"
+    ],
+    "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks",
+    "exitCode": 0,
+    "stdout": "PASS outer transaction bean is proxied\r\nPASS cache command bean is proxied\r\nPASS effective primary manager matches fixture\r\nPASS successful outer transaction invalidates\r\nPASS outer failure propagated\r\nPASS outer rollback executed\r\nPASS rollback cache retention depends on manager\r\nPASS method failure propagated\r\nPASS method failure skips default eviction\r\nPASS without transaction eviction is immediate\r\ncontrols=10 PASS\r\n",
+    "stderr": ""
+  }
+]

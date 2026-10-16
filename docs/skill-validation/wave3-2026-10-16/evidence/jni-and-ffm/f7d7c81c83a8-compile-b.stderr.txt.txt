@@ -1,0 +1,9 @@
+NativeFixture.java:26: warning: [restricted] Linker.upcallStub(MethodHandle,FunctionDescriptor,Arena,Option...) is a restricted method.
+        MemorySegment stub = linker.upcallStub(target, descriptor, stubArena);
+                                   ^
+  (Restricted methods are unsafe and, if used incorrectly, might crash the Java runtime or corrupt memory)
+NativeFixture.java:27: warning: [restricted] Linker.downcallHandle(MemorySegment,FunctionDescriptor,Option...) is a restricted method.
+        downcall = linker.downcallHandle(stub, descriptor);
+                         ^
+  (Restricted methods are unsafe and, if used incorrectly, might crash the Java runtime or corrupt memory)
+2 warnings

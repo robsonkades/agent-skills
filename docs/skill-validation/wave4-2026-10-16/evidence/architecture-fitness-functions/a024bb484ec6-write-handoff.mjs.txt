@@ -1,0 +1,278 @@
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const evidence = dirname(fileURLToPath(import.meta.url));
+const parent = dirname(evidence);
+const skill = 'architecture-fitness-functions';
+const readJson = (name) => JSON.parse(readFileSync(join(evidence, name), 'utf8').replace(/^\uFEFF/, ''));
+const baseline = readJson('baseline.json');
+const local = readJson('local-results.json');
+const save = (name, value) => writeFileSync(join(evidence, name), JSON.stringify(value, null, 2) + '\n');
+mkdirSync(join(evidence, 'cases'), { recursive: true });
+const apiDigest = 'sha256:' + createHash('sha256').update('synthetic order-api PR842 bytes').digest('hex');
+const workerDigest = 'sha256:' + createHash('sha256').update('synthetic settlement-worker PR842 bytes').digest('hex');
+
+const common = {
+  task: 'Review FF-17 for PR 842 from the supplied project records. State what its result establishes, whether the blocking control should be retained or adjusted, and the next validation needed. Preserve the approved architectural policy. Do not implement application tests or pipeline changes.',
+  evaluationDate: '2026-10-16',
+  fixturesAreSynthetic: true,
+  files: {
+    'policy.json': {
+      id: 'ARCH-7', status: 'approved', owner: 'architecture lead',
+      property: 'For production origin classes in protectedModules, packages containing .domain. must have no static dependencies on a class whose package contains .infrastructure.',
+      protectedModules: ['order-api', 'settlement-worker'],
+      threshold: 'zero unwaived dependency identities',
+      violationIdentity: ['rule', 'originClass', 'targetClass'],
+      missingEvidenceAction: 'FF-17 cannot approve the candidate; obtain applicable evidence or an authorized exception.',
+      exceptionAuthority: 'architecture lead',
+      exceptionRequirements: ['specific identity', 'owner', 'reason', 'expiry', 'compensating action'],
+    },
+    'fitness-contract.json': {
+      id: 'FF-17', configurationId: 'ff17-config-12', policy: 'ARCH-7', rule: 'domain-static-dependencies',
+      site: 'PR architecture-tests job', response: 'nonzero status blocks merge',
+      claim: 'ARCH-7 is satisfied for the candidate',
+      tool: 'ArchUnit 1.5.1', javaRelease: 21, ciRuntime: 'Temurin 21',
+      configuredOrigins: ['com.acme.order.api..'],
+      lifecycle: 'test engine executes domain-static-dependencies for selected production origins; then approved exact-identity waivers are applied.',
+    },
+    'candidate-build.json': {
+      revision: 'pr842-7c4d6a',
+      artifacts: [
+        { module: 'order-api', digest: apiDigest, productionClasses: 212, packageRoot: 'com.acme.order.api' },
+        { module: 'settlement-worker', digest: workerDigest, productionClasses: 38, packageRoot: 'com.acme.settlement.worker' },
+      ],
+    },
+    'ff17-result.json': {
+      revision: 'pr842-7c4d6a', controlConfiguration: 'ff17-config-12', executedOn: '2026-10-16', result: 'pass',
+      executed: true, selectedOrigins: { 'order-api': 212 },
+      evaluatedArtifacts: [{ module: 'order-api', digest: apiDigest }],
+      rawViolations: [
+        { rule: 'domain-static-dependencies', originClass: 'com.acme.order.api.domain.LegacyOrder', targetClass: 'com.acme.order.api.infrastructure.LegacyOrderStore' },
+      ],
+      appliedWaivers: ['W-12'], unsuppressedViolations: 0, processExit: 0,
+      gate: { state: 'success', required: true },
+    },
+    'waivers.json': [
+      {
+        id: 'W-12', status: 'approved', approvedBy: 'architecture lead', owner: 'order-api lead',
+        identity: { rule: 'domain-static-dependencies', originClass: 'com.acme.order.api.domain.LegacyOrder', targetClass: 'com.acme.order.api.infrastructure.LegacyOrderStore' },
+        reason: 'Bridge retained during the approved storage migration.',
+        expiresOn: '2026-10-23', compensatingAction: 'Migration owner reviews every edit touching the bridge until removal.',
+      },
+    ],
+    'control-rehearsal.json': {
+      controlConfiguration: 'ff17-config-12', executedOn: '2026-10-15',
+      results: [
+        { name: 'order-api allowed dependency', originModule: 'order-api', result: 'pass', gate: 'success' },
+        { name: 'order-api new forbidden dependency', originModule: 'order-api', result: 'violation', processExit: 1, gate: 'failure' },
+        { name: 'order-api import unavailable', originModule: 'order-api', result: 'inconclusive', processExit: 2, gate: 'failure' },
+        { name: 'W-12 expired', originModule: 'order-api', result: 'violation', processExit: 1, gate: 'failure' },
+        { name: 'different target class under W-12 origin', originModule: 'order-api', result: 'violation', processExit: 1, gate: 'failure' },
+      ],
+    },
+  },
+};
+const caseA = structuredClone(common);
+const caseB = structuredClone(common);
+caseB.files['policy.json'].protectedModules = ['order-api'];
+save('cases/case-a.input.json', caseA);
+save('cases/case-b.input.json', caseB);
+const withoutPopulation = (value) => {
+  const copy = structuredClone(value);
+  delete copy.files['policy.json'].protectedModules;
+  return copy;
+};
+assert.deepEqual(withoutPopulation(caseA), withoutPopulation(caseB));
+
+const commonCriteria = [
+  'Separate the static-dependency property from broader claims about domain quality or runtime isolation.',
+  'Use the approved scope and exact waiver contract; preserve the valid W-12 exception at the supplied date.',
+  'Do not treat a fresh report or nonzero class count alone as proof that every protected module was assessed.',
+  'Use the rehearsal as supplied case evidence, without claiming the reviewer actually ran ArchUnit or CI.',
+  'Keep the task a control review and implementation handoff; do not reopen settled policy or add a new governance framework.',
+];
+const criteriaA = {
+  caseId: 'case-a', evaluatorOnly: true, actorInput: 'case-a.input.json',
+  expectedBehavior: [
+    'ARCH-7 includes settlement-worker but the evaluated origins and artifact list cover only order-api. The result cannot establish FF-17 coverage for the full approved population.',
+    'Retain the useful order-api control and its supported pass under W-12; correct the overall applicability/disposition to incomplete evidence.',
+    'Specify a validation handoff that includes settlement-worker production origins/artifact and a representative hostile fixture in that module through the actual gate path.',
+    'Apply the existing missing-evidence response rather than silently accepting the whole candidate, shrinking the protected scope, or declaring a known architecture defect without a reported forbidden edge.',
+    ...commonCriteria,
+  ],
+  observableFailures: [
+    'Approve ARCH-7 for both modules because 212 classes were inspected and the gate was green.',
+    'Say that the rehearsal proves sensitivity for settlement-worker.',
+    'Retire the useful control, waive the uncovered module without authority, or invent a demonstrated worker dependency violation.',
+    'Reject W-12 solely because exceptions are always disallowed.',
+  ],
+};
+const criteriaB = {
+  caseId: 'case-b', evaluatorOnly: true, actorInput: 'case-b.input.json',
+  expectedBehavior: [
+    'The approved population is order-api only; report identity, selected population, threshold response and legitimate waiver are supported by the supplied records.',
+    'Retain the blocking control without demanding population expansion as a condition of this policy. It is permissible to note settlement-worker is outside this claim.',
+    'Do not certify the unassessed worker or architectural quality beyond the static-dependency contract.',
+    'Preserve the current scoped W-12 exception and its expiry/review responsibility; no silent refreeze or broad suppression is needed.',
+    ...commonCriteria,
+  ],
+  observableFailures: [
+    'Treat missing settlement-worker coverage as a failure of this approved order-api-only contract.',
+    'Require widening scope or removing W-12 before retaining the existing valid control.',
+    'Claim all service architecture is sound or that the worker was evaluated.',
+  ],
+};
+save('cases/case-a.criteria.json', criteriaA);
+save('cases/case-b.criteria.json', criteriaB);
+
+const sources = [
+  {
+    id: 'archunit-guide', publisher: 'TNG / ArchUnit',
+    url: 'https://www.archunit.org/userguide/html/000_Index.html',
+    version: 'Page identifies itself as 1.5.1', consultedOn: '2026-10-16',
+    sections: ['3.1 Importing Classes', '8.6 Freezing Arch Rules', '8.7.2 Component Dependency Metrics', '9.1.2 Controlling the Import'],
+    support: 'Confirms bytecode/import population, known-violation storage and configured matching, refreeze behavior, and the abstractness/instability definition of distance. Supports the existing caveats rather than a content correction.',
+    limitation: 'Documentation/source contract review only; no ArchUnit runtime, Java fixture or real CI execution in this assignment.',
+  },
+  {
+    id: 'dependency-check-maven', publisher: 'OWASP Dependency-Check',
+    url: 'https://dependency-check.github.io/DependencyCheck/dependency-check-maven/check-mojo.html',
+    version: 'Page goal identifier org.owasp:dependency-check-maven:13.0.0:check', consultedOn: '2026-10-16',
+    sections: ['Required Parameters: failBuildOnCVSS', 'Required Parameters: failOnError'],
+    support: 'Default failBuildOnCVSS remains 11; producing a report does not demonstrate score-based blocking. The existing reference separately requires effective project configuration and actual gate validation.',
+    limitation: 'No Maven plugin execution or vulnerability feed retrieval; no claim that every project uses this version.',
+  },
+  {
+    id: 'github-skipped-jobs', publisher: 'GitHub',
+    url: 'https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-jobs-with-conditions',
+    version: 'Current hosted Actions documentation, accessed 2026-10-16', consultedOn: '2026-10-16',
+    sections: ['Example: Only run job for a specific repository', 'Note about skipped required jobs'],
+    support: 'A conditionally skipped job may report success and permit merge, including a required job. This confirms the skill distinction between execution evidence and enclosing green status.',
+    limitation: 'No hosted workflow or branch protection configuration was exercised.',
+  },
+  {
+    id: 'slsa-artifact-verification', publisher: 'SLSA / Linux Foundation',
+    url: 'https://slsa.dev/spec/v1.1/verifying-artifacts',
+    version: 'SLSA v1.1, page now labeled retired in favor of v1.2', consultedOn: '2026-10-16',
+    sections: ['Step 1: Check SLSA Build level, artifact/provenance checks'],
+    support: 'Matching the provenance subject to the artifact digest is required by the cited procedure; this supports the existing identity example without establishing architectural fitness.',
+    limitation: 'The skill cites this version as an example, not as current SLSA compliance guidance. Retired status is not evidence that the illustrated digest comparison is false.',
+  },
+  {
+    id: 'thoughtworks-concept', publisher: 'Thoughtworks',
+    url: 'https://www.thoughtworks.com/radar/techniques/architectural-fitness-function',
+    version: 'Radar entry updated May 15, 2018; not in current edition', consultedOn: '2026-10-16',
+    sections: ['May 2018 architectural fitness function description'],
+    support: 'The concept assesses architectural characteristics and includes existing tests, metrics and monitors. It supports the skill scope, not controlled efficacy claims.',
+    limitation: 'An explanatory practitioner source is not experimental evidence of delivery benefit or agent improvement.',
+  },
+];
+save('sources.json', sources);
+
+const cases = [
+  {
+    id: 'case-a', inputPath: join(evidence, 'cases/case-a.input.json'),
+    evaluatorCriteriaPath: join(evidence, 'cases/case-a.criteria.json'),
+    status: 'PREPARED_NOT_EXECUTED', walkthrough: 'Existing population/applicability and implementation-handoff guidance yields incomplete assurance for the approved two-module scope while preserving the API check and W-12.',
+  },
+  {
+    id: 'case-b', inputPath: join(evidence, 'cases/case-b.input.json'),
+    evaluatorCriteriaPath: join(evidence, 'cases/case-b.criteria.json'),
+    status: 'PREPARED_NOT_EXECUTED', walkthrough: 'Changing only approved protectedModules to order-api makes the supplied observation population sufficient for the stated static contract; legitimate exception remains visible.',
+  },
+];
+const handoff = {
+  skill, ownedPath: 'skills/architecture-fitness-functions/**', status: 'NO_CHANGES_NEEDED',
+  reviewDate: '2026-10-16',
+  allWritesStopped: true, activeBackgroundProcesses: [],
+  baseline: {
+    head: 'bbb7d996a929e81baf735bbaab5b6e3fbf6e8503',
+    preExistingChanges: [], stagedChanges: [], untrackedFiles: [],
+    source: 'docs/skill-validation/wave4-2026-10-16/baseline.json',
+    snapshotPath: join(evidence, 'baseline.json'),
+    allSevenAssignmentHashesMatchCoordinatorBaseline: true,
+  },
+  versions: { committed: '1.3.3', assignment: '1.3.3', final: '1.3.3', preExistingBump: false, rationale: 'No package content changed; no version bump.' },
+  promise: 'Design/review architectural assessments and response policy, distinguishing the observed property and coverage from a pipeline pass; hand off implementation to existing owners.',
+  domainSuccessCriteria: [
+    'Tie the assessment to an approved property, population and artifact/configuration.',
+    'Exercise sensitivity to a representative violation and distinguish unavailable evidence from pass.',
+    'Check actual response and explain proxy/selection limits.',
+    'Preserve valid policy, identity-based debt baselines and authorized scoped exceptions.',
+    'Conclude a small review without imposing a new framework or claiming implementation/effectiveness.',
+  ],
+  findingsCorrected: [],
+  findingsRemaining: [],
+  reviewedFindings: [
+    { location: 'SKILL.md Workflow 2-3 and 6; references/catalogue.md Bind a verdict to the evidence it actually assessed', disposition: 'Adequate', consequence: 'Already requires actual population, input identity, applicability, hostile fixture and response evidence; distinguishes no-data, skipped execution and incompatible reuse.' },
+    { location: 'SKILL.md Decision rules; references/catalogue.md Baselines and proxies', disposition: 'Adequate', consequence: 'Already prevents count-only false green under no-new policy and preserves the distinct authorized count-only policy; tool docs confirm the freezing caveats.' },
+    { location: 'references/ungoverned.md Register schema and Review and exceptions; scripts/check-governance-register.mjs', disposition: 'Adequate', consequence: 'Checker and prose explicitly limit success to metadata, distinguish stale assurance from a defective system, and leave approval and waiver semantics with accountable authority.' },
+    { location: 'references/disagreements-and-evidence.md; SKILL.md Deliverable', disposition: 'Adequate', consequence: 'No empirical improvement claim; written cases and checker tests are correctly distinguished from agent behavior.' },
+  ],
+  changedFilesByReviewer: [], preservedPreExistingChanges: [],
+  capabilities: {
+    preserved: ['Triggered/runtime/manual controls', 'Evidence identity and freshness', 'Policy versus incidental threshold', 'Sensitivity and actual response path', 'Partial coverage and proxies', 'No-new versus timed debt reduction', 'Scoped authorized waivers', 'Optional metadata checker and its existing tests', 'Conditional routing and implementation boundary'],
+    replaced: [], removed: [],
+  },
+  validation: {
+    executedStructural: {
+      command: 'node C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-fitness-functions/local-check.mjs',
+      cwd: 'C:/git/agent-skills', exitCode: 0,
+      results: 'Strict package validation: 7 files, zero issues; 5 internal links; 6 optional referrals; scoped Prettier and git diff checks passed; all 7 hashes unchanged.',
+    },
+    commands: local.commands,
+    executedTechnical: [{ command: 'node --test scripts/check-governance-register.test.mjs', cwd: 'C:/git/agent-skills/skills/architecture-fitness-functions', result: '25 passed; 0 failed; 0 skipped. Includes hostile metadata, invalid input, date boundaries, mode-specific fields and documented JSON example.', log: join(evidence, 'logs/register-tests.json') }],
+    behavioralEvaluationsExecuted: [],
+    walkthroughs: cases.map((item) => ({ id: item.id, description: item.walkthrough, classification: 'Structured expected-behavior walkthrough, not an actor result' })),
+    failures: [],
+    unobservedOrAborted: [
+      'An initial functions.exec batch combined four web pages with the test command and was terminated while awaiting web results; that batch returned no inspectable results, so it is not counted as a test pass. The recorded direct test run was then performed successfully.',
+      'A multi-pattern web find was terminated after stalling; later direct page opens retrieved the needed sections. No failed query result was used as evidence.',
+    ],
+    noActiveChildren: true,
+  },
+  sources,
+  behavioralCases: {
+    cases,
+    pairDifference: 'Only files.policy.json.protectedModules changes: [order-api, settlement-worker] versus [order-api]. A deep-equality assertion verified the remaining input is identical.',
+    prerequisites: 'Fresh actor sessions with identical model/settings/tools and only the chosen input JSON plus the selected skill/resource snapshot. Inputs contain all synthetic project records needed for a review, so Java/ArchUnit installation is unnecessary.',
+    exposure: 'Reviewer-authored development cases, not held out. Do not pass criteria, this handoff or walkthroughs to actors. No independent actor was run.',
+    comparisonLimit: 'No revision exists to compare with the assignment baseline. A coordinator may compare no-skill versus current 1.3.3; selection and execution are separate claims.',
+  },
+  assumptionsAndLimits: [
+    'No supported material defect was found; this does not guarantee defect absence or universal agent efficacy.',
+    'Windows/Node v25.6.1 was used for the existing checker; the documented minimum Node 22.18.0 was not separately executed.',
+    'No executable Java example ships here and no Java/application/pipeline control was changed or run.',
+    'Primary documentation establishes tool semantics, not real-project execution, runtime architectural quality or measured delivery improvement.',
+    'Case reports and approvals are synthetic input fixtures, not measurements or approvals obtained during this review.',
+    'Local package checks do not establish catalog-wide dependency/routing consistency.',
+  ],
+  pendingGlobalChecks: [
+    { command: 'npm run registry:build', owner: 'coordinator', prerequisite: 'All assigned writers stopped; shared index must preserve other authorized changes.', reason: 'Parallel-review ownership restriction; this unchanged package needs no new index content.' },
+    { command: 'npm run verify', owner: 'coordinator', prerequisite: 'After coordinator registry build and a stable complete wave.', reason: 'Reviewer did not run repository-wide checks.' },
+  ],
+  crossSkillIssues: [],
+  coordinatorActions: ['Inspect unchanged package diff/hashes.', 'Optionally run the separate actor cases with evaluator criteria private; do not claim measured gain from this handoff.'],
+  evidence: {
+    root: evidence, baseline: join(evidence, 'baseline.json'),
+    results: join(evidence, 'local-results.json'), checker: join(evidence, 'local-check.mjs'),
+    sourceNotes: join(evidence, 'sources.json'), casesDirectory: join(evidence, 'cases'),
+    finalHashes: local.finalHashes,
+  },
+};
+const output = join(parent, skill + '.json');
+writeFileSync(output, JSON.stringify(handoff, null, 2) + '\n');
+const verified = JSON.parse(readFileSync(output, 'utf8'));
+assert.equal(verified.status, 'NO_CHANGES_NEEDED');
+assert.equal(verified.allWritesStopped, true);
+assert.equal(verified.behavioralCases.cases.length, 2);
+assert.equal(verified.changedFilesByReviewer.length, 0);
+assert.equal(verified.evidence.finalHashes.length, 7);
+process.stdout.write(JSON.stringify({
+  handoff: output, status: verified.status, version: verified.versions.final,
+  inputFiles: cases.map((item) => item.inputPath), allWritesStopped: true,
+  sha256: createHash('sha256').update(readFileSync(output)).digest('hex'),
+}, null, 2) + '\n');

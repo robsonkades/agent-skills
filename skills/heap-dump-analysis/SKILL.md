@@ -58,7 +58,9 @@ missing consequential scope, and continue analysis that does not depend on a new
    starting point, not a universal 30% leak threshold; caches and immutable indexes can
    legitimately dominate, while a distributed leak may have no single large owner. Check MAT's
    unreachable/discard settings: an unfiltered file and its indexed graph can contain different
-   populations. Reparse existing evidence when that resolves the gap; see the MAT reference.
+   populations. Experimental discard can put reachable objects in the Unreachable Objects
+   Histogram and remove their ownership evidence. Reparse existing evidence when that resolves
+   the gap; see the MAT reference.
 6. **Run Path to GC Roots on the suspect with reference strengths made explicit.** Start
    by excluding weak/soft/phantom paths to expose strong ownership, then inspect excluded
    strengths when a soft cache or reference-processing policy is itself the question. A

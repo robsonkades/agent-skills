@@ -1,0 +1,23 @@
+{
+  "inputFilesUnchanged": true,
+  "contractUnchanged": true,
+  "fixtureUnchanged": true,
+  "javaSourcesAndExistingTestUnchanged": true,
+  "jarUnchanged": true,
+  "jarSha256": "306a7086328fe3b9ec65bf292156cec22bfee690ed9ae32afb6851b1118e5fc9",
+  "changedOriginalFiles": [
+    {
+      "path": "output/project/launch.json",
+      "before": "cd43e6dbcf11a01567a66b98da7bdee4618a72a7584b4520e3bb77860644822a",
+      "after": "4f6fd1f423d114f7ddc572b89112ed44d1fec852dc8e1b4c6110b2baead77182"
+    },
+    {
+      "path": "output/project/run.mjs",
+      "before": "5f42b0e09e0f6f6b71b361169b38ea449b9610f09f72967cd3677d3477bf7a53",
+      "after": "2c4dd368da9526cc9649af2669d297d55d2e66eaf9754b14e97fc4e633d6fc79"
+    }
+  ],
+  "addedProjectFiles": [
+    "test/export.test.mjs"
+  ]
+}

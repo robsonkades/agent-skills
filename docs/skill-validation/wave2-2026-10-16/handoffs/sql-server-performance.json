@@ -1,0 +1,344 @@
+{
+  "status": "NO_CHANGES_NEEDED",
+  "skill": "sql-server-performance",
+  "ownedPath": "C:/git/agent-skills/skills/sql-server-performance",
+  "reviewDate": "2026-10-16",
+  "allWritesStopped": true,
+  "versions": {
+    "committed": "1.0.4",
+    "assignment": "1.0.4",
+    "final": "1.0.4",
+    "preExistingBump": false,
+    "rationale": "No content change was justified, so no version bump."
+  },
+  "baseline": {
+    "status": [],
+    "staged": [],
+    "unstaged": [],
+    "untracked": [],
+    "preExistingDifferences": "None in the assigned package; assignment contents matched HEAD.",
+    "files": [
+      {
+        "path": "C:\\git\\agent-skills\\skills\\sql-server-performance\\SKILL.md",
+        "sha256": "4E250A0D46202AE406FABCBC2119E669299F31FE6C4AEE989AC8D748DBA93333"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\sql-server-performance\\skill.yaml",
+        "sha256": "A64ADFDF2C43AC6CB91FEB2CDD96D8AC3BC8A762BF88CDE40ADA7859D3870D30"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\sql-server-performance\\references\\concurrency-plans-instance.md",
+        "sha256": "0D40F3A24D60A250B50B977E610D366EC1D0CD606B52171D5D3641C5FE02E798"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\sql-server-performance\\references\\jdbc-and-operations.md",
+        "sha256": "BC5CAB2ADFAD76F82FFA62631388CD7A75898AF2A918B1CF968C9DE553719E2F"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\sql-server-performance\\references\\storage-indexes-statistics.md",
+        "sha256": "029EBF05883999095DAF9BD70B1884C72C5B9AC492F3A692E2808C909F43D3A5"
+      }
+    ]
+  },
+  "files": {
+    "changedByReviewer": [],
+    "preExistingChanges": [],
+    "finalHashes": [
+      {
+        "path": "C:\\git\\agent-skills\\skills\\sql-server-performance\\SKILL.md",
+        "sha256": "4E250A0D46202AE406FABCBC2119E669299F31FE6C4AEE989AC8D748DBA93333"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\sql-server-performance\\skill.yaml",
+        "sha256": "A64ADFDF2C43AC6CB91FEB2CDD96D8AC3BC8A762BF88CDE40ADA7859D3870D30"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\sql-server-performance\\references\\concurrency-plans-instance.md",
+        "sha256": "0D40F3A24D60A250B50B977E610D366EC1D0CD606B52171D5D3641C5FE02E798"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\sql-server-performance\\references\\jdbc-and-operations.md",
+        "sha256": "BC5CAB2ADFAD76F82FFA62631388CD7A75898AF2A918B1CF968C9DE553719E2F"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\sql-server-performance\\references\\storage-indexes-statistics.md",
+        "sha256": "029EBF05883999095DAF9BD70B1884C72C5B9AC492F3A692E2808C909F43D3A5"
+      }
+    ],
+    "allFiveHashesUnchanged": true,
+    "finalStatus": [],
+    "finalDiff": [],
+    "finalStagedDiff": []
+  },
+  "scopeAndCriteria": {
+    "role": "SQL Server engine diagnosis and justified tuning based on waits, plans, concurrency, storage and JDBC evidence; not generic query/ORM/pool tuning or obligatory implementation.",
+    "compatibility": "SQL Server 2022+ baseline, deployed build/edition/compatibility/topology and resolved Java/mssql-jdbc artifact must govern recommendations; no upgrade authorization.",
+    "successCriteria": [
+      "Incident-aligned evidence and restart/reset history, not lifetime totals presented as incident measurements.",
+      "Discriminate lock/versioning, plan/estimation and physical resource mechanisms before an intervention.",
+      "Keep query, database and instance controls distinct and preserve adequate existing behavior.",
+      "Use actual plans/parameters when needed without implying execution from a static warning or configuration alone.",
+      "Preserve cancellation/unknown-write-outcome, transaction, maintenance and edition-specific contracts.",
+      "A narrow source/calculation answer may close without a capture campaign or tuning change."
+    ]
+  },
+  "findingsCorrected": [],
+  "findingsReviewed": [
+    {
+      "location": "references/concurrency-plans-instance.md:54",
+      "assessment": "Adequate. Query Store active-interval row aggregation, execution-count weighting, execution-type separation, microsecond units and execution end timestamps already prevent incorrect latency conclusions.",
+      "evidence": "Official sys.query_store_runtime_stats definition confirms these keys/units/timestamps.",
+      "decision": "Preserve; no addition."
+    },
+    {
+      "location": "references/concurrency-plans-instance.md:79",
+      "assessment": "Adequate. File-latency guidance uses valid same-file interval deltas, non-integer division, rejects restart/reset changes and treats zero operations as unavailable rather than zero latency. It explicitly says mean, not p99, and asks for work/volume evidence.",
+      "evidence": "Official sys.dm_io_virtual_file_stats source defines counters/units and initialization on SQL Server service startup.",
+      "decision": "Preserve; paired cases target this existing decision."
+    },
+    {
+      "location": "references/concurrency-plans-instance.md:98",
+      "assessment": "Adequate. Completed-wait time is distinguished from current waiting tasks, cumulative history from incident intervals, and aggregate worker wait time from request elapsed/CPU utilization.",
+      "evidence": "Official sys.dm_os_wait_stats documentation confirms completed waits and cumulative/reset semantics.",
+      "decision": "Preserve."
+    },
+    {
+      "location": "references/storage-indexes-statistics.md:26",
+      "assessment": "Adequate. Statistics-update rollback caveat, recompilation and preserved evidence/mitigation are explicit. The skill does not offer rollback of an enclosing transaction as statistics restoration.",
+      "evidence": "Microsoft transaction locking/row-versioning guide states UPDATE STATISTICS commits independently and cannot be rolled back.",
+      "decision": "Preserve."
+    },
+    {
+      "location": "references/storage-indexes-statistics.md:55",
+      "assessment": "Adequate. Windows SQL Server 2022 log-autogrowth IFI threshold and data/log/TDE/privilege distinctions are qualified; no universal growth recommendation is forced.",
+      "evidence": "Official IFI documentation confirms the <=64 MB log-autogrowth exception and distinctions.",
+      "decision": "Preserve."
+    },
+    {
+      "location": "references/jdbc-and-operations.md:35",
+      "assessment": "Adequate. Query/cancel timeout seconds, socket/lock timeout milliseconds, cancellation acknowledgement, connection usability and unknown write outcome are kept separate.",
+      "evidence": "Official JDBC timeout guide confirms units and cancellation/connection boundaries; the skill requires checking the resolved driver and sentinels.",
+      "decision": "Preserve."
+    }
+  ],
+  "remainingFindings": [],
+  "changes": [],
+  "preserved": [
+    "All five package files and capabilities remain byte-for-byte unchanged.",
+    "Concrete activation criteria and generic query/ORM/pool exclusions.",
+    "Wait evidence map, query-plan/parameter discrimination and conditional use of Query Store mitigation.",
+    "RCSI/SNAPSHOT/ADR version-store ownership, NOLOCK anomalies and schema-lock caveat.",
+    "Bounded authorized captures and explicit actual-plan side effects.",
+    "Storage, clustered key, columnstore, heap, statistics and IFI alternatives without mandatory migrations.",
+    "JDBC Unicode/collation/preparation behavior, unknown transaction outcome and operational routing limits.",
+    "Version/edition/compatibility, baseline-preservation and proportionate no-change paths."
+  ],
+  "commandsAndResults": [
+    {
+      "name": "structural",
+      "cmd": "@'\nimport fs from 'node:fs';\nimport path from 'node:path';\nimport assert from 'node:assert/strict';\nimport {parseManifest} from './packages/core/src/domain/manifest.ts';\nimport {parseSkillDocument, documentName, documentDescription} from './packages/core/src/domain/skill-document.ts';\nconst dir='skills/sql-server-performance';\nconst {manifest,issues}=parseManifest(fs.readFileSync(dir+'/skill.yaml','utf8'),{source:dir+'/skill.yaml',strict:true});\nassert.deepEqual(issues,[]);\nconst main=fs.readFileSync(dir+'/SKILL.md','utf8'), doc=parseSkillDocument(main);\nassert.equal(documentName(doc),manifest.name);\nassert.equal(documentDescription(doc),manifest.description);\nassert.equal(manifest.version,'1.0.4');\nconst files=fs.readdirSync(dir,{recursive:true}).filter(x=>fs.statSync(path.join(dir,x)).isFile());\nassert.deepEqual(files.map(x=>x.replaceAll('\\\\','/')).sort(),['SKILL.md','references/concurrency-plans-instance.md','references/jdbc-and-operations.md','references/storage-indexes-statistics.md','skill.yaml']);\nfor(const file of manifest.files) assert.ok(fs.existsSync(path.join(dir,file)),file);\nconst referrals=[...manifest.dependencies.map(x=>x.name),...manifest.suggests];\nfor(const name of referrals) assert.ok(fs.existsSync(path.join('skills',name,'SKILL.md')),name);\nlet relativeLinks=0;\nfor(const file of files.filter(x=>x.endsWith('.md'))) {\n const text=fs.readFileSync(path.join(dir,file),'utf8');\n for(const [,ref] of text.matchAll(/\\[[^\\]]*\\]\\(([^)]+)\\)/g)) if(!/^[a-z]+:\\/\\//i.test(ref)&&!ref.startsWith('#')) {\n  assert.ok(fs.existsSync(path.resolve(dir,path.dirname(file),ref.split('#')[0])),ref); relativeLinks++;\n }\n}\nfor(const file of files.filter(x=>x.startsWith('references'))) assert.ok(main.includes(file.replaceAll('\\\\','/')),file);\nconsole.log(JSON.stringify({strictManifestIssues:issues.length,files:files.length,metadataEqual:true,version:manifest.version,relativeLinks,declaredReferrals:referrals.length,routes:'pass'}));\n'@ | node --input-type=module -",
+      "chunk_id": "5c69f6",
+      "wall_time_seconds": 0.205668,
+      "exit_code": 0,
+      "original_token_count": 33,
+      "output": "{\"strictManifestIssues\":0,\"files\":5,\"metadataEqual\":true,\"version\":\"1.0.4\",\"relativeLinks\":3,\"declaredReferrals\":4,\"routes\":\"pass\"}\n",
+      "workingDirectory": "C:/git/agent-skills",
+      "classification": "executed structural/read-only check"
+    },
+    {
+      "name": "format",
+      "cmd": "node node_modules/prettier/bin/prettier.cjs --check skills/sql-server-performance/SKILL.md skills/sql-server-performance/skill.yaml skills/sql-server-performance/references/concurrency-plans-instance.md skills/sql-server-performance/references/jdbc-and-operations.md skills/sql-server-performance/references/storage-indexes-statistics.md",
+      "chunk_id": "20ffce",
+      "wall_time_seconds": 0.2103224,
+      "exit_code": 0,
+      "original_token_count": 17,
+      "output": "Checking formatting...\nAll matched files use Prettier code style!\n",
+      "workingDirectory": "C:/git/agent-skills",
+      "classification": "executed structural/read-only check"
+    },
+    {
+      "name": "diff",
+      "cmd": "git diff --check -- skills/sql-server-performance",
+      "chunk_id": "21676c",
+      "wall_time_seconds": 0.0754305,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": "",
+      "workingDirectory": "C:/git/agent-skills",
+      "classification": "executed structural/read-only check"
+    },
+    {
+      "name": "locations",
+      "cmd": "rg -n 'Query Store holds|For file evidence|sys.dm_os_wait_stats|UPDATE STATISTICS|For SQL Server 2022|queryTimeout|Compatibility|baseline' skills/sql-server-performance",
+      "chunk_id": "e78a48",
+      "wall_time_seconds": 0.0621946,
+      "exit_code": 0,
+      "original_token_count": 553,
+      "output": "skills/sql-server-performance\\SKILL.md:36:The engine baseline is SQL Server 2022+; inspect the deployed build, database compatibility,\nskills/sql-server-performance\\references\\storage-indexes-statistics.md:22:A targeted `UPDATE STATISTICS` comparison may help when the evidence and authorized scope justify\nskills/sql-server-performance\\references\\storage-indexes-statistics.md:26:`UPDATE STATISTICS` commits independently of an enclosing transaction; a later `ROLLBACK` does\nskills/sql-server-performance\\references\\storage-indexes-statistics.md:55:For SQL Server 2022 on Windows, distinguish data-file IFI from transaction-log autogrowth: log growth\nskills/sql-server-performance\\references\\storage-indexes-statistics.md:65:- [Transaction guide](https://learn.microsoft.com/en-us/sql/relational-databases/sql-server-transaction-locking-and-row-versioning-guide?view=sql-server-ver16) — UPDATE STATISTICS commits independently of an enclosing transaction.\nskills/sql-server-performance\\references\\storage-indexes-statistics.md:66:- [UPDATE STATISTICS](https://learn.microsoft.com/en-us/sql/t-sql/statements/update-statistics-transact-sql?view=sql-server-ver16) — recompilation and update costs.\nskills/sql-server-performance\\references\\jdbc-and-operations.md:35:For mssql-jdbc, `queryTimeout` and `cancelQueryTimeout` use seconds; `socketTimeout` and\nskills/sql-server-performance\\references\\jdbc-and-operations.md:37:Cancellation acknowledgement can add `cancelQueryTimeout` after `queryTimeout`; a socket timeout\nskills/sql-server-performance\\references\\concurrency-plans-instance.md:54:Query Store holds compiled plans and aggregated execution statistics, not an actual execution plan\nskills/sql-server-performance\\references\\concurrency-plans-instance.md:79:For file evidence, take two `sys.dm_io_virtual_file_stats` snapshots for the same database/file\nskills/sql-server-performance\\references\\concurrency-plans-instance.md:90:  Equal-sized data files up to an initial measured baseline are a starting point, not a timeless rule.\nskills/sql-server-performance\\references\\concurrency-plans-instance.md:98:  diagnostic counters. `sys.dm_os_wait_stats` accounts for completed waits; inspect live waiting\n",
+      "workingDirectory": "C:/git/agent-skills",
+      "classification": "read-only location inspection"
+    }
+  ],
+  "additionalInspection": {
+    "actions": [
+      "Read the entire assigned package and scoped working-tree/staged diff; confirmed assignment and committed version.",
+      "Applied the complete review prompt, wave-two brief and previously read unchanged skill-engineering references/history; no generic checklist was inserted.",
+      "Opened the six primary Microsoft sources below and inspected the relevant statements.",
+      "Compared the final hashes of all five files with the captured assignment baseline; all match and scoped git diff/status are empty."
+    ],
+    "prohibitedActionsNotRun": [
+      "No SQL Server or production connection/capture.",
+      "No framework, Java or JDBC dependency installation/upgrade.",
+      "No shared repository write, registry generation, global test/formatter/build or delegation.",
+      "No stage/commit/reset/stash or real agent configuration change."
+    ]
+  },
+  "behavioralEvidence": {
+    "executedAgentEvaluations": [],
+    "executedDatabaseOrJavaTests": [],
+    "walkthroughs": [
+      "For same-startup snapshots, checked the specified delta arithmetic: 600000 ms / 300000 reads = 2.0 ms/read; this is an interval mean and leaves hardware causality unresolved.",
+      "Changed only the second startup timestamp: the existing reset guard rejects the otherwise plausible positive deltas and requires valid interval evidence.",
+      "Reviewed that Query Store aggregates cannot supply p99 or arbitrary incident subwindows and missing DMV permissions/data do not prove healthy zero values.",
+      "Reviewed that sound existing engine behavior or a narrow artifact question does not force a tuning/capture campaign."
+    ],
+    "classification": "Structured expected-behavior walkthroughs only. No agent outputs or SQL Server executions were produced; no measured improvement claim.",
+    "reproducibleDevelopmentCases": [
+      {
+        "id": "same-startup-valid-interval",
+        "input": {
+          "task": "Use the incident artifacts to correct incident-note.md. State the file-level read-latency result, its units and limits, and whether these artifacts justify replacing the disks. Identify the smallest next observation that would resolve the remaining uncertainty. Do not change SQL Server settings, clear DMVs or execute application queries.",
+          "fixtures": {
+            "environment.txt": "SQL Server 2022, major version 16, Standard edition; database compatibility level 160. Single instance and primary database. These files are synthetic exported evidence for a read-only review. Database/file identity and physical path remain unchanged across the samples. No file detach/attach, failover or statistics reset is reported beyond the captured engine startup timestamps. No device/request-level latency distribution or actual application plan is supplied.\n",
+            "incident-window.txt": "2026-10-16T10:00:00Z through 2026-10-16T10:05:00Z. Requests slowed. PAGEIOLATCH_SH appeared in incident-aligned live request observations. This observation does not include a duration histogram or matched query plan. Existing healthy-window evidence for the same file reported 2.0 ms per read; workload comparability has not been established.\n",
+            "incident-note.md": "# Incident review\nThe file counters prove incident p99 read latency was 2 ms. PAGEIOLATCH_SH identifies slow disks as the cause, so replace the disks. No further observation is needed.\n",
+            "io-before.json": "{\n  \"captured_at\": \"2026-10-16T10:00:00Z\",\n  \"sqlserver_start_time\": \"2026-10-15T08:00:00Z\",\n  \"database_id\": 7,\n  \"file_id\": 1,\n  \"physical_name\": \"X:\\\\Data\\\\orders.mdf\",\n  \"num_of_reads\": 100000,\n  \"io_stall_read_ms\": 200000,\n  \"num_of_bytes_read\": 819200000\n}\n",
+            "io-after.json": "{\n  \"captured_at\": \"2026-10-16T10:05:00Z\",\n  \"sqlserver_start_time\": \"2026-10-15T08:00:00Z\",\n  \"database_id\": 7,\n  \"file_id\": 1,\n  \"physical_name\": \"X:\\\\Data\\\\orders.mdf\",\n  \"num_of_reads\": 400000,\n  \"io_stall_read_ms\": 800000,\n  \"num_of_bytes_read\": 3276800000\n}\n"
+          },
+          "prerequisites": "Isolated text fixture workspace only. Use the supplied snapshots and version-applicable sys.dm_io_virtual_file_stats documentation. No SQL Server connection is required or authorized by this case."
+        },
+        "evaluatorCriteria": {
+          "expected": [
+            "Read both snapshots and validate matching database/file/path and unchanged sqlserver_start_time before using deltas.",
+            "Calculate delta reads=300000 and delta read stall=600000 ms, yielding interval mean 2.0 ms/read with non-integer division.",
+            "Correct incident-note.md: this is a mean, not p99; PAGEIOLATCH_SH alone does not prove slow hardware and the supplied evidence does not justify disk replacement.",
+            "Preserve the valid calculated interval result while leaving storage cause and workload comparability unresolved.",
+            "Choose a proportionate discriminating observation, such as actual query work/reads and memory residency together with file/device/request latency evidence; do not prescribe a full audit or global tuning."
+          ],
+          "failureConditions": [
+            "Reports lifetime ratio or mean as p99.",
+            "Treats the wait name or matching healthy-window mean as proof that disks are respectively bad or definitively healthy.",
+            "Changes MAXDOP, memory, indexes or file layout without mechanism evidence.",
+            "Clears shared DMVs or executes production SQL to answer the bounded artifact question."
+          ]
+        }
+      },
+      {
+        "id": "restart-invalid-interval",
+        "input": {
+          "task": "Use the incident artifacts to correct incident-note.md. State the file-level read-latency result, its units and limits, and whether these artifacts justify replacing the disks. Identify the smallest next observation that would resolve the remaining uncertainty. Do not change SQL Server settings, clear DMVs or execute application queries.",
+          "fixtures": {
+            "environment.txt": "SQL Server 2022, major version 16, Standard edition; database compatibility level 160. Single instance and primary database. These files are synthetic exported evidence for a read-only review. Database/file identity and physical path remain unchanged across the samples. No file detach/attach, failover or statistics reset is reported beyond the captured engine startup timestamps. No device/request-level latency distribution or actual application plan is supplied.\n",
+            "incident-window.txt": "2026-10-16T10:00:00Z through 2026-10-16T10:05:00Z. Requests slowed. PAGEIOLATCH_SH appeared in incident-aligned live request observations. This observation does not include a duration histogram or matched query plan. Existing healthy-window evidence for the same file reported 2.0 ms per read; workload comparability has not been established.\n",
+            "incident-note.md": "# Incident review\nThe file counters prove incident p99 read latency was 2 ms. PAGEIOLATCH_SH identifies slow disks as the cause, so replace the disks. No further observation is needed.\n",
+            "io-before.json": "{\n  \"captured_at\": \"2026-10-16T10:00:00Z\",\n  \"sqlserver_start_time\": \"2026-10-15T08:00:00Z\",\n  \"database_id\": 7,\n  \"file_id\": 1,\n  \"physical_name\": \"X:\\\\Data\\\\orders.mdf\",\n  \"num_of_reads\": 100000,\n  \"io_stall_read_ms\": 200000,\n  \"num_of_bytes_read\": 819200000\n}\n",
+            "io-after.json": "{\n  \"captured_at\": \"2026-10-16T10:05:00Z\",\n  \"sqlserver_start_time\": \"2026-10-16T10:02:00Z\",\n  \"database_id\": 7,\n  \"file_id\": 1,\n  \"physical_name\": \"X:\\\\Data\\\\orders.mdf\",\n  \"num_of_reads\": 400000,\n  \"io_stall_read_ms\": 800000,\n  \"num_of_bytes_read\": 3276800000\n}\n"
+          },
+          "prerequisites": "Same isolated text fixture and official documentation as the first case. No live database access is required.",
+          "changedConstraint": "Only io-after.json sqlserver_start_time changes, proving an engine restart occurred between snapshots. Numeric counters are deliberately still increasing."
+        },
+        "evaluatorCriteria": {
+          "expected": [
+            "Inspect startup timestamps and reject subtracting the snapshots across the reset, even though all numeric deltas are positive.",
+            "Correct incident-note.md: no valid incident mean or p99 can be recovered from this pair. Retain the separately supplied healthy-window observation without treating it as the incident measurement.",
+            "Do not reuse the first case's apparently plausible 2.0 ms incident conclusion or treat missing interval evidence as zero/healthy.",
+            "Require a valid same-startup pair or other already available incident-aligned measurements before the file-latency comparison; no immediate disk replacement or global setting change.",
+            "Preserve the independent limitation that PAGEIOLATCH_SH can reflect work/residency or I/O service and does not alone identify hardware failure."
+          ],
+          "failureConditions": [
+            "Computes and accepts 2.0 ms/read from counters spanning the restart.",
+            "Checks only for negative deltas and misses the positive-counter reset case.",
+            "Declares zero latency, healthy storage or hardware failure from invalid/missing data.",
+            "Discards unrelated valid prior evidence or launches unauthorized workload/counter changes."
+          ]
+        }
+      }
+    ],
+    "caseSeparation": "Give only input to the actor. evaluatorCriteria is separate. These are authored development cases, not unseen holdouts."
+  },
+  "sources": [
+    {
+      "url": "https://learn.microsoft.com/en-us/sql/relational-databases/system-catalog-views/sys-query-store-runtime-stats-transact-sql?view=sql-server-ver16",
+      "type": "official Microsoft API/catalog documentation",
+      "versionScope": "SQL Server 2022 view; page also contains separately qualified later/platform fields",
+      "supports": "Active-interval multiple rows, grouping keys, execution types, microsecond durations and end-time timestamps.",
+      "status": "Accessed successfully."
+    },
+    {
+      "url": "https://learn.microsoft.com/en-us/sql/relational-databases/system-dynamic-management-objects/sys-dm-os-wait-stats-transact-sql?view=sql-server-ver16",
+      "type": "official Microsoft DMV documentation",
+      "versionScope": "SQL Server 2022 view",
+      "supports": "Completed wait times, live-wait distinction, cumulative history, restart/explicit reset and 2022 permission differences.",
+      "status": "Accessed successfully."
+    },
+    {
+      "url": "https://github.com/MicrosoftDocs/sql-docs/blob/live/docs/relational-databases/system-dynamic-management-objects/sys-dm-io-virtual-file-stats-transact-sql.md",
+      "retrievedVia": "https://raw.githubusercontent.com/MicrosoftDocs/sql-docs/live/docs/relational-databases/system-dynamic-management-objects/sys-dm-io-virtual-file-stats-transact-sql.md",
+      "type": "official Microsoft documentation source",
+      "versionScope": "Source includes SQL Server 2022-specific permission branch and general counter semantics",
+      "supports": "Read/write counts and stall units, file identity and initialization at SQL Server service startup.",
+      "status": "Accessed successfully."
+    },
+    {
+      "url": "https://learn.microsoft.com/en-us/sql/relational-databases/sql-server-transaction-locking-and-row-versioning-guide?view=sql-server-ver16",
+      "type": "official Microsoft guide",
+      "versionScope": "SQL Server 2022 view; only applicable statements were used",
+      "supports": "UPDATE STATISTICS independent commit and inability to roll it back with the enclosing transaction.",
+      "status": "Accessed successfully."
+    },
+    {
+      "url": "https://learn.microsoft.com/en-us/sql/relational-databases/databases/database-instant-file-initialization?view=sql-server-ver16",
+      "type": "official Microsoft guide",
+      "versionScope": "SQL Server 2022 and later, with Windows data-file privilege distinction",
+      "supports": "Transaction-log autogrowth <=64 MB IFI exception, TDE distinction and lack of data-file volume-maintenance privilege prerequisite for that log case.",
+      "status": "Accessed successfully."
+    },
+    {
+      "url": "https://learn.microsoft.com/en-us/sql/connect/jdbc/understand-timeouts?view=sql-server-ver17",
+      "type": "official Microsoft JDBC driver documentation",
+      "versionScope": "Driver documentation; match the actual installed driver rather than interpreting ver17 as an engine upgrade",
+      "supports": "Timeout units, cancellation acknowledgement interval, socket connection closure and distinct behavior after write timeout.",
+      "status": "Accessed successfully."
+    }
+  ],
+  "limitations": [
+    "No actual SQL Server instance, execution plan, JVM application or JDBC connection was exercised; no database state or performance outcome was measured.",
+    "Existing examples are a text evidence inventory and descriptive names/formulas, not a shipped executable SQL/Java program; no example compilation or engine execution was applicable.",
+    "Primary-source review focused on consequential evidence/contract boundaries identified above. It is not exhaustive verification of every SQL Server edition, build, collation, driver or service tier.",
+    "The source pages can include later-version/platform sections even with a SQL Server 2022 view; later optimized locking/tempdb ADR behavior was not generalized to the baseline.",
+    "No independent behavioral evaluation, baseline comparison or measured skill-quality gain; no-change reflects the reviewed scope and evidence, not a universal guarantee.",
+    "Synthetic case counter arithmetic was reviewed in a structured walkthrough; it is not an executed database or agent test.",
+    "Global integration checks are coordinator-only and pending for the wave."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "reason": "Coordinator-only shared generation for the wave after all reviewers stop; this unchanged package introduces no new integrity/version content.",
+      "prerequisites": "All reviewer writes stopped."
+    },
+    {
+      "command": "npm run verify",
+      "reason": "Coordinator-only repository-wide validation.",
+      "prerequisites": "Final accepted catalog and regenerated registry for all changed packages."
+    }
+  ],
+  "crossSkill": {
+    "findings": [],
+    "requiredCoordinatorActions": [
+      "Archive this handoff.",
+      "Optionally execute the two separated inputs independently.",
+      "Run wave-wide coordinator checks after all reviewers stop."
+    ]
+  },
+  "processState": "All local commands completed without sessions or background writers. No repository writes were made; the isolated JSON handoff is the only created artifact."
+}

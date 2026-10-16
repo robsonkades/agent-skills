@@ -1,0 +1,133 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
+
+const outputRoot = path.dirname(fileURLToPath(import.meta.url));
+const runRoot = path.dirname(outputRoot);
+const readInventory = [];
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const absolute = relative => {
+  const resolved = path.resolve(runRoot, relative);
+  assert.ok(resolved.startsWith(runRoot + path.sep), `Read must remain in run: ${relative}`);
+  return resolved;
+};
+function read(relative, { binary = false, retainedLog = false } = {}) {
+  const bytes = fs.readFileSync(absolute(relative));
+  const record = { path: relative, bytes: bytes.length, sha256: sha(bytes), complete: true, truncated: false };
+  if (retainedLog) record.contentReference = relative;
+  else if (binary) record.base64 = bytes.toString('base64');
+  else record.text = bytes.toString('utf8');
+  readInventory.push(record);
+  return bytes;
+}
+function walk(relative) {
+  return fs.readdirSync(absolute(relative), { withFileTypes: true }).flatMap(entry => {
+    const child = `${relative}/${entry.name}`;
+    return entry.isDirectory() ? walk(child) : [child];
+  });
+}
+const seed = JSON.parse(read('output/audit-seed.json', { retainedLog: true }));
+read('TASK.md');
+const changedFiles = [];
+const preservedFiles = [];
+for (const original of walk('input/project')) {
+  const relative = original.slice('input/project/'.length);
+  const binary = original.endsWith('.jar');
+  const before = read(original, { binary });
+  const after = read(`output/project/${relative}`, { binary });
+  if (before.equals(after)) preservedFiles.push({ path: relative, sha256: sha(before) });
+  else changedFiles.push(relative);
+}
+assert.deepEqual(changedFiles.sort(), ['launch.json', 'run.mjs']);
+read('output/project/test/export.test.mjs');
+read('output/observe.mjs');
+read('output/finalize.mjs');
+read('output/REVIEW.md');
+
+const fixture = read('output/project/fixture/input.txt', { binary: true });
+const baseline = read('output/baseline-export.txt', { binary: true });
+const beforeTraceOutput = read('output/baseline-trace-export.txt', { binary: true });
+const final = read('output/final-export.txt', { binary: true });
+const afterTraceOutput = read('output/final-trace-export.txt', { binary: true });
+assert.equal(fixture.toString('hex'), '610d620d0a630a');
+assert.equal(baseline.toString('hex'), '610d620a630a');
+assert.deepEqual(beforeTraceOutput, baseline);
+assert.equal(final.toString('hex'), '610a620a630a');
+assert.deepEqual(afterTraceOutput, final);
+
+const classFiles = ['.build/app/work/Main.class', '.build/app/work/Normalizer.class', '.build/test/work/SelfTest.class'];
+const classVersions = classFiles.map(relative => {
+  const bytes = read(`output/project/${relative}`, { binary: true });
+  assert.equal(bytes.readUInt32BE(0), 0xcafebabe);
+  const major = bytes.readUInt16BE(6);
+  assert.equal(major, 61, `${relative}: Java 17 classfile`);
+  return { path: relative, major, sha256: sha(bytes) };
+});
+
+const commands = [];
+const traceEvidence = {};
+for (const relative of walk('output/logs')) {
+  const bytes = read(relative, { retainedLog: true });
+  if (relative.endsWith('.json')) commands.push({ ...JSON.parse(bytes), logPath: relative });
+  if (relative.endsWith('classload.log')) {
+    traceEvidence[relative] = bytes.toString('utf8').split(/\r?\n/).filter(line => /work\.(Main|Normalizer|LegacyBanner) source:/.test(line));
+  }
+}
+const beforeTrace = traceEvidence['output/logs/baseline-classload.log'];
+const afterTrace = traceEvidence['output/logs/final-classload.log'];
+assert.ok(beforeTrace.some(line => /work.Normalizer source:.*\/lib\/compat\.jar$/.test(line)));
+assert.ok(afterTrace.some(line => /work.Normalizer source:.*\/\.build\/app\/$/.test(line)));
+assert.ok(afterTrace.some(line => /work.LegacyBanner source:.*\/lib\/compat\.jar$/.test(line)));
+assert.equal(commands.find(command => command.id === 'baseline-check').exit, 0);
+assert.equal(commands.find(command => command.id === 'baseline-export').exit, 0);
+assert.equal(commands.find(command => command.id === 'regression-before-fix').exit, 1);
+assert.equal(commands.find(command => command.id === 'clean-check').exit, 0);
+assert.equal(commands.find(command => command.id === 'final-export').exit, 0);
+assert.ok(commands.find(command => command.id === 'clean-check').stdout.includes('Export integration PASS (6 cases)'));
+assert.ok(commands.find(command => command.id === 'runtime').stderr.includes('Temurin-25.0.3+9'));
+assert.ok(commands.every(command => command.error === null && command.signal === null && command.durationMs < 30000));
+
+const nestedExports = [];
+for (const base of ['output/before-fix-build', 'output/project/.build']) {
+  for (const relative of walk(base)) {
+    if (relative.endsWith('.execution.json')) {
+      nestedExports.push({ ...JSON.parse(read(relative, { retainedLog: true })), logPath: relative });
+    } else {
+      read(relative, { binary: relative.endsWith('.class') || relative.endsWith('.txt') });
+    }
+  }
+}
+assert.equal(nestedExports.length, 7);
+assert.ok(nestedExports.every(command => command.exit === 0 && command.signal === null && command.error === null));
+
+const summary = {
+  status: 'PASS', changedFiles: changedFiles.concat('test/export.test.mjs'),
+  fixtureHex: fixture.toString('hex'), baselineExportHex: baseline.toString('hex'), finalExportHex: final.toString('hex'),
+  compatibilityJarSha256: preservedFiles.find(file => file.path === 'lib/compat.jar').sha256,
+  unitTests: 'SelfTest PASS (original test retained)', integrationCases: 6,
+  runtime: 'Temurin-25.0.3+9', targetRelease: 17, classVersions, traceEvidence,
+};
+const finalizerStdout = JSON.stringify(summary, null, 2) + '\n';
+const finalizerCommand = {
+  command: process.execPath, args: [path.join(outputRoot, 'finalize.mjs')], cwd: process.cwd(),
+  shellCommand: 'node finalize.mjs', exit: 0, stdout: finalizerStdout, stderr: '',
+  note: 'The final audit is synchronous and spawns no processes. It writes execution.json after all assertions; all writes stop when it exits.',
+};
+const evidence = {
+  ...seed, commands, nestedExports, finalizerCommand,
+  readInventory,
+  additionalReadNotes: [
+    'javac read the Java sources and the compatibility classpath; the JVM read the built classes, compatibility library and export inputs documented in these commands. The retained runtime binaries and JDK classes were used as tools, not browsed as outside-scope project content.',
+    'Nested export test inputs, outputs and per-case command logs remain in the build directories. Test assertions read each complete output Buffer and compared it against explicit expected UTF-8 bytes.',
+    'The full before/after class loading logs were parsed during this audit; traceEvidence contains only the application-class selection. No log was truncated.',
+  ],
+  preservedFiles,
+  verification: summary,
+  executed: true,
+  processes: { mode: 'synchronous', backgroundProcessesStarted: 0, timeoutsObserved: 0, ownedProcessesRemainingAfterReturn: 0 },
+  allWritesStopped: true,
+};
+fs.writeFileSync(path.join(outputRoot, 'execution.json'), JSON.stringify(evidence, null, 2) + '\n');
+process.stdout.write(finalizerStdout);

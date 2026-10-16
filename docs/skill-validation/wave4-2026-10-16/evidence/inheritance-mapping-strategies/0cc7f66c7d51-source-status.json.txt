@@ -1,0 +1,24 @@
+{
+  "consulted": "2026-10-16",
+  "results": [
+    {
+      "url": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2",
+      "finalUrl": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2",
+      "status": 404,
+      "title": "404 Page Not Found | Jakarta EE | The Eclipse Foundation"
+    },
+    {
+      "url": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html",
+      "finalUrl": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html",
+      "status": 200,
+      "title": "Jakarta Persistence"
+    },
+    {
+      "url": "https://docs.hibernate.org/orm/6.6/userguide/html_single/",
+      "finalUrl": "https://docs.hibernate.org/orm/6.6/userguide/html_single/",
+      "status": 200,
+      "title": "Hibernate ORM User Guide",
+      "hibernatePatch": "6.6.58.Final"
+    }
+  ]
+}

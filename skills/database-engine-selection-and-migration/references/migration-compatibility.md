@@ -12,6 +12,42 @@
 - Operations: backup/restore, replication, CDC, jobs, observability, maintenance, DDL, recovery,
   role membership/grants, routine execution privileges and credential mapping.
 
+## Prove post-load integrity
+
+When an import, CDC path or staged DDL bypasses validation, inspect the executed load options,
+constraint catalog and effective connection settings. A definition in converted DDL, matching
+row counts or rejection of a new invalid row does not establish validity of previously loaded
+rows. Record separately:
+
+- which invariant must hold for existing data at the cutover boundary;
+- which evidence validates that population, including changes applied after the initial copy;
+- how ordinary application writes will continue to enforce it after the migration.
+
+The distinction is engine-specific:
+
+- MySQL 8.4 re-enabling `foreign_key_checks` does not scan rows loaded while checks were off.
+- SQL Server can have an enabled but untrusted foreign key; enabling it and validating its
+  existing rows are separate operations. Inspect both disabled and trust state.
+- PostgreSQL 18 can enforce an added `NOT VALID` foreign key or check constraint on new writes
+  while old rows remain unvalidated; successful `VALIDATE CONSTRAINT` establishes that validation.
+
+Reuse applicable validation already completed at the required boundary. Otherwise budget the
+destination's validation work and coordinate writes so a scan cannot miss subsequent unchecked
+changes. Load mechanics belong to `database-bulk-loading`; preserve the integrity acceptance
+condition here. A source violation copied faithfully is an inherited-data issue, not proof of
+a conversion defect: apply the agreed repair/quarantine policy rather than silently deleting
+records or weakening the destination contract.
+
+In an isolated rehearsal, include a child row with no parent while exercising the actual bypass
+path. Verify that the existing-data check detects it even after future enforcement is restored;
+also verify that a valid existing row passes and an ordinary invalid new write is rejected.
+This is a test specification, not executed evidence. Preserve a completed, sufficient validation
+instead of demanding a reload or repeat full scan merely because the load once bypassed checks.
+
+Sources: [MySQL 8.4 foreign-key checks](https://dev.mysql.com/doc/refman/8.4/en/create-table-foreign-keys.html),
+[SQL Server enabling and trusting foreign keys](https://learn.microsoft.com/en-us/sql/relational-databases/tables/disable-foreign-key-constraints-with-insert-and-update-statements?view=sql-server-ver17),
+and [PostgreSQL 18 constraint validation](https://www.postgresql.org/docs/18/sql-altertable.html).
+
 ## Applicable edge cases
 
 Select cases from the inventoried source behavior and intended destination features. Test rather

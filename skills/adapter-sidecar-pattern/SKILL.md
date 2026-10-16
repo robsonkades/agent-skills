@@ -41,8 +41,8 @@ but incorrect output when either contract changes.
    and overload; never silently convert missing data to a successful zero or healthy state.
 5. **Verify semantics and the failure path.** Use producer-version fixtures and consumer
    tooling to check both valid output and its meaning. Include the relevant failure injection
-   (format drift, source outage, restart or sink outage). Record actual results separately
-   from proposed checks. Parser acceptance alone cannot prove correctness.
+   (format drift, source outage, restart, sink outage or partial rejection). Record actual
+   results separately from proposed checks. Parser acceptance alone cannot prove correctness.
 
 ## Rules
 

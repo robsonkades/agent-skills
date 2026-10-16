@@ -1,0 +1,1 @@
+{"manifestIssues":0,"name":"spring-boot-observability","version":"1.1.0","descriptionsMatch":true,"manifestFilesExist":true,"markdownFiles":5,"localLinks":6,"externalLinksObserved":18}

@@ -1,0 +1,13 @@
+-------------------------------------------------------------------------------
+Test set: example.hexagonal.application.ArchitectureTest
+-------------------------------------------------------------------------------
+Tests run: 3, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 0.768 s <<< FAILURE! -- in example.hexagonal.application.ArchitectureTest
+example.hexagonal.application.ArchitectureTest.productionCoreHasNoExternalMechanismsAndDomainDoesNotDependOnApplication -- Time elapsed: 0.589 s <<< FAILURE!
+java.lang.AssertionError: 
+Architecture Violation [Priority: MEDIUM] - Rule 'no classes that reside in any package ['example.hexagonal.domain..', 'example.hexagonal.application..'] should depend on classes that reside outside of packages ['java..', 'example.hexagonal.domain..', 'example.hexagonal.application..'] and no classes that reside in any package ['example.hexagonal.domain..', 'example.hexagonal.application..'] should depend on classes that reside in any package ['java.sql..', 'javax.sql..']' was violated (1 times):
+Field <example.hexagonal.application.MutationProbe.leakedJdbcType> has type <java.sql.Connection> in (MutationProbe.java:0)
+	at com.tngtech.archunit.lang.ArchRule$Assertions.assertNoViolation(ArchRule.java:94)
+	at com.tngtech.archunit.lang.ArchRule$Assertions.check(ArchRule.java:86)
+	at com.tngtech.archunit.lang.CompositeArchRule.check(CompositeArchRule.java:77)
+	at example.hexagonal.application.ArchitectureTest.productionCoreHasNoExternalMechanismsAndDomainDoesNotDependOnApplication(ArchitectureTest.java:35)
+

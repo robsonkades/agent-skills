@@ -1,0 +1,72 @@
+{
+  "skill": "domain-logic-organization",
+  "version": "1.3.6",
+  "baselineVersion": "1.3.5",
+  "fileCount": 4,
+  "issues": [],
+  "links": [
+    {
+      "from": "SKILL.md",
+      "target": "references/transaction-script-and-table-module.md",
+      "exists": true
+    },
+    {
+      "from": "SKILL.md",
+      "target": "references/transaction-script-and-table-module.md",
+      "exists": true
+    },
+    {
+      "from": "SKILL.md",
+      "target": "references/domain-model.md",
+      "exists": true
+    },
+    {
+      "from": "references/transaction-script-and-table-module.md",
+      "target": "domain-model.md",
+      "exists": true
+    }
+  ],
+  "hashes": [
+    {
+      "path": "skills/domain-logic-organization/SKILL.md",
+      "sha256": "2a7e2ad7668dfeb94eb3d6d933792dce6805d1a3e96ec3a9a321a67bed4c111f",
+      "baselineSha256": "2a7e2ad7668dfeb94eb3d6d933792dce6805d1a3e96ec3a9a321a67bed4c111f",
+      "unchangedFromAssignment": true
+    },
+    {
+      "path": "skills/domain-logic-organization/references/domain-model.md",
+      "sha256": "9179c7cf6cb54ea2eff45eb61a9f5980d7143d6088ba888a71b7e3f5c3267ba2",
+      "baselineSha256": "1d2d8be81ed286c3358e1d5a549145696f746583353534e296cbbf724000cd22",
+      "unchangedFromAssignment": false
+    },
+    {
+      "path": "skills/domain-logic-organization/references/transaction-script-and-table-module.md",
+      "sha256": "086752d088514c72bbcd66c61dce64fa53e75934bcf10e62bcb11a15c13de8cf",
+      "baselineSha256": "3694f24385ba9022fcbeb3abeadf09aeaff59cef47fe9993e336465ece8b346f",
+      "unchangedFromAssignment": false
+    },
+    {
+      "path": "skills/domain-logic-organization/skill.yaml",
+      "sha256": "6451f4c724ceda93c5b9fddb9e1f08d0bce8061d4a3adfa64fbf0a9f99dac88b",
+      "baselineSha256": "61a04405d390463dcef9f59f990a07cd624af32f25ca489b34a88cd91e97d26c",
+      "unchangedFromAssignment": false
+    }
+  ],
+  "examplePreservation": [
+    {
+      "path": "skills/domain-logic-organization/SKILL.md",
+      "javaBlocks": 0,
+      "unchanged": true
+    },
+    {
+      "path": "skills/domain-logic-organization/references/domain-model.md",
+      "javaBlocks": 2,
+      "unchanged": true
+    },
+    {
+      "path": "skills/domain-logic-organization/references/transaction-script-and-table-module.md",
+      "javaBlocks": 2,
+      "unchanged": true
+    }
+  ]
+}

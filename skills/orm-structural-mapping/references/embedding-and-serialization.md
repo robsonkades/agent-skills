@@ -53,7 +53,7 @@ This does not establish record support for every identifier use.
 
 See the [Hibernate 6.2.0 record instantiator](https://github.com/hibernate/hibernate-orm/blob/6.2.0/hibernate-core/src/main/java/org/hibernate/metamodel/internal/EmbeddableInstantiatorRecordStandard.java),
 [Hibernate 6.2 embeddable types](https://docs.hibernate.org/orm/6.2/introduction/html_single/#embeddable-types)
-and [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2)
+and [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html)
 for record, ownership and converter contracts.
 
 ### Points that bite

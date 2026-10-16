@@ -1,0 +1,11 @@
+# Recomendação atualizada à diretora Ana
+
+**Escolher a retenção R para o horizonte aprovado de 24 meses e substituir a recomendação anterior de N via P.** O novo limite contratual de 6 minutos torna P inadmissível. A direção atual pode ser decidida hoje, sem aguardar pesquisa de outra migração.
+
+A atualização autenticada altera somente o limite de pausa planejada de escrita, com efeito imediato e sem exceção. Os ensaios locais documentados de P continuam entre 18 e 20 minutos: mesmo o menor tempo observado supera o contrato, e o limite operacional demonstrado de 20 minutos excede o teto em 14 minutos. Não existe evidência de que P consiga cumprir 6 minutos. A ausência de reconhecimento de escritas durante a pausa preserva uma obrigação distinta; não elimina o limite de indisponibilidade.
+
+R permanece viável durante os 24 meses e atende aos contratos do estado final. N também atende a esses contratos, mas isso não basta para autorizar uma transição incompatível. P é o único caminho ensaiado; outros caminhos não foram analisados nem estimados. Portanto, não cabe concluir que N seja definitivamente inviável, nem pressupor uma alternativa de migração conforme.
+
+R custa 520 mil, contra 410 mil de N via P. A economia potencial de 110 mil não pode prevalecer sobre uma obrigação contratual: custo só diferencia alternativas admissíveis. Os 90 mil irrecuperáveis do protótipo continuam excluídos da comparação. A solicitação do patrocinador por economia e prazo não constitui autorização de exceção.
+
+**Encaminhamento:** Ana deve confirmar R; o responsável técnico deve manter sua operação e retirar P de qualquer planejamento de execução sob o contrato vigente. Uma futura reconsideração de N depende de demonstrar um caminho que cumpra os 6 minutos e todas as demais obrigações, apurar seu custo total e submetê-lo a nova decisão. Não se deve iniciar a migração para testar essa possibilidade. Esta recomendação usa os documentos fornecidos; não executei novos ensaios.

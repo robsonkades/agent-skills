@@ -1,0 +1,10 @@
+PASS phase-before-drain
+PASS phase-after-drain
+PASS view-once
+PASS no-duplicate-capture
+PASS original-failure-preserved
+PASS failure-unknown
+PASS no-blind-retry
+PASS no-fabricated-completion
+OBSERVATION mode=queued variant=corrected finalPhase=DONE views=1
+SUMMARY checks=8

@@ -1,0 +1,50 @@
+[
+  {
+    "id": "cal-a",
+    "mustPass": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+    ]
+  },
+  {
+    "id": "cal-b",
+    "mustFail": [
+      "C1",
+      "C2"
+    ]
+  },
+  {
+    "id": "cal-c",
+    "mustPass": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+    ]
+  },
+  {
+    "id": "cal-d",
+    "mustPass": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+    ]
+  },
+  {
+    "id": "cal-e",
+    "mustFail": [
+      "C1",
+      "C2"
+    ]
+  },
+  {
+    "id": "cal-f",
+    "mustFail": [
+      "C1",
+      "C2"
+    ]
+  }
+]

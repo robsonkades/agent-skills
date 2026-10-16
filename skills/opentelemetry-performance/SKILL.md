@@ -70,12 +70,16 @@ reactive/messaging boundary relevant to the question, reuse adequate existing ev
 
 1. test whether the pinned instrumentation already wraps it;
 2. assert parent/trace IDs in an integration fixture;
-3. if missing, capture Context at submission and wrap/restore at execution;
+3. identify the action's logical parent and, if propagation is missing, capture its Context
+   before the relevant boundary: direct work at submission, request-owned deferred callbacks
+   at registration rather than a later submission under another operation;
 4. verify restoration and avoid unnecessary wrapping and scope leaks.
 
 For a reusable executor serving unrelated requests, distinguish per-submission capture from a
 wrapper bound to one captured Context; otherwise later requests can inherit the wrong parent.
-The instrumentation reference covers this API choice and periodic-task exceptions.
+Registration, submission and execution can occur under different parents; a per-submission
+wrapper alone cannot recover an earlier registering request's Context. The instrumentation
+reference covers this API choice, deferred-callback checks and periodic-task exceptions.
 
 Wrapping Context alone does not create a span. Redundant scope wrapping can add work, while
 duplicate spans require span-creating instrumentation; inspect the actual boundary before

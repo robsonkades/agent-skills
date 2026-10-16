@@ -1,0 +1,61 @@
+{
+  "policy": "Read existing jars only; no installation or copying cache.",
+  "jars": [
+    {
+      "name": "spring-core",
+      "version": "6.2.10",
+      "path": "C:/Users/robso/.m2/repository/org/springframework/spring-core/6.2.10/spring-core-6.2.10.jar",
+      "bytes": 1966697,
+      "sha256": "28122d6e4a48eb8b6a0e4e087a55e96e46fb4d5e7d5d2c74dc8051401d8101da"
+    },
+    {
+      "name": "spring-jcl",
+      "version": "6.2.10",
+      "path": "C:/Users/robso/.m2/repository/org/springframework/spring-jcl/6.2.10/spring-jcl-6.2.10.jar",
+      "bytes": 24540,
+      "sha256": "71586e08cdc62daa2c6f06dc606a1cc031e32477986a216c272d1a17270b2ade"
+    },
+    {
+      "name": "spring-beans",
+      "version": "6.2.10",
+      "path": "C:/Users/robso/.m2/repository/org/springframework/spring-beans/6.2.10/spring-beans-6.2.10.jar",
+      "bytes": 889749,
+      "sha256": "d786027a693687d84c6ba9ee1b2f640f4c068bd9c1046990e676c683c30920fc"
+    },
+    {
+      "name": "spring-aop",
+      "version": "6.2.10",
+      "path": "C:/Users/robso/.m2/repository/org/springframework/spring-aop/6.2.10/spring-aop-6.2.10.jar",
+      "bytes": 420147,
+      "sha256": "9ddea2c5dacbe8197548c3d321355a0ed7358dd64ebb191637e59d827df10482"
+    },
+    {
+      "name": "spring-context",
+      "version": "6.2.10",
+      "path": "C:/Users/robso/.m2/repository/org/springframework/spring-context/6.2.10/spring-context-6.2.10.jar",
+      "bytes": 1358053,
+      "sha256": "b46e2ff27708a2f85dadfda5cf1c41c9ecd52b3265b272211ce085516c028af9"
+    },
+    {
+      "name": "spring-expression",
+      "version": "6.2.10",
+      "path": "C:/Users/robso/.m2/repository/org/springframework/spring-expression/6.2.10/spring-expression-6.2.10.jar",
+      "bytes": 317829,
+      "sha256": "4fb07c59249cfb341208a27c371886c110b55cda2c933e5944ed7e02eabf1828"
+    },
+    {
+      "name": "spring-context-support",
+      "version": "6.2.10",
+      "path": "C:/Users/robso/.m2/repository/org/springframework/spring-context-support/6.2.10/spring-context-support-6.2.10.jar",
+      "bytes": 175200,
+      "sha256": "99c227f950eb336902d171ab542900cd6bbaa520f44f832e1f4f5c76eaa1097c"
+    },
+    {
+      "name": "spring-tx",
+      "version": "6.2.10",
+      "path": "C:/Users/robso/.m2/repository/org/springframework/spring-tx/6.2.10/spring-tx-6.2.10.jar",
+      "bytes": 285514,
+      "sha256": "637a8475d2be7743bbfde3cffc388a9013301edaa708abd7eda472e61855f7de"
+    }
+  ]
+}

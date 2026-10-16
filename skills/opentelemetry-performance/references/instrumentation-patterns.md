@@ -46,8 +46,8 @@ executor.execute(
     }));
 ```
 
-Context capture belongs at submission because execution-time Context may be unrelated.
-For completion callbacks, capture at registration in the originating operation, not in
+For directly submitted work, capture at submission because execution-time Context may be unrelated.
+For request-owned completion callbacks, capture at registration in the originating operation, not in
 an unrelated thread that later completes the future. Keep Context as data across threads;
 open and close each Scope on its own executing thread.
 OpenTelemetry Java also exposes wrappers for Runnable, Callable, Executor and functions.
@@ -72,11 +72,31 @@ Agent versions instrument supported concurrency libraries, so behavior cannot be
 from ThreadLocal storage alone. When propagation across one of these boundaries is the
 claim under review, inspect existing integration evidence or test:
 
-1. parent span current at submission/start;
+1. required logical parent, and where its Context is current at registration/submission/start;
 2. child created inside callback/thread;
 3. expected parent ID;
 4. two interleaved requests do not cross-contaminate;
 5. exceptional/cancelled paths close scopes/spans.
+
+For a request-owned continuation on a pending future, `Context.taskWrapping(executor)` can
+capture the completer's Context when the continuation is eventually submitted. An already-complete
+source may submit during registration and conceal the mismatch. Verify actual stage/instrumentation
+wiring before changing it. When that boundary lacks registration-aware propagation, the native
+function wrapper can bind the action to the current request:
+
+```java
+Context origin = Context.current();
+CompletableFuture<Price> result =
+    source.thenApplyAsync(origin.wrapFunction(this::reprice), executor);
+```
+
+This partial snippet assumes a source `CompletableFuture`, executor, application `Price` type
+and synchronous `reprice(value)` method. It scopes that callback; it does not create a span,
+extend its parent span's lifetime or by itself cover further asynchronous work started by `reprice`.
+Check a callback registered under request A, completed later under provider B and executed under
+worker C: a child created by that callback must name A as its parent, share A's trace and leave C restored
+on success and failure. Repeat with an already-completed source and inline execution. Bind per
+registration; do not retain A as the parent of every future request on a shared executor.
 
 For StructuredTaskScope or virtual-thread APIs, pin JDK and instrumentation version.
 `Context.wrap` itself opens/restores a Scope; it does not start spans. Two wrappers do not

@@ -1,0 +1,4 @@
+PASS CallerRuns: submitted=3 bodies=3 workerHooks=2 poolCompleted=2 thirdDone=true
+PASS Discard: submitted=3 bodies=2 workerHooks=2 poolCompleted=2 thirdDone=false
+PASS submitted failure: future=FAILED afterExecuteThrowable=null
+PASS 3 bounded mechanism checks

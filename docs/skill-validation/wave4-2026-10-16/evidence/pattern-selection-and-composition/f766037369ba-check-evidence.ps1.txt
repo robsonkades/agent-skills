@@ -1,0 +1,36 @@
+@'
+import assert from 'node:assert/strict';
+import {readFileSync, existsSync, readdirSync, statSync} from 'node:fs';
+import {resolve, relative} from 'node:path';
+const root = "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/pattern-selection-and-composition-validation-quality18";
+const readJson = p => JSON.parse(readFileSync(resolve(root,p),'utf8'));
+const inputs=readJson('case-inputs.json');
+const criteria=readJson('case-criteria.json');
+const evidence=readJson('evidence.json');
+assert.equal(inputs.length,2);
+assert.equal(criteria.actorRuns,0);
+assert.equal(evidence.actorRuns,0);
+assert.equal(evidence.technicalCheck.result.exit_code,0);
+assert.equal(evidence.technicalCheck.assertions.total,56);
+const files=dir=>readdirSync(dir,{withFileTypes:true}).flatMap(e=>e.isDirectory()?files(resolve(dir,e.name)):[resolve(dir,e.name)]);
+for(const [index,c] of inputs.entries()){
+  const id='case0'+(index+1);
+  assert.equal(c.id,criteria.cases[index].id);
+  const overlay=files(resolve(root,id)).map(p=>relative(resolve(root,id),p).replaceAll('\\','/'));
+  assert.deepEqual(overlay,['queries/account-view.sql']);
+  const smoke=readFileSync(resolve(root,'smoke-'+id+'.log'),'utf8');
+  const probe=readFileSync(resolve(root,'probe-'+id+'.log'),'utf8');
+  assert.match(smoke,/SMOKE PASS assertions=4/);
+  assert.match(probe,/PROBE PASS assertions=24/);
+  assert.match(probe,/completion=\[42, 41\]/);
+  assert.match(probe,new RegExp('served=State\\[accountId=7, revision='+ (index===0?'41':'42') +','));
+  assert.equal(statSync(resolve(root,'probe-javac-'+id+'.log')).size,0);
+  assert.equal(statSync(resolve(root,'technical-'+id+'/.build/smoke/javac.log')).size,0);
+  for(const p of ['README.md','docs/architecture.md','schema.sql','src/AccountEvent.java','src/AccountProjection.java','src/AccountView.java','src/BatchDispatcher.java','test/SmokeTest.java','run-smoke.ps1']){
+    assert.equal(readFileSync(resolve(root,'common',p),'utf8'),readFileSync(resolve(root,'technical-'+id,p),'utf8'),id+': '+p);
+  }
+}
+assert.notEqual(readFileSync(resolve(root,'case01/queries/account-view.sql'),'utf8'),readFileSync(resolve(root,'case02/queries/account-view.sql'),'utf8'));
+for(const p of ['baseline-package.json','common/fixture-dependencies.json','technical-probe/CompositionProbe.java','run-technical-checks.ps1','check-package.ps1'])assert.ok(existsSync(resolve(root,p)),p);
+console.log(JSON.stringify({artifactIntegrity:'PASS',pairedCases:2,onlyOverlayDifference:'queries/account-view.sql',smokeAssertions:8,technicalAssertions:48,totalAssertions:56,actorRuns:0,emptySuccessfulCompilerLogs:4,commonFixtureCopies:'identical'}));
+'@ | node --input-type=module

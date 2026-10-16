@@ -1,0 +1,30 @@
+{
+  "runtime": "v25.6.1",
+  "name": "zgc-and-shenandoah",
+  "version": "1.3.3",
+  "packageFiles": 4,
+  "issues": [],
+  "localMarkdownLinks": [
+    {
+      "file": "SKILL.md",
+      "target": "references/flags-and-modes.md"
+    },
+    {
+      "file": "SKILL.md",
+      "target": "references/reading-concurrent-gc-logs.md"
+    }
+  ],
+  "referrals": [
+    "gc-fundamentals",
+    "jvm-gc-tuning",
+    "zgc-generational-internals",
+    "epsilon-and-shenandoah-internals"
+  ],
+  "hashes": {
+    "SKILL.md": "3550499CC1C02AC26069DD51D886076F633D2C8C52B57EF822F89F742431CFF8",
+    "skill.yaml": "C19F68A12B6100C9732C4E7ADB552FB6563E56ACD7006E0786175874A4069C4E",
+    "references/flags-and-modes.md": "1E742DFBD4E8DA9F006F14C15CE05B8E84D572B6044CC93283C15BDAEAA37044",
+    "references/reading-concurrent-gc-logs.md": "186303720EE8CD57DA47074416E6D4E98AABB69BF72FC6AE876218DA532851C7"
+  },
+  "allPackageHashesUnchanged": true
+}

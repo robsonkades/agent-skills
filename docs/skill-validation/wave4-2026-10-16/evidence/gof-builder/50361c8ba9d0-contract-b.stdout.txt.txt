@@ -1,0 +1,9 @@
+PASS previous product survives builder reuse
+PASS public constructor isolates caller list
+PASS setter isolates caller list before build
+PASS product accessor rejects mutation
+PASS failed build retains state for correction
+PASS failed setters preserve previous state
+PASS all public product paths enforce invariants
+PASS copyOf does not copy mutable elements
+SUMMARY checks=8 failures=0

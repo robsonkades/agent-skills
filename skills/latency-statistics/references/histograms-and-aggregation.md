@@ -54,6 +54,27 @@ Filter/group by dimensions required by the decision (`route`, `region`, outcome 
 removing labels. Do not merge populations with different clocks or semantics merely because their
 metric names match.
 
+## Query estimates are not event samples
+
+Before using `n` in rank or binomial confidence bounds, follow the query and recording rules to
+their counter samples, timestamps, resets and observation window. Prometheus `rate` estimates a
+per-second rate; `increase` extrapolates to the range boundaries and can return fractional counts.
+An integer result is not proof of an observed sample size. Scrape/query timestamps are not request
+replications either.
+
+For example, a six-minute range `(0, 360]` contains counter samples at 30, 90, 150, 210, 270 and
+330 seconds, with values 1,000, 1,050, 1,100, 1,150, 1,200 and 1,250. Prometheus 3.8 extrapolates
+the 250 observed increments over 300 seconds to an `increase` of 300. It has not observed the
+events in both boundary gaps. Matching bucket and total estimates of 300 therefore do not
+establish 300 successful trials for an exact confidence calculation.
+
+Keep rate-based histogram queries and SLI ratios for monitoring. Count-based inference requires
+actual counts for the declared cohort/window, with reset and coverage accounting and the proper
+dependence unit; complete interval counts can suffice without retaining individual payloads.
+Do not round extrapolated counts or fabricate request rows for resampling. If coverage cannot
+be recovered, report the descriptive estimate or an explicit observation model and its uncertainty,
+not exact binomial/rank coverage. Using only the observed subinterval also changes the population.
+
 ## Sample quantiles and resolution
 
 A sample quantile is an estimator based on order statistics. Multiple interpolation conventions
@@ -172,6 +193,8 @@ slow/error cohort.
 ## Sources
 
 - [Prometheus: Histograms and summaries](https://prometheus.io/docs/practices/histograms/)
+- [Prometheus rate and increase semantics](https://prometheus.io/docs/prometheus/latest/querying/functions/#increase) and [Prometheus 3.8 extrapolatedRate implementation](https://github.com/prometheus/prometheus/blob/v3.8.0/promql/functions.go) — estimated interval counts are not recovered event samples.
+- [NIST binomial confidence intervals](https://www.itl.nist.gov/div898/handbook/prc/section2/prc241.htm) — the count-based construction uses successes/failures from an observed sample.
 - [Prometheus histogram_quantile edge cases](https://prometheus.io/docs/prometheus/latest/querying/functions/#histogram_quantile) and [Prometheus 3.8 BucketQuantile implementation](https://github.com/prometheus/prometheus/blob/v3.8.0/promql/quantile.go) — empty/invalid histograms and the highest-bucket fallback.
 - [Prometheus native histogram specification](https://prometheus.io/docs/specs/native_histograms/)
 - [Micrometer: Histograms and percentiles](https://docs.micrometer.io/micrometer/reference/concepts/histogram-quantiles.html)

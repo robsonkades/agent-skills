@@ -1,0 +1,531 @@
+{
+  "skill": "skill-engineering",
+  "inspectionCommands": [
+    {
+      "label": "files",
+      "command": "rg --files skills/skill-engineering",
+      "cwd": "C:/git/agent-skills",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "d7dcd5",
+          "wall_time_seconds": 0.0774985,
+          "exit_code": 0,
+          "original_token_count": 73,
+          "output": "skills/skill-engineering\\skill.yaml\nskills/skill-engineering\\SKILL.md\nskills/skill-engineering\\references\\resource-design.md\nskills/skill-engineering\\references\\evidence-and-confidence.md\nskills/skill-engineering\\references\\evaluation.md\nskills/skill-engineering\\references\\anti-patterns.md\n"
+        }
+      }
+    },
+    {
+      "label": "status",
+      "command": "git status --short -- skills/skill-engineering",
+      "cwd": "C:/git/agent-skills",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "f530f1",
+          "wall_time_seconds": 0.0958161,
+          "exit_code": 0,
+          "original_token_count": 0,
+          "output": ""
+        }
+      }
+    },
+    {
+      "label": "unstaged",
+      "command": "git diff -- skills/skill-engineering",
+      "cwd": "C:/git/agent-skills",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "3491fb",
+          "wall_time_seconds": 0.0700879,
+          "exit_code": 0,
+          "original_token_count": 0,
+          "output": ""
+        }
+      }
+    },
+    {
+      "label": "staged",
+      "command": "git diff --cached -- skills/skill-engineering",
+      "cwd": "C:/git/agent-skills",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "4613dd",
+          "wall_time_seconds": 0.0946815,
+          "exit_code": 0,
+          "original_token_count": 0,
+          "output": ""
+        }
+      }
+    },
+    {
+      "label": "committed",
+      "command": "git show HEAD:skills/skill-engineering/skill.yaml",
+      "cwd": "C:/git/agent-skills",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "9b6a2d",
+          "wall_time_seconds": 0.0744494,
+          "exit_code": 0,
+          "original_token_count": 338,
+          "output": "schemaVersion: 1\n\nname: skill-engineering\nversion: 1.0.3\ndescription: >-\n  Designing and reviewing agent skills: scope boundaries, the SKILL.md frontmatter\n  contract, progressive disclosure across references and scripts, explicit decision rules,\n  and quality gates. Use when creating a new skill, when reviewing one that is too long or\n  never activates, when deciding what belongs in SKILL.md versus a reference, or when\n  converting an existing prompt into a skill. Does not cover packaging, versioning or\n  distribution, and does not cover writing the domain expertise itself.\n\nlicense: Apache-2.0\n\nauthors:\n  - name: agent-skills contributors\n    url: https://github.com/robsonkades/agent-skills\n\nhomepage: https://github.com/robsonkades/agent-skills/tree/main/skills/skill-engineering\nrepository:\n  type: git\n  url: https://github.com/robsonkades/agent-skills\n  directory: skills/skill-engineering\n\nkeywords:\n  - skills\n  - prompt-engineering\n  - agent-design\n  - meta\n\n# No `compatibility` block: the skill is deliberately runtime-neutral.\n\nfiles:\n  - SKILL.md\n  - skill.yaml\n  - references/\n\ndependencies: []\n\nagentOverrides:\n  codex:\n    interface:\n      display_name: Skill Engineering\n      short_description: Design and review agent skills that change behaviour\n      default_prompt: Use Skill Engineering to design or review this skill.\n"
+        }
+      }
+    },
+    {
+      "label": "brief",
+      "command": "Get-Content -LiteralPath 'docs/skill-validation/wave5-2026-10-16/review-brief.md' -Raw",
+      "cwd": "C:/git/agent-skills",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "f04744",
+          "wall_time_seconds": 0.0943421,
+          "exit_code": 0,
+          "original_token_count": 1233,
+          "output": "# Wave 5 — close the Base/Piloto coverage gap\n\nThe coverage audit identifies 298 distinct packages reviewed in waves 1–4 and\nseven remaining packages: `architecture-trade-off-analysis`, `debugging`,\n`java-memory-model`, `retries-and-backoff`, `spring-transactions-and-events`,\n`sql-query-performance`, and `skill-engineering`. These were deliberately outside\nthe numbered inventory batches. This wave closes individual review coverage;\nit does not declare the roadmap's full pilot, memory or multi-runtime programme\ncomplete. See `coverage.json` and `baseline.json` for source hashes and scope.\n\n## Required review and ownership\n\nRead applicable `AGENTS.md`, the complete `docs/skill-review-prompt.md`,\n`docs/parallel-skill-reviews.md`, and `skills/skill-engineering/SKILL.md` with its\nrelevant references. Read every file in the assigned package. Use the cumulative\nlessons in `docs/skill-validation/skills-comparative-research-2026-10-16.md` and\nthe prior wave reports. A previously read unchanged procedure need not be reread.\n\nOwn only `skills/<assigned-name>/**`. You are not alone in the working tree;\npreserve others' changes. The seven selected packages were clean at assignment;\nthousands of unrelated prior-wave files are not. Do not revert, stage, commit,\npublish, install globally, or touch actual agent configuration. Do not delegate.\nSend findings before editing, then implement justified in-scope fixes without\nwaiting for approval. Do not force an edit when the evidence supports preservation.\n\nThe coordinator alone writes shared reports, generates the registry, and runs\nglobal verification after all writers stop. Do not run repository-wide builds,\nformatters, installs or dependency updates. Keep temporary technical fixtures and\ntheir logs in a unique directory beneath\n`C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/`.\nUse `apply_patch` for hand edits. Bump one patch if content changes; no change means\nno bump. Synchronize descriptions and declare any real optional referrals.\n\nThe six domain skills run first. `skill-engineering` remains unchanged while\nthey use it, and is reviewed alone after their writes stop, as required by the\nparallel review workflow.\n\n## Cumulative quality criteria\n\n- Inspect the effective caller, configuration, consumer and evidence before\n  deciding. A familiar name, successful command or empty search is not proof.\n- Challenge the premise that controls the next action. Preserve adequate designs\n  and legitimate alternatives; missing evidence should limit the affected claim.\n- Apply new evidence to the decision and requested artifact. Preserve accepted\n  constraints, authority, compatibility and unrelated valid conclusions.\n- Verify uncertain claims against primary sources for the applicable version.\n  Distinguish language/API contracts, implementation behavior, local observations\n  and causal claims. Record source failures and unavailable runtimes explicitly.\n- Keep each skill's role. Do not turn diagnosis or architectural reasoning into\n  a mandatory implementation process, nor append the review procedure wholesale.\n- Preserve specialist depth; remove text only where it adds no decision,\n  prerequisite, useful example or reliability guard. Length is not a quality score.\n\nThe earlier behavioral comparisons did not establish incremental gain and often\nreached the maximum in all conditions. Do not weaken criteria, choose only winning\ncases or call a tie equivalence. Return investigation cases with ordinary project\nartifacts; avoid giving the cause and solution in the task. Record known example\nexposure. Technical correctness fixes can stand on source and executable evidence\nwithout inventing a claim that agents perform better.\n\n## Local evidence and handoff\n\nValidate relevant metadata, routing, links, examples and failure paths. Use the\ndeclared baseline; `--release 17` on JDK 25 is not execution on JDK 17. A simulated\ntransaction or database is not a framework or database integration test. Prefer\nsmall discriminating technical checks and a meaningful negative control.\n\nSupply a reproducible pair of task inputs and fixtures separately from expected\nbehavior and failure conditions. Change one decisive constraint. Do not run agent\nactors yourself; report written cases separately from executed checks.\n\nWrite `<assigned-name>.json` in the temporary root with status, skill, assignment\nand final versions, findings and fixes, files changed, preserved capabilities,\ncommands/results and logs, primary sources, evidence paths, case inputs/criteria,\nlimitations, cross-skill findings and pending global checks. Prefer an explicit\n`evidenceFiles` array of authored scripts/logs. Do not copy downloaded documents,\ndependency caches or third-party implementation sources into the repository.\nRead back the handoff and confirm `allWritesStopped: true`, no running processes,\nand no further edits without reopening ownership.\n\r\n"
+        }
+      }
+    },
+    {
+      "label": "package",
+      "command": "$ErrorActionPreference='Stop'\nGet-ChildItem -LiteralPath 'skills/skill-engineering' -Recurse -File | ForEach-Object { [pscustomobject]@{path=$_.FullName.Substring((Get-Location).Path.Length+1);sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash;content=[System.IO.File]::ReadAllText($_.FullName)} } | ConvertTo-Json -Depth 3",
+      "cwd": "C:/git/agent-skills",
+      "result": {
+        "exitCode": 0,
+        "note": "Six file contents read and retained in review memory; baseline hashes recorded in inspection.json."
+      }
+    }
+  ],
+  "executedLocalChecks": [
+    {
+      "label": "package-validation",
+      "command": "$ErrorActionPreference = 'Stop'\n@'\nimport {readFileSync,readdirSync,existsSync} from 'node:fs';\nimport {resolve,relative,dirname} from 'node:path';\nimport {parseManifest} from './packages/core/src/domain/manifest.ts';\nimport {buildSkillPackage} from './packages/core/src/domain/skill-package.ts';\nimport {validatePackage} from './packages/core/src/application/validate-package.ts';\nconst root=resolve('skills/skill-engineering');\nconst paths=readdirSync(root,{recursive:true,withFileTypes:true}).filter(e=>e.isFile()).map(e=>resolve(e.parentPath,e.name));\nconst files=paths.map(p=>({path:relative(root,p).replaceAll('\\\\','/'),bytes:readFileSync(p)}));\nconst parsed=parseManifest(readFileSync(resolve(root,'skill.yaml'),'utf8'),{strict:true});\nconst report=validatePackage(buildSkillPackage(parsed.manifest,files),{directoryName:'skill-engineering'});\nconst issues=[...parsed.issues,...report.issues];\nconst links=[];\nconst body=readFileSync(resolve(root,'SKILL.md'),'utf8');\nconst routes=[...body.matchAll(/`(references\\/[^`]+\\.md)`/g)].map(m=>m[1]);\nfor(const route of routes) if(!existsSync(resolve(root,route))) throw new Error('Missing routed resource '+route);\nfor(const path of paths.filter(p=>p.endsWith('.md'))) {\n const text=readFileSync(path,'utf8');\n for(const match of text.matchAll(/\\[[^\\]]*\\]\\((<[^>]+>|[^\\s)]+)(?:\\s+[^)]*)?\\)/g)) {\n  const target=match[1].replace(/^<|>$/g,'');\n  if(/^[a-z][a-z0-9+.-]*:/i.test(target)) continue;\n  const [file,anchor]=target.split('#');\n  const dest=file?resolve(dirname(path),decodeURIComponent(file)):path;\n  if(!existsSync(dest)) throw new Error('Missing link '+target+' from '+path);\n  if(anchor) {\n   const headings=[...readFileSync(dest,'utf8').matchAll(/^#{1,6}\\s+(.+)$/gm)].map(m=>m[1].toLowerCase().replace(/[^\\w\\s-]/g,'').replace(/\\s/g,'-'));\n   if(!headings.includes(anchor)) throw new Error('Missing anchor '+target);\n  }\n  links.push({from:relative(root,path).replaceAll('\\\\','/'),target});\n }\n}\nconsole.log(JSON.stringify({skill:'skill-engineering',files:files.map(f=>f.path),manifestVersion:parsed.manifest.version,issues,relativeLinks:links,routedResources:[...new Set(routes)]},null,2));\nif(issues.length) process.exitCode=1;\n'@ | node --input-type=module -",
+      "cwd": "C:/git/agent-skills",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "label": "package-validation",
+          "chunk_id": "1ed543",
+          "wall_time_seconds": 0.1839977,
+          "exit_code": 0,
+          "original_token_count": 120,
+          "output": "{\n  \"skill\": \"skill-engineering\",\n  \"files\": [\n    \"SKILL.md\",\n    \"skill.yaml\",\n    \"references/anti-patterns.md\",\n    \"references/evaluation.md\",\n    \"references/evidence-and-confidence.md\",\n    \"references/resource-design.md\"\n  ],\n  \"manifestVersion\": \"1.0.4\",\n  \"issues\": [],\n  \"relativeLinks\": [],\n  \"routedResources\": [\n    \"references/resource-design.md\",\n    \"references/anti-patterns.md\",\n    \"references/evidence-and-confidence.md\",\n    \"references/evaluation.md\"\n  ]\n}\n"
+        }
+      }
+    },
+    {
+      "label": "format-check",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/skill-engineering/SKILL.md skills/skill-engineering/skill.yaml skills/skill-engineering/references/resource-design.md skills/skill-engineering/references/evidence-and-confidence.md skills/skill-engineering/references/evaluation.md skills/skill-engineering/references/anti-patterns.md",
+      "cwd": "C:/git/agent-skills",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "label": "format-check",
+          "chunk_id": "f2d73c",
+          "wall_time_seconds": 0.2200789,
+          "exit_code": 0,
+          "original_token_count": 17,
+          "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+        }
+      }
+    },
+    {
+      "label": "diff-check",
+      "command": "git diff --check -- skills/skill-engineering",
+      "cwd": "C:/git/agent-skills",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "label": "diff-check",
+          "chunk_id": "12f871",
+          "wall_time_seconds": 0.0572396,
+          "exit_code": 0,
+          "original_token_count": 0,
+          "output": ""
+        }
+      }
+    },
+    {
+      "label": "owned-diff",
+      "command": "git diff -- skills/skill-engineering",
+      "cwd": "C:/git/agent-skills",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "label": "owned-diff",
+          "chunk_id": "0189f2",
+          "wall_time_seconds": 0.0810099,
+          "exit_code": 0,
+          "original_token_count": 798,
+          "output": "diff --git a/skills/skill-engineering/references/evaluation.md b/skills/skill-engineering/references/evaluation.md\nindex 87af43f..f4100f4 100644\n--- a/skills/skill-engineering/references/evaluation.md\n+++ b/skills/skill-engineering/references/evaluation.md\n@@ -104,6 +104,25 @@ or trace evidence. A model's unsupported self-score is not independent verificat\n For example, identify which missing evidence made a diagnosis unsupported, rather than\n assigning a number without explanation or requiring one tool for every diagnosis.\n \n+For consequential criteria, check the actual grader against a known failure and a valid\n+alternative. Compare its judgements with artifacts or traces: a required heading can appear\n+while the underlying result is wrong. Investigate disagreement before trusting totals; see\n+the [Agent Skills grading guidance](https://agentskills.io/skill-creation/evaluating-skills#grading-principles).\n+\n+## Interpreting a comparison\n+\n+Report distinct tasks, repeated trials and checks separately; several assertions on one\n+output are not independent attempts. Retain per-case outcomes and relevant measured time\n+or token costs so an aggregate does not hide a consequential regression or trade-off.\n+\n+If both configurations reach the ceiling, report no observed difference on those cases and\n+criteria. A tie establishes neither equivalence nor general lack of value. Preserve valid\n+safety and regression criteria even when both configurations pass; they can protect a\n+contract without discriminating the comparison. If improvement remains the question, add\n+cases from real coverage gaps prospectively, not by selecting only cases where the revision\n+wins. See [Anthropic's evaluation guidance](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents)\n+for the task/trial distinction and capability versus regression evaluation.\n+\n ## Where evaluation material lives\n \n Use the repository's existing evaluation location and authorized write scope. An `evals/`\n@@ -127,9 +146,7 @@ rerun affected comparisons, recording the change; do not silently redefine succe\n the output.\n \n Check first whether the actor received the context and tools the criterion requires. Missing\n-coverage must be reported rather than relabeled as an end-to-end pass. Preserve valid safety\n-and regression criteria even if both configurations pass them; a criterion can protect a\n-contract without discriminating the current comparison.\n+coverage must be reported rather than relabeled as an end-to-end pass.\n \n If the fix is \"add more instructions\", check first whether the real problem is scope: a\n skill that needs ever more rules to cover its cases usually has a boundary that is too\ndiff --git a/skills/skill-engineering/skill.yaml b/skills/skill-engineering/skill.yaml\nindex aee979e..6193013 100644\n--- a/skills/skill-engineering/skill.yaml\n+++ b/skills/skill-engineering/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: skill-engineering\n-version: 1.0.3\n+version: 1.0.4\n description: >-\n   Designing and reviewing agent skills: scope boundaries, the SKILL.md frontmatter\n   contract, progressive disclosure across references and scripts, explicit decision rules,\n"
+        }
+      }
+    },
+    {
+      "label": "package-validation-final",
+      "command": "$ErrorActionPreference = 'Stop'\n@'\nimport {readFileSync,readdirSync,existsSync} from 'node:fs';\nimport {resolve,relative,dirname} from 'node:path';\nimport {parseManifest} from './packages/core/src/domain/manifest.ts';\nimport {buildSkillPackage} from './packages/core/src/domain/skill-package.ts';\nimport {validatePackage} from './packages/core/src/application/validate-package.ts';\nconst root=resolve('skills/skill-engineering');\nconst paths=readdirSync(root,{recursive:true,withFileTypes:true}).filter(e=>e.isFile()).map(e=>resolve(e.parentPath,e.name));\nconst files=paths.map(p=>({path:relative(root,p).replaceAll('\\\\','/'),bytes:readFileSync(p)}));\nconst parsed=parseManifest(readFileSync(resolve(root,'skill.yaml'),'utf8'),{strict:true});\nconst report=validatePackage(buildSkillPackage(parsed.manifest,files),{directoryName:'skill-engineering'});\nconst issues=[...parsed.issues,...report.issues];\nconst links=[];\nconst body=readFileSync(resolve(root,'SKILL.md'),'utf8');\nconst routes=[...body.matchAll(/`(references\\/[^`]+\\.md)`/g)].map(m=>m[1]);\nfor(const route of routes) if(!existsSync(resolve(root,route))) throw new Error('Missing routed resource '+route);\nfor(const path of paths.filter(p=>p.endsWith('.md'))) {\n const text=readFileSync(path,'utf8');\n for(const match of text.matchAll(/\\[[^\\]]*\\]\\((<[^>]+>|[^\\s)]+)(?:\\s+[^)]*)?\\)/g)) {\n  const target=match[1].replace(/^<|>$/g,'');\n  if(/^[a-z][a-z0-9+.-]*:/i.test(target)) continue;\n  const [file,anchor]=target.split('#');\n  const dest=file?resolve(dirname(path),decodeURIComponent(file)):path;\n  if(!existsSync(dest)) throw new Error('Missing link '+target+' from '+path);\n  if(anchor) {\n   const headings=[...readFileSync(dest,'utf8').matchAll(/^#{1,6}\\s+(.+)$/gm)].map(m=>m[1].toLowerCase().replace(/[^\\w\\s-]/g,'').replace(/\\s/g,'-'));\n   if(!headings.includes(anchor)) throw new Error('Missing anchor '+target);\n  }\n  links.push({from:relative(root,path).replaceAll('\\\\','/'),target});\n }\n}\nconsole.log(JSON.stringify({skill:'skill-engineering',files:files.map(f=>f.path),manifestVersion:parsed.manifest.version,issues,relativeLinks:links,routedResources:[...new Set(routes)]},null,2));\nif(issues.length) process.exitCode=1;\n'@ | node --input-type=module -",
+      "cwd": "C:/git/agent-skills",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "label": "package-validation-final",
+          "chunk_id": "c294d3",
+          "wall_time_seconds": 0.1688828,
+          "exit_code": 0,
+          "original_token_count": 120,
+          "output": "{\n  \"skill\": \"skill-engineering\",\n  \"files\": [\n    \"SKILL.md\",\n    \"skill.yaml\",\n    \"references/anti-patterns.md\",\n    \"references/evaluation.md\",\n    \"references/evidence-and-confidence.md\",\n    \"references/resource-design.md\"\n  ],\n  \"manifestVersion\": \"1.0.4\",\n  \"issues\": [],\n  \"relativeLinks\": [],\n  \"routedResources\": [\n    \"references/resource-design.md\",\n    \"references/anti-patterns.md\",\n    \"references/evidence-and-confidence.md\",\n    \"references/evaluation.md\"\n  ]\n}\n"
+        }
+      }
+    },
+    {
+      "label": "format-check-final",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/skill-engineering/references/evaluation.md skills/skill-engineering/skill.yaml",
+      "cwd": "C:/git/agent-skills",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "label": "format-check-final",
+          "chunk_id": "c60f9c",
+          "wall_time_seconds": 0.1649611,
+          "exit_code": 0,
+          "original_token_count": 17,
+          "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+        }
+      }
+    },
+    {
+      "label": "diff-check-final",
+      "command": "git diff --check -- skills/skill-engineering",
+      "cwd": "C:/git/agent-skills",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "label": "diff-check-final",
+          "chunk_id": "16a9e2",
+          "wall_time_seconds": 0.0590554,
+          "exit_code": 0,
+          "original_token_count": 0,
+          "output": ""
+        }
+      }
+    },
+    {
+      "label": "owned-diff-final",
+      "command": "git diff -- skills/skill-engineering",
+      "cwd": "C:/git/agent-skills",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "label": "owned-diff-final",
+          "chunk_id": "e5ee53",
+          "wall_time_seconds": 0.0694635,
+          "exit_code": 0,
+          "original_token_count": 799,
+          "output": "diff --git a/skills/skill-engineering/references/evaluation.md b/skills/skill-engineering/references/evaluation.md\nindex 87af43f..38de538 100644\n--- a/skills/skill-engineering/references/evaluation.md\n+++ b/skills/skill-engineering/references/evaluation.md\n@@ -104,6 +104,25 @@ or trace evidence. A model's unsupported self-score is not independent verificat\n For example, identify which missing evidence made a diagnosis unsupported, rather than\n assigning a number without explanation or requiring one tool for every diagnosis.\n \n+For consequential criteria, check the actual grader against a known failure and a valid\n+alternative. Compare its judgements with artifacts or traces: a required heading can appear\n+while the underlying result is wrong. Investigate disagreement before trusting totals; see\n+the [Agent Skills grading guidance](https://agentskills.io/skill-creation/evaluating-skills#grading-principles).\n+\n+## Interpreting a comparison\n+\n+Report distinct tasks, repeated trials and checks separately; several assertions on one\n+output are not independent attempts. Retain per-case outcomes and relevant measured time\n+or token costs so an aggregate does not hide a consequential regression or trade-off.\n+\n+If both configurations reach the ceiling, report no observed difference on those cases and\n+criteria. A tie alone establishes neither equivalence nor general lack of value. Preserve valid\n+safety and regression criteria even when both configurations pass; they can protect a\n+contract without discriminating the comparison. If improvement remains the question, add\n+cases from real coverage gaps prospectively, not by selecting only cases where the revision\n+wins. See [Anthropic's evaluation guidance](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents)\n+for the task/trial distinction and capability versus regression evaluation.\n+\n ## Where evaluation material lives\n \n Use the repository's existing evaluation location and authorized write scope. An `evals/`\n@@ -127,9 +146,7 @@ rerun affected comparisons, recording the change; do not silently redefine succe\n the output.\n \n Check first whether the actor received the context and tools the criterion requires. Missing\n-coverage must be reported rather than relabeled as an end-to-end pass. Preserve valid safety\n-and regression criteria even if both configurations pass them; a criterion can protect a\n-contract without discriminating the current comparison.\n+coverage must be reported rather than relabeled as an end-to-end pass.\n \n If the fix is \"add more instructions\", check first whether the real problem is scope: a\n skill that needs ever more rules to cover its cases usually has a boundary that is too\ndiff --git a/skills/skill-engineering/skill.yaml b/skills/skill-engineering/skill.yaml\nindex aee979e..6193013 100644\n--- a/skills/skill-engineering/skill.yaml\n+++ b/skills/skill-engineering/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: skill-engineering\n-version: 1.0.3\n+version: 1.0.4\n description: >-\n   Designing and reviewing agent skills: scope boundaries, the SKILL.md frontmatter\n   contract, progressive disclosure across references and scripts, explicit decision rules,\n"
+        }
+      }
+    },
+    {
+      "label": "hashes-final",
+      "command": "Get-ChildItem -File -Recurse skills/skill-engineering | ForEach-Object { [PSCustomObject]@{path=(Resolve-Path -Relative $_.FullName).Substring(2); sha256=(Get-FileHash -Algorithm SHA256 -LiteralPath $_.FullName).Hash} } | ConvertTo-Json",
+      "cwd": "C:/git/agent-skills",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "label": "hashes-final",
+          "chunk_id": "4c2fa6",
+          "wall_time_seconds": 0.0816572,
+          "exit_code": 0,
+          "original_token_count": 242,
+          "output": "[\r\n  {\r\n    \"path\": \"skills\\\\skill-engineering\\\\SKILL.md\",\r\n    \"sha256\": \"5B3B3F9FA40C5B13051F501B4B7A58D0D0AD83C3836EFEDE2AD714A3A85582D6\"\r\n  },\r\n  {\r\n    \"path\": \"skills\\\\skill-engineering\\\\skill.yaml\",\r\n    \"sha256\": \"8F74EE5B0DDD63F124297DE81C508C53D08E9B11C49EBA7F80BB44054369AEA9\"\r\n  },\r\n  {\r\n    \"path\": \"skills\\\\skill-engineering\\\\references\\\\anti-patterns.md\",\r\n    \"sha256\": \"269274D782F0AF5CE830A0DAA99283210F4C586F083E0F82479C1D77C7211E02\"\r\n  },\r\n  {\r\n    \"path\": \"skills\\\\skill-engineering\\\\references\\\\evaluation.md\",\r\n    \"sha256\": \"6CD7CDCB91444849849919570F06BA64FD701C424ACC87A5F379B4D03B601AFF\"\r\n  },\r\n  {\r\n    \"path\": \"skills\\\\skill-engineering\\\\references\\\\evidence-and-confidence.md\",\r\n    \"sha256\": \"2A03FD347628B27704663DB09AF08A8A86BCD097A5A2D822E98E6A79BE3C6E69\"\r\n  },\r\n  {\r\n    \"path\": \"skills\\\\skill-engineering\\\\references\\\\resource-design.md\",\r\n    \"sha256\": \"D8E5911D26319AAB030ACD9647ED7FAD82B453ACEA72866B15E282C47C94509C\"\r\n  }\r\n]\r\n"
+        }
+      }
+    }
+  ],
+  "technicalFixture": {
+    "command": "node 'C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/skill-engineering-quality07-20261016/fixture-preflight.mjs'",
+    "cwd": "C:/git/agent-skills",
+    "exitCode": 0,
+    "result": {
+      "status": "PASS",
+      "kind": "deterministic fixture preflight, not agent evaluation",
+      "node": "v25.6.1",
+      "pairDifference": [
+        "evaluation/config.json"
+      ],
+      "commands": [
+        {
+          "case": "A",
+          "command": "node evaluation/grade.mjs archive",
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-validation-ujPBF2\\skill-engineering-quality07-20261016\\case-a",
+          "exitCode": 0,
+          "result": {
+            "completionMode": "narrative",
+            "input": "archive",
+            "grades": [
+              {
+                "id": "original/batch/1",
+                "condition": "original",
+                "task": "batch",
+                "trial": 1,
+                "checks": {
+                  "object": true,
+                  "count": true,
+                  "totalCents": true,
+                  "completion": true
+                },
+                "passedChecks": 4,
+                "totalChecks": 4,
+                "passed": true
+              },
+              {
+                "id": "revised/batch/1",
+                "condition": "revised",
+                "task": "batch",
+                "trial": 1,
+                "checks": {
+                  "object": true,
+                  "count": true,
+                  "totalCents": true,
+                  "completion": true
+                },
+                "passedChecks": 4,
+                "totalChecks": 4,
+                "passed": true
+              },
+              {
+                "id": "original/empty/1",
+                "condition": "original",
+                "task": "empty",
+                "trial": 1,
+                "checks": {
+                  "object": true,
+                  "count": true,
+                  "totalCents": true,
+                  "completion": true
+                },
+                "passedChecks": 4,
+                "totalChecks": 4,
+                "passed": true
+              },
+              {
+                "id": "revised/empty/1",
+                "condition": "revised",
+                "task": "empty",
+                "trial": 1,
+                "checks": {
+                  "object": true,
+                  "count": true,
+                  "totalCents": true,
+                  "completion": true
+                },
+                "passedChecks": 4,
+                "totalChecks": 4,
+                "passed": true
+              }
+            ]
+          }
+        },
+        {
+          "case": "A",
+          "command": "node evaluation/grade.mjs samples",
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-validation-ujPBF2\\skill-engineering-quality07-20261016\\case-a",
+          "exitCode": 0,
+          "result": {
+            "completionMode": "narrative",
+            "input": "samples",
+            "grades": [
+              {
+                "id": "alpha",
+                "condition": null,
+                "task": "batch",
+                "trial": null,
+                "checks": {
+                  "object": true,
+                  "count": true,
+                  "totalCents": true,
+                  "completion": true
+                },
+                "passedChecks": 4,
+                "totalChecks": 4,
+                "passed": true
+              },
+              {
+                "id": "beta",
+                "condition": null,
+                "task": "batch",
+                "trial": null,
+                "checks": {
+                  "object": true,
+                  "count": true,
+                  "totalCents": true,
+                  "completion": true
+                },
+                "passedChecks": 4,
+                "totalChecks": 4,
+                "passed": true
+              },
+              {
+                "id": "gamma",
+                "condition": null,
+                "task": "batch",
+                "trial": null,
+                "checks": {
+                  "object": true,
+                  "count": true,
+                  "totalCents": true,
+                  "completion": false
+                },
+                "passedChecks": 3,
+                "totalChecks": 4,
+                "passed": false
+              }
+            ]
+          }
+        },
+        {
+          "case": "B",
+          "command": "node evaluation/grade.mjs archive",
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-validation-ujPBF2\\skill-engineering-quality07-20261016\\case-b",
+          "exitCode": 0,
+          "result": {
+            "completionMode": "contract",
+            "input": "archive",
+            "grades": [
+              {
+                "id": "original/batch/1",
+                "condition": "original",
+                "task": "batch",
+                "trial": 1,
+                "checks": {
+                  "object": true,
+                  "count": true,
+                  "totalCents": true,
+                  "completion": true
+                },
+                "passedChecks": 4,
+                "totalChecks": 4,
+                "passed": true
+              },
+              {
+                "id": "revised/batch/1",
+                "condition": "revised",
+                "task": "batch",
+                "trial": 1,
+                "checks": {
+                  "object": true,
+                  "count": true,
+                  "totalCents": true,
+                  "completion": true
+                },
+                "passedChecks": 4,
+                "totalChecks": 4,
+                "passed": true
+              },
+              {
+                "id": "original/empty/1",
+                "condition": "original",
+                "task": "empty",
+                "trial": 1,
+                "checks": {
+                  "object": true,
+                  "count": true,
+                  "totalCents": true,
+                  "completion": true
+                },
+                "passedChecks": 4,
+                "totalChecks": 4,
+                "passed": true
+              },
+              {
+                "id": "revised/empty/1",
+                "condition": "revised",
+                "task": "empty",
+                "trial": 1,
+                "checks": {
+                  "object": true,
+                  "count": true,
+                  "totalCents": true,
+                  "completion": true
+                },
+                "passedChecks": 4,
+                "totalChecks": 4,
+                "passed": true
+              }
+            ]
+          }
+        },
+        {
+          "case": "B",
+          "command": "node evaluation/grade.mjs samples",
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-validation-ujPBF2\\skill-engineering-quality07-20261016\\case-b",
+          "exitCode": 0,
+          "result": {
+            "completionMode": "contract",
+            "input": "samples",
+            "grades": [
+              {
+                "id": "alpha",
+                "condition": null,
+                "task": "batch",
+                "trial": null,
+                "checks": {
+                  "object": true,
+                  "count": true,
+                  "totalCents": true,
+                  "completion": true
+                },
+                "passedChecks": 4,
+                "totalChecks": 4,
+                "passed": true
+              },
+              {
+                "id": "beta",
+                "condition": null,
+                "task": "batch",
+                "trial": null,
+                "checks": {
+                  "object": true,
+                  "count": true,
+                  "totalCents": true,
+                  "completion": false
+                },
+                "passedChecks": 3,
+                "totalChecks": 4,
+                "passed": false
+              },
+              {
+                "id": "gamma",
+                "condition": null,
+                "task": "batch",
+                "trial": null,
+                "checks": {
+                  "object": true,
+                  "count": true,
+                  "totalCents": true,
+                  "completion": true
+                },
+                "passedChecks": 4,
+                "totalChecks": 4,
+                "passed": true
+              }
+            ]
+          }
+        }
+      ],
+      "processes": "four synchronous child commands exited; no process kept running"
+    },
+    "scope": "Deterministic control of case fixtures, not agent evaluation; no new dependency/toolchain installed."
+  },
+  "failures": [],
+  "behavioralEvaluationsExecuted": [],
+  "deferredGlobal": [
+    "npm run registry:build",
+    "npm run verify"
+  ]
+}

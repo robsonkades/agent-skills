@@ -1,0 +1,9 @@
+Não autorizo a liberação de V para os 100 lotes reais com a evidência atual. Antecipar a reunião e chamar a operação de “piloto reversível” não altera as obrigações nem demonstra seu cumprimento. Esta recomendação usa os documentos fornecidos; não executei ensaios.
+
+Reinstalar um binário anterior pode reverter software, mas não recupera trabalhos confirmados que tenham sido perdidos. A proposta não acrescenta persistência, replay ou recuperação e, neste serviço novo, o binário disponível tampouco constitui uma alternativa qualificada. Limitar a exposição a 100 lotes reduz o volume potencialmente afetado; cada confirmação continua exigindo preservação e conclusão correta.
+
+A situação técnica permanece: U/u1 perdeu definitivamente um trabalho confirmado, em observação reproduzida e auditada. V/v1 continua sem ensaio válido de recuperação, pois o gerador falhou antes do primeiro envio. Ausência de observação não equivale a aprovação. Seus 80 ms de p99 até confirmação não comprovam aceitação durável nem conclusão em 60 segundos; compará-los aos 3.200 ms de U até resultado pronto não sustenta a alegada vantagem de 40 vezes.
+
+A ação concreta para hoje é corrigir a falha de abertura do arquivo pelo gerador e executar um ensaio de V em ambiente isolado com lotes sintéticos rastreáveis. Confirmar primeiro que a carga foi realmente enviada; depois provocar quedas após confirmações, recuperar o processo e reconciliar cada trabalho confirmado com seu resultado correto. Sob o perfil acordado de 100 lotes/minuto, medir separadamente aceitação e conclusão, verificar o limite de 60 segundos por trabalho e observar o backlog.
+
+Esse ensaio produz evidência para uma nova decisão; iniciá-lo não autoriza tráfego real. Se a evidência necessária não estiver disponível hoje, manter o lançamento adiado e levar à reunião o impedimento e o resultado efetivamente obtido, sem transformar a urgência em dispensa implícita.

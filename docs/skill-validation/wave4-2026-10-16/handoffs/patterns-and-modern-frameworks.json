@@ -1,0 +1,612 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "patterns-and-modern-frameworks",
+  "ownedPath": "C:/git/agent-skills/skills/patterns-and-modern-frameworks",
+  "completedAt": "2026-10-16T16:03:28.088Z",
+  "scope": "Review existing framework-mechanism/modern-Java specialist skill; no application implementation or generic pattern selection. Full package reviewed. Only in-scope supported edit restores two broken primary-source links.",
+  "procedure": [
+    "AGENTS.md",
+    "docs/skill-review-prompt.md (complete)",
+    "docs/parallel-skill-reviews.md",
+    "docs/skill-validation/wave4-2026-10-16/review-brief.md",
+    "skills/skill-engineering/SKILL.md and evidence/evaluation/resource-design/anti-patterns references",
+    "Relevant comparative research, roadmap and previous wave outcomes reused/read; no claim of incremental behavioral gain"
+  ],
+  "versions": {
+    "committed": "1.2.4",
+    "assignment": "1.2.4",
+    "preExistingBump": false,
+    "final": "1.2.5",
+    "rationale": "One patch because owned content changed; published content integrity policy applies to link-only fixes too. No entrypoint version field exists."
+  },
+  "preExistingChanges": [],
+  "baseline": {
+    "clean": true,
+    "matchedCoordinatorSnapshot": true,
+    "snapshot": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/assignment-baseline.json",
+    "staged": "",
+    "unstaged": "",
+    "untracked": [],
+    "files": 4
+  },
+  "correctedFindings": [
+    {
+      "id": "broken-jakarta-source-links",
+      "locations": ["references/modern-java-idioms.md:26", "references/modern-java-idioms.md:253"],
+      "evidence": [
+        "Original endpoint returns HTTP404 in browser and retained fetch.",
+        "Canonical .html endpoint returns HTTP200, identifies Persistence3.2, and contains composite-primary-keys anchor.",
+        "Sections2.1/2.2/2.4.1/2.7 support the unchanged scoped claims about entities, access, record key classes and embeddables."
+      ],
+      "consequence": "Reader could not follow the authoritative support for two consequential compatibility claims.",
+      "change": "Append .html to both targets, preserving original version and composite-key fragment.",
+      "sourceIds": ["jakarta-original-404", "jakarta-persistence-3.2"],
+      "measuredBenefit": "Source access restored under recorded fetch conditions. No agent quality/behavior improvement measured."
+    }
+  ],
+  "remainingFindings": [],
+  "findingsRetainedAfterReview": [
+    {
+      "location": "SKILL.md Workflow/Decision rules/Rules; framework-equivalents.md",
+      "conclusion": "Mechanism versus application responsibility, effective configuration, valid wrappers and adequate no-change outcomes already explicit; no generic discovery checklist or layer added."
+    },
+    {
+      "location": "framework-equivalents.md Caching",
+      "conclusion": "Existing composition guidance matches Spring6.2.10: success of an intercepted method does not necessarily mean outer commit; transaction-aware decorator defers evict/put/clear under active synchronization and immediate operations remain immediate. Real local Spring controls confirm the selected paths."
+    },
+    {
+      "location": "modern-java-idioms.md Records and JPA sections",
+      "conclusion": "Already distinguishes ordinary embedded records, key mapping/provider/version, mutable JPA entities, field access and defensive-copy limits. Official Persistence3.2 and Hibernate6.2 documentation support these distinctions."
+    },
+    {
+      "location": "modern-java-idioms.md Sealed/virtual-thread sections",
+      "conclusion": "Preserves non-sealed plugin branch, recompilation/null requirements, framework compatibility, downstream bounds and JDK24 monitor-pinning qualification; no unsupported performance claim added."
+    }
+  ],
+  "filesChangedByReviewer": [
+    {
+      "path": "C:/git/agent-skills/skills/patterns-and-modern-frameworks/references/modern-java-idioms.md",
+      "relativePath": "references/modern-java-idioms.md",
+      "assignmentSha256": "2d66ab4da06dc40d33ce091c069faba994c7457b45a725b3afb26374c48e4198",
+      "finalSha256": "502bc6e142e5aaca0a006fd928610eaa1ab96f20c0a7b6b66755a5242937f0d3",
+      "changedByReviewer": true
+    },
+    {
+      "path": "C:/git/agent-skills/skills/patterns-and-modern-frameworks/skill.yaml",
+      "relativePath": "skill.yaml",
+      "assignmentSha256": "cc164a3934ca9324d21a5600de65a51a67a7532d73d0407be5787c5c396b240b",
+      "finalSha256": "0cb5dfe8c1b53a6df98bfbdc49aa0f2f9533fc9e757207fd142a78bbb148d07e",
+      "changedByReviewer": true
+    }
+  ],
+  "filesUnchanged": [
+    {
+      "path": "C:/git/agent-skills/skills/patterns-and-modern-frameworks/SKILL.md",
+      "relativePath": "SKILL.md",
+      "assignmentSha256": "e6fea904d2fce24c568b8e8044069a7ccebf2ec9c6f1ea43e30d7d5385bf90b0",
+      "finalSha256": "e6fea904d2fce24c568b8e8044069a7ccebf2ec9c6f1ea43e30d7d5385bf90b0",
+      "changedByReviewer": false
+    },
+    {
+      "path": "C:/git/agent-skills/skills/patterns-and-modern-frameworks/references/framework-equivalents.md",
+      "relativePath": "references/framework-equivalents.md",
+      "assignmentSha256": "bd054c12bb15519c182cdacb6526ce8714866f5756517161d208413852173a00",
+      "finalSha256": "bd054c12bb15519c182cdacb6526ce8714866f5756517161d208413852173a00",
+      "changedByReviewer": false
+    }
+  ],
+  "capabilities": {
+    "preserved": [
+      "Activation and scope boundaries",
+      "Framework supplied/partial/absent mechanism map",
+      "Real contract-based wrapper justification and sufficient integration",
+      "JPA lifetime/identity/access/optimistic-lock distinctions",
+      "Spring proxy, transaction, cache composition and recovery limits",
+      "Java version constraints, partial examples, Money policy, plugin extension and immutable-data caveats",
+      "Targeted evidence/output and optional referrals"
+    ],
+    "replaced": [],
+    "removed": [],
+    "new": ["Two accessible primary-source destinations only"]
+  },
+  "commands": [
+    {
+      "exe": "git",
+      "args": [
+        "status",
+        "--short",
+        "--untracked-files=all",
+        "--",
+        "skills/patterns-and-modern-frameworks"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "exe": "git",
+      "args": ["diff", "--", "skills/patterns-and-modern-frameworks"],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "exe": "git",
+      "args": ["diff", "--cached", "--", "skills/patterns-and-modern-frameworks"],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "exe": "git",
+      "args": ["show", "HEAD:skills/patterns-and-modern-frameworks/skill.yaml"],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "schemaVersion: 1\n\nname: patterns-and-modern-frameworks\nversion: 1.2.4\ndescription: >-\n  Which classical enterprise patterns a modern Java and Spring stack already implements,\n  which it only partly implements, and which it does not implement at all — plus the modern\n  Java expression of each. Use when a repository interface is written over Spring Data, when\n  a unit of work or identity map is built over JPA, when a front controller is hand-rolled,\n  when a caching layer is written over the caching abstraction, when an entity is written as\n  a mutable bean because \"JPA requires it\", when a pattern's implementation is copied from\n  an old text, or when deciding whether a pattern is obsolete or merely invisible. Does not\n  cover choosing the pattern (pattern-selection-and-composition) or judging whether an\n  abstraction should exist (enterprise-architecture-smells).\n\nlicense: Apache-2.0\n\nauthors:\n  - name: agent-skills contributors\n    url: https://github.com/robsonkades/agent-skills\n\nhomepage: https://github.com/robsonkades/agent-skills/tree/main/skills/patterns-and-modern-frameworks\nrepository:\n  type: git\n  url: https://github.com/robsonkades/agent-skills\n  directory: skills/patterns-and-modern-frameworks\n\nkeywords:\n  - spring\n  - jpa\n  - records\n  - sealed-types\n  - virtual-threads\n  - patterns\n\nfiles:\n  - SKILL.md\n  - skill.yaml\n  - references/\n\ndependencies:\n  - name: repository-pattern\n    version: ^1.0.0\n  - name: orm-behavioral-patterns\n    version: ^1.0.0\n  - name: mvc-and-request-handling\n    version: ^1.0.0\n  - name: domain-logic-organization\n    version: ^1.0.0\n  - name: offline-concurrency-control\n    version: ^1.0.0\n\nsuggests:\n  - pattern-selection-and-composition\n  - caching-strategies\n  - connection-pool-sizing\n  - data-source-patterns\n  - enterprise-architecture-smells\n  - enterprise-base-patterns\n  - enterprise-transactions\n  - metadata-mapping\n  - query-objects-and-specifications\n  - reactive-and-virtual-thread-selection\n  - structured-concurrency\n  - thread-sizing-and-virtual-threads\n  - virtual-threads-internals\n\ncapabilities:\n  - reads-source\n\nagentOverrides:\n  codex:\n    interface:\n      display_name: Patterns and Modern Frameworks\n      short_description: What the framework already does, and what it does not\n      default_prompt: Use Patterns and Modern Frameworks to check whether this pattern needs implementing.\n",
+      "stderr": ""
+    },
+    {
+      "exe": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "C:/git/agent-skills/node_modules/prettier/bin/prettier.cjs",
+        "--check",
+        "C:/git/agent-skills/skills/patterns-and-modern-frameworks/SKILL.md",
+        "C:/git/agent-skills/skills/patterns-and-modern-frameworks/skill.yaml",
+        "C:/git/agent-skills/skills/patterns-and-modern-frameworks/references/framework-equivalents.md",
+        "C:/git/agent-skills/skills/patterns-and-modern-frameworks/references/modern-java-idioms.md"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "Checking formatting...\nAll matched files use Prettier code style!\n",
+      "stderr": ""
+    },
+    {
+      "exe": "git",
+      "args": ["diff", "--check", "--", "skills/patterns-and-modern-frameworks"],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "exe": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": ["-version"],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n"
+    },
+    {
+      "exe": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+      "args": ["-version"],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks",
+      "exitCode": 0,
+      "stdout": "javac 25.0.3\r\n",
+      "stderr": ""
+    },
+    {
+      "exe": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+      "args": [
+        "--release",
+        "17",
+        "-cp",
+        "C:/Users/robso/.m2/repository/org/springframework/spring-core/6.2.10/spring-core-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-jcl/6.2.10/spring-jcl-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-beans/6.2.10/spring-beans-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-aop/6.2.10/spring-aop-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-context/6.2.10/spring-context-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-expression/6.2.10/spring-expression-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-context-support/6.2.10/spring-context-support-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-tx/6.2.10/spring-tx-6.2.10.jar",
+        "-d",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/evaluator-only/classes-0",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/case-inputs/A/project/src/main/java/app/CacheConfiguration.java",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/case-inputs/A/project/src/main/java/app/CatalogCommands.java",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/case-inputs/A/project/src/main/java/app/CheckoutFlow.java",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/case-inputs/A/project/src/main/java/app/SandboxTransactionManager.java",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/case-inputs/A/project/src/test/java/app/Smoke.java",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/evaluator-only/IntegrationChecks.java"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "exe": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-cp",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/evaluator-only/classes-0;C:/Users/robso/.m2/repository/org/springframework/spring-core/6.2.10/spring-core-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-jcl/6.2.10/spring-jcl-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-beans/6.2.10/spring-beans-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-aop/6.2.10/spring-aop-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-context/6.2.10/spring-context-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-expression/6.2.10/spring-expression-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-context-support/6.2.10/spring-context-support-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-tx/6.2.10/spring-tx-6.2.10.jar",
+        "app.Smoke"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks",
+      "exitCode": 0,
+      "stdout": "smoke=1 PASS\r\n",
+      "stderr": ""
+    },
+    {
+      "exe": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-cp",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/evaluator-only/classes-0;C:/Users/robso/.m2/repository/org/springframework/spring-core/6.2.10/spring-core-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-jcl/6.2.10/spring-jcl-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-beans/6.2.10/spring-beans-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-aop/6.2.10/spring-aop-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-context/6.2.10/spring-context-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-expression/6.2.10/spring-expression-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-context-support/6.2.10/spring-context-support-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-tx/6.2.10/spring-tx-6.2.10.jar",
+        "app.IntegrationChecks",
+        "true"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks",
+      "exitCode": 0,
+      "stdout": "PASS outer transaction bean is proxied\r\nPASS cache command bean is proxied\r\nPASS effective primary manager matches fixture\r\nPASS successful outer transaction invalidates\r\nPASS outer failure propagated\r\nPASS outer rollback executed\r\nPASS rollback cache retention depends on manager\r\nPASS method failure propagated\r\nPASS method failure skips default eviction\r\nPASS without transaction eviction is immediate\r\nPASS put deferred while synchronization active\r\nPASS put omitted on rollback\r\nPASS clear deferred while synchronization active\r\nPASS clear omitted on rollback\r\nPASS evictIfPresent immediate\r\nPASS putIfAbsent immediate\r\nPASS immediate operations not restored by rollback\r\nPASS invalidate immediate despite rollback\r\ncontrols=18 PASS\r\n",
+      "stderr": ""
+    },
+    {
+      "exe": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+      "args": [
+        "--release",
+        "17",
+        "-cp",
+        "C:/Users/robso/.m2/repository/org/springframework/spring-core/6.2.10/spring-core-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-jcl/6.2.10/spring-jcl-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-beans/6.2.10/spring-beans-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-aop/6.2.10/spring-aop-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-context/6.2.10/spring-context-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-expression/6.2.10/spring-expression-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-context-support/6.2.10/spring-context-support-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-tx/6.2.10/spring-tx-6.2.10.jar",
+        "-d",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/evaluator-only/classes-1",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/case-inputs/B/project/src/main/java/app/CacheConfiguration.java",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/case-inputs/B/project/src/main/java/app/CatalogCommands.java",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/case-inputs/B/project/src/main/java/app/CheckoutFlow.java",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/case-inputs/B/project/src/main/java/app/SandboxTransactionManager.java",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/case-inputs/B/project/src/test/java/app/Smoke.java",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/evaluator-only/IntegrationChecks.java"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "exe": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-cp",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/evaluator-only/classes-1;C:/Users/robso/.m2/repository/org/springframework/spring-core/6.2.10/spring-core-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-jcl/6.2.10/spring-jcl-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-beans/6.2.10/spring-beans-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-aop/6.2.10/spring-aop-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-context/6.2.10/spring-context-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-expression/6.2.10/spring-expression-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-context-support/6.2.10/spring-context-support-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-tx/6.2.10/spring-tx-6.2.10.jar",
+        "app.Smoke"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks",
+      "exitCode": 0,
+      "stdout": "smoke=1 PASS\r\n",
+      "stderr": ""
+    },
+    {
+      "exe": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-cp",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/evaluator-only/classes-1;C:/Users/robso/.m2/repository/org/springframework/spring-core/6.2.10/spring-core-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-jcl/6.2.10/spring-jcl-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-beans/6.2.10/spring-beans-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-aop/6.2.10/spring-aop-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-context/6.2.10/spring-context-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-expression/6.2.10/spring-expression-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-context-support/6.2.10/spring-context-support-6.2.10.jar;C:/Users/robso/.m2/repository/org/springframework/spring-tx/6.2.10/spring-tx-6.2.10.jar",
+        "app.IntegrationChecks",
+        "false"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks",
+      "exitCode": 0,
+      "stdout": "PASS outer transaction bean is proxied\r\nPASS cache command bean is proxied\r\nPASS effective primary manager matches fixture\r\nPASS successful outer transaction invalidates\r\nPASS outer failure propagated\r\nPASS outer rollback executed\r\nPASS rollback cache retention depends on manager\r\nPASS method failure propagated\r\nPASS method failure skips default eviction\r\nPASS without transaction eviction is immediate\r\ncontrols=10 PASS\r\n",
+      "stderr": ""
+    },
+    {
+      "exe": "powershell",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "Add-Type -AssemblyName System.IO.Compression.FileSystem\n$names = @('spring-core','spring-jcl','spring-beans','spring-aop','spring-context','spring-expression','spring-context-support','spring-tx')\nforeach ($name in $names) {\n  $archivePath = 'C:/Users/robso/.m2/repository/org/springframework/' + $name + '/6.2.10/' + $name + '-6.2.10.jar'\n  $archive = [System.IO.Compression.ZipFile]::OpenRead($archivePath)\n  try {\n    $reader = [System.IO.StreamReader]::new($archive.GetEntry('META-INF/MANIFEST.MF').Open())\n    try { $body = $reader.ReadToEnd() } finally { $reader.Dispose() }\n    if ($body -notmatch '(?m)^Implementation-Version: 6\\.2\\.10\\r?$') { throw ('Unexpected implementation version: ' + $name) }\n    Write-Output ($name + ' Implementation-Version=6.2.10 PASS')\n  } finally { $archive.Dispose() }\n}"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "spring-core Implementation-Version=6.2.10 PASS\r\nspring-jcl Implementation-Version=6.2.10 PASS\r\nspring-beans Implementation-Version=6.2.10 PASS\r\nspring-aop Implementation-Version=6.2.10 PASS\r\nspring-context Implementation-Version=6.2.10 PASS\r\nspring-expression Implementation-Version=6.2.10 PASS\r\nspring-context-support Implementation-Version=6.2.10 PASS\r\nspring-tx Implementation-Version=6.2.10 PASS\r\n",
+      "stderr": ""
+    },
+    {
+      "exe": "git",
+      "args": [
+        "status",
+        "--short",
+        "--untracked-files=all",
+        "--",
+        "skills/patterns-and-modern-frameworks"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": " M skills/patterns-and-modern-frameworks/references/modern-java-idioms.md\n M skills/patterns-and-modern-frameworks/skill.yaml\n",
+      "stderr": ""
+    },
+    {
+      "exe": "git",
+      "args": ["diff", "--", "skills/patterns-and-modern-frameworks"],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "diff --git a/skills/patterns-and-modern-frameworks/references/modern-java-idioms.md b/skills/patterns-and-modern-frameworks/references/modern-java-idioms.md\nindex ff73539..d4f7e80 100644\n--- a/skills/patterns-and-modern-frameworks/references/modern-java-idioms.md\n+++ b/skills/patterns-and-modern-frameworks/references/modern-java-idioms.md\n@@ -23,7 +23,7 @@ record embeddables require provider support (Hibernate 6.2+, standardized by Per\n Record support for an ordinary embedded value does not establish support for `@EmbeddedId`\n or `@IdClass`. The [Hibernate 6.2 introduction](https://docs.hibernate.org/orm/6.2/introduction/html_single/#embeddable-objects)\n documents record embeddables alongside an `@EmbeddedId` restriction dated May 2023;\n-[Persistence 3.2, section 2.4.1](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2#composite-primary-keys)\n+[Persistence 3.2, section 2.4.1](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html#composite-primary-keys)\n explicitly permits record primary-key classes. Inspect the exact provider/update and mapping\n role instead of extending either statement to every version. Before converting a key, verify\n persist/reload and lookup by key, including equality consistent with the mapped database types.\n@@ -250,7 +250,7 @@ support this API illustration; they are source-review baselines, not a target up\n   (`domain-logic-organization`).\n \n See [Java 21 pattern switch](https://docs.oracle.com/en/java/javase/21/language/pattern-matching-switch.html)\n-for exhaustiveness and null behavior, and [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2)\n+for exhaustiveness and null behavior, and [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html)\n for entity/access requirements. Structured concurrency APIs remain version-sensitive;\n consult the project's target release before adding an API or preview flags.\n For absence intent versus enforcement, see [Optional's Java 21 API note](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html)\ndiff --git a/skills/patterns-and-modern-frameworks/skill.yaml b/skills/patterns-and-modern-frameworks/skill.yaml\nindex 4ebb7b5..7ca1737 100644\n--- a/skills/patterns-and-modern-frameworks/skill.yaml\n+++ b/skills/patterns-and-modern-frameworks/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: patterns-and-modern-frameworks\n-version: 1.2.4\n+version: 1.2.5\n description: >-\n   Which classical enterprise patterns a modern Java and Spring stack already implements,\n   which it only partly implements, and which it does not implement at all — plus the modern\n",
+      "stderr": ""
+    },
+    {
+      "exe": "git",
+      "args": ["diff", "--cached", "--", "skills/patterns-and-modern-frameworks"],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "exe": "git",
+      "args": ["diff", "--check", "--", "skills/patterns-and-modern-frameworks"],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "commandArtifacts": [
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/commands.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/final-validation.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/dependency-evidence.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/final-diff.patch"
+  ],
+  "validation": {
+    "structural": {
+      "metadata": "PASS",
+      "internalLinks": 2,
+      "dependenciesAndSuggestionsExist": 18,
+      "actualSkillReferralsDeclared": 17,
+      "fixedJakartaUrls": 2,
+      "prettier": "PASS",
+      "gitDiffCheck": "PASS"
+    },
+    "technical": [
+      {
+        "id": "patterns-and-modern-frameworks-A",
+        "smoke": 1,
+        "controls": 18,
+        "release": 17,
+        "classMajor": 61,
+        "runtime": "Temurin 25.0.3+9",
+        "spring": "6.2.10",
+        "limitation": "Real Spring AOP/cache/synchronization; fake resource transaction manager, no database or distributed cache."
+      },
+      {
+        "id": "patterns-and-modern-frameworks-B",
+        "smoke": 1,
+        "controls": 10,
+        "release": 17,
+        "classMajor": 61,
+        "runtime": "Temurin 25.0.3+9",
+        "spring": "6.2.10",
+        "limitation": "Real Spring AOP/cache/synchronization; fake resource transaction manager, no database or distributed cache."
+      }
+    ],
+    "executedAssertions": 28,
+    "countingLimit": "Ten common controls executed in both variants plus eight decorator-specific checks: 28 executions, not 28 independent mechanisms.",
+    "smokeExecutions": 2,
+    "originalAndFixedHttp": {
+      "original": 404,
+      "fixed": 200,
+      "compositePrimaryKeysAnchor": true
+    },
+    "behavioralEvaluationsExecuted": [],
+    "measuredComparativeImprovement": "unavailable",
+    "structuredWalkthroughs": [
+      "A: actual primary manager decorates eviction; bounded rollback contract is already satisfied, so preserve integration.",
+      "B: actual primary manager is raw; inner method success evicts before outer rollback, so a focused framework integration adjustment is justified."
+    ],
+    "sourceCoverage": "Nine successfully retrieved selected primary sources plus retained HTTP404 endpoint; not an exhaustive audit of every external URL.",
+    "issuesEncountered": [
+      {
+        "check": "prepare-review.mjs first run",
+        "result": "exit1",
+        "attribution": "Reviewer probe assumed two extra human-readable fragment IDs not used by the skill; actual entity/embeddable anchors are a18/a487.",
+        "correction": "Inspected actual HTML and restricted the link criterion to composite-primary-keys, the fragment actually shipped. Retained first source-index result; corrected rerun passed.",
+        "artifact": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/sources/source-index-first-attempt.json"
+      },
+      {
+        "check": "Initial broad dependency enumeration",
+        "result": "Tool output truncated",
+        "attribution": "Read-only discovery was too broad",
+        "correction": "All eight exact6.2.10 jar paths subsequently checked, SHA256 recorded, used successfully and MANIFEST versions verified."
+      }
+    ]
+  },
+  "sources": [
+    {
+      "id": "jakarta-original-404",
+      "url": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2",
+      "finalUrl": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2",
+      "status": 404,
+      "consultedAt": "2026-10-16T15:59:04.293Z",
+      "claim": "Both original links share this endpoint; expected HTTP 404.",
+      "file": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/sources/jakarta-original-404.html",
+      "sha256": "16ef63755b816a4e1abc5ea79a7c942fc6f11495379cbd680610de77e412090d",
+      "bytes": 211891,
+      "observedVersion": "HTTP404 original endpoint"
+    },
+    {
+      "id": "jakarta-persistence-3.2",
+      "url": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html",
+      "finalUrl": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html",
+      "status": 200,
+      "consultedAt": "2026-10-16T15:59:04.574Z",
+      "claim": "Sections 2.1, 2.2, 2.4.1, 2.7, 7.1 and 7.2: entity/access, record keys/embeddables, context identity/threading.",
+      "file": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/sources/jakarta-persistence-3.2.html",
+      "sha256": "956e60be6d163a84983e9a2be23d156a4376dcebd4c3fd0f1039c429678402c3",
+      "bytes": 2531021,
+      "anchors": [
+        {
+          "anchor": "composite-primary-keys",
+          "exists": true
+        }
+      ],
+      "observedVersion": "Jakarta Persistence 3.2, April 10 2024"
+    },
+    {
+      "id": "hibernate-6.2-introduction",
+      "url": "https://docs.hibernate.org/orm/6.2/introduction/html_single/",
+      "finalUrl": "https://docs.hibernate.org/orm/6.2/introduction/html_single/",
+      "status": 200,
+      "consultedAt": "2026-10-16T15:59:04.428Z",
+      "claim": "Embeddable objects: record embeddables since 6.2 and EmbeddedId restriction dated May 2023.",
+      "file": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/sources/hibernate-6.2-introduction.html",
+      "sha256": "38060cc20058268b9fc82fe5331e7ca90553cea7b2c81673ee12efe4e05c6c0f",
+      "bytes": 626602,
+      "observedVersion": "HTML header 6.2.52.Final; EmbeddedId limitation text explicitly dated May 2023"
+    },
+    {
+      "id": "spring-6.2.10-cache-decorator",
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.10/spring-context-support/src/main/java/org/springframework/cache/transaction/TransactionAwareCacheDecorator.java",
+      "finalUrl": "https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.10/spring-context-support/src/main/java/org/springframework/cache/transaction/TransactionAwareCacheDecorator.java",
+      "status": 200,
+      "consultedAt": "2026-10-16T15:59:03.460Z",
+      "claim": "Deferred put/evict/clear only with synchronization; immediate operations not deferred.",
+      "file": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/sources/spring-6.2.10-cache-decorator.java",
+      "sha256": "b380f4d61442b3a72571b1a80849ef4d8759f1bd4c4e94d0949dc85991521078",
+      "bytes": 4757,
+      "observedVersion": "Git tag v6.2.10; local binary MANIFEST Implementation-Version 6.2.10"
+    },
+    {
+      "id": "spring-6.2.10-cache-evict",
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.10/spring-context/src/main/java/org/springframework/cache/annotation/CacheEvict.java",
+      "finalUrl": "https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.10/spring-context/src/main/java/org/springframework/cache/annotation/CacheEvict.java",
+      "status": 200,
+      "consultedAt": "2026-10-16T15:59:03.462Z",
+      "claim": "beforeInvocation contract; method outcome versus transaction outcome.",
+      "file": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/sources/spring-6.2.10-cache-evict.java",
+      "sha256": "3b4ce6ffa536a1780581af7205b0ce05af3af02dd29d91f4f40b9d2192c6cf07",
+      "bytes": 6061,
+      "observedVersion": "Git tag v6.2.10; local binary MANIFEST Implementation-Version 6.2.10"
+    },
+    {
+      "id": "spring-6.2.10-cache-manager-proxy",
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.10/spring-context-support/src/main/java/org/springframework/cache/transaction/TransactionAwareCacheManagerProxy.java",
+      "finalUrl": "https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.10/spring-context-support/src/main/java/org/springframework/cache/transaction/TransactionAwareCacheManagerProxy.java",
+      "status": 200,
+      "consultedAt": "2026-10-16T15:59:03.459Z",
+      "claim": "Actual cache manager integration delegates through transaction-aware cache decorators.",
+      "file": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/sources/spring-6.2.10-cache-manager-proxy.java",
+      "sha256": "4848acfd27debc39c12eb34970fad5125e953eede0d694ce541c58d25d5745cf",
+      "bytes": 3191,
+      "observedVersion": "Git tag v6.2.10; local binary MANIFEST Implementation-Version 6.2.10"
+    },
+    {
+      "id": "spring-6.2.10-transactions",
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.10/framework-docs/modules/ROOT/pages/data-access/transaction/declarative/annotations.adoc",
+      "finalUrl": "https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.10/framework-docs/modules/ROOT/pages/data-access/transaction/declarative/annotations.adoc",
+      "status": 200,
+      "consultedAt": "2026-10-16T15:59:03.463Z",
+      "claim": "Proxy interception, outer transaction and rollback defaults including 6.2 configuration.",
+      "file": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/sources/spring-6.2.10-transactions.adoc",
+      "sha256": "fdbc796f739ee46b853267fa646c738ba6f544c473c8b3f5949c4790e60d0abc",
+      "bytes": 24043,
+      "observedVersion": "Git tag v6.2.10; local binary MANIFEST Implementation-Version 6.2.10"
+    },
+    {
+      "id": "jls-21-interfaces",
+      "url": "https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html",
+      "finalUrl": "https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html",
+      "status": 200,
+      "consultedAt": "2026-10-16T15:59:03.507Z",
+      "claim": "9.1.1.4: sealed and non-sealed interfaces.",
+      "file": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/sources/jls-21-interfaces.html",
+      "sha256": "3c87670664402810a30ae26c854459240e8164f748e4a1649bcb0d62099ab4ca",
+      "bytes": 344349,
+      "observedVersion": "Java SE21"
+    },
+    {
+      "id": "java-21-switch",
+      "url": "https://docs.oracle.com/en/java/javase/21/language/pattern-matching-switch.html",
+      "finalUrl": "https://docs.oracle.com/en/java/javase/21/language/pattern-matching-switch.html",
+      "status": 200,
+      "consultedAt": "2026-10-16T15:59:03.514Z",
+      "claim": "Exhaustiveness, null and MatchException under separate compilation.",
+      "file": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/sources/java-21-switch.html",
+      "sha256": "71389867b84241f785db6f09a7d3895afe525097e923812ac5603d37613c516c",
+      "bytes": 50432,
+      "observedVersion": "Java SE21"
+    },
+    {
+      "id": "jep-491",
+      "url": "https://openjdk.org/jeps/491",
+      "finalUrl": "https://openjdk.org/jeps/491",
+      "status": 200,
+      "consultedAt": "2026-10-16T15:59:03.697Z",
+      "claim": "Delivered in JDK24; eliminate monitor pinning, retain native callback caveats.",
+      "file": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/sources/jep-491.html",
+      "sha256": "0e78e4fa6593883f7da96791b4dee4817f537fe09ca59757ce615ddd600faf73",
+      "bytes": 28518,
+      "observedVersion": "Delivered in JDK24"
+    }
+  ],
+  "evidenceDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks",
+  "cases": {
+    "inputs": [
+      {
+        "id": "patterns-and-modern-frameworks-A",
+        "input": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/case-inputs/A/input.json",
+        "fixtureRoot": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/case-inputs/A/project",
+        "files": [
+          "README.md",
+          "docs/cache-contract.md",
+          "docs/review-request.md",
+          "pom.xml",
+          "src/main/java/app/CacheConfiguration.java",
+          "src/main/java/app/CatalogCommands.java",
+          "src/main/java/app/CheckoutFlow.java",
+          "src/main/java/app/SandboxTransactionManager.java",
+          "src/test/java/app/Smoke.java"
+        ]
+      },
+      {
+        "id": "patterns-and-modern-frameworks-B",
+        "input": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/case-inputs/B/input.json",
+        "fixtureRoot": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/case-inputs/B/project",
+        "files": [
+          "README.md",
+          "docs/cache-contract.md",
+          "docs/review-request.md",
+          "pom.xml",
+          "src/main/java/app/CacheConfiguration.java",
+          "src/main/java/app/CatalogCommands.java",
+          "src/main/java/app/CheckoutFlow.java",
+          "src/main/java/app/SandboxTransactionManager.java",
+          "src/test/java/app/Smoke.java"
+        ]
+      }
+    ],
+    "onlyDifferingFile": [
+      {
+        "name": "src/main/java/app/CacheConfiguration.java",
+        "a": "4b11f2d7a5935adba26ddeae35f5265302ae5d5df8107b9d756e56d09f21d7a9",
+        "b": "bd4b1367d3dd74ccfc79a73128939d1317482f0246a79f09c03ac76784f979e1"
+      }
+    ],
+    "criteria": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/evaluator-only/criteria.json",
+    "knownDevelopmentCases": true
+  },
+  "casesAwaitingCoordinatorEvaluation": true,
+  "caseDesignLimitations": [
+    "Known development examples, not held-out cases.",
+    "Criteria are separate from input fixtures; directory separation is procedural, not an access-control boundary.",
+    "Only CacheConfiguration.java return expression differs; all other fixture files byte-identical.",
+    "The pair evaluates existing decision guidance; a link-only patch is not expected to change an already-correct decision automatically."
+  ],
+  "limitations": [
+    "No independent agent evaluation or measured behavioral improvement.",
+    "No ORM/JPA mapping integration test; language snippets unchanged and not compiled in this review.",
+    "--release 17 on JDK25 does not execute on a Java17 VM.",
+    "Spring synchronization checks do not validate an actual database transaction or database/cache atomicity.",
+    "No global checks run; coordinator alone owns registry:build and verify."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "cwd": "C:/git/agent-skills",
+      "purpose": "Regenerate shared registry integrity/version after approved owned change.",
+      "prerequisite": "All reviewers have stopped writes; coordinator ownership only."
+    },
+    {
+      "command": "npm run verify",
+      "cwd": "C:/git/agent-skills",
+      "purpose": "Full repository integration, versions, routing and required checks.",
+      "prerequisite": "Coordinator runs after registry build and all writers stop."
+    }
+  ],
+  "crossSkillFindings": [],
+  "coordinatorActions": [
+    "Review two-link/version diff against baseline, archive local evidence/cases and run global checks after writers stop.",
+    "Independent behavioral evaluation optional for these known cases; no reviewer actor was run."
+  ],
+  "allWritesStopped": true,
+  "activeBackgroundProcesses": [],
+  "processAssurance": "All child processes were synchronous with timeouts, completed exit0 on final checks. No service, watcher, actor, install or background process was started."
+}

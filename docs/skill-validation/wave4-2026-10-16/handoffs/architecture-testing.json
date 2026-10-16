@@ -1,0 +1,379 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "architecture-testing",
+  "ownedPath": "skills/architecture-testing/",
+  "allWritesStopped": true,
+  "versions": {
+    "committed": "1.3.4",
+    "assignmentTime": "1.3.4",
+    "final": "1.3.5",
+    "preexistingBump": false,
+    "rationale": "One patch bump covers the example claim correction and two repaired source links; no dependency or architecture policy change."
+  },
+  "baseline": {
+    "clean": true,
+    "staged": [],
+    "unstaged": [],
+    "untracked": [],
+    "snapshot": "docs/skill-validation/wave4-2026-10-16/baseline.json",
+    "files": [
+      {
+        "path": "skills/architecture-testing/SKILL.md",
+        "sha256": "2b6cacfe8d8df3f013e85b7eb70bdbc55341ffbba469a96c25b9dc65e4d5401b",
+        "bytes": 9360
+      },
+      {
+        "path": "skills/architecture-testing/references/boundary-and-contract-tests.md",
+        "sha256": "c456aaabc4df73c704caa6393fb83f42b723ab0e28cc0f8170e4320b8965a415",
+        "bytes": 9173
+      },
+      {
+        "path": "skills/architecture-testing/references/persistence-and-concurrency-tests.md",
+        "sha256": "f82df6732f303a4e82539dc803956871e91bee98b5de3c4d07ecbdd28341d896",
+        "bytes": 15307
+      },
+      {
+        "path": "skills/architecture-testing/references/validation-cases.md",
+        "sha256": "d94993b953eb42104e02fdcd01931c8aa52293851a2163de83ec12cf744797bb",
+        "bytes": 11357
+      },
+      {
+        "path": "skills/architecture-testing/skill.yaml",
+        "sha256": "052109cf116e3a70991ac4aac8c54a7ec9b9ed8913d3091826d98cd42457e789",
+        "bytes": 1832
+      }
+    ]
+  },
+  "correctedFindings": [
+    {
+      "location": "references/boundary-and-contract-tests.md:28,42,53–59,89",
+      "problem": "The method name/because text claimed infrastructure independence while the predicate excluded only four package groups.",
+      "evidence": "Literal example tested on ArchUnit 1.5.0: a com.acme.persistence field fails, a java.sql.Connection field passes, and an explicitly extended JDBC predicate rejects the same Connection. BigDecimal remains valid.",
+      "change": "Renamed the test and explanation to the listed infrastructure packages. Added concrete scope/counterexample and conditional JDBC control guidance, preserving the accepted narrower alternative.",
+      "consequence": "Prevents a green selective ban from being reported as a broader architectural guarantee without imposing new dependency policy."
+    },
+    {
+      "location": "references/persistence-and-concurrency-tests.md:40,184",
+      "problem": "Both Jakarta Persistence specification references omitted .html and returned HTTP 404.",
+      "evidence": "Direct requests: malformed URL 404/'404 Page Not Found'; .html URL 200/'Jakarta Persistence'.",
+      "change": "Corrected both URLs to the actual 3.2 specification.",
+      "consequence": "Restores accessible primary evidence for persistence/locking/bulk-operation guidance."
+    }
+  ],
+  "remainingFindings": [],
+  "files": {
+    "changedByReviewer": [
+      "skills/architecture-testing/references/boundary-and-contract-tests.md",
+      "skills/architecture-testing/references/persistence-and-concurrency-tests.md",
+      "skills/architecture-testing/skill.yaml"
+    ],
+    "preexistingChanges": [],
+    "unchanged": [
+      "skills/architecture-testing/SKILL.md",
+      "skills/architecture-testing/references/validation-cases.md"
+    ],
+    "finalHashes": [
+      {
+        "path": "skills/architecture-testing/SKILL.md",
+        "sha256": "2b6cacfe8d8df3f013e85b7eb70bdbc55341ffbba469a96c25b9dc65e4d5401b"
+      },
+      {
+        "path": "skills/architecture-testing/references/boundary-and-contract-tests.md",
+        "sha256": "fe2135c728cdfcee1c342fddd9dd97a8fc50e9e6c1e9757685e103b377de0735"
+      },
+      {
+        "path": "skills/architecture-testing/references/persistence-and-concurrency-tests.md",
+        "sha256": "dcecc3e1c18232c23a50f4fd1c6786603f07223b23e20efbfb88eb63d530114b"
+      },
+      {
+        "path": "skills/architecture-testing/references/validation-cases.md",
+        "sha256": "d94993b953eb42104e02fdcd01931c8aa52293851a2163de83ec12cf744797bb"
+      },
+      {
+        "path": "skills/architecture-testing/skill.yaml",
+        "sha256": "8c2f1e993e3fe11fab677de5ccb98ee900385206cd6d049ef369ad70ec3d265d"
+      }
+    ]
+  },
+  "changes": [
+    "Scoped the structural example's name and claim to its actual package predicate.",
+    "Documented JDBC as a policy-dependent coverage case and a legitimate JDK-value positive control.",
+    "Added pinned ArchUnit 1.5.0 predicate reference.",
+    "Repaired two Jakarta Persistence 3.2 URLs.",
+    "Incremented manifest patch once."
+  ],
+  "preserved": [
+    "Original four forbidden package predicates, import scope, production/test exclusion and nonempty selection guard.",
+    "Multi-module coverage guidance and known-violation controls; no broadening of the accepted architecture.",
+    "Findings-only versus implementation mode and reuse of adequate prior evidence.",
+    "Static/dynamic coverage limits for reflection, generated wiring, configuration and remote calls.",
+    "Web preconditions/security/error translation, gateway timeout/lifecycle and consumer/provider contract distinctions.",
+    "Production-family database fidelity, mapping/flush/commit/cache and query-budget observation semantics.",
+    "Separate stale-state versus concurrent schedules, bounded cleanup, optimistic/serialization conflict distinctions and cross-row invariant alternatives.",
+    "Migration API/version distinctions and all existing known teaching cases and routing."
+  ],
+  "intentionallyRemoved": [],
+  "domainSuccessCriteria": [
+    "Match the tested predicate and observed classes to the architectural promise.",
+    "Preserve legitimate alternatives when the agreed policy is narrower than a broad test name.",
+    "Observe intended assertion failures from compilable violations, and retain a legitimate positive control.",
+    "Keep static dependency results distinct from runtime integration and quality-attribute evidence.",
+    "Retain database/concurrency/counter/transaction observation boundaries and test runner discovery.",
+    "Use actual declared tool/library versions without installation or upgrade."
+  ],
+  "checks": [
+    {
+      "kind": "technical-before",
+      "command": "node 'C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-testing-artifacts/check-boundary.mjs'",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "fullResults": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\results.json",
+      "summary": "18 commands: six main compilations, six test compilations and six JUnit Platform executions. Exactly one discovered/started Jupiter test in each execution; no skips/aborts. Clean, JDBC-selective and BigDecimal pass; listed persistence, explicitly banned JDBC and wrong root fail their intended assertions."
+    },
+    {
+      "kind": "technical-after",
+      "command": "node 'C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-testing-artifacts/check-boundary.mjs'",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "fullResults": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-Ww1zKC\\results.json",
+      "summary": "Same six controls repeated after the name/claim correction. All compile/discovery counts and intended outcomes match. Final Java block SHA256 matches this executed copy."
+    },
+    {
+      "kind": "metadata-and-local-links",
+      "command": "node --input-type=module (PowerShell literal here-string supplies stdin)",
+      "stdin": "import assert from 'node:assert/strict';\nimport { existsSync, readFileSync, readdirSync } from 'node:fs';\nimport { dirname, resolve, join } from 'node:path';\nimport { createHash } from 'node:crypto';\nimport { loadPackageFromDirectory, validatePackage } from '@jvm-expert/core';\nimport { NodeFileSystem } from '@jvm-expert/node';\nconst root = 'skills/architecture-testing';\nconst loaded = await loadPackageFromDirectory(new NodeFileSystem(), root, { strict: true });\nconst report = validatePackage(loaded.pkg, { directoryName: 'architecture-testing' });\nassert.deepEqual([...loaded.issues, ...report.issues], []);\nconst links = [];\nfor (const file of loaded.pkg.files.filter(file => file.path.endsWith('.md'))) {\n const source = readFileSync(resolve(root, file.path), 'utf8');\n for (const match of source.matchAll(/\\[[^\\]]*\\]\\(([^)]+)\\)/g)) {\n  const target = match[1].replace(/^<|>$/g, '');\n  if (/^(https?:|#)/.test(target)) continue;\n  assert.ok(existsSync(resolve(root, dirname(file.path), target.split('#')[0])), target);\n  links.push({ from: file.path, target });\n }\n}\nconst baseline = JSON.parse(readFileSync('docs/skill-validation/wave4-2026-10-16/baseline.json', 'utf8')).packages.find(row => row.name === 'architecture-testing');\nconst final = baseline.files.map(file => ({ path: file.path, sha256: createHash('sha256').update(readFileSync(file.path)).digest('hex') }));\nconst changed = final.filter(file => file.sha256 !== baseline.files.find(original => original.path === file.path).sha256).map(file => file.path);\nassert.deepEqual(changed.sort(), ['skills/architecture-testing/references/boundary-and-contract-tests.md', 'skills/architecture-testing/references/persistence-and-concurrency-tests.md', 'skills/architecture-testing/skill.yaml']);\nconst base = 'C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-testing-artifacts';\nconst walk = (dir, relative = '') => readdirSync(dir, { withFileTypes: true }).flatMap(entry => entry.isDirectory() ? walk(join(dir, entry.name), join(relative, entry.name)) : [join(relative, entry.name)]);\nconst caseFiles = walk(join(base, 'case-a-input'));\nassert.deepEqual(caseFiles, walk(join(base, 'case-b-input')));\nfor (const file of caseFiles.filter(file => file !== 'architecture-decision.md')) assert.equal(readFileSync(join(base, 'case-a-input', file), 'utf8'), readFileSync(join(base, 'case-b-input', file), 'utf8'), file);\nconst policyA = readFileSync(join(base, 'case-a-input/architecture-decision.md'), 'utf8');\nconst policyB = readFileSync(join(base, 'case-b-input/architecture-decision.md'), 'utf8');\nassert.equal(policyA.replace('policy is: permitted.', 'policy is: forbidden.'), policyB);\nconst latest = JSON.parse(readFileSync(join(base, 'latest-technical-results.json'), 'utf8'));\nconst currentJava = [...readFileSync(join(root, 'references/boundary-and-contract-tests.md'), 'utf8').matchAll(/```java\\r?\\n([\\s\\S]*?)```/g)][0][1];\nassert.equal(createHash('sha256').update(currentJava).digest('hex'), latest.extractedJavaSha256);\nconsole.log(JSON.stringify({ status: 'PASS', issues: 0, files: loaded.pkg.files.length, markdown: loaded.pkg.files.filter(file => file.path.endsWith('.md')).length, links, version: loaded.pkg.manifest.version, baseline, final, changed, pair: { filesPerInput: caseFiles.length, changedOnly: 'architecture-decision.md: permitted -> forbidden' }, finalJavaMatchesExecuted: true }, null, 2));",
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS: zero issues; five distributed files, four Markdown files, four valid local reference links; version 1.3.5. Exactly three changed package hashes. Two actor input trees have seven files each; only accepted JDBC policy differs. Final Java equals executed copy.",
+      "fullResults": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-testing-artifacts/local-validation.json"
+    },
+    {
+      "kind": "formatting",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/architecture-testing/SKILL.md skills/architecture-testing/skill.yaml 'skills/architecture-testing/references/*.md'",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "All matched files use Prettier code style."
+    },
+    {
+      "kind": "git",
+      "commands": [
+        "git diff --check -- skills/architecture-testing",
+        "git diff -- skills/architecture-testing",
+        "git status --short --untracked-files=all -- skills/architecture-testing",
+        "git diff --cached --numstat -- skills/architecture-testing"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS: inspected three focused owned diffs; no staged or untracked package changes. No changes outside ownership by this reviewer."
+    },
+    {
+      "kind": "source-url",
+      "command": "node --input-type=module (PowerShell literal here-string supplies stdin)",
+      "stdin": "const urls = [\n 'https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2',\n 'https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html'\n];\nconst results = await Promise.all(urls.map(async url => {\n const response = await fetch(url, { signal: AbortSignal.timeout(20000) });\n const body = await response.text();\n return { requested: url, finalUrl: response.url, status: response.status, title: body.match(/<title>([^<]*)<\\/title>/i)?.[1] ?? null, bytes: Buffer.byteLength(body) };\n}));\nconsole.log(JSON.stringify(results, null, 2));",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "Original 404, corrected 200; exact URL/status/title/byte output retained in local-validation.json."
+    },
+    {
+      "kind": "toolchain",
+      "commands": [
+        "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -version",
+        "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' -version"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "result": "Temurin 25.0.3+9 compiler/runtime. Source compilation used --release 17; no Java 17 VM was exercised."
+    }
+  ],
+  "failures": {
+    "expected": "Three intended JUnit assertion failures per control run: listed persistence dependency, explicit JDBC prohibition and missing domain selection. All underlying compiles succeeded. No unexpected test failure.",
+    "recovered": [
+      "Initial broad baseline serialization/listings produced truncated output. A second targeted JSON read selected only architecture-testing from packages and matched all five initial hashes.",
+      "docs/skill-validation/wave3-2026-10-16/report.md does not exist; the actual README.md was located/read as the wave report.",
+      "junit-platform-console-standalone was absent; no installation attempted. Existing JUnit Platform Launcher/Engine 1.11.4 and Jupiter 5.11.4 were used with exact test-discovery assertions.",
+      "An initial broad cache inventory was truncated; exact paths for the nine required jars were subsequently verified and hashed in each technical result.",
+      "Web opening the malformed Jakarta URL returned an internal-error result; direct HTTP checks established 404 versus 200 for the corrected .html target."
+    ],
+    "pending": []
+  },
+  "behavioralEvaluationsExecuted": [],
+  "walkthroughs": [
+    "Case A: accepted JDBC allowance makes the same Connection dependency legitimate under the selective static policy; report its actual scope and avoid inventing a stricter architecture.",
+    "Case B: accepted JDBC prohibition makes that same passing guard insufficient and the field a policy violation; propose the corresponding predicate/sensitivity control without editing application policy or code."
+  ],
+  "twoCases": {
+    "inputs": [
+      {
+        "id": "a",
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-testing-artifacts/case-a-input/task.json",
+        "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-testing-artifacts/case-a-input/"
+      },
+      {
+        "id": "b",
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-testing-artifacts/case-b-input/task.json",
+        "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-testing-artifacts/case-b-input/"
+      }
+    ],
+    "criteriaPath": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-testing-artifacts/evaluator-criteria.json",
+    "decisiveConstraint": "Only architecture-decision.md changes the accepted JDBC policy from permitted to forbidden. Source, CI output, build inputs and request remain byte-identical.",
+    "status": "Known development cases, ordinary code and genuine technical CI output supplied; no independent actor run.",
+    "exposureLimit": "Procedural separation only on the shared filesystem. Coordinator must provide a selected input snapshot plus skill condition, excluding criteria, sibling cases, handoff and control results."
+  },
+  "sources": [
+    {
+      "url": "https://javadoc.io/static/com.tngtech.archunit/archunit/1.5.0/com/tngtech/archunit/lang/syntax/elements/ClassesThat.html",
+      "version": "ArchUnit 1.5.0",
+      "section": "resideInAnyPackage(String...)",
+      "support": "The predicate matches only the supplied package identifiers. Used with real 1.5.0 binary controls to qualify the example's scope.",
+      "kind": "primary API documentation",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://www.archunit.org/userguide/html/000_Index.html",
+      "version": "Current guide resolved to 1.5.1 on consultation",
+      "section": "Importing classes, rule execution, empty-selection behavior",
+      "support": "Import coverage and static bytecode limits remain relevant; not substituted for 1.5.0-specific predicate evidence.",
+      "kind": "primary guide",
+      "limit": "Existing historical guide check in the skill remains historical; review used pinned 1.5.0 Javadoc and binary.",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html",
+      "version": "Java 17",
+      "section": "Connection",
+      "support": "JDBC connection is a database interface in java.sql, a package absent from the existing selective predicate.",
+      "kind": "primary API documentation",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html",
+      "version": "Jakarta Persistence 3.2",
+      "section": "Persistence context, version checking and 4.11 bulk updates",
+      "support": "Bulk updates bypass normal optimistic checks and do not synchronize the persistence context; existing guidance retained. Corrected URL returned HTTP 200 with Jakarta Persistence title.",
+      "kind": "primary specification",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2",
+      "version": "Broken existing target",
+      "section": "HTTP retrieval",
+      "support": "Returned HTTP 404 and title '404 Page Not Found | Jakarta EE | The Eclipse Foundation'; both owned occurrences were corrected.",
+      "kind": "direct HTTP evidence",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://docs.hibernate.org/orm/6.6/javadocs/org/hibernate/stat/Statistics.html",
+      "version": "Hibernate ORM 6.6",
+      "section": "getPrepareStatementCount",
+      "support": "Counts prepared statements acquired, supporting the existing distinction from universal round trips.",
+      "kind": "primary API documentation",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://java.testcontainers.org/test_framework_integration/junit_5/",
+      "version": "Current page examples resolve Testcontainers 2.0.5",
+      "section": "Limitations",
+      "support": "JUnit extension parallel execution is documented unsupported; existing caution retained.",
+      "kind": "primary guide",
+      "limit": "No Testcontainers dependency or runtime used by the technical checks.",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://www.postgresql.org/docs/17/transaction-iso.html",
+      "version": "PostgreSQL 17",
+      "section": "Repeatable Read and Serializable",
+      "support": "Repeatable Read permits serialization anomalies; serializable conflicts and whole-transaction retry remain distinct from JPA version conflicts.",
+      "kind": "primary database documentation",
+      "limit": "No database experiment executed.",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/flyway/flyway/flyway-11.8.2/flyway-core/src/main/java/org/flywaydb/core/Flyway.java",
+      "version": "Flyway 11.8.2 tag",
+      "section": "validate and validateWithResult",
+      "support": "validate returns void and delegates to inspectable validateWithResult; source/API guidance retained.",
+      "kind": "primary implementation source",
+      "limit": "No Flyway/database execution or source vendoring.",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://docs.spring.io/spring-framework/reference/testing/testcontext-framework/tx.html",
+      "version": "Current Spring reference; consumer version not chosen",
+      "section": "Test-managed transactions and preemptive timeouts",
+      "support": "Thread-bound test transaction can mask application boundaries; work on a timeout thread may escape it.",
+      "kind": "primary framework documentation",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/rolling-back.html",
+      "version": "Current Spring reference; consumer version not chosen",
+      "section": "Rollback rules",
+      "support": "Consulted to assess existing conditional guidance; no new rollback claim added.",
+      "kind": "primary framework documentation",
+      "limit": "A literal find for ALL_EXCEPTIONS did not match; the skill already requires actual rules/global defaults, and no source absence was treated as disproof.",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://docs.pact.io/getting_started/how_pact_works",
+      "version": "Page last updated 2024-12-23",
+      "section": "Consumer testing and provider verification",
+      "support": "Consumer code interacts with the mock and provider verification exercises the provider interaction; schema-only checking remains different.",
+      "kind": "primary project documentation",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ExecutorService.html",
+      "version": "Java 21",
+      "section": "close",
+      "support": "close waits for termination, including after interruption; existing cleanup bound warning retained.",
+      "kind": "primary API documentation",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/ExecutorService.html",
+      "version": "Java 17",
+      "section": "Interface declaration and shutdown",
+      "support": "ExecutorService extends Executor, not AutoCloseable; existing Java 17 compatibility guard retained.",
+      "kind": "primary API documentation",
+      "consulted": "2026-10-16"
+    }
+  ],
+  "limits": [
+    "No measured agent improvement, discovery efficacy or catalog-wide guarantee.",
+    "Structural test is deliberately still selective; default JDBC prohibition was not added.",
+    "Technical runs cover six focused classpath/dependency cases, not every forbidden package, module arrangement or runtime coupling.",
+    "No database, Spring context, ORM, migration, gateway, Pact provider or performance/concurrency integration executed.",
+    "Runtime/compiler 25.0.3 with --release 17 does not establish execution on Java 17.",
+    "Current ArchUnit guide is 1.5.1; version-sensitive predicate evidence uses 1.5.0 Javadoc and cached artifact, preserving the declared baseline.",
+    "No dependencies installed; nine existing jars were read directly and hashed, without copying their cache into evidence.",
+    "Existing teaching cases and new development cases are not held out, and no statistical behavioral comparison was run.",
+    "Global registry/verification deferred by parallel ownership rules."
+  ],
+  "crossSkill": {
+    "issues": [],
+    "coordinatorActions": [
+      "Archive this handoff and small local artifacts; no third-party binaries/source caches need archiving.",
+      "Evaluate paired cases only with actor inputs separated from rubric/prior control results if evaluation is selected.",
+      "Run registry:build and verify after all writers stop."
+    ]
+  },
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "cwd": "C:/git/agent-skills",
+      "owner": "coordinator",
+      "prerequisite": "All reviewers stopped; update this skill's version/hash."
+    },
+    {
+      "command": "npm run verify",
+      "cwd": "C:/git/agent-skills",
+      "owner": "coordinator",
+      "prerequisite": "Registry regenerated and working tree stable."
+    }
+  ],
+  "evidencePaths": [
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-testing-artifacts/check-boundary.mjs",
+    "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\results.json",
+    "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-Ww1zKC\\results.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-testing-artifacts/local-validation.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-testing-artifacts/evaluator-criteria.json"
+  ],
+  "writesStoppedStatement": "All owned edits and isolated evidence writes complete. Both Java/JUnit runs and every child process exited. No active background process remains; read-only after handoff."
+}

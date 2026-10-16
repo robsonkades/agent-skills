@@ -1,0 +1,52 @@
+{
+  "skill": "view-and-representation-patterns",
+  "checkType": "Versioned-source resource availability and local package checks; no renderer runtime or actor evaluation",
+  "date": "2026-10-16",
+  "records": [
+    {
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/view-and-representation-patterns-check/verify-servlet-reference.cjs C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/baseline/view-and-representation-patterns/references/two-step-view-and-modern-representations.md",
+      "workingDirectory": "C:/git/agent-skills",
+      "chunk_id": "536a0c",
+      "wall_time_seconds": 1.0354568,
+      "exit_code": 1,
+      "original_token_count": 251,
+      "output": "{\n  \"kind\": \"Versioned primary-source link check; not a renderer or agent behavior test\",\n  \"node\": \"v25.6.1\",\n  \"referenceFile\": \"C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/baseline/view-and-representation-patterns/references/two-step-view-and-modern-representations.md\",\n  \"url\": \"https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/servletresponse\",\n  \"status\": 404,\n  \"finalUrl\": \"https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/servletresponse\",\n  \"title\": \"404 Page Not Found | Jakarta EE | The Eclipse Foundation\",\n  \"members\": [\n    {\n      \"name\": \"getWriter()\",\n      \"present\": false\n    },\n    {\n      \"name\": \"flushBuffer()\",\n      \"present\": false\n    },\n    {\n      \"name\": \"reset()\",\n      \"present\": false\n    },\n    {\n      \"name\": \"isCommitted()\",\n      \"present\": false\n    }\n  ],\n  \"responseUtf8Sha256\": \"16ef63755b816a4e1abc5ea79a7c942fc6f11495379cbd680610de77e412090d\",\n  \"ok\": false\n}\n"
+    },
+    {
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/view-and-representation-patterns-check/verify-servlet-reference.cjs skills/view-and-representation-patterns/references/two-step-view-and-modern-representations.md",
+      "workingDirectory": "C:/git/agent-skills",
+      "chunk_id": "569567",
+      "wall_time_seconds": 0.7250917,
+      "exit_code": 0,
+      "original_token_count": 234,
+      "output": "{\n  \"kind\": \"Versioned primary-source link check; not a renderer or agent behavior test\",\n  \"node\": \"v25.6.1\",\n  \"referenceFile\": \"skills/view-and-representation-patterns/references/two-step-view-and-modern-representations.md\",\n  \"url\": \"https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/ServletResponse.html\",\n  \"status\": 200,\n  \"finalUrl\": \"https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/ServletResponse.html\",\n  \"title\": \"ServletResponse (Jakarta Servlet API documentation)\",\n  \"members\": [\n    {\n      \"name\": \"getWriter()\",\n      \"present\": true\n    },\n    {\n      \"name\": \"flushBuffer()\",\n      \"present\": true\n    },\n    {\n      \"name\": \"reset()\",\n      \"present\": true\n    },\n    {\n      \"name\": \"isCommitted()\",\n      \"present\": true\n    }\n  ],\n  \"responseUtf8Sha256\": \"58f68b18d82039ecf89d9a6988a5d64147b6dfed28830d56886dd70dac2778b3\",\n  \"ok\": true\n}\n"
+    },
+    {
+      "command": "node packages/cli/bin/agent-skills.mjs --no-update-check validate skills/view-and-representation-patterns --strict --json",
+      "workingDirectory": "C:/git/agent-skills",
+      "chunk_id": "8e8bbc",
+      "wall_time_seconds": 0.1729456,
+      "exit_code": 0,
+      "original_token_count": 46,
+      "output": "{\n  \"ok\": true,\n  \"directory\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\view-and-representation-patterns\",\n  \"name\": \"view-and-representation-patterns\",\n  \"version\": \"1.3.4\",\n  \"issues\": []\n}\n"
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/view-and-representation-patterns/SKILL.md skills/view-and-representation-patterns/skill.yaml skills/view-and-representation-patterns/references/template-and-transform-view.md skills/view-and-representation-patterns/references/two-step-view-and-modern-representations.md",
+      "workingDirectory": "C:/git/agent-skills",
+      "chunk_id": "0d3d97",
+      "wall_time_seconds": 0.2182584,
+      "exit_code": 0,
+      "original_token_count": 17,
+      "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+    },
+    {
+      "command": "git diff --check -- skills/view-and-representation-patterns",
+      "workingDirectory": "C:/git/agent-skills",
+      "chunk_id": "798b48",
+      "wall_time_seconds": 0.0765182,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    }
+  ]
+}

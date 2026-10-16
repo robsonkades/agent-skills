@@ -1,0 +1,1 @@
+package shop.app; import shop.orders.*; import shop.smtp.*; import java.math.BigDecimal; public final class WiredCheck { public static void main(String[] args) { new OrderConfirmer(new SmtpConfirmationSender(new SmtpClient("mail.internal", 587))).confirm(new Order("A-1", new BigDecimal("12.50"), "customer@example.test")); } }

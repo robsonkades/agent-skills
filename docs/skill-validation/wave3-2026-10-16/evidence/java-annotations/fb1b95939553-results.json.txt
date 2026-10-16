@@ -1,0 +1,91 @@
+[
+  {
+    "label": "api",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+    "args": [
+      "--release",
+      "17",
+      "-proc:none",
+      "-d",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\annotation-reader-case-5AzY1L\\api",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\cases\\runtime\\input\\src\\api\\example\\Codec.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\cases\\runtime\\input\\src\\api\\example\\DefaultCodec.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\cases\\runtime\\input\\src\\api\\example\\UseCodec.java"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\cases\\runtime\\input",
+    "status": 0,
+    "stdout": "",
+    "stderr": "",
+    "error": null
+  },
+  {
+    "label": "application",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+    "args": [
+      "--release",
+      "17",
+      "-proc:none",
+      "-cp",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\annotation-reader-case-5AzY1L\\api",
+      "-d",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\annotation-reader-case-5AzY1L\\app",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\cases\\runtime\\input\\src\\app\\example\\DefaultUse.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\cases\\runtime\\input\\src\\app\\example\\ExplicitUse.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\cases\\runtime\\input\\src\\app\\example\\LocalCodec.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\cases\\runtime\\input\\src\\runtime\\example\\RuntimeReader.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\cases\\runtime\\input\\src\\invalid-value\\example\\InvalidUse.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\cases\\runtime\\input\\src\\invalid-array\\example\\InvalidArrayUse.java"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\cases\\runtime\\input",
+    "status": 0,
+    "stdout": "",
+    "stderr": "",
+    "error": null
+  },
+  {
+    "label": "accepted",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+    "args": [
+      "-cp",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\annotation-reader-case-5AzY1L\\api;C:\\Users\\robso\\AppData\\Local\\Temp\\annotation-reader-case-5AzY1L\\app",
+      "example.RuntimeReader",
+      "example.ExplicitUse",
+      "example.DefaultUse"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\cases\\runtime\\input",
+    "status": 0,
+    "stdout": "RUNTIME_OK example.ExplicitUse value=example.LocalCodec alternatives=2\r\nRUNTIME_OK example.DefaultUse value=example.DefaultCodec alternatives=1\r\n",
+    "stderr": "",
+    "error": null
+  },
+  {
+    "label": "rejected-value",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+    "args": [
+      "-cp",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\annotation-reader-case-5AzY1L\\api;C:\\Users\\robso\\AppData\\Local\\Temp\\annotation-reader-case-5AzY1L\\app",
+      "example.RuntimeReader",
+      "example.InvalidUse"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\cases\\runtime\\input",
+    "status": 1,
+    "stdout": "",
+    "stderr": "Exception in thread \"main\" java.lang.IllegalArgumentException: CODEC_REQUIRED: java.lang.String in value\r\n\tat example.RuntimeReader.check(RuntimeReader.java:16)\r\n\tat example.RuntimeReader.main(RuntimeReader.java:8)\r\n",
+    "error": null
+  },
+  {
+    "label": "rejected-array",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+    "args": [
+      "-cp",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\annotation-reader-case-5AzY1L\\api;C:\\Users\\robso\\AppData\\Local\\Temp\\annotation-reader-case-5AzY1L\\app",
+      "example.RuntimeReader",
+      "example.InvalidArrayUse"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\cases\\runtime\\input",
+    "status": 1,
+    "stdout": "",
+    "stderr": "Exception in thread \"main\" java.lang.IllegalArgumentException: CODEC_REQUIRED: java.lang.String in alternatives\r\n\tat example.RuntimeReader.check(RuntimeReader.java:16)\r\n\tat example.RuntimeReader.main(RuntimeReader.java:9)\r\n",
+    "error": null
+  }
+]

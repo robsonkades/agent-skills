@@ -1,0 +1,71 @@
+diff --git a/skills/load-testing-advanced/SKILL.md b/skills/load-testing-advanced/SKILL.md
+index eb53769..2c08f5e 100644
+--- a/skills/load-testing-advanced/SKILL.md
++++ b/skills/load-testing-advanced/SKILL.md
+@@ -138,6 +138,8 @@ retention across cycles, failure to plateau, ownership paths, time-to-limit and
+ ## Automation and output contracts
+ 
+ - Pin tool/version/extensions and output/summary mode; validate output against a real fixture.
++- Before trusting a CI pass, trace the executed script and effective options; confirm that
++  the gate evaluated the declared predicate and propagated failure.
+ - Treat raw event output and aggregated summaries as different schemas.
+ - Fail loudly on missing required fields, unknown coverage, histogram overflow or changed units.
+   A confirmed-empty optional outcome cohort (for example, zero rejections) is valid evidence of
+@@ -151,7 +153,7 @@ retention across cycles, failure to plateau, ownership paths, time-to-limit and
+ 
+ Tool-specific commands and current caveats belong in
+ [generator configuration](references/generator-configuration.md); read it when configuring
+-a generator or output parser. Read [test profiles](references/test-profiles.md) when selecting
++a generator, output parser or CI gate. Read [test profiles](references/test-profiles.md) when selecting
+ phase duration, refining a boundary, or designing spike, soak and recovery acceptance.
+ Inspect the project's actual JDK, collector, framework, build and deployed topology before
+ choosing diagnostic commands. The k6 options are partial JavaScript configuration, not a
+diff --git a/skills/load-testing-advanced/references/generator-configuration.md b/skills/load-testing-advanced/references/generator-configuration.md
+index a1f1522..f8df2bc 100644
+--- a/skills/load-testing-advanced/references/generator-configuration.md
++++ b/skills/load-testing-advanced/references/generator-configuration.md
+@@ -1,5 +1,22 @@
+ # Generator Configuration and Output Contracts
+ 
++## Effective invocation and acceptance gate
++
++Follow the CI job and wrapper to the actual script/archive, binary/image, CLI flags,
++selected configuration and relevant inherited environment. Resolve overrides before comparing
++runs; capture effective scenario/load settings and evaluation switches without exporting
++credentials. Check whether the wrapper propagates the generator's failure or delegates
++acceptance to a separate evaluator.
++
++For example, k6 1.3.0 skips threshold evaluation with `--no-thresholds` or
++`K6_NO_THRESHOLDS=true`, even when the script defines thresholds. An explicitly supplied CLI
++value wins over that environment setting. Exit zero alone cannot establish that those
++predicates passed. Exercise the same invocation path with a small, known-failing local
++fixture and require the job to fail when those thresholds are its gate. Disabling them can
++be intentional for measurement-only runs with a separately verified acceptance evaluator.
++Retain valid metrics; reevaluate sufficient captured data or report acceptance as unevaluated
++instead of discarding every phase or claiming a pass.
++
+ ## Arrival-executor concurrency
+ 
+ For a stable iteration population with consistently measured arrival rate \(\lambda_i\)
+@@ -160,6 +177,8 @@ so inspect the effective implementation and metrics before attributing a plateau
+ - [Karl Sigman: Little's law and finite-window boundary work](https://www.columbia.edu/~ks20/stochastic-I/stochastic-I-LL.pdf)
+ - [k6 built-in metrics](https://grafana.com/docs/k6/latest/using-k6/metrics/reference/)
+ - [k6 thresholds](https://grafana.com/docs/k6/latest/using-k6/thresholds/)
++- [k6 1.3.0 runtime flags and environment precedence](https://github.com/grafana/k6/blob/v1.3.0/internal/cmd/runtime_options.go)
++- [k6 1.3.0 threshold execution and failure propagation](https://github.com/grafana/k6/blob/v1.3.0/internal/cmd/run.go)
+ - [k6 summary trend statistics options](https://grafana.com/docs/k6/latest/using-k6/k6-options/reference/#summary-trend-stats)
+ - [k6 1.3.0 trend/rate sink semantics](https://github.com/grafana/k6/blob/v1.3.0/metrics/sink.go)
+ - [k6 1.3.0 summary paths and metric aggregation](https://github.com/grafana/k6/blob/v1.3.0/internal/js/summary.go)
+diff --git a/skills/load-testing-advanced/skill.yaml b/skills/load-testing-advanced/skill.yaml
+index 750f6d6..4270b7b 100644
+--- a/skills/load-testing-advanced/skill.yaml
++++ b/skills/load-testing-advanced/skill.yaml
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: load-testing-advanced
+-version: 1.3.3
++version: 1.3.4
+ description: >-
+   Selecting and executing advanced load profiles—baseline, capacity-envelope,
+   breakpoint, stress, spike, ramp, soak and recovery—using bracketed boundaries,

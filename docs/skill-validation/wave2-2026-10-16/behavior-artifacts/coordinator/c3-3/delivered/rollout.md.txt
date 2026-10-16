@@ -1,0 +1,18 @@
+Recommendation: block the candidate rollout against authoritative stored state without a placement-contract change and migration.
+
+`ClientRouter` prepends the selected `keyPrefix` before both primary and replica lookup. The accepted configuration uses an empty prefix; `candidate.properties`, the selection under review, uses `cache:`. Thus the same request key reaches `HashRing` as different UTF-8 input despite identical node positions.
+
+The frozen epoch-E vector, exercised through `ClientRouter` with V=1024, n1..n4 at weight 1, and three ordered distinct replicas, gives:
+
+| Configuration | Request key | Primary | Ordered replicas |
+| --- | --- | --- | --- |
+| Accepted, empty prefix | `user:2` | `n2` | `[n2, n3, n4]` |
+| Candidate, `cache:` prefix | `user:2` | `n1` | `[n1, n3, n2]` |
+
+This changes both primary ownership and the replica set: n1 is added and n4 is removed. The candidate cannot assume that its new owner already holds the authoritative value or that concurrent old/new clients coordinate writes. Existing node-point equality and join monotonicity checks do not test agreement between these client configurations. Their observed 2,075/10,000 moves concern adding n5 under the candidate prefix, not this rollout's movement rate.
+
+`node check.mjs` now executes the frozen primary and ordered-replica check through the router. The accepted configuration passes; the unchanged candidate exits 1 with a placement mismatch. See `compatibility-check.log` and `REVIEW.md`.
+
+For a rollout preserving the existing contract, retain raw-key routing by selecting an empty `keyPrefix`, then rerun the compatibility gate with the actual candidate configuration. No such configuration change or deployment was made in this review. The algorithm, V, weights, Java target and data model remain unchanged.
+
+Intentionally retaining `cache:` would require a separately approved placement epoch and a stored-data handoff: copy and verify affected data, coordinate concurrent reads/writes with fencing or forwarding/change capture, activate the new epoch, and bound stale clients before retiring old ownership. That is outside this no-migration review. One failing frozen vector is sufficient to reject compatibility; no claim is made about total moved keys, bytes, traffic, balance or migration duration.

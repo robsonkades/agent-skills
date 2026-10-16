@@ -1,0 +1,15 @@
+# Reparo do recibo pós-commit
+
+A implementação precisava de correção. BookingService já possuía a fronteira REQUIRED adequada com businessTx, mas BookingListener executava em BEFORE_COMMIT e ReceiptWriter não estabelecia uma unidade transacional própria. O recibo era processado antes de uma conexão independente conseguir enxergar a reserva; uma rejeição do corpo revertia também o negócio.
+
+Alterei apenas a fase do listener para AFTER_COMMIT e adicionei REQUIRES_NEW ao método público do writer, chamado através do bean Spring existente. Mantive o serviço, o evento, o observador imediatamente antes da escrita, o agendamento síncrono e a limitação de 12 caracteres. Cabeçalho e corpo agora pertencem à mesma transação independente do recibo. Não foi necessário adicionar dependências, executor, broker ou armazenamento de recuperação.
+
+A nova regressão usa beans reais e lê a reserva por outra conexão READ_COMMITTED dentro de ReceiptObserver.beforeWrite. No original, oito verificações falharam: a reserva ainda não era visível e recibos inválidos revertiam booking/stock. O controle com somente REQUIRES_NEW reproduziu as oito falhas, refutando a sugestão genérica. O controle com somente AFTER_COMMIT deixou cabeçalhos parciais: booking=1, receipt=1, receipt_detail=0. Portanto, ambas as partes do reparo são necessárias.
+
+Com o reparo completo, os sete cenários passaram. Um recibo válido de 12 caracteres preserva o texto e deixa booking/header/body=1 e stock=19. Um corpo de 13 caracteres deixa booking=1, header/body=0 e stock=19. O observador enxerga a reserva já confirmada e roda na mesma thread. Falta de estoque, publicação sem transação e rollback do proprietário externo não produzem recibos. O serviço continua participando da transação externa; o recibo espera o commit do proprietário. O caso inválido também não faz o proprietário falhar na conclusão.
+
+As exceções de rejeição permanecem visíveis nos logs SEVERE de TransactionSynchronizationUtils; não são falhas dos checks finais. O Spring 7.0.9 registra a exceção do callback após completion, enquanto o interceptor do writer desfaz sua transação. O RUNBOOK explica essa política e a perda de recibos aceita.
+
+Executei compilação real e testes via check.mjs, com Java 25, Spring 7.0.9 e H2 2.4.240 fornecidos. Logs dos casos originais, controles negativos e checks finais estão em checks/. Não executei npm ou ferramentas do repositório externo ao projeto autorizado.
+
+Os resultados não demonstram comportamento de crash de banco de produção, interrupção de processo, concorrência, capacidade de pools, deduplicação distribuída ou JPA. Não existe garantia de recuperação; ela não é exigida pelo contrato. A consulta web a fontes versionadas não retornou dentro da tentativa e foi cancelada; o diagnóstico usa o snapshot da skill, o código fornecido e as observações locais.

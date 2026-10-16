@@ -1,0 +1,208 @@
+{
+  "task": "A15",
+  "workingDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A15/output",
+  "scope": "All writes under this output directory; only RetryEngine.java changed among supplied copies.",
+  "reads": [
+    {
+      "file": "TASK.md",
+      "purpose": "Establish isolated scope, immutable inputs, output artifacts and execution limits."
+    },
+    {
+      "file": "input/skills/idempotency/SKILL.md",
+      "purpose": "Apply the two mandated local skill snapshots."
+    },
+    {
+      "file": "input/skills/timeouts-and-deadlines/SKILL.md",
+      "purpose": "Apply the two mandated local skill snapshots."
+    },
+    {
+      "file": "input/project/README.md",
+      "purpose": "Inspect authored component contract, baseline or implementation."
+    },
+    {
+      "file": "input/project/REQUEST.md",
+      "purpose": "Inspect authored component contract, baseline or implementation."
+    },
+    {
+      "file": "input/project/RetryEngine.java",
+      "purpose": "Inspect authored component contract, baseline or implementation."
+    },
+    {
+      "file": "input/project/Ports.java",
+      "purpose": "Inspect authored component contract, baseline or implementation."
+    },
+    {
+      "file": "input/project/Contract.java",
+      "purpose": "Inspect authored component contract, baseline or implementation."
+    },
+    {
+      "file": "input/project/contract.md",
+      "purpose": "Inspect authored component contract, baseline or implementation."
+    },
+    {
+      "file": "input/project/Smoke.java",
+      "purpose": "Inspect authored component contract, baseline or implementation."
+    },
+    {
+      "file": "input/project/run.mjs",
+      "purpose": "Inspect compile/run commands and 20-second subprocess timeout before execution."
+    },
+    {
+      "file": "input/skills/idempotency/references/key-selection.md",
+      "purpose": "Stable identity, preservation of ambiguity, and remaining-budget arithmetic."
+    },
+    {
+      "file": "input/skills/idempotency/references/idempotency-key-filter.md",
+      "purpose": "Stable identity, preservation of ambiguity, and remaining-budget arithmetic."
+    },
+    {
+      "file": "input/skills/timeouts-and-deadlines/references/deadline-propagation.md",
+      "purpose": "Stable identity, preservation of ambiguity, and remaining-budget arithmetic."
+    },
+    {
+      "file": "output/RetryEngine.java",
+      "purpose": "Read final deliverable after validation; check public signature and state transitions."
+    }
+  ],
+  "commands": [
+    {
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A15/TASK.md' -Raw",
+      "exitCode": 0,
+      "result": "Read the complete independent task instructions."
+    },
+    {
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A15/input/skills/idempotency/SKILL.md','C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A15/input/skills/timeouts-and-deadlines/SKILL.md','C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A15/input/project/README.md','C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A15/input/project/REQUEST.md' -Raw",
+      "exitCode": 0,
+      "result": "Read both complete mandatory local skill snapshots plus baseline and requested repair."
+    },
+    {
+      "command": "rg --files 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A15/input/project'; rg --files 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A15/output'",
+      "exitCode": 0,
+      "result": "Each location contained README.md, REQUEST.md, RetryEngine.java, Ports.java, Contract.java, contract.md, Smoke.java and run.mjs."
+    },
+    {
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A15/input/project/RetryEngine.java','C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A15/input/project/Ports.java','C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A15/input/project/Contract.java','C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A15/input/project/contract.md','C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A15/input/project/Smoke.java','C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A15/input/project/run.mjs' -Raw",
+      "exitCode": 0,
+      "result": "Read all implementation/port/contract/runner evidence. REPLAY_SAFE=false; runner uses javac --release 17 then java -ea with individual 20000 ms limits."
+    },
+    {
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A15/input/skills/idempotency/references/key-selection.md','C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A15/input/skills/idempotency/references/idempotency-key-filter.md','C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A15/input/skills/timeouts-and-deadlines/references/deadline-propagation.md' -Raw",
+      "exitCode": 0,
+      "result": "Combined output was truncated in the first two references; deadline-propagation was visible. Re-read first two separately."
+    },
+    {
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A15/input/skills/idempotency/references/key-selection.md' -Raw",
+      "exitCode": 0,
+      "result": "Read full key-selection reference."
+    },
+    {
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A15/input/skills/idempotency/references/idempotency-key-filter.md' -Raw",
+      "exitCode": 0,
+      "result": "Read full idempotency-key-filter reference."
+    },
+    {
+      "command": "$taskRoot = 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A15'; $names = @('README.md','REQUEST.md','RetryEngine.java','Ports.java','Contract.java','contract.md','Smoke.java','run.mjs'); foreach ($name in $names) { $sourceHash = (Get-FileHash -LiteralPath \"$taskRoot/input/project/$name\" -Algorithm SHA256).Hash; $outputHash = (Get-FileHash -LiteralPath \"$taskRoot/output/$name\" -Algorithm SHA256).Hash; [pscustomobject]@{ file=$name; inputSha256=$sourceHash; outputSha256=$outputHash; equal=($sourceHash -eq $outputHash) } }",
+      "exitCode": 0,
+      "result": "Displayed hashes of eight source/output pairs, but PowerShell table truncated the output/equal columns. A later JSON check explicitly enforced equality for the immutable copies."
+    },
+    {
+      "stage": "baseline",
+      "command": "node run.mjs Verification",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A15/output",
+      "exitCode": 1,
+      "output": "FAIL terminal replay APPLIED: java.lang.AssertionError: unexpected dispatch\r\nFAIL terminal replay REJECTED: java.lang.AssertionError: unexpected dispatch\r\nFAIL successful original identity, timeout and receipt: java.lang.AssertionError: stable intent and payload required\r\nFAIL transient retry obeys server minimum: java.lang.AssertionError: reply must close before next call, token or sleep\r\nFAIL transient retry obeys local minimum: java.lang.AssertionError: reply must close before next call, token or sleep\r\nFAIL unknown after dispatch persists and stops: java.lang.AssertionError: reply must close before next call, token or sleep\r\nFAIL initial unknown survives invocation restart: java.lang.AssertionError: unexpected dispatch\r\nFAIL permanent known nonapplication: java.lang.AssertionError: stable intent and payload required\r\nFAIL exhaustion does not buy unused final token: java.lang.AssertionError: reply must close before next call, token or sleep\r\nFAIL insufficient initial budget: java.lang.AssertionError: unexpected dispatch\r\nFAIL exact initial budget: java.lang.AssertionError: stable intent and payload required\r\nFAIL overflowing attempt plus reserve refused: java.lang.AssertionError: unexpected dispatch\r\nFAIL largest representable exact attempt accepted: java.lang.AssertionError: stable intent and payload required\r\nFAIL overflowing retry wait refused before token: java.lang.AssertionError: reply must close before next call, token or sleep\r\nFAIL server minimum cannot be truncated to fit: java.lang.AssertionError: reply must close before next call, token or sleep\r\nFAIL exact retry wait plus call budget: java.lang.AssertionError: reply must close before next call, token or sleep\r\nFAIL budget consumed by call prevents wait: java.lang.AssertionError: reply must close before next call, token or sleep\r\nFAIL oversleep burns grant but prevents next call: java.lang.AssertionError: reply must close before next call, token or sleep\r\nFAIL retry token denial closes reply: java.lang.AssertionError: reply must close before next call, token or sleep\r\nFAIL cancellation before initial call: java.lang.AssertionError: unexpected dispatch\r\nFAIL cancellation after known nonapplication: java.lang.AssertionError: reply must close before next call, token or sleep\r\nFAIL cancellation during sleep: java.lang.AssertionError: reply must close before next call, token or sleep\r\nFAIL pre-interruption prevents dispatch: java.lang.AssertionError: unexpected dispatch\r\nFAIL interrupted call records unknown and rethrows: java.lang.AssertionError: ambiguous call persisted\r\nFAIL interrupted sleep closes returned reply: java.lang.AssertionError: reply must close before next call, token or sleep\r\nFAIL interrupt flag after sleep prevents dispatch: java.lang.AssertionError: reply must close before next call, token or sleep\r\nFAIL zero-delay retry still needs one token: java.lang.AssertionError: reply must close before next call, token or sleep\r\nVerification: 0 passed, 27 failed\r\nException in thread \"main\" java.lang.AssertionError: Verification failures: 27\r\n\tat Verification.main(Verification.java:235)\r\n",
+      "wallTimeSeconds": 0.6693545
+    },
+    {
+      "stage": "repairedVerification",
+      "command": "node run.mjs Verification",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A15/output",
+      "exitCode": 0,
+      "output": "PASS terminal replay APPLIED\r\nPASS terminal replay REJECTED\r\nPASS successful original identity, timeout and receipt\r\nPASS transient retry obeys server minimum\r\nPASS transient retry obeys local minimum\r\nPASS unknown after dispatch persists and stops\r\nPASS initial unknown survives invocation restart\r\nPASS permanent known nonapplication\r\nPASS exhaustion does not buy unused final token\r\nPASS insufficient initial budget\r\nPASS exact initial budget\r\nPASS overflowing attempt plus reserve refused\r\nPASS largest representable exact attempt accepted\r\nPASS overflowing retry wait refused before token\r\nPASS server minimum cannot be truncated to fit\r\nPASS exact retry wait plus call budget\r\nPASS budget consumed by call prevents wait\r\nPASS oversleep burns grant but prevents next call\r\nPASS retry token denial closes reply\r\nPASS cancellation before initial call\r\nPASS cancellation after known nonapplication\r\nPASS cancellation during sleep\r\nPASS pre-interruption prevents dispatch\r\nPASS interrupted call records unknown and rethrows\r\nPASS interrupted sleep closes returned reply\r\nPASS interrupt flag after sleep prevents dispatch\r\nPASS zero-delay retry still needs one token\r\nVerification: 27 passed, 0 failed\r\n",
+      "wallTimeSeconds": 0.683894
+    },
+    {
+      "stage": "smoke",
+      "command": "node run.mjs Smoke",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A15/output",
+      "exitCode": 0,
+      "output": "Smoke passed\r\n",
+      "wallTimeSeconds": 0.622139
+    },
+    {
+      "stage": "runtime versions",
+      "command": "node -e \"const {spawnSync}=require('node:child_process'); for (const command of ['javac','java']) { const r=spawnSync(command,['-version'],{encoding:'utf8',timeout:20000,windowsHide:true}); process.stdout.write(r.stdout||''); process.stderr.write(r.stderr||''); if(r.error||r.status!==0) process.exit(r.status||1); }\"",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A15/output",
+      "exitCode": 0,
+      "output": "javac 25.0.3\r\nopenjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n",
+      "wallTimeSeconds": 0.2193375
+    },
+    {
+      "stage": "immutable copies and implementation read",
+      "command": "$taskRoot = 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A15'; $names = @('README.md','REQUEST.md','Ports.java','Contract.java','contract.md','Smoke.java','run.mjs'); $checks = foreach ($name in $names) { $sourceHash = (Get-FileHash -LiteralPath \"$taskRoot/input/project/$name\" -Algorithm SHA256).Hash; $outputHash = (Get-FileHash -LiteralPath \"$taskRoot/output/$name\" -Algorithm SHA256).Hash; if ($sourceHash -ne $outputHash) { throw \"Immutable file changed: $name\" }; [pscustomobject]@{ file=$name; sha256=$outputHash; unchanged=$true } }; $checks | ConvertTo-Json; Get-Content -LiteralPath \"$taskRoot/output/RetryEngine.java\" -Raw",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A15/output",
+      "exitCode": 0,
+      "output": "[\r\n  {\r\n    \"file\": \"README.md\",\r\n    \"sha256\": \"0A082FC19EAFAAA6457ED4A4E130B1F2BF3D3383C5CF38B7B6D8B58F18DD69DB\",\r\n    \"unchanged\": true\r\n  },\r\n  {\r\n    \"file\": \"REQUEST.md\",\r\n    \"sha256\": \"E4E2CFED9376CFC24406348415CDAA28F75A0D731E7A9EACBA0902216592774D\",\r\n    \"unchanged\": true\r\n  },\r\n  {\r\n    \"file\": \"Ports.java\",\r\n    \"sha256\": \"21D10C20819D3DDB796FF1081D53EFC63664E1A1C768DE1D1C627A3DCD36AE6A\",\r\n    \"unchanged\": true\r\n  },\r\n  {\r\n    \"file\": \"Contract.java\",\r\n    \"sha256\": \"ACEF7E155F89B61CAE2BC9F780A011A826B2DD9A02AED893BFE0F0C0620CBEFB\",\r\n    \"unchanged\": true\r\n  },\r\n  {\r\n    \"file\": \"contract.md\",\r\n    \"sha256\": \"5D38AE3410AED98F10DD2F358C4737DB753A6D06A49F40F055EFB7A045787FE7\",\r\n    \"unchanged\": true\r\n  },\r\n  {\r\n    \"file\": \"Smoke.java\",\r\n    \"sha256\": \"3E242BBCBE7B25A644AAF6D14D2C6C885AD217ED06686782BEAD18572C983425\",\r\n    \"unchanged\": true\r\n  },\r\n  {\r\n    \"file\": \"run.mjs\",\r\n    \"sha256\": \"BB2C9544993BB4128564AF264CC0F5719CE2D237F3A5E710027C062FECF1007C\",\r\n    \"unchanged\": true\r\n  }\r\n]\r\npublic final class RetryEngine {\n    public static Ports.Result execute(Ports.Intent intent, Ports.Policy p, Ports.Store store,\n            Ports.Operation operation, Ports.Runtime runtime) throws InterruptedException {\n        Ports.Snapshot initial = store.snapshot();\n        if (initial.state() == Ports.State.APPLIED || initial.state() == Ports.State.REJECTED) {\n            return new Ports.Result(initial, 0);\n        }\n\n        boolean unresolved = initial.state() == Ports.State.UNKNOWN;\n        int attempts = 0;\n        long wait = 0;\n        try {\n            while (attempts < p.maxAttempts()) {\n                checkInterrupted();\n                if (runtime.cancelled() || (unresolved && !Contract.REPLAY_SAFE)) break;\n\n                if (attempts > 0) {\n                    if (!fits(runtime.remainingNanos(), p, wait)) break;\n                    if (!runtime.acquireRetry()) break;\n                    checkInterrupted();\n                    if (runtime.cancelled()) break;\n                    runtime.sleep(wait);\n                }\n\n                // Sleep can overshoot or be cancelled; an admission token is not a call.\n                checkInterrupted();\n                if (runtime.cancelled() || !fits(runtime.remainingNanos(), p, 0)) break;\n\n                Ports.Reply response;\n                attempts++;\n                try {\n                    response = operation.call(intent, p.attemptNanos());\n                } catch (InterruptedException interrupted) {\n                    store.unknown();\n                    throw interrupted;\n                }\n\n                try (Ports.Reply reply = response) {\n                    if (reply.kind() == Ports.Kind.OK) {\n                        store.applied(reply.receipt());\n                        return new Ports.Result(store.snapshot(), attempts);\n                    }\n                    if (reply.kind() == Ports.Kind.UNKNOWN) {\n                        unresolved = true;\n                        store.unknown();\n                    }\n                    if (reply.kind() == Ports.Kind.PERMANENT) break;\n                    wait = Math.max(p.localWaitNanos(), reply.serverMinimumNanos());\n                }\n            }\n        } catch (InterruptedException interrupted) {\n            Thread.currentThread().interrupt();\n            throw interrupted;\n        }\n        if (unresolved) store.unknown();\n        else store.rejected();\n        return new Ports.Result(store.snapshot(), attempts);\n    }\n\n    private static boolean fits(long remaining, Ports.Policy p, long wait) {\n        // Subtract only after comparison, so valid long inputs cannot overflow a sum.\n        if (remaining < p.reserveNanos()) return false;\n        long available = remaining - p.reserveNanos();\n        return available >= p.attemptNanos() && wait <= available - p.attemptNanos();\n    }\n\n    private static void checkInterrupted() throws InterruptedException {\n        if (Thread.currentThread().isInterrupted()) throw new InterruptedException(\"Retry interrupted\");\n    }\n}\n\r\n",
+      "wallTimeSeconds": 0.1076162
+    }
+  ],
+  "artifactValidation": {
+    "command": "node -e \"const fs=require('node:fs'); const result=JSON.parse(fs.readFileSync('result.json','utf8')); const execution=JSON.parse(fs.readFileSync('execution.json','utf8')); const words=fs.readFileSync('REVIEW.md','utf8').trim().split(/\\s+/).length; if(words>750) throw Error('Review word limit exceeded'); if(result.task!=='A15'||execution.task!=='A15') throw Error('Artifact task mismatch'); console.log('Artifacts parsed; REVIEW.md words='+words+'; recorded commands='+execution.commands.length);\"",
+    "workingDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A15/output",
+    "exitCode": 0,
+    "output": "Artifacts parsed; REVIEW.md words=436; recorded commands=13\n",
+    "wallTimeSeconds": 0.0738526
+  },
+  "runnerSubprocesses": {
+    "compile": "javac --release 17 -d classes Contract.java Ports.java RetryEngine.java Smoke.java Verification.java",
+    "runVerification": "java -ea -cp classes Verification",
+    "runSmoke": "java -ea -cp classes Smoke",
+    "timeoutMillisecondsEach": 20000,
+    "note": "Runner obtains .java filenames using fs.readdirSync; list describes the files actually present, without relying on readdir order."
+  },
+  "writes": [
+    {
+      "tool": "apply_patch",
+      "files": [
+        "Verification.java"
+      ],
+      "purpose": "Add executable regression before repairing implementation.",
+      "patch": "*** Begin Patch\n*** Add File: C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A15/output/Verification.java\n+import java.util.ArrayList;\n+import java.util.List;\n+\n+public final class Verification {\n+    private static final Ports.Intent INTENT = new Ports.Intent(\"intent-original\", \"payload-original\");\n+    private static final Ports.Policy POLICY = new Ports.Policy(3, 10, 5, 4);\n+    private static int passed;\n+    private static int failed;\n+\n+    @FunctionalInterface private interface Check { void run() throws Exception; }\n+    @FunctionalInterface private interface Hook { void run() throws InterruptedException; }\n+\n+    private static final class Store implements Ports.Store {\n+        Ports.Snapshot value;\n+        int writes;\n+        Store(Ports.State state) { value = new Ports.Snapshot(state, state == Ports.State.APPLIED ? \"original-receipt\" : null); }\n+        public Ports.Snapshot snapshot() { return value; }\n+        public void unknown() { writes++; value = new Ports.Snapshot(Ports.State.UNKNOWN, null); }\n+        public void applied(String receipt) { writes++; value = new Ports.Snapshot(Ports.State.APPLIED, receipt); }\n+        public void rejected() { writes++; value = new Ports.Snapshot(Ports.State.REJECTED, null); }\n+    }\n+\n+    private static final class Reply implements Ports.Reply {\n+        final Ports.Kind kind;\n+        final long minimum;\n+        int closes;\n+        Reply(Ports.Kind kind, long minimum) { this.kind = kind; this.minimum = minimum; }\n+        public Ports.Kind kind() { return kind; }\n+        public String receipt() { return \"authoritative-receipt\"; }\n+        public long serverMinimumNanos() { return minimum; }\n+        public void close() { closes++; require(closes == 1, \"reply closed twice\"); }\n+    }\n+\n+    private static final class Fixture implements Ports.Runtime, Ports.Operation {\n+        final Store store;\n+        final List<Reply> replies = new ArrayList<>();\n+        final List<Ports.Intent> intents = new ArrayList<>();\n+        final List<Long> timeouts = new ArrayList<>();\n+        final List<Long> sleeps = new ArrayList<>();\n+        long remaining = 1000;\n+        long callCost;\n+        int grants;\n+        boolean cancelled;\n+        boolean token = true;\n+        Hook inCall = () -> {};\n+        Hook inSleep = () -> {};\n+        Fixture() { this(Ports.State.PENDING); }\n+        Fixture(Ports.State state) { store = new Store(state); }\n+        Fixture add(Ports.Kind kind, long minimum) { replies.add(new Reply(kind, minimum)); return this; }\n+        public long remainingNanos() { return remaining; }\n+        public boolean cancelled() { return cancelled; }\n+        public boolean acquireRetry() { assertPreviousClosed(); grants++; return token; }\n+        public void sleep(long nanos) throws InterruptedException {\n+            assertPreviousClosed();\n+            sleeps.add(nanos);\n+            require(nanos >= 0 && nanos <= remaining, \"invalid sleep budget\");\n+            remaining -= nanos;\n+            inSleep.run();\n+        }\n+        public Ports.Reply call(Ports.Intent intent, long timeout) throws InterruptedException {\n+            assertPreviousClosed();\n+            intents.add(intent);\n+            timeouts.add(timeout);\n+            remaining = Math.max(0, remaining - callCost);\n+            inCall.run();\n+            require(intents.size() <= replies.size(), \"unexpected dispatch\");\n+            return replies.get(intents.size() - 1);\n+        }\n+        void assertPreviousClosed() {\n+            for (int i = 0; i < intents.size() && i < replies.size(); i++) {\n+                require(replies.get(i).closes == 1, \"reply must close before next call, token or sleep\");\n+            }\n+        }\n+        Ports.Result run() throws InterruptedException { return run(POLICY); }\n+        Ports.Result run(Ports.Policy policy) throws InterruptedException {\n+            Ports.Result result = RetryEngine.execute(INTENT, policy, store, this, this);\n+            assertPreviousClosed();\n+            require(result.attempts() == intents.size(), \"returned attempt count\");\n+            require(result.snapshot().equals(store.snapshot()), \"returned durable outcome\");\n+            for (Ports.Intent actual : intents) require(actual.equals(INTENT), \"stable intent and payload required\");\n+            for (long actual : timeouts) require(actual == policy.attemptNanos(), \"propagated attempt timeout\");\n+            return result;\n+        }\n+    }\n+\n+    private static void require(boolean condition, String message) {\n+        if (!condition) throw new AssertionError(message);\n+    }\n+    private static void state(Ports.Result result, Ports.State state, int attempts) {\n+        require(result.snapshot().state() == state && result.attempts() == attempts,\n+                \"expected \" + state + \"/\" + attempts + \", got \" + result);\n+    }\n+    private static void test(String name, Check check) {\n+        try { check.run(); passed++; System.out.println(\"PASS \" + name); }\n+        catch (Throwable failure) { failed++; System.out.println(\"FAIL \" + name + \": \" + failure); }\n+        finally { Thread.interrupted(); }\n+    }\n+    private static void interrupted(Fixture f, InterruptedException expected) throws Exception {\n+        try { f.run(); throw new AssertionError(\"interruption swallowed\"); }\n+        catch (InterruptedException actual) { if (expected != null) require(actual == expected, \"original exception propagated\"); }\n+    }\n+\n+    public static void main(String[] args) throws Exception {\n+        require(!Contract.REPLAY_SAFE, \"this verification targets the supplied false replay guarantee\");\n+        for (Ports.State terminal : List.of(Ports.State.APPLIED, Ports.State.REJECTED)) {\n+            test(\"terminal replay \" + terminal, () -> {\n+                Fixture f = new Fixture(terminal);\n+                Ports.Snapshot initial = f.store.snapshot();\n+                state(f.run(), terminal, 0);\n+                require(f.store.writes == 0 && initial.equals(f.store.snapshot()), \"terminal unchanged\");\n+            });\n+        }\n+        test(\"successful original identity, timeout and receipt\", () -> {\n+            Fixture f = new Fixture().add(Ports.Kind.OK, Long.MAX_VALUE);\n+            Ports.Result result = f.run(); state(result, Ports.State.APPLIED, 1);\n+            require(\"authoritative-receipt\".equals(result.snapshot().receipt()), \"original receipt\");\n+            require(f.grants == 0 && f.sleeps.isEmpty(), \"initial call requires no retry admission\");\n+        });\n+        test(\"transient retry obeys server minimum\", () -> {\n+            Fixture f = new Fixture().add(Ports.Kind.TRANSIENT, 9).add(Ports.Kind.OK, 0);\n+            state(f.run(), Ports.State.APPLIED, 2);\n+            require(f.sleeps.equals(List.of(9L)) && f.grants == 1, \"max delay and one token\");\n+        });\n+        test(\"transient retry obeys local minimum\", () -> {\n+            Fixture f = new Fixture().add(Ports.Kind.TRANSIENT, 1).add(Ports.Kind.OK, 0);\n+            state(f.run(), Ports.State.APPLIED, 2);\n+            require(f.sleeps.equals(List.of(4L)), \"local delay must not shrink\");\n+        });\n+        test(\"unknown after dispatch persists and stops\", () -> {\n+            Fixture f = new Fixture().add(Ports.Kind.UNKNOWN, 9);\n+            state(f.run(), Ports.State.UNKNOWN, 1);\n+            require(f.grants == 0 && f.sleeps.isEmpty(), \"unsafe replay refused\");\n+        });\n+        test(\"initial unknown survives invocation restart\", () -> {\n+            Fixture f = new Fixture(Ports.State.UNKNOWN);\n+            state(f.run(), Ports.State.UNKNOWN, 0);\n+            require(f.grants == 0 && f.sleeps.isEmpty(), \"no unsafe redispatch\");\n+        });\n+        test(\"permanent known nonapplication\", () -> {\n+            Fixture f = new Fixture().add(Ports.Kind.PERMANENT, Long.MAX_VALUE);\n+            state(f.run(), Ports.State.REJECTED, 1);\n+            require(f.grants == 0 && f.sleeps.isEmpty(), \"permanent stop must not wait\");\n+        });\n+        test(\"exhaustion does not buy unused final token\", () -> {\n+            Fixture f = new Fixture().add(Ports.Kind.TRANSIENT, 0).add(Ports.Kind.TRANSIENT, 0).add(Ports.Kind.TRANSIENT, 0);\n+            state(f.run(), Ports.State.REJECTED, 3);\n+            require(f.grants == 2 && f.sleeps.size() == 2, \"only between-attempt admissions\");\n+        });\n+        test(\"insufficient initial budget\", () -> {\n+            Fixture f = new Fixture(); f.remaining = 14;\n+            state(f.run(), Ports.State.REJECTED, 0);\n+        });\n+        test(\"exact initial budget\", () -> {\n+            Fixture f = new Fixture().add(Ports.Kind.OK, 0); f.remaining = 15;\n+            state(f.run(), Ports.State.APPLIED, 1);\n+        });\n+        test(\"overflowing attempt plus reserve refused\", () -> {\n+            Fixture f = new Fixture(); f.remaining = Long.MAX_VALUE;\n+            state(f.run(new Ports.Policy(1, Long.MAX_VALUE, 1, 0)), Ports.State.REJECTED, 0);\n+        });\n+        test(\"largest representable exact attempt accepted\", () -> {\n+            Fixture f = new Fixture().add(Ports.Kind.OK, 0); f.remaining = Long.MAX_VALUE;\n+            state(f.run(new Ports.Policy(1, Long.MAX_VALUE, 0, 0)), Ports.State.APPLIED, 1);\n+        });\n+        test(\"overflowing retry wait refused before token\", () -> {\n+            Fixture f = new Fixture().add(Ports.Kind.TRANSIENT, Long.MAX_VALUE); f.remaining = Long.MAX_VALUE;\n+            state(f.run(), Ports.State.REJECTED, 1);\n+            require(f.grants == 0 && f.sleeps.isEmpty(), \"impossible wait not admitted\");\n+        });\n+        test(\"server minimum cannot be truncated to fit\", () -> {\n+            Fixture f = new Fixture().add(Ports.Kind.TRANSIENT, 10); f.remaining = 24;\n+            state(f.run(), Ports.State.REJECTED, 1);\n+            require(f.grants == 0 && f.sleeps.isEmpty(), \"wait requires attempt and reserve too\");\n+        });\n+        test(\"exact retry wait plus call budget\", () -> {\n+            Fixture f = new Fixture().add(Ports.Kind.TRANSIENT, 9).add(Ports.Kind.OK, 0); f.remaining = 24;\n+            state(f.run(), Ports.State.APPLIED, 2);\n+            require(f.sleeps.equals(List.of(9L)), \"exact-fit wait\");\n+        });\n+        test(\"budget consumed by call prevents wait\", () -> {\n+            Fixture f = new Fixture().add(Ports.Kind.TRANSIENT, 0); f.remaining = 20; f.callCost = 10;\n+            state(f.run(), Ports.State.REJECTED, 1);\n+            require(f.grants == 0 && f.sleeps.isEmpty(), \"fresh remaining budget required\");\n+        });\n+        test(\"oversleep burns grant but prevents next call\", () -> {\n+            Fixture f = new Fixture().add(Ports.Kind.TRANSIENT, 0); f.inSleep = () -> f.remaining = 14;\n+            state(f.run(), Ports.State.REJECTED, 1);\n+            require(f.grants == 1 && f.sleeps.size() == 1, \"token is admission, not attempt\");\n+        });\n+        test(\"retry token denial closes reply\", () -> {\n+            Fixture f = new Fixture().add(Ports.Kind.TRANSIENT, 0); f.token = false;\n+            state(f.run(), Ports.State.REJECTED, 1);\n+            require(f.grants == 1 && f.sleeps.isEmpty(), \"denial prevents sleep\");\n+        });\n+        test(\"cancellation before initial call\", () -> {\n+            Fixture f = new Fixture(); f.cancelled = true;\n+            state(f.run(), Ports.State.REJECTED, 0);\n+        });\n+        test(\"cancellation after known nonapplication\", () -> {\n+            Fixture f = new Fixture().add(Ports.Kind.TRANSIENT, 0); f.inCall = () -> f.cancelled = true;\n+            state(f.run(), Ports.State.REJECTED, 1);\n+            require(f.grants == 0 && f.sleeps.isEmpty(), \"cancellation checked before retry admission\");\n+        });\n+        test(\"cancellation during sleep\", () -> {\n+            Fixture f = new Fixture().add(Ports.Kind.TRANSIENT, 0); f.inSleep = () -> f.cancelled = true;\n+            state(f.run(), Ports.State.REJECTED, 1);\n+            require(f.grants == 1, \"one admitted retry but no dispatch\");\n+        });\n+        test(\"pre-interruption prevents dispatch\", () -> {\n+            Fixture f = new Fixture(); Thread.currentThread().interrupt(); interrupted(f, null);\n+            require(f.intents.isEmpty() && f.store.snapshot().state() == Ports.State.PENDING, \"no attempt or normal-stop write\");\n+        });\n+        test(\"interrupted call records unknown and rethrows\", () -> {\n+            Fixture f = new Fixture(); InterruptedException signal = new InterruptedException(\"call interrupted\");\n+            f.inCall = () -> { throw signal; }; interrupted(f, signal);\n+            require(f.intents.size() == 1 && f.store.snapshot().state() == Ports.State.UNKNOWN, \"ambiguous call persisted\");\n+        });\n+        test(\"interrupted sleep closes returned reply\", () -> {\n+            Fixture f = new Fixture().add(Ports.Kind.TRANSIENT, 0);\n+            InterruptedException signal = new InterruptedException(\"sleep interrupted\");\n+            f.inSleep = () -> { throw signal; }; interrupted(f, signal);\n+            require(f.intents.size() == 1 && f.replies.get(0).closes == 1, \"closed before interrupted wait\");\n+            require(f.store.snapshot().state() == Ports.State.PENDING, \"known nonapplication is not unknown\");\n+        });\n+        test(\"interrupt flag after sleep prevents dispatch\", () -> {\n+            Fixture f = new Fixture().add(Ports.Kind.TRANSIENT, 0); f.inSleep = () -> Thread.currentThread().interrupt();\n+            interrupted(f, null); require(f.intents.size() == 1, \"post-sleep interruption checked\");\n+        });\n+        test(\"zero-delay retry still needs one token\", () -> {\n+            Fixture f = new Fixture().add(Ports.Kind.TRANSIENT, 0).add(Ports.Kind.OK, 0);\n+            state(f.run(new Ports.Policy(2, 10, 0, 0)), Ports.State.APPLIED, 2);\n+            require(f.grants == 1 && f.sleeps.equals(List.of(0L)), \"zero-delay admission\");\n+        });\n+        System.out.println(\"Verification: \" + passed + \" passed, \" + failed + \" failed\");\n+        if (failed != 0) throw new AssertionError(\"Verification failures: \" + failed);\n+    }\n+}\n*** End Patch"
+    },
+    {
+      "tool": "apply_patch",
+      "files": [
+        "RetryEngine.java",
+        "Verification.java"
+      ],
+      "purpose": "Repair runner and remove the fixture's extra close-before-token assertion.",
+      "patch": "*** Begin Patch\n*** Update File: C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A15/output/RetryEngine.java\n@@\n-        int attempts = 0;\n-        while (attempts < p.maxAttempts()) {\n-            Ports.Reply reply = operation.call(new Ports.Intent(intent.id() + \"-\" + attempts, intent.payload()), p.attemptNanos());\n-            attempts++;\n-            if (reply.kind() == Ports.Kind.OK) {\n-                store.applied(reply.receipt());\n-                reply.close();\n-                return new Ports.Result(store.snapshot(), attempts);\n-            }\n-            if (reply.kind() == Ports.Kind.PERMANENT) {\n-                store.rejected(); reply.close();\n-                return new Ports.Result(store.snapshot(), attempts);\n-            }\n-            long wait = Math.min(p.localWaitNanos(), reply.serverMinimumNanos());\n-            if (!runtime.acquireRetry()) break;\n-            runtime.sleep(wait);\n-            reply.close();\n-        }\n-        store.rejected();\n-        return new Ports.Result(store.snapshot(), attempts);\n+        Ports.Snapshot initial = store.snapshot();\n+        if (initial.state() == Ports.State.APPLIED || initial.state() == Ports.State.REJECTED) {\n+            return new Ports.Result(initial, 0);\n+        }\n+\n+        boolean unresolved = initial.state() == Ports.State.UNKNOWN;\n+        int attempts = 0;\n+        long wait = 0;\n+        try {\n+            while (attempts < p.maxAttempts()) {\n+                checkInterrupted();\n+                if (runtime.cancelled() || (unresolved && !Contract.REPLAY_SAFE)) break;\n+\n+                if (attempts > 0) {\n+                    if (!fits(runtime.remainingNanos(), p, wait)) break;\n+                    if (!runtime.acquireRetry()) break;\n+                    checkInterrupted();\n+                    if (runtime.cancelled()) break;\n+                    runtime.sleep(wait);\n+                }\n+\n+                // Sleep can overshoot or be cancelled; an admission token is not a call.\n+                checkInterrupted();\n+                if (runtime.cancelled() || !fits(runtime.remainingNanos(), p, 0)) break;\n+\n+                Ports.Reply response;\n+                attempts++;\n+                try {\n+                    response = operation.call(intent, p.attemptNanos());\n+                } catch (InterruptedException interrupted) {\n+                    store.unknown();\n+                    throw interrupted;\n+                }\n+\n+                try (Ports.Reply reply = response) {\n+                    if (reply.kind() == Ports.Kind.OK) {\n+                        store.applied(reply.receipt());\n+                        return new Ports.Result(store.snapshot(), attempts);\n+                    }\n+                    if (reply.kind() == Ports.Kind.UNKNOWN) {\n+                        unresolved = true;\n+                        store.unknown();\n+                    }\n+                    if (reply.kind() == Ports.Kind.PERMANENT) break;\n+                    wait = Math.max(p.localWaitNanos(), reply.serverMinimumNanos());\n+                }\n+            }\n+        } catch (InterruptedException interrupted) {\n+            Thread.currentThread().interrupt();\n+            throw interrupted;\n+        }\n+        if (unresolved) store.unknown();\n+        else store.rejected();\n+        return new Ports.Result(store.snapshot(), attempts);\n     }\n+\n+    private static boolean fits(long remaining, Ports.Policy p, long wait) {\n+        // Subtract only after comparison, so valid long inputs cannot overflow a sum.\n+        if (remaining < p.reserveNanos()) return false;\n+        long available = remaining - p.reserveNanos();\n+        return available >= p.attemptNanos() && wait <= available - p.attemptNanos();\n+    }\n+\n+    private static void checkInterrupted() throws InterruptedException {\n+        if (Thread.currentThread().isInterrupted()) throw new InterruptedException(\"Retry interrupted\");\n+    }\n }\n*** Update File: C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A15/output/Verification.java\n@@\n-        public boolean acquireRetry() { assertPreviousClosed(); grants++; return token; }\n+        public boolean acquireRetry() { grants++; return token; }\n@@\n-                require(replies.get(i).closes == 1, \"reply must close before next call, token or sleep\");\n+                require(replies.get(i).closes == 1, \"reply must close before next call or sleep\");\n*** End Patch"
+    },
+    {
+      "tool": "node run.mjs",
+      "files": [
+        "classes/*.class"
+      ],
+      "purpose": "Compile Java 17-compatible deliverable locally; no service, installation or real configuration involved."
+    },
+    {
+      "tool": "apply_patch",
+      "files": [
+        "REVIEW.md",
+        "result.json",
+        "execution.json"
+      ],
+      "purpose": "Record decision, observed checks, exact commands, limitations and final write/process status."
+    }
+  ],
+  "limits": [
+    "Deterministic local simulation only; no production provider guarantee or wall-clock bound established.",
+    "Store durability/atomicity and same-intent semantics are supplied assumptions; no real provider, database or framework supplied.",
+    "Contract.REPLAY_SAFE=true not exercised because Contract.java is immutable.",
+    "No physical cancellation, concurrent-worker, hidden-retry, retention or fleet validation.",
+    "No authoritative reconciliation port supplied; UNKNOWN must remain unresolved.",
+    "Only the two supplied local skill packages and their relevant references were read; no external skill routing, network or delegation."
+  ],
+  "processesStopped": true,
+  "allWritesStopped": true
+}

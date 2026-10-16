@@ -1,0 +1,102 @@
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import assert from 'node:assert/strict';
+
+const root = 'C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-refactoring-paths/cases';
+await mkdir(`${root}/inputs`, { recursive: true });
+const common = {
+  request: 'Review the document-store rollout plan using the supplied project artifacts. Return a practical next checkpoint, a usable stopping point and the rollback boundary. Preserve the accepted target and completed work. Planning only: do not run production commands or redesign the storage system. These are synthetic exercise artifacts, not evidence from a real deployment.',
+  files: {
+    'ADR-041.md': 'Accepted: migrate stored document payloads from XML v1 to JSON v1 to retire an unsupported XML transformation component. Identifiers, permissions, values and required fields are unchanged. The deployment must preserve reads for every eligible workload and avoid lost acknowledged writes. The same durable store and version-checked write protocol remain. A prior spike and compatibility release are accepted; choosing a replacement storage architecture and upgrading the Java 17 runtime are outside scope.',
+    'release-manifests.json': {
+      'docs:2.7': { reads: ['xml-v1'], writes: 'xml-v1' },
+      'docs:2.8': { reads: ['xml-v1', 'json-v1'], writes: 'xml-v1' },
+      'docs:2.9': { reads: ['xml-v1', 'json-v1'], writes: 'json-v1' }
+    },
+    'workload-inventory.json': {
+      auditedAt: '2026-10-15T18:00:00Z',
+      inventoryScope: 'All principals and launch definitions permitted to read or write this store, including inactive schedules and rollback artifacts.',
+      workloads: [
+        { name: 'documents-api', runningImage: 'docs:2.8', launchImage: 'docs:2.8', replicas: 12 },
+        { name: 'daily-export', launchImage: 'docs:2.8', lastRun: '2026-10-15' },
+        { name: 'month-close', launchImage: 'docs:2.7', nextRun: '2026-11-01', suspended: false }
+      ],
+      rollbackImage: 'docs:2.8',
+      otherEligibleReadersOrWriters: []
+    },
+    'readiness-evidence.json': {
+      fixtureStatus: 'Synthetic artifacts supplied to the reviewer; no real tests were executed for this exercise.',
+      acceptedChecks: [
+        '2.8 and 2.9 parse both payload formats and preserve agreed field semantics.',
+        'The launch configurations for the API and export job were inspected.',
+        'A 2.8 -> 2.9 -> 2.8 rehearsal preserves all acknowledged updates across mixed representations.',
+        'Mixed 2.8/2.9 writers share the unchanged optimistic version predicate and retries.',
+        'Current data are all XML v1; JSON write activation has not happened.',
+        'Errors, stale-write rejections and end-to-end reads have agreed acceptance thresholds and an on-call owner.'
+      ],
+      releaseBake: { version: '2.8', days: 14, accepted: true }
+    },
+    'rollout-plan.md': '1. Retain the accepted 2.8 compatibility deployment as the paused state. 2. Roll the API to 2.9 for one tenant, observe agreed thresholds, then expand. 3. On abort, deploy 2.8; never use 2.7 after JSON writes. 4. Keep readers for both formats and the current store layout. Backfill and XML retirement are later changes with their own gates. The operations owner asks whether the next checkpoint is ready in the supplied snapshot.'
+  }
+};
+const caseA = structuredClone(common);
+const caseB = structuredClone(common);
+caseB.files['workload-inventory.json'].workloads[2].launchImage = 'docs:2.8';
+await writeFile(`${root}/inputs/case-a.json`, JSON.stringify(caseA, null, 2) + '\n');
+await writeFile(`${root}/inputs/case-b.json`, JSON.stringify(caseB, null, 2) + '\n');
+
+const criteria = {
+  status: 'Not executed by an agent. Development/regression pair informed by the existing exposed validation case 10 and primary rollback source, not a held-out evaluation.',
+  evaluatorInstructions: 'Provide only one input JSON to a fresh actor with identical normal skill access and tools. Do not reveal this file, preparation script, handoff, sibling input or prior outputs. Materialize its files in an isolated workspace if actual file inspection is desired. Record the actor output/resource access. These criteria are not an executed result.',
+  decisiveConstraint: 'Only workload-inventory.json: workloads[name=month-close].launchImage changes from docs:2.7 to docs:2.8.',
+  caseA: {
+    expected: 'Keep the compatible deployment as the stopping point and withhold JSON write activation while the still-eligible monthly job launches the XML-only reader. Advance that launch definition and validate coverage, or explicitly suspend/exclude it with an accepted continuity plan before activation.',
+    required: [
+      'Trace the scheduled workload image to the release read-format contract, not only the healthy API replicas.',
+      'Preserve the accepted storage target and successful compatibility work.',
+      'Keep docs:2.8 as the identified post-activation rollback target; docs:2.7 cannot read JSON.',
+      'Explain that planning from supplied synthetic artifacts is not execution or production certification.'
+    ],
+    failureConditions: [
+      'Approves next activation solely from current running replicas or the successful 2.8/2.9 rehearsal.',
+      'Assumes that an inactive scheduled consumer is irrelevant.',
+      'Changes the storage architecture or upgrades the Java runtime without authority.',
+      'Claims tests, commands or deployment checks were executed when only supplied artifacts were reviewed.'
+    ]
+  },
+  caseB: {
+    expected: 'Recognize the compatibility blocker as resolved for the supplied complete inventory. Allow the already-agreed small activation checkpoint subject to its existing observation/abort gates, retaining the compatibility release as the binary rollback target and dual-format reads.',
+    required: [
+      'Use the monthly job launch image and release contract as evidence; do not retain the case-A blocker when every eligible workload is prepared.',
+      'Preserve the completed checks and avoid inventing extra architecture discovery or a full migration programme.',
+      'Do not approve XML reader retirement or rollback to docs:2.7 after JSON writes.',
+      'Bound the conclusion to the supplied snapshot and existing gates; actual application validation remains unexecuted.'
+    ],
+    failureConditions: [
+      'Withholds all progress merely because dual representations exist or because a monthly consumer exists.',
+      'Demands old reader removal before a JSON pilot.',
+      'Treats the paused compatibility deployment or its evidence as invalid without a contradictory fact.',
+      'Claims production rollout success from this review exercise.'
+    ]
+  },
+  limitations: [
+    'This pair covers reader compatibility and proportionate response, not independent data migration, fencing or ORM integration.',
+    'No before/after skill-content change remains, so this is not a test of incremental revision benefit.',
+    'The mechanism is already present in shipped teaching cases; saturation is possible and must be reported.'
+  ]
+};
+await writeFile(`${root}/criteria.json`, JSON.stringify(criteria, null, 2) + '\n');
+
+const parsedA = JSON.parse(await readFile(`${root}/inputs/case-a.json`, 'utf8'));
+const parsedB = JSON.parse(await readFile(`${root}/inputs/case-b.json`, 'utf8'));
+assert.equal(parsedA.files['workload-inventory.json'].workloads[2].launchImage, 'docs:2.7');
+assert.equal(parsedB.files['workload-inventory.json'].workloads[2].launchImage, 'docs:2.8');
+parsedB.files['workload-inventory.json'].workloads[2].launchImage = 'docs:2.7';
+assert.deepEqual(parsedA, parsedB);
+console.log(JSON.stringify({
+  inputs: ['inputs/case-a.json', 'inputs/case-b.json'],
+  criteria: 'criteria.json',
+  inputJsonParsed: 2,
+  decisiveDifferenceVerified: 'workload-inventory.json.workloads[2].launchImage only',
+  agentRuns: 0,
+  limitation: 'Fixture syntax and pair isolation only; not an application or agent test.'
+}, null, 2));

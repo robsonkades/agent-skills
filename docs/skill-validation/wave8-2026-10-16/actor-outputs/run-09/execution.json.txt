@@ -1,0 +1,86 @@
+{
+  "taskRoot": "C:/Users/robso/AppData/Local/Temp/skills-wave8-6b5d18c2/actors/run-09",
+  "journalType": "Concise actor report of actual reads, commands and outcomes; not a full tool trace",
+  "filesRead": [
+    "TASK.md",
+    "input/README.md",
+    "input/REQUEST.md",
+    "input/schema.sql",
+    "input/seed.sql",
+    "input/current.sql",
+    "input/proposed.sql",
+    "input/fixture.mjs",
+    "skill/SKILL.md",
+    "skill/references/query-shapes.md",
+    "output/README.md",
+    "output/REQUEST.md",
+    "output/schema.sql",
+    "output/seed.sql",
+    "output/current.sql",
+    "output/proposed.sql",
+    "output/fixture.mjs",
+    "output/solution.sql",
+    "output/verify.mjs",
+    "output/check-mutants.mjs",
+    "output/verification-run.json",
+    "output/REVIEW.md",
+    "output/result.json"
+  ],
+  "commands": [
+    {
+      "command": "Get-Content -LiteralPath <taskRoot>/TASK.md -Raw",
+      "exitCode": 0,
+      "result": "Read the isolation, skill routing and deliverable instructions."
+    },
+    {
+      "command": "Get-Content input/README.md, input/REQUEST.md and skill/SKILL.md; rg --files input output skill",
+      "exitCode": 0,
+      "result": "Read the environment, task and authorized skill; inventoried only this run."
+    },
+    {
+      "command": "Get-Content input/schema.sql, seed.sql, current.sql, proposed.sql, fixture.mjs, output/solution.sql and skill/references/query-shapes.md",
+      "exitCode": 0,
+      "result": "Inspected helper before use and established the non-null boolean domain."
+    },
+    {
+      "command": "node -e <bounded spawnSync runner and byte-preservation audit>",
+      "workingDirectory": "output",
+      "exitCode": 0,
+      "subcommands": [
+        { "command": "node verify.mjs", "exitCode": 0, "result": "11 ordered-bag cases passed; 124 generated rows; two illegal active values rejected." },
+        { "command": "node check-mutants.mjs", "exitCode": 0, "result": "Five sequential wrong candidates each caused verify.mjs to exit 1 with AssertionError. Original solution bytes restored." },
+        { "command": "node verify.mjs", "exitCode": 0, "result": "Restored candidate passed the same 11 cases." }
+      ],
+      "result": "Wrote verification-run.json with real stdout, stderr, exits and hashes; all seven provided copies preserved and solution equal to proposal."
+    },
+    {
+      "command": "node -e <final report, JSON, log and byte-preservation validation>",
+      "workingDirectory": "output",
+      "exitCode": 0,
+      "result": "REVIEW.md has 546 words; decision/evidence/limits present; all logged checks passed; unchanged solution and provided copies confirmed."
+    }
+  ],
+  "primarySourcesRead": [
+    "https://www.postgresql.org/docs/17/queries-union.html",
+    "https://www.postgresql.org/docs/17/functions-logical.html",
+    "https://www.postgresql.org/docs/17/indexes-bitmap-scans.html",
+    "https://www.postgresql.org/docs/17/using-explain.html"
+  ],
+  "authoredFiles": [
+    "output/verify.mjs",
+    "output/check-mutants.mjs",
+    "output/verification-run.json",
+    "output/REVIEW.md",
+    "output/result.json",
+    "output/execution.json"
+  ],
+  "temporaryWrites": "check-mutants.mjs replaced only output/solution.sql for five tests, then restored its original bytes in finally; final equality was verified.",
+  "subprocessBounds": "Verification children used spawnSync timeout=20000. Every observed shell command completed within 20 seconds.",
+  "limits": [
+    "No target PostgreSQL execution, plan or performance timings.",
+    "Local checks use experimental node:sqlite and do not establish PostgreSQL production behavior or speedup.",
+    "No sibling runs, repository, evaluator or other agents' artifacts were accessed; no delegation, installations or real configuration changes."
+  ],
+  "pendingProcesses": [],
+  "allWritesStopped": true
+}

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-flyweight
-version: 1.2.4
+version: 1.2.5
 description: >-
   Flyweight in modern Java: sharing one immutable instance across many logical occurrences to
   reduce retained memory, with benefits dependent on duplicate lifetimes and lookup cost. Covers the

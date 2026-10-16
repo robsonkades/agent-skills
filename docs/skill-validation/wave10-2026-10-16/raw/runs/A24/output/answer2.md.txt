@@ -1,0 +1,9 @@
+**Recomendo que Diego aprove J para os próximos 12 meses e autorize sua migração agora, sem condicionar a recomendação a novos benchmarks.** A investigação financeira resolveu a única incerteza capaz de mudar a escolha.
+
+Com as premissas fornecidas, J custa **12 + 12 × 17 = 216 mil** no horizonte completo, incluindo migração/saída e todos os itens mensais. H custa **240 mil**. J economiza **24 mil, ou 10%**, frente a H. Os 180 mil já pagos em H continuam excluídos por serem irrecuperáveis. Esses valores são cálculos sobre os documentos locais, não medições executadas por mim.
+
+Correção, prazo contratado, segurança, suporte e recuperação já foram verificados nas duas alternativas, assim como a transição de J. Como o único critério residual é o menor custo futuro total, **J é a escolha superior nas condições informadas**. O custo fixo de 12 mil já está contabilizado; não é razão adicional para rejeitá-la. Não há necessidade de inventar uma desvantagem decisória para cada opção: este caso não apresenta uma compensação entre critérios que possa justificar pagar mais por H.
+
+Não recomendo novas investigações para esta decisão. As quatro semanas de benchmarking pedidas pelo patrocinador apenas adiam a escolha: a variação plausível da latência permanece dentro do contrato e não modifica custo, qualidade percebida ou preferência de Diego. Assim, esses testes não podem alterar a recomendação com o material disponível.
+
+A direção provisória de manter H deixa de se aplicar. A conferência financeira não autorizou gastos; cabe agora a Diego aprovar explicitamente a migração de J. Nenhuma migração ou experimento foi executado nesta análise.

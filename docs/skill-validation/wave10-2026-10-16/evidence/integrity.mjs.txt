@@ -1,0 +1,29 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+import {execFileSync} from 'node:child_process';
+const root='C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23',repo='C:/git/agent-skills',report=repo+'/docs/skill-validation/wave10-2026-10-16';
+const read=p=>JSON.parse(fs.readFileSync(p,'utf8'));
+const sha=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
+const actors=read(root+'/actors.json'),freeze=read(report+'/freeze.json'),base=read(report+'/baseline.json');
+const mismatches=[];
+for(const f of freeze.inputs)if(!fs.existsSync(f.path)||sha(f.path)!==f.sha256)mismatches.push(f.path);
+for(const a of actors){
+ const seal=read(root+'/stage-seals/'+a.id+'.json');
+ for(const f of seal.files)if(sha(f.path)!==f.sha256)mismatches.push(f.path);
+ assert.equal(fs.readFileSync(a.dir+'/input/UPDATE.md','utf8'),read(root+'/cases.json')[a.case].update+'\n');
+ for(const s of[1,2])assert.ok(fs.existsSync(a.dir+'/output/answer'+s+'.md')&&fs.existsSync(a.dir+'/output/access'+s+'.json'));
+}
+const gradeSeal=read(root+'/root-grades-seal.json');assert.equal(sha(root+'/root-grades.json'),gradeSeal.sha256);
+for(const f of gradeSeal.notes)assert.equal(sha(root+'/'+f.path),f.sha256);
+const packets=read(root+'/packets-seal.json');for(const f of packets.files)assert.equal(sha(root+'/'+f.path),f.sha256);
+const allowed=['skills/architecture-trade-off-analysis/skill.yaml','skills/architecture-trade-off-analysis/references/validation-cases.md','skills/architecture-trade-off-analysis/references/bias-and-evidence.md','registry/skills.yaml','docs/skills-evolution-inventory.md'];
+const changes=base.allFiles.filter(f=>!fs.existsSync(repo+'/'+f.path)||sha(repo+'/'+f.path)!==f.sha256).map(f=>f.path);
+const existing=new Set(base.allFiles.map(f=>f.path));
+const now=[...new Set(execFileSync('git',['ls-files','-z','--cached','--others','--exclude-standard'],{cwd:repo,encoding:'utf8',maxBuffer:64*1024*1024}).split('\0').filter(Boolean))];
+const added=now.filter(p=>!existing.has(p));
+const unexpectedChanges=changes.filter(p=>!allowed.includes(p));
+const unexpectedAdded=added.filter(p=>!p.startsWith('docs/skill-validation/wave10-2026-10-16/'));
+const result={at:new Date().toISOString(),frozenInputs:freeze.inputs.length,stage1SealedFiles:actors.length*2,expectedUpdates:actors.length,maskedPackets:packets.files.length,mismatches,initialFiles:base.allFiles.length,changedInitialFiles:changes,addedFiles:added.length,unexpectedChanges,unexpectedAdded,limit:'Hashes establish preservation of observed files, not read isolation. The starting inventory includes tracked and nonignored untracked files, not ignored dependencies or real agent configuration.'};
+fs.writeFileSync(root+'/integrity-final.json',JSON.stringify(result,null,2)+'\n');
+console.log(JSON.stringify(result));assert.equal(mismatches.length+unexpectedChanges.length+unexpectedAdded.length,0);

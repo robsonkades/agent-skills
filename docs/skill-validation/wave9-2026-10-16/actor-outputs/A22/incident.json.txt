@@ -1,0 +1,49 @@
+{
+  "provenance": "Authored fixture, not production capture",
+  "cohort": {
+    "logicalCalls": 1000,
+    "outerAttempts": 1060,
+    "wireAttempts": 1600,
+    "successesThatRefill": 900,
+    "outerRetryGrants": 60,
+    "scope": "Same completed cohort/window/dependency; every outer attempt invokes exactly one SDK operation. All wire attempts in this cohort are attributed to SDK retries; no fanout, hedging or unrelated traffic."
+  },
+  "deployment": {
+    "processes": 4,
+    "initialTokensPerProcess": 10,
+    "refillPerSuccess": 0.1,
+    "maxTokensPerProcess": 20,
+    "noRestartsOrOtherRefills": true,
+    "budgetScope": "One local bucket per process admits outer retries, not SDK wire sends"
+  },
+  "configuration": {
+    "outerMaxAttemptsIncludingInitial": 2,
+    "sdkMaxAttemptsIncludingInitial": 3,
+    "gatewayCurrentAttempts": 1,
+    "gatewayProposedAttempts": 3,
+    "combinedDeadline": "No numerical bound supplied; nominal attempt maxima need not be reachable under deadline."
+  },
+  "effectTrace": {
+    "intent": "operation-41",
+    "peerReplayGuarantee": "None for this operation; a lookup reports current state only, with no guarantee against later application.",
+    "events": [
+      {
+        "atMs": 0,
+        "event": "write dispatched"
+      },
+      {
+        "atMs": 50,
+        "event": "caller timeout, cancel signal sent"
+      },
+      {
+        "atMs": 52,
+        "event": "lookup reports not found"
+      },
+      {
+        "atMs": 80,
+        "event": "original write commits"
+      }
+    ],
+    "pendingWork": "A cancellation signal is recorded; no cancellation acknowledgement or release timestamp before commit."
+  }
+}

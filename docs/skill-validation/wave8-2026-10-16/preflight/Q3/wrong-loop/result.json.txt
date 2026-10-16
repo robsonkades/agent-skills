@@ -1,0 +1,1 @@
+{"metrics":{"innerExecutions":1,"innerEmittedRows":4,"innerInclusiveWorkMs":0.065,"capturedExecutionTimeMs":605000}}

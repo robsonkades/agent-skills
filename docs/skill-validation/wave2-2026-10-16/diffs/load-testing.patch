@@ -1,0 +1,62 @@
+diff --git a/skills/load-testing/SKILL.md b/skills/load-testing/SKILL.md
+index 3d6f7c9..64efe1b 100644
+--- a/skills/load-testing/SKILL.md
++++ b/skills/load-testing/SKILL.md
+@@ -122,6 +122,9 @@ evidence, change one causal factor, and reproduce.
+   aggregation dimensions with percentiles.
+ - Do not average or add percentiles across replicas, windows or path components.
+ - Do not treat error responses as fast successes. Report outcome and latency jointly.
++- For asynchronous operations, distinguish admission from the required terminal effect.
++  A fast accepted-job response does not establish completion throughput or latency; use
++  the asynchronous boundary checks in `references/test-plan.md` when that is the claim.
+ - Separate client- and server-observed latency.
+ - Name each timer's start/end and included phases. Report scheduled-to-start delay separately
+   from started-request latency; a tool's request-duration metric may omit DNS, connection or
+diff --git a/skills/load-testing/references/test-plan.md b/skills/load-testing/references/test-plan.md
+index 7013072..bafcc4e 100644
+--- a/skills/load-testing/references/test-plan.md
++++ b/skills/load-testing/references/test-plan.md
+@@ -127,6 +127,21 @@ the server's eventual completion may still be unknown, and its work may retain r
+ Keep graceful drain separate from the active offered-load interval instead of diluting rates
+ by dividing active-phase work by a longer teardown-inclusive duration.
+ 
++For asynchronous APIs, trace the handler's acknowledgement point, enqueue/persist action,
++worker and authoritative effect. HTTP `202` describes acceptance before processing completes;
++k6's status-based `http_req_failed` cannot establish downstream business completion. An
++admission-only experiment is valid within that declared boundary. For an end-to-end claim,
++join logical operation IDs from submission to terminal success/failure, retain unresolved
++members through the declared follow-up, and compare queue growth/age with useful completions.
++Missing completion evidence limits the claim; it is not proof of success or loss. Name
++whether the timer ends at durable effect or observed visibility, including polling delay.
++
++Separate submission requests, status polls and completed logical operations in metrics and
++thresholds; ten successful polls are not ten completed jobs. Bound observation traffic and
++account for its generator/target cost. Waiting or polling inside an arrival iteration changes
++VU occupancy and can affect the achieved schedule; revalidate both without changing the intended
++arrival process. Reuse independent completion telemetry when it establishes the required effect.
++
+ ## Run validity matrix
+ 
+ | Dimension          | Evidence                                        | If violated                              |
+@@ -168,6 +183,8 @@ credentials/data, respect dependency quotas, verify recovery and clean only owne
+ 
+ ## Sources for tool-specific interpretation
+ 
++- [RFC 9110 section 15.3.3: 202 Accepted](https://www.rfc-editor.org/rfc/rfc9110.html#section-15.3.3)
++- [k6 expected-response classification](https://grafana.com/docs/k6/latest/javascript-api/k6-http/set-response-callback/)
+ - [k6 built-in metric boundaries](https://grafana.com/docs/k6/latest/using-k6/metrics/reference/)
+ - [k6 scenario-scoped iteration duration](https://grafana.com/docs/k6/latest/using-k6/workaround-iteration-duration/)
+ - [k6 checks and thresholds](https://grafana.com/docs/k6/latest/using-k6/checks/)
+diff --git a/skills/load-testing/skill.yaml b/skills/load-testing/skill.yaml
+index d6739dc..5617633 100644
+--- a/skills/load-testing/skill.yaml
++++ b/skills/load-testing/skill.yaml
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: load-testing
+-version: 1.4.3
++version: 1.4.4
+ description: >-
+   Designing valid service load experiments: choosing open or closed workload models,
+   defining offered, admitted and successful work, controlling generator and environment

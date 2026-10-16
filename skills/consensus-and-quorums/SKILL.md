@@ -61,8 +61,11 @@ and reversible investigation moving. An adequate deployment can remain unchanged
 4. **Decide, in writing, what each side of a partition does.** A side lacking the configured
    quorum cannot commit new consensus decisions; separately specify any permitted stale/local reads.
    Do not bypass quorum safety to restore writes. CAP itself is `consistency-models`.
-5. **Choose product-specific read semantics per call site.** etcd linearizable and serializable
-   reads differ; ZooKeeper member-local reads are not linearizable. Measure the actual path.
+5. **Choose product-specific read semantics per call site.** Follow the caller through its client
+   wrapper to the effective read options and request boundary. etcd linearizable and serializable
+   reads differ; ZooKeeper member-local reads are not linearizable. An atomic multi-key write does
+   not make several separate reads one snapshot; inspect both sides before claiming a torn write
+   (`references/quorum-arithmetic.md`). Measure the actual path when latency is part of the decision.
 6. **Keep business traffic off the coordination path by default.** A synchronous dependency
    needs a measured rate/retention/latency case and accepted outage behaviour. Cache a decision
    only when its freshness and authority contract permits it; some decisions must fail closed
@@ -74,9 +77,12 @@ and reversible investigation moving. An adequate deployment can remain unchanged
    recovery budget. Stop or isolate `f+1` in total and verify newly initiated writes cannot be acknowledged
    as committed without a quorum. For weighted or hierarchical policies, choose surviving sets
    that satisfy or fail the actual quorum rule; headcount alone does not select those cases.
-   Do not remove members through the membership API for this
-   test: that changes the required quorum. In-flight writes may have committed before disruption;
-   timeouts retain unknown outcomes. Test each minority read/fail-fast policy and restore the fixture.
+   Record the effective voter configuration, partition sets and the client's contacted endpoints.
+   Isolating a group that itself contains a quorum still allows that group to commit; automatic client
+   failover can mask which side served a successful probe. Do not remove members through the membership
+   API for this test: that changes the required quorum. Use unique probe IDs and reconcile outcomes
+   against recovered history. In-flight writes may have committed before disruption; timeouts retain
+   unknown outcomes. Test each minority read/fail-fast policy and restore the fixture.
 
 ## Decision block
 

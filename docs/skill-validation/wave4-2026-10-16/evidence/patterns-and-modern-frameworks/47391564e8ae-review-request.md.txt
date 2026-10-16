@@ -1,0 +1,3 @@
+# Review request
+
+The current implementation uses Spring caching for catalog updates. A proposed follow-up would add an application-owned CacheCoordinator and explicit transaction callbacks because the team is unsure whether the existing configuration is sufficient. Review the effective call path and configuration against the cache contract. Decide whether this follow-up is needed or another focused adjustment is appropriate. Preserve adequate mechanisms and accepted scope. Deliver a review with file evidence, the decision and a discriminating check; do not implement a production redesign.

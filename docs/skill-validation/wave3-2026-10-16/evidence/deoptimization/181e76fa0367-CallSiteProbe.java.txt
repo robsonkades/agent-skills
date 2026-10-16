@@ -1,0 +1,64 @@
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+import java.lang.invoke.MutableCallSite;
+
+/** Disposable mechanism probe; no latency or throughput claim. */
+public final class CallSiteProbe {
+    private static final MethodHandle A;
+    private static final MethodHandle B;
+    private static final MutableCallSite SITE;
+    private static final MethodHandle INVOKER;
+    private static volatile long sink;
+
+    static {
+        try {
+            var lookup = MethodHandles.lookup();
+            var type = MethodType.methodType(int.class, int.class);
+            A = lookup.findStatic(CallSiteProbe.class, "plusOne", type);
+            B = lookup.findStatic(CallSiteProbe.class, "plusTwo", type);
+            SITE = new MutableCallSite(A);
+            INVOKER = SITE.dynamicInvoker();
+        } catch (ReflectiveOperationException e) {
+            throw new ExceptionInInitializerError(e);
+        }
+    }
+
+    static int plusOne(int value) { return value + 1; }
+    static int plusTwo(int value) { return value + 2; }
+    static int dispatch(int value) throws Throwable {
+        return (int) INVOKER.invokeExact(value);
+    }
+
+    public static void main(String[] args) throws Throwable {
+        if (args.length != 1 || !(args[0].equals("same") || args[0].equals("change"))) {
+            throw new IllegalArgumentException("Expected same or change");
+        }
+        boolean change = args[0].equals("change");
+        System.out.println("phase=begin mode=" + args[0]);
+        int delta = 1;
+        for (int round = 0; round < 4; round++) {
+            long checksum = 0;
+            long expected = 0;
+            for (int i = 0; i < 100_000; i++) {
+                int value = i & 1023;
+                checksum += dispatch(value);
+                expected += value + delta;
+            }
+            sink = checksum;
+            if (checksum != expected) {
+                throw new AssertionError("Incorrect checksum");
+            }
+            MethodHandle next = change && round % 2 == 0 ? B : A;
+            System.out.println("phase=before-set round=" + round);
+            SITE.setTarget(next);
+            MutableCallSite.syncAll(new MutableCallSite[] {SITE});
+            delta = next == A ? 1 : 2;
+            if (dispatch(7) != 7 + delta) {
+                throw new AssertionError("Incorrect target after setTarget");
+            }
+            System.out.println("phase=after-set round=" + round);
+        }
+        System.out.println("PASS mode=" + args[0] + " checksum=" + sink);
+    }
+}

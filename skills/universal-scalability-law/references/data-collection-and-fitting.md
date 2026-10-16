@@ -203,6 +203,9 @@ discard bootstrap samples with no finite peak to manufacture a finite peak inter
 ```r
 library(usl)
 packageVersion("usl")
+if (any(is.na(runs[c("load", "throughput")]))) {
+  stop("Account for missing run data before fitting")
+}
 model <- usl(throughput ~ load, data = runs)
 coef(model)       # current releases estimate alpha, beta and gamma
 confint(model)    # inspect the installed interval implementation before claiming coverage
@@ -211,6 +214,12 @@ plot(model)
 
 The CRAN 3.0.4 manual documents `alpha`, `beta`, `gamma` and nonlinear solvers; the interface
 changed across major versions. Pin the installed version and archive `sessionInfo()`.
+Its [3.0.4 model-frame construction](https://raw.githubusercontent.com/cran/usl/3.0.4/R/usl.R)
+sets `na.action = "na.omit"`, so missing load/throughput values remove runs before fitting.
+The guard above makes that loss visible. Preserve raw rows and run status; a missing measurement
+after a timeout is unknown, not measured zero or evidence that throughput did not fall.
+Repair acquisition or explicitly justify an analysis subset, recording excluded run IDs and reasons.
+A fit to complete cases does not establish capacity at loads whose outcomes remain unknown.
 Its 3.0.4 `nls`/`nlxb` solvers use gamma `>=0` and alpha/beta in `[0,1]`, unlike the wider
 nonnegative coefficient regime in the Python fragment. Report the chosen constraints when comparing fits.
 Its `confint` uses parameter standard errors and a Student t distribution, not a bootstrap.

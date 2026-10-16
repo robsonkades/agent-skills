@@ -1,0 +1,35 @@
+{
+  "javaVersion": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)",
+  "javacVersion": "javac 25.0.3",
+  "sourceAndApiTarget": 17,
+  "actualRuntime": 25,
+  "springCore": "6.2.10",
+  "dependency": {
+    "path": "C:/Users/robso/.m2/repository/org/springframework/spring-core/6.2.10/spring-core-6.2.10.jar",
+    "sha256": "28122D6E4A48EB8B6A0E4E087A55E96E46FB4D5E7D5D2C74DC8051401D8101DA"
+  },
+  "executedChildCommands": 11,
+  "expectedNegativeExits": 1,
+  "unexpectedFailures": [],
+  "results": {
+    "applicationWithoutSpring": "PASS javac --release17 without Spring on classpath",
+    "originalSingleRead": "PASS reads=1 checksum=483217965",
+    "originalTwoReads": "EXPECTED FAILURE: InputStreamResource rejects second access despite fresh-stream supplier and application-owned forwarding port",
+    "originalControls": "PASS lifecycle, forwarding, direct resource use, failure cleanup, snapshot; opens=1 closes=1",
+    "replayableTwoReads": "PASS reads=2 checksum=483217965",
+    "replayableSingleRead": "PASS reads=1 checksum=483217965",
+    "replayableControls": "PASS lifecycle, forwarding, direct resource use, failure cleanup, snapshot; opens=1 closes=1"
+  },
+  "conclusions": [
+    "The application compile boundary exists but does not remove the selected provider lifecycle contract.",
+    "One-read consumers already fit the original lifecycle; two-read consumers require a different effective resource contract.",
+    "Existing ByteArrayResource at the permitted adapter boundary suffices for the bounded, already materialized snapshot.",
+    "A forwarding wrapper neither changes replayability nor removes the need for close and failure-path checks."
+  ],
+  "limits": [
+    "No independent agent evaluation, comparison or measured gain.",
+    "No Spring container, persistence, transaction, proxy interception, HTTP or external I/O integration was executed.",
+    "Compiled with --release17 on JDK25.0.3; no JDK17 VM executed.",
+    "No large or unbounded payload benchmark; the case contract bounds the existing byte[] to4096 bytes."
+  ]
+}

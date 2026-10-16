@@ -301,6 +301,6 @@ Primary sources: [Java 21 pattern switch](https://docs.oracle.com/en/java/javase
 [JLS 17.1 monitor reentrancy](https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html#jls-17.1),
 [CompletableFuture cancellation](<https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CompletableFuture.html#cancel(boolean)>),
 [AtomicReference](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/atomic/AtomicReference.html),
-[Jakarta Persistence 3.2 bulk updates/versioning](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2),
-[Jakarta Persistence 3.2 enum value mapping](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/enumeratedvalue),
+[Jakarta Persistence 3.2 bulk updates/versioning](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html),
+[Jakarta Persistence 3.2 enum value mapping](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/EnumeratedValue.html),
 and [ShedLock lock duration](https://github.com/lukas-krecan/ShedLock).

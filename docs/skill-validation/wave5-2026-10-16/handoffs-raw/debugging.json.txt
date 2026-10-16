@@ -1,0 +1,585 @@
+{
+  "skill": "debugging",
+  "status": "NO_CHANGES_NEEDED",
+  "wave": 5,
+  "ownedPath": "skills/debugging/**",
+  "completedAt": "2026-10-16T16:53:02.252Z",
+  "scope": "Review of the existing specialist diagnostic skill, all four package files, against the complete review prompt, parallel workflow, wave-five brief and skill-engineering references. No skill-content defect requiring change was substantiated.",
+  "reviewReference": {
+    "skillEngineeringVersion": "1.0.3",
+    "documents": [
+      "AGENTS.md",
+      "docs/skill-review-prompt.md",
+      "docs/parallel-skill-reviews.md",
+      "docs/skill-validation/wave5-2026-10-16/review-brief.md",
+      "skills/skill-engineering/SKILL.md",
+      "skills/skill-engineering/references/evidence-and-confidence.md",
+      "skills/skill-engineering/references/evaluation.md",
+      "skills/skill-engineering/references/resource-design.md",
+      "skills/skill-engineering/references/anti-patterns.md"
+    ],
+    "cumulativeResearch": "Previously read unchanged comparative research and prior-wave lessons reused: ordinary investigation inputs, controlling-premise refutation, appropriate no-change decisions, and no measured gain inferred from source/fixture checks."
+  },
+  "versions": {
+    "committed": "1.1.4",
+    "assignment": "1.1.4",
+    "final": "1.1.4",
+    "preExistingBump": false,
+    "rationale": "Package byte hashes are unchanged; repository policy requires no bump for a no-change result."
+  },
+  "baseline": {
+    "path": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/baseline.json",
+    "head": "bbb7d996a929e81baf735bbaab5b6e3fbf6e8503",
+    "coordinatorBaselineMatched": true,
+    "ownedCommittedDifferences": [],
+    "ownedStagedDifferences": [],
+    "ownedUnstagedDifferences": [],
+    "ownedUntrackedFiles": [],
+    "otherContributors": "Unrelated earlier-wave and concurrent edits preserved; not attributed to this review."
+  },
+  "compatibilityContract": {
+    "skill": "No universal Java baseline; inspect source and deployed toolchain/configuration before version-sensitive recommendations. JDK 25 and PostgreSQL 17 references are examples with explicit applicability.",
+    "fixture": "Reviewer-authored synthetic Java case uses Java 17 language/API surface, compiled with javac 25.0.3 --release 17 and executed only on Temurin 25.0.3+9. No Java 17 runtime verification."
+  },
+  "criteria": [
+    "Establish observed versus expected behavior using the actual caller and effective configuration.",
+    "Separate hypothesis, causal support and missing evidence; revise the requested diagnostic artifact after refutation.",
+    "Use comparable state/exposure and reliable classification, preserving the same failure signature.",
+    "Select production evidence within authorized mitigation budgets and known source coverage.",
+    "Preserve diagnosis-only scope, useful existing mechanisms and target compatibility."
+  ],
+  "findings": [
+    {
+      "location": "SKILL.md:25-66",
+      "result": "preserved",
+      "evidence": "Reads expected contract, effective call path/configuration and existing tests; accepts diagnosis-only completion and unavailable evidence.",
+      "consequence": "Avoids treating the report explanation as fact or forcing a repair where the task authorizes diagnosis only."
+    },
+    {
+      "location": "references/method.md:3-68",
+      "result": "preserved",
+      "evidence": "Keeps failure signature while reducing; separates defect, trigger and detection; records state/cache/process effects and rechecks failing controls.",
+      "consequence": "A changed environment or cleared cache cannot silently receive credit as a causal fix."
+    },
+    {
+      "location": "references/method.md:70-100",
+      "result": "preserved",
+      "evidence": "Exit protocol and actual-case execution checks agree with Git documentation; false-good zero-test runs and unrelated failures are already addressed.",
+      "consequence": "No additional classifier framework or duplicated bisection instructions are justified."
+    },
+    {
+      "location": "references/method.md:102-170",
+      "result": "preserved",
+      "evidence": "Cause/suppression contracts, intermittent exposure and observer effects are conditional; repeated refutations reopen the model.",
+      "consequence": "The skill does not mistake a stack location, debugger effect or one passing retry for established cause."
+    },
+    {
+      "location": "references/production-evidence.md:18-76",
+      "result": "preserved",
+      "evidence": "Target-specific capture cost/coverage, primary/replica snapshots, authorized recovery deadline, mutable drained nodes and JFR enablement/threshold/sample/filter limits are explicit.",
+      "consequence": "Capture selection remains proportional, and empty evidence does not justify absence outside verified coverage."
+    },
+    {
+      "location": "SKILL.md:97-108 and references/production-evidence.md:30-34",
+      "result": "preserved",
+      "evidence": "Both references have explicit reading conditions. Live capture planning is routed to incident-evidence-capture; detailed specialist analysis remains separate.",
+      "consequence": "Retains the diagnostic role and avoids absorbing neighboring operational mechanics."
+    }
+  ],
+  "correctedFindings": [],
+  "remainingFindings": [],
+  "changes": [],
+  "files": {
+    "changedByReviewer": [],
+    "preExistingWithinOwnedPath": [],
+    "addedToShippedPackage": [],
+    "removedFromShippedPackage": []
+  },
+  "preserved": [
+    "Concrete symptom-based activation and specialist exclusions.",
+    "Full reproduction/shrinking/differential-diagnosis method, interactions and no-change/contract-clarification outcomes.",
+    "Explicit cause/suppression, intermittent reproduction, heisenbug, bisection and false-good classifier guidance.",
+    "Incident evidence volatility, cost, target versions, capture bounds, handoffs and unknown-coverage caveats.",
+    "Twelve declared optional referrals, both routed references, diagnosis/mitigation/repair distinction and proportional output."
+  ],
+  "replaced": [],
+  "intentionallyRemoved": [],
+  "checks": [
+    {
+      "kind": "executed baseline inspection",
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/baseline.mjs",
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS: clean staged/unstaged/untracked state; four hashes match coordinator baseline; HEAD/assignment version 1.1.4.",
+      "log": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/baseline.json"
+    },
+    {
+      "kind": "executed source retrieval and manual source inspection",
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/capture-sources.mjs; primary pages also opened with web.run for Git and Google SRE",
+      "cwd": "C:/git/agent-skills",
+      "result": "Eight HTTP 200 captures retained with URLs, timestamps and hashes. Relevant text sections read; pinned JFC blocks inspected and extracted.",
+      "log": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/source-captures.json"
+    },
+    {
+      "kind": "executed structural and technical validation",
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/validate-local.mjs",
+      "cwd": "C:/git/agent-skills",
+      "result": {
+        "strictIssues": 0,
+        "nameMatches": true,
+        "descriptionMatches": true,
+        "assignmentHashesMatched": 4,
+        "routedReferences": [
+          "references/method.md",
+          "references/production-evidence.md"
+        ],
+        "declaredReferrals": 12,
+        "externalMarkdownLinks": 8
+      },
+      "log": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/local-validation.json"
+    },
+    {
+      "kind": "executed local structural/read-only command",
+      "command": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "node_modules/prettier/bin/prettier.cjs",
+        "--check",
+        "skills/debugging/SKILL.md",
+        "skills/debugging/references/method.md",
+        "skills/debugging/references/production-evidence.md",
+        "skills/debugging/skill.yaml"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "Checking formatting...\nAll matched files use Prettier code style!\n",
+      "stderr": ""
+    },
+    {
+      "kind": "executed technical fixture/toolchain command",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-version"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n"
+    },
+    {
+      "kind": "executed technical fixture/toolchain command",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "-version"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "javac 25.0.3\r\n",
+      "stderr": ""
+    },
+    {
+      "kind": "executed technical fixture/toolchain command",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "--release",
+        "17",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-validation-ujPBF2\\debugging\\technical\\classes",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-validation-ujPBF2\\debugging\\case-inputs\\DBG-C1\\src\\Quote.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-validation-ujPBF2\\debugging\\case-inputs\\DBG-C1\\src\\QuoteService.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-validation-ujPBF2\\debugging\\case-inputs\\DBG-C1\\src\\Replay.java"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "kind": "executed technical fixture/toolchain command",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-validation-ujPBF2\\debugging\\technical\\classes",
+        "Replay",
+        "config/app.properties",
+        "data/requests.csv"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-validation-ujPBF2\\debugging\\case-inputs\\DBG-C1",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "W-17\tUSD\tUSD\t1299\r\nW-17\tEUR\tUSD\t1299\r\n",
+      "stderr": ""
+    },
+    {
+      "kind": "executed technical fixture/toolchain command",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-validation-ujPBF2\\debugging\\technical\\classes",
+        "Replay",
+        "config/app.properties",
+        "data/requests.csv"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-validation-ujPBF2\\debugging\\case-inputs\\DBG-C2",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "W-17\tUSD\tUSD\t1299\r\nW-17\tEUR\tEUR\t1199\r\n",
+      "stderr": ""
+    },
+    {
+      "kind": "executed technical fixture/toolchain command",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-validation-ujPBF2\\debugging\\technical\\classes",
+        "Replay",
+        "config/app.properties",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-validation-ujPBF2\\debugging\\technical\\second-only.csv"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-validation-ujPBF2\\debugging\\case-inputs\\DBG-C1",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "W-17\tEUR\tEUR\t1199\r\n",
+      "stderr": ""
+    },
+    {
+      "kind": "executed local structural/read-only command",
+      "command": "git",
+      "args": [
+        "diff",
+        "--exit-code",
+        "--",
+        "skills/debugging"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "kind": "executed final ownership inspection",
+      "command": "git status --short -- skills/debugging; git diff -- skills/debugging; git diff --cached -- skills/debugging; git ls-files --others --exclude-standard -- skills/debugging; git diff --check -- skills/debugging; hash comparison to assignment",
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS: every scoped output empty; version and all four package hashes unchanged.",
+      "evidence": {
+        "status": "",
+        "diff": "",
+        "stagedDiff": "",
+        "untracked": "",
+        "diffCheck": "",
+        "version": "1.1.4",
+        "files": [
+          {
+            "path": "skills/debugging/SKILL.md",
+            "sha256": "169c722dcb37565038e7cf6301e844bab0a3418a06ee2a92b8e061d4cf44bac3"
+          },
+          {
+            "path": "skills/debugging/references/method.md",
+            "sha256": "634fe5e9a6348b906f9eaa21a5e62c953267c18937b8d19080bd00b3358889b0"
+          },
+          {
+            "path": "skills/debugging/references/production-evidence.md",
+            "sha256": "a39db753411920daf80d823b9b159c9fc9dfae192c15c0143107ee77ccad00c8"
+          },
+          {
+            "path": "skills/debugging/skill.yaml",
+            "sha256": "6aedefbc32ca9cffcc05c7d92af33eb605a873bc006d64a2ba0d7c8f20a23d15"
+          }
+        ]
+      }
+    }
+  ],
+  "technicalEvidence": {
+    "java": "Temurin 25.0.3+9",
+    "compilerRelease": 17,
+    "compilationUnits": 3,
+    "actorRuns": 0,
+    "replayProcesses": 3,
+    "c1": "W-17\tUSD\tUSD\t1299\r\nW-17\tEUR\tUSD\t1299",
+    "c2": "W-17\tUSD\tUSD\t1299\r\nW-17\tEUR\tEUR\t1199",
+    "freshProcessNegativeControl": "W-17\tEUR\tEUR\t1199",
+    "interpretation": "Both ordered replay commands exit 0; only C2 satisfies both quote contracts. The fresh-process single-request control hides C1's cross-currency reuse. This validates case discriminability, not an agent or a historical incident."
+  },
+  "behavioralEvaluation": {
+    "executed": false,
+    "actorRuns": 0,
+    "comparisonExecuted": false,
+    "measuredGain": "not established",
+    "reason": "Reviewers are explicitly instructed not to execute actors. Cases and criteria are prepared separately for coordinator evaluation."
+  },
+  "walkthroughs": [
+    {
+      "scenario": "DBG-C1 ordinary caller/config/cache investigation",
+      "kind": "structured expected-behavior walkthrough plus separate executed fixture",
+      "expected": "Update report with the reproduced cross-currency defect, preserve incident-attribution limits, reject permanent-fix certainty and retain diagnosis-only scope.",
+      "status": "No actor output exists."
+    },
+    {
+      "scenario": "DBG-C2 same investigation with runtime override false",
+      "kind": "structured expected-behavior walkthrough plus separate executed fixture",
+      "expected": "The actual path bypasses the defective branch. Revise the draft causal claim; preserve the contract and valid catalog evidence, record unknown historical cause and choose the next discriminating evidence.",
+      "status": "No actor output exists."
+    },
+    {
+      "scenario": "Incident restart deadline is shorter than proposed heap-capture cost",
+      "kind": "structured guidance walkthrough",
+      "expected": "Existing budget/incident-authority rules permit immediate mitigation and record evidence traded away; use incident-evidence-capture for the bounded plan.",
+      "status": "No production operation or actor executed."
+    },
+    {
+      "scenario": "An empty JFR query is offered as proof that no relevant exception/monitor/allocation occurred",
+      "kind": "source-backed guidance walkthrough",
+      "expected": "Check target event, settings, thresholds/throttles, time window, loss and filters; a positive control tests collection but does not prove completeness.",
+      "status": "Source inspection only; no JFR recording executed."
+    }
+  ],
+  "cases": {
+    "inputManifest": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/case-inputs.json",
+    "evaluatorOnlyCriteria": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/case-criteria.json",
+    "pair": [
+      {
+        "id": "DBG-C1",
+        "actorInputDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/case-inputs/DBG-C1",
+        "entrypoint": "TASK.md",
+        "requestedArtifact": "report.md",
+        "fileCount": 11
+      },
+      {
+        "id": "DBG-C2",
+        "actorInputDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/case-inputs/DBG-C2",
+        "entrypoint": "TASK.md",
+        "requestedArtifact": "report.md",
+        "fileCount": 11
+      }
+    ],
+    "decisiveChange": {
+      "file": "runtime/overrides.properties",
+      "key": "quote.cache.enabled",
+      "values": [
+        "true",
+        "false"
+      ]
+    },
+    "separation": "Criteria and reviewer results are outside actor input directories. Filesystem access isolation must be supplied by the coordinator/harness; this folder separation alone is not enforced isolation.",
+    "exposure": "Reviewer-authored and not held out from this review; general configuration/cache-control principles are already in the skill. Exact case is not shipped teaching material."
+  },
+  "sources": [
+    {
+      "id": "git-bisect",
+      "requestedUrl": "https://git-scm.com/docs/git-bisect",
+      "finalUrl": "https://git-scm.com/docs/git-bisect",
+      "status": 200,
+      "capturedAt": "2026-10-16T16:47:23.615Z",
+      "bytes": 72405,
+      "sha256": "fc479a5496c3d54bc805a5a7ad6aaad58da5137354410342beb0b8f725ebc29d",
+      "rawPath": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/sources/git-bisect.html",
+      "textPath": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/sources/git-bisect.txt",
+      "version": "Git documentation 2.56.0; installed Git 2.56.0.windows.2",
+      "supports": "Good/bad/skip/abort status protocol; 126 and 127 are bad to bisect unless mapped; skipped adjacent revisions leave ambiguity; external stable harness avoids checkout interactions.",
+      "locations": [
+        "references/method.md:70-100"
+      ]
+    },
+    {
+      "id": "sre-troubleshooting",
+      "requestedUrl": "https://sre.google/sre-book/effective-troubleshooting/",
+      "finalUrl": "https://sre.google/sre-book/effective-troubleshooting/",
+      "status": 200,
+      "capturedAt": "2026-10-16T16:47:23.642Z",
+      "bytes": 90418,
+      "sha256": "ef7413400d0b49c66bbc10f2ca42a7ddd070bcb69791fef7322e15730d088d92",
+      "rawPath": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/sources/sre-troubleshooting.html",
+      "textPath": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/sources/sre-troubleshooting.txt",
+      "version": "Google SRE book, Effective Troubleshooting, accessed 2026-10-16",
+      "supports": "Hypothesis/refutation, reading actual system state, confounders, active-test side effects and uncertain evidence; mitigation can precede a complete causal explanation.",
+      "locations": [
+        "SKILL.md:25-66",
+        "references/method.md:49-68",
+        "references/method.md:161-170"
+      ]
+    },
+    {
+      "id": "jcmd25",
+      "requestedUrl": "https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html",
+      "finalUrl": "https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html",
+      "status": 200,
+      "capturedAt": "2026-10-16T16:47:23.643Z",
+      "bytes": 47386,
+      "sha256": "767fc6b222293fd09b0add86050403591753216287089dd1a732ffd41fcfab81",
+      "rawPath": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/sources/jcmd25.html",
+      "textPath": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/sources/jcmd25.txt",
+      "version": "JDK 25 manual",
+      "supports": "GC.heap_dump requires a filename, has high impact and normally requests full GC; Thread.print impact depends on thread count. Available commands/options must match the target.",
+      "locations": [
+        "references/production-evidence.md:40-65"
+      ]
+    },
+    {
+      "id": "jep444",
+      "requestedUrl": "https://openjdk.org/jeps/444",
+      "finalUrl": "https://openjdk.org/jeps/444",
+      "status": 200,
+      "capturedAt": "2026-10-16T16:47:23.643Z",
+      "bytes": 73887,
+      "sha256": "67024c9eda0ae3ab6e605f1330da41921cad88cdbb3f3e82a55f3d99e80c9341",
+      "rawPath": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/sources/jep444.html",
+      "textPath": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/sources/jep444.txt",
+      "version": "JEP 444 delivered in JDK 21; used for thread-dump coverage distinction, not all later runtime guarantees",
+      "supports": "Traditional dumps omit virtual threads; the separate mechanism has different detail and tracking constraints.",
+      "locations": [
+        "references/production-evidence.md:40-43"
+      ]
+    },
+    {
+      "id": "default-jfc25",
+      "requestedUrl": "https://raw.githubusercontent.com/openjdk/jdk/jdk-25-ga/src/jdk.jfr/share/conf/jfr/default.jfc",
+      "finalUrl": "https://raw.githubusercontent.com/openjdk/jdk/jdk-25-ga/src/jdk.jfr/share/conf/jfr/default.jfc",
+      "status": 200,
+      "capturedAt": "2026-10-16T16:47:23.644Z",
+      "bytes": 40502,
+      "sha256": "f5b4096783739ee71066f7c81bc640387e1e5c6b255ea2aafc3085b01e18e17f",
+      "rawPath": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/sources/default-jfc25.xml",
+      "textPath": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/sources/default-jfc25.txt",
+      "version": "OpenJDK jdk-25-ga pinned tag",
+      "supports": "Template contains JavaExceptionThrow throttle 100/s, ObjectAllocationSample throttle 150/s, JavaMonitorEnter threshold 20 ms. These settings support the coverage caveat; they do not establish the settings of an arbitrary target recording.",
+      "locations": [
+        "references/production-evidence.md:67-76"
+      ]
+    },
+    {
+      "id": "throwable25",
+      "requestedUrl": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html",
+      "finalUrl": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html",
+      "status": 200,
+      "capturedAt": "2026-10-16T16:47:23.644Z",
+      "bytes": 59432,
+      "sha256": "adbd5c05ac24382aa1dad73daec2b9798e2cdb930bcd110b6dc6e6a4fcf12f64",
+      "rawPath": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/sources/throwable25.html",
+      "textPath": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/sources/throwable25.txt",
+      "version": "Java SE 25 Throwable API",
+      "supports": "Cause and suppression are distinct contracts; suppressed exceptions are often cleanup failures, but addSuppressed is also callable. Absence of a recorded cause does not establish absence of an initiating failure.",
+      "locations": [
+        "references/method.md:102-125"
+      ]
+    },
+    {
+      "id": "postgres17-isolation",
+      "requestedUrl": "https://www.postgresql.org/docs/17/transaction-iso.html",
+      "finalUrl": "https://www.postgresql.org/docs/17/transaction-iso.html",
+      "status": 200,
+      "capturedAt": "2026-10-16T16:47:23.645Z",
+      "bytes": 47618,
+      "sha256": "e3475df0c76b214dbda0bc681015099763b83778e1355e17ee7b908e6fd38a26",
+      "rawPath": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/sources/postgres17-isolation.html",
+      "textPath": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/sources/postgres17-isolation.txt",
+      "version": "PostgreSQL 17 documentation",
+      "supports": "Read Committed uses statement snapshots; Repeatable Read retains the first non-transaction statement snapshot, with visibility of own writes. Current database visibility is not complete write history.",
+      "locations": [
+        "references/production-evidence.md:18-26"
+      ]
+    },
+    {
+      "id": "nist-doe",
+      "requestedUrl": "https://www.itl.nist.gov/div898/handbook/pri/section3/pri33.htm",
+      "finalUrl": "https://www.itl.nist.gov/div898/handbook/pri/section3/pri33.htm",
+      "status": 200,
+      "capturedAt": "2026-10-16T16:47:23.645Z",
+      "bytes": 10272,
+      "sha256": "03118f382a201bad9edfcbd334f07dcefa051c3f22beb0754ffa284d614cc6cc",
+      "rawPath": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/sources/nist-doe.html",
+      "textPath": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/sources/nist-doe.txt",
+      "version": "NIST/SEMATECH e-Handbook section 5.3.3, accessed 2026-10-16",
+      "supports": "Choose design by objective, factors, resources and error control; this supports deliberate interaction comparisons rather than interpreting a successful uncontrolled batch.",
+      "locations": [
+        "references/method.md:57-62"
+      ]
+    }
+  ],
+  "evidenceFiles": [
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/baseline.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/baseline.mjs",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/capture-sources.mjs",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/case-criteria.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/case-inputs/DBG-C1/config/app.properties",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/case-inputs/DBG-C1/data/catalog.csv",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/case-inputs/DBG-C1/data/requests.csv",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/case-inputs/DBG-C1/incident/notes.md",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/case-inputs/DBG-C1/README.md",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/case-inputs/DBG-C1/report.md",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/case-inputs/DBG-C1/runtime/overrides.properties",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/case-inputs/DBG-C1/src/Quote.java",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/case-inputs/DBG-C1/src/QuoteService.java",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/case-inputs/DBG-C1/src/Replay.java",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/case-inputs/DBG-C1/TASK.md",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/case-inputs/DBG-C2/config/app.properties",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/case-inputs/DBG-C2/data/catalog.csv",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/case-inputs/DBG-C2/data/requests.csv",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/case-inputs/DBG-C2/incident/notes.md",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/case-inputs/DBG-C2/README.md",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/case-inputs/DBG-C2/report.md",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/case-inputs/DBG-C2/runtime/overrides.properties",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/case-inputs/DBG-C2/src/Quote.java",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/case-inputs/DBG-C2/src/QuoteService.java",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/case-inputs/DBG-C2/src/Replay.java",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/case-inputs/DBG-C2/TASK.md",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/case-inputs.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/create-cases.mjs",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/fixture-c1.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/fixture-c2.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/fixture-compile.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/fixture-reset-control.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/java-version.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/javac-version.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/local-validation.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/owned-diff.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/prettier-check.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/source-captures.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/technical/second-only.csv",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/validate-local.mjs",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/debugging/write-handoff.mjs"
+  ],
+  "downloadedEvidenceHandling": "Downloaded primary-source captures remain only in the temporary sources directory. They and compiled .class files are excluded from evidenceFiles; do not copy third-party documents or binaries into the repository. Source URLs/hashes and authored validation evidence are retained.",
+  "limitations": [
+    "No behavioral comparison or automatic-selection test; no claim of agent improvement or universal correctness.",
+    "Synthetic replay discriminates the written cases only and does not establish a historical incident cause.",
+    "No production capture, real deployment, database test, Git bisection, performance benchmark or security implementation was executed.",
+    "JDK documentation/JFC source inspection establishes cited contracts/configuration, not a runtime trace or arbitrary target settings.",
+    "Java fixture ran on JDK 25 only; --release 17 is compilation compatibility, not runtime-17 execution.",
+    "Repository-wide integration remains pending with the coordinator.",
+    "Initial broad text outputs were truncated; relevant package/source sections and baseline package entry were reread in bounded form. A preliminary path lookup for semver.ts failed and was corrected to the actual version.ts import; no validation depends on that nonexistent path."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "cwd": "C:/git/agent-skills",
+      "owner": "coordinator",
+      "reason": "Parallel-review ownership; rebuild the combined catalog after all writers stop, even though this package needs no new entry version."
+    },
+    {
+      "command": "npm run verify",
+      "cwd": "C:/git/agent-skills",
+      "owner": "coordinator",
+      "reason": "Parallel-review ownership; verify the stable combined tree after registry generation."
+    }
+  ],
+  "crossSkill": [],
+  "coordinatorActions": [
+    "Inspect unchanged owned diff and this handoff.",
+    "Archive only authored evidence/case fixtures selected from evidenceFiles; source downloads and compiled classes stay temporary.",
+    "Run the pending global commands when all reviewers have stopped; optional future actor evaluation must receive isolated case inputs without criteria/results."
+  ],
+  "allChildProcessesExited": true,
+  "runningProcesses": [],
+  "allWritesStopped": true
+}

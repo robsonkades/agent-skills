@@ -1,0 +1,7 @@
+package work;
+public final class Settings {
+ private final Record record;
+ Settings(int limit) { Record next = new Record(); next.limit = limit; record = next; }
+ public int limit() { return record.limit; }
+ private static final class Record { int limit; }
+}

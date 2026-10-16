@@ -1,0 +1,10 @@
+package work;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+public record Report(List<Entry> entries) {
+    public Report {
+        entries = Collections.unmodifiableList(new ArrayList<>(entries));
+    }
+    public long total() { return entries.stream().mapToLong(Entry::cents).sum(); }
+}

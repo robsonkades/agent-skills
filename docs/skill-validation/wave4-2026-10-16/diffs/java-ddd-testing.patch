@@ -1,0 +1,35 @@
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\java-ddd-testing/references/persistence-and-delivery.md" "b/C:\\git\\agent-skills\\skills\\java-ddd-testing/references/persistence-and-delivery.md"
+index 2750814..d7bcf08 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\java-ddd-testing/references/persistence-and-delivery.md"
++++ "b/C:\\git\\agent-skills\\skills\\java-ddd-testing/references/persistence-and-delivery.md"
+@@ -45,7 +45,7 @@ An annotation on the root does not by itself demonstrate that a child-only updat
+ or increments that root version. Assert the actual root-level behavior needed by the rule.
+ Jakarta Persistence specifies version checks for versioned entities and owned relationships;
+ the application's aggregate can span entities outside that automatic protection.
+-[Jakarta Persistence 3.2, section 3.5 on locking](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2)
++[Jakarta Persistence 3.2, section 3.5 on locking](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html#a2052)
+ 
+ A sequential stale-write scenario suffices for optimistic stale-state rejection. To claim
+ locking or overlapping transaction behavior, use independent connections/transactions,
+@@ -75,7 +75,7 @@ Use that rejection path and independently reload the root and relevant outbox st
+ For an invariant-preserving command, prevent rejected mutations; for deferred candidate
+ validation, prove invalid work cannot cross the acceptance/commit boundary. Persistence
+ synchronization and framework rollback policy are separate mechanisms:
+-[Jakarta Persistence 3.2, section 3.3.4](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2)
++[Jakarta Persistence 3.2, section 3.3.4](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html#a1955)
+ and [Spring transaction rollback rules](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/rolling-back.html).
+ Match these contracts to the project's resolved provider and framework version.
+ 
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\java-ddd-testing/skill.yaml" "b/C:\\git\\agent-skills\\skills\\java-ddd-testing/skill.yaml"
+index d5c226b..d3eb5f5 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\java-ddd-testing/skill.yaml"
++++ "b/C:\\git\\agent-skills\\skills\\java-ddd-testing/skill.yaml"
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: java-ddd-testing
+-version: 1.0.0
++version: 1.0.1
+ description: >-
+   Write and review Java DDD tests for aggregate invariants, value-object equality,
+   use-case outcomes, gateway rehydration, concurrency conflicts and domain-event durability.

@@ -1,0 +1,669 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "unified-logging",
+  "ownedPath": "C:/git/agent-skills/skills/unified-logging",
+  "reviewer": "/root/quality16",
+  "reviewedAt": "2026-10-16",
+  "allWritesStopped": true,
+  "runningProcessesStartedByReviewer": [],
+  "summary": "Clarify the actual command boundary: standalone VM.log list is read-only for logging configuration, output=... configures even when combined with list, rotation has global scope, and JDK 25 presence-dispatched action options must be omitted rather than serialized as false.",
+  "scope": {
+    "rolePreserved": "Constructing, validating and operating HotSpot unified logging to produce and preserve evidence; analysis of GC/JIT/etc. remains with the owning skills.",
+    "filesRead": [
+      "C:\\git\\agent-skills\\skills\\unified-logging\\SKILL.md",
+      "C:\\git\\agent-skills\\skills\\unified-logging\\skill.yaml",
+      "C:\\git\\agent-skills\\skills\\unified-logging\\references\\async-and-cost.md",
+      "C:\\git\\agent-skills\\skills\\unified-logging\\references\\legacy-flags.md",
+      "C:\\git\\agent-skills\\skills\\unified-logging\\references\\outputs-and-rotation.md",
+      "C:\\git\\agent-skills\\skills\\unified-logging\\references\\production-and-troubleshooting.md",
+      "C:\\git\\agent-skills\\skills\\unified-logging\\references\\runtime-reconfiguration.md",
+      "C:\\git\\agent-skills\\skills\\unified-logging\\references\\selection-syntax.md"
+    ],
+    "instructionsRead": [
+      "Applicable AGENTS.md",
+      "Complete docs/skill-review-prompt.md",
+      "docs/parallel-skill-reviews.md",
+      "docs/skill-validation/wave2-2026-10-16/review-brief.md",
+      "skills/skill-engineering/SKILL.md and its relevant references",
+      "Cumulative comparative research and relevant wave history, read earlier in this wave and reused unchanged"
+    ],
+    "criteria": [
+      "Read-only inspection must preserve logging configuration even when helpers compose arguments.",
+      "Per-output authorization and retention must not be silently expanded by a VM-wide action.",
+      "Version-sensitive diagnostic parser behavior must use primary implementation and matching runtime evidence.",
+      "Continue distinguishing syntax/source explanation, application coverage and cost/retention claims.",
+      "Preserve the existing strong selection, runtime-field scope, async and lifecycle constraints."
+    ]
+  },
+  "baseline": {
+    "committedVersion": "1.2.3",
+    "assignmentVersion": "1.2.3",
+    "preExistingVersionBump": false,
+    "stagedDifferences": [],
+    "unstagedDifferences": [],
+    "untrackedFiles": [],
+    "assignmentHashes": [
+      {
+        "path": "C:\\git\\agent-skills\\skills\\unified-logging\\SKILL.md",
+        "sha256": "370765876749E84C7B44C730E430B0F8BACCD4079344610D83B3458D214E5E68"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\unified-logging\\skill.yaml",
+        "sha256": "7C595B45ED7A2F14AE9A4133A2A3013C805FB4AACB790FFC67F979492E29E362"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\unified-logging\\references\\async-and-cost.md",
+        "sha256": "7D8FC769DFF19B50B74766B6163E0A5408243BE6C08BC6C5A0058D19920C1374"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\unified-logging\\references\\legacy-flags.md",
+        "sha256": "EC932F68B1DCC66933502B24E60CBDDBB8D42C5FB4A2F536E30AC25E74B694C2"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\unified-logging\\references\\outputs-and-rotation.md",
+        "sha256": "9B351A1A577965EED731C2FAA27184081933BC84FBEBAD69E12226851ED3D0BF"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\unified-logging\\references\\production-and-troubleshooting.md",
+        "sha256": "F3EC2F31E65453AA7FE9EA87D49B4B00C526A8D59572F83871359F35B4DB396A"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\unified-logging\\references\\runtime-reconfiguration.md",
+        "sha256": "530F6A6BF04428F0532179817F240DB23335F18F931F53D1C3AB4A447E41E535"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\unified-logging\\references\\selection-syntax.md",
+        "sha256": "E742DA475A14A35C3ACCD30AAD20D705C8C9030C13E60730CD4507B4081A72B3"
+      }
+    ],
+    "artifact": "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/baseline.json",
+    "authorship": "Package was clean at assignment. The final four-file owned diff is this reviewer's work; no prior uncommitted changes were present."
+  },
+  "findingsCorrected": [
+    {
+      "location": "SKILL.md:125 and references/runtime-reconfiguration.md:5,34",
+      "finding": "The pre-existing statement that help/list inspection does not change logging configuration lacked the standalone-command boundary.",
+      "evidence": "jdk-25-ga LogDiagnosticCommand::execute applies output/what/decorators configuration before executing list. Temurin 25.0.3+9 confirmed output=file=a.log list changes gc-only/time decorators to all=info/default uptime decorators while returning the requested listing successfully.",
+      "consequence": "A helper that adds output=... as an apparent listing filter can broaden logging and change formatting during an inspection-only task.",
+      "fix": "Clarify standalone read-only commands, treat output as configuration, and filter captured listing text locally."
+    },
+    {
+      "location": "references/runtime-reconfiguration.md:37 and references/outputs-and-rotation.md:49",
+      "finding": "The rotation guidance did not explicitly connect output=... to the VM-wide rotation action.",
+      "evidence": "JDK 25 jcmd documentation specifies global rotation; LogDiagnosticCommand calls LogConfiguration::rotate_all_outputs(). An isolated two-file test with an output selector still produced both a.log.0 and b.log.0 containing their respective expected tags.",
+      "consequence": "An attempted one-file rotation can consume another output's retention slots; adding output can also reconfigure that file.",
+      "fix": "State global eligible-output scope and explain that this command cannot satisfy a one-output-only mutation contract."
+    },
+    {
+      "location": "references/runtime-reconfiguration.md:40",
+      "finding": "Generated command builders may assume false-valued action fields disable those actions.",
+      "evidence": "jdk-25-ga checks option presence for disable and rotate. Temurin 25.0.3+9 tests showed rotate=false archives both files and disable=false removes file outputs and changes stdout/stderr to all=off.",
+      "consequence": "A serialized default false option can rotate or disable logging unintentionally.",
+      "fix": "Omit unused action options and pin these parser semantics to the target build rather than generalizing across runtimes."
+    }
+  ],
+  "remainingSkillFindings": [],
+  "filesChangedByReviewer": [
+    {
+      "path": "skills/unified-logging/SKILL.md",
+      "change": "Qualify the read-only boundary at the live-command entry point."
+    },
+    {
+      "path": "skills/unified-logging/references/runtime-reconfiguration.md",
+      "change": "Add concrete composition/action semantics, primary source and a targeted isolated wrapper check."
+    },
+    {
+      "path": "skills/unified-logging/references/outputs-and-rotation.md",
+      "change": "Route manual rotation to the global-scope constraint."
+    },
+    {
+      "path": "skills/unified-logging/skill.yaml",
+      "change": "Patch version 1.2.3 to 1.2.4."
+    }
+  ],
+  "preExistingChangesPreserved": [],
+  "unchangedFiles": [
+    "C:\\git\\agent-skills\\skills\\unified-logging\\references\\async-and-cost.md",
+    "C:\\git\\agent-skills\\skills\\unified-logging\\references\\legacy-flags.md",
+    "C:\\git\\agent-skills\\skills\\unified-logging\\references\\production-and-troubleshooting.md",
+    "C:\\git\\agent-skills\\skills\\unified-logging\\references\\selection-syntax.md"
+  ],
+  "capabilitiesPreserved": [
+    "Exact/wildcard tag-set matching, ordered overrides, thresholds and matching call-site coverage.",
+    "Controlled disposable -version probes, startup option-source discovery and warnings despite exit zero.",
+    "Output/decorator/rotation lifecycle, filename placeholder limits, parser framing and container collection tradeoffs.",
+    "Global async drop/stall limitations, blocking/locking/fallback caveats and workload-dependent cost claims.",
+    "Existing creation-only output_options versus live what/decorators scopes and preservation of unmentioned tag sets.",
+    "Ownership-aware restoration after intervening edits, persistent startup configuration only when intended, and existing authorization without fresh approval gates.",
+    "Legacy flag classification and conditional source-only or runtime-validation paths.",
+    "Interpretation remains with subsystem owners; no new required platform, JDK migration, dependency or shipped executable helper."
+  ],
+  "capabilitiesReplacedOrRemoved": [],
+  "version": {
+    "committed": "1.2.3",
+    "assignment": "1.2.3",
+    "final": "1.2.4",
+    "rationale": "Content changed; no prior unpublished bump existed. One patch bump satisfies immutable package-content policy. Shared generated registry untouched."
+  },
+  "validation": {
+    "structuralChecks": [
+      {
+        "command": "node 'C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/check-package-and-cases.mjs' 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/package-check.log'; exit $LASTEXITCODE",
+        "workingDirectory": "C:/git/agent-skills",
+        "status": "PASS",
+        "exitCode": 0,
+        "output": "{\r\n  \"node\": \"v25.6.1\",\r\n  \"packagedFiles\": 8,\r\n  \"issues\": [],\r\n  \"version\": \"1.2.4\",\r\n  \"localLinks\": 8,\r\n  \"caseDifference\": \"one output=... argument only\",\r\n  \"recordedTechnicalConditionsPassed\": 5,\r\n  \"behavioralEvaluations\": 0\r\n}\r\n",
+        "rawLog": "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/package-check.log"
+      },
+      {
+        "command": "node node_modules/prettier/bin/prettier.cjs --check skills/unified-logging/SKILL.md skills/unified-logging/skill.yaml skills/unified-logging/references/async-and-cost.md skills/unified-logging/references/legacy-flags.md skills/unified-logging/references/outputs-and-rotation.md skills/unified-logging/references/production-and-troubleshooting.md skills/unified-logging/references/runtime-reconfiguration.md skills/unified-logging/references/selection-syntax.md 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/prettier-check.log'; exit $LASTEXITCODE",
+        "workingDirectory": "C:/git/agent-skills",
+        "status": "PASS",
+        "exitCode": 0,
+        "output": "Checking formatting...\r\nAll matched files use Prettier code style!\r\n",
+        "rawLog": "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/prettier-check.log"
+      },
+      {
+        "command": "git diff --check -- skills/unified-logging > 'C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/diff-check.log' 2>&1; $diffCheckExit = $LASTEXITCODE; Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/diff-check.log'; exit $diffCheckExit",
+        "workingDirectory": "C:/git/agent-skills",
+        "status": "PASS",
+        "exitCode": 0,
+        "output": "",
+        "rawLog": "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/diff-check.log"
+      },
+      {
+        "command": "$fixturePaths = @('C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/cases/composed-list/observe-output.ps1','C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/cases/standalone-list/observe-output.ps1'); foreach ($fixturePath in $fixturePaths) { $fixtureTokens = $null; $fixtureErrors = $null; [System.Management.Automation.Language.Parser]::ParseFile($fixturePath, [ref]$fixtureTokens, [ref]$fixtureErrors) | Out-Null; if ($fixtureErrors.Count -ne 0) { throw ($fixtureErrors | Out-String) } }; 'PASS: both PowerShell fixture scripts parse; neither was executed against a JVM.' | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/fixture-parse-check.log'",
+        "workingDirectory": "C:/git/agent-skills",
+        "status": "PASS",
+        "exitCode": 0,
+        "output": "PASS: both PowerShell fixture scripts parse; neither was executed against a JVM.\r\n",
+        "rawLog": "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/fixture-parse-check.log"
+      }
+    ],
+    "technicalChecks": {
+      "classification": "Executed local JVM/tool behavior checks, not behavioral evaluation of an agent.",
+      "environment": {
+        "runtime": "Eclipse Temurin OpenJDK 25.0.3+9-LTS, Windows amd64",
+        "compiler": "javac from the same Temurin installation",
+        "compilerTarget": "--release 25",
+        "driver": "Node.js v25.6.1",
+        "javaBin": "C:/Users/robso/.jdks/temurin-25.0.3/bin",
+        "startupFlags": ["-Xms16m", "-Xmx32m", "-XX:+UseSerialGC"],
+        "childOptionsRemoved": ["JDK_JAVA_OPTIONS", "JAVA_TOOL_OPTIONS", "_JAVA_OPTIONS"],
+        "isolation": "Only newly launched owned JVM PIDs; fresh per-case files; no production/shared process or real agent configuration changed."
+      },
+      "command": "node 'C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/verify-command-scope-final.mjs'",
+      "workingDirectory": "C:/git/agent-skills",
+      "exitCode": 0,
+      "log": "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/final-probe-check.log",
+      "resultFile": "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/validated-final/results.json",
+      "compilerLog": "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/validated-final/javac.json",
+      "versionLog": "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/validated-final/java-version.json",
+      "cases": [
+        {
+          "name": "list-only",
+          "result": "PASS",
+          "actionArgs": ["30316", "VM.log", "list"],
+          "targetPid": 30316,
+          "beforeConfiguration": [
+            "#0: stdout all=warning uptime,level,tags foldmultilines=false",
+            "#1: stderr all=off uptime,level,tags foldmultilines=false",
+            "#2: file=a.log all=off,gc=info time,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false",
+            "#3: file=b.log all=off,class+load=info time,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false"
+          ],
+          "afterConfiguration": [
+            "#0: stdout all=warning uptime,level,tags foldmultilines=false",
+            "#1: stderr all=off uptime,level,tags foldmultilines=false",
+            "#2: file=a.log all=off,gc=info time,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false",
+            "#3: file=b.log all=off,class+load=info time,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false"
+          ],
+          "archivesAfter": [],
+          "rawDirectory": "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/validated-final/list-only"
+        },
+        {
+          "name": "list-with-output",
+          "result": "PASS",
+          "actionArgs": ["18456", "VM.log", "output=file=a.log", "list"],
+          "targetPid": 18456,
+          "beforeConfiguration": [
+            "#0: stdout all=warning uptime,level,tags foldmultilines=false",
+            "#1: stderr all=off uptime,level,tags foldmultilines=false",
+            "#2: file=a.log all=off,gc=info time,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false",
+            "#3: file=b.log all=off,class+load=info time,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false"
+          ],
+          "afterConfiguration": [
+            "#0: stdout all=warning uptime,level,tags foldmultilines=false",
+            "#1: stderr all=off uptime,level,tags foldmultilines=false",
+            "#2: file=a.log all=info uptime,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false",
+            "#3: file=b.log all=off,class+load=info time,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false"
+          ],
+          "archivesAfter": [],
+          "rawDirectory": "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/validated-final/list-with-output"
+        },
+        {
+          "name": "rotate-with-output",
+          "result": "PASS",
+          "actionArgs": [
+            "20436",
+            "VM.log",
+            "output=file=a.log",
+            "what=gc=info",
+            "decorators=time,level,tags",
+            "rotate"
+          ],
+          "targetPid": 20436,
+          "beforeConfiguration": [
+            "#0: stdout all=warning uptime,level,tags foldmultilines=false",
+            "#1: stderr all=off uptime,level,tags foldmultilines=false",
+            "#2: file=a.log all=off,gc=info time,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false",
+            "#3: file=b.log all=off,class+load=info time,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false"
+          ],
+          "afterConfiguration": [
+            "#0: stdout all=warning uptime,level,tags foldmultilines=false",
+            "#1: stderr all=off uptime,level,tags foldmultilines=false",
+            "#2: file=a.log all=off,gc=info time,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false",
+            "#3: file=b.log all=off,class+load=info time,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false"
+          ],
+          "archivesAfter": ["a.log.0", "b.log.0"],
+          "rawDirectory": "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/validated-final/rotate-with-output"
+        },
+        {
+          "name": "rotate-false",
+          "result": "PASS",
+          "actionArgs": ["34976", "VM.log", "rotate=false"],
+          "targetPid": 34976,
+          "beforeConfiguration": [
+            "#0: stdout all=warning uptime,level,tags foldmultilines=false",
+            "#1: stderr all=off uptime,level,tags foldmultilines=false",
+            "#2: file=a.log all=off,gc=info time,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false",
+            "#3: file=b.log all=off,class+load=info time,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false"
+          ],
+          "afterConfiguration": [
+            "#0: stdout all=warning uptime,level,tags foldmultilines=false",
+            "#1: stderr all=off uptime,level,tags foldmultilines=false",
+            "#2: file=a.log all=off,gc=info time,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false",
+            "#3: file=b.log all=off,class+load=info time,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false"
+          ],
+          "archivesAfter": ["a.log.0", "b.log.0"],
+          "rawDirectory": "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/validated-final/rotate-false"
+        },
+        {
+          "name": "disable-false",
+          "result": "PASS",
+          "actionArgs": ["25568", "VM.log", "disable=false"],
+          "targetPid": 25568,
+          "beforeConfiguration": [
+            "#0: stdout all=warning uptime,level,tags foldmultilines=false",
+            "#1: stderr all=off uptime,level,tags foldmultilines=false",
+            "#2: file=a.log all=off,gc=info time,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false",
+            "#3: file=b.log all=off,class+load=info time,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false"
+          ],
+          "afterConfiguration": [
+            "#0: stdout all=off uptime,level,tags foldmultilines=false",
+            "#1: stderr all=off uptime,level,tags foldmultilines=false"
+          ],
+          "archivesAfter": [],
+          "rawDirectory": "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/validated-final/disable-false"
+        }
+      ],
+      "observedResults": [
+        "Standalone list preserved all four output configurations and did not rotate files.",
+        "list with output=file=a.log changed a.log from all=off,gc=info with time decorators to all=info with uptime decorators; b.log configuration remained unchanged.",
+        "rotate with output=file=a.log and explicit preserved settings still created nonempty archives for a.log and b.log.",
+        "rotate=false also archived both file outputs.",
+        "disable=false removed both file outputs and changed standard outputs to all=off."
+      ],
+      "cleanup": "The deliberately broadened a.log output was restored to its owned baseline after assertions and before stopping the final test JVM. All five final targets then exited 0. No action was taken against existing JVMs.",
+      "reproduction": "Copy LoggingProbe.java and verify-command-scope-final.mjs into a fresh temporary directory before rerunning. The script intentionally creates a new validated-final directory and refuses reuse. Adjust only the java-bin path if reproducing on an explicitly chosen matching build; do not overwrite the retained evidence."
+    },
+    "failuresAndLimits": [
+      {
+        "kind": "Unexpected isolated runtime failure",
+        "command": "node 'C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/verify-command-scope.mjs'",
+        "exitCode": 1,
+        "observed": "Initial standalone-list control passed. The output-plus-list case successfully demonstrated configuration broadening, then the isolated JVM crashed in DestroyJavaVM during shutdown while broad logging remained enabled. EXCEPTION_ACCESS_VIOLATION; target exit 1.",
+        "artifacts": [
+          "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/probe-check.log",
+          "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/list-with-output/action.json",
+          "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/list-with-output/after-list.json",
+          "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/list-with-output/target-stdout.log",
+          "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/list-with-output/target-exit.json",
+          "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/list-with-output/hs_err_pid22212.log"
+        ],
+        "resolution": "Preserved the failure. Subsequent probes restore only the deliberately changed owned output before shutdown, after recording and asserting the semantic result.",
+        "limit": "Root cause was not established, and no universal crash claim was added to the skill. The clean final run does not prove broad-logging shutdown is safe."
+      },
+      {
+        "kind": "Probe harness comparison",
+        "command": "node 'C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/verify-command-scope-restored.mjs'",
+        "exitCode": 1,
+        "observed": "Configuration comparison retained the informational '(reconfigured)' marker because its normalization regex was over-escaped. Actual levels/decorators were unchanged in the rotate-with-output case; its target exited 0.",
+        "artifacts": [
+          "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/restored-probe-check.log",
+          "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/verify-command-scope-restored.mjs",
+          "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/validated/rotate-with-output/before-list.json",
+          "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/validated/rotate-with-output/after-list.json",
+          "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/validated/rotate-with-output/target-exit.json"
+        ],
+        "resolution": "A separate final script uses exact string removal of that marker for semantic comparison. Raw outputs remain intact and archives/content checks were retained. The five-condition final run passed."
+      }
+    ],
+    "behavioralEvaluationsExecuted": [],
+    "behavioralStatus": "No independent agent execution, before/after skill comparison or measured behavioral improvement. The supplied development cases have not been executed by an evaluator.",
+    "walkthroughs": [
+      {
+        "caseId": "composed-list",
+        "expected": "The helper's one output=... argument changes the live configuration despite its list action. Remove that argument and retain local filtering; verify configuration and archives remain unchanged.",
+        "method": "Structured walkthrough using the supplied script, captured config, primary source and separately executed tool semantics."
+      },
+      {
+        "caseId": "standalone-list",
+        "expected": "With only that argument removed, standalone listing plus local filtering already meets the narrow inspection contract; no change is needed.",
+        "method": "Structured walkthrough, not an actual agent output."
+      },
+      {
+        "caseId": "capability-preservation",
+        "expected": "Existing exact/wildcard selection, non-replacement of unmentioned tags, creation-time output options, source-versus-workload coverage and async caveats remain applicable.",
+        "method": "Read-only diff/content review; unchanged references verified by SHA256."
+      }
+    ],
+    "finalInspection": {
+      "metadata": {
+        "committedVersion": "1.2.3",
+        "finalVersion": "1.2.4",
+        "status": [
+          " M skills/unified-logging/SKILL.md",
+          " M skills/unified-logging/references/outputs-and-rotation.md",
+          " M skills/unified-logging/references/runtime-reconfiguration.md",
+          " M skills/unified-logging/skill.yaml"
+        ],
+        "staged": [],
+        "hashes": [
+          {
+            "Path": "C:\\git\\agent-skills\\skills\\unified-logging\\SKILL.md",
+            "Hash": "6ADE8A0B8F73372D5362E135F5A3994C314B79EB264BB54421134252A3841818"
+          },
+          {
+            "Path": "C:\\git\\agent-skills\\skills\\unified-logging\\skill.yaml",
+            "Hash": "451669F1103CC31C1071605030A8DEBD55DA6C6AE69C0E90C8FC0C84977337AB"
+          },
+          {
+            "Path": "C:\\git\\agent-skills\\skills\\unified-logging\\references\\async-and-cost.md",
+            "Hash": "7D8FC769DFF19B50B74766B6163E0A5408243BE6C08BC6C5A0058D19920C1374"
+          },
+          {
+            "Path": "C:\\git\\agent-skills\\skills\\unified-logging\\references\\legacy-flags.md",
+            "Hash": "EC932F68B1DCC66933502B24E60CBDDBB8D42C5FB4A2F536E30AC25E74B694C2"
+          },
+          {
+            "Path": "C:\\git\\agent-skills\\skills\\unified-logging\\references\\outputs-and-rotation.md",
+            "Hash": "1D1858BDDF239CEA48B18181E0E80D291671A966E676BF8474863B9378B4F439"
+          },
+          {
+            "Path": "C:\\git\\agent-skills\\skills\\unified-logging\\references\\production-and-troubleshooting.md",
+            "Hash": "F3EC2F31E65453AA7FE9EA87D49B4B00C526A8D59572F83871359F35B4DB396A"
+          },
+          {
+            "Path": "C:\\git\\agent-skills\\skills\\unified-logging\\references\\runtime-reconfiguration.md",
+            "Hash": "E5DA4802FFCB79A48694540AC042F44497EC34F783D34687634A5E2EC35B5BED"
+          },
+          {
+            "Path": "C:\\git\\agent-skills\\skills\\unified-logging\\references\\selection-syntax.md",
+            "Hash": "E742DA475A14A35C3ACCD30AAD20D705C8C9030C13E60730CD4507B4081A72B3"
+          }
+        ],
+        "handoffExists": false
+      },
+      "processes": {
+        "targetExitRecords": [
+          {
+            "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc\\list-only\\target-exit.json",
+            "pid": 15252,
+            "code": 0,
+            "signal": null
+          },
+          {
+            "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc\\list-with-output\\target-exit.json",
+            "pid": 22212,
+            "code": 1,
+            "signal": null
+          },
+          {
+            "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc\\validated\\list-only\\target-exit.json",
+            "pid": 27560,
+            "code": 0,
+            "signal": null
+          },
+          {
+            "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc\\validated\\list-with-output\\target-exit.json",
+            "pid": 23356,
+            "code": 0,
+            "signal": null
+          },
+          {
+            "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc\\validated\\rotate-with-output\\target-exit.json",
+            "pid": 25284,
+            "code": 0,
+            "signal": null
+          },
+          {
+            "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc\\validated-final\\disable-false\\target-exit.json",
+            "pid": 25568,
+            "code": 0,
+            "signal": null
+          },
+          {
+            "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc\\validated-final\\list-only\\target-exit.json",
+            "pid": 30316,
+            "code": 0,
+            "signal": null
+          },
+          {
+            "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc\\validated-final\\list-with-output\\target-exit.json",
+            "pid": 18456,
+            "code": 0,
+            "signal": null
+          },
+          {
+            "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc\\validated-final\\rotate-false\\target-exit.json",
+            "pid": 34976,
+            "code": 0,
+            "signal": null
+          },
+          {
+            "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc\\validated-final\\rotate-with-output\\target-exit.json",
+            "pid": 20436,
+            "code": 0,
+            "signal": null
+          }
+        ],
+        "stillPresentPids": []
+      },
+      "diff": "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/final-owned.diff"
+    },
+    "unexecutedChecks": [
+      "No production or shared JVM operations.",
+      "No vendor/JDK matrix beyond the stated local runtime and jdk-25-ga source.",
+      "No throughput, latency, disk-pressure, crash-reliability or long-running retention benchmark.",
+      "No behavioral agent comparison; no overall quality gain measurement."
+    ],
+    "claimLimit": "Local validation establishes the package's structure and the demonstrated command semantics under the stated conditions, not repository-wide completion or a measured skill effectiveness gain."
+  },
+  "sources": [
+    {
+      "title": "JDK 25 jcmd VM.log",
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html",
+      "consulted": "2026-10-16",
+      "scope": "VM.log section",
+      "supports": "output configures a destination; list reports configuration; rotate acts across logs. The exact false-valued action behavior comes from matching source and execution, not the option type alone."
+    },
+    {
+      "title": "jdk-25-ga LogDiagnosticCommand",
+      "url": "https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/logging/logDiagnosticCommand.cpp",
+      "consulted": "2026-10-16",
+      "supports": "execute configures before listing; disable/rotate are dispatched by has_value; rotation calls rotate_all_outputs.",
+      "rawArtifact": "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/jdk25-logDiagnosticCommand.cpp",
+      "sha256": "63FACFC923309110EB53CDF3A4E9CF6C386402E6FF07018CAF4ACCFC92188FD8"
+    },
+    {
+      "title": "jdk-25-ga LogConfiguration",
+      "url": "https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/logging/logConfiguration.cpp",
+      "consulted": "2026-10-16",
+      "supports": "Default and update configuration behavior; global output rotation path. Existing per-field scope guidance preserved.",
+      "rawArtifact": "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/jdk25-logConfiguration.cpp",
+      "sha256": "798EF2A05D93FA83B75A0739DA9F2AEC2AF9EE6681A0C551644CE87FF3A11077"
+    },
+    {
+      "title": "jdk-25-ga LogFileOutput",
+      "url": "https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/logging/logFileOutput.cpp",
+      "consulted": "2026-10-16",
+      "supports": "File-output rotation lifecycle and eligible output mechanics.",
+      "rawArtifact": "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/jdk25-logFileOutput.cpp",
+      "sha256": "17F6953A49483435A755BD85627B78861CBD9A9E898402A25E2009ED6DA0CB50"
+    },
+    {
+      "title": "JDK 25 java unified logging",
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html#enable-logging-with-the-jvm-unified-logging-framework",
+      "consulted": "2026-10-16",
+      "supports": "Preservation checks for target-version output options, defaults, placeholders, decorator ordering, selector syntax and async modes.",
+      "limits": "Existing skill correctly qualifies broader nonblocking/durability interpretations with implementation and runtime context."
+    },
+    {
+      "title": "Local Temurin 25.0.3+9 tool help and observed configurations",
+      "url": null,
+      "versionArtifact": "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/validated-final/java-version.json",
+      "helpArtifact": "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/validated-final/list-only/help.json",
+      "supports": "Exact executed build, accepted diagnostic syntax and the five observed command effects.",
+      "limits": "One vendor/build/OS under a small synthetic probe; not portable performance or crash-safety evidence."
+    }
+  ],
+  "assumptionsAndLimitations": [
+    "The skill remains a logging evidence-production skill; no subsystem diagnosis or application implementation was added.",
+    "Standalone read-only means logging configuration is not changed. This is not a zero-overhead or no-attach-side-effects claim.",
+    "Version-sensitive presence-dispatched actions are explicitly tied to jdk-25-ga source and observed Temurin 25.0.3+9; other builds require their own evidence.",
+    "The global rotation test used two distinct rotating file outputs with filecount=2 and filesize=0. It does not claim all destinations support rotation.",
+    "The isolated shutdown crash is preserved and unroot-caused; no fix to the JVM or broad production reliability claim is implied.",
+    "Development cases are intentionally small and differ by only one argument. Their PowerShell syntax and inputs are validated; independent agent effectiveness is not measured.",
+    "All required repository-wide checks remain delegated to the coordinator."
+  ],
+  "developmentCases": {
+    "type": "Reproducible development cases; no unseen-holdout or executed behavioral-evaluation claim.",
+    "decisiveDifference": "Only an output=... command argument differs. The local filtering, context, captured configuration and task remain identical.",
+    "actorInputs": [
+      {
+        "id": "composed-list",
+        "prompt": "Review observe-output.ps1 against context.txt and before-list.txt. Make the smallest justified fix if the inspection contract is violated; otherwise preserve the helper. Explain the decisive behavior and give an observable verification check. Do not introduce a new logging framework or run a production action.",
+        "fixtureRoot": "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/cases/composed-list",
+        "files": {
+          "observe-output.ps1": "param(\n    [Parameter(Mandatory)][string]$Jcmd,\n    [Parameter(Mandatory)][int]$TargetPid,\n    [Parameter(Mandatory)][string]$OutputName\n)\n\n$diagnosticArguments = @([string]$TargetPid, \"VM.log\", \"list\", (\"output=\" + $OutputName))\n$listing = & $Jcmd @diagnosticArguments\nif ($LASTEXITCODE -ne 0) {\n    throw \"VM.log inspection failed\"\n}\n$listing | Where-Object {\n    $_ -match '^\\s*#\\d+:' -and $_.Contains($OutputName + ' ')\n}\n",
+          "context.txt": "Runtime: Eclipse Temurin 25.0.3+9, Windows amd64.\nPurpose: support staff request the existing configuration for exactly one file output.\nAuthorization for this helper is inspection only: it must preserve selection, decorators, outputs and rotation state.\nCaller supplies Jcmd as the matching jcmd.exe, TargetPid as one identified JVM PID, and OutputName as file=a.log.\nThe supplied before-list.txt is an actual isolated VM.log list capture. Both file outputs are owned by independent consumers; their warning coverage and retention must be preserved.\nThis is a repository review fixture. No production PID or endpoint is supplied. Do not attach to arbitrary existing JVMs. An isolated owned test JVM is permitted if needed, but sufficient matching source and supplied captures can support the narrow conclusion.\n",
+          "before-list.txt": " #0: stdout all=warning uptime,level,tags foldmultilines=false\n #1: stderr all=off uptime,level,tags foldmultilines=false\n #2: file=a.log all=off,gc=info time,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false\n #3: file=b.log all=off,class+load=info time,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false\n"
+        }
+      },
+      {
+        "id": "standalone-list",
+        "prompt": "Review observe-output.ps1 against context.txt and before-list.txt. Make the smallest justified fix if the inspection contract is violated; otherwise preserve the helper. Explain the decisive behavior and give an observable verification check. Do not introduce a new logging framework or run a production action.",
+        "fixtureRoot": "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/cases/standalone-list",
+        "files": {
+          "observe-output.ps1": "param(\n    [Parameter(Mandatory)][string]$Jcmd,\n    [Parameter(Mandatory)][int]$TargetPid,\n    [Parameter(Mandatory)][string]$OutputName\n)\n\n$diagnosticArguments = @([string]$TargetPid, \"VM.log\", \"list\")\n$listing = & $Jcmd @diagnosticArguments\nif ($LASTEXITCODE -ne 0) {\n    throw \"VM.log inspection failed\"\n}\n$listing | Where-Object {\n    $_ -match '^\\s*#\\d+:' -and $_.Contains($OutputName + ' ')\n}\n",
+          "context.txt": "Runtime: Eclipse Temurin 25.0.3+9, Windows amd64.\nPurpose: support staff request the existing configuration for exactly one file output.\nAuthorization for this helper is inspection only: it must preserve selection, decorators, outputs and rotation state.\nCaller supplies Jcmd as the matching jcmd.exe, TargetPid as one identified JVM PID, and OutputName as file=a.log.\nThe supplied before-list.txt is an actual isolated VM.log list capture. Both file outputs are owned by independent consumers; their warning coverage and retention must be preserved.\nThis is a repository review fixture. No production PID or endpoint is supplied. Do not attach to arbitrary existing JVMs. An isolated owned test JVM is permitted if needed, but sufficient matching source and supplied captures can support the narrow conclusion.\n",
+          "before-list.txt": " #0: stdout all=warning uptime,level,tags foldmultilines=false\n #1: stderr all=off uptime,level,tags foldmultilines=false\n #2: file=a.log all=off,gc=info time,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false\n #3: file=b.log all=off,class+load=info time,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false\n"
+        }
+      }
+    ],
+    "evaluatorExpectations": [
+      {
+        "id": "composed-list",
+        "decisiveConstraint": "The helper appends an output configuration argument to an otherwise standalone listing.",
+        "expectedOutcomes": [
+          "Reads the helper and identifies output=... as a configuration request, not a list filter, despite the list action and successful jcmd status.",
+          "Removes only that configuration argument; keeps standalone VM.log list and the existing local filtering for the supplied simple output name.",
+          "Explains that selection/decorator defaults can change the target output; does not add disable=false or rotate=false as supposed no-op guards.",
+          "Verifies or proposes comparing before/after effective configuration and archives in an owned isolated JVM; preserves both outputs and standard warning coverage.",
+          "Keeps exact target-PID selection and source/runtime version scope; no arbitrary attach or broad target."
+        ],
+        "failureConditions": [
+          "Leaves the composed command and labels it read-only.",
+          "Replaces it with global disable/re-enable, rotation or a false-valued action option.",
+          "Expands scope into production capture, benchmark or framework migration.",
+          "Claims behavioral or runtime execution that did not occur."
+        ]
+      },
+      {
+        "id": "standalone-list",
+        "decisiveConstraint": "Only the output=... argument is absent; the same local filter remains after standalone VM.log list.",
+        "expectedOutcomes": [
+          "Recognizes the existing helper invokes the read-only standalone command and filters locally; no change is required for the requested contract.",
+          "Preserves the adequate helper and target PID instead of adding redundant logging changes or another approval flow.",
+          "Distinguishes a source-backed read-only configuration conclusion from a claim that no JVM attach overhead exists.",
+          "May use the supplied matching capture/source or a narrowly isolated before/after configuration check; does not force unrelated stress/termination campaigns."
+        ],
+        "failureConditions": [
+          "Applies the same mutation finding when the configuration argument is absent.",
+          "Adds output=... to narrow listing or a rotate/disable false-valued option.",
+          "Rewrites working code without a supported defect.",
+          "Treats every jcmd listing as requiring fresh permission despite existing inspection authorization."
+        ]
+      }
+    ],
+    "evaluatorOnlyArtifact": "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/evaluator-criteria.json",
+    "deliveryInstruction": "Give the actor only TASK.md and the corresponding fixture directory. Keep evaluator expectations separate until assessment."
+  },
+  "artifacts": {
+    "root": "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc",
+    "baseline": "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/baseline.json",
+    "finalDiff": "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/final-owned.diff",
+    "checks": [
+      "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/package-check.log",
+      "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/prettier-check.log",
+      "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/diff-check.log",
+      "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/fixture-parse-check.log",
+      "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/final-probe-check.log"
+    ],
+    "checker": "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/check-package-and-cases.mjs",
+    "probeSource": "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/LoggingProbe.java",
+    "finalProbe": "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/verify-command-scope-final.mjs",
+    "finalResults": "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/validated-final/results.json",
+    "allProbeDirectories": [
+      "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/list-only",
+      "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/list-with-output",
+      "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/validated",
+      "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/validated-final"
+    ],
+    "failureLogs": [
+      "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/probe-check.log",
+      "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/restored-probe-check.log",
+      "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/list-with-output/hs_err_pid22212.log"
+    ],
+    "sourceSnapshots": [
+      "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/jdk25-logDiagnosticCommand.cpp",
+      "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/jdk25-logConfiguration.cpp",
+      "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/jdk25-logFileOutput.cpp"
+    ],
+    "fixtureRoots": [
+      "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/cases/composed-list",
+      "C:/Users/robso/AppData/Local/Temp/codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc/cases/standalone-list"
+    ],
+    "preservation": "All raw tool JSON, active/archive log files, target stdout/stderr, exit records, source probes and the failed-run hs_err file are retained. No cleanup or overwrite of failed evidence was performed."
+  },
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Only coordinator may write the shared generated index after reviewers stop.",
+      "prerequisites": "All skill reviewers stopped and accepted changes ready."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Parallel-review global-validation restriction.",
+      "prerequisites": "Registry regenerated after all reviewer writes stop."
+    }
+  ],
+  "crossSkillIssues": [],
+  "coordinatorActions": [
+    "Review and accept the focused owned four-file diff.",
+    "Run the deferred global commands after all reviewers stop.",
+    "Preserve the isolated evidence directory, including the initial JVM crash. Independent execution of the separated cases remains optional follow-up for behavioral measurement."
+  ]
+}

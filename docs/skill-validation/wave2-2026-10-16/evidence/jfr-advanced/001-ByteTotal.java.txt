@@ -1,0 +1,25 @@
+import java.nio.file.Path;
+import jdk.jfr.consumer.RecordedEvent;
+import jdk.jfr.consumer.RecordingFile;
+
+public final class ByteTotal {
+    public static void main(String[] args) throws Exception {
+        long total = 0;
+        long matches = 0;
+        try (RecordingFile file = new RecordingFile(Path.of(args[0]))) {
+            while (file.hasMoreEvents()) {
+                RecordedEvent event = file.readEvent();
+                if (!event.getEventType().getName().equals("com.example.Measurement")) {
+                    continue;
+                }
+                total = Math.addExact(total, event.getLong("value"));
+                matches++;
+            }
+        }
+        if (matches == 0) {
+            throw new IllegalStateException("Expected measurement control is absent");
+        }
+        System.out.println("bytes=" + total);
+    }
+}
+

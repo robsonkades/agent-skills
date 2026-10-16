@@ -37,9 +37,11 @@ absence throughout the system.
    uses.
    If the feature is too ambiguous to select relevant paths, ask the smallest scope question;
    repository investigation does not require delaying a question only the user can answer.
-2. **Work the checklist** in `references/investigation-checklist.md` — build, dependencies,
-   layering, persistence, messaging, configuration, security, observability, testing, delivery.
-   Relevant concerns get a finding, bounded "not found", "not examined" or "unavailable".
+2. **Investigate the feature's material questions.** For behavior or reuse questions, follow
+   the relevant entrypoint through implementation selection to the result or side effect;
+   finding a class is not enough to establish that path. Use the tracing procedure and relevant
+   concerns in `references/investigation-checklist.md`, including search failures and refreshes.
+   Record a finding, bounded "not found", "not examined" or "unavailable" for each material question.
 3. **Cite findings to their sources.** Use `path:line` or a command with captured output and
    its target module/profile/configuration. Dependency coordinates and versions identify an
    artifact; also cite what establishes its declared or resolved status. A material claim not
@@ -48,7 +50,7 @@ absence throughout the system.
 4. **Close the unknowns it can close.** Walk the discovery ledger and mark each unknown this
    sweep answered, with the evidence. This is the phase's main product.
 5. **List reusable components** by name and location, with what each would have to change.
-   Trace a representative caller and its wiring: target module/configuration availability,
+   Use a traced representative caller and its wiring: target module/configuration availability,
    lifecycle, input/output and failure contracts can rule out a superficially similar component.
    Distinguish a plausible candidate from verified compatibility; choosing it remains a decision.
 6. **List the conflicts** — anything in the request that the codebase makes awkward, expensive
@@ -61,6 +63,8 @@ absence throughout the system.
    feature revision so later baseline changes can invalidate findings.
    Reuse the existing ledger when present; otherwise concise inline IDs/unknowns are enough.
    Record repository revision and relevant working-tree changes as well as the feature input.
+   When resuming or receiving changed inputs, use the checklist's refresh guidance to recheck
+   affected findings and reopen unsupported answers before reusing the report.
 
 ## Decision rules
 
@@ -89,6 +93,11 @@ THEN retain the competing claims with their revisions and target environments. E
      each source proves; desired policy and observed behavior can both be real and inconsistent.
      Do not resolve the unknown by selecting the newest file or the first example. Name the
      discriminating check, or pass the conflict to clarification/decision with its consequence.
+
+IF evidence or the feature's target changes after an unknown was resolved
+THEN recheck the facts that answered it, including their scope and derived reuse/constraint claims.
+     Keep the historical evidence, reopen unsupported answers and flag consuming decisions for
+     their owners to review. Do not silently reverse an accepted decision or restart unrelated work.
 
 IF the feature needs a capability and something close already exists
 THEN name it, say precisely what it lacks, and let the decision phase choose between
@@ -125,18 +134,22 @@ Existing architecture      <shape, with the paths that show it>
 Input revisions            <Product/Engineering or Tech Feature revision IDs>
 Relevant modules           <path -> what it owns>
 Relevant components        <name, path, what it does>
+Inspected flows            <question -> entrypoint, selection, result; evidence and unresolved edges>
 Existing patterns          <pattern, count within inspected scope, counter-examples>
 Existing technologies      <name, version, where used, observed>
 Reusable components        <name -> what it would need>
 Potential conflicts        <request item vs what the code makes hard, with evidence>
 Source disagreements       <competing claims, revision/target, consequence and next check>
+Changed conclusions        <affected F-*/U-*, replacement evidence or reopened gap, handoff>
 Constraints from the code  <enforced/documented requirement vs change cost, with evidence>
 Questions answered         <U-* -> F-*, evidence>
 Still unknown              <U-nn, search limits/access gaps, smallest next evidence or question>
 ```
 
 Scale the report to the feature: omit irrelevant rows and reuse existing artifacts. Before handing
-off, verify cited paths match the current revision and each resolved unknown is actually supported.
+off, verify cited content still supports each resolved unknown at the stated revision and target;
+a path that still exists is not sufficient. If relevant files changed during the sweep, recheck the
+affected claims or mark their snapshot limit rather than presenting mixed revisions as one state.
 Do not mark a product decision answered merely because one implementation was found.
 End the sweep when material questions in scope have supported answers or bounded evidence/access
 gaps with the next check or accountable role identified. Expand only when further inspection could

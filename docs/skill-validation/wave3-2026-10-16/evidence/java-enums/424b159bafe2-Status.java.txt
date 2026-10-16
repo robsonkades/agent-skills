@@ -1,0 +1,12 @@
+package fixtures;
+public enum Status {
+    APPROVED("A"), REJECTED("R");
+    private final String code;
+    Status(String code) { this.code = code; }
+    public String code() { return code; }
+    public static Status byCode(String code) {
+        for (Status value : values()) if (value.code.equals(code)) return value;
+        throw new IllegalArgumentException("unknown code");
+    }
+    private Object writeReplace() { return code; }
+}

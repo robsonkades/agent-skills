@@ -1,0 +1,17 @@
+[
+  {
+    "Url": "https://raw.githubusercontent.com/mattpocock/skills/49dd158d1076134a641b33efb035946536778336/skills/engineering/improve-codebase-architecture/SKILL.md",
+    "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-refactoring-paths/sources/improve-codebase-architecture.md",
+    "Success": true
+  },
+  {
+    "Url": "https://martinfowler.com/bliki/ParallelChange.html",
+    "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-refactoring-paths/sources/parallel-change.html",
+    "Success": true
+  },
+  {
+    "Url": "https://aws.amazon.com/builders-library/ensuring-rollback-safety-during-deployments/",
+    "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-refactoring-paths/sources/rollback-safety.html",
+    "Success": true
+  }
+]

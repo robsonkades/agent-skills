@@ -1,0 +1,49 @@
+{
+  "decision": "changed",
+  "cause": "Dispatcher.replayOne generated a fresh UUID acceptance token on every attempt. Receiver acknowledgment commits independently; a subsequent Checkpoint failure leaves the row pending. Replay then used another token and bypassed the receiver's existing deduplication contract.",
+  "changes": [
+    "Dispatcher passes the retained immutable event_id directly to ReceiverClient.accept and removes the unused UUID import.",
+    "Regression.java exercises actual Spring beans, the acknowledgment/checkpoint failure window, file-backed recovery in another JVM, payload snapshot preservation, publisher atomicity, bounded replay, receiver rejection and token/payload conflict.",
+    "RUNBOOK.md documents stable identity, pending-work ownership, replay commands and evidence limits."
+  ],
+  "verification": [
+    "Before repair: node check.mjs passed.",
+    "Before repair: node check.mjs work.Regression exited 1 after proving order=1, pending=1 and receiver effect=1 at the failure window; replay then produced receiver effects=2.",
+    "After repair: prepare exited 0 with one retained row and one independently committed receiver effect after the propagated checkpoint failure.",
+    "After repair: recover in a separate JVM exited 0 with receiver effects=1 and done=1; it reused event:retained and original-fact without resubmitting Publisher.create.",
+    "After repair: controls exited 0 for publisher rollback on second-write failure, one-row replay, distinct same-payload events, receiver rejection and conflicting payload rejection.",
+    "After repair: unchanged smoke exited 0.",
+    "SHA-256 comparisons: all 23 input files outside the intentionally edited Dispatcher and RUNBOOK match their output copies, including all frozen files and libraries."
+  ],
+  "limits": [
+    "Evidence covers sequential replay by one worker against H2 2.4.240 and the frozen ReceiverClient surrogate; no production provider or concurrent workers were exercised.",
+    "Recovery was tested after orderly termination of one JVM and start of another using the same file-backed databases, not process killing, power loss or physical storage crash guarantees.",
+    "Previously acknowledged random UUID tokens from the defective implementation were not persisted; reconciling their old effects requires information unavailable in the outbox. The correction cannot reconstruct historical mappings.",
+    "Boot, JPA, brokers and Modulith are absent; no related integration guarantees are claimed."
+  ],
+  "regressionCommands": [
+    [
+      "node",
+      "check.mjs"
+    ],
+    [
+      "node",
+      "check.mjs",
+      "work.Regression",
+      "prepare"
+    ],
+    [
+      "node",
+      "check.mjs",
+      "work.Regression",
+      "recover"
+    ],
+    [
+      "node",
+      "check.mjs",
+      "work.Regression",
+      "controls"
+    ]
+  ]
+}
+

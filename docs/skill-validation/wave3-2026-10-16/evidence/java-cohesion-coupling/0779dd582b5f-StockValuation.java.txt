@@ -1,0 +1,17 @@
+package inv.pricing;
+
+import inv.stock.StockLevel;
+import java.math.BigDecimal;
+import java.util.List;
+
+public final class StockValuation {
+    private final PriceList prices;
+
+    public StockValuation(PriceList prices) { this.prices = prices; }
+
+    public BigDecimal value(List<StockLevel> levels) {
+        return levels.stream()
+                .map(l -> prices.unitPrice(l.sku()).multiply(BigDecimal.valueOf(l.quantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+}

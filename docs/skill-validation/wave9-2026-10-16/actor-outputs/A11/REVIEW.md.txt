@@ -1,0 +1,26 @@
+Reject the proposal as written. Its arithmetic and recovery conclusions contradict the supplied authored incident packet. No policy changes were made.
+
+All attempt counts include the initial attempt. The current configured maximum is `1 gateway × 2 outer × 3 SDK = 6` wire attempts per logical call. The proposed gateway policy makes it `3 × 2 × 3 = 18`, not eight. These are nominal nested maxima, not observed counts or reachable schedules: no numerical combined deadline, attempt timeouts, backoff or cleanup reserve is supplied.
+
+The cohort is explicitly matched by window/dependency and excludes fanout, hedging and unrelated traffic:
+
+| Quantity | Calculation | Meaning |
+| --- | --- | --- |
+| Outer attempts/logical call | 1060 / 1000 = 1.06 | Observed cohort ratio |
+| Wire attempts/logical call | 1600 / 1000 = 1.6 | Observed cohort ratio |
+| Additional SDK wire attempts | 1600 - 1060 = 540 | Attributed to SDK retries by the packet |
+| Wire attempts/SDK operation | 1600 / 1060 = 1.509434 | Each outer attempt invokes one SDK operation |
+| Aggregate outer retry grant upper bound | 4 × 10 + 0.1 × 900 = 130 | Initial tokens plus success refills |
+
+The 60 observed outer retry grants match `1060 - 1000` and are below 130. There is no evidence here that the bucket is broken; this does not prove its implementation correct. The 20-token per-process capacity can discard refills, making actual available grants smaller; it is not a lifetime grant limit. Per-process success/grant timing is absent. The aggregate calculation relies on the stated four processes and absence of restarts or other refills.
+
+The refill rate earns outer retry tokens per success. It does not cover SDK wire retries, is not per logical call, and includes startup burst. Consequently it does not prove a fleet-wide wire ratio cap of 1.1. Here, 60 additional outer attempts plus 540 SDK retries explain the 600 wire sends above the 1000-call baseline. Retain the useful outer admission control; any revised policy must explicitly account for all retry layers and a shared shrinking deadline.
+
+For operation-41, dispatch at 0 ms followed by caller timeout/cancel at 50 ms leaves the business outcome UNKNOWN. The 52 ms lookup proves only then-current absence; the supplied peer contract explicitly does not rule out later application. Preserve the original identity and unresolved recovery state, and stop automatic redispatch because this operation has no replay guarantee. A fresh intent could duplicate the effect.
+
+The full packet then records the original commit at 80 ms. This is evidence of an applied original write in this fixture, not a definitively failed operation or a permanently unknown outcome. Reconcile that committed outcome under operation-41. Cancellation was signalled, not acknowledged; the write could still commit 30 ms after caller expiry. No resource-release timestamp is supplied, so neither immediate termination nor a bounded remote lifetime is established.
+
+One bounded next verification, not executed: after correcting the proposal, replay this four-event schedule once against the actual recovery handler in an isolated harness, with one intent and a 20-second process limit. Record durable state and dispatches at 50/52/80 ms. Require UNKNOWN after timeout and negative lookup, zero replacement intents or redispatches, and reconciliation to the original committed outcome. Passing would change this rejection to a request for production-contract validation of the revised recovery logic; failing retains rejection. It would not establish provider guarantees or fleet behavior.
+
+Checks performed: parsed the incident JSON; recomputed the five requested metrics and SDK attribution; verified SHA-256 equality of all four immutable output copies; validated the final JSON and review length. No Java build, runner, network call or production test ran. This is a review-only fixture with no Java implementation or run.mjs. Endpoint/API/account identity, SDK/gateway versions, database/isolation, retention, numerical deadline and production release behavior are not supplied. Cross-skill routes beyond the supplied snapshots were not opened.
+

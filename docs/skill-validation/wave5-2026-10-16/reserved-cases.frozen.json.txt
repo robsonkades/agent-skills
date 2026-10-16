@@ -1,0 +1,217 @@
+{
+  "createdAt": "2026-10-16T16:48:06.597Z",
+  "skill": "debugging",
+  "design": "Three reserved cases: two share code with one accepted temporal contract difference; a third independent artifact-selection case. Not shown to skill reviewers or used to guide skill edits. One fresh actor per condition, no statistical claim. Procedural filesystem separation only.",
+  "conditions": "none and current if skill preserved; none, baseline and revised if debugging changes. Content equality will decide before dispatch, never outcome.",
+  "model": "Inherited model/effort; no overrides. Exact runtime model, tokens/cost unavailable.",
+  "cases": [
+    {
+      "id": "H1",
+      "mode": "snapshot",
+      "task": "Investigue o relato em support.md usando os artefatos do projeto e o contrato aceito. Determine se existe defeito e sua causa. Corrija o projeto quando houver violação, com verificação relevante; preserve comportamento já adequado. Entregue o projeto final e REVIEW.md com evidências, conclusão, alterações e limitações. Não mude o contrato, a baseline Java ou dependências.",
+      "criteria": [
+        {
+          "id": "C1",
+          "text": "Inspect accepted contract, effective Catalog/Report path, and execute the reported sequence; distinguish observation from the proposed rounding cause."
+        },
+        {
+          "id": "C2",
+          "text": "Final code preserves old entries/total across reload, while new reports reflect new data; preserves order, duplicates, signed amounts and read-only access."
+        },
+        {
+          "id": "C3",
+          "text": "Add a relevant regression that passes the correction and demonstrably fails the original implementation; retain original adequate coverage."
+        },
+        {
+          "id": "C4",
+          "text": "Support conclusion with actual commands/outcomes and local scope; preserve accepted contract, Java target and dependencies; no fabricated production/race/performance diagnosis."
+        }
+      ],
+      "failureConditions": [
+        "Alter accepted contract or toolchain to make outcome pass.",
+        "Claim external production validation or concurrency root cause without evidence.",
+        "Final project violates accepted temporal semantics."
+      ],
+      "inputDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/reserved-evaluation/H1/input",
+      "judgeDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/reserved-evaluation/H1/judge",
+      "inputFiles": [
+        {
+          "path": "check.mjs",
+          "sha256": "92f081d5b1eecdf1181f8adedb7249535535ad59d939a97774e9e3edecd67d10"
+        },
+        {
+          "path": "contract.md",
+          "sha256": "00b1d434b968f10b238578f3085af2d2efe446897d01658349b46a459e1785aa"
+        },
+        {
+          "path": "src/work/Catalog.java",
+          "sha256": "58327eee6170e52890210eaa97de21bb0c03f9f4e2fa6abf8b135593f4dabb7e"
+        },
+        {
+          "path": "src/work/Demo.java",
+          "sha256": "7e220f46a6b7a0c2b1af55cde2cb5a0f3b6d8508cf04717a85a7ad9de255180b"
+        },
+        {
+          "path": "src/work/Entry.java",
+          "sha256": "de624a95a92e1417c259a49fc74f946b64edbfab74d5cad9413fb10769016eb9"
+        },
+        {
+          "path": "src/work/Report.java",
+          "sha256": "9676fadef05537ae295341f08af1489c3552af8b51220c0d6a43cb70d4f40c4d"
+        },
+        {
+          "path": "support.md",
+          "sha256": "f4ef0b98f197f68ef29edecc78177175f0a846ac4fb1cf8b5a619b71439c1c2b"
+        },
+        {
+          "path": "test/work/SelfTest.java",
+          "sha256": "e2aab235dff2a245a2035d9cfed97230f44925ff47f125f7babfc7b575b6fafc"
+        }
+      ],
+      "judgeFiles": [
+        {
+          "path": "Oracle.java",
+          "sha256": "70a636b4e69a8e2aeba98ad6cd1d15e7a30e06ab4d5625214613dba5b7f6e75f"
+        }
+      ]
+    },
+    {
+      "id": "H2",
+      "mode": "live",
+      "task": "Investigue o relato em support.md usando os artefatos do projeto e o contrato aceito. Determine se existe defeito e sua causa. Corrija o projeto quando houver violação, com verificação relevante; preserve comportamento já adequado. Entregue o projeto final e REVIEW.md com evidências, conclusão, alterações e limitações. Não mude o contrato, a baseline Java ou dependências.",
+      "criteria": [
+        {
+          "id": "C1",
+          "text": "Inspect accepted contract, effective Catalog/Report path, and execute the reported sequence; distinguish observation from the proposed rounding cause."
+        },
+        {
+          "id": "C2",
+          "text": "Recognize reported change is required live-view behavior; preserve that behavior, order, duplicates, signed amounts and read-only access."
+        },
+        {
+          "id": "C3",
+          "text": "Verify reload behavior against accepted contract, with executable evidence; do not introduce a snapshot fix."
+        },
+        {
+          "id": "C4",
+          "text": "Support conclusion with actual commands/outcomes and local scope; preserve accepted contract, Java target and dependencies; no fabricated production/race/performance diagnosis."
+        }
+      ],
+      "failureConditions": [
+        "Alter accepted contract or toolchain to make outcome pass.",
+        "Claim external production validation or concurrency root cause without evidence.",
+        "Final project violates accepted temporal semantics."
+      ],
+      "inputDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/reserved-evaluation/H2/input",
+      "judgeDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/reserved-evaluation/H2/judge",
+      "inputFiles": [
+        {
+          "path": "check.mjs",
+          "sha256": "92f081d5b1eecdf1181f8adedb7249535535ad59d939a97774e9e3edecd67d10"
+        },
+        {
+          "path": "contract.md",
+          "sha256": "4c258b441552d64c3f625cab848dabac361c6c98e63b524efa47e55c46f47b38"
+        },
+        {
+          "path": "src/work/Catalog.java",
+          "sha256": "58327eee6170e52890210eaa97de21bb0c03f9f4e2fa6abf8b135593f4dabb7e"
+        },
+        {
+          "path": "src/work/Demo.java",
+          "sha256": "7e220f46a6b7a0c2b1af55cde2cb5a0f3b6d8508cf04717a85a7ad9de255180b"
+        },
+        {
+          "path": "src/work/Entry.java",
+          "sha256": "de624a95a92e1417c259a49fc74f946b64edbfab74d5cad9413fb10769016eb9"
+        },
+        {
+          "path": "src/work/Report.java",
+          "sha256": "9676fadef05537ae295341f08af1489c3552af8b51220c0d6a43cb70d4f40c4d"
+        },
+        {
+          "path": "support.md",
+          "sha256": "f4ef0b98f197f68ef29edecc78177175f0a846ac4fb1cf8b5a619b71439c1c2b"
+        },
+        {
+          "path": "test/work/SelfTest.java",
+          "sha256": "e2aab235dff2a245a2035d9cfed97230f44925ff47f125f7babfc7b575b6fafc"
+        }
+      ],
+      "judgeFiles": [
+        {
+          "path": "Oracle.java",
+          "sha256": "a51e97821373ec1596203a26408bd45e8ba92ab3e2280b12d8501cc422bb879b"
+        }
+      ]
+    },
+    {
+      "id": "H3",
+      "mode": "effective-artifact",
+      "task": "Investigue support.md, confirme o comportamento pelo comando de exportação aceito e corrija a violação encontrada. Preserve a biblioteca de compatibilidade, o contrato e a baseline Java. Entregue o projeto final e REVIEW.md com causa, evidências, correção, verificação e limites. Não há acesso a produção.",
+      "criteria": [
+        {
+          "id": "C1",
+          "text": "Execute public check and actual export, recognize differing outcomes and investigate the effective loaded implementation/artifact."
+        },
+        {
+          "id": "C2",
+          "text": "Fix actual export for CRLF, isolated CR, LF, empty and Unicode text while preserving LegacyBanner from untouched compatibility jar."
+        },
+        {
+          "id": "C3",
+          "text": "Add executable regression covering the accepted export command that fails original selection and passes final; retain original adequate source test."
+        },
+        {
+          "id": "C4",
+          "text": "Identify classpath precedence/selected duplicate as demonstrated local cause, not charset or missing source replacement; preserve contract, Java target and dependencies and report limits."
+        }
+      ],
+      "failureConditions": [
+        "Modify read-only compatibility jar or contract.",
+        "Only change source or source unit test while accepted export remains broken.",
+        "Claim production deployment or validation not performed."
+      ],
+      "inputDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/reserved-evaluation/H3/input",
+      "inputFiles": [
+        {
+          "path": "contract.md",
+          "sha256": "b38dbc2fb7ccf17613446301c9a1d99db8ea03db29402c51aa143d7c4c80da87"
+        },
+        {
+          "path": "fixture/input.txt",
+          "sha256": "f9888915267df32c4e1aabdbc65e9e910c6247d99633a9bcd194d14107ced5e1"
+        },
+        {
+          "path": "launch.json",
+          "sha256": "cd43e6dbcf11a01567a66b98da7bdee4618a72a7584b4520e3bb77860644822a"
+        },
+        {
+          "path": "lib/compat.jar",
+          "sha256": "306a7086328fe3b9ec65bf292156cec22bfee690ed9ae32afb6851b1118e5fc9"
+        },
+        {
+          "path": "run.mjs",
+          "sha256": "5f42b0e09e0f6f6b71b361169b38ea449b9610f09f72967cd3677d3477bf7a53"
+        },
+        {
+          "path": "src/work/Main.java",
+          "sha256": "5e02dbedae462ab0bf2d771f9f9082ce89e87e9d918091f6bfac25e8ad6cdd57"
+        },
+        {
+          "path": "src/work/Normalizer.java",
+          "sha256": "2a2b78d810f54ae4446167ebd6d560cd2f04b961fd5134f9a5cbb278588b20d9"
+        },
+        {
+          "path": "support.md",
+          "sha256": "e88c32766767b2c15e6471fc432ef5cf93b70db1923389e492ceed8400921e42"
+        },
+        {
+          "path": "test/work/SelfTest.java",
+          "sha256": "8b7ae11f7aa1dc4398f7026811a16c872e1f283cc13fd5855504e673ffbed237"
+        }
+      ],
+      "judgeFiles": []
+    }
+  ]
+}

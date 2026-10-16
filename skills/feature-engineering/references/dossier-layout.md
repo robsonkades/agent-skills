@@ -40,8 +40,8 @@ directories. External writes still follow the user's authorization and available
 
 - **definition.md** — immutable input revision identities, accountable owners, acceptance criteria,
   gaps and approval. New semantic content creates a revision rather than rewriting the baseline.
-- **analysis.md** — everything established before the plan. It is written once and then
-  amended with dated notes; the amendments are what make it trustworthy later.
+- **analysis.md** — the current analysis, with dated corrections and prior reasoning retained.
+  Update the resolution of an entry rather than leaving contradictory answers looking current.
 - **contracts/** — the repository's authoritative contract artefacts or links to an existing
   source of truth. Do not duplicate a contract merely to fit this layout.
 - **plan.md** — the living artefact. It changes during implementation, and every change says
@@ -56,6 +56,49 @@ directories. External writes still follow the user's authorization and available
 - **decisions/** — ADRs for choices that warrant a separate record; routine decisions stay in
   the existing decision log. Follow the local lifecycle through architecture-decision-making,
   preserving prior rationale when a choice changes.
+
+## Integrate a phase result before handing it on
+
+Keep one authoritative location for each statement; downstream records link to it using the existing
+IDs and revisions. A specialist response is an input to this record, not another competing baseline.
+Before advancing dependent work:
+
+1. Reconcile the result with the question and source decisions. Preserve qualifiers that change
+   behavior: scope, units/defaults, ordering, exceptions, forbidden effects and failure handling.
+   For example, “cancel queued exports only; running exports continue” must not become merely
+   “support cancellation” in the plan. A conflict returns to its owner; a shorter summary cannot
+   silently amend acceptance.
+2. Apply the resolved answer or evidence to its existing record, retaining its source, authority
+   and status. A proposed option remains proposed; an accepted design is not implemented behavior.
+   Keep a material engineering choice in the existing decision log even when it needs no separate ADR.
+3. Check the recorded content and links after writing, then update the progress entry with the
+   next action and any affected stale or blocked work. Preserve unrelated current results. If the
+   authoritative record cannot be read or written, name the limitation and hand off the proposed
+   delta explicitly; do not claim it was persisted or silently create a second source of truth.
+
+On resumption, read the progress entry and follow the material links for the next action; do not
+replace detailed obligations with the summary. Apply the artefact contract's applicability checks
+before reusing a gate or evidence. Missing records leave a reconstruction gap, not proof that an
+earlier decision never existed. Reuse supported decisions and ask only for a consequential answer
+that the available records cannot establish.
+
+## Bounded lessons
+
+At completion or a material return, retain a lesson only if the observed result could improve a
+future decision. In the existing analysis or decision record, link the relevant IDs/evidence and
+state the condition, observation, decision implication, limits and what would favor a different
+choice. Distinguish a supported lesson from a hypothesis needing another check; one successful
+feature does not establish an organizational standard.
+
+Keep lessons scoped to the demonstrated environment and outcome. On reuse, check those conditions
+against current evidence. Record any follow-up with its owner and verifiable end state; work outside
+the accepted feature remains a proposal, not an automatic scope expansion. Do not create a lesson
+for routine work with nothing new to preserve, invent persistent memory, or modify agent instructions
+or shared policy merely to retain it.
+
+This adapts the evidence-linked conclusions and concrete actions described in
+[Google's postmortem guidance](https://sre.google/workbook/postmortem-culture/); it does not require a
+postmortem for every feature or claim that a written lesson has prevented recurrence.
 
 ## When there is no dossier
 

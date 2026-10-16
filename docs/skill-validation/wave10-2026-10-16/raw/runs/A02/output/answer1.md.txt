@@ -1,0 +1,11 @@
+Recomendo que Ana escolha hoje **N pelo caminho P**, no horizonte contratado de 24 meses. A direção arquitetural está sustentada; a autorização do rollout segue seu processo próprio.
+
+Uso os documentos locais como premissas deste caso, sem executar medições. A comparação é entre reter R e adotar a solução completa N via P:
+
+- **Estados finais:** R e N atendem aos contratos de leitura, integridade, capacidade, recuperação sem perda e operação. R permanece viável por todo o horizonte; migrar não é uma necessidade imposta (`decision.md`).
+- **Transição:** a obrigação permite até 25 minutos de interrupção planejada das escritas, mantendo leitura e dados reconhecidos. O registro assinado por Ana e operações informa ensaios de P entre 18 e 20 minutos e limite operacional demonstrado de 20 minutos: há 5 minutos de margem frente à obrigação. Nenhuma escrita é reconhecida durante a pausa; leitura, preservação, recuperação e demais obrigações foram verificadas, sem incompatibilidade adicional em aberto (`operacao.md`). Portanto, P passa nas condições documentadas.
+- **Preferência:** o custo total futuro é o único diferenciador autorizado. R custa 520 mil; N via P, 410 mil, incluindo migração, sobreposição, operação, saída e recuperação. A economia é **110 mil em 24 meses**, aproximadamente 21,2% (`options.csv`). Os 90 mil irrecuperáveis do protótipo não entram nesta comparação nem justificam a escolha (`proposal.md`).
+
+Aceita-se a pausa de escritas dentro do limite acordado em troca da economia. Não há razão documentada para adiar a direção buscando outro caminho: P é o único ensaiado; alternativas não analisadas nem estimadas não substituem essa evidência.
+
+O responsável técnico deve encaminhar **N via P** ao processo de rollout, preservando carga, capacidade e obrigações verificadas como condições de aceitação. Reabrir a decisão se mudarem essas condições, se surgir violação de leitura, preservação ou pausa máxima, ou se a revisão dos custos eliminar a vantagem de 110 mil. Se P perder viabilidade, manter R enquanto outro caminho é avaliado; isso não demonstraria que todo caminho para N é inviável.

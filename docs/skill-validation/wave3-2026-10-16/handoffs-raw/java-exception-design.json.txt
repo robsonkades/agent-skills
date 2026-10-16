@@ -1,0 +1,343 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "java-exception-design",
+  "ownedPath": "C:/git/agent-skills/skills/java-exception-design",
+  "allWritesStopped": true,
+  "writerProcessesRemaining": [],
+  "handoffPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-exception-design.json",
+  "scope": "Only assigned skill edited. No shared repository files, global checks/generation, installations, subagents, real agent configuration or git-state changes. Prior io-uring-and-zero-copy remains read-only.",
+  "assessmentSentBeforeEdits": true,
+  "procedure": {
+    "documentsRead": [
+      "AGENTS.md",
+      "docs/parallel-skill-reviews.md",
+      "docs/skill-review-prompt.md (complete)",
+      "docs/skill-validation/wave3-2026-10-16/review-brief.md",
+      "skills/skill-engineering/SKILL.md and evidence/evaluation/resource-design/anti-patterns references",
+      "docs/skill-validation/skills-comparative-research-2026-10-16.md",
+      "All five assigned-package files"
+    ],
+    "reuse": "Previously read unchanged procedure documents reused as wave brief permits.",
+    "nestedInstructions": "No nested AGENTS.md found for owned package."
+  },
+  "baseline": {
+    "packageState": "Clean at assignment; no staged/unstaged/untracked owned changes.",
+    "committedVersion": "1.3.4",
+    "assignmentVersion": "1.3.4",
+    "preExistingBump": false,
+    "retainedSnapshot": "C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/baseline.json"
+  },
+  "findingsCorrected": [
+    {
+      "location": "skills/java-exception-design/SKILL.md:73",
+      "finding": "Cleanup preservation guidance omitted throwable identity. If close rethrows the exact work throwable, the compiler-generated addSuppressed call can replace the original failure with IllegalArgumentException.",
+      "evidence": "JLS21 basic try-with-resources translation calls addSuppressed without an identity guard; Java21 API and pinned OpenJDK21 source reject self-suppression before checking whether suppression is disabled. Executed target-21 harness on runtime25 reproduces both shared and distinct outcomes.",
+      "consequence": "Callers can receive a different failure category and lose the promised primary identity despite use of try-with-resources.",
+      "correction": "Qualify normal distinct-failure behavior; direct resource/cleanup review to identity checks. Explain fixing owned stored-failure policy or guarded manual adapter when necessary, retaining cleanup attempts, close-only failures and distinct secondary evidence.",
+      "referenceLocation": "skills/java-exception-design/references/design-decisions.md:69",
+      "sourceLocation": "skills/java-exception-design/references/design-decisions.md:141",
+      "confidence": "High for documented Java21 contract and pinned implementation; runtime observation is Temurin25.0.3, not a Java21 VM."
+    }
+  ],
+  "findingsRemaining": [],
+  "filesChangedByMe": [
+    {
+      "path": "skills/java-exception-design/SKILL.md",
+      "reason": "Focused self-suppression caveat and reference routing within existing cleanup rule.",
+      "sha256": "3F33EEBDC1112B62E453707E46F7FCF6466E9E9893C1A8581A6A66FF3228787B"
+    },
+    {
+      "path": "skills/java-exception-design/references/design-decisions.md",
+      "reason": "Conditional cleanup identity decision, legitimate ordinary-TWR alternative, failure checks and primary sources.",
+      "sha256": "436616BAEDC1CB2284A57F0D3B735B9C5887671C92919F0E7A15572DC615EA23"
+    },
+    {
+      "path": "skills/java-exception-design/skill.yaml",
+      "reason": "Required single patch bump.",
+      "sha256": "453EEE325B793620BBAC832FAB9736ECD0E5BCAD1825A14A9F9B3A23D0074FAA"
+    }
+  ],
+  "preExistingChanges": [],
+  "unchangedOwnedFiles": [
+    {
+      "path": "skills/java-exception-design/references/failure-atomicity.md",
+      "sha256": "0D243997DDD3B343C485DA9EC1DABD3BB48FB9B61CA75803F0A13804AFB5E1AF"
+    },
+    {
+      "path": "skills/java-exception-design/references/payment-surface.md",
+      "sha256": "B4A7C6DDB94601102E8973CFC0B80290F549874B3455371760D1A1C1F898148C"
+    }
+  ],
+  "capabilities": {
+    "preserved": [
+      "Java21 non-preview baseline and caller/framework/public-contract inspection.",
+      "Checked versus unchecked/result choice from supported handling shapes; hierarchy sizing and compatibility boundaries.",
+      "Cause preservation, typed remote facts, safe audience-specific messages and owning logging boundary.",
+      "Ordinary try-with-resources recommendation, suppression-enabled check, finally hazards and close-only primary failure.",
+      "Interruption/cancellation as control flow and unknown remote outcomes rather than retry permission.",
+      "Payment example, sealed-result exhaustiveness limits, remote approval versus recording failure and recovery ownership.",
+      "Failure atomicity, copy/publish and local/persistent/remote boundary distinctions."
+    ],
+    "replaced": [
+      "Unqualified work-plus-close preservation wording now states distinct-throwable precondition and special handling of reused failure objects."
+    ],
+    "intentionallyRemoved": []
+  },
+  "version": {
+    "committed": "1.3.4",
+    "assignmentTime": "1.3.4",
+    "final": "1.3.5",
+    "rationale": "One patch for changed immutable published content; no assignment-time bump to reuse. No separate SKILL.md version field; descriptions unchanged and consistency validated."
+  },
+  "commandsExecuted": [
+    {
+      "command": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -version\n& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' -version",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "Temurin25.0.3+9-LTS / javac25.0.3.",
+      "type": "Toolchain identification."
+    },
+    {
+      "command": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' --release 21 -d 'C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/classes' 'C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/SuppressionContractCheck.java'\nif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }\n& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -cp 'C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/classes' SuppressionContractCheck | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/suppression-checks.txt'\nexit $LASTEXITCODE",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "PASS, exit 0, 15 contract assertions. Shared identity causes self-suppression failure; distinct identity and guarded manual cleanup preserve required outcomes. Suppression-disabled and same-text/distinct-object controls included.",
+      "type": "Executed isolated Java technical check; compiled target21, executed runtime25."
+    },
+    {
+      "command": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' --release 21 -d 'C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/mutant-classes' 'C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/SuppressionContractMutant.java'\nif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }\n& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -cp 'C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/mutant-classes' SuppressionContractMutant 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/mutant-checks.txt'\nexit $LASTEXITCODE",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "EXPECTED FAILURE, exit 1: removal of secondary != primary is rejected by 'guarded manual cleanup retains shared primary' assertion. Seven earlier checks passed.",
+      "type": "Executed negative control, not a pre-existing or introduced repository failure."
+    },
+    {
+      "command": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' --release 21 -d 'C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/cases/shared/classes' 'C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/cases/shared/Operation.java' 'C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/cases/shared/StoredFailureResource.java' 'C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/cases/shared/FixtureFactory.java' 'C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/cases/shared/Probe.java'\nif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }\n& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -cp 'C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/cases/shared/classes' Probe | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/shared-observation.txt'\nexit $LASTEXITCODE",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "Compiled/executed, exit 0. Probe prints IllegalArgumentException, sameAsWork=false, suppressedCount=0, causeSameAsWork=true, closeCalls=1. Exit 0 reports observation, not correctness.",
+      "type": "Executed baseline development-fixture observation; no agent."
+    },
+    {
+      "command": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' --release 21 -d 'C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/cases/distinct/classes' 'C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/cases/distinct/Operation.java' 'C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/cases/distinct/StoredFailureResource.java' 'C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/cases/distinct/FixtureFactory.java' 'C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/cases/distinct/Probe.java'\nif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }\n& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -cp 'C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/cases/distinct/classes' Probe | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/distinct-observation.txt'\nexit $LASTEXITCODE",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "Compiled/executed, exit 0. Probe prints IOException, sameAsWork=true, suppressedCount=1, causeSameAsWork=false, closeCalls=1.",
+      "type": "Executed baseline development-fixture observation; no agent."
+    },
+    {
+      "command": "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/openjdk/jdk/jdk-21%2B35/src/java.base/share/classes/java/lang/Throwable.java' -OutFile 'C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/jdk21-Throwable.java'\nrg -n -A 23 -B 9 'void addSuppressed' 'C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/jdk21-Throwable.java'",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "PASS, exit 0; pinned source retained and addSuppressed inspected.",
+      "type": "Executed primary-source retrieval/read."
+    },
+    {
+      "command": "node 'C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/check-package.mjs' | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/package-validation.json'\nexit $LASTEXITCODE",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "PASS, exit 0; five package files, zero validation issues, three routed local Markdown links, zero broken links.",
+      "type": "Executed assigned-package metadata/resource validation using repository loader/validator."
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/java-exception-design",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "PASS, exit 0; all matched files use Prettier code style.",
+      "type": "Executed scoped read-only format check."
+    },
+    {
+      "command": "git diff --check -- skills/java-exception-design\ngit diff --stat -- skills/java-exception-design\ngit diff -- skills/java-exception-design",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "PASS, exit 0; final diff inspected, three files, 25 insertions/4 deletions.",
+      "type": "Executed scoped whitespace and final-change review."
+    },
+    {
+      "command": "node 'C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/check-case-fixtures.mjs' | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/case-fixture-validation.json'\nexit $LASTEXITCODE",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "PASS, exit 0; seven assertions confirm four common input files, single factory identity difference, two separate criteria IDs.",
+      "type": "Executed fixture integrity; no behavioral comparison."
+    },
+    {
+      "command": "git status --short -- skills/java-exception-design\ngit diff --cached -- skills/java-exception-design\ngit show HEAD:skills/java-exception-design/skill.yaml | Select-Object -First 6",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "Only three declared unstaged owned changes; staged diff empty; committed version1.3.4.",
+      "type": "Executed authorship/version final inspection."
+    }
+  ],
+  "failures": [
+    {
+      "kind": "External retrieval delay",
+      "action": "Initial batched web.open request for Throwable21/JLS21/AutoCloseable21",
+      "result": "No output after repeated bounded waits; orchestration cell terminated without repository writes.",
+      "resolution": "Targeted later calls retrieved Throwable21 and JLS21 and pinned source successfully. AutoCloseable page was not used as evidence."
+    },
+    {
+      "kind": "Expected negative control",
+      "action": "SuppressionContractMutant",
+      "result": "Exit1 at intended primary-identity assertion.",
+      "resolution": "Control intentionally unsafe; correct 15-check harness passes. No repository test weakened."
+    }
+  ],
+  "behavioralEvaluationsExecuted": [],
+  "walkthroughsPerformed": [
+    {
+      "name": "Manual cleanup alternative",
+      "result": "Original failure retained by identity; caught distinct secondary attached; close-only failure propagates; no cleanup omission or broad IllegalArgumentException recovery."
+    },
+    {
+      "name": "Legitimate ordinary TWR",
+      "result": "Distinct cleanup throwable, including one sharing the same message, retains normal primary/suppressed behavior and does not justify a rewrite."
+    },
+    {
+      "name": "Existing API and payment guidance",
+      "result": "Cause preservation, checked caller cost, sealed-result limits, interruption and unknown remote effects remain intact. Both payment and failure-atomicity reference files remain byte-identical to assignment."
+    }
+  ],
+  "reproducibleCases": {
+    "classification": "Development cases; not unseen holdouts or independent agent evaluation.",
+    "singleDecisiveConstraint": "FixtureFactory gives close the same IOException object as work versus a fresh IOException with the same message.",
+    "inputs": [
+      {
+        "id": "cleanup-shared-instance",
+        "task": "Review Operation.run and its resource provider for Java 21 without preview. The public contract is to preserve the work failure object when work fails, attempt close exactly once, and retain a distinct cleanup failure as suppressed. If work succeeds and close fails, the close failure must propagate. Exception messages are diagnostic text, not identity.\n\nInspect all supplied source, including FixtureFactory. The resource implementation represents a supported dependency contract and is read-only for this task. Change only Operation.java if needed, add targeted tests, and write review.md explaining the caller-visible outcome and compatibility. Retain an adequate implementation rather than rewriting it automatically. Do not change Java release settings, install dependencies or turn failures into success.\n\nProbe.java prints the current behavior and can be run after compiling these files. It is an observation tool, not a test oracle. A modern JDK compiling with --release 21 does not establish execution on a Java 21 VM.",
+        "taskFile": "C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/cases/shared/task.md",
+        "fixtureFiles": [
+          "C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/cases/shared/Operation.java",
+          "C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/cases/shared/StoredFailureResource.java",
+          "C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/cases/shared/FixtureFactory.java",
+          "C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/cases/shared/Probe.java"
+        ],
+        "files": {
+          "Operation.java": "import java.io.IOException;\n\npublic final class Operation {\n    @FunctionalInterface\n    public interface Work { void run() throws IOException; }\n\n    public static void run(Work work, StoredFailureResource resource) throws IOException {\n        try (resource) {\n            work.run();\n        }\n    }\n}\n",
+          "StoredFailureResource.java": "import java.io.IOException;\n\npublic final class StoredFailureResource implements AutoCloseable {\n    private final IOException closeFailure;\n    private int closeCalls;\n\n    public StoredFailureResource(IOException closeFailure) {\n        this.closeFailure = closeFailure;\n    }\n\n    public int closeCalls() { return closeCalls; }\n\n    @Override public void close() throws IOException {\n        closeCalls++;\n        if (closeFailure != null) throw closeFailure;\n    }\n}\n",
+          "Probe.java": "import java.io.IOException;\n\npublic final class Probe {\n    public static void main(String[] args) {\n        IOException workFailure = new IOException(\"storage failure\");\n        StoredFailureResource resource = FixtureFactory.resourceFor(workFailure);\n        try {\n            Operation.run(() -> { throw workFailure; }, resource);\n            System.out.println(\"outcome=normal\");\n        } catch (Throwable observed) {\n            System.out.println(\"outcome=\" + observed.getClass().getName());\n            System.out.println(\"sameAsWork=\" + (observed == workFailure));\n            System.out.println(\"suppressedCount=\" + observed.getSuppressed().length);\n            System.out.println(\"causeSameAsWork=\" + (observed.getCause() == workFailure));\n        }\n        System.out.println(\"closeCalls=\" + resource.closeCalls());\n    }\n}\n",
+          "FixtureFactory.java": "import java.io.IOException;\n\npublic final class FixtureFactory {\n    public static StoredFailureResource resourceFor(IOException workFailure) {\n        return new StoredFailureResource(workFailure);\n    }\n}\n"
+        }
+      },
+      {
+        "id": "cleanup-distinct-instance",
+        "task": "Review Operation.run and its resource provider for Java 21 without preview. The public contract is to preserve the work failure object when work fails, attempt close exactly once, and retain a distinct cleanup failure as suppressed. If work succeeds and close fails, the close failure must propagate. Exception messages are diagnostic text, not identity.\n\nInspect all supplied source, including FixtureFactory. The resource implementation represents a supported dependency contract and is read-only for this task. Change only Operation.java if needed, add targeted tests, and write review.md explaining the caller-visible outcome and compatibility. Retain an adequate implementation rather than rewriting it automatically. Do not change Java release settings, install dependencies or turn failures into success.\n\nProbe.java prints the current behavior and can be run after compiling these files. It is an observation tool, not a test oracle. A modern JDK compiling with --release 21 does not establish execution on a Java 21 VM.",
+        "taskFile": "C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/cases/distinct/task.md",
+        "fixtureFiles": [
+          "C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/cases/distinct/Operation.java",
+          "C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/cases/distinct/StoredFailureResource.java",
+          "C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/cases/distinct/FixtureFactory.java",
+          "C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/cases/distinct/Probe.java"
+        ],
+        "files": {
+          "Operation.java": "import java.io.IOException;\n\npublic final class Operation {\n    @FunctionalInterface\n    public interface Work { void run() throws IOException; }\n\n    public static void run(Work work, StoredFailureResource resource) throws IOException {\n        try (resource) {\n            work.run();\n        }\n    }\n}\n",
+          "StoredFailureResource.java": "import java.io.IOException;\n\npublic final class StoredFailureResource implements AutoCloseable {\n    private final IOException closeFailure;\n    private int closeCalls;\n\n    public StoredFailureResource(IOException closeFailure) {\n        this.closeFailure = closeFailure;\n    }\n\n    public int closeCalls() { return closeCalls; }\n\n    @Override public void close() throws IOException {\n        closeCalls++;\n        if (closeFailure != null) throw closeFailure;\n    }\n}\n",
+          "Probe.java": "import java.io.IOException;\n\npublic final class Probe {\n    public static void main(String[] args) {\n        IOException workFailure = new IOException(\"storage failure\");\n        StoredFailureResource resource = FixtureFactory.resourceFor(workFailure);\n        try {\n            Operation.run(() -> { throw workFailure; }, resource);\n            System.out.println(\"outcome=normal\");\n        } catch (Throwable observed) {\n            System.out.println(\"outcome=\" + observed.getClass().getName());\n            System.out.println(\"sameAsWork=\" + (observed == workFailure));\n            System.out.println(\"suppressedCount=\" + observed.getSuppressed().length);\n            System.out.println(\"causeSameAsWork=\" + (observed.getCause() == workFailure));\n        }\n        System.out.println(\"closeCalls=\" + resource.closeCalls());\n    }\n}\n",
+          "FixtureFactory.java": "import java.io.IOException;\n\npublic final class FixtureFactory {\n    public static StoredFailureResource resourceFor(IOException workFailure) {\n        return new StoredFailureResource(new IOException(\"storage failure\"));\n    }\n}\n"
+        }
+      }
+    ],
+    "expectedOutcomeCriteria": [
+      {
+        "id": "cleanup-shared-instance",
+        "expectedOutcome": [
+          "Inspect FixtureFactory and follow object identity into close, not merely matching type or text.",
+          "Explain that the generated addSuppressed call rejects the same throwable and exposes IllegalArgumentException rather than the promised work failure.",
+          "Modify only the owned Operation.java using a correctly scoped cleanup policy preserving primary identity, attempting close once and suppressing only secondary != primary.",
+          "Retain distinct secondary failures, propagate close failure when work succeeds and preserve normal completion when neither fails; verify these cases with executed tests where available.",
+          "Preserve unchecked/Error failure identity as appropriate rather than catching only one failure type and allowing cleanup to mask other work failures.",
+          "Do not claim Java 21 VM execution from --release 21 alone."
+        ],
+        "failureConditions": [
+          "Leaves the defective TWR unchanged while claiming it preserves the same-instance case.",
+          "Suppresses all cleanup exceptions, skips close, or rewraps the primary despite identity contract.",
+          "Disables suppression as a purported fix.",
+          "Catches all IllegalArgumentException and reclassifies them as the body failure.",
+          "Changes read-only resource/factory contracts to make a check pass."
+        ]
+      },
+      {
+        "id": "cleanup-distinct-instance",
+        "expectedOutcome": [
+          "Observe the separate IOException instance in FixtureFactory even though type and message match the body failure.",
+          "Recognize that ordinary TWR preserves the work failure with one distinct suppressed cleanup failure here.",
+          "Retain adequate Operation.java; do not mandate manual cleanup because of the separate shared-instance edge case.",
+          "Add or describe targeted tests of body+close failure, body-success+close failure and all-success, checking identities and close attempts.",
+          "Do not claim object equality or repeated message implies self-suppression."
+        ],
+        "failureConditions": [
+          "Reports self-suppression from equal text/type despite distinct instances.",
+          "Unnecessarily replaces correct TWR without a concrete contract reason.",
+          "Drops suppressed evidence or changes primary identity.",
+          "Claims runtime/version or behavioral evaluation evidence not executed."
+        ]
+      }
+    ],
+    "criteriaFile": "C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/case-criteria.json",
+    "prerequisites": "Java21-compatible compiler/runtime for fixture execution; current evidence used --release21 on javac25.0.3 and Temurin25.0.3. Source review can be done without execution.",
+    "evaluatorInstructions": "Provide only the selected input source files/task plus the chosen skill baseline. Keep criteria, this handoff, review-evidence.json, observation outputs and contract/mutant harnesses from the actor. The actor owns Operation.java only. No evaluation agent was launched."
+  },
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Throwable.html#addSuppressed(java.lang.Throwable)",
+      "version": "Java SE 21",
+      "supports": "addSuppressed rejects the receiver itself; disabled suppression still validates the supplied argument."
+    },
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.20.3.1",
+      "version": "JLS 21",
+      "supports": "Basic try-with-resources translation catches the cleanup Throwable and invokes primary.addSuppressed(secondary), without an identity guard."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/openjdk/jdk/jdk-21%2B35/src/java.base/share/classes/java/lang/Throwable.java",
+      "version": "OpenJDK jdk-21+35",
+      "supports": "Pinned addSuppressed implementation checks self identity before the suppression-disabled return; IllegalArgumentException is constructed with the original as cause.",
+      "localArtifact": "C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/jdk21-Throwable.java",
+      "sha256": "958A64A11F867F430ED58EDCBC44FDC9CAE32489437D43C8525EE1C2F3AB0E1C"
+    }
+  ],
+  "evidencePaths": [
+    "C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/baseline.json",
+    "C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/review-evidence.json",
+    "C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/jdk21-Throwable.java",
+    "C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/SuppressionContractCheck.java",
+    "C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/classes",
+    "C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/suppression-checks.txt",
+    "C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/SuppressionContractMutant.java",
+    "C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/mutant-classes",
+    "C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/mutant-checks.txt",
+    "C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/shared-observation.txt",
+    "C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/distinct-observation.txt",
+    "C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/check-package.mjs",
+    "C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/package-validation.json",
+    "C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/check-case-fixtures.mjs",
+    "C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/case-fixture-validation.json",
+    "C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/case-criteria.json",
+    "C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/cases/shared/task.md",
+    "C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/cases/shared/Operation.java",
+    "C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/cases/shared/StoredFailureResource.java",
+    "C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/cases/shared/FixtureFactory.java",
+    "C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/cases/shared/Probe.java",
+    "C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/cases/distinct/task.md",
+    "C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/cases/distinct/Operation.java",
+    "C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/cases/distinct/StoredFailureResource.java",
+    "C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/cases/distinct/FixtureFactory.java",
+    "C:/Users/robso/AppData/Local/Temp/exception-quality13-c9ec5b54aba94a358f3d87bfdd5e2f51/cases/distinct/Probe.java"
+  ],
+  "assumptions": [
+    "Fixture resource contract can rethrow a stored Throwable; this is a supported constructed case, not a measured frequency claim about applications.",
+    "Manual adapter recommendation is conditional when resource policy cannot be changed; ordinary distinct-failure resources retain TWR."
+  ],
+  "limitations": [
+    "Executed VM is Temurin25.0.3, not Java21; --release21 validates source/API target and pinned OpenJDK21 source supports the baseline contract.",
+    "No independent original-versus-revised agent evaluation, measured agent gain or production incident frequency claim.",
+    "No payment gateway integration, remote-effect test or complete compilation of unchanged partial payment/atomicity examples performed in this assignment.",
+    "The manual harness checks scoped failure cases and is not a general resource framework or guarantee under arbitrary resource exhaustion.",
+    "Global registry, dependency, adapter and full-repository validation remain pending."
+  ],
+  "crossSkillIssues": [],
+  "coordinatorActions": [
+    "Run registry:build and verify after every reviewer has stopped writing.",
+    "If evaluating behavior, use separated inputs and criteria and capture actual actor outputs. Treat current probes as Java technical evidence only."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "reason": "Coordinator-only shared generated index/integrity update.",
+      "prerequisite": "All reviewers stopped writing."
+    },
+    {
+      "command": "npm run verify",
+      "reason": "Coordinator-only global verification required before repository-wide completion claim.",
+      "prerequisite": "Registry regenerated and all reviewers stopped writing."
+    }
+  ]
+}

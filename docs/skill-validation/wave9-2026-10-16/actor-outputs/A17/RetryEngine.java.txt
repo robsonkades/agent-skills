@@ -1,0 +1,71 @@
+public final class RetryEngine {
+    public static Ports.Result execute(Ports.Intent intent, Ports.Policy p, Ports.Store store,
+            Ports.Operation operation, Ports.Runtime runtime) throws InterruptedException {
+        Ports.Snapshot initial = store.snapshot();
+        if (initial.state() == Ports.State.APPLIED || initial.state() == Ports.State.REJECTED) {
+            return new Ports.Result(initial, 0);
+        }
+
+        boolean unresolved = initial.state() == Ports.State.UNKNOWN;
+        int attempts = 0;
+        long wait = 0;
+        try {
+            while (attempts < p.maxAttempts()) {
+                checkInterrupted();
+                if (runtime.cancelled() || (unresolved && !Contract.REPLAY_SAFE)
+                        || !fits(runtime.remainingNanos(), wait, p)) {
+                    break;
+                }
+                if (attempts > 0) {
+                    if (!runtime.acquireRetry()) break;
+                    checkInterrupted();
+                    if (runtime.cancelled()) break;
+                    runtime.sleep(wait);
+                    checkInterrupted();
+                    if (runtime.cancelled() || !fits(runtime.remainingNanos(), 0, p)) break;
+                }
+
+                attempts++;
+                try (Ports.Reply reply = operation.call(intent, p.attemptNanos())) {
+                    if (reply.kind() == Ports.Kind.OK) {
+                        store.applied(reply.receipt());
+                        return new Ports.Result(store.snapshot(), attempts);
+                    }
+                    if (reply.kind() == Ports.Kind.UNKNOWN) {
+                        unresolved = true;
+                        store.unknown();
+                    }
+                    if (reply.kind() == Ports.Kind.PERMANENT) {
+                        return stop(store, attempts, unresolved);
+                    }
+                    wait = Math.max(p.localWaitNanos(), reply.serverMinimumNanos());
+                } catch (InterruptedException interrupted) {
+                    // Dispatch may have applied even though this caller stopped waiting.
+                    store.unknown();
+                    throw interrupted;
+                }
+            }
+            return stop(store, attempts, unresolved);
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            throw interrupted;
+        }
+    }
+
+    private static boolean fits(long remaining, long wait, Ports.Policy p) {
+        // Subtract only after comparison: a valid policy can overflow when summed.
+        if (remaining < p.reserveNanos()) return false;
+        long available = remaining - p.reserveNanos();
+        return available >= p.attemptNanos() && wait <= available - p.attemptNanos();
+    }
+
+    private static void checkInterrupted() throws InterruptedException {
+        if (Thread.currentThread().isInterrupted()) throw new InterruptedException("Retry interrupted");
+    }
+
+    private static Ports.Result stop(Ports.Store store, int attempts, boolean unresolved) {
+        if (unresolved) store.unknown();
+        else store.rejected();
+        return new Ports.Result(store.snapshot(), attempts);
+    }
+}

@@ -1,0 +1,14 @@
+{
+  "checkedAt": "2026-10-16T15:25:13.128Z",
+  "passed": true,
+  "scope": "Report integrity and completeness, not new technical or behavioral execution",
+  "skills": 63,
+  "evidenceFiles": 2044,
+  "embeddedEvidenceReviews": 2,
+  "behaviorFiles": 156,
+  "archivedBytes": 7508388,
+  "frozenBehaviorManifestSha256": "b8091363615d04db691ee4eae981ac9c162f00349a7cc1871c82f0d3319d25da",
+  "behaviorCriteriaHashesVerified": true,
+  "allHandoffsStopped": true,
+  "notesComplete": true
+}

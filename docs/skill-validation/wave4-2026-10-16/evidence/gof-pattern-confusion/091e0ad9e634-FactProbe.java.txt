@@ -1,0 +1,32 @@
+public final class FactProbe {
+    static void require(boolean condition, String message) {
+        if (!condition) {
+            throw new AssertionError(message);
+        }
+    }
+
+    public static void main(String[] args) {
+        OrderFlow.Result rejected = OrderFlow.run("O-17", 400);
+        OrderFlow.Result approved = OrderFlow.run("O-18", 700);
+        OrderFlow.Result invalid = OrderFlow.run(" ", 700);
+        require(rejected.publications().size() == 1, "valid input must publish once");
+        require(approved.publications().size() == 1, "valid input must publish once");
+        require(invalid.publications().isEmpty(), "invalid input must not publish validation");
+        require(rejected.creditDecision().equals("REJECTED"), "credit rejection control");
+        require(approved.creditDecision().equals("APPROVED"), "credit approval control");
+        require(rejected.trace().equals(java.util.List.of(
+                "INPUT_ACCEPTED", "OrderValidated published", "CREDIT_REJECTED")), "execution order");
+        System.out.println("controls passed: rejected credit, approved credit, invalid input");
+        for (OrderFlow.Result result : java.util.List.of(rejected, approved)) {
+            OrderFlow.Publication publication = result.publications().get(0);
+            require(publication.creditDecision().equals("PENDING"), "credit must be pending at publication");
+            boolean reportedFact = switch (args[0]) {
+                case "input-validation" -> publication.inputAccepted();
+                case "credit-approval" -> publication.creditDecision().equals("APPROVED");
+                default -> throw new IllegalArgumentException("Unknown contract");
+            };
+            require(reportedFact, "documented event fact false at publication: " + args[0]);
+        }
+        System.out.println("documented fact held at publication: " + args[0]);
+    }
+}

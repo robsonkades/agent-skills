@@ -1,0 +1,8 @@
+{"runtime":"25.0.3+9-LTS","vendor":"Eclipse Adoptium","contract":"transferred"}
+{"case":"fixture-success","contractSatisfied":true,"closeCalls":1,"observation":"legitimate-transferred-control"}
+{"case":"fixture-read-failure","contractSatisfied":true,"closeCalls":1,"observation":"legitimate-transferred-control"}
+{"case":"borrowed-control-success","contractSatisfied":true,"closeCalls":0,"observation":"legitimate-borrowed-control"}
+{"case":"borrowed-control-read-failure","contractSatisfied":true,"closeCalls":0,"observation":"legitimate-borrowed-control"}
+{"case":"byte-array-fixture","contractSatisfied":true,"closeCalls":-1,"observation":"reuse-check-cannot-detect-close"}
+{"case":"jdk-readAllBytes-override","contractSatisfied":false,"closeCalls":1,"observation":"inherited-no-close-contract-violation-reproduced"}
+{"checks":6,"result":"PASS"}

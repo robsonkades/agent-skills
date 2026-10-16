@@ -1,0 +1,3 @@
+Note: C:\Users\robso\AppData\Local\Temp\skills-wave2-validation-Bu1zNV\scoped-values\StructuredInheritanceControl.java uses preview features of Java SE 25.
+Note: Recompile with -Xlint:preview for details.
+javac --enable-preview --release 25 exit=0

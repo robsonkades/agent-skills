@@ -1,0 +1,135 @@
+{
+  "frozenAt": "2026-10-16T18:18:15.555Z",
+  "independentActorGradesSeen": false,
+  "scope": "Coordinator semantic/source review and independent artifact re-execution. Conditions visible to coordinator; independent semantic reviewer receives partially masked outputs afterward.",
+  "grades": [
+    {
+      "run": "run-01",
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "reason": "Preserves correct mandatory receipt unit. Explains owner completion and the independent-transaction violation. Private probe passes 20; actor's eight-scenario regression rejects independent writer on actual visibility. Test-only counterexample reproduces orphan receipt. No production change; frozen bytes intact."
+    },
+    {
+      "run": "run-02",
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "reason": "Preserves correct same-unit path and distinguishes missing receipt policy from defect. Private probe passes 20; real-bean regression rejects independent writer. Its extra wrapper control was not rerun by root; equivalent candidate/counterfactual comparison was. No production change; frozen bytes intact."
+    },
+    {
+      "run": "run-03",
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "reason": "Changes only listener phase and effective writer transaction. Explains post-completion callback exception handling and accepted loss. Private probe passes 21; own regression fails original phase/atomicity behavior and passes repaired state, including mixed valid/invalid receipts. Frozen bytes intact."
+    },
+    {
+      "run": "run-04",
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "reason": "Correct AFTER_COMMIT plus independent header/detail unit, preserving REQUIRED caller. Supported logging-versus-propagation explanation and scope limits. Private probe passes 21; own seven-scenario regression rejects original with state/phase failures. Frozen bytes intact."
+    },
+    {
+      "run": "run-05",
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "reason": "Qualifies ordersTx without changing primary metricsTx. Explains why active flag does not establish orders enlistment. Private probe passes 10; seven-case regression rejects original using persisted state, including notifier failure and caught metrics rollback. Frozen bytes intact."
+    },
+    {
+      "run": "run-06",
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "reason": "Same narrow manager repair with correct resource/unchecked-exception diagnosis. Private probe passes 10; five-case regression rejects original stock/notifier leaks and checks metrics behavior. Auxiliary hash script not repeated; root hashes protected files. Redundant setup copy preserved outside executable project after blocked delete; no contract or dependency change."
+    },
+    {
+      "run": "run-07",
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "reason": "Stable event_id and unchanged receiver/checkpoint/progress order. Private probe passes 30. Root repeated prepare/recover in distinct JVMs with file-backed H2: candidate one receiver effect, original two; controls also reject original conflict bypass. Text limits orderly restart and old random-token reconciliation. Frozen bytes intact."
+    },
+    {
+      "run": "run-08",
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "reason": "Same stable identity repair; private probe passes 30. Root repeated failure/replay across distinct JVMs: candidate passes, original duplicates receiver effect. Tests also preserve publisher rollback and bounded operation. Explicitly limits physical crash/concurrency and legacy token recovery. Frozen bytes intact."
+    },
+    {
+      "run": "run-09",
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "reason": "Preserves mandatory receipt path with correct shared-resource/owner reasoning. Private probe passes 20; own eight-scenario regression rejects independent writer at real publisher-state visibility. Wrapper control not rerun; root recreated the same alternative. Frozen bytes intact."
+    },
+    {
+      "run": "run-10",
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "reason": "Preserves correct code and explains REQUIRED versus independent receipt. Private probe passes 20; eight-scenario regression rejects independent writer and checks rollback-only/late owner failure. Failed path/documentation attempts are disclosed. Frozen bytes intact."
+    },
+    {
+      "run": "run-11",
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "reason": "Narrow phase plus effective writer transaction repair. Private probe passes 21; seven-scenario regression rejects original with phase, partial business outcome and callback-after-rollback failures. Correct exception containment account. Redundant input copy retained outside executable project after blocked deletion; frozen bytes intact."
+    },
+    {
+      "run": "run-12",
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "reason": "Correct AFTER_COMMIT and independent two-write receipt unit. Private probe passes 21; regression passes candidate and rejects original with eight contract failures. Actor also retained phase-only partial-header failure. Unavailable web request disclosed without claiming source access; explanation supported by snapshot, actual wiring and execution. Frozen bytes intact."
+    },
+    {
+      "run": "run-13",
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "reason": "Qualifies ordersTx only. Accurate distinction between active metrics transaction and orders autocommit. Private probe passes 10; five-case regression rejects original three scenarios, retaining exception/cause and metrics behavior. Routed reference use excludes unnecessary event recovery. Frozen bytes intact."
+    },
+    {
+      "run": "run-14",
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "reason": "Qualifies ordersTx while preserving metrics default and all operations. Private probe passes 10; regression rejects original stock and notifier partial state. Correct explanation of resource ownership, meaningful failure and limits. Auxiliary hash script not rerun; root independently hashes. Frozen bytes intact."
+    },
+    {
+      "run": "run-15",
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "reason": "Stable retained identity with unchanged replay boundaries/order. Private probe passes 30. Own regression launches separate Java processes; root repeated it and observed candidate success versus original duplicate-effect assertion in replay child. Actor's independent-connection progress observation alone would not prove ordering, but source preservation and root's in-transaction checkpoint probe cover that property. Frozen bytes intact."
+    },
+    {
+      "run": "run-16",
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C4": true,
+      "reason": "Same stable identity repair; private probe passes 30 and own context-recreation regression rejects original duplicate effect. Separate-JVM helper inspected, but not rerun by root: its claim remains actor-recorded additional evidence, distinct from independently repeated project regression. Report correctly limits orderly restart and does not claim exactly-once delivery. Frozen bytes intact."
+    }
+  ]
+}

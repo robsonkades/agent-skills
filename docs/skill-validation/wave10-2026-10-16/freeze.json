@@ -1,0 +1,864 @@
+{
+  "at": "2026-10-16T20:01:53.791Z",
+  "inputs": [
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/cases.json",
+      "sha256": "7db9995caa72335887b59187df8aacab994a74a16a5a6764fdc11e6deb1e5b3d"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/criteria.json",
+      "sha256": "9ff146975f91d89e5c2e4611c7b26718368da2e94b94f703e927fff191f31c5d"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/calibration.json",
+      "sha256": "cf248cbb1280de7b12703f9183950d3b3c1b7cd3e765046b4b0d87f5dd54387a"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/actors.json",
+      "sha256": "beca6df41c56c4e9a5c7e576f4cc3f5ae8547205188a82b1ab3490a62704c9e1"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/review/criteria-review.json",
+      "sha256": "03e19d9c31145e4120f21d68f8e4d8f0f8e5cce50be06d9c3fb8048422e4becf"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/review/calibration-grades.json",
+      "sha256": "2fac0b4199ed3a9f666b52da036ccd5af6ccac2aa3efd8de92a8954cbe42acc6"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/review/research-handoff.json",
+      "sha256": "0f9a5cd8f3403baf8fc0802c276a15f0de24b18e7d7bd392c2ee422a85865690"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/preflight.json",
+      "sha256": "cbbbbcafd78c9c6b8260914d5ace40f7d3a99f568d484d82169e1e9f9cc3cf70"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/snapshot/references/bias-and-evidence.md",
+      "sha256": "a731d9c1cd50e931c911b9c1fff18575fbb9aa40ae6931efc138a8e1af53166a"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/snapshot/references/qualitative-and-quantitative.md",
+      "sha256": "e8782a149de65eab35a6ccab46c6a72ea785ed8eb1f30ad6394095168087bf3f"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/snapshot/references/validation-cases.md",
+      "sha256": "f12ee03e485033d72b5a4694e72a91d7a2e2d6d972b281eea61df672ff3930d6"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/snapshot/references/worked-analysis.md",
+      "sha256": "7bbccf10a4da8d7111a2f779ffff29e66bef42c75d0b493d4acd13b1638d7f8a"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/snapshot/SKILL.md",
+      "sha256": "f53d8686017e317089c10184ef2e7f31888b2e9d188b1845a3a650d283254ff0"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/snapshot/skill.yaml",
+      "sha256": "dcc67e226a01189095c2f3893dda75c53014ae9e6bb4e5a59f56e050cc1320d2"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A01/input/project/decision.md",
+      "sha256": "f2ef99576448642f5138a71f89bf9aa90636dd7ac01eee64d7a66cfa58e701f4"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A01/input/project/operacao.md",
+      "sha256": "fd601a1529e2bf2fff3b409294aa9eba12c168191b9feaea08d282c4a4ed60cf"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A01/input/project/options.csv",
+      "sha256": "c361d0c8cca46e78e5cf328d87043bff335de420bd9ad5f60456cc88cc356d3e"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A01/input/project/proposal.md",
+      "sha256": "9c38e4fcca8b0148ddf306540595cd191b2a2536f1bb0989e97ae2253469438c"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A01/TASK.md",
+      "sha256": "c57fb16fa89af37aed16574a575c9ba18a589c2ff938dad94e463d09d0a321a7"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A02/input/project/decision.md",
+      "sha256": "f2ef99576448642f5138a71f89bf9aa90636dd7ac01eee64d7a66cfa58e701f4"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A02/input/project/operacao.md",
+      "sha256": "fd601a1529e2bf2fff3b409294aa9eba12c168191b9feaea08d282c4a4ed60cf"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A02/input/project/options.csv",
+      "sha256": "c361d0c8cca46e78e5cf328d87043bff335de420bd9ad5f60456cc88cc356d3e"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A02/input/project/proposal.md",
+      "sha256": "9c38e4fcca8b0148ddf306540595cd191b2a2536f1bb0989e97ae2253469438c"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A02/input/skill/references/bias-and-evidence.md",
+      "sha256": "a731d9c1cd50e931c911b9c1fff18575fbb9aa40ae6931efc138a8e1af53166a"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A02/input/skill/references/qualitative-and-quantitative.md",
+      "sha256": "e8782a149de65eab35a6ccab46c6a72ea785ed8eb1f30ad6394095168087bf3f"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A02/input/skill/references/validation-cases.md",
+      "sha256": "f12ee03e485033d72b5a4694e72a91d7a2e2d6d972b281eea61df672ff3930d6"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A02/input/skill/references/worked-analysis.md",
+      "sha256": "7bbccf10a4da8d7111a2f779ffff29e66bef42c75d0b493d4acd13b1638d7f8a"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A02/input/skill/SKILL.md",
+      "sha256": "f53d8686017e317089c10184ef2e7f31888b2e9d188b1845a3a650d283254ff0"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A02/input/skill/skill.yaml",
+      "sha256": "dcc67e226a01189095c2f3893dda75c53014ae9e6bb4e5a59f56e050cc1320d2"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A02/TASK.md",
+      "sha256": "b553de2ee0f99927f6b4eb3b85c59e67187f8344c03d2aed90158e731de87cd3"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A03/input/project/decision.md",
+      "sha256": "f2ef99576448642f5138a71f89bf9aa90636dd7ac01eee64d7a66cfa58e701f4"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A03/input/project/operacao.md",
+      "sha256": "fd601a1529e2bf2fff3b409294aa9eba12c168191b9feaea08d282c4a4ed60cf"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A03/input/project/options.csv",
+      "sha256": "c361d0c8cca46e78e5cf328d87043bff335de420bd9ad5f60456cc88cc356d3e"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A03/input/project/proposal.md",
+      "sha256": "9c38e4fcca8b0148ddf306540595cd191b2a2536f1bb0989e97ae2253469438c"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A03/input/skill/references/bias-and-evidence.md",
+      "sha256": "d3bad83f28116509e916a96c95ba4b33ffb877229f0551d3f54558b6458a4044"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A03/input/skill/references/qualitative-and-quantitative.md",
+      "sha256": "e8782a149de65eab35a6ccab46c6a72ea785ed8eb1f30ad6394095168087bf3f"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A03/input/skill/references/validation-cases.md",
+      "sha256": "6161653543404ec28e95d4204d0407bd31cf833fa01f8a1122fd8110f1217f39"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A03/input/skill/references/worked-analysis.md",
+      "sha256": "7bbccf10a4da8d7111a2f779ffff29e66bef42c75d0b493d4acd13b1638d7f8a"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A03/input/skill/SKILL.md",
+      "sha256": "f53d8686017e317089c10184ef2e7f31888b2e9d188b1845a3a650d283254ff0"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A03/input/skill/skill.yaml",
+      "sha256": "bc7c2e343459fc364e24a5a5fc46ba41c1aacd7700ce7570bb85c8b0576c1c34"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A03/TASK.md",
+      "sha256": "b553de2ee0f99927f6b4eb3b85c59e67187f8344c03d2aed90158e731de87cd3"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A04/input/project/decision.md",
+      "sha256": "f2ef99576448642f5138a71f89bf9aa90636dd7ac01eee64d7a66cfa58e701f4"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A04/input/project/operacao.md",
+      "sha256": "fd601a1529e2bf2fff3b409294aa9eba12c168191b9feaea08d282c4a4ed60cf"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A04/input/project/options.csv",
+      "sha256": "c361d0c8cca46e78e5cf328d87043bff335de420bd9ad5f60456cc88cc356d3e"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A04/input/project/proposal.md",
+      "sha256": "9c38e4fcca8b0148ddf306540595cd191b2a2536f1bb0989e97ae2253469438c"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A04/input/skill/references/bias-and-evidence.md",
+      "sha256": "d3bad83f28116509e916a96c95ba4b33ffb877229f0551d3f54558b6458a4044"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A04/input/skill/references/qualitative-and-quantitative.md",
+      "sha256": "e8782a149de65eab35a6ccab46c6a72ea785ed8eb1f30ad6394095168087bf3f"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A04/input/skill/references/validation-cases.md",
+      "sha256": "6161653543404ec28e95d4204d0407bd31cf833fa01f8a1122fd8110f1217f39"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A04/input/skill/references/worked-analysis.md",
+      "sha256": "7bbccf10a4da8d7111a2f779ffff29e66bef42c75d0b493d4acd13b1638d7f8a"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A04/input/skill/SKILL.md",
+      "sha256": "f53d8686017e317089c10184ef2e7f31888b2e9d188b1845a3a650d283254ff0"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A04/input/skill/skill.yaml",
+      "sha256": "bc7c2e343459fc364e24a5a5fc46ba41c1aacd7700ce7570bb85c8b0576c1c34"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A04/TASK.md",
+      "sha256": "b553de2ee0f99927f6b4eb3b85c59e67187f8344c03d2aed90158e731de87cd3"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A05/input/project/decision.md",
+      "sha256": "f2ef99576448642f5138a71f89bf9aa90636dd7ac01eee64d7a66cfa58e701f4"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A05/input/project/operacao.md",
+      "sha256": "fd601a1529e2bf2fff3b409294aa9eba12c168191b9feaea08d282c4a4ed60cf"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A05/input/project/options.csv",
+      "sha256": "c361d0c8cca46e78e5cf328d87043bff335de420bd9ad5f60456cc88cc356d3e"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A05/input/project/proposal.md",
+      "sha256": "9c38e4fcca8b0148ddf306540595cd191b2a2536f1bb0989e97ae2253469438c"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A05/input/skill/references/bias-and-evidence.md",
+      "sha256": "a731d9c1cd50e931c911b9c1fff18575fbb9aa40ae6931efc138a8e1af53166a"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A05/input/skill/references/qualitative-and-quantitative.md",
+      "sha256": "e8782a149de65eab35a6ccab46c6a72ea785ed8eb1f30ad6394095168087bf3f"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A05/input/skill/references/validation-cases.md",
+      "sha256": "f12ee03e485033d72b5a4694e72a91d7a2e2d6d972b281eea61df672ff3930d6"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A05/input/skill/references/worked-analysis.md",
+      "sha256": "7bbccf10a4da8d7111a2f779ffff29e66bef42c75d0b493d4acd13b1638d7f8a"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A05/input/skill/SKILL.md",
+      "sha256": "f53d8686017e317089c10184ef2e7f31888b2e9d188b1845a3a650d283254ff0"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A05/input/skill/skill.yaml",
+      "sha256": "dcc67e226a01189095c2f3893dda75c53014ae9e6bb4e5a59f56e050cc1320d2"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A05/TASK.md",
+      "sha256": "b553de2ee0f99927f6b4eb3b85c59e67187f8344c03d2aed90158e731de87cd3"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A06/input/project/decision.md",
+      "sha256": "f2ef99576448642f5138a71f89bf9aa90636dd7ac01eee64d7a66cfa58e701f4"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A06/input/project/operacao.md",
+      "sha256": "fd601a1529e2bf2fff3b409294aa9eba12c168191b9feaea08d282c4a4ed60cf"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A06/input/project/options.csv",
+      "sha256": "c361d0c8cca46e78e5cf328d87043bff335de420bd9ad5f60456cc88cc356d3e"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A06/input/project/proposal.md",
+      "sha256": "9c38e4fcca8b0148ddf306540595cd191b2a2536f1bb0989e97ae2253469438c"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A06/TASK.md",
+      "sha256": "c57fb16fa89af37aed16574a575c9ba18a589c2ff938dad94e463d09d0a321a7"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A07/input/project/minutes.md",
+      "sha256": "da69b2890a3f144b241ecdb32b6997468fc4bd8cfd69b6356d29287dc8bc27e5"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A07/input/project/model.md",
+      "sha256": "bdc5bf5606d0335a580e500ba92783a94d27125fb4c8342f4cdf1535fee34021"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A07/input/project/values.csv",
+      "sha256": "01c4c44a12548e0219a020a466265b63248afda1cd0a3d5de891386353d533fc"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A07/input/skill/references/bias-and-evidence.md",
+      "sha256": "a731d9c1cd50e931c911b9c1fff18575fbb9aa40ae6931efc138a8e1af53166a"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A07/input/skill/references/qualitative-and-quantitative.md",
+      "sha256": "e8782a149de65eab35a6ccab46c6a72ea785ed8eb1f30ad6394095168087bf3f"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A07/input/skill/references/validation-cases.md",
+      "sha256": "f12ee03e485033d72b5a4694e72a91d7a2e2d6d972b281eea61df672ff3930d6"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A07/input/skill/references/worked-analysis.md",
+      "sha256": "7bbccf10a4da8d7111a2f779ffff29e66bef42c75d0b493d4acd13b1638d7f8a"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A07/input/skill/SKILL.md",
+      "sha256": "f53d8686017e317089c10184ef2e7f31888b2e9d188b1845a3a650d283254ff0"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A07/input/skill/skill.yaml",
+      "sha256": "dcc67e226a01189095c2f3893dda75c53014ae9e6bb4e5a59f56e050cc1320d2"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A07/TASK.md",
+      "sha256": "9907d5199aba40b5af97406a53750763e14f6c099cd7cf1493847808e6591d97"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A08/input/project/minutes.md",
+      "sha256": "da69b2890a3f144b241ecdb32b6997468fc4bd8cfd69b6356d29287dc8bc27e5"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A08/input/project/model.md",
+      "sha256": "bdc5bf5606d0335a580e500ba92783a94d27125fb4c8342f4cdf1535fee34021"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A08/input/project/values.csv",
+      "sha256": "01c4c44a12548e0219a020a466265b63248afda1cd0a3d5de891386353d533fc"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A08/input/skill/references/bias-and-evidence.md",
+      "sha256": "d3bad83f28116509e916a96c95ba4b33ffb877229f0551d3f54558b6458a4044"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A08/input/skill/references/qualitative-and-quantitative.md",
+      "sha256": "e8782a149de65eab35a6ccab46c6a72ea785ed8eb1f30ad6394095168087bf3f"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A08/input/skill/references/validation-cases.md",
+      "sha256": "6161653543404ec28e95d4204d0407bd31cf833fa01f8a1122fd8110f1217f39"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A08/input/skill/references/worked-analysis.md",
+      "sha256": "7bbccf10a4da8d7111a2f779ffff29e66bef42c75d0b493d4acd13b1638d7f8a"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A08/input/skill/SKILL.md",
+      "sha256": "f53d8686017e317089c10184ef2e7f31888b2e9d188b1845a3a650d283254ff0"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A08/input/skill/skill.yaml",
+      "sha256": "bc7c2e343459fc364e24a5a5fc46ba41c1aacd7700ce7570bb85c8b0576c1c34"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A08/TASK.md",
+      "sha256": "9907d5199aba40b5af97406a53750763e14f6c099cd7cf1493847808e6591d97"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A09/input/project/minutes.md",
+      "sha256": "da69b2890a3f144b241ecdb32b6997468fc4bd8cfd69b6356d29287dc8bc27e5"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A09/input/project/model.md",
+      "sha256": "bdc5bf5606d0335a580e500ba92783a94d27125fb4c8342f4cdf1535fee34021"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A09/input/project/values.csv",
+      "sha256": "01c4c44a12548e0219a020a466265b63248afda1cd0a3d5de891386353d533fc"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A09/TASK.md",
+      "sha256": "a330d604b534363d7ed6bd763e45694ce96ab3dcaac7ee33bd94dddd55a6e876"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A10/input/project/minutes.md",
+      "sha256": "da69b2890a3f144b241ecdb32b6997468fc4bd8cfd69b6356d29287dc8bc27e5"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A10/input/project/model.md",
+      "sha256": "bdc5bf5606d0335a580e500ba92783a94d27125fb4c8342f4cdf1535fee34021"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A10/input/project/values.csv",
+      "sha256": "01c4c44a12548e0219a020a466265b63248afda1cd0a3d5de891386353d533fc"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A10/input/skill/references/bias-and-evidence.md",
+      "sha256": "a731d9c1cd50e931c911b9c1fff18575fbb9aa40ae6931efc138a8e1af53166a"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A10/input/skill/references/qualitative-and-quantitative.md",
+      "sha256": "e8782a149de65eab35a6ccab46c6a72ea785ed8eb1f30ad6394095168087bf3f"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A10/input/skill/references/validation-cases.md",
+      "sha256": "f12ee03e485033d72b5a4694e72a91d7a2e2d6d972b281eea61df672ff3930d6"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A10/input/skill/references/worked-analysis.md",
+      "sha256": "7bbccf10a4da8d7111a2f779ffff29e66bef42c75d0b493d4acd13b1638d7f8a"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A10/input/skill/SKILL.md",
+      "sha256": "f53d8686017e317089c10184ef2e7f31888b2e9d188b1845a3a650d283254ff0"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A10/input/skill/skill.yaml",
+      "sha256": "dcc67e226a01189095c2f3893dda75c53014ae9e6bb4e5a59f56e050cc1320d2"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A10/TASK.md",
+      "sha256": "9907d5199aba40b5af97406a53750763e14f6c099cd7cf1493847808e6591d97"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A11/input/project/minutes.md",
+      "sha256": "da69b2890a3f144b241ecdb32b6997468fc4bd8cfd69b6356d29287dc8bc27e5"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A11/input/project/model.md",
+      "sha256": "bdc5bf5606d0335a580e500ba92783a94d27125fb4c8342f4cdf1535fee34021"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A11/input/project/values.csv",
+      "sha256": "01c4c44a12548e0219a020a466265b63248afda1cd0a3d5de891386353d533fc"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A11/TASK.md",
+      "sha256": "a330d604b534363d7ed6bd763e45694ce96ab3dcaac7ee33bd94dddd55a6e876"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A12/input/project/minutes.md",
+      "sha256": "da69b2890a3f144b241ecdb32b6997468fc4bd8cfd69b6356d29287dc8bc27e5"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A12/input/project/model.md",
+      "sha256": "bdc5bf5606d0335a580e500ba92783a94d27125fb4c8342f4cdf1535fee34021"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A12/input/project/values.csv",
+      "sha256": "01c4c44a12548e0219a020a466265b63248afda1cd0a3d5de891386353d533fc"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A12/input/skill/references/bias-and-evidence.md",
+      "sha256": "d3bad83f28116509e916a96c95ba4b33ffb877229f0551d3f54558b6458a4044"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A12/input/skill/references/qualitative-and-quantitative.md",
+      "sha256": "e8782a149de65eab35a6ccab46c6a72ea785ed8eb1f30ad6394095168087bf3f"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A12/input/skill/references/validation-cases.md",
+      "sha256": "6161653543404ec28e95d4204d0407bd31cf833fa01f8a1122fd8110f1217f39"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A12/input/skill/references/worked-analysis.md",
+      "sha256": "7bbccf10a4da8d7111a2f779ffff29e66bef42c75d0b493d4acd13b1638d7f8a"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A12/input/skill/SKILL.md",
+      "sha256": "f53d8686017e317089c10184ef2e7f31888b2e9d188b1845a3a650d283254ff0"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A12/input/skill/skill.yaml",
+      "sha256": "bc7c2e343459fc364e24a5a5fc46ba41c1aacd7700ce7570bb85c8b0576c1c34"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A12/TASK.md",
+      "sha256": "9907d5199aba40b5af97406a53750763e14f6c099cd7cf1493847808e6591d97"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A13/input/project/measurements.csv",
+      "sha256": "5cea418a29c671ddcc07aa3d080a0302d1a7687d9a3fd8542daec081aaa82482"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A13/input/project/memo.md",
+      "sha256": "653c64bc3049a8b5bc2377c475a8bfdb1d1d75cdb77f3801af615ab58e467abf"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A13/input/project/recovery.txt",
+      "sha256": "d8f455c6f865f8f1c1f77b4bb478bdeee3817712a889006c01756acbd8058dc4"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A13/input/project/requirements.md",
+      "sha256": "18cfd85c41af04d7cb2043b2389576c3b1e7fea9a66c9e66e7f62587b716077f"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A13/input/skill/references/bias-and-evidence.md",
+      "sha256": "d3bad83f28116509e916a96c95ba4b33ffb877229f0551d3f54558b6458a4044"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A13/input/skill/references/qualitative-and-quantitative.md",
+      "sha256": "e8782a149de65eab35a6ccab46c6a72ea785ed8eb1f30ad6394095168087bf3f"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A13/input/skill/references/validation-cases.md",
+      "sha256": "6161653543404ec28e95d4204d0407bd31cf833fa01f8a1122fd8110f1217f39"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A13/input/skill/references/worked-analysis.md",
+      "sha256": "7bbccf10a4da8d7111a2f779ffff29e66bef42c75d0b493d4acd13b1638d7f8a"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A13/input/skill/SKILL.md",
+      "sha256": "f53d8686017e317089c10184ef2e7f31888b2e9d188b1845a3a650d283254ff0"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A13/input/skill/skill.yaml",
+      "sha256": "bc7c2e343459fc364e24a5a5fc46ba41c1aacd7700ce7570bb85c8b0576c1c34"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A13/TASK.md",
+      "sha256": "4bb9b3ab385f4d023a330e2a4a9674281b64b2db9539fcd8e02981cb290521f0"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A14/input/project/measurements.csv",
+      "sha256": "5cea418a29c671ddcc07aa3d080a0302d1a7687d9a3fd8542daec081aaa82482"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A14/input/project/memo.md",
+      "sha256": "653c64bc3049a8b5bc2377c475a8bfdb1d1d75cdb77f3801af615ab58e467abf"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A14/input/project/recovery.txt",
+      "sha256": "d8f455c6f865f8f1c1f77b4bb478bdeee3817712a889006c01756acbd8058dc4"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A14/input/project/requirements.md",
+      "sha256": "18cfd85c41af04d7cb2043b2389576c3b1e7fea9a66c9e66e7f62587b716077f"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A14/TASK.md",
+      "sha256": "d41dbe90ed627d2e36a2c4c7c1cb1a1c968c1c09056f818fd69df811e06cfc32"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A15/input/project/measurements.csv",
+      "sha256": "5cea418a29c671ddcc07aa3d080a0302d1a7687d9a3fd8542daec081aaa82482"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A15/input/project/memo.md",
+      "sha256": "653c64bc3049a8b5bc2377c475a8bfdb1d1d75cdb77f3801af615ab58e467abf"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A15/input/project/recovery.txt",
+      "sha256": "d8f455c6f865f8f1c1f77b4bb478bdeee3817712a889006c01756acbd8058dc4"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A15/input/project/requirements.md",
+      "sha256": "18cfd85c41af04d7cb2043b2389576c3b1e7fea9a66c9e66e7f62587b716077f"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A15/input/skill/references/bias-and-evidence.md",
+      "sha256": "a731d9c1cd50e931c911b9c1fff18575fbb9aa40ae6931efc138a8e1af53166a"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A15/input/skill/references/qualitative-and-quantitative.md",
+      "sha256": "e8782a149de65eab35a6ccab46c6a72ea785ed8eb1f30ad6394095168087bf3f"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A15/input/skill/references/validation-cases.md",
+      "sha256": "f12ee03e485033d72b5a4694e72a91d7a2e2d6d972b281eea61df672ff3930d6"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A15/input/skill/references/worked-analysis.md",
+      "sha256": "7bbccf10a4da8d7111a2f779ffff29e66bef42c75d0b493d4acd13b1638d7f8a"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A15/input/skill/SKILL.md",
+      "sha256": "f53d8686017e317089c10184ef2e7f31888b2e9d188b1845a3a650d283254ff0"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A15/input/skill/skill.yaml",
+      "sha256": "dcc67e226a01189095c2f3893dda75c53014ae9e6bb4e5a59f56e050cc1320d2"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A15/TASK.md",
+      "sha256": "4bb9b3ab385f4d023a330e2a4a9674281b64b2db9539fcd8e02981cb290521f0"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A16/input/project/measurements.csv",
+      "sha256": "5cea418a29c671ddcc07aa3d080a0302d1a7687d9a3fd8542daec081aaa82482"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A16/input/project/memo.md",
+      "sha256": "653c64bc3049a8b5bc2377c475a8bfdb1d1d75cdb77f3801af615ab58e467abf"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A16/input/project/recovery.txt",
+      "sha256": "d8f455c6f865f8f1c1f77b4bb478bdeee3817712a889006c01756acbd8058dc4"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A16/input/project/requirements.md",
+      "sha256": "18cfd85c41af04d7cb2043b2389576c3b1e7fea9a66c9e66e7f62587b716077f"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A16/TASK.md",
+      "sha256": "d41dbe90ed627d2e36a2c4c7c1cb1a1c968c1c09056f818fd69df811e06cfc32"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A17/input/project/measurements.csv",
+      "sha256": "5cea418a29c671ddcc07aa3d080a0302d1a7687d9a3fd8542daec081aaa82482"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A17/input/project/memo.md",
+      "sha256": "653c64bc3049a8b5bc2377c475a8bfdb1d1d75cdb77f3801af615ab58e467abf"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A17/input/project/recovery.txt",
+      "sha256": "d8f455c6f865f8f1c1f77b4bb478bdeee3817712a889006c01756acbd8058dc4"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A17/input/project/requirements.md",
+      "sha256": "18cfd85c41af04d7cb2043b2389576c3b1e7fea9a66c9e66e7f62587b716077f"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A17/input/skill/references/bias-and-evidence.md",
+      "sha256": "d3bad83f28116509e916a96c95ba4b33ffb877229f0551d3f54558b6458a4044"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A17/input/skill/references/qualitative-and-quantitative.md",
+      "sha256": "e8782a149de65eab35a6ccab46c6a72ea785ed8eb1f30ad6394095168087bf3f"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A17/input/skill/references/validation-cases.md",
+      "sha256": "6161653543404ec28e95d4204d0407bd31cf833fa01f8a1122fd8110f1217f39"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A17/input/skill/references/worked-analysis.md",
+      "sha256": "7bbccf10a4da8d7111a2f779ffff29e66bef42c75d0b493d4acd13b1638d7f8a"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A17/input/skill/SKILL.md",
+      "sha256": "f53d8686017e317089c10184ef2e7f31888b2e9d188b1845a3a650d283254ff0"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A17/input/skill/skill.yaml",
+      "sha256": "bc7c2e343459fc364e24a5a5fc46ba41c1aacd7700ce7570bb85c8b0576c1c34"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A17/TASK.md",
+      "sha256": "4bb9b3ab385f4d023a330e2a4a9674281b64b2db9539fcd8e02981cb290521f0"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A18/input/project/measurements.csv",
+      "sha256": "5cea418a29c671ddcc07aa3d080a0302d1a7687d9a3fd8542daec081aaa82482"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A18/input/project/memo.md",
+      "sha256": "653c64bc3049a8b5bc2377c475a8bfdb1d1d75cdb77f3801af615ab58e467abf"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A18/input/project/recovery.txt",
+      "sha256": "d8f455c6f865f8f1c1f77b4bb478bdeee3817712a889006c01756acbd8058dc4"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A18/input/project/requirements.md",
+      "sha256": "18cfd85c41af04d7cb2043b2389576c3b1e7fea9a66c9e66e7f62587b716077f"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A18/input/skill/references/bias-and-evidence.md",
+      "sha256": "a731d9c1cd50e931c911b9c1fff18575fbb9aa40ae6931efc138a8e1af53166a"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A18/input/skill/references/qualitative-and-quantitative.md",
+      "sha256": "e8782a149de65eab35a6ccab46c6a72ea785ed8eb1f30ad6394095168087bf3f"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A18/input/skill/references/validation-cases.md",
+      "sha256": "f12ee03e485033d72b5a4694e72a91d7a2e2d6d972b281eea61df672ff3930d6"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A18/input/skill/references/worked-analysis.md",
+      "sha256": "7bbccf10a4da8d7111a2f779ffff29e66bef42c75d0b493d4acd13b1638d7f8a"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A18/input/skill/SKILL.md",
+      "sha256": "f53d8686017e317089c10184ef2e7f31888b2e9d188b1845a3a650d283254ff0"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A18/input/skill/skill.yaml",
+      "sha256": "dcc67e226a01189095c2f3893dda75c53014ae9e6bb4e5a59f56e050cc1320d2"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A18/TASK.md",
+      "sha256": "4bb9b3ab385f4d023a330e2a4a9674281b64b2db9539fcd8e02981cb290521f0"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A19/input/project/decision.md",
+      "sha256": "19aab26b18006d1b32d95aeeeeb38026e4913b06240b50eec3cb6a6cfba3f23b"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A19/input/project/investigations.md",
+      "sha256": "2d2d4f4ab7c006666bbc832e7f5429e6ff4c48f7fc5156210a64d6904f46a9e0"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A19/TASK.md",
+      "sha256": "c4e151f26f94e3efd23558b8813cf638824de837a29659e56ebb54e7225eed8e"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A20/input/project/decision.md",
+      "sha256": "19aab26b18006d1b32d95aeeeeb38026e4913b06240b50eec3cb6a6cfba3f23b"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A20/input/project/investigations.md",
+      "sha256": "2d2d4f4ab7c006666bbc832e7f5429e6ff4c48f7fc5156210a64d6904f46a9e0"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A20/input/skill/references/bias-and-evidence.md",
+      "sha256": "a731d9c1cd50e931c911b9c1fff18575fbb9aa40ae6931efc138a8e1af53166a"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A20/input/skill/references/qualitative-and-quantitative.md",
+      "sha256": "e8782a149de65eab35a6ccab46c6a72ea785ed8eb1f30ad6394095168087bf3f"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A20/input/skill/references/validation-cases.md",
+      "sha256": "f12ee03e485033d72b5a4694e72a91d7a2e2d6d972b281eea61df672ff3930d6"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A20/input/skill/references/worked-analysis.md",
+      "sha256": "7bbccf10a4da8d7111a2f779ffff29e66bef42c75d0b493d4acd13b1638d7f8a"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A20/input/skill/SKILL.md",
+      "sha256": "f53d8686017e317089c10184ef2e7f31888b2e9d188b1845a3a650d283254ff0"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A20/input/skill/skill.yaml",
+      "sha256": "dcc67e226a01189095c2f3893dda75c53014ae9e6bb4e5a59f56e050cc1320d2"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A20/TASK.md",
+      "sha256": "3b983369d143dc80f57faf02c2a056c96265b2e5305a434d17018a1613f3879f"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A21/input/project/decision.md",
+      "sha256": "19aab26b18006d1b32d95aeeeeb38026e4913b06240b50eec3cb6a6cfba3f23b"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A21/input/project/investigations.md",
+      "sha256": "2d2d4f4ab7c006666bbc832e7f5429e6ff4c48f7fc5156210a64d6904f46a9e0"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A21/input/skill/references/bias-and-evidence.md",
+      "sha256": "d3bad83f28116509e916a96c95ba4b33ffb877229f0551d3f54558b6458a4044"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A21/input/skill/references/qualitative-and-quantitative.md",
+      "sha256": "e8782a149de65eab35a6ccab46c6a72ea785ed8eb1f30ad6394095168087bf3f"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A21/input/skill/references/validation-cases.md",
+      "sha256": "6161653543404ec28e95d4204d0407bd31cf833fa01f8a1122fd8110f1217f39"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A21/input/skill/references/worked-analysis.md",
+      "sha256": "7bbccf10a4da8d7111a2f779ffff29e66bef42c75d0b493d4acd13b1638d7f8a"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A21/input/skill/SKILL.md",
+      "sha256": "f53d8686017e317089c10184ef2e7f31888b2e9d188b1845a3a650d283254ff0"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A21/input/skill/skill.yaml",
+      "sha256": "bc7c2e343459fc364e24a5a5fc46ba41c1aacd7700ce7570bb85c8b0576c1c34"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A21/TASK.md",
+      "sha256": "3b983369d143dc80f57faf02c2a056c96265b2e5305a434d17018a1613f3879f"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A22/input/project/decision.md",
+      "sha256": "19aab26b18006d1b32d95aeeeeb38026e4913b06240b50eec3cb6a6cfba3f23b"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A22/input/project/investigations.md",
+      "sha256": "2d2d4f4ab7c006666bbc832e7f5429e6ff4c48f7fc5156210a64d6904f46a9e0"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A22/input/skill/references/bias-and-evidence.md",
+      "sha256": "d3bad83f28116509e916a96c95ba4b33ffb877229f0551d3f54558b6458a4044"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A22/input/skill/references/qualitative-and-quantitative.md",
+      "sha256": "e8782a149de65eab35a6ccab46c6a72ea785ed8eb1f30ad6394095168087bf3f"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A22/input/skill/references/validation-cases.md",
+      "sha256": "6161653543404ec28e95d4204d0407bd31cf833fa01f8a1122fd8110f1217f39"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A22/input/skill/references/worked-analysis.md",
+      "sha256": "7bbccf10a4da8d7111a2f779ffff29e66bef42c75d0b493d4acd13b1638d7f8a"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A22/input/skill/SKILL.md",
+      "sha256": "f53d8686017e317089c10184ef2e7f31888b2e9d188b1845a3a650d283254ff0"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A22/input/skill/skill.yaml",
+      "sha256": "bc7c2e343459fc364e24a5a5fc46ba41c1aacd7700ce7570bb85c8b0576c1c34"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A22/TASK.md",
+      "sha256": "3b983369d143dc80f57faf02c2a056c96265b2e5305a434d17018a1613f3879f"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A23/input/project/decision.md",
+      "sha256": "19aab26b18006d1b32d95aeeeeb38026e4913b06240b50eec3cb6a6cfba3f23b"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A23/input/project/investigations.md",
+      "sha256": "2d2d4f4ab7c006666bbc832e7f5429e6ff4c48f7fc5156210a64d6904f46a9e0"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A23/input/skill/references/bias-and-evidence.md",
+      "sha256": "a731d9c1cd50e931c911b9c1fff18575fbb9aa40ae6931efc138a8e1af53166a"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A23/input/skill/references/qualitative-and-quantitative.md",
+      "sha256": "e8782a149de65eab35a6ccab46c6a72ea785ed8eb1f30ad6394095168087bf3f"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A23/input/skill/references/validation-cases.md",
+      "sha256": "f12ee03e485033d72b5a4694e72a91d7a2e2d6d972b281eea61df672ff3930d6"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A23/input/skill/references/worked-analysis.md",
+      "sha256": "7bbccf10a4da8d7111a2f779ffff29e66bef42c75d0b493d4acd13b1638d7f8a"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A23/input/skill/SKILL.md",
+      "sha256": "f53d8686017e317089c10184ef2e7f31888b2e9d188b1845a3a650d283254ff0"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A23/input/skill/skill.yaml",
+      "sha256": "dcc67e226a01189095c2f3893dda75c53014ae9e6bb4e5a59f56e050cc1320d2"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A23/TASK.md",
+      "sha256": "3b983369d143dc80f57faf02c2a056c96265b2e5305a434d17018a1613f3879f"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A24/input/project/decision.md",
+      "sha256": "19aab26b18006d1b32d95aeeeeb38026e4913b06240b50eec3cb6a6cfba3f23b"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A24/input/project/investigations.md",
+      "sha256": "2d2d4f4ab7c006666bbc832e7f5429e6ff4c48f7fc5156210a64d6904f46a9e0"
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A24/TASK.md",
+      "sha256": "c4e151f26f94e3efd23558b8813cf638824de837a29659e56ebb54e7225eed8e"
+    }
+  ],
+  "conditions": {
+    "none": "No explicit local skill body; platform catalog metadata may still be inherited.",
+    "reference": "Complete1.2.4 snapshot, all shipped references available.",
+    "candidate": "Complete1.2.5 snapshot, all shipped references available."
+  },
+  "limitations": [
+    "Authored synthetic tasks, not real project outcomes or selection tests.",
+    "Shared filesystem, procedural read boundaries; access logs are self-reported, not an enforced audit.",
+    "No provider model fingerprint/token/duration measurement; inherited model/effort no overrides.",
+    "Two stages in each session, not independent trials."
+  ]
+}

@@ -1,0 +1,19 @@
+**Decisão: violated.** A aprovação proposta não sustenta o contrato de `docs/contract.md:2`.
+
+O caminho efetivo é direto: `src/work/Message.java:4` rejeita null e tamanhos diferentes de dois, mas guarda a própria referência recebida (`this.words=words`). `checksum():5` lê os dois elementos desse mesmo array a cada chamada. O produtor conserva um alias e está autorizado a reutilizá-lo após o retorno do construtor. Portanto, não existe captura dos valores. A ausência de mutadores em Message não elimina o caminho de escrita externo.
+
+O construtor não deixa `this` escapar. Para uma instância corretamente construída, as regras de campos finais protegem a referência inicializada e alcançam o estado inicial do array conforme a ordenação exigida pela especificação. Isso não congela os elementos nem fornece uma fotografia permanente. Leituras do consumidor e escritas posteriores do produtor nos mesmos elementos, sem ordenação happens-before, constituem corrida; o par de leituras não é uma operação atômica e pode combinar estados. São garantias distintas de visibilidade da inicialização e de ausência de mutação posterior. [JLS SE25, §§17.4.1, 17.4.5 e 17.5–17.5.1](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.5).
+
+**Evidência executada.** Em Java Temurin 25.0.3, `node check.mjs` compilou com `--release 25` e imprimiu `before-recycle=30` e `after-recycle=300`. Seu exit 0 significa que o demonstrador terminou, não que o contrato passou. Um único fluxo já refuta a promessa, sem depender de probabilidades de escalonamento.
+
+O verificador próprio `checks/ContractCheck.java` confirmou a rejeição de null e de tamanhos 0, 1 e 3. Contra a classe fornecida, falhou com exit 1: esperava checksum 30 após a reciclagem, recebeu 300. O controle separado com cópia passou com exit 0, manteve os checksums de duas mensagens após reutilizações sucessivas e preservou a validação. Os detalhes estão em `checks/baseline.json` e `checks/checks-log.json`.
+
+**Correção mínima necessária, apenas proposta:**
+```java
+// Preservar a validação existente antes desta atribuição.
+this.words = words.clone();
+```
+A cópia ocorre durante a construção, antes do instante em que o contrato permite reciclar. Como os elementos são inteiros, essa cópia basta: não conserva referências mutáveis a elementos externos. O array privado não é exposto nem alterado pela classe, e o produtor continua dono do original. Assim, reciclar o original não pode mudar a cópia. Conservar o campo final mantém as garantias pertinentes de inicialização. Acrescentar volatile, sincronizar somente checksum ou obrigar o produtor a reter o buffer não fornece a captura exigida.
+
+**Limites.** Não houve alteração dos fontes, contratos ou dependências fornecidos. Seus hashes permaneceram iguais nas duas cópias. O controle é uma proposta isolada, não uma correção aplicada. Não executei stress concorrente nem integração assíncrona: a violação tem reprodução determinística, e a adequação da proposta decorre da separação de armazenamento e das regras de inicialização. Não falta evidência material para essa decisão. Uma consulta complementar à seção de arrays foi interrompida sem retorno útil; a conclusão usa a seção 17 efetivamente lida e os checks locais.
+

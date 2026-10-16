@@ -1,0 +1,76 @@
+39992:
+
+__ CodeHeapStateAnalytics lock wait took      0.000 seconds _________
+
+======================================================================================
+=  F R E E   S P A C E   S T A T I S T I C S   for CodeHeap 'non-profiled nmethods'  =
+======================================================================================
+Note: in this context, a gap is the occupied space between two free blocks.
+      Those gaps are of interest if there is a chance that they become
+      unoccupied, e.g. by class unloading. Then, the two adjacent free
+      blocks, together with the now unoccupied space, form a new, large
+      free block.
+
++---------------------------------------------------------------+
+|  List of all Free Blocks in CodeHeap 'non-profiled nmethods'  |
++---------------------------------------------------------------+
+0x000002cc98e79380: Len[   0] = 0x900,Gap[   0..   1]: 0x300 bytes,    block count:      1
+0x000002cc98e79980: Len[   1] = 0x900,Gap[   1..   2]: 0x300 bytes,    block count:      1
+0x000002cc98e79f80: Len[   2] = 0x900,Gap[   2..   3]: 0x300 bytes,    block count:      1
+0x000002cc98e7a580: Len[   3] = 0x900,Gap[   3..   4]: 0x300 bytes,    block count:      1
+0x000002cc98e7ab80: Len[   4] = 0x900,Gap[   4..   5]: 0x300 bytes,    block count:      1
+0x000002cc98e7b180: Len[   5] = 0x900,Gap[   5..   6]: 0x300 bytes,    block count:      1
+0x000002cc98e7b780: Len[   6] = 0x900,Gap[   6..   7]: 0x300 bytes,    block count:      1
+0x000002cc98e7bd80: Len[   7] = 0x900,Gap[   7..   8]: 0x300 bytes,    block count:      1
+0x000002cc98e7c380: Len[   8] = 0x900,Gap[   8..   9]: 0x300 bytes,    block count:      1
+0x000002cc98e7c980: Len[   9] = 0x900,Gap[   9..  10]: 0x300 bytes,    block count:      1
+0x000002cc98e7cf80: Len[  10] = 0x900,Gap[  10..  11]: 0x300 bytes,    block count:      1
+0x000002cc98e7d580: Len[  11] = 0x900,Gap[  11..  12]: 0x300 bytes,    block count:      1
+0x000002cc98e7db80: Len[  12] = 0x900,Gap[  12..  13]: 0x300 bytes,    block count:      1
+0x000002cc98e7e180: Len[  13] = 0x900,Gap[  13..  14]: 0x300 bytes,    block count:      1
+0x000002cc98e7e780: Len[  14] = 0x900,Gap[  14..  15]: 0x300 bytes,    block count:      1
+0x000002cc98e7ed80: Len[  15] = 0x900,Gap[  15..  16]: 0x300 bytes,    block count:      1
+0x000002cc98e7f380: Len[  16] = 0x900,Gap[  16..  17]: 0x300 bytes,    block count:      1
+0x000002cc98e7f980: Len[  17] = 0x300
+
+
++-----------------------------------------------------------+
+|  Top Ten Free Blocks in CodeHeap 'non-profiled nmethods'  |
++-----------------------------------------------------------+
+Pos   1: Block    0 - size 0x900,      Gap (to next) 0x300,    #blocks (in gap) 1
+Pos   2: Block    1 - size 0x900,      Gap (to next) 0x300,    #blocks (in gap) 1
+Pos   3: Block    2 - size 0x900,      Gap (to next) 0x300,    #blocks (in gap) 1
+Pos   4: Block    3 - size 0x900,      Gap (to next) 0x300,    #blocks (in gap) 1
+Pos   5: Block    4 - size 0x900,      Gap (to next) 0x300,    #blocks (in gap) 1
+Pos   6: Block    5 - size 0x900,      Gap (to next) 0x300,    #blocks (in gap) 1
+Pos   7: Block    6 - size 0x900,      Gap (to next) 0x300,    #blocks (in gap) 1
+Pos   8: Block    7 - size 0x900,      Gap (to next) 0x300,    #blocks (in gap) 1
+Pos   9: Block    8 - size 0x900,      Gap (to next) 0x300,    #blocks (in gap) 1
+Pos  10: Block    9 - size 0x900,      Gap (to next) 0x300,    #blocks (in gap) 1
+
+
++--------------------------------------------------------------------------+
+|  Top Ten Free-Occupied-Free Triples in CodeHeap 'non-profiled nmethods'  |
++--------------------------------------------------------------------------+
+  Use this information to judge how likely it is that a large(r) free block
+  might get created by code cache sweeping.
+  If all the occupied blocks can be swept, the three free blocks will be
+  merged into one (much larger) free block. That would reduce free space
+  fragmentation.
+
+Pos   1: Block    0 - size 0x1500,     Gap (to next) 0x300,    #blocks (in gap) 1
+Pos   2: Block    1 - size 0x1500,     Gap (to next) 0x300,    #blocks (in gap) 1
+Pos   3: Block    2 - size 0x1500,     Gap (to next) 0x300,    #blocks (in gap) 1
+Pos   4: Block    3 - size 0x1500,     Gap (to next) 0x300,    #blocks (in gap) 1
+Pos   5: Block    4 - size 0x1500,     Gap (to next) 0x300,    #blocks (in gap) 1
+Pos   6: Block    5 - size 0x1500,     Gap (to next) 0x300,    #blocks (in gap) 1
+Pos   7: Block    6 - size 0x1500,     Gap (to next) 0x300,    #blocks (in gap) 1
+Pos   8: Block    7 - size 0x1500,     Gap (to next) 0x300,    #blocks (in gap) 1
+Pos   9: Block    8 - size 0x1500,     Gap (to next) 0x300,    #blocks (in gap) 1
+Pos  10: Block    9 - size 0x1500,     Gap (to next) 0x300,    #blocks (in gap) 1
+
+
+No aggregated data available for heap CodeHeap 'non-nmethods'. Run function aggregate first.
+
+__ CodeHeapStateAnalytics total duration      0.000 seconds _________
+

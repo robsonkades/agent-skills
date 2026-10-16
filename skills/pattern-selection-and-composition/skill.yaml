@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: pattern-selection-and-composition
-version: 1.3.5
+version: 1.3.6
 description: >-
   Choosing enterprise patterns from forces rather than familiarity, and combining them into
   an architecture whose parts reinforce rather than fight each other: the selection criteria
@@ -61,6 +61,7 @@ suggests:
   - patterns-and-modern-frameworks
   - session-state-strategies
   - idempotency
+  - message-ordering-and-partitioning
   - remote-facade-and-dto
 
 capabilities:

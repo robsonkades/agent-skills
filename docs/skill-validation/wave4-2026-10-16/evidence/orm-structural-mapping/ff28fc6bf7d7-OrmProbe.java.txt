@@ -1,0 +1,147 @@
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.io.Reader;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.ResultSet;
+import java.util.Properties;
+import jakarta.persistence.NonUniqueResultException;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.boot.MetadataSources;
+import org.hibernate.boot.registry.StandardServiceRegistry;
+import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+
+public final class OrmProbe {
+    private static int assertions;
+    private static void check(boolean condition, String message) {
+        assertions++;
+        if (!condition) throw new AssertionError(message);
+    }
+    private static void rejectSql(Connection connection, String sql, String state, String label) throws Exception {
+        try (Statement statement = connection.createStatement()) {
+            statement.executeUpdate(sql);
+            throw new AssertionError(label + " was accepted");
+        } catch (SQLException expected) {
+            check(state.equals(expected.getSQLState()), label + ": " + expected);
+            System.out.println(label + "=" + expected.getSQLState());
+        }
+    }
+    private static String sqlState(Throwable failure) {
+        for (Throwable current = failure; current != null; current = current.getCause()) {
+            if (current instanceof SQLException sql) return sql.getSQLState();
+        }
+        return null;
+    }
+    private static int count(Connection connection, String sql) throws Exception {
+        try (Statement statement = connection.createStatement(); ResultSet result = statement.executeQuery(sql)) {
+            check(result.next(), "count returned a row");
+            return result.getInt(1);
+        }
+    }
+    public static void main(String[] args) throws Exception {
+        Path input = Path.of(args[0]);
+        boolean unique = Boolean.parseBoolean(args[1]);
+        String url = "jdbc:h2:mem:orm_skill_" + (unique ? "b" : "a") + ";DB_CLOSE_DELAY=-1";
+        Class.forName("org.h2.Driver");
+        Properties properties = new Properties();
+        try (Reader reader = Files.newBufferedReader(input.resolve("deployment.properties"))) {
+            properties.load(reader);
+        }
+        check("none".equals(properties.getProperty("hibernate.hbm2ddl.auto")), "Fixture disables provider DDL");
+        properties.setProperty("hibernate.connection.url", url);
+        try (Connection keeper = DriverManager.getConnection(url, "sa", "")) {
+            for (String sql : Files.readString(input.resolve("schema.sql")).split(";")) {
+                if (!sql.isBlank()) try (Statement statement = keeper.createStatement()) { statement.execute(sql); }
+            }
+            try (Statement statement = keeper.createStatement()) {
+                statement.executeUpdate("INSERT INTO access_member(id,name) VALUES (1,'Ana'), (2,'Bia')");
+            }
+            System.out.println("Java=" + System.getProperty("java.version"));
+            System.out.println("Hibernate=" + org.hibernate.Version.getVersionString());
+            System.out.println("Database=" + keeper.getMetaData().getDatabaseProductName() + " " + keeper.getMetaData().getDatabaseProductVersion());
+            StandardServiceRegistry registry = new StandardServiceRegistryBuilder().applySettings(properties).build();
+            try (SessionFactory factory = new MetadataSources(registry)
+                    .addAnnotatedClass(Member.class).addAnnotatedClass(Badge.class)
+                    .buildMetadata().buildSessionFactory()) {
+                BadgeIssueService issuer = new BadgeIssueService();
+                BadgeDirectory directory = new BadgeDirectory();
+                try (Session session = factory.openSession()) {
+                    var transaction = session.beginTransaction();
+                    Badge saved = issuer.issue(session, 10, 1, "front-door");
+                    check(saved.id() == 10L, "Assigned badge identity preserved");
+                    session.flush();
+                    session.clear();
+                    Badge reloaded = session.find(Badge.class, 10L);
+                    check(reloaded != saved, "Flush-clear-reload creates a separately loaded entity");
+                    check(reloaded.member().id() == 1L, "Owning relationship survives reload");
+                    check("front-door".equals(reloaded.label()), "Scalar state survives reload");
+                    transaction.commit();
+                }
+                boolean rejected = false;
+                String rejectionState = null;
+                try (Session session = factory.openSession()) {
+                    var transaction = session.beginTransaction();
+                    try {
+                        issuer.issue(session, 11, 1, "side-door");
+                        session.flush();
+                        transaction.commit();
+                    } catch (RuntimeException failure) {
+                        if (transaction.isActive()) transaction.rollback();
+                        rejected = true;
+                        rejectionState = sqlState(failure);
+                        if (!unique) throw failure;
+                        check("23505".equals(rejectionState), "Expected a unique constraint rejection, not unrelated ORM failure");
+                    }
+                }
+                check(rejected == unique, "ORM duplicate outcome follows actual deployed constraint");
+                System.out.println("duplicateViaOrmRejected=" + rejected + ", sqlState=" + rejectionState);
+                try (Session session = factory.openSession()) {
+                    var transaction = session.beginTransaction();
+                    boolean ambiguous = false;
+                    try {
+                        var result = directory.forMember(session, 1L);
+                        check(unique && result.isPresent() && result.get().id() == 10L, "Unique member directory resolves badge");
+                    } catch (NonUniqueResultException expected) {
+                        ambiguous = true;
+                    }
+                    check(ambiguous != unique, "Directory outcome exposes or rejects multiple badges");
+                    check(directory.forMember(session, 2L).isEmpty(), "Unreferenced parent is allowed");
+                    transaction.rollback();
+                    System.out.println("directoryAmbiguous=" + ambiguous);
+                }
+                rejectSql(keeper, "INSERT INTO access_badge(id,member_id,label,version) VALUES(30,NULL,'null-member',0)", "23502", "nullMemberRejected");
+                rejectSql(keeper, "INSERT INTO access_badge(id,member_id,label,version) VALUES(31,999,'unknown-member',0)", "23506", "missingMemberRejected");
+                if (unique) {
+                    rejectSql(keeper, "INSERT INTO access_badge(id,member_id,label,version) VALUES(12,1,'direct-writer',0)", "23505", "directDuplicateRejected");
+                } else {
+                    try (Statement statement = keeper.createStatement()) {
+                        check(statement.executeUpdate("INSERT INTO access_badge(id,member_id,label,version) VALUES(12,1,'direct-writer',0)") == 1, "Direct writer also creates duplicate in absent-constraint schema");
+                    }
+                    rejectSql(keeper, "ALTER TABLE access_badge ADD CONSTRAINT uq_badge_member UNIQUE(member_id)", "23505", "constraintCannotIgnoreExistingDuplicates");
+                }
+                check(count(keeper, "SELECT COUNT(*) FROM access_badge WHERE member_id=1") == (unique ? 1 : 3), "Stored relationship cardinality verified independently with JDBC");
+                try (Session session = factory.openSession()) {
+                    var transaction = session.beginTransaction();
+                    session.remove(session.find(Badge.class, 10L));
+                    session.flush();
+                    session.clear();
+                    check(session.find(Badge.class, 10L) == null, "Removed badge absent after flush-clear");
+                    check(session.find(Member.class, 1L) != null, "Member survives badge removal");
+                    transaction.commit();
+                }
+                check(count(keeper, "SELECT COUNT(*) FROM access_member") == 2, "No member rows removed");
+                check(count(keeper, "SELECT COUNT(*) FROM access_badge") == (unique ? 0 : 2), "Badge deletion did not silently fix unrelated duplicate rows");
+            } finally {
+                StandardServiceRegistryBuilder.destroy(registry);
+                try (Statement statement = keeper.createStatement()) { statement.execute("SHUTDOWN"); }
+            }
+        }
+        System.out.println("originalContract=" + (unique ? "satisfied for tested constraints" : "violated: missing upper-cardinality enforcement"));
+        System.out.println("assertions=" + assertions);
+        System.out.println("LIMIT: actual Hibernate/H2 fixture; not PostgreSQL, provider-general, production-migration or agent-evaluation evidence.");
+    }
+}
+

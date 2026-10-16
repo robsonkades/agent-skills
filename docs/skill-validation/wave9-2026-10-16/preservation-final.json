@@ -1,0 +1,15 @@
+{
+  "at": "2026-10-16T19:52:34.204Z",
+  "checked": 12836,
+  "changes": [
+    "docs/skills-evolution-inventory.md",
+    "registry/skills.yaml",
+    "skills/retries-and-backoff/references/retry-failure-modes.md",
+    "skills/retries-and-backoff/references/retry-in-java.md",
+    "skills/retries-and-backoff/skill.yaml"
+  ],
+  "unexpected": [],
+  "unexpectedNew": [],
+  "pass": true,
+  "note": "Tracked and nonignored files present in the initial working tree; generated ignored build products are outside this comparison"
+}

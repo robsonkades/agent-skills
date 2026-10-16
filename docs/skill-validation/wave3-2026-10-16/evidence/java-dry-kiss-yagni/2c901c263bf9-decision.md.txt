@@ -1,0 +1,5 @@
+# Batch rule change
+
+The platform owner requires the same batch-size rule at both boundaries. The current maximum is 100 and the approved maximum is 200; both boundaries must continue rejecting nonpositive sizes.
+
+Initial proposal: patch both Java policy files to 200, then create a shared runtime policy helper to eliminate the repeated condition. The authoritative edit point and cost of the extra helper have not yet been checked against the build.

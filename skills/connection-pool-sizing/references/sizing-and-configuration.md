@@ -1,5 +1,29 @@
 # Sizing and configuration
 
+## Identify the pool being changed
+
+Follow one affected caller through its repository/JDBC access and transaction manager to the
+selected DataSource. In a multi-DataSource application, inspect bean qualifiers, transaction-manager
+selection and routing targets; a read-only annotation or a familiar bean name alone does not prove
+which physical pool is used. Trace the selected pool's property binding, active profile and deployment
+overrides, then compare effective values from existing runtime evidence. Record the relevant file,
+bean/pool name, replica and database endpoint without copying credentials.
+
+For Spring Boot custom DataSources, inspect `@Bean` and `@ConfigurationProperties` declarations:
+the pool may bind under an application-specific prefix rather than `spring.datasource.hikari`.
+See the [Spring Boot 3.4.5 custom DataSource examples](https://github.com/spring-projects/spring-boot/blob/v3.4.5/spring-boot-project/spring-boot-docs/src/docs/antora/modules/how-to/pages/data-access.adoc).
+Correcting the wrong property is not a pool-size experiment; first confirm that the proposed setting
+actually reaches the intended pool.
+
+Match runtime identities before comparing metrics. Spring Boot 3.4.5 tags `jdbc.connections` by a
+DataSource name derived from its bean, while `hikaricp` metrics use the pool name; these need not be
+the same string. Keep replica/pool labels when diagnosing local waits, and aggregate separately for
+the database-wide budget. Two ten-connection pools with ten active on one and zero on the other
+have 50% aggregate occupancy, yet the first can have waiters. Spare connections in the second do
+not establish local headroom in the first. If only aggregate data is available, leave local sizing
+conditional and obtain a scoped capture; do not derive a per-instance increase from the aggregate alone.
+See [Spring Boot 3.4.5 metric identities](https://github.com/spring-projects/spring-boot/blob/v3.4.5/spring-boot-project/spring-boot-docs/src/docs/antora/modules/reference/pages/actuator/metrics.adoc).
+
 ## The calculation
 
 ```

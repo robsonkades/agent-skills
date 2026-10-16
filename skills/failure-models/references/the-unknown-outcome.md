@@ -24,7 +24,8 @@ new type or a Java runtime. Modelling a Java exception hierarchy is `java-except
 ## Classifying a real call
 
 The question is always the same: **could the request have reached the peer and taken
-effect?** Everything below follows from that.
+effect?** The table classifies one attempt. A logical call may include earlier client or
+intermediary attempts; join those before assigning its outcome.
 
 | Call                | Rejected (never applied)                                                                                     | Unknown                                                                                                                                                                                                               |
 | ------------------- | ------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -83,6 +84,29 @@ that proof, not only the last attempt.
 A rejected later attempt does not resolve an earlier unknown effect.
 
 ## Reviewing for it
+
+For a consequential timeout or retry decision, reconstruct only the relevant operation's
+attempt chain:
+
+1. Follow the caller through its selected client, wrappers/interceptors and deployed proxy
+   route. Inspect effective retry settings and resolved versions at each layer. One
+   application invocation need not mean one request reached the peer.
+2. Correlate the logical operation/key and target with individual attempts using client,
+   intermediary and peer evidence. Record dispatch phase and any terminal effect status;
+   distinguish an operation ID from a per-attempt ID. Check which layers and time window
+   the capture covers. A missing peer log is not non-application proof when logging is
+   incomplete; an attempt counter establishes neither business effect nor durable commit.
+3. Apply the classification to each relevant effect and attempt. Preserve earlier unknowns
+   after a later rejection; one confirmed application does not exclude another attempt's
+   duplicate effect. When new evidence resolves an attempt, update the existing card's
+   affected outcome/recovery policy and retry recommendation, retaining unrelated findings.
+
+For example, Envoy **v1.36.0** distinguishes `reset` retries from `reset-before-request`,
+which restricts retries to requests whose headers were not sent upstream. Its
+`x-envoy-attempt-count` reporting is opt-in: inspect the applicable configuration before
+using presence or absence as evidence. These are version-specific investigation aids,
+not a recommendation to add a proxy or enable retries. See the
+[router contract](https://github.com/envoyproxy/envoy/blob/v1.36.0/docs/root/configuration/http/http_filters/router_filter.rst).
 
 Three search leads for possible erasure; inspect the contract before calling them defects:
 

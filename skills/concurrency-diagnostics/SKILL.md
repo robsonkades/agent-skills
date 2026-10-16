@@ -38,6 +38,9 @@ recording or a policy change.
    traffic elsewhere does not refute a partial deadlock or a starved tenant.
 3. Capture application state: accepted/started/completed/failed/cancelled/rejected counts, queue age
    and depth, in-flight work, resource permits/connections and downstream latency.
+   Trace the affected submission to the actual executor, queue, rejection policy and metric-update
+   points. Worker-only hooks, caller-side execution and silent rejection can give different coverage;
+   use `references/failure-mode-triage.md` when counters or returned Futures appear inconsistent.
 4. When progress or ownership remains uncertain, capture thread views at suitable intervals. Use
    traditional dumps for platform-thread locks/deadlock detection and `Thread.dump_to_file` for
    virtual threads/containers.
@@ -141,6 +144,8 @@ Fix the wait-for graph: ordering, ownership, nested acquisition or alien calls.
   running or physically terminated within a defined accounting interval. Track caller-result
   cancellation separately: a cancelled Future can still have running work and held resources.
   Rejection is outside accepted work; snapshot races, retries and resets require explicit accounting.
+  A normal `submit` return is not an admission acknowledgement under a silent discard policy;
+  establish the admission and terminal observation points before using their counters together.
   For one owner and physical-work identity over the same interval, check
   `outstanding_start + accepted = outstanding_end + physically_terminated`.
   Include the starting backlog and distinguish attempts from logical requests. A mismatch is an

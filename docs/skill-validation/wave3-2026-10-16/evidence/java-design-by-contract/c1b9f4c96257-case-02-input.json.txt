@@ -1,0 +1,24 @@
+{
+  "request": "Review ReceiptService.find against its documented public contract. Inspect the supplied source and smoke test, make the smallest justified correction if one is needed, and add or run focused checks that support the conclusion. Preserve nonblocking behavior and existing public promises. If the implementation already meets the contract, report that rather than inventing a change.",
+  "context": {
+    "languageBaseline": "Java 25",
+    "dependencies": "JDK only",
+    "allowedWork": "Isolated disposable copy of the supplied fixture; no network, installations, real services, or agent configuration changes.",
+    "loaderContract": "Loader.load receives a non-null id, returns a non-null ordinary CompletableFuture, never throws synchronously, and may complete before or after find returns. It may produce any non-null Receipt or complete exceptionally. The service owns its returned stage; callers do not externally complete it."
+  },
+  "prerequisites": [
+    "JDK 25 compiler/runtime; repository version available at C:/Users/robso/.jdks/temurin-25.0.3/bin.",
+    "Provide only this task input and its fixture files to the actor, not evaluator criteria or paired outputs."
+  ],
+  "fixtureFiles": [
+    {
+      "path": "ReceiptService.java",
+      "content": "import java.util.Objects;\nimport java.util.concurrent.CompletableFuture;\n\npublic final class ReceiptService {\n    public record Receipt(int units) {}\n\n    @FunctionalInterface\n    public interface Loader {\n        CompletableFuture<Receipt> load(String id);\n    }\n\n    private final Loader loader;\n\n    public ReceiptService(Loader loader) {\n        this.loader = Objects.requireNonNull(loader, \"loader\");\n    }\n\n    /**\n     * Looks up a receipt without waiting for loading to finish.\n     * @return a non-null future; its normal completion provides a receipt with units > 0\n     * @throws NullPointerException synchronously when id is null\n     * Loading and receipt-validation failures are delivered through the returned future.\n     * No rollback or cancellation behavior is promised.\n     */\n    public CompletableFuture<Receipt> find(String id) {\n        Objects.requireNonNull(id, \"id\");\n        CompletableFuture<Receipt> loaded = loader.load(id);\n        CompletableFuture<Receipt> validated = loaded.thenApply(receipt -> {\n            if (receipt.units() <= 0) {\n                throw new IllegalStateException(\"invalid receipt\");\n            }\n            return receipt;\n        });\n        return validated;\n    }\n}\n"
+    },
+    {
+      "path": "ReceiptServiceSmoke.java",
+      "content": "import java.util.concurrent.CompletableFuture;\n\npublic final class ReceiptServiceSmoke {\n    public static void main(String[] args) {\n        ReceiptService service = new ReceiptService(\n                id -> CompletableFuture.completedFuture(new ReceiptService.Receipt(2)));\n        if (service.find(\"r1\").join().units() != 2) {\n            throw new AssertionError(\"receipt units\");\n        }\n    }\n}\n"
+    }
+  ],
+  "caseId": "completion-contract-02"
+}

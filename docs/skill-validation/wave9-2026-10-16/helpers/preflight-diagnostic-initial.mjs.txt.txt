@@ -1,0 +1,9 @@
+import fs from 'node:fs';
+import {spawnSync} from 'node:child_process';
+import assert from 'node:assert/strict';
+const root='C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4',report='C:/git/agent-skills/docs/skill-validation/wave9-2026-10-16';
+const good={configuredBeforeMax:6,configuredAfterMax:18,outerAttemptsPerLogical:1.06,wireAttemptsPerLogical:1.6,aggregateGrantUpperBound:130};
+const variants=[{name:'correct',metrics:good,pass:true},{name:'wrong-layer-max',metrics:{...good,configuredAfterMax:8},pass:false},{name:'ignore-burst',metrics:{...good,aggregateGrantUpperBound:90},pass:false},{name:'numeric-strings',metrics:Object.fromEntries(Object.entries(good).map(([k,v])=>[k,String(v)])),pass:false}];
+const records=[];
+for(const v of variants){const dir=root+'/diagnostic-controls/'+v.name;fs.mkdirSync(dir,{recursive:true});fs.writeFileSync(dir+'/result.json',JSON.stringify({metrics:v.metrics}));const r=spawnSync(process.execPath,[root+'/probe-diagnostic.mjs',dir],{encoding:'utf8',timeout:20000,windowsHide:true});const actualMatch=!r.error&&(v.pass?r.status===0:r.status!==0&&r.stderr.includes('AssertionError'));records.push({name:v.name,expectedPass:v.pass,actualMatch,exit:r.status,error:r.error?.message??null,stdout:r.stdout,stderr:r.stderr});}
+const result={at:new Date().toISOString(),allExpected:records.every(r=>r.actualMatch),records};fs.writeFileSync(report+'/preflight-diagnostic.json',JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify({controls:records.length,allExpected:result.allExpected}));assert.ok(result.allExpected);

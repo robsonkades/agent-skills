@@ -1,0 +1,24 @@
+# Reparo do recibo opcional após commit
+
+**Decisão: changed.** A implementação violava o contrato. `BookingService.place` já possuía uma fronteira REQUIRED correta em `businessTx`, mas `BookingListener` executava em BEFORE_COMMIT. O writer sem fronteira própria participava da transação de negócio: uma rejeição do corpo anulava booking e reserva e chegava ao chamador.
+
+O smoke original passou. A regressão adicionada demonstrou que o recibo válido rodava quando uma conexão independente READ_COMMITTED ainda via zero bookings. Com 13 caracteres, ocorreu `DataIntegrityViolationException`, não ficou booking e o estoque não foi reservado.
+
+Apliquei também a sugestão isolada de REQUIRES_NEW como controle intermediário. A mesma regressão falhou: a visibilidade continuava zero, a rejeição ainda abortava o negócio e uma falha posterior do dono da transação deixou recibo e detalhe sem booking. Esse resultado está preservado em `checks/requires-new-only-control.json`.
+
+O reparo final altera dois pontos: listener em AFTER_COMMIT e `ReceiptWriter.record` com REQUIRES_NEW explicitamente no manager `businessTx`, chamado através do bean Spring existente. Cabeçalho e corpo compartilham essa nova transação. Permanecem intactos a API, o evento, REQUIRED no serviço, a regra de estoque, o limite de 12 caracteres, o observador imediatamente antes da escrita e o agendamento síncrono.
+
+A fase AFTER_COMMIT usa o caminho de after-completion na [implementação Spring 7.0.9](https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.9/spring-tx/src/main/java/org/springframework/transaction/event/TransactionalApplicationListenerSynchronization.java). Nesse caminho, o Spring [registra a exceção do callback sem propagá-la ao chamador](https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.9/spring-tx/src/main/java/org/springframework/transaction/support/TransactionSynchronizationUtils.java). A necessidade de uma transação independente para escrita após conclusão também consta da [API da versão usada](https://docs.spring.io/spring-framework/docs/7.0.9/javadoc-api/org/springframework/transaction/event/TransactionalEventListener.html).
+
+Verificação executada com Java 25, Spring 7.0.9 e H2 2.4.240:
+
+- `node check.mjs`: passou antes e depois do reparo.
+- `node check.mjs work.Regression`: falhou na implementação inicial e no controle isolado; passou no reparo final.
+- Válido de 12 caracteres: booking, cabeçalho e detalhe persistidos; texto preservado integralmente.
+- Inválido de 13 caracteres: chamador sem exceção, booking e reserva persistidos, nenhum cabeçalho/detalhe parcial. Duas rejeições esperadas foram registradas no stderr do teste final.
+- Estoque indisponível, publicação sem transação e rollback do dono, inclusive falha durante completion: nenhum recibo persistido.
+- Serviço dentro de transação externa permaneceu não commitado até o dono concluir. Commit externo com um recibo válido e outro inválido preservou ambas as reservas e apenas o recibo válido.
+- Todas as quatro chamadas finais ao observador viram o booking commitado pela conexão independente, na thread do chamador e antes da inserção do cabeçalho.
+- Comparação de 26 arquivos originais: somente os dois fontes previstos e RUNBOOK mudaram; arquivos congelados correspondem aos inputs. O teste novo é adicional.
+
+O RUNBOOK documenta responsabilidade de conclusão, logs de rejeição e perda aceita. Não foi necessário um mecanismo de recuperação. Estes testes locais não estabelecem comportamento de crash de um banco de produção, entrega distribuída, capacidade de pool ou semântica JPA. Os registros são relatos deste ator, sem alegação de isolamento pelo sistema operacional.

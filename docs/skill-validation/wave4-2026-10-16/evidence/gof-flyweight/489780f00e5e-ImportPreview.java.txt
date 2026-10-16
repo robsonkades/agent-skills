@@ -1,0 +1,24 @@
+package imports;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
+import java.util.Locale;
+
+public final class ImportPreview {
+    public static void main(String[] args) throws Exception {
+        Path directory = Path.of(args[0]);
+        var factory = Bootstrap.factory(directory.resolve("import.properties"));
+        for (String row : Files.readAllLines(directory.resolve("sample-inputs.csv")).subList(1, 3)) {
+            String[] fields = row.split(",", -1);
+            if (fields[2].length() > 256) throw new IllegalArgumentException("date text too long");
+            try {
+                System.out.println(fields[0] + "," + LocalDate.parse(fields[2],
+                        factory.formatter(fields[1], Locale.forLanguageTag(fields[0]))));
+            } catch (DateTimeParseException invalid) {
+                System.out.println(fields[0] + ",REJECTED");
+            }
+        }
+    }
+}

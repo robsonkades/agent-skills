@@ -1,0 +1,3 @@
+# Current review
+
+The undo button restores the complete immutable draft state, so it cancels confirmation. Existing QA checks show ready returns to false. The current owner-checked snapshot and one-entry history are sufficient; no extra design work is needed. This conclusion has not yet been checked against the runtime factory and active configuration.

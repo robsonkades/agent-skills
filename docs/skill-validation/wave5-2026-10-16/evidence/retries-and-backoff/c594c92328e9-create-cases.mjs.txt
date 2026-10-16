@@ -1,0 +1,90 @@
+import assert from 'node:assert/strict';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const evidence = dirname(fileURLToPath(import.meta.url));
+const folder = join(evidence, 'cases');
+mkdirSync(folder, { recursive: true });
+const common = {
+  task: 'Review the proposed recovery run for the pending authorization in these artifacts. Decide the next concrete action, what outcome the application may report, and whether the existing retry plan needs adjustment for this run. Keep the established protocol and bounded policy when they suffice. This is an evidence review; do not contact the provider or perform a payment.',
+  fixtures: {
+    'ops/recovery-plan.json': {
+      reviewedAt: '2026-10-16T10:00:00Z', operationId: 'purchase-483', intentKey: 'auth-purchase-483',
+      action: 'Submit the saved request with the same key; a returned original receipt resolves the pending operation.',
+      totalDeadlineMs: 1000, maxAttemptsIncludingFirst: 2, perAttemptTimeoutMs: 300,
+      fullJitterBaseMs: 50, fullJitterCapMs: 100, responseCleanupReserveMs: 200,
+      budgetScope: 'authorization dependency / process', availableRetryTokens: 1,
+      onUnresolvedExhaustion: 'Keep UNKNOWN and return to the reconciliation queue',
+      transportTotalAttempts: 1, proxyTotalAttempts: 1,
+    },
+    'data/pending-authorization.json': {
+      operationId: 'purchase-483', intentKey: 'auth-purchase-483', createdAt: '2026-10-15T08:00:00Z',
+      outcome: 'UNKNOWN', savedPayload: { amountMinor: 4900, currency: 'BRL', purchaseId: 'purchase-483' },
+      payloadSource: 'Immutable saved bytes loaded afresh for each attempt',
+    },
+    'logs/attempts.json': [
+      { at: '2026-10-15T08:00:00Z', operationId: 'purchase-483', attempt: 1,
+        evidence: 'TLS request body completed locally; response wait timed out; server outcome unavailable.' },
+      { at: '2026-10-16T09:58:00Z', operationId: 'purchase-483', action: 'authoritative status lookup',
+        responseStatus: 503, evidence: 'No receipt/status representation returned. This is not an absent-operation result.' },
+    ],
+    'contracts/authorization.json': {
+      acceptedRevision: 'auth-v3', operation: 'POST /authorizations',
+      duplicateSuppression: { keyScope: 'merchant plus operation type', retainedForHours: 24,
+        retainedKeyBehavior: 'Same key and payload join one operation and return its original authoritative receipt when completed.',
+        changedPayloadBehavior: 'Reject the request', expiredKeyBehavior: 'The key may be treated as a new operation; no duplicate-effect protection remains.' },
+      reconciliation: 'GET /authorizations/by-intent is authoritative when it returns a completed status or explicit absence; an unavailable lookup does not settle the original outcome.',
+      timing: 'The first attempt and review clocks differ from provider time by less than one minute. Retention begins when the first request is accepted.',
+      dispatchEvidence: 'A local response timeout alone does not establish non-application.'
+    },
+    'docs/environment.md': 'Java 21 service. The listed retry owner is the only application retry layer. No response bytes have been delivered to the caller. The immutable payload and merchant identity are unchanged, credentials are valid, and failed HTTP response resources are released before backoff. The recovery plan is for this pending record, not a proposal to replay every historical record. Provider contract is an accepted synthetic fixture for this review; no real provider availability or business effect is supplied.'
+  },
+  classification: 'Known development case; fixtures are synthetic ordinary operational artifacts, not production measurements.'
+};
+const inputA = structuredClone(common);
+const inputB = structuredClone(common);
+inputB.fixtures['contracts/authorization.json'].duplicateSuppression.retainedForHours = 72;
+for (const [id, input, expected] of [['a', inputA, 'HOLD_AND_RECONCILE'], ['b', inputB, 'BOUNDED_SAME_INTENT_REPLAY_PERMITTED']]) {
+  const criteria = {
+    caseId: 'retry-retention-' + id, evaluatorOnly: true, expectedDisposition: expected,
+    decisiveConstraint: 'Provider replay guarantee lasts ' + input.fixtures['contracts/authorization.json'].duplicateSuppression.retainedForHours + ' hours; the pending record is about 26 hours old.',
+    expectedBehavior: id === 'a' ? [
+      'The record is older than 24 hours, so retaining the same key does not establish that its guarantee still covers replay. The acceptance time is unknown: expiration is possible, not observed as a definite provider event.',
+      'Do not resubmit the unknown write or replace its intent key. Preserve UNKNOWN while retrying an authoritative lookup under its own bounded policy or escalate for reconciliation.',
+      'A response timeout and unavailable lookup do not establish definite failure or permission to create another effect.'
+    ] : [
+      'Recognize that the 72-hour duplicate/receipt guarantee covers this roughly 26-hour record with ample margin.',
+      'Permit the bounded plan with the same key, merchant and saved payload; do not prohibit all POST retries merely because the original outcome was ambiguous.',
+      'Only the same intent original authoritative receipt settles the operation. Further timeout/exhaustion retains UNKNOWN rather than declaring failed or successful.'
+    ],
+    commonCriteria: [
+      'Read the effective provider contract and record age before deciding; key presence alone is insufficient.',
+      'Preserve the reproducible payload, existing per-attempt/overall deadline, cleanup reserve, aggregate token admission and single owner.',
+      'At most 2*300 + 50 + 200 = 850 milliseconds under the shown first-retry full-jitter maximum, within 1000 milliseconds, excluding uncontrolled scheduling/transport overrun; actual deadlines remain enforced.',
+      'No provider mutation, dependency/framework upgrade, new tracing framework, fabricated authoritative result or claim that source review executed a payment.'
+    ],
+    failureConditions: id === 'a' ? [
+      'Approves resubmission solely because the key is unchanged.', 'Marks a timed-out operation FAILED or creates a new intent without reconciliation.'
+    ] : [
+      'Rejects every replay despite the explicit current guarantee without a conflicting fact.', 'Drops pending/unknown state on another failure or changes the payload/key.'
+    ],
+    prerequisites: 'Give the actor only the matching input JSON and usual skill treatment. No real service access is needed or authorized.',
+    knownDevelopmentCase: true, actorExecuted: false,
+    technicalExecution: 'No provider/retention service executed. Case decision is a contract/age walkthrough; loop mechanics are separately checked with explicit local placeholders.'
+  };
+  writeFileSync(join(folder, 'case-' + id + '.input.json'), JSON.stringify(input, null, 2) + '\n');
+  writeFileSync(join(folder, 'case-' + id + '.criteria.json'), JSON.stringify(criteria, null, 2) + '\n');
+}
+const comparison = structuredClone(inputB);
+comparison.fixtures['contracts/authorization.json'].duplicateSuppression.retainedForHours = 24;
+assert.deepEqual(inputA, comparison);
+const ageHours = (Date.parse(inputA.fixtures['ops/recovery-plan.json'].reviewedAt) - Date.parse(inputA.fixtures['data/pending-authorization.json'].createdAt)) / 3600000;
+assert.equal(ageHours, 26);
+assert.ok(ageHours > 24 && ageHours < 72);
+const pair = { onlyChangedField: 'fixtures.contracts/authorization.json.duplicateSuppression.retainedForHours', a: 24, b: 72,
+  recordAgeHours: ageHours, inputEqualityApartFromConstraint: true, independentActorsExecuted: false,
+  expectedTimeBoundMs: 2 * 300 + 50 + 200, deadlineMs: 1000,
+  limits: 'Arithmetic and contract fixtures only; no provider retention, network timeout or durable-effect observation.' };
+writeFileSync(join(evidence, 'case-pair-check.json'), JSON.stringify(pair, null, 2) + '\n');
+process.stdout.write(JSON.stringify(pair, null, 2) + '\n');

@@ -61,7 +61,7 @@ experiments only in isolated or already authorized environments.
 5. **Bound all held work**: reserve permits before pulling, or use supported broker credit,
    bounded prefetch/dispatch and an equivalent intake limit. Account for running, queued and
    unresolved receive ownership, including lease time spent waiting locally. Handle receive
-   failure and submission rejection without leaking capacity or deliveries. For batch operations,
+   failure and submission rejection or silent discard without leaking capacity or deliveries. For batch operations,
    reconcile each delivery's result; request-level success need not mean every entry succeeded.
    The limit is
    `concurrency-limiting-and-bulkheads`.

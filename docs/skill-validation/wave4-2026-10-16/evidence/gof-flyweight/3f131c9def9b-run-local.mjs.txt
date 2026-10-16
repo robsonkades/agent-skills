@@ -1,0 +1,50 @@
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
+import assert from 'node:assert/strict';
+const root = dirname(fileURLToPath(import.meta.url));
+const repository = 'C:/git/agent-skills';
+const jdk = 'C:/Users/robso/.jdks/temurin-25.0.3/bin';
+const commands = [];
+function run(id, executable, args, cwd = repository) {
+  const result = spawnSync(executable, args, { cwd, encoding: 'utf8', timeout: 30000, windowsHide: true });
+  writeFileSync(resolve(root, `${id}.stdout.txt`), result.stdout ?? '');
+  writeFileSync(resolve(root, `${id}.stderr.txt`), result.stderr ?? '');
+  commands.push({ id, executable, args, cwd, status: result.status, signal: result.signal, error: result.error?.message, stdout: `${id}.stdout.txt`, stderr: `${id}.stderr.txt` });
+  return result;
+}
+run('local-validation', process.execPath, [resolve(root, 'local-validation.mjs')]);
+run('prettier', process.execPath, [resolve(repository, 'node_modules/prettier/bin/prettier.cjs'), '--check', 'skills/gof-flyweight/SKILL.md', 'skills/gof-flyweight/skill.yaml', 'skills/gof-flyweight/references/when-sharing-pays.md', 'skills/gof-flyweight/references/worked-example.md']);
+run('diff-check', 'git', ['diff', '--check', '--', 'skills/gof-flyweight']);
+run('scoped-status', 'git', ['status', '--short', '--untracked-files=all', '--', 'skills/gof-flyweight']);
+run('scoped-diff', 'git', ['diff', '--', 'skills/gof-flyweight']);
+run('staged-diff', 'git', ['diff', '--cached', '--', 'skills/gof-flyweight']);
+run('java-version', resolve(jdk, 'java.exe'), ['-version']);
+run('javac-version', resolve(jdk, 'javac.exe'), ['-version']);
+const preparation = run('case-preparation', process.execPath, [resolve(root, 'prepare-cases.mjs')]);
+const compiled = resolve(root, 'case-compiled');
+mkdirSync(compiled, { recursive: true });
+const compilation = preparation.status === 0 && run('case-compile', resolve(jdk, 'javac.exe'), ['--release', '17', '-d', compiled, ...['Bootstrap.java', 'FormatterFactory.java', 'ImportPreview.java'].map(name => resolve(root, 'cases/case-a', name)), resolve(root, 'UncachedControl.java')]);
+let controlResult = { status: 'NOT_RUN' };
+if (compilation && compilation.status === 0) {
+  const outputs = {};
+  for (const id of ['case-a', 'case-b']) {
+    for (const [mode, main] of [['cached', 'imports.ImportPreview'], ['uncached', 'imports.UncachedControl']]) {
+      const result = run(`${id}-${mode}`, resolve(jdk, 'java.exe'), ['-cp', compiled, main, resolve(root, 'cases', id)]);
+      outputs[`${id}-${mode}`] = result.stdout.replaceAll('\r\n', '\n');
+    }
+  }
+  try {
+    assert.equal(outputs['case-a-cached'], 'en-US,2026-03-01\nfr-FR,REJECTED\n');
+    assert.equal(outputs['case-a-cached'], outputs['case-a-uncached']);
+    assert.equal(outputs['case-b-uncached'], 'en-US,2026-03-01\nfr-FR,2026-03-01\n');
+    assert.equal(outputs['case-b-cached'], 'en-US,2026-03-01\nfr-FR,REJECTED\n');
+    assert.notEqual(outputs['case-b-cached'], outputs['case-b-uncached']);
+    controlResult = { status: 'PASS', purpose: 'Validate synthetic case distinction against uncached API behavior; not a benchmark or actor evaluation.', assertions: 5, outputs, limits: 'Only the two ordered rows and current runtime locale data were executed. No concurrency, cap/bypass, retained-memory or reverse-order test.' };
+  } catch (error) { controlResult = { status: 'FAIL', error: String(error), outputs }; }
+}
+writeFileSync(resolve(root, 'commands.json'), JSON.stringify(commands, null, 2) + '\n');
+writeFileSync(resolve(root, 'case-control.json'), JSON.stringify(controlResult, null, 2) + '\n');
+console.log(JSON.stringify({ commands: commands.map(({ id, status, error }) => ({ id, status, error })), controlResult }, null, 2));
+if (commands.some(command => command.status !== 0) || controlResult.status !== 'PASS') process.exitCode = 1;

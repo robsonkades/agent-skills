@@ -1,0 +1,97 @@
+import assert from 'node:assert/strict';
+import https from 'node:https';
+import { X509Certificate } from 'node:crypto';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { once } from 'node:events';
+
+const root = resolve(process.argv[2]);
+const bytes = name => readFileSync(resolve(root, name));
+const passphrase = 'synthetic-test-only';
+const registered = new X509Certificate(bytes('registered-a.pem'));
+const lookalike = new X509Certificate(bytes('lookalike-b.pem'));
+assert.equal(registered.subject, lookalike.subject);
+assert.notDeepEqual(registered.raw, lookalike.raw);
+const observations = [];
+const grants = new Map([['payments', registered.raw]]);
+
+async function runProfile(profile) {
+  let effects = 0;
+  const server = https.createServer({
+    pfx: bytes('server.p12'), passphrase, requestCert: true,
+    // This fixture permits TLS to deliver a self-signed peer only in the explicit
+    // registered-certificate profile. The request still requires the exact registered
+    // leaf from the TLS connection; no subject/header can grant access.
+    rejectUnauthorized: profile === 'pki',
+    ...(profile === 'pki' ? { ca: bytes('fixture-ca.pem') } : {}),
+    minVersion: 'TLSv1.3', maxVersion: 'TLSv1.3', handshakeTimeout: 3000
+  }, (request, response) => {
+    const peer = request.socket.getPeerCertificate();
+    const clientId = new URL(request.url, 'https://localhost').searchParams.get('client_id');
+    const permitted = profile === 'registered'
+      ? Boolean(peer.raw && grants.get(clientId)?.equals(peer.raw))
+      : request.socket.authorized && clientId === 'payments' && peer.subject?.CN === 'payments';
+    if (permitted) effects++;
+    response.writeHead(permitted ? 200 : 401, { Connection: 'close' });
+    response.end(permitted ? 'allowed' : 'denied');
+  });
+  server.on('tlsClientError', () => {});
+  server.listen(0, '127.0.0.1');
+  await once(server, 'listening');
+  const port = server.address().port;
+
+  async function attempt(name, certificate, clientId, expectedStatus, forgedHeader = false) {
+    const before = effects;
+    const outcome = await new Promise((resolveRequest, rejectRequest) => {
+      const request = https.get({
+        hostname: '127.0.0.1', port, servername: 'localhost',
+        path: '/effect?client_id=' + encodeURIComponent(clientId), agent: false,
+        ca: bytes('server.pem'), rejectUnauthorized: true,
+        minVersion: 'TLSv1.3', maxVersion: 'TLSv1.3',
+        ...(certificate ? { pfx: bytes(certificate + '.p12'), passphrase } : {}),
+        ...(forgedHeader ? { headers: { 'X-Client-Cert': registered.raw.toString('base64') } } : {})
+      }, response => {
+        response.resume();
+        response.once('end', () => resolveRequest({ status: response.statusCode }));
+      });
+      request.setTimeout(3000, () => request.destroy(new Error('fixture timeout')));
+      request.once('error', error => {
+        if (error.message === 'fixture timeout') rejectRequest(error);
+        else resolveRequest({ tlsError: error.code });
+      });
+    });
+    if (expectedStatus === 'tls-reject') {
+      assert.ok(outcome.tlsError, name + ': must reject before HTTP effect');
+      assert.equal(effects, before);
+    } else {
+      assert.equal(outcome.status, expectedStatus, name);
+      assert.equal(effects, before + (expectedStatus === 200 ? 1 : 0));
+    }
+    observations.push({ profile, name, ...outcome, effectDelta: effects - before, result: 'PASS' });
+  }
+
+  try {
+    if (profile === 'registered') {
+      await attempt('registered self-signed certificate', 'registered-a', 'payments', 200);
+      await attempt('unregistered same-subject certificate plus forged header', 'lookalike-b', 'payments', 401, true);
+      await attempt('missing certificate plus forged header', null, 'payments', 401, true);
+      await attempt('registered certificate under another client ID', 'registered-a', 'other-client', 401);
+      await attempt('CA-issued same-subject certificate absent from registration', 'pki-client', 'payments', 401);
+    } else {
+      await attempt('self-signed certificate is not trusted PKI', 'registered-a', 'payments', 'tls-reject');
+      await attempt('trusted CA and configured subject positive control', 'pki-client', 'payments', 200);
+    }
+    assert.equal(effects, 1, 'Only the permitted credential may cause an effect in ' + profile);
+  } finally {
+    await new Promise((resolveClose, rejectClose) => server.close(error => error ? rejectClose(error) : resolveClose()));
+  }
+}
+await runProfile('registered');
+await runProfile('pki');
+const result = { status: 'PASS', node: process.version, openssl: process.versions.openssl,
+  transport: 'TLSv1.3 over 127.0.0.1 with fresh client connections',
+  checks: observations, assertionsScope: 'TLS peer proof and profile-specific certificate selection with protected-effect counters',
+  limitations: 'Synthetic loopback fixture, not an OAuth authorization server, token endpoint, proxy, production PKI, revocation or certificate-bound-token validation. The fixture certificates expire after two days.' };
+writeFileSync(resolve(root, '../probe-results.json'), JSON.stringify(result, null, 2) + '\n');
+console.log(JSON.stringify(result, null, 2));
+

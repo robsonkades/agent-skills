@@ -1,0 +1,41 @@
+{
+  "id": "JR-C1",
+  "request": "Inspect this small Java 25 package and convert PaymentRouter.route to a pattern switch without changing its caller-visible behavior. Determine whether record deconstruction is a behavior-preserving step for the actual records here, and use it where justified. Preserve the existing public and caller contracts; run the available local checks. Do not change the toolchain, dependencies or existing tests to fit the rewrite.",
+  "workspace": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-refactoring\\cases\\fallible",
+  "fixtures": [
+    "PaymentRouter.java",
+    "RouterCheck.java"
+  ],
+  "prerequisites": {
+    "compiler": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+    "runtime": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+    "targetRelease": "25",
+    "preview": false,
+    "externalDependencies": []
+  },
+  "baselineCheck": [
+    {
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "--release",
+        "25",
+        "-Xlint:all",
+        "-d",
+        "classes",
+        "PaymentRouter.java",
+        "RouterCheck.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-refactoring\\cases\\fallible"
+    },
+    {
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-ea",
+        "-cp",
+        "classes",
+        "RouterCheck"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-refactoring\\cases\\fallible"
+    }
+  ]
+}

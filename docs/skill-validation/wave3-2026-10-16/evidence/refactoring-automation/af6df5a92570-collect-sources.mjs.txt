@@ -1,0 +1,61 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+
+const repo = 'C:/git/agent-skills';
+const owned = 'skills/refactoring-automation';
+const out = 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/refactoring-automation';
+const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+await fs.mkdir(`${out}/sources`, { recursive: true });
+const git = args => {
+  const result = spawnSync('git', args, { cwd: repo, encoding: 'utf8', timeout: 10000 });
+  if (result.status !== 0) throw new Error(result.stderr);
+  return result.stdout;
+};
+const files = [];
+async function visit(relative) {
+  for (const entry of await fs.readdir(`${repo}/${relative}`, { withFileTypes: true })) {
+    const next = `${relative}/${entry.name}`;
+    if (entry.isDirectory()) await visit(next);
+    else {
+      const bytes = await fs.readFile(`${repo}/${next}`);
+      files.push({ path: next, sha256: hash(bytes), bytes: bytes.length, content: bytes.toString('utf8') });
+    }
+  }
+}
+await visit(owned);
+const committed = git(['show', `HEAD:${owned}/skill.yaml`]);
+const baseline = { scope: owned, capturedAt: new Date().toISOString(),
+  status: git(['status', '--short', '--untracked-files=all', '--', owned]),
+  staged: git(['diff', '--cached', '--', owned]), unstaged: git(['diff', '--', owned]),
+  committedVersion: committed.match(/^version: (.+)$/m)[1],
+  initialVersion: files.find(file => file.path.endsWith('/skill.yaml')).content.match(/^version: (.+)$/m)[1], files };
+if (baseline.status || baseline.staged || baseline.unstaged) throw new Error('Unexpected assignment changes');
+await fs.writeFile(`${out}/assignment-baseline.json`, JSON.stringify(baseline, null, 2) + '\n');
+
+const raw = 'https://raw.githubusercontent.com/openrewrite/rewrite-maven-plugin/v6.24.0/src/main/java/org/openrewrite/maven';
+const sources = [
+  ['AbstractRewriteDryRunMojo.java', `${raw}/AbstractRewriteDryRunMojo.java`, 'Pinned dry-run output and failure handling'],
+  ['AbstractRewriteMojo.java', `${raw}/AbstractRewriteMojo.java`, 'Pinned recipe validation and result processing'],
+  ['AbstractRewriteRunMojo.java', `${raw}/AbstractRewriteRunMojo.java`, 'Pinned application and execution errors'],
+  ['MavenMojoProjectParser.java', `${raw}/MavenMojoProjectParser.java`, 'Pinned parsing, source selection, generated filtering'],
+  ['ConfigBase.java', `${raw}/ConfigBase.java`, 'Pinned plugin parameter metadata'],
+  ['rewrite-maven-plugin-6.24.0.pom', 'https://repo.maven.apache.org/maven2/org/openrewrite/maven/rewrite-maven-plugin/6.24.0/rewrite-maven-plugin-6.24.0.pom', 'Exact resolved rewrite dependency baseline; metadata only, no installation'],
+  ['maven-plugin.html', 'https://docs.openrewrite.org/reference/rewrite-maven-plugin', 'Current goal/options documentation; compare with pinned implementation'],
+  ['yaml-format.html', 'https://docs.openrewrite.org/reference/yaml-format-reference', 'Precondition file/generation scope'],
+  ['recipe-conventions.html', 'https://docs.openrewrite.org/authoring-recipes/recipe-conventions-and-best-practices', 'Visitor identity and immutability'],
+  ['recipe-testing.html', 'https://docs.openrewrite.org/authoring-recipes/recipe-testing', 'Positive, negative, type attribution and cycle tests'],
+  ['refaster.html', 'https://errorprone.info/docs/refaster', 'Compiler patch generation/application'],
+  ['intellij-rename.html', 'https://www.jetbrains.com/help/idea/rename-refactorings.html', 'IDE index and scope limitations'],
+];
+const results = await Promise.allSettled(sources.map(async ([file, url, supports]) => {
+  const response = await fetch(url, { signal: AbortSignal.timeout(30000) });
+  const bytes = Buffer.from(await response.arrayBuffer());
+  const target = path.join(out, 'sources', file);
+  await fs.writeFile(target, bytes);
+  return { file, url, supports, status: response.status, sha256: hash(bytes), bytes: bytes.length, path: target };
+}));
+const index = results.map((result, i) => result.status === 'fulfilled' ? result.value : { url: sources[i][1], error: String(result.reason) });
+await fs.writeFile(`${out}/source-index.json`, JSON.stringify(index, null, 2) + '\n');
+console.log(JSON.stringify({ baseline: baseline.initialVersion, files: files.length, sources: index.map(({ file, status, error }) => ({ file, status, error })) }, null, 2));

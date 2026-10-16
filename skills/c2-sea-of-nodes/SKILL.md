@@ -52,8 +52,10 @@ diagnostics require an alternative evidence source, not an assumed result.
 3. **If it reached tier 4, check inlining on the hot call site** with `-XX:+PrintInlining`,
    reading the **tier-4** tree, not the tier-3 one above it. C2 names the limit it applied:
    `too big` is `MaxInlineSize` at a cold site, `hot method too big` is `FreqInlineSize`,
-   `already compiled into a big method` is `InlineSmallCode`, `inlining too deep` is
-   `MaxInlineLevel`. `callee is too large` is C1's verdict and says nothing about C2.
+   `already compiled into a big method` uses `InlineSmallCode`; the cold-branch
+   `already compiled into a medium method` uses one quarter of that compiled-code limit.
+   `inlining too deep` is `MaxInlineLevel`. `callee is too large` is C1's verdict and says
+   nothing about C2. Use the phase reference to distinguish compiled size from bytecode size.
 4. **If an allocation appears to survive, get the escape evidence before theorising.** On a **debug
    build**, `-XX:+PrintEscapeAnalysis` with `-XX:+PrintEliminateAllocations` answers two
    different questions; both are `develop` flags, so a product JVM refuses to start on

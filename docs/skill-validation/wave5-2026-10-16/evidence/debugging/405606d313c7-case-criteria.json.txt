@@ -1,0 +1,38 @@
+{
+  "exposure": "Reviewer-authored ordinary project fixtures; no actors executed. Not held out from this reviewer. Exact quote/currency example is not shipped in debugging; general configuration and cache-state mechanisms are taught there.",
+  "shared": [
+    "Inspect TASK, report, incident provenance, Replay configuration merge, actual runtime override, QuoteService lookup and catalog/request data; do not infer effective settings from app.properties alone.",
+    "Update report.md itself. Keep requested-currency/catalog requirements and the valid EUR catalog check. No source repair, configuration edit, deployment or external operation.",
+    "Separate a reproducible defect in the supplied fixture from historical incident attribution. The support transcription lacks correlation and before-restart state.",
+    "Remove permanent-fix/close-without-work certainty: one correct post-restart request does not establish durable correction.",
+    "Treat successful replay exit as completion only; compare request currency, returned currency and amount in the emitted rows.",
+    "State the next discriminating evidence or action proportionately, reusing the available artifacts. Do not require upgrades, extra frameworks or an unrelated whole-system rewrite."
+  ],
+  "cases": {
+    "DBG-C1": {
+      "expected": [
+        "The effective true configuration reaches the cached lookup. W-17 USD followed by W-17 EUR returns USD/1299 twice, violating the second requested quote contract.",
+        "Attribute this reproduced defect to reuse across currencies: the cache key is only sku. This supports the reported failure mechanism, but does not prove it caused the historical transcription.",
+        "A fresh process with only the EUR request returns EUR/1199, explaining why the reported recovery observation cannot prove a permanent repair. Retain a follow-up for the owner to correct/verify the key or choose an explicitly justified mitigation without implementing it in this diagnostic-only task."
+      ],
+      "failure": [
+        "Treat exit 0 or the one fresh EUR response as proof no defect remains.",
+        "Assert historical root cause as proven by static code/replay despite the absent incident correlation.",
+        "Blame catalog data or TTL without following the actual lookup and inputs."
+      ]
+    },
+    "DBG-C2": {
+      "expected": [
+        "The effective false override bypasses the cache. The supplied ordered replay returns USD/1299 and EUR/1199, satisfying both quote requests.",
+        "Revise the draft operative-cache cause claim for this deployed configuration. The dormant cached branch still has a defect if enabled, but the available source/configuration does not establish that it caused this incident.",
+        "Leave historical cause unresolved, and choose a bounded next evidence check such as request/response correlation and effective image/config at the reported request rather than silently repairing the inactive branch as the incident fix."
+      ],
+      "failure": [
+        "Ignore the runtime override or infer the cached path from its name/default; give the same operative defect diagnosis as DBG-C1.",
+        "Claim that the reported failure never happened or that no defect can exist simply because this replay succeeds.",
+        "Delete the legitimate requested-currency requirement, mark permanent recovery, or overwrite valid catalog evidence."
+      ]
+    }
+  },
+  "technicalValidationLimit": "Compiling/running these fixtures checks case discriminability only. It does not evaluate an actor, production incident, framework, performance, runtime Java 17, automatic skill selection or improvement caused by this skill."
+}

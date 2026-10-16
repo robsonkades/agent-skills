@@ -1,0 +1,42 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {spawnSync} from 'node:child_process';
+const root='C:/Users/robso/AppData/Local/Temp/skills-wave2-behavior-6orq6B';
+const id=process.argv[2];
+if(!/^c2-[123]$/.test(id))throw new Error('C2 only');
+const dest=path.join(root,'grader',id,'legal-all-busy');
+if(fs.existsSync(dest))throw new Error('Preserve first execution');
+fs.cpSync(path.join(root,'grader',id,'conforming'),dest,{recursive:true,filter:p=>!p.includes(path.sep+'classes')&&!p.endsWith('.log')});
+const file=path.join(dest,'test','AccountTest.java');
+let source=fs.readFileSync(file,'utf8');
+function replaceOnce(needle,replacement){
+ if(source.split(needle).length!==2)throw new Error('Manual inspection required: '+needle);
+ source=source.replace(needle,replacement);
+}
+replaceOnce('    var exec = Executors.newVirtualThreadPerTaskExecutor();',`    // Coordinator intervention: all stress withdrawals contend with a real external owner.
+    CountDownLatch busyEntered = new CountDownLatch(1), busyRelease = new CountDownLatch(1);
+    FutureTask<Void> busyOwnerResult = new FutureTask<>(() -> { account.holdGate(busyEntered, busyRelease); return null; });
+    Thread busyOwner = Thread.ofPlatform().start(busyOwnerResult);
+    assertTrue(busyEntered.await(2, TimeUnit.SECONDS), "coordinator gate owner started");
+    var exec = Executors.newVirtualThreadPerTaskExecutor();`);
+replaceOnce('                tasks.forEach(task -> task.cancel(true));',`                busyRelease.countDown();
+                tasks.forEach(task -> task.cancel(true));`);
+const invariantsMarker = source.includes('    // Invariants, not schedules:') ? '    // Invariants, not schedules:' : '    // Busy refusals are allowed, so contention does not imply a fixed success count.';
+replaceOnce(invariantsMarker,`    busyOwnerResult.get(2, TimeUnit.SECONDS);
+    busyOwner.join(2_000);
+    assertFalse(busyOwner.isAlive(), "coordinator gate owner terminated");
+    // Invariants, not schedules:`);
+const anchor='    assertEquals(threads * opsPerThread, succeeded.get() + refused.get()); // accounting';
+replaceOnce(anchor,anchor+`
+    assertEquals(0, succeeded.get(), "coordinator control exercised all-busy history");
+    assertEquals(threads * opsPerThread, refused.get());
+    assertTrue(account.withdraw(10), "free-gate withdrawal succeeds after legal busy history");
+    assertEquals(9_990, account.balance());`);
+fs.writeFileSync(file,source);
+const startedAt=new Date().toISOString();
+const r=spawnSync(process.execPath,['check.mjs'],{cwd:dest,encoding:'utf8',timeout:120000,windowsHide:true});
+const record={run:id,label:'All stress withdrawals occur while actual gate is externally owned; then isolated success',productionUnchanged:true,intervention:'Only disposable copy of actor test: bounded holder, finally release, outcome assertions',startedAt,finishedAt:new Date().toISOString(),command:[process.execPath,'check.mjs'],cwd:dest,exit:r.status,error:r.error?.message,stdout:r.stdout||'',stderr:r.stderr||''};
+fs.writeFileSync(path.join(dest,'coordinator.stdout.log'),record.stdout);
+fs.writeFileSync(path.join(dest,'coordinator.stderr.log'),record.stderr);
+fs.writeFileSync(path.join(dest,'coordinator-checks.json'),JSON.stringify(record,null,2)+'\n');
+console.log(JSON.stringify(record,null,2));

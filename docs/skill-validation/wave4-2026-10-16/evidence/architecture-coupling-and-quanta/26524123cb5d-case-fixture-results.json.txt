@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "cases": [
+    {
+      "id": "AQ-C1",
+      "input": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-coupling-and-quanta\\cases\\case-a\\input.json",
+      "workspace": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-coupling-and-quanta\\cases\\case-a"
+    },
+    {
+      "id": "AQ-C2",
+      "input": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-coupling-and-quanta\\cases\\case-b\\input.json",
+      "workspace": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-coupling-and-quanta\\cases\\case-b"
+    }
+  ],
+  "criteria": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-coupling-and-quanta\\case-criteria.json",
+  "decisiveDifference": "release-policy.json requiredCoordination only; technical evidence unchanged",
+  "agentEvaluationsExecuted": 0
+}

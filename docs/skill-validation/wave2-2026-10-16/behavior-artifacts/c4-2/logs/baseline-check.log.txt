@@ -1,0 +1,1 @@
+Existing point and join checks passed; moved=2094

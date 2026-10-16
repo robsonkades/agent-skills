@@ -1,0 +1,61 @@
+// Isolated faulty controls: never replace src/Account.java or the normal classes.
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+
+const root = path.resolve(import.meta.dirname, '..');
+const check = fs.readFileSync(path.join(root, 'check.mjs'), 'utf8');
+const jars = JSON.parse(check.match(/const jars = (\[[^\n]*\]);/)[1]);
+const original = fs.readFileSync(path.join(root, 'src/Account.java'), 'utf8');
+const javac = 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe';
+const java = 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe';
+const controls = [
+  ['always-refuses', original.replace(
+    /    gate\.lock\(\);\r?\n    try[^\n]*\r?\n    finally[^\n]*/,
+    '    return false;')],
+  ['refuses-on-contention', original.replace(
+    '    gate.lock();', '    if (!gate.tryLock()) return false;')],
+];
+
+function run(executable, args) {
+  const result = spawnSync(executable, args, {
+    cwd: root, encoding: 'utf8', timeout: 60000, windowsHide: true,
+  });
+  if (result.error) throw result.error;
+  return result;
+}
+
+for (const [name, source] of controls) {
+  if (source === original) throw new Error(`Control ${name} was not applied`);
+  const directory = path.join(import.meta.dirname, name);
+  const classes = path.join(directory, 'classes');
+  fs.mkdirSync(classes, { recursive: true });
+  const sourceFile = path.join(directory, 'Account.java');
+  fs.writeFileSync(sourceFile, source);
+  const compileArgs = ['--release', '21', '-cp', jars.join(';'), '-d', classes,
+    sourceFile, 'test/AccountTest.java', 'tools/TestRunner.java'];
+  const runtimeArgs = ['-cp', [classes, ...jars].join(';'), 'TestRunner'];
+  const commands = `javac executable: ${javac}\narguments: ${JSON.stringify(compileArgs)}\n`
+    + `java executable: ${java}\narguments: ${JSON.stringify(runtimeArgs)}\n`;
+  const compiled = run(javac, compileArgs);
+  if (compiled.status !== 0) {
+    fs.writeFileSync(path.join(directory, 'result.log'),
+      commands + compiled.stdout + compiled.stderr);
+    throw new Error(`${name}: compilation failed (${compiled.status})`);
+  }
+  const result = run(java, runtimeArgs);
+  const output = result.stdout + result.stderr;
+  fs.writeFileSync(path.join(directory, 'result.log'),
+    commands + `compile exit: ${compiled.status}\nruntime exit: ${result.status}\n` + output);
+  process.stdout.write(`${name}: compile exit=${compiled.status}, runtime exit=${result.status}\n`);
+  process.stdout.write(output.split('\n').filter(line =>
+    /tests (found|started|successful|failed)/.test(line)).join('\n') + '\n');
+  if (result.status !== 1 || !output.includes('affordable')) {
+    throw new Error(`${name}: expected an affordable-withdrawal assertion failure`);
+  }
+}
+
+if (fs.readFileSync(path.join(root, 'src/Account.java'), 'utf8') !== original) {
+  throw new Error('Production source changed during controls');
+}
+process.stdout.write('Both faulty controls rejected; production source unchanged.\n');

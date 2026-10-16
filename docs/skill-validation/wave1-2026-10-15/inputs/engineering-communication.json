@@ -1,0 +1,6 @@
+{
+  "skill": "engineering-communication",
+  "common": "Draft a reply of at most 100 words to the release owner; do not send it. The prior recommendation was to delay because the rebuild takes 9 hours and the window is 4 hours. A representative rehearsal took 9 hours in total; the duration of customer-visible interruption is unknown. No exception has been approved, and there is no alternative ETA. Update the recommendation; ask a question only if needed.",
+  "scenarioA": "The owner clarifies that the 4-hour limit applies to the whole job.",
+  "scenarioB": "The owner clarifies that the 4-hour limit applies only to customer-visible interruption."
+}

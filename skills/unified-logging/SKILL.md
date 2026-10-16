@@ -122,9 +122,10 @@ Within existing operational authorization, snapshot before/after effective confi
 make the smallest change, trigger a known event and restore only owned changes after checking
 for intervening edits. Runtime reconfiguration cannot be assumed equivalent to every startup
 directive; test async/global behavior on the exact JDK.
-Help/list are read-only discovery; they do not authorize configuring, disabling or rotating
-outputs. Respect existing authorization for the specific inspection or change without adding
-a new approval gate merely because it uses jcmd.
+The standalone help/list commands above are read-only discovery. `output=...` configures an
+output; appending `list` does not make that combined command read-only. Inspection does not
+authorize configuring, disabling or rotating outputs. Respect existing authorization for
+the specific inspection or change without adding a new approval gate merely because it uses jcmd.
 
 ### 7. Migrate legacy flags from official mapping
 

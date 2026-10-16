@@ -1,0 +1,9 @@
+package work;
+import java.util.concurrent.CountDownLatch;
+public final class Job extends Thread {
+ private final CountDownLatch gate;
+ private int result;
+ public Job(CountDownLatch gate) { this.gate=gate; }
+ @Override public void run() { try { gate.await(); result=83; } catch (InterruptedException e) { Thread.currentThread().interrupt(); } }
+ public String collect() throws InterruptedException { join(2); return "DONE:" + result; }
+}

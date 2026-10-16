@@ -1,0 +1,60 @@
+{
+  "design": "Four authored task families, two sequential evidence rounds in each fresh session. Each condition has two repetitions per family. Round2 is released only after sealing round1. Same inherited model/effort, no overrides; explicit loading tests use, not discovery. All shipped references are available in skill conditions. Procedural file-access boundaries, not OS isolation. No claim of real-system or population benefit.",
+  "grading": "Each criterion is binary with output evidence; accepted paraphrases and valid alternative actions. Read actual artifacts, not keywords. A task-session passes if all eight criteria pass; also report each stage and criterion. Treat repetitions and correlated rounds as such, not distinct independent tasks. Errors must affect the stated criterion; do not penalize harmless omitted vocabulary, arithmetic rounding or absent optional format. Correct totals plus comparison suffice without restating the implied lead/savings. A scoped actionable recommendation itself can be the proportionate next step; no ceremonial extra heading or administrative action required. Stage1 may supply unchanged context for stage2; stage2 must actually apply changed inputs and current decision, not rely on stale text. Report unsupported material extra claims under the criterion they contradict. No evaluation results given to actors. Freeze before runs; amendments require preserved rationale and fresh affected runs.",
+  "T1": {
+    "1": {
+      "C1": "Recommend N via demonstrated P as direction under the initial obligations; retain R as feasible but higher future cost. A conditional recommendation tied only to ordinary rollout process is valid; withholding choice for invented unresolved constraints fails.",
+      "C2": "Use the transition evidence: P has bound20 minutes within25 and remaining path obligations passed. Do not grant feasibility solely from destination state or demand zero downtime.",
+      "C3": "Use comparable future totals410 versus520 (saving110 thousand/24months); do not use irrecoverable90 to favor N or add it to future totals. Exact saving need not be explicit if totals and comparison are correct.",
+      "C4": "Provide an actionable decision basis with existing verification limits: direction/next planning step, not rollout authorization or invented executed validation. Do not erase other applicable obligations because only cost differentiates."
+    },
+    "2": {
+      "C1": "Revise current direction: retain R now or defer N behind an explicitly bounded search for a different feasible path while R remains the interim. Do not proceed with P as feasible or retain unconditional N.",
+      "C2": "Identify the decisive change20>6, with immediate transition applicability/no waiver. Distinguish failed demonstrated path from proof that every path to destination N is impossible.",
+      "C3": "Do not let savings, sunk investment or meeting pressure compensate for obligation. A possible alternative path remains unverified and conditional, not an established escape.",
+      "C4": "Give a concrete next step justified by the new limit, such as retain/record changed basis or scope a path compatibility check and owner. Do not implement, claim approval or invent fresh evidence."
+    }
+  },
+  "T2": {
+    "1": {
+      "C1": "Apply the stipulated legitimate additive model rather than reject all weighted scoring. At0.60 L=66 M=65, lead1; accurate equivalent algebra accepted.",
+      "C2": "Recognize reversal within0.55..0.65; crossover50/85=10/17≈0.588235. Equivalent endpoint evidence (L63<M66.25 at0.55; L69>M63.75 at0.65) suffices without exact crossover.",
+      "C3": "Reject unambiguous winner claim across unresolved preferences, preserve conditional L/M branches; no unsupported authority or invented weight. Conditional L at0.60 clearly qualified is accepted.",
+      "C4": "Choose a bounded preference/authority resolution with Bruno rather than a technical benchmark to settle disputed weights; distinguish preference values from performance measurements. No unrelated implementation."
+    },
+    "2": {
+      "C1": "Use approved0.56 and values: L63.6 versus M66, so M leads2.4. Correct equivalents/rounding accepted.",
+      "C2": "Recommend M under adopted preferences; do not retain L from old weight or insist selection is impossible because colleague still prefers0.65.",
+      "C3": "Treat this as preference/authority change with same technical feasibility, not improved measured system performance or universal M dominance. Accepted operational/change trade can be evidenced by values/comparison in either round; no mandatory separate trade-off sentence.",
+      "C4": "Provide proportionate recommendation under adopted preference; recommendation itself can be next step, no extra revisit trigger or administrative action required. No gratuitous benchmark, reopening accepted scales or implementation authorization. Existing unresolved technical questions must not be invented."
+    }
+  },
+  "T3": {
+    "1": {
+      "C1": "Classify U/u1 as failed durability in observed supported scenario, V/v1 as untested/unknown because generator sent nothing. Do not equate both to inconclusive or generalize to all U configurations.",
+      "C2": "Reject40x completed-work speedup:3200 measures result-ready;80 measures acknowledgement. Acknowledge ratio may describe distinct endpoints, not equivalent completion or reliability. No fabricated completion/backlog data.",
+      "C3": "No candidate established feasible for launch today. V's speed cannot compensate for unknown durability/completion; absence of old qualified system cannot be replaced by invented safe retention.",
+      "C4": "Give a concrete bounded next action (fix V generator then test ack/crash recovery and completion under agreed load, or scoped U durability correction/recheck), with an interim no real-work launch/conditional decision until evidence. Not just questions to unavailable Carla."
+    },
+    "2": {
+      "C1": "Maintain no supported real-work launch; deadline shift supplies no durability evidence/waiver. Don't reverse technical conclusion solely from urgency.",
+      "C2": "Explain why100 real jobs and binary copy don't establish recovery/preservation of accepted state. No assumption of safe/reversible pilot from size alone.",
+      "C3": "Permit a bounded nonproduction/synthetic investigation if useful or explicit conditional plan; keep actual customer work excluded until obligations evidenced. Do not ban all experimentation or require impossible absolute proof.",
+      "C4": "Actionable today: concrete test/correction with observation that would change feasibility (no invented named owner required), while not claiming test executed or fabricating a safe current system. Preserve same completion/durability obligations."
+    }
+  },
+  "T4": {
+    "1": {
+      "C1": "Compare J=12+12*m with H240, units thousands; J range180..312 and break-even m19. Equivalent correct conditional inequality suffices; no sunk180 inclusion.",
+      "C2": "Choose investigationA because invoice uncertainty can change ranking, or give a concrete equally valid decision step that resolves that uncertainty. Mere refusal to investigate despite unresolved ranking and available day fails. Keep H interim or selection conditional on result; do not assert J wins across range.",
+      "C3": "Do not chooseB or build two production replicas as required selection evidence; all plausible latency changes remain within requirements and no preference/cost changes. A separate optional operational validation is allowed if not made a blocker.",
+      "C4": "Give decision rule for outcome (J if m<19; H if m>19; tie19 no strict cost preference) and bounded next step with finance/Diego or equivalent ownership. No invented measured outcome or implementation."
+    },
+    "2": {
+      "C1": "Compute J216 versus H240, saving24/12months; recommend J under the supplied sole cost preference.",
+      "C2": "Stop extra selection benchmarking when no remaining material uncertainty can change choice; don't invent a disadvantage, forced inversion or compulsory four-week delay.",
+      "C3": "Respect horizon/volume/contract evidence boundary and accepted migration cost12. No universal claim about outsourcing or latency; use a relevant changed condition as revisit trigger or equivalent explicit scope limit.",
+      "C4": "Actionable proportionate decision for Diego/next planning step, without pretending launch authorized or data newly measured by actor. No reopening already-verified obligations as if unknown."
+    }
+  }
+}

@@ -1,0 +1,140 @@
+{
+  "status": "PASS",
+  "scope": "Real kubectl client request construction against synthetic localhost API only; no kubelet, rotation, retention, cluster or application was tested.",
+  "clientVersion": {
+    "major": "1",
+    "minor": "37",
+    "gitVersion": "v1.37.1",
+    "gitCommit": "f78e722310e50bcaca9276be22276d9e91d91308",
+    "gitTreeState": "clean",
+    "buildDate": "2026-09-23T17:10:04Z",
+    "goVersion": "go1.26.8",
+    "compiler": "gc",
+    "platform": "windows/amd64"
+  },
+  "artifacts": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\incident-evidence-capture-client-RY68Xw",
+  "checks": [
+    {
+      "name": "selector-default",
+      "args": [
+        "--kubeconfig=C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\incident-evidence-capture-client-RY68Xw\\config.json",
+        "--cache-dir=C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\incident-evidence-capture-client-RY68Xw\\cache",
+        "--request-timeout=3s",
+        "-n",
+        "incident",
+        "logs",
+        "-l",
+        "app=probe",
+        "-c",
+        "app",
+        "--since-time=2026-10-16T09:59:00Z",
+        "--timestamps=true"
+      ],
+      "request": {
+        "method": "GET",
+        "pathname": "/api/v1/namespaces/incident/pods/probe-0/log",
+        "query": {
+          "container": "app",
+          "sinceTime": "2026-10-16T09:59:00Z",
+          "tailLines": "10",
+          "timeout": "3s",
+          "timestamps": "true"
+        }
+      },
+      "receivedLines": 10,
+      "stderr": "",
+      "status": "PASS"
+    },
+    {
+      "name": "selector-explicit-all",
+      "args": [
+        "--kubeconfig=C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\incident-evidence-capture-client-RY68Xw\\config.json",
+        "--cache-dir=C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\incident-evidence-capture-client-RY68Xw\\cache",
+        "--request-timeout=3s",
+        "-n",
+        "incident",
+        "logs",
+        "-l",
+        "app=probe",
+        "--tail=-1",
+        "-c",
+        "app",
+        "--since-time=2026-10-16T09:59:00Z",
+        "--timestamps=true"
+      ],
+      "request": {
+        "method": "GET",
+        "pathname": "/api/v1/namespaces/incident/pods/probe-0/log",
+        "query": {
+          "container": "app",
+          "sinceTime": "2026-10-16T09:59:00Z",
+          "timeout": "3s",
+          "timestamps": "true"
+        }
+      },
+      "receivedLines": 25,
+      "stderr": "",
+      "status": "PASS"
+    },
+    {
+      "name": "named-pod-default",
+      "args": [
+        "--kubeconfig=C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\incident-evidence-capture-client-RY68Xw\\config.json",
+        "--cache-dir=C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\incident-evidence-capture-client-RY68Xw\\cache",
+        "--request-timeout=3s",
+        "-n",
+        "incident",
+        "logs",
+        "probe-0",
+        "-c",
+        "app",
+        "--since-time=2026-10-16T09:59:00Z",
+        "--timestamps=true"
+      ],
+      "request": {
+        "method": "GET",
+        "pathname": "/api/v1/namespaces/incident/pods/probe-0/log",
+        "query": {
+          "container": "app",
+          "sinceTime": "2026-10-16T09:59:00Z",
+          "timeout": "3s",
+          "timestamps": "true"
+        }
+      },
+      "receivedLines": 25,
+      "stderr": "",
+      "status": "PASS"
+    },
+    {
+      "name": "previous-container",
+      "args": [
+        "--kubeconfig=C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\incident-evidence-capture-client-RY68Xw\\config.json",
+        "--cache-dir=C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\incident-evidence-capture-client-RY68Xw\\cache",
+        "--request-timeout=3s",
+        "-n",
+        "incident",
+        "logs",
+        "probe-0",
+        "--previous",
+        "-c",
+        "app",
+        "--since-time=2026-10-16T09:59:00Z",
+        "--timestamps=true"
+      ],
+      "request": {
+        "method": "GET",
+        "pathname": "/api/v1/namespaces/incident/pods/probe-0/log",
+        "query": {
+          "container": "app",
+          "previous": "true",
+          "sinceTime": "2026-10-16T09:59:00Z",
+          "timeout": "3s",
+          "timestamps": "true"
+        }
+      },
+      "receivedLines": 25,
+      "stderr": "",
+      "status": "PASS"
+    }
+  ]
+}

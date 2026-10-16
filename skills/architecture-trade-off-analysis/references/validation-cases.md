@@ -1,23 +1,35 @@
 # Behavioral validation cases
 
-These are synthetic requests for evaluating the skill, not measured improvements or tests
-of a generated application. No paired agent runs have been executed for this revision.
+These synthetic cases illustrate expected decision behavior and provide known regression
+inputs. They ship with the skill, so they are not unseen holdouts, measured improvements
+or tests of a generated application.
 
 ## Reproducible comparison
 
 Use fresh baseline and treatment sessions with the same model/version, reasoning settings,
-tools, permissions and supplied context. The treatment receives this skill's description,
-body and access to its technical references, excluding this evaluator-only file; the baseline
-must not discover the skill automatically. Supply the selected case's request/context as task input.
-Keep this file and expected/failure criteria outside both agents' accessible files and tools,
-not merely out of their prompts: the link in SKILL.md is for the evaluator, and an instruction
-not to read it is not access isolation. For activation tests,
-present only the description among the same neighboring descriptions before loading bodies.
+tools, permissions and task context. For a full-package comparison, give the treatment
+normal access to all shipped resources, including this file, and use newly authored tasks
+whose answers are not supplied by these examples. Freeze private expected/failure criteria
+before running them. If reusing a case below, supply its request/context and report a
+known-example regression result. Excluding this file changes the treatment; disclose that
+restriction and limit conclusions to that configuration.
 
-Save input, loaded resources, tool calls, output and pass/fail reasons. Judge observable
-decisions, not exact phrasing or a numerical quality score. If comparable isolation is
-unavailable, report the runs as pending; do not substitute mental simulation. Arithmetic or
-link checks on these fixtures validate the fixtures only.
+Keep the skill body and references out of the baseline condition. Record any description or
+other skill metadata supplied to both sessions by the platform; that comparison does not
+establish the effect of removing every skill signal. For activation tests, present only the
+description among the same neighboring descriptions before loading bodies.
+
+Keep private grading criteria and prior run answers separate from actor inputs and ordinary
+resources. Fresh sessions and instructions not to read paths do not isolate shared storage
+or tools. Use enforced access boundaries when available; otherwise disclose procedural
+separation and audit resource exposure. Preserve executed runs with their limitations; if
+answer leakage or baseline access to treatment resources invalidates a comparison, mark it
+contaminated or inconclusive and rerun with corrected boundaries when feasible.
+
+Save exact input, resource versions and access, tool calls, output and pass/fail reasons.
+Judge observable decisions with reasons tied to outputs or traces, not exact phrasing. Report runs as
+pending only when they have not been executed; mental simulation is a walkthrough.
+Arithmetic or link checks on these fixtures validate the fixtures only.
 
 ## 1. Comparable alternatives and sunk cost
 

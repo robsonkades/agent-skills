@@ -1,0 +1,152 @@
+import { readFileSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import assert from 'node:assert/strict';
+const root = dirname(fileURLToPath(import.meta.url));
+const repository = 'C:/git/agent-skills';
+const skill = 'inheritance-mapping-strategies';
+const read = file => readFileSync(resolve(root, file), 'utf8');
+const json = file => JSON.parse(read(file));
+const hash = data => createHash('sha256').update(data).digest('hex');
+const validation = json('local-validation.stdout.txt');
+const commands = json('commands.json').map(command => ({ ...command, stdoutText: read(command.stdout), stderrText: read(command.stderr) }));
+const inputs = json('actor-inputs.json');
+const criteria = json('evaluator-criteria.json');
+const fixtureHashes = json('case-integrity.json');
+assert.equal(validation.version, '1.3.5');
+assert.equal(validation.issues.length, 0);
+assert.ok(commands.every(command => command.status === 0));
+for (const entry of validation.hashes) assert.equal(hash(readFileSync(resolve(repository, entry.path))), entry.sha256);
+for (const entry of fixtureHashes) assert.equal(hash(readFileSync(resolve(root, 'cases', entry.case, entry.file))), entry.sha256);
+const files = inputs[0].actorFiles;
+const differentFiles = files.filter(file => read(`cases/case-a/${file}`) !== read(`cases/case-b/${file}`));
+assert.deepEqual(differentFiles, ['business-contract.json']);
+const a = json('cases/case-a/business-contract.json');
+const b = json('cases/case-b/business-contract.json');
+const differentFields = Object.keys(a).filter(key => a[key] !== b[key]);
+assert.deepEqual(differentFields, ['providerReferenceUniqueWithin']);
+const caseControl = {
+  status: 'PASS',
+  kind: 'Fixture integrity and separation only',
+  cases: 2,
+  filesPerCase: 6,
+  verifiedFileHashes: fixtureHashes.length,
+  differentFiles,
+  differentFields,
+  values: [a.providerReferenceUniqueWithin, b.providerReferenceUniqueWithin],
+  databaseOrOrmRuns: 0,
+  independentActorRuns: 0,
+};
+writeFileSync(resolve(root, 'case-preparation-control.json'), JSON.stringify(caseControl, null, 2) + '\n');
+const sources = [
+  { id: 'jakarta-persistence-3.2', url: 'https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html', version: 'Jakarta Persistence 3.2, April 10, 2024', sections: ['2.4 Primary Keys and Entity Identity', '2.13–2.14 inheritance and mapping strategies', '4.11 bulk update/delete', 'DiscriminatorValue mapping'], support: 'Correct versioned destination for both broken links. Existing hierarchy identity, optional TABLE_PER_CLASS portability, discriminator defaults and bulk-DML state/version caveats agree with the specification.', consulted: '2026-10-16', kind: 'primary' },
+  { id: 'hibernate-6.6-inheritance', url: 'https://docs.hibernate.org/orm/6.6/userguide/html_single/#entity-inheritance-table-per-class', version: 'Hibernate ORM 6.6; fetched guide identifies 6.6.58.Final', sections: ['Table per class', 'Polymorphism'], support: 'Confirms provider-specific UNION behavior and inclusion of concrete entity tables in polymorphic queries. It does not establish performance for an application or portability to other providers.', consulted: '2026-10-16', kind: 'primary' },
+  { id: 'hibernate-6.6-caching', url: 'https://docs.hibernate.org/orm/6.6/userguide/html_single/#caching', version: 'Hibernate ORM 6.6; fetched guide identifies 6.6.58.Final', sections: ['Caching'], support: 'Confirms the existing qualification that external database changes are not automatically visible to provider caches; a fresh persistence context alone is insufficient evidence of migration consistency.', consulted: '2026-10-16', kind: 'primary' },
+  { id: 'postgresql-18-alter-table', url: 'https://www.postgresql.org/docs/18/sql-altertable.html', version: 'PostgreSQL 18 documentation', sections: ['ALTER TABLE notes and constraints'], support: 'Supports existing database/version-specific cautions about validation and locking. No actual migration or lock-duration measurement was performed.', consulted: '2026-10-16', kind: 'primary' },
+  { id: 'postgresql-18-unique', url: 'https://www.postgresql.org/docs/18/ddl-constraints.html#DDL-CONSTRAINTS-UNIQUE-CONSTRAINTS', version: 'PostgreSQL 18 documentation', sections: ['5.5.3 Unique Constraints'], support: 'Grounds the case review of table-local uniqueness: a UNIQUE on each leaf table does not enforce a business key across the two separate tables.', consulted: '2026-10-16', kind: 'primary' },
+  { id: 'postgresql-18-partial-indexes', url: 'https://www.postgresql.org/docs/18/indexes-partial.html', version: 'PostgreSQL 18 documentation', sections: ['11.8 Partial Indexes'], support: 'Confirms conditional index selection is database-specific and predicate-sensitive, consistent with the existing qualified guidance. No query-plan claim was made.', consulted: '2026-10-16', kind: 'primary' },
+];
+const handoff = {
+  skill,
+  status: 'READY_FOR_GLOBAL_VALIDATION',
+  ownedPath: 'skills/inheritance-mapping-strategies/**',
+  allWritesStopped: true,
+  scope: 'Focused review of the existing inheritance mapping design/review skill. No domain-guidance rewrite or implementation workflow added.',
+  baseline: {
+    status: 'CLEAN',
+    committedVersion: '1.3.4',
+    assignmentVersion: '1.3.4',
+    preExistingVersionBump: false,
+    stagedChanges: [],
+    unstagedChanges: [],
+    untrackedFiles: [],
+    manifestBaseline: 'docs/skill-validation/wave4-2026-10-16/baseline.json',
+    snapshot: 'C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/baseline/inheritance-mapping-strategies',
+    verification: 'All four assignment files matched both the coordinator snapshot and wave baseline SHA256 before editing. Scoped Git differences were empty.',
+    hashes: validation.hashes,
+  },
+  versions: { committed: '1.3.4', assignment: '1.3.4', final: '1.3.5', rationale: 'One patch bump for two corrected documentation URLs; no pre-existing unpublished bump.' },
+  findings: {
+    corrected: [
+      { location: 'references/strategy-comparison.md:210', issue: 'Jakarta Persistence 3.2 reference omitted .html and returned HTTP 404.', correction: 'Point to the verified 3.2 HTML specification; HTTP 200 and expected document title confirmed.', consequence: 'Consumers can inspect the cited identity, inheritance and discriminator contracts.' },
+      { location: 'references/schema-evolution.md:175', issue: 'Same broken Jakarta Persistence 3.2 destination in migration evidence.', correction: 'Use the verified 3.2 HTML URL.', consequence: 'Consumers can inspect the cited bulk-DML/version/managed-state contract.' },
+    ],
+    remaining: [],
+    rejectedCandidateChanges: 'No additional material defect was established in the existing identity, query, constraints or migration decision guidance. Strong existing distinctions were retained rather than expanded for a forced change.',
+  },
+  filesChangedByReviewer: [
+    'skills/inheritance-mapping-strategies/references/strategy-comparison.md',
+    'skills/inheritance-mapping-strategies/references/schema-evolution.md',
+    'skills/inheritance-mapping-strategies/skill.yaml',
+  ],
+  preExistingChanges: [],
+  changes: ['Add .html to two references to the same versioned Jakarta Persistence specification.', 'Bump manifest version once, 1.3.4 to 1.3.5.'],
+  preserved: [
+    'SKILL.md is byte-for-byte unchanged; manifest description/capabilities/dependencies and all routing remain unchanged.',
+    'All 17 fenced blocks, including five Java and nine SQL examples, remain identical to the assignment snapshot.',
+    'Separate hierarchy primary-key identity from the scope of business-key uniqueness.',
+    'Consider leaf and root query workloads and real plans rather than imposing one inheritance strategy.',
+    'Preserve adequate TABLE_PER_CLASS designs; qualify optional Jakarta portability and actual Hibernate UNION behavior.',
+    'JOINED foreign keys alone do not ensure hierarchy completeness or sibling exclusivity.',
+    'Explicit discriminator/storage names, default entity-name contracts and class-rename distinctions.',
+    'All-writer expand/contract, old deployments, history reconciliation, cache/version handling and rollback limits.',
+    'Composition, mapped superclass and separate domain-model alternatives; partial Java/SQL examples retain their documented limits.',
+  ],
+  capabilitiesRemoved: [],
+  checks: {
+    commands,
+    package: { status: 'PASS', details: validation },
+    formatting: { status: 'PASS', scope: 'Four exact owned files; no formatter writes.' },
+    diff: { status: 'PASS', artifact: 'scoped-diff.stdout.txt', inspected: true, stagedDiffEmpty: true, changesLimitedToTwoUrlsAndManifestVersion: true },
+    sourceRetrieval: { command: 'node C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/inheritance-mapping-strategies/source-check.mjs', cwd: repository, exitCode: 0, results: json('source-status.json'), artifact: 'source-status.json' },
+    fixturePreparation: caseControl,
+    executableExamples: { changed: 0, compiled: 0, databaseRuns: 0, ormRuns: 0, rationale: 'Link-only corrections do not change executable content. Existing snippets were read and preservation checked, not recompiled or run against a database.' },
+  },
+  failures: { introducedOrUnresolvedLocal: [], baseline: ['The original extensionless Jakarta URL returned HTTP 404; both owned references are corrected.'] },
+  behavioralEvaluations: {
+    actorsExecuted: 0,
+    measuredImprovement: false,
+    comparisonsExecuted: [],
+    walkthroughs: [
+      'Case A: product authority defines uniqueness within tenant and method. One table per method with UNIQUE(tenant_id, provider_reference) satisfies the shown scope; IDs 101 and 102 are distinct. Retaining the existing mapping is appropriate without other evidence of a defect.',
+      'Case B: the identical two rows violate cross-method uniqueness. The shared primary-key sequence is unrelated to that business-key constraint. A common constrained table or a transactionally maintained shared-key registry is a candidate; all writers and historical conflicts must be handled before a rollout can be called safe.',
+    ],
+    technicalExecutionDistinction: 'Only package validation, URL retrieval and fixture integrity were executed. Neither walkthrough is an agent output, provider integration result or database concurrency test.',
+  },
+  cases: {
+    inputs: `${root.replaceAll('\\', '/')}/actor-inputs.json`,
+    evaluatorCriteria: `${root.replaceAll('\\', '/')}/evaluator-criteria.json`,
+    fixtureIntegrity: `${root.replaceAll('\\', '/')}/case-integrity.json`,
+    preparationControl: `${root.replaceAll('\\', '/')}/case-preparation-control.json`,
+    count: 2,
+    knownDevelopmentCases: true,
+    heldOut: false,
+    decisiveConstraint: criteria.decisiveConstraint,
+    expectedDifference: 'Preserve valid method-scoped uniqueness in A; recognize the missing cross-method enforcement in B without mandating a universal mapping strategy.',
+    prerequisites: 'Read-only fixture review; Java 17, Hibernate ORM 6.6 mapping inventory, PostgreSQL 18 DDL. No runnable ORM project or database is provided.',
+    isolation: criteria.isolation,
+  },
+  sources,
+  assumptions: ['The existing skill remains a review/design aid; this assignment does not implement or deploy a persistence strategy.', 'Cases are bounded synthetic project artifacts, not evidence of any real application workload.'],
+  limits: [
+    'The correction restores source accessibility; it does not establish incremental agent behavior improvement.',
+    'No ORM bootstrapping, SQL execution, migration, raw-SQL hostile fixture, concurrent write, query plan, cache integration or performance benchmark was executed.',
+    'A shared primary-key sequence in the synthetic inputs does not prove arbitrary writers obey an identity policy; real all-writer enforcement still needs review.',
+    'Source inspection supports static contracts only; real mapping overrides, database version/collation, provider SQL, constraints, writer coverage and rollout behavior require application evidence.',
+    'The Hibernate 6.6 guide is a moving maintenance-series URL; observed patch 6.6.58.Final is recorded, not assumed to be every consumer runtime.',
+    'The local loader used existing compiled repository modules without rebuilding. Catalog-wide routing, generated integrity/version data and full verification remain coordinator-owned.',
+  ],
+  crossSkill: { requiredActions: [], neighboringFilesEdited: false, addressedInput: 'Coordinator-reported candidate broken Jakarta links confirmed and fixed only in this owned skill.' },
+  pendingGlobalChecks: [
+    { command: 'npm run registry:build', owner: 'coordinator', reason: 'Regenerate index/integrity after all reviewers stop writing.' },
+    { command: 'npm run verify', owner: 'coordinator', reason: 'Parallel-review exception: run after index generation on stable shared tree.' },
+  ],
+  pendingBehavioralEvaluation: 'Coordinator may run matched actors using isolated case inputs and withheld evaluator criteria. No evaluation is required to assert the narrow HTTP-link fix, and no behavior gain is asserted.',
+  evidenceDirectory: root.replaceAll('\\', '/'),
+  evidence: ['local-validation.mjs', 'local-validation.stdout.txt', 'commands.json', 'run-local.mjs', 'scoped-diff.stdout.txt', 'scoped-status.stdout.txt', 'staged-diff.stdout.txt', 'prettier.stdout.txt', 'source-check.mjs', 'source-status.json', 'prepare-cases.mjs', 'actor-inputs.json', 'evaluator-criteria.json', 'case-integrity.json', 'case-preparation-control.json', 'cases/case-a/', 'cases/case-b/', 'write-handoff.mjs'],
+  writeState: { noActiveBackgroundProcess: true, allProcessesWaited: true, repositoryWritesRestrictedToOwnedPath: true, reviewArtifactsRestrictedToAssignedTempDirectory: true, stoppedBeforeHandoff: true },
+};
+const output = resolve(root, '..', `${skill}.json`);
+writeFileSync(output, JSON.stringify(handoff, null, 2) + '\n');
+console.log(JSON.stringify({ output, status: handoff.status, version: handoff.versions.final, allWritesStopped: true, caseControl }, null, 2));

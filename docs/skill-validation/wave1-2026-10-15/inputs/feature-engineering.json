@@ -1,0 +1,6 @@
+{
+  "skill": "feature-engineering",
+  "common": "Resume the accepted Standard Dossier TF01 r2 for export retries. CT01 r3 and ED01 rely on provider idempotency in API v3. Full implementation is authorized. RES01 covers retries; RES02 is an independent help string. Yesterday, both passed readiness review for code c17, the configuration, API v3, and the same criteria. Today, code c17 is unchanged, the gap has not expired, and no implementation has been run. Identify the next transition and the evidence that can be reused.",
+  "scenarioA": "The authoritative provider remains on API v3 with the same guarantee.",
+  "scenarioB": "The authoritative provider is now on API v4 with no idempotency guarantee."
+}

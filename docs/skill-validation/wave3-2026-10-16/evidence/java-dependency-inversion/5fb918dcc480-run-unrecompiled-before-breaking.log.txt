@@ -1,0 +1,15 @@
+{
+  "name": "run-unrecompiled-before-breaking",
+  "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+  "args": [
+    "-Xms16m",
+    "-Xmx64m",
+    "-cp",
+    "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\policy-before;C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\sdk-breaking",
+    "shop.orders.RunBefore"
+  ],
+  "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N",
+  "exitCode": 1,
+  "stdout": "",
+  "stderr": "Exception in thread \"main\" java.lang.NoSuchMethodError: 'void shop.smtp.SmtpClient.send(shop.smtp.SmtpMessage)'\r\n\tat shop.orders.OrderConfirmer.confirm(OrderConfirmer.java:13)\r\n\tat shop.orders.RunBefore.main(RunBefore.java:1)\r\n"
+}

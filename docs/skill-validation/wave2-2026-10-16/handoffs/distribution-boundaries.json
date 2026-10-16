@@ -1,0 +1,328 @@
+{
+  "schemaVersion": 1,
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "distribution-boundaries",
+  "ownedPath": "skills/distribution-boundaries/**",
+  "handoffPath": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/distribution-boundaries.json",
+  "allWritesStopped": true,
+  "activeProcessesStartedByReviewer": [],
+  "reviewScope": "Focused specialist review of process-boundary and interaction decisions; no package-manager, neighboring skill, registry or shared report edits.",
+  "baseline": {
+    "committedVersion": "1.2.4",
+    "assignmentVersion": "1.2.4",
+    "finalVersion": "1.2.5",
+    "preExistingStagedChanges": [],
+    "preExistingUnstagedChanges": [],
+    "preExistingUntrackedFiles": [],
+    "files": [
+      {
+        "path": "skills/distribution-boundaries/skill.yaml",
+        "sha256": "00CCF67B7AC76EA410724D03C4DD3BE1FA8B318111177612832BF905B579D001"
+      },
+      {
+        "path": "skills/distribution-boundaries/SKILL.md",
+        "sha256": "C9DCFADF5223E56AE5826AF2F324BD2A81D5073FFFD63D5A6EF14E4E996D5A47"
+      },
+      {
+        "path": "skills/distribution-boundaries/references/local-vs-remote.md",
+        "sha256": "6445B597B87EC8A366C485960BD81641962A55E0E59DB0BEEFEB3B31D9D91744"
+      },
+      {
+        "path": "skills/distribution-boundaries/references/distribution-strategies.md",
+        "sha256": "72E1B855971BE829C2C9806AF7836D89BE82CA0353792E81038D1D093322BC59"
+      }
+    ],
+    "versionRationale": "One patch for supported skill-content corrections; no pre-existing unpublished bump to reuse."
+  },
+  "filesChangedByReviewer": [
+    "skills/distribution-boundaries/skill.yaml",
+    "skills/distribution-boundaries/SKILL.md",
+    "skills/distribution-boundaries/references/distribution-strategies.md"
+  ],
+  "preExistingChangesPreserved": [],
+  "finalFiles": [
+    {
+      "path": "skills/distribution-boundaries/skill.yaml",
+      "changed": true,
+      "javaSnippetsPreserved": true,
+      "sha256": "7549260CEE9219547BFEC41EC9CC09A45D6128876F7FFECE9F8B55E1B1A50900"
+    },
+    {
+      "path": "skills/distribution-boundaries/SKILL.md",
+      "changed": true,
+      "javaSnippetsPreserved": true,
+      "sha256": "CE5CCC743136FF2363FA74B418017A77BE23A79623F469ECC2EF6D25B2E955AD"
+    },
+    {
+      "path": "skills/distribution-boundaries/references/local-vs-remote.md",
+      "changed": false,
+      "javaSnippetsPreserved": true,
+      "sha256": "6445B597B87EC8A366C485960BD81641962A55E0E59DB0BEEFEB3B31D9D91744"
+    },
+    {
+      "path": "skills/distribution-boundaries/references/distribution-strategies.md",
+      "changed": true,
+      "javaSnippetsPreserved": true,
+      "sha256": "F5809BA16881167EFE7D5ED4D0FE1E409205F4B346943E8F12579E02370A26E0"
+    }
+  ],
+  "findings": [
+    {
+      "location": "SKILL.md Workflow step 4 and Rules; references/distribution-strategies.md The four shapes, Synchronous request/response, Choosing table",
+      "problem": "Async selection hinged on needing an answer/result, leaving a void command's completed effect as an underspecified dependency.",
+      "consequence": "An adapter change can let payment proceed after publication instead of after inventory reservation.",
+      "correction": "Trace actual caller, selected adapter/handler and acknowledgement/persistence path; establish what must hold on normal return and preserve or explicitly redesign dependent workflow."
+    },
+    {
+      "location": "references/distribution-strategies.md Asynchronous command; SKILL.md Workflow step 7",
+      "problem": "Async transport was described as necessarily returning before work completes, and polling was treated too broadly as restoring coupling.",
+      "consequence": "Transport/API scheduling can be confused with the business completion boundary; legitimate later progress polling can be rejected while publish-only tests miss a premature side effect.",
+      "correction": "Separate acceptance, consumer commit and required effect; distinguish later status observation from waiting within the original request. Add paired reservation/checkout example and delay/reject validation at payment/checkout boundary."
+    }
+  ],
+  "remainingFindings": [],
+  "preservedCapabilities": [
+    "Design/review role and retained-local-boundary option.",
+    "Evidence-based extraction drivers, module rehearsal exceptions and remote granularity arithmetic.",
+    "Data authority, trust/tenant enforcement and one-authority migration/rollback.",
+    "Unknown remote outcomes, deadlines, capacity limits and conditional retry/idempotency.",
+    "Outbox local atomicity/transaction boundary and rollback caveats, saga compensation/pivot and supported 2PC alternatives.",
+    "Replication freshness, deletion/rebuild, fan-out latency and cancellation caveats.",
+    "All existing Java snippets byte-identical to assignment baseline; no new executable Java examples."
+  ],
+  "intentionallyReplaced": [
+    "Answer-only async heuristic and categorical early-return/polling wording; no useful specialist capability removed."
+  ],
+  "checks": {
+    "workingDirectory": "C:/git/agent-skills",
+    "executedStructural": [
+      {
+        "command": "@'\nimport fs from 'node:fs';\nimport path from 'node:path';\nimport { parseManifest } from './packages/core/src/domain/manifest.ts';\nimport { buildSkillPackage } from './packages/core/src/domain/skill-package.ts';\nimport { validatePackage } from './packages/core/src/application/validate-package.ts';\nconst root = path.resolve('skills/distribution-boundaries');\nconst paths = [];\nfunction walk(dir) { for (const entry of fs.readdirSync(dir, {withFileTypes:true})) { const absolute = path.join(dir,entry.name); if(entry.isDirectory()) walk(absolute); else paths.push(absolute); } }\nwalk(root);\nconst files = paths.map(absolute=>({path:path.relative(root,absolute).split(path.sep).join('/'),bytes:fs.readFileSync(absolute)}));\nconst parsed = parseManifest(fs.readFileSync(path.join(root,'skill.yaml'),'utf8'),{strict:true,source:'skills/distribution-boundaries/skill.yaml'});\nconst pkg = buildSkillPackage(parsed.manifest,files);\nconst report = validatePackage(pkg,{directoryName:'distribution-boundaries'});\nconst brokenLinks = [];\nlet linksChecked = 0;\nfor (const file of files.filter(file=>file.path.endsWith('.md'))) {\n for (const match of Buffer.from(file.bytes).toString('utf8').matchAll(/\\[[^\\]]*\\]\\(([^)]+)\\)/g)) {\n  const target = match[1].split('#')[0];\n  if(!target || /^[a-z][a-z0-9+.-]*:/i.test(target)) continue;\n  linksChecked++;\n  if(!fs.existsSync(path.resolve(root,path.dirname(file.path),target))) brokenLinks.push({from:file.path,target});\n }\n}\nconst issues = [...parsed.issues,...report.issues];\nconsole.log(JSON.stringify({runtime:process.version,skill:parsed.manifest.name,version:parsed.manifest.version,files:files.map(f=>f.path),issues,linksChecked,brokenLinks},null,2));\nif(issues.length || brokenLinks.length) process.exitCode=1;\n\n'@ | node --input-type=module",
+        "purpose": "Use existing strict parseManifest/buildSkillPackage/validatePackage against only the four owned files, then resolve their local Markdown links.",
+        "result": {
+          "chunk_id": "aaefb1",
+          "wall_time_seconds": 0.1646153,
+          "exit_code": 0,
+          "original_token_count": 70,
+          "output": "{\n  \"runtime\": \"v25.6.1\",\n  \"skill\": \"distribution-boundaries\",\n  \"version\": \"1.2.5\",\n  \"files\": [\n    \"references/distribution-strategies.md\",\n    \"references/local-vs-remote.md\",\n    \"SKILL.md\",\n    \"skill.yaml\"\n  ],\n  \"issues\": [],\n  \"linksChecked\": 2,\n  \"brokenLinks\": []\n}\n"
+        },
+        "limitations": "No adapters/global registry resolution. Report has zero issues and two valid relative links."
+      },
+      {
+        "command": "node node_modules/prettier/bin/prettier.cjs --check skills/distribution-boundaries/SKILL.md skills/distribution-boundaries/skill.yaml skills/distribution-boundaries/references/distribution-strategies.md skills/distribution-boundaries/references/local-vs-remote.md",
+        "result": {
+          "chunk_id": "520bc2",
+          "wall_time_seconds": 0.2260418,
+          "exit_code": 0,
+          "original_token_count": 17,
+          "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+        }
+      },
+      {
+        "command": "git diff --check -- skills/distribution-boundaries",
+        "result": {
+          "chunk_id": "87101e",
+          "wall_time_seconds": 0.0653959,
+          "exit_code": 0,
+          "original_token_count": 0,
+          "output": ""
+        }
+      },
+      {
+        "command": "git diff -- skills/distribution-boundaries",
+        "result": "Final diff manually inspected: three owned files only; no semantic edits to local-vs-remote.md or existing code snippets."
+      },
+      {
+        "command": "Get-FileHash over rg --files skills/distribution-boundaries, plus in-memory baseline comparison of Java fences",
+        "result": "One unchanged resource and three changed files; all Java fences preserved. Final hashes recorded above."
+      }
+    ],
+    "failuresAndCorrections": [
+      {
+        "command": "Initial scoped prettier --check",
+        "result": {
+          "chunk_id": "9932a3",
+          "wall_time_seconds": 0.2156861,
+          "exit_code": 1,
+          "original_token_count": 46,
+          "output": "Checking formatting...\n[warn] skills/distribution-boundaries/references/distribution-strategies.md\n[warn] Code style issues found in the above file. Run Prettier with --write to fix.\n"
+        },
+        "attribution": "Changed distribution-strategies.md table width needed formatting.",
+        "correction": "Ran node node_modules/prettier/bin/prettier.cjs --write skills/distribution-boundaries/references/distribution-strategies.md only; subsequent scoped check passed."
+      },
+      {
+        "command": "rg -n 'parseManifest|prettier|check:skills|check:versions' packages/core/src/domain/manifest.ts package.json .prettierignore .prettierrc*",
+        "result": "Read-only inspection exit 1 because Windows treated .prettierrc* as an invalid filename; useful matching output was read. Read .prettierignore separately and used installed Prettier successfully. No files changed."
+      }
+    ],
+    "behavioralEvaluationsExecuted": [],
+    "structuredWalkthroughs": [
+      {
+        "case": "completion_required",
+        "trace": "Current production path confirms reservation before charge. Substituted publisher acknowledgement can occur while consumer is paused, so the unchanged next charge violates the required effect. Retain completion confirmation and completed-response semantics.",
+        "classification": "Reasoned walkthrough, not executed agent behavior or runtime test."
+      },
+      {
+        "case": "pending_response_permitted",
+        "trace": "Only the pending-response permission changes. Intake may acknowledge pending, but the existing payment call must move behind confirmed reservation. Rejection leaves payment absent and a visible terminal failure; no guarantee of eventual execution is inferred.",
+        "classification": "Reasoned walkthrough, not executed agent behavior or runtime test."
+      }
+    ],
+    "javaValidation": {
+      "classification": "Existing partial illustrative snippets unchanged; new example is prose with inline names.",
+      "compilerTarget": "Not applicable; no new/materially changed executable Java.",
+      "runtime": "Node v25.6.1 for existing repository validator; no JVM/framework service run."
+    }
+  },
+  "sources": [
+    {
+      "url": "https://www.rfc-editor.org/rfc/rfc9110.html#section-15.3.3",
+      "version": "RFC 9110 (HTTP Semantics), section 15.3.3",
+      "supports": "202 reports acceptance without completed processing or guarantee of eventual execution. Durable acceptance must come from the application's actual persistence/acknowledgement contract.",
+      "verification": "Opened and read applicable section."
+    },
+    {
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/asynchronous-request-reply",
+      "version": "Current architecture guidance consulted 2026-10-16",
+      "supports": "Separate initial acknowledgement, pending status and terminal outcome; client behavior and later polling matter.",
+      "verification": "Opened and read Context/Solution/Problems sections; pattern guidance, not proof of a particular provider."
+    },
+    {
+      "url": "https://martinfowler.com/articles/201701-event-driven.html",
+      "version": "2017-02-07 article",
+      "supports": "Preserved event-notification/state-transfer distinction and hidden required workflow coupling.",
+      "verification": "Opened and read pertinent sections."
+    },
+    {
+      "url": "https://docs.spring.io/spring-framework/reference/6.2/data-access/transaction/declarative/rolling-back.html",
+      "version": "Spring Framework 6.2 documentation, served as 6.2.19",
+      "supports": "Preserved default RuntimeException/Error rollback versus checked exception configuration caveat.",
+      "verification": "Opened and read rollback sections; target-project configuration remains required."
+    },
+    {
+      "url": "https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/transactional-outbox.html",
+      "version": "Current AWS Prescriptive Guidance consulted 2026-10-16",
+      "supports": "Preserved local outbox transaction and duplicate-publication caveats.",
+      "verification": "Opened and inspected transaction/duplicate sections; did not adopt broad exactly-once claims."
+    },
+    {
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/saga",
+      "version": "Current architecture guidance consulted 2026-10-16",
+      "supports": "Preserved compensable/pivot/retryable steps and no built-in cross-service isolation.",
+      "verification": "Opened and inspected relevant sections."
+    }
+  ],
+  "assumptionsAndLimitations": [
+    "No application with live broker/database was supplied or executed; the paired reservation case is a synthetic development example and reasoned inference from its stated contract.",
+    "No independent agent behavioral evaluation, before/after comparison or held-out run was executed. No measured quality or performance gain is claimed.",
+    "The skill declares partial examples and requires target-project toolchain/client/framework inspection; no new Java baseline, dependency or upgrade was imposed.",
+    "Local validation excludes registry generation, cross-catalog references, adapter projection and full repository verification."
+  ],
+  "cases": [
+    {
+      "id": "completion_required",
+      "actorInput": {
+        "request": "Review the proposed interaction change using distribution-boundaries and the supplied project files. Update docs/boundary-proposal.md with a concrete recommendation, its evidence and the relevant validation plan. Stay at the design/review level; do not implement or deploy the extraction.",
+        "fixtureKind": "Synthetic partial Java/configuration/document fixtures, intended for evidence acquisition and design review, not a compilable application.",
+        "prerequisites": "Materialize fixtureFiles in an isolated temporary project. Give the actor the assigned skill and fixture files only; withhold evaluator criteria. No network services, broker or database are required for this design task.",
+        "allowedOutput": "An updated docs/boundary-proposal.md and concise explanation; code changes are unnecessary.",
+        "fixtureFiles": {
+          "config/runtime.properties": "inventory.adapter=http\n",
+          "src/Composition.java": "// Partial project fixture: the production selector.\nInventoryPort inventory(Properties config, HttpTransport http, Broker broker) {\n    return config.getProperty(\"inventory.adapter\").equals(\"http\")\n        ? new HttpInventory(http) : new QueueInventory(broker);\n}\n",
+          "src/Checkout.java": "// Partial project fixture. The controller returns 201 after submit returns normally.\nOrderId submit(CheckoutRequest request) {\n    OrderId id = request.orderId();\n    inventory.reserve(id);\n    payments.capture(id);\n    return id;\n}\n",
+          "src/InventoryAdapters.java": "// Partial project fixture. All inventory methods return void.\nfinal class HttpInventory implements InventoryPort {\n    public void reserve(OrderId id) {\n        http.post(\"/reservations\", id).requireStatus(204);\n    }\n}\nfinal class QueueInventory implements InventoryPort {\n    public void reserve(OrderId id) {\n        broker.publish(\"reserve-inventory\", id).awaitPublisherConfirmation();\n    }\n}\n// The broker confirms durable message acceptance; the consumer can remain paused afterward.\n",
+          "inventory/ReservationEndpoint.java": "// Partial project fixture. Transactions.execute returns only after successful commit;\n// a rejected reservation throws and maps to 409, never 204.\nResponse reserve(OrderId id) {\n    transactions.execute(() -> reservations.reserveFor(id));\n    return Response.noContent();\n}\n",
+          "docs/boundary-proposal.md": "# Proposed interaction change\nThe inventory service is already separate. Replace HttpInventory with QueueInventory\nin production to reduce checkout response latency during reservation-worker pauses.\nKeep Checkout.submit and its response handling unchanged because reserve returns void.\nUse the existing managed broker; one successful publication is the proposed success check.\n",
+          "test/QueueInventoryTest.java": "// Existing partial test fixture; no other completion test is supplied.\n@Test void publishesReservation() {\n    new QueueInventory(broker).reserve(orderId);\n    assertEquals(1, broker.confirmedPublicationCount());\n}\n",
+          "docs/checkout-contract.md": "# Checkout contract\nA successful initial checkout response must mean reservation and payment have completed; returning a pending state is not permitted.\nPayment must begin only after inventory has confirmed reservation. Rejected inventory must not be charged.\nRecovery belongs to Checkout; operations are correlated by order ID. This review does not authorize deployment or framework changes.\n"
+        }
+      },
+      "evaluator": {
+        "requiredEvidence": [
+          "Reads production selector/configuration and traces HttpInventory to the reservation endpoint rather than treating the unused/void return as lack of dependency.",
+          "Identifies that normal 204 follows a committed reservation, while broker confirmation can precede processing.",
+          "Uses the checkout contract and the following payment call as the decisive consumer observation point."
+        ],
+        "expectedOutcome": "Reject the transparent adapter substitution. Retain a completion-confirming interaction, or describe a completion-confirming message request/reply only if its deadline and semantics are met; do not claim immediate-consumer independence from that alternative. Update the proposal's success criterion at the reservation/payment/checkout boundary.",
+        "requiredValidation": [
+          "Delay or reject reservation after broker acceptance and verify no payment or completed-success response occurs prematurely.",
+          "Distinguish publisher acknowledgement from consumer/business completion; the existing publish-count test is insufficient.",
+          "Treat a dispatched operation's timeout as an unknown outcome requiring safe status/reconciliation/repeat policy."
+        ],
+        "failureConditions": [
+          "Approves QueueInventory unchanged because reserve returns void.",
+          "Changes the contract to pending/202 without authorization.",
+          "Treats broker acceptance or HTTP 202 as completed reservation or guaranteed eventual success.",
+          "Claims an executed integration or behavioral test without running it."
+        ],
+        "observableArtifacts": [
+          "Proposal retains a completion prerequisite and names actual fixture paths supporting it.",
+          "Validation observes payment invocation and the initial checkout response, not only broker publication."
+        ]
+      }
+    },
+    {
+      "id": "pending_response_permitted",
+      "actorInput": {
+        "request": "Review the proposed interaction change using distribution-boundaries and the supplied project files. Update docs/boundary-proposal.md with a concrete recommendation, its evidence and the relevant validation plan. Stay at the design/review level; do not implement or deploy the extraction.",
+        "fixtureKind": "Synthetic partial Java/configuration/document fixtures, intended for evidence acquisition and design review, not a compilable application.",
+        "prerequisites": "Materialize fixtureFiles in an isolated temporary project. Give the actor the assigned skill and fixture files only; withhold evaluator criteria. No network services, broker or database are required for this design task.",
+        "allowedOutput": "An updated docs/boundary-proposal.md and concise explanation; code changes are unnecessary.",
+        "fixtureFiles": {
+          "config/runtime.properties": "inventory.adapter=http\n",
+          "src/Composition.java": "// Partial project fixture: the production selector.\nInventoryPort inventory(Properties config, HttpTransport http, Broker broker) {\n    return config.getProperty(\"inventory.adapter\").equals(\"http\")\n        ? new HttpInventory(http) : new QueueInventory(broker);\n}\n",
+          "src/Checkout.java": "// Partial project fixture. The controller returns 201 after submit returns normally.\nOrderId submit(CheckoutRequest request) {\n    OrderId id = request.orderId();\n    inventory.reserve(id);\n    payments.capture(id);\n    return id;\n}\n",
+          "src/InventoryAdapters.java": "// Partial project fixture. All inventory methods return void.\nfinal class HttpInventory implements InventoryPort {\n    public void reserve(OrderId id) {\n        http.post(\"/reservations\", id).requireStatus(204);\n    }\n}\nfinal class QueueInventory implements InventoryPort {\n    public void reserve(OrderId id) {\n        broker.publish(\"reserve-inventory\", id).awaitPublisherConfirmation();\n    }\n}\n// The broker confirms durable message acceptance; the consumer can remain paused afterward.\n",
+          "inventory/ReservationEndpoint.java": "// Partial project fixture. Transactions.execute returns only after successful commit;\n// a rejected reservation throws and maps to 409, never 204.\nResponse reserve(OrderId id) {\n    transactions.execute(() -> reservations.reserveFor(id));\n    return Response.noContent();\n}\n",
+          "docs/boundary-proposal.md": "# Proposed interaction change\nThe inventory service is already separate. Replace HttpInventory with QueueInventory\nin production to reduce checkout response latency during reservation-worker pauses.\nKeep Checkout.submit and its response handling unchanged because reserve returns void.\nUse the existing managed broker; one successful publication is the proposed success check.\n",
+          "test/QueueInventoryTest.java": "// Existing partial test fixture; no other completion test is supplied.\n@Test void publishesReservation() {\n    new QueueInventory(broker).reserve(orderId);\n    assertEquals(1, broker.confirmedPublicationCount());\n}\n",
+          "docs/checkout-contract.md": "# Checkout contract\nA successful initial checkout response may acknowledge a pending checkout while reservation and payment complete later.\nPayment must begin only after inventory has confirmed reservation. Rejected inventory must not be charged.\nRecovery belongs to Checkout; operations are correlated by order ID. This review does not authorize deployment or framework changes.\n"
+        }
+      },
+      "evaluator": {
+        "decisiveDifferenceFrom": "completion_required",
+        "changedConstraint": "Only the initial-response completion requirement is relaxed to permit pending. The reservation-before-payment invariant, code/configuration, infrastructure and ownership are identical.",
+        "requiredEvidence": [
+          "Acquires the same configured path and acknowledgement distinction as case 1.",
+          "Finds the permission for a pending initial response and retains the unchanged reservation-before-payment invariant."
+        ],
+        "expectedOutcome": "Allow asynchronous command processing as a design candidate under the accepted pending workflow. Reject the unchanged Checkout.submit sequence, move payment behind confirmed reservation completion, represent pending/failure truthfully through the existing contract and retain Checkout recovery ownership. Update the existing proposal rather than merely adding a warning.",
+        "requiredValidation": [
+          "Pause reservation consumer after acceptance: initial response can be pending but payment must not run.",
+          "Reject reservation: expose the failed outcome and keep payment absent; on confirmed reservation allow the next step with repeat-safe correlation.",
+          "Name completion deadline/backlog/recovery constraints without inventing measured performance or guaranteed eventual completion."
+        ],
+        "failureConditions": [
+          "Rejects any asynchronous design despite the changed contract without a separate substantiated constraint.",
+          "Approves the transparent adapter swap and continues charging after publisher confirmation.",
+          "Claims durable broker acceptance is completed checkout, or silently reintroduces synchronous wait while claiming caller completion is decoupled.",
+          "Forces a new status service/schema when the existing workflow can carry the required states."
+        ],
+        "observableArtifacts": [
+          "Proposal explicitly changes the workflow and initial-response semantics to permitted pending.",
+          "Dependent payment is gated by reservation completion; acceptance, completion and failure are distinguishable."
+        ]
+      }
+    }
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Parallel ownership restriction; generated index/integrity must reflect version 1.2.5.",
+      "prerequisite": "All reviewers stopped writing."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Parallel ownership restriction; local readiness does not establish repository-wide verification.",
+      "prerequisite": "Registry regenerated and all reviewers stopped writing."
+    }
+  ],
+  "crossSkillIssues": [],
+  "coordinatorActions": [
+    "Run required global checks after all writers stop.",
+    "Select/execute independent actor cases with evaluator criteria withheld; do not classify these supplied development walkthroughs as measured behavioral improvement."
+  ],
+  "retrospectivePriorAssignment": "consensus-and-quorums.json was saved and JSON-parsed at the same temporary root before starting this assignment; consensus writes remain stopped."
+}

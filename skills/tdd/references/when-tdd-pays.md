@@ -109,6 +109,44 @@ controlled-defect run can establish scoped sensitivity without changing the deve
 For those approaches, report the evidence and its limits under the actual method
 (coding-agent-discipline); do not force a production failure or fabricate an earlier red.
 
+Keep enough context to reproduce the cycle: working directory/module, selected test, relevant
+fixture or configuration, source state, and the observed failure and subsequent result. Existing
+runner output can carry this; a separate report for every step is unnecessary. If the build reuses
+a cached result instead of executing, identify the reuse and its applicable inputs rather than
+counting it as a new observed run. Use the project's supported rerun mechanism when fresh execution
+is needed; do not delete shared build state merely to manufacture a clean run.
+
+The same outward result can mean different things:
+
+| Observed result                                                                   | What it establishes and what to do next                                                                                                                                                         |
+| --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Compilation fails because a newly required method is absent                       | The API is missing. Add the smallest declaration needed, then observe the runtime behavior test; the compiler failure did not exercise its assertions.                                          |
+| A pricing test aborts because unrelated fixture configuration is missing          | The pricing assertion has not run. Repair the fixture or report the limitation, then seek the intended red.                                                                                     |
+| A registration test fails to resolve the handler named in the contract            | Missing registration can be the intended red when the test exercises the actual registry/configuration; preserve that boundary while fixing it.                                                 |
+| A helper test passes, but the reported entry point selects another implementation | Only the helper's exercised behavior is covered. Follow the actual selection and obtain evidence at a test point that retains this risk; a full end-to-end suite is not automatically required. |
+
+The [JUnit 6.1.3 Console Launcher documentation](https://docs.junit.org/6.1.3/running-tests/console-launcher.html)
+illustrates separate discovery/execution counts, selectors and skipped/aborted results. Use the
+equivalent evidence from the project's existing runner rather than imposing this runner or version.
+
+## Resolving a disputed red
+
+An assertion's expected result needs a basis independent of the implementation being tested:
+an accepted requirement, documented boundary contract, worked example or justified invariant.
+Before fixing a failure, distinguish missing behavior from an invalid fixture or mistaken
+expectation. Characterization records observed behavior; it does not by itself endorse that
+behavior as the requirement for a bug fix.
+
+If the contract supports the assertion, repair production behavior and preserve that assertion.
+If authoritative evidence shows the expectation was wrong, correct the test and record the
+reason; do not introduce a production defect to satisfy it. Rerun affected tests and report the
+revised evidence, without treating the earlier invalid failure as proof of the corrected test's
+sensitivity. If the contract remains ambiguous, ask which observable outcome is required and
+continue independent cases. Copying actual output into expected values merely to get green,
+loosening a valid assertion, or updating snapshots without reviewing their contract defeats the
+check. Kent Beck's [Canon TDD](https://newsletter.kentbeck.com/p/canon-tdd) describes both the
+scenario list and this distinction between satisfying a test and disguising a failure.
+
 See [Fowler's TDD account](https://martinfowler.com/bliki/TestDrivenDevelopment.html) for the
 small test/code/refactoring cycle; these applicability choices depend on the actual contract
 and feedback cost, not a blanket prohibition on an entire type of work.

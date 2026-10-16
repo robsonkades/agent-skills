@@ -1,0 +1,69 @@
+{
+  "run": "c4-1",
+  "condition": "none",
+  "at": "2026-10-16T12:50:03.386Z",
+  "classification": "Coordinator artifact execution; rubric decisions recorded separately",
+  "fixtureComparisons": [
+    {
+      "path": "accepted.properties",
+      "originalSha256": "a566006af83508a0e7e568bba902ee13e399d06358427dbc6b14169f19ae20a4",
+      "finalSha256": "a566006af83508a0e7e568bba902ee13e399d06358427dbc6b14169f19ae20a4"
+    },
+    {
+      "path": "accepted-vectors.json",
+      "originalSha256": "8680df134ad5ec04d6fc94554a07af6425c55d68b095ef3d9ac6122106da7009",
+      "finalSha256": "8680df134ad5ec04d6fc94554a07af6425c55d68b095ef3d9ac6122106da7009"
+    },
+    {
+      "path": "candidate.properties",
+      "originalSha256": "a566006af83508a0e7e568bba902ee13e399d06358427dbc6b14169f19ae20a4",
+      "finalSha256": "a566006af83508a0e7e568bba902ee13e399d06358427dbc6b14169f19ae20a4"
+    },
+    {
+      "path": "src/ClientRouter.java",
+      "originalSha256": "596f31533e1afe92f47b2a1f5f6abded02f632e0467766006118ae54cb3abb2d",
+      "finalSha256": "596f31533e1afe92f47b2a1f5f6abded02f632e0467766006118ae54cb3abb2d"
+    },
+    {
+      "path": "src/HashRing.java",
+      "originalSha256": "3d499e7afd1210a5751da5935157e3cf6eb32f0f06e271c07f5c035061fab912",
+      "finalSha256": "3d499e7afd1210a5751da5935157e3cf6eb32f0f06e271c07f5c035061fab912"
+    },
+    {
+      "path": "test/CurrentChecks.java",
+      "originalSha256": "81763b1c8a1685ba517fd2d4932fdb63da794216807a03430a232d8d08a04739",
+      "finalSha256": "81763b1c8a1685ba517fd2d4932fdb63da794216807a03430a232d8d08a04739"
+    },
+    {
+      "path": "check.mjs",
+      "originalSha256": "3b54105ace63b59449fb4b934f499f5c4e0b5228317e1272efa5fd953d55cb3a",
+      "finalSha256": "69290033f0078af31dc07e88c9c1f0a096604e4cdf97c38b2056127514420698"
+    },
+    {
+      "path": "README.md",
+      "originalSha256": "839cf82cb58c0780b55ec8028d622c07982d1a8fa4dc74f40d96912307ed8e71",
+      "finalSha256": "839cf82cb58c0780b55ec8028d622c07982d1a8fa4dc74f40d96912307ed8e71"
+    },
+    {
+      "path": "rollout.md",
+      "originalSha256": "55932b293efa65af974cf3c04a3d9c997fab48ec79de414eb8221353b2643cc1",
+      "finalSha256": "1d7b7ef9652477c2a0d5ea25aae850cf858a56fc50646b488dd4e0749b88ce65"
+    }
+  ],
+  "checks": [
+    {
+      "label": "delivered compatibility checks",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "check.mjs"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-behavior-6orq6B\\grader\\c4-1\\delivered",
+      "startedAt": "2026-10-16T12:50:03.403Z",
+      "finishedAt": "2026-10-16T12:50:04.073Z",
+      "exit": 0,
+      "signal": null,
+      "stdout": "Existing point and join checks passed; moved=2094\r\nFrozen placement passed: accepted.properties key=user:2 primary=n2 replicas=[n2, n3, n4]\r\nFrozen placement passed: candidate.properties key=user:2 primary=n2 replicas=[n2, n3, n4]\r\n",
+      "stderr": ""
+    }
+  ]
+}

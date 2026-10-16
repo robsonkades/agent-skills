@@ -1,0 +1,8 @@
+package api;
+
+public class Labeler {
+    @Deprecated(since = "1.1", forRemoval = false)
+    public String getLabel(String value) { return "base:" + value; }
+    public String label(String value) { return getLabel(value); }
+    public String render(String value) { return label(value); }
+}

@@ -1,0 +1,12 @@
+import jakarta.persistence.EntityManager;
+
+public final class BadgeIssueService {
+    public Badge issue(EntityManager em, long badgeId, long memberId, String label) {
+        Member member = em.find(Member.class, memberId);
+        if (member == null) throw new IllegalArgumentException("Unknown member " + memberId);
+        Badge badge = new Badge(badgeId, member, label);
+        em.persist(badge);
+        return badge;
+    }
+}
+

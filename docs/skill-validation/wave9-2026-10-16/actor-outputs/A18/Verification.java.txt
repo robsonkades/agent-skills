@@ -1,0 +1,204 @@
+import java.util.ArrayList;
+import java.util.List;
+
+public final class Verification {
+    private static int cases;
+    private static final Ports.Intent INTENT = new Ports.Intent("stable-intent", "fixed-payload");
+
+    private static void check(boolean condition, String message) {
+        if (!condition) throw new AssertionError(message);
+    }
+
+    private static final class Harness implements Ports.Store, Ports.Runtime, Ports.Operation {
+        Ports.Snapshot snapshot = new Ports.Snapshot(Ports.State.PENDING, null);
+        Ports.Policy policy = new Ports.Policy(3, 10, 5, 4);
+        Ports.Kind[] kinds;
+        long[] minimums;
+        long remaining = 1000;
+        boolean cancelled, deny, cancelOnClose, cancelAfterSleep, interruptSleep, interruptAfterSleep;
+        boolean unresolvedEvidence;
+        int interruptCall, calls, closes, grants, unknownWrites, terminalWrites;
+        long oversleep;
+        final List<Long> sleeps = new ArrayList<>();
+
+        Harness(Ports.Kind... kinds) {
+            this.kinds = kinds;
+            minimums = new long[kinds.length];
+        }
+
+        public Ports.Snapshot snapshot() { return snapshot; }
+        public void unknown() {
+            unknownWrites++;
+            snapshot = new Ports.Snapshot(Ports.State.UNKNOWN, null);
+        }
+        public void applied(String receipt) {
+            terminalWrites++;
+            snapshot = new Ports.Snapshot(Ports.State.APPLIED, receipt);
+        }
+        public void rejected() {
+            check(snapshot.state() != Ports.State.UNKNOWN, "unresolved effect overwritten");
+            terminalWrites++;
+            snapshot = new Ports.Snapshot(Ports.State.REJECTED, null);
+        }
+        public long remainingNanos() { return remaining; }
+        public boolean cancelled() { return cancelled; }
+        public boolean acquireRetry() {
+            check(closes == calls, "reply open during retry admission");
+            check(!unresolvedEvidence || snapshot.state() == Ports.State.UNKNOWN,
+                    "unknown not persisted before retry admission");
+            grants++;
+            return !deny;
+        }
+        public void sleep(long nanos) throws InterruptedException {
+            check(closes == calls, "reply still open during sleep");
+            check(!unresolvedEvidence || snapshot.state() == Ports.State.UNKNOWN,
+                    "unknown not persisted before sleep");
+            sleeps.add(nanos);
+            if (interruptSleep) throw new InterruptedException("sleep interrupted");
+            remaining = Math.max(0, remaining - nanos);
+            remaining = Math.max(0, remaining - oversleep);
+            if (cancelAfterSleep) cancelled = true;
+            if (interruptAfterSleep) Thread.currentThread().interrupt();
+        }
+        public Ports.Reply call(Ports.Intent intent, long timeout) throws InterruptedException {
+            check(INTENT.equals(intent), "intent identity or payload changed");
+            check(timeout == policy.attemptNanos(), "wrong propagated attempt timeout");
+            check(closes == calls, "reply still open during next call");
+            check(!unresolvedEvidence || snapshot.state() == Ports.State.UNKNOWN,
+                    "unknown not persisted before next call");
+            check(!cancelled && !Thread.currentThread().isInterrupted(), "call after cancellation/interruption");
+            calls++;
+            if (interruptCall == calls) throw new InterruptedException("dispatch outcome unknown");
+            check(calls <= kinds.length, "unexpected extra call");
+            int index = calls - 1;
+            if (kinds[index] == Ports.Kind.UNKNOWN) unresolvedEvidence = true;
+            return new Ports.Reply() {
+                boolean closed;
+                public Ports.Kind kind() { return kinds[index]; }
+                public String receipt() { return "original-receipt"; }
+                public long serverMinimumNanos() { return minimums[index]; }
+                public void close() {
+                    check(!closed, "reply closed twice");
+                    closed = true;
+                    closes++;
+                    if (cancelOnClose) cancelled = true;
+                }
+            };
+        }
+        Ports.Result run() throws InterruptedException {
+            Ports.Result result = RetryEngine.execute(INTENT, policy, this, this, this);
+            check(result.attempts() == calls, "attempt count mismatch");
+            check(closes == calls, "reply not closed on normal return");
+            check(result.snapshot().equals(snapshot), "returned state not persisted");
+            return result;
+        }
+        void expect(Ports.State state, int attempts) throws InterruptedException {
+            Ports.Result result = run();
+            check(result.snapshot().state() == state && result.attempts() == attempts, result.toString());
+            cases++;
+        }
+    }
+
+    private static void expectInterrupt(Harness h, Ports.State expected) throws Exception {
+        try {
+            h.run();
+            throw new AssertionError("interruption swallowed");
+        } catch (InterruptedException expectedException) {
+            check(h.snapshot.state() == expected, "interruption lost uncertainty");
+            check(h.closes == h.calls - (h.interruptCall > 0 ? 1 : 0), "interruption leaked reply");
+            cases++;
+        } finally {
+            Thread.interrupted();
+        }
+    }
+
+    public static void main(String[] args) throws Exception {
+        for (Ports.State state : new Ports.State[] { Ports.State.APPLIED, Ports.State.REJECTED }) {
+            Harness h = new Harness();
+            h.snapshot = new Ports.Snapshot(state, "stored-receipt");
+            h.expect(state, 0);
+            check(h.terminalWrites == 0 && h.unknownWrites == 0 && h.grants == 0, "terminal state mutated");
+            check("stored-receipt".equals(h.snapshot.receipt()), "terminal receipt lost");
+        }
+        Harness h = new Harness(Ports.Kind.OK);
+        h.expect(Ports.State.APPLIED, 1);
+        check("original-receipt".equals(h.snapshot.receipt()), "receipt invented");
+
+        h = new Harness(Ports.Kind.TRANSIENT, Ports.Kind.OK);
+        h.minimums[0] = 2;
+        h.expect(Ports.State.APPLIED, 2);
+        check(h.sleeps.equals(List.of(4L)) && h.grants == 1, "local wait or token incorrect");
+        h = new Harness(Ports.Kind.TRANSIENT, Ports.Kind.OK);
+        h.minimums[0] = 20;
+        h.expect(Ports.State.APPLIED, 2);
+        check(h.sleeps.equals(List.of(20L)), "server minimum truncated");
+
+        h = new Harness(Ports.Kind.UNKNOWN, Ports.Kind.TRANSIENT, Ports.Kind.PERMANENT);
+        h.minimums[0] = 25;
+        h.expect(Ports.State.UNKNOWN, 3);
+        check(h.sleeps.equals(List.of(25L, 4L)) && h.unknownWrites > 0, "unknown guidance/state lost");
+        h = new Harness(Ports.Kind.UNKNOWN, Ports.Kind.OK);
+        h.expect(Ports.State.APPLIED, 2);
+        h = new Harness(Ports.Kind.PERMANENT);
+        h.snapshot = new Ports.Snapshot(Ports.State.UNKNOWN, null);
+        h.expect(Ports.State.UNKNOWN, 1);
+        h = new Harness(Ports.Kind.TRANSIENT, Ports.Kind.PERMANENT);
+        h.expect(Ports.State.REJECTED, 2);
+        h = new Harness(Ports.Kind.TRANSIENT);
+        h.policy = new Ports.Policy(1, 10, 5, 4);
+        h.expect(Ports.State.REJECTED, 1);
+        check(h.grants == 0 && h.sleeps.isEmpty(), "retry admitted after exhaustion");
+
+        for (Ports.State initial : new Ports.State[] { Ports.State.PENDING, Ports.State.UNKNOWN }) {
+            h = new Harness(); h.remaining = 14;
+            h.snapshot = new Ports.Snapshot(initial, null);
+            h.expect(initial == Ports.State.UNKNOWN ? Ports.State.UNKNOWN : Ports.State.REJECTED, 0);
+        }
+        h = new Harness(); h.remaining = Long.MAX_VALUE;
+        h.policy = new Ports.Policy(2, Long.MAX_VALUE, 1, 0);
+        h.expect(Ports.State.REJECTED, 0);
+        h = new Harness(Ports.Kind.UNKNOWN); h.remaining = Long.MAX_VALUE;
+        h.minimums[0] = Long.MAX_VALUE;
+        h.expect(Ports.State.UNKNOWN, 1);
+        check(h.grants == 0 && h.sleeps.isEmpty(), "overflow admitted impossible wait");
+        h = new Harness(Ports.Kind.TRANSIENT, Ports.Kind.OK); h.remaining = 25;
+        h.minimums[0] = 10;
+        h.expect(Ports.State.APPLIED, 2);
+        check(h.remaining == 15, "exact fitting budget rejected");
+        h = new Harness(Ports.Kind.UNKNOWN); h.remaining = 24;
+        h.minimums[0] = 10;
+        h.expect(Ports.State.UNKNOWN, 1);
+        check(h.grants == 0 && h.sleeps.isEmpty(), "unfit wait consumed token");
+        h = new Harness(Ports.Kind.UNKNOWN); h.deny = true;
+        h.expect(Ports.State.UNKNOWN, 1);
+        check(h.grants == 1 && h.sleeps.isEmpty(), "denied token slept");
+        h = new Harness(Ports.Kind.UNKNOWN); h.oversleep = 1000;
+        h.expect(Ports.State.UNKNOWN, 1);
+        check(h.grants == 1 && h.sleeps.size() == 1, "oversleep accounting incorrect");
+
+        h = new Harness(); h.cancelled = true;
+        h.expect(Ports.State.REJECTED, 0);
+        h = new Harness(Ports.Kind.UNKNOWN); h.cancelOnClose = true;
+        h.expect(Ports.State.UNKNOWN, 1);
+        check(h.grants == 0 && h.sleeps.isEmpty(), "cancelled retry admitted");
+        h = new Harness(Ports.Kind.UNKNOWN); h.cancelAfterSleep = true;
+        h.expect(Ports.State.UNKNOWN, 1);
+        h = new Harness(); Thread.currentThread().interrupt();
+        expectInterrupt(h, Ports.State.PENDING);
+        check(h.calls == 0, "pre-interrupted operation dispatched");
+        h = new Harness(); h.interruptCall = 1;
+        expectInterrupt(h, Ports.State.UNKNOWN);
+        h = new Harness(Ports.Kind.UNKNOWN); h.interruptSleep = true;
+        expectInterrupt(h, Ports.State.UNKNOWN);
+        h = new Harness(Ports.Kind.TRANSIENT); h.interruptSleep = true;
+        expectInterrupt(h, Ports.State.PENDING);
+        h = new Harness(Ports.Kind.UNKNOWN); h.interruptAfterSleep = true;
+        expectInterrupt(h, Ports.State.UNKNOWN);
+        h = new Harness(Ports.Kind.UNKNOWN);
+        h.policy = new Ports.Policy(1, 10, 5, 4);
+        h.expect(Ports.State.UNKNOWN, 1);
+        check(h.grants == 0 && h.sleeps.isEmpty(), "unknown exhaustion admitted retry");
+
+        System.out.println("Verification passed: " + cases + " scenarios");
+    }
+}

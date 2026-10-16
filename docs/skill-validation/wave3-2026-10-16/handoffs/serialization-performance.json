@@ -1,0 +1,647 @@
+{
+  "status": "NO_CHANGES_NEEDED",
+  "skill": "serialization-performance",
+  "ownedPath": "skills/serialization-performance/**",
+  "allWritesStopped": true,
+  "completedAt": "2026-10-16",
+  "summary": "No material in-scope defect was confirmed. Existing guidance already requires the effective codec/configuration/consumer, semantic equivalence, complete framing, state/ownership boundaries and bounded interpretation of performance evidence. All four assigned files remain byte-identical to assignment.",
+  "scope": {
+    "promise": "Diagnose and design serialization cost at the system boundary, and choose experiments/formats/configurations that preserve the actual consumer contract.",
+    "criteria": [
+      "Actual deployed codec/modules/configuration and consumer selection before attribution.",
+      "Equivalent logical work, representation/framing and complete compressed output.",
+      "Explicit codec/session state, buffer lifetime and asynchronous consumer ownership.",
+      "Representative cohorts and denominators; distinguish CPU/allocation/retention/bytes/critical-path latency.",
+      "Proportional validation, compatibility/security/rollout boundaries and conditional performance claims."
+    ],
+    "procedure": [
+      "Complete package inspected.",
+      "Full review prompt, wave 3 brief, applicable AGENTS and parallel-review procedure followed; previously read unchanged skill-engineering and relevant evidence/evaluation/resource/anti-pattern references reused.",
+      "No shared/package-manager writes, installations, dependency downloads, subagents or global checks."
+    ]
+  },
+  "baseline": {
+    "relevantCommittedState": "HEAD skill version 1.1.4.",
+    "staged": [],
+    "unstaged": [],
+    "untracked": [],
+    "preExistingVersionBump": false,
+    "hashes": [
+      {
+        "path": "skills/serialization-performance/SKILL.md",
+        "sha256": "680AC209AB128D307A0F60BC44C943F1B1B142AC8B568753BA39C161B225A210"
+      },
+      {
+        "path": "skills/serialization-performance/skill.yaml",
+        "sha256": "2DC99A250D775E301745F6492DEEF1465608538F7FA4050CA71F168F61DACB0F"
+      },
+      {
+        "path": "skills/serialization-performance/references/benchmarking-serialisers.md",
+        "sha256": "BD9AF63BCBF86A7D2FE304B78DE1BFDD7DB6518E086C72A0D790699DA4099155"
+      },
+      {
+        "path": "skills/serialization-performance/references/format-selection.md",
+        "sha256": "589DDFCF0FE4765F9F3240D9B76CE13C4490C6A84D3EEA60DDEFBB219C3CC9E9"
+      }
+    ],
+    "finalHashes": [
+      {
+        "path": "skills/serialization-performance/SKILL.md",
+        "sha256": "680AC209AB128D307A0F60BC44C943F1B1B142AC8B568753BA39C161B225A210"
+      },
+      {
+        "path": "skills/serialization-performance/skill.yaml",
+        "sha256": "2DC99A250D775E301745F6492DEEF1465608538F7FA4050CA71F168F61DACB0F"
+      },
+      {
+        "path": "skills/serialization-performance/references/benchmarking-serialisers.md",
+        "sha256": "BD9AF63BCBF86A7D2FE304B78DE1BFDD7DB6518E086C72A0D790699DA4099155"
+      },
+      {
+        "path": "skills/serialization-performance/references/format-selection.md",
+        "sha256": "589DDFCF0FE4765F9F3240D9B76CE13C4490C6A84D3EEA60DDEFBB219C3CC9E9"
+      }
+    ],
+    "attribution": "No repository file edits by this reviewer. Final scoped status, unstaged diff and staged diff are empty; all four SHA256 hashes match assignment."
+  },
+  "versions": {
+    "committed": "1.1.4",
+    "initial": "1.1.4",
+    "final": "1.1.4",
+    "rationale": "No skill content changes; no bump."
+  },
+  "findings": [
+    {
+      "status": "adequate_preserved",
+      "location": "SKILL.md:34 and references/format-selection.md:82-94",
+      "finding": "Requires the project's resolved codec/version/modules/framework configuration and deployed readers; explicitly tests effective Jackson configuration.",
+      "consequence": "Avoids attributing cost or changed parsing semantics to an assumed library default or unused path."
+    },
+    {
+      "status": "adequate_preserved",
+      "location": "references/benchmarking-serialisers.md:24-36 and :48-99",
+      "finding": "Defines semantic oracles and distinguishes API boundaries, complete frames, Protobuf length-prefix limitations and GZIP finalization versus flush.",
+      "consequence": "Prevents incomplete/semantically different output from appearing to be a serialization win."
+    },
+    {
+      "status": "adequate_preserved",
+      "location": "SKILL.md:125-137 and references/benchmarking-serialisers.md:130-163",
+      "finding": "Covers actual-use lifetime across asynchronous consumers, backing-array aliases, codec reset, Kryo registrations and ObjectOutputStream identity/header boundaries.",
+      "consequence": "Preserves legitimate reuse while detecting reuse before consumption and stateful-output comparison mistakes."
+    },
+    {
+      "status": "adequate_preserved",
+      "location": "SKILL.md decision framework/measurement ladder and references/benchmarking-serialisers.md production attribution/component checks",
+      "finding": "Separates units and observations from hypotheses; preserves valid independent evidence when an optional diagnostic is missing, without claiming application gain from microbenchmarks.",
+      "consequence": "Keeps performance recommendations conditional and validation proportionate."
+    }
+  ],
+  "correctedFindings": [],
+  "remainingFindings": [],
+  "filesChangedByMe": [],
+  "preExistingChanges": [],
+  "changes": [],
+  "preservedCapabilities": [
+    "Format/library choice under trust, language, schema, ownership and rollout constraints.",
+    "JSON/Protobuf/Avro/indexed format/Kryo/native Java distinctions with version-sensitive caveats.",
+    "Independent semantic oracles, representative corpora and cross-version compatibility checks.",
+    "Complete message framing, compressed finalization and stream-versus-independent-message alternatives.",
+    "Asynchronous buffer ownership, bounded retained capacity and state-reset limits.",
+    "JMH/component/load/production attribution ladder without forced full-campaign execution.",
+    "Correct routing to benchmark mechanics, schema governance and native deserialization hardening."
+  ],
+  "replacedOrRemovedCapabilities": [],
+  "checks": {
+    "structural": [
+      {
+        "command": "$ErrorActionPreference = 'Stop'\n@'\nimport {readFileSync,readdirSync,existsSync} from 'node:fs';\nimport {resolve,relative,dirname} from 'node:path';\nimport {parseManifest} from './packages/core/src/domain/manifest.ts';\nimport {buildSkillPackage} from './packages/core/src/domain/skill-package.ts';\nimport {validatePackage} from './packages/core/src/application/validate-package.ts';\nconst root=resolve('skills/serialization-performance');\nconst paths=readdirSync(root,{recursive:true,withFileTypes:true}).filter(e=>e.isFile()).map(e=>resolve(e.parentPath,e.name));\nconst files=paths.map(p=>({path:relative(root,p).replaceAll('\\\\','/'),bytes:readFileSync(p)}));\nconst parsed=parseManifest(readFileSync(resolve(root,'skill.yaml'),'utf8'),{strict:true});\nconst report=validatePackage(buildSkillPackage(parsed.manifest,files),{directoryName:'serialization-performance'});\nconst issues=[...parsed.issues,...report.issues];\nconst links=[];\nfor(const path of paths.filter(p=>p.endsWith('.md'))) {\n const text=readFileSync(path,'utf8');\n for(const match of text.matchAll(/\\[[^\\]]*\\]\\((<[^>]+>|[^\\s)]+)(?:\\s+[^)]*)?\\)/g)) {\n  const target=match[1].replace(/^<|>$/g,'');\n  if(/^[a-z][a-z0-9+.-]*:/i.test(target)) continue;\n  const [file,anchor]=target.split('#');\n  const dest=file?resolve(dirname(path),decodeURIComponent(file)):path;\n  if(!existsSync(dest)) throw new Error('Missing link '+target+' from '+path);\n  if(anchor) {\n   const headings=[...readFileSync(dest,'utf8').matchAll(/^#{1,6}\\s+(.+)$/gm)].map(m=>m[1].toLowerCase().replace(/[^\\w\\s-]/g,'').replace(/\\s/g,'-'));\n   if(!headings.includes(anchor)) throw new Error('Missing anchor '+target);\n  }\n  links.push({from:relative(root,path).replaceAll('\\\\','/'),target});\n }\n}\nconsole.log(JSON.stringify({skill:'serialization-performance',files:files.map(f=>f.path),manifestVersion:parsed.manifest.version,issues,relativeLinks:links},null,2));\nif(issues.length) process.exitCode=1;\n'@ | node --input-type=module -",
+        "cwd": "C:/git/agent-skills",
+        "result": {
+          "status": "fulfilled",
+          "value": {
+            "chunk_id": "a633c7",
+            "wall_time_seconds": 0.1842184,
+            "exit_code": 0,
+            "original_token_count": 135,
+            "output": "{\n  \"skill\": \"serialization-performance\",\n  \"files\": [\n    \"SKILL.md\",\n    \"skill.yaml\",\n    \"references/benchmarking-serialisers.md\",\n    \"references/format-selection.md\"\n  ],\n  \"manifestVersion\": \"1.1.4\",\n  \"issues\": [],\n  \"relativeLinks\": [\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/format-selection.md\"\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/benchmarking-serialisers.md\"\n    },\n    {\n      \"from\": \"references/format-selection.md\",\n      \"target\": \"benchmarking-serialisers.md\"\n    }\n  ]\n}\n"
+          }
+        }
+      },
+      {
+        "command": "node node_modules/prettier/bin/prettier.cjs --check skills/serialization-performance/SKILL.md skills/serialization-performance/skill.yaml skills/serialization-performance/references/format-selection.md skills/serialization-performance/references/benchmarking-serialisers.md",
+        "cwd": "C:/git/agent-skills",
+        "result": {
+          "status": "fulfilled",
+          "value": {
+            "chunk_id": "3912af",
+            "wall_time_seconds": 0.2430593,
+            "exit_code": 0,
+            "original_token_count": 17,
+            "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+          }
+        }
+      },
+      {
+        "command": "git diff --check -- skills/serialization-performance",
+        "cwd": "C:/git/agent-skills",
+        "result": {
+          "status": "fulfilled",
+          "value": {
+            "chunk_id": "e9afcb",
+            "wall_time_seconds": 0.0688753,
+            "exit_code": 0,
+            "original_token_count": 0,
+            "output": ""
+          }
+        }
+      },
+      {
+        "command": "rg -n 'Inspect the project|effective configuration|deployed implementation|semantic oracle|Message boundaries|Complete compressed|ObjectOutputStream|Kryo.reset|actual-use|consumer|finished reading' skills/serialization-performance/SKILL.md skills/serialization-performance/references/format-selection.md skills/serialization-performance/references/benchmarking-serialisers.md",
+        "cwd": "C:/git/agent-skills",
+        "result": {
+          "status": "fulfilled",
+          "value": {
+            "chunk_id": "6bb348",
+            "wall_time_seconds": 0.0667283,
+            "exit_code": 0,
+            "original_token_count": 830,
+            "output": "skills/serialization-performance/references/format-selection.md:11:| producer/consumer languages and support horizon |                    |                    |\nskills/serialization-performance/references/format-selection.md:91:`FAIL_ON_TRAILING_TOKENS` to true. Test the effective configuration rather than silently changing\nskills/serialization-performance/references/benchmarking-serialisers.md:9:producer_consumer_versions: []\nskills/serialization-performance/references/benchmarking-serialisers.md:24:is amortized or cold. Include the deployed implementation/configuration as the baseline.\nskills/serialization-performance/references/benchmarking-serialisers.md:26:Define the semantic oracle before measuring: absent versus null/default, integer range, decimal\nskills/serialization-performance/references/benchmarking-serialisers.md:48:### Message boundaries and complete frames\nskills/serialization-performance/references/benchmarking-serialisers.md:74:### Complete compressed output\nskills/serialization-performance/references/benchmarking-serialisers.md:128:- checksum/semantic oracle consumes the correct number of bytes.\nskills/serialization-performance/references/benchmarking-serialisers.md:130:A borrowed view is valid when its consumer finishes before backing storage is mutated/reused.\nskills/serialization-performance/references/benchmarking-serialisers.md:132:asynchronous consumer has finished. A view still needed after reuse can silently observe new bytes.\nskills/serialization-performance/references/benchmarking-serialisers.md:135:and cancellation while that consumer still owns the bytes; releasing a lease at caller completion\nskills/serialization-performance/references/benchmarking-serialisers.md:139:Reset is not universal erasure or deallocation. In Kryo 5.6.2, `Kryo.reset()` clears graph state\nskills/serialization-performance/references/benchmarking-serialisers.md:146:For a legacy Java object stream, make its identity scope explicit. `ObjectOutputStream.writeObject`\nskills/serialization-performance/references/benchmarking-serialisers.md:153:`ObjectOutputStream.reset()` clears remembered objects and emits a reset marker within the existing\nskills/serialization-performance/references/benchmarking-serialisers.md:190:- consumer processing and acknowledgement/retry behavior;\nskills/serialization-performance/references/benchmarking-serialisers.md:210:- rolling old-new producers/consumers, replay old bytes, rollback;\nskills/serialization-performance/references/benchmarking-serialisers.md:251:- [Java 17 ObjectOutputStream identity, reset and writeUnshared](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/ObjectOutputStream.html)\nskills/serialization-performance/SKILL.md:34:Inspect the project's toolchain, resolved codec versions/modules, framework configuration and\nskills/serialization-performance/SKILL.md:46:producer/consumer languages, versions, ownership and deployment skew\nskills/serialization-performance/SKILL.md:93:be tested across deployed producers/consumers.\nskills/serialization-performance/SKILL.md:132:has finished reading the bytes. Enqueue, timeout or cancellation alone does not prove that point.\nskills/serialization-performance/SKILL.md:221:the producer/consumer rollout cannot be made compatible, or buffer/native headroom is unbounded.\n"
+          }
+        }
+      }
+    ],
+    "technical": {
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/serialization-performance-check/run-check.mjs",
+      "cwd": "C:/git/agent-skills",
+      "result": {
+        "chunk_id": "b1872c",
+        "wall_time_seconds": 0.7387373,
+        "exit_code": 0,
+        "original_token_count": 81,
+        "output": "{\n  \"status\": \"PASS\",\n  \"controls\": 4,\n  \"streamCaseExit\": 0,\n  \"frameCaseExit\": 1,\n  \"frameFailure\": \"Expected EOFException\",\n  \"runtime\": \"Temurin 25.0.3+9-LTS\",\n  \"compilerRelease\": 17,\n  \"result\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave3-validation-wyg7TL\\\\serialization-performance-check\\\\result.json\"\n}\n"
+      },
+      "artifactResult": {
+        "kind": "technical fixture validation, not agent or performance evaluation",
+        "compilerRelease": 17,
+        "results": [
+          {
+            "name": "toolchain",
+            "exe": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+            "args": ["-version"],
+            "expectedExit": 0,
+            "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\serialization-performance-check",
+            "exitCode": 0,
+            "signal": null,
+            "stdout": "",
+            "stderr": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n"
+          },
+          {
+            "name": "compile",
+            "exe": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+            "args": [
+              "--release",
+              "17",
+              "-d",
+              "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\serialization-performance-check\\classes",
+              "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\serialization-performance-check\\CompressionReview.java",
+              "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\serialization-performance-check\\FixtureChecks.java"
+            ],
+            "expectedExit": 0,
+            "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\serialization-performance-check",
+            "exitCode": 0,
+            "signal": null,
+            "stdout": "",
+            "stderr": ""
+          },
+          {
+            "name": "controls",
+            "exe": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+            "args": [
+              "-cp",
+              "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\serialization-performance-check\\classes",
+              "FixtureChecks"
+            ],
+            "expectedExit": 0,
+            "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\serialization-performance-check",
+            "exitCode": 0,
+            "signal": null,
+            "stdout": "PASS continuous-consumer accepts completed session\r\nPASS Independent consumer must reject unfinished members [EOFException]\r\nPASS Continuous consumer must reject truncated final trailer [EOFException]\r\nPASS independent-consumer accepts complete members\r\n",
+            "stderr": ""
+          },
+          {
+            "name": "stream-case",
+            "exe": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+            "args": [
+              "-cp",
+              "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\serialization-performance-check\\classes",
+              "CompressionReview",
+              "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\serialization-performance-check\\stream.properties"
+            ],
+            "expectedExit": 0,
+            "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\serialization-performance-check",
+            "exitCode": 0,
+            "signal": null,
+            "stdout": "[order-17:USD:1200, order-18:EUR:2500]\r\n",
+            "stderr": ""
+          },
+          {
+            "name": "frame-case",
+            "exe": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+            "args": [
+              "-cp",
+              "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\serialization-performance-check\\classes",
+              "CompressionReview",
+              "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\serialization-performance-check\\frame.properties"
+            ],
+            "expectedExit": 1,
+            "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\serialization-performance-check",
+            "exitCode": 1,
+            "signal": null,
+            "stdout": "",
+            "stderr": "Exception in thread \"main\" java.io.EOFException: Unexpected end of ZLIB input stream\r\n\tat java.base/java.util.zip.InflaterInputStream.fill(InflaterInputStream.java:310)\r\n\tat java.base/java.util.zip.InflaterInputStream.read(InflaterInputStream.java:208)\r\n\tat java.base/java.util.zip.GZIPInputStream.read(GZIPInputStream.java:155)\r\n\tat java.base/java.io.InputStream.readNBytes(InputStream.java:411)\r\n\tat java.base/java.io.InputStream.readAllBytes(InputStream.java:348)\r\n\tat CompressionReview.decompress(CompressionReview.java:74)\r\n\tat CompressionReview$FrameReceiver.receive(CompressionReview.java:63)\r\n\tat CompressionReview.main(CompressionReview.java:97)\r\n"
+          }
+        ]
+      },
+      "classification": "Executed synthetic fixture correctness validation, not a performance benchmark or an agent behavioral evaluation.",
+      "controls": [
+        "Continuous consumer accepts completed shared GZIP session.",
+        "Independent-frame consumer rejects incomplete first member (EOFException).",
+        "Continuous consumer rejects a truncated final trailer (EOFException).",
+        "Independent-frame consumer accepts complete GZIP member per record."
+      ],
+      "target": "Compiled with --release 17 on Temurin javac 25.0.3; ran on Temurin 25.0.3+9-LTS. This does not execute or establish behavior on a Java 17 VM."
+    },
+    "baselineCommands": [
+      {
+        "command": "rg --files skills/serialization-performance",
+        "cwd": "C:/git/agent-skills",
+        "result": {
+          "status": "fulfilled",
+          "value": {
+            "chunk_id": "dc25c2",
+            "wall_time_seconds": 0.0897224,
+            "exit_code": 0,
+            "original_token_count": 56,
+            "output": "skills/serialization-performance\\skill.yaml\nskills/serialization-performance\\SKILL.md\nskills/serialization-performance\\references\\format-selection.md\nskills/serialization-performance\\references\\benchmarking-serialisers.md\n"
+          }
+        }
+      },
+      {
+        "command": "rg --files -g AGENTS.md skills/serialization-performance",
+        "cwd": "C:/git/agent-skills",
+        "result": {
+          "status": "fulfilled",
+          "value": {
+            "chunk_id": "981d4c",
+            "wall_time_seconds": 0.0642424,
+            "exit_code": 1,
+            "original_token_count": 0,
+            "output": ""
+          }
+        }
+      },
+      {
+        "command": "git status --short -- skills/serialization-performance",
+        "cwd": "C:/git/agent-skills",
+        "result": {
+          "status": "fulfilled",
+          "value": {
+            "chunk_id": "5971fb",
+            "wall_time_seconds": 0.0864429,
+            "exit_code": 0,
+            "original_token_count": 0,
+            "output": ""
+          }
+        }
+      },
+      {
+        "command": "git diff -- skills/serialization-performance",
+        "cwd": "C:/git/agent-skills",
+        "result": {
+          "status": "fulfilled",
+          "value": {
+            "chunk_id": "cfa223",
+            "wall_time_seconds": 0.068437,
+            "exit_code": 0,
+            "original_token_count": 0,
+            "output": ""
+          }
+        }
+      },
+      {
+        "command": "git diff --cached -- skills/serialization-performance",
+        "cwd": "C:/git/agent-skills",
+        "result": {
+          "status": "fulfilled",
+          "value": {
+            "chunk_id": "07877b",
+            "wall_time_seconds": 0.086117,
+            "exit_code": 0,
+            "original_token_count": 0,
+            "output": ""
+          }
+        }
+      },
+      {
+        "command": "git show HEAD:skills/serialization-performance/skill.yaml",
+        "cwd": "C:/git/agent-skills",
+        "result": {
+          "status": "fulfilled",
+          "value": {
+            "chunk_id": "210834",
+            "wall_time_seconds": 0.1110851,
+            "exit_code": 0,
+            "original_token_count": 443,
+            "output": "schemaVersion: 1\n\nname: serialization-performance\nversion: 1.1.4\ndescription: >-\n  Engineering serialization cost as a system budget across encode/decode CPU, allocation and\n  retention, wire/storage bytes, copies, buffers, compression, schema evolution, compatibility,\n  security, and rollout. Covers format/library selection by workload and contract, streaming\n  versus materialization, buffer ownership/backpressure, representative JMH/component/load\n  experiments, production attribution, and mixed-version failure tests. Use when serialization\n  is measured hot, a new wire/cache/topic format is chosen, or “zero-copy”/binary-format claims\n  need validation. General benchmark mechanics, schema governance, and Java native-serialization\n  hardening have separate owners.\n\nlicense: Apache-2.0\n\nauthors:\n  - name: agent-skills contributors\n    url: https://github.com/robsonkades/agent-skills\n\nhomepage: https://github.com/robsonkades/agent-skills/tree/main/skills/serialization-performance\nrepository:\n  type: git\n  url: https://github.com/robsonkades/agent-skills\n  directory: skills/serialization-performance\n\nkeywords:\n  - java\n  - serialization\n  - protobuf\n  - avro\n  - kryo\n  - jmh\n  - allocation\n\nfiles:\n  - SKILL.md\n  - skill.yaml\n  - references/\n\ndependencies:\n  - name: jmh-microbenchmarks\n    version: ^1.0.0\n\nsuggests:\n  - schema-evolution-and-compatibility\n  - java-serialization-hardening\n  - load-testing\n  - off-heap-memory\n  - jmh-advanced\n\ncapabilities:\n  - reads-source\n\nagentOverrides:\n  codex:\n    interface:\n      display_name: Serialization Performance\n      short_description: Format choice, allocation and honest benchmarks\n      default_prompt: Use Serialization Performance to choose or justify the serialisation format on this path.\n"
+          }
+        }
+      },
+      {
+        "command": "$ErrorActionPreference='Stop'\nGet-ChildItem -LiteralPath 'skills/serialization-performance' -Recurse -File | ForEach-Object { [pscustomobject]@{path=$_.FullName.Substring((Get-Location).Path.Length+1);sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash;content=[System.IO.File]::ReadAllText($_.FullName)} } | ConvertTo-Json -Depth 3",
+        "cwd": "C:/git/agent-skills",
+        "result": {
+          "exitCode": 0,
+          "summary": "Full contents and SHA256 of four files captured; hashes retained above."
+        }
+      }
+    ],
+    "finalCommands": [
+      {
+        "command": "git status --short -- skills/serialization-performance",
+        "cwd": "C:/git/agent-skills",
+        "result": {
+          "status": "fulfilled",
+          "value": {
+            "chunk_id": "6b3f0a",
+            "wall_time_seconds": 0.1029179,
+            "exit_code": 0,
+            "original_token_count": 0,
+            "output": ""
+          }
+        }
+      },
+      {
+        "command": "git diff -- skills/serialization-performance",
+        "cwd": "C:/git/agent-skills",
+        "result": {
+          "status": "fulfilled",
+          "value": {
+            "chunk_id": "b45fa5",
+            "wall_time_seconds": 0.0691705,
+            "exit_code": 0,
+            "original_token_count": 0,
+            "output": ""
+          }
+        }
+      },
+      {
+        "command": "git diff --cached -- skills/serialization-performance",
+        "cwd": "C:/git/agent-skills",
+        "result": {
+          "status": "fulfilled",
+          "value": {
+            "chunk_id": "075b1a",
+            "wall_time_seconds": 0.0910526,
+            "exit_code": 0,
+            "original_token_count": 0,
+            "output": ""
+          }
+        }
+      },
+      {
+        "command": "$ErrorActionPreference='Stop'\nGet-ChildItem -LiteralPath 'skills/serialization-performance' -Recurse -File | ForEach-Object { [pscustomobject]@{path=$_.FullName.Substring((Get-Location).Path.Length+1);sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash} } | ConvertTo-Json -Depth 3",
+        "cwd": "C:/git/agent-skills",
+        "result": {
+          "status": "fulfilled",
+          "value": {
+            "chunk_id": "735b21",
+            "wall_time_seconds": 0.1529133,
+            "exit_code": 0,
+            "original_token_count": 169,
+            "output": "[\r\n  {\r\n    \"path\": \"skills\\\\serialization-performance\\\\SKILL.md\",\r\n    \"sha256\": \"680AC209AB128D307A0F60BC44C943F1B1B142AC8B568753BA39C161B225A210\"\r\n  },\r\n  {\r\n    \"path\": \"skills\\\\serialization-performance\\\\skill.yaml\",\r\n    \"sha256\": \"2DC99A250D775E301745F6492DEEF1465608538F7FA4050CA71F168F61DACB0F\"\r\n  },\r\n  {\r\n    \"path\": \"skills\\\\serialization-performance\\\\references\\\\benchmarking-serialisers.md\",\r\n    \"sha256\": \"BD9AF63BCBF86A7D2FE304B78DE1BFDD7DB6518E086C72A0D790699DA4099155\"\r\n  },\r\n  {\r\n    \"path\": \"skills\\\\serialization-performance\\\\references\\\\format-selection.md\",\r\n    \"sha256\": \"589DDFCF0FE4765F9F3240D9B76CE13C4490C6A84D3EEA60DDEFBB219C3CC9E9\"\r\n  }\r\n]\r\n"
+          }
+        }
+      },
+      {
+        "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/serialization-performance-check/result.json' -Raw",
+        "cwd": "C:/git/agent-skills",
+        "result": {
+          "status": "fulfilled",
+          "value": {
+            "chunk_id": "bb4f59",
+            "wall_time_seconds": 0.098462,
+            "exit_code": 0,
+            "original_token_count": 1091,
+            "output": "{\n  \"kind\": \"technical fixture validation, not agent or performance evaluation\",\n  \"compilerRelease\": 17,\n  \"results\": [\n    {\n      \"name\": \"toolchain\",\n      \"exe\": \"C:\\\\Users\\\\robso\\\\.jdks\\\\temurin-25.0.3\\\\bin\\\\java.exe\",\n      \"args\": [\n        \"-version\"\n      ],\n      \"expectedExit\": 0,\n      \"cwd\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave3-validation-wyg7TL\\\\serialization-performance-check\",\n      \"exitCode\": 0,\n      \"signal\": null,\n      \"stdout\": \"\",\n      \"stderr\": \"openjdk version \\\"25.0.3\\\" 2026-04-21 LTS\\r\\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\\r\\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\\r\\n\"\n    },\n    {\n      \"name\": \"compile\",\n      \"exe\": \"C:\\\\Users\\\\robso\\\\.jdks\\\\temurin-25.0.3\\\\bin\\\\javac.exe\",\n      \"args\": [\n        \"--release\",\n        \"17\",\n        \"-d\",\n        \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave3-validation-wyg7TL\\\\serialization-performance-check\\\\classes\",\n        \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave3-validation-wyg7TL\\\\serialization-performance-check\\\\CompressionReview.java\",\n        \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave3-validation-wyg7TL\\\\serialization-performance-check\\\\FixtureChecks.java\"\n      ],\n      \"expectedExit\": 0,\n      \"cwd\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave3-validation-wyg7TL\\\\serialization-performance-check\",\n      \"exitCode\": 0,\n      \"signal\": null,\n      \"stdout\": \"\",\n      \"stderr\": \"\"\n    },\n    {\n      \"name\": \"controls\",\n      \"exe\": \"C:\\\\Users\\\\robso\\\\.jdks\\\\temurin-25.0.3\\\\bin\\\\java.exe\",\n      \"args\": [\n        \"-cp\",\n        \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave3-validation-wyg7TL\\\\serialization-performance-check\\\\classes\",\n        \"FixtureChecks\"\n      ],\n      \"expectedExit\": 0,\n      \"cwd\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave3-validation-wyg7TL\\\\serialization-performance-check\",\n      \"exitCode\": 0,\n      \"signal\": null,\n      \"stdout\": \"PASS continuous-consumer accepts completed session\\r\\nPASS Independent consumer must reject unfinished members [EOFException]\\r\\nPASS Continuous consumer must reject truncated final trailer [EOFException]\\r\\nPASS independent-consumer accepts complete members\\r\\n\",\n      \"stderr\": \"\"\n    },\n    {\n      \"name\": \"stream-case\",\n      \"exe\": \"C:\\\\Users\\\\robso\\\\.jdks\\\\temurin-25.0.3\\\\bin\\\\java.exe\",\n      \"args\": [\n        \"-cp\",\n        \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave3-validation-wyg7TL\\\\serialization-performance-check\\\\classes\",\n        \"CompressionReview\",\n        \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave3-validation-wyg7TL\\\\serialization-performance-check\\\\stream.properties\"\n      ],\n      \"expectedExit\": 0,\n      \"cwd\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave3-validation-wyg7TL\\\\serialization-performance-check\",\n      \"exitCode\": 0,\n      \"signal\": null,\n      \"stdout\": \"[order-17:USD:1200, order-18:EUR:2500]\\r\\n\",\n      \"stderr\": \"\"\n    },\n    {\n      \"name\": \"frame-case\",\n      \"exe\": \"C:\\\\Users\\\\robso\\\\.jdks\\\\temurin-25.0.3\\\\bin\\\\java.exe\",\n      \"args\": [\n        \"-cp\",\n        \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave3-validation-wyg7TL\\\\serialization-performance-check\\\\classes\",\n        \"CompressionReview\",\n        \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave3-validation-wyg7TL\\\\serialization-performance-check\\\\frame.properties\"\n      ],\n      \"expectedExit\": 1,\n      \"cwd\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave3-validation-wyg7TL\\\\serialization-performance-check\",\n      \"exitCode\": 1,\n      \"signal\": null,\n      \"stdout\": \"\",\n      \"stderr\": \"Exception in thread \\\"main\\\" java.io.EOFException: Unexpected end of ZLIB input stream\\r\\n\\tat java.base/java.util.zip.InflaterInputStream.fill(InflaterInputStream.java:310)\\r\\n\\tat java.base/java.util.zip.InflaterInputStream.read(InflaterInputStream.java:208)\\r\\n\\tat java.base/java.util.zip.GZIPInputStream.read(GZIPInputStream.java:155)\\r\\n\\tat java.base/java.io.InputStream.readNBytes(InputStream.java:411)\\r\\n\\tat java.base/java.io.InputStream.readAllBytes(InputStream.java:348)\\r\\n\\tat CompressionReview.decompress(CompressionReview.java:74)\\r\\n\\tat CompressionReview$FrameReceiver.receive(CompressionReview.java:63)\\r\\n\\tat CompressionReview.main(CompressionReview.java:97)\\r\\n\"\n    }\n  ]\n}\n\r\n"
+          }
+        }
+      }
+    ],
+    "prerequisites": {
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "ba9760",
+        "wall_time_seconds": 0.1499757,
+        "exit_code": 1,
+        "original_token_count": 77,
+        "output": "[\r\n  {\r\n    \"path\": \"C:/Users/robso/.m2/repository/com/google/protobuf/protobuf-java/4.36.2/protobuf-java-4.36.2.jar\",\r\n    \"exists\": false\r\n  },\r\n  {\r\n    \"path\": \"C:/Users/robso/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.18.0/jackson-databind-2.18.0.jar\",\r\n    \"exists\": false\r\n  }\r\n]\r\n"
+      }
+    },
+    "sourceCheck": "Primary sources inspected as detailed below. Not all documented codec behaviors were re-executed.",
+    "failures": "No unexpected local validation failure. Expected negative controls rejected incomplete compressed output. Scoped AGENTS search and existing serialization artifact search returned no matches; exact protobuf-java 4.36.2 and jackson-databind 2.18.0 Maven-cache paths probed were absent. No dependency was fetched.",
+    "behavioralEvaluations": {
+      "executed": false,
+      "actualAgentOutputs": [],
+      "comparison": "Not performed; coordinator owns independent evaluations.",
+      "measuredImprovement": "Not measured or claimed."
+    },
+    "walkthroughs": [
+      "Structured case analysis traces the same candidate encoder through the selected factory/consumer. Only receiver.mode changes; correct contract decision changes.",
+      "Reviewed missing-cost evidence: both cases permit correctness conclusions and a measurement plan but no performance gain claim."
+    ]
+  },
+  "sources": [
+    {
+      "url": "https://github.com/protocolbuffers/protobuf/blob/v36.2/java/core/src/main/java/com/google/protobuf/AbstractParser.java",
+      "version": "protobuf v36.2 / Java 4.36.2",
+      "supports": "Delimited parsing reads a varint size and wraps a LimitedInputStream without independently checking that all announced bytes arrived.",
+      "limitation": "Source inspection; the exact Int32Value byte example was not re-executed because the probed local 4.36.2 jar path was absent."
+    },
+    {
+      "url": "https://github.com/FasterXML/jackson-databind/blob/jackson-databind-3.0.0/src/main/java/tools/jackson/databind/DeserializationFeature.java",
+      "version": "jackson-databind 3.0.0",
+      "supports": "Enum defaults for unknown properties=false, null primitives=true and trailing tokens=true.",
+      "limitation": "Library defaults are not the deployed mapper's effective configuration."
+    },
+    {
+      "url": "https://github.com/FasterXML/jackson-databind/blob/jackson-databind-2.18.0/src/main/java/com/fasterxml/jackson/databind/ObjectMapper.java",
+      "version": "jackson-databind 2.18.0",
+      "supports": "Mapper configuration before first read/write and immutable ObjectReader/ObjectWriter alternatives.",
+      "limitation": "Source inspection; no Jackson workload was executed."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/zip/GZIPOutputStream.html",
+      "version": "Java SE 17",
+      "supports": "SYNC_FLUSH is conditional, finish completes compressed output without closing the underlying stream, and close handles completion/resource release.",
+      "limitation": "Technical fixture ran on Temurin 25, with --release 17 compilation; no Java 17 runtime execution."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/ObjectOutputStream.html",
+      "version": "Java SE 17",
+      "supports": "Object identity/back-references, reset within an existing stream and writeUnshared applying to the base object rather than all transitive references.",
+      "limitation": "Contract review; not re-executed in this assignment."
+    },
+    {
+      "url": "https://github.com/EsotericSoftware/kryo/blob/kryo-parent-5.6.2/src/com/esotericsoftware/kryo/io/Output.java",
+      "version": "Kryo 5.6.2",
+      "supports": "Output.reset changes position/total; getBuffer exposes backing storage; toBytes copies the used range.",
+      "limitation": "Versioned implementation, not a universal buffer-reset contract."
+    },
+    {
+      "url": "https://github.com/EsotericSoftware/kryo/blob/kryo-parent-5.6.2/src/com/esotericsoftware/kryo/Kryo.java",
+      "version": "Kryo 5.6.2",
+      "supports": "Graph reset clears graph/reference/copy state and delegates to the class resolver.",
+      "limitation": "Custom serializers/resolvers still require their own contract review."
+    },
+    {
+      "url": "https://github.com/EsotericSoftware/kryo/blob/kryo-parent-5.6.2/src/com/esotericsoftware/kryo/util/DefaultClassResolver.java",
+      "version": "Kryo 5.6.2",
+      "supports": "Default resolver reset clears name-ID tracking as applicable, not explicit registration maps.",
+      "limitation": "Default implementation source inspected."
+    },
+    {
+      "url": "https://avro.apache.org/docs/1.12.0/specification/",
+      "version": "Avro 1.12.0",
+      "supports": "Record fields encoded in declared order; defaults participate in reading missing fields and do not omit field encoding.",
+      "limitation": "Specification review; no Avro workload executed."
+    },
+    {
+      "url": "https://protobuf.dev/programming-guides/serialization-not-canonical/",
+      "version": "Official unversioned guide, accessed 2026-10-16",
+      "supports": "Deterministic serialization is not a canonical byte guarantee across all relevant versions/configurations.",
+      "limitation": "Conceptual current documentation, not a pinned release runtime experiment."
+    }
+  ],
+  "evidencePaths": [
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/serialization-performance-check/CompressionReview.java",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/serialization-performance-check/FixtureChecks.java",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/serialization-performance-check/stream.properties",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/serialization-performance-check/frame.properties",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/serialization-performance-check/run-check.mjs",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/serialization-performance-check/toolchain.log",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/serialization-performance-check/compile.log",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/serialization-performance-check/controls.log",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/serialization-performance-check/stream-case.log",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/serialization-performance-check/frame-case.log",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/serialization-performance-check/result.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/serialization-performance.json"
+  ],
+  "cases": [
+    {
+      "id": "gzip-selected-receiver-a",
+      "input": {
+        "request": "Review the proposed CandidateEncoder reuse for this Java 17 application. Follow the selected receiver from receiver.properties through the factory and inspect the actual encode/decode boundary. Make the smallest justified encoder change, or preserve it if its output satisfies the deployed consumer contract. The Receiver implementations and selected configuration are fixed integration contracts for this task. Preserve record count, order and values, give a correctness check and a bounded plan for measuring any remaining cost hypothesis; no codec/dependency/toolchain upgrade or fabricated speedup.",
+        "files": {
+          "CompressionReview.java": "import java.io.*;\nimport java.nio.charset.StandardCharsets;\nimport java.nio.file.*;\nimport java.util.*;\nimport java.util.zip.*;\n\npublic class CompressionReview {\n    record Transmission(List<byte[]> chunks, byte[] tail) {}\n\n    static final class CandidateEncoder implements AutoCloseable {\n        private final ByteArrayOutputStream sink = new ByteArrayOutputStream();\n        private final GZIPOutputStream gzip = new GZIPOutputStream(sink, true);\n\n        CandidateEncoder() throws IOException {}\n\n        byte[] encode(String record) throws IOException {\n            gzip.write((record + \"\\n\").getBytes(StandardCharsets.UTF_8));\n            gzip.flush();\n            return drain();\n        }\n\n        byte[] finish() throws IOException {\n            gzip.finish();\n            return drain();\n        }\n\n        private byte[] drain() {\n            byte[] bytes = sink.toByteArray();\n            sink.reset();\n            return bytes;\n        }\n\n        public void close() throws IOException {\n            gzip.close();\n        }\n    }\n\n    interface Receiver {\n        List<String> receive(Transmission transmission) throws IOException;\n    }\n\n    static Receiver receiver(Properties properties) {\n        return switch (properties.getProperty(\"receiver.mode\")) {\n            case \"stream\" -> new StreamReceiver();\n            case \"frame\" -> new FrameReceiver();\n            default -> throw new IllegalArgumentException(\"Unknown receiver.mode\");\n        };\n    }\n\n    static final class StreamReceiver implements Receiver {\n        public List<String> receive(Transmission transmission) throws IOException {\n            ByteArrayOutputStream stream = new ByteArrayOutputStream();\n            for (byte[] chunk : transmission.chunks()) stream.write(chunk);\n            stream.write(transmission.tail());\n            return records(decompress(stream.toByteArray()));\n        }\n    }\n\n    static final class FrameReceiver implements Receiver {\n        public List<String> receive(Transmission transmission) throws IOException {\n            List<String> result = new ArrayList<>();\n            for (byte[] frame : transmission.chunks()) {\n                List<String> decoded = records(decompress(frame));\n                if (decoded.size() != 1) throw new IOException(\"One record per frame required\");\n                result.addAll(decoded);\n            }\n            if (transmission.tail().length != 0) throw new IOException(\"Unexpected out-of-frame tail\");\n            return result;\n        }\n    }\n\n    static String decompress(byte[] bytes) throws IOException {\n        try (GZIPInputStream gzip = new GZIPInputStream(new ByteArrayInputStream(bytes))) {\n            return new String(gzip.readAllBytes(), StandardCharsets.UTF_8);\n        }\n    }\n\n    static List<String> records(String text) throws IOException {\n        if (!text.endsWith(\"\\n\")) throw new IOException(\"Incomplete record\");\n        return text.lines().toList();\n    }\n\n    static Transmission encode(List<String> records) throws IOException {\n        try (CandidateEncoder encoder = new CandidateEncoder()) {\n            List<byte[]> chunks = new ArrayList<>();\n            for (String record : records) chunks.add(encoder.encode(record));\n            return new Transmission(List.copyOf(chunks), encoder.finish());\n        }\n    }\n\n    public static void main(String[] args) throws IOException {\n        Properties properties = new Properties();\n        try (Reader reader = Files.newBufferedReader(Path.of(args[0]))) {\n            properties.load(reader);\n        }\n        List<String> expected = List.of(\"order-17:USD:1200\", \"order-18:EUR:2500\");\n        List<String> actual = receiver(properties).receive(encode(expected));\n        if (!actual.equals(expected)) throw new AssertionError(\"Wrong record count, order or values\");\n        System.out.println(actual);\n    }\n}\n",
+          "receiver.properties": "receiver.mode=stream\n"
+        },
+        "prerequisites": [
+          "JDK with Java 17 language/API support; no external dependencies.",
+          "Materialize these two input files into an isolated working directory; do not supply the evaluator with FixtureChecks.java, local result logs or criteria."
+        ],
+        "reproduction": [
+          "javac --release 17 -d classes CompressionReview.java",
+          "java -cp classes CompressionReview receiver.properties"
+        ],
+        "context": "Synthetic development fixture. No timing or allocation measurements have been provided. The supplied main independently checks expected records after the selected consumer reads to EOF."
+      },
+      "criteria": {
+        "must": [
+          "Trace receiver.properties -> receiver(Properties) -> StreamReceiver, rather than assuming every byte[] is an independent member.",
+          "Recognize that the chunks plus final tail form one completed GZIP member and that the selected consumer reads that continuous stream.",
+          "Preserve a legitimate continuous-stream design, including SYNC_FLUSH where the delivery contract requires incremental visibility and eventual finish/trailer/close.",
+          "Validate full session decoding, count/order/values and a truncated final trailer negative control; avoid accepting a decoded prefix alone.",
+          "Describe performance as unmeasured. If measurement is needed, include the session's initialization, flush policy, finalization and equivalent record/byte denominators; do not compare unfinished chunks with complete independent messages."
+        ],
+        "failure": [
+          "Forces a GZIP member per chunk solely because the encoder returns byte[].",
+          "Deletes finish/final tail or treats ordinary flush as completion.",
+          "Changes the selected consumer/configuration to make the proposal work.",
+          "Claims throughput/allocation gains from passing the correctness fixture."
+        ],
+        "observableBaseline": "The supplied fixture succeeds and prints both expected records on the locally exercised Temurin 25.0.3 runtime. The separate technical control rejects a truncated final trailer.",
+        "recommendationChange": "Accept this output structure as contract-compatible; retain the measurement hypothesis as unproven."
+      }
+    },
+    {
+      "id": "gzip-selected-receiver-b",
+      "input": {
+        "request": "Review the proposed CandidateEncoder reuse for this Java 17 application. Follow the selected receiver from receiver.properties through the factory and inspect the actual encode/decode boundary. Make the smallest justified encoder change, or preserve it if its output satisfies the deployed consumer contract. The Receiver implementations and selected configuration are fixed integration contracts for this task. Preserve record count, order and values, give a correctness check and a bounded plan for measuring any remaining cost hypothesis; no codec/dependency/toolchain upgrade or fabricated speedup.",
+        "files": {
+          "CompressionReview.java": "import java.io.*;\nimport java.nio.charset.StandardCharsets;\nimport java.nio.file.*;\nimport java.util.*;\nimport java.util.zip.*;\n\npublic class CompressionReview {\n    record Transmission(List<byte[]> chunks, byte[] tail) {}\n\n    static final class CandidateEncoder implements AutoCloseable {\n        private final ByteArrayOutputStream sink = new ByteArrayOutputStream();\n        private final GZIPOutputStream gzip = new GZIPOutputStream(sink, true);\n\n        CandidateEncoder() throws IOException {}\n\n        byte[] encode(String record) throws IOException {\n            gzip.write((record + \"\\n\").getBytes(StandardCharsets.UTF_8));\n            gzip.flush();\n            return drain();\n        }\n\n        byte[] finish() throws IOException {\n            gzip.finish();\n            return drain();\n        }\n\n        private byte[] drain() {\n            byte[] bytes = sink.toByteArray();\n            sink.reset();\n            return bytes;\n        }\n\n        public void close() throws IOException {\n            gzip.close();\n        }\n    }\n\n    interface Receiver {\n        List<String> receive(Transmission transmission) throws IOException;\n    }\n\n    static Receiver receiver(Properties properties) {\n        return switch (properties.getProperty(\"receiver.mode\")) {\n            case \"stream\" -> new StreamReceiver();\n            case \"frame\" -> new FrameReceiver();\n            default -> throw new IllegalArgumentException(\"Unknown receiver.mode\");\n        };\n    }\n\n    static final class StreamReceiver implements Receiver {\n        public List<String> receive(Transmission transmission) throws IOException {\n            ByteArrayOutputStream stream = new ByteArrayOutputStream();\n            for (byte[] chunk : transmission.chunks()) stream.write(chunk);\n            stream.write(transmission.tail());\n            return records(decompress(stream.toByteArray()));\n        }\n    }\n\n    static final class FrameReceiver implements Receiver {\n        public List<String> receive(Transmission transmission) throws IOException {\n            List<String> result = new ArrayList<>();\n            for (byte[] frame : transmission.chunks()) {\n                List<String> decoded = records(decompress(frame));\n                if (decoded.size() != 1) throw new IOException(\"One record per frame required\");\n                result.addAll(decoded);\n            }\n            if (transmission.tail().length != 0) throw new IOException(\"Unexpected out-of-frame tail\");\n            return result;\n        }\n    }\n\n    static String decompress(byte[] bytes) throws IOException {\n        try (GZIPInputStream gzip = new GZIPInputStream(new ByteArrayInputStream(bytes))) {\n            return new String(gzip.readAllBytes(), StandardCharsets.UTF_8);\n        }\n    }\n\n    static List<String> records(String text) throws IOException {\n        if (!text.endsWith(\"\\n\")) throw new IOException(\"Incomplete record\");\n        return text.lines().toList();\n    }\n\n    static Transmission encode(List<String> records) throws IOException {\n        try (CandidateEncoder encoder = new CandidateEncoder()) {\n            List<byte[]> chunks = new ArrayList<>();\n            for (String record : records) chunks.add(encoder.encode(record));\n            return new Transmission(List.copyOf(chunks), encoder.finish());\n        }\n    }\n\n    public static void main(String[] args) throws IOException {\n        Properties properties = new Properties();\n        try (Reader reader = Files.newBufferedReader(Path.of(args[0]))) {\n            properties.load(reader);\n        }\n        List<String> expected = List.of(\"order-17:USD:1200\", \"order-18:EUR:2500\");\n        List<String> actual = receiver(properties).receive(encode(expected));\n        if (!actual.equals(expected)) throw new AssertionError(\"Wrong record count, order or values\");\n        System.out.println(actual);\n    }\n}\n",
+          "receiver.properties": "receiver.mode=frame\n"
+        },
+        "prerequisites": [
+          "JDK with Java 17 language/API support; no external dependencies.",
+          "Materialize these two input files into an isolated working directory; do not supply the evaluator with FixtureChecks.java, local result logs or criteria."
+        ],
+        "reproduction": [
+          "javac --release 17 -d classes CompressionReview.java",
+          "java -cp classes CompressionReview receiver.properties"
+        ],
+        "context": "Synthetic development fixture. No timing or allocation measurements have been provided. The supplied main independently checks expected records after the selected consumer reads to EOF."
+      },
+      "criteria": {
+        "must": [
+          "Trace receiver.properties -> receiver(Properties) -> FrameReceiver, which reads every frame as a complete independent GZIP member.",
+          "Reject the proposed shared compressed session for this consumer; the first chunk cannot be consumed to member EOF and later chunks do not begin independent members.",
+          "Correct encoder output to produce a complete GZIP member per record, including its header/trailer/finalization, with no out-of-frame session tail. Preserve the fixed receiver contract.",
+          "Validate at least two distinct records and independent consumption of each resulting member, with count/order/values and truncated-member rejection.",
+          "Treat initialization/finalization and equivalent independent-message work as part of any proposed cost comparison; state that no speedup was measured."
+        ],
+        "failure": [
+          "Approves write+flush as a completed independent GZIP message.",
+          "Catches EOF and accepts the decoded prefix, drops records, joins frames or changes the fixed consumer/configuration.",
+          "Fixes only the out-of-frame tail while leaving incomplete frame contents.",
+          "Recommends a format migration, dependency upgrade or benchmark as a substitute for establishing framing correctness."
+        ],
+        "observableBaseline": "The supplied fixture exits with EOFException on the locally exercised Temurin 25.0.3 runtime. A separate positive control with complete independent members succeeds.",
+        "recommendationChange": "Reject/repair the encoder for complete independent members before comparing performance."
+      }
+    }
+  ],
+  "casePair": {
+    "decisiveConstraint": "Only receiver.properties changes: receiver.mode=stream versus receiver.mode=frame.",
+    "commonFilesIdentical": true,
+    "evaluationInputIsolation": "Only each case.input is evaluator input. Do not supply criteria, technical controls, result logs or the other case's configuration.",
+    "kind": "Development cases, not unseen holdouts.",
+    "technicalFixtureExecution": "Executed both supplied modes plus four positive/negative controls; no agent was run."
+  },
+  "limitations": [
+    "No package change and no measured incremental behavioral gain.",
+    "No independent agent evaluation or original-versus-revised comparison.",
+    "No performance benchmark, production capture, measured CPU/allocation/latency gain or real application workload.",
+    "JDK 25 running --release 17 output is not a Java 17 runtime test.",
+    "Protobuf/Jackson/Kryo/Avro implementation claims were reviewed in primary sources, not all executed locally; exact probed Maven-cache paths were absent and no downloads were performed.",
+    "The synthetic GZIP fixture validates framing/consumer correctness only, not transport timing, buffering bounds, arbitrary failure injection or deployment compatibility.",
+    "Primary source review and local structural checks do not establish repository-wide validity."
+  ],
+  "crossSkill": [],
+  "coordinatorActions": [
+    "Archive this handoff and retained artifacts.",
+    "If evaluating behavior, supply case.input only and keep criteria/logs separate.",
+    "Run global registry generation and verification after all reviewers have stopped writing."
+  ],
+  "pendingGlobals": [
+    {
+      "command": "npm run registry:build",
+      "reason": "Coordinator-only parallel review step; not run locally. No assigned package change here.",
+      "prerequisite": "All skill authors stopped writing."
+    },
+    {
+      "command": "npm run verify",
+      "reason": "Coordinator-only repository-wide verification; not run locally.",
+      "prerequisite": "All skill authors stopped writing and registry generated."
+    }
+  ]
+}

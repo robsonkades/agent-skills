@@ -1,0 +1,1 @@
+Extracted unchanged status method and wrote isolated compilation wrapper.

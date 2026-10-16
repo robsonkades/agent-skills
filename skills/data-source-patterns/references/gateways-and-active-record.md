@@ -201,4 +201,4 @@ the same tables.
 - [Fowler: Table Data Gateway](https://martinfowler.com/eaaCatalog/tableDataGateway.html)
 - [Spring Framework 6.1 JdbcClient](https://docs.spring.io/spring-framework/docs/6.1.x/javadoc-api/org/springframework/jdbc/core/simple/JdbcClient.html)
 - [Spring 6.1.21 JpaTransactionManager connection-sharing contract](https://github.com/spring-projects/spring-framework/blob/v6.1.21/spring-orm/src/main/java/org/springframework/orm/jpa/JpaTransactionManager.java)
-- [Jakarta Persistence 3.1 EntityManager flush, clear and refresh](https://jakarta.ee/specifications/persistence/3.1/apidocs/jakarta.persistence/jakarta/persistence/entitymanager)
+- [Jakarta Persistence 3.1 EntityManager flush, clear and refresh](https://jakarta.ee/specifications/persistence/3.1/apidocs/jakarta.persistence/jakarta/persistence/EntityManager.html)

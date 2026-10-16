@@ -1,0 +1,20 @@
+{
+  "disposition": "supported",
+  "basis": "Under docs/contract.md, SettingsRegistry.settings() returns its local observed reference. A stale outer null triggers a recheck under the single construction monitor; same-monitor ordering prevents another build after publication. The only non-null current value is the uniquely constructed Settings. Settings.record is final, its constructor assigns Record.limit=64 before freezing record, and publication follows constructor completion. JLS SE25 17.5.1 covers the subsequent dereference through record to limit despite limit being non-final. The private graph has no escape or later mutation. Thus the current data race does not permit a contract-violating return; mandatory volatile is not justified.",
+  "requiredChange": null,
+  "missingEvidence": [],
+  "checked": [
+    "Read every provided production source, the smoke, README, check.mjs, review request, and accepted contract completely.",
+    "Read local java-memory-model skill and both conditional references completely; verified applicable rules in primary JLS SE25 documentation.",
+    "Analyzed pre-start registry handoff, initial and stale-null paths, same-monitor recheck/publication, unique construction, local return, final freeze and reachable Record.limit state.",
+    "Analyzed builds counter access under the same monitor and the absence of reset, escape, post-publication mutation, reentry, or build failure under the accepted contract.",
+    "Executed supplied sequential smoke using node check.mjs, javac --release 25 and Temurin 25.0.3+9: exit 0, identity/value/build check PASS.",
+    "Compared SHA-256 of all seven supplied project files between input and output before and after execution; all identical and unchanged."
+  ],
+  "limits": [
+    "Finite sequential observations do not prove the JMM contract; the conclusion rests on the code paths and specification guarantees.",
+    "No concurrency stress, jcstress, static analyzer, cross-architecture/JIT matrix, performance, fairness, wait-free or deadline checks were executed or claimed.",
+    "External integration premises are accepted as specified, not independently observed in an absent production caller.",
+    "The proof would need re-evaluation if the accepted no-reset, no-mutation, no-escape, no-reentry, no-failure or before-Thread.start handoff premises changed."
+  ]
+}

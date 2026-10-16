@@ -1,0 +1,757 @@
+{
+  "at": "2026-10-16T19:28:38.562Z",
+  "label": "equivalence",
+  "allExpected": true,
+  "records": [
+    {
+      "caseId": "R1",
+      "variant": "correct-reference",
+      "expectedPass": true,
+      "actualMatch": true,
+      "compile": {
+        "cmd": "javac",
+        "args": [
+          "--release",
+          "17",
+          "-d",
+          "classes",
+          "Contract.java",
+          "Ports.java",
+          "ProbeRetry.java",
+          "RetryEngine.java",
+          "Smoke.java"
+        ],
+        "exit": 0,
+        "error": null,
+        "stdout": "",
+        "stderr": ""
+      },
+      "run": {
+        "cmd": "java",
+        "args": ["-ea", "-cp", "classes", "ProbeRetry"],
+        "exit": 0,
+        "error": null,
+        "stdout": "{\"status\":\"PASS\",\"scenarios\":26,\"assertions\":210,\"replaySafe\":false}\r\n",
+        "stderr": ""
+      }
+    },
+    {
+      "caseId": "R1",
+      "variant": "equivalent-split-wait",
+      "expectedPass": true,
+      "actualMatch": true,
+      "compile": {
+        "cmd": "javac",
+        "args": [
+          "--release",
+          "17",
+          "-d",
+          "classes",
+          "Contract.java",
+          "Ports.java",
+          "ProbeRetry.java",
+          "RetryEngine.java",
+          "Smoke.java"
+        ],
+        "exit": 0,
+        "error": null,
+        "stdout": "",
+        "stderr": ""
+      },
+      "run": {
+        "cmd": "java",
+        "args": ["-ea", "-cp", "classes", "ProbeRetry"],
+        "exit": 0,
+        "error": null,
+        "stdout": "{\"status\":\"PASS\",\"scenarios\":26,\"assertions\":218,\"replaySafe\":false}\r\n",
+        "stderr": ""
+      }
+    },
+    {
+      "caseId": "R1",
+      "variant": "provided-incorrect",
+      "expectedPass": false,
+      "actualMatch": true,
+      "compile": {
+        "cmd": "javac",
+        "args": [
+          "--release",
+          "17",
+          "-d",
+          "classes",
+          "Contract.java",
+          "Ports.java",
+          "ProbeRetry.java",
+          "RetryEngine.java",
+          "Smoke.java"
+        ],
+        "exit": 0,
+        "error": null,
+        "stdout": "",
+        "stderr": ""
+      },
+      "run": {
+        "cmd": "java",
+        "args": ["-ea", "-cp", "classes", "ProbeRetry"],
+        "exit": 1,
+        "error": null,
+        "stdout": "",
+        "stderr": "Exception in thread \"main\" java.lang.AssertionError: stable identity and payload\r\n\tat ProbeRetry.check(ProbeRetry.java:7)\r\n\tat ProbeRetry$Rig.call(ProbeRetry.java:37)\r\n\tat RetryEngine.execute(RetryEngine.java:6)\r\n\tat ProbeRetry$Rig.run(ProbeRetry.java:56)\r\n\tat ProbeRetry.main(ProbeRetry.java:66)\r\n"
+      }
+    },
+    {
+      "caseId": "R1",
+      "variant": "erase-earlier-unknown",
+      "expectedPass": false,
+      "actualMatch": true,
+      "compile": {
+        "cmd": "javac",
+        "args": [
+          "--release",
+          "17",
+          "-d",
+          "classes",
+          "Contract.java",
+          "Ports.java",
+          "ProbeRetry.java",
+          "RetryEngine.java",
+          "Smoke.java"
+        ],
+        "exit": 0,
+        "error": null,
+        "stdout": "",
+        "stderr": ""
+      },
+      "run": {
+        "cmd": "java",
+        "args": ["-ea", "-cp", "classes", "ProbeRetry"],
+        "exit": 1,
+        "error": null,
+        "stdout": "",
+        "stderr": "Exception in thread \"main\" java.lang.AssertionError: outcome UNKNOWN\r\n\tat ProbeRetry.check(ProbeRetry.java:7)\r\n\tat ProbeRetry$Rig.end(ProbeRetry.java:60)\r\n\tat ProbeRetry.main(ProbeRetry.java:70)\r\n"
+      }
+    },
+    {
+      "caseId": "R1",
+      "variant": "truncate-server-minimum",
+      "expectedPass": false,
+      "actualMatch": true,
+      "compile": {
+        "cmd": "javac",
+        "args": [
+          "--release",
+          "17",
+          "-d",
+          "classes",
+          "Contract.java",
+          "Ports.java",
+          "ProbeRetry.java",
+          "RetryEngine.java",
+          "Smoke.java"
+        ],
+        "exit": 0,
+        "error": null,
+        "stdout": "",
+        "stderr": ""
+      },
+      "run": {
+        "cmd": "java",
+        "args": ["-ea", "-cp", "classes", "ProbeRetry"],
+        "exit": 1,
+        "error": null,
+        "stdout": "",
+        "stderr": "Exception in thread \"main\" java.lang.AssertionError: transient guidance and one retry grant\r\n\tat ProbeRetry.check(ProbeRetry.java:7)\r\n\tat ProbeRetry.main(ProbeRetry.java:68)\r\n"
+      }
+    },
+    {
+      "caseId": "R1",
+      "variant": "skip-entry-deadline",
+      "expectedPass": false,
+      "actualMatch": true,
+      "compile": {
+        "cmd": "javac",
+        "args": [
+          "--release",
+          "17",
+          "-d",
+          "classes",
+          "Contract.java",
+          "Ports.java",
+          "ProbeRetry.java",
+          "RetryEngine.java",
+          "Smoke.java"
+        ],
+        "exit": 0,
+        "error": null,
+        "stdout": "",
+        "stderr": ""
+      },
+      "run": {
+        "cmd": "java",
+        "args": ["-ea", "-cp", "classes", "ProbeRetry"],
+        "exit": 1,
+        "error": null,
+        "stdout": "",
+        "stderr": "Exception in thread \"main\" java.lang.AssertionError: attempt fits remaining reserve\r\n\tat ProbeRetry.check(ProbeRetry.java:7)\r\n\tat ProbeRetry$Rig.call(ProbeRetry.java:40)\r\n\tat RetryEngine.execute(RetryEngine.java:23)\r\n\tat ProbeRetry$Rig.run(ProbeRetry.java:56)\r\n\tat ProbeRetry.main(ProbeRetry.java:84)\r\n"
+      }
+    },
+    {
+      "caseId": "R1",
+      "variant": "unsafe-replay",
+      "expectedPass": false,
+      "actualMatch": true,
+      "compile": {
+        "cmd": "javac",
+        "args": [
+          "--release",
+          "17",
+          "-d",
+          "classes",
+          "Contract.java",
+          "Ports.java",
+          "ProbeRetry.java",
+          "RetryEngine.java",
+          "Smoke.java"
+        ],
+        "exit": 0,
+        "error": null,
+        "stdout": "",
+        "stderr": ""
+      },
+      "run": {
+        "cmd": "java",
+        "args": ["-ea", "-cp", "classes", "ProbeRetry"],
+        "exit": 1,
+        "error": null,
+        "stdout": "",
+        "stderr": "Exception in thread \"main\" java.lang.AssertionError: attempt accounting\r\n\tat ProbeRetry.check(ProbeRetry.java:7)\r\n\tat ProbeRetry$Rig.end(ProbeRetry.java:59)\r\n\tat ProbeRetry.main(ProbeRetry.java:70)\r\n"
+      }
+    },
+    {
+      "caseId": "R2",
+      "variant": "correct-reference",
+      "expectedPass": true,
+      "actualMatch": true,
+      "compile": {
+        "cmd": "javac",
+        "args": [
+          "--release",
+          "17",
+          "-d",
+          "classes",
+          "Contract.java",
+          "Ports.java",
+          "ProbeRetry.java",
+          "RetryEngine.java",
+          "Smoke.java"
+        ],
+        "exit": 0,
+        "error": null,
+        "stdout": "",
+        "stderr": ""
+      },
+      "run": {
+        "cmd": "java",
+        "args": ["-ea", "-cp", "classes", "ProbeRetry"],
+        "exit": 0,
+        "error": null,
+        "stdout": "{\"status\":\"PASS\",\"scenarios\":26,\"assertions\":262,\"replaySafe\":true}\r\n",
+        "stderr": ""
+      }
+    },
+    {
+      "caseId": "R2",
+      "variant": "equivalent-split-wait",
+      "expectedPass": true,
+      "actualMatch": true,
+      "compile": {
+        "cmd": "javac",
+        "args": [
+          "--release",
+          "17",
+          "-d",
+          "classes",
+          "Contract.java",
+          "Ports.java",
+          "ProbeRetry.java",
+          "RetryEngine.java",
+          "Smoke.java"
+        ],
+        "exit": 0,
+        "error": null,
+        "stdout": "",
+        "stderr": ""
+      },
+      "run": {
+        "cmd": "java",
+        "args": ["-ea", "-cp", "classes", "ProbeRetry"],
+        "exit": 0,
+        "error": null,
+        "stdout": "{\"status\":\"PASS\",\"scenarios\":26,\"assertions\":276,\"replaySafe\":true}\r\n",
+        "stderr": ""
+      }
+    },
+    {
+      "caseId": "R2",
+      "variant": "provided-incorrect",
+      "expectedPass": false,
+      "actualMatch": true,
+      "compile": {
+        "cmd": "javac",
+        "args": [
+          "--release",
+          "17",
+          "-d",
+          "classes",
+          "Contract.java",
+          "Ports.java",
+          "ProbeRetry.java",
+          "RetryEngine.java",
+          "Smoke.java"
+        ],
+        "exit": 0,
+        "error": null,
+        "stdout": "",
+        "stderr": ""
+      },
+      "run": {
+        "cmd": "java",
+        "args": ["-ea", "-cp", "classes", "ProbeRetry"],
+        "exit": 1,
+        "error": null,
+        "stdout": "",
+        "stderr": "Exception in thread \"main\" java.lang.AssertionError: stable identity and payload\r\n\tat ProbeRetry.check(ProbeRetry.java:7)\r\n\tat ProbeRetry$Rig.call(ProbeRetry.java:37)\r\n\tat RetryEngine.execute(RetryEngine.java:6)\r\n\tat ProbeRetry$Rig.run(ProbeRetry.java:56)\r\n\tat ProbeRetry.main(ProbeRetry.java:66)\r\n"
+      }
+    },
+    {
+      "caseId": "R2",
+      "variant": "erase-earlier-unknown",
+      "expectedPass": false,
+      "actualMatch": true,
+      "compile": {
+        "cmd": "javac",
+        "args": [
+          "--release",
+          "17",
+          "-d",
+          "classes",
+          "Contract.java",
+          "Ports.java",
+          "ProbeRetry.java",
+          "RetryEngine.java",
+          "Smoke.java"
+        ],
+        "exit": 0,
+        "error": null,
+        "stdout": "",
+        "stderr": ""
+      },
+      "run": {
+        "cmd": "java",
+        "args": ["-ea", "-cp", "classes", "ProbeRetry"],
+        "exit": 1,
+        "error": null,
+        "stdout": "",
+        "stderr": "Exception in thread \"main\" java.lang.AssertionError: outcome UNKNOWN\r\n\tat ProbeRetry.check(ProbeRetry.java:7)\r\n\tat ProbeRetry$Rig.end(ProbeRetry.java:60)\r\n\tat ProbeRetry.main(ProbeRetry.java:73)\r\n"
+      }
+    },
+    {
+      "caseId": "R2",
+      "variant": "truncate-server-minimum",
+      "expectedPass": false,
+      "actualMatch": true,
+      "compile": {
+        "cmd": "javac",
+        "args": [
+          "--release",
+          "17",
+          "-d",
+          "classes",
+          "Contract.java",
+          "Ports.java",
+          "ProbeRetry.java",
+          "RetryEngine.java",
+          "Smoke.java"
+        ],
+        "exit": 0,
+        "error": null,
+        "stdout": "",
+        "stderr": ""
+      },
+      "run": {
+        "cmd": "java",
+        "args": ["-ea", "-cp", "classes", "ProbeRetry"],
+        "exit": 1,
+        "error": null,
+        "stdout": "",
+        "stderr": "Exception in thread \"main\" java.lang.AssertionError: transient guidance and one retry grant\r\n\tat ProbeRetry.check(ProbeRetry.java:7)\r\n\tat ProbeRetry.main(ProbeRetry.java:68)\r\n"
+      }
+    },
+    {
+      "caseId": "R2",
+      "variant": "skip-entry-deadline",
+      "expectedPass": false,
+      "actualMatch": true,
+      "compile": {
+        "cmd": "javac",
+        "args": [
+          "--release",
+          "17",
+          "-d",
+          "classes",
+          "Contract.java",
+          "Ports.java",
+          "ProbeRetry.java",
+          "RetryEngine.java",
+          "Smoke.java"
+        ],
+        "exit": 0,
+        "error": null,
+        "stdout": "",
+        "stderr": ""
+      },
+      "run": {
+        "cmd": "java",
+        "args": ["-ea", "-cp", "classes", "ProbeRetry"],
+        "exit": 1,
+        "error": null,
+        "stdout": "",
+        "stderr": "Exception in thread \"main\" java.lang.AssertionError: attempt fits remaining reserve\r\n\tat ProbeRetry.check(ProbeRetry.java:7)\r\n\tat ProbeRetry$Rig.call(ProbeRetry.java:40)\r\n\tat RetryEngine.execute(RetryEngine.java:23)\r\n\tat ProbeRetry$Rig.run(ProbeRetry.java:56)\r\n\tat ProbeRetry.main(ProbeRetry.java:79)\r\n"
+      }
+    },
+    {
+      "caseId": "R2",
+      "variant": "lose-ambiguous-advice",
+      "expectedPass": false,
+      "actualMatch": true,
+      "compile": {
+        "cmd": "javac",
+        "args": [
+          "--release",
+          "17",
+          "-d",
+          "classes",
+          "Contract.java",
+          "Ports.java",
+          "ProbeRetry.java",
+          "RetryEngine.java",
+          "Smoke.java"
+        ],
+        "exit": 0,
+        "error": null,
+        "stdout": "",
+        "stderr": ""
+      },
+      "run": {
+        "cmd": "java",
+        "args": ["-ea", "-cp", "classes", "ProbeRetry"],
+        "exit": 1,
+        "error": null,
+        "stdout": "",
+        "stderr": "Exception in thread \"main\" java.lang.AssertionError: ambiguous server guidance or no unsafe replay\r\n\tat ProbeRetry.check(ProbeRetry.java:7)\r\n\tat ProbeRetry.main(ProbeRetry.java:71)\r\n"
+      }
+    },
+    {
+      "caseId": "R2",
+      "variant": "forget-resumed-unknown",
+      "expectedPass": false,
+      "actualMatch": true,
+      "compile": {
+        "cmd": "javac",
+        "args": [
+          "--release",
+          "17",
+          "-d",
+          "classes",
+          "Contract.java",
+          "Ports.java",
+          "ProbeRetry.java",
+          "RetryEngine.java",
+          "Smoke.java"
+        ],
+        "exit": 0,
+        "error": null,
+        "stdout": "",
+        "stderr": ""
+      },
+      "run": {
+        "cmd": "java",
+        "args": ["-ea", "-cp", "classes", "ProbeRetry"],
+        "exit": 1,
+        "error": null,
+        "stdout": "",
+        "stderr": "Exception in thread \"main\" java.lang.AssertionError: outcome UNKNOWN\r\n\tat ProbeRetry.check(ProbeRetry.java:7)\r\n\tat ProbeRetry$Rig.end(ProbeRetry.java:60)\r\n\tat ProbeRetry.main(ProbeRetry.java:77)\r\n"
+      }
+    },
+    {
+      "caseId": "R3",
+      "variant": "correct-reference",
+      "expectedPass": true,
+      "actualMatch": true,
+      "compile": {
+        "cmd": "javac",
+        "args": [
+          "--release",
+          "17",
+          "-d",
+          "classes",
+          "ProbePlan.java",
+          "RetryPlan.java",
+          "Smoke.java"
+        ],
+        "exit": 0,
+        "error": null,
+        "stdout": "",
+        "stderr": ""
+      },
+      "run": {
+        "cmd": "java",
+        "args": ["-ea", "-cp", "classes", "ProbePlan"],
+        "exit": 0,
+        "error": null,
+        "stdout": "{\"status\":\"PASS\",\"scenarios\":532,\"oracle\":\"BigInteger mathematical budget and window; finite deterministic cases\"}\r\n",
+        "stderr": ""
+      }
+    },
+    {
+      "caseId": "R3",
+      "variant": "provided-incorrect",
+      "expectedPass": false,
+      "actualMatch": true,
+      "compile": {
+        "cmd": "javac",
+        "args": [
+          "--release",
+          "17",
+          "-d",
+          "classes",
+          "ProbePlan.java",
+          "RetryPlan.java",
+          "Smoke.java"
+        ],
+        "exit": 0,
+        "error": null,
+        "stdout": "",
+        "stderr": ""
+      },
+      "run": {
+        "cmd": "java",
+        "args": ["-ea", "-cp", "classes", "ProbePlan"],
+        "exit": 1,
+        "error": null,
+        "stdout": "",
+        "stderr": "Exception in thread \"main\" java.lang.AssertionError: full-jitter window saturation/ordinal\r\n\tat ProbePlan.check(ProbePlan.java:5)\r\n\tat ProbePlan.lambda$test$0(ProbePlan.java:16)\r\n\tat RetryPlan.next(RetryPlan.java:9)\r\n\tat ProbePlan.test(ProbePlan.java:16)\r\n\tat ProbePlan.main(ProbePlan.java:26)\r\n"
+      }
+    },
+    {
+      "caseId": "R3",
+      "variant": "absolute-deadline-comparison",
+      "expectedPass": false,
+      "actualMatch": true,
+      "compile": {
+        "cmd": "javac",
+        "args": [
+          "--release",
+          "17",
+          "-d",
+          "classes",
+          "ProbePlan.java",
+          "RetryPlan.java",
+          "Smoke.java"
+        ],
+        "exit": 0,
+        "error": null,
+        "stdout": "",
+        "stderr": ""
+      },
+      "run": {
+        "cmd": "java",
+        "args": ["-ea", "-cp", "classes", "ProbePlan"],
+        "exit": 1,
+        "error": null,
+        "stdout": "",
+        "stderr": "Exception in thread \"main\" java.lang.AssertionError: admission case 224 expected true got Plan[admitted=false, waitNanos=0, attemptNanos=0]\r\n\tat ProbePlan.check(ProbePlan.java:5)\r\n\tat ProbePlan.test(ProbePlan.java:17)\r\n\tat ProbePlan.main(ProbePlan.java:27)\r\n"
+      }
+    },
+    {
+      "caseId": "R3",
+      "variant": "uncapped-shift-overflow",
+      "expectedPass": false,
+      "actualMatch": true,
+      "compile": {
+        "cmd": "javac",
+        "args": [
+          "--release",
+          "17",
+          "-d",
+          "classes",
+          "ProbePlan.java",
+          "RetryPlan.java",
+          "Smoke.java"
+        ],
+        "exit": 0,
+        "error": null,
+        "stdout": "",
+        "stderr": ""
+      },
+      "run": {
+        "cmd": "java",
+        "args": ["-ea", "-cp", "classes", "ProbePlan"],
+        "exit": 1,
+        "error": null,
+        "stdout": "",
+        "stderr": "Exception in thread \"main\" java.lang.AssertionError: full-jitter window saturation/ordinal\r\n\tat ProbePlan.check(ProbePlan.java:5)\r\n\tat ProbePlan.lambda$test$0(ProbePlan.java:16)\r\n\tat RetryPlan.next(RetryPlan.java:16)\r\n\tat ProbePlan.test(ProbePlan.java:16)\r\n\tat ProbePlan.main(ProbePlan.java:26)\r\n"
+      }
+    },
+    {
+      "caseId": "R3",
+      "variant": "floating-point-window-precision",
+      "expectedPass": false,
+      "actualMatch": true,
+      "compile": {
+        "cmd": "javac",
+        "args": [
+          "--release",
+          "17",
+          "-d",
+          "classes",
+          "ProbePlan.java",
+          "RetryPlan.java",
+          "Smoke.java"
+        ],
+        "exit": 0,
+        "error": null,
+        "stdout": "",
+        "stderr": ""
+      },
+      "run": {
+        "cmd": "java",
+        "args": ["-ea", "-cp", "classes", "ProbePlan"],
+        "exit": 1,
+        "error": null,
+        "stdout": "",
+        "stderr": "Exception in thread \"main\" java.lang.AssertionError: full-jitter window saturation/ordinal\r\n\tat ProbePlan.check(ProbePlan.java:5)\r\n\tat ProbePlan.lambda$test$0(ProbePlan.java:16)\r\n\tat RetryPlan.next(RetryPlan.java:16)\r\n\tat ProbePlan.test(ProbePlan.java:16)\r\n\tat ProbePlan.main(ProbePlan.java:28)\r\n"
+      }
+    },
+    {
+      "caseId": "R3",
+      "variant": "truncate-server-minimum",
+      "expectedPass": false,
+      "actualMatch": true,
+      "compile": {
+        "cmd": "javac",
+        "args": [
+          "--release",
+          "17",
+          "-d",
+          "classes",
+          "ProbePlan.java",
+          "RetryPlan.java",
+          "Smoke.java"
+        ],
+        "exit": 0,
+        "error": null,
+        "stdout": "",
+        "stderr": ""
+      },
+      "run": {
+        "cmd": "java",
+        "args": ["-ea", "-cp", "classes", "ProbePlan"],
+        "exit": 1,
+        "error": null,
+        "stdout": "",
+        "stderr": "Exception in thread \"main\" java.lang.AssertionError: wait/reserve/timeout case 9 got Plan[admitted=true, waitNanos=0, attemptNanos=40]\r\n\tat ProbePlan.check(ProbePlan.java:5)\r\n\tat ProbePlan.test(ProbePlan.java:18)\r\n\tat ProbePlan.main(ProbePlan.java:26)\r\n"
+      }
+    },
+    {
+      "caseId": "R3",
+      "variant": "forget-reserve-allocation",
+      "expectedPass": false,
+      "actualMatch": true,
+      "compile": {
+        "cmd": "javac",
+        "args": [
+          "--release",
+          "17",
+          "-d",
+          "classes",
+          "ProbePlan.java",
+          "RetryPlan.java",
+          "Smoke.java"
+        ],
+        "exit": 0,
+        "error": null,
+        "stdout": "",
+        "stderr": ""
+      },
+      "run": {
+        "cmd": "java",
+        "args": ["-ea", "-cp", "classes", "ProbePlan"],
+        "exit": 1,
+        "error": null,
+        "stdout": "",
+        "stderr": "Exception in thread \"main\" java.lang.AssertionError: wait/reserve/timeout case 49 got Plan[admitted=true, waitNanos=49, attemptNanos=40]\r\n\tat ProbePlan.check(ProbePlan.java:5)\r\n\tat ProbePlan.test(ProbePlan.java:18)\r\n\tat ProbePlan.main(ProbePlan.java:26)\r\n"
+      }
+    },
+    {
+      "caseId": "R3",
+      "variant": "off-by-one-attempt-cap",
+      "expectedPass": false,
+      "actualMatch": true,
+      "compile": {
+        "cmd": "javac",
+        "args": [
+          "--release",
+          "17",
+          "-d",
+          "classes",
+          "ProbePlan.java",
+          "RetryPlan.java",
+          "Smoke.java"
+        ],
+        "exit": 0,
+        "error": null,
+        "stdout": "",
+        "stderr": ""
+      },
+      "run": {
+        "cmd": "java",
+        "args": ["-ea", "-cp", "classes", "ProbePlan"],
+        "exit": 1,
+        "error": null,
+        "stdout": "",
+        "stderr": "Exception in thread \"main\" java.lang.AssertionError: admission case 231 expected false got Plan[admitted=true, waitNanos=0, attemptNanos=10]\r\n\tat ProbePlan.check(ProbePlan.java:5)\r\n\tat ProbePlan.test(ProbePlan.java:17)\r\n\tat ProbePlan.main(ProbePlan.java:34)\r\n"
+      }
+    },
+    {
+      "caseId": "R3",
+      "variant": "equivalent-modular-remaining",
+      "expectedPass": true,
+      "actualMatch": true,
+      "compile": {
+        "cmd": "javac",
+        "args": [
+          "--release",
+          "17",
+          "-d",
+          "classes",
+          "ProbePlan.java",
+          "RetryPlan.java",
+          "Smoke.java"
+        ],
+        "exit": 0,
+        "error": null,
+        "stdout": "",
+        "stderr": ""
+      },
+      "run": {
+        "cmd": "java",
+        "args": ["-ea", "-cp", "classes", "ProbePlan"],
+        "exit": 0,
+        "error": null,
+        "stdout": "{\"status\":\"PASS\",\"scenarios\":532,\"oracle\":\"BigInteger mathematical budget and window; finite deterministic cases\"}\r\n",
+        "stderr": ""
+      }
+    }
+  ]
+}

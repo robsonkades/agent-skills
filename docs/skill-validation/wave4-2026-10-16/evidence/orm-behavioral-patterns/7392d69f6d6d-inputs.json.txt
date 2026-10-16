@@ -1,0 +1,25 @@
+{
+  "classification": "Development cases, not independent actor evaluations",
+  "sharedTask": "Revise o job de alteração de email. A operação autorizada pode alterar apenas o email de um contato existente; telefones devem continuar intactos. Preserve o controle de versão do editor e o comportamento já adequado. Investigue o caminho efetivo de entrada, a gravação e a leitura após commit, usando os artefatos. Recomende a menor correção necessária, ou justifique manter o código quando suficiente. Não atualize dependências.",
+  "sharedArtifacts": [
+    "fixtures/OrmFixture.java",
+    "fixtures/EmailUpdateJob.java"
+  ],
+  "prerequisites": {
+    "runtime": "Available cached Hibernate ORM 6.6.33.Final, Jakarta Persistence API 3.1.0, H2 2.3.232; compiled --release 17 and executed on Temurin 25.0.3. No Spring or JTA.",
+    "runner": "run-local.mjs resolves exact existing jars, invokes javac/java directly, no Maven or network installation."
+  },
+  "cases": [
+    {
+      "id": "A",
+      "configuration": "cases/A.properties",
+      "command": "java -cp <recorded exact classpath plus classes> EmailUpdateJob cases/A.properties"
+    },
+    {
+      "id": "B",
+      "configuration": "cases/B.properties",
+      "command": "java -cp <recorded exact classpath plus classes> EmailUpdateJob cases/B.properties"
+    }
+  ],
+  "isolation": "Give evaluator only shared task, common source files and selected properties file, with recorded runtime prerequisites. Do not expose criteria, test controls, observed outputs or this handoff. Only input.adapter differs."
+}

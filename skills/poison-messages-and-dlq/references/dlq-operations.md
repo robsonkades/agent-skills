@@ -111,6 +111,12 @@ effects after an effect succeeds and source acknowledgement fails. Options for q
 - durable transfer ledger keyed by source identity, repeat-safe DLQ publish, then source ack;
 - stop/pause when quarantine cannot be made durable.
 
+Successful Kafka `abortTransaction()` does not rewind records already returned by `poll()`.
+Before a later commit, retry the retained unresolved batch or restore a safe per-partition
+processing position under current ownership. Continuing with fresh records can commit past the
+aborted work even though its DLQ disposition did not commit. Inspect the framework's actual
+rollback/reseek behavior before adding manual seeks; preserve an adequate existing recovery path.
+
 A plain asynchronous DLQ `send()` followed by source acknowledgement loses data when the send
 fails or its outcome is unknown. Retrying publish requires a stable quarantine ID such as
 `(cluster, topic, partition, offset, consumer-purpose)` to reconcile duplicate quarantine attempts.
@@ -234,6 +240,8 @@ transactions, retention or rebalances. Reuse adequate prior evidence for an unch
   redrive uses, or the test proves nothing about the tool you will actually run.
 - **Transfer ambiguity.** Apply DLQ publish then drop its acknowledgement/crash before source
   commit; restart and prove one logical quarantine entry and no source loss.
+  Also abort a transaction after polling without restarting the consumer: verify its unresolved
+  batch is retried or its position restored before any later offset commit can pass that work.
 - **Externalized evidence.** Fail or lose the upload response before publication; source work
   must remain recoverable. Then lose the DLQ acknowledgement after a successful upload and
   verify cleanup cannot remove a referenced blob. Exercise delayed replay with object expiry,

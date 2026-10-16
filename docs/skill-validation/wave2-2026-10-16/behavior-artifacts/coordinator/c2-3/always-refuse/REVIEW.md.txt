@@ -1,0 +1,27 @@
+# Account concurrency test review
+
+The original conservation/accounting assertions accept an implementation that always refuses withdrawals. The local contract requires acceptance when the gate is free and funds are sufficient. `test/AccountTest.java` now checks uncontended withdrawals of 10 and then the remaining 90 from an initial 100, asserting both successful outcomes and exact balances.
+
+The existing 20 stress repetitions remain: 32 virtual workers, 1,000 attempts each, a five-second start barrier, retained Futures sharing a 20-second result budget, cancellation/shutdown in `finally`, and a separate two-second termination assertion that preserves worker failures. Nonnegative balance, conservation, and complete attempt accounting are unchanged. Contention permits refusals, so neither complete depletion nor a fixed concurrent success count is asserted. The gate-holding hook was unnecessary for the free-gate positive control; a mandatory busy refusal would exceed the contract.
+
+## Commands and observed results
+
+All commands ran in this task directory. [Exact PowerShell commands](.logs/commands.md) include logging, isolation setup, and hash comparison.
+
+| Invocation | Observed result |
+| --- | --- |
+| `node check.mjs` before editing | Exit 0; 20 started, 20 successful, no skipped/aborted/failed tests; 114 ms reported test time. [Log](.logs/baseline-check.txt) |
+| `node check.mjs` after editing | Exit 0; 21 started, 21 successful, no skipped/aborted/failed tests; 124 ms reported test time. [Log](.logs/final-check.txt) |
+| `node .logs/always-refuse-control/check.mjs` | Expected exit 1; new uncontended test failed on its first acceptance assertion; all 20 stress repetitions still passed. [Log](.logs/always-refuse-control.txt) |
+| `& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -version` | Temurin 25.0.3+9. [Log](.logs/toolchain.txt) |
+| `& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' -version` | javac 25.0.3. |
+
+The faulty control changes only an isolated copy under `.logs/always-refuse-control`, returning false for every positive amount. Production `src/Account.java` was never edited. SHA-256 comparison also confirms `check.mjs`, `tools/TestRunner.java`, `README.md`, and the contract are unchanged. [Integrity evidence](.logs/source-integrity.txt). Compilation still uses `--release 21`, no preview, cached Jupiter 5.11.4 and Platform 1.11.4, and the supplied 60-second subprocess deadlines. No dependencies were installed.
+
+## Limits and access record
+
+Passing runs show no checked invariant failed in these sampled executions; they do not prove thread safety, linearizability, transient balance safety, or correctness across other schedules, hardware, JDKs, or worker counts. The control establishes sensitivity only to universal refusal. Tests retain the existing virtual-thread contention shape, and no soak was justified by this fixture. The harness records worker completion/failure and checks aggregate outcomes; it does not print individual successful/refused counts. JUnit interruption and bounded cleanup cannot forcibly stop uncooperative Java work; the existing subprocess deadline remains the outer limit.
+
+Read: `TASK.md`, `README.md`, `docs/account-contract.md`, `src/Account.java`, `test/AccountTest.java`, `tools/TestRunner.java`, `check.mjs`, `.resources/skill/SKILL.md`, `.resources/skill/references/deterministic-tests.md`, and `.resources/skill/references/stress-and-soak.md`, plus this run's own hash/log artifacts. The declared JDK and cached dependency jars were used by the checks. No sibling tasks, repository reports, installed skills, comparison answers, or evaluator materials were read; no accidental access outside the allowed files occurred.
+
+All writes are stopped. Deliverables are the test correction, this report, and retained local evidence under `.logs/` (with compiled classes created by the supplied checks).

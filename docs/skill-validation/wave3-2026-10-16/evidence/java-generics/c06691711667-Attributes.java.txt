@@ -1,0 +1,14 @@
+import java.util.*;
+
+public final class Attributes {
+    private final Map<Class<?>, Object> values = new HashMap<>();
+
+    public <T> void put(Class<T> type, T value) {
+        values.put(Objects.requireNonNull(type), type.cast(value));   // store the checked form
+    }
+
+    public <T> Optional<T> get(Class<T> type) {
+        return Optional.ofNullable(type.cast(values.get(type)));      // checked cast, not (T)
+    }
+}
+

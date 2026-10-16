@@ -1,0 +1,4 @@
+package probe.jmh_generated;
+public class CoverageProbe_jmhType extends CoverageProbe_jmhType_B3 {
+}
+

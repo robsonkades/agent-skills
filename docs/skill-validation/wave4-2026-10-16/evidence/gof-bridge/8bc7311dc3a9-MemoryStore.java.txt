@@ -1,0 +1,14 @@
+import java.util.HashMap;
+import java.util.Map;
+
+final class MemoryStore implements Store {
+    private final Map<String, byte[]> contents = new HashMap<>();
+
+    public synchronized boolean exists(String key) {
+        return contents.containsKey(key);
+    }
+
+    public synchronized void write(String key, byte[] bytes) {
+        contents.put(key, bytes.clone());
+    }
+}

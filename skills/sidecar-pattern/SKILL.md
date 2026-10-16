@@ -63,6 +63,9 @@ placement or lifecycle change, include the relevant capability, failure and reso
 5. **Write down the coupling surface** — listener/protocol, shared mounts and any deliberately
    exposed management/agent or process-namespace interface. Specify identity, permissions and
    lifetime. Filesystems and the PID namespace are not shared unless configured.
+   For a config reloader, trace source publication, each container's mounted bytes and process
+   adoption separately. ConfigMap projection, `subPath` and environment variables have different
+   update contracts; startup ordering does not establish live reload.
 6. **Decide what the app does when the sidecar is up and answering wrongly.** A crash loop is
    visible to Kubernetes; a gray failure needs meaningful probes and request-path telemetry.
 7. **Retain container identity alongside Pod totals** for relevant restarts, memory, CPU and
@@ -148,7 +151,7 @@ Prefer changing the application instead when:
 
 - [Lifecycle and composition mechanics](references/lifecycle-and-composition.md) — native
   versus ordinary sidecar with a manifest fragment, startup and shutdown ordering, the Job
-  case, shared-volume lifetime and localhost contracts, init-phase resource accounting, pod QoS, and the failure
+  case, shared-volume lifetime, configuration reload and localhost contracts, init-phase resource accounting, pod QoS, and the failure
   matrix. Read when writing or reviewing a two-container pod.
 - [Sidecar, library, node agent or nothing](references/sidecar-or-node-agent.md) — the four
   options with the observable condition that selects each, and what each really costs in

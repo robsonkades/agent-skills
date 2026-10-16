@@ -1,0 +1,40 @@
+{
+  "provenance": "Authored evaluation fixture, not a captured production incident. Counters represent a stipulated PostgreSQL 17 serial execution for this exercise.",
+  "engine": "PostgreSQL 17",
+  "query": "SELECT o.id,l.sku FROM orders o JOIN lines l ON l.order_id=o.id WHERE o.tenant_id=$1 AND o.state='open'",
+  "parameter": {
+    "type": "bigint",
+    "value": 71
+  },
+  "prepareMode": "server prepared; generic versus custom not captured",
+  "cacheState": "database buffer counters recorded; OS/device cache not captured",
+  "endToEndRequestMs": 1320,
+  "executionTimeMs": 991,
+  "plan": {
+    "node": "Nested Loop",
+    "estimatedRows": 52000,
+    "actualRows": 48000,
+    "loops": 1,
+    "totalCost": 605000,
+    "actualTotalTimeMs": 980,
+    "children": [
+      {
+        "node": "Seq Scan orders",
+        "estimatedRows": 13000,
+        "actualRows": 12000,
+        "loops": 1,
+        "actualTotalTimeMs": 90,
+        "rowsRemovedByFilter": 3000
+      },
+      {
+        "node": "Index Scan lines_order_idx",
+        "estimatedRows": 4,
+        "actualRows": 4,
+        "loops": 12000,
+        "actualTotalTimeMs": 0.065,
+        "sharedHitBlocks": 90000,
+        "sharedReadBlocks": 32000
+      }
+    ]
+  }
+}

@@ -1,0 +1,21 @@
+package app;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
+import org.springframework.cache.transaction.TransactionAwareCacheManagerProxy;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
+@Configuration
+@EnableCaching(proxyTargetClass = true)
+@EnableTransactionManagement(proxyTargetClass = true)
+public class CacheConfiguration {
+    @Bean public ConcurrentMapCacheManager store() { return new ConcurrentMapCacheManager("catalog"); }
+    @Bean @Primary public CacheManager cacheManager(ConcurrentMapCacheManager store) {
+        return store;
+    }
+    @Bean public SandboxTransactionManager transactionManager() { return new SandboxTransactionManager(); }
+    @Bean public CatalogCommands catalogCommands() { return new CatalogCommands(); }
+    @Bean public CheckoutFlow checkoutFlow(CatalogCommands commands) { return new CheckoutFlow(commands); }
+}

@@ -1,0 +1,8 @@
+openjdk 25.0.3 2026-04-21 LTS
+OpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)
+OpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)
+javac 25.0.3
+runtime=25.0.3+9-LTS; compiler target=17; preview=false
+PASS: 21 channel adaptation checks
+No concurrency stress or real provider interaction performed.
+PASS: 3 known mappings and 4 null/unknown-status controls

@@ -1,0 +1,13 @@
+# ADR 009 — Repository API consumers
+
+Status: accepted.
+
+The repository API is a supported Java 17 library consumed by the server and the small CLI.
+The server uses Spring Data Commons 4.1.1. The CLI distribution excludes Spring libraries.
+
+The API's exposed types must let the CLI compile against that API and java.base without
+server framework libraries. Keep the application's page/size validation and its stable
+entry point. Framework-specific conversion and query execution belong to the server adapter.
+Changes to published signatures must account for existing source and binary consumers.
+
+No performance goal or migration duration is established by this ADR.

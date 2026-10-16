@@ -1,0 +1,178 @@
+{
+  "skill": "gof-pattern-thinking",
+  "date": "2026-10-16",
+  "commands": [
+    {
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-pattern-thinking-artifacts/check-snippets.mjs",
+      "cwd": "C:/git/agent-skills",
+      "chunk_id": "5c9608",
+      "wall_time_seconds": 1.7703128000000001,
+      "exit_code": 0,
+      "original_token_count": 498,
+      "output": "{\n  \"work\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave4-validation-Ceekn9\\\\gof-pattern-thinking-artifacts\\\\snippets-AzUVSb\",\n  \"pass\": true,\n  \"commands\": [\n    {\n      \"label\": \"compiler-version\",\n      \"expectedExit\": 0,\n      \"actualExit\": 0,\n      \"stdout\": \"javac 25.0.3\\r\\n\",\n      \"stderr\": \"\"\n    },\n    {\n      \"label\": \"runtime-version\",\n      \"expectedExit\": 0,\n      \"actualExit\": 0,\n      \"stdout\": \"\",\n      \"stderr\": \"openjdk version \\\"25.0.3\\\" 2026-04-21 LTS\\r\\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\\r\\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\\r\\n\"\n    },\n    {\n      \"label\": \"discount-compile-java17\",\n      \"expectedExit\": 0,\n      \"actualExit\": 0,\n      \"stdout\": \"\",\n      \"stderr\": \"\"\n    },\n    {\n      \"label\": \"discount-contracts\",\n      \"expectedExit\": 0,\n      \"actualExit\": 0,\n      \"stdout\": \"Discount checks passed: 10\\r\\n\",\n      \"stderr\": \"\"\n    },\n    {\n      \"label\": \"state-compile-java21\",\n      \"expectedExit\": 0,\n      \"actualExit\": 0,\n      \"stdout\": \"\",\n      \"stderr\": \"\"\n    },\n    {\n      \"label\": \"state-contracts\",\n      \"expectedExit\": 0,\n      \"actualExit\": 0,\n      \"stdout\": \"State checks passed: 6\\r\\n\",\n      \"stderr\": \"\"\n    },\n    {\n      \"label\": \"state-java17-negative\",\n      \"expectedExit\": 1,\n      \"actualExit\": 1,\n      \"stdout\": \"\",\n      \"stderr\": \"StateChecks.java:9: error: patterns in switch statements are not supported in -source 17\\r\\n        case Draft d -> new Paid(clock.instant());\\r\\n             ^\\r\\n  (use -source 21 or higher to enable patterns in switch statements)\\r\\n1 error\\r\\n\"\n    },\n    {\n      \"label\": \"state-unhandled-variant-negative\",\n      \"expectedExit\": 1,\n      \"actualExit\": 1,\n      \"stdout\": \"\",\n      \"stderr\": \"expanded\\\\StateChecks.java:8: error: the switch expression does not cover all possible input values\\r\\n    return switch (Objects.requireNonNull(current)) {\\r\\n           ^\\r\\n1 error\\r\\n\"\n    }\n  ]\n}\n",
+      "fullChildCommandLog": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-pattern-thinking-artifacts/latest-technical-results.json"
+    },
+    {
+      "command": "node --input-type=module (stdin)",
+      "cwd": "C:/git/agent-skills",
+      "stdin": "import assert from 'node:assert/strict';\nimport fs from 'node:fs';\nimport path from 'node:path';\nimport crypto from 'node:crypto';\nimport { loadPackageFromDirectory, validatePackage } from '@jvm-expert/core';\nimport { NodeFileSystem } from '@jvm-expert/node';\nconst owned='skills/gof-pattern-thinking';\nconst baseline='C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/baseline/gof-pattern-thinking';\nconst loaded=await loadPackageFromDirectory(new NodeFileSystem(),owned,{strict:true});\nconst checked=validatePackage(loaded.pkg,{directoryName:'gof-pattern-thinking'});\nconst issues=[...loaded.issues,...checked.issues]; assert.deepEqual(issues,[]);\nconst hashes=[]; const links=[];\nfor(const f of loaded.pkg.files){\n const bytes=fs.readFileSync(path.join(owned,f.path));\n assert.deepEqual(bytes,fs.readFileSync(path.join(baseline,f.path)));\n hashes.push({file:f.path,sha256:crypto.createHash('sha256').update(bytes).digest('hex')});\n if(f.path.endsWith('.md')){\n  const text=bytes.toString('utf8');\n  assert.equal((text.match(/^```/gm)||[]).length%2,0,f.path);\n  for(const match of text.matchAll(/\\[[^\\]]*\\]\\((?:<([^>]+)>|([^\\s)]+))\\)/g)){\n   const dest=match[1]??match[2];\n   if(/^(?:https?:|#)/.test(dest))continue;\n   assert.ok(fs.existsSync(path.resolve(owned,path.dirname(f.path),dest.split('#')[0])),dest);\n   links.push({from:f.path,to:dest});\n  }\n }\n}\nconst doc=loaded.pkg.document;\nconst normalize=x=>x.replace(/\\s+/g,' ').trim();\nassert.equal(normalize(doc.frontmatter.description),normalize(loaded.pkg.manifest.description));\nassert.equal(loaded.pkg.manifest.version,'1.3.4');\nconst ownedRefs=loaded.pkg.files.filter(x=>x.path.startsWith('references/')).map(x=>x.path);\nfor(const ref of ownedRefs)assert.ok(doc.body.includes(ref),ref);\nconst routes=[...loaded.pkg.manifest.dependencies.map(x=>x.name),...loaded.pkg.manifest.suggests];\nfor(const route of routes)assert.ok(fs.existsSync(path.join('skills',route,'SKILL.md')),route);\nconsole.log(JSON.stringify({skill:'gof-pattern-thinking',version:loaded.pkg.manifest.version,issues,files:loaded.pkg.files.length,markdownFiles:3,localLinks:links,routedReferences:ownedRefs,declaredRoutes:routes.length,baselineBytesIdentical:true,hashes},null,2));",
+      "chunk_id": "698e97",
+      "wall_time_seconds": 0.1594057,
+      "exit_code": 0,
+      "original_token_count": 279,
+      "output": "{\n  \"skill\": \"gof-pattern-thinking\",\n  \"version\": \"1.3.4\",\n  \"issues\": [],\n  \"files\": 4,\n  \"markdownFiles\": 3,\n  \"localLinks\": [\n    {\n      \"from\": \"SKILL.md\",\n      \"to\": \"references/alternatives-ladder.md\"\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"to\": \"references/alternatives-ladder.md\"\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"to\": \"references/pattern-inventory.md\"\n    }\n  ],\n  \"routedReferences\": [\n    \"references/alternatives-ladder.md\",\n    \"references/pattern-inventory.md\"\n  ],\n  \"declaredRoutes\": 35,\n  \"baselineBytesIdentical\": true,\n  \"hashes\": [\n    {\n      \"file\": \"SKILL.md\",\n      \"sha256\": \"74f7632c95e55d19090095cfd84082a542ca1f5e9639336784926070d7e3d6a2\"\n    },\n    {\n      \"file\": \"references/alternatives-ladder.md\",\n      \"sha256\": \"ec95fce59292d9ff84aec2db441ecfcf1c0b7b6eac009af902c19ffefef594c5\"\n    },\n    {\n      \"file\": \"references/pattern-inventory.md\",\n      \"sha256\": \"5bf84fc721298e704c2932f6dd0093c8c693584355752c45aba901ca4f852c4f\"\n    },\n    {\n      \"file\": \"skill.yaml\",\n      \"sha256\": \"e26b5a73a38ca669fb3a4b0872fc037ebdef4bd8828f39b5e1995f185cb86da4\"\n    }\n  ]\n}\n"
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/gof-pattern-thinking/SKILL.md skills/gof-pattern-thinking/skill.yaml 'skills/gof-pattern-thinking/references/*.md'; git diff --check -- skills/gof-pattern-thinking",
+      "cwd": "C:/git/agent-skills",
+      "chunk_id": "152aa3",
+      "wall_time_seconds": 0.2579063,
+      "exit_code": 0,
+      "original_token_count": 17,
+      "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+    },
+    {
+      "command": "Case inputs: parse JSON, require identical tasks/file lists and exactly one different release-contract file, compile/run shared Java fixture. Exact child commands retained in case-validation-results.json.",
+      "cwd": "C:/git/agent-skills",
+      "chunk_id": "f13c56",
+      "wall_time_seconds": 0.4951123,
+      "exit_code": 0,
+      "original_token_count": 440,
+      "output": "{\n  \"pass\": true,\n  \"differences\": [\n    \"docs/release-contract.md\"\n  ],\n  \"caseFiles\": [\n    \"pom.xml\",\n    \"src/main/java/example/pricing/PricingRule.java\",\n    \"src/main/java/example/pricing/FlatRule.java\",\n    \"src/main/java/example/pricing/PriceCalculator.java\",\n    \"src/test/java/example/pricing/PriceCheck.java\",\n    \"docs/maintenance-notes.md\",\n    \"proposals/pricing-simplification.md\",\n    \"docs/release-contract.md\"\n  ],\n  \"criteriaReadback\": \"gof-pattern-thinking\",\n  \"commonFixtureCompileAndRun\": [\n    {\n      \"executable\": \"C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe\",\n      \"args\": [\n        \"--release\",\n        \"17\",\n        \"-d\",\n        \"classes\",\n        \"src/main/java/example/pricing/PricingRule.java\",\n        \"src/main/java/example/pricing/FlatRule.java\",\n        \"src/main/java/example/pricing/PriceCalculator.java\",\n        \"src/test/java/example/pricing/PriceCheck.java\"\n      ],\n      \"cwd\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave4-validation-Ceekn9\\\\gof-pattern-thinking-artifacts\\\\case-fixture-OPxp4c\",\n      \"actualExit\": 0,\n      \"stdout\": \"\",\n      \"stderr\": \"\"\n    },\n    {\n      \"executable\": \"C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe\",\n      \"args\": [\n        \"-ea\",\n        \"-Xmx64m\",\n        \"-cp\",\n        \"classes\",\n        \"example.pricing.PriceCheck\"\n      ],\n      \"cwd\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave4-validation-Ceekn9\\\\gof-pattern-thinking-artifacts\\\\case-fixture-OPxp4c\",\n      \"actualExit\": 0,\n      \"stdout\": \"PriceCheck passed\\r\\n\",\n      \"stderr\": \"\"\n    }\n  ],\n  \"limitations\": \"Only the shared baseline fixture was compiled/executed; no actor or candidate refactor was run. Compiler --release17 on runtime Temurin25, not an actual Java17 runtime.\"\n}\n",
+      "fullChildCommandLog": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-pattern-thinking-artifacts/case-validation-results.json"
+    },
+    {
+      "command": "git status --short -- skills/gof-pattern-thinking; git diff --numstat -- skills/gof-pattern-thinking; git diff --cached --numstat -- skills/gof-pattern-thinking; git ls-files --others --exclude-standard -- skills/gof-pattern-thinking; git diff --check -- skills/gof-pattern-thinking",
+      "cwd": "C:/git/agent-skills",
+      "chunk_id": "9fae52",
+      "wall_time_seconds": 0.145914,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/en/java/javase/21/language/java-language-changes-release.html",
+      "version": "Oracle Java SE 21 Language Updates",
+      "sections": [
+        "Java SE 16",
+        "Java SE 17",
+        "Java SE 21"
+      ],
+      "consulted": "2026-10-16",
+      "supports": "Records are permanent from 16, sealed types from 17, and pattern switch from 21. Existing SKILL.md compatibility statements are supported.",
+      "result": "consulted",
+      "limit": "Source/API documentation; no application upgrade or older runtime execution."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/21/language/pattern-matching-switch.html",
+      "version": "Java SE 21",
+      "sections": [
+        "Type Coverage and Exhaustiveness"
+      ],
+      "consulted": "2026-10-16",
+      "supports": "Sealed hierarchies can make exhaustive pattern switches statically checkable. This does not prove legal business transitions or other events. Compatible with the existing State example.",
+      "result": "consulted"
+    },
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se17/html/jls-15.html#jls-15.27.2",
+      "version": "JLS Java SE 17",
+      "sections": [
+        "15.27.2",
+        "15.27.4"
+      ],
+      "consulted": "2026-10-16",
+      "supports": "Captured parameters must be final or effectively final; lambda identity is not a stable value-identity promise. Existing Discount capture/equality caveats are appropriate.",
+      "result": "consulted"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/ServiceLoader.html",
+      "version": "Java SE 17",
+      "sections": [
+        "Provider caches",
+        "iterator",
+        "load",
+        "reload"
+      ],
+      "consulted": "2026-10-16",
+      "supports": "A ServiceLoader owns its caches; constructing another loader does not establish shared provider instances or JVM-wide uniqueness.",
+      "result": "consulted",
+      "limit": "Provider ownership was source-reviewed, not exercised as an integration test."
+    },
+    {
+      "url": "https://docs.spring.io/spring-framework/reference/6.2/web/webmvc/mvc-config/interceptors.html",
+      "version": "Spring Framework 6.2 reference branch",
+      "sections": [
+        "Interceptors security note"
+      ],
+      "consulted": "2026-10-16",
+      "supports": "MVC interceptor matching can differ from annotated controller matching; security should use the appropriate Spring Security/filter integration. Existing worked elimination already states this condition.",
+      "result": "consulted",
+      "limit": "No Spring runtime, filter-chain or security execution was performed; versionless page also consulted and supports the same caution."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#clone()",
+      "version": "Java SE 17",
+      "sections": [
+        "clone"
+      ],
+      "consulted": "2026-10-16",
+      "supports": "Object.clone copies field contents without recursively cloning referenced objects. Existing Prototype inventory caveat is accurate.",
+      "result": "consulted"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Cloneable.html",
+      "version": "Java SE 17",
+      "sections": [
+        "Interface contract"
+      ],
+      "consulted": "2026-10-16",
+      "supports": "Cloneable itself does not declare clone. Existing inventory does not mistake the marker interface for a public copying API.",
+      "result": "consulted"
+    },
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se17/html/jls-12.html#jls-12.4.2",
+      "version": "JLS Java SE 17",
+      "sections": [
+        "12.4.2"
+      ],
+      "consulted": "2026-10-16",
+      "supports": "Class initialization synchronization supplies the publication contract used by a properly constructed holder. It does not make arbitrary later mutable operations safe.",
+      "result": "consulted"
+    },
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se17/html/jls-13.html#jls-13.5",
+      "version": "JLS Java SE 17",
+      "sections": [
+        "Interface evolution and binary compatibility"
+      ],
+      "consulted": "2026-10-16",
+      "supports": "Review of the paired case preserves independently compiled interface clients instead of assuming an internal arithmetic test establishes binary compatibility.",
+      "result": "consulted",
+      "limit": "No real external consumer binaries or candidate refactor were executed."
+    }
+  ],
+  "sourceAccessLimits": [
+    {
+      "urls": [
+        "https://openjdk.org/jeps/395",
+        "https://openjdk.org/jeps/409",
+        "https://openjdk.org/jeps/441"
+      ],
+      "result": "web open returned HTTP403",
+      "resolution": "Release facts verified using official Oracle Java Language Changes instead. Do not infer these existing links are broken for all clients."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/21/language/java-language-changes.html",
+      "result": "Incorrect exploratory URL returned timeout",
+      "resolution": "Discovered and successfully consulted the official java-language-changes-release.html page."
+    }
+  ],
+  "exploratoryCommandNotes": [
+    "An initial rg used nonexistent application/load-package.ts; corrected by rg to application/package-loader.ts. No package validation failed.",
+    "An rg for additional AGENTS.md under skills returned no matches (exit1); root AGENTS.md applies."
+  ],
+  "scope": "No repository writes. Only coordinator-assigned temporary evidence and case artifacts were created.",
+  "behavioralEvaluation": "None. Structured walkthroughs and executable Java checks are separate evidence classes."
+}

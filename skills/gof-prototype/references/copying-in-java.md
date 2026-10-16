@@ -197,5 +197,5 @@ Primary sources: [Object.clone](<https://docs.oracle.com/en/java/javase/17/docs/
 [TreeMap constructor contracts](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/TreeMap.html),
 [resource cleanup on abrupt completion](https://docs.oracle.com/javase/specs/jls/se17/html/jls-14.html#jls-14.20.3),
 [Java serialization architecture](https://docs.oracle.com/en/java/javase/17/docs/specs/serialization/serial-arch.html),
-and [Jakarta Persistence 3.2 entity lifecycle](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2).
+and [Jakarta Persistence 3.2 entity lifecycle](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html).
 Check the deployed provider/version and mappings for concrete persistence behavior.

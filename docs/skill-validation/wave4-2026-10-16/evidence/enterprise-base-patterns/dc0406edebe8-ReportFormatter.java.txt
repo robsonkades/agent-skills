@@ -1,0 +1,5 @@
+public final class ReportFormatter {
+    public String render(Measurement reading) {
+        return reading.amount().toPlainString() + " " + reading.unit();
+    }
+}

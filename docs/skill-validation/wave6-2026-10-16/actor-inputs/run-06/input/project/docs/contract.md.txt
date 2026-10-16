@@ -1,0 +1,5 @@
+# Lookup contract
+
+This is an optional memo of an expensive pure calculation. For a memo instance, one producer may install a single entry with value 42, once. Consumers may run concurrently with that installation. A lookup may return OptionalInt.empty() on any call, including indefinitely; callers compute the value on a miss. If a lookup returns a present value, it must be 42 and must not throw. There are no replacement updates, serialization hooks, reflective writes or mutations after construction.
+
+The memo and its reader function are constructed privately and handed to each participating thread before Thread.start(). There are no other publication, callback, constructor-escape or mutation paths. These are accepted requirements, not questions to reopen.

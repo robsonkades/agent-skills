@@ -1,0 +1,11 @@
+import fs from 'node:fs';
+const root='C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9';
+for(const name of process.argv.slice(2)){
+ const h=JSON.parse(fs.readFileSync(root+'/'+name+'.json','utf8'));
+ const selected=Object.fromEntries(Object.entries(h).filter(([k])=>/status|version|finding|preserv|result|limit|source|check|command|change|writes|assumption|cross/i.test(k)));
+ console.log(JSON.stringify({skill:name,keys:Object.keys(h),review:selected},(k,v)=>{
+  if(/^(?:cases|reproducibleCases|caseInputs|caseCriteria|structuredWalkthroughs)$/.test(k))return '[Case details retained in handoff; inspect separately when selecting evaluation inputs]';
+  if(typeof v==='string'){const limit=/^(?:output|stdout|stderr|command|cmd)$/.test(k)?260:650;return v.length>limit?v.slice(0,limit)+' [truncated for coordinator view; full original retained]':v;}
+  return v;
+ },2));
+}

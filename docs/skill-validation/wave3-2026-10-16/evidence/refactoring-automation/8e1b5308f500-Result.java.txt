@@ -1,0 +1,1 @@
+package org.openrewrite; public class Result { private final SourceFile before,after; public Result(SourceFile b,SourceFile a){before=b;after=a;} public SourceFile getBefore(){return before;} public SourceFile getAfter(){return after;} public String diff(){return "fixture diff for " + after.getSourcePath();} }

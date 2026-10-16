@@ -37,7 +37,7 @@ changes. A separately authorized "delete whatever exists now" command is a diffe
 intent; do not silently substitute it for a snapshot-protected delete. JPA checks the
 version of a versioned entity when removing it, but loading the latest entity first still
 requires comparing the editor's original version, just as for an update
-([Jakarta Persistence 3.2, section 3.5.1](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2)).
+([Jakarta Persistence 3.2, section 3.5.1](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html#a2056)).
 
 Check token lifetime when identifiers can be reused or old state restored. If an editor
 read `(id=42, version=0)`, then that row is deleted and a replacement is inserted with
@@ -240,6 +240,10 @@ require all recipes. These are integration-test recipes, not an already executed
    version must leave B's revision intact. Where deletion/recreation or restore exists,
    retain an old client's token across that lifecycle and prove that both its update and
    delete are rejected. A fresh token for the replacement must remain usable.
+7. **Read/version pairing:** pause the original edit load between its state and version
+   queries while another participating writer commits. An old state paired with a new
+   token must not authorize a stale save. Compare the actual snapshot/guard protocol and
+   an uncontended load; a barrier only at the eventual save misses this failure.
 
 Bound waits and database lock/statement timeouts. On failure, release barriers, roll back
 transactions and stop owned executors so a broken locking protocol cannot hang the suite.
@@ -249,7 +253,7 @@ JPA snippets here are partial application code using Java records (Java 16+, com
 Java 17 projects) and an existing JPA/Spring stack. Inspect the project's actual Java,
 namespace, provider and database versions; no upgrade is implied. The locking and bulk
 operation contracts are documented in
-[Jakarta Persistence 3.2, sections 3.5 and 4.11](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2).
+[Jakarta Persistence 3.2, sections 3.5 and 4.11](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html).
 
 The business/system transaction distinction and atomic validation requirement are described
 by [Optimistic Offline Lock](https://martinfowler.com/eaaCatalog/optimisticOfflineLock.html)

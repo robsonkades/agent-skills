@@ -1,0 +1,40 @@
+{
+  "decision": "repair_proposal_semantically; performance_unapproved",
+  "proposalPreservesContract": false,
+  "solutionSemanticallyApproved": true,
+  "performanceApproved": false,
+  "solution": "solution.sql",
+  "regression": "verify.mjs",
+  "allowedActiveValues": [true, false, null],
+  "counterexample": {
+    "row": {"id": 6, "tenant_id": 71, "customer_label": "NullQualified", "active": null, "amount": 100},
+    "boundTenant": 71,
+    "originalEmits": 1,
+    "proposalEmits": 0,
+    "reason": "CHECK permits NULL; NOT UNKNOWN is UNKNOWN, so the proposed second branch rejects a qualifying nullable-active invoice."
+  },
+  "repair": {
+    "replace": "NOT (active = true)",
+    "with": "(active = true) IS NOT TRUE",
+    "preserved": ["bound tenant in both branches", "customer_label projection", "bag multiplicity", "one emission per qualifying invoice", "global customer_label ordering", "original schema"]
+  },
+  "evidence": [
+    {"kind": "semantic_proof", "detail": "Branch p emits true p once. Branch q AND p IS NOT TRUE emits false/unknown p exactly when q is true, giving the original p OR q qualification."},
+    {"kind": "execution", "command": "node verify.mjs", "runner": "Node v25.6.1 / SQLite 3.51.2", "checksPassed": 46, "exit": 0, "log": "verification-approved.log"},
+    {"kind": "negative_controls", "command": "node check-candidates.mjs", "rejectedWithExit1": ["original-proposal", "deduplicating-union", "overlapping-union-all", "tenant-leak", "missing-ordering"], "approvedSolutionRestored": true, "log": "check-candidates.log"},
+    {"kind": "preservation", "files": 7, "sha256CopiesMatch": true, "log": "preserved-files.json"},
+    {"kind": "primary_sources", "urls": ["https://www.postgresql.org/docs/17/ddl-constraints.html", "https://www.postgresql.org/docs/17/functions-comparison.html", "https://www.postgresql.org/docs/17/queries-union.html", "https://www.postgresql.org/docs/17/using-explain.html"]}
+  ],
+  "performanceComparisonRequired": {
+    "engine": "PostgreSQL 17",
+    "queries": ["current.sql", "solution.sql"],
+    "controls": ["representative identical data and snapshot where practical", "same indexes and statistics", "actual bigint tenant binds", "same driver preparation/generic-custom plan behavior", "matched documented cache conditions", "tenant size/selectivity/overlap variation"],
+    "captures": ["EXPLAIN (ANALYZE, BUFFERS, SETTINGS, FORMAT JSON)", "estimated and actual rows and loops", "buffers and reads", "sorts and spills", "planning and execution times", "repeated interleaved full export latency"]
+  },
+  "limits": [
+    "No PostgreSQL server or connection supplied; no PostgreSQL execution performed.",
+    "No performance captures or elapsed SQL benchmark collected; no speedup claimed.",
+    "SQLite's portable subset checks do not validate PostgreSQL numeric/coercion, collation, concurrency, plans or production behavior.",
+    "The semantic argument covers all allowed rows; the finite executed fixtures are regression evidence, not exhaustive PostgreSQL testing."
+  ]
+}

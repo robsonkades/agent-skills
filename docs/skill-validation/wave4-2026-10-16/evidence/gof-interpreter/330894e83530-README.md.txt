@@ -1,0 +1,3 @@
+# Status recognizer fixture
+
+Java source/API target: 21, no dependencies. All data here are synthetic development inputs. Compile src/*.java with javac --release 21 -d <isolated-dir>; run Main <path-to-app.properties> from that output classpath. Main exercises the selected entry point. The pending proposal is not implemented.

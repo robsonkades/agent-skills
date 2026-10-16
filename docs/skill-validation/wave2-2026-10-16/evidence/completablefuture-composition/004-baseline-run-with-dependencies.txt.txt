@@ -1,0 +1,15 @@
+PASS recipe already=true queued=false failure=false
+PASS recipe already=true queued=false failure=true
+PASS recipe already=true queued=true failure=false
+PASS recipe already=true queued=true failure=true
+CONTROL taskWrapping already=true observed=request (cache-hit case)
+PASS rejected scheduling already=true
+PASS recipe already=false queued=false failure=false
+PASS recipe already=false queued=false failure=true
+PASS recipe already=false queued=true failure=false
+PASS recipe already=false queued=true failure=true
+CONTROL taskWrapping already=false observed=provider (wrong request owner)
+PASS rejected scheduling already=false
+PASS base executor edges (one versus two explicit submissions)
+PASS subclass preserves its configured default, not prior edge's executor
+PASS 15 contract cases/controls

@@ -44,6 +44,9 @@ upgrades, and generic gRPC guidance does not establish a Java transport's exact 
    or stream window, socket/network, proxy, or backend.
 3. Compare aligned per-hop evidence. A smaller Protobuf payload can reduce encoding and bytes but
    cannot establish that proxy policy or connection churn became cheaper.
+   Check what the dashboard counts as completion: HTTP 200, initial metadata or a received message
+   alone do not establish successful RPC completion. Use the consumer's final outcome; for long-lived
+   streams, distinguish useful message progress from the terminal call status.
 4. Check effective configuration from protocol negotiation, runtime metrics or proxy config dump.
    A configuration key accepted by a framework or CRD is not evidence that it changed behavior.
 5. When a change is justified, change one layer and validate useful completion, tail latency, errors,
@@ -92,4 +95,4 @@ supported no-change result does not require a tuning campaign.
 - [HTTP/2 and gRPC mechanics](references/http2-and-grpc.md) — read when diagnosing stream stalls,
   payload-size rejection, channel pools, flow control, deadline expiry or Netty execution.
 - [Service-mesh cost and policy composition](references/service-mesh.md) — read when a proxy,
-  mTLS, outlier detection or mesh retry participates in the path.
+  mTLS, outlier detection or mesh retry participates in the path, or HTTP and gRPC success metrics disagree.

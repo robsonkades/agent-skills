@@ -1,0 +1,4 @@
+STDOUT
+javac 25.0.3
+
+STDERR

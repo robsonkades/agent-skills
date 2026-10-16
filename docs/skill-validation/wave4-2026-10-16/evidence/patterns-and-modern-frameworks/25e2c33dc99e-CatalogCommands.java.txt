@@ -1,0 +1,8 @@
+package app;
+import org.springframework.cache.annotation.CacheEvict;
+public class CatalogCommands {
+    @CacheEvict(cacheNames = "catalog", key = "#p0")
+    public void change(String id, boolean fail) {
+        if (fail) throw new IllegalStateException("change rejected");
+    }
+}

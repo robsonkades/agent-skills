@@ -1,0 +1,44 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+const root='C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9';
+const repo='C:/git/agent-skills';
+const report=repo+'/docs/skill-validation/wave4-2026-10-16';
+assert.ok(!fs.existsSync(report+'/behavior-freeze.json'),'Do not overwrite frozen experiment');
+const h=JSON.parse(fs.readFileSync(root+'/component-and-release-boundaries.json','utf8'));
+assert.equal(h.allWritesStopped,true);
+const actorRoot=fs.mkdtempSync(path.join(os.tmpdir(),'skills-wave4-actors-')).replaceAll('\\','/');
+const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
+function put(base,p,b){fs.mkdirSync(path.dirname(base+'/'+p),{recursive:true});fs.writeFileSync(base+'/'+p,b);}
+function inventory(base,sub=''){return fs.readdirSync(base+'/'+sub,{withFileTypes:true}).flatMap(e=>{const rel=sub?sub+'/'+e.name:e.name;if(e.isDirectory())return inventory(base,rel);assert.ok(e.isFile());const b=fs.readFileSync(base+'/'+rel);return[{path:rel,sha256:sha(b),bytes:b.length}];}).sort((a,b)=>a.path.localeCompare(b.path));}
+const runs=[];
+for(const c of h.caseInputs)for(const condition of ['none','baseline','revised']){
+ const runId='run-'+String(runs.length+1).padStart(2,'0'),dir=actorRoot+'/'+runId;
+ fs.mkdirSync(dir,{recursive:true});
+ for(const f of c.fixtureFiles)put(dir,'input/'+f.destination,fs.readFileSync(f.source));
+ for(const [p,b]of Object.entries(c.inlineFiles))put(dir,'input/'+p,b+'\n');
+ if(condition!=='none')fs.cpSync(condition==='baseline'?root+'/baseline/component-and-release-boundaries':repo+'/skills/component-and-release-boundaries',dir+'/skill',{recursive:true,errorOnExist:true});
+ const task=`${c.task}\n\n${c.context}\n\nVocê trabalha exclusivamente em ${dir}. Você não está sozinho: escreva apenas em output/ dentro deste diretório. Os arquivos input/ e skill/ (quando presente) são somente leitura. Não leia o repositório, outros runs, critérios, handoffs, fontes das revisões, skills globais nem conversas anteriores. Não use rede, outros agentes, instalações ou configuração real.\n\n${condition==='none'?'Não foi fornecida skill para esta execução. Resolva com os artefatos locais.':'Aplique a skill fornecida em skill/SKILL.md, consultando as referências locais relevantes.'}\n\nInspecione input/project e os artefatos reais disponíveis. Faça verificações locais proporcionais à decisão. Pode criar fontes, cópias de trabalho e scripts em output/, sem substituir os inputs. Java, javac, jar e javap estão em C:/Users/robso/.jdks/temurin-25.0.3/bin; compilação alvo 17 e execução Temurin25.0.3+9 no Windows. Nenhuma dependência adicional é necessária. Limite cada processo filho a 30 segundos. ReportApp recebe CR ou LF como asserção do resultado; consulte seu código.\n\nSalve output/decision.md com a recomendação e output/execution.json com comandos/argumentos/cwd, código de saída e stdout/stderr reais de cada execução, versões utilizadas e limitações. Preserve scripts e logs que produzir. Não relate uma ação como executada se foi apenas proposta. No final, informe os caminhos, declare que terminou as escritas e encerre os processos.\n`;
+ put(dir,'TASK.md',task);
+ const criteria=h.caseCriteria.find(x=>x.caseId===c.id);assert.ok(criteria);
+ const inputs=inventory(dir);
+ const snapshot=`behavior-inputs/${runId}`;
+ for(const f of inputs)put(report,snapshot+'/'+f.path+'.txt',fs.readFileSync(dir+'/'+f.path));
+ const normalized={...criteria,expected:criteria.expected.map((text,i)=>({id:'C'+(i+1),text}))};
+ runs.push({runId,caseId:c.id,condition,actorDirectory:dir,taskPath:dir+'/TASK.md',taskSha256:sha(task),inputSnapshot:snapshot,inputs,criteria:normalized,criteriaSha256:sha(JSON.stringify(normalized)),skillVersion:condition==='none'?null:condition==='baseline'?'1.2.4':'1.2.5',status:'not-dispatched'});
+}
+for(const i of [0,3]){
+ const group=runs.slice(i,i+3);
+ const common=r=>r.inputs.filter(f=>f.path.startsWith('input/'));
+ assert.deepEqual(common(group[0]),common(group[1]));assert.deepEqual(common(group[0]),common(group[2]));
+}
+const a=runs[0].inputs.filter(f=>f.path.startsWith('input/')),b=runs[3].inputs.filter(f=>f.path.startsWith('input/'));
+assert.deepEqual(a.filter(f=>f.path!=='input/project/delivery.json'),b.filter(f=>f.path!=='input/project/delivery.json'));
+const manifest={createdAt:new Date().toISOString(),skill:'component-and-release-boundaries',actorRoot,design:'Two known development cases, one decisive layout difference, three conditions per case, one fresh actor each. Criteria and input/skill hashes frozen before dispatch. No held-out or statistical/general improvement claim.',isolation:'fork_turns none; separate directories and instructions. Read boundaries are instructed, not a filesystem security boundary. Available skill metadata may remain in system context; actors must not load global content.',model:'Same parent-inherited model and effort, no overrides. Runtime model identifier, actual token use and internal settings are not directly observable here.',judging:'Coordinator inspects artifacts against each frozen criterion and failure condition; unblinded judgment, no automatic phrase scoring. One pass per run, no post-result tuning.',caseDifference:'Only input/project/delivery.json layout changes bundled versus external.',runs};
+const raw=JSON.stringify(manifest,null,2)+'\n';
+put(report,'behavior-manifest.frozen.json.txt',raw);
+put(report,'behavior-manifest.json',raw);
+put(report,'behavior-freeze.json',JSON.stringify({frozenAt:new Date().toISOString(),manifestSha256:sha(raw),runs:runs.length,dispatched:0,allInputsMaterialized:true,onlyDecisiveInputDifference:'input/project/delivery.json'},null,2)+'\n');
+console.log(JSON.stringify({actorRoot,runs:runs.map(r=>({runId:r.runId,caseId:r.caseId,condition:r.condition,taskPath:r.taskPath})),manifestSha256:sha(raw)},null,2));

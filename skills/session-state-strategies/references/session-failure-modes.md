@@ -178,6 +178,6 @@ Do not require a full session audit or new latency/failure campaign for a narrow
 5. What happens with two tabs?
 6. What is the p99 added latency of the session lookup on the request path?
 
-Sources: [Servlet 6.0 session concurrency and client semantics](https://jakarta.ee/specifications/servlet/6.0/jakarta-servlet-spec-6.0),
+Sources: [Servlet 6.0 session concurrency and client semantics](https://jakarta.ee/specifications/servlet/6.0/jakarta-servlet-spec-6.0.html),
 [OWASP session lifecycle](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html),
 [JWT BCP](https://datatracker.ietf.org/doc/html/rfc8725).

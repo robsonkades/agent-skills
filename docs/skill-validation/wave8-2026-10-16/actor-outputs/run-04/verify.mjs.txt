@@ -1,0 +1,114 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { createDb, query } from './fixture.mjs';
+
+// Always read the submitted candidate: replace solution.sql to test another one.
+const candidate = fs.readFileSync(new URL('./solution.sql', import.meta.url), 'utf8');
+const current = fs.readFileSync(new URL('./current.sql', import.meta.url), 'utf8');
+const proposed = fs.readFileSync(new URL('./proposed.sql', import.meta.url), 'utf8');
+const db = createDb();
+const tenants = [71, 72, 73, 999, null];
+let candidateComparisons = 0;
+let referenceComparisons = 0;
+
+// Fixture labels are ASCII. Preserve multiplicity and check the returned ordering
+// and exact projection, rather than sorting or deduplicating candidate results.
+function expectedFor(tenant) {
+  return db.prepare('SELECT tenant_id, customer_label, active, amount FROM invoices').all()
+    .filter(row => tenant !== null && row.tenant_id === tenant &&
+      (row.active === 1 || row.amount >= 100))
+    .map(row => row.customer_label)
+    .sort()
+    .map(customer_label => ({ customer_label }));
+}
+
+function verifyStage(stage) {
+  for (const tenant of tenants) {
+    const expected = expectedFor(tenant);
+    assert.deepEqual(query(db, current, { tenant }), expected,
+      `${stage}: original query differs from the independent oracle; tenant=${tenant}`);
+    referenceComparisons++;
+    assert.deepEqual(query(db, candidate, { tenant }), expected,
+      `${stage}: solution.sql violates ordered bag contract; tenant=${tenant}`);
+    candidateComparisons++;
+  }
+}
+
+try {
+  const sqliteVersion = db.prepare('SELECT sqlite_version() AS version').get().version;
+  assert.deepEqual(query(db, current, { tenant: 71 }), [
+    { customer_label: 'Acme' }, { customer_label: 'Acme' }, { customer_label: 'Bravo' }
+  ]);
+  verifyStage('provided seed');
+
+  // Smallest missing class in the supplied fixture: nullable active, high amount.
+  db.prepare('INSERT INTO invoices VALUES (?, ?, ?, ?, ?)')
+    .run(6, 71, 'NullHigh', null, 100);
+  const counterexample = {
+    row: { id: 6, tenant_id: 71, customer_label: 'NullHigh', active: null, amount: 100 },
+    current: query(db, current, { tenant: 71 }),
+    proposed: query(db, proposed, { tenant: 71 }),
+    repaired: query(db, candidate, { tenant: 71 }),
+  };
+  assert.notDeepEqual(counterexample.proposed, counterexample.current);
+  verifyStage('nullable witness');
+
+  const insert = db.prepare('INSERT INTO invoices VALUES (?, ?, ?, ?, ?)');
+  let id = 1000;
+  for (const tenant of [73, 72, 71]) {
+    for (const active of [null, 0, 1]) {
+      for (const amount of [-1, 0, 99.99, 100, 100.01, 150]) {
+        for (const label of ['Zulu', 'Duplicate', 'Acme']) {
+          insert.run(id++, tenant, label, active, amount);
+        }
+      }
+    }
+  }
+  verifyStage('boolean and threshold grid');
+
+  // Known-wrong controls use the same oracle and fixture as solution.sql.
+  // SQL errors do not count as semantic rejection: each must execute successfully.
+  const disjoint = `SELECT customer_label FROM invoices
+    WHERE tenant_id = :tenant AND active = true
+    UNION ALL
+    SELECT customer_label FROM invoices
+    WHERE tenant_id = :tenant AND amount >= 100 AND active IS NOT TRUE
+    ORDER BY customer_label;`;
+  const mutants = new Map([
+    ['original proposal loses NULL/high invoices', proposed],
+    ['UNION removes legitimate duplicate labels', disjoint.replace('UNION ALL', 'UNION')],
+    ['unguarded UNION ALL repeats overlapping invoices', disjoint.replace(' AND active IS NOT TRUE', '')],
+    ['second branch leaks another tenant', disjoint.replace('tenant_id = :tenant AND amount', 'amount')],
+    ['exclusive threshold loses amount=100', disjoint.replace('amount >= 100', 'amount > 100')],
+    ['descending order violates export order', disjoint.replace('ORDER BY customer_label;', 'ORDER BY customer_label DESC;')],
+  ]);
+  const rejectedControls = [];
+  for (const [name, sql] of mutants) {
+    let differs = false;
+    for (const tenant of tenants) {
+      const actual = query(db, sql, { tenant });
+      try {
+        assert.deepEqual(actual, expectedFor(tenant));
+      } catch (error) {
+        if (!(error instanceof assert.AssertionError)) throw error;
+        differs = true;
+      }
+    }
+    assert.ok(differs, `Regression is insensitive to wrong control: ${name}`);
+    rejectedControls.push(name);
+  }
+
+  console.log(JSON.stringify({
+    status: 'passed',
+    runtime: { node: process.version, sqlite: sqliteVersion },
+    candidateFile: 'solution.sql',
+    candidateComparisons,
+    referenceComparisons,
+    finalFixtureRows: db.prepare('SELECT count(*) AS count FROM invoices').get().count,
+    counterexample,
+    rejectedControls,
+    scope: 'Portable result semantics only; no PostgreSQL execution or performance measurement.'
+  }, null, 2));
+} finally {
+  db.close();
+}

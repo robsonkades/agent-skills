@@ -2,19 +2,20 @@
 
 ## Symptom to hypothesis
 
-| Symptom                                 | Candidate explanation                                        | Discriminating evidence                                                |
-| --------------------------------------- | ------------------------------------------------------------ | ---------------------------------------------------------------------- |
-| Old Gen after collection keeps growing  | Cache growth, ineffective bound or another retainer          | Heap dominators, cache occupancy and retained bytes                    |
-| Periodic miss and source-load spikes    | Correlated expiry, scheduled workload or retries             | Align expiration/invalidation events with offered traffic and attempts |
-| Hit rate falling over days              | Working-set or popularity drift, key-format change           | Compare key cardinality/distribution, eviction and deployments         |
-| Instances disagree about a value        | Lost invalidation, stale fill, replica lag or key mismatch   | Trace value versions, fill/write ordering and invalidation offsets     |
-| Load latency rises with stable hit rate | Origin slowdown or loader executor queueing                  | Separate queue delay, origin service time and in-flight work           |
-| Origin work rises despite high hits     | Refresh, warming, retries or changed miss coalescing         | Count load attempts by trigger; inspect executor/client admission      |
-| Hit rate suddenly zero                  | Cold namespace, reset metrics, bulk expiry or routing change | Check absolute hit/miss counts, restarts, key prefixes and ownership   |
-| Cache never consulted, no error         | Proxy bypass or caching disabled/misconfigured               | Verify Spring mode, invocation path and an intercepted external call   |
+| Symptom                                 | Candidate explanation                                           | Discriminating evidence                                                         |
+| --------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| Old Gen after collection keeps growing  | Cache growth, ineffective bound or another retainer             | Heap dominators, cache occupancy and retained bytes                             |
+| Periodic miss and source-load spikes    | Correlated expiry, scheduled workload or retries                | Align expiration/invalidation events with offered traffic and attempts          |
+| Hit rate falling over days              | Working-set or popularity drift, key-format change              | Compare key cardinality/distribution, eviction and deployments                  |
+| Instances disagree about a value        | Lost invalidation, stale fill, replica lag or key mismatch      | Trace value versions, fill/write ordering and invalidation offsets              |
+| Load latency rises with stable hit rate | Origin slowdown or loader executor queueing                     | Separate queue delay, origin service time and in-flight work                    |
+| Origin work rises despite high hits     | Refresh, warming, retries or changed miss coalescing            | Count load attempts by trigger; inspect executor/client admission               |
+| Repeated origin calls for one cold key  | Split lookup/load/put, separate cache instances or failed fills | Inspect the invoked cache API/instance and order lookup, load and fill outcomes |
+| Hit rate suddenly zero                  | Cold namespace, reset metrics, bulk expiry or routing change    | Check absolute hit/miss counts, restarts, key prefixes and ownership            |
+| Cache never consulted, no error         | Proxy bypass or caching disabled/misconfigured                  | Verify Spring mode, invocation path and an intercepted external call            |
 
-The last row deserves its own check: it produces no error and no log. The only signal is
-that the source is being hit at full rate while the cache reports almost no activity.
+The last row can occur without an error: compare origin attempts with activity on the cache
+actually selected by the caller. An idle cache bean may simply be the wrong instance to observe.
 
 ## The four series that must be on the dashboard
 
@@ -38,16 +39,19 @@ Plus:
 
 ## Stampede: four scopes, four remedies
 
-| Scope                               | Remedy                                       |
-| ----------------------------------- | -------------------------------------------- |
-| Many keys expiring together         | jitter on creation                           |
-| One hot key, many concurrent misses | singleflight, or a `LoadingCache`            |
-| One hot key, periodic miss          | `refreshAfterWrite`                          |
-| Whole cache cold                    | staggered reload; never `FLUSHALL` on deploy |
+| Scope                               | Remedy                                             |
+| ----------------------------------- | -------------------------------------------------- |
+| Many keys expiring together         | jitter on creation                                 |
+| One hot key, many concurrent misses | coordinating load API on the actual cache instance |
+| One hot key, periodic miss          | `refreshAfterWrite`                                |
+| Whole cache cold                    | staggered reload; never `FLUSHALL` on deploy       |
 
 Probabilistic early expiration reduces correlated refresh; it does not cap origin traffic.
 Use the equation and parameter constraints in the skill's stampede rule, then measure origin
 concurrency and apply admission control independently.
+Before adding another lock or changing TTL for same-key bursts, follow the
+[active load path](configuring-a-cache.md#verify-the-active-cache-and-load-path) and distinguish
+overlapping successful loads from new attempts after failure, eviction or use of another instance.
 The four scopes above are not a capacity limit: many distinct cold keys can start independent
 loads. Compare admitted/running/queued origin work against its budget, including loads whose
 callers have timed out. Do not infer bounded concurrency from `maximumSize` or same-key coalescing.

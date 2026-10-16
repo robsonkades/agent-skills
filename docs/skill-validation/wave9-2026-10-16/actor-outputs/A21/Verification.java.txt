@@ -1,0 +1,161 @@
+import java.math.BigInteger;
+import java.util.Random;
+
+public final class Verification {
+    private static final BigInteger MODULUS = BigInteger.ONE.shiftLeft(64);
+    private static int checks;
+    private static int failures;
+
+    private record Inputs(long start, long now, long total, long reserve, long minimum,
+            long attemptCap, long base, long delayCap, int completed, int maxAttempts,
+            long serverMinimum, int drawPosition) {}
+
+    public static void main(String[] args) {
+        directedCases();
+        boundaryMatrix();
+        generatedCases();
+        if (failures != 0) {
+            throw new AssertionError(failures + " failures across " + checks + " cases");
+        }
+        System.out.println("Verification passed: " + checks
+                + " cases; exact plans, draw bounds, counts, signed wrap and large durations");
+    }
+
+    private static void directedCases() {
+        check("initial ignores server advice and never draws", input(0, 0, 100, 7, 10,
+                200, 2, 8, 0, 1, Long.MAX_VALUE, 2));
+        check("first retry exponent is zero", input(0, 0, 100, 5, 10, 200, 8, 100,
+                1, 3, 0, 2));
+        check("server minimum dominates", input(0, 0, 100, 5, 10, 200, 8, 100,
+                1, 3, 30, 2));
+        check("draw dominates", input(0, 0, 100, 5, 10, 200, 8, 100,
+                1, 3, 2, 2));
+        check("exact fit", input(0, 0, 45, 5, 10, 100, 2, 8, 1, 3, 30, 0));
+        check("one nanosecond short", input(0, 0, 44, 5, 10, 100, 2, 8, 1, 3, 30, 0));
+        check("attempt cap is exact", input(0, 0, 100, 5, 10, 11, 2, 8, 1, 3, 30, 0));
+        check("count exhausted", input(0, 0, 100, 0, 1, 100, 2, 8, 3, 3, 0, 0));
+        check("count exceeded", input(0, 0, 100, 0, 1, 100, 2, 8, 4, 3, 0, 0));
+        check("deadline exact expiry", input(0, 100, 100, 0, 1, 100, 2, 8, 1, 3, 0, 0));
+        check("deadline passed", input(0, 101, 100, 0, 1, 100, 2, 8, 1, 3, 0, 0));
+        check("maximum elapsed", input(Long.MIN_VALUE, -1, 100, 0, 1, 100,
+                2, 8, 1, 3, 0, 0));
+        check("signed wrap", input(Long.MAX_VALUE - 5, Long.MIN_VALUE + 4, 100, 5,
+                10, 100, 2, 8, 1, 3, 0, 0));
+        check("negative readings", input(-100, -90, 100, 5, 10, 100, 2, 8, 1, 3, 0, 0));
+        check("negative to positive", input(-5, 5, 100, 5, 10, 100, 2, 8, 1, 3, 0, 0));
+        check("maximum total and attempt", input(-1, -1, Long.MAX_VALUE, 0, 1,
+                Long.MAX_VALUE, 1, Long.MAX_VALUE, 0, 1, 0, 0));
+        check("maximum reserve", input(0, 0, Long.MAX_VALUE, Long.MAX_VALUE, 1,
+                Long.MAX_VALUE, 1, 1, 0, 1, 0, 0));
+        check("reserve plus minimum overflow", input(0, 0, Long.MAX_VALUE, 1,
+                Long.MAX_VALUE, Long.MAX_VALUE, 1, 1, 0, 1, 0, 0));
+        check("server minimum plus work overflow", input(0, 0, Long.MAX_VALUE, 0, 1,
+                Long.MAX_VALUE, 1, 1, 1, 2, Long.MAX_VALUE, 0));
+        check("large exact fit", input(0, 0, Long.MAX_VALUE, 3, 1,
+                Long.MAX_VALUE, 1, 1, 1, 2, Long.MAX_VALUE - 4, 0));
+        check("reserve exceeds remaining", input(0, 0, 1, Long.MAX_VALUE, 1,
+                1, 1, 1, 0, 1, 0, 0));
+        for (int completed : new int[] {1, 2, 62, 63, 64, 65, 127, Integer.MAX_VALUE - 1}) {
+            for (long base : new long[] {1, 2, Long.MAX_VALUE / 2, Long.MAX_VALUE}) {
+                check("saturating exponent " + completed + "/" + base,
+                        input(Long.MIN_VALUE, Long.MIN_VALUE, Long.MAX_VALUE, 0, 1,
+                                Long.MAX_VALUE, base, Long.MAX_VALUE, completed,
+                                Integer.MAX_VALUE, 0, 2));
+            }
+        }
+        check("maximum count exhausted", input(0, 0, Long.MAX_VALUE, 0, 1,
+                Long.MAX_VALUE, 1, 1, Integer.MAX_VALUE, Integer.MAX_VALUE, 0, 0));
+        // The fresh plan must refuse an attempt after a real wait overshoots its allowance.
+        check("oversleep requires new admission", input(0, 96, 100, 5, 1,
+                100, 1, 1, 1, 3, 0, 0));
+    }
+
+    private static void boundaryMatrix() {
+        long[] durations = {1, 2, 3, 10, 1L << 62, Long.MAX_VALUE - 1, Long.MAX_VALUE};
+        long[] extras = {0, 1, 2, 10, 1L << 62, Long.MAX_VALUE - 1, Long.MAX_VALUE};
+        for (long total : durations) {
+            for (long reserve : extras) {
+                for (long advice : extras) {
+                    for (int position = 0; position < 3; position++) {
+                        check("duration boundary matrix", input(Long.MAX_VALUE - 3,
+                                Long.MAX_VALUE - 3, total, reserve, 1, Long.MAX_VALUE,
+                                Long.MAX_VALUE, Long.MAX_VALUE, 2, 3, advice, position));
+                    }
+                }
+            }
+        }
+    }
+
+    private static void generatedCases() {
+        Random source = new Random(0xA21L);
+        for (int i = 0; i < 10000; i++) {
+            long start = source.nextLong();
+            long elapsed = nonnegative(source);
+            long cap = positive(source);
+            long minimum = 1 + nonnegative(source) % cap;
+            int completed = source.nextInt(100);
+            int maxAttempts = source.nextBoolean() ? 100 : source.nextInt(100) + 1;
+            check("deterministic generated case " + i, input(start, start + elapsed,
+                    positive(source), nonnegative(source), minimum, cap, positive(source),
+                    positive(source), completed, maxAttempts, nonnegative(source), i % 3));
+        }
+    }
+
+    private static long nonnegative(Random source) {
+        return source.nextLong() & Long.MAX_VALUE;
+    }
+
+    private static long positive(Random source) {
+        return 1 + nonnegative(source) % Long.MAX_VALUE;
+    }
+
+    private static Inputs input(long start, long now, long total, long reserve, long minimum,
+            long cap, long base, long delayCap, int completed, int maxAttempts,
+            long serverMinimum, int position) {
+        return new Inputs(start, now, total, reserve, minimum, cap, base, delayCap,
+                completed, maxAttempts, serverMinimum, position);
+    }
+
+    private static void check(String name, Inputs p) {
+        checks++;
+        try {
+            long bound = p.completed == 0 ? 0 : BigInteger.valueOf(p.base)
+                    .shiftLeft(Math.min(63, p.completed - 1))
+                    .min(BigInteger.valueOf(p.delayCap)).longValueExact();
+            long sampled = bound == 0 || p.drawPosition == 0 ? 0
+                    : p.drawPosition == 1 ? bound / 2 : bound - 1;
+            BigInteger elapsed = BigInteger.valueOf(p.now)
+                    .subtract(BigInteger.valueOf(p.start)).mod(MODULUS);
+            long wait = p.completed == 0 ? 0 : Math.max(sampled, p.serverMinimum);
+            BigInteger available = BigInteger.valueOf(p.total).subtract(elapsed)
+                    .subtract(BigInteger.valueOf(p.reserve)).subtract(BigInteger.valueOf(wait));
+            boolean admitted = p.completed < p.maxAttempts
+                    && available.compareTo(BigInteger.valueOf(p.minimum)) >= 0;
+            RetryPlan.Plan expected = admitted
+                    ? new RetryPlan.Plan(true, wait,
+                            available.min(BigInteger.valueOf(p.attemptCap)).longValueExact())
+                    : new RetryPlan.Plan(false, 0, 0);
+            int[] draws = {0};
+            RetryPlan.Plan actual = RetryPlan.next(p.start, p.now, p.total, p.reserve,
+                    p.minimum, p.attemptCap, p.base, p.delayCap, p.completed,
+                    p.maxAttempts, p.serverMinimum, actualBound -> {
+                        if (p.completed == 0 || ++draws[0] > 1 || actualBound != bound) {
+                            throw new AssertionError("draw bound/count: expected " + bound
+                                    + ", got " + actualBound + ", calls " + draws[0]);
+                        }
+                        return sampled;
+                    });
+            if (!actual.equals(expected)) {
+                throw new AssertionError("expected " + expected + ", got " + actual);
+            }
+            if (admitted && p.completed > 0 && draws[0] != 1) {
+                throw new AssertionError("admitted retry did not draw exactly once");
+            }
+        } catch (AssertionError failure) {
+            failures++;
+            if (failures <= 12) {
+                System.err.println(name + ": " + failure.getMessage());
+            }
+        }
+    }
+}

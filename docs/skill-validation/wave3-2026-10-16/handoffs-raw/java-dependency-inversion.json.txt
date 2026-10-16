@@ -1,0 +1,254 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "java-dependency-inversion",
+  "ownedPath": "skills/java-dependency-inversion/",
+  "allWritesStopped": true,
+  "versions": {
+    "committed": "1.2.4",
+    "assignmentTime": "1.2.4",
+    "final": "1.2.5",
+    "preexistingBump": false,
+    "rationale": "Single patch bump for two focused prose corrections. No Java code or dependency changes."
+  },
+  "baseline": {
+    "distributedFilesRead": 5,
+    "stagedChanges": [],
+    "unstagedChanges": [],
+    "untrackedFiles": [],
+    "hashes": [
+      {
+        "path": "skills/java-dependency-inversion/SKILL.md",
+        "hash": "b970d05a28665a594d657be22411697858d436814dd48b08834daecdc4b50e76"
+      },
+      {
+        "path": "skills/java-dependency-inversion/skill.yaml",
+        "hash": "5d7c60fa781506358b2cfb1f03eef65f1b099ccc37eb35e95076f4696eb98a4d"
+      },
+      {
+        "path": "skills/java-dependency-inversion/references/costs-and-false-positives.md",
+        "hash": "a5c9d962120164d1183a70640e79acc346909a6c7500f7e8d7a3ac016fb0b501"
+      },
+      {
+        "path": "skills/java-dependency-inversion/references/decision-guide.md",
+        "hash": "6292c6b0dd70f2e01e3214501a078913b586a03db958302b38c060c8f15b17a5"
+      },
+      {
+        "path": "skills/java-dependency-inversion/references/worked-example.md",
+        "hash": "ab11512cb286d793918b2b299c49024b2acf711a84f89ccf375289c2520a99d4"
+      }
+    ],
+    "overlapDetected": false
+  },
+  "findings": [
+    {
+      "location": "skills/java-dependency-inversion/references/worked-example.md:31",
+      "problem": "The original analysis claimed that any relay/SDK/SMTP representation change forces policy recompilation and redeployment.",
+      "consequence": "Conflates source dependencies, binary compatibility and deployment packaging, overstating the benefit an interface provides.",
+      "correction": "Qualify propagation by the actual API/type change; cite JLS17 binary-compatible implementation evolution; separate behavioral compatibility and require packaging/runtime evidence for independent deployment.",
+      "evidence": "JLS17 §§13.2/13.4.22 plus executed unchanged-consumer/compatible-SDK and incompatible-signature controls."
+    },
+    {
+      "location": "skills/java-dependency-inversion/references/worked-example.md:161",
+      "problem": "Trade-off text counted three types replacing one although policy remains and the example also introduces the Confirmation value.",
+      "consequence": "Misstates the cost of the shown refactoring.",
+      "correction": "Describe policy, port/value, adapter and composition root without the incorrect count."
+    }
+  ],
+  "remainingFindings": [],
+  "files": {
+    "changedByReviewer": [
+      "skills/java-dependency-inversion/references/worked-example.md",
+      "skills/java-dependency-inversion/skill.yaml"
+    ],
+    "preexistingChanges": [],
+    "addedDistributedFiles": [],
+    "removedDistributedFiles": [],
+    "unchangedDistributedFiles": 3,
+    "javaFencedBlocksUnchanged": 7
+  },
+  "changes": [
+    "Correct conditional change propagation and deployment claims in the worked example.",
+    "Correct description of added structure/cost.",
+    "Bump skill manifest to 1.2.5."
+  ],
+  "preserved": [
+    "All seven Java fenced snippets unchanged.",
+    "Consumer-owned policy vocabulary and provider-owned SPI exception.",
+    "Seam-value test, legitimate single-implementation boundaries and no speculative interfaces.",
+    "Plain constructor injection, composition roots and explicit factories with scope/concurrency/cleanup.",
+    "JPMS readability/transitive/launch edges and source-retention/build-input blind spots.",
+    "Async/lazy failure, cancellation and resource ownership contracts; consumer failure provenance.",
+    "Public constructor migration, SMTP unknown outcomes and no implicit retries/delivery guarantees.",
+    "All descriptions, dependencies and existing cross-skill handoffs."
+  ],
+  "intentionallyRemoved": [],
+  "domainSuccessCriteria": [
+    "Distinguish a real policy-to-mechanism source edge from an automatic requirement to recompile for every implementation change.",
+    "Preserve source-isolation, testing and vendor-quarantine benefits without promising behavioral or deployment independence.",
+    "Demonstrate a legitimate compatible replacement and an incompatible signature control.",
+    "Preserve the illustrated policy behavior and explicit absence of production transport integration evidence."
+  ],
+  "compatibility": {
+    "skillBaseline": "Java 17-compatible partial snippets; existing feature-specific minimums retained.",
+    "compiler": "javac 25.0.3 with --release 17",
+    "runtime": "Temurin 25.0.3+9 Windows",
+    "java17VmExercised": false,
+    "noPreview": true,
+    "dependencyInstallations": 0
+  },
+  "checks": [
+    {
+      "classification": "Executed technical checks",
+      "command": "node 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-dependency-inversion-artifacts/check-examples.mjs'",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "PASS, 15 javac/java/jdeps commands, including 3 expected negative commands. Exact executables, argument arrays, working directories, exits, stdout and stderr for every child are retained in technical-results.json and individual fixture logs.",
+      "script": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-dependency-inversion-artifacts/check-examples.mjs",
+      "results": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-dependency-inversion-artifacts/technical-results.json"
+    },
+    {
+      "classification": "Binary-compatible control",
+      "result": "The Markdown's original OrderConfirmer ran against SDK v1 and a v2 with unchanged public signatures and changed method body, without recompiling policy. OrderConfirmer.class SHA-256 remained 964a75ad34c19ee78ba3f743dbf214c53213cc7322c430cc98627cc3f5344cd4."
+    },
+    {
+      "classification": "Expected negative controls",
+      "result": "Replacement removing send(SmtpMessage) produced NoSuchMethodError for the old binary; recompiling unchanged policy against it failed with incompatible types. Compiling original policy with mechanism absent failed with missing shop.smtp types. Each expected command exited 1; evidence preserved."
+    },
+    {
+      "classification": "Existing seam regression checks",
+      "result": "Inverted policy compiled into fresh output without SDK; recording outcome and same-instance synchronous failure/no retry checks passed. jdeps showed java.base and no shop.smtp edge. Extracted adapter/root compiled and ran with illustrative SDK stub; recipient/subject/body translation observed."
+    },
+    {
+      "classification": "Executed structural check",
+      "command": "PowerShell here-string piped to node --input-type=module; script below",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "PASS: zero strict package issues, five distributed files, four Markdown files, three local references.",
+      "script": "import assert from 'node:assert/strict';\nimport {readFileSync,existsSync,readdirSync} from 'node:fs';\nimport {dirname,resolve,join} from 'node:path';\nimport {loadPackageFromDirectory,validatePackage} from '@jvm-expert/core';\nimport {NodeFileSystem} from '@jvm-expert/node';\nconst root='skills/java-dependency-inversion';\nconst loaded=await loadPackageFromDirectory(new NodeFileSystem(),root,{strict:true});\nconst report=validatePackage(loaded.pkg,{directoryName:'java-dependency-inversion'});\nassert.deepEqual([...loaded.issues,...report.issues],[]);\nconst docs=[`${root}/SKILL.md`,...readdirSync(`${root}/references`).filter(x=>x.endsWith('.md')).map(x=>join(root,'references',x))];\nlet links=0;\nfor(const file of docs){for(const m of readFileSync(file,'utf8').matchAll(/\\[[^\\]]+\\]\\(([^)]+)\\)|`((?:references\\/)?[a-z0-9-]+\\.md)`/g)){const target=(m[1]??m[2]).split('#')[0];if(!target||/^[a-z]+:\\/\\//i.test(target))continue;assert.ok(existsSync(resolve(dirname(file),target)),`${file}: ${target}`);links++;}}\nconsole.log(JSON.stringify({status:'PASS',issues:0,distributedFiles:loaded.pkg.files.length,markdownFiles:docs.length,localReferences:links}));"
+    },
+    {
+      "classification": "Executed formatting check",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/java-dependency-inversion/SKILL.md skills/java-dependency-inversion/skill.yaml 'skills/java-dependency-inversion/references/*.md'",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "PASS. Separate --file-info confirmed changed Markdown was not ignored."
+    },
+    {
+      "classification": "Executed diff/preservation check",
+      "command": "git diff --check -- skills/java-dependency-inversion; git diff -- skills/java-dependency-inversion; git status --short -- skills/java-dependency-inversion; git diff --cached --stat -- skills/java-dependency-inversion",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "PASS; inspected two focused files, no staged changes. Initial/final hash inventory and exact comparison of all Java fences confirm three untouched files and seven unchanged Java snippets."
+    },
+    {
+      "classification": "Primary-source retention",
+      "command": "Node fetch of six consulted Java17 primary sources; full URL/file/status/size/SHA-256 mapping in sources.json",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "All six HTTP 200; saved within isolated artifacts only."
+    }
+  ],
+  "failures": {
+    "unresolved": [],
+    "expected": "Three negative javac/java commands listed above are intentional controls, not unresolved failures.",
+    "tooling": "Initial rg call used a literal references/*.md path on PowerShell and emitted OS error 123. Retried using rg -g '*.md' skills/java-dependency-inversion successfully. Later commands caused the original cell to exit 0; the search error was read and corrected."
+  },
+  "behavioralEvaluations": {
+    "executed": [],
+    "walkthroughs": "Two paired development task inputs/criteria prepared from ordinary fixture sources/binaries and packaging context. Technical Java executions occurred, but no agent actor run occurred.",
+    "measuredImprovement": "None claimed; technical correction and preserved example behavior are not measured general skill improvement."
+  },
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se17/html/jls-13.html#jls-13.4.22",
+      "version": "JLS17",
+      "supports": "Method/constructor body changes preserve compatibility with pre-existing binaries. §13.2 distinguishes binary compatibility from other properties; interface evolution guidance also reviewed.",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-dependency-inversion-artifacts/jls17-binary-compatibility.html"
+    },
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se17/html/jls-7.html#jls-7.7.1",
+      "version": "JLS17",
+      "supports": "Existing module readability/transitive/cycle guidance reviewed and preserved.",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-dependency-inversion-artifacts/jls17-modules.html"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/CompletionStage.html",
+      "version": "JDK17",
+      "supports": "Existing deferred outcomes and whenComplete source-exception precedence preserved.",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-dependency-inversion-artifacts/jdk17-completion-stage.html"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Clock.html",
+      "version": "JDK17",
+      "supports": "Existing JDK clock abstraction and thread-safety contract preserved.",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-dependency-inversion-artifacts/jdk17-clock.html"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/random/RandomGenerator.html",
+      "version": "JDK17",
+      "supports": "Existing random-generator abstraction/confinement qualification preserved.",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-dependency-inversion-artifacts/jdk17-random-generator.html"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/stream/Stream.html",
+      "version": "JDK17",
+      "supports": "Existing lazy traversal and I/O resource closing obligations preserved.",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-dependency-inversion-artifacts/jdk17-stream.html"
+    }
+  ],
+  "limits": [
+    "Snippet validation supplies illustrative Order/SMTP placeholder classes; it is not a full mail application.",
+    "No real SMTP server, customer delivery, actual SDK failure mapping, cancellation, concurrency stress, JPMS runtime or framework integration executed.",
+    "Java17 source/API target compiled and ran with Java25 tools; no Java17 VM execution or universal vendor compatibility claim.",
+    "The compatible stub change establishes this linkage counterexample, not behavioral equivalence of real SDKs.",
+    "No new executable verifier or infrastructure shipped; all review fixtures/logs remain in authorized temporary artifacts.",
+    "Actor input copies exclude prior results and rubric, but shared filesystem does not enforce isolation; coordinator must control evaluator exposure.",
+    "No agent comparison or held-out evaluation performed.",
+    "Global index and repository validation remain coordinator work."
+  ],
+  "twoCases": {
+    "inputs": [
+      {
+        "id": "a",
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-dependency-inversion-artifacts/case-a-input/task.json",
+        "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-dependency-inversion-artifacts/case-a-input/"
+      },
+      {
+        "id": "b",
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-dependency-inversion-artifacts/case-b-input/task.json",
+        "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-dependency-inversion-artifacts/case-b-input/"
+      }
+    ],
+    "criteriaPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-dependency-inversion-artifacts/evaluator-criteria.json",
+    "decisiveConstraint": "Replacement SDK preserves the called send(SmtpMessage) signature in case A and removes it in favor of send(String) in case B; policy, existing consumer binary and packaging context remain the same.",
+    "exposureLimit": "Actor directories contain ordinary source/binaries/task/note only. Shared filesystem is not an enforced access boundary; coordinator must provide only the case input snapshot and applicable skill, excluding sibling criteria and prior results."
+  },
+  "crossSkill": {
+    "issues": [],
+    "requiredActions": [
+      "Inspect/merge the two owned-file changes and archive temporary evidence as desired.",
+      "Optional independent execution of separated cases; keep prior results and criteria outside actor context."
+    ]
+  },
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Shared generated registry; run after all reviewers stop writing."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Global validation reserved to coordinator after index regeneration and quiescent reviewers."
+    }
+  ],
+  "evidencePaths": [
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-dependency-inversion-artifacts/technical-results.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-dependency-inversion-artifacts/check-examples.mjs",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-dependency-inversion-artifacts/local-evidence.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-dependency-inversion-artifacts/sources.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-dependency-inversion-artifacts/evaluator-criteria.json"
+  ],
+  "artifactsDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-dependency-inversion-artifacts",
+  "writesStoppedStatement": "Owned edits and authorized temporary writes complete with this handoff. All spawned compiler/runtime commands finished; no writer remains. Reviewer remains read-only until reassigned."
+}

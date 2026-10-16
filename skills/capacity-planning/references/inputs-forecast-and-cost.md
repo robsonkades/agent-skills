@@ -16,6 +16,52 @@ Warmup is a state criterion. Inspect compilation, allocation/GC, cache hit rate,
 connection establishment and throughput/latency stability. Preserve cold-start behavior
 as a separate scenario.
 
+## Qualify decision inputs
+
+For each input that can change the capacity choice, open the underlying query, report or
+instrumentation definition. Trace where work is counted: before admission, at an individual
+attempt, after server completion, or after the caller observes the required result. Record
+filters, units, aggregation/window and the relevant workload class, deployment revision and
+configuration. Reconcile intended settings with the serving/tested instances; a chart for
+only the new pods or one successful response class cannot describe the entire target fleet.
+Do not mix logical operations, retry attempts and resource occupancy in one denominator.
+
+The [Google SRE SLI guidance](https://sre.google/workbook/implementing-slos/)
+distinguishes the desired user outcome from its measurement implementation: server logs can
+miss requests that never reach the backend. Apply the accepted SLO population and exclusions,
+not a convenient dashboard filter. Preserve separate successful-request latency and failure
+measures when that is the actual contract; do not silently replace it with another SLO.
+
+Check whether requests still in flight, client timeouts, cancellations or work abandoned at
+test end are absent from the reported latency samples. Follow the same eligible cohort to
+its terminal outcome or declared deadline, or retain unresolved outcomes explicitly. Requests
+that started before the window and finish inside it are not automatically the same cohort
+as starts inside that window. A client timeout may end the user's wait while server work
+continues consuming capacity; do not assume resources were released at that timeout. For
+example, [gRPC cancellation](https://grpc.io/docs/guides/cancellation/) requires application
+work to cooperate with cancellation; inspect the actual handler and cleanup behavior.
+
+For a **count-based good-event SLI**, a complete cohort of \(n>0\) eligible operations with
+\(g\) known good and \(u\) unresolved outcomes bounds the realized good fraction by:
+
+\[
+\frac{g}{n}\le f_{good}\le\frac{g+u}{n}
+\]
+
+Use mutually exclusive outcomes in the same unit, with \(0\le g,u\) and \(g+u\le n\).
+For a required fraction \(q\), the observed cohort passes this criterion if its lower bound
+is at least \(q\), fails if its upper bound is below \(q\), and is otherwise unresolved.
+This is an accounting bound, not a confidence interval or proof of future capacity; other
+guardrails and repeated-run evidence still apply. An outcome already known to miss its
+contractual deadline is not unresolved for that timeliness criterion, even if its eventual
+business result is unknown. If the eligible denominator itself is missing, the bound is not
+available. Do not use it to invent a p99 or to treat missing histogram observations as zero.
+
+Retain the original run and amend only affected envelope cells and forecasts when the
+population or evidence changes. If instrumentation cannot resolve a material ambiguity,
+hand the precise observation gap to `load-testing-advanced`; keep valid unrelated evidence
+instead of presenting an unsupported capacity point or rerunning every scenario.
+
 ## Signals
 
 | Plane          | Minimum evidence                                                          |

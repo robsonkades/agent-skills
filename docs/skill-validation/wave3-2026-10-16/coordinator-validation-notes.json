@@ -1,0 +1,20 @@
+{
+  "scope": "Report archive validation; no change to skill content or technical execution outcomes",
+  "initialFailure": {
+    "command": "node audit-report.mjs",
+    "exit": 1,
+    "message": "AssertionError: adapter-sidecar-pattern evidence",
+    "cause": "The first archive auditor required a separate evidence file for every skill. adapter-sidecar-pattern and cpu-cache-and-numa instead embedded executed structural command stdout and primary-source records in their original handoffs."
+  },
+  "correction": "The evidence manifest now explicitly references the byte-preserved original handoff, individual executed command records and source list for those two reviews. The auditor checks the original handoff hash, semantic equality with its readable copy, command record presence, exit code and stdout hash. All other evidence file hash checks remain in place.",
+  "limit": "These embedded records show structural checks and source inspection. They are not runtime or agent behavioral experiments.",
+  "globalCheckFirstFailure": {
+    "command": "npm run registry:build",
+    "exit": 1,
+    "resultFile": "registry-build-result.json",
+    "logFile": "registry-build.log.txt",
+    "message": "jvm-bytecode points at deoptimization without declaring or suggesting it",
+    "cause": "The new optional skill referral in dispatch-and-abstraction-cost.md lacked a suggests declaration in skill.yaml. The local package check did not cover catalog-wide document referrals.",
+    "repair": "Reopened with the owning reviewer for the optional suggests entry, keeping the existing wave-3 version 2.1.6. Subsequent global attempts use separately named logs and result files; the initial failure is preserved."
+  }
+}

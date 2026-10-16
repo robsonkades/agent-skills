@@ -1,0 +1,50 @@
+import { loadPackageFromDirectory, validatePackage } from '@jvm-expert/core';
+import { NodeFileSystem } from '@jvm-expert/node';
+import { ClaudeCodeAdapter } from '@jvm-expert/adapter-claude';
+import { CodexAdapter } from '@jvm-expert/adapter-codex';
+import { createHash } from 'node:crypto';
+
+const fs = new NodeFileSystem();
+const name = 'gof-pattern-selection';
+const root = `skills/${name}`;
+const evidence = 'C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-pattern-selection';
+const loaded = await loadPackageFromDirectory(fs, root, { strict: true });
+const report = validatePackage(loaded.pkg, {
+  strict: true, directoryName: name,
+  adapters: [new ClaudeCodeAdapter(), new CodexAdapter()],
+});
+const issues = [...loaded.issues, ...report.issues];
+const resourceLinks = [];
+for (const file of loaded.pkg.files.filter(f => f.path.endsWith('.md'))) {
+  const source = await fs.readTextFile(fs.join(root, file.path));
+  for (const match of source.matchAll(/\[[^\]]*\]\((<[^>]*>|[^)]+)\)/g)) {
+    const target = match[1].replace(/^<|>$/g, '');
+    if (/^(https?:|#)/.test(target)) continue;
+    const relative = target.split('#')[0];
+    const directory = file.path.includes('/') ? file.path.slice(0, file.path.lastIndexOf('/')) : '.';
+    if (!(await fs.exists(fs.join(root, directory, relative)))) throw new Error(file.path + ': missing ' + target);
+    resourceLinks.push({ from: file.path, target });
+  }
+}
+const referrals = [
+  ...loaded.pkg.manifest.dependencies.map(dependency => dependency.name),
+  ...loaded.pkg.manifest.suggests,
+];
+for (const target of referrals) {
+  if (!(await fs.exists(`skills/${target}/SKILL.md`))) throw new Error('Missing declared skill: ' + target);
+}
+const baseline = JSON.parse(await fs.readTextFile(`${evidence}/baseline.json`));
+const ownedHashes = [];
+for (const file of baseline.files) {
+  const hash = createHash('sha256').update(await fs.readFile(file.path)).digest('hex');
+  ownedHashes.push({ path: file.path, sha256: hash, matchesBaseline: hash === file.sha256 });
+}
+const unchanged = ownedHashes.every(file => file.matchesBaseline);
+console.log(JSON.stringify({
+  version: loaded.pkg.manifest.version,
+  packageFiles: loaded.pkg.files.map(file => file.path),
+  issues, resourceLinks, declaredTargetsChecked: referrals.length,
+  ownedHashes, unchanged,
+  limits: 'Local package validation and declared-target existence only; not catalog-wide version resolution or behavioral evaluation.'
+}, null, 2));
+if (issues.length || !unchanged) process.exitCode = 1;

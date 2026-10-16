@@ -1,0 +1,30 @@
+[
+  {
+    "file": "TASK.md",
+    "sha256": "a27c122c6d623aa09cc970351b4a24a9643ee804dfa96e89cdf805a8e3848c60"
+  },
+  {
+    "file": "client.mjs",
+    "sha256": "03f3c11d53a2d6273fe791b7dc41a42ce03b99e33747bf785e480a27630bf043"
+  },
+  {
+    "file": "server.mjs",
+    "sha256": "9207275610e3e93e7f06b73f9dde844d56e519ff874cf6a1854f6d170192b7d0"
+  },
+  {
+    "file": "adapter-contract.md",
+    "sha256": "591f36efd3fb491c27ecf90fe637c61933beaff291858d60502e7c3a0c1aab29"
+  },
+  {
+    "file": "protocol.json",
+    "sha256": "093a5214ebd8a4ba26a9aa3588b6add210b22e21678d324d5e4f634430fdc2e9"
+  },
+  {
+    "file": "proxy-policy.json",
+    "sha256": "1bb64854cfb9a3ee1f16cd231fec9643363313964e4022517f1d725d53740c60"
+  },
+  {
+    "file": "decision.md",
+    "sha256": "3ae54b5019d5cb4227d956e643fe8f82b17cdfcf3e7ba3e8e5705773fed06cbb"
+  }
+]

@@ -12,6 +12,36 @@ Correlate stacks, CPU and source/sink waits. A watermark held by an idle
 input can stall event-time output while record processing is healthy; follow
 `streaming-pipeline-topologies` before changing idleness or lateness semantics.
 
+## Async I/O: completed requests can still occupy the queue
+
+For Flink 2.0, trace the actual `orderedWait`/`unorderedWait` call, capacity, timeout/retry
+policy, client pool and callback path. Separate remote requests still running from completed
+results awaiting emission; task-thread busy time or remote latency alone cannot explain both.
+The capacity bounds each async operator instance's queued stream elements, not a global
+external-service budget. Completed but un-emitted entries still consume slots. Raising it can
+increase retained memory and replay work without releasing the element blocking emission;
+check aggregate remote load across subtasks and retries before scaling either setting.
+
+`orderedWait` holds later completed results behind an unfinished earlier input. Switch to
+unordered output only when the required result contract permits reordering. Even
+`unorderedWait` cannot move records across watermarks: compare `A, B` with
+`A, watermark, B`, while B completes before A. Within one segment B can be emitted while A
+waits; across the watermark B must wait until A and then the watermark are emitted. More
+capacity or unaligned checkpoints do not remove this event-time boundary. If no intervening
+watermark exists and unordered B still stalls, A alone is not the explanation: inspect
+`ResultFuture` completion, mailbox processing and downstream emission/backpressure.
+
+For a relevant recovery claim, include requests completed remotely but not yet emitted.
+In 2.0.0 those queued **inputs** are included in checkpoint state and reissued on restore;
+checkpoint success does not deduplicate external effects. Reuse the operation's idempotency
+contract where needed and measure replay load. Validate the paired completion histories and
+any changed restore contract in the target runtime; a queue model is not a Flink execution.
+
+These conditions follow from the [2.0.0 async I/O contract](https://github.com/apache/flink/blob/release-2.0.0/docs/content/docs/dev/datastream/operators/asyncio.md),
+the [ordered queue](https://github.com/apache/flink/blob/release-2.0.0/flink-streaming-java/src/main/java/org/apache/flink/streaming/api/operators/async/queue/OrderedStreamElementQueue.java),
+the [watermark-segmented unordered queue](https://github.com/apache/flink/blob/release-2.0.0/flink-streaming-java/src/main/java/org/apache/flink/streaming/api/operators/async/queue/UnorderedStreamElementQueue.java)
+and the [operator's checkpoint/restore path](https://github.com/apache/flink/blob/release-2.0.0/flink-streaming-java/src/main/java/org/apache/flink/streaming/api/operators/async/AsyncWaitOperator.java).
+
 ## Checkpoints and visibility
 
 For a checkpoint or visibility question, inspect relevant interval, timeout, minimum pause,

@@ -60,6 +60,9 @@ capacity number or diagnose metastability solely because recovery is slow.
    (`rate-limiting-and-load-shedding`), bound active work and waiting admission at the saturated resource
    (`concurrency-limiting-and-bulkheads`), trip breakers on the failing dependency
    (`circuit-breakers`). Also cancel expired work, disable optional fan-out and stop retry owners.
+   Follow the deployed rejection path: a shed response after expensive work, or one that triggers
+   more client attempts, may leave the bottleneck overloaded. Verify the removed work, not just
+   the control's configured limit (`references/cascade-response.md`).
 4. **Check the timeout stack down the call path.** An inner timeout longer than its caller's
    remaining budget can leave the inner call holding resources after the outer hop gives up.
    Verify which resources survive cancellation. The bound arithmetic is `timeouts-and-deadlines`;

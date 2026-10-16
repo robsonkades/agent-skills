@@ -16,8 +16,11 @@ service.changeNote("A", clientVersion, null); // conditional edit; null clears t
 
 `reserve` updates available stock and adds an owned movement in the same transaction.
 `changeNote` checks the client's earlier version before changing the current managed
-entity; Hibernate's `@Version` still protects a race after that check. Neither operation
-reconstructs a detached entity or overwrites omitted description/stock fields.
+entity; Hibernate's `@Version` checks the version when an update is written. A same-value
+edit may emit no UPDATE: this example accepts its initial comparison and does not request
+an additional optimistic read check. If that stronger validation is required, use the
+[mapping reference's lock-mode decision](../../references/mapping-and-identifiers.md).
+Neither operation reconstructs a detached entity or overwrites omitted description/stock fields.
 
 [InventoryException](src/main/java/example/persistence/InventoryException.java) gives
 the expected business failures a common code contract. Its specific
@@ -25,7 +28,7 @@ the expected business failures a common code contract. Its specific
 and [stale client version](src/main/java/example/persistence/InventoryVersionConflictException.java)
 failures retain the SKU and, for conflicts, expected/current versions. Their diagnostic
 messages are not an HTTP response contract. The latter is distinct from Hibernate's
-optimistic exception when two database transactions race after the initial check;
+optimistic exception when two database transactions update the row after the initial check;
 both paths remain protected. The base has no cause constructor because these failures
 originate here; an adapter translating infrastructure failures must preserve their cause.
 

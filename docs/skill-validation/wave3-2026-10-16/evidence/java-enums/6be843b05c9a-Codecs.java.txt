@@ -1,0 +1,43 @@
+import fixtures.Status;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.Properties;
+
+interface Codec {
+    Status read(byte[] bytes) throws Exception;
+    byte[] write(Status value) throws Exception;
+    String retainedFixture();
+}
+final class Codecs {
+    static Codec selected(Properties config) {
+        return switch (config.getProperty("codec")) {
+            case "native" -> new NativeCodec();
+            case "code" -> new CodeCodec();
+            default -> throw new IllegalArgumentException("unsupported codec");
+        };
+    }
+    private static final class NativeCodec implements Codec {
+        public Status read(byte[] bytes) throws Exception {
+            byte[] decoded = Base64.getDecoder().decode(new String(bytes, StandardCharsets.UTF_8).trim());
+            try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(decoded))) {
+                return (Status) in.readObject();
+            }
+        }
+        public byte[] write(Status value) throws Exception {
+            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            try (ObjectOutputStream out = new ObjectOutputStream(bytes)) { out.writeObject(value); }
+            return Base64.getEncoder().encode(bytes.toByteArray());
+        }
+        public String retainedFixture() { return "retained/legacy-native.b64"; }
+    }
+    private static final class CodeCodec implements Codec {
+        public Status read(byte[] bytes) {
+            return Status.byCode(new String(bytes, StandardCharsets.UTF_8).trim());
+        }
+        public byte[] write(Status value) {
+            return value.code().getBytes(StandardCharsets.UTF_8);
+        }
+        public String retainedFixture() { return "retained/legacy-code.txt"; }
+    }
+}

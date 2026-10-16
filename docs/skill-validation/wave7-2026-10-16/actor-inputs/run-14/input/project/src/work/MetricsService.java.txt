@@ -1,0 +1,4 @@
+package work;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.annotation.Transactional;
+public class MetricsService {private final JdbcTemplate jdbc;public MetricsService(JdbcTemplate jdbc){this.jdbc=jdbc;}@Transactional public void sample(String id){jdbc.update("insert into sample values (?)",id);if(id.isBlank())throw new IllegalArgumentException("blank sample");}}

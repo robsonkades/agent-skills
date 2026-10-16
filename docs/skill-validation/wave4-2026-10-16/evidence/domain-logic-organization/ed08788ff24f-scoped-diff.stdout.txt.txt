@@ -1,0 +1,63 @@
+diff --git a/skills/domain-logic-organization/references/domain-model.md b/skills/domain-logic-organization/references/domain-model.md
+index e95043e..6324427 100644
+--- a/skills/domain-logic-organization/references/domain-model.md
++++ b/skills/domain-logic-organization/references/domain-model.md
+@@ -243,7 +243,7 @@ an approximate or stale summary cannot enforce a strict invariant merely because
+ ## Sources
+ 
+ - [Evans: DDD Reference](https://www.domainlanguage.com/ddd/reference/) — entity identity, value semantics and aggregate/repository boundaries.
+-- [Jakarta Persistence 3.2 specification](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2): entity requirements, relationship ownership, optimistic locking and bulk operations.
++- [Jakarta Persistence 3.2 specification](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html): entity requirements, relationship ownership, optimistic locking and bulk operations.
+ - [Java 17 Record API](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Record.html): default component equality and explicitly declared methods.
+ - [Fowler: Domain Model](https://martinfowler.com/eaaCatalog/domainModel.html): data and behavior in the domain model.
+ - [Fowler: Active Record](https://martinfowler.com/eaaCatalog/activeRecord.html): domain behavior and persistence can coexist in one object.
+diff --git a/skills/domain-logic-organization/references/transaction-script-and-table-module.md b/skills/domain-logic-organization/references/transaction-script-and-table-module.md
+index 98dbbf7..4f31574 100644
+--- a/skills/domain-logic-organization/references/transaction-script-and-table-module.md
++++ b/skills/domain-logic-organization/references/transaction-script-and-table-module.md
+@@ -6,6 +6,11 @@ One procedure per business transaction. Input arrives, the procedure validates i
+ what it needs, computes, writes, and returns. Data is carried in structures — records,
+ rows, DTOs — with no behaviour of their own.
+ 
++Here, business transaction means a request or use case, not a guarantee of one atomic
++database transaction. Trace the participating resources, commit/rollback boundary and
++protection against competing writers separately (`enterprise-transactions`). Moving the
++same steps into domain objects or a Table Module does not supply those guarantees.
++
+ ```java
+ public class RegisterShipment {
+ 
+@@ -34,7 +39,7 @@ public class RegisterShipment {
+ }
+ ```
+ 
+-That is a good Transaction Script: one transaction, explicit steps, no hidden state, and
++That is a good Transaction Script: one cohesive use case, explicit steps, no hidden state, and
+ trivially readable. The pattern's reputation suffers from bad examples, not from the
+ pattern.
+ 
+@@ -195,9 +200,9 @@ compare the model's benefits and load costs (`domain-model.md`).
+ ## Sources
+ 
+ - [Fowler: Transaction Script](https://martinfowler.com/eaaCatalog/transactionScript.html) — procedures per business transaction, with shared subtasks where useful.
+-- [JdbcClient API](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/jdbc/core/simple/JdbcClient.html): API introduced in Spring Framework 6.1.
++- [JdbcClient 6.1.0 API](https://docs.spring.io/spring-framework/docs/6.1.0/javadoc-api/org/springframework/jdbc/core/simple/JdbcClient.html): API introduced in Spring Framework 6.1.
+ - [Spring proxying](https://docs.spring.io/spring-framework/reference/core/aop/proxying.html) — final classes and proxy/self-invocation boundaries.
+ - [Fowler: Table Module](https://martinfowler.com/eaaCatalog/tableModule.html) — record-set organization, distinct from a gateway's persistence responsibility.
+ - [Fowler: Table Data Gateway](https://martinfowler.com/eaaCatalog/tableDataGateway.html) — table-level database access, which does not by itself assign business-policy ownership.
+-- [Jakarta Persistence 3.2 specification](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2) — entity lifecycle callbacks and the separate direct-database bulk-operation path.
++- [Jakarta Persistence 3.2 specification](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html) — entity lifecycle callbacks and the separate direct-database bulk-operation path.
+ - [Spring Data aggregate event publication](https://docs.spring.io/spring-data/jpa/reference/repositories/core-domain-events.html) — hooks depend on the repository operation and aggregate instances; check the deployed version.
+diff --git a/skills/domain-logic-organization/skill.yaml b/skills/domain-logic-organization/skill.yaml
+index a8998be..1118909 100644
+--- a/skills/domain-logic-organization/skill.yaml
++++ b/skills/domain-logic-organization/skill.yaml
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: domain-logic-organization
+-version: 1.3.5
++version: 1.3.6
+ description: >-
+   Choosing where business rules live — Transaction Script, Domain Model or Table Module —
+   from the shape of the logic rather than from convention, and recognising when the choice

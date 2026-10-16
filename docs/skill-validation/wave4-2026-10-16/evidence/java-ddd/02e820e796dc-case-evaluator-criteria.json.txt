@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "kind": "evaluator-only",
+  "knownDevelopmentCases": true,
+  "independentActorRunsExecuted": 0,
+  "pair": {
+    "changedConstraint": "Only notificationContract differs; source, request, versions, missing deployment evidence and the mocked unit test are identical.",
+    "expectedDecisionDifference": "A permits keeping the local/simple notification path and does not justify mandatory durable messaging. B requires a supported state-and-delivery contract with a durability mechanism, integration checks and appropriate specialist handoff; selecting Rabbit by name or adding @Transactional does not meet it.",
+    "isolation": "Provide one expanded case only to each fresh actor. Do not expose this file, source-review notes, handoff or peer outputs; folder separation alone is not enforced isolation.",
+    "comparison": "Hold tools/model/budget/context fixed across baseline 1.0.0 and revised 1.0.1 (and no-skill if desired). Supply unchanged neighboring skill versions consistently when available. Record actually read resources. Cases are known development examples, not held-out."
+  },
+  "commonExpected": [
+    "Keep the role as review/design and preserve Java 17 source / Boot 2.7.7 and target naming; do not implement, upgrade or introduce microservices, CQRS or event sourcing without a requirement.",
+    "Trace DefaultVideoGateway's injected EventService to EventConfig and both implementations. Note the development logger and conditional Rabbit bean, while qualifying actual selection without a deployment profile/bean inventory.",
+    "Distinguish repository save, method invocation order and effective transactional interception from observed database commit. Passing mocked save/send tests do not prove database/broker behavior.",
+    "Keep simple domain capabilities proportionate; route detailed persistence/delivery/transaction questions to the relevant specialists instead of reproducing them or loading all seven by default.",
+    "Record material unknowns and discriminating checks while continuing source-supported design; do not require stakeholder ceremonies for the supplied clear acceptance examples."
+  ],
+  "caseCriteria": [
+    {
+      "id": "A",
+      "required": [
+        "Accept the simple notification contract as legitimate.",
+        "Do not prescribe an outbox/broker solely because an event or Rabbit implementation exists.",
+        "Check rejected input and saved identity/audit behavior in the eventual slice; state delivery loss is acceptable only under this contract."
+      ],
+      "failures": [
+        "Calls the active service Rabbit without resolving configuration.",
+        "Requires durable delivery or a rich aggregate hierarchy without supporting business rules.",
+        "Claims the mocked test proves commit ordering or atomicity."
+      ]
+    },
+    {
+      "id": "B",
+      "required": [
+        "Do not call the current excerpt a proven durable delivery path.",
+        "Connect accepted state, recoverable notification and rejected-video exclusion to a supported transaction/delivery mechanism; an outbox is one acceptable proposal, not the only acceptable answer.",
+        "Ask for/inspect effective configuration and transaction/consumer evidence; propose relevant restart/rollback/duplicate-delivery integration checks without claiming they ran."
+      ],
+      "failures": [
+        "Treats changing the profile to Rabbit as sufficient durability.",
+        "Claims successful save/send or @Transactional alone provides atomic DB/broker delivery.",
+        "Weakens the accepted-video requirement to best-effort logging.",
+        "Automatically decomposes the monolith or imposes event sourcing/CQRS."
+      ]
+    }
+  ],
+  "walkthroughs": [
+    {
+      "id": "A",
+      "kind": "structured reviewer walkthrough only",
+      "outcome": "Existing hub and corrected reference can support retaining local diagnostics, rejecting a forced outbox and qualifying bean/commit evidence."
+    },
+    {
+      "id": "B",
+      "kind": "structured reviewer walkthrough only",
+      "outcome": "Existing hub and corrected reference can support explicit durable delivery and specialist handoff while leaving configuration and integration results unproven."
+    }
+  ],
+  "behavioralBenefitMeasured": false
+}
+

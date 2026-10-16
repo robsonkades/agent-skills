@@ -149,10 +149,13 @@ interval` — and the heap from the live set plus that young generation plus
   sizing; the real policy is an adaptive predictor over truncated histories of past
   measurements, recalibrating every collection.
 - Every mixed collection is logged as `Pause Young (Mixed)`, never as a bare
-  `Pause Mixed`, and `Pause Young (Prepare Mixed)` is the young-only collection that
-  precedes the first one. A parser that reads the type immediately after `Pause `
+  `Pause Mixed`, and `Pause Young (Prepare Mixed)` marks preparation before the mixed phase.
+  A parser that reads the type immediately after `Pause `
   classifies all of them as young; one that matches `Mixed)` counts the preparation
   pause as mixed. Match `Pause Young \(Mixed\)` exactly.
+  On JDK 25, retained old candidates can also enter other pause types; check
+  [their selection](references/policy-log-and-troubleshooting.md) before attributing all
+  `Normal` or `Prepare Mixed` copy work to young objects.
 - `Old regions: 50->55` has **no** third parenthesised number, unlike Eden and Survivor.
   A regex demanding `(\d+)->(\d+)\((\d+)\)` matches nothing and yields an old-growth
   estimate of zero with no error. Even a parsed positive delta is region growth, not an

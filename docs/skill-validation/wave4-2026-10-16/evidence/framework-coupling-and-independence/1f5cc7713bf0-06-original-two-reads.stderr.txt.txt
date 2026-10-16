@@ -1,0 +1,5 @@
+Exception in thread "main" java.lang.IllegalStateException: InputStream has already been read (possibly for early content length determination) - do not use InputStreamResource if a stream needs to be read multiple times
+	at org.springframework.core.io.InputStreamResource.getInputStream(InputStreamResource.java:142)
+	at example.adapter.SpringExportBody.open(SpringExportBody.java:17)
+	at example.application.ExportPipeline.process(ExportPipeline.java:13)
+	at example.Runner.main(Runner.java:19)

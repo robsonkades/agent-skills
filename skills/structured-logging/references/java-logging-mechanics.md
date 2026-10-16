@@ -1,5 +1,49 @@
 # Java Logging Mechanics
 
+## Identify the backend selected by the running artifact
+
+For missing events or a packaging change, inspect the actual launch classpath/archive and startup
+diagnostics, alongside resolved dependencies. In SLF4J 2.x, an undiscoverable provider can leave
+calls returning normally through a no-operation logger. A 1.7-era static binding does not satisfy
+2.x provider discovery. A Logback configuration file cannot configure a backend that was never
+selected. See the [SLF4J provider diagnostics](https://www.slf4j.org/codes.html#noProviders).
+
+An isolated Java 17 startup probe can report selection outside the affected logging path:
+
+```java
+var probeLogger = org.slf4j.LoggerFactory.getLogger("logging.probe");
+System.err.println(org.slf4j.LoggerFactory.getILoggerFactory().getClass().getName());
+System.err.println(probeLogger.getClass().getName());
+```
+
+Then emit a permitted known event and inspect actual output. Verified with SLF4J **2.0.9**, compiled
+with `--release 17` and run on Temurin 25.0.3+9; the same fluent INFO call returned normally in all
+four isolated launches:
+
+| Runtime backend/configuration      | Selected factory   | Encoded probe events |
+| ---------------------------------- | ------------------ | -------------------- |
+| No provider                        | `NOPLoggerFactory` | 0                    |
+| Logback 1.2.11 static binding only | `NOPLoggerFactory` | 0; binding ignored   |
+| Logback 1.4.11, INFO, JsonEncoder  | `LoggerContext`    | 1                    |
+| Same Logback stack, root OFF       | `LoggerContext`    | 0                    |
+
+The NOP factory was `org.slf4j.helpers.NOPLoggerFactory`; Logback's was
+`ch.qos.logback.classic.LoggerContext`. Missing/legacy-provider cases emitted startup diagnostics
+on stderr. The OFF control shows that a selected provider alone does not establish emission;
+follow effective level/filter, appender lifecycle and the remaining delivery path when selection
+is correct. An enabled level alone likewise does not prove sink acceptance.
+
+For classpath service discovery, check that packaging preserves
+`META-INF/services/org.slf4j.spi.SLF4JServiceProvider` and that its provider is visible to the loader
+of `LoggerFactory`. Check an existing `slf4j.provider` override where the pinned API supports it
+(present in 2.0.9). The lookup is in
+[SLF4J 2.0.9 LoggerFactory](https://github.com/qos-ch/slf4j/blob/v_2.0.9/slf4j-api/src/main/java/org/slf4j/LoggerFactory.java);
+classpath registration follows [Java's ServiceLoader contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/ServiceLoader.html).
+Select the intended compatible provider in application packaging; reusable libraries normally
+depend on the API alone, leaving that choice to their host. Preserve an intentional no-logging
+policy or an adequate selected backend. The probe establishes local selection/emission for these
+coordinates, not collection, retention or behavior under a different loader/packaging scheme.
+
 ## Typed event example
 
 Partial Java 17 examples: supply the application variables, logger and exception types.

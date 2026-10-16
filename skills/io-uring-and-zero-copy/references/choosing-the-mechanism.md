@@ -38,9 +38,19 @@ Do not overlap independent sends, or independent receives, on an ordered TCP str
 ordering mechanism; sending and receiving are independent directions. Serialize dependent work
 or use supported linkage, preserving backpressure and the operation's buffer-release contract.
 `IOSQE_IO_LINK` orders members of one chain within a submission batch, not other chains or later
-submissions. Handle each result: errors and unexpected short I/O can break the chain and cancel
+submissions. Handle each result: operation-specific failure rules can break the chain and cancel
 its unstarted remainder. A link neither completes missing bytes nor makes the batch atomic.
 With an existing transport, verify its ordering contract before adding a parallel native path.
+
+For TCP `SEND`/`SEND_ZC`, a positive short send without `MSG_WAITALL` does not itself break
+`IOSQE_IO_LINK`: the next send can run before the missing suffix is sent. Under the liburing
+linked-send contract, set `MSG_WAITALL` in the send flags, not the SQE flags, when the successor
+requires the preceding payload in full. Alternatively, submit the next send only after the
+previous payload has completed, including its remaining-byte retries. With `MSG_WAITALL`, still
+inspect actual byte counts and canceled dependents: a terminal failure can leave partial progress
+that is not rolled back. Preserve admission/deadline bounds and the separate `SEND_ZC`
+buffer-release notification contract with either design. This distinction is documented in
+liburing 2.5 and implemented by Linux 6.6; verify the deployed binding's flags and semantics.
 
 ## Completion ownership and bounded capacity
 
@@ -191,5 +201,6 @@ completion ownership and delayed buffer reuse.
 - [MappedByteBuffer lifetime and truncation contract, JDK 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/nio/MappedByteBuffer.html)
 - [io_uring request ordering and completion correlation](https://man7.org/linux/man-pages/man7/io_uring.7.html)
 - [Linked requests and failure semantics](https://man7.org/linux/man-pages/man2/io_uring_enter.2.html) — `IOSQE_IO_LINK`.
+- [liburing 2.5 linked-send precondition](https://github.com/axboe/liburing/blob/liburing-2.5/man/io_uring_prep_send_zc.3) and [Linux 6.6 send implementation](https://github.com/torvalds/linux/blob/v6.6/io_uring/net.c) — `MSG_WAITALL`, partial progress and link failure for `SEND`/`SEND_ZC`.
 - [Linux direct-file-I/O contract and restrictions](https://man7.org/linux/man-pages/man2/open.2.html) — `O_DIRECT` and NOTES, when that file mode is actually involved.
 - [JDK 25 custom selector-provider contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/nio/channels/spi/SelectorProvider.html) and [stock OpenJDK 25 Linux selector provider](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/linux/classes/sun/nio/ch/DefaultSelectorProvider.java) — distinguish the standard API from the deployed native backend.

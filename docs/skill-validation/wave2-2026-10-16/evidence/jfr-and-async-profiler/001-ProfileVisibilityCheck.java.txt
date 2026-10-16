@@ -1,0 +1,102 @@
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.LockSupport;
+import jdk.jfr.Recording;
+import jdk.jfr.consumer.RecordedEvent;
+import jdk.jfr.consumer.RecordingFile;
+
+public final class ProfileVisibilityCheck {
+    private static final AtomicBoolean RELEASE = new AtomicBoolean();
+    private static final AtomicInteger RETURNS = new AtomicInteger();
+
+    public static void main(String[] args) throws Exception {
+        Path output = Path.of(args[0]).toAbsolutePath();
+        Files.createDirectories(output);
+        Thread target = new Thread(() -> {
+            while (!RELEASE.get()) {
+                LockSupport.park(ProfileVisibilityCheck.class);
+                RETURNS.incrementAndGet();
+            }
+        }, "review-target");
+        target.setDaemon(true);
+        try (Recording recording = new Recording()) {
+            recording.setName("isolated-visibility-check");
+            recording.enable("jdk.ThreadPark").withThreshold(Duration.ZERO).withStackTrace();
+            recording.start();
+            Files.writeString(output.resolve("settings.txt"),
+                    "runtime=" + Runtime.version() + "\nos=" + System.getProperty("os.name")
+                    + "\nsettings=" + recording.getSettings() + "\n");
+            Thread positive = new Thread(() -> LockSupport.parkNanos(25_000_000L), "review-positive");
+            positive.start();
+            positive.join(3_000L);
+            require(!positive.isAlive(), "Invalid run: positive control did not finish");
+
+            target.start();
+            long deadline = System.nanoTime() + 3_000_000_000L;
+            while (target.getState() != Thread.State.WAITING && System.nanoTime() < deadline) {
+                Thread.sleep(1L);
+            }
+            require(target.getState() == Thread.State.WAITING, "Invalid run: target not waiting");
+            Thread.sleep(50L);
+            require(RETURNS.get() == 0, "Invalid run: target park returned before first dump");
+            Files.writeString(output.resolve("before-thread.txt"), snapshot(target));
+            recording.dump(output.resolve("before.jfr"));
+            require(RETURNS.get() == 0, "Invalid run: target park returned during first dump");
+
+            RELEASE.set(true);
+            LockSupport.unpark(target);
+            target.join(3_000L);
+            require(!target.isAlive(), "Invalid run: target failed to finish");
+            Files.writeString(output.resolve("after-thread.txt"), snapshot(target));
+            recording.stop();
+            recording.dump(output.resolve("after.jfr"));
+
+            List<RecordedEvent> before = RecordingFile.readAllEvents(output.resolve("before.jfr"));
+            List<RecordedEvent> after = RecordingFile.readAllEvents(output.resolve("after.jfr"));
+            long beforeTarget = count(before, "review-target");
+            long afterTarget = count(after, "review-target");
+            long beforePositive = count(before, "review-positive");
+            long afterPositive = count(after, "review-positive");
+            require(beforeTarget == 0, "Ongoing target park unexpectedly published");
+            require(afterTarget == 1, "Completed target park missing or duplicated");
+            require(beforePositive == 1 && afterPositive == 1, "Positive-control coverage failed");
+            String result = "{\"beforeTarget\":" + beforeTarget
+                    + ",\"afterTarget\":" + afterTarget
+                    + ",\"beforePositive\":" + beforePositive
+                    + ",\"afterPositive\":" + afterPositive
+                    + ",\"targetReturns\":" + RETURNS.get()
+                    + ",\"compilerTarget\":25,\"runtime\":\"" + Runtime.version()
+                    + "\",\"testPassed\":true}\n";
+            Files.writeString(output.resolve("results.json"), result);
+            System.out.print(result);
+        } finally {
+            RELEASE.set(true);
+            LockSupport.unpark(target);
+            target.join(1_000L);
+        }
+    }
+
+    private static String snapshot(Thread thread) {
+        StringBuilder text = new StringBuilder("observed_utc=").append(Instant.now())
+                .append("\nthread=").append(thread.getName())
+                .append("\nstate=").append(thread.getState())
+                .append("\npark_returns=").append(RETURNS.get()).append("\n");
+        for (StackTraceElement frame : thread.getStackTrace()) text.append("at ").append(frame).append("\n");
+        return text.toString();
+    }
+
+    private static long count(List<RecordedEvent> events, String thread) {
+        return events.stream().filter(event -> event.getEventType().getName().equals("jdk.ThreadPark"))
+                .filter(event -> event.getThread() != null && event.getThread().getJavaName().equals(thread))
+                .count();
+    }
+
+    private static void require(boolean condition, String message) {
+        if (!condition) throw new AssertionError(message);
+    }
+}

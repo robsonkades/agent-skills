@@ -122,9 +122,13 @@ authorized lifecycle planning, not as delivery tasks in this definition workshop
   that will drift.
 - Trace every technical criterion and decision to `BAC-*`, a numbered business rule, a risk, or a
   stated engineering necessity. Untraced design is either speculative or missing its justification.
-- If engineering needs a product trade-off, set status to `Blocked on product decision`, state options
-  and consequences, and return that question to the product owner. Resume against a new accepted
-  business-definition revision.
+- If engineering needs a product trade-off, set status to `Blocked on product decision`, state the
+  affected rule or criterion, options and consequences, and return that question to the product owner.
+  Continue independent analysis. If the owner changes the definition, resume dependent work against
+  the new accepted revision and reassess its traced consequences. If the owner confirms the existing
+  meaning, record that source and retain the product revision; resolve the remaining engineering
+  uncertainty without reopening unrelated product decisions. Confirmation of intent is not proof
+  of feasibility.
 
 ## Technical criterion format
 

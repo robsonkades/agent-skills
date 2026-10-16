@@ -91,6 +91,11 @@ cached balance does not establish permission to spend it, and moving work behind
 does not establish authorization at the operation. Route the unresolved mechanism instead
 of filling the gap with a framework annotation.
 
+Reconcile time and load across the whole call path too: separately accepted timeout/retry
+policies can exhaust the caller's budget or multiply downstream attempts. Inspect effective
+gateway, client and SDK policies before accepting a composed guarantee. The integration
+reference identifies the evidence to pass to the timeout/retry specialists.
+
 If two binding constraints cannot both hold under the proposed design, expose the conflict
 and the options to its decision authority. Do not silently weaken an invariant or label
 an unapproved compromise accepted. Read [Integrating decisions](references/integrating-decisions.md)

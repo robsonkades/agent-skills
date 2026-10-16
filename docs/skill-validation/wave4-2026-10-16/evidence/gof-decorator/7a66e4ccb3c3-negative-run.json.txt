@@ -1,0 +1,15 @@
+{
+  "label": "negative-run",
+  "command": [
+    "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+    "-cp",
+    "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-decorator-check\\negative\\classes",
+    "DecoratorChecks"
+  ],
+  "workingDirectory": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-decorator-check\\negative",
+  "exitCode": 1,
+  "signal": null,
+  "stdout": "",
+  "stderr": "Exception in thread \"main\" java.lang.AssertionError: failure identity: expected PricingUnavailable: sku-1, got java.lang.AssertionError: validated attempt limit\r\n\tat DecoratorChecks.check(DecoratorChecks.java:32)\r\n\tat DecoratorChecks.sameFailure(DecoratorChecks.java:38)\r\n\tat DecoratorChecks.main(DecoratorChecks.java:91)\r\n",
+  "error": null
+}

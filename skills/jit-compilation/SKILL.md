@@ -62,8 +62,9 @@ Compiler.codecache` for `full_count` and the `Compilation:` line, `fullCount` in
    acceptance under representative self-training or ramped traffic. Compiler-statistics deltas,
    queue depth, and code-cache state explain convergence but are not sufficient readiness
    criteria. Compute rates from timed samples of the same JVM's cumulative counters; a final
-   snapshot is not a recording-interval total. `jdk.Compilation` event thresholds are
-   configuration- and version-specific.
+   snapshot is not a recording-interval total. `compileCount` counts successes on this build;
+   a flat value can coexist with failed compiler work, so inspect bailout and elapsed-time deltas.
+   `jdk.Compilation` event thresholds are configuration- and version-specific.
 
 ## Rules
 

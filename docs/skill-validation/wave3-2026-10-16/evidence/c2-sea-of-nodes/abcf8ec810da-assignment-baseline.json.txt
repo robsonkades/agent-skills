@@ -1,0 +1,28 @@
+{
+  "committedVersion": "1.4.5",
+  "initialVersion": "1.4.5",
+  "initialDiff": "",
+  "initialStatus": "",
+  "files": [
+    {
+      "path": "skills/c2-sea-of-nodes/references/c2-phases-and-ir.md",
+      "assignmentSha256": "292502a604f64e5704b44f177e981f149281366a54de6e1165eb405d0ad33696",
+      "currentSha256": "292502a604f64e5704b44f177e981f149281366a54de6e1165eb405d0ad33696"
+    },
+    {
+      "path": "skills/c2-sea-of-nodes/references/jit-diagnosis-recipes.md",
+      "assignmentSha256": "516cdba206af4eb87a9affc7dfa341409c7412fbff2ab01bc96e59d465a97e70",
+      "currentSha256": "516cdba206af4eb87a9affc7dfa341409c7412fbff2ab01bc96e59d465a97e70"
+    },
+    {
+      "path": "skills/c2-sea-of-nodes/SKILL.md",
+      "assignmentSha256": "de62473931c004556b9232d0234182319647f6a76af700d06e2b575359effce9",
+      "currentSha256": "de62473931c004556b9232d0234182319647f6a76af700d06e2b575359effce9"
+    },
+    {
+      "path": "skills/c2-sea-of-nodes/skill.yaml",
+      "assignmentSha256": "5c887c5340bf87b40357029f8f7e9e1dda77846d00bca3cff0df945b8c0289ae",
+      "currentSha256": "5c887c5340bf87b40357029f8f7e9e1dda77846d00bca3cff0df945b8c0289ae"
+    }
+  ]
+}

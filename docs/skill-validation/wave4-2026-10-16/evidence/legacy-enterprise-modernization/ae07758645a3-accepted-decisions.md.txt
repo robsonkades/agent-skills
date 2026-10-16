@@ -1,0 +1,9 @@
+# Accepted migration decisions
+
+- Keep this database and the owning application; this slice does not add a service, broker, ACL or new write authority.
+- Rename the physical customer relation and preserve the legacy lookup name through a compatibility view.
+- The lookup runs under the principal selected in consumer.json. Each application principal must see only the customer rows whose tenant_role equals that principal. There is no approved widening of read access.
+- Applications remain read-only. The separate owner retains its existing maintenance writes.
+- Preserve output column names and values. This migration does not reinterpret customer meaning.
+- Restore the old lookup with the supplied reverse DDL if this slice cannot be accepted. Operational locking and recovery windows still require a target-database rehearsal.
+- An owner smoke test is available from the team; no executed application-principal or restore rehearsal is supplied.

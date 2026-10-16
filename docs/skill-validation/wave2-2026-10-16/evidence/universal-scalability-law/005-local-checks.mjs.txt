@@ -1,0 +1,67 @@
+import assert from 'node:assert/strict';
+import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
+import { resolve, dirname, join } from 'node:path';
+import { pathToFileURL, fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
+
+const root = resolve('C:/git/agent-skills');
+const skill = join(root, 'skills/universal-scalability-law');
+const artifacts = dirname(fileURLToPath(import.meta.url));
+const { parseManifest } = await import(pathToFileURL(join(root, 'packages/core/src/domain/manifest.ts')));
+const { parseSkillDocument, documentName, documentDescription } = await import(pathToFileURL(join(root, 'packages/core/src/domain/skill-document.ts')));
+const manifestText = readFileSync(join(skill, 'skill.yaml'), 'utf8');
+const { manifest, issues } = parseManifest(manifestText, { strict: true });
+assert.deepEqual(issues, []);
+const doc = parseSkillDocument(readFileSync(join(skill, 'SKILL.md'), 'utf8'));
+assert.equal(documentName(doc), manifest.name);
+assert.equal(documentDescription(doc), manifest.description);
+assert.match(manifestText, /^version: 1\.2\.5$/m);
+for (const file of manifest.files) assert.ok(existsSync(join(skill, file)), file);
+
+const files = [join(skill, 'SKILL.md'), join(skill, 'skill.yaml'), ...readdirSync(join(skill, 'references')).map(file => join(skill, 'references', file))];
+assert.equal(files.length, 5);
+const localLinks = [];
+for (const file of files.filter(file => file.endsWith('.md'))) {
+  const text = readFileSync(file, 'utf8');
+  for (const match of text.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)) {
+    const href = match[1].replace(/^<|>$/g, '');
+    if (/^[a-z][a-z\d+.-]*:/i.test(href)) continue;
+    const [targetPath, anchor] = href.split('#');
+    const target = targetPath ? resolve(dirname(file), targetPath) : file;
+    assert.ok(existsSync(target), target);
+    if (anchor) {
+      const anchors = [...readFileSync(target, 'utf8').matchAll(/^#+\s+(.+)$/gm)]
+        .map(match => match[1].trim().toLowerCase().replace(/[^\p{L}\p{N}_\s-]/gu, '').replace(/\s/g, '-'));
+      assert.ok(anchors.includes(anchor), href);
+    }
+    localLinks.push({ source: file, href, target });
+  }
+}
+for (const ref of readdirSync(join(skill, 'references'))) {
+  assert.ok(doc.body.includes('references/' + ref), 'Unrouted reference: ' + ref);
+}
+const baseline = JSON.parse(readFileSync(join(artifacts, 'baseline-hashes.json'), 'utf8'));
+const finalFiles = files.map(path => ({
+  path, bytes: statSync(path).size,
+  sha256: createHash('sha256').update(readFileSync(path)).digest('hex').toUpperCase()
+}));
+const changed = finalFiles.filter(file => baseline.find(entry => resolve(entry.Path) === resolve(file.path)).Hash !== file.sha256);
+assert.deepEqual(changed.map(file => file.path).sort(), [
+  join(skill, 'skill.yaml'), join(skill, 'references/data-collection-and-fitting.md')
+].sort());
+
+const upstream = readFileSync(join(artifacts, 'usl-3.0.4.R'), 'utf8').split(/\r?\n/);
+const omissionLine = upstream.findIndex(line => /frame\$na.action\s*<-\s*"na.omit"/.test(line));
+assert.ok(omissionLine >= 0, 'Pinned upstream missing-value handling changed');
+console.log(JSON.stringify({
+  scope: 'skill-local structural/source inspection; not R execution or agent evaluation',
+  strictManifestIssues: issues.length,
+  nameAndDescriptionMatch: true,
+  version: '1.2.5',
+  shippedFiles: files.length,
+  localLinks,
+  allReferencesRouted: true,
+  sourceEvidence: { path: join(artifacts, 'usl-3.0.4.R'), line: omissionLine + 1, text: upstream[omissionLine].trim() },
+  changedFilesSinceAssignment: changed.map(file => file.path),
+  finalFiles
+}, null, 2));

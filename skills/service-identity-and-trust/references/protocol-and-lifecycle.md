@@ -90,6 +90,20 @@ revoke the input or couple later revocation of input and output. Verify provider
 when the design depends on that relationship. See
 [RFC 8693, sections 1.1, 2.1 and 4.1](https://www.rfc-editor.org/rfc/rfc8693.html).
 
+Select the actual certificate-authentication profile. RFC 8705 `tls_client_auth` uses a
+validated PKI chain plus the expected registered subject. Its `self_signed_tls_client_auth`
+alternative matches the TLS peer certificate against certificates in trusted client
+registration without validating a CA chain. Both require proof of possession in the TLS
+handshake and binding to the claimed client. A self-signed certificate with the same subject
+name is not enough. This profile-specific alternative does not weaken HTTPS server
+authentication or PKI/SPIFFE verification on other boundaries. See
+[RFC 8705, sections 2.1–2.2](https://www.rfc-editor.org/rfc/rfc8705.html#section-2).
+
+Test the configured distinction: a registered self-signed client succeeds only under its
+supported profile; an unregistered same-name certificate or a copied certificate header
+cannot authenticate it. When the contract instead requires PKI, that self-signed credential
+must not bypass the required chain check. Denied attempts must cause no protected effect.
+
 mTLS client authentication at the token endpoint and certificate-bound access tokens are
 different features. TLS between two workloads does not automatically bind an ordinary
 bearer token to the presenting workload. For RFC 8705 certificate-bound tokens, verify the

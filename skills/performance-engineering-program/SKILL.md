@@ -27,6 +27,9 @@ no-change conclusion is valid; an assessment need not start a new rollout or cha
 2. Assess evidence by service and dimension: user objective, representative baseline, regression
    gate, production observability, ownership/runbook and learning loop. Reuse existing artifacts,
    owners and accepted decisions; distinguish missing evidence from demonstrated absence.
+   Follow the selected workflow/configuration and a representative result to the decision or
+   owner that consumes it. A template or successful standalone exercise does not prove adoption
+   on the service's actual release/operating path.
 3. Check the decision's prerequisites. An advanced profiler does not compensate for
    a missing measurable objective—an SLO or an explicit performance requirement appropriate to the
    workload—or a gate that silently passes without data. Limit a blocker to the decision that
@@ -50,7 +53,9 @@ no-change conclusion is valid; an assessment need not start a new rollout or cha
   workloads. Inspect service criticality, runtime/tool versions and deployment constraints before
   applying a template; the program does not authorize upgrades or new release approval gates.
 - A CI performance gate is not adopted until it has representative evidence, calibrated noise,
-  explicit metric direction, `pass/regression/inconclusive`, and baseline ownership.
+  explicit metric direction, `pass/regression/inconclusive`, baseline ownership and evidence that
+  its outcomes cause the agreed reaction. An approved advisory pilot can be adopted in that mode;
+  do not count it as blocking release protection or introduce blocking without existing authority.
 - When using rotating champions, require practice on real services, a cadence that permits depth,
   and a maintained escalation path.
 - Do not use SLO attainment, incidents or maturity scores for individual performance evaluation.
@@ -66,6 +71,8 @@ signal to useful evidence, percentage of critical services with exercised runboo
 of performance budgets. Report uncertainty and avoid causal claims from simple correlation.
 Version the eligible-service/release population, observation window and exclusions. Show missing
 coverage separately: fewer reported regressions after detection is disabled is not improvement.
+Label advisory and blocking coverage separately; an exercised mechanism is not yet evidence of
+fewer escaped regressions or better user outcomes.
 Do not average service percentiles into an organization-wide percentile.
 
 For an assessment, deliver the supported conclusion, relevant gaps and any next decision or check;

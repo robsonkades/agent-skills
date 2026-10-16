@@ -43,8 +43,9 @@ Method suspected of being under-optimised
 |
 +-- 2. Does the hot path call other methods?
 |      PrintInlining on the TIER-4 tree shows "too big" / "hot method too big" /
-|      "already compiled into a big method" / "virtual call" / "inlining too deep"?
-|      yes -> the string names the limit (c2-phases-and-ir.md); check size, hotness, depth
+|      "already compiled into a big method" / "already compiled into a medium method" /
+|      "virtual call" / "inlining too deep"?
+|      yes -> identify the gate (c2-phases-and-ir.md): bytecode vs compiled size, hotness, depth
 |      (a tier-3 tree saying "callee is too large" is C1's verdict, not C2's)
 |
 +-- 3. Is there an allocation that "should" have disappeared?

@@ -153,8 +153,9 @@ can make it simple; being command values alone does not establish it.
 ## Captured state
 
 ```java
-// Live receiver: valid for a confined callback, not a snapshot for later/remote work.
-Runnable command = () -> order.cancel();
+// Inside an instance method; order is a reassignable field, execution is thread-confined.
+Runnable selectedNow = this.order::cancel;                 // bind this object now
+Runnable selectedWhenRun = () -> this.order.cancel();      // read the field when run
 
 // Unsafe if execution outlives the managed session or violates its thread ownership.
 record CancelOrder(Order order) implements Command { }
@@ -163,6 +164,15 @@ record CancelOrder(Order order) implements Command { }
 record CancelOrder(CommandId id, OrderId orderId, Reason reason, Instant issuedAt)
         implements Command { }
 ```
+
+Receiver identity and receiver state are separate choices. If `this.order` changes from A to B
+before execution, `selectedNow` still calls A, while `selectedWhenRun` calls B. Binding A does
+not snapshot its state: later confined edits to A remain visible. Choose from the caller's
+intent, not a blanket preference for lambdas or method references; an effectively final local
+receiver also keeps its original object. The [Java 17 method-reference rules](https://docs.oracle.com/javase/specs/jls/se17/html/jls-15.html#jls-15.13.3)
+bind the target when the reference is evaluated; the [lambda body runs on invocation](https://docs.oracle.com/javase/specs/jls/se17/html/jls-15.html#jls-15.27.4).
+A null bound receiver fails at callback creation; the lambda's field dereference occurs when
+run. Test receiver replacement and mutation separately, including null timing if supported.
 
 A [record is only shallowly immutable](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Record.html).
 For creation-time intent, arrays, collections and mutable elements must not remain writable through

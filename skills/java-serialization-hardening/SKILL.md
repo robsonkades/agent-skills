@@ -97,7 +97,9 @@ and verification, without changing code or process-wide policy.
   over a long linked structure also recurses per element and can overflow the stack.
 - `readObject` is an additional construction path that accepts hostile input. Constructors and
   field initializers of serializable classes do not establish the object; the no-arg constructor
-  of the first non-serializable superclass does run. Revalidate every invariant
+  of the first non-serializable superclass does run. A valid zero/null value does not prove a
+  required field was present: define whether missing fields are rejected or belong to an accepted
+  legacy form, as described in the implementation reference. Revalidate every invariant
   the real constructor enforces, and it must **defensively copy** every mutable component
   before validating — otherwise an attacker who appended extra bytes keeps a reference to the
   object's internals and mutates them after construction. Copy first, validate the copy, and

@@ -1,0 +1,35 @@
+package com.example.text;
+
+public final class LineEndings {
+    private LineEndings() { }
+
+    public static String normalize(String text) {
+        return text.replace("\r\n", "\n");
+    }
+}
+package com.example.text;
+
+public final class LineEndings {
+    private LineEndings() { }
+
+    public static String normalize(String text) {
+        return text.replace("\r\n", "\n").replace('\r', '\n');
+    }
+}
+package com.example.app;
+
+import com.example.text.LineEndings;
+
+public final class ReportApp {
+    public static void main(String[] args) {
+        if (args.length != 1 || !(args[0].equals("CR") || args[0].equals("LF"))) {
+            throw new IllegalArgumentException("Expected CR or LF");
+        }
+        String actual = LineEndings.normalize("A\rB");
+        String expected = args[0].equals("CR") ? "A\rB" : "A\nB";
+        if (!actual.equals(expected)) {
+            throw new AssertionError("Expected " + args[0]);
+        }
+        System.out.println(actual.replace("\r", "<CR>").replace("\n", "<LF>"));
+    }
+}

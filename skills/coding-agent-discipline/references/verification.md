@@ -15,17 +15,78 @@
 | "The change is complete"                    | Every required part and required verification is finished; remaining required work means a partial or blocked result                                     |
 
 State the scope and source of evidence: command, inspected artifact or versioned reference.
-A documented contract is not an observed application outcome. Bind test/build evidence to
-the relevant revision, module, configuration and environment; checks before later edits do
-not establish the final state. Re-run affected checks when subsequent changes invalidate them.
+A documented contract is not an observed application outcome.
 Limit performance claims to the measured operation and conditions; a microbenchmark does
 not establish application-level improvement (jmh-microbenchmarks, performance-methodology).
+
+## Reusing evidence after an edit or handoff
+
+Bind a result to the command, working directory, checked inputs, relevant environment and
+observed outcome. A revision identifies committed content, not the dirty working tree or
+generated output. Use an existing run record, snapshot or relevant diff to establish that
+relationship; do not require a new evidence file for a small local change.
+
+When freshness is uncertain, follow the command's entrypoint to what it actually reads:
+source files, compiled classes, a package export, generated resources or a deployed artifact.
+Inspect the build/configuration that connects those inputs and outputs. Running a test file
+from source does not establish that every dependency also came from current source. Repeating
+the same command against stale output only repeats the stale check.
+
+Compare subsequent edits with those inputs, including transitive dependencies, fixtures and
+configuration relevant to the claim. If they changed, refresh affected outputs through the
+project's producing task and rerun affected checks, respecting shared-write ownership. If the
+relationship cannot be established, the current result remains unverified. Reuse unaffected
+evidence with its scope stated; an unrelated edit does not invalidate every prior result or
+justify clearing all caches. Required repository gates still apply.
 
 For CI or delegated verification, identify the run/artifact and its checked revision or inputs.
 A CI pass for `HEAD` does not cover uncommitted edits. Inspect relevant job/test outcomes rather
 than treating a green workflow badge as proof that every required check ran. A collaborator's
 summary can be attributed as a report; distinguish that from results you independently inspected.
+If their checked state is unclear, obtain the relevant command/output and snapshot or rerun
+the affected check; do not promote the summary to a final-state pass. With concurrent writers,
+coordinate a stable checked state or reconcile later edits before claiming final verification.
 For valid cache reuse, report reuse rather than claiming the task executed again.
+
+For example, a Node package's `exports` maps a consumer import to `dist/index.js`. Tests pass,
+then its implementation in `src/` changes while `dist/` does not. A second green consumer run
+still exercises the old output: inspect the mapping, rebuild the affected package and rerun
+the consumer check. If the only later edit instead fixes prose outside that check's inputs,
+its behavioral result can remain applicable; check the edited prose separately. These are
+illustrative cases, not execution results. The
+[Node 22 package entrypoint contract](https://nodejs.org/download/release/v22.18.0/docs/api/packages.html#package-entry-points)
+explains the mapping; inspect each project's actual loader/build configuration.
+
+## When evidence changes the decision
+
+For a consequential uncertain claim, identify the observation, the candidate explanation
+and what result would change the next action. Keep alternatives that imply different fixes;
+do not enumerate every imaginable cause. Prefer the smallest available inspection or check
+that distinguishes those alternatives. An API-contract question may be settled by pinned
+source/documentation; application behavior may require an exercised path.
+
+Before treating new evidence as a contradiction, compare its revision, configuration,
+environment and coverage. A passing unit test and a failing integration test may both be
+accurate. Different conditions narrow the claim; they do not justify discarding the less
+convenient result. If relevant evidence refutes the working explanation:
+
+1. Drop or narrow that explanation and stop changes justified only by it. Preserve others'
+   work and still-needed edits; do not perform a blanket rollback.
+2. If the earlier claim was shared, correct it explicitly with the decisive evidence and
+   its consequence. Updating a plan silently leaves the user relying on the old claim.
+3. Continue the now-supported action within existing authorization and rerun checks affected
+   by the correction. If no explanation is established, report the uncertainty and next
+   discriminating check; do not substitute a new certainty.
+
+For example, a timeout after a client-library upgrade suggests a regression. A trace showing
+failure in DNS resolution before the client sends a request refutes an explanation based on
+response parsing for that attempt. It does not establish which DNS configuration is wrong,
+or rule out a separate client defect. Inspect the failing resolution path before changing
+the parser. This is a synthetic reasoning example, not a measured incident.
+
+This applies the principle that technical evidence outweighs preference from
+[Google's review standard](https://google.github.io/eng-practices/review/reviewer/standard.html#principles)
+to agent conclusions. It is a decision rule, not evidence that this skill improves accuracy.
 
 ## Traps that produce a false green
 

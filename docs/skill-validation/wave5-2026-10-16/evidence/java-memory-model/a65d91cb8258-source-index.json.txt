@@ -1,0 +1,75 @@
+[
+  {
+    "id": "jls-25-17",
+    "url": "https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html",
+    "resolvedUrl": "https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html",
+    "status": 200,
+    "consultedAt": "2026-10-16T16:48:24.983Z",
+    "version": "Java SE25",
+    "supports": "17.2 wait/notify; 17.4.4/5 lifecycle and synchronization; 17.5/17.5.1 final-field reachability; 17.6/7 atomicity.",
+    "file": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/sources/jls-25-17.html",
+    "sha256": "5f747f41e4d2acf422eb789a693d423b8d2453b2f27aedcda62e4a5a7310553a",
+    "bytes": 175855
+  },
+  {
+    "id": "jls-25-12",
+    "url": "https://docs.oracle.com/javase/specs/jls/se25/html/jls-12.html",
+    "resolvedUrl": "https://docs.oracle.com/javase/specs/jls/se25/html/jls-12.html",
+    "status": 200,
+    "consultedAt": "2026-10-16T16:48:25.006Z",
+    "version": "Java SE25",
+    "supports": "12.4.2 initialization, including recursive initialization and failure.",
+    "file": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/sources/jls-25-12.html",
+    "sha256": "180bddf144921dbaecd5363f86850ee5d240872feb65c108f6dfca97d16d64c9",
+    "bytes": 144130
+  },
+  {
+    "id": "concurrent-25",
+    "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/package-summary.html",
+    "resolvedUrl": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/package-summary.html",
+    "status": 200,
+    "consultedAt": "2026-10-16T16:48:24.950Z",
+    "version": "Java SE25",
+    "supports": "API-level memory consistency and exact handoff clauses.",
+    "file": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/sources/concurrent-25.html",
+    "sha256": "34cac50914ecbcf977d39c329d33d9c40763b11ad699454eae63ed32251ce220",
+    "bytes": 64391,
+    "memoryVisibilityAnchor": true
+  },
+  {
+    "id": "thread-25",
+    "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Thread.html",
+    "resolvedUrl": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Thread.html",
+    "status": 200,
+    "consultedAt": "2026-10-16T16:48:24.941Z",
+    "version": "Java SE25",
+    "supports": "join/timed join/isAlive/interrupt lifecycle distinctions.",
+    "file": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/sources/thread-25.html",
+    "sha256": "5e6778961fb01408a9ffa9c5233fb4e3d8e3f4a6c54a69b3d6b1b3c249fa4601",
+    "bytes": 139271
+  },
+  {
+    "id": "object-25",
+    "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html",
+    "resolvedUrl": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html",
+    "status": 200,
+    "consultedAt": "2026-10-16T16:48:24.933Z",
+    "version": "Java SE25",
+    "supports": "wait releases only its monitor and reacquires; notification/predicate requirements.",
+    "file": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/sources/object-25.html",
+    "sha256": "835c07e9b2bfc274819dbf8ffc0ab12d7ef81d2990508a8b95dbc7ca4e5a34a0",
+    "bytes": 51945
+  },
+  {
+    "id": "atomic-25",
+    "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/atomic/package-summary.html",
+    "resolvedUrl": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/atomic/package-summary.html",
+    "status": 200,
+    "consultedAt": "2026-10-16T16:48:25.074Z",
+    "version": "Java SE25",
+    "supports": "Individual atomic operations and arrays do not imply multi-element snapshot.",
+    "file": "C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/java-memory-model/sources/atomic-25.html",
+    "sha256": "5317bf4e767000cd88120621d67f56bad3a5ea3271a0858b04751ccca0f4098b",
+    "bytes": 18652
+  }
+]

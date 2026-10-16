@@ -1,0 +1,146 @@
+diff --git a/skills/caching-strategies/SKILL.md b/skills/caching-strategies/SKILL.md
+index d2a1d66..e5d41af 100644
+--- a/skills/caching-strategies/SKILL.md
++++ b/skills/caching-strategies/SKILL.md
+@@ -32,7 +32,8 @@ versions and do not enable preview features or upgrade dependencies to fit an ex
+ freshness requirements or measurements are absent, identify the gap and offer a conditional
+ decision and measurement plan rather than inventing a hit rate or safe TTL.
+ 
+-Trace the actual caller, key generator, loader, write/commit path and existing tests. Establish
++Trace the actual caller through the selected cache manager/resolver or direct cache instance,
++key generator, read/load operation, write/commit path and existing tests. Establish
+ who can change the source (including other services), what a reader must observe after a write,
+ and what may be served during an outage. Reuse documented requirements; an existing TTL is
+ configuration evidence, not proof of an accepted stale-data window. Ask only for unresolved
+@@ -90,9 +91,11 @@ freshness or failure requirements that change the decision; continue independent
+   For idempotency that must survive eviction, restart and retries, use a durable record with an
+   atomic relationship to the effect; a unique key alone does not supply that relationship.
+   Delegate the operation contract to `idempotency`.
+-- Stampede has several scopes: jitter desynchronizes bulk expiry; singleflight/`LoadingCache`
+-  coalesces per key only within its process/cache instance unless backed by distributed
+-  coordination; `refreshAfterWrite` serves an old value while a hot-key refresh runs; staged
++- Stampede has several scopes: jitter desynchronizes bulk expiry; a coordinating load operation
++  coalesces per key within its cache instance unless backed by distributed coordination.
++  A `LoadingCache` type alone does not prove the caller uses that operation; verify the
++  [active cache and load path](references/configuring-a-cache.md#verify-the-active-cache-and-load-path).
++  `refreshAfterWrite` serves an old value while a hot-key refresh runs; staged
+   warm-up avoids a
+   global cold cache. Probabilistic early expiration reduces the spike, it does not remove
+   it — and the correct form is `P = exp(−(expiry − now) / (β · δ))`, with β in the
+diff --git a/skills/caching-strategies/references/configuring-a-cache.md b/skills/caching-strategies/references/configuring-a-cache.md
+index 7f2a6b5..4bdd5a5 100644
+--- a/skills/caching-strategies/references/configuring-a-cache.md
++++ b/skills/caching-strategies/references/configuring-a-cache.md
+@@ -6,6 +6,35 @@ These are partial snippets, not standalone applications. Caffeine snippets targe
+ `ProductDto` and a bounded `loadFromSource` implementation. The Redis snippet separately requires
+ Spring Data Redis 4/Jackson 3 and its supported Java baseline; inspect the project's versions.
+ 
++## Verify the active cache and load path
++
++Before attributing behavior to a configured cache, follow one real operation to the cache it uses.
++In Spring, inspect cache names, `cacheManager`/`cacheResolver`, class-level defaults and effective
++bean/profile selection. A bounded Caffeine bean does not protect a method resolved to another
++manager. For direct caching, check where the instance is constructed and shared; identical names
++or settings do not make independently constructed caches one coordination domain.
++
++In Caffeine 3.2.2, `Cache.get(key, mappingFunction)` computes/populates atomically for that key;
++`LoadingCache.get(key)` uses its loader. A separate `getIfPresent`, external load and `put` sequence
++does not acquire that guarantee, even on a `LoadingCache`. Prefer the coordinating operation when
++same-key work should be shared, respecting its loader restrictions, including no recursive updates
++to other mappings in that cache. Null results and failures do not establish a stored value, so
++later attempts can load again; this is not an exactly-once effect or a cross-instance guarantee.
++Spring's `@Cacheable(sync = true)` likewise requires support from the selected provider; it is not
++proof of distributed exclusion. Check the target version and permitted annotation combinations.
++
++Verify with a controlled same-key cold burst: hold the origin operation open, start competing
++readers, record actual origin attempts, then release the load and inspect returned/stored values.
++Keep a split lookup/load/put variant as a negative control, forcing both lookups to miss before
++either fills. Repeat with independent cache instances and with a failed load followed by recovery;
++do not classify every later attempt as a broken lock. Use latches/barriers rather than sleep-based
++ordering. These checks exercise the integration; provider contracts establish its guarantees, and
++separate distinct-key admission and invalidation checks still apply.
++
++Sources: [Caffeine 3.2.2 Cache](https://github.com/ben-manes/caffeine/blob/v3.2.2/caffeine/src/main/java/com/github/benmanes/caffeine/cache/Cache.java),
++[LoadingCache](https://github.com/ben-manes/caffeine/blob/v3.2.2/caffeine/src/main/java/com/github/benmanes/caffeine/cache/LoadingCache.java),
++and [Spring 6.2.11 Cacheable](https://github.com/spring-projects/spring-framework/blob/v6.2.11/spring-context/src/main/java/org/springframework/cache/annotation/Cacheable.java).
++
+ ## Bounded by weight when entry sizes vary
+ 
+ ```java
+diff --git a/skills/caching-strategies/references/incident-triage.md b/skills/caching-strategies/references/incident-triage.md
+index 074df3a..7b1af7d 100644
+--- a/skills/caching-strategies/references/incident-triage.md
++++ b/skills/caching-strategies/references/incident-triage.md
+@@ -2,19 +2,20 @@
+ 
+ ## Symptom to hypothesis
+ 
+-| Symptom                                 | Candidate explanation                                        | Discriminating evidence                                                |
+-| --------------------------------------- | ------------------------------------------------------------ | ---------------------------------------------------------------------- |
+-| Old Gen after collection keeps growing  | Cache growth, ineffective bound or another retainer          | Heap dominators, cache occupancy and retained bytes                    |
+-| Periodic miss and source-load spikes    | Correlated expiry, scheduled workload or retries             | Align expiration/invalidation events with offered traffic and attempts |
+-| Hit rate falling over days              | Working-set or popularity drift, key-format change           | Compare key cardinality/distribution, eviction and deployments         |
+-| Instances disagree about a value        | Lost invalidation, stale fill, replica lag or key mismatch   | Trace value versions, fill/write ordering and invalidation offsets     |
+-| Load latency rises with stable hit rate | Origin slowdown or loader executor queueing                  | Separate queue delay, origin service time and in-flight work           |
+-| Origin work rises despite high hits     | Refresh, warming, retries or changed miss coalescing         | Count load attempts by trigger; inspect executor/client admission      |
+-| Hit rate suddenly zero                  | Cold namespace, reset metrics, bulk expiry or routing change | Check absolute hit/miss counts, restarts, key prefixes and ownership   |
+-| Cache never consulted, no error         | Proxy bypass or caching disabled/misconfigured               | Verify Spring mode, invocation path and an intercepted external call   |
+-
+-The last row deserves its own check: it produces no error and no log. The only signal is
+-that the source is being hit at full rate while the cache reports almost no activity.
++| Symptom                                 | Candidate explanation                                           | Discriminating evidence                                                         |
++| --------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------- |
++| Old Gen after collection keeps growing  | Cache growth, ineffective bound or another retainer             | Heap dominators, cache occupancy and retained bytes                             |
++| Periodic miss and source-load spikes    | Correlated expiry, scheduled workload or retries                | Align expiration/invalidation events with offered traffic and attempts          |
++| Hit rate falling over days              | Working-set or popularity drift, key-format change              | Compare key cardinality/distribution, eviction and deployments                  |
++| Instances disagree about a value        | Lost invalidation, stale fill, replica lag or key mismatch      | Trace value versions, fill/write ordering and invalidation offsets              |
++| Load latency rises with stable hit rate | Origin slowdown or loader executor queueing                     | Separate queue delay, origin service time and in-flight work                    |
++| Origin work rises despite high hits     | Refresh, warming, retries or changed miss coalescing            | Count load attempts by trigger; inspect executor/client admission               |
++| Repeated origin calls for one cold key  | Split lookup/load/put, separate cache instances or failed fills | Inspect the invoked cache API/instance and order lookup, load and fill outcomes |
++| Hit rate suddenly zero                  | Cold namespace, reset metrics, bulk expiry or routing change    | Check absolute hit/miss counts, restarts, key prefixes and ownership            |
++| Cache never consulted, no error         | Proxy bypass or caching disabled/misconfigured                  | Verify Spring mode, invocation path and an intercepted external call            |
++
++The last row can occur without an error: compare origin attempts with activity on the cache
++actually selected by the caller. An idle cache bean may simply be the wrong instance to observe.
+ 
+ ## The four series that must be on the dashboard
+ 
+@@ -38,16 +39,19 @@ Plus:
+ 
+ ## Stampede: four scopes, four remedies
+ 
+-| Scope                               | Remedy                                       |
+-| ----------------------------------- | -------------------------------------------- |
+-| Many keys expiring together         | jitter on creation                           |
+-| One hot key, many concurrent misses | singleflight, or a `LoadingCache`            |
+-| One hot key, periodic miss          | `refreshAfterWrite`                          |
+-| Whole cache cold                    | staggered reload; never `FLUSHALL` on deploy |
++| Scope                               | Remedy                                             |
++| ----------------------------------- | -------------------------------------------------- |
++| Many keys expiring together         | jitter on creation                                 |
++| One hot key, many concurrent misses | coordinating load API on the actual cache instance |
++| One hot key, periodic miss          | `refreshAfterWrite`                                |
++| Whole cache cold                    | staggered reload; never `FLUSHALL` on deploy       |
+ 
+ Probabilistic early expiration reduces correlated refresh; it does not cap origin traffic.
+ Use the equation and parameter constraints in the skill's stampede rule, then measure origin
+ concurrency and apply admission control independently.
++Before adding another lock or changing TTL for same-key bursts, follow the
++[active load path](configuring-a-cache.md#verify-the-active-cache-and-load-path) and distinguish
++overlapping successful loads from new attempts after failure, eviction or use of another instance.
+ The four scopes above are not a capacity limit: many distinct cold keys can start independent
+ loads. Compare admitted/running/queued origin work against its budget, including loads whose
+ callers have timed out. Do not infer bounded concurrency from `maximumSize` or same-key coalescing.
+diff --git a/skills/caching-strategies/skill.yaml b/skills/caching-strategies/skill.yaml
+index e200fde..2604e09 100644
+--- a/skills/caching-strategies/skill.yaml
++++ b/skills/caching-strategies/skill.yaml
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: caching-strategies
+-version: 1.2.4
++version: 1.2.5
+ description: >-
+   Deciding whether to cache, then doing it safely: saved origin work and latency, bounded size
+   or weight, TTL and jitter, stampede and its four distinct scopes, cache-aside versus

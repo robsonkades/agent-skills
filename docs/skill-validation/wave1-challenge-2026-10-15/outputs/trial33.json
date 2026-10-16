@@ -1,0 +1,13 @@
+{
+  "trialId": "trial33",
+  "caseId": "quality-gates-current-exception",
+  "filesRead": [
+    "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/actor-protocol.md",
+    "C:/git/agent-skills/docs/skill-validation/wave1-challenge-2026-10-15/inputs/quality-gates-current-exception.json",
+    "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/revised/quality-gates/SKILL.md",
+    "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/revised/quality-gates/references/gate-catalogue.md",
+    "C:/Users/robso/AppData/Local/Temp/agent-skills-challenge-18rgGA/revised/quality-gates/references/selecting-gates.md"
+  ],
+  "unexpectedExposure": [],
+  "response": "R81 may merge under existing policy because W9 currently satisfies every exception condition: authorized signature, exact candidate and finding, accountable owner Lee, applicable passing compensation, unchanged consumers, and unexpired validity. This is existing authorization, not a new approval. Compile and affected tests passed; compatibility failed on C7 and is excepted by W9. Reject the proposed wording ‘compatibility passed’. Preserve the report and link W9, its accepted incompatibility, compensation, owner, and expiry in the merge record.\n\nThe smallest correction is to change the trusted required aggregate’s decision logic to consume the checker’s raw outcome and candidate-bound evidence plus the exception record, rather than job results alone. Ensure it executes after upstream failures. Report three distinct dispositions: actual compatibility success; compatibility failed/excepted with merge permitted by an applicable exception; or blocked for unexcepted failure or insufficient evidence. An excepted aggregate may be green as a merge-policy decision while preserving the failed checker result. Reject missing, stale, cancelled, unexpectedly skipped, or invalid checker evidence even when W9 exists. Verify every finding is covered and evaluate exception validity at the merge decision. Expiry or changed candidate/consumers invalidates W9 immediately under its terms.\n\nValidate with isolated fixtures using the actual continue-on-error settings: a genuine passing checker; C7 on R81 with valid W9, accepted but labeled failed/excepted; C7 without an exception, blocked despite green job results; and expired, wrong-candidate, wrong-finding, unauthorized, changed-consumer, or failed-compensation exceptions, all blocked. Include missing checker evidence with W9 and an additional uncovered finding. Assert final required status and retained raw results/report labels. These are proposed validations, not executed results, and preserve the established exception policy."
+}

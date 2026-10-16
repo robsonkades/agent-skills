@@ -1,0 +1,7 @@
+PASS failure window: order=1, pending=1, receiver effect=1, checkpoint failure propagated
+Observed replay: receiver effects=2, done=1
+Exception in thread "main" java.lang.AssertionError: replay duplicated receiver effect: expected 1, got 2
+	at work.Regression.require(Regression.java:60)
+	at work.Regression.recover(Regression.java:112)
+	at work.Regression.main(Regression.java:17)
+

@@ -1,0 +1,135 @@
+import java.sql.*;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+public final class OfflineProbe {
+    private static int checks;
+    private static int scenarios;
+    record Draft(long revision, Map<Integer,Integer> amounts) {}
+    record State(long revision, int first, int second) {}
+    record Outcome(Draft draft, boolean committed, State finalState) {}
+
+    private static Connection connection(String url) throws SQLException {
+        Connection c=DriverManager.getConnection(url);
+        c.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+        c.setAutoCommit(false);
+        return c;
+    }
+    private static void check(boolean value,String label) {
+        if(!value)throw new AssertionError(label);
+        checks++;
+        System.out.println("PASS "+label);
+    }
+    private static int update(Connection c,String sql,long... values) throws SQLException {
+        try(PreparedStatement p=c.prepareStatement(sql)) {
+            p.setQueryTimeout(2);
+            for(int i=0;i<values.length;i++)p.setLong(i+1,values[i]);
+            return p.executeUpdate();
+        }
+    }
+    private static long revision(Connection c) throws SQLException {
+        try(Statement s=c.createStatement()) {
+            s.setQueryTimeout(2);
+            try(ResultSet r=s.executeQuery("SELECT revision FROM draft_root WHERE id = 1")) {
+                if(!r.next())throw new AssertionError("missing root");
+                return r.getLong(1);
+            }
+        }
+    }
+    private static Map<Integer,Integer> amounts(Connection c) throws SQLException {
+        Map<Integer,Integer> result=new LinkedHashMap<>();
+        try(Statement s=c.createStatement()) {
+            s.setQueryTimeout(2);
+            try(ResultSet r=s.executeQuery("SELECT id, amount FROM draft_line WHERE root_id = 1 ORDER BY id")) {
+                while(r.next())result.put(r.getInt(1),r.getInt(2));
+            }
+        }
+        return result;
+    }
+    private static void otherWriter(String url,boolean participates) throws SQLException {
+        try(Connection b=connection(url)) {
+            try {
+                if(participates && update(b,"UPDATE draft_root SET revision = revision + 1 WHERE id = 1 AND revision = ?",1)!=1)
+                    throw new AssertionError("B root precondition failed");
+                if(update(b,"UPDATE draft_line SET amount = ? WHERE id = ?",80,1)!=1)
+                    throw new AssertionError("B child missing");
+                b.commit();
+                System.out.println("TRACE B committed line1=80; rootParticipated="+participates);
+            } catch(SQLException|RuntimeException|Error failure) {b.rollback();throw failure;}
+        }
+    }
+    private static Draft load(String url,boolean guardFirst,boolean interleave,boolean writerParticipates) throws SQLException {
+        try(Connection read=connection(url)) {
+            try {
+                Long token=guardFirst ? revision(read) : null;
+                Map<Integer,Integer> state=amounts(read);
+                if(interleave)otherWriter(url,writerParticipates);
+                if(token==null)token=revision(read);
+                read.commit();
+                return new Draft(token,Map.copyOf(state));
+            } catch(SQLException|RuntimeException|Error failure) {read.rollback();throw failure;}
+        }
+    }
+    private static boolean save(String url,Draft draft) throws SQLException {
+        // A review session submits its base values and changes line 2 to 50.
+        // The root token is the documented precondition for this whole revision.
+        try(Connection save=connection(url)) {
+            try {
+                int matched=update(save,"UPDATE draft_root SET revision = revision + 1 WHERE id = 1 AND revision = ?",draft.revision());
+                if(matched==0) {save.rollback();return false;}
+                if(matched!=1)throw new AssertionError("unexpected root count");
+                if(draft.amounts().get(1)+50>100)throw new IllegalArgumentException("limit");
+                if(update(save,"UPDATE draft_line SET amount = ? WHERE id = ?",draft.amounts().get(1),1)!=1)
+                    throw new AssertionError("first line missing");
+                if(update(save,"UPDATE draft_line SET amount = ? WHERE id = ?",50,2)!=1)
+                    throw new AssertionError("second line missing");
+                save.commit();
+                return true;
+            } catch(SQLException|RuntimeException|Error failure) {save.rollback();throw failure;}
+        }
+    }
+    private static Outcome scenario(String label,boolean guardFirst,boolean interleave,boolean writerParticipates) throws SQLException {
+        String url="jdbc:h2:mem:offline_"+(++scenarios)+";LOCK_TIMEOUT=1000";
+        try(Connection owner=DriverManager.getConnection(url)) {
+            if(scenarios==1)System.out.println("ENGINE "+owner.getMetaData().getDatabaseProductName()+" "+owner.getMetaData().getDatabaseProductVersion());
+            try(Statement s=owner.createStatement()) {
+                s.execute("CREATE TABLE draft_root(id INT PRIMARY KEY, revision BIGINT NOT NULL)");
+                s.execute("CREATE TABLE draft_line(id INT PRIMARY KEY, root_id INT NOT NULL REFERENCES draft_root(id), amount INT NOT NULL)");
+                s.executeUpdate("INSERT INTO draft_root VALUES(1,1)");
+                s.executeUpdate("INSERT INTO draft_line VALUES(1,1,40),(2,1,10)");
+            }
+            Draft draft=load(url,guardFirst,interleave,writerParticipates);
+            boolean committed=save(url,draft);
+            try(Connection inspect=connection(url)) {
+                Map<Integer,Integer> actual=amounts(inspect);
+                State state=new State(revision(inspect),actual.get(1),actual.get(2));
+                inspect.commit();
+                System.out.println("RESULT "+label+" capturedRevision="+draft.revision()+" capturedLine1="+draft.amounts().get(1)
+                        +" committed="+committed+" final="+state+" isolation=READ_COMMITTED");
+                return new Outcome(draft,committed,state);
+            }
+        }
+    }
+    public static void main(String[] args) throws Exception {
+        Outcome late=scenario("late-token-participating-writer",false,true,true);
+        check(late.draft().revision()==2 && late.draft().amounts().get(1)==40,"late token pairs old state with new revision");
+        check(late.committed(),"negative control: fresh token permits stale snapshot save");
+        check(late.finalState().equals(new State(3,40,50)),"negative control: participating writer's line1=80 is overwritten");
+
+        Outcome early=scenario("early-token-participating-writer",true,true,true);
+        check(early.draft().revision()==1,"guard captured before dependent state retained");
+        check(!early.committed(),"early token rejects the interleaved committed writer");
+        check(early.finalState().equals(new State(2,80,10)),"rejection preserves writer and rolls back whole save");
+
+        Outcome lateQuiet=scenario("late-token-no-interleaving",false,false,true);
+        check(lateQuiet.committed() && lateQuiet.finalState().equals(new State(2,40,50)),"late token has no failure without intervening write");
+        Outcome earlyQuiet=scenario("early-token-no-interleaving",true,false,true);
+        check(earlyQuiet.committed() && earlyQuiet.finalState().equals(new State(2,40,50)),"guard-first permits uncontended edit");
+
+        Outcome bypass=scenario("early-token-nonparticipating-writer",true,true,false);
+        check(bypass.committed() && bypass.finalState().equals(new State(2,40,50)),
+                "negative control: read order cannot compensate for omitted writer participation");
+        System.out.println("PASS checks="+checks+" scenarios="+scenarios+"; all JDBC connections closed; no server/executor");
+    }
+}
+

@@ -1,0 +1,11 @@
+import java.util.*;
+import java.time.*;
+public final class Reservation {
+    private final String id;
+    private final List<String> seatIds;
+    public Reservation(String id, List<String> seatIds) {
+        this.id = id;
+        this.seatIds = List.copyOf(seatIds);
+    }
+    public List<String> seatIds() { return seatIds; }
+}

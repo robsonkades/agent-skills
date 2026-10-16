@@ -1,0 +1,45 @@
+{
+  "scope": "Read-only package-local checks using existing repository parsers; no catalog-wide routing verification.",
+  "strictManifestIssues": 0,
+  "descriptionMatches": true,
+  "version": "1.2.5",
+  "shippedFiles": 4,
+  "localLinks": [
+    {
+      "source": "C:\\git\\agent-skills\\skills\\framework-coupling-and-independence\\SKILL.md",
+      "href": "references/framework-in-the-code.md",
+      "target": "C:\\git\\agent-skills\\skills\\framework-coupling-and-independence\\references\\framework-in-the-code.md"
+    },
+    {
+      "source": "C:\\git\\agent-skills\\skills\\framework-coupling-and-independence\\SKILL.md",
+      "href": "references/betting-on-a-framework.md",
+      "target": "C:\\git\\agent-skills\\skills\\framework-coupling-and-independence\\references\\betting-on-a-framework.md"
+    }
+  ],
+  "allReferencesRouted": true,
+  "changedFilesFromAssignment": [],
+  "matchesCoordinatorWaveBaseline": true,
+  "casesDifferOnlyInReadsPerBody": true,
+  "finalFiles": [
+    {
+      "path": "C:\\git\\agent-skills\\skills\\framework-coupling-and-independence\\SKILL.md",
+      "bytes": 12893,
+      "sha256": "B80DC1AFDDBE8F77D104641CA2C4F0736DE5193D0A9A2A84A84F05E9F824B649"
+    },
+    {
+      "path": "C:\\git\\agent-skills\\skills\\framework-coupling-and-independence\\skill.yaml",
+      "bytes": 2534,
+      "sha256": "80A04687ACE52FC393EA765704375D87E441922D187A3F4C2F4435B99DB30DA2"
+    },
+    {
+      "path": "C:\\git\\agent-skills\\skills\\framework-coupling-and-independence\\references\\betting-on-a-framework.md",
+      "bytes": 11346,
+      "sha256": "24AA6E1EAA1B9197D8DA3F1DE1EC33051BC04A787E77CD73DDD5EF5FAC5A47B5"
+    },
+    {
+      "path": "C:\\git\\agent-skills\\skills\\framework-coupling-and-independence\\references\\framework-in-the-code.md",
+      "bytes": 15032,
+      "sha256": "CC1A3AB7D31D7DD289362DC809C8297337CA4FDD0F501A4EA1446AC464E49978"
+    }
+  ]
+}

@@ -1,0 +1,505 @@
+{
+  "schemaVersion": 1,
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "jfr-advanced",
+  "ownedPath": "skills/jfr-advanced/**",
+  "reviewer": "/root/quality14",
+  "allWritesStopped": true,
+  "outstandingWriterProcesses": [],
+  "baseline": {
+    "gitStatusAtAssignment": "Clean assigned package; staged and unstaged diffs empty, no untracked package files.",
+    "committedVersion": "1.3.4",
+    "assignmentVersion": "1.3.4",
+    "finalVersion": "1.3.5",
+    "preExistingVersionBump": false,
+    "preExistingChanges": [],
+    "bumpRationale": "Single patch increment for focused skill changes; no published version reused.",
+    "hashesAtAssignment": [
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\jfr-advanced\\SKILL.md",
+        "Hash": "B00612AFCFD34C2D1378B1DDE7FECAC41FF7D0A8F57D7DD474E21192AE6FE8A6"
+      },
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\jfr-advanced\\skill.yaml",
+        "Hash": "F539128AEF648F8414C27E367D101045171505CECBD483EDC7C5588FBF9BF222"
+      },
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\jfr-advanced\\references\\custom-events-and-streaming.md",
+        "Hash": "5115D5A995E3C38C50DD05B5AEEFBEA5D9740C440F38FC136F6FB35C23389EA0"
+      },
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\jfr-advanced\\references\\event-catalogue.md",
+        "Hash": "8C3E9F40A0C38C1BD431C6412C8DAC87838DC066D402025E4E7F4BD1976B261F"
+      }
+    ],
+    "finalHashes": [
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\jfr-advanced\\SKILL.md",
+        "Hash": "A3F212DE8E4372BDCAB807B89821506F34EBE10E919EB46AB4A3DA17793FF485"
+      },
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\jfr-advanced\\skill.yaml",
+        "Hash": "D4954488E649C7D1E98CDF37168FA1F21D48DF2F0BC636147B852C5BAD144506"
+      },
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\jfr-advanced\\references\\custom-events-and-streaming.md",
+        "Hash": "9D93F7EA24C3FF469FC97DF4BCD6FF866363CEEA2416ABE93E5008CA99E62F20"
+      },
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\jfr-advanced\\references\\event-catalogue.md",
+        "Hash": "A64E111F00A2BFD4ADA69DB0774486E5DB25DAF0F4C2FDC2DF6C843A8CE45EB6"
+      }
+    ]
+  },
+  "reviewScope": {
+    "inspectedFiles": [
+      "SKILL.md",
+      "skill.yaml",
+      "references/event-catalogue.md",
+      "references/custom-events-and-streaming.md"
+    ],
+    "requiredProcedure": "Read AGENTS.md, full review prompt, wave2 brief and skill-engineering with relevant references; reused unchanged readings across assignments as permitted.",
+    "specialistCriteria": [
+      "Event names must not be mistaken for unique registered type identity.",
+      "Selection settings must be distinguished from actual file population, including defaults and overlapping recordings.",
+      "Typed readers must validate each encountered schema and units before aggregation, with IDs scoped to their originating JVM/artifact.",
+      "Positive and negative controls must distinguish an incompatible observed population from merely present metadata.",
+      "Preserve existing Java compatibility, cost, loss, privacy and lifecycle constraints."
+    ],
+    "compatibility": {
+      "skillBaseline": "Core JFR examples remain Java 17-compatible unless an explicit newer minimum is already stated.",
+      "compiler": "javac 25.0.3 with --release 17",
+      "runtime": "OpenJDK Temurin 25.0.3+9-LTS, Windows",
+      "limitation": "No Java 17 runtime execution or other vendor/platform run; compilation target and execution runtime are distinct."
+    }
+  },
+  "findingsCorrected": [
+    {
+      "location": "SKILL.md:76; references/event-catalogue.md:37",
+      "priorGap": "Existing material mentioned loader-specific registration and a same-name test, but did not teach Recording.enable(String) name-wide selection or Class/current-JVM ID alternatives.",
+      "consequence": "A name-based setting can collect more event types than intended; it is not an exclusive producer/file filter.",
+      "correction": "Add a brief discovery guard and routed reference explaining class/name/ID selection, defaults/overlap, type identity and ID scope.",
+      "support": "JDK 17 and JDK 25 Recording API; bounded local recording control captured both same-name types under name selection and one under class/ID requests with both defaults disabled."
+    },
+    {
+      "location": "references/event-catalogue.md:46, 207; references/custom-events-and-streaming.md:279",
+      "priorGap": "The catalogue omitted type IDs and the sample readers filtered names without explaining that a later same-name type can carry different units even when its field has the same primitive type.",
+      "consequence": "A schema cache keyed only by name can silently add nanoseconds to bytes and publish a plausible numeric result.",
+      "correction": "Print IDs beside names, require per-encountered-type descriptor/unit validation, qualify name-match and field-presence examples, and distinguish schema presence from event occurrence.",
+      "support": "EventType/ValueDescriptor API plus executed mixed-unit negative control and accepted single-schema controls."
+    }
+  ],
+  "remainingFindings": [],
+  "filesChangedByReviewer": [
+    "skills/jfr-advanced/SKILL.md",
+    "skills/jfr-advanced/references/event-catalogue.md",
+    "skills/jfr-advanced/references/custom-events-and-streaming.md",
+    "skills/jfr-advanced/skill.yaml"
+  ],
+  "capabilities": {
+    "preserved": [
+      "Target-build discovery, JFC composition, thresholds/periods/throttles/stacks, event coverage and positive controls.",
+      "Concurrent recording behavior, dynamic custom-event enablement, custom filters and relational metadata.",
+      "Privacy and payload budgets, exception-safe instrumentation and measurement-based overhead claims.",
+      "RecordingStream object reuse/order/stop-close behavior and Java 17/20 compatibility constraints.",
+      "Offline reader ordering, malformed/unknown input handling, retained raw artifacts and Java 25 feature conditions."
+    ],
+    "replaced": [
+      "The catalogue's name-only display now includes the current JVM type ID; existing parser examples are explicitly candidates/count skeletons rather than schema validators."
+    ],
+    "intentionallyRemoved": [],
+    "newCrossSkillDependencies": []
+  },
+  "executedChecks": [
+    {
+      "kind": "Official skill-local package validation and links",
+      "workingDirectory": "C:/git/agent-skills",
+      "command": "@'\nimport assert from 'node:assert/strict';\nimport {readFileSync, readdirSync, existsSync} from 'node:fs';\nimport path from 'node:path';\nimport {loadPackageFromDirectory} from './packages/core/src/application/package-loader.ts';\nimport {validatePackage} from './packages/core/src/application/validate-package.ts';\nimport {NodeFileSystem} from './packages/node/src/file-system.ts';\nimport {ClaudeCodeAdapter} from './packages/adapter-claude/src/index.ts';\nimport {CodexAdapter} from './packages/adapter-codex/src/index.ts';\nconst root = 'skills/jfr-advanced';\nconst loaded = await loadPackageFromDirectory(new NodeFileSystem(), root, {strict:true});\nconst report = validatePackage(loaded.pkg, {directoryName:'jfr-advanced',adapters:[new ClaudeCodeAdapter(),new CodexAdapter()]});\nconst issues=[...loaded.issues,...report.issues];\nassert.equal(issues.length,0,JSON.stringify(issues));\nconst entry=readFileSync(path.join(root,'SKILL.md'),'utf8');\nconst refs=readdirSync(path.join(root,'references'));\nfor(const ref of refs) assert.ok(entry.includes('references/'+ref),'unrouted '+ref);\nlet checked=0;\nfor(const file of ['SKILL.md',...refs.map(r=>'references/'+r)]) {\n const body=readFileSync(path.join(root,file),'utf8');\n for(const m of body.matchAll(/\\]\\(([^)]+)\\)/g)) {\n  const href=m[1];\n  if(/^[a-z]+:\\/\\//i.test(href)) continue;\n  const [target,anchor]=href.split('#');\n  const resolved=target?path.resolve(root,path.dirname(file),target):path.resolve(root,file);\n  assert.ok(existsSync(resolved),file+': '+href);\n  if(anchor) {\n   const targetText=readFileSync(resolved,'utf8');\n   const anchors=[...targetText.matchAll(/^#+ (.+)$/gm)].map(m=>m[1].toLowerCase().replace(/[^a-z0-9\\s-]/g,'').trim().replace(/\\s+/g,'-'));\n   assert.ok(anchors.includes(anchor),file+': '+href);\n  }\n  checked++;\n }\n}\nconsole.log(JSON.stringify({name:'jfr-advanced',version:loaded.pkg.manifest.version,issues,referenceFilesRouted:refs.length,localLinksAndAnchorsChecked:checked},null,2));\n\n'@ | node --input-type=module -",
+      "result": {
+        "chunk_id": "df1e5d",
+        "wall_time_seconds": 0.2148661,
+        "exit_code": 0,
+        "original_token_count": 33,
+        "output": "{\n  \"name\": \"jfr-advanced\",\n  \"version\": \"1.3.5\",\n  \"issues\": [],\n  \"referenceFilesRouted\": 2,\n  \"localLinksAndAnchorsChecked\": 6\n}\n"
+      },
+      "meaning": "Zero issues using strict package loading and both agent adapters; two references routed and six local Markdown links/anchors checked."
+    },
+    {
+      "kind": "Skill-local formatting",
+      "workingDirectory": "C:/git/agent-skills",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/jfr-advanced/SKILL.md skills/jfr-advanced/skill.yaml skills/jfr-advanced/references/event-catalogue.md skills/jfr-advanced/references/custom-events-and-streaming.md",
+      "result": {
+        "chunk_id": "a09eb3",
+        "wall_time_seconds": 0.271389,
+        "exit_code": 0,
+        "original_token_count": 17,
+        "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+      }
+    },
+    {
+      "kind": "Skill-local diff whitespace",
+      "workingDirectory": "C:/git/agent-skills",
+      "command": "git diff --check -- skills/jfr-advanced",
+      "result": {
+        "chunk_id": "ff9020",
+        "wall_time_seconds": 0.0964739,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      }
+    },
+    {
+      "kind": "Changed catalogue Java fragment compilation",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/jfr-advanced-quality14-78c96791564b45ba87e9bb79c67aa520",
+      "command": "javac --release 17 CatalogueSnippet.java",
+      "result": {
+        "exitCode": 0,
+        "output": ""
+      },
+      "meaning": "Wrapped the exact changed first Java fence with required imports and a main method. Compilation succeeded; related narrowed catalogue traversal ran in the technical harness."
+    },
+    {
+      "kind": "Behavior-sensitive technical control compilation",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/jfr-advanced-quality14-78c96791564b45ba87e9bb79c67aa520",
+      "command": "javac --release 17 SameNameEvidenceCheck.java",
+      "result": {
+        "exitCode": 0,
+        "output": ""
+      }
+    },
+    {
+      "kind": "Executed disposable JVM technical controls",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/jfr-advanced-quality14-78c96791564b45ba87e9bb79c67aa520",
+      "command": "java -cp . SameNameEvidenceCheck . | Tee-Object -FilePath results.txt\nif ($LASTEXITCODE -ne 0) { throw 'SameNameEvidenceCheck failed' }",
+      "result": {
+        "chunk_id": "4860a5",
+        "wall_time_seconds": 0.3538025,
+        "exit_code": 0,
+        "original_token_count": 337,
+        "output": "com.example.Measurement id=1442 enabled=false\r\n  setting threshold default=0 ns\r\n  setting stackTrace default=false\r\n  setting enabled default=false\r\n  field startTime type=long content=jdk.jfr.Timestamp\r\n  field duration type=long content=jdk.jfr.Timespan\r\n  field eventThread type=java.lang.Thread content=null\r\n  field stackTrace type=jdk.types.StackTrace content=null\r\n  field value type=long content=jdk.jfr.Timespan\r\ncom.example.Measurement id=1019 enabled=false\r\n  setting threshold default=0 ns\r\n  setting stackTrace default=false\r\n  setting enabled default=false\r\n  field startTime type=long content=jdk.jfr.Timestamp\r\n  field duration type=long content=jdk.jfr.Timespan\r\n  field eventThread type=java.lang.Thread content=null\r\n  field stackTrace type=jdk.types.StackTrace content=null\r\n  field value type=long content=jdk.jfr.DataAmount\r\nmode=name types={1019=long/jdk.jfr.DataAmount, 1442=long/jdk.jfr.Timespan} count=2 byteEvents=1 incompatible=1 naiveSum=1031 strictAggregate=REJECTED\r\nmode=class types={1019=long/jdk.jfr.DataAmount} count=1 byteEvents=1 incompatible=0 naiveSum=1024 strictAggregate=ACCEPTED\r\nmode=id types={1019=long/jdk.jfr.DataAmount} count=1 byteEvents=1 incompatible=0 naiveSum=1024 strictAggregate=ACCEPTED\r\nPASS: name enables both schemas; class/id isolate the requested type; mixed-unit aggregate rejected\r\n"
+      },
+      "limits": "An in-process 30-second watchdog bounds the disposable JVM. No production attach, no overlapping recording or actual class-loader duplication experiment."
+    },
+    {
+      "kind": "Recorded metadata positive control",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/jfr-advanced-quality14-78c96791564b45ba87e9bb79c67aa520",
+      "command": "jfr metadata --events com.example.Measurement class.jfr | Tee-Object -FilePath class-metadata.txt\nif ($LASTEXITCODE -ne 0) { throw 'JFR metadata extraction failed' }",
+      "result": {
+        "chunk_id": "0a0e83",
+        "wall_time_seconds": 0.142634,
+        "exit_code": 0,
+        "original_token_count": 250,
+        "output": "@Name(\"com.example.Measurement\")\r\nclass Measurement extends jdk.jfr.Event {\r\n  @Label(\"Start Time\")\r\n  @Timestamp(\"TICKS\")\r\n  long startTime;\r\n\r\n  @Label(\"Duration\")\r\n  @Timespan(\"TICKS\")\r\n  long duration;\r\n\r\n  @Label(\"Event Thread\")\r\n  @Description(\"Thread in which event was committed in\")\r\n  Thread eventThread;\r\n\r\n  @Label(\"Stack Trace\")\r\n  @Description(\"Stack Trace starting from the method the event was committed in\")\r\n  StackTrace stackTrace;\r\n\r\n  @DataAmount(\"BYTES\")\r\n  long value;\r\n}\r\n\r\n@Name(\"com.example.Measurement\")\r\nclass Measurement extends jdk.jfr.Event {\r\n  @Label(\"Start Time\")\r\n  @Timestamp(\"TICKS\")\r\n  long startTime;\r\n\r\n  @Label(\"Duration\")\r\n  @Timespan(\"TICKS\")\r\n  long duration;\r\n\r\n  @Label(\"Event Thread\")\r\n  @Description(\"Thread in which event was committed in\")\r\n  Thread eventThread;\r\n\r\n  @Label(\"Stack Trace\")\r\n  @Description(\"Stack Trace starting from the method the event was committed in\")\r\n  StackTrace stackTrace;\r\n\r\n  @Timespan(\"NANOSECONDS\")\r\n  long value;\r\n}\r\n\r\n"
+      },
+      "meaning": "Both schemas occur in metadata even though the class-selected file contains only the byte event."
+    },
+    {
+      "kind": "Development actor-fixture compilation",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/jfr-advanced-quality14-78c96791564b45ba87e9bb79c67aa520",
+      "command": "javac --release 17 ByteTotal.java",
+      "result": {
+        "exitCode": 0,
+        "output": ""
+      }
+    },
+    {
+      "kind": "Initial development reader execution, mixed units",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/jfr-advanced-quality14-78c96791564b45ba87e9bb79c67aa520",
+      "command": "java -cp . ByteTotal name.jfr",
+      "result": {
+        "chunk_id": "87a08b",
+        "wall_time_seconds": 0.1715981,
+        "exit_code": 0,
+        "original_token_count": 3,
+        "output": "bytes=1031\r\n"
+      },
+      "interpretation": "bytes=1031 is the deliberately exposed wrong aggregation; exit zero is a successful reproducer of the unsafe reader, not validation of metric correctness."
+    },
+    {
+      "kind": "Initial development reader execution, single schema",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/jfr-advanced-quality14-78c96791564b45ba87e9bb79c67aa520",
+      "command": "java -cp . ByteTotal class.jfr",
+      "result": {
+        "chunk_id": "00bee5",
+        "wall_time_seconds": 0.1467592,
+        "exit_code": 0,
+        "original_token_count": 3,
+        "output": "bytes=1024\r\n"
+      },
+      "interpretation": "The initial reader returns 1024 for the byte-only observed population; both types remain present in metadata."
+    },
+    {
+      "kind": "Final ownership/diff/hash inspection",
+      "workingDirectory": "C:/git/agent-skills",
+      "commands": [
+        "git status --short -- skills/jfr-advanced",
+        "git diff -- skills/jfr-advanced",
+        "git diff --stat -- skills/jfr-advanced"
+      ],
+      "statusResult": {
+        "chunk_id": "c057c9",
+        "wall_time_seconds": 0.0917064,
+        "exit_code": 0,
+        "original_token_count": 46,
+        "output": " M skills/jfr-advanced/SKILL.md\n M skills/jfr-advanced/references/custom-events-and-streaming.md\n M skills/jfr-advanced/references/event-catalogue.md\n M skills/jfr-advanced/skill.yaml\n"
+      },
+      "diffResults": [
+        {
+          "chunk_id": "a40990",
+          "wall_time_seconds": 0.0634317,
+          "exit_code": 0,
+          "original_token_count": 1847,
+          "output": "diff --git a/skills/jfr-advanced/SKILL.md b/skills/jfr-advanced/SKILL.md\nindex b753f73..0c0b586 100644\n--- a/skills/jfr-advanced/SKILL.md\n+++ b/skills/jfr-advanced/SKILL.md\n@@ -73,6 +73,10 @@ Programmatically inspect `FlightRecorder.getFlightRecorder().getEventTypes()`, `\n without proving a matching event is currently registered or will emit. Validate registration,\n effective active settings, and a positive-control event count.\n \n+An event name can select several registered types, including class-loader copies. Do not treat\n+a name match as unique producer or schema identity. Use the [same-name type checks](references/event-catalogue.md#same-name-event-types)\n+when scoping a recording or choosing a reader's schema adapter.\n+\n Metadata in one file/build is not a contract for another vendor/update. Keep a schema snapshot\n or generated extractor tests per supported JDK epoch.\n \ndiff --git a/skills/jfr-advanced/references/custom-events-and-streaming.md b/skills/jfr-advanced/references/custom-events-and-streaming.md\nindex f99743a..cc98056 100644\n--- a/skills/jfr-advanced/references/custom-events-and-streaming.md\n+++ b/skills/jfr-advanced/references/custom-events-and-streaming.md\n@@ -276,6 +276,11 @@ Handle null stack/thread, truncation, experimental/unknown fields, renamed event\n custom event absence. Validate complete/readable files before processing and preserve raw\n recordings.\n \n+The name allowlist and field-presence check above only identify candidates. Validate the chosen\n+adapter against each encountered event type's field types and unit annotations, even if its name\n+was already seen. See [same-name event types](event-catalogue.md#same-name-event-types) before\n+caching schemas or combining values across registrations.\n+\n `RecordingFile.readEvent()` advances through the file; do not assume a global chronological\n order. If analysis requires ordering, select start/end time and a suitable tie policy explicitly,\n then sort the needed values within a size budget or use an external sort. `readAllEvents` retains\n@@ -308,7 +313,7 @@ adequate fixtures can supply evidence. A focused offline reader does not need a\n - malformed/unknown JFC/event/setting;\n - old/new reader against old/new custom schema and Java 25 events;\n - sensitive/high-cardinality field rejection;\n-- custom event class in multiple class loaders;\n+- same-name custom types with incompatible units, class-loader copies, and name/class/ID selection;\n - no positive-control events versus a genuinely valid zero-event window.\n \n ## Authoritative references\ndiff --git a/skills/jfr-advanced/references/event-catalogue.md b/skills/jfr-advanced/references/event-catalogue.md\nindex 650d699..3cff161 100644\n--- a/skills/jfr-advanced/references/event-catalogue.md\n+++ b/skills/jfr-advanced/references/event-catalogue.md\n@@ -18,7 +18,8 @@ Programmatic skeleton:\n FlightRecorder.getFlightRecorder().getEventTypes().stream()\n     .sorted(Comparator.comparing(EventType::getName))\n     .forEach(type -> {\n-        System.out.println(type.getName() + \" enabled=\" + type.isEnabled());\n+        System.out.println(type.getName() + \" id=\" + type.getId()\n+            + \" enabled=\" + type.isEnabled());\n         type.getSettingDescriptors().forEach(setting ->\n             System.out.println(\"  setting \" + setting.getName()\n                 + \" default=\" + setting.getDefaultValue()));\n@@ -33,6 +34,32 @@ Registration can be dynamic and class-loader-specific; capture after relevant cu\n classes/libraries are loaded. Event type IDs are JVM-instance-specific and must not be persisted\n as portable identifiers.\n \n+## Same-name event types\n+\n+`Recording.enable(String)` enables every type matching that name; separate event classes or\n+class-loader copies can share it. When a setting must target one registered class, use\n+`enable(MyEvent.class)` or the string form of its ID resolved in that JVM. Keep name-based\n+selection when all matching registrations are intended. This scopes a settings request, not an\n+exclusive file filter: check base/default enablement and other active recordings, whose enabled\n+types and event data may also appear.\n+\n+Inventory by ID as well as name, retaining the descriptors for each type. A reader that caches\n+one schema per name can silently combine incompatible fields: two types can both have a `long\n+value`, one annotated as bytes and the other as nanoseconds. Check field types, content types\n+and annotation values for each encountered type before typed access or aggregation. A matching\n+primitive type alone is insufficient. Reject or explicitly separate incompatible populations\n+according to the output contract; do not silently drop them to produce a plausible total.\n+\n+Scope a validation cache to the recording/type identity. Portable adapters require the accepted\n+name and schema contract, not an ID copied from a previous JVM. Matching descriptors alone also\n+do not establish identical business meaning; retain producer/schema-version provenance where\n+that distinction matters.\n+\n+For a focused control, register two `@Enabled(false)` custom types with the same `@Name` and\n+different units on a `long` field. In an isolated recording, compare name selection with class\n+or current-ID selection, and make the reader reject the mixed-unit aggregate. Include an\n+accepted single-schema case; two registered types in metadata do not imply both emitted events.\n+\n ## Command-line inspection\n \n ```bash\n@@ -177,6 +204,10 @@ if (requiresPositiveControl && matches == 0) {\n }\n ```\n \n+This skeleton counts name matches; it does not validate a schema. Before interpreting those\n+events, apply the [per-type checks](#same-name-event-types), including a type first encountered\n+after earlier events with that name. Preserve the actual count and any rejected-schema evidence.\n+\n Some valid incident windows can have zero events. Use a manifest/control event, recording\n health and expected opportunity count to distinguish valid zero from broken extraction.\n \n@@ -200,5 +231,7 @@ paths.\n - [JFR event and settings API](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/package-summary.html)\n - [`EventType`](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/EventType.html)\n - [`SettingDescriptor`](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/SettingDescriptor.html)\n+- [`Recording.enable` (Java 17)](https://docs.oracle.com/en/java/javase/17/docs/api/jdk.jfr/jdk/jfr/Recording.html) — name-wide selection versus class or current-JVM ID.\n+- [`ValueDescriptor` (Java 17)](https://docs.oracle.com/en/java/javase/17/docs/api/jdk.jfr/jdk/jfr/ValueDescriptor.html) — field types, content types and annotation values.\n - [JDK `jfr` command](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jfr.html)\n - [JEP 509](https://openjdk.org/jeps/509), [JEP 518](https://openjdk.org/jeps/518), and [JEP 520](https://openjdk.org/jeps/520)\ndiff --git a/skills/jfr-advanced/skill.yaml b/skills/jfr-advanced/skill.yaml\nindex c94c9e6..d37e5e2 100644\n--- a/skills/jfr-advanced/skill.yaml\n+++ b/skills/jfr-advanced/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: jfr-advanced\n-version: 1.3.4\n+version: 1.3.5\n description: >-\n   Engineering JDK Flight Recorder evidence beyond stock settings: discovering event schemas\n   and settings on the target build, designing threshold/period/throttle/stack trade-offs,\n"
+        },
+        {
+          "chunk_id": "8d9090",
+          "wall_time_seconds": 0.0687767,
+          "exit_code": 0,
+          "original_token_count": 79,
+          "output": " skills/jfr-advanced/SKILL.md                       |  4 +++\n .../references/custom-events-and-streaming.md      |  7 ++++-\n skills/jfr-advanced/references/event-catalogue.md  | 35 +++++++++++++++++++++-\n skills/jfr-advanced/skill.yaml                     |  2 +-\n 4 files changed, 45 insertions(+), 3 deletions(-)\n"
+        }
+      ],
+      "meaning": "Only the four owned files changed; final version 1.3.5."
+    }
+  ],
+  "failuresAndResolutions": [
+    {
+      "check": "Initial focused Prettier check",
+      "outcome": "One warning in the newly added Recording.enable API hyperlink.",
+      "resolution": "Used the verified canonical API page URL without a parentheses-bearing fragment. Re-ran formatting successfully; no broad formatting or unrelated changes.",
+      "initialResult": {
+        "chunk_id": "47f897",
+        "wall_time_seconds": 0.2374362,
+        "exit_code": 1,
+        "original_token_count": 41,
+        "output": "Checking formatting...\n[warn] skills/jfr-advanced/references/event-catalogue.md\n[warn] Code style issues found in the above file. Run Prettier with --write to fix.\n"
+      }
+    }
+  ],
+  "behavioralEvidence": {
+    "executedAgentEvaluations": [],
+    "executedTechnicalTests": "The Java control and reader runs above are executable technical evidence, not agent behavioral evaluations.",
+    "structuredWalkthroughs": [
+      "Name-selected capture contains a bytes schema followed by a same-name nanoseconds schema; validating only the first name occurrence admits an invalid sum.",
+      "Class-selected capture contains one byte event while both schemas are in metadata; rejecting solely from catalogue multiplicity would reject a valid observed population.",
+      "Current JVM class/ID selection scopes a request only; defaults and other recordings can still change actual output population."
+    ],
+    "measuredImprovement": "Not measured. No skill-versus-no-skill, before/after actor comparison or held-out run executed."
+  },
+  "actorInputs": [
+    {
+      "id": "case-1",
+      "request": "Review and correct ByteTotal.java against the supplied recording and accepted metric contract. Inspect the actual event metadata and observed population, run the narrow checks available, and return the computed result or the concrete reason it must be rejected. Keep the change proportional to this offline reader; retain the raw recording and Java 17 source target. State exactly which checks ran and their runtime.",
+      "fixtureFiles": {
+        "ByteTotal.java": "import java.nio.file.Path;\nimport jdk.jfr.consumer.RecordedEvent;\nimport jdk.jfr.consumer.RecordingFile;\n\npublic final class ByteTotal {\n    public static void main(String[] args) throws Exception {\n        long total = 0;\n        long matches = 0;\n        try (RecordingFile file = new RecordingFile(Path.of(args[0]))) {\n            while (file.hasMoreEvents()) {\n                RecordedEvent event = file.readEvent();\n                if (!event.getEventType().getName().equals(\"com.example.Measurement\")) {\n                    continue;\n                }\n                total = Math.addExact(total, event.getLong(\"value\"));\n                matches++;\n            }\n        }\n        if (matches == 0) {\n            throw new IllegalStateException(\"Expected measurement control is absent\");\n        }\n        System.out.println(\"bytes=\" + total);\n    }\n}\n",
+        "README.md": "# Offline byte-total exporter\n\nThe supplied recording is a small controlled JFR artifact, not a production capture.\nThe application source compatibility target is Java 17. Validation tools available for this fixture are Temurin 25.0.3+9 on Windows; compile with --release 17 and report the actual runtime separately.\nThe accepted metric contract is: every observed com.example.Measurement event contributes response bytes through its long value field, whose recorded unit must be bytes.\nOther event names are outside this metric. If any selected event has an incompatible or unrecognized schema/unit, do not publish a partial or mixed-unit total: fail with the relevant schema evidence.\nThis controlled fixture expects at least one selected event. An empty population is an error for this fixture.\nPreserve the existing overflow check. Do not discard a selected event merely because it cannot be interpreted as bytes.\nProcess the existing recording offline. Do not recapture, modify it, change dependencies or upgrade the application target.\n"
+      },
+      "binaryArtifacts": [
+        {
+          "destination": "recording.jfr",
+          "sourcePath": "C:/Users/robso/AppData/Local/Temp/jfr-advanced-quality14-78c96791564b45ba87e9bb79c67aa520/name.jfr",
+          "sha256": "E095F7968DCD6EB2DB43BDAB4973496E6B8BD53C8CE1E072F18F17E06A546F3C"
+        }
+      ],
+      "prerequisites": [
+        "Copy fixtureFiles and the binary artifact into a fresh isolated evaluation workspace.",
+        "Give the actor only its actorInputs entry and the chosen skill variant; keep evaluatorOnly and the technical harness results out of the actor context.",
+        "Use an installed JDK with the specified JFR reader/tool support; no dependency installation is needed.",
+        "The initial source is compilable via javac --release 17 ByteTotal.java; run with java -cp . ByteTotal recording.jfr."
+      ]
+    },
+    {
+      "id": "case-2",
+      "request": "Review and correct ByteTotal.java against the supplied recording and accepted metric contract. Inspect the actual event metadata and observed population, run the narrow checks available, and return the computed result or the concrete reason it must be rejected. Keep the change proportional to this offline reader; retain the raw recording and Java 17 source target. State exactly which checks ran and their runtime.",
+      "fixtureFiles": {
+        "ByteTotal.java": "import java.nio.file.Path;\nimport jdk.jfr.consumer.RecordedEvent;\nimport jdk.jfr.consumer.RecordingFile;\n\npublic final class ByteTotal {\n    public static void main(String[] args) throws Exception {\n        long total = 0;\n        long matches = 0;\n        try (RecordingFile file = new RecordingFile(Path.of(args[0]))) {\n            while (file.hasMoreEvents()) {\n                RecordedEvent event = file.readEvent();\n                if (!event.getEventType().getName().equals(\"com.example.Measurement\")) {\n                    continue;\n                }\n                total = Math.addExact(total, event.getLong(\"value\"));\n                matches++;\n            }\n        }\n        if (matches == 0) {\n            throw new IllegalStateException(\"Expected measurement control is absent\");\n        }\n        System.out.println(\"bytes=\" + total);\n    }\n}\n",
+        "README.md": "# Offline byte-total exporter\n\nThe supplied recording is a small controlled JFR artifact, not a production capture.\nThe application source compatibility target is Java 17. Validation tools available for this fixture are Temurin 25.0.3+9 on Windows; compile with --release 17 and report the actual runtime separately.\nThe accepted metric contract is: every observed com.example.Measurement event contributes response bytes through its long value field, whose recorded unit must be bytes.\nOther event names are outside this metric. If any selected event has an incompatible or unrecognized schema/unit, do not publish a partial or mixed-unit total: fail with the relevant schema evidence.\nThis controlled fixture expects at least one selected event. An empty population is an error for this fixture.\nPreserve the existing overflow check. Do not discard a selected event merely because it cannot be interpreted as bytes.\nProcess the existing recording offline. Do not recapture, modify it, change dependencies or upgrade the application target.\n"
+      },
+      "binaryArtifacts": [
+        {
+          "destination": "recording.jfr",
+          "sourcePath": "C:/Users/robso/AppData/Local/Temp/jfr-advanced-quality14-78c96791564b45ba87e9bb79c67aa520/class.jfr",
+          "sha256": "03C45EEFD44D0FF5F5351A3D6D0741563AC01D27C07B55A783942B78F9D01DC9"
+        }
+      ],
+      "prerequisites": [
+        "Copy fixtureFiles and the binary artifact into a fresh isolated evaluation workspace.",
+        "Give the actor only its actorInputs entry and the chosen skill variant; keep evaluatorOnly and the technical harness results out of the actor context.",
+        "Use an installed JDK with the specified JFR reader/tool support; no dependency installation is needed.",
+        "The initial source is compilable via javac --release 17 ByteTotal.java; run with java -cp . ByteTotal recording.jfr."
+      ]
+    }
+  ],
+  "evaluatorOnly": [
+    {
+      "caseId": "case-1",
+      "decisiveConstraint": "The binary artifact is the name-selected recording; two observed same-name types have long value fields with different units.",
+      "expectedBehavior": [
+        "Inspect raw recording metadata and actual events; do not assume event name uniquely identifies a schema.",
+        "Change ByteTotal.java to validate the accepted type and BYTES annotation for every encountered selected event type before publishing the aggregate.",
+        "Reject the mixed recording with a schema/unit diagnostic and no bytes total; preserve the raw file and observed evidence.",
+        "Do not cache validation only by name, hardcode captured numeric IDs, convert nanoseconds into bytes or skip the incompatible selected event.",
+        "Keep Java 17 source compatibility and report execution on the installed Java 25 runtime separately."
+      ],
+      "failureConditions": [
+        "Publishes bytes=1031 or another mixed-unit total.",
+        "Publishes bytes=1024 by silently dropping the nanoseconds event despite the accepted fail-on-incompatible contract.",
+        "Checks only the first schema for the event name.",
+        "Uses a portable hardcoded type ID or changes producer/capture settings instead of fixing the offline interpretation.",
+        "Claims agent-quality gain or Java 17 runtime coverage from the local compiler."
+      ],
+      "observableChecks": [
+        "Compile modified source with javac --release 17 ByteTotal.java.",
+        "Run java -cp . ByteTotal recording.jfr on the stated fixture runtime: expect nonzero rejection with a concrete unit/schema reason and no published bytes total.",
+        "Inspect implementation for validation of a later type sharing an already accepted name."
+      ]
+    },
+    {
+      "caseId": "case-2",
+      "decisiveConstraint": "Only the binary recording changes: class-selected request, one observed byte event; metadata still includes both registered schemas.",
+      "expectedBehavior": [
+        "Distinguish registered schema metadata from the actual observed event population.",
+        "Validate each observed selected type; return bytes=1024 with success for this recording.",
+        "Keep any narrow schema guard needed for the accepted contract without inventing incompatible events or demanding recapture.",
+        "Do not reject solely because two types share the name in metadata or because IDs differ from a prior run.",
+        "Preserve the source target and report actual checks/runtime."
+      ],
+      "failureConditions": [
+        "Rejects the valid capture only because the metadata contains the other type.",
+        "Assumes both registered schemas emitted events without reading the population.",
+        "Changes recording settings, collects a new recording, drops the positivity/overflow checks or upgrades Java unnecessarily.",
+        "Returns a value other than 1024 or an unsupported global uniqueness claim."
+      ],
+      "observableChecks": [
+        "Compile modified source with javac --release 17 ByteTotal.java.",
+        "Run java -cp . ByteTotal recording.jfr: expect exit zero and bytes=1024.",
+        "Confirm that the decisive recommendation differs from case-1 even though both metadata catalogues contain the same names."
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/jdk.jfr/jdk/jfr/Recording.html",
+      "version": "Java SE 17",
+      "support": "enable(String) applies to every matching name; Class and current type-ID alternatives.",
+      "accessedDate": "2026-10-16"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/Recording.html",
+      "version": "Java SE 25",
+      "support": "Same selection contract on execution-runtime generation; reviewed default and lifecycle APIs.",
+      "accessedDate": "2026-10-16"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/EventType.html",
+      "version": "Java SE 25",
+      "support": "JVM-scoped type ID, name, descriptors and annotations.",
+      "accessedDate": "2026-10-16"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/jdk.jfr/jdk/jfr/ValueDescriptor.html",
+      "version": "Java SE 17",
+      "support": "Field type, content type and unit-annotation inspection.",
+      "accessedDate": "2026-10-16"
+    }
+  ],
+  "assumptionsAndLimits": [
+    "The executed same-name registrations are different nested event classes, not separately loaded copies; class-loader multiplicity is supported by the official API and remains an unexecuted variant.",
+    "The control explicitly disables both event types by default and runs recordings sequentially. It does not establish exclusive filtering under permissive defaults or other active recordings.",
+    "Matching descriptors do not prove identical application meaning; producer/schema provenance remains necessary where relevant.",
+    "No overhead benchmark, CPU-time profiling, production recording or exporter lifecycle experiment was added; those paths were not changed.",
+    "Generated JFR type IDs, timestamps and file hashes are execution-specific. Regenerated fixture semantics should be compared, not expected numeric IDs or binary hashes."
+  ],
+  "technicalFixture": {
+    "directory": "C:/Users/robso/AppData/Local/Temp/jfr-advanced-quality14-78c96791564b45ba87e9bb79c67aa520",
+    "sourceFile": "SameNameEvidenceCheck.java",
+    "source": "import java.nio.file.Path;\nimport java.util.Comparator;\nimport java.util.LinkedHashMap;\nimport java.util.Map;\nimport jdk.jfr.DataAmount;\nimport jdk.jfr.Enabled;\nimport jdk.jfr.Event;\nimport jdk.jfr.EventType;\nimport jdk.jfr.FlightRecorder;\nimport jdk.jfr.Name;\nimport jdk.jfr.Recording;\nimport jdk.jfr.StackTrace;\nimport jdk.jfr.Timespan;\nimport jdk.jfr.ValueDescriptor;\nimport jdk.jfr.consumer.RecordedEvent;\nimport jdk.jfr.consumer.RecordingFile;\n\npublic final class SameNameEvidenceCheck {\n    static final String EVENT_NAME = \"com.example.Measurement\";\n\n    @Name(EVENT_NAME)\n    @Enabled(false)\n    @StackTrace(false)\n    public static final class ByteMeasurement extends Event {\n        @DataAmount(DataAmount.BYTES)\n        public long value;\n    }\n\n    @Name(EVENT_NAME)\n    @Enabled(false)\n    @StackTrace(false)\n    public static final class TimeMeasurement extends Event {\n        @Timespan(Timespan.NANOSECONDS)\n        public long value;\n    }\n\n    public static void main(String[] args) throws Exception {\n        Thread deadline = new Thread(() -> {\n            try {\n                Thread.sleep(30_000);\n                System.err.println(\"Validation exceeded its 30-second process deadline\");\n                Runtime.getRuntime().halt(124);\n            } catch (InterruptedException finished) {\n                Thread.currentThread().interrupt();\n            }\n        });\n        deadline.setDaemon(true);\n        deadline.start();\n        try {\n            Path directory = Path.of(args[0]);\n            FlightRecorder.register(ByteMeasurement.class);\n            FlightRecorder.register(TimeMeasurement.class);\n            long byteId = EventType.getEventType(ByteMeasurement.class).getId();\n            long timeId = EventType.getEventType(TimeMeasurement.class).getId();\n            if (byteId == timeId) throw new AssertionError(\"Event IDs must distinguish types\");\n            printCatalogue();\n            for (String mode : new String[] {\"name\", \"class\", \"id\"}) {\n                Path recordingPath = directory.resolve(mode + \".jfr\");\n                record(mode, byteId, recordingPath);\n                inspect(mode, recordingPath);\n            }\n            System.out.println(\"PASS: name enables both schemas; class/id isolate the requested type; mixed-unit aggregate rejected\");\n        } finally {\n            deadline.interrupt();\n        }\n    }\n\n    private static void printCatalogue() {\n        FlightRecorder.getFlightRecorder().getEventTypes().stream()\n            .filter(type -> type.getName().equals(EVENT_NAME))\n            .sorted(Comparator.comparing(EventType::getName))\n            .forEach(type -> {\n                System.out.println(type.getName() + \" id=\" + type.getId()\n                    + \" enabled=\" + type.isEnabled());\n                type.getSettingDescriptors().forEach(setting ->\n                    System.out.println(\"  setting \" + setting.getName()\n                        + \" default=\" + setting.getDefaultValue()));\n                type.getFields().forEach(field ->\n                    System.out.println(\"  field \" + field.getName()\n                        + \" type=\" + field.getTypeName()\n                        + \" content=\" + field.getContentType()));\n            });\n    }\n\n    private static void record(String mode, long byteId, Path destination) throws Exception {\n        try (Recording recording = new Recording()) {\n            switch (mode) {\n                case \"name\": recording.enable(EVENT_NAME).withoutStackTrace(); break;\n                case \"class\": recording.enable(ByteMeasurement.class).withoutStackTrace(); break;\n                case \"id\": recording.enable(Long.toString(byteId)).withoutStackTrace(); break;\n                default: throw new IllegalArgumentException(mode);\n            }\n            recording.start();\n            ByteMeasurement bytes = new ByteMeasurement();\n            bytes.value = 1024L;\n            bytes.commit();\n            TimeMeasurement time = new TimeMeasurement();\n            time.value = 7L;\n            time.commit();\n            recording.stop();\n            recording.dump(destination);\n        }\n    }\n\n    private static void inspect(String mode, Path recordingPath) throws Exception {\n        Map<Long, String> types = new LinkedHashMap<>();\n        long matches = 0;\n        long byteEvents = 0;\n        long incompatible = 0;\n        long naiveSum = 0;\n        long validBytes = 0;\n        try (RecordingFile file = new RecordingFile(recordingPath)) {\n            while (file.hasMoreEvents()) {\n                RecordedEvent event = file.readEvent();\n                EventType type = event.getEventType();\n                if (!type.getName().equals(EVENT_NAME)) continue;\n                matches++;\n                ValueDescriptor field = type.getField(\"value\");\n                types.put(type.getId(), field.getTypeName() + \"/\" + field.getContentType());\n                naiveSum += event.getLong(\"value\");\n                DataAmount unit = field.getAnnotation(DataAmount.class);\n                boolean bytesSchema = field.getTypeName().equals(\"long\")\n                    && unit != null && unit.value().equals(DataAmount.BYTES);\n                if (!bytesSchema) {\n                    incompatible++;\n                    continue;\n                }\n                byteEvents++;\n                validBytes += event.getLong(\"value\");\n            }\n        }\n        boolean mixed = mode.equals(\"name\");\n        if (matches != (mixed ? 2 : 1) || byteEvents != 1 || incompatible != (mixed ? 1 : 0)\n                || types.size() != (mixed ? 2 : 1) || validBytes != 1024\n                || naiveSum != (mixed ? 1031 : 1024)) {\n            throw new AssertionError(\"Unexpected capture for \" + mode + \": \" + types\n                + \", matches=\" + matches + \", byteEvents=\" + byteEvents\n                + \", incompatible=\" + incompatible + \", naiveSum=\" + naiveSum);\n        }\n        String status = incompatible > 0 ? \"REJECTED\" : \"ACCEPTED\";\n        System.out.println(\"mode=\" + mode + \" types=\" + types + \" count=\" + matches\n            + \" byteEvents=\" + byteEvents + \" incompatible=\" + incompatible\n            + \" naiveSum=\" + naiveSum + \" strictAggregate=\" + status);\n    }\n}\n",
+    "exactChangedCatalogueWrapper": "import java.util.Comparator;\nimport jdk.jfr.EventType;\nimport jdk.jfr.FlightRecorder;\n\npublic final class CatalogueSnippet {\n    public static void main(String[] args) {\n        FlightRecorder.getFlightRecorder().getEventTypes().stream()\n            .sorted(Comparator.comparing(EventType::getName))\n            .forEach(type -> {\n                System.out.println(type.getName() + \" id=\" + type.getId()\n                    + \" enabled=\" + type.isEnabled());\n                type.getSettingDescriptors().forEach(setting ->\n                    System.out.println(\"  setting \" + setting.getName()\n                        + \" default=\" + setting.getDefaultValue()));\n                type.getFields().forEach(field ->\n                    System.out.println(\"  field \" + field.getName()\n                        + \" type=\" + field.getTypeName()\n                        + \" content=\" + field.getContentType()));\n            });\n    }\n}\n",
+    "reproduction": [
+      "javac --release 17 SameNameEvidenceCheck.java",
+      "java -cp . SameNameEvidenceCheck ."
+    ],
+    "retainedHashes": [
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\jfr-advanced-quality14-78c96791564b45ba87e9bb79c67aa520\\ByteTotal.class",
+        "Hash": "F8AB687EACFE2391E6A38E1B212E715B9A4DF24F94F49A9DC335CC35CA962012"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\jfr-advanced-quality14-78c96791564b45ba87e9bb79c67aa520\\ByteTotal.java",
+        "Hash": "67AC53197290E0F9FD606A01E7E6EE95AD8C831C503179898316A42E96B9A2A2"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\jfr-advanced-quality14-78c96791564b45ba87e9bb79c67aa520\\CatalogueSnippet.class",
+        "Hash": "5AB893B97482A72F1EC68242093F2A1B7592C4A6620B3A9EE70D2406257B00CE"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\jfr-advanced-quality14-78c96791564b45ba87e9bb79c67aa520\\CatalogueSnippet.java",
+        "Hash": "E721CC07E551214E9356152EE79BC908145DB82235FEA8A8FDB0C044528AED76"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\jfr-advanced-quality14-78c96791564b45ba87e9bb79c67aa520\\class-metadata.txt",
+        "Hash": "EECD914909AC7783272CF61E2DCAE3C26EFC5F343A6CEDB2D1C7DCEFAE388DDD"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\jfr-advanced-quality14-78c96791564b45ba87e9bb79c67aa520\\class.jfr",
+        "Hash": "03C45EEFD44D0FF5F5351A3D6D0741563AC01D27C07B55A783942B78F9D01DC9"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\jfr-advanced-quality14-78c96791564b45ba87e9bb79c67aa520\\id.jfr",
+        "Hash": "BA379804ED0EF73C298C92A73D89C6E886A9F03BD1827EF6E27B42CE5F17CC54"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\jfr-advanced-quality14-78c96791564b45ba87e9bb79c67aa520\\name.jfr",
+        "Hash": "E095F7968DCD6EB2DB43BDAB4973496E6B8BD53C8CE1E072F18F17E06A546F3C"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\jfr-advanced-quality14-78c96791564b45ba87e9bb79c67aa520\\results.txt",
+        "Hash": "AF755A8F0218A5CD7582C769EFCFE913525D6FBE6F978E2902670F4DDE8168A9"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\jfr-advanced-quality14-78c96791564b45ba87e9bb79c67aa520\\SameNameEvidenceCheck.class",
+        "Hash": "2E3B4C9E077FBBA5DBFEC157E5E5FA7461D3465DAB15844C28D85A8AA559F654"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\jfr-advanced-quality14-78c96791564b45ba87e9bb79c67aa520\\SameNameEvidenceCheck.java",
+        "Hash": "EAB5FC45A1B0A2AE583DB696BCDA80802224B78F633776C0D6ECF6A1AB50E8B7"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\jfr-advanced-quality14-78c96791564b45ba87e9bb79c67aa520\\SameNameEvidenceCheck$ByteMeasurement.class",
+        "Hash": "4957FCF70F21607CB86760F5BCDAF8BC97611AE6D2AFBB49E04ED2C538F853F8"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\jfr-advanced-quality14-78c96791564b45ba87e9bb79c67aa520\\SameNameEvidenceCheck$TimeMeasurement.class",
+        "Hash": "68201278DB7FBB944B82359DC51BE720DEBCD05FAABDBBEE197AD35E42633BE2"
+      }
+    ]
+  },
+  "retainedArtifacts": [
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/jfr-advanced-quality14-78c96791564b45ba87e9bb79c67aa520",
+      "contents": "Technical harness/source/classes, exact catalogue wrapper, three raw JFR files, original ByteTotal fixture/source/class, results.txt and class-metadata.txt; all writers exited."
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/jfr-advanced.json",
+      "contents": "Full handoff, separated actor/evaluator cases, binary fixture paths/checksums, checks, sources and validation limits."
+    }
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Parallel ownership restriction; run after all reviewers stop writing to regenerate integrity/index and check cross-package contracts."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Repository-wide verification reserved for coordinator after registry generation and final write freeze."
+    }
+  ],
+  "crossSkillIssues": [],
+  "coordinatorActions": [
+    "Archive this handoff and retained fixture directory before running independent evaluation.",
+    "For actor tests, copy only the selected actor input files/binary; withhold evaluator and technical harness outputs.",
+    "Run final registry and repository verification after all reviewers stop."
+  ]
+}

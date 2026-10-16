@@ -1,0 +1,82 @@
+[
+  {
+    "url": "https://openjdk.org/jeps/521",
+    "file": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\zgc-and-shenandoah\\jep-521.html",
+    "status": 200,
+    "bytes": 11824,
+    "sha256": "6B26924BAAF6497F6F60DA19B9B3C3EE45E03E7828C4E3986CEC417D86FACC18",
+    "error": null
+  },
+  {
+    "url": "https://openjdk.org/jeps/535",
+    "file": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\zgc-and-shenandoah\\jep-535.html",
+    "status": 200,
+    "bytes": 12972,
+    "sha256": "CA8E0EAF30D548346F33285288EB1F3826BA786AACE8B56286213D9116994D3C",
+    "error": null
+  },
+  {
+    "url": "https://openjdk.org/jeps/523",
+    "file": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\zgc-and-shenandoah\\jep-523.html",
+    "status": 200,
+    "bytes": 14769,
+    "sha256": "B74FA0A3137F99ACB8A34365E59CA79ED00C71726CAD7FABEE25191FE9C09076",
+    "error": null
+  },
+  {
+    "url": "https://bugs.openjdk.org/rest/api/2/issue/JDK-8379682?fields=summary,status,fixVersions",
+    "file": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\zgc-and-shenandoah\\jep-535-issue.json",
+    "status": null,
+    "bytes": null,
+    "sha256": null,
+    "error": "Response status code does not indicate success: 403 (Forbidden)."
+  },
+  {
+    "url": "https://docs.oracle.com/en/java/javase/25/gctuning/z-garbage-collector1.html",
+    "file": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\zgc-and-shenandoah\\oracle-jdk25-zgc.html",
+    "status": 200,
+    "bytes": 16956,
+    "sha256": "EFFC4ACD45458B4C51944E084C373DBA780E9ACC17DADE6255BE6BB066CF36AC",
+    "error": null
+  },
+  {
+    "url": "https://raw.githubusercontent.com/openjdk/jdk/jdk-25-ga/src/hotspot/share/gc/z/z_globals.hpp",
+    "file": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\zgc-and-shenandoah\\z_globals.hpp",
+    "status": 200,
+    "bytes": 9398,
+    "sha256": "2314DF1EBF7418AE07F16337327972A92E18ACCABC9DF8149B467C05F87DE7E2",
+    "error": null
+  },
+  {
+    "url": "https://raw.githubusercontent.com/openjdk/jdk/jdk-25-ga/src/hotspot/share/gc/z/zPageAllocator.cpp",
+    "file": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\zgc-and-shenandoah\\zPageAllocator.cpp",
+    "status": 200,
+    "bytes": 79518,
+    "sha256": "B5D27D0BEA4EEFC6944EB702D1EA27CD1153971CB35EAF475AE20E1750B22A8D",
+    "error": null
+  },
+  {
+    "url": "https://raw.githubusercontent.com/openjdk/jdk/jdk-25-ga/src/hotspot/share/gc/shenandoah/shenandoahForwarding.inline.hpp",
+    "file": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\zgc-and-shenandoah\\shenandoahForwarding.inline.hpp",
+    "status": 200,
+    "bytes": 3757,
+    "sha256": "069F37737EFD6A76808B244842A51928D464A590EC62151BC1CC14C4CF8F7F44",
+    "error": null
+  },
+  {
+    "url": "https://raw.githubusercontent.com/openjdk/jdk/jdk-25-ga/src/hotspot/share/gc/shenandoah/shenandoahGeneration.cpp",
+    "file": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\zgc-and-shenandoah\\shenandoahGeneration.cpp",
+    "status": 200,
+    "bytes": 50233,
+    "sha256": "8218687B53C7AD9F98225ECBE5AE2AF6512BEBB66B11C9665D89BBB3FE08A3FF",
+    "error": null
+  },
+  {
+    "url": "https://raw.githubusercontent.com/openjdk/jdk/jdk-25-ga/src/hotspot/share/gc/shenandoah/shenandoah_globals.hpp",
+    "file": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\zgc-and-shenandoah\\shenandoah_globals.hpp",
+    "status": 200,
+    "bytes": 43294,
+    "sha256": "A6339F3466BAFE9F43D97BA5DCE9CB73629003E9F31CD333FD287602C510119D",
+    "error": null
+  }
+]

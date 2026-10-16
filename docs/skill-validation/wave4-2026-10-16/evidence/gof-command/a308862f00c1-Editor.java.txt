@@ -1,0 +1,12 @@
+public final class Editor {
+    public static final class Document {
+        String label;
+        int saves;
+        String lastSavedLabel;
+        Document(String label) { this.label = label; }
+        void save() { saves++; lastSavedLabel = label; }
+    }
+    Document active;
+    Editor(Document initial) { this.active = initial; }
+    Runnable queueSave() { return this.active::save; }
+}

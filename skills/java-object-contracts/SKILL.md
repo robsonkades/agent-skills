@@ -25,7 +25,7 @@ because a record generated `toString` for every component.
 
 ## Workflow
 
-Inspect compiler release/toolchains, target JVM, collection usage, published consumers and
+Inspect compiler release/toolchains, target JVM, concrete collection factories/usage, published consumers and
 ORM/provider configuration first. References use Java SE 25; partial examples require records
 and pattern `instanceof` from Java 16+, or `List.copyOf` from Java 10+ as applicable.
 Adapt to the project without upgrades or preview. Missing lifecycle/provider evidence makes
@@ -43,7 +43,10 @@ a demonstrated contract defect from a representation preference.
    are valid only if equal objects are guaranteed to derive the same value.
 3. **Write `equals` and `hashCode` together, from the same field list**, or let a record
    write both. A valid inherited hash implementation can suffice; overriding hash alone
-   while retaining reference equality is not inherently a contract violation.
+   while retaining reference equality is not inherently a contract violation. For handwritten
+   value equality, use `@Override` to verify `equals(Object)`; an `equals(MyType)` overload
+   can pass direct calls while collection lookups retain reference equality. The equality
+   reference covers diagnosis and preserving a published overload's binary contract.
 4. **Check the inheritance question explicitly.** Either the class is `final`, or `equals` is
    defined so subclasses cannot break symmetry. `references/equals-and-hashcode.md` has the
    two defensible answers and the one that is a trap.
@@ -64,7 +67,8 @@ a demonstrated contract defect from a representation preference.
   may collide. A violation can break equal-key lookup in hash-based collections, including ones the code
   does not know it is in — `HashSet`, `HashMap`, `ConcurrentHashMap`, `distinct()` in a
   stream, set-based dirty tracking in an ORM.
-- Do not mutate equality/hash-relevant state while an instance is stored as a key.
+- Do not mutate equality/hash-relevant state while an instance is stored as a key in a
+  collection whose lookup uses that state.
   Changing equality/hash-relevant state after insertion can make lookup search a different
   bucket or change equality without reindexing the stored entry. Behavior is unspecified;
   iteration may still find it, so do not rely on either lookup failure or success. A controlled

@@ -1,0 +1,2 @@
+# Review request
+Review the production guarantee of ResultBridge.currentValue(). The team says its volatile field is sufficient regardless of how the provider delivers the snapshot and points to the passing synchronous smoke. State what can be established locally, what depends on the missing provider, and the smallest evidence or contract change needed. Do not claim a production failure was observed.

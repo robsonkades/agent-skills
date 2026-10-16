@@ -64,6 +64,9 @@ guidance.
   reference equality, identity collections, nullability/default values, serialization and native
   boundaries. Resolve reachability and construction constraints before benchmarking; replacing
   weak ownership with strong retention is a contract change, not a neutral way to run the test.
+- Resolve confidentiality before migrating opaque or sensitive wrappers: `==` and
+  `System.identityHashCode` can expose information about private value-object fields even when
+  `equals` and `hashCode` are overridden. See the migration gates in the reference.
 - Identity-free does not mean primitive, deeply immutable, or universally interchangeable under
   domain equality. Inspect field-reference semantics, mutable referents and the proposal's
   distinction between `==` and `equals`; do not substitute operators mechanically.

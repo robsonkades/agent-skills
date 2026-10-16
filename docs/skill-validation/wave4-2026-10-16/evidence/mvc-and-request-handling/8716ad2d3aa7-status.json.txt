@@ -1,0 +1,18 @@
+{
+  "label": "status",
+  "command": "git",
+  "args": [
+    "status",
+    "--short",
+    "--",
+    "skills/mvc-and-request-handling"
+  ],
+  "cwd": "C:/git/agent-skills",
+  "exitCode": 0,
+  "expectedExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdout": " M skills/mvc-and-request-handling/SKILL.md\n M skills/mvc-and-request-handling/references/page-vs-front-controller.md\n M skills/mvc-and-request-handling/skill.yaml\n",
+  "stderr": "",
+  "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\mvc-and-request-handling\\logs\\status.json"
+}

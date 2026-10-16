@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ArchitectureTest {
     @Test
-    void domain_does_not_depend_on_infrastructure() {
+    void domain_avoids_listed_infrastructure_packages() {
         var production = new ClassFileImporter()
                 .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
                 .importPackages("com.acme");
@@ -39,7 +39,7 @@ class ArchitectureTest {
                 .should().dependOnClassesThat().resideInAnyPackage(
                         "..persistence..", "org.springframework..",
                         "jakarta.persistence..", "jakarta.servlet..")
-                .because("the domain must not depend on infrastructure")
+                .because("the example policy excludes these infrastructure packages")
                 .check(production);
     }
 }
@@ -49,6 +49,14 @@ Validate it with a production domain class that depends on a persistence class: 
 dependency rule, not compilation, to fail. Restore the dependency and expect a pass. Also
 exercise a wrong import root so the explicit selection guard fails. Do not globally disable
 empty-selection protection.
+
+This is a selective package ban, not proof of independence from all infrastructure. A domain
+field of type `java.sql.Connection` passes this rule because JDBC is outside the listed patterns.
+If the accepted policy also forbids JDBC, include `java.sql..` and `javax.sql..` and use that
+dependency as a compiling negative control. Keep a permitted dependency such as
+`java.math.BigDecimal` as a positive control so the correction does not ban unrelated JDK use.
+A narrower agreed policy can remain valid; align the rule's name and reported conclusion with
+its actual scope instead of expanding the architecture merely to satisfy a broad test name.
 
 The guard above proves only that some domain classes were imported. For a multi-module
 promise, derive the required modules from the build, include each production output and assert
@@ -78,6 +86,7 @@ Source: [ArchUnit guide](https://www.archunit.org/userguide/html/000_Index.html)
 checked 2026-09-19 (1.5.0): classpath-dependent package import, rule execution and
 empty-selection behavior. The module inventory check is a test-design safeguard derived
 from those import limits, not an automatic ArchUnit completeness guarantee.
+The selective match follows the [ArchUnit 1.5.0 package predicate API](https://javadoc.io/static/com.tngtech.archunit/archunit/1.5.0/com/tngtech/archunit/lang/syntax/elements/ClassesThat.html).
 
 ## Web boundaries
 

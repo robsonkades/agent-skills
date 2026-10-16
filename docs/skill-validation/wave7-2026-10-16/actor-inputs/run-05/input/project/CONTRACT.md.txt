@@ -1,0 +1,5 @@
+# Accepted transaction ownership
+
+OrderService.place is one orders-database transaction: persist order, reserve stock and invoke the local validation/notifier collaborator. A failure in any step must leave no order and no stock reduction. Caller exceptions retain their meaningful cause. A successful call creates one order and reserves one unit. The injected OrderNotifier can reject after the database writes; it has no external side effect and belongs to this unit.
+
+MetricsService is independent existing functionality. Its unqualified @Transactional methods intentionally use the primary metricsTx manager. A failed metrics sample must roll back only its metrics store. Do not change this global default or remove/merge datasources. Public methods and bean names must remain compatible. No distributed transaction, JTA or new library is required. lastObservedActive reports the real framework probe and is diagnostic, not an acceptance criterion for atomicity.

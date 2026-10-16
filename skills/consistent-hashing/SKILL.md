@@ -25,9 +25,8 @@ miss/refill traffic; a store may need to migrate changed ownership. The operatio
 on the moved keys' bytes and request share, surviving copies and the handoff/refill policy.
 Adding capacity can trigger overload when those costs exceed the recovery budget; key movement
 alone does not establish a miss storm or outage.
-The second failure is subtler: a ring with one point per node is _not_ well balanced, so a
-naive implementation gets minimal disruption while handing one node several times another's
-share.
+The second failure is subtler: one randomly placed point per node can leave highly unequal
+shares. Minimal disruption does not guarantee balance for the deployed ring.
 
 ## Workflow
 
@@ -46,8 +45,10 @@ Keep a sound current mapping when it meets those constraints. Apply only the rel
    directly remove an arbitrary physical node. See `references/mapping-functions.md`.
 3. **Specify the placement contract completely:** algorithm and variant, seed, byte encoding,
    normalization and malformed-input policy, field framing, signed/unsigned ordering,
-   virtual-point format and membership epoch. Prove
-   cross-runtime agreement with golden vectors. MurmurHash3 or xxHash can be suitable when
+   virtual-point format and membership epoch. Trace the caller's key serialization and the
+   selected placement implementation/configuration. Check frozen vectors for key bytes/hash,
+   primary and ordered replicas through that routing path; identical node positions alone
+   do not establish agreement. MurmurHash3 or xxHash can be suitable when
    the exact implementation is pinned. See
    `references/mapping-functions.md` for what disqualifies the obvious candidates.
 4. **Pick V by measurement, not by folklore.** Simulate representative keys, bytes, request
@@ -58,8 +59,8 @@ Keep a sound current mapping when it meets those constraints. Apply only the rel
    Changing V on a deployed ring can change placement even with unchanged membership; evaluate
    before/after ownership and migration cost separately from a one-node join.
 5. **For a ring, implement the wrap-around explicitly.** `ceilingEntry(h)` returning `null` means the key
-   hashed past the last point on the ring and belongs to the first entry. This single branch
-   is the most commonly omitted line in the pattern.
+   hashed past the last point on the ring and belongs to the first entry. Test a key beyond
+   the last point; a smoke test might never exercise this branch.
 6. **Separate invariants from statistical expectations.** For primary ownership with existing points unchanged,
    a join may move keys only to the new node; a removal may move only the removed node's
    keys. Measure movement against K/(N+1) or K/N using a justified tolerance, not a hard

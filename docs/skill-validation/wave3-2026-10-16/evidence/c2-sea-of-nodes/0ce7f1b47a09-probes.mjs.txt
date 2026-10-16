@@ -1,0 +1,55 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import {spawnSync} from 'node:child_process';
+
+const dir='C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/c2-sea-of-nodes';
+const bin='C:/Users/robso/.jdks/temurin-25.0.3/bin';
+fs.mkdirSync(`${dir}/logs`,{recursive:true});
+const runs=[];
+function run(id, executable, args) {
+ const r=spawnSync(executable,args,{cwd:dir,encoding:'utf8',timeout:30000,maxBuffer:10_000_000});
+ const stdout=`${dir}/logs/${id}.stdout.txt`, stderr=`${dir}/logs/${id}.stderr.txt`;
+ fs.writeFileSync(stdout,r.stdout ?? ''); fs.writeFileSync(stderr,r.stderr ?? '');
+ const entry={id,executable,args,cwd:dir,status:r.status,signal:r.signal,error:r.error?.message,stdout,stderr};
+ runs.push(entry);
+ return {...entry,output:(r.stdout ?? '')+(r.stderr ?? '')};
+}
+const probes=[
+ ['version',['-version'],0],
+ ['logging-help',['-Xlog:help'],0],
+ ['flags',['-XX:+UnlockDiagnosticVMOptions','-XX:+UnlockExperimentalVMOptions','-XX:+PrintFlagsFinal','-version'],0],
+ ['invalid-per-method-ea',['-XX:CompileCommand=PrintEscapeAnalysis,InlineGate::caller','-version'],1],
+ ['global-ea-product',['-XX:+UnlockDiagnosticVMOptions','-XX:+PrintEscapeAnalysis','-version'],1],
+ ['global-eliminate-product',['-XX:+UnlockDiagnosticVMOptions','-XX:+PrintEliminateAllocations','-version'],1],
+ ['ideal-level-product',['-XX:PrintIdealGraphLevel=2','-version'],1],
+ ['ideal-file-product',['-XX:PrintIdealGraphFile=unused.xml','-version'],1],
+ ['accessors-product',['-XX:-InlineAccessors','-version'],1],
+ ['locked-inline',['-XX:CompileCommand=PrintInlining,InlineGate::caller','-version'],1],
+ ['unlocked-inline',['-XX:+UnlockDiagnosticVMOptions','-XX:CompileCommand=PrintInlining,InlineGate::caller','-version'],0],
+ ['tiered-legacy',['-XX:CompileThreshold=100','-XX:+PrintFlagsFinal','-version'],0],
+ ['c1-legacy',['-XX:TieredStopAtLevel=1','-XX:CompileThreshold=100','-XX:+PrintFlagsFinal','-version'],0],
+];
+for(const [id,args,expected] of probes) {
+ const r=run(id,`${bin}/java.exe`,args);
+ r.expectedStatus=expected;
+ assert.equal(r.status,expected,id);
+}
+const compiled=run('compile',`${bin}/javac.exe`,['--release','25','-d',`${dir}/classes`,`${dir}/InlineGate.java`]);
+assert.equal(compiled.status,0,compiled.output);
+for(const [id,flags] of [
+ ['medium-gate',['-XX:InlineSmallCode=128']],
+ ['bytecode-only-widened',['-XX:InlineSmallCode=128','-XX:MaxInlineSize=1000']],
+ ['compiled-gate-widened',['-XX:InlineSmallCode=2500']],
+]) {
+ const r=run(id,`${bin}/java.exe`,[
+  '-Xbatch','-XX:-TieredCompilation','-XX:CompileThreshold=1000',
+  '-XX:+UnlockDiagnosticVMOptions','-XX:+LogCompilation',`-XX:LogFile=${dir}/logs/${id}.xml`,
+  '-XX:CompileCommand=exclude,InlineGate::main','-XX:CompileCommand=PrintInlining,InlineGate::caller',
+  ...flags,'-cp',`${dir}/classes`,'InlineGate'
+ ]);
+ assert.equal(r.status,0,r.output);
+ console.log(JSON.stringify({id,output:r.output}));
+}
+const result={runs,scope:'Fresh bounded startup checks and exploratory C2 mechanism runs only; no production state, timing benchmark or independent agent evaluation.'};
+fs.writeFileSync(`${dir}/probes.json`,JSON.stringify(result,null,2));
+console.log(JSON.stringify({startupChecks:probes.length,compilation:compiled.status,runs:runs.length}));

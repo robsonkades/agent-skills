@@ -1,0 +1,29 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+
+const solutionPath = new URL('./solution.sql', import.meta.url);
+const original = fs.readFileSync(solutionPath);
+const wrong = fs.readFileSync(new URL('./proposed.sql', import.meta.url));
+try {
+  fs.writeFileSync(solutionPath, wrong);
+  const result = spawnSync(process.execPath, ['verify.mjs'], {
+    cwd: fileURLToPath(new URL('.', import.meta.url)),
+    encoding: 'utf8',
+    timeout: 10000,
+    windowsHide: true,
+  });
+  if (result.error) throw result.error;
+  assert.equal(result.status, 1, 'Wrong solution.sql must fail verification');
+  assert.match(result.stderr, /nullable witness: solution\.sql violates ordered bag contract/);
+  console.log(JSON.stringify({
+    status: 'passed', wrongCandidate: 'proposed.sql substituted into solution.sql',
+    verifierExitCode: result.status,
+    rejectedAt: 'nullable witness: solution.sql violates ordered bag contract; tenant=71',
+    restore: 'finally restores the original solution.sql bytes',
+  }, null, 2));
+} finally {
+  fs.writeFileSync(solutionPath, original);
+}
+assert.deepEqual(fs.readFileSync(solutionPath), original);

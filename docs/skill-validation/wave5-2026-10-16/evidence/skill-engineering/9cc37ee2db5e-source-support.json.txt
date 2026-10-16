@@ -1,0 +1,69 @@
+[
+  {
+    "id": "format",
+    "kind": "primary specification",
+    "title": "Agent Skills specification",
+    "url": "https://agentskills.io/specification",
+    "version": "Live unversioned specification accessed 2026-10-16",
+    "sections": [
+      "Directory structure",
+      "Frontmatter",
+      "Optional directories",
+      "Progressive disclosure"
+    ],
+    "support": "Supports required SKILL.md/name/description and optional resource conventions. Existing skill correctly qualifies actual client loading; no format change needed.",
+    "limits": "Specification describes intended format, not proof of every client implementation or local runtime behavior."
+  },
+  {
+    "id": "expertise",
+    "kind": "primary author guidance",
+    "title": "Best practices for skill creators",
+    "url": "https://agentskills.io/skill-creation/best-practices",
+    "version": "Live documentation accessed 2026-10-16",
+    "sections": [
+      "Start from real expertise",
+      "Refine with real execution",
+      "Structure large skills with progressive disclosure"
+    ],
+    "support": "Relevant to artifact-grounded instructions, trace inspection and resource routing. Existing references already cover these decisions.",
+    "limits": "Author guidance and claims of efficacy do not establish a measured benefit for this catalog."
+  },
+  {
+    "id": "grading",
+    "kind": "primary author guidance",
+    "title": "Evaluating skill output quality",
+    "url": "https://agentskills.io/skill-creation/evaluating-skills#grading-principles",
+    "version": "Live documentation accessed 2026-10-16",
+    "sections": [
+      "Grading principles",
+      "Aggregating results",
+      "Analyzing patterns"
+    ],
+    "support": "Calls for evidence-grounded grades and inspection of weak, incorrect or uncheckable assertions. Aggregates and resource costs need context.",
+    "limits": "Did not adopt blanket removal of always-passing checks; valid regression guards remain. No claim that this guidance experimentally improved the current skill."
+  },
+  {
+    "id": "eval-structure",
+    "kind": "primary engineering guidance",
+    "title": "Demystifying evals for AI agents",
+    "url": "https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents",
+    "version": "Published 2026-01-09; accessed 2026-10-16",
+    "sections": [
+      "The structure of an evaluation",
+      "Capability vs. regression evals",
+      "Step 5: Design graders thoughtfully",
+      "Step 6: Check the transcripts",
+      "Step 7: Monitor for capability eval saturation"
+    ],
+    "support": "Distinguishes tasks, trials, graders and checks; discusses calibration and ceiling-limited capability comparisons while retaining regression coverage.",
+    "limits": "Not a controlled causal study of this repository. Concrete controls are a proportionate application of the guidance, validated only in the authored deterministic fixture."
+  },
+  {
+    "id": "repository-adapter",
+    "kind": "primary local implementation inspection",
+    "path": "packages/adapter-codex/src/index.ts",
+    "relatedPath": "packages/adapter-codex/test/adapter.test.ts",
+    "support": "Read-only scoped source inspection confirms this repository projects Codex-specific agents/openai.yaml UI metadata.",
+    "limits": "No adapter mutation, installation or real client execution; this confirms repository projection rather than actual universal runtime loading."
+  }
+]

@@ -1,0 +1,33 @@
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+
+record AuditEvent(int id) {}
+record Cursor(String value) {
+    static final Cursor START = new Cursor("start");
+    static final Cursor END = new Cursor("end");
+}
+final class Deadline {
+    boolean expired;
+    boolean hasExpired() { return expired; }
+}
+final class AuditDeadline extends RuntimeException {
+    AuditDeadline(Cursor next, long emitted) { super("deadline cursor=" + next + " emitted=" + emitted); }
+}
+final class AuditUnavailable extends RuntimeException {}
+final class FixtureFetcher implements AuditPageFetcher {
+    final Map<Cursor, AuditPage> pages;
+    final AtomicInteger fetches = new AtomicInteger();
+    boolean expireAfterFetch;
+    FixtureFetcher(Map<Cursor, AuditPage> pages) { this.pages = pages; }
+    public AuditPage fetch(Cursor cursor, Deadline deadline) {
+        fetches.incrementAndGet();
+        if (expireAfterFetch) deadline.expired = true;
+        AuditPage page = pages.get(cursor);
+        if (page == null) throw new IllegalArgumentException("unknown cursor " + cursor);
+        return page;
+    }
+    static FixtureFetcher threeEvents() {
+        return new FixtureFetcher(Map.of(Cursor.START, new AuditPage(List.of(new AuditEvent(1), new AuditEvent(2), new AuditEvent(3)), Cursor.END)));
+    }
+}

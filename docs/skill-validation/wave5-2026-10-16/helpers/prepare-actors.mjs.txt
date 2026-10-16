@@ -1,0 +1,35 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+const root='C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2',repo='C:/git/agent-skills',report=repo+'/docs/skill-validation/wave5-2026-10-16';
+const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
+const put=(p,s)=>{fs.mkdirSync(path.dirname(p),{recursive:true});fs.writeFileSync(p,s);};
+function files(dir,sub=''){return fs.readdirSync(dir+'/'+sub,{withFileTypes:true}).flatMap(e=>{const p=sub?sub+'/'+e.name:e.name;return e.isDirectory()?files(dir,p):[{path:p,sha256:sha(fs.readFileSync(dir+'/'+p)),bytes:fs.statSync(dir+'/'+p).size}];}).sort((a,b)=>a.path.localeCompare(b.path));}
+assert.ok(!fs.existsSync(report+'/behavior-manifest.json'));
+const handoff=JSON.parse(fs.readFileSync(root+'/debugging.json','utf8'));assert.equal(handoff.allWritesStopped,true);
+const frozen=fs.readFileSync(report+'/reserved-cases.frozen.json.txt');
+assert.equal(sha(frozen),JSON.parse(fs.readFileSync(report+'/reserved-freeze.json','utf8')).manifestSha256);
+const cases=JSON.parse(frozen).cases;
+const baselineFiles=files(root+'/baseline/debugging'),currentFiles=files(repo+'/skills/debugging');
+const equal=JSON.stringify(baselineFiles)===JSON.stringify(currentFiles);
+const conditions=equal?['none','current']:['none','baseline','revised'];
+const actorRoot=fs.mkdtempSync(path.join(os.tmpdir(),'skills-wave5-actors-')).replaceAll('\\','/');
+const runs=[];
+for(const c of cases)for(const condition of conditions){
+ const id='run-'+String(runs.length+1).padStart(2,'0'),dir=actorRoot+'/'+id;
+ assert.deepEqual(files(c.inputDirectory).map(({bytes,...f})=>f),c.inputFiles);
+ fs.cpSync(c.inputDirectory,dir+'/input/project',{recursive:true});
+ fs.cpSync(c.inputDirectory,dir+'/output/project',{recursive:true});
+ if(condition!=='none')fs.cpSync(condition==='baseline'?root+'/baseline/debugging':repo+'/skills/debugging',dir+'/skill',{recursive:true});
+ const task=`${c.task}\n\nTrabalhe exclusivamente em ${dir}. O projeto inicial está em input/project (somente leitura), e uma cópia de trabalho já está em output/project. Você não está sozinho: escreva somente dentro de output/. Não modifique input/, skill/, contract.md nem lib/compat.jar, se existir. Pode editar fontes, testes e configuração do projeto de trabalho quando sustentado pela investigação. Preserve as entradas originais e cobertura útil existente.\n\n${condition==='none'?'Nenhuma skill foi fornecida nesta execução. Resolva usando os artefatos locais.':'Aplique a skill local skill/SKILL.md. Leia o corpo completo e as referências relevantes conforme suas condições; registre o conteúdo efetivamente lido.'}\n\nNão leia o repositório C:/git/agent-skills, outros runs, critérios, handoffs, pastas de avaliações, skills globais ou conversas anteriores. Não use rede, instalações, outros agentes ou configuração real. Java, javac, javap e jar estão em C:/Users/robso/.jdks/temurin-25.0.3/bin. Node está disponível. Use alvo Java 17 e preserve o runtime disponível (Temurin25.0.3+9); cada processo deve ter limite de 30s.\n\nExecute verificações proporcionais e conserve logs/scripts. Salve output/REVIEW.md e output/execution.json. No JSON registre comandos exatos com argumentos, cwd, exit e saída ou caminho do log, arquivos/conteúdos efetivamente lidos (incluindo skill/referências e qualquer truncamento), limitações e qualquer acesso acidental fora do escopo. Diferencie execução de proposta. Ao terminar, encerre processos, pare as escritas e confirme allWritesStopped:true.\n`;
+ put(dir+'/TASK.md',task);
+ const all=files(dir);
+ for(const f of all)put(report+'/behavior-inputs/'+id+'/'+f.path+'.txt',fs.readFileSync(dir+'/'+f.path));
+ runs.push({id,caseId:c.id,condition,directory:dir,taskPath:dir+'/TASK.md',taskSha256:sha(task),inputs:all,skillVersion:condition==='none'?null:fs.readFileSync(dir+'/skill/skill.yaml','utf8').match(/^version:\s*(.+)$/m)[1],criteria:c.criteria,failureConditions:c.failureConditions,status:'not-dispatched'});
+}
+const manifest={createdAt:new Date().toISOString(),actorRoot,skill:'debugging',reservedCasesHash:sha(frozen),equalBaselineAndCandidate:equal,conditions,design:'One fresh actor per case/condition; three reserved cases, H1/H2 paired and H3 independent. Baseline/candidate identical means one current-skill condition, not a duplicated treatment. Inputs and criteria fixed before actors. No statistical generalization.',isolation:'Fresh fork_turns:none, separate output directories; filesystem access restrictions are instructions, not enforced security boundaries. Global skill metadata may remain in runtime context.',model:'Same inherited model and effort; exact runtime model, token usage and cost unavailable.',evaluation:'Coordinator inspects all decisions/artifacts against frozen criteria and reruns technical checks. Unblinded, no independent second judge, no automatic wording score.',runs};
+const raw=JSON.stringify(manifest,null,2)+'\n';put(report+'/behavior-manifest.frozen.json.txt',raw);put(report+'/behavior-manifest.json',raw);
+put(report+'/behavior-freeze.json',JSON.stringify({frozenAt:new Date().toISOString(),manifestSha256:sha(raw),runs:runs.length,actorsDispatched:0},null,2)+'\n');
+console.log(JSON.stringify({actorRoot,equal,conditions,manifestSha256:sha(raw),runs:runs.map(r=>({id:r.id,caseId:r.caseId,condition:r.condition,task:r.taskPath}))},null,2));

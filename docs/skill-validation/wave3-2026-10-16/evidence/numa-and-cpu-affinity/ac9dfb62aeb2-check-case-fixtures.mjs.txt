@@ -1,0 +1,27 @@
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+const root=path.dirname(fileURLToPath(import.meta.url));
+const get=(variant,file)=>readFile(path.join(root,'cases',variant,file),'utf8');
+let checks=0;
+const same=(left,right)=>{assert.deepEqual(left,right);checks++;};
+for (const file of ['task.md','placement-note.md','launch.txt','topology.txt','status.txt','thread-affinity.txt','vm-flags.txt','maps.txt','native-region.txt']) {
+ same(await get('node1',file),await get('node0',file));
+}
+const one=JSON.parse(await get('node1','history.json'));
+const zero=JSON.parse(await get('node0','history.json'));
+same(one.events[3].nodes,[1]);
+same(zero.events[3].nodes,[0]);
+const normalized=JSON.parse(JSON.stringify(one));
+normalized.events[3].nodes=[0];
+same(normalized,zero);
+same((await get('node1','numa_maps.txt')).replace('bind:1','bind:0'),await get('node0','numa_maps.txt'));
+same(Number(BigInt(one.range.end)-BigInt(one.range.start)),16777216);
+same(one.events[2].observedResidence.N1*4096,one.range.bytes);
+same(one.events[3].flags,0);
+const criteria=JSON.parse(await readFile(path.join(root,'case-criteria.json'),'utf8'));
+same(criteria.length,2);
+same(new Set(criteria.map(c=>c.id)).size,2);
+console.log(JSON.stringify({checks,result:'PASS',scope:'Synthetic case consistency only; no Linux execution, affinity change, page allocation or agent evaluation.'},null,2));
+

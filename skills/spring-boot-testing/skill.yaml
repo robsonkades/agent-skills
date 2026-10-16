@@ -1,6 +1,6 @@
 schemaVersion: 1
 name: spring-boot-testing
-version: 1.1.0
+version: 1.1.1
 description: >-
   Configure Spring Boot test harnesses for new service acceptance, or diagnose
   slices that omit real wiring, rollback that hides behavior, live-server state

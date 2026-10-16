@@ -42,6 +42,9 @@ are not portable Java guarantees.
 3. **Attribute bytes under representative load.** Use weighted allocation stacks to rank
    sites, preserving the sample population, interval/throttle, filters and window. Verify
    events and stacks are present, check recording loss, and confirm the target path ran.
+   When combining candidates, count each covered sample once; inclusive caller and callee
+   totals overlap. See [candidate contributions](references/allocation-tools.md#keep-candidate-contributions-disjoint)
+   before estimating their combined allocation opportunity.
    A readable recording is not proof of complete coverage. Reconcile totals with independent
    counters where available. A missing site may be undersampled or filtered; it does not
    prove that the JIT eliminated it. First-instrument and general capture planning belong

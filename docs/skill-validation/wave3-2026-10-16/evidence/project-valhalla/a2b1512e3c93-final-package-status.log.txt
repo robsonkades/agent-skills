@@ -1,0 +1,3 @@
+ M skills/project-valhalla/SKILL.md
+ M skills/project-valhalla/references/status-and-experiments.md
+ M skills/project-valhalla/skill.yaml

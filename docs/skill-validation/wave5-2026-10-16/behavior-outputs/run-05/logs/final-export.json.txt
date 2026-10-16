@@ -1,0 +1,20 @@
+{
+  "id": "final-export",
+  "command": "node",
+  "args": [
+    "run.mjs",
+    "export",
+    "fixture/input.txt",
+    "../final-export.txt"
+  ],
+  "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-05\\output\\project",
+  "startedAt": "2026-10-16T16:56:14.372Z",
+  "durationMs": 425,
+  "timeoutMs": 25000,
+  "exit": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "Exporter compatible mode\r\n",
+  "stderr": "",
+  "truncated": false
+}

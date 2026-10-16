@@ -1,0 +1,9 @@
+{
+  "command": "npm run registry:build",
+  "cwd": "C:/git/agent-skills",
+  "startedAt": "2026-10-16T15:21:59.488Z",
+  "finishedAt": "2026-10-16T15:22:00.374Z",
+  "exit": 1,
+  "log": "registry-build.log.txt",
+  "node": "v25.6.1"
+}

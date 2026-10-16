@@ -1,0 +1,342 @@
+{
+  "scope": "Technical Java controls, not agent evaluation or universal proof",
+  "release": 16,
+  "runtime": "Temurin 25.0.3+9",
+  "runs": [
+    {
+      "name": "java-version",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-version"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts",
+      "expectedExit": 0,
+      "expectedPattern": "25\\.0\\.3",
+      "actualExit": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n",
+      "stdoutPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/logs/java-version.stdout.txt",
+      "stderrPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/logs/java-version.stderr.txt",
+      "passed": true
+    },
+    {
+      "name": "compile-contracts",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+      "args": [
+        "--release",
+        "16",
+        "-d",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/classes",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/ContractsProbe.java"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts",
+      "expectedExit": 0,
+      "actualExit": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": "",
+      "stdoutPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/logs/compile-contracts.stdout.txt",
+      "stderrPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/logs/compile-contracts.stderr.txt",
+      "passed": true
+    },
+    {
+      "name": "run-contracts",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-cp",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/classes",
+        "ContractsProbe"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts",
+      "expectedExit": 0,
+      "expectedPattern": "SUMMARY checks=29",
+      "actualExit": 0,
+      "signal": null,
+      "stdout": "PASS typed overload sees value equality\r\nPASS same hash does not establish Object equality\r\nPASS Object call retains reference equality\r\nPASS Objects.equals invokes Object signature\r\nPASS HashMap does not select equals(OverloadedKey)\r\nPASS override reaches consumer Object calls\r\nPASS override identity null and unrelated type\r\nPASS equal distinct keys resolve in HashMap\r\nPASS IdentityHashMap intentionally ignores value equality\r\nPASS identity map preserves distinct equal representatives\r\nPASS record NaN equivalence\r\nPASS record signed zero distinction\r\nPASS record arrays retain identity semantics\r\nPASS copying alone violates record reconstruction\r\nPASS array content equality and matching hash\r\nPASS content record reconstruction\r\nPASS constructor and accessor preserve owned array contents\r\nPASS custom equal records have matching diagnostics\r\nPASS content key lookup in hash collection\r\nPASS sorted collection uses ordering rather than equals\r\nPASS descending score null last ascending tie\r\nPASS comparator laws on the four-value fixture including ties and null score\r\nPASS generated diagnostic negative control discloses synthetic secrets\r\nPASS redacted diagnostics exclude hostile components\r\nPASS Object.clone creates fresh same-runtime-class instance\r\nPASS Object.clone does not rerun constructor and shares reference fields\r\nPASS shallow clone does not grant independent mutable contents\r\nPASS an override named clone can invoke a constructor\r\nPASS copy constructor and wither preserve immutable-element snapshot\r\nSUMMARY checks=29\r\n",
+      "stderr": "",
+      "stdoutPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/logs/run-contracts.stdout.txt",
+      "stderrPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/logs/run-contracts.stderr.txt",
+      "passed": true
+    },
+    {
+      "name": "compile-original",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+      "args": [
+        "--release",
+        "16",
+        "-d",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/binary/original/classes",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/binary/original/src/api/Key.java"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts",
+      "expectedExit": 0,
+      "actualExit": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": "",
+      "stdoutPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/logs/compile-original.stdout.txt",
+      "stderrPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/logs/compile-original.stderr.txt",
+      "passed": true
+    },
+    {
+      "name": "compile-replaced",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+      "args": [
+        "--release",
+        "16",
+        "-d",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/binary/replaced/classes",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/binary/replaced/src/api/Key.java"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts",
+      "expectedExit": 0,
+      "actualExit": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": "",
+      "stdoutPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/logs/compile-replaced.stdout.txt",
+      "stderrPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/logs/compile-replaced.stderr.txt",
+      "passed": true
+    },
+    {
+      "name": "compile-bridged",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+      "args": [
+        "--release",
+        "16",
+        "-d",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/binary/bridged/classes",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/binary/bridged/src/api/Key.java"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts",
+      "expectedExit": 0,
+      "actualExit": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": "",
+      "stdoutPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/logs/compile-bridged.stdout.txt",
+      "stderrPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/logs/compile-bridged.stderr.txt",
+      "passed": true
+    },
+    {
+      "name": "compile-badOverride",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+      "args": [
+        "--release",
+        "16",
+        "-d",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/binary/badOverride/classes",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/binary/badOverride/src/api/Key.java"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts",
+      "expectedExit": 1,
+      "expectedPattern": "does not override",
+      "actualExit": 1,
+      "signal": null,
+      "stdout": "",
+      "stderr": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-object-contracts\\binary\\badOverride\\src\\api\\Key.java:6: error: method does not override or implement a method from a supertype\r\n  @Override\r\n  ^\r\n1 error\r\n",
+      "stdoutPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/logs/compile-badOverride.stdout.txt",
+      "stderrPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/logs/compile-badOverride.stderr.txt",
+      "passed": true
+    },
+    {
+      "name": "compile-client-against-original",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+      "args": [
+        "--release",
+        "16",
+        "-cp",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/binary/original/classes",
+        "-d",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/binary/clients",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/binary/LegacyClient.java",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/binary/ValueConsumer.java"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts",
+      "expectedExit": 0,
+      "actualExit": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": "",
+      "stdoutPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/logs/compile-client-against-original.stdout.txt",
+      "stderrPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/logs/compile-client-against-original.stderr.txt",
+      "passed": true
+    },
+    {
+      "name": "legacy-bytecode",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javap.exe",
+      "args": [
+        "-c",
+        "-classpath",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/binary/clients",
+        "LegacyClient"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts",
+      "expectedExit": 0,
+      "expectedPattern": "api\\/Key\\.equals:\\(Lapi\\/Key;\\)Z",
+      "actualExit": 0,
+      "signal": null,
+      "stdout": "Compiled from \"LegacyClient.java\"\r\npublic final class LegacyClient {\r\n  public LegacyClient();\r\n    Code:\r\n         0: aload_0\r\n         1: invokespecial #1                  // Method java/lang/Object.\"<init>\":()V\r\n         4: return\r\n\r\n  public static void main(java.lang.String[]);\r\n    Code:\r\n         0: new           #7                  // class api/Key\r\n         3: dup\r\n         4: ldc           #9                  // String A-1\r\n         6: invokespecial #11                 // Method api/Key.\"<init>\":(Ljava/lang/String;)V\r\n         9: new           #7                  // class api/Key\r\n        12: dup\r\n        13: ldc           #9                  // String A-1\r\n        15: invokespecial #11                 // Method api/Key.\"<init>\":(Ljava/lang/String;)V\r\n        18: invokevirtual #14                 // Method api/Key.equals:(Lapi/Key;)Z\r\n        21: istore_1\r\n        22: iload_1\r\n        23: ifne          36\r\n        26: new           #18                 // class java/lang/AssertionError\r\n        29: dup\r\n        30: ldc           #20                 // String typed equality\r\n        32: invokespecial #22                 // Method java/lang/AssertionError.\"<init>\":(Ljava/lang/Object;)V\r\n        35: athrow\r\n        36: getstatic     #25                 // Field java/lang/System.out:Ljava/io/PrintStream;\r\n        39: ldc           #31                 // String typed=true\r\n        41: invokevirtual #33                 // Method java/io/PrintStream.println:(Ljava/lang/String;)V\r\n        44: return\r\n}\r\n",
+      "stderr": "",
+      "stdoutPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/logs/legacy-bytecode.stdout.txt",
+      "stderrPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/logs/legacy-bytecode.stderr.txt",
+      "passed": true
+    },
+    {
+      "name": "legacy-on-original",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-cp",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/binary/original/classes;C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/binary/clients",
+        "LegacyClient"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts",
+      "expectedExit": 0,
+      "expectedPattern": "typed=true",
+      "actualExit": 0,
+      "signal": null,
+      "stdout": "typed=true\r\n",
+      "stderr": "",
+      "stdoutPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/logs/legacy-on-original.stdout.txt",
+      "stderrPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/logs/legacy-on-original.stderr.txt",
+      "passed": true
+    },
+    {
+      "name": "consumer-on-original",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-cp",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/binary/original/classes;C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/binary/clients",
+        "ValueConsumer"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts",
+      "expectedExit": 1,
+      "expectedPattern": "equal logical keys must resolve",
+      "actualExit": 1,
+      "signal": null,
+      "stdout": "",
+      "stderr": "Exception in thread \"main\" java.lang.AssertionError: equal logical keys must resolve\r\n\tat ValueConsumer.main(ValueConsumer.java:10)\r\n",
+      "stdoutPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/logs/consumer-on-original.stdout.txt",
+      "stderrPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/logs/consumer-on-original.stderr.txt",
+      "passed": true
+    },
+    {
+      "name": "legacy-on-replaced",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-cp",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/binary/replaced/classes;C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/binary/clients",
+        "LegacyClient"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts",
+      "expectedExit": 1,
+      "expectedPattern": "NoSuchMethodError",
+      "actualExit": 1,
+      "signal": null,
+      "stdout": "",
+      "stderr": "Exception in thread \"main\" java.lang.NoSuchMethodError: 'boolean api.Key.equals(api.Key)'\r\n\tat LegacyClient.main(LegacyClient.java:4)\r\n",
+      "stdoutPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/logs/legacy-on-replaced.stdout.txt",
+      "stderrPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/logs/legacy-on-replaced.stderr.txt",
+      "passed": true
+    },
+    {
+      "name": "consumer-on-replaced",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-cp",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/binary/replaced/classes;C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/binary/clients",
+        "ValueConsumer"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts",
+      "expectedExit": 0,
+      "expectedPattern": "lookup=stored",
+      "actualExit": 0,
+      "signal": null,
+      "stdout": "lookup=stored\r\n",
+      "stderr": "",
+      "stdoutPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/logs/consumer-on-replaced.stdout.txt",
+      "stderrPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/logs/consumer-on-replaced.stderr.txt",
+      "passed": true
+    },
+    {
+      "name": "legacy-on-bridged",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-cp",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/binary/bridged/classes;C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/binary/clients",
+        "LegacyClient"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts",
+      "expectedExit": 0,
+      "expectedPattern": "typed=true",
+      "actualExit": 0,
+      "signal": null,
+      "stdout": "typed=true\r\n",
+      "stderr": "",
+      "stdoutPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/logs/legacy-on-bridged.stdout.txt",
+      "stderrPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/logs/legacy-on-bridged.stderr.txt",
+      "passed": true
+    },
+    {
+      "name": "consumer-on-bridged",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-cp",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/binary/bridged/classes;C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/binary/clients",
+        "ValueConsumer"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts",
+      "expectedExit": 0,
+      "expectedPattern": "lookup=stored",
+      "actualExit": 0,
+      "signal": null,
+      "stdout": "lookup=stored\r\n",
+      "stderr": "",
+      "stdoutPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/logs/consumer-on-bridged.stdout.txt",
+      "stderrPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/logs/consumer-on-bridged.stderr.txt",
+      "passed": true
+    },
+    {
+      "name": "recompile-client-against-replacement",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+      "args": [
+        "--release",
+        "16",
+        "-cp",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/binary/replaced/classes",
+        "-d",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/binary/recompiled-clients",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/binary/LegacyClient.java"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts",
+      "expectedExit": 0,
+      "actualExit": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": "",
+      "stdoutPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/logs/recompile-client-against-replacement.stdout.txt",
+      "stderrPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/logs/recompile-client-against-replacement.stderr.txt",
+      "passed": true
+    },
+    {
+      "name": "recompiled-client-on-replacement",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-cp",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/binary/replaced/classes;C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/binary/recompiled-clients",
+        "LegacyClient"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts",
+      "expectedExit": 0,
+      "expectedPattern": "typed=true",
+      "actualExit": 0,
+      "signal": null,
+      "stdout": "typed=true\r\n",
+      "stderr": "",
+      "stdoutPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/logs/recompiled-client-on-replacement.stdout.txt",
+      "stderrPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-contracts/logs/recompiled-client-on-replacement.stderr.txt",
+      "passed": true
+    }
+  ]
+}

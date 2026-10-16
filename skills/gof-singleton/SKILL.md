@@ -57,6 +57,9 @@ Spring singleton scope is one instance per bean definition per container, not pe
 Two definitions of the same class can produce two instances in one context; child contexts may
 inherit a parent's bean or define their own. DI avoids global access only when callers actually
 receive dependencies rather than consulting a static service locator.
+Trace direct `@Bean` factory calls too: configuration enhancement and the actual receiver decide
+whether a call reuses the managed bean or executes ordinary factory code. See
+[Spring's scope boundary](references/uniqueness-and-scope.md#springs-singleton-scope-precisely).
 
 ## When it is the answer
 

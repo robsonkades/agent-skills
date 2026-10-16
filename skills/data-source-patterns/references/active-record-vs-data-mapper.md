@@ -110,6 +110,30 @@ state. Reconstitution must reject corrupt combinations or translate known legacy
 explicitly; it is not permission to bypass all validation. Use an appropriately accessible
 factory without weakening creation invariants.
 
+### Concurrency scope is separate from mapping style
+
+The version check above protects the entity being written; it does not automatically validate
+every other row read to make that decision. Suppose a rule requires at least one available
+operator. Two transactions both read two available operators, then each disables a different
+operator using that row's unchanged version. Both row-version checks can succeed under isolation
+that permits this interleaving. Moving the same reads and writes behind a mapper, or collecting
+them in a unit of work, does not remove the race.
+
+Inspect the rule's read set, actual write predicates, participating writers and effective
+database isolation/lock modes. Keep a narrow conditional update or simple mapper when its
+guard covers the required state. If the rule spans independently updated rows, choose a
+protocol covering that state rather than adding a second object model as a concurrency fix.
+Shared version/locking protocols or serializable transactions with whole-transaction retry
+may be candidates; their scope, costs and interaction with other writers need validation.
+Use `enterprise-transactions` and `offline-concurrency-control` for that choice. Test a
+controlled two-transaction interleaving as well as the legitimate rule that allows both writes.
+
+Jakarta Persistence 3.1 section 3.4 scopes version checks to entity state and leaves database
+isolation configuration outside the specification. As one database-specific example,
+[PostgreSQL 17 isolation](https://www.postgresql.org/docs/17/transaction-iso.html) permits
+serialization anomalies at Read Committed and Repeatable Read. Verify the actual database;
+an ORM transaction annotation or isolation-level name alone is not proof of the needed guarantee.
+
 ## Read shape and write intent
 
 A mapper may return a deliberately lossy read projection. That does not make the projection
@@ -137,7 +161,7 @@ does not provide a general “update only supplied DTO fields” contract. The s
 exception for unfetched LAZY fields concerns provider-tracked loading state, not arbitrary
 fields omitted from an application-created object. Inspect cascade and managed-state behavior
 before adapting a partial model; see section 3.2.7.1,
-[merging detached entity state](https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1).
+[merging detached entity state](https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1.html).
 Use `orm-behavioral-patterns` for the runtime details, carrying the read shape, supplied fields,
 expected version and required write semantics. If the runtime behavior cannot be established,
 keep the read projection read-only and report which write contract still needs verification.
@@ -239,4 +263,4 @@ or creating a redundant mapper without a supported benefit.
 ## Sources
 
 - [Fowler: Data Mapper](https://martinfowler.com/eaaCatalog/dataMapper.html)
-- [Jakarta Persistence 3.1: entities, versioning and bulk operations](https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1)
+- [Jakarta Persistence 3.1: entities, versioning and bulk operations](https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1.html)

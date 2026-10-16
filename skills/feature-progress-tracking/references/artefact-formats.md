@@ -45,19 +45,23 @@ uniqueness rule, with its source/revision recorded and affected criteria/contrac
 
 ## Next
 
-RES-09 (agent-B). RES-05 (agent-A) resumes at the poison-message path.
+RES-09 (agent-B): inspect the metric paths listed in plan.md#res-09 and identify which
+required counters are missing before implementing them. This work is unaffected by Q-08.
+RES-05 (agent-A): open DispatchConsumerTest and complete the poison-message scenario
+specified in plan.md#res-05, then capture its validation outcome. The happy-path test is unrun.
 
 ## Evidence
 
 EV-01..EV-04: link each result to its command, selected/passed/skipped counts or asserted
 outcome, timestamp, code and contract revision, test environment and limitations.
-For EV-01 include engine/version, fixture shape and migration assertions. A passing command
-against another revision or an empty test selection does not establish current acceptance.
+For EV-01 include engine/version, fixture shape and migration assertions. An empty test
+selection does not establish acceptance; a result from another revision needs an explicit
+impact assessment before it supports current acceptance.
 Do not mark these illustrative DONE rows as real results without those records.
 ```
 
 Three properties to preserve: the validation column contains what ran rather than a tick, the
-blocker section states the question in full, and "Next" names ready work and its owner.
+blocker section states the question in full, and "Next" names ready work, its owner and starting point.
 If RES-05's poison-message work depends on unresolved idempotency semantics, keep that part
 blocked rather than assuming all work on the consumer is independent.
 
@@ -88,6 +92,31 @@ gap from a failed or unexecuted check:
 
 If the project requires the original artifact, a summary alone cannot replace it. Preserve other
 resources' sufficient evidence and distinguish this evidence gap from an implementation defect.
+
+## Evidence applicability and reruns
+
+When a new result arrives, match the resource's required coverage to the checks actually run,
+their outcome and the revision and environment actually checked. Record omitted, skipped,
+cancelled or still-running required checks as gaps, not passes. A focused rerun can complete
+coverage alongside earlier applicable results; it need not repeat unrelated successful checks.
+Retain each contributing attempt so a passing retry does not erase the original failure or imply
+its cause was diagnosed. Unresolved instability remains visible under the project's acceptance
+requirements; do not invent a universal number of green retries.
+
+For GitHub Actions, [reruns retain the original event's SHA and ref and may target selected
+jobs](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/re-run-workflows-and-jobs).
+The [run ID stays the same while the attempt number increases](https://docs.github.com/en/actions/reference/workflows-and-actions/variables#default-environment-variables).
+Inspect what the checkout/build actually consumed if the workflow overrides that revision. A
+new attempt's timestamp alone is not evidence that the current working tree was tested. Apply
+the same provenance check to the actual CI system in use, without assuming GitHub's identifiers.
+
+Assess changes by their effect on the evidence's scope. For example, a completed consumer's
+passing poison-message tests may remain applicable after an unrelated documentation correction.
+If the accepted acknowledgement configuration changes, those earlier results no longer establish
+that path under the new configuration. Reopen the affected resource, preserve the old result as
+historical evidence, and name the missing check for the new condition. Keep unrelated DONE rows.
+An unchanged commit does not establish equivalence when relevant configuration or dependencies
+changed outside it; record the assumption checked, not just the commit label.
 
 ## execution-log.md
 
@@ -136,8 +165,15 @@ surprise explicable three weeks later.
 
 ## Resuming from the artefacts
 
-An agent picking up an unfamiliar feature uses this reading order, then verifies readiness for
-the selected resource before editing:
+Find the established entry point from the repository's feature index, task link or existing
+tracking convention. Follow its links before creating another tracker. If a link is missing,
+search the feature/resource IDs and affected paths in the likely documentation locations.
+Report what was searched and any access failure; one failed lookup does not establish that no
+record exists. With competing copies, compare scope, revisions and accepted supersession links;
+the newest filename or modification time does not establish authority.
+
+Use this reading order for the selected resource and its prerequisites. The names are roles
+in the existing format, not required filenames:
 
 1. **progress.md** — the table, blockers, ownership, baselines and "Next".
 2. **plan.md** — the resource being resumed, its files and its validation, and the amendments
@@ -153,19 +189,53 @@ and evidence to the current revision. File existence and an executable test comm
 neither prior execution nor present correctness. Reuse unaffected valid evidence; rerun checks
 when changes or gaps invalidate it, not merely because a new session began.
 
-If state disagrees, determine whether tracking is stale, code regressed or the accepted plan
-changed. Preserve other contributors' work and reopen only affected resources/evidence.
-Check recorded answers before asking the same question again. Resolve a blocker only when the
+Reconcile sources according to the claim they support: an accepted contract establishes intended
+behavior, code shows the implementation, and a check result establishes only what ran under its
+recorded conditions. A recent log entry may correct a stale table, but is not itself validation.
+For a discrepancy, retain the old claim and its source in history; record what was inspected,
+what is now established, the affected IDs and any remaining uncertainty. Correct the snapshot
+from that evidence. For example, an IN_PROGRESS row can become DONE if existing applicable
+evidence covers all remaining acceptance; a DONE row with invalidated coverage must reopen.
+Do not pick whichever source looks most complete, rewrite acceptance to fit code, or reset all
+resources because one record is stale.
+
+Check recorded answers before asking the same question again. Resolve a blocker only when its
 answer or restored condition is evidenced, applicable to the current revision, and within the
 responder's established authority where a decision is required. Record the resolution source
-and reassess dependent work; a proposal or expired decision alone does not unblock it, and
-unblocking does not imply DONE.
+and reassess dependent work; a proposal or expired decision alone does not unblock it. An
+unstarted resource whose impediment is gone may return to TODO; unfinished started work resumes
+as IN_PROGRESS. Unblocking does not imply DONE. If the current commitment cannot be established,
+record the conflicting sources and the specific owner/evidence needed to resolve them; continue
+work whose readiness does not depend on that conflict.
+
+Replace a stale "Next" with an action per available owner supported by the reconciled dependencies.
+Name its starting file, section or check, the result it should produce, and any condition that
+must be resolved first. "Continue RES-05" is insufficient when the next owner must rediscover
+which assertion failed or which question remained open. A tracking-only request stops at this
+handoff; route implementation or required validation to the resource owner without implying it
+ran. Before handing off, reopen the entry point and follow the selected resource's links to
+confirm that the correction, supporting evidence and next action were actually persisted. Record
+any inaccessible evidence and apply the evidence-retention rules above.
 
 ## Feature status line
 
-For a report, a status update or a commit message, derive one line from the table rather than
-writing prose:
+For a report, a status update or a commit message, derive the counts from the table:
 
 ```text
 async-order-dispatch: 4/10 done, 1 in progress, 2 blocked (Q-08), 2 todo, 1 cancelled — next RES-09 (agent-B)
 ```
+
+Add a short delta when counts hide useful progress: what evidence changed, which constraint or
+blocker matters now, and the next action's owner and intended result. If scope changed, name the
+added, split or retired IDs; do not compare the old and new ratios as a delivery-speed measure.
+When nothing material changed, say which condition is still outstanding rather than inventing
+progress. Tracking supplies facts for a forecast; it does not derive dates from resource counts.
+
+For a failed attempt that changes the plan, keep a feature-local lesson in the existing log:
+attempt and conditions → observed result → supported adjustment → next verification. For example,
+if validation never started because a runner could not obtain its database fixture, record that
+execution gap and the fixture-restoration check; do not report a tested implementation failure.
+If the fixture was available and an acceptance assertion failed, record the assertion and route
+the defect to its resource owner. A later pass can support completion when required coverage is
+sufficient, but does not by itself prove which intervention caused recovery. Do not turn one
+outcome into a project-wide policy or create a separate memory system.

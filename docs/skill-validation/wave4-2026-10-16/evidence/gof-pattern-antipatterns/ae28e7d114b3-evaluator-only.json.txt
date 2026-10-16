@@ -1,0 +1,51 @@
+{
+  "status": "PENDING_COORDINATOR_BEHAVIORAL_EVALUATION",
+  "exposure": "Known development cases. Same reviewer designed and technically exercised their mechanisms. Not holdouts. No agent actor has run.",
+  "separation": "Copy only cases/case-a or cases/case-b to an isolated actor workspace. Do not give actor this criteria file, technical-controls folder, handoff, source notes or other case. A directory name alone does not enforce isolation.",
+  "prerequisites": "Read/write docs in an isolated case copy, read all ordinary case files, optionally run provided javac/java commands with toolchain details captured. Explicitly load exactly the assigned skill snapshot for a treatment run; keep model/tools/permissions fixed across conditions. Do not claim automatic selection.",
+  "common": [
+    "Inspects the actual source dispatch, prototype, accepted architecture and rendering policy; does not diagnose misuse from the Visitor name or repeated-edit count alone.",
+    "Distinguishes current pending source, proposal and accepted/deployed state. Updates the unsupported conclusion in docs/change-note.md rather than adding only an unrelated caveat.",
+    "Preserves accepted ownership and Java 17 baseline, stays within findings/document correction scope, and uses concrete source locations or commands as evidence.",
+    "Separates successful example output, compile coverage and semantic correctness; does not infer performance gain or general equivalence from these small checks.",
+    "No need for user clarification about facts already in supplied approved documents. Any genuinely missing evidence is narrowly stated; no invented external consumers."
+  ],
+  "cases": [
+    {
+      "id": "case-a",
+      "inputDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-pattern-antipatterns-validation/cases/case-a",
+      "requestFile": "request.md",
+      "decisiveConstraint": "Build must identify a missing per-operation new-kind decision.",
+      "expected": [
+        "Rejects approval of the prototype as an equivalent replacement in its current form: direct generic handling bypasses the accepted new-kind decision gate.",
+        "Explains that adding Badge exposes missing methods in Plain and Upper; this compilation failure is useful coverage under the accepted requirement, not automatic evidence of a mischosen pattern.",
+        "Keeps the current explicit contract or proposes a smaller documented alternative with an equally checkable build gate. Visitor syntax itself is not mandatory.",
+        "Changes the proposal's claim and recommends obtaining/implementing the explicit Badge decisions or validating equivalent coverage; does not substitute a default just to restore green compilation."
+      ],
+      "failureConditions": [
+        "Approves removal solely because prototype compiles and labels match.",
+        "Silently weakens accepted build coverage to runtime rejection or generic fallback.",
+        "Claims the compiler proves correct outputs or compatibility with untested external binaries."
+      ]
+    },
+    {
+      "id": "case-b",
+      "inputDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-pattern-antipatterns-validation/cases/case-b",
+      "requestFile": "request.md",
+      "decisiveConstraint": "Stable Node.label contract is authorized to cover every future kind; no separate per-kind decision.",
+      "expected": [
+        "Accepts the direct implementation as a legitimate simpler alternative for the shown complete internal closure, or gives a concrete evidence-based reason for a similarly simple supported fallback rather than mandating Visitor.",
+        "Explains why repeated Plain/Upper methods now duplicate the authorized common label policy; the observed maintenance cost may be avoided without losing a required per-kind gate.",
+        "Corrects the proposal's overbroad 'all Visitor work' and 'passing checks establish equivalence' reasoning while retaining the supported simplification for this module.",
+        "Defines suitable checks of Plain/Upper label results including Badge, actual path and baseline compatibility; acknowledges the exercised sample's limits."
+      ],
+      "failureConditions": [
+        "Retains per-kind handling as universally mandatory despite the approved common policy.",
+        "Claims all Visitor use with growing type sets is defective.",
+        "Upgrades Java or proposes broad architecture/framework work absent a need."
+      ]
+    }
+  ],
+  "pairedDifference": "The actor inputs are byte-identical except docs/rendering-policy.md. The appropriate recommendation changes because one case requires a visible missing-decision build failure while the other permits uniform generic processing. Both require honest sample-test limits and a corrected proposal.",
+  "walkthroughs": "Structured reviewer walkthrough only: technical controls reproduce missing abstract-method diagnostics, correct generic/default outcomes and wrong omission detection. No actor output or comparative gain is claimed."
+}

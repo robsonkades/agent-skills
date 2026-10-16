@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+const read = name => readFileSync(new URL(name, import.meta.url), 'utf8');
+const result = JSON.parse(read('result.json'));
+const verification = JSON.parse(read('verification-results.json'));
+const reviewWords = read('REVIEW.md').trim().split(/\s+/).length;
+assert.ok(reviewWords <= 750, `Review has ${reviewWords} words`);
+assert.ok(result.decision && result.evidence && result.limits.length);
+assert.equal(verification.status, 'passed');
+assert.equal(result.evidence.cursorPageChecks, verification.cursorPageChecks);
+assert.equal(result.evidence.completeTraversals, verification.completeTraversals);
+assert.equal(result.evidence.providedCopiesPreserved, verification.preservedFiles.length);
+assert.equal(createHash('sha256').update(read('solution.sql')).digest('hex'), verification.solutionSha256);
+const check = { status: 'passed', reviewWords, resultJsonValid: true, evidenceMatchesVerification: true, solutionMatchesTestedHash: true };
+writeFileSync(new URL('delivery-check.json', import.meta.url), JSON.stringify(check, null, 2) + '\n');
+console.log(JSON.stringify(check));

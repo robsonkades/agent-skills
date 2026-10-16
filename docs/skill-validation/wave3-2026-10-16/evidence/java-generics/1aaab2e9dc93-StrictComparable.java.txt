@@ -1,0 +1,6 @@
+import java.util.Collection;
+import java.util.List;
+class StrictComparable {
+    static <T extends Comparable<T>> T strictMax(Collection<? extends T> values) { return values.iterator().next(); }
+    GenericProbe.Sub value = StrictComparable.<GenericProbe.Sub>strictMax(List.of(new GenericProbe.Sub(1)));
+}

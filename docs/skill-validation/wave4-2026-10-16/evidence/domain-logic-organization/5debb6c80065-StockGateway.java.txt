@@ -1,0 +1,41 @@
+package warehouse;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.UUID;
+
+public final class StockGateway {
+    private final String readSql;
+
+    public StockGateway(String readSql) { this.readSql = readSql; }
+
+    public int available(Connection connection, String sku) throws SQLException {
+        try (var statement = connection.prepareStatement(readSql)) {
+            statement.setString(1, sku);
+            try (var result = statement.executeQuery()) {
+                if (!result.next()) throw new IllegalArgumentException("unknown sku");
+                return result.getInt("available");
+            }
+        }
+    }
+
+    public void setAvailable(Connection connection, String sku, int value) throws SQLException {
+        try (var statement = connection.prepareStatement(
+                "UPDATE stock SET available = ? WHERE sku = ?")) {
+            statement.setInt(1, value);
+            statement.setString(2, sku);
+            if (statement.executeUpdate() != 1) throw new SQLException("stock row missing");
+        }
+    }
+
+    public void insertReservation(Connection connection, UUID requestId, String sku, int quantity)
+            throws SQLException {
+        try (var statement = connection.prepareStatement(
+                "INSERT INTO reservation (request_id, sku, quantity) VALUES (?, ?, ?)")) {
+            statement.setObject(1, requestId);
+            statement.setString(2, sku);
+            statement.setInt(3, quantity);
+            statement.executeUpdate();
+        }
+    }
+}

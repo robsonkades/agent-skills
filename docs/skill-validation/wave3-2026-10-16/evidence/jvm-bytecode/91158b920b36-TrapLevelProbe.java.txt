@@ -1,0 +1,29 @@
+public final class TrapLevelProbe {
+    static int hot(boolean positive, int value) {
+        if (positive) {
+            return value + 1;
+        }
+        return value - 1;
+    }
+
+    public static void main(String[] args) {
+        if (args.length != 1 || !(args[0].equals("change") || args[0].equals("stable"))) {
+            throw new IllegalArgumentException("Expected change or stable");
+        }
+        long checksum = 0;
+        for (int i = 0; i < 100_000; i++) {
+            checksum += hot(true, i);
+        }
+        if (checksum != 5_000_050_000L) {
+            throw new AssertionError("Warm-up result: " + checksum);
+        }
+        System.out.println("WARM checksum=" + checksum);
+        boolean change = args[0].equals("change");
+        int result = hot(!change, 7);
+        int expected = change ? 6 : 8;
+        if (result != expected) {
+            throw new AssertionError("Expected " + expected + ", got " + result);
+        }
+        System.out.println("RESULT mode=" + args[0] + " value=" + result);
+    }
+}

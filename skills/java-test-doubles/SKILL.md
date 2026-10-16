@@ -36,26 +36,32 @@ unavailable, report that coverage as pending rather than inferring it from a dou
 Reuse the requested behavior, existing tests and project constraints; ask only about a missing
 failure, lifecycle or interaction contract that would change the choice.
 
-1. **Consider the real collaborator first.** A fast, deterministic `new PricingRules()` can
+1. **Locate the actual substitution.** Read the subject's call site, collaborator contract,
+   relevant real implementation and test wiring. Identify which behavior the double removes;
+   keep the code responsible for the test's claimed behavior in the executed path. Use the
+   boundary walkthrough in `references/choosing-a-double.md` when the replacement layer is unclear.
+2. **Consider the real collaborator first.** A fast, deterministic `new PricingRules()` can
    exercise useful real behavior. Ownership alone does not decide: a stable library value may
    be appropriate, while an internal collaborator may need isolation for this scenario.
-2. **If you cannot, say why**: it does I/O, it is slow, it is non-deterministic, it belongs to
+3. **If you cannot, say why**: it does I/O, it is slow, it is non-deterministic, it belongs to
    a boundary whose behavior needs control, or the case you need (a timeout, a 500) cannot be
    produced on demand. One of those reasons, or another concrete isolation/contract need,
    should explain the substitution.
-3. **Pick by what the test needs.** A value to proceed with → a stub. A record that a command
+4. **Pick by what the test needs.** A value to proceed with → a stub. A record that a command
    happened → focused interaction verification. Required stateful behavior across several calls
    may justify a maintained fake; one canned outcome may need only a stub.
-4. **Verify contractual interactions.** Prefer returned values or readable state. Query counts
+5. **Verify contractual interactions.** Prefer returned values or readable state. Query counts
    or absence can matter for caching, remote-call budgets or authorization; verify these only
    when the requirement makes the interaction itself observable, not merely because it occurred.
    For asynchronous effects, establish completion of the relevant work or the contract's
    observation window before asserting final counts or absence. A polling verification that
    sees one call is not evidence that no later duplicate can occur; see the Mockito hazards
    reference for this distinction and the concurrency-testing handoff.
-5. **Pay the boundary's debt.** A mocked boundary carries assumptions to check against the
-   real thing — the query against the real engine, the HTTP shape against a stub server. Track
-   relevant existing evidence and uncovered risks as part of the change (java-testing-strategy).
+6. **Pay the boundary's debt.** A mocked boundary carries assumptions to check against the
+   real thing — for example, a query against the real engine. An HTTP stub server exercises
+   the real client against configured responses; it does not by itself establish provider
+   conformance. Link fixtures to the applicable provider contract and verification evidence,
+   and track uncovered risks as part of the change (java-testing-strategy).
 
 ## Rules
 
@@ -66,6 +72,10 @@ failure, lifecycle or interaction contract that would change the choice.
 - Prefer a small fake when the test needs its state transitions — "save then find", for
   example. A stub can be sufficient for one answer or failure. Neither a map-backed fake nor
   a mock establishes database, cache or queue semantics beyond what it actually implements.
+- For failure/recovery tests, model the boundary's effect as well as its answer. A rejection
+  before a write differs from a lost response after it; an exception alone does not establish
+  which occurred. Read [Failure injection](references/choosing-a-double.md#failure-injection)
+  when retries, reconciliation or partial effects determine the assertion.
 - Normally construct value objects, records, DTOs and enums. Mocking can bypass their
   constructors and invent impossible states; use such a substitution only for an explicit
   boundary-failure scenario, without claiming a real instance can produce it.
@@ -87,7 +97,7 @@ failure, lifecycle or interaction contract that would change the choice.
 
 ## References
 
-Deliver the behavior under test, reason for each substitution, what the double cannot prove,
+Deliver the behavior under test, actual substitution boundary and reason, what the double cannot prove,
 and real-boundary checks executed or still needed. Report actual test counts/failures; assertions
 against a fake do not establish database or network semantics.
 Retaining an adequate existing double or real collaborator is a valid result; name the risk it

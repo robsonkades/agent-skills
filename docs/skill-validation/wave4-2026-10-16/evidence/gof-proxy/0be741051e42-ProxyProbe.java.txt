@@ -1,0 +1,132 @@
+import java.io.IOException;
+import java.lang.reflect.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public final class ProxyProbe {
+    private static int checks;
+    private static final IOException FAILURE=new IOException("read failed");
+    public interface Foo {
+        Foo configure(String mode);
+        String execute() throws IOException;
+        void fail() throws IOException;
+    }
+    public static final class Target implements Foo {
+        private final boolean copyOnConfigure;
+        private String mode;
+        Target(boolean copyOnConfigure,String mode){this.copyOnConfigure=copyOnConfigure;this.mode=mode;}
+        public Foo configure(String next) {
+            if(copyOnConfigure)return new Target(true,next);
+            mode=next;
+            return this;
+        }
+        public String execute(){return mode;}
+        public void fail() throws IOException {throw FAILURE;}
+    }
+    public interface Wide { void call() throws IOException; }
+    public interface Narrow { void call(); }
+    public interface IntValue { int value(); }
+    public interface StringValue { String value(); }
+
+    static Foo forwarding(Foo target) {
+        ClassLoader loader=Foo.class.getClassLoader();
+        Foo foo = (Foo) Proxy.newProxyInstance(loader, new Class<?>[]{ Foo.class },
+        (p, method, args) -> {
+            if (method.getDeclaringClass() == Object.class) {
+                return switch (method.getName()) {
+                    case "equals" -> p == args[0];
+                    case "hashCode" -> System.identityHashCode(p);
+                    case "toString" -> "Foo proxy";
+                    default -> throw new AssertionError(method);
+                };
+            }
+            try { return method.invoke(target, args); }
+            catch (java.lang.reflect.InvocationTargetException e) { throw e.getCause(); }
+        });
+        return foo;
+    }
+    enum ReturnPolicy { RAW, SELF_ONLY, ALL_RETURNS_TO_SELF, WRAP_NEW }
+    static Foo guarded(Foo target,AtomicBoolean permitted,AtomicInteger checks,ReturnPolicy returns) {
+        InvocationHandler delegate=Proxy.getInvocationHandler(forwarding(target));
+        return (Foo)Proxy.newProxyInstance(Foo.class.getClassLoader(),new Class<?>[]{Foo.class},(proxy,method,args)->{
+            if(method.getName().equals("execute")) {
+                checks.incrementAndGet();
+                if(!permitted.get())throw new SecurityException("denied");
+            }
+            Object value=delegate.invoke(proxy,method,args);
+            if(method.getReturnType().isInstance(proxy)) {
+                if(returns==ReturnPolicy.ALL_RETURNS_TO_SELF && value instanceof Foo)return proxy;
+                if(returns!=ReturnPolicy.RAW && value==target)return proxy;
+                if(returns==ReturnPolicy.WRAP_NEW && value instanceof Foo next)return guarded(next,permitted,checks,returns);
+            }
+            return value;
+        });
+    }
+    private static void check(boolean value,String name) {
+        if(!value)throw new AssertionError(name);
+        checks++;System.out.println("PASS "+name);
+    }
+    private interface Action { void run() throws Exception; }
+    private static Throwable thrown(Action action) {
+        try{action.run();throw new AssertionError("expected failure");}
+        catch(Exception|Error e){return e;}
+    }
+    public static void main(String[] args) throws Exception {
+        Target target=new Target(false,"base");
+        Foo forwarding=forwarding(target);
+        check(forwarding.equals(forwarding),"extracted handler equality is reflexive");
+        check(!forwarding.equals(target) && !forwarding.equals(null),"proxy identity equality differs from target");
+        check(forwarding.hashCode()==System.identityHashCode(forwarding),"proxy identity hash preserved");
+        check(forwarding.toString().equals("Foo proxy"),"toString handled without target delegation");
+        check(forwarding.execute().equals("base"),"JDK proxy delegates final implementation");
+        check(thrown(forwarding::fail)==FAILURE,"InvocationTargetException removed; declared cause preserved");
+        check(forwarding.configure("changed")==target,"raw fluent self-return exposes target as documented");
+
+        AtomicBoolean permitted=new AtomicBoolean(false);
+        AtomicInteger access=new AtomicInteger();
+        Foo unguardedReturn=guarded(new Target(false,"base"),permitted,access,ReturnPolicy.RAW);
+        check(thrown(unguardedReturn::execute) instanceof SecurityException,"guard intercepts direct denied invocation");
+        access.set(0);
+        check(unguardedReturn.configure("secret").execute().equals("secret") && access.get()==0,
+              "negative control: raw fluent self-return bypasses second-call guard");
+
+        access.set(0);
+        Foo sameReceiver=guarded(new Target(false,"base"),permitted,access,ReturnPolicy.SELF_ONLY);
+        check(sameReceiver.configure("guarded")==sameReceiver,"identity-compatible self-return substitution");
+        check(thrown(sameReceiver::execute) instanceof SecurityException && access.get()==1,
+              "same-receiver substitution keeps guard on subsequent call");
+
+        access.set(0);
+        Foo copies=guarded(new Target(true,"base"),permitted,access,ReturnPolicy.SELF_ONLY);
+        check(copies.configure("copy").execute().equals("copy") && access.get()==0,
+              "negative control: self-only policy cannot protect distinct returned object");
+
+        permitted.set(true);
+        Foo blind=guarded(new Target(true,"base"),permitted,access,ReturnPolicy.ALL_RETURNS_TO_SELF);
+        check(blind.configure("copy").execute().equals("base"),
+              "negative control: replacing distinct result loses returned-object state");
+
+        access.set(0);
+        Foo wrap=guarded(new Target(true,"base"),permitted,access,ReturnPolicy.WRAP_NEW);
+        Foo child=wrap.configure("copy");
+        check(child!=wrap && child.execute().equals("copy"),"wrapping distinct child retains its state and receiver");
+        permitted.set(false);
+        check(thrown(child::execute) instanceof SecurityException && access.get()==2,
+              "wrapped distinct child enforces current permission");
+
+        Object duplicate=Proxy.newProxyInstance(Wide.class.getClassLoader(),new Class<?>[]{Wide.class,Narrow.class},
+                (p,m,a)->{throw FAILURE;});
+        Throwable duplicateFailure=thrown(()->((Wide)duplicate).call());
+        check(duplicateFailure instanceof UndeclaredThrowableException &&
+              ((UndeclaredThrowableException)duplicateFailure).getUndeclaredThrowable()==FAILURE,
+              "checked exception must fit every duplicate method declaration");
+        IntValue nullPrimitive=(IntValue)Proxy.newProxyInstance(IntValue.class.getClassLoader(),
+                new Class<?>[]{IntValue.class},(p,m,a)->null);
+        check(thrown(nullPrimitive::value) instanceof NullPointerException,"null primitive handler result rejected");
+        StringValue wrongType=(StringValue)Proxy.newProxyInstance(StringValue.class.getClassLoader(),
+                new Class<?>[]{StringValue.class},(p,m,a)->Integer.valueOf(1));
+        check(thrown(wrongType::value) instanceof ClassCastException,"incompatible handler result rejected");
+        System.out.println("PASS proxy checks="+checks+"; no executor or owned external resource");
+    }
+}
+

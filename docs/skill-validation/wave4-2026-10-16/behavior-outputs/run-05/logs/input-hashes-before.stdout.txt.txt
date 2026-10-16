@@ -1,0 +1,46 @@
+[
+  {
+    "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-actors-HoLlUY\\run-05\\input\\bundles\\report-1.0.0.jar",
+    "Hash": "BE3AA29F9DFE404B448615531E2AEF02ACECBF9CC43102B90216DAD69B74BE38"
+  },
+  {
+    "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-actors-HoLlUY\\run-05\\input\\consumer\\com\\example\\app\\ReportApp.java",
+    "Hash": "06439C0329E35B50310BCDB118E1BEB3CD004994BD025A3922A97FD71E8676BC"
+  },
+  {
+    "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-actors-HoLlUY\\run-05\\input\\library\\v1\\com\\example\\text\\LineEndings.java",
+    "Hash": "3144C01BE063C380F1133468C55A485F180F96095465AC0018F0BB9303791031"
+  },
+  {
+    "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-actors-HoLlUY\\run-05\\input\\library\\v2\\com\\example\\text\\LineEndings.java",
+    "Hash": "3B9828905DB8D2C349C0E19F841C246F6960F26BB27E43E7F4724D7E3A04E9C0"
+  },
+  {
+    "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-actors-HoLlUY\\run-05\\input\\project\\delivery.json",
+    "Hash": "C580CBA69C1405F21D55134A4FA97986BA13D4331CD51A34177C149D437F7480"
+  },
+  {
+    "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-actors-HoLlUY\\run-05\\input\\project\\README.md",
+    "Hash": "460BDB09A4220A7861080E0ABE66E6B1630B0D3673F2456AA664B52EB405CC47"
+  },
+  {
+    "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-actors-HoLlUY\\run-05\\input\\project\\recipes.json",
+    "Hash": "53362DDB1B2B35D505A21806A004A95991A08CDE29C4705C3F48B422C296D56A"
+  },
+  {
+    "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-actors-HoLlUY\\run-05\\input\\project\\release-policy.md",
+    "Hash": "128C15AE446A3A6DC4A47B1445AC05BFDA8FDD7CFF1453F86C654E7EC246BBD5"
+  },
+  {
+    "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-actors-HoLlUY\\run-05\\input\\published\\report-app-1.0.0.jar",
+    "Hash": "80E7634BCCF323B7949FDDAF5C90A7CC856B1AD305E7B7A0485B9EBED3E24CE8"
+  },
+  {
+    "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-actors-HoLlUY\\run-05\\input\\published\\text-core-1.0.0.jar",
+    "Hash": "BE8E720B908BFC0125350343E21CA4ABAF93C17B0FC9757880DA1AEF044B1954"
+  },
+  {
+    "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-actors-HoLlUY\\run-05\\input\\published\\text-core-1.0.1.jar",
+    "Hash": "5063BDAA4D9818BB69E59D2BF52409086F6FDF78BC0010923CA42D762D7EFBBB"
+  }
+]

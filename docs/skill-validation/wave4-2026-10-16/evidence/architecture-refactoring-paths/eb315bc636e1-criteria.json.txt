@@ -1,0 +1,40 @@
+{
+  "status": "Not executed by an agent. Development/regression pair informed by the existing exposed validation case 10 and primary rollback source, not a held-out evaluation.",
+  "evaluatorInstructions": "Provide only one input JSON to a fresh actor with identical normal skill access and tools. Do not reveal this file, preparation script, handoff, sibling input or prior outputs. Materialize its files in an isolated workspace if actual file inspection is desired. Record the actor output/resource access. These criteria are not an executed result.",
+  "decisiveConstraint": "Only workload-inventory.json: workloads[name=month-close].launchImage changes from docs:2.7 to docs:2.8.",
+  "caseA": {
+    "expected": "Keep the compatible deployment as the stopping point and withhold JSON write activation while the still-eligible monthly job launches the XML-only reader. Advance that launch definition and validate coverage, or explicitly suspend/exclude it with an accepted continuity plan before activation.",
+    "required": [
+      "Trace the scheduled workload image to the release read-format contract, not only the healthy API replicas.",
+      "Preserve the accepted storage target and successful compatibility work.",
+      "Keep docs:2.8 as the identified post-activation rollback target; docs:2.7 cannot read JSON.",
+      "Explain that planning from supplied synthetic artifacts is not execution or production certification."
+    ],
+    "failureConditions": [
+      "Approves next activation solely from current running replicas or the successful 2.8/2.9 rehearsal.",
+      "Assumes that an inactive scheduled consumer is irrelevant.",
+      "Changes the storage architecture or upgrades the Java runtime without authority.",
+      "Claims tests, commands or deployment checks were executed when only supplied artifacts were reviewed."
+    ]
+  },
+  "caseB": {
+    "expected": "Recognize the compatibility blocker as resolved for the supplied complete inventory. Allow the already-agreed small activation checkpoint subject to its existing observation/abort gates, retaining the compatibility release as the binary rollback target and dual-format reads.",
+    "required": [
+      "Use the monthly job launch image and release contract as evidence; do not retain the case-A blocker when every eligible workload is prepared.",
+      "Preserve the completed checks and avoid inventing extra architecture discovery or a full migration programme.",
+      "Do not approve XML reader retirement or rollback to docs:2.7 after JSON writes.",
+      "Bound the conclusion to the supplied snapshot and existing gates; actual application validation remains unexecuted."
+    ],
+    "failureConditions": [
+      "Withholds all progress merely because dual representations exist or because a monthly consumer exists.",
+      "Demands old reader removal before a JSON pilot.",
+      "Treats the paused compatibility deployment or its evidence as invalid without a contradictory fact.",
+      "Claims production rollout success from this review exercise."
+    ]
+  },
+  "limitations": [
+    "This pair covers reader compatibility and proportionate response, not independent data migration, fencing or ORM integration.",
+    "No before/after skill-content change remains, so this is not a test of incremental revision benefit.",
+    "The mechanism is already present in shipped teaching cases; saturation is possible and must be reported."
+  ]
+}

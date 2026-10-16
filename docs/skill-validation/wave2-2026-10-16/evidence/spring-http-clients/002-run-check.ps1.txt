@@ -1,0 +1,24 @@
+$ErrorActionPreference = 'Stop'
+$validationRoot = $PSScriptRoot
+$cacheRoot = 'C:/Users/robso/.m2/repository'
+$jarPaths = @(
+    "$cacheRoot/org/springframework/spring-web/7.0.9/spring-web-7.0.9.jar",
+    "$cacheRoot/org/springframework/spring-core/7.0.9/spring-core-7.0.9.jar",
+    "$cacheRoot/org/springframework/spring-beans/7.0.9/spring-beans-7.0.9.jar",
+    "$cacheRoot/org/springframework/spring-test/7.0.9/spring-test-7.0.9.jar",
+    "$cacheRoot/io/micrometer/micrometer-observation/1.16.7/micrometer-observation-1.16.7.jar",
+    "$cacheRoot/io/micrometer/micrometer-commons/1.16.7/micrometer-commons-1.16.7.jar",
+    "$cacheRoot/commons-logging/commons-logging/1.3.5/commons-logging-1.3.5.jar",
+    "$cacheRoot/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar"
+)
+foreach ($jarPath in $jarPaths) {
+    if (-not (Test-Path -LiteralPath $jarPath)) { throw "Missing cached dependency: $jarPath" }
+}
+$classpath = $jarPaths -join ';'
+$jdkBin = 'C:/Users/robso/.jdks/temurin-25.0.3/bin'
+& "$jdkBin/javac.exe" --release 25 -cp $classpath -d $validationRoot "$validationRoot/BufferingBoundaryCheck.java" 2>&1 | Tee-Object -FilePath "$validationRoot/compile.log"
+$compileExit = $LASTEXITCODE
+if ($compileExit -ne 0) { throw "javac exited $compileExit" }
+& "$jdkBin/java.exe" -cp "$validationRoot;$classpath" BufferingBoundaryCheck 2>&1 | Tee-Object -FilePath "$validationRoot/run.log"
+$runExit = $LASTEXITCODE
+if ($runExit -ne 0) { throw "java exited $runExit" }

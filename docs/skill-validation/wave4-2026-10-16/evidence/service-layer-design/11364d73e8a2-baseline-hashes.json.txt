@@ -1,0 +1,30 @@
+[
+  {
+    "Path": "C:\\git\\agent-skills\\skills\\service-layer-design\\SKILL.md",
+    "RelativePath": "SKILL.md",
+    "Bytes": 11606,
+    "SHA256": "774C0400417A1A3C8BED674F6429C7E5B8B34974B05BA9301887F322B5AE04D8",
+    "BaselineSHA256": "774C0400417A1A3C8BED674F6429C7E5B8B34974B05BA9301887F322B5AE04D8"
+  },
+  {
+    "Path": "C:\\git\\agent-skills\\skills\\service-layer-design\\skill.yaml",
+    "RelativePath": "skill.yaml",
+    "Bytes": 1994,
+    "SHA256": "31925B5B05A262DE51A0F3DBF9DC7B9F32EEE41F97DE39FCB3B0FDD5D240359B",
+    "BaselineSHA256": "31925B5B05A262DE51A0F3DBF9DC7B9F32EEE41F97DE39FCB3B0FDD5D240359B"
+  },
+  {
+    "Path": "C:\\git\\agent-skills\\skills\\service-layer-design\\references\\anaemic-and-god-services.md",
+    "RelativePath": "references\\anaemic-and-god-services.md",
+    "Bytes": 8704,
+    "SHA256": "20C2F4FC13EAB93DB02F2C825D90137D78AAAFE2E96E9155A952CC52EC6D8BCA",
+    "BaselineSHA256": "20C2F4FC13EAB93DB02F2C825D90137D78AAAFE2E96E9155A952CC52EC6D8BCA"
+  },
+  {
+    "Path": "C:\\git\\agent-skills\\skills\\service-layer-design\\references\\service-boundaries.md",
+    "RelativePath": "references\\service-boundaries.md",
+    "Bytes": 15358,
+    "SHA256": "EC35BC223787EAB9DF7E91ECF0C12769ED87326DFA4ECB225AC959F4B0E9D2FF",
+    "BaselineSHA256": "EC35BC223787EAB9DF7E91ECF0C12769ED87326DFA4ECB225AC959F4B0E9D2FF"
+  }
+]

@@ -1,0 +1,324 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "load-testing-advanced",
+  "ownedPath": "skills/load-testing-advanced/**",
+  "reviewDate": "2026-10-16",
+  "reviewer": "/root/quality01",
+  "versions": {
+    "committed": "1.3.3",
+    "assignment": "1.3.3",
+    "final": "1.3.4",
+    "preExistingBump": false,
+    "rationale": "One patch for a focused clarification of effective CI gate configuration; no Java/framework/dependency changes."
+  },
+  "baseline": {
+    "version": "1.3.3",
+    "headManifest": "1.3.3",
+    "status": "",
+    "unstaged": "",
+    "staged": "",
+    "files": [
+      {
+        "path": "skills/load-testing-advanced/references/generator-configuration.md",
+        "assignmentSha256": "ddc96c30812754638a990420e4609954012354d3903e96b7fb774e5c13fa6ddb",
+        "wave2BaselineSha256": "ddc96c30812754638a990420e4609954012354d3903e96b7fb774e5c13fa6ddb",
+        "matchesWave2Baseline": true
+      },
+      {
+        "path": "skills/load-testing-advanced/references/test-profiles.md",
+        "assignmentSha256": "3160c424405eeeec957c29e2ebc3683e830e76cd540499a424f563b116697980",
+        "wave2BaselineSha256": "3160c424405eeeec957c29e2ebc3683e830e76cd540499a424f563b116697980",
+        "matchesWave2Baseline": true
+      },
+      {
+        "path": "skills/load-testing-advanced/SKILL.md",
+        "assignmentSha256": "f74b6bffbc73fee5625e68d9dbf91196bef07eddcbc63fce5c25d2aabc469a85",
+        "wave2BaselineSha256": "f74b6bffbc73fee5625e68d9dbf91196bef07eddcbc63fce5c25d2aabc469a85",
+        "matchesWave2Baseline": true
+      },
+      {
+        "path": "skills/load-testing-advanced/skill.yaml",
+        "assignmentSha256": "6978f8877126de7a97e7d55e420f0e7786c31bd268379ff983676e0b03ab83a6",
+        "wave2BaselineSha256": "6978f8877126de7a97e7d55e420f0e7786c31bd268379ff983676e0b03ab83a6",
+        "matchesWave2Baseline": true
+      }
+    ],
+    "attribution": "Assignment-time state was clean and every package hash matched the wave-two baseline. All final package differences below are this reviewer's."
+  },
+  "findings": [
+    {
+      "location": "SKILL.md:140–150; references/generator-configuration.md former lines 67–77",
+      "evidence": "Checked-in thresholds and tool/schema pins did not include the effective CI invocation and runtime evaluation switches. k6 v1.3.0 runtime_options.go consumes K6_NO_THRESHOLDS with CLI precedence; run.go evaluates/finalizes thresholds only when enabled.",
+      "consequence": "A green job can be misclassified as acceptance even though the declared predicates were never evaluated.",
+      "resolution": "Short main-body guard and routed effective-invocation section: inspect CI/runner/script/binary/config/environment, resolve overrides, verify gate failure with a local control, allow verified external evaluation and preserve valid metrics."
+    }
+  ],
+  "changes": [
+    {
+      "file": "skills/load-testing-advanced/SKILL.md",
+      "details": "Added CI gate/effective-options guard and expanded generator-reference routing to CI gate audits."
+    },
+    {
+      "file": "skills/load-testing-advanced/references/generator-configuration.md",
+      "details": "Added conditional invocation/gate mechanism with versioned no-thresholds example, CLI precedence, local failure control, external-evaluator alternative and evidence preservation; added two pinned source links."
+    },
+    {
+      "file": "skills/load-testing-advanced/skill.yaml",
+      "details": "Patch version only."
+    }
+  ],
+  "files": [
+    {
+      "path": "skills/load-testing-advanced/references/generator-configuration.md",
+      "assignmentSha256": "ddc96c30812754638a990420e4609954012354d3903e96b7fb774e5c13fa6ddb",
+      "wave2BaselineSha256": "ddc96c30812754638a990420e4609954012354d3903e96b7fb774e5c13fa6ddb",
+      "matchesWave2Baseline": true,
+      "finalSha256": "95db63254053d82ba6b25ecee9d14baa3b7db3201d0b88af50879973d2018592",
+      "changedByReviewer": true
+    },
+    {
+      "path": "skills/load-testing-advanced/references/test-profiles.md",
+      "assignmentSha256": "3160c424405eeeec957c29e2ebc3683e830e76cd540499a424f563b116697980",
+      "wave2BaselineSha256": "3160c424405eeeec957c29e2ebc3683e830e76cd540499a424f563b116697980",
+      "matchesWave2Baseline": true,
+      "finalSha256": "3160c424405eeeec957c29e2ebc3683e830e76cd540499a424f563b116697980",
+      "changedByReviewer": false
+    },
+    {
+      "path": "skills/load-testing-advanced/SKILL.md",
+      "assignmentSha256": "f74b6bffbc73fee5625e68d9dbf91196bef07eddcbc63fce5c25d2aabc469a85",
+      "wave2BaselineSha256": "f74b6bffbc73fee5625e68d9dbf91196bef07eddcbc63fce5c25d2aabc469a85",
+      "matchesWave2Baseline": true,
+      "finalSha256": "1acf899b3d69cee82d2914aa3acebea6e2111d3613d4c69ae618c9b371852379",
+      "changedByReviewer": true
+    },
+    {
+      "path": "skills/load-testing-advanced/skill.yaml",
+      "assignmentSha256": "6978f8877126de7a97e7d55e420f0e7786c31bd268379ff983676e0b03ab83a6",
+      "wave2BaselineSha256": "6978f8877126de7a97e7d55e420f0e7786c31bd268379ff983676e0b03ab83a6",
+      "matchesWave2Baseline": true,
+      "finalSha256": "5d9f5c993e0a610c3ba2d393d7026ac948b41e7a0539a10fe76f396337f3b3d1",
+      "changedByReviewer": true
+    }
+  ],
+  "preExistingChanges": [],
+  "preserved": [
+    "Profile selection and conditional claims; adequate-evidence/no-change path; authorized passing ceiling does not require overload.",
+    "Passing/failing brackets with monotonicity, arrival fidelity, phase isolation and target/generator distinction.",
+    "Reflected fluid backlog, overload shedding/recovery, retained-resource soak hypotheses and no routine explicit GC.",
+    "Cohort/censoring and drain accounting, nonempty required populations, raw versus summary schema checks, generator headroom and distributed-generator caveats.",
+    "Existing partial k6 options example unchanged; all JVM compatibility and neighboring-skill boundaries retained."
+  ],
+  "intentionallyRemoved": [],
+  "javaCompatibility": {
+    "newJavaCode": false,
+    "baseline": "Inspect actual project toolchain and deployed JDK; existing version-specific Java references retained.",
+    "exampleClassification": "Unchanged partial JavaScript k6 options configuration, not a runnable workload. Paired control fixtures are unexecuted examples in this handoff only."
+  },
+  "checks": [
+    {
+      "name": "strict-package-validation",
+      "command": "node packages/cli/bin/agent-skills.mjs --no-update-check validate skills/load-testing-advanced --strict --json",
+      "cwd": "C:\\git\\agent-skills",
+      "result": {
+        "chunk_id": "75376d",
+        "wall_time_seconds": 0.1609056,
+        "exit_code": 0,
+        "original_token_count": 41,
+        "output": "{\n  \"ok\": true,\n  \"directory\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\load-testing-advanced\",\n  \"name\": \"load-testing-advanced\",\n  \"version\": \"1.3.4\",\n  \"issues\": []\n}\n"
+      }
+    },
+    {
+      "name": "owned-format-check",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/load-testing-advanced/SKILL.md skills/load-testing-advanced/skill.yaml skills/load-testing-advanced/references/generator-configuration.md skills/load-testing-advanced/references/test-profiles.md",
+      "cwd": "C:\\git\\agent-skills",
+      "result": {
+        "chunk_id": "891ea1",
+        "wall_time_seconds": 0.2267048,
+        "exit_code": 0,
+        "original_token_count": 17,
+        "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+      }
+    },
+    {
+      "name": "owned-diff-check",
+      "command": "git diff --check -- skills/load-testing-advanced",
+      "cwd": "C:\\git\\agent-skills",
+      "result": {
+        "chunk_id": "f07005",
+        "wall_time_seconds": 0.0712225,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      }
+    },
+    {
+      "name": "owned-links-and-example-syntax",
+      "command": "@'\nimport {readFileSync,existsSync} from 'node:fs';\nimport {dirname,resolve} from 'node:path';\nimport {parse} from 'yaml';\nimport {SourceTextModule} from 'node:vm';\nconst root='skills/load-testing-advanced';\nconst docs=['SKILL.md','references/generator-configuration.md','references/test-profiles.md'];\nlet links=0;\nfor(const relative of docs){const file=resolve(root,relative);const text=readFileSync(file,'utf8');for(const m of text.matchAll(/\\[[^\\]]*\\]\\((?:<([^>]+)>|([^\\s)]+))\\)/g)){const target=m[1]||m[2];if(/^https?:/.test(target))continue;const [local,anchor]=target.split('#');const dest=local?resolve(dirname(file),local):file;if(!existsSync(dest))throw new Error('Missing link: '+target);if(anchor){const headings=Array.from(readFileSync(dest,'utf8').matchAll(/^#+\\s+(.+)$/gm),h=>h[1].toLowerCase().replace(/[^\\w\\s-]/g,'').replace(/\\s/g,'-'));if(!headings.includes(anchor))throw new Error('Missing anchor: '+target);}links++;}}\nconst body=readFileSync(root+'/SKILL.md','utf8');const front=parse(body.split('---')[1]);const manifest=parse(readFileSync(root+'/skill.yaml','utf8'));\nif(front.description.trim()!==manifest.description.trim())throw new Error('Description mismatch');\nfor(const name of manifest.suggests)if(!existsSync('skills/'+name+'/SKILL.md'))throw new Error('Missing suggest '+name);\nconst snippet=readFileSync(root+'/references/generator-configuration.md','utf8').match(/```javascript\\r?\\n([\\s\\S]*?)```/)[1];new SourceTextModule(snippet);\nconsole.log(JSON.stringify({relativeLinks:links,descriptionsMatch:true,suggestsExist:manifest.suggests.length,partialJavaScriptOptionsSyntax:'PASS (Node parser only, not k6 execution)',version:manifest.version}));\n'@ | node --experimental-vm-modules --input-type=module",
+      "cwd": "C:\\git\\agent-skills",
+      "result": {
+        "chunk_id": "a2921e",
+        "wall_time_seconds": 0.1158065,
+        "exit_code": 0,
+        "original_token_count": 83,
+        "output": "{\"relativeLinks\":2,\"descriptionsMatch\":true,\"suggestsExist\":4,\"partialJavaScriptOptionsSyntax\":\"PASS (Node parser only, not k6 execution)\",\"version\":\"1.3.4\"}\n(node:26548) ExperimentalWarning: VM Modules is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n"
+      }
+    }
+  ],
+  "additionalChecks": [
+    {
+      "command": "Get-Command k6 -ErrorAction SilentlyContinue (explicit absence branch)",
+      "cwd": "C:\\git\\agent-skills",
+      "result": "k6 not available on PATH",
+      "exitCode": 0
+    },
+    {
+      "command": "git status --short -- skills/load-testing-advanced; git diff -- skills/load-testing-advanced; git diff --cached -- skills/load-testing-advanced; git show HEAD:skills/load-testing-advanced/skill.yaml; owned Node SHA-256 comparison against wave-two baseline",
+      "cwd": "C:\\git\\agent-skills",
+      "result": "Clean assignment state, committed/assignment 1.3.3, all four hashes matched; staged diff empty.",
+      "exitCode": 0
+    },
+    {
+      "command": "git diff -- skills/load-testing-advanced; owned Node recursive SHA-256 audit; git status --short -- skills/load-testing-advanced",
+      "cwd": "C:\\git\\agent-skills",
+      "result": "diff --git a/skills/load-testing-advanced/SKILL.md b/skills/load-testing-advanced/SKILL.md\nindex eb53769..2c08f5e 100644\n--- a/skills/load-testing-advanced/SKILL.md\n+++ b/skills/load-testing-advanced/SKILL.md\n@@ -138,6 +138,8 @@ retention across cycles, failure to plateau, ownership paths, time-to-limit and\n ## Automation and output contracts\n \n - Pin tool/version/extensions and output/summary mode; validate output against a real fixture.\n+- Before trusting a CI pass, trace the executed script and effective options; confirm that\n+  the gate evaluated the declared predicate and propagated failure.\n - Treat raw event output and aggregated summaries as different schemas.\n - Fail loudly on missing required fields, unknown coverage, histogram overflow or changed units.\n   A confirmed-empty optional outcome cohort (for example, zero rejections) is valid evidence of\n@@ -151,7 +153,7 @@ retention across cycles, failure to plateau, ownership paths, time-to-limit and\n \n Tool-specific commands and current caveats belong in\n [generator configuration](references/generator-configuration.md); read it when configuring\n-a generator or output parser. Read [test profiles](references/test-profiles.md) when selecting\n+a generator, output parser or CI gate. Read [test profiles](references/test-profiles.md) when selecting\n phase duration, refining a boundary, or designing spike, soak and recovery acceptance.\n Inspect the project's actual JDK, collector, framework, build and deployed topology before\n choosing diagnostic commands. The k6 options are partial JavaScript configuration, not a\ndiff --git a/skills/load-testing-advanced/references/generator-configuration.md b/skills/load-testing-advanced/references/generator-configuration.md\nindex a1f1522..f8df2bc 100644\n--- a/skills/load-testing-advanced/references/generator-configuration.md\n+++ b/skills/load-testing-advanced/references/generator-configuration.md\n@@ -1,5 +1,22 @@\n # Generator Configuration and Output Contracts\n \n+## Effective invocation and acceptance gate\n+\n+Follow the CI job and wrapper to the actual script/archive, binary/image, CLI flags,\n+selected configuration and relevant inherited environment. Resolve overrides before comparing\n+runs; capture effective scenario/load settings and evaluation switches without exporting\n+credentials. Check whether the wrapper propagates the generator's failure or delegates\n+acceptance to a separate evaluator.\n+\n+For example, k6 1.3.0 skips threshold evaluation with `--no-thresholds` or\n+`K6_NO_THRESHOLDS=true`, even when the script defines thresholds. An explicitly supplied CLI\n+value wins over that environment setting. Exit zero alone cannot establish that those\n+predicates passed. Exercise the same invocation path with a small, known-failing local\n+fixture and require the job to fail when those thresholds are its gate. Disabling them can\n+be intentional for measurement-only runs with a separately verified acceptance evaluator.\n+Retain valid metrics; reevaluate sufficient captured data or report acceptance as unevaluated\n+instead of discarding every phase or claiming a pass.\n+\n ## Arrival-executor concurrency\n \n For a stable iteration population with consistently measured arrival rate \\(\\lambda_i\\)\n@@ -160,6 +177,8 @@ so inspect the effective implementation and metrics before attributing a plateau\n - [Karl Sigman: Little's law and finite-window boundary work](https://www.columbia.edu/~ks20/stochastic-I/stochastic-I-LL.pdf)\n - [k6 built-in metrics](https://grafana.com/docs/k6/latest/using-k6/metrics/reference/)\n - [k6 thresholds](https://grafana.com/docs/k6/latest/using-k6/thresholds/)\n+- [k6 1.3.0 runtime flags and environment precedence](https://github.com/grafana/k6/blob/v1.3.0/internal/cmd/runtime_options.go)\n+- [k6 1.3.0 threshold execution and failure propagation](https://github.com/grafana/k6/blob/v1.3.0/internal/cmd/run.go)\n - [k6 summary trend statistics options](https://grafana.com/docs/k6/latest/using-k6/k6-options/reference/#summary-trend-stats)\n - [k6 1.3.0 trend/rate sink semantics](https://github.com/grafana/k6/blob/v1.3.0/metrics/sink.go)\n - [k6 1.3.0 summary paths and metric aggregation](https://github.com/grafana/k6/blob/v1.3.0/internal/js/summary.go)\ndiff --git a/skills/load-testing-advanced/skill.yaml b/skills/load-testing-advanced/skill.yaml\nindex 750f6d6..4270b7b 100644\n--- a/skills/load-testing-advanced/skill.yaml\n+++ b/skills/load-testing-advanced/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: load-testing-advanced\n-version: 1.3.3\n+version: 1.3.4\n description: >-\n   Selecting and executing advanced load profiles—baseline, capacity-envelope,\n   breakpoint, stress, spike, ramp, soak and recovery—using bracketed boundaries,\n{\n  \"node\": \"v25.6.1\",\n  \"files\": [\n    {\n      \"path\": \"skills/load-testing-advanced/references/generator-configuration.md\",\n      \"sha256\": \"95db63254053d82ba6b25ecee9d14baa3b7db3201d0b88af50879973d2018592\"\n    },\n    {\n      \"path\": \"skills/load-testing-advanced/references/test-profiles.md\",\n      \"sha256\": \"3160c424405eeeec957c29e2ebc3683e830e76cd540499a424f563b116697980\"\n    },\n    {\n      \"path\": \"skills/load-testing-advanced/SKILL.md\",\n      \"sha256\": \"1acf899b3d69cee82d2914aa3acebea6e2111d3613d4c69ae618c9b371852379\"\n    },\n    {\n      \"path\": \"skills/load-testing-advanced/skill.yaml\",\n      \"sha256\": \"5d9f5c993e0a610c3ba2d393d7026ac948b41e7a0539a10fe76f396337f3b3d1\"\n    }\n  ],\n  \"allProcessesReturned\": true\n}\n M skills/load-testing-advanced/SKILL.md\n M skills/load-testing-advanced/references/generator-configuration.md\n M skills/load-testing-advanced/skill.yaml\n",
+      "exitCode": 0
+    }
+  ],
+  "behavioralEvaluationsExecuted": [],
+  "walkthroughs": [
+    {
+      "kind": "Primary-source walkthrough, not a runtime test",
+      "scope": "Both case invocation paths against k6 v1.3.0 runtime option parsing and threshold execution.",
+      "result": "Inherited true without explicit override disables thresholds; explicit --no-thresholds=false wins and permits threshold failure. Codes 0/99 are expected, not observed."
+    }
+  ],
+  "cases": [
+    {
+      "id": "ci-threshold-bypass",
+      "input": {
+        "request": "Audit whether this test job enforces its checked-in acceptance rules. Follow the repository files, correct a concrete gating defect if there is one, and preserve working behavior otherwise. Validate only with the supplied local control; do not send load to external services or change tool versions. Report exactly what ran and what remains unverified.",
+        "fixtureFiles": {
+          "toolchain.txt": "k6 v1.3.0; Bash. Job entrypoint: bash ci/job.sh perf/gate-control.js. The job status is the acceptance gate; there is no external acceptance evaluator.\n",
+          "ci/job.sh": "#!/usr/bin/env bash\nset -euo pipefail\nexport K6_NO_THRESHOLDS=true\nexec bash ci/runner.sh \"$@\"\n",
+          "perf/gate-control.js": "import { check } from 'k6';\nexport const options = {\n  vus: 1,\n  iterations: 1,\n  thresholds: { checks: ['rate==1'] },\n};\nexport default function () {\n  check(false, { 'control is accepted': value => value === true });\n}\n",
+          "README.md": "The supplied control intentionally emits one failing check. The job must reject this control. Use it to inspect the acceptance gate without contacting a service. The check and threshold must remain strict; do not alter them to make a green job.\n",
+          "ci/runner.sh": "#!/usr/bin/env bash\nset -euo pipefail\nexec k6 run --no-usage-report \"$@\"\n"
+        }
+      },
+      "evaluatorCriteria": {
+        "required": [
+          "Read the job and runner, not only the checked-in JavaScript options.",
+          "Identify inherited K6_NO_THRESHOLDS=true as disabling the declared threshold gate in v1.3.0.",
+          "Correct only the effective gate configuration, e.g. an explicit --no-thresholds=false in the acceptance runner, while preserving the deliberately failing check and predicate.",
+          "When k6 is available, show the unchanged negative control yields native exit 0 before correction and exit 99 after correction; label these as expectations if it cannot run.",
+          "Verify an otherwise identical true check can pass after the fix (temporary positive control), without weakening the committed negative fixture.",
+          "Keep valid collected metrics usable; do not infer service capacity or require production load."
+        ],
+        "failureConditions": [
+          "Claims a pass merely because thresholds are present or the process exited zero.",
+          "Weakens/removes the check or threshold, changes tool versions, or broadens to a load campaign.",
+          "Claims k6 execution or measured skill improvement from source reading or Node syntax validation."
+        ]
+      },
+      "reproduction": [
+        "Materialize the case's input.fixtureFiles in a fresh isolated directory; leave evaluatorCriteria out of the actor context.",
+        "Provide an existing k6 v1.3.0 binary on the isolated child PATH and Bash. No installation or upgrade is required by the skill; if unavailable report the runtime check as unavailable.",
+        "Run from the fixture root: bash ci/job.sh perf/gate-control.js. Capture native process status and stdout/stderr; do not treat a shell pipeline's unrelated status as k6's.",
+        "For independent before/after comparison, keep model, tools, file fixtures and task constant. These are development cases, not unseen holdouts."
+      ],
+      "executionStatus": "NOT_EXECUTED; source-based walkthrough only"
+    },
+    {
+      "id": "explicit-cli-gate-overrides-inherited-default",
+      "decisiveConstraintChanged": "Only ci/runner.sh adds --no-thresholds=false. The inherited K6_NO_THRESHOLDS=true, control, tool version and task are identical.",
+      "input": {
+        "request": "Audit whether this test job enforces its checked-in acceptance rules. Follow the repository files, correct a concrete gating defect if there is one, and preserve working behavior otherwise. Validate only with the supplied local control; do not send load to external services or change tool versions. Report exactly what ran and what remains unverified.",
+        "fixtureFiles": {
+          "toolchain.txt": "k6 v1.3.0; Bash. Job entrypoint: bash ci/job.sh perf/gate-control.js. The job status is the acceptance gate; there is no external acceptance evaluator.\n",
+          "ci/job.sh": "#!/usr/bin/env bash\nset -euo pipefail\nexport K6_NO_THRESHOLDS=true\nexec bash ci/runner.sh \"$@\"\n",
+          "perf/gate-control.js": "import { check } from 'k6';\nexport const options = {\n  vus: 1,\n  iterations: 1,\n  thresholds: { checks: ['rate==1'] },\n};\nexport default function () {\n  check(false, { 'control is accepted': value => value === true });\n}\n",
+          "README.md": "The supplied control intentionally emits one failing check. The job must reject this control. Use it to inspect the acceptance gate without contacting a service. The check and threshold must remain strict; do not alter them to make a green job.\n",
+          "ci/runner.sh": "#!/usr/bin/env bash\nset -euo pipefail\nexec k6 run --no-usage-report --no-thresholds=false \"$@\"\n"
+        }
+      },
+      "evaluatorCriteria": {
+        "required": [
+          "Follow the full invocation and apply explicit CLI-over-environment precedence.",
+          "Recognize the negative control is correctly rejected by the configured acceptance runner; no gate change is needed solely because the inherited variable is true.",
+          "With k6 available, observe native exit 99 for the negative control and zero for a temporary true-check variant.",
+          "Keep the declared toolchain and strict predicate; distinguish a deliberately failing validation control from a broken service or invalid capacity test.",
+          "If execution is unavailable, provide the source-supported conclusion with its limitation rather than inventing an observed exit code."
+        ],
+        "failureConditions": [
+          "Diagnoses disabled gating solely from K6_NO_THRESHOLDS=true, ignoring --no-thresholds=false.",
+          "Removes a working override, weakens the predicate, or launches an unrelated load test.",
+          "Confuses the expected failing negative control with a validation failure caused by the skill edit."
+        ]
+      },
+      "reproduction": [
+        "Materialize the case's input.fixtureFiles in a fresh isolated directory; leave evaluatorCriteria out of the actor context.",
+        "Provide an existing k6 v1.3.0 binary on the isolated child PATH and Bash. No installation or upgrade is required by the skill; if unavailable report the runtime check as unavailable.",
+        "Run from the fixture root: bash ci/job.sh perf/gate-control.js. Capture native process status and stdout/stderr; do not treat a shell pipeline's unrelated status as k6's.",
+        "For independent before/after comparison, keep model, tools, file fixtures and task constant. These are development cases, not unseen holdouts."
+      ],
+      "executionStatus": "NOT_EXECUTED; source-based walkthrough only"
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://github.com/grafana/k6/blob/v1.3.0/internal/cmd/runtime_options.go",
+      "checkedVersion": "k6 v1.3.0",
+      "supports": "Runtime no-thresholds flag, inherited K6_NO_THRESHOLDS and explicit CLI precedence.",
+      "locations": "runtimeOptionFlagSet, runtimeOptionsFromFlags, populateRuntimeOptionsFromEnv, saveBoolFromEnv"
+    },
+    {
+      "url": "https://github.com/grafana/k6/blob/v1.3.0/internal/cmd/run.go",
+      "checkedVersion": "k6 v1.3.0",
+      "supports": "Threshold execution/finalization guard and propagation of crossed thresholds.",
+      "locations": "thresholdsEnabled; conditional StartThresholdCalculations; handleFinalThresholdCalculation"
+    },
+    {
+      "url": "https://github.com/grafana/k6/blob/v1.3.0/errext/exitcodes/codes.go",
+      "checkedVersion": "k6 v1.3.0",
+      "supports": "ThresholdsHaveFailed = 99 for the unexecuted control's expected result."
+    },
+    {
+      "url": "https://grafana.com/docs/k6/latest/using-k6/k6-options/how-to/",
+      "supports": "Official configuration sources and precedence; used as contextual corroboration, not a version upgrade requirement."
+    },
+    {
+      "url": "https://grafana.com/docs/k6/latest/using-k6/k6-options/reference/#no-thresholds",
+      "supports": "Official no-thresholds CLI/environment option; version-sensitive correction is pinned to v1.3.0 source."
+    }
+  ],
+  "limits": [
+    "No k6 binary was available on PATH; no actual generator run, native exit-code experiment, throughput benchmark or agent behavioral evaluation was executed.",
+    "Node v25.6.1 parsed the existing partial options snippet only. Its VM Modules experimental warning was observed; this does not validate k6 APIs or runtime behavior.",
+    "Versioned Grafana v1.3.x how-to URL returned an internal error; pinned v1.3.0 implementation was successfully inspected instead.",
+    "Expected prevention of ungated acceptance is not a measured improvement. The review does not certify all generator versions, wrappers or environments.",
+    "No global build, registry generation or verification was run by this reviewer."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "prerequisite": "All reviewers have stopped writing; regenerate shared index for final package version/integrity."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "prerequisite": "Registry generation and all write phases complete."
+    }
+  ],
+  "crossSkill": {
+    "issues": [],
+    "actions": []
+  },
+  "artifacts": {
+    "handoffPath": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/load-testing-advanced.json",
+    "separateRuntimeArtifacts": "Not applicable; no k6 runtime available. Exact fixture files and reproduction steps are embedded in separated cases."
+  },
+  "allWritesStopped": true,
+  "noRunningWriterProcesses": true
+}

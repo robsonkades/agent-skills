@@ -1,0 +1,23 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import {execFileSync} from 'node:child_process';
+import assert from 'node:assert/strict';
+const root='C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh',repo='C:/git/agent-skills',report=repo+'/docs/skill-validation/wave6-2026-10-16';
+const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
+assert.ok(!fs.existsSync(report));
+const git=args=>execFileSync('git',args,{cwd:repo,encoding:'utf8',maxBuffer:64*1024*1024});
+const files=[...new Set(git(['ls-files','-z','--cached','--others','--exclude-standard']).split('\0').filter(Boolean))];
+const before=files.filter(f=>fs.existsSync(repo+'/'+f)).map(p=>({path:p,sha256:sha(fs.readFileSync(repo+'/'+p))}));
+const walk=(d,s='')=>fs.readdirSync(d+'/'+s,{withFileTypes:true}).flatMap(e=>{const p=s?s+'/'+e.name:e.name;return e.isDirectory()?walk(d,p):[p];});
+const packageRoot=repo+'/skills/java-memory-model';
+fs.cpSync(packageRoot,root+'/snapshots/current',{recursive:true});
+const previous='C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/baseline/java-memory-model';
+const priorBaseline=JSON.parse(fs.readFileSync(repo+'/docs/skill-validation/wave5-2026-10-16/baseline.json','utf8')).packages.find(p=>p.name==='java-memory-model');
+for(const f of priorBaseline.files){const p=f.path.replace(/^skills\/java-memory-model\//,'');assert.equal(sha(fs.readFileSync(previous+'/'+p)),f.sha256);}
+fs.cpSync(previous,root+'/snapshots/previous',{recursive:true});
+const packages=['previous','current'].map(condition=>({condition,version:fs.readFileSync(root+'/snapshots/'+condition+'/skill.yaml','utf8').match(/^version: (.+)$/m)[1],files:walk(root+'/snapshots/'+condition).map(p=>({path:p,sha256:sha(fs.readFileSync(root+'/snapshots/'+condition+'/'+p))}))}));
+fs.mkdirSync(report,{recursive:true});fs.mkdirSync(root+'/review',{recursive:true});
+fs.writeFileSync(report+'/baseline.json',JSON.stringify({at:new Date().toISOString(),root,head:git(['rev-parse','HEAD']).trim(),allFiles:before,gitStatus:git(['status','--short']),registryBefore:fs.readFileSync(repo+'/registry/skills.yaml','utf8'),ownedDiffAtAssignment:git(['diff','--','skills/java-memory-model']),packages},null,2)+'\n');
+fs.writeFileSync(root+'/paths.json',JSON.stringify({root,repo,report,previous:root+'/snapshots/previous',current:root+'/snapshots/current'},null,2)+'\n');
+console.log(JSON.stringify({root,report,baselineFiles:before.length,packages:packages.map(p=>({condition:p.condition,version:p.version,files:p.files.length}))}));

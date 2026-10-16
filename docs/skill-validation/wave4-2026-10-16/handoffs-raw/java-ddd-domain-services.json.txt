@@ -1,0 +1,454 @@
+{
+  "skill": "java-ddd-domain-services",
+  "status": "NO_CHANGES_NEEDED",
+  "ownedPath": "skills/java-ddd-domain-services",
+  "reviewer": "/root/quality02",
+  "reviewDate": "2026-10-16",
+  "allWritesStopped": true,
+  "activeBackgroundProcesses": [],
+  "versions": {
+    "committed": "1.0.0",
+    "assignment": "1.0.0",
+    "final": "1.0.0",
+    "preExistingBump": false,
+    "rationale": "All three owned files remain byte-identical to assignment and the coordinator-provided temp baseline. No content change, therefore no bump."
+  },
+  "files": {
+    "changedByReviewer": [],
+    "preExistingChanges": [],
+    "untrackedInOwnedPackage": [],
+    "reviewed": [
+      "skills/java-ddd-domain-services/SKILL.md",
+      "skills/java-ddd-domain-services/references/policy-and-factory-contracts.md",
+      "skills/java-ddd-domain-services/skill.yaml"
+    ],
+    "baseline": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\baseline.json",
+    "coordinatorBaseline": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\java-ddd-domain-services",
+    "finalDiff": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\final.diff",
+    "finalHashes": [
+      {
+        "path": "SKILL.md",
+        "sha256": "929ce9de133dfdffbc80ce1221c318a6906021a52309c9dab7455aff5a9438ff"
+      },
+      {
+        "path": "references/policy-and-factory-contracts.md",
+        "sha256": "2aab99d20b6d00e7ef7093133a8446edd1389de4efd40b83cf060874ff7c9fc4"
+      },
+      {
+        "path": "skill.yaml",
+        "sha256": "86fd02d90f9f486bc60971ef6305e4f734d6e59a0f8f4be0589ceb08817710c3"
+      }
+    ]
+  },
+  "changes": [],
+  "findings": {
+    "corrected": [],
+    "remainingMaterialDefects": [],
+    "assessment": "Complete package review and targeted primary evidence support preserving the current content. It already distinguishes rule ownership, assessment, authoritative commitment, orchestration and lifecycle restoration without forcing a service/interface/factory.",
+    "evidence": [
+      {
+        "location": "SKILL.md:15-60, 93-114",
+        "finding": "Discovery follows accepted/rejected business scenarios and actual authority/consistency before choosing aggregate, value object, policy, specification, factory or use case. Existing adequate ownership is explicitly a valid outcome.",
+        "consequence": "A class name, two input objects or reuse alone cannot justify a domain service or rob an aggregate of its transition."
+      },
+      {
+        "location": "SKILL.md:73-88; references/policy-and-factory-contracts.md:9-86",
+        "finding": "Pure assessment receives explicit facts; source identity, tenant, amount/currency, observation/decision time and terms are bound to decisions. Evidence failure differs from business rejection; fixed offers differ from provisional assessments.",
+        "consequence": "No silent stale-data fallback, unsupported approval flag or repricing of a genuine fixed commitment."
+      },
+      {
+        "location": "references/policy-and-factory-contracts.md:39-46, 88-131",
+        "finding": "Reservations have authoritative provenance/binding/consumption semantics. Multi-aggregate rules identify their enforcement point; fresh prechecks and different row versions are not sufficient. Lost replies remain unknown outcomes with provider-specific recovery.",
+        "consequence": "A domain-service class or unit test cannot manufacture cross-system atomicity, stock/credit allocation or exactly-once guarantees."
+      },
+      {
+        "location": "references/policy-and-factory-contracts.md:133-168",
+        "finding": "Named domain specifications are optional; direct domain methods can suffice. SQL/Java equivalence, incomplete facts, short-circuit effects, trusted scope and candidate-prefilter paging are already qualified.",
+        "consequence": "Avoids putting JPA criteria or hidden I/O into a supposedly pure criterion and prevents predicate tests from proving SQL results."
+      },
+      {
+        "location": "references/policy-and-factory-contracts.md:170-207",
+        "finding": "Simple construction remains a constructor/named method; reconstitution preserves identity/version/time/historical terms and does not announce new creation. Structural invariants remain checked.",
+        "consequence": "No forwarding factory is required, and creation rules must not corrupt or reject otherwise valid historical lifecycle state."
+      }
+    ]
+  },
+  "preserved": [
+    "Business ownership and state consistency drive placement, with an explicit no-extra-class alternative.",
+    "Java 17-compatible design signatures, inspected target toolchains and no implicit dependency or Java upgrade.",
+    "Aggregate-local transition guards even when a policy explains a decision.",
+    "Pure stateless-per-execution policies with legitimate immutable terms and explicit unavailable-evidence outcomes.",
+    "Subject/tenant/currency/freshness/terms binding and fixed-offer versus stale-assessment distinction.",
+    "Authoritative reservation, timeout ambiguity, idempotent request meaning, expiry and persistence-failure recovery.",
+    "Conditional storage guarantees, conflict handling and honest limits of unit tests.",
+    "Domain specification versus JPA predicate, semantic equivalence and candidate filtering limits.",
+    "Creation versus reconstitution, historical validity and no duplicate lifecycle events on load.",
+    "One conditional reference and nine declared optional skill handoffs."
+  ],
+  "replacedOrRemovedCapabilities": [],
+  "checks": [
+    {
+      "kind": "executed structural",
+      "command": "node C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\check-local.mjs",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": {
+        "packageFiles": 3,
+        "strictManifestIssues": 0,
+        "metadataAgreement": true,
+        "relativeLinks": 1,
+        "directReferrals": 9,
+        "assignmentAndCoordinatorBaselineByteIdentical": true
+      },
+      "fullResult": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\structure-results.json"
+    },
+    {
+      "kind": "executed formatting, read-only",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/java-ddd-domain-services/SKILL.md skills/java-ddd-domain-services/skill.yaml skills/java-ddd-domain-services/references/policy-and-factory-contracts.md",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "Checking formatting...\nAll matched files use Prettier code style!\n",
+      "stderr": ""
+    },
+    {
+      "kind": "executed primary-source capture",
+      "command": "node C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\capture-sources.mjs",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "Six sources captured over HTTPS with HTTP 200 and retained SHA-256 hashes.",
+      "fullResult": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\source-evidence.json"
+    },
+    {
+      "kind": "executed source text extraction",
+      "command": "node C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\prepare-source-text.mjs",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": [
+        {
+          "source": "evans-ddd-reference",
+          "command": "C:/Users/robso/AppData/Local/Microsoft/WinGet/Packages/oschwartz10612.Poppler_Microsoft.Winget.Source_8wekyb3d8bbwe/poppler-25.07.0/Library/bin/pdftotext.exe -layout C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\sources\\evans-ddd-reference.pdf C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\sources\\evans-ddd-reference.txt",
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "output": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\sources\\evans-ddd-reference.txt"
+        },
+        {
+          "source": "fowler-domain-model",
+          "method": "Readable text from captured HTML; original retained",
+          "output": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\sources\\fowler-domain-model.txt"
+        },
+        {
+          "source": "fowler-anemic-model",
+          "method": "Readable text from captured HTML; original retained",
+          "output": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\sources\\fowler-anemic-model.txt"
+        },
+        {
+          "source": "aws-idempotent",
+          "method": "Readable text from captured HTML; original retained",
+          "output": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\sources\\aws-idempotent.txt"
+        },
+        {
+          "source": "postgres17-isolation",
+          "method": "Readable text from captured HTML; original retained",
+          "output": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\sources\\postgres17-isolation.txt"
+        },
+        {
+          "source": "spring-data-specifications",
+          "method": "Readable text from captured HTML; original retained",
+          "output": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\sources\\spring-data-specifications.txt"
+        }
+      ],
+      "note": "Run again after adding whitespace normalization for the PDF text; targeted sections then read. Existing Poppler; no installation."
+    },
+    {
+      "kind": "executed case fixture consistency",
+      "command": "node C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\create-cases.mjs",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": {
+        "status": "PASS",
+        "cases": [
+          {
+            "id": "DS-C1",
+            "input": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\cases\\case-a\\input.json",
+            "workspace": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\cases\\case-a"
+          },
+          {
+            "id": "DS-C2",
+            "input": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\cases\\case-b\\input.json",
+            "workspace": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\cases\\case-b"
+          }
+        ],
+        "evaluatorCriteria": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\case-criteria.json",
+        "commonFilesByteIdentical": 8,
+        "decisiveDifference": "runtime.properties stock.operation only",
+        "agentEvaluationsExecuted": 0
+      },
+      "note": "Eight common artifacts are byte-identical. Only stock.operation differs; not an actor run."
+    },
+    {
+      "kind": "executed synthetic fixture compilation",
+      "command": "node C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\check-case-sources.mjs",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": {
+        "status": "PASS",
+        "records": [
+          {
+            "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe -version",
+            "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services",
+            "exitCode": 0,
+            "stdout": "javac 25.0.3\r\n",
+            "stderr": ""
+          },
+          {
+            "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe --release 17 -Xlint:all -d C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\case-classes C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\cases\\case-a\\src\\domain\\stock\\StockEligibility.java C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\cases\\case-a\\src\\domain\\order\\Order.java C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\cases\\case-a\\src\\application\\stock\\AssessStockUseCase.java",
+            "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services",
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": ""
+          }
+        ],
+        "actorRuns": 0,
+        "runtimeExecutions": 0,
+        "scope": "Compilation of the shared synthetic case sources only. Case B sources are byte-identical. Not a test of shipped design sketches or actual persistence/provider behavior."
+      },
+      "note": "javac 25.0.3 --release 17 -Xlint:all; no runtime, actor, provider or database execution."
+    },
+    {
+      "kind": "executed final scoped git inspection",
+      "command": "git status --short -- skills/java-ddd-domain-services",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "kind": "executed final scoped git inspection",
+      "command": "git diff -- skills/java-ddd-domain-services",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "kind": "executed final scoped git inspection",
+      "command": "git diff --cached -- skills/java-ddd-domain-services",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "kind": "executed final scoped git inspection",
+      "command": "git diff --check -- skills/java-ddd-domain-services",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "kind": "executed final byte comparison",
+      "command": "node C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\finalize-handoff.mjs",
+      "cwd": "C:/git/agent-skills",
+      "result": "Three owned hashes/file inventory still match assignment and coordinator temp baseline; version 1.0.0 unchanged; six source hashes verified."
+    }
+  ],
+  "javaCompatibility": {
+    "skillBaseline": "Illustrative Java 17-compatible signatures/design flows using project-owned types; not standalone programs",
+    "changedExecutableExamples": 0,
+    "fixtureCompiler": "javac 25.0.3 --release 17 -Xlint:all",
+    "runtimeExecutions": 0,
+    "dependencyInstallOrUpgrade": false,
+    "note": "Only the synthetic evaluation-input source was compiled. Shipped design signatures require a target project and were not presented as executable tests."
+  },
+  "behavioralEvaluationsExecuted": [],
+  "walkthroughs": [
+    {
+      "case": "DS-C1",
+      "type": "Structured reviewer walkthrough of synthetic artifacts, not an actor run",
+      "outcome": "PREVIEW exits with a provisional decision; both eligible evaluations are consistent with the stated advisory contract. Preserve pure StockEligibility and the local Order guards; reject the proposed service that mixes I/O and transition. No authoritative allocation claim or new class is justified."
+    },
+    {
+      "case": "DS-C2",
+      "type": "Structured reviewer walkthrough of synthetic artifacts, not an actor run",
+      "outcome": "SUBMIT can persist independently versioned orders following the same unreserved availability snapshot. The pure rule may be correct while the combined durable commitment lacks authoritative allocation. Correct the review proposal and hand off provider reservation/application recovery, preserving domain ownership and input binding. This is a source-level possible schedule, not measured oversell."
+    }
+  ],
+  "cases": {
+    "kind": "Development cases, not holdouts",
+    "inputs": [
+      {
+        "id": "DS-C1",
+        "input": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\cases\\case-a\\input.json",
+        "workspace": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\cases\\case-a"
+      },
+      {
+        "id": "DS-C2",
+        "input": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\cases\\case-b\\input.json",
+        "workspace": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\cases\\case-b"
+      }
+    ],
+    "evaluatorCriteria": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\case-criteria.json",
+    "criteriaPhysicallySeparateFromInputs": true,
+    "decisiveDifference": "runtime.properties stock.operation only",
+    "actorStatus": "Zero actors run by reviewer; pending coordinator selection/evaluation.",
+    "prerequisites": "Copy synthetic project files and expose case input without evaluator criteria; review.md is the only actor-write target. No network/provider/database/config installation required.",
+    "separationLimit": "Procedural filesystem separation is not an enforced actor sandbox; coordinator must audit exposure for any comparison."
+  },
+  "sources": [
+    {
+      "id": "evans-ddd-reference",
+      "url": "https://www.domainlanguage.com/wp-content/uploads/2016/05/DDD_Reference_2015-03.pdf",
+      "resolvedUrl": "https://www.domainlanguage.com/wp-content/uploads/2016/05/DDD_Reference_2015-03.pdf",
+      "section": "Eric Evans, Domain-Driven Design Reference, March 2015; Services and Factories",
+      "consulted": "2026-10-16",
+      "primary": true,
+      "status": "CAPTURED",
+      "httpStatus": 200,
+      "evidence": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\sources\\evans-ddd-reference.pdf",
+      "bytes": 483985,
+      "sha256": "cf82dc7b4736bb24f4a1b69a3213c25cbd38aa98e37b99c2facfb94ff5cacb99",
+      "version": "Eric Evans, Domain-Driven Design Reference, 2015 edition at the March 2015 URL",
+      "inspected": "Printed pages 14 Services, 16 Aggregates and 18 Factories",
+      "supports": "Business operations without a natural entity/value owner and complex whole-aggregate creation justify services/factories; invariants have explicit owners.",
+      "limit": "Conceptual design guidance, not mandatory Java package/class templates or proof of a particular storage guarantee. Text extraction, not visual PDF inspection.",
+      "readableText": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\sources\\evans-ddd-reference.txt"
+    },
+    {
+      "id": "fowler-domain-model",
+      "url": "https://martinfowler.com/eaaCatalog/domainModel.html",
+      "resolvedUrl": "https://martinfowler.com/eaaCatalog/domainModel.html",
+      "section": "Martin Fowler, Domain Model catalog entry",
+      "consulted": "2026-10-16",
+      "primary": true,
+      "status": "CAPTURED",
+      "httpStatus": 200,
+      "evidence": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\sources\\fowler-domain-model.html",
+      "bytes": 12891,
+      "sha256": "6ad339af032457ac62ec20ca8ddf9ef8c202cb2dca62d92a9887f4a0fa13c3f7",
+      "version": "Martin Fowler catalog entry, 05 March 2003",
+      "inspected": "Domain Model definition and motivation",
+      "supports": "Domain Model combines business behavior and data.",
+      "limit": "Does not claim a domain model is appropriate for every application.",
+      "readableText": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\sources\\fowler-domain-model.txt"
+    },
+    {
+      "id": "fowler-anemic-model",
+      "url": "https://martinfowler.com/bliki/AnemicDomainModel.html",
+      "resolvedUrl": "https://martinfowler.com/bliki/AnemicDomainModel.html",
+      "section": "Martin Fowler, Anemic Domain Model, 25 November 2003",
+      "consulted": "2026-10-16",
+      "primary": true,
+      "status": "CAPTURED",
+      "httpStatus": 200,
+      "evidence": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\sources\\fowler-anemic-model.html",
+      "bytes": 18199,
+      "sha256": "70e73fefde700d6a74ca77941a8b43416a5c52dc87ab574dfc92235440161ec5",
+      "version": "Martin Fowler, 25 November 2003",
+      "inspected": "Behavior ownership, procedural service layer and quoted application/domain layer responsibilities",
+      "supports": "A thin orchestration layer can coexist with a rich domain model; moving all behavior into services loses model value.",
+      "limit": "Opinionated modeling guidance, not empirical evidence that a proposed class improves a given codebase.",
+      "readableText": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\sources\\fowler-anemic-model.txt"
+    },
+    {
+      "id": "aws-idempotent",
+      "url": "https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/",
+      "resolvedUrl": "https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/",
+      "section": "AWS Builders Library, Making retries safe with idempotent APIs; request identity, lost responses and changed intent",
+      "consulted": "2026-10-16",
+      "primary": true,
+      "status": "CAPTURED",
+      "httpStatus": 200,
+      "evidence": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\sources\\aws-idempotent.html",
+      "bytes": 455504,
+      "sha256": "21dacef7126f70d9f3e672333adc9cda2df22ab181ef5452830b64a9f2601373",
+      "version": "AWS Builders Library, Malcolm Featonby, page captured 2026-10-16",
+      "inspected": "Retrying and side effects; caller-provided identity; late arrivals; same ID with different intent",
+      "supports": "A missing response leaves effect outcome uncertain; safe retries depend on actual request identity/meaning and retention contracts.",
+      "limit": "Describes AWS mechanisms; no inference that an arbitrary provider supplies lookup, reservation or these exact guarantees.",
+      "readableText": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\sources\\aws-idempotent.txt"
+    },
+    {
+      "id": "postgres17-isolation",
+      "url": "https://www.postgresql.org/docs/17/transaction-iso.html",
+      "resolvedUrl": "https://www.postgresql.org/docs/17/transaction-iso.html",
+      "section": "PostgreSQL 17 section 13.2 Transaction Isolation",
+      "consulted": "2026-10-16",
+      "primary": true,
+      "status": "CAPTURED",
+      "httpStatus": 200,
+      "evidence": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\sources\\postgres17-isolation.html",
+      "bytes": 47618,
+      "sha256": "e3475df0c76b214dbda0bc681015099763b83778e1355e17ee7b908e6fd38a26",
+      "version": "PostgreSQL 17 documentation, section 13.2",
+      "inspected": "Repeatable Read and Serializable",
+      "supports": "Stable reads alone need not serialize concurrent business decisions; enforcing rules depends on appropriate storage/isolation mechanisms and conflict handling.",
+      "limit": "One database/version source supports the conditional warning, not behavior of every database or any unexecuted project integration.",
+      "readableText": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\sources\\postgres17-isolation.txt"
+    },
+    {
+      "id": "spring-data-specifications",
+      "url": "https://docs.spring.io/spring-data/jpa/reference/3.5/jpa/specifications.html",
+      "resolvedUrl": "https://docs.spring.io/spring-data/jpa/reference/3.5/jpa/specifications.html",
+      "section": "Spring Data JPA 3.5 Specifications reference requested; verify resolved version before interpretation",
+      "consulted": "2026-10-16",
+      "primary": true,
+      "status": "CAPTURED",
+      "httpStatus": 200,
+      "evidence": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\sources\\spring-data-specifications.html",
+      "bytes": 46173,
+      "sha256": "8cc372bff97f5acf7bd74a39f83dc7b7c41b32cfb013a22e0a8b9276c19a38f2",
+      "version": "Spring Data JPA 3.5.13 (HTML version metadata), generation 3.5",
+      "inspected": "Specifications and toPredicate(Root, CriteriaQuery, CriteriaBuilder)",
+      "supports": "A JPA Specification builds criteria queries; a domain criterion does not become a pure Java/SQL-equivalent implementation simply through naming.",
+      "limit": "No Spring/JPA dependency was added or executed. The version is source evidence, not a target-project upgrade or baseline selection.",
+      "readableText": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\sources\\spring-data-specifications.txt"
+    }
+  ],
+  "limitations": [
+    "No measured skill/agent improvement, original/revised comparison or skill-selection evaluation. Content intentionally unchanged.",
+    "No real domain business contract was supplied; thresholds, provider capabilities and outcomes in cases are synthetic task requirements, not recommendations for a user system.",
+    "No runtime tests, provider integration, database/isolation exercise, ORM execution, schema replay, property-based run or performance benchmark was executed.",
+    "Compile success applies only to shared synthetic case sources targeting Java 17 through javac 25. It does not prove persistence, reservation, recovery or a JDK 17 runtime outcome.",
+    "Primary research was targeted to consequential decisions, not a systematic DDD literature review. Java package conventions and pure-policy default remain explicitly local design guidance.",
+    "The initial parallel web consultation returned no output for an extended period and was terminated. All six sources were then retrieved directly over HTTPS with bounded requests and inspected locally; no claims rely on the interrupted call.",
+    "Some broad source displays were truncated; narrower reads covered Evans Services/Aggregates/Factories, Fowler behavior/layering, AWS identity/unknown outcome/retention, PostgreSQL isolation and the versioned Spring query contract.",
+    "The PDF was inspected through extracted text, not screenshots. Local metadata/referral checks do not prove catalog-wide routing or dependency resolution."
+  ],
+  "failures": {
+    "materialLocalFailures": [],
+    "preExistingProductFailures": [],
+    "introducedFailures": [],
+    "researchToolLimitation": "One initial web batch terminated without returned results; successful bounded HTTPS capture/text inspection replaced it."
+  },
+  "evidence": {
+    "directory": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services",
+    "baseline": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\baseline.json",
+    "finalChecks": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\final-check-results.json",
+    "sourceEvidence": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\source-evidence.json",
+    "sourceTextResults": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\source-text-results.json",
+    "fixtureCompilation": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\java-ddd-domain-services\\case-source-results.json"
+  },
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Only coordinator writes the generated shared index during parallel review.",
+      "prerequisite": "All reviewers stopped writing."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Repository-wide checks are deferred by ownership rules.",
+      "prerequisite": "Coordinator index build and all reviewers stopped."
+    }
+  ],
+  "crossSkill": [],
+  "coordinatorActions": [
+    "Archive handoff and small relevant evidence; do not vendor primary-source PDF/HTML into the shipped skill.",
+    "For an optional independent evaluation, provide case inputs without evaluator criteria and retain actual outputs; do not count fixture compilation as agent behavior.",
+    "Run shared registry build and final verification when all reviewers have stopped."
+  ]
+}

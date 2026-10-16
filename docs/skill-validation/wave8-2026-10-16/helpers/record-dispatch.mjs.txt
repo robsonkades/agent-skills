@@ -1,0 +1,5 @@
+import fs from 'node:fs';
+const report='C:/git/agent-skills/docs/skill-validation/wave8-2026-10-16',file=report+'/dispatch.json';
+const records=fs.existsSync(file)?JSON.parse(fs.readFileSync(file,'utf8')).records:[];
+for(const id of process.argv.slice(2)){if(records.some(r=>r.run===id))throw Error('Duplicate dispatch');records.push({run:id,agent:'/root/wave8_actor'+id.slice(-2),recordedAfterDispatch:new Date().toISOString(),freshConversation:true,role:'default',modelOrEffortOverride:false});}
+fs.writeFileSync(file,JSON.stringify({rule:'At most eight actor tasks concurrently. Recording timestamps are upper bounds after dispatch, not exact starts or elapsed execution time.',records},null,2)+'\n');console.log(JSON.stringify({recorded:records.length}));

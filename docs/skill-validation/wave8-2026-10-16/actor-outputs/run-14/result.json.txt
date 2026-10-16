@@ -1,0 +1,78 @@
+{
+  "decision": "Reject the proposed orders(state) index and global force_custom_plan remedy pending controlled evidence.",
+  "metrics": {
+    "innerExecutions": 12000,
+    "innerEmittedRows": 48000,
+    "innerInclusiveWorkMs": 780,
+    "capturedExecutionTimeMs": 991
+  },
+  "metricInterpretation": {
+    "innerExecutions": "Reported inner scan loops in the stipulated serial execution.",
+    "innerEmittedRows": "Reported per-loop actualRows times loops; emitted rows, not examined or unique rows. Real EXPLAIN display rounding can limit precision.",
+    "innerInclusiveWorkMs": "Reported average actualTotalTimeMs times loops. Approximate accumulated inclusive node time; not exclusive CPU time or an additional duration to add to its parent or total execution time.",
+    "capturedExecutionTimeMs": "The incident fixture's supplied executionTimeMs value. The fixture is authored, not an actual production capture, and the actor performed no database measurement."
+  },
+  "evidence": [
+    {
+      "source": "incident.json",
+      "finding": "12000 inner executions times 4 emitted rows yields 48000 rows; 12000 times 0.065 ms yields approximately 780 ms of inclusive work. Repeated inner-index work is material."
+    },
+    {
+      "source": "incident.json",
+      "finding": "The orders scan takes 90 ms and returns 12000 of 15000 observed rows. This is 80% combined-predicate selectivity, not separate state selectivity or evidence that a state index is beneficial."
+    },
+    {
+      "source": "incident.json",
+      "finding": "Orders and join estimates exceed observed emitted rows by about 8.3%; the inner per-loop estimate equals the observed average. Cost 605000 is not milliseconds or seconds."
+    },
+    {
+      "source": "preview-plan.json",
+      "finding": "The distinct preview workload is stopped by LIMIT 20. The child estimate is for completion, whereas actual rows are truncated; this is not evidence of catastrophic statistics error."
+    },
+    {
+      "source": "incident.json",
+      "finding": "90000 shared hits and 32000 shared reads are accumulated buffer activity, not per-loop averages or necessarily distinct pages. Shared reads do not prove physical device reads or a disk bottleneck."
+    },
+    {
+      "source": "literal-comparison.json",
+      "finding": "The 2 ms literal uses tenant 72, with 4 tenant rows and 16 result rows. Incident tenant 71 returns 48000 rows. Cache state and actual generic/custom prepared mode are unknown; the comparison is confounded."
+    },
+    {
+      "source": "incident.json",
+      "finding": "Parent node timing is 980 ms inclusive; executionTimeMs is 991; request latency is 1320. Their differences cannot establish exclusive CPU, I/O, network or application attribution."
+    }
+  ],
+  "nextExperiment": {
+    "status": "Proposed only; not executed",
+    "purpose": "Determine whether the actual prepared plan for tenant 71 differs from the same-parameter literal plan and whether the prepared plan is generic.",
+    "scope": "Owner-controlled PostgreSQL 17 session with the existing prepared statement; same data, statistics, schema and session context for both plans. A recreated session must be labeled a reconstruction.",
+    "operations": [
+      "Nonexecuting EXPLAIN (VERBOSE, SETTINGS, FORMAT JSON) EXECUTE the existing prepared statement with 71::bigint.",
+      "Nonexecuting EXPLAIN (VERBOSE, SETTINGS, FORMAT JSON) of the identical SELECT with literal tenant_id=71::bigint."
+    ],
+    "bounds": "Exactly two plans; external cancellation after five seconds per request; no ANALYZE, runtime setting changes, statistics refresh, DDL or index creation.",
+    "capture": [
+      "Statement identity and preparation history",
+      "Parameter value and bigint type",
+      "Full plan conditions: parameter placeholders versus substituted constants",
+      "Data/statistics identity, schema/index definitions and session context"
+    ],
+    "decisionRule": "A generic prepared plan that materially differs from the literal supports a later runtime hypothesis; similar plans weaken that explanation. Neither establishes runtime improvement or justifies a global setting."
+  },
+  "limits": [
+    "Authored fixture counters are stipulated, not captured production evidence.",
+    "No PostgreSQL server or connection was supplied; no connection was attempted and no workload SQL was executed.",
+    "No runtime settings, indexes, dependencies or real agent configuration were changed.",
+    "No SQLite execution or timing was used; SQLite cannot validate PostgreSQL performance.",
+    "Node timing is inclusive and displayed averages may be rounded; timings must not be summed across ancestors and descendants.",
+    "Buffer reads are not device-read evidence; no I/O timing, OS/device cache, wait or contention evidence is supplied.",
+    "Original prepared mode/history, complete production plans, index definitions and the best replacement strategy remain unknown.",
+    "The request/execution gap has no component attribution; 2 ms incident performance is unsupported.",
+    "The proposed next experiment measures plans only, not workload execution or end-to-end latency."
+  ],
+  "sources": [
+    "https://www.postgresql.org/docs/17/using-explain.html",
+    "https://www.postgresql.org/docs/17/sql-explain.html",
+    "https://www.postgresql.org/docs/17/sql-prepare.html"
+  ]
+}

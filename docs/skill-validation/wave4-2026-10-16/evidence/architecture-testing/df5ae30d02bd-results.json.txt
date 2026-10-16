@@ -1,0 +1,445 @@
+{
+  "fixture": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh",
+  "source": "C:/git/agent-skills/skills/architecture-testing/references/boundary-and-contract-tests.md",
+  "sourceSha256": "c456aaabc4df73c704caa6393fb83f42b723ab0e28cc0f8170e4320b8965a415",
+  "extractedJavaSha256": "42bfc96df4cb505859cf385c418b5534a763c38f04247159465eafe0c5ab1248",
+  "target": 17,
+  "compilerAndRuntime": "Temurin 25.0.3+9",
+  "dependencyVersions": {
+    "archunit": "1.5.0",
+    "junitJupiter": "5.11.4",
+    "junitPlatform": "1.11.4",
+    "slf4jApi": "2.0.18"
+  },
+  "dependencies": [
+    {
+      "path": "C:\\Users\\robso\\.m2\\repository\\com\\tngtech\\archunit\\archunit\\1.5.0\\archunit-1.5.0.jar",
+      "sha256": "5ab139643fa5090af181ff8dc9eab48cb38ca306d3e03e66acacc75831a08fe9"
+    },
+    {
+      "path": "C:\\Users\\robso\\.m2\\repository\\org\\slf4j\\slf4j-api\\2.0.18\\slf4j-api-2.0.18.jar",
+      "sha256": "44508fd1576500688c790b190acdd16fec4f8c79a3e0b900afd70503cf055f55"
+    },
+    {
+      "path": "C:\\Users\\robso\\.m2\\repository\\org\\junit\\jupiter\\junit-jupiter-api\\5.11.4\\junit-jupiter-api-5.11.4.jar",
+      "sha256": "ab83ef9e51ac4597d59d26b4b58812129550e2f579a404c8af7d09f5ce5b4293"
+    },
+    {
+      "path": "C:\\Users\\robso\\.m2\\repository\\org\\junit\\jupiter\\junit-jupiter-engine\\5.11.4\\junit-jupiter-engine-5.11.4.jar",
+      "sha256": "cdf8ac59f3fad774ca738ad03890950eeb91833ef0e8908753177edd26f1581c"
+    },
+    {
+      "path": "C:\\Users\\robso\\.m2\\repository\\org\\junit\\platform\\junit-platform-launcher\\1.11.4\\junit-platform-launcher-1.11.4.jar",
+      "sha256": "d7430bd029e7fcced53ee445e4d2d1a8a1e043ea4c4df43b6335a857f79761ae"
+    },
+    {
+      "path": "C:\\Users\\robso\\.m2\\repository\\org\\junit\\platform\\junit-platform-engine\\1.11.4\\junit-platform-engine-1.11.4.jar",
+      "sha256": "b1dd998f64f9acadc15966d9cd3d08074662677b3e390f0a38fcbf0bb4c72330"
+    },
+    {
+      "path": "C:\\Users\\robso\\.m2\\repository\\org\\junit\\platform\\junit-platform-commons\\1.11.4\\junit-platform-commons-1.11.4.jar",
+      "sha256": "9edd969b0d0670c54105bc91ae79bd1c6f503e12115faba82073b84c86bbc334"
+    },
+    {
+      "path": "C:\\Users\\robso\\.m2\\repository\\org\\apiguardian\\apiguardian-api\\1.1.2\\apiguardian-api-1.1.2.jar",
+      "sha256": "b509448ac506d607319f182537f0b35d71007582ec741832a1f111e5b5b70b38"
+    },
+    {
+      "path": "C:\\Users\\robso\\.m2\\repository\\org\\opentest4j\\opentest4j\\1.3.0\\opentest4j-1.3.0.jar",
+      "sha256": "48e2df636cab6563ced64dcdff8abb2355627cb236ef0bf37598682ddf742f1b"
+    }
+  ],
+  "commands": [
+    {
+      "name": "clean-compile-main",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "-J-Xms16m",
+        "-J-Xmx128m",
+        "--release",
+        "17",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\clean\\target\\classes",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\clean\\src\\main\\java\\com\\acme\\domain\\Order.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\clean\\src\\main\\java\\com\\acme\\persistence\\OrderStore.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\clean",
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "name": "clean-compile-tests",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "-J-Xms16m",
+        "-J-Xmx128m",
+        "--release",
+        "17",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\clean\\target\\classes;C:\\Users\\robso\\.m2\\repository\\com\\tngtech\\archunit\\archunit\\1.5.0\\archunit-1.5.0.jar;C:\\Users\\robso\\.m2\\repository\\org\\slf4j\\slf4j-api\\2.0.18\\slf4j-api-2.0.18.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\jupiter\\junit-jupiter-api\\5.11.4\\junit-jupiter-api-5.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\jupiter\\junit-jupiter-engine\\5.11.4\\junit-jupiter-engine-5.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\platform\\junit-platform-launcher\\1.11.4\\junit-platform-launcher-1.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\platform\\junit-platform-engine\\1.11.4\\junit-platform-engine-1.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\platform\\junit-platform-commons\\1.11.4\\junit-platform-commons-1.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\apiguardian\\apiguardian-api\\1.1.2\\apiguardian-api-1.1.2.jar;C:\\Users\\robso\\.m2\\repository\\org\\opentest4j\\opentest4j\\1.3.0\\opentest4j-1.3.0.jar",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\clean\\target\\test-classes",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\clean\\src\\test\\java\\com\\acme\\architecture\\ArchitectureTest.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\clean\\src\\test\\java\\review\\Runner.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\clean",
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "name": "clean-junit",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-Xms32m",
+        "-Xmx256m",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\clean\\target\\test-classes;C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\clean\\target\\classes;C:\\Users\\robso\\.m2\\repository\\com\\tngtech\\archunit\\archunit\\1.5.0\\archunit-1.5.0.jar;C:\\Users\\robso\\.m2\\repository\\org\\slf4j\\slf4j-api\\2.0.18\\slf4j-api-2.0.18.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\jupiter\\junit-jupiter-api\\5.11.4\\junit-jupiter-api-5.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\jupiter\\junit-jupiter-engine\\5.11.4\\junit-jupiter-engine-5.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\platform\\junit-platform-launcher\\1.11.4\\junit-platform-launcher-1.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\platform\\junit-platform-engine\\1.11.4\\junit-platform-engine-1.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\platform\\junit-platform-commons\\1.11.4\\junit-platform-commons-1.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\apiguardian\\apiguardian-api\\1.1.2\\apiguardian-api-1.1.2.jar;C:\\Users\\robso\\.m2\\repository\\org\\opentest4j\\opentest4j\\1.3.0\\opentest4j-1.3.0.jar",
+        "review.Runner"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\clean",
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "stdout": "\r\nTest run finished after 692 ms\r\n[         2 containers found      ]\r\n[         0 containers skipped    ]\r\n[         2 containers started    ]\r\n[         0 containers aborted    ]\r\n[         2 containers successful ]\r\n[         0 containers failed     ]\r\n[         1 tests found           ]\r\n[         0 tests skipped         ]\r\n[         1 tests started         ]\r\n[         0 tests aborted         ]\r\n[         1 tests successful      ]\r\n[         0 tests failed          ]\r\n\r\n",
+      "stderr": "SLF4J(W): No SLF4J providers were found.\r\nSLF4J(W): Defaulting to no-operation (NOP) logger implementation\r\nSLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.\r\n",
+      "error": null
+    },
+    {
+      "name": "listed-persistence-compile-main",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "-J-Xms16m",
+        "-J-Xmx128m",
+        "--release",
+        "17",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\listed-persistence\\target\\classes",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\listed-persistence\\src\\main\\java\\com\\acme\\domain\\Order.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\listed-persistence\\src\\main\\java\\com\\acme\\persistence\\OrderStore.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\listed-persistence",
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "name": "listed-persistence-compile-tests",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "-J-Xms16m",
+        "-J-Xmx128m",
+        "--release",
+        "17",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\listed-persistence\\target\\classes;C:\\Users\\robso\\.m2\\repository\\com\\tngtech\\archunit\\archunit\\1.5.0\\archunit-1.5.0.jar;C:\\Users\\robso\\.m2\\repository\\org\\slf4j\\slf4j-api\\2.0.18\\slf4j-api-2.0.18.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\jupiter\\junit-jupiter-api\\5.11.4\\junit-jupiter-api-5.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\jupiter\\junit-jupiter-engine\\5.11.4\\junit-jupiter-engine-5.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\platform\\junit-platform-launcher\\1.11.4\\junit-platform-launcher-1.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\platform\\junit-platform-engine\\1.11.4\\junit-platform-engine-1.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\platform\\junit-platform-commons\\1.11.4\\junit-platform-commons-1.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\apiguardian\\apiguardian-api\\1.1.2\\apiguardian-api-1.1.2.jar;C:\\Users\\robso\\.m2\\repository\\org\\opentest4j\\opentest4j\\1.3.0\\opentest4j-1.3.0.jar",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\listed-persistence\\target\\test-classes",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\listed-persistence\\src\\test\\java\\com\\acme\\architecture\\ArchitectureTest.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\listed-persistence\\src\\test\\java\\review\\Runner.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\listed-persistence",
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "name": "listed-persistence-junit",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-Xms32m",
+        "-Xmx256m",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\listed-persistence\\target\\test-classes;C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\listed-persistence\\target\\classes;C:\\Users\\robso\\.m2\\repository\\com\\tngtech\\archunit\\archunit\\1.5.0\\archunit-1.5.0.jar;C:\\Users\\robso\\.m2\\repository\\org\\slf4j\\slf4j-api\\2.0.18\\slf4j-api-2.0.18.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\jupiter\\junit-jupiter-api\\5.11.4\\junit-jupiter-api-5.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\jupiter\\junit-jupiter-engine\\5.11.4\\junit-jupiter-engine-5.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\platform\\junit-platform-launcher\\1.11.4\\junit-platform-launcher-1.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\platform\\junit-platform-engine\\1.11.4\\junit-platform-engine-1.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\platform\\junit-platform-commons\\1.11.4\\junit-platform-commons-1.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\apiguardian\\apiguardian-api\\1.1.2\\apiguardian-api-1.1.2.jar;C:\\Users\\robso\\.m2\\repository\\org\\opentest4j\\opentest4j\\1.3.0\\opentest4j-1.3.0.jar",
+        "review.Runner"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\listed-persistence",
+      "expectedExitCode": 1,
+      "exitCode": 1,
+      "stdout": "\r\nTest run finished after 665 ms\r\n[         2 containers found      ]\r\n[         0 containers skipped    ]\r\n[         2 containers started    ]\r\n[         0 containers aborted    ]\r\n[         2 containers successful ]\r\n[         0 containers failed     ]\r\n[         1 tests found           ]\r\n[         0 tests skipped         ]\r\n[         1 tests started         ]\r\n[         0 tests aborted         ]\r\n[         0 tests successful      ]\r\n[         1 tests failed          ]\r\n\r\n\r\nFailures (1):\r\n  JUnit Jupiter:ArchitectureTest:domain_does_not_depend_on_infrastructure()\r\n    MethodSource [className = 'com.acme.architecture.ArchitectureTest', methodName = 'domain_does_not_depend_on_infrastructure', methodParameterTypes = '']\r\n    => java.lang.AssertionError: Architecture Violation [Priority: MEDIUM] - Rule 'no classes that reside in a package '..domain..' should depend on classes that reside in any package ['..persistence..', 'org.springframework..', 'jakarta.persistence..', 'jakarta.servlet..'], because the domain must not depend on infrastructure' was violated (1 times):\r\nField <com.acme.domain.Order.store> has type <com.acme.persistence.OrderStore> in (Order.java:0)\r\n       com.tngtech.archunit.lang.ArchRule$Assertions.assertNoViolation(ArchRule.java:94)\r\n       com.tngtech.archunit.lang.ArchRule$Assertions.check(ArchRule.java:86)\r\n       com.tngtech.archunit.lang.ArchRule$Factory$SimpleArchRule.check(ArchRule.java:165)\r\n       com.acme.architecture.ArchitectureTest.domain_does_not_depend_on_infrastructure(ArchitectureTest.java:27)\r\n       java.base/java.lang.reflect.Method.invoke(Method.java:565)\r\n       java.base/java.util.ArrayList.forEach(ArrayList.java:1604)\r\n       java.base/java.util.ArrayList.forEach(ArrayList.java:1604)\r\n",
+      "stderr": "SLF4J(W): No SLF4J providers were found.\r\nSLF4J(W): Defaulting to no-operation (NOP) logger implementation\r\nSLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.\r\n",
+      "error": null
+    },
+    {
+      "name": "jdbc-selective-compile-main",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "-J-Xms16m",
+        "-J-Xmx128m",
+        "--release",
+        "17",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\jdbc-selective\\target\\classes",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\jdbc-selective\\src\\main\\java\\com\\acme\\domain\\Order.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\jdbc-selective\\src\\main\\java\\com\\acme\\persistence\\OrderStore.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\jdbc-selective",
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "name": "jdbc-selective-compile-tests",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "-J-Xms16m",
+        "-J-Xmx128m",
+        "--release",
+        "17",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\jdbc-selective\\target\\classes;C:\\Users\\robso\\.m2\\repository\\com\\tngtech\\archunit\\archunit\\1.5.0\\archunit-1.5.0.jar;C:\\Users\\robso\\.m2\\repository\\org\\slf4j\\slf4j-api\\2.0.18\\slf4j-api-2.0.18.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\jupiter\\junit-jupiter-api\\5.11.4\\junit-jupiter-api-5.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\jupiter\\junit-jupiter-engine\\5.11.4\\junit-jupiter-engine-5.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\platform\\junit-platform-launcher\\1.11.4\\junit-platform-launcher-1.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\platform\\junit-platform-engine\\1.11.4\\junit-platform-engine-1.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\platform\\junit-platform-commons\\1.11.4\\junit-platform-commons-1.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\apiguardian\\apiguardian-api\\1.1.2\\apiguardian-api-1.1.2.jar;C:\\Users\\robso\\.m2\\repository\\org\\opentest4j\\opentest4j\\1.3.0\\opentest4j-1.3.0.jar",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\jdbc-selective\\target\\test-classes",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\jdbc-selective\\src\\test\\java\\com\\acme\\architecture\\ArchitectureTest.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\jdbc-selective\\src\\test\\java\\review\\Runner.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\jdbc-selective",
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "name": "jdbc-selective-junit",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-Xms32m",
+        "-Xmx256m",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\jdbc-selective\\target\\test-classes;C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\jdbc-selective\\target\\classes;C:\\Users\\robso\\.m2\\repository\\com\\tngtech\\archunit\\archunit\\1.5.0\\archunit-1.5.0.jar;C:\\Users\\robso\\.m2\\repository\\org\\slf4j\\slf4j-api\\2.0.18\\slf4j-api-2.0.18.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\jupiter\\junit-jupiter-api\\5.11.4\\junit-jupiter-api-5.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\jupiter\\junit-jupiter-engine\\5.11.4\\junit-jupiter-engine-5.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\platform\\junit-platform-launcher\\1.11.4\\junit-platform-launcher-1.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\platform\\junit-platform-engine\\1.11.4\\junit-platform-engine-1.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\platform\\junit-platform-commons\\1.11.4\\junit-platform-commons-1.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\apiguardian\\apiguardian-api\\1.1.2\\apiguardian-api-1.1.2.jar;C:\\Users\\robso\\.m2\\repository\\org\\opentest4j\\opentest4j\\1.3.0\\opentest4j-1.3.0.jar",
+        "review.Runner"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\jdbc-selective",
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "stdout": "\r\nTest run finished after 647 ms\r\n[         2 containers found      ]\r\n[         0 containers skipped    ]\r\n[         2 containers started    ]\r\n[         0 containers aborted    ]\r\n[         2 containers successful ]\r\n[         0 containers failed     ]\r\n[         1 tests found           ]\r\n[         0 tests skipped         ]\r\n[         1 tests started         ]\r\n[         0 tests aborted         ]\r\n[         1 tests successful      ]\r\n[         0 tests failed          ]\r\n\r\n",
+      "stderr": "SLF4J(W): No SLF4J providers were found.\r\nSLF4J(W): Defaulting to no-operation (NOP) logger implementation\r\nSLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.\r\n",
+      "error": null
+    },
+    {
+      "name": "jdk-value-compile-main",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "-J-Xms16m",
+        "-J-Xmx128m",
+        "--release",
+        "17",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\jdk-value\\target\\classes",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\jdk-value\\src\\main\\java\\com\\acme\\domain\\Order.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\jdk-value\\src\\main\\java\\com\\acme\\persistence\\OrderStore.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\jdk-value",
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "name": "jdk-value-compile-tests",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "-J-Xms16m",
+        "-J-Xmx128m",
+        "--release",
+        "17",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\jdk-value\\target\\classes;C:\\Users\\robso\\.m2\\repository\\com\\tngtech\\archunit\\archunit\\1.5.0\\archunit-1.5.0.jar;C:\\Users\\robso\\.m2\\repository\\org\\slf4j\\slf4j-api\\2.0.18\\slf4j-api-2.0.18.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\jupiter\\junit-jupiter-api\\5.11.4\\junit-jupiter-api-5.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\jupiter\\junit-jupiter-engine\\5.11.4\\junit-jupiter-engine-5.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\platform\\junit-platform-launcher\\1.11.4\\junit-platform-launcher-1.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\platform\\junit-platform-engine\\1.11.4\\junit-platform-engine-1.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\platform\\junit-platform-commons\\1.11.4\\junit-platform-commons-1.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\apiguardian\\apiguardian-api\\1.1.2\\apiguardian-api-1.1.2.jar;C:\\Users\\robso\\.m2\\repository\\org\\opentest4j\\opentest4j\\1.3.0\\opentest4j-1.3.0.jar",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\jdk-value\\target\\test-classes",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\jdk-value\\src\\test\\java\\com\\acme\\architecture\\ArchitectureTest.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\jdk-value\\src\\test\\java\\review\\Runner.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\jdk-value",
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "name": "jdk-value-junit",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-Xms32m",
+        "-Xmx256m",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\jdk-value\\target\\test-classes;C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\jdk-value\\target\\classes;C:\\Users\\robso\\.m2\\repository\\com\\tngtech\\archunit\\archunit\\1.5.0\\archunit-1.5.0.jar;C:\\Users\\robso\\.m2\\repository\\org\\slf4j\\slf4j-api\\2.0.18\\slf4j-api-2.0.18.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\jupiter\\junit-jupiter-api\\5.11.4\\junit-jupiter-api-5.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\jupiter\\junit-jupiter-engine\\5.11.4\\junit-jupiter-engine-5.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\platform\\junit-platform-launcher\\1.11.4\\junit-platform-launcher-1.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\platform\\junit-platform-engine\\1.11.4\\junit-platform-engine-1.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\platform\\junit-platform-commons\\1.11.4\\junit-platform-commons-1.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\apiguardian\\apiguardian-api\\1.1.2\\apiguardian-api-1.1.2.jar;C:\\Users\\robso\\.m2\\repository\\org\\opentest4j\\opentest4j\\1.3.0\\opentest4j-1.3.0.jar",
+        "review.Runner"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\jdk-value",
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "stdout": "\r\nTest run finished after 646 ms\r\n[         2 containers found      ]\r\n[         0 containers skipped    ]\r\n[         2 containers started    ]\r\n[         0 containers aborted    ]\r\n[         2 containers successful ]\r\n[         0 containers failed     ]\r\n[         1 tests found           ]\r\n[         0 tests skipped         ]\r\n[         1 tests started         ]\r\n[         0 tests aborted         ]\r\n[         1 tests successful      ]\r\n[         0 tests failed          ]\r\n\r\n",
+      "stderr": "SLF4J(W): No SLF4J providers were found.\r\nSLF4J(W): Defaulting to no-operation (NOP) logger implementation\r\nSLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.\r\n",
+      "error": null
+    },
+    {
+      "name": "jdbc-explicit-ban-compile-main",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "-J-Xms16m",
+        "-J-Xmx128m",
+        "--release",
+        "17",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\jdbc-explicit-ban\\target\\classes",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\jdbc-explicit-ban\\src\\main\\java\\com\\acme\\domain\\Order.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\jdbc-explicit-ban\\src\\main\\java\\com\\acme\\persistence\\OrderStore.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\jdbc-explicit-ban",
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "name": "jdbc-explicit-ban-compile-tests",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "-J-Xms16m",
+        "-J-Xmx128m",
+        "--release",
+        "17",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\jdbc-explicit-ban\\target\\classes;C:\\Users\\robso\\.m2\\repository\\com\\tngtech\\archunit\\archunit\\1.5.0\\archunit-1.5.0.jar;C:\\Users\\robso\\.m2\\repository\\org\\slf4j\\slf4j-api\\2.0.18\\slf4j-api-2.0.18.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\jupiter\\junit-jupiter-api\\5.11.4\\junit-jupiter-api-5.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\jupiter\\junit-jupiter-engine\\5.11.4\\junit-jupiter-engine-5.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\platform\\junit-platform-launcher\\1.11.4\\junit-platform-launcher-1.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\platform\\junit-platform-engine\\1.11.4\\junit-platform-engine-1.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\platform\\junit-platform-commons\\1.11.4\\junit-platform-commons-1.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\apiguardian\\apiguardian-api\\1.1.2\\apiguardian-api-1.1.2.jar;C:\\Users\\robso\\.m2\\repository\\org\\opentest4j\\opentest4j\\1.3.0\\opentest4j-1.3.0.jar",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\jdbc-explicit-ban\\target\\test-classes",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\jdbc-explicit-ban\\src\\test\\java\\com\\acme\\architecture\\ArchitectureTest.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\jdbc-explicit-ban\\src\\test\\java\\review\\Runner.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\jdbc-explicit-ban",
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "name": "jdbc-explicit-ban-junit",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-Xms32m",
+        "-Xmx256m",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\jdbc-explicit-ban\\target\\test-classes;C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\jdbc-explicit-ban\\target\\classes;C:\\Users\\robso\\.m2\\repository\\com\\tngtech\\archunit\\archunit\\1.5.0\\archunit-1.5.0.jar;C:\\Users\\robso\\.m2\\repository\\org\\slf4j\\slf4j-api\\2.0.18\\slf4j-api-2.0.18.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\jupiter\\junit-jupiter-api\\5.11.4\\junit-jupiter-api-5.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\jupiter\\junit-jupiter-engine\\5.11.4\\junit-jupiter-engine-5.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\platform\\junit-platform-launcher\\1.11.4\\junit-platform-launcher-1.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\platform\\junit-platform-engine\\1.11.4\\junit-platform-engine-1.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\platform\\junit-platform-commons\\1.11.4\\junit-platform-commons-1.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\apiguardian\\apiguardian-api\\1.1.2\\apiguardian-api-1.1.2.jar;C:\\Users\\robso\\.m2\\repository\\org\\opentest4j\\opentest4j\\1.3.0\\opentest4j-1.3.0.jar",
+        "review.Runner"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\jdbc-explicit-ban",
+      "expectedExitCode": 1,
+      "exitCode": 1,
+      "stdout": "\r\nTest run finished after 640 ms\r\n[         2 containers found      ]\r\n[         0 containers skipped    ]\r\n[         2 containers started    ]\r\n[         0 containers aborted    ]\r\n[         2 containers successful ]\r\n[         0 containers failed     ]\r\n[         1 tests found           ]\r\n[         0 tests skipped         ]\r\n[         1 tests started         ]\r\n[         0 tests aborted         ]\r\n[         0 tests successful      ]\r\n[         1 tests failed          ]\r\n\r\n\r\nFailures (1):\r\n  JUnit Jupiter:ArchitectureTest:domain_does_not_depend_on_infrastructure()\r\n    MethodSource [className = 'com.acme.architecture.ArchitectureTest', methodName = 'domain_does_not_depend_on_infrastructure', methodParameterTypes = '']\r\n    => java.lang.AssertionError: Architecture Violation [Priority: MEDIUM] - Rule 'no classes that reside in a package '..domain..' should depend on classes that reside in any package ['..persistence..', 'org.springframework..', 'jakarta.persistence..', 'jakarta.servlet..', 'java.sql..', 'javax.sql..'], because the domain must not depend on infrastructure' was violated (1 times):\r\nField <com.acme.domain.Order.connection> has type <java.sql.Connection> in (Order.java:0)\r\n       com.tngtech.archunit.lang.ArchRule$Assertions.assertNoViolation(ArchRule.java:94)\r\n       com.tngtech.archunit.lang.ArchRule$Assertions.check(ArchRule.java:86)\r\n       com.tngtech.archunit.lang.ArchRule$Factory$SimpleArchRule.check(ArchRule.java:165)\r\n       com.acme.architecture.ArchitectureTest.domain_does_not_depend_on_infrastructure(ArchitectureTest.java:27)\r\n       java.base/java.lang.reflect.Method.invoke(Method.java:565)\r\n       java.base/java.util.ArrayList.forEach(ArrayList.java:1604)\r\n       java.base/java.util.ArrayList.forEach(ArrayList.java:1604)\r\n",
+      "stderr": "SLF4J(W): No SLF4J providers were found.\r\nSLF4J(W): Defaulting to no-operation (NOP) logger implementation\r\nSLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.\r\n",
+      "error": null
+    },
+    {
+      "name": "wrong-root-compile-main",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "-J-Xms16m",
+        "-J-Xmx128m",
+        "--release",
+        "17",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\wrong-root\\target\\classes",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\wrong-root\\src\\main\\java\\com\\acme\\domain\\Order.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\wrong-root\\src\\main\\java\\com\\acme\\persistence\\OrderStore.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\wrong-root",
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "name": "wrong-root-compile-tests",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "-J-Xms16m",
+        "-J-Xmx128m",
+        "--release",
+        "17",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\wrong-root\\target\\classes;C:\\Users\\robso\\.m2\\repository\\com\\tngtech\\archunit\\archunit\\1.5.0\\archunit-1.5.0.jar;C:\\Users\\robso\\.m2\\repository\\org\\slf4j\\slf4j-api\\2.0.18\\slf4j-api-2.0.18.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\jupiter\\junit-jupiter-api\\5.11.4\\junit-jupiter-api-5.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\jupiter\\junit-jupiter-engine\\5.11.4\\junit-jupiter-engine-5.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\platform\\junit-platform-launcher\\1.11.4\\junit-platform-launcher-1.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\platform\\junit-platform-engine\\1.11.4\\junit-platform-engine-1.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\platform\\junit-platform-commons\\1.11.4\\junit-platform-commons-1.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\apiguardian\\apiguardian-api\\1.1.2\\apiguardian-api-1.1.2.jar;C:\\Users\\robso\\.m2\\repository\\org\\opentest4j\\opentest4j\\1.3.0\\opentest4j-1.3.0.jar",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\wrong-root\\target\\test-classes",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\wrong-root\\src\\test\\java\\com\\acme\\architecture\\ArchitectureTest.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\wrong-root\\src\\test\\java\\review\\Runner.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\wrong-root",
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "name": "wrong-root-junit",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-Xms32m",
+        "-Xmx256m",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\wrong-root\\target\\test-classes;C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\wrong-root\\target\\classes;C:\\Users\\robso\\.m2\\repository\\com\\tngtech\\archunit\\archunit\\1.5.0\\archunit-1.5.0.jar;C:\\Users\\robso\\.m2\\repository\\org\\slf4j\\slf4j-api\\2.0.18\\slf4j-api-2.0.18.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\jupiter\\junit-jupiter-api\\5.11.4\\junit-jupiter-api-5.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\jupiter\\junit-jupiter-engine\\5.11.4\\junit-jupiter-engine-5.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\platform\\junit-platform-launcher\\1.11.4\\junit-platform-launcher-1.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\platform\\junit-platform-engine\\1.11.4\\junit-platform-engine-1.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\junit\\platform\\junit-platform-commons\\1.11.4\\junit-platform-commons-1.11.4.jar;C:\\Users\\robso\\.m2\\repository\\org\\apiguardian\\apiguardian-api\\1.1.2\\apiguardian-api-1.1.2.jar;C:\\Users\\robso\\.m2\\repository\\org\\opentest4j\\opentest4j\\1.3.0\\opentest4j-1.3.0.jar",
+        "review.Runner"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-testing-artifacts\\boundary-V6PdGh\\wrong-root",
+      "expectedExitCode": 1,
+      "exitCode": 1,
+      "stdout": "\r\nTest run finished after 361 ms\r\n[         2 containers found      ]\r\n[         0 containers skipped    ]\r\n[         2 containers started    ]\r\n[         0 containers aborted    ]\r\n[         2 containers successful ]\r\n[         0 containers failed     ]\r\n[         1 tests found           ]\r\n[         0 tests skipped         ]\r\n[         1 tests started         ]\r\n[         0 tests aborted         ]\r\n[         0 tests successful      ]\r\n[         1 tests failed          ]\r\n\r\n\r\nFailures (1):\r\n  JUnit Jupiter:ArchitectureTest:domain_does_not_depend_on_infrastructure()\r\n    MethodSource [className = 'com.acme.architecture.ArchitectureTest', methodName = 'domain_does_not_depend_on_infrastructure', methodParameterTypes = '']\r\n    => org.opentest4j.AssertionFailedError: No domain classes imported; check package roots and build outputs ==> expected: <true> but was: <false>\r\n       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)\r\n       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)\r\n       org.junit.jupiter.api.AssertTrue.failNotTrue(AssertTrue.java:63)\r\n       org.junit.jupiter.api.AssertTrue.assertTrue(AssertTrue.java:36)\r\n       org.junit.jupiter.api.Assertions.assertTrue(Assertions.java:214)\r\n       com.acme.architecture.ArchitectureTest.domain_does_not_depend_on_infrastructure(ArchitectureTest.java:17)\r\n       java.base/java.lang.reflect.Method.invoke(Method.java:565)\r\n       java.base/java.util.ArrayList.forEach(ArrayList.java:1604)\r\n       java.base/java.util.ArrayList.forEach(ArrayList.java:1604)\r\n",
+      "stderr": "SLF4J(W): No SLF4J providers were found.\r\nSLF4J(W): Defaulting to no-operation (NOP) logger implementation\r\nSLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.\r\n",
+      "error": null
+    }
+  ],
+  "cases": [
+    {
+      "id": "clean",
+      "body": "",
+      "expectedJunitExit": 0
+    },
+    {
+      "id": "listed-persistence",
+      "body": "private com.acme.persistence.OrderStore store;",
+      "expectedJunitExit": 1
+    },
+    {
+      "id": "jdbc-selective",
+      "body": "private java.sql.Connection connection;",
+      "expectedJunitExit": 0
+    },
+    {
+      "id": "jdk-value",
+      "body": "private java.math.BigDecimal amount;",
+      "expectedJunitExit": 0
+    },
+    {
+      "id": "jdbc-explicit-ban",
+      "body": "private java.sql.Connection connection;",
+      "expectedJunitExit": 1
+    },
+    {
+      "id": "wrong-root",
+      "body": "",
+      "expectedJunitExit": 1
+    }
+  ],
+  "limits": [
+    "No Java 17 runtime executed.",
+    "No database, reflection, generated wiring or remote-call behavior tested.",
+    "These are technical example controls, not independent agent evaluations."
+  ]
+}

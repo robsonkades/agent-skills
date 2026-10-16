@@ -1,0 +1,427 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "scoped-values",
+  "reviewDate": "2026-10-16",
+  "ownedPath": "skills/scoped-values/**",
+  "allWritesStopped": true,
+  "runningProcesses": [],
+  "versions": {
+    "committed": "1.3.3",
+    "assignment": "1.3.3",
+    "final": "1.3.4",
+    "rationale": "One patch for a focused framework-bridge correctness clarification; no pre-existing bump or content changes."
+  },
+  "baseline": {
+    "staged": [],
+    "unstaged": [],
+    "untracked": [],
+    "completePackageInspected": true,
+    "retainedContentAndHashes": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/scoped-values/baseline.json"
+  },
+  "filesChangedByReviewer": [
+    "skills/scoped-values/references/context-propagation-bridges.md",
+    "skills/scoped-values/skill.yaml"
+  ],
+  "preExistingChanges": [],
+  "findingsCorrected": [
+    {
+      "location": "skills/scoped-values/references/context-propagation-bridges.md:76",
+      "finding": "SecurityContextHolder was stated as unconditionally thread-local, although the effective strategy is configurable.",
+      "correction": "Name MODE_THREADLOCAL as the default, inspect active strategy and decorators, preserve authoritative framework read paths, and avoid changing JVM-wide strategy during request handling."
+    },
+    {
+      "location": "skills/scoped-values/references/context-propagation-bridges.md:83",
+      "finding": "The phrase 'copies per child thread' did not distinguish inherited map state from a shared mutable SecurityContext.",
+      "correction": "Specify that, with inheritance enabled, standard strategy setContext values pass by reference and child authentication mutation can affect the parent. Retain fresh-context/restoration requirements and add versioned primary sources and hostile validation guidance."
+    }
+  ],
+  "findingsRemaining": [],
+  "capabilitiesPreserved": [
+    "Java 25 final API and pre-25 preview/version conditions.",
+    "Nullable binding versus absence, unbound exceptions and orElse(null) rejection.",
+    "Generic CallableOp checked-exception propagation and normal/exceptional rebinding restoration.",
+    "StructuredTaskScope capture-at-creation, rebound-fork rejection, and separate preview requirement.",
+    "No implicit propagation to ordinary threads/executors; explicit capture and absent-capture policy.",
+    "Context/cache/mutable-state classification, private capability keys and authorization boundaries.",
+    "MDC/OTel/framework ownership bridges, asynchronous servlet boundary limits, deadline and retained-state constraints."
+  ],
+  "capabilitiesReplacedOrRemoved": [],
+  "compatibility": {
+    "authoredBaseline": "ScopedValue examples target Java 25; no change to project baseline or preview policy.",
+    "compiler": "javac 25.0.3",
+    "compilerTargets": {
+      "finalAndSpringControls": "--release 25, without preview",
+      "structuredControl": "--enable-preview --release 25"
+    },
+    "runtime": "Temurin OpenJDK 25.0.3+9-LTS",
+    "librariesUsed": {
+      "springSecurityCore": "6.4.3",
+      "springCore": "6.2.3",
+      "springJcl": "6.2.3"
+    },
+    "dependencySelection": "Initially inspected cached 6.4.4, whose POM requires unavailable Spring Core 6.2.4. Selected already-cached 6.4.3 with its declared 6.2.3 Core/JCL instead; no dependency installed or upgraded.",
+    "dependencyHashes": [
+      {
+        "Hash": "5F618F51C5F8D1A77447F3CB4E8C8CF420018A9FE2555AF3F070B5873F3B10B4",
+        "Path": "C:\\Users\\robso\\.m2\\repository\\org\\springframework\\security\\spring-security-core\\6.4.3\\spring-security-core-6.4.3.jar"
+      },
+      {
+        "Hash": "49531684DF2304F0E611F775FABA79273C77504EB7D856592D830E2389E9EB14",
+        "Path": "C:\\Users\\robso\\.m2\\repository\\org\\springframework\\spring-core\\6.2.3\\spring-core-6.2.3.jar"
+      },
+      {
+        "Hash": "8C65EC5ED648966A470E6B48B27CBEBF5F1F412BD46B243E0111C5D5D96EFE86",
+        "Path": "C:\\Users\\robso\\.m2\\repository\\org\\springframework\\spring-jcl\\6.2.3\\spring-jcl-6.2.3.jar"
+      }
+    ],
+    "untouchedExamples": "Servlet filter, MDC, OTel and full executor sketches were not recompiled; they are unchanged partial examples. Generic with helper was exercised using String instead of domain Tenant."
+  },
+  "commandsAndResults": [
+    {
+      "command": "javac --release 25 -cp 'C:/Users/robso/.m2/repository/org/springframework/security/spring-security-core/6.4.3/spring-security-core-6.4.3.jar;C:/Users/robso/.m2/repository/org/springframework/spring-core/6.2.3/spring-core-6.2.3.jar;C:/Users/robso/.m2/repository/org/springframework/spring-jcl/6.2.3/spring-jcl-6.2.3.jar' -d 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/scoped-values/classes-security' 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/scoped-values/SecurityBridgeControl.java' 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/scoped-values/compile-security.log'\n$compileExit = $LASTEXITCODE\n\"javac --release 25 exit=$compileExit\" | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/scoped-values/compile-security.log' -Append\nexit $compileExit",
+      "workingDirectory": "C:/git/agent-skills",
+      "exitCode": 0,
+      "output": "javac --release 25 exit=0\r\n",
+      "classification": "executed Java compilation"
+    },
+    {
+      "command": "javac --release 25 -d 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/scoped-values/classes-final' 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/scoped-values/ScopedValueContracts.java' 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/scoped-values/compile-final.log'\n$compileExit = $LASTEXITCODE\n\"javac --release 25 exit=$compileExit\" | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/scoped-values/compile-final.log' -Append\nexit $compileExit",
+      "workingDirectory": "C:/git/agent-skills",
+      "exitCode": 0,
+      "output": "javac --release 25 exit=0\r\n",
+      "classification": "executed Java compilation"
+    },
+    {
+      "command": "javac --enable-preview --release 25 -d 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/scoped-values/classes-preview' 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/scoped-values/StructuredInheritanceControl.java' 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/scoped-values/compile-preview.log'\n$compileExit = $LASTEXITCODE\n\"javac --enable-preview --release 25 exit=$compileExit\" | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/scoped-values/compile-preview.log' -Append\nexit $compileExit",
+      "workingDirectory": "C:/git/agent-skills",
+      "exitCode": 0,
+      "output": "Note: C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\scoped-values\\StructuredInheritanceControl.java uses preview features of Java SE 25.\r\nNote: Recompile with -Xlint:preview for details.\r\njavac --enable-preview --release 25 exit=0\r\n",
+      "classification": "executed Java compilation"
+    },
+    {
+      "command": "Get-Content 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/scoped-values/validate-local.mjs' -Raw | node --input-type=module 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/scoped-values/package-validation.log'\nexit $LASTEXITCODE",
+      "workingDirectory": "C:/git/agent-skills",
+      "exitCode": 0,
+      "output": "{\r\n  \"version\": \"1.3.4\",\r\n  \"packageFiles\": [\r\n    \"SKILL.md\",\r\n    \"references/context-propagation-bridges.md\",\r\n    \"references/threadlocal-migration.md\",\r\n    \"skill.yaml\"\r\n  ],\r\n  \"issues\": [],\r\n  \"linksChecked\": 2,\r\n  \"declaredTargetsChecked\": 4\r\n}\r\n",
+      "classification": "executed structural check"
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/scoped-values/SKILL.md skills/scoped-values/skill.yaml skills/scoped-values/references/context-propagation-bridges.md skills/scoped-values/references/threadlocal-migration.md 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/scoped-values/format.log'\nexit $LASTEXITCODE",
+      "workingDirectory": "C:/git/agent-skills",
+      "exitCode": 0,
+      "output": "Checking formatting...\r\nAll matched files use Prettier code style!\r\n",
+      "classification": "executed structural check"
+    },
+    {
+      "command": "git diff --check -- skills/scoped-values",
+      "workingDirectory": "C:/git/agent-skills",
+      "exitCode": 0,
+      "output": "",
+      "classification": "executed structural check"
+    },
+    {
+      "command": "java '-Dspring.security.strategy=MODE_INHERITABLETHREADLOCAL' -cp 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/scoped-values/classes-security;C:/Users/robso/.m2/repository/org/springframework/security/spring-security-core/6.4.3/spring-security-core-6.4.3.jar;C:/Users/robso/.m2/repository/org/springframework/spring-core/6.2.3/spring-core-6.2.3.jar;C:/Users/robso/.m2/repository/org/springframework/spring-jcl/6.2.3/spring-jcl-6.2.3.jar' SecurityBridgeControl naive 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/scoped-values/run-security-naive.log'\nexit $LASTEXITCODE",
+      "workingDirectory": "C:/git/agent-skills",
+      "expectedExitCode": 1,
+      "exitCode": 1,
+      "output": "runtime=25.0.3+9-LTS strategy=org.springframework.security.core.context.InheritableThreadLocalSecurityContextHolderStrategy\r\nfresh=false exceptional=false inheritedSameContext=true previousRestored=true parentAuthentication=child\r\nException in thread \"main\" java.lang.AssertionError: parent authentication changed through inherited SecurityContext reference\r\n\tat SecurityBridgeControl.check(SecurityBridgeControl.java:20)\r\n\tat SecurityBridgeControl.runChild(SecurityBridgeControl.java:73)\r\n\tat SecurityBridgeControl.lambda$main$0(SecurityBridgeControl.java:85)\r\n\tat java.base/jdk.internal.vm.ScopedValueContainer.callWithoutScope(ScopedValueContainer.java:162)\r\n\tat java.base/jdk.internal.vm.ScopedValueContainer.call(ScopedValueContainer.java:147)\r\n\tat java.base/java.lang.ScopedValue$Carrier.call(ScopedValue.java:419)\r\n\tat SecurityBridgeControl.main(SecurityBridgeControl.java:84)\r\n",
+      "classification": "executed technical control; not agent evaluation"
+    },
+    {
+      "command": "java '-Dspring.security.strategy=MODE_INHERITABLETHREADLOCAL' -cp 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/scoped-values/classes-security;C:/Users/robso/.m2/repository/org/springframework/security/spring-security-core/6.4.3/spring-security-core-6.4.3.jar;C:/Users/robso/.m2/repository/org/springframework/spring-core/6.2.3/spring-core-6.2.3.jar;C:/Users/robso/.m2/repository/org/springframework/spring-jcl/6.2.3/spring-jcl-6.2.3.jar' SecurityBridgeControl fresh 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/scoped-values/run-security-fresh.log'\nexit $LASTEXITCODE",
+      "workingDirectory": "C:/git/agent-skills",
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "output": "runtime=25.0.3+9-LTS strategy=org.springframework.security.core.context.InheritableThreadLocalSecurityContextHolderStrategy\r\nfresh=true exceptional=false inheritedSameContext=true previousRestored=true parentAuthentication=parent\r\nfresh=true exceptional=true inheritedSameContext=true previousRestored=true parentAuthentication=parent\r\nPASS: parent isolation and normal/exceptional restoration\r\n",
+      "classification": "executed technical control; not agent evaluation"
+    },
+    {
+      "command": "java -cp 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/scoped-values/classes-final' ScopedValueContracts 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/scoped-values/run-final.log'\nexit $LASTEXITCODE",
+      "workingDirectory": "C:/git/agent-skills",
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "output": "PASS: final API, null/absence, checked exception, restoration, plain-thread noninheritance, absent-capture hostile control; runtime=25.0.3+9-LTS\r\n",
+      "classification": "executed technical control; not agent evaluation"
+    },
+    {
+      "command": "java --enable-preview -cp 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/scoped-values/classes-preview' StructuredInheritanceControl 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/scoped-values/run-preview.log'\nexit $LASTEXITCODE",
+      "workingDirectory": "C:/git/agent-skills",
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "output": "PASS: structured inheritance and rebound-fork rejection; runtime=25.0.3+9-LTS\r\n",
+      "classification": "executed technical control; not agent evaluation"
+    },
+    {
+      "command": "java -cp 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/scoped-values/classes-preview' StructuredInheritanceControl 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/scoped-values/run-without-preview.log'\nexit $LASTEXITCODE",
+      "workingDirectory": "C:/git/agent-skills",
+      "expectedExitCode": 1,
+      "exitCode": 1,
+      "output": "Error: LinkageError occurred while loading main class StructuredInheritanceControl\r\n\tjava.lang.UnsupportedClassVersionError: Preview features are not enabled for StructuredInheritanceControl (class file version 69.65535). Try running with '--enable-preview'\r\n",
+      "classification": "executed technical control; not agent evaluation"
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/scoped-values/references/context-propagation-bridges.md 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/scoped-values/format-final.log'\nexit $LASTEXITCODE",
+      "workingDirectory": "C:/git/agent-skills",
+      "exitCode": 0,
+      "output": "Checking formatting...\r\nAll matched files use Prettier code style!\r\n",
+      "classification": "final formatting/whitespace/diff inspection"
+    },
+    {
+      "command": "git diff --check -- skills/scoped-values",
+      "workingDirectory": "C:/git/agent-skills",
+      "exitCode": 0,
+      "output": "",
+      "classification": "final formatting/whitespace/diff inspection"
+    },
+    {
+      "command": "git diff -- skills/scoped-values",
+      "workingDirectory": "C:/git/agent-skills",
+      "exitCode": 0,
+      "output": "diff --git a/skills/scoped-values/references/context-propagation-bridges.md b/skills/scoped-values/references/context-propagation-bridges.md\nindex 01247ed..16ea30a 100644\n--- a/skills/scoped-values/references/context-propagation-bridges.md\n+++ b/skills/scoped-values/references/context-propagation-bridges.md\n@@ -73,13 +73,17 @@ That two-line preamble is worth wrapping in one helper used by every fork in the\n \n ## Spring Security\n \n-`SecurityContextHolder` is `ThreadLocal`-based (or `InheritableThreadLocal` with\n-`MODE_INHERITABLETHREADLOCAL`). Do not try to replace it — the framework reads it from\n-places you do not control, including expression-based access control. Two rules:\n+`SecurityContextHolder` defaults to `MODE_THREADLOCAL`, but its storage strategy is configurable.\n+Inspect the effective `SecurityContextHolderStrategy` and the executor's existing context\n+decorators before adding a bridge; preserve custom strategies and the framework's authoritative\n+read path, including expression-based access control. Do not change the JVM-wide strategy during\n+request handling to propagate one task. Two rules:\n \n - Do not switch it to `MODE_INHERITABLETHREADLOCAL` to \"fix\" missing context in child\n-  threads under virtual threads. It copies per child thread and reintroduces exactly the\n-  footprint problem, while still not covering executor submissions.\n+  threads under virtual threads. Inheritable maps add per-child state. When inheritance is\n+  enabled, the standard strategy passes a `setContext` value by reference rather than cloning\n+  it. A child's `getContext().setAuthentication(...)` can therefore change its parent's\n+  authentication. It still does not capture context at executor submission.\n - In a `StructuredTaskScope`, set it inside the subtask from the inherited scoped value, or\n   use `DelegatingSecurityContextExecutor` when submitting to an executor. Restore prior\n   context in finally for manual bridges; use a fresh context and do not share mutable\n@@ -89,6 +93,11 @@ The same reasoning applies to any framework context whose read path you do not o\n authoritative context may be the framework's, with ScopedValue as an application projection.\n Do not treat a tenant header or a bound object as proof of authorization.\n \n+See [Spring Security 6.4.3 holder strategy selection](https://github.com/spring-projects/spring-security/blob/6.4.3/core/src/main/java/org/springframework/security/core/context/SecurityContextHolder.java)\n+and its [inheritable strategy](https://github.com/spring-projects/spring-security/blob/6.4.3/core/src/main/java/org/springframework/security/core/context/InheritableThreadLocalSecurityContextHolderStrategy.java).\n+Verify the resolved version/custom strategy; test child mutation and normal/exceptional restoration\n+of an existing outer context, not just whether the child can read a principal.\n+\n ## OpenTelemetry\n \n The default OTel ContextStorage is thread-local, and it already ships thread-boundary\ndiff --git a/skills/scoped-values/skill.yaml b/skills/scoped-values/skill.yaml\nindex e4c28cf..c9334f6 100644\n--- a/skills/scoped-values/skill.yaml\n+++ b/skills/scoped-values/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: scoped-values\n-version: 1.3.3\n+version: 1.3.4\n description: >-\n   ScopedValue as one-way, immutable, lexically bounded context: where/run/call, rebinding in\n   a nested scope, inheritance by StructuredTaskScope subtasks and by nothing else, and the\n",
+      "classification": "final formatting/whitespace/diff inspection"
+    },
+    {
+      "command": "javac --release 25 -cp 'C:/Users/robso/.m2/repository/org/springframework/security/spring-security-core/6.4.3/spring-security-core-6.4.3.jar;C:/Users/robso/.m2/repository/org/springframework/spring-core/6.2.3/spring-core-6.2.3.jar;C:/Users/robso/.m2/repository/org/springframework/spring-jcl/6.2.3/spring-jcl-6.2.3.jar' -d 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/scoped-values/classes-case' 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/scoped-values/BridgeCase.java' 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/scoped-values/compile-case.log'\n$compileExit = $LASTEXITCODE\n\"javac --release 25 exit=$compileExit\" | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/scoped-values/compile-case.log' -Append\nexit $compileExit",
+      "workingDirectory": "C:/git/agent-skills",
+      "exitCode": 0,
+      "output": "javac --release 25 exit=0\r\n",
+      "classification": "actor fixture compilation"
+    },
+    {
+      "command": "java '-Dspring.security.strategy=MODE_THREADLOCAL' -cp 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/scoped-values/classes-case;C:/Users/robso/.m2/repository/org/springframework/security/spring-security-core/6.4.3/spring-security-core-6.4.3.jar;C:/Users/robso/.m2/repository/org/springframework/spring-core/6.2.3/spring-core-6.2.3.jar;C:/Users/robso/.m2/repository/org/springframework/spring-jcl/6.2.3/spring-jcl-6.2.3.jar' BridgeCase 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/scoped-values/case-a-baseline.log'\nexit $LASTEXITCODE",
+      "workingDirectory": "C:/git/agent-skills",
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "output": "strategy=org.springframework.security.core.context.ThreadLocalSecurityContextHolderStrategy\r\nexceptional=false parent=parent\r\nexceptional=true parent=parent\r\n",
+      "classification": "baseline reproducibility check of actor fixture, not a behavioral run"
+    },
+    {
+      "command": "java '-Dspring.security.strategy=MODE_INHERITABLETHREADLOCAL' -cp 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/scoped-values/classes-case;C:/Users/robso/.m2/repository/org/springframework/security/spring-security-core/6.4.3/spring-security-core-6.4.3.jar;C:/Users/robso/.m2/repository/org/springframework/spring-core/6.2.3/spring-core-6.2.3.jar;C:/Users/robso/.m2/repository/org/springframework/spring-jcl/6.2.3/spring-jcl-6.2.3.jar' BridgeCase 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/scoped-values/case-b-baseline.log'\nexit $LASTEXITCODE",
+      "workingDirectory": "C:/git/agent-skills",
+      "exitCode": 1,
+      "expectedExitCode": 1,
+      "output": "strategy=org.springframework.security.core.context.InheritableThreadLocalSecurityContextHolderStrategy\r\nexceptional=false parent=worker-after\r\nException in thread \"main\" java.lang.AssertionError: child changed caller authentication\r\n\tat BridgeCase.exercise(BridgeCase.java:56)\r\n\tat BridgeCase.main(BridgeCase.java:64)\r\n",
+      "classification": "baseline reproducibility check of actor fixture, not a behavioral run"
+    }
+  ],
+  "validationArtifacts": {
+    "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/scoped-values",
+    "retainedSources": [
+      "baseline.json",
+      "validate-local.mjs",
+      "SecurityBridgeControl.java",
+      "ScopedValueContracts.java",
+      "StructuredInheritanceControl.java",
+      "BridgeCase.java",
+      "SpringSecurity-6.4.3-SecurityContextHolder.java",
+      "SpringSecurity-6.4.3-InheritableStrategy.java"
+    ],
+    "retainedLogs": [
+      "compile-security.log",
+      "compile-final.log",
+      "compile-preview.log",
+      "compile-case.log",
+      "run-security-naive.log",
+      "run-security-fresh.log",
+      "run-final.log",
+      "run-preview.log",
+      "run-without-preview.log",
+      "case-a-baseline.log",
+      "case-b-baseline.log",
+      "package-validation.log",
+      "format.log",
+      "format-final.log"
+    ],
+    "retainedCompiledDirectories": [
+      "classes-security",
+      "classes-final",
+      "classes-preview",
+      "classes-case"
+    ],
+    "removedHarness": false,
+    "structuralResult": "Strict package validation: 4 files, zero issues, 2 internal Markdown links and 4 declared skill targets resolve. Prettier and scoped diff checks pass.",
+    "technicalResult": "Naive inherited shared-context control fails caller isolation as intended. Fresh context passes normal and exceptional restoration. Final ScopedValue contract control passes without preview. Structured inheritance/rebound rejection passes with preview; running its preview class without the runtime flag fails as intended.",
+    "expectedFailures": [
+      "SecurityBridgeControl naive: exit 1, parentAuthentication=child, caller isolation assertion.",
+      "StructuredInheritanceControl without --enable-preview: exit 1, UnsupportedClassVersionError for preview class.",
+      "BridgeCase under MODE_INHERITABLETHREADLOCAL: exit 1, parent=worker-after; same source passes under MODE_THREADLOCAL."
+    ],
+    "unexpectedFailures": []
+  },
+  "sourceDownloads": [
+    {
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-security/6.4.3/core/src/main/java/org/springframework/security/core/context/SecurityContextHolder.java",
+      "retainedFile": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/scoped-values/SpringSecurity-6.4.3-SecurityContextHolder.java",
+      "exitCode": 0,
+      "hashRecord": {
+        "Hash": "8D8CB859B523D105DE042D265CC7DB17742C909296531DF32BDA6890D6604E89",
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\scoped-values\\SpringSecurity-6.4.3-SecurityContextHolder.java"
+      }
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-security/6.4.3/core/src/main/java/org/springframework/security/core/context/InheritableThreadLocalSecurityContextHolderStrategy.java",
+      "retainedFile": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/scoped-values/SpringSecurity-6.4.3-InheritableStrategy.java",
+      "exitCode": 0,
+      "hashRecord": {
+        "Hash": "4F1D09924E1CEA5D5A2C8DF142CDBA5A55C22D145EA8AF6B53700099117F6549",
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\scoped-values\\SpringSecurity-6.4.3-InheritableStrategy.java"
+      }
+    }
+  ],
+  "behavioralEvaluations": {
+    "executed": [],
+    "measuredGain": false,
+    "walkthroughs": [
+      "Same source under thread-local strategy preserves caller state in the bounded new-thread fixture.",
+      "Changing only startup strategy to inheritable exposes mutable context aliasing; bridge must isolate/restores holder state.",
+      "Existing final API/preview boundaries remain distinct under actual Java 25 compile/run controls."
+    ]
+  },
+  "developmentCases": {
+    "classification": "Known development cases with technically executed baseline fixtures; no independent agent output, before/after skill comparison, or held-out status.",
+    "decisiveConstraint": "Only jvm.args changes MODE_THREADLOCAL versus MODE_INHERITABLETHREADLOCAL; source, desired caller contract and dependencies stay the same.",
+    "prerequisites": "Materialize one actor case in an isolated workspace with the skill. Use JDK 25 and the listed already-available jars. Compile BridgeCase.java with --release 25 and the jar classpath; run using the selected jvm.args and the output directory plus jar classpath. Do not expose this handoff, corrected SecurityBridgeControl implementation or evaluator criteria to actor.",
+    "actorInputs": [
+      {
+        "id": "A_thread_local_strategy",
+        "task": "Review the ScopedValue-to-Spring Security bridge in BridgeCase.java under the supplied launch configuration. Reproduce the caller-authentication contract and fix the bridge if the current path violates it. Preserve the selected startup strategy, Java 25 without preview, dependency versions, explicit context capture and exception propagation. Do not replace Spring Security or change global strategy during request handling. Explain the evidence for any change or no-change decision; use meaningful normal and exceptional checks.",
+        "files": {
+          "BridgeCase.java": "import java.util.List;\nimport java.util.concurrent.ExecutionException;\nimport java.util.concurrent.FutureTask;\nimport java.util.concurrent.TimeUnit;\nimport org.springframework.security.authentication.UsernamePasswordAuthenticationToken;\nimport org.springframework.security.core.context.SecurityContext;\nimport org.springframework.security.core.context.SecurityContextHolder;\n\n// Minimal request-to-virtual-thread bridge. The launch file selects holder strategy.\npublic final class BridgeCase {\n    private static final ScopedValue<String> SUBJECT = ScopedValue.newInstance();\n    private static final class WorkFailure extends RuntimeException {}\n\n    private static UsernamePasswordAuthenticationToken auth(String name) {\n        return UsernamePasswordAuthenticationToken.authenticated(name, \"fixture-only\", List.of());\n    }\n\n    static Runnable capture(Runnable work) {\n        String subject = SUBJECT.get();\n        return () -> ScopedValue.where(SUBJECT, subject).run(() -> {\n            SecurityContext previous = SecurityContextHolder.getContext();\n            previous.setAuthentication(auth(SUBJECT.get()));\n            try {\n                work.run();\n            } finally {\n                SecurityContextHolder.setContext(previous);\n            }\n        });\n    }\n\n    static void exercise(boolean exceptional) throws Exception {\n        SecurityContext parent = SecurityContextHolder.createEmptyContext();\n        parent.setAuthentication(auth(\"parent\"));\n        SecurityContextHolder.setContext(parent);\n        Runnable work = ScopedValue.where(SUBJECT, \"worker\").call(() -> capture(() -> {\n            SecurityContextHolder.getContext().setAuthentication(auth(\"worker-after\"));\n            if (exceptional) throw new WorkFailure();\n        }));\n        FutureTask<Void> result = new FutureTask<>(work, null);\n        Thread child = Thread.ofVirtual().start(result);\n        try {\n            try {\n                result.get(5, TimeUnit.SECONDS);\n                if (exceptional) throw new AssertionError(\"missing work exception\");\n            } catch (ExecutionException failure) {\n                if (!exceptional || !(failure.getCause() instanceof WorkFailure)) throw failure;\n            }\n        } finally {\n            child.interrupt();\n            child.join(5000);\n            if (child.isAlive()) throw new AssertionError(\"child still running\");\n        }\n        System.out.println(\"exceptional=\" + exceptional\n                + \" parent=\" + parent.getAuthentication().getName());\n        if (!\"parent\".equals(parent.getAuthentication().getName())) {\n            throw new AssertionError(\"child changed caller authentication\");\n        }\n        SecurityContextHolder.clearContext();\n    }\n\n    public static void main(String[] args) throws Exception {\n        System.out.println(\"strategy=\"\n                + SecurityContextHolder.getContextHolderStrategy().getClass().getName());\n        exercise(false);\n        exercise(true);\n    }\n}\n",
+          "context.md": "The fixture represents one new virtual thread per child operation, never a reused worker. The caller's authentication must remain 'parent' when the child finishes or throws. The child's scoped subject is a trusted fixture input, not an authentication mechanism. Spring Security 6.4.3 and Spring Core/JCL 6.2.3 are already available. No deployment or dependency changes are authorized. Inspect jvm.args; holder behavior is selected at startup. This is a bounded reproduction, not a complete application.",
+          "dependencies.txt": "C:/Users/robso/.m2/repository/org/springframework/security/spring-security-core/6.4.3/spring-security-core-6.4.3.jar\nC:/Users/robso/.m2/repository/org/springframework/spring-core/6.2.3/spring-core-6.2.3.jar\nC:/Users/robso/.m2/repository/org/springframework/spring-jcl/6.2.3/spring-jcl-6.2.3.jar\n",
+          "jvm.args": "-Dspring.security.strategy=MODE_THREADLOCAL\n"
+        }
+      },
+      {
+        "id": "B_inheritable_strategy",
+        "task": "Review the ScopedValue-to-Spring Security bridge in BridgeCase.java under the supplied launch configuration. Reproduce the caller-authentication contract and fix the bridge if the current path violates it. Preserve the selected startup strategy, Java 25 without preview, dependency versions, explicit context capture and exception propagation. Do not replace Spring Security or change global strategy during request handling. Explain the evidence for any change or no-change decision; use meaningful normal and exceptional checks.",
+        "files": {
+          "BridgeCase.java": "import java.util.List;\nimport java.util.concurrent.ExecutionException;\nimport java.util.concurrent.FutureTask;\nimport java.util.concurrent.TimeUnit;\nimport org.springframework.security.authentication.UsernamePasswordAuthenticationToken;\nimport org.springframework.security.core.context.SecurityContext;\nimport org.springframework.security.core.context.SecurityContextHolder;\n\n// Minimal request-to-virtual-thread bridge. The launch file selects holder strategy.\npublic final class BridgeCase {\n    private static final ScopedValue<String> SUBJECT = ScopedValue.newInstance();\n    private static final class WorkFailure extends RuntimeException {}\n\n    private static UsernamePasswordAuthenticationToken auth(String name) {\n        return UsernamePasswordAuthenticationToken.authenticated(name, \"fixture-only\", List.of());\n    }\n\n    static Runnable capture(Runnable work) {\n        String subject = SUBJECT.get();\n        return () -> ScopedValue.where(SUBJECT, subject).run(() -> {\n            SecurityContext previous = SecurityContextHolder.getContext();\n            previous.setAuthentication(auth(SUBJECT.get()));\n            try {\n                work.run();\n            } finally {\n                SecurityContextHolder.setContext(previous);\n            }\n        });\n    }\n\n    static void exercise(boolean exceptional) throws Exception {\n        SecurityContext parent = SecurityContextHolder.createEmptyContext();\n        parent.setAuthentication(auth(\"parent\"));\n        SecurityContextHolder.setContext(parent);\n        Runnable work = ScopedValue.where(SUBJECT, \"worker\").call(() -> capture(() -> {\n            SecurityContextHolder.getContext().setAuthentication(auth(\"worker-after\"));\n            if (exceptional) throw new WorkFailure();\n        }));\n        FutureTask<Void> result = new FutureTask<>(work, null);\n        Thread child = Thread.ofVirtual().start(result);\n        try {\n            try {\n                result.get(5, TimeUnit.SECONDS);\n                if (exceptional) throw new AssertionError(\"missing work exception\");\n            } catch (ExecutionException failure) {\n                if (!exceptional || !(failure.getCause() instanceof WorkFailure)) throw failure;\n            }\n        } finally {\n            child.interrupt();\n            child.join(5000);\n            if (child.isAlive()) throw new AssertionError(\"child still running\");\n        }\n        System.out.println(\"exceptional=\" + exceptional\n                + \" parent=\" + parent.getAuthentication().getName());\n        if (!\"parent\".equals(parent.getAuthentication().getName())) {\n            throw new AssertionError(\"child changed caller authentication\");\n        }\n        SecurityContextHolder.clearContext();\n    }\n\n    public static void main(String[] args) throws Exception {\n        System.out.println(\"strategy=\"\n                + SecurityContextHolder.getContextHolderStrategy().getClass().getName());\n        exercise(false);\n        exercise(true);\n    }\n}\n",
+          "context.md": "The fixture represents one new virtual thread per child operation, never a reused worker. The caller's authentication must remain 'parent' when the child finishes or throws. The child's scoped subject is a trusted fixture input, not an authentication mechanism. Spring Security 6.4.3 and Spring Core/JCL 6.2.3 are already available. No deployment or dependency changes are authorized. Inspect jvm.args; holder behavior is selected at startup. This is a bounded reproduction, not a complete application.",
+          "dependencies.txt": "C:/Users/robso/.m2/repository/org/springframework/security/spring-security-core/6.4.3/spring-security-core-6.4.3.jar\nC:/Users/robso/.m2/repository/org/springframework/spring-core/6.2.3/spring-core-6.2.3.jar\nC:/Users/robso/.m2/repository/org/springframework/spring-jcl/6.2.3/spring-jcl-6.2.3.jar\n",
+          "jvm.args": "-Dspring.security.strategy=MODE_INHERITABLETHREADLOCAL\n"
+        }
+      }
+    ],
+    "evaluatorOnlyCriteria": [
+      {
+        "id": "A_thread_local_strategy",
+        "expected": [
+          "Read startup strategy and actual bridge/consumer path.",
+          "The unmodified bounded fixture runs normal and exceptional paths without changing parent authentication under MODE_THREADLOCAL.",
+          "Do not claim the same mutable SecurityContext was inherited on this path; a supported no-change conclusion for the stated fixture is valid.",
+          "A proportional fresh-context correction is also acceptable if described as widening safety/restoration rather than evidence of a reproduced parent mutation here; preserve startup strategy and final Java API."
+        ],
+        "failureConditions": [
+          "Claims observed parent mutation despite the default strategy control passing.",
+          "Changes JVM-wide strategy in capture/request code or upgrades dependencies/JDK.",
+          "Treats the passing case as proof that arbitrary custom strategies, worker reuse or nested contexts are safe."
+        ]
+      },
+      {
+        "id": "B_inheritable_strategy",
+        "expected": [
+          "Run/inspect the same source with MODE_INHERITABLETHREADLOCAL and identify that the inherited SecurityContext object is shared.",
+          "Reproduce parent=worker-after and the caller-authentication assertion failure, then fix bridge ownership by creating an appropriate separate SecurityContext rather than mutating the inherited holder.",
+          "Preserve prior context for owned nested boundaries in finally; maintain explicit scoped capture, child exception propagation and no preview requirement.",
+          "Verify parent remains unchanged after normal and exceptional child work; use actual object identity/state assertions where relevant, not only child principal readability."
+        ],
+        "failureConditions": [
+          "Assumes inheritable context is a deep copy or that immutable ScopedValue binding freezes framework state.",
+          "Only calls clearContext after having mutated the shared SecurityContext and declares isolation fixed.",
+          "Changes the global startup strategy to evade the contract or weakens/removes the parent-isolation assertion.",
+          "Claims a new SecurityContext automatically deep-clones arbitrary mutable Authentication/principal objects."
+        ]
+      }
+    ]
+  },
+  "sources": [
+    {
+      "url": "https://github.com/spring-projects/spring-security/blob/6.4.3/core/src/main/java/org/springframework/security/core/context/SecurityContextHolder.java",
+      "version": "Spring Security 6.4.3",
+      "verifiedClaim": "Default storage strategy, selectable implementations, and warning against changing strategy during active requests.",
+      "retainedFile": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/scoped-values/SpringSecurity-6.4.3-SecurityContextHolder.java"
+    },
+    {
+      "url": "https://github.com/spring-projects/spring-security/blob/6.4.3/core/src/main/java/org/springframework/security/core/context/InheritableThreadLocalSecurityContextHolderStrategy.java",
+      "version": "Spring Security 6.4.3",
+      "verifiedClaim": "Inheritable supplier returns the installed SecurityContext; setContext does not clone it.",
+      "retainedFile": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/scoped-values/SpringSecurity-6.4.3-InheritableStrategy.java"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/InheritableThreadLocal.html",
+      "version": "Java 25",
+      "verifiedClaim": "Default childValue uses the parent value; inheritance can be disabled by thread construction."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/ScopedValue.html",
+      "version": "Java 25",
+      "verifiedClaim": "Dynamic scope, nullable bindings, absence, capabilities and structured inheritance; tested key final-API contracts."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/ScopedValue.Carrier.html",
+      "version": "Java 25",
+      "verifiedClaim": "CallableOp typed exception and normal/exceptional binding restoration."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/StructuredTaskScope.html",
+      "version": "Java 25 preview",
+      "verifiedClaim": "Bindings captured at scope creation and StructureViolationException when fork occurs under different bindings."
+    }
+  ],
+  "sourceLimitations": [
+    {
+      "url": "https://openjdk.org/jeps/506",
+      "result": "web fetch returned HTTP 403; Java 25 API documentation and executable controls were available. No claim that this fetch succeeded."
+    }
+  ],
+  "finalHashes": [
+    {
+      "Path": "C:\\git\\agent-skills\\skills\\scoped-values\\SKILL.md",
+      "Hash": "D9BD1D4E4F0127578D244570173FE8BBBAA1F5D813B64C1577A6A7A917A737C3"
+    },
+    {
+      "Path": "C:\\git\\agent-skills\\skills\\scoped-values\\skill.yaml",
+      "Hash": "B56877F1CEDC264B556100D2F9D50C23C097268B1AF399E8AA465EE152A2B5C6"
+    },
+    {
+      "Path": "C:\\git\\agent-skills\\skills\\scoped-values\\references\\context-propagation-bridges.md",
+      "Hash": "9B55CE45B2DBD6BAFD85487EF9E0A0301C00EB9EB934853544CD2875F7513F82"
+    },
+    {
+      "Path": "C:\\git\\agent-skills\\skills\\scoped-values\\references\\threadlocal-migration.md",
+      "Hash": "7CC998CE38F9A43F1BD9B1CCD5BAB4E2F3917EB15CA4C250649C3BFC89AD55D0"
+    }
+  ],
+  "finalInspection": {
+    "stagedChanges": [],
+    "untrackedOwnedFiles": [],
+    "diffAgainstAssignment": "Exactly reference and manifest edited; SKILL.md and threadlocal-migration.md retain baseline hashes.",
+    "noActiveWriters": true
+  },
+  "limitations": [
+    "Technical controls establish exercised API/library behavior, not agent obedience or measured skill improvement.",
+    "Spring runtime control covers standard 6.4.3 strategy and configured inheritance; custom strategies and deferred suppliers require project-specific inspection.",
+    "Separate SecurityContext holders do not automatically deep-clone arbitrary Authentication/principal object graphs; fixtures create separate token objects.",
+    "No workload performance improvement, footprint reduction or cross-version framework compatibility was measured.",
+    "No global registry or repository-wide verification by reviewer."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Shared registry and parallel-review restriction.",
+      "prerequisites": "All reviewers stopped writing."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Final catalog-wide verification belongs to coordinator.",
+      "prerequisites": "Stable candidate and regenerated registry."
+    }
+  ],
+  "crossSkillIssues": [],
+  "coordinatorActions": [
+    "Archive JSON, source files, compiled controls and raw logs; keep expected failing evidence. Run global checks after all writes stop. Use separated cases only if selected for independent behavioral evaluation."
+  ]
+}

@@ -1,0 +1,45 @@
+[0.005s][info][gc] Using Serial
+CompileCommand: compileonly HotWork.applyAsInt bool compileonly = true
+[0.074s][info][class,unload] unloading class HotWork 0x000000009c067800
+[0.074s][info][class,unload] unloading class HotWork 0x000000009c066800
+[0.074s][info][class,unload] unloading class HotWork 0x000000009c065800
+[0.074s][info][class,unload] unloading class HotWork 0x000000009c064800
+[0.074s][info][class,unload] unloading class HotWork 0x000000009c063800
+[0.074s][info][class,unload] unloading class HotWork 0x000000009c062800
+[0.074s][info][class,unload] unloading class HotWork 0x000000009c061800
+[0.074s][info][class,unload] unloading class HotWork 0x000000009c060800
+[0.074s][info][class,unload] unloading class HotWork 0x000000009c05f800
+[0.074s][info][class,unload] unloading class HotWork 0x000000009c05e800
+[0.074s][info][class,unload] unloading class HotWork 0x000000009c05d800
+[0.074s][info][class,unload] unloading class HotWork 0x000000009c05c800
+[0.074s][info][class,unload] unloading class HotWork 0x000000009c05b800
+[0.074s][info][class,unload] unloading class HotWork 0x000000009c05a800
+[0.074s][info][class,unload] unloading class HotWork 0x000000009c059800
+[0.074s][info][class,unload] unloading class HotWork 0x000000009c058800
+[0.074s][info][class,unload] unloading class HotWork 0x000000009c057800
+[0.074s][info][class,unload] unloading class HotWork 0x000000009c056800
+[0.074s][info][class,unload] unloading class HotWork 0x000000009c055800
+[0.074s][info][class,unload] unloading class HotWork 0x000000009c054800
+[0.074s][info][class,unload] unloading class HotWork 0x000000009c053800
+[0.074s][info][class,unload] unloading class HotWork 0x000000009c052800
+[0.074s][info][class,unload] unloading class HotWork 0x000000009c051800
+[0.074s][info][class,unload] unloading class HotWork 0x000000009c050800
+[0.074s][info][class,unload] unloading class HotWork 0x000000009c04f800
+[0.074s][info][class,unload] unloading class HotWork 0x000000009c04e800
+[0.074s][info][class,unload] unloading class HotWork 0x000000009c04d800
+[0.074s][info][class,unload] unloading class HotWork 0x000000009c04c800
+[0.074s][info][class,unload] unloading class HotWork 0x000000009c04b800
+[0.074s][info][class,unload] unloading class HotWork 0x000000009c04a800
+[0.074s][info][class,unload] unloading class HotWork 0x000000009c049800
+[0.074s][info][class,unload] unloading class HotWork 0x000000009c048800
+[0.074s][info][class,unload] unloading class HotWork 0x000000009c047800
+[0.074s][info][class,unload] unloading class HotWork 0x000000009c046800
+[0.074s][info][class,unload] unloading class HotWork 0x000000009c045800
+[0.074s][info][class,unload] unloading class HotWork 0x000000009c044800
+[0.074s][info][class,unload] unloading class HotWork 0x000000009c043800
+[0.074s][info][class,unload] unloading class HotWork 0x000000009c042800
+[0.074s][info][class,unload] unloading class HotWork 0x000000009c041800
+[0.074s][info][class,unload] unloading class HotWork 0x000000009c040800
+[0.075s][info][gc          ] GC(0) Pause Full (System.gc()) 1M->1M(15M) 1.590ms
+[0.076s][info][gc          ] GC(1) Pause Full (System.gc()) 1M->1M(15M) 0.948ms
+READY pid=39992 unloadedLoaders=40 retained=40

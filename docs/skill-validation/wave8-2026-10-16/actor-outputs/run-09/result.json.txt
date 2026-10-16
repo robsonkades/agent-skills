@@ -1,0 +1,62 @@
+{
+  "decision": "approve_exact_proposal_semantically_keep_unchanged",
+  "originalProposalCorrect": true,
+  "repairRequired": false,
+  "solutionEqualsProposed": true,
+  "schemaChanged": false,
+  "semanticApproval": true,
+  "performanceApproval": false,
+  "performanceConclusion": "Not established: no PostgreSQL plan or performance capture is available.",
+  "proof": {
+    "activeDomain": "boolean NOT NULL CHECK(active IN (false,true)); p=(active=true) cannot be UNKNOWN",
+    "partition": "For p=true, the first branch emits once and the second cannot emit. For p=false, only the second branch can emit, exactly when amount>=100. This matches the original OR for every allowed row.",
+    "multiplicity": "UNION ALL preserves separate invoices with equal customer_label; disjoint branches prevent overlap duplication.",
+    "tenantIsolation": "Both branches retain the same bound tenant predicate.",
+    "projectionAndOrder": "Both project customer_label, followed by a global ORDER BY customer_label."
+  },
+  "evidence": [
+    "Reviewed the supplied schema, seed, current/proposed SQL and fixture helper before use.",
+    "verify.mjs reads solution.sql; 11 ordered bag/projection cases passed against current.sql and an independent oracle before and after mutation testing.",
+    "124 generated invoices cover four tenants, both legal booleans, amount boundaries and extremes, duplicated labels and predicate overlap.",
+    "NULL and 2 active values were rejected by the unchanged local fixture schema.",
+    "Five wrong variants each made verify.mjs exit 1 with an AssertionError; original solution bytes were restored.",
+    "All seven input artifacts match their output counterparts byte-for-byte; solution.sql matches proposed.sql. Hashes and actual subprocess output are in verification-run.json."
+  ],
+  "verification": {
+    "runner": "node verify.mjs",
+    "mutationRunner": "node check-mutants.mjs",
+    "node": "v25.6.1",
+    "sqlite": "3.51.2",
+    "correctCandidateExitCodes": [0, 0],
+    "casesPerRun": 11,
+    "generatedRows": 124,
+    "wrongVariantsRejected": [
+      "remove overlap exclusion",
+      "UNION instead of UNION ALL",
+      "remove tenant filter from second branch",
+      "amount > 100 instead of amount >= 100",
+      "ORDER BY customer_label DESC"
+    ],
+    "wrongVariantExitCodes": [1, 1, 1, 1, 1],
+    "log": "verification-run.json"
+  },
+  "performanceComparisonNeeded": [
+    "Authorized PostgreSQL 17 runs on representative data and tenant distributions, including branch selectivity and overlap.",
+    "Same snapshot, indexes, statistics, parameter types, driver prepare mode and settings for both statements.",
+    "Bounded EXPLAIN (ANALYZE, BUFFERS, SETTINGS, FORMAT JSON); compare estimates/actuals, loops, filters, heap work, reads/hits, sorting/spills and execution time.",
+    "Repeat in alternating order with documented cache conditions; measure full export latency separately and confirm ordered bags on the target."
+  ],
+  "limits": [
+    "No PostgreSQL server or connection was supplied, and no PostgreSQL statement was executed.",
+    "No target plans or measured speedup are available; indexability alone does not establish performance.",
+    "SQLite checks the supplied portable result subset only and emits an experimental-feature warning.",
+    "PostgreSQL coercions, collation, numeric edge behavior, concurrency and production performance are not validated by SQLite.",
+    "Finite regression cases support, but do not replace, the all-allowed-rows schema-based proof."
+  ],
+  "sources": [
+    "https://www.postgresql.org/docs/17/functions-logical.html",
+    "https://www.postgresql.org/docs/17/queries-union.html",
+    "https://www.postgresql.org/docs/17/indexes-bitmap-scans.html",
+    "https://www.postgresql.org/docs/17/using-explain.html"
+  ]
+}

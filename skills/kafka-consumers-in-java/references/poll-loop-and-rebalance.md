@@ -107,6 +107,16 @@ use repeat-safe effects and sink-side fencing where stale writers must be exclud
 Pause state is not preserved across rebalances: reconcile assignments and reapply pauses for
 retained work before admitting more. Never let a late old-epoch result advance a new assignment.
 
+If `onPartitionsAssigned` restores an external checkpoint or required local state, track
+readiness per partition and ownership epoch separately from membership. A callback exception
+does not undo partial initialization or guarantee the same partition list will be retried.
+In Kafka 4.1.0, a later assignment callback can contain no newly added partitions even though
+an earlier restore failed; callback retries and fetch gating depend on the client/protocol.
+Do not dispatch records or commit an uninitialized partition. Recover its required restore/seek
+explicitly within a bound, or stop and recreate the consumer; reconcile pending initialization
+against current ownership even after an empty callback. Normal callback return alone does not
+prove that every owned partition is ready.
+
 ## The rebalance sequence, and where duplicates enter
 
 Possible triggers: a member joins (scale-up, rolling deploy), a member leaves (protocol-dependent close, crash,
@@ -181,4 +191,5 @@ documented cross-thread escape hatch.
 - [ConsumerRebalanceListener: revoked versus lost partitions](https://kafka.apache.org/41/javadoc/org/apache/kafka/clients/consumer/ConsumerRebalanceListener.html)
 - [Kafka 4.1 consumer configuration](https://kafka.apache.org/41/configuration/consumer-configs/)
 - [Kafka 4.1.0 source: poll, pause, commits and close](https://github.com/apache/kafka/blob/4.1.0/clients/src/main/java/org/apache/kafka/clients/consumer/KafkaConsumer.java)
+- [Kafka 4.1.0 classic assignment callbacks](https://github.com/apache/kafka/blob/4.1.0/clients/src/main/java/org/apache/kafka/clients/consumer/internals/ConsumerCoordinator.java) and [consumer-protocol reconciliation](https://github.com/apache/kafka/blob/4.1.0/clients/src/main/java/org/apache/kafka/clients/consumer/internals/AbstractMembershipManager.java) — assignment can already be applied when custom initialization fails; do not infer readiness from a later empty callback.
 - [KIP-848: the next-generation consumer rebalance protocol](https://cwiki.apache.org/confluence/display/KAFKA/KIP-848%3A+The+Next+Generation+of+the+Consumer+Rebalance+Protocol)

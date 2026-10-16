@@ -1,0 +1,472 @@
+{
+  "task": "A04",
+  "scope": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04/output",
+  "instructions": "TASK.md and input/project supplied exercise; no repository catalog or global skills opened",
+  "meaningfulReads": [
+    {
+      "paths": [
+        "TASK.md",
+        "input/project/README.md",
+        "input/project/REQUEST.md"
+      ],
+      "purpose": "Authorized edit, Java baseline, runtime limits and required artifacts"
+    },
+    {
+      "paths": [
+        "input/skills/idempotency/SKILL.md",
+        "input/skills/timeouts-and-deadlines/SKILL.md",
+        "input/skills/retries-and-backoff/SKILL.md"
+      ],
+      "purpose": "Required idempotency, deadline and retry guidance"
+    },
+    {
+      "paths": [
+        "input/project/contract.md",
+        "input/project/Ports.java",
+        "input/project/Contract.java",
+        "input/project/RetryEngine.java",
+        "input/project/Smoke.java",
+        "input/project/run.mjs"
+      ],
+      "purpose": "State machine, public ports, replay guarantee, defects, smoke scope, and inspected 20-second Java runner before execution"
+    },
+    {
+      "paths": [
+        "input/skills/idempotency/references/key-selection.md",
+        "input/skills/retries-and-backoff/references/retry-in-java.md",
+        "input/skills/retries-and-backoff/references/retry-failure-modes.md",
+        "input/skills/timeouts-and-deadlines/references/deadline-propagation.md",
+        "input/skills/timeouts-and-deadlines/references/java-timeout-surface.md"
+      ],
+      "purpose": "Stable intent, earlier ambiguity, retry admission, release-before-backoff, overflow and cancellation limits"
+    },
+    {
+      "paths": [
+        "output/RetryEngine.java",
+        "output/REVIEW.md",
+        "output/result.json"
+      ],
+      "purpose": "Read back implementation; validate final JSON, deliverable presence and 453-word review"
+    },
+    {
+      "paths": [
+        "output/Ports.java",
+        "output/Contract.java",
+        "output/Smoke.java",
+        "output/contract.md",
+        "output/run.mjs",
+        "output/README.md",
+        "output/REQUEST.md"
+      ],
+      "purpose": "SHA-256 equality with protected input copies"
+    }
+  ],
+  "commands": [
+    {
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04/TASK.md'",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": {
+        "kind": "read",
+        "paths": [
+          "TASK.md"
+        ],
+        "summary": "Read assignment first."
+      }
+    },
+    {
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04/input/skills/idempotency/SKILL.md'; Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04/input/skills/timeouts-and-deadlines/SKILL.md'; Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04/input/skills/retries-and-backoff/SKILL.md'",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04",
+      "exitCode": 0,
+      "result": {
+        "kind": "read",
+        "paths": [
+          "input/skills/idempotency/SKILL.md",
+          "input/skills/timeouts-and-deadlines/SKILL.md",
+          "input/skills/retries-and-backoff/SKILL.md"
+        ],
+        "summary": "Loaded all three supplied skill snapshots before project inspection."
+      }
+    },
+    {
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04/input/project/README.md'",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04",
+      "exitCode": 0,
+      "result": {
+        "kind": "read",
+        "paths": [
+          "input/project/README.md"
+        ],
+        "summary": "Read completed successfully; input remained unchanged."
+      }
+    },
+    {
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04/input/project/REQUEST.md'",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04",
+      "exitCode": 0,
+      "result": {
+        "kind": "read",
+        "paths": [
+          "input/project/REQUEST.md"
+        ],
+        "summary": "Read completed successfully; input remained unchanged."
+      }
+    },
+    {
+      "command": "rg --files input/project output input/skills",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04",
+      "exitCode": 0,
+      "result": {
+        "kind": "inventory",
+        "summary": "Listed only input/project, output and input/skills; all supplied project files and six skill references discovered."
+      }
+    },
+    {
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04/input/project/contract.md'",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04",
+      "exitCode": 0,
+      "result": {
+        "kind": "read",
+        "paths": [
+          "input/project/contract.md"
+        ],
+        "summary": "Read succeeded. Batched display was truncated; retry, failure-mode, key-selection and deadline references were subsequently reread and displayed fully."
+      }
+    },
+    {
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04/input/project/Ports.java'",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04",
+      "exitCode": 0,
+      "result": {
+        "kind": "read",
+        "paths": [
+          "input/project/Ports.java"
+        ],
+        "summary": "Read succeeded. Batched display was truncated; retry, failure-mode, key-selection and deadline references were subsequently reread and displayed fully."
+      }
+    },
+    {
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04/input/project/Contract.java'",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04",
+      "exitCode": 0,
+      "result": {
+        "kind": "read",
+        "paths": [
+          "input/project/Contract.java"
+        ],
+        "summary": "Read succeeded. Batched display was truncated; retry, failure-mode, key-selection and deadline references were subsequently reread and displayed fully."
+      }
+    },
+    {
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04/input/project/RetryEngine.java'",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04",
+      "exitCode": 0,
+      "result": {
+        "kind": "read",
+        "paths": [
+          "input/project/RetryEngine.java"
+        ],
+        "summary": "Read succeeded. Batched display was truncated; retry, failure-mode, key-selection and deadline references were subsequently reread and displayed fully."
+      }
+    },
+    {
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04/input/project/Smoke.java'",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04",
+      "exitCode": 0,
+      "result": {
+        "kind": "read",
+        "paths": [
+          "input/project/Smoke.java"
+        ],
+        "summary": "Read succeeded. Batched display was truncated; retry, failure-mode, key-selection and deadline references were subsequently reread and displayed fully."
+      }
+    },
+    {
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04/input/project/run.mjs'",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04",
+      "exitCode": 0,
+      "result": {
+        "kind": "read",
+        "paths": [
+          "input/project/run.mjs"
+        ],
+        "summary": "Read succeeded. Batched display was truncated; retry, failure-mode, key-selection and deadline references were subsequently reread and displayed fully."
+      }
+    },
+    {
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04/input/skills/retries-and-backoff/references/retry-in-java.md'",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04",
+      "exitCode": 0,
+      "result": {
+        "kind": "read",
+        "paths": [
+          "input/skills/retries-and-backoff/references/retry-in-java.md"
+        ],
+        "summary": "Read succeeded. Batched display was truncated; retry, failure-mode, key-selection and deadline references were subsequently reread and displayed fully."
+      }
+    },
+    {
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04/input/skills/retries-and-backoff/references/retry-failure-modes.md'",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04",
+      "exitCode": 0,
+      "result": {
+        "kind": "read",
+        "paths": [
+          "input/skills/retries-and-backoff/references/retry-failure-modes.md"
+        ],
+        "summary": "Read succeeded. Batched display was truncated; retry, failure-mode, key-selection and deadline references were subsequently reread and displayed fully."
+      }
+    },
+    {
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04/input/skills/idempotency/references/key-selection.md'",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04",
+      "exitCode": 0,
+      "result": {
+        "kind": "read",
+        "paths": [
+          "input/skills/idempotency/references/key-selection.md"
+        ],
+        "summary": "Read succeeded. Batched display was truncated; retry, failure-mode, key-selection and deadline references were subsequently reread and displayed fully."
+      }
+    },
+    {
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04/input/skills/timeouts-and-deadlines/references/deadline-propagation.md'",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04",
+      "exitCode": 0,
+      "result": {
+        "kind": "read",
+        "paths": [
+          "input/skills/timeouts-and-deadlines/references/deadline-propagation.md"
+        ],
+        "summary": "Read succeeded. Batched display was truncated; retry, failure-mode, key-selection and deadline references were subsequently reread and displayed fully."
+      }
+    },
+    {
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04/input/skills/timeouts-and-deadlines/references/java-timeout-surface.md'",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04",
+      "exitCode": 0,
+      "result": {
+        "kind": "read",
+        "paths": [
+          "input/skills/timeouts-and-deadlines/references/java-timeout-surface.md"
+        ],
+        "summary": "Read succeeded. Batched display was truncated; retry, failure-mode, key-selection and deadline references were subsequently reread and displayed fully."
+      }
+    },
+    {
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04/input/skills/retries-and-backoff/references/retry-in-java.md'",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04",
+      "exitCode": 0,
+      "result": {
+        "kind": "read",
+        "paths": [
+          "input/skills/retries-and-backoff/references/retry-in-java.md"
+        ],
+        "summary": "Reread successfully and inspected full content; retrieval result was stored and displayed separately to avoid batch truncation."
+      }
+    },
+    {
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04/input/skills/retries-and-backoff/references/retry-failure-modes.md'",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04",
+      "exitCode": 0,
+      "result": {
+        "kind": "read",
+        "paths": [
+          "input/skills/retries-and-backoff/references/retry-failure-modes.md"
+        ],
+        "summary": "Reread successfully and inspected full content; retrieval result was stored and displayed separately to avoid batch truncation."
+      }
+    },
+    {
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04/input/skills/idempotency/references/key-selection.md'",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04",
+      "exitCode": 0,
+      "result": {
+        "kind": "read",
+        "paths": [
+          "input/skills/idempotency/references/key-selection.md"
+        ],
+        "summary": "Reread successfully and inspected full content; retrieval result was stored and displayed separately to avoid batch truncation."
+      }
+    },
+    {
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04/input/skills/timeouts-and-deadlines/references/deadline-propagation.md'",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04",
+      "exitCode": 0,
+      "result": {
+        "kind": "read",
+        "paths": [
+          "input/skills/timeouts-and-deadlines/references/deadline-propagation.md"
+        ],
+        "summary": "Reread successfully and inspected full content; retrieval result was stored and displayed separately to avoid batch truncation."
+      }
+    },
+    {
+      "command": "node run.mjs Verification",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04/output",
+      "result": {
+        "chunk_id": "b0ccdb",
+        "wall_time_seconds": 0.7777707,
+        "exit_code": 0,
+        "original_token_count": 15,
+        "output": "Verification passed: 23 scenario groups (REPLAY_SAFE=true)\r\n"
+      },
+      "subprocesses": [
+        {
+          "command": "javac --release 17 -d classes Contract.java Ports.java RetryEngine.java Smoke.java Verification.java",
+          "timeoutMs": 20000,
+          "result": "exit 0; no diagnostics"
+        },
+        {
+          "command": "java -ea -cp classes Verification",
+          "timeoutMs": 20000,
+          "result": "exit 0; Verification passed: 23 scenario groups (REPLAY_SAFE=true)"
+        }
+      ],
+      "note": "Source-file ordering is determined by fs.readdirSync in unchanged run.mjs."
+    },
+    {
+      "command": "node run.mjs Smoke",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04/output",
+      "result": {
+        "chunk_id": "0510cb",
+        "wall_time_seconds": 0.6625544,
+        "exit_code": 0,
+        "original_token_count": 4,
+        "output": "Smoke passed\r\n"
+      }
+    },
+    {
+      "command": "Get-Content -LiteralPath 'RetryEngine.java'",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04/output",
+      "result": {
+        "chunk_id": "9c29ad",
+        "wall_time_seconds": 0.0984228,
+        "exit_code": 0,
+        "original_token_count": 822,
+        "output": "public final class RetryEngine {\r\n    public static Ports.Result execute(Ports.Intent intent, Ports.Policy p, Ports.Store store,\r\n            Ports.Operation operation, Ports.Runtime runtime) throws InterruptedException {\r\n        Ports.Snapshot initial = store.snapshot();\r\n        if (initial.state() == Ports.State.APPLIED || initial.state() == Ports.State.REJECTED) {\r\n            return new Ports.Result(initial, 0);\r\n        }\r\n\r\n        boolean unresolved = initial.state() == Ports.State.UNKNOWN;\r\n        int attempts = 0;\r\n        while (true) {\r\n            checkInterrupted();\r\n            if ((unresolved && !Contract.REPLAY_SAFE) || runtime.cancelled()\r\n                    || !fits(runtime.remainingNanos(), 0, p)) {\r\n                return stopped(store, unresolved, attempts);\r\n            }\r\n\r\n            Ports.Kind kind;\r\n            String receipt;\r\n            long wait;\r\n            checkInterrupted();\r\n            attempts++;\r\n            try (Ports.Reply reply = operation.call(intent, p.attemptNanos())) {\r\n                kind = reply.kind();\r\n                receipt = kind == Ports.Kind.OK ? reply.receipt() : null;\r\n                wait = Math.max(p.localWaitNanos(), reply.serverMinimumNanos());\r\n            } catch (InterruptedException interrupted) {\r\n                // Dispatch may already have applied; cancellation does not settle that outcome.\r\n                store.unknown();\r\n                throw interrupted;\r\n            }\r\n\r\n            if (kind == Ports.Kind.OK) {\r\n                store.applied(receipt);\r\n                return new Ports.Result(store.snapshot(), attempts);\r\n            }\r\n            if (kind == Ports.Kind.UNKNOWN) {\r\n                unresolved = true;\r\n                store.unknown();\r\n            }\r\n            if (kind == Ports.Kind.PERMANENT || attempts >= p.maxAttempts()\r\n                    || (unresolved && !Contract.REPLAY_SAFE)) {\r\n                return stopped(store, unresolved, attempts);\r\n            }\r\n\r\n            checkInterrupted();\r\n            if (runtime.cancelled() || !fits(runtime.remainingNanos(), wait, p)\r\n                    || !runtime.acquireRetry()) {\r\n                return stopped(store, unresolved, attempts);\r\n            }\r\n            checkInterrupted();\r\n            if (runtime.cancelled()) return stopped(store, unresolved, attempts);\r\n            runtime.sleep(wait);\r\n            // Sleep may overrun or be cancelled: admission is checked again before dispatch.\r\n        }\r\n    }\r\n\r\n    private static boolean fits(long remaining, long wait, Ports.Policy p) {\r\n        // Subtract only after comparison so even Long.MAX_VALUE inputs cannot overflow.\r\n        if (wait > remaining) return false;\r\n        remaining -= wait;\r\n        if (p.reserveNanos() > remaining) return false;\r\n        return p.attemptNanos() <= remaining - p.reserveNanos();\r\n    }\r\n\r\n    private static Ports.Result stopped(Ports.Store store, boolean unresolved, int attempts) {\r\n        if (unresolved) store.unknown();\r\n        else store.rejected();\r\n        return new Ports.Result(store.snapshot(), attempts);\r\n    }\r\n\r\n    private static void checkInterrupted() throws InterruptedException {\r\n        if (Thread.currentThread().isInterrupted()) throw new InterruptedException();\r\n    }\r\n}\r\n"
+      }
+    },
+    {
+      "command": "$names = @('Ports.java', 'Contract.java', 'Smoke.java', 'contract.md', 'run.mjs', 'README.md', 'REQUEST.md'); foreach ($name in $names) { $source = (Get-FileHash -Algorithm SHA256 -LiteralPath ('../input/project/' + $name)).Hash; $copy = (Get-FileHash -Algorithm SHA256 -LiteralPath $name).Hash; if ($source -ne $copy) { throw ('Immutable copy changed: ' + $name) }; Write-Output ($name + ': unchanged') }",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04/output",
+      "result": {
+        "chunk_id": "de5fce",
+        "wall_time_seconds": 0.0870738,
+        "exit_code": 0,
+        "original_token_count": 41,
+        "output": "Ports.java: unchanged\r\nContract.java: unchanged\r\nSmoke.java: unchanged\r\ncontract.md: unchanged\r\nrun.mjs: unchanged\r\nREADME.md: unchanged\r\nREQUEST.md: unchanged\r\n"
+      }
+    },
+    {
+      "command": "node -e 'const {spawnSync}=require(\"node:child_process\"); for(const command of [\"java\",\"javac\"]){const r=spawnSync(command,[\"-version\"],{encoding:\"utf8\",timeout:20000,windowsHide:true});process.stdout.write(r.stdout||\"\");process.stdout.write(r.stderr||\"\");if(r.error||r.status!==0)process.exit(1)}'",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04/output",
+      "result": {
+        "chunk_id": "56bcc4",
+        "wall_time_seconds": 0.2252345,
+        "exit_code": 0,
+        "original_token_count": 52,
+        "output": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\njavac 25.0.3\r\n"
+      }
+    },
+    {
+      "command": "node -e 'const fs=require(\"node:fs\");const {spawnSync}=require(\"node:child_process\");fs.mkdirSync(\"baseline-classes\",{recursive:true});const c=spawnSync(\"javac\",[\"--release\",\"17\",\"-d\",\"baseline-classes\",\"../input/project/Ports.java\",\"../input/project/Contract.java\",\"../input/project/RetryEngine.java\",\"Verification.java\"],{encoding:\"utf8\",timeout:20000,windowsHide:true});process.stdout.write(\"baseline javac exit=\"+c.status+\"\\n\"+(c.stdout||\"\")+(c.stderr||\"\"));if(c.error||c.status!==0)process.exit(1);const r=spawnSync(\"java\",[\"-ea\",\"-cp\",\"baseline-classes\",\"Verification\"],{encoding:\"utf8\",timeout:20000,windowsHide:true});process.stdout.write(\"baseline java exit=\"+r.status+\"\\n\"+(r.stdout||\"\")+(r.stderr||\"\"));if(r.error||r.status===0)process.exit(1)'",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04/output",
+      "result": {
+        "chunk_id": "f89026",
+        "wall_time_seconds": 0.7008552,
+        "exit_code": 0,
+        "original_token_count": 207,
+        "output": "baseline javac exit=0\nbaseline java exit=1\nException in thread \"main\" java.lang.AssertionError: authoritative receipt and terminal snapshots\r\n\tat Verification.test(Verification.java:191)\r\n\tat Verification.main(Verification.java:12)\r\nCaused by: java.lang.AssertionError: stable request: expected=Intent[id=stable-intent, payload=unchanged-payload], actual=Intent[id=stable-intent-0, payload=unchanged-payload]\r\n\tat Verification.require(Verification.java:194)\r\n\tat Verification.equal(Verification.java:197)\r\n\tat Verification$Fixture.lambda$run$0(Verification.java:242)\r\n\tat RetryEngine.execute(RetryEngine.java:6)\r\n\tat Verification$Fixture.run(Verification.java:239)\r\n\tat Verification.result(Verification.java:200)\r\n\tat Verification.lambda$main$0(Verification.java:14)\r\n\tat Verification.test(Verification.java:190)\r\n\t... 1 more\r\n"
+      },
+      "note": "Expected baseline Java failure; wrapper succeeds only when compilation succeeds and original implementation fails Verification."
+    },
+    {
+      "command": "node -e 'const fs=require(\"node:fs\");const result=JSON.parse(fs.readFileSync(\"result.json\",\"utf8\"));const words=fs.readFileSync(\"REVIEW.md\",\"utf8\").trim().split(/\\s+/).length;if(words>750)throw Error(\"Review word limit exceeded\");for(const p of [\"RetryEngine.java\",\"Verification.java\",\"REVIEW.md\",\"result.json\"]){if(!fs.existsSync(p))throw Error(\"Missing \"+p)}console.log(\"result.json valid; REVIEW.md words=\"+words+\"; deliverables present; task=\"+result.task)'",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04/output",
+      "result": {
+        "chunk_id": "8b89ac",
+        "wall_time_seconds": 0.0876437,
+        "exit_code": 0,
+        "original_token_count": 18,
+        "output": "result.json valid; REVIEW.md words=453; deliverables present; task=A04\n"
+      }
+    }
+  ],
+  "journalConventions": "Read results report file paths and successful completion rather than duplicating supplied documents. Test, version and immutable-file verification outputs are recorded verbatim. No unexecuted test is reported as passed.",
+  "writeOperations": [
+    {
+      "tool": "apply_patch",
+      "files": [
+        "output/RetryEngine.java"
+      ],
+      "result": "Applied implementation repair"
+    },
+    {
+      "tool": "apply_patch",
+      "files": [
+        "output/Verification.java"
+      ],
+      "result": "Added executable 23-group regression"
+    },
+    {
+      "tool": "run.mjs",
+      "files": [
+        "output/classes/"
+      ],
+      "result": "Compiled delivered Java sources for Verification and Smoke"
+    },
+    {
+      "tool": "node baseline wrapper",
+      "files": [
+        "output/baseline-classes/"
+      ],
+      "result": "Compiled immutable original source with the regression; original failed as expected"
+    },
+    {
+      "tool": "apply_patch",
+      "files": [
+        "output/REVIEW.md",
+        "output/result.json"
+      ],
+      "result": "Created review and decision/evidence/limits summary"
+    },
+    {
+      "tool": "apply_patch",
+      "files": [
+        "output/REVIEW.md"
+      ],
+      "result": "Corrected evidence-file wording; review validated at 453 words"
+    },
+    {
+      "tool": "apply_patch",
+      "files": [
+        "output/execution.json"
+      ],
+      "result": "Final journal creation; this is the final write"
+    }
+  ],
+  "validation": {
+    "actualDeliverable": "node run.mjs Verification passed; node run.mjs Smoke passed",
+    "baseline": "Original implementation rejected at stable-intent regression assertion",
+    "immutability": "Seven protected copies match input by SHA-256",
+    "language": "JDK/javac Temurin 25.0.3, javac --release 17",
+    "limits": "Every Java subprocess ran through a 20000 ms spawnSync timeout; no Java process timed out",
+    "journal": "Serialized and parsed as JSON before final write"
+  },
+  "unexecuted": [
+    "Alternative REPLAY_SAFE=false build",
+    "Real provider/storage/physical cancellation or fleet fault testing",
+    "Repository npm run verify"
+  ],
+  "limitations": [
+    "Only supplied local exercise and skill snapshots were used; links and other skill routes were not opened",
+    "Simulation validates component control flow under supplied contracts, not provider guarantees or store durability",
+    "No provider API version, retention, database isolation or physical cancellation evidence supplied"
+  ],
+  "delegationUsed": false,
+  "networkUsed": false,
+  "writesOutsideOutput": false,
+  "processesStopped": true,
+  "allWritesStopped": true
+}

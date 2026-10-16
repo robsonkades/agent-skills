@@ -124,6 +124,7 @@ pipeline cleanup. Examples are partial snippets with application types and impor
   virtual threads with a concurrency limit and preserves encounter order. It is the supported
   extension point on those releases. Keep an adequate existing `Spliterator` or loop when it
   fits the source/transform contract or the supported Java baseline cannot use gatherers.
+  Retained prefixes must not alias state that later steps mutate; see the gatherers reference.
 
 - Parallel correctness requires more than “no shared list”: reduction/collector operations need
   associative combination, a true identity, compatible accumulator/combiner behavior, and honest

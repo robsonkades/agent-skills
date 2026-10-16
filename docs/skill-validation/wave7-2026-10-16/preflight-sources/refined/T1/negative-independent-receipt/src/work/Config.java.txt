@@ -1,0 +1,17 @@
+package work;
+import javax.sql.DataSource;
+import org.springframework.context.annotation.*;
+import org.springframework.jdbc.datasource.*;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
+@Configuration @EnableTransactionManagement(proxyTargetClass=true)
+public class Config {
+ @Bean public DataSource dataSource(){return new DriverManagerDataSource("jdbc:h2:mem:booking;DB_CLOSE_DELAY=-1;LOCK_TIMEOUT=1000", "sa", "");}
+ @Bean public JdbcTemplate jdbc(DataSource ds){return new JdbcTemplate(ds);}
+ @Bean public PlatformTransactionManager businessTx(DataSource ds){return new DataSourceTransactionManager(ds);}
+ @Bean public ReceiptObserver receiptObserver(){return id->{};}
+ @Bean public ReceiptWriter receiptWriter(JdbcTemplate jdbc,ReceiptObserver observer){return new ReceiptWriter(jdbc,observer);}
+ @Bean public BookingListener bookingListener(ReceiptWriter writer){return new BookingListener(writer);}
+ @Bean public BookingService bookingService(JdbcTemplate jdbc,org.springframework.context.ApplicationEventPublisher events){return new BookingService(jdbc,events);}
+}

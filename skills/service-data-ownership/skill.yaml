@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: service-data-ownership
-version: 1.0.0
+version: 1.0.1
 description: >-
   Define and verify data authority and access contracts when services, jobs or
   integrations share writers, read private tables, or bypass supported interfaces.

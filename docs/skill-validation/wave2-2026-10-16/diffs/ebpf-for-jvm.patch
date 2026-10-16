@@ -1,0 +1,49 @@
+diff --git a/skills/ebpf-for-jvm/SKILL.md b/skills/ebpf-for-jvm/SKILL.md
+index 7d3ffa8..50223d6 100644
+--- a/skills/ebpf-for-jvm/SKILL.md
++++ b/skills/ebpf-for-jvm/SKILL.md
+@@ -115,7 +115,9 @@ Scoping choices:
+   matching a pod parent's ID does not include child-container IDs. Verify hierarchy, helper
+   support, migration and recreation; see the interpretation reference for those semantics;
+ - process name (`comm == "java"`) is neither unique nor durable;
+-- PID namespaces change visible identifiers; record host and container mappings.
++- PID namespaces change visible identifiers; normalize membership and pairing keys before
++  comparing builtins with tracepoint subject fields. Record host/container mappings; the
++  interpretation reference explains the bpftrace 0.24 namespace distinction.
+ 
+ System-wide probes are legitimate for interference/capacity questions, but require stronger
+ privacy, overhead, and tenant authorization. “Always filter by PID” is wrong for host-level
+diff --git a/skills/ebpf-for-jvm/references/signal-interpretation.md b/skills/ebpf-for-jvm/references/signal-interpretation.md
+index ac68f0f..fb6024b 100644
+--- a/skills/ebpf-for-jvm/references/signal-interpretation.md
++++ b/skills/ebpf-for-jvm/references/signal-interpretation.md
+@@ -32,6 +32,16 @@ bpftrace builtins and tracepoint fields are separate APIs. For a current-task pr
+ `next_pid`, or wakeup `pid` names subject TIDs encoded by that tracepoint. A raw tracepoint may
+ have different arguments. Always use `-lv`/tracefs format and the matching documentation.
+ 
++In [bpftrace 0.24](https://bpftrace.org/docs/release_024/stdlib#pid), bare `pid`/`tid` default to
++the collector's PID namespace; `pid(init)`/`tid(init)` select the initial namespace. Linux
++**6.12** [scheduler subject fields](https://github.com/torvalds/linux/blob/v6.12/include/trace/events/sched.h)
++use the [initial-namespace task IDs](https://github.com/torvalds/linux/blob/v6.12/include/linux/pid.h).
++Normalize IDs before joining those APIs: a membership map keyed by container TID 17 will not
++match that thread's `next_pid` of 41802 and may instead match an unrelated host TID 17. Check
++the target kernel's field semantics, not just field types. `tid(init)` still identifies the
++current task; it does not turn a wakeup probe's current task into the woken subject. Validate
++target inclusion and non-target exclusion in the collector's actual PID namespace.
++
+ PID/TID values can be reused. Add process start identity, cgroup generation, or a bounded
+ collection window/cleanup strategy when stale map entries could cross lifetimes.
+ 
+diff --git a/skills/ebpf-for-jvm/skill.yaml b/skills/ebpf-for-jvm/skill.yaml
+index a25b18c..e4eabb1 100644
+--- a/skills/ebpf-for-jvm/skill.yaml
++++ b/skills/ebpf-for-jvm/skill.yaml
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: ebpf-for-jvm
+-version: 2.1.4
++version: 2.1.5
+ description: >-
+   Using eBPF/bpftrace to measure kernel-visible behavior around a JVM without inventing
+   attribution: selecting stable tracepoints versus kprobes/uprobes/USDT, scoping by

@@ -1,0 +1,117 @@
+{
+  "cases": [
+    {
+      "id": "DBG-C1",
+      "directory": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-validation-ujPBF2\\debugging\\case-inputs\\DBG-C1",
+      "task": "TASK.md",
+      "requestedArtifact": "report.md",
+      "files": [
+        {
+          "path": "TASK.md",
+          "sha256": "af3a8504fa6f3be7c8f7fa2ed02efef5e0813651bd736b489511128c6b451a29"
+        },
+        {
+          "path": "README.md",
+          "sha256": "420fcde68e469090f6444a374a262e6070fff431e66105a996a992832c1d442b"
+        },
+        {
+          "path": "report.md",
+          "sha256": "82ffa6c81eb6fc2504715de65b73c33039143a34606d97343e9b4e4efabf16a2"
+        },
+        {
+          "path": "incident/notes.md",
+          "sha256": "34a97009183940cc0f4f49e9114ad613bda668a8ddd7bed1b4dd4d46efcd49cb"
+        },
+        {
+          "path": "config/app.properties",
+          "sha256": "488774e66aa200861a268eb10cffce5b94a0d4aa8c3a5d9ce94f12cd1d9903c5"
+        },
+        {
+          "path": "data/catalog.csv",
+          "sha256": "a789c60cce1cfbfde0c520c08a4e8f0926785ba7137bea71706c92c07268a604"
+        },
+        {
+          "path": "data/requests.csv",
+          "sha256": "02b934e05256a8a7170b2d14a5c4c99e9d39c4388b941be73bb8616ad21322bc"
+        },
+        {
+          "path": "src/Quote.java",
+          "sha256": "9a24d522736d62922b0a0936cc2adf8b35e11dfcc302c643a1ecc3a7112ddf29"
+        },
+        {
+          "path": "src/QuoteService.java",
+          "sha256": "996516818319ee6823d2def81f6f772c643ebf0b2b4faacfab641e3f06f6fc43"
+        },
+        {
+          "path": "src/Replay.java",
+          "sha256": "bf1912c58dd3fcbd172b9f86271a94703b8511b60c8209584fe272278e6a9deb"
+        },
+        {
+          "path": "runtime/overrides.properties",
+          "sha256": "b36ae9b9b5e41e62e859bd1d4916bfa6dcdfae1f67581888bf381ac7648dceb5"
+        }
+      ]
+    },
+    {
+      "id": "DBG-C2",
+      "directory": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-validation-ujPBF2\\debugging\\case-inputs\\DBG-C2",
+      "task": "TASK.md",
+      "requestedArtifact": "report.md",
+      "files": [
+        {
+          "path": "TASK.md",
+          "sha256": "af3a8504fa6f3be7c8f7fa2ed02efef5e0813651bd736b489511128c6b451a29"
+        },
+        {
+          "path": "README.md",
+          "sha256": "420fcde68e469090f6444a374a262e6070fff431e66105a996a992832c1d442b"
+        },
+        {
+          "path": "report.md",
+          "sha256": "82ffa6c81eb6fc2504715de65b73c33039143a34606d97343e9b4e4efabf16a2"
+        },
+        {
+          "path": "incident/notes.md",
+          "sha256": "34a97009183940cc0f4f49e9114ad613bda668a8ddd7bed1b4dd4d46efcd49cb"
+        },
+        {
+          "path": "config/app.properties",
+          "sha256": "488774e66aa200861a268eb10cffce5b94a0d4aa8c3a5d9ce94f12cd1d9903c5"
+        },
+        {
+          "path": "data/catalog.csv",
+          "sha256": "a789c60cce1cfbfde0c520c08a4e8f0926785ba7137bea71706c92c07268a604"
+        },
+        {
+          "path": "data/requests.csv",
+          "sha256": "02b934e05256a8a7170b2d14a5c4c99e9d39c4388b941be73bb8616ad21322bc"
+        },
+        {
+          "path": "src/Quote.java",
+          "sha256": "9a24d522736d62922b0a0936cc2adf8b35e11dfcc302c643a1ecc3a7112ddf29"
+        },
+        {
+          "path": "src/QuoteService.java",
+          "sha256": "996516818319ee6823d2def81f6f772c643ebf0b2b4faacfab641e3f06f6fc43"
+        },
+        {
+          "path": "src/Replay.java",
+          "sha256": "bf1912c58dd3fcbd172b9f86271a94703b8511b60c8209584fe272278e6a9deb"
+        },
+        {
+          "path": "runtime/overrides.properties",
+          "sha256": "fc3559492333836da75b1aa414cdc7d16e9773c234493b2dbb14cda65856752a"
+        }
+      ]
+    }
+  ],
+  "pairChange": {
+    "file": "runtime/overrides.properties",
+    "key": "quote.cache.enabled",
+    "values": [
+      "true",
+      "false"
+    ]
+  },
+  "prerequisites": "Java 17+ only if replay is executed; source/artifact review is also possible. Give each actor a fresh disposable copy of only its case directory and the chosen skill treatment. No criteria, reviewer logs, other case or prior answers."
+}

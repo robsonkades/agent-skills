@@ -1,0 +1,569 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "enterprise-transactions",
+  "ownedPath": "skills/enterprise-transactions/**",
+  "repository": "C:/git/agent-skills",
+  "reviewer": "/root/quality14",
+  "date": "2026-10-16",
+  "allWritesStopped": true,
+  "activeBackgroundProcesses": 0,
+  "scope": "Exactly this skill package. Supported improvement to effective local JDBC transaction-timeout propagation; no package-manager, registry, neighboring skill or runtime configuration changes.",
+  "procedure": {
+    "readCompletePrompt": true,
+    "readCompletePackage": true,
+    "documents": [
+      "AGENTS.md",
+      "docs/skill-review-prompt.md",
+      "docs/parallel-skill-reviews.md",
+      "docs/skill-validation/wave4-2026-10-16/review-brief.md",
+      "skills/skill-engineering/SKILL.md",
+      "skill-engineering evidence-and-confidence, evaluation, resource-design and anti-patterns references"
+    ],
+    "comparativeLessons": "Reused/consulted comparative research, roadmap and cumulative wave results: popularity and added prose do not establish quality; follow the effective selected factory; preserve adequate alternate behavior; prior development comparisons showed no measured incremental gain.",
+    "findingsSentBeforeEdits": true,
+    "noSubdelegation": true
+  },
+  "baseline": {
+    "wave4Snapshot": "docs/skill-validation/wave4-2026-10-16/baseline.json",
+    "snapshotCapturedAt": "2026-10-16T15:31:27.481Z",
+    "snapshotHead": "bbb7d996a929e81baf735bbaab5b6e3fbf6e8503",
+    "committedVersion": "1.3.4",
+    "assignmentVersion": "1.3.4",
+    "preExistingVersionBump": false,
+    "preExistingChanges": [],
+    "status": "Clean owned package: no staged, unstaged or untracked differences at assignment; actual hashes matched selected wave4 baseline.",
+    "ownedInitialHashes": [
+      {
+        "path": "skills/enterprise-transactions/SKILL.md",
+        "sha256": "67414262a5615f5de5b62bf95e4b63530e23b40747e10630eb6ce21075b5e91e"
+      },
+      {
+        "path": "skills/enterprise-transactions/skill.yaml",
+        "sha256": "0bf34e5407ed1cdafed405946a76deaff2820982de269671fe88e44a629d5f58"
+      },
+      {
+        "path": "skills/enterprise-transactions/references/boundaries-and-propagation.md",
+        "sha256": "b856c9179f5cbe37add4ac5ff72545cb7abec1400f102f77aa23b7a1190996d8"
+      },
+      {
+        "path": "skills/enterprise-transactions/references/isolation-and-recovery.md",
+        "sha256": "592bcd66d86c16193f9644c5157826e86142e6c9f1a8e729f3270cb6d41fb7b0"
+      }
+    ],
+    "inspectionArtifact": "C:/Users/robso/AppData/Local/Temp/enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd/evaluator/review-record.json"
+  },
+  "domainCriteria": [
+    "Trace actual transaction manager, caller, configuration and JDBC access path; an active transaction alone is not proof of statement-timeout propagation.",
+    "Separate transaction timeout, statement timeout, pool acquisition, driver/database enforcement, arbitrary Java execution and remote-call deadlines.",
+    "Preserve atomicity, rollback, resources and adequate existing timeout integration; do not prescribe a new abstraction by default.",
+    "Distinguish framework/API behavior observed with a recording JDBC double from actual driver/database cancellation, ORM, commit/rollback, lock release and whole-method timing.",
+    "Keep existing enterprise transaction architectural scope, isolation/recovery mechanisms and external-effect distinctions."
+  ],
+  "findingsCorrected": [
+    {
+      "location": "skills/enterprise-transactions/SKILL.md:132",
+      "finding": "The existing duration/network-cost rules and timeout mentions did not guard against treating a transaction timeout as a whole-method deadline or equating connection participation with statement-timeout setup.",
+      "consequence": "An agent could trust a configured timeout on a manually prepared SQL path that never applies it, or assume HTTP/Java work is interrupted at that time.",
+      "change": "Added a short manager/resource/access-path guard and routed the timeout case to the existing boundaries reference.",
+      "evidence": "Spring 6.2.19 DataSourceTransactionManager and DataSourceUtils contracts; focused actual Spring 6.2.12 technical controls."
+    },
+    {
+      "location": "skills/enterprise-transactions/references/boundaries-and-propagation.md:35",
+      "finding": "Propagation section covered joining transaction attributes and obtaining the correct connection, but did not describe the separate JDBC statement timeout enforcement mechanism.",
+      "consequence": "DataSourceUtils.getConnection is sufficient for the fixture's transaction participation but not its manually created statement timeout. An inactive correct implementation can mask the selected broken path in a superficial review.",
+      "change": "Added What enforces a timeout: supported propagation paths, preserving already adequate integration, distinct timeout enforcement points, JTA/JPA limits and target-driver/database validation conditions.",
+      "evidence": "Versioned 6.2.19 Javadoc/source. Case pair changes only the selected Statements factory via configuration; negative and adequate paths both inspected/executed with actual Spring 6.2.12."
+    }
+  ],
+  "findingsRemaining": [],
+  "filesChangedByReviewer": [
+    "skills/enterprise-transactions/SKILL.md",
+    "skills/enterprise-transactions/references/boundaries-and-propagation.md",
+    "skills/enterprise-transactions/skill.yaml"
+  ],
+  "preExistingChangesPreserved": [],
+  "unchangedOwnedFile": "skills/enterprise-transactions/references/isolation-and-recovery.md",
+  "preservedCapabilities": [
+    "Application-service atomic unit with legitimate repository/listener/job boundaries and actual resource enlistment.",
+    "Proxy/self-invocation and asynchronous thread-context constraints; checked-exception rules, rollback-only state and outside-transaction verification.",
+    "REQUIRED/REQUIRES_NEW/NESTED semantics, nested resource demand, pool/lock risk, savepoint/JPA caveats and lazy physical connection acquisition.",
+    "Non-enlisted HTTP/message effects, outbox/durable operation identity, unknown outcomes, compensation and recovery.",
+    "After-commit listener versus direct synchronization behavior, best-effort versus durable follow-up and independent commit gaps.",
+    "Batch atomicity, durable chunks/checkpoints and intermediate-state constraints.",
+    "Provider-dependent read-only behavior and effective engine/isolation settings.",
+    "Existing isolation/anomaly table, stale reads across transactions, write-skew protocols, error classification, full-transaction retries, deadlock evidence and XA coordination.",
+    "Preserve adequate designs and report missing runtime evidence rather than infer guarantees from annotations."
+  ],
+  "capabilitiesReplacedOrRemoved": [],
+  "version": {
+    "committed": "1.3.4",
+    "assignment": "1.3.4",
+    "final": "1.3.5",
+    "rationale": "One patch bump for changed instructional content, consistent with repository policy. No pre-existing bump; descriptions unchanged and synchronized.",
+    "sharedGeneratedData": "Not edited; coordinator owns index generation."
+  },
+  "validation": {
+    "executedStructuralChecks": [
+      {
+        "check": "Official loadPackageFromDirectory + validatePackage with ClaudeCodeAdapter and CodexAdapter",
+        "result": "PASS; zero issues",
+        "stdout": "C:/Users/robso/AppData/Local/Temp/enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd/evidence/structural.stdout.txt",
+        "stderr": "C:/Users/robso/AppData/Local/Temp/enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd/evidence/structural.stderr.txt"
+      },
+      {
+        "check": "Reference routing and local Markdown links/anchors",
+        "result": "PASS; two references routed, two links checked"
+      },
+      {
+        "check": "Prettier --check on exactly four assigned files",
+        "result": "PASS",
+        "stdout": "C:/Users/robso/AppData/Local/Temp/enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd/evidence/format.stdout.txt",
+        "stderr": "C:/Users/robso/AppData/Local/Temp/enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd/evidence/format.stderr.txt"
+      },
+      {
+        "check": "git diff --check -- skills/enterprise-transactions",
+        "result": "PASS",
+        "stdout": "C:/Users/robso/AppData/Local/Temp/enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd/evidence/diff-check.stdout.txt",
+        "stderr": "C:/Users/robso/AppData/Local/Temp/enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd/evidence/diff-check.stderr.txt"
+      },
+      {
+        "check": "Pair identity",
+        "result": "PASS; four actor files byte-identical, only application.properties differs: basic versus remaining",
+        "artifact": "C:/Users/robso/AppData/Local/Temp/enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd/evidence/pair-check.json"
+      },
+      {
+        "check": "Final owned diff/staged diff/status inspected",
+        "result": "Exactly three owned files changed; no staged changes; isolation-and-recovery unchanged"
+      }
+    ],
+    "executedTechnicalChecks": {
+      "runtime": "Temurin OpenJDK 25.0.3+9; Spring Framework 6.2.12 from existing Maven cache",
+      "compilation": "Two successful javac --release 17 compilations of the exact actor source plus hidden TimeoutProbe; no package executable snippet was added or changed.",
+      "runs": [
+        {
+          "case": "case-a",
+          "configuration": "batch.statements=basic",
+          "assertions": 24,
+          "stdout": "C:/Users/robso/AppData/Local/Temp/enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd/evidence/case-a-probe.stdout.txt",
+          "stderr": "C:/Users/robso/AppData/Local/Temp/enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd/evidence/case-a-probe.stderr.txt",
+          "observed": "Both fresh and deterministically expired holder paths used the bound connection, called no statement timeout setter, requested one execution and one commit on the recording JDBC connection; statements/connections were closed and thread state cleared."
+        },
+        {
+          "case": "case-b",
+          "configuration": "batch.statements=remaining",
+          "assertions": 23,
+          "stdout": "C:/Users/robso/AppData/Local/Temp/enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd/evidence/case-b-probe.stdout.txt",
+          "stderr": "C:/Users/robso/AppData/Local/Temp/enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd/evidence/case-b-probe.stderr.txt",
+          "observed": "Fresh path applied remaining timeout then requested execution/commit. Expired holder produced TransactionTimedOutException before execution, requested rollback, closed the statement/connection and cleared thread state."
+        }
+      ],
+      "totalAssertions": 47,
+      "negativeControls": "Same bound connection and active transaction in the basic path do not configure the statement timeout; forced deadline expiry alone does not stop that path from reaching the recording connection's commit.",
+      "adequateAlternative": "Existing RemainingStatements path uses applyTransactionTimeout and closes a created statement if setup fails; preserved rather than forced into a new abstraction.",
+      "limits": "Actual Spring framework code was exercised against recording JDBC interfaces. No real SQL, persisted state, query cancellation, lock release, pool waiting, remote HTTP call, ORM or hard wall-clock deadline was exercised. The expired-deadline control sets ConnectionHolder timeout into the past directly; it does not wait for or measure a real database operation."
+    },
+    "executedAgentBehavioralEvaluations": [],
+    "structuredWalkthroughs": [
+      "case-a: resolve actual configured factory, diagnose missing propagation without confusing it with transaction enlistment, make a focused correction while preserving atomicity and cleanup.",
+      "case-b: identify the selected adequate helper path and choose no required change for the supplied requirement; keep missing driver/database evidence explicit."
+    ],
+    "measuredAgentGain": false,
+    "commands": [
+      {
+        "label": "case-a-compile",
+        "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+        "args": [
+          "--release",
+          "17",
+          "-cp",
+          "C:/Users/robso/.m2/repository/org/springframework/spring-core/6.2.12/spring-core-6.2.12.jar;C:/Users/robso/.m2/repository/org/springframework/spring-beans/6.2.12/spring-beans-6.2.12.jar;C:/Users/robso/.m2/repository/org/springframework/spring-tx/6.2.12/spring-tx-6.2.12.jar;C:/Users/robso/.m2/repository/org/springframework/spring-jdbc/6.2.12/spring-jdbc-6.2.12.jar;C:/Users/robso/.m2/repository/org/springframework/spring-jcl/6.2.12/spring-jcl-6.2.12.jar",
+          "-d",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd\\classes\\case-a",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd\\inputs\\case-a\\BatchWrite.java",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd\\evaluator\\TimeoutProbe.java"
+        ],
+        "workingDirectory": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd\\evidence\\case-a-compile.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd\\evidence\\case-a-compile.stderr.txt"
+      },
+      {
+        "label": "case-a-probe",
+        "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+        "args": [
+          "-cp",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd\\classes\\case-a;C:/Users/robso/.m2/repository/org/springframework/spring-core/6.2.12/spring-core-6.2.12.jar;C:/Users/robso/.m2/repository/org/springframework/spring-beans/6.2.12/spring-beans-6.2.12.jar;C:/Users/robso/.m2/repository/org/springframework/spring-tx/6.2.12/spring-tx-6.2.12.jar;C:/Users/robso/.m2/repository/org/springframework/spring-jdbc/6.2.12/spring-jdbc-6.2.12.jar;C:/Users/robso/.m2/repository/org/springframework/spring-jcl/6.2.12/spring-jcl-6.2.12.jar",
+          "TimeoutProbe",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd\\inputs\\case-a"
+        ],
+        "workingDirectory": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd\\evidence\\case-a-probe.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd\\evidence\\case-a-probe.stderr.txt"
+      },
+      {
+        "label": "case-b-compile",
+        "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+        "args": [
+          "--release",
+          "17",
+          "-cp",
+          "C:/Users/robso/.m2/repository/org/springframework/spring-core/6.2.12/spring-core-6.2.12.jar;C:/Users/robso/.m2/repository/org/springframework/spring-beans/6.2.12/spring-beans-6.2.12.jar;C:/Users/robso/.m2/repository/org/springframework/spring-tx/6.2.12/spring-tx-6.2.12.jar;C:/Users/robso/.m2/repository/org/springframework/spring-jdbc/6.2.12/spring-jdbc-6.2.12.jar;C:/Users/robso/.m2/repository/org/springframework/spring-jcl/6.2.12/spring-jcl-6.2.12.jar",
+          "-d",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd\\classes\\case-b",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd\\inputs\\case-b\\BatchWrite.java",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd\\evaluator\\TimeoutProbe.java"
+        ],
+        "workingDirectory": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd\\evidence\\case-b-compile.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd\\evidence\\case-b-compile.stderr.txt"
+      },
+      {
+        "label": "case-b-probe",
+        "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+        "args": [
+          "-cp",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd\\classes\\case-b;C:/Users/robso/.m2/repository/org/springframework/spring-core/6.2.12/spring-core-6.2.12.jar;C:/Users/robso/.m2/repository/org/springframework/spring-beans/6.2.12/spring-beans-6.2.12.jar;C:/Users/robso/.m2/repository/org/springframework/spring-tx/6.2.12/spring-tx-6.2.12.jar;C:/Users/robso/.m2/repository/org/springframework/spring-jdbc/6.2.12/spring-jdbc-6.2.12.jar;C:/Users/robso/.m2/repository/org/springframework/spring-jcl/6.2.12/spring-jcl-6.2.12.jar",
+          "TimeoutProbe",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd\\inputs\\case-b"
+        ],
+        "workingDirectory": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd\\evidence\\case-b-probe.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd\\evidence\\case-b-probe.stderr.txt"
+      },
+      {
+        "label": "structural",
+        "executable": "C:\\Program Files\\nodejs\\node.exe",
+        "args": [
+          "--input-type=module",
+          "--eval",
+          "import assert from 'node:assert/strict';\nimport {readFileSync, readdirSync, existsSync} from 'node:fs';\nimport path from 'node:path';\nimport {loadPackageFromDirectory} from './packages/core/src/application/package-loader.ts';\nimport {validatePackage} from './packages/core/src/application/validate-package.ts';\nimport {NodeFileSystem} from './packages/node/src/file-system.ts';\nimport {ClaudeCodeAdapter} from './packages/adapter-claude/src/index.ts';\nimport {CodexAdapter} from './packages/adapter-codex/src/index.ts';\nconst root='skills/enterprise-transactions';\nconst loaded=await loadPackageFromDirectory(new NodeFileSystem(),root,{strict:true});\nconst report=validatePackage(loaded.pkg,{directoryName:'enterprise-transactions',adapters:[new ClaudeCodeAdapter(),new CodexAdapter()]});\nconst issues=[...loaded.issues,...report.issues];\nassert.equal(issues.length,0,JSON.stringify(issues));\nconst entry=readFileSync(path.join(root,'SKILL.md'),'utf8');\nconst refs=readdirSync(path.join(root,'references'));\nfor(const ref of refs) assert.ok(entry.includes('references/'+ref),'unrouted '+ref);\nlet links=0;\nfor(const file of ['SKILL.md',...refs.map(f=>'references/'+f)]) {\n const body=readFileSync(path.join(root,file),'utf8');\n for(const m of body.matchAll(/\\]\\(([^)]+)\\)/g)) {\n  const href=m[1];\n  if(/^(?:<)?[a-z]+:\\/\\//i.test(href)) continue;\n  const [target,anchor]=href.split('#');\n  const resolved=target?path.resolve(root,path.dirname(file),target):path.resolve(root,file);\n  assert.ok(existsSync(resolved),file+': '+href);\n  if(anchor) {\n   const targetText=readFileSync(resolved,'utf8');\n   const anchors=[...targetText.matchAll(/^#+ (.+)$/gm)].map(m=>m[1].toLowerCase().replace(/[^a-z0-9\\s-]/g,'').trim().replace(/\\s+/g,'-'));\n   assert.ok(anchors.includes(anchor),file+': '+href);\n  }\n  links++;\n }\n}\nconsole.log(JSON.stringify({skill:'enterprise-transactions',version:loaded.pkg.manifest.version,issues,referenceFilesRouted:refs.length,localLinksAndAnchorsChecked:links},null,2));\n"
+        ],
+        "workingDirectory": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd\\evidence\\structural.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd\\evidence\\structural.stderr.txt"
+      },
+      {
+        "label": "format",
+        "executable": "C:\\Program Files\\nodejs\\node.exe",
+        "args": [
+          "node_modules/prettier/bin/prettier.cjs",
+          "--check",
+          "skills/enterprise-transactions/SKILL.md",
+          "skills/enterprise-transactions/skill.yaml",
+          "skills/enterprise-transactions/references/boundaries-and-propagation.md",
+          "skills/enterprise-transactions/references/isolation-and-recovery.md"
+        ],
+        "workingDirectory": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd\\evidence\\format.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd\\evidence\\format.stderr.txt"
+      },
+      {
+        "label": "diff-check",
+        "executable": "git",
+        "args": [
+          "diff",
+          "--check",
+          "--",
+          "skills/enterprise-transactions"
+        ],
+        "workingDirectory": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd\\evidence\\diff-check.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd\\evidence\\diff-check.stderr.txt"
+      },
+      {
+        "label": "final-diff",
+        "executable": "git",
+        "args": [
+          "diff",
+          "--",
+          "skills/enterprise-transactions"
+        ],
+        "workingDirectory": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd\\evidence\\final-diff.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd\\evidence\\final-diff.stderr.txt"
+      },
+      {
+        "label": "final-status",
+        "executable": "git",
+        "args": [
+          "status",
+          "--short",
+          "--",
+          "skills/enterprise-transactions"
+        ],
+        "workingDirectory": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd\\evidence\\final-status.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd\\evidence\\final-status.stderr.txt"
+      },
+      {
+        "label": "staged-diff",
+        "executable": "git",
+        "args": [
+          "diff",
+          "--cached",
+          "--",
+          "skills/enterprise-transactions"
+        ],
+        "workingDirectory": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd\\evidence\\staged-diff.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd\\evidence\\staged-diff.stderr.txt"
+      },
+      {
+        "label": "committed-SKILL.md",
+        "executable": "git",
+        "args": [
+          "show",
+          "HEAD:skills/enterprise-transactions/SKILL.md"
+        ],
+        "workingDirectory": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd\\evidence\\committed-SKILL.md.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd\\evidence\\committed-SKILL.md.stderr.txt"
+      },
+      {
+        "label": "committed-skill.yaml",
+        "executable": "git",
+        "args": [
+          "show",
+          "HEAD:skills/enterprise-transactions/skill.yaml"
+        ],
+        "workingDirectory": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd\\evidence\\committed-skill.yaml.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd\\evidence\\committed-skill.yaml.stderr.txt"
+      },
+      {
+        "label": "committed-references_boundaries-and-propagation.md",
+        "executable": "git",
+        "args": [
+          "show",
+          "HEAD:skills/enterprise-transactions/references/boundaries-and-propagation.md"
+        ],
+        "workingDirectory": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd\\evidence\\committed-references_boundaries-and-propagation.md.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd\\evidence\\committed-references_boundaries-and-propagation.md.stderr.txt"
+      },
+      {
+        "label": "committed-references_isolation-and-recovery.md",
+        "executable": "git",
+        "args": [
+          "show",
+          "HEAD:skills/enterprise-transactions/references/isolation-and-recovery.md"
+        ],
+        "workingDirectory": "C:/git/agent-skills",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd\\evidence\\committed-references_isolation-and-recovery.md.stdout.txt",
+        "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd\\evidence\\committed-references_isolation-and-recovery.md.stderr.txt"
+      }
+    ],
+    "exactReproductionCommand": "node 'C:/Users/robso/AppData/Local/Temp/enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd/evaluator/run-local.mjs'",
+    "workingDirectory": "C:/git/agent-skills",
+    "allCapturedStderrEmpty": true,
+    "compileOrTechnicalTestFailures": []
+  },
+  "cases": {
+    "knownDevelopmentCases": true,
+    "heldOutCases": false,
+    "actorEvaluationsRun": 0,
+    "criteriaFile": "C:/Users/robso/AppData/Local/Temp/enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd/evaluator/criteria.json",
+    "technicalProbeFile": "C:/Users/robso/AppData/Local/Temp/enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd/evaluator/TimeoutProbe.java",
+    "pairDifference": "One configuration value only: batch.statements=basic versus remaining. Same Java, dependencies, task and requirement.",
+    "actorInputFiles": [
+      "TASK.md",
+      "CONTRACT.md",
+      "BatchWrite.java",
+      "dependencies.txt",
+      "application.properties"
+    ],
+    "caseA": {
+      "id": "case-a",
+      "inputDirectory": "C:/Users/robso/AppData/Local/Temp/enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd/inputs/case-a",
+      "taskFile": "C:/Users/robso/AppData/Local/Temp/enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd/inputs/case-a/TASK.md",
+      "criteriaKey": "cases[0]"
+    },
+    "caseB": {
+      "id": "case-b",
+      "inputDirectory": "C:/Users/robso/AppData/Local/Temp/enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd/inputs/case-b",
+      "taskFile": "C:/Users/robso/AppData/Local/Temp/enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd/inputs/case-b/TASK.md",
+      "criteriaKey": "cases[1]"
+    },
+    "coordinatorEvaluationInstructions": "Provide only one copied input directory and selected skill variant per actor. Withhold evaluator/, evidence/, this handoff and prior results. Evaluate source/config edits or justified no-change, selected-factory reasoning, scope and honest runtime limits. The supplied sources are ordinary project artifacts; no real DB or installation is required.",
+    "expectedDecisionContrast": "Missing timeout setup in the selected basic path merits a focused fix. Selecting the already adequate remaining path merits preservation. Both require explicit limits on driver/database enforcement.",
+    "observableFailureConditions": [
+      "Inspecting only inactive implementation",
+      "Assuming active transaction/getConnection implies statement timeout",
+      "Changing atomicity/isolation/runtime baseline unnecessarily",
+      "Leaking statement on setup failure",
+      "Claiming DB/ORM cancellation or hard method deadline from a recording double"
+    ]
+  },
+  "sources": [
+    {
+      "url": "https://docs.spring.io/spring-framework/docs/6.2.19/javadoc-api/org/springframework/jdbc/datasource/DataSourceTransactionManager.html",
+      "version": "Spring Framework 6.2.19",
+      "section": "Class contract",
+      "verified": "Local JDBC transaction timeout is applied via JDBC statement timeouts, requiring JdbcTemplate, explicit DataSourceUtils.applyTransactionTimeout, or TransactionAwareDataSourceProxy. Bound connection access alone is a separate concern.",
+      "limit": "Contract inspected; this version was not locally executed."
+    },
+    {
+      "url": "https://docs.spring.io/spring-framework/docs/6.2.19/javadoc-api/org/springframework/jdbc/datasource/DataSourceUtils.html",
+      "version": "Spring Framework 6.2.19",
+      "sections": [
+        "getConnection",
+        "applyTransactionTimeout",
+        "applyTimeout"
+      ],
+      "verified": "The bound-connection lookup and remaining-timeout application are separate operations. applyTimeout lets current transaction remaining time override a supplied query timeout.",
+      "limit": "No driver behavior established by these API contracts."
+    },
+    {
+      "url": "https://github.com/spring-projects/spring-framework/blob/v6.2.19/spring-jdbc/src/main/java/org/springframework/jdbc/datasource/DataSourceTransactionManager.java",
+      "version": "v6.2.19",
+      "sections": [
+        "doBegin",
+        "doCommit"
+      ],
+      "verified": "doBegin stores timeout on the ConnectionHolder after obtaining the connection; doCommit invokes JDBC Connection.commit. These paths do not supply a timer that interrupts arbitrary Java method work.",
+      "limit": "Source inspection; driver/database enforcement or different transaction managers may differ."
+    },
+    {
+      "url": "https://github.com/spring-projects/spring-framework/blob/v6.2.19/spring-jdbc/src/main/java/org/springframework/jdbc/datasource/DataSourceUtils.java",
+      "version": "v6.2.19",
+      "section": "applyTimeout",
+      "verified": "Current transaction holder's getTimeToLiveInSeconds is passed to Statement.setQueryTimeout when the helper is used.",
+      "limit": "Executed technical controls use the available 6.2.12 binaries, not this 6.2.19 tag."
+    }
+  ],
+  "sourceConsultationDate": "2026-10-16",
+  "sourceEvidenceFile": "C:/Users/robso/AppData/Local/Temp/enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd/evaluator/SOURCES.json",
+  "failedOrUnavailableAttempts": [
+    "TransactionDefinition 6.2.19 Javadoc URL returned inaccessible via web tool; no claim relies on that response.",
+    "One follow-up GitHub/ResourceHolderSupport/TransactionDefinition batch remained pending and was terminated; unreturned results were not treated as evidence. Later focused finds on already opened DataSourceTransactionManager/DataSourceUtils pages completed.",
+    "An overly broad read-only rg search into baseline embedded registry and previous-wave evidence produced truncated output; replaced with parsed, selected wave4 baseline records.",
+    "An overly broad read-only Maven-cache listing produced truncated output; replaced with exact artifact/version existence checks.",
+    "Spring 6.2.19 binaries were not present at checked Maven-cache paths. Full Spring 6.2.12 JDBC dependencies were already available. No download/install.",
+    "psql was not found on PATH in the scoped command; no database execution attempted."
+  ],
+  "assumptionsAndLimits": [
+    "Instructional correction is supported by Spring 6.2.19 primary contracts/source; the locally executable technical fixtures use existing 6.2.12 binaries. No execution of Spring 6.2.19 is claimed.",
+    "--release 17 validates that source/API target; actual JVM was 25.0.3, not Java 17.",
+    "Fixture assumes synchronous imperative local JDBC, same datasource key, no enclosing transaction or extra timeout interceptor, and complete supplied write path.",
+    "PostgreSQL 18 is a declared fixture target; no PostgreSQL integration result is supplied or claimed.",
+    "Other transaction managers, ORM providers, driver settings or database limits may enforce timeout differently; actual target configuration remains relevant.",
+    "No universal efficacy or incremental agent improvement is inferred from structural checks, primary-source inspection or these technical controls."
+  ],
+  "retainedEvidence": {
+    "root": "C:/Users/robso/AppData/Local/Temp/enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd",
+    "readme": "C:/Users/robso/AppData/Local/Temp/enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd/README.md",
+    "artifactCount": 69,
+    "artifactHashManifest": "C:/Users/robso/AppData/Local/Temp/enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd/evidence/artifact-hashes.json",
+    "commandLog": "C:/Users/robso/AppData/Local/Temp/enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd/evidence/commands.json",
+    "sourceAndCaseInputs": "C:/Users/robso/AppData/Local/Temp/enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd/inputs",
+    "baselineAndFinalSnapshots": "C:/Users/robso/AppData/Local/Temp/enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd/evidence",
+    "finalDiff": "C:/Users/robso/AppData/Local/Temp/enterprise-transactions-quality14-79a320631fa34154b7f92509cd617fcd/evidence/final-diff.stdout.txt",
+    "finalOwnedHashes": [
+      {
+        "path": "skills/enterprise-transactions/SKILL.md",
+        "sha256": "201345f1048ba603d77622476f87d0379d0d6008c492047296828d299cf47861"
+      },
+      {
+        "path": "skills/enterprise-transactions/skill.yaml",
+        "sha256": "c520b94d42b76770cf9cfd77e4c9069f8d4de68305b25c8d664c38ec77cf4780"
+      },
+      {
+        "path": "skills/enterprise-transactions/references/boundaries-and-propagation.md",
+        "sha256": "481d8349bb94f3bdcf0827f79be5aeef483bdf1bf33bf87fa1f650aa9ca305b8"
+      },
+      {
+        "path": "skills/enterprise-transactions/references/isolation-and-recovery.md",
+        "sha256": "592bcd66d86c16193f9644c5157826e86142e6c9f1a8e729f3270cb6d41fb7b0"
+      }
+    ],
+    "dependencyFingerprints": [
+      {
+        "file": "C:/Users/robso/.m2/repository/org/springframework/spring-core/6.2.12/spring-core-6.2.12.jar",
+        "sha256": "bddc5a5be2d94191ebcfbadc672fa4d81e6ab51e38a9eaf41d5d035cb17548d4"
+      },
+      {
+        "file": "C:/Users/robso/.m2/repository/org/springframework/spring-beans/6.2.12/spring-beans-6.2.12.jar",
+        "sha256": "26ab8ce28a42fe951b0a4ebaf8dbe97478effca833a7b2f51b45d6540fe7179f"
+      },
+      {
+        "file": "C:/Users/robso/.m2/repository/org/springframework/spring-tx/6.2.12/spring-tx-6.2.12.jar",
+        "sha256": "cb4100d58122ab77b8d6a01ecb5852ade5d654a70887fd50a0e54d0071699295"
+      },
+      {
+        "file": "C:/Users/robso/.m2/repository/org/springframework/spring-jdbc/6.2.12/spring-jdbc-6.2.12.jar",
+        "sha256": "13bed660294c76846a460daac301b2b16919e708c28d172b03300bf36567f9de"
+      },
+      {
+        "file": "C:/Users/robso/.m2/repository/org/springframework/spring-jcl/6.2.12/spring-jcl-6.2.12.jar",
+        "sha256": "8244ee2a515291f41ed4f99aa89b4cd41fc13961c21d7c271a381210f6075fed"
+      }
+    ],
+    "thirdPartyDependenciesCopied": false
+  },
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Parallel review forbids shared generated writes",
+      "prerequisite": "All reviewers stopped writing"
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Repository-wide validation is coordinator-only",
+      "prerequisite": "Index regenerated after all writers stopped"
+    }
+  ],
+  "otherDeferredChecks": [
+    "Independent baseline/revised actor evaluations, if coordinator chooses; no guaranteed differentiation expected.",
+    "Target-driver/database slow SQL and expired-before-next-statement checks, persisted state outside completed transaction, cancellation/lock release/resource checks when operational enforcement must be established."
+  ],
+  "crossSkillFindings": [],
+  "coordinatorActions": [
+    "Inspect focused three-file diff and preserve retained evidence.",
+    "Run only authorized global checks after all writers stop.",
+    "Keep actor inputs separate from private criteria and technical oracle."
+  ],
+  "handoffPath": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/enterprise-transactions.json"
+}

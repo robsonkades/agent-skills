@@ -1,0 +1,5 @@
+package example.hexagonal.application;
+
+final class MutationProbe {
+    private java.sql.Connection leakedJdbcType;
+}

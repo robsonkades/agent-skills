@@ -26,6 +26,23 @@ within one configuration. Inspect constraint, conflict, forced, rule and variant
 information rather than interpreting an arrow as proof of incompatibility. A root
 project report is not a report of every subproject. See [dependency reports](https://docs.gradle.org/8.14.3/userguide/viewing_debugging_dependencies.html).
 
+Read report content as well as the exit status. `dependencies` and `dependencyInsight`
+can finish successfully while rendering unresolved dependencies as `FAILED`. An arrow
+to a requested/selected version followed by `FAILED` does not prove that component
+resolved. Retain the failure detail and investigate the affected coordinate, repository,
+constraint or variant; do not turn report success into a successful build claim. This
+behavior is covered by the Gradle 8.14.3 [dependency report tests](https://github.com/gradle/gradle/blob/v8.14.3/platforms/software/software-diagnostics/src/integTest/groovy/org/gradle/api/tasks/diagnostics/DependencyReportTaskIntegrationTest.groovy)
+and [insight report tests](https://github.com/gradle/gradle/blob/v8.14.3/platforms/software/software-diagnostics/src/integTest/groovy/org/gradle/api/tasks/diagnostics/DependencyInsightReportTaskIntegrationTest.groovy).
+
+Even a graph without unresolved nodes is not proof that the dependency files are
+available: Gradle separates graph resolution from artifact resolution. For example,
+available module metadata with a missing JAR can produce a selected graph before a
+task consuming that configuration fails. Rerun the affected compile, test, packaging
+or launch task that actually consumes the files; a report-only rerun cannot verify
+that repair. Keep the graph result and artifact failure as separate evidence rather
+than discarding the graph or changing a correctly selected version speculatively.
+See the [8.14.3 resolution model](https://github.com/gradle/gradle/blob/v8.14.3/platforms/documentation/docs/src/docs/userguide/dep-man/advanced/dependency_resolution.adoc).
+
 ## Version selection and ownership
 
 For ordinary competing versions of the same module, Gradle selects the highest eligible

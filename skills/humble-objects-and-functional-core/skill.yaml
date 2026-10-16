@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: humble-objects-and-functional-core
-version: 1.2.4
+version: 1.2.5
 description: >-
   Isolating decisions from hard-to-test effects with Humble Objects, or a pure functional
   core and imperative shell when explicit data inputs fit the contract. Use when a rule can

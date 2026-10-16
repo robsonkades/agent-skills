@@ -1,0 +1,44 @@
+Mutant JVM exit: 1
+Exception in thread "main" java.lang.reflect.UndeclaredThrowableException: Failed to invoke event listener method
+ApplicationListenerMethodAdapter details: 
+Bean [work.BookingListener]
+Method [public void work.BookingListener.on(work.BookingRecorded)]
+Resolved arguments: 
+[0] [type=work.BookingRecorded] [value=BookingRecorded[id=normal, receiptText=123456789012]]
+
+	at org.springframework.context.event.ApplicationListenerMethodAdapter.doInvoke(ApplicationListenerMethodAdapter.java:409)
+	at org.springframework.context.event.ApplicationListenerMethodAdapter.processEvent(ApplicationListenerMethodAdapter.java:270)
+	at org.springframework.transaction.event.TransactionalApplicationListenerSynchronization.processEventWithCallbacks(TransactionalApplicationListenerSynchronization.java:65)
+	at org.springframework.transaction.event.TransactionalApplicationListenerSynchronization$PlatformSynchronization.beforeCommit(TransactionalApplicationListenerSynchronization.java:110)
+	at org.springframework.transaction.support.TransactionSynchronizationUtils.triggerBeforeCommit(TransactionSynchronizationUtils.java:127)
+	at org.springframework.transaction.support.AbstractPlatformTransactionManager.triggerBeforeCommit(AbstractPlatformTransactionManager.java:985)
+	at org.springframework.transaction.support.AbstractPlatformTransactionManager.processCommit(AbstractPlatformTransactionManager.java:774)
+	at org.springframework.transaction.support.AbstractPlatformTransactionManager.commit(AbstractPlatformTransactionManager.java:757)
+	at org.springframework.transaction.interceptor.TransactionAspectSupport.commitTransactionAfterReturning(TransactionAspectSupport.java:687)
+	at org.springframework.transaction.interceptor.TransactionAspectSupport.invokeWithinTransaction(TransactionAspectSupport.java:408)
+	at org.springframework.transaction.interceptor.TransactionInterceptor.invoke(TransactionInterceptor.java:130)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:179)
+	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:719)
+	at work.BookingService$$SpringCGLIB$$0.place(<generated>)
+	at work.Regression.main(Regression.java:59)
+Caused by: java.lang.AssertionError: writer sees publisher's row: expected 1, got 0
+	at work.Regression.equal(Regression.java:181)
+	at work.Regression$Probe.beforeWrite(Regression.java:39)
+	at work.ReceiptWriter.record(ReceiptWriter.java:7)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565)
+	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:359)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.invokeJoinpoint(ReflectiveMethodInvocation.java:190)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:158)
+	at org.springframework.transaction.interceptor.TransactionInterceptor$1.proceedWithInvocation(TransactionInterceptor.java:133)
+	at org.springframework.transaction.interceptor.TransactionAspectSupport.invokeWithinTransaction(TransactionAspectSupport.java:371)
+	at org.springframework.transaction.interceptor.TransactionInterceptor.invoke(TransactionInterceptor.java:130)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:179)
+	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:719)
+	at work.ReceiptWriter$$SpringCGLIB$$0.record(<generated>)
+	at work.BookingListener.on(BookingListener.java:7)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565)
+	at org.springframework.context.event.ApplicationListenerMethodAdapter.doInvoke(ApplicationListenerMethodAdapter.java:392)
+	... 14 more
+PASS negative control: blanket REQUIRES_NEW loses publisher visibility and is rejected

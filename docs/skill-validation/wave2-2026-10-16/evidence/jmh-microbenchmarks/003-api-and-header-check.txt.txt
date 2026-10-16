@@ -1,0 +1,85 @@
+
+>   public org.openjdk.jmh.runner.options.ChainedOptionsBuilder shouldFailOnError(boolean);
+>   public org.openjdk.jmh.util.Optional<java.lang.Boolean> shouldFailOnError();
+    public org.openjdk.jmh.runner.options.ChainedOptionsBuilder threads(int);
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:/C:/Users/robso/.m2/repository/org/openjdk/jmh/jmh-core/1.37/jmh-core-1.37.jar)
+WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+# JMH version: 1.37
+# VM version: JDK 25.0.3, OpenJDK 64-Bit Server VM, 25.0.3+9-LTS
+# VM invoker: C:\Users\robso\.jdks\temurin-25.0.3\bin\java.exe
+# VM options: -Djava.io.tmpdir=C:/Users/robso/AppData/Local/Temp/jmh-quality13-bacfcc4fe31346b09017178462ac473f
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: <none>
+# Measurement: 1 iterations, single-shot each
+# Timeout: 10 min per iteration
+# Threads: 1 thread
+# Benchmark mode: Single shot invocation time
+# Benchmark: probe.CoverageProbe.operation
+# Parameters: (input = good)
+
+# Run progress: 0.00% complete, ETA 00:00:00
+# Fork: 1 of 1
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:/C:/Users/robso/.m2/repository/org/openjdk/jmh/jmh-core/1.37/jmh-core-1.37.jar)
+java.lang.IllegalStateException: deliberate-coverage-control
+Benchmark had encountered error, and fail on error was requested
+ERROR: org.openjdk.jmh.runner.RunnerException: Benchmark caught the exception
+	Suppressed: java.lang.IllegalStateException: deliberate-coverage-control
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:/C:/Users/robso/.m2/repository/org/openjdk/jmh/jmh-core/1.37/jmh-core-1.37.jar)
+WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+# JMH version: 1.37
+# VM version: JDK 25.0.3, OpenJDK 64-Bit Server VM, 25.0.3+9-LTS
+# VM invoker: C:\Users\robso\.jdks\temurin-25.0.3\bin\java.exe
+# VM options: -Djava.io.tmpdir=C:/Users/robso/AppData/Local/Temp/jmh-quality13-bacfcc4fe31346b09017178462ac473f
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: <none>
+# Measurement: 1 iterations, single-shot each
+# Timeout: 10 min per iteration
+# Threads: 1 thread
+# Benchmark mode: Single shot invocation time
+# Benchmark: probe.CoverageProbe.operation
+# Parameters: (input = good)
+
+# Run progress: 0.00% complete, ETA 00:00:00
+
+Name : CommandLineOptions.java
+
+
+Name : control-outcomes.json
+
+
+Name : CoverageProbe.java
+
+
+Name : default-results.json
+
+
+Name : default-run.log
+
+
+Name : Defaults.java
+
+
+Name : jmh.lock
+
+
+Name : Main.java
+
+
+Name : Runner.java
+
+
+Name : selected-good-results.json
+
+
+Name : selected-good-run.log
+
+
+Name : strict-results.json
+
+
+Name : strict-run.log

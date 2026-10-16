@@ -14,6 +14,13 @@ Inspect the generator declaration or an existing output when a runtime adapter i
 missing checkout/generated artifacts as coverage gaps rather than declaring the capability absent.
 Use targeted paths/options instead of disabling all exclusions across the whole repository.
 
+Inspect search diagnostics and exit status before recording "not found". A bad pattern, missing
+path, unreadable file or interrupted search is failed or partial collection, not an empty result.
+For `rg`, exit 1 means no match without an error; exit 2 signals an error. Quiet mode can exit 0
+after a match despite an error, so do not use that status as evidence of complete coverage.
+Retain useful matches from partial collection while naming unread portions; narrow or repair the
+query when possible. Truncated displayed output also limits what has actually been inspected.
+
 An existing report also needs provenance: module, profile/configuration, revision and whether
 the relevant build inputs have changed since it was produced. A stale report may suggest a lead
 without resolving today's dependency version. If a fresh report is needed, inspect the wrapper,
@@ -21,6 +28,28 @@ task/plugin and relevant build configuration before execution. Gradle evaluates 
 during configuration, even before the selected task runs; dependency reporting can also require
 artifact/repository access. Keep command effects within the authorized investigation and report
 unavailable evidence without running initialization or deployment merely to make the report complete.
+
+## Refreshing an existing report
+
+Compare the report's feature revision, repository snapshot and target module/configuration with
+the current task before reusing its answers. In Git, a commit ID alone misses local changes:
+inspect relevant staged, unstaged and untracked files. `git diff` compares the working tree with
+the index; `git diff --cached` compares the index with `HEAD`; `git status --short --untracked-files=all`
+also identifies untracked paths. Scope these commands to relevant inputs and retain the earlier
+snapshot or captured content when local changes existed then; a fresh status cannot reconstruct it.
+
+Follow each material change to the findings it supported: source, configuration, dependency
+report, contract or feature target -> `F-*` -> answered `U-*` and reuse/constraint conclusions.
+Preserve the old fact's revision and meaning, append new evidence, and reopen answers no longer
+supported. Name dependent proposals or decisions that need their owning phase's review; context
+analysis does not change their acceptance status. Unaffected evidence can remain in use. If the
+old snapshot is unavailable, recheck the relevant inputs instead of asserting that they are unchanged.
+
+For example, a report established that `SharedClient` was wired into the interactive service.
+The feature now targets the batch worker, where that wiring has not been inspected. The old fact
+can remain true while the reuse conclusion becomes unverified. Inspect the batch classpath,
+wiring and lifecycle, then update the answer or state the precise gap. A change only to unrelated
+documentation would not itself require reopening that conclusion.
 
 ## Ground truth first
 
@@ -45,6 +74,39 @@ without including the artifact; confirm inclusion in the relevant dependency gra
 reporting it available. Reuse available resolution reports or inspect the project's supported
 dependency-report command. If execution needs unavailable artifacts/access, retain that limitation
 rather than silently selecting a version.
+
+Test source establishes what its assertions and fixtures attempt to check, not that the tests
+ran or passed. For an observed-behavior claim, inspect a run report tied to the relevant revision,
+task, selection and environment, including failures, skips and whether the relevant tests ran.
+An executed mock-based test supports its exercised contract, not an unobserved production
+integration. If only source is available, record the intended check and leave execution unverified;
+run tests only when that evidence is needed and their effects are understood and authorized.
+
+## Following a behavior question
+
+Use this when a feature depends on how something currently happens, not merely whether a
+technology or component exists. Start from the feature's actor or trigger: an endpoint, command,
+scheduled job, event consumer or existing caller. Search domain terms to find that entrypoint,
+then follow symbols, registrations and configuration rather than repeating only the initial words.
+
+Trace the relevant calls and implementation selection to the result or side effect. At a factory,
+interface or asynchronous handoff, inspect the binding, selector or receiving consumer needed to
+continue the path; do not silently substitute the first implementation found. Record which module,
+profile, flag or override selects the path. Inspect an alternate or failure path when it could
+change the answer, rather than exhaustively following every branch in the application.
+
+Keep a compact route linked to the question and its sources. Separate edges established from
+source/configuration from behavior actually observed in a run. If an external binding, deployed
+override or consumer is unavailable, stop the claim at that boundary and name the smallest missing
+artifact; the verified upstream path can still be handed off. An inventory of existing classes
+does not close a question whose decisive selection remains unknown.
+
+For example, finding `RemoteWriter` does not establish that scheduled exports upload anything.
+An illustrative path is `ExportJob -> WriterFactory -> selected writer -> destination`.
+If the factory selects `RemoteWriter` only with `export.remote=true`, inspect the job's wiring and
+target configuration. A known value can establish the configured branch; an unavailable deployment
+override leaves the deployed selection unknown. Neither finding decides which writer the new
+feature should use. Record the supported path once and let reuse analysis refer to it.
 
 ## Structure and conventions
 
@@ -127,6 +189,12 @@ conflicting facts and preserve their scope. Route an unresolved intended-policy 
 with the input revision, affected `U-*`, sources and what changes if either answer holds. If those
 skills are unavailable, include that same bounded question in the handoff; do not invent a decision.
 
+For an evidence gap, request the smallest missing artifact from the role able to supply it — for
+example, the batch worker's runtime dependency report, not a product preference about using a
+client. State which conclusion depends on it and what can proceed meanwhile. For missing intent,
+pass the unresolved `U-*` and how the answers change the work to clarification; do not turn the
+investigation checklist into a questionnaire or ask again for an answer already supplied.
+
 ## Two traps
 
 **Reading the wrong project.** In a multi-project working directory, confirm the paths you are
@@ -138,10 +206,13 @@ controller. Start with comparable paths and independent contexts, looking for co
 where they could change the finding. Report counts within the inspected sample and name its scope;
 enumerate the full population only when the needed claim requires that coverage.
 
-## Sources for build and dependency evidence
+## Sources for repository and build evidence
 
+- [Git diff](https://git-scm.com/docs/git-diff) and [Git status](https://git-scm.com/docs/git-status): the separate committed, staged, unstaged and untracked views of repository state.
 - [Maven dependency mechanism](https://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html): mediation, management, inheritance and scopes.
 - [Gradle dependency reports](https://docs.gradle.org/current/userguide/viewing_debugging_dependencies.html): resolved configuration graphs and selection reasons; use the project's wrapper version.
 - [Gradle Java toolchains](https://docs.gradle.org/current/userguide/toolchains.html): compiler/toolchain selection and the separate `--release` target; inspect task-specific settings.
 - [ripgrep filtering](https://github.com/BurntSushi/ripgrep/blob/master/GUIDE.md#automatic-filtering): hidden and ignored paths affect the searched population.
+- [ripgrep manual source](https://github.com/BurntSushi/ripgrep/blob/master/crates/core/flags/doc/template.rg.1): exit status distinguishes no matches from errors, including the quiet-mode exception.
 - [Gradle build lifecycle](https://docs.gradle.org/current/userguide/build_lifecycle_intermediate.html): build scripts are evaluated during configuration before task execution.
+- [Gradle testing](https://docs.gradle.org/current/userguide/java_testing.html): test selection, execution and reports; inspect the project's test task and report coverage.

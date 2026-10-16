@@ -1,0 +1,51 @@
+import assert from 'node:assert/strict';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { loadPackageFromDirectory } from 'file:///C:/git/agent-skills/packages/core/src/application/package-loader.ts';
+import { validatePackage } from 'file:///C:/git/agent-skills/packages/core/src/application/validate-package.ts';
+import { NodeFileSystem } from 'file:///C:/git/agent-skills/packages/node/src/file-system.ts';
+const evidenceRoot = import.meta.dirname;
+const repository = 'C:/git/agent-skills';
+const name = 'java-application-security-basics';
+const skillRoot = resolve(repository, 'skills', name);
+const packageFiles = ['SKILL.md', 'skill.yaml', 'references/before-after.md',
+  'references/password-policy.md', 'references/password-storage.md', 'references/review.md'];
+const loaded = await loadPackageFromDirectory(new NodeFileSystem(), skillRoot, { strict: true });
+const issues = [...loaded.issues, ...validatePackage(loaded.pkg, { directoryName: name }).issues];
+assert.deepEqual(issues, []);
+assert.equal(loaded.pkg.manifest.version, '1.3.6');
+assert.equal(loaded.pkg.files.length, 6);
+const routed = ['references/before-after.md', 'references/password-policy.md',
+  'references/password-storage.md', 'references/review.md'];
+const skillText = readFileSync(resolve(skillRoot, 'SKILL.md'), 'utf8');
+for (const relative of routed) {
+  assert(skillText.includes(relative), 'Reference not routed from SKILL.md: ' + relative);
+  assert(existsSync(resolve(skillRoot, relative)), 'Missing reference: ' + relative);
+}
+const oldRoot = resolve(evidenceRoot, 'baseline', name);
+const preservedFiles = ['references/before-after.md', 'references/password-policy.md',
+  'references/password-storage.md'];
+for (const relative of preservedFiles) {
+  assert(readFileSync(resolve(skillRoot, relative)).equals(readFileSync(resolve(oldRoot, relative))),
+    'Unexpected edit to preserved reference: ' + relative);
+}
+const results = { strictPackageIssues: issues, packageFiles: loaded.pkg.files.length,
+  version: loaded.pkg.manifest.version, routedReferences: routed, byteIdenticalPreservedFiles: preservedFiles,
+  processes: [] };
+function run(label, command, args) {
+  const result = spawnSync(command, args, { cwd: repository, windowsHide: true,
+    encoding: 'utf8', timeout: 30000 });
+  const stdoutPath = resolve(evidenceRoot, label + '.stdout.log');
+  const stderrPath = resolve(evidenceRoot, label + '.stderr.log');
+  writeFileSync(stdoutPath, result.stdout ?? '');
+  writeFileSync(stderrPath, result.stderr ?? '');
+  results.processes.push({ label, command, args, cwd: repository, status: result.status,
+    signal: result.signal, error: result.error?.message ?? null, stdoutPath, stderrPath });
+  writeFileSync(resolve(evidenceRoot, 'local-validation-results.json'), JSON.stringify(results, null, 2) + '\n');
+  assert.equal(result.status, 0, label + '\n' + result.stdout + '\n' + result.stderr);
+}
+run('prettier-final', process.execPath, ['node_modules/prettier/bin/prettier.cjs', '--check',
+  ...packageFiles.map(relative => 'skills/' + name + '/' + relative)]);
+run('diff-check-final', 'git', ['diff', '--check', '--', 'skills/' + name]);
+console.log(JSON.stringify(results, null, 2));

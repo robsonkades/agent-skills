@@ -1,0 +1,74 @@
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.Properties;
+import javax.sql.DataSource;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.jdbc.datasource.DataSourceUtils;
+import org.springframework.transaction.support.TransactionTemplate;
+
+public final class BatchWrite {
+    private final DataSource dataSource;
+    private final Statements statements;
+    private final TransactionTemplate transaction;
+
+    private BatchWrite(DataSource dataSource, Statements statements) {
+        this.dataSource = dataSource;
+        this.statements = statements;
+        this.transaction = new TransactionTemplate(new DataSourceTransactionManager(dataSource));
+        this.transaction.setTimeout(5);
+    }
+
+    public static BatchWrite create(DataSource dataSource, Properties config) {
+        Statements selected = switch (config.getProperty("batch.statements")) {
+            case "basic" -> new BasicStatements();
+            case "remaining" -> new RemainingStatements();
+            default -> throw new IllegalArgumentException("Unknown batch.statements");
+        };
+        return new BatchWrite(dataSource, selected);
+    }
+
+    public void markReady(long id) {
+        transaction.executeWithoutResult(status -> {
+            Connection connection = DataSourceUtils.getConnection(dataSource);
+            try (PreparedStatement statement = statements.prepare(connection, dataSource)) {
+                statement.setLong(1, id);
+                if (statement.executeUpdate() != 1) {
+                    throw new IllegalStateException("Expected one row");
+                }
+            } catch (SQLException ex) {
+                throw new IllegalStateException("Batch update failed", ex);
+            } finally {
+                DataSourceUtils.releaseConnection(connection, dataSource);
+            }
+        });
+    }
+
+    private interface Statements {
+        PreparedStatement prepare(Connection connection, DataSource dataSource) throws SQLException;
+    }
+
+    private static final class BasicStatements implements Statements {
+        public PreparedStatement prepare(Connection connection, DataSource dataSource) throws SQLException {
+            return connection.prepareStatement("update batch_item set ready = true where id = ?");
+        }
+    }
+
+    private static final class RemainingStatements implements Statements {
+        public PreparedStatement prepare(Connection connection, DataSource dataSource) throws SQLException {
+            PreparedStatement statement =
+                connection.prepareStatement("update batch_item set ready = true where id = ?");
+            try {
+                DataSourceUtils.applyTransactionTimeout(statement, dataSource);
+                return statement;
+            } catch (SQLException | RuntimeException failure) {
+                try {
+                    statement.close();
+                } catch (SQLException closeFailure) {
+                    failure.addSuppressed(closeFailure);
+                }
+                throw failure;
+            }
+        }
+    }
+}

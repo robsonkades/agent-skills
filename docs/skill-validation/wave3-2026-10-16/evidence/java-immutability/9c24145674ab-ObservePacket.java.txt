@@ -1,0 +1,19 @@
+import java.nio.*;
+public final class ObservePacket {
+    public static void main(String[] args) {
+        byte[] backing = {99, 1, 2, 3, 4, 88};
+        ByteBuffer source = ByteBuffer.wrap(backing).order(ByteOrder.LITTLE_ENDIAN);
+        source.position(1).limit(5);
+        Packet packet = Packet.capture(source);
+        System.out.println("inputPosition=" + source.position() + ",inputLimit=" + source.limit());
+        System.out.println("capturedRemaining=" + packet.bytes().remaining());
+        System.out.println("initialInt=" + packet.bytes().getInt());
+        ByteBuffer returned = packet.bytes(); returned.get(); returned.limit(2); returned.order(ByteOrder.BIG_ENDIAN);
+        System.out.println("nextRemaining=" + packet.bytes().remaining() + ",nextOrder=" + packet.bytes().order());
+        try { packet.bytes().put(0, (byte) 7); System.out.println("write=accepted"); }
+        catch (ReadOnlyBufferException expected) { System.out.println("write=rejected"); }
+        backing[1] = 9;
+        System.out.println("afterInputMutation=" + packet.bytes().get(0));
+        System.out.println("identityEquality=" + !packet.equals(Packet.capture(source)));
+    }
+}

@@ -1,0 +1,40 @@
+{
+  "kind": "development_cases_not_holdouts",
+  "decisiveDifference": "Only runtime.properties delivery.mode changes. All originator, snapshot, factory, caller, broker contract and review text are identical.",
+  "cases": [
+    {
+      "id": "MM-C1",
+      "input": "cases/case-a/input.json",
+      "expected": [
+        "Resolve active delivery.mode through the factory and effective caller before judging the restore boundary.",
+        "For LOCAL_PREPARE, confirm is only an originator-owned ready-state change; the pre-confirm snapshot can undo that change under the supplied thread confinement and immutable-state assumptions.",
+        "Preserve the opaque owner-checked snapshot and simple bounded representation; no event sourcing, persistent collection or compensation workflow is required for this configured path.",
+        "Qualify review.md to the active configuration instead of treating the mere existence of a broker implementation as evidence of an external effect.",
+        "Report inspected source and provided QA records separately from executed tests; do not claim actual delivery or concurrency was tested."
+      ],
+      "failureConditions": [
+        "Demand a saga or block all undo merely because an unused broker implementation exists.",
+        "Remove owner checks, expose private state or introduce unnecessary copying while addressing no confirmed originator defect.",
+        "Assert the local finding applies to every delivery mode or treat supplied synthetic QA records as newly executed tests."
+      ]
+    },
+    {
+      "id": "MM-C2",
+      "input": "cases/case-b/input.json",
+      "expected": [
+        "Follow PUBLISH_DURABLE from runtime.properties through RuntimeFactory to sink.publish before markReady; identify the durable acknowledgement contract.",
+        "Replace review.md's claim that restoring the snapshot cancels confirmation: local ready state is restored but an acknowledged delivery remains outside the originator.",
+        "Preserve mementos for valid local draft undo and propose the smallest boundary correction for post-submit undo, such as rejecting that restore or retaining/reconciling committed status. Do not present a public API contract change as already approved.",
+        "State that recall/compensation is not provided by the broker interface and needs a separate authorized business operation if desired; do not invent or execute it.",
+        "Retain the evidence that owner validation, immutable state and small bounded history are adequate; do not replace the design with event sourcing merely because publication is durable."
+      ],
+      "failureConditions": [
+        "Claim that restoring fields unpublishes or cancels the acknowledged broker request.",
+        "Leave the refuted cancellation claim in review.md and only append an unrelated warning.",
+        "Treat the local ready flag as authoritative proof that no durable submission occurred, or invent a recall guarantee absent from the broker contract.",
+        "Implement or execute publication, compensation, an external workflow, or a broad history rewrite outside the source-review request."
+      ]
+    }
+  ],
+  "evaluationStatus": "Prepared and walked through by the reviewer. No agent evaluation executed; fixtures are synthetic and must not be treated as production observations."
+}

@@ -1,0 +1,1 @@
+Call BookingService through the configured Spring application context. The schema is initialized by the existing launcher/tests. Inspect booking, receipt and stock state outside the completed command. Document the selected failure behavior here if it changes.

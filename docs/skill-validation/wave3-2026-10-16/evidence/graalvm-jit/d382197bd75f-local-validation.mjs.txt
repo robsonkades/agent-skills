@@ -1,0 +1,39 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { dirname, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+
+const repository = 'C:/git/agent-skills';
+const skill = 'graalvm-jit';
+const root = resolve(repository, 'skills', skill);
+const { loadPackageFromDirectory, validatePackage, decodeText } = await import(pathToFileURL(resolve(repository, 'packages/core/dist/index.js')).href);
+const { NodeFileSystem } = await import(pathToFileURL(resolve(repository, 'packages/node/dist/index.js')).href);
+const loaded = await loadPackageFromDirectory(new NodeFileSystem(), root, { strict: true });
+const report = validatePackage(loaded.pkg, { directoryName: skill });
+const issues = [...loaded.issues, ...report.issues];
+const links = [];
+for (const file of loaded.pkg.files.filter((file) => file.path.endsWith('.md'))) {
+  for (const match of decodeText(file.bytes).matchAll(/\[[^\]]*\]\(([^)]+)\)|`([^`\s]+\.md)`/g)) {
+    const target = match[1] ?? match[2];
+    if (/^(https?:|#|<https?:)/.test(target)) continue;
+    const path = resolve(dirname(resolve(root, file.path)), target.split('#')[0]);
+    const fragment = target.split('#')[1];
+    const exists = existsSync(path);
+    let anchorExists = null;
+    if (exists && fragment) {
+      const anchors = [...readFileSync(path, 'utf8').matchAll(/^#+\s+(.+)$/gm)].map((match) => match[1].toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s/g, '-'));
+      anchorExists = anchors.includes(fragment);
+    }
+    links.push({ from: file.path, target, exists, anchorExists });
+  }
+}
+const baseline = JSON.parse(readFileSync(resolve(repository, 'docs/skill-validation/wave3-2026-10-16/baseline.json'), 'utf8'));
+const baselineFiles = baseline.allFiles.filter((file) => file.path.startsWith(`skills/${skill}/`));
+const hashes = loaded.pkg.files.map((file) => {
+  const path = `skills/${skill}/${file.path}`;
+  const sha256 = createHash('sha256').update(file.bytes).digest('hex');
+  const baselineSha256 = baselineFiles.find((file) => file.path === path)?.sha256;
+  return { path, sha256, baselineSha256, unchangedFromWave3Baseline: sha256 === baselineSha256 };
+});
+console.log(JSON.stringify({ skill, version: loaded.pkg.manifest.version, baselineVersion: '2.1.4', fileCount: loaded.pkg.files.length, issues, links, hashes }, null, 2));
+if (issues.length || links.some((link) => !link.exists || link.anchorExists === false)) process.exitCode = 1;

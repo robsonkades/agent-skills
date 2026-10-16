@@ -34,6 +34,16 @@ update those artifacts; do not ask again merely because a gate is being run. Wit
 scope, propose the corrections in the report. With authorized corrections, change only the affected
 scope and recheck it before reporting a new result.
 
+Bind each gate result to the reviewed scope, stage and material conditions supporting it.
+Reconsider affected conclusions when requirements, candidate, contracts, configuration,
+dependencies, data or workload change, or when new evidence contradicts a supporting assumption.
+An unchanged commit alone does not establish unchanged conditions. Explain which prior evidence
+still applies and which claims need rechecking; retain unaffected results and existing authority.
+
+Use status summaries and evidence IDs to locate claims, then inspect the supporting accepted
+record, artifact or result. Agreement between summaries is not independent support. When a source
+cannot be inspected, identify the affected claim and missing evidence rather than endorsing its label.
+
 ## Gate 0 — definition intake
 
 Validate the exact Product Definition plus required Engineering Analysis revisions, or the Tech Feature
@@ -78,7 +88,6 @@ Identify the accepted baseline, implementation candidate (commit, index or worki
 resource set and completion stage being judged. If deployment or production observation is Required,
 an implementation-only result cannot satisfy it. If those activities are outside the accepted scope,
 do not invent them as blockers or imply that this review has established production readiness.
-Reassess evidence affected by later candidate or contract changes; retain still-applicable results.
 
 Run the review in `references/completion-review.md`. It answers one question in twelve parts:
 **is this the feature that was agreed, and is the claim that it is done supported by something
@@ -155,12 +164,16 @@ THEN record it as future work. Do not implement it and call it part of this feat
 - **This is not a code review.** Defects, design and readability belong to a review of the diff;
   this gate checks the feature against what was agreed.
 - **Do not pass an item because it is probably fine.** PASS means checked.
+- **Separate failure from missing evidence.** A known violation is failed; unavailable or
+  insufficient evidence is unverified. Neither supports a pass for a Required criterion. Name the
+  material evidence needed and its affected claims; missing evidence alone does not prove a defect.
 - **Make the outcome and material gaps prominent.** State how failures and unavailable checks
   affect completion alongside what passed; give limitations detail proportionate to their impact.
 
 ## Output
 
-Gates 0 and 1: reviewed revisions, checklist, open items, affected IDs, and one normalized result:
+Gates 0 and 1: reviewed revisions, checklist with supporting source locators, open items, affected IDs,
+and one normalized result:
 `PASS`, `PASS WITH ACCEPTED GAPS`, `RETURN TO PRODUCT`, `RETURN TO ENGINEERING`, or
 `DECOMPOSE BEFORE PROCEEDING`.
 
@@ -177,8 +190,9 @@ Complete     yes | no
 Requirements   <each BAC/TC/SC item -> the RES-* that satisfy it>
 Not covered    <anything Required with no resource>
 Scope          <anything in the diff that no resource names>
-Validation     <EV-* observed; what did not run, and why>
+Validation     <EV-* with inspected result locators; what did not run, and why>
 Acceptance     <each BAC/TC-* -> EV-*>
+Recheck        <material conditions or contrary evidence that reopen affected conclusions, if any>
 Decisions      <recorded; any recorded retrospectively, marked as such>
 Risks          <avoided | mitigated | accepted | open, with evidence and authority where needed>
 Follow-ups     <future work, with what it waits on>

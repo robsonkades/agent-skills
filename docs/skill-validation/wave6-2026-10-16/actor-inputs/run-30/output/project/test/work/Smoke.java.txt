@@ -1,0 +1,10 @@
+package work;
+import java.util.concurrent.CountDownLatch;
+public final class Smoke {
+ public static void main(String[] args) throws Exception {
+  CountDownLatch gate=new CountDownLatch(1); Job job=new Job(gate); job.start();
+  try { System.out.println("while-gate-closed="+job.collect()); System.out.println("alive="+job.isAlive()); }
+  finally { gate.countDown(); job.join(2000); if(job.isAlive()) throw new AssertionError("cleanup did not terminate"); }
+  System.out.println("after-termination="+job.collect());
+ }
+}

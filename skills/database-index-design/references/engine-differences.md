@@ -39,6 +39,7 @@ actual clustered key before estimating secondary-index width.
   silently weaken a constraint this way.
 - A partial/filtered index is usable only when the optimizer can prove the query predicate implies
   the index predicate at planning time. Parameterization and generic plans can defeat that proof.
+  For PostgreSQL prepared statements, use the eligibility check below before replacing a full index.
 - PostgreSQL requires immutable functions/operators in index expressions and partial predicates.
   A predicate based on `now()` cannot define a self-maintaining rolling window; do not falsely
   mark a wrapper `IMMUTABLE` to accept it. A literal cutoff remains fixed as time passes. Compare
@@ -56,6 +57,37 @@ actual clustered key before estimating secondary-index width.
   it is not a cheap substitute for a selective B-tree.
 - SQL Server columnstore, PostgreSQL GIN/GiST/SP-GiST/BRIN, and each engine's full-text facility
   answer different workloads. Select from predicate semantics, not feature-name resemblance.
+
+## Partial indexes on the prepared application path
+
+For PostgreSQL 18, inspect generated SQL and bind types, then the deployed preparation settings
+and session `plan_cache_mode`. In Java, trace the resolved pgJDBC configuration, including
+`prepareThreshold`: a JDBC `PreparedStatement` alone does not establish whether the server uses
+a named prepared statement or a generic plan. A manually substituted literal can expose a
+candidate without proving its applicability to the application's reused statement.
+
+Consider an index on `jobs (tenant_id, created_at) WHERE state = 'ready'`. These are illustrative
+predicate fragments, not measured plans; assume matching types and no other condition proving
+the state:
+
+| Application predicate under a generic plan | Partial-index eligibility                                                                                                                                     |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tenant_id = $1 AND state = 'ready'`       | The fixed state proves the subset; the tenant parameter does not prevent eligibility. Cost still determines selection.                                        |
+| `tenant_id = $1 AND state = $2`            | The plan must work for other states too, so it cannot use this partial index as the sole access path for this query, even if every observed bind was `ready`. |
+
+A custom plan can use the supplied state value when proving eligibility. Inspect
+`EXPLAIN EXECUTE` for the matching prepared statement and parameters: generic plans retain
+parameter symbols, while custom plans substitute their values. Under PostgreSQL 18's `auto`
+policy, initial custom plans do not establish which plan later executions use. When a controlled
+comparison of `force_generic_plan` and `force_custom_plan` is needed, keep overrides local to
+the diagnostic session and record them; the result does not prove that deployment uses that mode.
+
+If the production path is unresolved, leave applicability and runtime benefit unverified and
+retain the full index pending evidence. If generic planning makes the partial candidate
+ineligible, compare a full composite index or a fixed-predicate application query only where
+that query preserves the required behavior. Do not remove parameter binding for arbitrary input
+or globally force custom planning just to obtain an attractive plan. An eligible index still
+needs workload, write-cost and rollout validation before it replaces another access path.
 
 ## Partitioned tables and uniqueness
 
@@ -108,6 +140,9 @@ does not automatically cluster heap rows; its values still affect B-tree localit
 
 ## Sources
 
+- [PostgreSQL 18 partial-index predicate implication](https://www.postgresql.org/docs/18/indexes-partial.html)
+- [PostgreSQL 18 prepared statements and custom/generic plans](https://www.postgresql.org/docs/18/sql-prepare.html)
+- [pgJDBC server preparation and driver configuration](https://jdbc.postgresql.org/documentation/server-prepare/) — check the resolved driver's behavior and deployed settings.
 - [PostgreSQL 18 partitioned uniqueness restrictions](https://www.postgresql.org/docs/18/ddl-partitioning.html#DDL-PARTITIONING-DECLARATIVE-LIMITATIONS)
 - [MySQL 8.4 partitioning and unique keys](https://dev.mysql.com/doc/refman/8.4/en/partitioning-limitations-partitioning-keys-unique-keys.html)
 - [SQL Server index partitioning and alignment](https://learn.microsoft.com/en-us/sql/relational-databases/partitions/partitioned-tables-and-indexes?view=sql-server-ver17)

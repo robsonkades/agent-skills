@@ -1,0 +1,692 @@
+{
+  "createdAt": "2026-10-16T15:46:00.741Z",
+  "skill": "component-and-release-boundaries",
+  "actorRoot": "C:/Users/robso/AppData/Local/Temp/skills-wave4-actors-HoLlUY",
+  "design": "Two known development cases, one decisive layout difference, three conditions per case, one fresh actor each. Criteria and input/skill hashes frozen before dispatch. No held-out or statistical/general improvement claim.",
+  "isolation": "fork_turns none; separate directories and instructions. Read boundaries are instructed, not a filesystem security boundary. Available skill metadata may remain in system context; actors must not load global content.",
+  "model": "Same parent-inherited model and effort, no overrides. Runtime model identifier, actual token use and internal settings are not directly observable here.",
+  "judging": "Coordinator inspects artifacts against each frozen criterion and failure condition; unblinded judgment, no automatic phrase scoring. One pass per run, no post-result tuning.",
+  "caseDifference": "Only input/project/delivery.json layout changes bundled versus external.",
+  "runs": [
+    {
+      "runId": "run-01",
+      "caseId": "delivery-bundled",
+      "condition": "none",
+      "actorDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave4-actors-HoLlUY/run-01",
+      "taskPath": "C:/Users/robso/AppData/Local/Temp/skills-wave4-actors-HoLlUY/run-01/TASK.md",
+      "taskSha256": "1c5e7f2e3e342ce064e06078e0ceabd9e1f317e6bb652c7a17dbed14a1fd3f97",
+      "inputSnapshot": "behavior-inputs/run-01",
+      "inputs": [
+        {
+          "path": "input/bundles/report-1.0.0.jar",
+          "sha256": "be3aa29f9dfe404b448615531e2aef02acecbf9cc43102b90216dad69b74be38",
+          "bytes": 2180
+        },
+        {
+          "path": "input/consumer/com/example/app/ReportApp.java",
+          "sha256": "06439c0329e35b50310bcdb118e1beb3cd004994bd025a3922a97fd71e8676bc",
+          "bytes": 622
+        },
+        {
+          "path": "input/library/v1/com/example/text/LineEndings.java",
+          "sha256": "3144c01be063c380f1133468c55a485f180f96095465ac0018f0bb9303791031",
+          "bytes": 192
+        },
+        {
+          "path": "input/library/v2/com/example/text/LineEndings.java",
+          "sha256": "3b9828905db8d2c349c0e19f841c246f6960f26bb27e43e7f4724d7e3a04e9c0",
+          "bytes": 212
+        },
+        {
+          "path": "input/project/delivery.json",
+          "sha256": "b1b4ad19c20b2ad7ca21f4c2b3217884ac10c349336d8efd21abd0da133acf0f",
+          "bytes": 119
+        },
+        {
+          "path": "input/project/README.md",
+          "sha256": "460bdb09a4220a7861080e0abe66e6b1630b0d3673f2456aa664b52eb405cc47",
+          "bytes": 389
+        },
+        {
+          "path": "input/project/recipes.json",
+          "sha256": "53362ddb1b2b35d505a21806a004a95991a08cde29c4705c3f48b422c296d56a",
+          "bytes": 746
+        },
+        {
+          "path": "input/project/release-policy.md",
+          "sha256": "128c15ae446a3a6dc4a47b1445ac05bfda8fdd7cff1453f86c654e7ec246bbd5",
+          "bytes": 538
+        },
+        {
+          "path": "input/published/report-app-1.0.0.jar",
+          "sha256": "80e7634bccf323b7949fddaf5c90a7cc856b1ad305e7b7a0485b9ebed3e24ce8",
+          "bytes": 1593
+        },
+        {
+          "path": "input/published/text-core-1.0.0.jar",
+          "sha256": "be8e720b908bfc0125350343e21ca4abaf93c17b0fc9757880da1aef044b1954",
+          "bytes": 1057
+        },
+        {
+          "path": "input/published/text-core-1.0.1.jar",
+          "sha256": "5063bdaa4d9818bb69e59d2bf52409086f6fdf78bc0010923ca42d762d7efbbb",
+          "bytes": 1074
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "1c5e7f2e3e342ce064e06078e0ceabd9e1f317e6bb652c7a17dbed14a1fd3f97",
+          "bytes": 2097
+        }
+      ],
+      "criteria": {
+        "caseId": "delivery-bundled",
+        "expected": [
+          {
+            "id": "C1",
+            "text": "Inspect delivery.json and the selected recipe plus actual jar/source artifacts; identify that library classes are inside the immutable application bundle."
+          },
+          {
+            "id": "C2",
+            "text": "Separate publishing text-core 1.0.1 from producing and rolling out an updated report distribution. Existing ReportApp.class may be reused if the observed/contractual compatibility is sufficient."
+          },
+          {
+            "id": "C3",
+            "text": "Verify the lone-CR behavior using the delivered candidate; preserve retained artifact rollback and the allowed migration interval."
+          },
+          {
+            "id": "C4",
+            "text": "Do not infer simultaneous release necessity or recommend merging ownership/release boundaries solely from one library change, repackaging work or an unchanged API."
+          }
+        ],
+        "failureConditions": [
+          "Concludes the deployed bundled consumer is fixed merely because text-core 1.0.1 is published or because recompilation is unnecessary.",
+          "Requires source recompilation without distinguishing it from packaging, or rewrites released artifact bytes in place.",
+          "Treats a 14-day deadline or ordinary consumer adoption work as proof of an atomic coordinated fleet release."
+        ]
+      },
+      "criteriaSha256": "3382508ba2fba5b875d108558356d8e33025ab7c37f172c52fa22bfc0e3d4b93",
+      "skillVersion": null,
+      "status": "not-dispatched"
+    },
+    {
+      "runId": "run-02",
+      "caseId": "delivery-bundled",
+      "condition": "baseline",
+      "actorDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave4-actors-HoLlUY/run-02",
+      "taskPath": "C:/Users/robso/AppData/Local/Temp/skills-wave4-actors-HoLlUY/run-02/TASK.md",
+      "taskSha256": "bfff0c0e1ccb69317f712e6d3292898cc14b4277c3c09713bf92cfe7b76b55f7",
+      "inputSnapshot": "behavior-inputs/run-02",
+      "inputs": [
+        {
+          "path": "input/bundles/report-1.0.0.jar",
+          "sha256": "be3aa29f9dfe404b448615531e2aef02acecbf9cc43102b90216dad69b74be38",
+          "bytes": 2180
+        },
+        {
+          "path": "input/consumer/com/example/app/ReportApp.java",
+          "sha256": "06439c0329e35b50310bcdb118e1beb3cd004994bd025a3922a97fd71e8676bc",
+          "bytes": 622
+        },
+        {
+          "path": "input/library/v1/com/example/text/LineEndings.java",
+          "sha256": "3144c01be063c380f1133468c55a485f180f96095465ac0018f0bb9303791031",
+          "bytes": 192
+        },
+        {
+          "path": "input/library/v2/com/example/text/LineEndings.java",
+          "sha256": "3b9828905db8d2c349c0e19f841c246f6960f26bb27e43e7f4724d7e3a04e9c0",
+          "bytes": 212
+        },
+        {
+          "path": "input/project/delivery.json",
+          "sha256": "b1b4ad19c20b2ad7ca21f4c2b3217884ac10c349336d8efd21abd0da133acf0f",
+          "bytes": 119
+        },
+        {
+          "path": "input/project/README.md",
+          "sha256": "460bdb09a4220a7861080e0abe66e6b1630b0d3673f2456aa664b52eb405cc47",
+          "bytes": 389
+        },
+        {
+          "path": "input/project/recipes.json",
+          "sha256": "53362ddb1b2b35d505a21806a004a95991a08cde29c4705c3f48b422c296d56a",
+          "bytes": 746
+        },
+        {
+          "path": "input/project/release-policy.md",
+          "sha256": "128c15ae446a3a6dc4a47b1445ac05bfda8fdd7cff1453f86c654e7ec246bbd5",
+          "bytes": 538
+        },
+        {
+          "path": "input/published/report-app-1.0.0.jar",
+          "sha256": "80e7634bccf323b7949fddaf5c90a7cc856b1ad305e7b7a0485b9ebed3e24ce8",
+          "bytes": 1593
+        },
+        {
+          "path": "input/published/text-core-1.0.0.jar",
+          "sha256": "be8e720b908bfc0125350343e21ca4abaf93c17b0fc9757880da1aef044b1954",
+          "bytes": 1057
+        },
+        {
+          "path": "input/published/text-core-1.0.1.jar",
+          "sha256": "5063bdaa4d9818bb69e59d2bf52409086f6fdf78bc0010923ca42d762d7efbbb",
+          "bytes": 1074
+        },
+        {
+          "path": "skill/references/component-principles.md",
+          "sha256": "d9b5d7a99c76b4ac3b1801672a001b2bdcc420f60437f97be77e17567349d757",
+          "bytes": 17985
+        },
+        {
+          "path": "skill/references/shared-code-in-a-fleet.md",
+          "sha256": "c2a4a5d2e8bc789a0c7118b00d49d1d6c342d9d87e2e1bd1efcb583aad6ec498",
+          "bytes": 13675
+        },
+        {
+          "path": "skill/SKILL.md",
+          "sha256": "90622f801fa139b9231f3d8bfd92d0a5682e37a160a140184688794070d6533e",
+          "bytes": 12077
+        },
+        {
+          "path": "skill/skill.yaml",
+          "sha256": "06a210a22cf893b9e3161bdd98b18e73a21af969ff0b0d8d65430347436b069f",
+          "bytes": 2249
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "bfff0c0e1ccb69317f712e6d3292898cc14b4277c3c09713bf92cfe7b76b55f7",
+          "bytes": 2109
+        }
+      ],
+      "criteria": {
+        "caseId": "delivery-bundled",
+        "expected": [
+          {
+            "id": "C1",
+            "text": "Inspect delivery.json and the selected recipe plus actual jar/source artifacts; identify that library classes are inside the immutable application bundle."
+          },
+          {
+            "id": "C2",
+            "text": "Separate publishing text-core 1.0.1 from producing and rolling out an updated report distribution. Existing ReportApp.class may be reused if the observed/contractual compatibility is sufficient."
+          },
+          {
+            "id": "C3",
+            "text": "Verify the lone-CR behavior using the delivered candidate; preserve retained artifact rollback and the allowed migration interval."
+          },
+          {
+            "id": "C4",
+            "text": "Do not infer simultaneous release necessity or recommend merging ownership/release boundaries solely from one library change, repackaging work or an unchanged API."
+          }
+        ],
+        "failureConditions": [
+          "Concludes the deployed bundled consumer is fixed merely because text-core 1.0.1 is published or because recompilation is unnecessary.",
+          "Requires source recompilation without distinguishing it from packaging, or rewrites released artifact bytes in place.",
+          "Treats a 14-day deadline or ordinary consumer adoption work as proof of an atomic coordinated fleet release."
+        ]
+      },
+      "criteriaSha256": "3382508ba2fba5b875d108558356d8e33025ab7c37f172c52fa22bfc0e3d4b93",
+      "skillVersion": "1.2.4",
+      "status": "not-dispatched"
+    },
+    {
+      "runId": "run-03",
+      "caseId": "delivery-bundled",
+      "condition": "revised",
+      "actorDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave4-actors-HoLlUY/run-03",
+      "taskPath": "C:/Users/robso/AppData/Local/Temp/skills-wave4-actors-HoLlUY/run-03/TASK.md",
+      "taskSha256": "64f307ccb6f25a0eeca4a38723eb86a70dbf14717cbfaf9b64e86e24cc55628d",
+      "inputSnapshot": "behavior-inputs/run-03",
+      "inputs": [
+        {
+          "path": "input/bundles/report-1.0.0.jar",
+          "sha256": "be3aa29f9dfe404b448615531e2aef02acecbf9cc43102b90216dad69b74be38",
+          "bytes": 2180
+        },
+        {
+          "path": "input/consumer/com/example/app/ReportApp.java",
+          "sha256": "06439c0329e35b50310bcdb118e1beb3cd004994bd025a3922a97fd71e8676bc",
+          "bytes": 622
+        },
+        {
+          "path": "input/library/v1/com/example/text/LineEndings.java",
+          "sha256": "3144c01be063c380f1133468c55a485f180f96095465ac0018f0bb9303791031",
+          "bytes": 192
+        },
+        {
+          "path": "input/library/v2/com/example/text/LineEndings.java",
+          "sha256": "3b9828905db8d2c349c0e19f841c246f6960f26bb27e43e7f4724d7e3a04e9c0",
+          "bytes": 212
+        },
+        {
+          "path": "input/project/delivery.json",
+          "sha256": "b1b4ad19c20b2ad7ca21f4c2b3217884ac10c349336d8efd21abd0da133acf0f",
+          "bytes": 119
+        },
+        {
+          "path": "input/project/README.md",
+          "sha256": "460bdb09a4220a7861080e0abe66e6b1630b0d3673f2456aa664b52eb405cc47",
+          "bytes": 389
+        },
+        {
+          "path": "input/project/recipes.json",
+          "sha256": "53362ddb1b2b35d505a21806a004a95991a08cde29c4705c3f48b422c296d56a",
+          "bytes": 746
+        },
+        {
+          "path": "input/project/release-policy.md",
+          "sha256": "128c15ae446a3a6dc4a47b1445ac05bfda8fdd7cff1453f86c654e7ec246bbd5",
+          "bytes": 538
+        },
+        {
+          "path": "input/published/report-app-1.0.0.jar",
+          "sha256": "80e7634bccf323b7949fddaf5c90a7cc856b1ad305e7b7a0485b9ebed3e24ce8",
+          "bytes": 1593
+        },
+        {
+          "path": "input/published/text-core-1.0.0.jar",
+          "sha256": "be8e720b908bfc0125350343e21ca4abaf93c17b0fc9757880da1aef044b1954",
+          "bytes": 1057
+        },
+        {
+          "path": "input/published/text-core-1.0.1.jar",
+          "sha256": "5063bdaa4d9818bb69e59d2bf52409086f6fdf78bc0010923ca42d762d7efbbb",
+          "bytes": 1074
+        },
+        {
+          "path": "skill/references/component-principles.md",
+          "sha256": "0403d8e44885cdcae465a071be85a9da3f192ac6cb41932690ed5494e6584514",
+          "bytes": 18149
+        },
+        {
+          "path": "skill/references/shared-code-in-a-fleet.md",
+          "sha256": "0853fe7a0250f6c7503df48ba4dcc7a76141ee62a71c8a289ea13a46899968d1",
+          "bytes": 14485
+        },
+        {
+          "path": "skill/SKILL.md",
+          "sha256": "90622f801fa139b9231f3d8bfd92d0a5682e37a160a140184688794070d6533e",
+          "bytes": 12077
+        },
+        {
+          "path": "skill/skill.yaml",
+          "sha256": "074690c2f09a05492926798bac23780e9355d4838808fba9af4c08c7f9f153e7",
+          "bytes": 2249
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "64f307ccb6f25a0eeca4a38723eb86a70dbf14717cbfaf9b64e86e24cc55628d",
+          "bytes": 2109
+        }
+      ],
+      "criteria": {
+        "caseId": "delivery-bundled",
+        "expected": [
+          {
+            "id": "C1",
+            "text": "Inspect delivery.json and the selected recipe plus actual jar/source artifacts; identify that library classes are inside the immutable application bundle."
+          },
+          {
+            "id": "C2",
+            "text": "Separate publishing text-core 1.0.1 from producing and rolling out an updated report distribution. Existing ReportApp.class may be reused if the observed/contractual compatibility is sufficient."
+          },
+          {
+            "id": "C3",
+            "text": "Verify the lone-CR behavior using the delivered candidate; preserve retained artifact rollback and the allowed migration interval."
+          },
+          {
+            "id": "C4",
+            "text": "Do not infer simultaneous release necessity or recommend merging ownership/release boundaries solely from one library change, repackaging work or an unchanged API."
+          }
+        ],
+        "failureConditions": [
+          "Concludes the deployed bundled consumer is fixed merely because text-core 1.0.1 is published or because recompilation is unnecessary.",
+          "Requires source recompilation without distinguishing it from packaging, or rewrites released artifact bytes in place.",
+          "Treats a 14-day deadline or ordinary consumer adoption work as proof of an atomic coordinated fleet release."
+        ]
+      },
+      "criteriaSha256": "3382508ba2fba5b875d108558356d8e33025ab7c37f172c52fa22bfc0e3d4b93",
+      "skillVersion": "1.2.5",
+      "status": "not-dispatched"
+    },
+    {
+      "runId": "run-04",
+      "caseId": "delivery-external",
+      "condition": "none",
+      "actorDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave4-actors-HoLlUY/run-04",
+      "taskPath": "C:/Users/robso/AppData/Local/Temp/skills-wave4-actors-HoLlUY/run-04/TASK.md",
+      "taskSha256": "43c462c308e7be0720ebd0419cf99eb1b573f097a62f6289d4aec8447ccee13d",
+      "inputSnapshot": "behavior-inputs/run-04",
+      "inputs": [
+        {
+          "path": "input/bundles/report-1.0.0.jar",
+          "sha256": "be3aa29f9dfe404b448615531e2aef02acecbf9cc43102b90216dad69b74be38",
+          "bytes": 2180
+        },
+        {
+          "path": "input/consumer/com/example/app/ReportApp.java",
+          "sha256": "06439c0329e35b50310bcdb118e1beb3cd004994bd025a3922a97fd71e8676bc",
+          "bytes": 622
+        },
+        {
+          "path": "input/library/v1/com/example/text/LineEndings.java",
+          "sha256": "3144c01be063c380f1133468c55a485f180f96095465ac0018f0bb9303791031",
+          "bytes": 192
+        },
+        {
+          "path": "input/library/v2/com/example/text/LineEndings.java",
+          "sha256": "3b9828905db8d2c349c0e19f841c246f6960f26bb27e43e7f4724d7e3a04e9c0",
+          "bytes": 212
+        },
+        {
+          "path": "input/project/delivery.json",
+          "sha256": "c580cba69c1405f21d55134a4fa97986ba13d4331cd51a34177c149d437f7480",
+          "bytes": 120
+        },
+        {
+          "path": "input/project/README.md",
+          "sha256": "460bdb09a4220a7861080e0abe66e6b1630b0d3673f2456aa664b52eb405cc47",
+          "bytes": 389
+        },
+        {
+          "path": "input/project/recipes.json",
+          "sha256": "53362ddb1b2b35d505a21806a004a95991a08cde29c4705c3f48b422c296d56a",
+          "bytes": 746
+        },
+        {
+          "path": "input/project/release-policy.md",
+          "sha256": "128c15ae446a3a6dc4a47b1445ac05bfda8fdd7cff1453f86c654e7ec246bbd5",
+          "bytes": 538
+        },
+        {
+          "path": "input/published/report-app-1.0.0.jar",
+          "sha256": "80e7634bccf323b7949fddaf5c90a7cc856b1ad305e7b7a0485b9ebed3e24ce8",
+          "bytes": 1593
+        },
+        {
+          "path": "input/published/text-core-1.0.0.jar",
+          "sha256": "be8e720b908bfc0125350343e21ca4abaf93c17b0fc9757880da1aef044b1954",
+          "bytes": 1057
+        },
+        {
+          "path": "input/published/text-core-1.0.1.jar",
+          "sha256": "5063bdaa4d9818bb69e59d2bf52409086f6fdf78bc0010923ca42d762d7efbbb",
+          "bytes": 1074
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "43c462c308e7be0720ebd0419cf99eb1b573f097a62f6289d4aec8447ccee13d",
+          "bytes": 2097
+        }
+      ],
+      "criteria": {
+        "caseId": "delivery-external",
+        "expected": [
+          {
+            "id": "C1",
+            "text": "Inspect the selected external layout; application jar contains consumer classes while versioned text-core is supplied separately at process start."
+          },
+          {
+            "id": "C2",
+            "text": "Reuse the existing application artifact where compatible; update the pinned external dependency selection and perform supported restart/rollout rather than demand a new application package."
+          },
+          {
+            "id": "C3",
+            "text": "Test changed runtime behavior and preserve rollback to previous dependency selection; publication alone does not change the process's selected or loaded dependency."
+          },
+          {
+            "id": "C4",
+            "text": "Keep the release boundary unless another concrete constraint supports changing it; preserve the time-window and compatibility conclusions common to both cases."
+          }
+        ],
+        "failureConditions": [
+          "Unconditionally requires repackaging the app despite the inspected external dependency layout.",
+          "Assumes replacing a repository artifact mutates running JVM behavior or allows overwriting immutable released versions.",
+          "Recommends a shared release unit or simultaneous deployment without a contract requiring it."
+        ]
+      },
+      "criteriaSha256": "5a935b56d79c320480a7e91e8c48c56dcf0e10e69da7903d3e0d90e99923e6cf",
+      "skillVersion": null,
+      "status": "not-dispatched"
+    },
+    {
+      "runId": "run-05",
+      "caseId": "delivery-external",
+      "condition": "baseline",
+      "actorDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave4-actors-HoLlUY/run-05",
+      "taskPath": "C:/Users/robso/AppData/Local/Temp/skills-wave4-actors-HoLlUY/run-05/TASK.md",
+      "taskSha256": "824e38ec0b1d9b20cf19725c9a06adb720d8ddf1bbac8e43cbf1daf964a9615e",
+      "inputSnapshot": "behavior-inputs/run-05",
+      "inputs": [
+        {
+          "path": "input/bundles/report-1.0.0.jar",
+          "sha256": "be3aa29f9dfe404b448615531e2aef02acecbf9cc43102b90216dad69b74be38",
+          "bytes": 2180
+        },
+        {
+          "path": "input/consumer/com/example/app/ReportApp.java",
+          "sha256": "06439c0329e35b50310bcdb118e1beb3cd004994bd025a3922a97fd71e8676bc",
+          "bytes": 622
+        },
+        {
+          "path": "input/library/v1/com/example/text/LineEndings.java",
+          "sha256": "3144c01be063c380f1133468c55a485f180f96095465ac0018f0bb9303791031",
+          "bytes": 192
+        },
+        {
+          "path": "input/library/v2/com/example/text/LineEndings.java",
+          "sha256": "3b9828905db8d2c349c0e19f841c246f6960f26bb27e43e7f4724d7e3a04e9c0",
+          "bytes": 212
+        },
+        {
+          "path": "input/project/delivery.json",
+          "sha256": "c580cba69c1405f21d55134a4fa97986ba13d4331cd51a34177c149d437f7480",
+          "bytes": 120
+        },
+        {
+          "path": "input/project/README.md",
+          "sha256": "460bdb09a4220a7861080e0abe66e6b1630b0d3673f2456aa664b52eb405cc47",
+          "bytes": 389
+        },
+        {
+          "path": "input/project/recipes.json",
+          "sha256": "53362ddb1b2b35d505a21806a004a95991a08cde29c4705c3f48b422c296d56a",
+          "bytes": 746
+        },
+        {
+          "path": "input/project/release-policy.md",
+          "sha256": "128c15ae446a3a6dc4a47b1445ac05bfda8fdd7cff1453f86c654e7ec246bbd5",
+          "bytes": 538
+        },
+        {
+          "path": "input/published/report-app-1.0.0.jar",
+          "sha256": "80e7634bccf323b7949fddaf5c90a7cc856b1ad305e7b7a0485b9ebed3e24ce8",
+          "bytes": 1593
+        },
+        {
+          "path": "input/published/text-core-1.0.0.jar",
+          "sha256": "be8e720b908bfc0125350343e21ca4abaf93c17b0fc9757880da1aef044b1954",
+          "bytes": 1057
+        },
+        {
+          "path": "input/published/text-core-1.0.1.jar",
+          "sha256": "5063bdaa4d9818bb69e59d2bf52409086f6fdf78bc0010923ca42d762d7efbbb",
+          "bytes": 1074
+        },
+        {
+          "path": "skill/references/component-principles.md",
+          "sha256": "d9b5d7a99c76b4ac3b1801672a001b2bdcc420f60437f97be77e17567349d757",
+          "bytes": 17985
+        },
+        {
+          "path": "skill/references/shared-code-in-a-fleet.md",
+          "sha256": "c2a4a5d2e8bc789a0c7118b00d49d1d6c342d9d87e2e1bd1efcb583aad6ec498",
+          "bytes": 13675
+        },
+        {
+          "path": "skill/SKILL.md",
+          "sha256": "90622f801fa139b9231f3d8bfd92d0a5682e37a160a140184688794070d6533e",
+          "bytes": 12077
+        },
+        {
+          "path": "skill/skill.yaml",
+          "sha256": "06a210a22cf893b9e3161bdd98b18e73a21af969ff0b0d8d65430347436b069f",
+          "bytes": 2249
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "824e38ec0b1d9b20cf19725c9a06adb720d8ddf1bbac8e43cbf1daf964a9615e",
+          "bytes": 2109
+        }
+      ],
+      "criteria": {
+        "caseId": "delivery-external",
+        "expected": [
+          {
+            "id": "C1",
+            "text": "Inspect the selected external layout; application jar contains consumer classes while versioned text-core is supplied separately at process start."
+          },
+          {
+            "id": "C2",
+            "text": "Reuse the existing application artifact where compatible; update the pinned external dependency selection and perform supported restart/rollout rather than demand a new application package."
+          },
+          {
+            "id": "C3",
+            "text": "Test changed runtime behavior and preserve rollback to previous dependency selection; publication alone does not change the process's selected or loaded dependency."
+          },
+          {
+            "id": "C4",
+            "text": "Keep the release boundary unless another concrete constraint supports changing it; preserve the time-window and compatibility conclusions common to both cases."
+          }
+        ],
+        "failureConditions": [
+          "Unconditionally requires repackaging the app despite the inspected external dependency layout.",
+          "Assumes replacing a repository artifact mutates running JVM behavior or allows overwriting immutable released versions.",
+          "Recommends a shared release unit or simultaneous deployment without a contract requiring it."
+        ]
+      },
+      "criteriaSha256": "5a935b56d79c320480a7e91e8c48c56dcf0e10e69da7903d3e0d90e99923e6cf",
+      "skillVersion": "1.2.4",
+      "status": "not-dispatched"
+    },
+    {
+      "runId": "run-06",
+      "caseId": "delivery-external",
+      "condition": "revised",
+      "actorDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave4-actors-HoLlUY/run-06",
+      "taskPath": "C:/Users/robso/AppData/Local/Temp/skills-wave4-actors-HoLlUY/run-06/TASK.md",
+      "taskSha256": "96b15c138b1778195c220694b8226819351f71b299c35e6b9f7b6db3a8d3396c",
+      "inputSnapshot": "behavior-inputs/run-06",
+      "inputs": [
+        {
+          "path": "input/bundles/report-1.0.0.jar",
+          "sha256": "be3aa29f9dfe404b448615531e2aef02acecbf9cc43102b90216dad69b74be38",
+          "bytes": 2180
+        },
+        {
+          "path": "input/consumer/com/example/app/ReportApp.java",
+          "sha256": "06439c0329e35b50310bcdb118e1beb3cd004994bd025a3922a97fd71e8676bc",
+          "bytes": 622
+        },
+        {
+          "path": "input/library/v1/com/example/text/LineEndings.java",
+          "sha256": "3144c01be063c380f1133468c55a485f180f96095465ac0018f0bb9303791031",
+          "bytes": 192
+        },
+        {
+          "path": "input/library/v2/com/example/text/LineEndings.java",
+          "sha256": "3b9828905db8d2c349c0e19f841c246f6960f26bb27e43e7f4724d7e3a04e9c0",
+          "bytes": 212
+        },
+        {
+          "path": "input/project/delivery.json",
+          "sha256": "c580cba69c1405f21d55134a4fa97986ba13d4331cd51a34177c149d437f7480",
+          "bytes": 120
+        },
+        {
+          "path": "input/project/README.md",
+          "sha256": "460bdb09a4220a7861080e0abe66e6b1630b0d3673f2456aa664b52eb405cc47",
+          "bytes": 389
+        },
+        {
+          "path": "input/project/recipes.json",
+          "sha256": "53362ddb1b2b35d505a21806a004a95991a08cde29c4705c3f48b422c296d56a",
+          "bytes": 746
+        },
+        {
+          "path": "input/project/release-policy.md",
+          "sha256": "128c15ae446a3a6dc4a47b1445ac05bfda8fdd7cff1453f86c654e7ec246bbd5",
+          "bytes": 538
+        },
+        {
+          "path": "input/published/report-app-1.0.0.jar",
+          "sha256": "80e7634bccf323b7949fddaf5c90a7cc856b1ad305e7b7a0485b9ebed3e24ce8",
+          "bytes": 1593
+        },
+        {
+          "path": "input/published/text-core-1.0.0.jar",
+          "sha256": "be8e720b908bfc0125350343e21ca4abaf93c17b0fc9757880da1aef044b1954",
+          "bytes": 1057
+        },
+        {
+          "path": "input/published/text-core-1.0.1.jar",
+          "sha256": "5063bdaa4d9818bb69e59d2bf52409086f6fdf78bc0010923ca42d762d7efbbb",
+          "bytes": 1074
+        },
+        {
+          "path": "skill/references/component-principles.md",
+          "sha256": "0403d8e44885cdcae465a071be85a9da3f192ac6cb41932690ed5494e6584514",
+          "bytes": 18149
+        },
+        {
+          "path": "skill/references/shared-code-in-a-fleet.md",
+          "sha256": "0853fe7a0250f6c7503df48ba4dcc7a76141ee62a71c8a289ea13a46899968d1",
+          "bytes": 14485
+        },
+        {
+          "path": "skill/SKILL.md",
+          "sha256": "90622f801fa139b9231f3d8bfd92d0a5682e37a160a140184688794070d6533e",
+          "bytes": 12077
+        },
+        {
+          "path": "skill/skill.yaml",
+          "sha256": "074690c2f09a05492926798bac23780e9355d4838808fba9af4c08c7f9f153e7",
+          "bytes": 2249
+        },
+        {
+          "path": "TASK.md",
+          "sha256": "96b15c138b1778195c220694b8226819351f71b299c35e6b9f7b6db3a8d3396c",
+          "bytes": 2109
+        }
+      ],
+      "criteria": {
+        "caseId": "delivery-external",
+        "expected": [
+          {
+            "id": "C1",
+            "text": "Inspect the selected external layout; application jar contains consumer classes while versioned text-core is supplied separately at process start."
+          },
+          {
+            "id": "C2",
+            "text": "Reuse the existing application artifact where compatible; update the pinned external dependency selection and perform supported restart/rollout rather than demand a new application package."
+          },
+          {
+            "id": "C3",
+            "text": "Test changed runtime behavior and preserve rollback to previous dependency selection; publication alone does not change the process's selected or loaded dependency."
+          },
+          {
+            "id": "C4",
+            "text": "Keep the release boundary unless another concrete constraint supports changing it; preserve the time-window and compatibility conclusions common to both cases."
+          }
+        ],
+        "failureConditions": [
+          "Unconditionally requires repackaging the app despite the inspected external dependency layout.",
+          "Assumes replacing a repository artifact mutates running JVM behavior or allows overwriting immutable released versions.",
+          "Recommends a shared release unit or simultaneous deployment without a contract requiring it."
+        ]
+      },
+      "criteriaSha256": "5a935b56d79c320480a7e91e8c48c56dcf0e10e69da7903d3e0d90e99923e6cf",
+      "skillVersion": "1.2.5",
+      "status": "not-dispatched"
+    }
+  ]
+}

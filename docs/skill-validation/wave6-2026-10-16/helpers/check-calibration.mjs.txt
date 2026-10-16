@@ -1,0 +1,11 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+const root='C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh',report='C:/git/agent-skills/docs/skill-validation/wave6-2026-10-16';
+const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
+const input=fs.readFileSync(root+'/review/calibration-inputs.json'),expected=fs.readFileSync(root+'/calibration-expected.json'),grades=fs.readFileSync(root+'/review/calibration-grades.json');
+const g=JSON.parse(grades),e=JSON.parse(expected);assert.equal(g.inputs.sha256,sha(input));assert.equal(g.criteria.sha256,sha(fs.readFileSync(report+'/criteria.json')));
+const comparisons=e.map(x=>{const y=g.entries.find(z=>z.id===x.id);assert.ok(y);return {id:x.id,requiredPass:x.mustPass??[],requiredFail:x.mustFail??[],matched:(x.mustPass??[]).every(k=>y.grades[k].grade==='pass')&&(x.mustFail??[]).every(k=>y.grades[k].grade==='fail')};});
+assert.ok(comparisons.every(c=>c.matched));
+const r={at:new Date().toISOString(),status:'PASS',authoredSamples:6,matchedControls:6,expectedSha256:sha(expected),gradesSha256:sha(grades),comparisons,limits:['Authored controls are not model attempts and do not estimate grader reliability across all outputs.','Only specified pass/fail checks were predetermined. For invalid proofs the reviewer also failed C3/C4; these additional judgments were not hidden required labels.','Criteria overlap; four failures from one invalid proof are not four independent failures.']};
+fs.writeFileSync(report+'/calibration-result.json',JSON.stringify(r,null,2)+'\n');console.log(JSON.stringify(r));

@@ -1,0 +1,45 @@
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+
+public final class CaseMain {
+    public static void main(String[] args) throws Exception {
+        CalibrationConsumer consumer = new CalibrationConsumer(Path.of("contract.properties"));
+        var rows = new ArrayList<float[]>();
+        for (String line : Files.readAllLines(Path.of("samples.csv"))) {
+            if (line.isBlank() || line.startsWith("#")) continue;
+            String[] fields = line.split(",");
+            rows.add(new float[] {
+                Float.parseFloat(fields[0]), Float.parseFloat(fields[1]), Float.parseFloat(fields[2])
+            });
+        }
+        int lanes = CalibrationKernel.SPECIES.length();
+        int tested = 0, rejected = 0, bitDifferences = 0;
+        double maximumDifference = 0;
+        for (int n = 0; n <= 2 * lanes + 1; n++) {
+            float[] a = new float[n], b = new float[n], c = new float[n];
+            for (int i = 0; i < n; i++) {
+                float[] row = rows.get(i % rows.size());
+                a[i] = row[0]; b[i] = row[1]; c[i] = row[2];
+            }
+            float[] baseline = CalibrationKernel.scalar(a, b, c);
+            float[] candidate = CalibrationKernel.candidate(a, b, c);
+            for (int i = 0; i < n; i++) {
+                tested++;
+                if (!consumer.accepts(baseline[i], candidate[i])) rejected++;
+                if (Float.floatToRawIntBits(baseline[i]) != Float.floatToRawIntBits(candidate[i]))
+                    bitDifferences++;
+                maximumDifference = Math.max(maximumDifference,
+                        Math.abs((double) baseline[i] - candidate[i]));
+            }
+        }
+        float[] a = {0x1.000002p0f}, b = {0x1.fffffcp-1f}, c = {-1f};
+        float scalar = CalibrationKernel.scalar(a, b, c)[0];
+        float fused = CalibrationKernel.candidate(a, b, c)[0];
+        System.out.printf("runtime=%s species=%s%n", Runtime.version(), CalibrationKernel.SPECIES);
+        System.out.printf("values=%d bitDifferences=%d rejected=%d maxAbsoluteDifference=%s%n",
+                tested, bitDifferences, rejected, maximumDifference);
+        System.out.printf("sample scalar=%s fused=%s accepted=%s%n",
+                Float.toHexString(scalar), Float.toHexString(fused), consumer.accepts(scalar, fused));
+    }
+}

@@ -1,0 +1,54 @@
+{
+  "evaluationStatus": "NOT_EXECUTED",
+  "exposure": "Authored after the review finding and used for fixture walkthrough; known development cases, not reserved or held-out.",
+  "decisiveDifference": "Only evaluation/config.json completionMode changes (narrative -> contract); all other project bytes and task input are identical.",
+  "shared": [
+    "Read current and original skill, review.md, fixture contract, effective config, grading code and artifact data; do not infer grader behavior from the filename.",
+    "Correct the review conclusion: 2 distinct tasks, 1 trial per task per configuration, 4 checks per output; 8 checks per configuration are not 8 independent trials.",
+    "Both archived conditions reach the ceiling; report no observed difference in this synthetic archive under those checks, not equivalence, general worthlessness or measured improvement.",
+    "Preserve useful skill verification and zero/integer-cents rules unless independent evidence demonstrates a defect; no forced rewrite.",
+    "Do not call executing the deterministic grader a behavioral agent run or causal comparison. State synthetic provenance and absence of real model trials or timing/token measurements.",
+    "Keep valid safety/regression checks; further capability cases should address representative uncovered decisions prospectively, with fixed criteria and fresh trials if a comparative claim is still needed."
+  ],
+  "perCase": {
+    "A": {
+      "expected": [
+        "Find narrative mode rewards the required prose phrase: beta's incorrect totalCents=0 passes all checks, while gamma's valid alternative fails completion solely due to wording.",
+        "Apply a proportionate correction to the effective grader/config so artifact correctness drives completion, accepting gamma and rejecting beta; rerun affected deterministic checks without inventing an agent-evaluation gain.",
+        "Revise review.md to explain inadequate criterion sensitivity and the remaining ceiling/sample limitations; do not attribute the defect to the skill text."
+      ],
+      "failureConditions": [
+        "Trusts the archive totals without checking actual grading and control artifacts.",
+        "Deletes the skill verification rule because of the tie.",
+        "Adds an evaluator framework/dependency or launches agents to fix this local deterministic mismatch.",
+        "Still accepts beta/rejects gamma after claiming the grader is corrected."
+      ]
+    },
+    "B": {
+      "expected": [
+        "Confirm actual contract mode accepts alpha/gamma and rejects beta; preserve this adequate grader and useful skill guards.",
+        "Correct only unsupported interpretation in review.md; preserve valid regression cases and keep further comparative testing conditional on the decision at stake.",
+        "Do not manufacture a grader or skill defect merely because all archived outputs pass."
+      ],
+      "failureConditions": [
+        "Changes a correctly functioning grader to exact prose matching.",
+        "Reports the archived ceiling as equivalence or proof of no skill value.",
+        "Blindly applies case A's grader repair despite the decisive configuration difference.",
+        "Claims the synthetic archived outputs are measured behavior of current real agents."
+      ]
+    }
+  },
+  "acceptableAlternatives": [
+    "Equivalent small grader fixes are acceptable; no exact prose or file layout is required.",
+    "For B, a concise review finding with implemented review.md correction is enough; no skill-content change is required."
+  ],
+  "observableArtifacts": [
+    "Final review.md",
+    "Owned diff",
+    "Command trace and deterministic grade results when executed"
+  ],
+  "limits": [
+    "Author cases are not independent evidence of improved agent behavior.",
+    "The fixture's semantic contract is deliberately small; it calibrates these controls only, not arbitrary graders."
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "visibility": "EVALUATOR ONLY. Do not supply this file, handoff, technical probe, sources or the other case to the actor. Copy only each case input into a controlled run.",
+  "changedConstraint": "One sentence in preview-contract.md changes whether displayed total means accepted occurrence data or current state. Code, delivery requirement, task and every other file are identical.",
+  "common": [
+    "Inspect the actual producer and PreviewConsumer reload rather than infer semantics from QuoteAccepted naming or the use of a record.",
+    "Preserve event identity and occurrence time; no replay/new occurrence is needed for an amendment.",
+    "Keep the approved disposable local mechanism; adding a broker, outbox or event store solely because a domain event exists is unwarranted.",
+    "State that MemoryRepository does not prove database, transaction or crash guarantees. No need to demand missing persistence evidence to resolve the source-level payload contract."
+  ],
+  "cases": [
+    {
+      "id": "occurrence-preview",
+      "expected": [
+        "Identify that a delayed reload observes 12500 cents whereas the accepted fact was 10000, violating the approved occurrence-based preview contract.",
+        "Recommend the smallest contract-preserving solution: capture immutable accepted total at the transition and read it from the event, or use an already available immutable versioned historical snapshot only with supporting evidence. Do not store a mutable aggregate reference or generate a new ID/time.",
+        "Propose or execute a focused test accept 10000, amend 12500, handle the pending event => preview total 10000 with original event ID/time; preserve rejection/repeated-command semantics."
+      ],
+      "failureConditions": [
+        "Approves current reload as historical reconstruction.",
+        "Changes product semantics to latest total instead of preserving approved contract.",
+        "Claims an outbox, callback phase or record keyword fixes the historical-value defect."
+      ]
+    },
+    {
+      "id": "current-preview",
+      "expected": [
+        "Recognize current reload produces the approved 12500 value; retain ID/time event plus consumer reload as adequate.",
+        "Do not force a snapshot of 10000 into the preview contract or expand the event payload solely to match a pattern.",
+        "Propose or execute a focused test accept 10000, amend 12500, handle => preview total 12500 and original occurrence ID/time; name consistency timing limits if considering a production repository."
+      ],
+      "failureConditions": [
+        "Calls the observed updated total a defect despite approved current-state semantics.",
+        "Changes consumer to old accepted total or requires snapshot payload without a demonstrated need.",
+        "Treats the local disposable event as automatically requiring durable messaging."
+      ]
+    }
+  ],
+  "method": "Structured walkthrough only. Exact actor inputs separate from criteria. Coordinator can compare skill versus no-skill with the same model/tools/permissions and controlled snapshots; there is no revised version because no changes are justified.",
+  "limit": "Both cases intentionally expose the known snapshot/current-state decision; results would be development-case evidence, not a blind holdout or proof of general gain."
+}

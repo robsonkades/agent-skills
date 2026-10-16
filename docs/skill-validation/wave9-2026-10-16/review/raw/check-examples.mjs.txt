@@ -1,0 +1,200 @@
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { join, resolve } from 'node:path';
+import { spawnSync } from 'node:child_process';
+
+const [reference, label] = process.argv.slice(2);
+if (!reference || !/^(baseline|candidate)$/.test(label)) {
+  throw new Error('Usage: node check-examples.mjs <retry-in-java.md> baseline|candidate');
+}
+const reviewRoot = 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/review';
+const output = join(reviewRoot, label);
+mkdirSync(output, { recursive: true });
+const blocks = [...readFileSync(reference, 'utf8').matchAll(/```java\r?\n([\s\S]*?)```/g)]
+  .map((match) => match[1]);
+if (blocks.length !== 5) throw new Error(`Expected 5 Java blocks, saw ${blocks.length}`);
+const prelude = 'import java.time.Duration;\nimport java.util.concurrent.ThreadLocalRandom;\n';
+const jitterSource = `${prelude}
+public class JitterChecks {
+${blocks[0]}
+  static void check(boolean ok, String message) {
+    if (!ok) throw new AssertionError(message);
+  }
+  public static void main(String[] args) {
+    long[][] cases = {{0,1,1,1}, {0,5,100,5}, {1,5,100,10}, {62,1,Long.MAX_VALUE,1L << 62},
+      {63,1,Long.MAX_VALUE,Long.MAX_VALUE}, {Integer.MAX_VALUE,10,100,100},
+      {62,3,1000,1000}, {0,Long.MAX_VALUE,100,100}};
+    int samples = 0;
+    for (long[] c : cases) for (int i = 0; i < 2000; i++) {
+      long draw = fullJitter((int)c[0], Duration.ofNanos(c[1]), Duration.ofNanos(c[2])).toNanos();
+      check(draw >= 0 && draw < c[3], "out-of-window draw " + draw);
+      samples++;
+    }
+    int rejected = 0;
+    try { fullJitter(-1, Duration.ofNanos(1), Duration.ofNanos(1)); }
+    catch (IllegalArgumentException expected) { rejected++; }
+    try { fullJitter(0, Duration.ZERO, Duration.ofNanos(1)); }
+    catch (IllegalArgumentException expected) { rejected++; }
+    try { fullJitter(0, Duration.ofNanos(1), Duration.ofNanos(-1)); }
+    catch (IllegalArgumentException expected) { rejected++; }
+    try { fullJitter(0, Duration.ofSeconds(Long.MAX_VALUE), Duration.ofNanos(1)); }
+    catch (ArithmeticException expected) { rejected++; }
+    check(rejected == 4, "invalid policy accepted");
+    System.out.println("PASS fullJitter: " + samples + " range/overflow samples; 4 invalid policies rejected");
+  }
+}
+`;
+const loopSource = `${prelude}
+public class LoopChecks {
+${blocks[0]}
+${blocks[1]}
+${blocks[2]}
+  static long now;
+  static long oversleep;
+  static boolean interruptSleep;
+  static int sleeps;
+  static int calls;
+  static boolean durableUnknown;
+  final Budget budget = new Budget();
+  record Policy(int maxAttempts, Duration expectedCost, Duration base, Duration cap) {}
+  record Deadline(long budgetNanos) {
+    Duration remaining() { return Duration.ofNanos(budgetNanos - now); }
+  }
+  interface Op<T> { Outcome<T> call(Deadline deadline) throws InterruptedException; }
+  static final class Budget {
+    int tokens = 1;
+    int successes;
+    boolean tryAcquire() { if (tokens < 1) return false; tokens--; return true; }
+    void recordSuccess() { successes++; }
+  }
+  enum TimeUnit {
+    NANOSECONDS;
+    void sleep(long nanos) throws InterruptedException {
+      sleeps++;
+      if (interruptSleep) throw new InterruptedException("injected during delay");
+      now += nanos + oversleep;
+    }
+  }
+  static final class Stopped extends RuntimeException {
+    final String reason;
+    final boolean unresolved;
+    Stopped(String reason, boolean unresolved) { this.reason = reason; this.unresolved = unresolved; }
+  }
+  static Stopped stopped(String reason, boolean unresolved) { return new Stopped(reason, unresolved); }
+  static Policy policy(int attempts) {
+    return new Policy(attempts, Duration.ofNanos(1), Duration.ofNanos(1), Duration.ofNanos(1));
+  }
+  @SuppressWarnings("unchecked")
+  static Outcome<String> ambiguous(long advice) {
+    durableUnknown = true; // fixture operation owner, not a durable storage implementation
+    try {
+      var ctor = Outcome.Ambiguous.class.getDeclaredConstructors()[0];
+      return (Outcome<String>) (ctor.getParameterCount() == 1
+        ? ctor.newInstance("503") : ctor.newInstance("503", Duration.ofNanos(advice)));
+    } catch (ReflectiveOperationException e) { throw new AssertionError(e); }
+  }
+  static Outcome<String> ok() { durableUnknown = false; return new Outcome.Ok<>("same-intent receipt"); }
+  static void check(boolean ok, String message) { if (!ok) throw new AssertionError(message); }
+  interface Checked { void run() throws Exception; }
+  static void expectStopped(String reason, boolean unresolved, Checked action) throws Exception {
+    try { action.run(); throw new AssertionError("expected stop " + reason); }
+    catch (Stopped s) { check(s.reason.equals(reason) && s.unresolved == unresolved,
+      "actual stop " + s.reason + ", unresolved=" + s.unresolved); }
+  }
+  static void reset() {
+    now = 0; oversleep = 0; sleeps = 0; calls = 0; interruptSleep = false; durableUnknown = false;
+    Thread.interrupted();
+  }
+  record Case(String name, Checked body) {}
+  public static void main(String[] args) throws Exception {
+    Case[] cases = {
+      new Case("ambiguous safe replay respects server minimum", () -> {
+        var h = new LoopChecks();
+        String result = h.execute(d -> ++calls == 1 ? ambiguous(100) : ok(), policy(2), new Deadline(200), true);
+        check(calls == 2 && now >= 100 && result.equals("same-intent receipt"), "server minimum lost: " + now);
+        check(h.budget.successes == 1 && !durableUnknown, "same-intent success did not resolve");
+      }),
+      new Case("unfittable ambiguous guidance stops unknown before token/sleep", () -> {
+        var h = new LoopChecks();
+        expectStopped("deadline-would-be-exceeded", true, () ->
+          h.execute(d -> ++calls == 1 ? ambiguous(100) : ok(), policy(2), new Deadline(50), true));
+        check(calls == 1 && sleeps == 0 && h.budget.tokens == 1 && durableUnknown, "attempt/token/state leak");
+      }),
+      new Case("unsafe ambiguous replay stops after one attempt", () -> {
+        var h = new LoopChecks();
+        expectStopped("503", true, () -> h.execute(d -> { calls++; return ambiguous(10); }, policy(3), new Deadline(200), false));
+        check(calls == 1 && sleeps == 0 && durableUnknown, "unsafe replay started");
+      }),
+      new Case("retry budget exhaustion preserves unknown", () -> {
+        var h = new LoopChecks(); h.budget.tokens = 0;
+        expectStopped("retry-budget-exhausted", true, () -> h.execute(d -> { calls++; return ambiguous(10); }, policy(3), new Deadline(200), true));
+        check(calls == 1 && sleeps == 0 && durableUnknown, "budget/state leak");
+      }),
+      new Case("attempt exhaustion preserves unknown", () -> {
+        var h = new LoopChecks();
+        expectStopped("attempts-exhausted", true, () -> h.execute(d -> { calls++; return ambiguous(10); }, policy(1), new Deadline(200), true));
+        check(calls == 1 && sleeps == 0 && durableUnknown, "attempt limit/state leak");
+      }),
+      new Case("later terminal attempt cannot erase earlier ambiguity", () -> {
+        var h = new LoopChecks();
+        expectStopped("denied", true, () -> h.execute(d -> ++calls == 1 ? ambiguous(10) : new Outcome.Permanent<String>("denied"), policy(2), new Deadline(200), true));
+        check(calls == 2 && durableUnknown, "lost prior unknown");
+      }),
+      new Case("expired entry starts no attempt", () -> {
+        var h = new LoopChecks();
+        expectStopped("deadline-exhausted", false, () -> h.execute(d -> { calls++; return ok(); }, policy(2), new Deadline(0), true));
+        check(calls == 0, "started expired operation");
+      }),
+      new Case("pre-interrupted entry starts no attempt", () -> {
+        var h = new LoopChecks(); Thread.currentThread().interrupt();
+        try { h.execute(d -> { calls++; return ok(); }, policy(2), new Deadline(200), true); throw new AssertionError("did not interrupt"); }
+        catch (InterruptedException expected) { check(calls == 0, "started interrupted operation"); }
+        finally { Thread.interrupted(); }
+      }),
+      new Case("timer oversleep starts no late attempt", () -> {
+        var h = new LoopChecks(); oversleep = 100;
+        expectStopped("deadline-exhausted", true, () -> h.execute(d -> { calls++; return ambiguous(10); }, policy(2), new Deadline(50), true));
+        check(calls == 1 && durableUnknown, "started late attempt or lost unknown");
+      }),
+      new Case("interrupted sleep starts no further attempt", () -> {
+        var h = new LoopChecks(); interruptSleep = true;
+        try { h.execute(d -> { calls++; return ambiguous(10); }, policy(2), new Deadline(200), true); throw new AssertionError("did not interrupt"); }
+        catch (InterruptedException expected) { check(calls == 1 && durableUnknown, "replayed or lost owner state"); }
+      }),
+      new Case("known rejection retains delay without manufacturing ambiguity", () -> {
+        var h = new LoopChecks();
+        expectStopped("denied", false, () -> h.execute(d -> ++calls == 1 ? new Outcome.Transient<String>("429", Duration.ofNanos(20)) : new Outcome.Permanent<String>("denied"), policy(2), new Deadline(200), false));
+        check(calls == 2 && now >= 20 && !durableUnknown, "rejection advice/state mismatch");
+      })
+    };
+    int failures = 0;
+    for (Case c : cases) {
+      reset();
+      try { c.body.run(); System.out.println("PASS " + c.name); }
+      catch (Throwable failure) { failures++; System.out.println("FAIL " + c.name + ": " + failure); }
+    }
+    System.out.println("Loop cases: " + (cases.length - failures) + "/" + cases.length + " passed");
+    if (failures != 0) System.exit(1);
+  }
+}
+`;
+writeFileSync(join(output, 'JitterChecks.java'), jitterSource);
+writeFileSync(join(output, 'LoopChecks.java'), loopSource);
+const commands = [
+  ['javac', ['--release', '17', '-d', output, join(output, 'JitterChecks.java')]],
+  ['java', ['-cp', output, 'JitterChecks']],
+  ['javac', ['--release', '21', '-d', output, join(output, 'LoopChecks.java')]],
+  ['java', ['-cp', output, 'LoopChecks']],
+];
+const results = [];
+for (const [command, args] of commands) {
+  const run = spawnSync(command, args, { encoding: 'utf8', cwd: output, timeout: 30000 });
+  const result = { command, args, cwd: output, status: run.status, stdout: run.stdout, stderr: run.stderr,
+    error: run.error?.message };
+  results.push(result);
+  process.stdout.write(`${command} ${args.join(' ')}\n${run.stdout ?? ''}${run.stderr ?? ''}`);
+  if (command === 'javac' && run.status !== 0) break;
+}
+writeFileSync(join(output, 'results.json'), JSON.stringify({
+  reference: resolve(reference), label, harness: 'Extracted snippets; injected budget/monotonic clock/scheduler/adapter placeholders; no network or independent agent runs', results,
+}, null, 2) + '\n');
+process.exitCode = results.some((result) => result.status !== 0) ? 1 : 0;

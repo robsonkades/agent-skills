@@ -1,0 +1,12 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+const root='C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23';
+const checks=[];
+function check(name,actual,expected){assert.ok(typeof actual==='number'?Math.abs(actual-expected)<1e-9:actual===expected,name);checks.push({name,actual,expected,pass:true});}
+check('T1 saving',520-410,110);check('T1 initial transition',20<=25,true);check('T1 updated transition',20<=6,false);
+const l=w=>90*w+30*(1-w),m=w=>55*w+80*(1-w);
+check('T2 central L',l(.60),66);check('T2 central M',m(.60),65);check('T2 lower preference',l(.55)<m(.55),true);check('T2 upper preference',l(.65)>m(.65),true);check('T2 crossover',l(10/17)-m(10/17),0);check('T2 updated L',l(.56),63.6);check('T2 updated M',m(.56),66);
+check('T3 ratio distinct endpoints',3200/80,40);
+check('T4 lower total',12+12*14,180);check('T4 upper total',12+12*25,312);check('T4 monthly crossover',(240-12)/12,19);check('T4 updated total',12+12*17,216);check('T4 saving',240-216,24);
+const result={at:new Date().toISOString(),checks,limit:'Checks authored fixture arithmetic only; not runtime-system evidence or behavioral gain.'};
+fs.writeFileSync(root+'/arithmetic-result.json',JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify({passed:checks.length,total:checks.length}));

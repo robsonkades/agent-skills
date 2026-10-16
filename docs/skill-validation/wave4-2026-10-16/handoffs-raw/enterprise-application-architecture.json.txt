@@ -1,0 +1,441 @@
+{
+  "skill": "enterprise-application-architecture",
+  "status": "NO_CHANGES_NEEDED",
+  "ownedPath": "skills/enterprise-application-architecture/**",
+  "allWritesStopped": true,
+  "reviewDate": "2026-10-16",
+  "assignment": "Wave 4 specialist review; preserve all other contributors and earlier waves.",
+  "baseline": {
+    "head": "bbb7d996a929e81baf735bbaab5b6e3fbf6e8503",
+    "committedVersion": "1.2.6",
+    "assignmentVersion": "1.2.6",
+    "files": [
+      {
+        "path": "skills/enterprise-application-architecture/SKILL.md",
+        "sha256": "10ae6bbacda7cb40cef507f73f5c9e823f8476dc878c245b849b3602c9eafddb",
+        "bytes": 12700,
+        "match": true
+      },
+      {
+        "path": "skills/enterprise-application-architecture/references/application-types.md",
+        "sha256": "107d95d3f6fab13356b1ee881d5cdc88cf4828baf30ef704fa8c3e6a294b7c6c",
+        "bytes": 10005,
+        "match": true
+      },
+      {
+        "path": "skills/enterprise-application-architecture/references/navigating-the-family.md",
+        "sha256": "09e9f7442b1e3ea76185dedd28d9b3e768229ad5cc7991c004e3d0471a5aff87",
+        "bytes": 14978,
+        "match": true
+      },
+      {
+        "path": "skills/enterprise-application-architecture/skill.yaml",
+        "sha256": "bfdb9e96125bfeaf11111dcc1bee85f78b04ba4b1de297b8d8a8f8e2f02e7c11",
+        "bytes": 4009,
+        "match": true
+      }
+    ],
+    "workingTreeStatus": "Clean, including no staged, unstaged or untracked files in the owned package.",
+    "preExistingChanges": [],
+    "preExistingVersionBump": false
+  },
+  "versions": {
+    "committed": "1.2.6",
+    "assignment": "1.2.6",
+    "final": "1.2.6",
+    "rationale": "No content or metadata changes justified; immutable package contents and all four assignment hashes preserved, so no bump."
+  },
+  "reviewProcedure": {
+    "read": [
+      "AGENTS.md",
+      "docs/skill-validation/wave4-2026-10-16/review-brief.md",
+      "docs/skill-review-prompt.md",
+      "skills/skill-engineering/SKILL.md",
+      "skills/skill-engineering/references/evidence-and-confidence.md",
+      "skills/skill-engineering/references/evaluation.md",
+      "skills/skill-engineering/references/resource-design.md",
+      "skills/skill-engineering/references/anti-patterns.md"
+    ],
+    "reused": "Previously read unchanged docs/parallel-skill-reviews.md and applicable earlier wave/roadmap lessons. Comparative research and wave-3 outcome evidence consulted again.",
+    "entireAssignedPackageRead": true,
+    "assessmentSentBeforeAnyPotentialSkillEdit": true,
+    "subagentsUsed": false
+  },
+  "promiseAndScope": {
+    "role": "Architecture discovery, orientation and routing; no mandatory implementation.",
+    "activations": [
+      "Unfamiliar enterprise application",
+      "First structural decisions for a new module",
+      "Architecture explanation and shared vocabulary",
+      "Locating a domain, persistence, transaction, presentation or remote-boundary question"
+    ],
+    "successCriteria": [
+      "Trace a concrete affected operation and effective caller/configuration.",
+      "Identify rule/state/transaction/consistency ownership using evidence.",
+      "Preserve requirements, accepted decisions and adequate current choices.",
+      "Route the bounded question with existing evidence, expected return and acceptance check.",
+      "Keep missing runtime/organizational evidence conditional and distinguish proposals from implemented architecture."
+    ],
+    "exclusions": [
+      "Team/delivery process",
+      "Full specialist pattern implementations",
+      "Universal project Java/framework baseline",
+      "A compulsory whole-system architecture redesign"
+    ]
+  },
+  "findingsCorrected": [],
+  "findingsReviewed": [
+    {
+      "id": "FLOW-AND-EFFECTIVE-BOUNDARY",
+      "disposition": "Existing guidance adequate; no change.",
+      "locations": [
+        "skills/enterprise-application-architecture/SKILL.md:78",
+        "skills/enterprise-application-architecture/SKILL.md:83"
+      ],
+      "observation": "The workflow starts from a consumer/business use case, accepted constraints and representative call paths; it explicitly rejects annotation presence as proof of an active transaction.",
+      "evidence": "Spring 6.2.19 annotation/runtime and transaction-manager contracts support the distinction.",
+      "consequenceIfRemoved": "An interface or @Transactional label could be mistaken for effective resource scope."
+    },
+    {
+      "id": "COMPOSITION-AND-RECOVERY",
+      "disposition": "Existing guidance adequate; no change.",
+      "locations": [
+        "skills/enterprise-application-architecture/references/navigating-the-family.md:111",
+        "skills/enterprise-application-architecture/references/application-types.md"
+      ],
+      "observation": "The recovery fork distinguishes shared transaction resources, local state plus publication intent, and separately committed effects; compensation is conditional on permitted intermediate states and meaningful recovery.",
+      "evidence": "Outbox and saga primary pattern sources; walkthrough of the same checkout operation under local and partner adapter selection.",
+      "consequenceIfRemoved": "A local outbox or compensating saga could be asserted to satisfy an immediate cross-owner invariant that it does not provide."
+    },
+    {
+      "id": "RESTRAINT-AND-STATE",
+      "disposition": "Existing guidance adequate; no change.",
+      "locations": [
+        "skills/enterprise-application-architecture/SKILL.md:104",
+        "skills/enterprise-application-architecture/references/application-types.md"
+      ],
+      "observation": "Application kinds are hypotheses rather than diagnoses. The reference preserves simple CRUD, bounded whole-run transactions, persistent workflow state distinct from sessions, and query projections without forcing separate stores or deployments.",
+      "evidence": "Fowler CQRS guidance and package inspection; no contradictory mechanism found in the stated scope.",
+      "consequenceIfRemoved": "Category labels could produce unnecessary Domain Models, service splits, CQRS or chunk visibility violations."
+    },
+    {
+      "id": "BOUNDED-HANDOFF",
+      "disposition": "Existing guidance adequate; no change.",
+      "locations": [
+        "skills/enterprise-application-architecture/SKILL.md:104",
+        "skills/enterprise-application-architecture/SKILL.md:110",
+        "skills/enterprise-application-architecture/references/navigating-the-family.md:125"
+      ],
+      "observation": "The deliverable carries observed evidence, inferred force, unresolved constraint, owner and acceptance check, stops when the bounded question is clear, and does not claim unavailable specialist work occurred.",
+      "evidence": "Direct package content, with two routed references and declared target checks passing.",
+      "consequenceIfRemoved": "An orientation task could expand into a full implementation, or uncertainty could be hidden by a map without verifiable decisions."
+    }
+  ],
+  "remainingFindings": [],
+  "noChangeRationale": "The consequential guards requested by this assignment already exist and are internally consistent. Adding another flow checklist, recovery recipe or diagram requirement would duplicate the current entrypoint or move specialist implementation into this routing skill. No source-backed defect or local structural failure was found.",
+  "filesChangedByReviewer": [],
+  "preExistingChangedFiles": [],
+  "filesUnchanged": [
+    "skills/enterprise-application-architecture/SKILL.md",
+    "skills/enterprise-application-architecture/references/application-types.md",
+    "skills/enterprise-application-architecture/references/navigating-the-family.md",
+    "skills/enterprise-application-architecture/skill.yaml"
+  ],
+  "capabilities": {
+    "preserved": [
+      "All eleven architectural forces and iterative eight-decision discovery guide.",
+      "Evidence-first distinction between documented intent, actual behavior, accepted requirement and open proposal.",
+      "Domain, persistence, concurrency, presentation, integration and security routing.",
+      "Module-specific choices; no-change, routine explanation and proportionate ADR alternatives.",
+      "Effective transaction/resource inspection and local/outbox/separate-owner recovery fork.",
+      "Durable workflow state, batch restart/checkpoint visibility, projection and read-store trade-offs.",
+      "Alternate authorization entry paths and JVM shared-memory versus database concurrency boundary.",
+      "Conditional references and explicit unavailable-specialist handoff behavior."
+    ],
+    "replaced": [],
+    "removed": []
+  },
+  "commandsExecuted": [
+    {
+      "command": "@'\nimport assert from 'node:assert/strict';\nimport { readFileSync, readdirSync, existsSync } from 'node:fs';\nimport path from 'node:path';\nimport { parseManifest } from './packages/core/src/domain/manifest.ts';\nimport { buildSkillPackage } from './packages/core/src/domain/skill-package.ts';\nimport { validatePackage } from './packages/core/src/application/validate-package.ts';\nconst root = path.resolve('skills/enterprise-application-architecture');\nfunction gather(dir, prefix = '') {\n  return readdirSync(dir, { withFileTypes: true }).flatMap(e => {\n    const rel = prefix + e.name;\n    return e.isDirectory() ? gather(path.join(dir, e.name), rel + '/') : [{ path: rel, bytes: readFileSync(path.join(dir, e.name)) }];\n  });\n}\nconst files = gather(root);\nconst parsed = parseManifest(readFileSync(path.join(root, 'skill.yaml'), 'utf8'));\nconst pkg = buildSkillPackage(parsed.manifest, files);\nconst report = validatePackage(pkg, { directoryName: 'enterprise-application-architecture' });\nassert.deepEqual(parsed.issues, []);\nassert.deepEqual(report.issues, []);\nassert.equal(parsed.manifest.version, '1.2.6');\nlet linkCount = 0;\nfor (const file of files.filter(f => f.path.endsWith('.md'))) {\n  const text = file.bytes.toString('utf8');\n  for (const match of text.matchAll(/\\[[^\\]]+\\]\\(([^)]+)\\)/g)) {\n    const href = match[1];\n    if (/^(?:https?:|mailto:)/.test(href)) continue;\n    const [relative, fragment] = href.split('#');\n    const target = path.resolve(root, path.dirname(file.path), relative || path.basename(file.path));\n    assert.ok(target.startsWith(root + path.sep), href);\n    assert.ok(existsSync(target), href);\n    if (fragment) {\n      const headings = [...readFileSync(target, 'utf8').matchAll(/^#+\\s+(.+)$/gm)].map(m => m[1].toLowerCase().replace(/[^\\w\\s-]/g, '').trim().replace(/\\s+/g, '-'));\n      assert.ok(headings.includes(fragment), href);\n    }\n    linkCount++;\n  }\n}\nconst entry = readFileSync(path.join(root, 'SKILL.md'), 'utf8');\nfor (const file of files.filter(f => f.path.startsWith('references/'))) assert.ok(entry.includes(file.path), 'Unrouted reference: ' + file.path);\nconsole.log(JSON.stringify({ name: parsed.manifest.name, version: parsed.manifest.version, files: files.length, packageIssues: report.issues, manifestIssues: parsed.issues, relativeLinksChecked: linkCount, referencesRouted: files.filter(f => f.path.startsWith('references/')).length }));\n'@ | node --input-type=module",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "44f832",
+          "wall_time_seconds": 0.3085423,
+          "exit_code": 0,
+          "original_token_count": 40,
+          "output": "{\"name\":\"enterprise-application-architecture\",\"version\":\"1.2.6\",\"files\":4,\"packageIssues\":[],\"manifestIssues\":[],\"relativeLinksChecked\":2,\"referencesRouted\":2}\n"
+        }
+      }
+    },
+    {
+      "command": "@'\nimport assert from 'node:assert/strict';\nimport { readFileSync, readdirSync, existsSync } from 'node:fs';\nimport path from 'node:path';\nimport { parseManifest } from './packages/core/src/domain/manifest.ts';\nconst root='skills/enterprise-application-architecture';\nconst {manifest}=parseManifest(readFileSync(root+'/skill.yaml','utf8'));\nconst declared=new Set([...(manifest.dependencies??[]).map(x=>x.name),...(manifest.suggests??[])]);\nconst files=[root+'/SKILL.md',...readdirSync(root+'/references').map(n=>root+'/references/'+n)];\nconst terms=new Set(files.flatMap(f=>[...readFileSync(f,'utf8').matchAll(/\\b[a-z][a-z0-9]+(?:-[a-z0-9]+)+\\b/g)].map(m=>m[0])));\nconst actualReferrals=[...terms].filter(n=>n!==manifest.name&&existsSync(path.join('skills',n,'SKILL.md'))).sort();\nconst undeclared=actualReferrals.filter(n=>!declared.has(n));\nassert.deepEqual(undeclared,[]);\nfor(const name of declared) assert.ok(existsSync(path.join('skills',name,'SKILL.md')),name);\nconsole.log(JSON.stringify({skill:manifest.name,actualReferralsChecked:actualReferrals,undeclared,declaredTargetsPresent:declared.size,scope:'owned markdown and explicitly named target entrypoint existence only; not catalog-wide routing/resolution'}));\n'@ | node --input-type=module",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "ddfd12",
+          "wall_time_seconds": 0.2673058,
+          "exit_code": 0,
+          "original_token_count": 380,
+          "output": "{\"skill\":\"enterprise-application-architecture\",\"actualReferralsChecked\":[\"architecture-and-performance\",\"architecture-characteristics\",\"architecture-decision-making\",\"architecture-refactoring-paths\",\"architecture-testing\",\"caching-strategies\",\"concurrency-limiting-and-bulkheads\",\"connection-pool-sizing\",\"consistency-models\",\"data-source-patterns\",\"delivery-semantics\",\"distributed-transactions-and-sagas\",\"distribution-boundaries\",\"domain-logic-organization\",\"enterprise-architecture-smells\",\"enterprise-base-patterns\",\"enterprise-transactions\",\"failure-models\",\"inheritance-mapping-strategies\",\"java-application-security-basics\",\"java-concurrency\",\"java-performance\",\"jvm-gc-tuning\",\"latency-statistics\",\"layering-and-boundaries\",\"legacy-enterprise-modernization\",\"littles-law-and-queueing\",\"metadata-mapping\",\"mvc-and-request-handling\",\"offline-concurrency-control\",\"orm-behavioral-patterns\",\"orm-structural-mapping\",\"pattern-selection-and-composition\",\"patterns-and-modern-frameworks\",\"performance-methodology\",\"query-objects-and-specifications\",\"remote-facade-and-dto\",\"repository-pattern\",\"retries-and-backoff\",\"rpc-and-api-contracts\",\"service-layer-design\",\"session-state-strategies\",\"sharding-and-partitioning\",\"skill-engineering\",\"stateless-service-design\",\"timeouts-and-deadlines\",\"universal-scalability-law\",\"view-and-representation-patterns\"],\"undeclared\":[],\"declaredTargetsPresent\":49,\"scope\":\"owned markdown and explicitly named target entrypoint existence only; not catalog-wide routing/resolution\"}\n"
+        }
+      }
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/enterprise-application-architecture/SKILL.md skills/enterprise-application-architecture/skill.yaml skills/enterprise-application-architecture/references/application-types.md skills/enterprise-application-architecture/references/navigating-the-family.md",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "cc1ded",
+          "wall_time_seconds": 0.3543409,
+          "exit_code": 0,
+          "original_token_count": 17,
+          "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+        }
+      }
+    },
+    {
+      "command": "git diff --check -- skills/enterprise-application-architecture",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "6b03b8",
+          "wall_time_seconds": 0.1490023,
+          "exit_code": 0,
+          "original_token_count": 0,
+          "output": ""
+        }
+      }
+    },
+    {
+      "command": "@'\nimport assert from 'node:assert/strict';\nimport { readFileSync } from 'node:fs';\nconst root='C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/enterprise-application-architecture-evidence/';\nconst first=JSON.parse(readFileSync(root+'case-01.input.json','utf8'));\nconst second=JSON.parse(readFileSync(root+'case-02.input.json','utf8'));\nconst criteria=JSON.parse(readFileSync(root+'evaluator-criteria.json','utf8'));\nassert.equal(first.files['deployment.properties'],'inventory.mode=local\\n');\nassert.equal(second.files['deployment.properties'],'inventory.mode=partner\\n');\nassert.equal(criteria.cases.length,2);\nassert.equal(first.prompt,second.prompt);\nfor(const input of [first,second]) {\n  assert.equal(Object.keys(input.files).length,11);\n  assert.ok(!Object.hasOwn(input,'required'));\n  assert.ok(!Object.hasOwn(input,'criteria'));\n  for(const file of Object.keys(input.files)) {\n    assert.ok(!file.startsWith('/')&&!file.includes('..'));\n  }\n}\nsecond.id=first.id;\nsecond.files['deployment.properties']=first.files['deployment.properties'];\nassert.deepEqual(first,second);\nconsole.log(JSON.stringify({cases:2,filesPerCase:11,onlyDecisiveDifference:'inventory.mode',criteriaSeparate:true,validation:'fixture consistency only; no Spring/database/HTTP runtime or actor evaluation'}));\n'@ | node --input-type=module",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "26b549",
+          "wall_time_seconds": 0.1554407,
+          "exit_code": 0,
+          "original_token_count": 48,
+          "output": "{\"cases\":2,\"filesPerCase\":11,\"onlyDecisiveDifference\":\"inventory.mode\",\"criteriaSeparate\":true,\"validation\":\"fixture consistency only; no Spring/database/HTTP runtime or actor evaluation\"}\n"
+        }
+      }
+    },
+    {
+      "command": "@'\nimport assert from 'node:assert/strict';\nimport { readFileSync, readdirSync } from 'node:fs';\nimport { createHash } from 'node:crypto';\nimport path from 'node:path';\nconst baseline=JSON.parse(readFileSync('docs/skill-validation/wave4-2026-10-16/baseline.json','utf8'));\nconst pkg=baseline.packages.find(p=>p.name==='enterprise-application-architecture');\nfunction gather(dir) {return readdirSync(dir,{withFileTypes:true}).flatMap(e=>e.isDirectory()?gather(path.join(dir,e.name)):[path.join(dir,e.name).replaceAll('\\\\','/')]);}\nconst paths=gather('skills/enterprise-application-architecture');\nassert.equal(paths.length,pkg.files.length);\nconst files=paths.map(p=>({path:p,sha256:createHash('sha256').update(readFileSync(p)).digest('hex')}));\nfor(const file of files) assert.equal(file.sha256,pkg.files.find(f=>f.path===file.path).sha256,file.path);\nconsole.log(JSON.stringify({allAssignmentHashesUnchanged:true,files,platform:process.platform,node:process.version,execPath:process.execPath}));\n'@ | node --input-type=module",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "e0a55c",
+          "wall_time_seconds": 0.1509036,
+          "exit_code": 0,
+          "original_token_count": 186,
+          "output": "{\"allAssignmentHashesUnchanged\":true,\"files\":[{\"path\":\"skills/enterprise-application-architecture/references/application-types.md\",\"sha256\":\"107d95d3f6fab13356b1ee881d5cdc88cf4828baf30ef704fa8c3e6a294b7c6c\"},{\"path\":\"skills/enterprise-application-architecture/references/navigating-the-family.md\",\"sha256\":\"09e9f7442b1e3ea76185dedd28d9b3e768229ad5cc7991c004e3d0471a5aff87\"},{\"path\":\"skills/enterprise-application-architecture/SKILL.md\",\"sha256\":\"10ae6bbacda7cb40cef507f73f5c9e823f8476dc878c245b849b3602c9eafddb\"},{\"path\":\"skills/enterprise-application-architecture/skill.yaml\",\"sha256\":\"bfdb9e96125bfeaf11111dcc1bee85f78b04ba4b1de297b8d8a8f8e2f02e7c11\"}],\"platform\":\"win32\",\"node\":\"v25.6.1\",\"execPath\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\"}\n"
+        }
+      }
+    },
+    {
+      "command": "git status --short -- skills/enterprise-application-architecture\n git diff -- skills/enterprise-application-architecture\n git diff --cached -- skills/enterprise-application-architecture",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "068569",
+          "wall_time_seconds": 0.1913142,
+          "exit_code": 0,
+          "original_token_count": 0,
+          "output": ""
+        }
+      }
+    }
+  ],
+  "readCommandsAndResults": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/enterprise-application-architecture-evidence/inspection-evidence.json",
+  "structuralResults": {
+    "filesValidated": 4,
+    "manifestIssues": [],
+    "packageIssues": [],
+    "relativeLinksChecked": 2,
+    "referencesRouted": 2,
+    "ownedMarkdownReferralsDeclared": true,
+    "declaredTargetEntrypointsPresent": 49,
+    "format": "PASS, all four owned files",
+    "diffCheck": "PASS",
+    "finalOwnedGitStatus": "clean",
+    "assignmentHashesUnchanged": true,
+    "limitation": "Named-target existence and declared referrals are local read-only checks; they do not prove catalog-wide version resolution or installation behavior."
+  },
+  "failuresAndRecovery": [],
+  "behavioralEvidence": {
+    "independentActorRuns": [],
+    "executedBehavioralEvaluations": [],
+    "measuredSkillImprovement": false,
+    "walkthroughs": {
+      "kind": "Structured reviewer walkthrough; no actor output or measured effectiveness.",
+      "case01": "The selected adapter shares the transaction-managed JDBC bean. The archived matching-profile rollback/control supports the bounded flow. Retain it and repair rationale/coverage, with no broad pattern intervention.",
+      "case02": "One configuration value selects an independently committing HTTP effect. The same later exception cannot roll that effect back through checkoutTx. Correct the map and hand off the accepted visibility/resource conflict; do not weaken the invariant or choose compensation automatically.",
+      "additionalExistingGuardsReviewed": [
+        "Batch whole-run atomicity versus chunk visibility",
+        "Workflow durable process state versus expiring session",
+        "Read projections versus mandatory separate store",
+        "Authorization at alternate entry paths",
+        "Shared-memory races versus persistence conflicts"
+      ]
+    },
+    "technicalExecution": "Read-only package metadata/link/routing/hash/format checks and JSON fixture consistency only.",
+    "integrationExecution": "No Spring runtime, database transaction, HTTP partner, broker, distributed recovery or benchmark executed.",
+    "negativeControls": "Supplied cases include a draft conclusion that is supported only under a matching local adapter/resource contract. Expected preservation and refutation criteria are separate and unexecuted by an actor.",
+    "exampleClassification": "The package has prose, tables and routing diagrams, no executable Java example requiring compilation. The temporary case snippets are explicitly incomplete discovery excerpts, not a runnable build."
+  },
+  "caseInputs": [
+    {
+      "id": "case-01",
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/enterprise-application-architecture-evidence/case-01.input.json",
+      "embeddedFiles": [
+        "README.md",
+        "deployment.properties",
+        "src/CheckoutService.java",
+        "src/Composition.java",
+        "src/Inventory.java",
+        "src/LocalInventory.java",
+        "src/PartnerInventory.java",
+        "contracts/partner.md",
+        "decisions/accepted-17.md",
+        "evidence/local-profile-check.md",
+        "architecture-map.md"
+      ],
+      "prerequisites": "Materialize the 11 embedded artifacts in an isolated temporary folder; allow file reads and architecture-map.md edits; no runtime installation required."
+    },
+    {
+      "id": "case-02",
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/enterprise-application-architecture-evidence/case-02.input.json",
+      "embeddedFiles": [
+        "README.md",
+        "deployment.properties",
+        "src/CheckoutService.java",
+        "src/Composition.java",
+        "src/Inventory.java",
+        "src/LocalInventory.java",
+        "src/PartnerInventory.java",
+        "contracts/partner.md",
+        "decisions/accepted-17.md",
+        "evidence/local-profile-check.md",
+        "architecture-map.md"
+      ],
+      "prerequisites": "Materialize the 11 embedded artifacts in an isolated temporary folder; allow file reads and architecture-map.md edits; no runtime installation required."
+    }
+  ],
+  "evaluatorCriteriaFile": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/enterprise-application-architecture-evidence/evaluator-criteria.json",
+  "evaluationInstructions": "The pair differs only in deployment.properties inventory.mode. The task does not state the diagnosis; ordinary artifacts include both candidate adapters, the active selection, an approved visibility contract, an architecture map and archived local-profile evidence. Give the actor one input and selected skill only; withhold criteria and reviewer report. These are known development cases, not holdouts.",
+  "sources": [
+    {
+      "url": "https://docs.spring.io/spring-framework/reference/6.2/data-access/transaction/declarative/annotations.html",
+      "version": "Spring Framework 6.2.19 as displayed when consulted",
+      "sections": [
+        "Method visibility and @Transactional in proxy mode",
+        "Multiple Transaction Managers with @Transactional"
+      ],
+      "supports": "Annotation metadata alone is insufficient: actual runtime interception and transaction-manager selection matter. Matches the existing workflow guard and the fixture's effective caller/configuration.",
+      "limit": "Documentation review only; no Spring runtime was executed. The initial unversioned lookup displayed 7.0.9 and was not used as the fixture's 6.2 baseline.",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://docs.spring.io/spring-framework/reference/6.2/data-access/transaction/strategies.html",
+      "version": "Spring Framework 6.2.19 as displayed when consulted",
+      "sections": [
+        "Understanding the Spring Framework Transaction Abstraction"
+      ],
+      "supports": "The selected transaction manager and associated resources determine the transaction mechanism; local JDBC DataSourceTransactionManager differs from globally coordinated JTA.",
+      "limit": "Does not establish the enlistment of any real project; the skill properly requests project evidence.",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://microservices.io/patterns/data/transactional-outbox.html",
+      "version": "Author-maintained pattern page, consulted 2026-10-16; no release number",
+      "sections": [
+        "Solution",
+        "Result context"
+      ],
+      "supports": "Local state and publication intent share a transaction; a relay can publish duplicates. Supports the existing local-intent versus remote business-effect distinction.",
+      "limit": "Conceptual pattern contract, not proof that a particular relay or consumer is reliable.",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://microservices.io/patterns/data/saga.html",
+      "version": "Author-maintained pattern page, consulted 2026-10-16; no release number",
+      "sections": [
+        "Resulting context"
+      ],
+      "supports": "Saga compensation is not automatic ACID rollback and lacks transaction isolation by default. Supports preserving the required intermediate visibility/recovery contract before selecting this mechanism.",
+      "limit": "No deployed saga implementation evaluated; case requirements are authored synthetic business contracts.",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://martinfowler.com/eaaCatalog/serviceLayer.html",
+      "version": "Patterns of Enterprise Application Architecture catalog entry, Randy Stafford, 2003-03-05",
+      "sections": [
+        "Service Layer"
+      ],
+      "supports": "Application operations and response/transaction coordination belong to the service boundary; this is not proof of one universal resource transaction.",
+      "limit": "Architecture pattern definition; it does not mandate the pattern for every module.",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://martinfowler.com/bliki/CQRS.html",
+      "version": "Martin Fowler, 2011-07-14",
+      "sections": [
+        "When to use it"
+      ],
+      "supports": "Separate command/query models carry complexity and can apply to selected portions; ordinary CRUD can remain appropriate. Supports the skill's conditional module-specific choices.",
+      "limit": "Expert pattern guidance, not a comparative benchmark for this catalog or target application.",
+      "consulted": "2026-10-16"
+    }
+  ],
+  "limitations": [
+    "No concrete skill edit was necessary; no change-induced improvement is claimed.",
+    "Architecture/source walkthroughs do not establish runtime guarantees or performance.",
+    "Fixture-provided archived QA observations are synthetic task context, not reviewer-executed evidence.",
+    "No independent actor run, original-versus-revised comparison or automatic skill-selection test occurred.",
+    "This review verified material routing contracts, not every implementation detail in every neighboring specialist.",
+    "Global registry resolution/version/integrity and repository-wide verification remain coordinator-owned."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "workingDirectory": "C:/git/agent-skills",
+      "reason": "Coordinator only after all reviewers stop. This unchanged package itself needs no integrity update; the cumulative wave may.",
+      "prerequisites": "All wave authors have stopped writing."
+    },
+    {
+      "command": "npm run verify",
+      "workingDirectory": "C:/git/agent-skills",
+      "reason": "Coordinator owns cumulative repository verification. Local no-change completion is not a global pass.",
+      "prerequisites": "Final registry generation and all authors read-only."
+    }
+  ],
+  "crossSkillIssues": [],
+  "coordinatorActions": [
+    "Accept or challenge the documented no-change conclusion without a version bump.",
+    "Use the separated case inputs for optional independent evaluation; preserve the lack of measured improvement.",
+    "Run cumulative global checks after every reviewer stops."
+  ],
+  "evidencePaths": [
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/enterprise-application-architecture-evidence/inspection-evidence.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/enterprise-application-architecture-evidence/local-checks.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/enterprise-application-architecture-evidence/source-ledger.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/enterprise-application-architecture-evidence/case-01.input.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/enterprise-application-architecture-evidence/case-02.input.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/enterprise-application-architecture-evidence/evaluator-criteria.json"
+  ],
+  "processState": {
+    "repositoryEdits": 0,
+    "backgroundProcessesStarted": [],
+    "activeWriters": [],
+    "allWritesStopped": true
+  }
+}

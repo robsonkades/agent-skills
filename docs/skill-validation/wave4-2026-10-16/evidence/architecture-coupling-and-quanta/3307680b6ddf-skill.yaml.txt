@@ -1,0 +1,60 @@
+schemaVersion: 1
+
+name: architecture-coupling-and-quanta
+version: 1.1.5
+description: >-
+  Map release and runtime coupling when services ship together, event-driven components still
+  require coordinated changes, shared data obscures ownership, or a proposed architecture
+  quantum boundary cannot be justified. Distinguish structural dependencies, workflow completion
+  and connascence using contracts, deployment evidence and failure behavior. Does not choose
+  service extractions (distribution-boundaries), diagnose architecture smells
+  (enterprise-architecture-smells), or refactor package dependencies (java-cohesion-coupling).
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/architecture-coupling-and-quanta
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/architecture-coupling-and-quanta
+
+keywords:
+  - architecture
+  - coupling
+  - architecture-quantum
+  - connascence
+  - change-coupling
+  - deployability
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: distribution-boundaries
+    version: ^1.0.0
+  - name: enterprise-architecture-smells
+    version: ^1.0.0
+
+suggests:
+  - architecture-characteristics
+  - architecture-decision-making
+  - architecture-fitness-functions
+  - architecture-testing
+  - architecture-trade-off-analysis
+  - component-and-release-boundaries
+  - java-cohesion-coupling
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Architecture Coupling and Quanta
+      short_description: Name the unit that ships and the coupling crossing its edge
+      default_prompt: Use Architecture Coupling and Quanta to map this estate's quanta and deployment units.

@@ -34,8 +34,10 @@ driving adapter -> transaction decorator -> CreateOrder -> OrderStore -> JdbcOrd
 ```
 
 These are runtime calls. Source dependencies point from adapters/composition to the
-application contracts; application/domain code imports only Java and its own core.
-`CreateOrder` calls the output interface without naming `JdbcOrders`.
+application contracts; application/domain code imports only allowed Java types and
+its own core. JDBC (`java.sql..` and `javax.sql..`) belongs in the persistence adapter
+even though the JDK supplies those APIs. `CreateOrder` calls the output interface
+without naming `JdbcOrders`.
 
 The composition root uses Spring's
 [`TransactionTemplate`](https://docs.spring.io/spring-framework/reference/data-access/transaction/programmatic.html)
@@ -107,7 +109,7 @@ mvn -B -Dtest=ArchitectureTest test
 
 ## Evidence and limits
 
-The restored fixture ran **16 tests with zero failures, errors or skips**:
+The revised fixture ran **17 tests with zero failures, errors or skips**:
 
 - `UseCaseTest`: five tests cover the shared storage contract and direct application
   invocation with a small fake: valid creation, authorization, quantity and duplicates. No
@@ -121,11 +123,13 @@ The restored fixture ran **16 tests with zero failures, errors or skips**:
   checks failure classification and rollback. A controlled caller transaction also
   rolls back after the inner operation returns successfully, proving that the inner
   return does not commit joined work.
-- `ArchitectureTest`: two tests use
+- `ArchitectureTest`: three tests use
   [ArchUnit](https://www.archunit.org/userguide/html/000_Index.html) to import production
   classes while excluding tests, assert required domain/application/adapter classes
   were selected, and enforce core independence plus domain-to-application direction.
-  The same core rule also rejects an explicitly imported hostile test class.
+  The same core rule separately rejects hostile Spring and JDBC test classes;
+  rejecting only a Spring type would not expose an overly broad `java..` allowance.
+  The rule enforces the listed dependency policy, not freedom from all possible I/O.
 
 Both the fake and JDBC adapter run the same
 [insert/find assertions](src/test/java/example/hexagonal/application/OrderStoreContract.java):
@@ -134,7 +138,8 @@ under the same globally unique ID, and preservation of the original row. This sh
 subset does not claim audit, transaction, infrastructure failure or concurrency parity;
 the JDBC-specific checks above retain the real mechanisms for those exercised claims.
 
-Five additional mutations were executed only in the disposable copy, then restored:
+Earlier validation executed five additional mutations only in the disposable copy,
+then restored them:
 
 1. Adding `application/MutationProbe.java` with a
    `org.springframework.http.ResponseEntity<String>` field made the actual production
@@ -153,6 +158,14 @@ production class, `mvn -B -o clean test` passed all 16 tests; an additional rest
 `mvn -B -o clean test dependency:tree` run confirmed the versions above. Offline mode
 (`-o`) requires the dependencies to be cached from a prior run. Use `clean`
 after deleting a mutation source so its compiled class cannot survive in `target/`.
+
+A subsequent JDBC mutation added a `java.sql.Connection` field to a production
+`application/MutationProbe.java`. Before the explicit JDBC exclusion, the actual
+production guard incorrectly passed both architecture tests. With the revised rule,
+the same mutation compiled and ran three architecture tests with one failure naming
+that field and `java.sql.Connection`; Maven exited 1. Removing the mutation and
+running `mvn -B -o clean test` restored all **17 passing tests** in the environment
+listed above. The earlier five mutations were not rerun in this JDBC experiment.
 
 MockMvc supplies `Principal` directly. These tests establish the application ownership
 check for the supplied identities, not credential verification, security filter

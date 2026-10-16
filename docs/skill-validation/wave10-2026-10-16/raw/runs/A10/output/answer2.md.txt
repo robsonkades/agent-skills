@@ -1,0 +1,15 @@
+Recomendo **M**, sob o peso `w = 0,56` formalmente aprovado por Bruno. A pendência de preferência foi resolvida; os dados fornecidos sustentam agora uma escolha definida pelo modelo aceito.
+
+Com os valores locais mantidos como premissas deste caso:
+
+- `V(L) = 0,56 × 90 + 0,44 × 30 = 63,60`;
+- `V(M) = 0,56 × 55 + 0,44 × 80 = 66,00`;
+- vantagem de M: `66,00 − 63,60 = 2,40` pontos de valor.
+
+As duas opções continuam viáveis, incluindo a transição, e os custos relevantes já estão incorporados. Escolher M aceita 35 pontos a menos em operação em troca de 50 pontos a mais em mudanças. Bruno aceitou essas consequências nas escalas existentes; os pontos expressam preferências, não percentuais de desempenho.
+
+A preferência do colega por `w = 0,65` pode ser registrada como divergência, mas não substitui o peso autorizado nem justifica reabrir o modelo. A recomendação é válida sob `w = 0,56`; não implica que M venceria sob qualquer peso.
+
+O comitê pode registrar hoje M como recomendação. Não há justificativa fornecida para contratar a semana de benchmark para encerrar esta escolha: não resta incerteza técnica material declarada. A autorização do peso não equivale à autorização de implementar M.
+
+Executei somente o cálculo local; não realizei benchmark nem implementação.

@@ -1,0 +1,343 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "lock-inflation",
+  "reviewer": "/root/quality18",
+  "date": "2026-10-16",
+  "ownedPath": "skills/lock-inflation/**",
+  "allWritesStopped": true,
+  "baseline": {
+    "committedVersion": "1.2.4",
+    "assignmentVersion": "1.2.4",
+    "assignmentGitState": "Clean within the four-file assigned package: no staged, unstaged or untracked changes.",
+    "preExistingVersionBump": false,
+    "preExistingChanges": [],
+    "fileHashes": [
+      {
+        "path": "skills/lock-inflation/skill.yaml",
+        "sha256": "AB79A5767AD3B10B631BCF26D5A6512501679FBE4280C8461306956243616BB2"
+      },
+      {
+        "path": "skills/lock-inflation/SKILL.md",
+        "sha256": "FB55432139A7B8E86AA009E11311700B4EEC703127A685D1EBFE9697F967ADB0"
+      },
+      {
+        "path": "skills/lock-inflation/references/monitor-lifecycle.md",
+        "sha256": "9571B62565967864F5E0FFB576F0AFAF7D38BB22A0438313655C5C600E1BBB32"
+      },
+      {
+        "path": "skills/lock-inflation/references/measuring-contention.md",
+        "sha256": "AE6CD7827B1B5EDD2E2CF7544E2B5DC78E8BFB9062406D9249EB63ADC42240F6"
+      }
+    ],
+    "attribution": "Complete package contents/hashes captured at assignment and hashes rechecked before editing. The final scoped diff is attributable to this review."
+  },
+  "version": {
+    "committed": "1.2.4",
+    "assignment": "1.2.4",
+    "final": "1.2.5",
+    "rationale": "One patch bump for a focused event-interpretation discriminator, preserving existing scope and metadata description."
+  },
+  "reviewCriteria": [
+    "Distinguish monitor inflation state/events from blocked acquisition, owner hold time and harmful serialization.",
+    "Use actual target implementation, locking representation, recording settings and executed code path rather than universal HotSpot rules.",
+    "Preserve JMM/wait semantics, monitor identity, partial/thresholded observation and operation-level attribution.",
+    "Keep a supported keep-current or static explanation as a complete result without mandatory captures or primitive changes."
+  ],
+  "findingsCorrected": [
+    {
+      "location": "SKILL.md Event-to-mechanism mapping; references/measuring-contention.md Metrics",
+      "evidence": "The existing general rule that inflation is not a bottleneck was sound, but the event mapping omitted JavaMonitorInflate and did not explain its cause/duration boundary. OpenJDK 25 GA LightweightSynchronizer::enter can inflate an already-owned monitor with cause Monitor Enter when fast recursive entry is unavailable; LockStack::try_recursive_enter requires the top object to match.",
+      "consequence": "A Monitor Enter cause label or summed inflation durations can be mistaken for other-thread contention, blocked time or hold time, prompting an unjustified primitive replacement.",
+      "correction": "Add JavaMonitorInflate to the event map and a version-scoped A→B→A counterexample, distinguish instrumented inflation duration from acquisition/hold/lifetime, and require following the selected stack/callers to shared versus confined objects before attribution.",
+      "technicalEvidence": "A fresh single-thread isolated probe on Temurin 25.0.3+9/-Xint observed 1000 Monitor Enter inflations for A→B→A and zero target inflations for A→A."
+    }
+  ],
+  "filesChangedByReviewer": [
+    {
+      "path": "skills/lock-inflation/SKILL.md",
+      "location": "Event map line 72; reference routing lines 188-189",
+      "change": "Map JavaMonitorInflate and route existing event interpretation to the measuring reference."
+    },
+    {
+      "path": "skills/lock-inflation/references/measuring-contention.md",
+      "location": "Inflation events versus blocked acquisitions, lines 80-95; primary sources",
+      "change": "Add cause/path and duration distinctions, source-scoped non-top recursion counterexample, real caller/sharing inspection and two primary-source links."
+    },
+    {
+      "path": "skills/lock-inflation/skill.yaml",
+      "location": "version",
+      "change": "1.2.4 to 1.2.5 only."
+    }
+  ],
+  "unchangedOwnedFiles": ["skills/lock-inflation/references/monitor-lifecycle.md"],
+  "preservedCapabilities": [
+    "Ownership/JMM, recursion, wait-set versus entry populations, spurious wakes and reacquisition before wait completion.",
+    "Release-scoped fast/inflated locking, deflation, compact headers and virtual-thread constraints.",
+    "Threshold, completion, loss and positive-control coverage; interrupted/in-progress operations do not become zero-duration events.",
+    "JFR versus dump/object/identity-hash differences and non-permanent monitor identity.",
+    "JavaMonitorWait event boundary versus full wait-call latency; previousOwner versus owner hold-path evidence.",
+    "Per-operation versus per-acquisition cohorts, overlapping waits, hot-key/partition skew and competing CPU/GC/downstream explanations.",
+    "Correctness-preserving critical-section redesign, no automatic ReentrantLock/lock-free preference, and valid keep-current/inconclusive outcomes."
+  ],
+  "removedCapabilities": [],
+  "remainingFindings": [],
+  "javaCompatibility": {
+    "repositorySkillBaseline": "Java 25 documentation/OpenJDK 25 GA source are illustrative, not minimum target version or upgrade authorization.",
+    "sourceScope": "OpenJDK tag jdk-25-ga, LightweightSynchronizer::enter, inflation-event emission and LockStack::try_recursive_enter.",
+    "probeCompilerTarget": "javac --release 25",
+    "probeRuntime": "Eclipse Adoptium Temurin 25.0.3+9-LTS, HotSpot, Windows x86_64",
+    "probeRuntimeFlags": [
+      "-Xint",
+      "-Xms32m",
+      "-Xmx64m",
+      "observed LockingMode=2",
+      "observed UseCompactObjectHeaders=false",
+      "observed UseObjectMonitorTable=false"
+    ],
+    "caveat": "The interpreter probe avoids compiled lock elimination/coarsening as a confounder. Its observed event counts are specific to this implementation and settings, not a promise for other JDKs or optimized code."
+  },
+  "checks": [
+    {
+      "kind": "baseline",
+      "command": "rg --files skills/lock-inflation; git status --short -- skills/lock-inflation; git diff -- skills/lock-inflation; git diff --cached -- skills/lock-inflation; git show HEAD:skills/lock-inflation/skill.yaml; Get-Content/Get-FileHash for all four files",
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS: clean package at 1.2.4; all contents and baseline hashes inspected."
+    },
+    {
+      "kind": "isolated example compilation",
+      "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe --release 25 InflationProbe.java",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/lock-inflation-validation-quality18",
+      "result": "PASS, exit 0. Source and three class files retained."
+    },
+    {
+      "kind": "negative/control mechanism run",
+      "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe -Xint -Xms32m -Xmx64m -cp . InflationProbe consecutive consecutive.jfr",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/lock-inflation-validation-quality18",
+      "result": "PASS, exit 0. 1000 iterations, checksum=1000, targetInflations=0."
+    },
+    {
+      "kind": "positive mechanism run",
+      "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe -Xint -Xms32m -Xmx64m -cp . InflationProbe interleaved interleaved.jfr",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/lock-inflation-validation-quality18",
+      "result": "PASS, exit 0. 1000 iterations, checksum=1000, targetInflations=1000, cause Monitor Enter=1000, event thread main=1000. totalInflationNanos=150600 was an incidental recorded sum, not a performance comparison."
+    },
+    {
+      "kind": "runtime flags",
+      "command": "java.exe -XX:+PrintFlagsFinal -version; then java.exe -XX:+UnlockDiagnosticVMOptions -XX:+PrintFlagsFinal -version, filtered to version and locking/header/table settings",
+      "cwd": "C:/git/agent-skills and isolated probe directory",
+      "result": "Observed Temurin 25.0.3+9-LTS, LockingMode 2, compact headers false, ObjectMonitorTable false. UnlockDiagnosticVMOptions used only for the separate flag-inspection JVM; the two probes used default locking flags."
+    },
+    {
+      "kind": "metadata and resources",
+      "command": "Read-only PowerShell here-string piped to node --input-type=module; exact script below.",
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS: strict manifest issues 0; name/version/description parity; 3 declared paths, 2 routed references and 2 local Markdown links."
+    },
+    {
+      "kind": "format",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/lock-inflation/SKILL.md skills/lock-inflation/skill.yaml skills/lock-inflation/references/measuring-contention.md skills/lock-inflation/references/monitor-lifecycle.md",
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS: all four matched files, including final rerun after reference-routing adjustment."
+    },
+    {
+      "kind": "final diff and attribution",
+      "command": "git diff --check -- skills/lock-inflation; git diff -- skills/lock-inflation; git diff --stat -- skills/lock-inflation; Get-FileHash for four owned files",
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS: three expected files changed, 22 insertions and 3 deletions; monitor-lifecycle.md unchanged."
+    }
+  ],
+  "structuralCheckScript": "@'\nimport assert from 'node:assert/strict';\nimport { readFileSync, existsSync } from 'node:fs';\nimport { resolve, dirname } from 'node:path';\nimport { parseManifest } from './packages/core/src/domain/manifest.ts';\nimport { parseSkillDocument } from './packages/core/src/domain/skill-document.ts';\nconst root = resolve('skills/lock-inflation');\nconst { manifest, issues } = parseManifest(readFileSync(resolve(root, 'skill.yaml'), 'utf8'), { strict: true });\nassert.deepEqual(issues, []);\nconst doc = parseSkillDocument(readFileSync(resolve(root, 'SKILL.md'), 'utf8'));\nassert.equal(manifest.name, 'lock-inflation');\nassert.equal(doc.frontmatter.name, manifest.name);\nassert.equal(manifest.version, '1.2.5');\nconst norm = s => s.replace(/\\s+/g, ' ').trim();\nassert.equal(norm(doc.frontmatter.description), norm(manifest.description));\nfor (const path of manifest.files) assert.ok(existsSync(resolve(root, path)), path);\nconst refs = [...new Set(doc.body.match(/references\\/[A-Za-z0-9/-]+\\.md/g))];\nassert.equal(refs.length, 2);\nlet links = 0;\nfor (const name of ['SKILL.md', ...refs]) {\n  const source = resolve(root, name);\n  const content = readFileSync(source, 'utf8');\n  for (const match of content.matchAll(/\\]\\(([^)]+)\\)/g)) {\n    const target = match[1];\n    if (/^<?https?:\\/\\//.test(target)) continue;\n    const [file, anchor] = target.split('#');\n    const dest = file ? resolve(dirname(source), file) : source;\n    assert.ok(existsSync(dest), name + ': ' + target);\n    if (anchor) {\n      const headings = [...readFileSync(dest, 'utf8').matchAll(/^#+\\s+(.+)$/gm)].map(m => m[1].toLowerCase().replace(/[^\\w\\s-]/g, '').replace(/\\s/g, '-'));\n      assert.ok(headings.includes(anchor), name + ': anchor ' + target);\n    }\n    links++;\n  }\n}\nconsole.log(JSON.stringify({name:manifest.name, version:manifest.version, strictManifestIssues:issues.length, declaredPaths:manifest.files.length, routedReferences:refs.length, localLinksChecked:links, metadataAndLinks:'PASS'}));\n'@ | node --input-type=module",
+  "technicalProbe": {
+    "classification": "Executed mechanism check with a positive case and a negative/control case; not an agent behavioral evaluation or performance benchmark.",
+    "path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/lock-inflation-validation-quality18",
+    "sourcePath": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/lock-inflation-validation-quality18/InflationProbe.java",
+    "source": "import java.nio.file.Path;\nimport java.time.Duration;\nimport java.util.Map;\nimport java.util.TreeMap;\nimport jdk.jfr.Recording;\nimport jdk.jfr.consumer.RecordedEvent;\nimport jdk.jfr.consumer.RecordingFile;\n\npublic class InflationProbe {\n    static final class TargetLock { int value; }\n    static final class OtherLock {}\n\n    public static void main(String[] args) throws Exception {\n        if (args.length != 2 || !(args[0].equals(\"consecutive\") || args[0].equals(\"interleaved\"))) {\n            throw new IllegalArgumentException(\"mode and output path required\");\n        }\n        String mode = args[0];\n        Path output = Path.of(args[1]);\n        long checksum = 0;\n        try (Recording recording = new Recording()) {\n            recording.enable(\"jdk.JavaMonitorInflate\").withThreshold(Duration.ZERO).withStackTrace();\n            recording.start();\n            for (int i = 0; i < 1000; i++) {\n                TargetLock a = new TargetLock();\n                OtherLock b = new OtherLock();\n                synchronized (a) {\n                    if (mode.equals(\"interleaved\")) {\n                        synchronized (b) {\n                            synchronized (a) { a.value++; }\n                        }\n                    } else {\n                        synchronized (a) { a.value++; }\n                    }\n                }\n                checksum += a.value;\n            }\n            recording.stop();\n            recording.dump(output);\n        }\n        long count = 0;\n        long totalNanos = 0;\n        Map<String, Long> causes = new TreeMap<>();\n        Map<String, Long> threads = new TreeMap<>();\n        for (RecordedEvent event : RecordingFile.readAllEvents(output)) {\n            if (!event.getEventType().getName().equals(\"jdk.JavaMonitorInflate\")\n                    || !event.getClass(\"monitorClass\").getName().equals(TargetLock.class.getName())) {\n                continue;\n            }\n            count++;\n            totalNanos += event.getDuration().toNanos();\n            causes.merge(event.getString(\"cause\"), 1L, Long::sum);\n            threads.merge(event.getThread().getJavaName(), 1L, Long::sum);\n        }\n        System.out.println(\"runtime=\" + Runtime.version());\n        System.out.println(\"mode=\" + mode + \", iterations=1000, checksum=\" + checksum);\n        System.out.println(\"targetInflations=\" + count + \", totalInflationNanos=\" + totalNanos\n                + \", causes=\" + causes + \", threads=\" + threads);\n        if (checksum != 1000) throw new AssertionError(\"Incomplete workload\");\n        if (mode.equals(\"interleaved\") && causes.getOrDefault(\"Monitor Enter\", 0L) == 0) {\n            throw new AssertionError(\"Expected Monitor Enter inflation in the selected implementation\");\n        }\n        if (mode.equals(\"consecutive\") && count != 0) {\n            throw new AssertionError(\"Expected no target inflation for the selected fast-recursive control\");\n        }\n    }\n}\n",
+    "artifacts": [
+      "InflationProbe.java",
+      "InflationProbe.class",
+      "InflationProbe$TargetLock.class",
+      "InflationProbe$OtherLock.class",
+      "consecutive.jfr",
+      "consecutive-output.txt",
+      "interleaved.jfr",
+      "interleaved-output.txt"
+    ],
+    "consecutiveOutput": "runtime=25.0.3+9-LTS\nmode=consecutive, iterations=1000, checksum=1000\ntargetInflations=0, totalInflationNanos=0, causes={}, threads={}\n",
+    "interleavedOutput": "runtime=25.0.3+9-LTS\nmode=interleaved, iterations=1000, checksum=1000\ntargetInflations=1000, totalInflationNanos=150600, causes={Monitor Enter=1000}, threads={main=1000}\n",
+    "interpretation": "Only main could access these fresh per-iteration target/other lock objects. A Monitor Enter inflation cause therefore occurred without an application contender in this tested configuration.",
+    "limits": [
+      "No production workload or SLO was measured.",
+      "No count/duration generalization across JDK/platform/optimization/locking flags.",
+      "No shared application process was attached, modified or sampled; both probe JVMs exited normally."
+    ]
+  },
+  "sources": [
+    {
+      "title": "OpenJDK 25 GA JFR event definitions",
+      "url": "https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/jfr/metadata/metadata.xml",
+      "verifiedOn": "2026-10-16",
+      "supports": "JavaMonitorInflate schema includes cause, monitorClass, address and thread/stack metadata, distinct from JavaMonitorEnter."
+    },
+    {
+      "title": "OpenJDK 25 GA lightweight synchronization",
+      "url": "https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/lightweightSynchronizer.cpp",
+      "verifiedOn": "2026-10-16",
+      "supports": "Already-owned recursive fallback can inflate with Monitor Enter; local EventJavaMonitorInflate emission delimits an inflation region rather than the later full acquisition/hold interval.",
+      "limit": "Implementation-specific source; actual runtime path/configuration and optimization must be checked."
+    },
+    {
+      "title": "OpenJDK 25 GA lock stack",
+      "url": "https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/lockStack.inline.hpp",
+      "verifiedOn": "2026-10-16",
+      "supports": "The fast recursive-entry helper requires the top lock-stack object to match, explaining the non-top recursion discriminator.",
+      "limit": "This source does not guarantee every source-level synchronized nesting survives optimization or emits a recorded event."
+    },
+    {
+      "title": "OpenJDK 25 GA ObjectSynchronizer",
+      "url": "https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/synchronizer.cpp",
+      "verifiedOn": "2026-10-16",
+      "supports": "Inflation causes and wait/monitor-enter call sites corroborate that a cause identifies a triggering runtime path.",
+      "limit": "A trigger label is not causal performance attribution."
+    }
+  ],
+  "sourceAccessLimitations": [
+    "An exploratory web find call stalled and was terminated; exact primary-source text was then fetched successfully through read-only Invoke-WebRequest.",
+    "A JEP 491 web open was unavailable during this assignment. No JEP 491 guidance was changed or newly validated by that request."
+  ],
+  "validationClassification": {
+    "executedStructuralChecks": [
+      "Manifest/frontmatter parity",
+      "Declared paths/local links",
+      "Prettier",
+      "Scoped diff and baseline/final hashes"
+    ],
+    "executedTechnicalBehavior": [
+      "Compiled and ran both isolated JFR mechanism cases on the stated compiler/runtime/flags; recordings parsed with JFR RecordingFile."
+    ],
+    "executedAgentBehavioralEvaluations": [],
+    "structuredWalkthroughsOnly": [
+      "Private fresh monitor selected by config: same-thread recursion supports inflation without inter-thread serialization.",
+      "Shared monitor selected by the sole changed config field: contention becomes possible, but the unchanged inflation sample still does not prove it or justify a primitive swap."
+    ],
+    "notExecuted": [
+      "Independent agent runs, no-skill baseline or original-versus-revised skill comparison.",
+      "Shared-monitor performance comparison, fairness, cancellation or production load test."
+    ],
+    "measuredSkillImprovement": false
+  },
+  "reproducibleCases": {
+    "classification": "Synthetic artifact-based development cases, not executed agent evaluations or held-out cases. The standalone probe above is separate technical evidence.",
+    "separationInstruction": "Give actors shared files, one overlay and the task input only; keep evaluatorOnly criteria private. Use fresh contexts for the two cases.",
+    "prerequisites": [
+      "Materialize fixtures in isolated temporary directories, outside the repository and real agent configuration.",
+      "Make the reviewed skill and routed references available.",
+      "No runtime is required: the cases are findings-only source/configuration/event reviews."
+    ],
+    "actorInputs": {
+      "sharedFixtureFiles": {
+        "README.md": "This is a synthetic diagnostic fixture. src/Scenario.java contains the complete application call path. The selected config is config/run.properties and the launcher passes that path to Scenario.main. There is no native/Unsafe code, callback, agent hook or other publisher of Gate instances in this fixture.\nBoth monitor-scope modes are intentionally supported by this diagnostic program. Findings only: do not modify its behavior, run it, attach to processes or start recordings.\nThe archived sample describes an inflation event, not a complete event population. The available evidence is the source, selected config, runtime/settings and this sample. No acquisition-wait, owner-hold or request/SLO evidence is provided.\n",
+        "src/Scenario.java": "import java.io.Reader;\nimport java.nio.file.Files;\nimport java.nio.file.Path;\nimport java.util.ArrayList;\nimport java.util.Properties;\nimport java.util.concurrent.Executors;\nimport java.util.concurrent.Future;\n\npublic class Scenario {\n    private static final class Gate { int value; }\n    private static final Gate SHARED = new Gate();\n\n    static int runUnit(boolean useSharedMonitor) {\n        Gate a = useSharedMonitor ? SHARED : new Gate();\n        Object b = new Object();\n        synchronized (a) {\n            synchronized (b) {\n                synchronized (a) { a.value++; }\n            }\n            return a.value;\n        }\n    }\n\n    public static void main(String[] args) throws Exception {\n        Properties settings = new Properties();\n        try (Reader reader = Files.newBufferedReader(Path.of(args[0]))) {\n            settings.load(reader);\n        }\n        boolean useSharedMonitor = Boolean.parseBoolean(settings.getProperty(\"useSharedMonitor\"));\n        try (var workers = Executors.newFixedThreadPool(8)) {\n            var results = new ArrayList<Future<Integer>>();\n            for (int i = 0; i < 1000; i++) {\n                results.add(workers.submit(() -> runUnit(useSharedMonitor)));\n            }\n            long sum = 0;\n            for (Future<Integer> result : results) sum += result.get();\n            System.out.println(sum);\n        }\n    }\n}\n",
+        "launch/runtime.txt": "Selected launch: java -Xint -Xms32m -Xmx64m -cp classes Scenario config/run.properties\nJDK: Eclipse Adoptium Temurin 25.0.3+9-LTS, Windows x86_64, HotSpot\nObserved flags: LockingMode=2, UseCompactObjectHeaders=false, UseObjectMonitorTable=false\nThe quoted numeric flags describe this fixture only; do not force them on another target.\n",
+        "diagnostics/recording-settings.txt": "jdk.JavaMonitorInflate: enabled=true, threshold=0 ns, stackTrace=true\njdk.JavaMonitorEnter: enabled=false\njdk.JavaMonitorWait: enabled=false\njdk.ThreadPark: enabled=false\nThe supplied event is one selected export from the recording; it does not establish total counts, event loss or operation-level latency.\n",
+        "diagnostics/sample-event.json": "{\n  \"eventType\": \"jdk.JavaMonitorInflate\",\n  \"monitorClass\": \"Scenario$Gate\",\n  \"cause\": \"Monitor Enter\",\n  \"durationNanos\": 200,\n  \"eventThread\": \"pool-1-thread-1\",\n  \"stackTrace\": [\n    \"Scenario.runUnit\",\n    \"Scenario.lambda$main$0\",\n    \"java.util.concurrent.FutureTask.run\"\n  ],\n  \"note\": \"Synthetic selected event; no JavaMonitorEnter population was captured.\"\n}\n"
+      },
+      "cases": [
+        {
+          "id": "fresh-monitor",
+          "taskInput": "Use lock-inflation to review whether the supplied Monitor Enter inflation event establishes inter-thread monitor contention in the selected run and justifies replacing synchronized with ReentrantLock. Inspect the active configuration, callers and diagnostic artifacts. Give the supported conclusion and the smallest next evidence step, if any. Findings only; do not edit or run the fixture or attach to a process.",
+          "overlayFiles": {
+            "config/run.properties": "useSharedMonitor=false\n"
+          }
+        },
+        {
+          "id": "shared-monitor",
+          "taskInput": "Use lock-inflation to review whether the supplied Monitor Enter inflation event establishes inter-thread monitor contention in the selected run and justifies replacing synchronized with ReentrantLock. Inspect the active configuration, callers and diagnostic artifacts. Give the supported conclusion and the smallest next evidence step, if any. Findings only; do not edit or run the fixture or attach to a process.",
+          "overlayFiles": {
+            "config/run.properties": "useSharedMonitor=true\n"
+          }
+        }
+      ]
+    },
+    "evaluatorOnly": {
+      "decisiveConstraint": "Only useSharedMonitor changes false→true. The actor must trace its effect in the selected call path: a fresh invocation-confined Gate versus the static SHARED Gate used by eight worker threads.",
+      "criteriaByCase": {
+        "fresh-monitor": {
+          "requiredObservations": [
+            "Inspect active properties, main's argument/config loading and runUnit rather than infer sharing from the monitor class or cause label.",
+            "Establish that each invocation's Gate is fresh and never escapes the invoking worker in this supplied complete path; other application workers cannot contend on that instance.",
+            "Explain that A→B→A already-owned recursion can produce Monitor Enter inflation under the stated implementation, consistent with the event.",
+            "Do not equate inflation duration/count with blocked wait, hold time, request latency or monitor lifetime.",
+            "Reject a contention-based ReentrantLock replacement on this evidence; distinguish possible inflation overhead from proven harmful serialization. No new capture is necessary for this static sharing conclusion."
+          ],
+          "failureConditions": [
+            "Treats Monitor Enter cause as proof of another thread waiting.",
+            "Ignores selected config or infers one shared global monitor from Scenario$Gate alone.",
+            "Replaces/removes synchronization or changes runtime flags despite findings-only scope.",
+            "Claims zero total runtime overhead or a measured latency improvement."
+          ]
+        },
+        "shared-monitor": {
+          "requiredObservations": [
+            "Trace the true setting to the one static SHARED Gate reached by all eight workers; do not reuse the private-monitor exclusion from the other case.",
+            "Keep inter-thread contention possible but unproven: an inflation cause and one duration specimen do not give actual blocked acquisitions or owner hold time.",
+            "Notice JavaMonitorEnter was disabled and no complete population/SLO evidence is available; propose the smallest missing acquisition/owner/progress measurement only if material runtime attribution is still required.",
+            "Retain synchronized unless semantic requirements or measured evidence justify a change; no automatic ReentrantLock speed claim.",
+            "Keep the review findings-only without starting a capture."
+          ],
+          "failureConditions": [
+            "Claims the shared instance cannot contend because A→B→A also allows a recursive cause.",
+            "Claims sharing plus one inflation event proves the production bottleneck or mandates sharding/primitive replacement.",
+            "Uses disabled/missing JavaMonitorEnter events as proof of zero waiting.",
+            "Runs the fixture, attaches to a process or claims new runtime evidence was collected."
+          ]
+        }
+      },
+      "commonScoringNotes": [
+        "Judge evidence use and changed sharing conclusion, not exact phrasing.",
+        "Both cases should reject an unsupported primitive swap; the reason and next evidence decision differ.",
+        "This pair tests trigger interpretation and selected monitor sharing, not full contention attribution or performance."
+      ],
+      "caseFixtureCompileStatus": "Not compiled or run. These are text review artifacts; the separately preserved InflationProbe.java was compiled and executed."
+    }
+  },
+  "finalHashes": [
+    {
+      "path": "skills/lock-inflation/skill.yaml",
+      "sha256": "1F0D4CEAC86D2A0A9288E6447826B7F1945BEF4B799DAD7E7C242929118FC551"
+    },
+    {
+      "path": "skills/lock-inflation/SKILL.md",
+      "sha256": "7752DC004F05F252E889D78A17115CF8353DF27533D5ED4857488EEC1CCF6C44"
+    },
+    {
+      "path": "skills/lock-inflation/references/monitor-lifecycle.md",
+      "sha256": "9571B62565967864F5E0FFB576F0AFAF7D38BB22A0438313655C5C600E1BBB32"
+    },
+    {
+      "path": "skills/lock-inflation/references/measuring-contention.md",
+      "sha256": "87AD3A6382D3414EA6F6A821640EAFA12768ED543E5AF80584023E5AC4EF6A83"
+    }
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Generated shared index; wait for all reviewers to stop writing."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Global validation reserved to the coordinator after index regeneration and stopped writes."
+    }
+  ],
+  "crossSkillIssues": [],
+  "coordinatorActions": [
+    "Archive the preserved isolated probe artifacts if desired.",
+    "Run required global checks and choose independent behavior cases without exposing evaluator criteria."
+  ],
+  "limitations": [
+    "Executed evidence establishes a particular inflation mechanism, not improved agent behavior or application performance.",
+    "No universal claim about Monitor Enter causes, exact inflation counts or optimized code across builds.",
+    "All reviewer-started JVM/compiler processes ended; all package and handoff writes have stopped."
+  ]
+}

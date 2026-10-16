@@ -1,0 +1,58 @@
+[
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\orm-fetch-and-batching-performance-artifacts\\SimpleJpaRepository-3.4.13.java",
+    "url": "https://raw.githubusercontent.com/spring-projects/spring-data-jpa/3.4.13/spring-data-jpa/src/main/java/org/springframework/data/jpa/repository/support/SimpleJpaRepository.java",
+    "status": 200,
+    "sha256": "7b8251efd29ef4353413c6b3e82dc9ab53d3f5e75fb8b279413ec031ad728b71",
+    "bytes": 30934
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\orm-fetch-and-batching-performance-artifacts\\JpaMetamodelEntityInformation-3.4.13.java",
+    "url": "https://raw.githubusercontent.com/spring-projects/spring-data-jpa/3.4.13/spring-data-jpa/src/main/java/org/springframework/data/jpa/repository/support/JpaMetamodelEntityInformation.java",
+    "status": 200,
+    "sha256": "5ab8c990ee8a81c2d6e10a47ca6d3834b5c266305d232a0fca30028cd1b5eac1",
+    "bytes": 10673
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\orm-fetch-and-batching-performance-artifacts\\JpaPersistableEntityInformation-3.4.13.java",
+    "url": "https://raw.githubusercontent.com/spring-projects/spring-data-jpa/3.4.13/spring-data-jpa/src/main/java/org/springframework/data/jpa/repository/support/JpaPersistableEntityInformation.java",
+    "status": 200,
+    "sha256": "e566be08d3438175dd0825958ee80613f390d01db0b064c50d9374f36243dee1",
+    "bytes": 1831
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\orm-fetch-and-batching-performance-artifacts\\entity-persistence-3.4.13.adoc",
+    "url": "https://raw.githubusercontent.com/spring-projects/spring-data-jpa/3.4.13/src/main/antora/modules/ROOT/pages/jpa/entity-persistence.adoc",
+    "status": 200,
+    "sha256": "97f548880050c287666743f84c962399b7d981009e8fef426eed9a67aa7bc07e",
+    "bytes": 3421
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\orm-fetch-and-batching-performance-artifacts\\DefaultMergeEventListener-6.6.33.java",
+    "url": "https://raw.githubusercontent.com/hibernate/hibernate-orm/6.6.33/hibernate-core/src/main/java/org/hibernate/event/internal/DefaultMergeEventListener.java",
+    "status": 200,
+    "sha256": "8b521543a010072ff78718b8661bae41201cf297b8b362fac819f9cf2ef909bf",
+    "bytes": 26468
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\orm-fetch-and-batching-performance-artifacts\\From-6.6.33.adoc",
+    "url": "https://raw.githubusercontent.com/hibernate/hibernate-orm/6.6.33/documentation/src/main/asciidoc/querylanguage/From.adoc",
+    "status": 200,
+    "sha256": "885f958fd4817a6be621e73fa2771404b404d6b7ac06b5041225a14e67cab7a7",
+    "bytes": 18781
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\orm-fetch-and-batching-performance-artifacts\\BatchSettings-6.6.33.java",
+    "url": "https://raw.githubusercontent.com/hibernate/hibernate-orm/6.6.33/hibernate-core/src/main/java/org/hibernate/cfg/BatchSettings.java",
+    "status": 200,
+    "sha256": "2465f9783c02bffa111809a47f71e26f29e21d73f32343547a4b0852962641bb",
+    "bytes": 2183
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\orm-fetch-and-batching-performance-artifacts\\Expectations-6.6.33.java",
+    "url": "https://raw.githubusercontent.com/hibernate/hibernate-orm/6.6.33/hibernate-core/src/main/java/org/hibernate/jdbc/Expectations.java",
+    "status": 200,
+    "sha256": "5260073c65c496b50c88251b306aa689ac1b47a4e2baea2adcb1e0853bcb8943",
+    "bytes": 6196
+  }
+]

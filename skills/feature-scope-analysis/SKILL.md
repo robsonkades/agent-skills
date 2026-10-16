@@ -33,6 +33,8 @@ scope is a decision, and it is the one that stops the argument later.
    Treat examples as directional unless explicitly exhaustive. Inspect affected callers, failure
    handling, compatibility, operations and validation for necessary supporting work, while keeping
    the search tied to the requested outcome. Include anything you have caught yourself intending to do.
+   When a boundary depends on an existing or external capability, use the evidence checks in
+   `references/scope-creep-catalogue.md` before counting that capability as available.
 2. **Sort each candidate** into exactly one of the five buckets below. Every candidate is
    sorted; none is left implicit. Mark a classification provisional when its deciding fact or
    authority is unknown, name the evidence needed and block only dependent commitments.
@@ -46,7 +48,8 @@ scope is a decision, and it is the one that stops the argument later.
 5. **Give every Out of Scope item a reason and an owner** — who excluded it, and on what basis.
    Reuse the request, accepted baseline and established authority; do not invent a Product owner
    or require another approval round. A proposed exclusion remains proposed if authority is missing.
-6. **State the boundary in one sentence** a reviewer can hold in their head.
+6. **Reconcile the selected scope with the accepted commitments** using the handoff check below,
+   then state the boundary in one sentence a reviewer can hold in their head.
 
 ## The five buckets
 
@@ -83,6 +86,15 @@ If a necessary prerequisite is excluded or unavailable, expose the conflict: rec
 selection, compare a feasible alternative or seek the specific scope revision needed. Do not
 retain the delivery promise while dropping its prerequisite. Conversely, when an addition is
 omitted, do not retain work needed only for that addition without another justified selection.
+
+Separate a required capability from ownership of its implementation. When another team or provider
+supplies it, record the external prerequisite, evidenced owner, readiness or commitment evidence,
+its applicability to this consumer and environment, and the point at which delivery needs it.
+Distinguish available capability from committed future delivery and an unconfirmed proposal.
+Building that provider can remain Out of scope while
+integration and sufficient validation are Required. An exclusion does not satisfy the dependency,
+and a dependency does not authorize taking over its implementation. Unknown readiness blocks only
+dependent commitments; do not treat a provider's proposed roadmap as an available capability.
 
 If this depends on an unresolved design choice, pass the accepted outcome, constraints, candidate
 prerequisites and deciding question to `feature-solution-analysis`; expect a supported option or
@@ -135,6 +147,7 @@ THEN report the delivery consequence and possible scope revisions; reclassificat
 ## Output
 
 ```text
+Baseline        <accepted request/scope sources and revisions; proposals kept distinct>
 Boundary        <one sentence>
 
 Required        SC-01  <item>  <- OBJ/BR/BAC or constraint it traces to
@@ -144,12 +157,20 @@ Out of scope    SC-04  <item>  <- reason; accountable owner who excluded it
 Future work     SC-05  <item>  <- what it waits on
 
 Delivery        <selected SC-* items with selection/authority sources; unselected proposals>
-Dependencies    <conditional prerequisites; any conflicts with selected delivery>
+Dependencies    <conditional/external prerequisites; consumer, owner, applicable readiness evidence,
+                 needed-by point, unresolved check and affected SC-* items; conflicts>
 Creep check     <items examined, and what was reclassified>
 ```
 
 Use existing identifiers and records; a small task may need only a boundary and a few lines,
 without empty buckets or a new dossier.
+
+Before handing scope to decomposition or planning, check both directions: selected work has a
+justification, and every accepted commitment has selected work or evidence that the existing
+behavior already satisfies it. An obligation omitted from the candidate list is still unresolved.
+Keep required validation of reused behavior visible without turning reuse into an implementation
+task. Name the dependent scope items and next evidence needed for any unresolved prerequisite;
+do not let a downstream plan interpret a conditional selection as ready or assigned to another team.
 
 Carry the accepted Out of scope list into the plan and completion review. Amendments retain the
 previous decision, source, revised boundary and authority. Trace changes to affected acceptance,

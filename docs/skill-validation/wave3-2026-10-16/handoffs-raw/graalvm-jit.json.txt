@@ -1,0 +1,421 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "graalvm-jit",
+  "ownedPath": "skills/graalvm-jit/**",
+  "allWritesStopped": true,
+  "versions": {
+    "committed": "2.1.4",
+    "assignment": "2.1.4",
+    "final": "2.1.5",
+    "preExistingBump": false,
+    "rationale": "One patch bump for focused instructional corrections; no description, dependency, capability or consumer-baseline changes."
+  },
+  "baseline": {
+    "source": "docs/skill-validation/wave3-2026-10-16/baseline.json",
+    "assignmentState": "All five owned files matched captured SHA-256 values; scoped git status, staged diff and unstaged diff were empty at assignment.",
+    "preExistingChanges": [],
+    "finalAttribution": "Exactly three files changed by this reviewer. SKILL.md and workload-fit-and-migration.md remain byte-identical to baseline; no untracked owned files or staged changes.",
+    "hashes": [
+      {
+        "path": "skills/graalvm-jit/SKILL.md",
+        "sha256": "58bfb527d03d2ecec98cb8c1b0ea67ba3448a48709e9dc6c562cb09edff61448",
+        "baselineSha256": "58bfb527d03d2ecec98cb8c1b0ea67ba3448a48709e9dc6c562cb09edff61448",
+        "unchangedFromWave3Baseline": true
+      },
+      {
+        "path": "skills/graalvm-jit/references/enabling-and-comparing.md",
+        "sha256": "72a82313886c0592ccade180b7edbd01244700567f6dc61cec9b912b53a3cff2",
+        "baselineSha256": "c3526e598b2c40a996817687611b6e3120322aafadd9647b2a6baa13953a7e56",
+        "unchangedFromWave3Baseline": false
+      },
+      {
+        "path": "skills/graalvm-jit/references/troubleshooting-and-timeline.md",
+        "sha256": "3b4b70a6803c4e80089e8383157cd80074e1ccc6cf79514a64f5fdb98f9f9afb",
+        "baselineSha256": "977fc5aa5924989bf8396948d225490cb2c95b7e2e7ca48af66577da39a8d2bf",
+        "unchangedFromWave3Baseline": false
+      },
+      {
+        "path": "skills/graalvm-jit/references/workload-fit-and-migration.md",
+        "sha256": "f9b91650db41651bb2cb1e7dab01cc307bc9dea21cf48bcf705c02e0c0367195",
+        "baselineSha256": "f9b91650db41651bb2cb1e7dab01cc307bc9dea21cf48bcf705c02e0c0367195",
+        "unchangedFromWave3Baseline": true
+      },
+      {
+        "path": "skills/graalvm-jit/skill.yaml",
+        "sha256": "856b235cd25cd15c54990bb72150938781773fd56bdf59376649c1b49fddf6ee",
+        "baselineSha256": "649bc2102c39e787154d48074f68a35bac8b165cb3247a47eeb120c81a10e1f0",
+        "unchangedFromWave3Baseline": false
+      }
+    ]
+  },
+  "reviewCriteria": [
+    "Actual Graal/JVMCI and libgraal/jargraal selection in measured processes, not flag presence alone.",
+    "Build-specific compiler diagnostics and fair treatment controls.",
+    "Observable application convergence and lifecycle evidence rather than aggregate compiler counters.",
+    "Preserve meaningful C2/no-change alternatives, correctness gates and uncertainty."
+  ],
+  "files": [
+    "skills/graalvm-jit/references/enabling-and-comparing.md",
+    "skills/graalvm-jit/references/troubleshooting-and-timeline.md",
+    "skills/graalvm-jit/skill.yaml"
+  ],
+  "changes": [
+    {
+      "location": "skills/graalvm-jit/references/enabling-and-comparing.md:161",
+      "finding": "Warm-up guidance treated continued compilation or code-cache growth as sufficient evidence that the measured application path was not steady.",
+      "correction": "Use the observed application trajectory; investigate relevant compiler/cache/GC/workload causes and distinguish unrelated background activity. Extending warm-up is conditional, not the default response to every compilation event."
+    },
+    {
+      "location": "skills/graalvm-jit/references/enabling-and-comparing.md:169",
+      "finding": "The package did not explain why CompilerStatistics cannot directly identify Graal warm-up completion or application readiness.",
+      "correction": "Explain process-wide cumulative counters, absent method/compiler identity, same-process deltas, elapsed compilation accounting versus CPU/uptime, and application timeline correlation. Add two pinned OpenJDK primary-source links."
+    },
+    {
+      "location": "skills/graalvm-jit/references/troubleshooting-and-timeline.md:18",
+      "finding": "The production-versus-JMH row explicitly proposed obtaining time-to-steady-state from CompilerStatistics and framed startup as categorically outside Graal.",
+      "correction": "Inspect cold-to-ready and steady-state application metrics with relevant compilation evidence; keep C2 and constrained lifetime/warm-up changes as alternatives. Route to the corrected warm-up section. Prettier realigned only the affected table."
+    }
+  ],
+  "remainingFindings": [],
+  "preserved": [
+    "Diagnosis/design role and existing description/activation boundaries.",
+    "Compatible JVMCI artifact requirement; missing compiler may fail after -version succeeds; Oracle JDK versus GraalVM distribution distinctions.",
+    "libgraal/jargraal detection, relevant successful level-4 compilation evidence, JMH fork selection and same-binary C2 control.",
+    "PEA mechanism/limits, graph-size inlining, release-specific vectorisation and option availability.",
+    "Compiler failure/correctness gates, native RSS accounting, Truffle host/guest boundaries, rollback, licensing and support distinctions.",
+    "Existing examples and all three routed references; no material executable example was changed or added to the skill."
+  ],
+  "replacedOrRemoved": [
+    "Removed the unsupported direct mapping from CompilerStatistics to application time-to-steady-state.",
+    "Replaced automatic rejection based solely on continued compilation with workload-relevant diagnosis."
+  ],
+  "checks": [
+    {
+      "kind": "structural",
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/graalvm-jit/local-validation.mjs",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "PASS",
+      "details": "Existing strict package loader and validator: 5 files, 0 issues; 12 relative links and all 3 referenced anchors resolved; description and manifest consistency validated.",
+      "rawOutput": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/graalvm-jit/package-validation-final.json",
+      "boundary": "Assigned package only; dependency registry resolution and catalog-wide version checks deferred."
+    },
+    {
+      "kind": "format",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/graalvm-jit/SKILL.md skills/graalvm-jit/skill.yaml skills/graalvm-jit/references/enabling-and-comparing.md skills/graalvm-jit/references/troubleshooting-and-timeline.md skills/graalvm-jit/references/workload-fit-and-migration.md",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "PASS on final check",
+      "details": "Initial check found the edited troubleshooting table misaligned. Ran --write on that exact owned file, inspected the diff, then all five files passed.",
+      "rawOutput": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/graalvm-jit/prettier-check-final.txt",
+      "earlierOutput": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/graalvm-jit/prettier-check.txt",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/graalvm-jit/prettier-write.txt"
+      ]
+    },
+    {
+      "kind": "diff",
+      "command": "git diff --check -- skills/graalvm-jit",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "PASS",
+      "rawOutput": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/graalvm-jit/diff-check-final.txt",
+      "artifacts": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/graalvm-jit/final.diff"
+      ],
+      "details": "Final scoped full diff inspected; three intended files changed, two baseline files preserved, no staged changes."
+    },
+    {
+      "kind": "technical-compilation",
+      "command": "& C:/Users/robso/.jdks/graalvm-ce-25.0.2/bin/javac.exe --release 25 -d . CompilerStatisticsProbe.java",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/graalvm-jit",
+      "result": "PASS after fixture correction",
+      "compilerTarget": "Java 25",
+      "runtime": "GraalVM CE 25.0.2+10-jvmci-b01, Windows x64",
+      "relevantFailure": "Initial review-only fixture used nonexistent RecordedEvent.getMethod(String); javap confirmed RecordedObject.getValue(String), corrected to typed RecordedMethod retrieval. No catalog example used that API.",
+      "rawOutput": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/graalvm-jit/compile-retry.txt",
+      "earlierOutput": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/graalvm-jit/compile.txt",
+      "fixture": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/graalvm-jit/CompilerStatisticsProbe.java"
+    },
+    {
+      "kind": "technical-runtime",
+      "command": "& C:/Users/robso/.jdks/graalvm-ce-25.0.2/bin/java.exe '-Xms64m' '-Xmx256m' '-XX:+UseG1GC' '-XX:ActiveProcessorCount=2' '-Xbatch' '-XX:CompileCommand=compileonly,CompilerStatisticsProbe::hot' '-Djdk.graal.ShowConfiguration=info' -cp . CompilerStatisticsProbe .",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/graalvm-jit",
+      "result": "PASS: 11 assertions",
+      "runtime": "GraalVM CE 25.0.2+10-jvmci-b01, Windows x64",
+      "details": "23 periodic samples in active.jfr and 5 in later.jfr; same cumulative count=4 and totalTimeSpent=8 ms across recordings. No compiler/method/steady-state fields. Two successful relevant level-4 JVMCI compilations; libgraal configuration message observed.",
+      "relevantFailure": "First launch left -Djdk.graal.ShowConfiguration=info unquoted in PowerShell; argument splitting made .graal.ShowConfiguration=info the class name. Quoted flag retry succeeded; no runtime defect inferred.",
+      "rawOutput": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/graalvm-jit/probe-output-retry.txt",
+      "earlierOutput": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/graalvm-jit/probe-output.txt",
+      "artifacts": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/graalvm-jit/active.jfr",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/graalvm-jit/later.jfr",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/graalvm-jit/statistics.csv",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/graalvm-jit/statistics-fields.txt",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/graalvm-jit/active-events.json",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/graalvm-jit/later-events.json",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/graalvm-jit/runtime-metadata.txt"
+      ],
+      "boundary": "Synthetic method with compileonly, synchronous compilation and constrained heap/CPU, deliberately not a benchmark. Confirms exercised event semantics, not service convergence, compiler performance, CPU consumption, failed-attempt timing or agent improvement."
+    },
+    {
+      "kind": "technical-inspection",
+      "command": "& C:/Users/robso/.jdks/graalvm-ce-25.0.2/bin/jfr.exe metadata --events jdk.CompilerStatistics,jdk.CompilerQueueUtilization,jdk.Compilation; & C:/Users/robso/.jdks/graalvm-ce-25.0.2/bin/jfr.exe print --json --events jdk.CompilerStatistics,jdk.Compilation active.jfr; & C:/Users/robso/.jdks/graalvm-ce-25.0.2/bin/jfr.exe print --json --events jdk.CompilerStatistics,jdk.Compilation later.jfr",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/graalvm-jit",
+      "result": "PASS",
+      "details": "Exact runtime schema and full raw events retained; field names include succeded and isOsr."
+    },
+    {
+      "kind": "case-fixture-integrity",
+      "command": "node prepare-cases.mjs",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/graalvm-jit",
+      "result": "PASS",
+      "details": "Two development case folders, actor inputs and evaluator criteria in separate JSON files. Byte comparison proves metrics.csv is the only differing fixture.",
+      "rawOutput": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/graalvm-jit/case-preparation.txt",
+      "artifacts": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/graalvm-jit/case-integrity.json"
+      ]
+    }
+  ],
+  "behavioralEvaluations": {
+    "executedWithActualAgentOutputs": [],
+    "walkthroughs": [
+      {
+        "case": "case-a",
+        "result": "Application p99 region is approximately flat across three runs; retain usable measurement evidence while replacing the faulty compiler-counter rationale."
+      },
+      {
+        "case": "case-b",
+        "result": "Same compiler evidence but declining p99 contradicts a steady-state claim; preserve valid C2/runtime evidence and investigate the application trajectory."
+      }
+    ],
+    "measuredImprovement": "Not measured. The technical probe, source review, case integrity checks and walkthroughs do not establish behavioral improvement."
+  },
+  "sources": [
+    {
+      "url": "https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/jfr/periodic/jfrPeriodic.cpp",
+      "version": "jdk-25-ga",
+      "support": "CompilerStatistics producer reads aggregate CompileBroker totals, including compile count and total compilation time.",
+      "verification": "Browsed primary source and retained raw source; inspected TRACE_REQUEST_FUNC(CompilerStatistics).",
+      "rawArtifact": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/graalvm-jit/jfrPeriodic-jdk-25-ga.cpp"
+    },
+    {
+      "url": "https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/compiler/compileBroker.cpp",
+      "version": "jdk-25-ga",
+      "support": "Compilation uses elapsedTimer/TraceTime; collect_statistics adds elapsed time including failed attempts before the success branch. This is not a thread-CPU measurement.",
+      "verification": "Browsed primary source and retained raw source; inspected invoke_compiler_on_method and collect_statistics.",
+      "rawArtifact": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/graalvm-jit/compileBroker-jdk-25-ga.cpp"
+    },
+    {
+      "url": "https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/jfr/metadata/metadata.xml",
+      "version": "jdk-25-ga",
+      "support": "CompilerStatistics field schema has aggregate counters, no per-method or compiler identity; Compilation has method/compiler/outcome/level fields.",
+      "verification": "Browsed primary source and retained raw source; cross-checked installed CE 25.0.2 metadata and recorded events.",
+      "rawArtifact": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/graalvm-jit/metadata-jdk-25-ga.xml"
+    }
+  ],
+  "limits": [
+    "Only GraalVM CE 25.0.2 on Windows x64 was executed; no new toolchain installed and no claims of reproducing CE 25.3/25.4, Oracle GraalVM, Linux, containers or production behavior.",
+    "The probe verifies aggregate semantics and non-reset across recordings, not actual steady state or a Graal/C2 performance gain. The failed-attempt elapsed-time claim comes from pinned HotSpot source, not an induced compiler failure.",
+    "The development scenarios use explicitly synthetic application traces and remain evaluator cases, not measured outcomes. Their preparation exposed expectations to this reviewer; they are not holdouts.",
+    "Actor/evaluator separation is currently procedural within a shared filesystem; coordinator must isolate case inputs, chosen skill snapshot and writable output before an independent evaluation.",
+    "Existing release-specific, licensing and workload-fit guidance was preserved; this pass did not rerun every prior reference experiment or assert current corporate licensing entitlement.",
+    "An early read-only baseline inspection assumed the older wave-2 JSON schema and failed on .skills; the wave-3 .packages/.allFiles schema was then inspected and all five initial hashes confirmed. This did not change repository files.",
+    "Catalog-wide registry, dependency ranges and global verification remain pending with the coordinator."
+  ],
+  "casePreparation": {
+    "classification": "Known development cases, not holdouts; no actor evaluation has been run",
+    "actorInputFile": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/graalvm-jit/actor-inputs.json",
+    "evaluatorCriteriaFile": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/graalvm-jit/evaluator-criteria.json",
+    "separation": "Copy only one actor fixture plus the selected original/revised skill into the actor environment. Keep this evaluator file, other-case fixtures and review artifacts unavailable to the actor. Folder separation here is procedural, not access control.",
+    "decisiveConstraint": "Only metrics.csv changes: Graal application p99 after second 60 is approximately stationary in case-a and systematically declining in case-b. The compiler counters and all other artifacts are identical.",
+    "prerequisites": "Read/write an isolated case snapshot; access only the selected original or revised graalvm-jit package. No Java runtime is needed to analyze these supplied fixtures."
+  },
+  "cases": [
+    {
+      "id": "case-a",
+      "actorInputs": {
+        "file": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/graalvm-jit/actor-inputs.json",
+        "selection": "case-a",
+        "fixtureDirectory": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\graalvm-jit\\cases\\case-a",
+        "files": [
+          "runtime.json",
+          "compilation-evidence.json",
+          "metrics.csv",
+          "decision.md"
+        ]
+      },
+      "evaluatorCriteria": {
+        "file": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/graalvm-jit/evaluator-criteria.json",
+        "selection": "case-a",
+        "common": "Apply common criteria plus this case only",
+        "expected": [
+          "Permit the proposed 60-150 second window as an observed approximately stable region under the supplied repeated workload, with uncertainty and scope explicit.",
+          "Use the application trace, not quiet compiler counters, for that decision; Graal p99 is about 79-82 ms and C2 about 99-102 ms per observed window.",
+          "Do not demand more warm-up solely because no universal convergence threshold was supplied; exact steady-state onset and future workload phases remain unproven."
+        ],
+        "observableFailure": [
+          "Reject all existing measurement evidence merely because compiler statistics cannot prove stability.",
+          "Claim an exact universal warm-up duration or statistical significance from the supplied summaries."
+        ]
+      }
+    },
+    {
+      "id": "case-b",
+      "actorInputs": {
+        "file": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/graalvm-jit/actor-inputs.json",
+        "selection": "case-b",
+        "fixtureDirectory": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\graalvm-jit\\cases\\case-b",
+        "files": [
+          "runtime.json",
+          "compilation-evidence.json",
+          "metrics.csv",
+          "decision.md"
+        ]
+      },
+      "evaluatorCriteria": {
+        "file": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/graalvm-jit/evaluator-criteria.json",
+        "selection": "case-b",
+        "common": "Apply common criteria plus this case only",
+        "expected": [
+          "Reject the current steady-state window claim: all three Graal traces continue declining through the final window despite unchanged compiler statistics.",
+          "Preserve the stable C2 baseline and runtime evidence; identify remaining application/cache/dependency behavior as a hypothesis to investigate, not a proved compiler fault.",
+          "Request/plan only the observation needed to establish a later stable region or report the workload as non-steady; do not average away the drift or blindly extend a universal warm-up count."
+        ],
+        "observableFailure": [
+          "Accept the window because compilation totals are flat.",
+          "Replace the drift with an average or the best final sample and call it a steady-state speedup."
+        ]
+      }
+    }
+  ],
+  "crossSkill": [],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "purpose": "Regenerate catalog integrity/version data and resolve cross-package constraints.",
+      "prerequisite": "Coordinator only, after all reviewers stop writing."
+    },
+    {
+      "command": "npm run verify",
+      "purpose": "Run repository-wide CI checks including version policy and generated-index consistency.",
+      "prerequisite": "Coordinator only, after registry regeneration and all writers stopped."
+    }
+  ],
+  "pendingBehavioralEvaluation": "Coordinator may run matched original/revised cases in isolated contexts with criteria frozen and actual outputs/artifacts retained. No such run was performed here.",
+  "evidence": {
+    "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/graalvm-jit",
+    "hashes": [
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\graalvm-jit\\active-events.json",
+        "sha256": "f1fce068196059f5b9274bd378bdba638ca775806193115e9598d55b5e0c5034"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\graalvm-jit\\active.jfr",
+        "sha256": "44fffbed12406a8f373edf1bb6f2cbccbf347c9336f97a727234334d7e2c3f84"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\graalvm-jit\\actor-inputs.json",
+        "sha256": "2d9abcb2bacd1cf43b97fad904168e58c65dfa3e7a6de50619beb54ab800b970"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\graalvm-jit\\case-integrity.json",
+        "sha256": "98b85560fe84ffe3da554ccaaff25531281a34b4a0a98fb78a9a819c92f9297b"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\graalvm-jit\\case-preparation.txt",
+        "sha256": "f64759768af4e2e2deb7ae571f1cb71d5a2935c2c157a0265bfba83a097a89cb"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\graalvm-jit\\compile.txt",
+        "sha256": "92d379a9d4e519b488c14c001f3f858d9b78ad9b7327fd4c66a0491ba65b7033"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\graalvm-jit\\compileBroker-jdk-25-ga.cpp",
+        "sha256": "83ab26f0954a8686d25fdaedd24af15843e538ac434ce893ca1fc17bce342844"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\graalvm-jit\\CompilerStatisticsProbe.class",
+        "sha256": "12573db26778f574364219494cd5ca614120c772bee5c36d2e4a1ea3715340f2"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\graalvm-jit\\CompilerStatisticsProbe.java",
+        "sha256": "1344c068028fe94d4572ca2b692d751f2ca6d17cf6d5f5b496b201fac66de355"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\graalvm-jit\\evaluator-criteria.json",
+        "sha256": "21f3b0fdcd1d6d078c9b7b46a40f5a5e12168e3bf52ec36a1d0a498de28a5331"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\graalvm-jit\\final.diff",
+        "sha256": "7fd794ec1f2299013e7f9761cf7d2a7d50089359b13f2520c559f58c41c5bd99"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\graalvm-jit\\jfrPeriodic-jdk-25-ga.cpp",
+        "sha256": "4706978412893e2254fe43bb08a21fe995d3468d8d065ac13e0ad0d386fe7be3"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\graalvm-jit\\later-events.json",
+        "sha256": "be06b3e7f404a429fec4bf1886f32d4910da070f0176ac42547a00e3e05b1a0e"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\graalvm-jit\\later.jfr",
+        "sha256": "7f055385f88670eb6480182f73333690a7a0c81c3b6c4e232aab394ee002c394"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\graalvm-jit\\local-validation.mjs",
+        "sha256": "3ebd97eed27f252063a726a8a606705c12c20a075637381dab5e7f899f13dbaa"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\graalvm-jit\\metadata-jdk-25-ga.xml",
+        "sha256": "61bb3354bb5949e8a099acb5773b8970e8adffdcf37f7c86606b9450a2d5817f"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\graalvm-jit\\package-validation-final.json",
+        "sha256": "2eba643e212a26a6ead697260a3d0cce5fa998baebf63bab6923708845db0b98"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\graalvm-jit\\package-validation.json",
+        "sha256": "7e630176f17073f9cfc5a01ca380e27ef85319ba3655f057bc05fa09a844d31c"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\graalvm-jit\\prepare-cases.mjs",
+        "sha256": "db619ddc55f1643cdf44c02566f4eee6995579fc844d2a00e2caafabf119ad7b"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\graalvm-jit\\prettier-check-final.txt",
+        "sha256": "f20510a9da4717c51c4cffee6d0dd88d6c9a723d0a83711d01216f5b48961283"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\graalvm-jit\\prettier-check.txt",
+        "sha256": "b722909175722578feeb57a9c67d846252ad890dac4a8c057766cebf0791efab"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\graalvm-jit\\prettier-write.txt",
+        "sha256": "ede12de0e2b9ac536b366490a15f7e6ede6345fb471b5eedde55cdddd04fc67c"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\graalvm-jit\\probe-output-retry.txt",
+        "sha256": "58113b4b79bfd4bc459453896cbf12981c13f3e9f0d295dd48fdfeb9536f80ff"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\graalvm-jit\\probe-output.txt",
+        "sha256": "400efd49468d1fb448f06bac08e63f435d08570c2e56f4d063b2adf734cb5937"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\graalvm-jit\\runtime-metadata.txt",
+        "sha256": "46f4cd779ae4a5be5b57e4f78fa0ee784a171a95ee77f733beb4e0e8a3beea0b"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\graalvm-jit\\statistics-fields.txt",
+        "sha256": "f5873d022bf6b6b7e88cd7a128ff4176e3d18cec4aebed7726817e2048e62c7b"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\graalvm-jit\\statistics.csv",
+        "sha256": "f5085cc33bdb77e6f1317483b106f9ae0d5e77e3d398fa8ec06ac7522b4d46d9"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\graalvm-jit\\write-handoff.mjs",
+        "sha256": "65de8dc3d30c4b361d54c60c5b13587ecd4e87b3f399d2887cebe8602e2e7c90"
+      }
+    ]
+  },
+  "writeState": "All launched tools/processes exited. Final handoff is the last write; subsequent parse/hash inspection is read-only. No other directories under repository were changed by this assignment."
+}

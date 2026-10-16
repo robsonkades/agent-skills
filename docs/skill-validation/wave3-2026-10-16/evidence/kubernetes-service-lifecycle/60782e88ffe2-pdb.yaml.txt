@@ -1,0 +1,9 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: lifecycle-review
+spec:
+  maxUnavailable: "25%"
+  selector:
+    matchLabels:
+      app: lifecycle-review

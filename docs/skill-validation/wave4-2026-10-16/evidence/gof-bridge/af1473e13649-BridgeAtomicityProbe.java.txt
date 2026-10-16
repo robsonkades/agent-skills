@@ -1,0 +1,123 @@
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import static java.nio.file.StandardOpenOption.CREATE_NEW;
+
+public final class BridgeAtomicityProbe {
+    private static int checks;
+
+    static void check(boolean condition, String message) {
+        checks++;
+        if (!condition) throw new AssertionError(message);
+    }
+
+    static void await(CountDownLatch latch) throws IOException {
+        try {
+            if (!latch.await(5, TimeUnit.SECONDS)) throw new IOException("probe coordination timeout");
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            throw new IOException(ex);
+        }
+    }
+
+    static void scheduledImport(Path configuration, Path workspace, boolean sameNamespace) throws Exception {
+        var application = Wiring.start(configuration, workspace);
+        var checked = new CountDownLatch(1);
+        var imported = new CountDownLatch(1);
+        var workerFailure = new AtomicReference<Throwable>();
+        Store observedStore = new Store() {
+            public boolean exists(String key) throws IOException {
+                boolean result = application.store().exists(key);
+                checked.countDown();
+                await(imported);
+                return result;
+            }
+            public void write(String key, byte[] bytes) throws IOException {
+                application.store().write(key, bytes);
+            }
+        };
+        var importer = new Thread(() -> {
+            try {
+                await(checked);
+                application.importer().importReport("daily", "imported".getBytes(StandardCharsets.UTF_8));
+            } catch (Throwable failure) {
+                workerFailure.set(failure);
+            } finally {
+                imported.countDown();
+            }
+        }, "disposable-importer");
+        importer.start();
+        try {
+            boolean result = new ReportPublisher(observedStore).publish("daily", new Report(42, Report.Format.JSON));
+            check(result, "publisher reports creation");
+        } finally {
+            importer.join(6000);
+            if (importer.isAlive()) {
+                importer.interrupt();
+                importer.join(6000);
+                throw new AssertionError("worker did not terminate promptly");
+            }
+        }
+        if (workerFailure.get() != null) throw new AssertionError("importer failed", workerFailure.get());
+        String published = Files.readString(application.store().path("daily"));
+        String importedBytes = Files.readString(application.importer().path("daily"));
+        check(published.equals("{\"count\":42}"), "publisher value observed");
+        if (sameNamespace) {
+            check(importedBytes.equals(published), "negative control: earlier imported bytes overwritten");
+            System.out.println("shared-root: importer created first; publisher returned true and replaced imported content (defect reproduced)");
+        } else {
+            check(importedBytes.equals("imported"), "disjoint namespace preserves importer value");
+            System.out.println("private-root: publisher and importer both preserved under stated writer scope");
+        }
+        check(!application.publisher().publish("daily", new Report(99, Report.Format.CSV)), "subsequent duplicate rejected");
+        check(Files.readString(application.store().path("daily")).equals(published), "duplicate preserved winner");
+    }
+
+    public static void main(String[] args) throws Exception {
+        Path artifacts = Path.of(args[0]);
+        Path output = Files.createTempDirectory(artifacts, "probe-run-");
+        scheduledImport(artifacts.resolve("case-01/config.properties"), output.resolve("shared"), true);
+        scheduledImport(artifacts.resolve("case-02/config.properties"), output.resolve("private"), false);
+
+        Path conditional = output.resolve("conditional.txt");
+        check(!Files.exists(conditional), "initially absent");
+        Files.writeString(conditional, "imported", CREATE_NEW);
+        try {
+            Files.writeString(conditional, "publisher", CREATE_NEW);
+            throw new AssertionError("CREATE_NEW unexpectedly replaced prior creator");
+        } catch (FileAlreadyExistsException expected) {
+            check(Files.readString(conditional).equals("imported"), "conditional create preserved prior winner");
+        }
+        System.out.println("conditional-create: existing winner preserved; FileAlreadyExistsException observed on this provider");
+
+        Path fresh = output.resolve("fresh.txt");
+        Files.writeString(fresh, "publisher", CREATE_NEW);
+        check(Files.readString(fresh).equals("publisher"), "fresh create succeeds");
+
+        Path partial = output.resolve("partial.txt");
+        try (var stream = Files.newOutputStream(partial, CREATE_NEW)) {
+            stream.write("prefix".getBytes(StandardCharsets.UTF_8));
+            throw new IOException("injected application failure after first write");
+        } catch (IOException expected) {
+            check(expected.getMessage().equals("injected application failure after first write"), "injected failure surfaced");
+        }
+        check(Files.readString(partial).equals("prefix"), "closing does not roll back created bytes");
+        System.out.println("partial-write: injected failure left prefix; no atomic-payload or rollback claim");
+
+        Path replaceable = output.resolve("replaceable.txt");
+        Files.writeString(replaceable, "old", CREATE_NEW);
+        Files.writeString(replaceable, "new");
+        check(Files.readString(replaceable).equals("new"), "ordinary write meets explicit replacement permission");
+        System.out.println("replacement-allowed: ordinary write retained as valid alternate contract");
+
+        System.out.println("PASS checks=" + checks);
+        System.out.println("runtime=" + System.getProperty("java.runtime.version"));
+        System.out.println("provider=" + output.getFileSystem().provider().getClass().getName());
+        System.out.println("retained=" + output);
+    }
+}

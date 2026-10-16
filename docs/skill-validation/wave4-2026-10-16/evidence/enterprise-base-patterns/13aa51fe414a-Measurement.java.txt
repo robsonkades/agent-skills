@@ -1,0 +1,9 @@
+import java.math.BigDecimal;
+import java.util.Objects;
+
+public record Measurement(BigDecimal amount, String unit) {
+    public Measurement {
+        Objects.requireNonNull(amount);
+        Objects.requireNonNull(unit);
+    }
+}

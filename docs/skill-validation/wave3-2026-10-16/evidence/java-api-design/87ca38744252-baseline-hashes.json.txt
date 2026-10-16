@@ -1,0 +1,27 @@
+[
+  {
+    "Path": "C:\\git\\agent-skills\\skills\\java-api-design\\SKILL.md",
+    "SHA256": "F6BCD9DFC79DCF806B403A919DCE053F63D5B6BD91F7AC11840E40CC6264C3AF",
+    "Bytes": 9471
+  },
+  {
+    "Path": "C:\\git\\agent-skills\\skills\\java-api-design\\skill.yaml",
+    "SHA256": "F351930201D6C5691B0675845C4B893F6CB4067738EAA9FD54F7858A0CF601B7",
+    "Bytes": 1602
+  },
+  {
+    "Path": "C:\\git\\agent-skills\\skills\\java-api-design\\references\\compatibility.md",
+    "SHA256": "3BE93E63B0BA7A6E168F2E4CD2FA3DDA8F9BF1DF0A3BBB1A0E0F8B4EF626AF68",
+    "Bytes": 18661
+  },
+  {
+    "Path": "C:\\git\\agent-skills\\skills\\java-api-design\\references\\naming.md",
+    "SHA256": "2880997E1C126D273D841249075D31E78E5D633685A0AB42A252A195DEB04FC3",
+    "Bytes": 4941
+  },
+  {
+    "Path": "C:\\git\\agent-skills\\skills\\java-api-design\\references\\worked-example.md",
+    "SHA256": "876B92584ED296E06F5BCA24277671713FABE03AF8ACBEB2DA405431A8980BDB",
+    "Bytes": 11310
+  }
+]

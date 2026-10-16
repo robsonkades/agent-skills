@@ -1,0 +1,307 @@
+{
+  "status": "NO_CHANGES_NEEDED",
+  "skill": "gc-fundamentals",
+  "ownedPath": "skills/gc-fundamentals/**",
+  "reviewedAt": "2026-10-16",
+  "versions": {
+    "committed": "1.4.4",
+    "assignment": "1.4.4",
+    "final": "1.4.4",
+    "rationale": "No supported in-scope defect identified and no package content changed; no bump."
+  },
+  "files": {
+    "inspected": [
+      {
+        "path": "skills/gc-fundamentals/SKILL.md",
+        "assignmentSha256": "539bff67a9348c92ccda51d4a66dd3f87b38dc7f3e058bd75c6cf8f6689a8355",
+        "finalSha256": "539bff67a9348c92ccda51d4a66dd3f87b38dc7f3e058bd75c6cf8f6689a8355"
+      },
+      {
+        "path": "skills/gc-fundamentals/skill.yaml",
+        "assignmentSha256": "653a723232403b632f8343b1f51222c7e4681f6f95879e35016c04b13f8fd1e7",
+        "finalSha256": "653a723232403b632f8343b1f51222c7e4681f6f95879e35016c04b13f8fd1e7"
+      },
+      {
+        "path": "skills/gc-fundamentals/references/safepoints.md",
+        "assignmentSha256": "f80b29f6aeb9c077cd8721827c4c14a908656177893aa2833e199be65791205a",
+        "finalSha256": "f80b29f6aeb9c077cd8721827c4c14a908656177893aa2833e199be65791205a"
+      },
+      {
+        "path": "skills/gc-fundamentals/references/diagnosis-and-versions.md",
+        "assignmentSha256": "f8c2872fc29264ed041f423baf4d90393cf4b1b18d5d1f0ba16cb16f08a79b9e",
+        "finalSha256": "f8c2872fc29264ed041f423baf4d90393cf4b1b18d5d1f0ba16cb16f08a79b9e"
+      },
+      {
+        "path": "skills/gc-fundamentals/references/collector-mechanisms.md",
+        "assignmentSha256": "1143b6e8731d214cdea92b949969741841ad1c01db7f9785d1e0a5f35a69cc33",
+        "finalSha256": "1143b6e8731d214cdea92b949969741841ad1c01db7f9785d1e0a5f35a69cc33"
+      }
+    ],
+    "changedByReviewer": [],
+    "preExistingChanges": [],
+    "stagedChanges": [],
+    "untrackedFiles": [],
+    "onlyReviewerArtifact": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/gc-fundamentals.json"
+  },
+  "changes": [],
+  "findings": [
+    {
+      "location": "SKILL.md: Workflow and Rules",
+      "conclusion": "Adequate",
+      "evidence": "Separates pause frequency/duration, phase work/survival/resource availability, post-mark occupancy/reclamation, and dependency retention under Little's-law assumptions. Reuses evidence and allows no-change within accepted budgets."
+    },
+    {
+      "location": "references/collector-mechanisms.md: Anatomy of a young pause / Generations, survivors and promotion",
+      "conclusion": "Adequate",
+      "evidence": "Uses phase-specific candidate mechanisms rather than inferring total pause from allocation or mortality; preserves collector-specific age/sizing policies and competing CPU/memory explanations."
+    },
+    {
+      "location": "references/safepoints.md: FFM critical downcalls",
+      "conclusion": "Verified existing distinction",
+      "evidence": "Java 25 API requires extremely short non-callback critical functions. Tagged CallingSequence chooses native transition based on critical status rather than heap access; x86 stub conditionally performs that transition. Thus critical(false) is not an ordinary native binding."
+    },
+    {
+      "location": "references/collector-mechanisms.md: Humongous allocations",
+      "conclusion": "Preserve the existing strict threshold",
+      "evidence": "Oracle's JDK 25 guide says larger-or-equal half a region, but tagged HotSpot 25.0.3 G1CollectedHeap.hpp explicitly uses strict greater-than and explains its TLAB boundary. The skill already follows that implementation. Do not introduce an equality error from the overview guide."
+    },
+    {
+      "location": "SKILL.md: version rule; references/diagnosis-and-versions.md: timeline",
+      "conclusion": "Current primary metadata still supports dated claims",
+      "evidence": "On 2026-10-16, JEP 522 is Closed/Delivered for 26; JEP 523 is Closed/Delivered for 27; JEP 535 remains Targeted for 28; JEP 521 is Closed/Delivered for 25 and does not change Shenandoah's default."
+    }
+  ],
+  "preserved": [
+    "Explanatory/diagnostic role and handoff boundaries; no automatic collector selection, heap sizing, upgrade or intrusive capture.",
+    "Reachability, reclamation and external-resource ownership distinctions.",
+    "Survivor, object-shape, root/card/reference and worker-cost model.",
+    "SATB floating garbage, staged reclamation, old-to-young retention and promotion caveats.",
+    "G1 region size/humongous behavior and a supported no-change option.",
+    "TTSP, safepoint/JFR timing scopes, critical-native distinctions and target-build limitations.",
+    "Delivered versus targeted JEP changes and distinction between prior runtime evidence and source metadata.",
+    "All three routed references and all existing declared specialist handoffs."
+  ],
+  "commands": [
+    {
+      "command": "rg --files skills/gc-fundamentals; separate git status --short, git diff HEAD, git diff --cached and git show HEAD:skills/gc-fundamentals/skill.yaml",
+      "cwd": "C:/git/agent-skills",
+      "result": "Five files inspected; assignment baseline clean; version 1.4.4.",
+      "exitCode": 0
+    },
+    {
+      "command": "node --input-type=module (inline existing loadPackageFromDirectory strict:true and validatePackage, plus relative-reference existence checks)",
+      "cwd": "C:/git/agent-skills",
+      "result": "Passed with zero issues and six resolved relative references.",
+      "exitCode": 0
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/gc-fundamentals/SKILL.md skills/gc-fundamentals/skill.yaml skills/gc-fundamentals/references/safepoints.md skills/gc-fundamentals/references/diagnosis-and-versions.md skills/gc-fundamentals/references/collector-mechanisms.md",
+      "cwd": "C:/git/agent-skills",
+      "result": "All five files passed.",
+      "exitCode": 0
+    },
+    {
+      "command": "git diff --check -- skills/gc-fundamentals",
+      "cwd": "C:/git/agent-skills",
+      "result": "Passed; no package diff.",
+      "exitCode": 0
+    },
+    {
+      "command": "node --input-type=module (assignment/final SHA-256 snapshots); git status --short -- skills/gc-fundamentals",
+      "cwd": "C:/git/agent-skills",
+      "result": "All five hashes unchanged and final scoped status clean.",
+      "exitCode": 0
+    },
+    {
+      "command": "node --input-type=module (read-only fetch of https://openjdk.org/jeps/522, /523, /535 and /521)",
+      "cwd": "C:/git/agent-skills",
+      "result": "All returned HTTP 200 and current metadata after the web tool returned 403 for those URLs. No local package writes.",
+      "exitCode": 0
+    }
+  ],
+  "retainedCheckOutput": [
+    {
+      "check": "strict-package-and-relative-references",
+      "chunk_id": "eda1bc",
+      "wall_time_seconds": 0.1597264,
+      "exit_code": 0,
+      "original_token_count": 18,
+      "output": "{\"strictValidation\":\"pass\",\"issues\":0,\"checkedRelativeReferences\":6}\n"
+    },
+    {
+      "check": "scoped-prettier",
+      "chunk_id": "a31ab5",
+      "wall_time_seconds": 0.2528358,
+      "exit_code": 0,
+      "original_token_count": 17,
+      "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+    },
+    {
+      "check": "scoped-diff-check",
+      "chunk_id": "730a17",
+      "wall_time_seconds": 0.0636791,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/gctuning/garbage-first-g1-garbage-collector1.html",
+      "version": "JDK 25",
+      "supports": "G1 phase work, incremental mixed reclamation, SATB, evacuation failure and region allocation. Its inclusive humongous-boundary wording conflicts with tagged implementation; not used to override it."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/gctuning/garbage-first-garbage-collector-tuning.html",
+      "version": "JDK 25",
+      "supports": "Separate Object Copy, heap-root scanning, reference processing and unavailable CPU as causes of long pauses."
+    },
+    {
+      "url": "https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/g1/g1CollectedHeap.hpp",
+      "version": "jdk-25.0.3+9",
+      "supports": "is_humongous uses word_size > threshold; helper computes half the region size. Preserves the skill's strict boundary."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/foreign/Linker.Option.html",
+      "version": "Java SE 25",
+      "supports": "critical(boolean) requires extremely short execution on every path and no callback; allowHeapAccess is a separate option meaning."
+    },
+    {
+      "url": "https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/java.base/share/classes/jdk/internal/foreign/abi/CallingSequence.java",
+      "version": "jdk-25.0.3+9",
+      "supports": "needsTransition returns the negation of isCritical, independently of allowsHeapAccess."
+    },
+    {
+      "url": "https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/cpu/x86/downcallLinker_x86_64.cpp",
+      "version": "jdk-25.0.3+9, x86",
+      "supports": "Ordinary native-state transition and return checks are guarded by needs_transition."
+    },
+    {
+      "url": "https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/runtime/safepoint.cpp",
+      "version": "jdk-25.0.3+9",
+      "supports": "Logged reaching/at/leaving/total phases use distinct timestamps, supporting the existing caution against equating them with client latency."
+    },
+    {
+      "url": "https://openjdk.org/jeps/522",
+      "version": "Current metadata checked 2026-10-16",
+      "supports": "Closed/Delivered, release 26; second-card-table G1 barrier change."
+    },
+    {
+      "url": "https://openjdk.org/jeps/523",
+      "version": "Current metadata checked 2026-10-16",
+      "supports": "Closed/Delivered, release 27; default G1 selection does not override explicit collector selection."
+    },
+    {
+      "url": "https://openjdk.org/jeps/535",
+      "version": "Current metadata checked 2026-10-16; page updated 2026-09-30",
+      "supports": "Targeted, release 28; proposed/default-mode change is not marked delivered."
+    },
+    {
+      "url": "https://openjdk.org/jeps/521",
+      "version": "Current metadata checked 2026-10-16",
+      "supports": "Closed/Delivered, release 25; generational Shenandoah product status does not change the default mode."
+    }
+  ],
+  "validationClassification": {
+    "executedStructural": [
+      "Strict package validation",
+      "Relative-resource checks",
+      "Scoped Prettier",
+      "Git diff/status",
+      "Assignment/final hash comparison"
+    ],
+    "executedTechnicalRuntime": [],
+    "executedBehavioralAgentEvaluations": [],
+    "walkthroughs": [
+      "Two synthetic artifact-based native-boundary cases below; not executed by an independent agent."
+    ],
+    "pending": [
+      "Independent coordinator evaluation",
+      "Coordinator registry generation",
+      "Coordinator repository verification"
+    ]
+  },
+  "limits": [
+    "No skill content changed and no behavioral gain is claimed.",
+    "Prior Temurin 25.0.3 flag checks and measurements in the package were preserved as pre-existing author evidence; they were not rerun or relabeled as this review's executions.",
+    "No Java compiler target, native compiler, JVM workload, JFR capture, forced collection, profiler attachment or production diagnostic was executed.",
+    "No executable example was added or materially changed, so compilation was not required for this no-change review.",
+    "Source inspection supports the identified implementation boundaries; it does not quantify an application's TTSP, GC cost or runtime behavior on other vendors/architectures.",
+    "The initial web-tool 403 responses were resolved by direct read-only HTTPS fetch for JEP metadata; there is no remaining source-access blocker.",
+    "The Oracle overview/HotSpot source discrepancy is recorded rather than silently treating all primary documents as equivalent.",
+    "No local gap was established within this review; this is not a universal correctness guarantee."
+  ],
+  "cases": [
+    {
+      "id": "critical_off_heap_native_call",
+      "kind": "development walkthrough; not executed or held out",
+      "input": {
+        "task": "Use the supplied artifacts to explain why the GC pause and request delay differ. Revise incident-note.md with the supported mechanism, competing causes, next discriminating evidence and the owner of any correction. Do not run a live capture, upgrade the JDK or change collector flags.",
+        "fixtures": {
+          "runtime.txt": "Linux x86_64; Temurin HotSpot 25.0.3+9; G1; all listed timestamps share one verified monotonic epoch.",
+          "src/NativeWait.java": "// Partial binding excerpt; imports and application wrapper omitted.\nMethodHandle waitHandle = linker.downcallHandle(symbol, FunctionDescriptor.ofVoid(ValueLayout.JAVA_LONG), Linker.Option.critical(false));\n",
+          "native-contract.md": "wait_service receives a deadline value and polls a socket until completion or deadline. The observed call spends 50 ms inside the native function. It uses no Java heap segment and does not call Java.",
+          "timeline.csv": "event,start_ms,end_ms\nnative_function_body,2000,2050\nreaching_safepoint,2001,2050\nat_safepoint,2050,2053\nG1_pause,2050,2053\nrequest,1999,2055\n",
+          "incident-note.md": "Draft conclusion: the G1 pause is only 3 ms, so a 56 ms request must be unrelated to safepoints. The native call is off-heap and therefore cannot delay GC synchronization. Switch to ZGC to resolve the mismatch."
+        }
+      },
+      "criteria": {
+        "required": [
+          "Inspect the actual binding; critical(false) still selects the critical path despite having no heap access.",
+          "Explain the separately observed 49 ms synchronization interval and 3 ms GC operation without adding overlapping durations or claiming the entire request delay is proven causal.",
+          "Identify the blocking 50 ms native function as ineligible for critical linkage independent of whether it explains every recorded delay; hand binding review to jni-and-ffm and synchronization attribution to safepoints as appropriate.",
+          "Revise the existing note, reject an unsupported collector change and identify evidence needed to locate the delaying thread."
+        ],
+        "failures": [
+          "Treats false as disabling critical behavior.",
+          "Uses G1 JNI region pinning or a ZGC switch as a fix for critical-call eligibility.",
+          "Exonerates safepoints from the short GC pause, or adds 49 ms to an already encompassing interval.",
+          "Claims root cause solely from temporal overlap."
+        ]
+      }
+    },
+    {
+      "id": "ordinary_off_heap_native_call",
+      "kind": "development walkthrough; not executed or held out",
+      "input": {
+        "task": "Use the same task and artifacts from critical_off_heap_native_call, replacing only src/NativeWait.java below. Update incident-note.md for the actual binding.",
+        "baseCase": "critical_off_heap_native_call",
+        "fixtureOverrides": {
+          "src/NativeWait.java": "// Partial binding excerpt; imports and application wrapper omitted.\nMethodHandle waitHandle = linker.downcallHandle(symbol, FunctionDescriptor.ofVoid(ValueLayout.JAVA_LONG));\n"
+        },
+        "decisiveConstraint": "Only the critical linker option is removed."
+      },
+      "criteria": {
+        "required": [
+          "Recognize that the critical-transition explanation no longer follows; ordinary native execution after a completed transition is normally safepoint-safe on this implementation.",
+          "Retain the adequate ordinary binding rather than applying a stale critical-option correction.",
+          "Preserve the observed synchronization/request discrepancy and investigate another delaying thread, transition or scheduling path using discriminating evidence.",
+          "Update only affected conclusions in incident-note.md and continue to reject an unsupported collector switch."
+        ],
+        "failures": [
+          "Carries forward the critical(false) diagnosis despite the actual binding.",
+          "Asserts that every long native call delays arrival at safepoints.",
+          "Dismisses the 49 ms synchronization observation because this specific cause was refuted.",
+          "Introduces new collection, compiler flags or deployment changes without a supported need."
+        ]
+      }
+    }
+  ],
+  "crossSkill": [],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "prerequisite": "All reviewers stopped writing",
+      "reason": "Parallel review policy; no package update here, but overall wave still needs regeneration."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "prerequisite": "Registry regenerated after writers stop",
+      "reason": "Repository-wide validation is coordinator-only."
+    }
+  ],
+  "allWritesStopped": true,
+  "runningWriterProcesses": []
+}

@@ -1,0 +1,20 @@
+CONTROL ONLY: unchanged pinned mojo methods with supplied Result objects and stubbed collaborators; no Maven or recipe engine executed.
+PASS successful application writes both generated files
+PASS successful application reaches processed
+PASS success preserves unrelated local file
+PASS result error surfaces before file application
+PASS early error creates neither result file
+PASS early error preserves local file
+PASS later target conflict surfaces a file-application failure
+PASS earlier generated file remains after failure
+PASS later result was not written as a source file
+PASS log announces later file before its write fails
+PASS failed application does not reach processed
+PASS failure preserves unrelated local files
+PASS positive preview gate fails for detected results
+PASS positive preview retains report despite expected gate failure
+PASS positive preview does not apply source results
+PASS clean preview creates no patch
+PASS clean preview completes with gate enabled
+PASS clean invocation does not delete a pre-existing report
+SUMMARY checks=18

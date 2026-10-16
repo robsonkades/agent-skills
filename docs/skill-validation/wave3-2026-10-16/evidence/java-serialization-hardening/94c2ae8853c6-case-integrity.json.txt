@@ -1,0 +1,122 @@
+{
+  "differences": [
+    "acceptance-policy.json"
+  ],
+  "hashes": [
+    {
+      "id": "case-a",
+      "files": [
+        {
+          "file": "consumer/fixture/RetryPolicy.java",
+          "sha256": "433dc7624bfe48de2842989b7d84ae990dbf275a00e9394c6a144a1445a9e8af"
+        },
+        {
+          "file": "consumer/fixture/DeniedPayload.java",
+          "sha256": "dd4b5bd911c8baf20473633cca19f9d3aff7f79d9439886af1d9bcd219119daf"
+        },
+        {
+          "file": "consumer/ConsumerMain.java",
+          "sha256": "2dff3439ae8a716ebc4b5fcd3102c45712a4379283111ae1387ebf7b5ff30ebf"
+        },
+        {
+          "file": "wire-forms.md",
+          "sha256": "c37a5ccff26e988d2ae9ad2d10082e303cc31212322ac743ca7d2c0cffd701e3"
+        },
+        {
+          "file": "streams/denied.ser",
+          "sha256": "332aa7422a6f17482778062fd1eebec68300d813e3f979aa8058246f3df1b779"
+        },
+        {
+          "file": "streams/missing.ser",
+          "sha256": "fa069c8979b5b284b95b824a6d7f9a7e804ab705a93dcf8a9ecebe2e3caeae67"
+        },
+        {
+          "file": "streams/null.ser",
+          "sha256": "4e68143408826326220a32d6bff59e1cca3dd85f74b018aebd6723c5686c54e5"
+        },
+        {
+          "file": "streams/value--1.ser",
+          "sha256": "15f9d50a8c028e923eb0066ff3195b682b8771a456134234de98a5caa8914ad5"
+        },
+        {
+          "file": "streams/value-0.ser",
+          "sha256": "0d3aec945ebb4f296007eddb0e35684361da3d251a10f965a1ceecd1c386c93b"
+        },
+        {
+          "file": "streams/value-10.ser",
+          "sha256": "67e5c33cc5d456932a458468736351bdec7fc654895effea46bbaf732e53f5ed"
+        },
+        {
+          "file": "streams/value-11.ser",
+          "sha256": "9cb976c98cf6dbe3b959554980892bd2a91ad94a63e87db30a4e50cc4d784380"
+        },
+        {
+          "file": "streams/value-5.ser",
+          "sha256": "9486d9bf5c6ba3d3e24f270a4b7f1c63465e602b38e9acf71ec476fad68286b8"
+        },
+        {
+          "file": "acceptance-policy.json",
+          "sha256": "afd82f1fc4a67f0c96af181f0141d6177f5795fc87c6232d667787f9186a88ff"
+        }
+      ]
+    },
+    {
+      "id": "case-b",
+      "files": [
+        {
+          "file": "consumer/fixture/RetryPolicy.java",
+          "sha256": "433dc7624bfe48de2842989b7d84ae990dbf275a00e9394c6a144a1445a9e8af"
+        },
+        {
+          "file": "consumer/fixture/DeniedPayload.java",
+          "sha256": "dd4b5bd911c8baf20473633cca19f9d3aff7f79d9439886af1d9bcd219119daf"
+        },
+        {
+          "file": "consumer/ConsumerMain.java",
+          "sha256": "2dff3439ae8a716ebc4b5fcd3102c45712a4379283111ae1387ebf7b5ff30ebf"
+        },
+        {
+          "file": "wire-forms.md",
+          "sha256": "c37a5ccff26e988d2ae9ad2d10082e303cc31212322ac743ca7d2c0cffd701e3"
+        },
+        {
+          "file": "streams/denied.ser",
+          "sha256": "332aa7422a6f17482778062fd1eebec68300d813e3f979aa8058246f3df1b779"
+        },
+        {
+          "file": "streams/missing.ser",
+          "sha256": "fa069c8979b5b284b95b824a6d7f9a7e804ab705a93dcf8a9ecebe2e3caeae67"
+        },
+        {
+          "file": "streams/null.ser",
+          "sha256": "4e68143408826326220a32d6bff59e1cca3dd85f74b018aebd6723c5686c54e5"
+        },
+        {
+          "file": "streams/value--1.ser",
+          "sha256": "15f9d50a8c028e923eb0066ff3195b682b8771a456134234de98a5caa8914ad5"
+        },
+        {
+          "file": "streams/value-0.ser",
+          "sha256": "0d3aec945ebb4f296007eddb0e35684361da3d251a10f965a1ceecd1c386c93b"
+        },
+        {
+          "file": "streams/value-10.ser",
+          "sha256": "67e5c33cc5d456932a458468736351bdec7fc654895effea46bbaf732e53f5ed"
+        },
+        {
+          "file": "streams/value-11.ser",
+          "sha256": "9cb976c98cf6dbe3b959554980892bd2a91ad94a63e87db30a4e50cc4d784380"
+        },
+        {
+          "file": "streams/value-5.ser",
+          "sha256": "9486d9bf5c6ba3d3e24f270a4b7f1c63465e602b38e9acf71ec476fad68286b8"
+        },
+        {
+          "file": "acceptance-policy.json",
+          "sha256": "05277c4bc9dafc7f272939efaa81f41c179a32736bb07d54bfbb888f2edb0aae"
+        }
+      ]
+    }
+  ],
+  "inputsCriteriaSeparated": true
+}

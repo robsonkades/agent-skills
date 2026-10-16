@@ -166,6 +166,28 @@ earlier but adds work; protocol health checks, max lifetime and failure eviction
 Use the HTTP client/proxy's actual connection and stream contracts here; `connection-pool-sizing`
 owns JDBC/HikariCP sizing, not generic HTTP pool configuration.
 
+## Reloading mounted configuration
+
+For a reloader intended to update a running Pod, trace the source through **each container's
+read path** to the consumer's effective configuration. In Kubernetes 1.34, ConfigMap volume
+projections update eventually, with delay depending on kubelet sync and cache propagation.
+ConfigMap `subPath` mounts do not receive those updates, and ConfigMap-derived environment
+variables do not change in the running process. A reload signal cannot repair stale delivery.
+The reloader may see a new projected file while the app still reads a pinned `subPath` file;
+inspect both mounts, not only the common volume name.
+
+Also inspect how the watcher and consumer reopen data. Kubernetes v1.34.0's `AtomicWriter`
+publishes projected files by switching the `..data` symlink to a new data directory, not by
+editing each visible file in place. Verify that the actual watcher/reload implementation
+handles replacement and reads the current path; do not assume a file-modified event or an
+already-open descriptor represents the new configuration.
+
+Verify a controlled change at the API object, the consumer's mounted path and its effective
+configuration/version or request behavior. A successful reload request alone does not prove
+adoption. Check the application's invalid-config and recovery behavior too. A versioned config
+released by replacing Pods is a valid alternative when live reload is not required; preserve
+that lifecycle instead of adding a reloader by default.
+
 ## Resources: per container, consequences per pod
 
 - Resources are traditionally declared per container; newer clusters can also enable Pod-level
@@ -228,6 +250,8 @@ faults; a narrow explanation does not require an unrelated full cluster campaign
 - [Kubernetes 1.34 Pod QoS](https://v1-34.docs.kubernetes.io/docs/concepts/workloads/pods/pod-qos/) — effective resource model.
 - [Kubernetes v1.34.0 resource helpers](https://github.com/kubernetes/kubernetes/blob/v1.34.0/staging/src/k8s.io/component-helpers/resource/helpers.go) — `AggregateContainerRequests` accounts for overlapping init phases; `PodRequests` applies Pod-level overrides and overhead.
 - [Kubernetes 1.34 emptyDir volumes](https://v1-34.docs.kubernetes.io/docs/concepts/storage/volumes/#emptydir) — Pod lifetime, memory accounting and shared node capacity.
+- [Kubernetes 1.34 ConfigMaps](https://v1-34.docs.kubernetes.io/docs/concepts/configuration/configmap/#mounted-configmaps-are-updated-automatically) — eventual projection updates, `subPath` and environment-variable limits.
+- [Kubernetes v1.34.0 AtomicWriter](https://github.com/kubernetes/kubernetes/blob/v1.34.0/pkg/volume/util/atomic_writer.go) — projected-data replacement and watcher implications; inspect the deployed implementation.
 - [Kubernetes 1.34 Pod lifecycle](https://v1-34.docs.kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/) — grace and failure conditions.
 - [Kubernetes 1.34 process namespace sharing](https://v1-34.docs.kubernetes.io/docs/tasks/configure-pod-container/share-process-namespace/) — process and filesystem visibility with permissions.
 - [Kubernetes 1.34 probe configuration](https://v1-34.docs.kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#http-probes) — kubelet HTTP probe destination and the host-network loopback exception.

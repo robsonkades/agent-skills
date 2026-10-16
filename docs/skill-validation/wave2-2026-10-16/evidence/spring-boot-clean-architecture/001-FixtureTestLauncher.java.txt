@@ -1,0 +1,43 @@
+import java.io.PrintWriter;
+import org.junit.platform.engine.TestExecutionResult;
+import org.junit.platform.launcher.TestExecutionListener;
+import org.junit.platform.launcher.TestIdentifier;
+import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
+import org.junit.platform.launcher.core.LauncherFactory;
+import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
+
+import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
+
+public final class FixtureTestLauncher {
+    public static void main(String[] args) {
+        System.out.println("runtime=" + Runtime.version());
+        System.out.println("Spring Boot=" + org.springframework.boot.SpringBootVersion.getVersion());
+        System.out.println("Spring Framework=" + org.springframework.core.SpringVersion.getVersion());
+        var summaryListener = new SummaryGeneratingListener();
+        var detailsListener = new TestExecutionListener() {
+            @Override
+            public void executionFinished(TestIdentifier test, TestExecutionResult result) {
+                if (test.isTest()) {
+                    System.out.println(result.getStatus() + " " + test.getDisplayName());
+                    result.getThrowable().ifPresent(Throwable::printStackTrace);
+                }
+            }
+        };
+        var request = LauncherDiscoveryRequestBuilder.request().selectors(
+                selectClass("example.clean.PolicyTest"),
+                selectClass("example.clean.WiringTest"),
+                selectClass("example.clean.BoundaryTest")).build();
+        try (var session = LauncherFactory.openSession()) {
+            session.getLauncher().execute(request, summaryListener, detailsListener);
+        }
+        var summary = summaryListener.getSummary();
+        summary.printTo(new PrintWriter(System.out, true));
+        summary.printFailuresTo(new PrintWriter(System.out, true));
+        if (summary.getTestsFoundCount() != 12 || summary.getTestsSucceededCount() != 12
+                || summary.getTestsSkippedCount() != 0 || summary.getTestsAbortedCount() != 0
+                || summary.getTotalFailureCount() != 0) {
+            throw new AssertionError("Expected all 12 documented tests to execute successfully");
+        }
+    }
+}
+

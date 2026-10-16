@@ -37,7 +37,7 @@ DataIntegrityViolationException. Do not assert the latter unless translation act
 that operation. Avoid driver-message substring matching; use the owned translation contract
 and, when needed, a vendor-aware SQL-state/constraint adapter.
 
-Sources: [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2)
+Sources: [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html)
 for persistence contexts, locking and bulk operations; implementation timing must still be tested.
 
 ## Query budgets without false greens
@@ -181,7 +181,7 @@ interactions, `offline-concurrency-control`. Pass the invariant, read/write sets
 retry policy and counterexample; request the accepted coordination protocol. Until resolved,
 report the coverage gap rather than silently changing isolation to make a test pass.
 
-Sources checked 2026-09-25: [Jakarta Persistence 3.2, sections 3.5.1–3.5.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2)
+Sources checked 2026-09-25: [Jakarta Persistence 3.2, sections 3.5.1–3.5.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html)
 defines entity version checking, not aggregate-wide predicates;
 [PostgreSQL 17 isolation](https://www.postgresql.org/docs/17/transaction-iso.html)
 documents serialization anomalies and whole-transaction retry. The duty-assignment schedule is

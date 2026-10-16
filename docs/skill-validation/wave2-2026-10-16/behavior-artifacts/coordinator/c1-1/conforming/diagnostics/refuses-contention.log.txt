@@ -1,0 +1,34 @@
+
+Test run finished after 118 ms
+[         3 containers found      ]
+[         0 containers skipped    ]
+[         3 containers started    ]
+[         0 containers aborted    ]
+[         3 containers successful ]
+[         0 containers failed     ]
+[        21 tests found           ]
+[         0 tests skipped         ]
+[        21 tests started         ]
+[         0 tests aborted         ]
+[        20 tests successful      ]
+[         1 tests failed          ]
+
+
+Failures (1):
+  JUnit Jupiter:AccountTest:affordableWithdrawalSucceedsDespiteContention()
+    MethodSource [className = 'AccountTest', methodName = 'affordableWithdrawalSucceedsDespiteContention', methodParameterTypes = '']
+    => org.opentest4j.MultipleFailuresError: workers and teardown (1 failure)
+	org.opentest4j.AssertionFailedError: contention must not refuse an affordable withdrawal ==> expected: <true> but was: <false>
+       org.junit.jupiter.api.AssertAll.assertAll(AssertAll.java:80)
+       org.junit.jupiter.api.AssertAll.assertAll(AssertAll.java:44)
+       org.junit.jupiter.api.Assertions.assertAll(Assertions.java:2961)
+       AccountTest.affordableWithdrawalSucceedsDespiteContention(AccountTest.java:62)
+       java.base/java.lang.reflect.Method.invoke(Method.java:565)
+       [...]
+       Suppressed: org.opentest4j.AssertionFailedError: contention must not refuse an affordable withdrawal ==> expected: <true> but was: <false>
+         org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+         org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+         org.junit.jupiter.api.AssertTrue.failNotTrue(AssertTrue.java:63)
+         org.junit.jupiter.api.AssertTrue.assertTrue(AssertTrue.java:36)
+         org.junit.jupiter.api.Assertions.assertTrue(Assertions.java:214)
+         [...]

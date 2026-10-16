@@ -1,0 +1,12 @@
+package work;
+public final class SelfTest {
+    public static void main(String[] args) {
+        Catalog c = new Catalog();
+        c.load(new Entry("A", 450), new Entry("B", 550));
+        Report first = c.open();
+        if (first.total() != 1000 || first.entries().size() != 2) throw new AssertionError("initial report");
+        try { first.entries().clear(); throw new AssertionError("writable report"); }
+        catch (UnsupportedOperationException expected) { }
+        System.out.println("SelfTest PASS");
+    }
+}

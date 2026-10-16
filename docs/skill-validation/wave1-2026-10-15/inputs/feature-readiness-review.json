@@ -1,0 +1,6 @@
+{
+  "skill": "feature-readiness-review",
+  "common": "Perform a completion review and report findings only; do not edit or deploy. Accepted r3 requires exactly one notification for simultaneous duplicates at the target worker count, plus a runbook. The c5 producer, worker, and runbook work are DONE; all mappings are settled. Inspected EV01 covers the real producer, broker, and worker at c5/e2 with four workers and shows exactly one notification. EV02 meets the runbook criterion. Other flags, dependencies, permissions, and inputs are unchanged; there are no other gaps.",
+  "scenarioA": "The target is c5/e2 with four workers.",
+  "scenarioB": "The target is c5/e2 with eight workers; there is no further evidence or applicability analysis."
+}

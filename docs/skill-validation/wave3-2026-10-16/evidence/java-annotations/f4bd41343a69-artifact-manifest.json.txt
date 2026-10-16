@@ -1,0 +1,522 @@
+{
+  "owned": [
+    {
+      "path": "skills/java-annotations/SKILL.md",
+      "committedSha256": "63E1BA8D04FFF20F7CF2C484756D9E5024EB7A2190D52C6FCF7148EE5291845F",
+      "finalSha256": "9D49251A7E3CAD941122FFCE851D3881AF46175B61C5435BEFB8F2B75EEBD52D"
+    },
+    {
+      "path": "skills/java-annotations/skill.yaml",
+      "committedSha256": "87BC99BF3172FC0680511C667233EE3EB4488638E2C06A2CCB29B12474717D4D",
+      "finalSha256": "F051979A44643E80D5ABD70662B841C59BE9C1B0415C10307DAE664E05232CBB"
+    },
+    {
+      "path": "skills/java-annotations/references/retention-targets-and-processing.md",
+      "committedSha256": "9E906938EA21DC941CAD0ECCD972E2C23DEEE61C2F65FEC4FD64AB1C141CB96B",
+      "finalSha256": "D1D09BB832EBF2B86FE1D9F3CCDE25CCDAA711AFE647660C424535EA47D80022"
+    },
+    {
+      "path": "skills/java-annotations/references/markers-and-custom-annotations.md",
+      "committedSha256": "581F7C172E13C19BE74DBBCE4C55B89ABC3D99459CD0AD103DFCB465AA848DE6",
+      "finalSha256": "581F7C172E13C19BE74DBBCE4C55B89ABC3D99459CD0AD103DFCB465AA848DE6"
+    }
+  ],
+  "artifacts": [
+    {
+      "file": "baseline-committed/SKILL.md",
+      "sha256": "63E1BA8D04FFF20F7CF2C484756D9E5024EB7A2190D52C6FCF7148EE5291845F"
+    },
+    {
+      "file": "baseline-committed/references/markers-and-custom-annotations.md",
+      "sha256": "581F7C172E13C19BE74DBBCE4C55B89ABC3D99459CD0AD103DFCB465AA848DE6"
+    },
+    {
+      "file": "baseline-committed/references/retention-targets-and-processing.md",
+      "sha256": "9E906938EA21DC941CAD0ECCD972E2C23DEEE61C2F65FEC4FD64AB1C141CB96B"
+    },
+    {
+      "file": "baseline-committed/skill.yaml",
+      "sha256": "87BC99BF3172FC0680511C667233EE3EB4488638E2C06A2CCB29B12474717D4D"
+    },
+    {
+      "file": "case-runs/correctedProcessorControl.json",
+      "sha256": "B458185F583EC4C5CBD762595CEDD2247AE2B8E66738DF9E6936C184D7169F1B"
+    },
+    {
+      "file": "case-runs/processor.json",
+      "sha256": "8F4EDEC36E710B9C115D4A020745374B6BF158D68C42159B36E03D7A1C1D6B95"
+    },
+    {
+      "file": "case-runs/runtime.json",
+      "sha256": "6D8C0EC7187DEBC45205BEBDCB6487864BEBC99DC45AD95E923640DF9E6E7C8D"
+    },
+    {
+      "file": "cases/evaluator-only.json",
+      "sha256": "BE36B1FD65EC561B032BB6E4886313EC597BC3F4D836BE3D0495EFE40202C499"
+    },
+    {
+      "file": "cases/processor/input/README.md",
+      "sha256": "035B14B7DADE751A31AD2E3A6F744E7DB7A889AD7F7FA62A7B8A59DD30F79436"
+    },
+    {
+      "file": "cases/processor/input/TASK.txt",
+      "sha256": "EFD985D3C286C9947456087095ECF6E6F3663EF9369AB890B83DC84F815B2006"
+    },
+    {
+      "file": "cases/processor/input/project.json",
+      "sha256": "7BEB9D3E7B8F355A3630B45BB81F7CF805818051504A58C74771243EA8510208"
+    },
+    {
+      "file": "cases/processor/input/src/api/example/Codec.java",
+      "sha256": "6CEDBDFF59B29FB854C8D9696F8E0DDD0CD1CEFCB00669414D61F5689573A750"
+    },
+    {
+      "file": "cases/processor/input/src/api/example/DefaultCodec.java",
+      "sha256": "F40574C2E598CF62C003BAFCE1AF3A11A95EB82A03E040500E13725A6F765257"
+    },
+    {
+      "file": "cases/processor/input/src/api/example/UseCodec.java",
+      "sha256": "EDFFD683AFCC3A31A65C2674468A3251402815EDC7BD867F5B2B29EE576C08F6"
+    },
+    {
+      "file": "cases/processor/input/src/app/example/DefaultUse.java",
+      "sha256": "13DA868BEDA543007689BF085F6302CA5FD197F7055D6324BC4E1CB6AA20B8DB"
+    },
+    {
+      "file": "cases/processor/input/src/app/example/ExplicitUse.java",
+      "sha256": "D8CB9D8CB7EEF422FC736F572696BF7421A3B2CC516778841DC6373D7D3A29E7"
+    },
+    {
+      "file": "cases/processor/input/src/app/example/LocalCodec.java",
+      "sha256": "549D8B2224729696E3A4F6594A78826961FC483B213C5743280A963481AA3D5F"
+    },
+    {
+      "file": "cases/processor/input/src/invalid-array/example/InvalidArrayUse.java",
+      "sha256": "A96CBD3BA06669E013C4FBC1EA82EAB5991CD25DC767B79A2C7FEBF7A0A6F1F1"
+    },
+    {
+      "file": "cases/processor/input/src/invalid-value/example/InvalidUse.java",
+      "sha256": "9F0B708413645379CA6AAE0C7A4BCFC2CE0F4C774A43769BB9DC9A74B6A01937"
+    },
+    {
+      "file": "cases/processor/input/src/processors/probe/CodecProcessor.java",
+      "sha256": "2240ACD9FE07FA02967DDC7EBC88FAB0767570347E5461DAC92D55C881B893B2"
+    },
+    {
+      "file": "cases/processor/input/src/runtime/example/RuntimeReader.java",
+      "sha256": "E6C3BBC46C5D7DA05A9FCB97D82FDFB1669BC315EA3ED838909019FA35116553"
+    },
+    {
+      "file": "cases/processor/input/verify.mjs",
+      "sha256": "A5447C992D8DE4350C9FF9BF7059361ED1915CAFC18C6E3F90887F7C8F85C3A8"
+    },
+    {
+      "file": "cases/runtime/input/README.md",
+      "sha256": "035B14B7DADE751A31AD2E3A6F744E7DB7A889AD7F7FA62A7B8A59DD30F79436"
+    },
+    {
+      "file": "cases/runtime/input/TASK.txt",
+      "sha256": "EFD985D3C286C9947456087095ECF6E6F3663EF9369AB890B83DC84F815B2006"
+    },
+    {
+      "file": "cases/runtime/input/project.json",
+      "sha256": "37B715735A6E8A46850B6DB1F1AA6E94D32AAC31B00135B9036AC1B4D7A0AD49"
+    },
+    {
+      "file": "cases/runtime/input/src/api/example/Codec.java",
+      "sha256": "6CEDBDFF59B29FB854C8D9696F8E0DDD0CD1CEFCB00669414D61F5689573A750"
+    },
+    {
+      "file": "cases/runtime/input/src/api/example/DefaultCodec.java",
+      "sha256": "F40574C2E598CF62C003BAFCE1AF3A11A95EB82A03E040500E13725A6F765257"
+    },
+    {
+      "file": "cases/runtime/input/src/api/example/UseCodec.java",
+      "sha256": "EDFFD683AFCC3A31A65C2674468A3251402815EDC7BD867F5B2B29EE576C08F6"
+    },
+    {
+      "file": "cases/runtime/input/src/app/example/DefaultUse.java",
+      "sha256": "13DA868BEDA543007689BF085F6302CA5FD197F7055D6324BC4E1CB6AA20B8DB"
+    },
+    {
+      "file": "cases/runtime/input/src/app/example/ExplicitUse.java",
+      "sha256": "D8CB9D8CB7EEF422FC736F572696BF7421A3B2CC516778841DC6373D7D3A29E7"
+    },
+    {
+      "file": "cases/runtime/input/src/app/example/LocalCodec.java",
+      "sha256": "549D8B2224729696E3A4F6594A78826961FC483B213C5743280A963481AA3D5F"
+    },
+    {
+      "file": "cases/runtime/input/src/invalid-array/example/InvalidArrayUse.java",
+      "sha256": "A96CBD3BA06669E013C4FBC1EA82EAB5991CD25DC767B79A2C7FEBF7A0A6F1F1"
+    },
+    {
+      "file": "cases/runtime/input/src/invalid-value/example/InvalidUse.java",
+      "sha256": "9F0B708413645379CA6AAE0C7A4BCFC2CE0F4C774A43769BB9DC9A74B6A01937"
+    },
+    {
+      "file": "cases/runtime/input/src/processors/probe/CodecProcessor.java",
+      "sha256": "2240ACD9FE07FA02967DDC7EBC88FAB0767570347E5461DAC92D55C881B893B2"
+    },
+    {
+      "file": "cases/runtime/input/src/runtime/example/RuntimeReader.java",
+      "sha256": "E6C3BBC46C5D7DA05A9FCB97D82FDFB1669BC315EA3ED838909019FA35116553"
+    },
+    {
+      "file": "cases/runtime/input/verify.mjs",
+      "sha256": "A5447C992D8DE4350C9FF9BF7059361ED1915CAFC18C6E3F90887F7C8F85C3A8"
+    },
+    {
+      "file": "collect-evidence.mjs",
+      "sha256": "B9A2E723ADD7E8EB66027AB56164710F455D7A47F119589C0953307378190266"
+    },
+    {
+      "file": "controls/processor-mirror/README.md",
+      "sha256": "035B14B7DADE751A31AD2E3A6F744E7DB7A889AD7F7FA62A7B8A59DD30F79436"
+    },
+    {
+      "file": "controls/processor-mirror/TASK.txt",
+      "sha256": "EFD985D3C286C9947456087095ECF6E6F3663EF9369AB890B83DC84F815B2006"
+    },
+    {
+      "file": "controls/processor-mirror/project.json",
+      "sha256": "7BEB9D3E7B8F355A3630B45BB81F7CF805818051504A58C74771243EA8510208"
+    },
+    {
+      "file": "controls/processor-mirror/src/api/example/Codec.java",
+      "sha256": "6CEDBDFF59B29FB854C8D9696F8E0DDD0CD1CEFCB00669414D61F5689573A750"
+    },
+    {
+      "file": "controls/processor-mirror/src/api/example/DefaultCodec.java",
+      "sha256": "F40574C2E598CF62C003BAFCE1AF3A11A95EB82A03E040500E13725A6F765257"
+    },
+    {
+      "file": "controls/processor-mirror/src/api/example/UseCodec.java",
+      "sha256": "EDFFD683AFCC3A31A65C2674468A3251402815EDC7BD867F5B2B29EE576C08F6"
+    },
+    {
+      "file": "controls/processor-mirror/src/app/example/DefaultUse.java",
+      "sha256": "13DA868BEDA543007689BF085F6302CA5FD197F7055D6324BC4E1CB6AA20B8DB"
+    },
+    {
+      "file": "controls/processor-mirror/src/app/example/ExplicitUse.java",
+      "sha256": "D8CB9D8CB7EEF422FC736F572696BF7421A3B2CC516778841DC6373D7D3A29E7"
+    },
+    {
+      "file": "controls/processor-mirror/src/app/example/LocalCodec.java",
+      "sha256": "549D8B2224729696E3A4F6594A78826961FC483B213C5743280A963481AA3D5F"
+    },
+    {
+      "file": "controls/processor-mirror/src/invalid-array/example/InvalidArrayUse.java",
+      "sha256": "A96CBD3BA06669E013C4FBC1EA82EAB5991CD25DC767B79A2C7FEBF7A0A6F1F1"
+    },
+    {
+      "file": "controls/processor-mirror/src/invalid-value/example/InvalidUse.java",
+      "sha256": "9F0B708413645379CA6AAE0C7A4BCFC2CE0F4C774A43769BB9DC9A74B6A01937"
+    },
+    {
+      "file": "controls/processor-mirror/src/processors/probe/CodecProcessor.java",
+      "sha256": "A532BE59375150BB020DF66FC6BFF2788DF85C0BEB3C36FF6E6D153A157CA6F0"
+    },
+    {
+      "file": "controls/processor-mirror/src/runtime/example/RuntimeReader.java",
+      "sha256": "E6C3BBC46C5D7DA05A9FCB97D82FDFB1669BC315EA3ED838909019FA35116553"
+    },
+    {
+      "file": "controls/processor-mirror/verify.mjs",
+      "sha256": "A5447C992D8DE4350C9FF9BF7059361ED1915CAFC18C6E3F90887F7C8F85C3A8"
+    },
+    {
+      "file": "final/SKILL.md",
+      "sha256": "9D49251A7E3CAD941122FFCE851D3881AF46175B61C5435BEFB8F2B75EEBD52D"
+    },
+    {
+      "file": "final/references/markers-and-custom-annotations.md",
+      "sha256": "581F7C172E13C19BE74DBBCE4C55B89ABC3D99459CD0AD103DFCB465AA848DE6"
+    },
+    {
+      "file": "final/references/retention-targets-and-processing.md",
+      "sha256": "D1D09BB832EBF2B86FE1D9F3CCDE25CCDAA711AFE647660C424535EA47D80022"
+    },
+    {
+      "file": "final/skill.yaml",
+      "sha256": "F051979A44643E80D5ABD70662B841C59BE9C1B0415C10307DAE664E05232CBB"
+    },
+    {
+      "file": "first-attempt-bad-scalar.stderr.txt",
+      "sha256": "B9C5CEE7C916B4AE14CC1A8D20109C0C715FDF92F25F93B8BFC7AC5357F98931"
+    },
+    {
+      "file": "first-attempt-results.json",
+      "sha256": "B7585AF563826C8F43D799BF5545182B9F17A7831ED7631749B4AA34D9538DA4"
+    },
+    {
+      "file": "loader-boundary.json",
+      "sha256": "F287A8B81B54D3B4DECCFF5FF04491FDE37F8398F88289AF63AE20787480F910"
+    },
+    {
+      "file": "logs/bad-array.stderr.txt",
+      "sha256": "EBEA4A9C4D0520591287F6881493EC14495858104CAFA162E425AAA8594FE19C"
+    },
+    {
+      "file": "logs/bad-array.stdout.txt",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "file": "logs/bad-even-with-compiled-app.stderr.txt",
+      "sha256": "B9C5CEE7C916B4AE14CC1A8D20109C0C715FDF92F25F93B8BFC7AC5357F98931"
+    },
+    {
+      "file": "logs/bad-even-with-compiled-app.stdout.txt",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "file": "logs/bad-scalar.stderr.txt",
+      "sha256": "FA74905AE3A1DAFF186D4E19410069BCBB2324F31FFF9507D94E450B0C5D1C1A"
+    },
+    {
+      "file": "logs/bad-scalar.stdout.txt",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "file": "logs/catching-positive.stderr.txt",
+      "sha256": "081E811C3FCBF2EB17BF3424CC5EB4A46ECBE3DCFD7FE6F4A44C548D0AC381C4"
+    },
+    {
+      "file": "logs/catching-positive.stdout.txt",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "file": "logs/compile-api.stderr.txt",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "file": "logs/compile-api.stdout.txt",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "file": "logs/compile-processors.stderr.txt",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "file": "logs/compile-processors.stdout.txt",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "file": "logs/compile-runtime.stderr.txt",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "file": "logs/compile-runtime.stdout.txt",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "file": "logs/java-version.stderr.txt",
+      "sha256": "E33F6CFDF4D70CB8BF63CAE1ED026B89A77539348B7AC97535E20D32D7C1D010"
+    },
+    {
+      "file": "logs/java-version.stdout.txt",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "file": "logs/javac-version.stderr.txt",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "file": "logs/javac-version.stdout.txt",
+      "sha256": "E28EEC99DA75B3A320C3A82EC268D403DD151791C791932203E6EA26CC0C0D3B"
+    },
+    {
+      "file": "logs/mirror-negative-array.stderr.txt",
+      "sha256": "FF0FAB42D022C1E29E8036AD6EA24825DB8464C99B50C9B177C97E2A2715E989"
+    },
+    {
+      "file": "logs/mirror-negative-array.stdout.txt",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "file": "logs/mirror-negative-value.stderr.txt",
+      "sha256": "C2D811AF1E01056E56BFCFB7636350B48FA24EC543495E9DCD238149B9A22E5B"
+    },
+    {
+      "file": "logs/mirror-negative-value.stdout.txt",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "file": "logs/mirror-positive.stderr.txt",
+      "sha256": "6B1DA1EC8772273FF96DE4205219BD60936B7898A98411F85B090804BC3749E1"
+    },
+    {
+      "file": "logs/mirror-positive.stdout.txt",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "file": "logs/runtime-negative-array.stderr.txt",
+      "sha256": "2B47B912CFD28759F1F0CA081D278AA0CF0D93C401F2A797525453A01A8A0921"
+    },
+    {
+      "file": "logs/runtime-negative-array.stdout.txt",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "file": "logs/runtime-negative-value.stderr.txt",
+      "sha256": "141C653A059DFAAE4A5BB45FB313642964CDE5127AA8F4C7CFCCBAE746C36385"
+    },
+    {
+      "file": "logs/runtime-negative-value.stdout.txt",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "file": "logs/runtime-positive.stderr.txt",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "file": "logs/runtime-positive.stdout.txt",
+      "sha256": "AC9F768ADDC529ACF213AED318080DB54B1487CCFB4B02ACAF10F65ED9AA3AD1"
+    },
+    {
+      "file": "out/api/example/Codec.class",
+      "sha256": "CD1FFA327F2F718B111FA38AE4D34334F17E0B0364AB10BB4B793A2D06EE66DF"
+    },
+    {
+      "file": "out/api/example/DefaultCodec.class",
+      "sha256": "FAF3695DEF7C1960BD6677DAC885BA3D5567E041DAA050CF94422D7D485EA665"
+    },
+    {
+      "file": "out/api/example/UseCodec.class",
+      "sha256": "36F01965BCE798D2C64B52A2313492ED88A244A9022D73AD8BA51484BE421F80"
+    },
+    {
+      "file": "out/catching-positive/example/DefaultUse.class",
+      "sha256": "6FF561AE8FEEE8B7F6ACF76179B4851098DF9D3603EC260CBA2AB3332B32FC04"
+    },
+    {
+      "file": "out/catching-positive/example/ExplicitUse.class",
+      "sha256": "D40A1A5522D29FC6B1AC5F47CC411E227E080B304DC8B94DC41AB98E317AE751"
+    },
+    {
+      "file": "out/catching-positive/example/LocalCodec.class",
+      "sha256": "53C11AEF01FEF37CB027CD1D2EB6BC7E7B716A12CB003E6A20AD434206508671"
+    },
+    {
+      "file": "out/mirror-positive/example/DefaultUse.class",
+      "sha256": "6FF561AE8FEEE8B7F6ACF76179B4851098DF9D3603EC260CBA2AB3332B32FC04"
+    },
+    {
+      "file": "out/mirror-positive/example/ExplicitUse.class",
+      "sha256": "D40A1A5522D29FC6B1AC5F47CC411E227E080B304DC8B94DC41AB98E317AE751"
+    },
+    {
+      "file": "out/mirror-positive/example/LocalCodec.class",
+      "sha256": "53C11AEF01FEF37CB027CD1D2EB6BC7E7B716A12CB003E6A20AD434206508671"
+    },
+    {
+      "file": "out/processors/probe/BadArrayProcessor.class",
+      "sha256": "2CF917D16151CED2C5670B416CBB1FA3D374C89DF99C36730A5C6A9E4BB5BC05"
+    },
+    {
+      "file": "out/processors/probe/BadProcessor.class",
+      "sha256": "D7BC4C65529C60A285EE3B809CBED789030ED7F7F0A0022966564488CF2034A2"
+    },
+    {
+      "file": "out/processors/probe/CatchingProcessor.class",
+      "sha256": "F069EE76957D42E5DD9B1B226003C2C26310C2C9B9CB2534B9D447CC5B9939C7"
+    },
+    {
+      "file": "out/processors/probe/MirrorProcessor.class",
+      "sha256": "CE995DCD8BA07200F9ADBC505412B4BC14FE57FA2F065443548143958207CFC4"
+    },
+    {
+      "file": "out/runtime/example/DefaultUse.class",
+      "sha256": "6FF561AE8FEEE8B7F6ACF76179B4851098DF9D3603EC260CBA2AB3332B32FC04"
+    },
+    {
+      "file": "out/runtime/example/ExplicitUse.class",
+      "sha256": "D40A1A5522D29FC6B1AC5F47CC411E227E080B304DC8B94DC41AB98E317AE751"
+    },
+    {
+      "file": "out/runtime/example/InvalidArrayUse.class",
+      "sha256": "84E52F96119E27842906866C5465E49B9BAD48B32DF72A8A21E702C5F9289E68"
+    },
+    {
+      "file": "out/runtime/example/InvalidUse.class",
+      "sha256": "E61EB54A9FEC8AB1400FD05480AAB7FCABE7EF2370E7DF998BB56A5AB1F2B1D0"
+    },
+    {
+      "file": "out/runtime/example/LocalCodec.class",
+      "sha256": "53C11AEF01FEF37CB027CD1D2EB6BC7E7B716A12CB003E6A20AD434206508671"
+    },
+    {
+      "file": "out/runtime/example/RuntimeReader.class",
+      "sha256": "6D989FAE1104A178A213E0306FE9DD2245B5A0D57498AF583B42DB4B71FC7EFA"
+    },
+    {
+      "file": "owned.diff",
+      "sha256": "631F177A0B1393B07A9952AE6A5CD46CD8E47D1488F2A93054EEB1588643EA27"
+    },
+    {
+      "file": "results.json",
+      "sha256": "FF3A6426BFC1EB8A77BCC64477EBFFF01C526B9E90A80DA6C540C2FBDFE1B6B9"
+    },
+    {
+      "file": "review-checks.json",
+      "sha256": "510EE674EE45FA2E110023F7DBFD2B40FC0E2FC8167FD6E1B4D4FE0C95F6865E"
+    },
+    {
+      "file": "run-technical.mjs",
+      "sha256": "D02AECBB3A14DF3F938E47ABCB940DF1D288DD9E49B75B85953C9FA6FAE2AE68"
+    },
+    {
+      "file": "src/api/example/Codec.java",
+      "sha256": "6CEDBDFF59B29FB854C8D9696F8E0DDD0CD1CEFCB00669414D61F5689573A750"
+    },
+    {
+      "file": "src/api/example/DefaultCodec.java",
+      "sha256": "F40574C2E598CF62C003BAFCE1AF3A11A95EB82A03E040500E13725A6F765257"
+    },
+    {
+      "file": "src/api/example/UseCodec.java",
+      "sha256": "EDFFD683AFCC3A31A65C2674468A3251402815EDC7BD867F5B2B29EE576C08F6"
+    },
+    {
+      "file": "src/app/example/DefaultUse.java",
+      "sha256": "13DA868BEDA543007689BF085F6302CA5FD197F7055D6324BC4E1CB6AA20B8DB"
+    },
+    {
+      "file": "src/app/example/ExplicitUse.java",
+      "sha256": "D8CB9D8CB7EEF422FC736F572696BF7421A3B2CC516778841DC6373D7D3A29E7"
+    },
+    {
+      "file": "src/app/example/LocalCodec.java",
+      "sha256": "549D8B2224729696E3A4F6594A78826961FC483B213C5743280A963481AA3D5F"
+    },
+    {
+      "file": "src/invalid-array/example/InvalidArrayUse.java",
+      "sha256": "A96CBD3BA06669E013C4FBC1EA82EAB5991CD25DC767B79A2C7FEBF7A0A6F1F1"
+    },
+    {
+      "file": "src/invalid-value/example/InvalidUse.java",
+      "sha256": "9F0B708413645379CA6AAE0C7A4BCFC2CE0F4C774A43769BB9DC9A74B6A01937"
+    },
+    {
+      "file": "src/processors/probe/BadArrayProcessor.java",
+      "sha256": "4E581CA6B3E0E3B651D408576BF8358420E973AF3E682F4FF5EFD8CC96858CB9"
+    },
+    {
+      "file": "src/processors/probe/BadProcessor.java",
+      "sha256": "28F3503A5D334A7FCD76F4FA6EE6E8FC6FC4CAA7DAA731C3208F6F13BDA05D00"
+    },
+    {
+      "file": "src/processors/probe/CatchingProcessor.java",
+      "sha256": "DBAF84931DAB6D057199B6B1F16F15FCE9833F15F38F355864233414C5713BC7"
+    },
+    {
+      "file": "src/processors/probe/MirrorProcessor.java",
+      "sha256": "8FF8E58C197FC009A8589E0BE07615CDE550B912DEC359858F738D70F393C3D5"
+    },
+    {
+      "file": "src/runtime/example/RuntimeReader.java",
+      "sha256": "E6C3BBC46C5D7DA05A9FCB97D82FDFB1669BC315EA3ED838909019FA35116553"
+    }
+  ]
+}

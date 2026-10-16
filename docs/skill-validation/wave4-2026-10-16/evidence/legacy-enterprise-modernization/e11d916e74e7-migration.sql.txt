@@ -1,0 +1,7 @@
+SET ROLE lm_w4_owner;
+ALTER TABLE lm_w4.cliente RENAME TO customer;
+ALTER TABLE lm_w4.customer RENAME COLUMN cod_cli TO id;
+CREATE VIEW lm_w4.cliente WITH (security_invoker = true) AS
+SELECT id AS cod_cli, tenant_role, nome_cli FROM lm_w4.customer;
+GRANT SELECT ON lm_w4.cliente TO lm_w4_app_a, lm_w4_app_b;
+RESET ROLE;

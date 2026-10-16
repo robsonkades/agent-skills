@@ -1,0 +1,41 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+
+const root = process.cwd();
+const project = path.join(root, 'output/project');
+const jdk = 'C:/Users/robso/.jdks/temurin-25.0.3/bin';
+const commands = [];
+const walk = p => fs.readdirSync(p, { withFileTypes: true }).flatMap(e => e.isDirectory() ? walk(path.join(p, e.name)) : [path.join(p, e.name)]);
+const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const files = walk(path.join(root, 'input/project'));
+const before = files.map(file => {
+  const relative = path.relative(path.join(root, 'input/project'), file);
+  const copy = path.join(project, relative);
+  const originalHash = hash(file);
+  const copyHash = hash(copy);
+  if (originalHash !== copyHash) throw new Error(`Copy differs: ${relative}`);
+  return { path: relative.replaceAll('\\', '/'), inputSha256: originalHash, outputSha256: copyHash };
+});
+function run(tool, args) {
+  const program = path.join(jdk, tool);
+  const startedAt = new Date().toISOString();
+  const result = spawnSync(program, args, { cwd: project, encoding: 'utf8', timeout: 20000, windowsHide: true });
+  commands.push({ program, arguments: args, cwd: project, timeoutMs: 20000, startedAt, endedAt: new Date().toISOString(), exit: result.status, signal: result.signal, error: result.error?.message ?? null, stdout: result.stdout ?? '', stderr: result.stderr ?? '' });
+  console.log(`${tool} ${args.join(' ')}: exit=${result.status}`);
+  if (tool === 'java.exe' || tool === 'javac.exe') process.stdout.write((result.stdout ?? '') + (result.stderr ?? ''));
+  if (result.status !== 0) throw new Error(`${tool} failed`);
+}
+try {
+  run('java.exe', ['-version']);
+  run('javac.exe', ['-version']);
+  fs.mkdirSync(path.join(project, '.build'), { recursive: true });
+  run('javac.exe', ['--release', '25', '-d', '.build', 'src/memo/BestEffortMemo.java', 'src/memo/PublishedEntry.java', 'src/memo/ReaderFactory.java', 'test/memo/Smoke.java']);
+  run('java.exe', ['-cp', '.build', 'memo.Smoke']);
+  run('javap.exe', ['-classpath', '.build', '-p', '-c', '-v', 'memo.ReaderFactory']);
+  run('javap.exe', ['-classpath', '.build', '-p', '-c', 'memo.BestEffortMemo', 'memo.PublishedEntry']);
+} finally {
+  const after = before.map(record => ({ ...record, inputUnchanged: hash(path.join(root, 'input/project', record.path)) === record.inputSha256, outputUnchanged: hash(path.join(project, record.path)) === record.outputSha256 }));
+  fs.writeFileSync(path.join(root, 'output/checks/results.json'), JSON.stringify({ node: { version: process.version, executable: process.execPath }, inheritedJvmFlags: Object.fromEntries(['JAVA_TOOL_OPTIONS', 'JDK_JAVA_OPTIONS', '_JAVA_OPTIONS'].map(key => [key, process.env[key] ?? null])), commands, protectedFiles: after, allChildProcessesExited: commands.every(command => command.exit !== null && command.signal === null && command.error === null) }, null, 2) + '\n');
+}

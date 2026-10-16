@@ -1,0 +1,2 @@
+The launcher confines every JVM allocation and resident page to node 0. Since the cache still has pages on node 1, numactl failed; enabling UseNUMA and repeating the same launch should enforce the original guarantee.
+

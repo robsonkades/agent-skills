@@ -1,0 +1,9 @@
+# Checkout pricing review
+
+2026-10-13
+
+ADR-0033 was reviewed with the alternatives and coexistence requirements recorded in its draft. Bruno provided comments on batch compatibility, incorporated in the current text.
+
+Outcome: accept the Order-module option for checkout only. Activation waits for PC-8; the batch decision stays unchanged.
+
+Signed: Ada

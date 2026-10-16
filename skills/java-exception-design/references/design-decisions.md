@@ -66,6 +66,23 @@ remaining deadline/attempt budget and current load. “Transient” does not mea
 “permanent” may change after operator/configuration action. Never parse a message or classify all
 `IOException`s alike.
 
+## Cleanup failures and throwable identity
+
+When reviewing manual suppression or a resource that rethrows a stored failure, check object
+identity as well as type/message. `primary.addSuppressed(primary)` throws
+`IllegalArgumentException`; disabling suppression still validates the argument and does not
+avoid this failure. Java 21 try-with-resources invokes `addSuppressed` when both work and
+closing fail, so a resource propagating the same throwable from both paths can mask the original
+caller-visible failure. Distinct exceptions with identical messages do not have this problem.
+
+Prefer correcting an owned resource's stored-failure policy while preserving real cleanup
+failures. If that contract cannot change, an owned manual-cleanup adapter can retain the original
+failure and add a caught secondary failure only when `secondary != primary`. Keep cleanup
+attempts, propagate a cleanup failure when work succeeded, and retain distinct secondary
+failures. Test all three paths; skipping cleanup, dropping every secondary failure, or catching
+every `IllegalArgumentException` is not a preservation strategy. Ordinary resources with distinct
+failures still fit try-with-resources; this edge case does not justify rewriting them.
+
 ## Detection heuristics
 
 Grep-able signals that this skill applies:
@@ -121,4 +138,5 @@ Grep-able signals that this skill applies:
 - [JLS 21 §14.20.2–3: finally and try-with-resources](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.20.2) — abrupt cleanup can replace the original outcome; try-with-resources defines primary and suppressed failures.
 - [JLS §11: Exceptions](https://docs.oracle.com/javase/specs/jls/se25/html/jls-11.html)
 - [Throwable cause and suppressed-exception API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html)
+- [Java 21 suppression argument contract](<https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Throwable.html#addSuppressed(java.lang.Throwable)>) and [OpenJDK 21 implementation](https://github.com/openjdk/jdk/blob/jdk-21%2B35/src/java.base/share/classes/java/lang/Throwable.java) — self-suppression is rejected even when suppression is disabled.
 - [InterruptedException API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/InterruptedException.html)

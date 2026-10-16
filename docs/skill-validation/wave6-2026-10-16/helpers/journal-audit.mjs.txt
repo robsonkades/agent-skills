@@ -1,0 +1,27 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+const root='C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh',report='C:/git/agent-skills/docs/skill-validation/wave6-2026-10-16';
+const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
+const m=JSON.parse(fs.readFileSync(report+'/actors.json','utf8'));
+const selected=process.argv.slice(2);
+const records=[];
+for(const r of m.runs){
+ const p=r.directory+'/output/execution.json';if(!fs.existsSync(p))continue;
+ const raw=fs.readFileSync(p),e=JSON.parse(raw);if(e.allWritesStopped!==true)continue;
+ const pathRecords=[],commands=[],sources=[],limits=[];
+ function visit(v,at=''){
+  if(Array.isArray(v))return v.forEach((x,i)=>visit(x,at+'/'+i));
+  if(!v||typeof v!=='object')return;
+  const entries=Object.entries(v),text=JSON.stringify(v);
+  if(entries.some(([k,x])=>/^(path|file|relativePath|filePath|name)$/.test(k)&&typeof x==='string')&&text.length<5000)pathRecords.push({at,...v});
+  if(entries.some(([k])=>/^(cwd|workdir|workingDirectory)$/.test(k)))commands.push({at,...Object.fromEntries(entries.map(([k,x])=>[k,typeof x==='string'&&x.length>1000?x.slice(0,1000)+' [display clipped; raw preserved]':x]).filter(([k])=>!['stdout','stderr','output','content'].includes(k)))});
+  if(entries.some(([k,x])=>/url/i.test(k)&&typeof x==='string'&&/^https?:/.test(x))&&text.length<5000)sources.push({at,...v});
+  for(const [k,x] of entries){if(/limits|limitations|isolation|unavailable|truncated|boundary/i.test(k))limits.push({at:at+'/'+k,value:x});if(!['stdout','stderr','output','content'].includes(k))visit(x,at+'/'+k);}
+ }
+ visit(e);
+ const row={id:r.id,condition:r.condition,caseId:r.caseId,executionSha256:sha(raw),keys:Object.keys(e),pathRecords,commands,sources,limits,allWritesStopped:e.allWritesStopped};
+ records.push(row);
+ if(selected.includes(r.id))console.log(JSON.stringify(row,null,2));
+}
+fs.writeFileSync(report+'/journal-audit.json',JSON.stringify({at:new Date().toISOString(),scope:'Extraction of actor-authored execution records for coordinator inspection; not an independent native tool trace or OS access audit. Long command display fields are clipped, originals retained.',records},null,2)+'\n');
+console.log(JSON.stringify({journals:records.length,completed:records.map(r=>r.id)}));

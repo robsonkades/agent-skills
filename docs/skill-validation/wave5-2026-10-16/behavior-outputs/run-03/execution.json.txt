@@ -1,0 +1,669 @@
+{
+  "scope": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-03",
+  "targetJava": 17,
+  "processTimeoutMs": 30000,
+  "networkUsed": false,
+  "dependenciesChanged": false,
+  "productionSourcesChanged": false,
+  "delegated": false,
+  "commands": [
+    {
+      "phase": "baseline",
+      "label": "java-version",
+      "executed": true,
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-version"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-03\\output\\project",
+      "timeoutMs": 30000,
+      "startedAt": "2026-10-16T16:54:34.296Z",
+      "finishedAt": "2026-10-16T16:54:34.338Z",
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n",
+      "outputTruncated": false,
+      "log": "output/logs/baseline-java-version.json"
+    },
+    {
+      "phase": "baseline",
+      "label": "existing-check",
+      "executed": true,
+      "executable": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "check.mjs"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-03\\output\\project",
+      "timeoutMs": 30000,
+      "startedAt": "2026-10-16T16:54:34.339Z",
+      "finishedAt": "2026-10-16T16:54:34.809Z",
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "SelfTest PASS\r\n",
+      "stderr": "",
+      "outputTruncated": false,
+      "log": "output/logs/baseline-existing-check.json"
+    },
+    {
+      "phase": "baseline",
+      "label": "demo",
+      "executed": true,
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-cp",
+        ".build",
+        "work.Demo"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-03\\output\\project",
+      "timeoutMs": 30000,
+      "startedAt": "2026-10-16T16:54:34.810Z",
+      "finishedAt": "2026-10-16T16:54:34.863Z",
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "first=1000\r\nfirst-after-reload=1200\r\nlatest=1200\r\n",
+      "stderr": "",
+      "outputTruncated": false,
+      "log": "output/logs/baseline-demo.json"
+    },
+    {
+      "phase": "final",
+      "label": "java-version",
+      "executed": true,
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-version"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-03\\output\\project",
+      "timeoutMs": 30000,
+      "startedAt": "2026-10-16T16:55:06.007Z",
+      "finishedAt": "2026-10-16T16:55:06.051Z",
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n",
+      "outputTruncated": false,
+      "log": "output/logs/final-java-version.json"
+    },
+    {
+      "phase": "final",
+      "label": "existing-check",
+      "executed": true,
+      "executable": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "check.mjs"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-03\\output\\project",
+      "timeoutMs": 30000,
+      "startedAt": "2026-10-16T16:55:06.052Z",
+      "finishedAt": "2026-10-16T16:55:06.585Z",
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "SelfTest PASS\r\n",
+      "stderr": "",
+      "outputTruncated": false,
+      "log": "output/logs/final-existing-check.json"
+    },
+    {
+      "phase": "final",
+      "label": "demo",
+      "executed": true,
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-cp",
+        ".build",
+        "work.Demo"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-03\\output\\project",
+      "timeoutMs": 30000,
+      "startedAt": "2026-10-16T16:55:06.586Z",
+      "finishedAt": "2026-10-16T16:55:06.635Z",
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "first=1000\r\nfirst-after-reload=1200\r\nlatest=1200\r\n",
+      "stderr": "",
+      "outputTruncated": false,
+      "log": "output/logs/final-demo.json"
+    }
+  ],
+  "reads": [
+    {
+      "phase": "baseline",
+      "path": "TASK.md",
+      "sha256": "6ff987166afea79c16ac45486d3351c5cadb272d90b90710d0fc728f799ec903",
+      "bytes": 1873,
+      "truncated": false,
+      "content": "Investigue o relato em support.md usando os artefatos do projeto e o contrato aceito. Determine se existe defeito e sua causa. Corrija o projeto quando houver violação, com verificação relevante; preserve comportamento já adequado. Entregue o projeto final e REVIEW.md com evidências, conclusão, alterações e limitações. Não mude o contrato, a baseline Java ou dependências.\n\nTrabalhe exclusivamente em C:/Users/robso/AppData/Local/Temp/skills-wave5-actors-4tJ3OK/run-03. O projeto inicial está em input/project (somente leitura), e uma cópia de trabalho já está em output/project. Você não está sozinho: escreva somente dentro de output/. Não modifique input/, skill/, contract.md nem lib/compat.jar, se existir. Pode editar fontes, testes e configuração do projeto de trabalho quando sustentado pela investigação. Preserve as entradas originais e cobertura útil existente.\n\nNenhuma skill foi fornecida nesta execução. Resolva usando os artefatos locais.\n\nNão leia o repositório C:/git/agent-skills, outros runs, critérios, handoffs, pastas de avaliações, skills globais ou conversas anteriores. Não use rede, instalações, outros agentes ou configuração real. Java, javac, javap e jar estão em C:/Users/robso/.jdks/temurin-25.0.3/bin. Node está disponível. Use alvo Java 17 e preserve o runtime disponível (Temurin25.0.3+9); cada processo deve ter limite de 30s.\n\nExecute verificações proporcionais e conserve logs/scripts. Salve output/REVIEW.md e output/execution.json. No JSON registre comandos exatos com argumentos, cwd, exit e saída ou caminho do log, arquivos/conteúdos efetivamente lidos (incluindo skill/referências e qualquer truncamento), limitações e qualquer acesso acidental fora do escopo. Diferencie execução de proposta. Ao terminar, encerre processos, pare as escritas e confirme allWritesStopped:true.\n"
+    },
+    {
+      "phase": "baseline",
+      "path": "output/project/support.md",
+      "sha256": "f4ef0b98f197f68ef29edecc78177175f0a846ac4fb1cf8b5a619b71439c1c2b",
+      "bytes": 385,
+      "truncated": false,
+      "content": "# Support observation\n\nAfter a reload, an already opened report displays a different total. The support ticket calls it a \"rounding regression\" after the last renderer update. A user remembers the first displayed total as 1000 and later saw 1200. No other application, database or production access is supplied.\n\nThe local Demo prints the reported sequence. The existing check passes.\n"
+    },
+    {
+      "phase": "baseline",
+      "path": "output/project/contract.md",
+      "sha256": "4c258b441552d64c3f625cab848dabac361c6c98e63b524efa47e55c46f47b38",
+      "bytes": 576,
+      "truncated": false,
+      "content": "# Accepted report contract\n\nJava source target: 17. Execution is sequential; no concurrent callers in this task.\nEntries are immutable values. Keep order, duplicates and signed cent amounts.\nA report exposes a read-only list: callers must not add, remove or reorder entries.\n\nA report is a live read-only view of the catalog. Later load() calls must be visible through reports already open, including their entries and total. Opening a new report is not required to observe a load().\n\nThis contract is accepted by the product owner and applies to this work. Do not change it.\n"
+    },
+    {
+      "phase": "baseline",
+      "path": "output/project/check.mjs",
+      "sha256": "92f081d5b1eecdf1181f8adedb7249535535ad59d939a97774e9e3edecd67d10",
+      "bytes": 738,
+      "truncated": false,
+      "content": "import fs from 'node:fs';\nimport path from 'node:path';\nimport {spawnSync} from 'node:child_process';\nconst jdk=\"C:/Users/robso/.jdks/temurin-25.0.3/bin\";\nconst walk=p=>fs.readdirSync(p,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(path.join(p,e.name)):e.name.endsWith('.java')?[path.join(p,e.name)]:[]);\nfs.mkdirSync('.build',{recursive:true});\nconst commands=[['javac.exe',['--release','17','-d','.build',...walk('src'),...walk('test')]],['java.exe',['-cp','.build','work.SelfTest']]];\nfor(const [tool,args] of commands){const r=spawnSync(path.join(jdk,tool),args,{encoding:'utf8',timeout:30000,windowsHide:true});process.stdout.write(r.stdout||'');process.stderr.write(r.stderr||'');if(r.status!==0)process.exit(r.status??1);}\n"
+    },
+    {
+      "phase": "baseline",
+      "path": "output/project/src/work/Catalog.java",
+      "sha256": "58327eee6170e52890210eaa97de21bb0c03f9f4e2fa6abf8b135593f4dabb7e",
+      "bytes": 293,
+      "truncated": false,
+      "content": "package work;\nimport java.util.*;\npublic final class Catalog {\n    private final List<Entry> rows = new ArrayList<>();\n    public void load(Entry... next) { rows.clear(); rows.addAll(Arrays.asList(next)); }\n    public Report open() { return new Report(Collections.unmodifiableList(rows)); }\n}\n"
+    },
+    {
+      "phase": "baseline",
+      "path": "output/project/src/work/Entry.java",
+      "sha256": "de624a95a92e1417c259a49fc74f946b64edbfab74d5cad9413fb10769016eb9",
+      "bytes": 61,
+      "truncated": false,
+      "content": "package work;\npublic record Entry(String sku, long cents) {}\n"
+    },
+    {
+      "phase": "baseline",
+      "path": "output/project/src/work/Report.java",
+      "sha256": "9676fadef05537ae295341f08af1489c3552af8b51220c0d6a43cb70d4f40c4d",
+      "bytes": 166,
+      "truncated": false,
+      "content": "package work;\nimport java.util.List;\npublic record Report(List<Entry> entries) {\n    public long total() { return entries.stream().mapToLong(Entry::cents).sum(); }\n}\n"
+    },
+    {
+      "phase": "baseline",
+      "path": "output/project/src/work/Demo.java",
+      "sha256": "7e220f46a6b7a0c2b1af55cde2cb5a0f3b6d8508cf04717a85a7ad9de255180b",
+      "bytes": 436,
+      "truncated": false,
+      "content": "package work;\npublic final class Demo {\n    public static void main(String[] args) {\n        Catalog c = new Catalog();\n        c.load(new Entry(\"A\", 450), new Entry(\"B\", 550));\n        Report first = c.open();\n        System.out.println(\"first=\" + first.total());\n        c.load(new Entry(\"C\", 1200));\n        System.out.println(\"first-after-reload=\" + first.total());\n        System.out.println(\"latest=\" + c.open().total());\n    }\n}\n"
+    },
+    {
+      "phase": "baseline",
+      "path": "output/project/test/work/SelfTest.java",
+      "sha256": "e2aab235dff2a245a2035d9cfed97230f44925ff47f125f7babfc7b575b6fafc",
+      "bytes": 523,
+      "truncated": false,
+      "content": "package work;\npublic final class SelfTest {\n    public static void main(String[] args) {\n        Catalog c = new Catalog();\n        c.load(new Entry(\"A\", 450), new Entry(\"B\", 550));\n        Report first = c.open();\n        if (first.total() != 1000 || first.entries().size() != 2) throw new AssertionError(\"initial report\");\n        try { first.entries().clear(); throw new AssertionError(\"writable report\"); }\n        catch (UnsupportedOperationException expected) { }\n        System.out.println(\"SelfTest PASS\");\n    }\n}\n"
+    },
+    {
+      "phase": "final",
+      "path": "TASK.md",
+      "sha256": "6ff987166afea79c16ac45486d3351c5cadb272d90b90710d0fc728f799ec903",
+      "bytes": 1873,
+      "truncated": false,
+      "content": "Investigue o relato em support.md usando os artefatos do projeto e o contrato aceito. Determine se existe defeito e sua causa. Corrija o projeto quando houver violação, com verificação relevante; preserve comportamento já adequado. Entregue o projeto final e REVIEW.md com evidências, conclusão, alterações e limitações. Não mude o contrato, a baseline Java ou dependências.\n\nTrabalhe exclusivamente em C:/Users/robso/AppData/Local/Temp/skills-wave5-actors-4tJ3OK/run-03. O projeto inicial está em input/project (somente leitura), e uma cópia de trabalho já está em output/project. Você não está sozinho: escreva somente dentro de output/. Não modifique input/, skill/, contract.md nem lib/compat.jar, se existir. Pode editar fontes, testes e configuração do projeto de trabalho quando sustentado pela investigação. Preserve as entradas originais e cobertura útil existente.\n\nNenhuma skill foi fornecida nesta execução. Resolva usando os artefatos locais.\n\nNão leia o repositório C:/git/agent-skills, outros runs, critérios, handoffs, pastas de avaliações, skills globais ou conversas anteriores. Não use rede, instalações, outros agentes ou configuração real. Java, javac, javap e jar estão em C:/Users/robso/.jdks/temurin-25.0.3/bin. Node está disponível. Use alvo Java 17 e preserve o runtime disponível (Temurin25.0.3+9); cada processo deve ter limite de 30s.\n\nExecute verificações proporcionais e conserve logs/scripts. Salve output/REVIEW.md e output/execution.json. No JSON registre comandos exatos com argumentos, cwd, exit e saída ou caminho do log, arquivos/conteúdos efetivamente lidos (incluindo skill/referências e qualquer truncamento), limitações e qualquer acesso acidental fora do escopo. Diferencie execução de proposta. Ao terminar, encerre processos, pare as escritas e confirme allWritesStopped:true.\n"
+    },
+    {
+      "phase": "final",
+      "path": "output/project/support.md",
+      "sha256": "f4ef0b98f197f68ef29edecc78177175f0a846ac4fb1cf8b5a619b71439c1c2b",
+      "bytes": 385,
+      "truncated": false,
+      "content": "# Support observation\n\nAfter a reload, an already opened report displays a different total. The support ticket calls it a \"rounding regression\" after the last renderer update. A user remembers the first displayed total as 1000 and later saw 1200. No other application, database or production access is supplied.\n\nThe local Demo prints the reported sequence. The existing check passes.\n"
+    },
+    {
+      "phase": "final",
+      "path": "output/project/contract.md",
+      "sha256": "4c258b441552d64c3f625cab848dabac361c6c98e63b524efa47e55c46f47b38",
+      "bytes": 576,
+      "truncated": false,
+      "content": "# Accepted report contract\n\nJava source target: 17. Execution is sequential; no concurrent callers in this task.\nEntries are immutable values. Keep order, duplicates and signed cent amounts.\nA report exposes a read-only list: callers must not add, remove or reorder entries.\n\nA report is a live read-only view of the catalog. Later load() calls must be visible through reports already open, including their entries and total. Opening a new report is not required to observe a load().\n\nThis contract is accepted by the product owner and applies to this work. Do not change it.\n"
+    },
+    {
+      "phase": "final",
+      "path": "output/project/check.mjs",
+      "sha256": "92f081d5b1eecdf1181f8adedb7249535535ad59d939a97774e9e3edecd67d10",
+      "bytes": 738,
+      "truncated": false,
+      "content": "import fs from 'node:fs';\nimport path from 'node:path';\nimport {spawnSync} from 'node:child_process';\nconst jdk=\"C:/Users/robso/.jdks/temurin-25.0.3/bin\";\nconst walk=p=>fs.readdirSync(p,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(path.join(p,e.name)):e.name.endsWith('.java')?[path.join(p,e.name)]:[]);\nfs.mkdirSync('.build',{recursive:true});\nconst commands=[['javac.exe',['--release','17','-d','.build',...walk('src'),...walk('test')]],['java.exe',['-cp','.build','work.SelfTest']]];\nfor(const [tool,args] of commands){const r=spawnSync(path.join(jdk,tool),args,{encoding:'utf8',timeout:30000,windowsHide:true});process.stdout.write(r.stdout||'');process.stderr.write(r.stderr||'');if(r.status!==0)process.exit(r.status??1);}\n"
+    },
+    {
+      "phase": "final",
+      "path": "output/project/src/work/Catalog.java",
+      "sha256": "58327eee6170e52890210eaa97de21bb0c03f9f4e2fa6abf8b135593f4dabb7e",
+      "bytes": 293,
+      "truncated": false,
+      "content": "package work;\nimport java.util.*;\npublic final class Catalog {\n    private final List<Entry> rows = new ArrayList<>();\n    public void load(Entry... next) { rows.clear(); rows.addAll(Arrays.asList(next)); }\n    public Report open() { return new Report(Collections.unmodifiableList(rows)); }\n}\n"
+    },
+    {
+      "phase": "final",
+      "path": "output/project/src/work/Entry.java",
+      "sha256": "de624a95a92e1417c259a49fc74f946b64edbfab74d5cad9413fb10769016eb9",
+      "bytes": 61,
+      "truncated": false,
+      "content": "package work;\npublic record Entry(String sku, long cents) {}\n"
+    },
+    {
+      "phase": "final",
+      "path": "output/project/src/work/Report.java",
+      "sha256": "9676fadef05537ae295341f08af1489c3552af8b51220c0d6a43cb70d4f40c4d",
+      "bytes": 166,
+      "truncated": false,
+      "content": "package work;\nimport java.util.List;\npublic record Report(List<Entry> entries) {\n    public long total() { return entries.stream().mapToLong(Entry::cents).sum(); }\n}\n"
+    },
+    {
+      "phase": "final",
+      "path": "output/project/src/work/Demo.java",
+      "sha256": "7e220f46a6b7a0c2b1af55cde2cb5a0f3b6d8508cf04717a85a7ad9de255180b",
+      "bytes": 436,
+      "truncated": false,
+      "content": "package work;\npublic final class Demo {\n    public static void main(String[] args) {\n        Catalog c = new Catalog();\n        c.load(new Entry(\"A\", 450), new Entry(\"B\", 550));\n        Report first = c.open();\n        System.out.println(\"first=\" + first.total());\n        c.load(new Entry(\"C\", 1200));\n        System.out.println(\"first-after-reload=\" + first.total());\n        System.out.println(\"latest=\" + c.open().total());\n    }\n}\n"
+    },
+    {
+      "phase": "final",
+      "path": "output/project/test/work/SelfTest.java",
+      "sha256": "701fc724b25410d3214e652b4c4ba6e45c59cf38f91ac6be7f1ef917ef6d4a6e",
+      "bytes": 2982,
+      "truncated": false,
+      "content": "package work;\nimport java.util.Comparator;\nimport java.util.List;\npublic final class SelfTest {\n    public static void main(String[] args) {\n        Catalog c = new Catalog();\n        c.load(new Entry(\"A\", 450), new Entry(\"B\", 550));\n        Report first = c.open();\n        if (first.total() != 1000 || first.entries().size() != 2) throw new AssertionError(\"initial report\");\n        try { first.entries().clear(); throw new AssertionError(\"writable report\"); }\n        catch (UnsupportedOperationException expected) { }\n\n        List<Entry> retainedEntries = first.entries();\n        c.load(new Entry(\"C\", 1200));\n        assertReport(first, List.of(new Entry(\"C\", 1200)), 1200, \"existing report after reload\");\n        Report latest = c.open();\n        assertReport(latest, List.of(new Entry(\"C\", 1200)), 1200, \"new report after reload\");\n        if (!retainedEntries.equals(latest.entries())) throw new AssertionError(\"retained live entries\");\n\n        Entry duplicate = new Entry(\"C\", -50);\n        List<Entry> ordered = List.of(new Entry(\"C\", 1200), duplicate, new Entry(\"D\", 25), duplicate);\n        c.load(ordered.toArray(Entry[]::new));\n        assertReport(first, ordered, 1125, \"first report keeps order, duplicates and signed cents\");\n        assertReport(latest, ordered, 1125, \"second report follows another reload\");\n        if (!retainedEntries.equals(ordered)) throw new AssertionError(\"retained entries follow another reload\");\n\n        rejectsMutation(\"add\", () -> first.entries().add(new Entry(\"E\", 1)));\n        rejectsMutation(\"remove\", () -> first.entries().remove(0));\n        rejectsMutation(\"replace\", () -> first.entries().set(0, new Entry(\"E\", 1)));\n        rejectsMutation(\"reorder\", () -> first.entries().sort(Comparator.comparingLong(Entry::cents)));\n        rejectsMutation(\"sublist clear\", () -> first.entries().subList(0, 1).clear());\n        assertReport(first, ordered, 1125, \"rejected mutations preserve catalog\");\n        assertReport(c.open(), ordered, 1125, \"new report after rejected mutations\");\n\n        c.load();\n        assertReport(first, List.of(), 0, \"first report observes empty reload\");\n        assertReport(latest, List.of(), 0, \"second report observes empty reload\");\n        if (!retainedEntries.isEmpty()) throw new AssertionError(\"retained entries observe empty reload\");\n        c.load(new Entry(\"negative\", -7));\n        assertReport(first, List.of(new Entry(\"negative\", -7)), -7, \"reload after empty catalog\");\n        System.out.println(\"SelfTest PASS\");\n    }\n\n    private static void assertReport(Report report, List<Entry> entries, long total, String label) {\n        if (!report.entries().equals(entries) || report.total() != total) throw new AssertionError(label);\n    }\n\n    private static void rejectsMutation(String label, Runnable mutation) {\n        try { mutation.run(); }\n        catch (UnsupportedOperationException expected) { return; }\n        throw new AssertionError(\"writable report: \" + label);\n    }\n}\n"
+    },
+    {
+      "phase": "final-comparison",
+      "path": "input/project/support.md",
+      "bytes": 385,
+      "sha256": "f4ef0b98f197f68ef29edecc78177175f0a846ac4fb1cf8b5a619b71439c1c2b",
+      "truncated": false,
+      "content": "# Support observation\n\nAfter a reload, an already opened report displays a different total. The support ticket calls it a \"rounding regression\" after the last renderer update. A user remembers the first displayed total as 1000 and later saw 1200. No other application, database or production access is supplied.\n\nThe local Demo prints the reported sequence. The existing check passes.\n"
+    },
+    {
+      "phase": "final-comparison",
+      "path": "output/project/support.md",
+      "bytes": 385,
+      "sha256": "f4ef0b98f197f68ef29edecc78177175f0a846ac4fb1cf8b5a619b71439c1c2b",
+      "truncated": false,
+      "content": "# Support observation\n\nAfter a reload, an already opened report displays a different total. The support ticket calls it a \"rounding regression\" after the last renderer update. A user remembers the first displayed total as 1000 and later saw 1200. No other application, database or production access is supplied.\n\nThe local Demo prints the reported sequence. The existing check passes.\n"
+    },
+    {
+      "phase": "final-comparison",
+      "path": "input/project/contract.md",
+      "bytes": 576,
+      "sha256": "4c258b441552d64c3f625cab848dabac361c6c98e63b524efa47e55c46f47b38",
+      "truncated": false,
+      "content": "# Accepted report contract\n\nJava source target: 17. Execution is sequential; no concurrent callers in this task.\nEntries are immutable values. Keep order, duplicates and signed cent amounts.\nA report exposes a read-only list: callers must not add, remove or reorder entries.\n\nA report is a live read-only view of the catalog. Later load() calls must be visible through reports already open, including their entries and total. Opening a new report is not required to observe a load().\n\nThis contract is accepted by the product owner and applies to this work. Do not change it.\n"
+    },
+    {
+      "phase": "final-comparison",
+      "path": "output/project/contract.md",
+      "bytes": 576,
+      "sha256": "4c258b441552d64c3f625cab848dabac361c6c98e63b524efa47e55c46f47b38",
+      "truncated": false,
+      "content": "# Accepted report contract\n\nJava source target: 17. Execution is sequential; no concurrent callers in this task.\nEntries are immutable values. Keep order, duplicates and signed cent amounts.\nA report exposes a read-only list: callers must not add, remove or reorder entries.\n\nA report is a live read-only view of the catalog. Later load() calls must be visible through reports already open, including their entries and total. Opening a new report is not required to observe a load().\n\nThis contract is accepted by the product owner and applies to this work. Do not change it.\n"
+    },
+    {
+      "phase": "final-comparison",
+      "path": "input/project/check.mjs",
+      "bytes": 738,
+      "sha256": "92f081d5b1eecdf1181f8adedb7249535535ad59d939a97774e9e3edecd67d10",
+      "truncated": false,
+      "content": "import fs from 'node:fs';\nimport path from 'node:path';\nimport {spawnSync} from 'node:child_process';\nconst jdk=\"C:/Users/robso/.jdks/temurin-25.0.3/bin\";\nconst walk=p=>fs.readdirSync(p,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(path.join(p,e.name)):e.name.endsWith('.java')?[path.join(p,e.name)]:[]);\nfs.mkdirSync('.build',{recursive:true});\nconst commands=[['javac.exe',['--release','17','-d','.build',...walk('src'),...walk('test')]],['java.exe',['-cp','.build','work.SelfTest']]];\nfor(const [tool,args] of commands){const r=spawnSync(path.join(jdk,tool),args,{encoding:'utf8',timeout:30000,windowsHide:true});process.stdout.write(r.stdout||'');process.stderr.write(r.stderr||'');if(r.status!==0)process.exit(r.status??1);}\n"
+    },
+    {
+      "phase": "final-comparison",
+      "path": "output/project/check.mjs",
+      "bytes": 738,
+      "sha256": "92f081d5b1eecdf1181f8adedb7249535535ad59d939a97774e9e3edecd67d10",
+      "truncated": false,
+      "content": "import fs from 'node:fs';\nimport path from 'node:path';\nimport {spawnSync} from 'node:child_process';\nconst jdk=\"C:/Users/robso/.jdks/temurin-25.0.3/bin\";\nconst walk=p=>fs.readdirSync(p,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(path.join(p,e.name)):e.name.endsWith('.java')?[path.join(p,e.name)]:[]);\nfs.mkdirSync('.build',{recursive:true});\nconst commands=[['javac.exe',['--release','17','-d','.build',...walk('src'),...walk('test')]],['java.exe',['-cp','.build','work.SelfTest']]];\nfor(const [tool,args] of commands){const r=spawnSync(path.join(jdk,tool),args,{encoding:'utf8',timeout:30000,windowsHide:true});process.stdout.write(r.stdout||'');process.stderr.write(r.stderr||'');if(r.status!==0)process.exit(r.status??1);}\n"
+    },
+    {
+      "phase": "final-comparison",
+      "path": "input/project/src/work/Report.java",
+      "bytes": 166,
+      "sha256": "9676fadef05537ae295341f08af1489c3552af8b51220c0d6a43cb70d4f40c4d",
+      "truncated": false,
+      "content": "package work;\nimport java.util.List;\npublic record Report(List<Entry> entries) {\n    public long total() { return entries.stream().mapToLong(Entry::cents).sum(); }\n}\n"
+    },
+    {
+      "phase": "final-comparison",
+      "path": "output/project/src/work/Report.java",
+      "bytes": 166,
+      "sha256": "9676fadef05537ae295341f08af1489c3552af8b51220c0d6a43cb70d4f40c4d",
+      "truncated": false,
+      "content": "package work;\nimport java.util.List;\npublic record Report(List<Entry> entries) {\n    public long total() { return entries.stream().mapToLong(Entry::cents).sum(); }\n}\n"
+    },
+    {
+      "phase": "final-comparison",
+      "path": "input/project/src/work/Entry.java",
+      "bytes": 61,
+      "sha256": "de624a95a92e1417c259a49fc74f946b64edbfab74d5cad9413fb10769016eb9",
+      "truncated": false,
+      "content": "package work;\npublic record Entry(String sku, long cents) {}\n"
+    },
+    {
+      "phase": "final-comparison",
+      "path": "output/project/src/work/Entry.java",
+      "bytes": 61,
+      "sha256": "de624a95a92e1417c259a49fc74f946b64edbfab74d5cad9413fb10769016eb9",
+      "truncated": false,
+      "content": "package work;\npublic record Entry(String sku, long cents) {}\n"
+    },
+    {
+      "phase": "final-comparison",
+      "path": "input/project/src/work/Demo.java",
+      "bytes": 436,
+      "sha256": "7e220f46a6b7a0c2b1af55cde2cb5a0f3b6d8508cf04717a85a7ad9de255180b",
+      "truncated": false,
+      "content": "package work;\npublic final class Demo {\n    public static void main(String[] args) {\n        Catalog c = new Catalog();\n        c.load(new Entry(\"A\", 450), new Entry(\"B\", 550));\n        Report first = c.open();\n        System.out.println(\"first=\" + first.total());\n        c.load(new Entry(\"C\", 1200));\n        System.out.println(\"first-after-reload=\" + first.total());\n        System.out.println(\"latest=\" + c.open().total());\n    }\n}\n"
+    },
+    {
+      "phase": "final-comparison",
+      "path": "output/project/src/work/Demo.java",
+      "bytes": 436,
+      "sha256": "7e220f46a6b7a0c2b1af55cde2cb5a0f3b6d8508cf04717a85a7ad9de255180b",
+      "truncated": false,
+      "content": "package work;\npublic final class Demo {\n    public static void main(String[] args) {\n        Catalog c = new Catalog();\n        c.load(new Entry(\"A\", 450), new Entry(\"B\", 550));\n        Report first = c.open();\n        System.out.println(\"first=\" + first.total());\n        c.load(new Entry(\"C\", 1200));\n        System.out.println(\"first-after-reload=\" + first.total());\n        System.out.println(\"latest=\" + c.open().total());\n    }\n}\n"
+    },
+    {
+      "phase": "final-comparison",
+      "path": "input/project/src/work/Catalog.java",
+      "bytes": 293,
+      "sha256": "58327eee6170e52890210eaa97de21bb0c03f9f4e2fa6abf8b135593f4dabb7e",
+      "truncated": false,
+      "content": "package work;\nimport java.util.*;\npublic final class Catalog {\n    private final List<Entry> rows = new ArrayList<>();\n    public void load(Entry... next) { rows.clear(); rows.addAll(Arrays.asList(next)); }\n    public Report open() { return new Report(Collections.unmodifiableList(rows)); }\n}\n"
+    },
+    {
+      "phase": "final-comparison",
+      "path": "output/project/src/work/Catalog.java",
+      "bytes": 293,
+      "sha256": "58327eee6170e52890210eaa97de21bb0c03f9f4e2fa6abf8b135593f4dabb7e",
+      "truncated": false,
+      "content": "package work;\nimport java.util.*;\npublic final class Catalog {\n    private final List<Entry> rows = new ArrayList<>();\n    public void load(Entry... next) { rows.clear(); rows.addAll(Arrays.asList(next)); }\n    public Report open() { return new Report(Collections.unmodifiableList(rows)); }\n}\n"
+    },
+    {
+      "phase": "final-comparison",
+      "path": "input/project/test/work/SelfTest.java",
+      "bytes": 523,
+      "sha256": "e2aab235dff2a245a2035d9cfed97230f44925ff47f125f7babfc7b575b6fafc",
+      "truncated": false,
+      "content": "package work;\npublic final class SelfTest {\n    public static void main(String[] args) {\n        Catalog c = new Catalog();\n        c.load(new Entry(\"A\", 450), new Entry(\"B\", 550));\n        Report first = c.open();\n        if (first.total() != 1000 || first.entries().size() != 2) throw new AssertionError(\"initial report\");\n        try { first.entries().clear(); throw new AssertionError(\"writable report\"); }\n        catch (UnsupportedOperationException expected) { }\n        System.out.println(\"SelfTest PASS\");\n    }\n}\n"
+    },
+    {
+      "phase": "final-comparison",
+      "path": "output/project/test/work/SelfTest.java",
+      "bytes": 2982,
+      "sha256": "701fc724b25410d3214e652b4c4ba6e45c59cf38f91ac6be7f1ef917ef6d4a6e",
+      "truncated": false,
+      "content": "package work;\nimport java.util.Comparator;\nimport java.util.List;\npublic final class SelfTest {\n    public static void main(String[] args) {\n        Catalog c = new Catalog();\n        c.load(new Entry(\"A\", 450), new Entry(\"B\", 550));\n        Report first = c.open();\n        if (first.total() != 1000 || first.entries().size() != 2) throw new AssertionError(\"initial report\");\n        try { first.entries().clear(); throw new AssertionError(\"writable report\"); }\n        catch (UnsupportedOperationException expected) { }\n\n        List<Entry> retainedEntries = first.entries();\n        c.load(new Entry(\"C\", 1200));\n        assertReport(first, List.of(new Entry(\"C\", 1200)), 1200, \"existing report after reload\");\n        Report latest = c.open();\n        assertReport(latest, List.of(new Entry(\"C\", 1200)), 1200, \"new report after reload\");\n        if (!retainedEntries.equals(latest.entries())) throw new AssertionError(\"retained live entries\");\n\n        Entry duplicate = new Entry(\"C\", -50);\n        List<Entry> ordered = List.of(new Entry(\"C\", 1200), duplicate, new Entry(\"D\", 25), duplicate);\n        c.load(ordered.toArray(Entry[]::new));\n        assertReport(first, ordered, 1125, \"first report keeps order, duplicates and signed cents\");\n        assertReport(latest, ordered, 1125, \"second report follows another reload\");\n        if (!retainedEntries.equals(ordered)) throw new AssertionError(\"retained entries follow another reload\");\n\n        rejectsMutation(\"add\", () -> first.entries().add(new Entry(\"E\", 1)));\n        rejectsMutation(\"remove\", () -> first.entries().remove(0));\n        rejectsMutation(\"replace\", () -> first.entries().set(0, new Entry(\"E\", 1)));\n        rejectsMutation(\"reorder\", () -> first.entries().sort(Comparator.comparingLong(Entry::cents)));\n        rejectsMutation(\"sublist clear\", () -> first.entries().subList(0, 1).clear());\n        assertReport(first, ordered, 1125, \"rejected mutations preserve catalog\");\n        assertReport(c.open(), ordered, 1125, \"new report after rejected mutations\");\n\n        c.load();\n        assertReport(first, List.of(), 0, \"first report observes empty reload\");\n        assertReport(latest, List.of(), 0, \"second report observes empty reload\");\n        if (!retainedEntries.isEmpty()) throw new AssertionError(\"retained entries observe empty reload\");\n        c.load(new Entry(\"negative\", -7));\n        assertReport(first, List.of(new Entry(\"negative\", -7)), -7, \"reload after empty catalog\");\n        System.out.println(\"SelfTest PASS\");\n    }\n\n    private static void assertReport(Report report, List<Entry> entries, long total, String label) {\n        if (!report.entries().equals(entries) || report.total() != total) throw new AssertionError(label);\n    }\n\n    private static void rejectsMutation(String label, Runnable mutation) {\n        try { mutation.run(); }\n        catch (UnsupportedOperationException expected) { return; }\n        throw new AssertionError(\"writable report: \" + label);\n    }\n}\n"
+    },
+    {
+      "phase": "artifact-finalization",
+      "path": "output/verify.mjs",
+      "bytes": 2956,
+      "sha256": "521a8e57b81388128b014f644e6777b6d1a9deefdf4c51dc7b0c3072728df0a0",
+      "truncated": false,
+      "content": "import fs from 'node:fs';\nimport path from 'node:path';\nimport {fileURLToPath} from 'node:url';\nimport {spawnSync} from 'node:child_process';\nimport {createHash} from 'node:crypto';\n\nconst output = path.dirname(fileURLToPath(import.meta.url));\nconst run = path.dirname(output);\nconst project = path.join(output, 'project');\nconst jdk = 'C:/Users/robso/.jdks/temurin-25.0.3/bin';\nconst phase = process.argv[2];\nif (!['baseline', 'final'].includes(phase)) throw new Error('Use baseline or final');\nconst manifestPath = path.join(output, 'execution.json');\nconst manifest = fs.existsSync(manifestPath)\n  ? JSON.parse(fs.readFileSync(manifestPath, 'utf8'))\n  : {\n      scope: run,\n      targetJava: 17,\n      processTimeoutMs: 30000,\n      networkUsed: false,\n      dependenciesChanged: false,\n      productionSourcesChanged: false,\n      delegated: false,\n      commands: [],\n      reads: [],\n      limitations: [],\n      outOfScopeAccess: [],\n      allWritesStopped: false\n    };\nmanifest.allWritesStopped = false;\nconst logDir = path.join(output, 'logs');\nfs.mkdirSync(logDir, {recursive: true});\n\nfor (const relative of [\n  'TASK.md',\n  'output/project/support.md',\n  'output/project/contract.md',\n  'output/project/check.mjs',\n  'output/project/src/work/Catalog.java',\n  'output/project/src/work/Entry.java',\n  'output/project/src/work/Report.java',\n  'output/project/src/work/Demo.java',\n  'output/project/test/work/SelfTest.java'\n]) {\n  const bytes = fs.readFileSync(path.join(run, relative));\n  manifest.reads.push({\n    phase,\n    path: relative,\n    sha256: createHash('sha256').update(bytes).digest('hex'),\n    bytes: bytes.length,\n    truncated: false,\n    content: bytes.toString('utf8')\n  });\n}\n\nfunction execute(label, executable, args) {\n  const startedAt = new Date().toISOString();\n  const result = spawnSync(executable, args, {\n    cwd: project,\n    encoding: 'utf8',\n    windowsHide: true,\n    timeout: 30000,\n    maxBuffer: 1024 * 1024\n  });\n  const log = {\n    phase, label, executed: true,\n    executable, args, cwd: project, timeoutMs: 30000,\n    startedAt, finishedAt: new Date().toISOString(),\n    exit: result.status, signal: result.signal,\n    error: result.error?.message ?? null,\n    stdout: result.stdout ?? '', stderr: result.stderr ?? '',\n    outputTruncated: false\n  };\n  const relativeLog = `output/logs/${phase}-${label}.json`;\n  fs.writeFileSync(path.join(run, relativeLog), JSON.stringify(log, null, 2) + '\\n');\n  manifest.commands.push({...log, log: relativeLog});\n  fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\\n');\n  process.stdout.write(`${phase} ${label}: exit=${result.status}\\n${log.stdout}${log.stderr}`);\n  if (result.status !== 0 || result.error) process.exit(result.status || 1);\n}\n\nexecute('java-version', path.join(jdk, 'java.exe'), ['-version']);\nexecute('existing-check', process.execPath, ['check.mjs']);\nexecute('demo', path.join(jdk, 'java.exe'), ['-cp', '.build', 'work.Demo']);\n"
+    },
+    {
+      "phase": "artifact-finalization",
+      "path": "output/finalize.mjs",
+      "bytes": 7975,
+      "sha256": "5fb8629dc7f0fda5fa628eb857563e2c50b43e7eeb4d16c99e1b7de570be4d62",
+      "truncated": false,
+      "content": "import fs from 'node:fs';\nimport path from 'node:path';\nimport {fileURLToPath} from 'node:url';\nimport {createHash} from 'node:crypto';\n\nconst output = path.dirname(fileURLToPath(import.meta.url));\nconst run = path.dirname(output);\nconst manifestPath = path.join(output, 'execution.json');\nconst manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));\nconst hash = bytes => createHash('sha256').update(bytes).digest('hex');\nconst projectFiles = [\n  'support.md', 'contract.md', 'check.mjs',\n  'src/work/Report.java', 'src/work/Entry.java',\n  'src/work/Demo.java', 'src/work/Catalog.java',\n  'test/work/SelfTest.java'\n];\nmanifest.skills = {provided: false, read: [], referencesRead: [], truncated: false};\nmanifest.initialInspection = {\n  executed: true,\n  tool: 'functions.exec -> tools.exec_command (PowerShell)',\n  commands: [\n    {\n      commandText: `Get-Content -LiteralPath '${run.replaceAll('\\\\', '/')}/TASK.md'`,\n      cwd: 'C:/git/agent-skills', exit: 0,\n      output: 'Complete TASK.md content recorded under reads; no truncation.'\n    },\n    {\n      commandText: \"rg --files -g '!*.class' -g '!*.jar' -g '!execution.json' .\",\n      cwd: run, exit: 0,\n      stdout: [\n        '.\\\\TASK.md',\n        '.\\\\output\\\\project\\\\test\\\\work\\\\SelfTest.java',\n        '.\\\\output\\\\project\\\\support.md',\n        '.\\\\output\\\\project\\\\src\\\\work\\\\Report.java',\n        '.\\\\output\\\\project\\\\src\\\\work\\\\Entry.java',\n        '.\\\\output\\\\project\\\\src\\\\work\\\\Demo.java',\n        '.\\\\output\\\\project\\\\src\\\\work\\\\Catalog.java',\n        '.\\\\output\\\\project\\\\contract.md',\n        '.\\\\output\\\\project\\\\check.mjs',\n        '.\\\\input\\\\project\\\\test\\\\work\\\\SelfTest.java',\n        '.\\\\input\\\\project\\\\contract.md',\n        '.\\\\input\\\\project\\\\check.mjs',\n        '.\\\\input\\\\project\\\\support.md',\n        '.\\\\input\\\\project\\\\src\\\\work\\\\Report.java',\n        '.\\\\input\\\\project\\\\src\\\\work\\\\Entry.java',\n        '.\\\\input\\\\project\\\\src\\\\work\\\\Demo.java',\n        '.\\\\input\\\\project\\\\src\\\\work\\\\Catalog.java'\n      ].join('\\n') + '\\n',\n      truncated: false\n    },\n    ...projectFiles.map(relative => ({\n      commandText: `Get-Content -LiteralPath 'output/project/${relative}'`,\n      cwd: run, exit: 0,\n      output: `Complete initial content recorded under reads for output/project/${relative}, phase baseline; no truncation.`\n    }))\n  ]\n};\nmanifest.supervisedInvocations = ['baseline', 'final'].map(phase => ({\n  executed: true,\n  executable: 'node',\n  args: ['-e', `const {spawnSync}=require('node:child_process');const r=spawnSync(process.execPath,['output/verify.mjs','${phase}'],{cwd:process.cwd(),encoding:'utf8',timeout:30000,windowsHide:true});process.stdout.write(r.stdout||'');process.stderr.write(r.stderr||'');if(r.error)process.stderr.write(r.error.message);process.exit(r.status??1)`],\n  cwd: run, exit: 0, timeoutMs: 30000,\n  output: manifest.commands.filter(command => command.phase === phase)\n    .map(command => `${phase} ${command.label}: exit=${command.exit}\\n${command.stdout}${command.stderr}`).join(''),\n  truncated: false\n}));\n\nmanifest.fileComparison = [];\nfor (const relative of projectFiles) {\n  const inputRelative = `input/project/${relative}`;\n  const inputBytes = fs.readFileSync(path.join(run, inputRelative));\n  const finalRelative = `output/project/${relative}`;\n  const finalBytes = fs.readFileSync(path.join(run, finalRelative));\n  const baseline = manifest.reads.find(read => read.path === finalRelative && read.phase === 'baseline');\n  manifest.reads.push({\n    phase: 'final-comparison', path: inputRelative,\n    bytes: inputBytes.length, sha256: hash(inputBytes),\n    truncated: false, content: inputBytes.toString('utf8')\n  });\n  manifest.reads.push({\n    phase: 'final-comparison', path: finalRelative,\n    bytes: finalBytes.length, sha256: hash(finalBytes),\n    truncated: false, content: finalBytes.toString('utf8')\n  });\n  const comparison = {\n    file: relative,\n    inputSha256: hash(inputBytes), finalSha256: hash(finalBytes),\n    inputMatchesInitialWorkingCopy: baseline?.sha256 === hash(inputBytes),\n    finalMatchesInput: inputBytes.equals(finalBytes)\n  };\n  manifest.fileComparison.push(comparison);\n  if (!comparison.inputMatchesInitialWorkingCopy) throw new Error(`Input diverged from original working copy: ${relative}`);\n  if (relative !== 'test/work/SelfTest.java' && !comparison.finalMatchesInput) throw new Error(`Unexpected project change: ${relative}`);\n}\n\nfor (const relative of ['output/verify.mjs', 'output/finalize.mjs', 'output/REVIEW.md']) {\n  const bytes = fs.readFileSync(path.join(run, relative));\n  manifest.reads.push({\n    phase: 'artifact-finalization', path: relative,\n    bytes: bytes.length, sha256: hash(bytes),\n    truncated: false, content: bytes.toString('utf8')\n  });\n}\nmanifest.manifestRead = {\n  path: 'output/execution.json',\n  purpose: 'Append execution records and finalize the manifest; prior contents retained.',\n  truncated: false\n};\nmanifest.changes = [{\n  path: 'output/project/test/work/SelfTest.java',\n  tool: 'apply_patch',\n  purpose: 'Preserve original coverage and assert accepted live, read-only behavior across reloads.'\n}];\nmanifest.preserved = {\n  inputMatchesInitialWorkingCopy: true,\n  productionSources: true, contract: true, checkScript: true,\n  dependencies: true, javaTarget: 17, runtime: 'Temurin-25.0.3+9',\n  originalTestCoverage: true\n};\nmanifest.limitations = [\n  'Only supplied local artifacts and the sequential accepted contract were evaluated.',\n  'No production, database, renderer implementation or historical version was supplied.',\n  'Compiled with --release 17; executed with the available Temurin 25.0.3+9 runtime, not a separate Java 17 runtime.',\n  'Initial read-only shell inspections completed below 30 seconds; their tool exposed a yield interval, not a hard timeout option. Java verification and supervised Node verification explicitly used 30000 ms timeouts.'\n];\nmanifest.outOfScopeAccess = [{\n  kind: 'inherited-cwd-only',\n  path: 'C:/git/agent-skills',\n  detail: 'First command inherited this cwd but read only the absolute TASK.md inside the authorized run. No repository file content or directory listing was read or written. All later shell commands used the run cwd.',\n  filesReadOutsideScope: [], filesWrittenOutsideScope: []\n}];\nmanifest.notExecuted = [\n  'No production fix, snapshot conversion, contract change or dependency change was proposed or applied.',\n  'No network access, package installation, real agent configuration access or delegation.'\n];\nmanifest.result = {\n  defectInReportedFlow: false,\n  conclusion: '1000 -> 1200 follows the required live view after load(); integer-cent aggregation contains no rounding step.',\n  baselineCheck: 'PASS', finalCheck: 'PASS',\n  baselineDemo: ['first=1000', 'first-after-reload=1200', 'latest=1200'],\n  finalDemo: ['first=1000', 'first-after-reload=1200', 'latest=1200']\n};\nmanifest.processes = {\n  model: 'Synchronous child processes only; no background processes launched.',\n  verificationProcessesCompleted: manifest.commands.every(command => command.exit === 0 && command.signal === null && command.error === null),\n  activeChildProcesses: 0\n};\nmanifest.finalizationInvocation = {\n  executed: true,\n  executable: 'node',\n  args: ['-e', \"const {spawnSync}=require('node:child_process');const r=spawnSync(process.execPath,['output/finalize.mjs'],{cwd:process.cwd(),encoding:'utf8',timeout:30000,windowsHide:true});process.stdout.write(r.stdout||'');process.stderr.write(r.stderr||'');if(r.error)process.stderr.write(r.error.message);process.exit(r.status??1)\"],\n  cwd: run, timeoutMs: 30000,\n  exit: 0,\n  output: 'Final artifact audit PASS; only SelfTest.java changed; allWritesStopped:true\\n',\n  recordedAtFinalSuccessfulWrite: true\n};\nmanifest.allWritesStopped = true;\nmanifest.completedAt = new Date().toISOString();\nfs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\\n');\nprocess.stdout.write('Final artifact audit PASS; only SelfTest.java changed; allWritesStopped:true\\n');\n"
+    },
+    {
+      "phase": "artifact-finalization",
+      "path": "output/REVIEW.md",
+      "bytes": 4497,
+      "sha256": "b788c19aaa632e170a042db18a451abde8b1f482b293e11168c18d44016adbe1",
+      "truncated": false,
+      "content": "# Revisão do relato de totais após recarga\n\n## Conclusão\n\nA sequência relatada está de acordo com o contrato aceito. Não foi identificado defeito no fluxo `Catalog.load()` → `Catalog.open()` → `Report.total()`. A mudança de 1000 para 1200 é a atualização exigida para um relatório vivo após uma recarga; os artefatos locais não demonstram uma regressão de arredondamento.\n\nO código de produção foi preservado. Fazer uma cópia dos itens ou guardar o total inicial impediria a atualização dos relatórios abertos e violaria o contrato.\n\n## Evidências e causa\n\n- `project/contract.md` exige uma visão viva e somente leitura, inclusive para entradas e total de relatórios abertos antes de uma chamada posterior a `load()`. A execução é sequencial.\n- `project/src/work/Catalog.java` mantém uma única lista `rows`; `load()` altera essa lista com `clear()` e `addAll()`. `open()` entrega uma visão `Collections.unmodifiableList(rows)`, que bloqueia alterações pelo consumidor e acompanha alterações feitas pelo catálogo.\n- `project/src/work/Report.java` recalcula o total das entradas atuais com `mapToLong(Entry::cents).sum()`. Não há ponto flutuante nem operação de arredondamento nesse caminho. `Entry` é um `record` composto por `String` e `long`, valores imutáveis neste modelo.\n- O `Demo` primeiro carrega 450 + 550, abre o relatório e depois substitui as entradas por uma de 1200. Tanto antes quanto depois da ampliação dos testes, sua saída foi exatamente:\n\n```text\nfirst=1000\nfirst-after-reload=1200\nlatest=1200\n```\n\nO diagnóstico do chamado confunde atualização dos dados com arredondamento. Não há renderer nem histórico da alteração mencionada nos arquivos fornecidos para atribuir causa a uma versão anterior.\n\n## Alterações\n\nSomente `project/test/work/SelfTest.java` foi alterado dentro do projeto. Foram mantidas as verificações originais de total/tamanho inicial e rejeição de `clear()`. Foram acrescentadas verificações comportamentais de:\n\n- recargas observáveis por relatórios já abertos e pela lista de entradas previamente obtida;\n- consistência entre relatórios antigos e novos, inclusive após múltiplas recargas;\n- preservação de ordem, duplicatas e centavos negativos;\n- rejeição de adição, remoção, substituição, ordenação e remoção via sublista;\n- preservação dos dados após tentativas de alteração;\n- recarga vazia e uma nova recarga após esvaziar o catálogo.\n\nFontes de produção, contrato, configuração, dependências, entradas originais e baseline Java foram preservados. `verify.mjs`, `finalize.mjs`, `logs/` e `execution.json` documentam a execução e ficam fora de `project/`.\n\n## Verificação executada\n\nNo diretório deste run, o script `node output/verify.mjs baseline` executou a verificação original antes de qualquer mudança no teste. `node output/verify.mjs final` executou a mesma verificação depois da ampliação. Ambos foram lançados com um supervisor `spawnSync` com limite de 30 segundos; os comandos completos estão em `execution.json`.\n\nEm cada fase, o script executou `java.exe -version`, `node check.mjs` e `java.exe -cp .build work.Demo`, todos com limite de 30 segundos. O `check.mjs` original compila fontes e testes com `javac.exe --release 17 -d .build ...` e executa `work.SelfTest`, também com limites de 30 segundos. Resultados: saída `SelfTest PASS`, sequência do `Demo` acima e código de saída 0 em todos os comandos.\n\nRuntime confirmado: Temurin **25.0.3+9**, preservado. O alvo de compilação continua **Java 17**. Logs completos estão em `logs/baseline-*.json` e `logs/final-*.json`; conteúdos lidos, hashes e a comparação dos arquivos finais estão em `execution.json`.\n\n## Limitações e escopo\n\nEsta conclusão cobre os artefatos locais e o contrato sequencial fornecido. Não houve acesso a produção, banco de dados, outros aplicativos, rede, instalações, configuração real ou agentes auxiliares. O bytecode foi compilado para Java 17 e executado no runtime disponível Java 25; não foi usado um runtime Java 17 separado.\n\nNa primeira leitura de `TASK.md`, o processo herdou `C:/git/agent-skills` como diretório de trabalho. O comando leu somente o caminho absoluto de `TASK.md` deste run: nenhum conteúdo do repositório foi consultado ou escrito. Todos os comandos seguintes usaram o diretório autorizado deste run. Nenhuma skill ou referência externa foi lida. Todas as escritas foram limitadas a `output/`.\n"
+    }
+  ],
+  "limitations": [
+    "Only supplied local artifacts and the sequential accepted contract were evaluated.",
+    "No production, database, renderer implementation or historical version was supplied.",
+    "Compiled with --release 17; executed with the available Temurin 25.0.3+9 runtime, not a separate Java 17 runtime.",
+    "Initial read-only shell inspections completed below 30 seconds; their tool exposed a yield interval, not a hard timeout option. Java verification and supervised Node verification explicitly used 30000 ms timeouts."
+  ],
+  "outOfScopeAccess": [
+    {
+      "kind": "inherited-cwd-only",
+      "path": "C:/git/agent-skills",
+      "detail": "First command inherited this cwd but read only the absolute TASK.md inside the authorized run. No repository file content or directory listing was read or written. All later shell commands used the run cwd.",
+      "filesReadOutsideScope": [],
+      "filesWrittenOutsideScope": []
+    }
+  ],
+  "allWritesStopped": true,
+  "skills": {
+    "provided": false,
+    "read": [],
+    "referencesRead": [],
+    "truncated": false
+  },
+  "initialInspection": {
+    "executed": true,
+    "tool": "functions.exec -> tools.exec_command (PowerShell)",
+    "commands": [
+      {
+        "commandText": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave5-actors-4tJ3OK/run-03/TASK.md'",
+        "cwd": "C:/git/agent-skills",
+        "exit": 0,
+        "output": "Complete TASK.md content recorded under reads; no truncation."
+      },
+      {
+        "commandText": "rg --files -g '!*.class' -g '!*.jar' -g '!execution.json' .",
+        "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-03",
+        "exit": 0,
+        "stdout": ".\\TASK.md\n.\\output\\project\\test\\work\\SelfTest.java\n.\\output\\project\\support.md\n.\\output\\project\\src\\work\\Report.java\n.\\output\\project\\src\\work\\Entry.java\n.\\output\\project\\src\\work\\Demo.java\n.\\output\\project\\src\\work\\Catalog.java\n.\\output\\project\\contract.md\n.\\output\\project\\check.mjs\n.\\input\\project\\test\\work\\SelfTest.java\n.\\input\\project\\contract.md\n.\\input\\project\\check.mjs\n.\\input\\project\\support.md\n.\\input\\project\\src\\work\\Report.java\n.\\input\\project\\src\\work\\Entry.java\n.\\input\\project\\src\\work\\Demo.java\n.\\input\\project\\src\\work\\Catalog.java\n",
+        "truncated": false
+      },
+      {
+        "commandText": "Get-Content -LiteralPath 'output/project/support.md'",
+        "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-03",
+        "exit": 0,
+        "output": "Complete initial content recorded under reads for output/project/support.md, phase baseline; no truncation."
+      },
+      {
+        "commandText": "Get-Content -LiteralPath 'output/project/contract.md'",
+        "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-03",
+        "exit": 0,
+        "output": "Complete initial content recorded under reads for output/project/contract.md, phase baseline; no truncation."
+      },
+      {
+        "commandText": "Get-Content -LiteralPath 'output/project/check.mjs'",
+        "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-03",
+        "exit": 0,
+        "output": "Complete initial content recorded under reads for output/project/check.mjs, phase baseline; no truncation."
+      },
+      {
+        "commandText": "Get-Content -LiteralPath 'output/project/src/work/Report.java'",
+        "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-03",
+        "exit": 0,
+        "output": "Complete initial content recorded under reads for output/project/src/work/Report.java, phase baseline; no truncation."
+      },
+      {
+        "commandText": "Get-Content -LiteralPath 'output/project/src/work/Entry.java'",
+        "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-03",
+        "exit": 0,
+        "output": "Complete initial content recorded under reads for output/project/src/work/Entry.java, phase baseline; no truncation."
+      },
+      {
+        "commandText": "Get-Content -LiteralPath 'output/project/src/work/Demo.java'",
+        "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-03",
+        "exit": 0,
+        "output": "Complete initial content recorded under reads for output/project/src/work/Demo.java, phase baseline; no truncation."
+      },
+      {
+        "commandText": "Get-Content -LiteralPath 'output/project/src/work/Catalog.java'",
+        "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-03",
+        "exit": 0,
+        "output": "Complete initial content recorded under reads for output/project/src/work/Catalog.java, phase baseline; no truncation."
+      },
+      {
+        "commandText": "Get-Content -LiteralPath 'output/project/test/work/SelfTest.java'",
+        "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-03",
+        "exit": 0,
+        "output": "Complete initial content recorded under reads for output/project/test/work/SelfTest.java, phase baseline; no truncation."
+      }
+    ]
+  },
+  "supervisedInvocations": [
+    {
+      "executed": true,
+      "executable": "node",
+      "args": [
+        "-e",
+        "const {spawnSync}=require('node:child_process');const r=spawnSync(process.execPath,['output/verify.mjs','baseline'],{cwd:process.cwd(),encoding:'utf8',timeout:30000,windowsHide:true});process.stdout.write(r.stdout||'');process.stderr.write(r.stderr||'');if(r.error)process.stderr.write(r.error.message);process.exit(r.status??1)"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-03",
+      "exit": 0,
+      "timeoutMs": 30000,
+      "output": "baseline java-version: exit=0\nopenjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\nbaseline existing-check: exit=0\nSelfTest PASS\r\nbaseline demo: exit=0\nfirst=1000\r\nfirst-after-reload=1200\r\nlatest=1200\r\n",
+      "truncated": false
+    },
+    {
+      "executed": true,
+      "executable": "node",
+      "args": [
+        "-e",
+        "const {spawnSync}=require('node:child_process');const r=spawnSync(process.execPath,['output/verify.mjs','final'],{cwd:process.cwd(),encoding:'utf8',timeout:30000,windowsHide:true});process.stdout.write(r.stdout||'');process.stderr.write(r.stderr||'');if(r.error)process.stderr.write(r.error.message);process.exit(r.status??1)"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-03",
+      "exit": 0,
+      "timeoutMs": 30000,
+      "output": "final java-version: exit=0\nopenjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\nfinal existing-check: exit=0\nSelfTest PASS\r\nfinal demo: exit=0\nfirst=1000\r\nfirst-after-reload=1200\r\nlatest=1200\r\n",
+      "truncated": false
+    }
+  ],
+  "fileComparison": [
+    {
+      "file": "support.md",
+      "inputSha256": "f4ef0b98f197f68ef29edecc78177175f0a846ac4fb1cf8b5a619b71439c1c2b",
+      "finalSha256": "f4ef0b98f197f68ef29edecc78177175f0a846ac4fb1cf8b5a619b71439c1c2b",
+      "inputMatchesInitialWorkingCopy": true,
+      "finalMatchesInput": true
+    },
+    {
+      "file": "contract.md",
+      "inputSha256": "4c258b441552d64c3f625cab848dabac361c6c98e63b524efa47e55c46f47b38",
+      "finalSha256": "4c258b441552d64c3f625cab848dabac361c6c98e63b524efa47e55c46f47b38",
+      "inputMatchesInitialWorkingCopy": true,
+      "finalMatchesInput": true
+    },
+    {
+      "file": "check.mjs",
+      "inputSha256": "92f081d5b1eecdf1181f8adedb7249535535ad59d939a97774e9e3edecd67d10",
+      "finalSha256": "92f081d5b1eecdf1181f8adedb7249535535ad59d939a97774e9e3edecd67d10",
+      "inputMatchesInitialWorkingCopy": true,
+      "finalMatchesInput": true
+    },
+    {
+      "file": "src/work/Report.java",
+      "inputSha256": "9676fadef05537ae295341f08af1489c3552af8b51220c0d6a43cb70d4f40c4d",
+      "finalSha256": "9676fadef05537ae295341f08af1489c3552af8b51220c0d6a43cb70d4f40c4d",
+      "inputMatchesInitialWorkingCopy": true,
+      "finalMatchesInput": true
+    },
+    {
+      "file": "src/work/Entry.java",
+      "inputSha256": "de624a95a92e1417c259a49fc74f946b64edbfab74d5cad9413fb10769016eb9",
+      "finalSha256": "de624a95a92e1417c259a49fc74f946b64edbfab74d5cad9413fb10769016eb9",
+      "inputMatchesInitialWorkingCopy": true,
+      "finalMatchesInput": true
+    },
+    {
+      "file": "src/work/Demo.java",
+      "inputSha256": "7e220f46a6b7a0c2b1af55cde2cb5a0f3b6d8508cf04717a85a7ad9de255180b",
+      "finalSha256": "7e220f46a6b7a0c2b1af55cde2cb5a0f3b6d8508cf04717a85a7ad9de255180b",
+      "inputMatchesInitialWorkingCopy": true,
+      "finalMatchesInput": true
+    },
+    {
+      "file": "src/work/Catalog.java",
+      "inputSha256": "58327eee6170e52890210eaa97de21bb0c03f9f4e2fa6abf8b135593f4dabb7e",
+      "finalSha256": "58327eee6170e52890210eaa97de21bb0c03f9f4e2fa6abf8b135593f4dabb7e",
+      "inputMatchesInitialWorkingCopy": true,
+      "finalMatchesInput": true
+    },
+    {
+      "file": "test/work/SelfTest.java",
+      "inputSha256": "e2aab235dff2a245a2035d9cfed97230f44925ff47f125f7babfc7b575b6fafc",
+      "finalSha256": "701fc724b25410d3214e652b4c4ba6e45c59cf38f91ac6be7f1ef917ef6d4a6e",
+      "inputMatchesInitialWorkingCopy": true,
+      "finalMatchesInput": false
+    }
+  ],
+  "manifestRead": {
+    "path": "output/execution.json",
+    "purpose": "Append execution records and finalize the manifest; prior contents retained.",
+    "truncated": false
+  },
+  "changes": [
+    {
+      "path": "output/project/test/work/SelfTest.java",
+      "tool": "apply_patch",
+      "purpose": "Preserve original coverage and assert accepted live, read-only behavior across reloads."
+    }
+  ],
+  "preserved": {
+    "inputMatchesInitialWorkingCopy": true,
+    "productionSources": true,
+    "contract": true,
+    "checkScript": true,
+    "dependencies": true,
+    "javaTarget": 17,
+    "runtime": "Temurin-25.0.3+9",
+    "originalTestCoverage": true
+  },
+  "notExecuted": [
+    "No production fix, snapshot conversion, contract change or dependency change was proposed or applied.",
+    "No network access, package installation, real agent configuration access or delegation."
+  ],
+  "result": {
+    "defectInReportedFlow": false,
+    "conclusion": "1000 -> 1200 follows the required live view after load(); integer-cent aggregation contains no rounding step.",
+    "baselineCheck": "PASS",
+    "finalCheck": "PASS",
+    "baselineDemo": [
+      "first=1000",
+      "first-after-reload=1200",
+      "latest=1200"
+    ],
+    "finalDemo": [
+      "first=1000",
+      "first-after-reload=1200",
+      "latest=1200"
+    ]
+  },
+  "processes": {
+    "model": "Synchronous child processes only; no background processes launched.",
+    "verificationProcessesCompleted": true,
+    "activeChildProcesses": 0
+  },
+  "finalizationInvocation": {
+    "executed": true,
+    "executable": "node",
+    "args": [
+      "-e",
+      "const {spawnSync}=require('node:child_process');const r=spawnSync(process.execPath,['output/finalize.mjs'],{cwd:process.cwd(),encoding:'utf8',timeout:30000,windowsHide:true});process.stdout.write(r.stdout||'');process.stderr.write(r.stderr||'');if(r.error)process.stderr.write(r.error.message);process.exit(r.status??1)"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-03",
+    "timeoutMs": 30000,
+    "exit": 0,
+    "output": "Final artifact audit PASS; only SelfTest.java changed; allWritesStopped:true\n",
+    "recordedAtFinalSuccessfulWrite": true
+  },
+  "completedAt": "2026-10-16T16:56:30.538Z"
+}

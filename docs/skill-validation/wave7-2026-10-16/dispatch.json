@@ -1,0 +1,21 @@
+{
+  "note": "Coordinator observation windows, not exact per-actor process start timestamps. Actor journals are separately retained.",
+  "batches": [
+    {
+      "runs": ["run-01", "run-02", "run-03", "run-04", "run-05", "run-06", "run-07", "run-08"],
+      "afterFreeze": true,
+      "allSpawnCallsReturnedBy": "2026-10-16T18:05:46Z",
+      "freshConversations": true,
+      "modelAndEffortOverride": false
+    },
+    {
+      "runs": ["run-09", "run-10", "run-11", "run-12", "run-13", "run-14", "run-15", "run-16"],
+      "afterFreeze": true,
+      "allFirstBatchWritersStoppedBefore": "2026-10-16T18:10:50Z",
+      "allSpawnCallsReturnedBy": "2026-10-16T18:11:27Z",
+      "freshConversations": true,
+      "modelAndEffortOverride": false
+    }
+  ],
+  "preFreezeFailure": "First freeze invocation rejected a status-label mismatch during reviewer handoff finalization before writing frozen artifacts. After final stopped confirmation, exact reviewed hashes and calibration were checked and freeze succeeded. No actor saw pre-freeze artifacts."
+}

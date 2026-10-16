@@ -1,0 +1,582 @@
+[
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\baseline-hashes.json",
+    "bytes": 794,
+    "sha256": "0575C52FADCAB11D21EE2DD4A3F61924A0B021D93F0724D07AEC55C7ED333A9D"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\baseline-staged.diff",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\baseline-status.txt",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\baseline.diff",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\callbacks-inline-corrected.stderr.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\callbacks-inline-corrected.stdout.log",
+    "bytes": 284,
+    "sha256": "C07DA3F264D12A749C9A684122E7BA5282657ACCC00D72456C36E3BF39C7AE65"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\callbacks-inline-original.stderr.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\callbacks-inline-original.stdout.log",
+    "bytes": 286,
+    "sha256": "8193CCBC1AC294EFB778589553C23A10BF0BC6954D2E5502692E2C5DECC7AF75"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\callbacks-queued-corrected.stderr.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\callbacks-queued-corrected.stdout.log",
+    "bytes": 284,
+    "sha256": "962798A3B45C2FC8CF2263EC5F3B4679616BCC538DF012AE7911A137B7FACBDA"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\callbacks-queued-original.stderr.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\callbacks-queued-original.stdout.log",
+    "bytes": 283,
+    "sha256": "C17884F3F81D44B75A75A3947F05A1DC6CC2988F09ADF839EC41559D20489F0E"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\case-criteria.json",
+    "bytes": 2343,
+    "sha256": "37D306012C59B852435AF2457C44E54EE7F472691F86BE59CD709AE1FD55B984"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\case-inputs.json",
+    "bytes": 4279,
+    "sha256": "C432A5E14B6AD13A2D9DC4D2754DD0147C70914E5FFC25235EEBB67C8A90CA29"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\committed-skill.yaml",
+    "bytes": 2002,
+    "sha256": "E0E1A002F5CB024CF4AFB4B468A1DCCE07B20052012C9A9B8299A704179D940E"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\compile-inline-corrected.stderr.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\compile-inline-corrected.stdout.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\compile-inline-original.stderr.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\compile-inline-original.stdout.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\compile-protocol-state.stderr.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\compile-protocol-state.stdout.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\compile-queued-corrected.stderr.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\compile-queued-corrected.stdout.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\compile-queued-original.stderr.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\compile-queued-original.stdout.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\completion-service-se17.html",
+    "bytes": 30380,
+    "sha256": "3A14E8D80BFB724FF8B8F51069EFFEBF90E123F8D4246092CF25A5C47469A30B"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\concurrenthashmap-se17.html",
+    "bytes": 197245,
+    "sha256": "69D202DDDA868E08CE61D4BE7185C51A8539FA5ED2B46C735A6AD47ABF6163A7"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\coordinator-baseline.json",
+    "bytes": 857,
+    "sha256": "10D404C608F1A5BA08ED159713E26B99DAB71F3AB7218EC0C443CB616FB1DD03"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\diff-check.stderr.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\diff-check.stdout.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\executor-se17.html",
+    "bytes": 14164,
+    "sha256": "DC909DFF1AFF6B77333998DC7997BB568795483E216F7BA9129804D502386EBA"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\final-hashes.json",
+    "bytes": 794,
+    "sha256": "0575C52FADCAB11D21EE2DD4A3F61924A0B021D93F0724D07AEC55C7ED333A9D"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\final-owned-diff.stderr.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\final-owned-diff.stdout.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\final-owned-status.stderr.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\final-owned-status.stdout.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\final-staged-diff.stderr.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\final-staged-diff.stdout.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\hashmap-se17.html",
+    "bytes": 69850,
+    "sha256": "BCEC6AE18DD7834FE332D0EC3A809BB39F0677B805A0F10F0557AEE1FF39C348"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\java-version.stderr.log",
+    "bytes": 193,
+    "sha256": "E33F6CFDF4D70CB8BF63CAE1ED026B89A77539348B7AC97535E20D32D7C1D010"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\java-version.stdout.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\javac-version.stderr.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\javac-version.stdout.log",
+    "bytes": 14,
+    "sha256": "E28EEC99DA75B3A320C3A82EC268D403DD151791C791932203E6EA26CC0C0D3B"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\prettier.stderr.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\prettier.stdout.log",
+    "bytes": 66,
+    "sha256": "17AA973D3F004560237D9A95171210B0671DEFF23D61628EECF7322FF5938F20"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\protocol-state-and-completion-order.stderr.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\protocol-state-and-completion-order.stdout.log",
+    "bytes": 404,
+    "sha256": "85834AA20EE44D4984228B3CC3316B45A7CD48AAB1F116DF52F9DFA8BD51D62A"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\source-fetch.json",
+    "bytes": 2118,
+    "sha256": "EAF74FE9833B1E6F3C5167B8AA8857BB2021C1053025B32738A0F6EE6E69D7F6"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\transactional-outbox.html",
+    "bytes": 25474,
+    "sha256": "7B9D9B224D9B985BF03D581DCDEF5C94A21F49A93F3AC1E74C6BC2104A48B3EB"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\validate.mjs",
+    "bytes": 7446,
+    "sha256": "0048DAAFD04563805979485B6B064654A93D1F431A9E513D6C4EC653E0A9A9A8"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\validation-results.json",
+    "bytes": 18899,
+    "sha256": "5E2F3940C920DB3524208DCA1088EB51DE6A425E51E1419E50036291B8D9D69E"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\baseline\\gof-mediator\\SKILL.md",
+    "bytes": 10778,
+    "sha256": "12CF20A8C6C28BBC98D5A3A56A90CE52441B7616F17E94233602E9E162B78302"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\baseline\\gof-mediator\\skill.yaml",
+    "bytes": 2002,
+    "sha256": "E0E1A002F5CB024CF4AFB4B468A1DCCE07B20052012C9A9B8299A704179D940E"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\baseline\\gof-mediator\\references\\mediator-vs-alternatives.md",
+    "bytes": 10028,
+    "sha256": "CF767E9B46AC03897A49478BE4FA6EE9E9104A7EE2674CD0A6AC49DC7DCE2F08"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\baseline\\gof-mediator\\references\\worked-example.md",
+    "bytes": 11891,
+    "sha256": "1545E505FC5A13C99474D646698BDD85019C530EA87A95B2E3694BD2F1B2F552"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\cases\\inline-completion\\input.md",
+    "bytes": 659,
+    "sha256": "05EBC7610397CFE44D96BB56F6603E573212B6732835F219884B27A230F3BC59"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\cases\\inline-completion\\protocol.md",
+    "bytes": 923,
+    "sha256": "7CC10C7C1661869F0475216D7DC89B9DBF8A51A662A48D9B5996EDCB441FAD01"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\cases\\inline-completion\\README.md",
+    "bytes": 498,
+    "sha256": "58A1E3B121A2F23785EF129B3FF49750DA680031A7A9AFA53F51FE8583A280C6"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\cases\\inline-completion\\src\\App.java",
+    "bytes": 421,
+    "sha256": "41A81EFFA2FF1A2B8F20D1F080E97C426E688EB6E813044AFBACAE76E4CB1418"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\cases\\inline-completion\\src\\Assembly.java",
+    "bytes": 106,
+    "sha256": "87280002BB2445162B6172391F1C0C27A38ABA71288E77B6220385007D213163"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\cases\\inline-completion\\src\\CaptureCoordinator.java",
+    "bytes": 1053,
+    "sha256": "83CD99E14EF34765E8779FC47BB14BF4560ACDC070267B431109EC4A23727FA1"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\cases\\inline-completion\\src\\Delivery.java",
+    "bytes": 961,
+    "sha256": "5F193D1BA67EE941E2C3ACA52508896F8E9F210228C3E2F9C2C9EE94403DE4C1"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\cases\\queued-completion\\input.md",
+    "bytes": 659,
+    "sha256": "05EBC7610397CFE44D96BB56F6603E573212B6732835F219884B27A230F3BC59"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\cases\\queued-completion\\protocol.md",
+    "bytes": 923,
+    "sha256": "7CC10C7C1661869F0475216D7DC89B9DBF8A51A662A48D9B5996EDCB441FAD01"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\cases\\queued-completion\\README.md",
+    "bytes": 498,
+    "sha256": "58A1E3B121A2F23785EF129B3FF49750DA680031A7A9AFA53F51FE8583A280C6"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\cases\\queued-completion\\src\\App.java",
+    "bytes": 421,
+    "sha256": "41A81EFFA2FF1A2B8F20D1F080E97C426E688EB6E813044AFBACAE76E4CB1418"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\cases\\queued-completion\\src\\Assembly.java",
+    "bytes": 106,
+    "sha256": "451D6C786F5CAFF4FFB491CD91A98F307DA29B482211BEFD40DB2637C8F26BD4"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\cases\\queued-completion\\src\\CaptureCoordinator.java",
+    "bytes": 1053,
+    "sha256": "83CD99E14EF34765E8779FC47BB14BF4560ACDC070267B431109EC4A23727FA1"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\cases\\queued-completion\\src\\Delivery.java",
+    "bytes": 961,
+    "sha256": "5F193D1BA67EE941E2C3ACA52508896F8E9F210228C3E2F9C2C9EE94403DE4C1"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\inline-corrected\\App.class",
+    "bytes": 1988,
+    "sha256": "B298F1CEAC266EB494642153BA89264C0A9915094B96BAEA8474B9F4F7A897E0"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\inline-corrected\\Assembly.class",
+    "bytes": 344,
+    "sha256": "D2450B4D7BE2BBACDB9F3A32BF946891245B55D2AB258DC4BFFDF108C7366A2A"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\inline-corrected\\CallbackCheck.class",
+    "bytes": 3959,
+    "sha256": "40B6FEBEBE35C170B578B9692599ABF9F85E7AD1D27D3696174924FF15290073"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\inline-corrected\\CaptureCoordinator.class",
+    "bytes": 1869,
+    "sha256": "E9B42DD0ABE256585E821F7B73A1CC5C7337EA4319BA0F6436868FBE88FC454B"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\inline-corrected\\CaptureCoordinator$Driver.class",
+    "bytes": 325,
+    "sha256": "5CBDF49A5FA11F57A5FA4DD1C2FAFE6CBF062F76D8C5DC56DD90C418DF381889"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\inline-corrected\\CaptureCoordinator$Phase.class",
+    "bytes": 1154,
+    "sha256": "1148CE1DAA269D187A625A9C974AA442DC82FD19A32091A0E34A2C4AC195FFFB"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\inline-corrected\\CaptureCoordinator$View.class",
+    "bytes": 302,
+    "sha256": "DA4687E7C89D977C61C989557D58364DB6A4429E42B190FBDABA57EEBC9582DE"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\inline-corrected\\Delivery.class",
+    "bytes": 281,
+    "sha256": "9D518E70A42C9C1A75BA6CFCE158543AEA5E26722B86C92AB2E3307B9F98E9EB"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\inline-corrected\\Delivery$Inline.class",
+    "bytes": 440,
+    "sha256": "200203CA16DF1DBDFBCED61DDEEF7F7034D042B87D0A41C2AFCB90C39A1BBFBA"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\inline-corrected\\Delivery$Queued.class",
+    "bytes": 1101,
+    "sha256": "AE616CD7905218E551C4A90BD0AA0E048141CCE54F61FB21B45515D032949285"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\inline-original\\App.class",
+    "bytes": 1988,
+    "sha256": "B298F1CEAC266EB494642153BA89264C0A9915094B96BAEA8474B9F4F7A897E0"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\inline-original\\Assembly.class",
+    "bytes": 344,
+    "sha256": "D2450B4D7BE2BBACDB9F3A32BF946891245B55D2AB258DC4BFFDF108C7366A2A"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\inline-original\\CallbackCheck.class",
+    "bytes": 3959,
+    "sha256": "40B6FEBEBE35C170B578B9692599ABF9F85E7AD1D27D3696174924FF15290073"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\inline-original\\CaptureCoordinator.class",
+    "bytes": 1869,
+    "sha256": "BC465F86E3F9E4AE63DD80CF00F26B50BF651993AEEDDB6BEFA22C02643597AD"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\inline-original\\CaptureCoordinator$Driver.class",
+    "bytes": 325,
+    "sha256": "5CBDF49A5FA11F57A5FA4DD1C2FAFE6CBF062F76D8C5DC56DD90C418DF381889"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\inline-original\\CaptureCoordinator$Phase.class",
+    "bytes": 1154,
+    "sha256": "1148CE1DAA269D187A625A9C974AA442DC82FD19A32091A0E34A2C4AC195FFFB"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\inline-original\\CaptureCoordinator$View.class",
+    "bytes": 302,
+    "sha256": "DA4687E7C89D977C61C989557D58364DB6A4429E42B190FBDABA57EEBC9582DE"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\inline-original\\Delivery.class",
+    "bytes": 281,
+    "sha256": "9D518E70A42C9C1A75BA6CFCE158543AEA5E26722B86C92AB2E3307B9F98E9EB"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\inline-original\\Delivery$Inline.class",
+    "bytes": 440,
+    "sha256": "200203CA16DF1DBDFBCED61DDEEF7F7034D042B87D0A41C2AFCB90C39A1BBFBA"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\inline-original\\Delivery$Queued.class",
+    "bytes": 1101,
+    "sha256": "AE616CD7905218E551C4A90BD0AA0E048141CCE54F61FB21B45515D032949285"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\queued-corrected\\App.class",
+    "bytes": 1988,
+    "sha256": "B298F1CEAC266EB494642153BA89264C0A9915094B96BAEA8474B9F4F7A897E0"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\queued-corrected\\Assembly.class",
+    "bytes": 344,
+    "sha256": "AEC53B042D274A77560CBCADBECA719031600A80F9924BF3DB3634C2698F8059"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\queued-corrected\\CallbackCheck.class",
+    "bytes": 3959,
+    "sha256": "40B6FEBEBE35C170B578B9692599ABF9F85E7AD1D27D3696174924FF15290073"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\queued-corrected\\CaptureCoordinator.class",
+    "bytes": 1869,
+    "sha256": "E9B42DD0ABE256585E821F7B73A1CC5C7337EA4319BA0F6436868FBE88FC454B"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\queued-corrected\\CaptureCoordinator$Driver.class",
+    "bytes": 325,
+    "sha256": "5CBDF49A5FA11F57A5FA4DD1C2FAFE6CBF062F76D8C5DC56DD90C418DF381889"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\queued-corrected\\CaptureCoordinator$Phase.class",
+    "bytes": 1154,
+    "sha256": "1148CE1DAA269D187A625A9C974AA442DC82FD19A32091A0E34A2C4AC195FFFB"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\queued-corrected\\CaptureCoordinator$View.class",
+    "bytes": 302,
+    "sha256": "DA4687E7C89D977C61C989557D58364DB6A4429E42B190FBDABA57EEBC9582DE"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\queued-corrected\\Delivery.class",
+    "bytes": 281,
+    "sha256": "9D518E70A42C9C1A75BA6CFCE158543AEA5E26722B86C92AB2E3307B9F98E9EB"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\queued-corrected\\Delivery$Inline.class",
+    "bytes": 440,
+    "sha256": "200203CA16DF1DBDFBCED61DDEEF7F7034D042B87D0A41C2AFCB90C39A1BBFBA"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\queued-corrected\\Delivery$Queued.class",
+    "bytes": 1101,
+    "sha256": "AE616CD7905218E551C4A90BD0AA0E048141CCE54F61FB21B45515D032949285"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\queued-original\\App.class",
+    "bytes": 1988,
+    "sha256": "B298F1CEAC266EB494642153BA89264C0A9915094B96BAEA8474B9F4F7A897E0"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\queued-original\\Assembly.class",
+    "bytes": 344,
+    "sha256": "AEC53B042D274A77560CBCADBECA719031600A80F9924BF3DB3634C2698F8059"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\queued-original\\CallbackCheck.class",
+    "bytes": 3959,
+    "sha256": "40B6FEBEBE35C170B578B9692599ABF9F85E7AD1D27D3696174924FF15290073"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\queued-original\\CaptureCoordinator.class",
+    "bytes": 1869,
+    "sha256": "BC465F86E3F9E4AE63DD80CF00F26B50BF651993AEEDDB6BEFA22C02643597AD"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\queued-original\\CaptureCoordinator$Driver.class",
+    "bytes": 325,
+    "sha256": "5CBDF49A5FA11F57A5FA4DD1C2FAFE6CBF062F76D8C5DC56DD90C418DF381889"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\queued-original\\CaptureCoordinator$Phase.class",
+    "bytes": 1154,
+    "sha256": "1148CE1DAA269D187A625A9C974AA442DC82FD19A32091A0E34A2C4AC195FFFB"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\queued-original\\CaptureCoordinator$View.class",
+    "bytes": 302,
+    "sha256": "DA4687E7C89D977C61C989557D58364DB6A4429E42B190FBDABA57EEBC9582DE"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\queued-original\\Delivery.class",
+    "bytes": 281,
+    "sha256": "9D518E70A42C9C1A75BA6CFCE158543AEA5E26722B86C92AB2E3307B9F98E9EB"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\queued-original\\Delivery$Inline.class",
+    "bytes": 440,
+    "sha256": "200203CA16DF1DBDFBCED61DDEEF7F7034D042B87D0A41C2AFCB90C39A1BBFBA"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\queued-original\\Delivery$Queued.class",
+    "bytes": 1101,
+    "sha256": "AE616CD7905218E551C4A90BD0AA0E048141CCE54F61FB21B45515D032949285"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\state\\FulfilmentState.class",
+    "bytes": 1918,
+    "sha256": "7982E576127EDC72E61A37A24412A0F496BC3E24E04F67E10E0E7E5A97B62F01"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\state\\ProtocolStateCheck.class",
+    "bytes": 3751,
+    "sha256": "8047664FCCC749B7B76BF91296837DA92720F544D5855D7149235880AEB9276B"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\state\\ProtocolStateCheck$ManualExecutor.class",
+    "bytes": 650,
+    "sha256": "73E22AE74E780A4790145F067E2D44A63981BA3C3D41239BB0B9C06EC822ABBF"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\technical\\CallbackCheck.java",
+    "bytes": 2334,
+    "sha256": "B9441EA164F573537FAC9AA5B2333C1A7046C31EA9BFE9CE04FDAE1FBEB354DA"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\technical\\FulfilmentState.java",
+    "bytes": 761,
+    "sha256": "894F94F63520FC0AA5E6DBBA8E919F7F0061E8A7432F1ECA543FC7CE47BFDC83"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\technical\\ProtocolStateCheck.java",
+    "bytes": 2544,
+    "sha256": "783D71CFA3C2F057EFF606AF062D9615CF6BF0E754FF9028E118426B49AF61F3"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\technical\\fixed\\CaptureCoordinator.java",
+    "bytes": 1049,
+    "sha256": "8D1C94315B06019FC7F0DDB0CAFCBDD8E5925F82B4A858710D5F21A3B7720289"
+  }
+]

@@ -1,0 +1,39 @@
+[
+  {
+    "id": "value-objects-case-a",
+    "input": {
+      "request": "Review the gauge-reading value and its import path before we reuse it in another ingestion job. Determine whether the current implementation meets the approved domain contract and collection behavior. Implement only a supported correction; preserve a correct simple value model. Keep Java 17, existing input grammar and the raw audit record. Report concrete evidence and checks, including any real mapping limits.",
+      "fixtureRelativePath": "case-a",
+      "javaBaseline": "17",
+      "files": [
+        "README.md",
+        "docs/approved-contract.md",
+        "GaugeReading.java",
+        "ImportRow.java",
+        "ReadingIndex.java",
+        "Smoke.java",
+        "sample-import.csv"
+      ]
+    },
+    "visibility": "actor-input-only"
+  },
+  {
+    "id": "value-objects-case-b",
+    "input": {
+      "request": "Review the gauge-reading value and its import path before we reuse it in another ingestion job. Determine whether the current implementation meets the approved domain contract and collection behavior. Implement only a supported correction; preserve a correct simple value model. Keep Java 17, existing input grammar and the raw audit record. Report concrete evidence and checks, including any real mapping limits.",
+      "fixtureRelativePath": "case-b",
+      "javaBaseline": "17",
+      "files": [
+        "README.md",
+        "docs/approved-contract.md",
+        "GaugeReading.java",
+        "ImportRow.java",
+        "ReadingIndex.java",
+        "Smoke.java",
+        "sample-import.csv"
+      ]
+    },
+    "visibility": "actor-input-only"
+  }
+]
+

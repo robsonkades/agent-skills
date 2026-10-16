@@ -1,0 +1,58 @@
+{
+  "task": "A14",
+  "decision": "Repaired RetryEngine.java while retaining its public signature and Java 17 source/API baseline.",
+  "evidence": {
+    "contract": "contract.md and unchanged Ports.java / Contract.java",
+    "replaySafe": false,
+    "originalRegression": {
+      "passed": 0,
+      "failed": 27,
+      "limitation": "Most original failures stop first at the changed-intent guard."
+    },
+    "verification": {
+      "passed": 27,
+      "failed": 0
+    },
+    "smoke": "passed",
+    "immutableProjectCopies": "7 unchanged by SHA-256 comparison",
+    "runtime": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\njavac 25.0.3",
+    "compilation": "javac --release 17"
+  },
+  "behavior": [
+    "Stable intent and payload across attempts; original receipt only on OK.",
+    "Previously terminal snapshots returned without calls.",
+    "UNKNOWN persisted and preserved; unsafe ambiguous replay refused.",
+    "Retry timing uses max(local, server minimum) and overflow-safe budget admission.",
+    "One token per admitted retry; fresh checks after sleep; close before wait/next call/return.",
+    "Interrupted operation persists UNKNOWN before exception propagation."
+  ],
+  "checks": [
+    {
+      "command": "node run.mjs Verification",
+      "exitCode": 0
+    },
+    {
+      "command": "node run.mjs Smoke",
+      "exitCode": 0
+    },
+    {
+      "command": "SHA-256 comparison of seven immutable copies against input/project",
+      "exitCode": 0
+    }
+  ],
+  "limits": [
+    "Authored local simulation only; no production provider/durable-store guarantee established.",
+    "Contract.REPLAY_SAFE is immutable false; replay-safe branches were not executed.",
+    "No reconciliation, remote API/version, database/isolation, retention, tenant/fingerprint enforcement or physical-cancellation implementation supplied.",
+    "Concurrency, real latency/resource release, crash recovery and fleet behavior are outside this single-owner component test.",
+    "Referenced skills outside supplied snapshots were not opened; no network or delegation."
+  ],
+  "artifacts": [
+    "RetryEngine.java",
+    "Verification.java",
+    "REVIEW.md",
+    "result.json",
+    "execution.json",
+    "classes/"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "provenance": "Synthetic pre-existing QA records; not executed by the reviewer",
+  "observations": [
+    "After confirm returns, draft.isReady() is true.",
+    "After undoConfirm returns, draft.isReady() is false and the message text/requestId equal their original values.",
+    "A snapshot from another draft is rejected without changing state."
+  ],
+  "limits": [
+    "QA observes the draft API only; it did not inspect the broker.",
+    "No multi-threaded or crash-recovery exercise."
+  ]
+}

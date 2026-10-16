@@ -1,0 +1,13 @@
+{
+  "version": "2.6.5",
+  "packageFiles": [
+    "SKILL.md",
+    "references/depth-ladder.md",
+    "references/latency-regression.md",
+    "references/triage-map.md",
+    "skill.yaml"
+  ],
+  "issues": [],
+  "linksChecked": 5,
+  "declaredTargetsChecked": 96
+}

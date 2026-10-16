@@ -1,0 +1,122 @@
+[
+  {
+    "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html",
+    "supports": "equals/hashCode and generic clone intent versus Object.clone implementation requirements",
+    "status": 200,
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-object-contracts\\sources\\Object.html",
+    "sha256": "835c07e9b2bfc274819dbf8ffc0ab12d7ef81d2990508a8b95dbc7ca4e5a34a0",
+    "bytes": 51945
+  },
+  {
+    "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Record.html",
+    "supports": "record field equality, copy invariant, hash and diagnostic contracts",
+    "status": 200,
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-object-contracts\\sources\\Record.html",
+    "sha256": "d7ec184cd5b9845a3ed2698ee69e696ead0ea20d8541b596c2d0d4e8f43f9211",
+    "bytes": 24089
+  },
+  {
+    "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Objects.html",
+    "supports": "equals(Object,Object), varargs hash and identity helpers",
+    "status": 200,
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-object-contracts\\sources\\Objects.html",
+    "sha256": "720ab9cb93fa523a53e668623757402710d9dde4d0cccbca5870e63aab3f45d9",
+    "bytes": 60314
+  },
+  {
+    "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/IdentityHashMap.html",
+    "supports": "reference equality of concrete map and views; topology-preserving use",
+    "status": 200,
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-object-contracts\\sources\\IdentityHashMap.html",
+    "sha256": "c84c7591ccf3153c5bfe687098af18904016698b245cd44058de8fe16e212c81",
+    "bytes": 71898
+  },
+  {
+    "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/HashMap.html",
+    "supports": "lookup relation and ordinary map behavior",
+    "status": 200,
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-object-contracts\\sources\\HashMap.html",
+    "sha256": "0f8d4137eb1d78ba855896feeb356dceecfd2501d3e189bfbf6babc6cc9dfd71",
+    "bytes": 75737
+  },
+  {
+    "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Comparator.html",
+    "supports": "ordering algebra, nulls and reversal",
+    "status": 200,
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-object-contracts\\sources\\Comparator.html",
+    "sha256": "059807383ee293f9c90d3e0e70e34fa170ebb6c6e47092b26c1d475639bff39b",
+    "bytes": 65183
+  },
+  {
+    "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Comparable.html",
+    "supports": "natural ordering and consistency with equality",
+    "status": 200,
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-object-contracts\\sources\\Comparable.html",
+    "sha256": "00dfb4ef24f646142b24c49ce831f90a116236c21bb3f997b67267525d48afa8",
+    "bytes": 45456
+  },
+  {
+    "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/TreeSet.html",
+    "supports": "ordering-based key identity and Set inconsistency",
+    "status": 200,
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-object-contracts\\sources\\TreeSet.html",
+    "sha256": "bfee35be8c10558ba8eeb4ad97e708822f94d52e8a494aa56da71547c3ed31f6",
+    "bytes": 107460
+  },
+  {
+    "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Arrays.html",
+    "supports": "array equality and matching hashes",
+    "status": 200,
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-object-contracts\\sources\\Arrays.html",
+    "sha256": "5af96640e028645ca3eb36f482a30c4c13aef4600081404cb749cc2d05b3b3f2",
+    "bytes": 619309
+  },
+  {
+    "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html",
+    "supports": "copyOf snapshot/null contract and stable sorting",
+    "status": 200,
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-object-contracts\\sources\\List.html",
+    "sha256": "b10d468a12ac9a482fbb269457f64705e568e78dcb1d54ee44d190d829fd1491",
+    "bytes": 134942
+  },
+  {
+    "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Cloneable.html",
+    "supports": "marker with no public clone method",
+    "status": 200,
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-object-contracts\\sources\\Cloneable.html",
+    "sha256": "a2f22652875d8bd0c5c5206911762f521e0b26baf684d36fd3d8283374ee024a",
+    "bytes": 10231
+  },
+  {
+    "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Override.html",
+    "supports": "compile-time override validation",
+    "status": 200,
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-object-contracts\\sources\\Override.html",
+    "sha256": "864ecdbed91b21519f57bf25d4c461f88f297ce274abe9b41edb342384eb3146",
+    "bytes": 8657
+  },
+  {
+    "url": "https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html",
+    "supports": "8.4.8.1 overriding by signature; 8.4.9 overloading; 8.10.3 records",
+    "status": 200,
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-object-contracts\\sources\\jls-8.html",
+    "sha256": "02358c18e0e9a16c3f0a6492478f5108b673162dc1bd822971037ba4a3fe3259",
+    "bytes": 600649
+  },
+  {
+    "url": "https://docs.oracle.com/javase/specs/jls/se25/html/jls-13.html",
+    "supports": "13.4.12 removal of a method can break pre-existing binaries",
+    "status": 200,
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-object-contracts\\sources\\jls-13.html",
+    "sha256": "f57d8a328a731e4e207095e54dc21b57eb86b42fedf77a6893c14e600bd3a4e9",
+    "bytes": 174796
+  },
+  {
+    "url": "https://docs.oracle.com/javase/specs/jls/se25/html/jls-15.html",
+    "supports": "15.12 compile-time method selection versus runtime dispatch",
+    "status": 200,
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-object-contracts\\sources\\jls-15.html",
+    "sha256": "829701f2d3efe55e03598155b2be2a2e19e9b3a0f1e9ca5c2401b616a8baae19",
+    "bytes": 1025337
+  }
+]

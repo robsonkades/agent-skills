@@ -1,0 +1,23 @@
+{
+  "id": "jar-normalizer-runtime",
+  "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javap.exe",
+  "args": [
+    "--multi-release",
+    "25",
+    "-classpath",
+    "lib/compat.jar",
+    "-c",
+    "-verbose",
+    "work.Normalizer"
+  ],
+  "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-05\\output\\project",
+  "startedAt": "2026-10-16T16:54:33.408Z",
+  "durationMs": 190,
+  "timeoutMs": 25000,
+  "exit": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "Classfile jar:file:///C:/Users/robso/AppData/Local/Temp/skills-wave5-actors-4tJ3OK/run-05/output/project/lib/compat.jar!/work/Normalizer.class\r\n  Last modified Oct 16, 2026; size 427 bytes\r\n  SHA-256 checksum 5bfc4ee997944db3ce9891fd822553c44da20d45eb492eb7e4c29b8db4fafb72\r\n  Compiled from \"Normalizer.java\"\r\npublic final class work.Normalizer\r\n  minor version: 0\r\n  major version: 61\r\n  flags: (0x0031) ACC_PUBLIC, ACC_FINAL, ACC_SUPER\r\n  this_class: #17                         // work/Normalizer\r\n  super_class: #2                         // java/lang/Object\r\n  interfaces: 0, fields: 0, methods: 2, attributes: 1\r\nConstant pool:\r\n   #1 = Methodref          #2.#3          // java/lang/Object.\"<init>\":()V\r\n   #2 = Class              #4             // java/lang/Object\r\n   #3 = NameAndType        #5:#6          // \"<init>\":()V\r\n   #4 = Utf8               java/lang/Object\r\n   #5 = Utf8               <init>\r\n   #6 = Utf8               ()V\r\n   #7 = String             #8             // \\r\\n\r\n   #8 = Utf8               \\r\\n\r\n   #9 = String             #10            // \\n\r\n  #10 = Utf8               \\n\r\n  #11 = Methodref          #12.#13        // java/lang/String.replace:(Ljava/lang/CharSequence;Ljava/lang/CharSequence;)Ljava/lang/String;\r\n  #12 = Class              #14            // java/lang/String\r\n  #13 = NameAndType        #15:#16        // replace:(Ljava/lang/CharSequence;Ljava/lang/CharSequence;)Ljava/lang/String;\r\n  #14 = Utf8               java/lang/String\r\n  #15 = Utf8               replace\r\n  #16 = Utf8               (Ljava/lang/CharSequence;Ljava/lang/CharSequence;)Ljava/lang/String;\r\n  #17 = Class              #18            // work/Normalizer\r\n  #18 = Utf8               work/Normalizer\r\n  #19 = Utf8               Code\r\n  #20 = Utf8               LineNumberTable\r\n  #21 = Utf8               normalize\r\n  #22 = Utf8               (Ljava/lang/String;)Ljava/lang/String;\r\n  #23 = Utf8               SourceFile\r\n  #24 = Utf8               Normalizer.java\r\n{\r\n  public work.Normalizer();\r\n    descriptor: ()V\r\n    flags: (0x0001) ACC_PUBLIC\r\n    Code:\r\n      stack=1, locals=1, args_size=1\r\n         0: aload_0\r\n         1: invokespecial #1                  // Method java/lang/Object.\"<init>\":()V\r\n         4: return\r\n      LineNumberTable:\r\n        line 1: 0\r\n\r\n  public static java.lang.String normalize(java.lang.String);\r\n    descriptor: (Ljava/lang/String;)Ljava/lang/String;\r\n    flags: (0x0009) ACC_PUBLIC, ACC_STATIC\r\n    Code:\r\n      stack=3, locals=1, args_size=1\r\n         0: aload_0\r\n         1: ldc           #7                  // String \\r\\n\r\n         3: ldc           #9                  // String \\n\r\n         5: invokevirtual #11                 // Method java/lang/String.replace:(Ljava/lang/CharSequence;Ljava/lang/CharSequence;)Ljava/lang/String;\r\n         8: areturn\r\n      LineNumberTable:\r\n        line 1: 0\r\n}\r\nSourceFile: \"Normalizer.java\"\r\n",
+  "stderr": "",
+  "truncated": false
+}

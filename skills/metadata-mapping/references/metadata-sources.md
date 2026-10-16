@@ -208,9 +208,9 @@ Do column or attribute names appear as strings anywhere?
           validate relevant remaining strings through supported bootstrap/query checks.
 ```
 
-Sources: [Jakarta Persistence 3.2 XML descriptor rules](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2#use-of-the-xml-descriptor),
-[Mapping-file discovery](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2#a12305),
-[Access type](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2#a113),
+Sources: [Jakarta Persistence 3.2 XML descriptor rules](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html#use-of-the-xml-descriptor),
+[Mapping-file discovery](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html#a12305),
+[Access type](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html#a113),
 [MapStruct 1.6 reference](https://mapstruct.org/documentation/1.6/reference/html/),
 [JDK 23 annotation-processing change](https://www.oracle.com/java/technologies/javase/23-relnote-issues.html),
 [Explicit processing options and older-JDK support](https://inside.java/2024/06/18/quality-heads-up/),

@@ -42,8 +42,13 @@ Start)`, `Concurrent Mark From Roots`, `Pause Remark`, `Pause Cleanup` and, on J
    cause or phase, but not establish the missing chronology. If material evidence is absent,
    arrange bounded collection through `gc-log-analysis`; `-Xlog:gc*` includes the info-level
    phases. Read the instrumentation reference for additional overflow or IHOP detail.
-3. **Check whether the trigger is adaptive before touching it.**
-   Use the target's effective flags and `gc+ihop=debug` predictor state. A fresh
+3. **Identify what requested the cycle before interpreting IHOP.** Read the concurrent-start
+   cause and `gc+ergo=debug` initiation decision. For example, `System.gc()` with
+   `ExplicitGCInvokesConcurrent` can request marking below the occupancy threshold; changing
+   IHOP does not remove that request. For occupancy-driven starts, use the target's effective
+   flags and `gc+ihop=debug` predictor state. Compare the initiation check's old/humongous
+   region capacity plus allocation request with its threshold, not total heap-used bytes in
+   the pause summary or predictor row; the cycle reference distinguishes these fields. A fresh
    `java -XX:+PrintFlagsFinal -version` shows that invocation's configuration, not the
    running service's overrides or learned state. With `G1UseAdaptiveIHOP=true`,
    `InitiatingHeapOccupancyPercent` supplies the initial threshold; a start away from 45%
@@ -154,8 +159,8 @@ and expire them like other production telemetry.
 - [The cycle, its log and its flags](references/marking-cycle-log-and-flags.md) — the phase
   sequence with correct names, an annotated log of a complete cycle, the logging and
   diagnostic flags with their defaults, JFR events, and the HotSpot source paths. Read when
-  configuring marking instrumentation, interpreting missing mixed collections or reading a
-  marking log for the first time.
+  configuring marking instrumentation, explaining unexpected start occupancy, interpreting
+  missing mixed collections or reading a marking log for the first time.
 - [Marking pathologies](references/marking-pathologies.md) — symptom-to-hypothesis-to-
   instrument table, the SATB buffer and overflow mechanism, evacuation-failure reconciliation,
   and the humongous threshold and eager-reclaim decision. Read when a cycle

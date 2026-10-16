@@ -1,0 +1,18 @@
+ M skills/jdk-upgrade-impact/SKILL.md
+ M skills/jdk-upgrade-impact/references/verification-and-rollout.md
+ M skills/jdk-upgrade-impact/skill.yaml
+ skills/jdk-upgrade-impact/SKILL.md                     |  8 ++++++--
+ .../references/verification-and-rollout.md             | 18 ++++++++++++++++++
+ skills/jdk-upgrade-impact/skill.yaml                   |  2 +-
+ 3 files changed, 25 insertions(+), 3 deletions(-)
+skills/jdk-upgrade-impact\skill.yaml:4:version: 1.2.6
+skills/jdk-upgrade-impact\skill.yaml:45:    version: ^1.0.0
+skills/jdk-upgrade-impact\skill.yaml:47:    version: ^1.0.0
+skills/jdk-upgrade-impact\skill.yaml:49:    version: ^1.0.0
+skills/jdk-upgrade-impact\skill.yaml:51:    version: ^1.0.0
+skills/jdk-upgrade-impact\skill.yaml:53:    version: ^2.0.0
+skills/jdk-upgrade-impact\SKILL.md:33:Inspect exact current/target runtime vendor builds, the compiler executable and effective
+skills/jdk-upgrade-impact\SKILL.md:69:- **Compiling is not the test.** `--release` constrains language, class-file version and the
+skills/jdk-upgrade-impact\references\verification-and-rollout.md:69:### Check the platform API used by the rebuild
+skills/jdk-upgrade-impact\references\verification-and-rollout.md:74:`--release 17` rejects that call: `List.getFirst()` was introduced in 21. Passing the resulting
+skills/jdk-upgrade-impact\references\verification-and-rollout.md:172:- [JDK 21 List.getFirst](<https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html#getFirst()>) — API availability and empty-list behavior.

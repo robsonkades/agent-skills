@@ -1,0 +1,32 @@
+[
+  {
+    "status": "fulfilled",
+    "value": {
+      "chunk_id": "b58f02",
+      "wall_time_seconds": 0.1875849,
+      "exit_code": 0,
+      "original_token_count": 404,
+      "output": "{\r\n  \"scope\": \"Read-only structural check of the assigned skill only.\",\r\n  \"strictManifestIssues\": 0,\r\n  \"descriptionMatches\": true,\r\n  \"version\": \"1.2.5\",\r\n  \"shippedFiles\": 4,\r\n  \"localLinks\": [\r\n    {\r\n      \"source\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\java-fluent-apis\\\\SKILL.md\",\r\n      \"href\": \"references/builder-decision.md\",\r\n      \"target\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\java-fluent-apis\\\\references\\\\builder-decision.md\"\r\n    },\r\n    {\r\n      \"source\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\java-fluent-apis\\\\SKILL.md\",\r\n      \"href\": \"references/worked-example.md\",\r\n      \"target\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\java-fluent-apis\\\\references\\\\worked-example.md\"\r\n    }\r\n  ],\r\n  \"allReferencesRouted\": true,\r\n  \"changedFilesFromAssignment\": [],\r\n  \"finalFiles\": [\r\n    {\r\n      \"path\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\java-fluent-apis\\\\SKILL.md\",\r\n      \"bytes\": 11347,\r\n      \"sha256\": \"B6CADE9831E623642658B19062C15FB6460E47D824EE51B767B13ECAEB9F24F7\"\r\n    },\r\n    {\r\n      \"path\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\java-fluent-apis\\\\skill.yaml\",\r\n      \"bytes\": 1514,\r\n      \"sha256\": \"E64B1503EBF3C3D03DFACE43097DDAF00C466D2AF78A96117C05950673B85D0F\"\r\n    },\r\n    {\r\n      \"path\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\java-fluent-apis\\\\references\\\\builder-decision.md\",\r\n      \"bytes\": 9692,\r\n      \"sha256\": \"6A901559835D34B6BDAC11E971B574E59BB0E96671809D000DDD6F1DA21F3938\"\r\n    },\r\n    {\r\n      \"path\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\java-fluent-apis\\\\references\\\\worked-example.md\",\r\n      \"bytes\": 9482,\r\n      \"sha256\": \"6F0D66C411DF88315E2387C0B1B1D19411C8BC386748ED422F2339D36C6079EF\"\r\n    }\r\n  ]\r\n}\r\n"
+    }
+  },
+  {
+    "status": "fulfilled",
+    "value": {
+      "chunk_id": "3a7b30",
+      "wall_time_seconds": 0.2109771,
+      "exit_code": 0,
+      "original_token_count": 17,
+      "output": "Checking formatting...\r\nAll matched files use Prettier code style!\r\n"
+    }
+  },
+  {
+    "status": "fulfilled",
+    "value": {
+      "chunk_id": "94ad1f",
+      "wall_time_seconds": 0.2140894,
+      "exit_code": 0,
+      "original_token_count": 5,
+      "output": "\r\nversion: 1.2.5\r\n\r\n"
+    }
+  }
+]

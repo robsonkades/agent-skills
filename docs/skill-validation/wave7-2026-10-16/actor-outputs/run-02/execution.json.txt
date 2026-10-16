@@ -1,0 +1,461 @@
+{
+  "actorDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-02",
+  "firstObservedClockUtc": "2026-10-16 18:05:29 UTC",
+  "finishedAtUtc": "2026-10-16 18:10:16 UTC",
+  "reportingScope": "Actor-reported reads, commands and outcomes; not an independent complete OS trace. Boundaries were procedural, not OS isolation.",
+  "reads": [
+    {
+      "path": "TASK.md",
+      "fullContent": true,
+      "method": "Get-Content -Raw"
+    },
+    {
+      "path": "skill/SKILL.md",
+      "fullContent": true,
+      "method": "Get-Content -Raw"
+    },
+    {
+      "path": "input/project/README.md",
+      "fullContent": true,
+      "method": "Get-Content -Raw",
+      "log": "logs/project-and-reference-read.log"
+    },
+    {
+      "path": "input/project/REQUEST.md",
+      "fullContent": true,
+      "method": "Get-Content -Raw",
+      "log": "logs/project-and-reference-read.log"
+    },
+    {
+      "path": "input/project/CONTRACT.md",
+      "fullContent": true,
+      "method": "Get-Content -Raw",
+      "log": "logs/project-and-reference-read.log"
+    },
+    {
+      "path": "input/project/RUNBOOK.md",
+      "fullContent": true,
+      "method": "Get-Content -Raw",
+      "log": "logs/project-and-reference-read.log"
+    },
+    {
+      "path": "input/project/toolchain.json",
+      "fullContent": true,
+      "method": "Get-Content -Raw",
+      "log": "logs/project-and-reference-read.log"
+    },
+    {
+      "path": "input/project/dependencies.json",
+      "fullContent": true,
+      "method": "Get-Content -Raw",
+      "log": "logs/project-and-reference-read.log"
+    },
+    {
+      "path": "input/project/check.mjs",
+      "fullContent": true,
+      "method": "Get-Content -Raw",
+      "log": "logs/project-and-reference-read.log"
+    },
+    {
+      "path": "input/project/src/work/Config.java",
+      "fullContent": true,
+      "method": "Get-Content -Raw",
+      "log": "logs/project-and-reference-read.log"
+    },
+    {
+      "path": "input/project/src/work/BookingService.java",
+      "fullContent": true,
+      "method": "Get-Content -Raw",
+      "log": "logs/project-and-reference-read.log"
+    },
+    {
+      "path": "input/project/src/work/BookingRecorded.java",
+      "fullContent": true,
+      "method": "Get-Content -Raw",
+      "log": "logs/project-and-reference-read.log"
+    },
+    {
+      "path": "input/project/src/work/BookingListener.java",
+      "fullContent": true,
+      "method": "Get-Content -Raw",
+      "log": "logs/project-and-reference-read.log"
+    },
+    {
+      "path": "input/project/src/work/ReceiptObserver.java",
+      "fullContent": true,
+      "method": "Get-Content -Raw",
+      "log": "logs/project-and-reference-read.log"
+    },
+    {
+      "path": "input/project/src/work/ReceiptWriter.java",
+      "fullContent": true,
+      "method": "Get-Content -Raw",
+      "log": "logs/project-and-reference-read.log"
+    },
+    {
+      "path": "input/project/test/work/Smoke.java",
+      "fullContent": true,
+      "method": "Get-Content -Raw",
+      "log": "logs/project-and-reference-read.log"
+    },
+    {
+      "path": "skill/references/interception-and-rollback.md",
+      "fullContent": true,
+      "method": "Get-Content -Raw",
+      "log": "logs/project-and-reference-read.log"
+    },
+    {
+      "path": "skill/references/event-wiring-and-recovery.md",
+      "fullContent": true,
+      "method": "Get-Content -Raw",
+      "log": "logs/project-and-reference-read.log"
+    },
+    {
+      "path": "skill/references/verification.md",
+      "fullContent": true,
+      "method": "Get-Content -Raw",
+      "log": "logs/project-and-reference-read.log"
+    }
+  ],
+  "failedReadAttempts": [
+    {
+      "path": "README.md",
+      "reason": "Does not exist at actor root; subsequently read input/project/README.md"
+    },
+    {
+      "path": "REQUEST.md",
+      "reason": "Does not exist at actor root; subsequently read input/project/REQUEST.md"
+    },
+    {
+      "path": "CONTRACT.md",
+      "reason": "Does not exist at actor root; subsequently read input/project/CONTRACT.md"
+    }
+  ],
+  "readNotes": [
+    "The large combined tool display was truncated. Interception and event-wiring references were subsequently displayed fully; the full combined read is retained in logs/project-and-reference-read.log.",
+    "Metadata-only inventory: rg --files input/project output. It did not search binary contents.",
+    "The snapshot references were read fully; only interception, event wiring and verification guidance was applicable. No Boot/JPA/Modulith path was introduced."
+  ],
+  "programmaticReads": [
+    {
+      "purpose": "Original driver compilation and execution",
+      "paths": [
+        "output/project/check.mjs",
+        "output/project/toolchain.json",
+        "output/project/src/work/BookingService.java",
+        "output/project/src/work/BookingListener.java",
+        "output/project/src/work/BookingRecorded.java",
+        "output/project/src/work/Config.java",
+        "output/project/src/work/ReceiptObserver.java",
+        "output/project/src/work/ReceiptWriter.java",
+        "output/project/test/work/Smoke.java",
+        "output/project/test/work/Regression.java"
+      ],
+      "fullText": true
+    },
+    {
+      "purpose": "Negative control construction",
+      "paths": [
+        "output/checks/blanket-requires-new.mjs",
+        "output/project/toolchain.json",
+        "output/project/src/work/ReceiptWriter.java"
+      ],
+      "fullText": true
+    },
+    {
+      "purpose": "Classpath loading",
+      "paths": [
+        "output/project/lib/spring-tx-7.0.9.jar",
+        "output/project/lib/spring-jdbc-7.0.9.jar",
+        "output/project/lib/spring-expression-7.0.9.jar",
+        "output/project/lib/spring-core-7.0.9.jar",
+        "output/project/lib/spring-context-7.0.9.jar",
+        "output/project/lib/spring-beans-7.0.9.jar",
+        "output/project/lib/spring-aop-7.0.9.jar",
+        "output/project/lib/micrometer-observation-1.16.7.jar",
+        "output/project/lib/micrometer-commons-1.16.7.jar",
+        "output/project/lib/jspecify-1.0.0.jar",
+        "output/project/lib/h2-2.4.240.jar",
+        "output/project/lib/commons-logging-1.3.5.jar"
+      ],
+      "fullContent": false,
+      "note": "JDK class loading is not a model text read; individual entries accessed were not independently traced."
+    },
+    {
+      "purpose": "Byte preservation check",
+      "paths": [
+        "input/project/CONTRACT.md",
+        "output/project/CONTRACT.md",
+        "input/project/REQUEST.md",
+        "output/project/REQUEST.md",
+        "input/project/README.md",
+        "output/project/README.md",
+        "input/project/check.mjs",
+        "output/project/check.mjs",
+        "input/project/dependencies.json",
+        "output/project/dependencies.json",
+        "input/project/toolchain.json",
+        "output/project/toolchain.json",
+        "input/project/src/work/BookingService.java",
+        "output/project/src/work/BookingService.java",
+        "input/project/src/work/BookingListener.java",
+        "output/project/src/work/BookingListener.java",
+        "input/project/src/work/BookingRecorded.java",
+        "output/project/src/work/BookingRecorded.java",
+        "input/project/src/work/Config.java",
+        "output/project/src/work/Config.java",
+        "input/project/src/work/ReceiptObserver.java",
+        "output/project/src/work/ReceiptObserver.java",
+        "input/project/src/work/ReceiptWriter.java",
+        "output/project/src/work/ReceiptWriter.java",
+        "input/project/test/work/Smoke.java",
+        "output/project/test/work/Smoke.java",
+        "input/project/lib/spring-tx-7.0.9.jar",
+        "output/project/lib/spring-tx-7.0.9.jar",
+        "input/project/lib/spring-jdbc-7.0.9.jar",
+        "output/project/lib/spring-jdbc-7.0.9.jar",
+        "input/project/lib/spring-expression-7.0.9.jar",
+        "output/project/lib/spring-expression-7.0.9.jar",
+        "input/project/lib/spring-core-7.0.9.jar",
+        "output/project/lib/spring-core-7.0.9.jar",
+        "input/project/lib/spring-context-7.0.9.jar",
+        "output/project/lib/spring-context-7.0.9.jar",
+        "input/project/lib/spring-beans-7.0.9.jar",
+        "output/project/lib/spring-beans-7.0.9.jar",
+        "input/project/lib/spring-aop-7.0.9.jar",
+        "output/project/lib/spring-aop-7.0.9.jar",
+        "input/project/lib/micrometer-observation-1.16.7.jar",
+        "output/project/lib/micrometer-observation-1.16.7.jar",
+        "input/project/lib/micrometer-commons-1.16.7.jar",
+        "output/project/lib/micrometer-commons-1.16.7.jar",
+        "input/project/lib/jspecify-1.0.0.jar",
+        "output/project/lib/jspecify-1.0.0.jar",
+        "input/project/lib/h2-2.4.240.jar",
+        "output/project/lib/h2-2.4.240.jar",
+        "input/project/lib/commons-logging-1.3.5.jar",
+        "output/project/lib/commons-logging-1.3.5.jar"
+      ],
+      "fullContent": true,
+      "interpretation": "SHA-256 byte processing only, not text inspection"
+    },
+    {
+      "purpose": "Compiler/JVM generated class files",
+      "pathPattern": "output/project/.build/** and output/checks/requires-new/classes/**",
+      "fullContent": false,
+      "note": "Generated by recorded compiler calls; runtime class loading was not independently traced."
+    },
+    {
+      "purpose": "Final artifact validation",
+      "paths": [
+        "output/assessment.json",
+        "output/execution.json",
+        "output/REVIEW.md",
+        "output/checks/requires-new-results.json"
+      ],
+      "fullContent": true,
+      "note": "Node JSON parsing and word/count assertions; recorded command output is logs/artifact-validation.log."
+    }
+  ],
+  "commands": [
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-02",
+      "argv": [
+        "Get-Content",
+        "-LiteralPath",
+        "TASK.md",
+        "-Raw"
+      ],
+      "shell": "PowerShell",
+      "exit": 0,
+      "stdoutContentRef": "../TASK.md",
+      "stderr": ""
+    },
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-02",
+      "argv": [
+        "Get-Content",
+        "-LiteralPath",
+        "README.md",
+        "REQUEST.md",
+        "CONTRACT.md",
+        "skill/SKILL.md",
+        "-Raw"
+      ],
+      "shell": "PowerShell",
+      "exit": 1,
+      "stdoutContentRef": "../skill/SKILL.md",
+      "stderr": "Cannot find path 'README.md' because it does not exist.\nCannot find path 'REQUEST.md' because it does not exist.\nCannot find path 'CONTRACT.md' because it does not exist.\n",
+      "note": "PowerShell location/line decorations omitted from this actor report; all three failures preserved."
+    },
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-02",
+      "argv": [
+        "rg",
+        "--files",
+        "input/project",
+        "output"
+      ],
+      "exit": 0,
+      "stdout": "input/project\\toolchain.json\ninput/project\\test\\work\\Smoke.java\noutput\\project\\toolchain.json\noutput\\project\\test\\work\\Smoke.java\ninput/project\\src\\work\\ReceiptWriter.java\noutput\\project\\src\\work\\ReceiptWriter.java\noutput\\project\\src\\work\\ReceiptObserver.java\ninput/project\\src\\work\\ReceiptObserver.java\noutput\\project\\src\\work\\Config.java\ninput/project\\src\\work\\Config.java\noutput\\project\\src\\work\\BookingService.java\ninput/project\\src\\work\\BookingService.java\noutput\\project\\src\\work\\BookingRecorded.java\ninput/project\\src\\work\\BookingRecorded.java\noutput\\project\\src\\work\\BookingListener.java\ninput/project\\src\\work\\BookingListener.java\noutput\\project\\RUNBOOK.md\noutput\\project\\REQUEST.md\noutput\\project\\README.md\ninput/project\\RUNBOOK.md\ninput/project\\REQUEST.md\ninput/project\\README.md\noutput\\project\\lib\\spring-tx-7.0.9.jar\noutput\\project\\lib\\spring-jdbc-7.0.9.jar\noutput\\project\\lib\\spring-expression-7.0.9.jar\noutput\\project\\lib\\spring-core-7.0.9.jar\noutput\\project\\lib\\spring-context-7.0.9.jar\noutput\\project\\lib\\spring-beans-7.0.9.jar\noutput\\project\\lib\\spring-aop-7.0.9.jar\noutput\\project\\lib\\micrometer-observation-1.16.7.jar\noutput\\project\\lib\\micrometer-commons-1.16.7.jar\noutput\\project\\lib\\jspecify-1.0.0.jar\noutput\\project\\lib\\h2-2.4.240.jar\noutput\\project\\lib\\commons-logging-1.3.5.jar\noutput\\project\\dependencies.json\noutput\\project\\CONTRACT.md\noutput\\project\\check.mjs\ninput/project\\dependencies.json\ninput/project\\CONTRACT.md\ninput/project\\check.mjs\ninput/project\\lib\\h2-2.4.240.jar\ninput/project\\lib\\commons-logging-1.3.5.jar\ninput/project\\lib\\jspecify-1.0.0.jar\ninput/project\\lib\\spring-tx-7.0.9.jar\ninput/project\\lib\\spring-jdbc-7.0.9.jar\ninput/project\\lib\\spring-expression-7.0.9.jar\ninput/project\\lib\\spring-core-7.0.9.jar\ninput/project\\lib\\spring-context-7.0.9.jar\ninput/project\\lib\\spring-beans-7.0.9.jar\ninput/project\\lib\\spring-aop-7.0.9.jar\ninput/project\\lib\\micrometer-commons-1.16.7.jar\ninput/project\\lib\\micrometer-observation-1.16.7.jar\n",
+      "stderr": "",
+      "note": "Filename inventory only; no file content searched."
+    },
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-02",
+      "argv": [
+        "powershell",
+        "-Command",
+        "$paths = @('input/project/README.md','input/project/REQUEST.md','input/project/CONTRACT.md','input/project/RUNBOOK.md','input/project/toolchain.json','input/project/dependencies.json','input/project/check.mjs','input/project/src/work/Config.java','input/project/src/work/BookingService.java','input/project/src/work/BookingRecorded.java','input/project/src/work/BookingListener.java','input/project/src/work/ReceiptObserver.java','input/project/src/work/ReceiptWriter.java','input/project/test/work/Smoke.java','skill/references/interception-and-rollback.md','skill/references/event-wiring-and-recovery.md','skill/references/verification.md'); foreach ($path in $paths) { Write-Output \"FILE: $path\"; Get-Content -LiteralPath $path -Raw }"
+      ],
+      "exit": 0,
+      "combinedOutputLog": "logs/project-and-reference-read.log"
+    },
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-02",
+      "argv": [
+        "Get-Content",
+        "-LiteralPath",
+        "skill/references/interception-and-rollback.md",
+        "-Raw"
+      ],
+      "shell": "PowerShell",
+      "exit": 0,
+      "combinedOutputLog": "logs/interception-read.log"
+    },
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-02",
+      "argv": [
+        "Get-Content",
+        "-LiteralPath",
+        "skill/references/event-wiring-and-recovery.md",
+        "-Raw"
+      ],
+      "shell": "PowerShell",
+      "exit": 0,
+      "combinedOutputLog": "logs/event-wiring-read.log"
+    },
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-02/output/project",
+      "argv": [
+        "node",
+        "check.mjs"
+      ],
+      "exit": 0,
+      "combinedOutputLog": "logs/baseline-smoke.log",
+      "wallSeconds": 1.1467968,
+      "childTimeoutMs": 30000
+    },
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-02/output/project",
+      "argv": [
+        "node",
+        "check.mjs",
+        "work.Regression"
+      ],
+      "exit": 0,
+      "combinedOutputLog": "logs/regression.log",
+      "wallSeconds": 1.8575825,
+      "childTimeoutMs": 30000
+    },
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-02/output/project",
+      "argv": [
+        "node",
+        "../checks/blanket-requires-new.mjs"
+      ],
+      "exit": 0,
+      "combinedOutputLog": "logs/negative-control.log",
+      "wallSeconds": 1.4986690999999999,
+      "childCommandRecords": "checks/requires-new-results.json",
+      "childTimeoutMs": 30000,
+      "note": "Mutant Java exit 1 is expected and preserved; wrapper exit 0 means the specified assertion rejected the blanket fix."
+    },
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-02/output/project",
+      "argv": [
+        "node",
+        "check.mjs"
+      ],
+      "exit": 0,
+      "combinedOutputLog": "logs/final-smoke.log",
+      "wallSeconds": 1.7294239999999999,
+      "childTimeoutMs": 30000
+    },
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-02",
+      "argv": [
+        "powershell",
+        "-Command",
+        "$taskInput = [IO.Path]::GetFullPath('input/project'); $taskOutput = [IO.Path]::GetFullPath('output/project'); $checked = 0; foreach ($file in Get-ChildItem -LiteralPath $taskInput -Recurse -File) { $relative = [IO.Path]::GetRelativePath($taskInput, $file.FullName); if ($relative -eq 'RUNBOOK.md') { continue }; $copy = Join-Path $taskOutput $relative; if ((Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash -ne (Get-FileHash -LiteralPath $copy -Algorithm SHA256).Hash) { throw \"Changed preserved file: $relative\" }; $checked++ }; Write-Output \"PASS $checked original source, test and frozen files match input bytes; only RUNBOOK and added regression/control artifacts differ.\""
+      ],
+      "exit": 0,
+      "combinedOutputLog": "logs/preserved-files.log",
+      "wallSeconds": 0.2019642
+    },
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-02/output",
+      "argv": [
+        "node",
+        "-e",
+        "const fs=require(\"node:fs\"); const assert=require(\"node:assert/strict\"); const a=JSON.parse(fs.readFileSync(\"assessment.json\",\"utf8\")); const e=JSON.parse(fs.readFileSync(\"execution.json\",\"utf8\")); const words=fs.readFileSync(\"REVIEW.md\",\"utf8\").trim().split(/\\s+/).length; assert(words<=800); assert.equal(a.decision,\"unchanged\"); assert.equal(a.regressionCommands.length,3); assert.equal(e.reads.length,19); for(const r of e.commands){assert.equal(typeof r.exit,\"number\"); if(r.combinedOutputLog) assert(fs.existsSync(r.combinedOutputLog));} const control=JSON.parse(fs.readFileSync(\"checks/requires-new-results.json\",\"utf8\")); assert.equal(control[0].exit,0); assert.equal(control[1].exit,1); assert(control[1].stderr.includes(\"expected 1, got 0\")); console.log(\"PASS artifacts: valid JSON, \"+words+\" review words, 19 explicit content reads, logs present, expected negative-control failure retained\");"
+      ],
+      "exit": 0,
+      "combinedOutputLog": "logs/artifact-validation.log",
+      "wallSeconds": 0.1493275
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://docs.spring.io/spring-framework/docs/7.0.9/javadoc-api/org/springframework/transaction/event/TransactionalEventListener.html",
+      "accessedAtUtc": "2026-10-16",
+      "method": "web open, twice",
+      "fullContent": false,
+      "usedFor": "Transaction-phase delivery, existing thread-bound transaction visibility and default skipping without a transaction."
+    },
+    {
+      "url": "https://docs.spring.io/spring-framework/docs/7.0.9/javadoc-api/org/springframework/transaction/annotation/Transactional.html",
+      "accessedAtUtc": "2026-10-16",
+      "method": "web open, twice",
+      "fullContent": false,
+      "usedFor": "Default REQUIRED propagation and unchecked-exception rollback rules."
+    }
+  ],
+  "writeActions": [
+    {
+      "method": "apply_patch",
+      "paths": [
+        "output/project/test/work/Regression.java",
+        "output/project/RUNBOOK.md",
+        "output/checks/blanket-requires-new.mjs",
+        "output/REVIEW.md",
+        "output/assessment.json",
+        "output/execution.json",
+        "output/logs/project-and-reference-read.log",
+        "output/logs/interception-read.log",
+        "output/logs/event-wiring-read.log",
+        "output/logs/baseline-smoke.log",
+        "output/logs/regression.log",
+        "output/logs/negative-control.log",
+        "output/logs/final-smoke.log",
+        "output/logs/preserved-files.log",
+        "output/logs/artifact-validation.log"
+      ]
+    },
+    {
+      "method": "original check.mjs / javac",
+      "paths": [
+        "output/project/.build/**"
+      ]
+    },
+    {
+      "method": "local negative control / javac",
+      "paths": [
+        "output/checks/requires-new/work/ReceiptWriter.java",
+        "output/checks/requires-new/classes/**",
+        "output/checks/requires-new-results.json"
+      ]
+    }
+  ],
+  "processStatus": "All shell, compiler and JVM commands returned. No persistent/background process or exec session was started. This finalized execution record is the last write.",
+  "allWritesStopped": true
+}

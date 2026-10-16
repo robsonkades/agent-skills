@@ -1,0 +1,102 @@
+{
+  "role": "independent evaluator",
+  "scope": {
+    "inputs_read": ["cases.json", "criteria.json (initial and revised)", "calibration.json"],
+    "excluded": ["skills", "actor outputs", "other wave outputs", "baseline or treatment labels", "expected calibration labels"],
+    "arithmetic_method": "isolated local arithmetic; no repository command or external source"
+  },
+  "status": "ready under the prospectively revised rubric; no outstanding factual or grading blocker",
+  "prospective_amendment_record": {
+    "timing": "Issues R1 through R6 were reported before the final review and before any actor ran. The coordinator accepted them, revised criteria.json, and only then supplied calibration.json for independent grading. The revised criteria were reread before grading.",
+    "R1": "Resolved: T2.2.C4 and global grading accept the scoped recommendation itself as the proportionate next step, without a compulsory administrative step or revisit trigger.",
+    "R2": "Resolved: T3.2.C4 accepts a concrete test/correction without an invented named owner.",
+    "R3": "Resolved: T2.2.C3 accepts semantic value/comparison evidence of the trade in either round; no separate formulaic sentence is mandatory.",
+    "R4": "Resolved: global grading expressly accepts correct totals plus comparison without restating the implied lead or saving.",
+    "R5": "Resolved: T4.1.C2 requires investigation A or a concrete equally valid decision step addressing the uncertainty; mere unexplained refusal fails.",
+    "R6": "Resolved: global grading permits unchanged first-stage context while requiring the second stage to apply the changed inputs and state the current decision.",
+    "rationale": "These are prospective clarifications of semantic acceptance, valid alternatives, and decision relevance. They correct avoidable false failures or ambiguity without changing the numerical facts or rewarding unsafe conclusions.",
+    "freeze_recommendation": "The revised rubric is ready to freeze for actor runs. Any later material amendment should preserve its rationale and require fresh affected runs, as the rubric already states."
+  },
+  "factual_and_math_review": {
+    "result": "pass",
+    "T1": "P's demonstrated bound is 20 minutes against the initial 25-minute limit. The authenticated update reduces the limit to 6 minutes; the same path no longer qualifies. Future costs are 410 versus 520 thousand, a saving of 110; the irrecoverable 90 is irrelevant. Failure of P does not prove that every route to N is impossible.",
+    "T2": "V_L=30+60w; V_M=80-25w; difference=85w-50. At w=0.60, L=66 and M=65. At 0.55, L=63 and M=66.25; at 0.65, L=69 and M=63.75. Crossover is 10/17, approximately 0.588235. At approved w=0.56, L=63.6 and M=66, so M leads by 2.4. These are preference-value calculations, not performance percentages.",
+    "T3": "The supported U/u1 configuration has affirmative, audited evidence of losing acknowledged work. V/v1 has no recovery observation because the generator sent no work. A p99 measured to result-ready and a p99 measured to acknowledgment cannot establish a completed-work speed ratio. Neither the shorter deadline nor a small live pilot with an old binary supplies preservation or replay of accepted state.",
+    "T4": "J=12+12m thousand over 12 months, giving a range of 180 to 312. The crossover with H=240 is m=19. Investigation A can change the cost ranking; B is stipulated to affect no requirement or preference. At m=17, J=216, saving 24 against H. No further selection benchmark is warranted under the supplied fixed facts. The old 180 payment is sunk."
+  },
+  "issues": [
+    {
+      "id": "R1",
+      "location": "T2.2.C4",
+      "type": "overprescriptive action requirement",
+      "issue": "Requiring a separate next step or revisit condition can fail a complete answer that directly recommends M under the formally adopted weight, supplies the comparison, and correctly leaves implementation outside scope.",
+      "recommended_interpretation": "Accept the fully scoped present recommendation as the proportionate decision action. Additional administrative work or a revisit trigger is optional."
+    },
+    {
+      "id": "R2",
+      "location": "T3.2.C4",
+      "type": "overprescriptive ownership wording",
+      "issue": "The phrase 'assigned test/correction' could be read as requiring a named owner or invented assignment authority not supplied by the case.",
+      "recommended_interpretation": "Accept a concrete bounded same-day test or correction sequence with decisive observations, even without a named assignee. Do not reward invented authority."
+    },
+    {
+      "id": "R3",
+      "location": "T2.2.C3",
+      "type": "semantic versus phrase matching",
+      "issue": "A meaningful operations-versus-change trade can be established by correct values and the adopted-weight comparison without a separate sentence announcing an accepted trade-off.",
+      "recommended_interpretation": "Accept equivalent semantic evidence. A universal-dominance or improved-performance claim still fails. Do not require the words 'trade-off', 'authority', or 'preference'."
+    },
+    {
+      "id": "R4",
+      "location": "T2.1.C1, T2.2.C1, T4.2.C1",
+      "type": "redundant arithmetic requirement",
+      "issue": "Correct totals and the correct comparison already establish the implied lead or saving. Unlike T1.1.C3, these criteria do not explicitly say that separately restating the subtraction is optional.",
+      "recommended_interpretation": "Pass correct totals plus an accurate comparison even if the answer does not separately print the lead or saving. Material arithmetic errors remain failures; harmless rounding is accepted."
+    },
+    {
+      "id": "R5",
+      "location": "T4.1.C2",
+      "type": "under-specified valid alternative",
+      "issue": "'Choose A if using the day' could pass an unexplained refusal to investigate despite cost uncertainty that can reverse the ranking and an available, directly relevant one-day inquiry.",
+      "recommended_interpretation": "Prefer A or accept an equally concrete, justified way of resolving or conditionally handling the decision-relevant cost uncertainty. Do not treat the bare claim that investigation is unnecessary as sufficient."
+    },
+    {
+      "id": "R6",
+      "location": "global grading across sequential stages",
+      "type": "context and evidence attribution",
+      "issue": "The current rubric does not explicitly say whether an update answer may rely on unchanged facts and explanations already sealed in the first answer.",
+      "recommended_interpretation": "Earlier sealed content may establish unchanged context and need not be repeated verbatim. The update answer must itself apply changed inputs, state the resulting current decision, and avoid contradiction. Stale first-stage conclusions cannot satisfy the update."
+    }
+  ],
+  "semantic_acceptance_notes": [
+    "Grade substantive claims and decision consequences, not isolated words or absence of optional headings.",
+    "T1 accepts conditional direction subject only to the ordinary rollout process; it does not require invented technical uncertainty.",
+    "T1 after the update accepts retaining R now, or keeping R while a bounded alternative-path inquiry proceeds. It does not require proving every N path impossible.",
+    "T2 before weight approval accepts a conditional decision table or a clearly qualified recommendation at 0.60, together with resolution of the actual preference disagreement.",
+    "T3 may say the offered U configuration fails, without a ritual disclaimer about every imaginable U configuration. Only an actual unsupported generalization should fail that scope requirement.",
+    "T3 may simply explain why the latency endpoints differ; it need not additionally celebrate or restate the arithmetic ratio of 40.",
+    "T3 permits synthetic or otherwise nonproduction investigation and conditional future launch after evidence. Declining today's real-work launch is not a ban on experimentation.",
+    "T4 accepts equivalent inequalities and a cost-based conditional recommendation. A tie at m=19 entails no strict preference under the sole supplied differentiator.",
+    "T4 after the update may directly recommend J for the given 12-month fixed-volume scope; an extra invented disadvantage or forced delay would contradict the case."
+  ],
+  "calibration": {
+    "artifact": "review/calibration-grades.json",
+    "method": "Independent manual semantic grading of all 12 samples, both stages, and C1 through C4, with output excerpts and reasons. No expected labels were consulted.",
+    "schema": "samples[].stages[stage].criteria[criterion] contains pass, evidence, and reason; stage and sample pass are separately recorded.",
+    "sample_passed": 8,
+    "sample_total": 12,
+    "stage_passed": 16,
+    "stage_total": 24,
+    "criterion_passed": 64,
+    "criterion_total": 96,
+    "passed_samples": ["K01", "K02", "K04", "K05", "K07", "K08", "K10", "K11"],
+    "failed_samples": ["K03", "K06", "K09", "K12"],
+    "readiness": "Ready for later assigned masked packets using the frozen rubric; no actor packet has been read or graded."
+  },
+  "limits": [
+    "The controls are short and authored, with unusually conspicuous good or bad behaviors. They check rubric application on these specific texts, not reliability on longer ambiguous actor responses.",
+    "No independent expected-label comparison was consulted, so this review alone does not establish inter-rater agreement.",
+    "Sequential stages and repeated criteria are correlated. Counts of criterion judgments must not be presented as independent task samples.",
+    "This review supplies no evidence of population-level or real-system benefit. Procedural file-access boundaries are not operating-system isolation."
+  ]
+}

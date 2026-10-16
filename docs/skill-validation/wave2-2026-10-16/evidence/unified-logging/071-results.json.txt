@@ -1,0 +1,248 @@
+{
+  "clearedChildVariables": [
+    "JDK_JAVA_OPTIONS",
+    "JAVA_TOOL_OPTIONS",
+    "_JAVA_OPTIONS"
+  ],
+  "compilerTarget": 25,
+  "cases": [
+    {
+      "name": "list-only",
+      "targetPid": 30316,
+      "startupArgs": [
+        "-Xms16m",
+        "-Xmx32m",
+        "-XX:+UseSerialGC",
+        "-Xlog:gc=info:file=a.log:time,level,tags:filecount=2,filesize=0",
+        "-Xlog:class+load=info:file=b.log:time,level,tags:filecount=2,filesize=0",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc\\validated-final",
+        "LoggingProbe"
+      ],
+      "actionArgs": [
+        "30316",
+        "VM.log",
+        "list"
+      ],
+      "beforeConfiguration": [
+        "#0: stdout all=warning uptime,level,tags foldmultilines=false",
+        "#1: stderr all=off uptime,level,tags foldmultilines=false",
+        "#2: file=a.log all=off,gc=info time,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false",
+        "#3: file=b.log all=off,class+load=info time,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false"
+      ],
+      "afterConfiguration": [
+        "#0: stdout all=warning uptime,level,tags foldmultilines=false",
+        "#1: stderr all=off uptime,level,tags foldmultilines=false",
+        "#2: file=a.log all=off,gc=info time,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false",
+        "#3: file=b.log all=off,class+load=info time,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false"
+      ],
+      "beforeFiles": [
+        "a.log",
+        "b.log",
+        "before-list.json",
+        "help.json"
+      ],
+      "afterFiles": [
+        "a.log",
+        "action.json",
+        "after-list.json",
+        "b.log",
+        "before-list.json",
+        "help.json"
+      ],
+      "assertions": "PASS"
+    },
+    {
+      "name": "list-with-output",
+      "targetPid": 18456,
+      "startupArgs": [
+        "-Xms16m",
+        "-Xmx32m",
+        "-XX:+UseSerialGC",
+        "-Xlog:gc=info:file=a.log:time,level,tags:filecount=2,filesize=0",
+        "-Xlog:class+load=info:file=b.log:time,level,tags:filecount=2,filesize=0",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc\\validated-final",
+        "LoggingProbe"
+      ],
+      "actionArgs": [
+        "18456",
+        "VM.log",
+        "output=file=a.log",
+        "list"
+      ],
+      "beforeConfiguration": [
+        "#0: stdout all=warning uptime,level,tags foldmultilines=false",
+        "#1: stderr all=off uptime,level,tags foldmultilines=false",
+        "#2: file=a.log all=off,gc=info time,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false",
+        "#3: file=b.log all=off,class+load=info time,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false"
+      ],
+      "afterConfiguration": [
+        "#0: stdout all=warning uptime,level,tags foldmultilines=false",
+        "#1: stderr all=off uptime,level,tags foldmultilines=false",
+        "#2: file=a.log all=info uptime,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false",
+        "#3: file=b.log all=off,class+load=info time,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false"
+      ],
+      "beforeFiles": [
+        "a.log",
+        "b.log",
+        "before-list.json",
+        "help.json"
+      ],
+      "afterFiles": [
+        "a.log",
+        "action.json",
+        "after-list.json",
+        "b.log",
+        "before-list.json",
+        "help.json"
+      ],
+      "assertions": "PASS"
+    },
+    {
+      "name": "rotate-with-output",
+      "targetPid": 20436,
+      "startupArgs": [
+        "-Xms16m",
+        "-Xmx32m",
+        "-XX:+UseSerialGC",
+        "-Xlog:gc=info:file=a.log:time,level,tags:filecount=2,filesize=0",
+        "-Xlog:class+load=info:file=b.log:time,level,tags:filecount=2,filesize=0",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc\\validated-final",
+        "LoggingProbe"
+      ],
+      "actionArgs": [
+        "20436",
+        "VM.log",
+        "output=file=a.log",
+        "what=gc=info",
+        "decorators=time,level,tags",
+        "rotate"
+      ],
+      "beforeConfiguration": [
+        "#0: stdout all=warning uptime,level,tags foldmultilines=false",
+        "#1: stderr all=off uptime,level,tags foldmultilines=false",
+        "#2: file=a.log all=off,gc=info time,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false",
+        "#3: file=b.log all=off,class+load=info time,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false"
+      ],
+      "afterConfiguration": [
+        "#0: stdout all=warning uptime,level,tags foldmultilines=false",
+        "#1: stderr all=off uptime,level,tags foldmultilines=false",
+        "#2: file=a.log all=off,gc=info time,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false",
+        "#3: file=b.log all=off,class+load=info time,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false"
+      ],
+      "beforeFiles": [
+        "a.log",
+        "b.log",
+        "before-list.json",
+        "help.json"
+      ],
+      "afterFiles": [
+        "a.log",
+        "a.log.0",
+        "action.json",
+        "after-list.json",
+        "b.log",
+        "b.log.0",
+        "before-list.json",
+        "help.json"
+      ],
+      "assertions": "PASS"
+    },
+    {
+      "name": "rotate-false",
+      "targetPid": 34976,
+      "startupArgs": [
+        "-Xms16m",
+        "-Xmx32m",
+        "-XX:+UseSerialGC",
+        "-Xlog:gc=info:file=a.log:time,level,tags:filecount=2,filesize=0",
+        "-Xlog:class+load=info:file=b.log:time,level,tags:filecount=2,filesize=0",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc\\validated-final",
+        "LoggingProbe"
+      ],
+      "actionArgs": [
+        "34976",
+        "VM.log",
+        "rotate=false"
+      ],
+      "beforeConfiguration": [
+        "#0: stdout all=warning uptime,level,tags foldmultilines=false",
+        "#1: stderr all=off uptime,level,tags foldmultilines=false",
+        "#2: file=a.log all=off,gc=info time,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false",
+        "#3: file=b.log all=off,class+load=info time,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false"
+      ],
+      "afterConfiguration": [
+        "#0: stdout all=warning uptime,level,tags foldmultilines=false",
+        "#1: stderr all=off uptime,level,tags foldmultilines=false",
+        "#2: file=a.log all=off,gc=info time,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false",
+        "#3: file=b.log all=off,class+load=info time,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false"
+      ],
+      "beforeFiles": [
+        "a.log",
+        "b.log",
+        "before-list.json",
+        "help.json"
+      ],
+      "afterFiles": [
+        "a.log",
+        "a.log.0",
+        "action.json",
+        "after-list.json",
+        "b.log",
+        "b.log.0",
+        "before-list.json",
+        "help.json"
+      ],
+      "assertions": "PASS"
+    },
+    {
+      "name": "disable-false",
+      "targetPid": 25568,
+      "startupArgs": [
+        "-Xms16m",
+        "-Xmx32m",
+        "-XX:+UseSerialGC",
+        "-Xlog:gc=info:file=a.log:time,level,tags:filecount=2,filesize=0",
+        "-Xlog:class+load=info:file=b.log:time,level,tags:filecount=2,filesize=0",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc\\validated-final",
+        "LoggingProbe"
+      ],
+      "actionArgs": [
+        "25568",
+        "VM.log",
+        "disable=false"
+      ],
+      "beforeConfiguration": [
+        "#0: stdout all=warning uptime,level,tags foldmultilines=false",
+        "#1: stderr all=off uptime,level,tags foldmultilines=false",
+        "#2: file=a.log all=off,gc=info time,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false",
+        "#3: file=b.log all=off,class+load=info time,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false"
+      ],
+      "afterConfiguration": [
+        "#0: stdout all=off uptime,level,tags foldmultilines=false",
+        "#1: stderr all=off uptime,level,tags foldmultilines=false"
+      ],
+      "beforeFiles": [
+        "a.log",
+        "b.log",
+        "before-list.json",
+        "help.json"
+      ],
+      "afterFiles": [
+        "a.log",
+        "action.json",
+        "after-list.json",
+        "b.log",
+        "before-list.json",
+        "help.json"
+      ],
+      "assertions": "PASS"
+    }
+  ],
+  "allOwnedJvmsStopped": true,
+  "behavioralEvaluation": false
+}

@@ -1,0 +1,38 @@
+import assert from 'node:assert/strict';
+import {writeFileSync} from 'node:fs';
+
+// Exact probabilities under the stated independent Bernoulli model, not a benchmark.
+const alpha = 0.05;
+const upperAtZero = n => -Math.expm1(Math.log(alpha) / n);
+const sampleSize = 40_000;
+const candidateWindows = 20;
+const targetViolationRate = 0.0001;
+const trueViolationRate = 0.00011;
+const oneCleanWindowProbability = Math.exp(sampleSize * Math.log1p(-trueViolationRate));
+const anyCleanWindowProbability = -Math.expm1(
+  candidateWindows * Math.log1p(-oneCleanWindowProbability)
+);
+
+assert.ok(Math.abs(upperAtZero(10_000) - 0.000300) < 0.000001);
+assert.ok(upperAtZero(sampleSize) < targetViolationRate);
+assert.ok(trueViolationRate > targetViolationRate);
+assert.ok(oneCleanWindowProbability < alpha);
+assert.ok(anyCleanWindowProbability > alpha);
+
+const result = {
+  kind: 'Exact probability calculation; no runtime latency or behavioral evaluation',
+  model: 'IID Bernoulli deadline violations; disjoint candidate windows',
+  alpha,
+  zeroViolationUpperBoundAt10000: upperAtZero(10_000),
+  sampleSize,
+  zeroViolationUpperBoundAt40000: upperAtZero(sampleSize),
+  targetViolationRate,
+  trueViolationRate,
+  onePredeclaredWindowFalsePassProbability: oneCleanWindowProbability,
+  candidateWindows,
+  anyCleanWindowFalsePassProbability: anyCleanWindowProbability,
+  whyItDiscriminates: 'An unchanged predeclared terminal decision uses one window. Selecting any clean window gives multiple opportunities to falsely pass and exceeds 5% in this counterexample.',
+  result: 'PASS'
+};
+writeFileSync(new URL('./selection-results.json', import.meta.url), JSON.stringify(result, null, 2) + '\n');
+console.log(JSON.stringify(result, null, 2));

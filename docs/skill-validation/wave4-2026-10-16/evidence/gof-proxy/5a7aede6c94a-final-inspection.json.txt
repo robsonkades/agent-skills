@@ -1,0 +1,129 @@
+{
+  "checks": [
+    {
+      "id": "status",
+      "command": "git",
+      "args": [
+        "status",
+        "--short",
+        "--untracked-files=all",
+        "--ignored",
+        "--",
+        "skills/gof-proxy"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "id": "diffAgainstHead",
+      "command": "git",
+      "args": [
+        "diff",
+        "HEAD",
+        "--",
+        "skills/gof-proxy"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "id": "staged",
+      "command": "git",
+      "args": [
+        "diff",
+        "--cached",
+        "--",
+        "skills/gof-proxy"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "id": "unstaged",
+      "command": "git",
+      "args": [
+        "diff",
+        "--",
+        "skills/gof-proxy"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "id": "headManifest",
+      "command": "git",
+      "args": [
+        "show",
+        "HEAD:skills/gof-proxy/skill.yaml"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "schemaVersion: 1\n\nname: gof-proxy\nversion: 1.2.4\ndescription: >-\n  Proxy in modern Java: a stand-in that controls access to another object behind that object's own\n  interface — virtual (lazy), remote, protection and caching variants. Covers the central danger\n  of making a network call look like a method call, how a proxy differs from a decorator, the\n  self-invocation hole that silently disables @Transactional and @Cacheable, JPA lazy proxies and\n  LazyInitializationException, what CGLIB cannot proxy, and safe publication in a virtual proxy.\n  Use when a lazy-loading wrapper is proposed, when a remote call hides behind a plain interface,\n  when an annotation on a self-called method does nothing, when instanceof fails on an injected\n  bean or a JPA entity, or when authorisation is enforced by a wrapper the caller can bypass. Does\n  not cover adding stackable behaviour (gof-decorator), changing an interface (gof-adapter),\n  sharing instances to save memory (gof-flyweight), lazy loading strategy in JPA\n  (orm-behavioral-patterns), or client-side resilience policy (circuit-breakers).\n\nlicense: Apache-2.0\n\nauthors:\n  - name: agent-skills contributors\n    url: https://github.com/robsonkades/agent-skills\n\nhomepage: https://github.com/robsonkades/agent-skills/tree/main/skills/gof-proxy\nrepository:\n  type: git\n  url: https://github.com/robsonkades/agent-skills\n  directory: skills/gof-proxy\n\nkeywords:\n  - design-patterns\n  - gof\n  - structural\n  - proxy\n  - lazy-loading\n  - aop\n\nfiles:\n  - SKILL.md\n  - skill.yaml\n  - references/\n\ndependencies: []\n\nsuggests:\n  - architecture-testing\n  - circuit-breakers\n  - failure-models\n  - gof-adapter\n  - gof-decorator\n  - gof-flyweight\n  - gof-patterns-and-distribution\n  - idempotency\n  - inheritance-mapping-strategies\n  - java-dependency-inversion\n  - java-memory-model\n  - java-testing-strategy\n  - jit-inlining-and-escape-analysis\n  - kubernetes-service-lifecycle\n  - orm-behavioral-patterns\n  - orm-structural-mapping\n  - query-objects-and-specifications\n  - rpc-and-api-contracts\n  - timeouts-and-deadlines\n\ncapabilities:\n  - reads-source\n\nagentOverrides:\n  codex:\n    interface:\n      display_name: Proxy\n      short_description: A lie told for a reason; price the lie\n      default_prompt: Use Proxy to review this stand-in and what it hides.\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "id": "diffCheck",
+      "command": "git",
+      "args": [
+        "diff",
+        "--check",
+        "--",
+        "skills/gof-proxy"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null
+    }
+  ],
+  "files": [
+    {
+      "path": "C:/git/agent-skills/skills/gof-proxy/SKILL.md",
+      "relative": "SKILL.md",
+      "bytes": 12681,
+      "sha256": "481A62E2320177F9CB28FF54496C60E27210D26EA27B2CF03EFA96BDE053F2E9",
+      "baselineSha256": "481A62E2320177F9CB28FF54496C60E27210D26EA27B2CF03EFA96BDE053F2E9",
+      "matchesBaseline": true
+    },
+    {
+      "path": "C:/git/agent-skills/skills/gof-proxy/skill.yaml",
+      "relative": "skill.yaml",
+      "bytes": 2311,
+      "sha256": "89FB2DED91051927C7EAD6215933B5A2F09C051552277F379539FF91A4F31A94",
+      "baselineSha256": "89FB2DED91051927C7EAD6215933B5A2F09C051552277F379539FF91A4F31A94",
+      "matchesBaseline": true
+    },
+    {
+      "path": "C:/git/agent-skills/skills/gof-proxy/references/proxy-kinds-and-hazards.md",
+      "relative": "references/proxy-kinds-and-hazards.md",
+      "bytes": 15010,
+      "sha256": "8277B602CB1747EE706397C9B567A0D752B3F5365F8D79B943428B5C324B7084",
+      "baselineSha256": "8277B602CB1747EE706397C9B567A0D752B3F5365F8D79B943428B5C324B7084",
+      "matchesBaseline": true
+    },
+    {
+      "path": "C:/git/agent-skills/skills/gof-proxy/references/worked-example.md",
+      "relative": "references/worked-example.md",
+      "bytes": 10035,
+      "sha256": "8B35F43857F84F48023DC97F422265B80BA3932D086B1D4710CDF1B808742C15",
+      "baselineSha256": "8B35F43857F84F48023DC97F422265B80BA3932D086B1D4710CDF1B808742C15",
+      "matchesBaseline": true
+    }
+  ],
+  "unchanged": true,
+  "newPaths": []
+}

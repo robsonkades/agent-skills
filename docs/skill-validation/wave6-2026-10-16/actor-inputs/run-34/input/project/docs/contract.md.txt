@@ -1,0 +1,2 @@
+# Accepted contract
+Message captures the two integer words present at constructor invocation. Later recycling of the producer's buffer must not change a previously created message. Message has no mutator and exposes only checksum(). The producer owns its int[] and may recycle it as soon as construction returns; consumers may run concurrently with recycling. Null or non-two-element inputs are rejected. Source arrays are ordinary heap arrays, without reflection/native access. Preserve these ownership requirements and do not require callers to retain their buffers.

@@ -111,6 +111,11 @@ returned mutable data; and what happens on timeout or partial failure. These are
 when Java's type system cannot express them. State only guarantees the implementation and its
 datastore/protocol can actually preserve.
 
+For asynchronous APIs, distinguish the immediate return contract from the guarantees at
+normal or exceptional completion of the exact stage returned to the caller. A check in a
+discarded dependent stage does not establish the original stage's postcondition; see the
+completion-boundary guidance in [Contracts in Java 25](references/contracts-in-java.md#completion-is-a-separate-contract-boundary).
+
 For each anticipated failure, distinguish unchanged state from permitted partial progress
 that still preserves the invariant, or a documented unusable state requiring disposal.
 An exception does not itself undo earlier writes. If unchanged state is promised, prepare and
@@ -138,8 +143,8 @@ the existing contract rather than assuming a redesign is safe.
 
 - [Contracts in Java 25](references/contracts-in-java.md) — the contract-element →
   language-mechanism mapping table, Javadoc conventions, behavioural-subtyping
-  violations in concrete Java, exceptional state guarantees, detection heuristics and false
-  positives. Read when reviewing an API, failure path or override.
+  violations in concrete Java, exceptional state guarantees, asynchronous completion boundaries,
+  detection heuristics and false positives. Read when reviewing an API, failure path or override.
 - [Worked example: from implicit to explicit](references/explicit-contract-example.md)
   — a stock-reservation class whose invariants lived in callers' heads, made explicit
   via types, checks and documented contract. Read when applying the workflow.

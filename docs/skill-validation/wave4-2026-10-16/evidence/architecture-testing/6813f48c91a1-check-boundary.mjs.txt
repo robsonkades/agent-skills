@@ -1,0 +1,98 @@
+import assert from 'node:assert/strict';
+import { readFileSync, writeFileSync, mkdirSync, mkdtempSync, existsSync } from 'node:fs';
+import { dirname, join, delimiter } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+
+const artifacts = dirname(fileURLToPath(import.meta.url));
+const fixture = mkdtempSync(join(artifacts, 'boundary-'));
+const bin = 'C:/Users/robso/.jdks/temurin-25.0.3/bin';
+const cache = 'C:/Users/robso/.m2/repository';
+const jars = [
+  'com/tngtech/archunit/archunit/1.5.0/archunit-1.5.0.jar',
+  'org/slf4j/slf4j-api/2.0.18/slf4j-api-2.0.18.jar',
+  'org/junit/jupiter/junit-jupiter-api/5.11.4/junit-jupiter-api-5.11.4.jar',
+  'org/junit/jupiter/junit-jupiter-engine/5.11.4/junit-jupiter-engine-5.11.4.jar',
+  'org/junit/platform/junit-platform-launcher/1.11.4/junit-platform-launcher-1.11.4.jar',
+  'org/junit/platform/junit-platform-engine/1.11.4/junit-platform-engine-1.11.4.jar',
+  'org/junit/platform/junit-platform-commons/1.11.4/junit-platform-commons-1.11.4.jar',
+  'org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar',
+  'org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar',
+].map(path => join(cache, path));
+for (const path of jars) assert.ok(existsSync(path), path);
+const env = { ...process.env };
+for (const key of ['JAVA_TOOL_OPTIONS', 'JDK_JAVA_OPTIONS', '_JAVA_OPTIONS']) delete env[key];
+const commands = [];
+function run(name, executable, args, cwd, expected = 0) {
+  const result = spawnSync(executable, args, { cwd, encoding: 'utf8', env, timeout: 30000 });
+  const record = { name, executable, args, cwd, expectedExitCode: expected, exitCode: result.status, stdout: result.stdout ?? '', stderr: result.stderr ?? '', error: result.error?.message ?? null };
+  commands.push(record);
+  writeFileSync(join(fixture, `${name}.json`), JSON.stringify(record, null, 2));
+  assert.equal(result.error, undefined, name);
+  assert.equal(result.status, expected, `${name}: ${result.stdout}\n${result.stderr}`);
+  return record;
+}
+const docPath = 'C:/git/agent-skills/skills/architecture-testing/references/boundary-and-contract-tests.md';
+const doc = readFileSync(docPath, 'utf8');
+const blocks = [...doc.matchAll(/```java\r?\n([\s\S]*?)```/g)].map(match => match[1]);
+assert.equal(blocks.length, 1);
+const original = blocks[0];
+writeFileSync(join(fixture, 'extracted-ArchitectureTest.java'), original);
+const runner = `package review;
+import java.io.PrintWriter;
+import org.junit.platform.engine.discovery.DiscoverySelectors;
+import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
+import org.junit.platform.launcher.core.LauncherFactory;
+import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
+public class Runner {
+  public static void main(String[] args) {
+    var request = LauncherDiscoveryRequestBuilder.request()
+        .selectors(DiscoverySelectors.selectClass("com.acme.architecture.ArchitectureTest")).build();
+    var listener = new SummaryGeneratingListener();
+    LauncherFactory.create().execute(request, listener);
+    var summary = listener.getSummary();
+    summary.printTo(new PrintWriter(System.out, true));
+    summary.printFailuresTo(new PrintWriter(System.out, true));
+    if (summary.getTestsFoundCount() != 1 || summary.getTestsStartedCount() != 1
+        || summary.getTestsSkippedCount() != 0 || summary.getTestsAbortedCount() != 0) {
+      throw new AssertionError("Expected exactly one discovered, executed Jupiter test");
+    }
+    if (summary.getTestsFailedCount() > 0) System.exit(1);
+  }
+}
+`;
+const strict = original.replace('"jakarta.persistence..", "jakarta.servlet..")', '"jakarta.persistence..", "jakarta.servlet..", "java.sql..", "javax.sql..")');
+assert.notEqual(strict, original);
+const states = [
+  { id: 'clean', body: '', test: original, exit: 0 },
+  { id: 'listed-persistence', body: 'private com.acme.persistence.OrderStore store;', test: original, exit: 1, failure: /Architecture Violation[\s\S]*com\.acme\.persistence\.OrderStore/ },
+  { id: 'jdbc-selective', body: 'private java.sql.Connection connection;', test: original, exit: 0 },
+  { id: 'jdk-value', body: 'private java.math.BigDecimal amount;', test: original, exit: 0 },
+  { id: 'jdbc-explicit-ban', body: 'private java.sql.Connection connection;', test: strict, exit: 1, failure: /Architecture Violation[\s\S]*java\.sql\.Connection/ },
+  { id: 'wrong-root', body: '', test: original.replace('.importPackages("com.acme")', '.importPackages("com.nonexistent")'), exit: 1, failure: /No domain classes imported/ },
+];
+for (const state of states) {
+  const root = join(fixture, state.id);
+  const main = join(root, 'src/main/java');
+  const test = join(root, 'src/test/java');
+  const classes = join(root, 'target/classes');
+  const tests = join(root, 'target/test-classes');
+  for (const path of [join(main, 'com/acme/domain'), join(main, 'com/acme/persistence'), join(test, 'com/acme/architecture'), join(test, 'review'), classes, tests]) mkdirSync(path, { recursive: true });
+  const order = join(main, 'com/acme/domain/Order.java');
+  const store = join(main, 'com/acme/persistence/OrderStore.java');
+  const architecture = join(test, 'com/acme/architecture/ArchitectureTest.java');
+  const runFile = join(test, 'review/Runner.java');
+  writeFileSync(order, `package com.acme.domain; public class Order { ${state.body} }\n`);
+  writeFileSync(store, 'package com.acme.persistence; public class OrderStore {}\n');
+  writeFileSync(architecture, state.test);
+  writeFileSync(runFile, runner);
+  run(`${state.id}-compile-main`, join(bin, 'javac.exe'), ['-J-Xms16m', '-J-Xmx128m', '--release', '17', '-d', classes, order, store], root);
+  run(`${state.id}-compile-tests`, join(bin, 'javac.exe'), ['-J-Xms16m', '-J-Xmx128m', '--release', '17', '-cp', [classes, ...jars].join(delimiter), '-d', tests, architecture, runFile], root);
+  const result = run(`${state.id}-junit`, join(bin, 'java.exe'), ['-Xms32m', '-Xmx256m', '-cp', [tests, classes, ...jars].join(delimiter), 'review.Runner'], root, state.exit);
+  if (state.failure) assert.match(result.stdout, state.failure, state.id);
+}
+const summary = { fixture, source: docPath, sourceSha256: createHash('sha256').update(doc).digest('hex'), extractedJavaSha256: createHash('sha256').update(original).digest('hex'), target: 17, compilerAndRuntime: 'Temurin 25.0.3+9', dependencyVersions: { archunit: '1.5.0', junitJupiter: '5.11.4', junitPlatform: '1.11.4', slf4jApi: '2.0.18' }, dependencies: jars.map(path => ({ path, sha256: createHash('sha256').update(readFileSync(path)).digest('hex') })), commands, cases: states.map(({ id, body, exit }) => ({ id, body, expectedJunitExit: exit })), limits: ['No Java 17 runtime executed.', 'No database, reflection, generated wiring or remote-call behavior tested.', 'These are technical example controls, not independent agent evaluations.'] };
+writeFileSync(join(fixture, 'results.json'), JSON.stringify(summary, null, 2));
+writeFileSync(join(artifacts, 'latest-technical-results.json'), JSON.stringify(summary, null, 2));
+console.log(JSON.stringify({ fixture, resultPath: join(fixture, 'results.json'), commands: commands.length, junitExecutions: states.length, expectedRuleFailures: 3, result: 'PASS: every compile, discovery count, legitimate pass and intended failure matched expectations' }, null, 2));

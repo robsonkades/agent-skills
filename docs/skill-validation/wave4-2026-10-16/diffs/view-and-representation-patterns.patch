@@ -1,0 +1,23 @@
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\view-and-representation-patterns/references/two-step-view-and-modern-representations.md" "b/C:\\git\\agent-skills\\skills\\view-and-representation-patterns/references/two-step-view-and-modern-representations.md"
+index 44022d6..7873529 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\view-and-representation-patterns/references/two-step-view-and-modern-representations.md"
++++ "b/C:\\git\\agent-skills\\skills\\view-and-representation-patterns/references/two-step-view-and-modern-representations.md"
+@@ -193,4 +193,4 @@ Sources: [Fowler Two Step View](https://martinfowler.com/eaaCatalog/twoStepView.
+ [Spring 6.1.14 ProblemDetail](https://docs.spring.io/spring-framework/docs/6.1.14/javadoc-api/org/springframework/http/ProblemDetail.html),
+ [htmx caching and history](https://htmx.org/docs/#caching),
+ [RFC 9111 cache selection with Vary](https://www.rfc-editor.org/rfc/rfc9111.html#section-4.1),
+-[Servlet 6 response buffering and commitment](https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/servletresponse).
++[Servlet 6 response buffering and commitment](https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/ServletResponse.html).
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\view-and-representation-patterns/skill.yaml" "b/C:\\git\\agent-skills\\skills\\view-and-representation-patterns/skill.yaml"
+index 6c30289..161dba2 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\view-and-representation-patterns/skill.yaml"
++++ "b/C:\\git\\agent-skills\\skills\\view-and-representation-patterns/skill.yaml"
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: view-and-representation-patterns
+-version: 1.3.3
++version: 1.3.4
+ description: >-
+   Producing the response: Template View, Transform View and Two Step View as three ways to
+   turn a model into output, and what each becomes in a JSON API, a server-rendered page or a

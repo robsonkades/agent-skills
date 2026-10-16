@@ -1,0 +1,48 @@
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { readFileSync, existsSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { pathToFileURL, fileURLToPath } from 'node:url';
+
+const repo = resolve(process.argv[2] ?? 'C:/git/agent-skills');
+const skill = resolve(repo, 'skills/consistent-hashing');
+const temporary = dirname(fileURLToPath(import.meta.url));
+const { parseManifest } = await import(pathToFileURL(resolve(repo, 'packages/core/src/domain/manifest.ts')));
+const { parseSkillDocument, documentName, documentDescription } = await import(
+  pathToFileURL(resolve(repo, 'packages/core/src/domain/skill-document.ts'))
+);
+
+const { manifest, issues } = parseManifest(readFileSync(resolve(skill, 'skill.yaml'), 'utf8'), { strict: true });
+const document = parseSkillDocument(readFileSync(resolve(skill, 'SKILL.md'), 'utf8'));
+assert.deepEqual(issues, []);
+assert.equal(documentName(document), manifest.name);
+assert.equal(documentDescription(document), manifest.description);
+assert.equal(manifest.name, 'consistent-hashing');
+assert.equal(manifest.version, '1.2.5');
+for (const entry of manifest.files) assert.ok(existsSync(resolve(skill, entry)), `Missing declared file ${entry}`);
+
+let relativeLinks = 0;
+for (const file of ['SKILL.md', 'references/ring-in-java.md', 'references/mapping-functions.md']) {
+  const path = resolve(skill, file);
+  const text = readFileSync(path, 'utf8');
+  for (const match of text.matchAll(/\]\(([^\s)]+)\)/g)) {
+    const target = match[1].replace(/^<|>$/g, '');
+    if (/^(https?:|#)/.test(target)) continue;
+    assert.ok(existsSync(resolve(dirname(path), target.split('#')[0])), `Missing resource ${target}`);
+    relativeLinks++;
+  }
+}
+
+const ringText = readFileSync(resolve(skill, 'references/ring-in-java.md'), 'utf8');
+const extracted = /```java\r?\n([\s\S]*?)\r?\n```/.exec(ringText)?.[1];
+assert.ok(extracted, 'Executable Java example missing');
+assert.equal(extracted.replace(/\r\n/g, '\n').trim(),
+  readFileSync(resolve(temporary, 'HashRing.java'), 'utf8').replace(/\r\n/g, '\n').trim(),
+  'Executable example changed after extraction');
+assert.equal(createHash('sha256').update(readFileSync(resolve(skill, 'references/mapping-functions.md'))).digest('hex'),
+  'd9d5a8b4805b584f2b3e5e0d03d72f2cb638585374b39cad08f6f0965ffa75e9',
+  'Untouched mapping reference differs from assignment baseline');
+
+console.log(JSON.stringify({ status: 'PASS', scope: 'consistent-hashing only', manifestIssues: issues.length,
+  metadataAgreement: true, version: manifest.version, declaredPaths: manifest.files.length,
+  relativeLinks, unchangedExecutableExample: true, unchangedMappingReference: true }, null, 2));

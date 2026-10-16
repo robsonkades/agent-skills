@@ -1,0 +1,152 @@
+{
+  "task": "Review FF-17 for PR 842 from the supplied project records. State what its result establishes, whether the blocking control should be retained or adjusted, and the next validation needed. Preserve the approved architectural policy. Do not implement application tests or pipeline changes.",
+  "evaluationDate": "2026-10-16",
+  "fixturesAreSynthetic": true,
+  "files": {
+    "policy.json": {
+      "id": "ARCH-7",
+      "status": "approved",
+      "owner": "architecture lead",
+      "property": "For production origin classes in protectedModules, packages containing .domain. must have no static dependencies on a class whose package contains .infrastructure.",
+      "protectedModules": [
+        "order-api"
+      ],
+      "threshold": "zero unwaived dependency identities",
+      "violationIdentity": [
+        "rule",
+        "originClass",
+        "targetClass"
+      ],
+      "missingEvidenceAction": "FF-17 cannot approve the candidate; obtain applicable evidence or an authorized exception.",
+      "exceptionAuthority": "architecture lead",
+      "exceptionRequirements": [
+        "specific identity",
+        "owner",
+        "reason",
+        "expiry",
+        "compensating action"
+      ]
+    },
+    "fitness-contract.json": {
+      "id": "FF-17",
+      "configurationId": "ff17-config-12",
+      "policy": "ARCH-7",
+      "rule": "domain-static-dependencies",
+      "site": "PR architecture-tests job",
+      "response": "nonzero status blocks merge",
+      "claim": "ARCH-7 is satisfied for the candidate",
+      "tool": "ArchUnit 1.5.1",
+      "javaRelease": 21,
+      "ciRuntime": "Temurin 21",
+      "configuredOrigins": [
+        "com.acme.order.api.."
+      ],
+      "lifecycle": "test engine executes domain-static-dependencies for selected production origins; then approved exact-identity waivers are applied."
+    },
+    "candidate-build.json": {
+      "revision": "pr842-7c4d6a",
+      "artifacts": [
+        {
+          "module": "order-api",
+          "digest": "sha256:20b874d55b85a311e4c92cb3e9da973210706f20234b09bbf518dd7d4e2d52b1",
+          "productionClasses": 212,
+          "packageRoot": "com.acme.order.api"
+        },
+        {
+          "module": "settlement-worker",
+          "digest": "sha256:92707ffde9e59b0165acf41238b77fa0dee6f0f6e47655fa68eab6bdfb6bfaf0",
+          "productionClasses": 38,
+          "packageRoot": "com.acme.settlement.worker"
+        }
+      ]
+    },
+    "ff17-result.json": {
+      "revision": "pr842-7c4d6a",
+      "controlConfiguration": "ff17-config-12",
+      "executedOn": "2026-10-16",
+      "result": "pass",
+      "executed": true,
+      "selectedOrigins": {
+        "order-api": 212
+      },
+      "evaluatedArtifacts": [
+        {
+          "module": "order-api",
+          "digest": "sha256:20b874d55b85a311e4c92cb3e9da973210706f20234b09bbf518dd7d4e2d52b1"
+        }
+      ],
+      "rawViolations": [
+        {
+          "rule": "domain-static-dependencies",
+          "originClass": "com.acme.order.api.domain.LegacyOrder",
+          "targetClass": "com.acme.order.api.infrastructure.LegacyOrderStore"
+        }
+      ],
+      "appliedWaivers": [
+        "W-12"
+      ],
+      "unsuppressedViolations": 0,
+      "processExit": 0,
+      "gate": {
+        "state": "success",
+        "required": true
+      }
+    },
+    "waivers.json": [
+      {
+        "id": "W-12",
+        "status": "approved",
+        "approvedBy": "architecture lead",
+        "owner": "order-api lead",
+        "identity": {
+          "rule": "domain-static-dependencies",
+          "originClass": "com.acme.order.api.domain.LegacyOrder",
+          "targetClass": "com.acme.order.api.infrastructure.LegacyOrderStore"
+        },
+        "reason": "Bridge retained during the approved storage migration.",
+        "expiresOn": "2026-10-23",
+        "compensatingAction": "Migration owner reviews every edit touching the bridge until removal."
+      }
+    ],
+    "control-rehearsal.json": {
+      "controlConfiguration": "ff17-config-12",
+      "executedOn": "2026-10-15",
+      "results": [
+        {
+          "name": "order-api allowed dependency",
+          "originModule": "order-api",
+          "result": "pass",
+          "gate": "success"
+        },
+        {
+          "name": "order-api new forbidden dependency",
+          "originModule": "order-api",
+          "result": "violation",
+          "processExit": 1,
+          "gate": "failure"
+        },
+        {
+          "name": "order-api import unavailable",
+          "originModule": "order-api",
+          "result": "inconclusive",
+          "processExit": 2,
+          "gate": "failure"
+        },
+        {
+          "name": "W-12 expired",
+          "originModule": "order-api",
+          "result": "violation",
+          "processExit": 1,
+          "gate": "failure"
+        },
+        {
+          "name": "different target class under W-12 origin",
+          "originModule": "order-api",
+          "result": "violation",
+          "processExit": 1,
+          "gate": "failure"
+        }
+      ]
+    }
+  }
+}

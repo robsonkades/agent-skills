@@ -1,0 +1,1 @@
+PASS: All five supplied implementation, protocol, policy and adapter-contract files are unchanged.

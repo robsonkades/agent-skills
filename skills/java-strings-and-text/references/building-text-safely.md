@@ -26,6 +26,25 @@ a rewrite adds no useful benefit. These are independent sketches, not byte-equiv
 null and `toCsv()` escaping contracts. Avoid unchecked `rows.size() * 64` capacity arithmetic or
 unbounded speculative preallocation; a capacity hint is optional, not a size or work limit.
 
+**Preserve string conversion when changing the mechanism.** Overload resolution uses the
+operand's declared type. String concatenation converts a `char[]` as an object, while
+`append(char[])` copies its characters:
+
+```java
+char[] chars = {'A', 'B'};
+String original = "" + chars;                              // array object representation
+String preserved = new StringBuilder().append((Object) chars).toString();
+String contents = new StringBuilder().append(chars).toString(); // "AB": different contract
+```
+
+If `chars` is null, concatenation and `append((Object) chars)` produce `"null"`, but
+`append(char[])` throws `NullPointerException`. `String.valueOf(chars)` also selects the
+array-content overload; use the object conversion only when preserving that existing contract.
+An operand already declared `Object` selects `append(Object)` without a cast, even when its
+runtime value is a character array. Keep adequate conversions and verify output and exceptions
+against the actual consumers; switching from an array's object representation to its contents
+is a separate behaviour change, not a cost-only refactor.
+
 Other composition tools, by purpose:
 
 | Purpose                              | Tool                                                                         |
@@ -174,6 +193,8 @@ See java-reference-types-and-leaks.
 ## Authoritative references
 
 - [JLS §15.18.1: String Concatenation Operator](https://docs.oracle.com/javase/specs/jls/se25/html/jls-15.html#jls-15.18.1)
+- [JLS §5.1.11: String Conversion](https://docs.oracle.com/javase/specs/jls/se25/html/jls-5.html#jls-5.1.11)
+- [StringBuilder append overloads, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/StringBuilder.html)
 - [Pattern API, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/regex/Pattern.html)
 - [String.split limits, Java SE 25](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html#split(java.lang.String,int)>)
 - [OWASP input validation and ReDoS guidance](https://cheatsheetseries.owasp.org/cheatsheets/Input_Validation_Cheat_Sheet.html)

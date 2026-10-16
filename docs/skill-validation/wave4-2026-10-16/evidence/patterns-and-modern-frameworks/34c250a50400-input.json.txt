@@ -1,0 +1,21 @@
+{
+  "id": "patterns-and-modern-frameworks-A",
+  "task": "Revise a proposta descrita em docs/review-request.md usando os artefatos deste projeto. Entregue review.md com decisão, evidência dos arquivos e validação adequada ao contrato. Preserve o escopo de revisão e a configuração suficiente. Não altere produção ou dependências; checks isolados podem ser criados em review-checks/.",
+  "fixtureRoot": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/case-inputs/A/project",
+  "allowedWrites": [
+    "review.md",
+    "review-checks/**"
+  ],
+  "prerequisites": "JDK17+ and existing Spring Framework 6.2.10 jars. No dependency installation authorized. Review can resolve static contracts and declare runtime limits if jars unavailable.",
+  "files": [
+    "README.md",
+    "docs/cache-contract.md",
+    "docs/review-request.md",
+    "pom.xml",
+    "src/main/java/app/CacheConfiguration.java",
+    "src/main/java/app/CatalogCommands.java",
+    "src/main/java/app/CheckoutFlow.java",
+    "src/main/java/app/SandboxTransactionManager.java",
+    "src/test/java/app/Smoke.java"
+  ]
+}

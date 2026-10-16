@@ -46,8 +46,9 @@ when the sort key is not unique. Seed equal sort keys and require an explicit un
 tie-breaker in the query; one nonrepeating run cannot prove unspecified order is stable.
 Check index existence separately. This small fixture cannot establish production query cost.
 
-**Not written:** unit tests of the service that calls it, beyond one proving it passes the
-caller's page size through. That logic is one line.
+**Not written:** an extra service test solely to verify unchanged page-size forwarding.
+If the service clamps page size, translates filters or enforces access rules, those are
+separate risks worth focused cases. Line count alone does not decide their value.
 
 ## 3. A call to a third-party API
 
@@ -148,8 +149,11 @@ An assertion failure, an unavailable database and an undiscovered test are diffe
 
 **Not written:** a duplicate end-to-end migration test, or a filename rename that moves the
 integration test into an unintended fast suite. Keep the scope where the risk remains real.
-The execution checklist in `test-levels.md` also applies to Gradle/custom suites; determine
-their actual task graph rather than transplanting Maven commands.
+**Gradle variant:** a custom `integrationTest` suite with only `shouldRunAfter(test)` may be
+absent from `check`. Inspect CI and task dependencies before adding a missing connection;
+it may already run in a separate required job. If the task is included but says `FROM-CACHE`,
+distinguish reused evidence from a new execution and check whether reuse covers this claim.
+Use the execution guidance in `test-levels.md`; do not transplant Maven commands.
 
 ## The recurring shape
 

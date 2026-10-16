@@ -1,0 +1,2 @@
+PASS 24 focused contract checks
+Scope: Java source compiled --release 17, executed on the available JDK; no agent evaluation.

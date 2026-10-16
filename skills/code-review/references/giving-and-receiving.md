@@ -33,16 +33,53 @@ following is a fallback; choosing ordinary labels does not require another user 
 | Label          | Meaning                                                                                                         | Blocks merge  |
 | -------------- | --------------------------------------------------------------------------------------------------------------- | ------------- |
 | **Blocking**   | Supported defect or contract violation, concrete security/data risk, missing test for identified risky behavior | Yes           |
-| **Question**   | I do not understand this; the answer may or may not change things                                               | Not by itself |
+| **Question**   | A material fact remains unresolved after inspection; state which decision the answer changes                    | Not by itself |
 | **Suggestion** | I would do it differently; your call                                                                            | No            |
 | **Nit**        | Trivial and optional; ideally automated away                                                                    | No            |
 
 Repeated mechanical **Nits** can reveal an automation gap; inspect whether a suitable rule
 exists and runs before proposing a pipeline change. Contextual naming or explanatory comments
 may need human judgment, and a count of nits alone does not establish a missing check. Keep
-preferences non-blocking unless an explicit repository requirement applies. A **Question**
-that turns out to reveal a supported defect is upgraded explicitly, so the author knows the
-status changed.
+preferences non-blocking unless an explicit repository requirement applies.
+
+## Resolve the premise, then update the finding
+
+For a candidate defect, identify the required behavior, changed path, reachable trigger and
+consequence. Inspect the smallest decisive evidence: a caller or guard for reachability, a
+handler for failure translation, the deployed schema for an invariant, or a version-matched
+API contract. A passing unrelated test does not refute a static proof; a familiar code pattern
+does not establish a defect without its relevant conditions.
+
+Before reporting it, try the strongest plausible refutation: an upstream precondition, a
+downstream constraint/handler, a different resource owner, or an execution path that cannot
+reach the claimed effect. Open the decisive artifact at the reviewed revision; do not accept
+a comment, class name or search hit as proof that a control executes there. If the evidence
+refutes the candidate, discard it; if it only protects one caller, narrow the finding to the
+remaining reachable path. Keep a short reason in working notes when the rejected candidate
+would otherwise recur across passes; do not fill the final review with disproved suspicions.
+This check does not require a separate agent or runtime reproduction when source and contracts
+already settle the claim.
+
+Ask the author only for a material fact unavailable in the supplied context or repository.
+Make the fork explicit: "Is this task joined before the resource closes? If yes, this lifetime
+concern is resolved; otherwise the worker can use the closed resource." If that fact is needed
+for a verdict, mark the affected coverage incomplete and identify the evidence needed. Do not
+turn an unanswered question into a confirmed defect or stop unrelated review work.
+
+When new evidence arrives, check that it applies to the reviewed revision and execution path:
+
+- If it disproves the premise, withdraw the finding and correct any verdict that depended on it.
+- If it limits the affected paths or impact, narrow the finding and reassess severity.
+- If it confirms the concern, state the supported defect and upgrade a prior question explicitly.
+- If it does not address the trigger, explain the remaining mismatch and retain the supported
+  objection. An author's confidence or a delivery deadline is not counterevidence.
+
+For example, finding a unique constraint can invalidate a claim of duplicate committed rows;
+it does not resolve an independently evidenced duplicate external side effect. Keep those
+claims separate. A fix on a newer revision resolves a defect there; it does not prove the
+earlier finding was false. This follows Google's
+[guidance on considering author pushback](https://google.github.io/eng-practices/review/reviewer/pushback.html)
+while keeping the decision tied to the inspected artifact.
 
 ## Deadlock between reviewer and author
 
@@ -52,8 +89,9 @@ concrete rather than by repetition.
 1. **Separate the claim from the preference.** "This will deadlock under concurrent renewal" is
    checkable. "This is over-engineered" is not, until it names a specific abstraction and what
    it costs.
-2. **Check the checkable one.** Write the test, run the query, read the docs. Whoever is wrong
-   learns something; the alternative is two people spending an afternoon on assertion.
+2. **Check the checkable one.** Read the relevant contract or inspect the path first; run a
+   targeted check when needed. Update the finding using the evidence rules above instead of
+   repeating the assertion or requiring a new test when existing evidence settles it.
 3. **If it is genuinely a preference**, the author decides. They carry the change; a reviewer's
    taste is not a veto, and treating it as one is what makes people stop opening small pull
    requests.

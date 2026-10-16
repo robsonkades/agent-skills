@@ -1,0 +1,126 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+
+const runRoot = path.resolve(import.meta.dirname, '..');
+const outputRoot = path.join(runRoot, 'output');
+const journalPath = path.join(outputRoot, 'execution.json');
+const execution = JSON.parse(fs.readFileSync(journalPath, 'utf8'));
+const digest = content => crypto.createHash('sha256').update(content).digest('hex');
+function read(relative, purpose) {
+  const content = fs.readFileSync(path.join(runRoot, relative), 'utf8');
+  execution.filesRead.push({file: relative, purpose, fullFile: true, truncated: false,
+    bytes: Buffer.byteLength(content), sha256: digest(content), content});
+  return content;
+}
+
+const wrapper = (script, label) =>
+  `$verificationProcess = Start-Process -FilePath node -ArgumentList @('output/${script}') -WorkingDirectory 'C:/Users/robso/AppData/Local/Temp/skills-wave5-actors-4tJ3OK/run-04' -WindowStyle Hidden -RedirectStandardOutput 'output/${label}-runner.stdout.log' -RedirectStandardError 'output/${label}-runner.stderr.log' -PassThru\n` +
+  `if (-not $verificationProcess.WaitForExit(30000)) { $verificationProcess.Kill($true); throw 'Verification exceeded 30 seconds' }\n` +
+  `Get-Content -LiteralPath 'output/${label}-runner.stdout.log' -Raw\n` +
+  `Get-Content -LiteralPath 'output/${label}-runner.stderr.log' -Raw\n` +
+  'exit $verificationProcess.ExitCode';
+
+for (const [script, label] of [['run-verification.mjs', 'baseline'], ['final-verification.mjs', 'final']]) {
+  const stdout = read(`output/${label}-runner.stdout.log`, 'Full observed output of the bounded script process');
+  const stderr = read(`output/${label}-runner.stderr.log`, 'Full observed error output of the bounded script process');
+  execution.commands.push({phase: `${label}-runner`, kind: 'shell', shell: 'PowerShell',
+    exactCommand: wrapper(script, label), cwd: runRoot, exit: 0, timeoutMs: 30000,
+    stdout, stderr, executed: true, truncated: false,
+    resultEvidence: 'The tool returned exit 0 after WaitForExit; stdout and stderr are retained.'});
+}
+
+const childArgs = ['--release', '17', '-d', '.build', 'src\\work\\Catalog.java',
+  'src\\work\\Demo.java', 'src\\work\\Entry.java', 'src\\work\\Report.java', 'test\\work\\SelfTest.java'];
+for (const phase of ['baseline-check', 'final-check']) {
+  const entry = execution.commands.find(command => command.phase === phase);
+  entry.childCommands = [
+    {executable: 'C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe', args: childArgs,
+      cwd: entry.cwd, timeoutMs: 30000, exit: 0},
+    {executable: 'C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe', args: ['-cp', '.build', 'work.SelfTest'],
+      cwd: entry.cwd, timeoutMs: 30000, exit: 0}
+  ];
+  entry.childCommandEvidence = 'Reconstructed from the unchanged check.mjs and enumerated source files. Child exit 0 follows from the script continuing and returning 0; child output is the parent stdout/stderr. The child process API was not instrumented.';
+}
+
+for (const relative of ['output/REVIEW.md', 'output/seal-execution.mjs',
+  'output/experiments/snapshot/src/work/Catalog.java'])
+  read(relative, 'Final artifact review');
+
+execution.inputPreservation = [];
+for (const original of execution.filesRead.filter(item => item.file.startsWith('input/project/'))) {
+  const actual = fs.readFileSync(path.join(runRoot, original.file), 'utf8');
+  const same = digest(actual) === original.sha256;
+  execution.inputPreservation.push({file: original.file, originalSha256: original.sha256,
+    finalSha256: digest(actual), identical: same, fullFileRead: true, truncated: false,
+    contentReference: 'Same content as the earlier filesRead entry for this path'});
+  if (!same) throw new Error(`Original input changed: ${original.file}`);
+}
+const classVersion = execution.commands.find(item => item.phase === 'final-class-version').stdout;
+if (!classVersion.includes('major version: 61')) throw new Error('Java 17 class version not confirmed');
+const expectedDemo = 'first=1000\nfirst-after-reload=1200\nlatest=1200\n';
+for (const phase of ['baseline-demo', 'final-demo']) {
+  const output = execution.commands.find(item => item.phase === phase).stdout.replaceAll('\r\n', '\n');
+  if (output !== expectedDemo) throw new Error(`Unexpected Demo output in ${phase}`);
+}
+if (execution.commands.some(item => item.error || item.elapsedMs > 30000))
+  throw new Error('A process failed to meet the execution bounds');
+
+execution.edits.push(
+  {file: 'output/REVIEW.md', tool: 'apply_patch', purpose: 'Evidence, conclusion, changes and limitations'},
+  {file: 'output/seal-execution.mjs', tool: 'apply_patch', purpose: 'Audit final artifacts and record observed wrapper results'}
+);
+execution.generatedArtifacts = [
+  'output/execution.json', 'output/logs/*.json', 'output/*-runner.stdout.log', 'output/*-runner.stderr.log',
+  'output/project/.build/work/*.class', 'output/experiments/snapshot/src/work/Catalog.java',
+  'output/experiments/snapshot/classes/work/*.class'
+];
+execution.limitations = [
+  'No production, database, external renderer, prior revision or deployment history was supplied.',
+  'Compiled with --release 17 and executed only on Temurin 25.0.3+9; no separate Java 17 runtime execution.',
+  'Sequential catalog/open report flow was investigated; this is not a comprehensive audit of every possible API input.',
+  'The original check.mjs captures combined child output; its child argv and exits are reconstructed as explicitly marked.',
+  'Two initial reads targeted missing support.md/contract.md at the run root, then the supplied input/project files were used. No out-of-scope path was touched.'
+];
+execution.outcome = {
+  reportedBehaviorIsDefect: false,
+  reason: 'The accepted contract requires live updates of entries and total in already-open reports.',
+  productionCodeChanged: false,
+  testCodeChanged: true,
+  projectFilesChanged: ['test/work/SelfTest.java'],
+  contractChanged: false,
+  baselineChanged: false,
+  dependenciesChanged: false,
+  finalProjectVerificationPassed: true,
+  expectedExperimentalFailure: 'Snapshot alternative rejected at the first live reload assertion',
+  remainingProposedWork: []
+};
+execution.skillApplied = {
+  file: 'skill/SKILL.md', fullyRead: true, referencesRead: [],
+  workflow: ['inspect contract and affected path', 'separate observation and explanation',
+    'reproduce before editing', 'test refutable predictions', 'change one variable in isolated experiment',
+    'preserve adequate production behavior', 'retain evidence and limitations']
+};
+execution.accessSummary = {
+  readRoots: [runRoot], writeRoots: [outputRoot],
+  authorizedExecutableAccess: ['C:/Users/robso/.jdks/temurin-25.0.3/bin', 'available Node runtime'],
+  networkUsed: false, installsPerformed: false, globalSkillsRead: false, otherRunsRead: false,
+  repositoryRead: false, realAgentConfigurationAccessed: false,
+  accidentalOutOfScopeAccesses: []
+};
+execution.processes = {detachedProcesses: [], runningChildren: [],
+  evidence: 'All Java/javac/javap calls used spawnSync with timeout 30000. Both recorded Node script runners were awaited by PowerShell with a 30000 ms bound and returned exit 0. No background server was launched.'};
+execution.commands.push({phase: 'seal-execution', kind: 'process', executable: process.execPath,
+  args: ['output/seal-execution.mjs'], cwd: runRoot, executed: true, exit: 0,
+  resultEvidence: 'Reached final synchronous journal write after all assertions; the outer PowerShell runner waits for this process and enforces 30 seconds.',
+  stdout: 'Final artifacts audited; ready to seal\n', stderr: '', truncated: false});
+execution.commands.push({phase: 'seal-runner', kind: 'shell', shell: 'PowerShell',
+  exactCommand: "$verificationProcess = Start-Process -FilePath node -ArgumentList @('output/seal-execution.mjs') -WorkingDirectory 'C:/Users/robso/AppData/Local/Temp/skills-wave5-actors-4tJ3OK/run-04' -WindowStyle Hidden -PassThru\nif (-not $verificationProcess.WaitForExit(30000)) { $verificationProcess.Kill($true); throw 'Verification exceeded 30 seconds' }\nif ($verificationProcess.ExitCode -ne 0) { throw 'Final artifact audit failed' }\nWrite-Output 'Artifact audit passed; ready to seal'\nexit $verificationProcess.ExitCode",
+  cwd: runRoot, executed: true, timeoutMs: 30000,
+  exit: null, resultEvidence: 'This wrapper is still awaiting the current seal process; its actual exit is returned in the final tool result after the journal is sealed.',
+  output: 'Completion is reported by the outer tool; its result will be filled in by a final audit patch.', truncated: false});
+execution.status = 'awaiting_seal_wrapper_result';
+execution.allWritesStopped = false;
+// The outer wrapper result is filled only after its actual completion is observed.
+fs.writeFileSync(journalPath, JSON.stringify(execution, null, 2) + '\n');
+process.stdout.write('Final artifacts audited; ready to seal\n');

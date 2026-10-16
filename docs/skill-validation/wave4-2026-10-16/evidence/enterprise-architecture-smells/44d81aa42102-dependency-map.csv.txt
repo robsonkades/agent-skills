@@ -1,0 +1,5 @@
+source,target
+cli,repository-api
+server,repository-api
+server-adapter,repository-api
+server-adapter,spring-data

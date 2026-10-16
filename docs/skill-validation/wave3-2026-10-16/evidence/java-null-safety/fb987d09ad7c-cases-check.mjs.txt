@@ -1,0 +1,37 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
+import assert from 'node:assert/strict';
+const root = path.dirname(fileURLToPath(import.meta.url));
+const bin = 'C:/Users/robso/.jdks/temurin-25.0.3/bin';
+const commands = [];
+function run(id, executable, args, expectedExit) {
+  const r = spawnSync(executable, args, { cwd: root, encoding: 'utf8', timeout: 30000 });
+  const record = { id, executable, args, cwd: root, exitCode: r.status, expectedExit, signal: r.signal, stdout: r.stdout, stderr: r.stderr };
+  commands.push(record);
+  fs.writeFileSync(path.join(root, 'logs', id + '.json'), JSON.stringify(record, null, 2));
+  assert.equal(r.status, expectedExit, id + ': ' + r.stdout + r.stderr);
+  return r.stdout;
+}
+const classpaths = {};
+for (const id of ['a', 'b']) {
+  classpaths[id] = path.join(root, 'case-classes', id);
+  fs.mkdirSync(classpaths[id], { recursive: true });
+  run('compile-case-' + id, path.join(bin, 'javac.exe'), ['--release', '25', '-d', classpaths[id], path.join(root, 'cases', id, 'CatalogLookup.java'), path.join(root, 'CaseContractCheck.java')], 0);
+  const output = run('run-original-' + id, path.join(bin, 'java.exe'), ['-cp', classpaths[id], 'CaseContractCheck', id], id === 'a' ? 1 : 0);
+  assert.match(output, id === 'a' ? /checks=13, failures=7, policy=a/ : /checks=13, failures=0, policy=b/);
+}
+const original = fs.readFileSync(path.join(root, 'cases', 'a', 'CatalogLookup.java'), 'utf8');
+assert.equal(original, fs.readFileSync(path.join(root, 'cases', 'b', 'CatalogLookup.java'), 'utf8'));
+assert.equal(fs.readFileSync(path.join(root, 'cases', 'a', 'input.md'), 'utf8'), fs.readFileSync(path.join(root, 'cases', 'b', 'input.md'), 'utf8'));
+const corrected = original.replace('return values.computeIfAbsent(sku, loader);', 'if (values.containsKey(sku)) return values.get(sku);\n        String loaded = loader.apply(sku);\n        values.put(sku, loaded);\n        return loaded;');
+assert.notEqual(corrected, original);
+const control = path.join(root, 'completed-absence-control');
+fs.mkdirSync(control, { recursive: true });
+fs.writeFileSync(path.join(control, 'CatalogLookup.java'), corrected);
+run('compile-completed-absence-control', path.join(bin, 'javac.exe'), ['--release', '25', '-d', control, path.join(control, 'CatalogLookup.java'), path.join(root, 'CaseContractCheck.java')], 0);
+assert.match(run('run-control-a', path.join(bin, 'java.exe'), ['-cp', control, 'CaseContractCheck', 'a'], 0), /checks=13, failures=0, policy=a/);
+assert.match(run('run-control-b', path.join(bin, 'java.exe'), ['-cp', control, 'CaseContractCheck', 'b'], 1), /checks=13, failures=7, policy=b/);
+fs.writeFileSync(path.join(root, 'case-results.json'), JSON.stringify({ commands, agentEvaluationsExecuted: false }, null, 2));
+console.log(JSON.stringify({ checks: commands.map(({ id, exitCode, expectedExit }) => ({ id, exitCode, expectedExit })), agentEvaluationsExecuted: false }));

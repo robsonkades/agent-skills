@@ -53,6 +53,16 @@ inline or nested execution. Never fall back to running without required context 
 Alternatively, use visible rejection when inline execution cannot satisfy affinity or context
 requirements; retaining caller-runs is not mandatory.
 
+`ThreadPoolExecutor` termination does not wait for a caller-run body on an external submitter;
+`shutdownNow` does not interrupt that thread. This follows from the
+[Java 17 handler contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.CallerRunsPolicy.html)
+and the pinned OpenJDK implementation's `tryTerminate`/`interruptWorkers` paths above.
+Before closing shared dependencies, stop admission and drain producer/request lifetimes covering
+inline execution, including submissions racing shutdown. Reuse an adequate existing drain;
+otherwise register ownership before execution, close registration during stop and observe physical
+exit, not only Future cancellation. A zero active counter while admission remains open is not a
+drain barrier. Retain bounded grace and residual-work escalation when this drain cannot complete.
+
 ## Failures before the task body
 
 A `ThreadFactory` may refuse creation by returning `null`. `ThreadPoolExecutor` can then queue a
@@ -174,6 +184,11 @@ These are teaching cases with visible expectations, not measured agent evaluatio
   `submit`. Expect the direct caller to receive the first exception and the second Future to
   retain the failure. Assert that caller context is restored in both cases. Failure: treating a
   worker uncaught handler as sufficient or losing the Future's outcome.
+- **Drain boundary:** hold one worker, fill its queue and latch a third body inside caller-runs
+  on an external submitter. `shutdownNow` can return queued work and terminate the pool while that
+  third body remains active (reproduced on JDK 25.0.3). Verify dependency closure waits for its
+  physical exit. Changing only to AbortPolicy should visibly refuse the third task, with no inline
+  body to drain; do not require an extra tracker when existing ownership already proves completion.
 - **Stalled children:** each occupied worker submits a child to the same unbounded queue and
   waits for it. Inspect the wait graph before proposing more maximum workers; accepted queued
   children cannot make progress while all workers wait. Preserve the task's dependency/parallelism

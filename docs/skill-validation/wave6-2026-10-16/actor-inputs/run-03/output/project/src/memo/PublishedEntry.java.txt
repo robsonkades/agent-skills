@@ -1,0 +1,14 @@
+package memo;
+final class PublishedEntry {
+    private final Payload primary;
+    private Payload legacy;
+    PublishedEntry(int value) {
+        Payload payload = new Payload();
+        payload.value = value;
+        primary = payload;
+        legacy = payload;
+    }
+    int value() { return primary.value; }
+    int legacyValue() { return legacy.value; }
+    private static final class Payload { int value; }
+}

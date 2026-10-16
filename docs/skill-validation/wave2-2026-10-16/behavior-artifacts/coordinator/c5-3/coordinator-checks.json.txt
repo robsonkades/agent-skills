@@ -1,0 +1,18 @@
+{
+  "at": "2026-10-16T12:52:58.171Z",
+  "run": "c5-3",
+  "classification": "Independent finite-cohort arithmetic; decision semantics inspected by coordinator separately",
+  "command": [
+    "node",
+    "grade-capacity.mjs"
+  ],
+  "lower": 0.98,
+  "upper": 1,
+  "requiredGood": 9900,
+  "possibleOutcomeCounts": 201,
+  "passingPossibilities": 101,
+  "failingPossibilities": 100,
+  "expectedDecision": "UNRESOLVED",
+  "decisionSha256": "dd79f8b3338c286a2bdf508e06e4e55f35fd4c50b994b07b08f180fd7385fdf5",
+  "limits": "Accounting bounds only; no new load test, outcome reconstruction or future capacity proof."
+}

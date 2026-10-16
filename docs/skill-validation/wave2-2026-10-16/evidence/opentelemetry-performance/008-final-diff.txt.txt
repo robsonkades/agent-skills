@@ -1,0 +1,85 @@
+diff --git a/skills/opentelemetry-performance/SKILL.md b/skills/opentelemetry-performance/SKILL.md
+index da8560b..77bcce9 100644
+--- a/skills/opentelemetry-performance/SKILL.md
++++ b/skills/opentelemetry-performance/SKILL.md
+@@ -70,12 +70,16 @@ reactive/messaging boundary relevant to the question, reuse adequate existing ev
+ 
+ 1. test whether the pinned instrumentation already wraps it;
+ 2. assert parent/trace IDs in an integration fixture;
+-3. if missing, capture Context at submission and wrap/restore at execution;
++3. identify the action's logical parent and, if propagation is missing, capture its Context
++   before the relevant boundary: direct work at submission, request-owned deferred callbacks
++   at registration rather than a later submission under another operation;
+ 4. verify restoration and avoid unnecessary wrapping and scope leaks.
+ 
+ For a reusable executor serving unrelated requests, distinguish per-submission capture from a
+ wrapper bound to one captured Context; otherwise later requests can inherit the wrong parent.
+-The instrumentation reference covers this API choice and periodic-task exceptions.
++Registration, submission and execution can occur under different parents; a per-submission
++wrapper alone cannot recover an earlier registering request's Context. The instrumentation
++reference covers this API choice, deferred-callback checks and periodic-task exceptions.
+ 
+ Wrapping Context alone does not create a span. Redundant scope wrapping can add work, while
+ duplicate spans require span-creating instrumentation; inspect the actual boundary before
+diff --git a/skills/opentelemetry-performance/references/instrumentation-patterns.md b/skills/opentelemetry-performance/references/instrumentation-patterns.md
+index 247ad83..db25360 100644
+--- a/skills/opentelemetry-performance/references/instrumentation-patterns.md
++++ b/skills/opentelemetry-performance/references/instrumentation-patterns.md
+@@ -46,8 +46,8 @@ executor.execute(
+     }));
+ ```
+ 
+-Context capture belongs at submission because execution-time Context may be unrelated.
+-For completion callbacks, capture at registration in the originating operation, not in
++For directly submitted work, capture at submission because execution-time Context may be unrelated.
++For request-owned completion callbacks, capture at registration in the originating operation, not in
+ an unrelated thread that later completes the future. Keep Context as data across threads;
+ open and close each Scope on its own executing thread.
+ OpenTelemetry Java also exposes wrappers for Runnable, Callable, Executor and functions.
+@@ -72,12 +72,32 @@ Agent versions instrument supported concurrency libraries, so behavior cannot be
+ from ThreadLocal storage alone. When propagation across one of these boundaries is the
+ claim under review, inspect existing integration evidence or test:
+ 
+-1. parent span current at submission/start;
++1. required logical parent, and where its Context is current at registration/submission/start;
+ 2. child created inside callback/thread;
+ 3. expected parent ID;
+ 4. two interleaved requests do not cross-contaminate;
+ 5. exceptional/cancelled paths close scopes/spans.
+ 
++For a request-owned continuation on a pending future, `Context.taskWrapping(executor)` can
++capture the completer's Context when the continuation is eventually submitted. An already-complete
++source may submit during registration and conceal the mismatch. Verify actual stage/instrumentation
++wiring before changing it. When that boundary lacks registration-aware propagation, the native
++function wrapper can bind the action to the current request:
++
++```java
++Context origin = Context.current();
++CompletableFuture<Price> result =
++    source.thenApplyAsync(origin.wrapFunction(this::reprice), executor);
++```
++
++This partial snippet assumes a source `CompletableFuture`, executor, application `Price` type
++and synchronous `reprice(value)` method. It scopes that callback; it does not create a span,
++extend its parent span's lifetime or by itself cover further asynchronous work started by `reprice`.
++Check a callback registered under request A, completed later under provider B and executed under
++worker C: a child created by that callback must name A as its parent, share A's trace and leave C restored
++on success and failure. Repeat with an already-completed source and inline execution. Bind per
++registration; do not retain A as the parent of every future request on a shared executor.
++
+ For StructuredTaskScope or virtual-thread APIs, pin JDK and instrumentation version.
+ `Context.wrap` itself opens/restores a Scope; it does not start spans. Two wrappers do not
+ by themselves prove duplicate spans. Verify captured parentage and overhead before changing
+diff --git a/skills/opentelemetry-performance/skill.yaml b/skills/opentelemetry-performance/skill.yaml
+index ab3db3d..683fdc9 100644
+--- a/skills/opentelemetry-performance/skill.yaml
++++ b/skills/opentelemetry-performance/skill.yaml
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: opentelemetry-performance
+-version: 1.2.4
++version: 1.2.5
+ description: >-
+   Designing OpenTelemetry tracing that remains causally useful within an explicit
+   overhead and data-risk budget: auditing automatic/manual coverage, preserving context

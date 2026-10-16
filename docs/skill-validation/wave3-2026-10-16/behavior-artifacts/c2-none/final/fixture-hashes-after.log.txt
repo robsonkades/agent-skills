@@ -1,0 +1,22 @@
+
+Algorithm : SHA256
+Hash      : 03F3C11D53A2D6273FE791B7DC41A42CE03B99E33747BF785E480A27630BF043
+Path      : C:\Users\robso\AppData\Local\Temp\skills-wave3-behavior-mJrztd\c2-none\client.mjs
+
+Algorithm : SHA256
+Hash      : 9207275610E3E93E7F06B73F9DDE844D56E519FF874CF6A1854F6D170192B7D0
+Path      : C:\Users\robso\AppData\Local\Temp\skills-wave3-behavior-mJrztd\c2-none\server.mjs
+
+Algorithm : SHA256
+Hash      : 7C6E7302B359275EBC74D9B0BF95BC7E2D44719A535CD3E47531B0A7BA6AE994
+Path      : C:\Users\robso\AppData\Local\Temp\skills-wave3-behavior-mJrztd\c2-none\protocol.json
+
+Algorithm : SHA256
+Hash      : 1BB64854CFB9A3EE1F16CD231FEC9643363313964E4022517F1D725D53740C60
+Path      : C:\Users\robso\AppData\Local\Temp\skills-wave3-behavior-mJrztd\c2-none\proxy-policy.json
+
+Algorithm : SHA256
+Hash      : 591F36EFD3FB491C27ECF90FE637C61933BEAFF291858D60502E7C3A0C1AAB29
+Path      : C:\Users\robso\AppData\Local\Temp\skills-wave3-behavior-mJrztd\c2-none\adapter-contract.md
+
+

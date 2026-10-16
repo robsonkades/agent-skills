@@ -88,7 +88,9 @@ consumer or runtime facts that would change the recommendation.
   `StringConcatFactory`; the language specification intentionally leaves the implementation to
   the compiler. Repeated `result += fragment` in a loop can copy an ever-growing prefix and
   become quadratic. Use a locally owned `StringBuilder` in loops, `String.join` or
-  `Collectors.joining` for collections.
+  `Collectors.joining` for collections. Preserve conversion and null behaviour when rewriting:
+  `append(char[])` copies the array's characters, whereas `+` uses its object representation.
+  Inspect declared operand types and the selected overload before treating the rewrite as equivalent.
 - Do not micro-optimise concatenation outside loops, and do not replace readable expressions
   with `StringBuilder` chains on a hunch. If string building appears in a profile, that is
   evidence; otherwise it is noise (performance-methodology).

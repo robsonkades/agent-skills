@@ -1,0 +1,37 @@
+[
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\kafka-consumers-in-java-artifacts\\ConsumerCoordinator-4.1.0.java",
+    "url": "https://raw.githubusercontent.com/apache/kafka/4.1.0/clients/src/main/java/org/apache/kafka/clients/consumer/internals/ConsumerCoordinator.java",
+    "status": 200,
+    "sha256": "f1bde182828c599ecc59d90e3b43b86aaa3538997c61bed49ff75a674f26837f",
+    "bytes": 85693
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\kafka-consumers-in-java-artifacts\\AbstractCoordinator-4.1.0.java",
+    "url": "https://raw.githubusercontent.com/apache/kafka/4.1.0/clients/src/main/java/org/apache/kafka/clients/consumer/internals/AbstractCoordinator.java",
+    "status": 200,
+    "sha256": "7e27fae7d0afe66a808447493c48ffdbe18608c12079047dbcc2b48cee45e7d1",
+    "bytes": 83121
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\kafka-consumers-in-java-artifacts\\AbstractMembershipManager-4.1.0.java",
+    "url": "https://raw.githubusercontent.com/apache/kafka/4.1.0/clients/src/main/java/org/apache/kafka/clients/consumer/internals/AbstractMembershipManager.java",
+    "status": 200,
+    "sha256": "28367b49de87e59c718c4f180b23d4144e2cd6dd15222266efd4dfe10c99979c",
+    "bytes": 69795
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\kafka-consumers-in-java-artifacts\\ConsumerMembershipManagerTest-4.1.0.java",
+    "url": "https://raw.githubusercontent.com/apache/kafka/4.1.0/clients/src/test/java/org/apache/kafka/clients/consumer/internals/ConsumerMembershipManagerTest.java",
+    "status": 200,
+    "sha256": "70f6f409571a516fbad6f48816d80f2eef42f932745672c1067e8547c32622f0",
+    "bytes": 155998
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\kafka-consumers-in-java-artifacts\\ConsumerRebalanceListener-4.1.2.html",
+    "url": "https://kafka.apache.org/41/javadoc/org/apache/kafka/clients/consumer/ConsumerRebalanceListener.html",
+    "status": 200,
+    "sha256": "e5f50112e3830f71862c0f72dc98f643875b0f7cc1ab17c50c6fa725a1c0b1ea",
+    "bytes": 27299
+  }
+]

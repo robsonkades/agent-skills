@@ -1,0 +1,29 @@
+// Execute through stdin from C:/git/agent-skills so existing package imports resolve.
+import { loadPackageFromDirectory, validatePackage } from '@jvm-expert/core';
+import { NodeFileSystem } from '@jvm-expert/node';
+import { ClaudeCodeAdapter } from '@jvm-expert/adapter-claude';
+import { CodexAdapter } from '@jvm-expert/adapter-codex';
+
+const fs = new NodeFileSystem();
+const root = 'skills/distributed-aggregation-and-barriers';
+const loaded = await loadPackageFromDirectory(fs, root, { strict: true });
+const report = validatePackage(loaded.pkg, {
+  strict: true,
+  directoryName: 'distributed-aggregation-and-barriers',
+  adapters: [new ClaudeCodeAdapter(), new CodexAdapter()],
+});
+const issues = [...loaded.issues, ...report.issues];
+let linksChecked = 0;
+for (const file of loaded.pkg.files.filter(f => f.path.endsWith('.md'))) {
+  const source = await fs.readTextFile(fs.join(root, file.path));
+  for (const match of source.matchAll(/\[[^\]]*\]\((<[^>]*>|[^)]+)\)/g)) {
+    const target = match[1].replace(/^<|>$/g, '');
+    if (/^(https?:|#)/.test(target)) continue;
+    const relative = target.split('#')[0];
+    const directory = file.path.includes('/') ? file.path.slice(0, file.path.lastIndexOf('/')) : '.';
+    if (!(await fs.exists(fs.join(root, directory, relative)))) throw new Error(`${file.path}: missing ${target}`);
+    linksChecked++;
+  }
+}
+console.log(JSON.stringify({version: loaded.pkg.manifest.version, packageFiles: loaded.pkg.files.map(f => f.path), issues, linksChecked}, null, 2));
+if (issues.length) process.exitCode = 1;

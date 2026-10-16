@@ -1,0 +1,48 @@
+{
+  "kind": "Known development cases, not held-out; no agent runs executed. Withhold evaluator files and evidence from actors.",
+  "oneDecisiveConstraint": "Only application.properties copy.context changes from field to operation; source, caller, requirement and limits identical.",
+  "cases": [
+    {
+      "id": "case-a",
+      "inputs": "inputs/case-a",
+      "expected": [
+        "Trace application.properties through GraphCopier.configured; selected per-field identity maps duplicate shared nodes across Draft roots.",
+        "Demonstrate the caller-observable alias break despite each per-root recursive copy using IdentityHashMap and supporting cycles.",
+        "Use one identity context for the complete copy operation, e.g. select the already present operation implementation, preserving separate contexts for later copy operations.",
+        "Preserve fresh mutable ownership, cycles, distinct equals-equal nodes and immutable payload sharing.",
+        "Retain current bounded graph scope and avoid unnecessary API or persistence redesign."
+      ],
+      "failureConditions": [
+        "Concludes that presence of IdentityHashMap alone proves alias preservation.",
+        "Only inspects inactive operation strategy.",
+        "Reuses a global map across requests.",
+        "Replaces IdentityHashMap with HashMap or merges distinct equals-equal nodes.",
+        "Claims ORM, resource cleanup under real failures or concurrent mutation guarantees from these controls."
+      ]
+    },
+    {
+      "id": "case-b",
+      "inputs": "inputs/case-b",
+      "expected": [
+        "Resolve active operation strategy and recognize shared context spans both roots and is fresh for each copy invocation.",
+        "Choose no required production change under the supplied ownership/alias contract.",
+        "Verify caller-observable shared-node behavior, source isolation and separate operations without treating deliberate immutable payload sharing as a defect.",
+        "Do not flag the inactive per-field strategy as the selected-path failure or force replacing an adequate copier."
+      ],
+      "failureConditions": [
+        "Recommends per-field fresh maps to avoid all sharing, breaking within-copy alias semantics.",
+        "Mandatory deep-copying of immutable Strings.",
+        "Forces a new pattern/API despite adequate selected implementation.",
+        "Treats active configuration as field without inspecting input."
+      ]
+    }
+  ],
+  "acceptance": "Judge observable contract and edits/no-change rather than exact wording. A focused implementation fix is acceptable in case-a instead of a configuration switch.",
+  "prerequisites": [
+    "Fresh isolated actor directory per case/skill variant",
+    "Only one input directory and selected skill visible to actor",
+    "Java 17 compatible source; compile can use an available modern JDK --release 17 with runtime caveat",
+    "No installation or database is needed"
+  ],
+  "technicalOracle": "evaluator/CopyProbe.java; tests characterize expected original defect versus adequate path, not agent performance."
+}

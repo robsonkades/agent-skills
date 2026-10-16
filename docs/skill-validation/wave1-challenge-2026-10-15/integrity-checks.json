@@ -1,0 +1,43 @@
+{
+  "checkedAt": "2026-10-16T01:56:45.206Z",
+  "frozenInputsAndCriteriaUnchanged": true,
+  "actorMessagesMatchManifest": true,
+  "distinctCompletedActors": 36,
+  "maskedResponsesMatchOriginals": true,
+  "exactQuotes": 144,
+  "archivedTreatmentFiles": 46,
+  "treatmentsMatchSnapshotsAndWorkingTree": true,
+  "priorWaveCatalogFilesPreserved": 1506,
+  "declaredReadsOutsideAllowlist": 0,
+  "commonInstructionExposureAcknowledgments": ["trial11", "trial25"],
+  "responseWordRange": [237, 281],
+  "aboveSuggestedRange": [
+    {
+      "trialId": "trial22",
+      "words": 281
+    }
+  ],
+  "gradingOverrides": 0,
+  "registryAndVerify": "passed",
+  "registry": {
+    "command": "npm run registry:build",
+    "exitCode": 0,
+    "entries": 305,
+    "unchanged": true,
+    "sha256": "6fe55b2f5c2a5f7fae8e4a6d79a746d9f1f66fbc2dd21628ac7167dab4eb40e0"
+  },
+  "verify": {
+    "command": "npm run verify",
+    "exitCode": 0,
+    "tests": 393,
+    "suites": 70,
+    "passed": 393,
+    "failed": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0,
+    "log": "verify.log",
+    "logSha256": "bab47accedb58544af72fb749a8efad68e33e5305e2b5e554125698c349276cd"
+  },
+  "completedAt": "2026-10-16T01:59:29.356Z"
+}

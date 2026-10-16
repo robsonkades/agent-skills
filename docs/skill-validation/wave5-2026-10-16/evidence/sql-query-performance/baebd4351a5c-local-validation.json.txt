@@ -1,0 +1,157 @@
+{
+  "skill": "sql-query-performance",
+  "commands": [
+    {
+      "command": "node --version; inspect wave5 baseline.json",
+      "cwd": "C:/git/agent-skills",
+      "result": "Node v25.6.1; committed/assignment version 1.2.3 and all five baseline hashes recorded",
+      "raw": {
+        "chunk_id": "926f07",
+        "wall_time_seconds": 0.0953205,
+        "exit_code": 0,
+        "original_token_count": 318,
+        "output": "v25.6.1\r\n{\n  \"keys\": [\n    \"capturedAt\",\n    \"head\",\n    \"wave\",\n    \"repo\",\n    \"temporaryRoot\",\n    \"registryBefore\",\n    \"gitStatus\",\n    \"gitDiffStat\",\n    \"gitCachedDiffStat\",\n    \"allFiles\",\n    \"packages\"\n  ]\n}\n{\n  \"name\": \"sql-query-performance\",\n  \"initialVersion\": \"1.2.3\",\n  \"committedVersion\": \"1.2.3\",\n  \"status\": \"\",\n  \"files\": [\n    {\n      \"path\": \"skills/sql-query-performance/SKILL.md\",\n      \"sha256\": \"b3dd5fe127872397fed5adc303512ecce16f18748472e0a24ef64d7bf8cce108\",\n      \"bytes\": 8539\n    },\n    {\n      \"path\": \"skills/sql-query-performance/references/index-decisions.md\",\n      \"sha256\": \"22002ac4e911e80b26e31041791bc4ce2471e03e2333718841308f17bd7251a5\",\n      \"bytes\": 6689\n    },\n    {\n      \"path\": \"skills/sql-query-performance/references/query-shapes.md\",\n      \"sha256\": \"552417ec2768f5f656a9423ba9af50bb22482e11007b7da72310fd67c491915f\",\n      \"bytes\": 8046\n    },\n    {\n      \"path\": \"skills/sql-query-performance/references/reading-a-plan.md\",\n      \"sha256\": \"c13b34392634c99a6067723ff03cf1336ea05ea1cfc59d48e31deb9cb266c09d\",\n      \"bytes\": 7542\n    },\n    {\n      \"path\": \"skills/sql-query-performance/skill.yaml\",\n      \"sha256\": \"b6197cab93685e6ef14e1825860e1551651dd36efdf41771e7ae499219f2fbc8\",\n      \"bytes\": 1609\n    }\n  ]\n}\n"
+      }
+    },
+    {
+      "command": "Node in-memory SQLite version probe; where.exe psql; where.exe postgres",
+      "cwd": "C:/git/agent-skills",
+      "result": "SQLite 3.51.2 probe succeeded. Both executable PATH lookups returned not found; combined shell exit 1 was from those lookups.",
+      "raw": {
+        "chunk_id": "e05315",
+        "wall_time_seconds": 0.1546838,
+        "exit_code": 1,
+        "original_token_count": 82,
+        "output": "(node:43568) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n{\"sqlite\":{\"version\":\"3.51.2\"},\"node\":\"v25.6.1\"}\nINFO: Could not find files for the given pattern(s).\r\nINFO: Could not find files for the given pattern(s).\r\n"
+      }
+    },
+    {
+      "command": "node 'C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/sql-query-performance-artifacts/check-sql-semantics.mjs'; Get-Content skills/sql-query-performance/SKILL.md -Tail 38",
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS: 43 assertions; exact EXISTS SQL fence plus portable subset counterexamples and paired fixture constraints; no actor.",
+      "raw": {
+        "chunk_id": "a66347",
+        "wall_time_seconds": 0.1181247,
+        "exit_code": 0,
+        "original_token_count": 1456,
+        "output": "(node:29472) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n{\n  \"status\": \"PASS\",\n  \"runtime\": {\n    \"node\": \"v25.6.1\",\n    \"sqlite\": \"3.51.2\"\n  },\n  \"scope\": \"Portable SQL-subset semantics only; not PostgreSQL execution plans, performance, concurrency, JDBC binding or index behavior.\",\n  \"databases\": \"All SQLite databases were in-memory and closed before output.\",\n  \"assertions\": 43,\n  \"checks\": [\n    {\n      \"family\": \"paired-input-a\",\n      \"result\": \"PASS\",\n      \"evidence\": \"declared domain rejects null counterexample; seed preserves overlap and repeated labels\"\n    },\n    {\n      \"family\": \"paired-input-b\",\n      \"result\": \"PASS\",\n      \"negativeControl\": \"proposed query loses allowed NULL-active row\",\n      \"correction\": \"IS NOT TRUE retains it\"\n    },\n    {\n      \"family\": \"OR-union\",\n      \"result\": \"PASS\",\n      \"truthCombinations\": 9,\n      \"negativeControls\": [\n        \"NOT p\",\n        \"unguarded UNION ALL\",\n        \"UNION deduplication\"\n      ]\n    },\n    {\n      \"family\": \"anti-membership\",\n      \"result\": \"PASS\",\n      \"combinations\": 12,\n      \"rows\": [\n        {\n          \"set\": \"empty\",\n          \"x\": null,\n          \"notIn\": 1,\n          \"notExists\": 1\n        },\n        {\n          \"set\": \"empty\",\n          \"x\": 1,\n          \"notIn\": 1,\n          \"notExists\": 1\n        },\n        {\n          \"set\": \"empty\",\n          \"x\": 2,\n          \"notIn\": 1,\n          \"notExists\": 1\n        },\n        {\n          \"set\": \"null\",\n          \"x\": null,\n          \"notIn\": null,\n          \"notExists\": 1\n        },\n        {\n          \"set\": \"null\",\n          \"x\": 1,\n          \"notIn\": null,\n          \"notExists\": 1\n        },\n        {\n          \"set\": \"null\",\n          \"x\": 2,\n          \"notIn\": null,\n          \"notExists\": 1\n        },\n        {\n          \"set\": \"duplicate\",\n          \"x\": null,\n          \"notIn\": null,\n          \"notExists\": 1\n        },\n        {\n          \"set\": \"duplicate\",\n          \"x\": 1,\n          \"notIn\": 0,\n          \"notExists\": 0\n        },\n        {\n          \"set\": \"duplicate\",\n          \"x\": 2,\n          \"notIn\": 1,\n          \"notExists\": 1\n        },\n        {\n          \"set\": \"mixed\",\n          \"x\": null,\n          \"notIn\": null,\n          \"notExists\": 1\n        },\n        {\n          \"set\": \"mixed\",\n          \"x\": 1,\n          \"notIn\": 0,\n          \"notExists\": 0\n        },\n        {\n          \"set\": \"mixed\",\n          \"x\": 2,\n          \"notIn\": null,\n          \"notExists\": 1\n        }\n      ]\n    },\n    {\n      \"family\": \"EXISTS exact example\",\n      \"result\": \"PASS\",\n      \"negativeControls\": [\n        \"drop projected deduplication\",\n        \"drop tenant correlation\"\n      ]\n    }\n  ],\n  \"behavioralActorsExecuted\": 0\n}\n  interchangeable for one query but not for other queries, compression, statistics, or ordering.\r\n  Verify the executed plan instead of applying a universal mnemonic.\r\n- **A function or cast on the indexed expression can make a predicate non-sargable.** Expression or\r\n  functional indexes may restore an access path. With mismatched parameter types, which operand is\r\n  converted follows the database's type-precedence and coercion rules; inspect the plan rather than\r\n  assuming the column is always converted.\r\n- **`SELECT *` can defeat covering** and increases transferred/materialized data when it adds\r\n  columns. A covering or clustered index may already contain all columns; visibility checks\r\n  can still require table access in some engines.\r\n- **Large `OFFSET n` usually performs work proportional to skipped rows**, even when an index avoids\r\n  a sort. Keyset pagination avoids rescanning prior offsets with a suitable access path, but\r\n  residual filters, invisible rows and joins can require more work than page size. It changes\r\n  navigation and concurrent-update semantics. Deep pagination is a query and\r\n  product-contract decision, not merely an index decision.\r\n- **Indexes add storage and relevant write maintenance**, depending on changed columns,\r\n  predicates and engine optimizations. An index proposal\r\n  without the write cost is half a proposal.\r\n- **Parameter sensitivity has several causes.** Compare actual plans, volumes and waits; skew,\r\n  plan reuse, cache state, locks or a missing useful access path can produce the same symptom.\r\n- **Measure with the cache state you actually have.** A second run reading from the buffer pool\r\n  answers a different question than the first. State which one you measured.\r\n- Preserve null handling, duplicates, ordering, pagination and authorization predicates in\r\n  rewrites. Return the supported conclusion and relevant evidence/limits. For a change, include\r\n  its hypothesis, semantic checks and comparable before/after evidence; missing actuals or failed\r\n  runs limit the claims that depend on them. Follow the engine's DDL mechanics and the project's\r\n  application/backfill/rollback migration contract when schema changes are involved.\r\n\r\n## References\r\n\r\n- [Reading a plan](references/reading-a-plan.md) — a structure for reading a plan, estimated versus\r\n  actual, the operator vocabulary and what the equivalent is called on each engine, and the\r\n  limits of what a plan can answer. Read when a plan is in front of you.\r\n- [Index decisions](references/index-decisions.md) — selectivity, composite column order,\r\n  covering, the write cost, and when the correct answer is no index. Read before proposing,\r\n  adding or removing one.\r\n- [Query shapes that fight the optimiser](references/query-shapes.md) — non-sargable predicates,\r\n  implicit conversion, pagination, join multiplicity and the semantics of rewrite, index or\r\n  no-change decisions. Read when comparing statement rewrites or checking their result contract.\r\n"
+      }
+    },
+    {
+      "command": "node 'C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/sql-query-performance-artifacts/check-package.mjs'",
+      "cwd": "C:/git/agent-skills",
+      "chunk_id": "94cb89",
+      "wall_time_seconds": 0.1784979,
+      "exit_code": 0,
+      "original_token_count": 466,
+      "output": "{\n  \"status\": \"PASS\",\n  \"skill\": \"sql-query-performance\",\n  \"issueCount\": 0,\n  \"filesChecked\": 5,\n  \"markdownFiles\": 4,\n  \"localLinks\": [\n    {\n      \"from\": \"skills/sql-query-performance/SKILL.md\",\n      \"to\": \"references/reading-a-plan.md\"\n    },\n    {\n      \"from\": \"skills/sql-query-performance/SKILL.md\",\n      \"to\": \"references/index-decisions.md\"\n    },\n    {\n      \"from\": \"skills/sql-query-performance/SKILL.md\",\n      \"to\": \"references/query-shapes.md\"\n    }\n  ],\n  \"referencesRouted\": [\n    \"references/index-decisions.md\",\n    \"references/query-shapes.md\",\n    \"references/reading-a-plan.md\"\n  ],\n  \"optionalRoutes\": [\n    \"architecture-and-performance\",\n    \"caching-strategies\",\n    \"connection-pool-sizing\",\n    \"database-index-design\",\n    \"orm-fetch-and-batching-performance\"\n  ],\n  \"versions\": {\n    \"committed\": \"1.2.3\",\n    \"assignment\": \"1.2.3\",\n    \"final\": \"1.2.3\"\n  },\n  \"baselineIdentical\": true,\n  \"files\": [\n    {\n      \"path\": \"skills/sql-query-performance/references/index-decisions.md\",\n      \"sha256\": \"22002ac4e911e80b26e31041791bc4ce2471e03e2333718841308f17bd7251a5\",\n      \"bytes\": 6689\n    },\n    {\n      \"path\": \"skills/sql-query-performance/references/query-shapes.md\",\n      \"sha256\": \"552417ec2768f5f656a9423ba9af50bb22482e11007b7da72310fd67c491915f\",\n      \"bytes\": 8046\n    },\n    {\n      \"path\": \"skills/sql-query-performance/references/reading-a-plan.md\",\n      \"sha256\": \"c13b34392634c99a6067723ff03cf1336ea05ea1cfc59d48e31deb9cb266c09d\",\n      \"bytes\": 7542\n    },\n    {\n      \"path\": \"skills/sql-query-performance/SKILL.md\",\n      \"sha256\": \"b3dd5fe127872397fed5adc303512ecce16f18748472e0a24ef64d7bf8cce108\",\n      \"bytes\": 8539\n    },\n    {\n      \"path\": \"skills/sql-query-performance/skill.yaml\",\n      \"sha256\": \"b6197cab93685e6ef14e1825860e1551651dd36efdf41771e7ae499219f2fbc8\",\n      \"bytes\": 1609\n    }\n  ]\n}\n"
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/sql-query-performance/SKILL.md skills/sql-query-performance/skill.yaml 'skills/sql-query-performance/references/*.md'",
+      "cwd": "C:/git/agent-skills",
+      "chunk_id": "96083d",
+      "wall_time_seconds": 0.2227478,
+      "exit_code": 0,
+      "original_token_count": 17,
+      "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+    },
+    {
+      "command": "git diff --check -- skills/sql-query-performance\ngit status --short --untracked-files=all -- skills/sql-query-performance\ngit diff --numstat -- skills/sql-query-performance\ngit diff --cached --numstat -- skills/sql-query-performance\nrg -n '^##|^Sources:|version:' skills/sql-query-performance",
+      "cwd": "C:/git/agent-skills",
+      "chunk_id": "d5201f",
+      "wall_time_seconds": 0.1515771,
+      "exit_code": 0,
+      "original_token_count": 602,
+      "output": "skills/sql-query-performance\\skill.yaml:4:version: 1.2.3\nskills/sql-query-performance\\SKILL.md:20:## Purpose\nskills/sql-query-performance\\SKILL.md:29:## Workflow\nskills/sql-query-performance\\SKILL.md:59:## Rules\nskills/sql-query-performance\\SKILL.md:106:## References\nskills/sql-query-performance\\references\\reading-a-plan.md:6:## 1. Is this the plan for the statement that runs?\nskills/sql-query-performance\\references\\reading-a-plan.md:36:## 2. Estimated rows against actual rows\nskills/sql-query-performance\\references\\reading-a-plan.md:63:## 3. Which operation actually costs\nskills/sql-query-performance\\references\\reading-a-plan.md:82:## 4. The access path, named plainly\nskills/sql-query-performance\\references\\reading-a-plan.md:95:## What a plan cannot tell you\nskills/sql-query-performance\\references\\query-shapes.md:6:## A function or cast on the column side\nskills/sql-query-performance\\references\\query-shapes.md:29:## Implicit conversion\nskills/sql-query-performance\\references\\query-shapes.md:46:## Pagination that degrades with depth\nskills/sql-query-performance\\references\\query-shapes.md:77:## Join multiplicity versus existence\nskills/sql-query-performance\\references\\query-shapes.md:104:## `OR` across different columns\nskills/sql-query-performance\\references\\query-shapes.md:113:## Leading wildcards\nskills/sql-query-performance\\references\\query-shapes.md:120:## `SELECT *` on a wide table\nskills/sql-query-performance\\references\\query-shapes.md:126:## `NOT IN` with a nullable subquery\nskills/sql-query-performance\\references\\query-shapes.md:135:## Counting to decide\nskills/sql-query-performance\\references\\query-shapes.md:147:Sources: [PostgreSQL 17 null/subquery semantics](https://www.postgresql.org/docs/17/functions-subquery.html),\nskills/sql-query-performance\\references\\index-decisions.md:12:## Selectivity decides whether filtering is worth it\nskills/sql-query-performance\\references\\index-decisions.md:33:## Composite indexes serve a leading prefix\nskills/sql-query-performance\\references\\index-decisions.md:56:## Covering, and its cost\nskills/sql-query-performance\\references\\index-decisions.md:76:## When the answer is no index\nskills/sql-query-performance\\references\\index-decisions.md:89:## Removing one\nskills/sql-query-performance\\references\\index-decisions.md:98:Sources: [PostgreSQL 18 multicolumn B-trees](https://www.postgresql.org/docs/18/indexes-multicolumn.html),\n"
+    }
+  ],
+  "metadata": {
+    "status": "PASS",
+    "skill": "sql-query-performance",
+    "issueCount": 0,
+    "filesChecked": 5,
+    "markdownFiles": 4,
+    "localLinks": [
+      {
+        "from": "skills/sql-query-performance/SKILL.md",
+        "to": "references/reading-a-plan.md"
+      },
+      {
+        "from": "skills/sql-query-performance/SKILL.md",
+        "to": "references/index-decisions.md"
+      },
+      {
+        "from": "skills/sql-query-performance/SKILL.md",
+        "to": "references/query-shapes.md"
+      }
+    ],
+    "referencesRouted": [
+      "references/index-decisions.md",
+      "references/query-shapes.md",
+      "references/reading-a-plan.md"
+    ],
+    "optionalRoutes": [
+      "architecture-and-performance",
+      "caching-strategies",
+      "connection-pool-sizing",
+      "database-index-design",
+      "orm-fetch-and-batching-performance"
+    ],
+    "versions": {
+      "committed": "1.2.3",
+      "assignment": "1.2.3",
+      "final": "1.2.3"
+    },
+    "baselineIdentical": true,
+    "files": [
+      {
+        "path": "skills/sql-query-performance/references/index-decisions.md",
+        "sha256": "22002ac4e911e80b26e31041791bc4ce2471e03e2333718841308f17bd7251a5",
+        "bytes": 6689
+      },
+      {
+        "path": "skills/sql-query-performance/references/query-shapes.md",
+        "sha256": "552417ec2768f5f656a9423ba9af50bb22482e11007b7da72310fd67c491915f",
+        "bytes": 8046
+      },
+      {
+        "path": "skills/sql-query-performance/references/reading-a-plan.md",
+        "sha256": "c13b34392634c99a6067723ff03cf1336ea05ea1cfc59d48e31deb9cb266c09d",
+        "bytes": 7542
+      },
+      {
+        "path": "skills/sql-query-performance/SKILL.md",
+        "sha256": "b3dd5fe127872397fed5adc303512ecce16f18748472e0a24ef64d7bf8cce108",
+        "bytes": 8539
+      },
+      {
+        "path": "skills/sql-query-performance/skill.yaml",
+        "sha256": "b6197cab93685e6ef14e1825860e1551651dd36efdf41771e7ae499219f2fbc8",
+        "bytes": 1609
+      }
+    ]
+  },
+  "walkthroughs": [
+    {
+      "kind": "structured walkthrough, not actor evaluation",
+      "scenario": "Plan node rows=2, loops=500 with an inclusive parent and an early LIMIT",
+      "expected": "Interpret rows as per-execution average in PostgreSQL; qualify partial execution and avoid summing inclusive timings as wall latency.",
+      "basis": "references/reading-a-plan.md:36,63 and PostgreSQL 17 EXPLAIN source",
+      "result": "Existing guidance contains the decisions; no correction needed."
+    },
+    {
+      "kind": "structured walkthrough, not actor evaluation",
+      "scenario": "An indexed Boolean is 99.9% true, a query filters the rare false value, and a separate query mostly needs index ordering",
+      "expected": "Do not equate low cardinality with useless filtering and do not judge every index solely by filtered fraction.",
+      "basis": "references/index-decisions.md:12,33,56",
+      "result": "Existing guidance preserves rare-value selectivity, ordering/coverage jobs and the no-index alternative."
+    },
+    {
+      "kind": "structured walkthrough, not actor evaluation",
+      "scenario": "Deep-page query whose UI requires arbitrary page jumps",
+      "expected": "Preserve the navigation requirement; keyset alone and cheaper total count do not implement it.",
+      "basis": "references/query-shapes.md:46",
+      "result": "Existing guidance explicitly names bounded OFFSET, page anchors and snapshot alternatives."
+    }
+  ]
+}

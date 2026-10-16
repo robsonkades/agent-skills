@@ -1,0 +1,3 @@
+Existing point and join checks passed; moved=2094
+accepted.properties key=user:2 primary=n2 replicas=[n2, n3, n4]
+candidate.properties key=user:2 primary=n2 replicas=[n2, n3, n4]

@@ -1,0 +1,58 @@
+{
+  "skill": "gof-strategy",
+  "evaluatedVersion": "1.2.4",
+  "purpose": "Evaluator-only; do not expose to actor",
+  "common": [
+    "Follow application.properties through Wiring and FactoryPolicy to the Supplier returned; names, the unmodifiable map, and the Supplier type do not establish fresh instances.",
+    "Respect the documented TEXT and UPPER outputs, input order, empty result, explicit unknown-key failure and Java 17 target.",
+    "Retain or justify replacement of the small existing mechanism using the caller contract, without forcing classes, Spring, a public API expansion, or broad pattern scaffolding.",
+    "Distinguish a single-job smoke pass from repeated-job and concurrent lifetime evidence; no benchmark or blanket thread-safety claim."
+  ],
+  "cases": [
+    {
+      "id": "strategy-case-a",
+      "expectedBehavior": "The configured cache reuses one TEXT LineEncoder across jobs. The first export closes it; a second export fails. This violates independent operation ownership. Implement a narrow repair restoring fresh per-job instances for TEXT, or an equally contract-preserving local-state solution.",
+      "requiredEvidence": [
+        "Trace the effective cache=true property and factory output.",
+        "Exercise repeated exports through the same service; include both format contracts and unknown-key failure.",
+        "Keep close-on-failure ownership and avoid sharing mutable accumulators."
+      ],
+      "failureConditions": [
+        "Approve unchanged after only Smoke.",
+        "Reset or synchronize the singleton encoder without establishing independent job lifetime.",
+        "Disable close, swallow IllegalStateException, or add fallback format behavior.",
+        "Fix case input documentation instead of the implemented defect."
+      ]
+    },
+    {
+      "id": "strategy-case-b",
+      "expectedBehavior": "The cache=false path returns the constructor supplier. Each TEXT job already has its own LineEncoder, as UPPER does. Retain this adequate mechanism unless a separately demonstrated problem justifies a change.",
+      "requiredEvidence": [
+        "Trace factory output and try-with-resources lifetime; do not assume all Supplier registries cache.",
+        "Exercise repeated exports on the same service and preserve both formats.",
+        "State observed limits without inventing a shared-state failure from the presence of mutable fields alone."
+      ],
+      "failureConditions": [
+        "Claim the stateful LineEncoder is shared because the registry is shared.",
+        "Introduce factories as a necessary fix despite the existing fresh-per-call supplier.",
+        "Rewrite into mandatory named Strategy classes or a container without need.",
+        "Assert generalized concurrent safety solely from a finite test."
+      ]
+    }
+  ],
+  "pair": {
+    "changedConstraint": "Only application.properties encoding.cache.instances changes from true to false; every other actor file and request is identical.",
+    "reason": "It changes actual object reuse across operations, so case A requires a repair and case B should preserve the already adequate lifetime."
+  },
+  "plannedTechnicalControls": [
+    "Compile all actor sources --release 17 with the existing JDK, run Smoke for each (both should pass).",
+    "Run evaluator-only ContractProbe against each compiled module; repeated-export check should reject A and accept B.",
+    "This is a deterministic fixture check, not an agent evaluation or measurement of skill benefit."
+  ],
+  "actorEvaluation": {
+    "executed": false,
+    "pending": "Coordinator may run independent matched contexts with criteria withheld; known development cases, not held-out.",
+    "isolation": "Material is separated by paths, not enforced filesystem permissions."
+  }
+}
+

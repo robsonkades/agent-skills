@@ -1,0 +1,6 @@
+import fs from 'node:fs';
+const report='C:/git/agent-skills/docs/skill-validation/wave9-2026-10-16';
+const event=process.argv[2],ids=process.argv.slice(3),p=report+'/dispatch.json';
+const records=fs.existsSync(p)?JSON.parse(fs.readFileSync(p,'utf8')):[];
+for(const id of ids)records.push({id,agent:'/root/wave9_'+id.toLowerCase(),event,recordedAt:new Date().toISOString(),note:'Coordinator record after tool response; not a measured start time or efficiency metric'});
+fs.writeFileSync(p,JSON.stringify(records,null,2)+'\n');console.log(JSON.stringify({recorded:ids,event}));

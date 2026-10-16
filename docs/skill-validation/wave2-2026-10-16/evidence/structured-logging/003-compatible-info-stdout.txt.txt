@@ -1,0 +1,6 @@
+java=25.0.3+9-LTS
+factory=ch.qos.logback.classic.LoggerContext
+logger=ch.qos.logback.classic.Logger
+infoEnabled=true
+{"sequenceNumber":0,"timestamp":1792154534375,"nanoseconds":375742800,"level":"INFO","threadName":"main","loggerName":"probe.service","context":{"name":"default","birthdate":1792154534250,"properties":{}},"mdc": {},"kvpList": [{"event.name":"probe.provider_selected"}],"message":"provider-probe-event","throwable":null}
+loggingCallReturned=true

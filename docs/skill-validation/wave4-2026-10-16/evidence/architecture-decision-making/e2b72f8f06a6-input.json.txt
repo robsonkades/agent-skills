@@ -1,0 +1,20 @@
+{
+  "id": "architecture-decision-making-A",
+  "task": "Atualize os ADRs e o índice para refletir a revisão de checkout de 13 de outubro. Use os documentos do projeto para conferir o que pode ser registrado. Entregue as alterações documentais e um resumo do que permanece pendente. Não altere a aplicação.",
+  "fixtureRoot": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/architecture-decision-making/case-inputs/A/project",
+  "actorFiles": [
+    "README.md",
+    "docs/adr/README.md",
+    "docs/adr/0012-pricing-execution.md",
+    "docs/adr/0033-checkout-pricing.md",
+    "notes/2026-10-13-checkout-review.md",
+    "delivery/PC-8.md",
+    "config/pricing.properties",
+    "docs/governance/decision-rights.csv"
+  ],
+  "allowedWrites": [
+    "docs/adr/**"
+  ],
+  "deliverable": "Document changes and concise pending-items report",
+  "setup": "Copy only this project and this task to an isolated task snapshot. No dependency installation, network, application execution or deployment is necessary. Keep sibling cases, criteria, handoff, baseline snapshot and review evidence outside actor access."
+}

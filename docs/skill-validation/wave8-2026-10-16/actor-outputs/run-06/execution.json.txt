@@ -1,0 +1,91 @@
+{
+  "task": "Isolated incident-plan review",
+  "runDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave8-6b5d18c2/actors/run-06",
+  "filesRead": [
+    "TASK.md",
+    "input/README.md",
+    "input/REQUEST.md",
+    "input/incident.json",
+    "input/preview-plan.json",
+    "input/literal-comparison.json",
+    "input/proposal.md",
+    "skill/SKILL.md",
+    "skill/references/reading-a-plan.md",
+    "skill/references/index-decisions.md",
+    "skill/references/query-shapes.md",
+    "output/README.md",
+    "output/REQUEST.md",
+    "output/incident.json",
+    "output/preview-plan.json",
+    "output/literal-comparison.json",
+    "output/proposal.md",
+    "output/check-artifacts.mjs",
+    "output/REVIEW.md",
+    "output/result.json"
+  ],
+  "readNotes": "The six output fixture copies were read for byte/hash comparison. check-artifacts.mjs was loaded by Node. No helper executable was supplied in the input listing. No sibling run, repository, evaluator or other agent artifacts were inspected.",
+  "commands": [
+    {
+      "commandSummary": "PowerShell Get-Content -LiteralPath for TASK.md",
+      "exitCode": 0,
+      "result": "Read isolation, skill and output requirements."
+    },
+    {
+      "commandSummary": "PowerShell Get-Content for input/README.md, input/REQUEST.md and skill/SKILL.md; rg --files input output skill",
+      "exitCode": 0,
+      "result": "Identified read-only incident task and supplied files."
+    },
+    {
+      "commandSummary": "PowerShell Get-Content for incident.json, preview-plan.json, literal-comparison.json, proposal.md and the three routed skill references",
+      "exitCode": 0,
+      "result": "Read all supplied incident evidence and relevant skill guidance."
+    },
+    {
+      "commandSummary": "PowerShell ConvertFrom-Json arithmetic from input/incident.json and Get-FileHash SHA256 comparison of all six input/output fixture pairs",
+      "exitCode": 0,
+      "result": "Metrics: 12000 executions, 48000 emitted rows, 780 ms inclusive work, 991 ms supplied execution time; retained fraction 0.8; request/execution difference 329 ms. All six copied fixtures matched."
+    },
+    {
+      "command": "node --input-type=module -e \"import { spawnSync } from 'node:child_process'; const check = spawnSync(process.execPath, ['output/check-artifacts.mjs'], { timeout: 20000, encoding: 'utf8' }); process.stdout.write(check.stdout ?? ''); process.stderr.write(check.stderr ?? ''); if (check.error) process.stderr.write(String(check.error)); process.exit(check.status ?? 1);\"",
+      "exitCode": 0,
+      "result": {
+        "passed": true,
+        "fixtureCopiesVerified": 6,
+        "metrics": {
+          "innerExecutions": 12000,
+          "innerEmittedRows": 48000,
+          "innerInclusiveWorkMs": 780,
+          "capturedExecutionTimeMs": 991
+        },
+        "reviewWords": 613,
+        "sqlExecuted": false
+      }
+    }
+  ],
+  "research": {
+    "tool": "web.run open/find",
+    "result": "Read PostgreSQL 17 primary documentation for per-loop counters, costs, early termination, prepared-plan inspection, buffer counters and OS cache limits. The initial search for 'non-distinct' in EXPLAIN found no match; the buffer section was subsequently located.",
+    "urls": [
+      "https://www.postgresql.org/docs/17/using-explain.html",
+      "https://www.postgresql.org/docs/17/sql-prepare.html",
+      "https://www.postgresql.org/docs/17/sql-explain.html",
+      "https://www.postgresql.org/docs/17/monitoring-stats.html"
+    ]
+  },
+  "writes": [
+    "output/REVIEW.md",
+    "output/result.json",
+    "output/check-artifacts.mjs",
+    "output/execution.json"
+  ],
+  "writeMethod": "apply_patch; authored deliverables only",
+  "limits": [
+    "No target PostgreSQL connection was supplied; the proposed experiment was not run.",
+    "No workload SQL, runtime setting change, index addition, installation, external database connection or real configuration modification occurred.",
+    "Verification was local arithmetic, input/output preservation checks and report validation; it does not establish production speedup.",
+    "All shell commands completed in less than one second according to tool results; the verification child also had a 20000 ms timeout.",
+    "This is a concise actor journal rather than a full tool trace."
+  ],
+  "allProcessesStopped": true,
+  "allWritesStopped": true
+}

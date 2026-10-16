@@ -49,7 +49,9 @@ for that session. No global linearizability requirement follows from this observ
    "latest" lookup. A caught-up server does not refresh an already established transaction
    snapshot. For a combined response, establish whether its separate reads need one coherent
    view; individually fresh reads need not describe the same state. Topology alone does not
-   establish the path's guarantees.
+   establish the path's guarantees. When a token gates the read, inspect what advances its
+   watermark and which effects it covers; use the
+   [visibility-watermark checks](references/requirement-to-model.md#verify-a-visibility-watermark).
 5. **Separate but connect isolation from consistency explicitly.** Decide the transaction isolation
    level for interactions among concurrent transactions, and the distributed model for ordering
    and recency across nodes; a product may bundle these as strict serializability.

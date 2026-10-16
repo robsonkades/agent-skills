@@ -38,6 +38,8 @@ existing stable coordination APIs when preview is not authorized.
 1. **Inspect the invariant and caller lifecycle first.** Reuse code, tests and the supplied context:
    what must be atomic, who owns accepted work/resources, and what ends a wait? Ask only for missing
    answers that change the choice. Retain an adequate existing lock or unshared collection.
+   For a condition wait, follow the actual predicate test, lock instance and wait registration,
+   then each state-changing path that should signal it; a matching field name is not lock identity.
    If overload can occur, name the admission policy: state
    the capacity or explain why an intrinsically unbounded structure is safe and bounded elsewhere.
 2. **Pick the member from the tables below and write down the cost accepted.** A choice with no
@@ -150,9 +152,12 @@ map.put(…)` is a race. Use `mappingCount()` when an approximate `long` count i
 - The untimed `tryAcquire()` and `tryLock()` **ignore the fairness setting** and barge;
   `tryAcquire(0, unit)` honours it and also detects interruption. Whether the limit should be fair
   at all is a sizing decision — concurrency-limiting-and-bulkheads.
-- Wait on a `Condition` in a `while` testing the predicate, never an `if`. Spurious wakeups are
-  only one of the three reasons, and not the one that makes `if` unconditionally wrong. Symptom: a
-  negative count or an item consumed twice, under load only.
+- Wait on a `Condition` in a `while` testing the predicate under its associated lock, then enter
+  `await` without releasing that lock between the test and wait. An outside-lock `while` can lose
+  a signal even with a volatile predicate. With a `ReentrantLock` condition, waiting and signalling
+  require that same lock; use the guarded state-change/signalling protocol in the reference.
+  A wakeup still requires rechecking: spurious wakeups, competing consumers and barging can leave
+  the predicate false again.
 - `signal()` is appropriate only when every waiter on that condition uses a compatible predicate
   and progress is preserved if the selected waiter cannot proceed; otherwise consider separate
   conditions or `signalAll()`. A wrong selection can leave an eligible waiter parked —
@@ -161,8 +166,10 @@ map.put(…)` is a race. Use `mappingCount()` when an approximate `long` count i
   Re-passing the original turns N wakeups into N × timeout — a "5-second timeout" that occasionally
   takes minutes and never reports one. `await(t, unit)` returns `false` but no remaining time.
 - Choose `ReentrantLock` over `synchronized` on **capability**: timed and interruptible acquisition,
-  `tryLock`, fairness, non-block-structured locking, more than one condition queue. Pinning has not
-  been a reason since JEP 491 (JDK 24) — virtual-threads-internals owns that diagnosis.
+  `tryLock`, fairness, non-block-structured locking, more than one condition queue. With default
+  HotSpot locking on JDK 24+, JEP 491 removes monitor-related virtual-thread pinning as a migration
+  reason. Legacy `-XX:LockingMode=1` still permits monitor pinning in HotSpot 24–25; native/VM
+  pinning also remains. Check the runtime/build/flags and route diagnosis to virtual-threads-internals.
 - A read-only `ReentrantReadWriteLock` holder cannot upgrade while retaining its read hold:
   blocking acquisition may wait indefinitely, whereas `tryLock` can fail or time out. A thread
   already owning the write lock may reenter it. Standard deadlock detection may miss read-hold

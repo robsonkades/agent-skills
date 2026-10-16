@@ -1,0 +1,1 @@
+SELECT available FROM stock WHERE sku = ? FOR UPDATE

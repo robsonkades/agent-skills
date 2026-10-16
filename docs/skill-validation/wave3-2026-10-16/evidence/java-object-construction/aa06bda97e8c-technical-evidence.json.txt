@@ -1,0 +1,58 @@
+{
+  "date": "2026-10-16",
+  "type": "Executed technical example/control evidence; not an agent evaluation",
+  "compileResults": [
+    {
+      "name": "acyclic",
+      "cmd": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' --release 21 -Xlint:all -d 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/acyclic/classes' 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/acyclic/Catalog.java' 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/acyclic/RegionConfig.java' 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/acyclic/Defaults.java' 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/acyclic/ConstructionCheck.java'",
+      "chunk_id": "b9ada5",
+      "wall_time_seconds": 0.4211531,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    },
+    {
+      "name": "recursive",
+      "cmd": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' --release 21 -Xlint:all -d 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/recursive/classes' 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/recursive/Catalog.java' 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/recursive/RegionConfig.java' 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/recursive/Defaults.java' 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/recursive/ConstructionCheck.java' 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/recursive/InitializationProbe.java'",
+      "chunk_id": "ba8744",
+      "wall_time_seconds": 0.3865703,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    }
+  ],
+  "runResults": [
+    {
+      "name": "acyclic-ConstructionCheck",
+      "cmd": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -cp 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/acyclic/classes' ConstructionCheck 1> 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/acyclic/check-stdout.txt' 2> 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/acyclic/check-stderr.txt'\n$constructionRunExit = $LASTEXITCODE\n[pscustomobject]@{Variant='acyclic';Class='ConstructionCheck';ExitCode=$constructionRunExit;Stdout=(Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/acyclic/check-stdout.txt' -Raw);Stderr=(Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/acyclic/check-stderr.txt' -Raw)} | ConvertTo-Json\nexit $constructionRunExit",
+      "chunk_id": "c9cc03",
+      "wall_time_seconds": 0.153089,
+      "exit_code": 0,
+      "original_token_count": 43,
+      "output": "{\r\n  \"Variant\": \"acyclic\",\r\n  \"Class\": \"ConstructionCheck\",\r\n  \"ExitCode\": 0,\r\n  \"Stdout\": \"PASS first access: region=eu, same identity=true\\r\\n\",\r\n  \"Stderr\": null\r\n}\r\n"
+    },
+    {
+      "name": "recursive-ConstructionCheck",
+      "cmd": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -cp 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/recursive/classes' ConstructionCheck 1> 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/recursive/check-stdout.txt' 2> 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/recursive/check-stderr.txt'\n$constructionRunExit = $LASTEXITCODE\n[pscustomobject]@{Variant='recursive';Class='ConstructionCheck';ExitCode=$constructionRunExit;Stdout=(Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/recursive/check-stdout.txt' -Raw);Stderr=(Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/recursive/check-stderr.txt' -Raw)} | ConvertTo-Json\nexit $constructionRunExit",
+      "chunk_id": "8d03b2",
+      "wall_time_seconds": 0.1628005,
+      "exit_code": 1,
+      "original_token_count": 143,
+      "output": "{\r\n  \"Variant\": \"recursive\",\r\n  \"Class\": \"ConstructionCheck\",\r\n  \"ExitCode\": 1,\r\n  \"Stdout\": null,\r\n  \"Stderr\": \"Exception in thread \\\"main\\\" java.lang.ExceptionInInitializerError\\r\\n\\tat Catalog.instance(Catalog.java:13)\\r\\n\\tat ConstructionCheck.main(ConstructionCheck.java:3)\\r\\nCaused by: java.lang.NullPointerException: Cannot invoke \\\"Catalog.region()\\\" because the return value of \\\"Catalog.instance()\\\" is null\\r\\n\\tat Defaults.region(Defaults.java:4)\\r\\n\\tat Catalog.<init>(Catalog.java:5)\\r\\n\\tat Catalog$Holder.<clinit>(Catalog.java:9)\\r\\n\\t... 2 more\\r\\n\"\r\n}\r\n"
+    },
+    {
+      "name": "recursive-InitializationProbe",
+      "cmd": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -cp 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/recursive/classes' InitializationProbe 1> 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/recursive/probe-stdout.txt' 2> 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/recursive/probe-stderr.txt'\n$constructionRunExit = $LASTEXITCODE\n[pscustomobject]@{Variant='recursive';Class='InitializationProbe';ExitCode=$constructionRunExit;Stdout=(Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/recursive/probe-stdout.txt' -Raw);Stderr=(Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-object-construction-validation/recursive/probe-stderr.txt' -Raw)} | ConvertTo-Json\nexit $constructionRunExit",
+      "chunk_id": "9e00b0",
+      "wall_time_seconds": 0.1258913,
+      "exit_code": 0,
+      "original_token_count": 64,
+      "output": "{\r\n  \"Variant\": \"recursive\",\r\n  \"Class\": \"InitializationProbe\",\r\n  \"ExitCode\": 0,\r\n  \"Stdout\": \"Observed first access: ExceptionInInitializerError caused by NullPointerException\\r\\nObserved later access: NoClassDefFoundError\\r\\n\",\r\n  \"Stderr\": null\r\n}\r\n"
+    }
+  ],
+  "primarySource": {
+    "url": "https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.4.2",
+    "verified": "2026-10-16",
+    "supports": "Same-thread recursive initialization completes without waiting; another initializing thread causes waiting; failed initialization records erroneous state. A cross-thread dependency cycle is a consequence of these waiting rules, not a scenario executed here."
+  }
+}

@@ -1,0 +1,735 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "java-application-security-basics",
+  "ownedPath": "skills/java-application-security-basics/**",
+  "repository": "C:/git/agent-skills",
+  "reviewDate": "2026-10-16",
+  "allWritesStopped": true,
+  "ownership": "No neighboring skill, shared repository file, generated registry, Git state, dependency installation, or real agent configuration was changed.",
+  "procedure": {
+    "requiredReadings": [
+      "AGENTS.md",
+      "docs/skill-review-prompt.md",
+      "docs/parallel-skill-reviews.md",
+      "docs/skill-validation/wave3-2026-10-16/review-brief.md",
+      "skills/skill-engineering/SKILL.md and applicable evidence, evaluation, resource-design and anti-pattern references"
+    ],
+    "reuse": "Previously read unchanged procedure/reference material reused where allowed by the wave brief; complete review prompt and current brief also reread during this assignment.",
+    "packageReadCompletely": true,
+    "findingsSentBeforeEdits": true,
+    "subagentsSpawned": 0
+  },
+  "baseline": {
+    "committedVersion": "1.3.5",
+    "assignmentVersion": "1.3.5",
+    "preExistingVersionBump": false,
+    "committedDifferences": [],
+    "stagedDifferences": [],
+    "unstagedDifferences": [],
+    "untrackedFiles": [],
+    "observation": "Assigned six-file package was clean against HEAD at assignment; full backup and SHA-256 hashes were retained before editing.",
+    "packageBackup": "C:/Users/robso/AppData/Local/Temp/codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417/baseline/java-application-security-basics",
+    "hashes": [
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\java-application-security-basics\\SKILL.md",
+        "Hash": "116BA4C4B9CB4AE5F1A3127C15EA52B2E2F2AD1D5DE0442C687DA54C24418502",
+        "Length": 16246
+      },
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\java-application-security-basics\\skill.yaml",
+        "Hash": "36FDC691B7684331A260242FCB44605F5ADD7514AE0235403551AD33DBCE79A9",
+        "Length": 2009
+      },
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\java-application-security-basics\\references\\before-after.md",
+        "Hash": "034E0F5A5775B005D0864FA8081F95CEB2F28DCC719E4059AC6A1C769CB1DF80",
+        "Length": 14248
+      },
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\java-application-security-basics\\references\\password-policy.md",
+        "Hash": "63870878F27359744DF4AD51326CCF4D6E0E0C5F304A580669AC88FF3ABBECDA",
+        "Length": 7879
+      },
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\java-application-security-basics\\references\\password-storage.md",
+        "Hash": "F45AB6FDF56D692031B828FADED62E0100889AE2A44AFA2FEF3F6E6DF9785300",
+        "Length": 25933
+      },
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\java-application-security-basics\\references\\review.md",
+        "Hash": "A715C4811EAAF8391659CFE5328B8242CF1A5AE5BD7352420786E9F80352526E",
+        "Length": 18050
+      }
+    ],
+    "statusCaptureLimitation": "Initial clean Git output was inspected in tool results; there was no separate nonempty initial status log. Baseline file backup/hashes are retained.",
+    "committedManifest": "C:/Users/robso/AppData/Local/Temp/codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417/committed-skill.yaml"
+  },
+  "scopeAndSuccessCriteria": {
+    "role": "Code-level Java security judgment and review; preserve design, diagnosis, and limited correction guidance rather than requiring implementation for every review.",
+    "baseline": "Java 21 API/source compatibility; consumers must inspect their actual resolved runtime and libraries.",
+    "criteria": [
+      "Follow the actual cipher operation mode and publication/acknowledgement boundary.",
+      "A failed authenticated decryption must not publish plaintext or a success effect.",
+      "Distinguish legitimate encryption from decryption; do not condemn a wrapper solely by its class name.",
+      "Retain valid empty messages when the application contract allows them.",
+      "Distinguish documented Java API behavior from one provider/runtime observation."
+    ]
+  },
+  "findings": [
+    {
+      "id": "aead-output-stream-failure-propagation",
+      "severity": "Material guidance gap",
+      "baselineLocations": ["SKILL.md:163-165", "references/review.md:165-171"],
+      "finalLocations": ["SKILL.md:163-168", "references/review.md:165-179"],
+      "finding": "The existing AEAD warning named CipherInputStream but omitted CipherOutputStream, whose Java 21 contract also permits hiding decryption integrity exceptions.",
+      "consequence": "A consumer that publishes output after successful close can acknowledge an unauthenticated message; the local SunJCE probe returned normally and published zero bytes after tag corruption.",
+      "correction": "Explicitly inspect both wrappers and the initialized operation mode, require authenticated completion before publication/success, and preserve legitimate encryption and application-permitted empty plaintext.",
+      "evidence": [
+        "Java SE 21 CipherInputStream and CipherOutputStream contracts",
+        "OpenJDK jdk-25+36 CipherOutputStream.close catches BadPaddingException without propagation",
+        "10-condition Temurin 25.0.3+9/SunJCE probe"
+      ],
+      "remaining": "No unresolved in-scope defect identified. Actual consumer/provider behavior still requires the applying agent's project evidence."
+    }
+  ],
+  "filesChangedByReviewer": [
+    {
+      "path": "skills/java-application-security-basics/SKILL.md",
+      "purpose": "Make the output-stream integrity failure and consumer success boundary visible in the main rules; qualify empty plaintext by the application contract."
+    },
+    {
+      "path": "skills/java-application-security-basics/references/review.md",
+      "purpose": "Expand item 36 with Java 21 primary sources, operation-mode discrimination, and legitimate encryption/empty-message countercases."
+    },
+    {
+      "path": "skills/java-application-security-basics/skill.yaml",
+      "purpose": "Patch version 1.3.5 to 1.3.6."
+    }
+  ],
+  "preExistingChangesPreserved": [],
+  "finalOwnedDiff": "C:/Users/robso/AppData/Local/Temp/codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417/final-owned.diff",
+  "finalOwnedStatus": "C:/Users/robso/AppData/Local/Temp/codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417/final-owned-status.txt",
+  "finalStagedDiff": "C:/Users/robso/AppData/Local/Temp/codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417/final-staged.diff",
+  "finalHashes": [
+    {
+      "Path": "C:\\git\\agent-skills\\skills\\java-application-security-basics\\SKILL.md",
+      "Hash": "57F1F17E35509CF076CFAFEF6159E1179FDFA9ADBFFA3460941880C96AC8B621",
+      "Length": 16468
+    },
+    {
+      "Path": "C:\\git\\agent-skills\\skills\\java-application-security-basics\\skill.yaml",
+      "Hash": "31E457379770E3DB0037E9D9180D8101B53AE3DB1AB0D1143E3B352042357B27",
+      "Length": 2009
+    },
+    {
+      "Path": "C:\\git\\agent-skills\\skills\\java-application-security-basics\\references\\before-after.md",
+      "Hash": "034E0F5A5775B005D0864FA8081F95CEB2F28DCC719E4059AC6A1C769CB1DF80",
+      "Length": 14248
+    },
+    {
+      "Path": "C:\\git\\agent-skills\\skills\\java-application-security-basics\\references\\password-policy.md",
+      "Hash": "63870878F27359744DF4AD51326CCF4D6E0E0C5F304A580669AC88FF3ABBECDA",
+      "Length": 7879
+    },
+    {
+      "Path": "C:\\git\\agent-skills\\skills\\java-application-security-basics\\references\\password-storage.md",
+      "Hash": "F45AB6FDF56D692031B828FADED62E0100889AE2A44AFA2FEF3F6E6DF9785300",
+      "Length": 25933
+    },
+    {
+      "Path": "C:\\git\\agent-skills\\skills\\java-application-security-basics\\references\\review.md",
+      "Hash": "572543B0E7DAA27F25F9C3B206C180A600DA18C7AB8FF4DF274499A33D89041B",
+      "Length": 18534
+    }
+  ],
+  "capabilitiesPreserved": [
+    "KDF selection and measured cost; exact legacy verifier parameters, encoding, policy ids, pepper lifecycle, conditional successful-login migration.",
+    "Framework/version inspection, Java 21 example baseline, no implied upgrades, and differentiation of conformance from demonstrated weakness.",
+    "Instance-level authorization, trusted/immutable Actor claims, caller tracing, tenant predicates and datastore TOCTOU constraints.",
+    "Secure randomness, token entropy/lifecycle, short-code attempt budgets and atomic single use.",
+    "Secret-safe types, equality/comparison distinctions, explicit crypto transformation, nonce uniqueness, AAD, key custody, envelope rotation and bounded large-object handling.",
+    "Existing before/after examples, password-policy and password-storage references remained byte-identical.",
+    "Conditional reference routing and existing neighboring-skill boundaries."
+  ],
+  "capabilitiesRemoved": [],
+  "alternativesConsidered": [
+    "Direct Cipher.doFinal is suitable for the bounded fixture; a vetted authenticated-encryption facility with verified failure semantics remains valid.",
+    "CipherOutputStream in ENCRYPT_MODE is not itself the identified decryption-authentication failure; preserve adequate encryption paths.",
+    "For large encrypted objects, preserve the existing established streaming-AEAD/bounded-handling guidance; do not add an unbounded buffer or invented framing.",
+    "Do not use empty-output rejection as a substitute for authentication completion: a valid empty message and the observed swallowed failure both yield zero output bytes."
+  ],
+  "version": {
+    "committed": "1.3.5",
+    "assignment": "1.3.5",
+    "final": "1.3.6",
+    "rationale": "One patch for a focused technical guidance correction; no prior unpublished bump to reuse. No dependency, description, or baseline change."
+  },
+  "commandsExecuted": [
+    {
+      "command": "node C:/Users/robso/AppData/Local/Temp/codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417/run-technical.mjs",
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS; ten API/consumer conditions. Child JDK options removed; exact child commands and raw streams retained.",
+      "details": {
+        "node": "v25.6.1",
+        "runs": [
+          {
+            "name": "java-version",
+            "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+            "args": ["-version"],
+            "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417",
+            "status": 0,
+            "signal": null,
+            "error": null,
+            "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\java-version.stdout.log",
+            "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\java-version.stderr.log"
+          },
+          {
+            "name": "javac-release21",
+            "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+            "args": ["--release", "21", "-d", "classes", "AeadStreamProbe.java"],
+            "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417",
+            "status": 0,
+            "signal": null,
+            "error": null,
+            "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\javac-release21.stdout.log",
+            "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\javac-release21.stderr.log"
+          },
+          {
+            "name": "aead-probe",
+            "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+            "args": ["-cp", "classes", "AeadStreamProbe"],
+            "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417",
+            "status": 0,
+            "signal": null,
+            "error": null,
+            "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\aead-probe.stdout.log",
+            "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\aead-probe.stderr.log"
+          }
+        ]
+      }
+    },
+    {
+      "command": "node C:/Users/robso/AppData/Local/Temp/codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417/validate-local.mjs",
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS; final rerun after qualifying empty input by the application contract.",
+      "details": {
+        "strictPackageIssues": [],
+        "packageFiles": 6,
+        "version": "1.3.6",
+        "routedReferences": [
+          "references/before-after.md",
+          "references/password-policy.md",
+          "references/password-storage.md",
+          "references/review.md"
+        ],
+        "byteIdenticalPreservedFiles": [
+          "references/before-after.md",
+          "references/password-policy.md",
+          "references/password-storage.md"
+        ],
+        "processes": [
+          {
+            "label": "prettier-final",
+            "command": "C:\\Program Files\\nodejs\\node.exe",
+            "args": [
+              "node_modules/prettier/bin/prettier.cjs",
+              "--check",
+              "skills/java-application-security-basics/SKILL.md",
+              "skills/java-application-security-basics/skill.yaml",
+              "skills/java-application-security-basics/references/before-after.md",
+              "skills/java-application-security-basics/references/password-policy.md",
+              "skills/java-application-security-basics/references/password-storage.md",
+              "skills/java-application-security-basics/references/review.md"
+            ],
+            "cwd": "C:/git/agent-skills",
+            "status": 0,
+            "signal": null,
+            "error": null,
+            "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\prettier-final.stdout.log",
+            "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\prettier-final.stderr.log"
+          },
+          {
+            "label": "diff-check-final",
+            "command": "git",
+            "args": ["diff", "--check", "--", "skills/java-application-security-basics"],
+            "cwd": "C:/git/agent-skills",
+            "status": 0,
+            "signal": null,
+            "error": null,
+            "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\diff-check-final.stdout.log",
+            "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\diff-check-final.stderr.log"
+          }
+        ]
+      }
+    },
+    {
+      "command": "node C:/Users/robso/AppData/Local/Temp/codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417/validate-cases.mjs",
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS; two fixtures compiled with --release 21, identical task text and exactly one mode-token difference.",
+      "details": {
+        "onlyConstraintDifference": "Cipher.DECRYPT_MODE vs Cipher.ENCRYPT_MODE",
+        "taskInputsByteIdentical": true,
+        "classification": "Fixture compilation only; no agent evaluated",
+        "runs": [
+          {
+            "mode": "decrypt",
+            "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+            "args": ["--release", "21", "-d", "classes", "StreamCodec.java"],
+            "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\cases\\decrypt",
+            "status": 0,
+            "signal": null,
+            "error": null,
+            "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\case-decrypt-compile.stdout.log",
+            "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\case-decrypt-compile.stderr.log"
+          },
+          {
+            "mode": "encrypt",
+            "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+            "args": ["--release", "21", "-d", "classes", "StreamCodec.java"],
+            "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\cases\\encrypt",
+            "status": 0,
+            "signal": null,
+            "error": null,
+            "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\case-encrypt-compile.stdout.log",
+            "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\case-encrypt-compile.stderr.log"
+          }
+        ]
+      }
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/java-application-security-basics/SKILL.md skills/java-application-security-basics/references/review.md skills/java-application-security-basics/skill.yaml",
+      "cwd": "C:/git/agent-skills",
+      "result": "Initial exit 1 for widened Markdown verification table; fixed by retaining the existing row because the new decision criteria were already in the main rule and item 36.",
+      "rawOutput": "C:/Users/robso/AppData/Local/Temp/codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417/prettier-initial.combined.log",
+      "details": "C:/Users/robso/AppData/Local/Temp/codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417/initial-format-check.json"
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --config .prettierrc.json --check C:/Users/robso/AppData/Local/Temp/codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417/baseline/java-application-security-basics/references/review.md",
+      "cwd": "C:/git/agent-skills",
+      "result": "Exit 0; assignment snapshot already conformed. Formatting failure was introduced, not pre-existing."
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs skills/java-application-security-basics/references/review.md > <evidenceRoot>/review-formatted-preview.md; git diff --no-index -- skills/java-application-security-basics/references/review.md <evidenceRoot>/review-formatted-preview.md",
+      "cwd": "C:/git/agent-skills",
+      "result": "Read-only formatting preview; git diff exit 1 was expected because the proposed widened table changed padding. Preview retained; no formatter writes to repository."
+    },
+    {
+      "command": "git diff -- skills/java-application-security-basics; git status --short --untracked-files=all -- skills/java-application-security-basics; git diff --cached -- skills/java-application-security-basics; git show HEAD:skills/java-application-security-basics/skill.yaml",
+      "cwd": "C:/git/agent-skills",
+      "result": "Inspected final owned diff: exactly three files, no staged changes or untracked owned files. Patch only."
+    },
+    {
+      "command": "Invoke-WebRequest -Uri <each recorded primary URL> -TimeoutSec 15",
+      "cwd": "C:/git/agent-skills",
+      "result": "Four primary responses HTTP 200; exact URLs, artifact paths and SHA-256 hashes retained.",
+      "details": [
+        {
+          "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/javax/crypto/CipherOutputStream.html",
+          "file": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\jdk21-cipheroutputstream.html",
+          "status": 200,
+          "sha256": "4E9BB414C3466AD2BE953F0385D362178235C1BF3AF488C9192886FD85DDEE0E"
+        },
+        {
+          "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/javax/crypto/CipherInputStream.html",
+          "file": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\jdk21-cipherinputstream.html",
+          "status": 200,
+          "sha256": "7FBAA9253DA73940F74230308CAE8F317E1ACD992AF5990417FBA2958A9A261B"
+        },
+        {
+          "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/javax/crypto/Cipher.html",
+          "file": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\jdk21-cipher.html",
+          "status": 200,
+          "sha256": "C5BC766C357BE433EB2F0791791FE34F1B2153B918D0017394E228C451E80F26"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/openjdk/jdk/jdk-25%2B36/src/java.base/share/classes/javax/crypto/CipherOutputStream.java",
+          "file": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\openjdk25-CipherOutputStream.java.txt",
+          "status": 200,
+          "sha256": "476BE0C18E1BD443E6FEB012547A635D94E02497E98F87029B934D996AFDB687"
+        }
+      ]
+    }
+  ],
+  "technicalValidation": {
+    "classification": "executed technical API/consumer checks, not agent behavioral evaluation",
+    "compileTarget": "Java 21 (--release 21; class file major 65)",
+    "runtime": {
+      "runtime": "25.0.3+9-LTS",
+      "vendor": "Eclipse Adoptium",
+      "provider": "SunJCE 25"
+    },
+    "checks": [
+      {
+        "case": "direct-valid",
+        "accepted": true,
+        "publications": 1,
+        "outputBytes": 52,
+        "failure": "",
+        "observation": "legitimate-control"
+      },
+      {
+        "case": "output-stream-valid",
+        "accepted": true,
+        "publications": 1,
+        "outputBytes": 52,
+        "failure": "",
+        "observation": "legitimate-control"
+      },
+      {
+        "case": "direct-tampered-tag",
+        "accepted": false,
+        "publications": 0,
+        "outputBytes": 0,
+        "failure": "AEADBadTagException",
+        "observation": "adversarial-control"
+      },
+      {
+        "case": "output-stream-tampered-tag",
+        "accepted": true,
+        "publications": 1,
+        "outputBytes": 0,
+        "failure": "",
+        "observation": "counterexample-reproduced"
+      },
+      {
+        "case": "direct-tampered-ciphertext",
+        "accepted": false,
+        "publications": 0,
+        "outputBytes": 0,
+        "failure": "AEADBadTagException",
+        "observation": "adversarial-control"
+      },
+      {
+        "case": "direct-wrong-aad",
+        "accepted": false,
+        "publications": 0,
+        "outputBytes": 0,
+        "failure": "AEADBadTagException",
+        "observation": "adversarial-control"
+      },
+      {
+        "case": "direct-wrong-key",
+        "accepted": false,
+        "publications": 0,
+        "outputBytes": 0,
+        "failure": "AEADBadTagException",
+        "observation": "adversarial-control"
+      },
+      {
+        "case": "direct-valid-empty",
+        "accepted": true,
+        "publications": 1,
+        "outputBytes": 0,
+        "failure": "",
+        "observation": "legitimate-control"
+      },
+      {
+        "case": "output-stream-valid-empty",
+        "accepted": true,
+        "publications": 1,
+        "outputBytes": 0,
+        "failure": "",
+        "observation": "legitimate-control"
+      },
+      {
+        "case": "output-stream-encryption-round-trip",
+        "accepted": true,
+        "publications": 1,
+        "outputBytes": 52,
+        "failure": "",
+        "observation": "legitimate-control"
+      }
+    ],
+    "result": {
+      "checks": 10,
+      "result": "PASS"
+    },
+    "allSpawnedProcessesExited": true
+  },
+  "structuralValidation": {
+    "strictPackageIssues": [],
+    "packageFiles": 6,
+    "version": "1.3.6",
+    "routedReferences": [
+      "references/before-after.md",
+      "references/password-policy.md",
+      "references/password-storage.md",
+      "references/review.md"
+    ],
+    "byteIdenticalPreservedFiles": [
+      "references/before-after.md",
+      "references/password-policy.md",
+      "references/password-storage.md"
+    ],
+    "processes": [
+      {
+        "label": "prettier-final",
+        "command": "C:\\Program Files\\nodejs\\node.exe",
+        "args": [
+          "node_modules/prettier/bin/prettier.cjs",
+          "--check",
+          "skills/java-application-security-basics/SKILL.md",
+          "skills/java-application-security-basics/skill.yaml",
+          "skills/java-application-security-basics/references/before-after.md",
+          "skills/java-application-security-basics/references/password-policy.md",
+          "skills/java-application-security-basics/references/password-storage.md",
+          "skills/java-application-security-basics/references/review.md"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "error": null,
+        "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\prettier-final.stdout.log",
+        "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\prettier-final.stderr.log"
+      },
+      {
+        "label": "diff-check-final",
+        "command": "git",
+        "args": ["diff", "--check", "--", "skills/java-application-security-basics"],
+        "cwd": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "error": null,
+        "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\diff-check-final.stdout.log",
+        "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\diff-check-final.stderr.log"
+      }
+    ]
+  },
+  "behavioralEvaluation": {
+    "executedAgentEvaluations": 0,
+    "status": "NOT_EXECUTED",
+    "measuredImprovement": false,
+    "explanation": "The technical probe demonstrates a documented failure mechanism and controls, not comparative agent quality. Cases are development cases used in this review, not unseen holdouts.",
+    "structuredWalkthroughs": [
+      {
+        "scenario": "Representative hostile decrypt",
+        "result": "Expected minimal direct Cipher completion before publishing; technical probe observed original wrapper swallow invalid tag. This is an expected agent outcome, not an agent output."
+      },
+      {
+        "scenario": "One-constraint countercase: encryption",
+        "result": "Expected no mandatory replacement of CipherOutputStream merely by name; encryption round-trip was technically executed."
+      },
+      {
+        "scenario": "Missing mode/caller evidence",
+        "result": "If initialization or publication paths are absent, report the conditional stream-contract concern and inspect those paths before claiming a reachable bypass. Structured walkthrough only."
+      },
+      {
+        "scenario": "Out-of-scope Spring filter/JWT wiring",
+        "result": "Existing Scope routes framework policy wiring to spring-security-for-apis with resolved versions and call paths. Structured walkthrough only."
+      },
+      {
+        "scenario": "Pressure to reject every empty output",
+        "result": "Reject that proposed fix because valid empty AEAD plaintext is allowed; require a completion signal instead. Technical probe covered both valid empty and bad-tag empty outputs."
+      }
+    ]
+  },
+  "reproducibleCases": {
+    "classification": "development cases; not held-out or executed agent evaluations",
+    "decisiveConstraint": "Cipher operation mode; fixture files otherwise byte-identical",
+    "evaluatorIsolation": "Supply only input.md and the matching StreamCodec.java. Do not supply criteria.json, technical probe, or reviewer findings.",
+    "prerequisites": "Java 21-compatible compiler/API. Actual available compiler/runtime is Temurin 25.0.3+9; --release 21 targets Java 21 and does not execute JDK 21.",
+    "inputManifestPath": "C:/Users/robso/AppData/Local/Temp/codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417/case-inputs.json",
+    "separateCriteriaPath": "C:/Users/robso/AppData/Local/Temp/codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417/case-criteria.json",
+    "taskInputs": [
+      {
+        "id": "decrypt-stream-boundary",
+        "prompt": "Review the Java 21 helper in StreamCodec.java for a bounded document import/export operation. Make only justified security changes and provide concrete verification; retaining adequate code is a valid outcome.\n\nThe OPERATION constant selects the operation used by every caller. Inputs are capped at 64 KiB before this helper. Nonempty and empty logical documents are both valid. A publish call commits the result; normal return acknowledges success to the job runner. A thrown exception marks the job failed, without committing new content.\n\nKey access, tenant/record binding through AAD, and envelope version routing have been reviewed. Encryption callers allocate a new nonce per key; decryption callers use the envelope's nonce. Preserve these contracts. Do not upgrade Java or add dependencies solely to fix this helper.\n\nExplain the trust boundary, whether the actual Java API communicates relevant failures to the consumer, and the smallest necessary change, if any. Do not infer a defect solely from the wrapper class name.\n",
+        "inputPath": "C:/Users/robso/AppData/Local/Temp/codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417/cases/decrypt/input.md",
+        "fixturePath": "C:/Users/robso/AppData/Local/Temp/codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417/cases/decrypt/StreamCodec.java",
+        "fixtureSource": "import java.io.ByteArrayOutputStream;\nimport java.io.IOException;\nimport java.security.GeneralSecurityException;\nimport java.util.function.Consumer;\nimport javax.crypto.Cipher;\nimport javax.crypto.CipherOutputStream;\nimport javax.crypto.SecretKey;\nimport javax.crypto.spec.GCMParameterSpec;\n\nfinal class StreamCodec {\n    static final int OPERATION = Cipher.DECRYPT_MODE;\n\n    static void transform(byte[] input, SecretKey key, byte[] nonce, byte[] aad,\n                          Consumer<byte[]> publish)\n            throws GeneralSecurityException, IOException {\n        Cipher cipher = Cipher.getInstance(\"AES/GCM/NoPadding\");\n        cipher.init(OPERATION, key, new GCMParameterSpec(128, nonce));\n        cipher.updateAAD(aad);\n        ByteArrayOutputStream buffer = new ByteArrayOutputStream();\n        try (CipherOutputStream output = new CipherOutputStream(buffer, cipher)) {\n            output.write(input);\n        }\n        publish.accept(buffer.toByteArray());\n    }\n}\n"
+      },
+      {
+        "id": "encrypt-stream-control",
+        "prompt": "Review the Java 21 helper in StreamCodec.java for a bounded document import/export operation. Make only justified security changes and provide concrete verification; retaining adequate code is a valid outcome.\n\nThe OPERATION constant selects the operation used by every caller. Inputs are capped at 64 KiB before this helper. Nonempty and empty logical documents are both valid. A publish call commits the result; normal return acknowledges success to the job runner. A thrown exception marks the job failed, without committing new content.\n\nKey access, tenant/record binding through AAD, and envelope version routing have been reviewed. Encryption callers allocate a new nonce per key; decryption callers use the envelope's nonce. Preserve these contracts. Do not upgrade Java or add dependencies solely to fix this helper.\n\nExplain the trust boundary, whether the actual Java API communicates relevant failures to the consumer, and the smallest necessary change, if any. Do not infer a defect solely from the wrapper class name.\n",
+        "inputPath": "C:/Users/robso/AppData/Local/Temp/codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417/cases/encrypt/input.md",
+        "fixturePath": "C:/Users/robso/AppData/Local/Temp/codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417/cases/encrypt/StreamCodec.java",
+        "fixtureSource": "import java.io.ByteArrayOutputStream;\nimport java.io.IOException;\nimport java.security.GeneralSecurityException;\nimport java.util.function.Consumer;\nimport javax.crypto.Cipher;\nimport javax.crypto.CipherOutputStream;\nimport javax.crypto.SecretKey;\nimport javax.crypto.spec.GCMParameterSpec;\n\nfinal class StreamCodec {\n    static final int OPERATION = Cipher.ENCRYPT_MODE;\n\n    static void transform(byte[] input, SecretKey key, byte[] nonce, byte[] aad,\n                          Consumer<byte[]> publish)\n            throws GeneralSecurityException, IOException {\n        Cipher cipher = Cipher.getInstance(\"AES/GCM/NoPadding\");\n        cipher.init(OPERATION, key, new GCMParameterSpec(128, nonce));\n        cipher.updateAAD(aad);\n        ByteArrayOutputStream buffer = new ByteArrayOutputStream();\n        try (CipherOutputStream output = new CipherOutputStream(buffer, cipher)) {\n            output.write(input);\n        }\n        publish.accept(buffer.toByteArray());\n    }\n}\n"
+      }
+    ],
+    "evaluatorCriteria": [
+      {
+        "id": "decrypt-stream-boundary",
+        "expectedBehavior": [
+          "Trace OPERATION to DECRYPT_MODE and the publication after closing CipherOutputStream.",
+          "Identify that the Java stream contract can suppress decryption integrity exceptions; normal close does not establish authenticated completion.",
+          "For these bounded messages, use direct Cipher.doFinal or another justified authenticated facility that propagates failure before publication.",
+          "Retain valid nonempty and empty plaintext acceptance and the existing key/nonce/AAD contracts.",
+          "Validate valid message, flipped ciphertext/tag, wrong AAD and wrong key; malformed authentication cases publish nothing and cannot acknowledge success."
+        ],
+        "explicitFailureConditions": [
+          "Keeps the existing decrypt pipeline based only on AES/GCM or try-with-resources.",
+          "Catches authentication failure and publishes an empty result or returns success.",
+          "Rejects every empty result, including an authenticated empty document.",
+          "Changes baseline or adds unrelated encryption protocol complexity.",
+          "Claims runtime Java 21 execution when only --release 21 on Java 25 was used."
+        ],
+        "observableOracle": "Generate an ephemeral AES key and distinct nonce for each sealed fixture with the JDK Cipher API. Capture publish calls; valid nonempty/empty ciphertext must publish exactly once with exact plaintext. Corrupt tag/ciphertext, AAD, or key; require AEAD authentication rejection and zero calls."
+      },
+      {
+        "id": "encrypt-stream-control",
+        "expectedBehavior": [
+          "Trace OPERATION to ENCRYPT_MODE and note that the specific hidden-decryption-authentication failure does not apply.",
+          "Preserve the already reviewed nonce/AAD/key prerequisites and completion before publication.",
+          "Acknowledge that retaining CipherOutputStream is valid for this scenario; a refactor may be optional but is not a demonstrated fix for swallowed decryption failures.",
+          "Verify the published ciphertext can be authenticated/decrypted with the matching key, nonce and AAD for nonempty and empty documents."
+        ],
+        "explicitFailureConditions": [
+          "Labels CipherOutputStream encryption as a tag-verification bypass solely from the class name.",
+          "Publishes before encryption closes/completes and the tag is available.",
+          "Rejects legitimate empty documents, drops AAD, introduces nonce reuse, upgrades the baseline, or invents unrelated requirements.",
+          "Claims the local counterexample establishes every provider or every stream operation is unsafe."
+        ],
+        "observableOracle": "Use an ephemeral AES key and unique nonces. Capture publish calls; exactly one completed ciphertext per valid nonempty/empty input. Direct Cipher.doFinal in DECRYPT_MODE with matching metadata must recover the exact input; a changed ciphertext/tag must fail authentication."
+      }
+    ],
+    "fixtureValidation": {
+      "onlyConstraintDifference": "Cipher.DECRYPT_MODE vs Cipher.ENCRYPT_MODE",
+      "taskInputsByteIdentical": true,
+      "classification": "Fixture compilation only; no agent evaluated",
+      "runs": [
+        {
+          "mode": "decrypt",
+          "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+          "args": ["--release", "21", "-d", "classes", "StreamCodec.java"],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\cases\\decrypt",
+          "status": 0,
+          "signal": null,
+          "error": null,
+          "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\case-decrypt-compile.stdout.log",
+          "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\case-decrypt-compile.stderr.log"
+        },
+        {
+          "mode": "encrypt",
+          "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+          "args": ["--release", "21", "-d", "classes", "StreamCodec.java"],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\cases\\encrypt",
+          "status": 0,
+          "signal": null,
+          "error": null,
+          "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\case-encrypt-compile.stdout.log",
+          "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\case-encrypt-compile.stderr.log"
+        }
+      ]
+    },
+    "pending": "Coordinator may compare original/revised/no-skill under identical model and tool settings. No behavioral run or measured quality gain is claimed."
+  },
+  "primarySources": [
+    {
+      "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/javax/crypto/CipherOutputStream.html",
+      "file": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\jdk21-cipheroutputstream.html",
+      "status": 200,
+      "sha256": "4E9BB414C3466AD2BE953F0385D362178235C1BF3AF488C9192886FD85DDEE0E",
+      "supports": "Java 21 CipherOutputStream may conceal integrity failures during decryption; use Cipher directly when explicit failure notification is required.",
+      "version": "Java SE 21"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/javax/crypto/CipherInputStream.html",
+      "file": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\jdk21-cipherinputstream.html",
+      "status": 200,
+      "sha256": "7FBAA9253DA73940F74230308CAE8F317E1ACD992AF5990417FBA2958A9A261B",
+      "supports": "Preserved existing CipherInputStream restriction; authentication-error propagation must be checked at the consuming wrapper.",
+      "version": "Java SE 21"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/javax/crypto/Cipher.html",
+      "file": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\jdk21-cipher.html",
+      "status": 200,
+      "sha256": "C5BC766C357BE433EB2F0791791FE34F1B2153B918D0017394E228C451E80F26",
+      "supports": "Direct Cipher authenticated completion reports AEAD tag mismatch; encryption/decryption operation modes have different contracts.",
+      "version": "Java SE 21"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/openjdk/jdk/jdk-25%2B36/src/java.base/share/classes/javax/crypto/CipherOutputStream.java",
+      "file": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417\\openjdk25-CipherOutputStream.java.txt",
+      "status": 200,
+      "sha256": "476BE0C18E1BD443E6FEB012547A635D94E02497E98F87029B934D996AFDB687",
+      "supports": "Pinned implementation corroboration: CipherOutputStream.close catches BadPaddingException without rethrowing.",
+      "version": "OpenJDK jdk-25+36; corroborating source, not claimed to be the exact Temurin 25.0.3 patch source"
+    }
+  ],
+  "exploratorySourcesNotUsedForChanges": [
+    {
+      "url": "https://github.com/spring-projects/spring-security/blob/7.1.1/crypto/src/main/java/org/springframework/security/crypto/password/AbstractValidatingPasswordEncoder.java",
+      "note": "Inspected existing password-encoder boundary; no additional finding or API requirement added."
+    },
+    {
+      "url": "https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html",
+      "note": "Consulted input-length context; did not turn the exploratory concern into an unsupported package change."
+    },
+    {
+      "url": "https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html",
+      "note": "Consulted existing password guidance; preserved the package's already detailed trade-offs."
+    }
+  ],
+  "failuresAndResolutions": [
+    {
+      "kind": "Initial formatting failure",
+      "result": "Introduced table-width issue corrected without broad reformatting. Final check of all six package files passed.",
+      "evidence": "C:/Users/robso/AppData/Local/Temp/codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417/initial-format-check.json"
+    },
+    {
+      "kind": "Unreturned web tool call",
+      "result": "Terminated yielded functions cell 125 after no result; primary sources then fetched with bounded requests, all HTTP 200.",
+      "evidence": "C:/Users/robso/AppData/Local/Temp/codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417/source-tool-retry.json"
+    },
+    {
+      "kind": "Diagnostic diff nonzero",
+      "result": "git diff --no-index exit 1 indicated expected preview differences, not a failed content check.",
+      "evidence": "C:/Users/robso/AppData/Local/Temp/codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417/review-formatted-preview.md"
+    }
+  ],
+  "limitations": [
+    "The probe compiled --release 21 and verified class-file major 65; execution used Temurin 25.0.3+9-LTS with SunJCE 25. No JDK 21 runtime run was performed.",
+    "The exact swallowed-tag/zero-byte output was observed for this runtime/provider and bounded one-shot fixtures; it is not an assertion that every provider/stream/mode has identical output behavior.",
+    "No original/revised/no-skill agent comparison was executed, so no incremental behavioral improvement is claimed.",
+    "Existing partial Java password/authorization examples were unchanged and were not recompiled in this focused review; their declared prerequisites and caveats remain.",
+    "No real application, live credential, production data, encryption service, provider matrix, capacity benchmark or exhaustive security audit was exercised.",
+    "Global registry integrity, dependency resolution and repository-wide verification remain pending with the coordinator."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Parallel-run restriction; regenerate only after all reviewers stop writing.",
+      "prerequisites": "All active skill authors hand off readiness; inspect unrelated generated churn."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Parallel-run restriction; local readiness does not claim repository-wide verification.",
+      "prerequisites": "All reviewers stopped; registry rebuilt. Includes global version/integrity checks."
+    },
+    {
+      "command": "Independent agent comparison using the separated cases",
+      "owner": "coordinator",
+      "reason": "Reviewer cannot delegate or run nested agents; cases prepared with observable criteria.",
+      "prerequisites": "Keep model, tool access, task context and baseline/revised/no-skill conditions comparable; evaluator should not receive criteria as input."
+    }
+  ],
+  "crossSkillFindings": [],
+  "coordinatorActions": [
+    "Inspect the three-file owned diff.",
+    "Retain the complete evidence directory and separated case inputs/criteria before any cleanup.",
+    "Run index/global verification after all authors stop."
+  ],
+  "evidenceRoot": "C:/Users/robso/AppData/Local/Temp/codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417",
+  "artifactManifest": "C:/Users/robso/AppData/Local/Temp/codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417/artifacts.json",
+  "artifactCountExcludingManifest": 53,
+  "evidence": {
+    "baselineHashes": "C:/Users/robso/AppData/Local/Temp/codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417/baseline-hashes.json",
+    "finalHashes": "C:/Users/robso/AppData/Local/Temp/codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417/final-hashes.json",
+    "technicalHarness": "C:/Users/robso/AppData/Local/Temp/codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417/AeadStreamProbe.java",
+    "technicalRunner": "C:/Users/robso/AppData/Local/Temp/codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417/run-technical.mjs",
+    "technicalRuns": "C:/Users/robso/AppData/Local/Temp/codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417/technical-runs.json",
+    "technicalResults": "C:/Users/robso/AppData/Local/Temp/codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417/technical-results.json",
+    "technicalStdout": "C:/Users/robso/AppData/Local/Temp/codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417/aead-probe.stdout.log",
+    "technicalStderr": "C:/Users/robso/AppData/Local/Temp/codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417/aead-probe.stderr.log",
+    "localValidator": "C:/Users/robso/AppData/Local/Temp/codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417/validate-local.mjs",
+    "localResults": "C:/Users/robso/AppData/Local/Temp/codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417/local-validation-results.json",
+    "caseValidator": "C:/Users/robso/AppData/Local/Temp/codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417/validate-cases.mjs",
+    "caseValidationResults": "C:/Users/robso/AppData/Local/Temp/codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417/case-validation-results.json",
+    "sourceFetch": "C:/Users/robso/AppData/Local/Temp/codex-java-application-security-basics-20261016-176d580828d9477390e5e38041fd9417/source-fetch.json"
+  },
+  "processState": "All started subprocesses used bounded synchronous execution and have exited; all statuses captured. No detached helper/server or process capable of writing remains.",
+  "finalInspection": "Inspected complete final owned diff after last wording qualification. Exactly the intended three files changed; no reformatting churn; writes stop with this handoff."
+}

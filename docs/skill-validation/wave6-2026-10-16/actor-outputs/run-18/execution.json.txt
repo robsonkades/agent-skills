@@ -1,0 +1,532 @@
+{
+  "schemaVersion": 1,
+  "runDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-18",
+  "timestamps": {
+    "firstRecordedClock": "2026-10-16 17:28:17 UTC",
+    "verificationStartedAt": "2026-10-16T17:30:17.362Z",
+    "verificationEndedAt": "2026-10-16T17:30:17.364Z",
+    "finalizationRecordedAt": "2026-10-16 17:30:54 UTC",
+    "note": "Initial TASK.md/skill reads preceded the first clock observation; their start time was not recorded. No total duration, token usage or cost is inferred."
+  },
+  "commands": [
+    {
+      "program": "PowerShell (exec_command configured shell)",
+      "arguments": {
+        "cmd": "Get-Content -Raw -LiteralPath 'TASK.md'"
+      },
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-18",
+      "exit": 0,
+      "output": {
+        "kind": "full content emitted",
+        "contentReference": "TASK.md",
+        "sha256": "34B120F5FCC597B9CBDE9935B3209F09D981EF6359EE1C9E4626ED1F7E721EB6",
+        "truncated": false,
+        "toolChunkId": null
+      }
+    },
+    {
+      "program": "PowerShell (exec_command configured shell)",
+      "arguments": {
+        "cmd": "Get-Content -Raw -LiteralPath 'skill/SKILL.md'"
+      },
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-18",
+      "exit": 0,
+      "output": {
+        "kind": "full content emitted",
+        "contentReference": "skill/SKILL.md",
+        "sha256": "A9F6DAB4BF513019BF245EFC9CD8757A5EDCC9B212EC507E3545FA59573C2A1A",
+        "truncated": false,
+        "toolChunkId": null
+      }
+    },
+    {
+      "program": "PowerShell (exec_command configured shell)",
+      "arguments": {
+        "cmd": "rg --files input output skill"
+      },
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-18",
+      "exit": 0,
+      "output": [
+        "skill/skill.yaml",
+        "skill/SKILL.md",
+        "skill/references/review-checklist.md",
+        "skill/references/happens-before.md",
+        "output/project/check.mjs",
+        "output/project/docs/review-request.md",
+        "output/project/docs/contract.md",
+        "output/project/README.md",
+        "input/project/test/work/Smoke.java",
+        "output/project/test/work/Smoke.java",
+        "output/project/src/work/Message.java",
+        "input/project/check.mjs",
+        "input/project/README.md",
+        "input/project/docs/review-request.md",
+        "input/project/docs/contract.md",
+        "input/project/src/work/Message.java"
+      ],
+      "operation": "listing only"
+    },
+    {
+      "program": "PowerShell (exec_command configured shell)",
+      "arguments": {
+        "cmd": "Get-Content -Raw -LiteralPath 'input/project/docs/review-request.md'"
+      },
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-18",
+      "exit": 0,
+      "output": {
+        "kind": "full content emitted",
+        "contentReference": "input/project/docs/review-request.md",
+        "sha256": "B289F7EEF31916B9FB63AD4B0CDF73AB6580A029E8233BAA8474E7B490C12505",
+        "truncated": false,
+        "toolChunkId": "593dce"
+      }
+    },
+    {
+      "program": "PowerShell (exec_command configured shell)",
+      "arguments": {
+        "cmd": "Get-Content -Raw -LiteralPath 'input/project/docs/contract.md'"
+      },
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-18",
+      "exit": 0,
+      "output": {
+        "kind": "full content emitted",
+        "contentReference": "input/project/docs/contract.md",
+        "sha256": "BDA240D743B23D54B26D335D25B8379187F5DAF02DDEA15BC5EAD15D45616AB9",
+        "truncated": false,
+        "toolChunkId": "f44062"
+      }
+    },
+    {
+      "program": "PowerShell (exec_command configured shell)",
+      "arguments": {
+        "cmd": "Get-Content -Raw -LiteralPath 'input/project/README.md'"
+      },
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-18",
+      "exit": 0,
+      "output": {
+        "kind": "full content emitted",
+        "contentReference": "input/project/README.md",
+        "sha256": "F7308D48921D2A1E694594AACE471A6A27DB4678BA1105B4A87B3157340BF641",
+        "truncated": false,
+        "toolChunkId": "9b453a"
+      }
+    },
+    {
+      "program": "PowerShell (exec_command configured shell)",
+      "arguments": {
+        "cmd": "Get-Content -Raw -LiteralPath 'input/project/src/work/Message.java'"
+      },
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-18",
+      "exit": 0,
+      "output": {
+        "kind": "full content emitted",
+        "contentReference": "input/project/src/work/Message.java",
+        "sha256": "296D6AFEAD1AA5CF9C04F3B211C88D6D797CE723D403EB199FD00F36444211AD",
+        "truncated": false,
+        "toolChunkId": "764984"
+      }
+    },
+    {
+      "program": "PowerShell (exec_command configured shell)",
+      "arguments": {
+        "cmd": "Get-Content -Raw -LiteralPath 'input/project/test/work/Smoke.java'"
+      },
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-18",
+      "exit": 0,
+      "output": {
+        "kind": "full content emitted",
+        "contentReference": "input/project/test/work/Smoke.java",
+        "sha256": "07FE704F60685B8618D47F924A83AEFC24B675C13A2066590C5B7329BFD6DF72",
+        "truncated": false,
+        "toolChunkId": "766a62"
+      }
+    },
+    {
+      "program": "PowerShell (exec_command configured shell)",
+      "arguments": {
+        "cmd": "Get-Content -Raw -LiteralPath 'input/project/check.mjs'"
+      },
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-18",
+      "exit": 0,
+      "output": {
+        "kind": "full content emitted",
+        "contentReference": "input/project/check.mjs",
+        "sha256": "01C7F729F0BD4F5CA17BC727272EA87C9310180EE17ECE398817CF5C6EB46973",
+        "truncated": false,
+        "toolChunkId": "dfa7f9"
+      }
+    },
+    {
+      "program": "PowerShell (exec_command configured shell)",
+      "arguments": {
+        "cmd": "Get-Content -Raw -LiteralPath 'skill/references/happens-before.md'"
+      },
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-18",
+      "exit": 0,
+      "output": {
+        "kind": "full content emitted",
+        "contentReference": "skill/references/happens-before.md",
+        "sha256": "FFB7B4955709D039D02549F7730D85B8BAD661F22D9DE908D14E741C6DF5A076",
+        "truncated": false,
+        "toolChunkId": "01daf1"
+      }
+    },
+    {
+      "program": "PowerShell (exec_command configured shell)",
+      "arguments": {
+        "cmd": "Get-Content -Raw -LiteralPath 'skill/references/review-checklist.md'"
+      },
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-18",
+      "exit": 0,
+      "output": {
+        "kind": "full content emitted",
+        "contentReference": "skill/references/review-checklist.md",
+        "sha256": "A9E6F00A8E7E26FCBE4B6D2A7A430198042ACC7905025BB661772DD29B73B8A8",
+        "truncated": false,
+        "toolChunkId": "020753"
+      }
+    },
+    {
+      "program": "PowerShell (exec_command configured shell)",
+      "arguments": {
+        "cmd": "Get-FileHash -Algorithm SHA256 -LiteralPath 'TASK.md' | Select-Object Path,Hash\nGet-FileHash -Algorithm SHA256 -LiteralPath 'skill/SKILL.md' | Select-Object Path,Hash\nGet-FileHash -Algorithm SHA256 -LiteralPath 'skill/references/happens-before.md' | Select-Object Path,Hash\nGet-FileHash -Algorithm SHA256 -LiteralPath 'skill/references/review-checklist.md' | Select-Object Path,Hash\nGet-FileHash -Algorithm SHA256 -LiteralPath 'input/project/docs/review-request.md' | Select-Object Path,Hash\nGet-FileHash -Algorithm SHA256 -LiteralPath 'input/project/docs/contract.md' | Select-Object Path,Hash\nGet-FileHash -Algorithm SHA256 -LiteralPath 'input/project/README.md' | Select-Object Path,Hash\nGet-FileHash -Algorithm SHA256 -LiteralPath 'input/project/src/work/Message.java' | Select-Object Path,Hash\nGet-FileHash -Algorithm SHA256 -LiteralPath 'input/project/test/work/Smoke.java' | Select-Object Path,Hash\nGet-FileHash -Algorithm SHA256 -LiteralPath 'input/project/check.mjs' | Select-Object Path,Hash\nGet-FileHash -Algorithm SHA256 -LiteralPath 'output/project/docs/review-request.md' | Select-Object Path,Hash\nGet-FileHash -Algorithm SHA256 -LiteralPath 'output/project/docs/contract.md' | Select-Object Path,Hash\nGet-FileHash -Algorithm SHA256 -LiteralPath 'output/project/README.md' | Select-Object Path,Hash\nGet-FileHash -Algorithm SHA256 -LiteralPath 'output/project/src/work/Message.java' | Select-Object Path,Hash\nGet-FileHash -Algorithm SHA256 -LiteralPath 'output/project/test/work/Smoke.java' | Select-Object Path,Hash\nGet-FileHash -Algorithm SHA256 -LiteralPath 'output/project/check.mjs' | Select-Object Path,Hash"
+      },
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-18",
+      "exit": 0,
+      "output": "\r\nPath                                                                                                      Hash\r\n----                                                                                                      ----\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave6-0tHxwh\\actors\\run-18\\TASK.md                               34B120F5FCC5…\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave6-0tHxwh\\actors\\run-18\\skill\\SKILL.md                        A9F6DAB4BF51…\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave6-0tHxwh\\actors\\run-18\\skill\\references\\happens-before.md    FFB7B4955709…\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave6-0tHxwh\\actors\\run-18\\skill\\references\\review-checklist.md  A9E6F00A8E7E…\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave6-0tHxwh\\actors\\run-18\\input\\project\\docs\\review-request.md  B289F7EEF319…\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave6-0tHxwh\\actors\\run-18\\input\\project\\docs\\contract.md        BDA240D743B2…\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave6-0tHxwh\\actors\\run-18\\input\\project\\README.md               F7308D48921D…\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave6-0tHxwh\\actors\\run-18\\input\\project\\src\\work\\Message.java   296D6AFEAD1A…\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave6-0tHxwh\\actors\\run-18\\input\\project\\test\\work\\Smoke.java    07FE704F6068…\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave6-0tHxwh\\actors\\run-18\\input\\project\\check.mjs               01C7F729F0BD…\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave6-0tHxwh\\actors\\run-18\\output\\project\\docs\\review-request.md B289F7EEF319…\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave6-0tHxwh\\actors\\run-18\\output\\project\\docs\\contract.md       BDA240D743B2…\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave6-0tHxwh\\actors\\run-18\\output\\project\\README.md              F7308D48921D…\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave6-0tHxwh\\actors\\run-18\\output\\project\\src\\work\\Message.java  296D6AFEAD1A…\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave6-0tHxwh\\actors\\run-18\\output\\project\\test\\work\\Smoke.java   07FE704F6068…\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave6-0tHxwh\\actors\\run-18\\output\\project\\check.mjs              01C7F729F0BD…\r\n\r\n",
+      "note": "PowerShell table formatting shortened displayed hashes; full JSON hash command followed."
+    },
+    {
+      "program": "PowerShell (exec_command configured shell)",
+      "arguments": {
+        "cmd": "$items = @('TASK.md','skill/SKILL.md','skill/references/happens-before.md','skill/references/review-checklist.md','input/project/docs/review-request.md','input/project/docs/contract.md','input/project/README.md','input/project/src/work/Message.java','input/project/test/work/Smoke.java','input/project/check.mjs','output/project/docs/review-request.md','output/project/docs/contract.md','output/project/README.md','output/project/src/work/Message.java','output/project/test/work/Smoke.java','output/project/check.mjs')\n$items | ForEach-Object { $h = Get-FileHash -Algorithm SHA256 -LiteralPath $_; [pscustomobject]@{path=$_;sha256=$h.Hash} } | ConvertTo-Json"
+      },
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-18",
+      "exit": 0,
+      "output": "[\r\n  {\r\n    \"path\": \"TASK.md\",\r\n    \"sha256\": \"34B120F5FCC597B9CBDE9935B3209F09D981EF6359EE1C9E4626ED1F7E721EB6\"\r\n  },\r\n  {\r\n    \"path\": \"skill/SKILL.md\",\r\n    \"sha256\": \"A9F6DAB4BF513019BF245EFC9CD8757A5EDCC9B212EC507E3545FA59573C2A1A\"\r\n  },\r\n  {\r\n    \"path\": \"skill/references/happens-before.md\",\r\n    \"sha256\": \"FFB7B4955709D039D02549F7730D85B8BAD661F22D9DE908D14E741C6DF5A076\"\r\n  },\r\n  {\r\n    \"path\": \"skill/references/review-checklist.md\",\r\n    \"sha256\": \"A9E6F00A8E7E26FCBE4B6D2A7A430198042ACC7905025BB661772DD29B73B8A8\"\r\n  },\r\n  {\r\n    \"path\": \"input/project/docs/review-request.md\",\r\n    \"sha256\": \"B289F7EEF31916B9FB63AD4B0CDF73AB6580A029E8233BAA8474E7B490C12505\"\r\n  },\r\n  {\r\n    \"path\": \"input/project/docs/contract.md\",\r\n    \"sha256\": \"BDA240D743B23D54B26D335D25B8379187F5DAF02DDEA15BC5EAD15D45616AB9\"\r\n  },\r\n  {\r\n    \"path\": \"input/project/README.md\",\r\n    \"sha256\": \"F7308D48921D2A1E694594AACE471A6A27DB4678BA1105B4A87B3157340BF641\"\r\n  },\r\n  {\r\n    \"path\": \"input/project/src/work/Message.java\",\r\n    \"sha256\": \"296D6AFEAD1AA5CF9C04F3B211C88D6D797CE723D403EB199FD00F36444211AD\"\r\n  },\r\n  {\r\n    \"path\": \"input/project/test/work/Smoke.java\",\r\n    \"sha256\": \"07FE704F60685B8618D47F924A83AEFC24B675C13A2066590C5B7329BFD6DF72\"\r\n  },\r\n  {\r\n    \"path\": \"input/project/check.mjs\",\r\n    \"sha256\": \"01C7F729F0BD4F5CA17BC727272EA87C9310180EE17ECE398817CF5C6EB46973\"\r\n  },\r\n  {\r\n    \"path\": \"output/project/docs/review-request.md\",\r\n    \"sha256\": \"B289F7EEF31916B9FB63AD4B0CDF73AB6580A029E8233BAA8474E7B490C12505\"\r\n  },\r\n  {\r\n    \"path\": \"output/project/docs/contract.md\",\r\n    \"sha256\": \"BDA240D743B23D54B26D335D25B8379187F5DAF02DDEA15BC5EAD15D45616AB9\"\r\n  },\r\n  {\r\n    \"path\": \"output/project/README.md\",\r\n    \"sha256\": \"F7308D48921D2A1E694594AACE471A6A27DB4678BA1105B4A87B3157340BF641\"\r\n  },\r\n  {\r\n    \"path\": \"output/project/src/work/Message.java\",\r\n    \"sha256\": \"296D6AFEAD1AA5CF9C04F3B211C88D6D797CE723D403EB199FD00F36444211AD\"\r\n  },\r\n  {\r\n    \"path\": \"output/project/test/work/Smoke.java\",\r\n    \"sha256\": \"07FE704F60685B8618D47F924A83AEFC24B675C13A2066590C5B7329BFD6DF72\"\r\n  },\r\n  {\r\n    \"path\": \"output/project/check.mjs\",\r\n    \"sha256\": \"01C7F729F0BD4F5CA17BC727272EA87C9310180EE17ECE398817CF5C6EB46973\"\r\n  }\r\n]\r\n"
+    },
+    {
+      "program": "PowerShell (exec_command configured shell)",
+      "arguments": {
+        "cmd": "node -e \"const {spawnSync}=require('node:child_process');for(const [p,a] of [[process.execPath,['--version']],['C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe',['-version']],['C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe',['-version']],[process.execPath,['check.mjs']]]){const start=new Date().toISOString();const r=spawnSync(p,a,{encoding:'utf8',timeout:25000,windowsHide:true});console.log(JSON.stringify({program:p,args:a,cwd:process.cwd(),startedAt:start,endedAt:new Date().toISOString(),exit:r.status,stdout:r.stdout,stderr:r.stderr,error:r.error?.message}));if(r.status!==0)process.exit(r.status??1);}\""
+      },
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-18/output/project",
+      "exit": 0,
+      "output": "{\"program\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"--version\"],\"cwd\":\"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave6-0tHxwh\\\\actors\\\\run-18\\\\output\\\\project\",\"startedAt\":\"2026-10-16T17:28:59.702Z\",\"endedAt\":\"2026-10-16T17:28:59.726Z\",\"exit\":0,\"stdout\":\"v25.6.1\\r\\n\",\"stderr\":\"\"}\n{\"program\":\"C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe\",\"args\":[\"-version\"],\"cwd\":\"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave6-0tHxwh\\\\actors\\\\run-18\\\\output\\\\project\",\"startedAt\":\"2026-10-16T17:28:59.727Z\",\"endedAt\":\"2026-10-16T17:28:59.767Z\",\"exit\":0,\"stdout\":\"\",\"stderr\":\"openjdk version \\\"25.0.3\\\" 2026-04-21 LTS\\r\\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\\r\\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\\r\\n\"}\n{\"program\":\"C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe\",\"args\":[\"-version\"],\"cwd\":\"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave6-0tHxwh\\\\actors\\\\run-18\\\\output\\\\project\",\"startedAt\":\"2026-10-16T17:28:59.767Z\",\"endedAt\":\"2026-10-16T17:28:59.860Z\",\"exit\":0,\"stdout\":\"javac 25.0.3\\r\\n\",\"stderr\":\"\"}\n{\"program\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"check.mjs\"],\"cwd\":\"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave6-0tHxwh\\\\actors\\\\run-18\\\\output\\\\project\",\"startedAt\":\"2026-10-16T17:28:59.860Z\",\"endedAt\":\"2026-10-16T17:29:00.278Z\",\"exit\":0,\"stdout\":\"before-recycle=30\\r\\nafter-recycle=300\\r\\n\",\"stderr\":\"\"}\n"
+    },
+    {
+      "program": "PowerShell (exec_command configured shell)",
+      "arguments": {
+        "cmd": "node -e \"console.log(JSON.stringify({JAVA_TOOL_OPTIONS:process.env.JAVA_TOOL_OPTIONS??null,JDK_JAVA_OPTIONS:process.env.JDK_JAVA_OPTIONS??null,_JAVA_OPTIONS:process.env._JAVA_OPTIONS??null}))\""
+      },
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-18",
+      "exit": 0,
+      "output": "{\"JAVA_TOOL_OPTIONS\":null,\"JDK_JAVA_OPTIONS\":null,\"_JAVA_OPTIONS\":null}\n"
+    },
+    {
+      "program": "PowerShell (exec_command configured shell)",
+      "arguments": {
+        "cmd": "node -e \"const fs=require('node:fs'),crypto=require('node:crypto');const startedAt=new Date().toISOString();const sha=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');const paths=['docs/review-request.md','docs/contract.md','README.md','src/work/Message.java','test/work/Smoke.java','check.mjs'];const copies=paths.map(p=>{const original=sha('input/project/'+p),copy=sha('output/project/'+p);if(original!==copy)throw new Error('Changed supplied file: '+p);return {path:p,sha256:original,copiesMatch:true};});const review=fs.readFileSync('output/REVIEW.md','utf8');const assessment=JSON.parse(fs.readFileSync('output/assessment.json','utf8'));const words=review.trim().split(/\\s+/).length;if(words>800||assessment.disposition!=='violated')throw new Error('Artifact validation failed');console.log(JSON.stringify({startedAt,endedAt:new Date().toISOString(),suppliedFiles:copies,reviewWords:words,assessmentParsed:true,assessmentDisposition:assessment.disposition,artifactHashes:{review:sha('output/REVIEW.md'),assessment:sha('output/assessment.json')}}));\""
+      },
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-18",
+      "exit": 0,
+      "output": "{\"startedAt\":\"2026-10-16T17:30:17.362Z\",\"endedAt\":\"2026-10-16T17:30:17.364Z\",\"suppliedFiles\":[{\"path\":\"docs/review-request.md\",\"sha256\":\"b289f7eef31916b9fb63ad4b0cdf73ab6580a029e8233baa8474e7b490c12505\",\"copiesMatch\":true},{\"path\":\"docs/contract.md\",\"sha256\":\"bda240d743b23d54b26d335d25b8379187f5daf02ddea15bc5ead15d45616ab9\",\"copiesMatch\":true},{\"path\":\"README.md\",\"sha256\":\"f7308d48921d2a1e694594aace471a6a27db4678ba1105b4a87b3157340bf641\",\"copiesMatch\":true},{\"path\":\"src/work/Message.java\",\"sha256\":\"296d6afead1aa5cf9c04f3b211c88d6d797ce723d403eb199fd00f36444211ad\",\"copiesMatch\":true},{\"path\":\"test/work/Smoke.java\",\"sha256\":\"07fe704f60685b8618d47f924a83aefc24b675c13a2066590c5b7329bfd6df72\",\"copiesMatch\":true},{\"path\":\"check.mjs\",\"sha256\":\"01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973\",\"copiesMatch\":true}],\"reviewWords\":481,\"assessmentParsed\":true,\"assessmentDisposition\":\"violated\",\"artifactHashes\":{\"review\":\"063345608d1aa74a1ab34ada01516c6520678708974688aaf3f23fcf5eb011be\",\"assessment\":\"4f7564cc6c169117cb479a652d96f76fe0cf4dc18167a5b4956d493cce7c0436\"}}\n"
+    }
+  ],
+  "subprocesses": [
+    {
+      "program": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "--version"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave6-0tHxwh\\actors\\run-18\\output\\project",
+      "startedAt": "2026-10-16T17:28:59.702Z",
+      "endedAt": "2026-10-16T17:28:59.726Z",
+      "exit": 0,
+      "stdout": "v25.6.1\r\n",
+      "stderr": "",
+      "timeoutMs": 25000
+    },
+    {
+      "program": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-version"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave6-0tHxwh\\actors\\run-18\\output\\project",
+      "startedAt": "2026-10-16T17:28:59.727Z",
+      "endedAt": "2026-10-16T17:28:59.767Z",
+      "exit": 0,
+      "stdout": "",
+      "stderr": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n",
+      "timeoutMs": 25000
+    },
+    {
+      "program": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+      "args": [
+        "-version"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave6-0tHxwh\\actors\\run-18\\output\\project",
+      "startedAt": "2026-10-16T17:28:59.767Z",
+      "endedAt": "2026-10-16T17:28:59.860Z",
+      "exit": 0,
+      "stdout": "javac 25.0.3\r\n",
+      "stderr": "",
+      "timeoutMs": 25000
+    },
+    {
+      "program": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "check.mjs"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave6-0tHxwh\\actors\\run-18\\output\\project",
+      "startedAt": "2026-10-16T17:28:59.860Z",
+      "endedAt": "2026-10-16T17:29:00.278Z",
+      "exit": 0,
+      "stdout": "before-recycle=30\r\nafter-recycle=300\r\n",
+      "stderr": "",
+      "timeoutMs": 25000
+    },
+    {
+      "program": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+      "args": [
+        "--release",
+        "25",
+        "-d",
+        ".build",
+        "src\\work\\Message.java",
+        "test\\work\\Smoke.java"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-18/output/project",
+      "exit": 0,
+      "timeoutMs": 15000,
+      "stdout": "",
+      "stderr": "",
+      "evidence": "Executed by the unchanged check.mjs; child success is established by the script reaching its Java invocation and exiting zero. Individual child timestamps were not captured."
+    },
+    {
+      "program": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-cp",
+        ".build",
+        "work.Smoke"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/actors/run-18/output/project",
+      "exit": 0,
+      "timeoutMs": 15000,
+      "stdout": "before-recycle=30\r\nafter-recycle=300\r\n",
+      "stderr": "",
+      "evidence": "Executed by unchanged check.mjs; captured through parent stdout. Child exit success is established by script exit zero."
+    }
+  ],
+  "files": [
+    {
+      "path": "TASK.md",
+      "sha256": "34B120F5FCC597B9CBDE9935B3209F09D981EF6359EE1C9E4626ED1F7E721EB6",
+      "access": "complete content read by reviewer",
+      "contentReadComplete": true,
+      "contentReadTruncated": false
+    },
+    {
+      "path": "skill/SKILL.md",
+      "sha256": "A9F6DAB4BF513019BF245EFC9CD8757A5EDCC9B212EC507E3545FA59573C2A1A",
+      "access": "complete content read by reviewer",
+      "contentReadComplete": true,
+      "contentReadTruncated": false
+    },
+    {
+      "path": "skill/references/happens-before.md",
+      "sha256": "FFB7B4955709D039D02549F7730D85B8BAD661F22D9DE908D14E741C6DF5A076",
+      "access": "complete content read by reviewer",
+      "contentReadComplete": true,
+      "contentReadTruncated": false
+    },
+    {
+      "path": "skill/references/review-checklist.md",
+      "sha256": "A9E6F00A8E7E26FCBE4B6D2A7A430198042ACC7905025BB661772DD29B73B8A8",
+      "access": "complete content read by reviewer",
+      "contentReadComplete": true,
+      "contentReadTruncated": false
+    },
+    {
+      "path": "input/project/docs/review-request.md",
+      "sha256": "B289F7EEF31916B9FB63AD4B0CDF73AB6580A029E8233BAA8474E7B490C12505",
+      "access": "complete content read by reviewer",
+      "contentReadComplete": true,
+      "contentReadTruncated": false
+    },
+    {
+      "path": "input/project/docs/contract.md",
+      "sha256": "BDA240D743B23D54B26D335D25B8379187F5DAF02DDEA15BC5EAD15D45616AB9",
+      "access": "complete content read by reviewer",
+      "contentReadComplete": true,
+      "contentReadTruncated": false
+    },
+    {
+      "path": "input/project/README.md",
+      "sha256": "F7308D48921D2A1E694594AACE471A6A27DB4678BA1105B4A87B3157340BF641",
+      "access": "complete content read by reviewer",
+      "contentReadComplete": true,
+      "contentReadTruncated": false
+    },
+    {
+      "path": "input/project/src/work/Message.java",
+      "sha256": "296D6AFEAD1AA5CF9C04F3B211C88D6D797CE723D403EB199FD00F36444211AD",
+      "access": "complete content read by reviewer",
+      "contentReadComplete": true,
+      "contentReadTruncated": false
+    },
+    {
+      "path": "input/project/test/work/Smoke.java",
+      "sha256": "07FE704F60685B8618D47F924A83AEFC24B675C13A2066590C5B7329BFD6DF72",
+      "access": "complete content read by reviewer",
+      "contentReadComplete": true,
+      "contentReadTruncated": false
+    },
+    {
+      "path": "input/project/check.mjs",
+      "sha256": "01C7F729F0BD4F5CA17BC727272EA87C9310180EE17ECE398817CF5C6EB46973",
+      "access": "complete content read by reviewer",
+      "contentReadComplete": true,
+      "contentReadTruncated": false
+    },
+    {
+      "path": "output/project/docs/review-request.md",
+      "sha256": "B289F7EEF31916B9FB63AD4B0CDF73AB6580A029E8233BAA8474E7B490C12505",
+      "access": "hash-only comparison by reviewer",
+      "contentReadComplete": false,
+      "contentReadTruncated": false,
+      "matchesInputCopy": true,
+      "executionConsumed": false
+    },
+    {
+      "path": "output/project/docs/contract.md",
+      "sha256": "BDA240D743B23D54B26D335D25B8379187F5DAF02DDEA15BC5EAD15D45616AB9",
+      "access": "hash-only comparison by reviewer",
+      "contentReadComplete": false,
+      "contentReadTruncated": false,
+      "matchesInputCopy": true,
+      "executionConsumed": false
+    },
+    {
+      "path": "output/project/README.md",
+      "sha256": "F7308D48921D2A1E694594AACE471A6A27DB4678BA1105B4A87B3157340BF641",
+      "access": "hash-only comparison by reviewer",
+      "contentReadComplete": false,
+      "contentReadTruncated": false,
+      "matchesInputCopy": true,
+      "executionConsumed": false
+    },
+    {
+      "path": "output/project/src/work/Message.java",
+      "sha256": "296D6AFEAD1AA5CF9C04F3B211C88D6D797CE723D403EB199FD00F36444211AD",
+      "access": "hash-only comparison by reviewer",
+      "contentReadComplete": false,
+      "contentReadTruncated": false,
+      "matchesInputCopy": true,
+      "executionConsumed": true
+    },
+    {
+      "path": "output/project/test/work/Smoke.java",
+      "sha256": "07FE704F60685B8618D47F924A83AEFC24B675C13A2066590C5B7329BFD6DF72",
+      "access": "hash-only comparison by reviewer",
+      "contentReadComplete": false,
+      "contentReadTruncated": false,
+      "matchesInputCopy": true,
+      "executionConsumed": true
+    },
+    {
+      "path": "output/project/check.mjs",
+      "sha256": "01C7F729F0BD4F5CA17BC727272EA87C9310180EE17ECE398817CF5C6EB46973",
+      "access": "hash-only comparison by reviewer",
+      "contentReadComplete": false,
+      "contentReadTruncated": false,
+      "matchesInputCopy": true,
+      "executionConsumed": true
+    }
+  ],
+  "listingOnly": [
+    {
+      "path": "skill/skill.yaml",
+      "operation": "rg --files",
+      "contentRead": false,
+      "hashComputed": false
+    }
+  ],
+  "generatedArtifactsReadByVerification": [
+    {
+      "path": "output/REVIEW.md",
+      "sha256": "063345608d1aa74a1ab34ada01516c6520678708974688aaf3f23fcf5eb011be",
+      "access": "complete programmatic content read for word count",
+      "wordCount": 481
+    },
+    {
+      "path": "output/assessment.json",
+      "sha256": "4f7564cc6c169117cb479a652d96f76fe0cf4dc18167a5b4956d493cce7c0436",
+      "access": "complete programmatic content read and JSON parse"
+    }
+  ],
+  "primaryUrls": [
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.5",
+      "status": "success",
+      "access": "web open extracted portions; targeted follow-up at line 485 included final-field rules at lines 517-579; also consulted 17.4.5 at lines 301-340",
+      "completeDocumentRead": false
+    },
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html",
+      "status": "success",
+      "access": "targeted web open at line 485",
+      "completeDocumentRead": false
+    },
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se25/html/jls-10.html#jls-10.7",
+      "status": "success",
+      "access": "web open; targeted follow-up at line 299 included clone members and example at lines 244-287",
+      "completeDocumentRead": false
+    },
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se25/html/jls-10.html",
+      "status": "success",
+      "access": "targeted web open at line 299",
+      "completeDocumentRead": false
+    }
+  ],
+  "webFailures": [],
+  "writes": [
+    {
+      "tool": "check.mjs via node",
+      "paths": [
+        "output/project/.build/work/Message.class",
+        "output/project/.build/work/Smoke.class"
+      ],
+      "purpose": "provided compilation artifacts"
+    },
+    {
+      "tool": "apply_patch",
+      "paths": [
+        "output/REVIEW.md",
+        "output/assessment.json"
+      ],
+      "purpose": "required review artifacts"
+    },
+    {
+      "tool": "apply_patch",
+      "paths": [
+        "output/execution.json"
+      ],
+      "purpose": "final execution record"
+    }
+  ],
+  "limits": [
+    "Review limited to TASK.md and this run's input/**, output/** and skill/**; no repository, other runs, global skills or criteria consulted.",
+    "No production edits, dependency installations, additional agents or background tasks.",
+    "Read-command output is recorded by its immutable content reference and SHA-256 instead of duplicating the full task and skill text in this JSON.",
+    "The exact PowerShell executable path and wrapper switches were not independently queried; actual command text and configured shell are recorded.",
+    "Only a single-thread lifecycle smoke was executed. Proposed clone correction, invalid-input cases, stress and concurrent-consumer checks were not executed.",
+    "No asynchronous handoff implementation was supplied; no delivery/liveness claim is made.",
+    "All spawned Node/Java commands completed normally. The Node wrapper bounded each child at 25000 ms and check.mjs bounded its Java children at 15000 ms; no timeout or process session remained.",
+    "execution.json is constructed as valid JSON in memory and written as the final artifact; no self-hash or fabricated post-write timestamp is recorded."
+  ],
+  "allSubprocessesStopped": true,
+  "allWritesStopped": true
+}

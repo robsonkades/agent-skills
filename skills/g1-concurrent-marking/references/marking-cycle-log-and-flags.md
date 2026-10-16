@@ -3,9 +3,10 @@
 ## The cycle from trigger to mixed collection
 
 ```
-Application allocates in Eden
-  |  old occupancy crosses the effective IHOP (initial static value or adaptive prediction),
-  |  or a humongous allocation requests a cycle (cause: G1 Humongous Allocation)
+Cycle initiation requested
+  |  occupancy check exceeds the effective IHOP (initial value or adaptive prediction),
+  |  or a humongous allocation requests a cycle (cause: G1 Humongous Allocation),
+  |  or an explicit/other GC cause requests a cycle; see the cause and effective flags
   v
 Pause Young (Concurrent Start)     STW, piggybacked on a young GC —
                                    marks roots, arms the SATB write barrier
@@ -41,6 +42,14 @@ needed after the pause. It can choose `Concurrent Undo Cycle`, for example after
 reduces occupancy. Undo cleans up the prepared cycle without the normal tracing, Remark or
 Cleanup sequence; its presence alone is not an aborted-marking failure. Inspect the trigger,
 post-pause occupancy and subsequent headroom rather than assuming which objects were reclaimed.
+
+A concurrent start is not proof of an IHOP crossing. On the pinned JDK 25 build,
+`System.gc()` with `-XX:+ExplicitGCInvokesConcurrent` can request a concurrent cycle below
+the threshold. Other cause-driven paths include configured periodic collection and code-cache
+requests. Use `gc+ergo=debug` to distinguish `requested by GC cause` from an occupancy request;
+`gc+ergo+ihop=debug` alone does not cover both paths. Investigate the initiating caller or
+policy and its application impact before changing IHOP. Do not infer that every `System.gc()`
+uses the concurrent path or disable explicit collection merely to hide its log entry.
 
 ## A complete-cycle excerpt, previously captured on JDK 25
 
@@ -97,6 +106,20 @@ Here the parenthesized percentage divides the effective threshold by current tot
 For predictor updates and `prediction active`, use `gc+ihop=debug`: its basic and adaptive rows
 use different denominators (target occupancy versus internal target occupancy). Compare bytes,
 the named denominator and predictor state; no ergo line is not proof that a cycle was unnecessary.
+
+The occupancy fields also measure different things on this pinned build:
+
+| Log field                                                  | Measured quantity                                                    | Use                                                                                      |
+| ---------------------------------------------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `gc+ergo+ihop` `occupancy`                                 | Capacity of old and humongous regions: their count times region size | Add the logged pending `allocation request`; compare the sum with this check's threshold |
+| `gc+ihop` basic `current occupancy` / adaptive `occupancy` | Total heap-used bytes, including young                               | Predictor context, not the numerator of the initiation check                             |
+| Pause summary `before->after(capacity)`                    | Total heap-used bytes at the pause boundaries, and heap capacity     | Collection outcome, not the earlier initiation decision                                  |
+
+An ordinary above-threshold check requests a later concurrent-start pause; the request and the
+pause need not have identical occupancy or threshold. A humongous request can count an allocation
+that has not happened yet. Correlate the request's source/time, pause cause and predictor update
+order before concluding that a configured percentage was ignored. Without those rows, total
+occupancy alone cannot establish either an IHOP violation or a healthy predictor.
 
 ## Completed marking without useful mixed reclaim
 
@@ -301,6 +324,8 @@ Pinned checks for the consequential implementation details:
 - [SATB filtering/enqueue paths](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/shared/satbMarkQueue.cpp).
 - [Initiation checks and cycle timing](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/g1/g1Policy.cpp)
   and [adaptive threshold and logging denominators](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/g1/g1IHOPControl.cpp).
+- [GC-cause routing](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/g1/g1CollectedHeap.cpp)
+  and [non-young region capacity](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/g1/g1CollectedHeap.hpp).
 - [Candidate admission and pruning](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/g1/g1CollectionSetChooser.cpp)
   and [live-byte threshold](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/g1/g1CollectionSetChooser.hpp).
 - [Concurrent mark and undo paths](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/g1/g1ConcurrentMarkThread.cpp)

@@ -1,0 +1,661 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "java-serialization-hardening",
+  "ownedPath": "skills/java-serialization-hardening/**",
+  "allWritesStopped": true,
+  "versions": {
+    "committed": "1.2.4",
+    "assignment": "1.2.4",
+    "final": "1.2.5",
+    "preExistingBump": false,
+    "rationale": "One patch bump for a focused correctness/security-contract addition. No consumer Java/framework upgrade, description or dependency change."
+  },
+  "baseline": {
+    "source": "docs/skill-validation/wave3-2026-10-16/baseline.json",
+    "assignmentState": "Four files clean; all initial SHA-256 hashes matched the captured baseline. Scoped staged/unstaged/untracked differences were empty.",
+    "preExistingChanges": [],
+    "finalAttribution": "Three files changed by this reviewer; untrusted-data-and-filters.md remains byte-identical. No generated index or shared file touched.",
+    "hashes": [
+      {
+        "path": "skills/java-serialization-hardening/SKILL.md",
+        "sha256": "1f37529f759ed8e7b86d0c5aaed8a99bf1e781d4e1276a9d42781864397d6cdb",
+        "baselineSha256": "ca78626f4307887d50417f13c9dbf4628acaf2bc1597d04f89e402bf47e73bf2",
+        "unchangedFromWave3Baseline": false
+      },
+      {
+        "path": "skills/java-serialization-hardening/references/implementing-serializable.md",
+        "sha256": "35d4064ba85884a4294fedf1b1f164d5e4e8d0e5159e2251faf146fdf65b85f1",
+        "baselineSha256": "4b256684823c268686c1b0c93014e84a99ccd36537ad7c04e840323b88729519",
+        "unchangedFromWave3Baseline": false
+      },
+      {
+        "path": "skills/java-serialization-hardening/references/untrusted-data-and-filters.md",
+        "sha256": "6a362e9a8dc21cafcb7c3a836d98385b5895a3be6fb412f2820c5aca717a1dd6",
+        "baselineSha256": "6a362e9a8dc21cafcb7c3a836d98385b5895a3be6fb412f2820c5aca717a1dd6",
+        "unchangedFromWave3Baseline": true
+      },
+      {
+        "path": "skills/java-serialization-hardening/skill.yaml",
+        "sha256": "99f135a310add3dcf7580fb392715604963a382866f200c8906d287acfdf9112",
+        "baselineSha256": "72cecb5ee2fd006ec2b150f3dbd86ccee1961f2e118611e9453cd7f98a52ca06",
+        "unchangedFromWave3Baseline": false
+      }
+    ]
+  },
+  "files": [
+    "skills/java-serialization-hardening/SKILL.md",
+    "skills/java-serialization-hardening/references/implementing-serializable.md",
+    "skills/java-serialization-hardening/skill.yaml"
+  ],
+  "changes": [
+    {
+      "location": "skills/java-serialization-hardening/SKILL.md:99",
+      "finding": "Value revalidation did not distinguish a missing required serialized field from a legitimate explicit zero/null.",
+      "correction": "Add the required-field versus accepted-legacy-form decision beside ordinary readObject invariant validation, routed to the existing implementation reference."
+    },
+    {
+      "location": "skills/java-serialization-hardening/references/implementing-serializable.md:11",
+      "finding": "The representation warning described private-field renaming as a blanket break, without explaining successful reads that silently lose/default data under a retained UID.",
+      "correction": "Qualify the statement to default serialized form and distinguish stream acceptance from semantic compatibility."
+    },
+    {
+      "location": "skills/java-serialization-hardening/references/implementing-serializable.md:123",
+      "finding": "readObjectNoData was covered, but its class-level purpose was not explicitly distinguished from individual field omission.",
+      "correction": "Clarify that it does not detect an individual missing field; teach readFields/GetField.defaulted as an alternative to defaultReadObject, with explicit assignment and validation."
+    },
+    {
+      "location": "skills/java-serialization-hardening/references/implementing-serializable.md:129",
+      "finding": "A zero-valued field can satisfy the constructor value invariant even when the stream omitted a required field.",
+      "correction": "Add a scoped single-field ordinary-class snippet that rejects absent maxRetries while accepting explicit 0..10. Preserve approved legacy defaults as a legitimate alternative and state that referenced-object hooks may already have run."
+    },
+    {
+      "location": "skills/java-serialization-hardening/references/implementing-serializable.md:262",
+      "finding": "Compatibility testing did not explicitly contrast omitted fields with explicitly encoded default values.",
+      "correction": "Add that contrast to golden-form testing under the supported-form policy."
+    }
+  ],
+  "remainingFindings": [],
+  "preserved": [
+    "Security/design/review scope, findings-only versus implementation authorization, target-build inspection and declared version boundaries.",
+    "Default recommendation to avoid native serialization for new trust/persistence boundaries; filters remain mitigations, not safety proofs.",
+    "JEP 290/415 effective-policy composition, closed context filters, primitive/string/array gaps, outer caps and rate-limited rejection handling.",
+    "Defensive copying, constructor/invariant rules, serialization proxies, records, readResolve/Externalizable distinctions and hook limitations.",
+    "Mixed-version golden data, old/new reader-writer rollout, cache fencing and logical-ID JSON subtype constraints.",
+    "Existing worked snippets unchanged; only the new field-presence snippet was added. All resources remain routed; no review fixtures shipped in the skill."
+  ],
+  "replacedOrRemoved": [
+    "Replaced the blanket private-field-rename statement with the supported default-form/silent-defaulting consequence. No capability removed."
+  ],
+  "checks": [
+    {
+      "kind": "structural",
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening/local-validation.mjs",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "PASS",
+      "details": "Existing strict package loader/validator: 4 files, 0 issues; 2 relative links resolve; manifest/frontmatter and metadata consistent.",
+      "rawOutput": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening/package-validation.json",
+      "boundary": "Assigned package only; catalog dependency/index/version checks deferred."
+    },
+    {
+      "kind": "format",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/java-serialization-hardening/SKILL.md skills/java-serialization-hardening/skill.yaml skills/java-serialization-hardening/references/implementing-serializable.md skills/java-serialization-hardening/references/untrusted-data-and-filters.md",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "PASS",
+      "rawOutput": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening/prettier-check.txt",
+      "details": "Read-only exact-file check; no formatter writes required."
+    },
+    {
+      "kind": "diff",
+      "command": "git diff --check -- skills/java-serialization-hardening; git diff -- skills/java-serialization-hardening; git status --short -- skills/java-serialization-hardening; git diff --cached --name-only -- skills/java-serialization-hardening",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "PASS",
+      "details": "Whitespace check clean; final complete diff inspected, exactly three intended files changed, no staged changes.",
+      "artifacts": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening/diff-check.txt",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening/final.diff"
+      ]
+    },
+    {
+      "kind": "technical-hostile-fixture",
+      "command": "node prepare-probe.mjs; node run-probe.mjs",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening",
+      "result": "PASS: 30 assertions, 10 per reader process",
+      "exactChildCommands": [
+        {
+          "label": "compile-writer",
+          "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+          "args": [
+            "--release",
+            "17",
+            "-d",
+            "writer/classes",
+            "writer/src/fixture/RetryPolicy.java",
+            "writer/src/fixture/DeniedPayload.java",
+            "writer/src/Writer.java"
+          ],
+          "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening",
+          "status": 0,
+          "error": null
+        },
+        {
+          "label": "compile-missing-writer",
+          "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+          "args": [
+            "--release",
+            "17",
+            "-d",
+            "missing-writer/classes",
+            "missing-writer/src/fixture/RetryPolicy.java",
+            "missing-writer/src/MissingWriter.java"
+          ],
+          "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening",
+          "status": 0,
+          "error": null
+        },
+        {
+          "label": "compile-baseline",
+          "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+          "args": [
+            "--release",
+            "17",
+            "-d",
+            "baseline/classes",
+            "baseline/src/fixture/RetryPolicy.java",
+            "baseline/src/fixture/DeniedPayload.java",
+            "baseline/src/Reader.java"
+          ],
+          "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening",
+          "status": 0,
+          "error": null
+        },
+        {
+          "label": "compile-required",
+          "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+          "args": [
+            "--release",
+            "17",
+            "-d",
+            "required/classes",
+            "required/src/fixture/RetryPolicy.java",
+            "required/src/fixture/DeniedPayload.java",
+            "required/src/Reader.java"
+          ],
+          "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening",
+          "status": 0,
+          "error": null
+        },
+        {
+          "label": "compile-legacy",
+          "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+          "args": [
+            "--release",
+            "17",
+            "-d",
+            "legacy/classes",
+            "legacy/src/fixture/RetryPolicy.java",
+            "legacy/src/fixture/DeniedPayload.java",
+            "legacy/src/Reader.java"
+          ],
+          "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening",
+          "status": 0,
+          "error": null
+        },
+        {
+          "label": "write-present",
+          "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+          "args": [
+            "-cp",
+            "writer/classes",
+            "Writer",
+            "streams"
+          ],
+          "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening",
+          "status": 0,
+          "error": null
+        },
+        {
+          "label": "write-missing",
+          "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+          "args": [
+            "-cp",
+            "missing-writer/classes",
+            "MissingWriter",
+            "streams/missing.ser"
+          ],
+          "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening",
+          "status": 0,
+          "error": null
+        },
+        {
+          "label": "read-baseline",
+          "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+          "args": [
+            "-cp",
+            "baseline/classes",
+            "Reader",
+            "baseline",
+            "streams"
+          ],
+          "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening",
+          "status": 0,
+          "error": null
+        },
+        {
+          "label": "read-required",
+          "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+          "args": [
+            "-cp",
+            "required/classes",
+            "Reader",
+            "required",
+            "streams"
+          ],
+          "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening",
+          "status": 0,
+          "error": null
+        },
+        {
+          "label": "read-legacy",
+          "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+          "args": [
+            "-cp",
+            "legacy/classes",
+            "Reader",
+            "legacy",
+            "streams"
+          ],
+          "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening",
+          "status": 0,
+          "error": null
+        }
+      ],
+      "compilerTarget": "Java 17 via Temurin javac 25.0.3 --release 17",
+      "runtime": "Temurin 25.0.3+9-LTS on Windows x64",
+      "details": "The exact new snippet is extracted from the reference into the required-field reader. Independent same-FQCN/UID-1 producer forms create current values and a descriptor omitting maxRetries. Value-only reader accepts omission as 0; required-field reader rejects it; approved-legacy reader maps it to 3. All retain explicit 0/5/10, reject -1/11 and null root, and reject unlisted DeniedPayload without running its harmless read hook. Constructor invalid-input control also passes.",
+      "artifacts": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening/prepare-probe.mjs",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening/run-probe.mjs",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening/probe-commands.json",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening/probe-summary.txt",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening/extracted-snippet.java.txt",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening/stream-integrity.json",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening/read-baseline.stdout.txt",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening/read-required.stdout.txt",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening/read-legacy.stdout.txt"
+      ],
+      "rawDirectories": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening/writer",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening/missing-writer",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening/baseline",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening/required",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening/legacy",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening/streams",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening/probe-initial"
+      ],
+      "boundary": "Synthetic field-contract and class-denial controls, not RCE, general deserialization safety, producer authentication, large-input limits, concurrency or production validation. Streams are 5-57 bytes in owned static fixtures; the file-size precheck wrapper is not a production bounded-stream implementation.",
+      "refinement": "Initial probe passed 27 assertions. Its review-only wrapper constructor did not enforce the stated constructor range. Preserved the initial source/classes/streams/stdout/stderr under probe-initial, strengthened reader constructors, added a constructor rejection control, and reran all five compilations plus writers/readers. Final 30-assertion run is authoritative."
+    },
+    {
+      "kind": "case-fixture-integrity",
+      "command": "node prepare-cases.mjs",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening",
+      "result": "PASS",
+      "details": "Two cases with 13 files each. All source and serialized bytes are identical; only acceptance-policy.json differs. Actor task and evaluator criteria are separate JSON resources.",
+      "rawOutput": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening/case-preparation.txt",
+      "artifacts": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening/case-integrity.json"
+      ]
+    },
+    {
+      "kind": "case-compilation",
+      "command": "& C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe --release 17 -d case-classes cases/case-a/consumer/fixture/RetryPolicy.java cases/case-a/consumer/fixture/DeniedPayload.java cases/case-a/consumer/ConsumerMain.java",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening",
+      "result": "PASS",
+      "details": "Identical source shared by both actor cases compiled after the constructor refinement. This checks case prerequisites only; no actor correction/evaluation was executed.",
+      "rawOutput": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening/case-compile.txt"
+    }
+  ],
+  "failures": [],
+  "behavioralEvaluations": {
+    "executedWithActualAgentOutputs": [],
+    "walkthroughs": [
+      {
+        "case": "case-a",
+        "result": "Current-only accepted-form policy requires rejecting the omitted-field stream while keeping explicitly stored zero. An allowed class and matching UID are insufficient evidence of presence."
+      },
+      {
+        "case": "case-b",
+        "result": "Accepted legacy form requires the approved default 3, while explicit zero remains zero. Blanket rejection or a zero-as-absence heuristic would break the declared contract."
+      }
+    ],
+    "measuredImprovement": "Not measured. Technical before/after readers test the Java mechanism, not whether an agent follows the skill better."
+  },
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/specs/serialization/input.html",
+      "version": "Java SE 25 Serialization Specification, sections 3.1, 3.2, 3.4 and 3.5",
+      "support": "Missing ordinary fields receive Java defaults; readFields is alternate access to the same default-field protocol and cannot follow defaultReadObject; readObjectNoData applies to absent class data; referenced objects are reconstructed during field reading.",
+      "verification": "Primary source opened and relevant passages inspected; mechanism reproduced on Temurin 25.0.3."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/ObjectInputStream.GetField.html#defaulted(java.lang.String)",
+      "version": "Java SE 25 API",
+      "support": "defaulted identifies an omitted serializable field; get returns the supplied default when no value was encoded. Presence and a valid default-valued payload are different observations.",
+      "verification": "Official API consulted; changed call compiled for Java 17 and executed on Java 25."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/specs/serialization/version.html",
+      "version": "Java SE 25 Serialization Specification, chapter 5",
+      "support": "Type evolution and field mapping require semantic compatibility decisions beyond stream linking/UID matching; preserved golden-form and mixed-reader guidance.",
+      "verification": "Primary specification consulted; no broad compatibility proof claimed."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/ObjectInputFilter.html",
+      "version": "Java SE 25 API",
+      "support": "Filter callbacks and composition do not validate arbitrary domain field presence or content. Existing filter mitigations remain necessary and unchanged.",
+      "verification": "Primary API consulted; harmless denied-class hook control executed with the configured per-stream filter."
+    }
+  ],
+  "limits": [
+    "Source/API target was Java 17, actual runtime Temurin 25.0.3; no Java 17 VM, other vendor runtime, installation, network sink or production deployment exercised.",
+    "The exact new readObject snippet was tested inside a single-field ordinary Serializable wrapper. Records ignore this hook, and no record, proxy, Externalizable or Jackson example was changed or newly executed.",
+    "The omitted-field producer has the same class name and UID with a valid descriptor lacking the field; it is hostile relative to the required-current-form contract, not an arbitrary executable exploit.",
+    "The denied payload only increments an in-memory counter if its hook executes. No command execution, sockets, file modification by hooks, real secrets or gadget packages were involved.",
+    "No allowed nested-object hook, concurrent file modification, compression expansion, oversized string/array, global filter factory or old production artifact was tested in this focused probe. Those existing caveats were preserved, not re-proven.",
+    "Field-presence checks do not authenticate the producer or undo nested-object effects. Compatibility acceptance is application policy, not a property inferred from hostile bytes.",
+    "Two case inputs and criteria are separated procedurally in one shared filesystem. Coordinator must isolate one case and selected skill snapshot; known development cases are not holdouts.",
+    "No actor run or measured skill-quality gain. Global registry/verify checks remain coordinator-owned."
+  ],
+  "casePreparation": {
+    "classification": "Known development cases prepared during review; not held-out or executed actor evaluations",
+    "actorInputFile": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening/actor-inputs.json",
+    "evaluatorCriteriaFile": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening/evaluator-criteria.json",
+    "decisiveConstraint": "Only acceptsLegacyForm changes in acceptance-policy.json. All consumer sources, wire contracts and serialized bytes are identical.",
+    "separation": "Give the actor one isolated case copy and the selected skill version. Keep this file, other-case inputs, probe readers/results and handoff outside actor access. Current filesystem separation is procedural, not enforced.",
+    "prerequisites": "An isolated case copy, selected skill snapshot and an existing JDK supporting --release 17. Do not expose probe readers/results or criteria to the actor; no installation needed."
+  },
+  "cases": [
+    {
+      "id": "case-a",
+      "actorInputs": {
+        "file": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening/actor-inputs.json",
+        "selection": "case-a",
+        "fixtureDirectory": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-serialization-hardening\\cases\\case-a",
+        "files": [
+          "consumer/fixture/RetryPolicy.java",
+          "consumer/fixture/DeniedPayload.java",
+          "consumer/ConsumerMain.java",
+          "wire-forms.md",
+          "streams/denied.ser",
+          "streams/missing.ser",
+          "streams/null.ser",
+          "streams/value--1.ser",
+          "streams/value-0.ser",
+          "streams/value-10.ser",
+          "streams/value-11.ser",
+          "streams/value-5.ser",
+          "acceptance-policy.json"
+        ]
+      },
+      "evaluatorCriteria": {
+        "file": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening/evaluator-criteria.json",
+        "selection": "case-a",
+        "common": "Apply common criteria and the selected case only",
+        "expected": [
+          "Reject missing.ser with InvalidObjectException because the accepted current form requires maxRetries on the wire.",
+          "Distinguish omission from explicit zero, for example with readFields/GetField.defaulted; value-range checks alone must not accept the omitted field as zero."
+        ],
+        "observableFailure": [
+          "Accept omitted required maxRetries because zero is valid or UID/filter passes.",
+          "Reject legitimate zero as a surrogate presence check.",
+          "Use readObjectNoData as if it detected this individual missing field."
+        ]
+      }
+    },
+    {
+      "id": "case-b",
+      "actorInputs": {
+        "file": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening/actor-inputs.json",
+        "selection": "case-b",
+        "fixtureDirectory": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-serialization-hardening\\cases\\case-b",
+        "files": [
+          "consumer/fixture/RetryPolicy.java",
+          "consumer/fixture/DeniedPayload.java",
+          "consumer/ConsumerMain.java",
+          "wire-forms.md",
+          "streams/denied.ser",
+          "streams/missing.ser",
+          "streams/null.ser",
+          "streams/value--1.ser",
+          "streams/value-0.ser",
+          "streams/value-10.ser",
+          "streams/value-11.ser",
+          "streams/value-5.ser",
+          "acceptance-policy.json"
+        ]
+      },
+      "evaluatorCriteria": {
+        "file": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening/evaluator-criteria.json",
+        "selection": "case-b",
+        "common": "Apply common criteria and the selected case only",
+        "expected": [
+          "Accept the supported legacy missing.ser and map it to the approved value 3.",
+          "Keep explicit zero as zero; presence-aware compatibility handling must distinguish the two forms.",
+          "Do not categorically reject all missing fields or break the approved old-reader/data transition merely to harden the current form."
+        ],
+        "observableFailure": [
+          "Reject the supported legacy form indiscriminately.",
+          "Leave missing maxRetries as implicit zero.",
+          "Convert explicit zero to 3 as if it were absent."
+        ]
+      }
+    }
+  ],
+  "crossSkill": [],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "purpose": "Update catalog integrity/version data and cross-package constraints.",
+      "prerequisite": "Coordinator only, after all reviewers stop writing."
+    },
+    {
+      "command": "npm run verify",
+      "purpose": "Repository-wide CI checks, including version policy and generated-index consistency.",
+      "prerequisite": "Coordinator only, after all writers stop and registry regeneration."
+    }
+  ],
+  "pendingBehavioralEvaluation": "Coordinator can run matched original/revised cases with frozen criteria and isolated context/filesystem. None was executed by this reviewer.",
+  "evidence": {
+    "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening",
+    "rootFileHashes": [
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-serialization-hardening\\actor-inputs.json",
+        "sha256": "8ac88fc782b1733e4892b1d994b2b7131846d4d6c0b7c6fddef607422abe200f"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-serialization-hardening\\case-integrity.json",
+        "sha256": "0039947d015311a0b704b6450ada15720850db44ecef7ab7cb86f4be879db3de"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-serialization-hardening\\case-preparation.txt",
+        "sha256": "75e946477458fb7e3bba6618916d122966488fd235f39b520f7d0ced3cb92181"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-serialization-hardening\\compile-baseline.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-serialization-hardening\\compile-baseline.stdout.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-serialization-hardening\\compile-legacy.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-serialization-hardening\\compile-legacy.stdout.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-serialization-hardening\\compile-missing-writer.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-serialization-hardening\\compile-missing-writer.stdout.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-serialization-hardening\\compile-required.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-serialization-hardening\\compile-required.stdout.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-serialization-hardening\\compile-writer.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-serialization-hardening\\compile-writer.stdout.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-serialization-hardening\\evaluator-criteria.json",
+        "sha256": "75d75eb0b242ab083164b41a8db8d08fc004a99c99546f84ded854860a5ca533"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-serialization-hardening\\extracted-snippet.java.txt",
+        "sha256": "780297195f5aeac6a1204a00a41803d9c451bd8da600e5fde4c6b3f66234379d"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-serialization-hardening\\final.diff",
+        "sha256": "577989c1a3356fa55c794e1dcffb2486516a1ba9dac278c4083d2e467decc6d4"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-serialization-hardening\\local-validation.mjs",
+        "sha256": "58f94f06b6113fa27c575e5340afe5751e759c15cd0eea591aa30e530538caf9"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-serialization-hardening\\package-validation.json",
+        "sha256": "a5c11b2018ed85ee02a145b0e96c612f467b1d2a743b6913285c491132643941"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-serialization-hardening\\prepare-cases.mjs",
+        "sha256": "b425cb62d5e3ffcbf6267ee1cd3bc0e783077bd33078c3a8f838986cac30d9fc"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-serialization-hardening\\prepare-probe.mjs",
+        "sha256": "6b69482ce1600f778c555b8ed552d40275d0d121ebe71b9d9323746078227425"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-serialization-hardening\\prettier-check.txt",
+        "sha256": "f20510a9da4717c51c4cffee6d0dd88d6c9a723d0a83711d01216f5b48961283"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-serialization-hardening\\probe-commands.json",
+        "sha256": "a6e5ed0db37cc50b5a3c8d9f33592a074b5b75cb2adf36209d361bde8d846a46"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-serialization-hardening\\probe-summary.txt",
+        "sha256": "b5c9d472f5fdde3272549e0b6ab14d68be18ed075d347032f988aa8ec8b3fa88"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-serialization-hardening\\read-baseline.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-serialization-hardening\\read-baseline.stdout.txt",
+        "sha256": "037eb7503da494c94632cae29b661b55df7815b835c7eaf6913a1129e743faef"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-serialization-hardening\\read-legacy.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-serialization-hardening\\read-legacy.stdout.txt",
+        "sha256": "bc9c54623cfeadec69041105cb16897a0f87817414eafd4e8598643a6e8ab860"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-serialization-hardening\\read-required.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-serialization-hardening\\read-required.stdout.txt",
+        "sha256": "998917e90082db9fbdccb291716a97571593950fb7c724aef1020611d03ab2eb"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-serialization-hardening\\run-probe.mjs",
+        "sha256": "59942ca72b11440229e20cd15adbd4caa97a150819a2bc13bf13c336e3d8d8e6"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-serialization-hardening\\stream-integrity.json",
+        "sha256": "6667e563c50ae034587cc2f98c30dd1d12eb558a9d60f811bad6ec92cdfd538f"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-serialization-hardening\\write-handoff.mjs",
+        "sha256": "30a0a938bebae2a35ab8acf25116a06a85c1b403b860fc284fc0be16ec669cfa"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-serialization-hardening\\write-missing.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-serialization-hardening\\write-missing.stdout.txt",
+        "sha256": "15adef18b7dfad69c448f0bb7e3406e4526ca9a4933a7223e8ebec322c699a34"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-serialization-hardening\\write-present.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-serialization-hardening\\write-present.stdout.txt",
+        "sha256": "3952565a211c7faf80ec78c41c62d60480162b747c2a6aa6d5a1c7ee08349cd5"
+      }
+    ],
+    "serializedStreams": [
+      {
+        "name": "denied.ser",
+        "bytes": 42,
+        "sha256": "332aa7422a6f17482778062fd1eebec68300d813e3f979aa8058246f3df1b779"
+      },
+      {
+        "name": "missing.ser",
+        "bytes": 40,
+        "sha256": "fa069c8979b5b284b95b824a6d7f9a7e804ab705a93dcf8a9ecebe2e3caeae67"
+      },
+      {
+        "name": "null.ser",
+        "bytes": 5,
+        "sha256": "4e68143408826326220a32d6bff59e1cca3dd85f74b018aebd6723c5686c54e5"
+      },
+      {
+        "name": "value--1.ser",
+        "bytes": 57,
+        "sha256": "15f9d50a8c028e923eb0066ff3195b682b8771a456134234de98a5caa8914ad5"
+      },
+      {
+        "name": "value-0.ser",
+        "bytes": 57,
+        "sha256": "0d3aec945ebb4f296007eddb0e35684361da3d251a10f965a1ceecd1c386c93b"
+      },
+      {
+        "name": "value-10.ser",
+        "bytes": 57,
+        "sha256": "67e5c33cc5d456932a458468736351bdec7fc654895effea46bbaf732e53f5ed"
+      },
+      {
+        "name": "value-11.ser",
+        "bytes": 57,
+        "sha256": "9cb976c98cf6dbe3b959554980892bd2a91ad94a63e87db30a4e50cc4d784380"
+      },
+      {
+        "name": "value-5.ser",
+        "bytes": 57,
+        "sha256": "9486d9bf5c6ba3d3e24f270a4b7f1c63465e602b38e9acf71ec476fad68286b8"
+      }
+    ],
+    "caseIntegrity": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-serialization-hardening/case-integrity.json"
+  },
+  "writeState": "Every spawned compiler/Java/Node process exited; no writing process remains. Handoff creation is the last write, followed only by read-only parse/hash checks. No repository files outside ownership changed."
+}

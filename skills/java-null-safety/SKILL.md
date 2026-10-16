@@ -69,9 +69,12 @@ or a construction path is unavailable, report the gap rather than claiming null 
   annotations, verify that path separately rather than crediting the annotation itself.
 - `Map.get` returns null for both "absent" and "mapped to null" — resolve it with
   `getOrDefault` when only absence should select a default (an explicitly mapped null remains
-  null), or collapse both to absence with `Optional.ofNullable` at the API edge. Only
+  null), or collapse both to absence with `Optional.ofNullable` at the API edge.
   `containsKey` distinguishes on a stable nullable map; separate calls race under concurrent
   mutation. `ConcurrentHashMap` forbids null keys/values, making a single `get` unambiguous.
+  Before replacing a lookup with `computeIfAbsent` or `putIfAbsent`, check whether a stored null
+  means “already looked up, no result”: both operations treat it as absent. See
+  [null-valued cache entries](references/nullability-contracts.md#null-valued-cache-entries).
 - Prefer empty collections and Optional/result/domain failures where they communicate absence well.
   An explicitly `@Nullable` public return is still a valid Java/JSpecify contract when framework
   conventions, hot-path cost or migration compatibility justify it; callers and overrides must be

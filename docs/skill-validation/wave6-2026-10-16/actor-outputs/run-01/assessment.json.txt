@@ -1,0 +1,18 @@
+{
+  "disposition": "supported",
+  "basis": "The accepted contract permits indefinite misses and exactly one install(42). find reads entry once and uses the same non-null observation with the reader created by PublishedEntry::value. That reaches final primary and then its construction-initialized payload.value. Constructor freeze plus publication after construction preserves 42 through this dereference chain, despite the plain entry race and non-final Payload.value. Memo and reader are published before Thread.start, so reader initialization is visible. The unused legacyValue path does not affect find.",
+  "requiredChange": null,
+  "missingEvidence": [],
+  "checked": [
+    "Complete reading of all eight supplied project files and TASK.md.",
+    "Initial SHA-256 equality between input/project and output/project supplied files.",
+    "Java SE25 JLS 17.4.5, 17.5/17.5.1, 17.7 and 15.13.3.",
+    "node check.mjs: exit 0; sequential-controls=2 PASS; compilation uses --release 25; Java subprocess timeout 15000 ms."
+  ],
+  "limits": [
+    "The proof applies to the accepted one-producer, single install(42), no-escape, no-postconstruction-mutation and pre-Thread.start memo/reader publication premises.",
+    "The plain entry field provides no freshness or eventual-hit guarantee; neither is required.",
+    "Only the supplied sequential smoke was run; no concurrency stress, alternate-machine execution or bytecode inspection.",
+    "No production sources, contracts or dependencies were changed."
+  ]
+}

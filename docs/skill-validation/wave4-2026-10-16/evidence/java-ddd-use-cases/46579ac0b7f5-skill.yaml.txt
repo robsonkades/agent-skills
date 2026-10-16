@@ -1,0 +1,51 @@
+schemaVersion: 1
+name: java-ddd-use-cases
+version: 1.0.0
+description: >-
+  Implement or review Java DDD application use cases when commands, aggregate
+  orchestration, authorization and commit outcomes are mixed. Preserve action-based
+  packages, UseCase/DefaultUseCase contracts and framework-independent commands and
+  outputs; distinguish creation, absence, concurrency and replay. Excludes deciding
+  whether a service layer is needed, strategic context design and Spring or ORM
+  configuration mechanics.
+license: Apache-2.0
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-ddd-use-cases
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-ddd-use-cases
+keywords:
+  - java
+  - ddd
+  - use-cases
+  - application-layer
+  - clean-architecture
+  - commands
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+dependencies: []
+suggests:
+  - java-ddd
+  - java-ddd-aggregates
+  - java-ddd-value-objects
+  - java-ddd-domain-services
+  - java-ddd-repositories
+  - java-ddd-domain-events
+  - java-ddd-testing
+  - service-layer-design
+  - spring-boot-clean-architecture
+  - spring-transactions-and-events
+  - idempotency
+capabilities:
+  - reads-source
+  - runs-commands
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java DDD Use Cases
+      short_description: Commands, application orchestration and reliable outcomes

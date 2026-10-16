@@ -1,0 +1,7 @@
+import fs from 'node:fs';
+const root='C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d';
+for(const id of process.argv.slice(2)){
+ const e=JSON.parse(fs.readFileSync(root+'/actors/'+id+'/output/execution.json','utf8'));
+ const rawReads=e.reads??e.readings??e.filesRead??[];const reads=Array.isArray(rawReads)?rawReads:Object.entries(rawReads).flatMap(([category,value])=>Array.isArray(value)?value.map(v=>typeof v==='string'?category+': '+v:v):[category+': '+JSON.stringify(value)]);
+ console.log(JSON.stringify({run:id,keys:Object.keys(e),reads:reads.filter(x=>!JSON.stringify(x).includes('.jar')).map(x=>typeof x==='string'?x:{path:x.path,full:x.fullContent??x.contentIntegral??x.readInFull,mode:x.mode}),commands:(e.commands??[]).map(c=>{const argv=c.argv??c.command;return {cwd:c.cwd,argv:Array.isArray(argv)?argv.map(a=>a.length>160?a.slice(0,160)+'...':a):argv,exit:c.exit??c.exitCode,log:c.log};}),sources:e.sources,stopped:e.allWritesStopped}));
+}

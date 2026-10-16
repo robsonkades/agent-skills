@@ -1,0 +1,19 @@
+package example;
+public final class RuntimeReader {
+    public static void main(String[] args) throws ReflectiveOperationException {
+        for (String name : args) {
+            Class<?> target = Class.forName(name);
+            UseCodec config = target.getAnnotation(UseCodec.class);
+            if (config == null) throw new IllegalArgumentException("MISSING_METADATA: " + name);
+            check(config.value(), "value");
+            for (Class<?> type : config.alternatives()) check(type, "alternatives");
+            System.out.println("RUNTIME_OK " + name + " value=" + config.value().getName()
+                + " alternatives=" + config.alternatives().length);
+        }
+    }
+    private static void check(Class<?> type, String member) {
+        if (!Codec.class.isAssignableFrom(type)) {
+            throw new IllegalArgumentException("CODEC_REQUIRED: " + type.getName() + " in " + member);
+        }
+    }
+}

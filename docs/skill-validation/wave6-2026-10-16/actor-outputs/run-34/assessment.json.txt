@@ -1,0 +1,39 @@
+{
+  "disposition": "violated",
+  "basis": "docs/contract.md requires Message to retain the two constructor-time words while allowing immediate producer-buffer recycling. src/work/Message.java:4 retains the caller's int[] rather than a copy; checksum() at line 5 rereads its mutable elements. The supplied single-thread smoke deterministically changed checksum from 30 to 300 after recycling. Final-field initialized-state visibility is distinct from post-construction mutation safety, so it cannot justify approval.",
+  "requiredChange": "After the existing null/length validation, replace this.words=words with this.words=words.clone(). Keep the private final array unexposed and unmodified thereafter; preserve validation, checksum semantics, and caller ownership. This is a proposal only; no production source was changed.",
+  "missingEvidence": [],
+  "checked": [
+    {
+      "kind": "contract/source inspection",
+      "result": "Accepted ownership, all supplied source paths and smoke lifecycle read in full. Constructor has no this escape; null and non-two-element guards retained."
+    },
+    {
+      "kind": "specification",
+      "result": "Java SE25 JLS 17.4.5 and 17.5/17.5.1 consulted; final freeze does not prohibit later writes through an external array alias."
+    },
+    {
+      "kind": "observed execution",
+      "command": "node check.mjs",
+      "cwd": "output/project",
+      "exit": 0,
+      "stdout": "before-recycle=30\nafter-recycle=300\n",
+      "result": "Demonstrates violation; the smoke contains no assertion and exit 0 is not a contract pass."
+    },
+    {
+      "kind": "toolchain",
+      "result": "Node v25.6.1; javac 25.0.3; Temurin Java 25.0.3+9; --release 25 without preview."
+    },
+    {
+      "kind": "hash comparison",
+      "result": "All six supplied project files in output/project are byte-identical to input/project after execution."
+    }
+  ],
+  "limits": [
+    "The proposed defensive-copy correction was not implemented or executed.",
+    "Null and invalid-length rejection were verified by source inspection, not separate runtime cases.",
+    "No stress, jcstress, architecture-diverse testing or performance measurement was performed.",
+    "No asynchronous handoff implementation was supplied; delivery/general publication is outside the demonstrated path. No further evidence is required to establish the deterministic aliasing violation.",
+    "No repository, external skill, other run, dependency installation, or real configuration was accessed."
+  ]
+}

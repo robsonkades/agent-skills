@@ -1,0 +1,9 @@
+public final class NewMain {
+    public static void main(String[] args) {
+        Model.Visitor<Integer> visitor = new OldOp();
+        int value = new Model.Text("four").accept(visitor);
+        if (value != 4) throw new AssertionError("old path changed");
+        System.out.println("OLD_PATH=" + value);
+        System.out.println("NEW_PATH=" + new Model.Code("example").accept(visitor));
+    }
+}

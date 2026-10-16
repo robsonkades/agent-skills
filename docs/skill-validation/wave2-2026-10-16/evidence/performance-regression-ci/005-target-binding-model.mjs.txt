@@ -1,0 +1,92 @@
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+// Synthetic counterexample only: no GitHub workflow, provenance authentication,
+// statistical calibration or agent behavior is executed by this model.
+const artifactDirectory = dirname(fileURLToPath(import.meta.url));
+const sha = (letter) => letter.repeat(40);
+const bytes = JSON.stringify({ fixture: 'synthetic', effect: 0.002, interval: [-0.003, 0.007], mpir: 0.05 });
+const digest = `sha256:${createHash('sha256').update(bytes).digest('hex')}`;
+const producer = {
+  repository: 'example/service', runId: 701, attempt: 2, pullRequest: 23,
+  sourceEvent: 'pull_request', headSha: sha('a'), baseSha: sha('c'),
+  measuredCheckoutSha: sha('d'), artifactId: 991, artifactDigest: digest,
+};
+const relationship = {
+  repository: producer.repository,
+  mergeSha: producer.measuredCheckoutSha,
+  parents: [producer.baseSha, producer.headSha],
+};
+const request = {
+  repository: producer.repository,
+  reportingHeadSha: producer.headSha,
+  baseSha: producer.baseSha,
+  policy: 'measure-test-merge-report-on-pr-head',
+};
+const newerRequest = { ...request, reportingHeadSha: sha('b') };
+const evaluator = { event: 'workflow_run', githubSha: sha('e'), triggeredByRunId: 701 };
+const inputs = {
+  task: 'Review whether this performance evidence supports the requested check target. Inspect the supplied producer, checkout relationship and requested target. State any focused correction or justified no-change conclusion; do not launch CI or publish a check.',
+  classification: 'Synthetic development cases, not real production measurements or unseen holdouts',
+  shared: {
+    prerequisites: [
+      'The trusted measurement service has authenticated the producer record and actual artifact bytes; this is a fixture premise, not a claim proved by the digest.',
+      'The checkout relationship comes from the trusted control plane, not a candidate-provided manifest.',
+      'Benchmark coverage, compatibility, baseline provenance and calibration are accepted for this narrow review. The calibrated comparator returned pass for the supplied measurement.',
+      'The policy measures a test merge using the supplied base and reports the result on its PR head. No cross-revision equivalence exception is declared.',
+    ],
+    producer, trustedCheckoutRelationship: relationship, evaluator,
+    rawArtifactBytes: bytes, downloadedDigest: digest,
+    currentPublisher: 'Verify the digest and baseline compatibility, then attach the comparator result to requestedTarget.reportingHeadSha.',
+  },
+  cases: [
+    { id: 'same-head-test-merge', requestedTarget: request },
+    { id: 'advanced-head-old-rerun', requestedTarget: newerRequest },
+  ],
+};
+writeFileSync(join(artifactDirectory, 'case-inputs.json'), `${JSON.stringify(inputs, null, 2)}\n`);
+
+// Illustrative binding relation using the declared fixture premises. It is not
+// a production verifier and does not authenticate these records itself.
+function boundToTarget(expected, observed = producer, ancestry = relationship) {
+  return observed.repository === expected.repository
+    && ancestry.repository === expected.repository
+    && observed.artifactDigest === digest
+    && observed.measuredCheckoutSha === ancestry.mergeSha
+    && observed.headSha === expected.reportingHeadSha
+    && observed.baseSha === expected.baseSha
+    && ancestry.parents.includes(expected.reportingHeadSha)
+    && ancestry.parents.includes(expected.baseSha);
+}
+
+const checks = [];
+function check(name, actual, expected) {
+  assert.equal(actual, expected, name);
+  checks.push({ name, actual, expected, result: 'pass' });
+}
+check('authentic artifact checksum remains valid', digest === inputs.shared.downloadedDigest, true);
+check('checksum alone cannot distinguish the two targets', inputs.cases.every(() => digest === inputs.shared.downloadedDigest), true);
+check('legitimate test merge and reporting head have unequal SHAs', producer.measuredCheckoutSha === request.reportingHeadSha, false);
+check('declared merge-to-head mapping admits original target', boundToTarget(request), true);
+check('same intact old bundle is inapplicable to advanced head', boundToTarget(newerRequest), false);
+check('different base input invalidates mapping', boundToTarget({ ...request, baseSha: sha('f') }), false);
+check('different repository invalidates mapping', boundToTarget({ ...request, repository: 'other/service' }), false);
+check('forged current-head claim conflicts with trusted checkout ancestry', boundToTarget(newerRequest, { ...producer, headSha: newerRequest.reportingHeadSha }), false);
+check('attempt number alone does not change measured identity', boundToTarget(request, { ...producer, attempt: 3 }), true);
+check('evaluator default-branch SHA is separate from candidate', evaluator.githubSha === producer.measuredCheckoutSha, false);
+
+const output = {
+  result: 'pass', assertions: checks.length,
+  classification: 'Executed synthetic technical counterexample, not a deployed CI test or agent evaluation',
+  checks,
+  limits: [
+    'Authenticity and merge ancestry are explicit fixture premises, not verified with GitHub.',
+    'Does not establish real workflow permissions, artifact transport, cancellation behavior or statistical operating characteristics.',
+    'Does not measure a before/after skill improvement.',
+  ],
+};
+writeFileSync(join(artifactDirectory, 'target-binding-output.json'), `${JSON.stringify(output, null, 2)}\n`);
+console.log(JSON.stringify(output, null, 2));

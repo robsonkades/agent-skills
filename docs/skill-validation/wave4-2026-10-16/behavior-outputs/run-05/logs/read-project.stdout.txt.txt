@@ -1,0 +1,42 @@
+FILE: delivery.json
+{
+  "application": "report-app",
+  "applicationVersion": "1.0.0",
+  "libraryVersion": "1.0.0",
+  "layout": "external"
+}
+FILE: README.md
+# Report delivery
+The text platform team owns text-core; the report team owns report-app. The candidate text-core 1.0.1 source is available alongside 1.0.0. Review the release work required to adopt the candidate in report-app using the deployed layout in delivery.json. The application owner is considering combining the library and application release schedules to reduce delivery work.
+FILE: recipes.json
+{
+  "bundled": {
+    "applicationContents": [
+      "compiled report-app classes",
+      "compiled text-core classes"
+    ],
+    "launch": [
+      "java",
+      "-jar",
+      "report-bundle.jar"
+    ],
+    "source": "jar --create --file report-bundle.jar --main-class com.example.app.ReportApp -C classes/consumer . -C classes/library ."
+  },
+  "external": {
+    "applicationContents": [
+      "compiled report-app classes"
+    ],
+    "runtimeDependencies": [
+      "published/text-core-${libraryVersion}.jar"
+    ],
+    "launch": [
+      "java",
+      "-cp",
+      "report-app.jar;published/text-core-${libraryVersion}.jar",
+      "com.example.app.ReportApp"
+    ],
+    "source": "jar --create --file report-app.jar -C classes/consumer ."
+  }
+}
+FILE: release-policy.md
+Published artifacts and application distributions are immutable. Each owner controls its releases. CR, LF and CRLF must normalize to LF; the lone-CR correction must reach report-app within 14 days. Existing and corrected normalized output remain acceptable to downstream storage during that interval. Java dependencies are selected at process start; the launcher does not dynamically reload them. Rollback uses a retained previous application distribution or runtime dependency selection. No live deployment is authorized by this review.

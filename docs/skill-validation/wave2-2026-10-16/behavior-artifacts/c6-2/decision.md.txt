@@ -1,0 +1,173 @@
+# Capacity decision: normal-peak evidence correction
+
+Reviewed: 2026-10-16. Scope: the existing normal-peak decision only.
+
+**Retain PASS** for 4 replicas, image digest `fixture-v1`, at the recorded
+1000 offered logical operations/s, under the accepted SLO for this fixed measured
+cohort. Replace the dashboard's claimed 100% SLO result with a supported good-fraction
+bound of **98% to 100%**. Every outcome consistent with the supplied records meets
+the inclusive 98% requirement; missing outcomes do not make this verdict unknown.
+
+Other required scenarios and resource/dependency guardrails have existing applicable
+evidence; preserve those decisions. The selected configuration remains unchanged.
+Those accepted decisions were not independently revalidated in this scoped review.
+No new deployment is requested or performed.
+
+## Accepted population and calculation
+
+The SLO covers all 10,000 eligible logical operations started in the measured cohort,
+with no exclusions. A good operation delivers the required successful result to the
+caller within 100 ms. At least 98% must be good. Retry attempts are not separate
+operations. The start-side census is complete, the counts concern the same fixed
+cohort, and all selected instances ran `fixture-v1` with the tested resource settings.
+
+| Classification | Operations |
+| --- | ---: |
+| Known good | 9,800 |
+| Known bad | 0 |
+| Unknown because terminal records were lost | 200 |
+| Total eligible | 10,000 |
+
+Let `x` be the number of good operations among the 200 unknown outcomes:
+
+```text
+0 <= x <= 200
+good fraction = (9800 + x) / 10000
+lower bound = 9800 / 10000 = 0.98
+upper bound = (9800 + 200) / 10000 = 1.00
+minimum required good operations = 0.98 * 10000 = 9800
+```
+
+Even the worst permitted completion, `x = 0`, reaches the threshold exactly.
+The 200 unknown operations could consume the entire allowed non-good budget of
+200 operations, leaving no guaranteed margin above the SLO. They are **not known
+timeouts or deadline misses**; their true outcomes remain unknown. Neither 98% nor
+100% is established as the exact cohort good fraction.
+
+The dashboard computes `9800 / 9800 = 100%` using recorded terminal events. Its
+denominator omits the 200 eligible operations without terminal records, contrary to
+the accepted population. That display cannot establish a 100% all-eligible result,
+but correcting the denominator does not overturn PASS because 9,800 known good
+operations already suffice.
+
+## Limits and follow-up
+
+- These are deterministic bounds for the complete fixed cohort, not statistical
+  confidence intervals or a guarantee for future cohorts. No missing-at-random
+  assumption is required.
+- The supplied point does not establish a maximum capacity, a higher passing load,
+  or additional headroom. No new replica count or broader provisioning approval is
+  inferred. Offered, admitted, attempted and successful rates must remain distinct;
+  only the offered rate and cohort outcome counts are supplied here.
+- Detailed timestamps, repeats and the artifacts underlying unrelated accepted
+  scenarios are not supplied. This correction relies on their recorded applicability
+  and preserves them; it does not invent or invalidate their evidence.
+- For future reporting, use the complete eligible start-side logical-operation
+  denominator, correlate terminal outcomes to that cohort, and display known-good,
+  known-bad and unknown counts with bounds when records are missing. Correct the
+  collector/reporting path before relying on an exact percentage. Raw supplied
+  evidence is preserved; no instrumentation change is made here.
+- Reopen this cell if census completeness, known-good classification or configuration
+  applicability is disproved, or if the SLO or workload changes. The current records
+  settle this cohort's SLO verdict without a new load test. No new load test,
+  production contact, dependency installation or deployment was performed.
+
+## Audit: files and commands
+
+All commands used PowerShell with working directory
+`C:/Users/robso/AppData/Local/Temp/skills-wave2-behavior-6orq6B/c6-2`.
+Only `decision.md` was modified, using `apply_patch`.
+
+Files read:
+
+- `TASK.md`
+- `.resources/skill/SKILL.md`
+- `.resources/skill/references/provisioning-decision.md`
+- `.resources/skill/references/sizing-arithmetic.md`
+- `decision.md` (original and final)
+- `slo.json`
+- `cohort.json`
+- `dashboard-query.txt`
+
+The local file listing exposed filenames only. No sibling tasks, repository reports,
+installed skills, comparison answers or evaluator materials were read. No files
+outside the task directory were accessed, accidentally or otherwise. No public
+documentation was needed for this calculation; no agents were delegated work.
+
+Exact inspection commands (each completed with exit code 0 and returned the requested
+file contents or local file list):
+
+```powershell
+Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave2-behavior-6orq6B/c6-2/TASK.md' -Raw
+Get-Content -LiteralPath '.resources/skill/SKILL.md' -Raw
+rg --files --hidden -g '!node_modules' -g '!.git'
+Get-Content -LiteralPath 'decision.md' -Raw
+Get-Content -LiteralPath 'slo.json' -Raw
+Get-Content -LiteralPath 'cohort.json' -Raw
+Get-Content -LiteralPath 'dashboard-query.txt' -Raw
+Get-Content -LiteralPath '.resources/skill/references/provisioning-decision.md' -Raw
+Get-Content -LiteralPath '.resources/skill/references/sizing-arithmetic.md' -Raw
+```
+
+Exact offline arithmetic and evidence-hash command:
+
+```powershell
+$ErrorActionPreference = 'Stop'
+$cohort = Get-Content -LiteralPath 'cohort.json' -Raw | ConvertFrom-Json
+$slo = Get-Content -LiteralPath 'slo.json' -Raw | ConvertFrom-Json
+$total = [int]$cohort.eligibleOperations
+$good = [int]$cohort.knownGood
+$bad = [int]$cohort.knownBad
+$missing = [int]$cohort.missingTerminalRecords
+$required = [decimal]$slo.requiredGoodFraction
+if ($total -le 0 -or $good -lt 0 -or $bad -lt 0 -or $missing -lt 0) { throw 'Invalid cohort counts' }
+if ($good + $bad + $missing -ne $total) { throw 'Cohort counts do not reconcile' }
+$lower = [decimal]$good / $total
+$upper = [decimal]($good + $missing) / $total
+$minimumGood = [decimal]::Ceiling($required * $total)
+$failingCompletions = @(0..$missing | Where-Object { ([decimal]($good + $_) / $total) -lt $required }).Count
+if ($lower -lt $required -or $failingCompletions -ne 0) { throw 'Normal-peak point not supported for every completion' }
+[pscustomobject]@{
+  EligibleOperations = $total
+  KnownGood = $good
+  KnownBad = $bad
+  UnknownOutcomes = $missing
+  MinimumRequiredGood = $minimumGood
+  GoodFractionLowerBound = $lower
+  GoodFractionUpperBound = $upper
+  RequiredGoodFraction = $required
+  UnknownGoodCountsChecked = $missing + 1
+  FailingCompletions = $failingCompletions
+  NormalPeak = 'PASS for the fixed measured cohort'
+} | ConvertTo-Json
+Get-FileHash -LiteralPath 'cohort.json','slo.json','dashboard-query.txt' -Algorithm SHA256 | Select-Object Path,Hash | ConvertTo-Json
+```
+
+Observed: exit code 0; counts reconcile to 10,000; lower bound `0.98`, upper bound
+`1.0`, required fraction `0.98`, minimum required good `9800.0`; all 201 possible
+unknown-good counts were checked, with 0 failing completions. This was an offline
+calculation over supplied records, not a new load test.
+
+Input SHA-256 values recorded before the edit:
+
+```text
+cohort.json          C0124C2FC17518800623A6671B5ABE26CDBEC04BFD76246CEF3C98DA30EDA808
+slo.json             29FF8C51CF3347271D0E02DC3844598C79A4A5568CBB72D1EFC29F2776150078
+dashboard-query.txt  D0528DC88BD99A12749C7116DDDE0742CD13370F12ECE5320AEE622F4510D0A9
+```
+
+Final read-back and preservation command:
+
+```powershell
+Get-Content -LiteralPath 'decision.md' -Raw
+Get-FileHash -LiteralPath 'cohort.json','slo.json','dashboard-query.txt' -Algorithm SHA256 | Select-Object Path,Hash | ConvertTo-Json
+```
+
+Final verification: exit code 0; read-back confirmed the corrected PASS rationale
+and preserved unrelated decisions. All three evidence hashes matched their pre-edit
+values. No repository build or test suite is applicable to this isolated
+document-only task; validation is the cohort arithmetic and preservation of supplied
+evidence.
+
+All writes stopped after this audit completion. The only changed artifact is
+`decision.md`; no pending execution, load test or deployment remains.

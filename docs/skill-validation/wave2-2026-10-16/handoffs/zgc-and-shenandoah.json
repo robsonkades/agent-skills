@@ -1,0 +1,389 @@
+{
+  "status": "NO_CHANGES_NEEDED",
+  "skill": "zgc-and-shenandoah",
+  "ownedPath": "C:/git/agent-skills/skills/zgc-and-shenandoah",
+  "reviewDate": "2026-10-16",
+  "reviewer": "/root/quality04",
+  "allWritesStopped": true,
+  "runningProcessesStartedByReviewer": [],
+  "artifactDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/zgc-and-shenandoah",
+  "baseline": {
+    "committedVersion": "1.3.3",
+    "assignmentVersion": "1.3.3",
+    "finalVersion": "1.3.3",
+    "preExistingVersionBump": false,
+    "preExistingStagedChanges": [],
+    "preExistingUnstagedChanges": [],
+    "preExistingUntrackedFiles": [],
+    "filesChangedByReviewer": [],
+    "finalOwnedGitDiff": "empty",
+    "versionRationale": "No skill content changed; no bump is appropriate.",
+    "unchangedSha256": {
+      "SKILL.md": "3550499CC1C02AC26069DD51D886076F633D2C8C52B57EF822F89F742431CFF8",
+      "skill.yaml": "C19F68A12B6100C9732C4E7ADB552FB6563E56ACD7006E0786175874A4069C4E",
+      "references/flags-and-modes.md": "1E742DFBD4E8DA9F006F14C15CE05B8E84D572B6044CC93283C15BDAEAA37044",
+      "references/reading-concurrent-gc-logs.md": "186303720EE8CD57DA47074416E6D4E98AABB69BF72FC6AE876218DA532851C7"
+    }
+  },
+  "procedure": {
+    "requiredReadings": [
+      "AGENTS.md",
+      "docs/skill-review-prompt.md (complete; reread during this assignment)",
+      "docs/parallel-skill-reviews.md",
+      "docs/skill-validation/wave2-2026-10-16/review-brief.md",
+      "skills/skill-engineering/SKILL.md and relevant evidence, evaluation, resource-design and anti-pattern references",
+      "Wave-two comparative research and relevant wave-one history previously read and reused under the unchanged-reading exception"
+    ],
+    "scope": "Operating and diagnosing existing ZGC/Shenandoah deployments, retaining collector selection and source-level internals boundaries.",
+    "domainCriteria": [
+      "Use the actual build, collector and effective mode rather than intended flags, accepted option strings or JEP product status.",
+      "Distinguish pause time, concurrent elapsed time, GC CPU and barrier work.",
+      "Distinguish heap soft maximum, hard maximum, minimum commitment and whole-process/container accounting.",
+      "Treat allocation-stall cycle cause separately from per-thread stall events and incomplete captures.",
+      "Close bounded configuration questions without demanding a workload benchmark; reserve performance claims for relevant evidence."
+    ],
+    "assessmentSentBeforePackageEdits": "Provisional no-change findings sent to coordinator; no package edit was made.",
+    "noChangeReason": "The current package already supplies the relevant evidence acquisition, version gates, negative controls, competing capacity explanations and proportional completion paths. Primary sources and owned launch controls supported these decisions; no material gap was established."
+  },
+  "findings": [
+    {
+      "location": "SKILL.md:48 and :73; references/flags-and-modes.md:97-137",
+      "result": "Supported existing guidance",
+      "evidence": "Temurin 25.0.3+9 launches confirmed default SATB, explicit generational without experimental unlock and ignored compact with adaptive startup logs. PrintFlagsFinal still displays compact, so the existing requirement to read warnings/effective startup policy is consequential.",
+      "consequence": "Avoids accepting a successful launch or raw option value as proof of the intended comparison mode."
+    },
+    {
+      "location": "SKILL.md:93; references/flags-and-modes.md:59-77",
+      "result": "Supported existing guidance",
+      "evidence": "Oracle JDK 25 guide supports SoftMaxHeapSize as a heuristic and the minimum-heap uncommit floor. Owned Xms=Xmx launch reports Uncommit: Implicitly Disabled and ZUncommit=false despite requesting it.",
+      "consequence": "Avoids treating soft max as a container cap or reducing a delay to override a fixed-heap floor."
+    },
+    {
+      "location": "references/flags-and-modes.md:22-29",
+      "result": "Historical status remains accurate on the current source check",
+      "evidence": "Official JEP 535 page: Targeted, release 28; JEP 523: Closed/Delivered, release 27; JEP 521: Closed/Delivered, release 25 and single-generation default retained.",
+      "consequence": "Existing text correctly separates product, default, target release and deployed binary; a date-only edit would add no supported decision improvement."
+    },
+    {
+      "location": "references/reading-concurrent-gc-logs.md:66-105 and :132 onward",
+      "result": "Supported existing guidance",
+      "evidence": "OpenJDK jdk-25-ga ZPageAllocator::alloc_page_stall creates EventZAllocationStall, requests asynchronous minor collection, waits for allocation completion/failure and commits the event. The skill separately preserves unknown/empty populations, concurrent wall-time versus CPU and generation/mode comparability.",
+      "consequence": "Avoids converting cycle labels to stall counts or using unsupported empty/short samples as latency or cost evidence."
+    }
+  ],
+  "remainingMaterialFindings": [],
+  "capabilitiesPreserved": [
+    "JDK 25 HotSpot authoring baseline, deployed-build verification and no implicit upgrade.",
+    "Version-specific ZGC and Shenandoah mode/flag audit, source-backed inert-option cleanup and bounded launch controls.",
+    "CPU quota/throttling, live-set/allocation headroom, native memory, RSS/PSS and cgroup reconciliation.",
+    "Store/load-barrier attribution, Shenandoah mark-word forwarding and avoidance of emitter-frame or shallow-size misattribution.",
+    "ZGC stall versus Shenandoah pacing/degeneration/full fallback, per-phase/generation accounting and measurement coverage.",
+    "Proportional production comparison and rollback, preserving independent conclusions when another capture is unavailable."
+  ],
+  "capabilitiesReplacedOrRemoved": [],
+  "validation": {
+    "structuralChecks": [
+      {
+        "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/zgc-and-shenandoah/package-check.mjs",
+        "workingDirectory": "C:/git/agent-skills",
+        "result": "PASS, exit 0; existing loadPackageFromDirectory and validatePackage strict mode returned zero issues; four files, two local Markdown links, four existing referrals and all unchanged hashes verified.",
+        "artifact": "zgc-and-shenandoah/package-check.json"
+      },
+      {
+        "command": "node node_modules/prettier/bin/prettier.cjs --check skills/zgc-and-shenandoah/SKILL.md skills/zgc-and-shenandoah/skill.yaml skills/zgc-and-shenandoah/references/flags-and-modes.md skills/zgc-and-shenandoah/references/reading-concurrent-gc-logs.md",
+        "workingDirectory": "C:/git/agent-skills",
+        "result": "PASS, exit 0; all four explicit files use Prettier code style; read-only check."
+      },
+      {
+        "commands": [
+          "git diff --check -- skills/zgc-and-shenandoah",
+          "git status --short --untracked-files=all -- skills/zgc-and-shenandoah",
+          "git diff --numstat -- skills/zgc-and-shenandoah",
+          "git diff --cached --numstat -- skills/zgc-and-shenandoah",
+          "git show HEAD:skills/zgc-and-shenandoah/skill.yaml",
+          "Get-FileHash -Algorithm SHA256 -LiteralPath skills/zgc-and-shenandoah/SKILL.md,skills/zgc-and-shenandoah/skill.yaml,skills/zgc-and-shenandoah/references/flags-and-modes.md,skills/zgc-and-shenandoah/references/reading-concurrent-gc-logs.md"
+        ],
+        "workingDirectory": "C:/git/agent-skills",
+        "result": "No owned Git changes, no whitespace issue, version 1.3.3 and four assignment-time hashes unchanged."
+      }
+    ],
+    "technicalChecks": {
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/zgc-and-shenandoah/launch-check.mjs",
+      "invocationWorkingDirectory": "C:/git/agent-skills",
+      "childWorkingDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/zgc-and-shenandoah",
+      "javaExecutable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "runtime": "OpenJDK Temurin 25.0.3+9-LTS Windows x64 HotSpot; Node v25.6.1",
+      "compilerTarget": "Not applicable: no Java source was added or compiled.",
+      "result": "Final harness PASS, exit 0, six controls checked. Each producer's stdout, stderr, status, signal and arguments retained separately.",
+      "artifact": "zgc-and-shenandoah/launch-results.recheck.json",
+      "commonJavaArguments": [
+        "-Xms16m",
+        "-Xmx64m",
+        "<control flags>",
+        "-Xlog:gc+init=info",
+        "-XX:+PrintFlagsFinal",
+        "-version"
+      ],
+      "controls": [
+        {
+          "id": "zgc-obsolete-mode",
+          "flags": ["-XX:+UseZGC", "-XX:+ZGenerational"],
+          "exit": 0,
+          "observed": "ZGenerational ignored, warning says support removed in 24.0."
+        },
+        {
+          "id": "shenandoah-default",
+          "flags": ["-XX:+UseShenandoahGC"],
+          "exit": 0,
+          "observed": "SATB startup mode and ShenandoahGCMode=satb."
+        },
+        {
+          "id": "shenandoah-generational",
+          "flags": ["-XX:+UseShenandoahGC", "-XX:ShenandoahGCMode=generational"],
+          "exit": 0,
+          "observed": "Generational mode active with no experimental unlock."
+        },
+        {
+          "id": "shenandoah-generational-compact",
+          "flags": [
+            "-XX:+UseShenandoahGC",
+            "-XX:ShenandoahGCMode=generational",
+            "-XX:ShenandoahGCHeuristics=compact"
+          ],
+          "exit": 0,
+          "observed": "Warning ignores compact; runtime startup says Adaptive; PrintFlagsFinal retains compact."
+        },
+        {
+          "id": "shenandoah-invalid-buffer",
+          "flags": ["-XX:+UseShenandoahGC", "-XX:ShenandoahMaxSATBBufferSize=1024"],
+          "exit": 1,
+          "observed": "Unrecognized VM option; expected negative launch."
+        },
+        {
+          "id": "zgc-fixed-heap-uncommit",
+          "flags": ["-XX:+UseZGC", "-Xms64m", "-XX:+ZUncommit"],
+          "exit": 0,
+          "observed": "Later Xms64m overrides common Xms16m; equal Xms/Xmx causes implicitly disabled uncommit and ZUncommit=false."
+        }
+      ],
+      "initialHarnessFailure": {
+        "result": "Exit 1 after all six launches completed; expected output regexes assumed labels different from actual HotSpot spelling. This was a review harness error, not a skill defect or a failing collector.",
+        "correction": "Read raw output, corrected only label syntax (Mode, ignored heuristic message and Implicitly Disabled wording), added effective/retained flag corroboration, reran the six controls. No valid policy criterion was weakened.",
+        "preservedArtifacts": [
+          "zgc-and-shenandoah/launch-check.initial.mjs",
+          "zgc-and-shenandoah/launch-results.initial.json",
+          "zgc-and-shenandoah/*.stdout.log",
+          "zgc-and-shenandoah/*.stderr.log"
+        ],
+        "recheckArtifacts": [
+          "zgc-and-shenandoah/launch-check.mjs",
+          "zgc-and-shenandoah/launch-results.recheck.json",
+          "zgc-and-shenandoah/*.recheck.stdout.log",
+          "zgc-and-shenandoah/*.recheck.stderr.log"
+        ]
+      }
+    },
+    "sourceCheck": {
+      "command": "& C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/zgc-and-shenandoah/fetch-sources.ps1",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "Nine official document/source downloads HTTP 200, separately hashed; one optional OpenJDK issue REST endpoint HTTP 403. Relevant downloaded passages inspected.",
+      "artifact": "zgc-and-shenandoah/source-fetch-results.json",
+      "initialAccessFailures": "web open for OpenJDK JEP pages returned 403 and issue REST returned inaccessible; Invoke-WebRequest obtained all three JEP pages. REST remained unavailable, with no dependency on it after JEP pages succeeded.",
+      "otherReviewCommandFailure": "An initial rg command passed a Windows *.log path literally and failed with OS error 123. Retried with -g '*.log' and the directory path, then inspected the matching raw records. No package changes resulted."
+    },
+    "exampleClassification": "Existing java -jar, jcmd and asprof snippets are explicitly target-dependent partial templates, not standalone executable workloads. Only safe owned -version controls were exercised; no production attachment or profile capture.",
+    "agentBehavioralEvaluationsExecuted": [],
+    "structuredWalkthroughs": [
+      "Case A: inspect both startup captures, correct the generational-alignment claim and preserve the valid ZGC/build observations; do not invent workload conclusions.",
+      "Case B: change only the explicit Shenandoah mode and related capture, accept supported generation alignment while leaving rollout/performance unverified."
+    ],
+    "measuredBehavioralImprovement": "Not measured. No agent runs, no before/after comparison, no held-out evaluation; this is a no-change review."
+  },
+  "sources": [
+    {
+      "url": "https://openjdk.org/jeps/521",
+      "version": "JDK 25",
+      "artifact": "zgc-and-shenandoah/jep-521.html",
+      "supports": "Generational Shenandoah product; single-generation default unchanged; no experimental unlock required for generational mode."
+    },
+    {
+      "url": "https://openjdk.org/jeps/535",
+      "version": "Status read 2026-10-16: Targeted, release 28",
+      "artifact": "zgc-and-shenandoah/jep-535.html",
+      "supports": "Future generational default is not a JDK 25 deployment guarantee."
+    },
+    {
+      "url": "https://openjdk.org/jeps/523",
+      "version": "Status read 2026-10-16: Closed/Delivered, release 27",
+      "artifact": "zgc-and-shenandoah/jep-523.html",
+      "supports": "G1 default selection is distinct from Shenandoah mode."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/gctuning/z-garbage-collector1.html",
+      "version": "JDK 25",
+      "artifact": "zgc-and-shenandoah/oracle-jdk25-zgc.html",
+      "supports": "Generational ZGC, allocation headroom, soft maximum, Xms uncommit floor, fixed-heap disable and eligibility delay."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/openjdk/jdk/jdk-25-ga/src/hotspot/share/gc/z/z_globals.hpp",
+      "version": "jdk-25-ga",
+      "artifact": "zgc-and-shenandoah/z_globals.hpp",
+      "supports": "Interval alias, minor/major/only policies and uncommit flag defaults."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/openjdk/jdk/jdk-25-ga/src/hotspot/share/gc/z/zPageAllocator.cpp",
+      "version": "jdk-25-ga, alloc_page_stall lines 1433-1462",
+      "artifact": "zgc-and-shenandoah/zPageAllocator.cpp",
+      "supports": "Allocation request, wait, and EventZAllocationStall commit path, distinct from cycle-cause accounting."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/openjdk/jdk/jdk-25-ga/src/hotspot/share/gc/shenandoah/shenandoahForwarding.inline.hpp",
+      "version": "jdk-25-ga",
+      "artifact": "zgc-and-shenandoah/shenandoahForwarding.inline.hpp",
+      "supports": "Forwarding reference represented through the mark word, not a universal extra object word."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/openjdk/jdk/jdk-25-ga/src/hotspot/share/gc/shenandoah/shenandoah_globals.hpp",
+      "version": "jdk-25-ga",
+      "artifact": "zgc-and-shenandoah/shenandoah_globals.hpp",
+      "supports": "SATB/adaptive defaults and distinct experimental SATB buffer-size/flush controls."
+    }
+  ],
+  "reproducibleDevelopmentCases": {
+    "executionStatus": "NOT_EXECUTED_BY_AN_AGENT; expected behavior developed as a structured walkthrough only.",
+    "deliveryRule": "Give the evaluator only one input object plus its materialized fixtures. Keep evaluatorCriteria separate. These are development cases, not unseen holdouts.",
+    "sharedInput": {
+      "task": "Audit this JDK 25 collector-comparison setup and correct comparison.md in place. The intended comparison holds generation policy generational while examining collector implementation. Inspect the supplied owned-launch captures and argument/exit metadata. Close configuration conclusions the evidence supports; state precisely what remains unverified. Do not run a workload, change runtime or request a new capture when the existing one suffices.",
+      "fixtures": {
+        "comparison.md": "# Collector comparison\nBoth configurations are generational. Their successful launches establish the intended modes. The setup is already valid evidence for our requested implementation-only performance comparison, and Shenandoah can be rolled out.\n",
+        "runs/zgc.stdout.log": {
+          "copyFromArtifact": "zgc-and-shenandoah/zgc-obsolete-mode.recheck.stdout.log"
+        },
+        "runs/zgc.stderr.log": {
+          "copyFromArtifact": "zgc-and-shenandoah/zgc-obsolete-mode.recheck.stderr.log"
+        },
+        "runs/zgc-metadata.json": {
+          "exitCode": 0,
+          "binary": "Temurin 25.0.3+9-LTS Windows x64",
+          "arguments": [
+            "-Xms16m",
+            "-Xmx64m",
+            "-XX:+UseZGC",
+            "-XX:+ZGenerational",
+            "-Xlog:gc+init=info",
+            "-XX:+PrintFlagsFinal",
+            "-version"
+          ]
+        }
+      },
+      "prerequisites": "Coordinator copies raw artifact contents into an isolated writable fixture directory. No JVM launch is required. Supplied captures are from owned -version launches, not a workload experiment."
+    },
+    "inputs": [
+      {
+        "id": "A-default-shenandoah",
+        "additionalFixtures": {
+          "runs/shenandoah.stdout.log": {
+            "copyFromArtifact": "zgc-and-shenandoah/shenandoah-default.recheck.stdout.log"
+          },
+          "runs/shenandoah.stderr.log": {
+            "copyFromArtifact": "zgc-and-shenandoah/shenandoah-default.recheck.stderr.log"
+          },
+          "runs/shenandoah-metadata.json": {
+            "exitCode": 0,
+            "binary": "Temurin 25.0.3+9-LTS Windows x64",
+            "arguments": [
+              "-Xms16m",
+              "-Xmx64m",
+              "-XX:+UseShenandoahGC",
+              "-Xlog:gc+init=info",
+              "-XX:+PrintFlagsFinal",
+              "-version"
+            ]
+          }
+        }
+      },
+      {
+        "id": "B-explicit-generational",
+        "singleDecisiveChange": "Explicit ShenandoahGCMode=generational and the corresponding real startup capture; build, other flags, task and draft unchanged.",
+        "additionalFixtures": {
+          "runs/shenandoah.stdout.log": {
+            "copyFromArtifact": "zgc-and-shenandoah/shenandoah-generational.recheck.stdout.log"
+          },
+          "runs/shenandoah.stderr.log": {
+            "copyFromArtifact": "zgc-and-shenandoah/shenandoah-generational.recheck.stderr.log"
+          },
+          "runs/shenandoah-metadata.json": {
+            "exitCode": 0,
+            "binary": "Temurin 25.0.3+9-LTS Windows x64",
+            "arguments": [
+              "-Xms16m",
+              "-Xmx64m",
+              "-XX:+UseShenandoahGC",
+              "-XX:ShenandoahGCMode=generational",
+              "-Xlog:gc+init=info",
+              "-XX:+PrintFlagsFinal",
+              "-version"
+            ]
+          }
+        }
+      }
+    ],
+    "evaluatorCriteria": [
+      {
+        "id": "A-default-shenandoah",
+        "required": [
+          "Read effective startup/flag evidence and update comparison.md itself.",
+          "Identify generational ZGC versus SATB single-generation Shenandoah, so the requested generation-controlled comparison is not established.",
+          "Explain that generational Shenandoah is available on this observed build without experimental unlock; explicit mode is needed for the intended follow-on comparison.",
+          "Recognize obsolete ZGenerational as ignored cleanup rather than a working selector or proven speed improvement.",
+          "Keep successful owned-launch support facts while removing rollout/performance conclusions unsupported by -version launches."
+        ],
+        "failIf": [
+          "Infer generational Shenandoah from JDK 25 product status or successful exit.",
+          "Claim application CPU, throughput, stall or latency benefits from launch-only output.",
+          "Leave the inaccurate draft unchanged while only writing an issue list.",
+          "Demand runtime upgrade, additional permission or benchmark merely to close the supported configuration audit."
+        ]
+      },
+      {
+        "id": "B-explicit-generational",
+        "required": [
+          "Update comparison.md to retain the now-supported generational alignment for the observed launches.",
+          "Do not prescribe adding a mode already active or insist that JDK 25 always uses SATB despite explicit evidence.",
+          "Keep the same launch-only scope and refuse to infer workload/rollout success; the configuration prerequisite can close independently.",
+          "Still treat obsolete ZGenerational warning proportionately and preserve the supported build/configuration facts."
+        ],
+        "failIf": [
+          "Repeat case A's generation-mismatch conclusion unchanged.",
+          "Treat configuration alignment as measured performance superiority or rollout acceptance.",
+          "Block the supported configuration conclusion on another benchmark/capture or silently broaden the task into collector selection."
+        ]
+      }
+    ]
+  },
+  "limitations": [
+    "Owned Windows Temurin launch checks establish only this binary/argument behavior; no Linux cgroup/RSS, production attach, load or latency measurement was performed.",
+    "OpenJDK jdk-25-ga source supports baseline implementation claims; it is not a proof for every vendor/update or architecture.",
+    "JEP issue REST was inaccessible; official JEP HTML succeeded and sufficed for the checked status claims.",
+    "No actual agent behavioral evaluation, comparative gain, universal collector choice or workload SLO guarantee is established.",
+    "No repository-wide validation was run by this reviewer."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Parallel review policy; run after all reviewers stop. No index change attributable to this unchanged package is expected."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Parallel review policy; shared repository validation after index regeneration and all writers stop."
+    }
+  ],
+  "crossSkillIssues": [],
+  "coordinatorActions": [
+    "Archive this JSON and its referenced artifact directory if desired.",
+    "Select independent behavior cases using only task inputs/fixtures, with evaluator criteria withheld from the tested agent.",
+    "Perform final shared index and verification steps when the complete wave is read-only."
+  ]
+}

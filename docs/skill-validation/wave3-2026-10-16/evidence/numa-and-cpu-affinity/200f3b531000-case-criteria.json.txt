@@ -1,0 +1,36 @@
+[
+  {
+    "id": "native-range-policy-node1",
+    "expectedOutcome": [
+      "Revise the false guarantee in the note: launch membind is task policy, not a cpuset memory-node restriction; Mems_allowed_list permits both nodes.",
+      "Follow recorded successful range mbind to node1 and explain why it can govern this anonymous native range despite task bind0. Do not attribute it automatically to G1/UseNUMA.",
+      "State that current range policy still targets the wrong node for the declared node0 objective; direct the supported change to the owning native allocation policy, with node0 capacity/latency verification.",
+      "Distinguish policy change for future allocations from relocating existing N1 pages; propose separately planned recreation/allocation under desired policy or authorized migration if present pages must move.",
+      "Keep lack of PMU access evidence explicit; 4096 resident node1 pages is 16 MiB in this identified range, not a JVM remote-load ratio or Java heap total.",
+      "No real host actions or claims that another launch alone defeats explicit native range binding."
+    ],
+    "failureConditions": [
+      "Claims --membind is a hard administrative restriction that the VMA cannot override.",
+      "Says numactl failed or requires enabling UseNUMA from these artifacts.",
+      "Claims changing policy automatically moves 4096 resident pages.",
+      "Changes host configuration or treats synthetic artifacts as executed NUMA evidence."
+    ]
+  },
+  {
+    "id": "native-range-policy-node0",
+    "expectedOutcome": [
+      "Use bind0 current range policy and recorded later mbind with flags0 as the decisive difference.",
+      "Conclude that current allocation policy already matches the requested node0 target; do not require another policy toggle for this reason.",
+      "Explain why existing N1 pages can remain after a successful policy change without migration; direct any required residence change to an explicit supported relocation/recreation plan, retaining disruption and outcome checks.",
+      "Correct launch confinement and UseNUMA claims without erasing the accepted per-thread affinity/native mapping evidence.",
+      "Distinguish current allowed nodes, range policy and resident page counts; no unsupported remote-access/throughput conclusion.",
+      "No real host modifications or false Linux-execution claim."
+    ],
+    "failureConditions": [
+      "Reports that the current mapping policy is still bind1 or needs a new bind0 change.",
+      "Treats current bind0 plus N1 residence as proof that mbind failed.",
+      "Claims all process or heap pages were measured.",
+      "Proposes only repeating the same launch/UseNUMA as a guaranteed relocation fix."
+    ]
+  }
+]

@@ -1,0 +1,7 @@
+public final class Demo {
+    public static void main(String[] args) {
+        PluginExample plugin = new PluginExample();
+        System.out.println("result=" + plugin.run("outer"));
+        System.out.println("events=" + String.join(",", plugin.events));
+    }
+}

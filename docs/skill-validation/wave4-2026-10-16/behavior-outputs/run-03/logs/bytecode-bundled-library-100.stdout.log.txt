@@ -1,0 +1,51 @@
+Classfile jar:file:///C:/Users/robso/AppData/Local/Temp/skills-wave4-actors-HoLlUY/run-03/input/bundles/report-1.0.0.jar!/com/example/text/LineEndings.class
+  Last modified Oct 16, 2026; size 441 bytes
+  SHA-256 checksum 624a89185fa802cc65e96a054046c2957ba0a6179f6c7c6e63d57eec5e46375d
+  Compiled from "LineEndings.java"
+public final class com.example.text.LineEndings
+  minor version: 0
+  major version: 61
+  flags: (0x0031) ACC_PUBLIC, ACC_FINAL, ACC_SUPER
+  this_class: #17                         // com/example/text/LineEndings
+  super_class: #2                         // java/lang/Object
+  interfaces: 0, fields: 0, methods: 2, attributes: 1
+Constant pool:
+   #1 = Methodref          #2.#3          // java/lang/Object."<init>":()V
+   #2 = Class              #4             // java/lang/Object
+   #3 = NameAndType        #5:#6          // "<init>":()V
+   #4 = Utf8               java/lang/Object
+   #5 = Utf8               <init>
+   #6 = Utf8               ()V
+   #7 = String             #8             // \r\n
+   #8 = Utf8               \r\n
+   #9 = String             #10            // \n
+  #10 = Utf8               \n
+  #11 = Methodref          #12.#13        // java/lang/String.replace:(Ljava/lang/CharSequence;Ljava/lang/CharSequence;)Ljava/lang/String;
+  #12 = Class              #14            // java/lang/String
+  #13 = NameAndType        #15:#16        // replace:(Ljava/lang/CharSequence;Ljava/lang/CharSequence;)Ljava/lang/String;
+  #14 = Utf8               java/lang/String
+  #15 = Utf8               replace
+  #16 = Utf8               (Ljava/lang/CharSequence;Ljava/lang/CharSequence;)Ljava/lang/String;
+  #17 = Class              #18            // com/example/text/LineEndings
+  #18 = Utf8               com/example/text/LineEndings
+  #19 = Utf8               Code
+  #20 = Utf8               LineNumberTable
+  #21 = Utf8               normalize
+  #22 = Utf8               (Ljava/lang/String;)Ljava/lang/String;
+  #23 = Utf8               SourceFile
+  #24 = Utf8               LineEndings.java
+{
+  public static java.lang.String normalize(java.lang.String);
+    descriptor: (Ljava/lang/String;)Ljava/lang/String;
+    flags: (0x0009) ACC_PUBLIC, ACC_STATIC
+    Code:
+      stack=3, locals=1, args_size=1
+         0: aload_0
+         1: ldc           #7                  // String \r\n
+         3: ldc           #9                  // String \n
+         5: invokevirtual #11                 // Method java/lang/String.replace:(Ljava/lang/CharSequence;Ljava/lang/CharSequence;)Ljava/lang/String;
+         8: areturn
+      LineNumberTable:
+        line 7: 0
+}
+SourceFile: "LineEndings.java"

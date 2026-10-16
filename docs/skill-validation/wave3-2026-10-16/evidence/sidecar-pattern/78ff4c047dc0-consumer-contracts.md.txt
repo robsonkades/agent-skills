@@ -1,0 +1,9 @@
+# Consumer contracts supplied for this review
+
+- The application reads /etc/app-config/application.yaml at startup.
+- POST http://127.0.0.1:8081/-/reload returns 202 when a reload request is queued. The worker reopens that path, parses the full document and adopts a valid version. Invalid input leaves the previous version active and records a rejected status.
+- GET http://127.0.0.1:8081/-/config-status reports the active version and last reload status. HTTP 202 is not that status.
+- The reloader watches the directory /watch. Its documented watcher handles Kubernetes projected-directory replacement and reopens the current file. It posts to the application's reload endpoint when the content changes.
+- Each configuration contains a non-sensitive version field, initially blue, changed to green in the planned check.
+- The two local endpoints, authorization, retry ownership, startup behavior, image ownership and resource budget have already been reviewed. Do not invent a defect in them without contradictory evidence.
+- The kubelet synchronization/cache settings and actual mounted/application version observations have not been supplied. No cluster execution is authorized.

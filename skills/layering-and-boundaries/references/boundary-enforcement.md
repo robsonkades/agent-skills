@@ -156,12 +156,19 @@ unverified data boundary rather than claiming isolation from an ArchUnit or JPMS
    `DataAccessException` or `RestClientException` handled in a business rule means the
    business rule now depends on the mechanism. Translate at the adapter boundary
    (`enterprise-base-patterns`).
-6. **Static access to context.** `SecurityContextHolder`, `LocaleContextHolder`, a static
-   clock or a thread-local tenant read from inside the domain. It compiles, it is invisible
-   in the signature, and it makes the rule untestable without the framework.
-7. **The upward call.** Domain code calling a notifier, a scheduler or an HTTP client
-   directly. Invert it: the domain declares the interface it needs, and the adapter
-   implements it.
+6. **Implicit context.** Resolve the actual source and lifetime of time, user or tenant data.
+   `SecurityContextHolder` and `LocaleContextHolder` introduce framework dependencies;
+   `Instant.now()` and `Clock.systemUTC()` do not. A hard-coded system clock still prevents
+   supplying a controlled time source, and a thread-local value needs checking across the
+   actual execution path. Pass required values or an existing `Clock` when that contract
+   needs control; `Clock.fixed` supports deterministic time tests without a DI framework.
+   Preserve an adequate explicit input rather than wrapping it in another port.
+7. **An upward source dependency.** Inspect the declared type, implementation and composition
+   behind a notifier, scheduler or HTTP-client call. When the chosen boundary forbids the
+   domain from depending on that outer mechanism, let the consuming domain/application own
+   the port and implement it outside. A call through an existing inside-owned port already
+   follows this rule. Keep an accepted classical dependency when no protected contract is
+   violated.
 
 ## Reviewing an existing structure
 
@@ -183,6 +190,7 @@ Ask, in this order:
 
 ## Primary references
 
+- [Java 17 Clock](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Clock.html) and [Instant.now](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Instant.html#now()>) — JDK time sources, controlled clocks and testing without a dependency-injection framework; these APIs exist since Java 8.
 - [ArchUnit user guide](https://www.archunit.org/userguide/html/000_Index.html) — imports and dependency-rule scope.
 - [Hibernate 6.6 Formula annotation](https://docs.hibernate.org/orm/6.6/javadocs/org/hibernate/annotations/Formula.html) — an example of a provider package outside the illustrative denylist.
 - [Spring transaction propagation](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/tx-propagation.html) — REQUIRED versus independent transaction scopes; match the deployed release.

@@ -1,0 +1,33 @@
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
+public final class BatchDispatcher implements AutoCloseable {
+    @FunctionalInterface public interface Handler { void handle(AccountEvent event) throws Exception; }
+    private final java.util.concurrent.ExecutorService workers = Executors.newFixedThreadPool(2);
+
+    public void accept(List<AccountEvent> batch, Handler handler) throws Exception {
+        var tasks = new ArrayList<Future<?>>();
+        try {
+            for (AccountEvent event : batch) {
+                tasks.add(workers.submit(() -> { handler.handle(event); return null; }));
+            }
+            for (Future<?> task : tasks) task.get(10, TimeUnit.SECONDS);
+        } catch (Exception failure) {
+            for (Future<?> task : tasks) task.cancel(true);
+            throw failure;
+        }
+    }
+
+    @Override public void close() throws InterruptedException {
+        workers.shutdown();
+        if (!workers.awaitTermination(5, TimeUnit.SECONDS)) {
+            workers.shutdownNow();
+            if (!workers.awaitTermination(5, TimeUnit.SECONDS)) {
+                throw new IllegalStateException("Fixture workers did not terminate");
+            }
+        }
+    }
+}

@@ -1,0 +1,70 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {spawnSync} from 'node:child_process';
+
+const root = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
+const repository = 'C:/git/agent-skills';
+const baseline = 'C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/baseline/humble-objects-and-functional-core';
+const java = 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe';
+const javac = 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe';
+const records = [];
+function run(id, executable, args, cwd, expectedExit = 0, expectedSummary) {
+  const result = spawnSync(executable, args, {cwd, encoding:'utf8', timeout:15000, windowsHide:true});
+  const record = {id, executable, args, cwd, expectedExit, expectedSummary,
+    status:result.status, signal:result.signal, error:result.error?.message ?? null,
+    stdout:result.stdout ?? '', stderr:result.stderr ?? ''};
+  record.passed = record.status === expectedExit && !record.error && !record.signal
+    && (expectedSummary === undefined || record.stdout.includes(expectedSummary));
+  records.push(record);
+  fs.writeFileSync(path.join(root,id+'.stdout.log'), record.stdout);
+  fs.writeFileSync(path.join(root,id+'.stderr.log'), record.stderr);
+  return record;
+}
+run('java-version', java, ['-version'], root);
+run('javac-version', javac, ['-version'], root);
+const template = fs.readFileSync(path.join(root,'ControllerFixture.template.java'),'utf8');
+for(const [variant,sourceRoot,expectedFailures] of [
+  ['baseline',baseline,5],
+  ['revised',path.join(repository,'skills/humble-objects-and-functional-core'),0]
+]) {
+  const directory = path.join(root,variant);
+  fs.mkdirSync(path.join(directory,'classes'),{recursive:true});
+  const reference = fs.readFileSync(path.join(sourceRoot,'references/humble-object-patterns.md'),'utf8');
+  const blocks = [...reference.matchAll(/```java\r?\n([\s\S]*?)```/g)].map(match=>match[1]);
+  if(blocks.length < 4) throw new Error('Missing controller Java blocks');
+  const fixture = template
+    .replace('// EXTRACTED_ORDER_VIEW',blocks[1])
+    .replace('// EXTRACTED_PRESENTER',blocks[2])
+    .replace('// EXTRACTED_BEFORE',blocks[0])
+    .replace('// EXTRACTED_AFTER',blocks[3])
+    .replaceAll('CORE_OWNER_ARGUMENT', variant === 'baseline' ? 'new Viewer("alice")' : 'true');
+  fs.writeFileSync(path.join(directory,'ControllerFixture.java'),fixture);
+  const compilation = run(variant+'-compile',javac,['--release','21','-d','classes','ControllerFixture.java'],directory);
+  if(compilation.passed) run(variant+'-behavior',java,['-cp','classes','ControllerFixture'],directory,
+    expectedFailures ? 1 : 0, 'checks=13 failed='+expectedFailures);
+}
+for(const variant of ['a','b']) {
+  const input = JSON.parse(fs.readFileSync(path.join(root,'case-'+variant+'-input.json'),'utf8'));
+  const directory = path.join(root,'case-'+variant);
+  fs.mkdirSync(path.join(directory,'classes'),{recursive:true});
+  for(const [name,content] of Object.entries(input.files)) {
+    const absolute = path.resolve(directory,name);
+    if(!absolute.startsWith(directory+path.sep)) throw new Error('Unsafe fixture path');
+    fs.writeFileSync(absolute,content);
+  }
+  fs.copyFileSync(path.join(root,'ReportsProbe.java'),path.join(directory,'ReportsProbe.java'));
+  const compilation = run('case-'+variant+'-compile',javac,
+    ['--release','21','-d','classes','Reports.java','Smoke.java','ReportsProbe.java'],directory);
+  if(compilation.passed) {
+    run('case-'+variant+'-smoke',java,['-cp','classes','Smoke'],directory,0,'PASS owner-report-smoke');
+    run('case-'+variant+'-probe',java,['-cp','classes','ReportsProbe'],directory,
+      variant === 'a' ? 1 : 0, 'checks=6 failed='+(variant === 'a' ? 2 : 0));
+  }
+}
+const result = {kind:'executed-technical-checks-not-agent-evaluations',records,
+  allExpectedResults:records.length===12 && records.every(record=>record.passed),
+  activeProcesses:[]};
+fs.writeFileSync(path.join(root,'technical-results.json'),JSON.stringify(result,null,2)+'\n');
+console.log(JSON.stringify(result,null,2));
+if(!result.allExpectedResults) process.exitCode=1;
+

@@ -1,0 +1,119 @@
+{
+  "at": "2026-10-16T17:08:18.780Z",
+  "classification": "Preservation, metadata and reviewed-diff audit; not behavioral evidence.",
+  "baselineHead": "bbb7d996a929e81baf735bbaab5b6e3fbf6e8503",
+  "baselineFiles": 8945,
+  "total": 7,
+  "changed": 2,
+  "unchanged": 5,
+  "unexpected": [],
+  "indexChanges": ["java-memory-model", "skill-engineering"],
+  "indexMatchesPackageChanges": true,
+  "lostIndexEntries": [],
+  "packages": [
+    {
+      "name": "architecture-trade-off-analysis",
+      "initialVersion": "1.2.4",
+      "finalVersion": "1.2.4",
+      "changedFiles": [],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "allWritesStopped": true,
+      "rawHandoffMatches": true,
+      "canonicalMatchesRaw": true,
+      "status": "validated"
+    },
+    {
+      "name": "debugging",
+      "initialVersion": "1.1.4",
+      "finalVersion": "1.1.4",
+      "changedFiles": [],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "allWritesStopped": true,
+      "rawHandoffMatches": true,
+      "canonicalMatchesRaw": true,
+      "status": "validated"
+    },
+    {
+      "name": "java-memory-model",
+      "initialVersion": "1.3.5",
+      "finalVersion": "1.3.6",
+      "changedFiles": [
+        "skills/java-memory-model/references/happens-before.md",
+        "skills/java-memory-model/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "allWritesStopped": true,
+      "rawHandoffMatches": true,
+      "canonicalMatchesRaw": true,
+      "status": "validated"
+    },
+    {
+      "name": "retries-and-backoff",
+      "initialVersion": "1.1.4",
+      "finalVersion": "1.1.4",
+      "changedFiles": [],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "allWritesStopped": true,
+      "rawHandoffMatches": true,
+      "canonicalMatchesRaw": true,
+      "status": "validated"
+    },
+    {
+      "name": "skill-engineering",
+      "initialVersion": "1.0.3",
+      "finalVersion": "1.0.4",
+      "changedFiles": [
+        "skills/skill-engineering/references/evaluation.md",
+        "skills/skill-engineering/skill.yaml"
+      ],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "allWritesStopped": true,
+      "rawHandoffMatches": true,
+      "canonicalMatchesRaw": true,
+      "status": "validated"
+    },
+    {
+      "name": "spring-transactions-and-events",
+      "initialVersion": "1.1.0",
+      "finalVersion": "1.1.0",
+      "changedFiles": [],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "allWritesStopped": true,
+      "rawHandoffMatches": true,
+      "canonicalMatchesRaw": true,
+      "status": "validated"
+    },
+    {
+      "name": "sql-query-performance",
+      "initialVersion": "1.2.3",
+      "finalVersion": "1.2.3",
+      "changedFiles": [],
+      "descriptionMatches": true,
+      "versionCorrect": true,
+      "diffReviewed": true,
+      "reviewedDiffStillMatches": true,
+      "allWritesStopped": true,
+      "rawHandoffMatches": true,
+      "canonicalMatchesRaw": true,
+      "status": "validated"
+    }
+  ]
+}

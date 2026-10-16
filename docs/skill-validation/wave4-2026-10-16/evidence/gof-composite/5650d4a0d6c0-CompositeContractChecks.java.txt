@@ -1,0 +1,105 @@
+import java.util.*;
+
+public class CompositeContractChecks {
+sealed interface Node permits Leaf, Branch {
+    long size();
+}
+record Leaf(String name, long bytes) implements Node {
+    Leaf {
+        if (bytes < 0) throw new IllegalArgumentException("negative byte size");
+    }
+    public long size() { return bytes; }
+}
+record Branch(String name, List<Node> children) implements Node {
+    Branch { children = List.copyOf(children); }
+    public long size() {
+        long total = 0;
+        for (Node child : children) total = Math.addExact(total, child.size());
+        return total;
+    }
+}
+
+// For validated, bounded, acyclic input; shared nodes contribute once per path.
+// Iterative: no recursive call stack; pending nodes still consume memory.
+static long size(Node root) {
+    long total = 0;
+    Deque<Node> stack = new ArrayDeque<>();
+    stack.push(root);
+    while (!stack.isEmpty()) {
+        switch (stack.pop()) {
+            case Leaf leaf -> total = Math.addExact(total, leaf.bytes());
+            case Branch branch -> branch.children().forEach(stack::push);
+        }
+    }
+    return total;
+}
+
+    private static int checks;
+    private static void check(String name, boolean condition) {
+        if (!condition) throw new AssertionError(name);
+        checks++;
+        System.out.println("PASS " + name);
+    }
+    private static void expect(String name, Class<? extends Throwable> expected, Runnable work) {
+        try { work.run(); } catch (Throwable failure) {
+            check(name, expected.isInstance(failure));
+            return;
+        }
+        throw new AssertionError(name + ": expected " + expected.getName());
+    }
+    private static long distinctIdentitySize(Node root) {
+        Set<Node> visited = Collections.newSetFromMap(new IdentityHashMap<>());
+        Deque<Node> pending = new ArrayDeque<>();
+        pending.push(root);
+        long total = 0;
+        while (!pending.isEmpty()) {
+            Node node = pending.pop();
+            if (!visited.add(node)) continue;
+            switch (node) {
+                case Leaf leaf -> total = Math.addExact(total, leaf.bytes());
+                case Branch branch -> branch.children().forEach(pending::push);
+            }
+        }
+        return total;
+    }
+    public static void main(String[] args) {
+        var first = new Leaf("entry", 7);
+        var second = new Leaf("entry", 7);
+        var left = new Branch("left", List.of(first));
+        var right = new Branch("right", List.of(first, second));
+        var root = new Branch("root", List.of(left, right));
+        check("equal leaf values retain distinct identity", first.equals(second) && first != second);
+        check("recursive size counts all paths", root.size() == 21);
+        check("quoted iterative size counts all paths", size(root) == 21);
+        check("identity visited size has different valid semantics", distinctIdentitySize(root) == 14);
+        var equalSet = new HashSet<Node>(List.of(first, second));
+        check("value set merges equal-but-distinct leaves", equalSet.size() == 1);
+        var children = new ArrayList<Node>(List.of(first, second));
+        children.remove(second);
+        check("remove Object removes the first equal instance", children.size() == 1 && children.get(0) == second);
+        var parentIndex = new IdentityHashMap<Node, Node>();
+        parentIndex.put(first, left);
+        parentIndex.put(first, right);
+        check("one-key parent index overwrites earlier parent", parentIndex.size() == 1 && parentIndex.get(first) == right);
+        parentIndex.put(second, left);
+        check("identity parent index separates equal node values", parentIndex.size() == 2);
+        var source = new ArrayList<Node>(List.of(first));
+        var snapshot = new Branch("snapshot", source);
+        source.clear();
+        check("copyOf snapshots list membership", snapshot.children().size() == 1);
+        expect("copyOf membership is unmodifiable", UnsupportedOperationException.class, () -> snapshot.children().clear());
+        var mutableRule = new StringBuilder("allow");
+        var frozenMembership = List.copyOf(List.of(mutableRule));
+        mutableRule.replace(0, mutableRule.length(), "deny");
+        check("copyOf does not freeze contained objects", frozenMembership.get(0).toString().equals("deny"));
+        var stack = new ArrayDeque<Node>();
+        List.<Node>of(first, second).forEach(stack::push);
+        check("forward push reverses encounter order", stack.pop() == second && stack.pop() == first);
+        check("record copy invariant", first.equals(new Leaf(first.name(), first.bytes())));
+        expect("negative bytes rejected", IllegalArgumentException.class, () -> new Leaf("negative", -1));
+        var overflowing = new Branch("overflow", List.of(new Leaf("max", Long.MAX_VALUE), new Leaf("one", 1)));
+        expect("recursive exact sum rejects overflow", ArithmeticException.class, overflowing::size);
+        expect("iterative exact sum rejects overflow", ArithmeticException.class, () -> size(overflowing));
+        System.out.println("checks=" + checks);
+    }
+}

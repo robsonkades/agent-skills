@@ -1,0 +1,62 @@
+{
+  "classification": "Evaluator-only expected outcomes. Do not include these in agent task inputs.",
+  "cases": [
+    {
+      "id": "decrypt-stream-boundary",
+      "expectedBehavior": [
+        "Trace OPERATION to DECRYPT_MODE and the publication after closing CipherOutputStream.",
+        "Identify that the Java stream contract can suppress decryption integrity exceptions; normal close does not establish authenticated completion.",
+        "For these bounded messages, use direct Cipher.doFinal or another justified authenticated facility that propagates failure before publication.",
+        "Retain valid nonempty and empty plaintext acceptance and the existing key/nonce/AAD contracts.",
+        "Validate valid message, flipped ciphertext/tag, wrong AAD and wrong key; malformed authentication cases publish nothing and cannot acknowledge success."
+      ],
+      "explicitFailureConditions": [
+        "Keeps the existing decrypt pipeline based only on AES/GCM or try-with-resources.",
+        "Catches authentication failure and publishes an empty result or returns success.",
+        "Rejects every empty result, including an authenticated empty document.",
+        "Changes baseline or adds unrelated encryption protocol complexity.",
+        "Claims runtime Java 21 execution when only --release 21 on Java 25 was used."
+      ],
+      "observableOracle": "Generate an ephemeral AES key and distinct nonce for each sealed fixture with the JDK Cipher API. Capture publish calls; valid nonempty/empty ciphertext must publish exactly once with exact plaintext. Corrupt tag/ciphertext, AAD, or key; require AEAD authentication rejection and zero calls."
+    },
+    {
+      "id": "encrypt-stream-control",
+      "expectedBehavior": [
+        "Trace OPERATION to ENCRYPT_MODE and note that the specific hidden-decryption-authentication failure does not apply.",
+        "Preserve the already reviewed nonce/AAD/key prerequisites and completion before publication.",
+        "Acknowledge that retaining CipherOutputStream is valid for this scenario; a refactor may be optional but is not a demonstrated fix for swallowed decryption failures.",
+        "Verify the published ciphertext can be authenticated/decrypted with the matching key, nonce and AAD for nonempty and empty documents."
+      ],
+      "explicitFailureConditions": [
+        "Labels CipherOutputStream encryption as a tag-verification bypass solely from the class name.",
+        "Publishes before encryption closes/completes and the tag is available.",
+        "Rejects legitimate empty documents, drops AAD, introduces nonce reuse, upgrades the baseline, or invents unrelated requirements.",
+        "Claims the local counterexample establishes every provider or every stream operation is unsafe."
+      ],
+      "observableOracle": "Use an ephemeral AES key and unique nonces. Capture publish calls; exactly one completed ciphertext per valid nonempty/empty input. Direct Cipher.doFinal in DECRYPT_MODE with matching metadata must recover the exact input; a changed ciphertext/tag must fail authentication."
+    }
+  ],
+  "walkthroughs": [
+    {
+      "scenario": "Representative hostile decrypt",
+      "result": "Expected minimal direct Cipher completion before publishing; technical probe observed original wrapper swallow invalid tag. This is an expected agent outcome, not an agent output."
+    },
+    {
+      "scenario": "One-constraint countercase: encryption",
+      "result": "Expected no mandatory replacement of CipherOutputStream merely by name; encryption round-trip was technically executed."
+    },
+    {
+      "scenario": "Missing mode/caller evidence",
+      "result": "If initialization or publication paths are absent, report the conditional stream-contract concern and inspect those paths before claiming a reachable bypass. Structured walkthrough only."
+    },
+    {
+      "scenario": "Out-of-scope Spring filter/JWT wiring",
+      "result": "Existing Scope routes framework policy wiring to spring-security-for-apis with resolved versions and call paths. Structured walkthrough only."
+    },
+    {
+      "scenario": "Pressure to reject every empty output",
+      "result": "Reject that proposed fix because valid empty AEAD plaintext is allowed; require a completion signal instead. Technical probe covered both valid empty and bad-tag empty outputs."
+    }
+  ],
+  "pending": "Coordinator may compare original/revised/no-skill under identical model and tool settings. No behavioral run or measured quality gain is claimed."
+}

@@ -1,0 +1,4 @@
+// Rung 7 as proposed
+public interface DiscountStrategy {
+    Money apply(Money subtotal);
+}

@@ -1,0 +1,24 @@
+# Proposal
+
+Set only `connect_start` to `immediate` in `proxy-policy.json`. Keep the explicit loopback listener `127.0.0.1:15001`, trusted route `fixed-service-a`, inspection timeout of 1000 ms, and inspection buffer limit of 4096. The route is already known without inspecting client payload, so opening it when the downstream connection is accepted is both supported by the adapter contract and necessary for this server-first handshake.
+
+`protocol.json` sets `first_message` to `server`. In `client.mjs`, connecting sends no bytes in that mode: the client waits for `HELLO\n` before sending `PING\n`. In `server.mjs`, an accepted upstream connection sends `HELLO\n`, then answers `PING\n` with `PONG\n`. Under `first_client_data`, the adapter opens no upstream connection until the client sends bytes. The client therefore waits for a greeting from a server that the adapter has not connected to. This is a circular wait established by the supplied code and adapter contract.
+
+The previously reported TCP connect success establishes only that the downstream listener accepted a connection. It establishes neither upstream reachability nor application protocol compatibility. Increasing the inspection timeout to ten seconds does not produce the missing first bytes or open the upstream connection under the documented gate; it cannot repair this handshake. Leave that timeout unchanged.
+
+The local contract is an explicit TCP endpoint, not an HTTP forward proxy or CONNECT configuration. For this fixture, both hops carry the supplied `HELLO`/`PING`/`PONG` byte protocol. The adapter owns connection establishment and selection of the trusted fixed route; the client and server retain the handshake and application semantics. Selection is per TCP connection, with no payload-based discovery needed. The fixture supplies no deployed endpoint mapping, proxy version, or TLS/authentication configuration. This proposal changes none of those and does not translate the policy into vendor configuration. Loopback binding alone is not caller authentication.
+
+Keep the existing no-retry policy: one upstream connection attempt for each accepted downstream connection, with no replay or fallback added. The 1000 ms inspection timeout is not evidence of an end-to-end handshake or operation deadline. The supplied client has no deadline/cancellation implementation; actual adapter behavior on unavailable upstreams and expired inspection waits remains unverified. A real rollout must confirm bounded, visible failure without a silent bypass. Immediate connection establishment also creates an upstream connection for clients that never send data; connection limits and idle cleanup need real-adapter validation, not an assumed benefit from the inspection fields.
+
+`local-handshake-check.mjs` imports the unchanged supplied client and server, uses ephemeral loopback ports, and models only the adapter contract's connection-start gate. Node v25.6.1 ran it successfully, with 1200 ms per scenario and an 8000 ms overall watchdog:
+
+| Case | Observed result |
+| --- | --- |
+| Direct client/server control | One connection completed `HELLO → PING → PONG` in 14.4 ms. |
+| Original `first_client_data` gate | Downstream TCP connected; zero upstream attempts, zero exchanged payload, no handshake completion by the check's deadline (1207.8 ms observed). |
+| Proposed `immediate` gate | One downstream connection and one upstream attempt completed `HELLO → PING → PONG` in 3.2 ms. |
+
+The transcript and assertions are retained in `local-handshake-check.log`. These small timings are observations, not performance guarantees. The stalled case uses the check's external deadline; it does not demonstrate the real adapter's inspection-timeout behavior. The positive case validates the fixture handshake through a documented-behavior model, not a real proxy implementation or deployment.
+
+Before deploying elsewhere, run the same handshake through the actual adapter/version and fixed route, observe the greeting and completion at both hops, and check upstream failure, resource bounds, configuration application and rollback. No update mechanism was supplied, so do not promise hot reload or a restart-free change. Verify new connections separately from existing ones; do not assume a setting update repairs already-waiting connections or migrates established sessions. Reverting this field to `first_client_data` is mechanically reversible but restores this fixture's server-first blockage; it is not a working recovery plan. Any production rollback must preserve a proven compatible connection-start policy.
+

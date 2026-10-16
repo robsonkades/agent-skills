@@ -54,6 +54,19 @@ handoff, not an invented DONE result.
 The negative case is the one most often missing. An allowed-path security test can establish
 permitted access; it does not establish that forbidden access is denied.
 
+Connect each accepted obligation assigned to the resource to its check or inspection and
+observed result in the existing resource entry; one line can suffice for a small change.
+For a resource that connects components or promises behavior through an entrypoint, check the
+smallest assembled path that exercises the real selection/wiring and observes that behavior.
+A test that directly constructs the new component can establish its own contract while
+bypassing the missing connection. Keep deliberately deferred activation deferred; use the
+authorized test configuration and identify what its result covers.
+
+A component can be DONE under its own accepted contract while a separately tracked integration
+resource remains open. Conversely, passing component tests cannot close a resource whose
+acceptance includes the connected path. Group coupled work when needed, or preserve the
+outstanding obligation and its validation rather than letting it disappear between resources.
+
 ## Beyond the resource
 
 Some checks cover more than one resource. Follow the project's required selection and cadence;
@@ -97,6 +110,30 @@ generated changes or invalidate unrelated evidence.
 
 Record command, counts and the inputs/target actually checked. "4 tests, 4 passed" identifies a
 result, but supports this resource only when its exercised behavior and revision are relevant.
+
+## When repeated results disagree
+
+Retain the failed attempt and retry history, not only the last green summary. For example,
+Surefire 3.5.4 can report a successful build with flakes after rerunning failed tests;
+its XML preserves failed attempts in `flakyFailure` or `flakyError`. Inspect the project's
+actual runner version, retry configuration and reports; this is not a recommendation to
+enable retries or change gate policy.
+
+Compare the exercised revision, inputs, fixture state, concurrency and environment. Choose a
+bounded check that distinguishes the suspected cause; repeated passes alone do not explain
+the original failure. A setup failure before the application ran and a violated application
+assertion are different evidence:
+
+- If evidence identifies a setup or fixture defect, repair it within scope and rerun the
+  required behavior under valid conditions. Record the correction; an unrelated setup failure
+  need not permanently prevent DONE once required acceptance has applicable evidence.
+- If the accepted behavior fails under supported conditions, fix that behavior and verify
+  the failing case. Do not remove the input, concurrency or assertion that exposed it merely
+  to obtain a pass.
+- If the cause remains unknown and bears on required acceptance, keep the affected validation
+  unresolved. Apply existing flaky-test policy where applicable, but do not invent a waiver
+  or call a suspected intermittent product defect an environment issue. Continue independent
+  resources and preserve their still-applicable evidence.
 
 ## When the planned validation is impossible
 
@@ -162,5 +199,6 @@ measured agent outcomes. Apply the stated task and authority without adding a re
 
 - [Maven build lifecycle](https://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html): phases versus directly invoked goals; project bindings determine the actual work.
 - [Surefire test goal](https://maven.apache.org/surefire/maven-surefire-plugin/test-mojo.html): generated test classes and configured test classpath.
+- [Surefire 3.5.4 rerun reports](https://maven.apache.org/surefire-archives/surefire-3.5.4/maven-surefire-plugin/examples/rerun-failing-tests.html): successful retry results can coexist with recorded flakes; inspect all attempts and the configured gate policy.
 - [npm lifecycle scripts](https://docs.npmjs.com/cli/v11/using-npm/scripts/): `pretest`, `test` and `posttest` order. Inspect the project's scripts and npm version before applying it.
 - [Node.js 22 child-process lifecycle](https://nodejs.org/download/release/v22.17.0/docs/api/child_process.html#optionsdetached): detached children can continue beyond their parent; a launcher exiting does not universally establish completion of its work. This is an example of the lifecycle risk, not a Node requirement for this skill.

@@ -1,0 +1,172 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "java-reflection-and-method-handles",
+  "ownedPath": "C:/git/agent-skills/skills/java-reflection-and-method-handles",
+  "allWritesStopped": true,
+  "allOwnedProcessesStopped": true,
+  "artifactRoot": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-reflection-and-method-handles",
+  "baseline": {
+    "committedVersion": "1.4.5",
+    "assignmentVersion": "1.4.5",
+    "finalVersion": "1.4.6",
+    "preExistingVersionBump": false,
+    "preExistingStagedChanges": [],
+    "preExistingUnstagedChanges": [],
+    "preExistingUntrackedFiles": [],
+    "assignmentInspection": "git status --short, git diff, and git diff --cached restricted to the assigned package were empty. All five package files were read before deciding changes.",
+    "baselineHashesArtifact": "baseline-hashes.json",
+    "finalHashesArtifact": "logs/package-check.stdout.txt",
+    "versionRationale": "One patch bump for the supported content correction; no existing unpublished bump was available. Description and all other metadata remain unchanged."
+  },
+  "procedure": {
+    "reread": ["docs/skill-validation/wave3-2026-10-16/review-brief.md", "docs/skill-review-prompt.md"],
+    "unchangedReadingsReused": ["AGENTS.md", "docs/parallel-skill-reviews.md", "skills/skill-engineering/SKILL.md", "skill-engineering evidence/evaluation/resource-design/anti-pattern references", "comparative research and prior-wave lessons"],
+    "findingsSentBeforePackageEdits": true,
+    "delegationUsed": false,
+    "sharedRepositoryWrites": false,
+    "globalChecksRun": false
+  },
+  "domainCriteria": [
+    "Match invocation and access decisions to the actual Java release, caller, module and loader.",
+    "Preserve dynamic-boundary authorization, exact signatures, target exceptions and owned cache/provider lifetimes.",
+    "Validate mandatory setup through the actual startup entry point and observation of readiness rather than storage syntax alone.",
+    "Keep invocation correctness distinct from unmeasured speed, native reachability and unload behavior."
+  ],
+  "findings": [
+    {
+      "id": "startup-resolution-timing",
+      "status": "CORRECTED",
+      "locationsBefore": ["references/method-handles-and-encapsulation.md:59", "SKILL.md:120"],
+      "locationsAfter": ["references/method-handles-and-encapsulation.md:23", "references/method-handles-and-encapsulation.md:60", "SKILL.md:122"],
+      "evidence": "The previous reference offered static initialization as an alternative to explicit startup resolution. JLS 17 12.4.1 defines active-use initialization. On Temurin 25.0.3, a fixture adapting the accessor sketch obtained a class literal, loaded with initialization=false and enumerated members, then printed READY before the holder initialized and failed with NoSuchMethodException wrapped in ExceptionInInitializerError on its first request.",
+      "consequence": "A mandatory accessor can remain unvalidated until traffic arrives even though the service declares readiness.",
+      "correction": "Require actual bootstrap resolution or explicit authorized holder initialization before readiness; identify ensureInitialized as Java 15+, distinguish passive metadata access, avoid side-effectful business calls for setup validation, preserve optional-plugin lifecycles, and add a missing-member bootstrap acceptance control.",
+      "technicalControl": "Both missing-member launches exit 1, but only the explicit initialization path prevents READY. Supported-member runs pass in both modes with their distinct initialization ordering."
+    },
+    {
+      "id": "cross-module-capability-and-linkage",
+      "status": "VERIFIED_PRESERVED",
+      "locations": ["references/method-handles-and-encapsulation.md:98", "references/method-handles-and-encapsulation.md:131"],
+      "evidence": "Java 17 MethodHandles.privateLookupIn and LambdaMetafactory contracts plus named-module execution: same-module lookup modes=31/fullPrivilege=true linked a direct handle; cross-module modes=15/fullPrivilege=false invoked its authorized private target but LambdaMetafactory rejected the caller. A narrow typed adapter worked in both cases.",
+      "consequence": "The existing distinction prevents incorrectly widening opens or treating an invocable private handle as sufficient metafactory authority. No content change was warranted."
+    }
+  ],
+  "remainingFindings": [],
+  "filesChangedByReviewer": ["SKILL.md", "references/method-handles-and-encapsulation.md", "skill.yaml"],
+  "filesUnchanged": ["references/when-reflection-is-justified.md", "references/reflection-cost-model.md"],
+  "diffSummary": "3 files, 13 insertions, 3 deletions; no staged changes and no package additions.",
+  "capabilitiesPreserved": [
+    "Dynamic-versus-build-time decision table, typed interfaces, ServiceLoader and generation alternatives.",
+    "External token authorization independent of asSubclass, initialization and construction; no private capabilities to untrusted plugins.",
+    "Java 17 snippet baseline, exact signature/varargs/null handling, checked/unchecked/error/interruption policies.",
+    "Same/cross-module lookup access and full-privilege/direct-handle metafactory requirements.",
+    "Application/plugin cache ownership, unloading concerns and optional/reloadable failure isolation.",
+    "JEP 416 implementation qualifications, current old-switch behavior and workload-dependent performance validation.",
+    "Actual supported deployment modes and native-artifact verification without mandatory irrelevant infrastructure."
+  ],
+  "capabilitiesReplacedOrRemoved": [],
+  "validation": {
+    "runtime": "OpenJDK Temurin 25.0.3+9-LTS, Windows 64-bit HotSpot; Node v25.6.1",
+    "compilerTarget": "javac 25.0.3 --release 17; no preview or extra dependency",
+    "topLevelCommands": [
+      {
+        "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-reflection-and-method-handles/technical-check.mjs",
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "result": "Nine recorded JVM/javac commands completed. Two compilation commands, four initialization launches, one module-access launch and two version queries. All assertions passed; the two expected missing-member JVM exits were 1."
+      },
+      {
+        "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-reflection-and-method-handles/structural-check.mjs",
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "result": "Six package-scoped read-only checks passed: strict loader/validator, explicit-file Prettier check, git diff --check, final diff, final status, and empty staged diff. Five files, zero metadata issues, four local links and twelve existing referrals. Baseline comparison identified precisely the three owned changed files."
+      },
+      {
+        "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-reflection-and-method-handles/source-fetch.mjs",
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "result": "All six official source pages retained with HTTP 200 status and SHA-256 hashes."
+      }
+    ],
+    "exactNestedCommandRecords": ["technical-results.json", "structural-results.json"],
+    "stdoutAndStderr": "logs/ contains separate stdout/stderr for every technical and structural command.",
+    "negativeControls": [
+      {"name": "passive-missing", "exitCode": 1, "expected": true, "observation": "DISCOVERED, READY, ACCESSORS_INITIALIZING, then ExceptionInInitializerError caused by NoSuchMethodException."},
+      {"name": "eager-missing", "exitCode": 1, "expected": true, "observation": "DISCOVERED, ACCESSORS_INITIALIZING, then ExceptionInInitializerError caused by NoSuchMethodException; READY absent."},
+      {"name": "cross-module-metafactory", "exitCode": 0, "expected": true, "observation": "LambdaConversionException is explicitly asserted inside the successful module control; authorized direct invocation and ordinary typed adapter remain valid."}
+    ],
+    "unexpectedFailedAttempts": [],
+    "preExistingFailures": [],
+    "finalDiffInspected": true,
+    "structuralChecksExecuted": true,
+    "technicalChecksExecuted": true,
+    "agentBehavioralEvaluationsExecuted": [],
+    "walkthroughs": ["Case A: passive bootstrap needs a concrete startup edge before readiness; verify valid and missing-member controls.", "Case B: explicit initialization already provides that edge; retain it after the same controls."],
+    "measuredIncrementalBehaviorGain": "Not measured; no agent comparison was executed."
+  },
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se17/html/jls-12.html#jls-12.4",
+      "version": "Java SE 17 JLS",
+      "supports": "Initialization triggers and erroneous class state; primary basis for the timing correction.",
+      "artifact": "sources/jls-17-initialization.html"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/invoke/MethodHandles.Lookup.html#ensureInitialized(java.lang.Class)",
+      "version": "Java SE 17 API; ensureInitialized introduced in 15",
+      "supports": "Explicit initialization requires an accessible target and can surface initializer failure; no target business-method invocation is required.",
+      "artifact": "sources/lookup-17.html"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/invoke/MethodHandles.html#privateLookupIn(java.lang.Class,java.lang.invoke.MethodHandles.Lookup)",
+      "version": "Java SE 17 API",
+      "supports": "Cross-module lookup needs readability and opens, preserves PRIVATE but loses MODULE; same-module result retains full privilege.",
+      "artifact": "sources/method-handles-17.html"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/invoke/LambdaMetafactory.html",
+      "version": "Java SE 17 API",
+      "supports": "Full-privilege caller and compatible direct implementation handle requirements.",
+      "artifact": "sources/lambda-metafactory-17.html"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/invoke/MethodHandle.html",
+      "version": "Java SE 25 API",
+      "supports": "Invocation typing and adaptation context reviewed; no new universal performance claim introduced.",
+      "artifact": "sources/method-handle-25.html"
+    },
+    {
+      "url": "https://www.oracle.com/java/technologies/javase/22-relnote-issues.html",
+      "version": "JDK 22 release notes, JDK-8305104",
+      "supports": "Old core-reflection implementation removed and useDirectMethodHandle=false becomes a no-op; existing guidance retained.",
+      "artifact": "sources/jdk-22-release-notes.html"
+    }
+  ],
+  "cases": {
+    "classification": "Reproducible development cases, not unseen holdouts; no agent evaluator launched.",
+    "inputs": [
+      {"id": "mandatory-accessor-bootstrap-a", "artifact": "case-a-input.json"},
+      {"id": "mandatory-accessor-bootstrap-b", "artifact": "case-b-input.json"}
+    ],
+    "evaluatorCriteriaArtifact": "case-criteria.json",
+    "sharedFixture": "InitializationProbe.java",
+    "singleDecisiveDifference": "The selected launch path: passive metadata discovery versus explicit holder initialization before READY.",
+    "prerequisites": "Copy only the selected input and InitializationProbe.java into an isolated evaluator workspace; Java compiler supporting --release 17 and a compatible JVM. Keep case-criteria.json and technical assertion scripts out of evaluator input.",
+    "coordinatorAction": "Run comparable independent agent outputs if measuring effectiveness; technical controls do not substitute for that evaluation."
+  },
+  "evidencePaths": ["baseline-hashes.json", "InitializationProbe.java", "modules/", "technical-check.mjs", "technical-results.json", "package-check.mjs", "structural-check.mjs", "structural-results.json", "source-fetch.mjs", "source-fetch-results.json", "sources/", "logs/", "case-a-input.json", "case-b-input.json", "case-criteria.json"],
+  "limitations": [
+    "Compilation targets Java 17 APIs and language but execution was only on Temurin 25.0.3+9; an actual Java 17 VM was not used.",
+    "The initialization fixture adapts the existing partial accessor sketch with String standing in for the domain return type and a controlled missing-member name. It proves the tested setup ordering, not all application startup paths.",
+    "No performance benchmark, native-image build, ServiceLoader integration, class-loader unloading experiment, or independent agent behavioral evaluation was run. Existing unchanged guidance in those areas was reviewed rather than empirically revalidated here.",
+    "Sources are official pages retained at review time; publication pages may evolve. Their exact downloaded hashes are recorded.",
+    "Local readiness is not repository-wide verification or a measured improvement in agent behavior."
+  ],
+  "pendingGlobalChecks": [
+    {"command": "npm run registry:build", "owner": "coordinator", "reason": "Shared index generation reserved to coordinator after all reviewers stop writing.", "prerequisites": "All skill write phases stopped."},
+    {"command": "npm run verify", "owner": "coordinator", "reason": "Repository-wide validation reserved to coordinator.", "prerequisites": "Regenerated registry and all authors stopped."}
+  ],
+  "crossSkillFindings": [],
+  "coordinatorActions": ["Archive this handoff and its artifactRoot, preserving separate case inputs and evaluator criteria.", "Run pending global checks after all authors stop; optional independent evaluation remains unexecuted."],
+  "processCleanup": "All tools awaited completion. Java, javac and local checks used synchronous children with timeouts; every child returned status and no background process or server was created."
+}

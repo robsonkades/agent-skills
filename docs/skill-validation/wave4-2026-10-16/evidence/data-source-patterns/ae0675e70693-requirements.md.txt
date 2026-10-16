@@ -1,0 +1,7 @@
+# Availability module requirements
+
+The operations owner controls operating-policy.properties. Its minimum.available is the accepted lower bound on available operators after a committed change. Operators may make simultaneous availability changes; every request must observe this policy. Identity/version guards reject stale writes to the selected operator. The only data writers currently use this module.
+
+The schema is owned by this team. The module has no additional rich domain rules or planned schema changes. Java 17 source/API compatibility is accepted. H2 2.2.224 is the current embedded database. The probe uses two overlapping resource-local transactions at the JDBC isolation it sets explicitly; splitting prepare/apply exposes the legal interleaving, not separate business transactions.
+
+The installed laboratory JDK is Temurin 25.0.3+9. Running --release 17 exercises Java 17 source/API compatibility but does not execute a Java 17 VM. JDBC/H2 validation is not validation of a future JPA provider.

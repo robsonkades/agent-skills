@@ -1,0 +1,3 @@
+# Proposed startup decision
+
+JEP 544 is integrated, so our selected AOT cache can be treated as a cache of native application methods. The application refresh path is enough training. We can accept the port-open timestamp as the readiness result and omit additional first-response measurements. Retain the current serving command from the runtime inventory.

@@ -2,11 +2,17 @@
 
 ## The classification table
 
-These are waiting-path expectations for the stock HotSpot JDK 21–25 implementations,
-not guarantees for arbitrary providers. Immediately completed operations need not park.
+These are waiting-path expectations for the stock HotSpot JDK 21–25 implementations with
+default locking, not guarantees for arbitrary providers. Immediately completed operations
+need not park.
 An enclosing native frame or, on JDK 21–23, held monitor can prevent an otherwise
 unmountable operation from releasing its carrier. `HttpClient` callbacks and custom body
 handlers must be classified separately from its supported network waits.
+
+Check effective VM flags before applying the JDK 24+ monitor rows: HotSpot 24–25 still
+supports legacy `-XX:LockingMode=1`, where holding a monitor can prevent unmounting. A JDK
+version alone does not rule that cause out. Establish why the override exists and whether
+the supported default is viable before recommending a configuration change or lock rewrite.
 
 | Operation                                                    | On a virtual thread             | Carrier                                      |
 | ------------------------------------------------------------ | ------------------------------- | -------------------------------------------- |
@@ -63,7 +69,8 @@ a POSIX shell, compatible JDK tools, attach access and an existing recording.
 Rules of reading:
 
 - **Pinning events present** → inspect the event and stack against the deployed JDK.
-  Held monitors also matter on JDK 21–23; do not presume that cause on JDK 24+.
+  Held monitors also matter on JDK 21–23 and legacy locking in HotSpot 24–25; on the latter,
+  check effective flags before accepting or dismissing that cause.
 - **No pinning events, carriers growing towards `maxPoolSize`** → compensation is a strong
   hypothesis. Correlate file/socket/JFR events and stacks; thread names or counts alone do
   not identify the operation.
@@ -214,6 +221,11 @@ deadlock; warming them at startup does not repair the dependency cycle.
 - [Oracle JDK 21 virtual threads](https://docs.oracle.com/en/java/javase/21/core/virtual-threads.html)
   and [JDK 24 virtual threads](https://docs.oracle.com/en/java/javase/24/core/virtual-threads.html):
   release-specific pinning and JFR diagnostics.
+- [HotSpot 25 locking modes](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/globals.hpp)
+  and [continuation freezing](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/continuationFreezeThaw.cpp):
+  default lightweight locking versus the legacy mode's held-monitor pinning check; the same
+  exception exists in the corresponding `jdk-24-ga` sources. These are implementation facts,
+  not portable Java API guarantees.
 - [JDK 21 Object.wait implementation](https://github.com/openjdk/jdk/blob/jdk-21-ga/src/java.base/share/classes/java/lang/Object.java):
   explicit `Blocker.begin`/`end` around `wait0`, unlike contended monitor entry in
   [HotSpot's monitor implementation](https://github.com/openjdk/jdk/blob/jdk-21-ga/src/hotspot/share/runtime/objectMonitor.cpp).

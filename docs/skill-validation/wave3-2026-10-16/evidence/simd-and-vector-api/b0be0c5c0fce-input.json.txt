@@ -1,0 +1,15 @@
+{
+  "caseId": "simd-fma-contract-b",
+  "task": "Review this calibration SIMD proposal. Inspect the actual caller, kernel, configuration and samples, then correct decision.md with the justified recommendation and evidence. Preserve supported observations and the project's JDK/module and numeric contracts. Perform a bounded functional check if the available toolchain permits it. Do not run a production benchmark, install dependencies, or upgrade the toolchain.",
+  "visibleFiles": [
+    "README.md",
+    "contract.properties",
+    "samples.csv",
+    "decision.md",
+    "src/CalibrationKernel.java",
+    "src/CalibrationConsumer.java",
+    "src/CaseMain.java"
+  ],
+  "prerequisites": "JDK 25 with jdk.incubator.vector; compile and run flags are documented in README.md. Independent actor output directory; no external service required.",
+  "requestedOutput": "Updated decision.md and a concise report of inspected evidence, executed checks and remaining gaps."
+}

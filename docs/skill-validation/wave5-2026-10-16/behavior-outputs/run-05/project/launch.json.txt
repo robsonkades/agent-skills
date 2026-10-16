@@ -1,0 +1,7 @@
+{
+  "classpath": [
+    ".build/app",
+    "lib/compat.jar"
+  ],
+  "main": "work.Main"
+}

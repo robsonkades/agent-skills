@@ -1,0 +1,16 @@
+package example;
+import java.util.ArrayList;
+import java.util.List;
+public final class Order {
+    private final List<Line> lines = new ArrayList<>();
+    public void add(String sku, int quantity) {
+        if (quantity <= 0 || quantity > 100 - totalUnits()) {
+            throw new IllegalArgumentException("Order supports at most 100 units");
+        }
+        lines.add(new Line(sku, quantity));
+    }
+    public int totalUnits() {
+        return lines.stream().mapToInt(Line::quantity).sum();
+    }
+    public List<Line> lines() { return List.copyOf(lines); }
+}

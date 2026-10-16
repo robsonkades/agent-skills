@@ -1,0 +1,15 @@
+{
+  "classification": "Development cases, not holdouts or executed agent evaluations.",
+  "decisiveConstraint": "Only the published application interface ownership promise changes: borrowed versus transferred.",
+  "instructions": "Give the evaluator only each case input.md, PayloadReader.java and StreamPayloadReader.java. Withhold criteria.json and probe results.",
+  "cases": [
+    {
+      "id": "borrowed-resource",
+      "dir": "cases/borrowed"
+    },
+    {
+      "id": "transferred-resource",
+      "dir": "cases/transferred"
+    }
+  ]
+}

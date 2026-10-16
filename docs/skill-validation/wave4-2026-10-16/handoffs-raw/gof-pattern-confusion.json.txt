@@ -1,0 +1,502 @@
+{
+  "skill": "gof-pattern-confusion",
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "ownedPath": "skills/gof-pattern-confusion/**",
+  "reviewDate": "2026-10-16",
+  "allWritesStopped": true,
+  "activeBackgroundProcesses": [],
+  "baseline": {
+    "head": "bbb7d996a929e81baf735bbaab5b6e3fbf6e8503",
+    "committedVersion": "1.2.4",
+    "assignmentVersion": "1.2.4",
+    "preExistingChanges": [],
+    "stagedChanges": [],
+    "untrackedFiles": [],
+    "snapshotPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\gof-pattern-confusion",
+    "hashRecord": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-confusion\\baseline.json",
+    "allFourFilesMatchedSharedBaselineAndSnapshot": true
+  },
+  "versions": {
+    "committed": "1.2.4",
+    "assignment": "1.2.4",
+    "final": "1.2.5",
+    "preExistingBump": false,
+    "rationale": "One patch bump for the focused classification correction and canonical source-link repair; no further bump for subsequent edits."
+  },
+  "promise": "Classify competing GoF roles from observed caller/collaborator contracts and expose their practical consequences without changing working APIs to fit pattern names.",
+  "criteria": [
+    "Use actual responsibility, caller intent and extension constraints rather than class counts/names.",
+    "Preserve composed roles, ordinary delegation, simple alternatives and existing public APIs.",
+    "Distinguish established facts from requested decisions and later decisions triggered by those facts.",
+    "Verify Java/framework-sensitive examples against the declared version and real contract.",
+    "Return a focused classification or explicit evidence gap, not an unsolicited implementation framework."
+  ],
+  "findingsCorrected": [
+    {
+      "location": "references/behavioural-lookalikes.md:69; SKILL.md:158",
+      "priorProblem": "The example unconditionally labeled OrderValidated sent to an approving/rejecting subscriber a misclassification and asserted a missing response path. It did not establish whether the consumer decides the reported validation itself or a distinct subsequent approval.",
+      "consequence": "Could reject legitimate fact-driven collaboration or cause incompatible API renaming based only on a downstream decision.",
+      "correction": "Trace the promised fact at publication and the separate decision owners; keep the premature-fact warning conditional and preserve a valid completed-validation event that triggers credit approval.",
+      "evidence": [
+        "fowler-event-notification",
+        "microsoft-choreography",
+        "Pure Java publication snapshot and positive/negative controls"
+      ]
+    },
+    {
+      "location": "references/wrappers.md:150",
+      "priorProblem": "Servlet 6 reference used lowercase extensionless /filter, which returned HTTP 404.",
+      "consequence": "The cited continuation contract was not reachable through the supplied link.",
+      "correction": "Use canonical /Filter.html, verified HTTP 200; all other wrapper content preserved.",
+      "evidence": [
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-confusion\\servlet-link-results.json",
+        "jakarta-servlet"
+      ]
+    }
+  ],
+  "findingsRemaining": [],
+  "changedFilesByReviewer": [
+    "skills/gof-pattern-confusion/SKILL.md",
+    "skills/gof-pattern-confusion/references/behavioural-lookalikes.md",
+    "skills/gof-pattern-confusion/references/wrappers.md",
+    "skills/gof-pattern-confusion/skill.yaml"
+  ],
+  "preExistingChangesPreserved": [],
+  "capabilities": {
+    "preserved": [
+      "All wrapper comparisons and composed responsibilities",
+      "Ordinary delegation and provisional classification when evidence is absent",
+      "Strategy/State/Template Method/Command distinctions and simple function alternatives",
+      "Observer/Mediator, Composite/Decorator, Bridge/Strategy and Chain/Decorator nuances",
+      "Classical Visitor versus framework callback API and compile-time overload caveat",
+      "Factory Method/Abstract Factory coexistence and static-factory alternatives",
+      "Singleton/Flyweight and Memento/snapshot/event-sourcing distinctions",
+      "Public names, extension contracts, Java 17 sketches and framework-version inspection",
+      "Warnings about premature facts, effect idempotency, wrapper ownership and partial failures"
+    ],
+    "replaced": [
+      "Unconditional OrderValidated example with a contract-dependent example and legitimate countercase."
+    ],
+    "removed": [
+      "Unsupported unconditional assertion that the publisher necessarily lacks a response path."
+    ]
+  },
+  "validation": {
+    "technical": {
+      "toolchain": "Temurin javac/java 25.0.3+9-LTS; compiled using --release 17, executed on JDK 25.0.3.",
+      "fixtures": [
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-confusion\\fixtures\\OrderFlow.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-confusion\\evaluator-private\\FactProbe.java"
+      ],
+      "results": [
+        "OrderFlow exits 0: INPUT_ACCEPTED, OrderValidated published, CREDIT_REJECTED; publication snapshot has inputAccepted=true and creditDecision=PENDING.",
+        "FactProbe input-validation exits 0; approved/rejected credit and invalid-input controls pass.",
+        "FactProbe credit-approval intentionally exits 1 at AssertionError: documented event fact false at publication: credit-approval, after common controls pass."
+      ],
+      "classification": "Executed deterministic in-memory Java example controls; not broker/database integration, transaction proof or actor behavior."
+    },
+    "structural": {
+      "results": "4 shipped files, zero strict issues, 2 internal links, 18 suggests and 1 dependency found. Explicit referrals declared. Scoped Prettier and git diff --check passed.",
+      "firstCommand": "node C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-pattern-confusion/local-check.mjs",
+      "finalCommand": "node C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-pattern-confusion/local-check.mjs --structural",
+      "cwd": "C:/git/agent-skills",
+      "exitCodes": [
+        0,
+        0
+      ],
+      "rerunScope": "Only structural checks rerun after the link correction; the unchanged Java fixture results are retained from local-results-initial.json.",
+      "wrapperPreservation": "Exact text comparison against baseline replacing only /filter) with /Filter.html) passed."
+    },
+    "commands": [
+      {
+        "label": "java-version",
+        "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+        "args": [
+          "--version"
+        ],
+        "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-confusion",
+        "exitCode": 0,
+        "expectedExitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "openjdk 25.0.3 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n",
+        "stderr": "",
+        "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-confusion\\logs\\java-version.json"
+      },
+      {
+        "label": "javac-version",
+        "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+        "args": [
+          "--version"
+        ],
+        "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-confusion",
+        "exitCode": 0,
+        "expectedExitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "javac 25.0.3\r\n",
+        "stderr": "",
+        "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-confusion\\logs\\javac-version.json"
+      },
+      {
+        "label": "compile-java17",
+        "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+        "args": [
+          "--release",
+          "17",
+          "-d",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-confusion\\classes",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-confusion\\fixtures\\OrderFlow.java",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-confusion\\evaluator-private\\FactProbe.java"
+        ],
+        "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-confusion",
+        "exitCode": 0,
+        "expectedExitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "",
+        "stderr": "",
+        "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-confusion\\logs\\compile-java17.json"
+      },
+      {
+        "label": "order-flow",
+        "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+        "args": [
+          "-cp",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-confusion\\classes",
+          "OrderFlow"
+        ],
+        "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-confusion",
+        "exitCode": 0,
+        "expectedExitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "INPUT_ACCEPTED\r\nOrderValidated published\r\nCREDIT_REJECTED\r\nat-publication: inputAccepted=true, creditDecision=PENDING\r\n",
+        "stderr": "",
+        "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-confusion\\logs\\order-flow.json"
+      },
+      {
+        "label": "fact-input-validation",
+        "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+        "args": [
+          "-cp",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-confusion\\classes",
+          "FactProbe",
+          "input-validation"
+        ],
+        "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-confusion",
+        "exitCode": 0,
+        "expectedExitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "controls passed: rejected credit, approved credit, invalid input\r\ndocumented fact held at publication: input-validation\r\n",
+        "stderr": "",
+        "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-confusion\\logs\\fact-input-validation.json"
+      },
+      {
+        "label": "fact-credit-approval",
+        "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+        "args": [
+          "-cp",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-confusion\\classes",
+          "FactProbe",
+          "credit-approval"
+        ],
+        "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-confusion",
+        "exitCode": 1,
+        "expectedExitCode": 1,
+        "signal": null,
+        "error": null,
+        "stdout": "controls passed: rejected credit, approved credit, invalid input\r\n",
+        "stderr": "Exception in thread \"main\" java.lang.AssertionError: documented event fact false at publication: credit-approval\r\n\tat FactProbe.require(FactProbe.java:4)\r\n\tat FactProbe.main(FactProbe.java:28)\r\n",
+        "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-confusion\\logs\\fact-credit-approval.json"
+      },
+      {
+        "label": "prettier-check",
+        "command": "C:\\Program Files\\nodejs\\node.exe",
+        "args": [
+          "C:\\git\\agent-skills\\node_modules\\prettier\\bin\\prettier.cjs",
+          "--check",
+          "C:\\git\\agent-skills\\skills\\gof-pattern-confusion\\references\\behavioural-lookalikes.md",
+          "C:\\git\\agent-skills\\skills\\gof-pattern-confusion\\references\\wrappers.md",
+          "C:\\git\\agent-skills\\skills\\gof-pattern-confusion\\SKILL.md",
+          "C:\\git\\agent-skills\\skills\\gof-pattern-confusion\\skill.yaml"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "expectedExitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "Checking formatting...\nAll matched files use Prettier code style!\n",
+        "stderr": "",
+        "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-confusion\\logs\\prettier-check.json"
+      },
+      {
+        "label": "diff-check",
+        "command": "git",
+        "args": [
+          "diff",
+          "--check",
+          "--",
+          "skills/gof-pattern-confusion"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "expectedExitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "",
+        "stderr": "",
+        "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-confusion\\logs\\diff-check.json"
+      },
+      {
+        "label": "status",
+        "command": "git",
+        "args": [
+          "status",
+          "--short",
+          "--",
+          "skills/gof-pattern-confusion"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "expectedExitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdout": " M skills/gof-pattern-confusion/SKILL.md\n M skills/gof-pattern-confusion/references/behavioural-lookalikes.md\n M skills/gof-pattern-confusion/references/wrappers.md\n M skills/gof-pattern-confusion/skill.yaml\n",
+        "stderr": "",
+        "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-confusion\\logs\\status.json"
+      },
+      {
+        "label": "diff",
+        "command": "git",
+        "args": [
+          "diff",
+          "--",
+          "skills/gof-pattern-confusion"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "expectedExitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "diff --git a/skills/gof-pattern-confusion/SKILL.md b/skills/gof-pattern-confusion/SKILL.md\nindex 8123001..7333342 100644\n--- a/skills/gof-pattern-confusion/SKILL.md\n+++ b/skills/gof-pattern-confusion/SKILL.md\n@@ -157,8 +157,10 @@ THEN inspect lifecycle invariants and transitions before calling it State;\n \n IF an \"event\" can be rejected, or has exactly one handler that owes\n an answer\n-THEN distinguish rejecting a requested action from failing to process an\n-     established fact. Handler count and delivery acknowledgments do not decide.\n+THEN distinguish a pending requested action, failure to process a fact,\n+     and a later business decision triggered by that fact. Inspect what was\n+     established when published; handler count and delivery acknowledgments\n+     do not decide.\n \n IF a \"Factory Method\" is static and lives on the product type\n THEN judge it as a named constructor, not by this pattern's criteria.\ndiff --git a/skills/gof-pattern-confusion/references/behavioural-lookalikes.md b/skills/gof-pattern-confusion/references/behavioural-lookalikes.md\nindex a52df92..ff06d95 100644\n--- a/skills/gof-pattern-confusion/references/behavioural-lookalikes.md\n+++ b/skills/gof-pattern-confusion/references/behavioural-lookalikes.md\n@@ -66,12 +66,22 @@ nobody designed, and a \"command\" passed as a parameter to configure behaviour ga\n | May be rejected               | Already happened                              |\n | The sender expects an outcome | Fact stands even if delivery/processing fails |\n \n-**The misclassification:** `OrderValidated`, published for a subscriber to approve or reject.\n-\n-**Cost:** the publisher now depends on a decision it cannot see, the answer has nowhere to go, and\n-adding another decision-maker can change the operation's meaning. Tense is only a naming clue:\n-an event may have one consumer and its handling can fail; the reported fact is already established.\n-A broker acknowledgment concerns delivery, not whether that fact happened (`gof-command`).\n+**The candidate:** `OrderValidated` reaches a subscriber that may approve or reject the order.\n+\n+**Check:** establish what \"validated\" promises and trace the producer and consumer decisions.\n+If the subscriber is being asked to perform that very validation, the message reports a fact\n+that is still pending; inspect the decision owner and how the requester learns the outcome.\n+If validation is already complete and the subscriber decides a separate credit approval,\n+its rejection does not undo the validation fact. Preserve that valid event contract.\n+\n+**Cost:** presenting a pending decision as completed can hide the owner/result protocol;\n+relabeling a genuine fact as a command can instead break consumers or move the wrong decision.\n+Tense, subscriber count and a broker acknowledgment do not settle either case (`gof-command`).\n+[Fowler's event-notification discussion](https://martinfowler.com/articles/201701-event-driven.html)\n+distinguishes notification from a disguised request;\n+[Microsoft's choreography description](https://learn.microsoft.com/en-us/azure/architecture/patterns/saga#choreography)\n+shows events triggering later local transactions. Inspect that workflow's contract rather than\n+assuming every downstream decision makes the original message a command.\n \n ## Observer vs Mediator\n \ndiff --git a/skills/gof-pattern-confusion/references/wrappers.md b/skills/gof-pattern-confusion/references/wrappers.md\nindex c4a29f7..8cfe584 100644\n--- a/skills/gof-pattern-confusion/references/wrappers.md\n+++ b/skills/gof-pattern-confusion/references/wrappers.md\n@@ -147,7 +147,7 @@ raises transaction/partial-effect questions without supplying atomicity.\n \n Verify the actual mechanism: [Spring AOP proxying](https://docs.spring.io/spring-framework/reference/core/aop/proxying.html)\n documents self-invocation bypass for proxy advice (AspectJ weaving differs).\n-[Jakarta Servlet 6 Filter](https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/filter)\n+[Jakarta Servlet 6 Filter](https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/Filter.html)\n can invoke the chain or block it; do not infer that every layer must run from a decorator label.\n Likewise [Spring 6.1.21 ClientHttpRequestInterceptor](https://docs.spring.io/spring-framework/docs/6.1.21/javadoc-api/org/springframework/http/client/ClientHttpRequestInterceptor.html)\n may forward or block execution and wrap a response. If it throws after receiving a response, it\ndiff --git a/skills/gof-pattern-confusion/skill.yaml b/skills/gof-pattern-confusion/skill.yaml\nindex d0475ac..090ea57 100644\n--- a/skills/gof-pattern-confusion/skill.yaml\n+++ b/skills/gof-pattern-confusion/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: gof-pattern-confusion\n-version: 1.2.4\n+version: 1.2.5\n description: >-\n   Telling apart the patterns that look alike, so a design is not chosen because a name sounded\n   right. Covers the four wrappers (Adapter, Decorator, Proxy, Facade) and the two questions that\n",
+        "stderr": "",
+        "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-confusion\\logs\\diff.json"
+      },
+      {
+        "label": "staged-diff",
+        "command": "git",
+        "args": [
+          "diff",
+          "--cached",
+          "--",
+          "skills/gof-pattern-confusion"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "expectedExitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "",
+        "stderr": "",
+        "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-confusion\\logs\\staged-diff.json"
+      }
+    ],
+    "sourceLinkCommand": {
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-pattern-confusion/check-servlet-link.mjs",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": {
+        "checkedAt": "2026-10-16T15:49:45.164Z",
+        "results": [
+          {
+            "url": "https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/filter",
+            "status": 404,
+            "finalUrl": "https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/filter",
+            "title": "404 Page Not Found | Jakarta EE | The Eclipse Foundation"
+          },
+          {
+            "url": "https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/Filter.html",
+            "status": 200,
+            "finalUrl": "https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/Filter.html",
+            "title": "Filter (Jakarta Servlet API documentation)"
+          }
+        ]
+      }
+    },
+    "behavioralEvaluationsExecuted": [],
+    "walkthroughs": [
+      {
+        "id": "case-a",
+        "result": "The approved fact is already true before dispatch; downstream credit rejection does not invalidate it.",
+        "classification": "Expected-behavior walkthrough only"
+      },
+      {
+        "id": "case-b",
+        "result": "Changing only the approved fact to credit approval makes the same publication premature; a compatible correction is needed.",
+        "classification": "Expected-behavior walkthrough only"
+      }
+    ],
+    "failedChecks": [],
+    "executionNotes": [
+      "The credit-approval probe failure is an intentional negative control, not a failed final check.",
+      "A read-only rg search named a nonexistent wave3 report.md and exited 1; rg --files located README.md and behavior-results.md, which were then consulted. This was not a package validation failure.",
+      "Two functions.exec patch submissions had JavaScript template-literal parse errors before apply_patch ran; corrected submissions succeeded and no partial repository changes occurred.",
+      "The web provider could not open the old Servlet link; direct fetch confirmed 404 and the canonical link was successfully opened and fetched."
+    ],
+    "noActiveChildren": true
+  },
+  "sources": [
+    {
+      "id": "fowler-event-notification",
+      "publisher": "Martin Fowler",
+      "url": "https://martinfowler.com/articles/201701-event-driven.html",
+      "version": "Article dated 2017-02-07, update noted 2017-02-08",
+      "consultedOn": "2026-10-16",
+      "section": "Event Notification",
+      "support": "Distinguishes notifications of domain changes from requests disguised as events and discusses indirect reactions and workflow coupling.",
+      "application": "Supports inspecting the actual fact/request and result protocol; the OrderValidated/credit counterexample is this review’s constructed application of the distinction.",
+      "limitation": "Authorial architectural reasoning, not a controlled efficacy experiment or a rule that every event reaction must become a command."
+    },
+    {
+      "id": "microsoft-choreography",
+      "publisher": "Microsoft Azure Architecture Center",
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/saga#choreography",
+      "version": "Hosted guidance consulted 2026-10-16; no fixed library release",
+      "consultedOn": "2026-10-16",
+      "section": "Choreography",
+      "support": "Documents domain events triggering local transactions in other services, supporting the legitimate existence of subsequent business decisions.",
+      "limitation": "Used only for the event/reaction distinction; no saga adoption or distributed guarantees are implied by this review."
+    },
+    {
+      "id": "spring-interceptor",
+      "publisher": "Spring",
+      "url": "https://docs.spring.io/spring-framework/docs/6.1.21/javadoc-api/org/springframework/http/client/ClientHttpRequestInterceptor.html",
+      "version": "6.1.21",
+      "consultedOn": "2026-10-16",
+      "section": "intercept method",
+      "support": "Confirms optional continuation/blocking, response wrapping and response close responsibility when throwing after receipt. Existing content retained.",
+      "limitation": "No Spring HTTP client integration executed."
+    },
+    {
+      "id": "jdk-element-visitor",
+      "publisher": "Oracle / Java SE",
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.compiler/javax/lang/model/element/ElementVisitor.html",
+      "version": "Java SE 17",
+      "consultedOn": "2026-10-16",
+      "section": "Interface contract",
+      "support": "Confirms element accept selects the appropriate visit operation, consistent with retained dispatch guidance.",
+      "limitation": "The review did not execute ElementVisitor or change the Visitor guidance."
+    },
+    {
+      "id": "gof-abstract-factory",
+      "publisher": "InformIT, original GoF authors",
+      "url": "https://www.informit.com/articles/article.aspx?p=1398599",
+      "version": "Publisher excerpt dated 2009-10-23 from Design Patterns",
+      "consultedOn": "2026-10-16",
+      "section": "Implementation and Sample Code",
+      "support": "The MazeFactory example combines product-family creation and overridable factory methods used by a separate MazeGame client. Existing coexistence guidance retained.",
+      "limitation": "An original pattern example, not evidence that a project needs a factory hierarchy."
+    },
+    {
+      "id": "spring-aop",
+      "publisher": "Spring",
+      "url": "https://docs.spring.io/spring-framework/reference/core/aop/proxying.html",
+      "version": "Page identifies Spring Framework 7.0.9",
+      "consultedOn": "2026-10-16",
+      "section": "Understanding AOP Proxies",
+      "support": "Confirms self-invocation bypass of proxy advice and the different behavior of AspectJ weaving. Existing conditional guidance retained.",
+      "limitation": "Actual project versions/mechanisms still must be inspected; no upgrade was made or authorized."
+    },
+    {
+      "id": "jakarta-servlet",
+      "publisher": "Eclipse Foundation / Jakarta EE",
+      "url": "https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/Filter.html",
+      "version": "Servlet 6.0",
+      "consultedOn": "2026-10-16",
+      "section": "doFilter",
+      "support": "The canonical page confirms that a filter can continue or block the chain. Direct fetch measured old lowercase extensionless link at HTTP 404 and corrected link at HTTP 200.",
+      "limitation": "Link/API-contract verification only; no servlet container executed."
+    }
+  ],
+  "behavioralCases": {
+    "cases": [
+      {
+        "id": "case-a",
+        "inputPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-confusion\\cases\\case-a.input.json",
+        "criteriaPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-confusion\\cases\\case-a.criteria.json",
+        "status": "PREPARED_NOT_EXECUTED",
+        "walkthrough": "The approved fact is already true before dispatch; downstream credit rejection does not invalidate it."
+      },
+      {
+        "id": "case-b",
+        "inputPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-confusion\\cases\\case-b.input.json",
+        "criteriaPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-confusion\\cases\\case-b.criteria.json",
+        "status": "PREPARED_NOT_EXECUTED",
+        "walkthrough": "Changing only the approved fact to credit approval makes the same publication premature; a compatible correction is needed."
+      }
+    ],
+    "pairDifference": "Only files.contracts.json.meaning changes, from completed intake input acceptance to completed credit approval. Deep equality verified all other actor input fields are identical.",
+    "prerequisites": "Fresh sessions with same model/settings/tools and copied selected input JSON. Input embeds all ordinary project records and Java fixture; Java 17+ is optional for replay, not required for a source review.",
+    "actorExposure": "Do not supply criteria, evaluator-private/FactProbe.java, validation logs or this handoff. Copy actor inputs into each isolated run rather than giving access to the whole evidence tree.",
+    "knownDevelopmentCases": true,
+    "heldOut": false,
+    "independentActorRuns": 0,
+    "comparison": "Coordinator can compare no skill, baseline 1.2.4 snapshot and revised 1.2.5 with the same inputs; no such comparison was performed by this reviewer."
+  },
+  "assumptionsAndLimitations": [
+    "The executed fixture illustrates ordering and fact truth in a single-threaded local callback flow. It does not simulate durable publication, transaction interception, brokers, retries or distributed compensation.",
+    "Java 17 source/API compatibility was checked with --release 17 on JDK 25; no JDK 17 runtime was executed.",
+    "Published partial SDK sketches were not changed or falsely treated as executable integrations.",
+    "Source contracts support the correction but do not establish better agent behavior or catalog superiority.",
+    "Optional-referral/dependency existence checks are local and do not prove catalog-wide resolution or routing consistency.",
+    "Pattern classification may remain provisional when actual business meaning or producer/consumer authority is unavailable."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "prerequisite": "All wave writers stopped; preserve other authorized index changes.",
+      "reason": "Generated shared artifact excluded from reviewer ownership."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "prerequisite": "After coordinator index generation and stable wave state.",
+      "reason": "Global checks prohibited for parallel reviewers."
+    }
+  ],
+  "crossSkillIssues": [],
+  "coordinatorActions": [
+    "Inspect the four-file diff against baseline.",
+    "Archive evidence; optionally run the separated cases without exposing criteria to actors."
+  ],
+  "evidence": {
+    "root": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-confusion",
+    "baseline": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-confusion\\baseline.json",
+    "results": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-confusion\\local-results.json",
+    "initialResults": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-confusion\\local-results-initial.json",
+    "checkScript": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-confusion\\local-check.mjs",
+    "sourceLinkResults": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-confusion\\servlet-link-results.json",
+    "sourceNotes": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-confusion\\sources.json",
+    "finalHashes": [
+      {
+        "path": "skills/gof-pattern-confusion/references/behavioural-lookalikes.md",
+        "sha256": "a130b51e2eb800d20ee9ee74edf5c282578ed812a934520ce4e21dd8089fc2fa"
+      },
+      {
+        "path": "skills/gof-pattern-confusion/references/wrappers.md",
+        "sha256": "6d3dedd42d7dd1ee9f520fc837499f0d754d2b665a43a050072552b8436db532"
+      },
+      {
+        "path": "skills/gof-pattern-confusion/SKILL.md",
+        "sha256": "d0b80566d93c8e91af363edd843088ea0402f6af907873c6dd5d3f9c766b34ce"
+      },
+      {
+        "path": "skills/gof-pattern-confusion/skill.yaml",
+        "sha256": "c463e9ba88a87fee049fef47e8367b308f2580cc59bbd70eda28cd1408bc7b8d"
+      }
+    ]
+  }
+}

@@ -1,0 +1,142 @@
+import java.math.BigInteger;
+import java.util.function.LongUnaryOperator;
+
+public final class Verification {
+    private static final BigInteger MAX = BigInteger.valueOf(Long.MAX_VALUE);
+    private static long checks;
+
+    public static void main(String[] args) {
+        examples();
+        smallPolicySweep();
+        exponentialBoundarySweep();
+        System.out.println("Verification passed: " + checks + " exact-plan checks");
+    }
+
+    private static void examples() {
+        check("initial reserves and clips", 0, 0, 100, 30, 10, 100, 2, 8, 0, 3, Long.MAX_VALUE, 2);
+        check("first retry uses base", 0, 0, 100, 5, 10, 100, 7, 50, 1, 3, 0, 2);
+        check("server wins", 0, 0, 100, 5, 10, 100, 7, 50, 1, 3, 20, 2);
+        check("local wins", 0, 0, 100, 5, 10, 100, 20, 50, 1, 3, 3, 2);
+        check("exact fit", 0, 0, 22, 5, 10, 90, 8, 8, 1, 3, 7, 2);
+        check("one short", 0, 0, 21, 5, 10, 90, 8, 8, 1, 3, 7, 2);
+        check("attempt limit reached", 0, 0, 100, 0, 1, 100, 1, 1, 3, 3, 0, 0);
+        check("attempt limit exceeded", 0, 0, 100, 0, 1, 100, 1, 1, 4, 3, 0, 0);
+        check("initial allowed with one attempt", -20, 0, 100, 0, 1, 100, 1, 1, 0, 1, 999, 0);
+        check("negative readings", -100, 20, 100, 10, 5, 100, 2, 8, 1, 3, 5, 1);
+        check("signed wrap", Long.MAX_VALUE - 4, 10, 100, 10, 5, 100, 2, 8, 1, 3, 5, 1);
+        check("maximum initial allocation", Long.MIN_VALUE, 0, Long.MAX_VALUE, 0,
+                Long.MAX_VALUE, Long.MAX_VALUE, Long.MAX_VALUE, Long.MAX_VALUE, 0, 1, Long.MAX_VALUE, 0);
+        check("maximum elapsed expires", 1, Long.MAX_VALUE, Long.MAX_VALUE, 0,
+                1, 1, 1, 1, 0, 1, 0, 0);
+        check("elapsed exceeds total", Long.MAX_VALUE, Long.MAX_VALUE, 1, 0,
+                1, 1, 1, 1, 1, 2, 0, 0);
+        check("huge reserve exact fit", 0, 0, Long.MAX_VALUE, Long.MAX_VALUE - 1,
+                1, Long.MAX_VALUE, 1, 1, 0, 1, 0, 0);
+        check("reserve and work sum exceeds long", 0, 0, Long.MAX_VALUE, Long.MAX_VALUE - 1,
+                2, Long.MAX_VALUE, 1, 1, 0, 1, 0, 0);
+        check("reserve consumes total", 0, 0, Long.MAX_VALUE, Long.MAX_VALUE,
+                1, Long.MAX_VALUE, 1, 1, 0, 1, 0, 0);
+        check("server advice not truncated", 0, 0, Long.MAX_VALUE, 0,
+                1, Long.MAX_VALUE, 1, 1, 1, 2, Long.MAX_VALUE, 0);
+        check("huge server advice exact fit", 0, 0, Long.MAX_VALUE, 0,
+                1, Long.MAX_VALUE, 1, 1, 1, 2, Long.MAX_VALUE - 1, 0);
+        check("maximum local draw exact fit", 0, 0, Long.MAX_VALUE, 0,
+                1, Long.MAX_VALUE, Long.MAX_VALUE, Long.MAX_VALUE, 1, 2, 0, 2);
+        check("last allowed int attempt", 0, 0, Long.MAX_VALUE, 0,
+                1, Long.MAX_VALUE, 1, Long.MAX_VALUE, Integer.MAX_VALUE - 1, Integer.MAX_VALUE, 0, 2);
+        check("maximum int attempt reached", 0, 0, Long.MAX_VALUE, 0,
+                1, Long.MAX_VALUE, 1, Long.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, 0, 2);
+    }
+
+    private static void smallPolicySweep() {
+        long[] starts = {0, -100, Long.MIN_VALUE, Long.MAX_VALUE - 4};
+        for (long total : new long[] {1, 8, 31})
+            for (long elapsed : new long[] {0, 1, 8, 31})
+                for (long reserve : new long[] {0, 2, 31})
+                    for (long minimum : new long[] {1, 3})
+                        for (long cap : new long[] {minimum, 10})
+                            for (long base : new long[] {1, 4, 20})
+                                for (long delayCap : new long[] {1, 7, 31})
+                                    for (int completed : new int[] {0, 1, 2, 3})
+                                        for (int maxAttempts : new int[] {1, 3})
+                                            for (long server : new long[] {0, 3, 31})
+                                                for (int mode = 0; mode < 3; mode++)
+                                                    check("small policy sweep", starts[(int) (checks % starts.length)],
+                                                            elapsed, total, reserve, minimum, cap, base, delayCap,
+                                                            completed, maxAttempts, server, mode);
+    }
+
+    private static void exponentialBoundarySweep() {
+        for (long base : new long[] {1, 2, 3, 1L << 31, Long.MAX_VALUE / 2, Long.MAX_VALUE})
+            for (long delayCap : new long[] {1, 2, 4, Long.MAX_VALUE / 2, Long.MAX_VALUE})
+                for (int completed : new int[] {1, 2, 30, 31, 32, 62, 63, 64, 65, Integer.MAX_VALUE - 1})
+                    for (int mode = 0; mode < 3; mode++)
+                        check("exponential boundary sweep", Long.MAX_VALUE - 2, 3, Long.MAX_VALUE, 0,
+                                1, Long.MAX_VALUE, base, delayCap, completed, Integer.MAX_VALUE, 0, mode);
+    }
+
+    private static void check(String name, long start, long elapsed, long total, long reserve,
+            long minimum, long cap, long base, long delayCap, int completed, int maxAttempts,
+            long server, int mode) {
+        // BigInteger models the contract's mathematical arithmetic, including otherwise overflowing sums.
+        long bound = completed == 0 ? 0 : BigInteger.valueOf(base)
+                .shiftLeft(Math.min(completed - 1, 63)).min(BigInteger.valueOf(delayCap)).longValueExact();
+        long local = completed == 0 ? 0 : drawAt(bound, mode);
+        long wait = completed == 0 ? 0 : Math.max(local, server);
+        BigInteger available = BigInteger.valueOf(total).subtract(BigInteger.valueOf(elapsed))
+                .subtract(BigInteger.valueOf(reserve)).subtract(BigInteger.valueOf(wait));
+        RetryPlan.Plan expected = completed < maxAttempts && available.compareTo(BigInteger.valueOf(minimum)) >= 0
+                ? new RetryPlan.Plan(true, wait, available.min(BigInteger.valueOf(cap)).longValueExact())
+                : new RetryPlan.Plan(false, 0, 0);
+        TestDraw draw = new TestDraw(bound, mode, completed == 0);
+        // Modular addition intentionally constructs valid nanoTime readings across signed wrap.
+        long now = start + elapsed;
+        RetryPlan.Plan actual = RetryPlan.next(start, now, total, reserve, minimum, cap,
+                base, delayCap, completed, maxAttempts, server, draw);
+        if (!expected.equals(actual)) {
+            throw new AssertionError(name + ": expected " + expected + " but got " + actual
+                    + "; start=" + start + ", elapsed=" + elapsed + ", total=" + total
+                    + ", reserve=" + reserve + ", minimum=" + minimum + ", cap=" + cap
+                    + ", base=" + base + ", delayCap=" + delayCap + ", completed=" + completed
+                    + ", maxAttempts=" + maxAttempts + ", server=" + server + ", mode=" + mode);
+        }
+        if (draw.calls > 1 || (actual.admitted() && completed > 0 && draw.calls != 1)) {
+            throw new AssertionError(name + ": unexpected draw count " + draw.calls);
+        }
+        if (actual.admitted()) {
+            BigInteger used = BigInteger.valueOf(actual.waitNanos()).add(BigInteger.valueOf(actual.attemptNanos()))
+                    .add(BigInteger.valueOf(reserve)).add(BigInteger.valueOf(elapsed));
+            if (used.compareTo(BigInteger.valueOf(total)) > 0 || used.compareTo(MAX) > 0) {
+                throw new AssertionError(name + ": budget overspent");
+            }
+        }
+        checks++;
+    }
+
+    private static long drawAt(long bound, int mode) {
+        return mode == 0 ? 0 : mode == 1 ? bound / 2 : bound - 1;
+    }
+
+    private static final class TestDraw implements LongUnaryOperator {
+        private final long expectedBound;
+        private final int mode;
+        private final boolean forbidden;
+        private int calls;
+
+        private TestDraw(long expectedBound, int mode, boolean forbidden) {
+            this.expectedBound = expectedBound;
+            this.mode = mode;
+            this.forbidden = forbidden;
+        }
+
+        @Override
+        public long applyAsLong(long bound) {
+            calls++;
+            if (forbidden || bound <= 0 || bound != expectedBound) {
+                throw new AssertionError("Unexpected draw: initial=" + forbidden + ", bound=" + bound
+                        + ", expectedBound=" + expectedBound);
+            }
+            return drawAt(bound, mode);
+        }
+    }
+}

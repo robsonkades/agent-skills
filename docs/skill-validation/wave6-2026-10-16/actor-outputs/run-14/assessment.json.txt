@@ -1,0 +1,22 @@
+{
+  "disposition": "unresolved",
+  "basis": "ResultBridge.java:3-5 supplies a volatile callback-to-reader publication and reads latest once. Snapshot.java:2 stores value in an ordinary non-final int. The accepted contract permits setter-based preparation before delivery and no later mutation, but gives no producer-to-callback happens-before guarantee. Smoke.java:3 supplies the missing order through synchronous execution; the deployed provider is absent. Thus the bridge's local path is sound conditionally, while the unconditional production claim is not established. No production failure was observed.",
+  "requiredChange": null,
+  "missingEvidence": [
+    "The deployed provider's actual write and delivery paths: prove setValue(91) happens-before callback execution, either by same-thread program order or an identified synchronization handoff.",
+    "Alternatively, add an explicit provider memory-consistency contract ordering snapshot-preparation writes before the callback, retaining no later mutation, and verify implementation conformance. This is the smallest contract clarification needed; it does not require changing ResultBridge."
+  ],
+  "checked": [
+    "Read the full local skill and both conditional references.",
+    "Inspected every supplied production source, accepted contract, review request, README, smoke and check.mjs.",
+    "Consulted primary Java SE25 JLS 17.4.4, 17.4.5 and 17.5.",
+    "Ran supplied check.mjs only in output/project: javac --release 25 and work.Smoke passed under Temurin 25.0.3.",
+    "Compared SHA-256 before/after for all eight supplied files in both copies: unchanged."
+  ],
+  "limits": [
+    "Only the synchronous test provider was executed; it does not exercise an asynchronous producer-to-callback handoff.",
+    "No deployed provider source or binary, thread identities, synchronization trace, production run or observed production failure.",
+    "No jcstress, stress, alternative architecture/JIT or additional provider implementation was executed.",
+    "An unprotected handoff is a conditional possibility, not an asserted fact about the missing provider; no production code correction is justified from present evidence."
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave7-a765972c5d\\actors\\run-15\\output\\project",
+  "argv": [
+    "node",
+    "check.mjs",
+    "work.RecoveryRegression"
+  ],
+  "startedAt": "2026-10-16T18:12:24.376Z",
+  "finishedAt": "2026-10-16T18:12:27.835Z",
+  "exit": 1,
+  "signal": null,
+  "stdout": "PASS failure window: receiver effect=1, pending=1, order=1\r\n",
+  "stderr": "Exception in thread \"main\" java.lang.AssertionError: Replay must preserve one receiver effect\r\n\tat work.RecoveryRegression.require(RecoveryRegression.java:168)\r\n\tat work.RecoveryRegression.replayRetainedWork(RecoveryRegression.java:92)\r\n\tat work.RecoveryRegression.main(RecoveryRegression.java:16)\r\nException in thread \"main\" java.lang.AssertionError: Child failed: replay\r\n\tat work.RecoveryRegression.require(RecoveryRegression.java:168)\r\n\tat work.RecoveryRegression.child(RecoveryRegression.java:37)\r\n\tat work.RecoveryRegression.main(RecoveryRegression.java:22)\r\n",
+  "error": null
+}

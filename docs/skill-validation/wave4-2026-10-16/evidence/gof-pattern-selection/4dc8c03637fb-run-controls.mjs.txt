@@ -1,0 +1,24 @@
+import { mkdir, writeFile } from 'node:fs/promises';
+import { spawnSync } from 'node:child_process';
+
+const root = 'C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-pattern-selection';
+const bin = 'C:/Users/robso/.jdks/temurin-25.0.3/bin';
+await mkdir(`${root}/controls/classes`, { recursive: true });
+const commands = [];
+function run(tool, args, expectedExit) {
+  const result = spawnSync(`${bin}/${tool}.exe`, args, { cwd: `${root}/controls`, encoding: 'utf8' });
+  const command = { executable: `${bin}/${tool}.exe`, args, cwd: `${root}/controls`, expectedExit, exitCode: result.status, stdout: result.stdout, stderr: result.stderr, error: result.error?.message ?? null };
+  commands.push(command);
+  return result.status === expectedExit && !result.error;
+}
+let ok = run('java', ['-version'], 0);
+ok = run('javac', ['--release', '17', '-d', `${root}/controls/classes`, 'CandidateSelection.java', 'SelectionProbe.java'], 0) && ok;
+if (ok) {
+  for (const [implementation, contract, expectedExit] of [['first', 'any', 0], ['first', 'all', 1], ['all', 'all', 0], ['all', 'any', 1]]) {
+    ok = run('java', ['-cp', `${root}/controls/classes`, 'SelectionProbe', implementation, contract], expectedExit) && ok;
+  }
+}
+const report = { allExpectedOutcomes: ok, javaBaseline: 'Compiled --release 17; executed on Temurin 25.0.3+9, not on a Java 17 JVM.', commands, limits: 'Native execution of synthetic contract controls, not an agent evaluation or a skill before/after comparison.' };
+await writeFile(`${root}/logs/controls.json`, JSON.stringify(report, null, 2) + '\n');
+console.log(JSON.stringify(report, null, 2));
+if (!ok) process.exitCode = 1;

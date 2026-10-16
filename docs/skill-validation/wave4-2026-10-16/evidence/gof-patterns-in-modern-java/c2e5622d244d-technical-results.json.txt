@@ -1,0 +1,274 @@
+{
+  "status": "PASS",
+  "runtime": "Temurin 25.0.3+9-LTS",
+  "compileTarget": "Java 21 --release 21, no preview",
+  "classMajorVersion": 65,
+  "processChecks": 15,
+  "snippetAssertions": 4,
+  "casePairOnlyDifference": "deployment.json rendererVersion 1 -> 2",
+  "snippetSource": "Exact sole java fence from feature-to-pattern.md with minimal surrounding Node, helpers and assertions; not a standalone shipped program.",
+  "limitations": [
+    "Execution on JDK 25, not a Java 21 runtime. --release 21 verifies compiler language/API target and class major 65.",
+    "Cases are synthetic local Java fixtures, not application integration, performance or agent behavior.",
+    "Negative compile/runtime results are required counterexamples, not unaddressed failures."
+  ],
+  "results": [
+    {
+      "label": "installed-javac",
+      "command": [
+        "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+        "-version"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work",
+      "expectedExit": 0,
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "javac 25.0.3\r\n",
+      "stderr": ""
+    },
+    {
+      "label": "installed-java",
+      "command": [
+        "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+        "-version"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work",
+      "expectedExit": 0,
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n"
+    },
+    {
+      "label": "model-1",
+      "command": [
+        "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+        "--release",
+        "21",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work\\model-1",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\common\\model-1\\demo\\Document.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work",
+      "expectedExit": 0,
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "renderer-1-against-model-1",
+      "command": [
+        "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+        "--release",
+        "21",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work\\model-1",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work\\renderer-1",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\common\\renderer-1\\demo\\Renderer.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work",
+      "expectedExit": 0,
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "model-2",
+      "command": [
+        "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+        "--release",
+        "21",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work\\model-2",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\common\\model-2\\demo\\Document.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work",
+      "expectedExit": 0,
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "renderer-2-against-model-2",
+      "command": [
+        "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+        "--release",
+        "21",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work\\model-2",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work\\renderer-2",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\common\\renderer-2\\demo\\Renderer.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work",
+      "expectedExit": 0,
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "launcher-1-against-original-releases",
+      "command": [
+        "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+        "--release",
+        "21",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work\\model-1;C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work\\renderer-1",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work\\launcher",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\common\\launcher\\demo\\RenderJob.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work",
+      "expectedExit": 0,
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "original-known-variants",
+      "command": [
+        "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work\\model-1;C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work\\renderer-1;C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work\\launcher",
+        "demo.RenderJob",
+        "text",
+        "section"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work",
+      "expectedExit": 0,
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "hello\r\nTitle:*hello*\r\n",
+      "stderr": ""
+    },
+    {
+      "label": "old-consumer-links-with-expanded-library-known-variants",
+      "command": [
+        "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work\\model-2;C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work\\renderer-1;C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work\\launcher",
+        "demo.RenderJob",
+        "text",
+        "section"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work",
+      "expectedExit": 0,
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "hello\r\nTitle:*hello*\r\n",
+      "stderr": ""
+    },
+    {
+      "label": "case-A",
+      "command": [
+        "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work\\model-2;C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work\\renderer-1;C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work\\launcher",
+        "demo.RenderJob",
+        "text",
+        "section",
+        "note"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work",
+      "expectedExit": 1,
+      "exitCode": 1,
+      "signal": null,
+      "stdout": "hello\r\nTitle:*hello*\r\n",
+      "stderr": "Exception in thread \"main\" java.lang.MatchException\r\n\tat demo.Renderer.render(Renderer.java:7)\r\n\tat demo.RenderJob.main(RenderJob.java:4)\r\n"
+    },
+    {
+      "label": "case-B",
+      "command": [
+        "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work\\model-2;C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work\\renderer-2;C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work\\launcher",
+        "demo.RenderJob",
+        "text",
+        "section",
+        "note"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work",
+      "expectedExit": 0,
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "hello\r\nTitle:*hello*\r\nNOTE release\r\n",
+      "stderr": ""
+    },
+    {
+      "label": "old-consumer-source-rejects-new-unhandled-variant",
+      "command": [
+        "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+        "--release",
+        "21",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work\\model-2",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work\\recompile-old",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\common\\renderer-1\\demo\\Renderer.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work",
+      "expectedExit": 1,
+      "exitCode": 1,
+      "signal": null,
+      "stdout": "",
+      "stderr": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\common\\renderer-1\\demo\\Renderer.java:7: error: the switch expression does not cover all possible input values\r\n        return switch (node) {\r\n               ^\r\n1 error\r\n"
+    },
+    {
+      "label": "record-pattern-example-rejects-java-17",
+      "command": [
+        "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+        "--release",
+        "17",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work\\model-1",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work\\reject-17",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\common\\renderer-1\\demo\\Renderer.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work",
+      "expectedExit": 1,
+      "exitCode": 1,
+      "signal": null,
+      "stdout": "",
+      "stderr": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\common\\renderer-1\\demo\\Renderer.java:8: error: patterns in switch statements are not supported in -source 17\r\n            case Text(String value, var emphasis) -> render(value, emphasis);\r\n                 ^\r\n  (use -source 21 or higher to enable patterns in switch statements)\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\common\\renderer-1\\demo\\Renderer.java:8: error: deconstruction patterns are not supported in -source 17\r\n            case Text(String value, var emphasis) -> render(value, emphasis);\r\n                     ^\r\n  (use -source 21 or higher to enable deconstruction patterns)\r\n2 errors\r\n"
+    },
+    {
+      "label": "compile-exact-shipped-snippet-with-scaffolding",
+      "command": [
+        "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+        "--release",
+        "21",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work\\probe",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work\\SnippetProbe.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work",
+      "expectedExit": 0,
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "exact-shipped-snippet-contracts",
+      "command": [
+        "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work\\probe",
+        "SnippetProbe"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-patterns-in-modern-java\\technical-work",
+      "expectedExit": 0,
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "PASS assertions=4: accessor-dispatch, recursive-section, null-selector, accessor-exception\r\n",
+      "stderr": ""
+    }
+  ]
+}

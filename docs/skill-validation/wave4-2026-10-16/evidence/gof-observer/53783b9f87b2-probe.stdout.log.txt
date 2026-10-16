@@ -1,0 +1,8 @@
+PASS: remove before publish, calls=0
+PASS: remove after snapshot, captured calls=1; subsequent added calls=0
+PASS: RuntimeException recorded=1; later listener calls=1
+PASS: throwing recorder propagated; later listener calls=0
+PASS: Error propagated; recorded=0; later listener calls=0
+PASS: reentrant later-listener sequence=[2, 1]
+PASS: PropertyChangeSupport equality suppressed=1; null-involving events=2
+PASS: 7 observer contract controls

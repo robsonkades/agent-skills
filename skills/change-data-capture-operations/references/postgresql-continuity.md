@@ -1,6 +1,6 @@
 # PostgreSQL WAL and failover continuity
 
-Read for PostgreSQL source retention, slot incidents, schema-state questions or promotion.
+Read for PostgreSQL source retention, slot incidents, schema-state questions, table resets or promotion.
 Examples target PostgreSQL 17 and Debezium 3.3.2.Final with `pgoutput`.
 
 ## Identify the actual state
@@ -27,6 +27,33 @@ exists. If complete before/after images are required, evaluate `REPLICA IDENTITY
 WAL/load cost; a later database lookup cannot reliably reconstruct the event-time value. Validate
 with a large unchanged column plus a changed small column through the actual transform/sink path.
 See [Debezium TOAST handling](https://debezium.io/documentation/reference/3.3/connectors/postgresql.html#postgresql-toasted-values).
+
+## A table truncate is not a row-delete stream
+
+When a maintenance job empties a table, read its actual statement before diagnosing missing deletes.
+For `TRUNCATE`, check the publication's `pg_publication.pubtruncate` and effective connector
+`skipped.operations`. The Debezium 3.3.2 default is `t`, which excludes truncates. If captured, a
+truncate is an `op=t` event with a null key, not a sequence of keyed deletes/tombstones. Verify these
+contracts against [PostgreSQL 17 publication flags](https://www.postgresql.org/docs/17/catalog-pg-publication.html)
+and the [version-pinned Debezium truncate and filtering rules](https://github.com/debezium/debezium/blob/v3.3.2.Final/documentation/modules/ROOT/pages/connectors/postgresql.adoc#truncate-events).
+
+Follow that non-row event through the actual topic, transforms and sink. Enabling capture alone
+does not make a keyed sink handle it. With multiple topic partitions, table row events and the
+null-key truncate have no common ordering guarantee; a delayed earlier row event can arrive after
+the truncate. Single-partition ordering still requires the sink to preserve application order.
+Do not blindly change partitioning or treat a row-delete smoke test as table-reset evidence.
+
+If table resets are required, choose a supported ordered application strategy or a controlled
+reconciliation/cutover; account for in-flight old records. If the accepted operating contract
+excludes truncates, retain that restriction rather than adding support speculatively. Replacing
+truncate with row deletes is a separate source-operation decision with locking, trigger and load
+consequences, not an automatic repair. See [PostgreSQL TRUNCATE semantics](https://www.postgresql.org/docs/17/sql-truncate.html).
+
+For a bounded isolated check, insert key A, truncate, then insert key B. Verify A is absent and B
+is durably visible after the pipeline catches up; include delayed pre-truncate delivery when the
+topology permits it. A successful check establishes only the tested path and conditions. If a
+truncate was already skipped, preserve the continuity evidence and plan stale-key reconciliation;
+an empty resnapshot does not itself delete the old sink rows.
 
 ## Observe retention before reclaiming it
 

@@ -1,0 +1,4 @@
+CompileCommand: exclude InlineGate.main bool exclude = true
+CompileCommand: PrintInlining InlineGate.caller bool PrintInlining = true
+                            @ 1   InlineGate::callee (9 bytes)   failed to inline: already compiled into a medium method
+12399400384

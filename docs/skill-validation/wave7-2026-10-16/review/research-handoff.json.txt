@@ -1,0 +1,220 @@
+{
+  "skill": "spring-transactions-and-events",
+  "status": "NO_CHANGES_NEEDED",
+  "phaseStatus": "RESEARCH_COMPLETE_AWAITING_CASE_REVIEW",
+  "statusScope": "No material skill defect confirmed by the requested focused research. This is not a completed efficacy review or approval of cases not yet supplied.",
+  "ownedPath": "C:/git/agent-skills/skills/spring-transactions-and-events",
+  "packageAccess": "READ_ONLY during this phase",
+  "evidenceWritePath": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/review",
+  "reviewDate": "2026-10-16",
+  "allWritesStopped": true,
+  "activeProcessesStartedByReviewer": [],
+  "procedureRead": [
+    "AGENTS.md",
+    "docs/parallel-skill-reviews.md",
+    "docs/skill-review-prompt.md (complete)",
+    "skills/skill-engineering/SKILL.md",
+    "skills/skill-engineering/references/resource-design.md",
+    "skills/skill-engineering/references/evidence-and-confidence.md",
+    "skills/skill-engineering/references/evaluation.md",
+    "skills/skill-engineering/references/anti-patterns.md",
+    "All five files of skills/spring-transactions-and-events",
+    "Selected properties of docs/skill-validation/wave5-2026-10-16/handoffs/spring-transactions-and-events.json"
+  ],
+  "scope": {
+    "rolePreserved": "Spring imperative transaction implementation/diagnosis and event wiring/recovery",
+    "reviewCriteria": [
+      "Required same-unit atomicity versus intentional independent after-commit work",
+      "Effective transaction manager and JDBC datasource participation instead of global active flags",
+      "Retained intent, externally accepted effect before failed progress recording, stable replay identity",
+      "Evidence from the actual bean/resource path and limits of H2/context recreation"
+    ],
+    "excluded": [
+      "REST or Postman workflows",
+      "Production database certification",
+      "Automatic selection efficacy",
+      "Changing adjacent skills",
+      "Rebuilding the prior complete review or inventing a candidate revision"
+    ]
+  },
+  "baseline": {
+    "record": "C:/git/agent-skills/docs/skill-validation/wave7-2026-10-16/baseline.json",
+    "stagedDiff": [],
+    "unstagedDiff": [],
+    "untrackedFiles": [],
+    "sameAsWave5": true,
+    "fileCount": 5,
+    "files": [
+      { "path": "references/event-wiring-and-recovery.md", "sha256": "2c158c3d83bb070ce0781b7e2b7907cde5510a21fd3de192ad1dd81e155d8f20", "matchesAssignmentAtHandoff": true },
+      { "path": "references/interception-and-rollback.md", "sha256": "6ccd1995155c797a07039a30e75eb37532e80f74a5b8714bda8c2c53084dd3f7", "matchesAssignmentAtHandoff": true },
+      { "path": "references/verification.md", "sha256": "d7490401fc49e0259ebce9e67b4f5f3d0dad300431388aaa797de0e23528620f", "matchesAssignmentAtHandoff": true },
+      { "path": "SKILL.md", "sha256": "56b31b9b8c39015b48e10aeb2bedb769ded2d0924f77d315fdac690b78ecc555", "matchesAssignmentAtHandoff": true },
+      { "path": "skill.yaml", "sha256": "fe6706d66851084e0a8d0a34373e2fa9a19779b4f15f60c4da9703332aac2003", "matchesAssignmentAtHandoff": true }
+    ]
+  },
+  "versions": {
+    "committed": "1.1.0",
+    "assignmentTime": "1.1.0",
+    "finalForThisPhase": "1.1.0",
+    "preExistingBump": false,
+    "rationale": "No package contents changed, so no bump."
+  },
+  "preExistingPackageChanges": [],
+  "packageFilesChangedByReviewer": [],
+  "evidenceFilesCreatedByReviewer": [
+    "collect-research-sources.ps1",
+    "sources/retrieval.json",
+    "sources/RestrictedTransactionalEventListenerFactory.java",
+    "sources/TransactionalApplicationListenerSynchronization.java",
+    "sources/TransactionSynchronizationUtils.java",
+    "sources/TransactionalEventListener.html",
+    "sources/DataSourceTransactionManager.java",
+    "sources/DataSourceUtils.java",
+    "sources/AbstractPlatformTransactionManager.java",
+    "sources/TransactionSynchronizationManager.java",
+    "sources/transactional-outbox-pattern.html",
+    "sources/aws-transactional-outbox.html",
+    "research-handoff.json"
+  ],
+  "findings": [
+    {
+      "status": "PRESERVE",
+      "locations": ["SKILL.md:60", "references/event-wiring-and-recovery.md:8", "references/event-wiring-and-recovery.md:85", "references/event-wiring-and-recovery.md:109", "references/event-wiring-and-recovery.md:119"],
+      "finding": "The package already chooses direct same-transaction collaboration for a required atomic outcome and conditions the after-commit independent transaction on an accepted split. Its Framework 7.0.9 listener registration restriction and BEFORE_COMMIT exemption match the source.",
+      "evidence": ["S1", "S2", "S3", "S4", "S7"],
+      "consequence": "No annotation rewrite is justified. In an atomicity case, changing phase alone while retaining REQUIRES_NEW can still violate the contract. Accept direct collaboration or an appropriate synchronous BEFORE_COMMIT path using the same enlisted transaction."
+    },
+    {
+      "status": "PRESERVE",
+      "locations": ["SKILL.md:26", "references/interception-and-rollback.md:31", "references/interception-and-rollback.md:43", "references/interception-and-rollback.md:130"],
+      "finding": "An active transaction does not identify the enlisted datasource. The skill explicitly requires manager/resource evidence and persisted-state checks.",
+      "evidence": ["S5", "S6", "S8"],
+      "consequence": "The case must distinguish the selected manager from the JdbcTemplate datasource. A resource bound by DataSourceUtils during synchronization is also insufficient by itself: it can be a connection on a different datasource whose auto-commit state was never changed by that local manager. Confirm rollback of the actual target table and preserve legitimate uses of the other manager."
+    },
+    {
+      "status": "PRESERVE",
+      "locations": ["references/event-wiring-and-recovery.md:148", "references/event-wiring-and-recovery.md:154", "references/verification.md:58", "references/verification.md:73"],
+      "finding": "The skill already separates retained intent from exactly-once external effects and explicitly identifies the accepted-effect/broken-progress window.",
+      "evidence": ["S9", "S10"],
+      "consequence": "A durable outbox permits recovery but can replay. A stable retained identity plus the provider's deduplication/receipt or reconciliation contract must protect the required external effect. A local completion mark alone is not proof; do not retry the already committed business command."
+    },
+    {
+      "status": "PRESERVE_WITH_TEST_PREREQUISITE",
+      "locations": ["references/event-wiring-and-recovery.md:127", "references/verification.md:26", "references/verification.md:32"],
+      "finding": "The callback-internal independent READ_COMMITTED observation discriminates phases only after establishing that the source write is actually part of the expected transaction.",
+      "evidence": ["S2", "S5", "S6", "Prior wave 5 technical-control handoff"],
+      "consequence": "In a mismatched-manager case, an auto-committed source can already be visible during BEFORE_COMMIT; a phase probe alone would be a false positive. The current skill already requires matching manager, isolation and database."
+    }
+  ],
+  "correctedFindings": [],
+  "remainingConfirmedSkillDefects": [],
+  "capabilities": {
+    "preserved": [
+      "Outcome-driven use-case boundary and persisted-state diagnosis",
+      "Interception/self-call distinctions, rollback defaults/rules and completion failures",
+      "Propagation resource budget, savepoint caveats and reactive/thread-bound boundary",
+      "Direct collaborator, best-effort cache hint and independent receipt examples",
+      "ID/reload versus immutable fact payloads and consumer compatibility",
+      "Default listener phase/fallback, registration and failure semantics",
+      "Existing outbox/conditional Modulith recovery, stable identity and external ambiguity",
+      "Routed verification and neighboring ownership"
+    ],
+    "replaced": [],
+    "removed": []
+  },
+  "checksExecutedThisPhase": [
+    {
+      "kind": "Read-only baseline and ownership inspection",
+      "cwd": "C:/git/agent-skills",
+      "commands": [
+        "git status --short --untracked-files=all -- skills/spring-transactions-and-events",
+        "git diff -- skills/spring-transactions-and-events",
+        "git diff --cached -- skills/spring-transactions-and-events",
+        "git show HEAD:skills/spring-transactions-and-events/skill.yaml",
+        "git log -3 --oneline -- skills/spring-transactions-and-events",
+        "Get-FileHash -Algorithm SHA256 for the five package files, compared with baseline.json"
+      ],
+      "result": "No assigned-package diffs/untracked files; five hashes match; committed and assignment version 1.1.0."
+    },
+    {
+      "kind": "Primary-source inspection and evidence capture",
+      "cwd": "C:/git/agent-skills",
+      "command": "& 'C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/review/collect-research-sources.ps1'",
+      "exitCode": 0,
+      "result": "10 requests returned HTTP 200. Bodies and SHA-256 values retained in review/sources. Three previously checked phase sources and TransactionalEventListener API match wave 5 hashes. Browser source reads and focused source searches support the findings; the download itself is not a runtime test."
+    },
+    {
+      "kind": "Final read-only package preservation",
+      "cwd": "C:/git/agent-skills",
+      "commands": [
+        "git diff --check -- skills/spring-transactions-and-events",
+        "git status --short --untracked-files=all -- skills/spring-transactions-and-events",
+        "git diff --numstat -- skills/spring-transactions-and-events",
+        "git diff --cached --numstat -- skills/spring-transactions-and-events",
+        "Get-FileHash -Algorithm SHA256 for the five package files, compared with baseline.json"
+      ],
+      "result": "No diff/status output; all hashes still match."
+    }
+  ],
+  "reusedPriorEvidence": {
+    "record": "C:/git/agent-skills/docs/skill-validation/wave5-2026-10-16/handoffs/spring-transactions-and-events.json",
+    "reportedChecks": "18 Framework 7.0.9/JDBC/H2 2.4.240 assertions on Temurin 25.0.3, plus assigned-package structural/link/format checks; zero agent evaluations.",
+    "reuseBasis": "Package bytes are identical and selected source contracts match. This phase read the report and did not rerun the prior tests.",
+    "limits": "Prior controls cover selected listener paths, not the new four actor tasks or production engines."
+  },
+  "behavioralEvaluation": {
+    "executedByThisReviewer": 0,
+    "actualAgentOutputsRead": [],
+    "measuredSkillGain": false,
+    "walkthroughs": [
+      "Atomic receipt versus accepted delayed receipt should change the chosen transaction boundary while preserving the same existing recovery mechanism where adequate.",
+      "An active unrelated manager plus a target JdbcTemplate must not pass rollback evidence on the target datasource.",
+      "A replay after external acceptance but before progress recording needs stable identity and the provider's repeated-operation contract."
+    ],
+    "caseFilesReviewed": [],
+    "pending": "Coordinator will supply four cases/rubric for read-only review before freezing and executing two conditions with two repetitions (16 actor runs). No distinct candidate revision currently exists.",
+    "rubricCautions": [
+      "Accept multiple valid same-unit implementations; do not require one annotation shape.",
+      "BEFORE_COMMIT plus an independent transaction is not sufficient evidence of atomicity.",
+      "After-commit listener exceptions in the standard path may be logged without reaching the original caller; require committed state observations.",
+      "Transaction-active and resource-bound flags are supporting evidence, not proof that the target datasource rolls back.",
+      "Differentiate provider attempts from accepted effects and test the accepted-effect/progress-failure window.",
+      "After restart/replay, retain the same event/provider identity and do not rerun the original business operation.",
+      "Label procedural actor separation honestly; a temp directory is not access isolation.",
+      "Do not infer production crash or multi-replica guarantees from H2 or orderly context recreation."
+    ]
+  },
+  "sources": [
+    { "id": "S1", "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.9/spring-tx/src/main/java/org/springframework/transaction/annotation/RestrictedTransactionalEventListenerFactory.java", "supports": "Post-completion propagation restriction and BEFORE_COMMIT exemption; method/class lookup.", "version": "7.0.9" },
+    { "id": "S2", "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.9/spring-tx/src/main/java/org/springframework/transaction/event/TransactionalApplicationListenerSynchronization.java", "supports": "Imperative registration and dispatch through beforeCommit or afterCompletion.", "version": "7.0.9" },
+    { "id": "S3", "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.9/spring-tx/src/main/java/org/springframework/transaction/support/TransactionSynchronizationUtils.java", "supports": "beforeCommit failure propagation versus afterCompletion exception logging.", "version": "7.0.9" },
+    { "id": "S4", "url": "https://docs.spring.io/spring-framework/docs/7.0.9/javadoc-api/org/springframework/transaction/event/TransactionalEventListener.html", "supports": "Default AFTER_COMMIT, missing-transaction behavior and already-completed resource warning.", "version": "7.0.9" },
+    { "id": "S5", "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.9/spring-jdbc/src/main/java/org/springframework/jdbc/datasource/DataSourceTransactionManager.java", "supports": "Single-datasource resource, connection lookup/binding, auto-commit adjustment and commit/rollback.", "version": "7.0.9" },
+    { "id": "S6", "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.9/spring-jdbc/src/main/java/org/springframework/jdbc/datasource/DataSourceUtils.java", "supports": "Lookup keyed by datasource; active synchronization can bind a newly fetched connection without beginning a local transaction on it.", "version": "7.0.9" },
+    { "id": "S7", "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.9/spring-tx/src/main/java/org/springframework/transaction/support/AbstractPlatformTransactionManager.java", "supports": "Commit phase sequence, rollback for failing pre-commit callbacks and completion/cleanup timing.", "version": "7.0.9" },
+    { "id": "S8", "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.9/spring-tx/src/main/java/org/springframework/transaction/support/TransactionSynchronizationManager.java", "supports": "Actual-transaction state is thread-associated; it does not identify the application's target datasource.", "version": "7.0.9" },
+    { "id": "S9", "url": "https://microservices.io/patterns/data/transactional-outbox.html", "supports": "Pattern author's accepted-publication/before-progress crash window and repeated publication requiring consumer idempotency.", "limit": "Conceptual outbox mechanism, not certification of an arbitrary external provider." },
+    { "id": "S10", "url": "https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/transactional-outbox.html", "supports": "Official outbox guidance acknowledges duplicate publication and idempotent consumption.", "limit": "Only this mechanism is reused; no AWS services or transport requirements are introduced into the Spring/JDBC cases." }
+  ],
+  "sourceRetrievalManifest": "sources/retrieval.json",
+  "limitations": [
+    "No new runtime tests, benchmarks or agent evaluations were executed by this reviewer.",
+    "No requested four-case fixture or evaluator rubric has yet been supplied or reviewed.",
+    "No skill effectiveness or absence-of-all-defects claim follows from focused source verification.",
+    "The declared authoring baseline remains Java 25, Boot 4.1.1, Framework 7.0.9, with conditional Modulith 2.1.1. The planned current controls are standalone Spring/JDBC/H2 and cannot establish Boot auto-configuration, JPA or Modulith runtime behavior.",
+    "Do not generalize H2 locking, transaction, restart or concurrency observations to the production database.",
+    "The outbox's stable identity is necessary only in conjunction with the selected provider's actual deduplication/receipt/reconciliation contract; no universal exactly-once promise.",
+    "No snapshot, future actor outputs or coordinator notes were read."
+  ],
+  "pendingGlobalChecks": [
+    { "command": "npm run registry:build", "owner": "coordinator", "reason": "Shared generated writes are prohibited for the reviewer. No package content changed in this phase.", "prerequisite": "All reviewers stopped writing and coordinator completes the applicable integration phase." },
+    { "command": "npm run verify", "owner": "coordinator", "reason": "Repository-wide validation reserved to coordinator; this is only a research handoff.", "prerequisite": "Stable shared worktree after any authorized implementation/integration work." }
+  ],
+  "crossSkillIssues": [],
+  "coordinatorActions": [
+    "Supply case/rubric paths for read-only expectation review before freeze.",
+    "Keep the two-condition comparison: no-skill versus unchanged snapshot; there is no distinct revised treatment.",
+    "Retain the prior 18-assertion report as reused evidence, separate from any new technical and behavioral runs.",
+    "Explicitly reopen the reviewer write phase if this handoff needs amendment after case review or if a supported package defect is found."
+  ]
+}

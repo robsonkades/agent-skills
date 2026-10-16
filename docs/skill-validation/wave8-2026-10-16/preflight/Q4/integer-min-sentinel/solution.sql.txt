@@ -1,0 +1,1 @@
+SELECT id,priority,created_at,label FROM tickets WHERE tenant_id=:tenant AND (COALESCE(priority,-2147483648)<COALESCE(:cursor_priority,-2147483648) OR (COALESCE(priority,-2147483648)=COALESCE(:cursor_priority,-2147483648) AND (created_at>:cursor_created OR (created_at=:cursor_created AND id<:cursor_id)))) ORDER BY priority DESC NULLS LAST,created_at ASC,id DESC LIMIT :page_size;

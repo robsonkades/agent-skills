@@ -1,0 +1,15 @@
+{
+  "id": "ST-C2",
+  "workspace": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\startup-cds-crac-leyden\\cases\\jdk28ea",
+  "request": "Review the startup adoption proposal against the supplied project inventory and primary-source captures. Revise adoption-note.md into a defensible decision for the selected runtime, keeping the requested scope to a source review. Identify any missing evidence that materially changes the recommendation. Do not install or download a toolchain, run a deployment, upgrade the target, or claim measurements that were not supplied.",
+  "fixtures": [
+    "runtime-inventory.json",
+    "adoption-note.md",
+    "source-provenance.json",
+    "sources/jep-544.html",
+    "sources/jdk-28.html",
+    "sources/jep-515.html"
+  ],
+  "prerequisites": "Read-only source inspection and local Markdown editing only; no runtime prerequisite for this review.",
+  "evaluationStatus": "Input prepared; no agent run."
+}

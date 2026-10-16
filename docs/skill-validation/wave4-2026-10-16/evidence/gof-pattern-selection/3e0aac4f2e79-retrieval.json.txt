@@ -1,0 +1,22 @@
+[
+  {
+    "Url": "https://www.informit.com/articles/article.aspx?p=1398601",
+    "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-selection\\sources\\chain-of-responsibility.html",
+    "Success": true
+  },
+  {
+    "Url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.compiler/javax/lang/model/element/ElementVisitor.html",
+    "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-selection\\sources\\element-visitor-17.html",
+    "Success": true
+  },
+  {
+    "Url": "https://openjdk.org/jeps/441",
+    "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-selection\\sources\\jep-441.html",
+    "Success": true
+  },
+  {
+    "Url": "https://docs.spring.io/spring-framework/reference/6.2/core/aop/proxying.html",
+    "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-selection\\sources\\spring-proxying-6.2.html",
+    "Success": true
+  }
+]

@@ -120,6 +120,11 @@ An automatic timer must not turn an unresolved pause into promotion. Specify wha
 if monitoring or the controller fails and who can perform containment. A manual override
 records the reason and residual risk; it does not relabel unknown evidence as passing.
 
+Trace each required gate through the effective caller to the next increase in admission.
+A template's success rule does not enforce a gate when the caller treats it as observational.
+Inspect rendered configuration, overrides and completion conditions; a reported success
+must contain the required measurements, not merely a completed controller operation.
+
 ## Order exposure around compatibility and effects
 
 Use a small release matrix of **caller/producer, callee/reader, stored representation,
@@ -173,7 +178,9 @@ Validate the claims affected by the change in an isolated environment:
   when relevant. A negative result must show the unauthorized branch or effect is rejected.
 - Feed the decision mechanism healthy, degraded, empty, stale and insufficient samples;
   check next-step promotion, pause and abort separately. Include a healthy global average
-  with a failing candidate region/tenant class and monitoring loss during a rollout.
+  with a failing candidate region/tenant class and monitoring loss during a rollout. Hold
+  required evidence unresolved beyond a timed advance and observe that exposure stays
+  bounded; testing the metric template alone does not verify its caller's gate.
 - Rehearse containment and recovery with delayed work and persistent effects. Observe
   admission, outcomes and elapsed convergence; a manifest diff or controller status alone
   cannot establish user availability, semantic compatibility or repair.

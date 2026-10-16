@@ -1,0 +1,12 @@
+{
+  "id": "mandatory-accessor-bootstrap-a",
+  "request": "Review the attached startup/dispatch path. Readiness must mean that the mandatory Order accessor's name, signature and access have been validated. An incompatible target library must be rejected before READY; calling total merely to validate setup is not allowed because real targets may have effects. Inspect and run the actual entry path, fix a violation if present, and report what you verified. Keep the Java 17 target and preserve the existing target-exception policy. Optional plugins are managed elsewhere and should remain lazy.",
+  "fixtures": ["InitializationProbe.java"],
+  "targetJavaRelease": 17,
+  "availableRuntime": "Temurin 25.0.3+9; no JDK 17 execution environment in this review",
+  "workingDirectory": "An isolated copy of InitializationProbe.java",
+  "compile": ["javac", "--release", "17", "-d", "classes", "InitializationProbe.java"],
+  "launch": ["java", "-cp", "classes", "InitializationProbe", "passive"],
+  "incompatibleLibraryControl": "Use -Dmember=missing to represent an incompatible configured member; omit it for the supported member.",
+  "additionalContext": "The supplied class-literal, non-initializing load and member-enumeration operations are the existing discovery step. Inspect their actual effects; do not treat a method name or a successful compile as evidence for startup timing."
+}

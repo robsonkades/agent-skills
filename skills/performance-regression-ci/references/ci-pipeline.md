@@ -36,13 +36,39 @@ JMH/JDK identities and JVM arguments; for system trials, their load profile, bou
 outcome accounting and deployment/trial identities. Canonicalize and hash the declared
 manifest fields. Do not compare merely because JSON benchmark names match.
 
+## Bind evidence to the decision target
+
+Before issuing an authoritative decision, resolve its expected candidate from trusted CI
+context. Declare whether the experiment measures the PR head, a test merge, or a release
+artifact. Reconcile the repository, actual measured checkout/artifact digest and producing
+run/attempt with that target; record the evaluator/policy revision separately. A candidate's
+self-reported manifest, PR number, branch name or latest artifact name cannot establish this
+binding. A valid checksum does not make an old measurement apply to a different candidate.
+
+GitHub event identities need particular care:
+
+- For an open, mergeable `pull_request`, `GITHUB_SHA` identifies the test merge by default;
+  `github.event.pull_request.head.sha` identifies the PR head. Follow the actual checkout.
+- A downstream `workflow_run` uses a default-branch `GITHUB_SHA`; resolve the triggering
+  measurement run and its artifact rather than treating the evaluator's SHA as the candidate.
+- A rerun retains the original event's `GITHUB_SHA` and `GITHUB_REF`. A recent attempt of an
+  old run does not establish coverage of a newer PR revision.
+
+Retain both the measured identity and the commit receiving the check. If policy reports a
+test-merge result on a PR head, verify that head's relationship to the measured merge and its
+base inputs instead of requiring the two SHAs to be equal. Publish only for that validated
+target. Evidence for another revision remains historical evidence; an unestablished binding
+is invalid for the requested decision, not proof of a performance regression or a reason to
+recalibrate the statistical rule. Reuse across identities requires an explicit, evidenced
+equivalence policy.
+
 ## Comparator contract
 
 The comparator should:
 
 1. validate schema, checksums, finite decision inputs, and expected entries (diagnostic-only
    fields such as unsupported JMH `scoreError` may be non-finite if explicitly handled);
-2. enforce the compatibility/epoch policy;
+2. enforce the target binding and compatibility/epoch policy;
 3. normalize direction so positive means worse;
 4. analyze independent blocks/units under the predeclared method;
 5. apply MPIR, absolute guardrails, and multiplicity policy;
@@ -290,6 +316,8 @@ workflow permission, cancellation or artifact-service behavior.
 | Runner cancellation/timeout/OOM                           | Outcome retained with diagnostics                           |
 | Untrusted PR attempts baseline write                      | Denied                                                      |
 | PR rewrites comparator/enforcer or forges its JSON result | Diagnostic output cannot satisfy authoritative check        |
+| Authentic old-run bundle is submitted for a new target    | Invalid for new target; preserve the original evidence      |
+| Measured merge maps to reporting head under policy        | Continue comparison; unequal SHAs alone are not invalid     |
 | Gradual series of sub-MPIR changes                        | Champion/guardrail trend detects budget exhaustion          |
 
 Before claiming deployed enforcement behavior, validate the real trigger and permissions
@@ -317,4 +345,7 @@ is unavailable or outside scope, report the remaining gap without launching a wo
 - [GitHub Actions secure-use reference](https://docs.github.com/en/actions/reference/security/secure-use) — untrusted checkout, action pinning, and self-hosted runner risks.
 - [GitHub Actions dependency caching](https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching) — cache scope and poisoning considerations.
 - [GitHub Actions artifacts](https://docs.github.com/en/actions/tutorials/store-and-share-data) — artifact retention and transport primitives.
+- [GitHub Actions events](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows) — `pull_request` and `workflow_run` commit identities.
+- [GitHub Actions reruns](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/re-run-workflows-and-jobs) — original event SHA/ref retained across attempts.
+- [GitHub check runs](https://docs.github.com/en/rest/checks/runs#create-a-check-run) — a check is created for a specific commit.
 - [OpenJDK JMH](https://github.com/openjdk/jmh) — authoritative harness source and samples.

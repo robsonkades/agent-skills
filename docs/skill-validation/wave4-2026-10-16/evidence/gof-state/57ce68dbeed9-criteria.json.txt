@@ -1,0 +1,53 @@
+{
+  "kind": "evaluator-only criteria",
+  "doNotProvideToActor": true,
+  "decisiveConstraint": "Somente app.properties muda callback.result=same para new. Código e contrato permanecem idênticos; muda a identidade do objeto entregue pelo callback repetido.",
+  "cases": [
+    {
+      "id": "state-adopted-result",
+      "expectedDecision": "Preservar o caminho que ignora o callback do mesmo recurso já adotado, mantendo-o aberto até o encerramento.",
+      "requiredEvidence": [
+        "Seguir o fornecedor simulado e a expressão que seleciona callbackResult; comprovar identidade com initial.",
+        "Demonstrar servingInitial=true, contagens 0/0 antes do shutdown e 1/1 depois, sendo a mesma instância.",
+        "Evitar fechar o recurso ativo ao classificar o evento como repetido ou fora da fase CONNECTING."
+      ],
+      "acceptableAlternatives": [
+        "No-change é a intervenção mínima adequada.",
+        "Ajuste equivalente só com requisito demonstrado; não exigir novo framework ou persistência para cenário local."
+      ],
+      "failureConditions": [
+        "Fechar indiscriminadamente qualquer resultado de callback recusado.",
+        "Trocar o objeto ativo ou reabrir uma máquina por causa do callback.",
+        "Alegar leak contando duas referências ao mesmo recurso como dois recursos distintos."
+      ]
+    },
+    {
+      "id": "state-distinct-result",
+      "expectedDecision": "Descartar com cleanup o resultado distinto não adotado, preservando o recurso ativo e o estado aceito.",
+      "requiredEvidence": [
+        "Rastrear configuração e criação de uma segunda OwnedConnection, diferenciando identidade de igualdade de tentativa.",
+        "Demonstrar o leak do resultado novo no código original e corrigir somente a responsabilidade de descarte sem adotar esse resultado.",
+        "Verificar servingInitial=true e recursos fechados exatamente uma vez até shutdown, com initial aberto antes dele.",
+        "Executar também controle de callback com o objeto já adotado para impedir que a correção feche o recurso em uso."
+      ],
+      "acceptableAlternatives": [
+        "Guard de identidade e descarte explícito para recurso não adotado, ou ownership equivalente proporcional.",
+        "Não é necessário adotar state classes, CAS, framework assíncrono, banco ou saga para esta correção confinada."
+      ],
+      "failureConditions": [
+        "Tratar deduplicação de evento como liberação automática do resultado novo.",
+        "Fechar initial ao descartar extra, substituir a conexão aceita ou alterar a configuração para esconder o problema.",
+        "Inventar garantias de rede, concorrência geral ou idempotência de close a partir do double local."
+      ]
+    }
+  ],
+  "limits": [
+    "Casos de desenvolvimento conhecidos derivados de uma orientação já presente; não holdouts.",
+    "Nenhum ator independente executado.",
+    "Fixture modela somente propriedade e sequência local, não rede real nem disputa entre threads."
+  ],
+  "expectedOriginalObservations": {
+    "same": "servingInitial=true; beforeStop 0/0; afterStop 1/1",
+    "new": "servingInitial=true; beforeStop 0/0; afterStop 1/0 (resultado extra sem fechamento)"
+  }
+}

@@ -1,0 +1,17 @@
+import java.util.concurrent.*;
+final class AwaitLatch implements ForkJoinPool.ManagedBlocker {
+    private final CountDownLatch latch;
+    private boolean awaited;
+
+    AwaitLatch(CountDownLatch latch) { this.latch = latch; }
+
+    @Override public boolean isReleasable() {
+        return awaited;
+    }
+
+    @Override public boolean block() throws InterruptedException {
+        latch.await();
+        awaited = true;
+        return true;
+    }
+}

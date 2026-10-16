@@ -1,0 +1,38 @@
+[
+  {
+    "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b\\fixtures\\complete\\gradle-user-home\\daemon\\9.6.1\\daemon-37160.out.log",
+    "processId": 37160,
+    "active": false,
+    "terminalLine": "\tat java.base/java.lang.Thread.run(Thread.java:1474)"
+  },
+  {
+    "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b\\fixtures\\complete\\gradle-user-home\\daemon\\9.6.1\\daemon-37276.out.log",
+    "processId": 37276,
+    "active": false,
+    "terminalLine": "\tat java.base/java.lang.Thread.run(Thread.java:1474)"
+  },
+  {
+    "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b\\fixtures\\missing-module\\gradle-user-home\\daemon\\9.6.1\\daemon-37456.out.log",
+    "processId": 37456,
+    "active": false,
+    "terminalLine": "\tat java.base/java.lang.Thread.run(Thread.java:1474)"
+  },
+  {
+    "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b\\fixtures\\missing-module\\gradle-user-home\\daemon\\9.6.1\\daemon-39588.out.log",
+    "processId": 39588,
+    "active": false,
+    "terminalLine": "\tat java.base/java.lang.Thread.run(Thread.java:1474)"
+  },
+  {
+    "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b\\fixtures\\pom-only\\gradle-user-home\\daemon\\9.6.1\\daemon-21884.out.log",
+    "processId": 21884,
+    "active": false,
+    "terminalLine": "\tat java.base/java.lang.Thread.run(Thread.java:1474)"
+  },
+  {
+    "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b\\fixtures\\pom-only\\gradle-user-home\\daemon\\9.6.1\\daemon-39428.out.log",
+    "processId": 39428,
+    "active": false,
+    "terminalLine": "\tat java.base/java.lang.Thread.run(Thread.java:1474)"
+  }
+]

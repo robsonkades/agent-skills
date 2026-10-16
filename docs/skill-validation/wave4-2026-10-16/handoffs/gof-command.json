@@ -1,0 +1,507 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "gof-command",
+  "ownedPath": "skills/gof-command/**",
+  "allWritesStopped": true,
+  "reviewDate": "2026-10-16",
+  "baseline": {
+    "head": "bbb7d996a929e81baf735bbaab5b6e3fbf6e8503",
+    "committedVersion": "1.2.4",
+    "assignmentVersion": "1.2.4",
+    "files": [
+      {
+        "path": "skills/gof-command/SKILL.md",
+        "sha256": "a3537ccf0ddc9cade7efbb0352f3e395a4a0bb878e6377a82ffeb7705ebcb0fb",
+        "bytes": 12847,
+        "match": true
+      },
+      {
+        "path": "skills/gof-command/references/command-vs-event.md",
+        "sha256": "ef9a8058be8356b99a31f16258a021d07d2b56b29386b8440660d45716d80f2c",
+        "bytes": 11191,
+        "match": true
+      },
+      {
+        "path": "skills/gof-command/references/worked-example.md",
+        "sha256": "097f4988cff8dd33d2850a62b6f71cd56ec7da1100e777b8b1d7a750d2d39091",
+        "bytes": 15855,
+        "match": true
+      },
+      {
+        "path": "skills/gof-command/skill.yaml",
+        "sha256": "8fd8052e81e828645a72760baca8af53189ea96d664d1413b62d05e88104f6f7",
+        "bytes": 2207,
+        "match": true
+      }
+    ],
+    "initialStatus": "Clean; no owned staged, unstaged or untracked files.",
+    "preExistingChanges": [],
+    "preExistingVersionBump": false
+  },
+  "versions": {
+    "committed": "1.2.4",
+    "assignment": "1.2.4",
+    "final": "1.2.5",
+    "rationale": "One patch for the supported receiver-binding clarification and example change; no prior unpublished bump and no technology upgrade."
+  },
+  "reviewProcedure": {
+    "read": [
+      "AGENTS.md",
+      "docs/skill-review-prompt.md",
+      "docs/skill-validation/wave4-2026-10-16/review-brief.md"
+    ],
+    "reused": "Unchanged parallel-review procedure, skill-engineering entrypoint and evidence-and-confidence/evaluation/resource-design/anti-pattern references read during preceding assignment; comparative research and earlier-wave no-gain limits preserved.",
+    "entirePackageRead": true,
+    "assessmentSentBeforeEdits": true,
+    "subagentsUsed": false
+  },
+  "promiseAndScope": {
+    "role": "Select, implement or review a reified invocation when identity, dispatch, lifetime, undo or transport earns its cost; preserve an adequate direct call/callback.",
+    "baseline": "Java 17 records/sealed types; Java 21 for non-preview type-pattern switches. New binding example uses Java 17-compatible syntax.",
+    "successCriteria": [
+      "Find the caller's target-selection, state, lifecycle and repeat contract.",
+      "Distinguish receiver identity from receiver state and data snapshots.",
+      "Preserve exact undo only inside its stated reversible boundary; keep compensation separate.",
+      "Preserve durable command identity and unknown-effect recovery constraints.",
+      "Choose the smallest adequate representation and verify observable effects."
+    ]
+  },
+  "findingsCorrected": [
+    {
+      "id": "RECEIVER-SELECTION-TIME",
+      "baselineLocations": [
+        "skills/gof-command/SKILL.md:151",
+        "skills/gof-command/references/command-vs-event.md:155"
+      ],
+      "finalLocations": [
+        "skills/gof-command/SKILL.md:151",
+        "skills/gof-command/references/command-vs-event.md:155",
+        "skills/gof-command/references/command-vs-event.md:168"
+      ],
+      "finding": "The prior live-receiver sketch used an unqualified order name without distinguishing a captured local from a reassignable field read at invocation. The creation-time target and execution-time active target can be different objects.",
+      "consequence": "A deferred action can operate on the wrong target, or an automatic lambda-to-method-reference rewrite can break a legitimate execution-time selection contract.",
+      "correction": "Make the two bindings explicit, retain both as valid under different caller contracts, distinguish live receiver state from identity, and preserve null-failure timing.",
+      "evidence": "JLS 17 §§15.13.3 and 15.27.4; 16 executed Java assertions plus the four-run two-contract fixture matrix."
+    }
+  ],
+  "remainingFindings": [],
+  "findingsReviewedWithoutChange": [
+    "History updates preserve state/stacks under documented immutable/confined operation failures; redo branch invalidation and inverse pre-state ordering are explicit.",
+    "Compound commands distinguish local candidate publication from externally visible effects.",
+    "Captured mutable components, consistent snapshot ownership and managed-session lifetime are already addressed.",
+    "Durable issuance retains identity/payload/timestamp; concurrent deduplication and provider unknown-outcome recovery are explicit prerequisites.",
+    "An adequate Runnable/method reference remains a valid Command implementation; no bus or class-per-method is imposed."
+  ],
+  "filesChangedByReviewer": [
+    "skills/gof-command/SKILL.md",
+    "skills/gof-command/references/command-vs-event.md",
+    "skills/gof-command/skill.yaml"
+  ],
+  "filesUnchanged": ["skills/gof-command/references/worked-example.md"],
+  "finalFileHashes": [
+    {
+      "path": "skills/gof-command/references/command-vs-event.md",
+      "sha256": "107645485040bb00bccec2e3ed569d81aa65ae1e39fa93d0eee89c1c5e54959d",
+      "bytes": 12201
+    },
+    {
+      "path": "skills/gof-command/references/worked-example.md",
+      "sha256": "097f4988cff8dd33d2850a62b6f71cd56ec7da1100e777b8b1d7a750d2d39091",
+      "bytes": 15855
+    },
+    {
+      "path": "skills/gof-command/SKILL.md",
+      "sha256": "a0596b754ca228ee83e12841850c615dc9673cb03f9d8645e6d1439ac90199aa",
+      "bytes": 12963
+    },
+    {
+      "path": "skills/gof-command/skill.yaml",
+      "sha256": "d6f074673e6387b98854150c908f5430d85ff431efed41968a2e2e5bb6e0530a",
+      "bytes": 2207
+    }
+  ],
+  "changeSummary": "Three files changed, 16 insertions and 5 deletions. Descriptions, metadata referrals and worked history/durable-settlement examples are preserved.",
+  "capabilities": {
+    "preserved": [
+      "Direct methods/callbacks as adequate alternatives to named command classes and buses.",
+      "Command/event semantic ownership and dispatcher validation.",
+      "Stable wire names, versioned intents, scoped retry identity and durable unknown-effect handling.",
+      "Snapshot depth, alias protection, synchronization/confinement and resource lifetime.",
+      "Exact inverse/memento versus compensation, stack order, compound failure boundary and redo invalidation.",
+      "Per-command outcome ownership, terminal failure routing and behavior-based checks."
+    ],
+    "replaced": ["Ambiguous single live-receiver lambda with explicit binding-time alternatives."],
+    "removed": []
+  },
+  "commandsExecuted": [
+    {
+      "command": "Get-Item -LiteralPath C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe,C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe | Select-Object FullName,Length\n& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -version\n& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' -version",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": {
+        "chunk_id": "02218c",
+        "wall_time_seconds": 0.3303881,
+        "exit_code": 0,
+        "original_token_count": 111,
+        "output": "\r\nopenjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\njavac 25.0.3\r\nFullName                                          Length\r\n--------                                          ------\r\nC:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe   50344\r\nC:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe  24744\r\n\r\n"
+      },
+      "kind": "Runtime identity"
+    },
+    {
+      "command": "@'\nimport assert from 'node:assert/strict';\nimport { readFileSync, readdirSync, existsSync } from 'node:fs';\nimport path from 'node:path';\nimport { parseManifest } from './packages/core/src/domain/manifest.ts';\nimport { buildSkillPackage } from './packages/core/src/domain/skill-package.ts';\nimport { validatePackage } from './packages/core/src/application/validate-package.ts';\nconst root = path.resolve('skills/gof-command');\nfunction gather(dir, prefix = '') {\n  return readdirSync(dir, { withFileTypes: true }).flatMap(e => {\n    const rel = prefix + e.name;\n    return e.isDirectory() ? gather(path.join(dir, e.name), rel + '/') : [{ path: rel, bytes: readFileSync(path.join(dir, e.name)) }];\n  });\n}\nconst files = gather(root);\nconst parsed = parseManifest(readFileSync(path.join(root, 'skill.yaml'), 'utf8'));\nconst pkg = buildSkillPackage(parsed.manifest, files);\nconst report = validatePackage(pkg, { directoryName: 'gof-command' });\nassert.deepEqual(parsed.issues, []);\nassert.deepEqual(report.issues, []);\nassert.equal(parsed.manifest.version, '1.2.5');\nlet linkCount = 0;\nfor (const file of files.filter(f => f.path.endsWith('.md'))) {\n  const text = file.bytes.toString('utf8');\n  for (const match of text.matchAll(/\\[[^\\]]+\\]\\(([^)]+)\\)/g)) {\n    const href = match[1];\n    if (/^(?:https?:|mailto:)/.test(href)) continue;\n    const [relative, fragment] = href.split('#');\n    const target = path.resolve(root, path.dirname(file.path), relative || path.basename(file.path));\n    assert.ok(target.startsWith(root + path.sep), href);\n    assert.ok(existsSync(target), href);\n    if (fragment) {\n      const headings = [...readFileSync(target, 'utf8').matchAll(/^#+\\s+(.+)$/gm)].map(m => m[1].toLowerCase().replace(/[^\\w\\s-]/g, '').trim().replace(/\\s+/g, '-'));\n      assert.ok(headings.includes(fragment), href);\n    }\n    linkCount++;\n  }\n}\nconst entry = readFileSync(path.join(root, 'SKILL.md'), 'utf8');\nfor (const file of files.filter(f => f.path.startsWith('references/'))) assert.ok(entry.includes(file.path), 'Unrouted reference: ' + file.path);\nconsole.log(JSON.stringify({ name: parsed.manifest.name, version: parsed.manifest.version, files: files.length, packageIssues: report.issues, manifestIssues: parsed.issues, relativeLinksChecked: linkCount, referencesRouted: files.filter(f => f.path.startsWith('references/')).length }));\n'@ | node --input-type=module",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "04afb8",
+          "wall_time_seconds": 0.3268503,
+          "exit_code": 0,
+          "original_token_count": 34,
+          "output": "{\"name\":\"gof-command\",\"version\":\"1.2.5\",\"files\":4,\"packageIssues\":[],\"manifestIssues\":[],\"relativeLinksChecked\":2,\"referencesRouted\":2}\n"
+        }
+      },
+      "kind": "Local structural check"
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/gof-command/SKILL.md skills/gof-command/skill.yaml skills/gof-command/references/command-vs-event.md skills/gof-command/references/worked-example.md",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "c6c2ef",
+          "wall_time_seconds": 0.3842291,
+          "exit_code": 0,
+          "original_token_count": 17,
+          "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+        }
+      },
+      "kind": "Local structural check"
+    },
+    {
+      "command": "git diff --check -- skills/gof-command",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "396566",
+          "wall_time_seconds": 0.138099,
+          "exit_code": 0,
+          "original_token_count": 0,
+          "output": ""
+        }
+      },
+      "kind": "Local structural check"
+    },
+    {
+      "command": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' --release 17 Editor.java Scenario.java\nexit $LASTEXITCODE",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-command-evidence/fixture-original",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "604372",
+          "wall_time_seconds": 0.6272899,
+          "exit_code": 0,
+          "original_token_count": 0,
+          "output": ""
+        }
+      },
+      "kind": "Fixture compilation"
+    },
+    {
+      "command": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' --release 17 Editor.java Scenario.java\nexit $LASTEXITCODE",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-command-evidence/fixture-bound",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "9ee2fe",
+          "wall_time_seconds": 0.6088815,
+          "exit_code": 0,
+          "original_token_count": 0,
+          "output": ""
+        }
+      },
+      "kind": "Fixture compilation"
+    },
+    {
+      "command": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' --release 17 ReceiverTimingProbe.java\nif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }\n& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -cp . ReceiverTimingProbe\nexit $LASTEXITCODE",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-command-evidence",
+      "result": {
+        "chunk_id": "8554ec",
+        "wall_time_seconds": 0.6553513,
+        "exit_code": 0,
+        "original_token_count": 22,
+        "output": "PASS 16 assertions; two valid contracts and two rejected cross-contract substitutions.\r\n"
+      },
+      "kind": "Executed Java binding controls"
+    },
+    {
+      "command": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -cp . Scenario ../creation.properties\nexit $LASTEXITCODE",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-command-evidence/fixture-original",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "2f03e9",
+          "wall_time_seconds": 0.1880366,
+          "exit_code": 1,
+          "original_token_count": 41,
+          "output": "Exception in thread \"main\" java.lang.AssertionError: chosen document saved exactly once\r\n\tat Scenario.check(Scenario.java:9)\r\n\tat Scenario.main(Scenario.java:26)\r\n"
+        }
+      },
+      "kind": "Executed fixture contract control",
+      "variant": "original",
+      "contract": "creation",
+      "expectedExitCode": 1
+    },
+    {
+      "command": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -cp . Scenario ../execution.properties\nexit $LASTEXITCODE",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-command-evidence/fixture-original",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "d08694",
+          "wall_time_seconds": 0.145826,
+          "exit_code": 0,
+          "original_token_count": 20,
+          "output": "PASS target=execution; chosen receiver, untouched other receiver, live label\r\n"
+        }
+      },
+      "kind": "Executed fixture contract control",
+      "variant": "original",
+      "contract": "execution",
+      "expectedExitCode": 0
+    },
+    {
+      "command": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -cp . Scenario ../creation.properties\nexit $LASTEXITCODE",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-command-evidence/fixture-bound",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "56a906",
+          "wall_time_seconds": 0.1901762,
+          "exit_code": 0,
+          "original_token_count": 20,
+          "output": "PASS target=creation; chosen receiver, untouched other receiver, live label\r\n"
+        }
+      },
+      "kind": "Executed fixture contract control",
+      "variant": "bound",
+      "contract": "creation",
+      "expectedExitCode": 0
+    },
+    {
+      "command": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -cp . Scenario ../execution.properties\nexit $LASTEXITCODE",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-command-evidence/fixture-bound",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "2b05aa",
+          "wall_time_seconds": 0.1668053,
+          "exit_code": 1,
+          "original_token_count": 41,
+          "output": "Exception in thread \"main\" java.lang.AssertionError: chosen document saved exactly once\r\n\tat Scenario.check(Scenario.java:9)\r\n\tat Scenario.main(Scenario.java:26)\r\n"
+        }
+      },
+      "kind": "Executed fixture contract control",
+      "variant": "bound",
+      "contract": "execution",
+      "expectedExitCode": 1
+    },
+    {
+      "command": "@'\nimport assert from 'node:assert/strict';\nimport { readFileSync, readdirSync } from 'node:fs';\nimport { createHash } from 'node:crypto';\nimport path from 'node:path';\nconst root='C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-command-evidence/';\nconst inputs=['case-01','case-02'].map(id=>JSON.parse(readFileSync(root+id+'.input.json','utf8')));\nconst criteria=JSON.parse(readFileSync(root+'evaluator-criteria.json','utf8'));\nassert.equal(criteria.cases.length,2);\nfor(const input of inputs) { assert.equal(Object.keys(input.files).length,4); assert.ok(!Object.hasOwn(input,'criteria')); }\nassert.equal(inputs[0].files['acceptance.properties'],'target.selection=creation\\nstate.observed=execution\\n');\nassert.equal(inputs[1].files['acceptance.properties'],'target.selection=execution\\nstate.observed=execution\\n');\ninputs[1].id=inputs[0].id;\ninputs[1].files['acceptance.properties']=inputs[0].files['acceptance.properties'];\nassert.deepEqual(inputs[0],inputs[1]);\nconst document=readFileSync('skills/gof-command/references/command-vs-event.md','utf8');\nconst probe=readFileSync(root+'ReceiverTimingProbe.java','utf8');\nconst statements=[...document.matchAll(/Runnable selected(?:Now|WhenRun) = [^;]+;/g)].map(m=>m[0]);\nassert.equal(statements.length,2);\nfor(const statement of statements) assert.ok(probe.includes(statement),statement);\nconst majors=['ReceiverTimingProbe.class','fixture-original/Editor.class','fixture-original/Scenario.class','fixture-bound/Editor.class','fixture-bound/Scenario.class'].map(p=>({path:p,major:readFileSync(root+p).readUInt16BE(6)}));\nfor(const f of majors) assert.equal(f.major,61);\nconst baseline=JSON.parse(readFileSync('docs/skill-validation/wave4-2026-10-16/baseline.json','utf8')).packages.find(p=>p.name==='gof-command');\nfunction gather(dir) {return readdirSync(dir,{withFileTypes:true}).flatMap(e=>e.isDirectory()?gather(path.join(dir,e.name)):[path.join(dir,e.name).replaceAll('\\\\','/')]);}\nconst files=gather('skills/gof-command').map(p=>({path:p,sha256:createHash('sha256').update(readFileSync(p)).digest('hex'),bytes:readFileSync(p).length}));\nassert.equal(files.length,4);\nconst unchanged=files.filter(f=>f.sha256===baseline.files.find(b=>b.path===f.path).sha256).map(f=>f.path);\nassert.deepEqual(unchanged,['skills/gof-command/references/worked-example.md']);\nconsole.log(JSON.stringify({cases:2,onlyDecisiveDifference:'target.selection',criteriaSeparate:true,compiledSnippetStatements:statements,compiledClassVersions:majors,files,unchanged}));\n'@ | node --input-type=module",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "48d72d",
+          "wall_time_seconds": 0.1626117,
+          "exit_code": 0,
+          "original_token_count": 281,
+          "output": "{\"cases\":2,\"onlyDecisiveDifference\":\"target.selection\",\"criteriaSeparate\":true,\"compiledSnippetStatements\":[\"Runnable selectedNow = this.order::cancel;\",\"Runnable selectedWhenRun = () -> this.order.cancel();\"],\"compiledClassVersions\":[{\"path\":\"ReceiverTimingProbe.class\",\"major\":61},{\"path\":\"fixture-original/Editor.class\",\"major\":61},{\"path\":\"fixture-original/Scenario.class\",\"major\":61},{\"path\":\"fixture-bound/Editor.class\",\"major\":61},{\"path\":\"fixture-bound/Scenario.class\",\"major\":61}],\"files\":[{\"path\":\"skills/gof-command/references/command-vs-event.md\",\"sha256\":\"107645485040bb00bccec2e3ed569d81aa65ae1e39fa93d0eee89c1c5e54959d\",\"bytes\":12201},{\"path\":\"skills/gof-command/references/worked-example.md\",\"sha256\":\"097f4988cff8dd33d2850a62b6f71cd56ec7da1100e777b8b1d7a750d2d39091\",\"bytes\":15855},{\"path\":\"skills/gof-command/SKILL.md\",\"sha256\":\"a0596b754ca228ee83e12841850c615dc9673cb03f9d8645e6d1439ac90199aa\",\"bytes\":12963},{\"path\":\"skills/gof-command/skill.yaml\",\"sha256\":\"d6f074673e6387b98854150c908f5430d85ff431efed41968a2e2e5bb6e0530a\",\"bytes\":2207}],\"unchanged\":[\"skills/gof-command/references/worked-example.md\"]}\n"
+        }
+      },
+      "kind": "Final local audit"
+    },
+    {
+      "command": "git status --short -- skills/gof-command\n git diff --cached -- skills/gof-command\n git diff --check -- skills/gof-command",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "98f2d0",
+          "wall_time_seconds": 0.2009592,
+          "exit_code": 0,
+          "original_token_count": 30,
+          "output": " M skills/gof-command/SKILL.md\n M skills/gof-command/references/command-vs-event.md\n M skills/gof-command/skill.yaml\n"
+        }
+      },
+      "kind": "Final local audit"
+    }
+  ],
+  "readCommandsAndResults": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-command-evidence/inspection-evidence.json",
+  "structuralValidation": {
+    "packageFiles": 4,
+    "manifestIssues": [],
+    "packageIssues": [],
+    "relativeLinksChecked": 2,
+    "routedReferences": 2,
+    "prettier": "All four owned files passed",
+    "gitDiffCheck": "Passed",
+    "unchangedWorkedExampleHashConfirmed": true
+  },
+  "runtimeValidation": {
+    "compiler": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+    "compilerVersion": "25.0.3",
+    "compileTarget": "--release 17; class major 61 verified for probe and both fixture variants",
+    "runtime": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+    "runtimeVersion": "Temurin 25.0.3+9-LTS",
+    "bindingProbe": "PASS 16 assertions",
+    "coverage": [
+      "Receiver replacement A→B",
+      "Later mutation of the bound receiver",
+      "Effectively final local reference capture",
+      "Null receiver at binding versus invocation",
+      "Repeated callback invocation",
+      "Both legitimate target-selection contracts",
+      "Both invalid cross-contract substitutions"
+    ],
+    "fixtureMatrix": [
+      {
+        "variant": "original",
+        "contract": "creation",
+        "expectedExit": 1,
+        "actualExit": 1,
+        "output": "Exception in thread \"main\" java.lang.AssertionError: chosen document saved exactly once\r\n\tat Scenario.check(Scenario.java:9)\r\n\tat Scenario.main(Scenario.java:26)\r\n"
+      },
+      {
+        "variant": "original",
+        "contract": "execution",
+        "expectedExit": 0,
+        "actualExit": 0,
+        "output": "PASS target=execution; chosen receiver, untouched other receiver, live label\r\n"
+      },
+      {
+        "variant": "bound",
+        "contract": "creation",
+        "expectedExit": 0,
+        "actualExit": 0,
+        "output": "PASS target=creation; chosen receiver, untouched other receiver, live label\r\n"
+      },
+      {
+        "variant": "bound",
+        "contract": "execution",
+        "expectedExit": 1,
+        "actualExit": 1,
+        "output": "Exception in thread \"main\" java.lang.AssertionError: chosen document saved exactly once\r\n\tat Scenario.check(Scenario.java:9)\r\n\tat Scenario.main(Scenario.java:26)\r\n"
+      }
+    ],
+    "limits": "Real Java execution on JDK 25, compiled for Java 17. Not an execution on a Java 17 VM, concurrency stress test, durable command integration, or agent evaluation."
+  },
+  "expectedNegativeControls": [
+    {
+      "variant": "original field-reading lambda",
+      "contract": "target.selection=creation",
+      "result": "Exit 1, chosen document saved exactly once assertion; expected wrong receiver detected."
+    },
+    {
+      "variant": "bound method reference",
+      "contract": "target.selection=execution",
+      "result": "Exit 1, chosen document saved exactly once assertion; expected regression detected."
+    }
+  ],
+  "unexpectedFailures": [],
+  "behavioralEvidence": {
+    "independentActorRuns": [],
+    "executedAgentEvaluations": [],
+    "measuredImprovement": false,
+    "walkthroughs": {
+      "kind": "Structured reviewer reasoning; separate from runtime controls and not an actor evaluation.",
+      "case01": "A later active-field replacement redirects the existing lambda to B, contradicting creation-time target selection. Bind A while preserving A's live state.",
+      "case02": "Execution-time selection deliberately follows the field to B; retain the lambda. The same binding change valid in case 01 would be a regression here."
+    },
+    "distinction": "The four executed variants compare Java callback semantics against two contracts. They do not compare agent performance with original and revised skill instructions.",
+    "pending": "Coordinator may run paired cases independently with criteria hidden."
+  },
+  "caseInputs": [
+    {
+      "id": "case-01",
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-command-evidence/case-01.input.json",
+      "embeddedFiles": ["README.md", "acceptance.properties", "Editor.java", "Scenario.java"],
+      "prerequisites": "Materialize four files in an isolated directory; Java 17+ toolchain; no libraries, network or infrastructure."
+    },
+    {
+      "id": "case-02",
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-command-evidence/case-02.input.json",
+      "embeddedFiles": ["README.md", "acceptance.properties", "Editor.java", "Scenario.java"],
+      "prerequisites": "Materialize four files in an isolated directory; Java 17+ toolchain; no libraries, network or infrastructure."
+    }
+  ],
+  "evaluatorCriteriaFile": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-command-evidence/evaluator-criteria.json",
+  "evaluationInstructions": "Only target.selection differs between inputs; state.observed remains execution in both. Supply one input and the skill version to each actor, withholding criteria, reviewer report, technical probe and candidate fixture. Cases are known development examples, not unseen holdouts.",
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se17/html/jls-15.html#jls-15.13.3",
+      "version": "Java Language Specification, Java SE 17",
+      "section": "15.13.3 Run-Time Evaluation of Method References",
+      "supports": "Bound target evaluation and null failure occur when the reference expression is evaluated.",
+      "consulted": "2026-10-16",
+      "limit": "Language contract; no claim of state copying, thread safety or domain idempotency."
+    },
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se17/html/jls-15.html#jls-15.27.4",
+      "version": "Java Language Specification, Java SE 17",
+      "section": "15.27.4 Run-Time Evaluation of Lambda Expressions",
+      "supports": "Lambda creation and body invocation are separate, supporting deferred field evaluation in the illustrated body.",
+      "consulted": "2026-10-16",
+      "limit": "The later field value is reliable in the example's confined execution; arbitrary unsynchronised mutation is outside that contract."
+    }
+  ],
+  "limitations": [
+    "No measured agent improvement or automatic skill-selection evaluation.",
+    "No Java 17 runtime was used for these checks; --release 17 verifies compilation target rather than old-VM execution.",
+    "Confinement is an explicit fixture contract. No claim that callback binding makes concurrent receiver mutation safe.",
+    "No broker, database, payment provider, durable retry protocol or remote undo was executed.",
+    "Existing unchanged history/settlement sketches were reviewed but not reimplemented solely to enlarge test coverage.",
+    "Global version/resolution/integrity and repository verification remain coordinator-owned."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "workingDirectory": "C:/git/agent-skills",
+      "reason": "Coordinator regenerates shared integrity/version index only after all reviewers stop.",
+      "prerequisites": "All package authors read-only."
+    },
+    {
+      "command": "npm run verify",
+      "workingDirectory": "C:/git/agent-skills",
+      "reason": "Coordinator owns cumulative repository checks; not executed by reviewer.",
+      "prerequisites": "Registry regenerated and all authors read-only."
+    }
+  ],
+  "crossSkillIssues": [],
+  "coordinatorActions": [
+    "Inspect the focused 1.2.5 diff.",
+    "Keep the two expected negative fixture results distinct from unexpected failures.",
+    "Optionally run independent agents on the two input files with hidden criteria.",
+    "Run cumulative global validation."
+  ],
+  "evidencePaths": [
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-command-evidence/inspection-evidence.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-command-evidence/local-checks.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-command-evidence/source-ledger.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-command-evidence/ReceiverTimingProbe.java",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-command-evidence/case-01.input.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-command-evidence/case-02.input.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-command-evidence/evaluator-criteria.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-command-evidence/fixture-original/Editor.java",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-command-evidence/fixture-original/Scenario.java",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-command-evidence/fixture-bound/Editor.java",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-command-evidence/fixture-bound/Scenario.java",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-command-evidence/creation.properties",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-command-evidence/execution.properties"
+  ],
+  "processState": {
+    "backgroundProcessesStarted": [],
+    "activeWriters": [],
+    "repositoryWritesStopped": true,
+    "temporaryWritesStopped": true
+  }
+}

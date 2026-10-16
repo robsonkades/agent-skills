@@ -1,0 +1,4 @@
+C:\Users\robso\AppData\Local\Temp\skills-wave3-validation-wyg7TL\java-object-contracts\binary\badOverride\src\api\Key.java:6: error: method does not override or implement a method from a supertype
+  @Override
+  ^
+1 error

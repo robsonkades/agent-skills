@@ -1,0 +1,19 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+const root='C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23';
+const read=n=>JSON.parse(fs.readFileSync(root+'/'+n+'.json','utf8'));
+const actors=read('actors'),mapping=read('mask-map'),r=read('root-grades'),g=read('review/actor-grades');
+assert.equal(g.samples.length,24);
+const comparisons=[];
+for(const a of actors){const m=mapping.find(m=>m.actor===a.id),x=r.samples.find(s=>s.id===a.id),y=g.samples.find(s=>s.id===m.id);assert.equal(y.case,a.case);
+ for(const stage of['1','2'])for(const criterion of['C1','C2','C3','C4']){
+  const ig=y.stages[stage].criteria[criterion];assert.equal(typeof ig.pass,'boolean');assert.ok(ig.reason&&ig.evidence.length);
+  comparisons.push({id:a.id,masked:m.id,case:a.case,condition:a.condition,stage,criterion,root:x.stages[stage].criteria[criterion].pass,independent:ig.pass,agreed:x.stages[stage].criteria[criterion].pass===ig.pass});
+ }
+}
+const groups=['none','reference','candidate'].map(condition=>{const ids=actors.filter(a=>a.condition===condition).map(a=>a.id);const rows=comparisons.filter(c=>ids.includes(c.id));return{condition,sessions:ids.length,rootPassed:ids.filter(id=>rows.filter(r=>r.id===id).every(r=>r.root)).length,independentPassed:ids.filter(id=>rows.filter(r=>r.id===id).every(r=>r.independent)).length,stageCount:ids.length*2,independentStagesPassed:ids.reduce((n,id)=>n+['1','2'].filter(s=>rows.filter(r=>r.id===id&&r.stage===s).every(r=>r.independent)).length,0),criteria:rows.length,independentCriteriaPassed:rows.filter(r=>r.independent).length};});
+const summary={at:new Date().toISOString(),families:4,sessions:24,rounds:48,judgments:192,groups,byCase:Object.fromEntries(['T1','T2','T3','T4'].map(c=>[c,groups.map(g=>({condition:g.condition,passed:actors.filter(a=>a.case===c&&a.condition===g.condition).filter(a=>comparisons.filter(r=>r.id===a.id).every(r=>r.independent)).length,total:2}))])),agreement:comparisons.filter(c=>c.agreed).length,disagreements:comparisons.filter(c=>!c.agreed),comparisons,limits:['These192judgments are not192trials.','Partial masking; independent grader had criteria/calibration, not arm labels or root grades.','No measured token/runtime cost, automatic selection, production validity or equivalence claim.']};
+fs.writeFileSync(root+'/result-summary.json',JSON.stringify(summary,null,2)+'\n');
+fs.writeFileSync(root+'/independent-grades-seal.json',JSON.stringify({at:new Date().toISOString(),sha256:crypto.createHash('sha256').update(fs.readFileSync(root+'/review/actor-grades.json')).digest('hex')},null,2)+'\n');
+console.log(JSON.stringify({groups,agreement:summary.agreement,disagreements:summary.disagreements}));

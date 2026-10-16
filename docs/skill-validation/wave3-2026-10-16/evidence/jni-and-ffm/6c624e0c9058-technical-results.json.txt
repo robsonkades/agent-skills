@@ -1,0 +1,152 @@
+{
+  "compilerApiTarget": 22,
+  "runtime": "Temurin 25.0.3+9",
+  "checks": {
+    "compilationA": true,
+    "compilationB": true,
+    "confinedWorkerRejected": true,
+    "sharedWorkerAccepted": true,
+    "scopeControlCompilation": true,
+    "scopeControls": true,
+    "deniedAccess": true,
+    "noTimeoutOrSpawnError": true
+  },
+  "results": [
+    {
+      "id": "compile-a",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "--release",
+        "22",
+        "-Xlint:all",
+        "-d",
+        "classes",
+        "NativeFixture.java",
+        "WorkerBoundary.java",
+        "BoundaryTest.java",
+        "RequestArenaFactory.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\jni-and-ffm-validation\\case-a",
+      "timeoutMs": 15000,
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": "NativeFixture.java:26: warning: [restricted] Linker.upcallStub(MethodHandle,FunctionDescriptor,Arena,Option...) is a restricted method.\r\n        MemorySegment stub = linker.upcallStub(target, descriptor, stubArena);\r\n                                   ^\r\n  (Restricted methods are unsafe and, if used incorrectly, might crash the Java runtime or corrupt memory)\r\nNativeFixture.java:27: warning: [restricted] Linker.downcallHandle(MemorySegment,FunctionDescriptor,Option...) is a restricted method.\r\n        downcall = linker.downcallHandle(stub, descriptor);\r\n                         ^\r\n  (Restricted methods are unsafe and, if used incorrectly, might crash the Java runtime or corrupt memory)\r\n2 warnings\r\n"
+    },
+    {
+      "id": "run-a",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "--enable-native-access=ALL-UNNAMED",
+        "--illegal-native-access=deny",
+        "-cp",
+        "classes",
+        "BoundaryTest"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\jni-and-ffm-validation\\case-a",
+      "timeoutMs": 15000,
+      "status": 1,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": "Exception in thread \"main\" java.util.concurrent.ExecutionException: java.lang.WrongThreadException: Attempted access outside owning thread\r\n\tat java.base/java.util.concurrent.FutureTask.report(FutureTask.java:124)\r\n\tat java.base/java.util.concurrent.FutureTask.get(FutureTask.java:193)\r\n\tat WorkerBoundary.execute(WorkerBoundary.java:18)\r\n\tat BoundaryTest.main(BoundaryTest.java:4)\r\nCaused by: java.lang.WrongThreadException: Attempted access outside owning thread\r\n\tat java.base/jdk.internal.foreign.MemorySessionImpl.wrongThread(MemorySessionImpl.java:330)\r\n\tat java.base/jdk.internal.misc.ScopedMemoryAccess$ScopedAccessError.newRuntimeException(ScopedMemoryAccess.java:114)\r\n\tat java.base/jdk.internal.foreign.MemorySessionImpl.checkValidState(MemorySessionImpl.java:217)\r\n\tat java.base/jdk.internal.foreign.ConfinedSession.acquire0(ConfinedSession.java:53)\r\n\tat NativeFixture.call(NativeFixture.java:42)\r\n\tat WorkerBoundary.lambda$execute$0(WorkerBoundary.java:17)\r\n\tat java.base/java.util.concurrent.FutureTask.run(FutureTask.java:328)\r\n\tat java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1090)\r\n\tat java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:614)\r\n\tat java.base/java.lang.Thread.run(Thread.java:1474)\r\n"
+    },
+    {
+      "id": "compile-b",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "--release",
+        "22",
+        "-Xlint:all",
+        "-d",
+        "classes",
+        "NativeFixture.java",
+        "WorkerBoundary.java",
+        "BoundaryTest.java",
+        "RequestArenaFactory.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\jni-and-ffm-validation\\case-b",
+      "timeoutMs": 15000,
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": "NativeFixture.java:26: warning: [restricted] Linker.upcallStub(MethodHandle,FunctionDescriptor,Arena,Option...) is a restricted method.\r\n        MemorySegment stub = linker.upcallStub(target, descriptor, stubArena);\r\n                                   ^\r\n  (Restricted methods are unsafe and, if used incorrectly, might crash the Java runtime or corrupt memory)\r\nNativeFixture.java:27: warning: [restricted] Linker.downcallHandle(MemorySegment,FunctionDescriptor,Option...) is a restricted method.\r\n        downcall = linker.downcallHandle(stub, descriptor);\r\n                         ^\r\n  (Restricted methods are unsafe and, if used incorrectly, might crash the Java runtime or corrupt memory)\r\n2 warnings\r\n"
+    },
+    {
+      "id": "run-b",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "--enable-native-access=ALL-UNNAMED",
+        "--illegal-native-access=deny",
+        "-cp",
+        "classes",
+        "BoundaryTest"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\jni-and-ffm-validation\\case-b",
+      "timeoutMs": 15000,
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "PASS one callback returned 7; worker completed before arena close\r\n",
+      "stderr": ""
+    },
+    {
+      "id": "compile-controls",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "--release",
+        "22",
+        "-Xlint:all",
+        "-cp",
+        "classes",
+        "-d",
+        "classes",
+        "../ScopeControls.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\jni-and-ffm-validation\\case-b",
+      "timeoutMs": 15000,
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "id": "run-controls",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "--enable-native-access=ALL-UNNAMED",
+        "--illegal-native-access=deny",
+        "-cp",
+        "classes",
+        "ScopeControls"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\jni-and-ffm-validation\\case-b",
+      "timeoutMs": 15000,
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "PASS confined owner-thread downcall\r\nPASS IllegalStateException before callback\r\nPASS IllegalArgumentException before callback\r\n",
+      "stderr": ""
+    },
+    {
+      "id": "run-denied-access",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "--illegal-native-access=deny",
+        "-cp",
+        "classes",
+        "BoundaryTest"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\jni-and-ffm-validation\\case-b",
+      "timeoutMs": 15000,
+      "status": 1,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": "Exception in thread \"main\" java.lang.IllegalCallerException: Illegal native access from an unnamed module (file:/C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jni-and-ffm-validation/case-b/classes/)\r\n\tat java.base/java.lang.Module.ensureNativeAccess(Module.java:307)\r\n\tat java.base/java.lang.System$1.ensureNativeAccess(System.java:2107)\r\n\tat java.base/jdk.internal.reflect.Reflection.ensureNativeAccess(Reflection.java:123)\r\n\tat java.base/jdk.internal.foreign.abi.AbstractLinker.upcallStub(AbstractLinker.java:130)\r\n\tat NativeFixture.<init>(NativeFixture.java:26)\r\n\tat BoundaryTest.main(BoundaryTest.java:3)\r\n"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+NOTE: Picked up JDK_JAVA_OPTIONS: 
+Picked up JAVA_TOOL_OPTIONS: 
+Picked up _JAVA_OPTIONS: 
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.6.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :resolveRuntime FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':resolveRuntime' (registered in build file 'build.gradle').
+> Could not resolve all files for configuration ':runtimeClasspath'.
+   > Could not find codec-1.0.jar (org.example:codec:1.0).
+     Searched in the following locations:
+         file:/C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b/fixtures/pom-only/repository/org/example/codec/1.0/codec-1.0.jar
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 2s
+1 actionable task: 1 executed

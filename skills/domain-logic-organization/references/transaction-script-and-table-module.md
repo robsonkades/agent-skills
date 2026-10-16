@@ -6,6 +6,11 @@ One procedure per business transaction. Input arrives, the procedure validates i
 what it needs, computes, writes, and returns. Data is carried in structures — records,
 rows, DTOs — with no behaviour of their own.
 
+Here, business transaction means a request or use case, not a guarantee of one atomic
+database transaction. Trace the participating resources, commit/rollback boundary and
+protection against competing writers separately (`enterprise-transactions`). Moving the
+same steps into domain objects or a Table Module does not supply those guarantees.
+
 ```java
 public class RegisterShipment {
 
@@ -34,7 +39,7 @@ public class RegisterShipment {
 }
 ```
 
-That is a good Transaction Script: one transaction, explicit steps, no hidden state, and
+That is a good Transaction Script: one cohesive use case, explicit steps, no hidden state, and
 trivially readable. The pattern's reputation suffers from bad examples, not from the
 pattern.
 
@@ -195,9 +200,9 @@ compare the model's benefits and load costs (`domain-model.md`).
 ## Sources
 
 - [Fowler: Transaction Script](https://martinfowler.com/eaaCatalog/transactionScript.html) — procedures per business transaction, with shared subtasks where useful.
-- [JdbcClient API](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/jdbc/core/simple/JdbcClient.html): API introduced in Spring Framework 6.1.
+- [JdbcClient 6.1.0 API](https://docs.spring.io/spring-framework/docs/6.1.0/javadoc-api/org/springframework/jdbc/core/simple/JdbcClient.html): API introduced in Spring Framework 6.1.
 - [Spring proxying](https://docs.spring.io/spring-framework/reference/core/aop/proxying.html) — final classes and proxy/self-invocation boundaries.
 - [Fowler: Table Module](https://martinfowler.com/eaaCatalog/tableModule.html) — record-set organization, distinct from a gateway's persistence responsibility.
 - [Fowler: Table Data Gateway](https://martinfowler.com/eaaCatalog/tableDataGateway.html) — table-level database access, which does not by itself assign business-policy ownership.
-- [Jakarta Persistence 3.2 specification](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2) — entity lifecycle callbacks and the separate direct-database bulk-operation path.
+- [Jakarta Persistence 3.2 specification](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html) — entity lifecycle callbacks and the separate direct-database bulk-operation path.
 - [Spring Data aggregate event publication](https://docs.spring.io/spring-data/jpa/reference/repositories/core-domain-events.html) — hooks depend on the repository operation and aggregate instances; check the deployed version.

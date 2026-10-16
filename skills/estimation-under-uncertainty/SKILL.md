@@ -36,10 +36,12 @@ permits, or identify what must be learned before a number is useful.
    history may already be sufficient. Stop when more detail would not change the decision;
    unfamiliar work needs explicit assumptions or investigation, not endless subdivision.
 3. **Choose inputs supported by evidence**: comparable cycle-time samples or elicited
-   quantiles with explicit assumptions. If using PERT, distinguish bounds and modal inputs
-   from P10/P50/P90; they are not interchangeable. Without calibration, label the range
-   provisional and do not fabricate a coverage percentage
-   (`references/methods.md`).
+   quantiles with explicit assumptions. Before using project history, follow the
+   [history procedure](references/methods.md#reference-class-forecasting-use-your-own-history)
+   to trace delivery records and check what their timestamps measure. A commit or merge is
+   not automatically the work's start or completion. If using PERT, distinguish bounds and
+   modal inputs from P10/P50/P90; they are not interchangeable. Without calibration, label
+   the range provisional and do not fabricate a coverage percentage.
 4. **Combine them with their dependencies.** For a sum, expected values add; variances add
    when covariances are zero, as under independence. Shared uncertain productivity, outages or
    integration risks can correlate durations. Shared people also constrain parallel work even
@@ -53,18 +55,26 @@ permits, or identify what must be learned before a number is useful.
    when reviewing a deadline assembled from task percentiles.
 5. **Calibrate against comparable history.** Record sample count, start/end definitions,
    changed team conditions and omissions. Three examples can anchor discussion, not establish
-   reliable tail percentiles. Compare forecasts with later outcomes without replacing old estimates.
+   reliable tail percentiles. Preserve dated forecasts and compare later outcomes at comparable
+   horizons. Count known deadline misses even when delivery is unfinished; do not claim learning
+   from a correction fitted and evaluated on the same outcomes. Use the
+   [feedback procedure](references/methods.md#learn-from-outcomes-without-rewriting-history)
+   when checking calibration or changing the estimation method.
 6. **State the forecast event and assumptions**: a central P10–P90 interval has nominal 80%
    coverage, while "by P80" is a model completion percentile, not an interval.
    Discrete durations/rounding can change coverage; calibration requires actual outcomes.
    Both require a stated model/basis. Otherwise report an uncalibrated scenario range.
 7. **Re-estimate when evidence arrives**, and say so immediately. An estimate is a statement
    about what you knew when you made it. Update when new evidence changes the decision or
-   risk materially; retain the original forecast and explain the change.
+   risk materially; retain the original forecast and explain the change. Use observed progress,
+   remaining scope and current capacity, not percentage of the original time budget consumed.
+   Updating one forecast does not demonstrate that the method is better calibrated.
 
 Deliver scope and completion criteria, estimate units/range and its basis, key assumptions,
-target versus commitment if supplied, and the next evidence/re-estimation trigger. Scale
-detail to the decision; do not invent a date, owner or probability merely to fill this shape.
+target versus commitment if supplied, and the next evidence/re-estimation trigger. When using
+history, retain source identifiers, selection criteria and material exclusions so the basis
+can be checked. Scale detail to the decision; do not invent a date, owner or probability
+merely to fill this shape.
 
 ## Rules
 

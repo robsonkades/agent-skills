@@ -1,0 +1,22 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import {fileURLToPath} from 'node:url';
+
+const checks = path.dirname(fileURLToPath(import.meta.url));
+const output = path.resolve(checks, '../project');
+const input = path.resolve(checks, '../../input/project');
+const walk = directory => fs.readdirSync(directory, {withFileTypes: true}).flatMap(entry =>
+    entry.isDirectory() ? walk(path.join(directory, entry.name)) : [path.join(directory, entry.name)]);
+const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const compared = walk(input).map(file => {
+    const relative = path.relative(input, file);
+    const counterpart = path.join(output, relative);
+    return {file: relative.replaceAll('\\', '/'), inputSha256: hash(file),
+        outputSha256: fs.existsSync(counterpart) ? hash(counterpart) : null};
+});
+const unexpected = compared.filter(entry => entry.inputSha256 !== entry.outputSha256 && entry.file !== 'RUNBOOK.md');
+const result = {compared, unexpected, passed: unexpected.length === 0};
+fs.writeFileSync(path.join(checks, 'preservation.json'), JSON.stringify(result, null, 2) + '\n');
+if (!result.passed) throw new Error('Unexpected change to input counterpart: ' + JSON.stringify(unexpected));
+console.log(`PASS preservation: ${compared.length} original files compared; only authorized RUNBOOK.md changed; application and frozen files identical`);

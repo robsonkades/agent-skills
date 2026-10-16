@@ -1,0 +1,144 @@
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.time.Instant;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.UUID;
+import org.hibernate.SessionFactory;
+import org.hibernate.boot.MetadataSources;
+import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+import org.hibernate.tool.schema.spi.SchemaManagementException;
+
+public class SchemaActionProbe {
+    @Entity(name = "OrderRow")
+    @Table(name = "customer_order")
+    public static class OrderRow {
+        @Id Long id;
+        @Column(name = "placed_at") Instant placedAt;
+        protected OrderRow() {}
+        OrderRow(long id, Instant placedAt) { this.id = id; this.placedAt = placedAt; }
+    }
+
+    static int assertions;
+    static void check(boolean value, String message) {
+        assertions++;
+        if (!value) throw new AssertionError(message);
+    }
+
+    static boolean hasColumn(Connection connection) throws SQLException {
+        try (var result = connection.getMetaData().getColumns(null, "PUBLIC", "CUSTOMER_ORDER", "PLACED_AT")) {
+            return result.next();
+        }
+    }
+
+    static int count(Connection connection) throws SQLException {
+        try (var statement = connection.createStatement();
+             var result = statement.executeQuery("select count(*) from customer_order")) {
+            result.next();
+            return result.getInt(1);
+        }
+    }
+
+    static boolean contains(Throwable problem, Class<?> type, String fragment) {
+        for (Throwable current = problem; current != null; current = current.getCause()) {
+            if (type.isInstance(current) && current.getMessage() != null && current.getMessage().contains(fragment)) return true;
+        }
+        return false;
+    }
+
+    public static void main(String[] args) throws Exception {
+        String mode = args[0];
+        Path output = Path.of(args[1]).toAbsolutePath();
+        Files.createDirectories(output);
+        boolean compatible = mode.equals("compatible-validate");
+        boolean scripts = mode.equals("script-create");
+        boolean mutate = mode.equals("database-drop-and-create");
+        boolean none = mode.equals("database-none");
+        check(java.util.Set.of("missing-validate", "compatible-validate", "script-create",
+                "database-drop-and-create", "database-none").contains(mode), "known mode");
+        String url = "jdbc:h2:mem:mm_" + UUID.randomUUID();
+        check(url.startsWith("jdbc:h2:mem:"), "only owned in-memory database");
+        Class.forName("org.h2.Driver");
+        try (Connection keeper = DriverManager.getConnection(url, "sa", "")) {
+            try (var statement = keeper.createStatement()) {
+                statement.execute("create table customer_order (id bigint primary key" +
+                        (compatible ? ", placed_at timestamp(6) with time zone" : "") + ")");
+                statement.execute("insert into customer_order(id) values (41)");
+            }
+            check(count(keeper) == 1, "seed row created");
+            check(hasColumn(keeper) == compatible, "initial schema controlled");
+            Map<String, Object> settings = new LinkedHashMap<>();
+            settings.put("hibernate.connection.driver_class", "org.h2.Driver");
+            settings.put("hibernate.connection.url", url);
+            settings.put("hibernate.connection.username", "sa");
+            settings.put("hibernate.connection.password", "");
+            settings.put("hibernate.connection.pool_size", "1");
+            settings.put("hibernate.hbm2ddl.auto", "validate");
+            settings.put("hibernate.hbm2ddl.halt_on_error", "true");
+            settings.put("hibernate.show_sql", "true");
+            if (mutate) settings.put("jakarta.persistence.schema-generation.database.action", "drop-and-create");
+            if (none) settings.put("jakarta.persistence.schema-generation.database.action", "none");
+            Path scriptFile = output.resolve("generated.sql");
+            Writer scriptWriter = scripts ? Files.newBufferedWriter(scriptFile) : null;
+            if (scripts) {
+                settings.put("jakarta.persistence.schema-generation.scripts.action", "create");
+                settings.put("jakarta.persistence.schema-generation.scripts.create-target", scriptWriter);
+            }
+            var printable = new LinkedHashMap<>(settings);
+            printable.put("hibernate.connection.url", "jdbc:h2:mem:<unique owned fixture>");
+            printable.remove("hibernate.connection.password");
+            if (scripts) printable.put("jakarta.persistence.schema-generation.scripts.create-target", scriptFile.toString());
+            System.out.println("BOOTSTRAP_SETTINGS=" + printable);
+            var registry = new StandardServiceRegistryBuilder().applySettings(settings).build();
+            boolean opened = false;
+            boolean writeSucceeded = false;
+            boolean missingColumnWriteFailed = false;
+            String failure = "";
+            try {
+                SessionFactory factory = new MetadataSources(registry).addAnnotatedClass(OrderRow.class)
+                        .buildMetadata().buildSessionFactory();
+                opened = true;
+                try (factory) {
+                    check(hasColumn(keeper) == (compatible || mutate), "database column state after bootstrap");
+                    check(count(keeper) == (mutate ? 0 : 1), "seed row distinguishes actual DDL mutation");
+                    try {
+                        factory.inTransaction(session -> session.persist(new OrderRow(42L, Instant.EPOCH)));
+                        writeSucceeded = true;
+                        var row = factory.fromSession(session -> session.find(OrderRow.class, 42L));
+                        check(row != null && row.placedAt.equals(Instant.EPOCH), "ORM read/write round-trip");
+                    } catch (RuntimeException problem) {
+                        if (!contains(problem, SQLException.class, "PLACED_AT")) throw problem;
+                        missingColumnWriteFailed = true;
+                        System.out.println("WRITE_FAILURE=" + problem.getClass().getName() + ":" + problem.getMessage());
+                    }
+                }
+            } catch (SchemaManagementException problem) {
+                failure = problem.getMessage();
+                if (!failure.contains("missing column [placed_at]")) throw problem;
+                System.out.println("BOOTSTRAP_FAILURE=" + failure);
+            } finally {
+                StandardServiceRegistryBuilder.destroy(registry);
+                if (scriptWriter != null) scriptWriter.close();
+            }
+            check(opened != mode.equals("missing-validate"), "bootstrap outcome");
+            check(writeSucceeded == (compatible || mutate), "write outcome");
+            check(missingColumnWriteFailed == (scripts || none), "missing-column SQL detected");
+            check(hasColumn(keeper) == (compatible || mutate), "final schema state");
+            check(count(keeper) == (compatible ? 2 : 1), "final data state");
+            String script = scripts ? Files.readString(scriptFile) : "";
+            check(scripts == script.toLowerCase(java.util.Locale.ROOT).contains("placed_at"), "DDL script target observed");
+            check(scripts == Files.exists(scriptFile), "no incidental script output");
+            System.out.println("RESULT mode=" + mode + " opened=" + opened + " writeSucceeded=" + writeSucceeded +
+                    " missingColumnWriteFailed=" + missingColumnWriteFailed + " hasPlacedAt=" + hasColumn(keeper) +
+                    " rowCount=" + count(keeper) + " scriptGenerated=" + scripts + " assertions=" + assertions);
+        }
+    }
+}

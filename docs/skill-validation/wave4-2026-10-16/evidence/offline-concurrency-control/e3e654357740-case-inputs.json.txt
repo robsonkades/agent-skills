@@ -1,0 +1,33 @@
+{
+  "purpose": "Actor-facing inputs only. Deliver exactly one case with its listed source fixtures, not the sibling case or evaluator criteria.",
+  "shared": {
+    "request": "Review this manual-review edit protocol and the supplied reproduction. Determine whether it preserves a separately committed edit when the load and later submit overlap another writer. Make the smallest justified correction if needed, or retain the adequate design with evidence. Preserve successful uncontended editing, public signatures and the existing transaction/validation contract.",
+    "projectContext": "Java 17 JDBC, H2 2.4.240 in this reproducible fixture, READ_COMMITTED, reads from the same authoritative in-memory database; no ORM, cache or replica. The original read commits before manual review and submit begins in a new transaction. The root revision is the contract for the whole submitted edit, including unchanged line 1. Revisions are not reused. Root and line writes commit atomically. All fixture writers are submit and recalculate; there are no triggers or external writers. If a matching snapshot is still current, editing line 2 to 50 is valid while total <= 100. A committed line 1 change must not be silently overwritten by a stale edit.",
+    "constraints": [
+      "No toolchain upgrade, dependency installation or framework addition.",
+      "Do not hold a database transaction across manual review.",
+      "Do not weaken stale-edit protection or turn a conflict into blind retry.",
+      "Distinguish this H2 fixture result from any untested production database behavior."
+    ],
+    "prerequisites": "Use existing Java 17+ and the available H2 2.4.240 jar; no server. Each case gets an isolated working directory. The evidence environment used C:/Users/robso/.m2/repository/com/h2database/h2/2.4.240/h2-2.4.240.jar.",
+    "reproduction": "Copy the selected ReviewStore.java and common CaseDriver.java into an isolated directory; javac --release 17 -Xlint:all -Werror -d classes ReviewStore.java CaseDriver.java; java -cp \"classes;<H2-2.4.240.jar>\" CaseDriver (use ':' classpath separator off Windows)."
+  },
+  "cases": [
+    {
+      "id": "offline-a",
+      "title": "Review service variant A",
+      "files": [
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-offline-concurrency-control-1f3a71ec38f3407a90e063633bc86aa2/cases/a/ReviewStore.java",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-offline-concurrency-control-1f3a71ec38f3407a90e063633bc86aa2/cases/CaseDriver.java"
+      ]
+    },
+    {
+      "id": "offline-b",
+      "title": "Review service variant B",
+      "files": [
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-offline-concurrency-control-1f3a71ec38f3407a90e063633bc86aa2/cases/b/ReviewStore.java",
+        "C:/Users/robso/AppData/Local/Temp/agent-skills-wave4-offline-concurrency-control-1f3a71ec38f3407a90e063633bc86aa2/cases/CaseDriver.java"
+      ]
+    }
+  ]
+}

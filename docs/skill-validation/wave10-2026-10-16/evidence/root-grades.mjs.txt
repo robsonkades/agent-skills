@@ -1,0 +1,17 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+const root='C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23';
+const sha=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
+const actors=JSON.parse(fs.readFileSync(root+'/actors.json','utf8'));
+const notes=[1,2,3].flatMap(i=>JSON.parse(fs.readFileSync(root+'/root-notes-'+i+'.json','utf8')));
+const samples=actors.map(a=>{const stages={};for(const stage of [1,2]){
+ const n=notes.filter(n=>n.stage===stage&&n.actors.includes(a.id));assert.equal(n.length,1,a.id+'/'+stage);
+ const path=a.dir+'/output/answer'+stage+'.md';assert.ok(fs.readFileSync(path,'utf8').length>0);
+ stages[stage]={criteria:Object.fromEntries(['C1','C2','C3','C4'].map((k,i)=>[k,{pass:n[0].pass[i],evidence:[{path,sha256:sha(path)}],reason:n[0].reasons[i]}])),pass:n[0].pass.every(Boolean)};
+ }return{id:a.id,case:a.case,stages,pass:Object.values(stages).every(s=>s.pass)};});
+const result={at:new Date().toISOString(),evaluator:'coordinator; arm-aware manual read of all48answers before independent grader receives packets',basis:'Frozen criteria, with each decision tied to full artifact hash and a semantic reason. Grouped notes describe common observed behavior after individually reading each response; no phrase matcher or actor self-score.',samples};
+if(fs.existsSync(root+'/root-grades.json'))throw Error('Already sealed');
+fs.writeFileSync(root+'/root-grades.json',JSON.stringify(result,null,2)+'\n');
+fs.writeFileSync(root+'/root-grades-seal.json',JSON.stringify({at:new Date().toISOString(),sha256:sha(root+'/root-grades.json'),notes:[1,2,3].map(i=>({path:'root-notes-'+i+'.json',sha256:sha(root+'/root-notes-'+i+'.json')}))},null,2)+'\n');
+console.log(JSON.stringify({sessions:samples.length,passed:samples.filter(s=>s.pass).length,criteria:samples.length*8}));

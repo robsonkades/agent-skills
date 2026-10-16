@@ -1,0 +1,19 @@
+public final class FrequencyProbe {
+    static int occasional(int value) {
+        int mixed = value * 17 + 3;
+        return mixed ^ (mixed >>> 3);
+    }
+
+    static int caller(int value) {
+        return (value & 63) == 0 ? occasional(value) : value;
+    }
+
+    public static void main(String[] args) {
+        long checksum = 0;
+        for (int i = 0; i < 500_000; i++) {
+            checksum += caller(i);
+        }
+        System.out.println("checksum=" + checksum);
+        System.out.println("runtime=" + System.getProperty("java.runtime.version"));
+    }
+}

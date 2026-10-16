@@ -1,0 +1,8 @@
+Java source baseline: 17. The controlled environment uses Hibernate ORM 6.6.33.Final, Jakarta Persistence API 3.1.0 and H2 2.3.232. This is a focused persistence slice, not a production deployment.
+
+Each member may have zero or one access badge. A badge requires an existing member. Badge and member identifiers are independently assigned and stable. Deleting a badge must leave its member intact. BadgeDirectory must return the member's sole badge or an empty result for a member without one. The requirement applies to ORM and direct SQL writers. The transaction caller begins and completes transactions around BadgeIssueService; exception presentation belongs to its outer boundary.
+
+schema.sql is the deployed DDL for this fixture, and deployment.properties is the effective provider configuration. The database starts empty for a fresh fixture. Use both ordinary and rejected writes when checking the contract. Do not infer production migration safety from this empty fixture; real duplicate data needs an explicit resolution policy.
+
+The four Java files are the complete focused mapping, issuance service and directory consumer. A coordinator can reproduce them with an isolated in-memory database. No external server or installation is needed or authorized. Evidence from H2 does not establish PostgreSQL, another provider or a production schema guarantee.
+

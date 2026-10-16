@@ -5,8 +5,8 @@
 ```
 Safepoint Total         = Reaching safepoint (sync) + At safepoint (VM work) + Leaving safepoint
                           \___________________/       \__________________/       \_______________/
-                           thread-side problem          collector or VM-op        disarm + wake-up,
-                           (TTSP)                       problem                   separate term
+                           VM coordination and          collector or VM-op        disarm + wake-up,
+                           thread synchronization       problem                   separate term
 ```
 
 This is the tested JDK 25 log layout, not a cross-version parser schema. `At` spans the
@@ -17,11 +17,18 @@ bucket to sum again. Match request intervals before reasoning about a remainder.
 | Log field            | What it measures                                            | Answers "how long did the application stop"?              |
 | -------------------- | ----------------------------------------------------------- | --------------------------------------------------------- |
 | `Time since last`    | Interval since the previous safepoint — frequency, not cost | No                                                        |
-| `Reaching safepoint` | Sync time; the slowest thread's TTSP                        | Partly                                                    |
+| `Reaching safepoint` | Elapsed synchronization including VM coordination           | Partly; not an individual thread's delay                  |
 | `At safepoint`       | Synchronized interval: VM work and cleanup                  | Partly; not necessarily equal to a GC event               |
 | `Leaving safepoint`  | Disarming the polls and waking the threads                  | Partly — the term a two-field sum drops                   |
 | `Total`              | Sync + operation + leaving                                  | JVM safepoint interval; correlate to application evidence |
 | `Threads`            | Counts recorded by the synchronization pass                 | No; counts alone do not establish sync cost               |
+
+On the pinned 25.0.3 implementation, the reaching timer starts before the collector's
+synchronization hook, acquiring `Threads_lock`, arming polls and checking/waiting for threads.
+A late thread can dominate it, but the duration alone does not identify that thread or isolate
+its poll-free execution time. Investigate VM coordination or scheduling when the available
+thread evidence does not explain the interval; reducing a loop's strip size targets only a
+demonstrated polling component.
 
 Worked example of why the manual sum is not the metric — a real `G1CollectFull` line from
 the package's historical 25.0.3 validation (not a new target observation):
@@ -100,6 +107,14 @@ with an iteration count. They are not instantaneous markers or one event per wai
 | `jdk.SafepointStateSynchronization` | Whole synchronization pass     | `safepointId`, `initialThreadCount`, `runningThreadCount`, `iterations` | Aggregated counts/iterations, not a per-iteration timeline                      |
 | `jdk.ExecuteVMOperation`            | The operation itself           | `operation`, `safepoint`, `blocking`, `caller`, `safepointId`, duration | Says **what** ran at that safepoint, and joins to Begin/End on `safepointId`    |
 | `jdk.SafepointLatency`              | One profiling sample (JEP 518) | `stackTrace`, `threadState`, duration                                   | Sample-request-to-poll delay; neither global TTSP nor a quantitative bias score |
+
+For the global cycle events above and `ExecuteVMOperation`, the checked 25.0.3 producer is
+the VM thread. Their standard `eventThread` is not a non-arrived application thread.
+`ExecuteVMOperation.caller` identifies the operation's requester, which may differ from
+the thread delaying synchronization. Do not label either as the culprit from these fields alone. Obtain a
+non-arrived identity from aligned timeout/other thread-state evidence, then investigate that
+thread's stack and scheduling over the same interval. The separate per-thread
+`SafepointLatency` event keeps the different sampler semantics described below.
 
 ```bash
 jfr configure --input profile.jfc --output safepoints.jfc \
@@ -258,6 +273,10 @@ removal merely because it differs from the default.
 
 Source for JFR duration boundaries and synchronization aggregation:
 [OpenJDK 25 safepoint implementation](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/safepoint.cpp).
+The [25.0.3 synchronization path](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/runtime/safepoint.cpp)
+places the reaching timer around VM coordination as well as thread acknowledgement;
+the [VM-operation event producer](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/runtime/vmThread.cpp)
+records the requesting thread separately as `caller`.
 Compare the [JDK 24 layout](https://github.com/openjdk/jdk/blob/jdk-24-ga/src/hotspot/share/runtime/safepoint.cpp)
 before interpreting an older `At` or absent `Leaving` field.
 For cadence, inspect the [25.0.3 VM-operation wait loop](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/runtime/vmThread.cpp)

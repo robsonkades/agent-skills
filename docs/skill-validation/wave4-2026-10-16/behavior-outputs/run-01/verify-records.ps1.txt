@@ -1,0 +1,30 @@
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
+$taskRoot = 'C:/Users/robso/AppData/Local/Temp/skills-wave4-actors-HoLlUY/run-01'
+$record = Get-Content -LiteralPath (Join-Path $taskRoot 'output/execution.json') -Raw | ConvertFrom-Json
+$checks = Get-Content -LiteralPath (Join-Path $taskRoot 'output/checks.json') -Raw | ConvertFrom-Json
+$decision = Get-Content -LiteralPath (Join-Path $taskRoot 'output/decision.md') -Raw
+if (@($record.commands).Count -ne 29) { throw 'Expected 29 recorded Java/JDK commands' }
+if ($record.commands.id | Group-Object | Where-Object Count -ne 1) { throw 'Repeated execution IDs' }
+foreach ($entry in $record.commands) {
+    if ($entry.timedOut -or $entry.allowedExitCodes -notcontains $entry.exitCode) { throw "Unexpected execution status: $($entry.id)" }
+    if ($entry.durationMs -gt 30000) { throw "Exceeded 30-second process limit: $($entry.id)" }
+    if ([System.IO.File]::ReadAllText($entry.stdoutLog) -cne $entry.stdout) { throw "stdout mismatch: $($entry.id)" }
+    if ([System.IO.File]::ReadAllText($entry.stderrLog) -cne $entry.stderr) { throw "stderr mismatch: $($entry.id)" }
+}
+foreach ($property in $checks.checks.PSObject.Properties) { if (-not $property.Value) { throw "Artifact assertion failed: $($property.Name)" } }
+foreach ($artifact in $checks.inputArtifactsBefore) {
+    if ((Get-FileHash -LiteralPath (Join-Path $taskRoot $artifact.path) -Algorithm SHA256).Hash -cne $artifact.sha256) { throw "Input changed: $($artifact.path)" }
+}
+if ((Get-FileHash -LiteralPath (Join-Path $taskRoot $checks.correctedBundle.path) -Algorithm SHA256).Hash -cne $checks.correctedBundle.sha256) { throw 'Generated bundle hash mismatch' }
+if ([string]::IsNullOrWhiteSpace($decision)) { throw 'Decision missing' }
+[ordered]@{
+    javaJdkCommandsVerified = 29
+    expectedNegativeControls = @($record.commands | Where-Object exitCode -eq 1).Count
+    distinctNormalizationCases = 6
+    artifactAssertionsPassed = @($checks.checks.PSObject.Properties).Count
+    logStreamsMatchRecords = $true
+    inputArtifactsUnchanged = $true
+    maximumChildDurationMs = ($record.commands.durationMs | Measure-Object -Maximum).Maximum
+    decisionWordCount = @($decision -split '\s+' | Where-Object { $_ }).Count
+} | ConvertTo-Json -Compress

@@ -1,0 +1,6 @@
+package api;
+
+public class Labeler {
+    public String getLabel(String value) { return "base:" + value; }
+    public String render(String value) { return getLabel(value); }
+}

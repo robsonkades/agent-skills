@@ -1,0 +1,11 @@
+Recomendo **adotar J para os próximos 12 meses**. A atualização informa que o Financeiro confirmou a fatura mensal de 17 mil, fixa e completa para o volume contratado. Assim:
+
+- H: custo futuro total de **240 mil**.
+- J: **12 + 12 × 17 = 216 mil**, incluindo migração/saída.
+- Economia de J: **24 mil**, ou **10%** frente a H.
+
+A fatura confirmada fica abaixo do ponto de equilíbrio de 19 mil/mês. Como as duas alternativas e a transição de J satisfazem as obrigações verificadas, e não há preferência residual além do menor custo futuro, J é a escolha sustentada pelo material. Os 180 mil já pagos por H permanecem excluídos por serem irrecuperáveis. O desembolso fixo de 12 mil é um custo aceito e já contabilizado.
+
+**Não são necessárias novas investigações para esta decisão.** O benchmarking proposto não pode mudar a escolha nas condições fornecidas; acrescentar quatro semanas de espera não tem benefício decisório demonstrado. Também não cabe inventar uma desvantagem para cada alternativa: uma comparação válida pode concluir que uma opção é superior em todos os critérios que diferenciam as opções.
+
+Diego pode decidir amanhã a favor de J e autorizar separadamente a despesa de migração. A conclusão do Financeiro é informação recebida, não medição que executei. Reabrir a análise somente se mudar alguma premissa material, como custo total, volume contratado ou cumprimento das obrigações.

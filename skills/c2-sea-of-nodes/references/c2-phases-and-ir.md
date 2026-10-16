@@ -137,16 +137,17 @@ and [allocation elimination versus expansion](https://github.com/openjdk/jdk25u/
 The refusal text is the limit's name in disguise. These are the exact strings C2 prints under
 `-XX:+PrintInlining` (`bytecodeInfo.cpp`, confirmed on Temurin 25.0.3):
 
-| Flag                      | Default                         | Effect                                                            | Refusal printed                       |
-| ------------------------- | ------------------------------- | ----------------------------------------------------------------- | ------------------------------------- |
-| `MaxInlineSize`           | 35 bytecode bytes               | Base bytecode-size allowance                                      | `too big`                             |
-| `FreqInlineSize`          | 325 bytecode bytes              | Larger allowance for eligible sites                               | `hot method too big`                  |
-| `InlineSmallCode`         | 2500 adjusted instruction bytes | Eligible compiled-code size gate                                  | `already compiled into a big method`  |
-| `MaxInlineLevel`          | 15 (C1: `C1MaxInlineLevel` 9)   | Maximum nested inlining depth                                     | `inlining too deep`                   |
-| `MaxRecursiveInlineLevel` | 1                               | Recursion: only one level is inlined                              | `recursive inlining is too deep`      |
-| —                         | —                               | Megamorphic or unprofiled receiver: size never considered         | `virtual call`, `no static binding`   |
-| —                         | —                               | Callee class not yet loaded or resolved at compile time           | `not inlineable` after `(not loaded)` |
-| `C1MaxInlineSize`         | 35 (C1 only)                    | C1's own limit, printed in **tier 1/2/3** trees, not a C2 verdict | `callee is too large`                 |
+| Flag                      | Default                         | Effect                                                            | Refusal printed                         |
+| ------------------------- | ------------------------------- | ----------------------------------------------------------------- | --------------------------------------- |
+| `MaxInlineSize`           | 35 bytecode bytes               | Base bytecode-size allowance                                      | `too big`                               |
+| `FreqInlineSize`          | 325 bytecode bytes              | Larger allowance for eligible sites                               | `hot method too big`                    |
+| `InlineSmallCode`         | 2500 adjusted instruction bytes | Eligible compiled-code size gate                                  | `already compiled into a big method`    |
+| `InlineSmallCode / 4`     | 625 adjusted instruction bytes  | Derived cold-branch gate, not a separate VM option                | `already compiled into a medium method` |
+| `MaxInlineLevel`          | 15 (C1: `C1MaxInlineLevel` 9)   | Maximum nested inlining depth                                     | `inlining too deep`                     |
+| `MaxRecursiveInlineLevel` | 1                               | Recursion: only one level is inlined                              | `recursive inlining is too deep`        |
+| —                         | —                               | Megamorphic or unprofiled receiver: size never considered         | `virtual call`, `no static binding`     |
+| —                         | —                               | Callee class not yet loaded or resolved at compile time           | `not inlineable` after `(not loaded)`   |
+| `C1MaxInlineSize`         | 35 (C1 only)                    | C1's own limit, printed in **tier 1/2/3** trees, not a C2 verdict | `callee is too large`                   |
 
 A verdict needs its compiler and compilation identity. In the recipe's example, C1 refuses
 the 85-byte callee with `callee is too large`; C2 later says `inline (hot)` for that callee.
@@ -164,6 +165,16 @@ total nmethod or `Compiler.codelist` address span. The inspected
 `ciMethod::inline_instructions_size()` uses the eligible nmethod's instruction end minus
 its verified entry and skipped instructions. A larger compiled callee can block later
 inlining and escape-analysis opportunities that depend on removing that call boundary.
+
+The `medium method` refusal comes from `should_inline`'s cold branch: when frequency,
+unboxing and constructor criteria do not select the frequent-site branch, an eligible
+pre-existing optimized nmethod is checked against `InlineSmallCode / 4` **before** the
+bytecode-size check. The `big method` gate in `should_not_inline` uses the full flag value.
+Thus even a tiny bytecode method can fail the cold gate while its compiled size is below
+the full limit; increasing `MaxInlineSize` alone does not remove this refusal. Keep the
+observed reason, caller profile and effective flags together rather than treating every
+size refusal as a bytecode budget problem. Other legality/profitability gates still apply;
+identify a material measured cost before considering a change to either policy.
 
 Implementation references: [C2 allowance selection](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/opto/bytecodeInfo.cpp)
 and [the compiled instruction-size metric](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/ci/ciMethod.cpp).

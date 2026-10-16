@@ -1,0 +1,4 @@
+[0.043s][info][safepoint] Safepoint "SetNotifyJvmtiEventsMode", Time since last: 30807600 ns, Reaching safepoint: 3900 ns, At safepoint: 2400 ns, Leaving safepoint: 300 ns, Total: 6600 ns, Threads: 0 runnable, 11 total
+[0.124s][info][safepoint] Safepoint "JFRSafepointClear", Time since last: 80921200 ns, Reaching safepoint: 1600 ns, At safepoint: 6500 ns, Leaving safepoint: 300 ns, Total: 8400 ns, Threads: 0 runnable, 13 total
+[0.129s][info][safepoint] Safepoint "G1CollectFull", Time since last: 1861500 ns, Reaching safepoint: 12300 ns, At safepoint: 3381200 ns, Leaving safepoint: 6200 ns, Total: 3399700 ns, Threads: 1 runnable, 13 total
+[0.129s][info][safepoint] Safepoint "JFRSafepointWrite", Time since last: 294400 ns, Reaching safepoint: 1700 ns, At safepoint: 14800 ns, Leaving safepoint: 2000 ns, Total: 18500 ns, Threads: 0 runnable, 13 total

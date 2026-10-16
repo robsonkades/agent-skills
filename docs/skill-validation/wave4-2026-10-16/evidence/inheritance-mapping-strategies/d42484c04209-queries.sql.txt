@@ -1,0 +1,5 @@
+-- Card import details are requested separately from transfer details.
+SELECT id, tenant_id, provider_reference, amount, card_last4
+  FROM card_payment WHERE tenant_id = :tenant AND provider_reference = :reference;
+SELECT id, tenant_id, provider_reference, amount, iban
+  FROM bank_transfer WHERE tenant_id = :tenant AND provider_reference = :reference;

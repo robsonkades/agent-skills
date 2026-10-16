@@ -15,10 +15,32 @@ For non-null `x`, `y`, `z`:
 And the linked obligation: **equal objects must have equal hash codes**. Unequal objects
 _may_ share one — that is a collision, not a defect.
 
-Both contracts are enforced by nothing at compile time and by everything at runtime. The
+The compiler does not verify these algebraic properties. The
 "consistent" property is conditional on equality-relevant state remaining unchanged. Mutable
 equality is not inherently illegal, but changing that state during hash-collection membership
 can break lookup; no particular failure is guaranteed.
+
+## Verify the method and the consumer's equality relation
+
+`equals(MyType)` overloads the name; it does not override `equals(Object)`. A direct call with
+two `MyType` variables can report value equality while `Objects.equals`, an `Object`-typed
+call and `HashMap` lookup still use inherited reference equality. Equal hash codes cannot
+repair that mismatch. Use `@Override` on the intended `public boolean equals(Object)` and
+exercise that signature and the actual collection operation, not only typed calls.
+
+Before replacing an accidental overload, inspect published consumers. Removing `equals(MyType)`
+can break a client already compiled against that descriptor even when its source recompiles
+successfully against `equals(Object)`. If binary compatibility is required, retain the typed
+method as a delegating overload (cast its argument to `Object` when delegating to avoid recursion),
+and run the old client without recompiling it. Otherwise replace the accidental overload when
+the consumer contract permits it. Both call paths must implement the intended equality relation.
+
+Follow the collection's factory or wrapper to its actual relation before blaming the key.
+`IdentityHashMap` deliberately compares keys and values by `==`, ignoring overridden equality
+and hashing; it can correctly keep distinct but value-equal nodes separate in a graph traversal.
+Changing the key methods will not turn it into a value-keyed map. Preserve identity semantics
+when required, or change the collection choice when consumers require value lookup. Sorted-key
+relations belong to the ordering reference; a variable declared as `Map` does not settle this.
 
 ## The canonical implementation
 
@@ -207,6 +229,10 @@ added later — including caches, back-references, and the lazy association that
 ## Authoritative references
 
 - [Object contract, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html)
+- [Method overriding and overloading, JLS 25 §8.4.8–9](https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html#jls-8.4.8)
+- [Compile-time method selection, JLS 25 §15.12](https://docs.oracle.com/javase/specs/jls/se25/html/jls-15.html#jls-15.12)
+- [Method removal and binary compatibility, JLS 25 §13.4.12](https://docs.oracle.com/javase/specs/jls/se25/html/jls-13.html#jls-13.4.12)
+- [IdentityHashMap reference equality, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/IdentityHashMap.html)
 - [Record contract, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Record.html)
 - [Objects.hash and hashCode, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Objects.html)
 - [Array content equality and hashing, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Arrays.html)

@@ -46,8 +46,9 @@ measurement is missing, and qualify only the claims that need it.
 2. **Classify what the count is proportional to.** Repeated selects growing with accessed
    associations suggest N+1; a constant query count can still transfer excessive rows or be
    slow. Entity-by-entity writes remain logical per-row DML even when JDBC batching works.
-   Measure batch executions separately; inspect listeners, cascades, implicit flushes and
-   identifier allocation rather than diagnosing from a count alone.
+   Measure batch executions separately; inspect listeners, cascades, implicit flushes,
+   identifier allocation and the caller's `persist`/`merge` path, including repository
+   new-entity detection, rather than diagnosing from a count alone.
 3. **Find the traversal that triggers it.** For N+1 the statement log shows one query followed by
    many near-identical ones differing only in a parameter. The many can be associations
    being resolved per row, possibly through eager secondary selects as well as lazy traversal.

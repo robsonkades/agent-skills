@@ -110,7 +110,8 @@ them; otherwise report the ownership correction and the evidence needed to verif
 - Metaspace growth and old application classes after redeploy suggest loader retention;
   confirm an unwanted root path and class-unloading/GC opportunity before declaring a leak.
   The usual holders are static registries, `ThreadLocal` values on container threads,
-  JDBC drivers, shutdown hooks and unremoved listeners.
+  thread context class loaders, JDBC drivers, shutdown hooks and unremoved listeners.
+  Use `jvm-class-loading` for loader selection and the component's stop protocol.
 - Restarts can mask per-replica retention until traffic concentrates or deploy cadence
   changes. “It recovers after restart” is evidence of process-lifetime state, not proof of a
   leak; bounded caches, fragmentation and load reset can look similar. Preserve evidence

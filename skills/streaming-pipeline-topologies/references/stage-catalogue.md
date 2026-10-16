@@ -6,7 +6,7 @@ semantic steps when useful without forcing each implementation into one category
 | Shape        | What it does                             | Ordering effect                                                                        | Safe above concurrency 1 when                                                                | State                                        | Characteristic failure                                              |
 | ------------ | ---------------------------------------- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------- |
 | **Copier**   | Fan-out to independent consumers         | Each branch can preserve source order; there is no cross-branch order                  | Branch effects and shared limits are independent                                             | Offset/checkpoint per branch                 | Shared broker or sink capacity couples supposedly independent paths |
-| **Filter**   | Drop records failing a predicate         | Preserves survivor order only if execution/emission does                               | Predicate and effects are deterministic/order-insensitive                                    | None for a pure predicate                    | Side effects or mutable predicates make replay/order incorrect      |
+| **Filter**   | Select records or table rows             | Preserves survivor order only if execution/emission does                               | Predicate and effects are deterministic/order-insensitive                                    | None for a pure predicate                    | Side effects or mutable predicates make replay/order incorrect      |
 | **Splitter** | One input, N outputs by classification   | Per-output order only if execution/emission preserve it; no general cross-output order | Classification plus effects tolerate reordering, or emission preserves required order        | None                                         | Non-atomic outputs: a crash between output 1 and 2 leaves a gap     |
 | **Sharder**  | Redistribute by key or partition mapping | Preserve only order established by source/application protocol and execution           | Partition contract and recovery boundary are explicit                                        | In-flight buffers; often internal topic      | Skew, migration incompatibility or a sink outside the guarantee     |
 | **Merger**   | Join or combine streams, keyed           | Output order is operator-defined, not either input's                                   | For keyed joins: compatible partitioning/ownership or a documented broadcast/lookup strategy | Window/raw matches, table state or aggregate | Unmatched or live-key state grows without an effective bound        |
@@ -41,6 +41,26 @@ semantic steps when useful without forcing each implementation into one category
   still hurt the first group through shared broker, quota or sink capacity. Kafka retention and
   compaction are topic policies, not per-group policies. Prefer it when those
   costs are acceptable and branches genuinely need independent lifecycle.
+
+## Filtering a table changelog
+
+Inspect the source encoding, operator and output consumer: independent events, keyed upserts
+and retractions are different contracts. For a current `active`-only projection, a key changing
+from active to inactive must disappear from the result. Simply dropping that update leaves
+the previous active row visible. Dropping a subsequent tombstone can leave it there after
+the source row is deleted too; a null guard that prevents an exception does not preserve the view.
+
+Kafka 4.1 `KTable.filter` maintains table meaning: nonmatching updates produce delete semantics,
+and input tombstones bypass the predicate and propagate when needed. It is not interchangeable
+with `KStream.filter` over the same changelog. Use the supported table operator or an explicit
+keyed update/delete protocol; do not add custom state merely because the predicate looks simple.
+Confirm serialization and the sink's handling of deletes. Flink 1.20 similarly distinguishes
+append, retract and keyed upsert streams; an updating result requires a compatible consumer.
+
+Validate the resulting view through `active → inactive → active → delete`, including the
+affected recovery path. Assert semantic state/removal, not an assumed one-to-one physical
+output count. If the output is instead a history of qualifying events, retaining earlier
+active events can be correct; preserve the simple record filter when that is the contract.
 
 ## Composition rules
 
@@ -90,3 +110,5 @@ semantic steps when useful without forcing each implementation into one category
 - [Flink 1.20 event-time watermarks](https://nightlies.apache.org/flink/flink-docs-release-1.20/docs/concepts/time/) — partition watermarks, idleness and event-time progress.
 - [Kafka topic configuration](https://kafka.apache.org/41/configuration/topic-configs/) — shared retention and compaction policies; verify the deployed release.
 - [Flink 1.20 operator parallelism](https://nightlies.apache.org/flink/flink-docs-release-1.20/docs/dev/datastream/execution/parallel/) and [chaining/redistribution](https://nightlies.apache.org/flink/flink-docs-release-1.20/docs/dev/datastream/operators/overview/) — per-operator configuration and physical placement do not require separate jobs. These are source-version examples, not a recommendation to change the deployed engine.
+- [Kafka 4.1.0 KTable filter contract](https://github.com/apache/kafka/blob/4.1.0/streams/src/main/java/org/apache/kafka/streams/kstream/KTable.java) and [implementation](https://github.com/apache/kafka/blob/4.1.0/streams/src/main/java/org/apache/kafka/streams/kstream/internals/KTableFilter.java) — table filtering and necessary delete propagation.
+- [Flink 1.20 dynamic tables](https://nightlies.apache.org/flink/flink-docs-release-1.20/docs/dev/table/concepts/dynamic_tables/) — updating results and append/retract/upsert encodings.

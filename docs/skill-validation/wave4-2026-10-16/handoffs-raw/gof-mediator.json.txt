@@ -1,0 +1,910 @@
+{
+  "status": "NO_CHANGES_NEEDED",
+  "skill": "gof-mediator",
+  "ownedPath": "skills/gof-mediator/**",
+  "repository": "C:/git/agent-skills",
+  "reviewDate": "2026-10-16",
+  "allWritesStopped": true,
+  "ownership": "Exclusive assigned package. No repository file changed, no neighboring/shared edits, subagents, installations, Git mutations or global checks. Temporary evidence only in the coordinator-authorized location.",
+  "procedure": {
+    "requiredInstructions": "Applied complete docs/skill-review-prompt.md, wave4 review-brief.md, AGENTS.md, parallel review workflow and skill-engineering with all four relevant references; reused unchanged instructions/research read during the preceding assignment in this same wave as permitted by the brief.",
+    "read": [
+      "skills/gof-mediator/SKILL.md",
+      "skills/gof-mediator/skill.yaml",
+      "skills/gof-mediator/references/mediator-vs-alternatives.md",
+      "skills/gof-mediator/references/worked-example.md"
+    ],
+    "coordinatorBaseline": "docs/skill-validation/wave4-2026-10-16/baseline.json packages[name=gof-mediator]",
+    "assessment": "Scope, adequate existing mechanisms, primary evidence, preservation and local controls reported to /root before fixture generation. No package edit proposed or made.",
+    "lessonsApplied": "Inspect actual selected caller/delivery path, challenge the presumed need for a bus, preserve adequate small coordination and no-change, use ordinary source inputs with separated evaluator criteria, distinguish local language/API checks from integration or agent outcomes."
+  },
+  "baseline": {
+    "status": "Clean committed/staged/unstaged/untracked owned baseline. All four actual hashes match the coordinator's recorded package.",
+    "initialVersion": "1.2.4",
+    "preExistingChanges": [],
+    "snapshot": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/baseline/gof-mediator",
+    "coordinatorSnapshot": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/coordinator-baseline.json",
+    "hashes": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/baseline-hashes.json",
+    "statusLog": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/baseline-status.txt",
+    "unstagedDiff": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/baseline.diff",
+    "stagedDiff": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/baseline-staged.diff"
+  },
+  "scopeAndSuccessCriteria": [
+    "Identify actual peer-collaboration protocol ownership before classifying mediator versus facade, observer or dispatcher.",
+    "Preserve direct collaboration and small cohesive mediator where adequate; do not require a bus/framework.",
+    "Verify reentrancy and state-before-effect ordering using the selected callback delivery path.",
+    "Separate serialized handler entry from offloaded completion order and current-state admission.",
+    "Keep claimed work, participant outcome, duplicate handling and transaction/durable-delivery guarantees distinct.",
+    "Preserve shutdown/resource ownership, protocol-instance correlation, late-result policy and cancellation authority.",
+    "Retain Java17 baseline and separate partial snippets, executable state and distributed pseudocode."
+  ],
+  "findings": [
+    {
+      "id": "selected-callback-path",
+      "status": "ADEQUATE_PRESERVED",
+      "location": "SKILL.md:30-34,92-104,129-136; references/mediator-vs-alternatives.md:62-99",
+      "finding": "The existing skill already requires examination of inline callbacks and reentrancy, committing state before effects and selecting a delivery policy without losing required events.",
+      "evidence": "JavaSE17 Executor contract permits inline execution. Fixture shows RUNNING overwriting a completed DONE state with Inline delivery; publishing RUNNING before calling the driver fixes that local defect and preserves queued behavior.",
+      "decision": "No content change. This observed fixture failure supports an existing instruction rather than exposing an omission."
+    },
+    {
+      "id": "ownership-and-scope",
+      "status": "ADEQUATE_PRESERVED",
+      "location": "SKILL.md:19-46,67-80; references/mediator-vs-alternatives.md:3-60",
+      "finding": "The direction test and cohesion criteria already distinguish real peer coordination from callback presence, dispatch and one-way observation. Participant count is a signal rather than a failure threshold.",
+      "evidence": "Complete package and fixture consumer-path review; the small driver/view coordination needs no bus to enforce its state protocol.",
+      "decision": "Preserve direct calls, the small coordinator, legitimate dispatchers and protocol-based splitting alternatives."
+    },
+    {
+      "id": "completion-order",
+      "status": "ADEQUATE_PRESERVED",
+      "location": "SKILL.md:101-104; references/mediator-vs-alternatives.md:121-140",
+      "finding": "The package separates submission, completion and admissible state-transition order; late results require instance correlation and effect-aware recovery.",
+      "evidence": "JavaSE17 ExecutorCompletionService documentation and actual API calls with manually reversed task execution show second submission becoming the first retrieved completion.",
+      "decision": "No change. Manual scheduling validates this API mechanism, not concurrent scheduling robustness."
+    },
+    {
+      "id": "mapping-atomicity",
+      "status": "ADEQUATE_PRESERVED",
+      "location": "references/worked-example.md:115-152",
+      "finding": "Both map computation restrictions and the lack of a transaction across external participant effects are explicit. Moving effects outside compute alone is not presented as sufficient.",
+      "evidence": "JavaSE17 ConcurrentHashMap.compute and HashMap.compute contracts; local extracted FulfilmentState checks preserve prerequisite conjunction and one-time packing claim.",
+      "decision": "No change. No undefined recursive-update experiment or false general exception guarantee was needed."
+    },
+    {
+      "id": "failure-and-lifecycle",
+      "status": "ADEQUATE_PRESERVED",
+      "location": "references/worked-example.md:95-113; references/mediator-vs-alternatives.md:128-140",
+      "finding": "Partial participant failure, claim-versus-completion, map retention/reused operation keys, late external effects, cancellation authority and owned resources are already qualified.",
+      "evidence": "Existing prose inspected. Callback fixtures preserve UNKNOWN and original failure without blindly starting capture again; broader lifecycle boundaries remain source review/walkthrough only.",
+      "decision": "No change; do not silently promote local fixture checks into shutdown or device integration guarantees."
+    },
+    {
+      "id": "distributed-boundary",
+      "status": "ADEQUATE_PRESERVED",
+      "location": "references/worked-example.md:170-229; SKILL.md:114-125,137-147",
+      "finding": "Distributed pseudocode stores state/outbox together, preserves stable identities and separates relay recovery from full workflow recovery. Persistence/compensation are conditional on the flow's actual requirements.",
+      "evidence": "Transactional outbox page by Chris Richardson supports same-transaction storage and duplicate relay delivery; package explicitly avoids automatic rollback/restart guarantees from centralization.",
+      "decision": "No change; preserve choreography, existing workflow views and ephemeral coordination where their contracts fit."
+    }
+  ],
+  "correctedFindings": [],
+  "remainingFindings": [],
+  "coverageLimit": "No material gap found in the inspected coordination, reentrancy, direction, lifecycle and distributed-boundary guidance. This is not a proof that the package is defect-free.",
+  "filesChangedByReviewer": [],
+  "preExistingChangesPreserved": [],
+  "finalOwnedDiff": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/final-owned-diff.stdout.log",
+  "finalOwnedStatus": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/final-owned-status.stdout.log",
+  "finalStagedDiff": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/final-staged-diff.stdout.log",
+  "finalHashes": [
+    {
+      "path": "C:\\git\\agent-skills\\skills\\gof-mediator\\SKILL.md",
+      "bytes": 10778,
+      "sha256": "12CF20A8C6C28BBC98D5A3A56A90CE52441B7616F17E94233602E9E162B78302"
+    },
+    {
+      "path": "C:\\git\\agent-skills\\skills\\gof-mediator\\skill.yaml",
+      "bytes": 2002,
+      "sha256": "E0E1A002F5CB024CF4AFB4B468A1DCCE07B20052012C9A9B8299A704179D940E"
+    },
+    {
+      "path": "C:\\git\\agent-skills\\skills\\gof-mediator\\references\\mediator-vs-alternatives.md",
+      "bytes": 10028,
+      "sha256": "CF767E9B46AC03897A49478BE4FA6EE9E9104A7EE2674CD0A6AC49DC7DCE2F08"
+    },
+    {
+      "path": "C:\\git\\agent-skills\\skills\\gof-mediator\\references\\worked-example.md",
+      "bytes": 11891,
+      "sha256": "1545E505FC5A13C99474D646698BDD85019C530EA87A95B2E3694BD2F1B2F552"
+    }
+  ],
+  "capabilitiesPreserved": [
+    "Caller-first investigation and conditional recommendations when delivery/lifetime evidence is missing.",
+    "Direction test against facade, observer/events, command dispatch and adequate direct collaboration.",
+    "Protocol/state ownership and non-numerical god-object/splitting criteria.",
+    "Reentrancy strategies with drop/coalescing/queue limitations; state-before-effect and callback confinement.",
+    "Submission/completion/admission order, operation-instance correlation, stale local results versus late external effects.",
+    "Failure after claim, no blind retries, bounded state/admission, cancellation and resource ownership.",
+    "Java17 partial fulfilment coordinator, executable immutable protocol-state example, and explicitly scoped distributed outbox pseudocode.",
+    "Orchestration/choreography alternatives without implicit bus, persistence or transaction mandates."
+  ],
+  "capabilitiesRemoved": [],
+  "version": {
+    "committed": "1.2.4",
+    "assignment": "1.2.4",
+    "final": "1.2.4",
+    "rationale": "No content changes; no patch bump. All four hashes preserved."
+  },
+  "commandsExecuted": [
+    {
+      "command": "git status --short --untracked-files=all -- skills/gof-mediator; git diff -- skills/gof-mediator; git diff --cached -- skills/gof-mediator; git show HEAD:skills/gof-mediator/skill.yaml",
+      "cwd": "C:/git/agent-skills",
+      "result": "Owned status and staged/unstaged diffs empty. Committed version1.2.4; commands executed sequentially on separate lines.",
+      "artifacts": [
+        "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/baseline-status.txt",
+        "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/baseline.diff",
+        "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/baseline-staged.diff",
+        "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/committed-skill.yaml"
+      ]
+    },
+    {
+      "command": "Read complete assigned package with Get-Content; rg for relevant sections and nested AGENTS.md; scoped coordinator-baseline extraction; Get-FileHash comparison",
+      "cwd": "C:/git/agent-skills",
+      "result": "Four owned package files read and matched baseline. rg --files -g AGENTS.md skills docs returned1 because no nested instruction file matched, not a package failure."
+    },
+    {
+      "command": "Invoke-WebRequest -Uri <exact source URL> -OutFile <source evidence path> -PassThru -TimeoutSec25",
+      "cwd": "C:/git/agent-skills",
+      "result": "Five primary sources fetched HTTP200; raw files and hashes retained.",
+      "details": [
+        {
+          "name": "executor-se17",
+          "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/Executor.html",
+          "status": 200,
+          "path": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/executor-se17.html",
+          "sha256": "DC909DFF1AFF6B77333998DC7997BB568795483E216F7BA9129804D502386EBA",
+          "consulted": "2026-10-16"
+        },
+        {
+          "name": "concurrenthashmap-se17",
+          "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/ConcurrentHashMap.html",
+          "status": 200,
+          "path": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/concurrenthashmap-se17.html",
+          "sha256": "69D202DDDA868E08CE61D4BE7185C51A8539FA5ED2B46C735A6AD47ABF6163A7",
+          "consulted": "2026-10-16"
+        },
+        {
+          "name": "hashmap-se17",
+          "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/HashMap.html",
+          "status": 200,
+          "path": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/hashmap-se17.html",
+          "sha256": "BCEC6AE18DD7834FE332D0EC3A809BB39F0677B805A0F10F0557AEE1FF39C348",
+          "consulted": "2026-10-16"
+        },
+        {
+          "name": "completion-service-se17",
+          "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/ExecutorCompletionService.html",
+          "status": 200,
+          "path": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/completion-service-se17.html",
+          "sha256": "3A14E8D80BFB724FF8B8F51069EFFEBF90E123F8D4246092CF25A5C47469A30B",
+          "consulted": "2026-10-16"
+        },
+        {
+          "name": "transactional-outbox",
+          "url": "https://microservices.io/patterns/data/transactional-outbox.html",
+          "status": 200,
+          "path": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/transactional-outbox.html",
+          "sha256": "7B9D9B224D9B985BF03D581DCDEF5C94A21F49A93F3AC1E74C6BC2104A48B3EB",
+          "consulted": "2026-10-16"
+        }
+      ]
+    },
+    {
+      "command": "node C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/validate.mjs",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "Strict package, references, byte preservation, fixture separation and bounded technical/format/diff commands passed.",
+      "script": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/validate.mjs",
+      "results": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/validation-results.json"
+    },
+    {
+      "label": "java-version",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-version"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\java-version.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\java-version.stderr.log",
+      "stdout": null,
+      "stderr": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n"
+    },
+    {
+      "label": "javac-version",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "-version"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\javac-version.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\javac-version.stderr.log",
+      "stdout": "javac 25.0.3\r\n",
+      "stderr": null
+    },
+    {
+      "label": "compile-inline-original",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "--release",
+        "17",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\inline-original",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\cases\\inline-completion\\src\\CaptureCoordinator.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\cases\\inline-completion\\src\\Delivery.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\cases\\inline-completion\\src\\Assembly.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\cases\\inline-completion\\src\\App.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\technical\\CallbackCheck.java"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\compile-inline-original.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\compile-inline-original.stderr.log",
+      "stdout": null,
+      "stderr": null
+    },
+    {
+      "label": "callbacks-inline-original",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\inline-original",
+        "CallbackCheck",
+        "inline",
+        "original"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\callbacks-inline-original.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\callbacks-inline-original.stderr.log",
+      "stdout": "PASS phase-before-drain\r\nPASS phase-after-drain\r\nPASS view-once\r\nPASS no-duplicate-capture\r\nPASS original-failure-preserved\r\nPASS failure-unknown\r\nPASS no-blind-retry\r\nPASS no-fabricated-completion\r\nOBSERVATION mode=inline variant=original finalPhase=RUNNING views=1\r\nSUMMARY checks=8\r\n",
+      "stderr": null
+    },
+    {
+      "label": "compile-inline-corrected",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "--release",
+        "17",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\inline-corrected",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\technical\\fixed\\CaptureCoordinator.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\cases\\inline-completion\\src\\Delivery.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\cases\\inline-completion\\src\\Assembly.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\cases\\inline-completion\\src\\App.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\technical\\CallbackCheck.java"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\compile-inline-corrected.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\compile-inline-corrected.stderr.log",
+      "stdout": null,
+      "stderr": null
+    },
+    {
+      "label": "callbacks-inline-corrected",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\inline-corrected",
+        "CallbackCheck",
+        "inline",
+        "corrected"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\callbacks-inline-corrected.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\callbacks-inline-corrected.stderr.log",
+      "stdout": "PASS phase-before-drain\r\nPASS phase-after-drain\r\nPASS view-once\r\nPASS no-duplicate-capture\r\nPASS original-failure-preserved\r\nPASS failure-unknown\r\nPASS no-blind-retry\r\nPASS no-fabricated-completion\r\nOBSERVATION mode=inline variant=corrected finalPhase=DONE views=1\r\nSUMMARY checks=8\r\n",
+      "stderr": null
+    },
+    {
+      "label": "compile-queued-original",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "--release",
+        "17",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\queued-original",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\cases\\queued-completion\\src\\CaptureCoordinator.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\cases\\queued-completion\\src\\Delivery.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\cases\\queued-completion\\src\\Assembly.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\cases\\queued-completion\\src\\App.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\technical\\CallbackCheck.java"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\compile-queued-original.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\compile-queued-original.stderr.log",
+      "stdout": null,
+      "stderr": null
+    },
+    {
+      "label": "callbacks-queued-original",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\queued-original",
+        "CallbackCheck",
+        "queued",
+        "original"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\callbacks-queued-original.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\callbacks-queued-original.stderr.log",
+      "stdout": "PASS phase-before-drain\r\nPASS phase-after-drain\r\nPASS view-once\r\nPASS no-duplicate-capture\r\nPASS original-failure-preserved\r\nPASS failure-unknown\r\nPASS no-blind-retry\r\nPASS no-fabricated-completion\r\nOBSERVATION mode=queued variant=original finalPhase=DONE views=1\r\nSUMMARY checks=8\r\n",
+      "stderr": null
+    },
+    {
+      "label": "compile-queued-corrected",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "--release",
+        "17",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\queued-corrected",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\technical\\fixed\\CaptureCoordinator.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\cases\\queued-completion\\src\\Delivery.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\cases\\queued-completion\\src\\Assembly.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\cases\\queued-completion\\src\\App.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\technical\\CallbackCheck.java"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\compile-queued-corrected.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\compile-queued-corrected.stderr.log",
+      "stdout": null,
+      "stderr": null
+    },
+    {
+      "label": "callbacks-queued-corrected",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\queued-corrected",
+        "CallbackCheck",
+        "queued",
+        "corrected"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\callbacks-queued-corrected.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\callbacks-queued-corrected.stderr.log",
+      "stdout": "PASS phase-before-drain\r\nPASS phase-after-drain\r\nPASS view-once\r\nPASS no-duplicate-capture\r\nPASS original-failure-preserved\r\nPASS failure-unknown\r\nPASS no-blind-retry\r\nPASS no-fabricated-completion\r\nOBSERVATION mode=queued variant=corrected finalPhase=DONE views=1\r\nSUMMARY checks=8\r\n",
+      "stderr": null
+    },
+    {
+      "label": "compile-protocol-state",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "--release",
+        "17",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\state",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\technical\\FulfilmentState.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\technical\\ProtocolStateCheck.java"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\compile-protocol-state.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\compile-protocol-state.stderr.log",
+      "stdout": null,
+      "stderr": null
+    },
+    {
+      "label": "protocol-state-and-completion-order",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\state",
+        "ProtocolStateCheck"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\protocol-state-and-completion-order.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\protocol-state-and-completion-order.stderr.log",
+      "stdout": "PASS initial-not-ready\r\nPASS stock-alone-not-ready\r\nPASS payment-alone-not-ready\r\nPASS stock-then-payment-ready\r\nPASS payment-then-stock-ready\r\nPASS claimed-not-ready\r\nPASS duplicates-do-not-reclaim\r\nPASS cancelled-not-ready\r\nPASS initial-state-unchanged\r\nPASS completed-second-submission-observed-first\r\nPASS completed-first-submission-observed-second\r\nPASS completion-queue-drained\r\nSUMMARY checks=12\r\n",
+      "stderr": null
+    },
+    {
+      "label": "prettier",
+      "command": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "node_modules/prettier/bin/prettier.cjs",
+        "--check",
+        "skills/gof-mediator/SKILL.md",
+        "skills/gof-mediator/skill.yaml",
+        "skills/gof-mediator/references/mediator-vs-alternatives.md",
+        "skills/gof-mediator/references/worked-example.md"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\prettier.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\prettier.stderr.log",
+      "stdout": "Checking formatting...\nAll matched files use Prettier code style!\n",
+      "stderr": null
+    },
+    {
+      "label": "diff-check",
+      "command": "git",
+      "args": [
+        "diff",
+        "--check",
+        "--",
+        "skills/gof-mediator"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\diff-check.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\diff-check.stderr.log",
+      "stdout": null,
+      "stderr": null
+    },
+    {
+      "label": "final-owned-diff",
+      "command": "git",
+      "args": [
+        "diff",
+        "--",
+        "skills/gof-mediator"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\final-owned-diff.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\final-owned-diff.stderr.log",
+      "stdout": null,
+      "stderr": null
+    },
+    {
+      "label": "final-owned-status",
+      "command": "git",
+      "args": [
+        "status",
+        "--short",
+        "--untracked-files=all",
+        "--",
+        "skills/gof-mediator"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\final-owned-status.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\final-owned-status.stderr.log",
+      "stdout": null,
+      "stderr": null
+    },
+    {
+      "label": "final-staged-diff",
+      "command": "git",
+      "args": [
+        "diff",
+        "--cached",
+        "--",
+        "skills/gof-mediator"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\final-staged-diff.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\final-staged-diff.stderr.log",
+      "stdout": null,
+      "stderr": null
+    }
+  ],
+  "structuralValidation": {
+    "classification": "Executed local package checks, not global verification.",
+    "package": {
+      "version": "1.2.4",
+      "fileCount": 4,
+      "issues": []
+    },
+    "references": {
+      "routed": [
+        "references/mediator-vs-alternatives.md",
+        "references/worked-example.md"
+      ],
+      "localLinks": 2
+    },
+    "preservation": [
+      {
+        "path": "skills/gof-mediator/SKILL.md",
+        "bytes": 10778,
+        "sha256": "12cf20a8c6c28bbc98d5a3a56a90ce52441b7616f17e94233602e9e162b78302"
+      },
+      {
+        "path": "skills/gof-mediator/skill.yaml",
+        "bytes": 2002,
+        "sha256": "e0e1a002f5cb024cf4afb4b468a1dcce07b20052012c9a9b8299a704179d940e"
+      },
+      {
+        "path": "skills/gof-mediator/references/mediator-vs-alternatives.md",
+        "bytes": 10028,
+        "sha256": "cf767e9b46ac03897a49478be4fa6ee9e9104a7ee2674cd0a6ac49dc7dce2f08"
+      },
+      {
+        "path": "skills/gof-mediator/references/worked-example.md",
+        "bytes": 11891,
+        "sha256": "1545e505fc5a13c99474d646698bdd85019c530ea87a95b2e3694bd2f1b2f552"
+      }
+    ],
+    "caseShape": {
+      "count": 2,
+      "identicalFiles": [
+        "input.md",
+        "README.md",
+        "protocol.md",
+        "src/CaptureCoordinator.java",
+        "src/Delivery.java",
+        "src/App.java"
+      ],
+      "soleDifference": "Assembly completion delivery selects Inline or Queued",
+      "criteriaSeparate": true
+    },
+    "formatting": "Exact four owned files passed Prettier --check; no formatting write.",
+    "git": "Owned git diff --check passed; final status, unstaged diff and cached diff empty."
+  },
+  "technicalValidation": {
+    "classification": "Executed deterministic Java callback and API/state checks. No independent agent evaluation.",
+    "toolchain": "Temurin25.0.3+9 / javac25.0.3; --release17, no preview. This is not Java17 VM execution.",
+    "callbackFixture": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/technical/CallbackCheck.java",
+    "originalSource": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/cases/inline-completion/src/CaptureCoordinator.java",
+    "temporaryCorrection": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/technical/fixed/CaptureCoordinator.java",
+    "correctionScope": "Reviewer-only control moves RUNNING publication before participant invocation. No shipped skill example or package source was edited.",
+    "conditions": [
+      {
+        "mode": "inline",
+        "variant": "original",
+        "assertions": 8,
+        "observation": "OBSERVATION mode=inline variant=original finalPhase=RUNNING views=1"
+      },
+      {
+        "mode": "inline",
+        "variant": "corrected",
+        "assertions": 8,
+        "observation": "OBSERVATION mode=inline variant=corrected finalPhase=DONE views=1"
+      },
+      {
+        "mode": "queued",
+        "variant": "original",
+        "assertions": 8,
+        "observation": "OBSERVATION mode=queued variant=original finalPhase=DONE views=1"
+      },
+      {
+        "mode": "queued",
+        "variant": "corrected",
+        "assertions": 8,
+        "observation": "OBSERVATION mode=queued variant=corrected finalPhase=DONE views=1"
+      }
+    ],
+    "conditionMeaning": "Each of four runs has eight contract checks. Inline-original intentionally observes RUNNING after one completed callback; this is the negative observation, not a correct final outcome. Corrected-inline and both queued variants finish DONE; each preserves one capture, one view update, UNKNOWN, original exception and no blind retry.",
+    "protocolState": {
+      "extractedFrom": "skills/gof-mediator/references/worked-example.md:record FulfilmentState",
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\technical\\FulfilmentState.java",
+      "blockSha256": "894f94f63520fc0aa5e6dbba8e919f7f0061e8a7432f1eca543fc7ce47bfdc83",
+      "assertions": 12,
+      "note": "Nine pure state checks plus three real ExecutorCompletionService API checks with a manually ordered executor. No parallel threads."
+    },
+    "protocolStateMeaning": "Extracted FulfilmentState block was compiled unchanged. Nine state checks cover prerequisites, order, claim, duplicates, cancellation and retained initial state. Three additional checks use real ExecutorCompletionService with a manual executor; no worker-thread race was exercised.",
+    "shippedExampleCoverage": "Only the complete FulfilmentState record was extracted and compiled. The other shipped coordinator/map snippets remain partial and the transaction example remains pseudocode; they were not falsely reported as executed.",
+    "limits": "No physical device, framework, database, broker, transaction, durable recovery, shutdown, concurrent scheduler or performance validation."
+  },
+  "behavioralEvaluation": {
+    "executed": false,
+    "agentRuns": 0,
+    "measuredImprovement": "Not measured; no revised package exists in this no-change review.",
+    "walkthroughs": [
+      {
+        "id": "inline-delivery",
+        "classification": "Structured walkthrough backed by a technical fixture, not agent output",
+        "expected": "Read effective assembly, trace reentrant callback and preserve final DONE through a minimal state/effect ordering correction."
+      },
+      {
+        "id": "queued-delivery",
+        "classification": "Structured walkthrough backed by a technical fixture, not agent output",
+        "expected": "Preserve the current valid sequence under deferred delivery; optional future-proofing should not be mislabeled a current defect."
+      },
+      {
+        "id": "single-listener-path",
+        "classification": "Structured walkthrough",
+        "expected": "Use direct call/observer where no shared peer protocol exists; no bus by default."
+      },
+      {
+        "id": "late-effect-after-disposal",
+        "classification": "Structured walkthrough only",
+        "expected": "Drop an obsolete local display result only under that contract; late reservation/payment effects remain owned by the original operation's recovery policy."
+      },
+      {
+        "id": "failure-after-claim",
+        "classification": "Structured walkthrough only",
+        "expected": "Do not reset and retry blindly; central state/CAS/one-consumer handling alone do not atomically deliver remote work."
+      }
+    ]
+  },
+  "reproducibleCases": {
+    "classification": "Known development cases; not unseen holdouts; no actor run.",
+    "decisiveConstraint": "Only Assembly.java changes: new Delivery.Inline() versus new Delivery.Queued(). Task, protocol, driver/view fixture, coordinator, delivery implementations and caller are byte-identical.",
+    "taskInputManifest": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/case-inputs.json",
+    "separateCriteria": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/case-criteria.json",
+    "isolation": "Provide only one case directory to the actor. Keep evaluator criteria, temporary corrected source, technical logs, this handoff and the other case outside actor context. This is procedural guidance rather than an enforced sandbox.",
+    "prerequisites": "Existing javac supporting --release17. No preview/dependencies, hardware or network system; work on an isolated copy of the case directory.",
+    "taskInputs": [
+      {
+        "id": "inline-completion",
+        "fixtureRoot": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/cases/inline-completion",
+        "prompt": "Review the capture feature before release. A proposal suggests adding a command bus and replacing the coordinator because it has callbacks. Inspect the implementation, selected assembly, consumer contract and driver boundary. Identify whether the current protocol satisfies the contract; apply the smallest justified correction or preserve it if adequate. Add a focused regression check and explain the evidence behind the decision.\n\nWork only in this supplied fixture, keep Java17 without preview or new dependencies, and distinguish local callback checks from integration with a physical device. Do not infer correctness or a defect from class names alone.\n",
+        "contract": "# Capture protocol\n\nApp owns the driver, completion-delivery object and view for its lifetime. All calls in this\nfixture run on one application thread; there is no concurrent request thread or background I/O.\nThe selected delivery implementation is part of this deployment's supported contract.\n\nA first request starts one capture. If the driver reports captured, the view is updated once\nand the coordinator must remain DONE after the call stack and pending delivery have finished.\nFurther requests in RUNNING, DONE or UNKNOWN do not start another capture.\n\nThe driver can also throw without a terminal outcome. The protocol then records UNKNOWN and\npreserves that outcome; the caller receives the original failure. Automatic retry is not allowed.\nThe fixture does not promise cancellation, restart recovery, multiple operation generations or\nphysical-device idempotency. Driver/view ownership is unchanged by the review.\n",
+        "assembly": "public final class Assembly {\n    public static Delivery completion() { return new Delivery.Inline(); }\n}\n",
+        "files": [
+          "input.md",
+          "README.md",
+          "protocol.md",
+          "src/CaptureCoordinator.java",
+          "src/Delivery.java",
+          "src/Assembly.java",
+          "src/App.java"
+        ]
+      },
+      {
+        "id": "queued-completion",
+        "fixtureRoot": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/cases/queued-completion",
+        "prompt": "Review the capture feature before release. A proposal suggests adding a command bus and replacing the coordinator because it has callbacks. Inspect the implementation, selected assembly, consumer contract and driver boundary. Identify whether the current protocol satisfies the contract; apply the smallest justified correction or preserve it if adequate. Add a focused regression check and explain the evidence behind the decision.\n\nWork only in this supplied fixture, keep Java17 without preview or new dependencies, and distinguish local callback checks from integration with a physical device. Do not infer correctness or a defect from class names alone.\n",
+        "contract": "# Capture protocol\n\nApp owns the driver, completion-delivery object and view for its lifetime. All calls in this\nfixture run on one application thread; there is no concurrent request thread or background I/O.\nThe selected delivery implementation is part of this deployment's supported contract.\n\nA first request starts one capture. If the driver reports captured, the view is updated once\nand the coordinator must remain DONE after the call stack and pending delivery have finished.\nFurther requests in RUNNING, DONE or UNKNOWN do not start another capture.\n\nThe driver can also throw without a terminal outcome. The protocol then records UNKNOWN and\npreserves that outcome; the caller receives the original failure. Automatic retry is not allowed.\nThe fixture does not promise cancellation, restart recovery, multiple operation generations or\nphysical-device idempotency. Driver/view ownership is unchanged by the review.\n",
+        "assembly": "public final class Assembly {\n    public static Delivery completion() { return new Delivery.Queued(); }\n}\n",
+        "files": [
+          "input.md",
+          "README.md",
+          "protocol.md",
+          "src/CaptureCoordinator.java",
+          "src/Delivery.java",
+          "src/Assembly.java",
+          "src/App.java"
+        ]
+      }
+    ],
+    "sharedFixtures": [
+      {
+        "relativePath": "src/CaptureCoordinator.java",
+        "content": "import java.util.concurrent.Executor;\n\npublic final class CaptureCoordinator {\n    public enum Phase { IDLE, RUNNING, DONE, UNKNOWN }\n    @FunctionalInterface public interface Driver { void capture(Runnable captured); }\n    @FunctionalInterface public interface View { void captured(); }\n\n    private final Driver driver;\n    private final Executor completion;\n    private final View view;\n    private Phase phase = Phase.IDLE;\n\n    public CaptureCoordinator(Driver driver, Executor completion, View view) {\n        this.driver = driver;\n        this.completion = completion;\n        this.view = view;\n    }\n    public Phase phase() { return phase; }\n    public void request() {\n        if (phase != Phase.IDLE) return;\n        try {\n            driver.capture(() -> completion.execute(this::captured));\n            phase = Phase.RUNNING;\n        } catch (RuntimeException failure) {\n            phase = Phase.UNKNOWN;\n            throw failure;\n        }\n    }\n    private void captured() {\n        phase = Phase.DONE;\n        view.captured();\n    }\n}\n"
+      },
+      {
+        "relativePath": "src/Delivery.java",
+        "content": "import java.util.ArrayDeque;\nimport java.util.Deque;\nimport java.util.concurrent.Executor;\nimport java.util.concurrent.RejectedExecutionException;\n\npublic interface Delivery extends Executor {\n    void drain();\n\n    final class Inline implements Delivery {\n        public void execute(Runnable task) { task.run(); }\n        public void drain() {}\n    }\n    final class Queued implements Delivery {\n        private final Deque<Runnable> pending = new ArrayDeque<>();\n        private boolean draining;\n        public void execute(Runnable task) {\n            if (pending.size() >= 8) throw new RejectedExecutionException(\"completion capacity\");\n            pending.addLast(task);\n        }\n        public void drain() {\n            if (draining) return;\n            draining = true;\n            try {\n                while (!pending.isEmpty()) pending.removeFirst().run();\n            } finally {\n                draining = false;\n            }\n        }\n    }\n}\n"
+      },
+      {
+        "relativePath": "src/App.java",
+        "content": "public final class App {\n    public static void main(String[] args) {\n        Delivery delivery = Assembly.completion();\n        int[] views = {0};\n        CaptureCoordinator coordinator = new CaptureCoordinator(\n                Runnable::run, delivery, () -> views[0]++);\n        coordinator.request();\n        delivery.drain();\n        System.out.println(\"phase=\" + coordinator.phase() + \" views=\" + views[0]);\n    }\n}\n"
+      },
+      {
+        "relativePath": "README.md",
+        "content": "# Capture feature fixture\n\nCompile target Java17; no preview or dependencies.\nCompile sources with javac --release 17 -d out src/*.java.\nThe source includes a small local driver/view boundary and two completion-delivery implementations.\nRead Assembly.java to determine which delivery this deployment selects.\n\nThe manual delivery drain exists for deterministic local execution. These sources are not a\nphysical driver integration and contain no external side effects. Only one capture is admitted.\n"
+      }
+    ],
+    "evaluatorCriteria": [
+      {
+        "id": "inline-completion",
+        "expected": [
+          "Trace Assembly selecting Inline, Driver.capture reporting synchronously, and the callback's DONE write being overwritten by request's later RUNNING write.",
+          "Demonstrate final phase mismatch after callback completion; one application thread does not eliminate reentrancy.",
+          "Use a minimal state/effect ordering correction (record RUNNING before invoking the participant), or preserve another justified serialization policy with the actual caller/delivery contract explained.",
+          "Preserve DONE duplicate-admission behavior and UNKNOWN/no-blind-retry behavior on failure; test normal and failure paths.",
+          "Retain the small coordinator/ports unless actual separate protocol responsibility warrants a split; do not add a command bus merely to route this interaction."
+        ],
+        "failureConditions": [
+          "Assumes Executor.execute is asynchronous or calls this a data race requiring ConcurrentHashMap.",
+          "Drops the required nested completion with a guard, or leaves DONE overwritten.",
+          "Introduces mandatory bus/framework, unsafe repeated capture after failure, version/dependency upgrade, or claims physical-device integration."
+        ]
+      },
+      {
+        "id": "queued-completion",
+        "expected": [
+          "Trace Assembly selecting Queued and drain occurring after request; preserve adequate sequencing under this supported delivery contract.",
+          "Check RUNNING before drain and DONE after drain, with a single capture/view update and no duplicate request effect.",
+          "Do not force a bus or label the current flow broken solely because the unused Inline implementation would expose a different contract.",
+          "May propose making the state/effect boundary robust to future inline delivery as optional hardening, explicitly distinguishing it from a current reproduced defect.",
+          "Preserve UNKNOWN/no-blind-retry and Java17 baseline; no claim of transaction or device integration."
+        ],
+        "failureConditions": [
+          "Claims the inline failure occurs under the supplied queued selection without evidence.",
+          "Assumes merely injecting any Executor preserves this behavior across deployments.",
+          "Adds a bus or persistence without a requirement, suppresses completion, or reports unexecuted integration as tested."
+        ]
+      }
+    ],
+    "pending": "Coordinator may run no-skill/current-skill matched cases with model/tools/context held comparable; no original-versus-revised comparison applies because package bytes did not change."
+  },
+  "primarySources": [
+    {
+      "name": "executor-se17",
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/Executor.html",
+      "version": "JavaSE17",
+      "claim": "Executor permits execution inline on the caller thread; using execute alone does not establish deferred callbacks.",
+      "consulted": "2026-10-16",
+      "retainedArtifact": {
+        "name": "executor-se17",
+        "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/Executor.html",
+        "status": 200,
+        "path": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/executor-se17.html",
+        "sha256": "DC909DFF1AFF6B77333998DC7997BB568795483E216F7BA9129804D502386EBA",
+        "consulted": "2026-10-16"
+      },
+      "supportLimit": "Supports the named API or pattern mechanism; not a measured agent or production guarantee."
+    },
+    {
+      "name": "concurrenthashmap-se17",
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/ConcurrentHashMap.html",
+      "version": "JavaSE17",
+      "section": "compute",
+      "claim": "Remapping must not modify the map; per-mapping atomicity is not a participant effect transaction.",
+      "consulted": "2026-10-16",
+      "retainedArtifact": {
+        "name": "concurrenthashmap-se17",
+        "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/ConcurrentHashMap.html",
+        "status": 200,
+        "path": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/concurrenthashmap-se17.html",
+        "sha256": "69D202DDDA868E08CE61D4BE7185C51A8539FA5ED2B46C735A6AD47ABF6163A7",
+        "consulted": "2026-10-16"
+      },
+      "supportLimit": "Supports the named API or pattern mechanism; not a measured agent or production guarantee."
+    },
+    {
+      "name": "hashmap-se17",
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/HashMap.html",
+      "version": "JavaSE17",
+      "section": "compute",
+      "claim": "Remapping should not modify map during computation; detection is best effort.",
+      "consulted": "2026-10-16",
+      "retainedArtifact": {
+        "name": "hashmap-se17",
+        "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/HashMap.html",
+        "status": 200,
+        "path": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/hashmap-se17.html",
+        "sha256": "BCEC6AE18DD7834FE332D0EC3A809BB39F0677B805A0F10F0557AEE1FF39C348",
+        "consulted": "2026-10-16"
+      },
+      "supportLimit": "Supports the named API or pattern mechanism; not a measured agent or production guarantee."
+    },
+    {
+      "name": "completion-service-se17",
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/ExecutorCompletionService.html",
+      "version": "JavaSE17",
+      "claim": "Completed tasks are queued when completed, not reordered to submission sequence.",
+      "consulted": "2026-10-16",
+      "retainedArtifact": {
+        "name": "completion-service-se17",
+        "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/ExecutorCompletionService.html",
+        "status": 200,
+        "path": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/completion-service-se17.html",
+        "sha256": "3A14E8D80BFB724FF8B8F51069EFFEBF90E123F8D4246092CF25A5C47469A30B",
+        "consulted": "2026-10-16"
+      },
+      "supportLimit": "Supports the named API or pattern mechanism; not a measured agent or production guarantee."
+    },
+    {
+      "name": "transactional-outbox",
+      "url": "https://microservices.io/patterns/data/transactional-outbox.html",
+      "version": "Author's unversioned pattern page, consulted2026-10-16",
+      "section": "Solution; Result context",
+      "claim": "Store business state and message within one database transaction, relay separately, tolerate duplicate delivery through consumer idempotency.",
+      "consulted": "2026-10-16",
+      "retainedArtifact": {
+        "name": "transactional-outbox",
+        "url": "https://microservices.io/patterns/data/transactional-outbox.html",
+        "status": 200,
+        "path": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/transactional-outbox.html",
+        "sha256": "7B9D9B224D9B985BF03D581DCDEF5C94A21F49A93F3AC1E74C6BC2104A48B3EB",
+        "consulted": "2026-10-16"
+      },
+      "supportLimit": "Supports the named API or pattern mechanism; not a measured agent or production guarantee."
+    }
+  ],
+  "assumptions": [
+    "Fixture contracts describe a single-threaded, single-operation application boundary and permit only the selected completion delivery.",
+    "Manual driver/view components model the callback protocol and have no real device effects.",
+    "An unused alternative delivery implementation does not by itself prove the deployed queued protocol defective.",
+    "Source/API evidence can resolve static limits; integration-specific recovery, cancellation and external-effect semantics require separate evidence."
+  ],
+  "limitations": [
+    "No independent actor, automatic selection, holdout, model variability or comparative skill improvement evaluation.",
+    "No Java17 VM execution; --release17 uses the installed JDK25 compiler.",
+    "Callback scheduling is deterministic on one thread; no concurrent-thread stress or memory-model proof.",
+    "No physical-driver, Spring/framework, DB, broker, distributed transaction, idempotency-store or restart test.",
+    "Only the pure FulfilmentState record among the shipped examples was compiled; partial snippets/pseudocode were reviewed under their declared limits.",
+    "The outbox page is an author-controlled but unversioned primary source, retained with consultation date and content hash.",
+    "Local strict checks do not prove catalog-wide suggestions/dependency routing or global verification.",
+    "No full licensed GoF book text was consulted or claimed; operational correctness relied on primary API contracts, author pattern description and explicit fixtures."
+  ],
+  "failuresAndResolutions": [
+    {
+      "classification": "Expected negative observation",
+      "result": "Inline-original final state RUNNING after one completion demonstrates the fixture's contract violation; not an unresolved skill defect or failed validator."
+    },
+    {
+      "classification": "Benign search result",
+      "result": "Nested AGENTS.md search returned1 for no match; root/user-provided instructions applied."
+    }
+  ],
+  "crossSkillIssues": [],
+  "coordinatorActions": [
+    "Preserve version1.2.4 and no-change result.",
+    "Retain source/log evidence and keep task input directories separated from criteria/control implementations.",
+    "Run global checks after all reviewers stop; optional actor evaluation must disclose case familiarity and isolation limits."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Parallel ownership. No index change is needed for this unchanged package itself; run after all writers stop."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Repository-wide verification deferred until all packages are stable."
+    }
+  ],
+  "evidenceRoot": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157",
+  "artifactManifest": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/artifacts.json",
+  "artifactCountExcludingManifest": 116,
+  "evidence": {
+    "baselineHashes": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/baseline-hashes.json",
+    "finalHashes": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/final-hashes.json",
+    "validator": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/validate.mjs",
+    "validationResults": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/validation-results.json",
+    "sourceFetch": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/source-fetch.json",
+    "caseInputs": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/case-inputs.json",
+    "caseCriteria": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/case-criteria.json",
+    "inlineOriginal": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/callbacks-inline-original.stdout.log",
+    "inlineCorrected": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/callbacks-inline-corrected.stdout.log",
+    "queuedOriginal": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/callbacks-queued-original.stdout.log",
+    "queuedCorrected": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/callbacks-queued-corrected.stdout.log",
+    "protocolState": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/protocol-state-and-completion-order.stdout.log",
+    "finalDiff": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/final-owned-diff.stdout.log",
+    "finalStatus": "C:/Users/robso/AppData/Local/Temp/codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157/final-owned-status.stdout.log"
+  },
+  "processState": "Every process was synchronous/bounded and exited. No background agent, helper, watcher, server, executor thread or external service was started.",
+  "finalInspection": "The complete assigned package remains byte-identical to the clean assignment/committed baseline. No new package files, staged changes or unstaged changes. Temporary evidence retained."
+}

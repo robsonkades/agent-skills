@@ -22,6 +22,29 @@ equivalent structures — follow established conventions and the decision owner'
 otherwise defer to the person doing the work
 (code-review).
 
+## Questions that can change the recommendation
+
+State the disputed premise fairly before challenging it. A useful question seeks a missing
+constraint or distinguishing evidence and explains why the answer matters. "Why would we
+ship something this slow?" asks for a defense of your conclusion; it cannot establish the
+constraint. Check the supplied context first, and do not ask the recipient to repeat it.
+
+For example, with an illustrative six-hour rehearsal and a two-hour window:
+
+> "The backfill rehearsal took six hours. Does the two-hour limit cover the whole job, or
+> customer-visible interruption? That determines whether total runtime rules this approach out."
+
+- **The limit covers the whole job:** retain the runtime objection. The next decision is
+  whether to validate a shorter approach or seek an authorized change to the window.
+- **The limit covers interruption only:** withdraw the inference that six hours of runtime
+  violates that limit. Check interruption and read-path correctness during backfill before
+  recommending release; the reply alone does not establish those facts.
+
+Acknowledge a valid correction without hedging the unchanged measurement: "I treated total
+runtime as downtime; that was the wrong constraint. The release recommendation now depends
+on the interruption check." If the reply does not resolve the disputed premise, name what
+remains open. Do not silently retain the old recommendation or agree merely to end friction.
+
 ## Ending a two-round argument
 
 Two rounds with no new information means the exchange has stopped producing anything. The next
@@ -122,3 +145,7 @@ delay an urgent escalation.
 - Represent uncertainty at the level you actually have it. "I could not run the integration
   tests — no container runtime available — so the mapping is unverified" is worth more than a
   summary that omits it (coding-agent-discipline).
+
+## Source
+
+- [Google Engineering Practices: Handling pushback](https://google.github.io/eng-practices/review/reviewer/pushback.html): reconsider a recommendation when the reply is correct, and explain remaining disagreement in a way that shows the reply was understood. The question example applies that reasoning to engineering communication; code-review procedures remain with `code-review`.

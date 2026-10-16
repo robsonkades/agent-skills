@@ -1,0 +1,350 @@
+
+Test run finished after 123 ms
+[         3 containers found      ]
+[         0 containers skipped    ]
+[         3 containers started    ]
+[         0 containers aborted    ]
+[         3 containers successful ]
+[         0 containers failed     ]
+[        20 tests found           ]
+[         0 tests skipped         ]
+[        20 tests started         ]
+[         0 tests aborted         ]
+[        20 tests successful      ]
+[         0 tests failed          ]
+
+CONTROL VERIFIED: BaselineTest, rejectAll=false, expectedFailures=0
+
+Test run finished after 128 ms
+[         3 containers found      ]
+[         0 containers skipped    ]
+[         3 containers started    ]
+[         0 containers aborted    ]
+[         3 containers successful ]
+[         0 containers failed     ]
+[        20 tests found           ]
+[         0 tests skipped         ]
+[        20 tests started         ]
+[         0 tests aborted         ]
+[        20 tests successful      ]
+[         0 tests failed          ]
+
+CONTROL VERIFIED: BaselineTest, rejectAll=true, expectedFailures=0
+
+Test run finished after 122 ms
+[         3 containers found      ]
+[         0 containers skipped    ]
+[         3 containers started    ]
+[         0 containers aborted    ]
+[         3 containers successful ]
+[         0 containers failed     ]
+[        20 tests found           ]
+[         0 tests skipped         ]
+[        20 tests started         ]
+[         0 tests aborted         ]
+[        20 tests successful      ]
+[         0 tests failed          ]
+
+CONTROL VERIFIED: RevisedTest, rejectAll=false, expectedFailures=0
+
+Test run finished after 133 ms
+[         3 containers found      ]
+[         0 containers skipped    ]
+[         3 containers started    ]
+[         0 containers aborted    ]
+[         3 containers successful ]
+[         0 containers failed     ]
+[        20 tests found           ]
+[         0 tests skipped         ]
+[        20 tests started         ]
+[         0 tests aborted         ]
+[         0 tests successful      ]
+[        20 tests failed          ]
+
+
+Failures (20):
+  JUnit Jupiter:RevisedTest:balanceConservesSuccessfulWithdrawalsAfterWorkersFinish():repetition 1 of 20
+    MethodSource [className = 'RevisedTest', methodName = 'balanceConservesSuccessfulWithdrawalsAfterWorkersFinish', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: expected: <1000> but was: <0>
+       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+       org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+       RevisedTest.balanceConservesSuccessfulWithdrawalsAfterWorkersFinish(RevisedTest.java:58)
+       java.base/java.lang.reflect.Method.invoke(Method.java:565)
+       java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+       java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+       [...]
+  JUnit Jupiter:RevisedTest:balanceConservesSuccessfulWithdrawalsAfterWorkersFinish():repetition 2 of 20
+    MethodSource [className = 'RevisedTest', methodName = 'balanceConservesSuccessfulWithdrawalsAfterWorkersFinish', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: expected: <1000> but was: <0>
+       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+       org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+       RevisedTest.balanceConservesSuccessfulWithdrawalsAfterWorkersFinish(RevisedTest.java:58)
+       java.base/java.lang.reflect.Method.invoke(Method.java:565)
+       java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+       java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+       [...]
+  JUnit Jupiter:RevisedTest:balanceConservesSuccessfulWithdrawalsAfterWorkersFinish():repetition 3 of 20
+    MethodSource [className = 'RevisedTest', methodName = 'balanceConservesSuccessfulWithdrawalsAfterWorkersFinish', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: expected: <1000> but was: <0>
+       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+       org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+       RevisedTest.balanceConservesSuccessfulWithdrawalsAfterWorkersFinish(RevisedTest.java:58)
+       java.base/java.lang.reflect.Method.invoke(Method.java:565)
+       java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+       java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+       [...]
+  JUnit Jupiter:RevisedTest:balanceConservesSuccessfulWithdrawalsAfterWorkersFinish():repetition 4 of 20
+    MethodSource [className = 'RevisedTest', methodName = 'balanceConservesSuccessfulWithdrawalsAfterWorkersFinish', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: expected: <1000> but was: <0>
+       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+       org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+       RevisedTest.balanceConservesSuccessfulWithdrawalsAfterWorkersFinish(RevisedTest.java:58)
+       java.base/java.lang.reflect.Method.invoke(Method.java:565)
+       java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+       java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+       [...]
+  JUnit Jupiter:RevisedTest:balanceConservesSuccessfulWithdrawalsAfterWorkersFinish():repetition 5 of 20
+    MethodSource [className = 'RevisedTest', methodName = 'balanceConservesSuccessfulWithdrawalsAfterWorkersFinish', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: expected: <1000> but was: <0>
+       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+       org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+       RevisedTest.balanceConservesSuccessfulWithdrawalsAfterWorkersFinish(RevisedTest.java:58)
+       java.base/java.lang.reflect.Method.invoke(Method.java:565)
+       java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+       java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+       [...]
+  JUnit Jupiter:RevisedTest:balanceConservesSuccessfulWithdrawalsAfterWorkersFinish():repetition 6 of 20
+    MethodSource [className = 'RevisedTest', methodName = 'balanceConservesSuccessfulWithdrawalsAfterWorkersFinish', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: expected: <1000> but was: <0>
+       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+       org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+       RevisedTest.balanceConservesSuccessfulWithdrawalsAfterWorkersFinish(RevisedTest.java:58)
+       java.base/java.lang.reflect.Method.invoke(Method.java:565)
+       java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+       java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+       [...]
+  JUnit Jupiter:RevisedTest:balanceConservesSuccessfulWithdrawalsAfterWorkersFinish():repetition 7 of 20
+    MethodSource [className = 'RevisedTest', methodName = 'balanceConservesSuccessfulWithdrawalsAfterWorkersFinish', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: expected: <1000> but was: <0>
+       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+       org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+       RevisedTest.balanceConservesSuccessfulWithdrawalsAfterWorkersFinish(RevisedTest.java:58)
+       java.base/java.lang.reflect.Method.invoke(Method.java:565)
+       java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+       java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+       [...]
+  JUnit Jupiter:RevisedTest:balanceConservesSuccessfulWithdrawalsAfterWorkersFinish():repetition 8 of 20
+    MethodSource [className = 'RevisedTest', methodName = 'balanceConservesSuccessfulWithdrawalsAfterWorkersFinish', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: expected: <1000> but was: <0>
+       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+       org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+       RevisedTest.balanceConservesSuccessfulWithdrawalsAfterWorkersFinish(RevisedTest.java:58)
+       java.base/java.lang.reflect.Method.invoke(Method.java:565)
+       java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+       java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+       [...]
+  JUnit Jupiter:RevisedTest:balanceConservesSuccessfulWithdrawalsAfterWorkersFinish():repetition 9 of 20
+    MethodSource [className = 'RevisedTest', methodName = 'balanceConservesSuccessfulWithdrawalsAfterWorkersFinish', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: expected: <1000> but was: <0>
+       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+       org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+       RevisedTest.balanceConservesSuccessfulWithdrawalsAfterWorkersFinish(RevisedTest.java:58)
+       java.base/java.lang.reflect.Method.invoke(Method.java:565)
+       java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+       java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+       [...]
+  JUnit Jupiter:RevisedTest:balanceConservesSuccessfulWithdrawalsAfterWorkersFinish():repetition 10 of 20
+    MethodSource [className = 'RevisedTest', methodName = 'balanceConservesSuccessfulWithdrawalsAfterWorkersFinish', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: expected: <1000> but was: <0>
+       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+       org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+       RevisedTest.balanceConservesSuccessfulWithdrawalsAfterWorkersFinish(RevisedTest.java:58)
+       java.base/java.lang.reflect.Method.invoke(Method.java:565)
+       java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+       java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+       [...]
+  JUnit Jupiter:RevisedTest:balanceConservesSuccessfulWithdrawalsAfterWorkersFinish():repetition 11 of 20
+    MethodSource [className = 'RevisedTest', methodName = 'balanceConservesSuccessfulWithdrawalsAfterWorkersFinish', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: expected: <1000> but was: <0>
+       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+       org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+       RevisedTest.balanceConservesSuccessfulWithdrawalsAfterWorkersFinish(RevisedTest.java:58)
+       java.base/java.lang.reflect.Method.invoke(Method.java:565)
+       java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+       java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+       [...]
+  JUnit Jupiter:RevisedTest:balanceConservesSuccessfulWithdrawalsAfterWorkersFinish():repetition 12 of 20
+    MethodSource [className = 'RevisedTest', methodName = 'balanceConservesSuccessfulWithdrawalsAfterWorkersFinish', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: expected: <1000> but was: <0>
+       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+       org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+       RevisedTest.balanceConservesSuccessfulWithdrawalsAfterWorkersFinish(RevisedTest.java:58)
+       java.base/java.lang.reflect.Method.invoke(Method.java:565)
+       java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+       java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+       [...]
+  JUnit Jupiter:RevisedTest:balanceConservesSuccessfulWithdrawalsAfterWorkersFinish():repetition 13 of 20
+    MethodSource [className = 'RevisedTest', methodName = 'balanceConservesSuccessfulWithdrawalsAfterWorkersFinish', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: expected: <1000> but was: <0>
+       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+       org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+       RevisedTest.balanceConservesSuccessfulWithdrawalsAfterWorkersFinish(RevisedTest.java:58)
+       java.base/java.lang.reflect.Method.invoke(Method.java:565)
+       java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+       java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+       [...]
+  JUnit Jupiter:RevisedTest:balanceConservesSuccessfulWithdrawalsAfterWorkersFinish():repetition 14 of 20
+    MethodSource [className = 'RevisedTest', methodName = 'balanceConservesSuccessfulWithdrawalsAfterWorkersFinish', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: expected: <1000> but was: <0>
+       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+       org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+       RevisedTest.balanceConservesSuccessfulWithdrawalsAfterWorkersFinish(RevisedTest.java:58)
+       java.base/java.lang.reflect.Method.invoke(Method.java:565)
+       java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+       java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+       [...]
+  JUnit Jupiter:RevisedTest:balanceConservesSuccessfulWithdrawalsAfterWorkersFinish():repetition 15 of 20
+    MethodSource [className = 'RevisedTest', methodName = 'balanceConservesSuccessfulWithdrawalsAfterWorkersFinish', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: expected: <1000> but was: <0>
+       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+       org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+       RevisedTest.balanceConservesSuccessfulWithdrawalsAfterWorkersFinish(RevisedTest.java:58)
+       java.base/java.lang.reflect.Method.invoke(Method.java:565)
+       java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+       java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+       [...]
+  JUnit Jupiter:RevisedTest:balanceConservesSuccessfulWithdrawalsAfterWorkersFinish():repetition 16 of 20
+    MethodSource [className = 'RevisedTest', methodName = 'balanceConservesSuccessfulWithdrawalsAfterWorkersFinish', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: expected: <1000> but was: <0>
+       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+       org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+       RevisedTest.balanceConservesSuccessfulWithdrawalsAfterWorkersFinish(RevisedTest.java:58)
+       java.base/java.lang.reflect.Method.invoke(Method.java:565)
+       java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+       java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+       [...]
+  JUnit Jupiter:RevisedTest:balanceConservesSuccessfulWithdrawalsAfterWorkersFinish():repetition 17 of 20
+    MethodSource [className = 'RevisedTest', methodName = 'balanceConservesSuccessfulWithdrawalsAfterWorkersFinish', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: expected: <1000> but was: <0>
+       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+       org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+       RevisedTest.balanceConservesSuccessfulWithdrawalsAfterWorkersFinish(RevisedTest.java:58)
+       java.base/java.lang.reflect.Method.invoke(Method.java:565)
+       java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+       java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+       [...]
+  JUnit Jupiter:RevisedTest:balanceConservesSuccessfulWithdrawalsAfterWorkersFinish():repetition 18 of 20
+    MethodSource [className = 'RevisedTest', methodName = 'balanceConservesSuccessfulWithdrawalsAfterWorkersFinish', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: expected: <1000> but was: <0>
+       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+       org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+       RevisedTest.balanceConservesSuccessfulWithdrawalsAfterWorkersFinish(RevisedTest.java:58)
+       java.base/java.lang.reflect.Method.invoke(Method.java:565)
+       java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+       java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+       [...]
+  JUnit Jupiter:RevisedTest:balanceConservesSuccessfulWithdrawalsAfterWorkersFinish():repetition 19 of 20
+    MethodSource [className = 'RevisedTest', methodName = 'balanceConservesSuccessfulWithdrawalsAfterWorkersFinish', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: expected: <1000> but was: <0>
+       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+       org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+       RevisedTest.balanceConservesSuccessfulWithdrawalsAfterWorkersFinish(RevisedTest.java:58)
+       java.base/java.lang.reflect.Method.invoke(Method.java:565)
+       java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+       java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+       [...]
+  JUnit Jupiter:RevisedTest:balanceConservesSuccessfulWithdrawalsAfterWorkersFinish():repetition 20 of 20
+    MethodSource [className = 'RevisedTest', methodName = 'balanceConservesSuccessfulWithdrawalsAfterWorkersFinish', methodParameterTypes = '']
+    => org.opentest4j.AssertionFailedError: expected: <1000> but was: <0>
+       org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+       org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+       org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+       org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+       org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+       RevisedTest.balanceConservesSuccessfulWithdrawalsAfterWorkersFinish(RevisedTest.java:58)
+       java.base/java.lang.reflect.Method.invoke(Method.java:565)
+       java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+       java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+       [...]
+CONTROL VERIFIED: RevisedTest, rejectAll=true, expectedFailures=20
+Compiler target: Java 21; runtime:
+openjdk version "25.0.3" 2026-04-21 LTS
+OpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)
+OpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)

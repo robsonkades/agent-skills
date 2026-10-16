@@ -1,0 +1,37 @@
+import { writeFile } from 'node:fs/promises';
+import assert from 'node:assert/strict';
+import { indexRows, selectedRow } from './controls/client.mjs';
+
+const root = 'C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/remote-facade-and-dto';
+const bounded = ['9007199254740990', '9007199254740991'];
+const wide = ['9007199254740992', '9007199254740993'];
+const scenarios = [
+  { name: 'bounded-numbers-existing-client', ids: bounded, strings: false, updatedLookup: false, expectedPass: true },
+  { name: 'wide-numbers-existing-client', ids: wide, strings: false, updatedLookup: false, expectedPass: false },
+  { name: 'wide-strings-existing-client', ids: wide, strings: true, updatedLookup: false, expectedPass: false },
+  { name: 'wide-strings-updated-lookup', ids: wide, strings: true, updatedLookup: true, expectedPass: true }
+];
+const results = [];
+for (const scenario of scenarios) {
+  // Preserve original digits; never construct the numeric payload from JS Number literals.
+  const payload = '[' + scenario.ids.map((digits, i) =>
+    `{"id":${scenario.strings ? JSON.stringify(digits) : digits},"name":"row-${i}"}`).join(',') + ']';
+  const rows = indexRows(payload);
+  const lookup = scenario.updatedLookup ? (map, id) => map.get(id) : selectedRow;
+  const observedNames = scenario.ids.map(id => lookup(rows, id)?.name ?? null);
+  let failure = null;
+  try {
+    assert.equal(rows.size, scenario.ids.length, 'Distinct business IDs must remain distinct.');
+    assert.deepEqual(observedNames, ['row-0', 'row-1'], 'Selection must resolve each original business ID.');
+  } catch (error) {
+    if (!(error instanceof assert.AssertionError)) throw error;
+    failure = { name: error.name, message: error.message, actual: error.actual, expected: error.expected };
+  }
+  const passed = failure === null;
+  results.push({ ...scenario, payload, parsedKeys: [...rows.keys()].map(String), mapSize: rows.size, observedNames, passed, failure });
+  assert.equal(passed, scenario.expectedPass, `Unexpected control result: ${scenario.name}`);
+}
+const report = { allExpectedOutcomes: true, runtime: process.version, engine: process.versions.v8, results,
+  limits: 'Real JSON.parse/Map/Number behavior in Node; no HTTP transport, Java producer, browser DOM, framework mocks or agent evaluation. String-plus-updated-lookup is an isolated candidate control, not a deployed compatibility solution.' };
+await writeFile(`${root}/logs/controls.json`, JSON.stringify(report, null, 2) + '\n');
+console.log(JSON.stringify(report, null, 2));

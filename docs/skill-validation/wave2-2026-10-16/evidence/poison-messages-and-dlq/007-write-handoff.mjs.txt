@@ -1,0 +1,124 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+
+const root = 'C:/git/agent-skills';
+const base = 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV';
+const dir = `${base}/poison-messages-and-dlq`;
+const local = JSON.parse(fs.readFileSync(`${dir}/local-validation.json`, 'utf8'));
+const sources = JSON.parse(fs.readFileSync(`${dir}/source-index.json`, 'utf8'));
+for (const file of local.files) {
+  assert.equal(crypto.createHash('sha256').update(fs.readFileSync(`${root}/${file.file}`)).digest('hex'), file.finalSha256);
+}
+const support = {
+  'kafka-design.html': 'Material correction: after a transaction abort, application state and consumer position must be reset explicitly. Also supports atomic Kafka output/offset scope versus external sink coordination, and compaction/tombstones.',
+  'kafka-consumer.html': 'Poll advances local position separately from committed position; offsets can have gaps; rebalance does not preserve pause state.',
+  'kafka-headers.html': 'Repeated header names and ordered iteration/addition.',
+  'kafka-header.html': 'Header value is byte[], not necessarily UTF-8 text.',
+  'spring-tombstones.html': 'Original null can be a tombstone; a deserializer can also return null after failure.',
+  'spring-error-handling.html': 'Dead-letter publication error handling and repeated original/exception header accumulation can affect transfer success.',
+  'sqs-dlq.html': 'Native delivery-count routing is not causal classification; Standard retains original enqueue clock, FIFO resets it on DLQ transfer, age metric differs.',
+  'sqs-redrive.html': 'Redrive receives new message identity/time and can interleave with live arrivals; velocity and cancellation have bounded operational semantics.',
+  's3-lifecycle.html': 'Object expiry/lifecycle is separate from the DLQ envelope retention policy.',
+  's3-presigned.html': 'Access-link expiry may be earlier than requested URL lifetime due to credential expiry; expired access is not proof of object deletion.',
+  'pubsub-dead-letter.html': 'Approximate best-effort forwarding/delivery attempts, required IAM and destination subscription.',
+};
+const commonTask = 'Review whether this Kafka transactional quarantine loop can safely resume after the DLQ destination recovers. Inspect the supplied loop, recovery hook and trace, then update recovery-review.md with the supported decision and any minimal correction needed. Preserve an adequate existing framework recovery path. This is an offline source/trace review; do not connect to a broker, change broker settings or deploy.';
+const commonArtifacts = {
+  'versions.txt': 'Application Java 17. Resolved kafka-clients 4.1.2. Broker 4.1.2. Automatic commit is disabled. Kafka output and source offsets use the same transactional producer, current group metadata and one cluster. Destination consumers use read_committed. There are no database/HTTP side effects in this fixture.\n',
+  'poll-loop.txt': 'One consumer thread owns source-0 throughout the shown interval. Before poll, the safely committed next offset is 101. A single transaction processes every record returned by poll: valid records go to the output topic; payload-intrinsic record 103 goes to the DLQ; offsets are sent and committed only if all outputs succeed. On failure, abortTransaction() completes, the old ConsumerRecords reference is discarded after RecoveryHook returns, and the outer loop calls poll() again. No rebalance occurred. No other buffered retry mechanism exists. The DLQ outage has since been repaired.\n',
+  'trace.json': JSON.stringify({ sourcePartition: 'source-0', committedNextOffsetBefore: 101, returnedOffsets: [101, 102, 103], consumerPositionAfterPoll: 104, transactionOutcome: 'ABORT_COMPLETED', cause: 'DLQ publish failure before commit', committedNextOffsetAfterAbort: 101, committedDispositionFor103: false }, null, 2) + '\n',
+  'recovery-review.md': 'Proposed: resume the existing poll loop now that the DLQ destination is healthy. Review pending.\n',
+};
+const inputs = [
+  { id: 'abort-without-position-recovery', task: commonTask, artifacts: { ...commonArtifacts, 'RecoveryHook.java': '// Source excerpt invoked synchronously on the consumer thread after successful abort.\nvoid recoverAfterAbort() {\n    metrics.recordAbortedBatch();\n    // No retained batch, seek, consumer replacement or framework after-rollback processing.\n}\n' } },
+  { id: 'abort-with-existing-position-recovery', task: commonTask, artifacts: { ...commonArtifacts, 'RecoveryHook.java': '// Source excerpt invoked synchronously on the consumer thread after successful abort.\nvoid recoverAfterAbort() {\n    metrics.recordAbortedBatch();\n    // safeStart was captured from the confirmed committed prefix before this poll.\n    // This hook verifies ownership and restores the only affected assigned partition.\n    frameworkAfterRollback.restoreAssignedPosition(sourcePartition, safeStart);\n}\n', 'recovery-hook-trace.json': JSON.stringify({ currentAssignment: ['source-0'], safeStart: 101, hookRunsOnConsumerThread: true, seekCompleted: true, consumerPositionAfterHook: 101, nextPollFirstOffset: 101 }, null, 2) + '\n' } },
+];
+const handoff = {
+  status: 'READY_FOR_GLOBAL_VALIDATION', skill: 'poison-messages-and-dlq', ownedPath: 'skills/poison-messages-and-dlq/**',
+  allWritesStopped: true, noProcessesLeftRunning: true,
+  version: { committed: '1.2.4', assignmentTime: '1.2.4', final: '1.2.5', preExistingBump: false, rationale: 'One patch bump for the supported reference change; descriptions and other metadata remain unchanged.' },
+  baseline: { source: 'docs/skill-validation/wave2-2026-10-16/baseline.json', allFourFilesMatchedAtAssignment: true, stagedUnstagedUntrackedAtAssignment: 'Empty; no pre-existing changes in assigned package.', files: local.files },
+  files: { changedByReviewer: ['skills/poison-messages-and-dlq/references/dlq-operations.md', 'skills/poison-messages-and-dlq/skill.yaml'], preExistingChanges: [], unchanged: ['skills/poison-messages-and-dlq/SKILL.md', 'skills/poison-messages-and-dlq/references/classification-and-routing.md'], sharedWrites: false },
+  reviewCriteria: [
+    'Classify from input/environment/effect evidence instead of exception type or attempt count.',
+    'Prove a recoverable source disposition at actual publish/offset/ack and external-object boundaries, including uncertain outcomes and retry.',
+    'Preserve operation identity, retention, envelope fidelity and correct ordering during quarantine/redrive.',
+    'Keep diagnosis/review scope narrow, preserve adequate recovery controls and distinguish source contracts from runtime proof.',
+  ],
+  findings: {
+    corrected: [{
+      location: 'skills/poison-messages-and-dlq/references/dlq-operations.md:114',
+      gap: 'Atomic Kafka transfer and crash/restart tests did not expose abort-without-restart recovery, where local consumer position is still advanced.',
+      evidence: 'Kafka 4.1 design explicitly requires resetting application/consumer position after abort; Consumer API distinguishes poll position from committed position.',
+      consequence: 'After a successful abort, fresh polls and a later commit can pass the unresolved batch even though its DLQ disposition did not commit.',
+      change: 'Require retrying the retained unresolved batch or restoring a safe owned position before later commits; inspect existing framework rollback/reseek rather than adding unconditional manual seeks.',
+    }, {
+      location: 'skills/poison-messages-and-dlq/references/dlq-operations.md:243',
+      gap: 'Restart-only transfer-ambiguity control could pass while same-consumer abort recovery remains unsafe.',
+      change: 'Extend the existing control to abort after poll without restarting, and check that later offset commits cannot overtake unresolved work.',
+    }],
+    remaining: [],
+  },
+  preserved: [
+    'Evidence-based payload/environment/transient/ambiguous classification; bounded attempts remain useful without proving poison.',
+    'Native DLQ as a legitimate durable holding path when ownership, retention and cause are explicit.',
+    'Block/skip/park-key/resynchronize alternatives, prefix commits, offset gaps, ownership, in-flight effects and replay ordering.',
+    'Raw bytes, null/tombstone distinction, repeated binary headers, bounded envelope/history and Kafka compaction disposition identity.',
+    'External blob upload/reconciliation/access/decryption/lifecycle boundary and no unsafe compensating deletion.',
+    'Stable operation identity, sink idempotency, semantic validity, shared production handler, bounded replay and unique-effect reconciliation.',
+    'Conditional monitoring, retention clock differences, native provider limitations and explicit privacy controls.',
+    'Java 17 conceptual schema and its explicit validation/mutability limits; no implementation or project upgrade added.',
+  ],
+  replacedOrRemoved: [],
+  commands: [
+    { command: 'Scoped git status/diff/cached diff/show and wave-two baseline SHA256 comparison', cwd: root, result: 'Four clean files, all matching assignment baseline, version 1.2.4. Final changed paths match exactly the two expected files.' },
+    { command: `node ${dir}/collect-sources.mjs`, cwd: root, result: 'Exit 0; eleven primary source pages HTTP 200, saved with SHA256. Pub/Sub web-tool open initially returned Internal Error, but direct official GET succeeded and followed its official redirect.', evidence: `${dir}/source-index.json` },
+    { command: `node ${dir}/validate.mjs`, cwd: root, result: 'PASS before edits and after the final edit: strict manifest/name/description, version, four attribution hashes, two internal links, source hashes, schema compilation and synthetic retention arithmetic.', evidence: `${dir}/local-validation.json`, baselineEvidence: `${dir}/baseline-local-validation.json` },
+    { command: local.conceptualJavaSchema.command, args: local.conceptualJavaSchema.args, cwd: dir, result: 'javac 25.0.3 --release 17 exit 0, no output; class version 61 and nested SafeHeader class present. Extracted schema is unchanged from assignment.', evidence: `${dir}/DeadLetter.java` },
+    { command: 'node node_modules/prettier/bin/prettier.cjs --check skills/poison-messages-and-dlq/SKILL.md skills/poison-messages-and-dlq/skill.yaml skills/poison-messages-and-dlq/references/classification-and-routing.md skills/poison-messages-and-dlq/references/dlq-operations.md', cwd: root, result: 'Exit 0; all matched files use Prettier code style.' },
+    { command: 'git diff --check -- skills/poison-messages-and-dlq', cwd: root, result: 'Exit 0; empty output.' },
+    { command: 'git diff -- skills/poison-messages-and-dlq', cwd: root, result: 'Final focused diff inspected: abort-position recovery paragraph, same-consumer test extension, one patch version bump.' },
+  ],
+  structuralAndTechnicalChecks: local,
+  behavioralEvidence: {
+    executedAgentEvaluations: [], executedBrokerIntegrationTests: [],
+    walkthroughs: ['Aborted output/offset writes leave committed next offset 101 but local poll position 104; an empty recovery hook cannot justify continuing to fresh work.', 'A verified existing after-rollback hook restoring the currently owned partition to 101 closes that specific gap without an additional manual seek.', 'Exploratory SQS clock arithmetic was executed: identical 96-hour retention and 50-hour total age leave 46 hours for Standard versus 94 hours for FIFO; this is not a provider expiry test.'],
+    improvementClaim: 'The documented mechanism and missing failure control were corrected with primary evidence. No measured agent behavioral gain or broker integration guarantee is claimed.',
+    pending: 'Coordinator independent actor evaluation and, where desired, actual Kafka transfer integration using the target client/framework path.',
+  },
+  developmentCases: {
+    singleChangedConstraint: 'Whether the existing post-abort recovery hook actually restores the consumer position; the poll batch, committed offset, successful abort and all other contracts are held constant.',
+    fixtureProvenance: 'Synthetic source excerpts and traces. These are known development cases, not actual broker captures or held-out cases.',
+    prerequisites: 'Materialize only one input bundle in an isolated directory; provide the selected skill and source access. Permit writes only to recovery-review.md. Keep evaluator criteria, handoff and other case out of actor access. No broker or dependencies need installation.',
+    inputs,
+    evaluatorOnlyCriteria: [
+      {
+        id: inputs[0].id,
+        expected: ['Read the loop, source offset trace and no-op recovery hook.', 'Distinguish committed next offset 101 from local position 104; aborting producer transaction does not by itself rewind consumer state.', 'Reject simply resuming fresh polls: a later commit can skip 101–103 and the uncommitted quarantine disposition.', 'Propose retaining/retrying the unresolved batch or restoring source-0 to the verified safe offset 101 under current ownership before new commits; consider actual framework ownership rather than unconditional global seeking.', 'Update recovery-review.md with this specific finding and a same-consumer abort control; no production action or broad recovery redesign.'],
+        failIf: ['Claims abort alone resets KafkaConsumer position.', 'Treats unchanged committed offset as proof that fresh polls cannot skip records.', 'Advances the source commit without a committed disposition.', 'Uses a crash/restart-only test as proof of the shown live-consumer recovery path.', 'Blindly seeks all partitions or ignores ownership and delivered-prefix constraints.'],
+      },
+      {
+        id: inputs[1].id,
+        expected: ['Inspect the hook and observed seek/next-poll evidence rather than stopping at the generic Kafka abort rule.', 'Recognize the existing framework path restores safe position 101 on the owner thread before the next poll.', 'Preserve the adequate recovery mechanism; an extra manual seek or mandatory consumer restart is unnecessary for the shown gap.', 'Keep the conclusion scoped to this position-recovery evidence; source/trace review is not proof of all broker failure paths or external exactly-once effects.', 'Update recovery-review.md with the supported decision and any relevant unexecuted broker control.'],
+        failIf: ['Reports the same missing-rewind defect despite the actual hook and trace.', 'Requires adding an unconditional manual seek/restart without an unresolved risk.', 'Claims broader end-to-end exactly-once proof from this fixture.', 'Connects to production, deploys or changes broker settings.'],
+      },
+    ],
+  },
+  sources: sources.map((source) => ({ ...source, retainedAt: `${dir}/sources/${source.file}`, supports: support[source.file] })),
+  limitations: [
+    'No Kafka/SQS/PubSub/S3 service was contacted beyond public documentation; no broker integration or replay operation was executed.',
+    'Java compilation validates only the conceptual Java 17 schema syntax/API availability, not defensive copying, serialization, null variants or operational safety.',
+    'Kafka API pages under /41 currently identify 4.1.2; the skill still requires inspecting actual target broker/client/framework versions and recovery hooks.',
+    'Retention arithmetic and Kafka review cases are synthetic; they are not runtime fault-injection or behavioral comparison results.',
+    'Global registry, version integration and repository checks remain coordinator-only after all reviewers stop writing.',
+  ],
+  crossSkillFindings: [],
+  pendingGlobalChecks: [
+    { command: 'npm run registry:build', prerequisite: 'All reviewer writes stopped.', reason: 'Coordinator owns shared index/integrity and cross-package checks.' },
+    { command: 'npm run verify', prerequisite: 'Coordinator regenerates registry and integrates final skill versions.', reason: 'Local readiness does not claim repository-wide verification.' },
+  ],
+  coordinatorActions: ['Archive this JSON and relevant retained primary sources/local validation files.', 'Choose independent evaluator cases with input and criteria kept separate.', 'Run the global checks after all writers stop.'],
+};
+fs.writeFileSync(`${base}/poison-messages-and-dlq.json`, JSON.stringify(handoff, null, 2) + '\n');
+console.log(JSON.stringify({ status: handoff.status, version: handoff.version.final, files: handoff.files.changedByReviewer, sourceCount: sources.length, allWritesStopped: true, handoff: `${base}/poison-messages-and-dlq.json` }));

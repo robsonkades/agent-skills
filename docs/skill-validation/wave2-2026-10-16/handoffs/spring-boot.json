@@ -1,0 +1,555 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "spring-boot",
+  "ownedPath": "skills/spring-boot/**",
+  "reviewer": "/root/quality01",
+  "date": "2026-10-16",
+  "allWritesStopped": true,
+  "processState": "All compiler/runtime/check processes have returned; no background writers started. Skill and isolated artifact writes stop after this handoff file is saved.",
+  "versions": {
+    "committed": "1.2.1",
+    "assignment": "1.2.1",
+    "final": "1.2.2",
+    "preExistingBump": false,
+    "rationale": "One patch bump for supported documentation/verification improvement; published integrity changes. No description or dependency changes."
+  },
+  "baseline": {
+    "status": "",
+    "staged": "",
+    "unstaged": "",
+    "untracked": [],
+    "matchesWaveTwoBaseline": true,
+    "files": [
+      {
+        "path": "skills/spring-boot/references/composition-and-configuration.md",
+        "assignmentSha256": "3664dfccecdc9c6f7c144340a5f8bfe322903f7fbe7ef3f5d33985b7d7c778ff",
+        "wave2BaselineSha256": "3664dfccecdc9c6f7c144340a5f8bfe322903f7fbe7ef3f5d33985b7d7c778ff",
+        "matchesWave2Baseline": true
+      },
+      {
+        "path": "skills/spring-boot/references/operations-and-events.md",
+        "assignmentSha256": "4b2c59bd12a27cd29d29c436da7f20055f1fb0698cef54f5dce3922d5835f3a2",
+        "wave2BaselineSha256": "4b2c59bd12a27cd29d29c436da7f20055f1fb0698cef54f5dce3922d5835f3a2",
+        "matchesWave2Baseline": true
+      },
+      {
+        "path": "skills/spring-boot/references/service-delivery.md",
+        "assignmentSha256": "29c5442ad13af0335178dd0358c871ad59e3f9a0b7ee3d53d6fd2a0c8a72ed10",
+        "wave2BaselineSha256": "29c5442ad13af0335178dd0358c871ad59e3f9a0b7ee3d53d6fd2a0c8a72ed10",
+        "matchesWave2Baseline": true
+      },
+      {
+        "path": "skills/spring-boot/references/verification.md",
+        "assignmentSha256": "47430dcd37b01e2cc29ad9a3787c406b85c2725a290e906600d05e21fb0d333a",
+        "wave2BaselineSha256": "47430dcd37b01e2cc29ad9a3787c406b85c2725a290e906600d05e21fb0d333a",
+        "matchesWave2Baseline": true
+      },
+      {
+        "path": "skills/spring-boot/SKILL.md",
+        "assignmentSha256": "3c7f0e576a00c36d471d0a06935d7a4070bc813647153675dadcfa36bcb81ee0",
+        "wave2BaselineSha256": "3c7f0e576a00c36d471d0a06935d7a4070bc813647153675dadcfa36bcb81ee0",
+        "matchesWave2Baseline": true
+      },
+      {
+        "path": "skills/spring-boot/skill.yaml",
+        "assignmentSha256": "af7357f0983eed5a61449eacd84bbd8185db03629657851ec6ede3f817367737",
+        "wave2BaselineSha256": "af7357f0983eed5a61449eacd84bbd8185db03629657851ec6ede3f817367737",
+        "matchesWave2Baseline": true
+      }
+    ]
+  },
+  "files": {
+    "changedByReviewer": [
+      {
+        "path": "skills/spring-boot/references/composition-and-configuration.md",
+        "sha256": "b06a5b8c3844d18cf327e26c4cf0d84b4c734f46b0289c64beb1964a3a455a3d"
+      },
+      {
+        "path": "skills/spring-boot/references/verification.md",
+        "sha256": "91c4725ce777588f9d76f71c9e5edbacadb91ae2d414117f2ad510380ac523b4"
+      },
+      {
+        "path": "skills/spring-boot/skill.yaml",
+        "sha256": "d3a3d254e2747b2b8a1345f0bdc24cb1d5eb59738a62460bd258b32d2270ff7c"
+      }
+    ],
+    "preExistingChanges": [],
+    "unchanged": [
+      {
+        "path": "skills/spring-boot/references/operations-and-events.md",
+        "sha256": "4b2c59bd12a27cd29d29c436da7f20055f1fb0698cef54f5dce3922d5835f3a2"
+      },
+      {
+        "path": "skills/spring-boot/references/service-delivery.md",
+        "sha256": "29c5442ad13af0335178dd0358c871ad59e3f9a0b7ee3d53d6fd2a0c8a72ed10"
+      },
+      {
+        "path": "skills/spring-boot/SKILL.md",
+        "sha256": "3c7f0e576a00c36d471d0a06935d7a4070bc813647153675dadcfa36bcb81ee0"
+      }
+    ]
+  },
+  "changes": [
+    {
+      "location": "skills/spring-boot/references/composition-and-configuration.md:168-181",
+      "finding": "Existing source-precedence guidance did not distinguish a winning scalar from the bound collection. In Boot 4.1.1, a partial higher-priority list override replaces the list rather than merging entries/fields by index; map object fields can combine across sources.",
+      "consequence": "A timeout-only override can lose a required URL and a second client while Environment still returns the second base URL. Scalar lookup or successful startup does not establish the consumer's contract.",
+      "correction": "Require inspecting the bound object; explain list replacement vs stable-key map merging, preserve ordered-list configuration through a complete override, qualify a map migration by consumer/compatibility needs, and check base/profile identity/count/required fields/values.",
+      "evidence": "Pinned official Boot 4.1.1 reference plus real SpringApplication config-data reproduction. List partial result: [Client[url=null, timeout=PT2S]]; map kept both complete clients."
+    },
+    {
+      "location": "skills/spring-boot/references/verification.md:17",
+      "finding": "Verification table lacked a collection-specific observation point.",
+      "correction": "Add a single focused row binding the claim to base/profile checks of actual entries, required fields and values, excluding overridden scalar key checks as sufficient proof."
+    },
+    {
+      "location": "skills/spring-boot/skill.yaml:3",
+      "correction": "Patch version 1.2.1 to 1.2.2 per immutable-content/version policy."
+    }
+  ],
+  "preserved": [
+    "Spring Boot 4.x / Java 25 baseline, existing version-specific Boot 4.1.1 / Framework 7.0.9 examples and no upgrade authorization.",
+    "Integrated service delivery for service requests; focused wiring/configuration diagnosis for focused requests; persistence/security/architecture specialist boundaries and existing suggests.",
+    "Evidence from resolved runtime graph, bootstrap/scanning/condition report, actual consumer and effective configuration origin.",
+    "Existing bean identity/interception, ownership/cleanup, scope, conditional opt-in, customizer/backoff, property-validation ownership, configuration compatibility and config-data test distinctions.",
+    "Existing lifecycle/readiness, raw initialization callback/AOP constraints, partially acquired resource cleanup, shutdown and non-HTTP task handling.",
+    "Management path/exposure/auth distinctions, liveness versus shared-dependency outage, logging/context, actual executor/scheduler and fixed-delay caveats.",
+    "In-process events versus durability, transaction/after-commit boundaries, and service-level real integration/acceptance evidence.",
+    "All six pre-existing package files and four routed references; no snippets removed or materially changed."
+  ],
+  "replacedOrRemoved": [],
+  "domainCriteria": [
+    "Diagnose the object the real Boot binder gives the consumer, not merely property-source precedence.",
+    "Use exact framework baseline and real config-data profile loading for consequential collection semantics.",
+    "Preserve public configuration shape, ordered client contract and required fields.",
+    "Change the recommendation when the profile already contains a complete list override; no forced refactor.",
+    "Keep checks proportionate and negative controls sensitive to the claimed loss."
+  ],
+  "toolchain": {
+    "compiler": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+    "compilerRelease": "25",
+    "compilerFlags": ["--release 25", "-parameters"],
+    "runtime": "Temurin 25.0.3+9-LTS",
+    "runtimeExecutable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+    "springBoot": "4.1.1",
+    "springFramework": "7.0.9",
+    "dependencies": "Already-cached jars; versions followed Boot 4.1.1 dependency management, including commons-logging 1.3.6, jspecify 1.0.1 and micrometer 1.17.1. No install/download/upgrade.",
+    "classpathJars": [
+      "C:/Users/robso/.m2/repository/org/springframework/boot/spring-boot/4.1.1/spring-boot-4.1.1.jar",
+      "C:/Users/robso/.m2/repository/org/springframework/spring-core/7.0.9/spring-core-7.0.9.jar",
+      "C:/Users/robso/.m2/repository/org/springframework/spring-context/7.0.9/spring-context-7.0.9.jar",
+      "C:/Users/robso/.m2/repository/org/springframework/spring-beans/7.0.9/spring-beans-7.0.9.jar",
+      "C:/Users/robso/.m2/repository/org/springframework/spring-expression/7.0.9/spring-expression-7.0.9.jar",
+      "C:/Users/robso/.m2/repository/org/springframework/spring-aop/7.0.9/spring-aop-7.0.9.jar",
+      "C:/Users/robso/.m2/repository/commons-logging/commons-logging/1.3.6/commons-logging-1.3.6.jar",
+      "C:/Users/robso/.m2/repository/org/jspecify/jspecify/1.0.1/jspecify-1.0.1.jar",
+      "C:/Users/robso/.m2/repository/io/micrometer/micrometer-observation/1.17.1/micrometer-observation-1.17.1.jar",
+      "C:/Users/robso/.m2/repository/io/micrometer/micrometer-commons/1.17.1/micrometer-commons-1.17.1.jar"
+    ],
+    "compileTargetIsNotRuntimeEvidence": true
+  },
+  "checks": [
+    {
+      "name": "compile-boot-profile-probe",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\spring-boot-check",
+      "command": "$taskJars = @('C:/Users/robso/.m2/repository/org/springframework/boot/spring-boot/4.1.1/spring-boot-4.1.1.jar','C:/Users/robso/.m2/repository/org/springframework/spring-core/7.0.9/spring-core-7.0.9.jar','C:/Users/robso/.m2/repository/org/springframework/spring-context/7.0.9/spring-context-7.0.9.jar','C:/Users/robso/.m2/repository/org/springframework/spring-beans/7.0.9/spring-beans-7.0.9.jar','C:/Users/robso/.m2/repository/org/springframework/spring-expression/7.0.9/spring-expression-7.0.9.jar','C:/Users/robso/.m2/repository/org/springframework/spring-aop/7.0.9/spring-aop-7.0.9.jar','C:/Users/robso/.m2/repository/commons-logging/commons-logging/1.3.6/commons-logging-1.3.6.jar','C:/Users/robso/.m2/repository/org/jspecify/jspecify/1.0.1/jspecify-1.0.1.jar','C:/Users/robso/.m2/repository/io/micrometer/micrometer-observation/1.17.1/micrometer-observation-1.17.1.jar','C:/Users/robso/.m2/repository/io/micrometer/micrometer-commons/1.17.1/micrometer-commons-1.17.1.jar')\nforeach ($taskJar in $taskJars) { if (-not (Test-Path -LiteralPath $taskJar)) { throw \"Required cached jar missing: $taskJar\" } }\n$taskClassPath = $taskJars -join [IO.Path]::PathSeparator\n& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' --release 25 -parameters -cp $taskClassPath -d classes CollectionBindingProbe.java\nexit $LASTEXITCODE",
+      "expectedExit": 0,
+      "result": {
+        "chunk_id": "550401",
+        "wall_time_seconds": 0.5891067,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      }
+    },
+    {
+      "name": "base-config-data-profile",
+      "profile": "base",
+      "guard": true,
+      "expectedExit": 0,
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\spring-boot-check",
+      "command": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' '-Dorg.springframework.boot.logging.LoggingSystem=none' -cp 'classes;C:/Users/robso/.m2/repository/org/springframework/boot/spring-boot/4.1.1/spring-boot-4.1.1.jar;C:/Users/robso/.m2/repository/org/springframework/spring-core/7.0.9/spring-core-7.0.9.jar;C:/Users/robso/.m2/repository/org/springframework/spring-context/7.0.9/spring-context-7.0.9.jar;C:/Users/robso/.m2/repository/org/springframework/spring-beans/7.0.9/spring-beans-7.0.9.jar;C:/Users/robso/.m2/repository/org/springframework/spring-expression/7.0.9/spring-expression-7.0.9.jar;C:/Users/robso/.m2/repository/org/springframework/spring-aop/7.0.9/spring-aop-7.0.9.jar;C:/Users/robso/.m2/repository/commons-logging/commons-logging/1.3.6/commons-logging-1.3.6.jar;C:/Users/robso/.m2/repository/org/jspecify/jspecify/1.0.1/jspecify-1.0.1.jar;C:/Users/robso/.m2/repository/io/micrometer/micrometer-observation/1.17.1/micrometer-observation-1.17.1.jar;C:/Users/robso/.m2/repository/io/micrometer/micrometer-commons/1.17.1/micrometer-commons-1.17.1.jar' CollectionBindingProbe config base --require-complete-list\nexit $LASTEXITCODE",
+      "result": {
+        "chunk_id": "ee68db",
+        "wall_time_seconds": 0.719703,
+        "exit_code": 0,
+        "original_token_count": 104,
+        "output": "Boot=4.1.1 Framework=7.0.9 Java=25.0.3+9-LTS profile=base\r\nraw second URL=https://secondary.invalid\r\nbound list=[Client[url=https://primary.invalid, timeout=PT1S], Client[url=https://secondary.invalid, timeout=PT1S]]\r\nbound map={primary=Client[url=https://primary.invalid, timeout=PT1S], secondary=Client[url=https://secondary.invalid, timeout=PT1S]}\r\nPASS: observed collection binding matches the selected profile\r\n"
+      }
+    },
+    {
+      "name": "partial-profile-list-and-map-binding",
+      "profile": "partial",
+      "guard": false,
+      "expectedExit": 0,
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\spring-boot-check",
+      "command": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' '-Dorg.springframework.boot.logging.LoggingSystem=none' -cp 'classes;C:/Users/robso/.m2/repository/org/springframework/boot/spring-boot/4.1.1/spring-boot-4.1.1.jar;C:/Users/robso/.m2/repository/org/springframework/spring-core/7.0.9/spring-core-7.0.9.jar;C:/Users/robso/.m2/repository/org/springframework/spring-context/7.0.9/spring-context-7.0.9.jar;C:/Users/robso/.m2/repository/org/springframework/spring-beans/7.0.9/spring-beans-7.0.9.jar;C:/Users/robso/.m2/repository/org/springframework/spring-expression/7.0.9/spring-expression-7.0.9.jar;C:/Users/robso/.m2/repository/org/springframework/spring-aop/7.0.9/spring-aop-7.0.9.jar;C:/Users/robso/.m2/repository/commons-logging/commons-logging/1.3.6/commons-logging-1.3.6.jar;C:/Users/robso/.m2/repository/org/jspecify/jspecify/1.0.1/jspecify-1.0.1.jar;C:/Users/robso/.m2/repository/io/micrometer/micrometer-observation/1.17.1/micrometer-observation-1.17.1.jar;C:/Users/robso/.m2/repository/io/micrometer/micrometer-commons/1.17.1/micrometer-commons-1.17.1.jar' CollectionBindingProbe config partial\nexit $LASTEXITCODE",
+      "result": {
+        "chunk_id": "9992f9",
+        "wall_time_seconds": 0.7073248,
+        "exit_code": 0,
+        "original_token_count": 87,
+        "output": "Boot=4.1.1 Framework=7.0.9 Java=25.0.3+9-LTS profile=partial\r\nraw second URL=https://secondary.invalid\r\nbound list=[Client[url=null, timeout=PT2S]]\r\nbound map={primary=Client[url=https://primary.invalid, timeout=PT2S], secondary=Client[url=https://secondary.invalid, timeout=PT1S]}\r\nPASS: observed collection binding matches the selected profile\r\n"
+      }
+    },
+    {
+      "name": "complete-profile-replacement-positive-control",
+      "profile": "complete",
+      "guard": true,
+      "expectedExit": 0,
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\spring-boot-check",
+      "command": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' '-Dorg.springframework.boot.logging.LoggingSystem=none' -cp 'classes;C:/Users/robso/.m2/repository/org/springframework/boot/spring-boot/4.1.1/spring-boot-4.1.1.jar;C:/Users/robso/.m2/repository/org/springframework/spring-core/7.0.9/spring-core-7.0.9.jar;C:/Users/robso/.m2/repository/org/springframework/spring-context/7.0.9/spring-context-7.0.9.jar;C:/Users/robso/.m2/repository/org/springframework/spring-beans/7.0.9/spring-beans-7.0.9.jar;C:/Users/robso/.m2/repository/org/springframework/spring-expression/7.0.9/spring-expression-7.0.9.jar;C:/Users/robso/.m2/repository/org/springframework/spring-aop/7.0.9/spring-aop-7.0.9.jar;C:/Users/robso/.m2/repository/commons-logging/commons-logging/1.3.6/commons-logging-1.3.6.jar;C:/Users/robso/.m2/repository/org/jspecify/jspecify/1.0.1/jspecify-1.0.1.jar;C:/Users/robso/.m2/repository/io/micrometer/micrometer-observation/1.17.1/micrometer-observation-1.17.1.jar;C:/Users/robso/.m2/repository/io/micrometer/micrometer-commons/1.17.1/micrometer-commons-1.17.1.jar' CollectionBindingProbe config complete --require-complete-list\nexit $LASTEXITCODE",
+      "result": {
+        "chunk_id": "c1175a",
+        "wall_time_seconds": 0.6885196,
+        "exit_code": 0,
+        "original_token_count": 105,
+        "output": "Boot=4.1.1 Framework=7.0.9 Java=25.0.3+9-LTS profile=complete\r\nraw second URL=https://secondary.invalid\r\nbound list=[Client[url=https://primary.invalid, timeout=PT2S], Client[url=https://secondary.invalid, timeout=PT1S]]\r\nbound map={primary=Client[url=https://primary.invalid, timeout=PT2S], secondary=Client[url=https://secondary.invalid, timeout=PT1S]}\r\nPASS: observed collection binding matches the selected profile\r\n"
+      }
+    },
+    {
+      "name": "partial-profile-complete-list-negative-control",
+      "profile": "partial",
+      "guard": true,
+      "expectedExit": 1,
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\spring-boot-check",
+      "command": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' '-Dorg.springframework.boot.logging.LoggingSystem=none' -cp 'classes;C:/Users/robso/.m2/repository/org/springframework/boot/spring-boot/4.1.1/spring-boot-4.1.1.jar;C:/Users/robso/.m2/repository/org/springframework/spring-core/7.0.9/spring-core-7.0.9.jar;C:/Users/robso/.m2/repository/org/springframework/spring-context/7.0.9/spring-context-7.0.9.jar;C:/Users/robso/.m2/repository/org/springframework/spring-beans/7.0.9/spring-beans-7.0.9.jar;C:/Users/robso/.m2/repository/org/springframework/spring-expression/7.0.9/spring-expression-7.0.9.jar;C:/Users/robso/.m2/repository/org/springframework/spring-aop/7.0.9/spring-aop-7.0.9.jar;C:/Users/robso/.m2/repository/commons-logging/commons-logging/1.3.6/commons-logging-1.3.6.jar;C:/Users/robso/.m2/repository/org/jspecify/jspecify/1.0.1/jspecify-1.0.1.jar;C:/Users/robso/.m2/repository/io/micrometer/micrometer-observation/1.17.1/micrometer-observation-1.17.1.jar;C:/Users/robso/.m2/repository/io/micrometer/micrometer-commons/1.17.1/micrometer-commons-1.17.1.jar' CollectionBindingProbe config partial --require-complete-list\nexit $LASTEXITCODE",
+      "result": {
+        "chunk_id": "f600ea",
+        "wall_time_seconds": 0.6511786,
+        "exit_code": 1,
+        "original_token_count": 133,
+        "output": "Boot=4.1.1 Framework=7.0.9 Java=25.0.3+9-LTS profile=partial\r\nraw second URL=https://secondary.invalid\r\nbound list=[Client[url=null, timeout=PT2S]]\r\nbound map={primary=Client[url=https://primary.invalid, timeout=PT2S], secondary=Client[url=https://secondary.invalid, timeout=PT1S]}\r\nException in thread \"main\" java.lang.AssertionError: complete ordered-list contract: expected=2, actual=1\r\n\tat CollectionBindingProbe.requireEquals(CollectionBindingProbe.java:78)\r\n\tat CollectionBindingProbe.main(CollectionBindingProbe.java:65)\r\n"
+      }
+    },
+    {
+      "name": "strict-package-validation",
+      "cwd": "C:\\git\\agent-skills",
+      "command": "node packages/cli/bin/agent-skills.mjs --no-update-check validate skills/spring-boot --strict --json",
+      "expectedExit": 0,
+      "result": {
+        "chunk_id": "5edb65",
+        "wall_time_seconds": 0.2583206,
+        "exit_code": 0,
+        "original_token_count": 36,
+        "output": "{\n  \"ok\": true,\n  \"directory\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\spring-boot\",\n  \"name\": \"spring-boot\",\n  \"version\": \"1.2.2\",\n  \"issues\": []\n}\n"
+      }
+    },
+    {
+      "name": "owned-format-check",
+      "cwd": "C:\\git\\agent-skills",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/spring-boot/SKILL.md skills/spring-boot/skill.yaml skills/spring-boot/references/composition-and-configuration.md skills/spring-boot/references/verification.md skills/spring-boot/references/operations-and-events.md skills/spring-boot/references/service-delivery.md",
+      "expectedExit": 0,
+      "result": {
+        "chunk_id": "5b2445",
+        "wall_time_seconds": 0.356328,
+        "exit_code": 1,
+        "original_token_count": 40,
+        "output": "Checking formatting...\n[warn] skills/spring-boot/references/verification.md\n[warn] Code style issues found in the above file. Run Prettier with --write to fix.\n"
+      }
+    },
+    {
+      "name": "owned-diff-check",
+      "cwd": "C:\\git\\agent-skills",
+      "command": "git diff --check -- skills/spring-boot",
+      "expectedExit": 0,
+      "result": {
+        "chunk_id": "0d0469",
+        "wall_time_seconds": 0.1069732,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      }
+    },
+    {
+      "name": "owned-format-check-after-row-fix",
+      "cwd": "C:/git/agent-skills",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/spring-boot/SKILL.md skills/spring-boot/skill.yaml skills/spring-boot/references/composition-and-configuration.md skills/spring-boot/references/operations-and-events.md skills/spring-boot/references/service-delivery.md skills/spring-boot/references/verification.md",
+      "expectedExit": 0,
+      "result": {
+        "chunk_id": "c10568",
+        "wall_time_seconds": 0.3122299,
+        "exit_code": 0,
+        "original_token_count": 17,
+        "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+      }
+    },
+    {
+      "name": "final-owned-diff-and-status-inspection",
+      "cwd": "C:/git/agent-skills",
+      "command": "git diff --check -- skills/spring-boot; git diff -- skills/spring-boot; git status --short -- skills/spring-boot",
+      "expectedExit": 0,
+      "result": {
+        "chunk_id": "1c7982",
+        "wall_time_seconds": 0.1360623,
+        "exit_code": 0,
+        "original_token_count": 1075,
+        "output": "diff --git a/skills/spring-boot/references/composition-and-configuration.md b/skills/spring-boot/references/composition-and-configuration.md\nindex 6bd4d13..66c7c7a 100644\n--- a/skills/spring-boot/references/composition-and-configuration.md\n+++ b/skills/spring-boot/references/composition-and-configuration.md\n@@ -165,6 +165,20 @@ and logging settings. Check the versioned\n [external configuration contract](https://docs.spring.io/spring-boot/reference/features/external-config.html)\n instead of assuming all configuration sources have identical precedence or activation.\n \n+Inspect the bound collection, not only individual winning keys. In Boot 4.1.1, a\n+higher-priority `List` definition replaces the entire list; entries and their fields do\n+not merge by index. A profile containing only `clients[0].timeout` can remove the other\n+clients and leave that entry's omitted URL unset. A `Map` can combine keys/object fields\n+from several sources, with the higher-priority value winning for the same property;\n+nested lists still have list semantics. The versioned\n+[collection binding contract](https://github.com/spring-projects/spring-boot/blob/v4.1.1/documentation/spring-boot-docs/src/docs/antora/modules/reference/pages/features/external-config.adoc#features.external-config.typesafe-configuration-properties.merging-complex-types)\n+shows both cases. Preserve an ordered-list contract by supplying the intended complete\n+override. Consider stable-key maps only when independent entry overrides fit the consumer;\n+changing the configuration shape requires the compatibility work below. Test base and\n+active-profile binding for element count, identity, required fields and changed values,\n+including an override that omits a required field. A successful scalar lookup alone cannot\n+establish that the consumer received the intended collection.\n+\n For a cohesive group, use `@ConfigurationProperties`, register it through configuration\n properties scanning or explicit enabling, and validate it. A constructor-bound record\n does not need a component stereotype or `@Autowired`. Use `Duration`/`DataSize` for units\ndiff --git a/skills/spring-boot/references/verification.md b/skills/spring-boot/references/verification.md\nindex a5366db..820cf29 100644\n--- a/skills/spring-boot/references/verification.md\n+++ b/skills/spring-boot/references/verification.md\n@@ -14,6 +14,7 @@ factory for a service request.\n | Invalid configuration prevents startup      | Bind real keys and assert startup failure/cause                                    | Construct the properties object manually          |\n | An opt-in feature activates only as agreed  | Absent/true/false/malformed values with actual binding, conditions and replacement | `havingValue` alone or checking only bean absence |\n | An environment override wins over a profile | Real Boot config-data loading with controlled property sources                     | Runner `withPropertyValues` alone                 |\n+| A collection override retains its contract  | Base/profile bootstrap checks of bound entries, required fields and values         | Checking only the overridden scalar key           |\n | Management access follows policy            | Real chains and effective paths, anonymous and role-negative cases                 | Security dependency on classpath                  |\n | Work stops and resources close              | Shutdown/failure observation with owned resources                                  | Health was UP once                                |\n | Fixed-delay jobs are independent            | Actual scheduler, blocked job/peer, no self-overlap and post-completion delay      | Virtual threads or pool property alone            |\ndiff --git a/skills/spring-boot/skill.yaml b/skills/spring-boot/skill.yaml\nindex 00e0850..673ecb4 100644\n--- a/skills/spring-boot/skill.yaml\n+++ b/skills/spring-boot/skill.yaml\n@@ -1,6 +1,6 @@\n schemaVersion: 1\n name: spring-boot\n-version: 1.2.1\n+version: 1.2.2\n description: >-\n   Create and integrate Spring Boot 4 services, or configure and diagnose bean\n   composition, auto-configuration, external properties and lifecycle. Use for a new\n M skills/spring-boot/references/composition-and-configuration.md\n M skills/spring-boot/references/verification.md\n M skills/spring-boot/skill.yaml\n"
+      }
+    },
+    {
+      "name": "owned-metadata-links-and-artifact-hashes",
+      "cwd": "C:/git/agent-skills",
+      "command": "@'\nimport {readFileSync,readdirSync,statSync,existsSync} from 'node:fs';\nimport {resolve,dirname} from 'node:path';\nimport {createHash} from 'node:crypto';\nimport {parse} from 'yaml';\nconst root='skills/spring-boot';\nconst artifacts='C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-check';\nconst walk=p=>readdirSync(p).flatMap(n=>{const path=p+'/'+n;return statSync(path).isDirectory()?walk(path):[path]});\nconst sha=p=>createHash('sha256').update(readFileSync(p)).digest('hex');\nconst files=walk(root);\nconst doc=readFileSync(root+'/SKILL.md','utf8');\nconst manifest=parse(readFileSync(root+'/skill.yaml','utf8'));\nconst front=parse(doc.split('---')[1]);\nconst links=[];\nfor(const file of files.filter(f=>f.endsWith('.md'))){\n  const content=readFileSync(file,'utf8');\n  for(const match of content.matchAll(/\\[[^\\]]*\\]\\((?:<([^>]+)>|([^\\s)]+))\\)/g)){\n    const href=match[1]??match[2];\n    if(/^(?:https?:|mailto:|#)/.test(href)) continue;\n    const target=resolve(dirname(file),decodeURIComponent(href.split('#')[0]));\n    links.push({file,href,exists:existsSync(target)});\n  }\n}\nconst issues=[];\nif(front.name!==manifest.name) issues.push('name mismatch');\nif(front.description!==manifest.description) issues.push('description mismatch');\nif(manifest.version!=='1.2.2') issues.push('unexpected version');\nfor(const link of links) if(!link.exists) issues.push('missing '+link.file+' -> '+link.href);\nconsole.log(JSON.stringify({\n  version:manifest.version,name:manifest.name,descriptionMatches:front.description===manifest.description,\n  files:files.map(path=>({path,sha256:sha(path)})),\n  artifacts:walk(artifacts).map(path=>({path,sha256:sha(path)})),\n  localLinks:links,issues\n},null,2));\nif(issues.length) process.exitCode=1;\n'@ | node --input-type=module",
+      "expectedExit": 0,
+      "result": {
+        "chunk_id": "ee148a",
+        "wall_time_seconds": 0.1126907,
+        "exit_code": 0,
+        "original_token_count": 945,
+        "output": "{\n  \"version\": \"1.2.2\",\n  \"name\": \"spring-boot\",\n  \"descriptionMatches\": true,\n  \"files\": [\n    {\n      \"path\": \"skills/spring-boot/references/composition-and-configuration.md\",\n      \"sha256\": \"b06a5b8c3844d18cf327e26c4cf0d84b4c734f46b0289c64beb1964a3a455a3d\"\n    },\n    {\n      \"path\": \"skills/spring-boot/references/operations-and-events.md\",\n      \"sha256\": \"4b2c59bd12a27cd29d29c436da7f20055f1fb0698cef54f5dce3922d5835f3a2\"\n    },\n    {\n      \"path\": \"skills/spring-boot/references/service-delivery.md\",\n      \"sha256\": \"29c5442ad13af0335178dd0358c871ad59e3f9a0b7ee3d53d6fd2a0c8a72ed10\"\n    },\n    {\n      \"path\": \"skills/spring-boot/references/verification.md\",\n      \"sha256\": \"91c4725ce777588f9d76f71c9e5edbacadb91ae2d414117f2ad510380ac523b4\"\n    },\n    {\n      \"path\": \"skills/spring-boot/SKILL.md\",\n      \"sha256\": \"3c7f0e576a00c36d471d0a06935d7a4070bc813647153675dadcfa36bcb81ee0\"\n    },\n    {\n      \"path\": \"skills/spring-boot/skill.yaml\",\n      \"sha256\": \"d3a3d254e2747b2b8a1345f0bdc24cb1d5eb59738a62460bd258b32d2270ff7c\"\n    }\n  ],\n  \"artifacts\": [\n    {\n      \"path\": \"C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-check/classes/CollectionBindingProbe$Client.class\",\n      \"sha256\": \"ef879d0a671b1e785ef272a32387c888f52630eae4485d3b76af2f0bc0d46b22\"\n    },\n    {\n      \"path\": \"C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-check/classes/CollectionBindingProbe$Config.class\",\n      \"sha256\": \"b215478a63abe6819dc4dcd7697e448d8422bd57d2e59ec5c9c3838972bf8909\"\n    },\n    {\n      \"path\": \"C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-check/classes/CollectionBindingProbe$Settings.class\",\n      \"sha256\": \"65469d48ee647420a823c75457b8e8d53668cc397d47d42226bf8e1c70a50d12\"\n    },\n    {\n      \"path\": \"C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-check/classes/CollectionBindingProbe.class\",\n      \"sha256\": \"75859524479e5ed387035fdf98f9b98aff6834c38a5b17a0f7e8dea6010011eb\"\n    },\n    {\n      \"path\": \"C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-check/CollectionBindingProbe.java\",\n      \"sha256\": \"ed7de74ce1edde3e867441734dbf705c10325cf58c08f6409a0267fc1ea158b4\"\n    },\n    {\n      \"path\": \"C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-check/config/application-complete.properties\",\n      \"sha256\": \"3698a7658a1b5aec30e925e02f468ab75aaaea98f16c907927247f1303cd91a3\"\n    },\n    {\n      \"path\": \"C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-check/config/application-partial.properties\",\n      \"sha256\": \"04b78c2446f157f51e962022e5c8d8b2032fc47646bee0ef892c4e6dd670d18f\"\n    },\n    {\n      \"path\": \"C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-check/config/application.properties\",\n      \"sha256\": \"840d198607d5dfca6d794f4efc1d00b41f574780678ccb9860aa7eabd3f0a69a\"\n    }\n  ],\n  \"localLinks\": [\n    {\n      \"file\": \"skills/spring-boot/references/service-delivery.md\",\n      \"href\": \"operations-and-events.md\",\n      \"exists\": true\n    },\n    {\n      \"file\": \"skills/spring-boot/references/verification.md\",\n      \"href\": \"service-delivery.md\",\n      \"exists\": true\n    },\n    {\n      \"file\": \"skills/spring-boot/SKILL.md\",\n      \"href\": \"references/service-delivery.md\",\n      \"exists\": true\n    },\n    {\n      \"file\": \"skills/spring-boot/SKILL.md\",\n      \"href\": \"references/composition-and-configuration.md\",\n      \"exists\": true\n    },\n    {\n      \"file\": \"skills/spring-boot/SKILL.md\",\n      \"href\": \"references/operations-and-events.md\",\n      \"exists\": true\n    },\n    {\n      \"file\": \"skills/spring-boot/SKILL.md\",\n      \"href\": \"references/verification.md\",\n      \"exists\": true\n    }\n  ],\n  \"issues\": []\n}\n"
+      }
+    }
+  ],
+  "failuresAndRecovery": [
+    {
+      "check": "owned-format-check",
+      "exitCode": 1,
+      "classification": "Introduced local table-row formatting issue",
+      "output": "[warn] skills/spring-boot/references/verification.md",
+      "resolution": "Shortened/padded only the new table row; rerun explicit six-file Prettier check exited 0. No global formatter or collateral table reformat."
+    },
+    {
+      "check": "partial-profile-complete-list-negative-control",
+      "exitCode": 1,
+      "classification": "Expected negative control, not an unresolved validation failure",
+      "output": "java.lang.AssertionError: complete ordered-list contract: expected=2, actual=1",
+      "resolution": "Same complete-list guard with the complete profile exits 0; no guard weakening."
+    }
+  ],
+  "technicalValidation": {
+    "snippetClassification": "No shipped Java snippet changed. New isolated CollectionBindingProbe.java is executable validation scaffolding outside the repository, with four properties/class fixtures retained.",
+    "actualBoundary": "Real SpringApplication, @EnableConfigurationProperties constructor-bound records and application.properties + active-profile files; WebApplicationType.NONE; no ApplicationContextRunner shortcut or hand-built properties object.",
+    "observed": [
+      "Base list/map preserve two complete entries, all timeouts PT1S (exit 0).",
+      "Partial profile yields one list entry with null URL/PT2S but preserves both complete named-map entries (exit 0 for those documented observations).",
+      "Complete profile preserves ordered list URLs/two entries and changes only first timeout PT2S; map unchanged except primary timeout (exit 0).",
+      "Raw Environment lookup of the second URL remains available in partial profile although the bound list drops it.",
+      "Complete-list business guard detects the partial profile (expected exit 1), passes base and complete profiles (exit 0)."
+    ],
+    "negativeControl": {
+      "mutation": "Use application-partial.properties instead of application-complete.properties, omitting list URLs and the second list item while keeping the first timeout override and same map override. The source/assertion and classpath remain unchanged.",
+      "before": {
+        "profile": "complete",
+        "guard": "--require-complete-list",
+        "exitCode": 0,
+        "text": "Boot=4.1.1 Framework=7.0.9 Java=25.0.3+9-LTS profile=complete\r\nraw second URL=https://secondary.invalid\r\nbound list=[Client[url=https://primary.invalid, timeout=PT2S], Client[url=https://secondary.invalid, timeout=PT1S]]\r\nbound map={primary=Client[url=https://primary.invalid, timeout=PT2S], secondary=Client[url=https://secondary.invalid, timeout=PT1S]}\r\nPASS: observed collection binding matches the selected profile\r\n"
+      },
+      "after": {
+        "profile": "partial",
+        "guard": "--require-complete-list",
+        "exitCode": 1,
+        "text": "Boot=4.1.1 Framework=7.0.9 Java=25.0.3+9-LTS profile=partial\r\nraw second URL=https://secondary.invalid\r\nbound list=[Client[url=null, timeout=PT2S]]\r\nbound map={primary=Client[url=https://primary.invalid, timeout=PT2S], secondary=Client[url=https://secondary.invalid, timeout=PT1S]}\r\nException in thread \"main\" java.lang.AssertionError: complete ordered-list contract: expected=2, actual=1\r\n\tat CollectionBindingProbe.requireEquals(CollectionBindingProbe.java:78)\r\n\tat CollectionBindingProbe.main(CollectionBindingProbe.java:65)\r\n"
+      },
+      "demonstrates": "Technical guard sensitivity to collection loss under an actual Boot binding boundary; not measured agent improvement."
+    }
+  },
+  "behavioralEvaluation": {
+    "executedAgentRuns": 0,
+    "independentComparison": "NOT_EXECUTED",
+    "measuredGain": "UNKNOWN",
+    "structuredWalkthroughs": [
+      {
+        "id": "partial-profile-ordered-clients",
+        "result": [
+          "Follow both config-data files into the bound properties consumed by the service; do not settle the contract using an individual Environment scalar lookup.",
+          "Identify the incomplete ordered-list override, preserve the public list shape, and supply the intended complete profile list. The named-map override need not be expanded simply to imitate the list.",
+          "Verify base and prod profiles through real Boot binding, including two list entries, both URLs, order, first timeout PT2S and second PT1S in prod; verify the named map still contains the two complete clients.",
+          "Keep Java 25 / Boot 4.1.1 and avoid a broad service rewrite, changing dependencies, replacing list with map without a compatibility decision, or turning the task into a persistence/security delivery."
+        ]
+      },
+      {
+        "id": "complete-profile-ordered-clients",
+        "result": [
+          "Inspect the bound collection and establish that the existing complete profile override already satisfies the ordered-list contract.",
+          "Preserve the existing production configuration; no configuration correction or API migration is required once binding verifies the contract. Adding a focused missing regression check may be appropriate if the fixture project lacks it.",
+          "Verify base/prod list counts, URLs, order and timeouts and the named-map entries using the actual binding boundary.",
+          "Retain compatibility, source precedence and the distinction between a raw property lookup and the consumer's object."
+        ]
+      }
+    ],
+    "classification": "Two reproducible development cases with separated actor inputs/evaluator criteria. These are not unseen holdouts and were not executed by an agent.",
+    "coordinatorAction": "Select independent or held-out cases, materialize ordinary artifacts without giving evaluator criteria, and compare agent outputs under controlled conditions if measuring behavioral improvement."
+  },
+  "cases": [
+    {
+      "id": "partial-profile-ordered-clients",
+      "actorInput": {
+        "request": "Review the production timeout override in this Spring Boot service. Production must use both configured clients in the declared order, with the first client's timeout changed to 2 seconds and the second left at 1 second; both URLs are required. The named-client view must keep the same two destinations. Make the smallest justified correction, preserve the public configuration shape and Java/framework baseline, and verify what the consumer actually receives.",
+        "projectContext": {
+          "java": "25",
+          "springBoot": "4.1.1",
+          "springFramework": "7.0.9",
+          "bootstrap": "SpringApplication with @EnableConfigurationProperties(Settings.class); normal application.properties + active prod profile config-data loading; no additional config/property sources.",
+          "consumer": "Consumer iterates Settings.clients() in order; Settings.clientsByName() also serves named lookups. URL is required for every usable destination. No network request is necessary to inspect binding."
+        },
+        "files": {
+          "src/main/resources/application.properties": "demo.clients[0].url=https://primary.invalid\ndemo.clients[0].timeout=1s\ndemo.clients[1].url=https://secondary.invalid\ndemo.clients[1].timeout=1s\ndemo.clients-by-name.primary.url=https://primary.invalid\ndemo.clients-by-name.primary.timeout=1s\ndemo.clients-by-name.secondary.url=https://secondary.invalid\ndemo.clients-by-name.secondary.timeout=1s\n",
+          "src/main/resources/application-prod.properties": "demo.clients[0].timeout=2s\ndemo.clients-by-name.primary.timeout=2s\n",
+          "binding-fragment.java": "// Excerpt from the project's configuration; surrounding imports/bootstrap are as described.\n@ConfigurationProperties(prefix = \"demo\")\npublic record Settings(List<Client> clients, Map<String, Client> clientsByName) {}\npublic record Client(String url, Duration timeout) {}\n"
+        },
+        "prerequisites": "An isolated project copy using the stated versions, or the cached dependency classpath listed in toolchain; do not expose reviewer criteria or the assertion-bearing technical probe source to the actor."
+      },
+      "evaluatorCriteria": {
+        "expectedBehavior": [
+          "Follow both config-data files into the bound properties consumed by the service; do not settle the contract using an individual Environment scalar lookup.",
+          "Identify the incomplete ordered-list override, preserve the public list shape, and supply the intended complete profile list. The named-map override need not be expanded simply to imitate the list.",
+          "Verify base and prod profiles through real Boot binding, including two list entries, both URLs, order, first timeout PT2S and second PT1S in prod; verify the named map still contains the two complete clients.",
+          "Keep Java 25 / Boot 4.1.1 and avoid a broad service rewrite, changing dependencies, replacing list with map without a compatibility decision, or turning the task into a persistence/security delivery."
+        ],
+        "observableFailureConditions": [
+          "Only assert the winning timeout or raw second URL and declare the consumer correct.",
+          "Ship a one-element list or a null URL.",
+          "Hide the defect by relaxing the business contract, clearing validation, or silently changing the configuration API.",
+          "Claim a stub/manual properties constructor establishes Boot config-data binding."
+        ],
+        "decisiveConstraint": "Profile list override is incomplete.",
+        "evidenceKind": "Development case and structured walkthrough only; no independent agent output executed.",
+        "technicalReference": "The retained partial profile run observes size=1/null URL while the map retains both entries; the complete-list negative control exits 1. The retained complete profile is the passing technical reference. These fixed-profile probe assertions are a demonstration, not a drop-in evaluator for arbitrary candidate edits."
+      }
+    },
+    {
+      "id": "complete-profile-ordered-clients",
+      "actorInput": {
+        "request": "Review the production timeout override in this Spring Boot service. Production must use both configured clients in the declared order, with the first client's timeout changed to 2 seconds and the second left at 1 second; both URLs are required. The named-client view must keep the same two destinations. Make the smallest justified correction, preserve the public configuration shape and Java/framework baseline, and verify what the consumer actually receives.",
+        "projectContext": {
+          "java": "25",
+          "springBoot": "4.1.1",
+          "springFramework": "7.0.9",
+          "bootstrap": "SpringApplication with @EnableConfigurationProperties(Settings.class); normal application.properties + active prod profile config-data loading; no additional config/property sources.",
+          "consumer": "Consumer iterates Settings.clients() in order; Settings.clientsByName() also serves named lookups. URL is required for every usable destination. No network request is necessary to inspect binding."
+        },
+        "files": {
+          "src/main/resources/application.properties": "demo.clients[0].url=https://primary.invalid\ndemo.clients[0].timeout=1s\ndemo.clients[1].url=https://secondary.invalid\ndemo.clients[1].timeout=1s\ndemo.clients-by-name.primary.url=https://primary.invalid\ndemo.clients-by-name.primary.timeout=1s\ndemo.clients-by-name.secondary.url=https://secondary.invalid\ndemo.clients-by-name.secondary.timeout=1s\n",
+          "src/main/resources/application-prod.properties": "demo.clients[0].url=https://primary.invalid\ndemo.clients[0].timeout=2s\ndemo.clients[1].url=https://secondary.invalid\ndemo.clients[1].timeout=1s\ndemo.clients-by-name.primary.timeout=2s\n",
+          "binding-fragment.java": "// Excerpt from the project's configuration; surrounding imports/bootstrap are as described.\n@ConfigurationProperties(prefix = \"demo\")\npublic record Settings(List<Client> clients, Map<String, Client> clientsByName) {}\npublic record Client(String url, Duration timeout) {}\n"
+        },
+        "prerequisites": "Same isolated project/toolchain as case one; only application-prod.properties differs. Do not expose evaluator criteria or the assertion-bearing probe to the actor."
+      },
+      "evaluatorCriteria": {
+        "expectedBehavior": [
+          "Inspect the bound collection and establish that the existing complete profile override already satisfies the ordered-list contract.",
+          "Preserve the existing production configuration; no configuration correction or API migration is required once binding verifies the contract. Adding a focused missing regression check may be appropriate if the fixture project lacks it.",
+          "Verify base/prod list counts, URLs, order and timeouts and the named-map entries using the actual binding boundary.",
+          "Retain compatibility, source precedence and the distinction between a raw property lookup and the consumer's object."
+        ],
+        "observableFailureConditions": [
+          "Report lost clients or a null URL despite the complete override and actual bound result.",
+          "Remove apparently duplicate URL/second-entry values from the complete list override and thereby introduce case one's defect.",
+          "Force a map migration or unrelated changes solely because lists replace.",
+          "Assert correctness without obtaining the bound result."
+        ],
+        "decisiveConstraint": "The only material change from case one is a complete profile list override; recommendation should change from correcting configuration to preserving it after verification.",
+        "evidenceKind": "Development case and structured walkthrough only; no independent agent output executed.",
+        "technicalReference": "Retained complete profile + --require-complete-list exits 0 and preserves both URLs/entries."
+      }
+    }
+  ],
+  "artifacts": {
+    "root": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-check",
+    "files": [
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-check/classes/CollectionBindingProbe$Client.class",
+        "sha256": "ef879d0a671b1e785ef272a32387c888f52630eae4485d3b76af2f0bc0d46b22"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-check/classes/CollectionBindingProbe$Config.class",
+        "sha256": "b215478a63abe6819dc4dcd7697e448d8422bd57d2e59ec5c9c3838972bf8909"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-check/classes/CollectionBindingProbe$Settings.class",
+        "sha256": "65469d48ee647420a823c75457b8e8d53668cc397d47d42226bf8e1c70a50d12"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-check/classes/CollectionBindingProbe.class",
+        "sha256": "75859524479e5ed387035fdf98f9b98aff6834c38a5b17a0f7e8dea6010011eb"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-check/CollectionBindingProbe.java",
+        "sha256": "ed7de74ce1edde3e867441734dbf705c10325cf58c08f6409a0267fc1ea158b4"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-check/config/application-complete.properties",
+        "sha256": "3698a7658a1b5aec30e925e02f468ab75aaaea98f16c907927247f1303cd91a3"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-check/config/application-partial.properties",
+        "sha256": "04b78c2446f157f51e962022e5c8d8b2032fc47646bee0ef892c4e6dd670d18f"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-check/config/application.properties",
+        "sha256": "840d198607d5dfca6d794f4efc1d00b41f574780678ccb9860aa7eabd3f0a69a"
+      }
+    ],
+    "sourceAndFixtures": {
+      "CollectionBindingProbe.java": "import java.nio.file.Path;\nimport java.time.Duration;\nimport java.util.List;\nimport java.util.Map;\nimport java.util.Objects;\n\nimport org.springframework.boot.Banner;\nimport org.springframework.boot.SpringApplication;\nimport org.springframework.boot.SpringBootVersion;\nimport org.springframework.boot.WebApplicationType;\nimport org.springframework.boot.context.properties.ConfigurationProperties;\nimport org.springframework.boot.context.properties.EnableConfigurationProperties;\nimport org.springframework.context.ConfigurableApplicationContext;\nimport org.springframework.context.annotation.Configuration;\nimport org.springframework.core.SpringVersion;\n\npublic class CollectionBindingProbe {\n    @Configuration(proxyBeanMethods = false)\n    @EnableConfigurationProperties(Settings.class)\n    static class Config {\n    }\n\n    @ConfigurationProperties(prefix = \"demo\")\n    public record Settings(List<Client> clients, Map<String, Client> clientsByName) {\n    }\n\n    public record Client(String url, Duration timeout) {\n    }\n\n    public static void main(String[] args) {\n        if (args.length < 2) {\n            throw new IllegalArgumentException(\"Usage: CollectionBindingProbe <config-directory> <base|partial|complete> [--require-complete-list]\");\n        }\n        String profile = args[1];\n        if (!List.of(\"base\", \"partial\", \"complete\").contains(profile)) {\n            throw new IllegalArgumentException(\"Unknown profile: \" + profile);\n        }\n        SpringApplication app = new SpringApplication(Config.class);\n        app.setWebApplicationType(WebApplicationType.NONE);\n        app.setBannerMode(Banner.Mode.OFF);\n        app.setLogStartupInfo(false);\n        app.setRegisterShutdownHook(false);\n        try (ConfigurableApplicationContext context = app.run(\n                \"--spring.config.location=\" + Path.of(args[0]).toAbsolutePath().toUri(),\n                \"--spring.profiles.active=\" + profile)) {\n            Settings settings = context.getBean(Settings.class);\n            System.out.println(\"Boot=\" + SpringBootVersion.getVersion()\n                    + \" Framework=\" + SpringVersion.getVersion()\n                    + \" Java=\" + Runtime.version() + \" profile=\" + profile);\n            System.out.println(\"raw second URL=\" + context.getEnvironment().getProperty(\"demo.clients[1].url\"));\n            System.out.println(\"bound list=\" + settings.clients());\n            System.out.println(\"bound map=\" + new java.util.TreeMap<>(settings.clientsByName()));\n            boolean partial = profile.equals(\"partial\");\n            requireEquals(partial ? 1 : 2, settings.clients().size(), \"bound list size\");\n            requireEquals(partial ? null : \"https://primary.invalid\", settings.clients().getFirst().url(), \"first list URL\");\n            requireEquals(Duration.ofSeconds(profile.equals(\"base\") ? 1 : 2), settings.clients().getFirst().timeout(), \"first list timeout\");\n            requireEquals(2, settings.clientsByName().size(), \"map size\");\n            requireEquals(\"https://primary.invalid\", settings.clientsByName().get(\"primary\").url(), \"primary map URL\");\n            requireEquals(Duration.ofSeconds(profile.equals(\"base\") ? 1 : 2), settings.clientsByName().get(\"primary\").timeout(), \"primary map timeout\");\n            requireEquals(new Client(\"https://secondary.invalid\", Duration.ofSeconds(1)), settings.clientsByName().get(\"secondary\"), \"secondary map entry\");\n            if (!partial) {\n                requireEquals(new Client(\"https://secondary.invalid\", Duration.ofSeconds(1)), settings.clients().get(1), \"secondary list entry\");\n            }\n            if (args.length == 3 && args[2].equals(\"--require-complete-list\")) {\n                requireEquals(2, settings.clients().size(), \"complete ordered-list contract\");\n                for (Client client : settings.clients()) {\n                    if (client.url() == null) {\n                        throw new AssertionError(\"required list URL is absent\");\n                    }\n                }\n            }\n            System.out.println(\"PASS: observed collection binding matches the selected profile\");\n        }\n    }\n\n    private static void requireEquals(Object expected, Object actual, String label) {\n        if (!Objects.equals(expected, actual)) {\n            throw new AssertionError(label + \": expected=\" + expected + \", actual=\" + actual);\n        }\n    }\n}\n",
+      "config/application.properties": "demo.clients[0].url=https://primary.invalid\ndemo.clients[0].timeout=1s\ndemo.clients[1].url=https://secondary.invalid\ndemo.clients[1].timeout=1s\ndemo.clients-by-name.primary.url=https://primary.invalid\ndemo.clients-by-name.primary.timeout=1s\ndemo.clients-by-name.secondary.url=https://secondary.invalid\ndemo.clients-by-name.secondary.timeout=1s\n",
+      "config/application-partial.properties": "demo.clients[0].timeout=2s\ndemo.clients-by-name.primary.timeout=2s\n",
+      "config/application-complete.properties": "demo.clients[0].url=https://primary.invalid\ndemo.clients[0].timeout=2s\ndemo.clients[1].url=https://secondary.invalid\ndemo.clients[1].timeout=1s\ndemo.clients-by-name.primary.timeout=2s\n"
+    },
+    "retention": "Retained for coordinator archival and technical reproduction. No review-only artifact added to the shipped skill.",
+    "reproduction": "Run compile command in checks with cached jars, then listed base/partial/complete Java commands. All paths/cwd/expected and actual exits/full output are retained. For independent actor cases, supply ordinary input fragments/configuration only, not this assertion-bearing probe."
+  },
+  "sources": [
+    {
+      "url": "https://github.com/spring-projects/spring-boot/blob/v4.1.1/documentation/spring-boot-docs/src/docs/antora/modules/reference/pages/features/external-config.adoc#features.external-config.typesafe-configuration-properties.merging-complex-types",
+      "version": "Spring Boot 4.1.1",
+      "type": "Official version-pinned documentation source",
+      "supports": "List override replacement, no element field merge by index, map key/object-field binding across property sources with highest-priority same-property value.",
+      "verification": "Read official source through web; raw text section merging-complex-types also inspected."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-boot/v4.1.1/documentation/spring-boot-docs/src/docs/antora/modules/reference/pages/features/external-config.adoc",
+      "version": "Spring Boot 4.1.1",
+      "type": "Official version-pinned raw source",
+      "supports": "Same merge semantics; source states applicability to all property sources."
+    },
+    {
+      "url": "https://docs.spring.io/spring-boot/reference/features/external-config.html",
+      "version": "Page labeled 4.1.1 at consultation",
+      "type": "Official rendered documentation",
+      "supports": "Cross-check of profile list replacement and map behavior.",
+      "limitation": "Rolling URL; material new skill citation is version-pinned."
+    },
+    {
+      "path": "C:/Users/robso/.m2/repository/org/springframework/boot/spring-boot-dependencies/4.1.1/spring-boot-dependencies-4.1.1.pom",
+      "version": "4.1.1",
+      "type": "Locally cached official Boot dependency-management POM",
+      "supports": "Managed runtime dependency versions used by probe; cached Boot and Framework POMs inspected as well."
+    }
+  ],
+  "assumptions": [
+    "The worked case's consumers require both configured destinations, their order and non-null URLs; these are task contracts, not generic requirements for every list.",
+    "The demonstrated record has no default URL/factory fallback, and the isolated profile config-data files are the only relevant application configuration inputs.",
+    "Map is an alternative configuration shape only when consumer identity/override needs justify compatibility work, not a blanket replacement for lists."
+  ],
+  "limits": [
+    "Only this skill's local validation is complete; no registry generation or repository-wide verify run by this reviewer.",
+    "No independent agent behavioral execution, before/after skill comparison or measured gain.",
+    "Runtime reproduction covers .properties profile overlays and list/map of constructor-bound records on Boot 4.1.1/Framework 7.0.9/Temurin 25.0.3, not every target release or configuration form.",
+    "YAML, environment-variable collection names, nested list binding, validation-provider startup failure, native-image behavior and a real network service were not separately executed; nested-list guidance relies on the documented collection contract.",
+    "The probe is a fixed-profile semantic demonstration and negative control, not a general validator for arbitrary candidate edits.",
+    "Existing unchanged Java illustrative fragments were reviewed, not recompiled during this focused change."
+  ],
+  "remainingFindings": [],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Parallel-review shared-write restriction",
+      "prerequisite": "All reviewers stopped writing; reconcile versions/index across wave."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Parallel-review global-check restriction",
+      "prerequisite": "Registry generation and all reviewers stopped writing."
+    }
+  ],
+  "crossSkill": [],
+  "coordinatorActions": [
+    "Archive this JSON and retained isolated artifacts.",
+    "Run required global checks after every reviewer has stopped writing.",
+    "Independent behavioral evaluation remains optional coordinator work and is required before any behavioral-gain claim."
+  ]
+}

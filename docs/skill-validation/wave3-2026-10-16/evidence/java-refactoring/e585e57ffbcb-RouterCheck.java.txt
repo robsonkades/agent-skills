@@ -1,0 +1,19 @@
+import java.util.List;
+public class RouterCheck {
+  public static void main(String[] args) {
+    PaymentRouter.Payment[] inputs = { null,
+      new PaymentRouter.Card("n", PaymentRouter.TODAY.minusDays(1)),
+      new PaymentRouter.Card("n", PaymentRouter.TODAY),
+      new PaymentRouter.Card("n", PaymentRouter.TODAY.plusDays(1)),
+      new PaymentRouter.Card("n", null), new PaymentRouter.Transfer("a") };
+    List<String> expected = List.of("no payment", "expired", "authorised", "authorised", "throws:java.lang.NullPointerException", "settled");
+    for (int i = 0; i < inputs.length; i++) {
+      String actual;
+      try { actual = PaymentRouter.response(inputs[i]); }
+      catch (RuntimeException error) { actual = "throws:" + error.getClass().getName(); }
+      if (!actual.equals(expected.get(i))) throw new AssertionError("row " + i + ": expected " + expected.get(i) + ", got " + actual);
+      System.out.println("row=" + i + " result=" + actual);
+    }
+    System.out.println("PASS 6 caller observations");
+  }
+}

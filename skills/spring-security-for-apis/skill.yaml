@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: spring-security-for-apis
-version: 1.2.0
+version: 1.2.1
 description: >-
   Configure and review Spring Security Servlet APIs when adding protected operations,
   changing credential delivery, fixing uncovered routes, validating JWT or opaque

@@ -77,6 +77,23 @@ have committed its duration event. Report that unfinished population using threa
 and any justified observed lower bounds; a completed-event summary alone cannot rule out a long
 wait. Do not turn a missing event into zero duration or an invented completed acquisition.
 
+### Inflation events versus blocked acquisitions
+
+Do not read `JavaMonitorInflate` as `JavaMonitorEnter`. In OpenJDK 25 GA, the inflation event
+records the triggering path in `cause`, along with a thread/stack and monitor class. Even
+`Monitor Enter` does not prove another thread contended: `LightweightSynchronizer::enter`
+can inflate a monitor already owned by the same thread when fast recursive entry cannot
+handle it. For example, the lock stack's fast-recursion check requires its top object to
+match; nested `A -> B -> A` can reach that inflation path with no competing thread. Actual
+emission depends on the selected build/path, optimization and recording settings.
+
+The inflation event's duration covers its instrumented inflation region, not the subsequent
+acquisition wait, the owner's hold time or the monitor's inflated lifetime. Counts are not
+a blocked-thread population or a count of all acquisitions. Follow the event stack to the
+selected guarded code and callers, including whether the object is shared or thread-confined.
+Correlate acquisition/owner/progress and workload evidence before treating inflation as a
+serialization bottleneck; an inflation-only capture can leave that attribution unresolved.
+
 ### Monitor identity and aggregation
 
 Grouping by `monitorClass` can combine unrelated instances and critical sections. A hot class
@@ -151,6 +168,7 @@ Report inconclusive if event opportunity/threshold or workload drift prevents di
 
 - [Java 25 Flight Recorder settings and control API](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/package-summary.html) — event discovery, thresholds, stacks and commitment.
 - [OpenJDK 25 GA monitor-event definitions](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/jfr/metadata/metadata.xml) — inspect the actual target schema before consuming fields.
+- [OpenJDK 25 GA lightweight synchronization](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/lightweightSynchronizer.cpp) and [lock-stack recursion](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/lockStack.inline.hpp) — inflation-event regions and already-owned recursion paths; a cause label alone does not prove contention.
 - [OpenJDK 25 GA monitor implementation](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/objectMonitor.cpp) — event commitment, previous-owner recording and wait/reacquisition boundaries.
 - [Java 25 Object.wait](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#wait(long,int)>) — reacquisition before return or interruption exception.
 - [JDK `jcmd`](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)

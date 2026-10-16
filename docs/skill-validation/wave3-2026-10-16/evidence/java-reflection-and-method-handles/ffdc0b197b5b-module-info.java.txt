@@ -1,0 +1,3 @@
+module m.client {
+    requires m.target;
+}

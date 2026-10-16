@@ -67,6 +67,20 @@ For this Java family:
 
 ## One concurrency protocol for all invariant-bearing writes
 
+Check how the expected version covers the state read for the invariant. A loader
+could read eight units, let another writer commit ten, then fetch the new root
+version: it can approve two more units from its stale total and still pass a version
+check. One transaction does not exclude this schedule; for example,
+[PostgreSQL 17 Read Committed](https://www.postgresql.org/docs/17/transaction-iso.html#XACT-READ-COMMITTED)
+allows successive statements to see different committed snapshots.
+
+When every invariant-bearing writer atomically advances the same root version,
+use a consistent state/version pair, or capture that version before authoritative
+invariant-state reads and retain it until the check. Confirm that the database and
+isolation support the selected protocol; inspect query ordering and cache/replica
+freshness. Fetching a fresh root version does not validate old children; when state
+must be reloaded, re-evaluate the command instead of refreshing only its version.
+
 Record which mechanism rejects or serializes the second writer. An explicit
 optimistic protocol might condition a root update on the version originally loaded:
 
@@ -91,7 +105,7 @@ What counts as the versioned entity's state and relationship ownership matters;
 changing an independently mapped child can leave a root's version untouched. Inspect
 the actual provider/version and mapping, then test it. Force-increment or explicit
 root updates are options only after confirming their transactional behavior.
-[Jakarta Persistence 3.2, sections 3.5.1 and 3.5.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2).
+[Jakarta Persistence 3.2, sections 3.5.1 and 3.5.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html).
 
 Keep the persisted expected version distinct from a domain revision or audit counter
 unless the project explicitly defines one protocol for both. Several method calls
@@ -106,7 +120,9 @@ must not run again accidentally.
 Use a deterministic barrier so two transactions load the same root version; issue
 commands whose combination breaks the invariant. Require at most one commit, no
 partial child data and no committed event from the loser. Exercise a child-only
-update as well as a root-field update. Run on the target database and isolation;
+update as well as a root-field update. Also interleave a competing commit between
+the loader's invariant-state and version reads; a stale decision must not commit
+merely because it acquired a newer token. Run on the target database and isolation;
 an in-memory fake or a single-threaded repository test cannot establish the result.
 
 Also attempt mutation through a constructor argument, a collection accessor and a

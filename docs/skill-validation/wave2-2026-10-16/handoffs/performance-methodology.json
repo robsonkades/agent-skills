@@ -1,0 +1,433 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "performance-methodology",
+  "ownedPath": "skills/performance-methodology/**",
+  "reviewer": "/root/quality01",
+  "reviewDate": "2026-10-16",
+  "versions": {
+    "committed": "1.4.5",
+    "assignment": "1.4.5",
+    "final": "1.4.6",
+    "preExistingBump": false,
+    "rationale": "Single patch for experiment-population provenance and selective telemetry-loss guidance. No dependency or Java baseline change."
+  },
+  "baseline": {
+    "version": "1.4.5",
+    "headManifest": "1.4.5",
+    "status": "",
+    "unstaged": "",
+    "staged": "",
+    "files": [
+      {
+        "path": "skills/performance-methodology/references/folklore.md",
+        "assignmentSha256": "4a157044f771f1f62c2f65ea05f952a3781b89c3107d28d194815bffd6a9ea9a",
+        "wave2BaselineSha256": "4a157044f771f1f62c2f65ea05f952a3781b89c3107d28d194815bffd6a9ea9a",
+        "matchesWave2Baseline": true
+      },
+      {
+        "path": "skills/performance-methodology/references/investigation-checklist.md",
+        "assignmentSha256": "f402609999864495d6084e4299b37e0e8350c66e60d428cfe68b1db811a95d98",
+        "wave2BaselineSha256": "f402609999864495d6084e4299b37e0e8350c66e60d428cfe68b1db811a95d98",
+        "matchesWave2Baseline": true
+      },
+      {
+        "path": "skills/performance-methodology/references/methods-and-failure-modes.md",
+        "assignmentSha256": "95592b65b5b965a2792acb3cf6a0a13c5ed1880f122a3e3cfa4ec7c101df55fe",
+        "wave2BaselineSha256": "95592b65b5b965a2792acb3cf6a0a13c5ed1880f122a3e3cfa4ec7c101df55fe",
+        "matchesWave2Baseline": true
+      },
+      {
+        "path": "skills/performance-methodology/references/reporting-a-finding.md",
+        "assignmentSha256": "001e4ac30d2bff9ecd99811c60aa8103650f44f3400512235cff45cefcfe8ddc",
+        "wave2BaselineSha256": "001e4ac30d2bff9ecd99811c60aa8103650f44f3400512235cff45cefcfe8ddc",
+        "matchesWave2Baseline": true
+      },
+      {
+        "path": "skills/performance-methodology/SKILL.md",
+        "assignmentSha256": "ff67bab599f6992559e972f6a0a7540560b0c3366b0587dc2b110f0248a6da76",
+        "wave2BaselineSha256": "ff67bab599f6992559e972f6a0a7540560b0c3366b0587dc2b110f0248a6da76",
+        "matchesWave2Baseline": true
+      },
+      {
+        "path": "skills/performance-methodology/skill.yaml",
+        "assignmentSha256": "a90be2d1440d95d7ee7f8936a6af926052875acc4d29b32e38e6a4ef4acf2f5b",
+        "wave2BaselineSha256": "a90be2d1440d95d7ee7f8936a6af926052875acc4d29b32e38e6a4ef4acf2f5b",
+        "matchesWave2Baseline": true
+      }
+    ],
+    "attribution": "Assignment was clean; all six hashes matched the coordinator's wave-two snapshot. All final package differences are this reviewer's."
+  },
+  "findings": [
+    {
+      "locations": [
+        "SKILL.md workflow step 6 (new lines 66–67)",
+        "references/methods-and-failure-modes.md experimental-design section (new lines 158–170)",
+        "references/investigation-checklist.md while measuring (new lines 73–74)"
+      ],
+      "gap": "Existing allocation/interference and missing-evidence guidance did not provide a concrete path from randomized assignment/exposure through logging/export/joins/filters to analysed observations.",
+      "consequence": "Balanced arm/sample counts can conceal outcome-dependent selection; a treatment may look faster because slower observations disappeared.",
+      "correction": "Trace population provenance, audit at the actual assignment unit, investigate unexplained SRM without presuming its cause, check arm/cohort loss, repair/reanalyse the affected pipeline and preserve independently supported metrics."
+    }
+  ],
+  "files": [
+    {
+      "path": "skills/performance-methodology/references/folklore.md",
+      "assignmentSha256": "4a157044f771f1f62c2f65ea05f952a3781b89c3107d28d194815bffd6a9ea9a",
+      "wave2BaselineSha256": "4a157044f771f1f62c2f65ea05f952a3781b89c3107d28d194815bffd6a9ea9a",
+      "matchesWave2Baseline": true,
+      "finalSha256": "4a157044f771f1f62c2f65ea05f952a3781b89c3107d28d194815bffd6a9ea9a",
+      "changedByReviewer": false
+    },
+    {
+      "path": "skills/performance-methodology/references/investigation-checklist.md",
+      "assignmentSha256": "f402609999864495d6084e4299b37e0e8350c66e60d428cfe68b1db811a95d98",
+      "wave2BaselineSha256": "f402609999864495d6084e4299b37e0e8350c66e60d428cfe68b1db811a95d98",
+      "matchesWave2Baseline": true,
+      "finalSha256": "38dd12e4d63b3fdd1dd3d2a3e6722a3ef6fce3bfdcdfbf27e58c6bb868ec81be",
+      "changedByReviewer": true
+    },
+    {
+      "path": "skills/performance-methodology/references/methods-and-failure-modes.md",
+      "assignmentSha256": "95592b65b5b965a2792acb3cf6a0a13c5ed1880f122a3e3cfa4ec7c101df55fe",
+      "wave2BaselineSha256": "95592b65b5b965a2792acb3cf6a0a13c5ed1880f122a3e3cfa4ec7c101df55fe",
+      "matchesWave2Baseline": true,
+      "finalSha256": "96c3d14ed83ecd0d7a2dc524f89626e325fccc35a1e7c1f4b8c25e390d19d287",
+      "changedByReviewer": true
+    },
+    {
+      "path": "skills/performance-methodology/references/reporting-a-finding.md",
+      "assignmentSha256": "001e4ac30d2bff9ecd99811c60aa8103650f44f3400512235cff45cefcfe8ddc",
+      "wave2BaselineSha256": "001e4ac30d2bff9ecd99811c60aa8103650f44f3400512235cff45cefcfe8ddc",
+      "matchesWave2Baseline": true,
+      "finalSha256": "001e4ac30d2bff9ecd99811c60aa8103650f44f3400512235cff45cefcfe8ddc",
+      "changedByReviewer": false
+    },
+    {
+      "path": "skills/performance-methodology/SKILL.md",
+      "assignmentSha256": "ff67bab599f6992559e972f6a0a7540560b0c3366b0587dc2b110f0248a6da76",
+      "wave2BaselineSha256": "ff67bab599f6992559e972f6a0a7540560b0c3366b0587dc2b110f0248a6da76",
+      "matchesWave2Baseline": true,
+      "finalSha256": "bf25cd7be6d9af21239be1bd79a0a33b3207e4539dd04e17e0136bd5c0e43c34",
+      "changedByReviewer": true
+    },
+    {
+      "path": "skills/performance-methodology/skill.yaml",
+      "assignmentSha256": "a90be2d1440d95d7ee7f8936a6af926052875acc4d29b32e38e6a4ef4acf2f5b",
+      "wave2BaselineSha256": "a90be2d1440d95d7ee7f8936a6af926052875acc4d29b32e38e6a4ef4acf2f5b",
+      "matchesWave2Baseline": true,
+      "finalSha256": "f1b9408f9de3afd5bbffb6a1cea0c4e82e2c842b697bbcece4738dabdebd2182",
+      "changedByReviewer": true
+    }
+  ],
+  "changes": [
+    {
+      "file": "skills/performance-methodology/SKILL.md",
+      "details": "Two-line guard links experimental comparison to actual assignment/logging/filtering populations."
+    },
+    {
+      "file": "skills/performance-methodology/references/methods-and-failure-modes.md",
+      "details": "Added one conditional design bullet for population provenance, sample-ratio mismatch versus selective loss, actionable artifacts and scoped correction; two primary references."
+    },
+    {
+      "file": "skills/performance-methodology/references/investigation-checklist.md",
+      "details": "Added a corresponding population-reconciliation check while measuring."
+    },
+    {
+      "file": "skills/performance-methodology/skill.yaml",
+      "details": "Version 1.4.6 only."
+    }
+  ],
+  "preExistingChanges": [],
+  "intentionallyRemoved": [],
+  "preserved": [
+    "Defining the decision/estimand and an adequate no-change path without requiring an unneeded profiling campaign.",
+    "Effective JVM flags, workload/version context and missing incident evidence limits.",
+    "Falsifiable hypotheses and separation of observed effect from causal mechanism.",
+    "Fixed-work Amdahl bounds, critical-path caveats, non-additive percentiles and queueing model assumptions.",
+    "Independent experimental units, randomized/block designs, interactions, shared-resource interference and switchback carry-over.",
+    "Warmup/state evolution, restart/canary confounds, production collection budgets, stopping criteria and all-run reporting.",
+    "Existing folklore and reporting examples are byte-for-byte unchanged."
+  ],
+  "javaCompatibility": {
+    "newJavaExamples": false,
+    "baseline": "Existing JDK 25 authoring references retained; deployed project runtime must still be inspected. No JVM feature, dependency, compiler flag or build upgrade was introduced.",
+    "probeRuntime": "Node.js v25.6.1, synthetic in-memory data only."
+  },
+  "checks": [
+    {
+      "name": "sequence-selection-positive-control",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\performance-methodology-check",
+      "command": "node selection-probe.mjs selection-by-sequence.json --require-preserved-p99",
+      "expectedExit": 0,
+      "result": {
+        "chunk_id": "074183",
+        "wall_time_seconds": 0.1151334,
+        "exit_code": 0,
+        "original_token_count": 140,
+        "output": "{\n  \"selection\": \"sequence\",\n  \"quantileEstimator\": \"empirical nearest rank, ceil(n * .99)\",\n  \"full\": {\n    \"A\": {\n      \"count\": 1000,\n      \"successful\": 1000,\n      \"p99Ms\": 400\n    },\n    \"B\": {\n      \"count\": 1000,\n      \"successful\": 1000,\n      \"p99Ms\": 200\n    }\n  },\n  \"retained\": {\n    \"A\": {\n      \"count\": 900,\n      \"successful\": 900,\n      \"p99Ms\": 400\n    },\n    \"B\": {\n      \"count\": 900,\n      \"successful\": 900,\n      \"p99Ms\": 200\n    }\n  },\n  \"sameRetainedCount\": true,\n  \"capturedP99Reduction\": 0.5,\n  \"fullPopulationP99Reduction\": 0.5\n}\n"
+      }
+    },
+    {
+      "name": "balanced-counts-biased-selection-demonstration",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\performance-methodology-check",
+      "command": "node selection-probe.mjs selection-by-duration.json",
+      "expectedExit": 0,
+      "result": {
+        "chunk_id": "715b24",
+        "wall_time_seconds": 0.0952569,
+        "exit_code": 0,
+        "original_token_count": 140,
+        "output": "{\n  \"selection\": \"duration\",\n  \"quantileEstimator\": \"empirical nearest rank, ceil(n * .99)\",\n  \"full\": {\n    \"A\": {\n      \"count\": 1000,\n      \"successful\": 1000,\n      \"p99Ms\": 400\n    },\n    \"B\": {\n      \"count\": 1000,\n      \"successful\": 1000,\n      \"p99Ms\": 200\n    }\n  },\n  \"retained\": {\n    \"A\": {\n      \"count\": 900,\n      \"successful\": 900,\n      \"p99Ms\": 400\n    },\n    \"B\": {\n      \"count\": 900,\n      \"successful\": 900,\n      \"p99Ms\": 10\n    }\n  },\n  \"sameRetainedCount\": true,\n  \"capturedP99Reduction\": 0.975,\n  \"fullPopulationP99Reduction\": 0.5\n}\n"
+      }
+    },
+    {
+      "name": "biased-selection-negative-control",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-validation-Bu1zNV\\performance-methodology-check",
+      "command": "node selection-probe.mjs selection-by-duration.json --require-preserved-p99",
+      "expectedExit": 1,
+      "result": {
+        "chunk_id": "fba0e2",
+        "wall_time_seconds": 0.1000913,
+        "exit_code": 1,
+        "original_token_count": 324,
+        "output": "{\n  \"selection\": \"duration\",\n  \"quantileEstimator\": \"empirical nearest rank, ceil(n * .99)\",\n  \"full\": {\n    \"A\": {\n      \"count\": 1000,\n      \"successful\": 1000,\n      \"p99Ms\": 400\n    },\n    \"B\": {\n      \"count\": 1000,\n      \"successful\": 1000,\n      \"p99Ms\": 200\n    }\n  },\n  \"retained\": {\n    \"A\": {\n      \"count\": 900,\n      \"successful\": 900,\n      \"p99Ms\": 400\n    },\n    \"B\": {\n      \"count\": 900,\n      \"successful\": 900,\n      \"p99Ms\": 10\n    }\n  },\n  \"sameRetainedCount\": true,\n  \"capturedP99Reduction\": 0.975,\n  \"fullPopulationP99Reduction\": 0.5\n}\nnode:internal/modules/run_main:107\r\n    triggerUncaughtException(\r\n    ^\r\n\r\nAssertionError [ERR_ASSERTION]: treatment selection changed finite-population p99 despite balanced counts\r\n\r\n10 !== 200\r\n\r\n    at file:///C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/performance-methodology-check/selection-probe.mjs:50:10\r\n    at ModuleJob.run (node:internal/modules/esm/module_job:430:25)\r\n    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:655:26)\r\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {\r\n  generatedMessage: false,\r\n  code: 'ERR_ASSERTION',\r\n  actual: 10,\r\n  expected: 200,\r\n  operator: 'strictEqual',\r\n  diff: 'simple'\r\n}\r\n\r\nNode.js v25.6.1\r\n"
+      }
+    },
+    {
+      "name": "strict-package-validation",
+      "cwd": "C:\\git\\agent-skills",
+      "command": "node packages/cli/bin/agent-skills.mjs --no-update-check validate skills/performance-methodology --strict --json",
+      "expectedExit": 0,
+      "result": {
+        "chunk_id": "938b75",
+        "wall_time_seconds": 0.1937905,
+        "exit_code": 0,
+        "original_token_count": 42,
+        "output": "{\n  \"ok\": true,\n  \"directory\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\performance-methodology\",\n  \"name\": \"performance-methodology\",\n  \"version\": \"1.4.6\",\n  \"issues\": []\n}\n"
+      }
+    },
+    {
+      "name": "owned-format-check",
+      "cwd": "C:\\git\\agent-skills",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/performance-methodology/SKILL.md skills/performance-methodology/skill.yaml skills/performance-methodology/references/methods-and-failure-modes.md skills/performance-methodology/references/investigation-checklist.md skills/performance-methodology/references/folklore.md skills/performance-methodology/references/reporting-a-finding.md",
+      "expectedExit": 0,
+      "result": {
+        "chunk_id": "f0150b",
+        "wall_time_seconds": 0.3078016,
+        "exit_code": 0,
+        "original_token_count": 17,
+        "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+      }
+    },
+    {
+      "name": "owned-diff-check",
+      "cwd": "C:\\git\\agent-skills",
+      "command": "git diff --check -- skills/performance-methodology",
+      "expectedExit": 0,
+      "result": {
+        "chunk_id": "07aece",
+        "wall_time_seconds": 0.0931642,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      }
+    },
+    {
+      "name": "owned-links-metadata-and-artifact-hashes",
+      "command": "@'\nimport {readFileSync,readdirSync,statSync,existsSync} from 'node:fs';\nimport {createHash} from 'node:crypto';\nimport {resolve,dirname} from 'node:path';\nimport {parse} from 'yaml';\nconst root='skills/performance-methodology';\nconst walk=p=>readdirSync(p).flatMap(n=>{const f=p+'/'+n;return statSync(f).isDirectory()?walk(f):[f];});\nlet links=0;\nfor(const file of walk(root).filter(p=>p.endsWith('.md'))){for(const m of readFileSync(file,'utf8').matchAll(/\\[[^\\]]*\\]\\((?:<([^>]+)>|([^\\s)]+))\\)/g)){const target=m[1]||m[2];if(/^https?:/.test(target))continue;const [local,anchor]=target.split('#');const destination=local?resolve(dirname(file),local):resolve(file);if(!existsSync(destination))throw new Error('Missing link '+target);if(anchor){const headings=Array.from(readFileSync(destination,'utf8').matchAll(/^#+\\s+(.+)$/gm),h=>h[1].toLowerCase().replace(/[^\\w\\s-]/g,'').replace(/\\s/g,'-'));if(!headings.includes(anchor))throw new Error('Missing anchor '+target);}links++;}}\nconst front=parse(readFileSync(root+'/SKILL.md','utf8').split('---')[1]);const manifest=parse(readFileSync(root+'/skill.yaml','utf8'));\nif(front.description.trim()!==manifest.description.trim())throw new Error('Description mismatch');\nfor(const skill of manifest.suggests)if(!existsSync('skills/'+skill+'/SKILL.md'))throw new Error('Missing suggested skill '+skill);\nconst hash=path=>({path,sha256:createHash('sha256').update(readFileSync(path)).digest('hex')});\nconst temp='C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/performance-methodology-check';\nconsole.log(JSON.stringify({node:process.version,relativeLinks:links,descriptionsMatch:true,suggestsExist:manifest.suggests.length,version:manifest.version,files:walk(root).map(hash),artifacts:walk(temp).map(hash)},null,2));\n'@ | node --input-type=module",
+      "cwd": "C:\\git\\agent-skills",
+      "result": {
+        "chunk_id": "8c21c0",
+        "wall_time_seconds": 0.1133486,
+        "exit_code": 0,
+        "original_token_count": 469,
+        "output": "{\n  \"node\": \"v25.6.1\",\n  \"relativeLinks\": 4,\n  \"descriptionsMatch\": true,\n  \"suggestsExist\": 10,\n  \"version\": \"1.4.6\",\n  \"files\": [\n    {\n      \"path\": \"skills/performance-methodology/references/folklore.md\",\n      \"sha256\": \"4a157044f771f1f62c2f65ea05f952a3781b89c3107d28d194815bffd6a9ea9a\"\n    },\n    {\n      \"path\": \"skills/performance-methodology/references/investigation-checklist.md\",\n      \"sha256\": \"38dd12e4d63b3fdd1dd3d2a3e6722a3ef6fce3bfdcdfbf27e58c6bb868ec81be\"\n    },\n    {\n      \"path\": \"skills/performance-methodology/references/methods-and-failure-modes.md\",\n      \"sha256\": \"96c3d14ed83ecd0d7a2dc524f89626e325fccc35a1e7c1f4b8c25e390d19d287\"\n    },\n    {\n      \"path\": \"skills/performance-methodology/references/reporting-a-finding.md\",\n      \"sha256\": \"001e4ac30d2bff9ecd99811c60aa8103650f44f3400512235cff45cefcfe8ddc\"\n    },\n    {\n      \"path\": \"skills/performance-methodology/SKILL.md\",\n      \"sha256\": \"bf25cd7be6d9af21239be1bd79a0a33b3207e4539dd04e17e0136bd5c0e43c34\"\n    },\n    {\n      \"path\": \"skills/performance-methodology/skill.yaml\",\n      \"sha256\": \"f1b9408f9de3afd5bbffb6a1cea0c4e82e2c842b697bbcece4738dabdebd2182\"\n    }\n  ],\n  \"artifacts\": [\n    {\n      \"path\": \"C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/performance-methodology-check/selection-by-duration.json\",\n      \"sha256\": \"c20ca561c62e038a8bd4d4274c6f5a4673e5b3fe0f90c52d65c3447b4911eb94\"\n    },\n    {\n      \"path\": \"C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/performance-methodology-check/selection-by-sequence.json\",\n      \"sha256\": \"d0f4d0e1d4f4e3df10fb3b1565c27fd4fe95393031662f9e28430485cc6304bb\"\n    },\n    {\n      \"path\": \"C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/performance-methodology-check/selection-probe.mjs\",\n      \"sha256\": \"806cbe527c6d619cb59fe0ed578b09d5f2ac9ab1479eb1531ce6be32b50a012a\"\n    }\n  ]\n}\n"
+      }
+    },
+    {
+      "name": "final-owned-diff-review",
+      "command": "git diff -- skills/performance-methodology; git status --short -- skills/performance-methodology",
+      "cwd": "C:\\git\\agent-skills",
+      "result": {
+        "chunk_id": "2ef3f0",
+        "wall_time_seconds": 0.0946159,
+        "exit_code": 0,
+        "original_token_count": 1586,
+        "output": "diff --git a/skills/performance-methodology/SKILL.md b/skills/performance-methodology/SKILL.md\nindex d9a1cb7..9ffd6bf 100644\n--- a/skills/performance-methodology/SKILL.md\n+++ b/skills/performance-methodology/SKILL.md\n@@ -63,6 +63,8 @@ Use the steps relevant to the decision; a small investigation need not become a\n    Check whether the treatment changes a resource shared with controls: randomising requests\n    does not prevent cache, queue or dependency interference. Choose the assignment unit and\n    interpretation accordingly; a mixed-rollout contrast need not estimate a full rollout.\n+   Reconcile assignment and analysed populations through routing, logging and filtering;\n+   balanced totals alone do not rule out outcome-dependent selection.\n 7. **Validate effect and mechanism separately.** A controlled comparison can support an effect\n    before its exact mechanism is known. Label that uncertainty; assess whether the proposed\n    mechanism accounts for the effect's size and challenge plausible alternative causes. A reversible feature flag can support\ndiff --git a/skills/performance-methodology/references/investigation-checklist.md b/skills/performance-methodology/references/investigation-checklist.md\nindex eb439f4..59d4a71 100644\n--- a/skills/performance-methodology/references/investigation-checklist.md\n+++ b/skills/performance-methodology/references/investigation-checklist.md\n@@ -70,6 +70,8 @@ and a completed causal diagnosis support different claims; unfinished checks rem\n       not proof that collection effects are isolated)\n - [ ] Treatment is defined and other differences controlled; interactions use a designed\n       factorial experiment rather than an undocumented bundle\n+- [ ] Assignment/exposure records reconcile with analysed populations; export loss, joins and\n+      filters do not silently select different outcomes between arms, even with balanced counts\n - [ ] Shared-resource exposure and carry-over checked; assignment unit and rollout fraction\n       support the intended contrast, with interference limits reported\n - [ ] Independent experimental unit, sample-size rationale, run count, allocation/blocking,\ndiff --git a/skills/performance-methodology/references/methods-and-failure-modes.md b/skills/performance-methodology/references/methods-and-failure-modes.md\nindex 06bdeb1..b5e9df2 100644\n--- a/skills/performance-methodology/references/methods-and-failure-modes.md\n+++ b/skills/performance-methodology/references/methods-and-failure-modes.md\n@@ -155,6 +155,19 @@ The parts a production measurement cannot skip:\n - **Allocation, randomisation and blocking.** Randomise treatment order or traffic assignment\n   when feasible. If time drift is expected, block comparable A/B observations within time\n   windows; deterministic ABAB is vulnerable to periodicity and carry-over. Record the scheme.\n+- **Assignment versus analysed population.** Follow router/assignment records and exposure\n+  logs through telemetry export, joins and analysis filters. For randomised comparisons,\n+  check observed assignment-unit counts against the planned split; a 50/50 user assignment\n+  does not require equal request counts. An unexplained sample-ratio mismatch is a data-quality\n+  signal to diagnose before attributing the contrast, not a specific cause.\n+  Balanced counts can still hide selective loss: discarding slow outcomes from one arm can\n+  improve its recorded latency without speeding up those requests. Reconcile observations\n+  with independent request/outcome counters or sequence records where available; inspect\n+  loss by arm and cohort, and whether treatment changes inclusion in the analysis.\n+  A longer run or forcing equal arm sizes does not fix that selection. Correct the\n+  collection/selection mechanism and reanalyse sufficient retained data, or qualify the affected\n+  conclusion. Keep independently supported metrics; a broken latency export need not invalidate\n+  an unaffected server-side correctness result.\n - **Treatment exposure and interference.** Inspect routing, cache ownership and shared queues,\n   databases or quotas before treating requests or pods as independent assignments. A change\n   that lowers shared backend demand can improve control latency too; cache eviction or extra\n@@ -329,6 +342,11 @@ rather than a change. Sizing the capacity option is `capacity-planning`; the rep\n   — randomisation, blocking, factorial designs and design selection.\n - [Microsoft ExP: pre-experiment engineering design](https://www.microsoft.com/en-us/research/articles/patterns-of-trustworthy-experimentation-pre-experiment-stage/)\n   — shared infrastructure and cache choices can leak treatment effects into control.\n+- [Microsoft ExP: diagnosing sample-ratio mismatch](https://www.microsoft.com/en-us/research/articles/diagnosing-sample-ratio-mismatch-in-a-b-testing/)\n+  — assignment, execution, log processing and analysis can change the retained population.\n+- [Dmitriev et al.: A Dirty Dozen—metric interpretation pitfalls (KDD 2017)](https://www.microsoft.com/en-us/research/wp-content/uploads/2020/08/2017-08-KDDMetricInterpretationPitfalls.pdf)\n+  — sections 5.1 and 5.3 distinguish population changes and telemetry-loss bias; unaffected\n+  server-side evidence can remain valid.\n - [Bojinov, Simchi-Levi and Zhao: Design and Analysis of Switchback Experiments](https://arxiv.org/abs/2009.00148)\n   — randomised time treatments and the importance of carry-over assumptions.\n - [Amdahl, “Validity of the Single Processor Approach…”, AFIPS 1967](https://doi.org/10.1145/1465482.1465560)\ndiff --git a/skills/performance-methodology/skill.yaml b/skills/performance-methodology/skill.yaml\nindex 4e6435b..506c3c0 100644\n--- a/skills/performance-methodology/skill.yaml\n+++ b/skills/performance-methodology/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: performance-methodology\n-version: 1.4.5\n+version: 1.4.6\n description: >-\n   The investigation process for performance work: defining measurable goals, recording a baseline,\n   characterising before diagnosing, falsifiability, fixed-work speedup bounds,\n M skills/performance-methodology/SKILL.md\n M skills/performance-methodology/references/investigation-checklist.md\n M skills/performance-methodology/references/methods-and-failure-modes.md\n M skills/performance-methodology/skill.yaml\n"
+      }
+    }
+  ],
+  "validationSummary": {
+    "structural": "Strict validator, explicit package Prettier, git diff --check, 4 local Markdown links, equal descriptions and 10 existing suggests all passed.",
+    "technical": "Synthetic observation-pipeline probe executed three branches/controls. Positive and demonstration commands exit 0; deliberately false preservation assertion exits 1 as intended.",
+    "behavioral": "No agent evaluation was executed; no measured skill or application-performance gain is claimed."
+  },
+  "probeEvidence": {
+    "artifactVersion": "Reviewer-only synthetic selection fixture v1",
+    "artifacts": [
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/performance-methodology-check/selection-by-duration.json",
+        "sha256": "c20ca561c62e038a8bd4d4274c6f5a4673e5b3fe0f90c52d65c3447b4911eb94"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/performance-methodology-check/selection-by-sequence.json",
+        "sha256": "d0f4d0e1d4f4e3df10fb3b1565c27fd4fe95393031662f9e28430485cc6304bb"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/performance-methodology-check/selection-probe.mjs",
+        "sha256": "806cbe527c6d619cb59fe0ed578b09d5f2ac9ab1479eb1531ce6be32b50a012a"
+      }
+    ],
+    "changeReproduced": "Only treatmentSelection changes from sequence to duration between the two JSON configs. Probe/assertion implementation is unchanged.",
+    "positive": {
+      "command": "node selection-probe.mjs selection-by-sequence.json --require-preserved-p99",
+      "exitCode": 0,
+      "result": "1000 full observations and 900 retained per arm; full and retained p99 A=400, B=200 ms; captured/full reduction both 0.5."
+    },
+    "negative": {
+      "command": "node selection-probe.mjs selection-by-duration.json --require-preserved-p99",
+      "exitCode": 1,
+      "error": "AssertionError [ERR_ASSERTION]: treatment selection changed finite-population p99 despite balanced counts; 10 !== 200",
+      "result": "Still 900 retained per arm, but B p99=10 instead of full-population 200 ms; apparent reduction 0.975 versus full-population 0.5."
+    },
+    "scope": "Demonstrates a finite counterexample to balanced-count sufficiency and sensitivity of the probe assertion. It does not validate production sampling, a causal experiment, runtime performance, or agent improvement."
+  },
+  "behavioralEvaluationsExecuted": [],
+  "walkthroughs": [
+    {
+      "kind": "Structured artifact/criteria walkthrough",
+      "details": "Paired development cases trace a loaded selector and the predeclared analysis population. Duration filter requires correction; sequence configuration is retained. These are not executed agent outputs."
+    }
+  ],
+  "cases": [
+    {
+      "id": "balanced-counts-selective-duration-filter",
+      "input": {
+        "request": "Review this pilot's analysis artifacts, correct a concrete selection defect if present, and update finding.md with supported measurements and limits. Do not change the service or send load to any system. The fixture reproduces the reporting pipeline; it is not production performance evidence.",
+        "fixtureFiles": {
+          "pilot-rows.mjs": "export const rows = ['A', 'B'].flatMap(arm => Array.from({ length: 1000 }, (_, sequence) => ({\n  arm,\n  sequence,\n  durationMs: sequence < 100 ? (arm === 'A' ? 400 : 200) : 10,\n  successful: true,\n})));\n",
+          "analyze.mjs": "import { readFileSync } from 'node:fs';\nimport { rows } from './pilot-rows.mjs';\nconst config = JSON.parse(readFileSync(new URL('./analysis.json', import.meta.url), 'utf8'));\nconst selected = rows.filter(row =>\n  row.arm === 'A' || config.treatmentSelection === 'sequence'\n    ? row.sequence % 10 !== 0\n    : row.durationMs < 100\n);\nconst nearestRank = values => [...values].sort((a, b) => a - b)[Math.ceil(values.length * 0.99) - 1];\nconst summary = Object.fromEntries(['A', 'B'].map(arm => {\n  const group = selected.filter(row => row.arm === arm);\n  return [arm, { count: group.length, p99Ms: nearestRank(group.map(row => row.durationMs)) }];\n}));\nconsole.log(JSON.stringify({ summary, p99Reduction: 1 - summary.B.p99Ms / summary.A.p99Ms }, null, 2));\n",
+          "analysis-plan.md": "This is a finite offline fixture for the pilot's analytics. The predeclared reduction keeps rows with sequence % 10 !== 0 in each arm. The intended output is the empirical nearest-rank p99 of that fixed retained population. Record assignment/terminal totals separately from the retained sample. This deterministic fixture rule is not a proposed production sampling strategy. It cannot establish run-to-run uncertainty or full-rollout effect.\n",
+          "server-counters.json": "{\n  \"source\": \"independent terminal-outcome ledger\",\n  \"A\": {\n    \"assigned\": 1000,\n    \"completed\": 1000,\n    \"successful\": 1000,\n    \"errors\": 0\n  },\n  \"B\": {\n    \"assigned\": 1000,\n    \"completed\": 1000,\n    \"successful\": 1000,\n    \"errors\": 0\n  }\n}\n",
+          "finding.md": "Pilot finding: pending review. Both arms have the same assignment count and retained count. Record the p99 contrast, its population and remaining limits before any recommendation.\n",
+          "analysis.json": "{\n  \"treatmentSelection\": \"duration\"\n}\n"
+        }
+      },
+      "evaluatorCriteria": {
+        "required": [
+          "Read analysis-plan.md, the selector in analyze.mjs, the actual loaded analysis.json and independent counters.",
+          "Find that B's duration < 100 selection differs from the predeclared sequence filter even though both retained counts are 900.",
+          "Correct the affected analysis/configuration to the declared population, rerun locally and update finding.md. Do not only append a warning while leaving the 97.5% contrast as the supported result.",
+          "For this finite fixture, report corrected A p99=400 ms and B p99=200 ms (50% empirical reduction), instead of the filtered B p99=10 ms (97.5%).",
+          "Preserve the independent terminal ledger's 1000 successful outcomes per arm; do not invalidate all evidence due to the latency selector.",
+          "Disclose that synthetic data, a predetermined finite population and no independent process runs support neither a production gain nor mechanism attribution."
+        ],
+        "failureConditions": [
+          "Accepts equal retained counts as proof of comparable selection.",
+          "Rebalances counts, discards inconvenient runs, or demands longer production tests without fixing the visible selector.",
+          "Changes the analysis plan to match the result, weakens correctness or treats the synthetic contrast as a measured service/skill improvement."
+        ]
+      },
+      "executionStatus": "Agent evaluation NOT_EXECUTED; underlying arithmetic/selector branches executed by separate probe.",
+      "reproduction": {
+        "prerequisites": [
+          "An existing Node.js runtime that supports ES modules; local probe was run on Node v25.6.1. No dependencies or network are required."
+        ],
+        "steps": [
+          "Materialize only input.fixtureFiles in an isolated temporary directory and give input.request to the evaluator's actor; withhold evaluatorCriteria and the reviewer probe/assertion outputs.",
+          "Run node analyze.mjs from that fixture directory and capture output before any correction.",
+          "Apply authorized artifact corrections, rerun node analyze.mjs and inspect finding.md; score against separate evaluatorCriteria."
+        ],
+        "evaluationNotes": "Development cases; not executed agent comparisons or unseen holdouts. Keep model, tools and other inputs constant in any comparison."
+      }
+    },
+    {
+      "id": "same-population-selector-retained",
+      "decisiveConstraintChanged": "Only analysis.json changes treatmentSelection from duration to sequence; all other fixtures and task are identical.",
+      "input": {
+        "request": "Review this pilot's analysis artifacts, correct a concrete selection defect if present, and update finding.md with supported measurements and limits. Do not change the service or send load to any system. The fixture reproduces the reporting pipeline; it is not production performance evidence.",
+        "fixtureFiles": {
+          "pilot-rows.mjs": "export const rows = ['A', 'B'].flatMap(arm => Array.from({ length: 1000 }, (_, sequence) => ({\n  arm,\n  sequence,\n  durationMs: sequence < 100 ? (arm === 'A' ? 400 : 200) : 10,\n  successful: true,\n})));\n",
+          "analyze.mjs": "import { readFileSync } from 'node:fs';\nimport { rows } from './pilot-rows.mjs';\nconst config = JSON.parse(readFileSync(new URL('./analysis.json', import.meta.url), 'utf8'));\nconst selected = rows.filter(row =>\n  row.arm === 'A' || config.treatmentSelection === 'sequence'\n    ? row.sequence % 10 !== 0\n    : row.durationMs < 100\n);\nconst nearestRank = values => [...values].sort((a, b) => a - b)[Math.ceil(values.length * 0.99) - 1];\nconst summary = Object.fromEntries(['A', 'B'].map(arm => {\n  const group = selected.filter(row => row.arm === arm);\n  return [arm, { count: group.length, p99Ms: nearestRank(group.map(row => row.durationMs)) }];\n}));\nconsole.log(JSON.stringify({ summary, p99Reduction: 1 - summary.B.p99Ms / summary.A.p99Ms }, null, 2));\n",
+          "analysis-plan.md": "This is a finite offline fixture for the pilot's analytics. The predeclared reduction keeps rows with sequence % 10 !== 0 in each arm. The intended output is the empirical nearest-rank p99 of that fixed retained population. Record assignment/terminal totals separately from the retained sample. This deterministic fixture rule is not a proposed production sampling strategy. It cannot establish run-to-run uncertainty or full-rollout effect.\n",
+          "server-counters.json": "{\n  \"source\": \"independent terminal-outcome ledger\",\n  \"A\": {\n    \"assigned\": 1000,\n    \"completed\": 1000,\n    \"successful\": 1000,\n    \"errors\": 0\n  },\n  \"B\": {\n    \"assigned\": 1000,\n    \"completed\": 1000,\n    \"successful\": 1000,\n    \"errors\": 0\n  }\n}\n",
+          "finding.md": "Pilot finding: pending review. Both arms have the same assignment count and retained count. Record the p99 contrast, its population and remaining limits before any recommendation.\n",
+          "analysis.json": "{\n  \"treatmentSelection\": \"sequence\"\n}\n"
+        }
+      },
+      "evaluatorCriteria": {
+        "required": [
+          "Inspect the same actual configuration and selection path, and recognize that both arms now follow the predeclared finite-population plan.",
+          "Keep the working selector; update finding.md with the observed A=400 ms, B=200 ms, 900 retained per arm and 50% empirical p99 reduction.",
+          "Retain independent outcome totals and clearly distinguish them from the retained sample.",
+          "Do not invent selection bias merely because each arm omits 100 predetermined fixture rows; do not generalize this deterministic thinning to production sampling validity.",
+          "Retain limits on synthetic data, uncertainty, mechanism and full-rollout interpretation."
+        ],
+        "failureConditions": [
+          "Forces another selection change or a new production profiling campaign without evidence.",
+          "Claims balanced counts alone establish validity, without reading the matching plan and code.",
+          "Claims measured production or behavioral improvement from this fixture."
+        ]
+      },
+      "executionStatus": "Agent evaluation NOT_EXECUTED; underlying arithmetic/selector branches executed by separate probe.",
+      "reproduction": {
+        "prerequisites": [
+          "An existing Node.js runtime that supports ES modules; local probe was run on Node v25.6.1. No dependencies or network are required."
+        ],
+        "steps": [
+          "Materialize only input.fixtureFiles in an isolated temporary directory and give input.request to the evaluator's actor; withhold evaluatorCriteria and the reviewer probe/assertion outputs.",
+          "Run node analyze.mjs from that fixture directory and capture output before any correction.",
+          "Apply authorized artifact corrections, rerun node analyze.mjs and inspect finding.md; score against separate evaluatorCriteria."
+        ],
+        "evaluationNotes": "Development cases; not executed agent comparisons or unseen holdouts. Keep model, tools and other inputs constant in any comparison."
+      }
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://www.microsoft.com/en-us/research/articles/diagnosing-sample-ratio-mismatch-in-a-b-testing/",
+      "title": "Microsoft ExP: Diagnosing Sample Ratio Mismatch in A/B Testing",
+      "published": "2020-09-14",
+      "supports": "Assignment, execution, logging and selection can cause SRM; root-cause investigation and segment/trigger checks precede effect interpretation.",
+      "qualification": "The skill does not copy Microsoft's numeric threshold or prescribe their platform policy universally."
+    },
+    {
+      "url": "https://www.microsoft.com/en-us/research/wp-content/uploads/2020/08/2017-08-KDDMetricInterpretationPitfalls.pdf",
+      "title": "Dmitriev, Gupta, Kim and Vaz: A Dirty Dozen: Twelve Common Metric Interpretation Pitfalls in Online Controlled Experiments",
+      "published": "KDD 2017",
+      "sections": ["5.1 Metric Sample Ratio Mismatch", "5.3 Telemetry Loss Bias"],
+      "supports": "Different observation populations and telemetry loss can bias metrics; compare independent events/sequence evidence and retain unaffected server-side results.",
+      "qualification": "Balanced-count counterexample additionally follows directly from the executed synthetic fixture; the paper is not claimed to have measured that fixture."
+    }
+  ],
+  "limits": [
+    "No independent agent evaluation or baseline-versus-revised-skill comparison was executed; expected reliability improvement remains unmeasured.",
+    "The probe constructs finite synthetic populations with a nearest-rank quantile. It is not a load test, runtime benchmark or uncertainty estimate.",
+    "The fixture's deterministic sequence thinning preserves its particular strata; it is not generally unbiased and is not recommended as a production sampler.",
+    "No Java examples were added or changed, so no Java compilation was necessary.",
+    "Global registry generation and verification are reserved for the coordinator. This handoff claims local readiness only."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "prerequisite": "All reviewers stop writing; regenerate index for version/integrity."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "prerequisite": "Shared registry update and all reviewers' write phases complete."
+    }
+  ],
+  "crossSkill": {
+    "issues": [],
+    "boundary": "latency-statistics was inspected read-only to avoid duplicating its quantile/censoring mechanics. No cross-skill metadata changes are needed."
+  },
+  "artifacts": {
+    "handoffPath": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/performance-methodology.json",
+    "isolatedRoot": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/performance-methodology-check",
+    "preserved": true
+  },
+  "allWritesStopped": true,
+  "noRunningWriterProcesses": true
+}

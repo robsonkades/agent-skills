@@ -1,0 +1,72 @@
+{
+  "decision": "reject",
+  "scope": "Reject proposal.md as written; review only, no policy implementation or deployment.",
+  "provenance": "Authored fixture, not production capture",
+  "configuredBeforeMax": 6,
+  "configuredAfterMax": 18,
+  "outerAttemptsPerLogical": 1.06,
+  "wireAttemptsPerLogical": 1.6,
+  "aggregateGrantUpperBound": 130,
+  "configuredLimits": {
+    "beforeFormula": "1 * 2 * 3 = 6 wire attempts per logical call, including initial attempts",
+    "afterFormula": "3 * 2 * 3 = 18 wire attempts per logical call, including initial attempts",
+    "reachableUnderDeadline": "Unknown; combined deadline has no numerical bound",
+    "budgetScope": "Four process-local buckets admit outer retries, not SDK wire attempts",
+    "grantFormula": "4 * 10 + 900 * 0.1 = 130 grants over this cohort",
+    "grantBoundCaveat": "No restarts or other refills. Per-process capacity and event ordering may discard refill and reduce achievable grants.",
+    "aggregateInstantaneousCapacity": 80,
+    "cohortOuterAttemptsUpperBoundFromGrants": 1130,
+    "fleetWireCapOfOnePointOneEstablished": false
+  },
+  "observedCounters": {
+    "source": "incident.json authored cohort",
+    "logicalCalls": 1000,
+    "outerAttempts": 1060,
+    "wireAttempts": 1600,
+    "successesThatRefill": 900,
+    "outerRetryGrants": 60,
+    "additionalSdkWireAttempts": 540,
+    "wireAttemptsPerSdkInvocation": 1.509433962264151,
+    "grantsViolateAggregateUpperBound": false,
+    "bucketCorrectnessProven": false,
+    "sdkAttribution": "Explicit in packet; same cohort/window/dependency, exactly one SDK invocation per outer attempt, no fanout, hedging or unrelated traffic"
+  },
+  "effectEvidence": {
+    "intent": "operation-41",
+    "stateAtTimeout50Ms": "UNKNOWN",
+    "stateAfterAbsentLookup52Ms": "UNKNOWN",
+    "originalCommitAtMs": 80,
+    "reviewKnowledgeAfterCommit": "The fixture states that the original write applied; operational reconciliation must recover its authoritative original result.",
+    "cancelSignalAtMs": 50,
+    "cancelAcknowledgementObserved": false,
+    "resourceReleaseAtMs": null,
+    "freshIntentAuthorized": false,
+    "automaticUnknownRedispatchAuthorized": false,
+    "peerReplayGuarantee": "None supplied for this operation; current absence does not exclude later application.",
+    "otherCohortEffects": "Unknown; attempt counters do not establish business outcomes or duplicate counts."
+  },
+  "nextVerification": {
+    "executed": false,
+    "type": "One offline deterministic recovery trace replay after proposal correction",
+    "timeoutSeconds": 20,
+    "intentCount": 1,
+    "networkCalls": 0,
+    "scheduleMs": [0, 50, 52, 80],
+    "assertions": [
+      "UNKNOWN is durable after timeout and remains after point-in-time absent lookup",
+      "No replacement intent or retry write is dispatched",
+      "Original commit evidence reconciles the same intent to its original result",
+      "Resource release is not inferred from cancellation or commit"
+    ],
+    "decisionChange": "Pass supports accepting the revised local recovery recommendation only; failure preserves rejection. It does not authorize the gateway increase or validate provider guarantees."
+  },
+  "limitations": [
+    "Authored fixture and local arithmetic cannot establish production provider durability, wall-clock latency, duplicate effects or fleet behavior.",
+    "No numerical combined deadline, effective phase/attempt limits, backoff or cleanup/response reserve supplied.",
+    "Exact peer API endpoint/version, SDK/framework/database/isolation versions, durable recovery implementation and retention contract are not supplied.",
+    "Java 17 source/API baseline and JDK 25.0.3 availability are README statements; no Java code or runtime was exercised in this review-only task.",
+    "Other skills referenced by supplied snapshots were outside authorized context and were not opened."
+  ],
+  "changes": ["REVIEW.md", "result.json", "execution.json"],
+  "actualValidation": "Node assertions parse artifacts, recompute required metrics, check REVIEW.md <= 750 words, and verify four immutable output copies match input/project bytes. No implementation tests, external services or deployment performed."
+}

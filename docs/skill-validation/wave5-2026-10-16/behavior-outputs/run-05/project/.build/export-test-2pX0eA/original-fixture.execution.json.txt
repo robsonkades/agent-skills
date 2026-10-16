@@ -1,0 +1,16 @@
+{
+  "command": "C:\\Program Files\\nodejs\\node.exe",
+  "args": [
+    "run.mjs",
+    "export",
+    "fixture/input.txt",
+    ".build\\export-test-2pX0eA\\original-fixture.output.txt"
+  ],
+  "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-05\\output\\project",
+  "timeoutMs": 10000,
+  "exit": 0,
+  "signal": null,
+  "stdout": "Exporter compatible mode\r\n",
+  "stderr": "",
+  "error": null
+}

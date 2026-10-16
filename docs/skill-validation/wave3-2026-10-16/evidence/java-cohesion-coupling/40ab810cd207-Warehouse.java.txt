@@ -1,0 +1,7 @@
+package inv.stock;
+import java.util.List;
+public final class Warehouse {
+    private final List<StockLevel> levels;
+    public Warehouse(List<StockLevel> levels) { this.levels = List.copyOf(levels); }
+    public List<StockLevel> levels() { return levels; }
+}

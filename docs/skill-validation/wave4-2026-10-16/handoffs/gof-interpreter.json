@@ -1,0 +1,573 @@
+{
+  "skill": "gof-interpreter",
+  "status": "NO_CHANGES_NEEDED",
+  "ownedPath": "skills/gof-interpreter/**",
+  "reviewer": "/root/quality13",
+  "reviewedOn": "2026-10-16",
+  "allWritesStopped": true,
+  "activeBackgroundProcesses": [],
+  "scope": {
+    "role": "Choosing/reviewing small expression languages, typed AST interpretation and relevant alternatives.",
+    "criteria": [
+      "Keep an adequate fixed configuration/parser/library and do not force a custom DSL.",
+      "Separate accepted grammar/precedence, complete-input entry contracts and parser implementation from interpretation.",
+      "Preserve explicit null/type/operator/error and short-circuit semantics across tree and compiled forms.",
+      "Bound structural work for all AST entry paths and account for expensive primitives/context capability separately.",
+      "Inspect authorization, immutable literal ownership, caller context isolation and engine cache lifecycle.",
+      "Distinguish Java semantics from SQL optimizer behavior and engine/version-specific execution contracts."
+    ],
+    "instructions": "Complete wave4 brief and review prompt read; unchanged applicable AGENTS, parallel review workflow, skill-engineering and its evidence/evaluation/resource-design/anti-pattern references reused from the immediately preceding assignment as permitted. Entire assigned four-file package read. Comparative research/roadmap and wave4 lessons remain applicable. No nested owned AGENTS found."
+  },
+  "baseline": {
+    "committedVersion": "1.2.4",
+    "initialVersion": "1.2.4",
+    "priorVersionBump": false,
+    "scopedGitState": "Clean at assignment; no staged/unstaged/untracked owned differences.",
+    "waveBaseline": "docs/skill-validation/wave4-2026-10-16/baseline.json",
+    "waveBaselineEntry": {
+      "name": "gof-interpreter",
+      "initialVersion": "1.2.4",
+      "committedVersion": "1.2.4",
+      "status": ""
+    },
+    "snapshot": "C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/baseline.json",
+    "files": [
+      {
+        "path": "C:\\git\\agent-skills\\skills\\gof-interpreter\\SKILL.md",
+        "sha256": "ABF310C02E18F70440DFB2AA29552B43BFFF5BF589D5002F060C9E6E8F16A9A9"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\gof-interpreter\\skill.yaml",
+        "sha256": "8F441E633CCFEF55D7316C52D2D21D16F0E987FAE5A20BA8339408606656840F"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\gof-interpreter\\references\\grammar-and-alternatives.md",
+        "sha256": "740A0C8DCAD8442A4FEE86C4170391B9D49C6A71F3D1261FA919BE0AF9D99E98"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\gof-interpreter\\references\\worked-example.md",
+        "sha256": "120222478BEA8C321B62D805384C3AF743E91D33AC7D006E8674C440E0A3FEF9"
+      }
+    ]
+  },
+  "findingsCorrected": [],
+  "findingsReviewed": [
+    {
+      "location": "SKILL.md Purpose, When it is not, Decision rules; references/grammar-and-alternatives.md Before writing a language / Parsing is a separate problem",
+      "outcome": "Retained",
+      "support": "The skill starts from actual consumer syntax/contracts, explicitly preserves fixed configuration or an existing language, treats parsing separately, and requires complete-input consumption with positional errors and limits. Precedence alone does not force a dependency.",
+      "consequence": "No new parser, language feature or library recommendation is justified by the reviewed material."
+    },
+    {
+      "location": "references/worked-example.md Parse, with the limits at the boundary; checkStructure",
+      "outcome": "Retained",
+      "support": "Parsing is explicitly omitted; bounds before recursion and all direct/deserialized AST paths are required. The iterative structural guard counts repeated occurrences, rejects deep ASTs without recursive validation and bounds node count.",
+      "executedEvidence": "Depth16 accepted; depth17 and a 5000-NOT direct AST rejected with IllegalArgumentException; 63 shared-tree occurrences accepted and 127 rejected despite only seven distinct nodes.",
+      "limitation": "This verifies the extracted guard under fixture construction; it does not verify an omitted parser, decoding limits or primitive CPU bounds."
+    },
+    {
+      "location": "references/worked-example.md Fold 1 / The hot path; SKILL.md error and short-circuit rules",
+      "outcome": "Retained",
+      "support": "Reached comparison/budget failures propagate through NOT and composition; only unreached branches are skipped. Defined missing values remain distinct from errors.",
+      "executedEvidence": "Extracted evaluator and closure checks preserve true/false/missing cases, reached exceptions, short-circuit behavior and injected budget signals. An error-to-false negative mutation fails the intended contract.",
+      "sources": ["JLS21 15.6, 15.15.6, 15.23, 15.24"]
+    },
+    {
+      "location": "references/worked-example.md Fold 3 — validate before either",
+      "outcome": "Retained",
+      "support": "Validation visits all bounded branches, checks field AND operator operand shape, avoids metadata calls for forbidden fields and preserves independent allowed-field issues.",
+      "executedEvidence": "Checks exercise forbidden unreached branch, no forbidden operator/type checker invocation, independent type issue, collection equality versus element membership, and unsupported operator without speculative operand checks.",
+      "limitation": "Field/Value/Issue are declared fixture doubles for omitted project types, and public diagnostic serialization was not exercised."
+    },
+    {
+      "location": "references/grammar-and-alternatives.md expression-language RCE / Closure compilation; references/worked-example.md Fold 2",
+      "outcome": "Retained",
+      "support": "The skill distinguishes restricted syntax from safe capabilities, disallows cross-security-context SpEL parsed-expression reuse, and warns that PostgreSQL boolean rearrangement and CASE limitations differ from Java short-circuiting.",
+      "sources": [
+        "Spring Framework7.0.9 current reference security/lifecycle sections",
+        "PostgreSQL18 expression evaluation rules"
+      ],
+      "limitation": "Source verification only; no SpEL or database runtime was installed or executed."
+    }
+  ],
+  "findingsRemaining": [],
+  "noChangeRationale": "No supported material defect was found within the assigned skill. Existing conditional guidance already covers the reviewed risks; adding more warnings or a complete parser would broaden scope without demonstrated need. The synthetic development cases are application-level review fixtures, not defects discovered in this package.",
+  "filesChangedByReviewer": [],
+  "preExistingChanges": [],
+  "finalOwnedHashes": [
+    {
+      "Path": "C:\\git\\agent-skills\\skills\\gof-interpreter\\SKILL.md",
+      "Hash": "ABF310C02E18F70440DFB2AA29552B43BFFF5BF589D5002F060C9E6E8F16A9A9"
+    },
+    {
+      "Path": "C:\\git\\agent-skills\\skills\\gof-interpreter\\skill.yaml",
+      "Hash": "8F441E633CCFEF55D7316C52D2D21D16F0E987FAE5A20BA8339408606656840F"
+    },
+    {
+      "Path": "C:\\git\\agent-skills\\skills\\gof-interpreter\\references\\grammar-and-alternatives.md",
+      "Hash": "740A0C8DCAD8442A4FEE86C4170391B9D49C6A71F3D1261FA919BE0AF9D99E98"
+    },
+    {
+      "Path": "C:\\git\\agent-skills\\skills\\gof-interpreter\\references\\worked-example.md",
+      "Hash": "120222478BEA8C321B62D805384C3AF743E91D33AC7D006E8674C440E0A3FEF9"
+    }
+  ],
+  "assignmentToFinal": "All four owned file SHA-256 values match the assignment snapshot; final scoped Git status and staged/unstaged diffs are empty.",
+  "capabilitiesPreserved": [
+    "Small-language/no-language choice and classical versus sealed-AST extension trade-offs.",
+    "Java21 baseline without preview, no automatic upgrades and separate parser responsibility.",
+    "Grammar/schema/semantic versioning, current caller authorization and explicit unknown-node rejection.",
+    "Deep immutable node/value ownership and per-call context rather than retained caller state.",
+    "Full-input parsing requirement, pre-recursion budgets and iterative checks for all AST entry paths.",
+    "Per-field AND per-operator type validation, independent issue collection and restricted metadata diagnostics.",
+    "Error/missing/false distinction, Java short-circuit order and faithful closure semantics.",
+    "Parameterized SQL, server tenant predicates, null/collation/time semantics and SQL evaluation-order limits.",
+    "Bounded caches, engine-specific cached capability constraints and measurement-driven optimization."
+  ],
+  "capabilitiesRemovedOrReplaced": [],
+  "versions": {
+    "committed": "1.2.4",
+    "initial": "1.2.4",
+    "final": "1.2.4",
+    "rationale": "No skill content changed; no version bump."
+  },
+  "technicalValidation": {
+    "environment": {
+      "os": "Windows",
+      "shell": "PowerShell",
+      "repository": "C:/git/agent-skills",
+      "compiler": "javac25.0.3",
+      "runtime": "Temurin25.0.3+9-LTS",
+      "sourceApiTarget": "--release21",
+      "node": "v25.6.1"
+    },
+    "checks": [
+      {
+        "kind": "Package structural",
+        "result": "PASS",
+        "detail": "Four files, version1.2.4, zero repository package validation issues, two valid local links, scoped Prettier and git diff --check passed."
+      },
+      {
+        "kind": "Extracted technical examples",
+        "result": "PASS",
+        "detail": "36 focused checks of actual AST/guard/validate/matches/compile snippets with declared domain test doubles; compiled --release21 and executed on existing JDK25."
+      },
+      {
+        "kind": "Negative control",
+        "result": "EXPECTED_FAILURE",
+        "detail": "A separate intentionally incorrect error-to-false mutation makes NOT accept a failed decision; negative-mask-errors invocation exits1 with targeted AssertionError."
+      },
+      {
+        "kind": "Development fixture compilation/execution",
+        "result": "EXECUTED",
+        "detail": "Four shared Java source files compile. Search demonstration accepts a trailing suffix (intentional fixture defect); workflow demonstration accepts its legitimate continuation and rejects a trailing suffix."
+      },
+      {
+        "kind": "Fixture consistency",
+        "result": "PASS",
+        "detail": "13 checks establish eight common task/source/grammar/proposal artifacts byte-identical; only app.properties selects the different entry point."
+      }
+    ],
+    "provenance": "C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/probe-provenance.json",
+    "commandsAndFullResults": [
+      {
+        "id": "fold-probe",
+        "command": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' --release 21 -d 'C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/classes' 'C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/InterpreterProbe.java' 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/javac.log'\nif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }\n& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -cp 'C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/classes' InterpreterProbe 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/fold-probe.log'\nexit $LASTEXITCODE",
+        "cwd": "C:/git/agent-skills",
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "50c5dd",
+          "wall_time_seconds": 0.8543964,
+          "exit_code": 0,
+          "original_token_count": 45,
+          "output": "PASS 36 checks of extracted AST/structure/validation/evaluation/closure code\r\nScope: fixture domain types; no parser, SQL, SpEL runtime, concurrency or performance validation.\r\n"
+        }
+      },
+      {
+        "id": "package",
+        "command": "node 'C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/check-package.mjs' | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/package-validation.json'\nexit $LASTEXITCODE",
+        "cwd": "C:/git/agent-skills",
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "f3c621",
+          "wall_time_seconds": 0.2808709,
+          "exit_code": 0,
+          "original_token_count": 197,
+          "output": "{\r\n  \"name\": \"gof-interpreter\",\r\n  \"version\": \"1.2.4\",\r\n  \"files\": [\r\n    \"SKILL.md\",\r\n    \"references/grammar-and-alternatives.md\",\r\n    \"references/worked-example.md\",\r\n    \"skill.yaml\"\r\n  ],\r\n  \"issues\": [],\r\n  \"localLinks\": [\r\n    {\r\n      \"file\": \"SKILL.md\",\r\n      \"target\": \"references/grammar-and-alternatives.md\",\r\n      \"resolved\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\gof-interpreter\\\\references\\\\grammar-and-alternatives.md\"\r\n    },\r\n    {\r\n      \"file\": \"SKILL.md\",\r\n      \"target\": \"references/worked-example.md\",\r\n      \"resolved\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\gof-interpreter\\\\references\\\\worked-example.md\"\r\n    }\r\n  ],\r\n  \"brokenLinks\": [],\r\n  \"limitations\": \"Package-local generic validation only; no adapter/global index validation or behavioral agent evaluation.\"\r\n}\r\n"
+        }
+      },
+      {
+        "id": "format",
+        "command": "node node_modules/prettier/bin/prettier.cjs --check skills/gof-interpreter",
+        "cwd": "C:/git/agent-skills",
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "1820b9",
+          "wall_time_seconds": 0.2830402,
+          "exit_code": 0,
+          "original_token_count": 17,
+          "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+        }
+      },
+      {
+        "id": "fixture-consistency",
+        "command": "node 'C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/check-case-fixtures.mjs' | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/case-fixture-validation.json'\nexit $LASTEXITCODE",
+        "cwd": "C:/git/agent-skills",
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "7b9d6c",
+          "wall_time_seconds": 0.1551224,
+          "exit_code": 0,
+          "original_token_count": 44,
+          "output": "{\r\n  \"checks\": 13,\r\n  \"result\": \"PASS\",\r\n  \"scope\": \"Only active entryPoint differs; eight ordinary source/task/grammar artifacts are byte-identical. No agent evaluation.\"\r\n}\r\n"
+        }
+      },
+      {
+        "id": "case-compilation",
+        "command": "$interpreterCaseSources = Get-ChildItem -LiteralPath 'C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/cases/search/src' -Filter '*.java' | ForEach-Object { $_.FullName }\n& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' --release 21 -d 'C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/case-classes' $interpreterCaseSources 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/case-javac.log'\nexit $LASTEXITCODE",
+        "cwd": "C:/git/agent-skills",
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "67b2ed",
+          "wall_time_seconds": 0.6075718,
+          "exit_code": 0,
+          "original_token_count": 0,
+          "output": ""
+        }
+      },
+      {
+        "id": "negative-mask-errors",
+        "command": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -cp 'C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/classes' InterpreterProbe mask-errors 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/negative-mask-errors.log'\nexit $LASTEXITCODE",
+        "cwd": "C:/git/agent-skills",
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "6442f1",
+          "wall_time_seconds": 0.1766051,
+          "exit_code": 1,
+          "original_token_count": 64,
+          "output": "Exception in thread \"main\" java.lang.AssertionError: Masking failure must not turn NOT into an accepted decision: expected EvaluationFailure\r\n\tat InterpreterProbe.expects(InterpreterProbe.java:152)\r\n\tat InterpreterProbe.main(InterpreterProbe.java:184)\r\n"
+        }
+      },
+      {
+        "id": "complete-input-case",
+        "command": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -cp 'C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/case-classes' Main 'C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/cases/search/app.properties' 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/case-search.log'\nexit $LASTEXITCODE",
+        "cwd": "C:/git/agent-skills",
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "b0761e",
+          "wall_time_seconds": 0.1441504,
+          "exit_code": 0,
+          "original_token_count": 20,
+          "output": "entryPoint=search\r\nstatus eq ACTIVE => true\r\nstatus eq ACTIVE suffix => true\r\n"
+        }
+      },
+      {
+        "id": "embedded-input-case",
+        "command": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -cp 'C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/case-classes' Main 'C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/cases/workflow/app.properties' 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/case-workflow.log'\nexit $LASTEXITCODE",
+        "cwd": "C:/git/agent-skills",
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "567aba",
+          "wall_time_seconds": 0.1281505,
+          "exit_code": 0,
+          "original_token_count": 35,
+          "output": "entryPoint=workflow\r\nwhen status eq ACTIVE then accept => accept\r\nwhen status eq ACTIVE then accept suffix => ERROR: invalid workflow tail\r\n"
+        }
+      },
+      {
+        "id": "final-owned-diff",
+        "command": "git status --short -- skills/gof-interpreter\ngit diff --cached -- skills/gof-interpreter\ngit diff -- skills/gof-interpreter\ngit show HEAD:skills/gof-interpreter/skill.yaml | Select-Object -First 5",
+        "cwd": "C:/git/agent-skills",
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "4b439e",
+          "wall_time_seconds": 0.1724359,
+          "exit_code": 0,
+          "original_token_count": 19,
+          "output": "schemaVersion: 1\r\n\r\nname: gof-interpreter\r\nversion: 1.2.4\r\ndescription: >-\r\n"
+        }
+      },
+      {
+        "id": "final-whitespace",
+        "command": "git diff --check -- skills/gof-interpreter",
+        "cwd": "C:/git/agent-skills",
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "5ed65b",
+          "wall_time_seconds": 0.0772538,
+          "exit_code": 0,
+          "original_token_count": 0,
+          "output": ""
+        }
+      }
+    ],
+    "sourceDownloadsAndFullResults": [
+      {
+        "command": "Invoke-WebRequest -Uri 'https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html' -TimeoutSec 25 -OutFile 'C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/jls21-expressions.html'\nGet-FileHash -LiteralPath 'C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/jls21-expressions.html' -Algorithm SHA256 | Select-Object Path,Hash | ConvertTo-Json -Compress",
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "27bf57",
+          "wall_time_seconds": 0.6893364,
+          "exit_code": 0,
+          "original_token_count": 52,
+          "output": "{\"Path\":\"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf\\\\jls21-expressions.html\",\"Hash\":\"575D903286081248BBD765FC736802C8480FE63E00B4A6B6DE141402B4FCAAE1\"}\r\n"
+        }
+      },
+      {
+        "command": "Invoke-WebRequest -Uri 'https://docs.spring.io/spring-framework/reference/core/expressions/evaluation.html' -TimeoutSec 25 -OutFile 'C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/spring-evaluation.html'\nGet-FileHash -LiteralPath 'C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/spring-evaluation.html' -Algorithm SHA256 | Select-Object Path,Hash | ConvertTo-Json -Compress",
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "3eb584",
+          "wall_time_seconds": 0.5346382,
+          "exit_code": 0,
+          "original_token_count": 52,
+          "output": "{\"Path\":\"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf\\\\spring-evaluation.html\",\"Hash\":\"C2701200D7714EDE4CE6500F46C56BEF316B0B8A5983A53B225D78A0C2661BCF\"}\r\n"
+        }
+      },
+      {
+        "command": "Invoke-WebRequest -Uri 'https://www.postgresql.org/docs/18/sql-expressions.html' -TimeoutSec 25 -OutFile 'C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/postgres18-expressions.html'\nGet-FileHash -LiteralPath 'C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/postgres18-expressions.html' -Algorithm SHA256 | Select-Object Path,Hash | ConvertTo-Json -Compress",
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "2d6e2f",
+          "wall_time_seconds": 1.1040429,
+          "exit_code": 0,
+          "original_token_count": 53,
+          "output": "{\"Path\":\"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf\\\\postgres18-expressions.html\",\"Hash\":\"6A6633911DE91677CBCD3D6DA394F5366ACBCE8D902601A872D82D56C1E3A6FE\"}\r\n"
+        }
+      }
+    ],
+    "finalHashCommandAndResult": {
+      "command": "Get-ChildItem -LiteralPath 'skills/gof-interpreter' -Recurse -File | ForEach-Object { [pscustomobject]@{ Path=$_.FullName; Hash=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash } } | ConvertTo-Json -Depth 4",
+      "cwd": "C:/git/agent-skills",
+      "chunk_id": "e5e100",
+      "wall_time_seconds": 0.0932624,
+      "exit_code": 0,
+      "original_token_count": 179,
+      "output": "[\r\n  {\r\n    \"Path\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\gof-interpreter\\\\SKILL.md\",\r\n    \"Hash\": \"ABF310C02E18F70440DFB2AA29552B43BFFF5BF589D5002F060C9E6E8F16A9A9\"\r\n  },\r\n  {\r\n    \"Path\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\gof-interpreter\\\\skill.yaml\",\r\n    \"Hash\": \"8F441E633CCFEF55D7316C52D2D21D16F0E987FAE5A20BA8339408606656840F\"\r\n  },\r\n  {\r\n    \"Path\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\gof-interpreter\\\\references\\\\grammar-and-alternatives.md\",\r\n    \"Hash\": \"740A0C8DCAD8442A4FEE86C4170391B9D49C6A71F3D1261FA919BE0AF9D99E98\"\r\n  },\r\n  {\r\n    \"Path\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\gof-interpreter\\\\references\\\\worked-example.md\",\r\n    \"Hash\": \"120222478BEA8C321B62D805384C3AF743E91D33AC7D006E8674C440E0A3FEF9\"\r\n  }\r\n]\r\n"
+    },
+    "baselineCommands": [
+      {
+        "command": "git status --short -- skills/gof-interpreter\ngit diff --cached -- skills/gof-interpreter\ngit diff -- skills/gof-interpreter\ngit show HEAD:skills/gof-interpreter/skill.yaml",
+        "cwd": "C:/git/agent-skills",
+        "result": "Owned diff/status empty; committed version1.2.4."
+      },
+      {
+        "command": "$interpreterWaveBaseline = Get-Content -Raw -LiteralPath 'docs/skill-validation/wave4-2026-10-16/baseline.json' | ConvertFrom-Json\n$interpreterWaveBaseline.packages | Where-Object { $_.name -eq 'gof-interpreter' } | Select-Object name,initialVersion,committedVersion,status | ConvertTo-Json -Depth 4",
+        "cwd": "C:/git/agent-skills",
+        "result": {
+          "name": "gof-interpreter",
+          "initialVersion": "1.2.4",
+          "committedVersion": "1.2.4",
+          "status": ""
+        }
+      }
+    ],
+    "sourceInspection": [
+      {
+        "command": "rg -n -A 5 -B 3 'security implications|safety guarantee|cached accessors|side effects' 'C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/spring-evaluation.html'\nGet-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/jls21-expressions.html' | Select-Object -Skip 1097 -First 8\nrg -n 'right-hand operand is not evaluated|left-hand operand is false|left-hand operand is true' 'C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/jls21-expressions.html'",
+        "cwd": "C:/git/agent-skills",
+        "result": "Read Spring accessor-side-effect warning and unsupported cross-security-context expression reuse; JLS15.6 confirms immediate propagation of abrupt completion."
+      },
+      {
+        "command": "rg -n -A 2 -B 1 'order of evaluation|reorganized|planning time|CASE' 'C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/postgres18-expressions.html' | Select-Object -Last 45",
+        "cwd": "C:/git/agent-skills",
+        "result": "PostgreSQL18 4.2.14 states no fixed subexpression order, boolean reorganization and constant/aggregate CASE limitations."
+      }
+    ],
+    "failedAttempts": [
+      {
+        "kind": "Terminated web read",
+        "detail": "Combined web.open for JLS21, Spring reference and PostgreSQL18 produced no response over repeated waits and was terminated. Direct primary downloads with -TimeoutSec25 succeeded; no package write was performed by the terminated cell."
+      }
+    ]
+  },
+  "behavioralEvaluationsExecuted": [],
+  "measuredBehavioralGain": "Not measured. No package revision and no actor run/comparison occurred.",
+  "structuredWalkthroughs": [
+    {
+      "case": "complete-search-input",
+      "type": "Source-based walkthrough, not agent output",
+      "conclusion": "The active complete-search caller ignores the returned parse position. Enforce complete-input consumption at that boundary or a separate complete wrapper, preserving the shared prefix parser's other caller."
+    },
+    {
+      "case": "embedded-workflow-input",
+      "type": "Source-based walkthrough, not agent output",
+      "conclusion": "The active workflow caller consumes the prefix and validates its complete tail. Reject the proposed unconditional shared-parser EOF check and retain the adequate active path; report SearchApi separately if noticed."
+    }
+  ],
+  "developmentCases": {
+    "classification": "Known development fixtures; not unseen holdouts and not executed behavioral evaluations.",
+    "decisiveConstraint": "Only the configured active entry point differs: complete search filter versus a prefix used within the outer workflow grammar. Both accepted API contracts and all source code remain available and identical.",
+    "inputs": [
+      {
+        "id": "complete-search-input",
+        "task": "Review proposal.md for the entry point selected in app.properties. Inspect the grammar and actual call path, then write review.md with a supported disposition and the smallest justified adjustment or no-change. Preserve the shared parser's other accepted callers; report unrelated findings separately. You may run the Java-only fixture or isolated checks. Do not change application code, add dependencies, introduce a new expression language or upgrade Java.",
+        "fixtureDirectory": "C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/cases/search",
+        "taskFile": "C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/cases/search/task.md",
+        "files": {
+          "task.md": "Review proposal.md for the entry point selected in app.properties. Inspect the grammar and actual call path, then write review.md with a supported disposition and the smallest justified adjustment or no-change. Preserve the shared parser's other accepted callers; report unrelated findings separately. You may run the Java-only fixture or isolated checks. Do not change application code, add dependencies, introduce a new expression language or upgrade Java.\n",
+          "README.md": "# Status recognizer fixture\n\nJava source/API target: 21, no dependencies. All data here are synthetic development inputs. Compile src/*.java with javac --release 21 -d <isolated-dir>; run Main <path-to-app.properties> from that output classpath. Main exercises the selected entry point. The pending proposal is not implemented.\n",
+          "grammar.md": "# Accepted grammar and API contracts\n\nStatusAtom = whitespace? 'status' whitespace+ 'eq' whitespace+ ('ACTIVE' | 'PAUSED'). Tokens cannot be prefixes of longer identifiers. No boolean operators or arbitrary quoted strings are supported or required. Inputs are bounded to 256 characters.\n\nSearchApi receives one complete StatusAtom with optional trailing whitespace. Anything else is an invalid request; it must not become a partial filter.\n\nWorkflowApi receives one complete line: 'when ' StatusAtom whitespace+ 'then' whitespace+ ('accept' | 'reject') whitespace?. It uses AtomParser as a shared internal recognizer and owns the line syntax after the atom. Both APIs remain supported; the configuration selects which entry point this review concerns.\n",
+          "proposal.md": "# Pending parser proposal\n\nAdd an end-of-input check directly to AtomParser.parse: throw when the returned position is not the end of its input except for whitespace. The author argues that every parser must consume its whole input and that this is the smallest correction for the active endpoint. A parser-generator rewrite was also suggested if the check is insufficient. Review against the accepted callers before adopting either change.\n",
+          "src/AtomParser.java": "import java.util.Objects;\nimport java.util.regex.Pattern;\n\npublic final class AtomParser {\n    public enum Status { ACTIVE, PAUSED }\n    public record Atom(Status expected) {\n        public boolean matches(Status actual) { return expected == actual; }\n    }\n    public record Parsed(Atom atom, int nextOffset) { }\n    private static final Pattern ATOM = Pattern.compile(\n            \"\\\\s*status\\\\s+eq\\\\s+(ACTIVE|PAUSED)\\\\b\");\n\n    public Parsed parse(String text) {\n        Objects.requireNonNull(text);\n        if (text.length() > 256) throw new IllegalArgumentException(\"input exceeds 256 characters\");\n        var match = ATOM.matcher(text);\n        if (!match.lookingAt()) throw new IllegalArgumentException(\"expected status atom at position 0\");\n        return new Parsed(new Atom(Status.valueOf(match.group(1))), match.end());\n    }\n}\n",
+          "src/SearchApi.java": "public final class SearchApi {\n    private final AtomParser parser = new AtomParser();\n    public boolean matches(String filter, AtomParser.Status actual) {\n        var parsed = parser.parse(filter);\n        return parsed.atom().matches(actual);\n    }\n}\n",
+          "src/WorkflowApi.java": "import java.util.Objects;\nimport java.util.regex.Pattern;\n\npublic final class WorkflowApi {\n    private static final Pattern TAIL = Pattern.compile(\"\\\\s+then\\\\s+(accept|reject)\\\\s*\");\n    private final AtomParser parser = new AtomParser();\n\n    public String execute(String line, AtomParser.Status actual) {\n        Objects.requireNonNull(line);\n        if (line.length() > 256) throw new IllegalArgumentException(\"input exceeds 256 characters\");\n        if (!line.startsWith(\"when \")) throw new IllegalArgumentException(\"expected when\");\n        var parsed = parser.parse(line.substring(5));\n        var tail = TAIL.matcher(line.substring(5 + parsed.nextOffset()));\n        if (!tail.matches()) throw new IllegalArgumentException(\"invalid workflow tail\");\n        return parsed.atom().matches(actual) ? tail.group(1) : \"skip\";\n    }\n}\n",
+          "src/Main.java": "import java.nio.file.Files;\nimport java.nio.file.Path;\nimport java.util.List;\nimport java.util.Properties;\n\npublic final class Main {\n    public static void main(String[] args) throws Exception {\n        var config = new Properties();\n        try (var reader = Files.newBufferedReader(Path.of(args[0]))) { config.load(reader); }\n        String entryPoint = config.getProperty(\"entryPoint\");\n        var inputs = switch (entryPoint) {\n            case \"search\" -> List.of(\"status eq ACTIVE\", \"status eq ACTIVE suffix\");\n            case \"workflow\" -> List.of(\"when status eq ACTIVE then accept\",\n                    \"when status eq ACTIVE then accept suffix\");\n            default -> throw new IllegalArgumentException(\"unknown entryPoint\");\n        };\n        System.out.println(\"entryPoint=\" + entryPoint);\n        for (String input : inputs) {\n            try {\n                Object result = entryPoint.equals(\"search\")\n                        ? new SearchApi().matches(input, AtomParser.Status.ACTIVE)\n                        : new WorkflowApi().execute(input, AtomParser.Status.ACTIVE);\n                System.out.println(input + \" => \" + result);\n            } catch (IllegalArgumentException error) {\n                System.out.println(input + \" => ERROR: \" + error.getMessage());\n            }\n        }\n    }\n}\n",
+          "app.properties": "entryPoint=search\n"
+        }
+      },
+      {
+        "id": "embedded-workflow-input",
+        "task": "Review proposal.md for the entry point selected in app.properties. Inspect the grammar and actual call path, then write review.md with a supported disposition and the smallest justified adjustment or no-change. Preserve the shared parser's other accepted callers; report unrelated findings separately. You may run the Java-only fixture or isolated checks. Do not change application code, add dependencies, introduce a new expression language or upgrade Java.",
+        "fixtureDirectory": "C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/cases/workflow",
+        "taskFile": "C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/cases/workflow/task.md",
+        "files": {
+          "task.md": "Review proposal.md for the entry point selected in app.properties. Inspect the grammar and actual call path, then write review.md with a supported disposition and the smallest justified adjustment or no-change. Preserve the shared parser's other accepted callers; report unrelated findings separately. You may run the Java-only fixture or isolated checks. Do not change application code, add dependencies, introduce a new expression language or upgrade Java.\n",
+          "README.md": "# Status recognizer fixture\n\nJava source/API target: 21, no dependencies. All data here are synthetic development inputs. Compile src/*.java with javac --release 21 -d <isolated-dir>; run Main <path-to-app.properties> from that output classpath. Main exercises the selected entry point. The pending proposal is not implemented.\n",
+          "grammar.md": "# Accepted grammar and API contracts\n\nStatusAtom = whitespace? 'status' whitespace+ 'eq' whitespace+ ('ACTIVE' | 'PAUSED'). Tokens cannot be prefixes of longer identifiers. No boolean operators or arbitrary quoted strings are supported or required. Inputs are bounded to 256 characters.\n\nSearchApi receives one complete StatusAtom with optional trailing whitespace. Anything else is an invalid request; it must not become a partial filter.\n\nWorkflowApi receives one complete line: 'when ' StatusAtom whitespace+ 'then' whitespace+ ('accept' | 'reject') whitespace?. It uses AtomParser as a shared internal recognizer and owns the line syntax after the atom. Both APIs remain supported; the configuration selects which entry point this review concerns.\n",
+          "proposal.md": "# Pending parser proposal\n\nAdd an end-of-input check directly to AtomParser.parse: throw when the returned position is not the end of its input except for whitespace. The author argues that every parser must consume its whole input and that this is the smallest correction for the active endpoint. A parser-generator rewrite was also suggested if the check is insufficient. Review against the accepted callers before adopting either change.\n",
+          "src/AtomParser.java": "import java.util.Objects;\nimport java.util.regex.Pattern;\n\npublic final class AtomParser {\n    public enum Status { ACTIVE, PAUSED }\n    public record Atom(Status expected) {\n        public boolean matches(Status actual) { return expected == actual; }\n    }\n    public record Parsed(Atom atom, int nextOffset) { }\n    private static final Pattern ATOM = Pattern.compile(\n            \"\\\\s*status\\\\s+eq\\\\s+(ACTIVE|PAUSED)\\\\b\");\n\n    public Parsed parse(String text) {\n        Objects.requireNonNull(text);\n        if (text.length() > 256) throw new IllegalArgumentException(\"input exceeds 256 characters\");\n        var match = ATOM.matcher(text);\n        if (!match.lookingAt()) throw new IllegalArgumentException(\"expected status atom at position 0\");\n        return new Parsed(new Atom(Status.valueOf(match.group(1))), match.end());\n    }\n}\n",
+          "src/SearchApi.java": "public final class SearchApi {\n    private final AtomParser parser = new AtomParser();\n    public boolean matches(String filter, AtomParser.Status actual) {\n        var parsed = parser.parse(filter);\n        return parsed.atom().matches(actual);\n    }\n}\n",
+          "src/WorkflowApi.java": "import java.util.Objects;\nimport java.util.regex.Pattern;\n\npublic final class WorkflowApi {\n    private static final Pattern TAIL = Pattern.compile(\"\\\\s+then\\\\s+(accept|reject)\\\\s*\");\n    private final AtomParser parser = new AtomParser();\n\n    public String execute(String line, AtomParser.Status actual) {\n        Objects.requireNonNull(line);\n        if (line.length() > 256) throw new IllegalArgumentException(\"input exceeds 256 characters\");\n        if (!line.startsWith(\"when \")) throw new IllegalArgumentException(\"expected when\");\n        var parsed = parser.parse(line.substring(5));\n        var tail = TAIL.matcher(line.substring(5 + parsed.nextOffset()));\n        if (!tail.matches()) throw new IllegalArgumentException(\"invalid workflow tail\");\n        return parsed.atom().matches(actual) ? tail.group(1) : \"skip\";\n    }\n}\n",
+          "src/Main.java": "import java.nio.file.Files;\nimport java.nio.file.Path;\nimport java.util.List;\nimport java.util.Properties;\n\npublic final class Main {\n    public static void main(String[] args) throws Exception {\n        var config = new Properties();\n        try (var reader = Files.newBufferedReader(Path.of(args[0]))) { config.load(reader); }\n        String entryPoint = config.getProperty(\"entryPoint\");\n        var inputs = switch (entryPoint) {\n            case \"search\" -> List.of(\"status eq ACTIVE\", \"status eq ACTIVE suffix\");\n            case \"workflow\" -> List.of(\"when status eq ACTIVE then accept\",\n                    \"when status eq ACTIVE then accept suffix\");\n            default -> throw new IllegalArgumentException(\"unknown entryPoint\");\n        };\n        System.out.println(\"entryPoint=\" + entryPoint);\n        for (String input : inputs) {\n            try {\n                Object result = entryPoint.equals(\"search\")\n                        ? new SearchApi().matches(input, AtomParser.Status.ACTIVE)\n                        : new WorkflowApi().execute(input, AtomParser.Status.ACTIVE);\n                System.out.println(input + \" => \" + result);\n            } catch (IllegalArgumentException error) {\n                System.out.println(input + \" => ERROR: \" + error.getMessage());\n            }\n        }\n    }\n}\n",
+          "app.properties": "entryPoint=workflow\n"
+        }
+      }
+    ],
+    "evaluatorCriteria": [
+      {
+        "id": "complete-search-input",
+        "expectedOutcome": [
+          "Follow app.properties to SearchApi and identify that it ignores Parsed.nextOffset, admitting non-whitespace trailing input.",
+          "Correct the pending proposal: enforce complete-input consumption at the complete search entry boundary (or a separately named complete-input wrapper) while preserving AtomParser prefix behavior for WorkflowApi.",
+          "Retain the bounded small recognizer and accepted restricted grammar unless evidence justifies more machinery.",
+          "Use or propose legitimate status/trailing whitespace, hostile suffix, token-boundary, null/length, and existing workflow-tail checks.",
+          "Distinguish this demonstrated fixture defect from the skill's intentionally omitted parser; do not claim all parser or security behavior was tested."
+        ],
+        "failureConditions": [
+          "Approves silently ignoring the complete search suffix.",
+          "Puts an unconditional end check in shared AtomParser without preserving valid WorkflowApi parsing.",
+          "Introduces ANTLR/DSL or supports new operators without a requirement.",
+          "Only adds warnings while leaving the proposed incompatible fix as final recommendation."
+        ]
+      },
+      {
+        "id": "embedded-workflow-input",
+        "expectedOutcome": [
+          "Follow app.properties to WorkflowApi; establish that AtomParser returns a prefix position and the caller validates the complete tail with Matcher.matches.",
+          "Reject the proposed global AtomParser end check because it would reject valid accepted workflow lines.",
+          "Retain the active bounded recognizer/caller design for the evidenced full-consumption concern, with explicit scope and no forced rewrite.",
+          "Recognize that unknown workflow suffixes are rejected; distinguish valid embedded continuation from ignored complete-input garbage.",
+          "If SearchApi's separate defect is reported, keep it separate from the active workflow no-change disposition and do not use it to approve an incompatible shared change."
+        ],
+        "failureConditions": [
+          "Demands that every internal parser consume the entire outer-language string.",
+          "Treats the legitimate then clause as trailing garbage or removes it from the grammar.",
+          "Claims the shared parser itself guarantees complete search requests are validated.",
+          "Rewrites an adequate active workflow path merely to show a change."
+        ]
+      }
+    ],
+    "separateCriteriaFile": "C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/case-criteria.json",
+    "prerequisites": "Read/inspect files and write review.md in an isolated copy. Existing JDK21+ compiler can compile --release21; no libraries or infrastructure required.",
+    "evaluatorExposure": "Provide only selected cases/search or cases/workflow directory. Withhold other case, handoff, review-evidence.json, private probe, logs, checker and criteria. Directory separation is procedural rather than enforced access isolation.",
+    "coordinatorEvaluation": "Pending if coordinator elects to run independent actors; preserve no-change criteria even when both variants already perform correctly."
+  },
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html",
+      "file": "jls21-expressions.html",
+      "version": "JLS21",
+      "sections": "15.6, 15.15.6, 15.23, 15.24",
+      "claim": "Abrupt completion propagates; boolean negation and conditional short-circuit evaluation.",
+      "consultedOn": "2026-10-16",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/jls21-expressions.html",
+      "sha256": "575D903286081248BBD765FC736802C8480FE63E00B4A6B6DE141402B4FCAAE1",
+      "validation": "Read the relevant downloaded primary-source sections. These sources support the existing guidance, not runtime integration or measured performance claims."
+    },
+    {
+      "url": "https://docs.spring.io/spring-framework/reference/core/expressions/evaluation.html",
+      "file": "spring-evaluation.html",
+      "version": "Spring Framework 7.0.9 (version meta in fetched current reference)",
+      "sections": "Understanding EvaluationContext / security notes",
+      "claim": "SimpleEvaluationContext reachable accessor effects and parsed-expression security-context reuse constraints.",
+      "pinnedSource": "https://github.com/spring-projects/spring-framework/blob/v7.0.9/framework-docs/modules/ROOT/pages/core/expressions/evaluation.adoc",
+      "consultedOn": "2026-10-16",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/spring-evaluation.html",
+      "sha256": "C2701200D7714EDE4CE6500F46C56BEF316B0B8A5983A53B225D78A0C2661BCF",
+      "validation": "Read the relevant downloaded primary-source sections. These sources support the existing guidance, not runtime integration or measured performance claims."
+    },
+    {
+      "url": "https://www.postgresql.org/docs/18/sql-expressions.html",
+      "file": "postgres18-expressions.html",
+      "version": "PostgreSQL18",
+      "sections": "4.2.14 Expression Evaluation Rules",
+      "claim": "SQL subexpression order may differ; boolean evaluation can be reorganized; CASE limitations.",
+      "consultedOn": "2026-10-16",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/postgres18-expressions.html",
+      "sha256": "6A6633911DE91677CBCD3D6DA394F5366ACBCE8D902601A872D82D56C1E3A6FE",
+      "validation": "Read the relevant downloaded primary-source sections. These sources support the existing guidance, not runtime integration or measured performance claims."
+    }
+  ],
+  "evidencePaths": {
+    "directory": "C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf",
+    "baseline": "C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/baseline.json",
+    "reviewEvidence": "C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/review-evidence.json",
+    "probe": "C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/InterpreterProbe.java",
+    "probeProvenance": "C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/probe-provenance.json",
+    "probeLogs": [
+      "C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/javac.log",
+      "C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/fold-probe.log",
+      "C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/negative-mask-errors.log"
+    ],
+    "probeClasses": "C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/classes",
+    "packageValidator": "C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/check-package.mjs",
+    "packageResult": "C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/package-validation.json",
+    "fixtureChecker": "C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/check-case-fixtures.mjs",
+    "fixtureResult": "C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/case-fixture-validation.json",
+    "caseDirectories": [
+      "C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/cases/search",
+      "C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/cases/workflow"
+    ],
+    "caseLogs": [
+      "C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/case-javac.log",
+      "C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/case-search.log",
+      "C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/case-workflow.log"
+    ],
+    "caseClasses": "C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/case-classes",
+    "evaluatorCriteria": "C:/Users/robso/AppData/Local/Temp/interpreter-quality13-5c67b0eb46b54bfa82dff51b0fbb59cf/case-criteria.json"
+  },
+  "limitations": [
+    "No catalog content changed, no agent evaluation occurred and no improvement is claimed.",
+    "Compiling --release21 on JDK25 does not test a JDK21 VM.",
+    "The probe supplies omitted domain types and compares only the implemented fixture primitive behavior; SQL/parser/engine implementations remain deliberately omitted in the skill.",
+    "The injected budget-exhaustion exception verifies propagation, not elapsed-time enforcement, scheduling, whole-request throughput or expensive primitive accounting.",
+    "No real parser fuzzing, SQL integration, SpEL runtime, concurrency stress or performance benchmark was executed.",
+    "Spring reference retrieved during this review identifies version7.0.9; its restrictions should not be silently projected onto every deployed engine/version, as the skill already cautions.",
+    "The synthetic application parser deliberately admits an invalid complete-search suffix; this is a development case, not evidence the skill's unspecified parser does so.",
+    "No dependency/toolchain installation, shared repository writes, neighboring changes or real agent configuration occurred.",
+    "Local package checks do not establish repository-wide index, dependency/adapter or routing validation."
+  ],
+  "crossSkillFindings": [],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "cwd": "C:/git/agent-skills",
+      "owner": "coordinator",
+      "reason": "Shared batch index generation after all writers stop; this unchanged package itself requires no new integrity/version entry."
+    },
+    {
+      "command": "npm run verify",
+      "cwd": "C:/git/agent-skills",
+      "owner": "coordinator",
+      "reason": "Repository-wide verification reserved to coordinator in parallel review workflow."
+    }
+  ],
+  "coordinatorActions": [
+    "Confirm empty owned diff and unchanged hashes.",
+    "Include no-change finding in wave4 review coverage.",
+    "Run pending batch globals after all authors stop.",
+    "Optionally execute separate cases without exposing expected outcomes."
+  ],
+  "readinessMeaning": "Local specialist review complete; all reviewer writes and background processes stopped after this handoff. No claim of repository-wide validation."
+}

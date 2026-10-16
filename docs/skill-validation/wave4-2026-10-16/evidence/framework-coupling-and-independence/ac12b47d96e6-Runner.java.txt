@@ -1,0 +1,22 @@
+package example;
+
+import example.adapter.ExportFactory;
+import example.application.ExportPipeline;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Properties;
+
+public final class Runner {
+    public static void main(String[] args) throws Exception {
+        Properties consumer = new Properties();
+        try (InputStream input = Files.newInputStream(Path.of(args[0]))) {
+            consumer.load(input);
+        }
+        byte[] payload = "invoice=17;total=42.00".getBytes(StandardCharsets.UTF_8);
+        int reads = Integer.parseInt(consumer.getProperty("readsPerBody"));
+        long checksum = new ExportPipeline().process(ExportFactory.create(payload), reads);
+        System.out.println("PASS reads=" + reads + " checksum=" + checksum);
+    }
+}

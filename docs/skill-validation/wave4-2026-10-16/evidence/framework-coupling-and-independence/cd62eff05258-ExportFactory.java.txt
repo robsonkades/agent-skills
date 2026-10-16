@@ -1,0 +1,13 @@
+package example.adapter;
+
+import example.application.ExportBody;
+import org.springframework.core.io.ByteArrayResource;
+
+public final class ExportFactory {
+    private ExportFactory() {}
+
+    public static ExportBody create(byte[] bytes) {
+        if (bytes.length > 4096) throw new IllegalArgumentException("export limit");
+        return new SpringExportBody(new ByteArrayResource(bytes.clone()));
+    }
+}

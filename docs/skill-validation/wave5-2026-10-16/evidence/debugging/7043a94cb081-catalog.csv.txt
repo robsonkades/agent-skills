@@ -1,0 +1,4 @@
+sku,currency,minorUnits
+W-17,USD,1299
+W-17,EUR,1199
+W-18,EUR,799

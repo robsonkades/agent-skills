@@ -124,7 +124,9 @@ Prefer instead when:
   another process still recognizes the lease.
 - **A renewal watchdog does not make a lease safe.** The pause that made the holder late stops
   its watchdog too, and a partition that stops renewal is precisely when another holder is
-  admitted. Renewal improves the common case and changes nothing about the bad one.
+  admitted. First prove renewal is enabled by the executed acquisition overload; a configured
+  watchdog may be unused on a fixed-lease path. See the Redisson example in
+  `references/lock-decision.md`. Renewal does not replace stale-effect enforcement.
 - `SET key <token> NX PX <ttl>` on one Redis instance is a lease. With asynchronous replica
   promotion, a failover may lose an unreplicated key and admit a second holder. Release must be
   owner-conditional: Redis 8.4 offers `DELEX ... IFEQ`; older versions use an atomic script.
@@ -164,5 +166,6 @@ Prefer instead when:
 - [Do you need a lock, and which one](references/lock-decision.md) — the alternatives with the
   condition selecting each, then Redis, Redlock, etcd/ZooKeeper leases, database row locks and
   advisory locks compared on failure mode, clock dependence, fencing support and operational
-  cost, plus release ordering across transaction and asynchronous boundaries. Read before
-  introducing a lock, changing its scope, or replacing one that failed.
+  cost, plus renewal selection and release ordering across transaction and asynchronous
+  boundaries. Read before introducing a lock, changing its scope, tuning its watchdog or
+  replacing one that failed.

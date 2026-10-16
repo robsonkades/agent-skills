@@ -1,0 +1,1 @@
+package org.openrewrite; import java.nio.file.Path; import java.nio.charset.Charset; public interface SourceFile { Path getSourcePath(); Charset getCharset(); FileAttributes getFileAttributes(); String printAll(PrintOutputCapture<?> capture); }

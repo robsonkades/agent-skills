@@ -1,0 +1,14 @@
+import { readFileSync } from 'node:fs';
+const record = JSON.parse(readFileSync(process.argv[2], 'utf8'));
+const markedBytes = record.deliveryGroups.filter(group => group.eceReported)
+  .reduce((sum, group) => sum + group.packets * group.payloadBytesPerPacket, 0);
+const totalBytes = record.deliveryGroups
+  .reduce((sum, group) => sum + group.packets * group.payloadBytesPerPacket, 0);
+const predicted = {
+  diagnosticBeforeUpdate: { dctcp_ab_ecn: markedBytes, dctcp_ab_tot: totalBytes },
+  alphaAfterOneUpdate: Math.min(1024,
+    record.dctcp_alpha - Math.floor(record.dctcp_alpha / 2 ** record.dctcp_shift_g)
+      + Math.floor(markedBytes * 2 ** (10 - record.dctcp_shift_g) / totalBytes)),
+  basis: 'Byte-weighted ECN feedback'
+};
+console.log(JSON.stringify(predicted, null, 2));

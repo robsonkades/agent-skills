@@ -1,0 +1,93 @@
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+
+const repo = 'C:/git/agent-skills';
+const skill = 'mvc-and-request-handling';
+const root = join(repo, 'skills', skill);
+const evidence = dirname(fileURLToPath(import.meta.url));
+const baseline = JSON.parse(readFileSync(join(evidence, 'baseline.json'), 'utf8'));
+const investigation = JSON.parse(readFileSync(join(evidence, 'investigation-results.json'), 'utf8'));
+const javaBin = 'C:/Users/robso/.jdks/temurin-25.0.3/bin';
+const jars = investigation.cachedJars.map((jar) => jar.path);
+const commands = [];
+function run(label, command, args, cwd = root, expected = 0) {
+  const result = spawnSync(command, args, { cwd, encoding: 'utf8', timeout: 30000, windowsHide: true });
+  const record = { label, command, args, cwd, exitCode: result.status, expectedExitCode: expected,
+    signal: result.signal, error: result.error?.message ?? null, stdout: result.stdout ?? '', stderr: result.stderr ?? '' };
+  record.log = join(evidence, 'logs', label + '.json');
+  writeFileSync(record.log, JSON.stringify(record, null, 2) + '\n');
+  commands.push(record);
+  assert.equal(record.error, null, label + ': ' + record.error);
+  assert.equal(record.signal, null, label);
+  assert.equal(record.exitCode, expected, label + '\n' + record.stdout + record.stderr);
+  return record;
+}
+for (const [id, expected] of [['a', 1], ['b', 0]]) {
+  const classes = join(evidence, 'case-' + id + '-classes');
+  mkdirSync(classes, { recursive: true });
+  run('compile-case-' + id, join(javaBin, 'javac.exe'), ['--release', '17', '-cp', jars.join(';'), '-d', classes,
+    join(evidence, 'fixtures/LifecycleProbe.java'), join(evidence, 'evaluator-private/CaseProbe.java'),
+    join(evidence, 'cases/case-' + id + '/example/RequestTagInterceptor.java')], evidence);
+  const result = run('execute-case-' + id, join(javaBin, 'java.exe'), ['-cp', classes + ';' + jars.join(';'), 'CaseProbe'], evidence, expected);
+  assert.match(result.stdout, /Completed 4 framework dispatch paths; response and handler controls passed/);
+  if (id === 'a') assert.match(result.stderr, /AssertionError: Request tag retained after dispatch: \[stop, readiness-failure\]/);
+  else assert.match(result.stdout, /PASS request-tag lifecycle contract/);
+  const input = JSON.parse(readFileSync(join(evidence, 'cases/case-' + id + '.input.json'), 'utf8'));
+  assert.equal(input.fixtures['src/main/java/example/RequestTagInterceptor.java'],
+    readFileSync(join(evidence, 'cases/case-' + id + '/example/RequestTagInterceptor.java'), 'utf8'));
+}
+const { loadPackageFromDirectory } = await import(pathToFileURL(join(repo, 'packages/core/src/application/package-loader.ts')).href);
+const { validatePackage } = await import(pathToFileURL(join(repo, 'packages/core/src/application/validate-package.ts')).href);
+const { NodeFileSystem } = await import(pathToFileURL(join(repo, 'packages/node/src/file-system.ts')).href);
+const loaded = await loadPackageFromDirectory(new NodeFileSystem(), root, { strict: true });
+const validated = validatePackage(loaded.pkg, { strict: true, directoryName: skill });
+const issues = [...loaded.issues, ...validated.issues];
+assert.deepEqual(issues, []);
+assert.equal(loaded.pkg.manifest.version, '1.3.6');
+assert.equal(loaded.pkg.files.length, 4);
+const links = [];
+const textReferrals = new Set();
+for (const file of baseline.hashes.filter((file) => file.path.endsWith('.md'))) {
+  const absolute = join(repo, file.path);
+  const body = readFileSync(absolute, 'utf8');
+  for (const match of body.matchAll(/\[[^\]]+\]\(([^)]+)\)/g)) {
+    if (/^(?:https?:|#)/.test(match[1])) continue;
+    assert.ok(existsSync(resolve(dirname(absolute), match[1].split('#')[0])), match[1]);
+    links.push({ from: file.path, target: match[1] });
+  }
+  for (const match of body.matchAll(/\x60([a-z]+(?:-[a-z]+)+)\x60/g)) {
+    if (existsSync(join(repo, 'skills', match[1], 'SKILL.md'))) textReferrals.add(match[1]);
+  }
+}
+const referrals = loaded.pkg.manifest.suggests;
+const required = loaded.pkg.manifest.dependencies.map((dependency) => dependency.name);
+for (const referral of [...referrals, ...required]) assert.ok(existsSync(join(repo, 'skills', referral, 'SKILL.md')), referral);
+for (const referral of textReferrals) assert.ok(referrals.includes(referral) || required.includes(referral), 'Undeclared referral: ' + referral);
+run('prettier-check', process.execPath, [join(repo, 'node_modules/prettier/bin/prettier.cjs'), '--check',
+  ...baseline.hashes.map((file) => join(repo, file.path))], repo);
+run('diff-check', 'git', ['diff', '--check', '--', 'skills/' + skill], repo);
+run('status', 'git', ['status', '--short', '--', 'skills/' + skill], repo);
+run('diff', 'git', ['diff', '--', 'skills/' + skill], repo);
+const staged = run('staged-diff', 'git', ['diff', '--cached', '--', 'skills/' + skill], repo);
+assert.equal(staged.stdout, '');
+const finalHashes = baseline.hashes.map((file) => ({ path: file.path,
+  sha256: createHash('sha256').update(readFileSync(join(repo, file.path))).digest('hex') }));
+const changed = finalHashes.filter((file) => file.sha256 !== baseline.hashes.find((entry) => entry.path === file.path).sha256)
+  .map((file) => file.path).sort();
+assert.deepEqual(changed, ['skills/mvc-and-request-handling/SKILL.md',
+  'skills/mvc-and-request-handling/references/page-vs-front-controller.md', 'skills/mvc-and-request-handling/skill.yaml']);
+const results = { skill, checkedAt: new Date().toISOString(), node: process.version, platform: process.platform,
+  commands, strictValidation: { issues, shippedFiles: loaded.pkg.files.length }, internalLinks: links,
+  optionalReferrals: referrals, dependencies: required, explicitTextReferrals: [...textReferrals].sort(),
+  finalHashes, changedSinceAssignment: changed, noActiveChildren: true,
+  caseContractResults: { a: 'Expected exit 1 only after all 4 response/handler controls: retained state on stop and readiness failure.',
+    b: 'Exit 0, 4 paths satisfy tag lifetime and response/handler controls.' },
+  caseArtifactIsolation: 'Case input fixtures match compiled RequestTagInterceptor sources. Criteria and harness are separate; do not expose them to an actor.' };
+writeFileSync(join(evidence, 'local-results.json'), JSON.stringify(results, null, 2) + '\n');
+process.stdout.write(JSON.stringify({ commands: commands.length, expectedNegativeExits: 1, shippedFiles: loaded.pkg.files.length,
+  issues: issues.length, links: links.length, referrals: referrals.length, dependencies: required.length,
+  changedSinceAssignment: changed, cases: results.caseContractResults, noActiveChildren: true }, null, 2) + '\n');

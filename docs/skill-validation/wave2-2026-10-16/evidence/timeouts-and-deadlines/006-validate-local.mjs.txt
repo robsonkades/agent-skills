@@ -1,0 +1,40 @@
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { readFileSync, existsSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { pathToFileURL } from 'node:url';
+
+const repo = resolve(process.argv[2] ?? 'C:/git/agent-skills');
+const skill = resolve(repo, 'skills/timeouts-and-deadlines');
+const { parseManifest } = await import(pathToFileURL(resolve(repo, 'packages/core/src/domain/manifest.ts')));
+const { parseSkillDocument, documentName, documentDescription } = await import(pathToFileURL(resolve(repo, 'packages/core/src/domain/skill-document.ts')));
+const { manifest, issues } = parseManifest(readFileSync(resolve(skill, 'skill.yaml'), 'utf8'), { strict: true });
+const document = parseSkillDocument(readFileSync(resolve(skill, 'SKILL.md'), 'utf8'));
+assert.deepEqual(issues, []);
+assert.equal(documentName(document), manifest.name);
+assert.equal(documentDescription(document), manifest.description);
+assert.equal(manifest.name, 'timeouts-and-deadlines');
+assert.equal(manifest.version, '1.1.5');
+for (const entry of manifest.files) assert.ok(existsSync(resolve(skill, entry)), entry);
+const baseline = {
+  'SKILL.md': 'ee9a435a6004ac96d1c991a0110ef6205aebaa2c6fc4f68b4d33ce660f2dc29f',
+  'skill.yaml': 'ec2c2602056b0fcf0076d65ebefba6d4da86d47020d6ffabd08ad483f8e6e0fb',
+  'references/deadline-propagation.md': 'a2cb2fbd6733e2ec1649cedae206c82ec83ad83a3ef3e5cb8f200272ff3b312f',
+  'references/java-timeout-surface.md': 'ce67e676b63eee0fe821e5e5407ed48b12194ca04cacbc0de8a501948789106a'
+};
+let relativeLinks = 0;
+for (const [file, hash] of Object.entries(baseline)) {
+  const full = resolve(skill, file);
+  const bytes = readFileSync(full);
+  assert.equal(createHash('sha256').update(bytes).digest('hex'), hash, `Baseline changed: ${file}`);
+  if (!file.endsWith('.md')) continue;
+  for (const match of bytes.toString('utf8').matchAll(/\]\(([^\s)]+)\)/g)) {
+    const target = match[1].replace(/^<|>$/g, '');
+    if (/^(https?:|#)/.test(target)) continue;
+    assert.ok(existsSync(resolve(dirname(full), target.split('#')[0])), target);
+    relativeLinks++;
+  }
+}
+console.log(JSON.stringify({ status: 'PASS', skill: manifest.name, strictManifestIssues: 0,
+  metadataAgreement: true, version: manifest.version, unchangedFiles: Object.keys(baseline).length,
+  declaredPaths: manifest.files.length, relativeLinks }, null, 2));

@@ -42,6 +42,33 @@ independent state per partition and follow the engine's ownership/reuse rules; s
 support does not make a shared accumulator thread-safe. A Java non-concurrent `Collector`
 uses isolated mutable containers, whereas its concurrent form has a different contract.
 
+### Check which engine hooks actually run
+
+Follow job registration and the selected execution plan to the functions and state codec
+that production uses. A correct unregistered combiner, or a test of a different helper,
+does not validate that path. Check whether intermediate combination is optional/repeated
+before assigning required filtering, validation or finalization to it.
+
+For example, Hadoop 3.4.1 `mapred.JobConf.setCombinerClass` permits zero, one or multiple
+combiner invocations. Its combiner must preserve input/output key and value types and have
+no side effects. Keep required transformations on a guaranteed path. For a mean, upstream
+records can carry `(value, 1)`, optional combiners merge `(sum, count)`, and the final reducer
+divides. Both uncombined records and already-combined states must remain valid inputs.
+Test no precombination, one pass and repeated passes, including mixtures of raw and combined
+states. Registering the final scalar-average reducer as the combiner is not safe merely
+because both classes implement the same interface. These invocation rules are specific to
+the engine/API; do not presume every framework permits the same execution shapes.
+
+A sequential convenience method may also bypass the risky hook. In Beam 2.77.0,
+`CombineFn.apply(inputs)` calls accumulation and output extraction but **does not call
+`mergeAccumulators`**. The sum-accumulator/max-merge defect above can therefore pass a test
+using only `apply`. Accumulate partitions independently, pass their states through the
+selected codec where available, invoke the actual merge hook, then extract and compare with
+the independent oracle. A deliberately faulty merge should fail this path even when the
+sequential helper still passes. Preserve the engine's mutable-state ownership contract while
+doing so. Use a targeted runner test when available to check registration and transport;
+a local hook test does not establish that the deployed runner selected or serialized it.
+
 ### Grouping keys are part of correctness
 
 Specify which keys denote the same business group before selecting a partitioner: include
@@ -221,6 +248,13 @@ ownership. [Beam GroupByKey](https://beam.apache.org/releases/javadoc/current/or
 and [Coder determinism](https://beam.apache.org/releases/javadoc/current/org/apache/beam/sdk/coders/Coder.html)
 support the encoded-key example (checked against the published 2.76.0 documentation on
 2026-09-25); verify the target engine/version rather than generalizing this equality mechanism.
+
+[Hadoop 3.4.1 JobConf](https://hadoop.apache.org/docs/r3.4.1/api/org/apache/hadoop/mapred/JobConf.html)
+documents optional/repeated combiner invocation and its type/side-effect constraints.
+[Beam 2.77.0 CombineFn](https://beam.apache.org/releases/javadoc/2.77.0/org/apache/beam/sdk/transforms/Combine.CombineFn.html)
+documents the sequential `apply` shortcut and merge ownership; its
+[implementation](https://github.com/apache/beam/blob/v2.77.0/sdks/java/core/src/main/java/org/apache/beam/sdk/transforms/Combine.java)
+shows the hooks called. These examples do not require adopting or upgrading either engine.
 
 ## Decision rehearsals
 

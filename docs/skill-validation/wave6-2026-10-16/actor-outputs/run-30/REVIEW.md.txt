@@ -1,0 +1,31 @@
+Contrato **violado** em `src/work/Job.java:8`: `collect()` chama `join(2)` e sempre retorna `DONE:` seguido de `result`, mesmo quando a espera termina sem conclusão do worker. O contrato permite `PENDING` e proíbe `DONE:0`.
+
+O caminho fornecido constrói o `Job`, inicia exatamente esse objeto, chama `collect()` com o latch fechado, libera o latch no `finally` e confirma o término antes da coleta seguinte. `run()` somente escreve `result = 83` depois de `gate.await()`. Portanto, na primeira coleta o trabalho ainda não ocorreu; o zero observado é o valor inicial, sem necessidade de invocar uma leitura obsoleta para explicar a falha.
+
+`join(long)` limita a espera, mas seu retorno normal não distingue timeout de término. A detecção de término do worker correto é a condição necessária para usar a publicação por ciclo de vida. [Thread.join(long), Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Thread.html#join(long)).
+
+No caminho concluído, a prova é: escrita `result=83` → ordem de programa → ação final do worker → synchronizes-with → detecção de término pelo coletor → ordem de programa → leitura de `result`. A transitividade estabelece happens-before. O simples timeout não oferece essa cadeia; em outros agendamentos, a leitura antecipada pode ficar sem ordenação com a escrita. A atomicidade de um `int` não comprova conclusão. [JLS 17.4.4–17.4.5](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.4.4).
+
+A correção focada, apenas proposta, é:
+
+```java
+public String collect() throws InterruptedException {
+    join(2);
+    if (isAlive()) return "PENDING";
+    return "DONE:" + result;
+}
+```
+
+Isso mantém uma única espera limitada. `isAlive()` falso detecta término sob a premissa aceita de que este worker já foi iniciado; falso em uma thread nunca iniciada não serviria. Se retornar verdadeiro e o worker terminar logo depois, `PENDING` continua permitido. Não há reinício após término nem escrita posterior em `result`; o campo pode continuar comum. Torná-lo `volatile` isoladamente não impediria `DONE:0` antes do trabalho. [Thread.isAlive(), Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Thread.html#isAlive()).
+
+A construção ocorre antes de `start()`, sem escape no construtor. O campo final `gate` não publica a futura escrita no campo não final `result`; a publicação relevante é a detecção do término. A interrupção do coletor continua propagando `InterruptedException`, sem retornar sucesso. Cancelamento/interrupção do worker não integra o pedido; esse caminho pode terminar sem escrever 83 e não deve ser confundido com conclusão bem-sucedida caso o escopo futuramente mude.
+
+O check fornecido foi executado uma vez na cópia `output/project`, compilado com `--release 25`, sem preview ou dependências, em Temurin 25.0.3+9. Saída efetiva:
+
+```text
+while-gate-closed=DONE:0
+alive=true
+after-termination=DONE:83
+```
+
+O processo terminou com código 0: o smoke imprime o defeito, mas não o reprova por assertion. Seu cleanup liberou o gate e terminou o worker. A segunda coleta ocorreu após o join do cleanup e não valida o caminho de timeout da primeira. Não fiz medição de latência, testes de stress/jcstress ou compilação da correção; a proposta se apoia no contrato JLS/API, não em ausência de falhas em testes. Nenhuma fonte, configuração ou contrato foi alterado. Skill local `java-memory-model` e suas duas referências foram lidas integralmente.

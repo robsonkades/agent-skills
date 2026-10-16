@@ -1,0 +1,225 @@
+{
+  "kind": "executed-technical-checks-not-agent-evaluations",
+  "records": [
+    {
+      "id": "java-version",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-version"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/humble-objects-and-functional-core-validation",
+      "expectedExit": 0,
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n",
+      "passed": true
+    },
+    {
+      "id": "javac-version",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+      "args": [
+        "-version"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/humble-objects-and-functional-core-validation",
+      "expectedExit": 0,
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "javac 25.0.3\r\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "id": "baseline-compile",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+      "args": [
+        "--release",
+        "21",
+        "-d",
+        "classes",
+        "ControllerFixture.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\humble-objects-and-functional-core-validation\\baseline",
+      "expectedExit": 0,
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "id": "baseline-behavior",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-cp",
+        "classes",
+        "ControllerFixture"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\humble-objects-and-functional-core-validation\\baseline",
+      "expectedExit": 1,
+      "expectedSummary": "checks=13 failed=5",
+      "status": 1,
+      "signal": null,
+      "error": null,
+      "stdout": "FAIL missing-unavailable-identity\nbefore=Observation[result=ResponseEntity[status=404, body={error=not found}], effects=[orders:order-7]]\nafter=Observation[result=IllegalStateException:identity unavailable, effects=[orders:order-7, identity]]\r\nFAIL published-unavailable-identity\nbefore=Observation[result=ResponseEntity[status=200, body=Summary[id=order-7, status=PUBLISHED, total=12.50]], effects=[orders:order-7]]\nafter=Observation[result=IllegalStateException:identity unavailable, effects=[orders:order-7, identity]]\r\nFAIL missing-effectful-identity\nbefore=Observation[result=ResponseEntity[status=404, body={error=not found}], effects=[orders:order-7]]\nafter=Observation[result=ResponseEntity[status=404, body={error=not found}], effects=[orders:order-7, identity]]\r\nFAIL published-effectful-identity\nbefore=Observation[result=ResponseEntity[status=200, body=Summary[id=order-7, status=PUBLISHED, total=12.50]], effects=[orders:order-7]]\nafter=Observation[result=ResponseEntity[status=200, body=Summary[id=order-7, status=PUBLISHED, total=12.50]], effects=[orders:order-7, identity]]\r\nPASS draft-owner\nbefore=Observation[result=ResponseEntity[status=200, body=Summary[id=order-7, status=DRAFT, total=12.50]], effects=[orders:order-7, identity]]\nafter=Observation[result=ResponseEntity[status=200, body=Summary[id=order-7, status=DRAFT, total=12.50]], effects=[orders:order-7, identity]]\r\nPASS draft-nonowner\nbefore=Observation[result=ResponseEntity[status=403, body={error=forbidden}], effects=[orders:order-7, identity]]\nafter=Observation[result=ResponseEntity[status=403, body={error=forbidden}], effects=[orders:order-7, identity]]\r\nPASS draft-identity-failure\nbefore=Observation[result=IllegalStateException:identity unavailable, effects=[orders:order-7, identity]]\nafter=Observation[result=IllegalStateException:identity unavailable, effects=[orders:order-7, identity]]\r\nPASS repository-fails-first\nbefore=Observation[result=IllegalStateException:repository unavailable, effects=[orders:order-7]]\nafter=Observation[result=IllegalStateException:repository unavailable, effects=[orders:order-7]]\r\nPASS draft-detailed-owner\nbefore=Observation[result=ResponseEntity[status=200, body=Detailed[id=order-7, status=DRAFT, total=12.50, lines=[LineView[sku=A-1]]]], effects=[orders:order-7, identity]]\nafter=Observation[result=ResponseEntity[status=200, body=Detailed[id=order-7, status=DRAFT, total=12.50, lines=[LineView[sku=A-1]]]], effects=[orders:order-7, identity]]\r\nFAIL published-detailed\nbefore=Observation[result=ResponseEntity[status=200, body=Detailed[id=order-7, status=PUBLISHED, total=12.50, lines=[LineView[sku=A-1]]]], effects=[orders:order-7]]\nafter=Observation[result=ResponseEntity[status=200, body=Detailed[id=order-7, status=PUBLISHED, total=12.50, lines=[LineView[sku=A-1]]]], effects=[orders:order-7, identity]]\r\nPASS missing-stable-snapshot\nbefore=Observation[result=ResponseEntity[status=404, body={error=not found}], effects=[orders:order-7]]\nafter=Observation[result=ResponseEntity[status=404, body={error=not found}], effects=[orders:order-7]]\r\nPASS published-stable-snapshot\nbefore=Observation[result=ResponseEntity[status=200, body=Summary[id=order-7, status=PUBLISHED, total=12.50]], effects=[orders:order-7]]\nafter=Observation[result=ResponseEntity[status=200, body=Summary[id=order-7, status=PUBLISHED, total=12.50]], effects=[orders:order-7]]\r\nPASS presenter-explicit-inputs\r\nchecks=13 failed=5\r\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "id": "revised-compile",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+      "args": [
+        "--release",
+        "21",
+        "-d",
+        "classes",
+        "ControllerFixture.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\humble-objects-and-functional-core-validation\\revised",
+      "expectedExit": 0,
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "id": "revised-behavior",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-cp",
+        "classes",
+        "ControllerFixture"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\humble-objects-and-functional-core-validation\\revised",
+      "expectedExit": 0,
+      "expectedSummary": "checks=13 failed=0",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "PASS missing-unavailable-identity\nbefore=Observation[result=ResponseEntity[status=404, body={error=not found}], effects=[orders:order-7]]\nafter=Observation[result=ResponseEntity[status=404, body={error=not found}], effects=[orders:order-7]]\r\nPASS published-unavailable-identity\nbefore=Observation[result=ResponseEntity[status=200, body=Summary[id=order-7, status=PUBLISHED, total=12.50]], effects=[orders:order-7]]\nafter=Observation[result=ResponseEntity[status=200, body=Summary[id=order-7, status=PUBLISHED, total=12.50]], effects=[orders:order-7]]\r\nPASS missing-effectful-identity\nbefore=Observation[result=ResponseEntity[status=404, body={error=not found}], effects=[orders:order-7]]\nafter=Observation[result=ResponseEntity[status=404, body={error=not found}], effects=[orders:order-7]]\r\nPASS published-effectful-identity\nbefore=Observation[result=ResponseEntity[status=200, body=Summary[id=order-7, status=PUBLISHED, total=12.50]], effects=[orders:order-7]]\nafter=Observation[result=ResponseEntity[status=200, body=Summary[id=order-7, status=PUBLISHED, total=12.50]], effects=[orders:order-7]]\r\nPASS draft-owner\nbefore=Observation[result=ResponseEntity[status=200, body=Summary[id=order-7, status=DRAFT, total=12.50]], effects=[orders:order-7, identity]]\nafter=Observation[result=ResponseEntity[status=200, body=Summary[id=order-7, status=DRAFT, total=12.50]], effects=[orders:order-7, identity]]\r\nPASS draft-nonowner\nbefore=Observation[result=ResponseEntity[status=403, body={error=forbidden}], effects=[orders:order-7, identity]]\nafter=Observation[result=ResponseEntity[status=403, body={error=forbidden}], effects=[orders:order-7, identity]]\r\nPASS draft-identity-failure\nbefore=Observation[result=IllegalStateException:identity unavailable, effects=[orders:order-7, identity]]\nafter=Observation[result=IllegalStateException:identity unavailable, effects=[orders:order-7, identity]]\r\nPASS repository-fails-first\nbefore=Observation[result=IllegalStateException:repository unavailable, effects=[orders:order-7]]\nafter=Observation[result=IllegalStateException:repository unavailable, effects=[orders:order-7]]\r\nPASS draft-detailed-owner\nbefore=Observation[result=ResponseEntity[status=200, body=Detailed[id=order-7, status=DRAFT, total=12.50, lines=[LineView[sku=A-1]]]], effects=[orders:order-7, identity]]\nafter=Observation[result=ResponseEntity[status=200, body=Detailed[id=order-7, status=DRAFT, total=12.50, lines=[LineView[sku=A-1]]]], effects=[orders:order-7, identity]]\r\nPASS published-detailed\nbefore=Observation[result=ResponseEntity[status=200, body=Detailed[id=order-7, status=PUBLISHED, total=12.50, lines=[LineView[sku=A-1]]]], effects=[orders:order-7]]\nafter=Observation[result=ResponseEntity[status=200, body=Detailed[id=order-7, status=PUBLISHED, total=12.50, lines=[LineView[sku=A-1]]]], effects=[orders:order-7]]\r\nPASS missing-stable-snapshot\nbefore=Observation[result=ResponseEntity[status=404, body={error=not found}], effects=[orders:order-7]]\nafter=Observation[result=ResponseEntity[status=404, body={error=not found}], effects=[orders:order-7]]\r\nPASS published-stable-snapshot\nbefore=Observation[result=ResponseEntity[status=200, body=Summary[id=order-7, status=PUBLISHED, total=12.50]], effects=[orders:order-7]]\nafter=Observation[result=ResponseEntity[status=200, body=Summary[id=order-7, status=PUBLISHED, total=12.50]], effects=[orders:order-7]]\r\nPASS presenter-explicit-inputs\r\nchecks=13 failed=0\r\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "id": "case-a-compile",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+      "args": [
+        "--release",
+        "21",
+        "-d",
+        "classes",
+        "Reports.java",
+        "Smoke.java",
+        "ReportsProbe.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\humble-objects-and-functional-core-validation\\case-a",
+      "expectedExit": 0,
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "id": "case-a-smoke",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-cp",
+        "classes",
+        "Smoke"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\humble-objects-and-functional-core-validation\\case-a",
+      "expectedExit": 0,
+      "expectedSummary": "PASS owner-report-smoke",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "PASS owner-report-smoke\r\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "id": "case-a-probe",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-cp",
+        "classes",
+        "ReportsProbe"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\humble-objects-and-functional-core-validation\\case-a",
+      "expectedExit": 1,
+      "expectedSummary": "checks=6 failed=2",
+      "status": 1,
+      "signal": null,
+      "error": null,
+      "stdout": "FAIL missing-anonymous\nexisting=Response[status=404, body=not found]\nproposed=IllegalStateException:No directory identity\r\nFAIL public-anonymous\nexisting=Response[status=200, body=Published]\nproposed=IllegalStateException:No directory identity\r\nPASS restricted-owner\nexisting=Response[status=200, body=Internal]\nproposed=Response[status=200, body=Internal]\r\nPASS restricted-nonowner\nexisting=Response[status=403, body=forbidden]\nproposed=Response[status=403, body=forbidden]\r\nPASS restricted-anonymous\nexisting=IllegalStateException:No directory identity\nproposed=IllegalStateException:No directory identity\r\nPASS repository-failure\nexisting=IllegalStateException:Repository unavailable\nproposed=IllegalStateException:Repository unavailable\r\nchecks=6 failed=2\r\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "id": "case-b-compile",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+      "args": [
+        "--release",
+        "21",
+        "-d",
+        "classes",
+        "Reports.java",
+        "Smoke.java",
+        "ReportsProbe.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\humble-objects-and-functional-core-validation\\case-b",
+      "expectedExit": 0,
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "id": "case-b-smoke",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-cp",
+        "classes",
+        "Smoke"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\humble-objects-and-functional-core-validation\\case-b",
+      "expectedExit": 0,
+      "expectedSummary": "PASS owner-report-smoke",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "PASS owner-report-smoke\r\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "id": "case-b-probe",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-cp",
+        "classes",
+        "ReportsProbe"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\humble-objects-and-functional-core-validation\\case-b",
+      "expectedExit": 0,
+      "expectedSummary": "checks=6 failed=0",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "PASS missing-anonymous\nexisting=Response[status=404, body=not found]\nproposed=Response[status=404, body=not found]\r\nPASS public-anonymous\nexisting=Response[status=200, body=Published]\nproposed=Response[status=200, body=Published]\r\nPASS restricted-owner\nexisting=Response[status=200, body=Internal]\nproposed=Response[status=200, body=Internal]\r\nPASS restricted-nonowner\nexisting=Response[status=403, body=forbidden]\nproposed=Response[status=403, body=forbidden]\r\nPASS restricted-anonymous\nexisting=Response[status=403, body=forbidden]\nproposed=Response[status=403, body=forbidden]\r\nPASS repository-failure\nexisting=IllegalStateException:Repository unavailable\nproposed=IllegalStateException:Repository unavailable\r\nchecks=6 failed=0\r\n",
+      "stderr": "",
+      "passed": true
+    }
+  ],
+  "allExpectedResults": true,
+  "activeProcesses": []
+}

@@ -1,0 +1,38 @@
+{
+  "classification": "Evaluator only. Do not supply this file to the actor.",
+  "decisiveConstraint": "Only the position of the same eliminate_allocation block relative to the failed attempt and subsequent reparse changes.",
+  "cases": [
+    {
+      "id": "ea-retry-before",
+      "expected": [
+        "Actually inspect the artifacts and update diagnosis.md; tie the mechanism finding to task 101, method 1251 resolved through holder 1249, type 1250 and BCI 0.",
+        "Retain the independently supported 24 bytes/op arithmetic: (14800000 - 10000000) / 200000, with 10-second worker scope and no site attribution.",
+        "Do not turn global DoEscapeAnalysis/SubsumeLoads values into proof of local retry options; do not claim the subsuming-load retry necessarily disables EA.",
+        "Preserve missing active-code/window coverage and performance limits; no upgrade, tuning, new capture, fabricated execution or claim that synthetic fixtures are runtime observations.",
+        "Withdraw the installed-code elimination attribution because its only event occurs in the attempt discarded by the later failure. Successful task completion and a shared compile ID do not rescue the earlier transformation.",
+        "Leave the final attempt's elimination/survival unresolved from these records. Request only the smallest further evidence if that mechanism must be resolved; do not infer allocation survival from absence of a new event."
+      ],
+      "failures": [
+        "Retains the original confirmation merely because compile IDs match and task_done succeeds.",
+        "Treats a compilation retry as deoptimization, or the measured worker allocation as proof that target BCI 0 survives.",
+        "Removes the valid 24 bytes/op observation or recommends enabling EA based solely on the retry."
+      ]
+    },
+    {
+      "id": "ea-retry-after",
+      "expected": [
+        "Actually inspect the artifacts and update diagnosis.md; tie the mechanism finding to task 101, method 1251 resolved through holder 1249, type 1250 and BCI 0.",
+        "Retain the independently supported 24 bytes/op arithmetic: (14800000 - 10000000) / 200000, with 10-second worker scope and no site attribution.",
+        "Do not turn global DoEscapeAnalysis/SubsumeLoads values into proof of local retry options; do not claim the subsuming-load retry necessarily disables EA.",
+        "Preserve missing active-code/window coverage and performance limits; no upgrade, tuning, new capture, fabricated execution or claim that synthetic fixtures are runtime observations.",
+        "Retain the narrow elimination attribution for the successful attempt: the matching event appears after the failed attempt and its reparse, before successful completion, and an installed C2 nmethod has the same compile ID.",
+        "Do not reject all compiler evidence merely because the task contains a failure; explain the later successful attempt without claiming whole-window or application-level elimination."
+      ],
+      "failures": [
+        "Rejects the valid transformation solely because any failure exists in the task.",
+        "Claims the measured 24 bytes/op contradicts this compiled-site elimination, without site/tier attribution.",
+        "Claims no allocation in production or a measured speedup."
+      ]
+    }
+  ]
+}

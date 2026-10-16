@@ -1,0 +1,60 @@
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.List;
+import java.util.function.Function;
+
+// Local numeric/invocation-shape control, not a Hadoop or Beam runner test.
+public class AggregationInvocationCheck {
+    private static final SumCount EMPTY = new SumCount(BigDecimal.ZERO, BigInteger.ZERO);
+
+    private static SumCount value(String value) {
+        return new SumCount(new BigDecimal(value), BigInteger.ONE);
+    }
+
+    private static SumCount merge(List<SumCount> states) {
+        return states.stream().reduce(EMPTY, SumCount::merge);
+    }
+
+    private static SumCount scalarAverage(List<SumCount> states) {
+        return new SumCount(merge(states).average(2).orElseThrow(), BigInteger.ONE);
+    }
+
+    private static void assertAverage(String shape, List<SumCount> states) {
+        BigDecimal actual = merge(states).average(2).orElseThrow();
+        // Independent oracle: (0 + 10 + 20) / 3 = 10, not an implementation-derived value.
+        if (actual.compareTo(new BigDecimal("10.00")) != 0) {
+            throw new AssertionError(shape + ": expected 10.00 but got " + actual);
+        }
+        System.out.println("PASS " + shape + ": " + actual);
+    }
+
+    public static void main(String[] args) {
+        String mode = args.length == 0 ? "good" : args[0];
+        if (mode.equals("merge-mutant")) {
+            List<BigInteger> inputs = List.of(BigInteger.valueOf(2), BigInteger.valueOf(3));
+            BigInteger sequential = inputs.stream().reduce(BigInteger.ZERO, BigInteger::add);
+            if (!sequential.equals(BigInteger.valueOf(5))) throw new AssertionError("Bad oracle");
+            System.out.println("PASS sequential helper: " + sequential + "; merge hook not called");
+            BigInteger merged = inputs.stream().reduce(BigInteger.ZERO, BigInteger::max);
+            if (!merged.equals(BigInteger.valueOf(5))) {
+                throw new AssertionError("partition merge: expected 5 but got " + merged);
+            }
+            throw new AssertionError("Faulty merge was not detected");
+        }
+        if (!mode.equals("good") && !mode.equals("combiner-mutant")) {
+            throw new IllegalArgumentException("Unknown mode: " + mode);
+        }
+        Function<List<SumCount>, SumCount> combine = mode.equals("combiner-mutant")
+            ? AggregationInvocationCheck::scalarAverage : AggregationInvocationCheck::merge;
+        List<SumCount> raw = List.of(value("0"), value("10"), value("20"));
+        assertAverage("no precombination", raw);
+        SumCount left = combine.apply(raw.subList(0, 1));
+        SumCount right = combine.apply(raw.subList(1, 3));
+        assertAverage("one precombination pass", List.of(left, right));
+        assertAverage("repeated precombination", List.of(combine.apply(List.of(left, right))));
+        assertAverage("mixed raw and combined", List.of(raw.get(0), right));
+        if (!EMPTY.average(2).isEmpty()) throw new AssertionError("Empty state became a value");
+        if (!EMPTY.merge(right).equals(right)) throw new AssertionError("Identity changed state");
+        System.out.println("PASS empty/identity controls");
+    }
+}

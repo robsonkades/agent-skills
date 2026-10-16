@@ -1,0 +1,9 @@
+FAIL previous product survives builder reuse: java.lang.AssertionError: expected [book] but got [book, pen]
+FAIL public constructor isolates caller list: java.lang.AssertionError: expected [book] but got [book, pen]
+PASS setter isolates caller list before build
+PASS product accessor rejects mutation
+PASS failed build retains state for correction
+PASS failed setters preserve previous state
+PASS all public product paths enforce invariants
+PASS copyOf does not copy mutable elements
+SUMMARY checks=8 failures=2

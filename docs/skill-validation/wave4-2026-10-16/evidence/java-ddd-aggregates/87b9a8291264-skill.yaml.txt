@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: java-ddd-aggregates
+version: 1.0.0
+description: >-
+  Design and implement Java DDD aggregates when deciding which entities must change
+  atomically, moving invariants out of setters, separating creation from rehydration,
+  or preventing concurrent writes from bypassing the root. Covers domain identity,
+  child ownership, valid transitions and aggregate version checks. Use for aggregate
+  boundaries and lifecycle behavior; bounded-context discovery and ORM mapping have
+  separate owners.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-ddd-aggregates
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-ddd-aggregates
+
+keywords:
+  - java
+  - domain-driven-design
+  - aggregates
+  - entities
+  - invariants
+  - optimistic-locking
+  - rehydration
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+suggests:
+  - bounded-context-design
+  - java-ddd-repositories
+  - java-ddd-testing
+  - java-ddd-value-objects
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java DDD Aggregates
+      short_description: Aggregate invariants, identity and safe transitions
+      default_prompt: Use Java DDD Aggregates to design or review this aggregate's boundary, lifecycle and concurrent writes.

@@ -1,0 +1,261 @@
+{
+  "skill": "queueing-models",
+  "status": "NO_CHANGES_NEEDED",
+  "ownedPath": "C:/git/agent-skills/skills/queueing-models",
+  "versions": {
+    "committed": "1.3.5",
+    "assignment": "1.3.5",
+    "final": "1.3.5",
+    "preExistingBump": false,
+    "rationale": "No package content changed; no version bump."
+  },
+  "files": {
+    "changedByReviewer": [],
+    "preExistingStaged": [],
+    "preExistingUnstaged": [],
+    "preExistingUntracked": [],
+    "unchanged": [
+      {
+        "path": "C:/git/agent-skills/skills/queueing-models/SKILL.md",
+        "sha256": "d28601b1b0e9a56b02974cdf41db64e722c3bd99a37e4ddf5d7e852dc1fa21ee"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/queueing-models/skill.yaml",
+        "sha256": "0210b511ccdf01cef5aa2619f74e19791c77206841802732c7613a8e765ba630"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/queueing-models/references/measuring-the-parameters.md",
+        "sha256": "3c5ff41f8c9ba87d63197e81f5bb68efb257e323c391d5c8e9709f63acca5686"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/queueing-models/references/model-selection-and-formulas.md",
+        "sha256": "cc3d49390a0afc56be28ac0ba293d61bd248f0b17d9a23d07a24446a46688db5"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/queueing-models/references/production-behaviour.md",
+        "sha256": "64f4b65cb2e1504b6b47f10f4e33d57ef610b234084a9faf17e14eb953967fdc"
+      }
+    ],
+    "temporaryArtifacts": [
+      "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/queueing-models/validate-local.mjs",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/queueing-models/case-arithmetic.mjs",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/queueing-models.json"
+    ]
+  },
+  "changes": [],
+  "assessment": {
+    "criteria": [
+      "Actual queue/admission/routing population and server-occupancy boundary.",
+      "Poisson/renewal/IID/stationarity assumptions beyond first two moments.",
+      "Exact occupancy/mean results versus approximations and unsupported tail extrapolation.",
+      "Finite loss, waiting, discipline, abandonment and outcome accounting.",
+      "Numerical stability, model falsification, capture/censoring limitations and proportional validation."
+    ],
+    "findingsCorrected": [],
+    "findingsRemaining": [],
+    "noChangeEvidence": [
+      {
+        "location": "SKILL.md:37-67; references/measuring-the-parameters.md:5-55",
+        "observation": "Existing workflow acquires selected boundary/topology and source/measurement evidence, permits narrow arithmetic or no change, and does not equate CV with distribution or endpoint response with service time."
+      },
+      {
+        "location": "references/model-selection-and-formulas.md:164-200",
+        "observation": "Already preserves Erlang-B applicability to general IID holding times in a no-wait loss system, separates it from waiting formulas, and ties finite occupancy reductions to actual transition rates rather than discipline labels alone."
+      },
+      {
+        "location": "references/model-selection-and-formulas.md:71-105; SKILL.md:78",
+        "observation": "Already states queue-wait point mass/quantile scope and stable B-to-C computation with input/domain checks; does not use mean corrections to invent general-service tails."
+      },
+      {
+        "location": "references/measuring-the-parameters.md:83-139",
+        "observation": "Already follows actual executor capacity behavior and task lifecycle, labels submission delay accurately, preserves rejection/cancellation semantics and qualifies JFR/ThreadMXBean coverage."
+      },
+      {
+        "location": "references/production-behaviour.md:77-151",
+        "observation": "Already preserves transient backlog reflection and delayed capacity, interprets residuals as competing hypotheses, and separates caller departure from actual work termination."
+      }
+    ]
+  },
+  "preserved": [
+    "Model selection and falsification role; boundaries with Little's Law, pool sizing, USL and latency statistics.",
+    "M/M/1, M/M/c, M/G/1, M/D/1, GI/G/1 and Allen–Cunneen decision rules with exact/approximate/tail distinctions.",
+    "General-holding Erlang loss insensitivity with its prerequisites, finite capacity and discipline-sensitive class outcomes.",
+    "Shared versus routed/partition-affine queues, open/closed/semi-open population and retry feedback.",
+    "Service-position occupancy, multi-load parameter dependence, censoring, inventory reconciliation and cohort accounting.",
+    "Stable Erlang recursion and numeric domains, reflected fluid backlog and finite-loss accounting.",
+    "Partial Java 8+ lifecycle snippet and JDK 25 observation boundaries, without upgrade authorization.",
+    "Existing no-change/limited-result choices; no new campaigns, generic checklists or forced topology changes.",
+    "All five shipped files unchanged by SHA-256."
+  ],
+  "checks": [
+    {
+      "type": "executed structural/read-only",
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/queueing-models/validate-local.mjs C:/git/agent-skills",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "PASS",
+      "exitCode": 0,
+      "output": "{\n  \"status\": \"PASS\",\n  \"scope\": \"queueing-models\",\n  \"manifestIssues\": 0,\n  \"metadataAgreement\": true,\n  \"version\": \"1.3.5\",\n  \"declaredPaths\": 3,\n  \"relativeLinks\": 3,\n  \"allFiveAssignmentHashesUnchanged\": true\n}\n"
+    },
+    {
+      "type": "executed arithmetic",
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/queueing-models/case-arithmetic.mjs",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "PASS",
+      "exitCode": 0,
+      "output": "{\n  \"type\": \"deterministic arithmetic only\",\n  \"model\": \"M/G/2/2 loss insensitivity assumptions supplied in the case\",\n  \"meanServiceSeconds\": 1,\n  \"offeredPerSecond\": 2,\n  \"offeredLoadErlangs\": 2,\n  \"blocking\": 0.4,\n  \"carriedPerSecond\": 1.2,\n  \"independentNormalization\": [\n    0.2,\n    0.4,\n    0.4\n  ],\n  \"assertions\": 3,\n  \"result\": \"PASS\",\n  \"limitation\": \"No validation of arrival/service assumptions, simulation, workload or agent behavior.\"\n}\n"
+    },
+    {
+      "type": "executed structural/read-only",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/queueing-models/SKILL.md skills/queueing-models/skill.yaml skills/queueing-models/references/measuring-the-parameters.md skills/queueing-models/references/model-selection-and-formulas.md skills/queueing-models/references/production-behaviour.md",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "PASS",
+      "exitCode": 0,
+      "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+    },
+    {
+      "type": "executed structural/read-only",
+      "command": "git diff --check -- skills/queueing-models\ngit diff --numstat -- skills/queueing-models\ngit diff --cached --numstat -- skills/queueing-models\ngit status --short -- skills/queueing-models",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "PASS",
+      "exitCode": 0,
+      "output": ""
+    },
+    {
+      "type": "executed structural/read-only",
+      "command": "rg -n 'M/G/c/c|recursion|insensitive|reflection|censor|recorder|SynchronousQueue|Life|IID' skills/queueing-models -g '*.md'",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "PASS",
+      "exitCode": 0,
+      "output": "skills/queueing-models\\SKILL.md:59:6. **Parameterise from boundary-consistent measurements**, with uncertainty and censoring. Model\nskills/queueing-models\\SKILL.md:78:- For large `c`, compute Erlang C through the Erlang B recursion rather than the direct sum;\nskills/queueing-models\\SKILL.md:124:Parameters:      sources, units, uncertainty, censoring; time/load dependence\nskills/queueing-models\\SKILL.md:136:  service/occupancy boundaries, model-server capacity, censoring, task-queue instrumentation and\nskills/queueing-models\\references\\production-behaviour.md:14:| Semaphore `tryAcquire` no wait                       | loss/admission gate                                     | Poisson arrivals, IID holding times, independent equivalent slots and no waiting/retry feedback for Erlang B |\nskills/queueing-models\\references\\production-behaviour.md:59:A zero-capacity handoff (`SynchronousQueue`) is not itself a closed population: submissions may\nskills/queueing-models\\references\\production-behaviour.md:156:- Fendick and Whitt, [fluid reflection models, section 4](https://www.columbia.edu/~ww2040/FW112822_submit.pdf)\nskills/queueing-models\\references\\model-selection-and-formulas.md:31:| Poisson arrivals, general IID service, one FCFS server          | M/G/1                           | exact mean via P–K                               | service correlated/state-dependent, multiple servers, tail required from moments alone |\nskills/queueing-models\\references\\model-selection-and-formulas.md:46:For independent stationary Poisson arrivals, IID exponential service independent of arrivals,\nskills/queueing-models\\references\\model-selection-and-formulas.md:125:For stationary Poisson arrivals, IID service with finite second moment, one FCFS server and\nskills/queueing-models\\references\\model-selection-and-formulas.md:139:simulation, or empirical measurement for tail decisions and validate sensitivity to censored slow\nskills/queueing-models\\references\\model-selection-and-formulas.md:170:Erlang B also applies to the stationary M/G/c/c loss system: Poisson arrivals, independent IID\nskills/queueing-models\\references\\model-selection-and-formulas.md:172:a slot is free and rejection otherwise. Occupancy/blocking is insensitive to the holding-time\nskills/queueing-models\\references\\model-selection-and-formulas.md:205:- Classical single-server non-preemptive priority formulas require Poisson classes, IID services and a\nskills/queueing-models\\references\\measuring-the-parameters.md:15:stationary queue's fluctuation. Edge-censored residence and time averages need matching treatment.\nskills/queueing-models\\references\\measuring-the-parameters.md:61:Compute moments from uncensored service-position samples and inspect the empirical distribution:\nskills/queueing-models\\references\\measuring-the-parameters.md:70:survival/hazard, modality and serial/class dependence. An aggregate IID service mixture can be\nskills/queueing-models\\references\\measuring-the-parameters.md:75:Timeouts and cancellations can right-censor service or abandon queue wait. Record whether work\nskills/queueing-models\\references\\measuring-the-parameters.md:79:without cancellation. Survival methods require defensible censoring assumptions, and a\nskills/queueing-models\\references\\measuring-the-parameters.md:94:bounded/full queue or `SynchronousQueue` is needed to trigger growth toward max. If worker count\nskills/queueing-models\\references\\measuring-the-parameters.md:117:The recorder must be thread-safe and must not prevent task execution or alter its failure contract;\nskills/queueing-models\\references\\measuring-the-parameters.md:118:this partial snippet assumes a nonthrowing recorder. Instrumentation has capture, allocation and\nskills/queueing-models\\references\\measuring-the-parameters.md:148:1. Attach uncertainty and outcome/censoring policy to every parameter.\nskills/queueing-models\\references\\measuring-the-parameters.md:166:- Bertsekas and Gallager, [_Data Networks_, section 3.5](https://web.mit.edu/dimitrib/www/Queueing_Data_Nets.pdf) — general IID service and the P–K mean-wait contract.\n"
+    }
+  ],
+  "readFailuresResolved": [
+    {
+      "command": "rg -n 'M/G/c/c|Erlang|finite|holding|shared|reflection|censor|recorder' skills/queueing-models/SKILL.md skills/queueing-models/references/*.md",
+      "result": "Read-only search emitted Windows invalid path syntax for literal wildcard; reran successfully with directory and -g '*.md'. No file or validation failure introduced."
+    },
+    {
+      "command": "rg -n 'queueing-models|1.3.5' docs/skill-validation/wave1-quality-2026-10-16 -g '*.md' -m 3",
+      "result": "No matching history row, exit 1. The complete current package, HEAD version and relevant September history were available and inspected."
+    }
+  ],
+  "behavioralEvaluations": {
+    "executedAgentRuns": [],
+    "structuredWalkthroughs": [
+      {
+        "case": "no-wait-general-holding",
+        "result": "Existing M/G/c/c rule supports retaining Erlang B under stipulated conditions. A small deterministic check independently normalized occupancy weights and confirmed B(2,2)=0.4, throughput=1.2/s."
+      },
+      {
+        "case": "finite-waiting-general-holding",
+        "result": "Changing only waiting capacity requires a different model; no exact general-service finite-waiting blocking result was computed or claimed."
+      }
+    ],
+    "technicalExecutions": "Three arithmetic assertions and local package checks executed. They are not stochastic simulation, production measurement or agent evaluation.",
+    "measuredImprovement": "Not measured; no content change or matched behavioral comparison."
+  },
+  "sources": [
+    {
+      "version": "Ward Whitt, December 4, 2013; sections 9.1 and 9.3",
+      "url": "https://www.columbia.edu/~ww2040/6711F13/CTMCnotes120413.pdf",
+      "supports": "Erlang-B recursion and no-wait general IID holding-time insensitivity. Source uses N/0 notation for servers/waiting places; package states K as total system capacity."
+    },
+    {
+      "version": "Oracle Java SE 25",
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html",
+      "supports": "Queue-before-non-core growth and unbounded-queue effect on effective worker count."
+    },
+    {
+      "version": "Oracle Java SE 25",
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.management/java/lang/management/ThreadMXBean.html",
+      "supports": "Platform-thread accounting boundary, unsupported virtual-thread monitoring and precision versus accuracy."
+    },
+    {
+      "version": "NSDI 2006",
+      "url": "https://www.usenix.org/conference/nsdi-06/open-versus-closed-cautionary-tale",
+      "supports": "Primary publication context for distinguishing open and closed load models; no fresh production conclusion derived."
+    }
+  ],
+  "limitations": [
+    "No Java snippet was added or changed; no fresh compilation/runtime lifecycle check was necessary or executed.",
+    "Historical September records describe 127 numerical assertions and Java --release 8 snippet checks on JVM 25.0.3; these are history and are not counted as this assignment's executions.",
+    "The small Erlang-B arithmetic check validates the selected finite calculation only, not numerical stability across all inputs, the insensitivity theorem, a simulation or workload assumptions.",
+    "No production capture, JVM recording, performance benchmark, stochastic simulation or independent agent comparison was performed.",
+    "Development cases are separated into task inputs and evaluator criteria but are not unseen holdouts.",
+    "Global registry/dependency/integrity checks remain coordinator-owned."
+  ],
+  "twoCases": [
+    {
+      "id": "no-wait-general-holding",
+      "prerequisites": "Read queueing-models and routed model/topology references. The fixtures define an analytical design scenario, not a claim that production telemetry has already proved its assumptions. No Java or dependencies are required; optional deterministic arithmetic or a bounded temporary numerical experiment is allowed.",
+      "taskInput": {
+        "task": "Review the proposed Erlang-B calculation for the active configuration. Determine whether it can supply exact steady-state rejection probability and carried throughput here. Compute justified quantities or give the smallest suitable alternative and the remaining validation limit. Preserve the supplied workload and admission contract; do not silently substitute exponential holding times, add waiting slots or switch to an infinite queue.",
+        "files": {
+          "decision.md": "We are budgeting admission loss for two equivalent resource slots. The proposed worksheet uses Erlang B with the mean slot-holding time. Check the active configuration before approving that choice.",
+          "admission-contract.md": "On arrival, a free resource slot starts the operation immediately. Otherwise an operation waits FCFS only when a configured waiting slot is available; if not, it is rejected. Holding time begins on acquisition and ends on release. A completed operation frees its slot and starts the oldest waiter immediately. There are no retries, timeout, cancellation, priorities, reservations, state-dependent admission or shared-resource slowdown. The holding-time law and arrival process in the configuration are stipulated inputs. State separately what applying the result to production would still require.",
+          "active-admission.yaml": "resource_slots: 2\nwaiting_slots: 0\ndiscipline: FCFS\non_full: reject\nretries: none\nabandonment: none\narrivals:\n  process: stationary_poisson\n  rate_per_second: 2\nholding_time:\n  law: iid_two_point\n  seconds: [0.5, 1.5]\n  probabilities: [0.5, 0.5]\n  independent_of_arrivals: true\n  independent_of_occupancy: true\n"
+        }
+      },
+      "evaluatorExpectations": {
+        "decisiveEvidence": "No waiting places and immediate rejection at two occupied slots; stationary Poisson arrivals and IID independent holding times with mean one second.",
+        "acceptableOutcome": "Retain Erlang B through the M/G/2/2 loss-system insensitivity property, despite non-exponential holding times. Offered load a=2 Erlangs; blocking=0.4; admitted/carried rate=1.2 per second. State the input assumptions and distinguish this model result from production validation.",
+        "observableCriteria": [
+          "Uses the actual admission boundary and zero waiting slots.",
+          "Does not reject Erlang B solely because service is bimodal or offered rho equals one.",
+          "Does not apply Erlang-C queue-wait/tail formulas or use offered lambda unchanged as carried throughput."
+        ],
+        "failureConditions": [
+          "Insists exponential service is required for this loss probability.",
+          "Treats rho=1 as absence of a stationary finite loss distribution.",
+          "Reports queue wait or a response percentile from Erlang B.",
+          "Claims the arithmetic validated the real workload assumptions."
+        ]
+      }
+    },
+    {
+      "id": "finite-waiting-general-holding",
+      "decisiveChangeFrom": "no-wait-general-holding: only waiting_slots changes from 0 to 4. Every other supplied process, service and admission condition is unchanged.",
+      "prerequisites": "Read queueing-models and routed model/topology references. The fixtures define an analytical design scenario, not a claim that production telemetry has already proved its assumptions. No Java or dependencies are required; optional deterministic arithmetic or a bounded temporary numerical experiment is allowed.",
+      "taskInput": {
+        "task": "Review the proposed Erlang-B calculation for the active configuration. Determine whether it can supply exact steady-state rejection probability and carried throughput here. Compute justified quantities or give the smallest suitable alternative and the remaining validation limit. Preserve the supplied workload and admission contract; do not silently substitute exponential holding times, add waiting slots or switch to an infinite queue.",
+        "files": {
+          "decision.md": "We are budgeting admission loss for two equivalent resource slots. The proposed worksheet uses Erlang B with the mean slot-holding time. Check the active configuration before approving that choice.",
+          "admission-contract.md": "On arrival, a free resource slot starts the operation immediately. Otherwise an operation waits FCFS only when a configured waiting slot is available; if not, it is rejected. Holding time begins on acquisition and ends on release. A completed operation frees its slot and starts the oldest waiter immediately. There are no retries, timeout, cancellation, priorities, reservations, state-dependent admission or shared-resource slowdown. The holding-time law and arrival process in the configuration are stipulated inputs. State separately what applying the result to production would still require.",
+          "active-admission.yaml": "resource_slots: 2\nwaiting_slots: 4\ndiscipline: FCFS\non_full: reject\nretries: none\nabandonment: none\narrivals:\n  process: stationary_poisson\n  rate_per_second: 2\nholding_time:\n  law: iid_two_point\n  seconds: [0.5, 1.5]\n  probabilities: [0.5, 0.5]\n  independent_of_arrivals: true\n  independent_of_occupancy: true\n"
+        }
+      },
+      "evaluatorExpectations": {
+        "decisiveEvidence": "Four waiting places make total system capacity K=6; the known service law remains a two-point non-exponential IID law.",
+        "acceptableOutcome": "Reject transferring the no-wait insensitivity result or exact M/M/2/6 birth-death rates to this FCFS finite-waiting system. Identify M/G/2/6 and a suitable distribution-aware numerical method/simulation or justified approximation. Retain finite-capacity stability/loss accounting; label any unexecuted or unvalidated numerical estimate honestly.",
+        "observableCriteria": [
+          "Changes the recommendation when waiting is introduced while preserving c=2 and the supplied holding law.",
+          "Keeps K as service plus waiting, distinguishes offered and admitted throughput.",
+          "Does not claim the count-only process has memoryless departures merely from mean holding time.",
+          "Can reuse the supplied distribution instead of requesting unrelated captures; production applicability remains conditional."
+        ],
+        "failureConditions": [
+          "Reuses blocking=0.4 as the exact finite-waiting result.",
+          "Presents exact Erlang C at rho=1 or infinite-queue instability as the answer for this finite system.",
+          "Uses M/M/2/6 as exact without stating the service substitution/approximation.",
+          "Invents a validated numerical result or turns a mean correction into a p99."
+        ]
+      }
+    }
+  ],
+  "crossSkill": [],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "purpose": "Regenerate shared catalog after all reviewers stop.",
+      "prerequisites": "All reviewers stopped; this unchanged package alone does not require a rebuild."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "purpose": "Repository-wide validation and version/integrity checks.",
+      "prerequisites": "All reviewers stopped and index regenerated for changed packages."
+    }
+  ],
+  "allWritesStopped": true
+}

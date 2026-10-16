@@ -18,7 +18,8 @@ Programmatic skeleton:
 FlightRecorder.getFlightRecorder().getEventTypes().stream()
     .sorted(Comparator.comparing(EventType::getName))
     .forEach(type -> {
-        System.out.println(type.getName() + " enabled=" + type.isEnabled());
+        System.out.println(type.getName() + " id=" + type.getId()
+            + " enabled=" + type.isEnabled());
         type.getSettingDescriptors().forEach(setting ->
             System.out.println("  setting " + setting.getName()
                 + " default=" + setting.getDefaultValue()));
@@ -32,6 +33,32 @@ FlightRecorder.getFlightRecorder().getEventTypes().stream()
 Registration can be dynamic and class-loader-specific; capture after relevant custom event
 classes/libraries are loaded. Event type IDs are JVM-instance-specific and must not be persisted
 as portable identifiers.
+
+## Same-name event types
+
+`Recording.enable(String)` enables every type matching that name; separate event classes or
+class-loader copies can share it. When a setting must target one registered class, use
+`enable(MyEvent.class)` or the string form of its ID resolved in that JVM. Keep name-based
+selection when all matching registrations are intended. This scopes a settings request, not an
+exclusive file filter: check base/default enablement and other active recordings, whose enabled
+types and event data may also appear.
+
+Inventory by ID as well as name, retaining the descriptors for each type. A reader that caches
+one schema per name can silently combine incompatible fields: two types can both have a `long
+value`, one annotated as bytes and the other as nanoseconds. Check field types, content types
+and annotation values for each encountered type before typed access or aggregation. A matching
+primitive type alone is insufficient. Reject or explicitly separate incompatible populations
+according to the output contract; do not silently drop them to produce a plausible total.
+
+Scope a validation cache to the recording/type identity. Portable adapters require the accepted
+name and schema contract, not an ID copied from a previous JVM. Matching descriptors alone also
+do not establish identical business meaning; retain producer/schema-version provenance where
+that distinction matters.
+
+For a focused control, register two `@Enabled(false)` custom types with the same `@Name` and
+different units on a `long` field. In an isolated recording, compare name selection with class
+or current-ID selection, and make the reader reject the mixed-unit aggregate. Include an
+accepted single-schema case; two registered types in metadata do not imply both emitted events.
 
 ## Command-line inspection
 
@@ -177,6 +204,10 @@ if (requiresPositiveControl && matches == 0) {
 }
 ```
 
+This skeleton counts name matches; it does not validate a schema. Before interpreting those
+events, apply the [per-type checks](#same-name-event-types), including a type first encountered
+after earlier events with that name. Preserve the actual count and any rejected-schema evidence.
+
 Some valid incident windows can have zero events. Use a manifest/control event, recording
 health and expected opportunity count to distinguish valid zero from broken extraction.
 
@@ -200,5 +231,7 @@ paths.
 - [JFR event and settings API](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/package-summary.html)
 - [`EventType`](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/EventType.html)
 - [`SettingDescriptor`](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/SettingDescriptor.html)
+- [`Recording.enable` (Java 17)](https://docs.oracle.com/en/java/javase/17/docs/api/jdk.jfr/jdk/jfr/Recording.html) — name-wide selection versus class or current-JVM ID.
+- [`ValueDescriptor` (Java 17)](https://docs.oracle.com/en/java/javase/17/docs/api/jdk.jfr/jdk/jfr/ValueDescriptor.html) — field types, content types and annotation values.
 - [JDK `jfr` command](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jfr.html)
 - [JEP 509](https://openjdk.org/jeps/509), [JEP 518](https://openjdk.org/jeps/518), and [JEP 520](https://openjdk.org/jeps/520)

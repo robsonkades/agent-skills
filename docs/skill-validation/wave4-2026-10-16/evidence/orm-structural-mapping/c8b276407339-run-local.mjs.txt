@@ -1,0 +1,135 @@
+import assert from 'node:assert/strict';
+import {readFileSync,writeFileSync,mkdirSync,readdirSync,existsSync,copyFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import {spawnSync} from 'node:child_process';
+import path from 'node:path';
+const root="C:/Users/robso/AppData/Local/Temp/orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d";
+const repo='C:/git/agent-skills';
+const evidence=path.join(root,'evidence');
+const classes=path.join(root,'classes');
+mkdirSync(evidence,{recursive:true});mkdirSync(classes,{recursive:true});
+const hash=p=>createHash('sha256').update(readFileSync(p)).digest('hex');
+const deps=[
+  {
+    "groupId": "org.hibernate.orm",
+    "artifactId": "hibernate-core",
+    "version": "6.6.33.Final",
+    "path": "C:/Users/robso/.m2/repository/org/hibernate/orm/hibernate-core/6.6.33.Final/hibernate-core-6.6.33.Final.jar"
+  },
+  {
+    "groupId": "jakarta.persistence",
+    "artifactId": "jakarta.persistence-api",
+    "version": "3.1.0",
+    "path": "C:/Users/robso/.m2/repository/jakarta/persistence/jakarta.persistence-api/3.1.0/jakarta.persistence-api-3.1.0.jar"
+  },
+  {
+    "groupId": "jakarta.transaction",
+    "artifactId": "jakarta.transaction-api",
+    "version": "2.0.1",
+    "path": "C:/Users/robso/.m2/repository/jakarta/transaction/jakarta.transaction-api/2.0.1/jakarta.transaction-api-2.0.1.jar"
+  },
+  {
+    "groupId": "org.jboss.logging",
+    "artifactId": "jboss-logging",
+    "version": "3.5.0.Final",
+    "path": "C:/Users/robso/.m2/repository/org/jboss/logging/jboss-logging/3.5.0.Final/jboss-logging-3.5.0.Final.jar"
+  },
+  {
+    "groupId": "org.hibernate.common",
+    "artifactId": "hibernate-commons-annotations",
+    "version": "7.0.3.Final",
+    "path": "C:/Users/robso/.m2/repository/org/hibernate/common/hibernate-commons-annotations/7.0.3.Final/hibernate-commons-annotations-7.0.3.Final.jar"
+  },
+  {
+    "groupId": "io.smallrye",
+    "artifactId": "jandex",
+    "version": "3.2.0",
+    "path": "C:/Users/robso/.m2/repository/io/smallrye/jandex/3.2.0/jandex-3.2.0.jar"
+  },
+  {
+    "groupId": "com.fasterxml",
+    "artifactId": "classmate",
+    "version": "1.5.1",
+    "path": "C:/Users/robso/.m2/repository/com/fasterxml/classmate/1.5.1/classmate-1.5.1.jar"
+  },
+  {
+    "groupId": "net.bytebuddy",
+    "artifactId": "byte-buddy",
+    "version": "1.15.11",
+    "path": "C:/Users/robso/.m2/repository/net/bytebuddy/byte-buddy/1.15.11/byte-buddy-1.15.11.jar"
+  },
+  {
+    "groupId": "jakarta.xml.bind",
+    "artifactId": "jakarta.xml.bind-api",
+    "version": "4.0.0",
+    "path": "C:/Users/robso/.m2/repository/jakarta/xml/bind/jakarta.xml.bind-api/4.0.0/jakarta.xml.bind-api-4.0.0.jar"
+  },
+  {
+    "groupId": "org.glassfish.jaxb",
+    "artifactId": "jaxb-runtime",
+    "version": "4.0.2",
+    "path": "C:/Users/robso/.m2/repository/org/glassfish/jaxb/jaxb-runtime/4.0.2/jaxb-runtime-4.0.2.jar"
+  },
+  {
+    "groupId": "jakarta.inject",
+    "artifactId": "jakarta.inject-api",
+    "version": "2.0.1",
+    "path": "C:/Users/robso/.m2/repository/jakarta/inject/jakarta.inject-api/2.0.1/jakarta.inject-api-2.0.1.jar"
+  },
+  {
+    "groupId": "org.antlr",
+    "artifactId": "antlr4-runtime",
+    "version": "4.13.0",
+    "path": "C:/Users/robso/.m2/repository/org/antlr/antlr4-runtime/4.13.0/antlr4-runtime-4.13.0.jar"
+  },
+  {
+    "groupId": "com.h2database",
+    "artifactId": "h2",
+    "version": "2.3.232",
+    "path": "C:/Users/robso/.m2/repository/com/h2database/h2/2.3.232/h2-2.3.232.jar"
+  }
+];
+for(const dep of deps){assert.ok(existsSync(dep.path),dep.path);dep.sha256=hash(dep.path);}
+writeFileSync(path.join(evidence,'dependency-hashes.json'),JSON.stringify(deps,null,2)+'\n');
+const files=readdirSync(path.join(root,'inputs/case-a')).sort();
+assert.deepEqual(files,readdirSync(path.join(root,'inputs/case-b')).sort());
+let identical=0;
+for(const file of files){
+ const a=readFileSync(path.join(root,'inputs/case-a',file),'utf8');
+ const b=readFileSync(path.join(root,'inputs/case-b',file),'utf8');
+ if(file==='schema.sql')assert.equal(b.replace('    CONSTRAINT uq_badge_member UNIQUE (member_id),\n',''),a);
+ else {assert.equal(a,b,file);identical++;}
+}
+writeFileSync(path.join(evidence,'pair-check.json'),JSON.stringify({identicalFiles:identical,changedFile:'schema.sql',onlyDifference:'CONSTRAINT uq_badge_member UNIQUE (member_id)',criteriaExposedToActors:false,actorsExecuted:0},null,2)+'\n');
+const commands=[];
+function run(label,executable,args){
+ const result=spawnSync(executable,args,{cwd:repo,encoding:'utf8',timeout:60000,windowsHide:true,maxBuffer:4*1024*1024});
+ const stdoutFile=path.join(evidence,label+'.stdout.txt'),stderrFile=path.join(evidence,label+'.stderr.txt');
+ writeFileSync(stdoutFile,result.stdout??'');writeFileSync(stderrFile,result.stderr??'');
+ commands.push({label,executable,args,workingDirectory:repo,exitCode:result.status,signal:result.signal,error:result.error?.message??null,stdoutFile,stderrFile});
+ writeFileSync(path.join(evidence,'commands.json'),JSON.stringify(commands,null,2)+'\n');
+ assert.equal(result.status,0,label+': '+(result.stderr??'').slice(-4500));
+}
+const java='C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe';
+const javac='C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe';
+const cp=deps.map(d=>d.path).join(';');
+const sourceFiles=['Member.java','Badge.java','BadgeIssueService.java','BadgeDirectory.java'].map(f=>path.join(root,'inputs/case-a',f));
+run('compile',javac,['--release','17','-cp',cp,'-d',classes,...sourceFiles,path.join(root,'evaluator/OrmProbe.java')]);
+run('case-a-probe',java,['-cp',classes+';'+cp,'OrmProbe',path.join(root,'inputs/case-a'),'false']);
+run('case-b-probe',java,['-cp',classes+';'+cp,'OrmProbe',path.join(root,'inputs/case-b'),'true']);
+run('structural',process.execPath,['--input-type=module','--eval',readFileSync(path.join(root,'evaluator/structural-source.txt'),'utf8')]);
+const packageFiles=['SKILL.md','skill.yaml','references/identity-and-associations.md','references/embedding-and-serialization.md'];
+run('format',process.execPath,['node_modules/prettier/bin/prettier.cjs','--check',...packageFiles.map(f=>'skills/orm-structural-mapping/'+f)]);
+run('diff-check','git',['diff','--check','--','skills/orm-structural-mapping']);
+run('final-diff','git',['diff','--','skills/orm-structural-mapping']);
+run('final-status','git',['status','--short','--','skills/orm-structural-mapping']);
+run('staged-diff','git',['diff','--cached','--','skills/orm-structural-mapping']);
+for(const file of packageFiles){
+ run('committed-'+file.replaceAll('/','_'),'git',['show','HEAD:skills/orm-structural-mapping/'+file]);
+ const target=path.join(evidence,'final-owned-snapshot',file);
+ mkdirSync(path.dirname(target),{recursive:true});copyFileSync(path.join(repo,'skills/orm-structural-mapping',file),target);
+}
+const finalHashes=packageFiles.map(file=>({path:'skills/orm-structural-mapping/'+file,sha256:hash(path.join(repo,'skills/orm-structural-mapping',file))}));
+writeFileSync(path.join(evidence,'final-hashes.json'),JSON.stringify(finalHashes,null,2)+'\n');
+console.log(JSON.stringify({commands:commands.length,allPassed:true,evidenceDirectory:evidence,dependencyCount:deps.length,finalHashes,subprocessesRemaining:0},null,2));
+

@@ -1,0 +1,19 @@
+import fixtures.Status;
+import java.nio.file.*;
+import java.util.Properties;
+
+public class CaseApp {
+    public static void main(String[] args) throws Exception {
+        Properties config = new Properties();
+        try (var reader = Files.newBufferedReader(Path.of("config.properties"))) { config.load(reader); }
+        Codec codec = Codecs.selected(config);
+        if (args.length == 2 && args[0].equals("write")) {
+            Files.write(Path.of(args[1]), codec.write(Status.byCode("A")));
+            System.out.println("WROTE " + args[1]);
+        } else {
+            Path path = args.length == 2 ? Path.of(args[1]) : Path.of(codec.retainedFixture());
+            Status value = codec.read(Files.readAllBytes(path));
+            System.out.println(value.name() + "|" + value.code());
+        }
+    }
+}

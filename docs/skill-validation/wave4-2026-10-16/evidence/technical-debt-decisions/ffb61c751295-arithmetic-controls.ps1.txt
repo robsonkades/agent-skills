@@ -1,0 +1,27 @@
+@'
+import assert from 'node:assert/strict';import{readFileSync}from'node:fs';
+const root='C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/technical-debt-decisions-evidence';
+const rows=['case-a','case-b'].map(id=>{
+ const base=root+'/'+id;
+ const options=JSON.parse(readFileSync(base+'/planning/options.json','utf8'));
+ const horizon=JSON.parse(readFileSync(base+'/planning/horizon.json','utf8'));
+ const n=horizon.plans[horizon.selectedPlan].relevantChangesRemaining;
+ const s=options.estimatedAvoidableWorkPerChange;
+ const repair=options.options.localRepair.remainingDeliveryHours;
+ const replacement=options.options.replacement.remainingDeliveryHours;
+ const carry=[n[0]*s[0],n[1]*s[1]];
+ const repairNetAvoided=[carry[0]-repair[1],carry[1]-repair[0]];
+ const switching=[repair[0]/s[1],repair[1]/s[0]];
+ const supportedEffortChoice=carry[1]<repair[0]?'retain':carry[0]>repair[1]?'localRepair':'sensitive';
+ assert.equal(supportedEffortChoice,id==='case-a'?'retain':'localRepair');
+ assert.ok(repair[1]<replacement[0]);
+ assert.deepEqual(switching,[8,16]);
+ const falseAbandonmentCost=[repair[0]+options.spentPrototypeHours,repair[1]+options.spentPrototypeHours];
+ assert.ok(falseAbandonmentCost[0]>replacement[1]);
+ return {case:id,selectedPlan:horizon.selectedPlan,relevantChanges:n,estimatedAvoidableHours:carry,repairHours:repair,replacementHours:replacement,repairNetAvoidedHours:repairNetAvoided,switchingIntervalChanges:switching,supportedEffortChoice,negativeControl:{misallocatedPastHours:options.spentPrototypeHours,falseRepairCost:falseAbandonmentCost,wronglyMakesReplacementAppearCheaper:true}};
+});
+assert.deepEqual(rows[0].estimatedAvoidableHours,[1.5,5]);
+assert.deepEqual(rows[1].estimatedAvoidableHours,[27,60]);
+console.log(JSON.stringify({runtime:process.version,rows,interpretation:'Deterministic arithmetic control over supplied synthetic assumptions. Not a measured carrying cost, validated business forecast, performance test or agent behavior evaluation.'},null,2));
+'@ | node --input-type=module
+

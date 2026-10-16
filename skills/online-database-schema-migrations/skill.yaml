@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: online-database-schema-migrations
-version: 1.1.1
+version: 1.1.2
 description: >-
   Planning and reviewing same-engine relational schema rollouts while old and new
   application versions coexist. Use for a hot-table column or constraint change,

@@ -1,0 +1,119 @@
+[
+  {
+    "id": "nygard-2011",
+    "url": "https://www.cognitect.com/blog/2011/11/15/documenting-architecture-decisions",
+    "version": "2011-11-15 article",
+    "sections": [
+      "Decision",
+      "Consequences"
+    ],
+    "supports": "Lightweight significant decisions, retained reversed records, non-reused IDs, consequences becoming later context.",
+    "retrievedAt": "2026-10-16T15:35:40.137Z",
+    "httpStatus": 200,
+    "finalUrl": "https://www.cognitect.com/blog/2011/11/15/documenting-architecture-decisions",
+    "bytes": 45800,
+    "sha256": "01bdb22a561924b5eb072b501b530d14157d4a674561dac25cfff3197eb04faf",
+    "file": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-decision-making\\sources\\nygard-2011.txt",
+    "limitations": "Source convention or implementation documentation; not evidence of agent improvement, production outcome, or universal process superiority."
+  },
+  {
+    "id": "madr-4.0.0",
+    "url": "https://raw.githubusercontent.com/adr/madr/4.0.0/template/adr-template.md",
+    "version": "4.0.0 tag",
+    "sections": [
+      "frontmatter",
+      "Considered Options",
+      "Decision Outcome",
+      "Confirmation"
+    ],
+    "supports": "Update date, optional roles, single feasible choice as an outcome reason, implementation confirmation.",
+    "retrievedAt": "2026-10-16T15:35:39.517Z",
+    "httpStatus": 200,
+    "finalUrl": "https://raw.githubusercontent.com/adr/madr/4.0.0/template/adr-template.md",
+    "bytes": 3316,
+    "sha256": "4903614bbae9aeb2aa811caeb9e156677ef1a993872af6ff8dcfb67b2266cae1",
+    "file": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-decision-making\\sources\\madr-4.0.0.txt",
+    "limitations": "Source convention or implementation documentation; not evidence of agent improvement, production outcome, or universal process superiority."
+  },
+  {
+    "id": "aws-adr-process",
+    "url": "https://docs.aws.amazon.com/prescriptive-guidance/latest/architectural-decision-records/adr-process.html",
+    "version": "latest retrieved 2026-10-16; mutable",
+    "sections": [
+      "ADR adoption process",
+      "ADR review process"
+    ],
+    "supports": "Owner records team decision, rejected reason, acceptance and replacement lifecycle; process model rather than universal authority.",
+    "retrievedAt": "2026-10-16T15:35:39.549Z",
+    "httpStatus": 200,
+    "finalUrl": "https://docs.aws.amazon.com/prescriptive-guidance/latest/architectural-decision-records/adr-process.html",
+    "bytes": 19929,
+    "sha256": "816c2d64444ca593aa2e482dd2c198cb09b716c687fc119f5889a1024b346eb5",
+    "file": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-decision-making\\sources\\aws-adr-process.txt",
+    "limitations": "Source convention or implementation documentation; not evidence of agent improvement, production outcome, or universal process superiority."
+  },
+  {
+    "id": "harmel-law-2021",
+    "url": "https://martinfowler.com/articles/scaling-architecture-conversationally.html",
+    "version": "2021-12-15 article",
+    "sections": [
+      "The most fundamental element: decision-making via the Advice Process",
+      "A thinking and recording tool: Decision Records"
+    ],
+    "supports": "Consult affected parties and experts without requiring consensus; local adoption matters.",
+    "retrievedAt": "2026-10-16T15:35:39.858Z",
+    "httpStatus": 200,
+    "finalUrl": "https://martinfowler.com/articles/scaling-architecture-conversationally.html",
+    "bytes": 75308,
+    "sha256": "a5810a5f60855a6e184b4a3fa161430ad7a72bacf0b8118a115d72d52ef89c57",
+    "file": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-decision-making\\sources\\harmel-law-2021.txt",
+    "limitations": "Source convention or implementation documentation; not evidence of agent improvement, production outcome, or universal process superiority."
+  },
+  {
+    "id": "github-required-checks",
+    "url": "https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/troubleshooting-required-status-checks",
+    "version": "mutable documentation retrieved 2026-10-16",
+    "sections": [
+      "Handling skipped but required checks"
+    ],
+    "supports": "Skipped filtered workflow remains pending; skipped conditional job reports success; failed predecessor can skip a dependent job.",
+    "retrievedAt": "2026-10-16T15:35:39.769Z",
+    "httpStatus": 200,
+    "finalUrl": "https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/troubleshooting-required-status-checks",
+    "bytes": 181140,
+    "sha256": "aee0057ad9408e3dcea6642582e7c2044639442be3f28dc6db84cc4162033f6f",
+    "file": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-decision-making\\sources\\github-required-checks.txt",
+    "limitations": "Source convention or implementation documentation; not evidence of agent improvement, production outcome, or universal process superiority."
+  },
+  {
+    "id": "external-architecture-skill",
+    "url": "https://raw.githubusercontent.com/mattpocock/skills/49dd158d1076134a641b33efb035946536778336/skills/engineering/improve-codebase-architecture/SKILL.md",
+    "version": "49dd158d1076134a641b33efb035946536778336",
+    "sections": [
+      "Explore",
+      "Present candidates as an HTML report",
+      "Grilling loop"
+    ],
+    "supports": "External architecture candidate discovery and choice, preserves ADRs; separate scope from record lifecycle.",
+    "retrievedAt": "2026-10-16T15:35:39.373Z",
+    "httpStatus": 200,
+    "finalUrl": "https://raw.githubusercontent.com/mattpocock/skills/49dd158d1076134a641b33efb035946536778336/skills/engineering/improve-codebase-architecture/SKILL.md",
+    "bytes": 6000,
+    "sha256": "552240a5ab5cec6b67c15dd1ad6e9f6962b1bca6ce870059a8c2713760c20392",
+    "file": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\architecture-decision-making\\sources\\external-architecture-skill.txt",
+    "limitations": "Source convention or implementation documentation; not evidence of agent improvement, production outcome, or universal process superiority."
+  },
+  {
+    "id": "iso-overview",
+    "url": "https://www.iso.org/standard/74393.html",
+    "version": "ISO/IEC/IEEE 42010:2022, edition 2",
+    "consultedAt": "2026-10-16",
+    "sections": [
+      "Abstract"
+    ],
+    "supports": "The overview says no format or medium is specified for an architecture description.",
+    "retainedArtifact": null,
+    "retrieval": "Browser read only",
+    "limitations": "Normative full standard not inspected; no conformance claim or full-text archive."
+  }
+]

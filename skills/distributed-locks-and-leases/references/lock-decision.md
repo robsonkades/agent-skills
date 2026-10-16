@@ -14,9 +14,8 @@ existing transaction/lock when replacing it would add cost without improving the
 | Queue with per-key ordering | Per-key dispatch fits, and consumer execution plus handoff rejects or tolerates overlapping old work   | Queue latency, per-partition ordering and recovery         |
 | Doing nothing               | The race is benign: last writer wins is an acceptable outcome                                          | Saying so explicitly, in the design, so nobody adds a lock |
 
-The single most common wrong turn is reaching for a lock when a conditional write expresses the
-invariant. The database already serialises writes to a row; a lock in front of it adds a
-dependency, a round trip, a TTL to guess and a failure mode the database did not have.
+When a conditional write already enforces the invariant, a separate TTL lock needs another
+justification: it adds a dependency, a round trip, an expiry policy and another failure mode.
 
 ## Step 2 — comparing lock implementations
 
@@ -48,6 +47,36 @@ session-level acquisitions need matching unlocks. Intentional reentrancy is vali
 tasks need distinct logical holders or local serialization. Do not share a session/lease and
 infer exclusion from two successful calls. Advisory locks also rely on every conflicting writer
 following the same protocol; they do not automatically block an ordinary SQL update.
+
+## The acquisition call selects the renewal policy
+
+Before tuning a watchdog, trace the resolved client version, application wrapper and selected
+overload to the actual acquisition. Separate the acquisition wait budget, ownership lease and
+protected operation's deadline; increasing one does not necessarily change the others.
+
+For a fresh, non-reentrant acquisition with Redisson 3.52.0 `RLock`:
+
+- `tryLock(waitTime, leaseTime, unit)` with a positive `leaseTime` uses that fixed lease and
+  does not schedule watchdog renewal. `lock(leaseTime, unit)` has the same lease selection.
+- `tryLock(waitTime, unit)` or `lock()` selects watchdog renewal. `waitTime` bounds contention
+  waiting, not the subsequent hold interval. An enabled watchdog can keep renewing while work
+  is stuck in a live process; its timeout is not a business-operation deadline.
+
+The tagged [RedissonLock implementation](https://github.com/redisson/redisson/blob/redisson-3.52.0/redisson/src/main/java/org/redisson/RedissonLock.java)
+selects these branches. [Config.lockWatchdogTimeout](https://github.com/redisson/redisson/blob/redisson-3.52.0/redisson/src/main/java/org/redisson/config/Config.java)
+applies to acquisitions without an explicit lease. Thus raising that setting does not extend
+a fresh fixed-lease acquisition. Do not infer another client's or lock type's behavior from
+these names, or mix reentrant acquisition modes without inspecting their renewal/hold-count
+contract. These are version-specific call shapes, not a required dependency or runnable example.
+
+In an isolated test with a fresh key and independent owners, block the protected work while
+leaving the holder's client and renewal threads running. Observe server TTL/renewal acknowledgments
+and a contender beyond the original expiry interval: a fixed lease expires without renewal;
+watchdog mode should retain exclusion while renewals succeed. Then interrupt renewal separately
+to exercise expiry and assert the resource's stale-write rejection. Do not stop the whole JVM
+in the first control, which would stop both work and renewal and hide the policy distinction.
+If duplicate effects are already safe, keep that protection and evaluate the lease only against
+the stated duplicate-work budget. Neither mode proves safety under pauses or partitions.
 
 ## Release follows protected completion
 

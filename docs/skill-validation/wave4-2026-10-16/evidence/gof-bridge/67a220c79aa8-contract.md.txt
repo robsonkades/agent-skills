@@ -1,0 +1,14 @@
+# Accepted publication contract
+
+publish(key, report) returns true when it creates a report and false when the key already
+exists. Existing reports must not be replaced by this operation. A successful call leaves the
+rendered bytes. An I/O failure propagates; partial new files are allowed and investigated by the
+application owner. There is no promise of atomic payload visibility or crash durability.
+The importer uses the same create-only rule. IDs are internal validated lowercase names.
+
+A deployment owns a private working directory. Wiring.start is invoked exactly once and keeps
+one ReportPublisher for all requests, formats and threads. There is one importer job and no other
+writers or deletion paths in this deployment. The configured roots are the authoritative paths;
+permissions are stable and allow all operations. A scheduled import can overlap request handling.
+Store objects are borrowed for the application's lifetime and have no per-call close operation.
+External processes, mutable permissions and network filesystems are outside this fixture's scope.

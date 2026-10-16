@@ -1,0 +1,20 @@
+[
+  {
+    "file": "sources/jep-544.html",
+    "url": "https://openjdk.org/jeps/544",
+    "captured": "2026-10-16",
+    "transportStatus": 200
+  },
+  {
+    "file": "sources/jdk-28.html",
+    "url": "https://openjdk.org/projects/jdk/28/",
+    "captured": "2026-10-16",
+    "transportStatus": 200
+  },
+  {
+    "file": "sources/jep-515.html",
+    "url": "https://openjdk.org/jeps/515",
+    "captured": "2026-10-16",
+    "transportStatus": 200
+  }
+]

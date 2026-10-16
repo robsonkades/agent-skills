@@ -10,6 +10,33 @@ compatible set.
 
 ## [Unreleased]
 
+## [1.12.0] — 2026-10-16
+
+### Added
+
+- Record the review of all 305 catalog skills across five waves, with source research,
+  technical checks, review findings and explicit evidence limits.
+- Add six comparative pilots covering debugging, the Java memory model, Spring
+  transactions, SQL queries, retry behavior and architecture trade-offs. Preserve
+  evaluation inputs, outputs and grading evidence. These pilots did not demonstrate
+  a general improvement from loading the skills; their reports distinguish observed
+  results from technical corrections and untested claims.
+
+### Changed
+
+- Refine skill guidance on contextual discovery, version-dependent behavior,
+  specialist boundaries, decision criteria and proportionate validation. Bump changed
+  skill versions and regenerate their registry integrity hashes.
+- Preserve the original bytes of archived validation captures so Git line-ending
+  conversion does not invalidate their recorded hashes.
+
+### Fixed
+
+- Preserve server-advised delay and outcome uncertainty in the retry example,
+  including when replay is permitted.
+- Qualify double-checked locking guidance and distinguish distributed teaching
+  examples, private evaluation criteria and procedurally restricted resource access.
+
 ## [1.11.2] — 2026-10-02
 
 ### Changed

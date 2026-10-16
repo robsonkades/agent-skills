@@ -1,0 +1,1 @@
+package org.openrewrite.binary; public abstract class Binary implements org.openrewrite.SourceFile { public abstract byte[] getBytes(); }

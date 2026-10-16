@@ -1,0 +1,11 @@
+{
+  "classification": "format check failure introduced by widening one verification-table cell; restored original row because the new criteria already appear in SKILL.md and review item 36",
+  "command": "node node_modules/prettier/bin/prettier.cjs --check skills/java-application-security-basics/SKILL.md skills/java-application-security-basics/references/review.md skills/java-application-security-basics/skill.yaml",
+  "cwd": "C:/git/agent-skills",
+  "exitCode": 1,
+  "stdout": "Checking formatting...\n",
+  "stderr": "[warn] skills/java-application-security-basics/references/review.md\n[warn] Code style issues found in the above file. Run Prettier with --write to fix.\n",
+  "rawPreservation": "Tool text transcribed verbatim; stream separation inferred from Prettier convention because exec_command returned combined output.",
+  "baselineResult": "Same formatter/config on assignment snapshot references/review.md passed, exit 0.",
+  "preview": "review-formatted-preview.md retained; git diff --no-index returned expected status 1 because content differed."
+}

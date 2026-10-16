@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-ddd-testing
-version: 1.0.0
+version: 1.0.1
 description: >-
   Write and review Java DDD tests for aggregate invariants, value-object equality,
   use-case outcomes, gateway rehydration, concurrency conflicts and domain-event durability.

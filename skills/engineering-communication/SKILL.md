@@ -31,29 +31,40 @@ do not know. That last part is what makes the rest of it trustworthy.
 
 1. **Decide what the reader must do** with this message: approve something, choose between
    options, be aware, or act now. If nothing, consider not sending it.
-2. **Lead with the decision, action or supported conclusion**, not the investigation story.
+2. **Read the sources behind that action.** For a status or recommendation, inspect the
+   relevant issue, check result, incident record or owner response when available. Read only
+   what the message depends on; an inaccessible link is not checked evidence. Keep reported
+   claims attributed. A wording-only rewrite does not require a fresh technical investigation,
+   but flag material contradictions instead of polishing them into apparent certainty.
+3. **Lead with the decision, action or supported conclusion**, not the investigation story.
    "The production-volume rehearsal took six hours" preserves what was actually measured;
    a forecast for production needs its assumptions.
-3. **Say what follows** in their terms — money, users, dates, risk — not in yours. "Six hours"
+4. **Say what follows** in their terms — money, users, dates, risk — not in yours. "Six hours"
    needs context: establish whether the backfill blocks exports before claiming unavailability.
-4. **Separate what you know from what you believe.** Mark the boundary explicitly: measured,
+5. **Separate what you know from what you believe.** Mark the boundary explicitly: measured,
    inferred, assumed. A reader who cannot tell which is which will either over-trust or
    discard the whole message. When reports conflict, compare their source, population, time
    window and measurement before combining them. If the conflict remains, name it and the
    check or owner needed; neither seniority nor a newer timestamp resolves mismatched scopes.
-5. **For a decision, give viable options and recommend one with a reason.** An awareness-only
+6. **For a decision, give viable options and recommend one with a reason.** An awareness-only
    update does not need invented alternatives. Preserve required controls and distinguish
    the proposed option from an approved commitment.
-6. **Send it early.** Every one of these is worth more the sooner it arrives, and a risk raised
+7. **Send it early.** Every one of these is worth more the sooner it arrives, and a risk raised
    after it materialises is not a warning, it is an explanation.
-7. **Check the draft against the inputs.** Preserve dates, scope, uncertainty and ownership;
+8. **Check the draft against the inputs.** Preserve dates, scope, uncertainty and ownership;
    do not invent measurements, confidence percentages, approval, recipients or delivery promises.
    Retain a measurement's source, population and time window when they affect its meaning;
    a dated observation does not establish the current state or an entire incident's impact.
    If an earlier shared claim was materially wrong, identify what is corrected and whether the
    reader's next action changes. A later observation for a different window is an update, not
    necessarily a correction; preserve that distinction.
-   Use a visible placeholder or one focused question for missing decision-critical facts.
+   For a missing decision-critical fact, use a visible placeholder or ask a focused question
+   after checking available context. Name the decision its answer changes; ask for evidence or
+   a constraint, not agreement with your preferred answer. Continue the parts already supported.
+   When a reply changes a premise, revise the existing draft's conclusion, consequences and
+   next action together, explaining what changed. Do not merely acknowledge the correction or
+   append a conflicting paragraph. If the reply changes only length, audience or tone, keep
+   the supported claim and the limits that affect the reader's action.
 
 Deliver the message at the requested length and register, plus only material unresolved
 facts needed to finalize it. Drafting a message does not authorize sending it to others;
@@ -83,17 +94,20 @@ use an external communication tool only within explicit authorization for that a
 - Blame is not diagnosis. Describe the mechanism and contributing conditions. Preserve accountable
   ownership where audit, security, safety, or deliberate policy violations require it, without
   turning a causal analysis into a judgement about character.
-- Match the register to the audience: a non-engineer needs the consequence and the decision,
-  not the mechanism. Keep the mechanism available below, for whoever wants it.
+- Match detail to the reader's task and known context, not just their job title. Keep a
+  mechanism in the message when it changes the decision; link supporting detail otherwise.
+  Shortening "migration checks were skipped" to "tests passed" changes the claim, not its style.
 
 ## References
 
 - **Message patterns, with worked examples** — `references/message-patterns.md`. Raising a
   risk, reporting a slip, saying no, an incident status update, correcting a material claim,
-  and a post-incident summary —
-  each in a version that fails and a version that works, with what changed and why. Read before
-  drafting a message that carries bad news, corrects an earlier claim or asks for a decision.
+  and a post-incident summary, plus incident handoffs and shortening a technical update.
+  Read before compressing a consequential message, drafting incident communication or a
+  message that carries bad news, corrects an earlier claim or asks for a decision; the
+  examples explain what changed and why.
 - **Disagreement and escalation** — `references/disagreement-and-escalation.md`. Separating
-  checkable claims from preferences, ending a two-round argument, disagreeing with someone more
-  senior, when and how to escalate without going around a person, and disagree-and-commit. Read
-  when a technical argument is stuck or a decision needs someone else.
+  checkable claims from preferences, asking questions that can change a recommendation,
+  ending a two-round argument, disagreeing with someone more senior, escalation, and
+  disagree-and-commit. Read when a technical argument is stuck, a reply changes a disputed
+  premise or a decision needs someone else.

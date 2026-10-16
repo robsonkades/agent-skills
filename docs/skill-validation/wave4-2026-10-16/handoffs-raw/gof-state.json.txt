@@ -1,0 +1,863 @@
+{
+  "schemaVersion": 1,
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "gof-state",
+  "ownedPath": "C:/git/agent-skills/skills/gof-state",
+  "reviewDate": "2026-10-16",
+  "reviewer": "/root/quality20",
+  "allWritesStopped": true,
+  "noActiveBackgroundProcess": true,
+  "scope": {
+    "rolePreserved": "State-pattern selection, modelling and review of transition/invariant/persistence/effect contracts.",
+    "criteria": [
+      "Legality and guarded payloads, repeat versus illegal-event semantics and closed-state/event inventory coverage.",
+      "Choice among Boolean/enum/function/state objects without forced representation change.",
+      "Stable persisted codes and actual provider mapping; explicit unknown-state behavior.",
+      "Atomic authoritative transitions, expected revision retention, pure retry and reentrancy policies.",
+      "Pending effects versus completed effects, attempt identity and resource adoption/cleanup.",
+      "Timeout delivery/durability and actual effect/transaction recovery boundaries."
+    ],
+    "procedure": "Entire four-file package read. Applicable AGENTS.md, complete review prompt, parallel workflow, skill-engineering and its references, wave4 brief and carried-forward findings followed; unchanged previously read procedure/reference material reused as permitted.",
+    "coordinatorCandidate": "Verify the Jakarta specification URL missing .html; independently found and verified the related EnumeratedValue API URL is also broken.",
+    "packageChangesLimitedTo": "Two source-link destinations and one patch version."
+  },
+  "baseline": {
+    "committedVersion": "1.2.4",
+    "assignmentVersion": "1.2.4",
+    "preExistingBump": false,
+    "stagedChanges": [],
+    "unstagedChanges": [],
+    "untrackedFiles": [],
+    "coordinatorSnapshot": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/baseline/gof-state",
+    "snapshotMatchesAllFourFiles": true,
+    "retainedBaseline": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-state-validation/assignment-baseline.json",
+    "hashes": [
+      {
+        "path": "C:\\git\\agent-skills\\skills\\gof-state\\SKILL.md",
+        "sha256": "5788418F0EDB96C56E0ECB3289DE54301CC9C7D673190B5033C92C98D001E5DC"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\gof-state\\skill.yaml",
+        "sha256": "921A1C4C98E9C4C4B020E715ED8E86E2E7E290C470C135C46AF5C75322AC3083"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\gof-state\\references\\modelling-transitions.md",
+        "sha256": "32E69460ADCA90AC51FCAC65E90F3B3F1B266E41E8A11D52F172954AEA281735"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\gof-state\\references\\worked-example.md",
+        "sha256": "A26170A4AC4AC4D7A44B90946024AFE009BE259AA2DFB207F14ECC2D4BDBFD62"
+      }
+    ]
+  },
+  "versions": {
+    "committed": "1.2.4",
+    "initial": "1.2.4",
+    "final": "1.2.5",
+    "rationale": "Source link corrections change package integrity; repository requires one patch bump. No previous unpublished bump was present. Descriptions and Java/framework baselines are unchanged."
+  },
+  "findings": [
+    {
+      "id": "jakarta-primary-links",
+      "status": "corrected",
+      "locations": [
+        "references/modelling-transitions.md:304",
+        "references/modelling-transitions.md:305"
+      ],
+      "evidence": "Direct HTTP GET returned404 for both existing URLs. The specification with .html and case-sensitive EnumeratedValue.html both returned200; their content supports the existing claims.",
+      "consequence": "A reader following the cited primary evidence could not verify bulk update/versioning or enum-code contracts from those links.",
+      "implemented": "Replace only the two destinations with working version3.2 primary pages; leave technical guidance intact.",
+      "validation": "Captured four HTTP outcomes, primary-content review, final diff/metadata/format checks."
+    },
+    {
+      "id": "transitions-invariants-and-cas",
+      "status": "reviewed-preserved",
+      "locations": [
+        "SKILL.md Decision rules and Testing",
+        "references/modelling-transitions.md transition, Atomicity and Reentrancy sections",
+        "references/worked-example.md state, transition and mapping blocks"
+      ],
+      "evidence": "Both documented transition functions agree across all20 state/event kind pairs. Five storage codes and null/corrupt cases checked with explicit fixture types. Deliberate addition to sealed states produces missing-case compiler errors. Controlled CAS re-evaluation and original-precondition conflict differ as documented.",
+      "consequence": "No additional in-scope correction justified by these checks. Existing inventory, payload and compatibility limits remain essential.",
+      "implemented": "None."
+    },
+    {
+      "id": "late-results-and-owned-resources",
+      "status": "reviewed-preserved",
+      "locations": [
+        "SKILL.md asynchronous-operation decision rule",
+        "references/modelling-transitions.md Reentrancy and transition completion"
+      ],
+      "evidence": "Existing text explicitly distinguishes a non-adopted late result from a callback referring to an already adopted resource. Paired fixtures and a wrong close-all control corroborate why identity/ownership changes cleanup.",
+      "consequence": "Do not replace this with blanket close-on-rejected-event behavior. No new wording needed.",
+      "implemented": "None."
+    },
+    {
+      "id": "durability-and-simple-alternatives",
+      "status": "reviewed-preserved",
+      "locations": [
+        "SKILL.md When it is not and cross-cutting checks",
+        "references/modelling-transitions.md Side effects and Timeouts",
+        "references/worked-example.md effect and timeout caveats"
+      ],
+      "evidence": "The skill already conditions outbox/recovery on actual requirements, distinguishes due-time queries from committed expiry, and warns that scheduler locks and local state writes do not make effects atomic.",
+      "consequence": "Retain adequate Boolean/enum/function designs and process-local lifetimes; no mandatory framework, persistence or saga introduced.",
+      "implemented": "None."
+    }
+  ],
+  "remainingFindings": [],
+  "files": {
+    "changedByReviewer": [
+      {
+        "path": "skills/gof-state/references/modelling-transitions.md",
+        "change": "Repair two Jakarta Persistence3.2 primary-source URLs."
+      },
+      {
+        "path": "skills/gof-state/skill.yaml",
+        "change": "Version1.2.4→1.2.5."
+      }
+    ],
+    "preExistingChanges": [],
+    "unchanged": [
+      "skills/gof-state/SKILL.md",
+      "skills/gof-state/references/worked-example.md"
+    ],
+    "finalHashes": [
+      {
+        "path": "SKILL.md",
+        "sha256": "5788418F0EDB96C56E0ECB3289DE54301CC9C7D673190B5033C92C98D001E5DC"
+      },
+      {
+        "path": "references/modelling-transitions.md",
+        "sha256": "5BE6403693B8418200A0E6B1DABC1949F1DC6798BE2B89A3BB2BF291300B414E"
+      },
+      {
+        "path": "references/worked-example.md",
+        "sha256": "A26170A4AC4AC4D7A44B90946024AFE009BE259AA2DFB207F14ECC2D4BDBFD62"
+      },
+      {
+        "path": "skill.yaml",
+        "sha256": "27BAC356C900298DAE4FEBBD7209378193F099402F9A50AF2A79F60A15292FB1"
+      }
+    ],
+    "finalDiff": "2 files changed, 3 insertions(+), 3 deletions(-); staged diff empty, no untracked package files."
+  },
+  "preservedCapabilities": [
+    "State-versus-Strategy intent and caller/guard ownership; terminal states and composable policies.",
+    "Preserve simple Boolean, enum, function, switch or state-method designs when adequate; inspect independent lifecycle dimensions.",
+    "Java21 pattern-switch baseline without preview; older-target alternatives and project-version checks.",
+    "Explicit illegal-transition and idempotent-repeat outcomes; state/event inventory and payload/sequence validation.",
+    "Stable storage codes including Jakarta3.2 explicit enum mapping, unknown-value policy and rolling-evolution compatibility.",
+    "CAS/conditional-write/version mechanisms, original revision preconditions, pure retries, ABA and managed ORM state coordination.",
+    "Reentrant callbacks, commit point and post-commit failure distinctions.",
+    "Attempt/phase-aware asynchronous adoption and cleanup of non-adopted results without closing a previously adopted resource.",
+    "Actual effect completion, permitted loss, local transactions/outbox, repeat protocol and recovery ownership.",
+    "Durable due-time delivery, duplicate/stale timer handling, catch-up and scheduler-lock expiry limits.",
+    "Five-state payment/shipping/refund example, nullable-payload guardrails, migration investigation and versioned write caveats.",
+    "Both routed references and all ten optional neighboring referrals."
+  ],
+  "replacedCapabilities": [],
+  "removedCapabilities": [],
+  "localValidation": {
+    "overall": "passed",
+    "runner": {
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-state-validation/run-checks.mjs",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "childCommands": 17,
+      "resultPath": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-state-validation/results.json",
+      "effects": "Reads the assigned package/shared parsers and optional suggestion existence; writes generated fixtures/classes/logs only under the isolated authorized evidence root."
+    },
+    "checks": [
+      {
+        "name": "local-package-and-link-evidence",
+        "passed": true,
+        "files": [
+          {
+            "path": "SKILL.md",
+            "sha256": "5788418F0EDB96C56E0ECB3289DE54301CC9C7D673190B5033C92C98D001E5DC"
+          },
+          {
+            "path": "references/modelling-transitions.md",
+            "sha256": "5BE6403693B8418200A0E6B1DABC1949F1DC6798BE2B89A3BB2BF291300B414E"
+          },
+          {
+            "path": "references/worked-example.md",
+            "sha256": "A26170A4AC4AC4D7A44B90946024AFE009BE259AA2DFB207F14ECC2D4BDBFD62"
+          },
+          {
+            "path": "skill.yaml",
+            "sha256": "27BAC356C900298DAE4FEBBD7209378193F099402F9A50AF2A79F60A15292FB1"
+          }
+        ],
+        "version": "1.2.5",
+        "manifestIssues": [],
+        "localLinks": 2,
+        "routedReferences": 2,
+        "suggestions": 10,
+        "httpStatuses": [
+          {
+            "url": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2",
+            "status": 404
+          },
+          {
+            "url": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html",
+            "status": 200
+          },
+          {
+            "url": "https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/enumeratedvalue",
+            "status": 404
+          },
+          {
+            "url": "https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/EnumeratedValue.html",
+            "status": 200
+          }
+        ],
+        "scope": "HTTP results were captured before editing; replacement URLs were fetched and their primary contracts reviewed."
+      },
+      {
+        "name": "transition-and-row-controls",
+        "passed": true,
+        "sourceRelease": 21,
+        "actualRuntime": "Temurin 25.0.3+9",
+        "scope": "Five original blocks compiled with imports/enclosure and explicit domain fixtures; modelling transition renamed only to co-locate it. Full 5x4 transition matrix, payload/mapping checks and controlled CAS interleaving. Added sealed state deliberately rejects compilation. No database/ORM integration."
+      },
+      {
+        "name": "ownership-pair-controls",
+        "passed": true,
+        "scope": "Identical source/contracts with one configuration value changing callback object identity. Original same-reference path valid; distinct original leaks. Private identity-aware control preserves both; indiscriminate close fails adopted-resource control. No independent actor or network run."
+      }
+    ],
+    "commands": [
+      {
+        "label": "node-version",
+        "executable": "C:\\Program Files\\nodejs\\node.exe",
+        "args": [
+          "--version"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "expectedExit": 0,
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "v25.6.1\r\n",
+        "stderr": "",
+        "error": null
+      },
+      {
+        "label": "java-version",
+        "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+        "args": [
+          "-version"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "expectedExit": 0,
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "",
+        "stderr": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n",
+        "error": null
+      },
+      {
+        "label": "javac-version",
+        "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+        "args": [
+          "-version"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "expectedExit": 0,
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "javac 25.0.3\r\n",
+        "stderr": "",
+        "error": null
+      },
+      {
+        "label": "prettier-owned",
+        "executable": "C:\\Program Files\\nodejs\\node.exe",
+        "args": [
+          "C:\\git\\agent-skills\\node_modules\\prettier\\bin\\prettier.cjs",
+          "--check",
+          "C:\\git\\agent-skills\\skills\\gof-state\\SKILL.md",
+          "C:\\git\\agent-skills\\skills\\gof-state\\references\\modelling-transitions.md",
+          "C:\\git\\agent-skills\\skills\\gof-state\\references\\worked-example.md",
+          "C:\\git\\agent-skills\\skills\\gof-state\\skill.yaml"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "expectedExit": 0,
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "Checking formatting...\nAll matched files use Prettier code style!\n",
+        "stderr": "",
+        "error": null
+      },
+      {
+        "label": "diff-check-owned",
+        "executable": "git",
+        "args": [
+          "diff",
+          "--check",
+          "--",
+          "skills/gof-state"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "expectedExit": 0,
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "",
+        "stderr": "",
+        "error": null
+      },
+      {
+        "label": "compile-release21",
+        "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+        "args": [
+          "--release",
+          "21",
+          "-d",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-state-validation\\technical\\classes",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-state-validation\\technical\\StateControls.java"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "expectedExit": 0,
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "",
+        "stderr": "",
+        "error": null
+      },
+      {
+        "label": "state-controls",
+        "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+        "args": [
+          "-cp",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-state-validation\\technical\\classes",
+          "check.StateControls"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "expectedExit": 0,
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "PASS 67 controls: complete 5x4 table in both functions, null and payload guards, five row codes, unknown/corrupt rows, CAS re-evaluation versus bound precondition\r\n",
+        "stderr": "",
+        "error": null
+      },
+      {
+        "label": "new-state-coverage-negative",
+        "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+        "args": [
+          "--release",
+          "21",
+          "-d",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-state-validation\\technical\\new-state\\classes",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-state-validation\\technical\\new-state\\StateControls.java"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "expectedExit": 1,
+        "exitCode": 1,
+        "signal": null,
+        "stdout": "",
+        "stderr": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-state-validation\\technical\\new-state\\StateControls.java:28: error: the switch expression does not cover all possible input values\r\n    return switch (current) {\r\n           ^\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-state-validation\\technical\\new-state\\StateControls.java:52: error: the switch expression does not cover all possible input values\r\n    return switch (current) {\r\n           ^\r\n2 errors\r\n",
+        "error": null
+      },
+      {
+        "label": "compile-case-a",
+        "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+        "args": [
+          "--release",
+          "21",
+          "-d",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-state-validation\\case-a\\classes",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-state-validation\\case-a\\src\\ConnectionApp.java"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "expectedExit": 0,
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "",
+        "stderr": "",
+        "error": null
+      },
+      {
+        "label": "run-case-a",
+        "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+        "args": [
+          "-cp",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-state-validation\\case-a\\classes",
+          "ConnectionApp",
+          "app.properties"
+        ],
+        "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-state-validation\\case-a",
+        "expectedExit": 0,
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "servingInitial=true\r\nbeforeStop: initialClosed=0, callbackClosed=0\r\nafterStop: initialClosed=1, callbackClosed=1\r\n",
+        "stderr": "",
+        "error": null
+      },
+      {
+        "label": "compile-case-b",
+        "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+        "args": [
+          "--release",
+          "21",
+          "-d",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-state-validation\\case-b\\classes",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-state-validation\\case-b\\src\\ConnectionApp.java"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "expectedExit": 0,
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "",
+        "stderr": "",
+        "error": null
+      },
+      {
+        "label": "run-case-b",
+        "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+        "args": [
+          "-cp",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-state-validation\\case-b\\classes",
+          "ConnectionApp",
+          "app.properties"
+        ],
+        "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-state-validation\\case-b",
+        "expectedExit": 0,
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "servingInitial=true\r\nbeforeStop: initialClosed=0, callbackClosed=0\r\nafterStop: initialClosed=1, callbackClosed=0\r\n",
+        "stderr": "",
+        "error": null
+      },
+      {
+        "label": "compile-ownership-control",
+        "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+        "args": [
+          "--release",
+          "21",
+          "-d",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-state-validation\\technical\\ownership-control\\classes",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-state-validation\\technical\\ownership-control\\ConnectionApp.java"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "expectedExit": 0,
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "",
+        "stderr": "",
+        "error": null
+      },
+      {
+        "label": "run-ownership-control-a",
+        "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+        "args": [
+          "-cp",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-state-validation\\technical\\ownership-control\\classes",
+          "ConnectionApp",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-state-validation\\case-a\\app.properties"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "expectedExit": 0,
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "servingInitial=true\r\nbeforeStop: initialClosed=0, callbackClosed=0\r\nafterStop: initialClosed=1, callbackClosed=1\r\n",
+        "stderr": "",
+        "error": null
+      },
+      {
+        "label": "run-ownership-control-b",
+        "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+        "args": [
+          "-cp",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-state-validation\\technical\\ownership-control\\classes",
+          "ConnectionApp",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-state-validation\\case-b\\app.properties"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "expectedExit": 0,
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "servingInitial=true\r\nbeforeStop: initialClosed=0, callbackClosed=1\r\nafterStop: initialClosed=1, callbackClosed=1\r\n",
+        "stderr": "",
+        "error": null
+      },
+      {
+        "label": "compile-indiscriminate-control",
+        "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+        "args": [
+          "--release",
+          "21",
+          "-d",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-state-validation\\technical\\indiscriminate-close\\classes",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-state-validation\\technical\\indiscriminate-close\\ConnectionApp.java"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "expectedExit": 0,
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "",
+        "stderr": "",
+        "error": null
+      },
+      {
+        "label": "run-indiscriminate-control",
+        "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+        "args": [
+          "-cp",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-state-validation\\technical\\indiscriminate-close\\classes",
+          "ConnectionApp",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-state-validation\\case-a\\app.properties"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "expectedExit": 1,
+        "exitCode": 1,
+        "signal": null,
+        "stdout": "servingInitial=false\r\nbeforeStop: initialClosed=1, callbackClosed=1\r\n",
+        "stderr": "Exception in thread \"main\" java.lang.IllegalStateException: duplicate close: initial\r\n\tat ConnectionApp$OwnedConnection.close(ConnectionApp.java:11)\r\n\tat ConnectionApp$Machine.close(ConnectionApp.java:31)\r\n\tat ConnectionApp.main(ConnectionApp.java:48)\r\n",
+        "error": null
+      }
+    ],
+    "httpCommands": {
+      "cwd": "C:/git/agent-skills",
+      "template": "Invoke-WebRequest -Uri <url> -Method Get -SkipHttpErrorCheck -TimeoutSec 20",
+      "urlsAndResults": [
+        {
+          "url": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2",
+          "status": 404,
+          "finalUrl": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2",
+          "contentBytes": 211891
+        },
+        {
+          "url": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html",
+          "status": 200,
+          "finalUrl": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html",
+          "contentBytes": 2531021
+        },
+        {
+          "url": "https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/enumeratedvalue",
+          "status": 404,
+          "finalUrl": "https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/enumeratedvalue",
+          "contentBytes": 211891
+        },
+        {
+          "url": "https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/EnumeratedValue.html",
+          "status": 200,
+          "finalUrl": "https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/EnumeratedValue.html",
+          "contentBytes": 6741
+        }
+      ],
+      "resultPath": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-state-validation/link-checks.json",
+      "executedBeforeEdit": true
+    },
+    "primaryContentFetch": {
+      "command": "Invoke-WebRequest -Uri 'https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/EnumeratedValue.html' -TimeoutSec 20",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "Read API v3.2.0 content successfully after browser extraction failed; retained paraphrased review notes, not a vendored documentation copy.",
+      "notesPath": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-state-validation/enum-api-primary.txt"
+    },
+    "finalInspection": {
+      "commands": [
+        "git diff -- skills/gof-state",
+        "git status --short --untracked-files=all -- skills/gof-state",
+        "git diff --cached -- skills/gof-state",
+        "git diff --stat -- skills/gof-state"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "result": {
+        "chunk_id": "1635d4",
+        "wall_time_seconds": 0.1239172,
+        "exit_code": 0,
+        "original_token_count": 495,
+        "output": "diff --git a/skills/gof-state/references/modelling-transitions.md b/skills/gof-state/references/modelling-transitions.md\nindex f7301d8..ec4bc6e 100644\n--- a/skills/gof-state/references/modelling-transitions.md\n+++ b/skills/gof-state/references/modelling-transitions.md\n@@ -301,6 +301,6 @@ Primary sources: [Java 21 pattern switch](https://docs.oracle.com/en/java/javase\n [JLS 17.1 monitor reentrancy](https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html#jls-17.1),\n [CompletableFuture cancellation](<https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CompletableFuture.html#cancel(boolean)>),\n [AtomicReference](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/atomic/AtomicReference.html),\n-[Jakarta Persistence 3.2 bulk updates/versioning](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2),\n-[Jakarta Persistence 3.2 enum value mapping](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/enumeratedvalue),\n+[Jakarta Persistence 3.2 bulk updates/versioning](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html),\n+[Jakarta Persistence 3.2 enum value mapping](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/EnumeratedValue.html),\n and [ShedLock lock duration](https://github.com/lukas-krecan/ShedLock).\ndiff --git a/skills/gof-state/skill.yaml b/skills/gof-state/skill.yaml\nindex 3db01bf..5163bb6 100644\n--- a/skills/gof-state/skill.yaml\n+++ b/skills/gof-state/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: gof-state\n-version: 1.2.4\n+version: 1.2.5\n description: >-\n   State in modern Java: making an object's behaviour depend on an explicit state, with the\n   transitions themselves modelled rather than implied by scattered flags. Covers the intent\n M skills/gof-state/references/modelling-transitions.md\n M skills/gof-state/skill.yaml\n"
+      },
+      "conclusion": "Only the two intended URL edits and patch bump; unchanged file hashes preserved."
+    },
+    "executedTechnicalEvidence": [
+      "Five original Markdown blocks compiled with imports, enclosure and explicit fixture collaborators: OrderState, both transition functions and both row mappers. The reference transition method was renamed solely to coexist in one control class.",
+      "67 local assertions cover both5x4 kind matrices, null/payload checks, preserved refund reference/reason, all five row codes, unknown/corrupt values and controlled CAS semantics.",
+      "A synthetic new Held state causes both switches to fail compilation as expected.",
+      "Original case same-reference path remains valid; original distinct-result path demonstrates an owned-result leak.",
+      "Private identity-aware discard control preserves the active resource and releases the extra resource; indiscriminate close control fails by closing the active resource and closing it twice."
+    ],
+    "failures": [
+      {
+        "kind": "pre-existing broken sources, corrected",
+        "details": "Two HTTP404 destinations replaced by verified HTTP200 endpoints; exact observations retained."
+      },
+      {
+        "kind": "browser extraction unavailable, fallback succeeded",
+        "details": "web.open returned Internal Error for the valid EnumeratedValue.html API page. Invoke-WebRequest returned200 and exposed its contract; no source claim rests on the browser error."
+      },
+      {
+        "kind": "expected compiler-negative control",
+        "command": "new-state-coverage-negative",
+        "exitCode": 1,
+        "details": "Both switch expressions reject the synthetic extra sealed state."
+      },
+      {
+        "kind": "expected wrong-cleanup control",
+        "command": "run-indiscriminate-control",
+        "exitCode": 1,
+        "details": "servingInitial=false and duplicate close: initial demonstrate why a callback referring to an adopted resource must not be closed indiscriminately."
+      }
+    ],
+    "unexpectedTechnicalFailures": []
+  },
+  "behavioralEvidence": {
+    "executedActorEvaluations": [],
+    "measuredImprovement": false,
+    "structuredWalkthroughs": [
+      {
+        "caseId": "state-adopted-result",
+        "expectedDecision": "Same object has already transferred to active-state ownership; preserve it until shutdown and retain the adequate path."
+      },
+      {
+        "caseId": "state-distinct-result",
+        "expectedDecision": "A newly supplied owned object cannot be adopted in this phase; dispose of that object while retaining the current connection."
+      }
+    ],
+    "technicalVersusBehavioral": "Case fixtures were executed as Java code; no agent used the skill in an independent run. These exercise existing guidance and do not measure benefit from source-link repair.",
+    "pending": "Any independent actor evaluation remains coordinator-owned."
+  },
+  "sources": [
+    {
+      "url": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html",
+      "version": "Jakarta Persistence 3.2, April 10 2024",
+      "sections": [
+        "4.11 Bulk Update and Delete Operations",
+        "6.3 Criteria bulk updates"
+      ],
+      "support": "Bulk writes bypass automatic optimistic-lock checks and do not synchronize the active persistence context; existing manual version/precondition and refresh/clear caveats remain appropriate.",
+      "verifiedBy": "HTTP200 plus content review",
+      "limitation": "Specification evidence, not provider/database integration.",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/EnumeratedValue.html",
+      "version": "Jakarta Persistence API 3.2.0",
+      "sections": [
+        "EnumeratedValue type contract"
+      ],
+      "support": "Final field with distinct non-null values; numeric byte/short/int for ordinal mapping or String for string mapping. Confirms existing explicit-code guidance and provider-version qualification.",
+      "verifiedBy": "HTTP200 and document content via Invoke-WebRequest; browser extraction failed",
+      "limitation": "No provider support test or annotation integration executed.",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/21/language/pattern-matching-switch.html",
+      "version": "Java SE21",
+      "sections": [
+        "Type coverage and exhaustive switch expressions"
+      ],
+      "support": "Closed-state type coverage is compiler-checked; this does not validate payload guards, legal event combinations or business effects.",
+      "verifiedBy": "Official language guide; compile and deliberate new-state rejection",
+      "limitation": "Compilation used javac25 --release21, not execution on JVM21.",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html#jls-17.1",
+      "version": "JLS SE21",
+      "sections": [
+        "17.1 Synchronization"
+      ],
+      "support": "A thread can acquire the same monitor repeatedly, so synchronized alone does not reject callback-driven reentry.",
+      "verifiedBy": "Primary specification",
+      "limitation": "No new reentrancy runtime test in this assignment; existing guidance retained.",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/atomic/AtomicReference.html",
+      "version": "Java SE21",
+      "sections": [
+        "compareAndSet",
+        "getAndUpdate/updateAndGet"
+      ],
+      "support": "Expected-reference atomic update and retry-sensitive update functions support the existing pure transition/re-evaluation distinction.",
+      "verifiedBy": "Primary API and controlled single-thread interleaving using actual AtomicReference",
+      "limitation": "Controlled interleaving is not a concurrency stress test or proof of all histories.",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CompletableFuture.html#cancel(boolean)",
+      "version": "Java SE21",
+      "sections": [
+        "Class policies and cancel"
+      ],
+      "support": "Cancellation completes the result exceptionally and does not itself control the computation; state adoption must remain guarded and resource ownership explicit.",
+      "verifiedBy": "Primary API",
+      "limitation": "No actual network cancellation or task-stop integration executed.",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://github.com/lukas-krecan/ShedLock",
+      "version": "Maintainer README as served 2026-10-16; dependency example 7.10.1",
+      "sections": [
+        "Behavior",
+        "Caveats"
+      ],
+      "support": "Tasks exceeding lockAtMostFor can overlap; the existing state predicate/atomicity guidance must remain the correctness boundary.",
+      "verifiedBy": "Maintainer documentation",
+      "limitation": "README is not a pinned deployment version. No scheduler/lock-provider test, and skill still requires inspecting the project's actual framework/version.",
+      "consulted": "2026-10-16"
+    }
+  ],
+  "evidencePaths": [
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-state-validation/assignment-baseline.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-state-validation/link-checks.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-state-validation/enum-api-primary.txt",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-state-validation/source-review.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-state-validation/run-checks.mjs",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-state-validation/results.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-state-validation/logs",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-state-validation/technical/helpers-and-checks.txt",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-state-validation/technical/StateControls.java",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-state-validation/technical/new-state/StateControls.java",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-state-validation/technical/ownership-control/ConnectionApp.java",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-state-validation/technical/indiscriminate-close/ConnectionApp.java",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-state-validation/case-a/README.md",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-state-validation/case-a/app.properties",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-state-validation/case-a/src/ConnectionApp.java",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-state-validation/case-b/README.md",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-state-validation/case-b/app.properties",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-state-validation/case-b/src/ConnectionApp.java",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-state-validation/inputs.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-state-validation/criteria.json"
+  ],
+  "cases": {
+    "inputsPath": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-state-validation/inputs.json",
+    "criteriaPath": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-state-validation/criteria.json",
+    "inputs": {
+      "kind": "development case inputs",
+      "behavioralEvaluationExecuted": false,
+      "commonTask": "Revise a máquina de conexão e o callback conforme os artefatos deste projeto. Verifique transição, resultado adotado e ciclo de vida dos objetos. Faça a menor correção comprovada ou preserve o código se já atende ao contrato; mantenha a configuração aceita e o target Java 21. Relate as verificações executadas e seus limites.",
+      "cases": [
+        {
+          "id": "state-adopted-result",
+          "fixture": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-state-validation/case-a",
+          "visibleFiles": [
+            "README.md",
+            "app.properties",
+            "src/ConnectionApp.java"
+          ]
+        },
+        {
+          "id": "state-distinct-result",
+          "fixture": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-state-validation/case-b",
+          "visibleFiles": [
+            "README.md",
+            "app.properties",
+            "src/ConnectionApp.java"
+          ]
+        }
+      ],
+      "prerequisites": "JDK21+ existente, sem preview/dependências. Na revisão: javac --release21 e execução Temurin25.0.3+9.",
+      "isolation": "Copiar apenas os arquivos visíveis do caso selecionado e a tarefa para workspace isolado. Não expor o outro caso, critérios, logs, controles, baseline, runner ou handoff. Diretórios sozinhos não impõem isolamento de acesso."
+    },
+    "criteria": {
+      "kind": "evaluator-only criteria",
+      "doNotProvideToActor": true,
+      "decisiveConstraint": "Somente app.properties muda callback.result=same para new. Código e contrato permanecem idênticos; muda a identidade do objeto entregue pelo callback repetido.",
+      "cases": [
+        {
+          "id": "state-adopted-result",
+          "expectedDecision": "Preservar o caminho que ignora o callback do mesmo recurso já adotado, mantendo-o aberto até o encerramento.",
+          "requiredEvidence": [
+            "Seguir o fornecedor simulado e a expressão que seleciona callbackResult; comprovar identidade com initial.",
+            "Demonstrar servingInitial=true, contagens 0/0 antes do shutdown e 1/1 depois, sendo a mesma instância.",
+            "Evitar fechar o recurso ativo ao classificar o evento como repetido ou fora da fase CONNECTING."
+          ],
+          "acceptableAlternatives": [
+            "No-change é a intervenção mínima adequada.",
+            "Ajuste equivalente só com requisito demonstrado; não exigir novo framework ou persistência para cenário local."
+          ],
+          "failureConditions": [
+            "Fechar indiscriminadamente qualquer resultado de callback recusado.",
+            "Trocar o objeto ativo ou reabrir uma máquina por causa do callback.",
+            "Alegar leak contando duas referências ao mesmo recurso como dois recursos distintos."
+          ]
+        },
+        {
+          "id": "state-distinct-result",
+          "expectedDecision": "Descartar com cleanup o resultado distinto não adotado, preservando o recurso ativo e o estado aceito.",
+          "requiredEvidence": [
+            "Rastrear configuração e criação de uma segunda OwnedConnection, diferenciando identidade de igualdade de tentativa.",
+            "Demonstrar o leak do resultado novo no código original e corrigir somente a responsabilidade de descarte sem adotar esse resultado.",
+            "Verificar servingInitial=true e recursos fechados exatamente uma vez até shutdown, com initial aberto antes dele.",
+            "Executar também controle de callback com o objeto já adotado para impedir que a correção feche o recurso em uso."
+          ],
+          "acceptableAlternatives": [
+            "Guard de identidade e descarte explícito para recurso não adotado, ou ownership equivalente proporcional.",
+            "Não é necessário adotar state classes, CAS, framework assíncrono, banco ou saga para esta correção confinada."
+          ],
+          "failureConditions": [
+            "Tratar deduplicação de evento como liberação automática do resultado novo.",
+            "Fechar initial ao descartar extra, substituir a conexão aceita ou alterar a configuração para esconder o problema.",
+            "Inventar garantias de rede, concorrência geral ou idempotência de close a partir do double local."
+          ]
+        }
+      ],
+      "limits": [
+        "Casos de desenvolvimento conhecidos derivados de uma orientação já presente; não holdouts.",
+        "Nenhum ator independente executado.",
+        "Fixture modela somente propriedade e sequência local, não rede real nem disputa entre threads."
+      ],
+      "expectedOriginalObservations": {
+        "same": "servingInitial=true; beforeStop 0/0; afterStop 1/1",
+        "new": "servingInitial=true; beforeStop 0/0; afterStop 1/0 (resultado extra sem fechamento)"
+      }
+    },
+    "oneChangedConstraint": "The identity of the callback's result, selected by one configuration value. Source and requirement files are identical by hash.",
+    "status": "Known development cases; separate inputs/criteria established before technical runs, no actors.",
+    "isolation": "Provide only selected visible files and task in a separate actor workspace; do not expose criteria, other case, controls, logs or this handoff. Procedural folders do not enforce access isolation."
+  },
+  "assumptions": [
+    "Fixture collaborators validate only the explicit local payload conditions; they are not a production domain model.",
+    "Ownership and callback sequence follow the supplied case contract, not an inferred provider guarantee.",
+    "Stable primary links and HTTP observations are scoped to consultation time2026-10-16."
+  ],
+  "limits": [
+    "javac25.0.3 compiled with --release21; all Java execution used Temurin25.0.3+9. No JVM21 run or toolchain installation.",
+    "No Jakarta provider, SQL database, Spring/ShedLock scheduler, network provider or outbox integration executed.",
+    "Migration SQL was reviewed but not executed; no proof of production16-combination/null-flag migration or concurrency behavior.",
+    "Controlled CAS interleaving and resource doubles are deterministic technical models, not multithreaded stress tests, race-freedom proofs or resource-stop integration.",
+    "Compiler exhaustiveness only establishes closed-state type coverage at compilation; event defaults require explicit inventory and guards.",
+    "No benchmark, auto-selection test, independent actor run, unseen holdout or measured incremental skill gain.",
+    "Local parsing/link/suggestion checks do not replace global catalog routing/version/integrity verification.",
+    "The technical content was preserved; the implemented benefit is restored access to two primary sources."
+  ],
+  "crossSkill": [
+    {
+      "status": "coordinator candidate confirmed within ownership",
+      "finding": "Both the missing-.html specification link and the incorrectly cased/extensionless EnumeratedValue link were broken here. Corrected this package only; no neighboring package inspected or edited for the same pattern."
+    }
+  ],
+  "pendingGlobals": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "cwd": "C:/git/agent-skills",
+      "purpose": "Regenerate shared index/integrity and cross-package checks.",
+      "prerequisites": "All reviewers stopped; retain package1.2.5."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "cwd": "C:/git/agent-skills",
+      "purpose": "Repository-wide CI/version checks.",
+      "prerequisites": "Shared index regenerated after writers stop."
+    },
+    {
+      "command": "independent actor evaluation if selected",
+      "owner": "coordinator",
+      "purpose": "Evaluate decisions separately from technical controls.",
+      "prerequisites": "Isolated case inputs and hidden criteria; do not infer behavior gain from repaired URLs."
+    }
+  ],
+  "coordinatorActions": "Archive evidence, inspect focused two-file diff and run globals after all writers stop. No ownership conflict or unresolved blocker.",
+  "processes": {
+    "allStartedProcessesExited": true,
+    "backgroundProcessesStarted": 0,
+    "description": "All Java/Node checks were synchronous subprocesses and completed. No watcher, install, global validator or actor spawned."
+  }
+}

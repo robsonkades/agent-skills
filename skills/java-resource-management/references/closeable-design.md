@@ -21,8 +21,18 @@ try (Connection c = pool.get()) {
 }                                 // close()'s exception is in getSuppressed()
 ```
 
-Suppression is why the construct is not a convenience. Two further properties follow from
-the desugaring, and both matter in review:
+This ordering assumes distinct throwable objects and suppression enabled. TWR's generated
+`primary.addSuppressed(closeFailure)` has no identity guard. If a resource's `close()` rethrows
+the same stored failure already thrown by the body, `addSuppressed` throws
+`IllegalArgumentException`, replacing the primary outcome. Disabling suppression does not avoid
+that identity check; it only prevents recording distinct suppressed failures, so an empty
+`getSuppressed()` is not proof that cleanup succeeded. Inspect the actual resource and exception
+implementation. Fix owned `close` code that rethrows an already reported operation failure;
+report genuine cleanup failures independently. For a necessary explicit cleanup protocol, retain
+the identity guard in the factory below. Test same-object and distinct-object failures, and
+assert all required close attempts separately from which exception escapes.
+
+Two further properties follow from the desugaring, and both matter in review:
 
 - Resources close in **reverse declaration order**, so a resource may depend on one declared
   before it.
@@ -191,6 +201,7 @@ reader position afterward.
 ## Authoritative references
 
 - [JLS §14.20.3: try-with-resources, Java SE 21](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.20.3)
+- [Throwable suppression and identity contract, Java SE 21](<https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Throwable.html#addSuppressed(java.lang.Throwable)>)
 - [AutoCloseable contract, Java SE 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/AutoCloseable.html)
 - [Closeable idempotence contract, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/Closeable.html)
 - [JDBC Connection close/transaction contract, Java SE 25](<https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html#close()>)

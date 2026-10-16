@@ -164,6 +164,11 @@ Executor termination does not prove that every retained submitted Future is term
 default `close()` can leave never-started Future wrappers unsettled; keep result/recovery ownership
 as described in `references/shutdown-and-rejection.md`.
 
+A `ThreadPoolExecutor` can terminate while its rejection handler still runs work on an external
+submitter. With caller-runs, prove physical completion on that path before closing shared
+dependencies. Reuse a producer/request drain that already covers this lifetime; see the reference
+for admission races and a targeted test.
+
 Use a bounded two-phase protocol:
 
 ```text
@@ -173,7 +178,8 @@ shutdown orderly
 await declared grace while measuring active/queued/residual work
 escalate cancellation/abort according to task contract
 persist/requeue/drop never-started work explicitly
-close owned resources and confirm termination
+confirm pool termination and physical completion on worker/caller paths
+close owned resources only after their users have finished
 ```
 
 Coordinate orchestration grace, preStop, load balancer drain and downstream deadlines. Returned
@@ -198,7 +204,8 @@ transitions when decisions need accuracy. Metrics are not “free.”
 - virtual-thread migration with connection/memory/downstream bounds;
 - worker creation fails, or a hook/wrapper throws or blocks; check body execution and result settlement.
 - saturation switches from worker execution to caller-runs; check hook coverage, context restoration
-  and both `execute`/`submit` failure surfaces.
+  and both `execute`/`submit` failure surfaces; keep a caller-run body active during pool shutdown
+  and check the dependency-close boundary.
 
 ## Anti-patterns
 
@@ -229,7 +236,7 @@ complete the task without a capacity experiment or a full lifecycle redesign.
 ## References
 
 - [Shutdown, rejection and drain](references/shutdown-and-rejection.md) — read when designing
-  overload, task wrappers, hook coverage or interrupted shutdown/drain ownership.
+  overload, task wrappers, hook coverage, caller-run drain or interrupted shutdown ownership.
 - [Scheduled and periodic tasks](references/scheduled-and-periodic.md) — read for periodic
   failures, scheduler-to-worker dispatch, cancellation retention or replica execution.
 - [`ThreadPoolExecutor`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html)

@@ -1,0 +1,5 @@
+{
+  "checks": 5,
+  "result": "PASS",
+  "scope": "Fixture integrity only. No native compilation, kernel execution, benchmark or agent evaluation."
+}

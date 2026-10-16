@@ -41,6 +41,20 @@ does not replace this gate. In an isolated fixture, prove a known violation fail
 changes were detected, then prove the corrected input passes and a near-miss stays unchanged.
 Retain scope/attribution checks: an inactive or skipped recipe can also return success.
 
+### A failed application may already have changed files
+
+Distinguish an expected dry-run gate failure from a failed `run`. In Maven plugin 6.24.0,
+`run` logs proposed file changes before writing them, then applies generated, deleted, moved
+and modified results sequentially. A later file-system failure can leave earlier edits applied;
+those log messages do not prove every file was written. A recipe error detected before that
+phase can instead abort without applying any result. Do not infer either state from exit status.
+
+Compare the actual files with the recorded input, including preserved local changes, and retain
+the failure evidence. Correct the cause and retry from a fresh isolated copy of that input, or
+reconcile the proven partial edits within the owned scope. Do not reset to `HEAD` and discard
+pre-existing work. Idempotence on a complete successful output does not establish safe replay on
+a partially written project. Recheck the resulting patch and affected contracts after recovery.
+
 ## The type-attribution trap
 
 This is the failure mode to expect. Recipes that match on a type — most useful recipes —
@@ -167,6 +181,7 @@ a recipe attached, and they need the upgrade's testing, not a refactoring's.
 
 Primary references: [Maven plugin goals and lifecycle](https://docs.openrewrite.org/reference/rewrite-maven-plugin),
 [6.24.0 dry-run property and failure behavior](https://github.com/openrewrite/rewrite-maven-plugin/blob/v6.24.0/src/main/java/org/openrewrite/maven/AbstractRewriteDryRunMojo.java),
+[6.24.0 application order and file writes](https://github.com/openrewrite/rewrite-maven-plugin/blob/v6.24.0/src/main/java/org/openrewrite/maven/AbstractRewriteRunMojo.java),
 [6.24.0 Maven source selection](https://github.com/openrewrite/rewrite-maven-plugin/blob/v6.24.0/src/main/java/org/openrewrite/maven/MavenMojoProjectParser.java),
 [declarative precondition scope](https://docs.openrewrite.org/reference/yaml-format-reference),
 [visitor identity and immutability](https://docs.openrewrite.org/authoring-recipes/recipe-conventions-and-best-practices),

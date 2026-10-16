@@ -1,0 +1,179 @@
+import assert from 'node:assert/strict';
+import { readFileSync, writeFileSync, readdirSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+import { dirname, resolve, relative } from 'node:path';
+import { fileURLToPath } from 'node:url';
+const here = dirname(fileURLToPath(import.meta.url));
+const repo = 'C:/git/agent-skills';
+const skill = 'java-ddd-domain-services';
+const ownedPath = 'skills/' + skill;
+const load = file => JSON.parse(readFileSync(resolve(here, file), 'utf8'));
+const baseline = load('baseline.json');
+const structure = load('structure-results.json');
+const cases = load('case-fixture-results.json');
+const caseSources = load('case-source-results.json');
+const extraction = load('source-text-results.json');
+for (const result of [structure, cases, caseSources]) assert.equal(result.status, 'PASS');
+const checks = [];
+for (const args of [['status', '--short', '--', ownedPath], ['diff', '--', ownedPath],
+  ['diff', '--cached', '--', ownedPath], ['diff', '--check', '--', ownedPath]]) {
+  const r = spawnSync('git', args, { cwd: repo, encoding: 'utf8', windowsHide: true });
+  assert.equal(r.status, 0);
+  assert.equal(r.stdout.trim(), '');
+  checks.push({ command: 'git ' + args.join(' '), cwd: repo, exitCode: r.status, stdout: r.stdout, stderr: r.stderr });
+}
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const pathsFor = root => readdirSync(root, { recursive: true, withFileTypes: true }).filter(e => e.isFile())
+  .map(e => relative(root, resolve(e.parentPath, e.name)).replaceAll('\\', '/')).sort();
+assert.deepEqual(pathsFor(resolve(repo, ownedPath)), baseline.files.map(f => f.path).sort());
+assert.deepEqual(pathsFor(resolve(repo, ownedPath)), pathsFor(baseline.coordinatorBaseline));
+for (const file of baseline.files) {
+  assert.equal(sha(readFileSync(resolve(repo, ownedPath, file.path))), file.sha256);
+  assert.equal(sha(readFileSync(resolve(baseline.coordinatorBaseline, file.path))), file.sha256);
+}
+const version = readFileSync(resolve(repo, ownedPath, 'skill.yaml'), 'utf8').match(/^version:\s*(\S+)/m)[1];
+assert.equal(version, '1.0.0');
+const supports = {
+  'evans-ddd-reference': { version: 'Eric Evans, Domain-Driven Design Reference, 2015 edition at the March 2015 URL',
+    inspected: 'Printed pages 14 Services, 16 Aggregates and 18 Factories',
+    supports: 'Business operations without a natural entity/value owner and complex whole-aggregate creation justify services/factories; invariants have explicit owners.',
+    limit: 'Conceptual design guidance, not mandatory Java package/class templates or proof of a particular storage guarantee. Text extraction, not visual PDF inspection.' },
+  'fowler-domain-model': { version: 'Martin Fowler catalog entry, 05 March 2003', inspected: 'Domain Model definition and motivation',
+    supports: 'Domain Model combines business behavior and data.', limit: 'Does not claim a domain model is appropriate for every application.' },
+  'fowler-anemic-model': { version: 'Martin Fowler, 25 November 2003', inspected: 'Behavior ownership, procedural service layer and quoted application/domain layer responsibilities',
+    supports: 'A thin orchestration layer can coexist with a rich domain model; moving all behavior into services loses model value.',
+    limit: 'Opinionated modeling guidance, not empirical evidence that a proposed class improves a given codebase.' },
+  'aws-idempotent': { version: 'AWS Builders Library, Malcolm Featonby, page captured 2026-10-16',
+    inspected: 'Retrying and side effects; caller-provided identity; late arrivals; same ID with different intent',
+    supports: 'A missing response leaves effect outcome uncertain; safe retries depend on actual request identity/meaning and retention contracts.',
+    limit: 'Describes AWS mechanisms; no inference that an arbitrary provider supplies lookup, reservation or these exact guarantees.' },
+  'postgres17-isolation': { version: 'PostgreSQL 17 documentation, section 13.2', inspected: 'Repeatable Read and Serializable',
+    supports: 'Stable reads alone need not serialize concurrent business decisions; enforcing rules depends on appropriate storage/isolation mechanisms and conflict handling.',
+    limit: 'One database/version source supports the conditional warning, not behavior of every database or any unexecuted project integration.' },
+  'spring-data-specifications': { version: 'Spring Data JPA 3.5.13 (HTML version metadata), generation 3.5', inspected: 'Specifications and toPredicate(Root, CriteriaQuery, CriteriaBuilder)',
+    supports: 'A JPA Specification builds criteria queries; a domain criterion does not become a pure Java/SQL-equivalent implementation simply through naming.',
+    limit: 'No Spring/JPA dependency was added or executed. The version is source evidence, not a target-project upgrade or baseline selection.' }
+};
+const sources = load('source-evidence.json').map(source => {
+  assert.equal(source.status, 'CAPTURED');
+  assert.equal(sha(readFileSync(source.evidence)), source.sha256);
+  return { ...source, ...supports[source.id], readableText: resolve(here, 'sources', source.id + '.txt') };
+});
+writeFileSync(resolve(here, 'final.diff'), '');
+writeFileSync(resolve(here, 'final-check-results.json'), JSON.stringify({ checks, finalHashes: baseline.files,
+  unchangedPackage: true, verifiedSourceCaptures: sources.length }, null, 2) + '\n');
+const handoff = {
+  skill, status: 'NO_CHANGES_NEEDED', ownedPath, reviewer: '/root/quality02', reviewDate: '2026-10-16',
+  allWritesStopped: true, activeBackgroundProcesses: [],
+  versions: { committed: baseline.committedVersion, assignment: baseline.assignmentVersion, final: version,
+    preExistingBump: false, rationale: 'All three owned files remain byte-identical to assignment and the coordinator-provided temp baseline. No content change, therefore no bump.' },
+  files: { changedByReviewer: [], preExistingChanges: [], untrackedInOwnedPackage: [],
+    reviewed: baseline.files.map(f => ownedPath + '/' + f.path), baseline: resolve(here, 'baseline.json'),
+    coordinatorBaseline: baseline.coordinatorBaseline, finalDiff: resolve(here, 'final.diff'), finalHashes: baseline.files },
+  changes: [],
+  findings: {
+    corrected: [], remainingMaterialDefects: [],
+    assessment: 'Complete package review and targeted primary evidence support preserving the current content. It already distinguishes rule ownership, assessment, authoritative commitment, orchestration and lifecycle restoration without forcing a service/interface/factory.',
+    evidence: [
+      { location: 'SKILL.md:15-60, 93-114',
+        finding: 'Discovery follows accepted/rejected business scenarios and actual authority/consistency before choosing aggregate, value object, policy, specification, factory or use case. Existing adequate ownership is explicitly a valid outcome.',
+        consequence: 'A class name, two input objects or reuse alone cannot justify a domain service or rob an aggregate of its transition.' },
+      { location: 'SKILL.md:73-88; references/policy-and-factory-contracts.md:9-86',
+        finding: 'Pure assessment receives explicit facts; source identity, tenant, amount/currency, observation/decision time and terms are bound to decisions. Evidence failure differs from business rejection; fixed offers differ from provisional assessments.',
+        consequence: 'No silent stale-data fallback, unsupported approval flag or repricing of a genuine fixed commitment.' },
+      { location: 'references/policy-and-factory-contracts.md:39-46, 88-131',
+        finding: 'Reservations have authoritative provenance/binding/consumption semantics. Multi-aggregate rules identify their enforcement point; fresh prechecks and different row versions are not sufficient. Lost replies remain unknown outcomes with provider-specific recovery.',
+        consequence: 'A domain-service class or unit test cannot manufacture cross-system atomicity, stock/credit allocation or exactly-once guarantees.' },
+      { location: 'references/policy-and-factory-contracts.md:133-168',
+        finding: 'Named domain specifications are optional; direct domain methods can suffice. SQL/Java equivalence, incomplete facts, short-circuit effects, trusted scope and candidate-prefilter paging are already qualified.',
+        consequence: 'Avoids putting JPA criteria or hidden I/O into a supposedly pure criterion and prevents predicate tests from proving SQL results.' },
+      { location: 'references/policy-and-factory-contracts.md:170-207',
+        finding: 'Simple construction remains a constructor/named method; reconstitution preserves identity/version/time/historical terms and does not announce new creation. Structural invariants remain checked.',
+        consequence: 'No forwarding factory is required, and creation rules must not corrupt or reject otherwise valid historical lifecycle state.' }
+    ]
+  },
+  preserved: [
+    'Business ownership and state consistency drive placement, with an explicit no-extra-class alternative.',
+    'Java 17-compatible design signatures, inspected target toolchains and no implicit dependency or Java upgrade.',
+    'Aggregate-local transition guards even when a policy explains a decision.',
+    'Pure stateless-per-execution policies with legitimate immutable terms and explicit unavailable-evidence outcomes.',
+    'Subject/tenant/currency/freshness/terms binding and fixed-offer versus stale-assessment distinction.',
+    'Authoritative reservation, timeout ambiguity, idempotent request meaning, expiry and persistence-failure recovery.',
+    'Conditional storage guarantees, conflict handling and honest limits of unit tests.',
+    'Domain specification versus JPA predicate, semantic equivalence and candidate filtering limits.',
+    'Creation versus reconstitution, historical validity and no duplicate lifecycle events on load.',
+    'One conditional reference and nine declared optional skill handoffs.'
+  ],
+  replacedOrRemovedCapabilities: [],
+  checks: [
+    { kind: 'executed structural', command: 'node ' + resolve(here, 'check-local.mjs'), cwd: repo, exitCode: 0,
+      result: { packageFiles: structure.packageFiles, strictManifestIssues: structure.strictManifestIssues,
+        metadataAgreement: structure.metadataAgreement, relativeLinks: structure.relativeLinks,
+        directReferrals: structure.directReferrals, assignmentAndCoordinatorBaselineByteIdentical: true },
+      fullResult: resolve(here, 'structure-results.json') },
+    { kind: 'executed formatting, read-only', command: 'node node_modules/prettier/bin/prettier.cjs --check skills/java-ddd-domain-services/SKILL.md skills/java-ddd-domain-services/skill.yaml skills/java-ddd-domain-services/references/policy-and-factory-contracts.md',
+      cwd: repo, exitCode: 0, stdout: 'Checking formatting...\nAll matched files use Prettier code style!\n', stderr: '' },
+    { kind: 'executed primary-source capture', command: 'node ' + resolve(here, 'capture-sources.mjs'), cwd: repo,
+      exitCode: 0, result: 'Six sources captured over HTTPS with HTTP 200 and retained SHA-256 hashes.', fullResult: resolve(here, 'source-evidence.json') },
+    { kind: 'executed source text extraction', command: 'node ' + resolve(here, 'prepare-source-text.mjs'), cwd: repo,
+      exitCode: 0, result: extraction, note: 'Run again after adding whitespace normalization for the PDF text; targeted sections then read. Existing Poppler; no installation.' },
+    { kind: 'executed case fixture consistency', command: 'node ' + resolve(here, 'create-cases.mjs'), cwd: repo,
+      exitCode: 0, result: cases, note: 'Eight common artifacts are byte-identical. Only stock.operation differs; not an actor run.' },
+    { kind: 'executed synthetic fixture compilation', command: 'node ' + resolve(here, 'check-case-sources.mjs'), cwd: repo,
+      exitCode: 0, result: caseSources, note: 'javac 25.0.3 --release 17 -Xlint:all; no runtime, actor, provider or database execution.' },
+    ...checks.map(c => ({ kind: 'executed final scoped git inspection', ...c })),
+    { kind: 'executed final byte comparison', command: 'node ' + resolve(here, 'finalize-handoff.mjs'), cwd: repo,
+      result: 'Three owned hashes/file inventory still match assignment and coordinator temp baseline; version 1.0.0 unchanged; six source hashes verified.' }
+  ],
+  javaCompatibility: { skillBaseline: 'Illustrative Java 17-compatible signatures/design flows using project-owned types; not standalone programs',
+    changedExecutableExamples: 0, fixtureCompiler: 'javac 25.0.3 --release 17 -Xlint:all',
+    runtimeExecutions: 0, dependencyInstallOrUpgrade: false,
+    note: 'Only the synthetic evaluation-input source was compiled. Shipped design signatures require a target project and were not presented as executable tests.' },
+  behavioralEvaluationsExecuted: [],
+  walkthroughs: [
+    { case: 'DS-C1', type: 'Structured reviewer walkthrough of synthetic artifacts, not an actor run',
+      outcome: 'PREVIEW exits with a provisional decision; both eligible evaluations are consistent with the stated advisory contract. Preserve pure StockEligibility and the local Order guards; reject the proposed service that mixes I/O and transition. No authoritative allocation claim or new class is justified.' },
+    { case: 'DS-C2', type: 'Structured reviewer walkthrough of synthetic artifacts, not an actor run',
+      outcome: 'SUBMIT can persist independently versioned orders following the same unreserved availability snapshot. The pure rule may be correct while the combined durable commitment lacks authoritative allocation. Correct the review proposal and hand off provider reservation/application recovery, preserving domain ownership and input binding. This is a source-level possible schedule, not measured oversell.' }
+  ],
+  cases: { kind: 'Development cases, not holdouts', inputs: cases.cases, evaluatorCriteria: cases.evaluatorCriteria,
+    criteriaPhysicallySeparateFromInputs: true, decisiveDifference: cases.decisiveDifference,
+    actorStatus: 'Zero actors run by reviewer; pending coordinator selection/evaluation.',
+    prerequisites: 'Copy synthetic project files and expose case input without evaluator criteria; review.md is the only actor-write target. No network/provider/database/config installation required.',
+    separationLimit: 'Procedural filesystem separation is not an enforced actor sandbox; coordinator must audit exposure for any comparison.' },
+  sources,
+  limitations: [
+    'No measured skill/agent improvement, original/revised comparison or skill-selection evaluation. Content intentionally unchanged.',
+    'No real domain business contract was supplied; thresholds, provider capabilities and outcomes in cases are synthetic task requirements, not recommendations for a user system.',
+    'No runtime tests, provider integration, database/isolation exercise, ORM execution, schema replay, property-based run or performance benchmark was executed.',
+    'Compile success applies only to shared synthetic case sources targeting Java 17 through javac 25. It does not prove persistence, reservation, recovery or a JDK 17 runtime outcome.',
+    'Primary research was targeted to consequential decisions, not a systematic DDD literature review. Java package conventions and pure-policy default remain explicitly local design guidance.',
+    'The initial parallel web consultation returned no output for an extended period and was terminated. All six sources were then retrieved directly over HTTPS with bounded requests and inspected locally; no claims rely on the interrupted call.',
+    'Some broad source displays were truncated; narrower reads covered Evans Services/Aggregates/Factories, Fowler behavior/layering, AWS identity/unknown outcome/retention, PostgreSQL isolation and the versioned Spring query contract.',
+    'The PDF was inspected through extracted text, not screenshots. Local metadata/referral checks do not prove catalog-wide routing or dependency resolution.'
+  ],
+  failures: { materialLocalFailures: [], preExistingProductFailures: [], introducedFailures: [],
+    researchToolLimitation: 'One initial web batch terminated without returned results; successful bounded HTTPS capture/text inspection replaced it.' },
+  evidence: { directory: here, baseline: resolve(here, 'baseline.json'), finalChecks: resolve(here, 'final-check-results.json'),
+    sourceEvidence: resolve(here, 'source-evidence.json'), sourceTextResults: resolve(here, 'source-text-results.json'),
+    fixtureCompilation: resolve(here, 'case-source-results.json') },
+  pendingGlobalChecks: [
+    { command: 'npm run registry:build', owner: 'coordinator', reason: 'Only coordinator writes the generated shared index during parallel review.', prerequisite: 'All reviewers stopped writing.' },
+    { command: 'npm run verify', owner: 'coordinator', reason: 'Repository-wide checks are deferred by ownership rules.', prerequisite: 'Coordinator index build and all reviewers stopped.' }
+  ],
+  crossSkill: [],
+  coordinatorActions: ['Archive handoff and small relevant evidence; do not vendor primary-source PDF/HTML into the shipped skill.',
+    'For an optional independent evaluation, provide case inputs without evaluator criteria and retain actual outputs; do not count fixture compilation as agent behavior.',
+    'Run shared registry build and final verification when all reviewers have stopped.']
+};
+const destination = resolve(here, '..', skill + '.json');
+writeFileSync(destination, JSON.stringify(handoff, null, 2) + '\n');
+const readback = JSON.parse(readFileSync(destination, 'utf8'));
+assert.equal(readback.status, 'NO_CHANGES_NEEDED');
+assert.equal(readback.skill, skill);
+assert.equal(readback.allWritesStopped, true);
+assert.equal(readback.cases.inputs.length, 2);
+assert.equal(readback.files.changedByReviewer.length, 0);
+console.log(JSON.stringify({ handoff: destination, status: readback.status, version, unchangedFiles: baseline.files.length,
+  sources: sources.length, cases: cases.cases.length, runtimeTests: 0, actorRuns: 0, allWritesStopped: true }, null, 2));

@@ -1,0 +1,57 @@
+{
+  "completedAt": "2026-10-16T15:24:57.360Z",
+  "scope": "Exactly the 63 inventory wave-3 skills",
+  "reviewed": 63,
+  "changed": 46,
+  "unchanged": 17,
+  "skillFilesChanged": 136,
+  "indexEntriesChanged": 46,
+  "tests": {
+    "tests": 393,
+    "suites": 70,
+    "pass": 393,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "registry": {
+    "command": "npm run registry:build",
+    "attempt": 2,
+    "cwd": "C:/git/agent-skills",
+    "startedAt": "2026-10-16T15:23:55.708Z",
+    "finishedAt": "2026-10-16T15:23:56.592Z",
+    "exit": 0,
+    "log": "registry-build-attempt2.log.txt",
+    "node": "v25.6.1",
+    "resultFile": "registry-build-attempt2-result.json"
+  },
+  "verify": {
+    "command": "npm run verify",
+    "attempt": 1,
+    "cwd": "C:/git/agent-skills",
+    "startedAt": "2026-10-16T15:23:59.179Z",
+    "finishedAt": "2026-10-16T15:24:42.538Z",
+    "exit": 0,
+    "log": "verify.log.txt",
+    "node": "v25.6.1",
+    "resultFile": "verify-result.json"
+  },
+  "previousWorkPreserved": true,
+  "behavioralIncrementalGainObserved": false,
+  "behavioralScope": "Six fresh actor runs on two ambassador-pattern development cases; all three conditions passed both cases. No general gain/equivalence claim.",
+  "reportIntegrity": {
+    "checkedAt": "2026-10-16T15:24:52.682Z",
+    "passed": true,
+    "scope": "Report integrity and completeness, not new technical or behavioral execution",
+    "skills": 63,
+    "evidenceFiles": 2044,
+    "embeddedEvidenceReviews": 2,
+    "behaviorFiles": 156,
+    "archivedBytes": 7508388,
+    "frozenBehaviorManifestSha256": "b8091363615d04db691ee4eae981ac9c162f00349a7cc1871c82f0d3319d25da",
+    "behaviorCriteriaHashesVerified": true,
+    "allHandoffsStopped": true,
+    "notesComplete": true
+  }
+}

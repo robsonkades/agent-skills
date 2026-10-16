@@ -1,0 +1,30 @@
+import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
+import {spawnSync} from 'node:child_process';
+import {dirname,join} from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {createHash} from 'node:crypto';
+const root=dirname(fileURLToPath(import.meta.url));
+const skill='C:/git/agent-skills/skills/gof-facade/references/worked-example.md';
+const text=readFileSync(skill,'utf8');
+const section=text.split('## The remote variant')[1].split('## What the facade bought')[0];
+const method=section.match(/```java\r?\n([\s\S]*?)```/)[1].trim();
+const template=readFileSync(join(root,'harness-template.java.txt'),'utf8');
+writeFileSync(join(root,'FacadeRemoteCheck.java'),template.replace('__EXTRACTED_METHOD__',method));
+mkdirSync(join(root,'classes'),{recursive:true});
+const jdk='C:/Users/robso/.jdks/temurin-25.0.3/bin';
+const commands=[
+ {name:'toolchain',executable:join(jdk,'java.exe'),args:['-version']},
+ {name:'compile',executable:join(jdk,'javac.exe'),args:['--release','25','--enable-preview','-d',join(root,'classes'),join(root,'FacadeRemoteCheck.java')]},
+ {name:'run',executable:join(jdk,'java.exe'),args:['--enable-preview','-cp',join(root,'classes'),'FacadeRemoteCheck']}
+];
+const results=[];
+for(const command of commands) {
+ const result=spawnSync(command.executable,command.args,{cwd:root,encoding:'utf8',timeout:20000,windowsHide:true});
+ const output={...command,cwd:root,exitCode:result.status,signal:result.signal,stdout:result.stdout,stderr:result.stderr,error:result.error?.message};
+ writeFileSync(join(root,command.name+'.log'),JSON.stringify(output,null,2)+'\n');
+ results.push(output);
+ if(result.status!==0) throw new Error('Failure: '+command.name);
+ if(command.name==='run'&&result.stdout.split('\n').filter(line=>line.startsWith('PASS ')).length!==8) throw new Error('Expected eight executed controls');
+}
+writeFileSync(join(root,'result.json'),JSON.stringify({kind:'extracted preview-method technical checks, with synthetic ports',sourcePath:skill,sourceSha256:createHash('sha256').update(text).digest('hex'),methodSha256:createHash('sha256').update(method).digest('hex'),results},null,2)+'\n');
+console.log(JSON.stringify({status:'PASS',controls:8,target:'Java 25 preview',runtime:'Temurin 25.0.3+9-LTS',result:join(root,'result.json')},null,2));

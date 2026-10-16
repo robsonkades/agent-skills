@@ -1,0 +1,19 @@
+{
+  "label": "prettier-owned",
+  "executable": "C:\\Program Files\\nodejs\\node.exe",
+  "args": [
+    "C:\\git\\agent-skills\\node_modules\\prettier\\bin\\prettier.cjs",
+    "--check",
+    "C:\\git\\agent-skills\\skills\\java-streams\\SKILL.md",
+    "C:\\git\\agent-skills\\skills\\java-streams\\references\\collectors-and-purity.md",
+    "C:\\git\\agent-skills\\skills\\java-streams\\references\\parallel-and-gatherers.md",
+    "C:\\git\\agent-skills\\skills\\java-streams\\skill.yaml"
+  ],
+  "cwd": "C:/git/agent-skills",
+  "exitCode": 0,
+  "signal": null,
+  "stdout": "Checking formatting...\nAll matched files use Prettier code style!\n",
+  "stderr": "",
+  "error": null,
+  "expectedExit": 0
+}

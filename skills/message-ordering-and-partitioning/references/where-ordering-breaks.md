@@ -45,9 +45,19 @@ and one worker per lane. `handle` must finish its effect before returning; merel
 another asynchronous operation does not preserve completion order:
 
 ```java
-int worker = Math.floorMod(rec.key().hashCode(), workers.length);
+// Here the consumer's declared key type is byte[] containing canonical, unchanged key bytes.
+byte[] canonicalKey = rec.key();
+int worker = Math.floorMod(java.util.Arrays.hashCode(canonicalKey), workers.length);
 workers[worker].submit(() -> handle(rec));    // one slow key now blocks every key sharing it
 ```
+
+Hash the logical key's value, not its object identity. Distinct `byte[]` instances with equal
+contents inherit `Object.hashCode()` and may choose different lanes if `key.hashCode()` is
+used. `Arrays.hashCode(byte[])` gives equal hashes for equal contents; a suitable immutable
+value type such as `String` can use its own value hash. Keep canonicalization and worker
+mapping stable, and do not mutate key bytes between routings. Hash collisions merely share
+a serial lane; they do not require different keys to be equal. Test separate key objects with
+equal values, holding the first effect open while admitting the second.
 
 Offsets advance only through the completed prefix of **delivered records** per partition;
 numeric offsets can have gaps. Use an explicit safe next-offset commit map and ownership epoch;
@@ -124,6 +134,8 @@ Choose recovery from the required effect history:
   sequencing. Keep every required delta; a newer-version snapshot guard would discard some.
 - For complete snapshots with deliberately skippable intermediate effects, the atomic
   newer-version guard can reject a late older resend; preserve equal-version conflict checks.
+  If a compacted topic is the rebuild source, also check the retained-log counterexample in
+  [Designing without ordering](designing-without-ordering.md#live-convergence-is-not-cold-rebuild-correctness).
 - When source order is required, a concurrent outbox relay also needs per-key scheduling/
   recovery or sink resequencing. Inspect relay claims, retries and completion order rather
   than inferring order from outbox insertion alone.
@@ -184,3 +196,4 @@ Consequences to plan for at creation:
 - [Kafka 4.1 operations: partition-count changes](https://kafka.apache.org/41/operations/basic-kafka-operations/)
 - [Kafka 4.1.0 built-in key mapping](https://github.com/apache/kafka/blob/4.1.0/clients/src/main/java/org/apache/kafka/clients/producer/internals/BuiltInPartitioner.java) — implementation example; inspect the target client's partitioner.
 - [Java 17 Executors: single-worker execution](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/Executors.html) — serial execution is possible; the factory's unbounded queue is not an overload policy.
+- [Java 17 array members](https://docs.oracle.com/javase/specs/jls/se17/html/jls-10.html#jls-10.7) and [Arrays content hashes](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Arrays.html) — arrays inherit object identity methods; content hashing is a separate operation.

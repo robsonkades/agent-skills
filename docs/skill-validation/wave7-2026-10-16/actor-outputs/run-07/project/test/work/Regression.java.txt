@@ -1,0 +1,179 @@
+package work;
+
+import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
+
+public class Regression {
+    private static final String BUSINESS = fileUrl("replay-business");
+    private static final String RECEIVER = fileUrl("replay-receiver");
+
+    public static void main(String[] args) {
+        if (args.length == 0) {
+            prepare();
+            recover();
+            controls();
+        } else {
+            switch (args[0]) {
+                case "prepare" -> prepare();
+                case "recover" -> recover();
+                case "controls" -> controls();
+                default -> throw new IllegalArgumentException("Unknown phase: " + args[0]);
+            }
+        }
+    }
+
+    private static String fileUrl(String name) {
+        return "jdbc:h2:file:" + Path.of(".build", name).toAbsolutePath().toString().replace('\\', '/');
+    }
+
+    private static JdbcTemplate database(String url) {
+        return new JdbcTemplate(new DriverManagerDataSource(url, "sa", ""));
+    }
+
+    private static AnnotationConfigApplicationContext context(String business, String receiver, Checkpoint checkpoint) {
+        System.setProperty("work.businessUrl", business);
+        System.setProperty("work.receiverUrl", receiver);
+        var ctx = new AnnotationConfigApplicationContext();
+        ctx.registerBean("testCheckpoint", Checkpoint.class, () -> checkpoint, definition -> definition.setPrimary(true));
+        ctx.register(Config.class);
+        ctx.refresh();
+        return ctx;
+    }
+
+    private static void reset(AnnotationConfigApplicationContext ctx, String receiver) {
+        var jdbc = ctx.getBean(JdbcTemplate.class);
+        jdbc.execute("drop all objects");
+        jdbc.execute("create table orders(id varchar primary key,payload varchar)");
+        jdbc.execute("create table outbox(event_id varchar primary key,payload varchar,done boolean)");
+        database(receiver).update("delete from accepted");
+    }
+
+    private static int count(JdbcTemplate jdbc, String table, String condition) {
+        return jdbc.queryForObject("select count(*) from " + table + condition, Integer.class);
+    }
+
+    private static void require(boolean condition, String message) {
+        if (!condition) throw new AssertionError(message);
+    }
+
+    private static <T extends RuntimeException> T expect(Class<T> type, Runnable action) {
+        try {
+            action.run();
+        } catch (RuntimeException failure) {
+            if (type.isInstance(failure)) return type.cast(failure);
+            throw failure;
+        }
+        throw new AssertionError("Expected " + type.getSimpleName());
+    }
+
+    private static void prepare() {
+        var failure = new IllegalStateException("checkpoint unavailable after acknowledgment");
+        var calls = new AtomicInteger();
+        var businessJdbc = new AtomicReference<JdbcTemplate>();
+        try (var ctx = context(BUSINESS, RECEIVER, eventId -> {
+            require(eventId.equals("event:retained"), "checkpoint received wrong identity");
+            require(count(database(RECEIVER), "accepted", "") == 1, "checkpoint must follow receiver commit");
+            require(count(businessJdbc.get(), "outbox", " where done=false") == 1,
+                    "checkpoint must precede progress recording in the dispatcher transaction");
+            calls.incrementAndGet();
+            throw failure;
+        })) {
+            reset(ctx, RECEIVER);
+            var jdbc = ctx.getBean(JdbcTemplate.class);
+            businessJdbc.set(jdbc);
+            ctx.getBean(Publisher.class).create("retained", "original-fact");
+            jdbc.update("update orders set payload='changed-current-state' where id='retained'");
+            require(expect(IllegalStateException.class, () -> ctx.getBean(Dispatcher.class).replayOne()) == failure,
+                    "checkpoint failure must propagate unchanged");
+            require(calls.get() == 1, "checkpoint must run exactly once per accepted attempt");
+            require(count(jdbc, "orders", "") == 1, "committed business order must survive");
+            require(count(jdbc, "outbox", " where done=false") == 1, "failed checkpoint must retain pending work");
+            require(count(jdbc, "outbox", " where done=true") == 0, "failed work must not be acknowledged locally");
+            require(jdbc.queryForObject("select payload from outbox", String.class).equals("original-fact"),
+                    "retained payload must remain the original fact");
+            require(ctx.getBean(ReceiverClient.class).count() == 1, "receiver effect must survive local failure");
+            System.out.println("PASS failure window: order=1, pending=1, receiver effect=1, checkpoint failure propagated");
+        }
+    }
+
+    private static void recover() {
+        var calls = new AtomicInteger();
+        try (var ctx = context(BUSINESS, RECEIVER, eventId -> {
+            require(eventId.equals("event:retained"), "replay changed retained event identity");
+            calls.incrementAndGet();
+        })) {
+            var jdbc = ctx.getBean(JdbcTemplate.class);
+            var receiver = ctx.getBean(ReceiverClient.class);
+            require(count(jdbc, "outbox", " where done=false") == 1 && receiver.count() == 1,
+                    "recovery must begin from retained failure state");
+            require(ctx.getBean(Dispatcher.class).replayOne(), "retained work must be replayed");
+            int effects = receiver.count();
+            System.out.println("Observed replay: receiver effects=" + effects + ", done=" + count(jdbc, "outbox", " where done=true"));
+            require(effects == 1, "replay duplicated receiver effect: expected 1, got " + effects);
+            require(calls.get() == 1, "checkpoint must also run on acknowledged duplicate");
+            require(count(jdbc, "orders", "") == 1 && count(jdbc, "outbox", " where done=true") == 1,
+                    "replay must complete existing work without recreating the order");
+            require(count(jdbc, "outbox", " where done=false") == 0, "completed row must no longer be pending");
+            var accepted = database(RECEIVER).queryForMap("select token,payload from accepted");
+            require(accepted.get("TOKEN").equals("event:retained"), "acceptance identity must be persisted event_id");
+            require(accepted.get("PAYLOAD").equals("original-fact"), "replay must deliver original snapshot");
+            require(!ctx.getBean(Dispatcher.class).replayOne() && receiver.count() == 1 && calls.get() == 1,
+                    "empty replay must do no work");
+            System.out.println("PASS recovery: stable identity, original payload, one effect, retained row completed");
+        }
+    }
+
+    private static void controls() {
+        String business = "jdbc:h2:mem:regression-controls;DB_CLOSE_DELAY=-1";
+        String receiverUrl = "jdbc:h2:mem:regression-control-receiver;DB_CLOSE_DELAY=-1";
+        var calls = new AtomicInteger();
+        try (var ctx = context(business, receiverUrl, eventId -> calls.incrementAndGet())) {
+            reset(ctx, receiverUrl);
+            var jdbc = ctx.getBean(JdbcTemplate.class);
+            var publisher = ctx.getBean(Publisher.class);
+            var dispatcher = ctx.getBean(Dispatcher.class);
+            var receiver = ctx.getBean(ReceiverClient.class);
+
+            jdbc.update("insert into outbox values ('event:collision','existing',false)");
+            expect(DuplicateKeyException.class, () -> publisher.create("collision", "new"));
+            require(count(jdbc, "orders", "") == 0, "second-write failure must roll back business insert");
+            require(count(jdbc, "outbox", "") == 1 && jdbc.queryForObject("select payload from outbox", String.class).equals("existing"),
+                    "publisher failure must preserve original outbox row");
+            System.out.println("PASS publisher atomicity after outbox constraint failure");
+
+            reset(ctx, receiverUrl);
+            publisher.create("a", "same-payload");
+            publisher.create("b", "same-payload");
+            require(dispatcher.replayOne() && receiver.count() == 1 && count(jdbc, "outbox", " where done=false") == 1,
+                    "one replay must process at most one row");
+            require(dispatcher.replayOne() && receiver.count() == 2 && count(jdbc, "outbox", " where done=true") == 2,
+                    "different event identities must remain distinct even with identical payloads");
+            require(!dispatcher.replayOne() && calls.get() == 2, "drained replay must return false");
+            System.out.println("PASS bounded replay and distinct events with equal payloads");
+
+            reset(ctx, receiverUrl);
+            calls.set(0);
+            publisher.create("rejected", "reject");
+            expect(IllegalArgumentException.class, dispatcher::replayOne);
+            expect(IllegalArgumentException.class, dispatcher::replayOne);
+            require(calls.get() == 0 && receiver.count() == 0 && count(jdbc, "outbox", " where done=false") == 1
+                    && count(jdbc, "orders", "") == 1, "receiver rejection must retain work and skip checkpoint");
+            System.out.println("PASS receiver rejection propagates and preserves pending work");
+
+            reset(ctx, receiverUrl);
+            receiver.accept("event:conflict", "different-payload");
+            publisher.create("conflict", "original-fact");
+            expect(IllegalArgumentException.class, dispatcher::replayOne);
+            require(calls.get() == 0 && receiver.count() == 1 && count(jdbc, "outbox", " where done=false") == 1,
+                    "same-token payload conflict must not be marked complete or bypass receiver rejection");
+            require(database(receiverUrl).queryForObject("select payload from accepted", String.class).equals("different-payload"),
+                    "receiver conflict must preserve previous effect");
+            System.out.println("PASS same-token different-payload rejection remains enforced");
+        }
+    }
+}

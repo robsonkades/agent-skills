@@ -1,0 +1,22 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+const root='C:/Users/robso/AppData/Local/Temp/skills-wave5-actors-4tJ3OK';
+const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
+function walk(dir,sub=''){return fs.readdirSync(dir+'/'+sub,{withFileTypes:true}).flatMap(e=>{const p=sub?sub+'/'+e.name:e.name;return e.isDirectory()?(e.name==='.build'?[]:walk(dir,p)):[p];});}
+function compact(value,key=''){
+ if(Array.isArray(value))return value.map(v=>compact(v,key));
+ if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).map(([k,v])=>[k,compact(v,k)]));
+ if(typeof value==='string'&&(/content|stdout|stderr|text|script/i.test(key)||value.length>2500))return {omittedCharacters:value.length,sha256:sha(value)};
+ return value;
+}
+for(const number of process.argv.slice(2)){
+ const id='run-'+number.padStart(2,'0'),dir=root+'/'+id;
+ const files=walk(dir+'/output/project').filter(p=>!fs.existsSync(dir+'/input/project/'+p)||!fs.readFileSync(dir+'/input/project/'+p).equals(fs.readFileSync(dir+'/output/project/'+p)));
+ console.log(JSON.stringify({id,changed:files,removed:walk(dir+'/input/project').filter(p=>!fs.existsSync(dir+'/output/project/'+p))},null,2));
+ for(const p of files)if(/\.(java|mjs|json)$/.test(p))console.log(JSON.stringify({file:p,content:fs.readFileSync(dir+'/output/project/'+p,'utf8')},null,2));
+ const data=JSON.parse(fs.readFileSync(dir+'/output/execution.json','utf8'));
+ const exposure=Object.fromEntries(Object.entries(data).filter(([k])=>/allWrites|scope|limit|access|skill|process|reference|status/i.test(k)));
+ const readFields=Object.fromEntries(Object.entries(data).filter(([k])=>/read|exposure/i.test(k)));
+ for(const [key,value]of Object.entries(readFields))if(Array.isArray(value))readFields[key]=value.filter(v=>/skill\//i.test(v.file??v.path??JSON.stringify(v))).map(v=>{const {content,...rest}=v;return rest;});
+ console.log(JSON.stringify({id,executionKeys:Object.keys(data),exposure:compact(exposure),readFields:compact(readFields)},null,2));
+}

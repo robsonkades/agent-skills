@@ -1,0 +1,80 @@
+{
+  "decision": "changed",
+  "cause": "OrderService.place crossed a real Spring proxy but its unqualified @Transactional selected primary metricsTx. ordersJdbc writes target a different datasource, so an active metrics transaction did not roll back order writes. The observed exceptions already matched default unchecked rollback rules; self-invocation was not the executed path.",
+  "changes": [
+    "Selected transactionManager=\"ordersTx\" on OrderService.place.",
+    "Added five persisted-state regressions through actual Spring beans in test/work/Regression.java.",
+    "Updated RUNBOOK.md with resource ownership, failure behavior and verification commands.",
+    "Added output/checks/verify-frozen.mjs to compare frozen project bytes."
+  ],
+  "verification": [
+    {
+      "argv": [
+        "node",
+        "check.mjs"
+      ],
+      "stage": "before repair",
+      "exit": 0,
+      "result": "command rejected; active=true committed orders=1 (smoke lacked rollback assertions)"
+    },
+    {
+      "argv": [
+        "node",
+        "check.mjs",
+        "work.Regression"
+      ],
+      "stage": "before repair",
+      "exit": 1,
+      "result": "2 failures: stock rejection and notifier rejection retained an order; 3 other scenarios passed"
+    },
+    {
+      "argv": [
+        "node",
+        "check.mjs",
+        "work.Regression"
+      ],
+      "stage": "after repair",
+      "exit": 0,
+      "result": "5 regressions passed: stock rollback, notifier rollback and cause preservation, success, insertion failure, metrics preservation"
+    },
+    {
+      "argv": [
+        "node",
+        "check.mjs"
+      ],
+      "stage": "after repair",
+      "exit": 0,
+      "result": "command rejected; active=true committed orders=0"
+    },
+    {
+      "argv": [
+        "node",
+        "../checks/verify-frozen.mjs"
+      ],
+      "stage": "after repair",
+      "exit": 0,
+      "result": "18 frozen files byte-identical to input, including all 12 libraries"
+    }
+  ],
+  "limits": [
+    "Local Java 25 / Spring Framework 7.0.9 / JDBC / H2 2.4.240 evidence; no production crash, JPA or cross-database atomicity claim.",
+    "No dependencies installed or external application services contacted.",
+    "An unintended setup copy remains preserved at output/checks/setup-copy, outside executed project. Its delete attempt was blocked automatically; a non-destructive move succeeded.",
+    "Execution records are actor reports, not an independent complete trace."
+  ],
+  "regressionCommands": [
+    [
+      "node",
+      "check.mjs",
+      "work.Regression"
+    ],
+    [
+      "node",
+      "check.mjs"
+    ],
+    [
+      "node",
+      "../checks/verify-frozen.mjs"
+    ]
+  ]
+}

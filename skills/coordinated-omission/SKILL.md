@@ -44,6 +44,8 @@ decision. Keep a representative existing workload model rather than forcing open
    completion and deadline so generator lag and send-to-completion response time are separable.
    For an open target, establish how due times exist independently of actual starts and responses;
    a "scheduled" counter incremented only at send time cannot reveal missing schedule slots.
+   Inspect when metrics are emitted: a counter timestamped on completion does not independently
+   count starts in that time bucket. Preserve the selected arrival cohort through its declared drain.
 3. **Check response coupling.** In a closed population at equilibrium, the interactive response
    law is `X = N/(R+Z)` for population `N`, response time `R` and think time `Z`. It explains why
    throughput falls as responses slow; `N ≥ λR` is a concurrency sizing estimate, not proof that
@@ -120,6 +122,7 @@ proposed validation run; a narrow explanation does not require collecting a fres
 ```text
 Target workload: open / closed / semi-open / replay; production evidence
 Clock model:     scheduled, actual start, accepted, completed/deadline timestamps
+Observation:     cohort selection, metric emission time and final outcome cutoff
 Stage counts:    scheduled → admitted → started → accepted → each terminal outcome
 Generator:       version/config, VUs/workers, CPU/GC/event-loop, sockets, clock sync
 Schedule:        target and empirical inter-arrival distributions; lag/drop policy

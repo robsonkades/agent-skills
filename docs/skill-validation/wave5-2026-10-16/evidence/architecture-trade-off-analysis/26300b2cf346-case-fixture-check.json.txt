@@ -1,0 +1,11 @@
+{
+  "command": "@'\nconst fs=require('node:fs'),assert=require('node:assert/strict');\nconst root='C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/architecture-trade-off-analysis-check';\nconst input=JSON.parse(fs.readFileSync(root+'/case-inputs.json','utf8'));\nconst criteria=JSON.parse(fs.readFileSync(root+'/case-criteria.json','utf8'));\nconst a={...input.commonFiles,...input.cases[0].fixtureOverrides};\nconst b={...input.commonFiles,...input.cases[1].fixtureOverrides};\nassert.deepEqual(Object.keys(a).sort(),Object.keys(b).sort());\nconst changed=Object.keys(a).filter(p=>a[p]!==b[p]);\nassert.deepEqual(changed,['api/report-contract.yaml']);\nassert.equal(a[changed[0]].replace('allowPendingOnSuccessfulPost: false','allowPendingOnSuccessfulPost: true'),b[changed[0]]);\nassert.equal(input.cases[0].input,input.cases[1].input);\nassert.equal(criteria.behavioralEvaluationsExecuted,0);\nassert.deepEqual(criteria.cases.map(x=>x.id),input.cases.map(x=>x.id));\nconst costs=a['ops/costs.csv'].trim().split('\\n').slice(1).map(line=>{const [candidate,monthly,transition,months]=line.split(',');return {candidate,total:Number(monthly)*Number(months)+Number(transition)};});\nassert.deepEqual(costs,[{candidate:'A',total:54000},{candidate:'B',total:43700}]);\nconsole.log(JSON.stringify({status:'PASS',fixtureFiles:Object.keys(a).length,cases:input.cases.map(x=>x.id),changedFiles:changed,onlyChangedField:'allowPendingOnSuccessfulPost false -> true',sameTask:true,costTotals:costs,inputCriteriaFilesSeparated:true,actorsExecuted:0},null,2));\n'@ | node",
+  "cwd": "C:/git/agent-skills",
+  "chunk_id": "111255",
+  "wall_time_seconds": 0.0990084,
+  "exit_code": 0,
+  "original_token_count": 110,
+  "output": "{\n  \"status\": \"PASS\",\n  \"fixtureFiles\": 12,\n  \"cases\": [\n    \"ATA-W5-A\",\n    \"ATA-W5-B\"\n  ],\n  \"changedFiles\": [\n    \"api/report-contract.yaml\"\n  ],\n  \"onlyChangedField\": \"allowPendingOnSuccessfulPost false -> true\",\n  \"sameTask\": true,\n  \"costTotals\": [\n    {\n      \"candidate\": \"A\",\n      \"total\": 54000\n    },\n    {\n      \"candidate\": \"B\",\n      \"total\": 43700\n    }\n  ],\n  \"inputCriteriaFilesSeparated\": true,\n  \"actorsExecuted\": 0\n}\n",
+  "scope": "Input fixture consistency and arithmetic only; not an actor or application execution."
+}
+

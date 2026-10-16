@@ -35,6 +35,9 @@ configuration, retention jobs, tests and documented API/provider contracts. Trac
 from caller through every durable mutation and external effect. Establish the target
 Java/framework and database/isolation versions from build/runtime evidence; the reference's
 Java 17 schema sketch does not authorize an upgrade or prove transaction behavior.
+Resolve remote calls to the actual HTTP method/path, account/sandbox scope and API version
+from client wiring/configuration or redacted request evidence. A provider name or SDK version
+alone does not select its replay contract.
 
 Separate the requested guarantee and documented contract from incidental code patterns. If
 identity, acceptable duplicate effects, replay horizon or provider recovery guarantees remain

@@ -1,0 +1,10 @@
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+
+final class ProductLists {
+    static <T> List<T> prepare(List<T> items) {
+        Objects.requireNonNull(items, "items");
+        return List.copyOf(items);
+    }
+}

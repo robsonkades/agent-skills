@@ -115,7 +115,9 @@ Scoping choices:
   matching a pod parent's ID does not include child-container IDs. Verify hierarchy, helper
   support, migration and recreation; see the interpretation reference for those semantics;
 - process name (`comm == "java"`) is neither unique nor durable;
-- PID namespaces change visible identifiers; record host and container mappings.
+- PID namespaces change visible identifiers; normalize membership and pairing keys before
+  comparing builtins with tracepoint subject fields. Record host/container mappings; the
+  interpretation reference explains the bpftrace 0.24 namespace distinction.
 
 System-wide probes are legitimate for interference/capacity questions, but require stronger
 privacy, overhead, and tenant authorization. “Always filter by PID” is wrong for host-level

@@ -1,0 +1,3 @@
+public interface PriceLookup {
+    Price of(Sku sku, Deadline deadline);
+}

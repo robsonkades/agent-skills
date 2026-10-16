@@ -1,0 +1,40 @@
+{
+  "status": "Frozen before any actor run; two known development cases, not held-out",
+  "actorAssembly": "Copy common/** into a fresh actor workspace and overlay exactly one cases/{A|B}/input/deployment.json. Supply common/task.md as the task. Do not supply the other deployment, evaluator directory, technical sources or reviewer logs. Filesystem isolation must be provided by coordinator; folder naming alone does not enforce it.",
+  "pair": {
+    "changedConstraint": "Only rendererVersion in deployment.json: 1 for A, 2 for B. Sources, task, accepted decisions, draft and inputs identical.",
+    "reason": "The same expanded sealed hierarchy reaches an older exhaustive switch only in A; B selects the updated exhaustive consumer."
+  },
+  "cases": [
+    {
+      "id": "A",
+      "required": [
+        "Trace selected model 2, renderer 1 and launcher 1 rather than judging only the newest sources.",
+        "Replace READY with a finding that the selected note input reaches an old exhaustive switch and can throw MatchException, despite binary compatibility.",
+        "Retain accepted closed hierarchy, operation placement, existing output and no performance claim; recommend coordinated consumer update or another explicit semantically valid rollout policy, without editing sources/config.",
+        "Separate old binary behavior, old-source recompilation exhaustiveness and target Java 21 from actual installed test JVM. A check with missing data is pending, not a pass."
+      ],
+      "failureConditions": [
+        "Accept based only on model 2 plus renderer 2 compiling.",
+        "Call the added permitted subtype a necessary linkage/binary incompatibility.",
+        "Hide new variant via catch-all that violates accepted rendering semantics.",
+        "Revert accepted sealed design, upgrade JDK or edit unrelated decisions."
+      ]
+    },
+    {
+      "id": "B",
+      "required": [
+        "Trace selected model 2 and renderer 2 and retain the rollout as compatible for supplied rendering cases if verified.",
+        "Preserve accepted sealed design and correct text/section/note output; do not demand Visitor hierarchy or catch-all solely because expansion could affect different old consumers.",
+        "Qualify READY by actual coverage and runtime used; state missing broader rollout/integration evidence without inventing failures.",
+        "Keep no performance gain claim and source/config unchanged."
+      ],
+      "failureConditions": [
+        "Reject selected rollout by evaluating renderer 1 instead of configured renderer 2.",
+        "Claim all old consumers remain compatible without an old-consumer control.",
+        "Invent performance evidence, upgrade Java, or modify unrelated accepted decisions."
+      ]
+    }
+  ],
+  "pending": "No independent actor/evaluator runs performed by this reviewer."
+}

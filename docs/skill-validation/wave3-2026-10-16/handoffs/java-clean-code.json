@@ -1,0 +1,273 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "java-clean-code",
+  "reviewer": "/root/quality18",
+  "wave": 3,
+  "repository": "C:/git/agent-skills",
+  "ownedPath": "skills/java-clean-code/**",
+  "reviewDate": "2026-10-16",
+  "allWritesStopped": true,
+  "scope": "Existing skill only: readability split/merge/keep decisions and behavior-preserving extraction. No package-manager/shared/global changes, installations or subdelegation.",
+  "requiredReadings": "Wave3 brief, complete skill-review-prompt, skill-engineering and evidence/evaluation/resource-design/anti-pattern references read; applicable supplied/root AGENTS constraints followed. Entire assigned four-file package read before edits.",
+  "baseline": {
+    "committedVersion": "2.2.4",
+    "assignmentVersion": "2.2.4",
+    "preExistingVersionBump": false,
+    "preExistingChanges": [],
+    "gitState": "Scoped staged/unstaged/untracked baseline clean; saved all four contents/hashes before edit; committed version rechecked at completion.",
+    "hashes": [
+      {
+        "Path": "skills/java-clean-code\\skill.yaml",
+        "Hash": "E4C177D5F34387D2EA8A9E722906BCC65D21B4D7872222D6039F36F1D745899C"
+      },
+      {
+        "Path": "skills/java-clean-code\\SKILL.md",
+        "Hash": "0D577D804F588F195C2B347C54B90C94EE6D75CE977AC0F0D4A1CA0DA9D0BCAE"
+      },
+      {
+        "Path": "skills/java-clean-code\\references\\worked-examples.md",
+        "Hash": "72156A63034B7877B65FEEE302B279779BEC694E9CBFB907ACDF306853FAC2D6"
+      },
+      {
+        "Path": "skills/java-clean-code\\references\\structure-and-coupling.md",
+        "Hash": "B7BCE02B74CC03C9AE9F8100A3AE85206AB98307C16B33D7DCBEE3505EBB47B1"
+      }
+    ]
+  },
+  "findingsCorrected": [
+    {
+      "location": "SKILL.md:77-84; references/structure-and-coupling.md:26-64",
+      "finding": "Extraction guidance protected evaluation order/count but did not explicitly account for changed compile-time overload selection when a helper broadens declared types.",
+      "evidence": "JLS25§15.12.2 plus compiled/runtime/javap probe: same char[] yields OK through append(char[]) and array object representation through Object helper; typed Receipt audit selects a different effect route after widening.",
+      "consequence": "A supposedly structural cleanup can compile and preserve event counts while changing output or the called effect.",
+      "fix": "Short visible rule plus conditional reference: follow receiver/argument declarations, selected member and discriminating result/effect evidence; preserve a meaningful helper's type or retain clearer inline code."
+    },
+    {
+      "location": "references/structure-and-coupling.md:54-64",
+      "finding": "The safe fix depends on the original declared contract; narrowing based on one runtime fixture can introduce a different regression.",
+      "evidence": "The probe's original Object path and Object helper retain the same selected overload for the identical runtime char[]/Receipt. Typed helper preserves typed original only.",
+      "consequence": "A universal 'always use the concrete runtime type' correction breaks generic original behavior and potentially accepted input types.",
+      "fix": "Include an explicit original-Object counterexample and cast/input-contract caveat, preserving sound generic paths and no-change choices."
+    }
+  ],
+  "findingsRemaining": [],
+  "filesChangedByReviewer": [
+    "skills/java-clean-code/SKILL.md",
+    "skills/java-clean-code/references/structure-and-coupling.md",
+    "skills/java-clean-code/skill.yaml"
+  ],
+  "preExistingFilesChanged": [],
+  "finalHashes": [
+    {
+      "Path": "skills/java-clean-code\\skill.yaml",
+      "Hash": "1DB32AFFB7F01F75BC0E4724CA2E0719C64810B8CE290EBE2A213D5B30D796A2"
+    },
+    {
+      "Path": "skills/java-clean-code\\SKILL.md",
+      "Hash": "6F8F03DCFB34E6F1DB5DF3411D08E63FD2ED89ECAE80A63F93C46FAB49F81CAB"
+    },
+    {
+      "Path": "skills/java-clean-code\\references\\worked-examples.md",
+      "Hash": "72156A63034B7877B65FEEE302B279779BEC694E9CBFB907ACDF306853FAC2D6"
+    },
+    {
+      "Path": "skills/java-clean-code\\references\\structure-and-coupling.md",
+      "Hash": "6DB7304003A8C0A050A245DD8B57976FCB98E040669E225FF62042F2B44B0157"
+    }
+  ],
+  "capabilitiesPreserved": [
+    "Review-only versus authorized-refactor scope and conditional unknown-target handling",
+    "Split/keep/merge based on reader tasks and concept/navigation cost rather than line/arity rules",
+    "Settlement and batch worked examples, including timing/count/snapshot, retry and reentrancy limitations",
+    "Phase types with enforced invariant/ownership and action-time checks; legitimate framework/protocol lifecycles",
+    "Ambient input exposure with clock/timezone/read-count/random-source sharing constraints",
+    "Correctness and measured performance take precedence; publication/framework compatibility boundaries",
+    "Concrete verification, meaningful no-findings/no-change decisions and proper neighboring-skill handoffs"
+  ],
+  "capabilitiesRemoved": [],
+  "capabilitiesReplaced": [],
+  "version": {
+    "committed": "2.2.4",
+    "assignment": "2.2.4",
+    "final": "2.2.5",
+    "rationale": "One patch for supported scoped instruction/example additions; no prior unpublished bump; manifest only version field; descriptions unchanged and matched."
+  },
+  "validation": {
+    "technicalExecutions": [
+      {
+        "kind": "Overload extraction technical probe",
+        "cwd": "C:/git/agent-skills",
+        "command": "$probeDir = 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-clean-code-validation-quality18'\n& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' --release 25 -d $probeDir \"$probeDir/ExtractionProbe.java\" 1> \"$probeDir/compile-stdout.txt\" 2> \"$probeDir/compile-stderr.txt\"\nif ($LASTEXITCODE -ne 0) { Get-Content -LiteralPath \"$probeDir/compile-stderr.txt\"; exit $LASTEXITCODE }\n& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -cp $probeDir ExtractionProbe 1> \"$probeDir/run-stdout.txt\" 2> \"$probeDir/run-stderr.txt\"\n$runExit = $LASTEXITCODE\nGet-Content -LiteralPath \"$probeDir/run-stdout.txt\"\nGet-Content -LiteralPath \"$probeDir/run-stderr.txt\"\nif ($runExit -ne 0) { exit $runExit }\n& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javap.exe' -c -p -classpath $probeDir ExtractionProbe 1> \"$probeDir/javap.txt\" 2> \"$probeDir/javap-stderr.txt\"\n$javapExit = $LASTEXITCODE\nGet-Content -LiteralPath \"$probeDir/javap.txt\" | Select-String -Pattern 'StringBuilder.append:|Audit.record:'\nexit $javapExit",
+        "compilerTarget": "javac25.0.3 --release25",
+        "runtimeObserved": "Temurin25.0.3+9-LTS",
+        "dependencies": "JDK only; no external artifacts installed",
+        "result": "Compile, runtime assertions and javap exit0; stderr files empty. Nonempty and empty char[] original/typed helper matched; widened helper differed; originalObject/helperObject matched; String Object control matched; typed/generic Audit effect routes asserted.",
+        "observed": [
+          "chars {'O','K'}: original OK; widened [C@<identity>; typed helper OK.",
+          "empty chars: original empty; widened array identity representation.",
+          "Receipt r-7: original typed effect receipt:r-7; widened Object effect generic:Receipt[id=r-7]; typed helper retains typed effect; original Object retains generic effect.",
+          "javap confirms StringBuilder.append descriptors ([C) vs (Ljava/lang/Object;) and Audit.record Receipt vs Object."
+        ],
+        "outputs": [
+          "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-clean-code-validation-quality18/compile-stdout.txt",
+          "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-clean-code-validation-quality18/compile-stderr.txt",
+          "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-clean-code-validation-quality18/run-stdout.txt",
+          "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-clean-code-validation-quality18/run-stderr.txt",
+          "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-clean-code-validation-quality18/javap.txt",
+          "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-clean-code-validation-quality18/javap-stderr.txt"
+        ],
+        "limit": "Exact identity hash text is incidental and not asserted. Probe establishes chosen overload/output/effect in this fixture, not universal equivalence or readability gain."
+      },
+      {
+        "kind": "Existing core parsers and local resource checks",
+        "cwd": "C:/git/agent-skills",
+        "command": "@'\nimport assert from 'node:assert/strict';\nimport { readFileSync, existsSync } from 'node:fs';\nimport { resolve, dirname } from 'node:path';\nimport { parseManifest } from './packages/core/src/domain/manifest.ts';\nimport { parseSkillDocument } from './packages/core/src/domain/skill-document.ts';\nconst root = resolve('skills/java-clean-code');\nconst { manifest, issues } = parseManifest(readFileSync(resolve(root, 'skill.yaml'), 'utf8'), { strict: true });\nassert.deepEqual(issues, []);\nconst doc = parseSkillDocument(readFileSync(resolve(root, 'SKILL.md'), 'utf8'));\nassert.equal(manifest.name, 'java-clean-code');\nassert.equal(doc.frontmatter.name, manifest.name);\nassert.equal(manifest.version, '2.2.5');\nconst norm = s => s.replace(/\\s+/g, ' ').trim();\nassert.equal(norm(doc.frontmatter.description), norm(manifest.description));\nfor (const path of manifest.files) assert.ok(existsSync(resolve(root, path)), path);\nconst refs = [...new Set(doc.body.match(/references\\/[A-Za-z0-9/-]+\\.md/g))];\nassert.equal(refs.length, 2);\nlet links = 0;\nfor (const name of ['SKILL.md', ...refs]) {\n  const source = resolve(root, name);\n  const content = readFileSync(source, 'utf8');\n  for (const match of content.matchAll(/\\]\\(([^)]+)\\)/g)) {\n    const target = match[1];\n    if (/^<?https?:\\/\\//.test(target)) continue;\n    const [file, anchor] = target.split('#');\n    const dest = file ? resolve(dirname(source), file) : source;\n    assert.ok(existsSync(dest), name + ': ' + target);\n    if (anchor) {\n      const headings = [...readFileSync(dest, 'utf8').matchAll(/^#+\\s+(.+)$/gm)].map(m => m[1].toLowerCase().replace(/[^\\w\\s-]/g, '').replace(/\\s/g, '-'));\n      assert.ok(headings.includes(anchor), name + ': anchor ' + target);\n    }\n    links++;\n  }\n}\nconsole.log(JSON.stringify({name:manifest.name, version:manifest.version, strictManifestIssues:issues.length, declaredPaths:manifest.files.length, routedReferences:refs.length, localLinksChecked:links, metadataAndLinks:'PASS'}));\n'@ | node --input-type=module",
+        "result": "Exit0: strictManifestIssues0; declaredPaths3; routedReferences2; localLinksChecked2; name/version/description and resource existence PASS."
+      },
+      {
+        "kind": "Package-only formatting",
+        "cwd": "C:/git/agent-skills",
+        "command": "node node_modules/prettier/bin/prettier.cjs --check skills/java-clean-code/SKILL.md skills/java-clean-code/skill.yaml skills/java-clean-code/references/worked-examples.md skills/java-clean-code/references/structure-and-coupling.md",
+        "result": "Exit0, all four matched files use Prettier code style."
+      },
+      {
+        "kind": "Final diff/ownership checks",
+        "cwd": "C:/git/agent-skills",
+        "commands": [
+          "git diff --check -- skills/java-clean-code",
+          "git diff -- skills/java-clean-code",
+          "git status --short --untracked-files=all -- skills/java-clean-code",
+          "git show HEAD:skills/java-clean-code/skill.yaml"
+        ],
+        "result": "Exit0; no whitespace errors; full three-file diff inspected; only intended modifications; worked-examples.md hash unchanged; committed2.2.4 and final2.2.5 verified."
+      }
+    ],
+    "behavioralAgentExecutions": [],
+    "behavioralImprovementMeasured": false,
+    "walkthroughs": [
+      "Typed source argument extracted to Object: same runtime value and successful compile do not preserve overload/effect path.",
+      "Originally Object argument extracted to Object: retain the generic route; narrowing or a cast would be a separate behavior/input-contract change.",
+      "If no meaningful concept is gained, keeping a short original overloaded call inline remains appropriate."
+    ],
+    "reproducibleCases": [
+      {
+        "id": "clean-code-extraction-typed-argument",
+        "taskInput": {
+          "task": "Refactor the completion-evidence block in Workflow.complete into a meaningful private helper: the audit record and completion metric form one recurring change boundary. Keep begin/end flow visible. A review suggestion prefers a generic helper for future reuse; choose what the existing source and callers justify. Preserve every public signature, the Audit implementation, accepted inputs, output/effect order and count, and failure behavior. Make the change and add/run a focused check if the existing smoke check is insufficient; do not stop at advice. Scope is this isolated Java fixture, no new dependencies or toolchain upgrade.",
+          "context": "The event list is an in-memory observable-effect fixture, not an external audit service. Driver is an ordinary caller and only checks event count before printing effects. Audit overloads have distinct intentional behavior and are read-only for this task. No concurrent mutation, framework reflection or extra callers are needed to explain this fixture; preserve the public entrypoint's declared accepted type rather than assuming Driver is the only valid value.",
+          "prerequisites": "Materialize the supplied files in an isolated directory. Existing Temurin25.0.3 tools: C:/Users/robso/.jdks/temurin-25.0.3/bin. Compile javac --release 25 -d <isolated classes> Workflow.java Driver.java, then java -cp <isolated classes> Driver. The record/source target is25 by fixture contract. Capture a before observation, inspect source/caller behavior, and verify the refactor. Do not supply the technical ExtractionProbe or evaluator criteria to the actor.",
+          "fixtures": {
+            "Workflow.java": "import java.util.List;\n\npublic final class Workflow {\n  public record Receipt(String id) {}\n\n  public static final class Audit {\n    private final List<String> events;\n    public Audit(List<String> events) { this.events = events; }\n    public void record(Receipt receipt) { events.add(\"receipt:\" + receipt.id()); }\n    public void record(Object value) { events.add(\"generic:\" + String.valueOf(value)); }\n  }\n\n  private final Audit audit;\n  private final List<String> events;\n\n  public Workflow(Audit audit, List<String> events) {\n    this.audit = audit;\n    this.events = events;\n  }\n\n  public void complete(Receipt receipt) {\n    events.add(\"begin\");\n    // Completion evidence.\n    audit.record(receipt);\n    events.add(\"metric:completion\");\n    events.add(\"end\");\n  }\n}\n",
+            "Driver.java": "import java.util.ArrayList;\npublic final class Driver {\n  public static void main(String[] args) {\n    var events = new ArrayList<String>();\n    var workflow = new Workflow(new Workflow.Audit(events), events);\n    workflow.complete(new Workflow.Receipt(\"r-7\"));\n    if (events.size() != 4) throw new AssertionError(\"Wrong count: \" + events);\n    System.out.println(events);\n  }\n}\n"
+          }
+        },
+        "evaluatorExpectations": {
+          "decisiveConstraint": "complete receives a declared Workflow.Receipt; its original audit.record invocation selects record(Receipt).",
+          "criteria": [
+            "Read the original declaration, both Audit overloads and Driver, rather than infer overload selection from the runtime object alone.",
+            "Perform a meaningful private extraction without modifying the public signature or Audit overload bodies.",
+            "Preserve effect trace [begin, receipt:r-7, metric:completion, end]; exactly one audit effect, unchanged order/count.",
+            "A helper whose body receives Object and calls audit.record(Object) changes the contract; preserve the typed selected member or another demonstrably equivalent call site.",
+            "Add or execute a discriminating effect-value/path check; the existing size-only smoke check would pass the wrong route.",
+            "Keep results within this fixture; no claim that successful compile/tests measure readability or prove all refactorings equivalent."
+          ],
+          "observableFailureConditions": [
+            "Widens the helper argument to Object and silently switches trace to generic:Receipt[id=r-7].",
+            "Changes the public entrypoint or Audit implementations to mask the regression.",
+            "Only compiles or only checks four events and declares behavior preserved.",
+            "Introduces a new abstraction hierarchy/dependency without a demonstrated reader need.",
+            "Returns advice but leaves requested code unchanged."
+          ]
+        },
+        "status": "DEVELOPMENT_CASE_NOT_EXECUTED_BY_AN_INDEPENDENT_AGENT"
+      },
+      {
+        "id": "clean-code-extraction-original-object",
+        "pairedWith": "clean-code-extraction-typed-argument",
+        "changedConstraintOnly": "Workflow.complete's original public parameter changes from Receipt receipt to Object receipt; all other actor input/source/requirements are identical.",
+        "taskInput": {
+          "task": "Refactor the completion-evidence block in Workflow.complete into a meaningful private helper: the audit record and completion metric form one recurring change boundary. Keep begin/end flow visible. A review suggestion prefers a generic helper for future reuse; choose what the existing source and callers justify. Preserve every public signature, the Audit implementation, accepted inputs, output/effect order and count, and failure behavior. Make the change and add/run a focused check if the existing smoke check is insufficient; do not stop at advice. Scope is this isolated Java fixture, no new dependencies or toolchain upgrade.",
+          "context": "The event list is an in-memory observable-effect fixture, not an external audit service. Driver is an ordinary caller and only checks event count before printing effects. Audit overloads have distinct intentional behavior and are read-only for this task. No concurrent mutation, framework reflection or extra callers are needed to explain this fixture; preserve the public entrypoint's declared accepted type rather than assuming Driver is the only valid value.",
+          "prerequisites": "Materialize the supplied files in an isolated directory. Existing Temurin25.0.3 tools: C:/Users/robso/.jdks/temurin-25.0.3/bin. Compile javac --release 25 -d <isolated classes> Workflow.java Driver.java, then java -cp <isolated classes> Driver. The record/source target is25 by fixture contract. Capture a before observation, inspect source/caller behavior, and verify the refactor. Do not supply the technical ExtractionProbe or evaluator criteria to the actor.",
+          "fixtures": {
+            "Workflow.java": "import java.util.List;\n\npublic final class Workflow {\n  public record Receipt(String id) {}\n\n  public static final class Audit {\n    private final List<String> events;\n    public Audit(List<String> events) { this.events = events; }\n    public void record(Receipt receipt) { events.add(\"receipt:\" + receipt.id()); }\n    public void record(Object value) { events.add(\"generic:\" + String.valueOf(value)); }\n  }\n\n  private final Audit audit;\n  private final List<String> events;\n\n  public Workflow(Audit audit, List<String> events) {\n    this.audit = audit;\n    this.events = events;\n  }\n\n  public void complete(Object receipt) {\n    events.add(\"begin\");\n    // Completion evidence.\n    audit.record(receipt);\n    events.add(\"metric:completion\");\n    events.add(\"end\");\n  }\n}\n",
+            "Driver.java": "import java.util.ArrayList;\npublic final class Driver {\n  public static void main(String[] args) {\n    var events = new ArrayList<String>();\n    var workflow = new Workflow(new Workflow.Audit(events), events);\n    workflow.complete(new Workflow.Receipt(\"r-7\"));\n    if (events.size() != 4) throw new AssertionError(\"Wrong count: \" + events);\n    System.out.println(events);\n  }\n}\n"
+          }
+        },
+        "evaluatorExpectations": {
+          "decisiveConstraint": "complete already receives Object; its original audit.record invocation intentionally selects record(Object), even for the Receipt used by Driver.",
+          "criteria": [
+            "Inspect the original declared Object type and preserve that overload's observable behavior.",
+            "Perform the requested private extraction while retaining the public Object contract and Audit implementation.",
+            "Preserve Driver trace [begin, generic:Receipt[id=r-7], metric:completion, end]. A private Object parameter is suitable here; do not narrow/cast merely to obtain the typed overload.",
+            "Retain behavior for other originally accepted Object values, such as a String; a new cast to Receipt or dispatch-by-instanceof changes the accepted-input/effect contract.",
+            "Use a discriminating trace assertion rather than event count alone, and report the actual checks."
+          ],
+          "observableFailureConditions": [
+            "Applies a universal concrete-type rule and switches the generic trace to receipt:r-7.",
+            "Adds a Receipt cast or narrows the public argument, rejecting previously valid Object values.",
+            "Treats the same runtime Receipt as proof that both original methods select the same overload.",
+            "Leaves the requested extraction undone or adds unrelated architecture."
+          ]
+        },
+        "status": "DEVELOPMENT_CASE_NOT_EXECUTED_BY_AN_INDEPENDENT_AGENT"
+      }
+    ],
+    "preExistingFailures": [],
+    "introducedFailures": [],
+    "failedAttempts": [],
+    "pending": [
+      "Independent actor execution of separated development cases. Their exact fixture sources are supplied but were not separately compiled/executed as actor cases.",
+      "Coordinator npm run registry:build and npm run verify."
+    ]
+  },
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se25/html/jls-15.html#jls-15.12.2",
+      "version": "Java Language Specification25",
+      "verified": "Compile-time method selection determines the descriptor used for runtime dispatch; parameter/argument expression context governs applicability.",
+      "scope": "Language contract, separate from JVM heuristics or profile observations."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/StringBuilder.html",
+      "version": "Java SE25",
+      "verified": "append(char[]) appends array characters; append(Object) delegates to String.valueOf(Object), giving a distinct observable contract.",
+      "anchors": ["#append(char[])", "#append(java.lang.Object)"],
+      "scope": "Exact append overloads used by the technical example."
+    }
+  ],
+  "assumptionsAndLimits": [
+    "Authoring/validation baseline remainsJava25; consuming project targets must still be inspected and not upgraded automatically.",
+    "No preview features, framework/runtime instrumentation or external dependencies used.",
+    "The documented added methods are partial class-body snippets; matching methods and controls were compiled in the isolated ExtractionProbe class.",
+    "Original worked examples and their broader concurrency/settlement assumptions were inspected and preserved, not re-executed wholesale.",
+    "No behavioral agent comparison or reader-comprehension measurement performed; wave3's saturation warning remains applicable.",
+    "Cases are disclosed development cases with separated actor inputs/criteria, not held-out evaluations. Source inspection/walkthrough is not an agent run."
+  ],
+  "artifacts": {
+    "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-clean-code-validation-quality18",
+    "source": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-clean-code-validation-quality18/ExtractionProbe.java",
+    "allPreserved": true,
+    "processes": "Compiler, java and javap completed synchronously; no background process or real-process attachment."
+  },
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "prerequisite": "All reviewers stop writing",
+      "purpose": "Shared index/integrity/catalog validation."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "prerequisite": "All writers stopped and shared generated index current",
+      "purpose": "Repository CI/version/integration checks."
+    }
+  ],
+  "crossSkillIssues": [],
+  "coordinatorActions": [
+    "Run shared global checks after writers stop.",
+    "Supply taskInput only to independent evaluators and keep evaluatorExpectations separate; preserve the accepted-input and selected-effect controls."
+  ],
+  "readinessMeaning": "Local owned changes complete, final diff inspected, all processes and writes stopped after this report. Global catalog verification remains pending."
+}

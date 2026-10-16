@@ -1,0 +1,2 @@
+40000000 bind:0 anon=4096 dirty=4096 N1=4096 kernelpagesize_kB=4
+

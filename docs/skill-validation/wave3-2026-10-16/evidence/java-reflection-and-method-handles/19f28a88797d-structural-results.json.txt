@@ -1,0 +1,97 @@
+[
+  {
+    "name": "package-check",
+    "command": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-reflection-and-method-handles\\package-check.mjs"
+    ],
+    "cwd": "C:/git/agent-skills",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "logs/package-check.stdout.txt",
+    "stderr": "logs/package-check.stderr.txt"
+  },
+  {
+    "name": "prettier-check",
+    "command": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "node_modules/prettier/bin/prettier.cjs",
+      "--check",
+      "skills/java-reflection-and-method-handles/SKILL.md",
+      "skills/java-reflection-and-method-handles/skill.yaml",
+      "skills/java-reflection-and-method-handles/references/method-handles-and-encapsulation.md",
+      "skills/java-reflection-and-method-handles/references/reflection-cost-model.md",
+      "skills/java-reflection-and-method-handles/references/when-reflection-is-justified.md"
+    ],
+    "cwd": "C:/git/agent-skills",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "logs/prettier-check.stdout.txt",
+    "stderr": "logs/prettier-check.stderr.txt"
+  },
+  {
+    "name": "diff-check",
+    "command": [
+      "git",
+      "diff",
+      "--check",
+      "--",
+      "skills/java-reflection-and-method-handles"
+    ],
+    "cwd": "C:/git/agent-skills",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "logs/diff-check.stdout.txt",
+    "stderr": "logs/diff-check.stderr.txt"
+  },
+  {
+    "name": "final-diff",
+    "command": [
+      "git",
+      "diff",
+      "--",
+      "skills/java-reflection-and-method-handles"
+    ],
+    "cwd": "C:/git/agent-skills",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "logs/final-diff.stdout.txt",
+    "stderr": "logs/final-diff.stderr.txt"
+  },
+  {
+    "name": "final-status",
+    "command": [
+      "git",
+      "status",
+      "--short",
+      "--",
+      "skills/java-reflection-and-method-handles"
+    ],
+    "cwd": "C:/git/agent-skills",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "logs/final-status.stdout.txt",
+    "stderr": "logs/final-status.stderr.txt"
+  },
+  {
+    "name": "staged-diff",
+    "command": [
+      "git",
+      "diff",
+      "--cached",
+      "--",
+      "skills/java-reflection-and-method-handles"
+    ],
+    "cwd": "C:/git/agent-skills",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "logs/staged-diff.stdout.txt",
+    "stderr": "logs/staged-diff.stderr.txt"
+  }
+]

@@ -1,0 +1,5 @@
+{
+  "release": 25,
+  "java": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+  "javac": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe"
+}

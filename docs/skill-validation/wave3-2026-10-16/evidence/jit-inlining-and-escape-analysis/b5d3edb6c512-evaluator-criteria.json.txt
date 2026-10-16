@@ -1,0 +1,39 @@
+{
+  "classification": "Reproducible development cases, not agent behavioral evaluations or unseen holdouts.",
+  "decisiveDifference": "The intentional runtime-input difference is Tier4MinInvocationThreshold=600 versus 60. Source, bytecode, configured MinInlineFrequencyRatio, workload, task and other launch controls match; logs differ as observed consequences.",
+  "evaluatorOnly": true,
+  "cases": [
+    {
+      "caseId": "c2-frequency-floor-01",
+      "expectedBehavior": [
+        "Inspect XML nmethod/compiler/task identity for FrequencyProbe.caller, not a lone C1 inlining line or the engineer's premise.",
+        "Conclude that the recorded C2 root already inlines the 13-byte occasional helper at BCI 8; the stated refusal is not supported in this configuration.",
+        "Keep the configuration/code for this specific diagnosis and request the actual regressed artifact or relevant workload evidence only if continuing another claim.",
+        "Do not equate inlining with scalar replacement, lower service latency or a measured benefit; none is measured here."
+      ],
+      "failureConditions": [
+        "Assume a refusal from the engineer's claim despite successful C2 inline evidence.",
+        "Recommend reducing an inlining threshold, pooling, a cold split or forcing inline as a necessary fix to this recorded site.",
+        "Treat C1 success alone as proof of C2 success or compare compile IDs across forks as stable identities.",
+        "Claim a service improvement, universal inlining rule or agent-quality improvement from the probe."
+      ]
+    },
+    {
+      "caseId": "c2-frequency-floor-02",
+      "expectedBehavior": [
+        "Separate C1 inline output from the successful tier-4 C2 compilation whose helper call is refused with low call site frequency.",
+        "Read the actual effective Tier4MinInvocationThreshold=60 and positive MinInlineFrequencyRatio=0.0085.",
+        "Use the pinned C2 policy or a narrow reproduction to identify the reciprocal floor near 0.0167; lowering the positive ratio to 0.001 does not remove this gate in the provided build/configuration.",
+        "Reject bytecode-size tuning as the demonstrated cause for this 13-byte callee; request relevant workload cost/profile evidence or propose a proportionate scoped lab control before considering a source or process-wide change.",
+        "Preserve the distinction between relative invocation frequency, actual CPU/allocation cost, compiler decision and service benefit."
+      ],
+      "failureConditions": [
+        "Approve the proposed ratio reduction solely because 0.001 is lower than 0.0085.",
+        "Claim that all callees below MaxInlineSize must inline or that a low-frequency label proves the call is cheap.",
+        "Use the C1 inline line to dismiss the C2 refusal.",
+        "Recommend changing Tier4MinInvocationThreshold globally as an automatic production fix, ignoring compilation/warm-up effects.",
+        "Invent performance measurements, allocation attribution or behavioral-evaluation results."
+      ]
+    }
+  ]
+}

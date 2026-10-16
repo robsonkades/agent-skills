@@ -31,10 +31,11 @@ Classes that change for the same reason, at the same time, belong in the same co
 is the single-responsibility principle raised to component scale: a component should have one
 reason to change.
 
-The payoff is that a business change touches one artefact, so one thing is released,
-revalidated and deployed. The failure is the opposite: a change to VAT rules touching
-`billing-core`, `billing-model`, `tax-common` and `reporting-shared`, each of which must be
-released in dependency order.
+The payoff is fewer independently evolved artefacts to change and publish for one reason.
+That does not imply one consumer rebuild, validation or deployment: a shared library may be
+packaged into several applications. Inspect those delivery paths before counting the savings.
+The opposite cost is a change to VAT rules touching `billing-core`, `billing-model`,
+`tax-common` and `reporting-shared`, each requiring its own publication and compatibility work.
 
 This is the principle to favour while a system is young. Maintainability dominates
 reusability when there are no external reusers.

@@ -1,0 +1,42 @@
+{
+  "caseId": "same-cgroup",
+  "provenance": "Synthetic development case; these values are not measurements made in the review.",
+  "task": "Review and update incident-note.md using the supplied artifacts. Decide whether its proposed bounded CPU-quota experiment is supported, preserve unaffected facts, and identify only missing evidence that could change the next action. Do not alter production, install tools or start a workload.",
+  "artifacts": {
+    "incident-note.md": "The service p99 rose from 90 ms to 450 ms during the 60-second window. No GC pause exceeded 8 ms. The snapshots show 40% throttled periods, so CPU bandwidth is a candidate contributor. Proposal: compare a bounded increase of CPU quota under the same offered load, observing p99, CPU usage, throttling, throughput and error rate. Heap policy remains unchanged because its existing measured budget still meets requirements.",
+    "runtime.txt": "Linux HotSpot Temurin 25.0.3+9; G1; availableProcessors=2; ActiveProcessorCount=-1; cgroup v2. Snapshot files were collected by the metrics exporter, not by starting a second JVM. Offered load and request mix were stable.",
+    "memory-summary.txt": "Existing representative captures meet the configured memory headroom and latency goals; no memory pressure event change in this incident window.",
+    "cpu-snapshots.json": [
+      {
+        "timestamp": "2026-10-16T15:00:00Z",
+        "podUid": "pod-a",
+        "containerId": "container-a",
+        "cgroupId": 4101,
+        "cgroupPath": "/service/pod-a/container-a",
+        "cpuMax": "200000 100000",
+        "cpuStat": {
+          "usage_usec": 90000000,
+          "nr_periods": 1000,
+          "nr_throttled": 20,
+          "throttled_usec": 3000000
+        }
+      },
+      {
+        "timestamp": "2026-10-16T15:01:00Z",
+        "podUid": "pod-a",
+        "containerId": "container-a",
+        "cgroupId": 4101,
+        "cgroupPath": "/service/pod-a/container-a",
+        "cpuMax": "200000 100000",
+        "cpuStat": {
+          "usage_usec": 150000000,
+          "nr_periods": 1600,
+          "nr_throttled": 260,
+          "throttled_usec": 6600000
+        }
+      }
+    ],
+    "ancestor-summary.txt": "The exporter inspected relevant visible ancestors in the same mount/cgroup namespace; none had a finite CPU quota. Node scheduling contention has not been ruled out."
+  },
+  "prerequisites": "Only supplied artifacts and skill are needed for the initial review. An experiment remains a scoped plan, not execution of infrastructure changes."
+}

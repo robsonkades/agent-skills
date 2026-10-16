@@ -1,0 +1,15 @@
+{
+  "command": "git",
+  "args": [
+    "diff",
+    "--exit-code",
+    "--",
+    "skills/debugging"
+  ],
+  "cwd": "C:/git/agent-skills",
+  "status": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "",
+  "stderr": ""
+}

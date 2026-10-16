@@ -1,0 +1,15 @@
+{
+  "run": "c4-2",
+  "label": "Coordinator changes only candidate prefix to \"cache:\"",
+  "scope": "Disposable copy; does not count as actor executing a missing control",
+  "startedAt": "2026-10-16T12:51:26.989Z",
+  "finishedAt": "2026-10-16T12:51:27.619Z",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "check.mjs"
+  ],
+  "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave2-behavior-6orq6B\\grader\\c4-2\\prefix-control",
+  "exit": 1,
+  "stdout": "Existing point and join checks passed; moved=2075\r\nFrozen ClientRouter vector passed: accepted.properties key=user:2 primary=n2 replicas=[n2, n3, n4]\r\n",
+  "stderr": "Exception in thread \"main\" java.lang.AssertionError: candidate.properties key=user:2 primary=n1 expected=n2\r\n\tat CurrentChecks.verifyRouting(CurrentChecks.java:14)\r\n\tat CurrentChecks.main(CurrentChecks.java:35)\r\n"
+}

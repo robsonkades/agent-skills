@@ -49,6 +49,9 @@ do not upgrade Java or enable preview merely to use this skill.
 4. **Assert invariants, not schedules.** After owned work terminates, account for every
    submission as success, failure, cancellation or rejection with disjoint definitions;
    check resource bounds and recovered permit counts at their specified observation points.
+   Check whether doing no required work would also satisfy the oracle. Derive success/refusal
+   conditions from the actual contract and add a positive operation or a deliberately faulty
+   control when conservation or zero-active-work assertions could pass vacuously.
 5. **Add budgeted stress where competing accesses remain a material risk**, retaining worker
    outcomes and varying relevant contention shapes. A shared field alone does not require a soak.
 6. **Check resource recovery after quiescence.** Owned permits/connections should return;

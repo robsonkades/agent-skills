@@ -1,0 +1,413 @@
+{
+  "status": "NO_CHANGES_NEEDED",
+  "skill": "safepoints",
+  "ownedPath": "C:/git/agent-skills/skills/safepoints",
+  "recorded": "2026-10-16",
+  "assignmentBaseline": {
+    "committedVersion": "1.3.4",
+    "assignmentVersion": "1.3.4",
+    "preExistingVersionBump": false,
+    "stagedChanges": [],
+    "unstagedChanges": [],
+    "untrackedFiles": [],
+    "files": [
+      {
+        "path": "skills\\safepoints\\SKILL.md",
+        "sha256": "B49B812D2E92D20BB49560F4663B90A8EC5C0C62E9C37AAD63F1C8A8ECF31ADF"
+      },
+      {
+        "path": "skills\\safepoints\\skill.yaml",
+        "sha256": "C0DE7BCB1114E9C3C4BB09623EA3ED608AA89C1957C455627F3295F514D0F2D8"
+      },
+      {
+        "path": "skills\\safepoints\\references\\instrumentation.md",
+        "sha256": "C0695C18F4A463D834C12141DB5FF4A267C28BF76428AA655A20FAC0241A11FA"
+      },
+      {
+        "path": "skills\\safepoints\\references\\ttsp-triage.md",
+        "sha256": "A5E6769C02A8DEC71CACE0AF10A17AEF61CBDB0C400D3913CEA451052BAC239D"
+      }
+    ],
+    "note": "Complete four-file package read. No nested AGENTS.md found in the assigned directory. Assignment-time state is the attribution baseline."
+  },
+  "versions": {
+    "committed": "1.3.4",
+    "assignment": "1.3.4",
+    "final": "1.3.4",
+    "rationale": "No supported in-scope defect required a content change; unchanged content must not receive a version bump."
+  },
+  "filesChangedByReviewer": [],
+  "filesChangedBeforeAssignment": [],
+  "changes": [],
+  "findingsReviewed": [
+    {
+      "location": "SKILL.md:34-71; references/instrumentation.md:23-55",
+      "finding": "The skill already distinguishes measured synchronization from incident attribution, includes coordination/scheduling in Reaching, and explains cycle-end timestamps and the Total components.",
+      "consequence": "It avoids blaming the slowest thread exclusively or treating the complete cycle as equal suspension for every thread.",
+      "disposition": "Preserved without changes; do not duplicate the neighboring pause-attribution correction."
+    },
+    {
+      "location": "SKILL.md:73-148; references/ttsp-triage.md:23-59",
+      "finding": "Ordinary native states, JNI critical regions and FFM critical linkage are separated. critical(false) is explicitly critical, and the checked HotSpot 25 x86 scope is explicit.",
+      "consequence": "A duration label alone does not select a native fix, while blocking work can independently violate the critical option contract.",
+      "disposition": "Confirmed against Java 25 API and tagged OpenJDK source; no new gap."
+    },
+    {
+      "location": "references/instrumentation.md:91-162",
+      "finding": "The skill distinguishes JFR event metadata from actual enablement and coverage, joins cycle evidence by identifiers, and treats missing events as incomplete evidence.",
+      "consequence": "Disabled synchronization/end events are not silently interpreted as zero delay or full phase coverage.",
+      "disposition": "Confirmed against the JDK 25 GA profile.jfc; preserved."
+    },
+    {
+      "location": "SKILL.md:34-50,93-110,150-163; references/instrumentation.md:164-194; references/ttsp-triage.md:61-116",
+      "finding": "Actual runtime/build/collector/probe success, conditional loop-poll remediation, and throughput rechecks are already explicit. Failed/obsolete option probes are distinguished from defaults.",
+      "consequence": "Recommendations remain target-specific rather than asserting a portable flag or cost guarantee.",
+      "disposition": "No supported change. Existing historical 25.0.3 observations were not relabeled as freshly executed."
+    },
+    {
+      "location": "SKILL.md:118-137; references/ttsp-triage.md:39-59",
+      "finding": "JNI collector evolution is separated from the FFM critical option, including G1 region pinning from JDK 22.",
+      "consequence": "Avoids extending old GCLocker behavior to every modern collector/native path.",
+      "disposition": "Fresh primary release-note support confirmed; no edit."
+    }
+  ],
+  "preserved": [
+    "Focused diagnosis of HotSpot safepoint mechanism, TTSP and non-GC VM operations; neighboring pause/OS/collector ownership remains intact.",
+    "Actual-target inspection, successful-probe requirements, collector-specific polling and historically scoped JDK observations.",
+    "Timing arithmetic, completed-summary timestamp semantics, operation-versus-synchronization separation and scheduling/coordination caveats.",
+    "Native/JNI/FFM distinctions, critical(false) semantics, heap access and lifetime caveats for changing linkage.",
+    "JFR configuration, event coverage and correlation limits; timeout warnings are not invented stack samples.",
+    "Bounded evidence collection and conditional remediation with throughput/latency checks; no universal tuning recipe.",
+    "All four source files, examples, source links, manifest contracts and capability metadata unchanged."
+  ],
+  "reviewCriteria": [
+    "Can the agent separate supported timing facts, native-path mechanisms, and unproved causal attribution?",
+    "Does it inspect actual binding/options/runtime and change the recommendation when the critical linkage constraint changes?",
+    "Does it retain valid ordinary linkage rather than applying a native-duration heuristic?",
+    "Does incomplete or disabled instrumentation remain unknown instead of becoming a fabricated zero or thread identity?",
+    "Does remediation preserve application/native contracts and avoid unmeasured performance guarantees?"
+  ],
+  "commands": [
+    {
+      "command": "$ErrorActionPreference = 'Stop'\n@'\nimport {readFileSync,readdirSync,existsSync} from 'node:fs';\nimport {resolve,relative,dirname} from 'node:path';\nimport {parseManifest} from './packages/core/src/domain/manifest.ts';\nimport {buildSkillPackage} from './packages/core/src/domain/skill-package.ts';\nimport {validatePackage} from './packages/core/src/application/validate-package.ts';\nconst root=resolve('skills/safepoints');\nconst paths=readdirSync(root,{recursive:true,withFileTypes:true}).filter(e=>e.isFile()).map(e=>resolve(e.parentPath,e.name));\nconst files=paths.map(p=>({path:relative(root,p).replaceAll('\\\\','/'),bytes:readFileSync(p)}));\nconst parsed=parseManifest(readFileSync(resolve(root,'skill.yaml'),'utf8'),{strict:true});\nconst report=validatePackage(buildSkillPackage(parsed.manifest,files),{directoryName:'safepoints'});\nconst issues=[...parsed.issues,...report.issues];\nconst links=[];\nfor(const path of paths.filter(p=>p.endsWith('.md'))) {\n const text=readFileSync(path,'utf8');\n for(const match of text.matchAll(/\\[[^\\]]*\\]\\((<[^>]+>|[^\\s)]+)(?:\\s+[^)]*)?\\)/g)) {\n  const target=match[1].replace(/^<|>$/g,'');\n  if(/^[a-z][a-z0-9+.-]*:/i.test(target)) continue;\n  const [file,anchor]=target.split('#');\n  const dest=file?resolve(dirname(path),decodeURIComponent(file)):path;\n  if(!existsSync(dest)) throw new Error('Missing link '+target+' from '+path);\n  if(anchor) {\n   const headings=[...readFileSync(dest,'utf8').matchAll(/^#{1,6}\\s+(.+)$/gm)].map(m=>m[1].toLowerCase().replace(/[^\\w\\s-]/g,'').replace(/\\s/g,'-'));\n   if(!headings.includes(anchor)) throw new Error('Missing anchor '+target);\n  }\n  links.push({from:relative(root,path).replaceAll('\\\\','/'),target});\n }\n}\nconsole.log(JSON.stringify({skill:'safepoints',files:files.map(f=>f.path),manifestVersion:parsed.manifest.version,issues,relativeLinks:links},null,2));\nif(issues.length) process.exitCode=1;\n'@ | node --input-type=module -",
+      "cwd": "C:/git/agent-skills",
+      "classification": "executed read-only skill-local structural check",
+      "chunk_id": "d19fb8",
+      "wall_time_seconds": 0.1946672,
+      "exit_code": 0,
+      "original_token_count": 128,
+      "output": "{\n  \"skill\": \"safepoints\",\n  \"files\": [\n    \"SKILL.md\",\n    \"skill.yaml\",\n    \"references/instrumentation.md\",\n    \"references/ttsp-triage.md\"\n  ],\n  \"manifestVersion\": \"1.3.4\",\n  \"issues\": [],\n  \"relativeLinks\": [\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/instrumentation.md\"\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/ttsp-triage.md\"\n    },\n    {\n      \"from\": \"references/instrumentation.md\",\n      \"target\": \"ttsp-triage.md#distinguish-the-native-paths\"\n    }\n  ]\n}\n"
+    },
+    {
+      "command": "git diff --check -- skills/safepoints",
+      "cwd": "C:/git/agent-skills",
+      "classification": "executed read-only skill-local structural check",
+      "chunk_id": "c68d7c",
+      "wall_time_seconds": 0.0572242,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    },
+    {
+      "command": "git status --short -- skills/safepoints; git diff -- skills/safepoints; git diff --cached -- skills/safepoints; git show HEAD:skills/safepoints/skill.yaml",
+      "cwd": "C:/git/agent-skills",
+      "classification": "executed read-only skill-local structural check",
+      "chunk_id": "267b7c",
+      "wall_time_seconds": 0.1185011,
+      "exit_code": 0,
+      "original_token_count": 484,
+      "output": "schemaVersion: 1\n\nname: safepoints\nversion: 1.3.4\ndescription: >-\n  The HotSpot safepoint mechanism on JDK 25: thread-local polling words and where the JIT emits polls,\n  loop strip mining, global safepoints versus thread-local handshakes, the VM operations\n  other than GC that stop the world, time-to-safepoint versus operation time, and reading\n  `-Xlog:safepoint`. Use when measured p99 or p99.9 is far worse than the GC log explains,\n  when GC logs look clean but latency does not match, when a stop-the-world pause has no GC\n  event behind it, when JNI critical regions or runtime/native transitions are suspected, when a\n  profiler's hot path never responds to optimisation, or when someone proposes\n  `-XX:+UseCountedLoopSafepoints`, `UseThreadLocalHandshakes` or blames `RevokeBias` on a\n  modern JDK. Does not cover the introductory TTSP treatment or collector mechanics\n  (gc-fundamentals), attributing an observed production pause across GC phase, safepoint and\n  OS (pause-attribution), or host-side causes such as CPU throttling and page faults\n  (linux-for-jvm).\n\nlicense: Apache-2.0\n\nauthors:\n  - name: agent-skills contributors\n    url: https://github.com/robsonkades/agent-skills\n\nhomepage: https://github.com/robsonkades/agent-skills/tree/main/skills/safepoints\nrepository:\n  type: git\n  url: https://github.com/robsonkades/agent-skills\n  directory: skills/safepoints\n\nkeywords:\n  - java\n  - jvm\n  - safepoint\n  - ttsp\n  - latency\n  - hotspot\n  - jni\n\nfiles:\n  - SKILL.md\n  - skill.yaml\n  - references/\n\ndependencies:\n  - name: gc-fundamentals\n    version: ^1.0.0\n\nsuggests:\n  - linux-for-jvm\n  - pause-attribution\n  - reading-jit-assembly\n\ncapabilities:\n  - reads-source\n\nagentOverrides:\n  codex:\n    interface:\n      display_name: Safepoints\n      short_description: Sync time, TTSP and stop-the-world beyond GC\n      default_prompt: Use Safepoints to explain stop-the-world time the GC log does not account for.\n"
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/safepoints/SKILL.md skills/safepoints/skill.yaml skills/safepoints/references/instrumentation.md skills/safepoints/references/ttsp-triage.md",
+      "cwd": "C:/git/agent-skills",
+      "classification": "executed scoped formatting check",
+      "chunk_id": "f7f2b8",
+      "wall_time_seconds": 0.2235704,
+      "exit_code": 0,
+      "original_token_count": 17,
+      "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+    }
+  ],
+  "structuralResults": {
+    "strictPackageValidation": {
+      "status": "PASS",
+      "files": 4,
+      "version": "1.3.4",
+      "issues": [],
+      "method": "Existing repository parseManifest/buildSkillPackage/validatePackage source APIs; no global substitute or generated writes."
+    },
+    "relativeLinksAndAnchors": {
+      "status": "PASS",
+      "checked": 3
+    },
+    "scopedPrettier": {
+      "status": "PASS",
+      "checkedFiles": 4
+    },
+    "scopedDiffCheck": {
+      "status": "PASS"
+    },
+    "assignmentToFinalHashComparison": {
+      "status": "PASS",
+      "allFourUnchanged": true,
+      "finalFiles": [
+        {
+          "path": "skills\\safepoints\\SKILL.md",
+          "sha256": "B49B812D2E92D20BB49560F4663B90A8EC5C0C62E9C37AAD63F1C8A8ECF31ADF"
+        },
+        {
+          "path": "skills\\safepoints\\skill.yaml",
+          "sha256": "C0DE7BCB1114E9C3C4BB09623EA3ED608AA89C1957C455627F3295F514D0F2D8"
+        },
+        {
+          "path": "skills\\safepoints\\references\\instrumentation.md",
+          "sha256": "C0695C18F4A463D834C12141DB5FF4A267C28BF76428AA655A20FAC0241A11FA"
+        },
+        {
+          "path": "skills\\safepoints\\references\\ttsp-triage.md",
+          "sha256": "A5E6769C02A8DEC71CACE0AF10A17AEF61CBDB0C400D3913CEA451052BAC239D"
+        }
+      ]
+    },
+    "finalScopedGitState": {
+      "stagedChanges": [],
+      "unstagedChanges": [],
+      "untrackedFiles": []
+    }
+  },
+  "technicalChecks": {
+    "executed": [
+      {
+        "kind": "primary source inspection",
+        "artifact": "CallingSequence.java at jdk-25-ga",
+        "result": "needsTransition depends on the critical linker option, independently from heap-access address-pair handling.",
+        "toolResult": {
+          "chunk_id": "711890",
+          "wall_time_seconds": 0.3982764,
+          "exit_code": 0,
+          "original_token_count": 117,
+          "output": "\r\n      public int capturedStateMask() {\r\n          return linkerOptions.capturedCallStateMask();\r\n      }\r\n  \r\n>     public boolean needsTransition() {\r\n>         return !linkerOptions.isCritical();\r\n      }\r\n  \r\n      public boolean usingAddressPairs() {\r\n>         return linkerOptions.allowsHeapAccess();\r\n      }\r\n  \r\n      public int numLeadingParams() {\r\n          return 2 + (linkerOptions.hasCapturedCallState() ? 1 : 0); // 2 for addr, allocator\r\n      }\r\n\r\n"
+        }
+      },
+      {
+        "kind": "primary source inspection",
+        "artifact": "downcallLinker_x86_64.cpp at jdk-25-ga",
+        "result": "The native-state transition path is conditional on needs_transition; this is implementation evidence scoped to HotSpot x86.",
+        "exitCode": 0
+      },
+      {
+        "kind": "primary source inspection",
+        "artifact": "profile.jfc at jdk-25-ga",
+        "result": "SafepointStateSynchronization and SafepointEnd disabled; SafepointBegin and ExecuteVMOperation enabled; SafepointLatency disabled in the checked template.",
+        "exitCode": 0
+      }
+    ],
+    "notExecuted": [
+      "No JVM started or attached.",
+      "No Java example compiled during this review.",
+      "No native function or profiler executed.",
+      "No performance benchmark or repeated runtime matrix.",
+      "No model or dependency downloads."
+    ],
+    "sourceAcquisition": "Read-only HTTPS retrieval with web tools and PowerShell Invoke-RestMethod/Invoke-WebRequest; source text only, no downloaded binaries."
+  },
+  "behavioralEvaluation": {
+    "status": "NOT_EXECUTED",
+    "actualAgentOutputs": [],
+    "measuredImprovement": false,
+    "walkthroughs": [
+      {
+        "caseId": "safepoints-native-linkage-a",
+        "type": "structured reviewer walkthrough",
+        "result": "Existing native-path guidance selects a critical-linkage API-contract correction while retaining causality uncertainty and observed 24 ms synchronization."
+      },
+      {
+        "caseId": "safepoints-native-linkage-b",
+        "type": "structured reviewer walkthrough",
+        "result": "Existing guidance retains ordinary linkage and requests late-thread/transition/scheduling evidence instead of treating duration as causality."
+      }
+    ],
+    "caveat": "Walkthroughs and structural/source checks are not independent actor evaluations or evidence of measured gain. These are supplied development cases, not claimed holdouts."
+  },
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/foreign/Linker.Option.html#critical(boolean)",
+      "checked": "2026-10-16",
+      "kind": "primary API",
+      "version": "Java SE 25",
+      "supports": "Critical calls must satisfy the short-running/no-callback contract; the boolean controls heap access rather than switching critical behavior off."
+    },
+    {
+      "url": "https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/share/classes/jdk/internal/foreign/abi/CallingSequence.java",
+      "rawUrl": "https://raw.githubusercontent.com/openjdk/jdk/jdk-25-ga/src/java.base/share/classes/jdk/internal/foreign/abi/CallingSequence.java",
+      "checked": "2026-10-16",
+      "kind": "tagged primary implementation",
+      "version": "jdk-25-ga",
+      "supports": "Transition selection and heap-address handling are distinct linker-option decisions."
+    },
+    {
+      "url": "https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/cpu/x86/downcallLinker_x86_64.cpp",
+      "rawUrl": "https://raw.githubusercontent.com/openjdk/jdk/jdk-25-ga/src/hotspot/cpu/x86/downcallLinker_x86_64.cpp",
+      "checked": "2026-10-16",
+      "kind": "tagged primary implementation",
+      "version": "jdk-25-ga x86_64",
+      "supports": "Checked critical downcall implementation skips the transition path guarded by needs_transition; not a universal FFM implementation promise."
+    },
+    {
+      "url": "https://github.com/openjdk/jdk/blob/jdk-25-ga/src/jdk.jfr/share/conf/jfr/profile.jfc",
+      "rawUrl": "https://raw.githubusercontent.com/openjdk/jdk/jdk-25-ga/src/jdk.jfr/share/conf/jfr/profile.jfc",
+      "checked": "2026-10-16",
+      "kind": "tagged primary configuration",
+      "version": "jdk-25-ga",
+      "supports": "Profile configuration does not enable every safepoint event; synchronization/end events need explicit capture enablement."
+    },
+    {
+      "url": "https://www.oracle.com/java/technologies/javase/22-relnote-issues.html",
+      "checked": "2026-10-16",
+      "kind": "primary release notes",
+      "version": "JDK 22",
+      "supports": "JEP 423 region pinning allows G1 collection during JNI critical regions."
+    }
+  ],
+  "evidenceFailures": [
+    {
+      "action": "Open https://openjdk.org/jeps/423 with web tool",
+      "result": "403 Forbidden",
+      "resolution": "Used official Oracle JDK 22 release notes as the primary fallback; no successful JEP-page fetch claimed."
+    },
+    {
+      "action": "First profile.jfc retrieval with Invoke-RestMethod and line filtering",
+      "result": "Exit 0 but no matching output because XML conversion prevented the intended raw-line inspection.",
+      "resolution": "Retried with Invoke-WebRequest.Content and inspected matching raw settings successfully. Initial no-match is not evidence of absent events."
+    },
+    {
+      "action": "Scoped rg for nested AGENTS.md",
+      "result": "Exit 1, no matches",
+      "resolution": "No nested file found; repository AGENTS.md remains applicable."
+    }
+  ],
+  "limits": [
+    "No fresh runtime execution establishes the correctness of every historical probe or executable example in this unchanged skill.",
+    "Primary source checks are version/architecture scoped; GA implementation evidence is not automatically every vendor update's behavior.",
+    "No measured with/without-skill comparison or independent behavioral pass is claimed.",
+    "Synthetic case timings are task fixtures, not incident observations or benchmark artifacts.",
+    "No broader catalog cleanliness or repository-wide validation is claimed; other contributors are working concurrently.",
+    "An unchanged package is not proof that every future use will be correct; no supported present gap was found within the assigned scope."
+  ],
+  "cases": [
+    {
+      "id": "safepoints-native-linkage-a",
+      "classification": "proposed development case; not an independent holdout; not executed",
+      "input": {
+        "task": "Use safepoints to review the proposed TTSP diagnosis and fix for this capture. Inspect the supplied binding and evidence, and update ttsp-review.md with the supported conclusion, smallest justified correction or no change, and next discriminating evidence. Do not edit code or JVM flags, run the native function, attach a profiler, or start a JVM.",
+        "prerequisites": [
+          "Materialize only this case's input.fixtureFiles in a fresh isolated workspace. Provide the current safepoints skill and its routed references.",
+          "Give the actor input.task and the fixture files only; keep criteria, the other case and this review handoff hidden from the actor.",
+          "The case requires file inspection/editing of ttsp-review.md only. A JVM, native binary, dependency installation and live service are unnecessary. Primary-source lookup may be allowed."
+        ],
+        "fixtureFiles": {
+          "README.md": "# TTSP review fixture\nThis is a synthetic source-and-capture review, not an executed benchmark. The selected production binding and caller are completely represented by the two Java files. The native binary is intentionally absent. Treat the runtime and native contract as supplied facts. All timestamps below use the JVM uptime axis and are aligned within 1 ms. There is no late-thread, native-stack or scheduler capture. The safepoint log contains the completed summary for the one cycle under review. Do not execute the native function or start a JVM.\n",
+          "runtime.json": "{\n  \"jdk\": \"25.0.3\",\n  \"vm\": \"HotSpot\",\n  \"architecture\": \"x86_64\",\n  \"collector\": \"G1\",\n  \"activeBindingFactory\": \"NativeBinding.bind\",\n  \"caller\": \"NativeRequest.call\",\n  \"extraVmOptions\": [],\n  \"timestampBasis\": \"JVM uptime seconds\",\n  \"alignmentUncertaintyMilliseconds\": 1\n}\n",
+          "src/NativeRequest.java": "import java.lang.foreign.*;\nimport java.lang.invoke.MethodHandle;\n\npublic final class NativeRequest {\n    public static void call(String libraryPath) throws Throwable {\n        try (Arena arena = Arena.ofConfined()) {\n            MemorySegment symbol = SymbolLookup.libraryLookup(libraryPath, arena)\n                    .find(\"await_gate\").orElseThrow();\n            MethodHandle handle = NativeBinding.bind(symbol);\n            handle.invokeExact(80);\n        }\n    }\n}\n",
+          "native-contract.md": "# Supplied native function contract\nSignature: void await_gate(int budget_ms).\nThe implementation can block on an internal native mutex for up to budget_ms milliseconds. It does not call Java. There are no pointer arguments, Java-heap addresses or retained Java objects. The library must remain loaded until the call completes. Preserve this native business contract.\n",
+          "evidence/native-calls.csv": "thread,start_uptime_s,end_uptime_s,function\nnative-worker,12.990,13.070,await_gate\n",
+          "evidence/safepoint.log": "[13.025000s][info][safepoint] Safepoint \"ThreadDump\", Time since last: 1000000 ns, Reaching safepoint: 24000000 ns, At safepoint: 900000 ns, Leaving safepoint: 100000 ns, Total: 25000000 ns, Threads: 1 / 12\n",
+          "ttsp-review.md": "# Proposed diagnosis and fix\nHypothesis: the 80 ms native call blocks every safepoint. Its overlap with the 25 ms cycle proves that it caused TTSP.\nProposed fix: split it into eight native calls.\nPreserve JDK 25, G1 and the native business contract.\n",
+          "src/NativeBinding.java": "import java.lang.foreign.*;\nimport java.lang.invoke.MethodHandle;\n\npublic final class NativeBinding {\n    public static MethodHandle bind(MemorySegment symbol) {\n        return Linker.nativeLinker().downcallHandle(symbol,\n                FunctionDescriptor.ofVoid(ValueLayout.JAVA_INT),\n                Linker.Option.critical(false));\n    }\n}\n"
+        }
+      },
+      "criteria": {
+        "expected": [
+          "Write the requested ttsp-review.md artifact, preserving JDK 25/G1 and the native business contract.",
+          "Retain the supported timing fact: Reaching is 24 ms of elapsed synchronization, and Total is a 25 ms cycle including At and Leaving; it is not 25 ms of suspension for every thread.",
+          "Place the completed cycle approximately at uptime 13.000–13.025 s, within the stated alignment uncertainty; do not start its interval at the completed-summary timestamp.",
+          "Separate overlap and the observed high synchronization from proof of a particular late thread or mechanism. Request aligned late-thread/state/native-stack/scheduler evidence as appropriate, rather than inventing it.",
+          "Do not edit code or flags, execute native code, attach a profiler, start a JVM, or claim a measured latency improvement.",
+          "Inspect the active NativeBinding factory and identify that Linker.Option.critical(false) still requests a critical downcall; false controls heap access and does not disable critical behavior.",
+          "Identify a separate, source-supported API contract problem: a potentially 80 ms blocking function does not meet the critical option's all-path short-running constraint, irrespective of whether this capture establishes incident causality.",
+          "Recommend removing the critical option for this int-only binding while preserving function signature and library lifetime. Treat it as an API-contract correction, not proof that the incident will be resolved.",
+          "Explain that the checked HotSpot 25 x86 critical path can omit the ordinary native-state transition; retain a qualified candidate mechanism without asserting this worker was the late required thread."
+        ],
+        "failureConditions": [
+          "Claims overlap alone proves that native-worker caused the 24 ms synchronization delay.",
+          "Treats a Java thread-state label as proof of HotSpot safepoint-safe state.",
+          "Equates Total with a uniform all-thread stopped interval or treats the summary timestamp as the cycle start.",
+          "Applies batching, yield, JVM flags or a collector change as a guaranteed fix without mechanism evidence.",
+          "Runs forbidden runtime operations or reports an improvement as measured.",
+          "Says critical(false) means critical mode is disabled.",
+          "Leaves the blocking function marked critical solely because it has no heap arguments.",
+          "Claims reducing an 80 ms call into eight 10 ms calls makes critical usage valid without an all-path constraint."
+        ]
+      }
+    },
+    {
+      "id": "safepoints-native-linkage-b",
+      "classification": "proposed development case; not an independent holdout; not executed",
+      "input": {
+        "task": "Use safepoints to review the proposed TTSP diagnosis and fix for this capture. Inspect the supplied binding and evidence, and update ttsp-review.md with the supported conclusion, smallest justified correction or no change, and next discriminating evidence. Do not edit code or JVM flags, run the native function, attach a profiler, or start a JVM.",
+        "prerequisites": [
+          "Materialize only this case's input.fixtureFiles in a fresh isolated workspace. Provide the current safepoints skill and its routed references.",
+          "Give the actor input.task and the fixture files only; keep criteria, the other case and this review handoff hidden from the actor.",
+          "The case requires file inspection/editing of ttsp-review.md only. A JVM, native binary, dependency installation and live service are unnecessary. Primary-source lookup may be allowed."
+        ],
+        "fixtureFiles": {
+          "README.md": "# TTSP review fixture\nThis is a synthetic source-and-capture review, not an executed benchmark. The selected production binding and caller are completely represented by the two Java files. The native binary is intentionally absent. Treat the runtime and native contract as supplied facts. All timestamps below use the JVM uptime axis and are aligned within 1 ms. There is no late-thread, native-stack or scheduler capture. The safepoint log contains the completed summary for the one cycle under review. Do not execute the native function or start a JVM.\n",
+          "runtime.json": "{\n  \"jdk\": \"25.0.3\",\n  \"vm\": \"HotSpot\",\n  \"architecture\": \"x86_64\",\n  \"collector\": \"G1\",\n  \"activeBindingFactory\": \"NativeBinding.bind\",\n  \"caller\": \"NativeRequest.call\",\n  \"extraVmOptions\": [],\n  \"timestampBasis\": \"JVM uptime seconds\",\n  \"alignmentUncertaintyMilliseconds\": 1\n}\n",
+          "src/NativeRequest.java": "import java.lang.foreign.*;\nimport java.lang.invoke.MethodHandle;\n\npublic final class NativeRequest {\n    public static void call(String libraryPath) throws Throwable {\n        try (Arena arena = Arena.ofConfined()) {\n            MemorySegment symbol = SymbolLookup.libraryLookup(libraryPath, arena)\n                    .find(\"await_gate\").orElseThrow();\n            MethodHandle handle = NativeBinding.bind(symbol);\n            handle.invokeExact(80);\n        }\n    }\n}\n",
+          "native-contract.md": "# Supplied native function contract\nSignature: void await_gate(int budget_ms).\nThe implementation can block on an internal native mutex for up to budget_ms milliseconds. It does not call Java. There are no pointer arguments, Java-heap addresses or retained Java objects. The library must remain loaded until the call completes. Preserve this native business contract.\n",
+          "evidence/native-calls.csv": "thread,start_uptime_s,end_uptime_s,function\nnative-worker,12.990,13.070,await_gate\n",
+          "evidence/safepoint.log": "[13.025000s][info][safepoint] Safepoint \"ThreadDump\", Time since last: 1000000 ns, Reaching safepoint: 24000000 ns, At safepoint: 900000 ns, Leaving safepoint: 100000 ns, Total: 25000000 ns, Threads: 1 / 12\n",
+          "ttsp-review.md": "# Proposed diagnosis and fix\nHypothesis: the 80 ms native call blocks every safepoint. Its overlap with the 25 ms cycle proves that it caused TTSP.\nProposed fix: split it into eight native calls.\nPreserve JDK 25, G1 and the native business contract.\n",
+          "src/NativeBinding.java": "import java.lang.foreign.*;\nimport java.lang.invoke.MethodHandle;\n\npublic final class NativeBinding {\n    public static MethodHandle bind(MemorySegment symbol) {\n        return Linker.nativeLinker().downcallHandle(symbol,\n                FunctionDescriptor.ofVoid(ValueLayout.JAVA_INT));\n    }\n}\n"
+        }
+      },
+      "criteria": {
+        "expected": [
+          "Write the requested ttsp-review.md artifact, preserving JDK 25/G1 and the native business contract.",
+          "Retain the supported timing fact: Reaching is 24 ms of elapsed synchronization, and Total is a 25 ms cycle including At and Leaving; it is not 25 ms of suspension for every thread.",
+          "Place the completed cycle approximately at uptime 13.000–13.025 s, within the stated alignment uncertainty; do not start its interval at the completed-summary timestamp.",
+          "Separate overlap and the observed high synchronization from proof of a particular late thread or mechanism. Request aligned late-thread/state/native-stack/scheduler evidence as appropriate, rather than inventing it.",
+          "Do not edit code or flags, execute native code, attach a profiler, start a JVM, or claim a measured latency improvement.",
+          "Inspect the active NativeBinding factory and note that no critical option is present.",
+          "Retain ordinary linkage; ordinary native execution can normally be recognized safe without waiting for the entire native call. No linkage correction is justified by the supplied blocking duration alone.",
+          "Reject the blanket claim that every long native call blocks safepoints. Seek evidence for the actual late required thread, transition race or scheduling mechanism before choosing a TTSP remediation.",
+          "Keep the independently supported 24 ms synchronization observation while withholding a cause or a speculative batching fix."
+        ],
+        "failureConditions": [
+          "Claims overlap alone proves that native-worker caused the 24 ms synchronization delay.",
+          "Treats a Java thread-state label as proof of HotSpot safepoint-safe state.",
+          "Equates Total with a uniform all-thread stopped interval or treats the summary timestamp as the cycle start.",
+          "Applies batching, yield, JVM flags or a collector change as a guaranteed fix without mechanism evidence.",
+          "Runs forbidden runtime operations or reports an improvement as measured.",
+          "Invents critical linkage or recommends removing an option that is absent.",
+          "Claims safepoint synchronization must wait until the ordinary 80 ms native call returns.",
+          "Rejects the observed 24 ms synchronization solely because the native binding is ordinary."
+        ]
+      }
+    }
+  ],
+  "pairedCaseConstraint": "Only src/NativeBinding.java changes: Linker.Option.critical(false) is present in A and omitted in B. All other actor task and fixture contents are identical. A calls for a binding contract correction; B retains ordinary linkage. Both preserve high synchronization evidence and causality uncertainty.",
+  "crossSkill": {
+    "findings": [
+      "Coordinator reported pause-attribution is correcting exclusive slowest-thread interpretation. safepoints already describes synchronization coordination correctly; no neighbor file was changed."
+    ],
+    "actions": []
+  },
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Parallel review constraint; only coordinator may regenerate shared index.",
+      "prerequisites": "All reviewers have stopped writes; not run by this reviewer."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Repository-wide completion belongs to coordinator.",
+      "prerequisites": "All reviewers stopped writes and generated index prepared; not run by this reviewer."
+    }
+  ],
+  "allWritesStopped": true,
+  "processesStillWriting": false
+}

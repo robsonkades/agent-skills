@@ -1,0 +1,880 @@
+{
+  "at": "2026-10-16T20:01:46.137Z",
+  "calibrationSamples": 12,
+  "validAlternatives": 8,
+  "invalidControls": 4,
+  "criterionAgreement": 96,
+  "comparisons": [
+    {
+      "id": "K01",
+      "stage": "1",
+      "criterion": "C1",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K01",
+      "stage": "1",
+      "criterion": "C2",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K01",
+      "stage": "1",
+      "criterion": "C3",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K01",
+      "stage": "1",
+      "criterion": "C4",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K01",
+      "stage": "2",
+      "criterion": "C1",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K01",
+      "stage": "2",
+      "criterion": "C2",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K01",
+      "stage": "2",
+      "criterion": "C3",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K01",
+      "stage": "2",
+      "criterion": "C4",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K02",
+      "stage": "1",
+      "criterion": "C1",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K02",
+      "stage": "1",
+      "criterion": "C2",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K02",
+      "stage": "1",
+      "criterion": "C3",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K02",
+      "stage": "1",
+      "criterion": "C4",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K02",
+      "stage": "2",
+      "criterion": "C1",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K02",
+      "stage": "2",
+      "criterion": "C2",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K02",
+      "stage": "2",
+      "criterion": "C3",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K02",
+      "stage": "2",
+      "criterion": "C4",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K03",
+      "stage": "1",
+      "criterion": "C1",
+      "expected": false,
+      "actual": false,
+      "agreed": true
+    },
+    {
+      "id": "K03",
+      "stage": "1",
+      "criterion": "C2",
+      "expected": false,
+      "actual": false,
+      "agreed": true
+    },
+    {
+      "id": "K03",
+      "stage": "1",
+      "criterion": "C3",
+      "expected": false,
+      "actual": false,
+      "agreed": true
+    },
+    {
+      "id": "K03",
+      "stage": "1",
+      "criterion": "C4",
+      "expected": false,
+      "actual": false,
+      "agreed": true
+    },
+    {
+      "id": "K03",
+      "stage": "2",
+      "criterion": "C1",
+      "expected": false,
+      "actual": false,
+      "agreed": true
+    },
+    {
+      "id": "K03",
+      "stage": "2",
+      "criterion": "C2",
+      "expected": false,
+      "actual": false,
+      "agreed": true
+    },
+    {
+      "id": "K03",
+      "stage": "2",
+      "criterion": "C3",
+      "expected": false,
+      "actual": false,
+      "agreed": true
+    },
+    {
+      "id": "K03",
+      "stage": "2",
+      "criterion": "C4",
+      "expected": false,
+      "actual": false,
+      "agreed": true
+    },
+    {
+      "id": "K04",
+      "stage": "1",
+      "criterion": "C1",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K04",
+      "stage": "1",
+      "criterion": "C2",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K04",
+      "stage": "1",
+      "criterion": "C3",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K04",
+      "stage": "1",
+      "criterion": "C4",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K04",
+      "stage": "2",
+      "criterion": "C1",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K04",
+      "stage": "2",
+      "criterion": "C2",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K04",
+      "stage": "2",
+      "criterion": "C3",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K04",
+      "stage": "2",
+      "criterion": "C4",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K05",
+      "stage": "1",
+      "criterion": "C1",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K05",
+      "stage": "1",
+      "criterion": "C2",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K05",
+      "stage": "1",
+      "criterion": "C3",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K05",
+      "stage": "1",
+      "criterion": "C4",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K05",
+      "stage": "2",
+      "criterion": "C1",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K05",
+      "stage": "2",
+      "criterion": "C2",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K05",
+      "stage": "2",
+      "criterion": "C3",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K05",
+      "stage": "2",
+      "criterion": "C4",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K06",
+      "stage": "1",
+      "criterion": "C1",
+      "expected": false,
+      "actual": false,
+      "agreed": true
+    },
+    {
+      "id": "K06",
+      "stage": "1",
+      "criterion": "C2",
+      "expected": false,
+      "actual": false,
+      "agreed": true
+    },
+    {
+      "id": "K06",
+      "stage": "1",
+      "criterion": "C3",
+      "expected": false,
+      "actual": false,
+      "agreed": true
+    },
+    {
+      "id": "K06",
+      "stage": "1",
+      "criterion": "C4",
+      "expected": false,
+      "actual": false,
+      "agreed": true
+    },
+    {
+      "id": "K06",
+      "stage": "2",
+      "criterion": "C1",
+      "expected": false,
+      "actual": false,
+      "agreed": true
+    },
+    {
+      "id": "K06",
+      "stage": "2",
+      "criterion": "C2",
+      "expected": false,
+      "actual": false,
+      "agreed": true
+    },
+    {
+      "id": "K06",
+      "stage": "2",
+      "criterion": "C3",
+      "expected": false,
+      "actual": false,
+      "agreed": true
+    },
+    {
+      "id": "K06",
+      "stage": "2",
+      "criterion": "C4",
+      "expected": false,
+      "actual": false,
+      "agreed": true
+    },
+    {
+      "id": "K07",
+      "stage": "1",
+      "criterion": "C1",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K07",
+      "stage": "1",
+      "criterion": "C2",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K07",
+      "stage": "1",
+      "criterion": "C3",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K07",
+      "stage": "1",
+      "criterion": "C4",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K07",
+      "stage": "2",
+      "criterion": "C1",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K07",
+      "stage": "2",
+      "criterion": "C2",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K07",
+      "stage": "2",
+      "criterion": "C3",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K07",
+      "stage": "2",
+      "criterion": "C4",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K08",
+      "stage": "1",
+      "criterion": "C1",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K08",
+      "stage": "1",
+      "criterion": "C2",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K08",
+      "stage": "1",
+      "criterion": "C3",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K08",
+      "stage": "1",
+      "criterion": "C4",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K08",
+      "stage": "2",
+      "criterion": "C1",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K08",
+      "stage": "2",
+      "criterion": "C2",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K08",
+      "stage": "2",
+      "criterion": "C3",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K08",
+      "stage": "2",
+      "criterion": "C4",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K09",
+      "stage": "1",
+      "criterion": "C1",
+      "expected": false,
+      "actual": false,
+      "agreed": true
+    },
+    {
+      "id": "K09",
+      "stage": "1",
+      "criterion": "C2",
+      "expected": false,
+      "actual": false,
+      "agreed": true
+    },
+    {
+      "id": "K09",
+      "stage": "1",
+      "criterion": "C3",
+      "expected": false,
+      "actual": false,
+      "agreed": true
+    },
+    {
+      "id": "K09",
+      "stage": "1",
+      "criterion": "C4",
+      "expected": false,
+      "actual": false,
+      "agreed": true
+    },
+    {
+      "id": "K09",
+      "stage": "2",
+      "criterion": "C1",
+      "expected": false,
+      "actual": false,
+      "agreed": true
+    },
+    {
+      "id": "K09",
+      "stage": "2",
+      "criterion": "C2",
+      "expected": false,
+      "actual": false,
+      "agreed": true
+    },
+    {
+      "id": "K09",
+      "stage": "2",
+      "criterion": "C3",
+      "expected": false,
+      "actual": false,
+      "agreed": true
+    },
+    {
+      "id": "K09",
+      "stage": "2",
+      "criterion": "C4",
+      "expected": false,
+      "actual": false,
+      "agreed": true
+    },
+    {
+      "id": "K10",
+      "stage": "1",
+      "criterion": "C1",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K10",
+      "stage": "1",
+      "criterion": "C2",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K10",
+      "stage": "1",
+      "criterion": "C3",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K10",
+      "stage": "1",
+      "criterion": "C4",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K10",
+      "stage": "2",
+      "criterion": "C1",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K10",
+      "stage": "2",
+      "criterion": "C2",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K10",
+      "stage": "2",
+      "criterion": "C3",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K10",
+      "stage": "2",
+      "criterion": "C4",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K11",
+      "stage": "1",
+      "criterion": "C1",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K11",
+      "stage": "1",
+      "criterion": "C2",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K11",
+      "stage": "1",
+      "criterion": "C3",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K11",
+      "stage": "1",
+      "criterion": "C4",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K11",
+      "stage": "2",
+      "criterion": "C1",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K11",
+      "stage": "2",
+      "criterion": "C2",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K11",
+      "stage": "2",
+      "criterion": "C3",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K11",
+      "stage": "2",
+      "criterion": "C4",
+      "expected": true,
+      "actual": true,
+      "agreed": true
+    },
+    {
+      "id": "K12",
+      "stage": "1",
+      "criterion": "C1",
+      "expected": false,
+      "actual": false,
+      "agreed": true
+    },
+    {
+      "id": "K12",
+      "stage": "1",
+      "criterion": "C2",
+      "expected": false,
+      "actual": false,
+      "agreed": true
+    },
+    {
+      "id": "K12",
+      "stage": "1",
+      "criterion": "C3",
+      "expected": false,
+      "actual": false,
+      "agreed": true
+    },
+    {
+      "id": "K12",
+      "stage": "1",
+      "criterion": "C4",
+      "expected": false,
+      "actual": false,
+      "agreed": true
+    },
+    {
+      "id": "K12",
+      "stage": "2",
+      "criterion": "C1",
+      "expected": false,
+      "actual": false,
+      "agreed": true
+    },
+    {
+      "id": "K12",
+      "stage": "2",
+      "criterion": "C2",
+      "expected": false,
+      "actual": false,
+      "agreed": true
+    },
+    {
+      "id": "K12",
+      "stage": "2",
+      "criterion": "C3",
+      "expected": false,
+      "actual": false,
+      "agreed": true
+    },
+    {
+      "id": "K12",
+      "stage": "2",
+      "criterion": "C4",
+      "expected": false,
+      "actual": false,
+      "agreed": true
+    }
+  ],
+  "arithmetic": {
+    "at": "2026-10-16T20:00:37.618Z",
+    "checks": [
+      {
+        "name": "T1 saving",
+        "actual": 110,
+        "expected": 110,
+        "pass": true
+      },
+      {
+        "name": "T1 initial transition",
+        "actual": true,
+        "expected": true,
+        "pass": true
+      },
+      {
+        "name": "T1 updated transition",
+        "actual": false,
+        "expected": false,
+        "pass": true
+      },
+      {
+        "name": "T2 central L",
+        "actual": 66,
+        "expected": 66,
+        "pass": true
+      },
+      {
+        "name": "T2 central M",
+        "actual": 65,
+        "expected": 65,
+        "pass": true
+      },
+      {
+        "name": "T2 lower preference",
+        "actual": true,
+        "expected": true,
+        "pass": true
+      },
+      {
+        "name": "T2 upper preference",
+        "actual": true,
+        "expected": true,
+        "pass": true
+      },
+      {
+        "name": "T2 crossover",
+        "actual": 1.4210854715202004e-14,
+        "expected": 0,
+        "pass": true
+      },
+      {
+        "name": "T2 updated L",
+        "actual": 63.60000000000001,
+        "expected": 63.6,
+        "pass": true
+      },
+      {
+        "name": "T2 updated M",
+        "actual": 66,
+        "expected": 66,
+        "pass": true
+      },
+      {
+        "name": "T3 ratio distinct endpoints",
+        "actual": 40,
+        "expected": 40,
+        "pass": true
+      },
+      {
+        "name": "T4 lower total",
+        "actual": 180,
+        "expected": 180,
+        "pass": true
+      },
+      {
+        "name": "T4 upper total",
+        "actual": 312,
+        "expected": 312,
+        "pass": true
+      },
+      {
+        "name": "T4 monthly crossover",
+        "actual": 19,
+        "expected": 19,
+        "pass": true
+      },
+      {
+        "name": "T4 updated total",
+        "actual": 216,
+        "expected": 216,
+        "pass": true
+      },
+      {
+        "name": "T4 saving",
+        "actual": 24,
+        "expected": 24,
+        "pass": true
+      }
+    ],
+    "limit": "Checks authored fixture arithmetic only; not runtime-system evidence or behavioral gain."
+  },
+  "limit": "Short authored controls verify these judgments; no claim of general evaluator reliability or agent gain."
+}

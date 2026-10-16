@@ -26,7 +26,7 @@ public class InventoryService {
         if (!expectedVersion.equals(item.getVersion())) {
             throw new InventoryVersionConflictException(sku, expectedVersion, item.getVersion());
         }
-        // Never assign expectedVersion to @Version. Hibernate still detects a race at commit.
+        // Never assign expectedVersion to @Version. Actual writes check it; a no-op may not.
         item.changeNote(note);
     }
 

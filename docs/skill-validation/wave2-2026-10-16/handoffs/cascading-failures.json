@@ -1,0 +1,49 @@
+{
+  "skill": "cascading-failures",
+  "owner": "quality10",
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "versions": {
+    "committed": "1.3.4",
+    "initial": "1.3.4",
+    "final": "1.3.5"
+  },
+  "changes": [
+    "Trace effective rejection path before assuming shed requests spare the bottleneck; check rejection cost, retry reaction, arrivals and surviving in-flight work.",
+    "Incident record separates observed changes, confounders and missing evidence from causality."
+  ],
+  "preserved": "Diagnosis/operation boundary, competing causes, goodput, durable obligations, cancellation, retries, admission, failover, recovery ramps, Java executor caveats.",
+  "checks": [
+    {
+      "command": "Strict loadPackageFromDirectory and validatePackage",
+      "result": "four files, zero issues"
+    },
+    {
+      "command": "Relative reference checks",
+      "result": "four relationships, none missing"
+    },
+    {
+      "command": "Scoped Prettier and git diff --check",
+      "result": "pass; complete diff and assignment hashes inspected"
+    }
+  ],
+  "sources": [
+    "https://sre.google/sre-book/handling-overload/",
+    "https://sre.google/sre-book/addressing-cascading-failures/",
+    "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.CallerRunsPolicy.html",
+    "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/Semaphore.html"
+  ],
+  "limitations": ["No Java snippet changed; no runtime load test or behavioral evaluation."],
+  "cases": [
+    {
+      "input": "Java17 fixture runtime mode alpha selects repo.readSnapshot before gate.allow; beta performs gate before read. Disposable reads, clients one attempt, shared DB. Before gate DB slowdown/pool wait/goodput decline; no post-enable DB measurements. Runbook assumes high rejection count proves protection. Edit runbook only. Case A selects alpha.",
+      "expected": "Identify late placement, propose bounded earlier admission under given contract, require evidence before restoring traffic; beta existing in source is not active protection."
+    },
+    {
+      "input": "Same fixtures, only runtime mode changes to beta.",
+      "expected": "Preserve early admission; no invented placement bug. Remove unconditional full-traffic recovery; distinguish prior in-flight work from new arrivals, require post-enable resource/goodput/cost evidence."
+    }
+  ],
+  "crossSkill": [],
+  "allWritesStopped": true,
+  "evidenceType": "Coordinator transcription of reviewer handoff; checks are reviewer-reported."
+}

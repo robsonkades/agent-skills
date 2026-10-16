@@ -1,0 +1,9 @@
+import java.util.concurrent.*;
+
+public final class MigrationSnippet {
+static <T> Future<T> start(Callable<T> task) {
+    try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+        return executor.submit(task);
+    } // close runs before the method returns
+}
+}

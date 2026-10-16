@@ -34,16 +34,19 @@ reproduction, state a proposed selection and its evidence gap, not a verified di
 
 ## Workflow
 
-1. **Name the risk this change carries**, in one sentence. Wrong calculation, wrong wiring,
-   wrong SQL, wrong contract with another team, wrong under concurrency or load — these are
-   five different risks and they are not testable at the same level. If you cannot name it,
-   you do not yet know what to test.
+1. **Trace the changed behavior, then name its risks.** Read the change, its production
+   caller/configuration and the nearest existing tests. Follow the relevant path to an
+   observable result: calculation, wiring, SQL, protocol or concurrent state. State which
+   mechanism could fail and what evidence establishes that path. If a caller or environment
+   is unavailable, keep the selection conditional instead of inferring coverage from a test name.
 2. **Find the narrowest scope in which that risk is real.** A rounding rule is real inside
    one method. A lazy-loading failure is not real until a real persistence context exists.
    Push down as far as the risk survives, and no further.
 3. **Read what that level cannot prove** (`references/test-levels.md`) and inspect existing
-   evidence for the same boundary, versions and assumptions. Add focused coverage only for a
-   material remaining gap, or make its acceptance explicit; do not add a test per mock.
+   setup, real/substituted collaborators and assertions for the same boundary, versions and
+   assumptions. A matching annotation or suite name does not establish coverage. Add focused
+   coverage only for a material remaining gap, or make its acceptance explicit; do not add a
+   test per mock.
 4. **Price it**: feedback latency, probability of flaking, and how tightly it binds to
    structure that will change. A test that must be rewritten by every refactoring is a
    change detector, and it will be deleted under deadline pressure.
@@ -51,9 +54,10 @@ reproduction, state a proposed selection and its evidence gap, not a verified di
    test alone does not establish that it detects the intended failure. If a red run is
    unavailable, report that limitation; do not alter production merely to manufacture one.
 6. **Confirm execution in the intended gate.** Inspect the actual CI task/phase, selected
-   modules, profiles, test engines and filters. Read fresh reports for the intended test's
-   identity, executed/skipped counts and failure propagation. Compilation, a green exit code
-   or a passing unrelated suite does not prove this regression runs or can fail that gate.
+   modules, profiles, test engines and filters. Read reports tied to the run for the intended
+   test's identity, executed/skipped counts and failure propagation; distinguish newly executed
+   tests from reused results. Compilation, a green exit code or a passing unrelated suite does
+   not prove this regression runs or can fail that gate.
 
 Return the risk, chosen scope, decisive assertion or reproduction, uncovered boundary and
 how it is covered or accepted, plus commands/results actually observed. A short paragraph
@@ -61,10 +65,10 @@ is enough for a single change.
 
 ## Rules
 
-- The pyramid is a cost heuristic, not a target shape. It says fast tests are cheap to run
-  often and slow ones are not — nothing more. Where integration tests run in seconds
-  (container reuse, a real engine started once per suite), lean on them; where they take
-  minutes, do not. Decide from your measured suite time, not from the picture.
+- The pyramid is a cost heuristic, not a target shape. Compare feedback latency, isolation
+  and diagnostic value after preserving the risk. Fast integration tests can be economical;
+  a slow database test may still be necessary when a mock removes the failure mechanism.
+  Measure startup, test work and retries separately before choosing scope or gate cadence.
 - Every mocked boundary carries assumptions to verify at an appropriate real boundary: schema and
   query behaviour by an integration test against the real engine, HTTP shape by a contract
   test, serialisation by expected wire fixtures as well as round trips. An unverified mock is an assumption written in
@@ -87,9 +91,11 @@ is enough for a single change.
   prove dead code or a wrong boundary. A focused direct test may be a useful legacy seam, but
   carries coupling and does not prove invocation by the real caller. Do not expose methods or
   extract classes solely to satisfy a testing rule (java-cohesion-coupling).
-- Diagnose slow or flaky tests before deleting coverage. Temporary quarantine needs an
-  owner, repair deadline and explicit risk; it is not a pass. A slow valuable test may belong
-  in a scheduled suite with a defined release policy.
+- Diagnose slow or flaky tests before deleting coverage. Distinguish fixture interference,
+  unavailable infrastructure and an intermittent product defect; passing on retry does not
+  resolve any of them. Use the triage in `references/test-levels.md`. Temporary quarantine
+  needs an owner, repair deadline and explicit risk; it is not a pass. A slow valuable test
+  may belong in a scheduled suite with a defined release policy.
 
 ## References
 
@@ -97,7 +103,8 @@ is enough for a single change.
   integration, Spring slice, contract, end-to-end and characterisation, each with the Java
   tooling, typical feedback latency, and the specific failures it is blind to. Read when
   choosing a level, deciding what a mocked boundary still obliges you to verify, or checking
-  whether the build actually executes and enforces the selected tests.
+  whether the build actually executes and enforces the selected tests, or diagnosing shared
+  state, fixture lifecycle and retry-related loss of signal.
 - **Worked selection scenarios** — `references/selection-scenarios.md`. Pricing, queries,
   third-party calls, schema migrations, a bug report and a green build missing its regression
   test — taken from risk to chosen scope, with work deliberately omitted and why. Read when

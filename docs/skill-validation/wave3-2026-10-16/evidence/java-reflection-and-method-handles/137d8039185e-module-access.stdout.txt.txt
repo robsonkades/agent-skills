@@ -1,0 +1,6 @@
+local modes=31 fullPrivilege=true handle=local
+local linkage=PASS
+local typedAdapter=PASS
+foreign modes=15 fullPrivilege=false handle=foreign
+foreign linkage=java.lang.invoke.LambdaConversionException: Invalid caller: target.Foreign
+foreign typedAdapter=PASS

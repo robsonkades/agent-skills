@@ -1,0 +1,747 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "java-strings-and-text",
+  "reviewDate": "2026-10-16",
+  "ownedPath": "skills/java-strings-and-text/**",
+  "allWritesStopped": true,
+  "runningProcesses": [],
+  "versions": {
+    "committed": "1.2.3",
+    "assignment": "1.2.3",
+    "final": "1.2.4",
+    "rationale": "One patch for supported semantic guidance and its executable example; no pre-existing bump."
+  },
+  "baseline": {
+    "staged": "clean",
+    "unstaged": "clean",
+    "untracked": [],
+    "retainedContentAndHashes": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-strings-and-text/baseline.json",
+    "hashes": [
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\java-strings-and-text\\SKILL.md",
+        "Hash": "F9B3A0DE4CF96422ED4BA944641B92DCEF46C20B5DFB0DEDE1D62B34EECF12AF"
+      },
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\java-strings-and-text\\skill.yaml",
+        "Hash": "2E383960BAEFA19F0F23EB09E980D3135F5D05522E240E8A0E3C643981432C6D"
+      },
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\java-strings-and-text\\references\\building-text-safely.md",
+        "Hash": "C4A695DC3DBEB8F04939A5F91777F784618575D517E45FA41196FD1F92D0CB84"
+      },
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\java-strings-and-text\\references\\encoding-locale-and-unicode.md",
+        "Hash": "E0FFB2D1E6C3ADC39344241916EB8611B068F46EDCE316CC6B8D122C5DC7B9EF"
+      }
+    ]
+  },
+  "preExistingChanges": [],
+  "filesChangedByReviewer": [
+    "skills/java-strings-and-text/SKILL.md",
+    "skills/java-strings-and-text/references/building-text-safely.md",
+    "skills/java-strings-and-text/skill.yaml"
+  ],
+  "findingsCorrected": [
+    {
+      "location": "SKILL.md:87–93; references/building-text-safely.md:29–46",
+      "problem": "Loop-to-StringBuilder guidance did not expose a conversion/overload trap: concatenating a char[] uses its object string representation, but append(char[]) writes its contents and rejects null. A plausible cost-only refactor can change observable output and accepted inputs.",
+      "evidence": "Java SE25 JLS5.1.11 and StringBuilder append(Object)/append(char[]) contracts; actual published snippet compiled/executed plus 35 semantic controls on Temurin25.0.3+9.",
+      "change": "Add a short guard to inspect declared operand types and selected overload. Add a routed example showing explicit object conversion, legitimate content conversion, null behavior, and the String.valueOf(char[]) trap. Preserve an already-Object operand rather than adding unnecessary casts.",
+      "consequence": "Guides a contract-preserving refactor and distinguishes a deliberate change to character contents from an optimization. It does not establish application speedup or measured agent improvement."
+    }
+  ],
+  "findingsRemaining": [],
+  "reviewCriteria": [
+    "Follow text through actual producer and consumer contracts: encoding/error policy, locale, code-unit/code-point/grapheme or byte units, normalization and comparison.",
+    "Preserve output and exception behavior when changing construction mechanisms; reject a transformation that only looks mechanically equivalent.",
+    "Keep valid string representations and compiler/runtime targets; do not introduce wrappers, global state, upgrades or tuning without a demonstrated need.",
+    "Separate semantic checks from regex growth, throughput, allocation, security prevalence and agent-behavior claims."
+  ],
+  "capabilitiesPreserved": [
+    "Java25 authoring baseline and preservation of consumer toolchain/runtime; no new dependency or preview feature.",
+    "Validated strings versus domain types, compound-key ambiguity and public encoding compatibility.",
+    "UTF-16/code-point/grapheme distinction; malformed-input encoder/decoder policy and actual byte limits.",
+    "Locale-specific formatting and protocol/ASCII casing distinctions; Unicode normalization, identity and database uniqueness contracts.",
+    "Concatenation cost model, empty/trailing-delimiter/null preservation, confined builders and bounded capacity hints.",
+    "Pattern/Matcher distinction, bounded regex inputs, literal pattern/replacement quoting, split trailing fields and cautious isolated growth probes.",
+    "Context-specific injection defenses, argument injection, filesystem traversal and log encoder boundaries.",
+    "Text block semantics and conditional interning/string-deduplication guidance.",
+    "Existing encoding-locale-and-unicode.md is byte-for-byte unchanged."
+  ],
+  "capabilitiesReplacedOrRemoved": [],
+  "compatibility": {
+    "authoringBaseline": "Java25",
+    "executedCompiler": "Temurin javac25.0.3+9 with --release25",
+    "executedRuntime": "Temurin OpenJDK25.0.3+9-LTS Windows x64",
+    "consumerBaseline": "Must be inspected in the applying project; no consumer upgrade authorized or performed.",
+    "newExample": "Partial Java snippet requiring no external imports/dependencies; extracted verbatim from shipped reference into an isolated main for compilation and execution."
+  },
+  "commandsAndResults": [
+    {
+      "classification": "local",
+      "key": "technical",
+      "cmd": "node 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-strings-and-text/run-controls.mjs' 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-strings-and-text/technical-controls.log'\nexit $LASTEXITCODE",
+      "workdir": "C:/git/agent-skills",
+      "max_output_tokens": 5000,
+      "chunk_id": "56bace",
+      "wall_time_seconds": 0.6253926,
+      "exit_code": 0,
+      "original_token_count": 379,
+      "output": "{\"id\":\"runtime\",\"executable\":\"C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe\",\"args\":[\"-version\"],\"cwd\":\"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave3-validation-wyg7TL\\\\java-strings-and-text\",\"status\":0,\"error\":null,\"stdout\":\"\",\"stderr\":\"openjdk version \\\"25.0.3\\\" 2026-04-21 LTS\\r\\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\\r\\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\\r\\n\"}\r\n{\"id\":\"compile-controls\",\"executable\":\"C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe\",\"args\":[\"--release\",\"25\",\"-d\",\"classes\",\"PublishedSnippet.java\",\"StringAppendControls.java\"],\"cwd\":\"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave3-validation-wyg7TL\\\\java-strings-and-text\",\"status\":0,\"error\":null,\"stdout\":\"\",\"stderr\":\"\"}\r\n{\"id\":\"published-snippet\",\"executable\":\"C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe\",\"args\":[\"-cp\",\"classes\",\"PublishedSnippet\"],\"cwd\":\"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave3-validation-wyg7TL\\\\java-strings-and-text\",\"status\":0,\"error\":null,\"stdout\":\"PASS actual published snippet: object conversion preserved; content alternative distinguished\\r\\n\",\"stderr\":\"\"}\r\n{\"id\":\"semantic-controls\",\"executable\":\"C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe\",\"args\":[\"-cp\",\"classes\",\"StringAppendControls\"],\"cwd\":\"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave3-validation-wyg7TL\\\\java-strings-and-text\",\"status\":0,\"error\":null,\"stdout\":\"PASS 35 semantic checks; no performance measured\\r\\n\",\"stderr\":\"\"}\r\n"
+    },
+    {
+      "classification": "local",
+      "key": "structure",
+      "cmd": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-strings-and-text/validate-local.mjs' -Raw | node --input-type=module 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-strings-and-text/package-validation.log'\nexit $LASTEXITCODE",
+      "workdir": "C:/git/agent-skills",
+      "max_output_tokens": 2000,
+      "chunk_id": "1c9c8b",
+      "wall_time_seconds": 0.2033712,
+      "exit_code": 0,
+      "original_token_count": 64,
+      "output": "{\r\n  \"version\": \"1.2.4\",\r\n  \"packageFiles\": [\r\n    \"SKILL.md\",\r\n    \"references/building-text-safely.md\",\r\n    \"references/encoding-locale-and-unicode.md\",\r\n    \"skill.yaml\"\r\n  ],\r\n  \"issues\": [],\r\n  \"linksChecked\": 2,\r\n  \"declaredTargetsChecked\": 10\r\n}\r\n"
+    },
+    {
+      "classification": "local",
+      "key": "format",
+      "cmd": "node node_modules/prettier/bin/prettier.cjs --check skills/java-strings-and-text/SKILL.md skills/java-strings-and-text/skill.yaml skills/java-strings-and-text/references/*.md 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-strings-and-text/format-check.log'\nexit $LASTEXITCODE",
+      "workdir": "C:/git/agent-skills",
+      "max_output_tokens": 2000,
+      "chunk_id": "2b26fc",
+      "wall_time_seconds": 0.2714568,
+      "exit_code": 0,
+      "original_token_count": 17,
+      "output": "Checking formatting...\r\nAll matched files use Prettier code style!\r\n"
+    },
+    {
+      "classification": "local",
+      "key": "diff",
+      "cmd": "git diff --check -- skills/java-strings-and-text\nif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }\ngit diff -- skills/java-strings-and-text",
+      "workdir": "C:/git/agent-skills",
+      "max_output_tokens": 5000,
+      "chunk_id": "ea87c9",
+      "wall_time_seconds": 0.1112546,
+      "exit_code": 0,
+      "original_token_count": 1106,
+      "output": "diff --git a/skills/java-strings-and-text/SKILL.md b/skills/java-strings-and-text/SKILL.md\nindex cec5e7e..321ecd4 100644\n--- a/skills/java-strings-and-text/SKILL.md\n+++ b/skills/java-strings-and-text/SKILL.md\n@@ -88,7 +88,9 @@ consumer or runtime facts that would change the recommendation.\n   `StringConcatFactory`; the language specification intentionally leaves the implementation to\n   the compiler. Repeated `result += fragment` in a loop can copy an ever-growing prefix and\n   become quadratic. Use a locally owned `StringBuilder` in loops, `String.join` or\n-  `Collectors.joining` for collections.\n+  `Collectors.joining` for collections. Preserve conversion and null behaviour when rewriting:\n+  `append(char[])` copies the array's characters, whereas `+` uses its object representation.\n+  Inspect declared operand types and the selected overload before treating the rewrite as equivalent.\n - Do not micro-optimise concatenation outside loops, and do not replace readable expressions\n   with `StringBuilder` chains on a hunch. If string building appears in a profile, that is\n   evidence; otherwise it is noise (performance-methodology).\ndiff --git a/skills/java-strings-and-text/references/building-text-safely.md b/skills/java-strings-and-text/references/building-text-safely.md\nindex 1b3984e..e3781ec 100644\n--- a/skills/java-strings-and-text/references/building-text-safely.md\n+++ b/skills/java-strings-and-text/references/building-text-safely.md\n@@ -26,6 +26,25 @@ a rewrite adds no useful benefit. These are independent sketches, not byte-equiv\n null and `toCsv()` escaping contracts. Avoid unchecked `rows.size() * 64` capacity arithmetic or\n unbounded speculative preallocation; a capacity hint is optional, not a size or work limit.\n \n+**Preserve string conversion when changing the mechanism.** Overload resolution uses the\n+operand's declared type. String concatenation converts a `char[]` as an object, while\n+`append(char[])` copies its characters:\n+\n+```java\n+char[] chars = {'A', 'B'};\n+String original = \"\" + chars;                              // array object representation\n+String preserved = new StringBuilder().append((Object) chars).toString();\n+String contents = new StringBuilder().append(chars).toString(); // \"AB\": different contract\n+```\n+\n+If `chars` is null, concatenation and `append((Object) chars)` produce `\"null\"`, but\n+`append(char[])` throws `NullPointerException`. `String.valueOf(chars)` also selects the\n+array-content overload; use the object conversion only when preserving that existing contract.\n+An operand already declared `Object` selects `append(Object)` without a cast, even when its\n+runtime value is a character array. Keep adequate conversions and verify output and exceptions\n+against the actual consumers; switching from an array's object representation to its contents\n+is a separate behaviour change, not a cost-only refactor.\n+\n Other composition tools, by purpose:\n \n | Purpose                              | Tool                                                                         |\n@@ -174,6 +193,8 @@ See java-reference-types-and-leaks.\n ## Authoritative references\n \n - [JLS §15.18.1: String Concatenation Operator](https://docs.oracle.com/javase/specs/jls/se25/html/jls-15.html#jls-15.18.1)\n+- [JLS §5.1.11: String Conversion](https://docs.oracle.com/javase/specs/jls/se25/html/jls-5.html#jls-5.1.11)\n+- [StringBuilder append overloads, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/StringBuilder.html)\n - [Pattern API, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/regex/Pattern.html)\n - [String.split limits, Java SE 25](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html#split(java.lang.String,int)>)\n - [OWASP input validation and ReDoS guidance](https://cheatsheetseries.owasp.org/cheatsheets/Input_Validation_Cheat_Sheet.html)\ndiff --git a/skills/java-strings-and-text/skill.yaml b/skills/java-strings-and-text/skill.yaml\nindex 68a6f35..7c7bcb7 100644\n--- a/skills/java-strings-and-text/skill.yaml\n+++ b/skills/java-strings-and-text/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: java-strings-and-text\n-version: 1.2.3\n+version: 1.2.4\n description: >-\n   Text in Java as encoded data rather than a universal type: UTF-16 code units versus code\n   points versus graphemes, charsets and why the platform default is not a policy,\n"
+    },
+    {
+      "classification": "technical-case-fixture-check",
+      "cmd": "node 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-strings-and-text/verify-cases.mjs' 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-strings-and-text/case-fixture-controls.log'\nexit $LASTEXITCODE",
+      "cwd": "C:/git/agent-skills",
+      "chunk_id": "445259",
+      "wall_time_seconds": 0.8498068,
+      "exit_code": 0,
+      "original_token_count": 433,
+      "output": "{\"id\":\"A\",\"stage\":\"compile\",\"executable\":\"C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe\",\"args\":[\"--release\",\"25\",\"-d\",\"classes\",\"TextRenderer.java\",\"ConsumerContract.java\"],\"cwd\":\"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave3-validation-wyg7TL\\\\java-strings-and-text\\\\case-inputs\\\\A\",\"status\":0,\"error\":null,\"stdout\":\"\",\"stderr\":\"\"}\r\n{\"id\":\"A\",\"stage\":\"run\",\"executable\":\"C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe\",\"args\":[\"-cp\",\"classes\",\"ConsumerContract\"],\"cwd\":\"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave3-validation-wyg7TL\\\\java-strings-and-text\\\\case-inputs\\\\A\",\"status\":0,\"error\":null,\"stdout\":\"PASS 6 compatibility cases; performance not measured\\r\\n\",\"stderr\":\"\"}\r\n{\"id\":\"B\",\"stage\":\"compile\",\"executable\":\"C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe\",\"args\":[\"--release\",\"25\",\"-d\",\"classes\",\"TextRenderer.java\",\"ConsumerContract.java\"],\"cwd\":\"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave3-validation-wyg7TL\\\\java-strings-and-text\\\\case-inputs\\\\B\",\"status\":0,\"error\":null,\"stdout\":\"\",\"stderr\":\"\"}\r\n{\"id\":\"B\",\"stage\":\"run\",\"executable\":\"C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe\",\"args\":[\"-cp\",\"classes\",\"ConsumerContract\"],\"cwd\":\"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave3-validation-wyg7TL\\\\java-strings-and-text\\\\case-inputs\\\\B\",\"status\":1,\"error\":null,\"stdout\":\"FAIL nonempty fragment: changed output\\r\\nFAIL empty fragment: changed output\\r\\nFAIL supplementary and combining text: changed output\\r\\nFAIL null fragment: new NullPointerException\\r\\nFAIL mixed fragments: new NullPointerException\\r\\n\",\"stderr\":\"Exception in thread \\\"main\\\" java.lang.AssertionError: 5 of 6 compatibility cases failed\\r\\n\\tat ConsumerContract.main(ConsumerContract.java:29)\\r\\n\"}\r\n"
+    },
+    {
+      "classification": "final-owned-diff",
+      "cmd": "git diff --check -- skills/java-strings-and-text 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-strings-and-text/diff-check.log'\nif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }\ngit diff -- skills/java-strings-and-text | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-strings-and-text/final-owned.diff'\ngit status --short -- skills/java-strings-and-text\ngit diff --cached --numstat -- skills/java-strings-and-text",
+      "cwd": "C:/git/agent-skills",
+      "chunk_id": "0d47cc",
+      "wall_time_seconds": 0.176977,
+      "exit_code": 0,
+      "original_token_count": 1332,
+      "output": "diff --git a/skills/java-strings-and-text/SKILL.md b/skills/java-strings-and-text/SKILL.md\r\nindex cec5e7e..321ecd4 100644\r\n--- a/skills/java-strings-and-text/SKILL.md\r\n+++ b/skills/java-strings-and-text/SKILL.md\r\n@@ -88,7 +88,9 @@ consumer or runtime facts that would change the recommendation.\r\n   `StringConcatFactory`; the language specification intentionally leaves the implementation to\r\n   the compiler. Repeated `result += fragment` in a loop can copy an ever-growing prefix and\r\n   become quadratic. Use a locally owned `StringBuilder` in loops, `String.join` or\r\n-  `Collectors.joining` for collections.\r\n+  `Collectors.joining` for collections. Preserve conversion and null behaviour when rewriting:\r\n+  `append(char[])` copies the array's characters, whereas `+` uses its object representation.\r\n+  Inspect declared operand types and the selected overload before treating the rewrite as equivalent.\r\n - Do not micro-optimise concatenation outside loops, and do not replace readable expressions\r\n   with `StringBuilder` chains on a hunch. If string building appears in a profile, that is\r\n   evidence; otherwise it is noise (performance-methodology).\r\ndiff --git a/skills/java-strings-and-text/references/building-text-safely.md b/skills/java-strings-and-text/references/building-text-safely.md\r\nindex 1b3984e..e3781ec 100644\r\n--- a/skills/java-strings-and-text/references/building-text-safely.md\r\n+++ b/skills/java-strings-and-text/references/building-text-safely.md\r\n@@ -26,6 +26,25 @@ a rewrite adds no useful benefit. These are independent sketches, not byte-equiv\r\n null and `toCsv()` escaping contracts. Avoid unchecked `rows.size() * 64` capacity arithmetic or\r\n unbounded speculative preallocation; a capacity hint is optional, not a size or work limit.\r\n \r\n+**Preserve string conversion when changing the mechanism.** Overload resolution uses the\r\n+operand's declared type. String concatenation converts a `char[]` as an object, while\r\n+`append(char[])` copies its characters:\r\n+\r\n+```java\r\n+char[] chars = {'A', 'B'};\r\n+String original = \"\" + chars;                              // array object representation\r\n+String preserved = new StringBuilder().append((Object) chars).toString();\r\n+String contents = new StringBuilder().append(chars).toString(); // \"AB\": different contract\r\n+```\r\n+\r\n+If `chars` is null, concatenation and `append((Object) chars)` produce `\"null\"`, but\r\n+`append(char[])` throws `NullPointerException`. `String.valueOf(chars)` also selects the\r\n+array-content overload; use the object conversion only when preserving that existing contract.\r\n+An operand already declared `Object` selects `append(Object)` without a cast, even when its\r\n+runtime value is a character array. Keep adequate conversions and verify output and exceptions\r\n+against the actual consumers; switching from an array's object representation to its contents\r\n+is a separate behaviour change, not a cost-only refactor.\r\n+\r\n Other composition tools, by purpose:\r\n \r\n | Purpose                              | Tool                                                                         |\r\n@@ -174,6 +193,8 @@ See java-reference-types-and-leaks.\r\n ## Authoritative references\r\n \r\n - [JLS §15.18.1: String Concatenation Operator](https://docs.oracle.com/javase/specs/jls/se25/html/jls-15.html#jls-15.18.1)\r\n+- [JLS §5.1.11: String Conversion](https://docs.oracle.com/javase/specs/jls/se25/html/jls-5.html#jls-5.1.11)\r\n+- [StringBuilder append overloads, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/StringBuilder.html)\r\n - [Pattern API, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/regex/Pattern.html)\r\n - [String.split limits, Java SE 25](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html#split(java.lang.String,int)>)\r\n - [OWASP input validation and ReDoS guidance](https://cheatsheetseries.owasp.org/cheatsheets/Input_Validation_Cheat_Sheet.html)\r\ndiff --git a/skills/java-strings-and-text/skill.yaml b/skills/java-strings-and-text/skill.yaml\r\nindex 68a6f35..7c7bcb7 100644\r\n--- a/skills/java-strings-and-text/skill.yaml\r\n+++ b/skills/java-strings-and-text/skill.yaml\r\n@@ -1,7 +1,7 @@\r\n schemaVersion: 1\r\n \r\n name: java-strings-and-text\r\n-version: 1.2.3\r\n+version: 1.2.4\r\n description: >-\r\n   Text in Java as encoded data rather than a universal type: UTF-16 code units versus code\r\n   points versus graphemes, charsets and why the platform default is not a policy,\r\n M skills/java-strings-and-text/SKILL.md\n M skills/java-strings-and-text/references/building-text-safely.md\n M skills/java-strings-and-text/skill.yaml\nskills/java-strings-and-text/skill.yaml:4:version: 1.2.4\nskills/java-strings-and-text/SKILL.md:91:  `Collectors.joining` for collections. Preserve conversion and null behaviour when rewriting:\nskills/java-strings-and-text/references/building-text-safely.md:29:**Preserve string conversion when changing the mechanism.** Overload resolution uses the\nskills/java-strings-and-text/references/building-text-safely.md:43:An operand already declared `Object` selects `append(Object)` without a cast, even when its\nskills/java-strings-and-text/references/building-text-safely.md:196:- [JLS §5.1.11: String Conversion](https://docs.oracle.com/javase/specs/jls/se25/html/jls-5.html#jls-5.1.11)\n"
+    }
+  ],
+  "nativeCommandsAndResults": [
+    {
+      "id": "runtime",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-version"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text",
+      "status": 0,
+      "error": null,
+      "stdout": "",
+      "stderr": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n"
+    },
+    {
+      "id": "compile-controls",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+      "args": [
+        "--release",
+        "25",
+        "-d",
+        "classes",
+        "PublishedSnippet.java",
+        "StringAppendControls.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text",
+      "status": 0,
+      "error": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "id": "published-snippet",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-cp",
+        "classes",
+        "PublishedSnippet"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text",
+      "status": 0,
+      "error": null,
+      "stdout": "PASS actual published snippet: object conversion preserved; content alternative distinguished\r\n",
+      "stderr": ""
+    },
+    {
+      "id": "semantic-controls",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-cp",
+        "classes",
+        "StringAppendControls"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text",
+      "status": 0,
+      "error": null,
+      "stdout": "PASS 35 semantic checks; no performance measured\r\n",
+      "stderr": ""
+    }
+  ],
+  "caseFixtureCommandsAndResults": [
+    {
+      "id": "A",
+      "stage": "compile",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+      "args": [
+        "--release",
+        "25",
+        "-d",
+        "classes",
+        "TextRenderer.java",
+        "ConsumerContract.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\case-inputs\\A",
+      "status": 0,
+      "error": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "id": "A",
+      "stage": "run",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-cp",
+        "classes",
+        "ConsumerContract"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\case-inputs\\A",
+      "status": 0,
+      "error": null,
+      "stdout": "PASS 6 compatibility cases; performance not measured\r\n",
+      "stderr": ""
+    },
+    {
+      "id": "B",
+      "stage": "compile",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+      "args": [
+        "--release",
+        "25",
+        "-d",
+        "classes",
+        "TextRenderer.java",
+        "ConsumerContract.java"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\case-inputs\\B",
+      "status": 0,
+      "error": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "id": "B",
+      "stage": "run",
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-cp",
+        "classes",
+        "ConsumerContract"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\case-inputs\\B",
+      "status": 1,
+      "error": null,
+      "stdout": "FAIL nonempty fragment: changed output\r\nFAIL empty fragment: changed output\r\nFAIL supplementary and combining text: changed output\r\nFAIL null fragment: new NullPointerException\r\nFAIL mixed fragments: new NullPointerException\r\n",
+      "stderr": "Exception in thread \"main\" java.lang.AssertionError: 5 of 6 compatibility cases failed\r\n\tat ConsumerContract.main(ConsumerContract.java:29)\r\n"
+    }
+  ],
+  "sourceRetrieval": {
+    "commands": [
+      {
+        "cmd": "Invoke-WebRequest -Uri 'https://docs.oracle.com/javase/specs/jls/se25/html/jls-5.html' -OutFile 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-strings-and-text/sources/jls-5.html' -TimeoutSec 20",
+        "result": "success"
+      },
+      {
+        "cmd": "Invoke-WebRequest -Uri 'https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/StringBuilder.html' -OutFile 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-strings-and-text/sources/StringBuilder.html' -TimeoutSec 20",
+        "result": "success"
+      }
+    ],
+    "provenance": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-strings-and-text/sources/provenance.json",
+    "limitation": "An earlier web.open request remained pending and was terminated; no returned content from it was used. Official search results and subsequently retained primary HTML supplied the evidence."
+  },
+  "validationSummary": {
+    "strictPackage": {
+      "files": 4,
+      "issues": 0,
+      "localMarkdownLinks": 2,
+      "declaredSkillTargets": 10
+    },
+    "formatter": "passed; no format rewrite required",
+    "diffWhitespace": "passed",
+    "actualPublishedSnippet": {
+      "compiled": true,
+      "executed": true,
+      "result": "object conversion preserved, content alternative distinguished"
+    },
+    "semanticControls": {
+      "checks": 35,
+      "passed": 35,
+      "inputs": "Nonempty/empty char[]; supplementary and combining text; sentinel contents; null; declared Object; explicit Object cast; array-content alternative; String.valueOf overloads; nonempty and empty loops.",
+      "oracle": "Array Object representation derived from class name and identity hash; literal-null contract; content alternative checked against new String(char[]); caller output compared against prior concatenation.",
+      "negativeControls": "Direct char[] append and String.valueOf(char[]) reject null; direct char[] loop changes output and null behavior."
+    },
+    "fixtures": {
+      "A": {
+        "compiled": true,
+        "exit": 0,
+        "compatibilityCasesPassed": 6
+      },
+      "B": {
+        "compiled": true,
+        "exit": 1,
+        "expectedFailures": 5,
+        "totalCompatibilityCases": 6
+      },
+      "meaning": "Frozen technical fixture controls; B is deliberately faulty. These are not actual agent outputs."
+    }
+  },
+  "failuresAndLimitsOfAttempts": [
+    {
+      "attempt": "Initial web.open of primary pages",
+      "result": "Pending request manually terminated; no source content claimed from that attempt. Both exact sources later retrieved successfully.",
+      "evidence": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-strings-and-text/sources/provenance.json"
+    },
+    {
+      "attempt": "CaseB initial render",
+      "exit": 1,
+      "classification": "Expected negative fixture: five of six consumer cases fail due to changed output/new NPE. Harness expects the failure; no package validation failure.",
+      "evidence": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-strings-and-text/case-B-run.stdout.txt",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-strings-and-text/case-B-run.stderr.txt"
+      ]
+    }
+  ],
+  "behavioralEvaluations": {
+    "executed": [],
+    "measuredImprovement": false,
+    "structuredWalkthroughs": [
+      "CaseA: inspect declared Object loop and unchanged caller; existing append(Object) is adequate and all six cases pass. Preserve implementation and avoid claiming measured speedup.",
+      "CaseB: inspect declared char[] and caller; append(char[]) violates existing representation and null contracts. Authorized minimal fix is object string conversion, not null prohibition or changing expected output."
+    ],
+    "note": "No independent actor was launched. Technical native controls substantiate the API distinction and fixtures, not the effectiveness of the revised skill."
+  },
+  "developmentCases": {
+    "classification": "Two known development cases, not unseen holdouts",
+    "inputsFile": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-strings-and-text/case-inputs.json",
+    "evaluatorOnlyFile": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-strings-and-text/case-evaluator-criteria.json",
+    "actorInputs": [
+      {
+        "id": "A",
+        "task": "Review the candidate text-building refactor against the existing caller contract. Inspect both source files and correct any demonstrated behavior change in TextRenderer.render; keep an already adequate implementation. Preserve legacy and ConsumerContract, and run appropriate local checks. Report correctness evidence separately from any unmeasured performance claim.",
+        "prerequisites": "Installed JDK25; compile and run only the isolated actor copy. No production data, service access, dependency installation or runtime changes.",
+        "files": [
+          {
+            "from": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-strings-and-text/case-inputs/A/TextRenderer.java",
+            "to": "TextRenderer.java"
+          },
+          {
+            "from": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-strings-and-text/case-inputs/A/ConsumerContract.java",
+            "to": "ConsumerContract.java"
+          },
+          {
+            "from": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-strings-and-text/case-inputs/A/README.md",
+            "to": "README.md"
+          }
+        ]
+      },
+      {
+        "id": "B",
+        "task": "Review the candidate text-building refactor against the existing caller contract. Inspect both source files and correct any demonstrated behavior change in TextRenderer.render; keep an already adequate implementation. Preserve legacy and ConsumerContract, and run appropriate local checks. Report correctness evidence separately from any unmeasured performance claim.",
+        "prerequisites": "Installed JDK25; compile and run only the isolated actor copy. No production data, service access, dependency installation or runtime changes.",
+        "files": [
+          {
+            "from": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-strings-and-text/case-inputs/B/TextRenderer.java",
+            "to": "TextRenderer.java"
+          },
+          {
+            "from": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-strings-and-text/case-inputs/B/ConsumerContract.java",
+            "to": "ConsumerContract.java"
+          },
+          {
+            "from": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-strings-and-text/case-inputs/B/README.md",
+            "to": "README.md"
+          }
+        ]
+      }
+    ],
+    "evaluatorOnlyCriteria": {
+      "classification": "Known development cases, not held-out tests or executed agent evaluations",
+      "decisiveConstraint": "The two TextRenderer.java files differ only in the candidate loop variable's declared type: Object vs char[]. The method signature, runtime input values, legacy method, caller tests and task remain identical.",
+      "isolation": "Copy only the listed inputs for one actor. Do not expose criteria, other case, technical result logs, source baseline/revised skill comparison artifacts or validation harness. Folder naming alone is not isolation.",
+      "common": [
+        "Inspect the actual candidate and caller contract; preserve legacy, the tests, output delimiters and accepted null fragments.",
+        "Use JLS string conversion and the selected append overload to explain any correction; runtime array type alone does not determine the overload.",
+        "Compile/run the relevant Java25 compatibility checks or explicitly disclose unavailable execution.",
+        "Do not infer performance improvement from semantic tests, introduce dependencies, or turn the compatibility task into an unrequested wire-format change."
+      ],
+      "A": {
+        "expected": "Keep render: declared Object already selects append(Object), matching legacy output including null. Six compatibility cases pass. No redundant cast or broad rewrite is justified by this concern.",
+        "failureConditions": [
+          "Treat a runtime char[] as selecting append(char[]) despite the declared Object operand.",
+          "Replace adequate object conversion with array contents.",
+          "Invent a semantic failure or assert measured speedup."
+        ]
+      },
+      "B": {
+        "expected": "The char[] operand selects append(char[]), changing nonempty/empty outputs and introducing NPE for null. Correct render to preserve object string conversion, for example append((Object) fragment), then all six compatibility cases pass.",
+        "failureConditions": [
+          "Keep the content-writing append(char[]) or use uncast String.valueOf(fragment) as a claimed compatibility fix.",
+          "Change legacy, weaken tests or forbid previously accepted null input to hide the regression.",
+          "Fix only null handling while still emitting array contents.",
+          "Describe the issue without making the authorized correction."
+        ]
+      },
+      "technicalVerification": "Fresh original fixtures will be compiled/run with frozen expectations: A passes; B fails five of six caller cases. Their execution validates fixtures, not agent behavior.",
+      "behavioralEvaluationExecuted": false
+    },
+    "behavioralEvaluationExecuted": false
+  },
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se25/html/jls-5.html#jls-5.1.11",
+      "retained": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-strings-and-text/sources/jls-5.html",
+      "version": "Java SE25",
+      "location": "Section5.1.11; retained HTML1931–1958",
+      "support": "String conversion maps null references to literal null and otherwise uses the referenced object's toString, with a null return mapped to literal null."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/StringBuilder.html",
+      "retained": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-strings-and-text/sources/StringBuilder.html",
+      "version": "Java SE25",
+      "location": "append(Object), append(char[]), class-level null policy",
+      "support": "Object overload converts through String.valueOf(Object); char[] overload appends array characters; the class-level null exception contract applies to append(char[])."
+    }
+  ],
+  "validationArtifacts": {
+    "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-strings-and-text",
+    "retainedFiles": [
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\baseline.json",
+        "Length": 37343,
+        "Hash": "3DCA43D93AC17E804E866F23073976B5E5CFFA5AA3702129307CB8E7D5AF484C"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\case-A-compile.stderr.txt",
+        "Length": 0,
+        "Hash": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\case-A-compile.stdout.txt",
+        "Length": 0,
+        "Hash": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\case-A-run.stderr.txt",
+        "Length": 0,
+        "Hash": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\case-A-run.stdout.txt",
+        "Length": 54,
+        "Hash": "E971991B3EB1E6DFB031DF1F33545041FB3EC7E8D7E248106717219194B34C11"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\case-B-compile.stderr.txt",
+        "Length": 0,
+        "Hash": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\case-B-compile.stdout.txt",
+        "Length": 0,
+        "Hash": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\case-B-run.stderr.txt",
+        "Length": 141,
+        "Hash": "E75C0D92C080E9E3973E1B193F3D26BDEC4E98B60B716D6EA067E515F3884C34"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\case-B-run.stdout.txt",
+        "Length": 226,
+        "Hash": "23D971B96089897E1A36C52BF34245B101D9F966E5734B5B8A0301B98482B91A"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\case-evaluator-criteria.json",
+        "Length": 2524,
+        "Hash": "59C1D4B1CF9DE448F6354CEB16E986BB0C1B67B19691FE0BEDBCA701B9E35482"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\case-fixture-controls.json",
+        "Length": 2117,
+        "Hash": "0D3C1C716BF846304731D99F3FD1AA7393D423A7EADCD72950CE8305C26B74DA"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\case-fixture-controls.log",
+        "Length": 1732,
+        "Hash": "3522BB6F0615B9CDB741351CD4F54C1585BCC326207ABC48AD1E5A76C26339CA"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\case-inputs.json",
+        "Length": 2309,
+        "Hash": "98142AB7899F36298D8F748915FD66CDD05F62EE5A1B2A8237CC1A0E6001220E"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\compile-controls.stderr.txt",
+        "Length": 0,
+        "Hash": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\compile-controls.stdout.txt",
+        "Length": 0,
+        "Hash": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\final-owned.diff",
+        "Length": 4490,
+        "Hash": "17FD179BC062F6E74056FE41258CFA14C31FFC8957FFAD75C595D808801D5852"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\format-check.log",
+        "Length": 68,
+        "Hash": "F20510A9DA4717C51C4CFFEE6D0DD88D6C9A723D0A83711D01216F5B48961283"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\package-validation.log",
+        "Length": 255,
+        "Hash": "2AB3D38C1ED36ECCDC0FFA8A860DE92AE8456FCB18E25237FD5D44C1FAF891BF"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\published-snippet.stderr.txt",
+        "Length": 0,
+        "Hash": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\published-snippet.stdout.txt",
+        "Length": 95,
+        "Hash": "7A52A02AC6116D5CE0C585D8588A2461208BA7DE46D2ADF814BAA2C0AB78E4F6"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\PublishedSnippet.java",
+        "Length": 693,
+        "Hash": "1587189EAA300BC74065B39DA04D363769297EE5BCB224D8C09419218CEBA4E1"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\run-controls.mjs",
+        "Length": 2503,
+        "Hash": "737613187C5490BB77B9F85B808F692B2572ED0B5F44A8B25C7F2E80C85A9C58"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\runtime.stderr.txt",
+        "Length": 193,
+        "Hash": "E33F6CFDF4D70CB8BF63CAE1ED026B89A77539348B7AC97535E20D32D7C1D010"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\runtime.stdout.txt",
+        "Length": 0,
+        "Hash": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\semantic-controls.stderr.txt",
+        "Length": 0,
+        "Hash": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\semantic-controls.stdout.txt",
+        "Length": 50,
+        "Hash": "3F61F18298A7DE06790A37449136557D0C8017877C06FDFB62148179A2B8C196"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\StringAppendControls.java",
+        "Length": 4044,
+        "Hash": "EC36AE512FDFE5FDD9261922A5EF0FE7CC8AB608B8BB54E8359AB5B78E9F5934"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\technical-controls.json",
+        "Length": 1839,
+        "Hash": "2C958F98E730B3613B18B42F245BE77D6B16F4C1EE2814B4701B6A05C5B3EF60"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\technical-controls.log",
+        "Length": 1513,
+        "Hash": "43992F05ACAD0A857FB805AF08FC51D435FA3D96A4FE1BAAF18A610FCFB5E085"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\validate-local.mjs",
+        "Length": 1799,
+        "Hash": "B858F71DCB8B6E145951EFBD2779B17A71315A969D653799F4497E6B748DB784"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\verify-cases.mjs",
+        "Length": 1916,
+        "Hash": "8513376729B2E250E68FEA9ECAF64B64161A5726CA279FB9D742EEAF24C40EAD"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\case-inputs\\A\\ConsumerContract.java",
+        "Length": 1378,
+        "Hash": "BE778497C1E06CB72CB83A65585AD4C0D83B134884D68F3A6E7DE30C39717930"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\case-inputs\\A\\README.md",
+        "Length": 535,
+        "Hash": "D57ADC92947C7A1A0F18FF4A5D32945DA68DC38523D3800D28DF84FD89964921"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\case-inputs\\A\\TextRenderer.java",
+        "Length": 571,
+        "Hash": "9BFF65C2EBDBBBD7034DED2514A9C427D8FF2067CEDA643A336B3D70610B0A18"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\case-inputs\\A\\classes\\ConsumerContract.class",
+        "Length": 2264,
+        "Hash": "15506AA8F0D127B541F6CFF30C60CF0B136CC0CD89B71601050D73DF5633410A"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\case-inputs\\A\\classes\\TextRenderer.class",
+        "Length": 1253,
+        "Hash": "6F2E11B40D254A832C09E16A79E5DD3FBB939860CF86A1C9B8B103646C66D468"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\case-inputs\\B\\ConsumerContract.java",
+        "Length": 1378,
+        "Hash": "BE778497C1E06CB72CB83A65585AD4C0D83B134884D68F3A6E7DE30C39717930"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\case-inputs\\B\\README.md",
+        "Length": 535,
+        "Hash": "D57ADC92947C7A1A0F18FF4A5D32945DA68DC38523D3800D28DF84FD89964921"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\case-inputs\\B\\TextRenderer.java",
+        "Length": 571,
+        "Hash": "BB44BACC8309848147669AA5EEF33AC27DA8B8CB781E0ADAA4C254093F0C2CEF"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\case-inputs\\B\\classes\\ConsumerContract.class",
+        "Length": 2264,
+        "Hash": "15506AA8F0D127B541F6CFF30C60CF0B136CC0CD89B71601050D73DF5633410A"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\case-inputs\\B\\classes\\TextRenderer.class",
+        "Length": 1237,
+        "Hash": "BF2A1F31B5F774CB7794D923D278229586DEB91176CF0FB1FE8DBF91C4C32F2A"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\classes\\PublishedSnippet.class",
+        "Length": 1629,
+        "Hash": "BC2918E649EB1AE0828477F71115E9C132A5063F1A57182D467D6CA226CD2D82"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\classes\\StringAppendControls.class",
+        "Length": 5076,
+        "Hash": "485BE2C417909AD942BBE72E8A82B697BD0A8CABEFA486AA19E58ED01F4C092D"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\sources\\jls-5.html",
+        "Length": 252081,
+        "Hash": "7C389F6263525AC5E660C3E63165002826E5DE5C0ACEC38D47A50BE5B9C7DAC7"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\sources\\provenance.json",
+        "Length": 2165,
+        "Hash": "9CE0D8F88125DDC2EA1827B82D8845B583B515A3E12081EA7B242D07978082D3"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\sources\\retrieval.json",
+        "Length": 503,
+        "Hash": "706BBF5898EBDAA6FCAAEA7F423D3178F1E8F09ABBAA88E7FE0EE04C5359C36D"
+      },
+      {
+        "Path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-strings-and-text\\sources\\StringBuilder.html",
+        "Length": 137609,
+        "Hash": "42573D2E6EE8A574D29020E619DE84D1CC24DF4680B10C895C54C111AAF8310E"
+      }
+    ],
+    "rawEvidenceRemoved": false,
+    "fixtureSources": [
+      "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-strings-and-text/PublishedSnippet.java",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-strings-and-text/StringAppendControls.java"
+    ],
+    "harnesses": [
+      "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-strings-and-text/run-controls.mjs",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-strings-and-text/validate-local.mjs",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-strings-and-text/verify-cases.mjs"
+    ],
+    "rawResults": [
+      "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-strings-and-text/technical-controls.json",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-strings-and-text/case-fixture-controls.json",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-strings-and-text/package-validation.log",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-strings-and-text/format-check.log",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-strings-and-text/diff-check.log",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-strings-and-text/final-owned.diff"
+    ]
+  },
+  "finalHashes": [
+    {
+      "Path": "C:\\git\\agent-skills\\skills\\java-strings-and-text\\SKILL.md",
+      "Hash": "1F7D07C498380AD226E5ECAED16B8851A7ED32E788A9755C24574EB58E4D37BA"
+    },
+    {
+      "Path": "C:\\git\\agent-skills\\skills\\java-strings-and-text\\skill.yaml",
+      "Hash": "0417EFB2C76E6E664BE6DD63D8EB3E527E0D3176D9321003F0180D02C0560993"
+    },
+    {
+      "Path": "C:\\git\\agent-skills\\skills\\java-strings-and-text\\references\\building-text-safely.md",
+      "Hash": "730CDCFD885EA093EE3E6DE0F6634417F9A7E30E9849501C5299A3D7ADF4ADE8"
+    },
+    {
+      "Path": "C:\\git\\agent-skills\\skills\\java-strings-and-text\\references\\encoding-locale-and-unicode.md",
+      "Hash": "E0FFB2D1E6C3ADC39344241916EB8611B068F46EDCE316CC6B8D122C5DC7B9EF"
+    }
+  ],
+  "limitations": [
+    "No independent behavioral evaluation, original-vs-revised skill comparison or unseen holdout was executed.",
+    "No throughput, allocation, regex-growth or application-performance measurement was needed or performed; loop cost guidance remains conditional.",
+    "Execution was on Temurin25.0.3+9 only. No older VM was installed or exercised.",
+    "Existing Unicode, normalization, locale, boundary encoding, text block, regex and injection guidance was reviewed and preserved; their full version/platform matrix and every original snippet were not re-executed.",
+    "The new preservation path applies when object string conversion is the existing consumer contract; array character contents can be a legitimate different contract and are positively checked.",
+    "Evaluation input separation is procedural; coordinator must expose only each case's listed files, not the shared evidence directory or evaluator criteria.",
+    "Global catalog integration remains pending."
+  ],
+  "crossSkillIssues": [],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Shared generated registry; only after all reviewers stop writing."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Global integration check after stable writers and regenerated registry."
+    }
+  ],
+  "coordinatorActions": [
+    "Inspect scoped three-file diff and capture the candidate after this handoff.",
+    "Retain raw Java sources, native commands/stdout/stderr, primary HTML and separate case inputs/criteria.",
+    "If running independent evaluations, copy only listed actor inputs for A or B into isolated workspaces and keep criteria/results inaccessible.",
+    "Run pending global checks; no repository-wide validation is claimed by this handoff."
+  ]
+}

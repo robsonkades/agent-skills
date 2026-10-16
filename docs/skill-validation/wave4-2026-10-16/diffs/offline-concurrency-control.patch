@@ -1,0 +1,100 @@
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\offline-concurrency-control/SKILL.md" "b/C:\\git\\agent-skills\\skills\\offline-concurrency-control/SKILL.md"
+index 8ea773b..90ff159 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\offline-concurrency-control/SKILL.md"
++++ "b/C:\\git\\agent-skills\\skills\\offline-concurrency-control/SKILL.md"
+@@ -77,6 +77,9 @@ Do not require a new abstraction, workload measurement or database campaign for
+ 3. **Choose the coordination boundary from the invariant**, not from the table layout.
+    A shared root version is one option; an existing atomic constraint or conditional operation
+    may already enforce the invariant without versioning every related row together.
++   Include unchanged data and query membership on which the decision depends, not only
++   modified rows. Keep each checked version associated with the state it guards; a newer
++   token obtained after reading older state does not validate that state.
+ 4. **Design the conflict experience before the mechanism.** What does the user see, and
+    what can they do about it? A pattern that produces an unusable error is not implemented.
+ 5. **Ensure every affected write path participates.** A mapped superclass, repository base
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\offline-concurrency-control/references/lock-granularity-and-implicit-locks.md" "b/C:\\git\\agent-skills\\skills\\offline-concurrency-control/references/lock-granularity-and-implicit-locks.md"
+index e1798b6..bd787b2 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\offline-concurrency-control/references/lock-granularity-and-implicit-locks.md"
++++ "b/C:\\git\\agent-skills\\skills\\offline-concurrency-control/references/lock-granularity-and-implicit-locks.md"
+@@ -3,6 +3,10 @@
+ ## Choosing what to lock together
+ 
+ Granularity is decided by the invariant, not by the table structure.
++Trace the decision's read dependencies as well as its writes: an unchanged credit limit
++or the presence/absence of matching rows may matter. Versions on modified rows alone do
++not protect those dependencies. Use the relevant shared guard, authoritative constraint
++or protected revalidation; independent data needs no global version merely because it was read.
+ 
+ ```text
+ Order (root, @Version)
+@@ -34,6 +38,24 @@ That is a domain design option, not a required response to every false conflict.
+ concurrency boundary can also be valid without changing the aggregate's public semantics,
+ provided its independent-write and invariant assumptions hold.
+ 
++### Pair the version with the state it guards
++
++Reading children from revision 7, then capturing root version 8 after another writer commits,
++can attach a new token to old state. A later successful check of version 8 does not detect
++that mismatch. Being in one transaction is insufficient: [PostgreSQL 17 Read Committed](https://www.postgresql.org/docs/17/transaction-iso.html#XACT-READ-COMMITTED)
++uses a new snapshot for each statement.
++
++One shared-root protocol captures the root version before authoritative dependent reads and
++carries it unchanged into the atomic check/bump and related writes. This requires every writer
++that changes guarded state, including membership, to advance that root version atomically;
++the read isolation and freshness must also prevent combining that token with older dependent
++state. A stale cache or replica can invalidate that assumption. A consistent read of state and
++version, or authoritative revalidation protected through the write, may already satisfy the
++contract. Do not refresh only the token while retaining old decisions or state.
++
++This applies the version/data association in [Jakarta Persistence 3.2, section 3.5.1](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html#a2056)
++to a multi-row guard; it is not a claim that an ORM root annotation validates every child read.
++
+ ### Bumping the root's version from a child change
+ 
+ Changing an existing child's scalar field does not by itself increment the root's
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\offline-concurrency-control/references/optimistic-and-pessimistic.md" "b/C:\\git\\agent-skills\\skills\\offline-concurrency-control/references/optimistic-and-pessimistic.md"
+index 2a9b90f..d1aa4d8 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\offline-concurrency-control/references/optimistic-and-pessimistic.md"
++++ "b/C:\\git\\agent-skills\\skills\\offline-concurrency-control/references/optimistic-and-pessimistic.md"
+@@ -37,7 +37,7 @@ changes. A separately authorized "delete whatever exists now" command is a diffe
+ intent; do not silently substitute it for a snapshot-protected delete. JPA checks the
+ version of a versioned entity when removing it, but loading the latest entity first still
+ requires comparing the editor's original version, just as for an update
+-([Jakarta Persistence 3.2, section 3.5.1](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2)).
++([Jakarta Persistence 3.2, section 3.5.1](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html#a2056)).
+ 
+ Check token lifetime when identifiers can be reused or old state restored. If an editor
+ read `(id=42, version=0)`, then that row is deleted and a replacement is inserted with
+@@ -240,6 +240,10 @@ require all recipes. These are integration-test recipes, not an already executed
+    version must leave B's revision intact. Where deletion/recreation or restore exists,
+    retain an old client's token across that lifecycle and prove that both its update and
+    delete are rejected. A fresh token for the replacement must remain usable.
++7. **Read/version pairing:** pause the original edit load between its state and version
++   queries while another participating writer commits. An old state paired with a new
++   token must not authorize a stale save. Compare the actual snapshot/guard protocol and
++   an uncontended load; a barrier only at the eventual save misses this failure.
+ 
+ Bound waits and database lock/statement timeouts. On failure, release barriers, roll back
+ transactions and stop owned executors so a broken locking protocol cannot hang the suite.
+@@ -249,7 +253,7 @@ JPA snippets here are partial application code using Java records (Java 16+, com
+ Java 17 projects) and an existing JPA/Spring stack. Inspect the project's actual Java,
+ namespace, provider and database versions; no upgrade is implied. The locking and bulk
+ operation contracts are documented in
+-[Jakarta Persistence 3.2, sections 3.5 and 4.11](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2).
++[Jakarta Persistence 3.2, sections 3.5 and 4.11](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html).
+ 
+ The business/system transaction distinction and atomic validation requirement are described
+ by [Optimistic Offline Lock](https://martinfowler.com/eaaCatalog/optimisticOfflineLock.html)
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\offline-concurrency-control/skill.yaml" "b/C:\\git\\agent-skills\\skills\\offline-concurrency-control/skill.yaml"
+index 7406278..a321fdd 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\offline-concurrency-control/skill.yaml"
++++ "b/C:\\git\\agent-skills\\skills\\offline-concurrency-control/skill.yaml"
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: offline-concurrency-control
+-version: 1.2.4
++version: 1.2.5
+ description: >-
+   Protecting data from concurrent edits that span more than one transaction: optimistic
+   offline lock, pessimistic offline lock, coarse-grained locking at the aggregate, and

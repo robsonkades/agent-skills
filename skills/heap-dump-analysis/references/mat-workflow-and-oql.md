@@ -29,8 +29,19 @@ discards unreachable objects while indexing and retains their class/count/size s
 the Unreachable Objects Histogram, without their reference graph. If that graph answers
 the question, reparse a copy of the existing dump with **Keep unreachable objects** after
 removing that copy's index files. MAT's resulting UNREACHABLE roots are artificial analysis
-roots, not proof of JVM liveness or a leak. Record this setting and any experimental discard
-settings when comparing snapshots; reparsing cannot recover objects absent from the file.
+roots, not proof of JVM liveness or a leak; reparsing cannot recover objects absent from the file.
+
+**Enable discard (experimental)** is different: MAT deliberately omits matching objects to fit
+its analysis budget, even if reachable. These objects also enter the Unreachable Objects
+Histogram, but have no indexed root paths and do not contribute to retained sizes. Inspect the
+parse options/logs and that histogram before calling its rows garbage or treating missing paths
+and reduced retained totals as evidence against a leak. Record the discard pattern, percentage,
+offset and seed; **Keep unreachable objects** alone does not undo this separate omission.
+If the suspect population was discarded, reparse an artifact copy without discard when capacity
+permits, or revise the pattern to preserve the objects/links needed for that question. Otherwise
+report the graph coverage limit; repeated partial parses do not by themselves establish complete
+ownership or exact retention. Do not request a new production dump merely to correct an
+analysis-side filter.
 
 ## Shallow versus retained, concretely
 
@@ -205,6 +216,7 @@ third-party allocations and some JDK-library memory are outside NMT's coverage.
 - [Retained sets and minimum versus exact size](https://help.eclipse.org/latest/topic/org.eclipse.mat.ui.help/concepts/shallowretainedheap.html)
 - [MAT thread stacks and locals](https://help.eclipse.org/latest/topic/org.eclipse.mat.ui.help/tasks/analyzingthreads.html)
 - [MAT unreachable-object population and reparsing](https://help.eclipse.org/latest/topic/org.eclipse.mat.ui.help/reference/inspections/unreachable_objects.html)
+- [MAT experimental discard: omitted objects, graph coverage and retained sizes](https://help.eclipse.org/latest/topic/org.eclipse.mat.ui.help/tasks/configure_mat.html)
 - [ThreadLocalMap weak keys, strong values and cleanup, OpenJDK 25.0.3](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3-ga/src/java.base/share/classes/java/lang/ThreadLocal.java)
 - [NMT coverage, JDK 25](https://docs.oracle.com/en/java/javase/25/vm/native-memory-tracking.html)
 - [JEP 444: thread-dump syntax and virtual-thread tracking coverage](https://openjdk.org/jeps/444)

@@ -155,6 +155,19 @@ The parts a production measurement cannot skip:
 - **Allocation, randomisation and blocking.** Randomise treatment order or traffic assignment
   when feasible. If time drift is expected, block comparable A/B observations within time
   windows; deterministic ABAB is vulnerable to periodicity and carry-over. Record the scheme.
+- **Assignment versus analysed population.** Follow router/assignment records and exposure
+  logs through telemetry export, joins and analysis filters. For randomised comparisons,
+  check observed assignment-unit counts against the planned split; a 50/50 user assignment
+  does not require equal request counts. An unexplained sample-ratio mismatch is a data-quality
+  signal to diagnose before attributing the contrast, not a specific cause.
+  Balanced counts can still hide selective loss: discarding slow outcomes from one arm can
+  improve its recorded latency without speeding up those requests. Reconcile observations
+  with independent request/outcome counters or sequence records where available; inspect
+  loss by arm and cohort, and whether treatment changes inclusion in the analysis.
+  A longer run or forcing equal arm sizes does not fix that selection. Correct the
+  collection/selection mechanism and reanalyse sufficient retained data, or qualify the affected
+  conclusion. Keep independently supported metrics; a broken latency export need not invalidate
+  an unaffected server-side correctness result.
 - **Treatment exposure and interference.** Inspect routing, cache ownership and shared queues,
   databases or quotas before treating requests or pods as independent assignments. A change
   that lowers shared backend demand can improve control latency too; cache eviction or extra
@@ -329,6 +342,11 @@ rather than a change. Sizing the capacity option is `capacity-planning`; the rep
   — randomisation, blocking, factorial designs and design selection.
 - [Microsoft ExP: pre-experiment engineering design](https://www.microsoft.com/en-us/research/articles/patterns-of-trustworthy-experimentation-pre-experiment-stage/)
   — shared infrastructure and cache choices can leak treatment effects into control.
+- [Microsoft ExP: diagnosing sample-ratio mismatch](https://www.microsoft.com/en-us/research/articles/diagnosing-sample-ratio-mismatch-in-a-b-testing/)
+  — assignment, execution, log processing and analysis can change the retained population.
+- [Dmitriev et al.: A Dirty Dozen—metric interpretation pitfalls (KDD 2017)](https://www.microsoft.com/en-us/research/wp-content/uploads/2020/08/2017-08-KDDMetricInterpretationPitfalls.pdf)
+  — sections 5.1 and 5.3 distinguish population changes and telemetry-loss bias; unaffected
+  server-side evidence can remain valid.
 - [Bojinov, Simchi-Levi and Zhao: Design and Analysis of Switchback Experiments](https://arxiv.org/abs/2009.00148)
   — randomised time treatments and the importance of carry-over assumptions.
 - [Amdahl, “Validity of the Single Processor Approach…”, AFIPS 1967](https://doi.org/10.1145/1465482.1465560)

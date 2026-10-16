@@ -1,0 +1,6 @@
+{
+  "skill": "feature-context-analysis",
+  "common": "Refresh the report only for orders-prod r2. F1 records that the r1 configuration uses S3; the reuse question U1 was resolved from F1. Accepted decision D1 selects S3, subject to compatible wiring. StoreWiring line 20 selects export.store; the r2 build includes both S3 and File implementations. The unapproved README draft r3 prefers S3. The S3IT source contains a round-trip assertion; the only test report is the r1 Unit* report, which excludes integration tests. There is no deployment evidence. Other relevant material is unchanged between r1 and r2.",
+  "scenarioA": "In r2 prod.yaml line 8, export.store=S3ExportStore.",
+  "scenarioB": "In r2 prod.yaml line 8, export.store=FileExportStore."
+}

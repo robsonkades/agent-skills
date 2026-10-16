@@ -1,0 +1,7 @@
+
+> agent-skills-monorepo@1.11.2 registry:build
+> node scripts/build-registry-index.mjs
+
+error: 1 document reference(s) are not declared:
+  - jvm-bytecode points at "deoptimization" without declaring or suggesting it
+Add each to `suggests`, or stop naming it.

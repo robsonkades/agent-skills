@@ -1,0 +1,191 @@
+{
+  "reviewedAt": "2026-10-16T17:22:16Z",
+  "reviewer": "/root/wave6_review",
+  "skill": "java-memory-model",
+  "status": "SEMANTIC_EXPECTATIONS_ACCEPTED_WITH_PREFREEZE_CLARIFICATIONS",
+  "draftSha256": "0b7db3426a8299aea4b00d3510aa9a47ac4c6e8e1d43913d6e3a952010aa6528",
+  "allSixExpectedSemanticVerdictsAccepted": true,
+  "scope": {
+    "read": [
+      "criteria-draft.json",
+      "cases/D1/input/**",
+      "cases/D2/input/**",
+      "cases/H1/input/**",
+      "cases/H2/input/**",
+      "cases/H3/input/**",
+      "cases/H4/input/**",
+      "C:/git/agent-skills/docs/skill-validation/wave6-2026-10-16/case-preflight.json"
+    ],
+    "notRead": ["actors/**", "actor outputs", "condition allocation or future result manifests"],
+    "modifiedProtectedInputs": false,
+    "modifiedSkill": false,
+    "delegation": "None",
+    "actorRunsByReviewer": 0
+  },
+  "requiredBeforeFreeze": [
+    {
+      "id": "R1",
+      "at": "H3.expected.disposition and grading policy",
+      "issue": "The expected literal unresolved is sound for the deployed integration, but a reasoned rejection of the claimed universal guarantee is also correct. Do not grade the label instead of the distinction.",
+      "action": "Explicitly accept unresolved, unsupported, or contract/guarantee violated when the response clearly means that the supplied specification cannot justify the universal claim and does not assert an observed or inevitable deployed failure. Still reject approval of the generic relay guarantee.",
+      "reason": "The local bridge orders its own prior actions; absent provider implementation and handoff evidence cannot establish the upstream write-to-callback relation. This is a proof gap, sufficient to reject the team claim, but not production-failure evidence.",
+      "sources": ["S1", "S5"],
+      "fixtureChangeRequired": false
+    },
+    {
+      "id": "R2",
+      "at": "All check.mjs files; common failure condition protecting inputs",
+      "issue": "The supplied checker creates .build under its working directory. Asking actors to use that checker while treating every new file under input as a protected-input mutation would make a legitimate run fail the preservation criterion.",
+      "action": "Declare .build an allowed generated output in the actor copy, or execute an isolated fixture copy under output/checks. Protect original source, contract, checker and dependency bytes; do not penalize an explicitly allowed compilation artifact. Use the same policy for all conditions.",
+      "reason": "Each checked script executes mkdirSync('.build') and javac -d .build; no original source files are modified by that script. The report task separately permits checks under output/checks.",
+      "sources": ["fixture:*/input/check.mjs", "criteria-draft.json:failureConditions"],
+      "fixtureChangeRequired": false
+    }
+  ],
+  "gradingClarifications": [
+    {
+      "id": "G1",
+      "at": "commonCriteria C1-C4",
+      "action": "Judge semantic proof and observable behavior, not exact headings, JLS section numbers, the terms freeze/dereference, a particular technology, or a particular spelling of the disposition. A concise equivalent explanation can satisfy the contract; a named concept alone cannot.",
+      "severity": "Nonblocking if already enforced by the manual grader"
+    },
+    {
+      "id": "G2",
+      "at": "H4.expected.restraint",
+      "action": "Accept a private defensive copy, two private final scalar values, or a constructor-computed final checksum with preserved input validation and arithmetic. The accepted public operation is only checksum(), so a precomputed immutable result is also adequate here. Do not require clone or Arrays.copyOf specifically.",
+      "reason": "The lifetime defect is retaining the producer-owned mutable array. The alternative can avoid retaining that array entirely while preserving every exposed result under the supplied ownership contract.",
+      "severity": "Nonblocking clarification of valid alternatives"
+    },
+    {
+      "id": "G3",
+      "at": "H2.expected.restraint",
+      "action": "Accept equivalent bounded completion protocols. The same-started-worker isAlive check is one focused remedy for the stated normal lifecycle, not a required API. Do not require an unbounded join or cancellation redesign. If the actor mentions the existing InterruptedException path, accept a bounded caveat: termination visibility does not itself prove successful work. Do not claim a detection-only change handles every possible interrupt/failure path.",
+      "reason": "Job.run can terminate from its interrupt catch with result still zero, but the accepted request does not ask for cancellation. Keep the demonstrated timeout defect distinct from that optional boundary observation.",
+      "severity": "Nonblocking scope clarification"
+    },
+    {
+      "id": "G4",
+      "at": "H3.expected.proof/restraint",
+      "action": "A callback-side copy or another volatile relay is not by itself evidence of the missing producer handoff. An immutable alternative must establish the relevant state during correct producer-side construction, or a repair must order producer writes before callback consumption. Accept identifying the absent assignment/value evidence as part of the provider proof gap, without forcing a new question about already fixed Java version or callback count.",
+      "reason": "The missing provider does not supply an implementation proof of the value assignment or of its delivery to the callback; a downstream read cannot reconstruct either guarantee.",
+      "severity": "Nonblocking explicit negative criterion"
+    },
+    {
+      "id": "G5",
+      "at": "commonCriteria C3 and case-preflight.json",
+      "action": "An actor may report an execution as observed only when its own trace contains it. The coordinator's preflight is not an actor execution. Credit a correct static counterexample or conditional proof without requiring fabricated smoke results; assess any omitted requested runnable check separately from technical correctness.",
+      "severity": "Nonblocking evidence-attribution clarification"
+    }
+  ],
+  "cases": [
+    {
+      "id": "D1",
+      "acceptedDisposition": "supported",
+      "review": "The method reference selects value(), and find() retains one captured PublishedEntry. Payload.value is assigned before primary's construction freeze and is read through primary. Accepted misses remove any eventual-visibility obligation. The unused ordinary alias does not invalidate the exercised final path.",
+      "mustReject": "Treating every racy reference or every non-final reachable field as an automatic violation; requiring stronger cache freshness than the contract.",
+      "controlLimit": "The sequential smoke validates initial miss and same-thread lookup only. It cannot distinguish D1 from D2 under races.",
+      "sources": ["S1", "fixture:D1/input/src/memo/**", "fixture:D1/input/docs/contract.md"]
+    },
+    {
+      "id": "D2",
+      "acceptedDisposition": "violated",
+      "review": "Only ReaderFactory.java differs from D1. It selects legacyValue(), whose path never reads primary. The unused final alias does not supply the needed protection for legacy or Payload.value on this path. A non-null captured entry can therefore lead to an unacceptable outcome under the contract.",
+      "mustReject": "Approving merely because an equivalent final alias exists or because the sequential control passed. Do not claim that a bad race was observed by that control.",
+      "validRemedies": "Select the existing primary path or establish an adequate publication/access protocol; equivalent focused fixes are acceptable.",
+      "sources": ["S1", "fixture:D2/input/src/memo/**"]
+    },
+    {
+      "id": "H1",
+      "acceptedDisposition": "supported",
+      "review": "Accepted assumptions close the relevant proof: current is written only during successful same-lock initialization; null on the outer read causes a locked recheck; the method returns its captured reference. Settings.limit() reads Record.limit through the final Settings.record, and the private record is never changed after construction. The lock also protects buildsForCheck(). No proof of wait freedom is requested.",
+      "mustReject": "Declaring volatile universally mandatory; assuming local capture alone publishes ordinary mutable fields; treating a final class declaration as final-field protection; inventing duplicate initialization despite the recheck and accepted no-reentrancy/no-failure assumptions.",
+      "validAlternative": "Keeping or recommending volatile as optional maintenance hardening remains valid if existing bounded correctness is acknowledged.",
+      "controlLimit": "The sequential identity/value/build check does not execute contending callers or validate the JMM proof. The proof is source- and contract-based.",
+      "sources": ["S1", "S2", "S3", "fixture:H1/input/src/work/**", "fixture:H1/input/docs/contract.md"]
+    },
+    {
+      "id": "H2",
+      "acceptedDisposition": "violated",
+      "review": "The fixture gate remains closed until after collect() returns, so work cannot have assigned 83 on that call. join(2) can return while the started worker is alive. The preflight's DONE:0 and alive=true corroborate the concrete completion defect. The later DONE:83 is after termination cleanup and is a different lifecycle point.",
+      "mustReject": "Equating timeout return with completion, treating volatile result alone as a completion protocol, or replacing the bounded wait with an unbounded wait.",
+      "controlLimit": "Controlled lifecycle counterexample, not a stress experiment or evidence for every possible timeout, interruption, or scheduler path. The checker exits zero while displaying the defect.",
+      "sources": ["S4", "fixture:H2/input/src/work/Job.java", "fixture:H2/input/test/work/Smoke.java", "case-preflight.json:H2"]
+    },
+    {
+      "id": "H3",
+      "acceptedDisposition": "unresolved deployed integration; generic sufficiency claim rejected",
+      "review": "The callback publishes latest and the reader captures it once. The absent provider is the missing upstream part, not a defect established in the bridge's local volatile access. The synchronous test includes the setValue-to-callback program order that the deployed-provider specification omits.",
+      "mustReject": "Approving the universal downstream-volatile claim, asserting an actual deployed race without evidence, or demanding a redesign as though the missing implementation were proven defective.",
+      "controlLimit": "The synchronous smoke supports only its synchronous provider. It is not a sample of the absent deployed provider.",
+      "sources": ["S1", "S5", "fixture:H3/input/src/work/**", "fixture:H3/input/test/work/Smoke.java"]
+    },
+    {
+      "id": "H4",
+      "acceptedDisposition": "violated",
+      "review": "Message retains the caller's array. The one-thread recycling scenario suffices to refute stable capture: checksum changes from 30 to 300. No claim of an observed concurrent race is needed. A replacement representation must preserve producer ownership and the existing argument checks.",
+      "mustReject": "Claiming final or volatile makes later element mutations immutable, requiring callers to stop permitted recycling, or promising an atomic array snapshot during an unspecified concurrent constructor mutation.",
+      "controlLimit": "Sequential ownership counterexample, not concurrent schedule coverage. The checker exits zero while displaying the defect. The accepted lifecycle allows recycling after construction returns.",
+      "sources": ["S1", "fixture:H4/input/src/work/Message.java", "fixture:H4/input/test/work/Smoke.java", "case-preflight.json:H4"]
+    }
+  ],
+  "controlAudit": {
+    "fixtureFilesVerified": 43,
+    "inventoryMatchesDraft": true,
+    "sha256Mismatches": [],
+    "D1D2ChangedFiles": ["src/memo/ReaderFactory.java"],
+    "fixtureChecksExecutedByReviewer": 0,
+    "preflightReviewed": "All six recorded commands exited zero. D1/D2/H1/H3 are sequential controls; H2 is a controlled started-thread lifecycle; H4 is a sequential ownership counterexample. H2/H4 display failures of their application contracts despite successful process exit.",
+    "futureExecutionPrerequisites": "The declared JDK path and Node must remain available to each actor. The provided scripts write a build directory and spawn javac/java with 15-second timeouts; use the same allowed-output policy in all conditions. No repository installation or global build is needed.",
+    "readOnlyFixtureHashCheck": "Executed a Node read-only inventory/SHA-256 comparison against inputFiles in the draft; all 43 entries matched."
+  },
+  "comparisonLimits": [
+    "Six distinct tasks with two repetitions in three conditions yield 36 planned attempts, not 36 distinct tasks or independent criteria observations.",
+    "D1/D2 are explicitly known regression cases. H1-H4 were excluded from wave5 skill authoring; they are now visible to this reviewer for criteria review and cannot be called unseen for any later revision guided by this report.",
+    "The unchanged DCL sentence occurs in both skill snapshots. A later DCL qualification must be evaluated as a separate revision, not attributed to the 1.3.5-to-1.3.6 reachable-state correction.",
+    "Explicit treatment loading evaluates execution under supplied resources, not natural activation/discovery.",
+    "No actor allocation, masking implementation, accessible-resource enforcement, or future outputs were inspected. The coordinator must record those conditions and procedural isolation limits.",
+    "Two repetitions give limited stochastic coverage; all-pass ties show no observed difference on these cases. Preserve adverse results and severe errors individually.",
+    "No jcstress execution or performance benchmark was performed or needed for this criteria review. Source proof and the supplied preflight have distinct evidentiary roles."
+  ],
+  "sources": [
+    {
+      "id": "S1",
+      "url": "https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.5.1",
+      "checkedAt": "2026-10-16",
+      "role": "Normative Java SE25 final-field freeze, memory/dereference-chain rules and sections 17.4.4-17.4.5 for ordinary ordering. Fixture-specific conclusions above are applications to the provided code, not quotations."
+    },
+    {
+      "id": "S2",
+      "url": "https://cmu-sei.github.io/secure-coding-standards/sei-cert-oracle-coding-standard-for-java/rules/locking-lck/lck10-j/#compliant-solution-immutable",
+      "checkedAt": "2026-10-16",
+      "role": "CERT's immutable local-capture DCL code corroborates the narrow H1 pattern. Use the code and conditions, not its informal assertion that two same-thread reads lack happens-before; program order still orders those reads."
+    },
+    {
+      "id": "S3",
+      "url": "https://shipilev.net/blog/2014/safe-public-construction/",
+      "checkedAt": "2026-10-16",
+      "role": "Original analysis distinguishes local-capture null protection, final-wrapper initialization protection and general volatile publication. Historical benchmarks and platform costs are not generalized here."
+    },
+    {
+      "id": "S4",
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Thread.html#join(long)",
+      "checkedAt": "2026-10-16",
+      "role": "Version-matched timed-join and thread-lifecycle contracts; termination and successful computation are different properties."
+    },
+    {
+      "id": "S5",
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/package-summary.html#MemoryVisibility",
+      "checkedAt": "2026-10-16",
+      "role": "Documented utility handoffs illustrate what concrete upstream memory-consistency evidence would close H3; no unspecified provider is assumed to implement one."
+    }
+  ],
+  "handoff": {
+    "coordinatorActions": [
+      "Resolve R1 and R2 in the grading/execution policy before freezing; no fixture source change is required.",
+      "Record the accepted equivalent-answer rules, especially G2 and G3.",
+      "Keep snapshots and skill content fixed for the planned comparison.",
+      "Keep actor outputs and condition mapping outside this reviewer's access until the separate masked-evaluation assignment."
+    ],
+    "writesStoppedAfterHandoff": true
+  }
+}

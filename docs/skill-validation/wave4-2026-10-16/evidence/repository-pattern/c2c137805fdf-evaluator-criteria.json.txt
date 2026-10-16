@@ -1,0 +1,56 @@
+{
+  "audience": "Evaluator only; do not provide to actors",
+  "classification": "Known development pair, not held out. Neither actor has been run.",
+  "decisiveConstraint": "Only CREATE INDEX versus CREATE UNIQUE INDEX differs in db/schema.sql. The index name itself is identical and does not establish uniqueness.",
+  "sharedExpected": [
+    "Inspect deployed-schema fixture, callers, two-replica scope, READ_COMMITTED transaction and catch outside TransactionTemplate.execute.",
+    "Distinguish a precheck interleaving from violation of the persisted invariant under the effective constraint.",
+    "Preserve normalized non-null key scope, exact duplicate-email exception classification, and rollback/commit boundary.",
+    "Do not rely on synchronized to coordinate independent application replicas.",
+    "Keep Java/framework baseline and avoid provisioning/installing services or claiming unexecuted checks."
+  ],
+  "cases": [
+    {
+      "id": "customer-registration-a",
+      "expected": [
+        "Identify that the named uq_customer_email_key is a nonunique index; no effective cross-replica protection is provided by the existence check or READ_COMMITTED alone.",
+        "Recommend a database unique safeguard for the accepted normalized key, with appropriate existing-data/migration considerations if promoted beyond the empty fixture.",
+        "Retain the precheck as advisory if desired and keep error translation around the complete owning transaction.",
+        "Propose a two-connection concurrent test that pauses both after absence checks and verifies one committed row, correct loser result and no failed-transaction continuation."
+      ],
+      "failures": [
+        "Infers uniqueness from the uq_ name.",
+        "Treats @Transactional/TransactionTemplate or synchronized as sufficient cross-replica uniqueness.",
+        "Suppresses arbitrary integrity/storage errors as duplicates.",
+        "Declares a database integration test passed without running it."
+      ]
+    },
+    {
+      "id": "customer-registration-b",
+      "expected": [
+        "Recognize the existing unique index enforces the key invariant despite a possible stale precheck.",
+        "Do not report duplicate committed rows as a confirmed defect under the supplied schema; reject the synchronized change as unnecessary for that invariant.",
+        "Preserve existing targeted translation around a transaction whose commit occurs before execute returns.",
+        "Request or propose a real concurrent integration test to confirm adapter translation and outcome handling; source guarantees do not establish observed production frequency."
+      ],
+      "failures": [
+        "Reports the same missing-uniqueness defect as case A without inspecting UNIQUE.",
+        "Adds a redundant second index, global lock or framework redesign to satisfy an already-protected invariant.",
+        "Removes exact exception translation or broadens it to all integrity violations.",
+        "Claims the unique index serializes all business logic or makes every repository operation atomic."
+      ]
+    }
+  ],
+  "reproduction": {
+    "setup": "Use isolated input files for each actor. Expose no evaluator criteria, handoff or prior output.",
+    "sourceComparison": "All actor files identical except the UNIQUE keyword in db/schema.sql.",
+    "suggestedDatabaseSchedule": [
+      "Two independent READ_COMMITTED connections begin and each checks the same absent normalized email.",
+      "Each attempts INSERT with a distinct UUID.",
+      "Commit the winner and resolve the other transaction; inspect row count and concrete SQLSTATE/constraint identity.",
+      "At application level verify classification happens after transaction completion/rollback."
+    ],
+    "expectedObservations": "Case A can commit two rows; case B permits at most one same-key row and rejects the conflicting insert. These are source-grounded expectations, not executed results."
+  }
+}
+

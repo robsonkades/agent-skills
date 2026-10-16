@@ -167,6 +167,13 @@ probe contract, not the rollout's complete availability SLO.
 actual scheduling headroom, including quota and placement constraints. Terminating pods can
 still consume resources beyond `replicas + maxSurge`; a long drain is also a capacity cost.
 
+Deployment percentages round `maxUnavailable` down and `maxSurge` up. Resolve the pair together:
+in Kubernetes 1.34, if both resolve to zero, the controller permits one unavailable replica to
+make progress. With one replica, `maxUnavailable: "25%"`, `maxSurge: 0` can therefore remove
+the only serving pod; changing surge to `"25%"` resolves to one surge and zero unavailable.
+Check the smallest supported replica count, including an autoscaler's minimum, before accepting
+a percentage-based availability claim.
+
 **Single-replica rollout:** with one healthy replica, `maxUnavailable: 0` and `maxSurge: 1` let the old
 pod serve until the new pod becomes available. With no place to schedule that extra pod, the
 same rollout can stall. Add capacity or resolve placement constraints when uninterrupted
@@ -196,6 +203,15 @@ configuration checks; an availability claim still needs the workload validation 
 - A PodDisruptionBudget applies only to evictions through the Eviction API (`kubectl drain`,
   autoscaler, node upgrades). It does not constrain a node crash, a direct pod deletion, or a
   Deployment's own rollout.
+- PDB percentages round **up** for both `minAvailable` and `maxUnavailable`, using the selected
+  pods' controllers' desired scale. With desired scale one and its pod healthy,
+  `maxUnavailable: "25%"` allows one unavailable, so a compliant eviction can remove the last
+  healthy pod; at desired scale four with all four healthy, it permits one unavailable and
+  requires three healthy. Do not copy Deployment
+  rounding or infer protection from a small percentage. Inspect selectors/owners and current
+  PDB `expectedPods`, `currentHealthy`, `desiredHealthy` and `disruptionsAllowed`: unhealthy,
+  deleting or already disrupted pods can consume the allowance. Static arithmetic identifies
+  a configuration risk; it does not establish the live eviction decision or request availability.
 - `minAvailable: 1` with `replicas: 1` disallows a healthy-pod eviction through the Eviction
   API, so a compliant drain retries until capacity appears or its own timeout expires. Run
   enough replicas for the availability objective or explicitly accept/bypass the disruption.
@@ -215,6 +231,11 @@ configuration checks; an availability claim still needs the workload validation 
 - [Kubernetes 1.34 feature gates](https://v1-34.docs.kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/): sleep-action and native-sidecar release/gate conditions.
 - [Kubernetes sidecar lifecycle](https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/): termination ordering and the shared grace budget.
 - [Kubernetes disruption budgets](https://kubernetes.io/docs/tasks/run-application/configure-pdb/): unhealthy-pod eviction policy and its availability tradeoff.
+- [Kubernetes 1.34 disruption controller](https://github.com/kubernetes/kubernetes/blob/v1.34.0/pkg/controller/disruption/disruption.go):
+  desired-scale denominator, percentage rounding and healthy/disrupted-pod accounting.
+- [Kubernetes 1.34 rollout budget resolution](https://github.com/kubernetes/kubernetes/blob/v1.34.0/pkg/controller/deployment/util/deployment_util.go)
+  and [percentage helper](https://github.com/kubernetes/kubernetes/blob/v1.34.0/staging/src/k8s.io/apimachinery/pkg/util/intstr/intstr.go):
+  different rounding directions and the zero/zero fallback in `ResolveFenceposts`.
 - [Boot 3.4 release notes](https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-3.4-Release-Notes): graceful shutdown default.
 - [Boot Actuator probes](https://docs.spring.io/spring-boot/reference/actuator/endpoints.html#actuator.endpoints.kubernetes-probes): main-port health groups and management-port blind spots. Match properties to the deployed Boot line.
 - [Boot 3.4 health status mappings](https://docs.spring.io/spring-boot/3.4/reference/actuator/endpoints.html#actuator.endpoints.health.writing-custom-health-indicators): custom mappings replace defaults; health groups can inherit or override the system mapper.

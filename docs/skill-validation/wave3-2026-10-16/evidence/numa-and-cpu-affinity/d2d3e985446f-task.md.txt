@@ -1,0 +1,5 @@
+Review placement-note.md against the supplied NUMA evidence for a Linux 6.10 / numactl 2.0.19 / OpenJDK 25 deployment. Rewrite the note with a supported conclusion and the next action needed for the stated goal: this identified native cache should use node 0 while its consumer threads run on node-0 CPUs.
+
+Only edit the review note. Do not run Linux capture commands, change affinity/cpusets/policies, install software or operate on a real host. Explain what the evidence establishes, what remains unknown, and whether the current mapping policy itself needs changing. Preserve the distinction between allocation policy, existing page residence and observed memory accesses.
+
+These are synthetic development fixtures shaped like operational evidence; no real machine measurement is being supplied. The recorded history is part of the fixture. All events and snapshots refer to PID 4242 and the same mapping. Other JVM memory ranges are out of scope.

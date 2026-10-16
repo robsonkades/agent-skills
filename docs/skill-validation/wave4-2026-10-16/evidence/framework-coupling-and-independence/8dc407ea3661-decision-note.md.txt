@@ -1,0 +1,7 @@
+# Existing export boundary decision
+
+Accepted: application code compiles without Spring, adapters may use Spring, and the small ExportBody interface supports rule tests. This boundary is retained.
+
+Proposed conclusion awaiting review: because the application uses ExportBody rather than Resource, the consumer is independent of Spring resource behavior and no runtime contract test is necessary.
+
+Review scope: assess that conclusion against the factory and supplied consumer configuration, preserving the accepted boundary and stable exported contents. Do not change the consumer's required reads merely to avoid a failure.

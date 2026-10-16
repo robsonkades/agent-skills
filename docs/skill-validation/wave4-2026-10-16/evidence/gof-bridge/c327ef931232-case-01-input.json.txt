@@ -1,0 +1,30 @@
+{
+  "id": "gof-bridge-01",
+  "classification": "Known development case; no actor execution",
+  "request": "Review this report-publishing Bridge extraction before release. Inspect the accepted contract, source, tests and deployment wiring. Report required changes with file evidence and perform a focused check for any material finding. Preserve an adequate design and the Java 17 target; do not turn a review into a hierarchy rewrite.",
+  "prerequisites": [
+    "Available JDK able to compile --release 17; no external dependencies",
+    "Disposable workspace with write access for fixture outputs; no real configuration"
+  ],
+  "resources": [
+    {
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-bridge-validation-quality18/common",
+      "target": "."
+    },
+    {
+      "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-bridge-validation-quality18/case-01/config.properties",
+      "target": "config.properties"
+    }
+  ],
+  "exclude": [
+    "evaluator-criteria.json",
+    "technical-probe/",
+    "evidence.json",
+    "case-02",
+    "other actor outputs",
+    "revised skill in control condition"
+  ],
+  "baselineCommand": "javac --release 17 -d classes src/*.java test/*.java; java -cp classes SequentialTest",
+  "inputDifference": "Only importer.root in config.properties differs between the pair.",
+  "isolation": "Procedural until the coordinator creates an actor workspace containing only listed resources and the chosen treatment. No agent runs performed."
+}

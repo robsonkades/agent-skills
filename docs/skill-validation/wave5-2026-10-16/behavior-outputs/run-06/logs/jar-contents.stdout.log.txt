@@ -1,0 +1,5 @@
+META-INF/
+META-INF/MANIFEST.MF
+work/
+work/LegacyBanner.class
+work/Normalizer.class

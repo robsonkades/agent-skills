@@ -1,0 +1,7 @@
+Review the Java 21 helper in StreamCodec.java for a bounded document import/export operation. Make only justified security changes and provide concrete verification; retaining adequate code is a valid outcome.
+
+The OPERATION constant selects the operation used by every caller. Inputs are capped at 64 KiB before this helper. Nonempty and empty logical documents are both valid. A publish call commits the result; normal return acknowledges success to the job runner. A thrown exception marks the job failed, without committing new content.
+
+Key access, tenant/record binding through AAD, and envelope version routing have been reviewed. Encryption callers allocate a new nonce per key; decryption callers use the envelope's nonce. Preserve these contracts. Do not upgrade Java or add dependencies solely to fix this helper.
+
+Explain the trust boundary, whether the actual Java API communicates relevant failures to the consumer, and the smallest necessary change, if any. Do not infer a defect solely from the wrapper class name.

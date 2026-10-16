@@ -1,0 +1,55 @@
+{
+  "frozenBeforeActorRuns": true,
+  "actorRuns": 0,
+  "decisiveDifference": "Only queries/account-view.sql changes. Same event contract, publisher evidence, dispatcher, consumer transaction, test and release question. Case01 serves last-applied table; case02 serves greatest authoritative revision from retained complete snapshots.",
+  "common": [
+    "Trace the actual reader through AccountView to the deployed query and the actual handler through BatchDispatcher to AccountProjection.",
+    "Separate durable publication, repeated-message suppression and order of distinct event effects; challenge the candidate release note instead of endorsing its reasoning.",
+    "Inspect current test coverage: direct sequential handle calls plus duplicate do not exercise worker completion order.",
+    "Preserve accepted complete snapshots, authoritative revisions, eventual delivery and skippable intermediate states; no invented payment/notification requirement.",
+    "Keep Domain Model/outbox/consumer transaction/read split unless a specific force requires a change. No forced new service, global sequencer, broker or framework upgrade.",
+    "Limit observed technical results to H2 2.4.240/local executor; no claim of Kafka/source transaction/deployment integration or measured skill benefit."
+  ],
+  "cases": [
+    {
+      "id": "pattern-composition-account-panel-01",
+      "expected": [
+        "Find a permitted schedule where the worker for revision42 commits before41; last-applied account_latest becomes41 and the served panel remains stale after all pending records have completed.",
+        "Observe or derive that both IDs are recorded once and replay of42 is suppressed, so duplicates are not the cause or sufficient correction.",
+        "Recommend a focused supported alternative: use already maintained greatest-revision history query for the stated informational view, or guard complete-snapshot latest updates atomically against authoritative revisions, or preserve per-account effect order. Explain costs/coverage rather than require all alternatives.",
+        "Validate reordered completion and replay against the relevant product result, retaining sequential/duplicate/rollback behavior. An investigation-only review may supply an executable focused counterexample and proposal rather than production edits."
+      ],
+      "failureConditions": [
+        "Approve release solely from outbox/inbox or passing smoke.",
+        "Change only message ID/dedup behavior and claim stale-order fixed.",
+        "Discard earlier deltas/required transitions as if this fixture's complete-snapshot contract applied to all consumers.",
+        "Introduce global order or distribute the domain without a named need."
+      ]
+    },
+    {
+      "id": "pattern-composition-account-panel-02",
+      "expected": [
+        "Follow the actual deployed query: greatest authoritative revision in account_history is returned regardless of insert/commit order of the two distinct snapshots.",
+        "Do not classify the unserved compatibility account_latest row as a violation of this release's panel contract; note that any future consumer of it needs a separate review.",
+        "Preserve the implemented composition for this product outcome while correcting unsupported reasoning/coverage in the candidate note.",
+        "Use the same reversed-completion and replay schedule to verify the configured reader remains revision42/balance9000; qualify coverage and accepted upstream assumptions."
+      ],
+      "failureConditions": [
+        "Force serial dispatch, global order, version-gated table writes or another service solely because the compatibility table can regress.",
+        "Fail to inspect the different deployed query.",
+        "Claim inbox IDs establish consumer effect order or all integration guarantees.",
+        "Treat passing known-case checks as demonstrated behavioral gain."
+      ]
+    }
+  ],
+  "pendingSupplementalWalkthroughs": [
+    {
+      "input": "A downstream consumer uses deltas and must trigger every transition; can it discard all revisions older than the largest seen?",
+      "expected": "No. Full-snapshot/skippable-effect argument does not apply; route sequencing/gap/reconciliation design to message-ordering-and-partitioning."
+    },
+    {
+      "input": "The relay/dispatch configuration is unavailable; can the composition be called ordered?",
+      "expected": "Keep that guarantee conditional, retain supported durable-publication/dedup conclusions and request/identify only the discriminating scope/stage/config evidence."
+    }
+  ]
+}

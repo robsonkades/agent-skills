@@ -51,7 +51,8 @@ enum, lookup, switch or external encoding rather than turning every review into 
    masks/encodings through explicit conversion, including any unknown-bit forwarding policy.
 5. **Decide the external representation explicitly** before the first release: an explicit
    code field for storage and wire, `name()` only when you accept that renaming a constant is
-   a breaking change. Verify accepted token types and coercions as well as code values: a
+   a breaking change. Inspect the selected codec: Java object serialization still uses the
+   constant's name, regardless of a code field. Verify accepted token types and coercions as well as code values: a
    textual JSON representation does not by itself disable ordinal-number decoding. See
    `references/enums-across-boundaries.md` for mapper-specific checks.
 6. **Plan for a consumer that does not know a constant yet.** Independently deployed producers
@@ -133,5 +134,5 @@ performance from assumptions; written deployment cases are not executed verifica
   becoming a state machine or a registry. Also read for `EnumSet`/`EnumMap` changes, including
   empty copies and policies governing new constants.
 - [Enums across boundaries](references/enums-across-boundaries.md) — read before an enum
-  reaches a database column, a JSON contract, a message schema or another team's code, and
+  reaches a database column, an object stream, a JSON contract, a message schema or another team's code, and
   whenever adding or removing a constant needs a deployment plan.

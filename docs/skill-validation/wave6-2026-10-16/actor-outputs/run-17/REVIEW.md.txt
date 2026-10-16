@@ -1,0 +1,21 @@
+O contrato está **violado**. A aprovação proposta confunde visibilidade do estado inicial com imutabilidade do conteúdo.
+
+Em `src/work/Message.java:4`, a validação rejeita `null` e comprimentos diferentes de dois, mas `this.words=words` conserva o mesmo array do produtor. Em `:5`, cada chamada de `checksum()` lê novamente seus dois elementos. O campo privado não elimina o alias externo, e `final` não torna os elementos finais. A classe não publica `this` durante a construção; isso preserva suas garantias de inicialização, mas não impede a reciclagem autorizada em `docs/contract.md` de alterar a mensagem.
+
+A semântica de campos finais protege a referência corretamente construída e o estado alcançável inicial pertinente: escritas anteriores ao freeze do construtor participam da garantia de visibilidade. Ela não congela os elementos nem ordena as escritas posteriores do produtor com as leituras do consumidor. Sem outra ordenação, esses acessos aos mesmos elementos podem constituir data races; os dois acessos de `checksum()` não formam um snapshot atômico. Essa análise decorre da [JLS 25, §§17.4.5 e 17.5–17.5.1](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.5), não de um teste concorrente.
+
+A correção mínima adequada é conservar a validação e substituir somente a atribuição por:
+
+```java
+this.words = words.clone();
+```
+
+Para este `int[]` unidimensional, a cópia tem elementos independentes, conforme a [JLS 25, §10.7](https://docs.oracle.com/javase/specs/jls/se25/html/jls-10.html#jls-10.7). A cópia termina antes do retorno, fica privada, não é exposta nem modificada por `Message` e permanece alcançável pelo campo final. Assim, consumidores que recebem a mensagem construída observam o conteúdo inicial da cópia, enquanto o produtor pode reciclar imediatamente seu próprio array. O ciclo aceito permite reciclagem após o retorno; não há requisito de snapshot durante mutação concorrente do argumento dentro do construtor. A correção preserva a API, a soma de `int`, as rejeições e a propriedade do produtor. Sincronizar apenas o leitor ou mudar a forma de publicar a mensagem não elimina o alias nem resolve a falha sequencial.
+
+Resultados efetivamente observados em Java SE25:
+
+- `node check.mjs`, na cópia fornecida: saída `before-recycle=30` e `after-recycle=300`; exit 0. O smoke apenas imprime e não verifica o contrato.
+- Verificador separado contra a implementação original: quatro rejeições válidas; depois falha esperada com `expected=30 actual=120` após reciclar somente o primeiro elemento; exit 1.
+- Mesmo verificador contra uma cópia experimental com `clone()`: quatro verificações de rejeição e seis de snapshot/reutilização passaram; exit 0. Os comandos Java usaram timeout de 15 segundos.
+
+Os fontes, contratos e configuração fornecidos permaneceram intactos. A variante é apenas um controle em `output/checks/candidate/`; não foi implementada em produção. Não foram executados stress concorrente, benchmarks ou testes de publicação. A suficiência concorrente decorre da separação de armazenamento, da ausência de mutação da cópia e da semântica de campos finais; os testes demonstram casos concretos. Não falta evidência material para decidir esta violação. Detalhes reproduzíveis estão em `execution.json` e `checks/checks-execution.json`.

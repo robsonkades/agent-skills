@@ -206,9 +206,9 @@ uses `List<SomeRow>` records plus SQL for set operations. Choose based on tabula
 mapping and bounded memory rather than claiming Java lacks record-set support
 (`domain-logic-organization`).
 
-**Value Object** — an object whose identity is its value. Java records give equality,
-shallow immutability and a constructor to validate in; mutable components still need defensive
-ownership. This example validates a deliberately narrow legacy digit-only format:
+**Value Object** — an object whose identity is its value. Java records give component-derived
+equality, shallow immutability and a constructor to validate in; mutable components still need
+defensive ownership. This example validates a deliberately narrow legacy digit-only format:
 
 ```java
 public record TaxId(String digits) {
@@ -224,6 +224,21 @@ registration, ownership or every jurisdiction's identifier format. Value semanti
 require a nontrivial validator. Name the accepted format and add its actual invariants before
 claiming a valid tax identifier
 (`orm-structural-mapping` for how it is stored).
+
+Before using a record as a Value Object or map/stub key, check the equality required by its
+callers. Generated equality follows each reference component's equality: an array compares by
+identity. Defensive ownership does not supply content equality; copying arrays while retaining
+default record equality can also break the accessor-to-constructor copy invariant. Choose an
+immutable representation with the required semantics or implement coherent
+`equals`/`hashCode`. Check independently constructed equivalent values, reconstruction through
+accessors, lookup by an equal key, and mutation of supplied or returned components
+(`java-object-contracts`).
+
+A `BigDecimal` component distinguishes `2.0` from `2.00` in equality, although their numerical
+comparison is zero. Normalise only when scale is irrelevant to the agreed domain contract;
+preserve it when it conveys meaningful precision or representation. Inspect consumers and
+serialization before changing the representation. Neither record syntax nor a mapper should
+silently decide that equivalence policy.
 
 ## Choosing, quickly
 
@@ -244,4 +259,6 @@ claiming a valid tax identifier
 - [Java 17 ServiceLoader](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/ServiceLoader.html): independently deployed providers, construction, selection with zero/one/many providers and configuration failures; not a requirement to adopt this loader.
 - [Java 17 CachedRowSet](https://docs.oracle.com/en/java/javase/17/docs/api/java.sql.rowset/javax/sql/rowset/CachedRowSet.html): disconnected tabular data support.
 - [Java 17 Record](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Record.html): shallow immutability and component-derived equality.
+- [JLS 17 array members](https://docs.oracle.com/javase/specs/jls/se17/html/jls-10.html#jls-10.7): arrays inherit `Object` equality; cloning does not provide content equality.
+- [Java 17 BigDecimal](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/math/BigDecimal.html#equals(java.lang.Object)>): equality includes scale, unlike numerical comparison.
 - [Java 21 pattern matching for switch](https://docs.oracle.com/en/java/javase/21/language/pattern-matching-switch.html): type patterns and exhaustiveness for sealed variants.

@@ -1,0 +1,52 @@
+{
+  "decision": "repaired",
+  "implementation": "RetryEngine.java",
+  "publicSignaturePreserved": true,
+  "sourceApiBaseline": 17,
+  "observedJdk": "Temurin OpenJDK 25.0.3+9; javac 25.0.3",
+  "providedReplaySafe": false,
+  "changes": [
+    "Retain same intent and payload on every attempt.",
+    "Return terminal snapshots without dispatch.",
+    "Persist and preserve operation-level UNKNOWN; dispatch interruption records UNKNOWN before propagation.",
+    "Permit retries only under supplied replay, attempt, time, cancellation and token contracts.",
+    "Use maximum of local delay and validated server minimum; perform overflow-safe admission and post-sleep rechecks.",
+    "Close each returned Reply exactly once before sleep, next call or normal return."
+  ],
+  "checks": [
+    {
+      "command": "node run.mjs Verification",
+      "exitCode": 0,
+      "assertions": {
+        "providedFalseContract": 337,
+        "testOnlyTrueContract": 552
+      },
+      "inMemoryTrueContract": true,
+      "providedContractModified": false
+    },
+    {
+      "command": "node run.mjs Smoke",
+      "exitCode": 0,
+      "stdout": "Smoke passed"
+    },
+    {
+      "check": "SHA-256 immutable-copy comparisons",
+      "files": 7,
+      "unchanged": 7
+    }
+  ],
+  "limits": [
+    "All provider and store guarantees are supplied assumptions; no real provider/database was exercised.",
+    "No authoritative reconciliation port is supplied; unsafe unresolved effects remain UNKNOWN.",
+    "Test-only true contract compiles the actual source in isolation and does not change Contract.java or assert real replay safety.",
+    "No production latency, physical cancellation, concurrency, crash recovery, dedup retention or fleet behavior was measured.",
+    "References to skills outside the supplied snapshots were not followed."
+  ],
+  "artifacts": [
+    "RetryEngine.java",
+    "Verification.java",
+    "REVIEW.md",
+    "result.json",
+    "execution.json"
+  ]
+}

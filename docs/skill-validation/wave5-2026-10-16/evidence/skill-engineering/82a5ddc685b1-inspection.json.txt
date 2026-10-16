@@ -1,0 +1,144 @@
+{
+  "skill": "skill-engineering",
+  "assignmentBaseline": {
+    "head": "bbb7d996a929e81baf735bbaab5b6e3fbf6e8503",
+    "committedVersion": "1.0.3",
+    "assignmentVersion": "1.0.3",
+    "committedToAssignmentDiff": "none",
+    "stagedDiff": "none",
+    "unstagedDiff": "none",
+    "untrackedFiles": [],
+    "preExistingVersionBump": false,
+    "files": [
+      {
+        "path": "skills/skill-engineering/SKILL.md",
+        "sha256": "5B3B3F9FA40C5B13051F501B4B7A58D0D0AD83C3836EFEDE2AD714A3A85582D6"
+      },
+      {
+        "path": "skills/skill-engineering/skill.yaml",
+        "sha256": "C040A7F5F938ECF66C265A96595999D5FDBDB74201F03A3616E048C4EFF51BD6"
+      },
+      {
+        "path": "skills/skill-engineering/references/anti-patterns.md",
+        "sha256": "269274D782F0AF5CE830A0DAA99283210F4C586F083E0F82479C1D77C7211E02"
+      },
+      {
+        "path": "skills/skill-engineering/references/evaluation.md",
+        "sha256": "81F3C9853321BA2F4CAA828AFF5C0482CCF4D06E7FF28148A8F4F0A7068B761A"
+      },
+      {
+        "path": "skills/skill-engineering/references/evidence-and-confidence.md",
+        "sha256": "2A03FD347628B27704663DB09AF08A8A86BCD097A5A2D822E98E6A79BE3C6E69"
+      },
+      {
+        "path": "skills/skill-engineering/references/resource-design.md",
+        "sha256": "D8E5911D26319AAB030ACD9647ED7FAD82B453ACEA72866B15E282C47C94509C"
+      }
+    ]
+  },
+  "finalFiles": [
+    {
+      "path": "skills/skill-engineering/SKILL.md",
+      "sha256": "5B3B3F9FA40C5B13051F501B4B7A58D0D0AD83C3836EFEDE2AD714A3A85582D6"
+    },
+    {
+      "path": "skills/skill-engineering/skill.yaml",
+      "sha256": "8F74EE5B0DDD63F124297DE81C508C53D08E9B11C49EBA7F80BB44054369AEA9"
+    },
+    {
+      "path": "skills/skill-engineering/references/anti-patterns.md",
+      "sha256": "269274D782F0AF5CE830A0DAA99283210F4C586F083E0F82479C1D77C7211E02"
+    },
+    {
+      "path": "skills/skill-engineering/references/evaluation.md",
+      "sha256": "6CD7CDCB91444849849919570F06BA64FD701C424ACC87A5F379B4D03B601AFF"
+    },
+    {
+      "path": "skills/skill-engineering/references/evidence-and-confidence.md",
+      "sha256": "2A03FD347628B27704663DB09AF08A8A86BCD097A5A2D822E98E6A79BE3C6E69"
+    },
+    {
+      "path": "skills/skill-engineering/references/resource-design.md",
+      "sha256": "D8E5911D26319AAB030ACD9647ED7FAD82B453ACEA72866B15E282C47C94509C"
+    }
+  ],
+  "attribution": [
+    {
+      "path": "skills/skill-engineering/SKILL.md",
+      "sha256": "5B3B3F9FA40C5B13051F501B4B7A58D0D0AD83C3836EFEDE2AD714A3A85582D6",
+      "assignmentSha256": "5B3B3F9FA40C5B13051F501B4B7A58D0D0AD83C3836EFEDE2AD714A3A85582D6",
+      "changedByReviewer": false
+    },
+    {
+      "path": "skills/skill-engineering/skill.yaml",
+      "sha256": "8F74EE5B0DDD63F124297DE81C508C53D08E9B11C49EBA7F80BB44054369AEA9",
+      "assignmentSha256": "C040A7F5F938ECF66C265A96595999D5FDBDB74201F03A3616E048C4EFF51BD6",
+      "changedByReviewer": true
+    },
+    {
+      "path": "skills/skill-engineering/references/anti-patterns.md",
+      "sha256": "269274D782F0AF5CE830A0DAA99283210F4C586F083E0F82479C1D77C7211E02",
+      "assignmentSha256": "269274D782F0AF5CE830A0DAA99283210F4C586F083E0F82479C1D77C7211E02",
+      "changedByReviewer": false
+    },
+    {
+      "path": "skills/skill-engineering/references/evaluation.md",
+      "sha256": "6CD7CDCB91444849849919570F06BA64FD701C424ACC87A5F379B4D03B601AFF",
+      "assignmentSha256": "81F3C9853321BA2F4CAA828AFF5C0482CCF4D06E7FF28148A8F4F0A7068B761A",
+      "changedByReviewer": true
+    },
+    {
+      "path": "skills/skill-engineering/references/evidence-and-confidence.md",
+      "sha256": "2A03FD347628B27704663DB09AF08A8A86BCD097A5A2D822E98E6A79BE3C6E69",
+      "assignmentSha256": "2A03FD347628B27704663DB09AF08A8A86BCD097A5A2D822E98E6A79BE3C6E69",
+      "changedByReviewer": false
+    },
+    {
+      "path": "skills/skill-engineering/references/resource-design.md",
+      "sha256": "D8E5911D26319AAB030ACD9647ED7FAD82B453ACEA72866B15E282C47C94509C",
+      "assignmentSha256": "D8E5911D26319AAB030ACD9647ED7FAD82B453ACEA72866B15E282C47C94509C",
+      "changedByReviewer": false
+    }
+  ],
+  "readCoverage": [
+    {
+      "file": "SKILL.md",
+      "review": "Preserve runtime-neutral creation/review scope, role-specific deliverables, existing authorization, early discovery review, conditional routing, checkable decisions, ownership versus isolation, and no-change path."
+    },
+    {
+      "file": "skill.yaml",
+      "review": "Metadata/description consistent; no dependencies or compatibility block. Single patch bump only."
+    },
+    {
+      "file": "references/resource-design.md",
+      "review": "Preserve each-file-purpose test, body guards versus conditional detail, directory conventions versus client loading, deliberate script use with side-effect review, existing consumers and scope."
+    },
+    {
+      "file": "references/evidence-and-confidence.md",
+      "review": "Preserve evidence/observation/inference/hypothesis distinction, version-sensitive primary claims, context versus policy, static/API proof versus runtime/causal/agent behavior, no mandatory labels."
+    },
+    {
+      "file": "references/evaluation.md",
+      "review": "Preserve structural/technical/behavioral separation, comparable treatment, exact exposure, holdouts and frozen criteria, filesystem access limits, selection versus execution, output/artifact-based grading, valid regression guards; add concrete grader controls and comparison interpretation."
+    },
+    {
+      "file": "references/anti-patterns.md",
+      "review": "Preserve critique of generic expertise, arbitrary length, checklist inflation, runtime assumptions and invented causal gains; subtraction pass without quotas."
+    }
+  ],
+  "procedures": {
+    "readOrReusedUnchanged": [
+      "AGENTS.md",
+      "docs/skill-review-prompt.md (complete)",
+      "docs/parallel-skill-reviews.md",
+      "docs/skill-validation/wave5-2026-10-16/review-brief.md",
+      "docs/skill-validation/skills-comparative-research-2026-10-16.md"
+    ],
+    "reservedMaterialsAccessed": false
+  },
+  "reviewLimits": [
+    "All six package files inspected. This was a reference quality review, not a client runtime compatibility matrix.",
+    "Some combined display output was truncated; relevant package contents and source sections were reread in scoped chunks.",
+    "No root index, global checks, neighboring edits, installations or actual agent config operations."
+  ]
+}

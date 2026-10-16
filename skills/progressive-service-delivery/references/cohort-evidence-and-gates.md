@@ -141,10 +141,30 @@ results from a prior candidate. A tool's default treatment of an empty result ma
 the release policy. Preserve the evaluated inputs and decision before retention deletes them.
 
 Argo Rollouts supports successful, failed and inconclusive analysis; inconclusive runs can
-pause the rollout, and query expressions determine handling of NaN and empty results. This
-is an implementation example, not a required platform or proof that its sample configuration
-enforces this policy. Pin the installed controller/CRDs, inspect the provider semantics,
-and test the actual template before relying on it.
+pause the rollout, and query expressions determine handling of NaN and empty results.
+The caller determines whether that analysis enforces the intended decision. For example,
+the v1.8.3 analysis documentation distinguishes:
+
+- A canary **background analysis** runs alongside rollout steps; its presence does not
+  make each timed advance wait for positive evidence. An **inline analysis step** blocks
+  until its run completes. Check metric counts and positive completion conditions before
+  reusing a background template as a blocking gate.
+- Metrics selected by **`dryRun`** do not affect the rollout outcome even when they fail
+  or are inconclusive. The caller can specify this selection, including a regex matching
+  every metric; inspecting the referenced template alone misses that override.
+
+Trace the rendered rollout/pipeline through its referenced templates to the generated run,
+required metric results and next admission change. Inspect why a run completed; an aggregate
+`Successful` state does not prove every required metric passed. Background monitoring or
+dry-run calibration can be appropriate when that is the accepted policy, but cannot stand
+in for a required positive gate.
+
+Pin the installed controller/CRDs and inspect provider and orchestration semantics; these
+are implementation examples, not a required platform. In an isolated check, keep required
+evidence unresolved past an automatic advance, then supply passing and failing results.
+Observe actual exposure and the next step: expansion must wait for the required evidence,
+or containment must stop exposure if its budget expires. Do not infer this property from
+a standalone successful template test.
 
 ## Sources and limits
 
@@ -158,8 +178,11 @@ and test the actual template before relying on it.
   decisions separate from their implementation. Local authorization and state contracts
   still determine which assignment unit is correct.
 - [Argo Rollouts: Analysis](https://argoproj.github.io/argo-rollouts/features/analysis/)
-  documents inconclusive runs and metric result handling. The page is version-evolving;
-  confirm installed behavior rather than copying a success expression without its context.
+  documents inconclusive runs and metric result handling. The
+  [v1.8.3 analysis documentation](https://github.com/argoproj/argo-rollouts/blob/v1.8.3/docs/features/analysis.md)
+  also supports the background/inline and dry-run distinctions above, checked
+  2026-10-16. Confirm installed behavior and effective callers rather than copying a success
+  expression without its context.
 - [Prometheus: Histograms and summaries](https://prometheus.io/docs/practices/histograms/)
   supports aggregating distributions rather than precomputed quantiles. It does not
   establish that the target service's instrumentation represents the intended population.

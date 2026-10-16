@@ -1,0 +1,29 @@
+{
+  "bundled": {
+    "applicationContents": [
+      "compiled report-app classes",
+      "compiled text-core classes"
+    ],
+    "launch": [
+      "java",
+      "-jar",
+      "report-bundle.jar"
+    ],
+    "source": "jar --create --file report-bundle.jar --main-class com.example.app.ReportApp -C classes/consumer . -C classes/library ."
+  },
+  "external": {
+    "applicationContents": [
+      "compiled report-app classes"
+    ],
+    "runtimeDependencies": [
+      "published/text-core-${libraryVersion}.jar"
+    ],
+    "launch": [
+      "java",
+      "-cp",
+      "report-app.jar;published/text-core-${libraryVersion}.jar",
+      "com.example.app.ReportApp"
+    ],
+    "source": "jar --create --file report-app.jar -C classes/consumer ."
+  }
+}

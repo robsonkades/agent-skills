@@ -1,0 +1,113 @@
+{
+  "date": "2026-10-16",
+  "baseline": {
+    "ownedPath": "C:/git/agent-skills/skills/project-valhalla",
+    "committedVersion": "1.0.4",
+    "assignmentVersion": "1.0.4",
+    "preExistingChanges": [],
+    "initialOwnedHashes": [
+      {
+        "path": "SKILL.md",
+        "sha256": "254DD2851367F1A6BB121A58CD4F35ED56ACD678B6F645979D5E8899C1D1933D"
+      },
+      {
+        "path": "skill.yaml",
+        "sha256": "AB15292CE5647285D1C7C57E40B6C17269D62E1345A9BAD4AFC8A2A87F3A022B"
+      },
+      {
+        "path": "references/status-and-experiments.md",
+        "sha256": "E2E23F88A4FFDA5D27FA61BD073E2C4833ACDB8C57E920FCB47508A5F34FDECF"
+      }
+    ]
+  },
+  "sourceRetrieval": [
+    {
+      "status": "fulfilled",
+      "value": {
+        "url": "https://openjdk.org/jeps/401",
+        "chunk_id": "9c9482",
+        "wall_time_seconds": 0.6088897,
+        "exit_code": 0,
+        "original_token_count": 65,
+        "output": "{\"url\":\"https://openjdk.org/jeps/401\",\"status\":200,\"file\":\"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\agent-skills-wave3-project-valhalla-a69ccec59339442c8777df61facd844c/jep-401.html\",\"sha256\":\"E876E73EA5AC1A617C6C502B7856D06B67511083A9810D090C58F4F7DD10D352\"}\r\n"
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "url": "https://openjdk.org/jeps/539",
+        "chunk_id": "6ba3f2",
+        "wall_time_seconds": 0.6607961,
+        "exit_code": 0,
+        "original_token_count": 65,
+        "output": "{\"url\":\"https://openjdk.org/jeps/539\",\"status\":200,\"file\":\"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\agent-skills-wave3-project-valhalla-a69ccec59339442c8777df61facd844c/jep-539.html\",\"sha256\":\"79D979A0D7D10F2CB7D7B78D1C9AAEE98C78ABDEF3DB535D05D503B429CA4C79\"}\r\n"
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "url": "https://openjdk.org/projects/valhalla/",
+        "chunk_id": "7310b8",
+        "wall_time_seconds": 0.4693503,
+        "exit_code": 0,
+        "original_token_count": 68,
+        "output": "{\"url\":\"https://openjdk.org/projects/valhalla/\",\"status\":200,\"file\":\"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\agent-skills-wave3-project-valhalla-a69ccec59339442c8777df61facd844c/project.html\",\"sha256\":\"02C10E8469D5ED7BEA1884891408632F0507DA5432B946E117607355B1D53F27\"}\r\n"
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "url": "https://jdk.java.net/28/",
+        "chunk_id": "94802d",
+        "wall_time_seconds": 0.5104681,
+        "exit_code": 0,
+        "original_token_count": 64,
+        "output": "{\"url\":\"https://jdk.java.net/28/\",\"status\":200,\"file\":\"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\agent-skills-wave3-project-valhalla-a69ccec59339442c8777df61facd844c/jdk28.html\",\"sha256\":\"EC92BA784E42CC6CBDC1C55C11E78AD0C5986955FA5E65BCEDBC2DD244B4DFBF\"}\r\n"
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "url": "https://jdk.java.net/valhalla/",
+        "chunk_id": "ba8910",
+        "wall_time_seconds": 0.4794996,
+        "exit_code": 0,
+        "original_token_count": 67,
+        "output": "{\"url\":\"https://jdk.java.net/valhalla/\",\"status\":200,\"file\":\"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\agent-skills-wave3-project-valhalla-a69ccec59339442c8777df61facd844c/valhalla-ea.html\",\"sha256\":\"8C51C639E884F59765DCF7F74DCBE4035C650FFC5CFFFAD5C70A5AE6D7ABA253\"}\r\n"
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "4cbe5f",
+        "wall_time_seconds": 2.4839726,
+        "exit_code": 0,
+        "original_token_count": 48,
+        "output": "{\"url\":\"https://download.java.net/java/early_access/jdk28/docs/api/java.base/java/lang/System.html\",\"status\":200,\"sha256\":\"DD3BA260BFF94AE418C9EACB25A63A4513D388BF20806C0C984D005606117657\"}\r\n"
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "9ba213",
+        "wall_time_seconds": 2.8921676,
+        "exit_code": 0,
+        "original_token_count": 49,
+        "output": "{\"url\":\"https://download.java.net/java/early_access/jdk28/docs/api/java.base/java/util/WeakHashMap.html\",\"status\":200,\"sha256\":\"E5857C3E81840C5AD469A3443970F505352E33C31F546905C7120C09674C5E79\"}\r\n"
+      }
+    }
+  ],
+  "webFallback": {
+    "attempt": "web open on 5 OpenJDK/project/download URLs returned 403 for all; direct Invoke-WebRequest to same primary sources returned 200",
+    "rawResult": "Internal Error ()\nciteturn743view0 [wordlim: 200] Source: open({\"ref_id\":\"https://openjdk.org/jeps/401\",\"lineno\":null}); Total lines: 1\nL0: Failed to fetch https://openjdk.org/jeps/401: (403) Forbidden\n--------------------------------------------------------------------------------\nInternal Error ()\nciteturn743view1 [wordlim: 200] Source: open({\"ref_id\":\"https://openjdk.org/jeps/539\",\"lineno\":null}); Total lines: 1\nL0: Failed to fetch https://openjdk.org/jeps/539: (403) Forbidden\n--------------------------------------------------------------------------------\nInternal Error ()\nciteturn743view2 [wordlim: 200] Source: open({\"ref_id\":\"https://openjdk.org/projects/valhalla/\",\"lineno\":null}); Total lines: 1\nL0: Failed to fetch https://openjdk.org/projects/valhalla/: (403) Forbidden\n--------------------------------------------------------------------------------\nInternal Error ()\nciteturn743view3 [wordlim: 200] Source: open({\"ref_id\":\"https://jdk.java.net/28/\",\"lineno\":null}); Total lines: 1\nL0: Failed to fetch https://jdk.java.net/28/: (403) Forbidden\n--------------------------------------------------------------------------------\nInternal Error ()\nciteturn743view4 [wordlim: 200] Source: open({\"ref_id\":\"https://jdk.java.net/valhalla/\",\"lineno\":null}); Total lines: 1\nL0: Failed to fetch https://jdk.java.net/valhalla/: (403) Forbidden\n"
+  },
+  "technicalScope": "Available Java25 identity-class negative/sensitivity controls only; proposed value variant not compiled or run on EA28. No benchmark or independent agent evaluation.",
+  "harnessIncident": {
+    "initialCommand": "& ./run-probes.ps1 2>&1 | Tee-Object -FilePath probe-run.log\nexit $LASTEXITCODE",
+    "exitCode": 2,
+    "cause": "Wrapper propagated final expected javac exit2 despite every command matching its expected exit. Fixture behavior was not a test failure.",
+    "correction": "Added exit0 after successful assertions to review-only run-probes.ps1; rerun all six commands with probe-rerun.log, overall exit0. Both top-level logs retained."
+  },
+  "fixtureDifferences": "identity/OpaqueCode.java and value/OpaqueCode.java differ only public final class vs public value class; the rest of the code is identical. The attack reads no private fields or reflection. Canonical factory positive control prevents claiming identity alone guarantees secrecy.",
+  "developmentCases": "Known reviewer-developed cases, not held-out; actor inputs and evaluator criteria in separate files. No actor runs."
+}

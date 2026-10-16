@@ -1,0 +1,6 @@
+{
+  "skill": "java-testing-strategy",
+  "common": "Use java-testing-strategy to recommend the narrowest test scope and the next repair and verification steps; do not implement or upgrade tooling. The project uses Java 17, Spring Boot 3.4, and PostgreSQL 16. ReservationIT sends two concurrent reservations for one seat and asserts exactly one committed reservation. Failsafe runs it during CI verify; first attempts sometimes fail, and reruns pass. Eight tests share a manually managed PostgreSQL instance for the whole suite. The team proposes using Mockito instead of the database or adding more retries. Explain the evidence and remaining verification.",
+  "scenarioA": "Row provenance shows the extra reservation came from OtherReservationIT using the same seat ID. Per-test schemas remove contamination while ReservationIT still sends both concurrent requests.",
+  "scenarioB": "Row provenance shows both reservations came from ReservationIT's own requests. Failure persists when that test runs alone in a fresh schema."
+}

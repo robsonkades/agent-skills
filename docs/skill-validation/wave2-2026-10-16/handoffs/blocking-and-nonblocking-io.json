@@ -1,0 +1,232 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "blocking-and-nonblocking-io",
+  "reviewDate": "2026-10-16",
+  "retrospective": true,
+  "ownedPath": "skills/blocking-and-nonblocking-io/",
+  "allWritesStopped": true,
+  "runningProcesses": [],
+  "versions": {
+    "committed": "1.3.4",
+    "assignment": "1.3.4",
+    "final": "1.3.5",
+    "rationale": "One patch for supported skill-content corrections; initial package was clean."
+  },
+  "baseline": {
+    "stagedChanges": [],
+    "unstagedChanges": [],
+    "untrackedFiles": [],
+    "files": [
+      {
+        "path": "SKILL.md",
+        "sha256": "CB21D47CE65EC07E916EECC6B5AB02F11E20C3DB2D9587E5B44C9DC2D88AB8AF"
+      },
+      {
+        "path": "skill.yaml",
+        "sha256": "6C9B75A07E09BA89A530C0B272FF59C6A82ABE640C3C0B47948E268F691404F2"
+      },
+      {
+        "path": "references/event-loops-and-pollers.md",
+        "sha256": "A86905641C64BF1D890444E9720A8F8E0DDC5FBC90CF587AF83807C3E6FF4961"
+      },
+      {
+        "path": "references/what-unmounts.md",
+        "sha256": "CF1F1022C0AB99816DF3BD114B9AAF351E67D018BF8C445A6817ADDD63FCA944"
+      }
+    ]
+  },
+  "filesChangedByReviewer": [
+    "SKILL.md",
+    "skill.yaml",
+    "references/event-loops-and-pollers.md",
+    "references/what-unmounts.md"
+  ],
+  "preExistingChanges": [],
+  "findingsCorrected": [
+    {
+      "location": "SKILL.md:46,57,71",
+      "finding": "Classification now follows the selected implementation, effective VM flags and execution boundaries through consumption/cleanup. Known source/context can prove placement; runtime measurement remains necessary for occurrence/cost claims."
+    },
+    {
+      "location": "SKILL.md:105; references/what-unmounts.md:12,72",
+      "finding": "Default-locking qualification added to JDK 24+ monitor guidance. HotSpot 24–25 legacy LockingMode=1 retains held-monitor pinning; inspect effective flags and purpose before changing locks/configuration."
+    },
+    {
+      "location": "references/event-loops-and-pollers.md:63",
+      "finding": "Added partial-offload Reactor example, alternatives that preserve loop affinity, in-memory no-change condition, and both-call assertion with misplaced-boundary negative control."
+    }
+  ],
+  "capabilitiesPreserved": [
+    "Blocking API versus blocked OS thread, nonblocking syscall and asynchronous programming model",
+    "Unmounting versus carrier retention, compensation and pinning",
+    "Operation/provider/version-specific file compensation and asynchronous executor contracts",
+    "Cancellation, buffers, stream consumption/close and resource ownership",
+    "Bounded admission, saturation, caller-runs and BlockHound controls",
+    "Role boundaries and existing dependencies/suggestions"
+  ],
+  "replacedGuidance": "Unconditional runtime-evidence requirement replaced by claim-appropriate evidence. No capabilities removed.",
+  "commandsAndResults": [
+    {
+      "cwd": "C:/git/agent-skills",
+      "command": "git status --short -- skills/blocking-and-nonblocking-io; git diff --cached -- skills/blocking-and-nonblocking-io; git show HEAD:skills/blocking-and-nonblocking-io/skill.yaml; Get-FileHash on all four package files",
+      "result": "Clean initial package, committed/assignment version 1.3.4; baseline hashes captured."
+    },
+    {
+      "cwd": "C:/git/agent-skills",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/blocking-and-nonblocking-io/SKILL.md skills/blocking-and-nonblocking-io/skill.yaml skills/blocking-and-nonblocking-io/references/what-unmounts.md skills/blocking-and-nonblocking-io/references/event-loops-and-pollers.md",
+      "result": "Initial check flagged edited what-unmounts table. Narrow formatter applied to that file; final check passed all four files."
+    },
+    {
+      "cwd": "C:/git/agent-skills",
+      "command": "git diff --check -- skills/blocking-and-nonblocking-io",
+      "result": "Passed; final diff four files, 66 insertions, 15 deletions."
+    },
+    {
+      "cwd": "C:/git/agent-skills",
+      "command": "Inline node --input-type=module script using existing loadPackageFromDirectory(NodeFileSystem, path, {strict:true}) and validatePackage with directoryName and ClaudeCodeAdapter/CodexAdapter",
+      "result": "Final version 1.3.5; exactly four shipped files; zero issues. Separate inline read-only relative Markdown link walk resolved both local links."
+    },
+    {
+      "cwd": "C:/git/agent-skills/skills/blocking-and-nonblocking-io/.validation-wave2",
+      "command": "javac --release 21 -cp 'C:/Users/robso/.m2/repository/io/projectreactor/reactor-core/3.6.9/reactor-core-3.6.9.jar;C:/Users/robso/.m2/repository/org/reactivestreams/reactive-streams/1.0.4/reactive-streams-1.0.4.jar' -d . ReactorBoundaryCheck.java",
+      "result": "Passed using javac 25.0.3. Java compiler target was 21."
+    },
+    {
+      "cwd": "C:/git/agent-skills/skills/blocking-and-nonblocking-io/.validation-wave2",
+      "command": "java -cp '.;C:/Users/robso/.m2/repository/io/projectreactor/reactor-core/3.6.9/reactor-core-3.6.9.jar;C:/Users/robso/.m2/repository/org/reactivestreams/reactive-streams/1.0.4/reactive-streams-1.0.4.jar' ReactorBoundaryCheck",
+      "result": "Passed technical control on Temurin 25.0.3+9. One expected placement failure, three successful variants.",
+      "reportedOutput": [
+        "EXPECTED FAILURE: storage escaped I/O workers: test-loop-1 | [client=io-workers-1, storage=test-loop-1]",
+        "PASS moved boundary: [client=io-workers-1, storage=io-workers-1, consumer=test-loop-1]",
+        "PASS separate source: [client=io-workers-1, affine callback=test-loop-1, storage=io-workers-1, consumer=test-loop-1]",
+        "PASS in-memory unchanged: [client=io-workers-1, bounded in-memory lookup=test-loop-1]"
+      ]
+    },
+    {
+      "cwd": "C:/git/agent-skills",
+      "command": "Removed only temporary ReactorBoundaryCheck.java, ReactorBoundaryCheck.class and empty .validation-wave2 directory; final owned status/diff/hash inspection",
+      "result": "No temporary artifacts or reviewer processes remain. Four intended modified package files only."
+    }
+  ],
+  "evidenceRetention": {
+    "rawEvidenceRetained": false,
+    "harnessRetained": false,
+    "disclosure": "The temporary Java harness and class were removed before handoff. Raw stdout was available in conversation tool results but was not saved to disk. This retrospective JSON records reported commands/results; it is not retained raw execution evidence and does not reconstruct or claim the original harness."
+  },
+  "finalHashes": [
+    {
+      "path": "SKILL.md",
+      "sha256": "0855B59117F9633136860D0DE82B0A9E13A5B1C5D5CA5A904D39F26F7EDE703E"
+    },
+    {
+      "path": "skill.yaml",
+      "sha256": "6FC02249D499F74E58EB8BB17A9090630769718D383C8CB1E78BDBA276FAA22A"
+    },
+    {
+      "path": "references/event-loops-and-pollers.md",
+      "sha256": "FD074D0228284A494770EDAE64B1F8377D3CBC215225BAD27D2CBC191F0B0624"
+    },
+    {
+      "path": "references/what-unmounts.md",
+      "sha256": "3C5ED1452F34720E72547803D8CDC658F28DC37F5121A537CFBEE5D45DBF1D00"
+    }
+  ],
+  "behavioralEvaluations": {
+    "executed": [],
+    "measuredGain": false,
+    "walkthroughs": [
+      "Selected file I/O after publishOn versus bounded in-memory lookup",
+      "Default HotSpot locking versus legacy LockingMode=1"
+    ]
+  },
+  "developmentCases": {
+    "classification": "Reproducible development inputs and evaluator criteria, not executed agent evaluations or unseen holdouts.",
+    "commonActorContext": "Create isolated Java target 21 fixture using cached Reactor 3.6.9 and reactive-streams 1.0.4. Pipeline: Mono.fromCallable(client::call).subscribeOn(ioWorkers).publishOn(loop).map(storage::loadPayload).map(consumer::accept). ioWorkers=Schedulers.newBoundedElastic(1,8,\"io-workers\"); loop=Schedulers.newSingle(\"test-loop\"). Client.call performs synchronous I/O and returns a key. Consumer.accept requires loop thread. FileStorage.loadPayload calls Files.readString on a temporary fixture file (wrap IOException as UncheckedIOException); MemoryStorage uses a small immutable Map.of(...).get with no disk fallback. Current test checks only client.call execution thread. Dispose schedulers and isolate fixture files.",
+    "actorTask": "Review blocking risk and apply the smallest justified correction; preserve consumer affinity, existing bounds and dependencies.",
+    "actorInputs": [
+      {
+        "id": "A",
+        "constraint": "Wiring.storage() selects FileStorage."
+      },
+      {
+        "id": "B",
+        "constraint": "Change only Wiring.storage() to select MemoryStorage."
+      }
+    ],
+    "evaluatorCriteria": [
+      {
+        "id": "A",
+        "expected": [
+          "Follow the selected storage implementation",
+          "Identify second I/O after publishOn",
+          "Move storage map before publishOn or equivalent correct bounded offload",
+          "Preserve consumer on loop",
+          "Assert both call sites; old placement must fail control",
+          "Do not require a production profile to establish placement or promise measured speedup"
+        ],
+        "failureConditions": [
+          "Accept source-only assertion as total isolation",
+          "Leave file read on loop",
+          "Move consumer off its required loop"
+        ]
+      },
+      {
+        "id": "B",
+        "expected": [
+          "Recognize bounded in-memory selected implementation",
+          "Do not add compulsory offload or rewrite without evidence",
+          "Preserve chain/consumer affinity",
+          "Do not attribute unselected FileStorage costs to MemoryStorage"
+        ],
+        "failureConditions": [
+          "Apply file-I/O remedy to unselected provider",
+          "Treat every map as blocking"
+        ]
+      }
+    ]
+  },
+  "sources": [
+    {
+      "url": "https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/globals.hpp",
+      "supports": "Default and legacy locking modes; fixed 25 GA source verified."
+    },
+    {
+      "url": "https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/continuationFreezeThaw.cpp",
+      "supports": "Legacy held-monitor freeze/pinning checks; fixed 25 GA source verified."
+    },
+    {
+      "url": "https://github.com/openjdk/jdk/blob/jdk-24-ga/src/hotspot/share/runtime/globals.hpp",
+      "supports": "Same legacy mode/default distinction in 24 GA."
+    },
+    {
+      "url": "https://github.com/openjdk/jdk/blob/jdk-24-ga/src/hotspot/share/runtime/continuationFreezeThaw.cpp",
+      "supports": "Held-monitor pinning check in 24 GA."
+    },
+    {
+      "url": "https://projectreactor.io/docs/core/3.6.12/reference/index.html#schedulers",
+      "supports": "publishOn downstream dispatch and subscribeOn placement."
+    },
+    {
+      "url": "https://github.com/reactor/reactor-core/blob/v3.6.9/reactor-core/src/main/java/reactor/core/publisher/MonoPublishOn.java",
+      "supports": "Version-matched scheduling for cached Reactor technical control."
+    },
+    {
+      "url": "https://github.com/reactor/reactor-core/blob/v3.6.9/reactor-core/src/main/java/reactor/core/publisher/MonoSubscribeOnCallable.java",
+      "supports": "Version-matched callable source scheduling."
+    }
+  ],
+  "remainingLimitations": [
+    "No actual agent behavioral evaluation, catalog-wide improvement measurement or independent holdout.",
+    "Technical control validates callback placement only, not real driver blocking/cancellation or production latency.",
+    "Compiler target 21 on runtime 25.0.3; no JDK 21 runtime execution.",
+    "Monitor exception verified in primary implementation sources; no new pinning runtime control executed for this review.",
+    "Original validation harness and raw disk logs were not retained."
+  ],
+  "crossSkillFindings": "Neighbor virtual-thread skills already qualified default versus legacy locking. This correction aligns the assigned package without editing them.",
+  "pendingGlobalChecks": ["npm run registry:build", "npm run verify"],
+  "coordinatorActions": [
+    "Run global checks after all reviewers stop writing",
+    "Select independent behavioral cases if required",
+    "Treat this evidence record as retrospective, not preserved raw evidence"
+  ]
+}

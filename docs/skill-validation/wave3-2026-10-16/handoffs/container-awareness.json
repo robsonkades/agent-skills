@@ -1,0 +1,305 @@
+{
+  "status": "NO_CHANGES_NEEDED",
+  "skill": "container-awareness",
+  "ownedPath": "skills/container-awareness/",
+  "allWritesStopped": true,
+  "versions": {
+    "committed": "1.2.4",
+    "assignmentTime": "1.2.4",
+    "final": "1.2.4",
+    "preexistingBump": false,
+    "rationale": "No supported content defect found; no package changes and no version bump."
+  },
+  "baseline": {
+    "gitHead": "bbb7d996a929e81baf735bbaab5b6e3fbf6e8503",
+    "filesRead": 4,
+    "staged": [],
+    "unstaged": [],
+    "untracked": [],
+    "hashes": [
+      {
+        "path": "skills/container-awareness/SKILL.md",
+        "hash": "980cb59c1a036562e1a3e1199a19ad590261f212ec520b29f722233f1dd17563"
+      },
+      {
+        "path": "skills/container-awareness/skill.yaml",
+        "hash": "fcdb4e43e368d2361375150b8f6f95486c40638029fcafe3f881eb098ef5de28"
+      },
+      {
+        "path": "skills/container-awareness/references/reading-the-container.md",
+        "hash": "03ce775562117e0c712e5980be3a94f5d80ce46a2ce2b41b8a69f28bff11b4fa"
+      },
+      {
+        "path": "skills/container-awareness/references/sizing-heap-and-cpu.md",
+        "hash": "0fd6376a38a9d8dae49e96a0663ede2a8adb37d2b03f0c3f1f6a541ebe113df8"
+      }
+    ],
+    "preservation": "Final read-only SHA-256 inventory matches all four assignment hashes; scoped Git status/diffs empty."
+  },
+  "files": {
+    "changedByReviewer": [],
+    "preexistingChanges": [],
+    "added": [],
+    "removed": []
+  },
+  "scope": "Review existing Linux HotSpot container-detection and sizing diagnosis guidance, primarily JDK 17–25 with explicit JDK 26 heap-default note. Preserve diagnostic role, existing runtime baseline and Linux/memory/topology handoffs.",
+  "findings": [
+    {
+      "location": "skills/container-awareness/SKILL.md:43",
+      "result": "Adequate",
+      "evidence": "Already requires target binary/options/cgroup identity, distinguishes live availableProcessors from the default ActiveProcessorCount sentinel and fresh-JVM probes, and accounts for probe headroom/pre-touch.",
+      "consequence": "Does not equate a new process or a flag sentinel with the live JVM's effective settings. No additional mechanism justified."
+    },
+    {
+      "location": "skills/container-awareness/references/reading-the-container.md:78",
+      "result": "Adequate",
+      "evidence": "Resolves proc cgroup/mountinfo in matching namespaces, qualifies schematic paths, checks visible ancestor limits and version-specific units. Empty output remains unknown rather than healthy.",
+      "consequence": "Existing instructions already address wrong cgroup/root reads and incomplete hierarchy evidence."
+    },
+    {
+      "location": "skills/container-awareness/SKILL.md:56",
+      "result": "Adequate",
+      "evidence": "Local oom_kill is explicitly compatible with global OOM; event hierarchy, victim/time correlation and kernel context are required. NMT/committed/RSS/charged-memory differences and missing pre-kill history are preserved.",
+      "consequence": "No unsupported local-limit or native-leak diagnosis is prescribed."
+    },
+    {
+      "location": "skills/container-awareness/references/sizing-heap-and-cpu.md:47",
+      "result": "Adequate",
+      "evidence": "Correct file/shmem overlap, tmpfs emptyDir writer accounting and persistence across container crashes; existing memory.high guidance avoids assuming platform feature enablement.",
+      "consequence": "Retains alternative charge attribution and avoids double-counting or unauthorized deletion."
+    },
+    {
+      "location": "skills/container-awareness/references/sizing-heap-and-cpu.md:72",
+      "result": "Adequate",
+      "evidence": "CPU procedure uses timestamped deltas, positive denominator, reset/recreation handling, per-CPU time caveat, relevant ancestors, actual demand/latency and same-load validation; no universal throttle threshold.",
+      "consequence": "Counter changes do not become an automatic causal guarantee or collector/limit change."
+    },
+    {
+      "location": "skills/container-awareness/references/reading-the-container.md:46",
+      "result": "Adequate",
+      "evidence": "Pinned HotSpot 25/26 source confirms RAM defaults and InitialRAMPercentage change; existing text preserves collector/minimum/generation constraints rather than assuming InitialHeapSize equals MinHeapSize.",
+      "consequence": "Version-specific note is supported; no baseline upgrade or rewrite needed."
+    }
+  ],
+  "corrected": [],
+  "remainingFindings": [],
+  "preserved": [
+    "All four package files byte-for-byte, including descriptions and dependencies.",
+    "Runtime-image vendor/update evidence rather than build-toolchain inference.",
+    "Live-versus-probe identity and resource-cost guard, including Xms/AlwaysPreTouch.",
+    "Effective CPU Count versus cpuset list, request/weight versus quota, explicit ActiveProcessorCount override semantics.",
+    "NMT/RSS/cgroup reconciliation, OOM attribution, memory.high and memory-backed emptyDir alternatives.",
+    "Fixed-Xmx versus percentage sizing, unit-normalized budgets and measured headroom rather than universal multipliers.",
+    "CPU period/throttle units, hierarchy, counter resets, causal alternatives and same-load validation.",
+    "Existing negative/contrast teaching cases and scoped handoffs to linux-for-jvm, jvm-memory-regions and numa-and-cpu-affinity."
+  ],
+  "intentionallyRemoved": [],
+  "commands": [
+    {
+      "command": "rg --files --hidden skills/container-awareness; separate reads of all four package files, applicable AGENTS.md, wave3 review brief and skill-engineering references",
+      "cwd": "C:/git/agent-skills",
+      "result": "Complete four-file package inspected. Complete unchanged review prompt/history references read earlier and reused as permitted by brief."
+    },
+    {
+      "command": "git status --short -- skills/container-awareness; git diff --cached -- skills/container-awareness; git diff -- skills/container-awareness; git show HEAD:skills/container-awareness/skill.yaml",
+      "cwd": "C:/git/agent-skills",
+      "result": "Assignment baseline clean; committed and assignment versions 1.2.4."
+    },
+    {
+      "command": "Get-Command java,javac,docker,podman,wsl,bash -ErrorAction SilentlyContinue | Select-Object Name,Source | ConvertTo-Json -Compress",
+      "cwd": "C:/git/agent-skills",
+      "result": "Found Windows Temurin 25.0.3 binaries, Rancher Desktop docker.exe and Windows WSL/bash launchers; no podman reported. Inventory only; no daemon, distro or production system contacted."
+    },
+    {
+      "command": "PowerShell here-string piped to node --input-type=module",
+      "cwd": "C:/git/agent-skills",
+      "script": "import assert from 'node:assert/strict';\nimport {existsSync,readFileSync,readdirSync} from 'node:fs';\nimport {dirname,resolve,join} from 'node:path';\nimport {loadPackageFromDirectory,validatePackage} from '@jvm-expert/core';\nimport {NodeFileSystem} from '@jvm-expert/node';\nconst root='skills/container-awareness';\nconst loaded=await loadPackageFromDirectory(new NodeFileSystem(),root,{strict:true});\nconst validation=validatePackage(loaded.pkg,{directoryName:'container-awareness'});\nassert.deepEqual([...loaded.issues,...validation.issues],[]);\nconst docs=[`${root}/SKILL.md`,...readdirSync(`${root}/references`).filter(x=>x.endsWith('.md')).map(x=>join(root,'references',x))];\nlet links=0;\nfor(const file of docs){for(const m of readFileSync(file,'utf8').matchAll(/\\[[^\\]]+\\]\\(([^)]+)\\)|`((?:references\\/)?[a-z0-9-]+\\.md)`/g)){const target=(m[1]??m[2]).split('#')[0];if(!target||/^[a-z]+:\\/\\//i.test(target))continue;assert.ok(existsSync(resolve(dirname(file),target)),`${file}: ${target}`);links++;}}\nassert.equal(1100*1000*1000-1024**3,26258176);\nconsole.log(JSON.stringify({status:'PASS',issues:0,distributedFiles:loaded.pkg.files.length,markdownFiles:docs.length,localReferences:links,unitExampleBytes:26258176}));",
+      "exitCode": 0,
+      "result": "PASS: 0 issues, 4 distributed files, 3 Markdown files, 6 local references. Unit example remainder equals 26,258,176 bytes."
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/container-awareness/SKILL.md skills/container-awareness/skill.yaml 'skills/container-awareness/references/*.md'",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "PASS; all matched files. A separate --file-info check confirmed reading-the-container.md is not ignored."
+    },
+    {
+      "command": "git diff --check -- skills/container-awareness; git status --short -- skills/container-awareness; git diff --cached --stat -- skills/container-awareness; git rev-parse HEAD",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "PASS; no owned changes; HEAD recorded in baseline."
+    },
+    {
+      "command": "Get-ChildItem -LiteralPath skills/container-awareness -Recurse -File | ForEach-Object { [pscustomobject]@{ path = $_.FullName.Replace('C:\\git\\agent-skills\\','').Replace('\\','/'); hash = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant() } } | ConvertTo-Json -Compress",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "All four final hashes equal assignment baseline."
+    },
+    {
+      "command": "Node fetch(url, {signal: AbortSignal.timeout(20000)}) for each URL in sources.json, save response and SHA-256 under isolated artifacts",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "result": "16 primary-source downloads all HTTP 200; exact URL/file/size/hash mapping in sources.json. No dependencies installed."
+    }
+  ],
+  "technicalChecks": {
+    "executed": "Package metadata/resources, formatting, Git/hash preservation, numeric unit example and primary-source inspection.",
+    "runtimeExecutions": [],
+    "exampleClassification": "Contextual Linux shell commands and an in-process Java expression; no standalone Java application or executable helper added/changed.",
+    "compilerTarget": "Not applicable; no compilation performed.",
+    "runtimeUsed": "Node local validators only; no Java/Linux container diagnostic was executed."
+  },
+  "behavioralEvaluations": {
+    "executed": [],
+    "walkthroughs": "Two written development cases contrast same-cgroup versus different-cgroup counter samples. Walkthrough only, no actor outputs or measured comparative benefit.",
+    "comparison": "Not performed; no improvement claim."
+  },
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html",
+      "version": "Java SE 25",
+      "supports": "ActiveProcessorCount ergonomics override, sizing options and units.",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/container-awareness-artifacts/java25-launcher.html"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/openjdk/jdk/jdk-25%2B36/src/hotspot/os/linux/cgroupUtil_linux.cpp",
+      "version": "jdk-25+36",
+      "supports": "Quota/period rounds up, capped by available CPUs; hierarchy adjustments are version-specific implementation.",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/container-awareness-artifacts/jdk25-cgroup-util.cpp"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/openjdk/jdk/jdk-25%2B36/src/java.base/share/classes/sun/launcher/LauncherHelper.java",
+      "version": "jdk-25+36",
+      "supports": "Effective CPU Count and effective cpuset list are distinct output fields.",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/container-awareness-artifacts/jdk25-launcher-helper.java"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/openjdk/jdk/jdk-25%2B36/src/java.base/linux/classes/jdk/internal/platform/cgroupv2/CgroupV2Subsystem.java",
+      "version": "jdk-25+36",
+      "supports": "getEffectiveCpuCount delegates to Runtime.availableProcessors; effective processor list comes from cpuset.cpus.effective.",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/container-awareness-artifacts/jdk25-cgroup-v2.java"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/openjdk/jdk/jdk-25%2B36/src/hotspot/share/gc/shared/gc_globals.hpp",
+      "version": "jdk-25+36",
+      "supports": "Initial/Min/Max RAM defaults and ActiveProcessorCount=-1.",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/container-awareness-artifacts/jdk25-gc-globals.hpp"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/openjdk/jdk/jdk-26%2B35/src/hotspot/share/gc/shared/gc_globals.hpp",
+      "version": "jdk-26+35",
+      "supports": "InitialRAMPercentage default 0.",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/container-awareness-artifacts/jdk26-gc-globals.hpp"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/openjdk/jdk/jdk-26%2B35/src/hotspot/share/runtime/arguments.cpp",
+      "version": "jdk-26+35",
+      "supports": "Initial heap constraints and explicit-Xmx precedence; zero percentage is not unconditional equality with minimum heap.",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/container-awareness-artifacts/jdk26-arguments.cpp"
+    },
+    {
+      "url": "https://inside.java/2026/03/02/jdk-26-rn-ops/",
+      "version": "JDK 26 release explanation, 2026-03-02",
+      "supports": "Confirms deliberate InitialRAMPercentage default change.",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/container-awareness-artifacts/jdk26-ops.html"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/openjdk/jdk/jdk-19%2B36/src/hotspot/os/linux/globals_linux.hpp",
+      "version": "jdk-19+36",
+      "supports": "UseContainerCpuShares default false; corresponding pinned cgroup source branches on that flag.",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/container-awareness-artifacts/jdk19-linux-globals.hpp",
+      "companion": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/container-awareness-artifacts/jdk19-cgroup-subsystem.cpp"
+    },
+    {
+      "url": "https://www.oracle.com/java/technologies/javase/11-0-16-bugfixes.html",
+      "version": "11.0.16",
+      "supports": "Lists JDK-8230305 cgroups v2 backport.",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/container-awareness-artifacts/jdk11-0-16-fixes.html"
+    },
+    {
+      "url": "https://docs.kernel.org/admin-guide/cgroup-v2.html",
+      "version": "Rolling kernel documentation consulted 2026-10-16; actual deployed kernel still must be inspected",
+      "supports": "OOM event scope, memory.high, file/shmem accounting, CPU fields and hierarchy limits.",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/container-awareness-artifacts/kernel-cgroup-v2.html"
+    },
+    {
+      "url": "https://docs.kernel.org/scheduler/sched-bwc.html",
+      "version": "Rolling kernel documentation consulted 2026-10-16",
+      "supports": "CFS period/quota and statistic semantics, inherited throttling and per-CPU accounting.",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/container-awareness-artifacts/kernel-cfs-bandwidth.html"
+    },
+    {
+      "url": "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+      "version": "Rolling Kubernetes documentation consulted 2026-10-16; no production cluster version asserted",
+      "supports": "Requests/weights versus CPU limits and resource-unit distinctions.",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/container-awareness-artifacts/kubernetes-resources.html"
+    },
+    {
+      "url": "https://kubernetes.io/docs/concepts/storage/volumes/#emptydir",
+      "version": "Rolling Kubernetes documentation consulted 2026-10-16",
+      "supports": "Memory-backed emptyDir accounting and survival across container crashes.",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/container-awareness-artifacts/kubernetes-volumes.html"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/vm/native-memory-tracking.html",
+      "version": "Java SE 25",
+      "supports": "NMT startup enablement and jcmd cannot start/restart it.",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/container-awareness-artifacts/jdk25-nmt.html"
+    }
+  ],
+  "failures": [
+    "web.open for JDK-8281571 and Oracle JDK 19 release notes returned Internal Error. Relevant behavior checked using pinned OpenJDK 19/25 source instead; not diagnosed as broken package links.",
+    "First temporary case-writer attempt used unavailable structuredClone in functions.exec and failed before tool invocation. Retried using JSON round trip; no repository or artifact changes from that failed attempt."
+  ],
+  "limits": [
+    "No Linux/cgroup v1/v2 runtime experiment, Kubernetes workload, OOM induction, profiler attachment or load test was executed.",
+    "Available Windows Docker/WSL executables were inventoried only; presence does not establish a matching running environment.",
+    "Pinned source proves the inspected implementations, not behavior of every vendor/update or the user's deployment.",
+    "Rolling kernel/Kubernetes sources were used for reviewed semantics; the skill correctly requires actual platform/version evidence before operational conclusions.",
+    "No agent evaluation or comparative gain measured. Written cases are known development cases.",
+    "No global registry regeneration or verify run by reviewer."
+  ],
+  "twoCases": {
+    "inputs": [
+      {
+        "id": "same-cgroup",
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/container-awareness-artifacts/case-a-input.json"
+      },
+      {
+        "id": "different-cgroup",
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/container-awareness-artifacts/case-b-input.json"
+      }
+    ],
+    "criteriaPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/container-awareness-artifacts/evaluator-criteria.json",
+    "decisiveConstraint": "Numeric counters, task, quota and other artifacts are unchanged; only target cgroup identity of the second sample differs."
+  },
+  "crossSkill": {
+    "issues": [],
+    "actionsRequired": [
+      "Archive the handoff/evidence if desired; no neighboring edits required.",
+      "Coordinator runs global checks after all reviewers stop writing.",
+      "Optional independent case execution must keep evaluator-criteria.json outside actor context."
+    ]
+  },
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Shared generated index; deferred by parallel workflow."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Global validation after all reviewers have stopped writing."
+    }
+  ],
+  "artifactsDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/container-awareness-artifacts",
+  "evidencePaths": [
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/container-awareness-artifacts/local-evidence.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/container-awareness-artifacts/sources.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/container-awareness-artifacts/case-a-input.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/container-awareness-artifacts/case-b-input.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/container-awareness-artifacts/evaluator-criteria.json"
+  ],
+  "writesStoppedStatement": "No owned package write was performed. All authorized temporary evidence writes finish with this handoff; no process remains running. Reviewer remains read-only until reassigned."
+}

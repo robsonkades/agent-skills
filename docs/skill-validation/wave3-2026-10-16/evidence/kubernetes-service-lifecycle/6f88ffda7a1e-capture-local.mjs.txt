@@ -1,0 +1,59 @@
+import assert from "node:assert/strict";
+import { readFileSync, writeFileSync, mkdirSync, copyFileSync, readdirSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const repo = "C:/git/agent-skills";
+const owned = "skills/kubernetes-service-lifecycle";
+const evidence = path.join(root, "evidence");
+mkdirSync(evidence, { recursive: true });
+const commands = [];
+function run(label, executable, args) {
+  const result = spawnSync(executable, args, { cwd: repo, encoding: "utf8", windowsHide: true });
+  const stdoutFile = path.join(evidence, label + ".stdout.txt");
+  const stderrFile = path.join(evidence, label + ".stderr.txt");
+  writeFileSync(stdoutFile, result.stdout ?? "");
+  writeFileSync(stderrFile, result.stderr ?? "");
+  const record = { label, executable, args, workingDirectory: repo, status: result.status, signal: result.signal, error: result.error?.message ?? null, stdoutFile, stderrFile };
+  commands.push(record);
+  assert.equal(result.status, 0, JSON.stringify(record));
+  return result.stdout;
+}
+run("structural", process.execPath, ["--input-type=module", "--eval", readFileSync(path.join(root, "evaluator", "structural-source.txt"), "utf8")]);
+run("format", process.execPath, ["node_modules/prettier/bin/prettier.cjs", "--check", owned + "/SKILL.md", owned + "/skill.yaml", owned + "/references/probe-and-shutdown-configuration.md", owned + "/references/draining-non-http-work.md"]);
+run("model", process.execPath, [path.join(root, "evaluator", "budget-model.mjs")]);
+run("diff-check", "git", ["diff", "--check", "--", owned]);
+run("final-diff", "git", ["diff", "--", owned]);
+run("final-status", "git", ["status", "--short", "--", owned]);
+run("final-staged-diff", "git", ["diff", "--cached", "--", owned]);
+const files = ["SKILL.md", "skill.yaml", "references/draining-non-http-work.md", "references/probe-and-shutdown-configuration.md"];
+const finalHashes = [];
+for (const file of files) {
+  const source = path.join(repo, owned, file);
+  const final = path.join(evidence, "final", file);
+  const committed = path.join(evidence, "committed", file);
+  mkdirSync(path.dirname(final), { recursive: true });
+  mkdirSync(path.dirname(committed), { recursive: true });
+  copyFileSync(source, final);
+  const contents = run("committed-" + file.replaceAll("/", "_"), "git", ["show", "HEAD:" + owned + "/" + file]);
+  writeFileSync(committed, contents);
+  finalHashes.push({ file: owned + "/" + file, sha256: createHash("sha256").update(readFileSync(source)).digest("hex") });
+}
+writeFileSync(path.join(evidence, "commands.json"), JSON.stringify(commands, null, 2) + "\n");
+writeFileSync(path.join(evidence, "owned-final-hashes.json"), JSON.stringify(finalHashes, null, 2) + "\n");
+const artifactHashes = [];
+function walk(directory) {
+  for (const entry of readdirSync(directory, { withFileTypes: true })) {
+    const file = path.join(directory, entry.name);
+    if (entry.isDirectory()) walk(file);
+    else if (file !== path.join(evidence, "artifact-hashes.json")) artifactHashes.push({
+      path: path.relative(root, file).replaceAll("\\", "/"),
+      sha256: createHash("sha256").update(readFileSync(file)).digest("hex")
+    });
+  }
+}
+walk(root);
+writeFileSync(path.join(evidence, "artifact-hashes.json"), JSON.stringify(artifactHashes, null, 2) + "\n");
+console.log(JSON.stringify({ executedCommands: commands.length, artifactsHashed: artifactHashes.length, finalHashes, evidenceDirectory: evidence, subprocessesRemaining: 0 }, null, 2));

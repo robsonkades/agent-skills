@@ -1,0 +1,125 @@
+import java.io.*;
+import java.net.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.*;
+import javax.tools.ToolProvider;
+
+public class EnumSerializationProbe {
+    private static int checks;
+
+    private static void check(boolean condition, String label) {
+        if (!condition) throw new AssertionError(label);
+        checks++;
+        System.out.println("PASS " + label);
+    }
+
+    private static URLClassLoader compile(Path root, String variant, String constants) throws Exception {
+        Path source = root.resolve("versions").resolve(variant).resolve("src/fixtures/Status.java");
+        Path output = root.resolve("versions").resolve(variant).resolve("classes");
+        Files.createDirectories(source.getParent());
+        Files.createDirectories(output);
+        String text = """
+            package fixtures;
+            public enum Status {
+                %s;
+                private static final long serialVersionUID = 99L;
+                public static int hookCalls;
+                private final String code;
+                private final Object notSerializable = new Object();
+                Status(String code) { this.code = code; }
+                public String code() { return code; }
+                public static Status byCode(String code) {
+                    for (Status value : values()) if (value.code.equals(code)) return value;
+                    throw new IllegalArgumentException("unknown code");
+                }
+                private Object writeReplace() { hookCalls++; return code; }
+                private Object readResolve() { hookCalls++; throw new AssertionError("unexpected readResolve"); }
+                private void writeObject(java.io.ObjectOutputStream out) { hookCalls++; throw new AssertionError("unexpected writeObject"); }
+                private void readObject(java.io.ObjectInputStream in) { hookCalls++; throw new AssertionError("unexpected readObject"); }
+            }
+            """.formatted(constants);
+        Files.writeString(source, text);
+        int status = ToolProvider.getSystemJavaCompiler().run(null, System.out, System.err,
+                "--release", "17", "-d", output.toString(), source.toString());
+        if (status != 0) throw new AssertionError("compile " + variant + " exited " + status);
+        return new URLClassLoader(new URL[]{output.toUri().toURL()}, null);
+    }
+
+    private static Object constant(Class<?> type, String name) throws Exception {
+        return type.getMethod("valueOf", String.class).invoke(null, name);
+    }
+
+    private static String code(Object value) throws Exception {
+        return (String) value.getClass().getMethod("code").invoke(value);
+    }
+
+    private static byte[] encode(Object value) throws Exception {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        try (ObjectOutputStream out = new ObjectOutputStream(bytes)) {
+            out.writeObject(value);
+        }
+        return bytes.toByteArray();
+    }
+
+    private static Object decode(byte[] bytes, ClassLoader loader) throws Exception {
+        try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bytes)) {
+            @Override protected Class<?> resolveClass(ObjectStreamClass descriptor)
+                    throws IOException, ClassNotFoundException {
+                if (descriptor.getName().equals("fixtures.Status"))
+                    return Class.forName(descriptor.getName(), false, loader);
+                return super.resolveClass(descriptor);
+            }
+        }) {
+            return in.readObject();
+        }
+    }
+
+    private static void failsForMissingName(byte[] bytes, ClassLoader loader, String label) throws Exception {
+        try {
+            decode(bytes, loader);
+            throw new AssertionError(label + ": unexpectedly decoded");
+        } catch (InvalidObjectException expected) {
+            check(expected.getCause() instanceof IllegalArgumentException, label);
+            System.out.println("EXPECTED " + expected.getClass().getSimpleName() + ": " + expected.getMessage());
+        }
+    }
+
+    private record EnumHolder(Object status) implements Serializable {}
+    private record CodeHolder(String code) implements Serializable {}
+
+    public static void main(String[] args) throws Exception {
+        Path root = Path.of(args[0]).toAbsolutePath().normalize();
+        Files.createDirectories(root);
+        try (URLClassLoader oldLoader = compile(root, "old", "APPROVED(\"A\"), REJECTED(\"R\")");
+             URLClassLoader renamedLoader = compile(root, "renamed", "ACCEPTED(\"A\"), REJECTED(\"R\")");
+             URLClassLoader reorderedLoader = compile(root, "reordered", "REJECTED(\"R\"), APPROVED(\"A\")")) {
+            Class<?> oldType = oldLoader.loadClass("fixtures.Status");
+            Class<?> renamedType = renamedLoader.loadClass("fixtures.Status");
+            Class<?> reorderedType = reorderedLoader.loadClass("fixtures.Status");
+            Object oldValue = constant(oldType, "APPROVED");
+            Object renamedValue = constant(renamedType, "ACCEPTED");
+            byte[] oldBytes = encode(oldValue);
+            Files.write(root.resolve("legacy-native.bin"), oldBytes);
+            Files.writeString(root.resolve("legacy-code.txt"), code(oldValue), StandardCharsets.UTF_8);
+            check(decode(oldBytes, oldLoader) == oldValue, "native round trip retains enum identity");
+            check(oldType.getField("hookCalls").getInt(null) == 0, "enum read/write/replace/resolve hooks ignored");
+            check(ObjectStreamClass.lookup(oldType).getSerialVersionUID() == 0L, "declared enum serialVersionUID ignored");
+            Object reordered = decode(oldBytes, reorderedLoader);
+            check(((Enum<?>) reordered).name().equals("APPROVED"), "reordering preserves native name identity");
+            check(((Enum<?>) reordered).ordinal() != ((Enum<?>) oldValue).ordinal(), "reordered positive control changes ordinal");
+            failsForMissingName(oldBytes, renamedLoader, "same-code rename breaks old native bytes");
+            failsForMissingName(encode(renamedValue), oldLoader, "new native name breaks rollback reader");
+            check(renamedType.getField("hookCalls").getInt(null) == 0, "rename hooks cannot bridge native names");
+            String oldCode = Files.readString(root.resolve("legacy-code.txt"), StandardCharsets.UTF_8);
+            Object mappedNew = renamedType.getMethod("byCode", String.class).invoke(null, oldCode);
+            check(mappedNew == renamedValue, "explicit retained code reads after source rename");
+            Object mappedOld = oldType.getMethod("byCode", String.class).invoke(null, code(mappedNew));
+            check(mappedOld == oldValue, "explicit retained code supports rollback reader");
+            failsForMissingName(encode(new EnumHolder(oldValue)), renamedLoader, "wrapping enum does not change nested identity");
+            CodeHolder holder = (CodeHolder) decode(encode(new CodeHolder(oldCode)), renamedLoader);
+            check(holder.code().equals("A"), "DTO storing actual code preserves representation");
+        }
+        System.out.println("RESULT checks=" + checks + " runtime=" + Runtime.version()
+                + " compilerRelease=17; runtime17NotExercised=true");
+    }
+}

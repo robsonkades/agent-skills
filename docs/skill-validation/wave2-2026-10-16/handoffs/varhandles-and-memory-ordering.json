@@ -1,0 +1,451 @@
+{
+  "status": "NO_CHANGES_NEEDED",
+  "skill": "varhandles-and-memory-ordering",
+  "ownedPath": "skills/varhandles-and-memory-ordering/**",
+  "reviewer": "/root/quality01",
+  "date": "2026-10-16",
+  "allWritesStopped": true,
+  "processState": "Compiler, three runtime probes and local checks have all returned. No background writer was started. One slow read-only web follow-up was terminated; subsequent targeted official-source retrieval and local source inspection completed. Writes end with this handoff.",
+  "versions": {
+    "committed": "1.2.4",
+    "assignment": "1.2.4",
+    "final": "1.2.4",
+    "preExistingBump": false,
+    "rationale": "No package content changed, so no version bump."
+  },
+  "baseline": {
+    "status": "",
+    "staged": "",
+    "unstaged": "",
+    "untracked": [],
+    "allFourFilesMatchWaveTwoBaseline": true,
+    "files": [
+      {
+        "path": "skills/varhandles-and-memory-ordering/references/access-mode-selection.md",
+        "sha256": "e14f6bfd821f4e0ca6621e5add27170b471ae71bd26e28273ab7106a8baa4d33"
+      },
+      {
+        "path": "skills/varhandles-and-memory-ordering/references/proving-ordering.md",
+        "sha256": "40f04661808eea6f350fe7aecc6614e48cc957ca406e3224c59930633b464171"
+      },
+      {
+        "path": "skills/varhandles-and-memory-ordering/SKILL.md",
+        "sha256": "314dd2c5ca2e1c57ac796b8cbab9fc3c84f5a17e4fadcc21c7704ccc8ec7a3bd"
+      },
+      {
+        "path": "skills/varhandles-and-memory-ordering/skill.yaml",
+        "sha256": "accd4b4165e2823fcb58fd766abdf988111307352567b247adb93b0b58918715"
+      }
+    ]
+  },
+  "files": {
+    "changedByReviewer": [],
+    "preExistingChanges": [],
+    "unchanged": [
+      {
+        "path": "skills/varhandles-and-memory-ordering/references/access-mode-selection.md",
+        "assignmentSha256": "e14f6bfd821f4e0ca6621e5add27170b471ae71bd26e28273ab7106a8baa4d33",
+        "sha256": "e14f6bfd821f4e0ca6621e5add27170b471ae71bd26e28273ab7106a8baa4d33",
+        "unchanged": true
+      },
+      {
+        "path": "skills/varhandles-and-memory-ordering/references/proving-ordering.md",
+        "assignmentSha256": "40f04661808eea6f350fe7aecc6614e48cc957ca406e3224c59930633b464171",
+        "sha256": "40f04661808eea6f350fe7aecc6614e48cc957ca406e3224c59930633b464171",
+        "unchanged": true
+      },
+      {
+        "path": "skills/varhandles-and-memory-ordering/SKILL.md",
+        "assignmentSha256": "314dd2c5ca2e1c57ac796b8cbab9fc3c84f5a17e4fadcc21c7704ccc8ec7a3bd",
+        "sha256": "314dd2c5ca2e1c57ac796b8cbab9fc3c84f5a17e4fadcc21c7704ccc8ec7a3bd",
+        "unchanged": true
+      },
+      {
+        "path": "skills/varhandles-and-memory-ordering/skill.yaml",
+        "assignmentSha256": "accd4b4165e2823fcb58fd766abdf988111307352567b247adb93b0b58918715",
+        "sha256": "accd4b4165e2823fcb58fd766abdf988111307352567b247adb93b0b58918715",
+        "unchanged": true
+      }
+    ]
+  },
+  "changes": [],
+  "assessment": {
+    "result": "No supported material gap found in the reviewed scope. The existing instructions already make the discriminating decisions and reject the unsafe shortcuts tested here; adding the same safeguards again would duplicate guidance.",
+    "criteria": [
+      "Choose a sufficient access mode for actual publication/ordering/progress requirements and preserve adequate stronger/higher-level alternatives.",
+      "Separate success/failure ordering, spurious failure, witness comparison and retry side effects.",
+      "Obtain real handle descriptors, lookup authority and coordinate-specific access constraints instead of inferring them from a declaration or support bit.",
+      "Distinguish Java compiler compatibility, runtime/factory changes, architecture observations and API/JMM guarantees.",
+      "Keep negative controls and source proofs separate from finite stress runs and measured performance."
+    ],
+    "findings": [
+      {
+        "location": "SKILL.md:62-84,117-144",
+        "finding": "Mode lattice, declaration override, asymmetric acquire/release updates and unsuccessful release-only witness ordering are already explicit.",
+        "evidence": "Java 25 VarHandle class and method contracts match these statements.",
+        "consequence": "No justified ordering correction or extra generic checklist."
+      },
+      {
+        "location": "SKILL.md:86-115",
+        "finding": "Publication example is explicitly partial, one-shot, safely shared, single-writer and non-reusable; plain guard is not presented as multiwriter exclusion.",
+        "evidence": "Source review of publication paths and API ordering contract.",
+        "consequence": "No reuse/lifecycle guarantee is inferred from the one-shot example."
+      },
+      {
+        "location": "references/access-mode-selection.md:42-86,126-152",
+        "finding": "Actual descriptors, exact/default adaptation, reflective placeholders, capability access and raw floating-point witness comparisons already have concrete constraints and checks.",
+        "evidence": "Java 25 VarHandle and Lookup API inspection.",
+        "consequence": "No invocation-adapter or witness-classification change justified."
+      },
+      {
+        "location": "references/access-mode-selection.md:88-106",
+        "finding": "JDK 23+ byte[]/heap-buffer restrictions, runtime-versus-release distinction and support-versus-coordinate checks are already correct and actionable.",
+        "evidence": "Official JDK 23 release note, Java 25 factory/source contract and executed JDK 25 matrix/controls.",
+        "consequence": "The skill already rejects the support-only preflight and plain fallback exposed by the negative control."
+      },
+      {
+        "location": "references/proving-ordering.md:3-59,99-117",
+        "finding": "Allowed outcomes, negative-control reclassification, accidental harness synchronization and finite-run limits are already covered.",
+        "evidence": "Review of the one-shot litmus and store-buffering reasoning against the stated VarHandle ordering contract.",
+        "consequence": "No claim that lack of observed bad outcomes proves safety; no new stress campaign required for this API-focused check."
+      }
+    ],
+    "remainingFindings": [],
+    "reviewedPromise": "API/protocol design and review for low-level VarHandle use, with conditional generated-code/performance validation; not a blanket lock-free implementation or universal memory-model proof."
+  },
+  "preserved": [
+    "All four original package files, metadata, references, examples and Java 17+/FFM 22+ compatibility distinction.",
+    "Higher-level/adequate-mode alternatives and no-change path for focused API reviews.",
+    "One-shot publication versus reused state/snapshot obligations, mixed access paths and sole-writer limits.",
+    "CAS success/failure ordering, spurious weak failure, witness/raw-bit comparison, retry/side-effect/progress caveats and lock-free handoff.",
+    "Dynamic/exact invocation, protected receiver narrowing, lookup capability boundaries and supported-mode/coordinate distinctions.",
+    "Factory-specific plain atomicity, JDK 23 byte-view changes, alignment, bounds, read-only and lifetime constraints.",
+    "Proof/outcome discipline, jcstress controls, codegen context, measurement denominator/topology and no finite-run proof claim.",
+    "Existing dependency on java-memory-model and optional lock-free-patterns referral."
+  ],
+  "replacedOrRemoved": [],
+  "toolchain": {
+    "compiler": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+    "compilerRelease": "17",
+    "runtime": "Temurin 25.0.3+9-LTS",
+    "runtimeExecutable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+    "vm": "OpenJDK 64-Bit Server VM",
+    "architecture": "amd64",
+    "preview": false,
+    "dependencies": "JDK only; no download/install/upgrade.",
+    "distinction": "--release 17 establishes source/API/bytecode target for this probe, not execution on a Java 17 runtime."
+  },
+  "checks": [
+    {
+      "name": "compile-factory-contract-probe",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/varhandles-and-memory-ordering-check",
+      "command": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' --release 17 -d classes ViewAccessProbe.java\nexit $LASTEXITCODE",
+      "expectedExit": 0,
+      "result": {
+        "chunk_id": "1ac6fe",
+        "wall_time_seconds": 0.4288473,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      }
+    },
+    {
+      "name": "factory-contract-matrix",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/varhandles-and-memory-ordering-check",
+      "command": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -cp classes ViewAccessProbe\nexit $LASTEXITCODE",
+      "expectedExit": 0,
+      "result": {
+        "chunk_id": "e9f6ac",
+        "wall_time_seconds": 0.1570596,
+        "exit_code": 0,
+        "original_token_count": 128,
+        "output": "Java=25.0.3+9-LTS VM=OpenJDK 64-Bit Server VM arch=amd64\r\nGET_ACQUIRE type=(ByteBuffer,int)int\r\nbuffer GET_ACQUIRE supported=true\r\nPASS: byte-array acquire -> UnsupportedOperationException\r\nPASS: heap-buffer acquire at offset 0 -> IllegalStateException\r\nPASS: aligned direct setRelease/getAcquire = 42\r\nPASS: direct acquire at byte offset 1 -> IllegalStateException\r\nPASS: read-only direct release -> ReadOnlyBufferException\r\nPASS: every observed support/coordinate result matches the JDK 25 factory contract\r\n"
+      }
+    },
+    {
+      "name": "support-only-preflight-direct-positive-control",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/varhandles-and-memory-ordering-check",
+      "command": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -cp classes ViewAccessProbe claim-direct\nexit $LASTEXITCODE",
+      "expectedExit": 0,
+      "result": {
+        "chunk_id": "ac732f",
+        "wall_time_seconds": 0.1356149,
+        "exit_code": 0,
+        "original_token_count": 51,
+        "output": "Java=25.0.3+9-LTS VM=OpenJDK 64-Bit Server VM arch=amd64\r\nGET_ACQUIRE type=(ByteBuffer,int)int\r\nbuffer GET_ACQUIRE supported=true\r\ncandidate direct=true byteOffset=0\r\nPASS: requested coordinate accepted\r\n"
+      }
+    },
+    {
+      "name": "support-only-preflight-heap-negative-control",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/varhandles-and-memory-ordering-check",
+      "command": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -cp classes ViewAccessProbe claim-heap\nexit $LASTEXITCODE",
+      "expectedExit": 1,
+      "result": {
+        "chunk_id": "757ec9",
+        "wall_time_seconds": 0.1271103,
+        "exit_code": 1,
+        "original_token_count": 143,
+        "output": "Java=25.0.3+9-LTS VM=OpenJDK 64-Bit Server VM arch=amd64\r\nGET_ACQUIRE type=(ByteBuffer,int)int\r\nbuffer GET_ACQUIRE supported=true\r\ncandidate direct=false byteOffset=0\r\nException in thread \"main\" java.lang.IllegalStateException: Atomic access not supported for heap buffer\r\n\tat java.base/java.lang.invoke.VarHandleByteArrayAsInts$ByteBufferHandle.checkNullHeapBase(VarHandleByteArrayAsInts.java:189)\r\n\tat java.base/java.lang.invoke.VarHandleByteArrayAsInts$ByteBufferHandle.getAcquire(VarHandleByteArrayAsInts.java:241)\r\n\tat ViewAccessProbe.main(ViewAccessProbe.java:31)\r\n"
+      }
+    },
+    {
+      "name": "strict-package-validation",
+      "cwd": "C:/git/agent-skills",
+      "command": "node packages/cli/bin/agent-skills.mjs --no-update-check validate skills/varhandles-and-memory-ordering --strict --json",
+      "expectedExit": 0,
+      "result": {
+        "chunk_id": "432604",
+        "wall_time_seconds": 0.2843373,
+        "exit_code": 0,
+        "original_token_count": 45,
+        "output": "{\n  \"ok\": true,\n  \"directory\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\varhandles-and-memory-ordering\",\n  \"name\": \"varhandles-and-memory-ordering\",\n  \"version\": \"1.2.4\",\n  \"issues\": []\n}\n"
+      }
+    },
+    {
+      "name": "owned-format-check",
+      "cwd": "C:/git/agent-skills",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/varhandles-and-memory-ordering/SKILL.md skills/varhandles-and-memory-ordering/skill.yaml skills/varhandles-and-memory-ordering/references/access-mode-selection.md skills/varhandles-and-memory-ordering/references/proving-ordering.md",
+      "expectedExit": 0,
+      "result": {
+        "chunk_id": "dbe5d5",
+        "wall_time_seconds": 0.3024746,
+        "exit_code": 0,
+        "original_token_count": 17,
+        "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+      }
+    },
+    {
+      "name": "owned-diff-check",
+      "cwd": "C:/git/agent-skills",
+      "command": "git diff --check -- skills/varhandles-and-memory-ordering",
+      "expectedExit": 0,
+      "result": {
+        "chunk_id": "6930a1",
+        "wall_time_seconds": 0.1163199,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      }
+    },
+    {
+      "name": "owned-metadata-links-baseline-and-artifact-audit",
+      "cwd": "C:/git/agent-skills",
+      "command": "@'\nimport {readFileSync,readdirSync,statSync,existsSync} from 'node:fs';\nimport {resolve,dirname} from 'node:path';\nimport {execFileSync} from 'node:child_process';\nimport {createHash} from 'node:crypto';\nimport {parse} from 'yaml';\nconst root='skills/varhandles-and-memory-ordering';\nconst artifacts='C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/varhandles-and-memory-ordering-check';\nconst walk=p=>readdirSync(p).flatMap(n=>{const path=p+'/'+n;return statSync(path).isDirectory()?walk(path):[path]});\nconst sha=p=>createHash('sha256').update(readFileSync(p)).digest('hex');\nconst manifest=parse(readFileSync(root+'/skill.yaml','utf8'));\nconst front=parse(readFileSync(root+'/SKILL.md','utf8').split('---')[1]);\nconst baseline=JSON.parse(readFileSync('docs/skill-validation/wave2-2026-10-16/baseline.json','utf8'));\nconst issues=[];\nconst files=walk(root).map(path=>({path,assignmentSha256:baseline.allFiles[path],sha256:sha(path),unchanged:baseline.allFiles[path]===sha(path)}));\nconst links=[];\nfor(const {path:file} of files.filter(f=>f.path.endsWith('.md'))){\n  for(const match of readFileSync(file,'utf8').matchAll(/\\[[^\\]]*\\]\\((?:<([^>]+)>|([^\\s)]+))\\)/g)){\n    const href=match[1]??match[2];\n    if(/^(?:https?:|mailto:|#)/.test(href)) continue;\n    links.push({file,href,exists:existsSync(resolve(dirname(file),decodeURIComponent(href.split('#')[0])))});\n  }\n}\nconst status=execFileSync('git',['status','--short','--',root],{encoding:'utf8'});\nconst staged=execFileSync('git',['diff','--cached','--',root],{encoding:'utf8'});\nconst unstaged=execFileSync('git',['diff','--',root],{encoding:'utf8'});\nconst descriptionsMatch=front.description.trim()===manifest.description.trim();\nif(front.name!==manifest.name||!descriptionsMatch||manifest.version!=='1.2.4') issues.push('metadata mismatch');\nif(files.some(f=>!f.unchanged)||status||staged||unstaged)issues.push('unexpected package change');\nif(links.some(l=>!l.exists))issues.push('missing local link');\nconst peers=[...(manifest.dependencies??[]).map(d=>d.name),...(manifest.suggests??[])].map(name=>({name,exists:existsSync('skills/'+name+'/SKILL.md')}));\nif(peers.some(p=>!p.exists))issues.push('missing declared peer');\nconsole.log(JSON.stringify({version:manifest.version,descriptionsMatch,status,staged,unstaged,files,localLinks:links,declaredPeers:peers,artifacts:walk(artifacts).map(path=>({path,sha256:sha(path)})),issues},null,2));\nif(issues.length)process.exitCode=1;\n'@ | node --input-type=module",
+      "expectedExit": 0,
+      "result": {
+        "chunk_id": "0c0e25",
+        "wall_time_seconds": 0.2082591,
+        "exit_code": 0,
+        "original_token_count": 573,
+        "output": "{\n  \"version\": \"1.2.4\",\n  \"descriptionsMatch\": true,\n  \"status\": \"\",\n  \"staged\": \"\",\n  \"unstaged\": \"\",\n  \"files\": [\n    {\n      \"path\": \"skills/varhandles-and-memory-ordering/references/access-mode-selection.md\",\n      \"assignmentSha256\": \"e14f6bfd821f4e0ca6621e5add27170b471ae71bd26e28273ab7106a8baa4d33\",\n      \"sha256\": \"e14f6bfd821f4e0ca6621e5add27170b471ae71bd26e28273ab7106a8baa4d33\",\n      \"unchanged\": true\n    },\n    {\n      \"path\": \"skills/varhandles-and-memory-ordering/references/proving-ordering.md\",\n      \"assignmentSha256\": \"40f04661808eea6f350fe7aecc6614e48cc957ca406e3224c59930633b464171\",\n      \"sha256\": \"40f04661808eea6f350fe7aecc6614e48cc957ca406e3224c59930633b464171\",\n      \"unchanged\": true\n    },\n    {\n      \"path\": \"skills/varhandles-and-memory-ordering/SKILL.md\",\n      \"assignmentSha256\": \"314dd2c5ca2e1c57ac796b8cbab9fc3c84f5a17e4fadcc21c7704ccc8ec7a3bd\",\n      \"sha256\": \"314dd2c5ca2e1c57ac796b8cbab9fc3c84f5a17e4fadcc21c7704ccc8ec7a3bd\",\n      \"unchanged\": true\n    },\n    {\n      \"path\": \"skills/varhandles-and-memory-ordering/skill.yaml\",\n      \"assignmentSha256\": \"accd4b4165e2823fcb58fd766abdf988111307352567b247adb93b0b58918715\",\n      \"sha256\": \"accd4b4165e2823fcb58fd766abdf988111307352567b247adb93b0b58918715\",\n      \"unchanged\": true\n    }\n  ],\n  \"localLinks\": [\n    {\n      \"file\": \"skills/varhandles-and-memory-ordering/SKILL.md\",\n      \"href\": \"references/access-mode-selection.md\",\n      \"exists\": true\n    },\n    {\n      \"file\": \"skills/varhandles-and-memory-ordering/SKILL.md\",\n      \"href\": \"references/proving-ordering.md\",\n      \"exists\": true\n    }\n  ],\n  \"declaredPeers\": [\n    {\n      \"name\": \"java-memory-model\",\n      \"exists\": true\n    },\n    {\n      \"name\": \"lock-free-patterns\",\n      \"exists\": true\n    }\n  ],\n  \"artifacts\": [\n    {\n      \"path\": \"C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/varhandles-and-memory-ordering-check/classes/ViewAccessProbe.class\",\n      \"sha256\": \"67c58e000ccc359a2459bdb6c56cf06e904db116f5afcd54aae67bcdb869e8d7\"\n    },\n    {\n      \"path\": \"C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/varhandles-and-memory-ordering-check/ViewAccessProbe.java\",\n      \"sha256\": \"0571b6c243c9247f9b76da5b92e2a5c52b08d1e5b453d52d09e7df172030c652\"\n    }\n  ],\n  \"issues\": []\n}\n"
+      }
+    }
+  ],
+  "technicalValidation": {
+    "classification": "Isolated executable JDK API/factory probe; no shipped snippet changed.",
+    "boundary": "Same actual byte-buffer view VarHandle under real JDK 25, varied byte[]/heap/direct/alignment/read-only coordinates. Sequential checks establish observed invocation eligibility and results, not inter-thread ordering proof.",
+    "observations": [
+      "byte[] plain set/get succeeds; GET_ACQUIRE support is false and invocation throws UnsupportedOperationException.",
+      "buffer GET_ACQUIRE access-mode type is (ByteBuffer,int)int and handle reports support=true.",
+      "Heap-buffer plain set/get succeeds, but acquire at offset 0 throws IllegalStateException.",
+      "Aligned direct release/acquire returns 42; direct acquire at byte offset 1 throws IllegalStateException.",
+      "Read-only aligned direct acquire succeeds; release write throws ReadOnlyBufferException and original value remains 42."
+    ],
+    "negativeControl": {
+      "purpose": "Challenge the proposition that a true handle-level support bit suffices for every actual coordinate.",
+      "mutation": "Keep the same compiled class, handle, mode and offset 0; switch argument claim-direct to claim-heap, which changes allocation from aligned direct to heap.",
+      "before": {
+        "argument": "claim-direct",
+        "exitCode": 0,
+        "output": "Java=25.0.3+9-LTS VM=OpenJDK 64-Bit Server VM arch=amd64\r\nGET_ACQUIRE type=(ByteBuffer,int)int\r\nbuffer GET_ACQUIRE supported=true\r\ncandidate direct=true byteOffset=0\r\nPASS: requested coordinate accepted\r\n"
+      },
+      "after": {
+        "argument": "claim-heap",
+        "expectedExitCode": 1,
+        "actualExitCode": 1,
+        "output": "Java=25.0.3+9-LTS VM=OpenJDK 64-Bit Server VM arch=amd64\r\nGET_ACQUIRE type=(ByteBuffer,int)int\r\nbuffer GET_ACQUIRE supported=true\r\ncandidate direct=false byteOffset=0\r\nException in thread \"main\" java.lang.IllegalStateException: Atomic access not supported for heap buffer\r\n\tat java.base/java.lang.invoke.VarHandleByteArrayAsInts$ByteBufferHandle.checkNullHeapBase(VarHandleByteArrayAsInts.java:189)\r\n\tat java.base/java.lang.invoke.VarHandleByteArrayAsInts$ByteBufferHandle.getAcquire(VarHandleByteArrayAsInts.java:241)\r\n\tat ViewAccessProbe.main(ViewAccessProbe.java:31)\r\n"
+      },
+      "conclusion": "Existing guidance anticipates the deterministic failing coordinate. This is technical evidence supporting no-change, not a new verifier improvement or measured skill benefit."
+    }
+  },
+  "behavioralEvaluation": {
+    "executedAgentRuns": 0,
+    "measuredGain": "UNKNOWN",
+    "independentComparison": "NOT_EXECUTED",
+    "structuredWalkthroughs": [
+      {
+        "id": "heap-carrier-on-java25",
+        "expectedDecision": [
+          "Inspect and run the actual byte-buffer factory/storage path on Java 25; recognize that handle-level mode support does not establish eligibility of this heap coordinate.",
+          "Preserve the release/acquire publication contract using an appropriate supported carrier such as a typed field/array, Atomic* or a justified aligned direct representation. Keep failure reporting honest and do not silently use plain modes.",
+          "Verify the chosen storage/mode path and retain the one-shot/writer assumptions in the source-level ordering argument; a sequential smoke run is not proof of all concurrent executions.",
+          "Preserve target release 17 and runtime 25; do not propose final FFM APIs requiring a newer compiler target merely to fix the private carrier."
+        ]
+      },
+      {
+        "id": "aligned-direct-carrier-on-java25",
+        "expectedDecision": [
+          "Inspect the actual aligned direct storage, in-bounds byte offset 0, int carrier and read/write access rights. Recognize that the heap restriction does not apply to this coordinate.",
+          "Retain the adequate existing modes/storage for this focused compatibility task unless independent evidence justifies a change; no mandatory rewrite or performance campaign.",
+          "Check actual operations on the runtime and explain the one-shot release/acquire ordering argument separately from that finite execution.",
+          "Preserve the compiler/runtime baseline and avoid a plain-mode fallback or an unsupported generalization to all buffers/offsets."
+        ]
+      }
+    ],
+    "limits": "The two cases are development cases, not independent runs or unseen holdouts. ReadyFlag source fragments are supplied for coordinator materialization and were not compiled/executed as agent fixtures; the separately retained ViewAccessProbe is the executed technical evidence."
+  },
+  "cases": [
+    {
+      "id": "heap-carrier-on-java25",
+      "actorInput": {
+        "request": "Review this readiness carrier for the supported deployment and correct it only if needed. Preserve its one-shot publication contract, current public methods and target versions. Obtain evidence from the build/runtime and actual storage access; distinguish API compatibility checks from the concurrency argument. Keep the change and verification proportionate.",
+        "context": {
+          "compilerRelease": 17,
+          "runtime": "Temurin 25.0.3",
+          "architecture": "amd64",
+          "deployment": "The compiler target stayed 17 when the deployment moved to Java 25. No runtime, compiler, dependency or preview upgrade is authorized.",
+          "protocol": "Holder safely shared; one designated publisher initializes an immutable payload and then calls publish exactly once. A reader consumes the payload only after observed returns true. No reset/reuse or concurrent publishers. There is no other publication synchronization.",
+          "api": "Only publish()/observed() are exposed. The raw storage representation is private; no serialized/off-heap layout or external buffer ABI is required. No performance regression or optimization target is claimed."
+        },
+        "files": {
+          "ReadyFlag.java": "import java.lang.invoke.MethodHandles;\nimport java.lang.invoke.VarHandle;\nimport java.nio.ByteBuffer;\nimport java.nio.ByteOrder;\n\npublic final class ReadyFlag {\n    private static final VarHandle VIEW =\n            MethodHandles.byteBufferViewVarHandle(int[].class, ByteOrder.LITTLE_ENDIAN);\n    private final ByteBuffer storage = ByteBuffer.allocate(32);\n\n    public ReadyFlag() {\n        if (!VIEW.isAccessModeSupported(VarHandle.AccessMode.SET_RELEASE)\n                || !VIEW.isAccessModeSupported(VarHandle.AccessMode.GET_ACQUIRE)) {\n            throw new UnsupportedOperationException(\"Required readiness access mode unavailable\");\n        }\n    }\n\n    public void publish() {\n        VIEW.setRelease(storage, 0, 1);\n    }\n\n    public boolean observed() {\n        return (int) VIEW.getAcquire(storage, 0) == 1;\n    }\n\n    public static void main(String[] args) {\n        ReadyFlag flag = new ReadyFlag();\n        flag.publish();\n        System.out.println(flag.observed());\n    }\n}\n"
+        },
+        "prerequisites": "Isolated temporary project, stated JDK 25 runtime, javac --release 17. No third-party dependencies. Provide only actorInput, not evaluatorCriteria or the technical probe's assertion matrix."
+      },
+      "evaluatorCriteria": {
+        "expectedBehavior": [
+          "Inspect and run the actual byte-buffer factory/storage path on Java 25; recognize that handle-level mode support does not establish eligibility of this heap coordinate.",
+          "Preserve the release/acquire publication contract using an appropriate supported carrier such as a typed field/array, Atomic* or a justified aligned direct representation. Keep failure reporting honest and do not silently use plain modes.",
+          "Verify the chosen storage/mode path and retain the one-shot/writer assumptions in the source-level ordering argument; a sequential smoke run is not proof of all concurrent executions.",
+          "Preserve target release 17 and runtime 25; do not propose final FFM APIs requiring a newer compiler target merely to fix the private carrier."
+        ],
+        "failureConditions": [
+          "Declare the current implementation valid solely because isAccessModeSupported returns true or --release 17 compilation succeeds.",
+          "Catch the access failure and fall back to plain get/set while claiming unchanged publication guarantees.",
+          "Treat changing numeric offset or enabling preview/upgrading dependencies as a demonstrated repair without the relevant factory contract.",
+          "Claim a passing one-thread run proves the concurrent publication contract or measured performance gain."
+        ],
+        "decisiveConstraint": "Storage is heap-backed on the actual Java 25 runtime.",
+        "technicalEvidence": "The retained support-only probe using heap storage fails with expected exit 1 despite GET_ACQUIRE supported=true. The matrix also confirms plain heap access remains usable; stronger publication cannot be recovered by silently selecting it.",
+        "executionStatus": "Development case and structured walkthrough only; ReadyFlag actor fixture and agent behavior not executed. A separate real-runtime factory probe was executed."
+      }
+    },
+    {
+      "id": "aligned-direct-carrier-on-java25",
+      "actorInput": {
+        "request": "Review this readiness carrier for the supported deployment and correct it only if needed. Preserve its one-shot publication contract, current public methods and target versions. Obtain evidence from the build/runtime and actual storage access; distinguish API compatibility checks from the concurrency argument. Keep the change and verification proportionate.",
+        "context": {
+          "compilerRelease": 17,
+          "runtime": "Temurin 25.0.3",
+          "architecture": "amd64",
+          "deployment": "The compiler target stayed 17 when the deployment moved to Java 25. No runtime, compiler, dependency or preview upgrade is authorized.",
+          "protocol": "Holder safely shared; one designated publisher initializes an immutable payload and then calls publish exactly once. A reader consumes the payload only after observed returns true. No reset/reuse or concurrent publishers. There is no other publication synchronization.",
+          "api": "Only publish()/observed() are exposed. The raw storage representation is private; no serialized/off-heap layout or external buffer ABI is required. No performance regression or optimization target is claimed."
+        },
+        "files": {
+          "ReadyFlag.java": "import java.lang.invoke.MethodHandles;\nimport java.lang.invoke.VarHandle;\nimport java.nio.ByteBuffer;\nimport java.nio.ByteOrder;\n\npublic final class ReadyFlag {\n    private static final VarHandle VIEW =\n            MethodHandles.byteBufferViewVarHandle(int[].class, ByteOrder.LITTLE_ENDIAN);\n    private final ByteBuffer storage = ByteBuffer.allocateDirect(32).alignedSlice(Integer.BYTES);\n\n    public ReadyFlag() {\n        if (!VIEW.isAccessModeSupported(VarHandle.AccessMode.SET_RELEASE)\n                || !VIEW.isAccessModeSupported(VarHandle.AccessMode.GET_ACQUIRE)) {\n            throw new UnsupportedOperationException(\"Required readiness access mode unavailable\");\n        }\n    }\n\n    public void publish() {\n        VIEW.setRelease(storage, 0, 1);\n    }\n\n    public boolean observed() {\n        return (int) VIEW.getAcquire(storage, 0) == 1;\n    }\n\n    public static void main(String[] args) {\n        ReadyFlag flag = new ReadyFlag();\n        flag.publish();\n        System.out.println(flag.observed());\n    }\n}\n"
+        },
+        "prerequisites": "Same isolated project/toolchain and task as case one. Only storage allocation changes; provide only actorInput."
+      },
+      "evaluatorCriteria": {
+        "expectedBehavior": [
+          "Inspect the actual aligned direct storage, in-bounds byte offset 0, int carrier and read/write access rights. Recognize that the heap restriction does not apply to this coordinate.",
+          "Retain the adequate existing modes/storage for this focused compatibility task unless independent evidence justifies a change; no mandatory rewrite or performance campaign.",
+          "Check actual operations on the runtime and explain the one-shot release/acquire ordering argument separately from that finite execution.",
+          "Preserve the compiler/runtime baseline and avoid a plain-mode fallback or an unsupported generalization to all buffers/offsets."
+        ],
+        "failureConditions": [
+          "Diagnose the heap-only restriction even though storage is direct and aligned.",
+          "Force a migration solely because byte-view handles changed in JDK 23, ignoring the factory's coordinate-specific support.",
+          "Infer that every coordinate/backing storage is supported from this direct-buffer success.",
+          "Claim a sequential run proves all concurrent executions."
+        ],
+        "decisiveConstraint": "The only material change from case one is aligned direct backing storage; compatibility recommendation should change from repairing the carrier to retaining it after verification.",
+        "technicalEvidence": "Retained aligned direct setRelease/getAcquire check returns 42 (matrix exit 0); support-only direct control exits 0. Offset 1 and read-only writes are separately rejected as documented.",
+        "executionStatus": "Development case and structured walkthrough only; ReadyFlag actor fixture and agent behavior not executed. A separate real-runtime factory probe was executed."
+      }
+    }
+  ],
+  "artifacts": {
+    "root": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/varhandles-and-memory-ordering-check",
+    "files": [
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/varhandles-and-memory-ordering-check/classes/ViewAccessProbe.class",
+        "sha256": "67c58e000ccc359a2459bdb6c56cf06e904db116f5afcd54aae67bcdb869e8d7"
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/varhandles-and-memory-ordering-check/ViewAccessProbe.java",
+        "sha256": "0571b6c243c9247f9b76da5b92e2a5c52b08d1e5b453d52d09e7df172030c652"
+      }
+    ],
+    "source": "import java.lang.invoke.MethodHandles;\nimport java.lang.invoke.VarHandle;\nimport java.nio.ByteBuffer;\nimport java.nio.ByteOrder;\nimport java.nio.ReadOnlyBufferException;\n\npublic class ViewAccessProbe {\n    private static final VarHandle ARRAY =\n            MethodHandles.byteArrayViewVarHandle(int[].class, ByteOrder.LITTLE_ENDIAN);\n    private static final VarHandle BUFFER =\n            MethodHandles.byteBufferViewVarHandle(int[].class, ByteOrder.LITTLE_ENDIAN);\n\n    public static void main(String[] args) {\n        System.out.println(\"Java=\" + Runtime.version()\n                + \" VM=\" + System.getProperty(\"java.vm.name\")\n                + \" arch=\" + System.getProperty(\"os.arch\"));\n        System.out.println(\"GET_ACQUIRE type=\" + BUFFER.accessModeType(VarHandle.AccessMode.GET_ACQUIRE));\n        System.out.println(\"buffer GET_ACQUIRE supported=\"\n                + BUFFER.isAccessModeSupported(VarHandle.AccessMode.GET_ACQUIRE));\n        if (args.length == 1) {\n            // Deliberately incomplete adapter: handle-level support is its only preflight.\n            ByteBuffer storage = switch (args[0]) {\n                case \"claim-direct\" -> ByteBuffer.allocateDirect(32).alignedSlice(Integer.BYTES);\n                case \"claim-heap\" -> ByteBuffer.allocate(32);\n                default -> throw new IllegalArgumentException(\"Unknown case: \" + args[0]);\n            };\n            if (!BUFFER.isAccessModeSupported(VarHandle.AccessMode.GET_ACQUIRE)) {\n                throw new UnsupportedOperationException(\"GET_ACQUIRE unsupported\");\n            }\n            System.out.println(\"candidate direct=\" + storage.isDirect() + \" byteOffset=0\");\n            int observed = (int) BUFFER.getAcquire(storage, 0);\n            require(observed == 0, \"fresh storage must read zero\");\n            System.out.println(\"PASS: requested coordinate accepted\");\n            return;\n        }\n\n        byte[] bytes = new byte[32];\n        ARRAY.set(bytes, 0, 41);\n        require((int) ARRAY.get(bytes, 0) == 41, \"byte-array plain access\");\n        require(!ARRAY.isAccessModeSupported(VarHandle.AccessMode.GET_ACQUIRE),\n                \"byte-array acquire is unsupported on this JDK 25 runtime\");\n        expect(UnsupportedOperationException.class, \"byte-array acquire\", () -> {\n            int ignored = (int) ARRAY.getAcquire(bytes, 0);\n        });\n\n        ByteBuffer heap = ByteBuffer.allocate(32);\n        BUFFER.set(heap, 0, 41);\n        require((int) BUFFER.get(heap, 0) == 41, \"heap-buffer plain access\");\n        require(BUFFER.isAccessModeSupported(VarHandle.AccessMode.GET_ACQUIRE),\n                \"buffer handle supports acquire for eligible coordinates\");\n        expect(IllegalStateException.class, \"heap-buffer acquire at offset 0\", () -> {\n            int ignored = (int) BUFFER.getAcquire(heap, 0);\n        });\n\n        ByteBuffer direct = ByteBuffer.allocateDirect(32).alignedSlice(Integer.BYTES);\n        require(direct.alignmentOffset(0, Integer.BYTES) == 0, \"aligned direct coordinate\");\n        BUFFER.setRelease(direct, 0, 42);\n        require((int) BUFFER.getAcquire(direct, 0) == 42, \"aligned direct release/acquire\");\n        System.out.println(\"PASS: aligned direct setRelease/getAcquire = 42\");\n        expect(IllegalStateException.class, \"direct acquire at byte offset 1\", () -> {\n            int ignored = (int) BUFFER.getAcquire(direct, 1);\n        });\n\n        ByteBuffer readOnly = direct.asReadOnlyBuffer();\n        require((int) BUFFER.getAcquire(readOnly, 0) == 42, \"read-only direct acquire\");\n        expect(ReadOnlyBufferException.class, \"read-only direct release\", () -> {\n            BUFFER.setRelease(readOnly, 0, 43);\n        });\n        require((int) BUFFER.getAcquire(direct, 0) == 42, \"rejected write preserved value\");\n        System.out.println(\"PASS: every observed support/coordinate result matches the JDK 25 factory contract\");\n    }\n\n    private static void require(boolean condition, String message) {\n        if (!condition) {\n            throw new AssertionError(message);\n        }\n    }\n\n    private static void expect(Class<? extends Throwable> expected, String label, Runnable action) {\n        try {\n            action.run();\n        } catch (Throwable observed) {\n            if (!expected.isInstance(observed)) {\n                throw new AssertionError(label + \": expected \" + expected.getName()\n                        + \", got \" + observed, observed);\n            }\n            System.out.println(\"PASS: \" + label + \" -> \" + observed.getClass().getSimpleName());\n            return;\n        }\n        throw new AssertionError(label + \": expected \" + expected.getName() + \", no exception\");\n    }\n}\n",
+    "reproduction": "Run recorded javac --release 17 command in artifact root, then the three recorded Java commands. Positive matrix and direct control expect exit 0; heap control expects exit 1. Preserve output and class/source hashes.",
+    "retention": "Retained isolated source/class and complete outputs in this JSON for coordinator archival; no review-only artifacts shipped."
+  },
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/invoke/VarHandle.html",
+      "version": "Java SE 25",
+      "type": "Official API",
+      "checked": "Atomicity/order hierarchy, mode overrides, exact/default descriptors, update asymmetry, lookup capability, reflective placeholder and supported-mode contracts."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/invoke/MethodHandles.html",
+      "version": "Java SE 25",
+      "type": "Official API",
+      "checked": "Byte-array and byte-buffer view factory restrictions and coordinate-specific access constraints."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/invoke/MethodHandles.Lookup.html",
+      "version": "Java SE 25",
+      "type": "Official API",
+      "checked": "Unsupported final-field writes and numeric/bitwise types, declaration override, raw float/double comparison caveats."
+    },
+    {
+      "url": "https://www.oracle.com/java/technologies/javase/23-relnote-issues.html#JDK-8318966",
+      "version": "JDK 23",
+      "type": "Official release note",
+      "checked": "Version where aligned heap-view access was removed; stronger access alternatives. Targeted read completed after an earlier slow follow-up was terminated."
+    },
+    {
+      "path": "C:/Users/robso/.jdks/temurin-25.0.3/lib/src.zip",
+      "entry": "java.base/java/lang/invoke/MethodHandles.java",
+      "version": "Installed Temurin 25.0.3",
+      "type": "Bundled primary JDK source",
+      "checked": "Read the complete byteBufferViewVarHandle Javadoc with a read-only ZIP stream; corroborated heap rejection, direct alignment, bounds/read-only rights and carrier-specific support."
+    }
+  ],
+  "assumptions": [
+    "No unreported project protocol is being declared safe; review concerns the catalog guidance and a scoped API demonstration.",
+    "The paired cases hold one-shot writer/ownership/visibility requirements fixed while changing backing storage.",
+    "A successful API operation or sequential result does not establish publication guarantees across every legal concurrent execution."
+  ],
+  "limits": [
+    "No independent agent evaluation, original/revised comparison, behavioral gain or catalog-wide quality percentage measured.",
+    "No jcstress, multi-thread litmus, stress scheduling, assembly/codegen or JMH performance campaign executed; no changed concurrent algorithm or performance claim required those runs.",
+    "Runtime probe executed only on Temurin 25.0.3 amd64. Java 17 runtime, AArch64, 32-bit, FFM segments and other vendor/JIT paths were not exercised.",
+    "Existing partial publication/jcstress snippets were source-reviewed, not expanded into executable tests.",
+    "Only local structural checks ran; global registry generation and repository verify remain the coordinator's responsibility.",
+    "One multi-page web follow-up did not complete and was terminated; narrower primary-source lookups and bundled JDK source supplied the necessary factory/version evidence."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Parallel-review global/shared-write restriction; no package change from this reviewer.",
+      "prerequisite": "All wave reviewers stopped writing."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Repository-wide validation is coordinator-only after wave completion.",
+      "prerequisite": "Index reconciliation/generation and all reviewers stopped writing."
+    }
+  ],
+  "crossSkill": [],
+  "coordinatorActions": [
+    "Archive the handoff and retained isolated artifacts.",
+    "No change/version action needed for this skill.",
+    "Run required wave-level checks after all reviewers stop writing; independently evaluate cases if behavioral evidence is desired."
+  ]
+}

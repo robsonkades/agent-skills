@@ -5,21 +5,26 @@ for different operations, and that is correct.
 
 ## The four shapes
 
-| Strategy                          | Caller needs the answer      | Coupling                 | Consistency          | Failure of callee                         |
+| Strategy                          | Caller completion dependency | Coupling                 | Consistency          | Failure of callee                         |
 | --------------------------------- | ---------------------------- | ------------------------ | -------------------- | ----------------------------------------- |
-| Synchronous request/response      | usually now                  | temporal + contract      | API/store contract   | caller fails or degrades                  |
+| Synchronous request/response      | decision/effect usually now  | temporal + contract      | API/store contract   | caller fails or degrades                  |
 | Asynchronous command              | completion may be later      | contract + broker        | application contract | backlog grows within capacity/retention   |
 | Event notification                | no immediate consumer result | contract + broker        | application contract | consumer lags; publication can still fail |
 | Event-carried state / replication | reads locally                | schema + update pipeline | lag-dependent        | stale data; enforce freshness policy      |
 
-The decision is mostly one question: **does the caller need the answer to complete its own
-work?** If not, consider asynchronous completion against its operational cost. Synchronous
-transport by itself guarantees neither freshness nor atomicity.
+Ask **what decision or completed effect must the caller observe before its next action?**
+Follow representative call sites through the selected adapter/handler and its persistence or
+acknowledgement path; use the contract and relevant tests to establish what normal return
+currently means. Neither a `void` return nor an ignored response proves independence from
+the effect. If this path or contract is unavailable, keep the choice conditional and identify
+the missing evidence. Synchronous transport alone guarantees neither freshness nor atomicity.
 
 ## Synchronous request/response
 
-Correct when the answer changes what the caller does next: an authorisation decision, a
-price quote, a validity check.
+Appropriate when a decision or confirmed effect is required before the caller proceeds:
+an authorisation decision, price quote, or reservation before charging. A nonblocking client
+or message transport can still wait for completion; freeing a thread does not remove that
+business dependency.
 
 For the project's actual runtime and client version, configure and verify pool-acquisition,
 connect and response limits against the remaining end-to-end deadline. Include DNS/TLS
@@ -35,14 +40,25 @@ between fewer hops and improving a link.
 
 ## Asynchronous command
 
-The caller wants something done, not answered. Latency is decoupled and the callee's
-downtime can become queue depth after durable acceptance. Broker outages, full queues,
-expired retention and missed completion deadlines still affect the business operation.
+The caller requests work whose completion may occur later. To decouple its progress from
+immediate consumer availability, the business contract must permit that intermediate state.
+After durable acceptance, callee downtime can become queue depth. Broker outages, full
+queues, expired retention and missed completion deadlines still affect the operation.
 
-The cost is the intermediate state: the caller must return before the work completes, so
-the API returns "accepted", and the caller's user interface must represent in-progress
-work. Teams frequently pay the messaging cost and then hide the intermediate state behind a
-synchronous poll, which reintroduces the coupling.
+Distinguish recording a recoverable intent, broker acceptance, consumer commit and the
+business effect the caller needs. Inspect which stage an acknowledgement actually confirms.
+HTTP `202 Accepted` does not confirm completed work or guarantee eventual execution; the
+status code alone is not evidence of durable acceptance. Define how the caller observes
+pending, successful or failed work and who owns recovery. Later status polling can expose
+progress; polling to completion within the original request retains its completion dependency.
+Use the existing workflow and contract rather than forcing a new status API on every command.
+
+For example, checkout calls `inventory.reserve(orderId)` (return type `void`) and then
+charges. If normal return currently confirms a reservation, replacing it with successful
+queue publication lets charging race reservation failure. Keep that prerequisite, or use an
+explicitly accepted pending-checkout workflow that resumes charging only after reservation
+confirmation. Delaying/rejecting the reservation while publication succeeds should expose
+the difference at the checkout/payment boundary. A publish-only test cannot verify it.
 
 ## Event notification
 
@@ -176,14 +192,14 @@ One request producing N downstream calls is where remote latency becomes visible
 
 ## Choosing, in one table
 
-| Condition                                                     | Strategy                                                           |
-| ------------------------------------------------------------- | ------------------------------------------------------------------ |
-| Caller cannot proceed without the answer                      | Synchronous, with deadline and safe failure behaviour              |
-| Caller needs work done but not the result                     | Asynchronous command                                               |
-| Other parties may care about a fact; producer should not know | Event notification                                                 |
-| Data is read often, changes rarely, staleness tolerable       | Event-carried state / replication                                  |
-| Multi-step business process across services                   | Saga recovery; outbox where local state and publication must agree |
-| The two sides genuinely need one transaction                  | Prefer one transaction boundary; assess supported 2PC if necessary |
+| Condition                                                     | Strategy                                                               |
+| ------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Caller requires a decision/effect before proceeding           | Completion-confirming interaction, deadline and safe failure behaviour |
+| Caller may proceed while the effect is pending                | Asynchronous command with explicit completion/recovery ownership       |
+| Other parties may care about a fact; producer should not know | Event notification                                                     |
+| Data is read often, changes rarely, staleness tolerable       | Event-carried state / replication                                      |
+| Multi-step business process across services                   | Saga recovery; outbox where local state and publication must agree     |
+| The two sides genuinely need one transaction                  | Prefer one transaction boundary; assess supported 2PC if necessary     |
 
 ## Boundary decision checks
 
@@ -226,3 +242,5 @@ because a case exposes a missing contract.
 - [AWS transactional outbox](https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/transactional-outbox.html): dual-write gap and duplicate publication.
 - [Azure saga pattern](https://learn.microsoft.com/en-us/azure/architecture/patterns/saga): compensable, pivot and retryable transactions; lack of global isolation.
 - [Fowler on event-driven patterns](https://martinfowler.com/articles/201701-event-driven.html): notification, hidden workflow coupling and state transfer.
+- [RFC 9110, section 15.3.3](https://www.rfc-editor.org/rfc/rfc9110.html#section-15.3.3): HTTP 202 is acceptance rather than completed processing; eventual execution is not guaranteed.
+- [Azure asynchronous request-reply](https://learn.microsoft.com/en-us/azure/architecture/patterns/asynchronous-request-reply): separate acknowledgement, pending status and terminal outcome; client behaviour matters when changing the completion contract.

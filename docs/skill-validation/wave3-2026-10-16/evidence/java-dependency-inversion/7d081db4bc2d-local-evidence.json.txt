@@ -1,0 +1,101 @@
+{
+  "baseline": [
+    {
+      "path": "skills/java-dependency-inversion/SKILL.md",
+      "hash": "b970d05a28665a594d657be22411697858d436814dd48b08834daecdc4b50e76"
+    },
+    {
+      "path": "skills/java-dependency-inversion/skill.yaml",
+      "hash": "5d7c60fa781506358b2cfb1f03eef65f1b099ccc37eb35e95076f4696eb98a4d"
+    },
+    {
+      "path": "skills/java-dependency-inversion/references/costs-and-false-positives.md",
+      "hash": "a5c9d962120164d1183a70640e79acc346909a6c7500f7e8d7a3ac016fb0b501"
+    },
+    {
+      "path": "skills/java-dependency-inversion/references/decision-guide.md",
+      "hash": "6292c6b0dd70f2e01e3214501a078913b586a03db958302b38c060c8f15b17a5"
+    },
+    {
+      "path": "skills/java-dependency-inversion/references/worked-example.md",
+      "hash": "ab11512cb286d793918b2b299c49024b2acf711a84f89ccf375289c2520a99d4"
+    }
+  ],
+  "final": {
+    "javaBlocksUnchanged": 7,
+    "files": [
+      {
+        "path": "skills/java-dependency-inversion/references/costs-and-false-positives.md",
+        "hash": "a5c9d962120164d1183a70640e79acc346909a6c7500f7e8d7a3ac016fb0b501"
+      },
+      {
+        "path": "skills/java-dependency-inversion/references/decision-guide.md",
+        "hash": "6292c6b0dd70f2e01e3214501a078913b586a03db958302b38c060c8f15b17a5"
+      },
+      {
+        "path": "skills/java-dependency-inversion/references/worked-example.md",
+        "hash": "91e9af56ff5d6040b49c1c20325d9fe573ca9dc1ecf89d2f3b0c701416302674"
+      },
+      {
+        "path": "skills/java-dependency-inversion/SKILL.md",
+        "hash": "b970d05a28665a594d657be22411697858d436814dd48b08834daecdc4b50e76"
+      },
+      {
+        "path": "skills/java-dependency-inversion/skill.yaml",
+        "hash": "131b6739c8e2d5cddf41c3997600e9f1bdacd8ffb0563b3a8cee52d373986189"
+      }
+    ],
+    "committedVersion": "1.2.4",
+    "finalVersion": "1.2.5",
+    "status": " M skills/java-dependency-inversion/references/worked-example.md\n M skills/java-dependency-inversion/skill.yaml\n",
+    "staged": ""
+  },
+  "technical": {
+    "chunk_id": "ac9076",
+    "wall_time_seconds": 3.2435392,
+    "exit_code": 0,
+    "original_token_count": 180,
+    "output": "{\"status\":\"PASS\",\"compiler\":\"javac 25.0.3 --release 17\",\"runtime\":\"Temurin 25.0.3+9 on Windows; not a Java 17 VM\",\"fixture\":\"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave3-validation-wyg7TL\\\\java-dependency-inversion-artifacts\\\\fixture-ENiV7N\",\"checks\":15,\"expectedNegativeCommands\":[\"run-unrecompiled-before-breaking\",\"recompile-before-breaking\",\"compile-before-without-mechanism\"],\"originalPolicyClassSha256\":\"964a75ad34c19ee78ba3f743dbf214c53213cc7322c430cc98627cc3f5344cd4\",\"policyUnrecompiledForV2\":true,\"extractedJavaBlocks\":7,\"noSmtpEdgeAfter\":true,\"limits\":\"Illustrative SDK stubs print observations only; no SMTP server, delivery, SDK failure mapping, JPMS runtime or framework integration exercised.\"}\n"
+  },
+  "packageCheck": {
+    "status": "fulfilled",
+    "value": {
+      "chunk_id": "06879d",
+      "wall_time_seconds": 0.1722532,
+      "exit_code": 0,
+      "original_token_count": 22,
+      "output": "{\"status\":\"PASS\",\"issues\":0,\"distributedFiles\":5,\"markdownFiles\":4,\"localReferences\":3}\n"
+    }
+  },
+  "formatAndDiff": {
+    "status": "fulfilled",
+    "value": {
+      "chunk_id": "e2447f",
+      "wall_time_seconds": 0.3330463,
+      "exit_code": 0,
+      "original_token_count": 772,
+      "output": "Checking formatting...\nAll matched files use Prettier code style!\n{ \"ignored\": false, \"inferredParser\": \"markdown\" }\ndiff --git a/skills/java-dependency-inversion/references/worked-example.md b/skills/java-dependency-inversion/references/worked-example.md\nindex d1b31bb..881494b 100644\n--- a/skills/java-dependency-inversion/references/worked-example.md\n+++ b/skills/java-dependency-inversion/references/worked-example.md\n@@ -29,10 +29,14 @@ public final class OrderConfirmer {\n \n ## Analysis\n \n-- The edge `shop.orders → shop.smtp` points from policy to mechanism. If the mail relay, SDK or\n-  SMTP representation changes, the _order policy_ recompiles and redeploys. Adding SMS is a\n-  separate product decision: this contract currently contains an email destination, so a truly\n-  multi-channel policy may honestly require its own contract change.\n+- The edge `shop.orders → shop.smtp` points from policy to mechanism. An incompatible change\n+  to the SMTP types or API can force policy-source changes; a\n+  [binary-compatible implementation change](https://docs.oracle.com/javase/specs/jls/se17/html/jls-13.html#jls-13.4.22)\n+  need not require policy recompilation. Binary compatibility does not establish unchanged\n+  behavior. Inspect packaging and runtime wiring before claiming independent deployment;\n+  adding an interface alone does not provide it. Adding SMS is a separate product decision:\n+  this contract contains an email destination, so a multi-channel policy may require its own\n+  contract change.\n - `new SmtpClient(...)` inside the class hides the dependency and hardcodes the\n   endpoint; under the assumed directly connecting client, a test needs a mail server or\n   interception. Inspect the actual client's existing test hooks before concluding a new\n@@ -154,9 +158,9 @@ thread safety, and a synchronous `send` call does not serialize calls from diffe\n \n ## Trade-offs\n \n-- Three types now exist where one did: port, adapter, root. Navigation from\n-  `confirm` to actual SMTP takes one extra jump. This is the price; it is paid\n-  because the seam is real.\n+- The policy now has a port and a confirmation value, plus an adapter and composition\n+  root. Navigation from `confirm` to actual SMTP takes one extra jump. This is the price;\n+  it is paid because the seam is real.\n - `Confirmation` duplicates shape the SMTP message also has. That duplication is\n   the decoupling — collapsing them would re-leak transport vocabulary into policy.\n - The composition root becomes a coupling hotspot by design. It is the one file\ndiff --git a/skills/java-dependency-inversion/skill.yaml b/skills/java-dependency-inversion/skill.yaml\nindex 4ab043d..5c4989b 100644\n--- a/skills/java-dependency-inversion/skill.yaml\n+++ b/skills/java-dependency-inversion/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: java-dependency-inversion\n-version: 1.2.4\n+version: 1.2.5\n description: >-\n   Dependency direction in Java: policy versus mechanism, ports and adapters, constructor\n   injection as plain Java, factories, composition roots, and JPMS module edges as physical\n"
+    }
+  },
+  "technicalOutput": {
+    "status": "fulfilled",
+    "value": {
+      "chunk_id": "b948a3",
+      "wall_time_seconds": 0.0855518,
+      "exit_code": 0,
+      "original_token_count": 2314,
+      "output": "[\n  {\n    \"name\": \"compile-sdk-v1\",\n    \"exitCode\": 0,\n    \"stdout\": \"\",\n    \"stderr\": \"\"\n  },\n  {\n    \"name\": \"compile-sdk-v2\",\n    \"exitCode\": 0,\n    \"stdout\": \"\",\n    \"stderr\": \"\"\n  },\n  {\n    \"name\": \"compile-sdk-breaking\",\n    \"exitCode\": 0,\n    \"stdout\": \"\",\n    \"stderr\": \"\"\n  },\n  {\n    \"name\": \"compile-before\",\n    \"exitCode\": 0,\n    \"stdout\": \"\",\n    \"stderr\": \"\"\n  },\n  {\n    \"name\": \"run-before-v1\",\n    \"exitCode\": 0,\n    \"stdout\": \"v1|customer@example.test|Order confirmed|Order A-1 confirmed, total 12.50\\r\\n\",\n    \"stderr\": \"\"\n  },\n  {\n    \"name\": \"run-unrecompiled-before-v2\",\n    \"exitCode\": 0,\n    \"stdout\": \"v2|customer@example.test|Order confirmed|Order A-1 confirmed, total 12.50\\r\\n\",\n    \"stderr\": \"\"\n  },\n  {\n    \"name\": \"run-unrecompiled-before-breaking\",\n    \"exitCode\": 1,\n    \"stdout\": \"\",\n    \"stderr\": \"Exception in thread \\\"main\\\" java.lang.NoSuchMethodError: 'void shop.smtp.SmtpClient.send(shop.smtp.SmtpMessage)'\\r\\n\\tat shop.orders.OrderConfirmer.confirm(OrderConfirmer.java:13)\\r\\n\\tat shop.orders.RunBefore.main(RunBefore.java:1)\\r\\n\"\n  },\n  {\n    \"name\": \"recompile-before-breaking\",\n    \"exitCode\": 1,\n    \"stdout\": \"\",\n    \"stderr\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave3-validation-wyg7TL\\\\java-dependency-inversion-artifacts\\\\fixture-ENiV7N\\\\src\\\\before\\\\shop\\\\orders\\\\OrderConfirmer.java:13: error: incompatible types: SmtpMessage cannot be converted to String\\r\\n        smtp.send(new SmtpMessage(order.customerEmail(), \\\"Order confirmed\\\", body));\\r\\n                  ^\\r\\nNote: Some messages have been simplified; recompile with -Xdiags:verbose to get full output\\r\\n1 error\\r\\n\"\n  },\n  {\n    \"name\": \"compile-before-without-mechanism\",\n    \"exitCode\": 1,\n    \"stdout\": \"\",\n    \"stderr\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave3-validation-wyg7TL\\\\java-dependency-inversion-artifacts\\\\fixture-ENiV7N\\\\src\\\\before\\\\shop\\\\orders\\\\OrderConfirmer.java:3: error: package shop.smtp does not exist\\r\\nimport shop.smtp.SmtpClient;      // policy imports the mechanism\\r\\n                ^\\r\\nC:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave3-validation-wyg7TL\\\\java-dependency-inversion-artifacts\\\\fixture-ENiV7N\\\\src\\\\before\\\\shop\\\\orders\\\\OrderConfirmer.java:4: error: package shop.smtp does not exist\\r\\nimport shop.smtp.SmtpMessage;\\r\\n                ^\\r\\nC:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave3-validation-wyg7TL\\\\java-dependency-inversion-artifacts\\\\fixture-ENiV7N\\\\src\\\\before\\\\shop\\\\orders\\\\OrderConfirmer.java:8: error: cannot find symbol\\r\\n    private final SmtpClient smtp = new SmtpClient(\\\"mail.internal\\\", 587);\\r\\n                  ^\\r\\n  symbol:   class SmtpClient\\r\\n  location: class OrderConfirmer\\r\\nC:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave3-validation-wyg7TL\\\\java-dependency-inversion-artifacts\\\\fixture-ENiV7N\\\\src\\\\before\\\\shop\\\\orders\\\\OrderConfirmer.java:8: error: cannot find symbol\\r\\n    private final SmtpClient smtp = new SmtpClient(\\\"mail.internal\\\", 587);\\r\\n                                        ^\\r\\n  symbol:   class SmtpClient\\r\\n  location: class OrderConfirmer\\r\\nC:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave3-validation-wyg7TL\\\\java-dependency-inversion-artifacts\\\\fixture-ENiV7N\\\\src\\\\before\\\\shop\\\\orders\\\\OrderConfirmer.java:13: error: cannot find symbol\\r\\n        smtp.send(new SmtpMessage(order.customerEmail(), \\\"Order confirmed\\\", body));\\r\\n                      ^\\r\\n  symbol:   class SmtpMessage\\r\\n  location: class OrderConfirmer\\r\\n5 errors\\r\\n\"\n  },\n  {\n    \"name\": \"compile-after-without-mechanism\",\n    \"exitCode\": 0,\n    \"stdout\": \"\",\n    \"stderr\": \"\"\n  },\n  {\n    \"name\": \"run-isolated-policy\",\n    \"exitCode\": 0,\n    \"stdout\": \"PASS: recording outcome and synchronous failure without retry\\r\\n\",\n    \"stderr\": \"\"\n  },\n  {\n    \"name\": \"jdeps-policy-after\",\n    \"exitCode\": 0,\n    \"stdout\": \"policy-after -> java.base\\r\\n   shop.orders.Confirmation                           -> java.lang.Class                                    java.base\\r\\n   shop.orders.Confirmation                           -> java.lang.Object                                   java.base\\r\\n   shop.orders.Confirmation                           -> java.lang.Record                                   java.base\\r\\n   shop.orders.Confirmation                           -> java.lang.String                                   java.base\\r\\n   shop.orders.Confirmation                           -> java.lang.invoke.MethodHandle                      java.base\\r\\n   shop.orders.Confirmation                           -> java.lang.invoke.MethodHandles                     java.base\\r\\n   shop.orders.Confirmation                           -> java.lang.invoke.MethodHandles$Lookup              java.base\\r\\n   shop.orders.Confirmation                           -> java.lang.invoke.TypeDescriptor                    java.base\\r\\n   shop.orders.Confirmation                           -> java.lang.runtime.ObjectMethods                    java.base\\r\\n   shop.orders.ConfirmationSender                     -> java.lang.Object                                   java.base\\r\\n   shop.orders.Order                                  -> java.lang.Class                                    java.base\\r\\n   shop.orders.Order                                  -> java.lang.Object                                   java.base\\r\\n   shop.orders.Order                                  -> java.lang.Record                                   java.base\\r\\n   shop.orders.Order                                  -> java.lang.String                                   java.base\\r\\n   shop.orders.Order                                  -> java.lang.invoke.MethodHandle                      java.base\\r\\n   shop.orders.Order                                  -> java.lang.invoke.MethodHandles                     java.base\\r\\n   shop.orders.Order                                  -> java.lang.invoke.MethodHandles$Lookup              java.base\\r\\n   shop.orders.Order                                  -> java.lang.invoke.TypeDescriptor                    java.base\\r\\n   shop.orders.Order                                  -> java.lang.runtime.ObjectMethods                    java.base\\r\\n   shop.orders.Order                                  -> java.math.BigDecimal                               java.base\\r\\n   shop.orders.OrderConfirmer                         -> java.lang.Object                                   java.base\\r\\n   shop.orders.OrderConfirmer                         -> java.lang.String                                   java.base\\r\\n   shop.orders.OrderConfirmer                         -> java.math.BigDecimal                               java.base\\r\\n   shop.orders.PolicyCheck                            -> java.io.PrintStream                                java.base\\r\\n   shop.orders.PolicyCheck                            -> java.lang.AssertionError                           java.base\\r\\n   shop.orders.PolicyCheck                            -> java.lang.Object                                   java.base\\r\\n   shop.orders.PolicyCheck                            -> java.lang.RuntimeException                         java.base\\r\\n   shop.orders.PolicyCheck                            -> java.lang.String                                   java.base\\r\\n   shop.orders.PolicyCheck                            -> java.lang.System                                   java.base\\r\\n   shop.orders.PolicyCheck                            -> java.lang.Throwable                                java.base\\r\\n   shop.orders.PolicyCheck                            -> java.lang.invoke.CallSite                          java.base\\r\\n   shop.orders.PolicyCheck                            -> java.lang.invoke.LambdaMetafactory                 java.base\\r\\n   shop.orders.PolicyCheck                            -> java.lang.invoke.MethodHandle                      java.base\\r\\n   shop.orders.PolicyCheck                            -> java.lang.invoke.MethodHandles                     java.base\\r\\n   shop.orders.PolicyCheck                            -> java.lang.invoke.MethodHandles$Lookup              java.base\\r\\n   shop.orders.PolicyCheck                            -> java.lang.invoke.MethodType                        java.base\\r\\n   shop.orders.PolicyCheck                            -> java.math.BigDecimal                               java.base\\r\\n   shop.orders.PolicyCheck                            -> java.util.List                                     java.base\\r\\n   shop.orders.RecordingSender                        -> java.lang.Object                                   java.base\\r\\n   shop.orders.RecordingSender                        -> java.util.ArrayList                                java.base\\r\\n   shop.orders.RecordingSender                        -> java.util.List                                     java.base\\r\\n\",\n    \"stderr\": \"\"\n  },\n  {\n    \"name\": \"compile-adapter-and-root\",\n    \"exitCode\": 0,\n    \"stdout\": \"\",\n    \"stderr\": \"\"\n  },\n  {\n    \"name\": \"run-adapter-translation\",\n    \"exitCode\": 0,\n    \"stdout\": \"v1|customer@example.test|Order confirmed|Order A-1 confirmed, total 12.50\\r\\n\",\n    \"stderr\": \"\"\n  },\n  {\n    \"name\": \"run-root-construction\",\n    \"exitCode\": 0,\n    \"stdout\": \"\",\n    \"stderr\": \"\"\n  }\n]\n"
+    }
+  },
+  "sourceDownloads": {
+    "status": "fulfilled",
+    "value": {
+      "chunk_id": "d0183a",
+      "wall_time_seconds": 1.3609797000000001,
+      "exit_code": 0,
+      "original_token_count": 94,
+      "output": "[{\"file\":\"jls17-binary-compatibility.html\",\"status\":200,\"bytes\":169240},{\"file\":\"jls17-modules.html\",\"status\":200,\"bytes\":148397},{\"file\":\"jdk17-completion-stage.html\",\"status\":200,\"bytes\":136163},{\"file\":\"jdk17-clock.html\",\"status\":200,\"bytes\":46820},{\"file\":\"jdk17-random-generator.html\",\"status\":200,\"bytes\":81525},{\"file\":\"jdk17-stream.html\",\"status\":200,\"bytes\":155037}]\n"
+    }
+  },
+  "firstSearchWarning": "Initial rg call passed a literal references/*.md path on PowerShell and emitted OS error123; repeated with rg -g '*.md' ownedDir succeeded. Subsequent commands in the first cell returned0; the rg error was read and corrected."
+}

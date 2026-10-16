@@ -1,0 +1,28 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+
+const runRoot = path.resolve(import.meta.dirname, '../..');
+const project = path.join(runRoot, 'output/project');
+const jdk = 'C:/Users/robso/.jdks/temurin-25.0.3/bin';
+const startedAt = new Date().toISOString();
+const commands = [];
+function run(program, args, cwd) {
+  const start = new Date().toISOString();
+  const result = spawnSync(program, args, { cwd, timeout: 30000, encoding: 'utf8', windowsHide: true });
+  const record = { program, args, cwd, startedAt: start, finishedAt: new Date().toISOString(), timeoutMs: 30000, exit: result.status, signal: result.signal, error: result.error?.message ?? null, stdout: result.stdout ?? '', stderr: result.stderr ?? '' };
+  commands.push(record);
+  process.stdout.write(JSON.stringify(record) + '\n');
+}
+const files = ['README.md', 'docs/review-request.md', 'docs/contract.md', 'src/work/Settings.java', 'src/work/SettingsRegistry.java', 'test/work/Smoke.java', 'check.mjs'];
+const digest = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const before = files.map(name => ({ name, inputSha256: digest(path.join(runRoot, 'input/project', name)), outputSha256: digest(path.join(project, name)) }));
+run(path.join(jdk, 'java.exe'), ['-version'], project);
+run(path.join(jdk, 'javac.exe'), ['-version'], project);
+run(process.execPath, ['check.mjs'], project);
+const after = files.map(name => ({ name, inputSha256: digest(path.join(runRoot, 'input/project', name)), outputSha256: digest(path.join(project, name)) }));
+const unchanged = before.every((entry, index) => entry.inputSha256 === entry.outputSha256 && entry.inputSha256 === after[index].inputSha256 && entry.outputSha256 === after[index].outputSha256);
+const result = { startedAt, finishedAt: new Date().toISOString(), nodeVersion: process.version, commands, before, after, providedFilesIdenticalAndUnchanged: unchanged, allChildProcessesExited: commands.every(command => command.exit !== null && command.error === null) };
+fs.writeFileSync(path.join(runRoot, 'output/checks/commands.json'), JSON.stringify(result, null, 2) + '\n');
+if (!unchanged || commands.some(command => command.exit !== 0 || command.error)) process.exitCode = 1;

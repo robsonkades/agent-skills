@@ -1,0 +1,30 @@
+import java.util.function.LongUnaryOperator;
+public final class RetryPlan {
+    public record Plan(boolean admitted, long waitNanos, long attemptNanos) {}
+    public static Plan next(long start, long now, long total, long reserve, long minimumWork,
+            long attemptCap, long base, long delayCap, int completed, int maxAttempts,
+            long serverMinimum, LongUnaryOperator draw) {
+        if (completed >= maxAttempts) return new Plan(false, 0, 0);
+
+        // Elapsed subtraction handles signed nanoTime wrap within the contracted horizon.
+        long elapsed = now - start;
+        if (elapsed >= total) return new Plan(false, 0, 0);
+        long remaining = total - elapsed;
+        if (reserve > remaining) return new Plan(false, 0, 0);
+        long available = remaining - reserve;
+        if (available < minimumWork) return new Plan(false, 0, 0);
+
+        long wait = 0;
+        if (completed > 0) {
+            long maximumWait = available - minimumWork;
+            if (serverMinimum > maximumWait) return new Plan(false, 0, 0);
+            int exponent = completed - 1;
+            long exponential = exponent >= 63 || base > (Long.MAX_VALUE >> exponent)
+                    ? Long.MAX_VALUE : base << exponent;
+            long window = Math.min(delayCap, exponential);
+            wait = Math.max(draw.applyAsLong(window), serverMinimum);
+            if (wait > maximumWait) return new Plan(false, 0, 0);
+        }
+        return new Plan(true, wait, Math.min(attemptCap, available - wait));
+    }
+}

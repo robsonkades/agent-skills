@@ -1,0 +1,7 @@
+final class TypeMismatch {
+    void misuse() {
+        var pdf = new FamilyContractChecks.Part<FamilyContractChecks.Pdf>(new Object());
+        var html = new FamilyContractChecks.Part<FamilyContractChecks.Html>(new Object());
+        FamilyContractChecks.sameOwner(pdf, html);
+    }
+}

@@ -1,0 +1,68 @@
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
+public final class Reports {
+    public enum Format { PDF, HTML, TEXT }
+    public record Report(String title) {}
+    public record Page(String content) {}
+    public interface Paginator {
+        Format format();
+        List<Page> paginate(Report report);
+    }
+    public interface Renderer {
+        Format format();
+        String render(List<Page> pages, StyleSheet styles);
+    }
+    public record StyleSheet(Format format, String name) {}
+
+    public record Family(Renderer renderer, Paginator paginator, StyleSheet styles) {
+        public Family {
+            Objects.requireNonNull(renderer, "renderer");
+            Objects.requireNonNull(paginator, "paginator");
+            Objects.requireNonNull(styles, "styles");
+        }
+        public String export(Report report) {
+            return renderer.render(paginator.paginate(report), styles);
+        }
+    }
+
+    public static final class FormatPaginator implements Paginator {
+        private final Format format;
+        public FormatPaginator(Format format) { this.format = format; }
+        public Format format() { return format; }
+        public List<Page> paginate(Report report) {
+            return List.of(new Page(format == Format.PDF ? report.title() + "[page]" : report.title() + "<br>"));
+        }
+    }
+
+    public static final class FormatRenderer implements Renderer {
+        private final Format format;
+        public FormatRenderer(Format format) { this.format = format; }
+        public Format format() { return format; }
+        public String render(List<Page> pages, StyleSheet styles) {
+            String marker = format == Format.PDF ? "[page]" : "<br>";
+            return format + ":" + styles.name() + ":" + pages.get(0).content().replace(marker, "");
+        }
+    }
+
+    public static Family create(Format format) {
+        if (format != Format.PDF && format != Format.HTML) {
+            throw new IllegalArgumentException("Unsupported format: " + format);
+        }
+        return new Family(new FormatRenderer(format), new FormatPaginator(format),
+                new StyleSheet(format, "default"));
+    }
+}
+
+final class App {
+    private final Map<Reports.Format, Reports.Family> families = Map.of(
+            Reports.Format.PDF, Reports.create(Reports.Format.PDF),
+            Reports.Format.HTML, Reports.create(Reports.Format.HTML));
+
+    String export(Reports.Report report, Reports.Format format) {
+        Reports.Family selected = families.get(format);
+        if (selected == null) throw new IllegalArgumentException("Unsupported format: " + format);
+        return selected.export(report);
+    }
+}

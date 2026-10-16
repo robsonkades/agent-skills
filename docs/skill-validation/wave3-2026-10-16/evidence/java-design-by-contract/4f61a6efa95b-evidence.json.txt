@@ -1,0 +1,99 @@
+{
+  "baseline": [
+    {
+      "path": "skills/java-design-by-contract\\skill.yaml",
+      "sha256": "ADF4BF432B2FA9F912147D1C3EB705F56EEB174C1AD5409BD0A3565F594BBCF0"
+    },
+    {
+      "path": "skills/java-design-by-contract\\SKILL.md",
+      "sha256": "F74398897A0D04AB31BD9DACD709CC4F68571BC585EE8421BADAE83942AC367A"
+    },
+    {
+      "path": "skills/java-design-by-contract\\references\\explicit-contract-example.md",
+      "sha256": "FC9E300933434F7123C662A596373B6AF01CDF6AD190B6B0F8D8C035F71E0634"
+    },
+    {
+      "path": "skills/java-design-by-contract\\references\\contracts-in-java.md",
+      "sha256": "526229AF49B49DF058ECB1D0CC4AC3CED6ABB42D5E0AC1CD78DE86453D2DF1D9"
+    }
+  ],
+  "sources": [
+    {
+      "title": "Java SE 25 CompletionStage",
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletionStage.html",
+      "checkedDate": "2026-10-16",
+      "sections": [
+        "class contract",
+        "thenAccept",
+        "thenApply",
+        "thenCompose"
+      ],
+      "support": "Dependency completion and failure channels; callbacks create a dependent stage; composition follows the returned computation's completion.",
+      "limits": "Does not establish an application domain promise, effect rollback, or executor/cancellation policy."
+    },
+    {
+      "title": "Java SE 25 CompletableFuture",
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html",
+      "checkedDate": "2026-10-16",
+      "sections": [
+        "class contract",
+        "dependent stages",
+        "thenApply",
+        "join"
+      ],
+      "support": "Concrete future operations and observing exceptional completion; technical reproduction separately recorded.",
+      "limits": "Probe uses ordinary CompletableFuture on Temurin 25.0.3+9 with controlled producers; no alternative implementation or older runtime was tested."
+    }
+  ],
+  "checks": [
+    {
+      "name": "compile and execute targeted probe",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-design-by-contract-validation-quality18",
+      "command": "$ErrorActionPreference = 'Stop'\n& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' --release 25 -d classes CompletionContractProbe.java *> javac.log\nif ($LASTEXITCODE -ne 0) { Get-Content javac.log; throw 'javac failed' }\n& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -ea -cp classes CompletionContractProbe *> probe-ea.log\nif ($LASTEXITCODE -ne 0) { Get-Content probe-ea.log; throw 'assertions-enabled probe failed' }\nGet-Content probe-ea.log\n& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -da -cp classes CompletionContractProbe *> probe-da.log\nif ($LASTEXITCODE -ne 0) { Get-Content probe-da.log; throw 'assertions-disabled probe failed' }\nGet-Content probe-da.log",
+      "chunk_id": "111582",
+      "wall_time_seconds": 0.5970736,
+      "exit_code": 0,
+      "original_token_count": 325,
+      "output": "ORIGINAL PENDING VALID -> VALID\r\nORIGINAL PENDING INVALID -> NORMAL_WITH_REJECTED_RECEIPT\r\nORIGINAL PENDING UPSTREAM_FAILURE -> UPSTREAM_FAILURE\r\nORIGINAL PRECOMPLETED VALID -> VALID\r\nORIGINAL PRECOMPLETED INVALID -> NORMAL_WITH_REJECTED_RECEIPT\r\nORIGINAL PRECOMPLETED UPSTREAM_FAILURE -> UPSTREAM_FAILURE\r\nDEPENDENT PENDING VALID -> VALID\r\nDEPENDENT PENDING INVALID -> CHECK_FAILURE\r\nDEPENDENT PENDING UPSTREAM_FAILURE -> UPSTREAM_FAILURE\r\nDEPENDENT PRECOMPLETED VALID -> VALID\r\nDEPENDENT PRECOMPLETED INVALID -> CHECK_FAILURE\r\nDEPENDENT PRECOMPLETED UPSTREAM_FAILURE -> UPSTREAM_FAILURE\r\nPASS: 12 scenarios; assertions=true; runtime=25.0.3+9-LTS\r\nORIGINAL PENDING VALID -> VALID\r\nORIGINAL PENDING INVALID -> NORMAL_WITH_REJECTED_RECEIPT\r\nORIGINAL PENDING UPSTREAM_FAILURE -> UPSTREAM_FAILURE\r\nORIGINAL PRECOMPLETED VALID -> VALID\r\nORIGINAL PRECOMPLETED INVALID -> NORMAL_WITH_REJECTED_RECEIPT\r\nORIGINAL PRECOMPLETED UPSTREAM_FAILURE -> UPSTREAM_FAILURE\r\nDEPENDENT PENDING VALID -> VALID\r\nDEPENDENT PENDING INVALID -> CHECK_FAILURE\r\nDEPENDENT PENDING UPSTREAM_FAILURE -> UPSTREAM_FAILURE\r\nDEPENDENT PRECOMPLETED VALID -> VALID\r\nDEPENDENT PRECOMPLETED INVALID -> CHECK_FAILURE\r\nDEPENDENT PRECOMPLETED UPSTREAM_FAILURE -> UPSTREAM_FAILURE\r\nPASS: 12 scenarios; assertions=false; runtime=25.0.3+9-LTS\r\n"
+    },
+    {
+      "name": "strict manifest, identity, descriptions, paths and links",
+      "cwd": "C:/git/agent-skills",
+      "command": "@'\nimport assert from 'node:assert/strict';\nimport { readFileSync, existsSync } from 'node:fs';\nimport { resolve, dirname } from 'node:path';\nimport { parseManifest } from './packages/core/src/domain/manifest.ts';\nimport { parseSkillDocument } from './packages/core/src/domain/skill-document.ts';\nconst root = resolve('skills/java-design-by-contract');\nconst { manifest, issues } = parseManifest(readFileSync(resolve(root, 'skill.yaml'), 'utf8'), { strict: true });\nassert.deepEqual(issues, []);\nconst doc = parseSkillDocument(readFileSync(resolve(root, 'SKILL.md'), 'utf8'));\nassert.equal(manifest.name, 'java-design-by-contract');\nassert.equal(doc.frontmatter.name, manifest.name);\nassert.equal(manifest.version, '1.2.5');\nconst norm = s => s.replace(/\\s+/g, ' ').trim();\nassert.equal(norm(doc.frontmatter.description), norm(manifest.description));\nfor (const path of manifest.files) assert.ok(existsSync(resolve(root, path)), path);\nconst refs = [...new Set(doc.body.match(/references\\/[A-Za-z0-9/-]+\\.md/g))];\nassert.equal(refs.length, 2);\nlet links = 0;\nfor (const name of ['SKILL.md', ...refs]) {\n  const source = resolve(root, name);\n  const content = readFileSync(source, 'utf8');\n  for (const match of content.matchAll(/\\]\\(([^)]+)\\)/g)) {\n    const target = match[1];\n    if (/^<?https?:\\/\\//.test(target)) continue;\n    const [file, anchor] = target.split('#');\n    const dest = file ? resolve(dirname(source), file) : source;\n    assert.ok(existsSync(dest), name + ': ' + target);\n    if (anchor) {\n      const headings = [...readFileSync(dest, 'utf8').matchAll(/^#+\\s+(.+)$/gm)].map(m => m[1].toLowerCase().replace(/[^\\w\\s-]/g, '').replace(/\\s/g, '-'));\n      assert.ok(headings.includes(anchor), name + ': anchor ' + target);\n    }\n    links++;\n  }\n}\nconsole.log(JSON.stringify({name:manifest.name, version:manifest.version, strictManifestIssues:issues.length, declaredPaths:manifest.files.length, routedReferences:refs.length, localLinksChecked:links, metadataAndLinks:'PASS'}));\n'@ | node --input-type=module",
+      "chunk_id": "824ab2",
+      "wall_time_seconds": 0.1585374,
+      "exit_code": 0,
+      "original_token_count": 42,
+      "output": "{\"name\":\"java-design-by-contract\",\"version\":\"1.2.5\",\"strictManifestIssues\":0,\"declaredPaths\":3,\"routedReferences\":2,\"localLinksChecked\":3,\"metadataAndLinks\":\"PASS\"}\n"
+    },
+    {
+      "name": "owned-package formatting",
+      "cwd": "C:/git/agent-skills",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/java-design-by-contract/SKILL.md skills/java-design-by-contract/skill.yaml skills/java-design-by-contract/references/contracts-in-java.md skills/java-design-by-contract/references/explicit-contract-example.md",
+      "chunk_id": "e55282",
+      "wall_time_seconds": 0.2085982,
+      "exit_code": 0,
+      "original_token_count": 17,
+      "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+    },
+    {
+      "name": "scoped diff, status, version markers and final hashes",
+      "cwd": "C:/git/agent-skills",
+      "command": "git diff --check -- skills/java-design-by-contract; git status --short -- skills/java-design-by-contract; git diff --cached -- skills/java-design-by-contract; rg -n \"For asynchronous|Completion is|CompletionStage:|CompletableFuture:|version:\" skills/java-design-by-contract; $skillFiles = rg --files skills/java-design-by-contract; $skillFiles | ForEach-Object { [pscustomobject]@{ Path = $_; Hash = (Get-FileHash -LiteralPath $_ -Algorithm SHA256).Hash } } | ConvertTo-Json -Depth 3",
+      "chunk_id": "85eda3",
+      "wall_time_seconds": 0.1660499,
+      "exit_code": 0,
+      "original_token_count": 397,
+      "output": " M skills/java-design-by-contract/SKILL.md\n M skills/java-design-by-contract/references/contracts-in-java.md\n M skills/java-design-by-contract/skill.yaml\nskills/java-design-by-contract\\skill.yaml:4:version: 1.2.5\nskills/java-design-by-contract\\SKILL.md:114:For asynchronous APIs, distinguish the immediate return contract from the guarantees at\nskills/java-design-by-contract\\references\\contracts-in-java.md:83:## Completion is a separate contract boundary\nskills/java-design-by-contract\\references\\contracts-in-java.md:199:- [CompletionStage: dependency and exceptional-completion contracts](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletionStage.html)\nskills/java-design-by-contract\\references\\contracts-in-java.md:200:- [CompletableFuture: completion and dependent-stage behavior](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html)\n[\r\n  {\r\n    \"Path\": \"skills/java-design-by-contract\\\\skill.yaml\",\r\n    \"Hash\": \"E055829970F9A727115AEB58750B023C532DCB74DB8536E3B291416F9B07AC51\"\r\n  },\r\n  {\r\n    \"Path\": \"skills/java-design-by-contract\\\\SKILL.md\",\r\n    \"Hash\": \"153252F5A0EC383FAFF200BCD13B273FEF8E23C613FC7BA465D5B64F9A57B99D\"\r\n  },\r\n  {\r\n    \"Path\": \"skills/java-design-by-contract\\\\references\\\\explicit-contract-example.md\",\r\n    \"Hash\": \"FC9E300933434F7123C662A596373B6AF01CDF6AD190B6B0F8D8C035F71E0634\"\r\n  },\r\n  {\r\n    \"Path\": \"skills/java-design-by-contract\\\\references\\\\contracts-in-java.md\",\r\n    \"Hash\": \"CCC62744D7FD78F948DE95C9346447D124388700642045E60AD4C5FFCF5D0DAA\"\r\n  }\r\n]\r\n"
+    }
+  ],
+  "failedAttempts": [
+    {
+      "phase": "artifact assembly",
+      "error": "ReferenceError: structuredClone is not defined",
+      "effect": "The functions.exec isolate lacks that helper; the script stopped before any tool call or file write.",
+      "resolution": "Retried with JSON.parse(JSON.stringify(...)) for serializable case data. No repository or validation failure resulted."
+    }
+  ],
+  "unchangedExampleHash": "FC9E300933434F7123C662A596373B6AF01CDF6AD190B6B0F8D8C035F71E0634"
+}

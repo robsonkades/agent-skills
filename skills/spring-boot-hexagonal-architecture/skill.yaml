@@ -1,6 +1,6 @@
 schemaVersion: 1
 name: spring-boot-hexagonal-architecture
-version: 1.0.1
+version: 1.0.2
 description: >-
   Implement or repair an agreed ports-and-adapters boundary in Java 25 and Spring
   Boot 4 applications. Use when one use case must serve multiple entry points,

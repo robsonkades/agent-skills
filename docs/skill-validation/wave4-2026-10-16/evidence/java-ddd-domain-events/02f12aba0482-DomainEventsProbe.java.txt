@@ -1,0 +1,103 @@
+import com.example.domain.order.*;
+import com.example.domain.order.event.OrderSubmitted;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+
+public final class DomainEventsProbe {
+    private static int checks;
+    private static final OrderID ORDER = new OrderID("O-17");
+    private static final UUID FIRST = new UUID(0, 1);
+    private static final UUID SECOND = new UUID(0, 2);
+    private static final Instant WHEN = Instant.parse("2026-10-16T10:00:00Z");
+    private static void check(boolean pass, String label) {
+        if (!pass) throw new AssertionError(label);
+        checks++;
+        System.out.println("PASS " + label);
+    }
+    private static void expect(Class<? extends Throwable> type, Runnable action, String label) {
+        try { action.run(); }
+        catch (Throwable ex) {
+            check(type.isInstance(ex), label + " [" + ex.getClass().getSimpleName() + "]");
+            return;
+        }
+        throw new AssertionError(label + ": no exception");
+    }
+    record ShallowFact(List<String> lines) {}
+    record ValueOnlyFact(OrderID id, Instant occurredOn) {}
+
+    public static void main(String[] args) {
+        // Published snippet: event validation happens before state mutation.
+        var nullTime = Order.draft(ORDER, List.of("A"));
+        expect(NullPointerException.class, () -> nullTime.submit(FIRST, null), "reject null time");
+        check(nullTime.status() == OrderStatus.DRAFT && nullTime.pendingEvents().isEmpty(),
+                "null time leaves state and pending events unchanged");
+        var nullId = Order.draft(ORDER, List.of("A"));
+        expect(NullPointerException.class, () -> nullId.submit(null, WHEN), "reject null event identity");
+        check(nullId.status() == OrderStatus.DRAFT && nullId.pendingEvents().isEmpty(),
+                "null identity leaves state and pending events unchanged");
+        expect(NullPointerException.class, () -> new OrderSubmitted(FIRST, null, WHEN),
+                "event rejects null immutable subject identity");
+
+        var order = Order.draft(ORDER, List.of("A"));
+        var clock = Clock.fixed(WHEN, ZoneOffset.UTC);
+        order.submit(FIRST, clock.instant());
+        check(order.status() == OrderStatus.SUBMITTED, "accepted transition updates state");
+        var firstBatch = order.pendingEvents();
+        check(firstBatch.size() == 1, "accepted transition creates one fact");
+        var fact = firstBatch.get(0);
+        check(fact.eventId().equals(FIRST) && fact.orderId().equals(ORDER)
+                && fact.occurredOn().equals(WHEN), "fact preserves occurrence identity subject and supplied time");
+        expect(DomainException.class, () -> order.submit(SECOND, WHEN), "reject repeated submit by fixture policy");
+        check(order.status() == OrderStatus.SUBMITTED && order.pendingEvents().equals(firstBatch),
+                "rejection leaves state and accepted event unchanged");
+
+        var empty = Order.draft(ORDER, List.of());
+        expect(DomainException.class, () -> empty.submit(FIRST, WHEN), "reject empty draft");
+        check(empty.status() == OrderStatus.DRAFT && empty.pendingEvents().isEmpty(),
+                "invalid draft produces no event or state change");
+
+        // Fixture-defined rehydration/acknowledgment demonstrates prose, not a database.
+        var restored = Order.restore(ORDER, OrderStatus.SUBMITTED, List.of("A"));
+        check(restored.status() == OrderStatus.SUBMITTED && restored.pendingEvents().isEmpty(),
+                "fixture rehydration restores state without inventing a fact");
+        order.reopen();
+        order.submit(SECOND, WHEN);
+        check(firstBatch.size() == 1 && order.pendingEvents().size() == 2,
+                "immutable captured batch excludes a later occurrence");
+        check(!firstBatch.get(0).equals(order.pendingEvents().get(1)),
+                "equal subject and time do not erase distinct occurrence identity");
+        order.acknowledge(Set.of(FIRST));
+        check(order.pendingEvents().size() == 1 && order.pendingEvents().get(0).eventId().equals(SECOND),
+                "acknowledgment preserves newly appended occurrence");
+        expect(UnsupportedOperationException.class, () -> firstBatch.clear(), "snapshot rejects membership mutation");
+
+        var backing = new ArrayList<>(List.of("old"));
+        var view = Collections.unmodifiableList(backing);
+        var snapshot = List.copyOf(backing);
+        backing.add("new");
+        check(view.size() == 2 && snapshot.size() == 1, "read-only view differs from membership snapshot");
+        expect(NullPointerException.class, () -> List.copyOf(java.util.Arrays.asList("a", null)),
+                "snapshot rejects null entries");
+        var mutableLine = new ArrayList<>(List.of("old"));
+        var shallow = new ShallowFact(mutableLine);
+        var shallowBatch = List.copyOf(List.of(mutableLine));
+        mutableLine.set(0, "new");
+        check(shallow.lines().get(0).equals("new") && shallowBatch.get(0).get(0).equals("new"),
+                "record and list snapshot do not deep-freeze mutable payload");
+
+        var equalOld = new ValueOnlyFact(ORDER, WHEN);
+        var equalLater = new ValueOnlyFact(ORDER, WHEN);
+        var pending = new ArrayList<>(List.of(equalOld));
+        var captured = List.copyOf(pending);
+        pending.add(equalLater);
+        pending.removeAll(captured);
+        check(pending.isEmpty(), "negative example: value equality cleanup can erase a distinct occurrence");
+        System.out.println("PASS " + checks + " checks; partial snippets plus explicit fixtures only; no database/framework/crash guarantee.");
+    }
+}

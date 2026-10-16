@@ -1,0 +1,121 @@
+import assert from 'node:assert/strict';
+import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+const here = dirname(fileURLToPath(import.meta.url));
+const common = {
+  'src/domain/stock/StockEligibility.java': `package domain.stock;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Objects;
+
+public final class StockEligibility {
+    public record Request(String tenant, String orderId, String sku, int quantity) {
+        public Request {
+            Objects.requireNonNull(tenant); Objects.requireNonNull(orderId); Objects.requireNonNull(sku);
+            if (quantity <= 0) throw new IllegalArgumentException("quantity");
+        }
+    }
+    public record Snapshot(String tenant, String sku, int available, Instant observedAt, String sourceVersion) { }
+    public enum Result { ELIGIBLE, INELIGIBLE, NEEDS_EVIDENCE }
+    public record Assessment(Request request, Result result, String sourceVersion, Instant decisionAt) { }
+    public Assessment assess(Request request, Snapshot facts, Instant decisionAt) {
+        if (facts == null || facts.observedAt() == null || facts.sourceVersion() == null
+                || !request.tenant().equals(facts.tenant()) || !request.sku().equals(facts.sku())) {
+            return new Assessment(request, Result.NEEDS_EVIDENCE, null, decisionAt);
+        }
+        var age = Duration.between(facts.observedAt(), decisionAt);
+        if (age.isNegative() || age.compareTo(Duration.ofSeconds(30)) > 0 || facts.available() < 0) {
+            return new Assessment(request, Result.NEEDS_EVIDENCE, facts.sourceVersion(), decisionAt);
+        }
+        var result = facts.available() >= request.quantity() ? Result.ELIGIBLE : Result.INELIGIBLE;
+        return new Assessment(request, result, facts.sourceVersion(), decisionAt);
+    }
+}
+`,
+  'src/domain/order/Order.java': `package domain.order;
+import domain.stock.StockEligibility.Assessment;
+import domain.stock.StockEligibility.Request;
+import domain.stock.StockEligibility.Result;
+
+public final class Order {
+    private final Request request;
+    private boolean submitted;
+    public Order(Request request) { this.request = java.util.Objects.requireNonNull(request); }
+    public Request request() { return request; }
+    public void submit(Assessment assessment) {
+        if (submitted) throw new IllegalStateException("already submitted");
+        if (!request.equals(assessment.request()) || assessment.result() != Result.ELIGIBLE) {
+            throw new IllegalArgumentException("assessment does not authorize these order inputs");
+        }
+        submitted = true;
+    }
+}
+`,
+  'src/application/stock/AssessStockUseCase.java': `package application.stock;
+import java.time.Instant;
+import java.util.Properties;
+import domain.order.Order;
+import domain.stock.StockEligibility;
+import domain.stock.StockEligibility.Assessment;
+import domain.stock.StockEligibility.Result;
+import domain.stock.StockEligibility.Snapshot;
+
+public final class AssessStockUseCase {
+    public interface StockGateway { Snapshot snapshot(String tenant, String sku); }
+    public interface Orders { void saveWithVersionCheck(Order order); }
+    private final StockEligibility rule;
+    private final StockGateway stock;
+    private final Orders orders;
+    private final String operation;
+    public AssessStockUseCase(StockEligibility rule, StockGateway stock, Orders orders, Properties runtime) {
+        this.rule = rule; this.stock = stock; this.orders = orders;
+        this.operation = runtime.getProperty("stock.operation");
+        if (!operation.equals("PREVIEW") && !operation.equals("SUBMIT")) throw new IllegalArgumentException("mode");
+    }
+    public Assessment execute(Order order, Instant decisionAt) {
+        var request = order.request();
+        var facts = stock.snapshot(request.tenant(), request.sku());
+        var assessment = rule.assess(request, facts, decisionAt);
+        if (operation.equals("SUBMIT") && assessment.result() == Result.ELIGIBLE) {
+            order.submit(assessment);
+            orders.saveWithVersionCheck(order);
+        }
+        return assessment;
+    }
+}
+`,
+  'contracts/product.md': '# Accepted product contract\n\nPREVIEW reports present eligibility under source observations at most 30 seconds old and is explicitly provisional. A preview neither consumes stock nor promises later acceptance. SUBMIT accepts a customer order; accepted submissions must be backed by capacity reserved by the inventory owner. A request is tenant/order/SKU/quantity-specific. This small rule and one-shot assessment have no independent algorithm variations. Existing Order guards own its local lifecycle; no requirement asks for a new policy interface or factory.\n',
+  'contracts/provider.md': '# Inventory provider API v2 contract\n\nGET availability is an informational snapshot; it acquires no hold. The sourceVersion identifies the observation. POST reservations atomically checks remaining stock and creates a hold bound to tenant, order, SKU, quantity, expiry and caller operation ID. It does not confirm an order in the orders database. A timeout can follow a committed hold. The provider exposes lookup by operation ID and idempotent retry of the same request meaning for 24 hours; changing request fields under that ID is rejected. Confirmation must occur before expiry. Cancellation and status lookup exist for recovery when the local order save fails. No provider endpoint is available to this review fixture.\n',
+  'project.md': '# Project evidence\n\nJava 17, no preview. runtime.properties is the effective per-deployment setting supplied to AssessStockUseCase without overrides. Orders.saveWithVersionCheck checks and increments the version of that individual order row; it is not a lock or allocation record for a SKU. The deployment has multiple application instances. Domain objects and decisionAt are supplied non-null by the boundary. This is a synthetic source-review fixture, with no database or network credentials.\n',
+  'policy-test-records.json': JSON.stringify({ provenance: 'Synthetic existing policy-test records, not tests executed by this reviewer', input: {
+    snapshot: { tenant: 'T1', sku: 'S1', available: 100, observedAt: '2026-10-16T12:00:00Z', sourceVersion: 'stock-v8' },
+    decisionAt: '2026-10-16T12:00:01Z', requests: [ { orderId: 'A', tenant: 'T1', sku: 'S1', quantity: 80 }, { orderId: 'B', tenant: 'T1', sku: 'S1', quantity: 80 } ]
+  }, outcomes: ['A: ELIGIBLE', 'B: ELIGIBLE'], scope: 'StockEligibility only. No use-case execution, order save or provider reservation was part of these records.' }, null, 2) + '\n',
+  'review.md': '# Current ownership proposal\n\nTwo requests are ELIGIBLE from one availability snapshot. Replace StockEligibility with InventoryDomainService, move the availability lookup and Order.submit into it, and let one service own the full operation. This centralization should guarantee the shared stock limit, so the Order guards and provider orchestration need no further review. The active runtime setting has not yet been considered.\n'
+};
+const cases = [];
+for (const [folder, id, operation] of [['case-a', 'DS-C1', 'PREVIEW'], ['case-b', 'DS-C2', 'SUBMIT']]) {
+  const workspace = resolve(here, 'cases', folder);
+  mkdirSync(workspace, { recursive: true });
+  for (const [file, content] of Object.entries(common)) {
+    mkdirSync(dirname(resolve(workspace, file)), { recursive: true });
+    writeFileSync(resolve(workspace, file), content);
+  }
+  writeFileSync(resolve(workspace, 'runtime.properties'), 'stock.operation=' + operation + '\n');
+  const input = { id, workspace,
+    request: 'Review the proposed domain-service refactor in review.md using the effective caller, runtime configuration, domain code, provider contract and existing test records. Update that review with supported conclusions, preserving adequate ownership and identifying the smallest necessary follow-up and its owner. This is a review only: do not change implementation code, contact the provider, install tools or introduce infrastructure. Distinguish inspected source and supplied records from checks you actually execute.',
+    fixtures: [...Object.keys(common), 'runtime.properties'],
+    prerequisites: 'Copied synthetic Java source/config/contracts; edit review.md only. No broker, database, provider credentials, framework or new toolchain required.',
+    status: 'Prepared; no actor run.' };
+  writeFileSync(resolve(workspace, 'input.json'), JSON.stringify(input, null, 2) + '\n');
+  cases.push({ id, input: resolve(workspace, 'input.json'), workspace });
+}
+for (const file of Object.keys(common)) assert.equal(readFileSync(resolve(cases[0].workspace, file), 'utf8'), readFileSync(resolve(cases[1].workspace, file), 'utf8'));
+assert.equal(readFileSync(resolve(cases[0].workspace, 'runtime.properties'), 'utf8'), 'stock.operation=PREVIEW\n');
+assert.equal(readFileSync(resolve(cases[1].workspace, 'runtime.properties'), 'utf8'), 'stock.operation=SUBMIT\n');
+assert.deepEqual(JSON.parse(readFileSync(resolve(here, 'case-criteria.json'), 'utf8')).cases.map(c => c.id), cases.map(c => c.id));
+const result = { status: 'PASS', cases, evaluatorCriteria: resolve(here, 'case-criteria.json'),
+  commonFilesByteIdentical: Object.keys(common).length, decisiveDifference: 'runtime.properties stock.operation only', agentEvaluationsExecuted: 0 };
+writeFileSync(resolve(here, 'case-fixture-results.json'), JSON.stringify(result, null, 2) + '\n');
+console.log(JSON.stringify(result, null, 2));

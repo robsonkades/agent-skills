@@ -1,0 +1,33 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import crypto from 'node:crypto';
+const root='C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL';
+const report='C:/git/agent-skills/docs/skill-validation/wave3-2026-10-16';
+const source=root+'/ambassador-pattern';
+const output=fs.mkdtempSync(path.join(os.tmpdir(),'skills-wave3-behavior-')).replaceAll('\\','/');
+const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
+const walk=d=>fs.readdirSync(d,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(path.join(d,e.name)):[path.join(d,e.name)]);
+const rubric=JSON.parse(fs.readFileSync(source+'/case-criteria.json','utf8'));
+const runs=[];
+let index=0;
+for(const [c,id] of ['C1-server-greeting','C2-client-first'].entries()){
+ const input=JSON.parse(fs.readFileSync(source+'/cases/'+id+'-input.json','utf8'));
+ const criteria=rubric.cases.find(x=>x.id===id);
+ if(!criteria?.expected?.length||!criteria?.failures?.length)throw Error('Unfrozen criteria');
+ for(const condition of ['none','baseline','revised']){
+  const runId=`c${c+1}-${condition}`,dir=output+'/'+runId;
+  fs.mkdirSync(dir);
+  for(const [file,text] of Object.entries(input.files)){fs.mkdirSync(path.dirname(dir+'/'+file),{recursive:true});fs.writeFileSync(dir+'/'+file,text+'\n');}
+  if(condition!=='none')fs.cpSync(condition==='baseline'?root+'/baseline/ambassador-pattern':'C:/git/agent-skills/skills/ambassador-pattern',dir+'/skill-resources',{recursive:true});
+  const task=`${input.request}\n\n${input.context}\n\nWork only inside ${dir}. You are not alone; preserve other contributors' work. Read TASK.md and the ordinary supplied artifacts. ${condition==='none'?'No supplemental skill is supplied for this run.':'Read and apply skill-resources/SKILL.md and its routed references; this is the only supplemental skill for this run.'} Do not inspect the repository, any other run, external local directories, prior reports, coordinator criteria or other installed skills. Node and its built-ins are available. Web primary-source lookup is permitted if needed. Do not spawn agents. Keep implementation fixtures intact except the policy change explicitly authorized by the task. You may add a bounded local verification script. Finish REVIEW.md with the result, exact commands/results, coverage limits, files read and any accidental access. Retain logs. Stop all processes and writes before final response.\n`;
+  fs.writeFileSync(dir+'/TASK.md',task);
+  const files=walk(dir).map(f=>({path:path.relative(dir,f).replaceAll('\\','/'),sha256:sha(fs.readFileSync(f))}));
+  runs.push({runId,actor:`wave3_actor${String(++index).padStart(2,'0')}`,case:id,condition,directory:dir,task,criteria,criteriaSha256:sha(JSON.stringify(criteria)),files,status:'prepared-not-dispatched'});
+ }
+}
+const manifest={frozenAt:new Date().toISOString(),classification:'Two development cases from the reviewer; no unseen holdout. Prepared comparisons are not executed evaluations.',skill:'ambassador-pattern',versions:{baseline:'1.3.4',revised:'1.3.5'},model:'Inherited parent model and reasoning; no override. Exact runtime identifier unavailable.',runtime:process.version,separation:'Separate directories and instructions only; no filesystem enforcement or complete independent read trace.',runs};
+const serialized=JSON.stringify(manifest,null,2)+'\n';fs.writeFileSync(report+'/behavior-manifest.json',serialized);fs.writeFileSync(report+'/behavior-manifest.frozen.json.txt',serialized);
+fs.writeFileSync(report+'/behavior-freeze.json',JSON.stringify({frozenAt:manifest.frozenAt,manifestSha256:sha(serialized),criteriaValidated:true,allCaseCriteriaHashes:runs.map(r=>({runId:r.runId,sha256:r.criteriaSha256}))},null,2)+'\n');
+fs.writeFileSync(root+'/behavior-root.txt',output+'\n');
+console.log(JSON.stringify({output,runs:runs.length,first:runs[0].directory,manifestSha256:sha(serialized)},null,2));

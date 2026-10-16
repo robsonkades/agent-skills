@@ -1,0 +1,15 @@
+# Retained review and technical controls
+
+Only three broken Jakarta Persistence 3.2 URLs were repaired in the skill, plus version 1.3.4 to 1.3.5. No mapping example or rule was rewritten.
+
+Run from C:/git/agent-skills:
+`node "C:/Users/robso/AppData/Local/Temp/orm-structural-mapping-quality14-66674868b16142a1870404ca6583269d/evaluator/run-local.mjs"`
+
+The runner uses 13 already present Maven-cache jars listed with versions and hashes in evidence/dependency-hashes.json. It does not download/install dependencies, modify caches or build the repository. It compiles Java 17-compatible fixture sources with Temurin 25.0.3 --release 17 and executes on VM 25.0.3. The actual fixture uses Hibernate ORM 6.6.33.Final, Jakarta Persistence API 3.1.0 and H2 2.3.232, with provider schema generation disabled. The two in-memory databases are explicitly shut down and subprocesses exit. There is no PostgreSQL or production endpoint.
+
+The original-state probes report 20 assertions in case-a and 21 in case-b. Case-a intentionally permits duplicate member references and demonstrates that BadgeDirectory.getSingleResult fails; case-b rejects duplicate writes with its deployed unique constraint. Direct SQL verifies null/FK rejection, parent existence is not mandatory-child cardinality, and deleting the badge retains the member. Flush-clear-reload and executed SQL are retained. Case-a's passing probe means the expected defect was observed, not that its contract is correct.
+
+For a separate actor evaluation, expose exactly one inputs/case-a or inputs/case-b directory and a complete selected skill snapshot. Withhold evaluator/, evidence/, the other input, this README and the handoff. Criteria were frozen before technical execution and are separate at evaluator/criteria.json. Seven files are identical; only schema.sql adds UNIQUE(member_id). These are known development cases, not held-out. No independent actor ran.
+
+If an actor repairs case-a, evaluate the new contract against the criteria instead of requiring the original negative-case assertion to remain true. Actual existing data, concurrency, deployment, ORM/provider variants, native JSON, record embeddables and derived-key mutations are not covered by these two technical probes. Source-link repairs and passing technical probes do not establish behavioral gain.
+

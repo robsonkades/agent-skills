@@ -1,0 +1,11 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+const files=['CONTRACT.md','REQUEST.md','README.md','check.mjs','dependencies.json','toolchain.json'];
+const walk=directory=>fs.readdirSync(directory,{withFileTypes:true}).flatMap(entry=>entry.isDirectory()?walk(path.join(directory,entry.name)):[path.join(directory,entry.name)]);
+files.push(...walk('lib'),...walk('support'));
+const digest=file=>crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+for(const file of files){
+  if(digest(file)!==digest(path.join('../../input/project',file)))throw new Error('Frozen bytes changed: '+file);
+}
+console.log(`PASS ${files.length} frozen files identical to input`);

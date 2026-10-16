@@ -50,23 +50,48 @@ this here?" If so, it belongs in a report, not the diff.
 | "Improving" adjacent code in the same commit     | Makes the real change unreviewable and unrevertable                                |
 | Adding defensive checks everywhere               | Noise that hides the two checks that matter (java-defensive-programming)           |
 
-## When to stop and ask
+## When to inspect, proceed or ask
 
 Check the request, prior decisions, repository evidence and applicable instruction hierarchy
-first. Ask only when a necessary decision remains unresolved and materially changes the
-authorized scope or commits the user to something expensive to reverse:
+first. Distinguish an explicit requirement or applicable standard from an incidental pattern:
+one implementation shows what exists, not what every implementation must do. A test records
+an expectation that may need checking against an already authorized contract change.
+
+- **Inspect** when the answer is in callers, tests, pinned APIs, configuration or prior
+  decisions. Ask the user only if a material gap remains after available evidence is checked.
+- **Proceed** when alternatives satisfy the same known contract and the choice is routine
+  and readily reversible. Follow a suitable local convention or choose the simplest option;
+  state an assumption only when it matters to understanding the result. Uncertainty alone
+  is not a reason to stop, and an existing authorization does not expire between steps.
+- **Ask** when the unresolved answer changes observable behavior, authorized scope or an
+  expensive commitment. State the alternatives, the consequence of choosing incorrectly,
+  and the one decision needed. Pause only the dependent action, not independent work.
+
+Examples of material unresolved decisions include:
 
 - Two readings of the request produce materially different designs.
 - A new dependency, schema or public API change is neither already authorized nor a routine
   implementation detail implied by the requested outcome.
 - The correct fix is much larger than the request implies — say so and propose the smaller one
   as well.
-- The request appears to contradict an existing convention in the codebase, and you cannot tell
-  whether that is deliberate.
-- Something in scope is genuinely blocked.
+- The request appears to contradict a behavioral contract, and the request, prior decisions
+  and project evidence do not settle which behavior is intended.
+- Something in scope is blocked on information or authorization only the user can supply.
 
 Do not stop for things you can determine yourself: the existing convention, the library
 version, whether a method has other callers. Those are searches, not questions.
+
+For example, if an authorized change explicitly makes a date interval end-exclusive, update
+an obsolete inclusive-boundary assertion and retain boundary coverage. If the request only
+says "fix the date boundary" and available contracts disagree, ask which boundary behavior
+is intended before choosing it. The failing assertion is the same; the controlling requirement
+changes whether a question is necessary. A correct requirement does not prove the fix works:
+verification still has to exercise the changed behavior.
+
+[Anthropic's Claude Code guidance](https://code.claude.com/docs/en/best-practices#explore-first-then-plan-then-code)
+distinguishes small clear tasks from work needing more exploration. The inspect/proceed/ask
+rules here apply that proportionality without requiring a particular client's planning mode
+or introducing an approval step.
 
 ## When blocked, deliver everything else
 

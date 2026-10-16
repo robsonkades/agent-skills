@@ -1,0 +1,30 @@
+{
+  "classification": "Known development cases, not held-out tests or executed agent evaluations",
+  "decisiveConstraint": "The two TextRenderer.java files differ only in the candidate loop variable's declared type: Object vs char[]. The method signature, runtime input values, legacy method, caller tests and task remain identical.",
+  "isolation": "Copy only the listed inputs for one actor. Do not expose criteria, other case, technical result logs, source baseline/revised skill comparison artifacts or validation harness. Folder naming alone is not isolation.",
+  "common": [
+    "Inspect the actual candidate and caller contract; preserve legacy, the tests, output delimiters and accepted null fragments.",
+    "Use JLS string conversion and the selected append overload to explain any correction; runtime array type alone does not determine the overload.",
+    "Compile/run the relevant Java25 compatibility checks or explicitly disclose unavailable execution.",
+    "Do not infer performance improvement from semantic tests, introduce dependencies, or turn the compatibility task into an unrequested wire-format change."
+  ],
+  "A": {
+    "expected": "Keep render: declared Object already selects append(Object), matching legacy output including null. Six compatibility cases pass. No redundant cast or broad rewrite is justified by this concern.",
+    "failureConditions": [
+      "Treat a runtime char[] as selecting append(char[]) despite the declared Object operand.",
+      "Replace adequate object conversion with array contents.",
+      "Invent a semantic failure or assert measured speedup."
+    ]
+  },
+  "B": {
+    "expected": "The char[] operand selects append(char[]), changing nonempty/empty outputs and introducing NPE for null. Correct render to preserve object string conversion, for example append((Object) fragment), then all six compatibility cases pass.",
+    "failureConditions": [
+      "Keep the content-writing append(char[]) or use uncast String.valueOf(fragment) as a claimed compatibility fix.",
+      "Change legacy, weaken tests or forbid previously accepted null input to hide the regression.",
+      "Fix only null handling while still emitting array contents.",
+      "Describe the issue without making the authorized correction."
+    ]
+  },
+  "technicalVerification": "Fresh original fixtures will be compiled/run with frozen expectations: A passes; B fails five of six caller cases. Their execution validates fixtures, not agent behavior.",
+  "behavioralEvaluationExecuted": false
+}

@@ -1,0 +1,13 @@
+{
+  "name": "inactive-input-only",
+  "command": "C:\\Program Files\\nodejs\\node.exe",
+  "args": [
+    "build.mjs",
+    "200"
+  ],
+  "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dry-kiss-yagni-validation\\inactive-input-only",
+  "expectedPass": false,
+  "exitCode": 1,
+  "stdout": "",
+  "stderr": "Exception in thread \"main\" java.lang.AssertionError: web count=199 expected=true\r\n\tat example.ContractCheck.check(ContractCheck.java:10)\r\n\tat example.ContractCheck.main(ContractCheck.java:20)\r\n"
+}

@@ -1,0 +1,7 @@
+Review this native send preparation used by a JDK 22 FFM service on Linux 6.6 with liburing 2.5. The protocol requires all 8192 bytes of record A to precede the 4096 bytes of record B on one TCP connection. Slow receivers are part of the supported workload.
+
+Read native_send.c and send_policy.c. Decide whether the prepared pair preserves that byte order when progress is partial. If a change is needed, make the smallest supported correction to these files; otherwise retain them and explain why. Write review.md with the decision, the relevant runtime contract, and the validation still needed before rollout.
+
+Fixture facts: both SQEs are obtained and submitted together as one batch; there are no other sends on this connection. The surrounding dispatcher handles every CQE by stable user_data, tracks actual byte counts, retains SEND_ZC buffers through any required NOTIF, observes canceled requests, and enforces a per-connection byte budget and deadline. It can retry remaining bytes after a partial completion but cannot retract bytes that a dependent request has already sent. Do not redesign those existing ownership controls or silently upgrade the baseline.
+
+These are development review fragments, not an executable service. Do not claim a Linux runtime test from static review.

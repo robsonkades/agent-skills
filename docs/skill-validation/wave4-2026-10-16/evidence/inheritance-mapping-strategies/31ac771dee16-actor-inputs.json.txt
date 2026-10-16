@@ -1,0 +1,32 @@
+[
+  {
+    "id": "case-a",
+    "request": "Review the payment import storage in README.md against the supplied accepted contract and project artifacts. Recommend retaining or changing the design with evidence and explicit validation/rollout limits.",
+    "fixtureDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/inheritance-mapping-strategies/cases/case-a",
+    "actorFiles": [
+      "README.md",
+      "mapping-inventory.json",
+      "schema.sql",
+      "sample-rows.csv",
+      "queries.sql",
+      "business-contract.json"
+    ],
+    "prerequisites": "Read-only review of PostgreSQL 18 DDL and Hibernate 6.6 mapping inventory; no database or ORM execution supplied.",
+    "origin": "Synthetic known development case authored during review; not held out."
+  },
+  {
+    "id": "case-b",
+    "request": "Review the payment import storage in README.md against the supplied accepted contract and project artifacts. Recommend retaining or changing the design with evidence and explicit validation/rollout limits.",
+    "fixtureDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/inheritance-mapping-strategies/cases/case-b",
+    "actorFiles": [
+      "README.md",
+      "mapping-inventory.json",
+      "schema.sql",
+      "sample-rows.csv",
+      "queries.sql",
+      "business-contract.json"
+    ],
+    "prerequisites": "Read-only review of PostgreSQL 18 DDL and Hibernate 6.6 mapping inventory; no database or ORM execution supplied.",
+    "origin": "Synthetic known development case authored during review; not held out."
+  }
+]

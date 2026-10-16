@@ -1,0 +1,6 @@
+{
+  "status": "passed",
+  "preservedCopies": 7,
+  "reviewWords": 552,
+  "resultMatchesVerification": true
+}

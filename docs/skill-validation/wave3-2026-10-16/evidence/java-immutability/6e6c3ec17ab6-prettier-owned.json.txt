@@ -1,0 +1,19 @@
+{
+  "label": "prettier-owned",
+  "executable": "C:\\Program Files\\nodejs\\node.exe",
+  "args": [
+    "C:\\git\\agent-skills\\node_modules\\prettier\\bin\\prettier.cjs",
+    "--check",
+    "C:\\git\\agent-skills\\skills\\java-immutability\\SKILL.md",
+    "C:\\git\\agent-skills\\skills\\java-immutability\\references\\costs-and-when-not.md",
+    "C:\\git\\agent-skills\\skills\\java-immutability\\references\\records-and-copies.md",
+    "C:\\git\\agent-skills\\skills\\java-immutability\\references\\safe-publication.md",
+    "C:\\git\\agent-skills\\skills\\java-immutability\\skill.yaml"
+  ],
+  "cwd": "C:/git/agent-skills",
+  "exitCode": 0,
+  "signal": null,
+  "stdout": "Checking formatting...\nAll matched files use Prettier code style!\n",
+  "stderr": "",
+  "error": null
+}

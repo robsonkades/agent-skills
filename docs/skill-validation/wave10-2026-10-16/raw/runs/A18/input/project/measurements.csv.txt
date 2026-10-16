@@ -1,0 +1,3 @@
+candidato,evento_inicio,evento_fim,p99_ms,carga_lotes_minuto
+U,submissao,resultado_pronto,3200,100
+V,submissao,confirmacao_recebimento,80,100

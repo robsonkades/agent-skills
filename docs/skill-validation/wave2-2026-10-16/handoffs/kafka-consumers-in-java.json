@@ -1,0 +1,299 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "kafka-consumers-in-java",
+  "ownedPath": "C:/git/agent-skills/skills/kafka-consumers-in-java",
+  "reviewedAt": "2026-10-16",
+  "versions": {
+    "committed": "1.3.4",
+    "assignment": "1.3.4",
+    "final": "1.3.5",
+    "rationale": "One patch bump for added recovery guidance and a matching fault case; no pre-existing bump."
+  },
+  "files": {
+    "inspected": [
+      {
+        "path": "skills/kafka-consumers-in-java/SKILL.md",
+        "assignmentSha256": "04f2237049cfb30a26a8d0d2a037e723d8e0ba34fe33c52d71eb0a6919bfbf02",
+        "finalSha256": "04f2237049cfb30a26a8d0d2a037e723d8e0ba34fe33c52d71eb0a6919bfbf02"
+      },
+      {
+        "path": "skills/kafka-consumers-in-java/skill.yaml",
+        "assignmentSha256": "77771cd20b424fc7b561a792599426284bfa8371b57297ebd32ebd4a21e5b121",
+        "finalSha256": "985acdeceb8f0dd2a938b5188b24dadb29b833edc38ee085242c7aa9937a9566"
+      },
+      {
+        "path": "skills/kafka-consumers-in-java/references/poll-loop-and-rebalance.md",
+        "assignmentSha256": "862fb68b4a2beb15c68b6513411e231a4df738acfe81af57b870be799fd90104",
+        "finalSha256": "69e6aa5b5ca0a29b6ca36ead67d96ae5847a78690e8f98ecece3f748382bec6d"
+      },
+      {
+        "path": "skills/kafka-consumers-in-java/references/offsets-and-lag.md",
+        "assignmentSha256": "7ac2335702a0f3ddd3145b8edb4ba965c0b98a9084410cac5af43ad7a94485ed",
+        "finalSha256": "8a280f07374257c2147b483b8ef81b442e4a13d6765690acfe1d9b60a29571fb"
+      }
+    ],
+    "changedByReviewer": [
+      "skills/kafka-consumers-in-java/references/poll-loop-and-rebalance.md",
+      "skills/kafka-consumers-in-java/references/offsets-and-lag.md",
+      "skills/kafka-consumers-in-java/skill.yaml"
+    ],
+    "preExistingChanges": [],
+    "stagedChanges": [],
+    "untrackedFiles": [],
+    "unchanged": ["skills/kafka-consumers-in-java/SKILL.md"],
+    "attribution": "Assignment status/diffs were empty; hash equality was checked again immediately before edits. Only the listed 17 added reference lines and patch version change are this review's package edits."
+  },
+  "findings": [
+    {
+      "location": "references/poll-loop-and-rebalance.md:110",
+      "before": "Required custom checkpoint/state restoration during assignment had no explicit recovery/readiness rule. Existing ownership epochs and completed-offset tracking covered processing after initialization.",
+      "consequence": "An exception during custom initialization followed by a successful callback with no newly added partitions can leave an owned partition unrestored; continuing can use an unintended checkpoint and process or commit beyond required work.",
+      "correction": "Conditionally separate readiness from membership for custom restoration, preserve pending initialization per partition/epoch, and require bounded explicit restore/seek recovery or consumer recreation before dispatch/commit.",
+      "evidence": "Kafka 4.1.0 ConsumerCoordinator lines 392–419/461–470; AbstractCoordinator lines 506–516; AbstractMembershipManager lines 859–866/1194–1217.",
+      "classification": "Supported decision gap; source-backed mechanism, not a measured behavioral defect in a user application."
+    },
+    {
+      "location": "references/offsets-and-lag.md:145",
+      "correction": "Added fault-injection coverage for partial initialization, later empty callbacks, recovery position, and late old-epoch restoration; distinguishes application guard mocks from actual client/protocol behavior.",
+      "consequence": "A happy rebalance test can otherwise miss dispatch/commit from a partition whose required initialization never completed."
+    },
+    {
+      "location": "External source discrepancy; preserved under isolated artifacts",
+      "detail": "The Kafka 4.1.2 listener Javadoc broadly says callback exceptions do not cause retries. Tagged 4.1.0 classic onJoinComplete and consumer-protocol reconciliation paths contain retry/re-entry behavior and potentially empty added-partition sets. The skill therefore makes no universal callback retry/non-retry promise and pins its example to 4.1.0.",
+      "status": "Recorded; no unverified universal claim added."
+    }
+  ],
+  "changes": [
+    "Added one conditional initialization/readiness paragraph and two version-pinned implementation links.",
+    "Added one matching failure-injection case to the existing testing reference.",
+    "Bumped only skill.yaml version; entrypoint/manifest description remains unchanged."
+  ],
+  "preserved": [
+    "Role as Java consumer operating/diagnostic guidance, Kafka 4.1 semantic baseline and project dependency preservation.",
+    "Simple synchronous loop and proportional choice between batch reduction, bounded offload, interval changes and task queues.",
+    "Delivery boundary, safe next offsets with numeric gaps, ownership epochs, late completions and lost-partition handling.",
+    "Classic/consumer protocol and static/cooperative membership distinctions, bounded shutdown and callback time caveat.",
+    "Reset/retention/partition-expansion handling, lag observation boundaries, Spring acknowledgement nuances and fault matrix.",
+    "No new dependencies, scripts, infrastructure, mandatory framework or cross-skill referrals."
+  ],
+  "commands": [
+    {
+      "command": "rg --files skills/kafka-consumers-in-java; package-only git status/diff/diff --cached and git show HEAD:skills/kafka-consumers-in-java/skill.yaml (separate commands)",
+      "cwd": "C:/git/agent-skills",
+      "result": "4 files, clean assignment baseline, committed and assignment version 1.3.4",
+      "exitCode": 0
+    },
+    {
+      "command": "Read every owned file and wave2 brief; capture and recheck SHA-256 assignment snapshot via node --input-type=module",
+      "cwd": "C:/git/agent-skills",
+      "result": "All four package files read; snapshot unchanged before edits",
+      "exitCode": 0
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/kafka-consumers-in-java/SKILL.md skills/kafka-consumers-in-java/skill.yaml skills/kafka-consumers-in-java/references/poll-loop-and-rebalance.md skills/kafka-consumers-in-java/references/offsets-and-lag.md",
+      "cwd": "C:/git/agent-skills",
+      "result": "All matched files use Prettier code style",
+      "exitCode": 0
+    },
+    {
+      "command": "node --input-type=module: loadPackageFromDirectory(new NodeFileSystem(), ownedPath, {strict:true}); validatePackage(...,{directoryName:'kafka-consumers-in-java'}); check relative reference existence and final version",
+      "cwd": "C:/git/agent-skills",
+      "result": "0 package issues; 5 relative reference occurrences resolve; version 1.3.5",
+      "exitCode": 0
+    },
+    {
+      "command": "git diff --check -- skills/kafka-consumers-in-java",
+      "cwd": "C:/git/agent-skills",
+      "result": "Pass; no output",
+      "exitCode": 0
+    },
+    {
+      "command": "git diff -- skills/kafka-consumers-in-java; git status --short -- skills/kafka-consumers-in-java; git diff --cached -- skills/kafka-consumers-in-java (separate commands)",
+      "cwd": "C:/git/agent-skills",
+      "result": "Reviewed focused 3-file diff; no staged or untracked owned files",
+      "exitCode": 0
+    },
+    {
+      "command": "Read-only source fetch and excerpt extraction with node --input-type=module",
+      "cwd": "C:/git/agent-skills",
+      "result": "One research-only attempt failed before network access due to an invalid JS regex /(?i)/; removed it and repeated successfully. No package changes or validation claims came from the failed attempt.",
+      "exitCode": 1,
+      "correctedRunExitCode": 0
+    },
+    {
+      "command": "Fetch pinned primary sources into isolated temp artifacts and record SHA-256; inspect focused excerpts",
+      "cwd": "C:/git/agent-skills",
+      "result": "Five source files archived, all HTTP 200; focused callback paths and upstream test inspected but not executed",
+      "exitCode": 0
+    },
+    {
+      "command": "Final package SHA-256 comparison and JSON handoff readback",
+      "cwd": "C:/git/agent-skills",
+      "result": "Expected final hashes recorded; handoff readback is the final read-only check"
+    }
+  ],
+  "retainedCheckOutput": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/kafka-consumers-in-java-artifacts/validation-log.json",
+  "retainedTechnicalEvidence": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/kafka-consumers-in-java-artifacts/source-manifest.json",
+  "sources": [
+    {
+      "url": "https://github.com/apache/kafka/blob/4.1.0/clients/src/main/java/org/apache/kafka/clients/consumer/internals/ConsumerCoordinator.java",
+      "version": "Kafka 4.1.0",
+      "supports": "addedPartitions excludes already assigned partitions; assignment is updated before the listener is called, then listener exceptions propagate."
+    },
+    {
+      "url": "https://github.com/apache/kafka/blob/4.1.0/clients/src/main/java/org/apache/kafka/clients/consumer/internals/AbstractCoordinator.java",
+      "version": "Kafka 4.1.0",
+      "supports": "onJoinComplete runs before join-future reset, allowing re-entry after a callback failure."
+    },
+    {
+      "url": "https://github.com/apache/kafka/blob/4.1.0/clients/src/main/java/org/apache/kafka/clients/consumer/internals/AbstractMembershipManager.java",
+      "version": "Kafka 4.1.0; relevant paths also inspected at tag 4.1.2",
+      "supports": "Consumer-protocol assignment/fetch gating depends on callback completion; subsequent success enables the assignment, including the documented empty added-set case."
+    },
+    {
+      "url": "https://github.com/apache/kafka/blob/4.1.0/clients/src/test/java/org/apache/kafka/clients/consumer/internals/ConsumerMembershipManagerTest.java",
+      "version": "Kafka 4.1.0",
+      "supports": "testAddedPartitionsNotEnabledAfterFailedOnPartitionsAssignedCallback checks initial failure gating; source inspected only."
+    },
+    {
+      "url": "https://kafka.apache.org/41/javadoc/org/apache/kafka/clients/consumer/ConsumerRebalanceListener.html",
+      "version": "Served clients 4.1.2 on review date",
+      "supports": "Revoked/lost distinction preserved; broad callback-no-retry prose discrepancy recorded rather than copied."
+    },
+    {
+      "url": "https://kafka.apache.org/41/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html",
+      "version": "Served clients 4.1.2",
+      "supports": "Existing auto-commit boundary, nonconsecutive offsets/nextOffsets, manual assignment, owner-thread discipline and external checkpoint guidance verified."
+    },
+    {
+      "url": "https://kafka.apache.org/41/configuration/consumer-configs/",
+      "version": "Kafka 4.1",
+      "supports": "Existing reset including by_duration, latest/new-partition risk, max.poll.records fetch distinction and static session-timeout nuances verified."
+    },
+    {
+      "url": "https://docs.spring.io/spring-kafka/reference/3.3/kafka/receiving-messages/message-listener-container.html",
+      "version": "Spring Kafka 3.3 reference",
+      "supports": "Existing acknowledgement/commit selection and framework dependency-management caveat retained."
+    },
+    {
+      "url": "https://github.com/apache/kafka/blob/4.1.0/clients/src/main/java/org/apache/kafka/clients/consumer/internals/AsyncKafkaConsumer.java",
+      "version": "Kafka 4.1.0",
+      "supports": "Existing auto-commit assumption verified: poll triggers reconciliation/auto-commit and waits for offsets to be captured before returning new fetches."
+    },
+    {
+      "url": "https://github.com/apache/kafka/blob/4.1.0/clients/src/main/java/org/apache/kafka/clients/consumer/CloseOptions.java",
+      "version": "Kafka 4.1.0",
+      "supports": "Existing versioned close API/timeout and membership distinctions verified."
+    }
+  ],
+  "validationClassification": {
+    "executedStructural": [
+      "Strict repository package loader/validator",
+      "relative-reference existence",
+      "owned Prettier check",
+      "owned diff whitespace check",
+      "assignment/final hash and ownership checks"
+    ],
+    "executedTechnicalRuntime": [],
+    "executedBehavioralAgentEvaluations": [],
+    "walkthroughs": [
+      "Required restore fails for orders-1 before seek; membership plus an empty subsequent callback does not restore next offset 40. Guard/stop prevents dispatch and commit from broker checkpoint 500 until valid initialization.",
+      "Same callback failure is optional telemetry; valid broker checkpoint 500 remains usable. Isolate the telemetry failure without adding mandatory initialization state.",
+      "Reviewed source transition for partial assignment and stale-epoch restore: ownership invalidation must prevent old initialization from granting current readiness."
+    ],
+    "pending": [
+      "Independent coordinator execution of the separated cases",
+      "Optional target Kafka broker/client/protocol integration fixture if runtime callback behavior is to be claimed"
+    ]
+  },
+  "limits": [
+    "No Kafka broker, Java compilation, integration suite or agent behavioral evaluation was executed; existing Java snippet remains a labeled conceptual partial example and was not changed.",
+    "Upstream Kafka tests were read, not run. Source inspection establishes the version-specific mechanism, not real-environment scheduling or durability.",
+    "The two cases are synthetic development fixtures, not observed incidents or unseen holdouts. No measured general quality gain is claimed.",
+    "New guidance is conditional on required custom checkpoint/state restoration; it does not require a readiness subsystem for a simple consumer.",
+    "No repository-wide verification claim; registry and verify remain coordinator-only after all reviewers stop."
+  ],
+  "cases": [
+    {
+      "id": "required-checkpoint-restore-fails",
+      "kind": "development case; not an executed agent evaluation or held-out benchmark",
+      "input": {
+        "task": "Review the supplied Java Kafka consumer and incident fixture. Patch the smallest affected working artifact, explain the cause using the resolved client/protocol, and provide focused checks that preserve the consumer's delivery contract. Do not upgrade dependencies.",
+        "prerequisites": "An isolated fixture with the shown source/configuration; no production access. Source inspection and a local unit fixture are sufficient for a proposal; a broker-level claim requires Kafka 4.1.0 client/broker with group.protocol=classic. Existing test infrastructure only.",
+        "fixtures": {
+          "resolved-dependencies.txt": "org.apache.kafka:kafka-clients:4.1.0; Java 17; no Spring container",
+          "consumer.properties": "group.protocol=classic\npartition.assignment.strategy=org.apache.kafka.clients.consumer.CooperativeStickyAssignor\nenable.auto.commit=false\nauto.offset.reset=none\nmax.poll.interval.ms=300000",
+          "ConsumerLoop.java": "// Partial existing owner-thread code; omitted imports/wiring are unchanged.\nvoid pollOnce() {\n  try {\n    var records = consumer.poll(Duration.ofMillis(100));\n    for (var record : records) sink.applyRepeatSafe(record);\n    consumer.commitSync();\n  } catch (KafkaException error) {\n    log.warn(\"consumer cycle failed\", error);\n  }\n}\npublic void onPartitionsAssigned(Collection<TopicPartition> partitions) {\n  for (var partition : partitions) bootstrap.onAssignment(consumer, partition);\n}",
+          "incident.json": "{\n  \"syntheticDevelopmentFixture\": true,\n  \"assigned\": [\n    \"orders-0\",\n    \"orders-1\"\n  ],\n  \"brokerCheckpoints\": {\n    \"orders-0\": 50,\n    \"orders-1\": 500\n  },\n  \"events\": [\n    \"onPartitionsAssigned receives [orders-0, orders-1]\",\n    \"bootstrap succeeds for orders-0 and throws while handling orders-1\",\n    \"pollOnce catches the KafkaException\",\n    \"a later onPartitionsAssigned receives [] and returns\",\n    \"the next poll returns orders-1 at offset 500\"\n  ],\n  \"bootstrapLatencyMs\": 20,\n  \"sink\": \"repeat-safe; success recorded before manual broker checkpoint\"\n}",
+          "PartitionBootstrap.java": "// Contract: the database checkpoint is authoritative and stored atomically with the sink's effects.\nvoid onAssignment(Consumer<String, String> consumer, TopicPartition partition) {\n  long next = checkpointStore.requiredNextOffset(partition); // may throw KafkaException wrapping store failure\n  consumer.seek(partition, next);\n}",
+          "bootstrap-contract.json": "{\"role\":\"required checkpoint initialization\",\"databaseNextOffsets\":{\"orders-0\":50,\"orders-1\":40},\"retainedFrom\":{\"orders-0\":0,\"orders-1\":0},\"failure\":\"read for orders-1 fails once before seek\",\"groupOwnedPartitions\":[\"orders-0\",\"orders-1\"]}"
+        }
+      },
+      "evaluator": {
+        "required": [
+          "Inspect bootstrap implementation and discover that broker checkpoint 500 is not authoritative for orders-1; required restore to 40 failed.",
+          "Do not treat the empty callback or its normal return as proof that restore succeeded; do not dispatch/commit orders-1 while unresolved.",
+          "Patch the working artifact with a bounded stop/recreate path or per-partition current-epoch initialization state and explicit recovery; no callback loop assumed to repeat the same partition list.",
+          "If choosing per-partition recovery, retain already initialized partitions safely and reconcile unresolved state with ownership; late old-epoch restoration must not mark a new assignment ready.",
+          "Provide failure/empty-callback and eventual-success controls, with real client/protocol testing separately identified from an application guard unit test."
+        ],
+        "failureConditions": [
+          "Log-and-continue runs the handler at offset 500 and commits beyond unprocessed retained offsets 40–499.",
+          "Reset the entire group, raise max.poll.interval.ms, or switch assignors without evidence that these address initialization.",
+          "Claim any callback exception rolls assignment back, or claim universally that callbacks never retry.",
+          "Change commit boundary, ordering, dependency versions, or required state authority without justification."
+        ]
+      }
+    },
+    {
+      "id": "optional-assignment-telemetry-fails",
+      "kind": "paired development case; only bootstrap's correctness role changes",
+      "input": {
+        "task": "Review the supplied Java Kafka consumer and incident fixture. Patch the smallest affected working artifact, explain the cause using the resolved client/protocol, and provide focused checks that preserve the consumer's delivery contract. Do not upgrade dependencies.",
+        "prerequisites": "An isolated fixture with the shown source/configuration; no production access. Source inspection and a local unit fixture are sufficient for a proposal; a broker-level claim requires Kafka 4.1.0 client/broker with group.protocol=classic. Existing test infrastructure only.",
+        "fixtures": {
+          "resolved-dependencies.txt": "org.apache.kafka:kafka-clients:4.1.0; Java 17; no Spring container",
+          "consumer.properties": "group.protocol=classic\npartition.assignment.strategy=org.apache.kafka.clients.consumer.CooperativeStickyAssignor\nenable.auto.commit=false\nauto.offset.reset=none\nmax.poll.interval.ms=300000",
+          "ConsumerLoop.java": "// Partial existing owner-thread code; omitted imports/wiring are unchanged.\nvoid pollOnce() {\n  try {\n    var records = consumer.poll(Duration.ofMillis(100));\n    for (var record : records) sink.applyRepeatSafe(record);\n    consumer.commitSync();\n  } catch (KafkaException error) {\n    log.warn(\"consumer cycle failed\", error);\n  }\n}\npublic void onPartitionsAssigned(Collection<TopicPartition> partitions) {\n  for (var partition : partitions) bootstrap.onAssignment(consumer, partition);\n}",
+          "incident.json": "{\n  \"syntheticDevelopmentFixture\": true,\n  \"assigned\": [\n    \"orders-0\",\n    \"orders-1\"\n  ],\n  \"brokerCheckpoints\": {\n    \"orders-0\": 50,\n    \"orders-1\": 500\n  },\n  \"events\": [\n    \"onPartitionsAssigned receives [orders-0, orders-1]\",\n    \"bootstrap succeeds for orders-0 and throws while handling orders-1\",\n    \"pollOnce catches the KafkaException\",\n    \"a later onPartitionsAssigned receives [] and returns\",\n    \"the next poll returns orders-1 at offset 500\"\n  ],\n  \"bootstrapLatencyMs\": 20,\n  \"sink\": \"repeat-safe; success recorded before manual broker checkpoint\"\n}",
+          "PartitionBootstrap.java": "// Contract: assignment telemetry is optional. Kafka checkpoints are authoritative; this callback does not restore state or call seek.\nvoid onAssignment(Consumer<String, String> consumer, TopicPartition partition) {\n  metrics.assignmentObserved(partition); // may throw KafkaException wrapping metrics failure\n}",
+          "bootstrap-contract.json": "{\"role\":\"optional telemetry\",\"databaseNextOffsets\":{\"orders-0\":50,\"orders-1\":40},\"databaseOffsetsPurpose\":\"read-only diagnostic comparison, not recovery positions\",\"retainedFrom\":{\"orders-0\":0,\"orders-1\":0},\"failure\":\"metrics call for orders-1 fails once\",\"groupOwnedPartitions\":[\"orders-0\",\"orders-1\"]}"
+        }
+      },
+      "evaluator": {
+        "required": [
+          "Inspect the implementation and identify that the callback has no required state restoration; checkpoint 500 is the valid recovery position.",
+          "Isolate/report optional metrics failure without making it a mandatory consumer readiness dependency or resetting offsets to the diagnostic database value.",
+          "Preserve synchronous effects-before-commit and keep real poll/commit errors observable.",
+          "Patch the callback/wiring that allows optional telemetry to break consumer coordination; apply an appropriate bound if the telemetry call itself can block.",
+          "Provide a metrics-failure control in which valid consumption progresses and a real consumer-error control that remains visible."
+        ],
+        "failureConditions": [
+          "Add mandatory per-partition readiness or stop the group solely because optional telemetry failed.",
+          "Seek to diagnostic offset 40, blanket-catch every callback/poll/commit error, or remove observability of true consumer failure.",
+          "Claim improved delivery or protocol behavior from a mock-only check."
+        ]
+      }
+    }
+  ],
+  "crossSkill": {
+    "issues": [],
+    "coordinatorActions": [
+      "Archive JSON and technical evidence",
+      "Select any independent behavioral/integration evaluations",
+      "Run shared registry/global verification once all reviewers are read-only"
+    ]
+  },
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "reason": "Coordinator-only shared write after all reviewers stop"
+    },
+    {
+      "command": "npm run verify",
+      "reason": "Coordinator-only full validation after regeneration and all reviewers stop"
+    }
+  ],
+  "allWritesStopped": true,
+  "runningWriterProcesses": []
+}

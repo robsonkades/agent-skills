@@ -1,0 +1,35 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+const root='C:/Users/robso/AppData/Local/Temp/skills-wave8-6b5d18c2',repo='C:/git/agent-skills',report=repo+'/docs/skill-validation/wave8-2026-10-16';
+const json=p=>JSON.parse(fs.readFileSync(p,'utf8')),sha=b=>crypto.createHash('sha256').update(b).digest('hex');
+const walk=(d,s='')=>fs.readdirSync(d+'/'+s,{withFileTypes:true}).flatMap(e=>{const p=s?s+'/'+e.name:e.name;return e.isDirectory()?walk(d,p):[p];});
+const put=(p,b)=>{fs.mkdirSync(path.dirname(p),{recursive:true});fs.writeFileSync(p,b);};
+if(fs.existsSync(report+'/freeze.json'))throw Error('Already frozen');
+const review=json(root+'/review/criteria-resolution.json');assert.equal(review.status,'APPROVED');assert.equal(review.allWritesStopped,true);
+for(const [p,h] of Object.entries(review.hashes))assert.equal(sha(fs.readFileSync(root+'/'+p)),h,p);
+assert.equal(json(report+'/preflight-reviewed.json').allExpected,true);
+const calibration=json(root+'/review/calibration-grades.json'),expected=json(root+'/calibration-expected.json');
+const cgrades=calibration.grades??calibration.samples;assert.equal(cgrades.length,4);for(const g of cgrades)assert.equal(g.decision,expected[g.sampleId]);
+const base=json(report+'/baseline.json');for(const f of base.skill.files)assert.equal(sha(fs.readFileSync(repo+'/skills/sql-query-performance/'+f.path)),f.sha256);
+const frozenAt=new Date().toISOString(),criteria=fs.readFileSync(root+'/criteria-draft.json');
+put(report+'/criteria.json',criteria);put(report+'/criteria.frozen.json.txt',criteria);
+const runs=[];
+for(let trial=1;trial<=2;trial++)for(let ci=0;ci<4;ci++)for(let side=0;side<2;side++){
+ const id='run-'+String(runs.length+1).padStart(2,'0'),caseId='Q'+(ci+1),condition=((ci+side+trial)%2===1)?'none':'skill',dir=root+'/actors/'+id;
+ fs.mkdirSync(dir,{recursive:true});fs.cpSync(root+'/cases/'+caseId+'/input',dir+'/input',{recursive:true});fs.cpSync(dir+'/input',dir+'/output',{recursive:true});
+ if(condition==='skill')fs.cpSync(root+'/snapshot',dir+'/skill',{recursive:true});
+ if(caseId!=='Q3')fs.copyFileSync(dir+'/input/proposed.sql',dir+'/output/solution.sql');
+ const task=`You are executing one isolated SQL review task. Work only from ${dir}. Read input/README.md, input/REQUEST.md and all relevant input artifacts; inspect provided helper before using it. The output/ working copy is already present. Complete the requested review/repair and verification; all outputs belong in output/. You are not alone in this shared filesystem: do not read/write any sibling run, repository, evaluator, prior-wave outputs or other agent files, and never revert others' edits. No subagents, no globals, no installs or real config. File isolation is procedural.\n\n${condition==='skill'?'Load skill/SKILL.md and the routed references relevant to this task. All shipped resources are available. Do not load other skills.':'Do not load any skill body or reference, including globally installed or repository skills. Solve using ordinary task inputs and primary documentation if useful.'}\n\nYou may use tools, scripts and primary-source web research. Bound each subprocess to 20 seconds and aim to finish within 8 minutes; if a tool is unavailable disclose it and continue justified work. Do not fabricate SQL/server execution or timings. Preserve every provided file in input/ and its copied counterpart in output/; create/edit only solution.sql, verify.mjs, REVIEW.md, result.json, execution.json and supplementary authored checks/logs inside output/. For Q3 solution.sql/verify.mjs are not required. Final result.json must include decision, evidence and limits, plus the requested case-specific fields. A concise execution.json records actual files read, commands, exit/results and allWritesStopped=true after work ends; do not invent full traces. Every SQL regression must read solution.sql so the coordinator can reexecute it against another candidate. Finish all writes/processes before handoff, report paths and limits.\n`;
+ put(dir+'/TASK.md',task);
+ const inputs=['TASK.md',...walk(dir+'/input').map(p=>'input/'+p),...(condition==='skill'?walk(dir+'/skill').map(p=>'skill/'+p):[]),...walk(dir+'/input').map(p=>'output/'+p)].map(p=>({path:p,sha256:sha(fs.readFileSync(dir+'/'+p))}));
+ for(const f of inputs)put(report+'/actor-inputs/'+id+'/'+f.path+'.txt',fs.readFileSync(dir+'/'+f.path));
+ runs.push({id,caseId,condition,trial,directory:dir,inputs});
+}
+const manifest={frozenAt,runtime:'fresh collaboration agents, inherited model/reasoning, no overrides',maxConcurrent:8,requestedMinutesPerActor:8,readIsolation:'procedural, not OS enforced',runs};
+const raw=JSON.stringify(manifest,null,2)+'\n';put(report+'/actors.json',raw);put(report+'/actors.frozen.json.txt',raw);
+const caseFiles=[];for(const caseId of ['Q1','Q2','Q3','Q4'])for(const p of walk(root+'/cases/'+caseId+'/input'))caseFiles.push({caseId,path:p,sha256:sha(fs.readFileSync(root+'/cases/'+caseId+'/input/'+p))});
+const freeze={frozenAt,criteriaSha256:sha(criteria),actorsSha256:sha(raw),probeSha256:sha(fs.readFileSync(root+'/probe.mjs')),criteriaResolutionSha256:sha(fs.readFileSync(root+'/review/criteria-resolution.json')),calibrationGradesSha256:sha(fs.readFileSync(root+'/review/calibration-grades.json')),calibrationAgreement:'4/4 authored semantic controls; not actor trials',caseFiles};
+put(report+'/freeze.json',JSON.stringify(freeze,null,2)+'\n');put(report+'/probe.frozen.mjs.txt',fs.readFileSync(root+'/probe.mjs'));
+console.log(JSON.stringify({frozenAt,attempts:16,conditions:['none','skill'],caseIds:['Q1','Q2','Q3','Q4'],criteriaSha256:freeze.criteriaSha256}));

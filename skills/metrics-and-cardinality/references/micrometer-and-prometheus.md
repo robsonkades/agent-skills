@@ -66,6 +66,18 @@ test rather than assuming Spring/Micrometer always normalizes a custom filter/cl
 ## MeterFilter boundaries
 
 Micrometer provides maximum-allowable-tag and metric filters, denial and tag replacement.
+
+Keep `MeterFilter.map` a stable transformation of the incoming `Meter.Id` and configuration
+fixed for the registry lifetime. Reading a request's tier/outcome from `ThreadLocal` or MDC
+there can attribute later observations to the first context: lookups of the same original ID
+can reuse the previously mapped meter. Repeating the lookup is not a per-observation callback.
+Select a meter with bounded request-dependent tags at the instrumentation boundary, or use
+the resolved instrumentation's observation convention/filter. Fixed process tags remain valid
+in a meter filter. Exercise two different request contexts through the same registry and the
+actual handle lookup/reuse path; assert both cohort counts, not only the combined total.
+See the [Micrometer 1.15.5 filter contract](https://github.com/micrometer-metrics/micrometer/blob/v1.15.5/docs/modules/ROOT/pages/concepts/meter-filters.adoc)
+and [registry lookup implementation](https://github.com/micrometer-metrics/micrometer/blob/v1.15.5/micrometer-core/src/main/java/io/micrometer/core/instrument/MeterRegistry.java).
+
 Install filters before affected meters register. Verify:
 
 - prefix/key matching;

@@ -1,0 +1,10 @@
+WARN Generated new file A.java by:
+WARN Generated new file B.java by:
+WARN Please review and commit the results.
+WARN Estimate time saved: PT0S
+OBSERVED state=PROCESSED
+OBSERVED failure=none
+OBSERVED A.exists=true
+OBSERVED B.regularFile=true
+OBSERVED B.directory=false
+OBSERVED localNotes=keep this unrelated local work

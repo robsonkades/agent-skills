@@ -1,0 +1,311 @@
+{
+  "status": "PASS",
+  "scope": "Extracted shipped awk programs; GNU awk --posix on synthetic G1 records. No JVM capture or behavioral actor run.",
+  "awkVersion": "GNU Awk 5.4.1, API 4.1, PMA Avon 8-g1, (GNU MPFR 4.2.2, GNU MP 6.3.0)",
+  "programsExtracted": [
+    "completions",
+    "durations",
+    "quantiles",
+    "types",
+    "causes",
+    "headroom",
+    "rates"
+  ],
+  "sortStage": {
+    "executable": "C:/Program Files/Git/usr/bin/sort.exe",
+    "status": 0,
+    "stderr": ""
+  },
+  "checks": [
+    {
+      "name": "rates",
+      "args": [
+        "--posix",
+        "-f",
+        "rates.awk"
+      ],
+      "expectedStatus": 0,
+      "status": 0,
+      "stdout": "young GCs=3  span=4.000s  region=2MiB\nEden refill ~ 30.0 MiB/s   old growth ~ 3.0 MiB/s   (old growth/Eden refill = 10.0%)\n",
+      "stderr": ""
+    },
+    {
+      "name": "completions",
+      "args": [
+        "--posix",
+        "-f",
+        "completions.awk"
+      ],
+      "expectedStatus": 0,
+      "status": 0,
+      "stdout": "[600.000s][info][gc ] GC(10) Pause Young (Normal) (G1 Evacuation Pause) 150M->100M(256M) 2ms\n[602.000s][info][gc ] GC(12) Pause Young (Normal) (G1 Evacuation Pause) 150M->100M(256M) 4ms\n[604.000s][info][gc ] GC(13) Pause Young (Normal) (G1 Evacuation Pause) 150M->100M(256M) 6ms\n",
+      "stderr": ""
+    },
+    {
+      "name": "durations",
+      "args": [
+        "--posix",
+        "-f",
+        "durations.awk"
+      ],
+      "expectedStatus": 0,
+      "status": 0,
+      "stdout": "2\n4\n6\n",
+      "stderr": ""
+    },
+    {
+      "name": "quantiles",
+      "args": [
+        "--posix",
+        "-f",
+        "quantiles.awk"
+      ],
+      "expectedStatus": 0,
+      "status": 0,
+      "stdout": "pauses=3  p50_nearest_rank=4.00ms  p99_nearest_rank=6.00ms  max=6.00ms  total=12.0ms\n",
+      "stderr": ""
+    },
+    {
+      "name": "types",
+      "args": [
+        "--posix",
+        "-f",
+        "types.awk"
+      ],
+      "expectedStatus": 0,
+      "status": 0,
+      "stdout": "Pause Young\nPause Young\nPause Young\n",
+      "stderr": ""
+    },
+    {
+      "name": "causes",
+      "args": [
+        "--posix",
+        "-f",
+        "causes.awk"
+      ],
+      "expectedStatus": 0,
+      "status": 0,
+      "stdout": "(G1 Evacuation Pause)\n(G1 Evacuation Pause)\n(G1 Evacuation Pause)\n",
+      "stderr": ""
+    },
+    {
+      "name": "headroom",
+      "args": [
+        "--posix",
+        "-f",
+        "headroom.awk"
+      ],
+      "expectedStatus": 0,
+      "status": 0,
+      "stdout": "after=100M  headroom=156M (61%)\nafter=100M  headroom=156M (61%)\nafter=100M  headroom=156M (61%)\n",
+      "stderr": ""
+    },
+    {
+      "name": "rates",
+      "args": [
+        "--posix",
+        "-f",
+        "rates.awk"
+      ],
+      "expectedStatus": 0,
+      "status": 0,
+      "stdout": "young GCs=3  span=4.000s  region=2MiB\nEden refill ~ 30.0 MiB/s   old growth ~ 3.0 MiB/s   (old growth/Eden refill = 10.0%)\n",
+      "stderr": ""
+    },
+    {
+      "name": "rates",
+      "args": [
+        "--posix",
+        "-f",
+        "rates.awk"
+      ],
+      "expectedStatus": 0,
+      "status": 0,
+      "stdout": "young GCs=3  span=2.000s  region=2MiB\nEden refill ~ 60.0 MiB/s   old growth ~ 6.0 MiB/s   (old growth/Eden refill = 10.0%)\n",
+      "stderr": ""
+    },
+    {
+      "name": "rates",
+      "args": [
+        "--posix",
+        "-v",
+        "region_mb=2",
+        "-f",
+        "rates.awk"
+      ],
+      "expectedStatus": 0,
+      "status": 0,
+      "stdout": "young GCs=3  span=4.000s  region=2MiB\nEden refill ~ 30.0 MiB/s   old growth ~ 3.0 MiB/s   (old growth/Eden refill = 10.0%)\n",
+      "stderr": ""
+    },
+    {
+      "name": "rates",
+      "args": [
+        "--posix",
+        "-f",
+        "rates.awk"
+      ],
+      "expectedStatus": 1,
+      "status": 1,
+      "stdout": "incomplete, duplicate, nonchronological or unsupported window; split/repair input\n",
+      "stderr": ""
+    },
+    {
+      "name": "rates",
+      "args": [
+        "--posix",
+        "-f",
+        "rates.awk"
+      ],
+      "expectedStatus": 1,
+      "status": 1,
+      "stdout": "incomplete, duplicate, nonchronological or unsupported window; split/repair input\n",
+      "stderr": ""
+    },
+    {
+      "name": "rates",
+      "args": [
+        "--posix",
+        "-f",
+        "rates.awk"
+      ],
+      "expectedStatus": 1,
+      "status": 1,
+      "stdout": "incomplete, duplicate, nonchronological or unsupported window; split/repair input\n",
+      "stderr": ""
+    },
+    {
+      "name": "rates",
+      "args": [
+        "--posix",
+        "-f",
+        "rates.awk"
+      ],
+      "expectedStatus": 1,
+      "status": 1,
+      "stdout": "non-positive observation span or Eden refill; cannot compute a rate\n",
+      "stderr": ""
+    },
+    {
+      "name": "rates",
+      "args": [
+        "--posix",
+        "-f",
+        "rates.awk"
+      ],
+      "expectedStatus": 1,
+      "status": 1,
+      "stdout": "incomplete, duplicate, nonchronological or unsupported window; split/repair input\n",
+      "stderr": ""
+    },
+    {
+      "name": "rates",
+      "args": [
+        "--posix",
+        "-f",
+        "rates.awk"
+      ],
+      "expectedStatus": 1,
+      "status": 1,
+      "stdout": "need >= 2 young GCs and a Heap Region Size line (or -v region_mb=N)\n",
+      "stderr": ""
+    },
+    {
+      "name": "completions",
+      "args": [
+        "--posix",
+        "-f",
+        "completions.awk"
+      ],
+      "expectedStatus": 1,
+      "status": 1,
+      "stdout": "[600.000s][info][gc ] GC(10) Pause Young (Normal) (G1 Evacuation Pause) 150M->100M(256M) 2ms\n[602.000s][info][gc ] GC(12) Pause Young (Normal) (G1 Evacuation Pause) 150M->100M(256M) 4ms\n[604.000s][info][gc ] GC(13) Pause Young (Normal) (G1 Evacuation Pause) 150M->100M(256M) 6ms\nduplicate/unsupported pause records or no supported G1 pause completions; discard output\n",
+      "stderr": ""
+    },
+    {
+      "name": "completions",
+      "args": [
+        "--posix",
+        "-f",
+        "completions.awk"
+      ],
+      "expectedStatus": 1,
+      "status": 1,
+      "stdout": "duplicate/unsupported pause records or no supported G1 pause completions; discard output\n",
+      "stderr": ""
+    },
+    {
+      "name": "completions",
+      "args": [
+        "--posix",
+        "-f",
+        "completions.awk"
+      ],
+      "expectedStatus": 1,
+      "status": 1,
+      "stdout": "duplicate/unsupported pause records or no supported G1 pause completions; discard output\n",
+      "stderr": ""
+    },
+    {
+      "name": "completions",
+      "args": [
+        "--posix",
+        "-f",
+        "completions.awk"
+      ],
+      "expectedStatus": 0,
+      "status": 0,
+      "stdout": "[5.000s][info][gc] GC(5) Pause Remark 2.000ms\n[6.000s][info][gc] GC(5) Pause Cleanup 1.000ms\n",
+      "stderr": ""
+    },
+    {
+      "name": "completions",
+      "args": [
+        "--posix",
+        "-f",
+        "completions.awk"
+      ],
+      "expectedStatus": 0,
+      "status": 0,
+      "stdout": "[7.000s][info][gc] GC(7) Pause Young (Concurrent Start) (G1 Humongous Allocation) (Evacuation Failure: Allocation) 200M->190M(256M) 3.000ms\n",
+      "stderr": ""
+    },
+    {
+      "name": "causes",
+      "args": [
+        "--posix",
+        "-f",
+        "causes.awk"
+      ],
+      "expectedStatus": 0,
+      "status": 0,
+      "stdout": "(G1 Humongous Allocation) (Evacuation Failure: Allocation)\n",
+      "stderr": ""
+    },
+    {
+      "name": "headroom",
+      "args": [
+        "--posix",
+        "-f",
+        "headroom.awk"
+      ],
+      "expectedStatus": 1,
+      "status": 1,
+      "stdout": "no supported integer-M heap summaries\n",
+      "stderr": ""
+    },
+    {
+      "name": "quantiles",
+      "args": [
+        "--posix",
+        "-f",
+        "quantiles.awk"
+      ],
+      "expectedStatus": 1,
+      "status": 1,
+      "stdout": "no pauses found\n",
+      "stderr": ""
+    }
+  ]
+}

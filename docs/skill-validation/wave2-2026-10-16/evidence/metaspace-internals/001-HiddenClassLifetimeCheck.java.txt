@@ -1,0 +1,73 @@
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup.ClassOption;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryPoolMXBean;
+import java.lang.ref.WeakReference;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+
+public final class HiddenClassLifetimeCheck {
+    private static final int COHORT_SIZE = 128;
+    private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
+
+    public static void main(String[] args) throws Exception {
+        boolean strong = switch (args[0]) {
+            case "weak" -> false;
+            case "strong" -> true;
+            default -> throw new IllegalArgumentException("weak or strong");
+        };
+        byte[] bytes = Files.readAllBytes(Path.of("Payload.class"));
+        // Initialize measurement code before the generated cohort.
+        String before = memory();
+        long unloadedBefore = ManagementFactory.getClassLoadingMXBean().getUnloadedClassCount();
+        List<WeakReference<Class<?>>> refs = defineAndEvict(bytes, strong);
+        String afterDefinitions = memory();
+        for (int attempt = 0; attempt < 5; attempt++) {
+            System.gc(); // Isolated diagnostic fixture only; no production recommendation.
+            Thread.sleep(30);
+        }
+        long live = refs.stream().filter(ref -> ref.get() != null).count();
+        long unloadedDelta = ManagementFactory.getClassLoadingMXBean().getUnloadedClassCount() - unloadedBefore;
+        if (strong && live != COHORT_SIZE) throw new AssertionError("Strong cohort unexpectedly lost classes");
+        String result = "{\"mode\":\"" + args[0] + "\",\"cohortSize\":" + COHORT_SIZE
+                + ",\"cacheEntriesAfterEviction\":0,\"weakReferencesStillLive\":" + live
+                + ",\"unloadedClassDelta\":" + unloadedDelta
+                + ",\"loaderStillReachable\":" + (LOOKUP.lookupClass().getClassLoader() != null)
+                + ",\"coverageEstablished\":" + (strong || live == 0)
+                + ",\"runtime\":\"" + Runtime.version() + "\",\"before\":" + before
+                + ",\"afterDefinitions\":" + afterDefinitions + ",\"afterGc\":" + memory() + "}\n";
+        Files.writeString(Path.of(args[0] + "-results.json"), result);
+        System.out.print(result);
+    }
+
+    private static List<WeakReference<Class<?>>> defineAndEvict(byte[] bytes, boolean strong) throws Exception {
+        List<Class<?>> cache = new ArrayList<>();
+        List<WeakReference<Class<?>>> observations = new ArrayList<>();
+        ClassOption[] options = strong ? new ClassOption[] {ClassOption.STRONG} : new ClassOption[0];
+        for (int index = 0; index < COHORT_SIZE; index++) {
+            Class<?> generated = LOOKUP.defineHiddenClass(bytes, false, options).lookupClass();
+            cache.add(generated);
+            observations.add(new WeakReference<>(generated));
+            if (cache.size() > 8) cache.remove(0);
+        }
+        cache.clear();
+        return observations;
+    }
+
+    private static String memory() {
+        long used = 0;
+        long committed = 0;
+        for (MemoryPoolMXBean pool : ManagementFactory.getMemoryPoolMXBeans()) {
+            if (pool.getName().equals("Metaspace") || pool.getName().equals("Compressed Class Space")) {
+                // Metaspace MXBean includes both spaces; do not add the class subset.
+                if (pool.getName().equals("Metaspace")) {
+                    used += pool.getUsage().getUsed();
+                    committed += pool.getUsage().getCommitted();
+                }
+            }
+        }
+        return "{\"metaspaceUsed\":" + used + ",\"metaspaceCommitted\":" + committed + "}";
+    }
+}

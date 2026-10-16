@@ -1,0 +1,277 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "latency-statistics",
+  "reviewDate": "2026-10-16",
+  "ownedPath": "skills/latency-statistics/**",
+  "allWritesStopped": true,
+  "runningProcesses": [],
+  "versions": {
+    "committed": "1.4.5",
+    "assignment": "1.4.5",
+    "final": "1.4.6",
+    "rationale": "One patch for a supported content correction. No pre-existing version bump or content edits."
+  },
+  "baseline": {
+    "staged": [],
+    "unstaged": [],
+    "untracked": [],
+    "retainedContentAndHashes": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/latency-statistics/baseline.json",
+    "completePackageInspected": true
+  },
+  "reviewCriteria": [
+    "Population/clock/outcome consistency and missingness before latency inference.",
+    "Distinguish histogram/query representation from the independent experimental unit and actual sample count.",
+    "Preserve appropriate monitoring while preventing exact confidence claims from extrapolated counts.",
+    "Retain mixture, censoring, quantile-resolution and coordinated-omission boundaries without turning this statistical skill into an experimental pipeline."
+  ],
+  "findingsCorrected": [
+    {
+      "location": "skills/latency-statistics/SKILL.md:32",
+      "finding": "Count provenance was implicit at the point where counts become sample size.",
+      "correction": "Trace observed versus rate-derived counts and route conditional details to the histogram reference."
+    },
+    {
+      "location": "skills/latency-statistics/references/histograms-and-aggregation.md:57",
+      "finding": "Existing correct rate-based queries could be mistaken for raw event populations by downstream binomial or rank calculations.",
+      "correction": "Follow recording rules, counter samples, timestamps and resets; explain the verified 250-to-300 extrapolation and require cohort coverage or an explicit observation model for inference.",
+      "consequence": "Prevents fabricated n from turning an unsupported exact-confidence release decision into a pass while keeping monitoring queries usable."
+    }
+  ],
+  "findingsRemaining": [],
+  "filesChangedByReviewer": [
+    "skills/latency-statistics/SKILL.md",
+    "skills/latency-statistics/references/histograms-and-aggregation.md",
+    "skills/latency-statistics/skill.yaml"
+  ],
+  "preExistingChanges": [],
+  "capabilitiesPreserved": [
+    "All original activation/scope boundaries and declared dependencies/suggestions.",
+    "Independent-unit, paired/hierarchical and quantile uncertainty guidance.",
+    "Actual versus common traffic-mixture estimands and CDF standardization.",
+    "Timeout terminal latency versus censored eventual completion.",
+    "HDR/Micrometer representation and ownership contracts, Prometheus bucket edge cases.",
+    "Load-generation observation process and modeled coordinated-omission correction.",
+    "Monitoring by compatible rate-based histograms and threshold ratios."
+  ],
+  "capabilitiesReplacedOrRemoved": [],
+  "compatibility": {
+    "javaBaseline": "Statistical guidance has no Java baseline; existing partial Java instrumentation snippets unchanged and not recompiled.",
+    "prometheus": "Illustrative arithmetic verified against ordinary, unmodified rate/increase path in tagged Prometheus v3.8.0 source; no server/Go runtime available.",
+    "runtimeUsed": "Node v25.6.1",
+    "dependencyChanges": "None"
+  },
+  "commandsAndResults": [
+    {
+      "command": "Get-Content 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/latency-statistics/validate-local.mjs' -Raw | node --input-type=module 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/latency-statistics/package-validation.log'\nexit $LASTEXITCODE",
+      "workingDirectory": "C:/git/agent-skills",
+      "exitCode": 0,
+      "output": "{\r\n  \"version\": \"1.4.6\",\r\n  \"packageFiles\": [\r\n    \"SKILL.md\",\r\n    \"references/comparing-two-measurements.md\",\r\n    \"references/coordinated-omission.md\",\r\n    \"references/histograms-and-aggregation.md\",\r\n    \"skill.yaml\"\r\n  ],\r\n  \"issues\": [],\r\n  \"linksChecked\": 3,\r\n  \"declaredTargetsChecked\": 7\r\n}\r\n",
+      "classification": "executed structural/local technical check"
+    },
+    {
+      "command": "node 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/latency-statistics/numerical-controls.mjs' 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/latency-statistics/numerical-controls.log'\nexit $LASTEXITCODE",
+      "workingDirectory": "C:/git/agent-skills",
+      "exitCode": 0,
+      "output": "{\r\n  \"classification\": \"source-backed arithmetic and independent event-ledger controls; no PromQL runtime\",\r\n  \"node\": \"v25.6.1\",\r\n  \"range\": {\r\n    \"start\": 0,\r\n    \"end\": 360\r\n  },\r\n  \"sampleTimes\": [\r\n    30,\r\n    90,\r\n    150,\r\n    210,\r\n    270,\r\n    330\r\n  ],\r\n  \"sampleValues\": [\r\n    1000,\r\n    1050,\r\n    1100,\r\n    1150,\r\n    1200,\r\n    1250\r\n  ],\r\n  \"observedIncrements\": 250,\r\n  \"extrapolationFactor\": 1.2,\r\n  \"increase\": 300,\r\n  \"ledgerResults\": {\r\n    \"onlyObserved\": {\r\n      \"actualN\": 250,\r\n      \"actualCompliant\": 250,\r\n      \"queryIncrease\": 300,\r\n      \"queryCompliantIncrease\": 300\r\n    },\r\n    \"hiddenCompliant\": {\r\n      \"actualN\": 300,\r\n      \"actualCompliant\": 300,\r\n      \"queryIncrease\": 300,\r\n      \"queryCompliantIncrease\": 300\r\n    },\r\n    \"hiddenSlow\": {\r\n      \"actualN\": 300,\r\n      \"actualCompliant\": 250,\r\n      \"queryIncrease\": 300,\r\n      \"queryCompliantIncrease\": 300\r\n    }\r\n  },\r\n  \"exactBinomialAllSuccess\": {\r\n    \"assumptions\": \"fixed n independent Bernoulli trials, one-sided 95% lower bound\",\r\n    \"n250Lower\": 0.9880885802850193,\r\n    \"n300Lower\": 0.9900639180555423,\r\n    \"fabricatedNChanges99PercentDecision\": true,\r\n    \"probabilityOf250SuccessesAtP99\": 0.08105851616218128\r\n  },\r\n  \"regressionControls\": {\r\n    \"type1MixtureP99A\": 10,\r\n    \"type1MixtureP99B\": 500,\r\n    \"type1RankN200\": 198,\r\n    \"weightedQuantileAverage\": 19.8\r\n  },\r\n  \"checksPassed\": true\r\n}\r\n",
+      "classification": "executed numerical control, not PromQL runtime or agent evaluation"
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/latency-statistics/SKILL.md skills/latency-statistics/skill.yaml skills/latency-statistics/references/histograms-and-aggregation.md skills/latency-statistics/references/comparing-two-measurements.md skills/latency-statistics/references/coordinated-omission.md 2>&1 | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/latency-statistics/format.log'\nexit $LASTEXITCODE",
+      "workingDirectory": "C:/git/agent-skills",
+      "exitCode": 0,
+      "output": "Checking formatting...\r\nAll matched files use Prettier code style!\r\n",
+      "classification": "executed structural/local technical check"
+    },
+    {
+      "command": "git diff --check -- skills/latency-statistics",
+      "workingDirectory": "C:/git/agent-skills",
+      "exitCode": 0,
+      "output": "",
+      "classification": "executed structural/local technical check"
+    }
+  ],
+  "sourceAcquisition": [
+    {
+      "command": "Invoke-WebRequest -Uri https://raw.githubusercontent.com/prometheus/prometheus/v3.8.0/promql/functions.go -OutFile <evidenceDir>/prometheus-v3.8.0-functions.go",
+      "workingDirectory": "C:/git/agent-skills",
+      "exitCode": 0,
+      "sha256": "8502C88F2BBA7C3E717AD3C859FFBF248F9512CEF864843239BFE2756D066E4B"
+    },
+    {
+      "command": "Invoke-WebRequest -Uri https://www.itl.nist.gov/div898/handbook/prc/section2/prc241.htm -OutFile <evidenceDir>/nist-binomial-confidence.html",
+      "workingDirectory": "C:/git/agent-skills",
+      "exitCode": 0,
+      "sha256": "CAC34570BC501CF47F5B957A4166E89ECD7809145206D80E951B253DB04EEA8C"
+    }
+  ],
+  "availability": {
+    "command": "Get-Command node,promtool,go -ErrorAction SilentlyContinue",
+    "workingDirectory": "C:/git/agent-skills",
+    "exitCode": 1,
+    "result": "Node found. promtool and go not found. This availability probe is the only nonzero command result; no installation attempted."
+  },
+  "validationArtifacts": {
+    "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/latency-statistics",
+    "retainedSources": [
+      "baseline.json",
+      "validate-local.mjs",
+      "numerical-controls.mjs",
+      "prometheus-v3.8.0-functions.go",
+      "nist-binomial-confidence.html"
+    ],
+    "retainedLogs": ["package-validation.log", "numerical-controls.log", "format.log"],
+    "retainedRawEvidence": true,
+    "removedHarness": false,
+    "structuralResult": "Strict package validation with both adapters: 5 package files, 0 issues; 3 Markdown links and 7 declared skill targets resolved. All 5 files pass Prettier; git diff --check passes.",
+    "numericalResult": "The same counter samples admit event ledgers of 250/250 compliant, 300/300 compliant, or 250/300 compliant within the requested window, while source-backed query arithmetic returns 300/300. Exact all-success lower bounds differ at the 99% decision threshold: n250=0.9880885802850193, n300=0.9900639180555423. Existing mixture/type-1 rank controls also pass.",
+    "numericalScope": "Independent event-ledger oracles plus narrow source-backed arithmetic; no Prometheus server or PromQL evaluator was executed."
+  },
+  "behavioralEvaluations": {
+    "executed": [],
+    "measuredGain": false,
+    "walkthroughs": [
+      "Complete fenced interval counts preserve the exact-binomial gate pass under the fixture assumptions.",
+      "Estimated range counts require revision of the exact release-confidence claim; monitoring stays descriptive and valid within its model."
+    ]
+  },
+  "developmentCases": {
+    "classification": "Known reproducible development cases, not held-out behavioral evaluations",
+    "prerequisites": "Materialize only the selected actor case's files in an isolated workspace with the skill. Do not expose this handoff, numerical-control output, or evaluator criteria to the actor. No production access, package installation or Java runtime is required.",
+    "decisiveConstraint": "Whether the reported 300 observations come from a complete fenced cohort or extrapolated range-query counts.",
+    "actorInputs": [
+      {
+        "id": "A_complete_interval_counts",
+        "task": "Review this canary latency decision against the supplied experiment and collection artifacts. Inspect how report.json was produced, recompute only supported statistics, and update decision.md. Preserve supported statements; identify the smallest missing evidence if the release decision cannot be established. Do not change production configuration or install tools.",
+        "files": {
+          "experiment.md": "The controlled replay uses independent identically distributed Bernoulli indicators for terminal latency at most 300 ms. Arrival scheduling is independent of these outcomes. There are no timeouts, drops, retries or counter resets in this fixture. The population parameter is the generator's compliant fraction, not a causal build contrast. The analysis window (0, 360] seconds and the single analysis time were chosen before collecting data. Gate: the exact one-sided 95% lower confidence bound must be at least 0.99. A complete cohort count can support the binomial model; no event payloads are required. All times use the same monotonic clock.",
+          "report.json": "{\n  \"windowStartSeconds\": 0,\n  \"windowEndSeconds\": 360,\n  \"thresholdMs\": 300,\n  \"compliant\": 300,\n  \"terminal\": 300,\n  \"displayedCompliantFraction\": 1\n}",
+          "decision.md": "# Canary latency decision\nThe monitoring report shows 100% compliant latency. We observed 300 independent terminal requests, all within 300 ms. The exact one-sided 95% lower bound is 99.0064%, so the gate passes. Ship under the declared model.\n",
+          "report-config.json": "{\n  \"source\": \"capture.csv\",\n  \"method\": \"difference_of_fenced_boundary_counters\",\n  \"startSeconds\": 0,\n  \"endSeconds\": 360\n}",
+          "capture-contract.md": "capture.csv contains counters from one collector. The rows at t=0 and t=360 are completed, fenced snapshots for the requested cohort: every terminal outcome in (0,360] is recorded exactly once before the closing snapshot. The counters have not reset. These are observed cumulative counts, not range-query estimates.",
+          "capture.csv": "time_seconds,terminal_count,le_300ms_count\n0,1000,1000\n30,1025,1025\n90,1075,1075\n150,1125,1125\n210,1175,1175\n270,1225,1225\n330,1275,1275\n360,1300,1300\n"
+        }
+      },
+      {
+        "id": "B_extrapolated_range_counts",
+        "task": "Review this canary latency decision against the supplied experiment and collection artifacts. Inspect how report.json was produced, recompute only supported statistics, and update decision.md. Preserve supported statements; identify the smallest missing evidence if the release decision cannot be established. Do not change production configuration or install tools.",
+        "files": {
+          "experiment.md": "The controlled replay uses independent identically distributed Bernoulli indicators for terminal latency at most 300 ms. Arrival scheduling is independent of these outcomes. There are no timeouts, drops, retries or counter resets in this fixture. The population parameter is the generator's compliant fraction, not a causal build contrast. The analysis window (0, 360] seconds and the single analysis time were chosen before collecting data. Gate: the exact one-sided 95% lower confidence bound must be at least 0.99. A complete cohort count can support the binomial model; no event payloads are required. All times use the same monotonic clock.",
+          "report.json": "{\n  \"windowStartSeconds\": 0,\n  \"windowEndSeconds\": 360,\n  \"thresholdMs\": 300,\n  \"compliant\": 300,\n  \"terminal\": 300,\n  \"displayedCompliantFraction\": 1\n}",
+          "decision.md": "# Canary latency decision\nThe monitoring report shows 100% compliant latency. We observed 300 independent terminal requests, all within 300 ms. The exact one-sided 95% lower bound is 99.0064%, so the gate passes. Ship under the declared model.\n",
+          "report-config.json": "{\n  \"source\": \"recording-rules.yaml\",\n  \"evaluationSeconds\": 360,\n  \"serverVersion\": \"Prometheus 3.8.0\",\n  \"rawRangeSamples\": \"capture.csv\"\n}",
+          "recording-rules.yaml": "groups:\n  - name: canary\n    rules:\n      - record: canary:terminal_6m\n        expr: sum(increase(http_request_duration_seconds_count{route=\"/canary\"}[6m]))\n      - record: canary:compliant_6m\n        expr: sum(increase(http_request_duration_seconds_bucket{route=\"/canary\",le=\"0.3\"}[6m]))\n",
+          "capture-contract.md": "capture.csv contains all counter samples available to these ordinary range queries from the single collector. No preceding/following snapshots or terminal event ledger are available. Counter samples were collected by periodic scrapes. There were no observed counter resets.",
+          "capture.csv": "time_seconds,terminal_count,le_300ms_count\n30,1000,1000\n90,1050,1050\n150,1100,1100\n210,1150,1150\n270,1200,1200\n330,1250,1250\n"
+        }
+      }
+    ],
+    "evaluatorOnlyCriteria": [
+      {
+        "id": "A_complete_interval_counts",
+        "expected": [
+          "Read report-config.json and capture evidence rather than accepting the summary alone.",
+          "Use the fenced difference 1300 - 1000 = 300 observed trials and successes for the full declared interval; no raw payload is needed.",
+          "Compute or verify 0.05^(1/300) = 0.9900639180555423 and retain the gate pass under the supplied iid/fixed-analysis assumptions.",
+          "Keep the monitoring result and avoid implying causal or production generalization."
+        ],
+        "failureConditions": [
+          "Rejects all aggregate counts solely because event-level rows are unavailable.",
+          "Uses a different confidence level, a two-sided bound, or a zero-failure Wald bound without resolving the declared gate.",
+          "Claims the fixture proves production independence or a causal performance improvement."
+        ]
+      },
+      {
+        "id": "B_extrapolated_range_counts",
+        "expected": [
+          "Follow report-config.json to recording rules and raw counter timestamps.",
+          "Identify 250 observed increments between t=30 and 330, with full-window increase 300 arising from 1.2 extrapolation; integer output is not 300 observed Bernoulli trials.",
+          "Revise the release inference to insufficient evidence for the full cohort while preserving the descriptive monitoring estimate.",
+          "Request/recommend complete fenced interval counts or a stated observation model; do not fabricate sample rows.",
+          "If reporting a bound for the observed subinterval, use n=250 and 0.05^(1/250) = 0.9880885802850193, label the changed interval, and do not silently substitute it for the full-window inference."
+        ],
+        "failureConditions": [
+          "Retains exact full-window release confidence using n=300 from increase.",
+          "Treats six scrape samples as six independent requests.",
+          "Rounds estimated counts and calls them raw observations.",
+          "Suppresses valid monitoring or declares a genuine latency regression from this provenance issue alone."
+        ]
+      }
+    ]
+  },
+  "sources": [
+    {
+      "url": "https://prometheus.io/docs/prometheus/latest/querying/functions/#increase",
+      "verifiedOn": "2026-10-16",
+      "verifiedClaim": "increase extrapolates to range boundaries and may be noninteger; rate produces per-second estimates. Supports provenance distinction, not invalidation of monitoring.",
+      "type": "official current documentation"
+    },
+    {
+      "url": "https://github.com/prometheus/prometheus/blob/v3.8.0/promql/functions.go",
+      "rawUrl": "https://raw.githubusercontent.com/prometheus/prometheus/v3.8.0/promql/functions.go",
+      "version": "v3.8.0",
+      "verifiedClaim": "ordinary extrapolatedRate uses first/last samples, boundary-gap conditions and factor; the six-sample no-reset example yields 250*1.2=300.",
+      "retainedFile": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/latency-statistics/prometheus-v3.8.0-functions.go",
+      "type": "primary tagged implementation"
+    },
+    {
+      "url": "https://www.itl.nist.gov/div898/handbook/prc/section2/prc241.htm",
+      "verifiedOn": "2026-10-16",
+      "verifiedClaim": "Binomial confidence constructions use outcomes within an observed sample; the all-success one-sided bound follows by solving p^n=alpha.",
+      "retainedFile": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/latency-statistics/nist-binomial-confidence.html",
+      "type": "primary NIST statistical reference; numerical example is our derivation"
+    }
+  ],
+  "finalHashes": [
+    {
+      "Path": "C:\\git\\agent-skills\\skills\\latency-statistics\\SKILL.md",
+      "Hash": "96EC1DA5ED9855408BCCEAEBCC7ABBA4C583BC43253F77D0B5C9D33F262B0104"
+    },
+    {
+      "Path": "C:\\git\\agent-skills\\skills\\latency-statistics\\skill.yaml",
+      "Hash": "7CB5C2F6644F4809595DB0F0D3EEEA58D7299C2631AF4DF84D8A059FC6E24CBB"
+    },
+    {
+      "Path": "C:\\git\\agent-skills\\skills\\latency-statistics\\references\\comparing-two-measurements.md",
+      "Hash": "54FE649678193D70D1F8BD931F2465FC55A60E60F7828B2D88B9BC2B3C27FBEB"
+    },
+    {
+      "Path": "C:\\git\\agent-skills\\skills\\latency-statistics\\references\\coordinated-omission.md",
+      "Hash": "9247AC41C53A2BA4CA2659399801BE463A8D5CCC4C9D1E58242125B7E3343040"
+    },
+    {
+      "Path": "C:\\git\\agent-skills\\skills\\latency-statistics\\references\\histograms-and-aggregation.md",
+      "Hash": "0D796F4F24FBF89880ED64B446DF97D3DEFEDD26AD9F545B7CD03A580E6B1D5F"
+    }
+  ],
+  "finalInspection": {
+    "diffAgainstAssignment": "Assignment package was clean; current diff against HEAD matches reviewer edits in precisely three files. Other two reference hashes unchanged.",
+    "stagedChanges": [],
+    "untrackedOwnedFiles": [],
+    "noActiveWriters": true
+  },
+  "limitations": [
+    "No independent agent behavioral evaluation and no measured skill improvement.",
+    "No Prometheus/PromQL runtime was available; numerical example verified from tagged source and arithmetic, with independent event-ledger counterexamples.",
+    "Exact-binomial numerical contrast assumes iid Bernoulli outcomes and a prespecified analysis; it does not establish those conditions for production telemetry.",
+    "No claim that interval counts alone recover raw quantile values; existing histogram representation and dependence requirements still apply.",
+    "Global registry/version/dependency verification intentionally deferred to coordinator."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Shared generated registry; run only after every reviewer stops writing.",
+      "prerequisites": "All reviewers stopped writing."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Parallel-review constraint; no repository-wide verification claimed.",
+      "prerequisites": "Registry regenerated and catalog candidate stable."
+    }
+  ],
+  "crossSkillIssues": [],
+  "coordinatorActions": [
+    "Archive the full JSON and retained sources/logs; execute separated behavioral cases only if selected for independent evaluation; run global checks after all writers stop."
+  ]
+}

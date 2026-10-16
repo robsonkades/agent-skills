@@ -1,0 +1,11 @@
+# Availability persistence decision
+
+Status: proposed
+
+Current access uses OperatorGateway SQL, with availability policy in AvailabilityService. Each command is wrapped in one resource-local transaction and each update checks the selected row's version.
+
+Proposal: introduce a second domain representation plus JPA entity mapping. Use @Version on each entity. The ORM unit of work is expected to resolve any remaining concurrent availability issue. No specific object/table mismatch has been identified yet.
+
+Accepted constraints: preserve Java 17 compatibility, the operations-owned minimum, and optimistic guards for stale selected-row edits. No framework upgrade or schema migration is approved by this draft.
+
+Validation: pending review of the supplied code and transaction probe.

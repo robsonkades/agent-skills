@@ -1,0 +1,47 @@
+# Revisão da exportação local
+
+## Resultado e causa
+
+A violação foi reproduzida pelo comando aceito e corrigida em `project/launch.json`: `.build/app` agora precede `lib/compat.jar` no classpath. O código de normalização já estava correto. A configuração anterior carregava a classe homônima `work.Normalizer` do JAR, que substitui CRLF, mas não CR isolado.
+
+O `check` original passava porque executava `SelfTest` com `.build/app` e `.build/test`, sem usar a configuração de exportação. Portanto, não exercitava o caminho que falhava. A correção preserva integralmente as fontes Java, o teste Java existente, o contrato, a fixture e a biblioteca.
+
+## Evidências e hipóteses
+
+- Contrato observado: `contract.md` exige CRLF → LF, CR isolado → LF, preservação dos demais caracteres e disponibilidade de `LegacyBanner`. O alvo permanece Java 17; o runtime permanece Temurin 25.0.3+9.
+- Controle original: `node run.mjs check` retornou 0 e `SelfTest PASS`. Em seguida, `node run.mjs export fixture/input.txt ../baseline-export.txt` retornou 0, imprimiu `Exporter compatible mode`, mas produziu os bytes `61 0d 62 0a 63 0a`. O esperado era `61 0a 62 0a 63 0a`.
+- A hipótese registrada antes dos diagnósticos foi que o classpath da exportação selecionava a cópia antiga do JAR. Seria refutada se a classe efetivamente carregada fosse a mesma do teste, ou se trocar apenas a ordem não corrigisse a saída.
+- `jar --list` identificou `work/Normalizer.class` e `work/LegacyBanner.class`. `javap -verbose -c` mostrou uma substituição na cópia do JAR e duas na compilação da fonte, ambas com versão de classe 61. Logs completos estão em `logs/jar-contents.stdout.log`, `logs/jar-normalizer-default.stdout.log` e `logs/app-normalizer.stdout.log`.
+- O diagnóstico com `-Xlog:class+load` confirmou `work.Normalizer` vindo do JAR na configuração original. Alterando somente a ordem do classpath, a classe veio de `.build/app` e a saída foi corrigida. Nas duas execuções, `LegacyBanner` veio do JAR. Os mesmos dados, classes compiladas, biblioteca e runtime foram usados. Logs: `logs/baseline-classes.log`, `logs/app-first-classes.log` e os respectivos `*-origin-lines.stdout.log`.
+- A regressão reduziu a entrada a um único byte CR: a configuração original produziu `0d`, em vez de `0a`. A entrada vazia passou. CRLF, LF, texto sem CR e Unicode sem CR também passaram antes da correção; todos os quatro casos com CR isolado falharam. Essa distribuição corresponde ao bytecode antigo e não exige alterar charset ou repetir a substituição na fonte.
+
+Os diagnósticos de carregamento foram chamadas diretas à JVM, mantendo os argumentos da exportação e acrescentando somente o log de classes. A reprodução original e a validação final usaram o comando aceito, sem instrumentação.
+
+## Alterações
+
+1. `project/launch.json`: prioridade para as classes da aplicação, mantendo o JAR no classpath.
+2. `project/test/export.test.mjs`: oito casos pelo comando `node run.mjs export`, verificando bytes completos, preservação da entrada e o banner da biblioteca. Cobrem fixture original, CR mínimo, CRLF, separadores adjacentes, entrada vazia, LF e texto UTF-8, inclusive BOM, NUL, tabulação, emoji, U+2028 e sequência literal de barra invertida com `r`.
+3. `project/run.mjs`: o `check` continua executando o `SelfTest` original e também executa os testes de exportação. O executor comum conserva o limite de 30 segundos para cada subprocesso. O compilador continua usando `--release 17`.
+
+## Verificação executada
+
+| Verificação | Resultado |
+| --- | --- |
+| `node --test test/export.test.mjs`, antes da correção | Exit 1: quatro casos falharam e quatro passaram; o teste agregador também foi marcado como falho. |
+| Remoção de `.build` | Caminho absoluto resolvido e conferido dentro de `output/project` antes da remoção. |
+| `node run.mjs check`, após a correção e sem build anterior | Exit 0: `SelfTest PASS`, oito casos de exportação e o agregador passaram; nove testes reportados, zero falhas ou skips. |
+| `node run.mjs export fixture/input.txt ../final-export.txt` | Exit 0; banner preservado; bytes finais `61 0a 62 0a 63 0a`. |
+| `javap -verbose -c`, após recompilação | Classe da aplicação com as duas substituições e versão 61, correspondente ao alvo Java 17. |
+| Verificação de integridade | Todos os arquivos de `input/project`, contrato, fixture, fontes Java e teste Java original inalterados. |
+
+SHA-256 preservado de `lib/compat.jar`: `306a7086328fe3b9ec65bf292156cec22bfee690ed9ae32afb6851b1118e5fc9`. O JAR não foi extraído, reempacotado ou modificado. Sua presença funcional foi verificada pelo banner e pela origem da classe.
+
+Os resultados completos, inclusive as falhas anteriores à correção, estão em `logs/`. `execution.json` registra comandos, argumentos, cwd, saídas, códigos de saída, leituras e hashes. `audit.mjs` e `finalize-audit.mjs` conservam o procedimento de registro. Os arquivos de exportação original, diagnosticada e final foram preservados fora do projeto, dentro de `output/`.
+
+## Skill aplicada e limites
+
+Foram lidos integralmente `skill/SKILL.md` e `skill/references/method.md`, além de `TASK.md`, relato, contrato, configuração, executor, fontes, teste e fixture. A referência de método foi usada para diagnóstico diferencial, redução da entrada e experimento controlado. A referência de evidências de produção não foi aberta, pois não houve acesso nem intervenção em produção. O registro distingue leituras completas de texto, hashes binários e filtragem dos logs de carregamento.
+
+A conclusão é sobre o projeto e a execução locais fornecidos. Não houve acesso a produção, rede, instalação, atualização de dependências ou toolchain, leitura do repositório externo, outros runs, skills globais ou uso de outros agentes. Java 17 foi verificado como alvo de compilação e versão de bytecode; os testes foram executados no runtime disponível Temurin 25.0.3+9, não em uma instalação de runtime Java 17. Não foram investigados dados externos ou entradas UTF-8 inválidas, que não fazem parte da reprodução fornecida.
+
+Todos os subprocessos terminaram, sem timeouts ou processos em segundo plano. As únicas alterações de arquivos originais do projeto são `launch.json` e `run.mjs`; o teste de exportação é novo. A finalização registra `allWritesStopped: true` e encerra as escritas.

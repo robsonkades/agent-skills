@@ -1,0 +1,56 @@
+$ErrorActionPreference = 'Stop'
+$probeDirectory = $PSScriptRoot
+$javaTools = 'C:/Users/robso/.jdks/temurin-25.0.3/bin'
+$probeResults = [System.Collections.Generic.List[object]]::new()
+foreach ($directory in @('classes-original', 'classes-isolated-original', 'classes-core', 'classes-inverted', 'empty')) {
+    New-Item -ItemType Directory -Path (Join-Path $probeDirectory $directory) -Force | Out-Null
+}
+function Invoke-ProbeProcess {
+    param([string]$Label, [string]$Tool, [string[]]$Arguments, [int]$ExpectedExit = 0)
+    $stdoutPath = Join-Path $probeDirectory ($Label + '.stdout.log')
+    $stderrPath = Join-Path $probeDirectory ($Label + '.stderr.log')
+    $quoted = @($Arguments | ForEach-Object { '"' + $_ + '"' })
+    $process = Start-Process -FilePath (Join-Path $javaTools $Tool) -ArgumentList $quoted -PassThru -WindowStyle Hidden -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath
+    if (-not $process.WaitForExit(30000)) {
+        $process.Kill()
+        $process.WaitForExit()
+        throw "$Label exceeded 30 seconds"
+    }
+    $process.Refresh()
+    $result = [pscustomobject]@{ label=$Label; tool=$Tool; arguments=$Arguments; exitCode=$process.ExitCode; expectedExit=$ExpectedExit; stdout=(Get-Content -LiteralPath $stdoutPath -Raw); stderr=(Get-Content -LiteralPath $stderrPath -Raw) }
+    $probeResults.Add($result)
+    Write-Output "$Label exit code: $($process.ExitCode); expected: $ExpectedExit"
+    if ($result.stdout) { Write-Output $result.stdout }
+    if ($result.stderr) { Write-Output $result.stderr }
+    if ($process.ExitCode -ne $ExpectedExit) { throw "$Label unexpected exit code" }
+}
+$originalSources = @(
+    (Join-Path $probeDirectory 'case-fixtures/src/com/acme/orders/domain/OrderService.java'),
+    (Join-Path $probeDirectory 'case-fixtures/src/com/acme/orders/integration/LocalNotifier.java'),
+    (Join-Path $probeDirectory 'case-fixtures/src/com/acme/orders/web/OrderController.java'),
+    (Join-Path $probeDirectory 'case-fixtures/src/com/acme/orders/Bootstrap.java')
+)
+$invertedCore = @(
+    (Join-Path $probeDirectory 'counterfactual/com/acme/orders/domain/NotificationPort.java'),
+    (Join-Path $probeDirectory 'counterfactual/com/acme/orders/domain/OrderService.java')
+)
+$empty = Join-Path $probeDirectory 'empty'
+Invoke-ProbeProcess 'version' 'java.exe' @('-version')
+Invoke-ProbeProcess 'compile-original' 'javac.exe' (@('--release', '17', '-d', (Join-Path $probeDirectory 'classes-original')) + $originalSources + @((Join-Path $probeDirectory 'BoundaryProbe.java')))
+Invoke-ProbeProcess 'compile-isolated-original' 'javac.exe' @('--release', '17', '-classpath', $empty, '-sourcepath', $empty, '-d', (Join-Path $probeDirectory 'classes-isolated-original'), $originalSources[0]) 1
+$diagnostic = Get-Content -LiteralPath (Join-Path $probeDirectory 'compile-isolated-original.stderr.log') -Raw
+if ($diagnostic -notmatch 'package com[.]acme[.]orders[.]integration does not exist') {
+    throw 'Isolated compilation failed without the expected integration dependency diagnostic'
+}
+Invoke-ProbeProcess 'compile-inverted-core' 'javac.exe' (@('--release', '17', '-classpath', $empty, '-sourcepath', $empty, '-d', (Join-Path $probeDirectory 'classes-core')) + $invertedCore)
+$invertedSources = $invertedCore + @(
+    (Join-Path $probeDirectory 'counterfactual/com/acme/orders/integration/LocalNotifier.java'),
+    $originalSources[2],
+    $originalSources[3],
+    (Join-Path $probeDirectory 'BoundaryProbe.java')
+)
+Invoke-ProbeProcess 'compile-inverted-complete' 'javac.exe' (@('--release', '17', '-d', (Join-Path $probeDirectory 'classes-inverted')) + $invertedSources)
+Invoke-ProbeProcess 'run-original' 'java.exe' @('--limit-modules', 'java.base', '-cp', (Join-Path $probeDirectory 'classes-original'), 'BoundaryProbe')
+Invoke-ProbeProcess 'run-inverted' 'java.exe' @('--limit-modules', 'java.base', '-cp', (Join-Path $probeDirectory 'classes-inverted'), 'BoundaryProbe')
+$probeResults | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $probeDirectory 'results.json') -Encoding utf8
+Write-Output 'PASS: all seven subprocess checks reached their expected result'

@@ -1,0 +1,83 @@
+{
+  "status": "PASS",
+  "checks": [
+    "rare disjoint stage tails cannot be added",
+    "same marginals with co-occurrence change total p99",
+    "total p99 can also be below sum of component p99s",
+    "nonnegative matched-stage marginal lower bound is retained",
+    "independent fan-out table rounded probabilities",
+    "perfectly correlated leaves reach lower union bound",
+    "mutually exclusive leaf stragglers reach upper union bound",
+    "FIFO constructed backlog completions",
+    "later request latency is wait plus service, not earlier pause duration",
+    "same earlier pause without prior arrivals leaves no backlog"
+  ],
+  "numericalExamples": {
+    "disjointRare": {
+      "a": 0,
+      "b": 0,
+      "total": 100
+    },
+    "coincidentRare": {
+      "a": 0,
+      "b": 0,
+      "total": 0
+    },
+    "disjointFrequent": {
+      "a": 100,
+      "b": 100,
+      "total": 100
+    },
+    "independent": [
+      0.010000000000000009,
+      0.09561792499119559,
+      0.6339676587267709,
+      0.9999568287525893
+    ],
+    "backlog": [
+      {
+        "arrival": 10,
+        "start": 100,
+        "finish": 110,
+        "wait": 90,
+        "latency": 100
+      },
+      {
+        "arrival": 30,
+        "start": 110,
+        "finish": 120,
+        "wait": 80,
+        "latency": 90
+      },
+      {
+        "arrival": 50,
+        "start": 120,
+        "finish": 130,
+        "wait": 70,
+        "latency": 80
+      },
+      {
+        "arrival": 70,
+        "start": 130,
+        "finish": 140,
+        "wait": 60,
+        "latency": 70
+      },
+      {
+        "arrival": 90,
+        "start": 140,
+        "finish": 150,
+        "wait": 50,
+        "latency": 60
+      },
+      {
+        "arrival": 110,
+        "start": 150,
+        "finish": 160,
+        "wait": 40,
+        "latency": 50
+      }
+    ]
+  },
+  "limitations": "Deterministic calculations of teaching examples, not production measurements, a queue-model validation or an agent evaluation."
+}

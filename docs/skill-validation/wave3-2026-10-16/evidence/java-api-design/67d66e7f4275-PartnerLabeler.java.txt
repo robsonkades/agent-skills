@@ -1,0 +1,8 @@
+package client;
+
+public final class PartnerLabeler extends api.Labeler {
+    @Override
+    public String getLabel(String value) {
+        return "partner:" + super.getLabel(value);
+    }
+}

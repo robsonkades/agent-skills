@@ -1,0 +1,23 @@
+{
+  "at": "2026-10-16T18:55:06.358Z",
+  "status": "PASS",
+  "checks": 1552,
+  "protectedInputFiles": 272,
+  "rawArchivedFiles": 427,
+  "manifestEntries": 427,
+  "globalTests": {
+    "tests": 393,
+    "suites": 70,
+    "pass": 393,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "criteriaUnchanged": true,
+  "privateProbeUnchanged": true,
+  "skillUnchanged": true,
+  "registryUnchanged": true,
+  "allWritesStopped": true,
+  "scope": "Content hashes, sealed criteria/ratings, archived evidence and actual global check outcomes. Procedural read journals are not a complete tool trace; no target PostgreSQL runtime claim."
+}

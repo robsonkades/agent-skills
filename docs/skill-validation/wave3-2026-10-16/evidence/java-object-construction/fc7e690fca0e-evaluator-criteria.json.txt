@@ -1,0 +1,65 @@
+[
+  {
+    "id": "java-object-construction-case-a",
+    "evaluator": {
+      "requiredBehavior": [
+        "Inspect Defaults.region and the actual initialization path, not only the apparent holder idiom.",
+        "Preserve Catalog.instance/region signatures, lazy creation, RegionConfig as the configuration source and documented per-defining-loader identity.",
+        "Keep any correction limited to the supplied sample; do not add a DI container, switch Java versions, or claim unmeasured performance improvement.",
+        "Verify first-use behavior in a fresh JVM/defining loader; distinguish --release 21 compilation from the actual VM used.",
+        "Report executed checks and any limitations, not hypothetical success."
+      ],
+      "failureConditions": [
+        "Approves all holder implementations solely because Holder.INSTANCE is static final.",
+        "Treats later access to an already initialized class as sufficient coverage of first-use construction.",
+        "Diagnoses a publication race without inspecting the recursive dependency or proposes volatile/additional locking as a complete cycle fix.",
+        "Replaces the configuration with a test-specific hard-coded value, or changes the declared lifecycle/identity contract.",
+        "Claims a no-change or implementation outcome unsupported by the actual artifact and available checks."
+      ],
+      "prerequisites": [
+        "Provide only the actorInput file/ordinary fixture to the actor. Withhold evaluator criteria, prior technical results and InitializationProbe.",
+        "Materialize files in a writable isolated fixture directory; do not expose the peer case's answer or revised solution.",
+        "Java 21+ compiler can use --release 21 for these non-preview examples. Report the runtime; no newer toolchain installation is authorized.",
+        "These development cases are not held out. File separation alone does not enforce isolation."
+      ],
+      "decisiveConstraint": "Defaults.region reads RegionConfig.REGION; the construction dependency path does not re-enter Catalog.instance.",
+      "expectedOutcome": [
+        "Conclude no construction-cycle defect is supported by the supplied code; retain the adequate holder design.",
+        "Show the dependency path is acyclic with respect to Catalog initialization and the first-access/identity check passes if executed.",
+        "Do not manufacture a need for a builder, interface, eager singleton, retry loop or broad rewrite."
+      ]
+    }
+  },
+  {
+    "id": "java-object-construction-case-b",
+    "evaluator": {
+      "requiredBehavior": [
+        "Inspect Defaults.region and the actual initialization path, not only the apparent holder idiom.",
+        "Preserve Catalog.instance/region signatures, lazy creation, RegionConfig as the configuration source and documented per-defining-loader identity.",
+        "Keep any correction limited to the supplied sample; do not add a DI container, switch Java versions, or claim unmeasured performance improvement.",
+        "Verify first-use behavior in a fresh JVM/defining loader; distinguish --release 21 compilation from the actual VM used.",
+        "Report executed checks and any limitations, not hypothetical success."
+      ],
+      "failureConditions": [
+        "Approves all holder implementations solely because Holder.INSTANCE is static final.",
+        "Treats later access to an already initialized class as sufficient coverage of first-use construction.",
+        "Diagnoses a publication race without inspecting the recursive dependency or proposes volatile/additional locking as a complete cycle fix.",
+        "Replaces the configuration with a test-specific hard-coded value, or changes the declared lifecycle/identity contract.",
+        "Claims a no-change or implementation outcome unsupported by the actual artifact and available checks."
+      ],
+      "prerequisites": [
+        "Provide only the actorInput file/ordinary fixture to the actor. Withhold evaluator criteria, prior technical results and InitializationProbe.",
+        "Materialize files in a writable isolated fixture directory; do not expose the peer case's answer or revised solution.",
+        "Java 21+ compiler can use --release 21 for these non-preview examples. Report the runtime; no newer toolchain installation is authorized.",
+        "These development cases are not held out. File separation alone does not enforce isolation."
+      ],
+      "decisiveConstraint": "Only Defaults.region's return expression changes; it re-enters the Catalog being constructed.",
+      "expectedOutcome": [
+        "Follow Catalog.instance -> Holder initialization -> Catalog constructor -> Defaults.region -> Catalog.instance and identify the still-unassigned holder value.",
+        "Explain the observed null dereference/ExceptionInInitializerError and that later same-loader access does not retry the erroneous holder.",
+        "Make the smallest in-scope correction that removes the dependency on unfinished Catalog state while still sourcing the region from RegionConfig.",
+        "Run the existing first-use/identity check in a fresh process when execution is available and report the actual result."
+      ]
+    }
+  }
+]

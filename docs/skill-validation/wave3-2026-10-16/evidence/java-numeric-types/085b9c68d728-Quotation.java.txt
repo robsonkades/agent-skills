@@ -1,0 +1,11 @@
+import java.math.*;
+public final class Quotation {
+    private final AmountParser parser;
+    public Quotation(AmountParser parser) { this.parser = parser; }
+    public BigDecimal unitPrice(String total, int units) {
+        if (units <= 0) throw new IllegalArgumentException("units must be positive");
+        BigDecimal amount = parser.parse(total);
+        return amount.divide(BigDecimal.valueOf(units), RoundingMode.HALF_UP)
+            .setScale(2, RoundingMode.HALF_UP);
+    }
+}

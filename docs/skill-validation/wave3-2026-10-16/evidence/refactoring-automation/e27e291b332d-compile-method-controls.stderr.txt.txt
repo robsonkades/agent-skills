@@ -1,0 +1,54 @@
+warning: [options] source value 8 is obsolete and will be removed in a future release
+warning: [options] target value 8 is obsolete and will be removed in a future release
+warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+C:\Users\robso\AppData\Local\Temp\skills-wave3-validation-wyg7TL\refactoring-automation\method-harness\src\org\openrewrite\maven\MethodControls.java:6: error: unclosed string literal
+  static final String A="class A {}
+                        ^
+C:\Users\robso\AppData\Local\Temp\skills-wave3-validation-wyg7TL\refactoring-automation\method-harness\src\org\openrewrite\maven\MethodControls.java:8: error: illegal start of type
+", LOCAL="keep this unrelated local work
+^
+C:\Users\robso\AppData\Local\Temp\skills-wave3-validation-wyg7TL\refactoring-automation\method-harness\src\org\openrewrite\maven\MethodControls.java:8: error: as of release 8, 'this' is allowed as the parameter name for the receiver type only
+", LOCAL="keep this unrelated local work
+               ^
+  which has to be the first parameter, and cannot be a lambda parameter
+C:\Users\robso\AppData\Local\Temp\skills-wave3-validation-wyg7TL\refactoring-automation\method-harness\src\org\openrewrite\maven\MethodControls.java:8: error: ';' expected
+", LOCAL="keep this unrelated local work
+                   ^
+C:\Users\robso\AppData\Local\Temp\skills-wave3-validation-wyg7TL\refactoring-automation\method-harness\src\org\openrewrite\maven\MethodControls.java:8: error: ';' expected
+", LOCAL="keep this unrelated local work
+                                   ^
+C:\Users\robso\AppData\Local\Temp\skills-wave3-validation-wyg7TL\refactoring-automation\method-harness\src\org\openrewrite\maven\MethodControls.java:9: error: unclosed string literal
+";
+^
+C:\Users\robso\AppData\Local\Temp\skills-wave3-validation-wyg7TL\refactoring-automation\method-harness\src\org\openrewrite\maven\MethodControls.java:71: error: unclosed string literal
+    Path stale=setup(root,"preview-stale");Files.createDirectory(stale.resolve("reports"));write(stale.resolve("reports/rewrite.patch"),"stale report
+                                                                                                                                        ^
+C:\Users\robso\AppData\Local\Temp\skills-wave3-validation-wyg7TL\refactoring-automation\method-harness\src\org\openrewrite\maven\MethodControls.java:72: error: unclosed string literal
+");
+^
+C:\Users\robso\AppData\Local\Temp\skills-wave3-validation-wyg7TL\refactoring-automation\method-harness\src\org\openrewrite\maven\MethodControls.java:75: error: unclosed string literal
+    check(read(stale.resolve("reports/rewrite.patch")).equals("stale report
+                                                              ^
+C:\Users\robso\AppData\Local\Temp\skills-wave3-validation-wyg7TL\refactoring-automation\method-harness\src\org\openrewrite\maven\MethodControls.java:76: error: ';' expected
+"),"clean invocation does not delete a pre-existing report");snapshot(stale,reused,null);
+                    ^
+C:\Users\robso\AppData\Local\Temp\skills-wave3-validation-wyg7TL\refactoring-automation\method-harness\src\org\openrewrite\maven\MethodControls.java:76: error: ';' expected
+"),"clean invocation does not delete a pre-existing report");snapshot(stale,reused,null);
+                             ^
+C:\Users\robso\AppData\Local\Temp\skills-wave3-validation-wyg7TL\refactoring-automation\method-harness\src\org\openrewrite\maven\MethodControls.java:76: error: ';' expected
+"),"clean invocation does not delete a pre-existing report");snapshot(stale,reused,null);
+                                      ^
+C:\Users\robso\AppData\Local\Temp\skills-wave3-validation-wyg7TL\refactoring-automation\method-harness\src\org\openrewrite\maven\MethodControls.java:76: error: not a statement
+"),"clean invocation does not delete a pre-existing report");snapshot(stale,reused,null);
+                                          ^
+C:\Users\robso\AppData\Local\Temp\skills-wave3-validation-wyg7TL\refactoring-automation\method-harness\src\org\openrewrite\maven\MethodControls.java:76: error: ';' expected
+"),"clean invocation does not delete a pre-existing report");snapshot(stale,reused,null);
+                                                   ^
+C:\Users\robso\AppData\Local\Temp\skills-wave3-validation-wyg7TL\refactoring-automation\method-harness\src\org\openrewrite\maven\MethodControls.java:76: error: unclosed string literal
+"),"clean invocation does not delete a pre-existing report");snapshot(stale,reused,null);
+                                                          ^
+C:\Users\robso\AppData\Local\Temp\skills-wave3-validation-wyg7TL\refactoring-automation\method-harness\src\org\openrewrite\maven\MethodControls.java:76: error: not a statement
+"),"clean invocation does not delete a pre-existing report");snapshot(stale,reused,null);
+                                                    ^
+16 errors
+3 warnings

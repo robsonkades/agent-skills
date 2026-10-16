@@ -1,0 +1,19 @@
+import java.io.IOException;
+
+public final class Probe {
+    public static void main(String[] args) {
+        IOException workFailure = new IOException("storage failure");
+        StoredFailureResource resource = FixtureFactory.resourceFor(workFailure);
+        try {
+            Operation.run(() -> { throw workFailure; }, resource);
+            System.out.println("outcome=normal");
+        } catch (Throwable observed) {
+            System.out.println("outcome=" + observed.getClass().getName());
+            System.out.println("sameAsWork=" + (observed == workFailure));
+            System.out.println("suppressedCount=" + observed.getSuppressed().length);
+            System.out.println("causeSameAsWork=" + (observed.getCause() == workFailure));
+        }
+        System.out.println("closeCalls=" + resource.closeCalls());
+    }
+}
+

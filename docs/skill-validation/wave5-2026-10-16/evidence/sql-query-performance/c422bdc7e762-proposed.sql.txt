@@ -1,0 +1,7 @@
+SELECT customer_label FROM invoices
+WHERE tenant_id = 71 AND active = true
+UNION ALL
+SELECT customer_label FROM invoices
+WHERE tenant_id = 71 AND amount >= 100 AND NOT (active = true)
+ORDER BY customer_label;
+

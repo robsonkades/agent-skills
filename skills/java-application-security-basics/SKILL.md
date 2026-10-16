@@ -160,9 +160,12 @@ THEN define the threat model and key custody first; use a vetted AEAD constructi
   verification. Store algorithm, key version, nonce and ciphertext/tag so rotation is possible;
   never store a plaintext data-encryption key beside the ciphertext it protects. An encrypted
   (wrapped) data key may accompany the ciphertext when its wrapping key is separately protected.
-  Check the consuming API too: `CipherInputStream` may conceal integrity-check failures under
-  its documented contract. Use direct `Cipher` authentication completion or a vetted AEAD facility,
-  and verify tampered ciphertext, tag, AAD and wrong-key cases before claiming protected decryption.
+  Check the consuming API too: both `CipherInputStream` and `CipherOutputStream` can conceal
+  integrity-check failures during decryption under their documented contracts. A successful
+  `close()` or an empty result is not proof of authentication. Use direct `Cipher` authentication
+  completion or a vetted AEAD facility. Test legitimate inputs, including empty plaintext when
+  the application allows it, and reject tampered ciphertext, tag, AAD and wrong-key cases without
+  publishing output or a success effect.
 - A secret in an automatically generated record or Lombok `@Data` `toString()` can leak
   through `log.info("processing {}", request)`; check custom exclusions and renderers too.
 - Two moves make code worse. **Encrypting what only needs hashing** ("so we can support

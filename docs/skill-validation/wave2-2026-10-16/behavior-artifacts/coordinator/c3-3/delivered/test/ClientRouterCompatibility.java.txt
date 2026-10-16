@@ -1,0 +1,37 @@
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Properties;
+
+/** Expected placement is supplied from accepted-vectors.json, never from the candidate. */
+public final class ClientRouterCompatibility {
+    public static void main(String[] args) throws Exception {
+        if (args.length < 7 || (args.length - 5) % 2 != 0) {
+            throw new IllegalArgumentException(
+                    "config V key primary comma-separated-replicas node weight [node weight ...]");
+        }
+        HashRing ring = new HashRing(Integer.parseInt(args[1]));
+        for (int i = 5; i < args.length; i += 2) {
+            ring.add(args[i], Integer.parseInt(args[i + 1]));
+        }
+        Properties config = new Properties();
+        try (var input = Files.newInputStream(Path.of(args[0]))) {
+            config.load(input);
+        }
+        ClientRouter router = new ClientRouter(ring, config);
+        String key = args[2];
+        String expectedPrimary = args[3];
+        List<String> expectedReplicas = Arrays.asList(args[4].split(","));
+        String actualPrimary = router.owner(key);
+        List<String> actualReplicas = router.owners(key);
+        System.out.println(args[0] + ": key=" + key + ", primary=" + actualPrimary
+                + ", ordered replicas=" + actualReplicas);
+        if (!expectedPrimary.equals(actualPrimary) || !expectedReplicas.equals(actualReplicas)) {
+            throw new AssertionError("Placement contract mismatch: expected primary="
+                    + expectedPrimary + ", ordered replicas=" + expectedReplicas
+                    + "; actual primary=" + actualPrimary + ", ordered replicas=" + actualReplicas);
+        }
+        System.out.println("Frozen ClientRouter placement vector passed: " + args[0]);
+    }
+}

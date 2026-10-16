@@ -1,0 +1,118 @@
+{
+  "checks": [
+    {
+      "kind": "package",
+      "cwd": "C:/git/agent-skills",
+      "cmd": "@'\nimport { loadPackageFromDirectory } from './packages/core/src/application/package-loader.ts';\nimport { validatePackage } from './packages/core/src/application/validate-package.ts';\nimport { NodeFileSystem } from './packages/node/src/file-system.ts';\nimport { CodexAdapter } from './packages/adapter-codex/src/index.ts';\nimport { ClaudeCodeAdapter } from './packages/adapter-claude/src/index.ts';\nconst loaded=await loadPackageFromDirectory(new NodeFileSystem(),'skills/jit-compilation',{strict:true});\nconst report=validatePackage(loaded.pkg,{directoryName:'jit-compilation',adapters:[new CodexAdapter(),new ClaudeCodeAdapter()]});\nconst issues=[...loaded.issues,...report.issues];\nconsole.log(JSON.stringify({skill:loaded.pkg.manifest.name,version:loaded.pkg.manifest.version,files:loaded.pkg.files.length,issues},null,2));\nif(issues.length)process.exitCode=1;\n'@ | node --input-type=module",
+      "result": {
+        "chunk_id": "7df41c",
+        "wall_time_seconds": 0.216567,
+        "exit_code": 0,
+        "original_token_count": 22,
+        "output": "{\n  \"skill\": \"jit-compilation\",\n  \"version\": \"1.3.5\",\n  \"files\": 5,\n  \"issues\": []\n}\n"
+      }
+    },
+    {
+      "kind": "format",
+      "cwd": "C:/git/agent-skills",
+      "cmd": "node node_modules/prettier/bin/prettier.cjs --check skills/jit-compilation/SKILL.md skills/jit-compilation/references/tiered-compilation-model.md skills/jit-compilation/references/warmup-and-cold-start.md skills/jit-compilation/skill.yaml",
+      "result": {
+        "chunk_id": "123aca",
+        "wall_time_seconds": 0.2571438,
+        "exit_code": 1,
+        "original_token_count": 44,
+        "output": "Checking formatting...\n[warn] skills/jit-compilation/references/tiered-compilation-model.md\n[warn] Code style issues found in the above file. Run Prettier with --write to fix.\n"
+      }
+    },
+    {
+      "kind": "links",
+      "cwd": "C:/git/agent-skills",
+      "cmd": "@'\nimport fs from 'node:fs';\nimport path from 'node:path';\nconst root='skills/jit-compilation';\nconst walk=dir=>fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(path.join(dir,e.name)):[path.join(dir,e.name)]);\nconst markdown=walk(root).filter(p=>p.endsWith('.md'));const links=[];\nfor(const file of markdown){const text=fs.readFileSync(file,'utf8');for(const match of text.matchAll(/\\[[^\\]]*\\]\\(([^)]+)\\)/g)){const target=match[1].split('#')[0];if(!target||/^[a-z][a-z\\d+.-]*:/i.test(target))continue;const resolved=path.resolve(path.dirname(file),target);if(!fs.existsSync(resolved))throw Error(file+': '+target);links.push({file,target});}}\nconsole.log(JSON.stringify({markdownFiles:markdown.length,relativeLinks:links.length,links},null,2));\n'@ | node --input-type=module",
+      "result": {
+        "chunk_id": "ef816a",
+        "wall_time_seconds": 0.0777703,
+        "exit_code": 0,
+        "original_token_count": 103,
+        "output": "{\n  \"markdownFiles\": 4,\n  \"relativeLinks\": 3,\n  \"links\": [\n    {\n      \"file\": \"skills\\\\jit-compilation\\\\SKILL.md\",\n      \"target\": \"references/tiered-compilation-model.md\"\n    },\n    {\n      \"file\": \"skills\\\\jit-compilation\\\\SKILL.md\",\n      \"target\": \"references/warmup-and-cold-start.md\"\n    },\n    {\n      \"file\": \"skills\\\\jit-compilation\\\\SKILL.md\",\n      \"target\": \"references/code-cache.md\"\n    }\n  ]\n}\n"
+      }
+    },
+    {
+      "kind": "diff-check",
+      "cwd": "C:/git/agent-skills",
+      "cmd": "git diff --check -- skills/jit-compilation",
+      "result": {
+        "chunk_id": "fd11ef",
+        "wall_time_seconds": 0.0769769,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      }
+    },
+    {
+      "kind": "format-after-local-one-space-fix",
+      "cwd": "C:/git/agent-skills",
+      "cmd": "node node_modules/prettier/bin/prettier.cjs --check skills/jit-compilation/SKILL.md skills/jit-compilation/references/tiered-compilation-model.md skills/jit-compilation/references/warmup-and-cold-start.md skills/jit-compilation/skill.yaml",
+      "result": {
+        "exit_code": 0,
+        "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+      }
+    },
+    {
+      "kind": "final-diff-check",
+      "cwd": "C:/git/agent-skills",
+      "cmd": "git diff --check -- skills/jit-compilation",
+      "result": {
+        "chunk_id": "2bfe3b",
+        "wall_time_seconds": 0.0579421,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      }
+    },
+    {
+      "kind": "technical-fixture-validation",
+      "cwd": "C:/git/agent-skills",
+      "cmd": "node C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/jit-compilation-validation/validate-and-build-cases.mjs",
+      "result": {
+        "chunk_id": "914f11",
+        "wall_time_seconds": 0.0834021,
+        "exit_code": 0,
+        "original_token_count": 367,
+        "output": "{\n  \"classification\": \"executed technical checks; not behavioral evaluation\",\n  \"runtime\": \"Temurin 25.0.3+9-LTS\",\n  \"sourceRelease\": 25,\n  \"applicationChecksumIdentical\": true,\n  \"oneChangedCausalFlag\": true,\n  \"controls\": [\n    {\n      \"label\": \"restricted-v3\",\n      \"samples\": 26,\n      \"first\": \"2026-10-16T12:10:40.206022300-03:00\",\n      \"last\": \"2026-10-16T12:10:42.928180-03:00\",\n      \"sampleIntervalSecondsRoundedToMs\": 2.722,\n      \"successfulCompilations\": 0,\n      \"failedCompilations\": 1,\n      \"successfulCompilationsPerSecondApprox\": 0,\n      \"failedCompilationsPerSecondApprox\": 0.36737692872887584,\n      \"aggregateDurationFirst\": \"PT0S\",\n      \"aggregateDurationLast\": \"PT0S\",\n      \"individualDuration\": \"PT0.000138S\",\n      \"compileId\": 61,\n      \"succeeded\": false,\n      \"checksum\": 1697108433\n    },\n    {\n      \"label\": \"normal-v3\",\n      \"samples\": 26,\n      \"first\": \"2026-10-16T12:10:43.784305500-03:00\",\n      \"last\": \"2026-10-16T12:10:46.507156700-03:00\",\n      \"sampleIntervalSecondsRoundedToMs\": 2.723,\n      \"successfulCompilations\": 1,\n      \"failedCompilations\": 0,\n      \"successfulCompilationsPerSecondApprox\": 0.36724201248622845,\n      \"failedCompilationsPerSecondApprox\": 0,\n      \"aggregateDurationFirst\": \"PT0S\",\n      \"aggregateDurationLast\": \"PT0.001S\",\n      \"individualDuration\": \"PT0.001885S\",\n      \"compileId\": 61,\n      \"succeeded\": true,\n      \"checksum\": 1697108433\n    }\n  ],\n  \"allChildProcessesStopped\": true\n}\n"
+      }
+    }
+  ],
+  "finals": {
+    "committedVersion": "1.3.4",
+    "finalVersion": "1.3.5",
+    "status": " M skills/jit-compilation/SKILL.md\n M skills/jit-compilation/references/tiered-compilation-model.md\n M skills/jit-compilation/references/warmup-and-cold-start.md\n M skills/jit-compilation/skill.yaml\n",
+    "stagedDiff": "",
+    "files": [
+      {
+        "path": "skills/jit-compilation/SKILL.md",
+        "sha256": "55b491254241cee977a2089bafcfb618e13e8cd186edf160297d8142e52fa42f",
+        "bytes": 10911
+      },
+      {
+        "path": "skills/jit-compilation/references/code-cache.md",
+        "sha256": "5b0606b36c407b776a828c68164dfff4fe0e1fa5c7c8614bd9292f464870fb62",
+        "bytes": 8888
+      },
+      {
+        "path": "skills/jit-compilation/references/tiered-compilation-model.md",
+        "sha256": "0fa55eca8b35e3cf3c697e9a59e8c72f694d7795612d46205099e280129cab81",
+        "bytes": 30050
+      },
+      {
+        "path": "skills/jit-compilation/references/warmup-and-cold-start.md",
+        "sha256": "f893e14b71f6b30c8f9f7fb5833296b19012029562c2e9958fccfbf2f04b1ac3",
+        "bytes": 12291
+      },
+      {
+        "path": "skills/jit-compilation/skill.yaml",
+        "sha256": "c7534dfae90d076b78a01332118ab58419a29cc799ffa642a0851f28c405bd54",
+        "bytes": 2125
+      }
+    ]
+  }
+}

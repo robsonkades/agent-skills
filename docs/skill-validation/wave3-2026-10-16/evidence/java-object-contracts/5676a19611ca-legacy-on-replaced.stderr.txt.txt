@@ -1,0 +1,2 @@
+Exception in thread "main" java.lang.NoSuchMethodError: 'boolean api.Key.equals(api.Key)'
+	at LegacyClient.main(LegacyClient.java:4)

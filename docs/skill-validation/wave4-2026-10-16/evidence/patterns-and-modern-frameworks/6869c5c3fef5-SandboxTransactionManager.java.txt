@@ -1,0 +1,13 @@
+package app;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.AbstractPlatformTransactionManager;
+import org.springframework.transaction.support.DefaultTransactionStatus;
+// Synchronization exercise only: there is no database or business resource.
+public class SandboxTransactionManager extends AbstractPlatformTransactionManager {
+    public int commits;
+    public int rollbacks;
+    @Override protected Object doGetTransaction() { return new Object(); }
+    @Override protected void doBegin(Object tx, TransactionDefinition definition) { }
+    @Override protected void doCommit(DefaultTransactionStatus status) { commits++; }
+    @Override protected void doRollback(DefaultTransactionStatus status) { rollbacks++; }
+}

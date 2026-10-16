@@ -1,0 +1,3 @@
+java.release=25
+library.previous=1.0
+library.candidate=1.1

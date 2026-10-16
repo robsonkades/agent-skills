@@ -1,0 +1,28 @@
+{
+  "grep": "C:/Program Files/Git/usr/bin/grep.exe",
+  "oldPattern": "\\]\\[jit,compilation\\] +[0-9]+ [ %s!bn]{5} 4 ",
+  "correctedPattern": "\\]\\[jit,compilation *\\] +[0-9]+ [ %s!bn]{5} 4 ",
+  "results": [
+    {
+      "mode": "jit-only",
+      "oracleRecords": 5,
+      "oldRecords": 5,
+      "oldExit": 0,
+      "fixedRecords": 5,
+      "fixedExit": 0
+    },
+    {
+      "mode": "mixed-loader",
+      "oracleRecords": 5,
+      "oldRecords": 0,
+      "oldExit": 1,
+      "fixedRecords": 5,
+      "fixedExit": 0
+    },
+    {
+      "negativeTags": true,
+      "selected": 0,
+      "exit": 1
+    }
+  ]
+}

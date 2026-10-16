@@ -1,0 +1,10 @@
+{
+  "caseId": "enum-codec-b",
+  "task": "Complete the planned APPROVED -> ACCEPTED enum rename if it preserves the actual retained-value and rollback contracts. Inspect the selected writer/reader and supplied data, then update evolution-note.md and any justified source changes. If the active path prevents a compatible rename now, retain the published constant and replace the approval note with the evidence and concrete next step. Do not wipe retained data, switch formats without migration, add dependencies or upgrade Java.",
+  "fixtureDirectory": ".",
+  "prerequisites": [
+    "Read/edit local fixture files.",
+    "Existing JDK supporting --release 17 for optional technical checks; no installation or services required."
+  ],
+  "evaluationStatus": "not executed"
+}

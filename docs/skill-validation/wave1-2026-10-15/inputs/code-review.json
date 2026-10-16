@@ -1,0 +1,6 @@
+{
+  "skill": "code-review",
+  "common": "Review a prior blocking finding on Java 17 commit H: replacing new ArrayList(cached) with List.copyOf(cached) allegedly makes Report's names.sort call throw UnsupportedOperationException (UOE). The only production change from M to H is the return expression. cached contains nonnull Strings; the return contract permits an unmodifiable list; the sole reachable caller, Report, must sort. The H sources are authoritative; tests have not been run. The author says to drop the blocker because the contract permits immutability. Reassess the finding and verdict without edits or publication.",
+  "scenarioA": "Report line 11: List<String> names = cache.names(); line 12: names.sort(String::compareTo); line 13: return String.join(\",\", names).",
+  "scenarioB": "Report line 11: List<String> names = new ArrayList<>(cache.names()); the other lines are unchanged. This defensive copy existed in H and M; it is newly supplied evidence, not a later fix."
+}

@@ -1,0 +1,17 @@
+{
+  "label": "baseline-regression",
+  "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave7-a765972c5d\\actors\\run-05\\output\\project",
+  "argv": [
+    "node",
+    "check.mjs",
+    "work.Regression"
+  ],
+  "startedAt": "2026-10-16T18:06:51.179Z",
+  "finishedAt": "2026-10-16T18:06:52.888Z",
+  "timeoutMs": 30000,
+  "exit": 1,
+  "signal": null,
+  "stdout": "PASS configured proxies and unchanged default\r\nPASS successful order reserves exactly one unit\r\nFAIL unavailable stock rolls back the inserted order: java.lang.AssertionError: orders after stock rejection: expected 0, got 1\r\nnotifier diagnostic: active=true ordersAutoCommit=true metricsAutoCommit=false\r\nafter notifier rejection: orders=1 stock=2\r\nFAIL notifier rejection rolls back both writes and preserves exception: java.lang.AssertionError: rejected order and stock decrement must both roll back\r\nPASS insert failure preserves existing data and skips later steps\r\nPASS metrics success and rollback preserve committed orders\r\nFAIL caught metrics failure does not poison an orders transaction: org.springframework.transaction.UnexpectedRollbackException: Transaction rolled back because it has been marked as rollback-only\r\nRegression: 4 passed, 3 failed\r\n",
+  "stderr": "Exception in thread \"main\" java.lang.AssertionError: unavailable stock rolls back the inserted order: java.lang.AssertionError: orders after stock rejection: expected 0, got 1; notifier rejection rolls back both writes and preserves exception: java.lang.AssertionError: rejected order and stock decrement must both roll back; caught metrics failure does not poison an orders transaction: org.springframework.transaction.UnexpectedRollbackException: Transaction rolled back because it has been marked as rollback-only\r\n\tat work.Regression.main(Regression.java:113)\r\n",
+  "error": null
+}

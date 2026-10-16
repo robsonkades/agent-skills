@@ -1,0 +1,26 @@
+
+Algorithm : SHA256
+Hash      : 3D499E7AFD1210A5751DA5935157E3CF6EB32F0F06E271C07F5C035061FAB912
+Path      : C:\Users\robso\AppData\Local\Temp\skills-wave2-behavior-6orq6B\c4-3\src\HashRing.java
+
+Algorithm : SHA256
+Hash      : 596F31533E1AFE92F47B2A1F5F6ABDED02F632E0467766006118AE54CB3ABB2D
+Path      : C:\Users\robso\AppData\Local\Temp\skills-wave2-behavior-6orq6B\c4-3\src\ClientRouter.java
+
+Algorithm : SHA256
+Hash      : A566006AF83508A0E7E568BBA902EE13E399D06358427DBC6B14169F19AE20A4
+Path      : C:\Users\robso\AppData\Local\Temp\skills-wave2-behavior-6orq6B\c4-3\accepted.properties
+
+Algorithm : SHA256
+Hash      : A566006AF83508A0E7E568BBA902EE13E399D06358427DBC6B14169F19AE20A4
+Path      : C:\Users\robso\AppData\Local\Temp\skills-wave2-behavior-6orq6B\c4-3\candidate.properties
+
+Algorithm : SHA256
+Hash      : 8680DF134AD5EC04D6FC94554A07AF6425C55D68B095EF3D9AC6122106DA7009
+Path      : C:\Users\robso\AppData\Local\Temp\skills-wave2-behavior-6orq6B\c4-3\accepted-vectors.json
+
+Algorithm : SHA256
+Hash      : 1E301F0C52AC248B0B14FDC3D12283C77252D4D6F48521D572E7D8C4C2CC4AC7
+Path      : C:\Users\robso\.m2\repository\com\google\guava\guava\33.5.0-jre\guava-33.5.0-jre.jar
+
+

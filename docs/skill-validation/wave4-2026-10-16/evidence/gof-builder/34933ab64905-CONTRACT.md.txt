@@ -1,0 +1,16 @@
+# Packing plans
+
+Java source/API baseline: 17. No annotation processors or additional libraries.
+
+A PackingPlan is a completed value: later caller-list changes or later operations on its
+builder must not change a previously returned plan. Its ordered item list is non-empty,
+contains no nulls, and cannot be edited through the product. Item values are immutable Strings.
+
+PlanBuilder is confined to one caller and supports sequential reuse. Successful build()
+preserves builder fields, and a failed setter or failed build leaves the previous builder
+state available for correction. The caller may choose setter order freely. A blank label,
+empty item list or null item is invalid on every public product-construction path.
+
+The constructor and current builder method signatures are consumed by another module.
+Keep these entry points and valid existing call sequences. There is no demonstrated need
+for a staged API, a new public method, or concurrent builder use.

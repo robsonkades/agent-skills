@@ -1,0 +1,694 @@
+{
+  "schemaVersion": 1,
+  "status": "NO_CHANGES_NEEDED",
+  "skill": "spring-boot-observability",
+  "ownedPath": "C:/git/agent-skills/skills/spring-boot-observability",
+  "date": "2026-10-16",
+  "reviewer": "/root/quality15",
+  "allWritesStopped": true,
+  "processes": {
+    "runningWriterProcesses": [],
+    "evidence": "Both Maven test processes and forked test JVMs completed. No background service was started. This handoff is the final write; later verification is read-only."
+  },
+  "baseline": {
+    "committedVersion": "1.1.0",
+    "assignmentVersion": "1.1.0",
+    "finalVersion": "1.1.0",
+    "preExistingVersionBump": false,
+    "committedVsAssignment": "No staged, unstaged or nonignored untracked changes. Twelve shipped files were read in full.",
+    "ignoredAtAssignment": "Six pre-existing compiled/resource files in assets/observation-fixture/target/. Preserved unchanged and never used as execution proof.",
+    "files": [
+      {
+        "path": "C:/git/agent-skills/skills/spring-boot-observability/SKILL.md",
+        "sha256": "9375D18B95BD55BEC7060A098BA20F2239B37424FA5D8200AC2F82B4CF824743",
+        "bytes": 11788,
+        "classification": "shipped package file"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/spring-boot-observability/skill.yaml",
+        "sha256": "42271EE298BB330DBCD05E1595F91E0E77228285D2B6F0797A7D3C8BFE3536AC",
+        "bytes": 1547,
+        "classification": "shipped package file"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/spring-boot-observability/assets/observation-fixture/pom.xml",
+        "sha256": "BE2D2FD52BDE60E033ECDB263612BA09E71B7BB97C8C500362F8AAEF75169A70",
+        "bytes": 1544,
+        "classification": "shipped package file"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/spring-boot-observability/assets/observation-fixture/README.md",
+        "sha256": "EB1AD0910E4FAD48E5366086C1753EC9AE9126AE699F07F7BD5518EE4218F1A8",
+        "bytes": 2450,
+        "classification": "shipped package file"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/spring-boot-observability/assets/observation-fixture/src/main/java/example/observability/AsyncWork.java",
+        "sha256": "30C9AF9E33642CEBB70B339D07937C665471A712A97C6C8664FB36DA6951A2D2",
+        "bytes": 770,
+        "classification": "shipped package file"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/spring-boot-observability/assets/observation-fixture/src/main/java/example/observability/ObservationApplication.java",
+        "sha256": "F0CAF544E59E80FEFEF6732B4BBAFC37BD27A14B0896099DBA90B4A6C7CF123E",
+        "bytes": 240,
+        "classification": "shipped package file"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/spring-boot-observability/assets/observation-fixture/src/main/java/example/observability/WorkController.java",
+        "sha256": "683852D8894B1B8205528BEB7C103AB6BAC93E8BEDB15379894E3588E6F69EDF",
+        "bytes": 1292,
+        "classification": "shipped package file"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/spring-boot-observability/assets/observation-fixture/src/test/java/example/observability/ObservationContractTest.java",
+        "sha256": "130AD6F1B9E782F4CB95B3803CA6CB249B1D1B9BC2E7B025B7016BC7354E2DE1",
+        "bytes": 6611,
+        "classification": "shipped package file"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/spring-boot-observability/assets/observation-fixture/src/test/resources/application.properties",
+        "sha256": "B61905453EA46B61F1C895162E078806D4DE3F28E4CF01FA0260AF06CD37EF0F",
+        "bytes": 756,
+        "classification": "shipped package file"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/spring-boot-observability/assets/observation-fixture/target/classes/example/observability/AsyncWork.class",
+        "sha256": "F9A63869802825DA585EA15ACA5E348C2E788B75B6CFD806393256947E088C51",
+        "bytes": 2672,
+        "classification": "pre-existing ignored build output"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/spring-boot-observability/assets/observation-fixture/target/classes/example/observability/ObservationApplication.class",
+        "sha256": "02A64033A7C5126FF6B41FF20C22E41DB06802C63C28014DBD500301790B4EE9",
+        "bytes": 502,
+        "classification": "pre-existing ignored build output"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/spring-boot-observability/assets/observation-fixture/target/classes/example/observability/WorkController.class",
+        "sha256": "C4BAD57481299619727E3A32627F4FFF56BBB8A909620EC6B873D7C8DF8F9FA6",
+        "bytes": 3247,
+        "classification": "pre-existing ignored build output"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/spring-boot-observability/assets/observation-fixture/target/test-classes/application.properties",
+        "sha256": "B61905453EA46B61F1C895162E078806D4DE3F28E4CF01FA0260AF06CD37EF0F",
+        "bytes": 756,
+        "classification": "pre-existing ignored build output"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/spring-boot-observability/assets/observation-fixture/target/test-classes/example/observability/ObservationContractTest.class",
+        "sha256": "A9FAF1EB8A1906F55140CA2B3900BE5317EEA067C4AD2485216B6BFFE1505875",
+        "bytes": 13354,
+        "classification": "pre-existing ignored build output"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/spring-boot-observability/assets/observation-fixture/target/test-classes/example/observability/ObservationContractTest$LocalExport.class",
+        "sha256": "DA96FE3A7D0A1074631892A4D3D16E1BE26DF4FCCD504A8E160AA64335622C1C",
+        "bytes": 1344,
+        "classification": "pre-existing ignored build output"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/spring-boot-observability/references/instrumentation-and-propagation.md",
+        "sha256": "6C0E4251096137177D6D92BA15D47E9BF6C0357E492EFD3F0ACEC866D9194339",
+        "bytes": 9129,
+        "classification": "shipped package file"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/spring-boot-observability/references/management-and-probes.md",
+        "sha256": "A1A1F7F042A29BBA7280F07324B056892958A8C636517C05AC7F21BC9040F75C",
+        "bytes": 6116,
+        "classification": "shipped package file"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/spring-boot-observability/references/verification.md",
+        "sha256": "280273C343D34B93A4BFFE0E088C4EBD1D6A3EF7FACA01DF187CA66E56026019",
+        "bytes": 8181,
+        "classification": "shipped package file"
+      }
+    ],
+    "finalHashesEqualAssignment": true,
+    "versionRationale": "No shipped content changed; retain 1.1.0 without bump.",
+    "finalGitDiff": "Empty; scoped git diff --check passes."
+  },
+  "procedure": {
+    "followed": [
+      "AGENTS.md",
+      "docs/parallel-skill-reviews.md",
+      "docs/skill-review-prompt.md",
+      "docs/skill-validation/wave2-2026-10-16/review-brief.md",
+      "skills/skill-engineering/SKILL.md",
+      "skill-engineering references: evidence-and-confidence, evaluation, resource-design, anti-patterns"
+    ],
+    "note": "The unchanged procedure and cumulative wave references were already read earlier in this session; the complete assigned package, baseline, POM, executable tests and all references were inspected for this assignment.",
+    "scope": "Boot integration diagnosis/design/implementation. Preserve the actual project version/provider; trace topology, metric schema, SLO and access-policy design remain with their specialist owners.",
+    "reviewCriteria": [
+      "Actual managed client/registry and qualified executor path.",
+      "Context propagation, precise parentage and cleanup on the reused worker after success/failure.",
+      "Observation/meter/sampled-span/export/backend boundaries and unknown evidence.",
+      "Endpoint availability/exposure/authorization and health state at the consumer's effective port.",
+      "Version-matched APIs, bounded dimensions, secret-handling limits and useful operational handoff."
+    ]
+  },
+  "findings": [
+    {
+      "kind": "adequate",
+      "location": "SKILL.md:22 and :78; references/instrumentation-and-propagation.md:30",
+      "evidence": "Requires actual versions/active properties, managed client construction, proxy crossing, qualified executor selection and ownership. Boot-owned opt-in is separated from attaching a decorator to a manually created executor.",
+      "consequence": "No basis to add an executor, span wrapper, registry or generic implementation checklist."
+    },
+    {
+      "kind": "adequate",
+      "location": "references/verification.md:8 and :43",
+      "evidence": "Separates operation/local emission, selection/export and ingestion/query. Explicitly limits the in-memory exporter to local SDK evidence and distinguishes business completion from HTTP acceptance.",
+      "consequence": "Already prevents declaring backend repair from a passing local probe or inferring absence from sampled data."
+    },
+    {
+      "kind": "adequate",
+      "location": "assets/observation-fixture/src/test/java/example/observability/ObservationContractTest.java:40",
+      "evidence": "Real Boot HTTP journey verifies both trace and parent IDs, downstream failure outcomes, reuse of the actual single worker and raw unscoped observation cleanup. Counts use initial baselines and bounded waits.",
+      "consequence": "Both shipped tests pass; disabling only context propagation triggers the intended trace-ID assertion rather than a connection/export setup failure."
+    },
+    {
+      "kind": "adequate",
+      "location": "references/management-and-probes.md:25 and :43",
+      "evidence": "Independent availability/exposure/authorization checks, actual serving-port probes, explicit unhealthy status mapping and bounded dependency timeouts. Boot v4.1.1 source confirms slow-indicator threshold merely logs after the contributor returns.",
+      "consequence": "No unsupported inference from separate management port, hidden details or a warning threshold."
+    },
+    {
+      "kind": "adequate",
+      "location": "references/instrumentation-and-propagation.md:82 and :118",
+      "evidence": "Synchronous observation lifetime is separated from future completion; low-cardinality labels, handled HTTP outcomes and log/trace secret policy are independently considered.",
+      "consequence": "Preserve existing caveats; the fixture does not falsely claim log redaction, network-export or management authorization coverage."
+    }
+  ],
+  "findingsCorrected": [],
+  "remainingSupportedDefects": [],
+  "filesChangedByReviewer": [],
+  "preExistingChangedTrackedFiles": [],
+  "preExistingIgnoredFiles": [
+    "C:/git/agent-skills/skills/spring-boot-observability/assets/observation-fixture/target/classes/example/observability/AsyncWork.class",
+    "C:/git/agent-skills/skills/spring-boot-observability/assets/observation-fixture/target/classes/example/observability/ObservationApplication.class",
+    "C:/git/agent-skills/skills/spring-boot-observability/assets/observation-fixture/target/classes/example/observability/WorkController.class",
+    "C:/git/agent-skills/skills/spring-boot-observability/assets/observation-fixture/target/test-classes/application.properties",
+    "C:/git/agent-skills/skills/spring-boot-observability/assets/observation-fixture/target/test-classes/example/observability/ObservationContractTest.class",
+    "C:/git/agent-skills/skills/spring-boot-observability/assets/observation-fixture/target/test-classes/example/observability/ObservationContractTest$LocalExport.class"
+  ],
+  "capabilitiesPreserved": [
+    "Concrete activation and Boot integration boundaries.",
+    "Managed client and actual executor guidance without introducing a new topology.",
+    "Distinct business-observation completion and error contracts.",
+    "Meter dimensions, safe diagnostics, log correlation and context-carrier constraints.",
+    "Management access, health-group membership and serving-port probe verification.",
+    "Per-hop missing-signal diagnosis and explicit unknown outcomes.",
+    "Existing optional runnable fixture and its narrow, documented limits."
+  ],
+  "capabilitiesReplaced": [],
+  "capabilitiesRemoved": [],
+  "compatibility": {
+    "declared": "Java 25 / Spring Boot 4.1.1, no preview; Maven 3.9.x for optional fixture.",
+    "actualCompiler": "javac through maven-compiler-plugin 3.15.0, release 25 on Temurin 25.0.3+9.",
+    "actualRuntime": "Temurin 25.0.3+9-LTS, Windows 11 amd64.",
+    "build": "Apache Maven 3.9.15; Surefire 3.5.6.",
+    "managedVersions": "Cached Boot 4.1.1 dependency BOM declares Framework 7.0.9, Micrometer 1.17.1, Micrometer Tracing 1.7.1, OpenTelemetry 1.62.0. Test report classpaths retain resolved artifact paths.",
+    "noUpgrade": true
+  },
+  "commands": [
+    {
+      "cwd": "C:/git/agent-skills",
+      "command": "rg --files skills/spring-boot-observability; git status --short -- skills/spring-boot-observability; git diff -- skills/spring-boot-observability; git diff --cached -- skills/spring-boot-observability; git ls-files --others --exclude-standard -- skills/spring-boot-observability; git show HEAD:skills/spring-boot-observability/skill.yaml",
+      "note": "Separate read-only baseline commands.",
+      "result": "Clean tracked/nonignored baseline; version 1.1.0; twelve shipped files."
+    },
+    {
+      "cwd": "C:/git/agent-skills",
+      "command": "git status --short --ignored -- skills/spring-boot-observability",
+      "exitCode": 0,
+      "result": "Only assets/observation-fixture/target/ was ignored at assignment; six files were captured and preserved."
+    },
+    {
+      "cwd": "C:/git/agent-skills",
+      "command": "$source = 'C:/git/agent-skills/skills/spring-boot-observability/assets/observation-fixture'\n$destination = 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/positive'\nNew-Item -ItemType Directory -Path $destination -ErrorAction Stop | Out-Null\nCopy-Item -LiteralPath \"$source/pom.xml\", \"$source/README.md\", \"$source/src\" -Destination $destination -Recurse -ErrorAction Stop\nGet-ChildItem -LiteralPath $destination -File -Recurse | Select-Object -ExpandProperty FullName",
+      "exitCode": 0,
+      "result": "Copied only pom.xml, README.md and src/ to temporary positive directory; no existing target/ copied."
+    },
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/positive",
+      "command": "$ErrorActionPreference = 'Stop'\nGet-ChildItem Env: | Where-Object { $_.Name -match '^(SPRING_|MANAGEMENT_|OTEL_|JAVA_TOOL_OPTIONS$|JDK_JAVA_OPTIONS$|_JAVA_OPTIONS$|MAVEN_OPTS$|MAVEN_ARGS$)' } | ForEach-Object { Remove-Item -LiteralPath (\"Env:\" + $_.Name) }\n$env:JAVA_HOME = 'C:/Users/robso/.jdks/temurin-25.0.3'\n& 'C:/dev/apache-maven-3.9.15/bin/mvn.cmd' -version *> 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/maven-version.log'\n& 'C:/dev/apache-maven-3.9.15/bin/mvn.cmd' -B -ntp -s 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/settings.xml' -gs 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/settings.xml' '-Dmaven.repo.local=C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/cache' test *> 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/positive.log'\n$runExit = $LASTEXITCODE\nGet-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/positive.log' -Tail 60\nWrite-Output \"testExit=$runExit\"\nexit $runExit",
+      "exitCode": 0,
+      "result": "2 tests, 0 failures, 0 errors, 0 skipped; real loopback application and local exporter. Maven copied necessary artifacts only from file:// mirror of existing cache into this temporary cache."
+    },
+    {
+      "cwd": "C:/git/agent-skills",
+      "command": "$source = 'C:/git/agent-skills/skills/spring-boot-observability/assets/observation-fixture'\n$destination = 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/negative'\nNew-Item -ItemType Directory -Path $destination -ErrorAction Stop | Out-Null\nCopy-Item -LiteralPath \"$source/pom.xml\", \"$source/README.md\", \"$source/src\" -Destination $destination -Recurse -ErrorAction Stop\nGet-Content -LiteralPath \"$destination/src/test/resources/application.properties\"",
+      "exitCode": 0,
+      "result": "Created separate source copy; apply_patch changed only spring.task.execution.propagate-context=true to false in its test properties."
+    },
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/negative",
+      "command": "$ErrorActionPreference = 'Stop'\nGet-ChildItem Env: | Where-Object { $_.Name -match '^(SPRING_|MANAGEMENT_|OTEL_|JAVA_TOOL_OPTIONS$|JDK_JAVA_OPTIONS$|_JAVA_OPTIONS$|MAVEN_OPTS$|MAVEN_ARGS$)' } | ForEach-Object { Remove-Item -LiteralPath (\"Env:\" + $_.Name) }\n$env:JAVA_HOME = 'C:/Users/robso/.jdks/temurin-25.0.3'\n& 'C:/dev/apache-maven-3.9.15/bin/mvn.cmd' -B -ntp -o -s 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/settings.xml' -gs 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/settings.xml' '-Dmaven.repo.local=C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/cache' test *> 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/negative.log'\n$runExit = $LASTEXITCODE\nGet-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/negative.log' -Tail 70\nWrite-Output \"testExit=$runExit\"\nexit $runExit",
+      "exitCode": 1,
+      "classification": "Expected negative technical control",
+      "result": "2 tests, 1 failure, 0 errors, 0 skipped. Journey failed at ObservationContractTest.java:58: outgoing trace ID differed from incoming trace ID. Metric-dimension test still passed. HTTP status and three completed spans were already asserted before the failed trace comparison."
+    },
+    {
+      "cwd": "C:/git/agent-skills",
+      "command": "@'\nimport assert from 'node:assert/strict';\nimport {readFileSync,existsSync,readdirSync} from 'node:fs';\nimport {resolve,dirname} from 'node:path';\nimport {parseManifest} from './packages/core/src/domain/manifest.ts';\nimport {parseSkillDocument,documentName,documentDescription} from './packages/core/src/domain/skill-document.ts';\nconst root=resolve('skills/spring-boot-observability');\nconst parsed=parseManifest(readFileSync(resolve(root,'skill.yaml'),'utf8'),{strict:true});\nassert.deepEqual(parsed.issues,[]);\nconst doc=parseSkillDocument(readFileSync(resolve(root,'SKILL.md'),'utf8'));\nassert.equal(documentName(doc),parsed.manifest.name);\nconst normalize=s=>s.replace(/\\s+/g,' ').trim();\nassert.equal(normalize(documentDescription(doc)),normalize(parsed.manifest.description));\nfor(const file of parsed.manifest.files)assert.ok(existsSync(resolve(root,file)),file);\nconst files=['SKILL.md',...readdirSync(resolve(root,'references')).filter(f=>f.endsWith('.md')).map(f=>'references/'+f),'assets/observation-fixture/README.md'];\nlet links=0,external=0;\nfor(const file of files){\n const absolute=resolve(root,file);\n for(const match of readFileSync(absolute,'utf8').matchAll(/\\[[^\\]]*\\]\\(([^)]+)\\)/g)){\n  const targetValue=match[1].replace(/^</,'').replace(/>$/,'');\n  if(/^[a-z]+:/i.test(targetValue)){external++;continue;}\n  const [target,anchor]=targetValue.split('#');\n  const path=target?resolve(dirname(absolute),target):absolute;\n  assert.ok(existsSync(path),targetValue);\n  if(anchor){const headings=[...readFileSync(path,'utf8').matchAll(/^#{1,6}\\s+(.+)$/gm)].map(m=>m[1].toLowerCase().replace(/[^\\p{L}\\p{N}\\s-]/gu,'').trim().replace(/\\s/g,'-'));assert.ok(headings.includes(anchor),targetValue);}\n  links++;\n }\n}\nconsole.log(JSON.stringify({manifestIssues:parsed.issues.length,name:documentName(doc),version:parsed.manifest.version,descriptionsMatch:true,manifestFilesExist:true,markdownFiles:files.length,localLinks:links,externalLinksObserved:external}));\n'@ | node --input-type=module *> 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/structural.log'\n$checkExit = $LASTEXITCODE\nGet-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/structural.log'\nexit $checkExit",
+      "exitCode": 0,
+      "result": "Strict manifest parse zero issues, matching name/description, declared file paths exist, 6 local links across 5 Markdown files resolve; 18 external URLs observed, not all network checked."
+    },
+    {
+      "cwd": "C:/git/agent-skills",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/spring-boot-observability/SKILL.md skills/spring-boot-observability/skill.yaml skills/spring-boot-observability/references/*.md skills/spring-boot-observability/assets/observation-fixture/README.md *> 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/format.log'\n$checkExit = $LASTEXITCODE\nGet-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/format.log'\nexit $checkExit",
+      "exitCode": 0,
+      "result": "All six Markdown/YAML files matched Prettier formatting."
+    },
+    {
+      "cwd": "C:/git/agent-skills",
+      "command": "git diff --check -- skills/spring-boot-observability",
+      "exitCode": 0,
+      "result": "No whitespace errors; final scoped status and diffs unchanged."
+    },
+    {
+      "cwd": "C:/git/agent-skills",
+      "command": "Get-ChildItem -LiteralPath skills/spring-boot-observability -File -Recurse | ForEach-Object { Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256 }",
+      "exitCode": 0,
+      "result": "All 18 assignment hashes unchanged, including 12 shipped files and 6 pre-existing ignored files."
+    },
+    {
+      "cwd": "C:/git/agent-skills",
+      "command": "Parse both retained target/surefire-reports/TEST-example.observability.ObservationContractTest.xml files with PowerShell XML and select testcase names/failure counts.",
+      "exitCode": 0,
+      "result": "Confirmed positive 2/0/0/0; negative 2/1/0/0. Only negative journey test failed."
+    }
+  ],
+  "checkIssues": [
+    "Initial all-files JSON read included ignored class files and exceeded the output limit; JSON parse failed. Repeated with hash-only inventory and read each shipped text file separately. No edits or missing package reads resulted.",
+    "An rg command used a literal Windows references/*.md path and returned an invalid-path error. Repeated using skill directory plus -g '*.md' -g '*.yaml'; successful output inspected.",
+    "Initial PowerShell XML-summary foreach pipeline had a parser error. Repeated with an array assignment; both XML summaries parsed successfully.",
+    "Both Maven runs report Mockito/Byte Buddy dynamic self-attachment and class-sharing warnings. Tests executed normally; no instrumentation flags or dependencies were changed to suppress warnings.",
+    "The direct TaskExecutorConfigurations.java source URL could not be retrieved. Versioned Boot task-execution/observability documentation and the real Boot-owned fixture provide evidence for the tested behavior; arbitrary custom executors were not tested."
+  ],
+  "technicalEvaluations": {
+    "classification": "Executed local Boot integration tests, not an agent behavioral evaluation.",
+    "positive": {
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "coverage": "Actual @Async proxy/client parentage on success and downstream 503, HTTP outcome/count metrics, same worker with no lingering current observation, stable URI meter dimensions across twelve identities and fake-secret header."
+    },
+    "negative": {
+      "tests": 2,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "onlyApplicationChange": "spring.task.execution.propagate-context=false",
+      "failure": "Trace-ID equality at line 58, first success iteration. Later failure-path assertions in that negative test were not reached.",
+      "unaffected": "URI template/cardinality test passed."
+    },
+    "testSettings": "Single platform worker, queue capacity 8, synchronous in-memory span processor, sampling 1.0, no remote export, loopback random port. These are fixture controls, not production defaults.",
+    "noAgentOutput": true,
+    "noPerformanceMeasurement": true,
+    "isolation": "Both projects and Maven local cache are under the authorized temporary artifact root. Maven settings mirror all artifact repositories to the user's existing cache via file://; original .m2 is read-only input. Child environment removes inherited Java agents and Spring/management/OTel overrides. No real agent configuration or production service accessed."
+  },
+  "executedBehavioralEvaluations": [],
+  "measuredSkillGain": false,
+  "walkthroughs": [
+    {
+      "case": "propagation-disabled",
+      "type": "Structured walkthrough; not an agent execution",
+      "expected": "Follow the actual qualified Boot executor and managed builder. The selected property disables captured observation propagation. Restore the documented property and verify the unchanged parentage/cleanup assertions without adding an observation or executor."
+    },
+    {
+      "case": "propagation-enabled",
+      "type": "Structured walkthrough; not an agent execution",
+      "expected": "The selected property is already enabled and actual journey tests pass. Retain local wiring; any alleged backend gap needs the next boundary's sampling/export/ingestion evidence instead of speculative wrappers."
+    }
+  ],
+  "separatedCases": [
+    {
+      "id": "propagation-disabled",
+      "classification": "Known development fixture, not held-out; agent execution pending",
+      "actor": {
+        "task": "Review trace continuation across the existing asynchronous HTTP journey in this service. Inspect its resolved versions, actual client construction, qualified executor and active properties. Run the supplied integration tests and correct a demonstrated local wiring defect, if any, using the smallest supported change. Preserve adequate wiring when the evidence supports it. Keep Java 25, Boot 4.1.1, the managed RestClient and the existing asynchronous topology. Do not add another executor, registry, business span, tracing agent, exporter destination or backend. Report what the executed checks establish and what remains unverified.",
+        "prerequisites": [
+          "JDK 25 and Maven 3.9.x; use existing cached dependencies without changing project versions.",
+          "Fresh isolated copy of this case's pom.xml and src/. Provide ordinary build/test access. Give the actor the complete unchanged skill package 1.1.0 if testing skill use."
+        ],
+        "buildCommand": "mvn -B -ntp -o -s <validation-root>/settings.xml -gs <validation-root>/settings.xml -Dmaven.repo.local=<validation-root>/cache test",
+        "isolation": "Use only the selected case sources/configuration in an independent workspace. Do not expose prior positive/negative logs, surefire results, the other case or evaluatorOnly fields. Copying alone is not access enforcement; the coordinator controls the evaluation boundary.",
+        "resources": "Application has real inbound HTTP -> proxied @Async(\"applicationTaskExecutor\") bean -> injected managed RestClient.Builder -> loopback receiver; existing tests observe parentage, HTTP outcomes and worker cleanup. The in-memory exporter replaces only terminal local export.",
+        "safety": "Clear inherited Java agents and Spring/management/OTel application overrides in the child process as shown in the recorded validation commands. Test traffic is loopback on a random port; export is disabled. No production systems.",
+        "selectedProject": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/negative",
+        "copyOnly": ["pom.xml", "src/"],
+        "onlySelectedDifference": "Its actual test properties file contains the selected propagation setting; inspect that file."
+      },
+      "evaluatorOnly": {
+        "decisiveConstraint": "Selected Boot executor's propagate-context=false property.",
+        "required": [
+          "Inspect POM, @Async qualifier, managed RestClient construction and active properties.",
+          "Use the existing real test to locate the first failed context boundary; a 200 response and three spans do not establish parentage.",
+          "Make a minimal configuration fix for the existing Boot-owned executor, then run unchanged tests.",
+          "Preserve exception outcomes, cleanup assertion, bounded dimensions and absence of secret labels; report local-only evidence."
+        ],
+        "failureConditions": [
+          "Add a second executor/registry/tracer/business span or rebuild topology without evidence.",
+          "Only assert non-null span, HTTP success or span count; weaken trace/parent equality or cleanup criteria.",
+          "Change approved sampling or backend configuration as the propagation fix.",
+          "Claim collector ingestion, durable audit, log redaction or production readiness from this fixture."
+        ]
+      }
+    },
+    {
+      "id": "propagation-enabled",
+      "classification": "Paired known development fixture; only propagation property changes; agent execution pending",
+      "actor": {
+        "task": "Review trace continuation across the existing asynchronous HTTP journey in this service. Inspect its resolved versions, actual client construction, qualified executor and active properties. Run the supplied integration tests and correct a demonstrated local wiring defect, if any, using the smallest supported change. Preserve adequate wiring when the evidence supports it. Keep Java 25, Boot 4.1.1, the managed RestClient and the existing asynchronous topology. Do not add another executor, registry, business span, tracing agent, exporter destination or backend. Report what the executed checks establish and what remains unverified.",
+        "prerequisites": [
+          "JDK 25 and Maven 3.9.x; use existing cached dependencies without changing project versions.",
+          "Fresh isolated copy of this case's pom.xml and src/. Provide ordinary build/test access. Give the actor the complete unchanged skill package 1.1.0 if testing skill use."
+        ],
+        "buildCommand": "mvn -B -ntp -o -s <validation-root>/settings.xml -gs <validation-root>/settings.xml -Dmaven.repo.local=<validation-root>/cache test",
+        "isolation": "Use only the selected case sources/configuration in an independent workspace. Do not expose prior positive/negative logs, surefire results, the other case or evaluatorOnly fields. Copying alone is not access enforcement; the coordinator controls the evaluation boundary.",
+        "resources": "Application has real inbound HTTP -> proxied @Async(\"applicationTaskExecutor\") bean -> injected managed RestClient.Builder -> loopback receiver; existing tests observe parentage, HTTP outcomes and worker cleanup. The in-memory exporter replaces only terminal local export.",
+        "safety": "Clear inherited Java agents and Spring/management/OTel application overrides in the child process as shown in the recorded validation commands. Test traffic is loopback on a random port; export is disabled. No production systems.",
+        "selectedProject": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/positive",
+        "copyOnly": ["pom.xml", "src/"],
+        "onlySelectedDifference": "Its actual test properties file contains the selected propagation setting; inspect that file."
+      },
+      "evaluatorOnly": {
+        "decisiveConstraint": "Selected Boot executor's propagate-context=true property; identical source/tests otherwise.",
+        "required": [
+          "Inspect the same real path and run tests.",
+          "Retain adequate local wiring rather than manufacture a defect or new wrapper.",
+          "Explain that missing backend evidence remains unknown beyond the local exporter and name a discriminating next artifact if relevant."
+        ],
+        "failureConditions": [
+          "Apply another propagation wrapper solely because an asynchronous boundary exists.",
+          "Claim absence of context or exporter data despite the test evidence without a separate supported failure.",
+          "Promote test-only sampling/processor/pool settings to a production recommendation.",
+          "Treat a passing local integration test as proof of comparative agent improvement."
+        ]
+      }
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://github.com/spring-projects/spring-boot/blob/v4.1.1/documentation/spring-boot-docs/src/docs/antora/modules/reference/pages/actuator/observability.adoc",
+      "version": "Spring Boot v4.1.1",
+      "consulted": "2026-10-16",
+      "supports": "Boot-owned async executor context opt-in; annotation activation/AspectJ conditions; automatic instrumentation duplication and low/high cardinality consumers."
+    },
+    {
+      "url": "https://github.com/spring-projects/spring-boot/blob/v4.1.1/documentation/spring-boot-docs/src/docs/antora/modules/reference/pages/features/task-execution-and-scheduling.adoc",
+      "version": "Spring Boot v4.1.1",
+      "consulted": "2026-10-16",
+      "supports": "Actual executor selection, backoff and explicit applicationTaskExecutor/qualifier contracts; custom executor presence changes default assumptions."
+    },
+    {
+      "url": "https://github.com/spring-projects/spring-boot/blob/v4.1.1/documentation/spring-boot-docs/src/docs/antora/modules/reference/pages/testing/spring-boot-applications.adoc",
+      "version": "Spring Boot v4.1.1, Using Observations/Metrics/Tracing",
+      "consulted": "2026-10-16",
+      "supports": "AutoConfigureTracing enables reporting components for full Boot tests; slices use a no-op tracer, and metrics have separate annotation support."
+    },
+    {
+      "url": "https://docs.spring.io/spring-framework/reference/integration/observability.html",
+      "version": "Page identifies Spring Framework 7.0.9",
+      "consulted": "2026-10-16",
+      "supports": "Framework HTTP observation boundaries and handled-error recording; registry/convention ownership. Versions match the fixture's managed baseline."
+    },
+    {
+      "url": "https://github.com/spring-projects/spring-boot/blob/v4.1.1/module/spring-boot-health/src/main/java/org/springframework/boot/health/actuate/endpoint/HealthEndpointSupport.java",
+      "version": "Spring Boot v4.1.1, getDescriptorAndLogIfSlow",
+      "consulted": "2026-10-16",
+      "supports": "Contributor is called synchronously and slow duration logged in finally; the logging threshold is not a dependency timeout."
+    },
+    {
+      "url": "https://github.com/spring-projects/spring-boot/blob/v4.1.1/documentation/spring-boot-docs/src/docs/antora/modules/reference/pages/actuator/endpoints.adoc",
+      "version": "Spring Boot v4.1.1, health indicators/groups",
+      "consulted": "2026-10-16",
+      "supports": "Group membership, explicit status mappings and slow-indicator warning. Custom mapping can replace default DOWN/OUT_OF_SERVICE mappings."
+    }
+  ],
+  "assumptionsAndLimits": [
+    "No supported gap found; no-change is not a guarantee of universal skill correctness.",
+    "No independent agent run, original/revised comparison or with/without-skill comparison; no behavioral gain claimed.",
+    "Known fixture cases intentionally exercise existing shipped guidance. They are not unseen holdouts and may saturate comparisons.",
+    "Executed coverage is local Boot-owned platform-thread executor and managed synchronous client only.",
+    "No collector/backend ingestion, deployment authentication, separate management ports, log/MDC fields, actual log/span redaction, production sampling/overhead, reactive/custom/virtual executor or prior nonempty worker-context restoration was tested.",
+    "Negative run exits at the first trace-ID failure; it does not execute later negative failure-path cleanup assertions.",
+    "Mockito attachment warnings were retained; future JDK behavior was not validated.",
+    "Maven reused existing artifacts through a local file mirror. No new version, network dependency source or user configuration change was introduced."
+  ],
+  "retainedArtifactRoot": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation",
+  "retainedArtifacts": [
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/format.log",
+      "Bytes": 68,
+      "SHA256": "F20510A9DA4717C51C4CFFEE6D0DD88D6C9A723D0A83711D01216F5B48961283"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/maven-version.log",
+      "Bytes": 321,
+      "SHA256": "F4BBE16957F270F85F784C86B6D4AC6611503418BB67B9AFE426FF9E5FC87C63"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/negative.log",
+      "Bytes": 5348,
+      "SHA256": "8812922A931576D435BADC79DB73890A7CE707D294D9DB83340C57F02A6AF2ED"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/positive.log",
+      "Bytes": 3817,
+      "SHA256": "959F096DD24A371041B8FB46BBD23C0C04CDFB90D1F41CB262FF8FD646848EBF"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/settings.xml",
+      "Bytes": 281,
+      "SHA256": "47F90CB37EF803C5AC3FD16FB61DCC12891F7EEB9515E22D8D05D764AADB0EB3"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/structural.log",
+      "Bytes": 186,
+      "SHA256": "2BCC95B70F13546912C1090D438B5C396E1656466656532AE09B8F83AB7BF426"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/negative/pom.xml",
+      "Bytes": 1544,
+      "SHA256": "BE2D2FD52BDE60E033ECDB263612BA09E71B7BB97C8C500362F8AAEF75169A70"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/negative/README.md",
+      "Bytes": 2450,
+      "SHA256": "EB1AD0910E4FAD48E5366086C1753EC9AE9126AE699F07F7BD5518EE4218F1A8"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/negative/src/main/java/example/observability/AsyncWork.java",
+      "Bytes": 770,
+      "SHA256": "30C9AF9E33642CEBB70B339D07937C665471A712A97C6C8664FB36DA6951A2D2"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/negative/src/main/java/example/observability/ObservationApplication.java",
+      "Bytes": 240,
+      "SHA256": "F0CAF544E59E80FEFEF6732B4BBAFC37BD27A14B0896099DBA90B4A6C7CF123E"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/negative/src/main/java/example/observability/WorkController.java",
+      "Bytes": 1292,
+      "SHA256": "683852D8894B1B8205528BEB7C103AB6BAC93E8BEDB15379894E3588E6F69EDF"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/negative/src/test/java/example/observability/ObservationContractTest.java",
+      "Bytes": 6611,
+      "SHA256": "130AD6F1B9E782F4CB95B3803CA6CB249B1D1B9BC2E7B025B7016BC7354E2DE1"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/negative/src/test/resources/application.properties",
+      "Bytes": 757,
+      "SHA256": "3E43D61B6431289868F9617CC56009AA532492E51CF5F6AAE4097222EEB4B198"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/negative/target/classes/example/observability/AsyncWork.class",
+      "Bytes": 2668,
+      "SHA256": "7543F050F5D44CECB8208D8D394F5F5C47DEF281150A18A5A1AA4D229CC0D8DE"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/negative/target/classes/example/observability/ObservationApplication.class",
+      "Bytes": 502,
+      "SHA256": "6B8E7100B92047C424CADCEF23E98EDA169A4759999CB7FB04397E1575EC6E04"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/negative/target/classes/example/observability/WorkController.class",
+      "Bytes": 3256,
+      "SHA256": "40E2E81F32EA8D3FC5AD8B8765288BFDF517D659755CD3ED695FBFE731313076"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/negative/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst",
+      "Bytes": 132,
+      "SHA256": "8C2F85397B088703E1D819A212CB7B4FE549A21A261BDA305AC4BF6A8E1866AF"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/negative/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst",
+      "Bytes": 507,
+      "SHA256": "30A337EAED69F3BE3B598DAF833B31BE7D79B1CD51593E2279FC9D5C5B903404"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/negative/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/createdFiles.lst",
+      "Bytes": 116,
+      "SHA256": "5BE66C6F1ACAA5BC228C409A7F3D53293201379C0B04D82198DF8419D8ACBB6F"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/negative/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/inputFiles.lst",
+      "Bytes": 177,
+      "SHA256": "2CE0984917230A4703130A9A22F470F1319D092D68D3D9511E5A880066232E2C"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/negative/target/surefire-reports/example.observability.ObservationContractTest.txt",
+      "Bytes": 794,
+      "SHA256": "B75785AC1D6BE368F69312555D3D24DB49594E68C7C23EEFAC332DC8D549AC47"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/negative/target/surefire-reports/TEST-example.observability.ObservationContractTest.xml",
+      "Bytes": 53452,
+      "SHA256": "F038E6AF6DD416A9B8926E24C34974E7BF1CE36A2DFE3C67AB83362BFADF69EF"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/negative/target/test-classes/application.properties",
+      "Bytes": 757,
+      "SHA256": "3E43D61B6431289868F9617CC56009AA532492E51CF5F6AAE4097222EEB4B198"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/negative/target/test-classes/example/observability/ObservationContractTest.class",
+      "Bytes": 13906,
+      "SHA256": "07907411350B8857E2FF73AD01BA4616F342EA508CFA5A0404B22BDC94D1E0D2"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/negative/target/test-classes/example/observability/ObservationContractTest$LocalExport.class",
+      "Bytes": 1344,
+      "SHA256": "4CB63F60E9AAAAB7367FD01C1D0C0DCF69ADEB454AF41C89DF26D1363AF7D131"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/positive/pom.xml",
+      "Bytes": 1544,
+      "SHA256": "BE2D2FD52BDE60E033ECDB263612BA09E71B7BB97C8C500362F8AAEF75169A70"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/positive/README.md",
+      "Bytes": 2450,
+      "SHA256": "EB1AD0910E4FAD48E5366086C1753EC9AE9126AE699F07F7BD5518EE4218F1A8"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/positive/src/main/java/example/observability/AsyncWork.java",
+      "Bytes": 770,
+      "SHA256": "30C9AF9E33642CEBB70B339D07937C665471A712A97C6C8664FB36DA6951A2D2"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/positive/src/main/java/example/observability/ObservationApplication.java",
+      "Bytes": 240,
+      "SHA256": "F0CAF544E59E80FEFEF6732B4BBAFC37BD27A14B0896099DBA90B4A6C7CF123E"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/positive/src/main/java/example/observability/WorkController.java",
+      "Bytes": 1292,
+      "SHA256": "683852D8894B1B8205528BEB7C103AB6BAC93E8BEDB15379894E3588E6F69EDF"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/positive/src/test/java/example/observability/ObservationContractTest.java",
+      "Bytes": 6611,
+      "SHA256": "130AD6F1B9E782F4CB95B3803CA6CB249B1D1B9BC2E7B025B7016BC7354E2DE1"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/positive/src/test/resources/application.properties",
+      "Bytes": 756,
+      "SHA256": "B61905453EA46B61F1C895162E078806D4DE3F28E4CF01FA0260AF06CD37EF0F"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/positive/target/classes/example/observability/AsyncWork.class",
+      "Bytes": 2668,
+      "SHA256": "7543F050F5D44CECB8208D8D394F5F5C47DEF281150A18A5A1AA4D229CC0D8DE"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/positive/target/classes/example/observability/ObservationApplication.class",
+      "Bytes": 502,
+      "SHA256": "6B8E7100B92047C424CADCEF23E98EDA169A4759999CB7FB04397E1575EC6E04"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/positive/target/classes/example/observability/WorkController.class",
+      "Bytes": 3256,
+      "SHA256": "40E2E81F32EA8D3FC5AD8B8765288BFDF517D659755CD3ED695FBFE731313076"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/positive/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst",
+      "Bytes": 132,
+      "SHA256": "8C2F85397B088703E1D819A212CB7B4FE549A21A261BDA305AC4BF6A8E1866AF"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/positive/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst",
+      "Bytes": 507,
+      "SHA256": "7C6DF41AA6BBB607327F9B1096685B621AD66A8E4C16501E2DC4AFBA190CEE4C"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/positive/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/createdFiles.lst",
+      "Bytes": 116,
+      "SHA256": "5BE66C6F1ACAA5BC228C409A7F3D53293201379C0B04D82198DF8419D8ACBB6F"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/positive/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/inputFiles.lst",
+      "Bytes": 177,
+      "SHA256": "64FC4A15F978EA9E1F93655EE1E9BDACF96541C908DAC8CA16DD5B1BDA8295AB"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/positive/target/surefire-reports/example.observability.ObservationContractTest.txt",
+      "Bytes": 344,
+      "SHA256": "FE54636AB2C3AC6ED4079968FC7D690B01ECB332600610872F449ABFACD16244"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/positive/target/surefire-reports/TEST-example.observability.ObservationContractTest.xml",
+      "Bytes": 52943,
+      "SHA256": "A161B2E80C83EDD5D2B66E345DD64122F8C3B72E6AAA7D8A98933A61CBC67C40"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/positive/target/test-classes/application.properties",
+      "Bytes": 756,
+      "SHA256": "B61905453EA46B61F1C895162E078806D4DE3F28E4CF01FA0260AF06CD37EF0F"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/positive/target/test-classes/example/observability/ObservationContractTest.class",
+      "Bytes": 13906,
+      "SHA256": "07907411350B8857E2FF73AD01BA4616F342EA508CFA5A0404B22BDC94D1E0D2"
+    },
+    {
+      "Path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/positive/target/test-classes/example/observability/ObservationContractTest$LocalExport.class",
+      "Bytes": 1344,
+      "SHA256": "4CB63F60E9AAAAB7367FD01C1D0C0DCF69ADEB454AF41C89DF26D1363AF7D131"
+    }
+  ],
+  "cachePreserved": {
+    "path": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/spring-boot-observability-validation/cache",
+    "purpose": "Temporary Maven cache populated exclusively from existing file:// mirror; retained for reproducibility, excluded from per-file report hashes."
+  },
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "prerequisite": "All reviewers stop writing; regenerate once for combined changed skills.",
+      "reason": "Parallel-review restriction; this assignment has no shipped change."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "prerequisite": "All reviewers stopped and combined registry regenerated.",
+      "reason": "No repository-wide validation by subagent."
+    }
+  ],
+  "crossSkillIssues": [],
+  "coordinatorActions": [
+    "Archive this JSON and raw positive/negative sources/logs/Surefire reports.",
+    "Record no-change at version 1.1.0; no registry/version change attributable to this assignment.",
+    "Optional independent behavioral evaluation must separate actor resources from evaluator-only expectations and prior outputs."
+  ],
+  "noSharedRepositoryWrites": true,
+  "noDelegation": true,
+  "finalWriteScope": "Only coordinator-authorized temporary validation artifacts and this handoff were written. All 12 shipped files and 6 pre-existing ignored outputs remain unchanged."
+}

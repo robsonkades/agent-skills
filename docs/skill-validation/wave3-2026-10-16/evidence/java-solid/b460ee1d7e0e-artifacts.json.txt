@@ -1,0 +1,277 @@
+[
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\baseline-hashes.json",
+    "bytes": 974,
+    "sha256": "07422752E5BEF648A641E36EA586E6F0CA390E416855C9062F315538C39C0339"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\baseline-staged.diff",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\baseline-status.txt",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\baseline.diff",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\borrowed-compile.stderr.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\borrowed-compile.stdout.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\borrowed-probe.stderr.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\borrowed-probe.stdout.log",
+    "bytes": 855,
+    "sha256": "D85DBD5994EB0E2FC657445D9941CA49EA0154FE1B1BD9F4943F5B751CF52F01"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\case-criteria.json",
+    "bytes": 3891,
+    "sha256": "D14E1DF437D20570FD40A761B222180A83D9C7A8D26DAD7D62304A317D3F2E0B"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\case-inputs.json",
+    "bytes": 544,
+    "sha256": "88144FFE42960C8E86201D1FE1A2F5CD1FFDD5BF4D2E48ACA8DFD5E614E3FB4B"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\committed-skill.yaml",
+    "bytes": 1464,
+    "sha256": "8B9D51549DB4DEC1E1674019D88C0FADFDC1346DBD1FFB0769AC4DA1A8C69F10"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\diff-check.stderr.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\diff-check.stdout.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\final-hashes.json",
+    "bytes": 974,
+    "sha256": "07422752E5BEF648A641E36EA586E6F0CA390E416855C9062F315538C39C0339"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\final-owned-diff.stderr.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\final-owned-diff.stdout.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\final-owned-status.stderr.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\final-owned-status.stdout.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\final-staged-diff.stderr.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\final-staged-diff.stdout.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\java-version.stderr.log",
+    "bytes": 193,
+    "sha256": "E33F6CFDF4D70CB8BF63CAE1ED026B89A77539348B7AC97535E20D32D7C1D010"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\java-version.stdout.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\jdk21-bytearrayinputstream.html",
+    "bytes": 39568,
+    "sha256": "9CA4C8EC483EE06B67095D708C2C44EE8D214CE8DDE1E1D980B6912CDBAA3E3B"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\jdk21-inputstream.html",
+    "bytes": 55780,
+    "sha256": "F258A01B644F9FD1D12F04104D6C82BC22BA253B193214429F6C8B29C9B850B8"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\OwnershipProbe.java",
+    "bytes": 5463,
+    "sha256": "4C99AB55885FAB68BBDB3E143E4B80EE847497E4B0095EDDF72D3EEA6BEC58E7"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\prettier.stderr.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\prettier.stdout.log",
+    "bytes": 66,
+    "sha256": "17AA973D3F004560237D9A95171210B0671DEFF23D61628EECF7322FF5938F20"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\source-fetch.json",
+    "bytes": 729,
+    "sha256": "5373B3545A0569F195425FE3C31E7085FD24A1709D4E40E655B3EF81E1894DD3"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\transferred-compile.stderr.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\transferred-compile.stdout.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\transferred-probe.stderr.log",
+    "bytes": 0,
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\transferred-probe.stdout.log",
+    "bytes": 857,
+    "sha256": "48427CA5AA6BBE95084964F8495ABADFF0805E93D1BAB634DB466E5C52249617"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\validate.mjs",
+    "bytes": 5364,
+    "sha256": "0575EEC196599CCCA312191E6FAE9AA54BCF3A528AF9B0E581739759041A879E"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\validation-results.json",
+    "bytes": 10479,
+    "sha256": "DDD9AD70DD667C81D5BAC49EE175706473B916227C635AEF9C88D809F11F7C91"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\baseline\\java-solid\\SKILL.md",
+    "bytes": 7229,
+    "sha256": "6DD084F93ECBB3B7B910A0B9237B89EF75888243D3B250D638E836668CE45A63"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\baseline\\java-solid\\skill.yaml",
+    "bytes": 1464,
+    "sha256": "8B9D51549DB4DEC1E1674019D88C0FADFDC1346DBD1FFB0769AC4DA1A8C69F10"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\baseline\\java-solid\\references\\lsp-and-isp.md",
+    "bytes": 10808,
+    "sha256": "352C127CBEC56DB892FD98837403D9C93BF1CA97625CD9AD114A88B29434CA24"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\baseline\\java-solid\\references\\srp-and-ocp.md",
+    "bytes": 5993,
+    "sha256": "5522F4CE3C3D28CDE93979D76E4C8DCC8E78162CE63A252B530ADEE106066A42"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\baseline\\java-solid\\references\\worked-refactoring.md",
+    "bytes": 7933,
+    "sha256": "34CBF48FE27DF9D99AF96D6A54CF47DEB2FA4740A34DC46D148AE9E1E13D2CE8"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\cases\\borrowed\\input.md",
+    "bytes": 740,
+    "sha256": "ADC2DADFAB6F2DD9BCD840E7EECD062904D629DFFC8255FBAC18F0A7C3B54DCE"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\cases\\borrowed\\PayloadReader.java",
+    "bytes": 291,
+    "sha256": "FDB71D9C6FCF1EF60FC2F59D1864AACA0225459943BD3143FE57D9717E1CFF2C"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\cases\\borrowed\\StreamPayloadReader.java",
+    "bytes": 274,
+    "sha256": "FC49082E57FB0C68216434CDF62259728DA8C39CC6B4AB2E64DEE4EDDF7291DE"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\cases\\borrowed\\classes\\OwnershipProbe.class",
+    "bytes": 4299,
+    "sha256": "6F6B1F929CF8A53EB197E9A4E641421AF5527EA4030EE0D65700F2329BFAFD1E"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\cases\\borrowed\\classes\\OwnershipProbe$ClosingReadAll.class",
+    "bytes": 708,
+    "sha256": "82F314B0EFB63C186490D82380E2695432597D8E65DDDE73367F35791673D15A"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\cases\\borrowed\\classes\\OwnershipProbe$TrackingInput.class",
+    "bytes": 868,
+    "sha256": "A2F918EBFB5B0B768423C395548B7B4256687AA28844C83B6509605986F40191"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\cases\\borrowed\\classes\\PayloadReader.class",
+    "bytes": 198,
+    "sha256": "89FFA0CD9CFCEB93EE81776F9C19FE68156514976047D44EF756AF1FAD460B03"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\cases\\borrowed\\classes\\StreamPayloadReader.class",
+    "bytes": 661,
+    "sha256": "057868D1CA44607DDE5981FBF0EB5801D2715CEB7FDE5DE95E866243899FAEA2"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\cases\\transferred\\input.md",
+    "bytes": 740,
+    "sha256": "ADC2DADFAB6F2DD9BCD840E7EECD062904D629DFFC8255FBAC18F0A7C3B54DCE"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\cases\\transferred\\PayloadReader.java",
+    "bytes": 282,
+    "sha256": "58D3B2FEEC69F309A6F9E6E7C6172CFB31747332622275A252A2615A5012C4FD"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\cases\\transferred\\StreamPayloadReader.java",
+    "bytes": 274,
+    "sha256": "FC49082E57FB0C68216434CDF62259728DA8C39CC6B4AB2E64DEE4EDDF7291DE"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\cases\\transferred\\classes\\OwnershipProbe.class",
+    "bytes": 4299,
+    "sha256": "6F6B1F929CF8A53EB197E9A4E641421AF5527EA4030EE0D65700F2329BFAFD1E"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\cases\\transferred\\classes\\OwnershipProbe$ClosingReadAll.class",
+    "bytes": 708,
+    "sha256": "82F314B0EFB63C186490D82380E2695432597D8E65DDDE73367F35791673D15A"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\cases\\transferred\\classes\\OwnershipProbe$TrackingInput.class",
+    "bytes": 868,
+    "sha256": "A2F918EBFB5B0B768423C395548B7B4256687AA28844C83B6509605986F40191"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\cases\\transferred\\classes\\PayloadReader.class",
+    "bytes": 198,
+    "sha256": "89FFA0CD9CFCEB93EE81776F9C19FE68156514976047D44EF756AF1FAD460B03"
+  },
+  {
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\cases\\transferred\\classes\\StreamPayloadReader.class",
+    "bytes": 661,
+    "sha256": "057868D1CA44607DDE5981FBF0EB5801D2715CEB7FDE5DE95E866243899FAEA2"
+  }
+]

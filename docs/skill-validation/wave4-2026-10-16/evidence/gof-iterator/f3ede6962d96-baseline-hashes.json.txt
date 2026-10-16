@@ -1,0 +1,22 @@
+[
+  {
+    "Path": "C:\\git\\agent-skills\\skills\\gof-iterator\\SKILL.md",
+    "SHA256": "3168CAADAAAF253CFF4057D01E12BBF40B1B4417D3D9D81A1BBC8489189789CC",
+    "Bytes": 12294
+  },
+  {
+    "Path": "C:\\git\\agent-skills\\skills\\gof-iterator\\skill.yaml",
+    "SHA256": "C2D4F2C5E96B83816943D69B8BBE641BC4739B8B3CA481D54FE879A5D77EC3D4",
+    "Bytes": 1937
+  },
+  {
+    "Path": "C:\\git\\agent-skills\\skills\\gof-iterator\\references\\iterator-stream-spliterator.md",
+    "SHA256": "5433BF1FAD102230718CAAF4A7D54E7044D72BF655F66BAE46C0888B31A23102",
+    "Bytes": 12425
+  },
+  {
+    "Path": "C:\\git\\agent-skills\\skills\\gof-iterator\\references\\worked-example.md",
+    "SHA256": "008CC0F79C91A41EA47042D8D33A335F009F883E8435D47B3C642FCCA7B7A140",
+    "Bytes": 10326
+  }
+]

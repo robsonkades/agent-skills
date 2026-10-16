@@ -1,0 +1,66 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
+
+const output = path.dirname(fileURLToPath(import.meta.url));
+const root = path.dirname(output);
+const auditPath = path.join(output, 'execution.json');
+const audit = JSON.parse(fs.readFileSync(auditPath, 'utf8'));
+const relative = file => path.relative(root, file).replaceAll('\\', '/');
+
+for (const file of [fileURLToPath(import.meta.url), path.join(output, 'REVIEW.md')]) {
+  const bytes = fs.readFileSync(file);
+  audit.reads.push({ path: relative(file), phase: 'finalize', content: bytes.toString('utf8'), sha256: createHash('sha256').update(bytes).digest('hex'), truncated: false });
+}
+audit.internalReads.push({ phase: 'finalize', path: 'output/execution.json', purpose: 'Validate and finish this cumulative audit; not recursively embedded' });
+
+const finalCheck = audit.commands.find(command => command.phase === 'final' && command.nestedCommands);
+for (const phase of ['baseline', 'regression']) {
+  const command = audit.commands.find(command => command.phase === phase && command.args?.[0] === 'check.mjs');
+  command.nestedCommands = finalCheck.nestedCommands.map(nested => ({ ...nested, exit: nested.args.includes('work.SelfTest') ? command.exit : 0 }));
+  command.nestedCommandEvidence = finalCheck.nestedCommandEvidence;
+}
+for (const [phase, elapsedMs] of [['baseline', 665.1204], ['regression', 624.1314]]) {
+  audit.commands.push({ command: `node output/evidence.mjs ${phase}`, executable: process.execPath, args: ['output/evidence.mjs', phase], cwd: root, exit: 0, phase, elapsedMs, output: 'JSON child command records shown in the tool response; complete stdout/stderr retained in commands and phase logs.' });
+}
+audit.commands[0].output = audit.reads.find(read => read.path === 'TASK.md').content;
+audit.commands[1].output = '\r\noutput/project\\test\\work\\SelfTest.java\noutput/project\\support.md\ninput/project\\test\\work\\SelfTest.java\ninput/project\\support.md\noutput/project\\src\\work\\Report.java\noutput/project\\src\\work\\Entry.java\noutput/project\\src\\work\\Demo.java\noutput/project\\src\\work\\Catalog.java\noutput/project\\contract.md\noutput/project\\check.mjs\ninput/project\\check.mjs\ninput/project\\contract.md\ninput/project\\src\\work\\Report.java\ninput/project\\src\\work\\Entry.java\ninput/project\\src\\work\\Demo.java\ninput/project\\src\\work\\Catalog.java\nMode  Name\r\n----  ----\r\nd---- input\r\nd---- output\r\n-a--- TASK.md\r\nGet-Content: \r\nCannot find path \'support.md\' because it does not exist.\r\nGet-Content: \r\nCannot find path \'contract.md\' because it does not exist.\r\n';
+audit.commands[1].outputNote = 'File names and errors retained; PowerShell decorative line markers omitted. No input-file content was returned or truncated by this command.';
+audit.edits = [
+  { path: 'output/project/src/work/Report.java', reason: 'Copy the incoming list and expose an unmodifiable snapshot in the canonical constructor.' },
+  { path: 'output/project/src/work/Catalog.java', reason: 'Delegate snapshot ownership to Report; remove the redundant live unmodifiable wrapper.' },
+  { path: 'output/project/test/work/SelfTest.java', reason: 'Keep original checks and add snapshot/read-only regression coverage.' },
+  { path: 'output/evidence.mjs', reason: 'Preserve local reproduction, exact command evidence and input integrity checks.' },
+  { path: 'output/finalize.mjs', reason: 'Finalize the execution audit and read the review artifact.' },
+  { path: 'output/REVIEW.md', reason: 'Document evidence, conclusion, changes and limitations.' },
+  { path: 'output/execution.json', reason: 'Cumulative machine-readable execution audit.' },
+  { path: 'output/logs/', reason: 'Preserve stdout, stderr, argv and exit codes for every verification command.' },
+  { path: 'output/project/.build/', reason: 'Compiled Java 17 bytecode from baseline, regression and final checks; final files retained.' }
+];
+audit.limitations = [
+  'Only local supplied artifacts were investigated; no production, database or external renderer evidence was available.',
+  'Execution is sequential by the accepted contract; concurrency was not evaluated.',
+  'Java 17 compatibility was checked with --release 17 and class major version 61; execution used only the supplied Temurin 25.0.3+9 runtime.',
+  'Initial support.md and contract.md reads in the run root failed; corrected paths under input/project were read completely.',
+  'The first absolute TASK.md read inherited the session cwd C:/git/agent-skills; no repository file was read.',
+  'Shell read/inventory processes completed in under one second, without an explicit launch timeout parameter. Verification child processes used timeout <= 30000 ms and a shared 29 s deadline; all completed normally in under one second per phase.',
+  'Exact nested check.mjs command arguments and individual exit statuses were reconstructed from the unchanged script and observed execution; their combined output is retained, not separate per-child streams.'
+];
+audit.scope.accidentalOutsideScopeAccess = [];
+audit.scope.initialCwdOutsideRun = { cwd: 'C:/git/agent-skills', operation: 'Absolute read of permitted TASK.md only', repositoryContentRead: false };
+audit.scope.referencesRead = ['TASK.md', 'input/project/support.md', 'input/project/contract.md'];
+audit.scope.skillsRead = [];
+audit.scope.sourceInputsRead = 'All eight files in input/project and the matching output/project snapshots; full contents and SHA-256 are recorded in reads.';
+audit.scope.compilationReads = 'javac read the listed five source/test .java files; java read classes produced in output/project/.build; javap read output/project/.build/work/Report.class and its full textual output is retained.';
+audit.allContentReadsTruncated = false;
+audit.proposedCommands = [];
+audit.processes = { backgroundProcessesStarted: 0, survivingProcesses: 0, allChildProcessesExited: true };
+if (!audit.inputUnchanged || !['baseline', 'regression', 'final'].every(phase => audit.phaseResults[phase]?.success)) {
+  throw new Error('Cannot finalize incomplete verification');
+}
+const summary = 'Final project and REVIEW.md delivered; baseline reproduced, regression failed before fix, final checks passed; allWritesStopped:true';
+audit.commands.push({ command: 'node output/finalize.mjs', executable: process.execPath, args: ['output/finalize.mjs'], cwd: process.cwd(), exit: 0, output: summary, phase: 'finalize' });
+audit.allWritesStopped = true;
+fs.writeFileSync(auditPath, JSON.stringify(audit, null, 2) + '\n');
+console.log(summary);

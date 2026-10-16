@@ -1,0 +1,44 @@
+[
+  {
+    "input": "input/project/README.md",
+    "output": "output/project/README.md",
+    "inputSha256": "bb4df13b026852574a9c850cba10d2cc483aa5be644e391bbd16ff69852647b6",
+    "outputSha256": "bb4df13b026852574a9c850cba10d2cc483aa5be644e391bbd16ff69852647b6",
+    "equal": true
+  },
+  {
+    "input": "input/project/check.mjs",
+    "output": "output/project/check.mjs",
+    "inputSha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973",
+    "outputSha256": "01c7f729f0bd4f5ca17bc727272ea87c9310180ee17ece398817cf5c6eb46973",
+    "equal": true
+  },
+  {
+    "input": "input/project/docs/review-request.md",
+    "output": "output/project/docs/review-request.md",
+    "inputSha256": "a422a7854771e6c3b411b2b5e7083f7428cfd15a1fe7d538ce9512fba046c5ed",
+    "outputSha256": "a422a7854771e6c3b411b2b5e7083f7428cfd15a1fe7d538ce9512fba046c5ed",
+    "equal": true
+  },
+  {
+    "input": "input/project/docs/contract.md",
+    "output": "output/project/docs/contract.md",
+    "inputSha256": "f2b702ba6fb794e030886c7a7b2c80fa8da6bb98e22223945a5a696d4fdc71b5",
+    "outputSha256": "f2b702ba6fb794e030886c7a7b2c80fa8da6bb98e22223945a5a696d4fdc71b5",
+    "equal": true
+  },
+  {
+    "input": "input/project/src/work/Job.java",
+    "output": "output/project/src/work/Job.java",
+    "inputSha256": "34690066cc95f8d4349c7adc90fd0b9048accd5ec41f658f5946e17d0b9854a4",
+    "outputSha256": "34690066cc95f8d4349c7adc90fd0b9048accd5ec41f658f5946e17d0b9854a4",
+    "equal": true
+  },
+  {
+    "input": "input/project/test/work/Smoke.java",
+    "output": "output/project/test/work/Smoke.java",
+    "inputSha256": "171679869bd7d083fe6f5f31b1ab3480214c07ef13a02ecc0cfb360f3a30c543",
+    "outputSha256": "171679869bd7d083fe6f5f31b1ab3480214c07ef13a02ecc0cfb360f3a30c543",
+    "equal": true
+  }
+]

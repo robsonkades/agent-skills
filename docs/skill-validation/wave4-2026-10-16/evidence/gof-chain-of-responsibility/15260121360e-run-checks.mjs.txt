@@ -1,0 +1,109 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { parseManifest } from 'file:///C:/git/agent-skills/packages/core/src/domain/manifest.ts';
+import { parseSkillDocument, documentName, documentDescription } from 'file:///C:/git/agent-skills/packages/core/src/domain/skill-document.ts';
+
+const root = path.dirname(fileURLToPath(import.meta.url));
+const repo = 'C:/git/agent-skills';
+const owned = path.join(repo, 'skills/gof-chain-of-responsibility');
+const javaRoot = 'C:/Users/robso/.jdks/temurin-25.0.3/bin';
+const commands = [], checks = [];
+fs.mkdirSync(path.join(root, 'logs'), { recursive: true });
+const hash = filename => createHash('sha256').update(fs.readFileSync(filename)).digest('hex').toUpperCase();
+function write(relative, content) {
+  const target = path.join(root, relative);
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  fs.writeFileSync(target, content.trimEnd() + '\n');
+  return target;
+}
+function run(label, executable, args, cwd = repo) {
+  const result = spawnSync(executable, args, { cwd, encoding: 'utf8', timeout: 30000 });
+  const record = { label, executable, args, cwd, exitCode: result.status, signal: result.signal, stdout: result.stdout ?? '', stderr: result.stderr ?? '', error: result.error?.message ?? null };
+  commands.push(record);
+  fs.writeFileSync(path.join(root, 'logs', label + '.json'), JSON.stringify(record, null, 2) + '\n');
+  assert.equal(result.error, undefined, label);
+  assert.equal(result.status, 0, label);
+  return record;
+}
+try {
+  const baseline = JSON.parse(fs.readFileSync(path.join(root, 'assignment-baseline.json'), 'utf8'));
+  const files = fs.readdirSync(owned, { recursive: true }).filter(p => fs.statSync(path.join(owned, p)).isFile()).sort();
+  assert.equal(files.length, 4);
+  const hashes = files.map(p => ({ path: p.replaceAll('\\', '/'), sha256: hash(path.join(owned, p)) }));
+  for (const file of baseline.files) assert.equal(hash(file.path), file.sha256, file.path);
+  const { manifest, issues } = parseManifest(fs.readFileSync(path.join(owned, 'skill.yaml'), 'utf8'), { source: path.join(owned, 'skill.yaml'), strict: true });
+  assert.deepEqual(issues, []);
+  const skill = parseSkillDocument(fs.readFileSync(path.join(owned, 'SKILL.md'), 'utf8'));
+  assert.equal(documentName(skill), manifest.name);
+  assert.equal(documentDescription(skill), manifest.description);
+  assert.equal(manifest.version, '1.2.4');
+  for (const file of manifest.files) assert.ok(fs.existsSync(path.join(owned, file)), file);
+  for (const suggestion of manifest.suggests) assert.ok(fs.existsSync(path.join(repo, 'skills', suggestion, 'SKILL.md')), suggestion);
+  let localLinks = 0;
+  for (const p of files.filter(f => f.endsWith('.md'))) {
+    const text = fs.readFileSync(path.join(owned, p), 'utf8');
+    for (const match of text.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)) {
+      const target = match[1];
+      if (/^[a-z]+:\/\//i.test(target) || target.startsWith('#')) continue;
+      assert.ok(fs.existsSync(path.resolve(owned, path.dirname(p), target.split('#')[0])), target);
+      localLinks++;
+    }
+  }
+  const refs = files.filter(p => p.startsWith('references'));
+  for (const ref of refs) assert.ok(skill.body.includes(ref.replaceAll('\\', '/')), ref);
+  checks.push({ name: 'local-structure-and-preservation', passed: true, version: manifest.version, fileHashes: hashes, manifestIssues: issues, localLinks, routedReferences: refs.length, suggestions: manifest.suggests.length, unchangedAgainstAssignment: true });
+
+  run('node-version', process.execPath, ['--version']);
+  run('java-version', path.join(javaRoot, 'java.exe'), ['-version']);
+  run('javac-version', path.join(javaRoot, 'javac.exe'), ['-version']);
+  run('prettier-owned', process.execPath, [path.join(repo, 'node_modules/prettier/bin/prettier.cjs'), '--check', ...files.map(p => path.join(owned, p))]);
+  run('diff-check-owned', 'git', ['diff', '--check', '--', 'skills/gof-chain-of-responsibility']);
+  run('diff-against-head', 'git', ['diff', '--exit-code', 'HEAD', '--', 'skills/gof-chain-of-responsibility']);
+
+  const worked = fs.readFileSync(path.join(owned, 'references/worked-example.md'), 'utf8');
+  const fence = String.fromCharCode(96).repeat(3);
+  const javaBlocks = [...worked.matchAll(new RegExp(fence + 'java\\r?\\n([\\s\\S]*?)' + fence, 'g'))].map(m => m[1]);
+  const snippets = ['AuthorisationRule', 'AuthorisationRules', 'Decision'].map(name => {
+    const marker = name === 'AuthorisationRule' ? 'public interface AuthorisationRule {' : name === 'AuthorisationRules' ? 'public final class AuthorisationRules {' : 'public record Decision(';
+    const matches = javaBlocks.filter(code => code.includes(marker));
+    assert.equal(matches.length, 1, name);
+    return write('technical/extracted/' + name + '.java', 'import java.util.*;\n' + matches[0]);
+  });
+  const classes = path.join(root, 'technical/classes');
+  run('compile-extracted-and-controls-release17', path.join(javaRoot, 'javac.exe'), ['--release', '17', '-d', classes, ...snippets, path.join(root, 'technical/RuleControls.java'), path.join(root, 'technical/ContinuationControls.java')]);
+  run('rule-controls', path.join(javaRoot, 'java.exe'), ['-cp', classes, 'RuleControls']);
+  run('continuation-controls', path.join(javaRoot, 'java.exe'), ['-cp', classes, 'ContinuationControls']);
+  checks.push({ name: 'java17-examples-and-contract-controls', passed: true, sourceRelease: 17, actualRuntime: 'Temurin 25.0.3+9', scope: 'Exact AuthorisationRule, AuthorisationRules and Decision Markdown blocks, imports/minimal domain fixtures; plus synthetic continuation/resource/cancellation controls. No Spring, Netty, database or broker integration.' });
+
+  assert.equal(hash(path.join(root, 'case-a/src/ExportApp.java')), hash(path.join(root, 'case-b/src/ExportApp.java')));
+  assert.equal(hash(path.join(root, 'case-a/README.md')), hash(path.join(root, 'case-b/README.md')));
+  for (const mode of ['a', 'b']) {
+    const caseRoot = path.join(root, 'case-' + mode);
+    const classRoot = path.join(caseRoot, 'classes');
+    run('compile-case-' + mode, path.join(javaRoot, 'javac.exe'), ['--release', '17', '-d', classRoot, path.join(caseRoot, 'src/ExportApp.java')]);
+    const result = run('run-case-' + mode, path.join(javaRoot, 'java.exe'), ['-cp', classRoot, 'ExportApp', 'app.properties'], caseRoot);
+    const expected = mode === 'a' ? 'report\n[open, read, close]' : 'FAILED: IllegalStateException: session closed\n[open, close]';
+    assert.equal(result.stdout.trim().replaceAll('\r', ''), expected);
+  }
+  const original = fs.readFileSync(path.join(root, 'case-a/src/ExportApp.java'), 'utf8');
+  const oldBody = '            try (var session = new Session(trace)) {\n                return next.handle(session);\n            }';
+  const newBody = '            var session = new Session(trace);\n            try {\n                return next.handle(session).whenComplete((value, failure) -> session.close());\n            } catch (RuntimeException | Error failure) {\n                session.close();\n                throw failure;\n            }';
+  assert.ok(original.includes(oldBody));
+  const control = write('technical/completion-control/ExportApp.java', original.replace(oldBody, newBody));
+  const controlClasses = path.join(root, 'technical/completion-control/classes');
+  run('compile-completion-control', path.join(javaRoot, 'javac.exe'), ['--release', '17', '-d', controlClasses, control]);
+  for (const mode of ['a', 'b']) {
+    const result = run('run-completion-control-' + mode, path.join(javaRoot, 'java.exe'), ['-cp', controlClasses, 'ExportApp', path.join(root, 'case-' + mode, 'app.properties')]);
+    assert.equal(result.stdout.trim().replaceAll('\r', ''), 'report\n[open, read, close]');
+  }
+  checks.push({ name: 'paired-fixture-technical-observations', passed: true, onlyInputDifference: 'execution.mode property: inline versus queued', actorEvaluation: false, observations: 'Unchanged original passes inline and exposes closed-session failure queued. Separate completion-owned control passes both. The control assumes the shown non-cancelled minimal stage; it is not a universal cancel-safe recipe.' });
+  fs.writeFileSync(path.join(root, 'results.json'), JSON.stringify({ passed: true, checks, commands, allProcessesExited: true }, null, 2) + '\n');
+  console.log(JSON.stringify({ passed: true, checks: checks.map(c => c.name), commands: commands.length, result: path.join(root, 'results.json') }, null, 2));
+} catch (error) {
+  fs.writeFileSync(path.join(root, 'results.json'), JSON.stringify({ passed: false, error: error.stack, checks, commands }, null, 2) + '\n');
+  throw error;
+}

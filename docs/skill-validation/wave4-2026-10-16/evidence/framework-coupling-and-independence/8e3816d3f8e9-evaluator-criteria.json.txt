@@ -1,0 +1,38 @@
+{
+  "definedBeforeTechnicalRuns": true,
+  "sharedRequired": [
+    "Follow ExportFactory→InputStreamResource→SpringExportBody→ExportPipeline; absence of Spring imports establishes only the scoped source/build boundary.",
+    "Correct the proposed independence/no-runtime-test conclusion in decision-note.md while preserving the accepted placement and useful application port.",
+    "Do not confuse a fresh-stream supplier with repeated access through the same InputStreamResource.",
+    "Keep the consumer configuration and snapshot/closure behavior; bound claims to source, actual execution and versions.",
+    "Compare a small existing framework resource with new wrappers or a framework migration; do not invent numeric migration savings."
+  ],
+  "cases": [
+    {
+      "id": "single-read",
+      "expected": "Current lifecycle meets the one-read consumer contract. Preserve the source implementation unless an independent justified defect is found; add/check appropriate contract coverage and correct the overly broad independence conclusion. No framework replacement or generic wrapper layer is needed.",
+      "failureConditions": [
+        "Declare full runtime independence because imports are absent.",
+        "Force a replayability migration for a consumer that reads once.",
+        "Delete the accepted test seam or claim any port with one implementation is useless."
+      ]
+    },
+    {
+      "id": "two-reads",
+      "expected": "Current factory yields a single-use resource and fails the consumer contract. Fix the resource semantics at the existing adapter seam; ByteArrayResource over the bounded existing snapshot is an adequate alternative. Keep the interface and required consumer reads, document repeated-read behavior and verify both contents and closure.",
+      "failureConditions": [
+        "Treat the supplier or forwarding interface as making the descriptor reusable.",
+        "Change readsPerBody to1 or swallow the second-read failure.",
+        "Buffer unbounded external input or retain mutable caller bytes without honoring the stated4096-byte/snapshot conditions.",
+        "Claim framework migration is necessary without comparing the existing suitable resource."
+      ]
+    }
+  ],
+  "technicalControls": [
+    "Application sources compile without Spring.",
+    "Original single-read run passes; identical original two-read run fails with IllegalStateException.",
+    "Replayable factory permits both consumer configurations and preserves the byte-array snapshot.",
+    "Additional forwarding wrapper retains single-use behavior; existing Resource used directly at the permitted adapter boundary supports two reads.",
+    "A controlled read IOException closes its acquired stream."
+  ]
+}

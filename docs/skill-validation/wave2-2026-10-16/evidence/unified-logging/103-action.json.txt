@@ -1,0 +1,14 @@
+{
+  "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\jcmd.exe",
+  "args": [
+    "23356",
+    "VM.log",
+    "output=file=a.log",
+    "list"
+  ],
+  "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-unified-logging-20261016-1aad6e1fe90242348c864ce660ee08fc\\validated\\list-with-output",
+  "status": 0,
+  "signal": null,
+  "stdout": "23356:\r\nAvailable log levels: off, trace, debug, info, warning, error\nAvailable log decorators: time (t), utctime (utc), uptime (u), timemillis (tm), uptimemillis (um), timenanos (tn), uptimenanos (un), hostname (hn), pid (p), tid (ti), level (l), tags (tg)\nAvailable log tags: add, age, alloc, annotation, aot, arguments, array, attach, barrier, blocks, bot, breakpoint, bytecode, cause, cds, census, class, classhisto, cleanup, codecache, compaction, compilation, condy, constantpool, constraints, container, continuations, coops, cpu, cset, data, datacreation, dcmd, decoder, defaultmethods, deoptimization, dependencies, director, dump, dynamic, ergo, event, exceptions, exit, fastlock, finalizer, fingerprint, free, freelist, gc, handshake, hashtables, heap, heapdump, humongous, ihop, iklass, indy, init, inlinecache, inlining, install, interpreter, itables, jfr, jit, jmethod, jni, jvmci, jvmti, lambda, library, link, liveness, load, loader, logging, malloc, map, mark, marking, membername, memops, metadata, metaspace, methodcomparator, methodhandles, methodtrace, mirror, mmu, module, monitorinflation, monitormismatch, monitortable, native, nestmates, nmethod, nmt, normalize, numa, objecttagging, obsolete, oldobject, oom, oopmap, oops, oopstorage, os, owner, page, pagesize, parser, patch, path, perf, periodic, phases, plab, placeholders, preempt, preorder, preview, promotion, ptrqueue, purge, record, redefine, ref, refine, region, reloc, remset, resolve, safepoint, sampling, scavenge, sealed, setting, smr, stackbarrier, stackmap, stacktrace, stackwalk, start, startup, startuptime, state, stats, streaming, stringdedup, stringtable, stubs, subclass, survivor, suspend, sweep, symboltable, system, table, task, thread, throttle, timer, tlab, tracking, training, trimnative, unload, unmap, unshareable, update, valuebasedclasses, verification, verify, vmmutex, vmoperation, vmthread, vtables, vtablestubs\nDescribed tag sets:\n logging: Logging for the log framework itself\nLog output configuration:\n #0: stdout all=warning uptime,level,tags foldmultilines=false\n #1: stderr all=off uptime,level,tags foldmultilines=false\n #2: file=a.log all=info uptime,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false (reconfigured)\n #3: file=b.log all=off,class+load=info time,level,tags foldmultilines=false,filecount=2,filesize=0B,async=false\n",
+  "stderr": ""
+}

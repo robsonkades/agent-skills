@@ -1,0 +1,51 @@
+{
+  "classification": "Known development pair. No independent actor execution; not held-out.",
+  "decisiveConstraint": "Only PageRequest.java import of its Sort component changes: Spring Data's type versus the application's own Sort. The component spelling, wrapper name, consumer, declared requirements, draft and coarse map are otherwise identical; caseId differs administratively.",
+  "commonExpected": [
+    "Read ADR/build scope and follow PageRequest's public record component/accessor through the actual CliPreview use.",
+    "Correct review.md itself, retaining supported validation, consumer and measurement observations.",
+    "Reject the claimed six-day migration estimate and high priority based solely on four graph edges; state missing effort/exposure/history evidence.",
+    "Preserve accepted consumer independence. Do not remove the wrapper and expose Spring Data directly just because the draft requests that remedy.",
+    "Treat source/API and compile evidence as static contract evidence, not runtime latency, database integration or measured developer cost.",
+    "Keep existing Java/dependency baselines and review-only application scope."
+  ],
+  "cases": [
+    {
+      "caseId": "architecture-wrapper-type-a",
+      "inputPath": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/enterprise-architecture-smells/case-a/input.json",
+      "expected": [
+        "Identify that the application-owned PageRequest exposes org.springframework.data.domain.Sort in its public accessor/canonical constructor.",
+        "Confirm the concrete independence violation for CliPreview using the declared API-only classpath; compiler evidence can show missing Sort.",
+        "Retain a scoped finding about that exposed type, remove invented cost/severity justification, and propose an application-owned sorting contract/adapter translation with compatibility assessment for published consumers."
+      ],
+      "failureConditions": [
+        "Dismiss leakage solely because PageRequest belongs to the application.",
+        "Infer actual migration time/latency from map counts.",
+        "Replace with Spring Data PageRequest or delete the accepted boundary.",
+        "Claim all runtime or organizational consequences are confirmed by compilation."
+      ]
+    },
+    {
+      "caseId": "architecture-wrapper-type-b",
+      "inputPath": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/enterprise-architecture-smells/case-b/input.json",
+      "expected": [
+        "Identify that PageRequest exposes demo.api.Sort and CliPreview can compile against the API output alone.",
+        "Withdraw the leak/cost assertion in F-17 for the inspected path; retain the valid application boundary and accepted observations.",
+        "Limit no-finding to inspected type/consumer scope rather than assert the entire system has no architectural problems."
+      ],
+      "failureConditions": [
+        "Report framework leakage because of class name, wrapper count or server adapter's legitimate dependency.",
+        "Perform an application rewrite despite a review request.",
+        "Leave the refuted recommendation active and only append a caveat."
+      ]
+    }
+  ],
+  "predeclaredTechnicalExpectations": [
+    "Case A API compiles with existing Spring Data Commons 4.1.1.",
+    "Case A CliPreview fails compilation with API output only because Sort is absent.",
+    "Case A CliPreview compiles when the same existing framework jar is added, isolating the missing type.",
+    "Case B API and CliPreview compile without Spring libraries.",
+    "javap exposes the corresponding public Sort return type in each PageRequest."
+  ],
+  "separation": "Actor fixture folders contain no evaluator criteria or prior output. Directory layout is procedural separation, not enforced access control; coordinator must restrict exposure."
+}

@@ -1,0 +1,2 @@
+demo.clients[0].timeout=2s
+demo.clients-by-name.primary.timeout=2s

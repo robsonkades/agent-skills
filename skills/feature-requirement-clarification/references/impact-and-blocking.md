@@ -73,8 +73,11 @@ Q  Should we use Lombok for the new DTOs?
 4. Record it in the progress artefact as a blocker with the decision it needs, so the state
    survives the end of the session.
 
-An answer that arrives partially — "probably async, but check with the platform team" — is not
-an answer. Record it as still blocking, with the owner named.
+A tentative answer — "probably async, but check with the platform team" — does not settle the
+execution model. Keep that distinction blocking, with the owner named. A mixed reply can settle
+part of the work: "Customers may cancel before dispatch; after dispatch, check with Operations"
+settles the first condition when the speaker has that authority. Keep only the latter condition
+open, and block work that depends on it; do not ask the settled part again.
 
 ## When an answer requires evidence
 

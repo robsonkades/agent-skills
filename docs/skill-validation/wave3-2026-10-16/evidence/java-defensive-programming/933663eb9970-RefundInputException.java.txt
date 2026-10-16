@@ -1,0 +1,16 @@
+import java.math.*;
+import java.util.*;
+import java.util.regex.*;
+public final class RefundInputException extends IllegalArgumentException {
+    private final String field;
+    private final String code;
+
+    public RefundInputException(String field, String code) {
+        super(field + ": " + code);
+        this.field = field;
+        this.code = code;
+    }
+
+    public String field() { return field; }
+    public String code() { return code; }
+}

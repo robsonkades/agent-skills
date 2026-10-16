@@ -1,0 +1,24 @@
+SELECT id, priority, created_at, label
+FROM tickets
+WHERE tenant_id = :tenant
+  AND (
+    -- Lower non-null priorities, then all NULL priorities, follow a non-null cursor.
+    (
+      :cursor_priority IS NOT NULL
+      AND (priority < :cursor_priority OR priority IS NULL)
+    )
+    OR
+    -- Within one priority group, dates ascend and tied IDs descend.
+    (
+      (
+        priority = :cursor_priority
+        OR (priority IS NULL AND :cursor_priority IS NULL)
+      )
+      AND (
+        created_at > :cursor_created
+        OR (created_at = :cursor_created AND id < :cursor_id)
+      )
+    )
+  )
+ORDER BY priority DESC NULLS LAST, created_at ASC, id DESC
+LIMIT :page_size;

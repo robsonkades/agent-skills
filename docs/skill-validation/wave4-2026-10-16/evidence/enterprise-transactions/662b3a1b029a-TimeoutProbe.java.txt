@@ -1,0 +1,137 @@
+import java.io.InputStream;
+import java.lang.reflect.Proxy;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.Properties;
+import org.springframework.jdbc.datasource.AbstractDataSource;
+import org.springframework.jdbc.datasource.ConnectionHolder;
+import org.springframework.transaction.TransactionTimedOutException;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+
+// Real Spring 6.2.12 manager/template/holder/helper, with recording JDBC doubles.
+// No database, SQL cancellation, lock release, ORM or wall-clock integration proof.
+public final class TimeoutProbe {
+    private static int assertions;
+
+    private static void check(boolean condition, String description) {
+        assertions++;
+        if (!condition) throw new AssertionError(description);
+    }
+
+    public static void main(String[] args) throws Exception {
+        Properties config = new Properties();
+        try (InputStream in = Files.newInputStream(Path.of(args[0], "application.properties"))) {
+            config.load(in);
+        }
+        boolean appliesTimeout = config.getProperty("batch.statements").equals("remaining");
+        run(config, appliesTimeout, false);
+        run(config, appliesTimeout, true);
+        System.out.println("Spring=" + org.springframework.core.SpringVersion.getVersion());
+        System.out.println("Java=" + System.getProperty("java.version"));
+        System.out.println("selection=" + config.getProperty("batch.statements"));
+        System.out.println("assertions=" + assertions);
+        System.out.println("LIMIT: JDBC recording doubles; no database enforcement or ORM test.");
+    }
+
+    private static void run(Properties config, boolean appliesTimeout, boolean expired) {
+        RecordingDataSource dataSource = new RecordingDataSource(expired);
+        RuntimeException observed = null;
+        try {
+            BatchWrite.create(dataSource, config).markReady(7);
+        } catch (RuntimeException ex) {
+            observed = ex;
+        }
+        check(dataSource.acquisitions == 1, "manager and DAO use one bound connection");
+        check(dataSource.sawActiveTransaction, "statement prepared inside the real Spring transaction");
+        check(dataSource.statementClosed, "statement closed on success or setup failure");
+        check(dataSource.connectionClosed, "manager closes owned connection");
+        check(dataSource.autoCommit, "manager restores auto-commit");
+        check(!TransactionSynchronizationManager.hasResource(dataSource), "thread-bound holder removed");
+        check(!TransactionSynchronizationManager.isActualTransactionActive(), "active flag cleared");
+        if (expired && appliesTimeout) {
+            check(observed instanceof TransactionTimedOutException, "expired remaining timeout detected");
+            check(dataSource.executions == 0, "expiry detected before SQL execution");
+            check(dataSource.rollbacks == 1 && dataSource.commits == 0, "manager invokes rollback");
+            check(dataSource.timeoutCalls == 0, "expired TTL throws before setting query timeout");
+        } else {
+            check(observed == null, "normal completion for this selected path");
+            check(dataSource.executions == 1, "one SQL execution requested");
+            check(dataSource.commits == 1 && dataSource.rollbacks == 0, "manager invokes commit");
+            check(dataSource.timeoutCalls == (appliesTimeout ? 1 : 0), "selected path timeout setter");
+            if (appliesTimeout) {
+                check(dataSource.queryTimeout > 0 && dataSource.queryTimeout <= 5, "remaining timeout passed");
+            } else {
+                check(dataSource.queryTimeout == 0, "missing propagation leaves driver default");
+            }
+        }
+        System.out.println("expired=" + expired + " timeoutCalls=" + dataSource.timeoutCalls
+                + " executions=" + dataSource.executions + " commits=" + dataSource.commits
+                + " rollbacks=" + dataSource.rollbacks + " outcome="
+                + (observed == null ? "returned" : observed.getClass().getSimpleName()));
+    }
+
+    private static final class RecordingDataSource extends AbstractDataSource {
+        final boolean expireBeforeStatement;
+        int acquisitions, timeoutCalls, queryTimeout, executions, commits, rollbacks;
+        boolean autoCommit = true, connectionClosed, statementClosed, sawActiveTransaction;
+        final Connection connection;
+        final PreparedStatement statement;
+
+        RecordingDataSource(boolean expireBeforeStatement) {
+            this.expireBeforeStatement = expireBeforeStatement;
+            statement = (PreparedStatement) Proxy.newProxyInstance(
+                    TimeoutProbe.class.getClassLoader(), new Class<?>[]{PreparedStatement.class},
+                    (proxy, method, args) -> switch (method.getName()) {
+                        case "toString" -> "RecordingStatement";
+                        case "hashCode" -> System.identityHashCode(proxy);
+                        case "equals" -> proxy == args[0];
+                        case "setQueryTimeout" -> { timeoutCalls++; queryTimeout = (Integer) args[0]; yield null; }
+                        case "getQueryTimeout" -> queryTimeout;
+                        case "setLong", "clearWarnings" -> null;
+                        case "getWarnings" -> null;
+                        case "executeUpdate" -> { executions++; yield 1; }
+                        case "close" -> { statementClosed = true; yield null; }
+                        case "isClosed" -> statementClosed;
+                        default -> throw new UnsupportedOperationException("Statement." + method.getName());
+                    });
+            connection = (Connection) Proxy.newProxyInstance(
+                    TimeoutProbe.class.getClassLoader(), new Class<?>[]{Connection.class},
+                    (proxy, method, args) -> switch (method.getName()) {
+                        case "toString" -> "RecordingConnection";
+                        case "hashCode" -> System.identityHashCode(proxy);
+                        case "equals" -> proxy == args[0];
+                        case "getAutoCommit" -> autoCommit;
+                        case "setAutoCommit" -> { autoCommit = (Boolean) args[0]; yield null; }
+                        case "isReadOnly" -> false;
+                        case "getTransactionIsolation" -> Connection.TRANSACTION_READ_COMMITTED;
+                        case "prepareStatement" -> {
+                            sawActiveTransaction = TransactionSynchronizationManager.isActualTransactionActive();
+                            if (expireBeforeStatement) {
+                                ConnectionHolder holder = (ConnectionHolder)
+                                        TransactionSynchronizationManager.getResource(this);
+                                // Deterministic test seam: place holder deadline in the past.
+                                // Does not simulate elapsed real SQL or promise time precision.
+                                holder.setTimeoutInMillis(-1);
+                            }
+                            yield statement;
+                        }
+                        case "commit" -> { commits++; yield null; }
+                        case "rollback" -> { rollbacks++; yield null; }
+                        case "close" -> { connectionClosed = true; yield null; }
+                        case "isClosed" -> connectionClosed;
+                        default -> throw new UnsupportedOperationException("Connection." + method.getName());
+                    });
+        }
+
+        public Connection getConnection() {
+            acquisitions++;
+            return connection;
+        }
+        public Connection getConnection(String username, String password) throws SQLException {
+            return getConnection();
+        }
+    }
+}

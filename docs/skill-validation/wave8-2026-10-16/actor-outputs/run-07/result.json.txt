@@ -1,0 +1,40 @@
+{
+  "decision": "Replace proposed.sql with solution.sql for the fixed-snapshot next-page contract; local semantic verification passed, PostgreSQL performance unverified.",
+  "solution": "solution.sql",
+  "verification": "verify.mjs",
+  "review": "REVIEW.md",
+  "evidence": {
+    "runner": "Node v25.6.1, experimental node:sqlite, SQLite 3.51.2",
+    "verificationExitCode": 0,
+    "cursorPageChecks": 1914,
+    "completeTraversals": 45,
+    "seedRows": 9,
+    "expandedSnapshotRows": 310,
+    "providedCopiesPreserved": 7,
+    "resultsFile": "verification-results.json",
+    "proposedCounterexamples": [
+      { "tenant": 71, "cursorId": 1, "expectedIds": [3, 4, 6, 5, 7], "proposedIds": [4] },
+      { "tenant": 71, "cursorId": 6, "expectedIds": [5, 7], "proposedIds": [] }
+    ],
+    "coverage": ["all cursor boundaries", "several page sizes including zero and oversize", "exact output values", "tenant isolation", "NULL tail and NULL-only tenant", "mixed sort directions", "negative and extreme integer priorities", "bigint ID extremes", "duplicate labels", "complete traversals without omissions or duplicates"]
+  },
+  "cursorContract": {
+    "tenant": "bigint; same tenant as previous page",
+    "cursor_priority": "nullable integer; original last-row value",
+    "cursor_created": "text; original canonical ISO value",
+    "cursor_id": "bigint; original last-row value",
+    "page_size": "validated nonnegative integer",
+    "order": "priority DESC NULLS LAST, created_at ASC, id DESC",
+    "boundary": "strictly after the previous page's last row",
+    "firstPage": "Original ordering with LIMIT; NULL priority is not a first-page marker"
+  },
+  "candidateAccessPath": {
+    "indexKeys": "(tenant_id, priority DESC NULLS LAST, created_at ASC, id DESC)",
+    "applied": false,
+    "existingIndexMismatch": "PostgreSQL DESC defaults to NULLS FIRST; the existing index does not match the requested complete ordering.",
+    "hypothesis": "Tenant equality and matching B-tree order can support ordered pagination; actual seek bounds depend on planner handling of the disjunction.",
+    "risks": ["Residual filtering can scan prior tenant rows", "Bitmap paths may require sorting", "Label requires heap access without coverage", "INCLUDE(label) adds width and write/storage maintenance; MVCC visibility can still require heap access"]
+  },
+  "missingPostgreSQLEvidence": ["Target execution with actual typed bindings and prepare mode", "Representative data and statistics", "Comparable shallow/deep cursor plans, including NULL and non-NULL priorities", "Index conditions, actual rows/loops, filters, buffers, sorting/spills and heap work", "Cache state and comparable latency measurements"],
+  "limits": ["No target PostgreSQL server or execution was available", "No speedup, latency or bounded page-size work is claimed", "SQLite results do not verify PostgreSQL coercion, collation, planning, MVCC or concurrency", "Contract assumes immutable rows and valid same-tenant cursor fields", "No schema/index changes, installations, external service connections or real configuration changes were made"]
+}

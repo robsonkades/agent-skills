@@ -1,0 +1,54 @@
+diff --git a/skills/online-database-schema-migrations/references/ddl-and-runner-control.md b/skills/online-database-schema-migrations/references/ddl-and-runner-control.md
+index 902c25c..d13f785 100644
+--- a/skills/online-database-schema-migrations/references/ddl-and-runner-control.md
++++ b/skills/online-database-schema-migrations/references/ddl-and-runner-control.md
+@@ -2,8 +2,8 @@
+ 
+ Read before recommending a DDL operation, a migration-runner setting, or recovery after a
+ failed migration. This is the execution envelope; per-engine tuning remains with the engine
+-specialist. The sources below were checked on 2026-09-22. Recheck against the deployed patch,
+-edition and hosting service before preparing executable operations.
++specialist. Match the cited contracts to the deployed patch, edition and hosting service
++before preparing executable operations.
+ 
+ ## Classify the operation, not the feature name
+ 
+@@ -94,6 +94,25 @@ When using these products, verify the named control for the installed release:
+   an engine without transactional DDL can leave user objects requiring explicit reconciliation.
+   [Flyway transaction handling](https://documentation.red-gate.com/flyway/flyway-concepts/migrations/migration-transaction-handling)
+   describes these distinctions.
++
++  On PostgreSQL, SQL transaction boundaries and the runner's advisory-lock lifetime are
++  separate controls. For `CREATE INDEX CONCURRENTLY`, the
++  [transactional-lock setting](https://documentation.red-gate.com/flyway/reference/configuration/flyway-namespace/flyway-postgresql-namespace/flyway-postgresql-transactional-lock-setting)
++  documents `flyway.postgresql.transactional.lock=false`, selecting session-level locks.
++  This changes lock scope; it does not disable mutual exclusion or replace the SQL's
++  nontransactional execution requirement. The
++  [Flyway 11.9.1 implementation](https://github.com/flyway/flyway/blob/flyway-11.9.1/flyway-database/flyway-database-postgresql/src/main/java/org/flywaydb/database/postgresql/PostgreSQLAdvisoryLockTemplate.java)
++  acquires and explicitly releases a session advisory lock on this branch.
++
++  Trace the actual migration connection through any pooler, including effective per-database
++  or per-user overrides. [PgBouncer transaction pooling](https://www.pgbouncer.org/features.html)
++  does not support session-level advisory locks. Use a direct or session-pooled migrator path
++  that preserves the backend session for the lock's lifetime, with the same intended
++  database/schema/history and an accounted connection budget. Retain an already suitable
++  path; this is not a reason to change the application's pool globally. Rehearse competing
++  migrators and failure cleanup on that path, then inspect catalog and history before retrying;
++  nontransactional DDL and session locks do not make partial results disappear.
++
+ - **Liquibase:** check `runInTransaction`, executor and changeset boundaries. A multi-statement
+   changeset with transactions disabled can fail after committing only part of its SQL, leaving
+   history inconsistent. Prefer independently verifiable operation boundaries when transaction
+diff --git a/skills/online-database-schema-migrations/skill.yaml b/skills/online-database-schema-migrations/skill.yaml
+index fd8a783..05282d0 100644
+--- a/skills/online-database-schema-migrations/skill.yaml
++++ b/skills/online-database-schema-migrations/skill.yaml
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: online-database-schema-migrations
+-version: 1.1.1
++version: 1.1.2
+ description: >-
+   Planning and reviewing same-engine relational schema rollouts while old and new
+   application versions coexist. Use for a hot-table column or constraint change,

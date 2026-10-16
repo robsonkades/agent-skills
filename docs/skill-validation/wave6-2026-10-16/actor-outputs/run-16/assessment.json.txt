@@ -1,0 +1,19 @@
+{
+  "disposition": "violated",
+  "basis": "The accepted contract requires a message to retain both constructor-time words while the producer may recycle its buffer after construction. Message.java:4 stores the original int[] reference and checksum() at line 5 reads its mutable elements. Smoke follows the accepted lifecycle and changes the result from 30 to 300 in one thread. Final-field initialized-state visibility does not make the reachable array immutable or protect later mutations; concurrent recycling also lacks an atomic snapshot.",
+  "requiredChange": "After the existing null/two-element validation, replace this.words=words with this.words=words.clone(). Keep the private final field and do not expose or mutate the copied array. This removes the producer alias while preserving its right to recycle immediately after construction. Proposal only; supplied sources were not changed.",
+  "missingEvidence": [],
+  "checked": [
+    "Read the complete local skill and both conditional references, the request, accepted contract, README, Message.java, Smoke.java, and check.mjs.",
+    "Confirmed the effective alias path and lack of constructor escape; inspected the null/length guard.",
+    "Consulted Java SE25 JLS 17.4.5 and 17.5/17.5.1 for ordering and final-field semantics.",
+    "Observed java and javac 25.0.3; node check.mjs compiled with --release 25 and printed before-recycle=30, after-recycle=300; exit 0.",
+    "Compared SHA-256 for all six supplied project files before and after compilation; output copies match input and remain unchanged."
+  ],
+  "limits": [
+    "The smoke check prints results and contains no assertion; its exit 0 does not imply contract satisfaction.",
+    "No proposed correction was implemented or executed. Invalid-input rejection was verified by source inspection only.",
+    "No stress test, static analyzer, alternate JDK or alternate architecture was run; none is needed to establish the sequential contract violation.",
+    "No asynchronous handoff implementation was supplied, so delivery of the reference was not audited. This is not a blocker for the verdict or a reason to alter the accepted ownership requirements."
+  ]
+}

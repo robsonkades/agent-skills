@@ -1,0 +1,6 @@
+{
+  "skill": "java-test-design",
+  "common": "Provide a review only; do not edit or run anything. The project uses Java 17 and Jupiter 5.7.2. eligible(cents) now returns cents > 10000. Tests expect false for 9999, true for 10000, and true for 10001; only the middle test fails. The previous contract required at least 10000. Recommend focused corrections and identify the tests to retain.",
+  "scenarioA": "The authorized work changes eligibility to strictly greater than 10000.",
+  "scenarioB": "The authorized work is refactoring only; eligibility remains at least 10000."
+}

@@ -69,6 +69,7 @@ may still vary. Deflation is lifecycle/housekeeping, not a remediation for activ
 | --------------------------------- | ---------------------------------------- | ------------------------------------------------------ |
 | thread `BLOCKED` entering monitor | intrinsic-monitor acquisition            | one sample has no duration/population                  |
 | JFR `JavaMonitorEnter`            | qualifying monitor acquisition wait      | settings/threshold censor shorter waits                |
+| JFR `JavaMonitorInflate`          | recorded inflation path/trigger          | cause labels do not prove inter-thread contention      |
 | JFR `JavaMonitorWait`             | `Object.wait` lifecycle                  | intentional condition wait may be healthy              |
 | JFR `ThreadPark`                  | park-based synchronizer/wait             | includes many locks, pools, futures, queues            |
 | high CPU in monitor/spin path     | spinning/churn/contention                | require owner/progress and compiled/native attribution |
@@ -184,8 +185,8 @@ design is a complete result without an invented capture or finding.
 
 - [Version-scoped monitor lifecycle](references/monitor-lifecycle.md) — read when interpreting
   inflation, wait/reacquisition, headers or monitor-state evidence.
-- [Measuring and reducing contention](references/measuring-contention.md) — read when planning
-  a capture or changing critical-section scope/partitioning.
+- [Measuring and reducing contention](references/measuring-contention.md) — read when interpreting
+  monitor events, planning a capture or changing critical-section scope/partitioning.
 - [JEP 491](https://openjdk.org/jeps/491)
 - [JLS 17 monitors and waits](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html)
 - [OpenJDK 25 GA monitor source example](https://github.com/openjdk/jdk/tree/jdk-25-ga/src/hotspot/share/runtime) — match the target vendor/build before attributing a runtime path.

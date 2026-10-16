@@ -1,0 +1,7 @@
+package memo;
+import java.util.function.ToIntFunction;
+final class ReaderFactory {
+    static ToIntFunction<PublishedEntry> create() {
+        return PublishedEntry::value;
+    }
+}

@@ -1,0 +1,131 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+
+const base = 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL';
+const out = `${base}/java-object-contracts`;
+const json = path => JSON.parse(fs.readFileSync(path, 'utf8'));
+const text = path => fs.readFileSync(path, 'utf8');
+const validation = json(`${out}/local-validation.json`);
+const sources = json(`${out}/source-index.json`);
+const probes = json(`${out}/probes.json`);
+assert.equal(validation.status, 'PASS');
+
+const sharedFiles = [
+  { path: 'src/api/Key.java', encoding: 'utf8', content: text(`${out}/binary/original/src/api/Key.java`) },
+  { path: 'src/LegacyClient.java', encoding: 'utf8', content: text(`${out}/binary/LegacyClient.java`) },
+  { path: 'src/ValueConsumer.java', encoding: 'utf8', content: text(`${out}/binary/ValueConsumer.java`) },
+  { path: 'compatibility/LegacyClient.class', encoding: 'base64', content: fs.readFileSync(`${out}/binary/clients/LegacyClient.class`).toString('base64') },
+  { path: 'README.md', encoding: 'utf8', content: `# key-library\n\nThe target is Java 16, without preview or dependencies. Keys represent non-null logical ids; two separately constructed keys with the same id must support equivalent lookup.\n\nExisting checks call LegacyClient.main. A new consumer regression is in ValueConsumer.main. The compatibility directory retains a caller binary built against the currently released library. Consult release-policy.md before deciding which compatibility checks apply.\n\nFrom the fixture root, using the supplied JDK:\n\n\`\`\`powershell\njavac --release 16 -d build src/api/Key.java src/LegacyClient.java src/ValueConsumer.java\njava -cp build LegacyClient\njava -cp build ValueConsumer\njava -cp "build;compatibility" LegacyClient\n\`\`\`\n\nFor the retained binary check, use a separate library-only output directory so a recompiled LegacyClient in build does not hide compatibility/LegacyClient.class. The caller binary must remain unchanged when checking that scenario.\n` },
+];
+// Ensure the ordinary README does not provide an accidentally ineffective binary check.
+sharedFiles.find(file => file.path === 'README.md').content = sharedFiles.find(file => file.path === 'README.md').content.replace(
+  'java -cp "build;compatibility" LegacyClient',
+  'javac --release 16 -d library-only src/api/Key.java\njava -cp "library-only;compatibility" LegacyClient');
+
+const task = 'Investigate the key lookup regression in this fixture. Inspect the actual declarations, callers and release policy. Fix the supported defect with the smallest compatible change and add or run focused checks for the relevant object contract. Preserve the Java baseline and the release policy. Report the evidence, changes, compatibility impact and what you actually executed. Do not add dependencies.';
+const policies = [
+  { id: 'object-contracts-1', content: '# Release policy\n\nThis is a public library deployed independently of its clients. The retained compatibility/LegacyClient.class represents a supported deployed caller that cannot be rebuilt for this release. Preserve linkage and its intended behavior while repairing value-key lookup. Verify the retained binary against the replacement library without recompiling or replacing it.\n' },
+  { id: 'object-contracts-2', content: '# Release policy\n\nThis is an internal module deployed atomically with all its consumers; every active client is rebuilt from the supplied sources for each release. The retained compatibility/LegacyClient.class is historical and is not a supported deployed caller. Binary compatibility with that archive is not required. Keep the public surface minimal while repairing value-key lookup; do not retain unused compatibility-only entry points.\n' },
+];
+const cases = policies.map(policy => ({ id: policy.id, task,
+  prerequisites: { javaTarget: 16, availableCompilerAndRuntime: 'Temurin 25.0.3+9', dependencies: 'none',
+    preparation: 'Materialize these files in a fresh isolated case directory. Decode base64 exactly. Expose only task inputs and ordinary skill resources to the actor; evaluator criteria and prior solutions stay separate.' },
+  files: [...sharedFiles, { path: 'release-policy.md', encoding: 'utf8', content: policy.content }],
+}));
+const criteria = {
+  status: 'Written development cases, not executed agent evaluations or unseen holdouts',
+  decisiveConstraint: 'Only release-policy.md changes: independently deployed retained binary versus a fully rebuilt internal source graph.',
+  common: [
+    'Inspect the actual equals parameter type. Recognize that equals(Key) is an overload while Objects.equals and HashMap exercise equals(Object).',
+    'Do not misdiagnose the existing id-derived hashCode as the cause; equal hashes do not make inherited Object equality value-based.',
+    'Provide correct Object equality for the declared logical-id contract; retain null/unrelated-type behavior and matching hashes.',
+    'Exercise equal distinct instances through Objects.equals and the value consumer; report actual commands and results. Preserve Java 16 without preview or dependency upgrades.',
+  ],
+  cases: [
+    { id: 'object-contracts-1', expected: [
+      'Retain the public equals(Key) descriptor for the supported binary while adding equals(Object), preferably with a delegating typed overload that casts to Object and avoids recursion.',
+      'Run the unchanged compatibility/LegacyClient.class with only the replacement library classes before it on the classpath; do not mask it with a freshly compiled caller.',
+      'Both typed equality and Object/collection equality agree; the retained client and ValueConsumer succeed.'
+    ], failures: ['Removing equals(Key) and accepting NoSuchMethodError.', 'Recompiling the compatibility caller, or shadowing it with the new caller, then claiming binary compatibility.', 'Only typed equals tests or a hash-only change.'] },
+    { id: 'object-contracts-2', expected: [
+      'Replace the accidental typed overload with the Object override and rebuild the source consumers, respecting the minimal-surface policy.',
+      'Do not treat historical binary breakage as a blocker or demand an unnecessary compatibility bridge. If another design is proposed, justify it from an actual active consumer requirement.',
+      'Freshly compiled LegacyClient and ValueConsumer both succeed.'
+    ], failures: ['Claiming that all Java clients must fail because the old historical binary no longer links.', 'Retaining a compatibility-only overload without a supported consumer reason despite the internal release policy.', 'Ignoring the Object-signature lookup defect.'] },
+  ],
+  technicalSupport: { original: 'legacy typed call passes while ValueConsumer fails', replaced: 'ValueConsumer passes; original binary raises NoSuchMethodError; recompiled source caller passes', bridged: 'unchanged old binary and value consumer both pass', commands: `${out}/probes.json` },
+  limitations: 'These cases and expectations were developed during review. Independent original/revised/no-skill comparison is pending with the coordinator. Technical candidate executions are not agent outputs; expected behavior is not measured improvement.',
+};
+fs.writeFileSync(`${out}/case-inputs.json`, JSON.stringify(cases, null, 2) + '\n');
+fs.writeFileSync(`${out}/case-evaluator-criteria.json`, JSON.stringify(criteria, null, 2) + '\n');
+
+const commands = [
+  { command: `node ${out}/collect-sources.mjs`, cwd: 'C:/git/agent-skills', exit: 0, result: 'Clean 5-file assignment baseline retained; all 15 primary sources returned HTTP 200 and were hashed.' },
+  { command: `node ${out}/probes.mjs`, cwd: 'C:/git/agent-skills', exit: 0, result: '29 finite behavioral checks of Java fixture; 17 child commands all met frozen expectations, including 3 expected failures.' },
+  { command: 'node node_modules/prettier/bin/prettier.cjs --check skills/java-object-contracts/SKILL.md skills/java-object-contracts/references/equals-and-hashcode.md skills/java-object-contracts/references/tostring-and-copying.md skills/java-object-contracts/skill.yaml', cwd: 'C:/git/agent-skills', exit: 0, result: 'All matched files use Prettier code style; read-only check.' },
+  { command: 'git diff --check -- skills/java-object-contracts', cwd: 'C:/git/agent-skills', exit: 0, result: 'No whitespace errors.' },
+  { command: `node ${out}/validate.mjs`, cwd: 'C:/git/agent-skills', exit: 0, result: 'Strict metadata, descriptions, versions, baseline attribution, links, source hashes, retained outputs and class version passed.' },
+  { command: `node ${out}/write-handoff.mjs`, cwd: 'C:/git/agent-skills', result: 'Writes isolated handoff and separated reproducible cases; no repository writes.' },
+];
+const handoff = {
+  status: 'READY_FOR_GLOBAL_VALIDATION', skill: 'java-object-contracts', ownedPath: 'skills/java-object-contracts/**',
+  allWritesStopped: true, noProcessesLeftRunning: true,
+  versions: { committed: '1.2.4', assignmentTime: '1.2.4', final: '1.2.5', preExistingBump: false,
+    rationale: 'One patch for supported changes to diagnostic and copy-contract guidance. No dependency or baseline upgrade.' },
+  baseline: { clean: true, artifact: `${out}/assignment-baseline.json`, waveBaselineMatches: true, preExistingChanges: [] },
+  files: { changedByReviewer: validation.files.filter(file => file.changedByReviewer), untouched: validation.files.filter(file => !file.changedByReviewer), preExistingChanges: [], diff: `${out}/final-owned.patch` },
+  findings: [
+    { location: 'SKILL.md workflow step 3; references/equals-and-hashcode.md: Verify the method and the consumer\'s equality relation',
+      corrected: 'Explicitly distinguish equals(MyType) overloads from equals(Object) overrides, test through the consumer signature and actual collection, and retain a delegating published overload when required by precompiled clients.',
+      consequence: 'Direct equality/hash tests can pass while real lookup fails; blindly changing the parameter type can fix source clients and break a supported binary.',
+      evidence: ['JLS 25 8.4.8–9, 15.12 and 13.4.12; Object and Objects API', `${out}/logs/run-contracts.stdout.txt`, `${out}/logs/legacy-bytecode.stdout.txt`, `${out}/logs/legacy-on-replaced.stderr.txt`, `${out}/logs/legacy-on-bridged.stdout.txt`],
+      remaining: 'Published caller coverage and actual project identity requirements remain consumer-specific.' },
+    { location: 'SKILL.md workflow entry and mutation rule; references/equals-and-hashcode.md: Verify the method and the consumer\'s equality relation',
+      corrected: 'Follow actual collection factories; IdentityHashMap intentionally ignores equality/hash overrides. Preserve legitimate reference identity or choose a value-keyed collection for a value contract. Qualify mutation guidance by the lookup relation.',
+      consequence: 'An interface name and a failed lookup do not establish that equals/hashCode are defective; changing them cannot change identity-map semantics.',
+      evidence: ['IdentityHashMap Java SE 25 API', `${out}/logs/run-contracts.stdout.txt`], remaining: 'Other provider-specific collection behaviors require their own evidence.' },
+    { location: 'references/tostring-and-copying.md: Copying: what to do instead of clone',
+      corrected: 'Separate Object.clone implementation requirements from generic clone intent and inspect intermediate superclass overrides before replacing a copying API.',
+      consequence: 'The method name or use of super alone cannot establish the concrete implementation or subtype/lifecycle promises.',
+      evidence: ['Object.clone Java SE 25 API; JLS overriding rules', `${out}/logs/run-contracts.stdout.txt`], remaining: 'Application-specific graph/resource copying remains delegated to gof-prototype.' },
+  ],
+  preserved: [
+    'Identity-first workflow, missing lifecycle/provider evidence, no automatic upgrades or preview.',
+    'Equality laws, lawful collisions/inherited hash, inheritance and provider-specific entity lifecycle caveats.',
+    'Record array ownership/content equality and reconstruction; NaN/signed-zero semantics; nonportable record/enum hash warnings.',
+    'Sorted-key membership, comparison algebra, TimSort limits, null/direction/tie composition, protocol-specific ordering and pagination consistency caveats.',
+    'Secret redaction, bounded diagnostics, named textual contracts, copy constructors/withers and shallow-copy limitations.',
+    'All existing examples and the entire ordering-and-comparators reference unchanged; conditional reference routes and neighboring ownership retained.',
+  ],
+  replacedOrRemoved: ['Replaced the inaccurate claim that the clone contract is stated in no-constructor conventions rather than semantics; retained its valid warning about generic clone intent.', 'Qualified compiler-enforcement rhetoric and key mutation guidance instead of expanding to a generic checklist.'],
+  commands, childCommands: probes.runs,
+  structuralAndTechnicalChecks: validation,
+  exampleClassification: 'No executable shipped snippets added or materially changed. Existing snippets remain explicitly partial. Isolated complete Java fixtures compiled with --release 16; class major 60/minor 0, run on Temurin 25.0.3+9.',
+  behavioralEvidence: { agentEvaluationsExecuted: [], measuredImprovement: 'not measured',
+    technicalCandidateRuns: 'Original, replaced and bridge Java implementations with original and recompiled caller binaries; these are code controls, not agent behavior.',
+    structuredWalkthroughs: ['Independent binary deployment requires a retained descriptor/delegating overload.', 'An all-source internal release permits removing the accidental overload and rebuilding callers.'],
+    walkthroughLimit: 'Expected recommendations only; no independent agent output evaluated.' },
+  developmentCases: { inputPath: `${out}/case-inputs.json`, evaluatorCriteriaPath: `${out}/case-evaluator-criteria.json`, count: 2,
+    actorVisibleInputsSeparated: true, unseenHoldouts: false, binaryFixtureSha256: crypto.createHash('sha256').update(fs.readFileSync(`${out}/binary/clients/LegacyClient.class`)).digest('hex'),
+    isolation: 'Coordinator must materialize separate actor snapshots and withhold criteria/technical solutions; temp-directory naming is not access control.' },
+  sources,
+  limitations: [
+    'Java 16 source/API target was compiled and run on Java 25; no Java 16 runtime execution.',
+    'No Hibernate/JPA runtime or provider SQL behavior tested; pre-existing provider guidance was preserved.',
+    'Finite fixtures expose the exercised contract failures, not a universal proof or production-frequency estimate.',
+    'Source review and code execution do not show agent quality gain; comparative behavioral evaluation remains pending.',
+    'No full text audit of every API chapter; sources were inspected for the material claims recorded here.',
+    'No dependency installation, shared files, real agent configuration, registry generation or global verification touched.',
+  ],
+  failures: { unexpected: [], expectedNegativeControls: probes.runs.filter(run => run.expectedExit !== 0).map(run => ({ name: run.name, actualExit: run.actualExit, reason: run.expectedPattern, stdoutPath: run.stdoutPath, stderrPath: run.stderrPath })) },
+  crossSkillFindings: [],
+  pendingGlobalChecks: [
+    { command: 'npm run registry:build', owner: 'coordinator', prerequisites: 'All reviewer writes stopped; inspect preserved shared changes.', reason: 'Parallel ownership excludes shared index generation.' },
+    { command: 'npm run verify', owner: 'coordinator', prerequisites: 'Registry regenerated and all reviewer writes stopped.', reason: 'Parallel ownership excludes repository-wide verification.' },
+  ],
+  coordinatorActions: ['Inspect four owned diffs and keep the unchanged ordering reference.', 'Archive this JSON, source snapshots, stdout/stderr, fixtures and separated cases.', 'If evaluating agent behavior, retain criteria separation and distinguish development cases from unseen holdouts.'],
+};
+fs.writeFileSync(`${base}/java-object-contracts.json`, JSON.stringify(handoff, null, 2) + '\n');
+console.log(JSON.stringify({ status: handoff.status, version: handoff.versions.final, changedFiles: handoff.files.changedByReviewer.length,
+  handoff: `${base}/java-object-contracts.json`, cases: 2, allWritesStopped: true }, null, 2));

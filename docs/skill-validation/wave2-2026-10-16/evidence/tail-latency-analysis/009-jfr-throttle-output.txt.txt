@@ -1,0 +1,4 @@
+Result[name=throttle-zero-threshold-zero, throttle=0/s, threshold=PT0S, attempted=100, enabled=100, recorded=0]
+Result[name=throttle-off-threshold-zero, throttle=off, threshold=PT0S, attempted=100, enabled=100, recorded=100]
+Result[name=throttle-off-threshold-high, throttle=off, threshold=PT24H, attempted=100, enabled=100, recorded=0]
+PASS: metadata plus 3 recording controls; enabled=true does not establish coverage

@@ -1,0 +1,186 @@
+{
+  "scope": "Owned package only; no global validator or shared writes.",
+  "nodeVersion": "v25.6.1",
+  "strictManifestIssues": 0,
+  "descriptionMatches": true,
+  "finalVersion": "1.0.1",
+  "baselineVersion": "1.0.0",
+  "packageFiles": 5,
+  "finalFiles": [
+    {
+      "path": "C:\\git\\agent-skills\\skills\\java-ddd-repositories\\SKILL.md",
+      "relativePath": "SKILL.md",
+      "bytes": 9541,
+      "sha256": "75F61A9D25F26AA452622DD9318CCC1C5D118DAEE05377F3FEA4BEA3869D6EAA"
+    },
+    {
+      "path": "C:\\git\\agent-skills\\skills\\java-ddd-repositories\\skill.yaml",
+      "relativePath": "skill.yaml",
+      "bytes": 1595,
+      "sha256": "6671B65A21E083F97652076A4F149DC18EBFF9C076A33767D4BDC1E99D452CE7"
+    },
+    {
+      "path": "C:\\git\\agent-skills\\skills\\java-ddd-repositories\\references\\gateway-contracts.md",
+      "relativePath": "references/gateway-contracts.md",
+      "bytes": 6984,
+      "sha256": "FA7F7F4C587D94F3892A807543816DE8D6C87B91BE97645BF470F7DED590192A"
+    },
+    {
+      "path": "C:\\git\\agent-skills\\skills\\java-ddd-repositories\\references\\reconstitution-and-concurrency.md",
+      "relativePath": "references/reconstitution-and-concurrency.md",
+      "bytes": 7320,
+      "sha256": "1440615DEAF5FACEABA552FC0274173E9A0378F9FFEA82508BDA7DF8C0B7C220"
+    },
+    {
+      "path": "C:\\git\\agent-skills\\skills\\java-ddd-repositories\\references\\verification.md",
+      "relativePath": "references/verification.md",
+      "bytes": 7534,
+      "sha256": "039AB19789F9B8B753F8BE5CDA1F0C1DB5D9233C674DB95EDA1BDD9F698263F8"
+    }
+  ],
+  "exactNormalizedDelta": "Only Jakarta .html suffix and manifest patch bump; other files byte-identical.",
+  "localLinks": [
+    {
+      "source": "SKILL.md",
+      "href": "references/gateway-contracts.md",
+      "target": "C:\\git\\agent-skills\\skills\\java-ddd-repositories\\references\\gateway-contracts.md"
+    },
+    {
+      "source": "SKILL.md",
+      "href": "references/reconstitution-and-concurrency.md",
+      "target": "C:\\git\\agent-skills\\skills\\java-ddd-repositories\\references\\reconstitution-and-concurrency.md"
+    },
+    {
+      "source": "SKILL.md",
+      "href": "references/verification.md",
+      "target": "C:\\git\\agent-skills\\skills\\java-ddd-repositories\\references\\verification.md"
+    }
+  ],
+  "allReferencesRouted": true,
+  "casePairDiffersOnlyInEffectiveIsolation": true,
+  "commands": [
+    {
+      "executable": "git",
+      "args": [
+        "diff",
+        "--check",
+        "--",
+        "skills/java-ddd-repositories"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": ""
+    },
+    {
+      "executable": "git",
+      "args": [
+        "diff",
+        "--numstat",
+        "--",
+        "skills/java-ddd-repositories"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "1\t1\tskills/java-ddd-repositories/references/reconstitution-and-concurrency.md\n1\t1\tskills/java-ddd-repositories/skill.yaml\n"
+    },
+    {
+      "executable": "git",
+      "args": [
+        "diff",
+        "--",
+        "skills/java-ddd-repositories"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "diff --git a/skills/java-ddd-repositories/references/reconstitution-and-concurrency.md b/skills/java-ddd-repositories/references/reconstitution-and-concurrency.md\nindex ea0c373..c661a2a 100644\n--- a/skills/java-ddd-repositories/references/reconstitution-and-concurrency.md\n+++ b/skills/java-ddd-repositories/references/reconstitution-and-concurrency.md\n@@ -86,7 +86,7 @@ an appropriate root write or `OPTIMISTIC_FORCE_INCREMENT` so all invariant-chang\n paths contend on the root. Prove the actual mapping/provider behavior. A stale\n version can fail at merge, flush or commit and marks the transaction for rollback.\n These mechanism constraints are documented in\n-[Jakarta Persistence 3.2, sections 3.5.1–3.5.4](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2).\n+[Jakarta Persistence 3.2, sections 3.5.1–3.5.4](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html).\n Use version-matched documentation for the target, including older `javax` stacks.\n \n Choose one owner for the storage revision. Do not both increment it with a domain\ndiff --git a/skills/java-ddd-repositories/skill.yaml b/skills/java-ddd-repositories/skill.yaml\nindex 8e3e80b..f4d30ba 100644\n--- a/skills/java-ddd-repositories/skill.yaml\n+++ b/skills/java-ddd-repositories/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: java-ddd-repositories\n-version: 1.0.0\n+version: 1.0.1\n description: >-\n   Implement or review Java DDD aggregate persistence when a Gateway loses identity,\n   audit or child state, concurrent updates bypass an aggregate invariant, database\n"
+    },
+    {
+      "executable": "git",
+      "args": [
+        "diff",
+        "--cached",
+        "--numstat",
+        "--",
+        "skills/java-ddd-repositories"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": ""
+    },
+    {
+      "executable": "git",
+      "args": [
+        "status",
+        "--short",
+        "--untracked-files=all",
+        "--",
+        "skills/java-ddd-repositories"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": " M skills/java-ddd-repositories/references/reconstitution-and-concurrency.md\n M skills/java-ddd-repositories/skill.yaml\n"
+    },
+    {
+      "executable": "git",
+      "args": [
+        "ls-files",
+        "--others",
+        "--ignored",
+        "--exclude-standard",
+        "--",
+        "skills/java-ddd-repositories"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": ""
+    },
+    {
+      "executable": "git",
+      "args": [
+        "show",
+        "HEAD:skills/java-ddd-repositories/skill.yaml"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "schemaVersion: 1\n\nname: java-ddd-repositories\nversion: 1.0.0\ndescription: >-\n  Implement or review Java DDD aggregate persistence when a Gateway loses identity,\n  audit or child state, concurrent updates bypass an aggregate invariant, database\n  errors become not-found results, or an in-memory fake hides missing saves. Preserve\n  inward dependencies and the project's Gateway, JpaEntity and Repository naming.\n  Owns reconstitution and aggregate persistence contracts; excludes aggregate\n  boundary discovery, generic Repository selection and detailed ORM configuration.\n\nlicense: Apache-2.0\n\nauthors:\n  - name: agent-skills contributors\n    url: https://github.com/robsonkades/agent-skills\n\nhomepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-ddd-repositories\nrepository:\n  type: git\n  url: https://github.com/robsonkades/agent-skills\n  directory: skills/java-ddd-repositories\n\nkeywords:\n  - java\n  - domain-driven-design\n  - aggregate\n  - gateway\n  - repository\n  - reconstitution\n  - optimistic-locking\n\nfiles:\n  - SKILL.md\n  - skill.yaml\n  - references/\n\ndependencies: []\n\nsuggests:\n  - java-ddd-aggregates\n  - java-ddd-domain-events\n  - java-ddd-testing\n  - java-ddd-use-cases\n  - repository-pattern\n  - spring-boot-jpa\n  - spring-transactions-and-events\n\ncapabilities:\n  - reads-source\n\nagentOverrides:\n  codex:\n    interface:\n      display_name: Java DDD Repositories\n      short_description: Aggregate gateways, reconstitution and concurrency contracts\n      default_prompt: Use Java DDD Repositories to implement or review this aggregate persistence boundary.\n"
+    }
+  ],
+  "sourceFiles": [
+    {
+      "path": "C:/git/ddd-example/domain/src/main/java/com/robsonkades/admin/catalogo/domain/category/CategoryGateway.java",
+      "bytes": 595,
+      "sha256": "9C2C47C8EB2BC2F6B389456CA480206B1B854F9B2C69D3E1520970E3C0D9FC17"
+    },
+    {
+      "path": "C:/git/ddd-example/infrastructure/src/main/java/com/robsonkades/admin/catalogo/infrastructure/category/CategoryMySQLGateway.java",
+      "bytes": 3788,
+      "sha256": "C8A1BD77757E3FABE74741E2683B5C518DF9A2880E84EA5225C8055F3E76A8AF"
+    },
+    {
+      "path": "C:/git/ddd-example/infrastructure/src/main/java/com/robsonkades/admin/catalogo/infrastructure/category/persistence/CategoryJpaEntity.java",
+      "bytes": 3555,
+      "sha256": "3CDC72A0B9E95F656496EA0586980DA724F4F727BEC890B2442841FE763649A4"
+    },
+    {
+      "path": "C:/git/ddd-example/infrastructure/src/main/java/com/robsonkades/admin/catalogo/infrastructure/category/persistence/CategoryRepository.java",
+      "bytes": 764,
+      "sha256": "B7929BE2B57521E6BB2CF91A92CC3C41CF629F6BB8D5E58627800629A30DB042"
+    },
+    {
+      "path": "C:/git/ddd-example/infrastructure/build.gradle",
+      "bytes": 3006,
+      "sha256": "09AF135E54ACAA9C1DCE075C8A1A64ED2A73ED90C7B6A5A40CEBF9B422A366C2"
+    },
+    {
+      "path": "C:/Users/robso/.codex/skills/java-ddd-service-foundation/references/infrastructure-patterns.md",
+      "bytes": 6620,
+      "sha256": "911CE535F325ECDAB594F085A99081D07353267136F2880474CD3470973ABBD7"
+    },
+    {
+      "path": "C:/Users/robso/.codex/skills/java-ddd-service-foundation/references/code-examples.md",
+      "bytes": 3700,
+      "sha256": "7AABD4C01ED96D1F3F4EE5EE4A812DE21D4D18302735F81B1DF878E486B49699"
+    }
+  ],
+  "sourceInspectionLimit": "Read-only source/build inspection, no original application build or resolved dependency/runtime verification."
+}

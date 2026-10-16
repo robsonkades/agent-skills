@@ -1,0 +1,18 @@
+package demo;
+import java.util.List;
+public final class Document {
+    private Document() {}
+    public sealed interface Node permits Text, Section, Note {}
+    public record Text(String value, boolean emphasis) implements Node {}
+    public record Section(String title, List<Node> children) implements Node {}
+    public record Note(String value) implements Node {}
+    public static Node sample(String kind) {
+        return switch (kind) {
+            case "text" -> new Text("hello", false);
+            case "section" -> new Section("Title", List.of(new Text("hello", true)));
+            case "note" -> new Note("release");
+            case "null" -> null;
+            default -> throw new IllegalArgumentException(kind);
+        };
+    }
+}

@@ -1,0 +1,53 @@
+import jakarta.persistence.*;
+import java.nio.file.*;
+import java.sql.*;
+import java.time.Instant;
+import java.util.*;
+import org.hibernate.boot.MetadataSources;
+import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+
+public class Bootstrap {
+    @Entity(name = "OrderRow") @Table(name = "customer_order")
+    public static class OrderRow {
+        @Id Long id;
+        @Column(name = "placed_at") Instant placedAt;
+        protected OrderRow() {}
+        OrderRow(long id, Instant placedAt) { this.id = id; this.placedAt = placedAt; }
+    }
+    public static void main(String[] args) throws Exception {
+        Path project = Path.of(args[0]), output = Path.of(args[1]);
+        Files.createDirectories(output);
+        Properties config = new Properties();
+        for (String file : List.of("bootstrap.properties", "export.properties")) {
+            try (var input = Files.newInputStream(project.resolve(file))) { config.load(input); }
+        }
+        String url = "jdbc:h2:mem:review_" + UUID.randomUUID();
+        config.put("hibernate.connection.driver_class", "org.h2.Driver");
+        config.put("hibernate.connection.url", url);
+        config.put("hibernate.connection.username", "sa");
+        config.put("hibernate.connection.password", "");
+        config.put("hibernate.connection.pool_size", "1");
+        Class.forName("org.h2.Driver");
+        try (Connection keeper = DriverManager.getConnection(url, "sa", "")) {
+            try (var statement = keeper.createStatement()) {
+                for (String sql : Files.readString(project.resolve("schema.sql")).split(";"))
+                    if (!sql.isBlank()) statement.execute(sql);
+            }
+            var writer = config.containsKey("jakarta.persistence.schema-generation.scripts.action")
+                    ? Files.newBufferedWriter(output.resolve("schema.sql")) : null;
+            if (writer != null) config.put("jakarta.persistence.schema-generation.scripts.create-target", writer);
+            var registry = new StandardServiceRegistryBuilder().applySettings(config).build();
+            try (var factory = new MetadataSources(registry).addAnnotatedClass(OrderRow.class)
+                    .buildMetadata().buildSessionFactory()) {
+                System.out.println("BOOTSTRAP_OK");
+                if (args.length > 2 && args[2].equals("write")) {
+                    factory.inTransaction(session -> session.persist(new OrderRow(42L, Instant.EPOCH)));
+                    System.out.println("WRITE_OK");
+                }
+            } finally {
+                StandardServiceRegistryBuilder.destroy(registry);
+                if (writer != null) writer.close();
+            }
+        }
+    }
+}

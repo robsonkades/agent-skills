@@ -10,7 +10,7 @@ when it fits the question; an unrelated request-latency SLO is not a prerequisit
 | ---------- | -------------------------------------------------------------------- |
 | objective  | user journey, SLI/SLO or explicit performance requirement            |
 | baseline   | versioned workload, environment, raw result and limitations          |
-| prevention | review/gate that can fail or return inconclusive                     |
+| prevention | selected review/gate and its reaction to regression/inconclusive     |
 | production | signals that discriminate application, JVM, dependency and platform  |
 | response   | owner, safe evidence capture, mitigation and rollback                |
 | learning   | action item with owner, deadline and measurable acceptance criterion |
@@ -46,6 +46,21 @@ replay for measurement. Record skipped/inapplicable checks and their consequence
 runner must not become a passing performance result. A successful exercise on one runtime or
 workload does not validate all target services. Track exceptions with owner and expiry/review date.
 
+For a release-safety capability, follow the active trigger, selected checker/configuration, result
+artifact and actual release decision or responsible reviewer. Check whether filtering, skips,
+continued failures or bypasses change the agreed reaction. Reuse a representative run and decision
+record, or specify a safe exercise through that path; a checker unit test alone does not establish
+integration. Record what the evidence covers, leaving unexercised paths conditional rather than
+requiring an organization-wide audit for one pilot.
+
+For example, a GitHub Actions performance step can fail while `continue-on-error: true` leaves its
+conclusion successful. If no later step or reviewer acts on the performance result, a green job
+does not demonstrate regression prevention. If the approved pilot is advisory and its owner reviews
+results and records follow-up, that can demonstrate advisory adoption. If the agreed policy requires
+blocking, verify that a regression or inconclusive result reaches the intended release decision;
+classify the missing reaction as a scoped integration gap. Pass the evidence and required policy to
+`performance-regression-ci` for detailed gate work, without changing the organization's authority.
+
 Budget team/champion time and measurement infrastructure before the wave. Define the evidence
 that permits expansion and what triggers revision or pause (for example false gate failures
 exceeding the agreed operational budget). Keep a safe fallback for a noisy pilot gate and record
@@ -79,3 +94,9 @@ for incremental adoption, staffing and migration costs, and
 for learning and follow-through. The prioritization example is a synthesis of these practices,
 not a reported case study. These are experience-based guidance, not empirical proof
 that a specific champion cadence or maturity score improves every organization.
+
+The continued-failure example follows the GitHub Actions
+[workflow syntax](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idstepscontinue-on-error)
+and [step outcome/conclusion contracts](https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#steps-context).
+It illustrates result consumption, not a requirement to use GitHub or to make every check blocking;
+verify the selected CI platform/version and the organization's approved policy.

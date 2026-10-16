@@ -1,0 +1,15 @@
+{
+  "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave7-a765972c5d\\actors\\run-08\\output\\project",
+  "argv": [
+    "node",
+    "check.mjs",
+    "work.RecoveryRegression",
+    "controls"
+  ],
+  "startedAt": "2026-10-16T18:07:34.755Z",
+  "finishedAt": "2026-10-16T18:07:36.372Z",
+  "exit": 0,
+  "stdout": "PASS receiver rejection propagates and retains pending work\r\nPASS receiver token/payload conflict is not acknowledged locally\r\nPASS publisher order/outbox atomicity preserved\r\nPASS at most one row per replay and empty queue behavior\r\n",
+  "stderr": "",
+  "error": null
+}

@@ -31,30 +31,44 @@ keeping it true rather than about writing it well the first time.
    scope, impact map, decisions, resources, risks. If a section needs a new decision, the plan
    is incomplete for dependent work — route that decision while assembling independent parts.
    Check cited paths, contract/toolchain revisions and validation entrypoints against the current
-   repository. Separate accepted inputs from proposals, incidental implementation patterns and
+   repository. Inspect the relevant caller/registration and build definitions to locate the real
+   change point: distinguish source inputs, generated outputs and files to create. A matching path
+   alone does not establish that the affected behavior is wired or tested. If an input cannot be
+   inspected, record the verification gap; a failed search does not establish absence.
+   Separate accepted inputs from proposals, incidental implementation patterns and
    assumptions. If accepted inputs conflict or implementation has drifted, identify affected
    resources and resolve from available decision history; ask the responsible owner only when
    that evidence cannot settle the issue. A newer file alone does not supersede an accepted decision.
 2. **Order the resources** from their dependencies, and mark which arrows are forced. The order
-   is a dependency graph, not necessarily one chain. Validate IDs/cycles and identify ready work;
-   preserve each dependency's stage and condition: implementation input, validation prerequisite
-   or release gate. An accepted contract/fixture may permit implementation before the real producer
-   is ready, while integration/release still waits. Shared-file ownership also constrains parallel work.
+   is a dependency graph, not necessarily one chain. Validate IDs and cycles between the required
+   milestones: name what must exist or pass before implementation, validation or release can proceed.
+   An accepted contract may permit implementation before the real producer is ready. If the work
+   relies on a fixture, cite the contract revision and behavior it models, its coverage limits,
+   and any resource that must first create or update it. Producer conformance and applicable
+   integration/release gates still wait for evidence. For a handoff, identify the delivered
+   artifact/revision, producing resource or owner, and the consumer's acceptance check; a team's
+   general completion status does not establish that this prerequisite is available.
+   Shared-file ownership also constrains parallel work.
 3. **Name every change of kind** — schema, contract, configuration, security, observability,
    messaging — in a discoverable section or compact labelled entry. These are the entries
    people search for, and a change buried in a resource description is not found.
 4. **State the test strategy per resource kind**, not as a paragraph. What level, against what,
    and what it must establish. Name the executable check or manual procedure and its prerequisites;
    when a test or fixture must first be created, link the responsible resource rather than implying
-   that the check already exists or has passed.
+   that the check already exists or has passed. For automated checks, inspect build profiles, task
+   bindings and filters to establish that the command selects them. Carry the required environment and
+   expected test/report identity so a skipped or empty run cannot be mistaken for verification.
 5. **Write migration, deployment and rollback as sequences**, with the ordering constraint
    spelled out. "Deploy then migrate" and "migrate then deploy" are different plans. For material
    operational steps, carry accepted prerequisites, success/stop conditions, recovery checks and
    responsible roles. Missing criteria remain unresolved for the affected step; do not invent
    thresholds or block independent preparation.
-6. **Assemble, do not author, acceptance.** Carry accepted `BAC-*` from Product and `TC-*` from
-   Engineering, trace both to `RES-*`, and name planned `EV-*`. If a criterion is missing or cannot
-   become a check, return it to its owning stage instead of repairing intent in the plan.
+6. **Assemble, do not author, acceptance.** Carry applicable accepted `BAC-*` from Product and
+   `TC-*` from Engineering. Check both directions: each selected criterion maps to `RES-*` and
+   planned `EV-*`; each resource has an accepted scope/criterion justification. Include shared
+   checks for behavior no resource alone can establish. A command name is insufficient without
+   the setup, observable result and accepted boundary it checks. Missing criteria or decisions
+   needed to make them checkable return to the owning stage; do not repair intent in the plan.
 7. **Distinguish inapplicable from unresolved.** Use `none, because <reason>` only for established
    inapplicability; unknown decisions/evidence name the affected resources and next action. A Light
    plan can stay inline with scope, resource, validation and relevant constraints.
@@ -68,6 +82,11 @@ THEN mark dependent work not ready and route the decision. A draft may name the 
 
 IF a resource has no validation
 THEN it is not planned yet, whatever else is written about it.
+
+IF the dependencies form a cycle
+THEN check whether implementation and later validation milestones were conflated. If a real
+     prerequisite cycle remains, route the missing shared contract or inseparable breakdown
+     to its owner; do not delete an edge or invent a serial order to declare readiness.
 
 IF the plan names a file that does not exist and is not created by a resource
 THEN the file list is wrong. Every path is either created here or exists today.
@@ -126,12 +145,21 @@ Amend the plan whenever any of these happens, and say so in the execution log:
 
 Keep a current authoritative plan with dated revision-impact entries and preserved history.
 Readers must not reconstruct the executable state by mentally applying every old amendment.
+For a semantic input change, follow its traced dependents, including fixtures and shared checks.
+Identify stale assumptions, planned validation and existing `EV-*` that no longer support the new
+revision; name the checks to create or rerun and affected readiness gates. Preserve historical
+evidence and unaffected work. Updating the plan is not evidence that those checks have run.
 Synchronize affected resource links with the existing progress record rather than creating a
 competing status source.
 
 ## Output
 
-The full section list and the shape of each is in `references/plan-template.md`. The plan is
+Read `references/plan-template.md` when assembling or revising a plan for its section shapes,
+repository-grounding example, dependency milestones and acceptance-check guidance. Before calling
+the plan ready, walk its next ready resource from the current checkout through the proposed change
+to its check. Resolve or expose any unstated generation step, profile, producer artifact or ownership
+handoff the executor would otherwise have to discover. This walkthrough does not execute the plan.
+The plan is
 ready for its declared phase and scope when applicable decisions are resolved, dependencies, paths and
 acceptance agree, and planned validation names executable checks and prerequisites. Return draft
 status with affected blockers when that cannot yet be established; omit irrelevant template sections.

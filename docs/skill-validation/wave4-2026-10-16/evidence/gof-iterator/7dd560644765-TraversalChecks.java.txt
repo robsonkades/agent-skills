@@ -1,0 +1,139 @@
+import java.util.*;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
+import java.util.stream.StreamSupport;
+
+public final class TraversalChecks {
+    private static final List<String> passed = new ArrayList<>();
+    private static void ok(boolean value, String label) {
+        if (!value) throw new AssertionError(label);
+        passed.add(label);
+    }
+    private static <T extends Throwable> void expect(Class<T> type, Runnable action, String label) {
+        try { action.run(); throw new AssertionError(label + ": no exception"); }
+        catch (Throwable e) { if (!type.isInstance(e)) throw new AssertionError(label, e); }
+        passed.add(label);
+    }
+    private static FixtureFetcher page(int size) {
+        List<AuditEvent> events = new ArrayList<>();
+        for (int n = 1; n <= size; n++) events.add(new AuditEvent(n));
+        return new FixtureFetcher(Map.of(Cursor.START, new AuditPage(events, Cursor.END)));
+    }
+    private static AuditSpliterator source(FixtureFetcher fetcher, Deadline deadline, long cap) {
+        return new AuditSpliterator(fetcher, Cursor.START, deadline, cap);
+    }
+    public static void main(String[] args) {
+        FixtureFetcher exact = page(2);
+        AuditSpliterator exactSource = source(exact, new Deadline(), 2);
+        ok(exactSource.estimateSize() == Long.MAX_VALUE && !exactSource.hasCharacteristics(Spliterator.SIZED), "unknown size is not SIZED");
+        ok(exactSource.trySplit() == null && exact.fetches.get() == 0, "unsplittable does not prefetch");
+        try (var stream = StreamSupport.stream(exactSource, false)) {
+            ok(stream.map(AuditEvent::id).toList().equals(List.of(1, 2)), "exact final page at cap is exhausted");
+        }
+        expect(NullPointerException.class, () -> exactSource.tryAdvance(null), "null action still rejected after exhaustion");
+
+        AuditSpliterator limited = source(page(3), new Deadline(), 2);
+        AtomicInteger emitted = new AtomicInteger();
+        limited.tryAdvance(e -> emitted.incrementAndGet());
+        limited.tryAdvance(e -> emitted.incrementAndGet());
+        expect(IllegalStateException.class, () -> limited.tryAdvance(e -> emitted.incrementAndGet()), "cap with buffered event is incomplete");
+        ok(emitted.get() == 2, "budget failure does not undo delivered effects");
+
+        FixtureFetcher zero = page(1);
+        expect(IllegalStateException.class, () -> source(zero, new Deadline(), 0).tryAdvance(e -> {}), "zero active budget fails");
+        ok(zero.fetches.get() == 0, "zero budget does not fetch");
+
+        Deadline before = new Deadline(); before.expired = true;
+        FixtureFetcher beforeFetch = page(1);
+        expect(AuditDeadline.class, () -> source(beforeFetch, before, 10).tryAdvance(e -> {}), "expired before fetch");
+        ok(beforeFetch.fetches.get() == 0, "expired source does not fetch");
+
+        FixtureFetcher afterFetch = page(1); afterFetch.expireAfterFetch = true;
+        expect(AuditDeadline.class, () -> source(afterFetch, new Deadline(), 10).tryAdvance(e -> {}), "expiry after fetch is failure");
+
+        Deadline bufferedDeadline = new Deadline();
+        AuditSpliterator buffered = source(page(2), bufferedDeadline, 10);
+        buffered.tryAdvance(e -> {});
+        bufferedDeadline.expired = true;
+        expect(AuditDeadline.class, () -> buffered.tryAdvance(e -> {}), "buffered source checks deadline");
+
+        Deadline cachedDeadline = new Deadline();
+        FixtureFetcher cachedFetcher = page(2);
+        Iterator<AuditEvent> adapted = Spliterators.iterator(source(cachedFetcher, cachedDeadline, 10));
+        ok(adapted.hasNext() && adapted.hasNext() && cachedFetcher.fetches.get() == 1, "repeated hasNext fetches once");
+        ok(adapted.next().id() == 1, "lookahead does not skip first element");
+        ok(adapted.hasNext(), "second event prefetched");
+        cachedDeadline.expired = true;
+        ok(adapted.next().id() == 2, "cached next is not a new source deadline check");
+
+        Cursor middle = new Cursor("middle");
+        FixtureFetcher emptyThenData = new FixtureFetcher(Map.of(
+            Cursor.START, new AuditPage(List.of(), middle),
+            middle, new AuditPage(List.of(new AuditEvent(9)), Cursor.END)));
+        try (var stream = StreamSupport.stream(source(emptyThenData, new Deadline(), 5), false)) {
+            ok(stream.findFirst().orElseThrow().id() == 9 && emptyThenData.fetches.get() == 2, "empty progressing page continues");
+        }
+        FixtureFetcher stuck = new FixtureFetcher(Map.of(Cursor.START, new AuditPage(List.of(), Cursor.START)));
+        expect(IllegalStateException.class, () -> source(stuck, new Deadline(), 10).tryAdvance(e -> {}), "nonadvancing cursor rejected");
+
+        Thread.currentThread().interrupt();
+        try { expect(CancellationException.class, () -> source(page(1), new Deadline(), 10).tryAdvance(e -> {}), "interruption is not exhaustion"); }
+        finally { Thread.interrupted(); }
+
+        AtomicInteger closed = new AtomicInteger();
+        try (var stream = StreamSupport.stream(source(page(3), new Deadline(), 5), false).onClose(closed::incrementAndGet)) {
+            ok(stream.limit(1).count() == 1, "prefix stops source");
+            ok(closed.get() == 0, "terminal operation does not invoke close");
+        }
+        ok(closed.get() == 1, "scope closes after early exit");
+        AtomicInteger failureClosed = new AtomicInteger();
+        expect(IllegalArgumentException.class, () -> {
+            try (var stream = StreamSupport.stream(source(page(3), new Deadline(), 5), false).onClose(failureClosed::incrementAndGet)) {
+                stream.forEach(e -> { throw new IllegalArgumentException("consumer failure"); });
+            }
+        }, "consumer exception propagates");
+        ok(failureClosed.get() == 1, "scope closes after consumer failure");
+
+        List<Integer> sequential, parallel;
+        try (var stream = StreamSupport.stream(source(page(3), new Deadline(), 5), false)) { sequential = stream.map(AuditEvent::id).toList(); }
+        try (var stream = StreamSupport.stream(source(page(3), new Deadline(), 5), true)) { parallel = stream.map(AuditEvent::id).toList(); }
+        ok(sequential.equals(parallel), "fresh unsplittable sequential/parallel result agreement only");
+
+        ArrayList<Integer> unsafe = new ArrayList<>(List.of(1, 2));
+        Iterator<Integer> raw = unsafe.iterator();
+        raw.next(); unsafe.remove(Integer.valueOf(1));
+        ok(!raw.hasNext() && unsafe.equals(List.of(2)), "observed ArrayList interference without CME on this build");
+
+        ArrayList<Integer> safe = new ArrayList<>(List.of(1, 2, 3));
+        Iterator<Integer> ordinary = safe.iterator();
+        ordinary.next(); ordinary.hasNext(); ordinary.remove();
+        ok(safe.equals(List.of(2, 3)), "ordinary iterator preserves last-returned removal");
+
+        ArrayList<Integer> badBacking = new ArrayList<>(List.of(1, 2, 3));
+        Iterator<Integer> bad = new PrefetchWithWrongRemove(badBacking.iterator());
+        bad.next(); bad.hasNext(); bad.hasNext(); bad.remove();
+        ok(badBacking.equals(List.of(1, 3)), "negative control removes prefetched rather than returned element");
+
+        System.out.println("PASS " + passed.size() + " focused checks");
+        passed.forEach(System.out::println);
+        System.out.println("LIMIT: controlled deadline/fetcher, onClose notification, no real transport/cleanup integration or speedup.");
+    }
+
+    private static final class PrefetchWithWrongRemove implements Iterator<Integer> {
+        private final Iterator<Integer> source;
+        private boolean ready;
+        private Integer cached;
+        PrefetchWithWrongRemove(Iterator<Integer> source) { this.source = source; }
+        public boolean hasNext() {
+            if (!ready && source.hasNext()) { cached = source.next(); ready = true; }
+            return ready;
+        }
+        public Integer next() {
+            if (!hasNext()) throw new NoSuchElementException();
+            ready = false;
+            return cached;
+        }
+        public void remove() { source.remove(); }
+    }
+}

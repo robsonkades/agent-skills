@@ -1,0 +1,50 @@
+diff --git a/skills/metrics-and-cardinality/SKILL.md b/skills/metrics-and-cardinality/SKILL.md
+index c29d0ad..86a76ae 100644
+--- a/skills/metrics-and-cardinality/SKILL.md
++++ b/skills/metrics-and-cardinality/SKILL.md
+@@ -82,6 +82,9 @@ operational identity such as an approved logical queue alias can be a useful coh
+ population, churn, access/privacy and overflow contract fit the budget. Bounded cardinality
+ alone does not make sensitive data suitable; hashing does not remove identity or churn.
+ 
++Assign request-dependent labels at the instrumentation/observation boundary; a cached
++meter-registration filter is not a per-request hook.
++
+ Estimate worst-case and realistic **active** combinations; labels are correlated, so the
+ simple product is an upper bound, not the observed bill. Include targets/replicas as a label
+ dimension rather than multiplying and then also counting the instance label.
+diff --git a/skills/metrics-and-cardinality/references/micrometer-and-prometheus.md b/skills/metrics-and-cardinality/references/micrometer-and-prometheus.md
+index bcbfed9..8450ab6 100644
+--- a/skills/metrics-and-cardinality/references/micrometer-and-prometheus.md
++++ b/skills/metrics-and-cardinality/references/micrometer-and-prometheus.md
+@@ -66,6 +66,18 @@ test rather than assuming Spring/Micrometer always normalizes a custom filter/cl
+ ## MeterFilter boundaries
+ 
+ Micrometer provides maximum-allowable-tag and metric filters, denial and tag replacement.
++
++Keep `MeterFilter.map` a stable transformation of the incoming `Meter.Id` and configuration
++fixed for the registry lifetime. Reading a request's tier/outcome from `ThreadLocal` or MDC
++there can attribute later observations to the first context: lookups of the same original ID
++can reuse the previously mapped meter. Repeating the lookup is not a per-observation callback.
++Select a meter with bounded request-dependent tags at the instrumentation boundary, or use
++the resolved instrumentation's observation convention/filter. Fixed process tags remain valid
++in a meter filter. Exercise two different request contexts through the same registry and the
++actual handle lookup/reuse path; assert both cohort counts, not only the combined total.
++See the [Micrometer 1.15.5 filter contract](https://github.com/micrometer-metrics/micrometer/blob/v1.15.5/docs/modules/ROOT/pages/concepts/meter-filters.adoc)
++and [registry lookup implementation](https://github.com/micrometer-metrics/micrometer/blob/v1.15.5/micrometer-core/src/main/java/io/micrometer/core/instrument/MeterRegistry.java).
++
+ Install filters before affected meters register. Verify:
+ 
+ - prefix/key matching;
+diff --git a/skills/metrics-and-cardinality/skill.yaml b/skills/metrics-and-cardinality/skill.yaml
+index 5589e30..3c179dd 100644
+--- a/skills/metrics-and-cardinality/skill.yaml
++++ b/skills/metrics-and-cardinality/skill.yaml
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: metrics-and-cardinality
+-version: 1.3.4
++version: 1.3.5
+ description: >-
+   Designing bounded, decision-oriented metrics for Java services: selecting counters,
+   gauges and histogram forms; defining RED, USE and business outcomes; budgeting active

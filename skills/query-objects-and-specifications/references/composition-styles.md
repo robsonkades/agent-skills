@@ -265,7 +265,7 @@ types catch some structural mistakes, but not every semantic change becomes a co
 | Data for display                                               | Projection or bounded entities according to required data/behavior |
 
 Sources: [Spring Data JPA Specifications](https://docs.spring.io/spring-data/jpa/reference/jpa/specifications.html)
-and [Jakarta Persistence query semantics](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2).
+and [Jakarta Persistence query semantics](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html).
 The rolling Spring documentation must be matched to the project's release.
 For absent-predicate behavior, compare the tagged [Spring Data JPA 3.5.2 Specification](https://github.com/spring-projects/spring-data-jpa/blob/3.5.2/spring-data-jpa/src/main/java/org/springframework/data/jpa/domain/Specification.java)
 and [4.0.0 Specification](https://github.com/spring-projects/spring-data-jpa/blob/4.0.0/spring-data-jpa/src/main/java/org/springframework/data/jpa/domain/Specification.java)

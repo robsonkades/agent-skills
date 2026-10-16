@@ -1,0 +1,488 @@
+{
+  "skill": "inheritance-mapping-strategies",
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "ownedPath": "skills/inheritance-mapping-strategies/**",
+  "allWritesStopped": true,
+  "scope": "Focused review of the existing inheritance mapping design/review skill. No domain-guidance rewrite or implementation workflow added.",
+  "baseline": {
+    "status": "CLEAN",
+    "committedVersion": "1.3.4",
+    "assignmentVersion": "1.3.4",
+    "preExistingVersionBump": false,
+    "stagedChanges": [],
+    "unstagedChanges": [],
+    "untrackedFiles": [],
+    "manifestBaseline": "docs/skill-validation/wave4-2026-10-16/baseline.json",
+    "snapshot": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/baseline/inheritance-mapping-strategies",
+    "verification": "All four assignment files matched both the coordinator snapshot and wave baseline SHA256 before editing. Scoped Git differences were empty.",
+    "hashes": [
+      {
+        "path": "skills/inheritance-mapping-strategies/SKILL.md",
+        "sha256": "d972977153ce426102a44cd1e6f22844c809e25053f3a6c171a2570645e0f838",
+        "baselineSha256": "d972977153ce426102a44cd1e6f22844c809e25053f3a6c171a2570645e0f838",
+        "snapshotSha256": "d972977153ce426102a44cd1e6f22844c809e25053f3a6c171a2570645e0f838",
+        "snapshotMatchesBaseline": true,
+        "unchangedFromAssignment": true
+      },
+      {
+        "path": "skills/inheritance-mapping-strategies/references/schema-evolution.md",
+        "sha256": "cd990f966041d7b6faa1c96be191e7f704730ed392974fa961daf7ba4aacdcd5",
+        "baselineSha256": "a37bd7b5f1f23045b2e192e21a24d0c71d42c08e55783fa85d9dacdba6a54968",
+        "snapshotSha256": "a37bd7b5f1f23045b2e192e21a24d0c71d42c08e55783fa85d9dacdba6a54968",
+        "snapshotMatchesBaseline": true,
+        "unchangedFromAssignment": false
+      },
+      {
+        "path": "skills/inheritance-mapping-strategies/references/strategy-comparison.md",
+        "sha256": "f83b4366c92b249eb77a166ec7f093730b62527607e1b6f7073fcf806ff663d4",
+        "baselineSha256": "dec11c20d764cbe5b23b3c2cebd2f795983c244564750b6da332d1d6b5887286",
+        "snapshotSha256": "dec11c20d764cbe5b23b3c2cebd2f795983c244564750b6da332d1d6b5887286",
+        "snapshotMatchesBaseline": true,
+        "unchangedFromAssignment": false
+      },
+      {
+        "path": "skills/inheritance-mapping-strategies/skill.yaml",
+        "sha256": "eb663bcdeecd406c0de1b5273c3da150f1c653600316a27ffb6cdb786d285cb2",
+        "baselineSha256": "b6e59c56f145400625e01794c2b124420d458c5cc5c883eb1feabc1fa4417fdf",
+        "snapshotSha256": "b6e59c56f145400625e01794c2b124420d458c5cc5c883eb1feabc1fa4417fdf",
+        "snapshotMatchesBaseline": true,
+        "unchangedFromAssignment": false
+      }
+    ]
+  },
+  "versions": {
+    "committed": "1.3.4",
+    "assignment": "1.3.4",
+    "final": "1.3.5",
+    "rationale": "One patch bump for two corrected documentation URLs; no pre-existing unpublished bump."
+  },
+  "findings": {
+    "corrected": [
+      {
+        "location": "references/strategy-comparison.md:210",
+        "issue": "Jakarta Persistence 3.2 reference omitted .html and returned HTTP 404.",
+        "correction": "Point to the verified 3.2 HTML specification; HTTP 200 and expected document title confirmed.",
+        "consequence": "Consumers can inspect the cited identity, inheritance and discriminator contracts."
+      },
+      {
+        "location": "references/schema-evolution.md:175",
+        "issue": "Same broken Jakarta Persistence 3.2 destination in migration evidence.",
+        "correction": "Use the verified 3.2 HTML URL.",
+        "consequence": "Consumers can inspect the cited bulk-DML/version/managed-state contract."
+      }
+    ],
+    "remaining": [],
+    "rejectedCandidateChanges": "No additional material defect was established in the existing identity, query, constraints or migration decision guidance. Strong existing distinctions were retained rather than expanded for a forced change."
+  },
+  "filesChangedByReviewer": [
+    "skills/inheritance-mapping-strategies/references/strategy-comparison.md",
+    "skills/inheritance-mapping-strategies/references/schema-evolution.md",
+    "skills/inheritance-mapping-strategies/skill.yaml"
+  ],
+  "preExistingChanges": [],
+  "changes": [
+    "Add .html to two references to the same versioned Jakarta Persistence specification.",
+    "Bump manifest version once, 1.3.4 to 1.3.5."
+  ],
+  "preserved": [
+    "SKILL.md is byte-for-byte unchanged; manifest description/capabilities/dependencies and all routing remain unchanged.",
+    "All 17 fenced blocks, including five Java and nine SQL examples, remain identical to the assignment snapshot.",
+    "Separate hierarchy primary-key identity from the scope of business-key uniqueness.",
+    "Consider leaf and root query workloads and real plans rather than imposing one inheritance strategy.",
+    "Preserve adequate TABLE_PER_CLASS designs; qualify optional Jakarta portability and actual Hibernate UNION behavior.",
+    "JOINED foreign keys alone do not ensure hierarchy completeness or sibling exclusivity.",
+    "Explicit discriminator/storage names, default entity-name contracts and class-rename distinctions.",
+    "All-writer expand/contract, old deployments, history reconciliation, cache/version handling and rollback limits.",
+    "Composition, mapped superclass and separate domain-model alternatives; partial Java/SQL examples retain their documented limits."
+  ],
+  "capabilitiesRemoved": [],
+  "checks": {
+    "commands": [
+      {
+        "id": "local-validation",
+        "executable": "C:\\Program Files\\nodejs\\node.exe",
+        "args": [
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\inheritance-mapping-strategies\\local-validation.mjs"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "stdout": "local-validation.stdout.txt",
+        "stderr": "local-validation.stderr.txt",
+        "stdoutText": "{\n  \"skill\": \"inheritance-mapping-strategies\",\n  \"version\": \"1.3.5\",\n  \"baselineVersion\": \"1.3.4\",\n  \"fileCount\": 4,\n  \"issues\": [],\n  \"links\": [\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/strategy-comparison.md\",\n      \"exists\": true\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/schema-evolution.md\",\n      \"exists\": true\n    }\n  ],\n  \"hashes\": [\n    {\n      \"path\": \"skills/inheritance-mapping-strategies/SKILL.md\",\n      \"sha256\": \"d972977153ce426102a44cd1e6f22844c809e25053f3a6c171a2570645e0f838\",\n      \"baselineSha256\": \"d972977153ce426102a44cd1e6f22844c809e25053f3a6c171a2570645e0f838\",\n      \"snapshotSha256\": \"d972977153ce426102a44cd1e6f22844c809e25053f3a6c171a2570645e0f838\",\n      \"snapshotMatchesBaseline\": true,\n      \"unchangedFromAssignment\": true\n    },\n    {\n      \"path\": \"skills/inheritance-mapping-strategies/references/schema-evolution.md\",\n      \"sha256\": \"cd990f966041d7b6faa1c96be191e7f704730ed392974fa961daf7ba4aacdcd5\",\n      \"baselineSha256\": \"a37bd7b5f1f23045b2e192e21a24d0c71d42c08e55783fa85d9dacdba6a54968\",\n      \"snapshotSha256\": \"a37bd7b5f1f23045b2e192e21a24d0c71d42c08e55783fa85d9dacdba6a54968\",\n      \"snapshotMatchesBaseline\": true,\n      \"unchangedFromAssignment\": false\n    },\n    {\n      \"path\": \"skills/inheritance-mapping-strategies/references/strategy-comparison.md\",\n      \"sha256\": \"f83b4366c92b249eb77a166ec7f093730b62527607e1b6f7073fcf806ff663d4\",\n      \"baselineSha256\": \"dec11c20d764cbe5b23b3c2cebd2f795983c244564750b6da332d1d6b5887286\",\n      \"snapshotSha256\": \"dec11c20d764cbe5b23b3c2cebd2f795983c244564750b6da332d1d6b5887286\",\n      \"snapshotMatchesBaseline\": true,\n      \"unchangedFromAssignment\": false\n    },\n    {\n      \"path\": \"skills/inheritance-mapping-strategies/skill.yaml\",\n      \"sha256\": \"eb663bcdeecd406c0de1b5273c3da150f1c653600316a27ffb6cdb786d285cb2\",\n      \"baselineSha256\": \"b6e59c56f145400625e01794c2b124420d458c5cc5c883eb1feabc1fa4417fdf\",\n      \"snapshotSha256\": \"b6e59c56f145400625e01794c2b124420d458c5cc5c883eb1feabc1fa4417fdf\",\n      \"snapshotMatchesBaseline\": true,\n      \"unchangedFromAssignment\": false\n    }\n  ],\n  \"examples\": [\n    {\n      \"path\": \"SKILL.md\",\n      \"languages\": [\n        \"text\",\n        \"text\"\n      ],\n      \"count\": 2,\n      \"unchanged\": true\n    },\n    {\n      \"path\": \"references/schema-evolution.md\",\n      \"languages\": [\n        \"java\",\n        \"sql\",\n        \"text\",\n        \"sql\",\n        \"sql\",\n        \"sql\"\n      ],\n      \"count\": 6,\n      \"unchanged\": true\n    },\n    {\n      \"path\": \"references/strategy-comparison.md\",\n      \"languages\": [\n        \"sql\",\n        \"java\",\n        \"sql\",\n        \"sql\",\n        \"sql\",\n        \"sql\",\n        \"java\",\n        \"java\",\n        \"java\"\n      ],\n      \"count\": 9,\n      \"unchanged\": true\n    }\n  ]\n}\n",
+        "stderrText": ""
+      },
+      {
+        "id": "prettier",
+        "executable": "C:\\Program Files\\nodejs\\node.exe",
+        "args": [
+          "C:\\git\\agent-skills\\node_modules\\prettier\\bin\\prettier.cjs",
+          "--check",
+          "skills/inheritance-mapping-strategies/SKILL.md",
+          "skills/inheritance-mapping-strategies/skill.yaml",
+          "skills/inheritance-mapping-strategies/references/strategy-comparison.md",
+          "skills/inheritance-mapping-strategies/references/schema-evolution.md"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "stdout": "prettier.stdout.txt",
+        "stderr": "prettier.stderr.txt",
+        "stdoutText": "Checking formatting...\nAll matched files use Prettier code style!\n",
+        "stderrText": ""
+      },
+      {
+        "id": "diff-check",
+        "executable": "git",
+        "args": ["diff", "--check", "--", "skills/inheritance-mapping-strategies"],
+        "cwd": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "stdout": "diff-check.stdout.txt",
+        "stderr": "diff-check.stderr.txt",
+        "stdoutText": "",
+        "stderrText": ""
+      },
+      {
+        "id": "scoped-status",
+        "executable": "git",
+        "args": [
+          "status",
+          "--short",
+          "--untracked-files=all",
+          "--",
+          "skills/inheritance-mapping-strategies"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "stdout": "scoped-status.stdout.txt",
+        "stderr": "scoped-status.stderr.txt",
+        "stdoutText": " M skills/inheritance-mapping-strategies/references/schema-evolution.md\n M skills/inheritance-mapping-strategies/references/strategy-comparison.md\n M skills/inheritance-mapping-strategies/skill.yaml\n",
+        "stderrText": ""
+      },
+      {
+        "id": "scoped-diff",
+        "executable": "git",
+        "args": ["diff", "--", "skills/inheritance-mapping-strategies"],
+        "cwd": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "stdout": "scoped-diff.stdout.txt",
+        "stderr": "scoped-diff.stderr.txt",
+        "stdoutText": "diff --git a/skills/inheritance-mapping-strategies/references/schema-evolution.md b/skills/inheritance-mapping-strategies/references/schema-evolution.md\nindex a6756d2..59df5c6 100644\n--- a/skills/inheritance-mapping-strategies/references/schema-evolution.md\n+++ b/skills/inheritance-mapping-strategies/references/schema-evolution.md\n@@ -172,7 +172,7 @@ views when adding a subtype; providers normally derive hierarchy queries from th\n \n ## Primary sources\n \n-- [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2),\n+- [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html),\n   section 4.11 and the EntityManager contract: bulk DML, versions and managed-instance state.\n - [Hibernate ORM 6.6 caching](https://docs.hibernate.org/orm/6.6/userguide/html_single/#caching):\n   cache visibility limits for changes made by other applications.\ndiff --git a/skills/inheritance-mapping-strategies/references/strategy-comparison.md b/skills/inheritance-mapping-strategies/references/strategy-comparison.md\nindex 4ddba6a..ccd03ed 100644\n--- a/skills/inheritance-mapping-strategies/references/strategy-comparison.md\n+++ b/skills/inheritance-mapping-strategies/references/strategy-comparison.md\n@@ -207,7 +207,7 @@ an arbitrary multi-column hierarchy. The storage can stay flat\n \n ## Primary sources\n \n-- [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2),\n+- [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html),\n   sections 2.4, 2.13–2.14 and discriminator mappings: identity, inheritance and portability.\n - [Hibernate ORM 6.6 inheritance](https://docs.hibernate.org/orm/6.6/userguide/html_single/#entity-inheritance-table-per-class):\n   concrete root tables and polymorphic UNIONs under TABLE_PER_CLASS.\ndiff --git a/skills/inheritance-mapping-strategies/skill.yaml b/skills/inheritance-mapping-strategies/skill.yaml\nindex 5d04c19..7357d3f 100644\n--- a/skills/inheritance-mapping-strategies/skill.yaml\n+++ b/skills/inheritance-mapping-strategies/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: inheritance-mapping-strategies\n-version: 1.3.4\n+version: 1.3.5\n description: >-\n   Mapping a subtype hierarchy onto tables — single table, class table (joined), concrete\n   table per class — and deciding whether the hierarchy should exist at all. Use when an\n",
+        "stderrText": ""
+      },
+      {
+        "id": "staged-diff",
+        "executable": "git",
+        "args": ["diff", "--cached", "--", "skills/inheritance-mapping-strategies"],
+        "cwd": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "stdout": "staged-diff.stdout.txt",
+        "stderr": "staged-diff.stderr.txt",
+        "stdoutText": "",
+        "stderrText": ""
+      },
+      {
+        "id": "case-preparation",
+        "executable": "C:\\Program Files\\nodejs\\node.exe",
+        "args": [
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\inheritance-mapping-strategies\\prepare-cases.mjs"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "status": 0,
+        "signal": null,
+        "stdout": "case-preparation.stdout.txt",
+        "stderr": "case-preparation.stderr.txt",
+        "stdoutText": "{\n  \"cases\": 2,\n  \"filesPerCase\": 6,\n  \"decisiveDifference\": \"business-contract.json only\",\n  \"actorsRun\": 0,\n  \"databaseRuns\": 0\n}\n",
+        "stderrText": ""
+      }
+    ],
+    "package": {
+      "status": "PASS",
+      "details": {
+        "skill": "inheritance-mapping-strategies",
+        "version": "1.3.5",
+        "baselineVersion": "1.3.4",
+        "fileCount": 4,
+        "issues": [],
+        "links": [
+          {
+            "from": "SKILL.md",
+            "target": "references/strategy-comparison.md",
+            "exists": true
+          },
+          {
+            "from": "SKILL.md",
+            "target": "references/schema-evolution.md",
+            "exists": true
+          }
+        ],
+        "hashes": [
+          {
+            "path": "skills/inheritance-mapping-strategies/SKILL.md",
+            "sha256": "d972977153ce426102a44cd1e6f22844c809e25053f3a6c171a2570645e0f838",
+            "baselineSha256": "d972977153ce426102a44cd1e6f22844c809e25053f3a6c171a2570645e0f838",
+            "snapshotSha256": "d972977153ce426102a44cd1e6f22844c809e25053f3a6c171a2570645e0f838",
+            "snapshotMatchesBaseline": true,
+            "unchangedFromAssignment": true
+          },
+          {
+            "path": "skills/inheritance-mapping-strategies/references/schema-evolution.md",
+            "sha256": "cd990f966041d7b6faa1c96be191e7f704730ed392974fa961daf7ba4aacdcd5",
+            "baselineSha256": "a37bd7b5f1f23045b2e192e21a24d0c71d42c08e55783fa85d9dacdba6a54968",
+            "snapshotSha256": "a37bd7b5f1f23045b2e192e21a24d0c71d42c08e55783fa85d9dacdba6a54968",
+            "snapshotMatchesBaseline": true,
+            "unchangedFromAssignment": false
+          },
+          {
+            "path": "skills/inheritance-mapping-strategies/references/strategy-comparison.md",
+            "sha256": "f83b4366c92b249eb77a166ec7f093730b62527607e1b6f7073fcf806ff663d4",
+            "baselineSha256": "dec11c20d764cbe5b23b3c2cebd2f795983c244564750b6da332d1d6b5887286",
+            "snapshotSha256": "dec11c20d764cbe5b23b3c2cebd2f795983c244564750b6da332d1d6b5887286",
+            "snapshotMatchesBaseline": true,
+            "unchangedFromAssignment": false
+          },
+          {
+            "path": "skills/inheritance-mapping-strategies/skill.yaml",
+            "sha256": "eb663bcdeecd406c0de1b5273c3da150f1c653600316a27ffb6cdb786d285cb2",
+            "baselineSha256": "b6e59c56f145400625e01794c2b124420d458c5cc5c883eb1feabc1fa4417fdf",
+            "snapshotSha256": "b6e59c56f145400625e01794c2b124420d458c5cc5c883eb1feabc1fa4417fdf",
+            "snapshotMatchesBaseline": true,
+            "unchangedFromAssignment": false
+          }
+        ],
+        "examples": [
+          {
+            "path": "SKILL.md",
+            "languages": ["text", "text"],
+            "count": 2,
+            "unchanged": true
+          },
+          {
+            "path": "references/schema-evolution.md",
+            "languages": ["java", "sql", "text", "sql", "sql", "sql"],
+            "count": 6,
+            "unchanged": true
+          },
+          {
+            "path": "references/strategy-comparison.md",
+            "languages": ["sql", "java", "sql", "sql", "sql", "sql", "java", "java", "java"],
+            "count": 9,
+            "unchanged": true
+          }
+        ]
+      }
+    },
+    "formatting": {
+      "status": "PASS",
+      "scope": "Four exact owned files; no formatter writes."
+    },
+    "diff": {
+      "status": "PASS",
+      "artifact": "scoped-diff.stdout.txt",
+      "inspected": true,
+      "stagedDiffEmpty": true,
+      "changesLimitedToTwoUrlsAndManifestVersion": true
+    },
+    "sourceRetrieval": {
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/inheritance-mapping-strategies/source-check.mjs",
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "results": {
+        "consulted": "2026-10-16",
+        "results": [
+          {
+            "url": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2",
+            "finalUrl": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2",
+            "status": 404,
+            "title": "404 Page Not Found | Jakarta EE | The Eclipse Foundation"
+          },
+          {
+            "url": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html",
+            "finalUrl": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html",
+            "status": 200,
+            "title": "Jakarta Persistence"
+          },
+          {
+            "url": "https://docs.hibernate.org/orm/6.6/userguide/html_single/",
+            "finalUrl": "https://docs.hibernate.org/orm/6.6/userguide/html_single/",
+            "status": 200,
+            "title": "Hibernate ORM User Guide",
+            "hibernatePatch": "6.6.58.Final"
+          }
+        ]
+      },
+      "artifact": "source-status.json"
+    },
+    "fixturePreparation": {
+      "status": "PASS",
+      "kind": "Fixture integrity and separation only",
+      "cases": 2,
+      "filesPerCase": 6,
+      "verifiedFileHashes": 12,
+      "differentFiles": ["business-contract.json"],
+      "differentFields": ["providerReferenceUniqueWithin"],
+      "values": ["tenant-and-payment-method", "tenant-across-all-payment-methods"],
+      "databaseOrOrmRuns": 0,
+      "independentActorRuns": 0
+    },
+    "executableExamples": {
+      "changed": 0,
+      "compiled": 0,
+      "databaseRuns": 0,
+      "ormRuns": 0,
+      "rationale": "Link-only corrections do not change executable content. Existing snippets were read and preservation checked, not recompiled or run against a database."
+    }
+  },
+  "failures": {
+    "introducedOrUnresolvedLocal": [],
+    "baseline": [
+      "The original extensionless Jakarta URL returned HTTP 404; both owned references are corrected."
+    ]
+  },
+  "behavioralEvaluations": {
+    "actorsExecuted": 0,
+    "measuredImprovement": false,
+    "comparisonsExecuted": [],
+    "walkthroughs": [
+      "Case A: product authority defines uniqueness within tenant and method. One table per method with UNIQUE(tenant_id, provider_reference) satisfies the shown scope; IDs 101 and 102 are distinct. Retaining the existing mapping is appropriate without other evidence of a defect.",
+      "Case B: the identical two rows violate cross-method uniqueness. The shared primary-key sequence is unrelated to that business-key constraint. A common constrained table or a transactionally maintained shared-key registry is a candidate; all writers and historical conflicts must be handled before a rollout can be called safe."
+    ],
+    "technicalExecutionDistinction": "Only package validation, URL retrieval and fixture integrity were executed. Neither walkthrough is an agent output, provider integration result or database concurrency test."
+  },
+  "cases": {
+    "inputs": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/inheritance-mapping-strategies/actor-inputs.json",
+    "evaluatorCriteria": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/inheritance-mapping-strategies/evaluator-criteria.json",
+    "fixtureIntegrity": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/inheritance-mapping-strategies/case-integrity.json",
+    "preparationControl": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/inheritance-mapping-strategies/case-preparation-control.json",
+    "count": 2,
+    "knownDevelopmentCases": true,
+    "heldOut": false,
+    "decisiveConstraint": "Only providerReferenceUniqueWithin in business-contract.json differs. All schema, mapping, query, history and sample-row artifacts are identical.",
+    "expectedDifference": "Preserve valid method-scoped uniqueness in A; recognize the missing cross-method enforcement in B without mandating a universal mapping strategy.",
+    "prerequisites": "Read-only fixture review; Java 17, Hibernate ORM 6.6 mapping inventory, PostgreSQL 18 DDL. No runnable ORM project or database is provided.",
+    "isolation": "Coordinator must provide one case and intended skill treatment. Evaluator-only criteria, paired answer, handoff and prior results are excluded. Folder separation alone is not enforced isolation."
+  },
+  "sources": [
+    {
+      "id": "jakarta-persistence-3.2",
+      "url": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html",
+      "version": "Jakarta Persistence 3.2, April 10, 2024",
+      "sections": [
+        "2.4 Primary Keys and Entity Identity",
+        "2.13–2.14 inheritance and mapping strategies",
+        "4.11 bulk update/delete",
+        "DiscriminatorValue mapping"
+      ],
+      "support": "Correct versioned destination for both broken links. Existing hierarchy identity, optional TABLE_PER_CLASS portability, discriminator defaults and bulk-DML state/version caveats agree with the specification.",
+      "consulted": "2026-10-16",
+      "kind": "primary"
+    },
+    {
+      "id": "hibernate-6.6-inheritance",
+      "url": "https://docs.hibernate.org/orm/6.6/userguide/html_single/#entity-inheritance-table-per-class",
+      "version": "Hibernate ORM 6.6; fetched guide identifies 6.6.58.Final",
+      "sections": ["Table per class", "Polymorphism"],
+      "support": "Confirms provider-specific UNION behavior and inclusion of concrete entity tables in polymorphic queries. It does not establish performance for an application or portability to other providers.",
+      "consulted": "2026-10-16",
+      "kind": "primary"
+    },
+    {
+      "id": "hibernate-6.6-caching",
+      "url": "https://docs.hibernate.org/orm/6.6/userguide/html_single/#caching",
+      "version": "Hibernate ORM 6.6; fetched guide identifies 6.6.58.Final",
+      "sections": ["Caching"],
+      "support": "Confirms the existing qualification that external database changes are not automatically visible to provider caches; a fresh persistence context alone is insufficient evidence of migration consistency.",
+      "consulted": "2026-10-16",
+      "kind": "primary"
+    },
+    {
+      "id": "postgresql-18-alter-table",
+      "url": "https://www.postgresql.org/docs/18/sql-altertable.html",
+      "version": "PostgreSQL 18 documentation",
+      "sections": ["ALTER TABLE notes and constraints"],
+      "support": "Supports existing database/version-specific cautions about validation and locking. No actual migration or lock-duration measurement was performed.",
+      "consulted": "2026-10-16",
+      "kind": "primary"
+    },
+    {
+      "id": "postgresql-18-unique",
+      "url": "https://www.postgresql.org/docs/18/ddl-constraints.html#DDL-CONSTRAINTS-UNIQUE-CONSTRAINTS",
+      "version": "PostgreSQL 18 documentation",
+      "sections": ["5.5.3 Unique Constraints"],
+      "support": "Grounds the case review of table-local uniqueness: a UNIQUE on each leaf table does not enforce a business key across the two separate tables.",
+      "consulted": "2026-10-16",
+      "kind": "primary"
+    },
+    {
+      "id": "postgresql-18-partial-indexes",
+      "url": "https://www.postgresql.org/docs/18/indexes-partial.html",
+      "version": "PostgreSQL 18 documentation",
+      "sections": ["11.8 Partial Indexes"],
+      "support": "Confirms conditional index selection is database-specific and predicate-sensitive, consistent with the existing qualified guidance. No query-plan claim was made.",
+      "consulted": "2026-10-16",
+      "kind": "primary"
+    }
+  ],
+  "assumptions": [
+    "The existing skill remains a review/design aid; this assignment does not implement or deploy a persistence strategy.",
+    "Cases are bounded synthetic project artifacts, not evidence of any real application workload."
+  ],
+  "limits": [
+    "The correction restores source accessibility; it does not establish incremental agent behavior improvement.",
+    "No ORM bootstrapping, SQL execution, migration, raw-SQL hostile fixture, concurrent write, query plan, cache integration or performance benchmark was executed.",
+    "A shared primary-key sequence in the synthetic inputs does not prove arbitrary writers obey an identity policy; real all-writer enforcement still needs review.",
+    "Source inspection supports static contracts only; real mapping overrides, database version/collation, provider SQL, constraints, writer coverage and rollout behavior require application evidence.",
+    "The Hibernate 6.6 guide is a moving maintenance-series URL; observed patch 6.6.58.Final is recorded, not assumed to be every consumer runtime.",
+    "The local loader used existing compiled repository modules without rebuilding. Catalog-wide routing, generated integrity/version data and full verification remain coordinator-owned."
+  ],
+  "crossSkill": {
+    "requiredActions": [],
+    "neighboringFilesEdited": false,
+    "addressedInput": "Coordinator-reported candidate broken Jakarta links confirmed and fixed only in this owned skill."
+  },
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Regenerate index/integrity after all reviewers stop writing."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Parallel-review exception: run after index generation on stable shared tree."
+    }
+  ],
+  "pendingBehavioralEvaluation": "Coordinator may run matched actors using isolated case inputs and withheld evaluator criteria. No evaluation is required to assert the narrow HTTP-link fix, and no behavior gain is asserted.",
+  "evidenceDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/inheritance-mapping-strategies",
+  "evidence": [
+    "local-validation.mjs",
+    "local-validation.stdout.txt",
+    "commands.json",
+    "run-local.mjs",
+    "scoped-diff.stdout.txt",
+    "scoped-status.stdout.txt",
+    "staged-diff.stdout.txt",
+    "prettier.stdout.txt",
+    "source-check.mjs",
+    "source-status.json",
+    "prepare-cases.mjs",
+    "actor-inputs.json",
+    "evaluator-criteria.json",
+    "case-integrity.json",
+    "case-preparation-control.json",
+    "cases/case-a/",
+    "cases/case-b/",
+    "write-handoff.mjs"
+  ],
+  "writeState": {
+    "noActiveBackgroundProcess": true,
+    "allProcessesWaited": true,
+    "repositoryWritesRestrictedToOwnedPath": true,
+    "reviewArtifactsRestrictedToAssignedTempDirectory": true,
+    "stoppedBeforeHandoff": true
+  }
+}

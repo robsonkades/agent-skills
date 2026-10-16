@@ -1,0 +1,92 @@
+{
+  "task": "run-14 isolated incident/proposal review",
+  "journalScope": "Concise actor report of reads, commands and observed results; not a complete tool trace.",
+  "filesRead": [
+    "TASK.md",
+    "input/README.md",
+    "input/REQUEST.md",
+    "input/proposal.md",
+    "input/incident.json",
+    "input/preview-plan.json",
+    "input/literal-comparison.json",
+    "output/README.md",
+    "output/REQUEST.md",
+    "output/proposal.md",
+    "output/incident.json",
+    "output/preview-plan.json",
+    "output/literal-comparison.json",
+    "output/REVIEW.md",
+    "output/result.json",
+    "output/check-artifacts.mjs",
+    "output/check.log",
+    "output/check.stderr.log"
+  ],
+  "commands": [
+    {
+      "command": "Get-Content -Raw -LiteralPath TASK.md",
+      "exitCode": 0,
+      "result": "Read isolation, scope and deliverable instructions."
+    },
+    {
+      "command": "Get-Content input/README.md and input/REQUEST.md; rg --files input output",
+      "exitCode": 0,
+      "result": "Read environment/request and enumerated six original artifacts with six preexisting output copies; no fixture helper supplied."
+    },
+    {
+      "command": "Get-Content input/proposal.md, input/preview-plan.json, input/literal-comparison.json and input/incident.json",
+      "exitCode": 0,
+      "result": "Read all incident evidence and proposed remedy."
+    },
+    {
+      "command": "web open/find on PostgreSQL 17 using-explain, sql-prepare and sql-explain documentation",
+      "result": "Primary documentation retrieved for per-loop averages, cost units, LIMIT, buffer semantics and prepared-plan interpretation; a find for non-distinct returned no match."
+    },
+    {
+      "command": "apply_patch to create output/REVIEW.md, output/result.json and output/check-artifacts.mjs",
+      "result": "Authored review, structured findings and local arithmetic/preservation check."
+    },
+    {
+      "command": "Start-Process node output/check-artifacts.mjs with redirected output/check.log and output/check.stderr.log, hidden window, WaitForExit(20000), and process-tree kill on timeout",
+      "exitCode": 0,
+      "result": "Passed on Node v25.6.1; all six supplied copies are byte-identical; required metric fields match derived input arithmetic; report is 599 whitespace-separated words; stderr empty. No timeout occurred."
+    }
+  ],
+  "authoredFiles": [
+    "output/REVIEW.md",
+    "output/result.json",
+    "output/check-artifacts.mjs",
+    "output/check.log",
+    "output/check.stderr.log",
+    "output/execution.json"
+  ],
+  "verification": {
+    "localArtifactChecks": "passed",
+    "preservedOriginalAndCopiedInputs": true,
+    "metrics": {
+      "innerExecutions": 12000,
+      "innerEmittedRows": 48000,
+      "innerInclusiveWorkMs": 780,
+      "capturedExecutionTimeMs": 991
+    },
+    "reportWordCount": 599,
+    "postgresqlExecution": "Not performed; no supplied server or connection",
+    "sqlRegression": "Not applicable: this is a review-only incident task; no solution.sql or SQL regression was authored"
+  },
+  "scope": {
+    "skillsRead": false,
+    "siblingOrRepositoryArtifactsRead": false,
+    "subagentsUsed": false,
+    "workloadSqlExecuted": false,
+    "runtimeSettingsChanged": false,
+    "indexCreated": false,
+    "dependenciesInstalled": false,
+    "realAgentConfigurationChanged": false
+  },
+  "limits": [
+    "The incident counters are an authored fixture, not an actual production capture.",
+    "Local checks establish artifact consistency and arithmetic, not PostgreSQL runtime performance or the best query plan.",
+    "The bounded next experiment is proposed only and contains no workload execution."
+  ],
+  "runningProcesses": [],
+  "allWritesStopped": true
+}

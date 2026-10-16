@@ -1,0 +1,341 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "structured-logging",
+  "reviewer": "/root/quality18",
+  "ownedPath": "skills/structured-logging/**",
+  "repository": "C:/git/agent-skills",
+  "reviewDate": "2026-10-16",
+  "allWritesStopped": true,
+  "scope": "Domain skill guidance only; local artifacts authorized by coordinator. No shared files, globals, delegated sessions, dependency installation or real-process attachment.",
+  "baseline": {
+    "committedVersion": "1.4.4",
+    "assignmentVersion": "1.4.4",
+    "preExistingVersionBump": false,
+    "preExistingChanges": [],
+    "gitState": "All five package files inspected; scoped committed/staged/unstaged/untracked state clean at assignment; baseline hashes saved before any edits.",
+    "hashes": [
+      {
+        "Path": "skills/structured-logging\\skill.yaml",
+        "Hash": "6DBDB7B0B72FD365006BC631D522BCE7ECD267D2E07322A9C4132D6582255B5B"
+      },
+      {
+        "Path": "skills/structured-logging\\SKILL.md",
+        "Hash": "E63523859C6A154C1D18245582B9D3551619F86ADF41E08F956B197EBA87925A"
+      },
+      {
+        "Path": "skills/structured-logging\\references\\java-logging-mechanics.md",
+        "Hash": "460E266541D44DC325D8C355CFB5AA2705517E8FFC284EC81A3EA2CA41086315"
+      },
+      {
+        "Path": "skills/structured-logging\\references\\fields-and-levels.md",
+        "Hash": "081EE14697F32275EFEC75D73AE1E945B9B18332424AC7E824E8DE7E9C55D2E5"
+      },
+      {
+        "Path": "skills/structured-logging\\references\\appenders-and-cost.md",
+        "Hash": "560F22E8010B2A9CF53C8D9E9AB7CD099C87CF68926F4C3875D096DF58631E61"
+      }
+    ]
+  },
+  "findingsCorrected": [
+    {
+      "location": "SKILL.md:80-83; references/java-logging-mechanics.md:3-46",
+      "finding": "Existing provider/version advice did not explicitly follow selection in the delivered runtime artifact or distinguish NOP fallback from downstream loss.",
+      "evidence": "SLF4J2.0.9 source/docs plus four isolated launches: API-only and legacy binding-only select NOPLoggerFactory, no event, normal return. Compatible Logback1.4.11 emits the event; same backend OFF suppresses it.",
+      "consequence": "Build dependency declarations can falsely reassure reviewers; queue/appender edits cannot repair a backend never selected.",
+      "fix": "Trace actual launch classpath/service registration/provider override, inspect effective factory/logger outside affected logging path, then distinguish filtering/lifecycle/delivery."
+    },
+    {
+      "location": "references/java-logging-mechanics.md:34-46",
+      "finding": "Selection and emission need separate evidence; a real backend may intentionally filter the event.",
+      "evidence": "Compatible root-OFF control selected LoggerContext, returned normally and emitted0; root-INFO control emitted exactly1 parsed JSON record.",
+      "consequence": "Selecting a backend or normal API return cannot establish even local event emission, much less ingestion/retention.",
+      "fix": "Add explicit positive/negative controls and limits, retain intentional NOP/no-logging policy and adequate existing backend; application owns provider choice, reusable libraries usually API only."
+    }
+  ],
+  "findingsRemaining": [],
+  "filesChangedByReviewer": [
+    "skills/structured-logging/SKILL.md",
+    "skills/structured-logging/references/java-logging-mechanics.md",
+    "skills/structured-logging/skill.yaml"
+  ],
+  "preExistingFilesChanged": [],
+  "finalHashes": [
+    {
+      "Path": "skills/structured-logging\\skill.yaml",
+      "Hash": "C3A4DFD4081E37A39029806D55B53738A1092D5944C2885B9BA7D670FC605020"
+    },
+    {
+      "Path": "skills/structured-logging\\SKILL.md",
+      "Hash": "DF2CD29AB9BA04D87DAB3BFE153A623D3611D3D7EE416A4DB8766AA7C148CE54"
+    },
+    {
+      "Path": "skills/structured-logging\\references\\java-logging-mechanics.md",
+      "Hash": "0D3292F6644389903D1B11C01E579F093178F7F7C3DEC8341F847FACAF4CF34F"
+    },
+    {
+      "Path": "skills/structured-logging\\references\\fields-and-levels.md",
+      "Hash": "081EE14697F32275EFEC75D73AE1E945B9B18332424AC7E824E8DE7E9C55D2E5"
+    },
+    {
+      "Path": "skills/structured-logging\\references\\appenders-and-cost.md",
+      "Hash": "560F22E8010B2A9CF53C8D9E9AB7CD099C87CF68926F4C3875D096DF58631E61"
+    }
+  ],
+  "capabilitiesPreserved": [
+    "Governed event schemas, field types/units/exact IDs, trusted envelope collision policy and schema/history migration",
+    "Occurrence versus observation time and correlation validity",
+    "Fluent/parameterized API alternatives and actual encoder-shape fixtures",
+    "Lexical MDC capture/restoration, existing framework bridge and trust-boundary constraints",
+    "Data minimization, secret/Throwable policy, injection and byte/field bounds",
+    "Synchronous versus asynchronous/durable delivery, actual appender failure semantics, independent loss evidence and transaction/audit distinction",
+    "Delayed-encoding mutation caution, queue blocking/discard, shutdown/crash/collector and cost analysis",
+    "Adequate existing design/no-change results without universal upgrades or campaigns"
+  ],
+  "capabilitiesRemoved": [],
+  "capabilitiesReplaced": [],
+  "version": {
+    "committed": "1.4.4",
+    "assignment": "1.4.4",
+    "final": "1.4.5",
+    "rationale": "One patch for scoped guidance additions; no pre-existing bump to reuse. Manifest is the only version field; description unchanged and synchronized."
+  },
+  "validation": {
+    "technicalExecutions": [
+      {
+        "kind": "Standalone provider selection/emission probe",
+        "cwd": "C:/git/agent-skills",
+        "command": "$probeDir = 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/structured-logging-validation-quality18'\n$slf4j = 'C:/Users/robso/.m2/repository/org/slf4j/slf4j-api/2.0.9/slf4j-api-2.0.9.jar'\n$classic = 'C:/Users/robso/.m2/repository/ch/qos/logback/logback-classic/1.4.11/logback-classic-1.4.11.jar'\n$core = 'C:/Users/robso/.m2/repository/ch/qos/logback/logback-core/1.4.11/logback-core-1.4.11.jar'\n$legacyClassic = 'C:/Users/robso/.m2/repository/ch/qos/logback/logback-classic/1.2.11/logback-classic-1.2.11.jar'\n$legacyCore = 'C:/Users/robso/.m2/repository/ch/qos/logback/logback-core/1.2.11/logback-core-1.2.11.jar'\nforeach ($jar in @($slf4j,$classic,$core,$legacyClassic,$legacyCore)) { if (-not (Test-Path -LiteralPath $jar)) { throw \"Missing cached jar: $jar\" } }\n& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' --release 17 -cp $slf4j -d $probeDir \"$probeDir/ProviderProbe.java\"\nif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }\n$cases = @(\n  @{Name='no-provider';Classpath=\"$probeDir;$slf4j\";Config='logback-info.xml';Factory='org.slf4j.helpers.NOPLoggerFactory';Enabled='false';Events=0},\n  @{Name='legacy-binding';Classpath=\"$probeDir;$slf4j;$legacyClassic;$legacyCore\";Config='logback-info.xml';Factory='org.slf4j.helpers.NOPLoggerFactory';Enabled='false';Events=0},\n  @{Name='compatible-info';Classpath=\"$probeDir;$slf4j;$classic;$core\";Config='logback-info.xml';Factory='ch.qos.logback.classic.LoggerContext';Enabled='true';Events=1},\n  @{Name='compatible-off';Classpath=\"$probeDir;$slf4j;$classic;$core\";Config='logback-off.xml';Factory='ch.qos.logback.classic.LoggerContext';Enabled='false';Events=0}\n)\nforeach ($case in $cases) {\n  $stdoutPath = \"$probeDir/$($case.Name)-stdout.txt\"\n  $stderrPath = \"$probeDir/$($case.Name)-stderr.txt\"\n  & 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' \"-Dlogback.configurationFile=$probeDir/$($case.Config)\" -cp $case.Classpath ProviderProbe $case.Factory $case.Enabled 1> $stdoutPath 2> $stderrPath\n  if ($LASTEXITCODE -ne 0) { throw \"Probe failed: $($case.Name) exit $LASTEXITCODE\" }\n  $lines = Get-Content -LiteralPath $stdoutPath\n  $events = @($lines | Where-Object { $_.StartsWith('{') } | ForEach-Object { $_ | ConvertFrom-Json } | Where-Object { $_.message -eq 'provider-probe-event' })\n  if ($events.Count -ne $case.Events) { throw \"Event count $($events.Count) != $($case.Events): $($case.Name)\" }\n  if ($lines -notcontains 'loggingCallReturned=true') { throw \"Missing call-return evidence: $($case.Name)\" }\n  [pscustomobject]@{Case=$case.Name;Factory=$case.Factory;InfoEnabled=$case.Enabled;JsonEvents=$events.Count;Exit=0;Stdout=(Get-Content -Raw -LiteralPath $stdoutPath);Stderr=(Get-Content -Raw -LiteralPath $stderrPath)} | ConvertTo-Json\n}",
+        "compilerTarget": "javac --release 17",
+        "runtimeObserved": "Temurin 25.0.3+9-LTS",
+        "cachedDependencies": [
+          "org.slf4j:slf4j-api:2.0.9",
+          "ch.qos.logback:logback-classic:1.4.11",
+          "ch.qos.logback:logback-core:1.4.11",
+          "negative control ch.qos.logback:logback-classic:1.2.11",
+          "negative control ch.qos.logback:logback-core:1.2.11"
+        ],
+        "result": "Compile and command exit0; all four runtime processes exit0; asserted expected factory and level state, normal call return, and external parse/count of encoded JSON events.",
+        "matrix": [
+          {
+            "case": "no-provider",
+            "factory": "org.slf4j.helpers.NOPLoggerFactory",
+            "logger": "org.slf4j.helpers.NOPLogger",
+            "infoEnabled": false,
+            "events": 0,
+            "normalReturn": true,
+            "diagnostic": "stderr no provider/NOP warning"
+          },
+          {
+            "case": "legacy-binding",
+            "factory": "org.slf4j.helpers.NOPLoggerFactory",
+            "logger": "org.slf4j.helpers.NOPLogger",
+            "infoEnabled": false,
+            "events": 0,
+            "normalReturn": true,
+            "diagnostic": "stderr no provider/NOP and ignored 1.7-era binding warning"
+          },
+          {
+            "case": "compatible-info",
+            "factory": "ch.qos.logback.classic.LoggerContext",
+            "logger": "ch.qos.logback.classic.Logger",
+            "infoEnabled": true,
+            "events": 1,
+            "normalReturn": true,
+            "diagnostic": "stderr empty"
+          },
+          {
+            "case": "compatible-off",
+            "factory": "ch.qos.logback.classic.LoggerContext",
+            "logger": "ch.qos.logback.classic.Logger",
+            "infoEnabled": false,
+            "events": 0,
+            "normalReturn": true,
+            "diagnostic": "stderr empty"
+          }
+        ],
+        "outputs": [
+          "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/structured-logging-validation-quality18/no-provider-stdout.txt",
+          "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/structured-logging-validation-quality18/no-provider-stderr.txt",
+          "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/structured-logging-validation-quality18/legacy-binding-stdout.txt",
+          "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/structured-logging-validation-quality18/legacy-binding-stderr.txt",
+          "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/structured-logging-validation-quality18/compatible-info-stdout.txt",
+          "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/structured-logging-validation-quality18/compatible-info-stderr.txt",
+          "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/structured-logging-validation-quality18/compatible-off-stdout.txt",
+          "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/structured-logging-validation-quality18/compatible-off-stderr.txt"
+        ]
+      },
+      {
+        "kind": "Existing core parsers and local resource checks",
+        "cwd": "C:/git/agent-skills",
+        "command": "@'\nimport assert from 'node:assert/strict';\nimport { readFileSync, existsSync } from 'node:fs';\nimport { resolve, dirname } from 'node:path';\nimport { parseManifest } from './packages/core/src/domain/manifest.ts';\nimport { parseSkillDocument } from './packages/core/src/domain/skill-document.ts';\nconst root = resolve('skills/structured-logging');\nconst { manifest, issues } = parseManifest(readFileSync(resolve(root, 'skill.yaml'), 'utf8'), { strict: true });\nassert.deepEqual(issues, []);\nconst doc = parseSkillDocument(readFileSync(resolve(root, 'SKILL.md'), 'utf8'));\nassert.equal(manifest.name, 'structured-logging');\nassert.equal(doc.frontmatter.name, manifest.name);\nassert.equal(manifest.version, '1.4.5');\nconst norm = s => s.replace(/\\s+/g, ' ').trim();\nassert.equal(norm(doc.frontmatter.description), norm(manifest.description));\nfor (const path of manifest.files) assert.ok(existsSync(resolve(root, path)), path);\nconst refs = [...new Set(doc.body.match(/references\\/[A-Za-z0-9/-]+\\.md/g))];\nassert.equal(refs.length, 3);\nlet links = 0;\nfor (const name of ['SKILL.md', ...refs]) {\n  const source = resolve(root, name);\n  const content = readFileSync(source, 'utf8');\n  for (const match of content.matchAll(/\\]\\(([^)]+)\\)/g)) {\n    const target = match[1];\n    if (/^<?https?:\\/\\//.test(target)) continue;\n    const [file, anchor] = target.split('#');\n    const dest = file ? resolve(dirname(source), file) : source;\n    assert.ok(existsSync(dest), name + ': ' + target);\n    if (anchor) {\n      const headings = [...readFileSync(dest, 'utf8').matchAll(/^#+\\s+(.+)$/gm)].map(m => m[1].toLowerCase().replace(/[^\\w\\s-]/g, '').replace(/\\s/g, '-'));\n      assert.ok(headings.includes(anchor), name + ': anchor ' + target);\n    }\n    links++;\n  }\n}\nconsole.log(JSON.stringify({name:manifest.name, version:manifest.version, strictManifestIssues:issues.length, declaredPaths:manifest.files.length, routedReferences:refs.length, localLinksChecked:links, metadataAndLinks:'PASS'}));\n'@ | node --input-type=module",
+        "result": "Exit0, strictManifestIssues0, declaredPaths3, routedReferences3, localLinksChecked3; name/version/normalized description and local links PASS. Repeated after final resource edits."
+      },
+      {
+        "kind": "Package-only formatting",
+        "cwd": "C:/git/agent-skills",
+        "command": "node node_modules/prettier/bin/prettier.cjs --check skills/structured-logging/SKILL.md skills/structured-logging/skill.yaml skills/structured-logging/references/java-logging-mechanics.md skills/structured-logging/references/fields-and-levels.md skills/structured-logging/references/appenders-and-cost.md",
+        "result": "Final standalone check exit0, all matched files use Prettier code style. Earlier check warned about introduced table spacing; fixed only that table with apply_patch. The initial command group ended with git diff --check, so its exit0 did not mean formatter success; warning inspected and corrected."
+      },
+      {
+        "kind": "Final whitespace/ownership inspection",
+        "cwd": "C:/git/agent-skills",
+        "commands": [
+          "git diff --check -- skills/structured-logging",
+          "git diff -- skills/structured-logging",
+          "git status --short --untracked-files=all -- skills/structured-logging",
+          "git show HEAD:skills/structured-logging/skill.yaml"
+        ],
+        "result": "Exit0, no whitespace errors; complete diff reviewed; only three intended files modified; committed1.4.4 verified; fields-and-levels and appenders-and-cost hashes unchanged."
+      }
+    ],
+    "behavioralAgentExecutions": [],
+    "behavioralImprovementMeasured": false,
+    "walkthroughs": [
+      "API-only delivered launch: NOP selection directs repair to application runtime packaging instead of queue settings.",
+      "Compatible backend with root OFF: selection succeeds but filtering suppresses the known event; provider installation is not the remedy.",
+      "Compatible INFO JsonEncoder path: existing local emission works; preserve it and bound conclusions to the observation point.",
+      "Reusable host/library policy: intentional absence of application logging does not force a library to choose a provider."
+    ],
+    "reproducibleCases": [
+      {
+        "id": "logging-missing-runtime-provider",
+        "taskInput": {
+          "task": "Investigate the reported missing service.ready event using the supplied launcher and runtime artifacts. Update triage.md with the demonstrated cause or corrected conclusion; apply the smallest justified fixture change if the local emission contract is broken, and verify it. Preserve the declared compatible versions and structured output contract. Do not contact a live service/collector, install dependencies, or change real agent configuration. Scope: the isolated actor fixture only.",
+          "coverage": "The fixture launch is the complete local emission path under review. No framework launcher, module-path loader, custom class loader, asynchronous appender, collector or storage service is part of this fixture. The build-dependencies record is supplied evidence, not proof of the runtime classpath. Logging is required by this application; there is no intentional NOP policy.",
+          "prerequisites": "Materialize actor fixtures in a separate temporary directory; the absolute cached jars and Temurin25.0.3 compiler/runtime listed in run.ps1 already exist in this environment. Execute run.ps1 in a child PowerShell, preserving stdout and stderr independently. App.java uses Java17 source/bytecode target. Actor can inspect factory/logger selection with a temporary local probe if needed. Do not provide technical ProviderProbe artifacts/results or evaluator expectations to the actor.",
+          "fixtures": {
+            "App.java": "import org.slf4j.LoggerFactory;\npublic class App {\n  public static void main(String[] args) {\n    var logger = LoggerFactory.getLogger(\"fixture.service\");\n    logger.atInfo().setMessage(\"service-ready\")\n        .addKeyValue(\"event.name\", \"service.ready\").log();\n  }\n}\n",
+            "run.ps1": "$fixtureDir = $PSScriptRoot\n$runtimeJars = Get-Content -LiteralPath (Join-Path $fixtureDir 'runtime.classpath')\n& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' --release 17 -cp 'C:/Users/robso/.m2/repository/org/slf4j/slf4j-api/2.0.9/slf4j-api-2.0.9.jar' -d $fixtureDir (Join-Path $fixtureDir 'App.java')\nif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }\n$runtimeClasspath = (@($fixtureDir) + $runtimeJars) -join ';'\n& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' \"-Dlogback.configurationFile=$fixtureDir/logback.xml\" -cp $runtimeClasspath App\nexit $LASTEXITCODE\n",
+            "logback.xml": "<configuration>\n  <appender name=\"CONSOLE\" class=\"ch.qos.logback.core.ConsoleAppender\">\n    <encoder class=\"ch.qos.logback.classic.encoder.JsonEncoder\" />\n  </appender>\n  <root level=\"INFO\"><appender-ref ref=\"CONSOLE\" /></root>\n</configuration>\n",
+            "build-dependencies.txt": "Resolved compile/runtime dependency record:\norg.slf4j:slf4j-api:2.0.9\nch.qos.logback:logback-classic:1.4.11\nch.qos.logback:logback-core:1.4.11\n",
+            "triage.md": "# Logging triage\nA colleague suspects a logging queue discards service.ready during the packaged launch and proposes increasing queue capacity. Desired local contract: exactly one parseable JSON event with message service-ready, level INFO and kvpList containing event.name=service.ready. Current conclusion: unverified.\n",
+            "runtime.classpath": "C:/Users/robso/.m2/repository/org/slf4j/slf4j-api/2.0.9/slf4j-api-2.0.9.jar\n"
+          }
+        },
+        "evaluatorExpectations": {
+          "decisiveConstraint": "The actual launcher classpath contains only slf4j-api despite the recorded build dependency list.",
+          "criteria": [
+            "Inspect run.ps1 and runtime.classpath rather than stopping at build-dependencies.txt.",
+            "Observe the startup no-provider/NOP diagnostics and no JSON service-ready event; use effective factory evidence if needed.",
+            "Reject the queue-capacity explanation for the supplied path; no configured backend/queue is selected in this launch.",
+            "Repair application runtime packaging to include the already declared compatible Logback classic/core jars, not an arbitrary new provider/version or changes to logging calls/levels.",
+            "Verify exactly one valid JSON event with expected message/level/kvp value after the change and update triage.md with pre/post evidence.",
+            "Limit success to local emission; collector ingestion/storage was not exercised."
+          ],
+          "observableFailureConditions": [
+            "Only edits logback.xml/queue settings while leaving the missing provider unchanged.",
+            "Claims successful logging from normal application exit alone.",
+            "Adds a provider dependency to reusable-library code or upgrades stacks without need.",
+            "Claims local JSON output proves collector/storage delivery.",
+            "Leaves the requested triage artifact unchanged."
+          ]
+        },
+        "status": "DEVELOPMENT_CASE_NOT_EXECUTED_BY_AN_INDEPENDENT_AGENT"
+      },
+      {
+        "id": "logging-adequate-runtime-provider",
+        "pairedWith": "logging-missing-runtime-provider",
+        "changedConstraintOnly": "runtime.classpath includes the declared Logback1.4.11 classic/core jars in addition to slf4j-api. Every other fixture and requirement is identical.",
+        "taskInput": {
+          "task": "Investigate the reported missing service.ready event using the supplied launcher and runtime artifacts. Update triage.md with the demonstrated cause or corrected conclusion; apply the smallest justified fixture change if the local emission contract is broken, and verify it. Preserve the declared compatible versions and structured output contract. Do not contact a live service/collector, install dependencies, or change real agent configuration. Scope: the isolated actor fixture only.",
+          "coverage": "The fixture launch is the complete local emission path under review. No framework launcher, module-path loader, custom class loader, asynchronous appender, collector or storage service is part of this fixture. The build-dependencies record is supplied evidence, not proof of the runtime classpath. Logging is required by this application; there is no intentional NOP policy.",
+          "prerequisites": "Materialize actor fixtures in a separate temporary directory; the absolute cached jars and Temurin25.0.3 compiler/runtime listed in run.ps1 already exist in this environment. Execute run.ps1 in a child PowerShell, preserving stdout and stderr independently. App.java uses Java17 source/bytecode target. Actor can inspect factory/logger selection with a temporary local probe if needed. Do not provide technical ProviderProbe artifacts/results or evaluator expectations to the actor.",
+          "fixtures": {
+            "App.java": "import org.slf4j.LoggerFactory;\npublic class App {\n  public static void main(String[] args) {\n    var logger = LoggerFactory.getLogger(\"fixture.service\");\n    logger.atInfo().setMessage(\"service-ready\")\n        .addKeyValue(\"event.name\", \"service.ready\").log();\n  }\n}\n",
+            "run.ps1": "$fixtureDir = $PSScriptRoot\n$runtimeJars = Get-Content -LiteralPath (Join-Path $fixtureDir 'runtime.classpath')\n& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' --release 17 -cp 'C:/Users/robso/.m2/repository/org/slf4j/slf4j-api/2.0.9/slf4j-api-2.0.9.jar' -d $fixtureDir (Join-Path $fixtureDir 'App.java')\nif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }\n$runtimeClasspath = (@($fixtureDir) + $runtimeJars) -join ';'\n& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' \"-Dlogback.configurationFile=$fixtureDir/logback.xml\" -cp $runtimeClasspath App\nexit $LASTEXITCODE\n",
+            "logback.xml": "<configuration>\n  <appender name=\"CONSOLE\" class=\"ch.qos.logback.core.ConsoleAppender\">\n    <encoder class=\"ch.qos.logback.classic.encoder.JsonEncoder\" />\n  </appender>\n  <root level=\"INFO\"><appender-ref ref=\"CONSOLE\" /></root>\n</configuration>\n",
+            "build-dependencies.txt": "Resolved compile/runtime dependency record:\norg.slf4j:slf4j-api:2.0.9\nch.qos.logback:logback-classic:1.4.11\nch.qos.logback:logback-core:1.4.11\n",
+            "triage.md": "# Logging triage\nA colleague suspects a logging queue discards service.ready during the packaged launch and proposes increasing queue capacity. Desired local contract: exactly one parseable JSON event with message service-ready, level INFO and kvpList containing event.name=service.ready. Current conclusion: unverified.\n",
+            "runtime.classpath": "C:/Users/robso/.m2/repository/org/slf4j/slf4j-api/2.0.9/slf4j-api-2.0.9.jar\nC:/Users/robso/.m2/repository/ch/qos/logback/logback-classic/1.4.11/logback-classic-1.4.11.jar\nC:/Users/robso/.m2/repository/ch/qos/logback/logback-core/1.4.11/logback-core-1.4.11.jar\n"
+          }
+        },
+        "evaluatorExpectations": {
+          "decisiveConstraint": "The actual launcher selects the compatible Logback backend with the supplied INFO JsonEncoder configuration.",
+          "criteria": [
+            "Inspect and exercise the actual launch, then recognize that local service-ready emission already meets the contract.",
+            "Preserve the existing API/provider/encoder/runtime classpath; no provider migration, dependency addition, queue tuning or extra transport is justified by this fixture.",
+            "Update triage.md to retract the local queue-loss premise using the emitted JSON and effective configuration.",
+            "If a broader collector symptom is claimed, state the missing collector evidence without inventing a local logging defect or declaring end-to-end delivery proven."
+          ],
+          "observableFailureConditions": [
+            "Still applies the missing-provider diagnosis despite complete classpath and observed event.",
+            "Manufactures a queue or forces an API/framework change.",
+            "Treats the observed local event as proof against every downstream failure.",
+            "Returns only a checklist while leaving triage.md uncorrected."
+          ]
+        },
+        "status": "DEVELOPMENT_CASE_NOT_EXECUTED_BY_AN_INDEPENDENT_AGENT"
+      }
+    ],
+    "preExistingFailures": [],
+    "correctedLocalFailures": [
+      "Introduced Markdown table formatting, corrected; final Prettier pass."
+    ],
+    "pending": [
+      "Independent actor execution of the separated development cases; their fixtures were supplied verbatim, not separately executed as actor cases.",
+      "Coordinator npm run registry:build and npm run verify."
+    ]
+  },
+  "sources": [
+    {
+      "url": "https://www.slf4j.org/codes.html#noProviders",
+      "verified": "No-provider NOP fallback, SLF4J2.x ServiceLoader vs old binder distinction, ignored1.7 bindings, and provider ownership at application/host rather than reusable library.",
+      "versionScope": "Living official docs read2026-10-16; consequential behavior independently checked at API2.0.9."
+    },
+    {
+      "url": "https://github.com/qos-ch/slf4j/blob/v_2.0.9/slf4j-api/src/main/java/org/slf4j/LoggerFactory.java",
+      "rawUrl": "https://raw.githubusercontent.com/qos-ch/slf4j/v_2.0.9/slf4j-api/src/main/java/org/slf4j/LoggerFactory.java",
+      "verified": "findServiceProviders uses LoggerFactory's loader, explicit slf4j.provider override, ServiceLoader discovery, bind fallback NOP and ignored-static-binder reporting.",
+      "versionScope": "v_2.0.9 tagged source, exact probe API baseline."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/ServiceLoader.html",
+      "verified": "Classpath provider configuration location META-INF/services/<service binary name> and visibility requirement for providers.",
+      "versionScope": "Java SE17 API contract; no modular/custom-loader execution claim."
+    },
+    {
+      "url": "https://www.slf4j.org/manual.html",
+      "verified": "Facade/provider distinction and terminal log() call in fluent API; supports unchanged API scope and probe's fluent emission.",
+      "versionScope": "Official living manual; probe uses cached2.0.9, not an upgrade to current documented coordinates."
+    }
+  ],
+  "assumptionsAndLimits": [
+    "Only standalone classpath launches were executed; no Spring/fat-jar/shaded archive/JPMS/custom class loader or deployment artifact was created/tested.",
+    "Service descriptor and explicit-provider override are source/documentation-verified inspection routes, not additional executed packaging/override tests.",
+    "Local console JSON emission is not collector ingestion, transport acknowledgement, durable storage or retention proof.",
+    "Compiled for Java17 but ran Temurin25.0.3; Java17 runtime was not executed.",
+    "Historical unchanged MDC, Throwable/security, async mutation/delivery and numeric-field probes were inspected and preserved, not rerun in this focused provider task.",
+    "No independent agent behavior execution or measured comparison against previous skill.",
+    "Old Logback1.2.11 was used only as an isolated negative binding-control fixture, not recommended as a runtime baseline."
+  ],
+  "artifacts": {
+    "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/structured-logging-validation-quality18",
+    "source": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/structured-logging-validation-quality18/ProviderProbe.java",
+    "configs": [
+      "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/structured-logging-validation-quality18/logback-info.xml",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/structured-logging-validation-quality18/logback-off.xml"
+    ],
+    "allPreserved": true,
+    "processes": "All compiler/runtime processes completed; no background process or attachment started."
+  },
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "prerequisite": "All reviewers stop writing",
+      "purpose": "Regenerate shared index/integrity and validate catalog metadata."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "prerequisite": "All writers stopped and shared generated index current",
+      "purpose": "Repository-wide CI/version/registry checks."
+    }
+  ],
+  "crossSkillIssues": [],
+  "coordinatorActions": [
+    "Perform shared global checks after all reviewers stop.",
+    "Give independent evaluators taskInput only; preserve evaluatorExpectations separately. These are development cases, not unseen holdouts."
+  ],
+  "readinessMeaning": "Owned local work complete and full diff inspected; all writes stopped after saving this handoff. Repository-wide verification remains pending."
+}

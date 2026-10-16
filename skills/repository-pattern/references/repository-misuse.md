@@ -203,4 +203,4 @@ a supported no-change conclusion or a named evidence gap (`architecture-refactor
 
 - [Spring Data JPA 4.1.1 transaction boundaries](https://github.com/spring-projects/spring-data-jpa/blob/4.1.1/src/main/antora/modules/ROOT/pages/jpa/transactions.adoc)
 - [Spring Data JPA 4.1.1 lock metadata](https://github.com/spring-projects/spring-data-jpa/blob/4.1.1/src/main/antora/modules/ROOT/pages/jpa/locking.adoc)
-- [Jakarta Persistence 3.2 specification](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2) — entity lifecycle, flush and bulk-update semantics.
+- [Jakarta Persistence 3.2 specification](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html) — entity lifecycle, flush and bulk-update semantics.

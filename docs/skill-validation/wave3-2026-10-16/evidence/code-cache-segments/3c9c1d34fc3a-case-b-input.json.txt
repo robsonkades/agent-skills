@@ -1,0 +1,31 @@
+{
+  "id": "B-refreshed-aggregation",
+  "task": "Review the captured CodeHeap evidence and update incident-note.md. Decide which free-block output can support a contiguous-space observation during this capture, whether the apparent growth establishes reclamation, and the smallest next step if evidence is insufficient. Preserve independent valid observations. Use the supplied runtime source if needed. The owned JVM has terminated; do not attach to its old PID, run another workload, resize or restart anything.",
+  "context": {
+    "runtime": "Windows x64 Temurin 25.0.3+9-LTS",
+    "capture": "An owned probe compiled methods from isolated classloaders, released half, performed two Serial GCs, then waited on stdin throughout the diagnostic commands. Its process was terminated normally after capture.",
+    "questionScope": "Assess supplied diagnostics, not a workload SLO or allocation-failure diagnosis."
+  },
+  "decisiveChange": "The latest FreeSpace report is now preceded by a fresh aggregate; use its actual captured output. All earlier commands, runtime, task and initial note remain the same.",
+  "fixtures": {
+    "incident-note.md": { "inline": "# CodeHeap observation\nThe latest FreeSpace output shows larger free blocks than the first. This demonstrates that unloading reclaimed larger contiguous regions between the print commands. The latest largest free block can be used as measured allocator capacity.\n" },
+    "captures/commands.json": { "inlineJson": [
+      { "order": 1, "command": "jcmd <owned-pid> Compiler.codecache", "exitCode": 0, "stdout": "codecache-before.log" },
+      { "order": 2, "command": "jcmd <owned-pid> Compiler.CodeHeap_Analytics aggregate", "exitCode": 0, "stdout": "aggregate-first.log" },
+      { "order": 3, "command": "jcmd <owned-pid> Compiler.CodeHeap_Analytics FreeSpace", "exitCode": 0, "stdout": "freespace-first.log" },
+      { "order": 4, "command": "jcmd <owned-pid> Compiler.CodeHeap_Analytics FreeSpace", "exitCode": 0, "stdout": "freespace-repeated.log" },
+      { "order": 5, "command": "jcmd <owned-pid> Compiler.CodeHeap_Analytics aggregate", "exitCode": 0, "stdout": "aggregate-refreshed.log" },
+      { "order": 6, "command": "jcmd <owned-pid> Compiler.CodeHeap_Analytics FreeSpace", "exitCode": 0, "stdout": "freespace-latest.log" }
+    ] },
+    "captures/codecache-before.log": { "copyFrom": "codecache-before.stdout.log" },
+    "captures/aggregate-first.log": { "copyFrom": "aggregate-first.stdout.log" },
+    "captures/freespace-first.log": { "copyFrom": "freespace-first.stdout.log" },
+    "captures/freespace-repeated.log": { "copyFrom": "freespace-repeated.stdout.log" },
+    "captures/aggregate-refreshed.log": { "copyFrom": "aggregate-refresh.stdout.log" },
+    "captures/freespace-latest.log": { "copyFrom": "freespace-refreshed.stdout.log" },
+    "runtime/codeHeapState.cpp": { "copyFrom": "codeHeapState.cpp", "sourceUrl": "https://raw.githubusercontent.com/openjdk/jdk25u/jdk-25.0.3%2B9/src/hotspot/share/code/codeHeapState.cpp" },
+    "runtime/java-version.log": { "copyFrom": "java-version.stderr.log" }
+  },
+  "fixtureSourceDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/code-cache-segments",
+  "materialization": "Copy only these ordinary task fixtures into an isolated writable directory and supply the selected skill treatment. Do not give the tested agent case-criteria.json, the review handoff, analytics-comparison.json or another run's outputs."
+}

@@ -1,0 +1,12 @@
+Working directory: C:/Users/robso/AppData/Local/Temp/agent-skills-wave2-jvm-memory-regions-832c882c6bf14dae9d632c576fa1b4f8
+Compiler/runtime: C:/Users/robso/.jdks/temurin-25.0.3/bin/{javac,java}.exe
+javac --release 25 -Xlint:all DirectCapacityProbe.java
+java -version
+java -Xms32m -Xmx64m -XX:+UseG1GC -XX:ActiveProcessorCount=2 -XX:MaxDirectMemorySize=64k -Dsun.nio.PageAlignDirectMemory=false DirectCapacityProbe false
+java -Xms32m -Xmx64m -XX:+UseG1GC -XX:ActiveProcessorCount=2 -XX:MaxDirectMemorySize=64k -Dsun.nio.PageAlignDirectMemory=true DirectCapacityProbe true
+
+Compilation and both executions exited 0; no compiler diagnostics.
+Only the allocation alignment policy changes between controls. The Boolean program argument selects the expected assertion for that policy and does not change allocations.
+The internal sun.nio.PageAlignDirectMemory property is used solely as an isolated implementation control for this pinned build. It is not a recommended production option and was not added to the skill.
+Both runs retain 64 buffers of 1024 bytes, then deliberately attempt one additional 1024-byte allocation against a 64KiB direct-capacity limit; this is bounded and does not exhaust the system.
+No RSS, cgroup residency, performance improvement or agent behavior is measured.

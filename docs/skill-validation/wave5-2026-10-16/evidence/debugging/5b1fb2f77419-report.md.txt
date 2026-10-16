@@ -1,0 +1,11 @@
+# INC-42
+
+Customer impact: support reported an EUR quote showing the USD amount.
+
+Root cause: the new quote cache mixed currencies. A restart permanently fixed the cache.
+
+Product requirement: quotes use the requested currency and its catalog amount.
+
+The catalog export contains an EUR price for W-17; this check remains useful.
+
+Next action: close the incident without further work.

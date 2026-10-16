@@ -1,0 +1,38 @@
+{
+  "classification": "Post-completion exposure audit. No task was reopened and no answer, artifact or criterion was changed.",
+  "runs": [
+    {
+      "runId": "run-01",
+      "condition": "none",
+      "evidence": "No skill content supplied; TASK.md prohibits global skill reads. Read boundary is instructed, not sandbox-enforced."
+    },
+    {
+      "runId": "run-02",
+      "condition": "baseline",
+      "evidence": "Follow-up self-report from the original actor: SKILL.md, both complete reference files and skill.yaml were read via Get-Content -Raw before completion, with no truncation. No new tools or writes in audit.",
+      "confidenceLimit": "Coordinator has the actor statement; named reads were not present in execution.json."
+    },
+    {
+      "runId": "run-03",
+      "condition": "revised",
+      "evidence": "Follow-up self-report from the original actor: SKILL.md and both complete reference files read via Get-Content -Raw before completion, with no truncation. No new tools or writes in audit.",
+      "confidenceLimit": "Coordinator has the actor statement; named reads were not present in execution.json."
+    },
+    {
+      "runId": "run-04",
+      "condition": "none",
+      "evidence": "No skill content supplied; actor execution record states no skill was read. Read boundary is instructed, not sandbox-enforced."
+    },
+    {
+      "runId": "run-05",
+      "condition": "baseline",
+      "evidence": "execution.json /executions/0/stdout contains SKILL.md; /executions/3/arguments/2 names both references and /executions/3/stdout contains their returned contents."
+    },
+    {
+      "runId": "run-06",
+      "condition": "revised",
+      "evidence": "Follow-up self-report from the original actor: SKILL.md and both complete reference files read via Get-Content before completion, with no truncation. No new tools or writes in audit.",
+      "confidenceLimit": "Coordinator has the actor statement; named reads were not present in execution.json."
+    }
+  ]
+}

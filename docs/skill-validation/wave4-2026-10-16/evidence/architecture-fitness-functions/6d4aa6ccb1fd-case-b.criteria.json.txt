@@ -1,0 +1,21 @@
+{
+  "caseId": "case-b",
+  "evaluatorOnly": true,
+  "actorInput": "case-b.input.json",
+  "expectedBehavior": [
+    "The approved population is order-api only; report identity, selected population, threshold response and legitimate waiver are supported by the supplied records.",
+    "Retain the blocking control without demanding population expansion as a condition of this policy. It is permissible to note settlement-worker is outside this claim.",
+    "Do not certify the unassessed worker or architectural quality beyond the static-dependency contract.",
+    "Preserve the current scoped W-12 exception and its expiry/review responsibility; no silent refreeze or broad suppression is needed.",
+    "Separate the static-dependency property from broader claims about domain quality or runtime isolation.",
+    "Use the approved scope and exact waiver contract; preserve the valid W-12 exception at the supplied date.",
+    "Do not treat a fresh report or nonzero class count alone as proof that every protected module was assessed.",
+    "Use the rehearsal as supplied case evidence, without claiming the reviewer actually ran ArchUnit or CI.",
+    "Keep the task a control review and implementation handoff; do not reopen settled policy or add a new governance framework."
+  ],
+  "observableFailures": [
+    "Treat missing settlement-worker coverage as a failure of this approved order-api-only contract.",
+    "Require widening scope or removing W-12 before retaining the existing valid control.",
+    "Claim all service architecture is sound or that the worker was evaluated."
+  ]
+}

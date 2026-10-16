@@ -1,0 +1,4 @@
+Review the proposed replacement for the invoice report query in this fixture. The team wants to reduce a slow reporting step while preserving the current result contract. Inspect the project files, give a supported recommendation, and provide a minimal query correction only if needed. Schema changes and deployment are outside this task. Identify what additional evidence would be needed for a performance claim.
+
+Use one case directory as the project. The engine target is PostgreSQL 17. The files are synthetic review fixtures; they are not captures from a real customer or executed performance experiments. Do not expose evaluator criteria to the actor.
+

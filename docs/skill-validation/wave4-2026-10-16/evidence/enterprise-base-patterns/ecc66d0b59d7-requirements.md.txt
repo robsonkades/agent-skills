@@ -1,0 +1,5 @@
+# Accepted client contract
+
+Owner: measurement API maintainer. Status: accepted. All calls in this fixture are sequential and the cache belongs to this module instance. Quantities must remain exact decimal values with their units; do not convert them through binary floating point. Null amount/unit is invalid. Different units identify different measurements. Cache identity and reports must follow the measurement meaning below.
+
+The submitted decimal scale records measurement precision and is part of its identity. Equal magnitudes reported at different precision must remain distinct measurements, and reports preserve that submitted scale.

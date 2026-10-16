@@ -66,6 +66,9 @@ The gains require design and operational evidence; a separate process alone guar
    trusted, and where access is enforced. An internal network or authenticated calling
    service does not by itself authorise its user's requested effect.
 4. **Shape the interface from caller use cases.** A bounded lookup may already be adequate.
+   Trace representative callers through the configured adapter/handler: what must already
+   be true when control returns, and what happens next? A `void` method can still promise
+   a completed effect. Preserve that contract or explicitly redesign the dependent workflow.
    Coarsen or batch chatty navigation when the round-trip benefit justifies payload,
    consistency and compatibility costs (`remote-facade-and-dto`).
 5. **Decide the consistency story explicitly.** What is atomic, what is eventual, what is
@@ -78,9 +81,10 @@ The gains require design and operational evidence; a separate process alone guar
    `retries-and-backoff`, `idempotency`).
 7. **Verify the intended gain.** Persistent lockstep releases undermine independent
    deployment; they do not disprove scaling or isolation benefits. For a proposed extraction,
-   define relevant mixed-version, dependency-outage and migration/rollback checks, plus
-   unauthorised-caller and cross-tenant cases when access rules apply. Distinguish those
-   plans from executed validation.
+   define relevant mixed-version, dependency-outage and migration/rollback checks. When
+   completion semantics change, delay the consumer and check the caller's next visible
+   action, not just publication success. Include unauthorised-caller and cross-tenant cases
+   when access rules apply. Distinguish those plans from executed validation.
 
 With missing workload, dependency or ownership evidence, keep extraction conditional and
 identify the next discriminating check or material question. Retain an adequate existing boundary
@@ -154,10 +158,11 @@ A synchronous chain would be three or more hops deep
   optional field requires lockstep releases, inspect tolerant readers and contract tests;
   a change to required business semantics may need a staged migration
   (`rpc-and-api-contracts`).
-- Prefer asynchronous messaging where the caller does not need the answer to proceed. It
-  decouples producer progress from immediate consumer availability, subject to durable
-  acceptance, queue capacity, retention and recovery. Publication still needs time bounds;
-  define completion deadlines, backlog limits and visible intermediate states
+- Consider asynchronous messaging when the caller can proceed without the downstream
+  result **or completed effect**, under an accepted intermediate-state contract. It decouples
+  producer progress from immediate consumer availability, subject to durable acceptance,
+  queue capacity, retention and recovery. Publication still needs time bounds; define
+  completion deadlines, backlog limits and how pending or failed work becomes visible
   (`delivery-semantics`).
 - Do not extract a service to fix a code quality problem. A tangled module becomes a
   tangled module you cannot refactor with an IDE.
@@ -177,4 +182,4 @@ A synchronous chain would be three or more hops deep
   coupling, consistency and failure; sagas and compensation; the outbox; fan-out and its
   latency; and choosing per interaction rather than per system. Read when designing the
   interaction between two services, or use its decision checks when reviewing a proposed
-  boundary's freshness, authority or failure assumptions.
+  boundary's completion, freshness, authority or failure assumptions.

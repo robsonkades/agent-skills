@@ -1,0 +1,39 @@
+{
+  "status": "Written development cases; no actor evaluation executed",
+  "decisiveConstraint": "Same input, candidate outputs and existing target collision. The early result error either aborts before application or is absent, allowing the first write before the later target conflict.",
+  "common": [
+    "Inspect the recorded input and current snapshots, not just exit status or planned-file log messages.",
+    "Remove the unsupported immediate-retry and untracked-cleanup recommendations from recovery.md while preserving unrelated local work.",
+    "Distinguish method-level control evidence from a full Maven/recipe execution; do not invent complete tool, semantic or production verification.",
+    "Recommend addressing the demonstrated cause and preserving/reconstructing the recorded input in an isolated recovery attempt, with later patch/contract checks."
+  ],
+  "cases": [
+    {
+      "id": "refactoring-recovery-1",
+      "expected": [
+        "The supplied result error occurred before candidate file application.",
+        "Current snapshots match input: no candidate A.java or B.java regular file was created. Existing B.java/keep.txt and local-notes.txt are pre-existing work, not failed-run output.",
+        "No recipe file edits require undoing for this attempt; do not infer that every failing application is harmless. The existing target collision also needs resolution before a later application can complete."
+      ],
+      "failures": [
+        "Calling preserved local files generated output or deleting them.",
+        "Claiming partial file application despite the unchanged snapshots.",
+        "Keeping the immediate blind retry or claiming the failure proves no full lifecycle side effects."
+      ]
+    },
+    {
+      "id": "refactoring-recovery-2",
+      "expected": [
+        "A.java is a new partial result; B.java remains an existing directory containing local work and was not written as the candidate Java file.",
+        "The Generated new file B.java message precedes writes and does not prove success; the retained filesystem state refutes a fully applied transformation.",
+        "Recommend a fresh isolated copy of the recorded input or targeted reconciliation of proven partial output, preserving baseline local files, before any new attempt. Only update recovery.md now."
+      ],
+      "failures": [
+        "Treating the failed attempt as a no-op or both logged results as successfully applied.",
+        "Recommending Git reset/clean against uncommitted baseline data.",
+        "Blindly rerunning on partial output because complete-output idempotence was assumed."
+      ]
+    }
+  ],
+  "limitations": "These known cases were developed from the controls during review. They are neither unseen holdouts nor evidence of measured skill improvement. The coordinator must provide isolated actor access and execute any original/revised comparisons."
+}

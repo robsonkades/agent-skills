@@ -1,0 +1,46 @@
+$ErrorActionPreference = 'Stop'
+$javaRoot = 'C:/Users/robso/.jdks/temurin-25.0.3/bin'
+$runner = Join-Path $PSScriptRoot 'run-command.ps1'
+$runRoot = Split-Path -Parent $PSScriptRoot
+$initialHashes = @(Get-ChildItem -LiteralPath (Join-Path $runRoot 'input') -Recurse -File | Get-FileHash -Algorithm SHA256)
+$initialHashes | Select-Object Path, Hash | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $PSScriptRoot 'input-hashes-before.json') -Encoding utf8
+
+function Run-Check([string]$Executable, [string[]]$CommandArguments, [string]$Label, [int]$ExpectedCode = 0) {
+    $resultJson = & $runner -Executable $Executable -CommandArguments $CommandArguments -Label $Label
+    $resultJson
+    $result = $resultJson | ConvertFrom-Json
+    if ($result.timedOut -or $result.exitCode -ne $ExpectedCode) {
+        throw "$Label failed: exit $($result.exitCode); expected $ExpectedCode"
+    }
+}
+
+$app = 'input/published/report-app-1.0.0.jar'
+$old = 'input/published/text-core-1.0.0.jar'
+$candidate = 'input/published/text-core-1.0.1.jar'
+$main = 'com.example.app.ReportApp'
+Run-Check "$javaRoot/java.exe" @('-cp', "$app;$old", $main, 'CR') 'external-old-baseline'
+Run-Check "$javaRoot/java.exe" @('-cp', "$app;$old", $main, 'LF') 'external-old-rejects-corrected-assertion' 1
+Run-Check "$javaRoot/java.exe" @('-Xlog:class+load=info:file=output/classload-candidate.log', '-cp', "$app;$candidate", $main, 'LF') 'external-candidate-same-app-binary'
+Run-Check "$javaRoot/java.exe" @('-cp', "$app;$candidate", $main, 'CR') 'external-candidate-rejects-old-assertion' 1
+Run-Check "$javaRoot/java.exe" @('-cp', "$app;$old", $main, 'CR') 'external-rollback-old-selection-new-process'
+
+$null = New-Item -ItemType Directory -Path (Join-Path $PSScriptRoot 'classes/probe') -Force
+$null = New-Item -ItemType Directory -Path (Join-Path $PSScriptRoot 'classes/library') -Force
+$null = New-Item -ItemType Directory -Path (Join-Path $PSScriptRoot 'classes/consumer') -Force
+Run-Check "$javaRoot/javac.exe" @('--release', '17', '-cp', $old, '-d', 'output/classes/probe', 'output/NormalizationCheck.java') 'compile-probe-against-old-api-release17'
+Run-Check "$javaRoot/java.exe" @('-cp', "output/classes/probe;$old", 'NormalizationCheck') 'old-library-contract-negative-control' 1
+Run-Check "$javaRoot/java.exe" @('-cp', "output/classes/probe;$candidate", 'NormalizationCheck') 'published-candidate-normalization-contract'
+Run-Check "$javaRoot/javac.exe" @('--release', '17', '-d', 'output/classes/library', 'input/library/v2/com/example/text/LineEndings.java') 'compile-candidate-source-release17'
+Run-Check "$javaRoot/jar.exe" @('--create', '--file', 'output/text-core-1.0.1-rebuilt.jar', '-C', 'output/classes/library', '.') 'package-candidate-local-copy'
+Run-Check "$javaRoot/java.exe" @('-cp', 'output/classes/probe;output/text-core-1.0.1-rebuilt.jar', 'NormalizationCheck') 'rebuilt-candidate-normalization-contract'
+Run-Check "$javaRoot/java.exe" @('-cp', "$app;output/text-core-1.0.1-rebuilt.jar", $main, 'LF') 'unchanged-app-with-rebuilt-candidate'
+Run-Check "$javaRoot/javac.exe" @('--release', '17', '-cp', $candidate, '-d', 'output/classes/consumer', 'input/consumer/com/example/app/ReportApp.java') 'consumer-source-compatibility-optional-recompile'
+
+$proposedDelivery = Get-Content -LiteralPath (Join-Path $runRoot 'input/project/delivery.json') -Raw | ConvertFrom-Json
+$proposedDelivery.libraryVersion = '1.0.1'
+$proposedDelivery | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $PSScriptRoot 'delivery.proposed.json') -Encoding utf8
+$finalHashes = @(Get-ChildItem -LiteralPath (Join-Path $runRoot 'input') -Recurse -File | Get-FileHash -Algorithm SHA256)
+$finalHashes | Select-Object Path, Hash | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $PSScriptRoot 'input-hashes-after.json') -Encoding utf8
+$differences = @(Compare-Object ($initialHashes | ForEach-Object { "$($_.Path):$($_.Hash)" }) ($finalHashes | ForEach-Object { "$($_.Path):$($_.Hash)" }))
+if ($differences.Count -ne 0) { throw 'Read-only inputs changed' }
+'INPUT HASHES UNCHANGED'

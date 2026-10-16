@@ -1,0 +1,87 @@
+diff --git a/skills/scatter-gather/SKILL.md b/skills/scatter-gather/SKILL.md
+index 5b41fac..770652a 100644
+--- a/skills/scatter-gather/SKILL.md
++++ b/skills/scatter-gather/SKILL.md
+@@ -76,7 +76,9 @@ execution model or a full fault campaign.
+    when internal owner names are sensitive; the representation must support the caller's actual
+    decision (`rpc-and-api-contracts`).
+ 7. **Only then consider hedging**, with operation safety, replica independence/consistency,
+-   rate/capacity budget and cancellability measured.
++   rate/capacity budget and cancellability measured. Trace the actual client's winner selection:
++   it may commit and cancel alternatives on response headers, before application eligibility
++   checks. A later rejection cannot restore those alternatives; see the hedging reference.
+ 
+ ## Decision block
+ 
+diff --git a/skills/scatter-gather/references/tail-amplification-and-hedging.md b/skills/scatter-gather/references/tail-amplification-and-hedging.md
+index 9429127..74b3309 100644
+--- a/skills/scatter-gather/references/tail-amplification-and-hedging.md
++++ b/skills/scatter-gather/references/tail-amplification-and-hedging.md
+@@ -59,10 +59,11 @@ nor a precomputed view is automatically better once maintenance and consistency
+ 
+ ## Hedging
+ 
+-A hedge (backup request) is a duplicate of a leaf call, issued once the original has already
+-spent a chosen percentile of its expected time; the first semantically acceptable success wins and the other is
+-signalled for cancellation. An early error or stale answer need not end the race. It converts leaf-local, uncorrelated slowness into an extra request. It does not
+-fix a slow system.
++A hedge (backup request) is a duplicate leaf call issued while the original is still pending,
++often after a latency trigger. For first-acceptable semantics, only an eligible success should
++win; an early error or stale answer can be ignored only while eligible alternatives remain
++available. Hedging trades extra work for possible tail improvement; it does not fix a saturated
++dependency.
+ 
+ All conditions must hold before a hedge is enabled:
+ 
+@@ -78,6 +79,20 @@ All conditions must hold before a hedge is enabled:
+ 4. **One deadline and cancellation contract apply.** The hedge receives only remaining time;
+    residual loser work is included in capacity even if cancellation is advisory.
+ 
++Trace the resolved client version, service configuration, wrappers/interceptors and completion
++callbacks to the event that commits a winner. Native transport hedging need not evaluate the
++application's freshness or validity predicate. For example, grpc-java 1.76.0
++`RetriableStream.headersRead` commits an attempt and schedules cancellation of competing streams
++before delivering response headers upstream. A stale payload rejected later cannot revive them;
++even a configured nonfatal status arriving after headers cannot undo commitment.
++
++Native hedging can remain appropriate when eligibility is enforced before that commitment and
++the failure policy matches the contract. With gRPC, an error sent before response headers/messages
++can be trailers-only; configure which such statuses permit continuing the race. Otherwise move
++eligibility earlier or own a bounded application race that preserves eligible attempts, using
++one hedge owner and the existing deadline/admission budget. Merely adding a validator after
++the native call or stacking another independent hedge does not implement that policy.
++
+ Use atomic admission for hedge issuance, not a racy ratio-check followed by issue. Combine a
+ ratio of hedges to original eligible requests with absolute rate, burst and in-flight limits;
+ a short window alone permits startup bursts or concurrent overshoot. Coordinate across roots
+@@ -98,6 +113,11 @@ and instances at the scope of the protected resource. Include retries and loser
+ 
+ ## Knowing whether hedging is helping
+ 
++For a client-policy change, make the fastest attempt return a stale payload, then a configured
++nonfatal failure before versus after response headers. Observe when competitors are cancelled
++and whether an eligible result can still win; checking only that a validator rejects stale data
++does not verify the race's completion contract.
++
+ For a material hedge-policy change, compare these relevant series with the intended latency,
+ availability and resource objective, using adequate existing evidence when available:
+ 
+@@ -128,3 +148,5 @@ and consistency result; a fast answer outside the accepted watermark is not a wi
+ - [Jeff Dean, Achieving Rapid Response Times in Large Online Services](https://research.google/pubs/achieving-rapid-response-times-in-large-online-services/)
+ - [RFC 9113: HTTP/2 streams and multiplexing](https://www.rfc-editor.org/rfc/rfc9113#section-5)
+ - [Gatling: workload models](https://docs.gatling.io/testing-concepts/workload-models/) — arrival-model concepts; no Gatling API or version-specific configuration assumed
++- [gRPC A6 retry/hedging design: commitment and trailers-only errors](https://github.com/grpc/proposal/blob/master/A6-client-retries.md#when-retries-are-valid)
++- [grpc-java 1.76.0 `RetriableStream`](https://github.com/grpc/grpc-java/blob/v1.76.0/core/src/main/java/io/grpc/internal/RetriableStream.java) — `headersRead`, `commit` and `closed`; verify the deployed version's path.
+diff --git a/skills/scatter-gather/skill.yaml b/skills/scatter-gather/skill.yaml
+index b43af2d..7772183 100644
+--- a/skills/scatter-gather/skill.yaml
++++ b/skills/scatter-gather/skill.yaml
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: scatter-gather
+-version: 1.3.4
++version: 1.3.5
+ description: >-
+   Fanning one request out to N workers and combining answers: order-statistic latency,
+   choosing N against tail exposure, all-of-N/first-of-N/k-of-N completion, safe hedging,

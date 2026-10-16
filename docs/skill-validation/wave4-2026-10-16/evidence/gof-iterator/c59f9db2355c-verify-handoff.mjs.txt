@@ -1,0 +1,43 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+const root = dirname(fileURLToPath(import.meta.url));
+const handoffPath = join(root, '..', 'gof-iterator.json');
+const handoffBytes = readFileSync(handoffPath);
+const handoff = JSON.parse(handoffBytes.toString('utf8'));
+assert.equal(handoff.skill, 'gof-iterator');
+assert.equal(handoff.status, 'NO_CHANGES_NEEDED');
+assert.equal(handoff.allWritesStopped, true);
+assert.deepEqual(handoff.activeBackgroundProcesses, []);
+assert.equal(handoff.versions.final, '1.2.4');
+for (const artifact of handoff.evidence.artifacts) {
+  const bytes = readFileSync(artifact.path);
+  assert.equal(bytes.length, artifact.bytes, artifact.path);
+  assert.equal(createHash('sha256').update(bytes).digest('hex').toUpperCase(), artifact.sha256, artifact.path);
+}
+for (const file of handoff.baseline.finalFiles) {
+  assert.equal(createHash('sha256').update(readFileSync(file.path)).digest('hex').toUpperCase(), file.sha256, file.path);
+}
+const gitCommands = [
+  ['status', '--short', '--untracked-files=all', '--', 'skills/gof-iterator'],
+  ['diff', '--check', '--', 'skills/gof-iterator'],
+  ['diff', '--numstat', '--', 'skills/gof-iterator'],
+  ['diff', '--cached', '--numstat', '--', 'skills/gof-iterator'],
+  ['ls-files', '--others', '--ignored', '--exclude-standard', '--', 'skills/gof-iterator']
+];
+const commandResults = gitCommands.map(args => {
+  const stdout = execFileSync('git', args, { cwd: 'C:/git/agent-skills', encoding: 'utf8' });
+  assert.equal(stdout, '', args.join(' '));
+  return { executable: 'git', args, cwd: 'C:/git/agent-skills', exitCode: 0, stdout };
+});
+console.log(JSON.stringify({
+  handoffPath,
+  handoffSHA256: createHash('sha256').update(handoffBytes).digest('hex').toUpperCase(),
+  status: handoff.status, allWritesStopped: handoff.allWritesStopped,
+  verifiedArtifactCount: handoff.evidence.artifacts.length,
+  verifiedOwnedFileCount: handoff.baseline.finalFiles.length,
+  commandResults
+}, null, 2));

@@ -63,6 +63,30 @@ from design choices in [NASA's requirements-management guidance](https://www.nas
 especially sections 6.2.1.2.3–4 on traceability and change impact. Use that reasoning here;
 the project's existing authority and proportional records govern the process.
 
+When an inclusion or exclusion relies on an existing capability, inspect the applicable
+implementation/configuration, consumer contract and relevant validation or owner commitment.
+Follow the actual consumer path far enough to check the claim: an interface declaration or
+similarly named component does not establish that the needed behavior is wired or supported.
+Record the artifact and its applicable revision/environment; reuse sufficient existing evidence
+instead of requiring a new test merely to fill the scope record. If an artifact cannot be found,
+check the documented owner/integration location and search coverage before claiming the capability
+is absent. Missing access or failed discovery leaves a specific unknown, not authority to build it.
+
+An invoice PDF feature may consume a renderer owned by a platform team. With an applicable
+service contract and evidence that it is available for this integration, the feature needs its
+integration and validation work; it does not need to build another renderer. A staging demo with
+synthetic data does not establish readiness for a production consumer with different access or
+data-handling constraints. If that is all the evidence supports, distinguish permitted integration
+work from the unresolved production prerequisite and name the missing check. If the renderer is
+only proposed, keep the required rendering capability visible as an unresolved external
+prerequisite. The platform owner, availability evidence or commitment, and needed-by point belong
+in the dependency record. Do not remove the dependency because platform implementation is
+excluded, or promise that team's delivery without evidence. Reopen only affected selections if
+later evidence invalidates the availability assumption; independent scope analysis can continue.
+This applies the boundary and responsibility distinctions in
+[NASA's interface-management guidance](https://www.nasa.gov/reference/6-3-interface-management/),
+without importing its organizational process or creating new authority.
+
 ## Detecting creep after the plan exists
 
 Three prompts for investigation, none of which alone proves creep:

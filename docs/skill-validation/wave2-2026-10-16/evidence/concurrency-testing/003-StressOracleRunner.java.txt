@@ -1,0 +1,37 @@
+import java.io.PrintWriter;
+import org.junit.platform.engine.discovery.DiscoverySelectors;
+import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
+import org.junit.platform.launcher.core.LauncherFactory;
+import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
+import org.opentest4j.AssertionFailedError;
+
+public final class StressOracleRunner {
+    public static void main(String[] args) throws Exception {
+        var request = LauncherDiscoveryRequestBuilder.request()
+                .selectors(DiscoverySelectors.selectClass(Class.forName(args[0])))
+                .configurationParameter("junit.jupiter.execution.parallel.enabled", "false")
+                .build();
+        var listener = new SummaryGeneratingListener();
+        LauncherFactory.create().execute(request, listener);
+        var summary = listener.getSummary();
+        long expectedFailures = Long.parseLong(args[1]);
+        summary.printTo(new PrintWriter(System.out, true));
+        summary.printFailuresTo(new PrintWriter(System.out, true));
+        if (summary.getTestsFoundCount() != 20 || summary.getTestsStartedCount() != 20
+                || summary.getTestsFailedCount() != expectedFailures
+                || summary.getTestsSucceededCount() != 20 - expectedFailures
+                || summary.getTestsSkippedCount() != 0 || summary.getTestsAbortedCount() != 0
+                || summary.getContainersFailedCount() != 0) {
+            throw new AssertionError("Unexpected test discovery/result for " + args[0]);
+        }
+        for (var failure : summary.getFailures()) {
+            if (!(failure.getException() instanceof AssertionFailedError assertion)
+                    || !Integer.valueOf(1_000).equals(assertion.getExpected().getValue())
+                    || !Integer.valueOf(0).equals(assertion.getActual().getValue())) {
+                throw new AssertionError("Negative control failed for an unintended reason", failure.getException());
+            }
+        }
+        System.out.println("CONTROL VERIFIED: " + args[0] + ", rejectAll="
+                + Boolean.getBoolean("rejectAll") + ", expectedFailures=" + expectedFailures);
+    }
+}

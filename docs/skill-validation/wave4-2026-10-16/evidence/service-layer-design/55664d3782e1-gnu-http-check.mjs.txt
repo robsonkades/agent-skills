@@ -1,0 +1,21 @@
+import { writeFileSync } from 'node:fs';
+import { dirname,join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
+const root=dirname(fileURLToPath(import.meta.url));
+const links=[
+ {url:'https://www.gnu.org/software/bash/manual/html_node/Pipelines.html',term:'pipefail'},
+ {url:'https://www.gnu.org/software/bash/manual/html_node/Simple-Command-Expansion.html',term:'last command substitution'}
+];
+const results=await Promise.all(links.map(async item=>{
+ try {
+  const response=await fetch(item.url,{signal:AbortSignal.timeout(12000)});
+  const body=await response.text();
+  const index=body.indexOf(item.term);
+  return {url:item.url,finalURL:response.url,status:response.status,bodyBytes:Buffer.byteLength(body),
+   bodySHA256:createHash('sha256').update(body).digest('hex'),term:item.term,found:index>=0,
+   excerpt:index<0?null:body.slice(Math.max(0,index-50),index+350)};
+ } catch(error) {return {url:item.url,error:String(error),cause:String(error.cause??'')};}
+}));
+writeFileSync(join(root,'gnu-http-results.json'),JSON.stringify(results,null,2)+'\n');
+console.log(JSON.stringify(results,null,2));

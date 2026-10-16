@@ -1,0 +1,7 @@
+{
+  "sourcePath": "C:/git/agent-skills/skills/gof-adapter/references/worked-example.md",
+  "sourceSha256": "4343dbd4318971e056eb764e1c64685a9b28e6c7bb3cb1a7b6a3dc9ac2f34c8a",
+  "extractedMethodUnchanged": true,
+  "methodSha256": "34f5800a6ce090f45319ac7cca15d20939781ad9ce0b64cd7af056ed722b9bf8",
+  "additions": "Class wrapper, a three-value enum, a minimal exception and assertions only. No SDK/payment body extracted or simulated as integration."
+}

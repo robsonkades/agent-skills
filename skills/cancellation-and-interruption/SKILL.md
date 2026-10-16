@@ -118,6 +118,11 @@ threads and JDK/provider implementations have evolved. Read the exact API contra
 control on the target, and prefer owner-initiated close only when close semantics and connection
 reuse are acceptable.
 
+Check the resource consequences of interruption as well as explicit close. Interrupting blocking
+I/O on an `InterruptibleChannel` closes that channel; a task-owned `cancel(true)` can therefore
+disrupt other users of a borrowed channel. Task ownership alone does not establish resource
+isolation. Read the blocking-operations reference before choosing that cancellation path.
+
 ## Futures and stages
 
 - `Future.cancel(false)` can prevent execution before start; if already running, it does not request
@@ -194,6 +199,7 @@ process so a failing termination assertion cannot hang the test suite.
 - swallowed/cleared interrupt and task/framework boundary translation;
 - noninterruptible provider/native call and owner close/abort;
 - resource released/reusable versus deliberately closed;
+- borrowed-channel effects on other users, including interrupt status already set before I/O;
 - partial write/transaction/message/remote unknown outcome;
 - executor/scope shutdown and process grace expiry;
 - virtual/platform thread and supported JDK/provider variants;

@@ -1,0 +1,20 @@
+[
+  {
+    "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-dry-kiss-yagni-validation/pragmatic-programmer-dry.pdf",
+    "url": "https://media.pragprog.com/titles/tpp20/dry.pdf",
+    "bytes": 709554,
+    "sha256": "99CF464AE91597D9144829CD88A0AFABBD7AE05F339E696E8CAF4FF038E67807"
+  },
+  {
+    "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-dry-kiss-yagni-validation/java17-filer.html",
+    "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.compiler/javax/annotation/processing/Filer.html",
+    "bytes": 38541,
+    "sha256": "2DC1CDABBAF1C2E5C7590C828B54067E767EAFB3AD769267610A6DDCB643269E"
+  },
+  {
+    "path": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-dry-kiss-yagni-validation/java17-generated.html",
+    "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.compiler/javax/annotation/processing/Generated.html",
+    "bytes": 13243,
+    "sha256": "99FFC35D900DF7B2765BDEA966333BEBF740AA82FDCFFA16C1C1AFBD7AAA2EA0"
+  }
+]

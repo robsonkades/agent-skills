@@ -1,0 +1,2 @@
+ M skills/gof-flyweight/references/when-sharing-pays.md
+ M skills/gof-flyweight/skill.yaml

@@ -1,0 +1,11 @@
+14240:
+Compiler.CodeHeap_Analytics
+Print CodeHeap analytics
+
+Impact: Low: Depends on code heap size and content. Holds CodeCache_lock during analysis step, usually sub-second duration.
+
+Syntax : Compiler.CodeHeap_Analytics  [<function>] [<granularity>]
+
+Arguments:
+	function : [optional] Function to be performed (aggregate, UsedSpace, FreeSpace, MethodCount, MethodSpace, MethodAge, MethodNames, discard (STRING, all)
+	granularity : [optional] Detail level - smaller value -> more detail (INT, 4096)

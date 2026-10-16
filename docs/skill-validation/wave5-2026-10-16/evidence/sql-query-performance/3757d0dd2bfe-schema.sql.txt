@@ -1,0 +1,10 @@
+CREATE TABLE invoices (
+  id bigint PRIMARY KEY,
+  tenant_id bigint NOT NULL,
+  customer_label text NOT NULL,
+  active boolean NOT NULL,
+  amount numeric(12,2) NOT NULL
+);
+CREATE INDEX invoice_tenant_active ON invoices (tenant_id, active);
+CREATE INDEX invoice_tenant_amount ON invoices (tenant_id, amount);
+

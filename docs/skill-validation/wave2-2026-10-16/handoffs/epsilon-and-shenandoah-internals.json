@@ -1,0 +1,205 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "epsilon-and-shenandoah-internals",
+  "ownedPath": "skills/epsilon-and-shenandoah-internals/**",
+  "allWritesStopped": true,
+  "versions": {
+    "committed": "2.1.4",
+    "assignment": "2.1.4",
+    "final": "2.1.5",
+    "rationale": "One patch for changed skill contents; no pre-existing bump or package changes at assignment. Generated registry data is deferred to the coordinator."
+  },
+  "baseline": {
+    "source": "docs/skill-validation/wave2-2026-10-16/baseline.json",
+    "assignmentState": "All five package files matched the recorded wave-two baseline; staged, unstaged and untracked package changes were absent.",
+    "preExistingChanges": [],
+    "finalAttribution": "Exactly three files changed. The Epsilon instrument and Shenandoah internals references remain byte-identical to the wave-two baseline. No neighboring or shared repository file was edited."
+  },
+  "files": [
+    "skills/epsilon-and-shenandoah-internals/SKILL.md",
+    "skills/epsilon-and-shenandoah-internals/references/shenandoah-log-and-troubleshooting.md",
+    "skills/epsilon-and-shenandoah-internals/skill.yaml"
+  ],
+  "changes": [
+    {
+      "location": "SKILL.md:63-74",
+      "finding": "The capacity step compared evacuation budget and aggregate available space without routing failed large allocations through the contiguous-region constraint.",
+      "correction": "Require aligned object size and eligible contiguous regions, using the detailed gc+free evidence; total free bytes and humongous waste do not prove fit."
+    },
+    {
+      "location": "references/shenandoah-log-and-troubleshooting.md:21-23,98-129,227",
+      "finding": "The Outside-of-Cycle symptom row pointed to humongous waste as fragmentation evidence. That is tail/internal waste, not proof that a requested object lacks a consecutive region run.",
+      "correction": "Added the verified gc+free=info selector, exact source-based meanings of Free/Max regular/Max humongous and collector reserve fields, aligned-size example, snapshot and recyclable-trash qualifications, and a discriminator that can invalidate the fragmentation diagnosis. Corrected the symptom row."
+    },
+    {
+      "location": "skill.yaml:4",
+      "finding": "Changed package integrity requires a new published version.",
+      "correction": "Bumped 2.1.4 to 2.1.5 once."
+    }
+  ],
+  "preserved": [
+    "Diagnosis/internals role and JDK25 reference baseline; actual deployed build and mode remain authoritative.",
+    "Epsilon finite-budget experiment, warm-up and total-process consumption distinctions, catch/exit semantics, direct-memory cleanup caveats and allocation-attribution boundaries.",
+    "LRB mechanism, generational remembered sets and mode selection, active heuristic versus requested flags, pacing interval/population limitations, evacuation reserve and version-specific fallback evidence.",
+    "Existing captured examples and primary references; no historic measurements were relabeled as newly executed.",
+    "All existing metadata descriptions, dependency and suggestion contracts. No capability removed or replaced."
+  ],
+  "checks": [
+    {
+      "kind": "executed structural",
+      "command": "Read-only node --input-type=module using existing loadPackageFromDirectory(new NodeFileSystem(), root, {strict:true}) and validatePackage(pkg,{directoryName}); local Markdown target resolution with existsSync.",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "PASS",
+      "details": "Five loaded files, zero loader/validator issues, final manifest 2.1.5, four local reference edges, zero missing targets. Includes description consistency and package metadata validation."
+    },
+    {
+      "kind": "executed attribution",
+      "command": "Node SHA-256 comparison of each recorded repo-relative path in baseline.json against current bytes; focused git status/diff/cached diff and committed manifest read.",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "PASS",
+      "details": "Two references unchanged, exactly three owned files changed; no staged or untracked package changes. An initial auxiliary hash display used package-relative lookup keys and reported false mismatches; corrected to the baseline's repo-relative keys and rerun. This was a diagnostic-script lookup mistake, not a package defect."
+    },
+    {
+      "kind": "executed formatting",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/epsilon-and-shenandoah-internals/SKILL.md skills/epsilon-and-shenandoah-internals/references/shenandoah-log-and-troubleshooting.md skills/epsilon-and-shenandoah-internals/skill.yaml",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "PASS after local correction",
+      "details": "Initial check flagged the edited reference. Ran --write only on that exact owned reference and reran --check on the three changed files; all pass. The formatter adjusted symptom-table alignment around the changed row."
+    },
+    {
+      "kind": "executed diff review",
+      "command": "git diff --check -- skills/epsilon-and-shenandoah-internals; git diff --ignore-space-change -- skills/epsilon-and-shenandoah-internals/references/shenandoah-log-and-troubleshooting.md; focused full package diff/status",
+      "workingDirectory": "C:/git/agent-skills",
+      "result": "PASS",
+      "details": "No whitespace errors; reviewed all substantive changed text and the version bump."
+    },
+    {
+      "kind": "executed technical probe",
+      "command": "javac --release 25 ShenandoahFreeSetProbe.java; java -XX:+UseShenandoahGC -XX:ShenandoahGCMode=satb -Xms64m -Xmx64m -Xlog:gc,gc+init,gc+free=info:file=shenandoah-free.log:uptime,level,tags ShenandoahFreeSetProbe",
+      "workingDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/epsilon-and-shenandoah-internals",
+      "result": "PASS",
+      "details": "Compiler target 25, compiler/runtime Temurin25.0.3+9 on Windows. Sixteen bounded 1MiB array allocations and one explicit GC completed, output 'bounded probe completed: 15', exit 0. Log shows SATB mode, 256K region size and gc,free Free/Max regular/Max humongous/Collector Reserve fields. The probe checks selector and field availability, not fragmentation or OOM outcomes.",
+      "artifacts": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/epsilon-and-shenandoah-internals/ShenandoahFreeSetProbe.java",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/epsilon-and-shenandoah-internals/shenandoah-free.log"
+      ]
+    }
+  ],
+  "behavioralEvaluations": {
+    "executedWithActualAgentOutputs": [],
+    "walkthroughs": [
+      "ESI-D1: a 16MiB aligned object needs four 4MiB regions; six eligible regions arranged as three pairs cannot supply the run despite 24MiB aggregate free capacity.",
+      "ESI-D2: rearranging the same six eligible regions to include four consecutive regions removes the contiguous-fit obstacle. A report claiming that obstacle as the proven cause must be revised and the unexplained failure investigated rather than assigning another cause automatically."
+    ],
+    "measuredImprovement": "Not measured. Walkthroughs and the JVM field-availability probe are not independent behavioral evaluations."
+  },
+  "sources": [
+    {
+      "url": "https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/shenandoah/shenandoahHeapRegion.hpp",
+      "version": "OpenJDK jdk-25.0.3+9",
+      "support": "requires_humongous compares object words against region size; supports the one-region threshold and aligned-size decision.",
+      "verification": "Read the pinned raw implementation through a read-only HTTPS request."
+    },
+    {
+      "url": "https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/shenandoah/shenandoahFreeSet.cpp",
+      "version": "OpenJDK jdk-25.0.3+9",
+      "support": "allocate_contiguous searches consecutive eligible Mutator regions, records humongous tail waste; can_allocate_from admits empty regions and conditionally trash; log_status uses gc+free=info, distinguishes mutator capacity from reserves and computes Max humongous from empty runs.",
+      "verification": "Read source with browser and read-only HTTPS requests; log selector and fields also executed on matching Temurin25.0.3+9."
+    }
+  ],
+  "limits": [
+    "No independent actor output, before/after behavioral comparison, performance benchmark or measured gain.",
+    "No forced OOM, deterministic fragmentation reproduction, native commit-failure reproduction or production capture. The JVM probe validates documented log availability only.",
+    "New implementation-specific statements are pinned to 25.0.3+9. Snapshot time, concurrent state, reserve membership and recyclable trash affect what an observed maximum establishes.",
+    "Existing JEP535 status was retained with its existing dated qualification; attempting to refresh openjdk.org/jeps/535 returned HTTP403, so no current-status claim was added.",
+    "Other existing historic runtime measurements were preserved, not rerun. Global registry/version/dependency integration awaits the coordinator."
+  ],
+  "casePreparation": {
+    "classification": "Reproducible development cases, not unseen holdouts or executed actor evaluations.",
+    "separation": "Give the actor only sharedActorFixtures, the selected actorFixtures and actorTask. Keep evaluatorExpectations, failureConditions and constraintFlip private to the evaluator. The evaluator can materialize the named files in an isolated directory.",
+    "actorTask": "Review incident.md against the supplied build and allocation artifacts. Update the incident diagnosis and proposed next action, stating which claim is supported, contradicted or still missing evidence. Do not run a load test or change JVM flags.",
+    "sharedActorFixtures": {
+      "incident.md": "A 16MiB allocation failed after a Shenandoah cycle. We had 24MiB free and 12MiB humongous waste, so the collector must have started too late. Proposed fix: increase ShenandoahInitFreeThreshold from 70 to 80. Please validate this diagnosis and update it.",
+      "runtime.json": {
+        "build": "Temurin25.0.3+9",
+        "collector": "Shenandoah",
+        "mode": "satb",
+        "regionSizeMiB": 4,
+        "maxHeapMiB": 8192,
+        "learningPhase": false
+      },
+      "attempt.json": {
+        "alignedObjectSizeMiB": 16,
+        "includesHeaderAndPadding": true,
+        "reportedMutatorFreeMiB": 24,
+        "humongousTailWasteMiB": 12,
+        "reportedAllocationFailure": true,
+        "capture": "Instrumented harness snapshot at the allocation decision, all listed regions committed and empty, no intervening allocation or free-set transfer; no other eligible empty or trash regions in the Mutator partition.",
+        "failurePathStack": "not supplied"
+      },
+      "implementation.txt": "Use the pinned JDK25.0.3+9 FreeSet::allocate_contiguous and HeapRegion::requires_humongous implementation if needed; URLs are listed in the skill reference."
+    }
+  },
+  "cases": [
+    {
+      "id": "ESI-D1",
+      "actorFixtures": {
+        "inherit": "sharedActorFixtures",
+        "add": {
+          "mutator-empty-regions.json": [40, 41, 45, 46, 50, 51]
+        }
+      },
+      "actorTask": "Use the shared actor task and update incident.md.",
+      "evaluatorExpectations": [
+        "Inspect the region artifact and derive a four-region requirement versus a maximum two-region run.",
+        "Correct the inference from aggregate free bytes and tail waste: contiguous fit is the demonstrated obstacle under this fixture.",
+        "Withdraw the unsupported learning-threshold fix because the fixture is outside learning and does not demonstrate trigger lateness.",
+        "Recommend examining allocation shape and reclaimable regions/recovery under the existing latency and correctness constraints; do not prescribe a larger region, heap or full GC as an unconditional remedy."
+      ],
+      "failureConditions": [
+        "Treats 24MiB aggregate free as sufficient for any 16MiB object.",
+        "Uses humongous tail waste as proof of external fragmentation without the region artifact.",
+        "Retains the learning-threshold change as the established fix."
+      ],
+      "constraintFlip": "In ESI-D2 only the placement of the same six eligible free regions changes."
+    },
+    {
+      "id": "ESI-D2",
+      "actorFixtures": {
+        "inherit": "sharedActorFixtures",
+        "add": {
+          "mutator-empty-regions.json": [40, 41, 42, 43, 50, 51]
+        }
+      },
+      "actorTask": "Use the shared actor task and update incident.md.",
+      "evaluatorExpectations": [
+        "Inspect the region artifact and derive an eligible four-region run matching the four-region requirement.",
+        "Do not identify lack of contiguous space as proven: under the supplied snapshot it does not explain the reported failure.",
+        "Revise the incident diagnosis to unresolved/inconsistent evidence and request the actual failure path or allocation capture needed to reconcile it; do not invent a new root cause.",
+        "Withdraw the unsupported learning-threshold fix and retain the actual mode/build, object-size and aggregate-memory facts."
+      ],
+      "failureConditions": [
+        "Repeats the fragmentation diagnosis despite the eligible fitting run.",
+        "Assumes a log maximum is an unconditional production allocation guarantee rather than reasoning within the fixture's explicit snapshot conditions.",
+        "Selects more GC workers, heap or threshold tuning as a proven remedy without evidence for the remaining failure path."
+      ],
+      "constraintFlip": "Only the eligible-region arrangement changes; build, mode, aligned request size, total free bytes, tail waste and reported failure remain fixed."
+    }
+  ],
+  "crossSkill": [],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "purpose": "Regenerate integrity/version index and validate cross-package constraints.",
+      "prerequisite": "Coordinator runs after every wave reviewer stops writing."
+    },
+    {
+      "command": "npm run verify",
+      "purpose": "Repository-wide final validation, including version/index integration.",
+      "prerequisite": "Coordinator runs after registry generation and all writers stop."
+    }
+  ],
+  "pendingBehavioralEvaluation": [
+    "Coordinator may run ESI-D1 and ESI-D2 with actor inputs separated from evaluator expectations. No independent evaluator was launched by this reviewer."
+  ]
+}

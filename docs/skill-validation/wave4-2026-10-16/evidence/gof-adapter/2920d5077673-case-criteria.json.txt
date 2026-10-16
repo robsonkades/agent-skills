@@ -1,0 +1,46 @@
+[
+  {
+    "id": "channel-transferred",
+    "decisiveDifference": "Only the lifetime field differs: ownership transfers to the parser.",
+    "expectedOutcome": "The supplied direct JDK adaptation and parser try-with-resources already satisfy the ownership contract. No change is valid; any simplification must preserve compatibility and closing behavior.",
+    "required": [
+      "Read both ReaderBridge and PrefixParser plus the provider contract, not only the matching method types.",
+      "Verify Channels.newInputStream(ReadableByteChannel) close propagation using Java17 primary docs and/or an accurately labeled local runtime probe.",
+      "Preserve prefix contents and bounded source consumption; do not materialize an unbounded source to sidestep lifecycle.",
+      "Keep standard IOException visible; do not silently return empty on failure or add a domain failure hierarchy without a requested boundary.",
+      "Preserve Java17 target and report the actual Java25 runtime used; no claimed Java17 VM/provider-integration execution.",
+      "Choose the smallest adequate adapter; retain public ownership/API constraints and avoid unrelated design-pattern scaffolding.",
+      "Keep failure cleanup and successful cleanup in verification coverage; tests should distinguish a lifecycle violation from the valid case.",
+      "Confirm the original channel closes after success and IOException, and data remains the next at-most-two bytes."
+    ],
+    "failureConditions": [
+      "Adds a no-close wrapper or removes cleanup, leaving the transferred resource open.",
+      "Treats direct mapping as inadequate merely because it is a one-line adapter.",
+      "Claims ownership mismatch without reading the provider contract.",
+      "Rewrites caller/contract or adds buffering that consumes more than the prefix."
+    ]
+  },
+  {
+    "id": "channel-borrowed",
+    "decisiveDifference": "Only the lifetime field differs: the caller retains ownership and may reuse the channel.",
+    "expectedOutcome": "Identify that the direct JDK stream propagates PrefixParser's close into the borrowed channel. Implement a minimal non-owning view/close shield or equivalent contract-preserving adapter in ReaderBridge; original caller still owns eventual close.",
+    "required": [
+      "Read both ReaderBridge and PrefixParser plus the provider contract, not only the matching method types.",
+      "Verify Channels.newInputStream(ReadableByteChannel) close propagation using Java17 primary docs and/or an accurately labeled local runtime probe.",
+      "Preserve prefix contents and bounded source consumption; do not materialize an unbounded source to sidestep lifecycle.",
+      "Keep standard IOException visible; do not silently return empty on failure or add a domain failure hierarchy without a requested boundary.",
+      "Preserve Java17 target and report the actual Java25 runtime used; no claimed Java17 VM/provider-integration execution.",
+      "Choose the smallest adequate adapter; retain public ownership/API constraints and avoid unrelated design-pattern scaffolding.",
+      "Keep failure cleanup and successful cleanup in verification coverage; tests should distinguish a lifecycle violation from the valid case.",
+      "Show original fails the borrowed-continuation contract and the chosen correction leaves channel open after success and read IOException.",
+      "Show remaining bytes are still available to the owner and that the owner can later close the channel.",
+      "Document any view lifetime restriction instead of promising a generic thread-safe/shared stream."
+    ],
+    "failureConditions": [
+      "Leaves original direct adapter unchanged while claiming it preserves borrowed lifecycle.",
+      "Calls close on the borrowed channel per operation or swallows the read failure.",
+      "Removes PrefixParser try-with-resources or changes the accepted ownership contract.",
+      "Reads the entire source into memory or imposes blanket thread-safety claims from wrapping alone."
+    ]
+  }
+]

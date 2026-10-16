@@ -1,0 +1,23 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+
+const original = path.resolve('../../input/project');
+const output = process.cwd();
+const editable = new Set(['src/work/Dispatcher.java', 'RUNBOOK.md']);
+const walk = (root, relative = '') => fs.readdirSync(path.join(root, relative), { withFileTypes: true })
+  .flatMap(entry => entry.isDirectory() ? walk(root, path.join(relative, entry.name)) : [path.join(relative, entry.name)]);
+const sha256 = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const records = walk(original).map(relative => {
+  const file = relative.replaceAll('\\', '/');
+  return { file, inputSha256: sha256(path.join(original, relative)), outputSha256: sha256(path.join(output, relative)) };
+});
+const changed = records.filter(record => record.inputSha256 !== record.outputSha256);
+if (changed.some(record => !editable.has(record.file))) {
+  throw new Error('Unexpected change: ' + changed.map(record => record.file).join(', '));
+}
+fs.writeFileSync('../checks/integrity.json', JSON.stringify({
+  checkedAt: new Date().toISOString(), records, changed: changed.map(record => record.file),
+  frozenProjectFilesMatchInput: true,
+}, null, 2) + '\n');
+console.log('PASS input/output comparison: only Dispatcher.java and RUNBOOK.md differ among original files; frozen project files match');

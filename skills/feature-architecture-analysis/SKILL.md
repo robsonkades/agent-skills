@@ -30,27 +30,34 @@ from outside.
 1. **Start from agreed scope and accepted decisions**, not an assumed design. Record the feature
    revision, any accepted contract revisions, each inspected repository revision and relevant
    working-tree changes.
-   Trace accepted items to `SC-*`; recommended work is conditional until included. If used
-   alone, derive a small scope list from the request. Discovered impacts of accepted work
+   Trace accepted items to `SC-*` or existing scope references; recommended work is conditional
+   until included. If used alone, derive a small scope list from the request without requiring
+   a dossier or new identifier scheme. Discovered impacts of accepted work
    remain relevant even if their files were absent from that list; surface new requirements
    as scope questions rather than silently adding them.
    If a mechanism is undecided, map confirmed impacts now and mark mechanism-specific
    candidates conditional on that choice. A proposed location does not establish an accepted design.
-2. **Walk each item outward** — the component that changes, its callers, its persisted state,
-   its contract, its configuration, its tests. `references/impact-map.md` gives the traversal
-   and the shape of an entry.
+2. **Locate a starting point, then walk each item outward.** Use supplied paths or search the
+   repository for the behavior's entrypoint, contract or stored identity; open the matches before
+   treating them as impacts. Follow [Traversal](references/impact-map.md#traversal) to trace callers,
+   persisted state, configuration and tests, including consumers connected through runtime wiring.
 3. **Classify every touched element**: NEW, MODIFIED (including explicit removals), or READ
    (unchanged, but its behaviour is depended on). READ elements are why a change breaks something nobody edited.
 4. **Name the component boundary and mark visibility.** INTERNAL if nothing outside it can observe the change;
    EXTERNAL if a caller, a stored row, a message consumer, an operator or a dashboard can.
 5. **Find consumers and dependencies of relevant NEW, MODIFIED and READ elements.** Search
    source, schemas, configuration and registrations; trace changed data, load and failure
-   behavior. Distinguish call sites from distinct consumers and record search coverage.
+   behavior. Distinguish call sites from distinct consumers. For branching or cross-repository
+   investigations, keep [bounded coverage](references/impact-map.md#bounded-coverage) with the map;
+   an unfinished search is an open branch, not an unaffected consumer.
+   When a boundary is shared by other features, follow
+   [Shared contracts and conflicting evidence](references/impact-map.md#shared-contracts-and-conflicting-evidence).
 6. **Name the cross-cutting touches explicitly** — security, configuration, observability,
    transactions, concurrency. These are the ones a component-shaped reading misses.
 7. **Flag affected boundary crossings**: a contract others
    depend on, a schema holding existing data, a message others consume, or a shared library.
-8. **Identify and trace impacts.** Assign each entry an `IMP-*` linked to its `SC-*` source. Every
+8. **Identify and trace impacts.** Give entries stable references (`IMP-*` and `SC-*` when used
+   by the project) so consumers and verification can link to their scope source. Every
    boundary crossing names the accountable contract/engineering owner or records that owner as open.
    Identify any required review from actual repository/team policy and existing authorization;
    crossing a boundary alone does not create a new permission gate or require a message.
@@ -62,6 +69,8 @@ IF a NEW or MODIFIED element affects an external contract
 THEN link the applicable accepted contract revision and record the compatibility question.
      Changed or missing semantics need a decision/CT-* handoff through feature-contract-definition;
      do not duplicate a settled contract or choose its new semantics while mapping impacts.
+     Acceptance states intended behavior, not proof that deployed code or consumers conform.
+     Record consequential discrepancies and affected branches rather than silently reconciling them.
 
 IF an element is READ and the dependency is new, heavier or used under changed conditions
 THEN it belongs in the map. Changed values, ordering, transaction scope or failure handling
@@ -100,6 +109,10 @@ THEN say so with the search boundary; lower review depth only if risk evidence s
   open questions to `feature-solution-analysis`; if unavailable, report them for the decision owner.
   Do not block the supported map or present an option's resources as committed work.
 - **Do not omit tests and configuration.** They are where features are actually incomplete.
+- **Inspect before asking.** Reuse available scope, contract, consumer and deployment evidence.
+  Ask only when a remaining ambiguity changes inclusion, compatibility, ownership or the next
+  handoff; state that consequence. Missing access or consumer coverage is a bounded unknown,
+  not a reason to repeat settled questions or withhold the supported map.
 - **Keep independently actionable impacts identifiable.** Group generated/repeated files
   under their source only when consumers, risks and verification remain traceable. File
   count is not a risk score. Map meaningful propagation without expanding every library call.
@@ -134,14 +147,16 @@ tests/
 Boundary crossings   <IMP-*, who depends on it, and accountable owner>
 Contracts            <IMP-* -> existing CT/specification revision, or required definition and owner>
 Consumers/dependencies   <IMP-* -> locators, count type, searched scope and evidence>
+Coverage             <for branching investigations: mapped, stopped and unresolved branches + reasons>
 Applicability        <where consequential: IMP-* -> decision/unknown and environment/flag/version/state>
 Verification points  <IMP-* -> existing test/contract evidence or required check>
 Unknowns             <what could not be established, next check/owner, and what it blocks>
 ```
 
-Before handoff, check that every accepted scope item maps to impacts or an evidenced no-impact
-conclusion, locators match the inspected revision, and affected consumers and verification points are
-traceable. Conditional entries name what would include or exclude them. If scope, decisions,
+Before handoff, [verify the map against its sources](references/impact-map.md#verify-the-map):
+scope-to-impact coverage, relevant diff-to-map coverage when a diff exists, and the evidence chain
+from changed behavior to affected consumer and verification point. Conditional entries name what
+would include or exclude them. If scope, decisions,
 contracts, code, wiring or relevant release state change, recheck affected entries and their propagation
 before reusing the map; a path that still exists does not make old evidence current.
 Material unknowns name their next check/owner and dependent work; they do not prevent

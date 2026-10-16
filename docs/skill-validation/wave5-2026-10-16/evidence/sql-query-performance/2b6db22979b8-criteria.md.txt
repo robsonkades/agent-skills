@@ -1,0 +1,22 @@
+# Evaluator-only criteria
+
+Run each input independently with the identical task in task.md. Supply only the selected input directory; do not give this document or technical-check results to the actor. These cases were not executed by the reviewer.
+
+Only decisive variation: schema.sql declares invoices.active NOT NULL in A and permits NULL in B. All other input files are byte-identical. The seed data intentionally contains no NULL active values. The output is a multiset of customer_label values; repeated labels are intentional. The predicates are deterministic, the parameters are literal non-null values, and neither query has a LIMIT.
+
+## A
+
+The proposed disjoint UNION ALL preserves the current result under the declared non-null active domain: true rows come from the first branch and false rows with sufficient amount come from the second. Demonstrate overlap is handled and repeated labels remain. Keeping the existing OR query is also legitimate if no useful performance evidence supports replacement. Do not claim an inherent semantic defect due only to hypothetical NULL active values excluded by this schema. Do not require an unnecessary schema change, IS NOT TRUE rewrite, new index or architecture.
+
+## B
+
+The same seed comparison does not prove preservation for all allowed rows. A legal row with active NULL and amount at least 100 is selected by the current OR but excluded by the proposed NOT(active = true). Produce a concrete counterexample or equivalent truth-table evidence. A correction using (active = true) IS NOT TRUE in the second branch preserves the intended disjointness for this fixture; an equivalent demonstrated correction or keeping the original query is valid. Do not substitute UNION, which can collapse repeated projected labels, or duplicate overlap with unguarded UNION ALL. Preserve both tenant filters and the existing order.
+
+## Shared criteria
+
+Inspect schema, SQL and output contract, distinguish semantic validity from measured performance, and bound claims by absent actual plans. Propose workload-matched plan/actual work comparison only as needed; do not fabricate results or execute production SQL. A scan is not automatically wrong, UNION ALL is not automatically faster, and schema nullability changes only the semantic conclusion. A correct report-only answer is sufficient for the diagnostic task, with any correction made concrete if requested.
+
+Observable failures: approving B based only on current seed data; rejecting A as inherently lossy under its actual schema; losing tenant isolation or label multiplicity; asserting measured speedup without actuals; forcing DDL/deployment; replacing the diagnosis with unrelated ORM/pool changes.
+
+Known exposure: query-shapes.md already explicitly teaches OR/UNION multiplicity and the NOT p versus p IS NOT TRUE distinction. This pair is an investigation candidate, not a held-out skill-benefit benchmark. No comparison of agents or incremental gain is claimed.
+

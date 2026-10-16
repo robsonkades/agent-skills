@@ -1,0 +1,4 @@
+Exception in thread "main" java.io.IOException: parser is closed
+	at TrackingParser.parse(TrackingParser.java:8)
+	at ImportJob.run(ImportJob.java:14)
+	at LifecycleProbe.main(LifecycleProbe.java:11)

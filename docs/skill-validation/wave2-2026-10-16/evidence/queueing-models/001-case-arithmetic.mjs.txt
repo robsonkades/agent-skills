@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+let b = 1;
+for (let n = 1; n <= 2; n++) b = 2 * b / (n + 2 * b);
+// Independent occupancy normalization for the loss case: weights 1, a, a^2/2!.
+const normalized = [1, 2, 2].map(weight => weight / 5);
+assert.ok(Math.abs(b - normalized[2]) < 1e-15);
+assert.ok(Math.abs(b - 0.4) < 1e-15);
+assert.ok(Math.abs(2 * (1 - b) - 1.2) < 1e-15);
+console.log(JSON.stringify({ type: 'deterministic arithmetic only', model: 'M/G/2/2 loss insensitivity assumptions supplied in the case',
+  meanServiceSeconds: 1, offeredPerSecond: 2, offeredLoadErlangs: 2, blocking: b, carriedPerSecond: 2 * (1 - b),
+  independentNormalization: normalized, assertions: 3, result: 'PASS',
+  limitation: 'No validation of arrival/service assumptions, simulation, workload or agent behavior.' }, null, 2));
+

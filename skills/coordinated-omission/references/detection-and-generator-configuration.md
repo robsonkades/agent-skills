@@ -35,6 +35,13 @@ Coordinated omission is the diagnosis when slow/in-flight work governed missed o
 target arrival model. There is no universal 2% threshold: one missed start can matter for a tiny
 safety test, while an explicitly modelled shed fraction can be acceptable if reported.
 
+For a claim about arrivals in `[a,b)`, select the cohort by its declared arrival clock and retain
+those IDs through the declared observation cutoff, including outcomes after `b`. Filtering to
+requests that also completed inside `[a,b)` preferentially removes waits crossing the boundary.
+Keep pending outcomes visible when the cutoff expires; neither label them as missing starts nor
+silently extend the experiment. If only aggregate completion buckets survive, they cannot establish
+start-time fidelity for the corresponding arrival window.
+
 ## Audit the source of the schedule
 
 For an open target, due times must come from its independent arrival plan, not be assigned
@@ -158,6 +165,16 @@ matter, and use paired timestamps for the required end-to-end boundary. Adding c
 does not produce the p99 of their sum. An arrival-rate executor does not change the definition
 of `http_req_duration`.
 
+The metric's emission timestamp is another boundary. In k6 v2.3.0, `http_reqs` and HTTP timing
+samples are timestamped at request end, as shown by the
+[sample construction](https://github.com/grafana/k6/blob/v2.3.0/lib/netext/httpext/tracer.go#L39-L117).
+Requests dispatched before a stall may therefore appear only in later metric buckets. A zero
+`http_reqs` bucket during the stall does not establish zero dispatches; nor can subtracting
+`http_req_duration` recover a scheduled start because it excludes earlier waits. Inspect actual
+dispatch timestamps and join the outcome by attempt ID, or report that this evidence is missing.
+Keep late outcomes with their arrival cohort instead of truncating the slow tail to the dashboard
+window. Verify these semantics against the deployed k6 version.
+
 ## Validation protocol
 
 Use the checks needed to resolve the disputed claim, reusing valid artifacts. Before a new
@@ -199,6 +216,7 @@ separately from the expected decision when evaluating; record tool use and missi
 - [Grafana k6: constant-arrival-rate executor](https://grafana.com/docs/k6/latest/using-k6/scenarios/executors/constant-arrival-rate/)
 - [Grafana k6: arrival-rate VU allocation](https://grafana.com/docs/k6/latest/using-k6/scenarios/concepts/arrival-rate-vu-allocation/)
 - [Grafana k6: built-in metric boundaries](https://grafana.com/docs/k6/latest/using-k6/metrics/reference/)
+- [k6 v2.3.0 HTTP sample timestamps](https://github.com/grafana/k6/blob/v2.3.0/lib/netext/httpext/tracer.go#L39-L117)
 - [Gatling workload models](https://docs.gatling.io/testing-concepts/workload-models/)
 - [Gatling injection reference](https://docs.gatling.io/concepts/injection/)
 - [Apache JMeter component reference](https://jmeter.apache.org/usermanual/component_reference.html)

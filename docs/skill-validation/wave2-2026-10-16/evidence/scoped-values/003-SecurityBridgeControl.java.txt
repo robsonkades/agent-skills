@@ -1,0 +1,93 @@
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+
+// Isolated fixture only. Select strategy at JVM startup; never change an active server.
+public final class SecurityBridgeControl {
+    private static final ScopedValue<String> SUBJECT = ScopedValue.newInstance();
+    private static final class WorkFailure extends RuntimeException {}
+
+    private static UsernamePasswordAuthenticationToken authentication(String name) {
+        return UsernamePasswordAuthenticationToken.authenticated(name, "fixture-only", List.of());
+    }
+
+    private static void check(boolean condition, String message) {
+        if (!condition) throw new AssertionError(message);
+    }
+
+    private static void runChild(boolean fresh, boolean exceptional) throws Exception {
+        SecurityContext parent = SecurityContextHolder.createEmptyContext();
+        parent.setAuthentication(authentication("parent"));
+        SecurityContextHolder.setContext(parent);
+        String captured = SUBJECT.get();
+        AtomicBoolean sameInheritedReference = new AtomicBoolean();
+        AtomicBoolean previousRestored = new AtomicBoolean();
+        FutureTask<Void> child = new FutureTask<>(() -> {
+            SecurityContext previous = SecurityContextHolder.getContext();
+            sameInheritedReference.set(previous == parent);
+            try {
+                ScopedValue.where(SUBJECT, captured).run(() -> {
+                    SecurityContext target = fresh ? SecurityContextHolder.createEmptyContext() : previous;
+                    if (fresh) {
+                        target.setAuthentication(authentication(SUBJECT.get()));
+                        SecurityContextHolder.setContext(target);
+                    }
+                    try {
+                        check("parent".equals(SUBJECT.get()), "scoped subject must be captured");
+                        SecurityContextHolder.getContext().setAuthentication(authentication("child"));
+                        if (exceptional) throw new WorkFailure();
+                    } finally {
+                        if (fresh) SecurityContextHolder.setContext(previous);
+                    }
+                });
+            } finally {
+                previousRestored.set(SecurityContextHolder.getContext() == previous);
+                check(!SUBJECT.isBound(), "child scoped binding must unwind");
+            }
+            return null;
+        });
+        Thread thread = Thread.ofVirtual().name("scoped-security-control").start(child);
+        try {
+            try {
+                child.get(5, TimeUnit.SECONDS);
+                check(!exceptional, "expected work failure was missing");
+            } catch (ExecutionException failure) {
+                if (!exceptional || !(failure.getCause() instanceof WorkFailure)) throw failure;
+            }
+        } finally {
+            thread.interrupt();
+            thread.join(5000);
+            check(!thread.isAlive(), "child did not terminate");
+        }
+        System.out.println("fresh=" + fresh + " exceptional=" + exceptional
+                + " inheritedSameContext=" + sameInheritedReference.get()
+                + " previousRestored=" + previousRestored.get()
+                + " parentAuthentication=" + parent.getAuthentication().getName());
+        check(sameInheritedReference.get(), "fixture must exercise inherited shared context");
+        check(previousRestored.get(), "previous child context must be restored");
+        check("parent".equals(parent.getAuthentication().getName()),
+                "parent authentication changed through inherited SecurityContext reference");
+        SecurityContextHolder.clearContext();
+    }
+
+    public static void main(String[] args) throws Exception {
+        String strategy = SecurityContextHolder.getContextHolderStrategy().getClass().getName();
+        System.out.println("runtime=" + Runtime.version() + " strategy=" + strategy);
+        check(strategy.endsWith("InheritableThreadLocalSecurityContextHolderStrategy"),
+                "run this fixture with the inheritable strategy startup property");
+        boolean fresh = args.length == 1 && "fresh".equals(args[0]);
+        ScopedValue.where(SUBJECT, "parent").call(() -> {
+            runChild(fresh, false);
+            if (fresh) runChild(true, true);
+            return null;
+        });
+        check(!SUBJECT.isBound(), "caller binding must unwind");
+        System.out.println("PASS: parent isolation and normal/exceptional restoration");
+    }
+}
+

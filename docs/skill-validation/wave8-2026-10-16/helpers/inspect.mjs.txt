@@ -1,0 +1,6 @@
+import fs from 'node:fs';
+const root='C:/Users/robso/AppData/Local/Temp/skills-wave8-6b5d18c2';
+for(const id of process.argv.slice(2)){
+ const d=root+'/actors/'+id+'/output';
+ for(const p of ['REVIEW.md','result.json','solution.sql','verify.mjs'])if(fs.existsSync(d+'/'+p))console.log(JSON.stringify({run:id,path:p,content:fs.readFileSync(d+'/'+p,'utf8')}));
+}

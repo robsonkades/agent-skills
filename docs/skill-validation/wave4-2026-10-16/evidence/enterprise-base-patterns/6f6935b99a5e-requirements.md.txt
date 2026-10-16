@@ -1,0 +1,5 @@
+# Accepted client contract
+
+Owner: measurement API maintainer. Status: accepted. All calls in this fixture are sequential and the cache belongs to this module instance. Quantities must remain exact decimal values with their units; do not convert them through binary floating point. Null amount/unit is invalid. Different units identify different measurements. Cache identity and reports must follow the measurement meaning below.
+
+The measurement identifies only the numerical quantity in its unit. Trailing fractional zeros carry no precision or presentation requirement. Reports use the canonical numerical representation, and clients do not depend on submitted scale.

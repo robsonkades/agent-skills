@@ -1,0 +1,13 @@
+{
+  "name": "inactive-source",
+  "command": "C:\\Program Files\\nodejs\\node.exe",
+  "args": [
+    "build.mjs",
+    "200"
+  ],
+  "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dry-kiss-yagni-validation\\inactive-source",
+  "expectedPass": true,
+  "exitCode": 0,
+  "stdout": "PASS checks=12 maximum=200\r\n{\"generatePolicies\":false,\"compilerTarget\":17,\"sourceFiles\":5,\"output\":\"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave3-validation-wyg7TL\\\\java-dry-kiss-yagni-validation\\\\inactive-source\\\\.validation\\\\classes-KhjRBI\"}\n",
+  "stderr": ""
+}

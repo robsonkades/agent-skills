@@ -1,0 +1,22 @@
+import fs from 'node:fs';
+import {spawnSync} from 'node:child_process';
+import assert from 'node:assert/strict';
+const root='C:/Users/robso/AppData/Local/Temp/skills-wave8-6b5d18c2',report='C:/git/agent-skills/docs/skill-validation/wave8-2026-10-16';
+const actors=JSON.parse(fs.readFileSync(report+'/actors.frozen.json.txt','utf8')).runs;
+const file=report+'/rechecks.json',prior=fs.existsSync(file)?JSON.parse(fs.readFileSync(file,'utf8')).records:[];
+const command=(args,cwd)=>{const start=new Date().toISOString(),r=spawnSync(process.execPath,args,{cwd,encoding:'utf8',timeout:20000,windowsHide:true});return {args:['node',...args],cwd,start,end:new Date().toISOString(),exit:r.status,error:r.error?.message??null,stdout:r.stdout,stderr:r.stderr};};
+for(const id of process.argv.slice(2)){
+ const a=actors.find(r=>r.id===id);assert.ok(a);assert.ok(!prior.some(r=>r.run===id));assert.equal(JSON.parse(fs.readFileSync(a.directory+'/output/execution.json','utf8')).allWritesStopped,true);
+ const dir=root+'/rechecks/'+id+'/candidate';fs.mkdirSync(dir,{recursive:true});fs.cpSync(a.directory+'/output',dir,{recursive:true});
+ fs.cpSync(a.directory+'/input',root+'/rechecks/'+id+'/input',{recursive:true});
+ const probe=command([root+'/probe.mjs',a.caseId,dir],dir);let regression=null,counterfactual=null;
+ if(a.caseId!=='Q3'){
+  regression=command(['verify.mjs'],dir);
+  const wrong=root+'/rechecks/'+id+'/counterfactual';fs.cpSync(dir,wrong,{recursive:true});
+  let sql=fs.readFileSync(a.directory+'/input/proposed.sql','utf8');if(a.caseId==='Q1')sql=sql.replace('UNION ALL','UNION');
+  fs.writeFileSync(wrong+'/solution.sql',sql);counterfactual=command(['verify.mjs'],wrong);
+ }
+ prior.push({run:id,caseId:a.caseId,probe,regression,counterfactual,limits:'Q3 artifact arithmetic, no DB. Other cases SQLite semantic subset, not PostgreSQL plan/performance. Counterfactual must fail behaviorally, not via setup/syntax error.'});
+ console.log(JSON.stringify({run:id,probe:probe.exit,regression:regression?.exit??'not applicable',counterfactual:counterfactual?.exit??'not applicable'}));
+}
+fs.writeFileSync(file,JSON.stringify({at:new Date().toISOString(),records:prior},null,2)+'\n');

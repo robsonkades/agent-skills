@@ -1,0 +1,41 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+const root = path.resolve(import.meta.dirname, '../..');
+const cwd = path.join(root, 'output/project');
+const jdk = 'C:/Users/robso/.jdks/temurin-25.0.3/bin';
+const evidence = { startedAt: new Date().toISOString(), nodeVersion: process.version, commands: [], hashes: [], immutableCopiesMatch: true };
+const sha = file => crypto.createHash('sha256').update(fs.readFileSync(path.join(root, file))).digest('hex');
+const consulted = ['TASK.md', 'skill/SKILL.md', 'skill/references/happens-before.md', 'skill/references/review-checklist.md',
+'input/project/docs/review-request.md', 'input/project/docs/contract.md', 'input/project/README.md',
+'input/project/src/memo/BestEffortMemo.java', 'input/project/src/memo/PublishedEntry.java', 'input/project/src/memo/ReaderFactory.java',
+'input/project/test/memo/Smoke.java', 'input/project/check.mjs'];
+for (const file of consulted) evidence.hashes.push({file, sha256:sha(file), contentReadByReviewer:'complete', hashOperationOnlyInThisCommand:true});
+for (const file of consulted.filter(p=>p.startsWith('input/'))) {
+  const copy = file.replace(/^input\//, 'output/');
+  const originalHash=sha(file), copyHash=sha(copy);
+  evidence.hashes.push({file:copy, sha256:copyHash, contentReadByReviewer:false, operation:'hash only; Java files later read by compiler'});
+  if(originalHash!==copyHash) evidence.immutableCopiesMatch=false;
+}
+const run = (tool,args) => {
+  const startedAt = new Date().toISOString();
+  const r=spawnSync(path.join(jdk,tool),args,{cwd,encoding:'utf8',timeout:15000,windowsHide:true});
+  evidence.commands.push({program:path.join(jdk,tool),arguments:args,cwd,timeoutMs:15000,startedAt,endedAt:new Date().toISOString(),exit:r.status,signal:r.signal,error:r.error?.message??null,stdout:r.stdout??'',stderr:r.stderr??'',processStopped:r.status!==null||Boolean(r.signal)});
+  if(r.status!==0) throw new Error(tool+' failed');
+};
+try {
+  if(!evidence.immutableCopiesMatch) throw new Error('Provided copies differ');
+  run('javac.exe',['-version']);
+  run('java.exe',['-version']);
+  fs.mkdirSync(path.join(cwd,'.build'),{recursive:true});
+  run('javac.exe',['--release','25','-d','.build','src/memo/BestEffortMemo.java','src/memo/PublishedEntry.java','src/memo/ReaderFactory.java','test/memo/Smoke.java']);
+  run('java.exe',['-cp','.build','memo.Smoke']);
+  evidence.passed=true;
+} catch(error) { evidence.passed=false; evidence.failure=error.message; process.exitCode=1; }
+for (const item of evidence.hashes) if(sha(item.file)!==item.sha256) throw new Error('Immutable file changed: '+item.file);
+evidence.endedAt=new Date().toISOString();
+evidence.allSpawnedChildrenStopped=evidence.commands.every(c=>c.processStopped);
+fs.writeFileSync(path.join(root,'output/checks/check-results.json'),JSON.stringify(evidence,null,2)+'\n');
+console.log(JSON.stringify(evidence,null,2));
+

@@ -86,7 +86,7 @@ an appropriate root write or `OPTIMISTIC_FORCE_INCREMENT` so all invariant-chang
 paths contend on the root. Prove the actual mapping/provider behavior. A stale
 version can fail at merge, flush or commit and marks the transaction for rollback.
 These mechanism constraints are documented in
-[Jakarta Persistence 3.2, sections 3.5.1–3.5.4](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2).
+[Jakarta Persistence 3.2, sections 3.5.1–3.5.4](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html).
 Use version-matched documentation for the target, including older `javax` stacks.
 
 Choose one owner for the storage revision. Do not both increment it with a domain

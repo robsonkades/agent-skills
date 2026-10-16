@@ -43,16 +43,20 @@ proves the others. The classification reference gives a concrete streaming examp
 
 Virtual-thread APIs require Java 21 (standard, no preview flags). Implementation guidance
 here targets HotSpot JDK 21–25; the monitor behavior changes at JDK 24. Before applying it,
-inspect compiler/toolchain settings, the deployed JDK vendor and version, OS, resolved
-client/framework versions, transport and scheduler configuration. These can differ from
-the development JDK. Recheck implementation claims for other releases; do not upgrade the
-project or add instrumentation dependencies merely to apply this skill.
+inspect compiler/toolchain settings, the deployed JDK vendor and version, effective VM flags
+(including locking mode), OS, resolved client/framework versions, transport and scheduler
+configuration. These can differ from the development JDK. Recheck implementation claims for
+other releases; do not upgrade the project or add instrumentation dependencies merely to
+apply this skill.
 
 ## Workflow
 
 1. **Establish which property matters.** "Is this blocking?" is four questions. Inspect
    the call site, configuration, tests and reported symptom first; ask only for missing
    context that changes the classification or remedy. A review request need not change code.
+   Follow the affected path from its caller through submission/subscription, actual I/O,
+   callbacks and consumption/cleanup. Read the selected implementation and scheduler wiring;
+   an offloaded entry call does not establish where later body reads or fallback calls run.
 2. **Classify each I/O wait on the path**: can it unmount? If it retains the carrier,
    does the implementation request compensation, or does it block without compensation?
    Identify any pinning frame separately; the actual path determines the cost and fix.
@@ -64,10 +68,13 @@ project or add instrumentation dependencies merely to apply this skill.
    whether the actual blocking operation has a separate compensation hook.
 5. **If an event loop is involved, find every blocking call inside it** — one is enough to
    stall every connection that loop serves.
-6. **Measure before concluding.** Carrier count over time, `jdk.VirtualThreadPinned`, and a
-   wall-clock profile answer this; reasoning about the library's name does not.
-   Missing events do not rule out native blocking. Without runtime evidence, return a
-   conditional classification and the measurement that would confirm or refute it.
+6. **Match the evidence to the claim.** Version-matched contracts/source and known execution
+   context can establish a classification or a misplaced blocking call. Test the call's
+   actual thread when practical; measure occurrence and cost with loop lag, carrier counts,
+   `jdk.VirtualThreadPinned` and wall-clock profiles as appropriate. Missing events do not
+   rule out native blocking. If the selected path or context is unknown, keep that conclusion
+   conditional and identify the artifact or capture that would resolve it. New evidence
+   should revise the affected diagnosis and remedy, not leave a disproved explanation in place.
 
 ## Rules
 
@@ -95,9 +102,12 @@ project or add instrumentation dependencies merely to apply this skill.
   recognizes for compensation is the system working as designed; pinning alone does not
   trigger that growth. Sustained saturation says the compensated-blocking
   workload reached this implementation ceiling, not that raising it is automatically safe.
-- **`synchronized` no longer pins** on JDK 24 and later (JEP 491), and `Object.wait` unmounts
-  too. On these releases, replacing `synchronized` solely for pinning is unnecessary;
-  `-Djdk.tracePinnedThreads` was removed and silently does nothing.
+- **With default HotSpot locking, `synchronized` no longer pins** on JDK 24+ (JEP 491), and
+  `Object.wait` unmounts too. Legacy `-XX:LockingMode=1` still permits monitor pinning in
+  HotSpot 24–25; inspect effective flags and why an override exists before replacing locks
+  or changing configuration. With default locking, replacing `synchronized` solely for
+  pinning is unnecessary. `-Djdk.tracePinnedThreads` was removed in JDK 24 and silently does
+  nothing; use the release-appropriate evidence in the classification reference.
 - **Non-blocking I/O is not the reactive model.** A `SocketChannel` in non-blocking mode with
   a `Selector` is non-blocking I/O written imperatively. Reactor and RxJava can compose
   blocking, non-blocking or in-memory work; neither requires Netty. Identify the actual

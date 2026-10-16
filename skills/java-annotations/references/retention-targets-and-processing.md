@@ -161,6 +161,29 @@ used only for additional checks should return `false` so it does not claim unrel
 and prevent other processors from running. Verify invocation, accepted/rejected source and
 coexistence with the other configured processors; invocation alone does not prove coverage.
 
+### Class-valued elements in a processor
+
+A compiler-model annotation proxy is not an ordinary runtime annotation instance.
+For an annotation with `Class<?> value()`, calling `element.getAnnotation(UseCodec.class).value()`
+can raise `MirroredTypeException`; a `Class<?>[]` accessor raises `MirroredTypesException`.
+The represented class may be source in the current compilation and not yet loadable. Increasing
+retention to `RUNTIME` or putting application classes on the processor's runtime path does not
+turn this model access into runtime reflection.
+
+Read the matching `AnnotationMirror` and its `AnnotationValue`s. Use
+`Elements.getElementValuesWithDefaults` when omitted elements must take their declared defaults;
+`AnnotationMirror.getElementValues` contains only explicitly supplied values. A class literal is
+represented by a `TypeMirror`, and an array by a list of `AnnotationValue`s. Use `Types`/`Elements`
+to inspect or compare represented types, rather than requiring `Class.forName` to load application
+classes. For a fixed, known annotation, deliberately catching the mirrored-type exception and
+extracting its mirror(s) is also valid; retain an adequate existing reader.
+
+Check the actual processor with a referenced class supplied as source in the same compilation,
+an omitted default, and a class array when supported. Assert the promised output or diagnostic
+for both accepted and rejected types. Separately, a runtime consumer of retained metadata can
+legitimately use `Class`-valued accessors after those classes are loadable; this compiler-model
+constraint is not a reason to rewrite that working path.
+
 ## Making an annotation observable
 
 An annotation whose effect is invisible is a maintenance hazard: the reader of the call site
@@ -198,3 +221,9 @@ cannot tell that something happens. Two mitigations that cost little:
   specifies type-use exclusion from matching, universal processors and annotation claiming.
 - [Java 17 TypeMirror](https://docs.oracle.com/en/java/javase/17/docs/api/java.compiler/javax/lang/model/type/TypeMirror.html)
   exposes annotations on represented types, separately from declaration elements.
+- [Java 17 AnnotatedConstruct](https://docs.oracle.com/en/java/javase/17/docs/api/java.compiler/javax/lang/model/AnnotatedConstruct.html)
+  specifies mirrored-type exceptions for class-valued annotation accessors;
+  [AnnotationValue](https://docs.oracle.com/en/java/javase/17/docs/api/java.compiler/javax/lang/model/element/AnnotationValue.html)
+  defines their compiler-model representations, and
+  [Elements](https://docs.oracle.com/en/java/javase/17/docs/api/java.compiler/javax/lang/model/util/Elements.html)
+  provides values including omitted defaults.

@@ -1,0 +1,18 @@
+[
+  {
+    "path": "skills/gof-prototype/SKILL.md",
+    "sha256": "770fb030b4e562737abb4de91bb98d819666f57d6612ef4132ab23198d94e1e2"
+  },
+  {
+    "path": "skills/gof-prototype/skill.yaml",
+    "sha256": "cf1d01a53a7d653c300ff5d03f2773c1818ba74d9204fd2ec3b3db6394c0b76e"
+  },
+  {
+    "path": "skills/gof-prototype/references/copying-in-java.md",
+    "sha256": "ce70157d35bf8fd1be30ab513cf5bfb03bc55e581dddb077ae6ef340ed90bb00"
+  },
+  {
+    "path": "skills/gof-prototype/references/worked-example.md",
+    "sha256": "11a11c4c51c4515d1108b5fcbd041d6356b05fc462f375540434235d9f7dd531"
+  }
+]

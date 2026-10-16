@@ -1,0 +1,19 @@
+package inv.stock;
+
+import inv.pricing.PriceList;   // the only import of pricing in this package
+import java.math.BigDecimal;
+import java.util.List;
+
+public final class Warehouse {
+    private final List<StockLevel> levels;
+
+    public Warehouse(List<StockLevel> levels) { this.levels = List.copyOf(levels); }
+
+    public List<StockLevel> levels() { return levels; }
+
+    public BigDecimal totalValue(PriceList prices) {
+        return levels.stream()
+                .map(l -> prices.unitPrice(l.sku()).multiply(BigDecimal.valueOf(l.quantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+}

@@ -96,7 +96,11 @@ memory/working set, network/storage and dependency saturation. Use repeated inde
 experimental units, preserve run-level results and report uncertainty; do not replace them
 with only the median.
 
-See [inputs, forecast and cost](references/inputs-forecast-and-cost.md).
+Trace each decision-changing number to its query or recording boundary, selected population
+and effective configuration. A success-only latency chart does not establish the outcome of
+all eligible requests; unresolved outcomes must not disappear from the decision. Follow
+[input provenance and incomplete outcomes](references/inputs-forecast-and-cost.md#qualify-decision-inputs)
+before admitting a run to the envelope.
 
 ### 3. Measure the feasible envelope
 

@@ -1,0 +1,26 @@
+A garantia de produção está **não resolvida** (`unresolved`). O contrato aceita `-1` na ausência de snapshot e exige `91` quando presente. A afirmação de que `volatile` basta independentemente da entrega não está sustentada; tampouco há evidência de falha no provedor implantado.
+
+Em `src/work/ResultBridge.java:4`, `attach` registra um callback que apenas atribui a referência a `latest`. Em `:5`, `currentValue` lê essa referência volatile uma única vez, retorna `-1` se nula e, caso contrário, chama `Snapshot.value()`. O payload é um `int` comum, alterado por `setValue` (`Snapshot.java:2`); a classe ser final não torna esse campo final ou volatile. Não existe cópia nem nova inicialização no callback.
+
+A prova necessária é:
+
+```text
+P: snapshot.setValue(91)
+       -- happens-before exigido, ainda não comprovado -->
+C: callback / escrita volatile latest = snapshot
+       -- synchronizes-with -->
+R: leitura volatile latest que seleciona snapshot
+       -- ordem de programa -->
+R: leitura de snapshot.value
+```
+
+O trecho C→R está sustentado. P→C pode decorrer da mesma thread ou de uma transferência sincronizada. Com essa aresta e sem mutações posteriores, a transitividade protege o payload. Sem ela, republicar uma referência por volatile não ordena retroativamente a escrita de outra thread; atomicidade de um `int` não garante atualização visível. Uma entrega sem sincronização poderia admitir o valor inicial `0`, inaceitável pelo contrato. Isso é uma possibilidade condicional, não um resultado observado nem uma descrição do provedor ausente. Ordem de relógio não substitui happens-before. [JLS SE25 §17.4.4–17.4.5](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.4.5).
+
+O caminho efetivamente testado está em `test/work/Smoke.java:4`: a mesma thread cria o snapshot, escreve `91`, invoca o callback e depois consulta o bridge. Ele sustenta esse caso síncrono por ordem de programa, inclusive sem exigir comunicação entre threads. Não testa uma transferência produtor→callback. O contrato disponível em `docs/contract.md` informa não nulidade, callback no máximo uma vez e nenhuma mutação posterior, mas não fornece a aresta ausente. `Provider.java` contém somente a assinatura de registro.
+
+A menor evidência suficiente é o caminho real de produção, com identidade das threads e operações que ordenam a inicialização até o callback. Se forem threads distintas, identificar o mecanismo e seus pares concretos de sincronização. Uma alternativa contratual mínima é exigir: “a escrita de `91` e toda inicialização do snapshot acontecem-before a invocação do callback; não há mutação posterior”. A implementação implantada deve cumprir essa cláusula. Uma fila concorrente, por exemplo, pode transferir as ações anteriores à inserção às ações posteriores ao acesso/remoção do elemento, quando esse é o caminho real. [API SE25: consistência de memória](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/package-summary.html#MemoryVisibility).
+
+Nenhuma alteração de produção no bridge é justificada pelos arquivos disponíveis. Preservar sua leitura única e publicação volatile; adicionar locks somente no consumidor não comprovaria a aresta ausente.
+
+Verificação observada: `node check.mjs` em `output/project`, compilação `--release 25`, javac/Temurin 25.0.3, saída `synchronous provider PASS; deployed provider absent`, exit 0. Os hashes dos oito arquivos fornecidos coincidiram antes/depois e entre as cópias. Não foram executados provedor implantado, teste concorrente, stress, jcstress ou produção. Fontes, contratos e dependências ficaram inalterados. Todos os subprocessos iniciados terminaram; `allWritesStopped:true`.
+

@@ -1,0 +1,12 @@
+WARN These recipes would generate a new file A.java:
+WARN These recipes would generate a new file B.java:
+WARN Patch file available:
+WARN     C:\Users\robso\AppData\Local\Temp\skills-wave3-validation-wyg7TL\refactoring-automation\method-controls-XWDeDK\preview-changes\reports\rewrite.patch
+WARN Estimate time saved: PT0S
+WARN Run 'mvn rewrite:run' to apply the recipes.
+OBSERVED state=TO_BE_PROCESSED
+OBSERVED failure=org.apache.maven.plugin.MojoExecutionException: Applying recipes would make changes. See logs for more details.
+OBSERVED A.exists=false
+OBSERVED B.regularFile=false
+OBSERVED B.directory=false
+OBSERVED localNotes=keep this unrelated local work

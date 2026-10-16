@@ -1,0 +1,22 @@
+import java.io.IOException;
+import java.nio.file.Path;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration(proxyBeanMethods = true)
+public class StorageConfiguration {
+    @Bean(destroyMethod = "close")
+    public ArchiveClient archiveClient() throws IOException {
+        return new ArchiveClient(Path.of(System.getProperty("fixture.storage")));
+    }
+
+    @Bean
+    public UploadService uploads() throws IOException {
+        return new UploadService(archiveClient());
+    }
+
+    @Bean
+    public DownloadService downloads() throws IOException {
+        return new DownloadService(archiveClient());
+    }
+}

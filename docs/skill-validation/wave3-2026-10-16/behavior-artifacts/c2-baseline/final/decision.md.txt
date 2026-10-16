@@ -1,0 +1,42 @@
+# Proposal
+
+Keep `connect_start: first_client_data` and leave `proxy-policy.json` unchanged, including
+the 1000 ms inspection timeout and 4096-byte buffer limit. `protocol.json` specifies a
+client-first protocol. On TCP connection, `client.mjs` sends `PING\n` without waiting for
+a greeting; under `adapter-contract.md`, those bytes trigger the upstream connection.
+`server.mjs` then responds with `PONG\n`. There is no circular wait in this supplied path.
+The fixed route is already known, so `immediate` could also start an upstream connection,
+but the evidence does not require that change.
+
+TCP acceptance establishes only the downstream transport connection. It does not prove
+upstream connection establishment, byte forwarding, or completion of the application
+handshake. A stall needs evidence from those stages; increasing the inspection timeout
+to ten seconds is not an established repair. For a different, server-first protocol,
+waiting for client bytes could block the upstream greeting indefinitely; more inspection
+time would not remove that dependency. That is not the configured protocol here.
+
+The local contract remains an explicit TCP listener at `127.0.0.1:15001`, with one fixed,
+trusted route, `fixed-service-a`, selected per connection without payload-based routing.
+The application owns initiating `PING` and recognizing `PONG`; the adapter owns when to
+connect and forwarding; the server owns the reply. No retries, TLS/authentication changes,
+new destinations, or vendor configuration are proposed. The actual upstream address,
+adapter version, caller deadline/cancellation behavior, and deployment update mechanism
+are not supplied. The inspection timeout bounds inspection, not the whole operation.
+There is no policy update or rollback to apply, and established connections are unaffected
+by this review. No bypass or automatic retry is introduced for failures.
+
+Executed `node .\verify-handshake.mjs` with Node v25.6.1. The check imports the unchanged
+client and server and models the documented adapter gate on ephemeral loopback ports:
+
+- Client-first handshake: one upstream attempt, `PING\n` received upstream, `PONG\n`
+  received by the client, and the supplied completion callback invoked.
+- TCP-only idle control: downstream TCP connection succeeded, no upstream attempt occurred,
+  and the model closed the idle connection at its 1000 ms inspection timer.
+
+Both scenarios passed with a 2500 ms watchdog per scenario; sockets, listeners, and timers
+were cleaned up. See `verification.log` and `REVIEW.md`. This validates the fixture's
+handshake ordering through a contract model, not an installed adapter or deployment. Its
+timer start/close behavior is a harness assumption. Before deployment approval, repeat the
+application-level handshake through the actual adapter/version and effective route, and
+verify its timeout and failure behavior; a TCP-only check is insufficient.
+

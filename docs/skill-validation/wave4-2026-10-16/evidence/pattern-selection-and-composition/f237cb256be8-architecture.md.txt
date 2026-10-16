@@ -1,0 +1,34 @@
+# Account panel composition
+
+Accepted product contract:
+- The panel displays the account's latest balance once all pending account events have
+  been applied. While delivery is still in flight, any received complete state is permitted.
+- Events carry complete after-images, not arithmetic deltas. The account authority assigns
+  strictly increasing revisions in commit order; revision 42 supersedes revision 41.
+- The panel is informational. There are no payments, notifications, transition handlers or
+  permission decisions triggered by these records. It is not a transaction admission check.
+- The only reader in this release is AccountView, using queries/account-view.sql. Both
+  projection tables are maintained during an approved migration; changing unused storage
+  or deleting the compatibility table is outside this review.
+- Authorization and tenant selection are performed before this already scoped account query;
+  those accepted controls are outside the isolated fixture.
+
+Implemented upstream contract (accepted evidence for this focused review):
+The account owner writes business state and publication intent in one transaction.
+The relay sends each account's events in source revision order to one stable partition.
+Delivery may repeat. Source, relay and consumer recoveries eventually deliver all committed
+records; this fixture does not re-prove their availability or durability.
+
+Read application:
+BatchDispatcher submits each delivered record to two worker threads, waits for the batch,
+then lets the outer adapter acknowledge it. AccountProjection handles a record in a database
+transaction, recording its message identity and writing both projection tables. AccountView
+is wired to the deployed SQL file.
+
+Candidate release note:
+"Outbox plus handled-message identities makes the asynchronous read side safe to process
+in parallel. The passing smoke test covers the composition."
+
+Review that statement and the release decision for the actual configured reader. Keep the
+domain model, transaction owner, wire contract and two-worker budget unless evidence shows
+a relevant contract violation. A redesign, another service or a broker change is not a goal.

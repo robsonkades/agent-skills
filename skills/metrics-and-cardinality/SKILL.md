@@ -82,6 +82,9 @@ operational identity such as an approved logical queue alias can be a useful coh
 population, churn, access/privacy and overflow contract fit the budget. Bounded cardinality
 alone does not make sensitive data suitable; hashing does not remove identity or churn.
 
+Assign request-dependent labels at the instrumentation/observation boundary; a cached
+meter-registration filter is not a per-request hook.
+
 Estimate worst-case and realistic **active** combinations; labels are correlated, so the
 simple product is an upper bound, not the observed bill. Include targets/replicas as a label
 dimension rather than multiplying and then also counting the instance label.

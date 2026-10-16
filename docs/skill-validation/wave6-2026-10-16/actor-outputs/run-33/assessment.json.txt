@@ -1,0 +1,29 @@
+{
+  "disposition": "unresolved",
+  "basis": "ResultBridge.java:4 publica latest com volatile e :5 lê uma vez antes de Snapshot.value(). O contrato exige -1 para ausência e 91 para presença. Snapshot.java:2 usa um campo ordinário escrito pelo setter. Falta evidência de que a preparação do payload acontece-before o callback do provider implantado; o caminho local não fornece essa aresta anterior. Smoke.java cobre somente escrita, callback e leitura síncronos. A suficiência universal alegada não está sustentada, mas não foi demonstrada uma violação de produção.",
+  "requiredChange": null,
+  "missingEvidence": [
+    "Implementação ou evidência verificável do caminho setValue(91) -> callback do provider implantado, incluindo identidade das threads e todas as operações de entrega.",
+    "Garantia aplicável de ordem na mesma thread ou de publicação entre produtor e callback, cobrindo os caminhos de entrega; non-null, callback-at-most-once e tempo de relógio não a especificam."
+  ],
+  "checked": [
+    "Leitura integral de TASK.md, SKILL.md e duas referências locais pertinentes.",
+    "Leitura integral do pedido, contrato, README, check.mjs, três fontes Java e Smoke.java.",
+    "JLS Java SE25 §§17.4.4, 17.4.5 e 17.5 consultada por trechos no site oficial Oracle.",
+    "Hashes SHA-256 dos oito arquivos fornecidos iguais entre input/project e output/project antes/depois da compilação.",
+    "node check.mjs executado em output/project; exit 0; synchronous provider PASS; deployed provider absent.",
+    "Node v25.6.1, javac 25.0.3 e Temurin 25.0.3+9; JAVA_TOOL_OPTIONS, JDK_JAVA_OPTIONS e _JAVA_OPTIONS ausentes."
+  ],
+  "limits": [
+    "Provider de produção ausente; nenhuma falha de produção observada ou afirmada.",
+    "O smoke não exercita uma entrega entre threads nem prova a implementação ausente.",
+    "Não executados jcstress, estresse, testes de arquitetura/JIT ou análise do ciclo de vida do provider.",
+    "Fontes, contratos e dependências fornecidos não foram modificados."
+  ],
+  "smallestResolution": "Demonstrar que a preparação do snapshot acontece-before o callback. Se não houver cláusula existente, especificar essa garantia e verificar que a implementação real a cumpre. Nenhuma correção local de produção se justifica sem essa evidência.",
+  "outcomes": {
+    "absentMinusOne": "aceitável pelo contrato; ramo demonstrado pela leitura do código, sem check específico",
+    "present91": "obrigatório pelo contrato; observado no smoke síncrono",
+    "present0": "inaceitável pelo contrato; não excluído pela especificação insuficiente do provider; não observado"
+  }
+}

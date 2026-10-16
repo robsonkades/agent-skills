@@ -1,0 +1,537 @@
+{
+  "skill": "gof-facade",
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "wave": 4,
+  "reviewer": "/root/quality07",
+  "ownedPath": "skills/gof-facade/**",
+  "scope": "Focused existing-skill review of facade caller contract, ownership, partial failures, effective interception and alternatives. No package-manager, registry, shared or neighboring edits.",
+  "procedure": {
+    "documents": [
+      "AGENTS.md",
+      "docs/skill-review-prompt.md",
+      "docs/parallel-skill-reviews.md",
+      "docs/skill-validation/wave4-2026-10-16/review-brief.md",
+      "skills/skill-engineering/SKILL.md",
+      "skill-engineering evidence/evaluation/resource-design/anti-pattern references",
+      "Relevant comparative research, roadmap and prior-wave lessons from the preceding assignment"
+    ],
+    "reuse": "Unchanged procedure and research readings were reused as permitted by the wave brief; the wave-four brief and every assigned package file were read for this assignment.",
+    "beforeEditing": "Sent initial scope/no-confirmed-gap findings to coordinator, then reported the confirmed child-versus-owner interruption issue and eight executed controls before editing. No approval pause required.",
+    "noDelegation": true
+  },
+  "baseline": {
+    "committedVersion": "1.2.4",
+    "assignmentVersion": "1.2.4",
+    "preExistingVersionBump": false,
+    "committedBaselineHead": "bbb7d996a929e81baf735bbaab5b6e3fbf6e8503",
+    "assignmentStatus": "",
+    "stagedDiff": "",
+    "unstagedDiff": "",
+    "untrackedFiles": [],
+    "priorChanges": [],
+    "note": "All four assignment-time hashes matched the coordinator's wave-four baseline; HEAD manifest also reported 1.2.4.",
+    "hashes": [
+      {
+        "path": "skills/gof-facade/SKILL.md",
+        "sha256": "c7bec0c71ac17105061e35a59e7b17fc372839147717fd96cf0d4a83f13ec8b3"
+      },
+      {
+        "path": "skills/gof-facade/skill.yaml",
+        "sha256": "b5314be765a11214f131d7e3bd62f614a343ca3011cf95933a66f48e480b3956"
+      },
+      {
+        "path": "skills/gof-facade/references/facade-vs-neighbours.md",
+        "sha256": "0a8caa7a67f104b46b96ac7d89b52e902cfafcc8857b8be8615df61b21f08349"
+      },
+      {
+        "path": "skills/gof-facade/references/worked-example.md",
+        "sha256": "426227439155c468008f88c5570a13805197dc0140edee5a7aaf17e07642566c"
+      }
+    ]
+  },
+  "versions": {
+    "committed": "1.2.4",
+    "assignment": "1.2.4",
+    "final": "1.2.5",
+    "rationale": "One patch bump for supported clarification of an existing executable example's public exception contract; no additional bump per edit. SKILL.md has no separate version field."
+  },
+  "criteria": [
+    "Inspect ordinary, advanced and failing consumer paths before recommending a wrapper.",
+    "Distinguish convenience API from an enforced access boundary and preserve supported bypass clients.",
+    "Make resource, transaction, deadline and partial-failure ownership explicit without promising atomicity or transparency from the facade name.",
+    "Test the actual asynchronous exception contract against the accepted Java baseline and supported consumer.",
+    "Compare with direct existing orchestration/no additional facade; preserve a valid existing wrapper contract when evidence supports it."
+  ],
+  "findingsCorrected": [
+    {
+      "id": "remote-failure-contract",
+      "locations": [
+        "skills/gof-facade/references/worked-example.md:230",
+        "skills/gof-facade/references/worked-example.md:248"
+      ],
+      "before": "The remote example's bullet said InterruptedException propagates without distinguishing its origin; the example did not explicitly identify the public FailedException wrapper produced by awaitAllSuccessfulOrThrow.",
+      "evidence": "Java SE 25 StructuredTaskScope contract and eight technical controls over the exact extracted method, including a child-thrown InterruptedException and an owner interrupted while joining.",
+      "consequence": "An agent could preserve method signatures yet bypass a consumer's specific port-exception handler, or conflate a child's failure with interruption of the caller.",
+      "change": "Added the selected-child FailedException/cause contract, distinguished direct owner interruption, required attention to actual caller branches, and offered narrow contract translation after cleanup or explicit adoption of the wrapper. Qualified the existing deadline bullet.",
+      "boundedClaim": "No blanket unwrapping rule, generic cancellation translation, new concurrency framework or code change was introduced."
+    }
+  ],
+  "findingsRemaining": [],
+  "filesChangedByReviewer": [
+    "skills/gof-facade/references/worked-example.md",
+    "skills/gof-facade/skill.yaml"
+  ],
+  "preExistingChanges": [],
+  "filesUnchanged": [
+    "skills/gof-facade/SKILL.md",
+    "skills/gof-facade/references/facade-vs-neighbours.md"
+  ],
+  "finalHashes": [
+    {
+      "path": "skills/gof-facade/references/facade-vs-neighbours.md",
+      "sha256": "0a8caa7a67f104b46b96ac7d89b52e902cfafcc8857b8be8615df61b21f08349"
+    },
+    {
+      "path": "skills/gof-facade/references/worked-example.md",
+      "sha256": "530ff0a5379fdd8ce334d80dcad2979591ebd2be16e9cff63e0f694c8e220bbf"
+    },
+    {
+      "path": "skills/gof-facade/SKILL.md",
+      "sha256": "c7bec0c71ac17105061e35a59e7b17fc372839147717fd96cf0d4a83f13ec8b3"
+    },
+    {
+      "path": "skills/gof-facade/skill.yaml",
+      "sha256": "47079d92ba9ee56fb9d0da95c9d84a747e594c9a0f90c028cfe9ffd9f4db7873"
+    }
+  ],
+  "changes": {
+    "summary": "Eight explanatory lines and a qualified deadline bullet, plus patch version.",
+    "executableExampleCode": "Unchanged; post-edit extracted-method SHA-256 equals the tested pre-edit method SHA-256.",
+    "descriptions": "Unchanged and validated as consistent.",
+    "dependenciesAndSuggests": "Unchanged; catalog-wide resolution/routing deferred to coordinator.",
+    "outsideOwnedRepositoryPath": "No writes."
+  },
+  "preserved": [
+    "Consumer-first review for ordinary, advanced and failing paths, including keeping existing direct calls or declining an extra facade.",
+    "Convenience versus enforced boundary, supported advanced bypasses, and JPMS exports/opens/class-path caveats.",
+    "Responsibility cohesion rather than numeric method/dependency thresholds, with compatible stable public entry points.",
+    "Application service coordination versus domain invariants and the concrete per-order versus aggregate-credit example.",
+    "Transaction proxy/interception and rollback translation caveats; local transaction boundaries do not make external effects atomic.",
+    "Lazy/live return-value ownership, borrowed client lifetime and failures that occur after a facade method returns.",
+    "Required versus optional branches, dependency ordering, named-only fallback and explicit failure visibility.",
+    "Java 17 local example context and separately identified Java 25 preview remote example.",
+    "Deadline exhaustion, timeout cancellation and the existing warning that uncooperative child cleanup can exceed the nominal budget.",
+    "Conditional neighboring-skill referrals and all existing dependencies/suggests."
+  ],
+  "capabilitiesRemoved": [],
+  "commands": [
+    {
+      "kind": "executed structural check",
+      "cwd": "C:/git/agent-skills",
+      "command": "$ErrorActionPreference = 'Stop'\n@'\nimport {readFileSync,readdirSync,existsSync} from 'node:fs';\nimport {resolve,relative,dirname} from 'node:path';\nimport {parseManifest} from './packages/core/src/domain/manifest.ts';\nimport {buildSkillPackage} from './packages/core/src/domain/skill-package.ts';\nimport {validatePackage} from './packages/core/src/application/validate-package.ts';\nconst root=resolve('skills/gof-facade');\nconst paths=readdirSync(root,{recursive:true,withFileTypes:true}).filter(e=>e.isFile()).map(e=>resolve(e.parentPath,e.name));\nconst files=paths.map(p=>({path:relative(root,p).replaceAll('\\\\','/'),bytes:readFileSync(p)}));\nconst parsed=parseManifest(readFileSync(resolve(root,'skill.yaml'),'utf8'),{strict:true});\nconst report=validatePackage(buildSkillPackage(parsed.manifest,files),{directoryName:'gof-facade'});\nconst issues=[...parsed.issues,...report.issues];\nconst links=[];\nfor(const path of paths.filter(p=>p.endsWith('.md'))) {\n const text=readFileSync(path,'utf8');\n for(const match of text.matchAll(/\\[[^\\]]*\\]\\((<[^>]+>|[^\\s)]+)(?:\\s+[^)]*)?\\)/g)) {\n  const target=match[1].replace(/^<|>$/g,'');\n  if(/^[a-z][a-z0-9+.-]*:/i.test(target)) continue;\n  const [file,anchor]=target.split('#');\n  const dest=file?resolve(dirname(path),decodeURIComponent(file)):path;\n  if(!existsSync(dest)) throw new Error('Missing link '+target+' from '+path);\n  if(anchor) {\n   const headings=[...readFileSync(dest,'utf8').matchAll(/^#{1,6}\\s+(.+)$/gm)].map(m=>m[1].toLowerCase().replace(/[^\\w\\s-]/g,'').replace(/\\s/g,'-'));\n   if(!headings.includes(anchor)) throw new Error('Missing anchor '+target);\n  }\n  links.push({from:relative(root,path).replaceAll('\\\\','/'),target});\n }\n}\nconsole.log(JSON.stringify({skill:'gof-facade',files:files.map(f=>f.path),manifestVersion:parsed.manifest.version,issues,relativeLinks:links},null,2));\nif(issues.length) process.exitCode=1;\n'@ | node --input-type=module -",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "6ae311",
+          "wall_time_seconds": 0.2943638,
+          "exit_code": 0,
+          "original_token_count": 102,
+          "output": "{\n  \"skill\": \"gof-facade\",\n  \"files\": [\n    \"SKILL.md\",\n    \"skill.yaml\",\n    \"references/facade-vs-neighbours.md\",\n    \"references/worked-example.md\"\n  ],\n  \"manifestVersion\": \"1.2.5\",\n  \"issues\": [],\n  \"relativeLinks\": [\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/facade-vs-neighbours.md\"\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/worked-example.md\"\n    }\n  ]\n}\n"
+        }
+      }
+    },
+    {
+      "kind": "executed structural check",
+      "cwd": "C:/git/agent-skills",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/gof-facade/SKILL.md skills/gof-facade/skill.yaml skills/gof-facade/references/facade-vs-neighbours.md skills/gof-facade/references/worked-example.md",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "26e55c",
+          "wall_time_seconds": 0.3449727,
+          "exit_code": 0,
+          "original_token_count": 17,
+          "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+        }
+      }
+    },
+    {
+      "kind": "executed structural check",
+      "cwd": "C:/git/agent-skills",
+      "command": "git diff --check -- skills/gof-facade",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "a31116",
+          "wall_time_seconds": 0.1504624,
+          "exit_code": 0,
+          "original_token_count": 0,
+          "output": ""
+        }
+      }
+    },
+    {
+      "kind": "read-only final diff",
+      "cwd": "C:/git/agent-skills",
+      "command": "git diff -- skills/gof-facade",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "1d36a4",
+          "wall_time_seconds": 0.1281982,
+          "exit_code": 0,
+          "original_token_count": 629,
+          "output": "diff --git a/skills/gof-facade/references/worked-example.md b/skills/gof-facade/references/worked-example.md\nindex c4a53d0..fab4426 100644\n--- a/skills/gof-facade/references/worked-example.md\n+++ b/skills/gof-facade/references/worked-example.md\n@@ -227,6 +227,14 @@ public OrderView view(OrderId id, Deadline deadline) throws InterruptedException\n }\n ```\n \n+This sketch exposes `StructuredTaskScope.FailedException` when a subtask failure determines\n+the joiner's outcome, retaining that failure as its cause. A child's `InterruptedException`\n+is wrapped too; interruption of the owner waiting in `join()` propagates directly as\n+`InterruptedException`. Existing caller branches for specific port exceptions may now be bypassed;\n+parallelization does not preserve exception transparency automatically. Preserve the agreed public\n+failure contract with narrow translation after scope cleanup, or explicitly adopt the wrapper\n+contract. Test both interruption origins; do not treat every child failure as caller cancellation.\n+\n Three decisions made explicitly, none of which the sequential version made:\n \n - **Concurrent branches**, with order→customer sequential within the required branch. Latency\n@@ -237,8 +245,8 @@ Three decisions made explicitly, none of which the sequential version made:\n   Required failures still fail the view. Multiplying availability assumes independent failures;\n   shared dependencies and this fallback policy change the result\n   (`failure-models`).\n-- **One deadline is passed down and a scope timeout cancels outstanding tasks.** InterruptedException\n-  propagates; scope timeout/failure remains visible. Scope close waits for child termination, so\n+- **One deadline is passed down and a scope timeout cancels outstanding tasks.** Scope\n+  timeout/failure remains visible. Scope close waits for child termination, so\n   uncooperative clients can exceed the budget. Require transport deadlines and cancellation tests.\n \n If this aggregation moves out of process, it becomes a remote boundary with its own scaling,\ndiff --git a/skills/gof-facade/skill.yaml b/skills/gof-facade/skill.yaml\nindex dee6a9d..81de392 100644\n--- a/skills/gof-facade/skill.yaml\n+++ b/skills/gof-facade/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: gof-facade\n-version: 1.2.4\n+version: 1.2.5\n description: >-\n   Facade in modern Java: one coherent entry point over a subsystem of collaborators, so callers\n   depend on an intention rather than on a sequence. Covers the difference between a facade\n"
+        }
+      }
+    },
+    {
+      "kind": "executed extracted-example technical controls",
+      "cwd": "C:/git/agent-skills",
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-facade-check/validate-example.mjs",
+      "result": {
+        "chunk_id": "da2a4a",
+        "wall_time_seconds": 0.9791132,
+        "exit_code": 0,
+        "original_token_count": 57,
+        "output": "{\n  \"status\": \"PASS\",\n  \"controls\": 8,\n  \"target\": \"Java 25 preview\",\n  \"runtime\": \"Temurin 25.0.3+9-LTS\",\n  \"result\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave4-validation-Ceekn9\\\\gof-facade-check\\\\result.json\"\n}\n"
+      },
+      "nestedCommandsAndFullResults": [
+        {
+          "name": "toolchain",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+          "args": [
+            "-version"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-facade-check",
+          "exitCode": 0,
+          "signal": null,
+          "stdout": "",
+          "stderr": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n"
+        },
+        {
+          "name": "compile",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+          "args": [
+            "--release",
+            "25",
+            "--enable-preview",
+            "-d",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-facade-check\\classes",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-facade-check\\FacadeRemoteCheck.java"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-facade-check",
+          "exitCode": 0,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Note: C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-facade-check\\FacadeRemoteCheck.java uses preview features of Java SE 25.\r\nNote: Recompile with -Xlint:preview for details.\r\n"
+        },
+        {
+          "name": "run",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+          "args": [
+            "--enable-preview",
+            "-cp",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-facade-check\\classes",
+            "FacadeRemoteCheck"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-facade-check",
+          "exitCode": 0,
+          "signal": null,
+          "stdout": "PASS success and dependent customer lookup\r\nPASS named shipping-unavailable fallback\r\nPASS required failure wrapped with original cause\r\nPASS unrelated shipping failure is not degraded\r\nPASS child InterruptedException is wrapped as FailedException\r\nPASS exhausted input budget rejected\r\nPASS timeout remains scope TimeoutException\r\nPASS owner interruption while joining propagates directly\r\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "kind": "executed post-edit preservation check",
+      "cwd": "C:/git/agent-skills",
+      "command": "$ErrorActionPreference = 'Stop'\n@'\nimport {readFileSync} from 'node:fs';\nimport {createHash} from 'node:crypto';\nconst path='skills/gof-facade/references/worked-example.md';\nconst text=readFileSync(path,'utf8');\nconst section=text.split('## The remote variant')[1].split('## What the facade bought')[0];\nconst method=section.match(/```java\\r?\\n([\\s\\S]*?)```/)[1].trim();\nconst result=JSON.parse(readFileSync('C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-facade-check/result.json','utf8'));\nconst hash=createHash('sha256').update(method).digest('hex');\nconst lines=text.split(/\\r?\\n/);\nconst changedParagraphLine=lines.findIndex(s=>s.startsWith('This sketch exposes'))+1;\nif(hash!==result.methodSha256) throw new Error('Executable method changed after validation');\nconsole.log(JSON.stringify({path,changedParagraphLine,finalMethodSha256:hash,testedMethodSha256:result.methodSha256,unchanged:true},null,2));\n'@ | node --input-type=module -",
+      "result": {
+        "chunk_id": "296df5",
+        "wall_time_seconds": 0.1015701,
+        "exit_code": 0,
+        "original_token_count": 75,
+        "output": "{\n  \"path\": \"skills/gof-facade/references/worked-example.md\",\n  \"changedParagraphLine\": 230,\n  \"finalMethodSha256\": \"d9788ffa355c4f3facdaafe7f25e1778e39d80d22e9a428a2a447f35c6bd0806\",\n  \"testedMethodSha256\": \"d9788ffa355c4f3facdaafe7f25e1778e39d80d22e9a428a2a447f35c6bd0806\",\n  \"unchanged\": true\n}\n"
+      }
+    }
+  ],
+  "inspectionResultsPath": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-facade-check/inspection-results.json",
+  "technicalChecks": {
+    "status": "PASS",
+    "target": "Java 25 preview",
+    "runtime": "Temurin 25.0.3+9-LTS, existing local toolchain",
+    "exactExtractedMethod": true,
+    "methodSha256": "d9788ffa355c4f3facdaafe7f25e1778e39d80d22e9a428a2a447f35c6bd0806",
+    "controls": [
+      "PASS success and dependent customer lookup",
+      "PASS named shipping-unavailable fallback",
+      "PASS required failure wrapped with original cause",
+      "PASS unrelated shipping failure is not degraded",
+      "PASS child InterruptedException is wrapped as FailedException",
+      "PASS exhausted input budget rejected",
+      "PASS timeout remains scope TimeoutException",
+      "PASS owner interruption while joining propagates directly"
+    ],
+    "fixture": "Synthetic ports and minimal surrounding types around the unmodified remote method, not a real transport.",
+    "resultsPath": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-facade-check/result.json",
+    "expectedCompilerNotes": "javac reported that Java SE 25 preview features are used; compile and execution both exited 0.",
+    "noBackgroundProcess": "All child commands used spawnSync with timeout and completed. The harness interrupted and joined its owner-interruption thread; no review-started background process remains."
+  },
+  "structuralChecks": {
+    "packageValidation": "Existing core parseManifest(strict), buildSkillPackage and validatePackage over exactly the four assigned files: zero issues, version 1.2.5.",
+    "resources": "Both relative Markdown references resolved. No new executable skill scripts or resources were added.",
+    "formatting": "Prettier --check on exactly four owned files passed.",
+    "diffWhitespace": "git diff --check -- skills/gof-facade passed.",
+    "attribution": "Final scoped status contains only the two expected unstaged files, no staged changes; unchanged files retain assignment hashes."
+  },
+  "relevantFailures": [
+    {
+      "kind": "rejected edit attempt, no filesystem effect",
+      "result": "An initial apply_patch payload contained an empty hunk for C:/git/agent-skills/skill.yaml. apply_patch rejected the entire payload before writing. A scoped diff was immediately checked and remained empty; the corrected patch targeted only skills/gof-facade/skill.yaml and the assigned reference.",
+      "introducedIssue": false
+    },
+    {
+      "kind": "source text search",
+      "result": "A first search term did not match Files.lines documentation; a subsequent search opened the relevant lines/close/UncheckedIOException contract. This was a search miss, not an unresolved source claim.",
+      "introducedIssue": false
+    }
+  ],
+  "behavioralEvaluation": {
+    "independentActorRuns": 0,
+    "measuredIncrementalGain": false,
+    "executedBehavioralEvaluations": [],
+    "distinction": "The eight executed Java controls are technical checks of example semantics, not an agent behavior comparison.",
+    "walkthroughs": [
+      {
+        "caseId": "facade-consumer-contract-a",
+        "status": "Structured walkthrough only",
+        "result": "A direct ProductMissing consumer branch is bypassed by the candidate's wrapper; a compatible library adjustment is justified."
+      },
+      {
+        "caseId": "facade-consumer-contract-b",
+        "status": "Structured walkthrough only",
+        "result": "An explicit FailedException/cause consumer agrees with the wrapper; forcing the first case's translation would break its contract."
+      }
+    ],
+    "pairStatus": "Inputs and criteria are development fixtures; not compiled or run by an actor. They are not held-out evidence.",
+    "soleDecisiveFixtureDifference": "src/consumer/SelectedConsumer.java",
+    "inputsPath": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-facade-check/case-inputs.json",
+    "criteriaPath": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-facade-check/case-criteria.json",
+    "evaluatorInstructions": "Give an actor only one case input, the intended skill treatment and a disposable workspace. Do not expose criteria, sibling output or technical review logs. Preserve the read-only consumer/probe fixtures."
+  },
+  "caseInputs": [
+    {
+      "id": "facade-consumer-contract-a",
+      "request": "Review the CatalogFacade candidate against the supplied project and consumer. Apply the smallest justified library correction, or leave the candidate unchanged if its contract is already adequate. Explain the consumer effect and validate the supported outcomes. Preserve the target stack and read-only consumer/probe fixtures; do not claim a performance gain without measurements.",
+      "files": {
+        "README.md": "# Catalog facade review\n\nJava 25 preview is already enabled and approved in this project. The library candidate replaces a sequential product/inventory lookup with two concurrent reads. Both ports are read-only. No benchmark or latency improvement has been established.\n\nThe separately released consumer source supplied here represents the supported consumer for this integration. Its failure handling is part of the contract and cannot be changed in this library patch. src/library is editable; src/consumer and src/probe are read-only fixtures. The probe covers a normal product and a missing product. Other failures must remain visible, and interruption of the calling thread must not turn into a missing-product response.\n\nReview the library implementation from that consumer's perspective. Keep a working implementation when no defect is supported. A new facade or framework is not required by the request.\n",
+        "src/library/ProductMissing.java": "public final class ProductMissing extends RuntimeException {\n    public ProductMissing(String id) { super(id); }\n}\n",
+        "src/library/CatalogFacade.java": "import java.util.concurrent.StructuredTaskScope;\nimport java.util.concurrent.StructuredTaskScope.Joiner;\n\npublic final class CatalogFacade {\n    public record View(String label, boolean inStock) {}\n    public interface Catalog { String label(String id) throws InterruptedException; }\n    public interface Inventory { boolean inStock(String id) throws InterruptedException; }\n\n    private final Catalog catalog;\n    private final Inventory inventory;\n\n    public CatalogFacade(Catalog catalog, Inventory inventory) {\n        this.catalog = catalog;\n        this.inventory = inventory;\n    }\n\n    public View view(String id) throws InterruptedException {\n        try (var scope = StructuredTaskScope.open(Joiner.<Object>awaitAllSuccessfulOrThrow())) {\n            var product = scope.fork(() -> catalog.label(id));\n            var availability = scope.fork(() -> inventory.inStock(id));\n            scope.join();\n            return new View(product.get(), availability.get());\n        }\n    }\n}\n",
+        "src/probe/Probe.java": "public final class Probe {\n    public static void main(String[] args) throws Exception {\n        var consumer = new SelectedConsumer();\n        var normal = new CatalogFacade(id -> \"pencil\", id -> true);\n        if (!consumer.render(normal, \"p-10\").equals(\"pencil:true\")) {\n            throw new AssertionError(\"Normal product changed\");\n        }\n        var missing = new CatalogFacade(id -> { throw new ProductMissing(id); }, id -> false);\n        if (!consumer.render(missing, \"p-99\").equals(\"missing\")) {\n            throw new AssertionError(\"Missing-product presentation changed\");\n        }\n        System.out.println(\"normal and missing product preserved\");\n    }\n}\n",
+        "src/consumer/SelectedConsumer.java": "public final class SelectedConsumer {\n    public String render(CatalogFacade facade, String id) throws InterruptedException {\n        try {\n            var view = facade.view(id);\n            return view.label() + \":\" + view.inStock();\n        } catch (ProductMissing missing) {\n            return \"missing\";\n        }\n    }\n}\n"
+      },
+      "prerequisites": [
+        "An available JDK 25 with preview already authorized for the disposable case; no external dependencies.",
+        "Provide only these input files and the selected skill treatment to the actor. The evaluator's criteria and technical-review logs must remain separate."
+      ],
+      "reproduction": [
+        "javac --release 25 --enable-preview -d classes src/library/ProductMissing.java src/library/CatalogFacade.java src/consumer/SelectedConsumer.java src/probe/Probe.java",
+        "java --enable-preview -cp classes Probe"
+      ],
+      "provenance": "Synthetic development case created during this review, not an application integration run."
+    },
+    {
+      "id": "facade-consumer-contract-b",
+      "request": "Review the CatalogFacade candidate against the supplied project and consumer. Apply the smallest justified library correction, or leave the candidate unchanged if its contract is already adequate. Explain the consumer effect and validate the supported outcomes. Preserve the target stack and read-only consumer/probe fixtures; do not claim a performance gain without measurements.",
+      "files": {
+        "README.md": "# Catalog facade review\n\nJava 25 preview is already enabled and approved in this project. The library candidate replaces a sequential product/inventory lookup with two concurrent reads. Both ports are read-only. No benchmark or latency improvement has been established.\n\nThe separately released consumer source supplied here represents the supported consumer for this integration. Its failure handling is part of the contract and cannot be changed in this library patch. src/library is editable; src/consumer and src/probe are read-only fixtures. The probe covers a normal product and a missing product. Other failures must remain visible, and interruption of the calling thread must not turn into a missing-product response.\n\nReview the library implementation from that consumer's perspective. Keep a working implementation when no defect is supported. A new facade or framework is not required by the request.\n",
+        "src/library/ProductMissing.java": "public final class ProductMissing extends RuntimeException {\n    public ProductMissing(String id) { super(id); }\n}\n",
+        "src/library/CatalogFacade.java": "import java.util.concurrent.StructuredTaskScope;\nimport java.util.concurrent.StructuredTaskScope.Joiner;\n\npublic final class CatalogFacade {\n    public record View(String label, boolean inStock) {}\n    public interface Catalog { String label(String id) throws InterruptedException; }\n    public interface Inventory { boolean inStock(String id) throws InterruptedException; }\n\n    private final Catalog catalog;\n    private final Inventory inventory;\n\n    public CatalogFacade(Catalog catalog, Inventory inventory) {\n        this.catalog = catalog;\n        this.inventory = inventory;\n    }\n\n    public View view(String id) throws InterruptedException {\n        try (var scope = StructuredTaskScope.open(Joiner.<Object>awaitAllSuccessfulOrThrow())) {\n            var product = scope.fork(() -> catalog.label(id));\n            var availability = scope.fork(() -> inventory.inStock(id));\n            scope.join();\n            return new View(product.get(), availability.get());\n        }\n    }\n}\n",
+        "src/probe/Probe.java": "public final class Probe {\n    public static void main(String[] args) throws Exception {\n        var consumer = new SelectedConsumer();\n        var normal = new CatalogFacade(id -> \"pencil\", id -> true);\n        if (!consumer.render(normal, \"p-10\").equals(\"pencil:true\")) {\n            throw new AssertionError(\"Normal product changed\");\n        }\n        var missing = new CatalogFacade(id -> { throw new ProductMissing(id); }, id -> false);\n        if (!consumer.render(missing, \"p-99\").equals(\"missing\")) {\n            throw new AssertionError(\"Missing-product presentation changed\");\n        }\n        System.out.println(\"normal and missing product preserved\");\n    }\n}\n",
+        "src/consumer/SelectedConsumer.java": "import java.util.concurrent.StructuredTaskScope;\n\npublic final class SelectedConsumer {\n    public String render(CatalogFacade facade, String id) throws InterruptedException {\n        try {\n            var view = facade.view(id);\n            return view.label() + \":\" + view.inStock();\n        } catch (StructuredTaskScope.FailedException failure) {\n            if (failure.getCause() instanceof ProductMissing) return \"missing\";\n            throw failure;\n        }\n    }\n}\n"
+      },
+      "prerequisites": [
+        "An available JDK 25 with preview already authorized for the disposable case; no external dependencies.",
+        "Provide only these input files and the selected skill treatment to the actor. The evaluator's criteria and technical-review logs must remain separate."
+      ],
+      "reproduction": [
+        "javac --release 25 --enable-preview -d classes src/library/ProductMissing.java src/library/CatalogFacade.java src/consumer/SelectedConsumer.java src/probe/Probe.java",
+        "java --enable-preview -cp classes Probe"
+      ],
+      "provenance": "Synthetic development case created during this review, not an application integration run."
+    }
+  ],
+  "caseCriteria": [
+    {
+      "id": "facade-consumer-contract-a",
+      "required": [
+        "Inspect the supported consumer's catch branch instead of inferring exception transparency from the facade signature or method name.",
+        "Identify that the candidate's selected child failure reaches the owner as FailedException with ProductMissing as cause, bypassing this consumer's ProductMissing handling.",
+        "Make a compatible library correction, such as narrowly translating the agreed ProductMissing cause outside scope cleanup. Keeping a valid direct/sequential implementation can also be justified if the proposed concurrency has no required contract or demonstrated benefit.",
+        "Keep unrelated failures visible, preserve diagnostic cause where wrapping remains, and distinguish caller interruption from a child-reported InterruptedException rather than generically unwrapping every cause or returning a missing result.",
+        "Preserve ordinary result and missing presentation without changing the read-only consumer/probe or adding an unnecessary wrapper. State that unit fixture success does not demonstrate transport cleanup, transaction atomicity or speedup."
+      ],
+      "failures": [
+        "Approves the candidate solely because both methods declare InterruptedException or both normal paths return View.",
+        "Changes the consumer to accept the library's accidental failure shape.",
+        "Catches every failure as missing, retries all failed operations, or converts every child interruption into caller cancellation.",
+        "Adds a new facade abstraction without solving the consumer contract.",
+        "Reports benchmark or real-service guarantees from these read-only synthetic ports."
+      ],
+      "decisiveResult": "With this consumer, the unmodified candidate does not preserve the missing-product behavior; a library compatibility adjustment is required.",
+      "evaluationStatus": "Written criteria only; this case pair has not been run by an actor or compiled. Separate extracted-skill technical controls did execute."
+    },
+    {
+      "id": "facade-consumer-contract-b",
+      "required": [
+        "Inspect the supported consumer and recognize that it intentionally handles FailedException with a ProductMissing cause.",
+        "Preserve the valid wrapper contract or explain a contract-compatible change; do not apply blanket exception unwrapping merely because wrappers exist.",
+        "Keep the normal and missing presentation, other failures and direct owner interruption intact. Do not transform a child failure into caller cancellation.",
+        "Give a bounded validation plan/check at the consumer boundary and compare against keeping the existing implementation; do not add a redundant facade or claim measured speedup."
+      ],
+      "failures": [
+        "Unwraps ProductMissing unconditionally, breaking this consumer's established wrapper handling.",
+        "Treats every FailedException as a missing product or caller cancellation.",
+        "Changes the read-only consumer/probe to make an incompatible rewrite pass.",
+        "Requires reverting concurrency or introducing new frameworks regardless of the observed working contract.",
+        "Claims the pattern itself guarantees resource/transaction/distribution properties."
+      ],
+      "decisiveResult": "The supplied consumer already agrees with the candidate's wrapper failure contract; no forced compatibility edit is needed.",
+      "evaluationStatus": "Written criteria only; this case pair has not been run by an actor or compiled. Separate extracted-skill technical controls did execute."
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/StructuredTaskScope.html",
+      "title": "Java SE 25 StructuredTaskScope API",
+      "version": "JDK 25 preview",
+      "sections": [
+        "Class overview: failed subtasks, interruption and timeout",
+        "open(Joiner), join(), close()",
+        "Joiner.awaitAllSuccessfulOrThrow"
+      ],
+      "supports": "The selected child failure is exposed by join as FailedException retaining its cause; owner interruption while waiting in join is InterruptedException. Timeout cancels the scope, but closing waits for child termination. Verified against the exact extracted remote-method check.",
+      "appliesTo": "Material correction at references/worked-example.md:230 and qualification at :248.",
+      "limits": "This is the Java 25 preview contract, not a claim that Java 21 preview or a future JDK has the same API. Stubbed transports do not establish real transport cancellation.",
+      "consultedOn": "2026-10-16"
+    },
+    {
+      "url": "https://docs.spring.io/spring-framework/reference/6.2/data-access/transaction/declarative/rolling-back.html",
+      "title": "Spring Framework 6.2 declarative rollback rules",
+      "version": "6.2 documentation, rendered 6.2.19",
+      "sections": [
+        "Rollback rules and defaults"
+      ],
+      "supports": "Default declarative rollback depends on exception category and configured rules; a facade's catch/translation can change the result. Existing guidance already qualifies failure values and configuration.",
+      "appliesTo": "Preservation check of existing transaction guidance; no edit needed.",
+      "limits": "No Spring application or database integration was run.",
+      "consultedOn": "2026-10-16"
+    },
+    {
+      "url": "https://docs.spring.io/spring-framework/reference/6.2/data-access/transaction/declarative/annotations.html",
+      "title": "Spring Framework 6.2 @Transactional semantics",
+      "version": "6.2 documentation, rendered 6.2.19",
+      "sections": [
+        "Proxy mode and self-invocation"
+      ],
+      "supports": "Default proxy interception applies to external calls through the proxy; self-invocation is not intercepted.",
+      "appliesTo": "Preservation check of transaction ownership/interception guidance.",
+      "limits": "No claim about a specific application's proxy configuration.",
+      "consultedOn": "2026-10-16"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/nio/file/Files.html#lines(java.nio.file.Path)",
+      "title": "Java SE 17 Files.lines(Path)",
+      "version": "Java SE 17",
+      "sections": [
+        "lines(Path) and lines(Path,Charset)"
+      ],
+      "supports": "The lazy returned stream owns an open file and must be closed; errors while consuming or closing can occur after the factory returns and are wrapped as UncheckedIOException.",
+      "appliesTo": "Preservation check of existing live-result/resource ownership example.",
+      "limits": "API contract review only, not a new executed Java 17 or filesystem test.",
+      "consultedOn": "2026-10-16"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/specs/jar/jar.html#modular-jar-files",
+      "title": "Java SE 17 JAR File Specification",
+      "version": "Java SE 17",
+      "sections": [
+        "Modular JAR files"
+      ],
+      "supports": "A modular JAR placed on the class path behaves as a non-modular JAR, supporting the distinction between convenience entry point and enforced module boundary.",
+      "appliesTo": "Preservation check of facade/boundary caveats.",
+      "limits": "No JPMS deployment or build fixture was executed.",
+      "consultedOn": "2026-10-16"
+    },
+    {
+      "url": "https://martinfowler.com/eaaCatalog/serviceLayer.html",
+      "title": "Service Layer (Randy Stafford, original pattern catalog)",
+      "version": "Catalog dated 2003-03-05",
+      "sections": [
+        "Pattern summary"
+      ],
+      "supports": "Application service coordination and application boundary responsibilities can coexist with a facade role.",
+      "appliesTo": "Preservation check of pattern-role distinctions.",
+      "limits": "Conceptual source; no runtime property follows from the pattern label.",
+      "consultedOn": "2026-10-16"
+    },
+    {
+      "url": "https://martinfowler.com/eaaCatalog/remoteFacade.html",
+      "title": "Remote Facade (Martin Fowler, original pattern catalog)",
+      "version": "Catalog dated 2003-03-05",
+      "sections": [
+        "Pattern summary"
+      ],
+      "supports": "A coarse-grained remote entry point addresses remote communication design over finer-grained collaborators.",
+      "appliesTo": "Preservation check of remote-boundary distinction.",
+      "limits": "No quantitative latency or availability claim was adopted from this source.",
+      "consultedOn": "2026-10-16"
+    }
+  ],
+  "evidencePaths": [
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-facade-check/validate-example.mjs",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-facade-check/harness-template.java.txt",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-facade-check/FacadeRemoteCheck.java",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-facade-check/toolchain.log",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-facade-check/compile.log",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-facade-check/run.log",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-facade-check/result.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-facade-check/inspection-results.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-facade-check/case-inputs.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-facade-check/case-criteria.json"
+  ],
+  "limits": [
+    "No independently executed actor comparison or measured incremental skill gain.",
+    "The paired consumer cases are complete reproducible inputs and criteria but have not themselves been compiled or executed.",
+    "Technical checks use synthetic read-only ports; no Spring transaction, database, network, real resource cleanup or actual consumer application integration was run.",
+    "The timeout fixture cooperates with interruption. It does not establish a hard wall-clock bound with uncooperative transports.",
+    "No latency, throughput, allocation or availability measurement; the facade pattern alone supplies no performance guarantee.",
+    "The local Java SE 17 examples were reviewed against Java 17 API contracts, not executed on a Java 17 JVM.",
+    "Only material claims selected for this review were checked against primary sources; this is not a fresh verification of every historical citation.",
+    "Catalog-wide dependency and routing consistency, generated index integrity and repository verification remain coordinator responsibilities."
+  ],
+  "crossSkill": {
+    "issues": [],
+    "actionsRequired": [
+      "Coordinator archives this handoff and evidence, evaluates the separate case pair if desired, then regenerates the index and runs global verification after all reviewers stop writing."
+    ]
+  },
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Shared generated registry writes are prohibited to parallel reviewers.",
+      "prerequisite": "All reviewers have stopped writing; include the 1.2.5 package."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Repository-wide checks are coordinator-owned in the parallel review workflow.",
+      "prerequisite": "Regenerated index and stable working tree after all reviewers stop writing."
+    }
+  ],
+  "allWritesStopped": true,
+  "noActiveBackgroundProcess": true,
+  "readinessMeaning": "Owned local review is complete; readiness does not claim repository-wide verification."
+}

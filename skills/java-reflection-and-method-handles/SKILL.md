@@ -119,6 +119,8 @@ which becomes an execution primitive once initialization, construction or invoca
 
 - Resolve mandatory members/providers during their owner's startup and optional plugins during
   their own lifecycle; report missing/ambiguous signatures with loader/module/code source.
+  When failure must precede readiness, test the actual bootstrap with a missing member; declaring
+  a static handle holder does not ensure that startup initializes it.
 - Test the deployment modes actually supported: named/classpath modules, duplicate loaders,
   reload/unload and native artifacts where applicable. Do not build unused modes merely to
   satisfy this list.

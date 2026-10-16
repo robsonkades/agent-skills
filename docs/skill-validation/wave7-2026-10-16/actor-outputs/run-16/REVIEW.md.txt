@@ -1,0 +1,19 @@
+# Recovery repair
+
+Changed only the receiver token in the production path: `Dispatcher.replayOne` now passes the retained `event_id` to `ReceiverClient.accept` instead of generating a UUID for each attempt. The existing outbox, immutable payload, public operations, transaction boundaries, checkpoint ordering and single-worker policy remain intact.
+
+The original smoke passed. A new regression first reproduced the reported window through actual Spring beans: the receiver committed one effect, `Checkpoint.afterAccepted` threw, the exception propagated, and the outbox row remained pending. Recreating the context and replaying that row then failed with **expected 1 receiver effect, actual 2**. A new token had bypassed the receiver's existing deduplication contract.
+
+Using the stored event identity repairs that retry path. The checkpoint still runs after acknowledgment and before progress is marked complete, including on a retry the receiver has already accepted. The publisher implementation required no change. Spring Framework 7.0.9 documents the existing unchecked-exception rollback behavior; the tests verify the relevant persisted outcomes rather than relying on the annotation alone. [Version-matched transaction API](https://docs.spring.io/spring-framework/docs/7.0.9/javadoc-api/org/springframework/transaction/annotation/Transactional.html).
+
+Observed checks:
+
+- `node check.mjs`: passed before and after the repair.
+- `node check.mjs work.Regression`: failed before the repair on duplicate receiver effects; passed afterward. Covers acknowledgment followed by checkpoint failure, propagated failure and pending work, context recreation, unchanged event identity and original payload despite a changed order, receiver rejection, conflicting payload for an existing identity, publisher rollback when its second insert fails, distinct events sharing a payload, and at most one row processed per call.
+- `node ../checks/restart.mjs`: passed. Two separately launched JVMs use the same disposable file-backed H2 databases. The first creates an order, obtains receiver acknowledgment, observes checkpoint failure and exits. The second reads the retained state and replays it without rerunning the publisher; one receiver effect remains and pending work becomes complete.
+- Full-byte SHA-256 comparisons found every frozen output file identical to its input counterpart. No write targeted input, TASK.md or the skill snapshot.
+
+The runbook now explains the stable token, failure window, retained-work inspection and single-worker replay procedure. The restart check establishes orderly process recreation with retained local database state and the frozen deterministic receiver surrogate. It does not establish forced-kill or physical crash durability, concurrent-worker behavior, production-provider behavior or distributed exactly-once delivery. Ordinary database durability and the specified receiver identity contract remain assumptions.
+
+The snapshot main skill and all three routed references were read in full. Exact reads, commands and captured outputs are recorded in `execution.json` and `checks/terminal-history.json`. The initial failed attempts to read the project documents at the actor root and the intentional pre-repair regression failure are retained in that account. These are actor reports, not an independent complete audit trace.
+

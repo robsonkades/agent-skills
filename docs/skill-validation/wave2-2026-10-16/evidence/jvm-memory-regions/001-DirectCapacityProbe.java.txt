@@ -1,0 +1,56 @@
+import java.lang.management.BufferPoolMXBean;
+import java.lang.management.ManagementFactory;
+import java.lang.ref.Reference;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
+
+public final class DirectCapacityProbe {
+    public static void main(String[] args) {
+        BufferPoolMXBean pool = ManagementFactory.getPlatformMXBeans(BufferPoolMXBean.class)
+                .stream().filter(candidate -> candidate.getName().equals("direct"))
+                .findFirst().orElseThrow();
+        long beforeCount = pool.getCount();
+        long beforeCapacity = pool.getTotalCapacity();
+        long beforeUsed = pool.getMemoryUsed();
+        System.out.printf("BEFORE count=%d capacity=%d memoryUsed=%d%n",
+                beforeCount, beforeCapacity, beforeUsed);
+        List<ByteBuffer> retained = new ArrayList<>();
+        for (int index = 0; index < 64; index++) {
+            retained.add(ByteBuffer.allocateDirect(1024));
+        }
+        try {
+            long addedCount = pool.getCount() - beforeCount;
+            long addedCapacity = pool.getTotalCapacity() - beforeCapacity;
+            long addedUsed = pool.getMemoryUsed() - beforeUsed;
+            System.out.printf("DELTA count=%d capacity=%d memoryUsed=%d%n",
+                    addedCount, addedCapacity, addedUsed);
+            if (addedCount != 64 || addedCapacity != 65_536) {
+                throw new AssertionError("Unexpected direct pool capacity/count delta");
+            }
+            boolean expectExtraBacking = Boolean.parseBoolean(args[0]);
+            if (expectExtraBacking ? addedUsed <= addedCapacity : addedUsed != addedCapacity) {
+                throw new AssertionError("Unexpected backing/capacity relation for control");
+            }
+            try {
+                retained.add(ByteBuffer.allocateDirect(1024));
+                throw new AssertionError("Expected bounded direct-capacity exhaustion");
+            } catch (OutOfMemoryError expected) {
+                if (!expected.getMessage().contains("direct buffer memory")) {
+                    throw expected;
+                }
+                System.out.println("EXPECTED OOME " + expected.getMessage());
+            }
+            System.out.printf("AFTER FAILED ALLOCATION count=%d capacity=%d memoryUsed=%d%n",
+                    pool.getCount(), pool.getTotalCapacity(), pool.getMemoryUsed());
+            if (pool.getCount() != beforeCount + 64
+                    || pool.getTotalCapacity() != beforeCapacity + 65_536
+                    || pool.getMemoryUsed() != beforeUsed + addedUsed) {
+                throw new AssertionError("Failed allocation changed pool accounting");
+            }
+            System.out.println("PASS capacity limit and accounting control");
+        } finally {
+            Reference.reachabilityFence(retained);
+        }
+    }
+}

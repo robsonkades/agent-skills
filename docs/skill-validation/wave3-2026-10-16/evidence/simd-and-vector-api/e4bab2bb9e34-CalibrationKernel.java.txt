@@ -1,0 +1,41 @@
+import jdk.incubator.vector.FloatVector;
+import jdk.incubator.vector.VectorSpecies;
+
+final class CalibrationKernel {
+    static final VectorSpecies<Float> SPECIES = FloatVector.SPECIES_PREFERRED;
+
+    static float[] scalar(float[] a, float[] b, float[] c) {
+        check(a, b, c);
+        float[] out = new float[a.length];
+        for (int i = 0; i < a.length; i++) out[i] = a[i] * b[i] + c[i];
+        return out;
+    }
+
+    static float[] candidate(float[] a, float[] b, float[] c) {
+        check(a, b, c);
+        float[] out = new float[a.length];
+        int bound = SPECIES.loopBound(a.length);
+        int i = 0;
+        for (; i < bound; i += SPECIES.length()) {
+            var va = FloatVector.fromArray(SPECIES, a, i);
+            var vb = FloatVector.fromArray(SPECIES, b, i);
+            var vc = FloatVector.fromArray(SPECIES, c, i);
+            va.fma(vb, vc).intoArray(out, i);
+        }
+        for (; i < a.length; i++) out[i] = Math.fma(a[i], b[i], c[i]);
+        return out;
+    }
+
+    private static void check(float[] a, float[] b, float[] c) {
+        if (a.length != b.length || a.length != c.length)
+            throw new IllegalArgumentException("length mismatch");
+        for (int i = 0; i < a.length; i++) {
+            if (!allowed(a[i]) || !allowed(b[i]) || !allowed(c[i]))
+                throw new IllegalArgumentException("outside calibrated input domain");
+        }
+    }
+
+    private static boolean allowed(float value) {
+        return Float.isFinite(value) && Math.abs(value) <= 2f;
+    }
+}

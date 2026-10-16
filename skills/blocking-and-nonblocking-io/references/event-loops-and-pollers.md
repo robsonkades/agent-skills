@@ -60,6 +60,32 @@ Verify the actual call's thread in a test and measure queue wait, rejection and 
 Do not assume cancellation interrupts a driver or releases its connection: configure its
 timeout and keep resource cleanup tied to completion of the underlying operation.
 
+Follow each scheduler boundary through the actual consumer, including fallback/error paths.
+For example, this partial Reactor 3.6 expression offloads only the first blocking operation:
+
+```java
+// Assumptions: ioWorkers is a bounded blocking-work scheduler;
+// loop dispatches on the application's event loop; both client and storage block.
+Mono.fromCallable(() -> client.call())
+    .subscribeOn(ioWorkers)
+    .publishOn(loop)
+    .map(storage::loadPayload);
+```
+
+`publishOn(loop)` delivers the value to the subsequent `map` on the loop; the earlier
+`subscribeOn` does not cover that second call. If no intervening callback requires loop
+affinity, place `map(storage::loadPayload)` before `publishOn(loop)`. If loop-affine work
+must precede the storage call, defer that call in its own `fromCallable` source with
+`subscribeOn(ioWorkers)` and compose it with `flatMap`; restore loop affinity only where
+required afterward. If `loadPayload` is instead a bounded, in-memory lookup, there is no
+blocking-I/O reason to add another offload. Inspect its selected implementation before
+changing the chain.
+
+Assert the execution context at **both** calls in a focused test; a test checking only the
+source can pass while the later call still blocks the loop. Include the misplaced boundary
+as a control that fails the off-loop assertion. This proves placement for the exercised
+path, not the real driver's blocking behavior, cancellation support or production loop lag.
+
 ## Finding blocking calls inside a non-blocking stack
 
 Use source review to locate candidate calls and instrumentation to exercise those paths.
@@ -158,6 +184,9 @@ what the model costs in diagnosability.
 - [Reactor threading and schedulers](https://projectreactor.io/docs/core/release/reference/coreFeatures/schedulers.html):
   boundedElastic implementations and their version requirements; check the matching
   reference for the project's release before relying on defaults.
+- [Reactor 3.6.12 reference, threading and schedulers](https://projectreactor.io/docs/core/3.6.12/reference/index.html#schedulers):
+  `publishOn` changes downstream execution; `subscribeOn` does not override a later
+  `publishOn`. Verify all blocking callbacks rather than only source execution.
 - [BlockHound project documentation](https://github.com/reactor/BlockHound):
   instrumentation scope, thread marking and JVM compatibility requirements.
 - [Netty 4.1 SingleThreadEventLoop](https://netty.io/4.1/api/io/netty/channel/SingleThreadEventLoop.html):

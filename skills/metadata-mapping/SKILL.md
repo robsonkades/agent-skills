@@ -129,6 +129,9 @@ need no deploy
   Hibernate's native setting is `hibernate.hbm2ddl.auto`. Avoid `update/create/create-drop`
   competing with migrations on shared data. Disposable test databases may deliberately
   generate schemas; model-generated scripts reviewed into migrations are another valid path.
+  Check resolved database and script actions: JPA schema-generation settings can bypass the
+  native `validate` action. Use [Generation and drift](references/generation-and-drift.md)
+  when those controls coexist; a generated script does not prove database validation ran.
 - Use `validate` where startup failure is an acceptable control and permissions expose enough
   metadata. For a mapping/schema change in a rolling deployment, validate affected old/new
   application contracts against the expanded schema, reusing applicable evidence; do not

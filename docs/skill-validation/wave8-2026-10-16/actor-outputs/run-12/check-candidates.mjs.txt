@@ -1,0 +1,37 @@
+import assert from 'node:assert/strict';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+
+// Bounded positive and negative runs against the exact same on-disk regression.
+const directory = fileURLToPath(new URL('.', import.meta.url));
+const solutionPath = new URL('./solution.sql', import.meta.url);
+const approved = readFileSync(solutionPath, 'utf8');
+const proposal = readFileSync(new URL('./proposed.sql', import.meta.url), 'utf8');
+const cases = [
+  ['approved', approved, true],
+  ['original-proposal', proposal, false],
+  ['deduplicating-union', approved.replace('UNION ALL', 'UNION'), false],
+  ['overlapping-union-all', approved.replace(' AND (active = true) IS NOT TRUE', ''), false],
+  ['tenant-leak', approved.replace('tenant_id = :tenant AND amount', 'amount'), false],
+  ['missing-ordering', approved.replace('ORDER BY customer_label', ''), false],
+];
+const results = [];
+try {
+  for (const [name, sql, shouldPass] of cases) {
+    writeFileSync(solutionPath, sql);
+    const run = spawnSync(process.execPath, ['verify.mjs'], {
+      cwd: directory, encoding: 'utf8', timeout: 3000, maxBuffer: 1024 * 1024,
+    });
+    writeFileSync(new URL(`./verification-${name}.log`, import.meta.url),
+      `exit=${run.status}; signal=${run.signal}; error=${run.error?.message ?? 'none'}\n${run.stdout ?? ''}${run.stderr ?? ''}`);
+    assert.equal(run.error, undefined, `${name}: subprocess error`);
+    assert.equal(run.signal, null, `${name}: subprocess signal`);
+    assert.equal(run.status === 0, shouldPass, `${name}: unexpected exit ${run.status}`);
+    results.push({ name, exit: run.status, expected: shouldPass ? 'pass' : 'reject', observed: run.status === 0 ? 'pass' : 'reject' });
+  }
+} finally {
+  writeFileSync(solutionPath, approved);
+}
+assert.equal(readFileSync(solutionPath, 'utf8'), approved, 'approved solution restored');
+console.log(JSON.stringify({ results, approvedSolutionRestored: true }, null, 2));

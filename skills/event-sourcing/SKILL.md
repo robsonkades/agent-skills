@@ -57,7 +57,9 @@ recovery deadline; a design review must not delay an already authorized mitigati
    and stale by lag; inline projections, direct stream reads or same-transaction read models
    have different semantics. CQRS deployment is optional, not implied by event sourcing.
 6. **Write the rebuild before you need it.** A projection you cannot rebuild is a database you
-   cannot migrate. Time it against production volume now, not during the incident.
+   cannot migrate. Time it against production volume now, not during the incident. Before replay
+   or copying history, follow the actual subscriptions and relays to effect-producing gateways;
+   a replay flag on one worker does not protect independent consumers of the same events.
 7. **Answer the three hard questions up front** — event versioning, personal-data erasure, and
    what the user sees immediately after they save. Each is cheap now and expensive later.
 

@@ -276,6 +276,11 @@ Handle null stack/thread, truncation, experimental/unknown fields, renamed event
 custom event absence. Validate complete/readable files before processing and preserve raw
 recordings.
 
+The name allowlist and field-presence check above only identify candidates. Validate the chosen
+adapter against each encountered event type's field types and unit annotations, even if its name
+was already seen. See [same-name event types](event-catalogue.md#same-name-event-types) before
+caching schemas or combining values across registrations.
+
 `RecordingFile.readEvent()` advances through the file; do not assume a global chronological
 order. If analysis requires ordering, select start/end time and a suitable tie policy explicitly,
 then sort the needed values within a size budget or use an external sort. `readAllEvents` retains
@@ -308,7 +313,7 @@ adequate fixtures can supply evidence. A focused offline reader does not need a 
 - malformed/unknown JFC/event/setting;
 - old/new reader against old/new custom schema and Java 25 events;
 - sensitive/high-cardinality field rejection;
-- custom event class in multiple class loaders;
+- same-name custom types with incompatible units, class-loader copies, and name/class/ID selection;
 - no positive-control events versus a genuinely valid zero-event window.
 
 ## Authoritative references

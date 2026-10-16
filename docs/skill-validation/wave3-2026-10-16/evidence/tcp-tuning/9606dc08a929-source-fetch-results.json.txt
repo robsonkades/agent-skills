@@ -1,0 +1,79 @@
+[
+  {
+    "url": "https://raw.githubusercontent.com/torvalds/linux/v6.12/Documentation/networking/ip-sysctl.rst",
+    "status": 200,
+    "artifact": "sources/linux-6.12-ip-sysctl.rst",
+    "bytes": 115159,
+    "sha256": "7417433f163b87d406378a4e8fb3e9b7c385162a2381e3f03dbcdfed5fca2c3d"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/torvalds/linux/v6.12/net/ipv4/tcp_dctcp.c",
+    "status": 200,
+    "artifact": "sources/linux-6.12-tcp-dctcp.c",
+    "bytes": 9063,
+    "sha256": "d34f312c65a3f422e5c563463c3c993c93c74b2874be4d9c623da771f09bc686"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/torvalds/linux/v3.18/net/ipv4/tcp_dctcp.c",
+    "status": 200,
+    "artifact": "sources/linux-3.18-tcp-dctcp.c",
+    "bytes": 9408,
+    "sha256": "6d83a81102b11582228934fab6b8d1c7c97426da5e71e79f06ca9e9540e11ff2"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/torvalds/linux/v6.12/Documentation/networking/dctcp.rst",
+    "status": 200,
+    "artifact": "sources/linux-6.12-dctcp.rst",
+    "bytes": 1734,
+    "sha256": "bd4f3045c983c1fe62e6ce601a0c28ccbcd8258f3afb6cbaab2ac54141dc9468"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/torvalds/linux/v6.12/net/ipv4/tcp_output.c",
+    "status": 200,
+    "artifact": "sources/linux-6.12-tcp-output.c",
+    "bytes": 131725,
+    "sha256": "81a3e778a6b698192745c4fc9c50c26245374ffd605b095d894659ca2cbc751a"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/torvalds/linux/v6.12/include/net/tcp.h",
+    "status": 200,
+    "artifact": "sources/linux-6.12-net-tcp.h",
+    "bytes": 85652,
+    "sha256": "cdf696125e9484f7a5579eb0fa0841acb92f39ba6cd2dab219670e837fcf1b8c"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/torvalds/linux/v6.12/include/linux/tcp.h",
+    "status": 200,
+    "artifact": "sources/linux-6.12-linux-tcp.h",
+    "bytes": 21115,
+    "sha256": "e70e425dfce9feeeb80e63515f14468938b18fb5a1da65967b84c73357842fdc"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/openjdk/jdk17u/jdk-17.0.16-ga/src/java.base/unix/native/libnet/net_util_md.c",
+    "status": 200,
+    "artifact": "sources/jdk-17.0.16-net-util-md.c",
+    "bytes": 21356,
+    "sha256": "2ec58c8c7a86e1d03a45e8d78cca7c77a199eb9b6318609ad637b38f805f1a56"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/openjdk/jdk17u/jdk-17.0.16-ga/src/java.base/unix/native/libnio/ch/Net.c",
+    "status": 200,
+    "artifact": "sources/jdk-17.0.16-net.c",
+    "bytes": 28064,
+    "sha256": "70a9f450278c400cb6c44eef74932f38a224e55db086b00afaedea7a8f2bfa2b"
+  },
+  {
+    "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/net/Socket.html",
+    "status": 200,
+    "artifact": "sources/java-17-socket.html",
+    "bytes": 132075,
+    "sha256": "00d836339706f8e33ae2cdd31ce1087257317412698060ef15252557a61a8c6b"
+  },
+  {
+    "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/net/ServerSocket.html",
+    "status": 200,
+    "artifact": "sources/java-17-server-socket.html",
+    "bytes": 79136,
+    "sha256": "b5d0ebe798b9d6ab5b2140a0a37403c55498fc55e2730ea8d266f9340a85774f"
+  }
+]

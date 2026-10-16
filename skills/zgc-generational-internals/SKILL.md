@@ -44,14 +44,17 @@ and effective collector support; JDK 25 HotSpot is the source baseline, not auth
    `ZAllocationSpikeTolerance` and `ZProactive` with `-XX:+PrintFlagsFinal` or
    `jcmd <pid> VM.flags -all` against the build in use; these defaults move between releases.
 3. **For a complete pause-population claim, capture every relevant STW phase.** Log with
-   `-Xlog:gc*,gc+phases=debug`; validate the parser against real young and old cycles and do
-   not assume one textual phase list survives releases.
+   `-Xlog:gc*,gc+phases=debug`; validate the parser against real minor and major cycles,
+   including their young/old phases. Do not assume one textual phase list survives releases.
 4. **Separate young and old-cycle evidence.** Frequency is workload/ergonomic, not “continuous
    versus rare.” Correlate promotion/aging, live bytes, allocation and old-cycle triggers;
    temporal overlap alone does not prove promotion pressure.
 5. **Classify allocation stalls from relevant capacity signals.** Correlate available stall intervals with free/used/soft-max
    heap, live set, page/large allocation, concurrent-cycle progress, allocation rate,
    `ConcGCThreads`, CPU throttling and safepoints. Time-of-day clustering is context, not cause.
+   A GC cause of `(Allocation Stall)` is not a count or duration of thread waits. The checked
+   stall event has no `gcId`; use thread/time evidence and the correlation limits in
+   [Cycles, logs and events](references/cycles-logs-and-events.md).
 6. **Attribute barrier cost from generated code/profile evidence.** Fast paths are commonly
    inlined and may not appear as named frames. Stores execute a barrier path broadly; only
    some require remembered-set work. See `references/barriers-and-remembered-set.md`.

@@ -22,6 +22,39 @@ An agent proposal later accepted by a person retains its provenance and gains se
 evidence. The later approver need not be the original proposer. Cite all relevant sources when a
 user instruction and project practice jointly support a choice.
 
+For a consequential claim, retain the source revision/date and the scope it actually covers.
+A repository count needs its search boundary; a measurement needs its environment, workload and
+metric. Separate the observed result from the inference used to justify the decision. Three
+documents repeating the same untested assumption are one evidence chain, not three confirmations.
+
+## Keeping a decision usable after handoff
+
+For a consequential source available only in the current conversation, retain the relevant exact
+words in the existing decision record, attributed to the speaker with date/context when known,
+or link a durable message accessible to the next reader. "Round 2" alone cannot recover that
+context in another session. Keep only the decision-bearing excerpt; do not invent a missing quote
+or copy the entire conversation. If a source cannot be retrieved, record that limitation rather
+than claiming no decision exists; preserve acceptance supported independently as above.
+
+Compare the recorded choice with its source, not only with an intermediate summary. Preserve the
+quantifiers, negative requirements, units, limits and exceptions that change what would satisfy it.
+Link the relevant clause and revision in the existing requirement or contract instead of creating
+a competing specification. If the summary could be satisfied while violating that clause, repair
+the summary; this does not authorize changing the accepted decision. An unresolved term that changes
+the commitment needs bounded clarification, not an invented definition.
+
+For example, an illustrative accepted import decision permits resumption **only for the same source-file
+digest and mapping revision**, preserves completed rows, and leaves conflicting rows for an operator.
+"Imports can be resumed" loses those conditions. A usable record keeps them or links their canonical
+clause, plus the acceptance source. It separately records whether implementation and checks exist;
+capturing the decision is not evidence that resumable imports work.
+
+On resumption, inspect the premise relevant to the next action: the source-file digest and mapping
+revision in this example. If they still match the accepted scope, reuse the decision without another approval
+round. If the mapping changed, keep the historical acceptance but identify the affected resumption
+action and obtain the missing option/authority evidence before treating the old choice as applicable.
+Do not reopen unrelated decisions or invalidate the entire feature merely because a session changed.
+
 ## The levels of "the project does this"
 
 These are routinely collapsed, and collapsing them is how an accident becomes a policy:
@@ -79,6 +112,14 @@ report the conflict and its affected retention action; a prototype using synthet
 proceed if its own authorization and policy scope permit it. If the same policy explicitly excludes
 these exports, cite that exclusion and retain the already authorized 30-day decision without a new
 approval ritual. Do not invent legal requirements from the example.
+
+Conflicting empirical claims need a different check from conflicting requirements. Compare the
+versions, configurations, populations, measurement definitions and coverage before concluding that
+one refutes the other. Preserve counterevidence that could change the choice; name the smallest
+inspection or test that would distinguish the explanations. If evidence is unavailable, keep the
+feasibility conclusion conditional. An authorized preference does not make its predicted behavior
+true, and a benchmark cannot waive a requirement. Send unresolved option evaluation to
+`feature-solution-analysis` with both sources and the precise claim in dispute.
 
 ## The authority test
 
@@ -145,7 +186,18 @@ GAP-02 If Data/Compliance explicitly accepts proceeding to implementation, recor
 Reversibility and an escalation date do not create authority. The gap is valid only when the role that
 owns the consequence accepts it; mandatory legal/security obligations may remain non-waivable.
 
-## Superseding
+## Reopening and superseding
+
+For a decision resting on material uncertainty, make the trigger checkable: the premise, the
+evidence or event that would invalidate it, the existing owner who will review it, and the
+affected scope. Reuse linked acceptance criteria and checks rather than inventing thresholds.
+If the threshold itself is unresolved, record that gap. A scheduled review prompts inspection;
+it does not prove that the decision expired or failed unless acceptance explicitly says so.
+
+For example, a replay decision may depend on retaining every event for the agreed window. A
+retention or compaction change calls for checking that premise; a different consumer group name
+alone does not. A failed replay check identifies an issue, but inspection must still distinguish
+an invalid design premise from a configuration that violates the accepted design.
 
 A decision changes when the world does — a constraint is lifted, an assumption is falsified,
 implementation shows the choice does not work. A deviation from a still-valid decision calls for
@@ -163,3 +215,25 @@ accountable decision process supports a change:
 
 Never edit a decision in place to make the record consistent with the code. The inconsistency
 was the information.
+
+## Reusing a lesson without creating a mandate
+
+When the outcome would prevent a recurring decision error, add a short linked note to the existing
+record: the condition, choice, observed outcome and limits, and the changed constraint that would
+favor an alternative. If verification is still planned, keep the note as a hypothesis. Do not
+manufacture an outcome or require a separate lessons document for every entry.
+
+For example, a replay test that succeeds for one topic configuration supports that tested setup,
+not "always use this broker". Preserve its retention policy, workload and required window when
+reusing the evidence. A feature needing every historical update cannot inherit a result that only
+checked recovery of the latest value per key. The earlier choice remains historical evidence;
+the new feature must establish applicable constraints and authority independently, reusing any
+existing delegation that covers it. A successful implementation does not promote PROJECT_EXISTING
+to CORPORATE_MANDATED.
+
+## Primary references
+
+- [Michael Nygard, Documenting Architecture Decisions](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions) — original rationale for retaining context, forces, consequences and superseded decisions. The bounded reuse guidance above applies that rationale to feature evidence; it is not a required ADR template.
+- [AWS, ADR best practices](https://docs.aws.amazon.com/prescriptive-guidance/latest/architectural-decision-records/best-practices.html) — preserve decision history and address code that does not comply with an established decision.
+- [Reported decision loss through downstream summaries](https://github.com/mattpocock/skills/issues/341) — concrete user reports motivating the handoff comparison above; not a reproduced evaluation or proof that the procedure prevents every omission.
+- [Kafka 4.1 design](https://kafka.apache.org/41/design/design/) — retention, compaction and replay semantics underlying the illustrative cases; inspect the actual topic configuration and deployed version before using their evidence.

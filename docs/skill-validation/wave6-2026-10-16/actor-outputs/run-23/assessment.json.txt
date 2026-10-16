@@ -1,0 +1,18 @@
+{
+  "disposition": "violated",
+  "basis": "The accepted contract allows indefinite misses but every hit must be 42 without throwing. BestEffortMemo.find reads entry once, then invokes the safely initialized reader. ReaderFactory.create selects PublishedEntry::legacyValue, which reads ordinary legacy and then ordinary Payload.value. Concurrent installation has no happens-before edge to that path. A non-null entry may therefore expose legacy == null (NullPointerException), or legacy != null with value == 0. The final primary alias is never read on the effective path and does not protect this access. Initial Thread.start publication covers the memo and reader, not later entry installation.",
+  "requiredChange": "In ReaderFactory.create, select PublishedEntry::value instead of PublishedEntry::legacyValue. The existing value() method dereferences final primary and its pre-freeze initialized payload; the accepted no-escape/no-mutation assumptions support 42 for hits. Preserve the single local read of ordinary entry and the allowed-miss behavior. Proposal only; production files were not changed.",
+  "missingEvidence": [],
+  "checked": [
+    "Read the full accepted contract, review request, README, all three production Java sources, Smoke.java and check.mjs.",
+    "Read the complete local java-memory-model skill and both conditional references.",
+    "Consulted primary Java SE25 JLS 17.4.5 and 17.5.1 rules.",
+    "Verified SHA-256 equality for all eight supplied files between input/project and output/project.",
+    "Observed java and javac version 25.0.3; compiled with --release 25 and ran memo.Smoke: sequential-controls=2 PASS."
+  ],
+  "limits": [
+    "The violating outcomes are specification-permitted outcomes, not failures reproduced in this run.",
+    "Only the supplied sequential smoke was executed; no concurrency stress, jcstress, architecture comparison, static analyzer or corrected-copy control was run.",
+    "No production source, accepted contract, configuration or dependency was modified."
+  ]
+}

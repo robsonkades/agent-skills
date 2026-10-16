@@ -55,8 +55,8 @@ JDK 25 configs, `jdk.CompilerStatistics` is periodic and carries cumulative `com
 jcmd <pid> JFR.start name=warm duration=120s filename=warm.jfr
 # JFR.start returns asynchronously. Wait for recording completion before reading.
 # Bound the wait; verify the target-written artifact exists and is complete/readable.
-jfr print --events jdk.CompilerStatistics warm.jfr | grep -E 'startTime|compileCount'
-# delta per window: compiler activity; correlate with workload, queue and latency
+jfr print --events jdk.CompilerStatistics warm.jfr | grep -E 'startTime|compileCount|bailoutCount|totalTimeSpent'
+# deltas per window: successes, bailouts and elapsed work; correlate with queue/latency
 ```
 
 Use the timestamps of the samples that actually bound each delta, not the requested recording
@@ -71,12 +71,16 @@ target JVM's filesystem and transfer a completed file before running local tools
 
 Do **not** count `jdk.Compilation` events without inspecting recording settings. On the examined
 25.0.3 files, that event has a threshold—1000 ms in `default.jfc`, 100 ms in `profile.jfc`—so it records only compilations slower than that,
-and a 20-second recording of a JVM that compiled 1542 methods held zero of them (Temurin
-25.0.3). `jfr summary | grep -i compilation` therefore reports a JVM that never compiles.
+and a 20-second recording of a JVM that completed 1542 compilations held zero of them (Temurin
+25.0.3). Treating `jfr summary | grep -i compilation` as a count of all compilations would
+incorrectly suggest that this JVM never compiled anything.
 
-A plateau means no additional counted compilations during that window. Methods can still be
-below threshold, excluded, queued, or blocked by compiler/code-cache conditions. Pair it with
-the service criterion; a service whose warm-up traffic never touched an
+A `compileCount` plateau means no additional successful compilations were counted during that
+sample window. Bailouts can still consume compiler time; inspect `bailoutCount` and
+`totalTimeSpent` deltas before concluding that compilation work stopped. Methods can also be
+below threshold, excluded, queued, or blocked by compiler/code-cache conditions. See the tiered
+model for counter meanings and timer resolution. Pair these observations with the service
+criterion; a service whose warm-up traffic never touched an
 endpoint plateaus early and compiles that endpoint on the first real request.
 
 Do not use a generic “seconds to minutes” expectation as a timeout. Measure the service and retain

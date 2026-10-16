@@ -1,0 +1,98 @@
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\deoptimization/SKILL.md" "b/C:\\git\\agent-skills\\skills\\deoptimization/SKILL.md"
+index 41f9304..2271cc4 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\deoptimization/SKILL.md"
++++ "b/C:\\git\\agent-skills\\skills\\deoptimization/SKILL.md"
+@@ -44,9 +44,10 @@ the JVM takes longer to give up on a method whose underlying assumption keeps ch
+    `jdk.Deoptimization` (enabled in the baseline `default.jfc`; stacks enabled by `profile.jfc`
+    or explicit event settings) for
+    production, `-Xlog:deoptimization=debug` for a session. Both see **uncommon traps only**:
+-   a class-loading or `RedefineClasses` invalidation appears in neither. If that path matters,
++   a class-loading, mutable call-site target or `RedefineClasses` invalidation appears in neither.
++   If that path matters,
+    use existing evidence or collect `-Xlog:jit+compilation=debug` with
+-   `-Xlog:dependencies=debug` for class loading, or `-Xlog:redefine+class+nmethod=debug`
++   `-Xlog:dependencies=debug` for class loading or call-site relinking, or `-Xlog:redefine+class+nmethod=debug`
+    for redefinition scope, within the budget. See
+    `references/deopt-tooling.md`.
+ 3. **Group by method and bci, reason and action, over a stated window.** Preserve the compile id
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\deoptimization/references/deopt-tooling.md" "b/C:\\git\\agent-skills\\skills\\deoptimization/references/deopt-tooling.md"
+index 518fcd0..fe627ef 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\deoptimization/references/deopt-tooling.md"
++++ "b/C:\\git\\agent-skills\\skills\\deoptimization/references/deopt-tooling.md"
+@@ -9,14 +9,14 @@ illustrative snippet was executed. Check the exact deployed build and recording
+ | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+ | Continuous production monitoring, low overhead                  | JFR `jdk.Deoptimization` — on in `default.jfc`, with stack traces in `profile.jfc`          |
+ | Investigation session, one line per trap with `cid` and `bci`   | `-Xlog:deoptimization=debug`                                                                |
+-| Dependency invalidation from class loading                      | `-Xlog:jit+compilation=debug` (`marked for deoptimization`) plus `-Xlog:dependencies=debug` |
++| Class-loading or mutable call-site dependency invalidation      | `-Xlog:jit+compilation=debug` (`marked for deoptimization`) plus `-Xlog:dependencies=debug` |
+ | Class redefinition/retransformation invalidation scope          | `-Xlog:redefine+class+nmethod=debug` plus compilation and safepoint logs                    |
+ | Was the invalidation a safepoint or a handshake, and how long   | `-Xlog:handshake=info`, `-Xlog:safepoint=info`                                              |
+ | Frame reconstruction in detail, rematerialised objects          | `-XX:+UnlockDiagnosticVMOptions -XX:+TraceDeoptimization`, one-off only                     |
+ | Installed compiled versions and their states, without a restart | `jcmd <pid> Compiler.codelist`                                                              |
+ | Machine-readable trap history for JITWatch                      | `-XX:+UnlockDiagnosticVMOptions -XX:+LogCompilation`                                        |
+ 
+-The first two see **uncommon traps only**. A CHA invalidation or a class redefinition
++The first two see **uncommon traps only**. CHA invalidation, mutable call-site relinking or class redefinition
+ produces no `jdk.Deoptimization` event and no `-Xlog:deoptimization` line; a production
+ setup collecting only this JFR event misses the invalidation. Other enabled JFR event types
+ may still provide class-loading, safepoint or agent context.
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\deoptimization/references/production-patterns.md" "b/C:\\git\\agent-skills\\skills\\deoptimization/references/production-patterns.md"
+index 8c4dd90..8781978 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\deoptimization/references/production-patterns.md"
++++ "b/C:\\git\\agent-skills\\skills\\deoptimization/references/production-patterns.md"
+@@ -102,6 +102,33 @@ loop can give strategies separate sites, but a source-level helper is not necess
+ boundary: C2 can inline it again. Inspect the resulting inline shape and service cost before
+ keeping such a change; preserve required runtime switching and API contracts.
+ 
++### Mutable call-site relinking
++
++Follow the flag/router's factory and update path. If it uses `MutableCallSite`, HotSpot can
++optimise a known target under a `call_site_target_value` dependency. Changing that target with
++`setTarget` can invalidate dependent compiled versions without loading another class. This
++is not a receiver-class guard or an `unstable_if` trap; it need not converge like a boolean
++branch. The presence of `invokedynamic` alone does not establish which call-site kind or
++update mechanism is used.
++
++On the 25.0.3+9 baseline, use `dependencies=debug` with `jit+compilation=debug` to connect the
++failed `call_site_target_value`, call-site/target objects and affected compilation to the
++update path. Do not infer CHA from `marked for deoptimization` or rule out this path from
++an empty trap capture. In a disposable C2 probe with targets resolved before warm-up, four
++alternating target changes invalidated four `dispatch` compilations; setting the same
++`MethodHandle` object four times invalidated none. Both modes passed result checks and emitted
++no uncommon-trap lines. This establishes that mechanism on that build, not its service cost
++or that every `setTarget` call invalidates code: an affected compiled dependency must exist.
++
++Accept infrequent relinking when service criteria pass. If repeated relinking has a measured
++cost, inspect unnecessary target reconstruction/updates before changing compiler limits;
++preloading classes does not stabilise a target that continues to change. Preserve target
++behavior and the required update visibility: `MutableCallSite.setTarget` alone does not
++publish the new target to unrelated threads, so retain the required synchronization,
++including `syncAll` where used. The API suggests considering `VolatileCallSite` for frequent
++updates; compare its steady-state access and update costs under the required concurrency
++contract. Do not freeze a required runtime choice or remove synchronization to reduce events.
++
+ ## Act or accept
+ 
+ | Signal                                                        | Accept when                                                    | Act when                                                                                     |
+@@ -131,6 +158,8 @@ keeping such a change; preserve required runtime switching and API contracts.
+ 
+ - [JDK 25 HotSpot `deoptimization.cpp`](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/deoptimization.cpp)
+ - [JDK 25 HotSpot `dependencies.cpp`](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/code/dependencies.cpp)
++- [JDK 25.0.3 call-site target update](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/prims/methodHandles.cpp) and [dependency check](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/code/dependencies.cpp) — `MHN_setCallSiteTargetNormal`, `mark_dependent_nmethods` and `check_call_site_target_value`.
++- [JDK 25 `MutableCallSite` API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/invoke/MutableCallSite.html) — target visibility, `syncAll` and the frequent-update alternative.
+ - [JDK 25.0.3 redefinition invalidation](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/prims/jvmtiRedefineClasses.cpp) — `flush_dependent_code` selects scoped or broad invalidation.
+ - [JDK 25.0.3 compiled-code scan](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/code/codeCache.cpp) and [nmethod metadata](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/code/nmethod.cpp) — the old-method references that determine the affected set.
+ - [JDK 25 Instrumentation API](https://docs.oracle.com/en/java/javase/25/docs/api/java.instrument/java/lang/instrument/Instrumentation.html)
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\deoptimization/skill.yaml" "b/C:\\git\\agent-skills\\skills\\deoptimization/skill.yaml"
+index 48f4a66..bd84513 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\deoptimization/skill.yaml"
++++ "b/C:\\git\\agent-skills\\skills\\deoptimization/skill.yaml"
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: deoptimization
+-version: 2.1.4
++version: 2.1.5
+ description: >-
+   Deoptimisation and recompilation on HotSpot: uncommon traps and their reason codes, the
+   none / maybe_recompile / reinterpret / make_not_entrant / make_not_compilable actions,

@@ -1,0 +1,57 @@
+package client;
+import java.lang.invoke.CallSite;
+import java.lang.invoke.LambdaConversionException;
+import java.lang.invoke.LambdaMetafactory;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+import java.util.function.Supplier;
+import target.Foreign;
+
+public final class Main {
+    public static final class Local {
+        private static String secret() { return "local"; }
+    }
+
+    public static void main(String[] args) throws Throwable {
+        probe(Local.class, "local", true);
+        probe(Foreign.class, "foreign", false);
+    }
+
+    private static void probe(Class<?> type, String expected, boolean fullPrivilege) throws Throwable {
+        MethodHandles.Lookup access = MethodHandles.privateLookupIn(type, MethodHandles.lookup());
+        MethodHandle handle = access.findStatic(type, "secret", MethodType.methodType(String.class));
+        String actual = (String) handle.invokeExact();
+        check(expected.equals(actual), "handle result");
+        check(access.hasFullPrivilegeAccess() == fullPrivilege, "lookup privilege");
+        System.out.println(expected + " modes=" + access.lookupModes()
+                + " fullPrivilege=" + access.hasFullPrivilegeAccess() + " handle=" + actual);
+        try {
+            CallSite linked = LambdaMetafactory.metafactory(access, "get",
+                    MethodType.methodType(Supplier.class), MethodType.methodType(Object.class),
+                    handle, MethodType.methodType(String.class));
+            Supplier<?> supplier = (Supplier<?>) linked.getTarget().invokeExact();
+            check(fullPrivilege, "cross-module linkage must be rejected");
+            check(expected.equals(supplier.get()), "linked supplier");
+            System.out.println(expected + " linkage=PASS");
+        } catch (LambdaConversionException rejected) {
+            check(!fullPrivilege, "same-module linkage must succeed");
+            System.out.println(expected + " linkage=" + rejected);
+        }
+        Supplier<String> adapter = () -> {
+            try {
+                return (String) handle.invokeExact();
+            } catch (RuntimeException | Error e) {
+                throw e;
+            } catch (Throwable t) {
+                throw new IllegalStateException("target failed", t);
+            }
+        };
+        check(expected.equals(adapter.get()), "typed adapter");
+        System.out.println(expected + " typedAdapter=PASS");
+    }
+
+    private static void check(boolean condition, String label) {
+        if (!condition) throw new AssertionError(label);
+    }
+}

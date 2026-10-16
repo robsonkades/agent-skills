@@ -1,0 +1,19 @@
+
+
+An annotation processor threw an uncaught exception.
+Consult the following stack trace for details.
+javax.lang.model.type.MirroredTypesException: Attempt to access Class objects for TypeMirrors [example.LocalCodec, example.DefaultCodec]
+	at jdk.compiler/com.sun.tools.javac.model.AnnotationProxyMaker$MirroredTypesExceptionProxy.generateException(AnnotationProxyMaker.java:355)
+	at java.base/sun.reflect.annotation.AnnotationInvocationHandler.invoke(AnnotationInvocationHandler.java:87)
+	at jdk.proxy3/jdk.proxy3.$Proxy5.alternatives(Unknown Source)
+	at probe.BadArrayProcessor.process(BadArrayProcessor.java:13)
+	at jdk.compiler/com.sun.tools.javac.processing.JavacProcessingEnvironment.callProcessor(JavacProcessingEnvironment.java:956)
+	at jdk.compiler/com.sun.tools.javac.processing.JavacProcessingEnvironment.discoverAndRunProcs(JavacProcessingEnvironment.java:872)
+	at jdk.compiler/com.sun.tools.javac.processing.JavacProcessingEnvironment$Round.run(JavacProcessingEnvironment.java:1188)
+	at jdk.compiler/com.sun.tools.javac.processing.JavacProcessingEnvironment.doProcessing(JavacProcessingEnvironment.java:1301)
+	at jdk.compiler/com.sun.tools.javac.main.JavaCompiler.processAnnotations(JavaCompiler.java:1262)
+	at jdk.compiler/com.sun.tools.javac.main.JavaCompiler.compile(JavaCompiler.java:938)
+	at jdk.compiler/com.sun.tools.javac.main.Main.compile(Main.java:319)
+	at jdk.compiler/com.sun.tools.javac.main.Main.compile(Main.java:178)
+	at jdk.compiler/com.sun.tools.javac.Main.compile(Main.java:66)
+	at jdk.compiler/com.sun.tools.javac.Main.main(Main.java:52)

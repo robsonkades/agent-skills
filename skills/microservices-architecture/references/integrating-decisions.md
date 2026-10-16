@@ -17,6 +17,7 @@ show whether an edge carries stale data, delegated authority or an uncertain out
 | A cached cross-service view authorizes an irreversible operation               | Allowed staleness/revocation, authoritative check at the effect                          | Separate display from authorization; protect the effect or obtain an explicit change to its contract.       |
 | Independent deployments, but old consumers require the previous payload/schema | Consumer contracts, deployed versions, migration sequence                                | Establish compatible coexistence or record the coordinated release dependency.                              |
 | Caller can stop waiting, therefore retry is harmless                           | Remote commit point, retry identity and result lookup                                    | Resolve unknown outcome and duplicate effects; timeout alone is no evidence of non-execution.               |
+| Each hop has bounded waits/retries, therefore the request is within budget     | Sequential/parallel path, deadline propagation, gateway/client/SDK attempts and backoff  | Reconcile the caller's total budget and downstream attempt load; local limits do not establish either.      |
 | A local commit guarantees a required downstream effect will be attempted       | Persisted intent or reconstructible work, dispatch path and crash recovery               | Close the commit-to-dispatch gap and identify who recovers stranded work; deduplication alone cannot do so. |
 | Gateway authenticates traffic, but jobs or services bypass the edge            | All entry paths, identity provenance and operation authorization                         | Enforce the operation's policy on each permitted path; do not trust a header merely because it is present.  |
 | Separate processes, therefore failures are isolated                            | Shared database/connection limits, identity/discovery dependencies and failure injection | State the demonstrated failure boundary and unresolved common failure paths.                                |
@@ -26,6 +27,18 @@ can change each, and a discriminating check. An absent measurement leaves a clai
 it does not prove that the proposed design failed. Resolve the binding requirement first,
 then adjust its dependent choices. Do not add a resilience mechanism to hide an unresolved
 business invariant.
+
+For a time/load conflict, send the traced path and remaining-budget behavior to
+`timeouts-and-deadlines`, and retry locations, total attempts (including the first) and
+failure eligibility to `retries-and-backoff`. A fresh timeout at each hop is not a propagated
+budget; independent nested retry loops can multiply attempts. Name the owner of the composed
+policy, then count downstream calls and residual work for one logical request under the
+selected failure fixture. Preserve existing policies when they already satisfy that contract.
+The [gRPC deadline guide](https://grpc.io/docs/guides/deadlines/) demonstrates elapsed-time
+deduction and implementation-specific propagation; verify the actual transport instead of
+assuming this behavior. [Amazon's retry analysis](https://aws.amazon.com/builders-library/timeouts-retries-and-backoff-with-jitter/)
+explains layered amplification and the trade-off of choosing a retry location. Neither source
+requires adopting its platform or adding retries to every hop.
 
 ## Worked constraint change: invoice issuance
 

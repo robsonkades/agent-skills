@@ -43,8 +43,19 @@ value just because the call crosses HTTP. Establish what bounds actually hold; a
 provider's size promise is an assumption, not a locally enforced cap.
 
 An untrusted peer, large export or explicit memory limit changes that choice. Prefer
-an existing enforced codec/transport limit. When the selected imperative path lacks the
-required cap, finite bounded extraction inside `exchange` is one conditional option:
+an existing enforced codec/transport limit. Locate the first aggregation step before
+placing a cap: factory wrappers and body-logging interceptors can consume the response
+before application extraction. `BufferingClientHttpRequestFactory`, or Framework 7's
+`RestClient.Builder.bufferContent(...)`, can enable whole-response buffering. In 7.0.9,
+the [buffering response wrapper](https://github.com/spring-projects/spring-framework/blob/v7.0.9/spring-web/src/main/java/org/springframework/http/client/BufferingClientHttpResponseWrapper.java)
+copies the underlying body when `getBody()` first runs, before returning the stream.
+A later `readNBytes(limit + 1)` can reject excess without preventing that allocation.
+Restrict buffering for the affected operation, replace unnecessary full-body logging,
+or enforce the required limit before that aggregation; preserve unrelated builder,
+TLS and observation configuration. Do not claim a cap from rejection alone.
+
+When no earlier layer performs unbounded aggregation and the selected imperative path
+lacks the required cap, finite bounded extraction inside `exchange` is one option:
 check status before copying diagnostic bodies; reject a declared excessive length;
 read at most `limit + 1` bytes and reject excess before decoding. Use an appropriate
 representation/decoder rather than turning this into a generic text/JSON client.

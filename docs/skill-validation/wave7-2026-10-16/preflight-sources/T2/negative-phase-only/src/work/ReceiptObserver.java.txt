@@ -1,0 +1,1 @@
+package work; public interface ReceiptObserver {void beforeWrite(String bookingId);}

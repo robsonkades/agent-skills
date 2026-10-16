@@ -1,0 +1,22 @@
+import java.nio.file.Files;
+import java.util.Arrays;
+
+public final class SequentialTest {
+    static void check(boolean value, String message) {
+        if (!value) throw new AssertionError(message);
+    }
+
+    public static void main(String[] args) throws Exception {
+        var root = Files.createTempDirectory("bridge-sequential-");
+        var fileStore = new DirectoryStore(root);
+        for (Store store : new Store[] {fileStore, new MemoryStore()}) {
+            var publisher = new ReportPublisher(store);
+            check(publisher.publish("first", new Report(7, Report.Format.CSV)), "first publish");
+            check(!publisher.publish("first", new Report(9, Report.Format.JSON)), "duplicate");
+        }
+        check(Arrays.equals(Files.readAllBytes(fileStore.path("first")),
+                new Report(7, Report.Format.CSV).render()), "unchanged first value");
+        System.out.println("PASS sequential file + memory; 5 assertions");
+        System.out.println("retained=" + root);
+    }
+}

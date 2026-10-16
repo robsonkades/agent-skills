@@ -42,6 +42,24 @@ sizes, generated-ID queries and database/driver round trips using suitable instr
 SQL log lines and logical DML/entity-insert counts may still be 1,000 with working batching;
 prepared-statement counts are not batch counts either. Check driver rewrite behavior separately.
 
+### Follow the application's write entry point
+
+When Spring Data JPA drives the writes, inspect its resolved repository implementation and
+entity-state detection. In 3.4.13, `saveAll()` calls `save()` for each entity; `save()` chooses
+`persist()` or `merge()` using `isNew()`. A non-null assigned ID without a usable non-primitive
+version or custom new-state contract can route a genuinely new entity through `merge()`.
+Hibernate 6.6 can then load state before inserting; JDBC insert batching may work while these
+reads grow with the input. Trace calls and SQL rather than treating `saveAll()` as a set-based
+insert or proof of batching. Preserve the project's managed framework/provider versions.
+
+For a creation-only boundary, explicit `persist()` in the owning transaction may fit. For a
+repository path, use accurate new-state detection, such as an existing nullable version or an
+intentional `Persistable` lifecycle. Do not mark every object new or reset existing versions:
+a newly constructed Java object can represent an existing row. Verify genuinely new assigned-ID
+entities, reloaded/detached entities and repeated/conflicting IDs against the intended contract.
+Count any pre-insert reads separately from batch execution, and preserve update, rejection and
+optimistic-lock behavior rather than trading correctness for fewer statements.
+
 ### Versioned batches must preserve conflict detection
 
 For entities with `@Version`, inspect the target driver's per-statement batch update counts.
@@ -166,7 +184,10 @@ For a slow individual statement, hand off SQL, bindings, rows and database timin
 Sources: [Hibernate 6.6 batching](https://docs.hibernate.org/orm/6.6/userguide/html_single/#batch),
 [identifier optimizers](https://docs.hibernate.org/orm/6.6/userguide/html_single/#identifiers-optimizers),
 [6.6.33 bulk cache cleanup](https://github.com/hibernate/hibernate-orm/blob/6.6.33/hibernate-core/src/main/java/org/hibernate/action/internal/BulkOperationCleanupAction.java)
-and [Jakarta Persistence 3.1 bulk update/delete and context contracts](https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1).
+and [Jakarta Persistence 3.1 bulk update/delete and context contracts](https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1.html).
 For versioned batches, see the [6.6.33 batching contract](https://github.com/hibernate/hibernate-orm/blob/6.6.33/documentation/src/main/asciidoc/userguide/chapters/batch/Batching.adoc),
 [batch-setting defaults](https://github.com/hibernate/hibernate-orm/blob/6.6.33/hibernate-core/src/main/java/org/hibernate/cfg/BatchSettings.java)
 and [row-count checking](https://github.com/hibernate/hibernate-orm/blob/6.6.33/hibernate-core/src/main/java/org/hibernate/jdbc/Expectations.java).
+For repository write paths, see [Spring Data JPA 3.4.13 new-state detection](https://github.com/spring-projects/spring-data-jpa/blob/3.4.13/src/main/antora/modules/ROOT/pages/jpa/entity-persistence.adoc),
+[`save` and `saveAll`](https://github.com/spring-projects/spring-data-jpa/blob/3.4.13/spring-data-jpa/src/main/java/org/springframework/data/jpa/repository/support/SimpleJpaRepository.java)
+and [Hibernate 6.6.33 merge handling](https://github.com/hibernate/hibernate-orm/blob/6.6.33/hibernate-core/src/main/java/org/hibernate/event/internal/DefaultMergeEventListener.java).

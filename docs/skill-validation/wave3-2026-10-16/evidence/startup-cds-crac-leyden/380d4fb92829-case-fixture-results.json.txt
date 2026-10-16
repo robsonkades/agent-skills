@@ -1,0 +1,16 @@
+{
+  "status": "PASS",
+  "cases": [
+    {
+      "id": "ST-C1",
+      "input": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\startup-cds-crac-leyden\\cases\\jdk25\\input.json"
+    },
+    {
+      "id": "ST-C2",
+      "input": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\startup-cds-crac-leyden\\cases\\jdk28ea\\input.json"
+    }
+  ],
+  "decisiveDifference": "selectedJavaRelease only; all other inventory, request, proposal and source content is identical",
+  "criteria": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\startup-cds-crac-leyden\\case-criteria.json",
+  "agentEvaluationsExecuted": 0
+}

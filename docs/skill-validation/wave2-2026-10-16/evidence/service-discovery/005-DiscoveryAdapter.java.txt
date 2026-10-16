@@ -1,0 +1,36 @@
+import java.io.IOException;
+import java.net.URI;
+import java.time.Duration;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
+
+public final class DiscoveryAdapter {
+    static final String EPOCH = "catalog/prod/epoch-1";
+    static final URI A = URI.create("https://a.catalog.internal.example:8443");
+    static final URI B = URI.create("https://b.catalog.internal.example:8443");
+    enum Origin { REGISTRY_READ, PROVIDER_CACHE }
+    record Reply(long revision, List<URI> endpoints, Origin origin) {}
+    @FunctionalInterface
+    interface Provider { Reply fetch() throws IOException; }
+
+    private final Provider provider;
+    private final SnapshotResolverExample.Resolver cache;
+
+    DiscoveryAdapter(Provider provider, AtomicLong nanos) {
+        this.provider = provider;
+        this.cache = new SnapshotResolverExample.Resolver(
+                EPOCH, Duration.ofSeconds(10), Duration.ofSeconds(3),
+                Duration.ofSeconds(5), 2, nanos::get, Set.of(A, B)::contains);
+    }
+
+    void refresh() throws IOException {
+        Reply reply = provider.fetch();
+        cache.accept(EPOCH, reply.revision(), reply.endpoints(), true);
+    }
+
+    SnapshotResolverExample.View endpoints() {
+        return cache.resolve(SnapshotResolverExample.Policy.BOUNDED_STALE);
+    }
+}
+

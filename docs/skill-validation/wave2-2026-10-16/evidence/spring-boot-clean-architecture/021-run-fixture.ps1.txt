@@ -1,0 +1,20 @@
+$ErrorActionPreference = 'Stop'
+$validationRoot = $PSScriptRoot
+$fixtureRoot = Join-Path $validationRoot 'fixture'
+$dependencies = (Get-Content -LiteralPath (Join-Path $validationRoot 'classpath-jars.txt')) -join [IO.Path]::PathSeparator
+$mainOutput = Join-Path $fixtureRoot 'target/classes'
+$testOutput = Join-Path $fixtureRoot 'target/test-classes'
+$runnerOutput = Join-Path $validationRoot 'runner-classes'
+$mainSources = @(Get-ChildItem -LiteralPath (Join-Path $fixtureRoot 'src/main/java') -Recurse -File -Filter '*.java' | ForEach-Object FullName)
+$testSources = @(Get-ChildItem -LiteralPath (Join-Path $fixtureRoot 'src/test/java') -Recurse -File -Filter '*.java' | ForEach-Object FullName)
+& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' --release 25 -cp $dependencies -d $mainOutput @mainSources
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+$testClasspath = $mainOutput + [IO.Path]::PathSeparator + $dependencies
+& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' --release 25 -cp $testClasspath -d $testOutput @testSources
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' --release 25 -cp $dependencies -d $runnerOutput (Join-Path $validationRoot 'FixtureTestLauncher.java')
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+$runtimeClasspath = @($runnerOutput, $mainOutput, $testOutput, $dependencies) -join [IO.Path]::PathSeparator
+& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' ('-Djava.io.tmpdir=' + (Join-Path $validationRoot 'junit-temp')) -cp $runtimeClasspath FixtureTestLauncher
+exit $LASTEXITCODE
+

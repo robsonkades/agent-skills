@@ -1,0 +1,87 @@
+{
+  "skill": "query-objects-and-specifications",
+  "version": "1.3.5",
+  "baselineVersion": "1.3.4",
+  "fileCount": 4,
+  "issues": [],
+  "links": [
+    {
+      "from": "SKILL.md",
+      "target": "references/composition-styles.md",
+      "exists": true
+    },
+    {
+      "from": "SKILL.md",
+      "target": "references/query-performance.md",
+      "exists": true
+    }
+  ],
+  "hashes": [
+    {
+      "path": "skills/query-objects-and-specifications/SKILL.md",
+      "sha256": "440489a5ae8a97234d5dc60f4c6103948596c3b4617c678316bc5dd9a3a88c16",
+      "baselineSha256": "440489a5ae8a97234d5dc60f4c6103948596c3b4617c678316bc5dd9a3a88c16",
+      "snapshotSha256": "440489a5ae8a97234d5dc60f4c6103948596c3b4617c678316bc5dd9a3a88c16",
+      "snapshotMatchesBaseline": true,
+      "unchangedFromAssignment": true
+    },
+    {
+      "path": "skills/query-objects-and-specifications/references/composition-styles.md",
+      "sha256": "5b976a84678baff3ed38b5280c5ad3a0659ad463ef514a95cfcd9dfe6d3c36c1",
+      "baselineSha256": "a66b56d621c9234930cd65c719c4451fd9556262d1317ddfbbeb085adcf43255",
+      "snapshotSha256": "a66b56d621c9234930cd65c719c4451fd9556262d1317ddfbbeb085adcf43255",
+      "snapshotMatchesBaseline": true,
+      "unchangedFromAssignment": false
+    },
+    {
+      "path": "skills/query-objects-and-specifications/references/query-performance.md",
+      "sha256": "f705ccd66daebf75b619f3f01952049ab8aa69e59e9e720dba1aee76f578516c",
+      "baselineSha256": "f705ccd66daebf75b619f3f01952049ab8aa69e59e9e720dba1aee76f578516c",
+      "snapshotSha256": "f705ccd66daebf75b619f3f01952049ab8aa69e59e9e720dba1aee76f578516c",
+      "snapshotMatchesBaseline": true,
+      "unchangedFromAssignment": true
+    },
+    {
+      "path": "skills/query-objects-and-specifications/skill.yaml",
+      "sha256": "d475684de0e086af580edbf71feb2224d14065134056e6f5ff9f25593a57c503",
+      "baselineSha256": "4a4acd0aa5bec3f10a3fc26bbe070f4b77fe4841b4eb70404bd53f593ca0d1d9",
+      "snapshotSha256": "4a4acd0aa5bec3f10a3fc26bbe070f4b77fe4841b4eb70404bd53f593ca0d1d9",
+      "snapshotMatchesBaseline": true,
+      "unchangedFromAssignment": false
+    }
+  ],
+  "examples": [
+    {
+      "path": "SKILL.md",
+      "languages": [
+        "text",
+        "text"
+      ],
+      "count": 2,
+      "unchanged": true
+    },
+    {
+      "path": "references/composition-styles.md",
+      "languages": [
+        "java",
+        "java",
+        "java",
+        "java",
+        "java",
+        "java"
+      ],
+      "count": 6,
+      "unchanged": true
+    },
+    {
+      "path": "references/query-performance.md",
+      "languages": [
+        "java",
+        "java",
+        "sql"
+      ],
+      "count": 3,
+      "unchanged": true
+    }
+  ]
+}

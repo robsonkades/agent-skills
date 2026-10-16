@@ -1,0 +1,612 @@
+{
+  "schemaVersion": 1,
+  "phase": "independent-masked-output-proof-review-batch1",
+  "reviewer": "/root/wave6_review",
+  "skill": "java-memory-model",
+  "input": {
+    "path": "C:/Users/robso/AppData/Local/Temp/skills-wave6-0tHxwh/review/masked-outputs-batch1.json",
+    "sha256": "594ac6f9aba7f603adf189cc87ea4ecaaca4b877cd25a20a295e504a5cf89a0a",
+    "samples": 18
+  },
+  "criteria": {
+    "path": "C:/git/agent-skills/docs/skill-validation/wave6-2026-10-16/criteria.json",
+    "sha256": "bdb8083f28085d0bfb6167f0769d6afed767b29e673618292c5493c3dd775218",
+    "frozen": true
+  },
+  "scope": {
+    "evaluated": "Semantica de REVIEW e assessment de cada amostra, confrontada com os criterios congelados e fixtures autorizados.",
+    "masking": "Parcial: condicao e repeticao foram omitidas, mas algumas respostas mencionam leitura da skill. Nenhuma condicao foi inferida ou atribuida.",
+    "C3": "Suporte, coerencia e proporcionalidade das alegacoes textuais. Pass nao certifica que comandos, consultas ou comparacoes de hashes foram realmente executados.",
+    "C4": "Preservacao do contrato e adequacao das propostas no texto; integridade real dos arquivos permanece sujeita a auditoria do coordenador.",
+    "executionClaimsIndependentlyVerified": false,
+    "artifactPreservationIndependentlyVerified": false,
+    "actorOrCoordinatorGradingFilesRead": false,
+    "calibrationExpectedRead": false,
+    "secondBatchSought": false,
+    "skillModified": false,
+    "actualActorRunsPerformedByReviewer": 0
+  },
+  "entries": [
+    {
+      "sampleId": "1c535a7a8a",
+      "caseId": "H1",
+      "grades": {
+        "C1": {
+          "grade": "pass",
+          "reason": "Aceita o contrato limitado e distingue volatile opcional de reparo obrigatorio.",
+          "source": "review",
+          "excerpt": "O comentário que exige `volatile` apenas por sua ausência não demonstra uma falha"
+        },
+        "C2": {
+          "grade": "pass",
+          "reason": "Combina releitura sob o mesmo monitor, retorno da referencia local e protecao do estado alcançado por record final.",
+          "source": "review",
+          "excerpt": "Se a leitura vê `null`, inclusive um valor desatualizado, a chamada adquire `lock` e relê `current`."
+        },
+        "C3": {
+          "grade": "pass",
+          "reason": "A prova depende das premissas e do JMM; o smoke sequencial nao e apresentado como prova de todas as execucoes.",
+          "source": "review",
+          "excerpt": "o teste é sequencial; não executei stress concorrente, benchmarks ou verificador formal."
+        },
+        "C4": {
+          "grade": "pass",
+          "reason": "Preserva a implementacao e o contrato sem generalizar DCL comum para recursos mutaveis.",
+          "source": "review",
+          "excerpt": "Acrescentar `volatile` poderia ser uma preferência de manutenção; não é reparo obrigatório deste contrato."
+        }
+      },
+      "materialFailures": []
+    },
+    {
+      "sampleId": "456348febf",
+      "caseId": "H3",
+      "grades": {
+        "C1": {
+          "grade": "pass",
+          "reason": "Rejeita a garantia universal e deixa o comportamento do provider ausente sem conclusao, sem inventar falha de producao.",
+          "source": "review",
+          "excerpt": "No production failure was observed"
+        },
+        "C2": {
+          "grade": "pass",
+          "reason": "Identifica o elo produtor-callback ausente e o alcance real da publicacao volatile posterior.",
+          "source": "review",
+          "excerpt": "It does not create a missing upstream edge"
+        },
+        "C3": {
+          "grade": "pass",
+          "reason": "Delimita o smoke sincrono e nao o extrapola para a integracao desconhecida.",
+          "source": "review",
+          "excerpt": "Its initialization/read ordering is established even without testing cross-thread visibility."
+        },
+        "C4": {
+          "grade": "pass",
+          "reason": "Pede contrato de memoria do provider e evidencia de conformidade, permitindo manter o bridge quando esse elo existir.",
+          "source": "review",
+          "excerpt": "The existing bridge then needs no change."
+        }
+      },
+      "materialFailures": []
+    },
+    {
+      "sampleId": "4b154f9b9b",
+      "caseId": "H1",
+      "grades": {
+        "C1": {
+          "grade": "pass",
+          "reason": "Decide supported e nao transforma ausencia de volatile em violacao deste contrato.",
+          "source": "review",
+          "excerpt": "o comentário não demonstra uma correção obrigatória"
+        },
+        "C2": {
+          "grade": "pass",
+          "reason": "A prova identifica local capturado, rechecagem sincronizada e caminho record final para limit; nao inventa hb geral.",
+          "source": "review",
+          "excerpt": "O efeito especial em `r2` não cria uma publicação happens-before genérica."
+        },
+        "C3": {
+          "grade": "pass",
+          "reason": "Distingue compilacao e smoke relatados da justificativa normativa de concorrencia.",
+          "source": "review",
+          "excerpt": "o smoke é sequencial, não uma prova concorrente."
+        },
+        "C4": {
+          "grade": "pass",
+          "reason": "Mantem comportamento adequado e classifica eventual volatile como escolha de manutencao.",
+          "source": "review",
+          "excerpt": "Isso é uma preferência de manutenção sob este contrato, não um reparo exigido."
+        }
+      },
+      "materialFailures": []
+    },
+    {
+      "sampleId": "69596a442b",
+      "caseId": "D1",
+      "grades": {
+        "C1": {
+          "grade": "pass",
+          "reason": "Aprova misses permitidos e hits protegidos pelo caminho final efetivo, sem exigir publicacao mais forte.",
+          "source": "review",
+          "excerpt": "O lookup atende ao contrato aceito"
+        },
+        "C2": {
+          "grade": "pass",
+          "reason": "Segue ReaderFactory ate primary.value e separa o alias ordinario inativo da cadeia de desreferencia protegida.",
+          "source": "review",
+          "excerpt": "O método `legacyValue()` e o campo não final `legacy` não integram esse caminho."
+        },
+        "C3": {
+          "grade": "pass",
+          "reason": "A compilacao/smoke relatados sao controles sequenciais; a conclusao concorrente recebe prova separada.",
+          "source": "review",
+          "excerpt": "Isso verifica os controles sequenciais, não todos os escalonamentos."
+        },
+        "C4": {
+          "grade": "pass",
+          "reason": "Preserva o contrato de instalacao unica de 42, sem reabrir valores de entrada ou exigir freshness.",
+          "source": "review",
+          "excerpt": "A assinatura `install(int)` aceitar outros argumentos não é violação"
+        }
+      },
+      "materialFailures": []
+    },
+    {
+      "sampleId": "6c11f6c367",
+      "caseId": "H3",
+      "grades": {
+        "C1": {
+          "grade": "pass",
+          "reason": "Mantem unresolved para producao e recusa inferir defeito observado a partir de uma lacuna documental.",
+          "source": "assessment",
+          "excerpt": "A ausência de prova não demonstra falha de produção."
+        },
+        "C2": {
+          "grade": "pass",
+          "reason": "Volatile publica o que ja chega ordenado ao callback; nao fornece retroativamente o handoff do produtor.",
+          "source": "review",
+          "excerpt": "republicar uma referência por volatile não ordena retroativamente a escrita de outra thread"
+        },
+        "C3": {
+          "grade": "pass",
+          "reason": "A possibilidade de zero e condicional; o smoke sincrono e separado do provider ausente.",
+          "source": "review",
+          "excerpt": "Isso é uma possibilidade condicional, não um resultado observado nem uma descrição do provedor ausente."
+        },
+        "C4": {
+          "grade": "pass",
+          "reason": "Solicita evidencia discriminante do caminho real, sem mudar arbitrariamente API, locks ou toolchain.",
+          "source": "review",
+          "excerpt": "A menor evidência suficiente é o caminho real de produção, com identidade das threads e operações"
+        }
+      },
+      "materialFailures": []
+    },
+    {
+      "sampleId": "6d15ea4390",
+      "caseId": "D1",
+      "grades": {
+        "C1": {
+          "grade": "pass",
+          "reason": "Aprova o contrato concreto e nao exige reparo para a referencia externa racy quando misses sao permitidos.",
+          "source": "review",
+          "excerpt": "O contrato aceito está sustentado; nenhuma correção é necessária."
+        },
+        "C2": {
+          "grade": "pass",
+          "reason": "Distingue leitura efetiva por primary final de um alias ordinario que nao recebe automaticamente essa protecao.",
+          "source": "review",
+          "excerpt": "o alias não recebe automaticamente a proteção de `primary`."
+        },
+        "C3": {
+          "grade": "pass",
+          "reason": "O texto nao confunde os dois controles sequenciais com verificacao universal de concorrencia.",
+          "source": "review",
+          "excerpt": "O smoke verifica apenas dois controles sequenciais; não prova concorrência."
+        },
+        "C4": {
+          "grade": "pass",
+          "reason": "Preserva misses, instalacao unica e o leitor fixado pelo contrato, sem adicionar exigencias.",
+          "source": "assessment",
+          "excerpt": "No requirement for eventual hit, replacement updates, or callers selecting legacyValue was introduced."
+        }
+      },
+      "materialFailures": []
+    },
+    {
+      "sampleId": "76bcdc50ee",
+      "caseId": "H2",
+      "grades": {
+        "C1": {
+          "grade": "pass",
+          "reason": "Identifica a classificacao DONE antes de detectar termino, preservando a necessidade de espera limitada.",
+          "source": "review",
+          "excerpt": "`join(2)` pode devolver o controle por timeout, mas `collect()` sempre lê `result` e anuncia `DONE`"
+        },
+        "C2": {
+          "grade": "pass",
+          "reason": "Vincula leitura ordinaria do resultado a deteccao de termino do mesmo worker iniciado, nao ao mero timeout.",
+          "source": "review",
+          "excerpt": "A prova é: escrita `result=83` → ordem de programa → ação final do worker → synchronizes-with → detecção de término → ordem de programa → leitura de `result`."
+        },
+        "C3": {
+          "grade": "pass",
+          "reason": "Interpreta corretamente DONE:0 com gate fechado como trabalho nao realizado, sem inventar observacao de stale read.",
+          "source": "review",
+          "excerpt": "o zero representa trabalho ainda não executado, e não demonstra leitura obsoleta de uma escrita já concluída."
+        },
+        "C4": {
+          "grade": "pass",
+          "reason": "Propoe PENDING enquanto vivo e leitura apos termino, sem espera ilimitada nem redesign de cancelamento.",
+          "source": "review",
+          "excerpt": "O retorno `PENDING` evita a leitura durante a execução, preservando a espera limitada."
+        }
+      },
+      "materialFailures": []
+    },
+    {
+      "sampleId": "87d18b02f2",
+      "caseId": "H3",
+      "grades": {
+        "C1": {
+          "grade": "pass",
+          "reason": "Recusa tanto aprovar o provider ausente quanto afirmar falha real a partir da garantia incompleta.",
+          "source": "review",
+          "excerpt": "tampouco foi demonstrado defeito no provider implantado ou observado resultado incorreto"
+        },
+        "C2": {
+          "grade": "pass",
+          "reason": "Separa elo inicial desconhecido e relay volatile; nao atribui publicacao retroativa ou final-field ao campo comum.",
+          "source": "review",
+          "excerpt": "A aquisição de uma referência por uma corrida seguida de publicação volatile não cria retroativamente essa aresta."
+        },
+        "C3": {
+          "grade": "pass",
+          "reason": "Rotula o cenario incorreto como hipotese, nao como reproducao ou fato sobre a integracao.",
+          "source": "review",
+          "excerpt": "Esse cenário seria inaceitável pelo contrato; não foi atribuído ao provider real nem reproduzido."
+        },
+        "C4": {
+          "grade": "pass",
+          "reason": "Pede evidencia do handoff em vez de impor alteracoes locais que nao resolvem a lacuna.",
+          "source": "review",
+          "excerpt": "Não se justifica mudar a API de `Snapshot`, adicionar locks ao bridge"
+        }
+      },
+      "materialFailures": []
+    },
+    {
+      "sampleId": "8c2f350d28",
+      "caseId": "D2",
+      "grades": {
+        "C1": {
+          "grade": "pass",
+          "reason": "Decide violated pela possibilidade permitida de NPE/zero no caminho real, sem exigir reproducao empirica.",
+          "source": "review",
+          "excerpt": "These are specification-permitted failures, not failures reproduced by the sequential smoke."
+        },
+        "C2": {
+          "grade": "pass",
+          "reason": "Segue legacyValue e explica por que primary inativo e reader final nao publicam esse argumento posterior.",
+          "source": "review",
+          "excerpt": "The final `reader` reference does not publish subsequently supplied callback arguments."
+        },
+        "C3": {
+          "grade": "pass",
+          "reason": "Separa a lacuna demonstrada pela especificacao dos controles sequenciais relatados.",
+          "source": "review",
+          "excerpt": "The smoke establishes its two sequential controls only."
+        },
+        "C4": {
+          "grade": "pass",
+          "reason": "Selecionar o acesso final existente e um reparo localizado que conserva misses e captura local.",
+          "source": "review",
+          "excerpt": "The focused proposed correction is to return `PublishedEntry::value`"
+        }
+      },
+      "materialFailures": []
+    },
+    {
+      "sampleId": "98eb56e665",
+      "caseId": "H4",
+      "grades": {
+        "C1": {
+          "grade": "pass",
+          "reason": "Reconhece violacao do snapshot pelo alias retido, demonstravel sequencialmente.",
+          "source": "review",
+          "excerpt": "O contrato está **violado**. A aprovação proposta confunde visibilidade do estado inicial com imutabilidade do conteúdo."
+        },
+        "C2": {
+          "grade": "pass",
+          "reason": "Distingue freeze da referencia e estado inicial de mutacoes posteriores dos elementos pelo produtor.",
+          "source": "review",
+          "excerpt": "O campo privado não elimina o alias externo, e `final` não torna os elementos finais."
+        },
+        "C3": {
+          "grade": "pass",
+          "reason": "Distingue controles relatados, candidato isolado e producao; nao atribui testes concorrentes ao smoke sequencial.",
+          "source": "review",
+          "excerpt": "A variante é apenas um controle em `output/checks/candidate/`; não foi implementada em produção."
+        },
+        "C4": {
+          "grade": "pass",
+          "reason": "Clone do int[] durante construcao preserva a captura, validacao, aritmetica e direito de reciclagem apos retorno.",
+          "source": "review",
+          "excerpt": "preserva a API, a soma de `int`, as rejeições e a propriedade do produtor"
+        }
+      },
+      "materialFailures": [],
+      "auditNotes": [
+        "Os checks adicionais e o candidato em output/checks sao alegacoes textualmente coerentes e permitidas; execucao e local real das escritas nao foram auditados pelo revisor."
+      ]
+    },
+    {
+      "sampleId": "9917701f45",
+      "caseId": "D2",
+      "grades": {
+        "C1": {
+          "grade": "pass",
+          "reason": "Declara violacao pelo alias ordinario e mantem separados resultados permitidos e resultados observados.",
+          "source": "review",
+          "excerpt": "A implementação admite uma leitura presente incorreta e uma exceção no caminho do hit."
+        },
+        "C2": {
+          "grade": "pass",
+          "reason": "Reconhece o caminho legacy real, o limite do final primary nao lido e o fato de reader anteceder a instalacao.",
+          "source": "review",
+          "excerpt": "O campo final `reader` tampouco congela o argumento construído posteriormente."
+        },
+        "C3": {
+          "grade": "pass",
+          "reason": "Os defaults legais sao a base do contraexemplo; o texto nao alega que o smoke sequencial reproduziu a corrida.",
+          "source": "review",
+          "excerpt": "não reproduziu a falha concorrente"
+        },
+        "C4": {
+          "grade": "pass",
+          "reason": "Propoe somente selecionar value/primary, mantendo os misses aceitos e sem exigir atualizacao eventual.",
+          "source": "review",
+          "excerpt": "Não é necessário exigir eventual hit"
+        }
+      },
+      "materialFailures": []
+    },
+    {
+      "sampleId": "a4f1f9b141",
+      "caseId": "H2",
+      "grades": {
+        "C1": {
+          "grade": "pass",
+          "reason": "Identifica corretamente timeout seguido de DONE incondicional como a violacao.",
+          "source": "review",
+          "excerpt": "`join(2)` pode expirar com o worker vivo, mas `collect()` sempre lê `result` e anuncia `DONE`."
+        },
+        "C2": {
+          "grade": "pass",
+          "reason": "A publicacao inversa depende da deteccao de termino; o monitoramento proposto e do worker correto ja iniciado.",
+          "source": "review",
+          "excerpt": "a última ação do worker sincroniza com essa detecção."
+        },
+        "C3": {
+          "grade": "pass",
+          "reason": "O resultado impresso pelo smoke revela a violacao mesmo com exit zero; proposta e execucao permanecem separadas.",
+          "source": "review",
+          "excerpt": "esse exit não significa aprovação do contrato."
+        },
+        "C4": {
+          "grade": "pass",
+          "reason": "Mantem uma espera limitada e usa PENDING ate detectar termino, sem transformar o caso em redesign de cancelamento.",
+          "source": "review",
+          "excerpt": "sem repetição nem espera ilimitada"
+        }
+      },
+      "materialFailures": []
+    },
+    {
+      "sampleId": "bddff29061",
+      "caseId": "H4",
+      "grades": {
+        "C1": {
+          "grade": "pass",
+          "reason": "Conclui violacao da captura de valores, que pode ser demonstrada por ordem de programa sem corrida observada.",
+          "source": "review",
+          "excerpt": "**Contrato violado.** A aprovação proposta confunde inicialização visível com imutabilidade."
+        },
+        "C2": {
+          "grade": "pass",
+          "reason": "Rastreia a retencao do array e limita final a inicializacao; elementos podem mudar apos o freeze.",
+          "source": "review",
+          "excerpt": "não congela os elementos nem cria uma relação geral de happens-before para as escritas posteriores do produtor."
+        },
+        "C3": {
+          "grade": "pass",
+          "reason": "Distingue saida deterministica relatada, possibilidades de intercalacao e correcao nao executada.",
+          "source": "review",
+          "excerpt": "Esses exemplos são possibilidades, não resultados medidos"
+        },
+        "C4": {
+          "grade": "pass",
+          "reason": "Copia antes da reciclagem autorizada, preservando validacao e propriedade do produtor sem alegar snapshot sob mutacao durante construcao.",
+          "source": "review",
+          "excerpt": "O contrato só autoriza reciclagem após o retorno; portanto a cópia ocorre antes dela."
+        }
+      },
+      "materialFailures": []
+    },
+    {
+      "sampleId": "dacf81b387",
+      "caseId": "H1",
+      "grades": {
+        "C1": {
+          "grade": "pass",
+          "reason": "Aceita o contrato fornecido e rejeita a correcao obrigatoria sugerida apenas pela falta de volatile.",
+          "source": "review",
+          "excerpt": "O comentário de revisão não demonstra uma violação do contrato aceito. Nenhuma correção de produção é necessária"
+        },
+        "C2": {
+          "grade": "pass",
+          "reason": "Demonstra unicidade pela releitura sob monitor, retorno local e protecao de Record.limit pelo final record sem hb generico.",
+          "source": "review",
+          "excerpt": "Isso não cria uma aresta geral de happens-before para todo o registro."
+        },
+        "C3": {
+          "grade": "pass",
+          "reason": "Premissas aceitas e prova normativa sao separadas do smoke e de observacoes limitadas de toolchain.",
+          "source": "review",
+          "excerpt": "Esses são pressupostos aceitos, não fatos inferidos do smoke."
+        },
+        "C4": {
+          "grade": "pass",
+          "reason": "Nao cria contrato de progresso/latencia e trata volatile somente como opcao de manutencao.",
+          "source": "review",
+          "excerpt": "Declarar `current` como `volatile` poderia simplificar manutenção e remover essa race, mas seria uma preferência de manutenção, não reparo necessário neste contrato."
+        }
+      },
+      "materialFailures": []
+    },
+    {
+      "sampleId": "daea3d7a98",
+      "caseId": "H4",
+      "grades": {
+        "C1": {
+          "grade": "pass",
+          "reason": "Reprova a retencao do buffer reciclavel por contrariar a captura exigida.",
+          "source": "review",
+          "excerpt": "The required result is 30 both times, but the supplied implementation yields 300 after recycling."
+        },
+        "C2": {
+          "grade": "pass",
+          "reason": "Segue o alias externo e distingue inicializacao final de imutabilidade e sincronizacao das mutacoes posteriores.",
+          "source": "review",
+          "excerpt": "That protection neither freezes array elements nor orders later producer writes with consumer reads, and it is not a general publication happens-before edge."
+        },
+        "C3": {
+          "grade": "pass",
+          "reason": "Interpreta o smoke que so imprime, separa inspecao de validacao dinamica e delimita o que nao foi executado.",
+          "source": "review",
+          "excerpt": "This script prints values rather than asserting the contract; its successful exit is not approval."
+        },
+        "C4": {
+          "grade": "pass",
+          "reason": "Propoe clone privado apos a validacao e antes da reciclagem permitida, sem exigir nova regra de propriedade.",
+          "source": "review",
+          "excerpt": "The minimal adequate correction is to retain the existing null/length guard and replace only the assignment with `this.words = words.clone();`."
+        }
+      },
+      "materialFailures": []
+    },
+    {
+      "sampleId": "e05655f22d",
+      "caseId": "D1",
+      "grades": {
+        "C1": {
+          "grade": "pass",
+          "reason": "Aceita a visibilidade eventual nao exigida e os hits protegidos; nao impoe reparo obrigatorio.",
+          "source": "review",
+          "excerpt": "**Disposition: supported. No production change is required.**"
+        },
+        "C2": {
+          "grade": "pass",
+          "reason": "Descreve captura unica, method reference real e protecao do payload nao final por primary final; separa o alias legado.",
+          "source": "review",
+          "excerpt": "The guarantee concerns construction-time state through the actual final-field path, not general publication of every sibling field or future mutations."
+        },
+        "C3": {
+          "grade": "pass",
+          "reason": "Distingue resultados sequenciais relatados da conclusao derivada de contrato, codigo e especificacao.",
+          "source": "review",
+          "excerpt": "The concurrent conclusion above comes from the accepted premises, source path, and specification; the smoke does not prove it."
+        },
+        "C4": {
+          "grade": "pass",
+          "reason": "Conserva implementacao e premissas aceitas; nao exige freshness ou troca do alias que nao e usado.",
+          "source": "review",
+          "excerpt": "It is unused by the accepted lookup; its presence does not invalidate `primary` or justify changing production code."
+        }
+      },
+      "materialFailures": []
+    },
+    {
+      "sampleId": "ef48fdb53d",
+      "caseId": "D2",
+      "grades": {
+        "C1": {
+          "grade": "pass",
+          "reason": "Rejeita hits incorretos/NPE permitidos pelo alias efetivo, sem confundir misses aceitos com falha.",
+          "source": "review",
+          "excerpt": "**Disposição: violated.** O contrato permite misses indefinidamente, mas exige que um hit seja 42 e não lance exceção."
+        },
+        "C2": {
+          "grade": "pass",
+          "reason": "A prova depende da leitura real de legacy e da ausencia de acesso a primary final, nao da mera existencia de um campo final.",
+          "source": "review",
+          "excerpt": "A existência de `primary` final apontando para o mesmo payload não protege o acesso pelo alias comum `legacy`."
+        },
+        "C3": {
+          "grade": "pass",
+          "reason": "Explicita que os resultados incorretos sao permitidos pelo JMM, nao reproduzidos pelo smoke sequencial.",
+          "source": "review",
+          "excerpt": "Esses são resultados permitidos, não resultados observados no smoke."
+        },
+        "C4": {
+          "grade": "pass",
+          "reason": "Seleciona o leitor value existente como proposta minima e mantem os misses, a publicacao comum e os arquivos protegidos no plano.",
+          "source": "review",
+          "excerpt": "A correção proposta é alterar somente a referência retornada pela fábrica para `PublishedEntry::value`."
+        }
+      },
+      "materialFailures": []
+    },
+    {
+      "sampleId": "f13e11727d",
+      "caseId": "H2",
+      "grades": {
+        "C1": {
+          "grade": "pass",
+          "reason": "Decide violacao pelo retorno DONE apos timeout e preserva a obrigacao de espera limitada.",
+          "source": "review",
+          "excerpt": "O retorno dessa espera temporizada não confirma que o trabalho terminou. A espera limitada deve ser preservada."
+        },
+        "C2": {
+          "grade": "pass",
+          "reason": "Identifica this como worker correto e condiciona a leitura a deteccao de termino, dentro do ciclo normal aceito pelos criterios.",
+          "source": "review",
+          "excerpt": "Sob o contrato aceito de worker já iniciado exatamente uma vez, `isAlive() == false` detecta seu término"
+        },
+        "C3": {
+          "grade": "pass",
+          "reason": "Nao confunde DONE:0 antes do trabalho com reordenacao rara; smoke impresso, proposta nao executada e limites sao explicitos.",
+          "source": "review",
+          "excerpt": "O valor 0 observado é o valor inicial de trabalho ainda não realizado; não é necessário atribuí-lo a cache ou a uma rara reordenação."
+        },
+        "C4": {
+          "grade": "pass",
+          "reason": "A proposta de PENDING/termino conserva uma espera limitada e propagacao de interrupcao da coleta, sem exigir cancelamento.",
+          "source": "review",
+          "excerpt": "A proposta conserva uma única espera de 2 ms, mais o overhead admitido; não acrescenta polling, espera ilimitada ou cancelamento."
+        }
+      },
+      "materialFailures": [],
+      "boundaryNotes": [
+        "A suficiência da deteccao de termino foi aceita apenas no ciclo normal delimitado por H2/G3. O texto usa ausencia de cancelamento como limite, nao como solucao de todos os caminhos excepcionais. Termino apos interrupcao do worker continuaria sem provar result=83; isso nao foi pontuado como requisito novo."
+      ]
+    }
+  ],
+  "summary": {
+    "sampleCount": 18,
+    "criterionCount": 72,
+    "pass": 72,
+    "fail": 0,
+    "unresolved": 0,
+    "samplesWithMaterialFailures": 0,
+    "interpretation": "Todos os 18 textos satisfazem C1-C4 no escopo de prova e coerencia acima. Isso nao certifica rastros de execucao, preservacao real ou exposicao, nem demonstra efeito comparativo da skill."
+  },
+  "sourcesUsedForSemanticJudgment": [
+    "https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.5.1",
+    "https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.4.4",
+    "https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.4.5",
+    "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Thread.html#join(long)",
+    "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/package-summary.html#MemoryVisibility"
+  ],
+  "allWritesStopped": true
+}

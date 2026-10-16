@@ -1,0 +1,6 @@
+{
+  "skill": "java-test-doubles",
+  "common": "Provide an output-only review of the test double and recommend justified test changes. The project uses Java 17, JUnit 5.10, and Mockito 4.11. WarehousePort.allocate(sku1, 2) allocates inventory and returns a reference; repeated successful calls produce separate allocations. The service retries once on Unavailable. The test stubs Unavailable followed by r9, asserts the result, and verifies 2 calls. The provider is unavailable; adapter stub fixtures pass, but there is no provider verification.",
+  "scenarioA": "The accepted port contract guarantees that Unavailable occurs before allocation.",
+  "scenarioB": "The accepted port contract permits Unavailable after allocation when the acknowledgment is lost."
+}

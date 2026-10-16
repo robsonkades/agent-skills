@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-ddd-aggregates
-version: 1.0.0
+version: 1.0.1
 description: >-
   Design and implement Java DDD aggregates when deciding which entities must change
   atomically, moving invariants out of setters, separating creation from rehydration,

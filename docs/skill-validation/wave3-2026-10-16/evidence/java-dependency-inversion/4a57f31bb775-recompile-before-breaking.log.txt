@@ -1,0 +1,21 @@
+{
+  "name": "recompile-before-breaking",
+  "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+  "args": [
+    "-J-Xms16m",
+    "-J-Xmx128m",
+    "--release",
+    "17",
+    "-d",
+    "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\policy-breaking",
+    "-classpath",
+    "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\sdk-breaking",
+    "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\before\\shop\\orders\\Order.java",
+    "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\before\\shop\\orders\\OrderConfirmer.java",
+    "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\before\\shop\\orders\\RunBefore.java"
+  ],
+  "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N",
+  "exitCode": 1,
+  "stdout": "",
+  "stderr": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\before\\shop\\orders\\OrderConfirmer.java:13: error: incompatible types: SmtpMessage cannot be converted to String\r\n        smtp.send(new SmtpMessage(order.customerEmail(), \"Order confirmed\", body));\r\n                  ^\r\nNote: Some messages have been simplified; recompile with -Xdiags:verbose to get full output\r\n1 error\r\n"
+}

@@ -58,6 +58,18 @@ Finish adding marking candidates to collection set. Initial: 14 regions (1 group
   optional collection set of JEP 344, JDK 12). Compare predictions, actual phases and elapsed
   pauses across representative events; one pause near the goal does not prove calibration.
 
+**Retained old work outside the mixed phase:**
+
+In the pinned [25.0.3 selection path](https://github.com/openjdk/jdk25u/blob/2fce64f0ecc22355298b9ab9c1ba9477a2f1ec86/src/hotspot/share/gc/g1/g1CollectionSet.cpp),
+marking candidates require the mixed phase; retained old candidates have a separate path.
+The [pause label follows collector state](https://github.com/openjdk/jdk25u/blob/2fce64f0ecc22355298b9ab9c1ba9477a2f1ec86/src/hotspot/share/gc/g1/g1CollectorState.cpp),
+so `Normal` or `Prepare Mixed` does not prove zero old-region work. Join marking/retained
+selection and elapsed phases by GC id before calibrating young copy cost. Available candidates
+are not necessarily evacuated: pinned retained regions can be skipped, and optional work
+depends on remaining time. Keep that distinction when reading selection counts. Mixed
+count/percent controls govern marking candidates; do not tune them as if they also split
+retained recovery work. Unresolved old contribution leaves a young-only cost derivation conditional.
+
 **Candidate pruning and exhaustion (`gc+ergo+cset=debug`):**
 
 Source-format examples from the pinned 25.0.3 implementation, not new runtime captures:

@@ -1,0 +1,4 @@
+package com.example.application.order.submit;
+public final class DirectDecorator extends SubmitOrderUseCase {
+    public SubmitOrderOutput execute(SubmitOrderCommand command) { throw new UnsupportedOperationException(); }
+}

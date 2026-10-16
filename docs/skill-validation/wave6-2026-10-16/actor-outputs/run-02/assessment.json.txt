@@ -1,0 +1,21 @@
+{
+  "disposition": "supported",
+  "basis": "Accepted contract permits arbitrary and indefinite misses and limits installation to one producer installing 42 once. find() reads entry once and passes that non-null local to the safely handed-off reader. ReaderFactory.create() selects PublishedEntry::value, which dereferences final primary, not non-final legacy. Payload.value is initialized before the constructor freeze and the entry assignment; JLS 17.5.1 protects the value reached through primary. The racy entry read can miss but cannot make this effective hit path return 0 or dereference an uninitialized primary. No post-construction mutation or constructor escape exists under the accepted contract.",
+  "requiredChange": null,
+  "missingEvidence": [],
+  "checked": [
+    "Read the complete local skill, both conditional references, all supplied source, test, configuration and contract files.",
+    "Traced find -> reader.applyAsInt -> PublishedEntry::value -> primary.value; legacyValue is not selected.",
+    "Applied the pre-Thread.start handoff separately from final-field freeze and racy entry publication.",
+    "Consulted primary Java SE 25 JLS 17.4.5, 17.5/17.5.1 and 17.7.",
+    "Compiled unchanged working-copy source and smoke with javac 25.0.3 --release 25; exit 0.",
+    "Ran memo.Smoke on Temurin 25.0.3; exit 0; sequential-controls=2 PASS.",
+    "Compared SHA256 of all eight supplied project files in input and output, before and after checks; all equal and unchanged."
+  ],
+  "limits": [
+    "The smoke is sequential observed evidence, not a proof of all concurrent executions.",
+    "No stress, jcstress, static analyzer or alternate architecture execution was performed.",
+    "Conclusion is limited to the accepted one-shot, value-42, no-escape and no-mutation contract; it does not assert eventual visibility or a generic mutable-cache guarantee.",
+    "check.mjs was read but not invoked; its compilation and smoke commands were executed directly by the recorded runner."
+  ]
+}

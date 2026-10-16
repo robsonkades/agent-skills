@@ -1,0 +1,21 @@
+Foi confirmado um defeito de snapshot no projeto fornecido. O contrato exige que um relatório capture o catálogo em `open()` e permaneça inalterado após qualquer `load()` posterior. A execução original apresentou `first=1000`, `first-after-reload=1200` e `latest=1200`, embora o teste existente passasse. As evidências estão em `logs/baseline-demo.log` e `logs/baseline-check.log`.
+
+A causa está no compartilhamento da lista: `Catalog.open()` entregava `Collections.unmodifiableList(rows)` ao relatório. Essa visão proíbe alterações pelo consumidor, mas continua refletindo o `clear()` e o `addAll()` executados por `Catalog.load()`. `Report.total()` recalcula a soma sobre essa mesma lista. O código local trabalha com centavos inteiros em `long`; não há arredondamento nesse caminho. A atribuição do chamado ao renderer não é sustentada pelos artefatos disponíveis.
+
+`Report` agora copia a lista recebida no construtor e expõe somente uma visão não modificável dessa cópia. `Catalog.open()` passa a lista ao construtor, que concentra a garantia de snapshot, inclusive para chamadas diretas a `new Report(...)`. Uma cópia dos elementos é suficiente porque `Entry` é um valor imutável com `String` e `long`. Ordem, duplicatas e centavos com sinal são preservados. `load()`, `total()`, `Entry` e `Demo` mantêm suas implementações; contrato, configuração de compilação e dependências não foram alterados. A cópia custa tempo e memória proporcionais ao número de entradas por abertura.
+
+Os três arquivos alterados no projeto são `src/work/Report.java`, `src/work/Catalog.java` e `test/work/SelfTest.java`. As verificações originais foram preservadas. Foram acrescentados cenários de reload, múltiplos relatórios, retenção da lista retornada, catálogo vazio, cargas vazias, ordem, duplicatas, valores negativos e zero, tentativas de adicionar/remover/substituir/reordenar/limpar entradas e alteração da lista fornecida diretamente ao construtor.
+
+| Verificação executada | Resultado | Evidência |
+| --- | --- | --- |
+| `node check.mjs` original | PASS, apesar do defeito | `logs/baseline-check.log` |
+| Testes ampliados antes da correção | Falha esperada: primeiro relatório mudou de 1000 para 1200 | `logs/regression-check.log` |
+| `node check.mjs` após a correção | `SelfTest PASS`, saída 0 | `logs/final-check.log` |
+| Demo após a correção | `first=1000`, `first-after-reload=1000`, `latest=1200` | `logs/final-demo.log` |
+| Runtime e alvo | Temurin 25.0.3+9 preservado; `javac --release 17`; bytecode major version 61 | `logs/baseline-runtime.log`, `logs/final-check.log`, `logs/final-bytecode.log` |
+
+Os comandos do projeto foram executados em `output/project`. `evidence.mjs` conserva a reprodução e a coleta de evidências; `execution.json` registra comandos, argumentos, saídas, leituras completas sem truncamento, hashes e limites. A comparação de hashes confirmou que todos os arquivos de `input/project` permaneceram intactos e que `contract.md`, `support.md` e `check.mjs` da cópia não mudaram.
+
+A conclusão se limita ao projeto e ao contrato locais: não houve acesso a produção, banco de dados ou renderer externo. A execução contratada é sequencial; concorrência não foi acrescentada nem avaliada. A compatibilidade com Java 17 foi verificada por compilação e bytecode, com execução no runtime fornecido, sem uma JVM 17 adicional. Nenhuma skill, rede, instalação ou outro agente foi utilizado.
+
+Houve duas tentativas iniciais de ler `support.md` e `contract.md` na raiz do run, onde não existem; os arquivos corretos foram então lidos em `input/project`. O primeiro comando herdou o diretório de trabalho da sessão (`C:/git/agent-skills`), mas leu exclusivamente o caminho absoluto de `TASK.md`; nenhum conteúdo daquele repositório foi acessado. Todos os processos terminaram, sem processos em segundo plano. Todas as escritas foram restritas a `output/` e estão encerradas.

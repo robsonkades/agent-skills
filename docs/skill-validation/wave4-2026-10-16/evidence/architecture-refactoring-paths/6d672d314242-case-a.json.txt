@@ -1,0 +1,70 @@
+{
+  "request": "Review the document-store rollout plan using the supplied project artifacts. Return a practical next checkpoint, a usable stopping point and the rollback boundary. Preserve the accepted target and completed work. Planning only: do not run production commands or redesign the storage system. These are synthetic exercise artifacts, not evidence from a real deployment.",
+  "files": {
+    "ADR-041.md": "Accepted: migrate stored document payloads from XML v1 to JSON v1 to retire an unsupported XML transformation component. Identifiers, permissions, values and required fields are unchanged. The deployment must preserve reads for every eligible workload and avoid lost acknowledged writes. The same durable store and version-checked write protocol remain. A prior spike and compatibility release are accepted; choosing a replacement storage architecture and upgrading the Java 17 runtime are outside scope.",
+    "release-manifests.json": {
+      "docs:2.7": {
+        "reads": [
+          "xml-v1"
+        ],
+        "writes": "xml-v1"
+      },
+      "docs:2.8": {
+        "reads": [
+          "xml-v1",
+          "json-v1"
+        ],
+        "writes": "xml-v1"
+      },
+      "docs:2.9": {
+        "reads": [
+          "xml-v1",
+          "json-v1"
+        ],
+        "writes": "json-v1"
+      }
+    },
+    "workload-inventory.json": {
+      "auditedAt": "2026-10-15T18:00:00Z",
+      "inventoryScope": "All principals and launch definitions permitted to read or write this store, including inactive schedules and rollback artifacts.",
+      "workloads": [
+        {
+          "name": "documents-api",
+          "runningImage": "docs:2.8",
+          "launchImage": "docs:2.8",
+          "replicas": 12
+        },
+        {
+          "name": "daily-export",
+          "launchImage": "docs:2.8",
+          "lastRun": "2026-10-15"
+        },
+        {
+          "name": "month-close",
+          "launchImage": "docs:2.7",
+          "nextRun": "2026-11-01",
+          "suspended": false
+        }
+      ],
+      "rollbackImage": "docs:2.8",
+      "otherEligibleReadersOrWriters": []
+    },
+    "readiness-evidence.json": {
+      "fixtureStatus": "Synthetic artifacts supplied to the reviewer; no real tests were executed for this exercise.",
+      "acceptedChecks": [
+        "2.8 and 2.9 parse both payload formats and preserve agreed field semantics.",
+        "The launch configurations for the API and export job were inspected.",
+        "A 2.8 -> 2.9 -> 2.8 rehearsal preserves all acknowledged updates across mixed representations.",
+        "Mixed 2.8/2.9 writers share the unchanged optimistic version predicate and retries.",
+        "Current data are all XML v1; JSON write activation has not happened.",
+        "Errors, stale-write rejections and end-to-end reads have agreed acceptance thresholds and an on-call owner."
+      ],
+      "releaseBake": {
+        "version": "2.8",
+        "days": 14,
+        "accepted": true
+      }
+    },
+    "rollout-plan.md": "1. Retain the accepted 2.8 compatibility deployment as the paused state. 2. Roll the API to 2.9 for one tenant, observe agreed thresholds, then expand. 3. On abort, deploy 2.8; never use 2.7 after JSON writes. 4. Keep readers for both formats and the current store layout. Backfill and XML retirement are later changes with their own gates. The operations owner asks whether the next checkpoint is ready in the supplied snapshot."
+  }
+}

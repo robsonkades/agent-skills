@@ -1,0 +1,1167 @@
+{
+  "at": "2026-10-16T20:09:02.292Z",
+  "basis": "Actor-declared access files only. Paths checked mechanically; this is not a complete tool trace, independent observation of reads, enforced isolation or proof of absence of leakage.",
+  "records": [
+    {
+      "id": "A01",
+      "stage": 1,
+      "condition": "none",
+      "reads": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A01/TASK.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A01/input/project/proposal.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A01/input/project/options.csv",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A01/input/project/operacao.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A01/input/project/decision.md"
+      ],
+      "writes": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A01/output/answer1.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A01/output/access1.json"
+      ],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": []
+    },
+    {
+      "id": "A01",
+      "stage": 2,
+      "condition": "none",
+      "reads": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A01/input/UPDATE.md"
+      ],
+      "writes": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A01/output/answer2.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A01/output/access2.json"
+      ],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": []
+    },
+    {
+      "id": "A02",
+      "stage": 1,
+      "condition": "reference",
+      "reads": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A02/TASK.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A02/input/project/proposal.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A02/input/project/options.csv",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A02/input/project/operacao.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A02/input/project/decision.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A02/input/skill/SKILL.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A02/input/skill/references/qualitative-and-quantitative.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A02/input/skill/references/bias-and-evidence.md"
+      ],
+      "writes": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A02/output/answer1.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A02/output/access1.json"
+      ],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": [
+        "input/skill/SKILL.md",
+        "input/skill/references/qualitative-and-quantitative.md",
+        "input/skill/references/bias-and-evidence.md"
+      ]
+    },
+    {
+      "id": "A02",
+      "stage": 2,
+      "condition": "reference",
+      "reads": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A02/input/UPDATE.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A02/output/answer1.md"
+      ],
+      "writes": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A02/output/answer2.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A02/output/access2.json"
+      ],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": []
+    },
+    {
+      "id": "A03",
+      "stage": 1,
+      "condition": "candidate",
+      "reads": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A03/TASK.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A03/input/project/proposal.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A03/input/project/options.csv",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A03/input/project/operacao.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A03/input/project/decision.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A03/input/skill/SKILL.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A03/input/skill/references/qualitative-and-quantitative.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A03/input/skill/references/bias-and-evidence.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A03/input/skill/references/worked-analysis.md"
+      ],
+      "writes": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A03/output/answer1.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A03/output/access1.json"
+      ],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": [
+        "input/skill/SKILL.md",
+        "input/skill/references/qualitative-and-quantitative.md",
+        "input/skill/references/bias-and-evidence.md",
+        "input/skill/references/worked-analysis.md"
+      ]
+    },
+    {
+      "id": "A03",
+      "stage": 2,
+      "condition": "candidate",
+      "reads": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A03/input/UPDATE.md"
+      ],
+      "writes": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A03/output/answer2.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A03/output/access2.json"
+      ],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": []
+    },
+    {
+      "id": "A04",
+      "stage": 1,
+      "condition": "candidate",
+      "reads": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A04/TASK.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A04/input/project/decision.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A04/input/project/proposal.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A04/input/project/operacao.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A04/input/project/options.csv",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A04/input/skill/SKILL.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A04/input/skill/references/qualitative-and-quantitative.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A04/input/skill/references/bias-and-evidence.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A04/input/skill/references/worked-analysis.md"
+      ],
+      "writes": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A04/output/answer1.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A04/output/access1.json"
+      ],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": [
+        "input/skill/SKILL.md",
+        "input/skill/references/qualitative-and-quantitative.md",
+        "input/skill/references/bias-and-evidence.md",
+        "input/skill/references/worked-analysis.md"
+      ]
+    },
+    {
+      "id": "A04",
+      "stage": 2,
+      "condition": "candidate",
+      "reads": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A04/input/UPDATE.md"
+      ],
+      "writes": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A04/output/answer2.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A04/output/access2.json"
+      ],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": []
+    },
+    {
+      "id": "A05",
+      "stage": 1,
+      "condition": "reference",
+      "reads": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A05/TASK.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A05/input/project/proposal.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A05/input/project/options.csv",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A05/input/project/operacao.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A05/input/project/decision.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A05/input/skill/SKILL.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A05/input/skill/references/qualitative-and-quantitative.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A05/input/skill/references/bias-and-evidence.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A05/output/answer1.md"
+      ],
+      "writes": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A05/output/answer1.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A05/output/access1.json"
+      ],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": [
+        "input/skill/SKILL.md",
+        "input/skill/references/qualitative-and-quantitative.md",
+        "input/skill/references/bias-and-evidence.md"
+      ]
+    },
+    {
+      "id": "A05",
+      "stage": 2,
+      "condition": "reference",
+      "reads": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A05/input/UPDATE.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A05/output/answer1.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A05/output/answer2.md"
+      ],
+      "writes": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A05/output/answer2.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A05/output/access2.json"
+      ],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": []
+    },
+    {
+      "id": "A06",
+      "stage": 1,
+      "condition": "none",
+      "reads": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A06/TASK.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A06/input/project/proposal.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A06/input/project/options.csv",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A06/input/project/operacao.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A06/input/project/decision.md"
+      ],
+      "writes": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A06/output/answer1.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A06/output/access1.json"
+      ],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": []
+    },
+    {
+      "id": "A06",
+      "stage": 2,
+      "condition": "none",
+      "reads": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A06/input/UPDATE.md"
+      ],
+      "writes": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A06/output/answer2.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A06/output/access2.json"
+      ],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": []
+    },
+    {
+      "id": "A07",
+      "stage": 1,
+      "condition": "reference",
+      "reads": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A07/TASK.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A07/input/project/minutes.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A07/input/project/model.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A07/input/project/values.csv",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A07/input/skill/SKILL.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A07/input/skill/references/qualitative-and-quantitative.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A07/input/skill/references/bias-and-evidence.md"
+      ],
+      "writes": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A07/output/answer1.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A07/output/access1.json"
+      ],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": [
+        "input/skill/SKILL.md",
+        "input/skill/references/qualitative-and-quantitative.md",
+        "input/skill/references/bias-and-evidence.md"
+      ]
+    },
+    {
+      "id": "A07",
+      "stage": 2,
+      "condition": "reference",
+      "reads": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A07/input/UPDATE.md"
+      ],
+      "writes": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A07/output/answer2.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A07/output/access2.json"
+      ],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": []
+    },
+    {
+      "id": "A08",
+      "stage": 1,
+      "condition": "candidate",
+      "reads": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A08/TASK.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A08/input/project/model.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A08/input/project/minutes.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A08/input/project/values.csv",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A08/input/skill/SKILL.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A08/input/skill/references/qualitative-and-quantitative.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A08/input/skill/references/bias-and-evidence.md"
+      ],
+      "writes": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A08/output/answer1.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A08/output/access1.json"
+      ],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": [
+        "input/skill/SKILL.md",
+        "input/skill/references/qualitative-and-quantitative.md",
+        "input/skill/references/bias-and-evidence.md"
+      ]
+    },
+    {
+      "id": "A08",
+      "stage": 2,
+      "condition": "candidate",
+      "reads": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A08/input/UPDATE.md"
+      ],
+      "writes": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A08/output/answer2.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A08/output/access2.json"
+      ],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": []
+    },
+    {
+      "id": "A09",
+      "stage": 1,
+      "condition": "none",
+      "reads": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A09/TASK.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A09/input",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A09/input/project/model.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A09/input/project/minutes.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A09/input/project/values.csv"
+      ],
+      "writes": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A09/output/access1.json",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A09/output/answer1.md"
+      ],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": []
+    },
+    {
+      "id": "A09",
+      "stage": 2,
+      "condition": "none",
+      "reads": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A09/input/UPDATE.md"
+      ],
+      "writes": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A09/output/access2.json",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A09/output/answer2.md"
+      ],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": []
+    },
+    {
+      "id": "A10",
+      "stage": 1,
+      "condition": "reference",
+      "reads": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A10/TASK.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A10/input/project/minutes.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A10/input/project/model.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A10/input/project/values.csv",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A10/input/skill/SKILL.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A10/input/skill/references/qualitative-and-quantitative.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A10/input/skill/references/bias-and-evidence.md"
+      ],
+      "writes": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A10/output/answer1.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A10/output/access1.json"
+      ],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": [
+        "input/skill/SKILL.md",
+        "input/skill/references/qualitative-and-quantitative.md",
+        "input/skill/references/bias-and-evidence.md"
+      ]
+    },
+    {
+      "id": "A10",
+      "stage": 2,
+      "condition": "reference",
+      "reads": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A10/input/UPDATE.md"
+      ],
+      "writes": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A10/output/answer2.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A10/output/access2.json"
+      ],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": []
+    },
+    {
+      "id": "A11",
+      "stage": 1,
+      "condition": "none",
+      "reads": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A11/TASK.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A11/input/project/model.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A11/input/project/minutes.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A11/input/project/values.csv"
+      ],
+      "writes": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A11/output/answer1.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A11/output/access1.json"
+      ],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [
+        {
+          "command_number": 6,
+          "exit_code": 1,
+          "message": "PowerShell ParserError: An empty pipe element is not allowed.",
+          "resolution": "Cálculo repetido com sintaxe corrigida no comando 7, concluído com exit_code 0."
+        }
+      ],
+      "skillReads": []
+    },
+    {
+      "id": "A11",
+      "stage": 2,
+      "condition": "none",
+      "reads": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A11/input/UPDATE.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A11/output/answer1.md"
+      ],
+      "writes": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A11/output/answer2.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A11/output/access2.json"
+      ],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": []
+    },
+    {
+      "id": "A12",
+      "stage": 1,
+      "condition": "candidate",
+      "reads": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A12/TASK.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A12/input/project/minutes.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A12/input/project/model.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A12/input/project/values.csv",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A12/input/skill/SKILL.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A12/input/skill/references/qualitative-and-quantitative.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A12/input/skill/references/bias-and-evidence.md"
+      ],
+      "writes": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A12/output/answer1.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A12/output/access1.json"
+      ],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": [
+        "input/skill/SKILL.md",
+        "input/skill/references/qualitative-and-quantitative.md",
+        "input/skill/references/bias-and-evidence.md"
+      ]
+    },
+    {
+      "id": "A12",
+      "stage": 2,
+      "condition": "candidate",
+      "reads": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A12/input/UPDATE.md"
+      ],
+      "writes": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A12/output/answer2.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A12/output/access2.json"
+      ],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": []
+    },
+    {
+      "id": "A13",
+      "stage": 1,
+      "condition": "candidate",
+      "reads": [
+        "TASK.md",
+        "input/project/requirements.md",
+        "input/project/recovery.txt",
+        "input/project/memo.md",
+        "input/project/measurements.csv",
+        "input/skill/SKILL.md",
+        "input/skill/references/qualitative-and-quantitative.md",
+        "input/skill/references/bias-and-evidence.md",
+        "input/skill/references/worked-analysis.md"
+      ],
+      "writes": ["output/answer1.md", "output/access1.json"],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": [
+        "input/skill/SKILL.md",
+        "input/skill/references/qualitative-and-quantitative.md",
+        "input/skill/references/bias-and-evidence.md",
+        "input/skill/references/worked-analysis.md"
+      ]
+    },
+    {
+      "id": "A13",
+      "stage": 2,
+      "condition": "candidate",
+      "reads": ["input/UPDATE.md"],
+      "writes": ["output/answer2.md", "output/access2.json"],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": []
+    },
+    {
+      "id": "A14",
+      "stage": 1,
+      "condition": "none",
+      "reads": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A14/TASK.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A14/input/project",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A14/input/project/requirements.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A14/input/project/recovery.txt",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A14/input/project/memo.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A14/input/project/measurements.csv"
+      ],
+      "writes": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A14/output/answer1.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A14/output/access1.json"
+      ],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": []
+    },
+    {
+      "id": "A14",
+      "stage": 2,
+      "condition": "none",
+      "reads": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A14/input/UPDATE.md"
+      ],
+      "writes": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A14/output/answer2.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A14/output/access2.json"
+      ],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": []
+    },
+    {
+      "id": "A15",
+      "stage": 1,
+      "condition": "reference",
+      "reads": [
+        "TASK.md",
+        "input/project/requirements.md",
+        "input/project/recovery.txt",
+        "input/project/memo.md",
+        "input/project/measurements.csv",
+        "input/skill/SKILL.md",
+        "input/skill/references/qualitative-and-quantitative.md",
+        "input/skill/references/bias-and-evidence.md",
+        "input/skill/references/worked-analysis.md"
+      ],
+      "writes": ["output/access1.json", "output/answer1.md"],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": [
+        "input/skill/SKILL.md",
+        "input/skill/references/qualitative-and-quantitative.md",
+        "input/skill/references/bias-and-evidence.md",
+        "input/skill/references/worked-analysis.md"
+      ]
+    },
+    {
+      "id": "A15",
+      "stage": 2,
+      "condition": "reference",
+      "reads": ["input/UPDATE.md"],
+      "writes": ["output/access2.json", "output/answer2.md"],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": []
+    },
+    {
+      "id": "A16",
+      "stage": 1,
+      "condition": "none",
+      "reads": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A16/TASK.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A16/input/project/requirements.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A16/input/project/recovery.txt",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A16/input/project/memo.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A16/input/project/measurements.csv"
+      ],
+      "writes": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A16/output/answer1.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A16/output/access1.json"
+      ],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": []
+    },
+    {
+      "id": "A16",
+      "stage": 2,
+      "condition": "none",
+      "reads": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A16/input/UPDATE.md"
+      ],
+      "writes": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A16/output/answer2.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A16/output/access2.json"
+      ],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": []
+    },
+    {
+      "id": "A17",
+      "stage": 1,
+      "condition": "candidate",
+      "reads": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A17/TASK.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A17/input/project/memo.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A17/input/project/requirements.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A17/input/project/recovery.txt",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A17/input/project/measurements.csv",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A17/input/skill/SKILL.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A17/input/skill/references/qualitative-and-quantitative.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A17/input/skill/references/bias-and-evidence.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A17/input/skill/references/worked-analysis.md"
+      ],
+      "writes": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A17/output/answer1.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A17/output/access1.json"
+      ],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": [
+        "input/skill/SKILL.md",
+        "input/skill/references/qualitative-and-quantitative.md",
+        "input/skill/references/bias-and-evidence.md",
+        "input/skill/references/worked-analysis.md"
+      ]
+    },
+    {
+      "id": "A17",
+      "stage": 2,
+      "condition": "candidate",
+      "reads": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A17/input/UPDATE.md"
+      ],
+      "writes": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A17/output/answer2.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A17/output/access2.json"
+      ],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": []
+    },
+    {
+      "id": "A18",
+      "stage": 1,
+      "condition": "reference",
+      "reads": [
+        "TASK.md",
+        "input/project/requirements.md",
+        "input/project/recovery.txt",
+        "input/project/memo.md",
+        "input/project/measurements.csv",
+        "input/skill/SKILL.md",
+        "input/skill/references/qualitative-and-quantitative.md",
+        "input/skill/references/bias-and-evidence.md",
+        "input/skill/references/worked-analysis.md"
+      ],
+      "writes": ["output/access1.json", "output/answer1.md"],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": [
+        "input/skill/SKILL.md",
+        "input/skill/references/qualitative-and-quantitative.md",
+        "input/skill/references/bias-and-evidence.md",
+        "input/skill/references/worked-analysis.md"
+      ]
+    },
+    {
+      "id": "A18",
+      "stage": 2,
+      "condition": "reference",
+      "reads": ["input/UPDATE.md", "output/answer1.md"],
+      "writes": ["output/access2.json", "output/answer2.md"],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": []
+    },
+    {
+      "id": "A19",
+      "stage": 1,
+      "condition": "none",
+      "reads": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A19/TASK.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A19/input/project/decision.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A19/input/project/investigations.md"
+      ],
+      "writes": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A19/output/access1.json",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A19/output/answer1.md"
+      ],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": []
+    },
+    {
+      "id": "A19",
+      "stage": 2,
+      "condition": "none",
+      "reads": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A19/input/UPDATE.md"
+      ],
+      "writes": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A19/output/access2.json",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A19/output/answer2.md"
+      ],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": []
+    },
+    {
+      "id": "A20",
+      "stage": 1,
+      "condition": "reference",
+      "reads": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A20/TASK.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A20/input/project/decision.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A20/input/project/investigations.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A20/input/skill/SKILL.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A20/input/skill/references/qualitative-and-quantitative.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A20/input/skill/references/bias-and-evidence.md"
+      ],
+      "writes": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A20/output/answer1.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A20/output/access1.json"
+      ],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": [
+        "input/skill/SKILL.md",
+        "input/skill/references/qualitative-and-quantitative.md",
+        "input/skill/references/bias-and-evidence.md"
+      ]
+    },
+    {
+      "id": "A20",
+      "stage": 2,
+      "condition": "reference",
+      "reads": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A20/input/UPDATE.md"
+      ],
+      "writes": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A20/output/answer2.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A20/output/access2.json"
+      ],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": []
+    },
+    {
+      "id": "A21",
+      "stage": 1,
+      "condition": "candidate",
+      "reads": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A21/TASK.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A21/input/project/decision.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A21/input/project/investigations.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A21/input/skill/SKILL.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A21/input/skill/references/qualitative-and-quantitative.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A21/input/skill/references/bias-and-evidence.md"
+      ],
+      "writes": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A21/output/answer1.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A21/output/access1.json"
+      ],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": [
+        "input/skill/SKILL.md",
+        "input/skill/references/qualitative-and-quantitative.md",
+        "input/skill/references/bias-and-evidence.md"
+      ]
+    },
+    {
+      "id": "A21",
+      "stage": 2,
+      "condition": "candidate",
+      "reads": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A21/input/UPDATE.md"
+      ],
+      "writes": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A21/output/answer2.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A21/output/access2.json"
+      ],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": []
+    },
+    {
+      "id": "A22",
+      "stage": 1,
+      "condition": "candidate",
+      "reads": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A22/TASK.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A22/input/project/decision.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A22/input/project/investigations.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A22/input/skill/SKILL.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A22/input/skill/references/qualitative-and-quantitative.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A22/input/skill/references/bias-and-evidence.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A22/output/answer1.md"
+      ],
+      "writes": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A22/output/answer1.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A22/output/access1.json"
+      ],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [
+        {
+          "ferramenta": "apply_patch",
+          "entrada": "*** Begin Patch\n*** AddFile: placeholder\n*** End Patch",
+          "erro": "apply_patch verification failed: invalid hunk at line 2, '*** AddFile: placeholder' is not a valid hunk header.",
+          "efeito": "Tentativa rejeitada por sintaxe inválida; nenhum arquivo foi gravado por essa tentativa."
+        }
+      ],
+      "skillReads": [
+        "input/skill/SKILL.md",
+        "input/skill/references/qualitative-and-quantitative.md",
+        "input/skill/references/bias-and-evidence.md"
+      ]
+    },
+    {
+      "id": "A22",
+      "stage": 2,
+      "condition": "candidate",
+      "reads": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A22/input/UPDATE.md"
+      ],
+      "writes": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A22/output/answer2.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A22/output/access2.json"
+      ],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": []
+    },
+    {
+      "id": "A23",
+      "stage": 1,
+      "condition": "reference",
+      "reads": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A23/TASK.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A23/input/project/decision.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A23/input/project/investigations.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A23/input/skill/SKILL.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A23/input/skill/references/qualitative-and-quantitative.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A23/input/skill/references/bias-and-evidence.md"
+      ],
+      "writes": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A23/output/answer1.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A23/output/access1.json"
+      ],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": [
+        "input/skill/SKILL.md",
+        "input/skill/references/qualitative-and-quantitative.md",
+        "input/skill/references/bias-and-evidence.md"
+      ]
+    },
+    {
+      "id": "A23",
+      "stage": 2,
+      "condition": "reference",
+      "reads": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A23/input/UPDATE.md"
+      ],
+      "writes": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A23/output/answer2.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A23/output/access2.json"
+      ],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": []
+    },
+    {
+      "id": "A24",
+      "stage": 1,
+      "condition": "none",
+      "reads": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A24/TASK.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A24/input/project/decision.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A24/input/project/investigations.md"
+      ],
+      "writes": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A24/output/answer1.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A24/output/access1.json"
+      ],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": []
+    },
+    {
+      "id": "A24",
+      "stage": 2,
+      "condition": "none",
+      "reads": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A24/input/UPDATE.md"
+      ],
+      "writes": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A24/output/answer2.md",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23/runs/A24/output/access2.json"
+      ],
+      "outside": [],
+      "reportedOutside": [],
+      "failures": [],
+      "skillReads": []
+    }
+  ],
+  "declaredOutside": [],
+  "skillCoverage": [
+    {
+      "id": "A01",
+      "condition": "none",
+      "reads": []
+    },
+    {
+      "id": "A02",
+      "condition": "reference",
+      "reads": [
+        "input/skill/SKILL.md",
+        "input/skill/references/qualitative-and-quantitative.md",
+        "input/skill/references/bias-and-evidence.md"
+      ]
+    },
+    {
+      "id": "A03",
+      "condition": "candidate",
+      "reads": [
+        "input/skill/SKILL.md",
+        "input/skill/references/qualitative-and-quantitative.md",
+        "input/skill/references/bias-and-evidence.md",
+        "input/skill/references/worked-analysis.md"
+      ]
+    },
+    {
+      "id": "A04",
+      "condition": "candidate",
+      "reads": [
+        "input/skill/SKILL.md",
+        "input/skill/references/qualitative-and-quantitative.md",
+        "input/skill/references/bias-and-evidence.md",
+        "input/skill/references/worked-analysis.md"
+      ]
+    },
+    {
+      "id": "A05",
+      "condition": "reference",
+      "reads": [
+        "input/skill/SKILL.md",
+        "input/skill/references/qualitative-and-quantitative.md",
+        "input/skill/references/bias-and-evidence.md"
+      ]
+    },
+    {
+      "id": "A06",
+      "condition": "none",
+      "reads": []
+    },
+    {
+      "id": "A07",
+      "condition": "reference",
+      "reads": [
+        "input/skill/SKILL.md",
+        "input/skill/references/qualitative-and-quantitative.md",
+        "input/skill/references/bias-and-evidence.md"
+      ]
+    },
+    {
+      "id": "A08",
+      "condition": "candidate",
+      "reads": [
+        "input/skill/SKILL.md",
+        "input/skill/references/qualitative-and-quantitative.md",
+        "input/skill/references/bias-and-evidence.md"
+      ]
+    },
+    {
+      "id": "A09",
+      "condition": "none",
+      "reads": []
+    },
+    {
+      "id": "A10",
+      "condition": "reference",
+      "reads": [
+        "input/skill/SKILL.md",
+        "input/skill/references/qualitative-and-quantitative.md",
+        "input/skill/references/bias-and-evidence.md"
+      ]
+    },
+    {
+      "id": "A11",
+      "condition": "none",
+      "reads": []
+    },
+    {
+      "id": "A12",
+      "condition": "candidate",
+      "reads": [
+        "input/skill/SKILL.md",
+        "input/skill/references/qualitative-and-quantitative.md",
+        "input/skill/references/bias-and-evidence.md"
+      ]
+    },
+    {
+      "id": "A13",
+      "condition": "candidate",
+      "reads": [
+        "input/skill/SKILL.md",
+        "input/skill/references/qualitative-and-quantitative.md",
+        "input/skill/references/bias-and-evidence.md",
+        "input/skill/references/worked-analysis.md"
+      ]
+    },
+    {
+      "id": "A14",
+      "condition": "none",
+      "reads": []
+    },
+    {
+      "id": "A15",
+      "condition": "reference",
+      "reads": [
+        "input/skill/SKILL.md",
+        "input/skill/references/qualitative-and-quantitative.md",
+        "input/skill/references/bias-and-evidence.md",
+        "input/skill/references/worked-analysis.md"
+      ]
+    },
+    {
+      "id": "A16",
+      "condition": "none",
+      "reads": []
+    },
+    {
+      "id": "A17",
+      "condition": "candidate",
+      "reads": [
+        "input/skill/SKILL.md",
+        "input/skill/references/qualitative-and-quantitative.md",
+        "input/skill/references/bias-and-evidence.md",
+        "input/skill/references/worked-analysis.md"
+      ]
+    },
+    {
+      "id": "A18",
+      "condition": "reference",
+      "reads": [
+        "input/skill/SKILL.md",
+        "input/skill/references/qualitative-and-quantitative.md",
+        "input/skill/references/bias-and-evidence.md",
+        "input/skill/references/worked-analysis.md"
+      ]
+    },
+    {
+      "id": "A19",
+      "condition": "none",
+      "reads": []
+    },
+    {
+      "id": "A20",
+      "condition": "reference",
+      "reads": [
+        "input/skill/SKILL.md",
+        "input/skill/references/qualitative-and-quantitative.md",
+        "input/skill/references/bias-and-evidence.md"
+      ]
+    },
+    {
+      "id": "A21",
+      "condition": "candidate",
+      "reads": [
+        "input/skill/SKILL.md",
+        "input/skill/references/qualitative-and-quantitative.md",
+        "input/skill/references/bias-and-evidence.md"
+      ]
+    },
+    {
+      "id": "A22",
+      "condition": "candidate",
+      "reads": [
+        "input/skill/SKILL.md",
+        "input/skill/references/qualitative-and-quantitative.md",
+        "input/skill/references/bias-and-evidence.md"
+      ]
+    },
+    {
+      "id": "A23",
+      "condition": "reference",
+      "reads": [
+        "input/skill/SKILL.md",
+        "input/skill/references/qualitative-and-quantitative.md",
+        "input/skill/references/bias-and-evidence.md"
+      ]
+    },
+    {
+      "id": "A24",
+      "condition": "none",
+      "reads": []
+    }
+  ]
+}

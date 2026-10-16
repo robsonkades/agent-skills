@@ -1,0 +1,694 @@
+{
+  "recordedAtUtc": "2026-10-16 18:09:50 UTC",
+  "firstClockObservationUtc": "2026-10-16 18:05:57 UTC",
+  "taskRoot": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-07",
+  "scope": "Only the assigned TASK, input/project, snapshot skill and output were accessed locally. No repository or sibling-directory access. These are procedural boundaries, not OS isolation.",
+  "recordKind": "Actor-reported actions and observations; not an independently complete audit trace.",
+  "reads": [
+    {
+      "path": "TASK.md",
+      "kind": "text",
+      "integral": true,
+      "readCount": 2,
+      "secondReadPurpose": "Preserve initial command output bodies"
+    },
+    {
+      "path": "skill/SKILL.md",
+      "kind": "text",
+      "integral": true,
+      "readCount": 2,
+      "secondReadPurpose": "Preserve initial command output bodies"
+    },
+    {
+      "path": "input/project/README.md",
+      "kind": "text",
+      "integral": true
+    },
+    {
+      "path": "input/project/REQUEST.md",
+      "kind": "text",
+      "integral": true
+    },
+    {
+      "path": "input/project/CONTRACT.md",
+      "kind": "text",
+      "integral": true
+    },
+    {
+      "path": "input/project/RUNBOOK.md",
+      "kind": "text",
+      "integral": true
+    },
+    {
+      "path": "input/project/dependencies.json",
+      "kind": "text",
+      "integral": true
+    },
+    {
+      "path": "input/project/toolchain.json",
+      "kind": "text",
+      "integral": true
+    },
+    {
+      "path": "input/project/check.mjs",
+      "kind": "text",
+      "integral": true
+    },
+    {
+      "path": "input/project/src/work/Publisher.java",
+      "kind": "text",
+      "integral": true
+    },
+    {
+      "path": "input/project/src/work/Dispatcher.java",
+      "kind": "text",
+      "integral": true
+    },
+    {
+      "path": "input/project/src/work/Config.java",
+      "kind": "text",
+      "integral": true
+    },
+    {
+      "path": "input/project/src/work/Checkpoint.java",
+      "kind": "text",
+      "integral": true
+    },
+    {
+      "path": "input/project/support/work/ReceiverClient.java",
+      "kind": "text",
+      "integral": true
+    },
+    {
+      "path": "input/project/test/work/Smoke.java",
+      "kind": "text",
+      "integral": true
+    },
+    {
+      "path": "skill/references/interception-and-rollback.md",
+      "kind": "text",
+      "integral": true
+    },
+    {
+      "path": "skill/references/event-wiring-and-recovery.md",
+      "kind": "text",
+      "integral": true
+    },
+    {
+      "path": "skill/references/verification.md",
+      "kind": "text",
+      "integral": true
+    },
+    {
+      "path": "output/project/src/work/Dispatcher.java",
+      "kind": "text",
+      "integral": true
+    },
+    {
+      "path": "output/project/test/work/Regression.java",
+      "kind": "text",
+      "integral": true
+    },
+    {
+      "path": "output/project/RUNBOOK.md",
+      "kind": "text",
+      "integral": true
+    },
+    {
+      "path": "README.md",
+      "kind": "failed read",
+      "integral": false,
+      "reason": "Wrong initial location; file absent. Correct files subsequently read under input/project."
+    },
+    {
+      "path": "REQUEST.md",
+      "kind": "failed read",
+      "integral": false,
+      "reason": "Wrong initial location; file absent. Correct files subsequently read under input/project."
+    },
+    {
+      "path": "CONTRACT.md",
+      "kind": "failed read",
+      "integral": false,
+      "reason": "Wrong initial location; file absent. Correct files subsequently read under input/project."
+    },
+    {
+      "path": "input/project/check.mjs",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "output/project/check.mjs",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "input/project/CONTRACT.md",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "output/project/CONTRACT.md",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "input/project/dependencies.json",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "output/project/dependencies.json",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "input/project/README.md",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "output/project/README.md",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "input/project/REQUEST.md",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "output/project/REQUEST.md",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "input/project/toolchain.json",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "output/project/toolchain.json",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "input/project/lib/commons-logging-1.3.5.jar",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "output/project/lib/commons-logging-1.3.5.jar",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "input/project/lib/h2-2.4.240.jar",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "output/project/lib/h2-2.4.240.jar",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "input/project/lib/jspecify-1.0.0.jar",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "output/project/lib/jspecify-1.0.0.jar",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "input/project/lib/micrometer-commons-1.16.7.jar",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "output/project/lib/micrometer-commons-1.16.7.jar",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "input/project/lib/micrometer-observation-1.16.7.jar",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "output/project/lib/micrometer-observation-1.16.7.jar",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "input/project/lib/spring-aop-7.0.9.jar",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "output/project/lib/spring-aop-7.0.9.jar",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "input/project/lib/spring-beans-7.0.9.jar",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "output/project/lib/spring-beans-7.0.9.jar",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "input/project/lib/spring-context-7.0.9.jar",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "output/project/lib/spring-context-7.0.9.jar",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "input/project/lib/spring-core-7.0.9.jar",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "output/project/lib/spring-core-7.0.9.jar",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "input/project/lib/spring-expression-7.0.9.jar",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "output/project/lib/spring-expression-7.0.9.jar",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "input/project/lib/spring-jdbc-7.0.9.jar",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "output/project/lib/spring-jdbc-7.0.9.jar",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "input/project/lib/spring-tx-7.0.9.jar",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "output/project/lib/spring-tx-7.0.9.jar",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "input/project/src/work/Checkpoint.java",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "output/project/src/work/Checkpoint.java",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "input/project/src/work/Config.java",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "output/project/src/work/Config.java",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "input/project/src/work/Publisher.java",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "output/project/src/work/Publisher.java",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "input/project/support/work/ReceiverClient.java",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "output/project/support/work/ReceiverClient.java",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "input/project/test/work/Smoke.java",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "output/project/test/work/Smoke.java",
+      "kind": "SHA-256 comparison",
+      "integralBytesRead": true,
+      "contentInterpreted": false
+    },
+    {
+      "path": "output/REVIEW.md",
+      "kind": "artifact validation text read",
+      "integral": true
+    },
+    {
+      "path": "output/assessment.json",
+      "kind": "artifact validation text read",
+      "integral": true
+    },
+    {
+      "path": "output/execution.json",
+      "kind": "artifact validation text read",
+      "integral": true
+    }
+  ],
+  "directoryListings": [
+    "input/project (top level)",
+    "output (top level)",
+    "input/project (rg file paths excluding jars)",
+    "output/project (rg file paths excluding jars)"
+  ],
+  "sources": [
+    {
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.9/spring-tx/src/main/java/org/springframework/transaction/interceptor/DefaultTransactionAttribute.java",
+      "version": "7.0.9",
+      "integral": true,
+      "returnedLines": "0-221",
+      "purpose": "Verify default rollback for RuntimeException and Error",
+      "toolResponseLog": "logs/spring-rollback-source.log"
+    }
+  ],
+  "toolchain": {
+    "java": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+    "javac": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+    "release": 25
+  },
+  "commandNotes": "argv records the requested logical command (PowerShell scripts for shell reads), not an independently captured OS process tree. exec_command merged streams; such logs retain the combined output without pretending to separate stderr. check.mjs limits each javac/java subprocess to 30 seconds; every observed command finished within 3 seconds.",
+  "commands": [
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-07",
+      "argv": [
+        "pwsh",
+        "-Command",
+        "Get-Content -Raw -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-07/TASK.md'"
+      ],
+      "exit": 0,
+      "stderr": "",
+      "note": "Initial stdout body reconstructed from the unchanged TASK.md solely for log preservation.",
+      "stdoutLog": "logs/command-01.log"
+    },
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-07",
+      "argv": [
+        "pwsh",
+        "-Command",
+        "Get-Content -Raw -LiteralPath 'README.md','REQUEST.md','CONTRACT.md','skill/SKILL.md'; Get-ChildItem -LiteralPath 'input/project' -Force | Select-Object Name,Mode; Get-ChildItem -LiteralPath 'output' -Force | Select-Object Name,Mode"
+      ],
+      "exit": 0,
+      "stderr": "Get-Content: Cannot find path 'README.md' because it does not exist.\nGet-Content: Cannot find path 'REQUEST.md' because it does not exist.\nGet-Content: Cannot find path 'CONTRACT.md' because it does not exist.\n",
+      "note": "Failed initial location guesses preserved. Skill stdout body reconstructed from unchanged snapshot; directory listing normalized. The shell returned 0 after successful trailing listings; three Get-Content operations failed.",
+      "stdoutLog": "logs/command-02.log"
+    },
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-07",
+      "argv": [
+        "pwsh",
+        "-Command",
+        "$paths = @('input/project/README.md','input/project/REQUEST.md','input/project/CONTRACT.md','input/project/RUNBOOK.md','input/project/dependencies.json','input/project/toolchain.json','input/project/check.mjs'); foreach ($path in $paths) { [pscustomobject]@{path=$path;content=(Get-Content -Raw -LiteralPath $path)} | ConvertTo-Json -Compress }; rg --files input/project -g '!lib/**' -g '!*.jar'; rg --files output/project -g '!lib/**' -g '!*.jar'"
+      ],
+      "exit": 0,
+      "stderr": "Merged by exec_command",
+      "seconds": 0.1233836,
+      "stdoutLog": "logs/command-03.log"
+    },
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-07",
+      "argv": [
+        "pwsh",
+        "-Command",
+        "$paths = @('input/project/src/work/Publisher.java','input/project/src/work/Dispatcher.java','input/project/src/work/Config.java','input/project/src/work/Checkpoint.java','input/project/support/work/ReceiverClient.java','input/project/test/work/Smoke.java','skill/references/interception-and-rollback.md','skill/references/event-wiring-and-recovery.md','skill/references/verification.md'); foreach ($path in $paths) { [pscustomobject]@{path=$path;content=(Get-Content -Raw -LiteralPath $path)} | ConvertTo-Json -Compress }"
+      ],
+      "exit": 0,
+      "stderr": "Merged by exec_command",
+      "seconds": 0.1516316,
+      "stdoutLog": "logs/command-04.log"
+    },
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-07/output/project",
+      "argv": [
+        "node",
+        "check.mjs"
+      ],
+      "exit": 0,
+      "stderr": "Merged by exec_command",
+      "seconds": 1.1598066,
+      "stdoutLog": "logs/command-05.log"
+    },
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-07/output/project",
+      "argv": [
+        "node",
+        "check.mjs",
+        "work.Regression"
+      ],
+      "phase": "before production repair",
+      "exit": 1,
+      "stderr": "Merged by exec_command",
+      "seconds": 2.5901877,
+      "stdoutLog": "logs/command-06.log"
+    },
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-07/output/project",
+      "argv": [
+        "node",
+        "check.mjs",
+        "work.Regression",
+        "prepare"
+      ],
+      "phase": "after production repair",
+      "exit": 0,
+      "stderr": "Merged by exec_command",
+      "seconds": 2.3033504000000002,
+      "stdoutLog": "logs/command-07.log"
+    },
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-07/output/project",
+      "argv": [
+        "node",
+        "check.mjs",
+        "work.Regression",
+        "recover"
+      ],
+      "phase": "after production repair",
+      "exit": 0,
+      "stderr": "Merged by exec_command",
+      "seconds": 2.3415004,
+      "stdoutLog": "logs/command-08.log"
+    },
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-07/output/project",
+      "argv": [
+        "node",
+        "check.mjs",
+        "work.Regression",
+        "controls"
+      ],
+      "phase": "after production repair",
+      "exit": 0,
+      "stderr": "Merged by exec_command",
+      "seconds": 1.7022347,
+      "stdoutLog": "logs/command-09.log"
+    },
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-07/output/project",
+      "argv": [
+        "node",
+        "check.mjs"
+      ],
+      "phase": "after production repair",
+      "exit": 0,
+      "stderr": "Merged by exec_command",
+      "seconds": 1.6021168000000001,
+      "stdoutLog": "logs/command-10.log"
+    },
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-07",
+      "argv": [
+        "pwsh",
+        "-Command",
+        "$paths = @('output/project/src/work/Dispatcher.java','output/project/test/work/Regression.java','output/project/RUNBOOK.md'); foreach ($path in $paths) { [pscustomobject]@{path=$path;content=(Get-Content -Raw -LiteralPath $path)} | ConvertTo-Json -Compress }; $root = (Resolve-Path 'input/project').Path; $comparisons = foreach ($file in Get-ChildItem -LiteralPath $root -File -Recurse) { $relative = [IO.Path]::GetRelativePath($root,$file.FullName); if ($relative -in @('src\\work\\Dispatcher.java','RUNBOOK.md')) { continue }; $target = Join-Path 'output/project' $relative; $expected = (Get-FileHash -Algorithm SHA256 -LiteralPath $file.FullName).Hash; $actual = (Get-FileHash -Algorithm SHA256 -LiteralPath $target).Hash; [pscustomobject]@{path=$relative;sha256=$actual;matchesInput=($expected -eq $actual)} }; $comparisons | ConvertTo-Json; if (@($comparisons | Where-Object { -not $_.matchesInput }).Count -gt 0) { exit 1 }"
+      ],
+      "exit": 0,
+      "stderr": "Merged by exec_command",
+      "seconds": 0.2229119,
+      "stdoutLog": "logs/command-11.log"
+    },
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-07",
+      "argv": [
+        "pwsh",
+        "-Command",
+        "@{task=(Get-Content -Raw -LiteralPath 'TASK.md'); skill=(Get-Content -Raw -LiteralPath 'skill/SKILL.md')} | ConvertTo-Json -Compress"
+      ],
+      "purpose": "Preserve immutable bodies of the two initial reads in command logs; no new implementation information",
+      "exit": 0,
+      "stderr": "Merged by exec_command",
+      "seconds": 0.1458423,
+      "stdoutLog": "logs/command-12.log"
+    },
+    {
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-07",
+      "argv": [
+        "pwsh",
+        "-Command",
+        "$review = Get-Content -Raw -LiteralPath 'output/REVIEW.md'; $assessment = Get-Content -Raw -LiteralPath 'output/assessment.json' | ConvertFrom-Json; $execution = Get-Content -Raw -LiteralPath 'output/execution.json' | ConvertFrom-Json; $words = @($review -split '\\s+' | Where-Object { $_ }).Count; if ($words -gt 800) { throw 'REVIEW exceeds 800 words' }; if ($assessment.decision -ne 'changed') { throw 'Unexpected decision' }; foreach ($command in $execution.commands) { if ($null -eq $command.exit) { throw 'Command without completion status' }; if (-not (Test-Path -LiteralPath (Join-Path 'output' $command.stdoutLog))) { throw 'Missing command log' } }; if ($assessment.regressionCommands.Count -ne 4) { throw 'Missing reproducible checks' }; [pscustomobject]@{reviewWords=$words;jsonValid=$true;decision=$assessment.decision;regressionCommands=$assessment.regressionCommands.Count;commandLogs=$execution.commands.Count;allRecordedProcessesExited=$true} | ConvertTo-Json -Compress"
+      ],
+      "exit": 0,
+      "stderr": "Merged by exec_command",
+      "seconds": 0.2314856,
+      "stdoutLog": "logs/command-13.log"
+    }
+  ],
+  "writes": [
+    {
+      "tool": "apply_patch",
+      "paths": [
+        "project/test/work/Regression.java"
+      ],
+      "purpose": "Failing regression before repair"
+    },
+    {
+      "tool": "apply_patch",
+      "paths": [
+        "project/src/work/Dispatcher.java",
+        "project/test/work/Regression.java",
+        "project/RUNBOOK.md"
+      ],
+      "purpose": "Minimal repair, checkpoint-order regression and operational documentation"
+    },
+    {
+      "tool": "check.mjs and local H2",
+      "paths": [
+        "project/.build/**"
+      ],
+      "purpose": "Compiled classes and disposable file databases"
+    },
+    {
+      "tool": "apply_patch",
+      "paths": [
+        "REVIEW.md",
+        "assessment.json",
+        "execution.json",
+        "logs/**"
+      ],
+      "purpose": "Requested delivery artifacts and command evidence"
+    }
+  ],
+  "verificationCommands": [
+    [
+      "node",
+      "check.mjs"
+    ],
+    [
+      "node",
+      "check.mjs",
+      "work.Regression",
+      "prepare"
+    ],
+    [
+      "node",
+      "check.mjs",
+      "work.Regression",
+      "recover"
+    ],
+    [
+      "node",
+      "check.mjs",
+      "work.Regression",
+      "controls"
+    ]
+  ],
+  "limitations": [
+    "Evidence covers sequential replay by one worker against H2 2.4.240 and the frozen ReceiverClient surrogate; no production provider or concurrent workers were exercised.",
+    "Recovery was tested after orderly termination of one JVM and start of another using the same file-backed databases, not process killing, power loss or physical storage crash guarantees.",
+    "Previously acknowledged random UUID tokens from the defective implementation were not persisted; reconciling their old effects requires information unavailable in the outbox. The correction cannot reconstruct historical mappings.",
+    "Boot, JPA, brokers and Modulith are absent; no related integration guarantees are claimed."
+  ],
+  "runningProcesses": [],
+  "allWritesStopped": true,
+  "failedToolAttempts": [
+    {
+      "tool": "functions.exec",
+      "purpose": "Prepare final execution record",
+      "error": "ReferenceError: structuredClone is not defined",
+      "writesPerformed": false,
+      "subprocessesStarted": false,
+      "resolution": "Used JSON serialization to clone the existing in-memory report; retried the final patch."
+    }
+  ],
+  "completionRecordPreparedAtUtc": "2026-10-16 18:10:28 UTC",
+  "completionNote": "All spawned commands have returned with exit codes; no background processes or writes remain. This completion flag takes effect when the final synchronous artifact patch has returned. No further subprocess will be launched."
+}
+

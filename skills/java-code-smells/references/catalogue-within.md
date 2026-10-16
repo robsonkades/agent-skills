@@ -89,11 +89,20 @@ zip` recurring together across signatures.
 
 - **Looks like:** unused private methods, unreachable branches, commented-out blocks,
   feature-flag arms for flags that shipped, `@Deprecated` items with no external callers.
-- **Detect:** compiler and IDE inspections for private scope; for public scope, search
-  callers — reflection, serialisation and framework wiring first.
+- **Detect:** compiler/IDE reports and missing direct callers are leads at any visibility.
+  Inspect reflective, serialization and framework entry points for private members as well
+  as public APIs; `private` does not establish unreachability. If supported callers or runtime
+  configuration cannot be inspected, keep that reachability gap explicit.
 - **Not it when:** public API kept for compatibility (that is java-api-design's
-  deprecation policy), or entry points invoked reflectively by a framework.
-- **Fix:** delete it. Version control is the archive; there is no other technique.
+  deprecation policy), or a verified runtime entry point. For an ordinary `Serializable`
+  class, private `writeObject(ObjectOutputStream)` and `readObject(ObjectInputStream)` can
+  be called by serialization without direct source callers. Check the exact signature and
+  effective protocol: `Externalizable` uses `writeExternal`/`readExternal` instead, so the
+  familiar hook name alone does not establish use
+  ([Serializable](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/Serializable.html),
+  [Externalizable](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/Externalizable.html), Java 21).
+- **Fix:** delete only after establishing it is unused in the supported configurations and
+  compatibility surface. Version control is the archive.
 
 ## Comments as deodorant
 

@@ -1,0 +1,29 @@
+{
+  "checkedAt": "2026-10-16T01:09:34.030Z",
+  "skills": 29,
+  "filesMatchFinalEvaluatedCandidate": 112,
+  "changedIndexRecords": 29,
+  "indexEntries": 305,
+  "outsideSkillChanges": [],
+  "retestOutputSha256": "0d7dfbaed5202789a4202250e1a5678bc94f38991573db0e57876a17784cf6cc",
+  "retestWords": {
+    "scenarioA": 210,
+    "scenarioB": 221
+  },
+  "initialCandidatePreserved": true,
+  "verify": {
+    "command": "npm run verify",
+    "exitCode": 0,
+    "tests": 393,
+    "suites": 70,
+    "passed": 393,
+    "failed": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0,
+    "log": "verify.log",
+    "logSha256": "b9945e0cff2871e7ea9c5f9082f83ec6e9b4958493b5bdd23626ccb7ff5e256d"
+  },
+  "initialCandidateRoundTripVerified": true,
+  "completedAt": "2026-10-16T01:11:21.887Z"
+}

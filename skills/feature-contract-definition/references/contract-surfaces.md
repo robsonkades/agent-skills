@@ -2,6 +2,43 @@
 
 Read only the sections matching boundary crossings in the impact map.
 
+## From evidence to clauses
+
+Use this when changing an existing boundary or translating behavior into a contract. Start with
+one affected journey: find its producer operation or writer, the response/event/record it exposes,
+and a consumer call site, handler, reader or runbook that acts on it. Follow the consumed field or
+state to the resulting action, including its failure branch. For independently deployed consumers,
+check the supported revision, not just the newest checkout. In a new boundary, use the accepted
+consumer scenario and mark implementation evidence as not yet available.
+
+For each changed promise, retain a compact chain in the existing contract or linked review:
+source and revision -> relied-on observation -> proposed clause -> verification criterion.
+Separate what an accepted specification guarantees, what code or a test demonstrates, and what
+a consumer assumes. A stale fixture or one successful request cannot decide between conflicting
+sources. A consumer dependency outside the documented promise is still impact evidence; it does
+not automatically become an approved guarantee. Record the conflict and its owner under the
+existing support policy, continuing clauses that do not depend on that decision.
+
+Inspect materially different consumer behavior, such as an old client with a different fallback,
+instead of copying a clause from the first caller found. Record inspected paths/revisions and
+material gaps in the existing parties or evidence record. A failed repository lookup, inaccessible
+consumer or absent local call site does not prove there are no consumers. For unknown public
+consumers, rely on the declared support policy and state the limits of sampled evidence.
+
+When terms such as "accepted", "complete" or "available" imply different actions, locate their
+definitions and actual uses before asking. Define the disputed term by the observation it promises,
+the conditions for entering/leaving that state, and what the consumer may do then. Keep unresolved
+alternatives explicit; persist the resolved meaning in the authoritative specification or existing
+glossary and update affected clauses and criteria. This does not authorize renaming wire fields or
+states. Existing consumers may depend on them; apply the compatibility policy first.
+
+Pact's [consumer-driven contract explanation](https://docs.pact.io/#consumer-driven-contracts)
+illustrates why concrete consumer interactions complement a provider specification. Such examples
+cover their selected interactions, not every consumer or an entire business workflow. Its
+[testing limits](https://docs.pact.io/faq#what-is-the-difference-between-contract-testing-and-functional-testing)
+also distinguish integration contracts from core business-logic tests. Use the project's existing
+verification tools; adopting Pact or another API tool is not required by this skill.
+
 ## API or RPC
 
 - operation identity, caller, request/response fields and invariants;
@@ -16,6 +53,28 @@ status/result retention, behavior after expiry, and cancellation semantics if ca
 Use the accepted interaction mechanism; route an unresolved mechanism choice back to solution analysis.
 [HTTP 202](https://httpwg.org/specs/rfc9110.html#status.202) indicates acceptance for processing,
 not completed processing or a guarantee of eventual success.
+
+## Failure and recovery
+
+For a mutation over an API, message or supplier boundary, pair each failure with the known effect
+state: no effect, completed, partial, or unknown. Specify the consumer action and recovery owner;
+an error code or "retryable" flag alone leaves the risk of repeating an effect unresolved.
+
+- If the established contract makes replay safe, state the identity scope, unchanged payload,
+  retention window and result behavior, including concurrent repeats and key expiry. Bound the
+  retry obligation by the agreed deadline/budget; do not promise retries indefinitely.
+- If replay safety is absent and the effect is unknown, retain that state and use the established
+  status/reconciliation path. A missing lookup result proves no effect only if the lookup contract
+  guarantees that interpretation, including visibility and retention. If no recovery path exists,
+  record that gap and route the mechanism decision; do not invent supplier deduplication.
+- For partial success, state which items/effects committed and whether recovery repeats only
+  failed items, resumes an operation, or compensates. Cancellation is a request unless the
+  contract promises an observable terminal state; define the race with completion.
+
+For HTTP, [RFC 9110 section 9.2.2](https://httpwg.org/specs/rfc9110.html#idempotent.methods)
+ties automatic retry of a non-idempotent method to knowledge of idempotent request semantics or
+that the original was never applied. Idempotency concerns the intended effect, not an identical
+response. A transient failure or a new request identifier is not such evidence.
 
 ## Event or message
 
@@ -124,6 +183,15 @@ from rollout and retention evidence. Distinguish syntax/code generation, wire de
 business semantics and deployed configuration; passing one does not establish the others.
 Route format-specific rules to `schema-evolution-and-compatibility` and remote protocol
 details to `rpc-and-api-contracts`, checking their claims against the actual versions.
+
+For a Java-facing library or generated SDK, inspect compiler release/toolchains, resolved
+generator/runtime dependencies and supported CI/runtime JDKs. This skill sets no Java minimum
+and authorizes no upgrade. Check supported caller source compilation and precompiled-client
+linkage separately from serialization and runtime behavior: [JLS chapter 13](https://docs.oracle.com/javase/specs/jls/se21/html/jls-13.html#jls-13.2)
+distinguishes binary from source compatibility. Use the target release's specification for a
+specific change. Google's [AIP-180](https://google.aip.dev/180) likewise distinguishes source,
+wire and semantic compatibility; apply its format-specific examples only to matching formats,
+not as a universal policy for every boundary.
 
 ## Acceptance check
 

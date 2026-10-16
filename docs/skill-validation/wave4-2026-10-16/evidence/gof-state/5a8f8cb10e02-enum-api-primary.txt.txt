@@ -1,0 +1,5 @@
+Source: https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/EnumeratedValue.html
+Version: Jakarta Persistence API 3.2.0; consulted 2026-10-16.
+HTTP GET: 200 through PowerShell; browser extraction returned an internal error.
+Review summary: the mapping field is final and each enum constant must have its own non-null stored value. Supported numeric field types are byte, short and int for ORDINAL; String supports STRING. Provider support must match the API version.
+No provider integration was executed; full documentation is not retained here.

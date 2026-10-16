@@ -1,0 +1,18 @@
+{
+  "name": "compile-sdk-v1",
+  "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+  "args": [
+    "-J-Xms16m",
+    "-J-Xmx128m",
+    "--release",
+    "17",
+    "-d",
+    "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\sdk-v1",
+    "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\sdk-v1\\shop\\smtp\\SmtpMessage.java",
+    "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N\\src\\sdk-v1\\shop\\smtp\\SmtpClient.java"
+  ],
+  "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-dependency-inversion-artifacts\\fixture-ENiV7N",
+  "exitCode": 0,
+  "stdout": "",
+  "stderr": ""
+}

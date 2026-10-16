@@ -1,0 +1,142 @@
+import assert from 'node:assert/strict';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const evidence = dirname(fileURLToPath(import.meta.url));
+const cases = join(evidence, 'cases');
+mkdirSync(cases, { recursive: true });
+const acquire = '        REQUEST_TAG.set(request.getRequestURI());\n';
+const decision = `        if (!ready.getAsBoolean()) {
+            response.setStatus(503);
+            return false;
+        }
+`;
+function interceptor(before) {
+  return `package example;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.util.function.BooleanSupplier;
+import org.springframework.web.servlet.HandlerInterceptor;
+
+public final class RequestTagInterceptor implements HandlerInterceptor {
+    private static final ThreadLocal<String> REQUEST_TAG = new ThreadLocal<>();
+    private final BooleanSupplier ready;
+
+    public RequestTagInterceptor(BooleanSupplier ready) { this.ready = ready; }
+    public static String currentTag() { return REQUEST_TAG.get(); }
+
+    @Override
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+${before ? acquire + decision : decision + acquire}        return true;
+    }
+
+    @Override
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response,
+                                Object handler, Exception failure) {
+        REQUEST_TAG.remove();
+    }
+}
+`;
+}
+const commonFiles = {
+  'build.gradle': `plugins { id 'java' }
+java { toolchain { languageVersion = JavaLanguageVersion.of(17) } }
+repositories { mavenCentral() }
+dependencies {
+    implementation 'org.springframework:spring-webmvc:6.2.7'
+    compileOnly 'jakarta.servlet:jakarta.servlet-api:6.0.0'
+    testImplementation 'org.springframework:spring-test:6.2.7'
+    testImplementation 'jakarta.servlet:jakarta.servlet-api:6.0.0'
+}
+`,
+  'src/main/java/example/WebConfiguration.java': `package example;
+
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+@Configuration
+@EnableWebMvc
+public class WebConfiguration implements WebMvcConfigurer {
+    private final Maintenance maintenance;
+    public WebConfiguration(Maintenance maintenance) { this.maintenance = maintenance; }
+    @Override public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(new RequestTagInterceptor(maintenance::acceptingRequests))
+                .addPathPatterns("/reports/**");
+    }
+}
+`,
+  'src/main/java/example/Maintenance.java': `package example;
+
+public interface Maintenance { boolean acceptingRequests(); }
+`,
+  'src/main/java/example/ReportsController.java': `package example;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class ReportsController {
+    @GetMapping("/reports/status")
+    public ResponseEntity<String> status() { return ResponseEntity.ok("ready"); }
+}
+`,
+  'docs/review-context.md': `This is the complete /reports handler and interceptor configuration for the change.
+The servlet uses synchronous request handling for these routes. No outer filter or other
+component manages RequestTagInterceptor's state. The pooled worker may next serve another
+route. Operations under /reports must see their route tag during execution, and their tag
+must not remain on the worker after dispatch ends. A normal maintenance rejection is an
+empty 503 and must not invoke the handler. Maintenance.acceptingRequests() may return false
+or throw an unchecked failure; an unrelated handler can also fail. Existing public error
+mapping must be preserved. The current smoke check exercises an accepted request and the
+200 body only. No deployed-container observation is supplied. Review the shown ownership
+and lifecycle; do not add a new service layer, tracing framework or framework upgrade.
+`,
+};
+const task = 'Review the request-tag change for this Spring MVC service. Determine whether it is ready with the shown synchronous routes, explain evidence and limits, and propose the smallest justified correction if needed. Preserve the public success/maintenance behavior and existing error mapping. Use the project artifacts rather than treating callback names as a guarantee.';
+const inputs = [];
+for (const [id, before] of [['a', true], ['b', false]]) {
+  const source = interceptor(before);
+  const input = { id: 'mvc-lifecycle-' + id, task, fixtures: {
+    ...commonFiles, 'src/main/java/example/RequestTagInterceptor.java': source,
+  }, prerequisites: ['Read-only source review needs no additional tools.',
+    'Optional technical reproduction uses existing Spring 6.2.7 jars, Servlet API 6.0.0, and Java 17+; no dependency installation is authorized.',
+    'A request/response mock demonstrates a bounded framework path, not real Servlet-container integration.'],
+  knownDevelopmentCase: true };
+  inputs.push(input);
+  writeFileSync(join(cases, 'case-' + id + '.input.json'), JSON.stringify(input, null, 2) + '\n');
+  const fixtureDir = join(cases, 'case-' + id, 'example');
+  mkdirSync(fixtureDir, { recursive: true });
+  writeFileSync(join(fixtureDir, 'RequestTagInterceptor.java'), source);
+  const criteria = { caseId: input.id, evaluatorOnly: true, expectedDisposition: before ? 'CHANGE_NEEDED' : 'NO_CHANGE_NEEDED_FOR_SHOWN_LIFECYCLE',
+    decisiveConstraint: 'RequestTag acquisition occurs ' + (before ? 'before' : 'after') + ' the decision that can stop or throw.',
+    requiredObservations: before ? [
+      'The tagged preHandle returns false or throws before it returns true; its own afterCompletion is not called.',
+      'The same worker can retain /reports context after maintenance rejection or readiness failure; a handler failure after accepted preHandle is a different path.',
+      'Preserve 503 and no handler invocation. Delay acquisition until after successful readiness when its value is not needed for rejection, or release only acquired state on each early/failure path.',
+      'Do not move cleanup into a finally block that clears context before an allowed handler executes.',
+    ] : [
+      'The readiness decision returns false or throws before this interceptor installs request state.',
+      'For accepted synchronous requests, preHandle returns true and afterCompletion clears state even when the later handler fails.',
+      'Do not invent a leak on the shown early decision path or demand filter/service/async infrastructure without a required contract.',
+    ],
+    commonCriteria: ['Cite Spring 6.2.7 callback contract or an actually executed applicable check.',
+      'Distinguish previous interceptors completed by the chain from the interceptor that did not return true.',
+      'Do not treat a unit/mock path as deployed-container, routing/security, or async validation.',
+      'Do not claim real runtime evidence if only source review was performed.'],
+    observableFailures: before ? ['Unqualified ready/no-change verdict on request-state cleanup.', 'Fix changes 503 into handler execution or clears the tag before the handler.'] : ['Unconditional false-positive cleanup defect despite acquisition after readiness.', 'Mandatory unrelated abstraction or framework migration.'],
+    privateReproduction: { fixture: join(fixtureDir, 'RequestTagInterceptor.java'),
+      harness: join(evidence, 'evaluator-private/CaseProbe.java'), expectedExitCode: before ? 1 : 0,
+      expectedResult: before ? '4 paths exercised; retained tag on stop and readiness exception causes the assertion.' : '4 paths exercised; no retained tag and correct handler/response behavior.' },
+    actorExecuted: false, classification: 'Known development case; independent agent evaluation pending.' };
+  writeFileSync(join(cases, 'case-' + id + '.criteria.json'), JSON.stringify(criteria, null, 2) + '\n');
+}
+const key = 'src/main/java/example/RequestTagInterceptor.java';
+assert.deepEqual({ ...inputs[0], id: '', fixtures: { ...inputs[0].fixtures, [key]: '' } },
+  { ...inputs[1], id: '', fixtures: { ...inputs[1].fixtures, [key]: '' } });
+assert.equal(inputs[0].fixtures[key].replace(acquire + decision, decision + acquire), inputs[1].fixtures[key]);
+process.stdout.write('Created 2 isolated inputs and 2 evaluator criteria; only acquisition placement changes.\n');

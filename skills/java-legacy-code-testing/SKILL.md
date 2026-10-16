@@ -76,8 +76,11 @@ assurance objective:
    deadlock below is only about the narrow test you cannot yet reach. `references/seams-and-interception.md` covers effect analysis and choosing the
    narrowest interception point.
 3. **Break dependencies.** Only enough to reach step 4. This is the catalogue below.
-4. **Write the tests.** Characterisation, by running the code and recording what it does —
-   mechanics in `java-refactoring/references/safety-workflow.md`.
+4. **Write the first meaningful test.** Exercise the real target through the seam; distinguish
+   an observed characterization result from a requirement and from a value supplied by a double.
+   Check relevant wrong behavior and isolate substituted state before trusting the result
+   (`references/seams-and-interception.md`). Building the characterization net belongs to
+   `java-refactoring/references/safety-workflow.md`.
 5. **Hand off the reachable test point.** Report the enabling point, first meaningful assertion
    and effects still untested. If the request includes the subsequent change, `java-refactoring`
    takes over; otherwise reaching the requested test point completes this task.
@@ -132,7 +135,7 @@ costs in `references/dependency-breaking-catalogue.md`; read it before applying 
 Each technique's precondition and cost is in the catalogue reference; do not apply one without
 reading its cost. Time is the exception that is not in the table: `LocalDate.now()` and
 `Instant.now()` are answered by injecting a `java.time.Clock`, and how to do that is
-`java-test-design` (`references/determinism.md`) and `java-test-doubles`. Retain an adequate
+`java-test-design/references/determinism.md` and `java-test-doubles`. Retain an adequate
 existing time abstraction, especially for monotonic elapsed time or business-calendar policy.
 
 ## What you may change before a test exists
@@ -277,8 +280,12 @@ shapes. They answer "I have two days"; they do not answer "how do we fix this".
   deliberately unobserved mutation does not establish a missing test; inspect what changed.
 - **The step is one reviewable, reversible diff.** Inspect signatures plus construction order,
   exceptions, dispatch and resource ownership; do not infer preservation from compilation alone.
+  Trace an existing caller through the retained production selection as well as the injected
+  test path; verify preserved acquisition/failure effects where safe and state unexecuted paths.
 - **The chosen seam stays within its ownership and lifetime.** Review new static mocks and test
-  hooks by effect, isolation and cleanup rather than occurrence counts.
+  hooks by effect, isolation and cleanup rather than occurrence counts. A passing isolated run
+  does not resolve an order-dependent suite failure; identify shared state or asynchronous work
+  and verify the affected execution mode before reporting the seam safe.
 - **Time-sensitive assertions control their relevant time source.** Inspect clock reads and
   retain actual time-zone, elapsed-time and business-calendar semantics.
 
@@ -301,11 +308,14 @@ shapes. They answer "I have two days"; they do not answer "how do we fix this".
 - [Seams and interception points](references/seams-and-interception.md) — read when the question
   is _where_ to put the test rather than how to reach the code: the seam taxonomy in Java detail,
   what replaces preprocessing seams, effect analysis, and choosing a pinch point whose tests
-  expose the relevant effects of a cluster of changes.
+  expose the relevant effects of a cluster of changes. Also read when the first test's oracle,
+  substituted state or varying results make its evidence uncertain.
 - [`scripts/renewal-service/`](scripts/renewal-service/) — `Before.java`, `After.java` and
   `verify.sh`. Run it when someone argues the obstacle is a matter of taste: the before state
-  throws at construction, the after state is deterministic, and the script fails if that stops
-  being true.
+  throws at construction, the after state checks retained production construction, results,
+  gateway calls and failure propagation. Wrong-policy-ID and bypassed-constructor variants must
+  fail for their intended reasons. Temporary outputs stay beside the script and are removed on
+  exit; no database is contacted.
 - [Tooling and the 2004 to 2026 sweep](references/tooling-and-modernization.md) — read when
   following older legacy-testing material, or when the output is too large to assert on: verified
   library coordinates, approval testing with scrubbers and a CI-safe reporter, and the table of

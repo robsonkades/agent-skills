@@ -1,0 +1,117 @@
+{
+  "task": "A22",
+  "workingDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A22",
+  "writeScope": "output/ only",
+  "allWritesStopped": true,
+  "meaningfulReads": [
+    {"path": "TASK.md", "purpose": "Assignment, immutable boundaries, local skill context and artifact requirements"},
+    {"path": "input/project/README.md", "purpose": "Review baseline, Java-only conditional instructions and operational restrictions"},
+    {"path": "input/project/REQUEST.md", "purpose": "Review-only decision and required numeric metrics"},
+    {"path": "input/project/proposal.md", "purpose": "Claims under review"},
+    {"path": "input/project/incident.json", "purpose": "Cohort, layer limits, bucket scope and late-commit evidence"},
+    {"path": "input/skills/idempotency/SKILL.md", "purpose": "Unknown outcome and external-effect recovery contract"},
+    {"path": "input/skills/timeouts-and-deadlines/SKILL.md", "purpose": "Budget scope and cancellation versus actual work"},
+    {"path": "input/skills/retries-and-backoff/SKILL.md", "purpose": "Layer amplification and retry budget scope"},
+    {"path": "input/skills/idempotency/references/key-selection.md", "purpose": "Stable identity, namespace, replay lifetime and limits of local dedup"},
+    {"path": "input/skills/idempotency/references/idempotency-key-filter.md", "purpose": "Current-state lookup cannot exclude later application; durable UNKNOWN recovery"},
+    {"path": "input/skills/timeouts-and-deadlines/references/java-timeout-surface.md", "purpose": "Cancellation signal versus actual resource release; no client/version assumptions"},
+    {"path": "input/skills/timeouts-and-deadlines/references/deadline-propagation.md", "purpose": "Missing numerical deadline prevents a latency bound"},
+    {"path": "input/skills/retries-and-backoff/references/retry-in-java.md", "purpose": "Scoped success-refilled grants, nested attempts and ambiguity"},
+    {"path": "input/skills/retries-and-backoff/references/retry-failure-modes.md", "purpose": "Matching-cohort attribution and bounded discriminating verification"}
+  ],
+  "commands": [
+    {
+      "id": 1,
+      "cwd": "C:/git/agent-skills",
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A22/TASK.md'",
+      "exitCode": 0,
+      "result": "Read TASK.md first, in full; no other repository files accessed."
+    },
+    {
+      "id": 2,
+      "command": "Get-Content -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A22/input/skills/idempotency/SKILL.md','C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A22/input/skills/timeouts-and-deadlines/SKILL.md','C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A22/input/skills/retries-and-backoff/SKILL.md'",
+      "exitCode": 0,
+      "result": "Read all three required local skill snapshots in full."
+    },
+    {
+      "id": 3,
+      "command": "Get-Content -LiteralPath 'input/project/README.md','input/project/REQUEST.md'; rg --files input/project output",
+      "exitCode": 0,
+      "result": "Read baseline and request; inventory contains README.md, REQUEST.md, proposal.md and incident.json in each of input/project and output. No implementation, Java source or run.mjs supplied."
+    },
+    {
+      "id": 4,
+      "command": "Get-Content -LiteralPath 'input/skills/idempotency/references/key-selection.md','input/skills/idempotency/references/idempotency-key-filter.md','input/skills/timeouts-and-deadlines/references/java-timeout-surface.md','input/skills/timeouts-and-deadlines/references/deadline-propagation.md','input/skills/retries-and-backoff/references/retry-in-java.md','input/skills/retries-and-backoff/references/retry-failure-modes.md'",
+      "exitCode": 0,
+      "result": "Output was truncated by tool response budget. Key-selection and retry-failure-modes were visible in full. The intervening resources were reread in commands 6-9; no truncated text is treated as inspected evidence."
+    },
+    {
+      "id": 5,
+      "command": "Get-Content -LiteralPath 'input/project/proposal.md','input/project/incident.json'",
+      "exitCode": 0,
+      "result": "Read all proposal and incident evidence: 1000 logical calls, 1060 outer attempts, 1600 wire attempts, 900 refill successes, 60 grants, 4 processes with 10 initial tokens and 0.1 refill, layer counts 1/3 gateway times 2 outer times 3 SDK; timeout 50, absent lookup 52 and commit 80 ms."
+    },
+    {
+      "id": 6,
+      "command": "Get-Content -LiteralPath 'input/skills/retries-and-backoff/references/retry-in-java.md'",
+      "exitCode": 0,
+      "result": "Read full retry-in-java resource without truncation."
+    },
+    {
+      "id": 7,
+      "command": "Get-Content -LiteralPath 'input/skills/idempotency/references/idempotency-key-filter.md'",
+      "exitCode": 0,
+      "result": "Read full idempotency-key-filter resource without truncation."
+    },
+    {
+      "id": 8,
+      "command": "Get-Content -LiteralPath 'input/skills/timeouts-and-deadlines/references/java-timeout-surface.md','input/skills/timeouts-and-deadlines/references/deadline-propagation.md'",
+      "exitCode": 0,
+      "result": "Deadline-propagation visible in full; a section of java-timeout-surface was truncated in the combined response and reread in command 9."
+    },
+    {
+      "id": 9,
+      "command": "Get-Content -LiteralPath 'input/skills/timeouts-and-deadlines/references/java-timeout-surface.md'",
+      "exitCode": 0,
+      "result": "Read full java-timeout-surface resource without truncation."
+    }
+  ],
+  "writes": [
+    {"tool": "apply_patch", "paths": ["output/REVIEW.md", "output/result.json", "output/execution.json"], "action": "Added review and structured decision/journal only"},
+    {"tool": "apply_patch", "paths": ["output/execution.json"], "action": "Final journal write: recorded completed validation command and exact stdout; all earlier commands exited and no processes or further writes remain"}
+  ],
+  "validation": {
+    "status": "passed",
+    "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A22/output",
+    "command": "node -e 'const fs = require(\"node:fs\"); const assert = require(\"node:assert/strict\"); const incident = JSON.parse(fs.readFileSync(\"../input/project/incident.json\", \"utf8\")); const result = JSON.parse(fs.readFileSync(\"result.json\", \"utf8\")); const journal = JSON.parse(fs.readFileSync(\"execution.json\", \"utf8\")); const review = fs.readFileSync(\"REVIEW.md\", \"utf8\"); const c = incident.configuration; const d = incident.deployment; const cohort = incident.cohort; const expected = {configuredBeforeMax: c.gatewayCurrentAttempts * c.outerMaxAttemptsIncludingInitial * c.sdkMaxAttemptsIncludingInitial, configuredAfterMax: c.gatewayProposedAttempts * c.outerMaxAttemptsIncludingInitial * c.sdkMaxAttemptsIncludingInitial, outerAttemptsPerLogical: cohort.outerAttempts / cohort.logicalCalls, wireAttemptsPerLogical: cohort.wireAttempts / cohort.logicalCalls, aggregateGrantUpperBound: d.processes * d.initialTokensPerProcess + d.refillPerSuccess * cohort.successesThatRefill}; for (const [key, value] of Object.entries(expected)) {assert.equal(typeof result[key], \"number\"); assert.equal(result[key], value, key);} const words = review.trim().split(/\\s+/).length; assert.ok(words <= 750, \"review exceeds word limit\"); for (const name of [\"README.md\", \"REQUEST.md\", \"proposal.md\", \"incident.json\"]) assert.ok(fs.readFileSync(name).equals(fs.readFileSync(\"../input/project/\" + name)), \"immutable copy changed: \" + name); assert.deepEqual(fs.readdirSync(\".\").sort(), [\"README.md\", \"REQUEST.md\", \"REVIEW.md\", \"execution.json\", \"incident.json\", \"proposal.md\", \"result.json\"].sort()); assert.equal(result.decision, \"reject\"); assert.equal(result.observedCounters.additionalSdkWireAttempts, cohort.wireAttempts - cohort.outerAttempts); assert.ok(cohort.outerRetryGrants <= expected.aggregateGrantUpperBound); assert.equal(result.effectEvidence.originalCommitAtMs, incident.effectTrace.events.find(e => e.event === \"original write commits\").atMs); assert.equal(result.nextVerification.executed, false); assert.equal(journal.commands.length, 9); console.log(JSON.stringify({status: \"passed\", requiredMetrics: expected, reviewWordCount: words, immutableCopiesMatched: 4, artifactSetMatched: true, implementationOrProviderTestsRun: false}));'",
+    "exitCode": 0,
+    "stdout": "{\"status\":\"passed\",\"requiredMetrics\":{\"configuredBeforeMax\":6,\"configuredAfterMax\":18,\"outerAttemptsPerLogical\":1.06,\"wireAttemptsPerLogical\":1.6,\"aggregateGrantUpperBound\":130},\"reviewWordCount\":629,\"immutableCopiesMatched\":4,\"artifactSetMatched\":true,\"implementationOrProviderTestsRun\":false}\n",
+    "result": {
+      "status": "passed",
+      "requiredMetrics": {
+        "configuredBeforeMax": 6,
+        "configuredAfterMax": 18,
+        "outerAttemptsPerLogical": 1.06,
+        "wireAttemptsPerLogical": 1.6,
+        "aggregateGrantUpperBound": 130
+      },
+      "reviewWordCount": 629,
+      "immutableCopiesMatched": 4,
+      "artifactSetMatched": true,
+      "implementationOrProviderTestsRun": false
+    },
+    "scope": "Actual review artifacts and fixture arithmetic only, not implementation or provider behavior."
+  },
+  "notExecuted": [
+    "No Java: review-only case with no Java implementation or run.mjs, so Verification.java and node run.mjs Verification do not apply.",
+    "No npm verify: repository edits are outside this isolated exercise's scope.",
+    "No provider call, network workload, deployment, installation, policy modification or runtime configuration change.",
+    "Proposed 20-second recovery replay is a next verification, not an executed test."
+  ],
+  "limitations": [
+    "Only supplied snapshots and evidence were used; no global skills, repository catalog, sibling sessions, evaluator files or prior outputs were read.",
+    "No other skill package was opened when the supplied resources routed to it.",
+    "Read-command results are recorded as inspected summaries; source bodies remain in immutable input files."
+  ],
+  "processes": {"backgroundProcessesStarted": 0, "javaSubprocessesStarted": 0, "allStartedCommandsCompleted": true}
+}

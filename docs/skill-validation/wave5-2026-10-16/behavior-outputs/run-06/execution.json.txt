@@ -1,0 +1,1580 @@
+{
+  "scope": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06",
+  "writesRestrictedTo": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06\\output",
+  "javaTarget": 17,
+  "runtimeRequired": "Temurin 25.0.3+9",
+  "timeoutMs": 30000,
+  "commands": [
+    {
+      "id": "runtime-version",
+      "executed": true,
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-version"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06\\output\\project",
+      "timeoutMs": 30000,
+      "started": "2026-10-16T16:54:57.132Z",
+      "ended": "2026-10-16T16:54:57.174Z",
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "output/logs/runtime-version.stdout.log",
+      "stderr": "output/logs/runtime-version.stderr.log",
+      "outputTruncated": false
+    },
+    {
+      "id": "compiler-version",
+      "executed": true,
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+      "args": [
+        "-version"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06\\output\\project",
+      "timeoutMs": 30000,
+      "started": "2026-10-16T16:54:57.488Z",
+      "ended": "2026-10-16T16:54:57.584Z",
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "output/logs/compiler-version.stdout.log",
+      "stderr": "output/logs/compiler-version.stderr.log",
+      "outputTruncated": false
+    },
+    {
+      "id": "node-version",
+      "executed": true,
+      "executable": "node",
+      "args": [
+        "--version"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06\\output\\project",
+      "timeoutMs": 30000,
+      "started": "2026-10-16T16:54:57.899Z",
+      "ended": "2026-10-16T16:54:57.926Z",
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "output/logs/node-version.stdout.log",
+      "stderr": "output/logs/node-version.stderr.log",
+      "outputTruncated": false
+    },
+    {
+      "id": "baseline-check",
+      "executed": true,
+      "executable": "node",
+      "args": [
+        "run.mjs",
+        "check"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06\\output\\project",
+      "timeoutMs": 30000,
+      "started": "2026-10-16T16:54:58.264Z",
+      "ended": "2026-10-16T16:54:59.009Z",
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "output/logs/baseline-check.stdout.log",
+      "stderr": "output/logs/baseline-check.stderr.log",
+      "outputTruncated": false
+    },
+    {
+      "id": "baseline-export",
+      "executed": true,
+      "executable": "node",
+      "args": [
+        "run.mjs",
+        "export",
+        "fixture/input.txt",
+        "../baseline-export.txt"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06\\output\\project",
+      "timeoutMs": 30000,
+      "started": "2026-10-16T16:54:59.328Z",
+      "ended": "2026-10-16T16:54:59.758Z",
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "output/logs/baseline-export.stdout.log",
+      "stderr": "output/logs/baseline-export.stderr.log",
+      "outputTruncated": false
+    },
+    {
+      "id": "jar-contents",
+      "executed": true,
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/jar.exe",
+      "args": [
+        "--list",
+        "--file",
+        "lib/compat.jar"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06\\output\\project",
+      "timeoutMs": 30000,
+      "started": "2026-10-16T16:55:04.528Z",
+      "ended": "2026-10-16T16:55:04.594Z",
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "output/logs/jar-contents.stdout.log",
+      "stderr": "output/logs/jar-contents.stderr.log",
+      "outputTruncated": false
+    },
+    {
+      "id": "jar-normalizer-default",
+      "executed": true,
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javap.exe",
+      "args": [
+        "-classpath",
+        "lib/compat.jar",
+        "-verbose",
+        "-c",
+        "work.Normalizer"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06\\output\\project",
+      "timeoutMs": 30000,
+      "started": "2026-10-16T16:55:04.862Z",
+      "ended": "2026-10-16T16:55:05.033Z",
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "output/logs/jar-normalizer-default.stdout.log",
+      "stderr": "output/logs/jar-normalizer-default.stderr.log",
+      "outputTruncated": false
+    },
+    {
+      "id": "app-normalizer",
+      "executed": true,
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javap.exe",
+      "args": [
+        "-classpath",
+        ".build/app",
+        "-verbose",
+        "-c",
+        "work.Normalizer"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06\\output\\project",
+      "timeoutMs": 30000,
+      "started": "2026-10-16T16:55:05.306Z",
+      "ended": "2026-10-16T16:55:05.464Z",
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "output/logs/app-normalizer.stdout.log",
+      "stderr": "output/logs/app-normalizer.stderr.log",
+      "outputTruncated": false
+    },
+    {
+      "id": "baseline-class-loading",
+      "executed": true,
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-Xlog:class+load=info:file=../logs/baseline-classes.log",
+        "-cp",
+        "lib/compat.jar;.build/app",
+        "work.Main",
+        "fixture/input.txt",
+        "../baseline-traced-export.txt"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06\\output\\project",
+      "timeoutMs": 30000,
+      "started": "2026-10-16T16:55:21.927Z",
+      "ended": "2026-10-16T16:55:21.984Z",
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "output/logs/baseline-class-loading.stdout.log",
+      "stderr": "output/logs/baseline-class-loading.stderr.log",
+      "outputTruncated": false
+    },
+    {
+      "id": "baseline-origin-lines",
+      "executed": true,
+      "executable": "rg",
+      "args": [
+        "-e",
+        "work\\.(Main|Normalizer|LegacyBanner)",
+        "../logs/baseline-classes.log"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06\\output\\project",
+      "timeoutMs": 30000,
+      "started": "2026-10-16T16:55:22.253Z",
+      "ended": "2026-10-16T16:55:22.270Z",
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "output/logs/baseline-origin-lines.stdout.log",
+      "stderr": "output/logs/baseline-origin-lines.stderr.log",
+      "outputTruncated": false
+    },
+    {
+      "id": "app-first-experiment",
+      "executed": true,
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+      "args": [
+        "-Xlog:class+load=info:file=../logs/app-first-classes.log",
+        "-cp",
+        ".build/app;lib/compat.jar",
+        "work.Main",
+        "fixture/input.txt",
+        "../app-first-export.txt"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06\\output\\project",
+      "timeoutMs": 30000,
+      "started": "2026-10-16T16:55:22.529Z",
+      "ended": "2026-10-16T16:55:22.583Z",
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "output/logs/app-first-experiment.stdout.log",
+      "stderr": "output/logs/app-first-experiment.stderr.log",
+      "outputTruncated": false
+    },
+    {
+      "id": "app-first-origin-lines",
+      "executed": true,
+      "executable": "rg",
+      "args": [
+        "-e",
+        "work\\.(Main|Normalizer|LegacyBanner)",
+        "../logs/app-first-classes.log"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06\\output\\project",
+      "timeoutMs": 30000,
+      "started": "2026-10-16T16:55:22.859Z",
+      "ended": "2026-10-16T16:55:22.877Z",
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "output/logs/app-first-origin-lines.stdout.log",
+      "stderr": "output/logs/app-first-origin-lines.stderr.log",
+      "outputTruncated": false
+    },
+    {
+      "id": "regression-before-fix",
+      "executed": true,
+      "executable": "node",
+      "args": [
+        "--test",
+        "test/export.test.mjs"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06\\output\\project",
+      "timeoutMs": 30000,
+      "started": "2026-10-16T16:55:58.971Z",
+      "ended": "2026-10-16T16:56:02.608Z",
+      "exit": 1,
+      "signal": null,
+      "error": null,
+      "stdout": "output/logs/regression-before-fix.stdout.log",
+      "stderr": "output/logs/regression-before-fix.stderr.log",
+      "outputTruncated": false
+    },
+    {
+      "id": "final-check",
+      "executed": true,
+      "executable": "node",
+      "args": [
+        "run.mjs",
+        "check"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06\\output\\project",
+      "timeoutMs": 30000,
+      "started": "2026-10-16T16:56:48.962Z",
+      "ended": "2026-10-16T16:56:53.171Z",
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "output/logs/final-check.stdout.log",
+      "stderr": "output/logs/final-check.stderr.log",
+      "outputTruncated": false
+    },
+    {
+      "id": "final-export",
+      "executed": true,
+      "executable": "node",
+      "args": [
+        "run.mjs",
+        "export",
+        "fixture/input.txt",
+        "../final-export.txt"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06\\output\\project",
+      "timeoutMs": 30000,
+      "started": "2026-10-16T16:56:53.432Z",
+      "ended": "2026-10-16T16:56:53.847Z",
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "output/logs/final-export.stdout.log",
+      "stderr": "output/logs/final-export.stderr.log",
+      "outputTruncated": false
+    },
+    {
+      "id": "final-bytecode",
+      "executed": true,
+      "executable": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javap.exe",
+      "args": [
+        "-classpath",
+        ".build/app",
+        "-verbose",
+        "-c",
+        "work.Normalizer"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06\\output\\project",
+      "timeoutMs": 30000,
+      "started": "2026-10-16T16:56:54.368Z",
+      "ended": "2026-10-16T16:56:54.526Z",
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "output/logs/final-bytecode.stdout.log",
+      "stderr": "output/logs/final-bytecode.stderr.log",
+      "outputTruncated": false
+    }
+  ],
+  "fileReads": [
+    {
+      "path": "TASK.md",
+      "phase": "initial",
+      "bytes": 1878,
+      "sha256": "2a756e67ec1119873dff38b662c70ef8a0fda07184f7d73625ff95868f5475d3",
+      "truncated": false,
+      "content": "Investigue support.md, confirme o comportamento pelo comando de exportação aceito e corrija a violação encontrada. Preserve a biblioteca de compatibilidade, o contrato e a baseline Java. Entregue o projeto final e REVIEW.md com causa, evidências, correção, verificação e limites. Não há acesso a produção.\n\nTrabalhe exclusivamente em C:/Users/robso/AppData/Local/Temp/skills-wave5-actors-4tJ3OK/run-06. O projeto inicial está em input/project (somente leitura), e uma cópia de trabalho já está em output/project. Você não está sozinho: escreva somente dentro de output/. Não modifique input/, skill/, contract.md nem lib/compat.jar, se existir. Pode editar fontes, testes e configuração do projeto de trabalho quando sustentado pela investigação. Preserve as entradas originais e cobertura útil existente.\n\nAplique a skill local skill/SKILL.md. Leia o corpo completo e as referências relevantes conforme suas condições; registre o conteúdo efetivamente lido.\n\nNão leia o repositório C:/git/agent-skills, outros runs, critérios, handoffs, pastas de avaliações, skills globais ou conversas anteriores. Não use rede, instalações, outros agentes ou configuração real. Java, javac, javap e jar estão em C:/Users/robso/.jdks/temurin-25.0.3/bin. Node está disponível. Use alvo Java 17 e preserve o runtime disponível (Temurin25.0.3+9); cada processo deve ter limite de 30s.\n\nExecute verificações proporcionais e conserve logs/scripts. Salve output/REVIEW.md e output/execution.json. No JSON registre comandos exatos com argumentos, cwd, exit e saída ou caminho do log, arquivos/conteúdos efetivamente lidos (incluindo skill/referências e qualquer truncamento), limitações e qualquer acesso acidental fora do escopo. Diferencie execução de proposta. Ao terminar, encerre processos, pare as escritas e confirme allWritesStopped:true.\n"
+    },
+    {
+      "path": "skill/SKILL.md",
+      "phase": "initial",
+      "bytes": 7677,
+      "sha256": "169c722dcb37565038e7cf6301e844bab0a3418a06ee2a92b8e061d4cf44bac3",
+      "truncated": false,
+      "content": "---\nname: debugging\ndescription: >\n  Finding the cause of a fault instead of a change that makes the symptom go away:\n  reproducing before diagnosing, shrinking the reproduction until nothing is removable,\n  stating a hypothesis that predicts an observation, changing one variable at a time,\n  bisecting, and choosing which evidence to collect from a running production system before\n  it is destroyed. Use when a fix is being guessed at, when a change \"seems to work\", when\n  the same bug keeps coming back, when a fault cannot be reproduced, when a production\n  incident needs a cause rather than a restart, when print statements are being added\n  everywhere, or when several changes were made at once and it now works. Does not cover\n  JVM performance triage (java-performance), GC (jvm-gc-tuning), live thread diagnosis\n  (concurrency-diagnostics), heap dump mechanics (heap-dump-analysis), or deliberately\n  injecting failures (distributed-systems-testing).\n---\n\n# Debugging\n\n## Purpose\n\nTurn a report into a cause. The alternative — changing things until the symptom disappears —\nproduces code nobody understands, a bug that returns under a slightly different input, and no\nway to tell whether the change helped or moved the failure somewhere quieter.\n\n## Workflow\n\nStart with the requested outcome: diagnosis, mitigation or repair. Inspect the report, affected\ncall path, documented contract, existing tests and effective configuration before accepting the\nreport's explanation. Reuse adequate evidence; ask only about missing expectations or context\nthat could change the conclusion. Diagnosis can finish with a supported finding without editing\ncode. Behavior consistent with the accepted contract may call for clarification rather than a fix.\n\n1. **Restate the fault as an observation.** \"Customer 88123 saw a negative balance at 14:02\"\n   is an observation. \"The refund logic is broken\" is a hypothesis wearing a report's clothes,\n   and adopting it early is how the wrong subsystem gets investigated for a day.\n   State the expected behavior and its source too: an allowed overdraft is not evidence of a\n   violated invariant. Separate requirements and established contracts from assumptions.\n2. **Reproduce it.** Deterministically if possible, intermittently if not — but know which,\n   because \"I cannot reproduce it\" and \"it reproduces one time in ten\" lead to different work.\n   If it only happens in production, collect evidence within the mitigation budget\n   (`references/production-evidence.md`).\n3. **Shrink.** Remove inputs, steps, data and configuration until removing anything more makes\n   the fault disappear, while preserving the original failure signature. Stop when the next\n   reduction costs more than it helps; a minimal reproduction need not identify the full cause.\n4. **State a hypothesis that predicts something you have not yet looked at.** \"If the cause is\n   the missing time zone, then the row written at 23:30 local will carry yesterday's date.\"\n   Also name an observation that would refute it. Explaining existing evidence is useful;\n   a discriminating prediction makes the next experiment useful.\n5. **Run a controlled, discriminating experiment**, normally changing one variable. Preserve\n   comparable state and a baseline control; record confirming and refuting outcomes. When an\n   interaction is suspected, compare the relevant combinations deliberately instead of treating\n   a successful batch of changes as an isolated cause (`references/method.md`).\n6. **Check the explanation against the distribution** — frequency, timing, affected and unaffected\n   users. Record remaining contradictions and uncertainty instead of forcing one cause to explain\n   unrelated failures.\n7. **When repair is in scope, verify it against the original fault.** Turn the reproduction\n   into regression coverage when it earns lasting value (tdd); confirm it detects the original\n   failure before accepting the corrected result. Reuse existing adequate tests. A race may need\n   controlled scheduling or integration coverage. Record intermittent outcomes and relevant\n   unaffected cases; do not make extra changes merely to finish a diagnosis-only task.\n\nInspect deployed versus source JDK/toolchain, dependencies, JVM flags, configuration and data\nversions before version-sensitive diagnostics or changes. This workflow has no universal Java\nbaseline. Preserve the target environment; upgrading it is a separate decision. Return the fault,\nevidence, tested/refuted hypotheses, fix or mitigation, validation and unresolved gaps. Missing\naccess or reproduction permits an evidence plan, not an invented root cause.\n\n## Rules\n\n- Prefer a causal explanation before a permanent fix. During an incident, a reversible mitigation\n  may precede diagnosis; label it as mitigation, preserve the evidence the response budget allows,\n  and do not present symptom disappearance as root-cause proof.\n- Prefer one controlled variable per experiment. If a batch helps, it implicates the batch but\n  does not isolate a member or interaction; reduce/revert the batch in a controlled environment.\n- Read the whole stack trace, including cause and suppressed chains. The deepest application frame\n  is a useful boundary candidate, not a verdict: framework callbacks, generated code, reflection,\n  native frames, and library defects can move or hide the causal frame.\n- Balance evidence preservation against customer impact and the incident commander's authority.\n  Capture cheap, non-disruptive evidence first when the error budget permits; mitigate immediately\n  when delay is unsafe, and record which volatile evidence the action destroyed\n  (`references/production-evidence.md`).\n- Symptom disappearance is evidence of recovery, not proof of cause or durable correction.\n- Missing events refute a hypothesis only within verified collection coverage. Check enablement,\n  filters, sampling/thresholds and workload opportunity before interpreting an empty result.\n- Question the assumption that the fault is where the symptom is. Corrupted state is written\n  in one place and observed in another, often much later. Trace the first contract violation;\n  an incorrect write is one candidate, but valid data can also be misread or misinterpreted.\n- Consider `git bisect` when verified good/bad revisions and a reliable classifier exist.\n  It can narrow a monotone change in roughly log₂(n) classifications; build cost, skipped commits\n  and intermittent or nonmonotone outcomes affect that benefit. See the reference's exit protocol.\n- Delete the debugging output before the change ships, and if a log line was genuinely useful,\n  promote it deliberately with a level and structure (structured-logging) rather than leaving\n  a `System.out.println`.\n- Timebox according to incident severity and experiment cost. Repeated refutations are a signal\n  to revisit observations, harness assumptions and the system model or seek another perspective.\n\n## References\n\n- **The method in detail** — `references/method.md`. Shrinking a reproduction, differential\n  diagnosis (what changed — code, data, config, dependency, traffic, time), bisection over\n  commits and over data, reading exception chains, and the specific traps of intermittent and\n  heisenbug faults. Read when the fault resists the workflow above.\n- **Evidence from a running system** — `references/production-evidence.md`. What each source\n  can and cannot answer — logs, metrics, traces, thread dumps, heap dumps, JFR, database state,\n  deployment history — with volatility, cost and collection order during an incident. Read\n  before touching a production system that is currently faulty.\n"
+    },
+    {
+      "path": "skill/references/method.md",
+      "phase": "initial",
+      "bytes": 11108,
+      "sha256": "634fe5e9a6348b906f9eaa21a5e62c953267c18937b8d19080bd00b3358889b0",
+      "truncated": false,
+      "content": "# The method in detail\n\n## Shrinking a reproduction\n\nThe goal is a reproduction where removing any element makes the fault disappear. Work in this\norder, because each step makes the next cheaper:\n\n1. **Data** — try subsets and their complements, keeping a smaller input only when the same\n   failure persists. If neither half fails, retain interacting elements and use smaller removals;\n   a pairwise interaction can span both halves. Preserve a known failing original.\n2. **Steps** — remove operations from the sequence. Many \"only fails after a full checkout\n   flow\" faults collapse to two calls in a particular order (which is itself the finding:\n   temporal coupling, java-clean-code).\n3. **Configuration** — revert to defaults one property at a time. A fault that disappears at a\n   default implicates that setting or an interaction; it does not by itself identify a defect.\n4. **Environment** — drop from the cluster to a single node, from the container to the JVM,\n   from the framework to a `main`. Preserve the failure signature; changing a layer can mask a\n   cause or expose a different failure rather than eliminate that layer as a contributor.\n5. **Concurrency** — one application caller does not eliminate background threads, callbacks,\n   other processes or prior corrupted state. A fully controlled sequential reproduction can\n   demonstrate that the reproduced failure does not require concurrent execution.\n\nWhen shrinking stops working, keep the smallest reproduction that still preserves the fault.\nAn interaction is one candidate, but missing harness capabilities or the reduction budget can\nalso explain why no smaller case was found. Test the boundaries you cannot yet remove rather\nthan treating failed reduction as proof of a cross-boundary cause.\n\n## Differential diagnosis: what changed\n\nFirst observation is not necessarily first occurrence or defect introduction. A latent defect\nmay be exposed by new input or a rare schedule; changed monitoring may reveal existing behavior.\nDistinguish the underlying defect, its trigger and its detection before seeking a recent change.\nEnumerate systematically rather than starting with the most recent code change:\n\n| Candidate      | How to check                                                     |\n| -------------- | ---------------------------------------------------------------- |\n| Code           | Deployment history against the fault's first occurrence          |\n| Configuration  | Config/secret change history — often not in the same repo        |\n| Data           | A row, a customer or a tenant that first appeared around then    |\n| Dependency     | A transitive version bump; `mvn dependency:tree` before/after    |\n| Infrastructure | Node, image, kernel, JDK patch, database version, network policy |\n| Traffic        | Volume, mix, a new client, a retry storm from upstream           |\n| Time           | Month end, DST transition, a certificate or token expiry         |\n\nA fault that starts at exactly 00:00 UTC, on the 1st, or the Sunday a clock changed makes time\nboundaries worth testing. Compare clock/date handling with scheduled work and coincident changes;\ntiming narrows hypotheses but does not by itself establish the cause.\n\n## Controlling an experiment\n\nName the failure predicate, baseline, intervention and observation that would separate the live\nhypotheses. Reset or record relevant state: database contents, cache warmth, process lifetime,\nrandom seed, clock inputs and prior requests. Changing one configuration value while also\nrestarting into an empty cache does not isolate that value. Recheck the failing control; if it\nno longer fails, investigate drift or a contaminated harness before crediting the intervention.\n\nFor a suspected interaction between two flags, compare the four safe combinations with the same\ninputs and state. A failure only when both are enabled supports a joint condition; it does not\nestablish which implementation violates the contract. For costly or unsafe combinations, retain\nthe uncertainty and choose narrower instrumentation instead. A factorial comparison is a\ndeliberate controlled experiment, unlike changing several things once and accepting the result.\nThe choice of factors and controls follows [NIST experimental-design guidance](https://www.itl.nist.gov/div898/handbook/pri/section3/pri33.htm).\n\nFor intermittent faults, choose comparable exposure before running baseline and candidate:\nattempts, duration, data and opportunity for the suspected schedule. Retain failures as well as\nsuccesses; do not rerun only the failing candidate until it turns green. One successful run can\nbe compatible with an unchanged failure rate. Report the observed counts and remaining detection\nlimits instead of claiming that silence proves a correction.\n\n## Bisection\n\n`git bisect run` needs a reliable classifier: exit `0` for good; `1`–`127` except `125` for bad;\n`125` for an untestable revision; `128` or higher to abort. A missing command (`127`) or an\nunrelated build failure must not silently classify the target fault as present. Deliberately map\nknown revision incompatibilities to skip and infrastructure/harness failures to abort. Verify\nboth endpoints, keep dependencies/data stable and use an isolated checkout to preserve edits.\n\nKeep the classifier and reproducer unchanged across checkouts, preferably outside the checkout\nbeing bisected. If compatibility adaptations are necessary, record them and preserve the same\nfailure predicate. A successful test command is not enough: verify that the intended case actually\nexecuted and evaluated its assertion. A missing, skipped or undiscovered test is not a good\nrevision; classify it through the skip/abort policy above. Likewise, count a bad result only when\nit matches the target failure, not merely because some test failed.\n\n```\ngit bisect start <bad> <good>\ngit bisect run ./reproduce.sh\ngit bisect log\ngit bisect reset\n```\n\nThe sketch assumes a POSIX shell and an unchanged executable harness at `./reproduce.sh`;\nuse its external path instead when keeping it outside the checkout. Save the log before reset. Skipped\nrevisions can leave several possible first-bad commits. Re-test the candidate and its relevant\nparent with the same harness; a regression boundary is not automatically the original defect.\nFor intermittent faults, repeat enough to bound false-good risk under stated independence/rate\nassumptions; finite successful runs do not prove absence. Preserve counts and uncertain outcomes.\n\nBisection also applies to things that are not commits: halve the config file, halve the\ndataset, halve the list of enabled modules. Any monotone property can be bisected.\n\n## Reading exception chains\n\n```\njava.lang.IllegalStateException: could not settle order ord-77\n    at billing.Settlement.settle(Settlement.java:42)\n    ...\nCaused by: java.sql.SQLException: deadlock victim\n```\n\n- The **top** line is the outermost translation — usually your own layer boundary, and usually\n  the least informative about the cause.\n- The deepest recorded `Caused by` is a useful starting point, not proof of the initiating fault;\n  earlier corruption, translation or omitted causes may be outside the chain.\n- The deepest frame **in your own package** is often the first useful boundary breakpoint. It is\n  not proof of ownership: framework callbacks, generated adapters, reflection, native transitions,\n  and genuine library defects can put the causal behaviour elsewhere.\n- `Suppressed:` often records try-with-resources cleanup failures, but application/library code\n  can also call `addSuppressed`. Read these alongside the primary exception without assuming origin.\n\nAn exception rewrapped without its cause (`throw new X(e.getMessage())`) destroys this entire\nstructure. If repair is in scope, preserve the cause through the exception type's supported\ncontract (`java-exception-design`) and verify callers' error handling. Otherwise record the\nevidence gap and seek an earlier capture; restoring diagnostics alone does not fix the original\nfailure.\n\n## Intermittent faults\n\nA fault that appears one time in N may depend on an uncontrolled input or execution condition.\nChoose among these candidates using the observed distribution:\n\n- **Concurrency** — interleaving, visibility, a shared mutable field (concurrency-diagnostics).\n- **Ordering** — hash iteration order, a set where a list was assumed, parallel stream order.\n- **Time** — a timeout that usually wins the race, a clock skew, a cache TTL boundary.\n- **Environment** — one node out of six with different config, an old pod, a stale image.\n- **Data** — one record with a null, an empty string, a non-ASCII character, a leap day.\n\nWhen waiting dominates the investigation, consider a bounded experiment that raises the\nreproduction rate: repeat the case, vary timeouts or concurrency, or restrict to one node.\nUse an isolated environment or existing incident authority with explicit load, effect and time\nlimits; replaying real requests can repeat their side effects. Preserve the original failure\nsignature and compare controls: a shorter deadline or extra load may create a different failure.\nExisting evidence may already discriminate causes without amplifying the fault.\n\n## Heisenbugs\n\nWhen adding logging, attaching a debugger or enabling assertions makes the fault disappear, the\nobservation itself changed the timing or the optimisation. That is evidence, not an obstacle:\n\n- Disappears under a debugger or with extra logging → timing sensitivity. A race is one candidate;\n  changed deadlines, queueing, buffering, resource pressure, compilation, or instrumentation side\n  effects are others. Design the next experiment to separate them.\n- Disappears in a debug build or with `-Xint` → execution mode matters. Timing, resource usage,\n  data races and compiler defects remain candidates; this is not proof of invalid application code.\n- Disappears when a field is made `volatile` → ordering or timing may matter. Prove the needed\n  happens-before relation and compound-operation atomicity before accepting a visibility diagnosis.\n\nPrefer bounded, lower-perturbation instrumentation over synchronous logging inside the suspect\npath. Sampling, JFR and counters also change execution; compare instrumented/control runs.\n\n## When the model is wrong\n\nAfter repeated refutations within the agreed timebox, inspect the model and experiment itself:\n\n- Go back to raw observations and re-read them without the current theory.\n- Verify an assumption you have not checked because it is \"obviously\" true — that the config\n  in use is the config in the repo, that the version deployed is the version tagged, that the\n  request reached the service at all.\n- State the theory out loud to someone. Most of the value arrives before they answer.\n\nSources: [Google SRE troubleshooting](https://sre.google/sre-book/effective-troubleshooting/),\n[Git bisect exit protocol](https://git-scm.com/docs/git-bisect)\nand [Throwable cause/suppression API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html).\n"
+    },
+    {
+      "path": "output/audit.mjs",
+      "phase": "initial",
+      "bytes": 5234,
+      "sha256": "fb51ad1692d2785cb6b9123e17a2989b60bc931a13185aed5ddc2151a9a7c608",
+      "truncated": false,
+      "content": "import fs from 'node:fs';\nimport path from 'node:path';\nimport crypto from 'node:crypto';\nimport { spawnSync } from 'node:child_process';\nimport { fileURLToPath } from 'node:url';\n\nconst output = path.dirname(fileURLToPath(import.meta.url));\nconst root = path.dirname(output);\nconst project = path.join(output, 'project');\nconst recordPath = path.join(output, 'execution.json');\nconst relative = file => path.relative(root, file).replaceAll('\\\\', '/');\nconst sha256 = data => crypto.createHash('sha256').update(data).digest('hex');\nconst audit = fs.existsSync(recordPath) ? JSON.parse(fs.readFileSync(recordPath, 'utf8')) : {\n  scope: root,\n  writesRestrictedTo: output,\n  javaTarget: 17,\n  runtimeRequired: 'Temurin 25.0.3+9',\n  timeoutMs: 30000,\n  commands: [],\n  fileReads: [],\n  observations: [],\n  limitations: [],\n  accidentalAccessOutsideScope: [],\n  allWritesStopped: false\n};\nconst save = () => fs.writeFileSync(recordPath, JSON.stringify(audit, null, 2) + '\\n');\nconst allowed = file => {\n  const full = path.resolve(root, file);\n  if (full !== root && !full.startsWith(root + path.sep)) throw Error('Outside run: ' + full);\n  return full;\n};\nconst read = (name, phase, print = false) => {\n  const file = allowed(name);\n  const data = fs.readFileSync(file);\n  const binary = /\\.(jar|class)$/.test(file);\n  const entry = { path: relative(file), phase, bytes: data.length, sha256: sha256(data), truncated: false };\n  if (binary) entry.contentRead = 'Binary bytes for SHA-256; jar/class semantics recorded by jar/javap command logs.';\n  else entry.content = data.toString('utf8');\n  if (file.endsWith('.txt')) entry.hex = data.toString('hex');\n  audit.fileReads.push(entry);\n  if (print) process.stdout.write(JSON.stringify(entry, null, 2) + '\\n');\n};\nconst files = dir => fs.readdirSync(dir, { withFileTypes: true }).flatMap(item => {\n  const name = path.join(dir, item.name);\n  return item.isDirectory() ? files(name) : [name];\n});\nconst [action, ...args] = process.argv.slice(2);\nif (action === 'init') {\n  for (const name of ['TASK.md', 'skill/SKILL.md', 'skill/references/method.md', 'output/audit.mjs']) read(name, 'initial');\n  for (const prefix of ['input/project', 'output/project']) {\n    for (const file of files(allowed(prefix))) read(relative(file), 'initial');\n  }\n  audit.environment = Object.fromEntries(['JAVA_TOOL_OPTIONS', 'JDK_JAVA_OPTIONS', '_JAVA_OPTIONS', 'CLASSPATH'].map(key => [key, process.env[key] ?? null]));\n  audit.referenceSelection = {\n    read: ['skill/SKILL.md (full)', 'skill/references/method.md (full; differential diagnosis and controlled experiments)'],\n    notRead: ['skill/references/production-evidence.md: no access to or intervention in production']\n  };\n  audit.observations.push({ phase: 'before execution', expected: 'Accepted export replaces CRLF and isolated CR with LF, preserves all other text and LegacyBanner; --release 17 and existing runtime/library retained.', hypothesis: 'The export classpath selects a stale work.Normalizer from compat.jar before .build/app, whereas SelfTest selects .build/app. Prediction: loading provenance or bytecode differs and swapping only classpath order corrects the same export bytes. Refutation: both runs load the same Normalizer implementation, or only changing classpath order leaves the same violation.' });\n  process.stdout.write('Audit initialized; initial input and output snapshots retained.\\n');\n} else if (action === 'run') {\n  const [id, executable, ...commandArgs] = args;\n  if (!/^[a-z0-9-]+$/.test(id)) throw Error('Invalid command ID');\n  const started = new Date().toISOString();\n  const result = spawnSync(executable, commandArgs, { cwd: project, encoding: 'utf8', timeout: 30000, windowsHide: true, maxBuffer: 10 * 1024 * 1024 });\n  fs.mkdirSync(path.join(output, 'logs'), { recursive: true });\n  const stdoutFile = path.join(output, 'logs', `${id}.stdout.log`);\n  const stderrFile = path.join(output, 'logs', `${id}.stderr.log`);\n  fs.writeFileSync(stdoutFile, result.stdout || '');\n  fs.writeFileSync(stderrFile, result.stderr || '');\n  audit.commands.push({ id, executed: true, executable, args: commandArgs, cwd: project, timeoutMs: 30000, started, ended: new Date().toISOString(), exit: result.status, signal: result.signal, error: result.error ? String(result.error) : null, stdout: relative(stdoutFile), stderr: relative(stderrFile), outputTruncated: false });\n  save();\n  process.stdout.write(result.stdout || '');\n  process.stderr.write(result.stderr || '');\n  process.stdout.write(`Recorded ${id}: exit=${result.status}, signal=${result.signal}, error=${result.error || 'none'}\\n`);\n  process.exitCode = result.status ?? 1;\n} else if (action === 'read') {\n  const [phase, ...names] = args;\n  for (const name of names) read(name, phase, true);\n} else if (action === 'snapshot') {\n  const [phase, ...prefixes] = args;\n  for (const prefix of prefixes) {\n    const resolved = allowed(prefix);\n    for (const file of fs.statSync(resolved).isDirectory() ? files(resolved) : [resolved]) read(relative(file), phase);\n  }\n  process.stdout.write('Snapshot recorded: ' + phase + '\\n');\n} else {\n  throw Error('Usage: audit.mjs init | run id executable args... | read phase paths... | snapshot phase paths...');\n}\nsave();\n"
+    },
+    {
+      "path": "input/project/contract.md",
+      "phase": "initial",
+      "bytes": 479,
+      "sha256": "b38dbc2fb7ccf17613446301c9a1d99db8ea03db29402c51aa143d7c4c80da87",
+      "truncated": false,
+      "content": "# Accepted export contract\n\nJava source target is 17. The local export command is `node run.mjs export input output`. It must replace CRLF and isolated CR by LF, preserve all other text, and continue to provide LegacyBanner from the retained compatibility library. That library and fixture inputs are read-only. Its metadata is not a security boundary. No dependency or toolchain upgrades. Build products are disposable, source and launch configuration are authoritative inputs.\n"
+    },
+    {
+      "path": "input/project/fixture/input.txt",
+      "phase": "initial",
+      "bytes": 7,
+      "sha256": "f9888915267df32c4e1aabdbc65e9e910c6247d99633a9bcd194d14107ced5e1",
+      "truncated": false,
+      "content": "a\rb\r\nc\n",
+      "hex": "610d620d0a630a"
+    },
+    {
+      "path": "input/project/launch.json",
+      "phase": "initial",
+      "bytes": 87,
+      "sha256": "cd43e6dbcf11a01567a66b98da7bdee4618a72a7584b4520e3bb77860644822a",
+      "truncated": false,
+      "content": "{\n  \"classpath\": [\n    \"lib/compat.jar\",\n    \".build/app\"\n  ],\n  \"main\": \"work.Main\"\n}\n"
+    },
+    {
+      "path": "input/project/lib/compat.jar",
+      "phase": "initial",
+      "bytes": 1179,
+      "sha256": "306a7086328fe3b9ec65bf292156cec22bfee690ed9ae32afb6851b1118e5fc9",
+      "truncated": false,
+      "contentRead": "Binary bytes for SHA-256; jar/class semantics recorded by jar/javap command logs."
+    },
+    {
+      "path": "input/project/run.mjs",
+      "phase": "initial",
+      "bytes": 1210,
+      "sha256": "5f42b0e09e0f6f6b71b361169b38ea449b9610f09f72967cd3677d3477bf7a53",
+      "truncated": false,
+      "content": "import fs from 'node:fs';import path from 'node:path';import {spawnSync} from 'node:child_process';\nconst jdk=\"C:/Users/robso/.jdks/temurin-25.0.3/bin\";const walk=p=>fs.readdirSync(p,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(path.join(p,e.name)):e.name.endsWith('.java')?[path.join(p,e.name)]:[]);\nconst invoke=(tool,args)=>{const r=spawnSync(path.join(jdk,tool),args,{encoding:'utf8',timeout:30000,windowsHide:true});process.stdout.write(r.stdout||'');process.stderr.write(r.stderr||'');if(r.status!==0)process.exit(r.status??1);};\nfs.mkdirSync('.build/app',{recursive:true});fs.mkdirSync('.build/test',{recursive:true});\ninvoke('javac.exe',['--release','17','-cp','lib/compat.jar','-d','.build/app',...walk('src')]);\nif(process.argv[2]==='check'){invoke('javac.exe',['--release','17','-cp','.build/app','-d','.build/test',...walk('test')]);invoke('java.exe',['-cp',['.build/app','.build/test'].join(path.delimiter),'work.SelfTest']);}\nelse if(process.argv[2]==='export'){const c=JSON.parse(fs.readFileSync('launch.json','utf8'));invoke('java.exe',['-cp',c.classpath.join(path.delimiter),c.main,...process.argv.slice(3)]);}\nelse throw new Error('Usage: node run.mjs check | export input output');\n"
+    },
+    {
+      "path": "input/project/src/work/Main.java",
+      "phase": "initial",
+      "bytes": 420,
+      "sha256": "5e02dbedae462ab0bf2d771f9f9082ce89e87e9d918091f6bfac25e8ad6cdd57",
+      "truncated": false,
+      "content": "package work; import java.nio.file.*; import java.nio.charset.StandardCharsets; public final class Main { public static void main(String[] args) throws Exception { if(args.length!=2)throw new IllegalArgumentException(\"input output\"); Files.writeString(Path.of(args[1]),Normalizer.normalize(Files.readString(Path.of(args[0]),StandardCharsets.UTF_8)),StandardCharsets.UTF_8); System.out.println(LegacyBanner.label()); } }\n"
+    },
+    {
+      "path": "input/project/src/work/Normalizer.java",
+      "phase": "initial",
+      "bytes": 145,
+      "sha256": "2a2b78d810f54ae4446167ebd6d560cd2f04b961fd5134f9a5cbb278588b20d9",
+      "truncated": false,
+      "content": "package work; public final class Normalizer { public static String normalize(String s) { return s.replace(\"\\r\\n\", \"\\n\").replace(\"\\r\", \"\\n\"); } }\n"
+    },
+    {
+      "path": "input/project/support.md",
+      "phase": "initial",
+      "bytes": 339,
+      "sha256": "e88c32766767b2c15e6471fc432ef5cf93b70db1923389e492ceed8400921e42",
+      "truncated": false,
+      "content": "# Support observation\n\nThe source normalization change was accepted. `node run.mjs check` is green. A fresh export still contains carriage returns; the ticket proposes adding the same replacement again or changing the runtime charset. Investigate the effective local export and repair the violation. No production deployment is requested.\n"
+    },
+    {
+      "path": "input/project/test/work/SelfTest.java",
+      "phase": "initial",
+      "bytes": 227,
+      "sha256": "8b7ae11f7aa1dc4398f7026811a16c872e1f283cc13fd5855504e673ffbed237",
+      "truncated": false,
+      "content": "package work; public final class SelfTest { public static void main(String[] args){ if(!Normalizer.normalize(\"a\\rb\\r\\nc\\n\").equals(\"a\\nb\\nc\\n\"))throw new AssertionError(\"normalization\"); System.out.println(\"SelfTest PASS\"); }}\n"
+    },
+    {
+      "path": "output/project/contract.md",
+      "phase": "initial",
+      "bytes": 479,
+      "sha256": "b38dbc2fb7ccf17613446301c9a1d99db8ea03db29402c51aa143d7c4c80da87",
+      "truncated": false,
+      "content": "# Accepted export contract\n\nJava source target is 17. The local export command is `node run.mjs export input output`. It must replace CRLF and isolated CR by LF, preserve all other text, and continue to provide LegacyBanner from the retained compatibility library. That library and fixture inputs are read-only. Its metadata is not a security boundary. No dependency or toolchain upgrades. Build products are disposable, source and launch configuration are authoritative inputs.\n"
+    },
+    {
+      "path": "output/project/fixture/input.txt",
+      "phase": "initial",
+      "bytes": 7,
+      "sha256": "f9888915267df32c4e1aabdbc65e9e910c6247d99633a9bcd194d14107ced5e1",
+      "truncated": false,
+      "content": "a\rb\r\nc\n",
+      "hex": "610d620d0a630a"
+    },
+    {
+      "path": "output/project/launch.json",
+      "phase": "initial",
+      "bytes": 87,
+      "sha256": "cd43e6dbcf11a01567a66b98da7bdee4618a72a7584b4520e3bb77860644822a",
+      "truncated": false,
+      "content": "{\n  \"classpath\": [\n    \"lib/compat.jar\",\n    \".build/app\"\n  ],\n  \"main\": \"work.Main\"\n}\n"
+    },
+    {
+      "path": "output/project/lib/compat.jar",
+      "phase": "initial",
+      "bytes": 1179,
+      "sha256": "306a7086328fe3b9ec65bf292156cec22bfee690ed9ae32afb6851b1118e5fc9",
+      "truncated": false,
+      "contentRead": "Binary bytes for SHA-256; jar/class semantics recorded by jar/javap command logs."
+    },
+    {
+      "path": "output/project/run.mjs",
+      "phase": "initial",
+      "bytes": 1210,
+      "sha256": "5f42b0e09e0f6f6b71b361169b38ea449b9610f09f72967cd3677d3477bf7a53",
+      "truncated": false,
+      "content": "import fs from 'node:fs';import path from 'node:path';import {spawnSync} from 'node:child_process';\nconst jdk=\"C:/Users/robso/.jdks/temurin-25.0.3/bin\";const walk=p=>fs.readdirSync(p,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(path.join(p,e.name)):e.name.endsWith('.java')?[path.join(p,e.name)]:[]);\nconst invoke=(tool,args)=>{const r=spawnSync(path.join(jdk,tool),args,{encoding:'utf8',timeout:30000,windowsHide:true});process.stdout.write(r.stdout||'');process.stderr.write(r.stderr||'');if(r.status!==0)process.exit(r.status??1);};\nfs.mkdirSync('.build/app',{recursive:true});fs.mkdirSync('.build/test',{recursive:true});\ninvoke('javac.exe',['--release','17','-cp','lib/compat.jar','-d','.build/app',...walk('src')]);\nif(process.argv[2]==='check'){invoke('javac.exe',['--release','17','-cp','.build/app','-d','.build/test',...walk('test')]);invoke('java.exe',['-cp',['.build/app','.build/test'].join(path.delimiter),'work.SelfTest']);}\nelse if(process.argv[2]==='export'){const c=JSON.parse(fs.readFileSync('launch.json','utf8'));invoke('java.exe',['-cp',c.classpath.join(path.delimiter),c.main,...process.argv.slice(3)]);}\nelse throw new Error('Usage: node run.mjs check | export input output');\n"
+    },
+    {
+      "path": "output/project/src/work/Main.java",
+      "phase": "initial",
+      "bytes": 420,
+      "sha256": "5e02dbedae462ab0bf2d771f9f9082ce89e87e9d918091f6bfac25e8ad6cdd57",
+      "truncated": false,
+      "content": "package work; import java.nio.file.*; import java.nio.charset.StandardCharsets; public final class Main { public static void main(String[] args) throws Exception { if(args.length!=2)throw new IllegalArgumentException(\"input output\"); Files.writeString(Path.of(args[1]),Normalizer.normalize(Files.readString(Path.of(args[0]),StandardCharsets.UTF_8)),StandardCharsets.UTF_8); System.out.println(LegacyBanner.label()); } }\n"
+    },
+    {
+      "path": "output/project/src/work/Normalizer.java",
+      "phase": "initial",
+      "bytes": 145,
+      "sha256": "2a2b78d810f54ae4446167ebd6d560cd2f04b961fd5134f9a5cbb278588b20d9",
+      "truncated": false,
+      "content": "package work; public final class Normalizer { public static String normalize(String s) { return s.replace(\"\\r\\n\", \"\\n\").replace(\"\\r\", \"\\n\"); } }\n"
+    },
+    {
+      "path": "output/project/support.md",
+      "phase": "initial",
+      "bytes": 339,
+      "sha256": "e88c32766767b2c15e6471fc432ef5cf93b70db1923389e492ceed8400921e42",
+      "truncated": false,
+      "content": "# Support observation\n\nThe source normalization change was accepted. `node run.mjs check` is green. A fresh export still contains carriage returns; the ticket proposes adding the same replacement again or changing the runtime charset. Investigate the effective local export and repair the violation. No production deployment is requested.\n"
+    },
+    {
+      "path": "output/project/test/work/SelfTest.java",
+      "phase": "initial",
+      "bytes": 227,
+      "sha256": "8b7ae11f7aa1dc4398f7026811a16c872e1f283cc13fd5855504e673ffbed237",
+      "truncated": false,
+      "content": "package work; public final class SelfTest { public static void main(String[] args){ if(!Normalizer.normalize(\"a\\rb\\r\\nc\\n\").equals(\"a\\nb\\nc\\n\"))throw new AssertionError(\"normalization\"); System.out.println(\"SelfTest PASS\"); }}\n"
+    },
+    {
+      "path": "output/baseline-export.txt",
+      "phase": "baseline",
+      "bytes": 6,
+      "sha256": "0252f0b9ed9f1a78a16cc53f77522edcc06346c533d15afabc22afd913c8c7ae",
+      "truncated": false,
+      "content": "a\rb\nc\n",
+      "hex": "610d620a630a"
+    },
+    {
+      "path": "output/app-first-export.txt",
+      "phase": "experiment",
+      "bytes": 6,
+      "sha256": "880553fca8fcea94e325ee2cfb48e5a985cc797f39a14cc6d3cedecfeb2ae4d2",
+      "truncated": false,
+      "content": "a\nb\nc\n",
+      "hex": "610a620a630a"
+    },
+    {
+      "path": "output/baseline-traced-export.txt",
+      "phase": "experiment",
+      "bytes": 6,
+      "sha256": "0252f0b9ed9f1a78a16cc53f77522edcc06346c533d15afabc22afd913c8c7ae",
+      "truncated": false,
+      "content": "a\rb\nc\n",
+      "hex": "610d620a630a"
+    },
+    {
+      "path": "output/final-export.txt",
+      "phase": "final",
+      "bytes": 6,
+      "sha256": "880553fca8fcea94e325ee2cfb48e5a985cc797f39a14cc6d3cedecfeb2ae4d2",
+      "truncated": false,
+      "content": "a\nb\nc\n",
+      "hex": "610a620a630a"
+    },
+    {
+      "path": "TASK.md",
+      "phase": "integrity-verification",
+      "bytes": 1878,
+      "sha256": "2a756e67ec1119873dff38b662c70ef8a0fda07184f7d73625ff95868f5475d3",
+      "truncated": false,
+      "content": "Investigue support.md, confirme o comportamento pelo comando de exportação aceito e corrija a violação encontrada. Preserve a biblioteca de compatibilidade, o contrato e a baseline Java. Entregue o projeto final e REVIEW.md com causa, evidências, correção, verificação e limites. Não há acesso a produção.\n\nTrabalhe exclusivamente em C:/Users/robso/AppData/Local/Temp/skills-wave5-actors-4tJ3OK/run-06. O projeto inicial está em input/project (somente leitura), e uma cópia de trabalho já está em output/project. Você não está sozinho: escreva somente dentro de output/. Não modifique input/, skill/, contract.md nem lib/compat.jar, se existir. Pode editar fontes, testes e configuração do projeto de trabalho quando sustentado pela investigação. Preserve as entradas originais e cobertura útil existente.\n\nAplique a skill local skill/SKILL.md. Leia o corpo completo e as referências relevantes conforme suas condições; registre o conteúdo efetivamente lido.\n\nNão leia o repositório C:/git/agent-skills, outros runs, critérios, handoffs, pastas de avaliações, skills globais ou conversas anteriores. Não use rede, instalações, outros agentes ou configuração real. Java, javac, javap e jar estão em C:/Users/robso/.jdks/temurin-25.0.3/bin. Node está disponível. Use alvo Java 17 e preserve o runtime disponível (Temurin25.0.3+9); cada processo deve ter limite de 30s.\n\nExecute verificações proporcionais e conserve logs/scripts. Salve output/REVIEW.md e output/execution.json. No JSON registre comandos exatos com argumentos, cwd, exit e saída ou caminho do log, arquivos/conteúdos efetivamente lidos (incluindo skill/referências e qualquer truncamento), limitações e qualquer acesso acidental fora do escopo. Diferencie execução de proposta. Ao terminar, encerre processos, pare as escritas e confirme allWritesStopped:true.\n"
+    },
+    {
+      "path": "skill/SKILL.md",
+      "phase": "integrity-verification",
+      "bytes": 7677,
+      "sha256": "169c722dcb37565038e7cf6301e844bab0a3418a06ee2a92b8e061d4cf44bac3",
+      "truncated": false,
+      "content": "---\nname: debugging\ndescription: >\n  Finding the cause of a fault instead of a change that makes the symptom go away:\n  reproducing before diagnosing, shrinking the reproduction until nothing is removable,\n  stating a hypothesis that predicts an observation, changing one variable at a time,\n  bisecting, and choosing which evidence to collect from a running production system before\n  it is destroyed. Use when a fix is being guessed at, when a change \"seems to work\", when\n  the same bug keeps coming back, when a fault cannot be reproduced, when a production\n  incident needs a cause rather than a restart, when print statements are being added\n  everywhere, or when several changes were made at once and it now works. Does not cover\n  JVM performance triage (java-performance), GC (jvm-gc-tuning), live thread diagnosis\n  (concurrency-diagnostics), heap dump mechanics (heap-dump-analysis), or deliberately\n  injecting failures (distributed-systems-testing).\n---\n\n# Debugging\n\n## Purpose\n\nTurn a report into a cause. The alternative — changing things until the symptom disappears —\nproduces code nobody understands, a bug that returns under a slightly different input, and no\nway to tell whether the change helped or moved the failure somewhere quieter.\n\n## Workflow\n\nStart with the requested outcome: diagnosis, mitigation or repair. Inspect the report, affected\ncall path, documented contract, existing tests and effective configuration before accepting the\nreport's explanation. Reuse adequate evidence; ask only about missing expectations or context\nthat could change the conclusion. Diagnosis can finish with a supported finding without editing\ncode. Behavior consistent with the accepted contract may call for clarification rather than a fix.\n\n1. **Restate the fault as an observation.** \"Customer 88123 saw a negative balance at 14:02\"\n   is an observation. \"The refund logic is broken\" is a hypothesis wearing a report's clothes,\n   and adopting it early is how the wrong subsystem gets investigated for a day.\n   State the expected behavior and its source too: an allowed overdraft is not evidence of a\n   violated invariant. Separate requirements and established contracts from assumptions.\n2. **Reproduce it.** Deterministically if possible, intermittently if not — but know which,\n   because \"I cannot reproduce it\" and \"it reproduces one time in ten\" lead to different work.\n   If it only happens in production, collect evidence within the mitigation budget\n   (`references/production-evidence.md`).\n3. **Shrink.** Remove inputs, steps, data and configuration until removing anything more makes\n   the fault disappear, while preserving the original failure signature. Stop when the next\n   reduction costs more than it helps; a minimal reproduction need not identify the full cause.\n4. **State a hypothesis that predicts something you have not yet looked at.** \"If the cause is\n   the missing time zone, then the row written at 23:30 local will carry yesterday's date.\"\n   Also name an observation that would refute it. Explaining existing evidence is useful;\n   a discriminating prediction makes the next experiment useful.\n5. **Run a controlled, discriminating experiment**, normally changing one variable. Preserve\n   comparable state and a baseline control; record confirming and refuting outcomes. When an\n   interaction is suspected, compare the relevant combinations deliberately instead of treating\n   a successful batch of changes as an isolated cause (`references/method.md`).\n6. **Check the explanation against the distribution** — frequency, timing, affected and unaffected\n   users. Record remaining contradictions and uncertainty instead of forcing one cause to explain\n   unrelated failures.\n7. **When repair is in scope, verify it against the original fault.** Turn the reproduction\n   into regression coverage when it earns lasting value (tdd); confirm it detects the original\n   failure before accepting the corrected result. Reuse existing adequate tests. A race may need\n   controlled scheduling or integration coverage. Record intermittent outcomes and relevant\n   unaffected cases; do not make extra changes merely to finish a diagnosis-only task.\n\nInspect deployed versus source JDK/toolchain, dependencies, JVM flags, configuration and data\nversions before version-sensitive diagnostics or changes. This workflow has no universal Java\nbaseline. Preserve the target environment; upgrading it is a separate decision. Return the fault,\nevidence, tested/refuted hypotheses, fix or mitigation, validation and unresolved gaps. Missing\naccess or reproduction permits an evidence plan, not an invented root cause.\n\n## Rules\n\n- Prefer a causal explanation before a permanent fix. During an incident, a reversible mitigation\n  may precede diagnosis; label it as mitigation, preserve the evidence the response budget allows,\n  and do not present symptom disappearance as root-cause proof.\n- Prefer one controlled variable per experiment. If a batch helps, it implicates the batch but\n  does not isolate a member or interaction; reduce/revert the batch in a controlled environment.\n- Read the whole stack trace, including cause and suppressed chains. The deepest application frame\n  is a useful boundary candidate, not a verdict: framework callbacks, generated code, reflection,\n  native frames, and library defects can move or hide the causal frame.\n- Balance evidence preservation against customer impact and the incident commander's authority.\n  Capture cheap, non-disruptive evidence first when the error budget permits; mitigate immediately\n  when delay is unsafe, and record which volatile evidence the action destroyed\n  (`references/production-evidence.md`).\n- Symptom disappearance is evidence of recovery, not proof of cause or durable correction.\n- Missing events refute a hypothesis only within verified collection coverage. Check enablement,\n  filters, sampling/thresholds and workload opportunity before interpreting an empty result.\n- Question the assumption that the fault is where the symptom is. Corrupted state is written\n  in one place and observed in another, often much later. Trace the first contract violation;\n  an incorrect write is one candidate, but valid data can also be misread or misinterpreted.\n- Consider `git bisect` when verified good/bad revisions and a reliable classifier exist.\n  It can narrow a monotone change in roughly log₂(n) classifications; build cost, skipped commits\n  and intermittent or nonmonotone outcomes affect that benefit. See the reference's exit protocol.\n- Delete the debugging output before the change ships, and if a log line was genuinely useful,\n  promote it deliberately with a level and structure (structured-logging) rather than leaving\n  a `System.out.println`.\n- Timebox according to incident severity and experiment cost. Repeated refutations are a signal\n  to revisit observations, harness assumptions and the system model or seek another perspective.\n\n## References\n\n- **The method in detail** — `references/method.md`. Shrinking a reproduction, differential\n  diagnosis (what changed — code, data, config, dependency, traffic, time), bisection over\n  commits and over data, reading exception chains, and the specific traps of intermittent and\n  heisenbug faults. Read when the fault resists the workflow above.\n- **Evidence from a running system** — `references/production-evidence.md`. What each source\n  can and cannot answer — logs, metrics, traces, thread dumps, heap dumps, JFR, database state,\n  deployment history — with volatility, cost and collection order during an incident. Read\n  before touching a production system that is currently faulty.\n"
+    },
+    {
+      "path": "skill/references/method.md",
+      "phase": "integrity-verification",
+      "bytes": 11108,
+      "sha256": "634fe5e9a6348b906f9eaa21a5e62c953267c18937b8d19080bd00b3358889b0",
+      "truncated": false,
+      "content": "# The method in detail\n\n## Shrinking a reproduction\n\nThe goal is a reproduction where removing any element makes the fault disappear. Work in this\norder, because each step makes the next cheaper:\n\n1. **Data** — try subsets and their complements, keeping a smaller input only when the same\n   failure persists. If neither half fails, retain interacting elements and use smaller removals;\n   a pairwise interaction can span both halves. Preserve a known failing original.\n2. **Steps** — remove operations from the sequence. Many \"only fails after a full checkout\n   flow\" faults collapse to two calls in a particular order (which is itself the finding:\n   temporal coupling, java-clean-code).\n3. **Configuration** — revert to defaults one property at a time. A fault that disappears at a\n   default implicates that setting or an interaction; it does not by itself identify a defect.\n4. **Environment** — drop from the cluster to a single node, from the container to the JVM,\n   from the framework to a `main`. Preserve the failure signature; changing a layer can mask a\n   cause or expose a different failure rather than eliminate that layer as a contributor.\n5. **Concurrency** — one application caller does not eliminate background threads, callbacks,\n   other processes or prior corrupted state. A fully controlled sequential reproduction can\n   demonstrate that the reproduced failure does not require concurrent execution.\n\nWhen shrinking stops working, keep the smallest reproduction that still preserves the fault.\nAn interaction is one candidate, but missing harness capabilities or the reduction budget can\nalso explain why no smaller case was found. Test the boundaries you cannot yet remove rather\nthan treating failed reduction as proof of a cross-boundary cause.\n\n## Differential diagnosis: what changed\n\nFirst observation is not necessarily first occurrence or defect introduction. A latent defect\nmay be exposed by new input or a rare schedule; changed monitoring may reveal existing behavior.\nDistinguish the underlying defect, its trigger and its detection before seeking a recent change.\nEnumerate systematically rather than starting with the most recent code change:\n\n| Candidate      | How to check                                                     |\n| -------------- | ---------------------------------------------------------------- |\n| Code           | Deployment history against the fault's first occurrence          |\n| Configuration  | Config/secret change history — often not in the same repo        |\n| Data           | A row, a customer or a tenant that first appeared around then    |\n| Dependency     | A transitive version bump; `mvn dependency:tree` before/after    |\n| Infrastructure | Node, image, kernel, JDK patch, database version, network policy |\n| Traffic        | Volume, mix, a new client, a retry storm from upstream           |\n| Time           | Month end, DST transition, a certificate or token expiry         |\n\nA fault that starts at exactly 00:00 UTC, on the 1st, or the Sunday a clock changed makes time\nboundaries worth testing. Compare clock/date handling with scheduled work and coincident changes;\ntiming narrows hypotheses but does not by itself establish the cause.\n\n## Controlling an experiment\n\nName the failure predicate, baseline, intervention and observation that would separate the live\nhypotheses. Reset or record relevant state: database contents, cache warmth, process lifetime,\nrandom seed, clock inputs and prior requests. Changing one configuration value while also\nrestarting into an empty cache does not isolate that value. Recheck the failing control; if it\nno longer fails, investigate drift or a contaminated harness before crediting the intervention.\n\nFor a suspected interaction between two flags, compare the four safe combinations with the same\ninputs and state. A failure only when both are enabled supports a joint condition; it does not\nestablish which implementation violates the contract. For costly or unsafe combinations, retain\nthe uncertainty and choose narrower instrumentation instead. A factorial comparison is a\ndeliberate controlled experiment, unlike changing several things once and accepting the result.\nThe choice of factors and controls follows [NIST experimental-design guidance](https://www.itl.nist.gov/div898/handbook/pri/section3/pri33.htm).\n\nFor intermittent faults, choose comparable exposure before running baseline and candidate:\nattempts, duration, data and opportunity for the suspected schedule. Retain failures as well as\nsuccesses; do not rerun only the failing candidate until it turns green. One successful run can\nbe compatible with an unchanged failure rate. Report the observed counts and remaining detection\nlimits instead of claiming that silence proves a correction.\n\n## Bisection\n\n`git bisect run` needs a reliable classifier: exit `0` for good; `1`–`127` except `125` for bad;\n`125` for an untestable revision; `128` or higher to abort. A missing command (`127`) or an\nunrelated build failure must not silently classify the target fault as present. Deliberately map\nknown revision incompatibilities to skip and infrastructure/harness failures to abort. Verify\nboth endpoints, keep dependencies/data stable and use an isolated checkout to preserve edits.\n\nKeep the classifier and reproducer unchanged across checkouts, preferably outside the checkout\nbeing bisected. If compatibility adaptations are necessary, record them and preserve the same\nfailure predicate. A successful test command is not enough: verify that the intended case actually\nexecuted and evaluated its assertion. A missing, skipped or undiscovered test is not a good\nrevision; classify it through the skip/abort policy above. Likewise, count a bad result only when\nit matches the target failure, not merely because some test failed.\n\n```\ngit bisect start <bad> <good>\ngit bisect run ./reproduce.sh\ngit bisect log\ngit bisect reset\n```\n\nThe sketch assumes a POSIX shell and an unchanged executable harness at `./reproduce.sh`;\nuse its external path instead when keeping it outside the checkout. Save the log before reset. Skipped\nrevisions can leave several possible first-bad commits. Re-test the candidate and its relevant\nparent with the same harness; a regression boundary is not automatically the original defect.\nFor intermittent faults, repeat enough to bound false-good risk under stated independence/rate\nassumptions; finite successful runs do not prove absence. Preserve counts and uncertain outcomes.\n\nBisection also applies to things that are not commits: halve the config file, halve the\ndataset, halve the list of enabled modules. Any monotone property can be bisected.\n\n## Reading exception chains\n\n```\njava.lang.IllegalStateException: could not settle order ord-77\n    at billing.Settlement.settle(Settlement.java:42)\n    ...\nCaused by: java.sql.SQLException: deadlock victim\n```\n\n- The **top** line is the outermost translation — usually your own layer boundary, and usually\n  the least informative about the cause.\n- The deepest recorded `Caused by` is a useful starting point, not proof of the initiating fault;\n  earlier corruption, translation or omitted causes may be outside the chain.\n- The deepest frame **in your own package** is often the first useful boundary breakpoint. It is\n  not proof of ownership: framework callbacks, generated adapters, reflection, native transitions,\n  and genuine library defects can put the causal behaviour elsewhere.\n- `Suppressed:` often records try-with-resources cleanup failures, but application/library code\n  can also call `addSuppressed`. Read these alongside the primary exception without assuming origin.\n\nAn exception rewrapped without its cause (`throw new X(e.getMessage())`) destroys this entire\nstructure. If repair is in scope, preserve the cause through the exception type's supported\ncontract (`java-exception-design`) and verify callers' error handling. Otherwise record the\nevidence gap and seek an earlier capture; restoring diagnostics alone does not fix the original\nfailure.\n\n## Intermittent faults\n\nA fault that appears one time in N may depend on an uncontrolled input or execution condition.\nChoose among these candidates using the observed distribution:\n\n- **Concurrency** — interleaving, visibility, a shared mutable field (concurrency-diagnostics).\n- **Ordering** — hash iteration order, a set where a list was assumed, parallel stream order.\n- **Time** — a timeout that usually wins the race, a clock skew, a cache TTL boundary.\n- **Environment** — one node out of six with different config, an old pod, a stale image.\n- **Data** — one record with a null, an empty string, a non-ASCII character, a leap day.\n\nWhen waiting dominates the investigation, consider a bounded experiment that raises the\nreproduction rate: repeat the case, vary timeouts or concurrency, or restrict to one node.\nUse an isolated environment or existing incident authority with explicit load, effect and time\nlimits; replaying real requests can repeat their side effects. Preserve the original failure\nsignature and compare controls: a shorter deadline or extra load may create a different failure.\nExisting evidence may already discriminate causes without amplifying the fault.\n\n## Heisenbugs\n\nWhen adding logging, attaching a debugger or enabling assertions makes the fault disappear, the\nobservation itself changed the timing or the optimisation. That is evidence, not an obstacle:\n\n- Disappears under a debugger or with extra logging → timing sensitivity. A race is one candidate;\n  changed deadlines, queueing, buffering, resource pressure, compilation, or instrumentation side\n  effects are others. Design the next experiment to separate them.\n- Disappears in a debug build or with `-Xint` → execution mode matters. Timing, resource usage,\n  data races and compiler defects remain candidates; this is not proof of invalid application code.\n- Disappears when a field is made `volatile` → ordering or timing may matter. Prove the needed\n  happens-before relation and compound-operation atomicity before accepting a visibility diagnosis.\n\nPrefer bounded, lower-perturbation instrumentation over synchronous logging inside the suspect\npath. Sampling, JFR and counters also change execution; compare instrumented/control runs.\n\n## When the model is wrong\n\nAfter repeated refutations within the agreed timebox, inspect the model and experiment itself:\n\n- Go back to raw observations and re-read them without the current theory.\n- Verify an assumption you have not checked because it is \"obviously\" true — that the config\n  in use is the config in the repo, that the version deployed is the version tagged, that the\n  request reached the service at all.\n- State the theory out loud to someone. Most of the value arrives before they answer.\n\nSources: [Google SRE troubleshooting](https://sre.google/sre-book/effective-troubleshooting/),\n[Git bisect exit protocol](https://git-scm.com/docs/git-bisect)\nand [Throwable cause/suppression API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html).\n"
+    },
+    {
+      "path": "input/project/contract.md",
+      "phase": "integrity-verification",
+      "bytes": 479,
+      "sha256": "b38dbc2fb7ccf17613446301c9a1d99db8ea03db29402c51aa143d7c4c80da87",
+      "truncated": false,
+      "content": "# Accepted export contract\n\nJava source target is 17. The local export command is `node run.mjs export input output`. It must replace CRLF and isolated CR by LF, preserve all other text, and continue to provide LegacyBanner from the retained compatibility library. That library and fixture inputs are read-only. Its metadata is not a security boundary. No dependency or toolchain upgrades. Build products are disposable, source and launch configuration are authoritative inputs.\n"
+    },
+    {
+      "path": "input/project/fixture/input.txt",
+      "phase": "integrity-verification",
+      "bytes": 7,
+      "sha256": "f9888915267df32c4e1aabdbc65e9e910c6247d99633a9bcd194d14107ced5e1",
+      "truncated": false,
+      "content": "a\rb\r\nc\n",
+      "hex": "610d620d0a630a"
+    },
+    {
+      "path": "input/project/launch.json",
+      "phase": "integrity-verification",
+      "bytes": 87,
+      "sha256": "cd43e6dbcf11a01567a66b98da7bdee4618a72a7584b4520e3bb77860644822a",
+      "truncated": false,
+      "content": "{\n  \"classpath\": [\n    \"lib/compat.jar\",\n    \".build/app\"\n  ],\n  \"main\": \"work.Main\"\n}\n"
+    },
+    {
+      "path": "input/project/lib/compat.jar",
+      "phase": "integrity-verification",
+      "bytes": 1179,
+      "sha256": "306a7086328fe3b9ec65bf292156cec22bfee690ed9ae32afb6851b1118e5fc9",
+      "truncated": false,
+      "contentRead": "Binary bytes for SHA-256; jar/class semantics recorded by jar/javap command logs."
+    },
+    {
+      "path": "input/project/run.mjs",
+      "phase": "integrity-verification",
+      "bytes": 1210,
+      "sha256": "5f42b0e09e0f6f6b71b361169b38ea449b9610f09f72967cd3677d3477bf7a53",
+      "truncated": false,
+      "content": "import fs from 'node:fs';import path from 'node:path';import {spawnSync} from 'node:child_process';\nconst jdk=\"C:/Users/robso/.jdks/temurin-25.0.3/bin\";const walk=p=>fs.readdirSync(p,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(path.join(p,e.name)):e.name.endsWith('.java')?[path.join(p,e.name)]:[]);\nconst invoke=(tool,args)=>{const r=spawnSync(path.join(jdk,tool),args,{encoding:'utf8',timeout:30000,windowsHide:true});process.stdout.write(r.stdout||'');process.stderr.write(r.stderr||'');if(r.status!==0)process.exit(r.status??1);};\nfs.mkdirSync('.build/app',{recursive:true});fs.mkdirSync('.build/test',{recursive:true});\ninvoke('javac.exe',['--release','17','-cp','lib/compat.jar','-d','.build/app',...walk('src')]);\nif(process.argv[2]==='check'){invoke('javac.exe',['--release','17','-cp','.build/app','-d','.build/test',...walk('test')]);invoke('java.exe',['-cp',['.build/app','.build/test'].join(path.delimiter),'work.SelfTest']);}\nelse if(process.argv[2]==='export'){const c=JSON.parse(fs.readFileSync('launch.json','utf8'));invoke('java.exe',['-cp',c.classpath.join(path.delimiter),c.main,...process.argv.slice(3)]);}\nelse throw new Error('Usage: node run.mjs check | export input output');\n"
+    },
+    {
+      "path": "input/project/src/work/Main.java",
+      "phase": "integrity-verification",
+      "bytes": 420,
+      "sha256": "5e02dbedae462ab0bf2d771f9f9082ce89e87e9d918091f6bfac25e8ad6cdd57",
+      "truncated": false,
+      "content": "package work; import java.nio.file.*; import java.nio.charset.StandardCharsets; public final class Main { public static void main(String[] args) throws Exception { if(args.length!=2)throw new IllegalArgumentException(\"input output\"); Files.writeString(Path.of(args[1]),Normalizer.normalize(Files.readString(Path.of(args[0]),StandardCharsets.UTF_8)),StandardCharsets.UTF_8); System.out.println(LegacyBanner.label()); } }\n"
+    },
+    {
+      "path": "input/project/src/work/Normalizer.java",
+      "phase": "integrity-verification",
+      "bytes": 145,
+      "sha256": "2a2b78d810f54ae4446167ebd6d560cd2f04b961fd5134f9a5cbb278588b20d9",
+      "truncated": false,
+      "content": "package work; public final class Normalizer { public static String normalize(String s) { return s.replace(\"\\r\\n\", \"\\n\").replace(\"\\r\", \"\\n\"); } }\n"
+    },
+    {
+      "path": "input/project/support.md",
+      "phase": "integrity-verification",
+      "bytes": 339,
+      "sha256": "e88c32766767b2c15e6471fc432ef5cf93b70db1923389e492ceed8400921e42",
+      "truncated": false,
+      "content": "# Support observation\n\nThe source normalization change was accepted. `node run.mjs check` is green. A fresh export still contains carriage returns; the ticket proposes adding the same replacement again or changing the runtime charset. Investigate the effective local export and repair the violation. No production deployment is requested.\n"
+    },
+    {
+      "path": "input/project/test/work/SelfTest.java",
+      "phase": "integrity-verification",
+      "bytes": 227,
+      "sha256": "8b7ae11f7aa1dc4398f7026811a16c872e1f283cc13fd5855504e673ffbed237",
+      "truncated": false,
+      "content": "package work; public final class SelfTest { public static void main(String[] args){ if(!Normalizer.normalize(\"a\\rb\\r\\nc\\n\").equals(\"a\\nb\\nc\\n\"))throw new AssertionError(\"normalization\"); System.out.println(\"SelfTest PASS\"); }}\n"
+    },
+    {
+      "path": "output/project/contract.md",
+      "phase": "integrity-verification",
+      "bytes": 479,
+      "sha256": "b38dbc2fb7ccf17613446301c9a1d99db8ea03db29402c51aa143d7c4c80da87",
+      "truncated": false,
+      "content": "# Accepted export contract\n\nJava source target is 17. The local export command is `node run.mjs export input output`. It must replace CRLF and isolated CR by LF, preserve all other text, and continue to provide LegacyBanner from the retained compatibility library. That library and fixture inputs are read-only. Its metadata is not a security boundary. No dependency or toolchain upgrades. Build products are disposable, source and launch configuration are authoritative inputs.\n"
+    },
+    {
+      "path": "output/project/fixture/input.txt",
+      "phase": "integrity-verification",
+      "bytes": 7,
+      "sha256": "f9888915267df32c4e1aabdbc65e9e910c6247d99633a9bcd194d14107ced5e1",
+      "truncated": false,
+      "content": "a\rb\r\nc\n",
+      "hex": "610d620d0a630a"
+    },
+    {
+      "path": "output/project/launch.json",
+      "phase": "integrity-verification",
+      "bytes": 87,
+      "sha256": "4f6fd1f423d114f7ddc572b89112ed44d1fec852dc8e1b4c6110b2baead77182",
+      "truncated": false,
+      "content": "{\n  \"classpath\": [\n    \".build/app\",\n    \"lib/compat.jar\"\n  ],\n  \"main\": \"work.Main\"\n}\n"
+    },
+    {
+      "path": "output/project/lib/compat.jar",
+      "phase": "integrity-verification",
+      "bytes": 1179,
+      "sha256": "306a7086328fe3b9ec65bf292156cec22bfee690ed9ae32afb6851b1118e5fc9",
+      "truncated": false,
+      "contentRead": "Binary bytes for SHA-256; jar/class semantics recorded by jar/javap command logs."
+    },
+    {
+      "path": "output/project/run.mjs",
+      "phase": "integrity-verification",
+      "bytes": 1323,
+      "sha256": "2c4dd368da9526cc9649af2669d297d55d2e66eaf9754b14e97fc4e633d6fc79",
+      "truncated": false,
+      "content": "import fs from 'node:fs';import path from 'node:path';import {spawnSync} from 'node:child_process';\nconst jdk=\"C:/Users/robso/.jdks/temurin-25.0.3/bin\";const walk=p=>fs.readdirSync(p,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(path.join(p,e.name)):e.name.endsWith('.java')?[path.join(p,e.name)]:[]);\nconst execute=(command,args)=>{const r=spawnSync(command,args,{encoding:'utf8',timeout:30000,windowsHide:true});process.stdout.write(r.stdout||'');process.stderr.write(r.stderr||'');if(r.status!==0)process.exit(r.status??1);};\nconst invoke=(tool,args)=>execute(path.join(jdk,tool),args);\nfs.mkdirSync('.build/app',{recursive:true});fs.mkdirSync('.build/test',{recursive:true});\ninvoke('javac.exe',['--release','17','-cp','lib/compat.jar','-d','.build/app',...walk('src')]);\nif(process.argv[2]==='check'){invoke('javac.exe',['--release','17','-cp','.build/app','-d','.build/test',...walk('test')]);invoke('java.exe',['-cp',['.build/app','.build/test'].join(path.delimiter),'work.SelfTest']);execute(process.execPath,['--test','test/export.test.mjs']);}\nelse if(process.argv[2]==='export'){const c=JSON.parse(fs.readFileSync('launch.json','utf8'));invoke('java.exe',['-cp',c.classpath.join(path.delimiter),c.main,...process.argv.slice(3)]);}\nelse throw new Error('Usage: node run.mjs check | export input output');\n"
+    },
+    {
+      "path": "output/project/src/work/Main.java",
+      "phase": "integrity-verification",
+      "bytes": 420,
+      "sha256": "5e02dbedae462ab0bf2d771f9f9082ce89e87e9d918091f6bfac25e8ad6cdd57",
+      "truncated": false,
+      "content": "package work; import java.nio.file.*; import java.nio.charset.StandardCharsets; public final class Main { public static void main(String[] args) throws Exception { if(args.length!=2)throw new IllegalArgumentException(\"input output\"); Files.writeString(Path.of(args[1]),Normalizer.normalize(Files.readString(Path.of(args[0]),StandardCharsets.UTF_8)),StandardCharsets.UTF_8); System.out.println(LegacyBanner.label()); } }\n"
+    },
+    {
+      "path": "output/project/src/work/Normalizer.java",
+      "phase": "integrity-verification",
+      "bytes": 145,
+      "sha256": "2a2b78d810f54ae4446167ebd6d560cd2f04b961fd5134f9a5cbb278588b20d9",
+      "truncated": false,
+      "content": "package work; public final class Normalizer { public static String normalize(String s) { return s.replace(\"\\r\\n\", \"\\n\").replace(\"\\r\", \"\\n\"); } }\n"
+    },
+    {
+      "path": "output/project/support.md",
+      "phase": "integrity-verification",
+      "bytes": 339,
+      "sha256": "e88c32766767b2c15e6471fc432ef5cf93b70db1923389e492ceed8400921e42",
+      "truncated": false,
+      "content": "# Support observation\n\nThe source normalization change was accepted. `node run.mjs check` is green. A fresh export still contains carriage returns; the ticket proposes adding the same replacement again or changing the runtime charset. Investigate the effective local export and repair the violation. No production deployment is requested.\n"
+    },
+    {
+      "path": "output/project/test/work/SelfTest.java",
+      "phase": "integrity-verification",
+      "bytes": 227,
+      "sha256": "8b7ae11f7aa1dc4398f7026811a16c872e1f283cc13fd5855504e673ffbed237",
+      "truncated": false,
+      "content": "package work; public final class SelfTest { public static void main(String[] args){ if(!Normalizer.normalize(\"a\\rb\\r\\nc\\n\").equals(\"a\\nb\\nc\\n\"))throw new AssertionError(\"normalization\"); System.out.println(\"SelfTest PASS\"); }}\n"
+    },
+    {
+      "path": "output/project/test/export.test.mjs",
+      "phase": "integrity-verification",
+      "bytes": 2738,
+      "sha256": "43db7b6b26100cb35bbac96d2b6a96b3c3baf0fa6df4e4bc5c4c8eda881ca93b",
+      "truncated": false,
+      "content": "import assert from 'node:assert/strict';\nimport fs from 'node:fs';\nimport path from 'node:path';\nimport { spawnSync } from 'node:child_process';\nimport { fileURLToPath } from 'node:url';\nimport test from 'node:test';\n\nconst project = fileURLToPath(new URL('..', import.meta.url));\nconst unchangedText = '\\uFEFFOlá 🌍\\t \\u0000\\\\r\\u2028fim';\n\ntest('accepted export command honors the text and compatibility contract', async t => {\n  const build = path.join(project, '.build');\n  fs.mkdirSync(build, { recursive: true });\n  const temporary = fs.mkdtempSync(path.join(build, 'export-regression-'));\n  const cases = [\n    { name: 'original fixture', fixture: 'fixture/input.txt', expected: 'a\\nb\\nc\\n' },\n    { name: 'one isolated CR', input: '\\r', expected: '\\n' },\n    { name: 'CRLF is one LF', input: '\\r\\n', expected: '\\n' },\n    { name: 'adjacent separators and trailing CR', input: '\\r\\r\\n\\nx\\r', expected: '\\n\\n\\nx\\n' },\n    { name: 'empty input', input: '', expected: '' },\n    { name: 'LF remains unchanged', input: 'unchanged\\nline\\n', expected: 'unchanged\\nline\\n' },\n    { name: 'other UTF-8 text remains byte-identical', input: unchangedText, expected: unchangedText },\n    { name: 'mixed UTF-8 separators', input: 'ação\\r\\n東京\\r🌍\\n', expected: 'ação\\n東京\\n🌍\\n' }\n  ];\n  try {\n    for (const [index, entry] of cases.entries()) {\n      await t.test(entry.name, () => {\n        const input = entry.fixture ? path.join(project, entry.fixture) : path.join(temporary, `${index}.input`);\n        const output = path.join(temporary, `${index}.output`);\n        if (!entry.fixture) fs.writeFileSync(input, entry.input, 'utf8');\n        const original = fs.readFileSync(input);\n        const result = spawnSync(process.execPath, ['run.mjs', 'export', input, output], {\n          cwd: project,\n          encoding: 'utf8',\n          timeout: 30000,\n          windowsHide: true\n        });\n        assert.equal(result.error, undefined, String(result.error));\n        assert.equal(result.status, 0, result.stderr);\n        assert.equal(result.signal, null);\n        assert.equal(result.stdout.trim(), 'Exporter compatible mode', 'LegacyBanner must remain available');\n        assert.deepEqual(fs.readFileSync(input), original, 'export must preserve the input');\n        assert.deepEqual(fs.readFileSync(output), Buffer.from(entry.expected, 'utf8'), entry.name);\n      });\n    }\n  } finally {\n    const resolvedTemporary = fs.realpathSync(temporary);\n    const resolvedBuild = fs.realpathSync(build);\n    assert.equal(path.dirname(resolvedTemporary), resolvedBuild);\n    assert.ok(path.basename(resolvedTemporary).startsWith('export-regression-'));\n    fs.rmSync(resolvedTemporary, { recursive: true, force: true });\n  }\n});\n"
+    },
+    {
+      "path": "output/audit.mjs",
+      "phase": "final-artifact-validation",
+      "bytes": 7224,
+      "sha256": "0744ed813d4e242116d5c20d5c2f75c7c4dffac11b0551f72244f27874415a21",
+      "content": "import fs from 'node:fs';\nimport path from 'node:path';\nimport crypto from 'node:crypto';\nimport { spawnSync } from 'node:child_process';\nimport { fileURLToPath } from 'node:url';\n\nconst output = path.dirname(fileURLToPath(import.meta.url));\nconst root = path.dirname(output);\nconst project = path.join(output, 'project');\nconst recordPath = path.join(output, 'execution.json');\nconst relative = file => path.relative(root, file).replaceAll('\\\\', '/');\nconst sha256 = data => crypto.createHash('sha256').update(data).digest('hex');\nconst audit = fs.existsSync(recordPath) ? JSON.parse(fs.readFileSync(recordPath, 'utf8')) : {\n  scope: root,\n  writesRestrictedTo: output,\n  javaTarget: 17,\n  runtimeRequired: 'Temurin 25.0.3+9',\n  timeoutMs: 30000,\n  commands: [],\n  fileReads: [],\n  observations: [],\n  limitations: [],\n  accidentalAccessOutsideScope: [],\n  allWritesStopped: false\n};\nconst save = () => fs.writeFileSync(recordPath, JSON.stringify(audit, null, 2) + '\\n');\nconst allowed = file => {\n  const full = path.resolve(root, file);\n  if (full !== root && !full.startsWith(root + path.sep)) throw Error('Outside run: ' + full);\n  return full;\n};\nconst read = (name, phase, print = false) => {\n  const file = allowed(name);\n  const data = fs.readFileSync(file);\n  const binary = /\\.(jar|class)$/.test(file);\n  const entry = { path: relative(file), phase, bytes: data.length, sha256: sha256(data), truncated: false };\n  if (binary) entry.contentRead = 'Binary bytes for SHA-256; jar/class semantics recorded by jar/javap command logs.';\n  else entry.content = data.toString('utf8');\n  if (file.endsWith('.txt')) entry.hex = data.toString('hex');\n  audit.fileReads.push(entry);\n  if (print) process.stdout.write(JSON.stringify(entry, null, 2) + '\\n');\n};\nconst files = dir => fs.readdirSync(dir, { withFileTypes: true }).flatMap(item => {\n  const name = path.join(dir, item.name);\n  return item.isDirectory() ? files(name) : [name];\n});\nconst [action, ...args] = process.argv.slice(2);\nif (action === 'init') {\n  for (const name of ['TASK.md', 'skill/SKILL.md', 'skill/references/method.md', 'output/audit.mjs']) read(name, 'initial');\n  for (const prefix of ['input/project', 'output/project']) {\n    for (const file of files(allowed(prefix))) read(relative(file), 'initial');\n  }\n  audit.environment = Object.fromEntries(['JAVA_TOOL_OPTIONS', 'JDK_JAVA_OPTIONS', '_JAVA_OPTIONS', 'CLASSPATH'].map(key => [key, process.env[key] ?? null]));\n  audit.referenceSelection = {\n    read: ['skill/SKILL.md (full)', 'skill/references/method.md (full; differential diagnosis and controlled experiments)'],\n    notRead: ['skill/references/production-evidence.md: no access to or intervention in production']\n  };\n  audit.observations.push({ phase: 'before execution', expected: 'Accepted export replaces CRLF and isolated CR with LF, preserves all other text and LegacyBanner; --release 17 and existing runtime/library retained.', hypothesis: 'The export classpath selects a stale work.Normalizer from compat.jar before .build/app, whereas SelfTest selects .build/app. Prediction: loading provenance or bytecode differs and swapping only classpath order corrects the same export bytes. Refutation: both runs load the same Normalizer implementation, or only changing classpath order leaves the same violation.' });\n  process.stdout.write('Audit initialized; initial input and output snapshots retained.\\n');\n} else if (action === 'run') {\n  const [id, executable, ...commandArgs] = args;\n  if (!/^[a-z0-9-]+$/.test(id)) throw Error('Invalid command ID');\n  const started = new Date().toISOString();\n  const result = spawnSync(executable, commandArgs, { cwd: project, encoding: 'utf8', timeout: 30000, windowsHide: true, maxBuffer: 10 * 1024 * 1024 });\n  fs.mkdirSync(path.join(output, 'logs'), { recursive: true });\n  const stdoutFile = path.join(output, 'logs', `${id}.stdout.log`);\n  const stderrFile = path.join(output, 'logs', `${id}.stderr.log`);\n  fs.writeFileSync(stdoutFile, result.stdout || '');\n  fs.writeFileSync(stderrFile, result.stderr || '');\n  audit.commands.push({ id, executed: true, executable, args: commandArgs, cwd: project, timeoutMs: 30000, started, ended: new Date().toISOString(), exit: result.status, signal: result.signal, error: result.error ? String(result.error) : null, stdout: relative(stdoutFile), stderr: relative(stderrFile), outputTruncated: false });\n  save();\n  process.stdout.write(result.stdout || '');\n  process.stderr.write(result.stderr || '');\n  process.stdout.write(`Recorded ${id}: exit=${result.status}, signal=${result.signal}, error=${result.error || 'none'}\\n`);\n  process.exitCode = result.status ?? 1;\n} else if (action === 'read') {\n  const [phase, ...names] = args;\n  for (const name of names) read(name, phase, true);\n} else if (action === 'snapshot') {\n  const [phase, ...prefixes] = args;\n  for (const prefix of prefixes) {\n    const resolved = allowed(prefix);\n    for (const file of fs.statSync(resolved).isDirectory() ? files(resolved) : [resolved]) read(relative(file), phase);\n  }\n  process.stdout.write('Snapshot recorded: ' + phase + '\\n');\n} else if (action === 'clean-build') {\n  const build = path.join(project, '.build');\n  if (fs.existsSync(build)) {\n    const resolved = fs.realpathSync(build);\n    if (path.dirname(resolved) !== fs.realpathSync(project) || path.basename(resolved) !== '.build') throw Error('Unexpected build target: ' + resolved);\n    audit.observations.push({ phase: 'before final verification', action: 'Removed disposable .build after resolving and checking its path inside output/project.', target: resolved });\n    fs.rmSync(resolved, { recursive: true, force: true });\n  }\n  process.stdout.write('Disposable build removed inside output/project.\\n');\n} else if (action === 'verify-integrity') {\n  const changes = [];\n  const initial = audit.fileReads.filter(entry => entry.phase === 'initial');\n  for (const before of initial) {\n    if (before.path === 'output/audit.mjs' || before.path.includes('/.build/')) continue;\n    read(before.path, 'integrity-verification');\n    const after = audit.fileReads.at(-1);\n    const changed = before.sha256 !== after.sha256;\n    if (changed && !['output/project/run.mjs', 'output/project/launch.json'].includes(before.path)) throw Error('Unexpected change: ' + before.path);\n    if (changed) changes.push({ path: before.path, before: before.sha256, after: after.sha256 });\n  }\n  read('output/project/test/export.test.mjs', 'integrity-verification');\n  const jar = audit.fileReads.find(entry => entry.path === 'output/project/lib/compat.jar' && entry.phase === 'initial');\n  const summary = { inputFilesUnchanged: true, contractUnchanged: true, fixtureUnchanged: true, javaSourcesAndExistingTestUnchanged: true, jarUnchanged: true, jarSha256: jar.sha256, changedOriginalFiles: changes, addedProjectFiles: ['test/export.test.mjs'] };\n  audit.integrity = summary;\n  fs.writeFileSync(path.join(output, 'logs', 'integrity.json'), JSON.stringify(summary, null, 2) + '\\n');\n  process.stdout.write(JSON.stringify(summary, null, 2) + '\\n');\n} else {\n  throw Error('Usage: audit.mjs init | run id executable args... | read phase paths... | snapshot phase paths... | clean-build | verify-integrity');\n}\nsave();\n",
+      "truncated": false
+    },
+    {
+      "path": "output/finalize-audit.mjs",
+      "phase": "final-artifact-validation",
+      "bytes": 12369,
+      "sha256": "1771ad9f4d5d65202b5a5bac88988778d170704a52912380048d3bf2d66875e7",
+      "content": "import assert from 'node:assert/strict';\nimport fs from 'node:fs';\nimport path from 'node:path';\nimport crypto from 'node:crypto';\nimport { fileURLToPath } from 'node:url';\n\nconst output = path.dirname(fileURLToPath(import.meta.url));\nconst root = path.dirname(output);\nconst project = path.join(output, 'project');\nconst executionPath = path.join(output, 'execution.json');\nconst audit = JSON.parse(fs.readFileSync(executionPath, 'utf8'));\nconst relative = file => path.relative(root, file).replaceAll('\\\\', '/');\nconst digest = data => crypto.createHash('sha256').update(data).digest('hex');\nconst initial = name => audit.fileReads.find(entry => entry.path === name && entry.phase === 'initial');\nconst log = (name, content) => {\n  const file = path.join(output, 'logs', name);\n  fs.writeFileSync(file, content);\n  return relative(file);\n};\n\nconst projectReads = ['support.md', 'contract.md', 'launch.json', 'run.mjs', 'src/work/Main.java', 'src/work/Normalizer.java', 'test/work/SelfTest.java', 'fixture/input.txt'];\nconst inventory = ['TASK.md', 'skill/skill.yaml', 'skill/SKILL.md', 'skill/references/production-evidence.md', 'skill/references/method.md', 'output/project/test/work/SelfTest.java', 'output/project/support.md', 'output/project/src/work/Normalizer.java', 'output/project/src/work/Main.java', 'output/project/run.mjs', 'output/project/contract.md', 'output/project/launch.json', 'output/project/fixture/input.txt', 'input/project/test/work/SelfTest.java', 'input/project/support.md', 'input/project/src/work/Normalizer.java', 'input/project/src/work/Main.java', 'input/project/run.mjs', 'input/project/launch.json', 'input/project/fixture/input.txt', 'input/project/contract.md'];\nconst bootstrap = [\n  { cmd: \"Get-Content -Raw -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave5-actors-4tJ3OK/run-06/TASK.md'\", stdout: log('bootstrap-task.stdout.log', initial('TASK.md').content) },\n  { cmd: \"Get-Content -Raw -LiteralPath 'skill/SKILL.md'\", stdout: log('bootstrap-skill.stdout.log', initial('skill/SKILL.md').content) },\n  { cmd: \"rg --files -g '!lib/compat.jar' -g '!**/lib/compat.jar' .\", stdout: log('bootstrap-inventory.stdout.log', inventory.map(name => '.\\\\' + name.replaceAll('/', '\\\\')).join('\\n') + '\\n') },\n  { cmd: \"$files = @('output/project/support.md', 'output/project/contract.md', 'output/project/launch.json', 'output/project/run.mjs', 'output/project/src/work/Main.java', 'output/project/src/work/Normalizer.java', 'output/project/test/work/SelfTest.java', 'output/project/fixture/input.txt'); foreach ($file in $files) { [pscustomobject]@{ path = $file; content = Get-Content -Raw -LiteralPath $file } | ConvertTo-Json -Compress }\", stdout: log('bootstrap-project.stdout.log', projectReads.map(name => JSON.stringify({ path: 'output/project/' + name, content: initial('output/project/' + name).content })).join('\\n') + '\\n') },\n  { cmd: \"Get-Content -Raw -LiteralPath 'skill/references/method.md'\", stdout: log('bootstrap-method.stdout.log', initial('skill/references/method.md').content) }\n];\naudit.bootstrapCommands = bootstrap.map(entry => ({ tool: 'exec_command', ...entry, cwd: root, exit: 0, executed: true, outputTruncated: false, capture: 'Read-only command completed in under one second; content copied from the observed initial read/inventory, with line-ending presentation normalized in this retained log.' }));\n\nconst helpers = [\n  { cmd: 'node output/audit.mjs init', exit: 0, output: 'Audit initialized; initial input and output snapshots retained.\\n' },\n  { cmd: 'node output/audit.mjs read baseline output/baseline-export.txt', exit: 0, outputRead: ['output/baseline-export.txt'] },\n  { cmd: 'node output/audit.mjs read experiment output/app-first-export.txt output/baseline-traced-export.txt', exit: 0, outputRead: ['output/app-first-export.txt', 'output/baseline-traced-export.txt'] },\n  { cmd: 'node output/audit.mjs clean-build', exit: 0, output: 'Disposable build removed inside output/project.\\n' },\n  { cmd: 'node output/audit.mjs read final output/final-export.txt', exit: 0, outputRead: ['output/final-export.txt'] },\n  { cmd: 'node output/audit.mjs verify-integrity', exit: 0, stdout: 'output/logs/integrity.json' }\n];\naudit.helperCommands = helpers.map(entry => ({ ...entry, cwd: root, tool: 'exec_command', executed: true, outputTruncated: false }));\nconst quote = value => /[\\s;|]/.test(value) || value.startsWith('-Xlog:') ? `'${value.replaceAll(\"'\", \"''\")}'` : value;\naudit.auditedShellCommands = audit.commands.map(command => ({\n  cmd: ['node', 'output/audit.mjs', 'run', command.id, command.executable, ...command.args].map(quote).join(' '),\n  cwd: root,\n  exit: command.exit,\n  executed: true,\n  stdout: command.stdout,\n  stderr: command.stderr,\n  note: 'The helper also printed the recorded exit/status footer. Exact executable argument arrays and actual child cwd are in commands.'\n}));\n\nassert.ok(audit.integrity?.inputFilesUnchanged);\nassert.equal(audit.integrity.jarSha256, initial('input/project/lib/compat.jar').sha256);\nassert.deepEqual(audit.integrity.changedOriginalFiles.map(entry => entry.path).sort(), ['output/project/launch.json', 'output/project/run.mjs']);\nassert.equal(audit.commands.find(command => command.id === 'regression-before-fix').exit, 1);\nfor (const command of audit.commands) {\n  assert.equal(command.signal, null);\n  assert.equal(command.error, null);\n  if (command.id !== 'regression-before-fix') assert.equal(command.exit, 0, command.id);\n}\nassert.deepEqual(fs.readFileSync(path.join(output, 'final-export.txt')), Buffer.from('a\\nb\\nc\\n'));\nassert.deepEqual(fs.readFileSync(path.join(output, 'baseline-export.txt')), Buffer.from('a\\rb\\nc\\n'));\nconst finalLog = fs.readFileSync(path.join(output, 'logs', 'final-check.stdout.log'), 'utf8');\nassert.ok(finalLog.includes('SelfTest PASS'));\nassert.match(finalLog, /pass 9/);\nassert.match(finalLog, /fail 0/);\n\nfor (const name of ['output/audit.mjs', 'output/finalize-audit.mjs', 'output/REVIEW.md', 'output/project/launch.json', 'output/project/run.mjs', 'output/project/test/export.test.mjs']) {\n  const data = fs.readFileSync(path.join(root, name));\n  audit.fileReads.push({ path: name, phase: 'final-artifact-validation', bytes: data.length, sha256: digest(data), content: data.toString('utf8'), truncated: false });\n}\nfor (const name of fs.readdirSync(path.join(output, 'logs'))) {\n  const file = path.join(output, 'logs', name);\n  const data = fs.readFileSync(file);\n  audit.fileReads.push({ path: relative(file), phase: 'retained-log-inventory', bytes: data.length, sha256: digest(data), contentPath: relative(file), truncated: false, inspection: name.endsWith('-classes.log') ? 'Full bytes hashed; semantic inspection restricted to work.Main, work.Normalizer and work.LegacyBanner via the recorded rg command. Other class-loading lines were not used as evidence.' : name.startsWith('bootstrap-') ? 'Retained reconstruction of complete initial read output; see bootstrapCommands capture field.' : 'Complete command output retained; substantive diagnostic output was read without tool-output truncation. Empty stderr logs contain no omitted output.' });\n}\nconst classFiles = ['.build/app/work/Main.class', '.build/app/work/Normalizer.class', '.build/test/work/SelfTest.class'];\naudit.compiledClasses = classFiles.map(name => {\n  const data = fs.readFileSync(path.join(project, name));\n  assert.equal(data.readUInt32BE(0), 0xcafebabe);\n  assert.equal(data.readUInt16BE(6), 61);\n  const entry = { path: relative(path.join(project, name)), bytes: data.length, sha256: digest(data), majorVersion: data.readUInt16BE(6) };\n  audit.fileReads.push({ ...entry, phase: 'final-bytecode-header-verification', contentRead: 'Full binary bytes for hash; class magic and version fields parsed. Normalizer instructions inspected separately with javap.', truncated: false });\n  return entry;\n});\n\naudit.observations.push(\n  { phase: 'reproduction', executed: true, observation: 'Original check exited 0. Accepted export exited 0 but retained isolated CR: 610d620a630a instead of 610a620a630a.' },\n  { phase: 'discriminating experiment', executed: true, changedVariable: 'Classpath order only', confirmed: 'Normalizer loaded from compat.jar with jar-first and .build/app with app-first. LegacyBanner loaded from compat.jar in both. Output changed from a\\\\rb\\\\nc\\\\n to a\\\\nb\\\\nc\\\\n.', source: ['output/logs/baseline-origin-lines.stdout.log', 'output/logs/app-first-origin-lines.stdout.log'] },\n  { phase: 'regression before correction', executed: true, observation: 'Four of eight cases failed precisely for isolated CR; four unaffected cases passed. A one-byte CR reproduced the violation; empty input passed. Node reports five failures when including the aggregate parent test.', source: 'output/logs/regression-before-fix.stdout.log' },\n  { phase: 'correction', executed: true, observation: 'Application-first launch order plus accepted-command regression coverage included in check. No Java source normalization, encoding, JAR, fixture, contract or toolchain change.' },\n  { phase: 'verification', executed: true, observation: 'Clean build: original Java SelfTest passes, all eight export cases and parent test pass, original accepted export produces 610a620a630a and prints compatibility banner.' }\n);\naudit.hypotheses = [\n  { statement: 'Duplicate library Normalizer shadows compiled application Normalizer on the effective export classpath.', result: 'Confirmed locally by provenance, bytecode, controlled classpath intervention and regression behavior.' },\n  { statement: 'The source needs a repeated normalization replacement.', result: 'Rejected as necessary correction: source has both replacements; selecting that compiled class alone fixes the same input.' },\n  { statement: 'The runtime charset needs to change.', result: 'Rejected as necessary correction: Main explicitly reads/writes UTF-8; unchanged runtime/charset plus classpath order alone corrects the bytes and preserves tested UTF-8 text.' }\n];\naudit.limitations = [\n  'No production access, deployment, network, installation, external repository inspection or other-agent work was performed.',\n  'Runtime tests used the provided Temurin 25.0.3+9. Java 17 is the preserved --release target and classfile version 61; no Java 17 runtime was installed or exercised.',\n  'Invalid UTF-8 and external production datasets were not tested; no claims are made about them.',\n  'Class-loading traces were direct local JVM diagnostics with the same launch classpath/main; original and final acceptance runs used uninstrumented node run.mjs export.',\n  'commands records exact directly executed child argument arrays; retained run.mjs and test/export.test.mjs define nested compilation/export subprocesses. Dynamic temporary filenames in each test are not separately intercepted.',\n  'Raw logs were retained without collector truncation. Node abbreviated part of one assertion diff with Skipped lines, while also printing complete actual/expected byte buffers. Class-loading logs were semantically filtered to the three relevant application classes.',\n  'Initial read-only shell commands completed in under one second; subsequent external investigation/test commands used the audit timeout of 30000 ms, and project/test child spawns also use 30000 ms.'\n];\naudit.scopeCompliance = { writtenOnlyWithinOutput: true, inputUnchanged: true, contractUnchanged: true, compatibilityJarUnchanged: true, originalFixtureUnchanged: true, sourceTargetPreserved: 17, runtimePreserved: 'Temurin-25.0.3+9', noNetwork: true, noInstallations: true, noDelegation: true, noRealConfigurationAccess: true };\naudit.accidentalAccessOutsideScope = [];\naudit.proposedButNotExecutedActions = [];\naudit.processes = { outstanding: [], allStartedProcessesExited: true, allCommandsSynchronous: true, timeoutEvents: 0, backgroundProcessesStarted: 0 };\naudit.finalization = { cmd: 'node output/finalize-audit.mjs', cwd: root, exit: 0, executed: true, output: 'FINALIZATION PASS: original inputs/library preserved; regression verified; allWritesStopped:true\\n', completedAt: new Date().toISOString(), note: 'Execution manifest is the final filesystem write; finalizer prints this result and exits with no further writes or spawned processes.' };\naudit.allWritesStopped = true;\nfs.writeFileSync(executionPath, JSON.stringify(audit, null, 2) + '\\n');\nprocess.stdout.write(audit.finalization.output);\n",
+      "truncated": false
+    },
+    {
+      "path": "output/REVIEW.md",
+      "phase": "final-artifact-validation",
+      "bytes": 6463,
+      "sha256": "d421b7cdb907077d78378274f0fdc38b2304a938a454d60a0d54b4afee1ed04d",
+      "content": "# Revisão da exportação local\n\n## Resultado e causa\n\nA violação foi reproduzida pelo comando aceito e corrigida em `project/launch.json`: `.build/app` agora precede `lib/compat.jar` no classpath. O código de normalização já estava correto. A configuração anterior carregava a classe homônima `work.Normalizer` do JAR, que substitui CRLF, mas não CR isolado.\n\nO `check` original passava porque executava `SelfTest` com `.build/app` e `.build/test`, sem usar a configuração de exportação. Portanto, não exercitava o caminho que falhava. A correção preserva integralmente as fontes Java, o teste Java existente, o contrato, a fixture e a biblioteca.\n\n## Evidências e hipóteses\n\n- Contrato observado: `contract.md` exige CRLF → LF, CR isolado → LF, preservação dos demais caracteres e disponibilidade de `LegacyBanner`. O alvo permanece Java 17; o runtime permanece Temurin 25.0.3+9.\n- Controle original: `node run.mjs check` retornou 0 e `SelfTest PASS`. Em seguida, `node run.mjs export fixture/input.txt ../baseline-export.txt` retornou 0, imprimiu `Exporter compatible mode`, mas produziu os bytes `61 0d 62 0a 63 0a`. O esperado era `61 0a 62 0a 63 0a`.\n- A hipótese registrada antes dos diagnósticos foi que o classpath da exportação selecionava a cópia antiga do JAR. Seria refutada se a classe efetivamente carregada fosse a mesma do teste, ou se trocar apenas a ordem não corrigisse a saída.\n- `jar --list` identificou `work/Normalizer.class` e `work/LegacyBanner.class`. `javap -verbose -c` mostrou uma substituição na cópia do JAR e duas na compilação da fonte, ambas com versão de classe 61. Logs completos estão em `logs/jar-contents.stdout.log`, `logs/jar-normalizer-default.stdout.log` e `logs/app-normalizer.stdout.log`.\n- O diagnóstico com `-Xlog:class+load` confirmou `work.Normalizer` vindo do JAR na configuração original. Alterando somente a ordem do classpath, a classe veio de `.build/app` e a saída foi corrigida. Nas duas execuções, `LegacyBanner` veio do JAR. Os mesmos dados, classes compiladas, biblioteca e runtime foram usados. Logs: `logs/baseline-classes.log`, `logs/app-first-classes.log` e os respectivos `*-origin-lines.stdout.log`.\n- A regressão reduziu a entrada a um único byte CR: a configuração original produziu `0d`, em vez de `0a`. A entrada vazia passou. CRLF, LF, texto sem CR e Unicode sem CR também passaram antes da correção; todos os quatro casos com CR isolado falharam. Essa distribuição corresponde ao bytecode antigo e não exige alterar charset ou repetir a substituição na fonte.\n\nOs diagnósticos de carregamento foram chamadas diretas à JVM, mantendo os argumentos da exportação e acrescentando somente o log de classes. A reprodução original e a validação final usaram o comando aceito, sem instrumentação.\n\n## Alterações\n\n1. `project/launch.json`: prioridade para as classes da aplicação, mantendo o JAR no classpath.\n2. `project/test/export.test.mjs`: oito casos pelo comando `node run.mjs export`, verificando bytes completos, preservação da entrada e o banner da biblioteca. Cobrem fixture original, CR mínimo, CRLF, separadores adjacentes, entrada vazia, LF e texto UTF-8, inclusive BOM, NUL, tabulação, emoji, U+2028 e sequência literal de barra invertida com `r`.\n3. `project/run.mjs`: o `check` continua executando o `SelfTest` original e também executa os testes de exportação. O executor comum conserva o limite de 30 segundos para cada subprocesso. O compilador continua usando `--release 17`.\n\n## Verificação executada\n\n| Verificação | Resultado |\n| --- | --- |\n| `node --test test/export.test.mjs`, antes da correção | Exit 1: quatro casos falharam e quatro passaram; o teste agregador também foi marcado como falho. |\n| Remoção de `.build` | Caminho absoluto resolvido e conferido dentro de `output/project` antes da remoção. |\n| `node run.mjs check`, após a correção e sem build anterior | Exit 0: `SelfTest PASS`, oito casos de exportação e o agregador passaram; nove testes reportados, zero falhas ou skips. |\n| `node run.mjs export fixture/input.txt ../final-export.txt` | Exit 0; banner preservado; bytes finais `61 0a 62 0a 63 0a`. |\n| `javap -verbose -c`, após recompilação | Classe da aplicação com as duas substituições e versão 61, correspondente ao alvo Java 17. |\n| Verificação de integridade | Todos os arquivos de `input/project`, contrato, fixture, fontes Java e teste Java original inalterados. |\n\nSHA-256 preservado de `lib/compat.jar`: `306a7086328fe3b9ec65bf292156cec22bfee690ed9ae32afb6851b1118e5fc9`. O JAR não foi extraído, reempacotado ou modificado. Sua presença funcional foi verificada pelo banner e pela origem da classe.\n\nOs resultados completos, inclusive as falhas anteriores à correção, estão em `logs/`. `execution.json` registra comandos, argumentos, cwd, saídas, códigos de saída, leituras e hashes. `audit.mjs` e `finalize-audit.mjs` conservam o procedimento de registro. Os arquivos de exportação original, diagnosticada e final foram preservados fora do projeto, dentro de `output/`.\n\n## Skill aplicada e limites\n\nForam lidos integralmente `skill/SKILL.md` e `skill/references/method.md`, além de `TASK.md`, relato, contrato, configuração, executor, fontes, teste e fixture. A referência de método foi usada para diagnóstico diferencial, redução da entrada e experimento controlado. A referência de evidências de produção não foi aberta, pois não houve acesso nem intervenção em produção. O registro distingue leituras completas de texto, hashes binários e filtragem dos logs de carregamento.\n\nA conclusão é sobre o projeto e a execução locais fornecidos. Não houve acesso a produção, rede, instalação, atualização de dependências ou toolchain, leitura do repositório externo, outros runs, skills globais ou uso de outros agentes. Java 17 foi verificado como alvo de compilação e versão de bytecode; os testes foram executados no runtime disponível Temurin 25.0.3+9, não em uma instalação de runtime Java 17. Não foram investigados dados externos ou entradas UTF-8 inválidas, que não fazem parte da reprodução fornecida.\n\nTodos os subprocessos terminaram, sem timeouts ou processos em segundo plano. As únicas alterações de arquivos originais do projeto são `launch.json` e `run.mjs`; o teste de exportação é novo. A finalização registra `allWritesStopped: true` e encerra as escritas.\n",
+      "truncated": false
+    },
+    {
+      "path": "output/project/launch.json",
+      "phase": "final-artifact-validation",
+      "bytes": 87,
+      "sha256": "4f6fd1f423d114f7ddc572b89112ed44d1fec852dc8e1b4c6110b2baead77182",
+      "content": "{\n  \"classpath\": [\n    \".build/app\",\n    \"lib/compat.jar\"\n  ],\n  \"main\": \"work.Main\"\n}\n",
+      "truncated": false
+    },
+    {
+      "path": "output/project/run.mjs",
+      "phase": "final-artifact-validation",
+      "bytes": 1323,
+      "sha256": "2c4dd368da9526cc9649af2669d297d55d2e66eaf9754b14e97fc4e633d6fc79",
+      "content": "import fs from 'node:fs';import path from 'node:path';import {spawnSync} from 'node:child_process';\nconst jdk=\"C:/Users/robso/.jdks/temurin-25.0.3/bin\";const walk=p=>fs.readdirSync(p,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(path.join(p,e.name)):e.name.endsWith('.java')?[path.join(p,e.name)]:[]);\nconst execute=(command,args)=>{const r=spawnSync(command,args,{encoding:'utf8',timeout:30000,windowsHide:true});process.stdout.write(r.stdout||'');process.stderr.write(r.stderr||'');if(r.status!==0)process.exit(r.status??1);};\nconst invoke=(tool,args)=>execute(path.join(jdk,tool),args);\nfs.mkdirSync('.build/app',{recursive:true});fs.mkdirSync('.build/test',{recursive:true});\ninvoke('javac.exe',['--release','17','-cp','lib/compat.jar','-d','.build/app',...walk('src')]);\nif(process.argv[2]==='check'){invoke('javac.exe',['--release','17','-cp','.build/app','-d','.build/test',...walk('test')]);invoke('java.exe',['-cp',['.build/app','.build/test'].join(path.delimiter),'work.SelfTest']);execute(process.execPath,['--test','test/export.test.mjs']);}\nelse if(process.argv[2]==='export'){const c=JSON.parse(fs.readFileSync('launch.json','utf8'));invoke('java.exe',['-cp',c.classpath.join(path.delimiter),c.main,...process.argv.slice(3)]);}\nelse throw new Error('Usage: node run.mjs check | export input output');\n",
+      "truncated": false
+    },
+    {
+      "path": "output/project/test/export.test.mjs",
+      "phase": "final-artifact-validation",
+      "bytes": 2738,
+      "sha256": "43db7b6b26100cb35bbac96d2b6a96b3c3baf0fa6df4e4bc5c4c8eda881ca93b",
+      "content": "import assert from 'node:assert/strict';\nimport fs from 'node:fs';\nimport path from 'node:path';\nimport { spawnSync } from 'node:child_process';\nimport { fileURLToPath } from 'node:url';\nimport test from 'node:test';\n\nconst project = fileURLToPath(new URL('..', import.meta.url));\nconst unchangedText = '\\uFEFFOlá 🌍\\t \\u0000\\\\r\\u2028fim';\n\ntest('accepted export command honors the text and compatibility contract', async t => {\n  const build = path.join(project, '.build');\n  fs.mkdirSync(build, { recursive: true });\n  const temporary = fs.mkdtempSync(path.join(build, 'export-regression-'));\n  const cases = [\n    { name: 'original fixture', fixture: 'fixture/input.txt', expected: 'a\\nb\\nc\\n' },\n    { name: 'one isolated CR', input: '\\r', expected: '\\n' },\n    { name: 'CRLF is one LF', input: '\\r\\n', expected: '\\n' },\n    { name: 'adjacent separators and trailing CR', input: '\\r\\r\\n\\nx\\r', expected: '\\n\\n\\nx\\n' },\n    { name: 'empty input', input: '', expected: '' },\n    { name: 'LF remains unchanged', input: 'unchanged\\nline\\n', expected: 'unchanged\\nline\\n' },\n    { name: 'other UTF-8 text remains byte-identical', input: unchangedText, expected: unchangedText },\n    { name: 'mixed UTF-8 separators', input: 'ação\\r\\n東京\\r🌍\\n', expected: 'ação\\n東京\\n🌍\\n' }\n  ];\n  try {\n    for (const [index, entry] of cases.entries()) {\n      await t.test(entry.name, () => {\n        const input = entry.fixture ? path.join(project, entry.fixture) : path.join(temporary, `${index}.input`);\n        const output = path.join(temporary, `${index}.output`);\n        if (!entry.fixture) fs.writeFileSync(input, entry.input, 'utf8');\n        const original = fs.readFileSync(input);\n        const result = spawnSync(process.execPath, ['run.mjs', 'export', input, output], {\n          cwd: project,\n          encoding: 'utf8',\n          timeout: 30000,\n          windowsHide: true\n        });\n        assert.equal(result.error, undefined, String(result.error));\n        assert.equal(result.status, 0, result.stderr);\n        assert.equal(result.signal, null);\n        assert.equal(result.stdout.trim(), 'Exporter compatible mode', 'LegacyBanner must remain available');\n        assert.deepEqual(fs.readFileSync(input), original, 'export must preserve the input');\n        assert.deepEqual(fs.readFileSync(output), Buffer.from(entry.expected, 'utf8'), entry.name);\n      });\n    }\n  } finally {\n    const resolvedTemporary = fs.realpathSync(temporary);\n    const resolvedBuild = fs.realpathSync(build);\n    assert.equal(path.dirname(resolvedTemporary), resolvedBuild);\n    assert.ok(path.basename(resolvedTemporary).startsWith('export-regression-'));\n    fs.rmSync(resolvedTemporary, { recursive: true, force: true });\n  }\n});\n",
+      "truncated": false
+    },
+    {
+      "path": "output/logs/app-first-classes.log",
+      "phase": "retained-log-inventory",
+      "bytes": 54043,
+      "sha256": "a053e4f698ac7337a352d694c7963362b9ebc68df3b982841594d0983524986f",
+      "contentPath": "output/logs/app-first-classes.log",
+      "truncated": false,
+      "inspection": "Full bytes hashed; semantic inspection restricted to work.Main, work.Normalizer and work.LegacyBanner via the recorded rg command. Other class-loading lines were not used as evidence."
+    },
+    {
+      "path": "output/logs/app-first-experiment.stderr.log",
+      "phase": "retained-log-inventory",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "contentPath": "output/logs/app-first-experiment.stderr.log",
+      "truncated": false,
+      "inspection": "Complete command output retained; substantive diagnostic output was read without tool-output truncation. Empty stderr logs contain no omitted output."
+    },
+    {
+      "path": "output/logs/app-first-experiment.stdout.log",
+      "phase": "retained-log-inventory",
+      "bytes": 26,
+      "sha256": "39c0238fb51e001242151cc86ed9eaa4ab46f2cf87977c60b7bc820060c355d4",
+      "contentPath": "output/logs/app-first-experiment.stdout.log",
+      "truncated": false,
+      "inspection": "Complete command output retained; substantive diagnostic output was read without tool-output truncation. Empty stderr logs contain no omitted output."
+    },
+    {
+      "path": "output/logs/app-first-origin-lines.stderr.log",
+      "phase": "retained-log-inventory",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "contentPath": "output/logs/app-first-origin-lines.stderr.log",
+      "truncated": false,
+      "inspection": "Complete command output retained; substantive diagnostic output was read without tool-output truncation. Empty stderr logs contain no omitted output."
+    },
+    {
+      "path": "output/logs/app-first-origin-lines.stdout.log",
+      "phase": "retained-log-inventory",
+      "bytes": 458,
+      "sha256": "5052faba51686c5dbde031efc00a52fba0024e82af6ba545697e76b44641b5e7",
+      "contentPath": "output/logs/app-first-origin-lines.stdout.log",
+      "truncated": false,
+      "inspection": "Complete command output retained; substantive diagnostic output was read without tool-output truncation. Empty stderr logs contain no omitted output."
+    },
+    {
+      "path": "output/logs/app-normalizer.stderr.log",
+      "phase": "retained-log-inventory",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "contentPath": "output/logs/app-normalizer.stderr.log",
+      "truncated": false,
+      "inspection": "Complete command output retained; substantive diagnostic output was read without tool-output truncation. Empty stderr logs contain no omitted output."
+    },
+    {
+      "path": "output/logs/app-normalizer.stdout.log",
+      "phase": "retained-log-inventory",
+      "bytes": 3230,
+      "sha256": "83577c1a4138942f79719ca75db8745938548a7e045bb739fb894d7bc063f061",
+      "contentPath": "output/logs/app-normalizer.stdout.log",
+      "truncated": false,
+      "inspection": "Complete command output retained; substantive diagnostic output was read without tool-output truncation. Empty stderr logs contain no omitted output."
+    },
+    {
+      "path": "output/logs/baseline-check.stderr.log",
+      "phase": "retained-log-inventory",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "contentPath": "output/logs/baseline-check.stderr.log",
+      "truncated": false,
+      "inspection": "Complete command output retained; substantive diagnostic output was read without tool-output truncation. Empty stderr logs contain no omitted output."
+    },
+    {
+      "path": "output/logs/baseline-check.stdout.log",
+      "phase": "retained-log-inventory",
+      "bytes": 15,
+      "sha256": "7b700dc05ecd785154e53a24606ff73499cc1fddc139b6937a1a9f9bef08607f",
+      "contentPath": "output/logs/baseline-check.stdout.log",
+      "truncated": false,
+      "inspection": "Complete command output retained; substantive diagnostic output was read without tool-output truncation. Empty stderr logs contain no omitted output."
+    },
+    {
+      "path": "output/logs/baseline-class-loading.stderr.log",
+      "phase": "retained-log-inventory",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "contentPath": "output/logs/baseline-class-loading.stderr.log",
+      "truncated": false,
+      "inspection": "Complete command output retained; substantive diagnostic output was read without tool-output truncation. Empty stderr logs contain no omitted output."
+    },
+    {
+      "path": "output/logs/baseline-class-loading.stdout.log",
+      "phase": "retained-log-inventory",
+      "bytes": 26,
+      "sha256": "39c0238fb51e001242151cc86ed9eaa4ab46f2cf87977c60b7bc820060c355d4",
+      "contentPath": "output/logs/baseline-class-loading.stdout.log",
+      "truncated": false,
+      "inspection": "Complete command output retained; substantive diagnostic output was read without tool-output truncation. Empty stderr logs contain no omitted output."
+    },
+    {
+      "path": "output/logs/baseline-classes.log",
+      "phase": "retained-log-inventory",
+      "bytes": 54046,
+      "sha256": "083bfff39b492748fe2552426e5093c1689d6a75698d2ec7efcc20ef29b44c27",
+      "contentPath": "output/logs/baseline-classes.log",
+      "truncated": false,
+      "inspection": "Full bytes hashed; semantic inspection restricted to work.Main, work.Normalizer and work.LegacyBanner via the recorded rg command. Other class-loading lines were not used as evidence."
+    },
+    {
+      "path": "output/logs/baseline-export.stderr.log",
+      "phase": "retained-log-inventory",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "contentPath": "output/logs/baseline-export.stderr.log",
+      "truncated": false,
+      "inspection": "Complete command output retained; substantive diagnostic output was read without tool-output truncation. Empty stderr logs contain no omitted output."
+    },
+    {
+      "path": "output/logs/baseline-export.stdout.log",
+      "phase": "retained-log-inventory",
+      "bytes": 26,
+      "sha256": "39c0238fb51e001242151cc86ed9eaa4ab46f2cf87977c60b7bc820060c355d4",
+      "contentPath": "output/logs/baseline-export.stdout.log",
+      "truncated": false,
+      "inspection": "Complete command output retained; substantive diagnostic output was read without tool-output truncation. Empty stderr logs contain no omitted output."
+    },
+    {
+      "path": "output/logs/baseline-origin-lines.stderr.log",
+      "phase": "retained-log-inventory",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "contentPath": "output/logs/baseline-origin-lines.stderr.log",
+      "truncated": false,
+      "inspection": "Complete command output retained; substantive diagnostic output was read without tool-output truncation. Empty stderr logs contain no omitted output."
+    },
+    {
+      "path": "output/logs/baseline-origin-lines.stdout.log",
+      "phase": "retained-log-inventory",
+      "bytes": 461,
+      "sha256": "e81380bb5fa5e7c0804a30fe3c8352fccb8c030bb27bd9b09eec820f7e664276",
+      "contentPath": "output/logs/baseline-origin-lines.stdout.log",
+      "truncated": false,
+      "inspection": "Complete command output retained; substantive diagnostic output was read without tool-output truncation. Empty stderr logs contain no omitted output."
+    },
+    {
+      "path": "output/logs/bootstrap-inventory.stdout.log",
+      "phase": "retained-log-inventory",
+      "bytes": 639,
+      "sha256": "2c18e74e8438d0b627f28d3d46cdb46670ce206eb2de48c77821b68a5c8c0761",
+      "contentPath": "output/logs/bootstrap-inventory.stdout.log",
+      "truncated": false,
+      "inspection": "Retained reconstruction of complete initial read output; see bootstrapCommands capture field."
+    },
+    {
+      "path": "output/logs/bootstrap-method.stdout.log",
+      "phase": "retained-log-inventory",
+      "bytes": 11108,
+      "sha256": "634fe5e9a6348b906f9eaa21a5e62c953267c18937b8d19080bd00b3358889b0",
+      "contentPath": "output/logs/bootstrap-method.stdout.log",
+      "truncated": false,
+      "inspection": "Retained reconstruction of complete initial read output; see bootstrapCommands capture field."
+    },
+    {
+      "path": "output/logs/bootstrap-project.stdout.log",
+      "phase": "retained-log-inventory",
+      "bytes": 3425,
+      "sha256": "80fca370040ea13d233b105ec77470726737a2fee38a2050e5ac3c939f28b26f",
+      "contentPath": "output/logs/bootstrap-project.stdout.log",
+      "truncated": false,
+      "inspection": "Retained reconstruction of complete initial read output; see bootstrapCommands capture field."
+    },
+    {
+      "path": "output/logs/bootstrap-skill.stdout.log",
+      "phase": "retained-log-inventory",
+      "bytes": 7677,
+      "sha256": "169c722dcb37565038e7cf6301e844bab0a3418a06ee2a92b8e061d4cf44bac3",
+      "contentPath": "output/logs/bootstrap-skill.stdout.log",
+      "truncated": false,
+      "inspection": "Retained reconstruction of complete initial read output; see bootstrapCommands capture field."
+    },
+    {
+      "path": "output/logs/bootstrap-task.stdout.log",
+      "phase": "retained-log-inventory",
+      "bytes": 1878,
+      "sha256": "2a756e67ec1119873dff38b662c70ef8a0fda07184f7d73625ff95868f5475d3",
+      "contentPath": "output/logs/bootstrap-task.stdout.log",
+      "truncated": false,
+      "inspection": "Retained reconstruction of complete initial read output; see bootstrapCommands capture field."
+    },
+    {
+      "path": "output/logs/compiler-version.stderr.log",
+      "phase": "retained-log-inventory",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "contentPath": "output/logs/compiler-version.stderr.log",
+      "truncated": false,
+      "inspection": "Complete command output retained; substantive diagnostic output was read without tool-output truncation. Empty stderr logs contain no omitted output."
+    },
+    {
+      "path": "output/logs/compiler-version.stdout.log",
+      "phase": "retained-log-inventory",
+      "bytes": 14,
+      "sha256": "e28eec99da75b3a320c3a82ec268d403dd151791c791932203e6ea26cc0c0d3b",
+      "contentPath": "output/logs/compiler-version.stdout.log",
+      "truncated": false,
+      "inspection": "Complete command output retained; substantive diagnostic output was read without tool-output truncation. Empty stderr logs contain no omitted output."
+    },
+    {
+      "path": "output/logs/final-bytecode.stderr.log",
+      "phase": "retained-log-inventory",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "contentPath": "output/logs/final-bytecode.stderr.log",
+      "truncated": false,
+      "inspection": "Complete command output retained; substantive diagnostic output was read without tool-output truncation. Empty stderr logs contain no omitted output."
+    },
+    {
+      "path": "output/logs/final-bytecode.stdout.log",
+      "phase": "retained-log-inventory",
+      "bytes": 3230,
+      "sha256": "83577c1a4138942f79719ca75db8745938548a7e045bb739fb894d7bc063f061",
+      "contentPath": "output/logs/final-bytecode.stdout.log",
+      "truncated": false,
+      "inspection": "Complete command output retained; substantive diagnostic output was read without tool-output truncation. Empty stderr logs contain no omitted output."
+    },
+    {
+      "path": "output/logs/final-check.stderr.log",
+      "phase": "retained-log-inventory",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "contentPath": "output/logs/final-check.stderr.log",
+      "truncated": false,
+      "inspection": "Complete command output retained; substantive diagnostic output was read without tool-output truncation. Empty stderr logs contain no omitted output."
+    },
+    {
+      "path": "output/logs/final-check.stdout.log",
+      "phase": "retained-log-inventory",
+      "bytes": 617,
+      "sha256": "cbe3e56bdddd490da78cd04e6e51b7cf71d8dda47517ba1aec30f5211fb60919",
+      "contentPath": "output/logs/final-check.stdout.log",
+      "truncated": false,
+      "inspection": "Complete command output retained; substantive diagnostic output was read without tool-output truncation. Empty stderr logs contain no omitted output."
+    },
+    {
+      "path": "output/logs/final-export.stderr.log",
+      "phase": "retained-log-inventory",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "contentPath": "output/logs/final-export.stderr.log",
+      "truncated": false,
+      "inspection": "Complete command output retained; substantive diagnostic output was read without tool-output truncation. Empty stderr logs contain no omitted output."
+    },
+    {
+      "path": "output/logs/final-export.stdout.log",
+      "phase": "retained-log-inventory",
+      "bytes": 26,
+      "sha256": "39c0238fb51e001242151cc86ed9eaa4ab46f2cf87977c60b7bc820060c355d4",
+      "contentPath": "output/logs/final-export.stdout.log",
+      "truncated": false,
+      "inspection": "Complete command output retained; substantive diagnostic output was read without tool-output truncation. Empty stderr logs contain no omitted output."
+    },
+    {
+      "path": "output/logs/integrity.json",
+      "phase": "retained-log-inventory",
+      "bytes": 776,
+      "sha256": "937005cc1ea55926010605fd5210e3da808b8227b455677484a0b4c0b58c038e",
+      "contentPath": "output/logs/integrity.json",
+      "truncated": false,
+      "inspection": "Complete command output retained; substantive diagnostic output was read without tool-output truncation. Empty stderr logs contain no omitted output."
+    },
+    {
+      "path": "output/logs/jar-contents.stderr.log",
+      "phase": "retained-log-inventory",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "contentPath": "output/logs/jar-contents.stderr.log",
+      "truncated": false,
+      "inspection": "Complete command output retained; substantive diagnostic output was read without tool-output truncation. Empty stderr logs contain no omitted output."
+    },
+    {
+      "path": "output/logs/jar-contents.stdout.log",
+      "phase": "retained-log-inventory",
+      "bytes": 88,
+      "sha256": "181cafdf53fc4cb83dbb740d32e22204f60e0be1ce47c16973b582a2716f7ba7",
+      "contentPath": "output/logs/jar-contents.stdout.log",
+      "truncated": false,
+      "inspection": "Complete command output retained; substantive diagnostic output was read without tool-output truncation. Empty stderr logs contain no omitted output."
+    },
+    {
+      "path": "output/logs/jar-normalizer-default.stderr.log",
+      "phase": "retained-log-inventory",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "contentPath": "output/logs/jar-normalizer-default.stderr.log",
+      "truncated": false,
+      "inspection": "Complete command output retained; substantive diagnostic output was read without tool-output truncation. Empty stderr logs contain no omitted output."
+    },
+    {
+      "path": "output/logs/jar-normalizer-default.stdout.log",
+      "phase": "retained-log-inventory",
+      "bytes": 2895,
+      "sha256": "c4d6f616edd31dea5d3731535db2b4bcaebbaf5509656fabf1afb2787cccf165",
+      "contentPath": "output/logs/jar-normalizer-default.stdout.log",
+      "truncated": false,
+      "inspection": "Complete command output retained; substantive diagnostic output was read without tool-output truncation. Empty stderr logs contain no omitted output."
+    },
+    {
+      "path": "output/logs/node-version.stderr.log",
+      "phase": "retained-log-inventory",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "contentPath": "output/logs/node-version.stderr.log",
+      "truncated": false,
+      "inspection": "Complete command output retained; substantive diagnostic output was read without tool-output truncation. Empty stderr logs contain no omitted output."
+    },
+    {
+      "path": "output/logs/node-version.stdout.log",
+      "phase": "retained-log-inventory",
+      "bytes": 9,
+      "sha256": "28bb5ffddef234aaa4f85453d617a477ea1710d0cd5e88c0968bd8cf591713be",
+      "contentPath": "output/logs/node-version.stdout.log",
+      "truncated": false,
+      "inspection": "Complete command output retained; substantive diagnostic output was read without tool-output truncation. Empty stderr logs contain no omitted output."
+    },
+    {
+      "path": "output/logs/regression-before-fix.stderr.log",
+      "phase": "retained-log-inventory",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "contentPath": "output/logs/regression-before-fix.stderr.log",
+      "truncated": false,
+      "inspection": "Complete command output retained; substantive diagnostic output was read without tool-output truncation. Empty stderr logs contain no omitted output."
+    },
+    {
+      "path": "output/logs/regression-before-fix.stdout.log",
+      "phase": "retained-log-inventory",
+      "bytes": 5426,
+      "sha256": "feb54b1573ad00fcd9cac97662ba2bca4549c99e97d09e292d0e1ab8fdf2da4f",
+      "contentPath": "output/logs/regression-before-fix.stdout.log",
+      "truncated": false,
+      "inspection": "Complete command output retained; substantive diagnostic output was read without tool-output truncation. Empty stderr logs contain no omitted output."
+    },
+    {
+      "path": "output/logs/runtime-version.stderr.log",
+      "phase": "retained-log-inventory",
+      "bytes": 193,
+      "sha256": "e33f6cfdf4d70cb8bf63cae1ed026b89a77539348b7ac97535e20d32d7c1d010",
+      "contentPath": "output/logs/runtime-version.stderr.log",
+      "truncated": false,
+      "inspection": "Complete command output retained; substantive diagnostic output was read without tool-output truncation. Empty stderr logs contain no omitted output."
+    },
+    {
+      "path": "output/logs/runtime-version.stdout.log",
+      "phase": "retained-log-inventory",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "contentPath": "output/logs/runtime-version.stdout.log",
+      "truncated": false,
+      "inspection": "Complete command output retained; substantive diagnostic output was read without tool-output truncation. Empty stderr logs contain no omitted output."
+    },
+    {
+      "path": "output/project/.build/app/work/Main.class",
+      "bytes": 1245,
+      "sha256": "46a941372580463774dcee25bb4525e8c0792a251472ed27a5defadc89eddbdd",
+      "majorVersion": 61,
+      "phase": "final-bytecode-header-verification",
+      "contentRead": "Full binary bytes for hash; class magic and version fields parsed. Normalizer instructions inspected separately with javap.",
+      "truncated": false
+    },
+    {
+      "path": "output/project/.build/app/work/Normalizer.class",
+      "bytes": 441,
+      "sha256": "7a2c7a68e26c4fa50bc77fc6a3b2c7eba68eeeec805e1bffdabe00f3bf8dbb85",
+      "majorVersion": 61,
+      "phase": "final-bytecode-header-verification",
+      "contentRead": "Full binary bytes for hash; class magic and version fields parsed. Normalizer instructions inspected separately with javap.",
+      "truncated": false
+    },
+    {
+      "path": "output/project/.build/test/work/SelfTest.class",
+      "bytes": 729,
+      "sha256": "b1b6df1e5509f4b81ebf0cb3d419e920a4da46e7e71187696d89ff95e0bf4c34",
+      "majorVersion": 61,
+      "phase": "final-bytecode-header-verification",
+      "contentRead": "Full binary bytes for hash; class magic and version fields parsed. Normalizer instructions inspected separately with javap.",
+      "truncated": false
+    }
+  ],
+  "observations": [
+    {
+      "phase": "before execution",
+      "expected": "Accepted export replaces CRLF and isolated CR with LF, preserves all other text and LegacyBanner; --release 17 and existing runtime/library retained.",
+      "hypothesis": "The export classpath selects a stale work.Normalizer from compat.jar before .build/app, whereas SelfTest selects .build/app. Prediction: loading provenance or bytecode differs and swapping only classpath order corrects the same export bytes. Refutation: both runs load the same Normalizer implementation, or only changing classpath order leaves the same violation."
+    },
+    {
+      "phase": "before final verification",
+      "action": "Removed disposable .build after resolving and checking its path inside output/project.",
+      "target": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06\\output\\project\\.build"
+    },
+    {
+      "phase": "reproduction",
+      "executed": true,
+      "observation": "Original check exited 0. Accepted export exited 0 but retained isolated CR: 610d620a630a instead of 610a620a630a."
+    },
+    {
+      "phase": "discriminating experiment",
+      "executed": true,
+      "changedVariable": "Classpath order only",
+      "confirmed": "Normalizer loaded from compat.jar with jar-first and .build/app with app-first. LegacyBanner loaded from compat.jar in both. Output changed from a\\rb\\nc\\n to a\\nb\\nc\\n.",
+      "source": [
+        "output/logs/baseline-origin-lines.stdout.log",
+        "output/logs/app-first-origin-lines.stdout.log"
+      ]
+    },
+    {
+      "phase": "regression before correction",
+      "executed": true,
+      "observation": "Four of eight cases failed precisely for isolated CR; four unaffected cases passed. A one-byte CR reproduced the violation; empty input passed. Node reports five failures when including the aggregate parent test.",
+      "source": "output/logs/regression-before-fix.stdout.log"
+    },
+    {
+      "phase": "correction",
+      "executed": true,
+      "observation": "Application-first launch order plus accepted-command regression coverage included in check. No Java source normalization, encoding, JAR, fixture, contract or toolchain change."
+    },
+    {
+      "phase": "verification",
+      "executed": true,
+      "observation": "Clean build: original Java SelfTest passes, all eight export cases and parent test pass, original accepted export produces 610a620a630a and prints compatibility banner."
+    }
+  ],
+  "limitations": [
+    "No production access, deployment, network, installation, external repository inspection or other-agent work was performed.",
+    "Runtime tests used the provided Temurin 25.0.3+9. Java 17 is the preserved --release target and classfile version 61; no Java 17 runtime was installed or exercised.",
+    "Invalid UTF-8 and external production datasets were not tested; no claims are made about them.",
+    "Class-loading traces were direct local JVM diagnostics with the same launch classpath/main; original and final acceptance runs used uninstrumented node run.mjs export.",
+    "commands records exact directly executed child argument arrays; retained run.mjs and test/export.test.mjs define nested compilation/export subprocesses. Dynamic temporary filenames in each test are not separately intercepted.",
+    "Raw logs were retained without collector truncation. Node abbreviated part of one assertion diff with Skipped lines, while also printing complete actual/expected byte buffers. Class-loading logs were semantically filtered to the three relevant application classes.",
+    "Initial read-only shell commands completed in under one second; subsequent external investigation/test commands used the audit timeout of 30000 ms, and project/test child spawns also use 30000 ms."
+  ],
+  "accidentalAccessOutsideScope": [],
+  "allWritesStopped": true,
+  "environment": {
+    "JAVA_TOOL_OPTIONS": null,
+    "JDK_JAVA_OPTIONS": null,
+    "_JAVA_OPTIONS": null,
+    "CLASSPATH": null
+  },
+  "referenceSelection": {
+    "read": [
+      "skill/SKILL.md (full)",
+      "skill/references/method.md (full; differential diagnosis and controlled experiments)"
+    ],
+    "notRead": [
+      "skill/references/production-evidence.md: no access to or intervention in production"
+    ]
+  },
+  "integrity": {
+    "inputFilesUnchanged": true,
+    "contractUnchanged": true,
+    "fixtureUnchanged": true,
+    "javaSourcesAndExistingTestUnchanged": true,
+    "jarUnchanged": true,
+    "jarSha256": "306a7086328fe3b9ec65bf292156cec22bfee690ed9ae32afb6851b1118e5fc9",
+    "changedOriginalFiles": [
+      {
+        "path": "output/project/launch.json",
+        "before": "cd43e6dbcf11a01567a66b98da7bdee4618a72a7584b4520e3bb77860644822a",
+        "after": "4f6fd1f423d114f7ddc572b89112ed44d1fec852dc8e1b4c6110b2baead77182"
+      },
+      {
+        "path": "output/project/run.mjs",
+        "before": "5f42b0e09e0f6f6b71b361169b38ea449b9610f09f72967cd3677d3477bf7a53",
+        "after": "2c4dd368da9526cc9649af2669d297d55d2e66eaf9754b14e97fc4e633d6fc79"
+      }
+    ],
+    "addedProjectFiles": [
+      "test/export.test.mjs"
+    ]
+  },
+  "bootstrapCommands": [
+    {
+      "tool": "exec_command",
+      "cmd": "Get-Content -Raw -LiteralPath 'C:/Users/robso/AppData/Local/Temp/skills-wave5-actors-4tJ3OK/run-06/TASK.md'",
+      "stdout": "output/logs/bootstrap-task.stdout.log",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06",
+      "exit": 0,
+      "executed": true,
+      "outputTruncated": false,
+      "capture": "Read-only command completed in under one second; content copied from the observed initial read/inventory, with line-ending presentation normalized in this retained log."
+    },
+    {
+      "tool": "exec_command",
+      "cmd": "Get-Content -Raw -LiteralPath 'skill/SKILL.md'",
+      "stdout": "output/logs/bootstrap-skill.stdout.log",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06",
+      "exit": 0,
+      "executed": true,
+      "outputTruncated": false,
+      "capture": "Read-only command completed in under one second; content copied from the observed initial read/inventory, with line-ending presentation normalized in this retained log."
+    },
+    {
+      "tool": "exec_command",
+      "cmd": "rg --files -g '!lib/compat.jar' -g '!**/lib/compat.jar' .",
+      "stdout": "output/logs/bootstrap-inventory.stdout.log",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06",
+      "exit": 0,
+      "executed": true,
+      "outputTruncated": false,
+      "capture": "Read-only command completed in under one second; content copied from the observed initial read/inventory, with line-ending presentation normalized in this retained log."
+    },
+    {
+      "tool": "exec_command",
+      "cmd": "$files = @('output/project/support.md', 'output/project/contract.md', 'output/project/launch.json', 'output/project/run.mjs', 'output/project/src/work/Main.java', 'output/project/src/work/Normalizer.java', 'output/project/test/work/SelfTest.java', 'output/project/fixture/input.txt'); foreach ($file in $files) { [pscustomobject]@{ path = $file; content = Get-Content -Raw -LiteralPath $file } | ConvertTo-Json -Compress }",
+      "stdout": "output/logs/bootstrap-project.stdout.log",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06",
+      "exit": 0,
+      "executed": true,
+      "outputTruncated": false,
+      "capture": "Read-only command completed in under one second; content copied from the observed initial read/inventory, with line-ending presentation normalized in this retained log."
+    },
+    {
+      "tool": "exec_command",
+      "cmd": "Get-Content -Raw -LiteralPath 'skill/references/method.md'",
+      "stdout": "output/logs/bootstrap-method.stdout.log",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06",
+      "exit": 0,
+      "executed": true,
+      "outputTruncated": false,
+      "capture": "Read-only command completed in under one second; content copied from the observed initial read/inventory, with line-ending presentation normalized in this retained log."
+    }
+  ],
+  "helperCommands": [
+    {
+      "cmd": "node output/audit.mjs init",
+      "exit": 0,
+      "output": "Audit initialized; initial input and output snapshots retained.\n",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06",
+      "tool": "exec_command",
+      "executed": true,
+      "outputTruncated": false
+    },
+    {
+      "cmd": "node output/audit.mjs read baseline output/baseline-export.txt",
+      "exit": 0,
+      "outputRead": [
+        "output/baseline-export.txt"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06",
+      "tool": "exec_command",
+      "executed": true,
+      "outputTruncated": false
+    },
+    {
+      "cmd": "node output/audit.mjs read experiment output/app-first-export.txt output/baseline-traced-export.txt",
+      "exit": 0,
+      "outputRead": [
+        "output/app-first-export.txt",
+        "output/baseline-traced-export.txt"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06",
+      "tool": "exec_command",
+      "executed": true,
+      "outputTruncated": false
+    },
+    {
+      "cmd": "node output/audit.mjs clean-build",
+      "exit": 0,
+      "output": "Disposable build removed inside output/project.\n",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06",
+      "tool": "exec_command",
+      "executed": true,
+      "outputTruncated": false
+    },
+    {
+      "cmd": "node output/audit.mjs read final output/final-export.txt",
+      "exit": 0,
+      "outputRead": [
+        "output/final-export.txt"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06",
+      "tool": "exec_command",
+      "executed": true,
+      "outputTruncated": false
+    },
+    {
+      "cmd": "node output/audit.mjs verify-integrity",
+      "exit": 0,
+      "stdout": "output/logs/integrity.json",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06",
+      "tool": "exec_command",
+      "executed": true,
+      "outputTruncated": false
+    }
+  ],
+  "auditedShellCommands": [
+    {
+      "cmd": "node output/audit.mjs run runtime-version C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe -version",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06",
+      "exit": 0,
+      "executed": true,
+      "stdout": "output/logs/runtime-version.stdout.log",
+      "stderr": "output/logs/runtime-version.stderr.log",
+      "note": "The helper also printed the recorded exit/status footer. Exact executable argument arrays and actual child cwd are in commands."
+    },
+    {
+      "cmd": "node output/audit.mjs run compiler-version C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe -version",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06",
+      "exit": 0,
+      "executed": true,
+      "stdout": "output/logs/compiler-version.stdout.log",
+      "stderr": "output/logs/compiler-version.stderr.log",
+      "note": "The helper also printed the recorded exit/status footer. Exact executable argument arrays and actual child cwd are in commands."
+    },
+    {
+      "cmd": "node output/audit.mjs run node-version node --version",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06",
+      "exit": 0,
+      "executed": true,
+      "stdout": "output/logs/node-version.stdout.log",
+      "stderr": "output/logs/node-version.stderr.log",
+      "note": "The helper also printed the recorded exit/status footer. Exact executable argument arrays and actual child cwd are in commands."
+    },
+    {
+      "cmd": "node output/audit.mjs run baseline-check node run.mjs check",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06",
+      "exit": 0,
+      "executed": true,
+      "stdout": "output/logs/baseline-check.stdout.log",
+      "stderr": "output/logs/baseline-check.stderr.log",
+      "note": "The helper also printed the recorded exit/status footer. Exact executable argument arrays and actual child cwd are in commands."
+    },
+    {
+      "cmd": "node output/audit.mjs run baseline-export node run.mjs export fixture/input.txt ../baseline-export.txt",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06",
+      "exit": 0,
+      "executed": true,
+      "stdout": "output/logs/baseline-export.stdout.log",
+      "stderr": "output/logs/baseline-export.stderr.log",
+      "note": "The helper also printed the recorded exit/status footer. Exact executable argument arrays and actual child cwd are in commands."
+    },
+    {
+      "cmd": "node output/audit.mjs run jar-contents C:/Users/robso/.jdks/temurin-25.0.3/bin/jar.exe --list --file lib/compat.jar",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06",
+      "exit": 0,
+      "executed": true,
+      "stdout": "output/logs/jar-contents.stdout.log",
+      "stderr": "output/logs/jar-contents.stderr.log",
+      "note": "The helper also printed the recorded exit/status footer. Exact executable argument arrays and actual child cwd are in commands."
+    },
+    {
+      "cmd": "node output/audit.mjs run jar-normalizer-default C:/Users/robso/.jdks/temurin-25.0.3/bin/javap.exe -classpath lib/compat.jar -verbose -c work.Normalizer",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06",
+      "exit": 0,
+      "executed": true,
+      "stdout": "output/logs/jar-normalizer-default.stdout.log",
+      "stderr": "output/logs/jar-normalizer-default.stderr.log",
+      "note": "The helper also printed the recorded exit/status footer. Exact executable argument arrays and actual child cwd are in commands."
+    },
+    {
+      "cmd": "node output/audit.mjs run app-normalizer C:/Users/robso/.jdks/temurin-25.0.3/bin/javap.exe -classpath .build/app -verbose -c work.Normalizer",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06",
+      "exit": 0,
+      "executed": true,
+      "stdout": "output/logs/app-normalizer.stdout.log",
+      "stderr": "output/logs/app-normalizer.stderr.log",
+      "note": "The helper also printed the recorded exit/status footer. Exact executable argument arrays and actual child cwd are in commands."
+    },
+    {
+      "cmd": "node output/audit.mjs run baseline-class-loading C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe '-Xlog:class+load=info:file=../logs/baseline-classes.log' -cp 'lib/compat.jar;.build/app' work.Main fixture/input.txt ../baseline-traced-export.txt",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06",
+      "exit": 0,
+      "executed": true,
+      "stdout": "output/logs/baseline-class-loading.stdout.log",
+      "stderr": "output/logs/baseline-class-loading.stderr.log",
+      "note": "The helper also printed the recorded exit/status footer. Exact executable argument arrays and actual child cwd are in commands."
+    },
+    {
+      "cmd": "node output/audit.mjs run baseline-origin-lines rg -e 'work\\.(Main|Normalizer|LegacyBanner)' ../logs/baseline-classes.log",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06",
+      "exit": 0,
+      "executed": true,
+      "stdout": "output/logs/baseline-origin-lines.stdout.log",
+      "stderr": "output/logs/baseline-origin-lines.stderr.log",
+      "note": "The helper also printed the recorded exit/status footer. Exact executable argument arrays and actual child cwd are in commands."
+    },
+    {
+      "cmd": "node output/audit.mjs run app-first-experiment C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe '-Xlog:class+load=info:file=../logs/app-first-classes.log' -cp '.build/app;lib/compat.jar' work.Main fixture/input.txt ../app-first-export.txt",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06",
+      "exit": 0,
+      "executed": true,
+      "stdout": "output/logs/app-first-experiment.stdout.log",
+      "stderr": "output/logs/app-first-experiment.stderr.log",
+      "note": "The helper also printed the recorded exit/status footer. Exact executable argument arrays and actual child cwd are in commands."
+    },
+    {
+      "cmd": "node output/audit.mjs run app-first-origin-lines rg -e 'work\\.(Main|Normalizer|LegacyBanner)' ../logs/app-first-classes.log",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06",
+      "exit": 0,
+      "executed": true,
+      "stdout": "output/logs/app-first-origin-lines.stdout.log",
+      "stderr": "output/logs/app-first-origin-lines.stderr.log",
+      "note": "The helper also printed the recorded exit/status footer. Exact executable argument arrays and actual child cwd are in commands."
+    },
+    {
+      "cmd": "node output/audit.mjs run regression-before-fix node --test test/export.test.mjs",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06",
+      "exit": 1,
+      "executed": true,
+      "stdout": "output/logs/regression-before-fix.stdout.log",
+      "stderr": "output/logs/regression-before-fix.stderr.log",
+      "note": "The helper also printed the recorded exit/status footer. Exact executable argument arrays and actual child cwd are in commands."
+    },
+    {
+      "cmd": "node output/audit.mjs run final-check node run.mjs check",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06",
+      "exit": 0,
+      "executed": true,
+      "stdout": "output/logs/final-check.stdout.log",
+      "stderr": "output/logs/final-check.stderr.log",
+      "note": "The helper also printed the recorded exit/status footer. Exact executable argument arrays and actual child cwd are in commands."
+    },
+    {
+      "cmd": "node output/audit.mjs run final-export node run.mjs export fixture/input.txt ../final-export.txt",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06",
+      "exit": 0,
+      "executed": true,
+      "stdout": "output/logs/final-export.stdout.log",
+      "stderr": "output/logs/final-export.stderr.log",
+      "note": "The helper also printed the recorded exit/status footer. Exact executable argument arrays and actual child cwd are in commands."
+    },
+    {
+      "cmd": "node output/audit.mjs run final-bytecode C:/Users/robso/.jdks/temurin-25.0.3/bin/javap.exe -classpath .build/app -verbose -c work.Normalizer",
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06",
+      "exit": 0,
+      "executed": true,
+      "stdout": "output/logs/final-bytecode.stdout.log",
+      "stderr": "output/logs/final-bytecode.stderr.log",
+      "note": "The helper also printed the recorded exit/status footer. Exact executable argument arrays and actual child cwd are in commands."
+    }
+  ],
+  "compiledClasses": [
+    {
+      "path": "output/project/.build/app/work/Main.class",
+      "bytes": 1245,
+      "sha256": "46a941372580463774dcee25bb4525e8c0792a251472ed27a5defadc89eddbdd",
+      "majorVersion": 61
+    },
+    {
+      "path": "output/project/.build/app/work/Normalizer.class",
+      "bytes": 441,
+      "sha256": "7a2c7a68e26c4fa50bc77fc6a3b2c7eba68eeeec805e1bffdabe00f3bf8dbb85",
+      "majorVersion": 61
+    },
+    {
+      "path": "output/project/.build/test/work/SelfTest.class",
+      "bytes": 729,
+      "sha256": "b1b6df1e5509f4b81ebf0cb3d419e920a4da46e7e71187696d89ff95e0bf4c34",
+      "majorVersion": 61
+    }
+  ],
+  "hypotheses": [
+    {
+      "statement": "Duplicate library Normalizer shadows compiled application Normalizer on the effective export classpath.",
+      "result": "Confirmed locally by provenance, bytecode, controlled classpath intervention and regression behavior."
+    },
+    {
+      "statement": "The source needs a repeated normalization replacement.",
+      "result": "Rejected as necessary correction: source has both replacements; selecting that compiled class alone fixes the same input."
+    },
+    {
+      "statement": "The runtime charset needs to change.",
+      "result": "Rejected as necessary correction: Main explicitly reads/writes UTF-8; unchanged runtime/charset plus classpath order alone corrects the bytes and preserves tested UTF-8 text."
+    }
+  ],
+  "scopeCompliance": {
+    "writtenOnlyWithinOutput": true,
+    "inputUnchanged": true,
+    "contractUnchanged": true,
+    "compatibilityJarUnchanged": true,
+    "originalFixtureUnchanged": true,
+    "sourceTargetPreserved": 17,
+    "runtimePreserved": "Temurin-25.0.3+9",
+    "noNetwork": true,
+    "noInstallations": true,
+    "noDelegation": true,
+    "noRealConfigurationAccess": true
+  },
+  "proposedButNotExecutedActions": [],
+  "processes": {
+    "outstanding": [],
+    "allStartedProcessesExited": true,
+    "allCommandsSynchronous": true,
+    "timeoutEvents": 0,
+    "backgroundProcessesStarted": 0
+  },
+  "finalization": {
+    "cmd": "node output/finalize-audit.mjs",
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-06",
+    "exit": 0,
+    "executed": true,
+    "output": "FINALIZATION PASS: original inputs/library preserved; regression verified; allWritesStopped:true\n",
+    "completedAt": "2026-10-16T16:59:37.380Z",
+    "note": "Execution manifest is the final filesystem write; finalizer prints this result and exits with no further writes or spawned processes."
+  }
+}

@@ -1,0 +1,7 @@
+export function indexRows(json) {
+  return new Map(JSON.parse(json).map(row => [row.id, row]));
+}
+
+export function selectedRow(rows, domId) {
+  return rows.get(Number(domId));
+}

@@ -1,0 +1,85 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+import {execFileSync} from 'node:child_process';
+import {parseManifest} from 'file:///C:/git/agent-skills/packages/core/src/domain/manifest.ts';
+import {parseSkillDocument,documentName,documentDescription} from 'file:///C:/git/agent-skills/packages/core/src/domain/skill-document.ts';
+
+const root='C:/git/agent-skills';
+const owned='skills/c2-sea-of-nodes';
+const dir='C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/c2-sea-of-nodes';
+const read=p=>fs.readFileSync(path.join(root,p),'utf8');
+const hash=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
+const baseline=JSON.parse(read('docs/skill-validation/wave3-2026-10-16/baseline.json')).packages.find(p=>p.name==='c2-sea-of-nodes');
+assert.equal(baseline.initialVersion,'1.4.5');
+assert.equal(baseline.committedVersion,'1.4.5');
+assert.equal(baseline.initialDiff,'');
+assert.equal(baseline.initialStatus,'');
+const manifest=parseManifest(read(`${owned}/skill.yaml`),{strict:true});
+assert.deepEqual(manifest.issues,[]);
+assert.equal(String(manifest.manifest.version),'1.4.6');
+const document=parseSkillDocument(read(`${owned}/SKILL.md`));
+assert.equal(documentName(document),manifest.manifest.name);
+assert.equal(documentDescription(document),manifest.manifest.description);
+const git=args=>execFileSync('git',args,{cwd:root,encoding:'utf8'});
+assert.match(git(['show',`HEAD:${owned}/skill.yaml`]),/^version: 1\.4\.5$/m);
+const status=git(['status','--short','--',owned]);
+const diff=git(['diff','--',owned]);
+assert.equal(git(['diff','--cached','--',owned]),'');
+assert.equal(git(['ls-files','--others','--exclude-standard','--',owned]),'');
+assert.equal(git(['diff','--check','--',owned]),'');
+const changed=git(['diff','--name-only','--',owned]).trim().split('\n').sort();
+const files=fs.readdirSync(path.join(root,owned),{recursive:true,withFileTypes:true}).filter(e=>e.isFile()).map(e=>path.relative(root,path.join(e.parentPath,e.name)).replaceAll('\\','/')).sort();
+assert.deepEqual(files,baseline.files.map(f=>f.path).sort());
+assert.deepEqual(changed,files);
+const hashes=files.map(file=>({path:file,assignmentSha256:baseline.files.find(f=>f.path===file).sha256,finalSha256:hash(fs.readFileSync(path.join(root,file)))}));
+assert.ok(hashes.every(f=>f.assignmentSha256!==f.finalSha256));
+const localLinks=[];
+for(const file of files.filter(f=>f.endsWith('.md'))) {
+ for(const m of read(file).matchAll(/\]\(([^)]+)\)/g)) {
+  const target=m[1].replace(/^<|>$/g,'').split('#')[0];
+  if(!target || /^[a-z][a-z0-9+.-]*:/i.test(target)) continue;
+  assert.ok(fs.existsSync(path.resolve(root,path.dirname(file),target)),`${file} -> ${target}`);
+  localLinks.push({from:file,to:target,exists:true});
+ }
+}
+const sources=JSON.parse(fs.readFileSync(`${dir}/source-index.json`,'utf8'));
+for(const source of sources) {
+ assert.equal(source.status,200);
+ assert.equal(hash(fs.readFileSync(`${dir}/sources/${source.file}`)),source.sha256);
+}
+const probes=JSON.parse(fs.readFileSync(`${dir}/probes.json`,'utf8'));
+const controls=JSON.parse(fs.readFileSync(`${dir}/cold-gate-controls.json`,'utf8'));
+const captures=JSON.parse(fs.readFileSync(`${dir}/case-captures.json`,'utf8'));
+assert.equal(probes.runs.length,17);
+for(const r of [...controls,...captures]) {
+ assert.equal(r.status,0,r.id);
+ assert.ok(r.stdout.includes(r.expected));
+ assert.match(r.stdout,/12399400384\r?\n$/);
+ const xml=fs.readFileSync(`${dir}/logs/${r.id}.xml`,'utf8');
+ assert.match(xml,/<hotspot_log_done\b/);
+ assert.match(xml,/<nmethod[^>]*compiler='c2'[^>]*method='InlineGate caller \(I\)I'/);
+ assert.match(xml,/<nmethod[^>]*compiler='c2'[^>]*method='InlineGate callee \(I\)I'/);
+ assert.match(xml,new RegExp(`<inline_(?:fail|success) reason='${r.expected.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}'`));
+}
+const classBytes=fs.readFileSync(`${dir}/classes/InlineGate.class`);
+assert.equal(classBytes.readUInt16BE(6),69);
+assert.equal(classBytes.readUInt16BE(4),0);
+const result={
+ status:'PASS',node:process.version,cwd:process.cwd(),
+ metadata:{strictIssues:[],nameAndDescriptionMatch:true,committedVersion:'1.4.5',assignmentVersion:'1.4.5',finalVersion:'1.4.6'},
+ files:hashes,localLinks,git:{status,diff,staged:'',untracked:'',diffCheck:''},
+ sources:{retained: sources.length,allHttp200:true,hashesMatch:true},
+ technical:{
+  startupChecks:13,compiler:{runtime:'Temurin 25.0.3+9',targetRelease:25,classMajor:69,classMinor:0},
+  controlledC2Runs:controls.map(({id,status,expected})=>({id,status,observed:expected})),
+  caseCaptures:captures.map(({id,status,expected})=>({id,status,observed:expected})),
+  selectedXmlChecks:'Completed logs, actual C2 callee/caller nmethods, expected inline decision and equal Java output for the five successful controls/case captures.',
+  exploratoryRunsRetained:6,
+  limitations:'Source and bounded compiler-mechanism checks only; modified policy, non-tiered C2 and excluded main are diagnostic controls, not production performance results. No debug graph or behavioral agent run.',
+ },
+};
+fs.writeFileSync(`${dir}/final-owned.patch`,diff);
+fs.writeFileSync(`${dir}/local-validation.json`,JSON.stringify(result,null,2));
+console.log(JSON.stringify({status:result.status,version:result.metadata.finalVersion,files:files.length,links:localLinks.length,sources:sources.length,startupChecks:13,successfulControlsAndCaseCaptures:controls.length+captures.length},null,2));

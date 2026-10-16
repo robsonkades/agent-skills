@@ -1,0 +1,27 @@
+[
+  {
+    "Path": "C:\\git\\agent-skills\\skills\\jdk-upgrade-impact\\SKILL.md",
+    "SHA256": "00B6AD3AF0D3785E23A6E73A4B50F76A6747CA527B856DBAB4581BD3471C1C72",
+    "Bytes": 10657
+  },
+  {
+    "Path": "C:\\git\\agent-skills\\skills\\jdk-upgrade-impact\\skill.yaml",
+    "SHA256": "65B435155903BAD8E70B3D3799EE6018CFE7622D376615B2DCF25F664A89FC32",
+    "Bytes": 1935
+  },
+  {
+    "Path": "C:\\git\\agent-skills\\skills\\jdk-upgrade-impact\\references\\breakage-classes.md",
+    "SHA256": "89E36A60F20BA84452C82D3CE4F0060D4DD2313F17707C4EAF8DBAAC296C674D",
+    "Bytes": 8192
+  },
+  {
+    "Path": "C:\\git\\agent-skills\\skills\\jdk-upgrade-impact\\references\\removed-and-degraded-apis.md",
+    "SHA256": "4DB64F8588921073CC04123B7EF84BB94CFEC91F5EA6AB19A0EF1E81CDED26FB",
+    "Bytes": 11530
+  },
+  {
+    "Path": "C:\\git\\agent-skills\\skills\\jdk-upgrade-impact\\references\\verification-and-rollout.md",
+    "SHA256": "F6AE753D65D24BB181F1F79D105950B95F1DA64B00C77633AC69199B12A04EE4",
+    "Bytes": 10264
+  }
+]

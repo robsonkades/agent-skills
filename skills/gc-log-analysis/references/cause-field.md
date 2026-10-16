@@ -34,7 +34,14 @@ diagnostic request for interpretation does not itself authorize tuning.
 ZGC is generational on the JDK 25 baseline, and its log reflects that:
 
 - Lines report `Minor Collection` and `Major Collection`.
-- Phases are prefixed `y:` (young) and `o:` (old).
+- Phase prefixes are case-sensitive: `y:` means young work in a minor collection;
+  `Y:` and `O:` mean young and old work within a major collection.
+
+The JDK 25.0.3 [GC ID printer](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/z/zGCIdPrinter.cpp)
+and [collection driver](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/z/zDriver.cpp)
+define these tags. Collection-level lines can lack a generation prefix. A parser matching
+only `y:` misses young phases within major collections; preserve case and distinguish
+the phase name from the collection summary before reporting pause counts.
 
 Examples showing bare `Pause Mark Start` / `Pause Mark End` describe the **non-generational
 ZGC removed in JDK 24**. If a runbook's example lines do not match what you see, the

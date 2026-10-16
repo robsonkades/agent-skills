@@ -226,6 +226,31 @@ union. These rules come from the tagged
 [converter](https://github.com/async-profiler/async-profiler/blob/v4.5/src/converter/one/convert/JfrConverter.java),
 not a general rule for arbitrary JDK-produced JFR. Verify the producer/schema before reuse.
 
+### Time selectors for an incident window
+
+Resolve the incident's date, timezone and relationship to recording start/end before choosing
+`--from`/`--to`. In v4.5, these selectors are not duration strings like `--latency 10s`:
+
+- Numeric values are milliseconds. Positive values below `1500000000000` are offsets from
+  recording start; negative values are offsets from recording end. Values at or above that
+  threshold are absolute epoch milliseconds. Zero leaves that bound unspecified, so `--to 0`
+  does not select only the recording's beginning.
+- Calendar strings without a timezone use the converter JVM's default timezone. A time-only
+  string also uses the conversion day's date, not the recording's date. Appending `Z` is not
+  supported by this parser; do not strip it and silently reinterpret UTC as local time.
+- Both bounds are inclusive. Adjacent windows sharing an endpoint can include the same event;
+  do not sum them as disjoint populations without handling the boundary.
+
+Prefer numeric offsets when the recording start is established, or contemporary epoch
+milliseconds calculated from an explicitly resolved incident timezone. For example,
+`--from 10000 --to 20000` selects timestamps 10–20 seconds after recording start; it does not
+mean 10–20 seconds after a separately recorded workload marker. If the incident timezone is
+unknown and changes the selection, leave the slice conditional rather than infer no activity.
+Verify a known event inside the intended window and one outside it, retain the original,
+and record the resolved bounds with the derived output. These semantics follow the tagged
+[argument parser](https://github.com/async-profiler/async-profiler/blob/v4.5/src/converter/one/convert/Arguments.java)
+and [time selection](https://github.com/async-profiler/async-profiler/blob/v4.5/src/converter/one/convert/JfrConverter.java).
+
 For narrow incident windows, check batching as well as the sampling interval. The v4.5
 [reader](https://github.com/async-profiler/async-profiler/blob/v4.5/src/converter/one/jfr/JfrReader.java)
 retains a wall batch's sample count but ignores its `timeSpan`; conversion filters admit or
@@ -234,6 +259,8 @@ proportionally. Treat such a slice as coarse evidence. If precise attribution ch
 decision, use suitable existing duration/context events, a converter verified to handle the
 span, or a bounded `--nobatch` recapture after measuring its cost. Otherwise keep the current
 capture and report its temporal limit; do not invent individual sample times.
+
+### Population and converter compatibility
 
 The live conversion requires `profiler.LiveObject` events captured with producer `--live`;
 it cannot reconstruct liveness from an ordinary allocation recording. Its byte total is

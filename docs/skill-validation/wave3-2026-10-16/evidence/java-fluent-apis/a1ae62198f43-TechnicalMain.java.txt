@@ -1,0 +1,30 @@
+package sample;
+
+import java.nio.file.Path;
+import java.util.List;
+
+public final class TechnicalMain {
+    public static void main(String[] args) throws Exception {
+        Options base = OptionsFactory.create(Path.of(args[0]));
+        List<Product> actual = switch (args[1]) {
+            case "copy-branches" -> copyBranches(base);
+            case "retain-return" -> retainReturn(base);
+            default -> throw new IllegalArgumentException("Unknown control");
+        };
+        ActorMain.verify(actual);
+    }
+
+    private static List<Product> copyBranches(Options base) {
+        base.withAudit(true);
+        Options left = base.copy().withLabel("left");
+        Options right = base.copy().withLabel("right");
+        return List.of(left.build(), right.build());
+    }
+
+    private static List<Product> retainReturn(Options base) {
+        base = base.withAudit(true);
+        Options left = base.withLabel("left");
+        Options right = base.withLabel("right");
+        return List.of(left.build(), right.build());
+    }
+}

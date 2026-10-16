@@ -1,0 +1,11 @@
+Recomendo que Ana **escolha manter R** para o horizonte de 24 meses. A atualização contratual substitui o limite de pausa de escritas por **6 minutos**, com efeito imediato e sem exceção. Isso altera a viabilidade da migração anteriormente recomendada.
+
+O destino N continua atendendo aos contratos finais. Entretanto, a alternativa completa **N via P falha na obrigação de transição**: os ensaios fornecidos registram pausas de 18 a 20 minutos, com limite operacional demonstrado de 20 minutos. Esse caminho ultrapassa os 6 minutos permitidos. A continuidade das leituras, a preservação dos dados reconhecidos e a recuperação continuam verificadas, mas não compensam essa violação. A recomendação anterior de N via P deixa, portanto, de valer.
+
+R permanece viável durante todo o horizonte, por 520 mil. N via P custa 410 mil, incluindo as despesas de transição e recuperação, mas sua economia de 110 mil não torna o caminho admissível. O pedido do patrocinador e o prazo não autorizam descumprir o contrato. Os 90 mil irrecuperáveis do protótipo seguem fora da decisão. Aceita-se o custo de R para cumprir as obrigações; não há necessidade de abandoná-lo.
+
+O responsável técnico deve usar a retenção de R como direção para o planejamento e retirar P da proposta de rollout. A escolha pode ser feita hoje, sem aguardar nova pesquisa.
+
+Isso não demonstra que todo caminho para N seja inviável. Para reabrir essa alternativa, o responsável técnico deverá apresentar um caminho concreto com evidência de pausa de até 6 minutos na escala contratada, mantendo leitura, preservação, recuperação e demais obrigações, além do custo total comparável em 24 meses. Outros caminhos permanecem desconhecidos e sem estimativas. Se um deles satisfizer essas condições e custar menos que R, a preferência econômica justificará revisar a decisão. A execução continuará sujeita ao processo separado de rollout.
+
+Esta análise usa as premissas documentais locais e a atualização autenticada; não executei ensaios ou medições.

@@ -38,6 +38,15 @@ dependencies in the chosen rule's capabilities. Explain exclusions for generated
 tests. A static checker may not observe reflection, bean selection or runtime calls; cover
 those with wiring/behavior tests rather than claiming total architectural proof.
 
+Match the allowed packages to the promised boundary. A blanket `java..` allowance
+also admits JDBC types such as
+[`java.sql.Connection`](https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html).
+For a persistence-independent core, explicitly exclude `java.sql..` and `javax.sql..`
+or use a narrower allowance for the needed Java types. Keep independent negative
+controls for JDBC and framework leakage: rejecting a Spring type alone does not show
+that the rule rejects a database API supplied by the JDK. This is a dependency-policy
+check, not proof that every allowed Java call is free of I/O or other side effects.
+
 Prove a new guard's sensitivity in an isolated copy: compile a forbidden Spring/JDBC/adapter
 dependency into a production core class, run the same check and observe the named boundary
 assertion fail, then restore and run the valid state. A compiler failure or unresolved artifact

@@ -1,0 +1,20 @@
+{
+  "provenance": "Constructed offline arithmetic fixture; no Linux runtime, packet capture or live TCP measurement.",
+  "snapshotPoint": "All ACK accounting is complete for one observation window, immediately before the expired-RTT alpha-update branch and before resetting its counters. Compute diagnostics at this pre-update snapshot and alpha after one update separately.",
+  "activeAlgorithm": "dctcp",
+  "tcpState": "ESTABLISHED",
+  "assumptions": ["ECN negotiation succeeded", "No retransmissions or duplicate ACK accounting", "All values fit unsigned 32-bit arithmetic", "No concurrent counter updates", "Use only the attached implementation's relevant counters"],
+  "deliveryGroups": [
+    {"packets": 20, "payloadBytesPerPacket": 200, "eceReported": true},
+    {"packets": 80, "payloadBytesPerPacket": 1500, "eceReported": false}
+  ],
+  "mss_cache": 1500,
+  "old_delivered": 0,
+  "delivered": 100,
+  "old_delivered_ce": 0,
+  "delivered_ce": 20,
+  "acked_bytes_total": 124000,
+  "acked_bytes_ecn": 4000,
+  "dctcp_alpha": 0,
+  "dctcp_shift_g": 4
+}

@@ -1,0 +1,34 @@
+[
+  {
+    "Path": "C:\\Users\\robso\\.m2\\repository\\io\\grpc\\grpc-api\\1.62.2\\grpc-api-1.62.2.jar",
+    "Hash": "2E896944CF513E0E5CFD32BCD72C89601A27C6CA56916F84B20F3A13BACF1B1F"
+  },
+  {
+    "Path": "C:\\Users\\robso\\.m2\\repository\\io\\grpc\\grpc-core\\1.62.2\\grpc-core-1.62.2.jar",
+    "Hash": "18439902C473A2C1511E517D13B8AE796378850A8EDA43787C6BA778FA90FCC5"
+  },
+  {
+    "Path": "C:\\Users\\robso\\.m2\\repository\\io\\grpc\\grpc-context\\1.62.2\\grpc-context-1.62.2.jar",
+    "Hash": "9959747DF6A753119E1C1A3DFF01AA766D2455F5E4860ACAA305359E1D533A05"
+  },
+  {
+    "Path": "C:\\Users\\robso\\.m2\\repository\\io\\grpc\\grpc-inprocess\\1.62.2\\grpc-inprocess-1.62.2.jar",
+    "Hash": "F3C28A9D7F13FA995E4DD89E4F6AA08FA3B383665314FDFCCB9F87F346625DF7"
+  },
+  {
+    "Path": "C:\\Users\\robso\\.m2\\repository\\com\\google\\guava\\guava\\32.1.3-jre\\guava-32.1.3-jre.jar",
+    "Hash": "6D4E2B5A118AAB62E6E5E29D185A0224EED82C85C40AC3D33CF04A270C3B3744"
+  },
+  {
+    "Path": "C:\\Users\\robso\\.m2\\repository\\com\\google\\guava\\failureaccess\\1.0.1\\failureaccess-1.0.1.jar",
+    "Hash": "A171EE4C734DD2DA837E4B16BE9DF4661AFAB72A41ADAF31EB84DFDAF936CA26"
+  },
+  {
+    "Path": "C:\\Users\\robso\\.m2\\repository\\com\\google\\code\\gson\\gson\\2.10.1\\gson-2.10.1.jar",
+    "Hash": "4241C14A7727C34FEEA6507EC801318A3D4A90F070E4525681079FB94EE4C593"
+  },
+  {
+    "Path": "C:\\Users\\robso\\.m2\\repository\\io\\perfmark\\perfmark-api\\0.26.0\\perfmark-api-0.26.0.jar",
+    "Hash": "B7D23E93A34537CE332708269A0D1404788A5B5E1949E82F5535FCE51B3EA95B"
+  }
+]

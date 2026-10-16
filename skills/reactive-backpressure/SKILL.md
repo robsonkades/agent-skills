@@ -56,7 +56,8 @@ review need not add instrumentation, migrate concurrency models or run a full te
    wrapping an API in a `Flux` does not make the external producer demand-aware.
 4. **Choose the overflow strategy from the data's semantics**, not from the operator name.
    Losing the newest, the oldest, everything, or failing loudly are four different product
-   decisions.
+   decisions. For shared fan-out, distinguish loss for one subscriber from loss for all;
+   a successful sink emission does not acknowledge every consumer's receipt or processing.
 5. **Isolate every blocking call.** Reactor's own blocking terminal APIs fail on marked
    non-blocking threads, but arbitrary JDBC, file or vendor calls may merely stall the event
    loop. Push them to a bounded elastic scheduler or a deliberately bounded executor, and
@@ -134,8 +135,8 @@ review need not add instrumentation, migrate concurrency models or run a full te
   control table, the three conditions that make reactive backpressure the right answer, the
   scenario-by-scenario comparison against thread-per-request, the full overflow strategy
   table with each operator's real signature and behaviour, and prefetch and maxConcurrency
-  tuning. Read when choosing where to apply flow control, adapting callback sources, or
-  choosing which overflow policy a stream should have.
+  tuning. Read when choosing where to apply flow control, adapting callback sources, handling
+  a slow subscriber on a shared sink, or choosing which overflow policy a stream should have.
 - [Instrumenting backpressure](references/instrumenting-backpressure.md) — the real
   Micrometer metric names and what each one reveals, `checkpoint()` versus
   `ReactorDebugAgent` versus `Hooks.onOperatorDebug()`, BlockHound setup and its detection

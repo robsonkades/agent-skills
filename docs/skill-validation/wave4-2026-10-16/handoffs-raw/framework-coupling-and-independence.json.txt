@@ -1,0 +1,1029 @@
+{
+  "status": "NO_CHANGES_NEEDED",
+  "skill": "framework-coupling-and-independence",
+  "ownedPath": "C:/git/agent-skills/skills/framework-coupling-and-independence",
+  "reviewer": "/root/quality15",
+  "wave": 4,
+  "reviewDate": "2026-10-16",
+  "allWritesStopped": true,
+  "activeWriterProcesses": [],
+  "scope": "Read-only review of the complete assigned package; all review-only files are in the coordinator-authorized temporary evidence directory. No neighboring/shared/registry edits, installations, Git mutations, global checks or subagents.",
+  "procedure": {
+    "requiredReadings": [
+      "AGENTS.md (applicable root instructions; no nested AGENTS found)",
+      "docs/parallel-skill-reviews.md (unchanged prior reading reused)",
+      "docs/skill-review-prompt.md (complete)",
+      "docs/skill-validation/wave4-2026-10-16/review-brief.md (complete)",
+      "skills/skill-engineering/SKILL.md",
+      "skill-engineering references: evidence-and-confidence, evaluation, resource-design, anti-patterns (unchanged prior readings reused)",
+      "Relevant comparative research and roadmap sections; wave3 summary and behavioral findings"
+    ],
+    "packageReadInFull": [
+      "SKILL.md",
+      "skill.yaml",
+      "references/framework-in-the-code.md",
+      "references/betting-on-a-framework.md"
+    ],
+    "criteria": [
+      "Trace effective framework/provider behavior through actual factory, adapter and consumer.",
+      "Distinguish static dependency isolation from semantic/runtime independence.",
+      "Compare retain, a small existing framework capability, and additional isolation against the accepted consumer contract and recurring cost.",
+      "Preserve valid direct framework use, useful application-owned ports and accepted placement decisions.",
+      "Keep version-sensitive claims and validation coverage explicit."
+    ],
+    "assessmentSentBeforeAnySkillEdit": true,
+    "assessmentOutcome": "No material unsupported gap identified; validate existing decision rules with a focused real-framework contract pair before concluding no-change."
+  },
+  "baseline": {
+    "committedVersion": "1.2.5",
+    "assignmentVersion": "1.2.5",
+    "finalVersion": "1.2.5",
+    "preExistingVersionBump": false,
+    "stagedChanges": [],
+    "unstagedChanges": [],
+    "untrackedFiles": [],
+    "ignoredUntrackedFiles": [],
+    "coordinatorBaseline": "docs/skill-validation/wave4-2026-10-16/baseline.json packages[name=framework-coupling-and-independence]",
+    "assignmentHashes": [
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\framework-coupling-and-independence\\SKILL.md",
+        "SHA256": "B80DC1AFDDBE8F77D104641CA2C4F0736DE5193D0A9A2A84A84F05E9F824B649",
+        "Bytes": 12893
+      },
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\framework-coupling-and-independence\\skill.yaml",
+        "SHA256": "80A04687ACE52FC393EA765704375D87E441922D187A3F4C2F4435B99DB30DA2",
+        "Bytes": 2534
+      },
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\framework-coupling-and-independence\\references\\betting-on-a-framework.md",
+        "SHA256": "24AA6E1EAA1B9197D8DA3F1DE1EC33051BC04A787E77CD73DDD5EF5FAC5A47B5",
+        "Bytes": 11346
+      },
+      {
+        "Path": "C:\\git\\agent-skills\\skills\\framework-coupling-and-independence\\references\\framework-in-the-code.md",
+        "SHA256": "CC1A3AB7D31D7DD289362DC809C8297337CA4FDD0F501A4EA1446AC464E49978",
+        "Bytes": 15032
+      }
+    ],
+    "finalHashes": [
+      {
+        "path": "C:\\git\\agent-skills\\skills\\framework-coupling-and-independence\\SKILL.md",
+        "bytes": 12893,
+        "sha256": "B80DC1AFDDBE8F77D104641CA2C4F0736DE5193D0A9A2A84A84F05E9F824B649"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\framework-coupling-and-independence\\skill.yaml",
+        "bytes": 2534,
+        "sha256": "80A04687ACE52FC393EA765704375D87E441922D187A3F4C2F4435B99DB30DA2"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\framework-coupling-and-independence\\references\\betting-on-a-framework.md",
+        "bytes": 11346,
+        "sha256": "24AA6E1EAA1B9197D8DA3F1DE1EC33051BC04A787E77CD73DDD5EF5FAC5A47B5"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\framework-coupling-and-independence\\references\\framework-in-the-code.md",
+        "bytes": 15032,
+        "sha256": "CC1A3AB7D31D7DD289362DC809C8297337CA4FDD0F501A4EA1446AC464E49978"
+      }
+    ],
+    "matchesCoordinatorWaveBaseline": true,
+    "attribution": "Four files are byte-for-byte unchanged from both assignment and coordinator baseline; empty scoped diff at completion."
+  },
+  "findingsCorrected": [],
+  "adequateGuidance": [
+    {
+      "locations": [
+        "SKILL.md Workflow1,5,6",
+        "SKILL.md Rules: smallest abstraction; Do not claim portability an interface does not provide"
+      ],
+      "finding": "Existing guidance already requires the effective behavior, caller contract and focused runtime verification, rejects forwarding wrappers as evidence of independence, and preserves a one-implementation port for concrete vocabulary/policy/testing benefits.",
+      "evidence": "Application package compiled without Spring, yet the selected InputStreamResource lifecycle remained observable through ExportBody. Same factory passed one-read consumption and failed two reads. The existing rule tells the consumer to inspect precisely these semantics.",
+      "consequence": "No new generic wrapper warning or resource subsection was needed."
+    },
+    {
+      "locations": [
+        "references/betting-on-a-framework.md: When coupling tightly is the right answer",
+        "SKILL.md: coupling ladder and Rules"
+      ],
+      "finding": "Using an existing framework abstraction is explicitly valid when the permitted boundary and required lifecycle fit; isolation cost and scope must be priced.",
+      "evidence": "Existing ByteArrayResource at the adapter seam supports the two-read bounded-snapshot contract; direct Resource use within the permitted adapter boundary also passed. An extra wrapper did not change single-use behavior.",
+      "consequence": "No whole-framework wrapper or migration is justified by the fixture; existing retain/isolate alternatives remain useful."
+    },
+    {
+      "locations": [
+        "references/framework-in-the-code.md: The base-class trap"
+      ],
+      "finding": "JdbcDaoSupport deprecation and the compositional alternatives are correctly qualified by target framework version and inherited behavior.",
+      "evidence": "Spring Framework v7.0.9 primary source declares deprecated since7.0, forRemoval=true, and names JdbcTemplate/JdbcClient injection.",
+      "consequence": "Version-sensitive guidance retained; no consumer upgrade performed."
+    },
+    {
+      "locations": [
+        "references/betting-on-a-framework.md: A removed or renamed test abstraction"
+      ],
+      "finding": "MockBean/SpyBean deprecation/removal guidance and warning against import-only migration are supported.",
+      "evidence": "Spring Boot3.5.16 API states MockBean deprecated since3.4.0 for removal4.0.0; Boot4.0 migration guide confirms removal and declaration-placement differences.",
+      "consequence": "Existing test-framework coupling example retained; no migration integration test claimed."
+    }
+  ],
+  "findingsRemaining": [],
+  "noChangeRationale": "The investigated effective-dependency, cost/benefit, lifecycle and consumer-contract decisions already have actionable conditions, legitimate alternatives and coverage limits. The technical fixture exposed a failure in a proposed consumer configuration, not a defect requiring another rule in this skill.",
+  "filesChangedByReviewer": [],
+  "preExistingChanges": [],
+  "capabilities": {
+    "preserved": [
+      "Scoped architecture review and retain/isolate/stage-migration output.",
+      "Five-step evidence/decision reasoning plus representative validation; no obligation to implement a migration for an assessment.",
+      "Coupling ladder treated as a hypothesis, adjusted for semantic reach and actual exit cost.",
+      "Static imports versus reflective wiring, callbacks, generated code, proxy/transaction/lifecycle behavior.",
+      "One versus two persistence models, hydration/invariant constraints, inheritance seams, serializer consumer contracts.",
+      "ArchUnit partial checks with generic/wrapper/selection limitations and behavioral follow-up.",
+      "Actual support horizon and authority, documented upgrade paths, uncertain exit costs and legitimate no-change alternatives.",
+      "Existing framework APIs and application ports evaluated by required contract instead of number of implementations."
+    ],
+    "replaced": [],
+    "intentionallyRemoved": []
+  },
+  "version": {
+    "committed": "1.2.5",
+    "assignment": "1.2.5",
+    "final": "1.2.5",
+    "rationale": "No skill content changed; repository policy requires no version bump for a no-change review."
+  },
+  "checks": {
+    "structural": [
+      {
+        "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/framework-coupling-and-independence-validation/local-checks.mjs",
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "result": {
+          "scope": "Read-only package-local checks using existing repository parsers; no catalog-wide routing verification.",
+          "strictManifestIssues": 0,
+          "descriptionMatches": true,
+          "version": "1.2.5",
+          "shippedFiles": 4,
+          "localLinks": [
+            {
+              "source": "C:\\git\\agent-skills\\skills\\framework-coupling-and-independence\\SKILL.md",
+              "href": "references/framework-in-the-code.md",
+              "target": "C:\\git\\agent-skills\\skills\\framework-coupling-and-independence\\references\\framework-in-the-code.md"
+            },
+            {
+              "source": "C:\\git\\agent-skills\\skills\\framework-coupling-and-independence\\SKILL.md",
+              "href": "references/betting-on-a-framework.md",
+              "target": "C:\\git\\agent-skills\\skills\\framework-coupling-and-independence\\references\\betting-on-a-framework.md"
+            }
+          ],
+          "allReferencesRouted": true,
+          "changedFilesFromAssignment": [],
+          "matchesCoordinatorWaveBaseline": true,
+          "casesDifferOnlyInReadsPerBody": true,
+          "finalFiles": [
+            {
+              "path": "C:\\git\\agent-skills\\skills\\framework-coupling-and-independence\\SKILL.md",
+              "bytes": 12893,
+              "sha256": "B80DC1AFDDBE8F77D104641CA2C4F0736DE5193D0A9A2A84A84F05E9F824B649"
+            },
+            {
+              "path": "C:\\git\\agent-skills\\skills\\framework-coupling-and-independence\\skill.yaml",
+              "bytes": 2534,
+              "sha256": "80A04687ACE52FC393EA765704375D87E441922D187A3F4C2F4435B99DB30DA2"
+            },
+            {
+              "path": "C:\\git\\agent-skills\\skills\\framework-coupling-and-independence\\references\\betting-on-a-framework.md",
+              "bytes": 11346,
+              "sha256": "24AA6E1EAA1B9197D8DA3F1DE1EC33051BC04A787E77CD73DDD5EF5FAC5A47B5"
+            },
+            {
+              "path": "C:\\git\\agent-skills\\skills\\framework-coupling-and-independence\\references\\framework-in-the-code.md",
+              "bytes": 15032,
+              "sha256": "CC1A3AB7D31D7DD289362DC809C8297337CA4FDD0F501A4EA1446AC464E49978"
+            }
+          ]
+        },
+        "artifact": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/framework-coupling-and-independence-validation/local-checks-result.json"
+      },
+      {
+        "command": "node node_modules/prettier/bin/prettier.cjs --check skills/framework-coupling-and-independence/SKILL.md skills/framework-coupling-and-independence/skill.yaml skills/framework-coupling-and-independence/references/*.md",
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "stdout": "Checking formatting...\nAll matched files use Prettier code style!\n"
+      },
+      {
+        "commands": [
+          "git status --short --untracked-files=all -- skills/framework-coupling-and-independence",
+          "git diff --check -- skills/framework-coupling-and-independence",
+          "git diff --numstat -- skills/framework-coupling-and-independence",
+          "git diff --cached --numstat -- skills/framework-coupling-and-independence",
+          "git ls-files --others --ignored --exclude-standard -- skills/framework-coupling-and-independence"
+        ],
+        "cwd": "C:/git/agent-skills",
+        "exitCode": 0,
+        "stdout": "",
+        "result": "All output empty; no owned changes or whitespace diagnostics."
+      }
+    ],
+    "structuralRawResults": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/framework-coupling-and-independence-validation/structural-command-results.json",
+    "technical": {
+      "driverCommand": "node C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/framework-coupling-and-independence-validation/technical-checks.mjs",
+      "driverCwd": "C:/git/agent-skills",
+      "driverExitCode": 0,
+      "exactChildCommands": [
+        {
+          "id": "01-java-version",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+          "args": [
+            "-version"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation",
+          "expectedExit": 0,
+          "actualExit": 0,
+          "signal": null,
+          "error": null,
+          "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\01-java-version.stdout.txt",
+          "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\01-java-version.stderr.txt"
+        },
+        {
+          "id": "02-javac-version",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+          "args": [
+            "-version"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation",
+          "expectedExit": 0,
+          "actualExit": 0,
+          "signal": null,
+          "error": null,
+          "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\02-javac-version.stdout.txt",
+          "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\02-javac-version.stderr.txt"
+        },
+        {
+          "id": "03-application-without-spring",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+          "args": [
+            "--release",
+            "17",
+            "-d",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\outputs\\application",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\actor\\common\\src\\example\\application\\ExportBody.java",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\actor\\common\\src\\example\\application\\ExportPipeline.java"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation",
+          "expectedExit": 0,
+          "actualExit": 0,
+          "signal": null,
+          "error": null,
+          "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\03-application-without-spring.stdout.txt",
+          "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\03-application-without-spring.stderr.txt"
+        },
+        {
+          "id": "04-original-with-spring",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+          "args": [
+            "--release",
+            "17",
+            "-cp",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\outputs\\application;C:/Users/robso/.m2/repository/org/springframework/spring-core/6.2.10/spring-core-6.2.10.jar",
+            "-d",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\outputs\\original",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\actor\\common\\src\\example\\adapter\\SpringExportBody.java",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\actor\\common\\src\\example\\adapter\\ExportFactory.java",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\actor\\common\\src\\example\\Runner.java",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\controls\\ResourceControls.java"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation",
+          "expectedExit": 0,
+          "actualExit": 0,
+          "signal": null,
+          "error": null,
+          "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\04-original-with-spring.stdout.txt",
+          "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\04-original-with-spring.stderr.txt"
+        },
+        {
+          "id": "05-original-single-read",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+          "args": [
+            "-cp",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\outputs\\application;C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\outputs\\original;C:/Users/robso/.m2/repository/org/springframework/spring-core/6.2.10/spring-core-6.2.10.jar",
+            "example.Runner",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\actor\\case-a\\consumer.properties"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation",
+          "expectedExit": 0,
+          "actualExit": 0,
+          "signal": null,
+          "error": null,
+          "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\05-original-single-read.stdout.txt",
+          "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\05-original-single-read.stderr.txt"
+        },
+        {
+          "id": "06-original-two-reads",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+          "args": [
+            "-cp",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\outputs\\application;C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\outputs\\original;C:/Users/robso/.m2/repository/org/springframework/spring-core/6.2.10/spring-core-6.2.10.jar",
+            "example.Runner",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\actor\\case-b\\consumer.properties"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation",
+          "expectedExit": 1,
+          "actualExit": 1,
+          "signal": null,
+          "error": null,
+          "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\06-original-two-reads.stdout.txt",
+          "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\06-original-two-reads.stderr.txt"
+        },
+        {
+          "id": "07-original-controls",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+          "args": [
+            "-cp",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\outputs\\application;C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\outputs\\original;C:/Users/robso/.m2/repository/org/springframework/spring-core/6.2.10/spring-core-6.2.10.jar",
+            "ResourceControls",
+            "1"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation",
+          "expectedExit": 0,
+          "actualExit": 0,
+          "signal": null,
+          "error": null,
+          "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\07-original-controls.stdout.txt",
+          "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\07-original-controls.stderr.txt"
+        },
+        {
+          "id": "08-replayable-with-spring",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+          "args": [
+            "--release",
+            "17",
+            "-cp",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\outputs\\application;C:/Users/robso/.m2/repository/org/springframework/spring-core/6.2.10/spring-core-6.2.10.jar",
+            "-d",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\outputs\\replayable",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\actor\\common\\src\\example\\adapter\\SpringExportBody.java",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\controls\\replayable\\example\\adapter\\ExportFactory.java",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\actor\\common\\src\\example\\Runner.java",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\controls\\ResourceControls.java"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation",
+          "expectedExit": 0,
+          "actualExit": 0,
+          "signal": null,
+          "error": null,
+          "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\08-replayable-with-spring.stdout.txt",
+          "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\08-replayable-with-spring.stderr.txt"
+        },
+        {
+          "id": "09-replayable-two-reads",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+          "args": [
+            "-cp",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\outputs\\application;C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\outputs\\replayable;C:/Users/robso/.m2/repository/org/springframework/spring-core/6.2.10/spring-core-6.2.10.jar",
+            "example.Runner",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\actor\\case-b\\consumer.properties"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation",
+          "expectedExit": 0,
+          "actualExit": 0,
+          "signal": null,
+          "error": null,
+          "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\09-replayable-two-reads.stdout.txt",
+          "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\09-replayable-two-reads.stderr.txt"
+        },
+        {
+          "id": "10-replayable-single-read",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+          "args": [
+            "-cp",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\outputs\\application;C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\outputs\\replayable;C:/Users/robso/.m2/repository/org/springframework/spring-core/6.2.10/spring-core-6.2.10.jar",
+            "example.Runner",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\actor\\case-a\\consumer.properties"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation",
+          "expectedExit": 0,
+          "actualExit": 0,
+          "signal": null,
+          "error": null,
+          "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\10-replayable-single-read.stdout.txt",
+          "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\10-replayable-single-read.stderr.txt"
+        },
+        {
+          "id": "11-replayable-controls",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+          "args": [
+            "-cp",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\outputs\\application;C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\outputs\\replayable;C:/Users/robso/.m2/repository/org/springframework/spring-core/6.2.10/spring-core-6.2.10.jar",
+            "ResourceControls",
+            "2"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation",
+          "expectedExit": 0,
+          "actualExit": 0,
+          "signal": null,
+          "error": null,
+          "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\11-replayable-controls.stdout.txt",
+          "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\11-replayable-controls.stderr.txt"
+        }
+      ],
+      "result": {
+        "javaVersion": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)",
+        "javacVersion": "javac 25.0.3",
+        "sourceAndApiTarget": 17,
+        "actualRuntime": 25,
+        "springCore": "6.2.10",
+        "dependency": {
+          "path": "C:/Users/robso/.m2/repository/org/springframework/spring-core/6.2.10/spring-core-6.2.10.jar",
+          "sha256": "28122D6E4A48EB8B6A0E4E087A55E96E46FB4D5E7D5D2C74DC8051401D8101DA"
+        },
+        "executedChildCommands": 11,
+        "expectedNegativeExits": 1,
+        "unexpectedFailures": [],
+        "results": {
+          "applicationWithoutSpring": "PASS javac --release17 without Spring on classpath",
+          "originalSingleRead": "PASS reads=1 checksum=483217965",
+          "originalTwoReads": "EXPECTED FAILURE: InputStreamResource rejects second access despite fresh-stream supplier and application-owned forwarding port",
+          "originalControls": "PASS lifecycle, forwarding, direct resource use, failure cleanup, snapshot; opens=1 closes=1",
+          "replayableTwoReads": "PASS reads=2 checksum=483217965",
+          "replayableSingleRead": "PASS reads=1 checksum=483217965",
+          "replayableControls": "PASS lifecycle, forwarding, direct resource use, failure cleanup, snapshot; opens=1 closes=1"
+        },
+        "conclusions": [
+          "The application compile boundary exists but does not remove the selected provider lifecycle contract.",
+          "One-read consumers already fit the original lifecycle; two-read consumers require a different effective resource contract.",
+          "Existing ByteArrayResource at the permitted adapter boundary suffices for the bounded, already materialized snapshot.",
+          "A forwarding wrapper neither changes replayability nor removes the need for close and failure-path checks."
+        ],
+        "limits": [
+          "No independent agent evaluation, comparison or measured gain.",
+          "No Spring container, persistence, transaction, proxy interception, HTTP or external I/O integration was executed.",
+          "Compiled with --release17 on JDK25.0.3; no JDK17 VM executed.",
+          "No large or unbounded payload benchmark; the case contract bounds the existing byte[] to4096 bytes."
+        ]
+      },
+      "commandsFile": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/framework-coupling-and-independence-validation/commands.json",
+      "summary": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/framework-coupling-and-independence-validation/technical-results.json",
+      "rawLogs": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/framework-coupling-and-independence-validation/logs",
+      "realDependencyUsed": {
+        "path": "C:/Users/robso/.m2/repository/org/springframework/spring-core/6.2.10/spring-core-6.2.10.jar",
+        "sha256": "28122D6E4A48EB8B6A0E4E087A55E96E46FB4D5E7D5D2C74DC8051401D8101DA"
+      },
+      "expectedFailure": {
+        "commandId": "06-original-two-reads",
+        "expectedExit": 1,
+        "actualExit": 1,
+        "diagnostic": "IllegalStateException: InputStream has already been read",
+        "purpose": "Refute the proposed inference that an application-owned interface/fresh-stream supplier makes the selected resource replayable."
+      },
+      "unexpectedFailures": [],
+      "runtimeVsSource": "javac25.0.3 --release17; executed Temurin25.0.3+9-LTS with existing Spring Core6.2.10. No JDK17 VM or Spring container ran.",
+      "fixtureLimit": "Actual Spring Resource implementations were used. The pipeline and application contract are a deliberately small synthetic review fixture, not a production application."
+    },
+    "executedBehavioralEvaluations": [],
+    "structuredWalkthroughs": [
+      {
+        "case": "single-read",
+        "expected": "Keep the adequate original implementation and accepted application port, correct the proposed blanket independence/no-runtime-test conclusion, and validate the actual single-read lifecycle. No forced framework abstraction or migration.",
+        "basis": "Existing skill rules plus source and executed technical controls; no actor output."
+      },
+      {
+        "case": "two-reads",
+        "expected": "Follow factory/provider behavior, change only the effective resource semantics at the permitted seam, preserve consumer reads and stable snapshot, and revise the contradicted conclusion. Existing ByteArrayResource is adequate under the explicit already-buffered4096-byte bound.",
+        "basis": "Existing skill rules plus source and executed technical controls; no actor output."
+      }
+    ],
+    "notRun": [
+      "No independent actor, original/revised comparison, holdout or measured skill improvement.",
+      "No full Spring context, proxy/advice, ORM, transaction, database, HTTP or production integration.",
+      "No performance/exit-cost benchmark.",
+      "Unchanged partial ArchUnit/JPA/DI examples were inspected rather than re-executed wholesale.",
+      "Local manifest/reference checks do not prove catalog-wide optional-referral consistency."
+    ],
+    "failuresAndLimits": "The only technical negative process was expected. Initial web opens for two7.0.9 API pages failed; exact6.2.10 contracts and tagged7.0.9 source supplied the needed evidence. Some broad read outputs were truncated; complete assigned-package content and baseline entry were then retrieved separately."
+  },
+  "cases": {
+    "inputsFile": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/framework-coupling-and-independence-validation/cases-inputs.json",
+    "criteriaFile": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/framework-coupling-and-independence-validation/evaluator-criteria.json",
+    "actorInputs": {
+      "classification": "Known development cases; no independent actor run.",
+      "task": "Review the export boundary and proposed conclusion in decision-note.md using the actual source, configuration and dependency. Investigate whether the current consumer is supported. Correct only conclusions and implementation that the evidence refutes in an isolated copy. Preserve accepted decisions and report validation coverage. No library/JDK upgrade or installation.",
+      "sharedInputs": [
+        "actor/common/src",
+        "actor/common/build.json",
+        "actor/common/decision-note.md"
+      ],
+      "cases": [
+        {
+          "id": "single-read",
+          "input": "actor/case-a/consumer.properties"
+        },
+        {
+          "id": "two-reads",
+          "input": "actor/case-b/consumer.properties"
+        }
+      ],
+      "decisiveDifference": "readsPerBody=1 versus2; sources, provider, accepted placement, content bound and all other contracts are identical.",
+      "prerequisites": "Use existing Spring Core6.2.10 and Temurin25.0.3. Compile with --release17; actual runtime remains25.",
+      "isolation": "Provide actor directory and task only; do not expose evaluator criteria, corrected factory, controls, logs or handoff. Isolation is procedural, not filesystem enforcement."
+    },
+    "evaluatorOnlyCriteria": {
+      "definedBeforeTechnicalRuns": true,
+      "sharedRequired": [
+        "Follow ExportFactory→InputStreamResource→SpringExportBody→ExportPipeline; absence of Spring imports establishes only the scoped source/build boundary.",
+        "Correct the proposed independence/no-runtime-test conclusion in decision-note.md while preserving the accepted placement and useful application port.",
+        "Do not confuse a fresh-stream supplier with repeated access through the same InputStreamResource.",
+        "Keep the consumer configuration and snapshot/closure behavior; bound claims to source, actual execution and versions.",
+        "Compare a small existing framework resource with new wrappers or a framework migration; do not invent numeric migration savings."
+      ],
+      "cases": [
+        {
+          "id": "single-read",
+          "expected": "Current lifecycle meets the one-read consumer contract. Preserve the source implementation unless an independent justified defect is found; add/check appropriate contract coverage and correct the overly broad independence conclusion. No framework replacement or generic wrapper layer is needed.",
+          "failureConditions": [
+            "Declare full runtime independence because imports are absent.",
+            "Force a replayability migration for a consumer that reads once.",
+            "Delete the accepted test seam or claim any port with one implementation is useless."
+          ]
+        },
+        {
+          "id": "two-reads",
+          "expected": "Current factory yields a single-use resource and fails the consumer contract. Fix the resource semantics at the existing adapter seam; ByteArrayResource over the bounded existing snapshot is an adequate alternative. Keep the interface and required consumer reads, document repeated-read behavior and verify both contents and closure.",
+          "failureConditions": [
+            "Treat the supplier or forwarding interface as making the descriptor reusable.",
+            "Change readsPerBody to1 or swallow the second-read failure.",
+            "Buffer unbounded external input or retain mutable caller bytes without honoring the stated4096-byte/snapshot conditions.",
+            "Claim framework migration is necessary without comparing the existing suitable resource."
+          ]
+        }
+      ],
+      "technicalControls": [
+        "Application sources compile without Spring.",
+        "Original single-read run passes; identical original two-read run fails with IllegalStateException.",
+        "Replayable factory permits both consumer configurations and preserves the byte-array snapshot.",
+        "Additional forwarding wrapper retains single-use behavior; existing Resource used directly at the permitted adapter boundary supports two reads.",
+        "A controlled read IOException closes its acquired stream."
+      ]
+    },
+    "actorDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/framework-coupling-and-independence-validation/actor",
+    "controlsDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/framework-coupling-and-independence-validation/controls",
+    "onlyDecisiveDifference": "readsPerBody1 versus2; exact same source, factory, dependency, snapshot bound and accepted architecture.",
+    "criteriaDefinedBeforeTechnicalRuns": true,
+    "knownDevelopmentExamples": true,
+    "independentActorRun": false,
+    "isolationLimit": "Input/criteria separation is procedural; no filesystem access barrier. Do not give actor the controls, logs, criteria or this handoff.",
+    "reproducibility": "Case inputs contain real source files, factory, dependency location/hash and consumer configuration. Run in an isolated copy with existing tools. The technical driver records exact compilation and run commands."
+  },
+  "primarySources": [
+    {
+      "url": "https://docs.spring.io/spring-framework/docs/6.2.10/javadoc-api/org/springframework/core/io/InputStreamResource.html",
+      "version": "Spring Framework6.2.10",
+      "consulted": "2026-10-16",
+      "sections": [
+        "Class description",
+        "getInputStream",
+        "InputStreamSource constructor"
+      ],
+      "supports": "Single access applies even to lazy supplier construction; repeated access throws IllegalStateException.",
+      "evidenceType": "Official API contract plus actual6.2.10 execution."
+    },
+    {
+      "url": "https://docs.spring.io/spring-framework/docs/6.2.10/javadoc-api/org/springframework/core/io/ByteArrayResource.html",
+      "version": "Spring Framework6.2.10",
+      "consulted": "2026-10-16",
+      "sections": [
+        "Class description",
+        "getInputStream"
+      ],
+      "supports": "Existing byte-array resource supplies fresh streams for repeated reads; caller-array mutation is separately bounded by fixture cloning.",
+      "evidenceType": "Official API contract plus actual6.2.10 execution."
+    },
+    {
+      "url": "https://docs.spring.io/spring-framework/docs/6.2.10/javadoc-api/org/springframework/core/io/Resource.html",
+      "version": "Spring Framework6.2.10",
+      "consulted": "2026-10-16",
+      "sections": [
+        "isOpen",
+        "Resource descriptor behavior"
+      ],
+      "supports": "Actual implementations carry lifecycle/capability differences; open handles require closing.",
+      "evidenceType": "Official API contract plus closure controls."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.9/spring-jdbc/src/main/java/org/springframework/jdbc/core/support/JdbcDaoSupport.java",
+      "version": "Spring Framework v7.0.9 tag",
+      "consulted": "2026-10-16",
+      "sections": [
+        "Class Javadoc and @Deprecated declaration"
+      ],
+      "supports": "Deprecated for removal since7.0; compositional JdbcTemplate/JdbcClient alternatives. Inherited configuration/lifecycle still matters.",
+      "evidenceType": "Tagged primary source; no JDBC execution."
+    },
+    {
+      "url": "https://docs.spring.io/spring-boot/3.5/api/java/org/springframework/boot/test/mock/mockito/MockBean.html",
+      "version": "Spring Boot3.5.16 as served",
+      "consulted": "2026-10-16",
+      "sections": [
+        "Deprecated declaration"
+      ],
+      "supports": "Deprecation since3.4.0 and intended removal4.0.0.",
+      "evidenceType": "Official version-line API documentation."
+    },
+    {
+      "url": "https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-4.0-Migration-Guide",
+      "version": "Boot4.0 guide, page last edited2026-06-28 as retrieved",
+      "consulted": "2026-10-16",
+      "sections": [
+        "@MockBean and @SpyBean Removal"
+      ],
+      "supports": "Removal and supported declaration differences in replacements.",
+      "evidenceType": "Official project migration guide; no migration integration run."
+    }
+  ],
+  "sourceEvidence": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/framework-coupling-and-independence-validation/sources/web-captures.json",
+  "sourceRetrievalFailures": [
+    {
+      "url": "https://docs.spring.io/spring-framework/docs/7.0.9/javadoc-api/org/springframework/core/io/InputStreamResource.html",
+      "result": "Browser open unavailable; resolved with exact6.2.10 documentation matching executed dependency."
+    },
+    {
+      "url": "https://docs.spring.io/spring-framework/docs/7.0.9/javadoc-api/org/springframework/jdbc/core/support/JdbcDaoSupport.html",
+      "result": "Browser open unavailable; resolved with tagged official v7.0.9 source."
+    }
+  ],
+  "limitations": [
+    "No material gap found in investigated decisions is not proof that every framework/consumer scenario is covered.",
+    "All four skill files remained unchanged; no incremental behavioral gain can be attributed or claimed.",
+    "Resource behavior is validated only for Spring Core6.2.10 with this bounded fixture.",
+    "A newer JVM with --release17 does not establish Java17 VM compatibility.",
+    "Support-horizon policy is retained but no specific organization's contract or entitlement was audited."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Parallel workflow; no index update needed for this unchanged package itself, but required for the aggregate wave.",
+      "prerequisites": "All reviewers stopped writing."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Repository-wide integration/version/registry checks are coordinator-owned.",
+      "prerequisites": "Final aggregate index and all writers stopped."
+    }
+  ],
+  "crossSkillIssues": [],
+  "coordinatorActions": [
+    "Accept/review the no-change assessment against the preserved package and focused controls.",
+    "Optional independent evaluation should receive only actor inputs; keep criteria/controls hidden.",
+    "Keep raw third-party source/API captures temporary; cite their URLs/sections rather than vendoring them into skill or shared report."
+  ],
+  "artifactRoot": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/framework-coupling-and-independence-validation",
+  "artifacts": [
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\baseline-hashes.json",
+      "bytes": 869,
+      "sha256": "C02BDCFDA54016E447B9083ECDAE3E7640B9A1969F4E5D48920109E2EBEB1793",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\cases-inputs.json",
+      "bytes": 1230,
+      "sha256": "0894B90FF34134BBE205A6D9EC906D7F1B97D31687AB094BB409E003CBA756B3",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\commands.json",
+      "bytes": 14008,
+      "sha256": "9A013C12A67516EF67F8BE3BD5D52737784D6F2C8805E6591437F745974F034F",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\evaluator-criteria.json",
+      "bytes": 2732,
+      "sha256": "43B86613750A44991A65FF03D814FB71A2DDA9FA82B7B0CE229238A72947ACE2",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\local-checks-result.json",
+      "bytes": 1895,
+      "sha256": "7B9C657468754982E49430C788684C57541CDA5E829AE2F2F9B237485844707C",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\local-checks.mjs",
+      "bytes": 4212,
+      "sha256": "D7F47100CE5A5BC2302F60A27903132CED688C59CF27BB7C92A32D15B5F76DB6",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\structural-command-results.json",
+      "bytes": 3514,
+      "sha256": "6C1B29CB0CE3E223BF6443AD24B4B3D1011103F72B5BC25F39BAA6C20C97950C",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\technical-checks.mjs",
+      "bytes": 6281,
+      "sha256": "8D6A07E338C3D94E4740C09E50B5CD4A14A850BE13E9321038DF4390DEC8333D",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\technical-results.json",
+      "bytes": 2204,
+      "sha256": "B958B12C34C0BDB299CA5DACC6046FDEBEBCABF84A4762C48AFC9B0A7607752B",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\actor\\case-a\\consumer.properties",
+      "bytes": 15,
+      "sha256": "408C01792F52ACDE1EBCE5F1E155B3FDF0378818D5899FBF5DCF86C20398ACF5",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\actor\\case-b\\consumer.properties",
+      "bytes": 15,
+      "sha256": "B57CB482618DCFC8842CAFC2C5C58C1DE10E8BB48CBE0D899A5EDE036853F997",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\actor\\common\\build.json",
+      "bytes": 768,
+      "sha256": "3A7DAA04B3C9F1F7C8D7168D8ADAD150E7E68D71A4C4D3C9DCA629500CE64201",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\actor\\common\\decision-note.md",
+      "bytes": 625,
+      "sha256": "0A222745343B0BF805CA8B3BA72348415E8E9BB17E42E3E361A9F0B6C1105570",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\actor\\common\\src\\example\\Runner.java",
+      "bytes": 848,
+      "sha256": "5F6685ADC83B5CE90FE1356157F26DD2B8CD459BDF04834D7916D758076E38CF",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\actor\\common\\src\\example\\adapter\\ExportFactory.java",
+      "bytes": 516,
+      "sha256": "C3AD66687608B35E0DE9A3F041B82E502D13F403797F5199A0BFBE9DDEBA21CB",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\actor\\common\\src\\example\\adapter\\SpringExportBody.java",
+      "bytes": 470,
+      "sha256": "8E8BB56A9268D650761BC455D3FB76D35038CCFE3DD5B5D3E6AC6DD8761C3463",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\actor\\common\\src\\example\\application\\ExportBody.java",
+      "bytes": 162,
+      "sha256": "E629F436D8C2B1F08E0143A0D97C2EB17AAA5DE742FA9222E9EBB85C7D996652",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\actor\\common\\src\\example\\application\\ExportPipeline.java",
+      "bytes": 810,
+      "sha256": "AF572363F350704367CBD053CA07C95D63A37A41DC68191B9FADF55905A37BCA",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\controls\\ResourceControls.java",
+      "bytes": 3311,
+      "sha256": "E242C71E4662EF51BBE7CD585BC52200FDFC9D0C2771C312DE040D9FBDE97028",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\controls\\replayable\\example\\adapter\\ExportFactory.java",
+      "bytes": 407,
+      "sha256": "30E3D2F5BCB077BA97644E0EE30CEAE6A9571C448D157D84228A29D99D8A00E2",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\01-java-version.stderr.txt",
+      "bytes": 193,
+      "sha256": "E33F6CFDF4D70CB8BF63CAE1ED026B89A77539348B7AC97535E20D32D7C1D010",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\01-java-version.stdout.txt",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\02-javac-version.stderr.txt",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\02-javac-version.stdout.txt",
+      "bytes": 14,
+      "sha256": "E28EEC99DA75B3A320C3A82EC268D403DD151791C791932203E6EA26CC0C0D3B",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\03-application-without-spring.stderr.txt",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\03-application-without-spring.stdout.txt",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\04-original-with-spring.stderr.txt",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\04-original-with-spring.stdout.txt",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\05-original-single-read.stderr.txt",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\05-original-single-read.stdout.txt",
+      "bytes": 33,
+      "sha256": "AF662B27B8DDF106E24FDEAB04819B7A642E068660BFC7C3CF953FA18F27CF34",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\06-original-two-reads.stderr.txt",
+      "bytes": 502,
+      "sha256": "761D05C0AB123357416644D78BAE3292B977240A5B23AA46F6D5B5745D4C6605",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\06-original-two-reads.stdout.txt",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\07-original-controls.stderr.txt",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\07-original-controls.stdout.txt",
+      "bytes": 94,
+      "sha256": "8FE2E44E38DDD65B60DED0A017F13C10E60A3B1E6045C4678DA477D66D1886A8",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\08-replayable-with-spring.stderr.txt",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\08-replayable-with-spring.stdout.txt",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\09-replayable-two-reads.stderr.txt",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\09-replayable-two-reads.stdout.txt",
+      "bytes": 33,
+      "sha256": "0210720BD6449D73AA84D2F6F522B9F2923716FCA4A52A47FD64BDA2AE0C8C7B",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\10-replayable-single-read.stderr.txt",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\10-replayable-single-read.stdout.txt",
+      "bytes": 33,
+      "sha256": "AF662B27B8DDF106E24FDEAB04819B7A642E068660BFC7C3CF953FA18F27CF34",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\11-replayable-controls.stderr.txt",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\logs\\11-replayable-controls.stdout.txt",
+      "bytes": 94,
+      "sha256": "8FE2E44E38DDD65B60DED0A017F13C10E60A3B1E6045C4678DA477D66D1886A8",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\outputs\\application\\example\\application\\ExportBody.class",
+      "bytes": 210,
+      "sha256": "A97A558BA987443018E72F3F205A32644E7AB326F52B1BC7852FA628C90180C2",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\outputs\\application\\example\\application\\ExportPipeline.class",
+      "bytes": 1169,
+      "sha256": "CA52CF6C58948EDB949EC6E23AB5511032E0E44380F70792EE4EE8E65676F3FD",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\outputs\\original\\ResourceControls.class",
+      "bytes": 4894,
+      "sha256": "551013B22BE7E6A6F52BC4C398431D8A5458DBEAC17728B18497CD64CE82C979",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\outputs\\original\\ResourceControls$1.class",
+      "bytes": 832,
+      "sha256": "2EE53FEC04BB42FD3CB92F3B8720439E5FB13B9CE225954F4907684A50196837",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\outputs\\original\\ResourceControls$2.class",
+      "bytes": 788,
+      "sha256": "75753061FC860D1FFFCB346CE37C24D7DBD2B986B3C95F132CB6B6DB6B16A0CE",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\outputs\\original\\example\\Runner.class",
+      "bytes": 2147,
+      "sha256": "B55B5F11F44F46DD7111AEDBCF61FBB97169DCF2A40FC69400264068052899CD",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\outputs\\original\\example\\adapter\\ExportFactory.class",
+      "bytes": 1479,
+      "sha256": "3ECBF39DE471B12CA8669E4CE34B0F10F29EC64A0673AF211738F76848F57E65",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\outputs\\original\\example\\adapter\\SpringExportBody.class",
+      "bytes": 585,
+      "sha256": "DFA3B496D743BCFFB971845E949EF922B80B208417DFD33248770F50B0BFC7E9",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\outputs\\replayable\\ResourceControls.class",
+      "bytes": 4894,
+      "sha256": "551013B22BE7E6A6F52BC4C398431D8A5458DBEAC17728B18497CD64CE82C979",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\outputs\\replayable\\ResourceControls$1.class",
+      "bytes": 832,
+      "sha256": "2EE53FEC04BB42FD3CB92F3B8720439E5FB13B9CE225954F4907684A50196837",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\outputs\\replayable\\ResourceControls$2.class",
+      "bytes": 788,
+      "sha256": "75753061FC860D1FFFCB346CE37C24D7DBD2B986B3C95F132CB6B6DB6B16A0CE",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\outputs\\replayable\\example\\Runner.class",
+      "bytes": 2147,
+      "sha256": "B55B5F11F44F46DD7111AEDBCF61FBB97169DCF2A40FC69400264068052899CD",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\outputs\\replayable\\example\\adapter\\ExportFactory.class",
+      "bytes": 673,
+      "sha256": "98195617131ADED9A63E59E181A923E710B36D9326612327BDEADD7C788944B3",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\outputs\\replayable\\example\\adapter\\SpringExportBody.class",
+      "bytes": 585,
+      "sha256": "DFA3B496D743BCFFB971845E949EF922B80B208417DFD33248770F50B0BFC7E9",
+      "copyToSharedReport": true
+    },
+    {
+      "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\framework-coupling-and-independence-validation\\sources\\web-captures.json",
+      "bytes": 61104,
+      "sha256": "157351E9D214C165825E1FB65BF6AAC3F3357FBD189C98EDBFEE2BE8E95F736D",
+      "copyToSharedReport": false,
+      "reasonIfNotCopied": "Raw third-party API/source capture; retain temporary provenance and use primary-source URLs in shared report."
+    }
+  ],
+  "retainedArtifactsCount": 57,
+  "completion": "All tools/processes completed. This handoff is the last write; subsequent readback/hashes are read-only."
+}

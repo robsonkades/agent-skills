@@ -1,0 +1,5 @@
+public final class RegionConfig {
+    public static final String REGION = "eu";
+    private RegionConfig() {}
+}
+

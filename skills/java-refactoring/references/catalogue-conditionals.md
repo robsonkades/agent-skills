@@ -125,7 +125,7 @@ is carried across explicitly:
 ```java
 return switch (payment) {
     case null -> Result.rejected("no payment");
-    case Card(_, var expiry) when expiry.isBefore(today) -> Result.rejected("expired");
+    case Card card when card.expiry().isBefore(today) -> Result.rejected("expired");
     case Card card -> authorise(card);
     case Transfer transfer -> settle(transfer);
 };
@@ -135,6 +135,19 @@ Second precondition: the chain's order is preserved. Pattern cases are tested in
 the compiler now rejects a case dominated by an earlier one — a dominance error usually
 means the original chain had an unreachable branch, which is a finding rather than an
 obstacle.
+
+**Record deconstruction is a separate transformation.** The example keeps the original
+accessor call in the guard. Replacing it with `case Card(_, var expiry)` invokes component
+accessors during pattern matching; these are methods, not direct field reads. A throwing
+accessor is wrapped in `MatchException` with the original failure as its cause, whereas a
+call in the guard propagates its original failure. Inspect custom accessors and compare
+exception types, call counts and effects before combining the transformations. A nested record
+pattern does not match a null value at its deconstruction boundary, whereas a `var` component
+binding can retain that null. Retain type patterns and explicit calls when these contracts are
+not established; deconstruction is appropriate when
+accessor and component-matching behavior preserves them. Check a failing accessor as well as
+ordinary values — a return-value-only test misses the changed exception contract. See
+[JLS 25 pattern matching](https://docs.oracle.com/javase/specs/jls/se25/html/jls-14.html#jls-14.30.2).
 
 Avoid `default` when the purpose is sealed exhaustiveness: it converts future missing-policy
 diagnostics into fallback behavior. A deliberate partial handler may define that fallback, as

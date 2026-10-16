@@ -1,0 +1,12 @@
+{
+  "name": "native-version",
+  "executable": "C:/Users/robso/.jdks/graalvm-ce-25.0.2/lib/svm/bin/native-image.exe",
+  "args": [
+    "--version"
+  ],
+  "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\graalvm-native-image-evidence",
+  "exitCode": 0,
+  "signal": null,
+  "stdout": "native-image 25.0.2 2026-01-20\r\nGraalVM Runtime Environment GraalVM CE 25.0.2+10.1 (build 25.0.2+10-jvmci-b01)\r\nSubstrate VM GraalVM CE 25.0.2+10.1 (build 25.0.2+10, serial gc)\r\n",
+  "stderr": ""
+}

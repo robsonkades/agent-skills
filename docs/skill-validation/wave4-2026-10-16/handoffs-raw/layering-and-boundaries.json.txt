@@ -1,0 +1,982 @@
+{
+  "skill": "layering-and-boundaries",
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "ownedPath": "skills/layering-and-boundaries/**",
+  "reviewDate": "2026-10-16",
+  "reviewer": "/root/quality08",
+  "coordinator": "/root",
+  "allWritesStopped": true,
+  "activeBackgroundProcesses": [],
+  "ownership": {
+    "changedRepositoryPaths": [
+      "skills/layering-and-boundaries/references/boundary-enforcement.md",
+      "skills/layering-and-boundaries/skill.yaml"
+    ],
+    "sharedOrNeighboringWrites": [],
+    "gitStateMutated": false,
+    "subagentsSpawned": false,
+    "globalCommandsExecuted": false,
+    "evidenceDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe"
+  },
+  "procedure": {
+    "fullAssignedPackageRead": [
+      "skills/layering-and-boundaries/skill.yaml",
+      "skills/layering-and-boundaries/SKILL.md",
+      "skills/layering-and-boundaries/references/layering-styles.md",
+      "skills/layering-and-boundaries/references/boundary-enforcement.md"
+    ],
+    "readOrReusedUnchanged": [
+      "Applicable root AGENTS.md",
+      "docs/skill-review-prompt.md complete",
+      "docs/parallel-skill-reviews.md complete",
+      "docs/skill-validation/wave4-2026-10-16/review-brief.md complete",
+      "skills/skill-engineering/SKILL.md and evidence-and-confidence, evaluation, resource-design and anti-patterns references",
+      "Relevant comparative research, roadmap and prior-wave limitations"
+    ],
+    "reuseBasis": "Wave-four brief permits reuse of unchanged instructions read earlier in the same wave. Full package was read this assignment; skill-engineering entry and parallel workflow reread.",
+    "findingsSentBeforeEdits": true
+  },
+  "baseline": {
+    "coordinatorCopy": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/baseline/layering-and-boundaries",
+    "committedVersion": "1.2.4",
+    "assignmentVersion": "1.2.4",
+    "preExistingVersionBump": false,
+    "preExistingChanges": {
+      "staged": [],
+      "unstaged": [],
+      "untracked": []
+    },
+    "assignmentHashes": [
+      {
+        "path": "skills/layering-and-boundaries/skill.yaml",
+        "sha256": "B1000E3C86274AEDFDE9257FBA0CDBDAF444519E226ACCE6F4FC3511B725C8A5"
+      },
+      {
+        "path": "skills/layering-and-boundaries/SKILL.md",
+        "sha256": "A2BDD21256F16FF8745438B2D87EE36F9F4364513A81727893A5F92199F36BE2"
+      },
+      {
+        "path": "skills/layering-and-boundaries/references/layering-styles.md",
+        "sha256": "CFA0FA00686454C280A28554E1F1C0583F07173788D7B9546D763DFA3067D08A"
+      },
+      {
+        "path": "skills/layering-and-boundaries/references/boundary-enforcement.md",
+        "sha256": "22AE2CD10C023542AA2D5FB2846AD161B5CE9BD9EFFDB9F900FD1E5BEC61035F"
+      }
+    ],
+    "allAssignmentHashesMatchedCoordinatorCopy": true
+  },
+  "versions": {
+    "committed": "1.2.4",
+    "assignment": "1.2.4",
+    "final": "1.2.5",
+    "bump": "One patch for the two focused corrections and source addition; no earlier assignment bump to reuse.",
+    "descriptionsChanged": false
+  },
+  "domainCriteria": {
+    "role": "Architectural discovery/design/review of boundary placement, allowed dependencies, crossing types and meaningful enforcement; retain adequate classical layering and proportional changes.",
+    "successCriteria": [
+      "Identify the actual caller, declared type, implementation, composition and accepted dependency policy before judging the boundary.",
+      "Separate source dependencies from runtime calls and framework dependence from hidden inputs or uncontrolled time.",
+      "Choose no change when the accepted policy is met; require a port or additional representation only for an actual protection contract.",
+      "Tie an enforcement result to its imported/compiled scope and preserve transaction, security, data access, compatibility and caller behavior.",
+      "Keep evidence gaps and pending integration work explicit; no topology or extra-class mandate."
+    ],
+    "compatibility": "Skill has no universal application JDK/ArchUnit/JUnit baseline. It already requires resolving the applying project's versions. New Clock/Instant reference uses Java SE 17 documentation and explicitly notes API availability since Java 8. No baseline/dependency/framework upgrade."
+  },
+  "findings": {
+    "corrected": [
+      {
+        "id": "implicit-context-not-framework-proof",
+        "location": "references/boundary-enforcement.md:159-165",
+        "baselineLocation": "references/boundary-enforcement.md:159-161",
+        "problem": "The original statement grouped framework context holders, static clocks and thread-local values and asserted the rule becomes untestable without the framework. JDK Clock/Instant need no framework; a hard-coded time source and a framework dependency are different constraints.",
+        "change": "Trace the actual source/lifetime. Distinguish framework holders from JDK clocks, identify controlled-input requirements, offer an existing Clock or explicit value, and preserve an adequate explicit input without adding another port.",
+        "sources": [
+          "java17-clock",
+          "java17-instant"
+        ],
+        "technicalEvidence": [
+          "Both original and inverted fixture runs execute Instant.now and Clock.systemUTC with only java.base resolved.",
+          "Before/at/after deadline controls use Clock.fixed with no DI or test framework."
+        ],
+        "expectedBenefit": "Avoid a false framework-dependency diagnosis and unnecessary abstraction while retaining the genuine time-control/context concern.",
+        "measuredAgentBenefit": false
+      },
+      {
+        "id": "inversion-conditional-on-policy",
+        "location": "references/boundary-enforcement.md:166-171",
+        "baselineLocation": "references/boundary-enforcement.md:162-164",
+        "problem": "The original recurring-leak item directed every direct notifier/scheduler/client call to a new domain interface. This omitted the skill's existing distinction between runtime calls and source policy, and its accepted classical dependency option.",
+        "change": "Inspect declared type, concrete implementation and composition; invert when the chosen boundary forbids the outer dependency. Preserve an existing inside-owned port and an accepted classical dependency when no protected contract is violated.",
+        "sources": [
+          "cockburn-2005",
+          "existing SKILL.md:44-45, decision rules, references/layering-styles.md classical/hexagonal sections"
+        ],
+        "technicalEvidence": [
+          "Original complete source fixture compiles and passes its observable confirmation/invalid-ID controls.",
+          "Original domain-only compilation fails on the actual integration type with sourcepath/classpath isolated.",
+          "Counterfactual domain-owned port lets the core compile alone; the complete variant preserves the tested caller behavior."
+        ],
+        "expectedBenefit": "Align the specific leak advice with the existing workflow and avoid an interface-per-collaborator mandate.",
+        "measuredAgentBenefit": false
+      }
+    ],
+    "remainingConfirmed": [],
+    "crossSkillIssues": [],
+    "limits": "A bounded specialist review found these two corrections. Existing ArchUnit/JPMS, transactional and data-access guidance was preserved; no exhaustive runtime certification is implied."
+  },
+  "filesChangedByReviewer": [
+    {
+      "path": "skills/layering-and-boundaries/references/boundary-enforcement.md",
+      "changes": "Replaced recurring-leak items 6/7 with conditional guidance and added versioned JDK source links. No executable code block changed."
+    },
+    {
+      "path": "skills/layering-and-boundaries/skill.yaml",
+      "changes": "Version 1.2.4 -> 1.2.5 only."
+    }
+  ],
+  "filesChangedBeforeAssignment": [],
+  "unchangedOwnedPaths": [
+    "skills/layering-and-boundaries/SKILL.md",
+    "skills/layering-and-boundaries/references/layering-styles.md"
+  ],
+  "finalOwnedFiles": [
+    {
+      "path": "skills/layering-and-boundaries/skill.yaml",
+      "sha256": "34AD09F336715F75B61751B202A6BE86B9DA39DD36F0645E4E74C18B43B377A2",
+      "baselineSha256": "B1000E3C86274AEDFDE9257FBA0CDBDAF444519E226ACCE6F4FC3511B725C8A5",
+      "bytes": 2118
+    },
+    {
+      "path": "skills/layering-and-boundaries/SKILL.md",
+      "sha256": "A2BDD21256F16FF8745438B2D87EE36F9F4364513A81727893A5F92199F36BE2",
+      "baselineSha256": "A2BDD21256F16FF8745438B2D87EE36F9F4364513A81727893A5F92199F36BE2",
+      "bytes": 10721
+    },
+    {
+      "path": "skills/layering-and-boundaries/references/layering-styles.md",
+      "sha256": "CFA0FA00686454C280A28554E1F1C0583F07173788D7B9546D763DFA3067D08A",
+      "baselineSha256": "CFA0FA00686454C280A28554E1F1C0583F07173788D7B9546D763DFA3067D08A",
+      "bytes": 8993
+    },
+    {
+      "path": "skills/layering-and-boundaries/references/boundary-enforcement.md",
+      "sha256": "93AAC23E0AC276FCEE284190135BBD7FD74066CCBC97548340584247E96DFCD3",
+      "baselineSha256": "22AE2CD10C023542AA2D5FB2846AD161B5CE9BD9EFFDB9F900FD1E5BEC61035F",
+      "bytes": 14288
+    }
+  ],
+  "finalDiff": [
+    "diff --git a/skills/layering-and-boundaries/references/boundary-enforcement.md b/skills/layering-and-boundaries/references/boundary-enforcement.md",
+    "index f162d62..e53b876 100644",
+    "--- a/skills/layering-and-boundaries/references/boundary-enforcement.md",
+    "+++ b/skills/layering-and-boundaries/references/boundary-enforcement.md",
+    "@@ -156,12 +156,19 @@ unverified data boundary rather than claiming isolation from an ArchUnit or JPMS",
+    "    `DataAccessException` or `RestClientException` handled in a business rule means the",
+    "    business rule now depends on the mechanism. Translate at the adapter boundary",
+    "    (`enterprise-base-patterns`).",
+    "-6. **Static access to context.** `SecurityContextHolder`, `LocaleContextHolder`, a static",
+    "-   clock or a thread-local tenant read from inside the domain. It compiles, it is invisible",
+    "-   in the signature, and it makes the rule untestable without the framework.",
+    "-7. **The upward call.** Domain code calling a notifier, a scheduler or an HTTP client",
+    "-   directly. Invert it: the domain declares the interface it needs, and the adapter",
+    "-   implements it.",
+    "+6. **Implicit context.** Resolve the actual source and lifetime of time, user or tenant data.",
+    "+   `SecurityContextHolder` and `LocaleContextHolder` introduce framework dependencies;",
+    "+   `Instant.now()` and `Clock.systemUTC()` do not. A hard-coded system clock still prevents",
+    "+   supplying a controlled time source, and a thread-local value needs checking across the",
+    "+   actual execution path. Pass required values or an existing `Clock` when that contract",
+    "+   needs control; `Clock.fixed` supports deterministic time tests without a DI framework.",
+    "+   Preserve an adequate explicit input rather than wrapping it in another port.",
+    "+7. **An upward source dependency.** Inspect the declared type, implementation and composition",
+    "+   behind a notifier, scheduler or HTTP-client call. When the chosen boundary forbids the",
+    "+   domain from depending on that outer mechanism, let the consuming domain/application own",
+    "+   the port and implement it outside. A call through an existing inside-owned port already",
+    "+   follows this rule. Keep an accepted classical dependency when no protected contract is",
+    "+   violated.",
+    " ",
+    " ## Reviewing an existing structure",
+    " ",
+    "@@ -183,6 +190,7 @@ Ask, in this order:",
+    " ",
+    " ## Primary references",
+    " ",
+    "+- [Java 17 Clock](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Clock.html) and [Instant.now](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Instant.html#now()>) — JDK time sources, controlled clocks and testing without a dependency-injection framework; these APIs exist since Java 8.",
+    " - [ArchUnit user guide](https://www.archunit.org/userguide/html/000_Index.html) — imports and dependency-rule scope.",
+    " - [Hibernate 6.6 Formula annotation](https://docs.hibernate.org/orm/6.6/javadocs/org/hibernate/annotations/Formula.html) — an example of a provider package outside the illustrative denylist.",
+    " - [Spring transaction propagation](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/tx-propagation.html) — REQUIRED versus independent transaction scopes; match the deployed release.",
+    "diff --git a/skills/layering-and-boundaries/skill.yaml b/skills/layering-and-boundaries/skill.yaml",
+    "index a210936..4e500c9 100644",
+    "--- a/skills/layering-and-boundaries/skill.yaml",
+    "+++ b/skills/layering-and-boundaries/skill.yaml",
+    "@@ -1,7 +1,7 @@",
+    " schemaVersion: 1",
+    " ",
+    " name: layering-and-boundaries",
+    "-version: 1.2.4",
+    "+version: 1.2.5",
+    " description: >-",
+    "   Deciding where an enterprise application's boundaries go and which direction dependencies",
+    "   cross them: the classical presentation / domain / data-source split, the styles that"
+  ],
+  "capabilities": {
+    "preserved": [
+      "Existing boundary/consumer/history discovery, conditional questions and smallest useful change/no-change choice.",
+      "Classical, hexagonal, clean/onion, modular-monolith and vertical-slice distinctions and their costs.",
+      "Crossing type/source direction, accepted ORM coupling, single-implementation port value, read/write shortcut safeguards and transaction ownership.",
+      "Scoped ArchUnit examples, provider-denylist limitations, valid/forbidden controls, JPMS/classpath visibility and runtime wiring limits.",
+      "SQL/schema ownership that bytecode rules miss, allowed data contracts and one-credential limitations.",
+      "Consequential ADRs, caller/migration compatibility, required transaction/security preservation and conditional reference routing."
+    ],
+    "replaced": [
+      "Unqualified assertion that static clocks require a framework to test.",
+      "Unqualified inversion prescription based solely on collaborator kind."
+    ],
+    "removed": [],
+    "codeFencesPreserved": {
+      "total": 8,
+      "files": 3,
+      "executedCheck": true
+    },
+    "newSkillReferrals": [],
+    "suggestsUnchanged": true
+  },
+  "checks": [
+    {
+      "kind": "assignment-inspection",
+      "status": "BASELINE_CONFIRMED_WITH_DISCOVERY_NOTE",
+      "command": {
+        "name": "owned-baseline",
+        "cmd": "git status --short -- skills/layering-and-boundaries\ngit diff --cached -- skills/layering-and-boundaries\ngit diff -- skills/layering-and-boundaries\ngit ls-files --others --exclude-standard -- skills/layering-and-boundaries\ngit show HEAD:skills/layering-and-boundaries/skill.yaml\nrg --files skills/layering-and-boundaries\nrg --files -g AGENTS.md skills/layering-and-boundaries skills docs",
+        "workdir": "C:/git/agent-skills",
+        "max_output_tokens": 3500
+      },
+      "result": {
+        "chunk_id": "ab8c75",
+        "wall_time_seconds": 0.2076237,
+        "exit_code": 1,
+        "original_token_count": 582,
+        "output": "schemaVersion: 1\n\nname: layering-and-boundaries\nversion: 1.2.4\ndescription: >-\n  Deciding where an enterprise application's boundaries go and which direction dependencies\n  cross them: the classical presentation / domain / data-source split, the styles that\n  reorganise it (hexagonal, clean, modular monolith, vertical slices), and how a boundary is\n  enforced rather than documented. Use when a package structure is argued about, when a\n  controller contains business rules, when an entity or DTO travels end to end, when a\n  service layer only forwards, when hexagonal is adopted without a driver, or when adding a\n  field requires editing seven files. Does not cover which layer business rules take\n  (domain-logic-organization), whether a boundary should be remote\n  (distribution-boundaries), the data-access patterns (data-source-patterns), or what the\n  application service around a use case owns (service-layer-design).\n\nlicense: Apache-2.0\n\nauthors:\n  - name: agent-skills contributors\n    url: https://github.com/robsonkades/agent-skills\n\nhomepage: https://github.com/robsonkades/agent-skills/tree/main/skills/layering-and-boundaries\nrepository:\n  type: git\n  url: https://github.com/robsonkades/agent-skills\n  directory: skills/layering-and-boundaries\n\nkeywords:\n  - layering\n  - hexagonal\n  - clean-architecture\n  - modular-monolith\n  - archunit\n  - boundaries\n\nfiles:\n  - SKILL.md\n  - skill.yaml\n  - references/\n\ndependencies:\n  - name: enterprise-transactions\n    version: ^1.0.0\n\nsuggests:\n  - architecture-and-performance\n  - architecture-decision-making\n  - data-source-patterns\n  - distribution-boundaries\n  - domain-logic-organization\n  - enterprise-architecture-smells\n  - enterprise-base-patterns\n  - pattern-selection-and-composition\n  - query-objects-and-specifications\n  - remote-facade-and-dto\n  - service-layer-design\n\ncapabilities:\n  - reads-source\n\nagentOverrides:\n  codex:\n    interface:\n      display_name: Layering and Boundaries\n      short_description: Dependency direction, styles and enforcement\n      default_prompt: Use Layering and Boundaries to review or design this structure.\nskills/layering-and-boundaries\\skill.yaml\nskills/layering-and-boundaries\\SKILL.md\nskills/layering-and-boundaries\\references\\layering-styles.md\nskills/layering-and-boundaries\\references\\boundary-enforcement.md\n"
+      },
+      "toolPromiseStatus": "fulfilled",
+      "note": "Owned Git output was clean and committed manifest 1.2.4. Final rg --files -g AGENTS.md over skills/docs returned 1 for no matches; subsequent root scan found only root AGENTS.md. This is not a test failure."
+    },
+    {
+      "kind": "technical-controls",
+      "status": "PASS_WITH_EXPECTED_NEGATIVE",
+      "command": {
+        "name": "technical-contract-controls",
+        "cmd": "& 'C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/run-probe.ps1'",
+        "workdir": "C:/git/agent-skills",
+        "max_output_tokens": 4700
+      },
+      "result": {
+        "chunk_id": "f0fb49",
+        "wall_time_seconds": 2.271185,
+        "exit_code": 0,
+        "original_token_count": 472,
+        "output": "version exit code: 0; expected: 0\r\nopenjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n\r\ncompile-original exit code: 0; expected: 0\r\ncompile-isolated-original exit code: 1; expected: 1\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\case-fixtures\\src\\com\\acme\\orders\\domain\\OrderService.java:3: error: package com.acme.orders.integration does not exist\r\nimport com.acme.orders.integration.LocalNotifier;\r\n                                  ^\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\case-fixtures\\src\\com\\acme\\orders\\domain\\OrderService.java:7: error: cannot find symbol\r\n    private final LocalNotifier notifier;\r\n                  ^\r\n  symbol:   class LocalNotifier\r\n  location: class OrderService\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\case-fixtures\\src\\com\\acme\\orders\\domain\\OrderService.java:9: error: cannot find symbol\r\n    public OrderService(LocalNotifier notifier) {\r\n                        ^\r\n  symbol:   class LocalNotifier\r\n  location: class OrderService\r\n3 errors\r\n\r\ncompile-inverted-core exit code: 0; expected: 0\r\ncompile-inverted-complete exit code: 0; expected: 0\r\nrun-original exit code: 0; expected: 0\r\nPASS: JDK wall-clock access without framework classes\r\nPASS: fixed clock before/at/after deadline without DI framework\r\nPASS: confirmation, invalid-ID control and composition\r\n\r\nrun-inverted exit code: 0; expected: 0\r\nPASS: JDK wall-clock access without framework classes\r\nPASS: fixed clock before/at/after deadline without DI framework\r\nPASS: confirmation, invalid-ID control and composition\r\n\r\nPASS: all seven subprocess checks reached their expected result\r\n"
+      },
+      "toolPromiseStatus": "fulfilled",
+      "resultDetailsArtifact": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/results.json",
+      "scope": "Four compiler invocations, two runtime invocations and Java version read. The isolated original compile must fail for the specific missing integration package; all other subprocesses pass."
+    },
+    {
+      "kind": "initial-local-package-validation",
+      "status": "PASS",
+      "command": {
+        "name": "owned-package-validation",
+        "cmd": "@'\nimport { readFileSync, existsSync } from 'node:fs';\nimport { resolve, dirname } from 'node:path';\nimport { parseManifest } from './packages/core/src/domain/manifest.ts';\nimport { buildSkillPackage } from './packages/core/src/domain/skill-package.ts';\nimport { validatePackage } from './packages/core/src/application/validate-package.ts';\n\nconst root = resolve('skills/layering-and-boundaries');\nconst paths = ['SKILL.md', 'skill.yaml', 'references/layering-styles.md', 'references/boundary-enforcement.md'];\nconst parsed = parseManifest(readFileSync(resolve(root, 'skill.yaml'), 'utf8'), { strict: true });\nconst pkg = buildSkillPackage(parsed.manifest, paths.map(path => ({ path, bytes: readFileSync(resolve(root, path)) })));\nconst report = validatePackage(pkg, { directoryName: 'layering-and-boundaries' });\nconst failures = [...parsed.issues, ...report.issues];\nconst resources = [];\nfor (const path of paths.filter(path => path.endsWith('.md'))) {\n  const source = readFileSync(resolve(root, path), 'utf8');\n  for (const match of source.matchAll(/\\]\\(([^)]+)\\)/g)) {\n    const target = match[1].replace(/^<|>$/g, '');\n    if (/^https?:/.test(target)) continue;\n    const filePart = target.split('#')[0];\n    const absolute = resolve(dirname(resolve(root, path)), filePart || path.split('/').at(-1));\n    resources.push({ from: path, target, exists: existsSync(absolute) });\n    if (!existsSync(absolute)) failures.push({ missing: target, from: path });\n  }\n  for (const match of source.matchAll(/\\x60((?:references|assets|scripts)\\/[^\\x60]+)\\x60/g)) {\n    const absolute = resolve(root, match[1].split('#')[0]);\n    resources.push({ from: path, target: match[1], exists: existsSync(absolute) });\n    if (!existsSync(absolute)) failures.push({ missing: match[1], from: path });\n  }\n}\nconst related = [...parsed.manifest.dependencies.map(item => item.name), ...parsed.manifest.suggests];\nconst missingRelated = related.filter(name => !existsSync(resolve('skills', name, 'SKILL.md')));\nif (missingRelated.length) failures.push({ missingRelated });\nconsole.log(JSON.stringify({ skill: parsed.manifest.name, version: parsed.manifest.version, files: paths.length, packageReport: report, parseIssues: parsed.issues, resources, relatedSkillsChecked: related.length, missingRelated, failures }, null, 2));\nprocess.exitCode = failures.length ? 1 : 0;\n'@ | node --input-type=module",
+        "workdir": "C:/git/agent-skills",
+        "max_output_tokens": 3600
+      },
+      "result": {
+        "chunk_id": "9a2745",
+        "wall_time_seconds": 0.2140782,
+        "exit_code": 0,
+        "original_token_count": 128,
+        "output": "{\n  \"skill\": \"layering-and-boundaries\",\n  \"version\": \"1.2.5\",\n  \"files\": 4,\n  \"packageReport\": {\n    \"ok\": true,\n    \"issues\": [],\n    \"errors\": [],\n    \"warnings\": []\n  },\n  \"parseIssues\": [],\n  \"resources\": [\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/layering-styles.md\",\n      \"exists\": true\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/boundary-enforcement.md\",\n      \"exists\": true\n    }\n  ],\n  \"relatedSkillsChecked\": 12,\n  \"missingRelated\": [],\n  \"failures\": []\n}\n"
+      },
+      "toolPromiseStatus": "fulfilled"
+    },
+    {
+      "kind": "initial-format-inspection",
+      "status": "FAILED_THEN_REPAIRED",
+      "command": {
+        "name": "owned-format-and-diff",
+        "cmd": "node node_modules/prettier/bin/prettier.cjs --check skills/layering-and-boundaries/SKILL.md skills/layering-and-boundaries/skill.yaml skills/layering-and-boundaries/references/layering-styles.md skills/layering-and-boundaries/references/boundary-enforcement.md\ngit diff --check -- skills/layering-and-boundaries\ngit diff --stat -- skills/layering-and-boundaries\ngit diff -- skills/layering-and-boundaries",
+        "workdir": "C:/git/agent-skills",
+        "max_output_tokens": 4000
+      },
+      "result": {
+        "chunk_id": "913355",
+        "wall_time_seconds": 0.3500634,
+        "exit_code": 0,
+        "original_token_count": 1015,
+        "output": "Checking formatting...\n[warn] skills/layering-and-boundaries/references/boundary-enforcement.md\n[warn] Code style issues found in the above file. Run Prettier with --write to fix.\n .../references/boundary-enforcement.md               | 20 ++++++++++++++------\n skills/layering-and-boundaries/skill.yaml            |  2 +-\n 2 files changed, 15 insertions(+), 7 deletions(-)\ndiff --git a/skills/layering-and-boundaries/references/boundary-enforcement.md b/skills/layering-and-boundaries/references/boundary-enforcement.md\nindex f162d62..8190ef0 100644\n--- a/skills/layering-and-boundaries/references/boundary-enforcement.md\n+++ b/skills/layering-and-boundaries/references/boundary-enforcement.md\n@@ -156,12 +156,19 @@ unverified data boundary rather than claiming isolation from an ArchUnit or JPMS\n    `DataAccessException` or `RestClientException` handled in a business rule means the\n    business rule now depends on the mechanism. Translate at the adapter boundary\n    (`enterprise-base-patterns`).\n-6. **Static access to context.** `SecurityContextHolder`, `LocaleContextHolder`, a static\n-   clock or a thread-local tenant read from inside the domain. It compiles, it is invisible\n-   in the signature, and it makes the rule untestable without the framework.\n-7. **The upward call.** Domain code calling a notifier, a scheduler or an HTTP client\n-   directly. Invert it: the domain declares the interface it needs, and the adapter\n-   implements it.\n+6. **Implicit context.** Resolve the actual source and lifetime of time, user or tenant data.\n+   `SecurityContextHolder` and `LocaleContextHolder` introduce framework dependencies;\n+   `Instant.now()` and `Clock.systemUTC()` do not. A hard-coded system clock still prevents\n+   supplying a controlled time source, and a thread-local value needs checking across the\n+   actual execution path. Pass required values or an existing `Clock` when that contract\n+   needs control; `Clock.fixed` supports deterministic time tests without a DI framework.\n+   Preserve an adequate explicit input rather than wrapping it in another port.\n+7. **An upward source dependency.** Inspect the declared type, implementation and composition\n+   behind a notifier, scheduler or HTTP-client call. When the chosen boundary forbids the\n+   domain from depending on that outer mechanism, let the consuming domain/application own\n+   the port and implement it outside. A call through an existing inside-owned port already\n+   follows this rule. Keep an accepted classical dependency when no protected contract is\n+   violated.\n \n ## Reviewing an existing structure\n \n@@ -183,6 +190,7 @@ Ask, in this order:\n \n ## Primary references\n \n+- [Java 17 Clock](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Clock.html) and [Instant.now](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Instant.html#now()) — JDK time sources, controlled clocks and testing without a dependency-injection framework; these APIs exist since Java 8.\n - [ArchUnit user guide](https://www.archunit.org/userguide/html/000_Index.html) — imports and dependency-rule scope.\n - [Hibernate 6.6 Formula annotation](https://docs.hibernate.org/orm/6.6/javadocs/org/hibernate/annotations/Formula.html) — an example of a provider package outside the illustrative denylist.\n - [Spring transaction propagation](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/tx-propagation.html) — REQUIRED versus independent transaction scopes; match the deployed release.\ndiff --git a/skills/layering-and-boundaries/skill.yaml b/skills/layering-and-boundaries/skill.yaml\nindex a210936..4e500c9 100644\n--- a/skills/layering-and-boundaries/skill.yaml\n+++ b/skills/layering-and-boundaries/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: layering-and-boundaries\n-version: 1.2.4\n+version: 1.2.5\n description: >-\n   Deciding where an enterprise application's boundaries go and which direction dependencies\n   cross them: the classical presentation / domain / data-source split, the styles that\n"
+      },
+      "toolPromiseStatus": "fulfilled",
+      "note": "Prettier warned on the newly added Instant.now anchor requiring angle-bracket URL syntax. Combined shell exit was zero due later Git commands; the warning was read and treated as a failure. Only that URL syntax was fixed with apply_patch."
+    },
+    {
+      "kind": "format-diagnostic",
+      "status": "PASS",
+      "command": {
+        "cmd": "@'\nimport { readFileSync } from 'node:fs';\nimport * as prettier from 'prettier';\nconst path='skills/layering-and-boundaries/references/boundary-enforcement.md';\nconst source=readFileSync(path,'utf8');\nconst options=await prettier.resolveConfig(path);\nconst formatted=await prettier.format(source,{...options,filepath:path});\nconst oldLines=source.split('\\n');\nconst newLines=formatted.split('\\n');\nconsole.log(JSON.stringify({changes:newLines.flatMap((line,index)=>line===oldLines[index]?[]:[{line:index+1,before:oldLines[index],after:line}])},null,2));\n'@ | node --input-type=module",
+        "workdir": "C:/git/agent-skills",
+        "max_output_tokens": 2200
+      },
+      "result": {
+        "chunk_id": "6e2e8f",
+        "wall_time_seconds": 0.1638171,
+        "exit_code": 0,
+        "original_token_count": 191,
+        "output": "{\n  \"changes\": [\n    {\n      \"line\": 193,\n      \"before\": \"- [Java 17 Clock](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Clock.html) and [Instant.now](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Instant.html#now()) — JDK time sources, controlled clocks and testing without a dependency-injection framework; these APIs exist since Java 8.\",\n      \"after\": \"- [Java 17 Clock](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Clock.html) and [Instant.now](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Instant.html#now()>) — JDK time sources, controlled clocks and testing without a dependency-injection framework; these APIs exist since Java 8.\"\n    }\n  ]\n}\n"
+      },
+      "toolPromiseStatus": "fulfilled",
+      "scope": "Read-only comparison against Prettier output identified exactly one changed link line; no formatter wrote repository files."
+    },
+    {
+      "kind": "final-local-package-validation",
+      "status": "PASS",
+      "command": {
+        "name": "final-owned-package-validation",
+        "cmd": "@'\nimport { readFileSync, existsSync } from 'node:fs';\nimport { resolve, dirname } from 'node:path';\nimport { parseManifest } from './packages/core/src/domain/manifest.ts';\nimport { buildSkillPackage } from './packages/core/src/domain/skill-package.ts';\nimport { validatePackage } from './packages/core/src/application/validate-package.ts';\n\nconst root = resolve('skills/layering-and-boundaries');\nconst paths = ['SKILL.md', 'skill.yaml', 'references/layering-styles.md', 'references/boundary-enforcement.md'];\nconst parsed = parseManifest(readFileSync(resolve(root, 'skill.yaml'), 'utf8'), { strict: true });\nconst pkg = buildSkillPackage(parsed.manifest, paths.map(path => ({ path, bytes: readFileSync(resolve(root, path)) })));\nconst report = validatePackage(pkg, { directoryName: 'layering-and-boundaries' });\nconst failures = [...parsed.issues, ...report.issues];\nconst resources = [];\nfor (const path of paths.filter(path => path.endsWith('.md'))) {\n  const source = readFileSync(resolve(root, path), 'utf8');\n  for (const match of source.matchAll(/\\]\\(([^)]+)\\)/g)) {\n    const target = match[1].replace(/^<|>$/g, '');\n    if (/^https?:/.test(target)) continue;\n    const filePart = target.split('#')[0];\n    const absolute = resolve(dirname(resolve(root, path)), filePart || path.split('/').at(-1));\n    resources.push({ from: path, target, exists: existsSync(absolute) });\n    if (!existsSync(absolute)) failures.push({ missing: target, from: path });\n  }\n  for (const match of source.matchAll(/\\x60((?:references|assets|scripts)\\/[^\\x60]+)\\x60/g)) {\n    const absolute = resolve(root, match[1].split('#')[0]);\n    resources.push({ from: path, target: match[1], exists: existsSync(absolute) });\n    if (!existsSync(absolute)) failures.push({ missing: match[1], from: path });\n  }\n}\nconst related = [...parsed.manifest.dependencies.map(item => item.name), ...parsed.manifest.suggests];\nconst missingRelated = related.filter(name => !existsSync(resolve('skills', name, 'SKILL.md')));\nif (missingRelated.length) failures.push({ missingRelated });\nconsole.log(JSON.stringify({ skill: parsed.manifest.name, version: parsed.manifest.version, files: paths.length, packageReport: report, parseIssues: parsed.issues, resources, relatedSkillsChecked: related.length, missingRelated, failures }, null, 2));\nprocess.exitCode = failures.length ? 1 : 0;\n'@ | node --input-type=module",
+        "workdir": "C:/git/agent-skills",
+        "max_output_tokens": 2200
+      },
+      "result": {
+        "chunk_id": "87f1fd",
+        "wall_time_seconds": 0.1658752,
+        "exit_code": 0,
+        "original_token_count": 128,
+        "output": "{\n  \"skill\": \"layering-and-boundaries\",\n  \"version\": \"1.2.5\",\n  \"files\": 4,\n  \"packageReport\": {\n    \"ok\": true,\n    \"issues\": [],\n    \"errors\": [],\n    \"warnings\": []\n  },\n  \"parseIssues\": [],\n  \"resources\": [\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/layering-styles.md\",\n      \"exists\": true\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/boundary-enforcement.md\",\n      \"exists\": true\n    }\n  ],\n  \"relatedSkillsChecked\": 12,\n  \"missingRelated\": [],\n  \"failures\": []\n}\n"
+      },
+      "toolPromiseStatus": "fulfilled",
+      "scope": "Strict manifest and repository package validator on four owned files, synchronized description, two local resources, existence of 12 declared dependency/suggestion entrypoints. No catalog-wide range/routing claim."
+    },
+    {
+      "kind": "final-format-and-whitespace",
+      "status": "PASS",
+      "command": {
+        "name": "final-owned-format-and-whitespace",
+        "cmd": "node node_modules/prettier/bin/prettier.cjs --check skills/layering-and-boundaries/SKILL.md skills/layering-and-boundaries/skill.yaml skills/layering-and-boundaries/references/layering-styles.md skills/layering-and-boundaries/references/boundary-enforcement.md\nif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }\ngit diff --check -- skills/layering-and-boundaries",
+        "workdir": "C:/git/agent-skills",
+        "max_output_tokens": 1500
+      },
+      "result": {
+        "chunk_id": "5ae968",
+        "wall_time_seconds": 0.2706523,
+        "exit_code": 0,
+        "original_token_count": 17,
+        "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+      },
+      "toolPromiseStatus": "fulfilled"
+    },
+    {
+      "kind": "unchanged-example-fences",
+      "status": "PASS",
+      "command": {
+        "name": "preserved-code-fences",
+        "cmd": "@'\nimport { readFileSync } from 'node:fs';\nimport { resolve } from 'node:path';\nconst root='skills/layering-and-boundaries';\nconst baseline='C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/baseline/layering-and-boundaries';\nconst paths=['SKILL.md','references/layering-styles.md','references/boundary-enforcement.md'];\nconst fences=text=>[...text.replaceAll('\\r\\n','\\n').matchAll(/^```[^\\n]*\\n[\\s\\S]*?^```/gm)].map(match=>match[0]);\nconst checks=paths.map(path=>{const before=fences(readFileSync(resolve(baseline,path),'utf8'));const after=fences(readFileSync(resolve(root,path),'utf8'));return {path,fences:after.length,preserved:JSON.stringify(before)===JSON.stringify(after)};});\nconsole.log(JSON.stringify(checks,null,2));\nif(checks.some(check=>!check.preserved))process.exitCode=1;\n'@ | node --input-type=module",
+        "workdir": "C:/git/agent-skills",
+        "max_output_tokens": 1600
+      },
+      "result": {
+        "chunk_id": "451889",
+        "wall_time_seconds": 0.1220761,
+        "exit_code": 0,
+        "original_token_count": 67,
+        "output": "[\n  {\n    \"path\": \"SKILL.md\",\n    \"fences\": 2,\n    \"preserved\": true\n  },\n  {\n    \"path\": \"references/layering-styles.md\",\n    \"fences\": 4,\n    \"preserved\": true\n  },\n  {\n    \"path\": \"references/boundary-enforcement.md\",\n    \"fences\": 2,\n    \"preserved\": true\n  }\n]\n"
+      },
+      "toolPromiseStatus": "fulfilled"
+    },
+    {
+      "kind": "final-baseline-artifacts-processes",
+      "status": "PASS",
+      "command": {
+        "name": "final-baseline-and-artifact-inspection",
+        "cmd": "$ErrorActionPreference = 'Stop'\n$baselineRoot = 'C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/baseline/layering-and-boundaries'\n$probeRoot = 'C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe'\n$files = @(rg --files skills/layering-and-boundaries | ForEach-Object {\n  $normalized = $_.Replace('\\', '/')\n  $relative = $normalized.Substring('skills/layering-and-boundaries/'.Length)\n  $current = Get-Item -LiteralPath $normalized\n  [pscustomobject]@{path=$normalized; sha256=(Get-FileHash -LiteralPath $normalized -Algorithm SHA256).Hash; baselineSha256=(Get-FileHash -LiteralPath (Join-Path $baselineRoot $relative) -Algorithm SHA256).Hash; bytes=$current.Length}\n})\n$artifacts = @(Get-ChildItem -LiteralPath $probeRoot -Recurse -File | ForEach-Object { [pscustomobject]@{path=$_.FullName.Replace('\\','/'); sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash; bytes=$_.Length} })\n$active = @(Get-CimInstance Win32_Process -Filter \"Name='java.exe' OR Name='javac.exe'\" | Where-Object { $_.CommandLine -like '*layering-and-boundaries-probe*' } | Select-Object ProcessId,Name,CommandLine)\n[pscustomobject]@{ files=$files; artifacts=$artifacts; status=@(git status --short -- skills/layering-and-boundaries); staged=@(git diff --cached -- skills/layering-and-boundaries); untracked=@(git ls-files --others --exclude-standard -- skills/layering-and-boundaries); diff=@(git diff -- skills/layering-and-boundaries); activeProbeProcesses=$active; probeResults=(Get-Content -LiteralPath (Join-Path $probeRoot 'results.json') -Raw | ConvertFrom-Json) } | ConvertTo-Json -Depth 12",
+        "workdir": "C:/git/agent-skills",
+        "max_output_tokens": 16500
+      },
+      "result": {
+        "exitCode": 0,
+        "status": [
+          " M skills/layering-and-boundaries/references/boundary-enforcement.md",
+          " M skills/layering-and-boundaries/skill.yaml"
+        ],
+        "staged": [],
+        "untracked": [],
+        "activeProbeProcesses": [],
+        "fullStructuredResultsStoredIn": [
+          "finalOwnedFiles",
+          "finalDiff",
+          "artifacts",
+          "technicalResults.subprocesses"
+        ]
+      },
+      "scope": "Against coordinator baseline and assignment hashes: exactly the intended two files changed; all other owned bytes preserved. No active probe JVM/compiler."
+    }
+  ],
+  "inspectionProblems": [
+    {
+      "command": "rg -n 'Static access|The upward|classical|consuming domain|no inversion|source dependencies|Java 9|No concrete|Mechanism' skills/layering-and-boundaries/SKILL.md skills/layering-and-boundaries/references/*.md",
+      "result": "PowerShell literal wildcard path produced rg os error 123 for references/*.md; no files modified.",
+      "resolution": "Reran rg with -g '*.md' and the owned directory; exact reference locations were returned."
+    }
+  ],
+  "technicalResults": {
+    "compiler": "Temurin javac 25.0.3+9 with --release 17",
+    "runtime": "OpenJDK Temurin 25.0.3+9-LTS; two runs with --limit-modules java.base",
+    "java17RuntimeExecuted": false,
+    "subprocesses": [
+      {
+        "label": "version",
+        "tool": "java.exe",
+        "arguments": [
+          "-version"
+        ],
+        "exitCode": 0,
+        "expectedExit": 0,
+        "stdout": null,
+        "stderr": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n"
+      },
+      {
+        "label": "compile-original",
+        "tool": "javac.exe",
+        "arguments": [
+          "--release",
+          "17",
+          "-d",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\classes-original",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\case-fixtures\\src\\com\\acme\\orders\\domain\\OrderService.java",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\case-fixtures\\src\\com\\acme\\orders\\integration\\LocalNotifier.java",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\case-fixtures\\src\\com\\acme\\orders\\web\\OrderController.java",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\case-fixtures\\src\\com\\acme\\orders\\Bootstrap.java",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\BoundaryProbe.java"
+        ],
+        "exitCode": 0,
+        "expectedExit": 0,
+        "stdout": null,
+        "stderr": null
+      },
+      {
+        "label": "compile-isolated-original",
+        "tool": "javac.exe",
+        "arguments": [
+          "--release",
+          "17",
+          "-classpath",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\empty",
+          "-sourcepath",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\empty",
+          "-d",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\classes-isolated-original",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\case-fixtures\\src\\com\\acme\\orders\\domain\\OrderService.java"
+        ],
+        "exitCode": 1,
+        "expectedExit": 1,
+        "stdout": null,
+        "stderr": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\case-fixtures\\src\\com\\acme\\orders\\domain\\OrderService.java:3: error: package com.acme.orders.integration does not exist\r\nimport com.acme.orders.integration.LocalNotifier;\r\n                                  ^\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\case-fixtures\\src\\com\\acme\\orders\\domain\\OrderService.java:7: error: cannot find symbol\r\n    private final LocalNotifier notifier;\r\n                  ^\r\n  symbol:   class LocalNotifier\r\n  location: class OrderService\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\case-fixtures\\src\\com\\acme\\orders\\domain\\OrderService.java:9: error: cannot find symbol\r\n    public OrderService(LocalNotifier notifier) {\r\n                        ^\r\n  symbol:   class LocalNotifier\r\n  location: class OrderService\r\n3 errors\r\n"
+      },
+      {
+        "label": "compile-inverted-core",
+        "tool": "javac.exe",
+        "arguments": [
+          "--release",
+          "17",
+          "-classpath",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\empty",
+          "-sourcepath",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\empty",
+          "-d",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\classes-core",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\counterfactual\\com\\acme\\orders\\domain\\NotificationPort.java",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\counterfactual\\com\\acme\\orders\\domain\\OrderService.java"
+        ],
+        "exitCode": 0,
+        "expectedExit": 0,
+        "stdout": null,
+        "stderr": null
+      },
+      {
+        "label": "compile-inverted-complete",
+        "tool": "javac.exe",
+        "arguments": [
+          "--release",
+          "17",
+          "-d",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\classes-inverted",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\counterfactual\\com\\acme\\orders\\domain\\NotificationPort.java",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\counterfactual\\com\\acme\\orders\\domain\\OrderService.java",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\counterfactual\\com\\acme\\orders\\integration\\LocalNotifier.java",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\case-fixtures\\src\\com\\acme\\orders\\web\\OrderController.java",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\case-fixtures\\src\\com\\acme\\orders\\Bootstrap.java",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\BoundaryProbe.java"
+        ],
+        "exitCode": 0,
+        "expectedExit": 0,
+        "stdout": null,
+        "stderr": null
+      },
+      {
+        "label": "run-original",
+        "tool": "java.exe",
+        "arguments": [
+          "--limit-modules",
+          "java.base",
+          "-cp",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\classes-original",
+          "BoundaryProbe"
+        ],
+        "exitCode": 0,
+        "expectedExit": 0,
+        "stdout": "PASS: JDK wall-clock access without framework classes\r\nPASS: fixed clock before/at/after deadline without DI framework\r\nPASS: confirmation, invalid-ID control and composition\r\n",
+        "stderr": null
+      },
+      {
+        "label": "run-inverted",
+        "tool": "java.exe",
+        "arguments": [
+          "--limit-modules",
+          "java.base",
+          "-cp",
+          "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\layering-and-boundaries-probe\\classes-inverted",
+          "BoundaryProbe"
+        ],
+        "exitCode": 0,
+        "expectedExit": 0,
+        "stdout": "PASS: JDK wall-clock access without framework classes\r\nPASS: fixed clock before/at/after deadline without DI framework\r\nPASS: confirmation, invalid-ID control and composition\r\n",
+        "stderr": null
+      }
+    ],
+    "interpretation": [
+      "Original domain imports a concrete integration type, observed by a specific compiler failure when the integration source/classes are unavailable.",
+      "A domain-owned port plus outside implementation compiles the domain independently, while supplied caller and composition controls still pass.",
+      "JDK time access and deterministic clock controls run without a framework; no static access count or naming heuristic was used as an independence proof."
+    ],
+    "notEstablished": [
+      "No application-independent performance advantage or architectural preference.",
+      "No actual framework, network, database, broker, transaction/security, concurrency, durability or deployment integration.",
+      "No proof that one green import/compile rule covers every boundary or runtime behavior.",
+      "No binary/source compatibility guarantee for consumers outside the supplied fixture."
+    ]
+  },
+  "behavioralEvaluation": {
+    "executed": false,
+    "actualAgentOutputs": [],
+    "measuredGain": false,
+    "beforeAfterComparison": false,
+    "reason": "Reviewer supplied reproducible cases and did not run actors under the parallel workflow. Technical fixtures test Java behavior and bounded source independence only.",
+    "walkthroughs": [
+      {
+        "caseId": "layering-accepted-classical",
+        "status": "STRUCTURED_WALKTHROUGH_ONLY",
+        "summary": "The existing domain -> integration source dependency meets the accepted policy; no interface addition is required merely because LocalNotifier is concrete."
+      },
+      {
+        "caseId": "layering-required-independence",
+        "status": "STRUCTURED_WALKTHROUGH_ONLY",
+        "summary": "The same dependency violates isolated-domain compilation; a purpose-owned port can address it while keeping the sole implementation and caller behavior."
+      }
+    ]
+  },
+  "caseInputs": [
+    {
+      "caseId": "layering-accepted-classical",
+      "knownDevelopmentCase": true,
+      "heldOut": false,
+      "requestFile": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/case-fixtures/request.txt",
+      "request": "Review the notification boundary in this small order module against its accepted architecture decision. Trace the consumer and composition, state which dependency direction the code actually implements, and make only corrections required by the accepted contract. Preserve observable confirmation behavior. Identify the smallest useful enforcement check and its limits; a justified no-change result is valid.",
+      "fixtures": [
+        {
+          "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/case-fixtures/src/com/acme/orders/domain/OrderService.java",
+          "destination": "src/com/acme/orders/domain/OrderService.java"
+        },
+        {
+          "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/case-fixtures/src/com/acme/orders/integration/LocalNotifier.java",
+          "destination": "src/com/acme/orders/integration/LocalNotifier.java"
+        },
+        {
+          "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/case-fixtures/src/com/acme/orders/web/OrderController.java",
+          "destination": "src/com/acme/orders/web/OrderController.java"
+        },
+        {
+          "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/case-fixtures/src/com/acme/orders/Bootstrap.java",
+          "destination": "src/com/acme/orders/Bootstrap.java"
+        }
+      ],
+      "prerequisites": [
+        "Materialize only these case inputs in a fresh isolated working directory; copy its selected decision as ARCHITECTURE.md.",
+        "Existing Java compiler supporting --release 17. No external dependencies, framework, installation or real agent configuration needed.",
+        "Withhold counterfactual sources, BoundaryProbe.java, reviewer logs, this handoff, private criteria and the alternative architecture decision from the actor."
+      ],
+      "reproduction": "Compile all provided .java sources with javac --release 17 -d classes. Inspect Bootstrap -> OrderController -> OrderService -> LocalNotifier; use bounded, isolated compilation/tests appropriate to the accepted project contract.",
+      "taskScope": "Review and implement justified local fixes if required. No prescribed number of interfaces/classes or chosen implementation.",
+      "decisionFixture": {
+        "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/case-fixtures/architecture-classical.md",
+        "destination": "ARCHITECTURE.md"
+      }
+    },
+    {
+      "caseId": "layering-required-independence",
+      "knownDevelopmentCase": true,
+      "heldOut": false,
+      "requestFile": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/case-fixtures/request.txt",
+      "request": "Review the notification boundary in this small order module against its accepted architecture decision. Trace the consumer and composition, state which dependency direction the code actually implements, and make only corrections required by the accepted contract. Preserve observable confirmation behavior. Identify the smallest useful enforcement check and its limits; a justified no-change result is valid.",
+      "fixtures": [
+        {
+          "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/case-fixtures/src/com/acme/orders/domain/OrderService.java",
+          "destination": "src/com/acme/orders/domain/OrderService.java"
+        },
+        {
+          "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/case-fixtures/src/com/acme/orders/integration/LocalNotifier.java",
+          "destination": "src/com/acme/orders/integration/LocalNotifier.java"
+        },
+        {
+          "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/case-fixtures/src/com/acme/orders/web/OrderController.java",
+          "destination": "src/com/acme/orders/web/OrderController.java"
+        },
+        {
+          "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/case-fixtures/src/com/acme/orders/Bootstrap.java",
+          "destination": "src/com/acme/orders/Bootstrap.java"
+        }
+      ],
+      "prerequisites": [
+        "Materialize only these case inputs in a fresh isolated working directory; copy its selected decision as ARCHITECTURE.md.",
+        "Existing Java compiler supporting --release 17. No external dependencies, framework, installation or real agent configuration needed.",
+        "Withhold counterfactual sources, BoundaryProbe.java, reviewer logs, this handoff, private criteria and the alternative architecture decision from the actor."
+      ],
+      "reproduction": "Compile all provided .java sources with javac --release 17 -d classes. Inspect Bootstrap -> OrderController -> OrderService -> LocalNotifier; use bounded, isolated compilation/tests appropriate to the accepted project contract.",
+      "taskScope": "Review and implement justified local fixes if required. No prescribed number of interfaces/classes or chosen implementation.",
+      "decisionFixture": {
+        "source": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/case-fixtures/architecture-isolated.md",
+        "destination": "ARCHITECTURE.md"
+      }
+    }
+  ],
+  "caseCriteria": [
+    {
+      "caseId": "layering-accepted-classical",
+      "privateEvaluatorOnly": true,
+      "expected": [
+        "Inspect Bootstrap, caller, domain and notifier plus accepted decision, rather than inferring from names.",
+        "Recognize that current source dependency is permitted and that full behavior works using only JDK classes.",
+        "Keep the adequate dependency or explicitly justify any optional change by a real requirement; no mandatory new port/class/DTO/layer due to collaborator kind or sole implementation.",
+        "Preserve exactly one notification for a valid confirmation, no notification for invalid IDs, and the Java 17/no-dependency target.",
+        "Describe scoped checks and do not claim durable delivery, concurrency safety or framework integration from this local recording notifier."
+      ],
+      "failureConditions": [
+        "Reports a prohibited upward/source dependency despite the explicit permitted policy.",
+        "Treats the interface count or notification name as sufficient proof a refactor is mandatory.",
+        "Calls the local in-memory mechanism a tested external broker/framework.",
+        "Silently changes notification/error behavior or upgrades the target/adds dependencies."
+      ]
+    },
+    {
+      "caseId": "layering-required-independence",
+      "privateEvaluatorOnly": true,
+      "expected": [
+        "Trace the same actual declared dependency and identify the accepted isolated-compilation requirement.",
+        "Demonstrate that the original core fails with integration classes/sources unavailable; a successful whole-project build does not meet this criterion.",
+        "Make a minimal source-boundary correction such as an inside-owned notification contract with the existing outside implementation and composition; do not mandate separate interfaces per method or extra representations.",
+        "Verify the corrected core with a restricted classpath/sourcepath so source discovery cannot hide the dependency, and check the supplied caller's valid and invalid confirmation behavior.",
+        "Distinguish tested provided consumers from compatibility of unavailable external consumers and avoid unsupported runtime/transaction claims."
+      ],
+      "failureConditions": [
+        "Accepts a whole-project build or package rename as proof of core independence.",
+        "Moves an interface to integration so the core still imports integration, or removes the required notification instead of preserving behavior.",
+        "Removes the one-implementation port solely because it has one implementation despite the independence requirement.",
+        "Adds framework/toolchain dependencies, reflection or hidden runtime lookup to bypass the architectural contract without justification."
+      ]
+    }
+  ],
+  "pairedConstraint": {
+    "identical": "Task, all four source files, Java baseline, behavior, implementation count, synchronous/local execution and web/framework independence requirement.",
+    "changedOnly": "Accepted source policy: concrete domain -> integration is permitted versus domain must compile with integration absent.",
+    "whyRecommendationChanges": "The observed concrete type dependency is allowed under the first policy and violates the second. Runtime call direction can remain outward after source inversion.",
+    "saturationWarning": "These are known development cases, not held out. Preserve valid criteria if baseline and revised agents both succeed; technical evidence is not an agent improvement measurement."
+  },
+  "sources": [
+    {
+      "id": "java17-clock",
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Clock.html",
+      "version": "Java SE 17; class since Java 8",
+      "consulted": "2026-10-16",
+      "sections": [
+        "Class purpose",
+        "systemUTC",
+        "fixed"
+      ],
+      "result": "Primary API documentation inspected. Supports built-in system/fixed clocks and controlled time without requiring a DI framework.",
+      "use": "Material correction to implicit-context item; paired with actual JDK-only controls."
+    },
+    {
+      "id": "java17-instant",
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Instant.html#now()",
+      "version": "Java SE 17; class since Java 8",
+      "consulted": "2026-10-16",
+      "sections": [
+        "now()",
+        "now(Clock)"
+      ],
+      "result": "Primary API documents system UTC use and the alternative clock overload.",
+      "use": "Distinguish hard-coded time source from a framework dependency."
+    },
+    {
+      "id": "cockburn-2005",
+      "url": "https://alistair.cockburn.us/hexagonal-architecture",
+      "version": "Original article, HaT Technical Report 2005.02, version 0.9 dated 2005-09-04",
+      "consulted": "2026-10-16",
+      "sections": [
+        "Intent",
+        "Nature of the Solution",
+        "Stage 3",
+        "How Many Ports?"
+      ],
+      "result": "Primary account inspected. Ports express purposeful conversations, support substitutable adapters and isolated execution; application calls may still go outward.",
+      "use": "Supports conditionally protecting the inside-owned contract; retaining the accepted classical alternative is a project/skill policy decision, not a claim that the article requires classical layering."
+    },
+    {
+      "id": "archunit-overview",
+      "url": "https://www.archunit.org/userguide/html/000_Index.html",
+      "version": "Current unversioned user guide; no exact runtime version established",
+      "consulted": "2026-10-16",
+      "result": "Guide opened for read-only review. Exact text search for consideringOnlyDependenciesInLayers returned no match in the rendered guide.",
+      "use": "No method/API correction inferred from a no-result search. Existing partial ArchUnit snippet was left unchanged; no ArchUnit execution or exact-version validation claimed."
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/BoundaryProbe.java",
+      "sha256": "648621F01313509DFF38A3B7EEE09359522983BAF7699C6EB1B35FA91DE7A6A7",
+      "bytes": 2118
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/compile-inverted-complete.stderr.log",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "bytes": 0
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/compile-inverted-complete.stdout.log",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "bytes": 0
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/compile-inverted-core.stderr.log",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "bytes": 0
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/compile-inverted-core.stdout.log",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "bytes": 0
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/compile-isolated-original.stderr.log",
+      "sha256": "357B038AD758DCA62AB72AB5E1B661E4F659705DC0DCEAF9F015EBDC8449ABC8",
+      "bytes": 954
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/compile-isolated-original.stdout.log",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "bytes": 0
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/compile-original.stderr.log",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "bytes": 0
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/compile-original.stdout.log",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "bytes": 0
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/results.json",
+      "sha256": "58D54ECA5394BAAC597BCC62B43F948E95271B0059B5BD3D3F626FF1DA11F672",
+      "bytes": 6966
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/run-inverted.stderr.log",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "bytes": 0
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/run-inverted.stdout.log",
+      "sha256": "2596DA670CF0E701F2F4B8577AB1FF16FB36C4748182680C5616C23AFDB2669C",
+      "bytes": 176
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/run-original.stderr.log",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "bytes": 0
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/run-original.stdout.log",
+      "sha256": "2596DA670CF0E701F2F4B8577AB1FF16FB36C4748182680C5616C23AFDB2669C",
+      "bytes": 176
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/run-probe.ps1",
+      "sha256": "9E20C44C4CACBD85E1FCB5B23AF6A9F925EEEC2CF563EA3D916A98A5BA66DEA5",
+      "bytes": 4143
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/version.stderr.log",
+      "sha256": "E33F6CFDF4D70CB8BF63CAE1ED026B89A77539348B7AC97535E20D32D7C1D010",
+      "bytes": 193
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/version.stdout.log",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "bytes": 0
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/case-fixtures/architecture-classical.md",
+      "sha256": "7765A62198AA3D69AAC96C9383F774A14327B9439E881308C7E519D5272C7133",
+      "bytes": 774
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/case-fixtures/architecture-isolated.md",
+      "sha256": "BC61B71ED141FC2A00E72398480ACD0C11C8EC2FA0319346D8193978F6D01868",
+      "bytes": 788
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/case-fixtures/request.txt",
+      "sha256": "3C420E77F31438D8A9776E0B349D9C971CE6592B54B2368FEA90BD629603E72D",
+      "bytes": 409
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/case-fixtures/src/com/acme/orders/Bootstrap.java",
+      "sha256": "2FCC52C44D4271E26FF5DD70FCAA0EF6CC201B77629889310369EFD940AE137B",
+      "bytes": 328
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/case-fixtures/src/com/acme/orders/domain/OrderService.java",
+      "sha256": "1E9FF75336988E4172FCDF70D0CBECF4F9F3636EEC449CAC85DCC069525C2979",
+      "bytes": 546
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/case-fixtures/src/com/acme/orders/integration/LocalNotifier.java",
+      "sha256": "EC2C1D2B51DD935811AA229C3E4C84C50A08B2E28EBF8729E0E413F0FE1F1A02",
+      "bytes": 347
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/case-fixtures/src/com/acme/orders/web/OrderController.java",
+      "sha256": "089D46889A80BC333ADF10F516CA76AAF9D5E4F827C51A50AEE7E007C984A13D",
+      "bytes": 336
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/classes-core/com/acme/orders/domain/NotificationPort.class",
+      "sha256": "6FF0B4C91653823DBDAFC211ED1284B45A06C29B29CB0F19BC92CDA2B605B594",
+      "bytes": 175
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/classes-core/com/acme/orders/domain/OrderService.class",
+      "sha256": "4A1E57C44598F4D04D49EC9F0906B2D3288394213215C94A5A25F82207DA2D64",
+      "bytes": 1229
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/classes-inverted/BoundaryProbe.class",
+      "sha256": "53C791D1D7E3AEA888C937B92FDB22F92F77EACAFD1680E14B2CA83D26C88A3D",
+      "bytes": 2770
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/classes-inverted/com/acme/orders/Bootstrap.class",
+      "sha256": "91ABB21C27F6EA29CBF53ABC0972471F5BF4A1AF2C9CC051C3EEDEFA783D77BB",
+      "bytes": 567
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/classes-inverted/com/acme/orders/domain/NotificationPort.class",
+      "sha256": "6FF0B4C91653823DBDAFC211ED1284B45A06C29B29CB0F19BC92CDA2B605B594",
+      "bytes": 175
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/classes-inverted/com/acme/orders/domain/OrderService.class",
+      "sha256": "4A1E57C44598F4D04D49EC9F0906B2D3288394213215C94A5A25F82207DA2D64",
+      "bytes": 1229
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/classes-inverted/com/acme/orders/integration/LocalNotifier.class",
+      "sha256": "5E8E31AE2ECE569CB78F2EBC2A3DB9E654CD7D9F8F0371CF2DCA3B8430DB9863",
+      "bytes": 750
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/classes-inverted/com/acme/orders/web/OrderController.class",
+      "sha256": "AE5E34DE6564AD183E5A044C3D6A36A44F4601D5329D7A86A1CA592B259190EE",
+      "bytes": 497
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/classes-original/BoundaryProbe.class",
+      "sha256": "7626C3E37526B103DB3CD1A43970613120328375DF2AE360683F99D271C0C323",
+      "bytes": 2772
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/classes-original/com/acme/orders/Bootstrap.class",
+      "sha256": "65C8CA150B0E60F36762BFB052276A0D31407DC080306F7EA4E8A094538B67A3",
+      "bytes": 569
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/classes-original/com/acme/orders/domain/OrderService.class",
+      "sha256": "08E886C918A92E3DF05B29AFD7C8526D873A6162EF1E69ED9C462D04AD05B583",
+      "bytes": 1233
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/classes-original/com/acme/orders/integration/LocalNotifier.class",
+      "sha256": "35C74E4D8CEE11D76B7A5867A64E8890C74FD3F9EFF3A123BBF3284E6BCA41FF",
+      "bytes": 703
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/classes-original/com/acme/orders/web/OrderController.class",
+      "sha256": "AE5E34DE6564AD183E5A044C3D6A36A44F4601D5329D7A86A1CA592B259190EE",
+      "bytes": 497
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/counterfactual/com/acme/orders/domain/NotificationPort.java",
+      "sha256": "79D7AFBDEAC6C5BCEA19BC8FE4DEA8B5FA360FE3D880E81DEA5F6CFFA9918CB5",
+      "bytes": 102
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/counterfactual/com/acme/orders/domain/OrderService.java",
+      "sha256": "9D572993B6744BED2499E314EE28D95A0B77D9B3400C714FF27A59955089026E",
+      "bytes": 502
+    },
+    {
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/layering-and-boundaries-probe/counterfactual/com/acme/orders/integration/LocalNotifier.java",
+      "sha256": "5CCAA5CE9A0C2B7450002EE64708F8E54EB2E720044BDF2F33D04FBEC8FA7B50",
+      "bytes": 437
+    }
+  ],
+  "limitations": [
+    "Expected benefit is more accurate, conditional guidance; no agent behavior improvement was measured.",
+    "Only reference prose and version changed; existing eight code fences were preserved. The isolated fixtures are technical evidence, not new examples shipped in the skill.",
+    "Java source/API target 17 was compiled on JDK 25 and run on JDK 25. No Java 17 runtime or all-version compatibility test.",
+    "The fixture's local notifier is intentionally in-memory. Successful recording is not notification-provider, network, persistence or transaction integration proof.",
+    "Only named compilation boundaries and confirmation/time controls were exercised; no general runtime wiring, data ownership, security or concurrency proof.",
+    "No third-party dependencies installed, framework examples executed, or repository-wide verification run.",
+    "No independent actor outputs, held-out case, no-skill comparison or measured baseline/revised gain.",
+    "Initial formatting and inspection-command issues are preserved in checks/inspectionProblems; final scoped checks passed."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Regenerate changed package integrity/version and check catalog-wide ranges/routing after all writers stop."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Required aggregate verification under the parallel exception; local checks are not repository-wide verification."
+    }
+  ],
+  "coordinatorActions": [
+    "Inspect the small diff and use the unique baseline to attribute the two changed files.",
+    "Optionally evaluate the two cases independently with only their inputs and fixed criteria.",
+    "Regenerate the registry and run global verification when all reviewers stop."
+  ],
+  "crossSkillIssues": [],
+  "handoffVerification": "Read back and verify status, two separated case arrays, all final owned/artifact hashes and absence of active probe java/javac processes before final response."
+}

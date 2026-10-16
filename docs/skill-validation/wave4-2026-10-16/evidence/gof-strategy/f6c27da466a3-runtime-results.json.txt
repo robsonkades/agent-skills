@@ -1,0 +1,135 @@
+{
+  "checks": [
+    {
+      "name": "javac identity",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "-version"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-strategy-evidence",
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "stdout": "javac 25.0.3\r\n",
+      "stderr": ""
+    },
+    {
+      "name": "java identity",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-version"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-strategy-evidence",
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n"
+    },
+    {
+      "name": "case-a compile release 17",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "--release",
+        "17",
+        "-d",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-strategy-evidence/classes/case-a",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-strategy-evidence/case-a/Encoder.java",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-strategy-evidence/case-a/ExportService.java",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-strategy-evidence/case-a/FactoryPolicy.java",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-strategy-evidence/case-a/LineEncoder.java",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-strategy-evidence/case-a/Smoke.java",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-strategy-evidence/case-a/Wiring.java",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-strategy-evidence/evaluator/ContractProbe.java"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-strategy-evidence",
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "case-a one-call smoke",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-cp",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-strategy-evidence/classes/case-a",
+        "Smoke",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-strategy-evidence/case-a/application.properties"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-strategy-evidence",
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "stdout": "PASS one TEXT export\r\n",
+      "stderr": ""
+    },
+    {
+      "name": "case-a repeated-operation contract",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-cp",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-strategy-evidence/classes/case-a",
+        "ContractProbe",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-strategy-evidence/case-a/application.properties"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-strategy-evidence",
+      "expectedExitCode": 1,
+      "exitCode": 1,
+      "stdout": "",
+      "stderr": "Exception in thread \"main\" java.lang.IllegalStateException: encoder already closed\r\n\tat LineEncoder.requireOpen(LineEncoder.java:27)\r\n\tat LineEncoder.add(LineEncoder.java:13)\r\n\tat ExportService.export(ExportService.java:16)\r\n\tat ContractProbe.main(ContractProbe.java:21)\r\n"
+    },
+    {
+      "name": "case-b compile release 17",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "--release",
+        "17",
+        "-d",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-strategy-evidence/classes/case-b",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-strategy-evidence/case-b/Encoder.java",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-strategy-evidence/case-b/ExportService.java",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-strategy-evidence/case-b/FactoryPolicy.java",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-strategy-evidence/case-b/LineEncoder.java",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-strategy-evidence/case-b/Smoke.java",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-strategy-evidence/case-b/Wiring.java",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-strategy-evidence/evaluator/ContractProbe.java"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-strategy-evidence",
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "case-b one-call smoke",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-cp",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-strategy-evidence/classes/case-b",
+        "Smoke",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-strategy-evidence/case-b/application.properties"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-strategy-evidence",
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "stdout": "PASS one TEXT export\r\n",
+      "stderr": ""
+    },
+    {
+      "name": "case-b repeated-operation contract",
+      "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-cp",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-strategy-evidence/classes/case-b",
+        "ContractProbe",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-strategy-evidence/case-b/application.properties"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-strategy-evidence",
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "stdout": "PASS 7 caller-contract checks\r\n",
+      "stderr": ""
+    }
+  ],
+  "behavioralAgentEvaluation": false,
+  "interpretation": "A single-job smoke passes both. Repeated-operation controls reject cached A and pass fresh B. JDK 25.0.3 compiler targeting Java 17; execution on JDK 25.0.3, not a Java 17 VM."
+}
+

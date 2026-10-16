@@ -1,0 +1,31 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {createHash} from 'node:crypto';
+const startedAt = new Date().toISOString();
+const input = path.resolve('../../input/project');
+const output = process.cwd();
+const allowedChanges = new Set(['src/work/BookingListener.java', 'src/work/ReceiptWriter.java', 'RUNBOOK.md']);
+const walk = dir => fs.readdirSync(dir, {withFileTypes:true}).flatMap(e => e.isDirectory()
+    ? walk(path.join(dir, e.name)) : [path.join(dir, e.name)]);
+const hash = file => createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const compared = walk(input).map(file => {
+    const relative = path.relative(input, file).replaceAll('\\', '/');
+    return {path: relative, inputSha256: hash(file), outputSha256: hash(path.join(output, relative))};
+});
+const changed = compared.filter(file => file.inputSha256 !== file.outputSha256);
+if (changed.some(file => !allowedChanges.has(file.path)) || changed.length !== allowedChanges.size)
+    throw new Error('Unexpected copied-file changes: ' + JSON.stringify(changed));
+const assessment = JSON.parse(fs.readFileSync('../assessment.json', 'utf8'));
+if (assessment.decision !== 'changed') throw new Error('Assessment decision mismatch');
+const wordCount = fs.readFileSync('../REVIEW.md', 'utf8').trim().split(/\s+/).length;
+if (wordCount > 800) throw new Error('Review exceeds word limit');
+for (const label of ['repaired-smoke', 'repaired-regression']) {
+    const log = JSON.parse(fs.readFileSync('../checks/' + label + '.json', 'utf8'));
+    if (log.exit !== 0 || log.error) throw new Error('Final check did not pass: ' + label);
+}
+const stdout = 'PASS frozen bytes preserved; ' + compared.length + ' input files compared; '
+    + changed.length + ' allowed original-file changes; review words=' + wordCount + '\n';
+fs.writeFileSync('../checks/integrity.json', JSON.stringify({cwd: output,
+    argv: ['node', '../checks/integrity.mjs'], startedAt, finishedAt: new Date().toISOString(),
+    exit: 0, stdout, stderr: '', compared, changed: changed.map(file => file.path)}, null, 2));
+process.stdout.write(stdout);

@@ -1,0 +1,99 @@
+{
+  "status": " M skills/patterns-and-modern-frameworks/references/modern-java-idioms.md\n M skills/patterns-and-modern-frameworks/skill.yaml\n",
+  "finalFiles": [
+    {
+      "path": "C:/git/agent-skills/skills/patterns-and-modern-frameworks/SKILL.md",
+      "relativePath": "SKILL.md",
+      "assignmentSha256": "e6fea904d2fce24c568b8e8044069a7ccebf2ec9c6f1ea43e30d7d5385bf90b0",
+      "finalSha256": "e6fea904d2fce24c568b8e8044069a7ccebf2ec9c6f1ea43e30d7d5385bf90b0",
+      "changedByReviewer": false
+    },
+    {
+      "path": "C:/git/agent-skills/skills/patterns-and-modern-frameworks/references/framework-equivalents.md",
+      "relativePath": "references/framework-equivalents.md",
+      "assignmentSha256": "bd054c12bb15519c182cdacb6526ce8714866f5756517161d208413852173a00",
+      "finalSha256": "bd054c12bb15519c182cdacb6526ce8714866f5756517161d208413852173a00",
+      "changedByReviewer": false
+    },
+    {
+      "path": "C:/git/agent-skills/skills/patterns-and-modern-frameworks/references/modern-java-idioms.md",
+      "relativePath": "references/modern-java-idioms.md",
+      "assignmentSha256": "2d66ab4da06dc40d33ce091c069faba994c7457b45a725b3afb26374c48e4198",
+      "finalSha256": "502bc6e142e5aaca0a006fd928610eaa1ab96f20c0a7b6b66755a5242937f0d3",
+      "changedByReviewer": true
+    },
+    {
+      "path": "C:/git/agent-skills/skills/patterns-and-modern-frameworks/skill.yaml",
+      "relativePath": "skill.yaml",
+      "assignmentSha256": "cc164a3934ca9324d21a5600de65a51a67a7532d73d0407be5787c5c396b240b",
+      "finalSha256": "0cb5dfe8c1b53a6df98bfbdc49aa0f2f9533fc9e757207fd142a78bbb148d07e",
+      "changedByReviewer": true
+    }
+  ],
+  "finishCommands": [
+    {
+      "exe": "powershell",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "Add-Type -AssemblyName System.IO.Compression.FileSystem\n$names = @('spring-core','spring-jcl','spring-beans','spring-aop','spring-context','spring-expression','spring-context-support','spring-tx')\nforeach ($name in $names) {\n  $archivePath = 'C:/Users/robso/.m2/repository/org/springframework/' + $name + '/6.2.10/' + $name + '-6.2.10.jar'\n  $archive = [System.IO.Compression.ZipFile]::OpenRead($archivePath)\n  try {\n    $reader = [System.IO.StreamReader]::new($archive.GetEntry('META-INF/MANIFEST.MF').Open())\n    try { $body = $reader.ReadToEnd() } finally { $reader.Dispose() }\n    if ($body -notmatch '(?m)^Implementation-Version: 6\\.2\\.10\\r?$') { throw ('Unexpected implementation version: ' + $name) }\n    Write-Output ($name + ' Implementation-Version=6.2.10 PASS')\n  } finally { $archive.Dispose() }\n}"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "spring-core Implementation-Version=6.2.10 PASS\r\nspring-jcl Implementation-Version=6.2.10 PASS\r\nspring-beans Implementation-Version=6.2.10 PASS\r\nspring-aop Implementation-Version=6.2.10 PASS\r\nspring-context Implementation-Version=6.2.10 PASS\r\nspring-expression Implementation-Version=6.2.10 PASS\r\nspring-context-support Implementation-Version=6.2.10 PASS\r\nspring-tx Implementation-Version=6.2.10 PASS\r\n",
+      "stderr": ""
+    },
+    {
+      "exe": "git",
+      "args": [
+        "status",
+        "--short",
+        "--untracked-files=all",
+        "--",
+        "skills/patterns-and-modern-frameworks"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": " M skills/patterns-and-modern-frameworks/references/modern-java-idioms.md\n M skills/patterns-and-modern-frameworks/skill.yaml\n",
+      "stderr": ""
+    },
+    {
+      "exe": "git",
+      "args": [
+        "diff",
+        "--",
+        "skills/patterns-and-modern-frameworks"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "diff --git a/skills/patterns-and-modern-frameworks/references/modern-java-idioms.md b/skills/patterns-and-modern-frameworks/references/modern-java-idioms.md\nindex ff73539..d4f7e80 100644\n--- a/skills/patterns-and-modern-frameworks/references/modern-java-idioms.md\n+++ b/skills/patterns-and-modern-frameworks/references/modern-java-idioms.md\n@@ -23,7 +23,7 @@ record embeddables require provider support (Hibernate 6.2+, standardized by Per\n Record support for an ordinary embedded value does not establish support for `@EmbeddedId`\n or `@IdClass`. The [Hibernate 6.2 introduction](https://docs.hibernate.org/orm/6.2/introduction/html_single/#embeddable-objects)\n documents record embeddables alongside an `@EmbeddedId` restriction dated May 2023;\n-[Persistence 3.2, section 2.4.1](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2#composite-primary-keys)\n+[Persistence 3.2, section 2.4.1](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html#composite-primary-keys)\n explicitly permits record primary-key classes. Inspect the exact provider/update and mapping\n role instead of extending either statement to every version. Before converting a key, verify\n persist/reload and lookup by key, including equality consistent with the mapped database types.\n@@ -250,7 +250,7 @@ support this API illustration; they are source-review baselines, not a target up\n   (`domain-logic-organization`).\n \n See [Java 21 pattern switch](https://docs.oracle.com/en/java/javase/21/language/pattern-matching-switch.html)\n-for exhaustiveness and null behavior, and [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2)\n+for exhaustiveness and null behavior, and [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html)\n for entity/access requirements. Structured concurrency APIs remain version-sensitive;\n consult the project's target release before adding an API or preview flags.\n For absence intent versus enforcement, see [Optional's Java 21 API note](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html)\ndiff --git a/skills/patterns-and-modern-frameworks/skill.yaml b/skills/patterns-and-modern-frameworks/skill.yaml\nindex 4ebb7b5..7ca1737 100644\n--- a/skills/patterns-and-modern-frameworks/skill.yaml\n+++ b/skills/patterns-and-modern-frameworks/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: patterns-and-modern-frameworks\n-version: 1.2.4\n+version: 1.2.5\n description: >-\n   Which classical enterprise patterns a modern Java and Spring stack already implements,\n   which it only partly implements, and which it does not implement at all — plus the modern\n",
+      "stderr": ""
+    },
+    {
+      "exe": "git",
+      "args": [
+        "diff",
+        "--cached",
+        "--",
+        "skills/patterns-and-modern-frameworks"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "exe": "git",
+      "args": [
+        "diff",
+        "--check",
+        "--",
+        "skills/patterns-and-modern-frameworks"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ]
+}

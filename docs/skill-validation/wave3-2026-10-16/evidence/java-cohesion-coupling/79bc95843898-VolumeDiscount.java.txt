@@ -1,0 +1,5 @@
+package inv.pricing;
+import inv.stock.StockLevel;
+public final class VolumeDiscount {
+    public boolean applies(StockLevel level) { return level.quantity() >= 10; }
+}

@@ -1,0 +1,39 @@
+{
+  "classification": "Evaluator-only expected outcomes",
+  "decisiveConstraint": "Only the ownership/alias of storage supplied by capture() to the private constructor differs in the fixture; requests, lifecycle and public contracts are identical.",
+  "cases": [
+    {
+      "id": "immutability-private-storage",
+      "expectedOutcome": "Retain the adequate implementation after tracing factory-owned storage; do not require another defensive content copy solely because the private constructor stores a view.",
+      "requiredEvidence": [
+        "Inspect capture(): the selected source range is copied into a fresh private array; construction retains no external writable alias.",
+        "Inspect bytes(): every access gets an independent read-only cursor and reapplies byte order after view creation.",
+        "Run or supply focused tests showing post-capture mutation of source bytes does not affect the snapshot; nonzero range, little-endian reads, source cursor and identity equality remain intact.",
+        "Explain that the conclusion depends on the actual private construction/alias path and confinement during capture, not on final or read-only labels alone."
+      ],
+      "failureConditions": [
+        "Diagnoses mutable shared backing solely from asReadOnlyBuffer(), without following the factory's existing copy.",
+        "Converts identity equality to value equality or changes the captured range/order.",
+        "Claims the design is universally free of allocation, or that a Java25 run with --release17 executed on Java17.",
+        "Introduces a second content copy or new dependency without identifying an unmet contract."
+      ]
+    },
+    {
+      "id": "immutability-aliased-storage",
+      "expectedOutcome": "Demonstrate and repair the writable alias retained by capture(), while preserving the already-correct cursor, byte-order and identity contracts.",
+      "requiredEvidence": [
+        "Inspect capture(): slice() shares caller-owned bytes; the private constructor's read-only view does not sever that alias.",
+        "Use a hostile mutation after capture to show the incorrect byte change, then isolate captured bytes before retaining the content.",
+        "Validate nonzero input position/limit, no change to the source cursor, little-endian typed reads, independent accessor positions/limits, rejected writes and existing identity equality.",
+        "Report the actual compiler/runtime and limit the evidence to the supplied ownership/lifecycle; no claim that copying is an atomic snapshot under concurrent mutation."
+      ],
+      "failureConditions": [
+        "Accepts the object as immutable because final fields and read-only buffers reject put().",
+        "Returns the stored cursor or loses byte order while adding a copy.",
+        "Copies capacity or all array bytes instead of the requested remaining range, or consumes the caller's cursor.",
+        "Changes the documented contract to borrowed live data to avoid the needed correction.",
+        "Silently replaces identity semantics or upgrades the baseline."
+      ]
+    }
+  ]
+}

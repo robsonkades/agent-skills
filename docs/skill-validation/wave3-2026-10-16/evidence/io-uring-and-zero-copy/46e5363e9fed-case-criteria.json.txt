@@ -1,0 +1,35 @@
+[
+  {
+    "id": "linked-send-flags-zero",
+    "expectedOutcome": [
+      "Trace record_send_flags through the caller into io_uring_prep_send_zc; recognize that IOSQE_IO_LINK alone is not a complete-record gate.",
+      "Identify a permitted 3072/8192 positive short completion followed by record B before the remaining 5120 bytes of A; do not claim that a short positive send automatically cancels B.",
+      "Use MSG_WAITALL in the send-message flags for the predecessor under the pinned linked-send contract, or replace batching with correct submission after all remaining bytes of A have completed. A patch only to SQE flags or a blind second send of all of A fails.",
+      "Retain partial-progress/canceled-dependent accounting, deadline/admission control and SEND_ZC MORE/NOTIF ownership; acknowledge that bytes already sent cannot be rolled back.",
+      "State that sources/static review do not constitute Linux execution or a performance improvement."
+    ],
+    "failureConditions": [
+      "Approves the original pair solely because it has IOSQE_IO_LINK.",
+      "Adds MSG_WAITALL to first->flags instead of send flags.",
+      "Uses HARDLINK, larger rings or buffer registration as a fix for complete-record ordering.",
+      "Releases referenced memory from send completion alone or treats NOTIF as bytes.",
+      "Claims no partial results or atomic transmission with MSG_WAITALL."
+    ]
+  },
+  {
+    "id": "linked-send-waitall",
+    "expectedOutcome": [
+      "Resolve the configured MSG_WAITALL value through the caller; recognize the supported linked-send full-progress/failure distinction under liburing 2.5 and Linux 6.6.",
+      "Do not report the missing-MSG_WAITALL defect or mandate a replacement transport/serialization redesign for this exact reason.",
+      "Preserve checks of actual byte counts and canceled dependents because a terminal failure after earlier progress can surface a positive partial count and must not be mistaken for the whole record.",
+      "Preserve separate SEND_ZC release-notification ownership, byte budgets and deadlines; a valid conclusion can retain both source files while specifying slow-peer/partial-error Linux validation.",
+      "Do not claim that a successful send means peer application processing, zero copying, or completion of every error path."
+    ],
+    "failureConditions": [
+      "Reports exactly the flags-zero defect despite MSG_WAITALL being in the correct argument.",
+      "Removes the flag because ordinary synchronous send documentation does not give it the io_uring semantics.",
+      "Treats all nonnegative results as complete success or changes to HARDLINK.",
+      "Claims kernel execution, benchmark results or measured agent gain."
+    ]
+  }
+]

@@ -1,0 +1,42 @@
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { readFileSync, existsSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { pathToFileURL } from 'node:url';
+
+const repo = resolve(process.argv[2] ?? 'C:/git/agent-skills');
+const skill = resolve(repo, 'skills/java-defensive-programming');
+const { parseManifest } = await import(pathToFileURL(resolve(repo, 'packages/core/src/domain/manifest.ts')));
+const { parseSkillDocument, documentName, documentDescription } = await import(pathToFileURL(resolve(repo, 'packages/core/src/domain/skill-document.ts')));
+const { manifest, issues } = parseManifest(readFileSync(resolve(skill, 'skill.yaml'), 'utf8'), { strict: true });
+const document = parseSkillDocument(readFileSync(resolve(skill, 'SKILL.md'), 'utf8'));
+assert.deepEqual(issues, []);
+assert.equal(documentName(document), manifest.name);
+assert.equal(documentDescription(document), manifest.description);
+assert.equal(manifest.name, 'java-defensive-programming');
+assert.equal(manifest.version, '1.2.5');
+for (const entry of manifest.files) assert.ok(existsSync(resolve(skill, entry)), entry);
+const baseline = {
+  'SKILL.md': '350026aaac0ceb279043718cb69136d97ecaf25823262aadea68dc477956302f',
+  'skill.yaml': '11338a59fec6ed2878344b6de1d6c332977a12e9b82f5a3cd811471df32c2b2a',
+  'references/trust-boundaries.md': '0975b3a918ee559a5e8c7a830cb29993c1edd7e463be3e2a76c07738967a2ffe',
+  'references/hardening-example.md': 'e00a8ed2a5ad11e3b86fa52d7c9abab2c3e8394e456fdd3e8668bd0e2cf80ecb'
+};
+let relativeLinks = 0;
+const changed = [];
+for (const [file, hash] of Object.entries(baseline)) {
+  const full = resolve(skill, file);
+  const bytes = readFileSync(full);
+  if (createHash('sha256').update(bytes).digest('hex') !== hash) changed.push(file);
+  if (!file.endsWith('.md')) continue;
+  for (const match of bytes.toString('utf8').matchAll(/\]\(([^\s)]+)\)/g)) {
+    const target = match[1].replace(/^<|>$/g, '');
+    if (/^(https?:|#)/.test(target)) continue;
+    assert.ok(existsSync(resolve(dirname(full), target.split('#')[0])), target);
+    relativeLinks++;
+  }
+}
+assert.deepEqual(changed.sort(), Object.keys(baseline).sort());
+console.log(JSON.stringify({ status: 'PASS', skill: manifest.name, strictManifestIssues: 0,
+  metadataAgreement: true, version: manifest.version, declaredPaths: manifest.files.length,
+  relativeLinks, changedFromAssignment: changed }, null, 2));

@@ -1,0 +1,18 @@
+{
+  "label": "diff-check",
+  "command": "git",
+  "args": [
+    "diff",
+    "--check",
+    "--",
+    "skills/retries-and-backoff"
+  ],
+  "cwd": "C:/git/agent-skills",
+  "exitCode": 0,
+  "expectedExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "",
+  "stderr": "",
+  "log": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-validation-ujPBF2\\retries-and-backoff\\logs\\diff-check.json"
+}

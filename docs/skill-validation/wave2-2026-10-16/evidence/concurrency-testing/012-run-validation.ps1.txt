@@ -1,0 +1,87 @@
+$concurrencyRepo = 'C:/git/agent-skills'
+$concurrencyTemp = $PSScriptRoot
+$concurrencyCache = 'C:/Users/robso/.m2/repository'
+$concurrencyJars = @(
+    'org/junit/jupiter/junit-jupiter-api/5.11.4/junit-jupiter-api-5.11.4.jar'
+    'org/junit/jupiter/junit-jupiter-engine/5.11.4/junit-jupiter-engine-5.11.4.jar'
+    'org/junit/platform/junit-platform-launcher/1.11.4/junit-platform-launcher-1.11.4.jar'
+    'org/junit/platform/junit-platform-engine/1.11.4/junit-platform-engine-1.11.4.jar'
+    'org/junit/platform/junit-platform-commons/1.11.4/junit-platform-commons-1.11.4.jar'
+    'org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar'
+    'org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar'
+) | ForEach-Object {
+    $concurrencyJar = Join-Path $concurrencyCache $_
+    if (!(Test-Path -LiteralPath $concurrencyJar)) { throw "Unavailable cached dependency: $concurrencyJar" }
+    $concurrencyJar
+}
+$concurrencyClasspath = $concurrencyJars -join ';'
+$concurrencyClassDir = Join-Path $concurrencyTemp 'classes'
+New-Item -ItemType Directory -Path $concurrencyClassDir -Force | Out-Null
+$concurrencyOriginal = (& git -C $concurrencyRepo show HEAD:skills/concurrency-testing/references/stress-and-soak.md) -join "`n"
+if ($LASTEXITCODE -ne 0) { throw 'Cannot read committed baseline' }
+$concurrencyCurrent = [IO.File]::ReadAllText((Join-Path $concurrencyRepo 'skills/concurrency-testing/references/stress-and-soak.md'))
+$concurrencyTemplate = @'
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
+import org.junit.jupiter.api.*;
+import static org.junit.jupiter.api.Assertions.*;
+
+public class __CLASS__ {
+    static final class Account {
+        private int balance;
+        Account(int initial) { balance = initial; }
+        synchronized boolean withdraw(int amount) {
+            if (Boolean.getBoolean("rejectAll")) return false;
+            if (amount > balance) return false;
+            balance -= amount;
+            return true;
+        }
+        synchronized int balance() { return balance; }
+    }
+__BODY__
+}
+'@
+foreach ($concurrencyCase in @(
+    @{ Name = 'BaselineTest'; Markdown = $concurrencyOriginal }
+    @{ Name = 'RevisedTest'; Markdown = $concurrencyCurrent }
+)) {
+    $concurrencyMatch = [regex]::Match($concurrencyCase.Markdown, '(?s)```java\r?\n(.*?)\r?\n```')
+    if (!$concurrencyMatch.Success) { throw 'Java stress snippet not found' }
+    $concurrencySource = $concurrencyTemplate.Replace('__CLASS__', $concurrencyCase.Name).Replace('__BODY__', $concurrencyMatch.Groups[1].Value)
+    [IO.File]::WriteAllText((Join-Path $concurrencyTemp ($concurrencyCase.Name + '.java')), $concurrencySource)
+}
+$concurrencySources = @('BaselineTest.java', 'RevisedTest.java', 'StressOracleRunner.java') | ForEach-Object { Join-Path $concurrencyTemp $_ }
+& javac --release 21 -cp $concurrencyClasspath -d $concurrencyClassDir @concurrencySources
+if ($LASTEXITCODE -ne 0) { throw 'Compilation failed' }
+foreach ($concurrencyRun in @(
+    @{ Name = 'baseline-conforming'; Class = 'BaselineTest'; Reject = 'false'; Failures = '0' }
+    @{ Name = 'baseline-reject-all'; Class = 'BaselineTest'; Reject = 'true'; Failures = '0' }
+    @{ Name = 'revised-conforming'; Class = 'RevisedTest'; Reject = 'false'; Failures = '0' }
+    @{ Name = 'revised-reject-all'; Class = 'RevisedTest'; Reject = 'true'; Failures = '20' }
+)) {
+    $concurrencyStdout = Join-Path $concurrencyTemp ($concurrencyRun.Name + '.stdout.txt')
+    $concurrencyStderr = Join-Path $concurrencyTemp ($concurrencyRun.Name + '.stderr.txt')
+    $concurrencyArguments = @(
+        ('-DrejectAll=' + $concurrencyRun.Reject)
+        '-cp'
+        ('"' + $concurrencyClassDir + ';' + $concurrencyClasspath + '"')
+        'StressOracleRunner'
+        $concurrencyRun.Class
+        $concurrencyRun.Failures
+    )
+    $concurrencyProcess = Start-Process -FilePath (Get-Command java).Source -ArgumentList $concurrencyArguments -WindowStyle Hidden -PassThru -RedirectStandardOutput $concurrencyStdout -RedirectStandardError $concurrencyStderr
+    if (!$concurrencyProcess.WaitForExit(30000)) {
+        $concurrencyProcess.Kill($true)
+        $concurrencyProcess.WaitForExit()
+        throw "External deadline exceeded: $($concurrencyRun.Name)"
+    }
+    $concurrencyProcess.Refresh()
+    Get-Content -LiteralPath $concurrencyStdout
+    if ($concurrencyProcess.ExitCode -ne 0) {
+        Get-Content -LiteralPath $concurrencyStderr
+        throw "Validation failed: $($concurrencyRun.Name), exit $($concurrencyProcess.ExitCode)"
+    }
+}
+Write-Output "Compiler target: Java 21; runtime:"
+& java -version

@@ -1,0 +1,1 @@
+{"manifestIssues":0,"name":"rate-limiting-and-load-shedding","version":"1.3.4","descriptionsMatch":true,"manifestFilesExist":true,"markdownFiles":3,"localLinks":2,"externalLinksObserved":14,"referenceRoutes":2}

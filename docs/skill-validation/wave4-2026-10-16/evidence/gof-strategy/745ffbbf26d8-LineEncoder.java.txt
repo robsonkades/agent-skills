@@ -1,0 +1,30 @@
+import java.util.function.UnaryOperator;
+
+final class LineEncoder implements Encoder {
+    private final UnaryOperator<String> transform;
+    private final StringBuilder rows = new StringBuilder();
+    private boolean closed;
+
+    LineEncoder(UnaryOperator<String> transform) {
+        this.transform = transform;
+    }
+
+    @Override public void add(String row) {
+        requireOpen();
+        rows.append(transform.apply(row)).append('\n');
+    }
+
+    @Override public String finish() {
+        requireOpen();
+        return rows.toString();
+    }
+
+    @Override public void close() {
+        closed = true;
+    }
+
+    private void requireOpen() {
+        if (closed) throw new IllegalStateException("encoder already closed");
+    }
+}
+

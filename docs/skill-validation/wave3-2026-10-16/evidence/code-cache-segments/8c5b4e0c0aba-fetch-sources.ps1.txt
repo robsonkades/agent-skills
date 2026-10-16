@@ -1,0 +1,25 @@
+$ErrorActionPreference = 'Stop'
+$sourceRoot = 'https://raw.githubusercontent.com/openjdk/jdk25u/jdk-25.0.3%2B9/src/hotspot/share/'
+$sourcePaths = @(
+  'code/codeCache.cpp',
+  'code/codeCache.hpp',
+  'code/codeHeapState.cpp',
+  'code/nmethod.cpp',
+  'compiler/compileBroker.cpp',
+  'compiler/compileBroker.hpp',
+  'compiler/compilerDefinitions.cpp',
+  'compiler/compilerDefinitions.hpp',
+  'memory/heap.cpp'
+)
+$results = foreach ($sourcePath in $sourcePaths) {
+  $sourceUrl = $sourceRoot + $sourcePath
+  $destination = Join-Path $PSScriptRoot ([System.IO.Path]::GetFileName($sourcePath))
+  try {
+    $response = Invoke-WebRequest -Uri $sourceUrl -OutFile $destination -PassThru -TimeoutSec 15
+    [ordered]@{ url = $sourceUrl; file = $destination; status = [int]$response.StatusCode; bytes = (Get-Item -LiteralPath $destination).Length; sha256 = (Get-FileHash -LiteralPath $destination -Algorithm SHA256).Hash; error = $null }
+  } catch {
+    [ordered]@{ url = $sourceUrl; file = $destination; status = $null; bytes = $null; sha256 = $null; error = $_.Exception.Message }
+  }
+}
+$results | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $PSScriptRoot 'source-fetch-results.json') -Encoding utf8
+$results | ConvertTo-Json -Depth 5

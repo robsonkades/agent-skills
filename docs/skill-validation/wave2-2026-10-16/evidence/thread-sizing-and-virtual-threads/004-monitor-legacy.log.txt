@@ -1,0 +1,19 @@
+OpenJDK 64-Bit Server VM warning: Option LockingMode was deprecated in version 24.0 and will likely be removed in a future release.
+runtime=25.0.3+9-LTS mode=monitor pinEvents=1 expectedPin=true
+jdk.VirtualThreadPinned {
+  startTime = 09:47:27.074 (2026-10-16)
+  duration = 0.0483 ms
+  blockingOperation = "LockSupport.park"
+  pinnedReason = "Freeze or preempt failed (4)"
+  carrierThread = "ForkJoinPool-1-worker-1" (javaThreadId = 40)
+  eventThread = "pinning-boundary-probe" (javaThreadId = 39, virtual)
+  stackTrace = [
+    java.lang.VirtualThread.parkOnCarrierThread(boolean, long) line: 830
+    java.lang.VirtualThread.park() line: 755
+    java.lang.System$1.parkVirtualThread() line: 2285
+    java.util.concurrent.locks.LockSupport.park(Object) line: 221
+    java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(AbstractQueuedSynchronizer$Node, int, boolean, boolean, boolean, long) line: 790
+  ]
+}
+
+

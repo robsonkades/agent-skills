@@ -1,0 +1,3 @@
+Observed replay: receiver effects=1, done=1
+PASS recovery: stable identity, original payload, one effect, retained row completed
+

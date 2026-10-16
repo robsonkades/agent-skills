@@ -1,0 +1,54 @@
+
+BEGIN {
+    if (region_mb != "" && (region_mb !~ /^[0-9]+$/ || region_mb <= 0)) bad=1
+}
+{ sub(/\r$/, "") }
+/Heap Region Size:/ {
+    if ($0 !~ /Heap Region Size: [0-9]+M$/) { bad=1; next }
+    s = $0; sub(/.*Heap Region Size: /, "", s); sub(/M$/, "", s)
+    if (n || s+0 <= 0 || (region_mb != "" && region_mb != s+0)) { bad=1; next }
+    region_mb = s + 0
+}
+/\[gc,heap *\]/ && /Eden regions:/ {
+    if (!match($0, /GC\([0-9]+\)/)) { bad=1; next }
+    id=substr($0,RSTART,RLENGTH)
+    e=$0; sub(/.*Eden regions: /,"",e); sub(/ [(].*$/,"",e)
+    if (e !~ /^[0-9]+->[0-9]+\([0-9]+\)$/ || have_e[id] || seen[id]) { bad=1; next }
+    sub(/->.*/,"",e)
+    eden[id]=e+0; have_e[id]=1
+}
+/\[gc,heap *\]/ && /Old regions:/ {
+    if (!match($0, /GC\([0-9]+\)/)) { bad=1; next }
+    id=substr($0,RSTART,RLENGTH)
+    o = $0; sub(/.*Old regions: /, "", o)
+    if (o !~ /^[0-9]+->[0-9]+$/ || have_o[id] || seen[id]) { bad=1; next }
+    split(o, p, "->")
+    growth[id]=p[2]-p[1]; have_o[id]=1
+}
+/\[gc *\]/ && /Pause Full/ && /ms$/ { bad=1 }
+/\[gc *\]/ && /Pause Young/ {
+    if ($0 !~ / [0-9]+([.][0-9]+)?ms$/ || region_mb <= 0) { bad=1; next }
+    if (!match($0,/GC\([0-9]+\)/)) { bad=1; next }
+    id=substr($0,RSTART,RLENGTH)
+    if (!have_e[id] || !have_o[id] || seen[id]++) { bad=1; next }
+    if (!match($0,/\[[0-9]+([.][0-9]+)?s\]/)) { bad=1; next }
+    uptime=substr($0,RSTART+1,RLENGTH-3)+0
+    if (n && uptime<last_t) { bad=1; next }
+    if (n) {
+      eden_mb+=eden[id]*region_mb
+      if (growth[id]>0) old_growth_mb+=growth[id]*region_mb
+    } else first_t=uptime
+    last_t=uptime; n++
+    delete have_e[id]; delete have_o[id]
+}
+END {
+    for (id in have_e) bad=1
+    for (id in have_o) bad=1
+    if (bad) { print "incomplete, duplicate, nonchronological or unsupported window; split/repair input"; exit 1 }
+    if (n < 2 || region_mb == 0) { print "need >= 2 young GCs and a Heap Region Size line (or -v region_mb=N)"; exit 1 }
+    span=last_t-first_t
+    if (span <= 0 || eden_mb <= 0) { print "non-positive observation span or Eden refill; cannot compute a rate"; exit 1 }
+    printf "young GCs=%d  span=%.3fs  region=%dMiB\n", n, span, region_mb
+    printf "Eden refill ~ %.1f MiB/s   old growth ~ %.1f MiB/s   (old growth/Eden refill = %.1f%%)\n",
+           eden_mb / span, old_growth_mb / span, 100 * old_growth_mb / eden_mb
+}

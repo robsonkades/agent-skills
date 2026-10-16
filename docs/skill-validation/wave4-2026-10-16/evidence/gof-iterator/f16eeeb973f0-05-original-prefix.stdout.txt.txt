@@ -1,0 +1,1 @@
+requested=prefix receipt=Receipt[status=COMPLETE, recordedIds=[1, 2]] closes=1 fetches=1

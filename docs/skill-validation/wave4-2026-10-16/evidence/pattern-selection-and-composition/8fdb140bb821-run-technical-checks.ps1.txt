@@ -1,0 +1,33 @@
+param(
+  [string]$JdkBin = 'C:/Users/robso/.jdks/temurin-25.0.3/bin',
+  [string]$H2Jar = 'C:/Users/robso/.m2/repository/com/h2database/h2/2.4.240/h2-2.4.240.jar'
+)
+$ErrorActionPreference = 'Stop'
+$evidenceRoot = $PSScriptRoot
+foreach ($caseNumber in @(1, 2)) {
+  $caseName = 'case0' + $caseNumber
+  $caseRoot = Join-Path $evidenceRoot ('technical-' + $caseName)
+  New-Item -ItemType Directory -Path $caseRoot -Force | Out-Null
+  Get-ChildItem -LiteralPath (Join-Path $evidenceRoot 'common') | Copy-Item -Destination $caseRoot -Recurse -Force
+  Get-ChildItem -LiteralPath (Join-Path $evidenceRoot $caseName) | Copy-Item -Destination $caseRoot -Recurse -Force
+  $smokeOutput = @(& powershell -NoProfile -File (Join-Path $caseRoot 'run-smoke.ps1') -JdkBin $JdkBin -H2Jar $H2Jar 2>&1)
+  $smokeExit = $LASTEXITCODE
+  [IO.File]::WriteAllText((Join-Path $evidenceRoot ('smoke-' + $caseName + '.log')), ($smokeOutput -join [Environment]::NewLine))
+  $smokeOutput | Write-Output
+  if ($smokeExit -ne 0) { exit $smokeExit }
+  $probeClasses = Join-Path $caseRoot '.build/probe'
+  New-Item -ItemType Directory -Path $probeClasses -Force | Out-Null
+  $fixtureClasses = Join-Path $caseRoot '.build/smoke'
+  $compilerOutput = @(& (Join-Path $JdkBin 'javac.exe') --release 17 -cp "$fixtureClasses;$H2Jar" -d $probeClasses (Join-Path $evidenceRoot 'technical-probe/CompositionProbe.java') 2>&1)
+  $compilerExit = $LASTEXITCODE
+  [IO.File]::WriteAllText((Join-Path $evidenceRoot ('probe-javac-' + $caseName + '.log')), ($compilerOutput -join [Environment]::NewLine))
+  $compilerOutput | Write-Output
+  if ($compilerExit -ne 0) { exit $compilerExit }
+  $expectedRevision = if ($caseNumber -eq 1) { '41' } else { '42' }
+  $probeOutput = @(& (Join-Path $JdkBin 'java.exe') -cp "$probeClasses;$fixtureClasses;$H2Jar" CompositionProbe $caseRoot $expectedRevision 2>&1)
+  $probeExit = $LASTEXITCODE
+  [IO.File]::WriteAllText((Join-Path $evidenceRoot ('probe-' + $caseName + '.log')), ($probeOutput -join [Environment]::NewLine))
+  $probeOutput | Write-Output
+  if ($probeExit -ne 0) { exit $probeExit }
+}
+exit 0

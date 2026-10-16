@@ -1,0 +1,201 @@
+Classfile jar:file:///C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/component-and-release-boundaries-probe/published/report-app-1.0.0.jar!/com/example/app/ReportApp.class
+  Last modified Oct 16, 2026; size 1461 bytes
+  SHA-256 checksum 9d329303b2f84ee6bf42cc4f73a17a46a4cc289033274d0ed815f9920876aeab
+  Compiled from "ReportApp.java"
+public final class com.example.app.ReportApp
+  minor version: 0
+  major version: 61
+  flags: (0x0031) ACC_PUBLIC, ACC_FINAL, ACC_SUPER
+  this_class: #65                         // com/example/app/ReportApp
+  super_class: #2                         // java/lang/Object
+  interfaces: 0, fields: 0, methods: 2, attributes: 3
+Constant pool:
+   #1 = Methodref          #2.#3          // java/lang/Object."<init>":()V
+   #2 = Class              #4             // java/lang/Object
+   #3 = NameAndType        #5:#6          // "<init>":()V
+   #4 = Utf8               java/lang/Object
+   #5 = Utf8               <init>
+   #6 = Utf8               ()V
+   #7 = String             #8             // CR
+   #8 = Utf8               CR
+   #9 = Methodref          #10.#11        // java/lang/String.equals:(Ljava/lang/Object;)Z
+  #10 = Class              #12            // java/lang/String
+  #11 = NameAndType        #13:#14        // equals:(Ljava/lang/Object;)Z
+  #12 = Utf8               java/lang/String
+  #13 = Utf8               equals
+  #14 = Utf8               (Ljava/lang/Object;)Z
+  #15 = String             #16            // LF
+  #16 = Utf8               LF
+  #17 = Class              #18            // java/lang/IllegalArgumentException
+  #18 = Utf8               java/lang/IllegalArgumentException
+  #19 = String             #20            // Expected CR or LF
+  #20 = Utf8               Expected CR or LF
+  #21 = Methodref          #17.#22        // java/lang/IllegalArgumentException."<init>":(Ljava/lang/String;)V
+  #22 = NameAndType        #5:#23         // "<init>":(Ljava/lang/String;)V
+  #23 = Utf8               (Ljava/lang/String;)V
+  #24 = String             #25            // A\rB
+  #25 = Utf8               A\rB
+  #26 = Methodref          #27.#28        // com/example/text/LineEndings.normalize:(Ljava/lang/String;)Ljava/lang/String;
+  #27 = Class              #29            // com/example/text/LineEndings
+  #28 = NameAndType        #30:#31        // normalize:(Ljava/lang/String;)Ljava/lang/String;
+  #29 = Utf8               com/example/text/LineEndings
+  #30 = Utf8               normalize
+  #31 = Utf8               (Ljava/lang/String;)Ljava/lang/String;
+  #32 = String             #33            // A\nB
+  #33 = Utf8               A\nB
+  #34 = Class              #35            // java/lang/AssertionError
+  #35 = Utf8               java/lang/AssertionError
+  #36 = InvokeDynamic      #0:#37         // #0:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+  #37 = NameAndType        #38:#31        // makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+  #38 = Utf8               makeConcatWithConstants
+  #39 = Methodref          #34.#40        // java/lang/AssertionError."<init>":(Ljava/lang/Object;)V
+  #40 = NameAndType        #5:#41         // "<init>":(Ljava/lang/Object;)V
+  #41 = Utf8               (Ljava/lang/Object;)V
+  #42 = Fieldref           #43.#44        // java/lang/System.out:Ljava/io/PrintStream;
+  #43 = Class              #45            // java/lang/System
+  #44 = NameAndType        #46:#47        // out:Ljava/io/PrintStream;
+  #45 = Utf8               java/lang/System
+  #46 = Utf8               out
+  #47 = Utf8               Ljava/io/PrintStream;
+  #48 = String             #49            // \r
+  #49 = Utf8               \r
+  #50 = String             #51            // <CR>
+  #51 = Utf8               <CR>
+  #52 = Methodref          #10.#53        // java/lang/String.replace:(Ljava/lang/CharSequence;Ljava/lang/CharSequence;)Ljava/lang/String;
+  #53 = NameAndType        #54:#55        // replace:(Ljava/lang/CharSequence;Ljava/lang/CharSequence;)Ljava/lang/String;
+  #54 = Utf8               replace
+  #55 = Utf8               (Ljava/lang/CharSequence;Ljava/lang/CharSequence;)Ljava/lang/String;
+  #56 = String             #57            // \n
+  #57 = Utf8               \n
+  #58 = String             #59            // <LF>
+  #59 = Utf8               <LF>
+  #60 = Methodref          #61.#62        // java/io/PrintStream.println:(Ljava/lang/String;)V
+  #61 = Class              #63            // java/io/PrintStream
+  #62 = NameAndType        #64:#23        // println:(Ljava/lang/String;)V
+  #63 = Utf8               java/io/PrintStream
+  #64 = Utf8               println
+  #65 = Class              #66            // com/example/app/ReportApp
+  #66 = Utf8               com/example/app/ReportApp
+  #67 = Utf8               Code
+  #68 = Utf8               LineNumberTable
+  #69 = Utf8               main
+  #70 = Utf8               ([Ljava/lang/String;)V
+  #71 = Utf8               StackMapTable
+  #72 = Utf8               SourceFile
+  #73 = Utf8               ReportApp.java
+  #74 = Utf8               BootstrapMethods
+  #75 = String             #76            // Expected \u0001
+  #76 = Utf8               Expected \u0001
+  #77 = MethodHandle       6:#78          // REF_invokeStatic java/lang/invoke/StringConcatFactory.makeConcatWithConstants:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/invoke/CallSite;
+  #78 = Methodref          #79.#80        // java/lang/invoke/StringConcatFactory.makeConcatWithConstants:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/invoke/CallSite;
+  #79 = Class              #81            // java/lang/invoke/StringConcatFactory
+  #80 = NameAndType        #38:#82        // makeConcatWithConstants:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/invoke/CallSite;
+  #81 = Utf8               java/lang/invoke/StringConcatFactory
+  #82 = Utf8               (Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/invoke/CallSite;
+  #83 = Utf8               InnerClasses
+  #84 = Class              #85            // java/lang/invoke/MethodHandles$Lookup
+  #85 = Utf8               java/lang/invoke/MethodHandles$Lookup
+  #86 = Class              #87            // java/lang/invoke/MethodHandles
+  #87 = Utf8               java/lang/invoke/MethodHandles
+  #88 = Utf8               Lookup
+{
+  public com.example.app.ReportApp();
+    descriptor: ()V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: aload_0
+         1: invokespecial #1                  // Method java/lang/Object."<init>":()V
+         4: return
+      LineNumberTable:
+        line 5: 0
+
+  public static void main(java.lang.String[]);
+    descriptor: ([Ljava/lang/String;)V
+    flags: (0x0009) ACC_PUBLIC, ACC_STATIC
+    Code:
+      stack=4, locals=3, args_size=1
+         0: aload_0
+         1: arraylength
+         2: iconst_1
+         3: if_icmpne     28
+         6: aload_0
+         7: iconst_0
+         8: aaload
+         9: ldc           #7                  // String CR
+        11: invokevirtual #9                  // Method java/lang/String.equals:(Ljava/lang/Object;)Z
+        14: ifne          38
+        17: aload_0
+        18: iconst_0
+        19: aaload
+        20: ldc           #15                 // String LF
+        22: invokevirtual #9                  // Method java/lang/String.equals:(Ljava/lang/Object;)Z
+        25: ifne          38
+        28: new           #17                 // class java/lang/IllegalArgumentException
+        31: dup
+        32: ldc           #19                 // String Expected CR or LF
+        34: invokespecial #21                 // Method java/lang/IllegalArgumentException."<init>":(Ljava/lang/String;)V
+        37: athrow
+        38: ldc           #24                 // String A\rB
+        40: invokestatic  #26                 // Method com/example/text/LineEndings.normalize:(Ljava/lang/String;)Ljava/lang/String;
+        43: astore_1
+        44: aload_0
+        45: iconst_0
+        46: aaload
+        47: ldc           #7                  // String CR
+        49: invokevirtual #9                  // Method java/lang/String.equals:(Ljava/lang/Object;)Z
+        52: ifeq          60
+        55: ldc           #24                 // String A\rB
+        57: goto          62
+        60: ldc           #32                 // String A\nB
+        62: astore_2
+        63: aload_1
+        64: aload_2
+        65: invokevirtual #9                  // Method java/lang/String.equals:(Ljava/lang/Object;)Z
+        68: ifne          87
+        71: new           #34                 // class java/lang/AssertionError
+        74: dup
+        75: aload_0
+        76: iconst_0
+        77: aaload
+        78: invokedynamic #36,  0             // InvokeDynamic #0:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+        83: invokespecial #39                 // Method java/lang/AssertionError."<init>":(Ljava/lang/Object;)V
+        86: athrow
+        87: getstatic     #42                 // Field java/lang/System.out:Ljava/io/PrintStream;
+        90: aload_1
+        91: ldc           #48                 // String \r
+        93: ldc           #50                 // String <CR>
+        95: invokevirtual #52                 // Method java/lang/String.replace:(Ljava/lang/CharSequence;Ljava/lang/CharSequence;)Ljava/lang/String;
+        98: ldc           #56                 // String \n
+       100: ldc           #58                 // String <LF>
+       102: invokevirtual #52                 // Method java/lang/String.replace:(Ljava/lang/CharSequence;Ljava/lang/CharSequence;)Ljava/lang/String;
+       105: invokevirtual #60                 // Method java/io/PrintStream.println:(Ljava/lang/String;)V
+       108: return
+      LineNumberTable:
+        line 7: 0
+        line 8: 28
+        line 10: 38
+        line 11: 44
+        line 12: 63
+        line 13: 71
+        line 15: 87
+        line 16: 108
+      StackMapTable: number_of_entries = 5
+        frame_type = 28 /* same */
+        frame_type = 9 /* same */
+        frame_type = 252 /* append */
+          offset_delta = 21
+          locals = [ class java/lang/String ]
+        frame_type = 65 /* same_locals_1_stack_item */
+          stack = [ class java/lang/String ]
+        frame_type = 252 /* append */
+          offset_delta = 24
+          locals = [ class java/lang/String ]
+}
+SourceFile: "ReportApp.java"
+BootstrapMethods:
+  0: #77 REF_invokeStatic java/lang/invoke/StringConcatFactory.makeConcatWithConstants:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/invoke/CallSite;
+    Method arguments:
+      #75 Expected \u0001
+InnerClasses:
+  public static final #88= #84 of #86;    // Lookup=class java/lang/invoke/MethodHandles$Lookup of class java/lang/invoke/MethodHandles

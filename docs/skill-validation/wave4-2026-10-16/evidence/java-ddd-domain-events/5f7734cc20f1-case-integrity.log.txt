@@ -1,0 +1,12 @@
+PASS two separate case inputs
+PASS two separately stored evaluator criteria
+PASS same actor task
+PASS same ordinary code fixture
+PASS same runtime and fixture limitations
+PASS contract sizes comparable
+PASS exactly one decisive contract sentence differs
+PASS occurrence-preview: no evaluator answers in task schema
+PASS occurrence-preview: retained code matches input
+PASS current-preview: no evaluator answers in task schema
+PASS current-preview: retained code matches input
+PASS 11 input-integrity checks; no actor run.

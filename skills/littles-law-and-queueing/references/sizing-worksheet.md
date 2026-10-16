@@ -70,6 +70,17 @@ departure, but server work may continue; do not remove it from server occupancy 
 boundary actually releases it. An unfinished server residence is censored at observation end,
 not a completed duration equal to the client timeout. See `latency-statistics`.
 
+Inspect how the occupancy gauge is recorded and aggregated. Arrival/completion/change-event
+rows weight observations, not elapsed time; their arithmetic mean need not equal `mean L`.
+With a complete post-change trace and a known initial state, integrate each count for its dwell
+time: `mean L = sum(L_i × Δt_i) / (b−a)`. For `[0,10)` seconds, counts `2,0,2,0` at times
+`0,1,9,10` give `(2×1 + 0×8 + 2×1)/10 = 0.4` requests, not the row average `1`.
+The final row closes the window and contributes no dwell time. Sparse point scrapes with the
+same values cannot establish that area: work may enter and leave between observations.
+Time weighting alone does not recover missing transitions. Label interpolation as an estimate
+with sampling limits, or obtain a complete change trace/residence ledger or an instrumented
+occupancy integral before treating a residual as evidence for a pool change.
+
 For an item with fixed accounted size `b` throughout residence `W`, integrate bytes over time:
 in a stable population, `mean bytes = λ E[bW]`, not generally `λ E[b] E[W]`. For example, equally
 frequent items with `(b,W)=(1 byte,9 s)` and `(9 bytes,1 s)` give `E[bW]=9 byte·s`, whereas the
@@ -230,3 +241,4 @@ and retain context; mounted runnable work still competes for carriers. See
 - [Oracle JDK 25 `BlockingQueue`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/BlockingQueue.html)
 - [Oracle JDK 25 `ThreadMXBean`](https://docs.oracle.com/en/java/javase/25/docs/api/java.management/java/lang/management/ThreadMXBean.html)
 - [Little, “A Proof for the Queuing Formula: L = λW”](https://doi.org/10.1287/opre.9.3.383)
+- [Denning and Buzen, “The Operational Analysis of Queueing Network Models,” p. 235](https://www.columbia.edu/~ww2040/8100S12/DenningBuzen1978.pdf) — time-average occupancy as area under the population trace.

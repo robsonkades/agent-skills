@@ -147,7 +147,9 @@ Multi-request conversation state
   When business state and publication intent must commit together, compare an outbox with
   the existing delivery contract. Transaction Scripts can need it too; a local synchronous
   event alone does not. Include consumer repeat safety in the composition, since an outbox
-  does not make downstream effects exactly once.
+  does not make downstream effects exactly once. Duplicate suppression does not order
+  distinct events: check the required publication and consumer-effect order, or verify that
+  the relevant outcome is order-insensitive.
 - **Set-based operations need explicit invariant and concurrency handling.** Table Module
   can own business rules over tabular data; it does not inherently bypass every invariant.
 - Reads and writes may use different patterns when query and invariant forces diverge.

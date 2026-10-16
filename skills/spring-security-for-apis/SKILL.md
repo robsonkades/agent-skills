@@ -93,7 +93,9 @@ reproduce framework setup from a diagnostic example.
    any successfully authenticated caller; that is insufficient where permissions differ.
    Prefer explicit permitted operations with `denyAll()` for the remaining surface when
    the API contract is an allowlist; retain an authenticated fallback only when all such
-   callers intentionally share access.
+   callers intentionally share access. When accepting multiple issuers, preserve validated
+   issuer/subject identity or an established canonical account mapping before ownership
+   checks; an authentication name alone need not be globally unique.
 4. **Trace the protected invocation.** `@EnableMethodSecurity` enables method checks;
    annotations must be reached through the Spring proxy. Self-invocation and manually
    constructed objects can bypass interception. Method permissions do not establish

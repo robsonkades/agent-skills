@@ -1,0 +1,46 @@
+compile-writer: exit 0
+compile-missing-writer: exit 0
+compile-baseline: exit 0
+compile-required: exit 0
+compile-legacy: exit 0
+write-present: exit 0
+Wrote seven bounded synthetic streams, including invalid scalar and denied-hook controls
+write-missing: exit 0
+Wrote RetryPolicy with UID 1 and omitted maxRetries descriptor
+read-baseline: exit 0
+PASS: ordinary constructor rejects invalid input -> IllegalArgumentException
+PASS: explicit zero retained
+PASS: ordinary value retained
+PASS: upper bound retained
+PASS: negative value rejected -> InvalidObjectException
+PASS: over-limit value rejected -> InvalidObjectException
+PASS: baseline omitted-field control
+PASS: unlisted class rejected before hook -> InvalidClassException
+PASS: denied hook did not execute
+PASS: null root rejected -> InvalidObjectException
+PASS: mode=baseline, assertions=10, runtime=25.0.3+9-LTS
+read-required: exit 0
+PASS: ordinary constructor rejects invalid input -> IllegalArgumentException
+PASS: explicit zero retained
+PASS: ordinary value retained
+PASS: upper bound retained
+PASS: negative value rejected -> InvalidObjectException
+PASS: over-limit value rejected -> InvalidObjectException
+PASS: omitted required field rejected -> InvalidObjectException
+PASS: unlisted class rejected before hook -> InvalidClassException
+PASS: denied hook did not execute
+PASS: null root rejected -> InvalidObjectException
+PASS: mode=required, assertions=10, runtime=25.0.3+9-LTS
+read-legacy: exit 0
+PASS: ordinary constructor rejects invalid input -> IllegalArgumentException
+PASS: explicit zero retained
+PASS: ordinary value retained
+PASS: upper bound retained
+PASS: negative value rejected -> InvalidObjectException
+PASS: over-limit value rejected -> InvalidObjectException
+PASS: legacy omitted-field control
+PASS: unlisted class rejected before hook -> InvalidClassException
+PASS: denied hook did not execute
+PASS: null root rejected -> InvalidObjectException
+PASS: mode=legacy, assertions=10, runtime=25.0.3+9-LTS
+PASS: 30 assertions across value-only, required-presence and accepted-legacy readers; no agent evaluation or general safety proof.

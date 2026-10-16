@@ -1,0 +1,92 @@
+schemaVersion: 1
+
+name: java-refactoring
+version: 1.4.4
+description: >-
+  Refactoring mechanics for Java: characterisation tests, small reversible steps, what
+  behaviour preservation actually covers, risk classification, and the catalogue —
+  Extract/Inline, Split Phase, guard clauses, Remove Flag Argument, Pull Up and Push Down,
+  Replace Conditional with Polymorphism or sealed types. What to detect is java-code-smells;
+  evolution rules for published APIs are java-api-design. Use when restructuring code
+  without changing behaviour, when a change is needed in code that has no tests, when a
+  method resists extraction because everything shares locals, when inverting a condition
+  into a guard clause, when converting an instanceof chain to a switch, when moving members
+  through a hierarchy, or when you need to know whether a step crosses a lock, transaction,
+  serialisation or published boundary and must stop. Getting a class that constructs its own
+  dependencies into a harness in the first place is java-legacy-code-testing.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-refactoring
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-refactoring
+
+keywords:
+  - java
+  - refactoring
+  - refactoring-catalogue
+  - characterisation-tests
+  - behaviour-preservation
+  - risk-classification
+  - guard-clauses
+  - inheritance
+  - binary-compatibility
+  - sealed-types
+  - records
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: concurrency-testing
+    version: ^1.0.0
+  - name: delivery-semantics
+    version: ^1.0.0
+  - name: idempotency
+    version: ^1.0.0
+  - name: java-memory-model
+    version: ^1.0.0
+  - name: rpc-and-api-contracts
+    version: ^1.0.0
+
+suggests:
+  - java-legacy-code-testing
+  - java-optional
+  - java-api-design
+  - java-code-smells
+  - java-clean-code
+  - refactoring-automation
+  - schema-evolution-and-compatibility
+  - java-serialization-hardening
+  - structured-logging
+  - metrics-and-cardinality
+  - message-ordering-and-partitioning
+  - enterprise-transactions
+  - remote-facade-and-dto
+  - distribution-boundaries
+  - humble-objects-and-functional-core
+  - java-immutability
+  - java-composition-over-inheritance
+  - inheritance-mapping-strategies
+  - java-solid
+  - framework-coupling-and-independence
+  - java-performance
+  - orm-structural-mapping
+  - task-queues-and-competing-consumers
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java Refactoring
+      short_description: Safe refactoring mechanics and compatibility

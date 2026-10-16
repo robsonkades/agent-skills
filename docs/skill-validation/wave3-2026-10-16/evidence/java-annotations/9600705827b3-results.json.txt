@@ -1,0 +1,380 @@
+[
+  {
+    "name": "java-version",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+    "args": [
+      "-version"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "expectedStatus": 0,
+    "expectedText": [],
+    "stdout": "",
+    "stderr": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n"
+  },
+  {
+    "name": "javac-version",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+    "args": [
+      "-version"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "expectedStatus": 0,
+    "expectedText": [],
+    "stdout": "javac 25.0.3\r\n",
+    "stderr": ""
+  },
+  {
+    "name": "compile-api",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+    "args": [
+      "--release",
+      "17",
+      "-proc:none",
+      "-d",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\out\\api",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\api\\example\\Codec.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\api\\example\\DefaultCodec.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\api\\example\\UseCodec.java"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "expectedStatus": 0,
+    "expectedText": [],
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "name": "compile-processors",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+    "args": [
+      "--release",
+      "17",
+      "-proc:none",
+      "-cp",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\out\\api",
+      "-d",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\out\\processors",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\processors\\probe\\BadArrayProcessor.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\processors\\probe\\BadProcessor.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\processors\\probe\\CatchingProcessor.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\processors\\probe\\MirrorProcessor.java"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "expectedStatus": 0,
+    "expectedText": [],
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "name": "bad-scalar",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+    "args": [
+      "--release",
+      "17",
+      "-cp",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\out\\api",
+      "-processorpath",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\out\\processors;C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\out\\api",
+      "-processor",
+      "probe.BadProcessor",
+      "-d",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\out\\bad-scalar",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\app\\example\\ExplicitUse.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\app\\example\\LocalCodec.java"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988",
+    "status": 3,
+    "signal": null,
+    "error": null,
+    "expectedStatus": 3,
+    "expectedText": [
+      "MirroredTypeException",
+      "example.LocalCodec"
+    ],
+    "stdout": "",
+    "stderr": "\r\n\r\nAn annotation processor threw an uncaught exception.\r\nConsult the following stack trace for details.\r\njavax.lang.model.type.MirroredTypeException: Attempt to access Class object for TypeMirror example.LocalCodec\r\n\tat jdk.compiler/com.sun.tools.javac.model.AnnotationProxyMaker$MirroredTypeExceptionProxy.generateException(AnnotationProxyMaker.java:310)\r\n\tat java.base/sun.reflect.annotation.AnnotationInvocationHandler.invoke(AnnotationInvocationHandler.java:87)\r\n\tat jdk.proxy3/jdk.proxy3.$Proxy5.value(Unknown Source)\r\n\tat probe.BadProcessor.process(BadProcessor.java:15)\r\n\tat jdk.compiler/com.sun.tools.javac.processing.JavacProcessingEnvironment.callProcessor(JavacProcessingEnvironment.java:956)\r\n\tat jdk.compiler/com.sun.tools.javac.processing.JavacProcessingEnvironment.discoverAndRunProcs(JavacProcessingEnvironment.java:872)\r\n\tat jdk.compiler/com.sun.tools.javac.processing.JavacProcessingEnvironment$Round.run(JavacProcessingEnvironment.java:1188)\r\n\tat jdk.compiler/com.sun.tools.javac.processing.JavacProcessingEnvironment.doProcessing(JavacProcessingEnvironment.java:1301)\r\n\tat jdk.compiler/com.sun.tools.javac.main.JavaCompiler.processAnnotations(JavaCompiler.java:1262)\r\n\tat jdk.compiler/com.sun.tools.javac.main.JavaCompiler.compile(JavaCompiler.java:938)\r\n\tat jdk.compiler/com.sun.tools.javac.main.Main.compile(Main.java:319)\r\n\tat jdk.compiler/com.sun.tools.javac.main.Main.compile(Main.java:178)\r\n\tat jdk.compiler/com.sun.tools.javac.Main.compile(Main.java:66)\r\n\tat jdk.compiler/com.sun.tools.javac.Main.main(Main.java:52)\r\n"
+  },
+  {
+    "name": "bad-array",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+    "args": [
+      "--release",
+      "17",
+      "-cp",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\out\\api",
+      "-processorpath",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\out\\processors;C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\out\\api",
+      "-processor",
+      "probe.BadArrayProcessor",
+      "-d",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\out\\bad-array",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\app\\example\\ExplicitUse.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\app\\example\\LocalCodec.java"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988",
+    "status": 3,
+    "signal": null,
+    "error": null,
+    "expectedStatus": 3,
+    "expectedText": [
+      "MirroredTypesException",
+      "example.LocalCodec"
+    ],
+    "stdout": "",
+    "stderr": "\r\n\r\nAn annotation processor threw an uncaught exception.\r\nConsult the following stack trace for details.\r\njavax.lang.model.type.MirroredTypesException: Attempt to access Class objects for TypeMirrors [example.LocalCodec, example.DefaultCodec]\r\n\tat jdk.compiler/com.sun.tools.javac.model.AnnotationProxyMaker$MirroredTypesExceptionProxy.generateException(AnnotationProxyMaker.java:355)\r\n\tat java.base/sun.reflect.annotation.AnnotationInvocationHandler.invoke(AnnotationInvocationHandler.java:87)\r\n\tat jdk.proxy3/jdk.proxy3.$Proxy5.alternatives(Unknown Source)\r\n\tat probe.BadArrayProcessor.process(BadArrayProcessor.java:13)\r\n\tat jdk.compiler/com.sun.tools.javac.processing.JavacProcessingEnvironment.callProcessor(JavacProcessingEnvironment.java:956)\r\n\tat jdk.compiler/com.sun.tools.javac.processing.JavacProcessingEnvironment.discoverAndRunProcs(JavacProcessingEnvironment.java:872)\r\n\tat jdk.compiler/com.sun.tools.javac.processing.JavacProcessingEnvironment$Round.run(JavacProcessingEnvironment.java:1188)\r\n\tat jdk.compiler/com.sun.tools.javac.processing.JavacProcessingEnvironment.doProcessing(JavacProcessingEnvironment.java:1301)\r\n\tat jdk.compiler/com.sun.tools.javac.main.JavaCompiler.processAnnotations(JavaCompiler.java:1262)\r\n\tat jdk.compiler/com.sun.tools.javac.main.JavaCompiler.compile(JavaCompiler.java:938)\r\n\tat jdk.compiler/com.sun.tools.javac.main.Main.compile(Main.java:319)\r\n\tat jdk.compiler/com.sun.tools.javac.main.Main.compile(Main.java:178)\r\n\tat jdk.compiler/com.sun.tools.javac.Main.compile(Main.java:66)\r\n\tat jdk.compiler/com.sun.tools.javac.Main.main(Main.java:52)\r\n"
+  },
+  {
+    "name": "mirror-positive",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+    "args": [
+      "--release",
+      "17",
+      "-cp",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\out\\api",
+      "-processorpath",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\out\\processors;C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\out\\api",
+      "-processor",
+      "probe.MirrorProcessor",
+      "-d",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\out\\mirror-positive",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\app\\example\\DefaultUse.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\app\\example\\ExplicitUse.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\app\\example\\LocalCodec.java"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "expectedStatus": 0,
+    "expectedText": [
+      "VALUES DefaultUse explicit=0 withDefaults=2",
+      "VALUES ExplicitUse explicit=2 withDefaults=2",
+      "CODEC_OK: example.LocalCodec in value",
+      "CODEC_OK: example.LocalCodec in alternatives",
+      "CODEC_OK: example.DefaultCodec in value",
+      "CODEC_OK: example.DefaultCodec in alternatives"
+    ],
+    "stdout": "",
+    "stderr": "Note: VALUES DefaultUse explicit=0 withDefaults=2\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\app\\example\\DefaultUse.java:3: Note: CODEC_OK: example.DefaultCodec in value\r\npublic final class DefaultUse {}\r\n             ^\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\app\\example\\DefaultUse.java:3: Note: CODEC_OK: example.DefaultCodec in alternatives\r\npublic final class DefaultUse {}\r\n             ^\r\nNote: VALUES ExplicitUse explicit=2 withDefaults=2\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\app\\example\\ExplicitUse.java:3: Note: CODEC_OK: example.LocalCodec in value\r\npublic final class ExplicitUse {}\r\n             ^\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\app\\example\\ExplicitUse.java:3: Note: CODEC_OK: example.LocalCodec in alternatives\r\npublic final class ExplicitUse {}\r\n             ^\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\app\\example\\ExplicitUse.java:3: Note: CODEC_OK: example.DefaultCodec in alternatives\r\npublic final class ExplicitUse {}\r\n             ^\r\n"
+  },
+  {
+    "name": "mirror-negative-value",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+    "args": [
+      "--release",
+      "17",
+      "-cp",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\out\\api",
+      "-processorpath",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\out\\processors;C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\out\\api",
+      "-processor",
+      "probe.MirrorProcessor",
+      "-d",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\out\\mirror-negative-value",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\app\\example\\DefaultUse.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\app\\example\\ExplicitUse.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\app\\example\\LocalCodec.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\invalid-value\\example\\InvalidUse.java"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988",
+    "status": 1,
+    "signal": null,
+    "error": null,
+    "expectedStatus": 1,
+    "expectedText": [
+      "CODEC_REQUIRED: java.lang.String in value"
+    ],
+    "stdout": "",
+    "stderr": "Note: VALUES DefaultUse explicit=0 withDefaults=2\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\app\\example\\DefaultUse.java:3: Note: CODEC_OK: example.DefaultCodec in value\r\npublic final class DefaultUse {}\r\n             ^\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\app\\example\\DefaultUse.java:3: Note: CODEC_OK: example.DefaultCodec in alternatives\r\npublic final class DefaultUse {}\r\n             ^\r\nNote: VALUES ExplicitUse explicit=2 withDefaults=2\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\app\\example\\ExplicitUse.java:3: Note: CODEC_OK: example.LocalCodec in value\r\npublic final class ExplicitUse {}\r\n             ^\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\app\\example\\ExplicitUse.java:3: Note: CODEC_OK: example.LocalCodec in alternatives\r\npublic final class ExplicitUse {}\r\n             ^\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\app\\example\\ExplicitUse.java:3: Note: CODEC_OK: example.DefaultCodec in alternatives\r\npublic final class ExplicitUse {}\r\n             ^\r\nNote: VALUES InvalidUse explicit=1 withDefaults=2\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\invalid-value\\example\\InvalidUse.java:3: error: CODEC_REQUIRED: java.lang.String in value\r\npublic final class InvalidUse {}\r\n             ^\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\invalid-value\\example\\InvalidUse.java:3: Note: CODEC_OK: example.DefaultCodec in alternatives\r\npublic final class InvalidUse {}\r\n             ^\r\n1 error\r\n"
+  },
+  {
+    "name": "mirror-negative-array",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+    "args": [
+      "--release",
+      "17",
+      "-cp",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\out\\api",
+      "-processorpath",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\out\\processors;C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\out\\api",
+      "-processor",
+      "probe.MirrorProcessor",
+      "-d",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\out\\mirror-negative-array",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\app\\example\\DefaultUse.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\app\\example\\ExplicitUse.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\app\\example\\LocalCodec.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\invalid-array\\example\\InvalidArrayUse.java"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988",
+    "status": 1,
+    "signal": null,
+    "error": null,
+    "expectedStatus": 1,
+    "expectedText": [
+      "CODEC_REQUIRED: java.lang.String in alternatives"
+    ],
+    "stdout": "",
+    "stderr": "Note: VALUES DefaultUse explicit=0 withDefaults=2\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\app\\example\\DefaultUse.java:3: Note: CODEC_OK: example.DefaultCodec in value\r\npublic final class DefaultUse {}\r\n             ^\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\app\\example\\DefaultUse.java:3: Note: CODEC_OK: example.DefaultCodec in alternatives\r\npublic final class DefaultUse {}\r\n             ^\r\nNote: VALUES ExplicitUse explicit=2 withDefaults=2\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\app\\example\\ExplicitUse.java:3: Note: CODEC_OK: example.LocalCodec in value\r\npublic final class ExplicitUse {}\r\n             ^\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\app\\example\\ExplicitUse.java:3: Note: CODEC_OK: example.LocalCodec in alternatives\r\npublic final class ExplicitUse {}\r\n             ^\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\app\\example\\ExplicitUse.java:3: Note: CODEC_OK: example.DefaultCodec in alternatives\r\npublic final class ExplicitUse {}\r\n             ^\r\nNote: VALUES InvalidArrayUse explicit=2 withDefaults=2\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\invalid-array\\example\\InvalidArrayUse.java:3: Note: CODEC_OK: example.LocalCodec in value\r\npublic final class InvalidArrayUse {}\r\n             ^\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\invalid-array\\example\\InvalidArrayUse.java:3: error: CODEC_REQUIRED: java.lang.String in alternatives\r\npublic final class InvalidArrayUse {}\r\n             ^\r\n1 error\r\n"
+  },
+  {
+    "name": "catching-positive",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+    "args": [
+      "--release",
+      "17",
+      "-cp",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\out\\api",
+      "-processorpath",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\out\\processors;C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\out\\api",
+      "-processor",
+      "probe.CatchingProcessor",
+      "-d",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\out\\catching-positive",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\app\\example\\DefaultUse.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\app\\example\\ExplicitUse.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\app\\example\\LocalCodec.java"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "expectedStatus": 0,
+    "expectedText": [
+      "CAUGHT_OK: example.LocalCodec in value",
+      "CAUGHT_OK: example.DefaultCodec in value",
+      "CAUGHT_OK: example.LocalCodec in alternatives"
+    ],
+    "stdout": "",
+    "stderr": "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\app\\example\\DefaultUse.java:3: Note: CAUGHT_OK: example.DefaultCodec in value\r\npublic final class DefaultUse {}\r\n             ^\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\app\\example\\DefaultUse.java:3: Note: CAUGHT_OK: example.DefaultCodec in alternatives\r\npublic final class DefaultUse {}\r\n             ^\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\app\\example\\ExplicitUse.java:3: Note: CAUGHT_OK: example.LocalCodec in value\r\npublic final class ExplicitUse {}\r\n             ^\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\app\\example\\ExplicitUse.java:3: Note: CAUGHT_OK: example.LocalCodec in alternatives\r\npublic final class ExplicitUse {}\r\n             ^\r\nC:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\app\\example\\ExplicitUse.java:3: Note: CAUGHT_OK: example.DefaultCodec in alternatives\r\npublic final class ExplicitUse {}\r\n             ^\r\n"
+  },
+  {
+    "name": "compile-runtime",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+    "args": [
+      "--release",
+      "17",
+      "-proc:none",
+      "-cp",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\out\\api",
+      "-d",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\out\\runtime",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\app\\example\\DefaultUse.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\app\\example\\ExplicitUse.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\app\\example\\LocalCodec.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\runtime\\example\\RuntimeReader.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\invalid-value\\example\\InvalidUse.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\invalid-array\\example\\InvalidArrayUse.java"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "expectedStatus": 0,
+    "expectedText": [],
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "name": "runtime-positive",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+    "args": [
+      "-cp",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\out\\api;C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\out\\runtime",
+      "example.RuntimeReader",
+      "example.ExplicitUse",
+      "example.DefaultUse"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "expectedStatus": 0,
+    "expectedText": [
+      "RUNTIME_OK example.ExplicitUse value=example.LocalCodec alternatives=2",
+      "RUNTIME_OK example.DefaultUse value=example.DefaultCodec alternatives=1"
+    ],
+    "stdout": "RUNTIME_OK example.ExplicitUse value=example.LocalCodec alternatives=2\r\nRUNTIME_OK example.DefaultUse value=example.DefaultCodec alternatives=1\r\n",
+    "stderr": ""
+  },
+  {
+    "name": "runtime-negative-value",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+    "args": [
+      "-cp",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\out\\api;C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\out\\runtime",
+      "example.RuntimeReader",
+      "example.InvalidUse"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988",
+    "status": 1,
+    "signal": null,
+    "error": null,
+    "expectedStatus": 1,
+    "expectedText": [
+      "CODEC_REQUIRED: java.lang.String in value"
+    ],
+    "stdout": "",
+    "stderr": "Exception in thread \"main\" java.lang.IllegalArgumentException: CODEC_REQUIRED: java.lang.String in value\r\n\tat example.RuntimeReader.check(RuntimeReader.java:16)\r\n\tat example.RuntimeReader.main(RuntimeReader.java:8)\r\n"
+  },
+  {
+    "name": "runtime-negative-array",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+    "args": [
+      "-cp",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\out\\api;C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\out\\runtime",
+      "example.RuntimeReader",
+      "example.InvalidArrayUse"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988",
+    "status": 1,
+    "signal": null,
+    "error": null,
+    "expectedStatus": 1,
+    "expectedText": [
+      "CODEC_REQUIRED: java.lang.String in alternatives"
+    ],
+    "stdout": "",
+    "stderr": "Exception in thread \"main\" java.lang.IllegalArgumentException: CODEC_REQUIRED: java.lang.String in alternatives\r\n\tat example.RuntimeReader.check(RuntimeReader.java:16)\r\n\tat example.RuntimeReader.main(RuntimeReader.java:9)\r\n"
+  },
+  {
+    "name": "bad-even-with-compiled-app",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+    "args": [
+      "--release",
+      "17",
+      "-cp",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\out\\api",
+      "-processorpath",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\out\\processors;C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\out\\api;C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\out\\runtime",
+      "-processor",
+      "probe.BadProcessor",
+      "-d",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\out\\bad-with-app",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\app\\example\\DefaultUse.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\app\\example\\ExplicitUse.java",
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\src\\app\\example\\LocalCodec.java"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988",
+    "status": 3,
+    "signal": null,
+    "error": null,
+    "expectedStatus": 3,
+    "expectedText": [
+      "MirroredTypeException"
+    ],
+    "stdout": "",
+    "stderr": "\r\n\r\nAn annotation processor threw an uncaught exception.\r\nConsult the following stack trace for details.\r\njavax.lang.model.type.MirroredTypeException: Attempt to access Class object for TypeMirror example.DefaultCodec\r\n\tat jdk.compiler/com.sun.tools.javac.model.AnnotationProxyMaker$MirroredTypeExceptionProxy.generateException(AnnotationProxyMaker.java:310)\r\n\tat java.base/sun.reflect.annotation.AnnotationInvocationHandler.invoke(AnnotationInvocationHandler.java:87)\r\n\tat jdk.proxy3/jdk.proxy3.$Proxy5.value(Unknown Source)\r\n\tat probe.BadProcessor.process(BadProcessor.java:15)\r\n\tat jdk.compiler/com.sun.tools.javac.processing.JavacProcessingEnvironment.callProcessor(JavacProcessingEnvironment.java:956)\r\n\tat jdk.compiler/com.sun.tools.javac.processing.JavacProcessingEnvironment.discoverAndRunProcs(JavacProcessingEnvironment.java:872)\r\n\tat jdk.compiler/com.sun.tools.javac.processing.JavacProcessingEnvironment$Round.run(JavacProcessingEnvironment.java:1188)\r\n\tat jdk.compiler/com.sun.tools.javac.processing.JavacProcessingEnvironment.doProcessing(JavacProcessingEnvironment.java:1301)\r\n\tat jdk.compiler/com.sun.tools.javac.main.JavaCompiler.processAnnotations(JavaCompiler.java:1262)\r\n\tat jdk.compiler/com.sun.tools.javac.main.JavaCompiler.compile(JavaCompiler.java:938)\r\n\tat jdk.compiler/com.sun.tools.javac.main.Main.compile(Main.java:319)\r\n\tat jdk.compiler/com.sun.tools.javac.main.Main.compile(Main.java:178)\r\n\tat jdk.compiler/com.sun.tools.javac.Main.compile(Main.java:66)\r\n\tat jdk.compiler/com.sun.tools.javac.Main.main(Main.java:52)\r\n"
+  }
+]

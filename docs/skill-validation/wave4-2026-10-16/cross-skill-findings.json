@@ -1,0 +1,38 @@
+{
+  "scope": "Coordinator routing of findings within the authorized wave; reviewers retain exclusive ownership",
+  "findings": [
+    {
+      "id": "jakarta-persistence-spec-links",
+      "sourceReviewers": ["data-source-patterns", "domain-logic-organization"],
+      "finding": "Reviewers observed that Jakarta Persistence specification URLs without the .html suffix returned 404; versioned .html specification URLs resolved. Check each actual destination and retain its intended version and section.",
+      "coordinatorInspection": "Read-only rg found similarly shaped URLs in the selected pending skills listed below. This is a candidate link defect, not independent confirmation of every destination.",
+      "skillsToCheck": [
+        "enterprise-architecture-smells",
+        "gof-prototype",
+        "gof-state",
+        "inheritance-mapping-strategies",
+        "java-ddd-aggregates",
+        "java-ddd-repositories",
+        "java-ddd-testing",
+        "metadata-mapping",
+        "offline-concurrency-control",
+        "orm-behavioral-patterns",
+        "orm-structural-mapping",
+        "patterns-and-modern-frameworks",
+        "query-objects-and-specifications",
+        "repository-pattern"
+      ],
+      "disposition": "All fourteen assigned reviewers confirmed and repaired the cited defect in their own scope, preserving intended versions; each final handoff records actual retrieval and source checks. Additional broken API/Servlet/Bean Validation links were handled only by their package owners. No bulk unverified rewrite."
+    },
+    {
+      "id": "visitor-deliberate-coverage",
+      "skills": ["gof-pattern-antipatterns", "gof-visitor"],
+      "disposition": "Both reviewed diffs preserve deliberate per-operation coverage when adding types. Compile failures are evidence of missing handling, not automatic justification to replace Visitor or add a fallback."
+    },
+    {
+      "id": "state-and-version-association",
+      "skills": ["java-ddd-aggregates", "offline-concurrency-control"],
+      "disposition": "Owners coordinated the late-token hazard and the conditions of a valid alternative, without editing each other's packages. H2 execution belongs to the offline-concurrency-control handoff; DDD source review and fixture compilation do not claim a second database run or PostgreSQL/JPA equivalence."
+    }
+  ]
+}

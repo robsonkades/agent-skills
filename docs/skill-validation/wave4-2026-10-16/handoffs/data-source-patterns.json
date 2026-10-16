@@ -1,0 +1,801 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "data-source-patterns",
+  "ownedPath": "C:/git/agent-skills/skills/data-source-patterns",
+  "allWritesStopped": true,
+  "scope": {
+    "role": "Select/review data-access patterns based on domain, access ownership and object/schema coupling; preserve simple gateways and directly mapped JPA entities as legitimate choices.",
+    "reviewCriteria": [
+      "Trace authority over state, callers, schema ownership, actual reads and writes, transaction scope and isolation.",
+      "Separate mapping independence from concurrency guarantees; avoid mapper migration as an unsupported fix.",
+      "Preserve read-projection/write-intent protections, optimistic tokens, effective mixed JDBC/JPA participation and partial-example limits.",
+      "Compare the smallest sufficient change and no change; keep detailed concurrency protocols with existing neighboring owners."
+    ],
+    "procedure": "Read complete review prompt, wave4 brief and entire assigned package; reviewed coordinator baseline row and actual scoped Git state. Reused unchanged skill-engineering and parallel-review instructions/readings. Findings delivered before editing; no ownership conflict."
+  },
+  "versions": {
+    "committed": "1.3.4",
+    "assignment": "1.3.4",
+    "final": "1.3.5",
+    "preExistingBump": false,
+    "rationale": "One patch for focused pattern-selection/concurrency-boundary guidance and verified source-link repairs. No description, dependency or technology-baseline change."
+  },
+  "baseline": {
+    "cleanAtAssignment": true,
+    "status": "",
+    "staged": "",
+    "unstaged": "",
+    "untrackedFiles": [],
+    "snapshot": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/assignment-baseline.json",
+    "hashes": [
+      {
+        "path": "skills/data-source-patterns/references/active-record-vs-data-mapper.md",
+        "sha256": "b75996d100465d5690fd870571ba93e423605440374976366580b82bab632504"
+      },
+      {
+        "path": "skills/data-source-patterns/references/gateways-and-active-record.md",
+        "sha256": "b310a7c6442548e054e1bf754a600b77964576069d67d5aa15383dd8303e682f"
+      },
+      {
+        "path": "skills/data-source-patterns/SKILL.md",
+        "sha256": "f167c51c6bd9264ad881761d43b7f310712d643bc6df32dc53679c00c1813167"
+      },
+      {
+        "path": "skills/data-source-patterns/skill.yaml",
+        "sha256": "9613aeebef4ec54a79f673ead3e6e74fec64bce3d5561d7f996bb3fee01e1571"
+      }
+    ],
+    "coordinatorBaseline": "docs/skill-validation/wave4-2026-10-16/baseline.json: data-source-patterns row matched assignment hashes and versions."
+  },
+  "findings": [
+    {
+      "id": "DSP-CONCURRENCY-SCOPE",
+      "status": "corrected",
+      "locations": [
+        "SKILL.md:76",
+        "SKILL.md:151",
+        "references/active-record-vs-data-mapper.md:113"
+      ],
+      "finding": "Existing guidance protected loaded entity versions but did not explicitly bound those protections when a decision reads multiple rows and writes different rows. The pattern-selection workflow could leave a missing isolation/concurrency protocol misattributed to missing mapping.",
+      "consequence": "A mapper or unit-of-work migration can preserve the same invalid cross-row interleaving. This is a supported missing decision boundary, not a measured agent failure.",
+      "changes": [
+        "Trace the rule read set, write predicates, participating writers and effective isolation/transaction boundary.",
+        "Explain the independently versioned-row counterexample and preserve narrow guarded SQL or simple mappers when sufficient.",
+        "Route protocol selection to enterprise-transactions/offline-concurrency-control, which were already declared in suggests."
+      ],
+      "evidence": [
+        "Jakarta Persistence 3.1 section 3.4 and footnote 31",
+        "PostgreSQL 17 section 13.2",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/controls.stdout.txt"
+      ]
+    },
+    {
+      "id": "DSP-PRIMARY-LINKS",
+      "status": "corrected",
+      "locations": [
+        "references/active-record-vs-data-mapper.md:164",
+        "references/active-record-vs-data-mapper.md:266",
+        "references/gateways-and-active-record.md:204"
+      ],
+      "finding": "Two distinct Jakarta source URLs, appearing three times, returned HTTP 404.",
+      "consequence": "Readers could not consult the referenced merge/version or EntityManager contracts.",
+      "changes": [
+        "Use the specification .html URL.",
+        "Use case-sensitive EntityManager.html API URL."
+      ],
+      "evidence": "Direct HEAD checks: old URLs 404; corrected URLs 200; GET source snapshots retained."
+    }
+  ],
+  "remainingFindings": [],
+  "filesChangedByMe": [
+    {
+      "path": "skills/data-source-patterns/references/active-record-vs-data-mapper.md",
+      "sha256": "42cbf794a9709e836e772a77b66a905d14bf6bc29cf1f7a3dbdb18e2b2efc769",
+      "bytes": 16374
+    },
+    {
+      "path": "skills/data-source-patterns/references/gateways-and-active-record.md",
+      "sha256": "a5c39a75a53264605732d886613350cb1c58de2f542628ce74b31750b8291cc2",
+      "bytes": 10485
+    },
+    {
+      "path": "skills/data-source-patterns/SKILL.md",
+      "sha256": "3b5190d4fe85f1e722f4ade677fa4eac2889f7f9b86b248b177352f60378e1fb",
+      "bytes": 11458
+    },
+    {
+      "path": "skills/data-source-patterns/skill.yaml",
+      "sha256": "176fdc00070dc126887e7f59ec49001b32cd609652392e07113a3ff4bb16210c",
+      "bytes": 2322
+    }
+  ],
+  "preExistingFilesChanged": [],
+  "capabilitiesPreserved": [
+    "All four pattern definitions and classification by responsibility rather than class/table names.",
+    "Schema/domain-shape ownership, simple mapper/Active Record/gateway alternatives and module-level coexistence.",
+    "Mapping identity and expected version preservation; lifecycle reconstitution and pure rule-test distinctions.",
+    "Read projections remain separate from writable state; omission/null/merge semantics and conditional narrow updates.",
+    "Shared JDBC/JPA transaction participation, flush-versus-commit, managed-state reconciliation and bulk/version caveats.",
+    "Java 17 and Spring 6.1+ partial-example baseline, unchanged descriptions/dependencies/referrals.",
+    "All five Java fenced snippets remained byte-for-byte identical."
+  ],
+  "capabilitiesRemoved": [],
+  "capabilitiesReplaced": ["Broken primary-source URLs only; no pattern capability removed."],
+  "checks": [
+    {
+      "kind": "package",
+      "cmd": "@'\nimport { loadPackageFromDirectory } from './packages/core/src/application/package-loader.ts';\nimport { validatePackage } from './packages/core/src/application/validate-package.ts';\nimport { NodeFileSystem } from './packages/node/src/file-system.ts';\nimport { CodexAdapter } from './packages/adapter-codex/src/index.ts';\nimport { ClaudeCodeAdapter } from './packages/adapter-claude/src/index.ts';\nconst loaded=await loadPackageFromDirectory(new NodeFileSystem(),'skills/data-source-patterns',{strict:true});\nconst report=validatePackage(loaded.pkg,{directoryName:'data-source-patterns',adapters:[new CodexAdapter(),new ClaudeCodeAdapter()]});\nconst issues=[...loaded.issues,...report.issues];\nconsole.log(JSON.stringify({skill:loaded.pkg.manifest.name,version:loaded.pkg.manifest.version,files:loaded.pkg.files.length,issues},null,2));\nif(issues.length)process.exitCode=1;\n'@ | node --input-type=module",
+      "cwd": "C:/git/agent-skills",
+      "result": {
+        "chunk_id": "8ad312",
+        "wall_time_seconds": 0.288597,
+        "exit_code": 0,
+        "original_token_count": 23,
+        "output": "{\n  \"skill\": \"data-source-patterns\",\n  \"version\": \"1.3.5\",\n  \"files\": 4,\n  \"issues\": []\n}\n"
+      }
+    },
+    {
+      "kind": "links",
+      "cmd": "@'\nimport fs from 'node:fs';\nimport path from 'node:path';\nconst root='skills/data-source-patterns';\nconst walk=dir=>fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(path.join(dir,e.name)):[path.join(dir,e.name)]);\nconst markdown=walk(root).filter(p=>p.endsWith('.md'));const links=[];\nfor(const file of markdown){const text=fs.readFileSync(file,'utf8');for(const match of text.matchAll(/\\[[^\\]]*\\]\\(([^)]+)\\)/g)){const target=match[1].split('#')[0];if(!target||/^[a-z][a-z\\d+.-]*:/i.test(target))continue;const resolved=path.resolve(path.dirname(file),target);if(!fs.existsSync(resolved))throw Error(file+': '+target);links.push({file,target});}}\nconsole.log(JSON.stringify({markdownFiles:markdown.length,relativeLinks:links.length,links},null,2));\n'@ | node --input-type=module",
+      "cwd": "C:/git/agent-skills",
+      "result": {
+        "chunk_id": "0659b5",
+        "wall_time_seconds": 0.1889555,
+        "exit_code": 0,
+        "original_token_count": 81,
+        "output": "{\n  \"markdownFiles\": 3,\n  \"relativeLinks\": 2,\n  \"links\": [\n    {\n      \"file\": \"skills\\\\data-source-patterns\\\\SKILL.md\",\n      \"target\": \"references/gateways-and-active-record.md\"\n    },\n    {\n      \"file\": \"skills\\\\data-source-patterns\\\\SKILL.md\",\n      \"target\": \"references/active-record-vs-data-mapper.md\"\n    }\n  ]\n}\n"
+      }
+    },
+    {
+      "kind": "format",
+      "cwd": "C:/git/agent-skills",
+      "cmd": "node node_modules/prettier/bin/prettier.cjs --check skills/data-source-patterns/SKILL.md skills/data-source-patterns/references/active-record-vs-data-mapper.md skills/data-source-patterns/references/gateways-and-active-record.md skills/data-source-patterns/skill.yaml",
+      "result": {
+        "chunk_id": "69b399",
+        "wall_time_seconds": 0.331037,
+        "exit_code": 0,
+        "original_token_count": 17,
+        "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+      }
+    },
+    {
+      "kind": "diff",
+      "cwd": "C:/git/agent-skills",
+      "cmd": "git diff --check -- skills/data-source-patterns",
+      "result": {
+        "chunk_id": "777cd3",
+        "wall_time_seconds": 0.1115358,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      }
+    }
+  ],
+  "finalInspection": [
+    {
+      "kind": "final-diff",
+      "cmd": "git diff -- skills/data-source-patterns",
+      "cwd": "C:/git/agent-skills",
+      "result": {
+        "chunk_id": "abe0da",
+        "wall_time_seconds": 0.1608886,
+        "exit_code": 0,
+        "original_token_count": 2059,
+        "output": "diff --git a/skills/data-source-patterns/SKILL.md b/skills/data-source-patterns/SKILL.md\nindex 4cfa465..6c7be40 100644\n--- a/skills/data-source-patterns/SKILL.md\n+++ b/skills/data-source-patterns/SKILL.md\n@@ -73,8 +73,8 @@ APIs on older stacks; adopting this skill does not authorize a dependency/runtim\n 4. **Check the work shape.** Consider a SQL gateway for set-based or reporting work when\n    query control, translation or measured cost warrants it. An existing ORM projection or\n    bulk query may already fit; validate its invariant, versioning and managed-state effects\n-   before adding another access layer. For mixed JDBC/JPA paths, verify transaction participation\n-   and flush/context visibility; sharing a database URL does not prove atomicity.\n+   before adding another access layer. For mixed JDBC/JPA paths, verify transaction participation,\n+   effective isolation and flush/context visibility; sharing a database URL does not prove atomicity.\n 5. **Decide per module.** A pricing engine with a mapper and an admin CRUD area with Active\n    Record in one application is a reasonable design, provided the boundary between them is\n    explicit.\n@@ -148,6 +148,11 @@ Read path of an application whose write path uses a mapper\n   deliberately partitioned operations, but they must share invariant, versioning and transaction\n   rules with explicit write authority. Uncoordinated writers are the defect\n   (`offline-concurrency-control`).\n+- Mapping style does not determine concurrency protection. Trace the state a rule reads, the rows\n+  each operation writes and the effective transaction boundary. A unit of work or individual\n+  `@Version` fields do not by themselves protect an invariant across independently updated rows.\n+  Resolve that protocol before attributing the defect to a missing mapper; the comparison\n+  reference covers this boundary and routes transaction details to their owner.\n - SQL can avoid object loading for reporting and bulk changes; verify plans, rows touched,\n   round trips and application latency. Set-based writes must preserve invariants, versioning\n   and transaction semantics; ORM callbacks and managed state may be bypassed. Decide flush\n@@ -174,4 +179,4 @@ is missing, state the conditional choice instead of prescribing a migration.\n   actually couples, testability and query control, the JPA middle ground and its risks, and\n   the migration path when the choice must change. Read when the decision is genuinely open,\n   is being re-opened, or a read projection is being reused for writes; it includes worked\n-  cases for that boundary.\n+  cases for that boundary and distinguishes mapping from cross-row concurrency protection.\ndiff --git a/skills/data-source-patterns/references/active-record-vs-data-mapper.md b/skills/data-source-patterns/references/active-record-vs-data-mapper.md\nindex 34ceb7f..f840445 100644\n--- a/skills/data-source-patterns/references/active-record-vs-data-mapper.md\n+++ b/skills/data-source-patterns/references/active-record-vs-data-mapper.md\n@@ -110,6 +110,30 @@ state. Reconstitution must reject corrupt combinations or translate known legacy\n explicitly; it is not permission to bypass all validation. Use an appropriately accessible\n factory without weakening creation invariants.\n \n+### Concurrency scope is separate from mapping style\n+\n+The version check above protects the entity being written; it does not automatically validate\n+every other row read to make that decision. Suppose a rule requires at least one available\n+operator. Two transactions both read two available operators, then each disables a different\n+operator using that row's unchanged version. Both row-version checks can succeed under isolation\n+that permits this interleaving. Moving the same reads and writes behind a mapper, or collecting\n+them in a unit of work, does not remove the race.\n+\n+Inspect the rule's read set, actual write predicates, participating writers and effective\n+database isolation/lock modes. Keep a narrow conditional update or simple mapper when its\n+guard covers the required state. If the rule spans independently updated rows, choose a\n+protocol covering that state rather than adding a second object model as a concurrency fix.\n+Shared version/locking protocols or serializable transactions with whole-transaction retry\n+may be candidates; their scope, costs and interaction with other writers need validation.\n+Use `enterprise-transactions` and `offline-concurrency-control` for that choice. Test a\n+controlled two-transaction interleaving as well as the legitimate rule that allows both writes.\n+\n+Jakarta Persistence 3.1 section 3.4 scopes version checks to entity state and leaves database\n+isolation configuration outside the specification. As one database-specific example,\n+[PostgreSQL 17 isolation](https://www.postgresql.org/docs/17/transaction-iso.html) permits\n+serialization anomalies at Read Committed and Repeatable Read. Verify the actual database;\n+an ORM transaction annotation or isolation-level name alone is not proof of the needed guarantee.\n+\n ## Read shape and write intent\n \n A mapper may return a deliberately lossy read projection. That does not make the projection\n@@ -137,7 +161,7 @@ does not provide a general “update only supplied DTO fields” contract. The s\n exception for unfetched LAZY fields concerns provider-tracked loading state, not arbitrary\n fields omitted from an application-created object. Inspect cascade and managed-state behavior\n before adapting a partial model; see section 3.2.7.1,\n-[merging detached entity state](https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1).\n+[merging detached entity state](https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1.html).\n Use `orm-behavioral-patterns` for the runtime details, carrying the read shape, supplied fields,\n expected version and required write semantics. If the runtime behavior cannot be established,\n keep the read projection read-only and report which write contract still needs verification.\n@@ -239,4 +263,4 @@ or creating a redundant mapper without a supported benefit.\n ## Sources\n \n - [Fowler: Data Mapper](https://martinfowler.com/eaaCatalog/dataMapper.html)\n-- [Jakarta Persistence 3.1: entities, versioning and bulk operations](https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1)\n+- [Jakarta Persistence 3.1: entities, versioning and bulk operations](https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1.html)\ndiff --git a/skills/data-source-patterns/references/gateways-and-active-record.md b/skills/data-source-patterns/references/gateways-and-active-record.md\nindex f30181a..19ba869 100644\n--- a/skills/data-source-patterns/references/gateways-and-active-record.md\n+++ b/skills/data-source-patterns/references/gateways-and-active-record.md\n@@ -201,4 +201,4 @@ the same tables.\n - [Fowler: Table Data Gateway](https://martinfowler.com/eaaCatalog/tableDataGateway.html)\n - [Spring Framework 6.1 JdbcClient](https://docs.spring.io/spring-framework/docs/6.1.x/javadoc-api/org/springframework/jdbc/core/simple/JdbcClient.html)\n - [Spring 6.1.21 JpaTransactionManager connection-sharing contract](https://github.com/spring-projects/spring-framework/blob/v6.1.21/spring-orm/src/main/java/org/springframework/orm/jpa/JpaTransactionManager.java)\n-- [Jakarta Persistence 3.1 EntityManager flush, clear and refresh](https://jakarta.ee/specifications/persistence/3.1/apidocs/jakarta.persistence/jakarta/persistence/entitymanager)\n+- [Jakarta Persistence 3.1 EntityManager flush, clear and refresh](https://jakarta.ee/specifications/persistence/3.1/apidocs/jakarta.persistence/jakarta/persistence/EntityManager.html)\ndiff --git a/skills/data-source-patterns/skill.yaml b/skills/data-source-patterns/skill.yaml\nindex 31af3b2..0b3a814 100644\n--- a/skills/data-source-patterns/skill.yaml\n+++ b/skills/data-source-patterns/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: data-source-patterns\n-version: 1.3.4\n+version: 1.3.5\n description: >-\n   Choosing how code reaches the database — Table Data Gateway, Row Data Gateway, Active\n   Record or Data Mapper — from the shape of the domain logic rather than from framework\n"
+      }
+    },
+    {
+      "kind": "final-metadata",
+      "cmd": "@'\nimport fs from 'node:fs';\nimport path from 'node:path';\nimport crypto from 'node:crypto';\nimport {execFileSync} from 'node:child_process';\nconst root='skills/data-source-patterns';const walk=d=>fs.readdirSync(d,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(path.join(d,e.name)):[path.join(d,e.name)]);\nconst committed=execFileSync('git',['show','HEAD:'+root+'/skill.yaml'],{encoding:'utf8'});\nconsole.log(JSON.stringify({committedVersion:committed.match(/^version: (.+)$/m)[1],finalVersion:fs.readFileSync(root+'/skill.yaml','utf8').match(/^version: (.+)$/m)[1],status:execFileSync('git',['status','--short','--untracked-files=all','--',root],{encoding:'utf8'}),staged:execFileSync('git',['diff','--cached','--',root],{encoding:'utf8'}),files:walk(root).map(p=>({path:p.replaceAll('\\\\','/'),sha256:crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex'),bytes:fs.statSync(p).size}))},null,2));\n'@ | node --input-type=module",
+      "cwd": "C:/git/agent-skills",
+      "result": {
+        "chunk_id": "e390a0",
+        "wall_time_seconds": 0.239602,
+        "exit_code": 0,
+        "original_token_count": 275,
+        "output": "{\n  \"committedVersion\": \"1.3.4\",\n  \"finalVersion\": \"1.3.5\",\n  \"status\": \" M skills/data-source-patterns/SKILL.md\\n M skills/data-source-patterns/references/active-record-vs-data-mapper.md\\n M skills/data-source-patterns/references/gateways-and-active-record.md\\n M skills/data-source-patterns/skill.yaml\\n\",\n  \"staged\": \"\",\n  \"files\": [\n    {\n      \"path\": \"skills/data-source-patterns/references/active-record-vs-data-mapper.md\",\n      \"sha256\": \"42cbf794a9709e836e772a77b66a905d14bf6bc29cf1f7a3dbdb18e2b2efc769\",\n      \"bytes\": 16374\n    },\n    {\n      \"path\": \"skills/data-source-patterns/references/gateways-and-active-record.md\",\n      \"sha256\": \"a5c39a75a53264605732d886613350cb1c58de2f542628ce74b31750b8291cc2\",\n      \"bytes\": 10485\n    },\n    {\n      \"path\": \"skills/data-source-patterns/SKILL.md\",\n      \"sha256\": \"3b5190d4fe85f1e722f4ade677fa4eac2889f7f9b86b248b177352f60378e1fb\",\n      \"bytes\": 11458\n    },\n    {\n      \"path\": \"skills/data-source-patterns/skill.yaml\",\n      \"sha256\": \"176fdc00070dc126887e7f59ec49001b32cd609652392e07113a3ff4bb16210c\",\n      \"bytes\": 2322\n    }\n  ]\n}\n"
+      }
+    },
+    {
+      "kind": "source-link-status",
+      "cmd": "@'\nconst urls=['https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1','https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1.html','https://jakarta.ee/specifications/persistence/3.1/apidocs/jakarta.persistence/jakarta/persistence/entitymanager','https://jakarta.ee/specifications/persistence/3.1/apidocs/jakarta.persistence/jakarta/persistence/EntityManager.html'];\nconsole.log(JSON.stringify(await Promise.all(urls.map(async url=>{const r=await fetch(url,{method:'HEAD'});return{url,status:r.status,finalUrl:r.url}})),null,2));\n'@ | node --input-type=module",
+      "cwd": "C:/git/agent-skills",
+      "result": {
+        "chunk_id": "a5c33d",
+        "wall_time_seconds": 0.8276468,
+        "exit_code": 0,
+        "original_token_count": 257,
+        "output": "[\n  {\n    \"url\": \"https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1\",\n    \"status\": 404,\n    \"finalUrl\": \"https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1\"\n  },\n  {\n    \"url\": \"https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1.html\",\n    \"status\": 200,\n    \"finalUrl\": \"https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1.html\"\n  },\n  {\n    \"url\": \"https://jakarta.ee/specifications/persistence/3.1/apidocs/jakarta.persistence/jakarta/persistence/entitymanager\",\n    \"status\": 404,\n    \"finalUrl\": \"https://jakarta.ee/specifications/persistence/3.1/apidocs/jakarta.persistence/jakarta/persistence/entitymanager\"\n  },\n  {\n    \"url\": \"https://jakarta.ee/specifications/persistence/3.1/apidocs/jakarta.persistence/jakarta/persistence/EntityManager.html\",\n    \"status\": 200,\n    \"finalUrl\": \"https://jakarta.ee/specifications/persistence/3.1/apidocs/jakarta.persistence/jakarta/persistence/EntityManager.html\"\n  }\n]\n"
+      }
+    },
+    {
+      "kind": "owned-process-check",
+      "cmd": "$dataSourceProcesses = @(Get-CimInstance Win32_Process -Filter \"Name = 'java.exe'\" | Where-Object { $_.CommandLine -like '*data-source-patterns-validation*' }); [pscustomobject]@{ count = $dataSourceProcesses.Count; pids = @($dataSourceProcesses | Select-Object -ExpandProperty ProcessId) } | ConvertTo-Json -Compress",
+      "cwd": "C:/git/agent-skills",
+      "result": {
+        "chunk_id": "ed9772",
+        "wall_time_seconds": 0.3678853,
+        "exit_code": 0,
+        "original_token_count": 6,
+        "output": "{\"count\":0,\"pids\":[]}\r\n"
+      }
+    }
+  ],
+  "technicalValidation": {
+    "classification": "Executed Java compilation and JDBC/H2 controls, not ORM/PostgreSQL integration and not agent evaluation.",
+    "compiler": "Temurin javac 25.0.3 with --release 17; class-file major 61 checked.",
+    "runtime": "Temurin 25.0.3+9-LTS on Windows; no Java 17 VM executed.",
+    "database": "Existing H2 2.2.224 jar; in-memory databases only; two actual resource-local JDBC transactions per control at Connection.TRANSACTION_READ_COMMITTED.",
+    "dependencies": {
+      "path": "C:/Users/robso/.m2/repository/com/h2database/h2/2.2.224/h2-2.2.224.jar",
+      "sha256": "b9d8f19358ada82a4f6eb5b174c6cfe320a375b5a9cb5a4fe456d623e6e55497",
+      "installationPerformed": false
+    },
+    "commands": [
+      {
+        "name": "compile",
+        "bin": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+        "args": [
+          "--release",
+          "17",
+          "-cp",
+          "C:/Users/robso/.m2/repository/com/h2database/h2/2.2.224/h2-2.2.224.jar",
+          "-d",
+          "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/classes",
+          "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/AvailabilityProbe.java"
+        ],
+        "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation",
+        "status": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "name": "controls",
+        "bin": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+        "args": [
+          "-cp",
+          "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/classes;C:/Users/robso/.m2/repository/com/h2database/h2/2.2.224/h2-2.2.224.jar",
+          "AvailabilityProbe"
+        ],
+        "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation",
+        "status": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "java=25.0.3+9-LTS\r\ndatabase=2.2.224 (2023-09-17)\r\nOutcome[minimum=1, sharedGuard=false, firstRows=1, secondRows=1, firstGuardRows=-1, secondGuardRows=-1, available=0, firstVersion=1, secondVersion=1]\r\nOutcome[minimum=0, sharedGuard=false, firstRows=1, secondRows=1, firstGuardRows=-1, secondGuardRows=-1, available=0, firstVersion=1, secondVersion=1]\r\nOutcome[minimum=1, sharedGuard=true, firstRows=1, secondRows=0, firstGuardRows=1, secondGuardRows=0, available=1, firstVersion=1, secondVersion=0]\r\nPASS: 8 assertions; three deterministic two-transaction controls; no ORM or PostgreSQL executed\r\n",
+        "stderr": ""
+      }
+    ],
+    "execution": {
+      "cmd": "@'\nimport fs from 'node:fs';\nimport crypto from 'node:crypto';\nimport {spawnSync} from 'node:child_process';\nconst root='C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation';\nconst jdk='C:/Users/robso/.jdks/temurin-25.0.3/bin';\nconst h2='C:/Users/robso/.m2/repository/com/h2database/h2/2.2.224/h2-2.2.224.jar';\nif(!fs.existsSync(h2))throw new Error('Existing H2 jar missing');\nfs.mkdirSync(root+'/classes',{recursive:true});\nconst env={...process.env}; for(const name of ['JAVA_TOOL_OPTIONS','JDK_JAVA_OPTIONS','_JAVA_OPTIONS'])delete env[name];\nconst commands=[];\nfor(const [name,bin,args]of[['compile','javac',['--release','17','-cp',h2,'-d',root+'/classes',root+'/AvailabilityProbe.java']],['controls','java',['-cp',root+'/classes;'+h2,'AvailabilityProbe']]]){\nconst r=spawnSync(jdk+'/'+bin+'.exe',args,{cwd:root,env,encoding:'utf8',timeout:25000,windowsHide:true,maxBuffer:2*1024*1024});\nfs.writeFileSync(root+'/'+name+'.stdout.txt',r.stdout??''); fs.writeFileSync(root+'/'+name+'.stderr.txt',r.stderr??'');\ncommands.push({name,bin:jdk+'/'+bin+'.exe',args,cwd:root,status:r.status,signal:r.signal,error:r.error?.message??null,stdout:r.stdout,stderr:r.stderr});\nfs.writeFileSync(root+'/technical-commands.json',JSON.stringify({h2,sha256:crypto.createHash('sha256').update(fs.readFileSync(h2)).digest('hex'),commands},null,2)+'\\n');\nif(r.status!==0||r.error)throw Error(JSON.stringify(commands.at(-1)));console.log(r.stdout);\n}\nconst cls=fs.readFileSync(root+'/classes/AvailabilityProbe.class');console.log('classFileMajor='+cls.readUInt16BE(6));\n'@ | node --input-type=module",
+      "cwd": "C:/git/agent-skills",
+      "result": {
+        "chunk_id": "863085",
+        "wall_time_seconds": 0.9738862,
+        "exit_code": 0,
+        "original_token_count": 155,
+        "output": "\njava=25.0.3+9-LTS\r\ndatabase=2.2.224 (2023-09-17)\r\nOutcome[minimum=1, sharedGuard=false, firstRows=1, secondRows=1, firstGuardRows=-1, secondGuardRows=-1, available=0, firstVersion=1, secondVersion=1]\r\nOutcome[minimum=0, sharedGuard=false, firstRows=1, secondRows=1, firstGuardRows=-1, secondGuardRows=-1, available=0, firstVersion=1, secondVersion=1]\r\nOutcome[minimum=1, sharedGuard=true, firstRows=1, secondRows=0, firstGuardRows=1, secondGuardRows=0, available=1, firstVersion=1, secondVersion=0]\r\nPASS: 8 assertions; three deterministic two-transaction controls; no ORM or PostgreSQL executed\r\n\nclassFileMajor=61\n"
+      }
+    },
+    "controls": [
+      {
+        "name": "row versions, minimum=1",
+        "result": "Both decisions observe 2; both disjoint guarded row writes commit and advance their versions; final available=0 violates the accepted minimum. Expected negative control exposed the defect."
+      },
+      {
+        "name": "row versions, minimum=0",
+        "result": "Identical database outcome is legitimate under the alternate accepted contract; both writes commit and final available=0 satisfies the minimum."
+      },
+      {
+        "name": "shared guard, minimum=1",
+        "result": "First shared-version update affects 1 row, second stale guard affects 0; second transaction rolls back without changing its operator. Final available=1. This demonstrates this coordinated JDBC protocol only, with all fixture writers participating."
+      }
+    ],
+    "assertions": "Eight explicit outcome assertions passed, plus isolation/read-overlap checks. No timing-based race or benchmark used.",
+    "caseFixtureChecks": {
+      "cmd": "@'\nimport fs from 'node:fs';\nimport path from 'node:path';\nimport {spawnSync} from 'node:child_process';\nimport assert from 'node:assert/strict';\nconst root='C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation';\nconst names=['request.md','requirements.md','architecture.md','schema.sql','CaseProbe.java','run.mjs','operating-policy.properties'];\nconst changed=names.filter(f=>!fs.readFileSync(root+'/cases/inputs/case-a/'+f).equals(fs.readFileSync(root+'/cases/inputs/case-b/'+f)));\nassert.deepEqual(changed,['operating-policy.properties']);\nconst runs=[];\nfor(const id of ['case-a','case-b']){\nconst cwd=root+'/cases/inputs/'+id;const r=spawnSync(process.execPath,['run.mjs'],{cwd,encoding:'utf8',timeout:25000,windowsHide:true});\nfs.writeFileSync(root+'/'+id+'.stdout.txt',r.stdout??'');fs.writeFileSync(root+'/'+id+'.stderr.txt',r.stderr??'');\nruns.push({id,executable:process.execPath,args:['run.mjs'],cwd,status:r.status,signal:r.signal,error:r.error?.message??null,stdout:r.stdout,stderr:r.stderr});\nfs.writeFileSync(root+'/case-technical-results.json',JSON.stringify({changedInputFiles:changed,runs},null,2)+'\\n');\nassert.equal(r.status,0);assert.match(r.stdout,/isolationA=2 isolationB=2/);assert.match(r.stdout,/observedA=2 observedB=2/);assert.match(r.stdout,/rowsA=1 rowsB=1/);assert.match(r.stdout,/available=0/);assert.match(r.stdout,/versionA=1 versionB=1/);\nconsole.log(id+'\\n'+r.stdout);\n}\nconsole.log('Only operating-policy.properties differs; both case probes compiled --release 17 and ran on Temurin 25.0.3+9 with H2 2.2.224. No agent outputs evaluated.');\n'@ | node --input-type=module",
+      "cwd": "C:/git/agent-skills",
+      "result": {
+        "chunk_id": "ee28db",
+        "wall_time_seconds": 1.9249071,
+        "exit_code": 0,
+        "original_token_count": 122,
+        "output": "case-a\nruntime=25.0.3+9-LTS\r\ndatabase=2.2.224 (2023-09-17)\r\nisolationA=2 isolationB=2\r\nobservedA=2 observedB=2\r\nrowsA=1 rowsB=1\r\navailable=0\r\nversionA=1 versionB=1\r\n\ncase-b\nruntime=25.0.3+9-LTS\r\ndatabase=2.2.224 (2023-09-17)\r\nisolationA=2 isolationB=2\r\nobservedA=2 observedB=2\r\nrowsA=1 rowsB=1\r\navailable=0\r\nversionA=1 versionB=1\r\n\nOnly operating-policy.properties differs; both case probes compiled --release 17 and ran on Temurin 25.0.3+9 with H2 2.2.224. No agent outputs evaluated.\n"
+      },
+      "records": {
+        "changedInputFiles": ["operating-policy.properties"],
+        "runs": [
+          {
+            "id": "case-a",
+            "executable": "C:\\Program Files\\nodejs\\node.exe",
+            "args": ["run.mjs"],
+            "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/cases/inputs/case-a",
+            "status": 0,
+            "signal": null,
+            "error": null,
+            "stdout": "runtime=25.0.3+9-LTS\r\ndatabase=2.2.224 (2023-09-17)\r\nisolationA=2 isolationB=2\r\nobservedA=2 observedB=2\r\nrowsA=1 rowsB=1\r\navailable=0\r\nversionA=1 versionB=1\r\n",
+            "stderr": ""
+          },
+          {
+            "id": "case-b",
+            "executable": "C:\\Program Files\\nodejs\\node.exe",
+            "args": ["run.mjs"],
+            "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/cases/inputs/case-b",
+            "status": 0,
+            "signal": null,
+            "error": null,
+            "stdout": "runtime=25.0.3+9-LTS\r\ndatabase=2.2.224 (2023-09-17)\r\nisolationA=2 isolationB=2\r\nobservedA=2 observedB=2\r\nrowsA=1 rowsB=1\r\navailable=0\r\nversionA=1 versionB=1\r\n",
+            "stderr": ""
+          }
+        ]
+      }
+    },
+    "unchangedJavaSnippets": 5,
+    "limitations": [
+      "No JPA provider, Spring transaction interceptor or PostgreSQL server executed.",
+      "Three controlled H2 schedules do not prove all concurrency schedules or other dialects.",
+      "Existing partial Java teaching examples were unchanged; no claim of newly compiling complete Spring/JPA applications."
+    ]
+  },
+  "behavioralEvaluation": {
+    "executed": [],
+    "measuredImprovement": false,
+    "walkthroughs": [
+      "For minimum=1, revise the ADR causal claim and request a protocol covering the cross-row invariant; adding a mapper alone leaves the demonstrated interleaving possible.",
+      "For minimum=0, preserve the adequate simple gateway and stale-row protection; correct the unsupported ORM guarantee without imposing a nonexistent minimum-one rule."
+    ],
+    "pending": "Coordinator may independently evaluate original/revised/no-skill behavior; these are known development cases, not holdouts."
+  },
+  "cases": {
+    "inputs": [
+      {
+        "id": "case-a",
+        "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/cases/inputs/case-a",
+        "request": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/cases/inputs/case-a/request.md",
+        "acceptedConstraint": "minimum.available=1",
+        "files": [
+          "request.md",
+          "requirements.md",
+          "architecture.md",
+          "schema.sql",
+          "CaseProbe.java",
+          "run.mjs",
+          "operating-policy.properties"
+        ]
+      },
+      {
+        "id": "case-b",
+        "directory": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/cases/inputs/case-b",
+        "request": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/cases/inputs/case-b/request.md",
+        "acceptedConstraint": "minimum.available=0",
+        "files": [
+          "request.md",
+          "requirements.md",
+          "architecture.md",
+          "schema.sql",
+          "CaseProbe.java",
+          "run.mjs",
+          "operating-policy.properties"
+        ]
+      }
+    ],
+    "criteriaFile": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/cases/evaluator/criteria.json",
+    "criteria": {
+      "classification": "Known development cases. No independent agent evaluation executed.",
+      "decisiveConstraint": "Only operating-policy.properties changes: minimum.available=1 versus 0. All other actor input file bytes are identical.",
+      "common": [
+        "Inspect actual gateway/service responsibilities, version predicates, configured isolation and authoritative policy.",
+        "Edit architecture.md as requested; preserve accepted Java/runtime, policy and ownership constraints.",
+        "Do not identify JPA or a second domain model as inherently solving concurrency; assess the absence of a concrete object/table mismatch.",
+        "Respect the legitimate simple SQL gateway/transaction-script alternative.",
+        "Separate actual JDBC/H2 probe observations from JPA/PostgreSQL guarantees and Java 17 runtime execution."
+      ],
+      "cases": [
+        {
+          "id": "case-a",
+          "expected": [
+            "Recognize both transactions can read 2 and successfully update distinct version-0 rows, leaving 0 although minimum=1.",
+            "Revise the ADR concurrency conclusion and propose a protocol covering the shared invariant, with all writers participating and suitable interleaving validation.",
+            "A simple gateway can remain; mapper migration alone is insufficient. A shared token/lock or database-appropriate serializable transaction with whole-transaction retry can be justified conditionally."
+          ],
+          "failures": [
+            "Accepts per-row @Version plus a unit of work as sufficient to guarantee the cross-row invariant.",
+            "Changes minimum.available to make the run pass.",
+            "Treats a prior count read or a mapper wrapper alone as an atomic guard."
+          ]
+        },
+        {
+          "id": "case-b",
+          "expected": [
+            "Both successful writes and final availability 0 satisfy the accepted minimum=0 contract.",
+            "Preserve an adequate simple gateway and row-version checks; decline the speculative second model/concurrency migration absent another evidenced requirement.",
+            "Correct the draft universal ORM concurrency claim even though this policy has no cross-row minimum defect."
+          ],
+          "failures": [
+            "Invents a requirement that at least one operator remain available.",
+            "Requires a shared roster lock, serializable isolation or rich mapper solely because two rows changed.",
+            "Deletes valid stale-row version guards or claims that no future concurrency issue is possible."
+          ]
+        }
+      ],
+      "isolation": "Only provide an actor its input folder and the selected skill snapshot. Criteria, other case and validation outputs are evaluator-only; folder separation is not enforced access control.",
+      "prerequisites": "Node and the explicit existing Temurin/H2 paths in run.mjs. If unavailable, inspect artifacts and report the execution limit; do not install.",
+      "verification": "Coordinator may compare artifact edits and command traces. Cases are not unseen holdouts and no incremental gain is claimed."
+    },
+    "decisiveDifference": "Only operating-policy.properties differs among the seven source input files; verified by byte comparison before probe runs.",
+    "ordinaryTask": "Inspect project artifacts and update the proposed architecture decision with the smallest justified action and validation. The request does not state the concurrency diagnosis.",
+    "separation": "Actor inputs and evaluator criteria are separate. Supply only one actor input folder and the intended skill snapshot; current filesystem separation is procedural rather than access-enforced.",
+    "prerequisites": "Node, provided Temurin path and existing H2 2.2.224 jar, or read-only artifact investigation with execution limitation stated. No dependency installation authorized."
+  },
+  "sources": [
+    {
+      "url": "https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1.html",
+      "status": 200,
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/sources/jakarta-persistence-3.1.html",
+      "sha256": "985fc6ce8318387545aee26c22efb8a4e9ba7c7a10be4ef17f93518c15dd71fc",
+      "bytes": 2199315,
+      "consulted": "2026-10-16",
+      "scope": "Jakarta Persistence 3.1, sections 3.4/3.4.1/3.4.2 and footnote 31; entity-level version checks and isolation configuration."
+    },
+    {
+      "url": "https://jakarta.ee/specifications/persistence/3.1/apidocs/jakarta.persistence/jakarta/persistence/EntityManager.html",
+      "status": 200,
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/sources/EntityManager-3.1.html",
+      "sha256": "bd667b27e64894cae21cce09ca56101ea3b5f28d5d67671a73d3295fd1e284b1",
+      "bytes": 124314,
+      "consulted": "2026-10-16",
+      "scope": "Jakarta Persistence 3.1 EntityManager flush/clear/refresh contracts; repair source navigation."
+    },
+    {
+      "url": "https://www.postgresql.org/docs/17/transaction-iso.html",
+      "status": 200,
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/sources/postgresql-17-isolation.html",
+      "sha256": "e3475df0c76b214dbda0bc681015099763b83778e1355e17ee7b908e6fd38a26",
+      "bytes": 47618,
+      "consulted": "2026-10-16",
+      "scope": "PostgreSQL 17, section 13.2 and isolation-level table; serialization anomalies remain possible in Read Committed/Repeatable Read. Documentation, not local PostgreSQL execution."
+    },
+    {
+      "url": "https://martinfowler.com/eaaCatalog/dataMapper.html",
+      "status": 200,
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/sources/fowler-data-mapper.html",
+      "sha256": "a4440509cc16103c58cf49ad689577191bbc27435956886b78fe5d562b52461d",
+      "bytes": 13882,
+      "consulted": "2026-10-16",
+      "scope": "Fowler Data Mapper: separates in-memory objects from database representation; retain that architectural responsibility."
+    },
+    {
+      "url": "https://martinfowler.com/eaaCatalog/unitOfWork.html",
+      "status": 200,
+      "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/sources/fowler-unit-of-work.html",
+      "sha256": "7f0d022783927ff6037bfbbdd9c48ce7b374db855e28ad7e5161aacd1852a477",
+      "bytes": 13600,
+      "consulted": "2026-10-16",
+      "scope": "Fowler Unit of Work: change coordination; pattern responsibility does not select a concrete database isolation protocol."
+    }
+  ],
+  "evidence": {
+    "root": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation",
+    "baseline": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/assignment-baseline.json",
+    "reviewChecks": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/review-checks.json",
+    "technicalCommands": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/technical-commands.json",
+    "technicalStdout": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/controls.stdout.txt",
+    "caseTechnicalResults": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/case-technical-results.json",
+    "artifacts": [
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/assignment-baseline.json",
+        "sha256": "9252984858eef7a891913676ac3c0fd6b3e6a45567529f3c06faaa58b3fe9a2b",
+        "bytes": 42315
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/AvailabilityProbe.java",
+        "sha256": "ecde19e1689377f708dee4d61a4b363e0ae0969f9ce60a4ed179ee78d7e989dc",
+        "bytes": 7278
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/case-a.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/case-a.stdout.txt",
+        "sha256": "af3cf625e00fd2b71e989dd8961a38f82a0f46d4e84fd6a8d3e00e8c4a95509d",
+        "bytes": 158
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/case-b.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/case-b.stdout.txt",
+        "sha256": "af3cf625e00fd2b71e989dd8961a38f82a0f46d4e84fd6a8d3e00e8c4a95509d",
+        "bytes": 158
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/case-technical-results.json",
+        "sha256": "867ad9cb0465a0a1a0230b1299b117a600c52fbb506bd5bae0bb5e10eaa27949",
+        "bytes": 1169
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/cases/evaluator/criteria.json",
+        "sha256": "0ef1979fcc67e530c3b0d9946c61415c8b3f0c865e873361c65a57d0233cb40d",
+        "bytes": 2980
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/cases/inputs/case-a/architecture.md",
+        "sha256": "4ffab6a087130eb2f1db77f2f524ae32b7a6f450875d4be292743ac555ef82bb",
+        "bytes": 785
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/cases/inputs/case-a/CaseProbe.java",
+        "sha256": "59071fef6b4fc90aab12bbf828d29dfffd804a3419884c57a57883d2360646fc",
+        "bytes": 4426
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/cases/inputs/case-a/classes/CaseProbe$AvailabilityService.class",
+        "sha256": "9ab35288efdfa8a8bd4506d42bb57595fcd1943f8fb49775d20fbb2cbc74341e",
+        "bytes": 1067
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/cases/inputs/case-a/classes/CaseProbe$Change.class",
+        "sha256": "e62c7efafd77c03720eaa86799647633b54597bca91325d289fe9a12258dac2f",
+        "bytes": 1518
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/cases/inputs/case-a/classes/CaseProbe$OperatorGateway.class",
+        "sha256": "fe0c9a93d639b70a3a686f72eeeee0bd1fbcbb535e19e97e0a06357da7919467",
+        "bytes": 2689
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/cases/inputs/case-a/classes/CaseProbe.class",
+        "sha256": "329a1bcb23bc2493ce55bf21dbd59eacdc4fb6cf9ff6990c8d00e31741bcb9e6",
+        "bytes": 4302
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/cases/inputs/case-a/operating-policy.properties",
+        "sha256": "8cc157c4b44fd1323c45552d107a363468da4b9982dec6758b2d5e24ab616af6",
+        "bytes": 20
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/cases/inputs/case-a/request.md",
+        "sha256": "d8e5be5de90deb89ec0990cdeffe55a0695066e9034985168d385e58e377b15b",
+        "bytes": 440
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/cases/inputs/case-a/requirements.md",
+        "sha256": "8fa658251a8018a9f9b9650b80ff21542ea85949e3a96c9c6b6c3608a463b346",
+        "bytes": 1013
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/cases/inputs/case-a/run.mjs",
+        "sha256": "24124d345894b1d60ecb54350fb797a6208ea2e236faf45702f81d1acb878f3a",
+        "bytes": 975
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/cases/inputs/case-a/schema.sql",
+        "sha256": "6b71ac24c856b69f8114cd4e9ad27e44b4fb256bd123d4b817712cff1ede5e1f",
+        "bytes": 179
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/cases/inputs/case-b/architecture.md",
+        "sha256": "4ffab6a087130eb2f1db77f2f524ae32b7a6f450875d4be292743ac555ef82bb",
+        "bytes": 785
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/cases/inputs/case-b/CaseProbe.java",
+        "sha256": "59071fef6b4fc90aab12bbf828d29dfffd804a3419884c57a57883d2360646fc",
+        "bytes": 4426
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/cases/inputs/case-b/classes/CaseProbe$AvailabilityService.class",
+        "sha256": "9ab35288efdfa8a8bd4506d42bb57595fcd1943f8fb49775d20fbb2cbc74341e",
+        "bytes": 1067
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/cases/inputs/case-b/classes/CaseProbe$Change.class",
+        "sha256": "e62c7efafd77c03720eaa86799647633b54597bca91325d289fe9a12258dac2f",
+        "bytes": 1518
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/cases/inputs/case-b/classes/CaseProbe$OperatorGateway.class",
+        "sha256": "fe0c9a93d639b70a3a686f72eeeee0bd1fbcbb535e19e97e0a06357da7919467",
+        "bytes": 2689
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/cases/inputs/case-b/classes/CaseProbe.class",
+        "sha256": "329a1bcb23bc2493ce55bf21dbd59eacdc4fb6cf9ff6990c8d00e31741bcb9e6",
+        "bytes": 4302
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/cases/inputs/case-b/operating-policy.properties",
+        "sha256": "154bea6a3927e69336e9064510c07bb00acdfc2bd0af29982cc66228539bd972",
+        "bytes": 20
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/cases/inputs/case-b/request.md",
+        "sha256": "d8e5be5de90deb89ec0990cdeffe55a0695066e9034985168d385e58e377b15b",
+        "bytes": 440
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/cases/inputs/case-b/requirements.md",
+        "sha256": "8fa658251a8018a9f9b9650b80ff21542ea85949e3a96c9c6b6c3608a463b346",
+        "bytes": 1013
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/cases/inputs/case-b/run.mjs",
+        "sha256": "24124d345894b1d60ecb54350fb797a6208ea2e236faf45702f81d1acb878f3a",
+        "bytes": 975
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/cases/inputs/case-b/schema.sql",
+        "sha256": "6b71ac24c856b69f8114cd4e9ad27e44b4fb256bd123d4b817712cff1ede5e1f",
+        "bytes": 179
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/classes/AvailabilityProbe$Decision.class",
+        "sha256": "1f98cbbed284e4acfc15692aed15f385e4a5e531b7c65b97a1035ba3f1e8c7e6",
+        "bytes": 1716
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/classes/AvailabilityProbe$OperatorGateway.class",
+        "sha256": "07da2e3bb32eea00f6f046bbdcaa41767c00d68b0c3acd937c180a74e1f16d77",
+        "bytes": 3391
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/classes/AvailabilityProbe$Outcome.class",
+        "sha256": "cbc04dcff4714aabb49794c64be2b1748abda4976445ab2c6d6b8d9aaaaf1520",
+        "bytes": 2124
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/classes/AvailabilityProbe.class",
+        "sha256": "208ad58ae00374a43e56cb429198b89db7bab299440d93bf6541d82dc859685d",
+        "bytes": 5691
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/compile.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/compile.stdout.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/controls.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/controls.stdout.txt",
+        "sha256": "15c5e03e5c2d4abb5bf1001ce4fca820e8fa2cccdce5bde24bdeb65f9ea2260e",
+        "bytes": 597
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/review-checks.json",
+        "sha256": "a5a753a6e0c960ad280dbb13d3014a914c889107fe57b176ab4b0c9c97552473",
+        "bytes": 22234
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/sources/downloads.json",
+        "sha256": "df3d175bfa9d00816a5e6dd15964f38280ae0950667141f15e31e4c37684b819",
+        "bytes": 1812
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/sources/EntityManager-3.1.html",
+        "sha256": "bd667b27e64894cae21cce09ca56101ea3b5f28d5d67671a73d3295fd1e284b1",
+        "bytes": 124314
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/sources/fowler-data-mapper.html",
+        "sha256": "a4440509cc16103c58cf49ad689577191bbc27435956886b78fe5d562b52461d",
+        "bytes": 13882
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/sources/fowler-unit-of-work.html",
+        "sha256": "7f0d022783927ff6037bfbbdd9c48ce7b374db855e28ad7e5161aacd1852a477",
+        "bytes": 13600
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/sources/jakarta-persistence-3.1.html",
+        "sha256": "985fc6ce8318387545aee26c22efb8a4e9ba7c7a10be4ef17f93518c15dd71fc",
+        "bytes": 2199315
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/sources/postgresql-17-isolation.html",
+        "sha256": "e3475df0c76b214dbda0bc681015099763b83778e1355e17ee7b908e6fd38a26",
+        "bytes": 47618
+      },
+      {
+        "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/data-source-patterns-validation/technical-commands.json",
+        "sha256": "6176176a16b3f52ed87a784787891fd93decf72f4f6e584df3137ef9ff72859a",
+        "bytes": 2102
+      }
+    ]
+  },
+  "failures": {
+    "preExisting": ["The two distinct Jakarta URLs returned 404; now corrected and verified 200."],
+    "introduced": [],
+    "localChecks": [],
+    "inspectionLimits": [
+      "Initial broad cache/source-baseline listings produced truncated display output; relevant exact artifact paths and coordinator baseline row were then inspected separately. No correctness result was inferred from truncated output."
+    ]
+  },
+  "limits": [
+    "No executed skill-agent comparison or demonstrated incremental behavioral gain.",
+    "Local checks cannot establish catalog-wide reference/dependency/index consistency.",
+    "The JDBC probe is a controlled model of row-version protection, not a claim that every ORM/dialect exposes exactly that scheduling behavior.",
+    "Serializable/locking/shared-token alternatives remain conditional on effective database behavior and participation of all relevant writers; no production configuration was changed."
+  ],
+  "crossSkill": {
+    "confirmedIssues": [],
+    "boundariesPreserved": [
+      "domain-logic-organization",
+      "enterprise-transactions",
+      "offline-concurrency-control",
+      "orm-behavioral-patterns",
+      "orm-structural-mapping",
+      "repository-pattern"
+    ],
+    "coordinatorActions": [
+      "Archive handoff and small evidence directory.",
+      "Optionally run independent actor comparisons using separate inputs/criteria.",
+      "Run global index/verification after all writers stop."
+    ]
+  },
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "reason": "Coordinator owns generated registry; not run by reviewer.",
+      "prerequisite": "All reviewers stopped writing."
+    },
+    {
+      "command": "npm run verify",
+      "reason": "Coordinator owns repository-wide verification; not run by reviewer.",
+      "prerequisite": "All reviewers stopped and registry regenerated."
+    }
+  ],
+  "finalOwnedMetadata": {
+    "committedVersion": "1.3.4",
+    "finalVersion": "1.3.5",
+    "status": " M skills/data-source-patterns/SKILL.md\n M skills/data-source-patterns/references/active-record-vs-data-mapper.md\n M skills/data-source-patterns/references/gateways-and-active-record.md\n M skills/data-source-patterns/skill.yaml\n",
+    "staged": "",
+    "files": [
+      {
+        "path": "skills/data-source-patterns/references/active-record-vs-data-mapper.md",
+        "sha256": "42cbf794a9709e836e772a77b66a905d14bf6bc29cf1f7a3dbdb18e2b2efc769",
+        "bytes": 16374
+      },
+      {
+        "path": "skills/data-source-patterns/references/gateways-and-active-record.md",
+        "sha256": "a5c39a75a53264605732d886613350cb1c58de2f542628ce74b31750b8291cc2",
+        "bytes": 10485
+      },
+      {
+        "path": "skills/data-source-patterns/SKILL.md",
+        "sha256": "3b5190d4fe85f1e722f4ade677fa4eac2889f7f9b86b248b177352f60378e1fb",
+        "bytes": 11458
+      },
+      {
+        "path": "skills/data-source-patterns/skill.yaml",
+        "sha256": "176fdc00070dc126887e7f59ec49001b32cd609652392e07113a3ff4bb16210c",
+        "bytes": 2322
+      }
+    ]
+  },
+  "allChildProcessesStopped": true,
+  "stoppedProcessEvidence": {
+    "kind": "owned-process-check",
+    "cmd": "$dataSourceProcesses = @(Get-CimInstance Win32_Process -Filter \"Name = 'java.exe'\" | Where-Object { $_.CommandLine -like '*data-source-patterns-validation*' }); [pscustomobject]@{ count = $dataSourceProcesses.Count; pids = @($dataSourceProcesses | Select-Object -ExpandProperty ProcessId) } | ConvertTo-Json -Compress",
+    "cwd": "C:/git/agent-skills",
+    "result": {
+      "chunk_id": "ed9772",
+      "wall_time_seconds": 0.3678853,
+      "exit_code": 0,
+      "original_token_count": 6,
+      "output": "{\"count\":0,\"pids\":[]}\r\n"
+    }
+  }
+}

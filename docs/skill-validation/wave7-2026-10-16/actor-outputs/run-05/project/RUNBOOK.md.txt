@@ -1,0 +1,23 @@
+Call OrderService and MetricsService through their configured Spring beans. Inspect the corresponding datasource after the call completes.
+
+`OrderService.place` explicitly selects `ordersTx`, which manages the same
+`ordersDataSource` used by `ordersJdbc`. Its insert, stock reservation and local
+notifier belong to one transaction. The notifier contract declares no checked
+exceptions; the existing runtime failures already trigger rollback without an
+additional rollback rule. `metricsTx` remains primary, and the unqualified
+`MetricsService.sample` retains its independent metrics transaction.
+
+The incident was manager selection, not a missing proxy: before the repair the
+configured bean was proxied and the framework active probe was true, but the
+orders connection used autocommit while the metrics connection was transacted.
+The active probe alone cannot identify which datasource is protected.
+
+Run `node check.mjs work.Regression` for seven checks using real Spring beans and
+local H2 stores. They check success, stock rejection, notifier rejection, insert
+failure, exception preservation, metrics rollback and independent metrics failure
+inside an order callback. Persisted-state assertions run after each service call
+completes. `node check.mjs` runs the original incident smoke; a rejected order must
+now report `active=true committed orders=0`.
+
+These local checks do not establish production crash recovery, distributed
+transactions, external notifier behavior or JPA semantics.

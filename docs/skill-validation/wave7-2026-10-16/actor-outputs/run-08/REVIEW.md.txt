@@ -1,0 +1,34 @@
+# Reparo do replay
+
+**Decisão: changed.** O dispatcher criava um UUID a cada chamada de aceitação. Se o receptor confirmasse e o checkpoint falhasse, a transação local deixava o outbox pendente, mas a tentativa seguinte usava outro token e gerava outro efeito.
+
+O reparo usa o `event_id` persistido como token de aceitação e remove o import de UUID. Payload, publisher, transações, checkpoint, marcação de conclusão e contratos permanecem preservados. Não há novo estado ou infraestrutura.
+
+## Evidência executada
+
+O smoke original passou. Antes do reparo, a nova regressão executou `failure`: um pedido e um evento foram persistidos, o receptor confirmou e o checkpoint lançou erro; observações após o retorno do bean verificaram um efeito independente no receptor e o evento ainda pendente. O processo terminou normalmente, preservando dois bancos H2 em arquivos.
+
+Outro processo executou `replay`, sem recriar schema ou pedido. A implementação original falhou com `expected=1 actual=2` na contagem de efeitos. Essa tentativa malsucedida está preservada em `checks/baseline-replay.json`.
+
+Após a alteração, o cenário foi reinicializado pela fase `failure` e repetido. A nova JVM reutilizou os arquivos, o mesmo evento e seu payload; o receptor permaneceu com um efeito, o checkpoint concluiu e o outbox ficou concluído. O replay seguinte retornou `false`.
+
+Os controles também passaram: rejeição repetida mantém trabalho pendente sem executar checkpoint; conflito entre token e payload propaga rejeição sem concluir o evento; falha por chave duplicada ao inserir outbox reverte o pedido; duas linhas exigem duas chamadas; fila vazia não executa checkpoint. Os testes usam beans reais do contexto Spring e observam estado persistido fora da conclusão transacional. O smoke final passou.
+
+Comandos reproduzíveis, a partir de `output/project`, nesta ordem:
+
+```text
+node check.mjs
+node check.mjs work.RecoveryRegression failure
+node check.mjs work.RecoveryRegression replay
+node check.mjs work.RecoveryRegression controls
+```
+
+Todos os arquivos congelados da cópia correspondem aos respectivos inputs por SHA-256. Entre os arquivos originais, somente `src/work/Dispatcher.java` e `RUNBOOK.md` mudaram. A regressão e os auxiliares de registro são adições autorizadas. Não houve consulta à web, carregamento de skills, instalação de dependências ou acesso a serviços externos.
+
+## Limites
+
+A execução prova recuperação após término normal e recriação da aplicação em outra JVM, sobre arquivos H2 e o receptor local contratado. Não prova queda física, durabilidade sob perda de energia, comportamento de provedor remoto ou concorrência entre workers. O checkpoint pode executar novamente; o reparo não promete execução única desse colaborador.
+
+Aceitações antigas feitas com tokens aleatórios não podem ser deduplicadas retroativamente apenas pelo `event_id`, pois esses tokens não foram persistidos. O runbook registra a necessidade de reconciliação desse intervalo legado. A regressão corrigida inicia a aceitação no caminho já corrigido.
+
+Os comandos e tentativas estão registrados em `execution.json` e `checks/*.json`. São relatos do ator, não um rastreio independente completo. Todos os processos terminaram; nenhuma escrita permanece em andamento.

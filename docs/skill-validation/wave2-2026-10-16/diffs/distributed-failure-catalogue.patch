@@ -1,0 +1,50 @@
+diff --git a/skills/distributed-failure-catalogue/references/silent-and-operational.md b/skills/distributed-failure-catalogue/references/silent-and-operational.md
+index 1f1b470..64c63e7 100644
+--- a/skills/distributed-failure-catalogue/references/silent-and-operational.md
++++ b/skills/distributed-failure-catalogue/references/silent-and-operational.md
+@@ -31,18 +31,28 @@ patterns error-rate monitoring cannot show, or that appear only around a deploy
+ - **Where it hides** — acknowledging before a database commit; advancing a consumer offset
+   after dispatch to an asynchronous worker; swallowing handler failures while committing later
+   progress; interpreting a publisher confirmation as proof of downstream business completion.
+-- **Discriminator** — trace one stable logical ID through acceptance, consumer recovery position
+-  and authoritative effect state. Compare read-replica/index lag, filtering, expected delay,
+-  DLQ/retention state and telemetry gaps. Progress past unfinished work supports a loss window;
++- **Discriminator** — trace one stable logical ID through acceptance, routing/delivery,
++  consumer recovery position and authoritative effect state. Compare read-replica/index lag,
++  filtering, expected delay, DLQ/retention state and telemetry gaps. Progress past unfinished work supports a loss window;
+   a publisher confirm alone does not. When an external effect cannot be reconciled, retain
+   unknown rather than declaring non-application or recommending blind replay.
+ - **Owner** — `delivery-semantics` (ack/effect boundary and recovery); `idempotency` when
+   recovery must tolerate already-applied effects.
+ 
++For RabbitMQ 4.2 AMQP 0-9-1, an unroutable publication can still receive a positive publisher
++confirm. If published with `mandatory`, its `basic.return` precedes that confirm. Inspect the
++actual exchange/routing key, bindings (including alternate-exchange routing), and correlated
++return/confirm handling at the incident time before blaming a consumer. Missing return logs
++do not establish routing when `mandatory` was off or return capture was absent; current
++topology alone cannot prove the historical route.
++
+ Evidence: [Kafka 4.1 consumer progress versus processing](https://kafka.apache.org/41/design/design/#semantics)
+ describes the crash window when position is saved first;
+ [RabbitMQ 4.2 acknowledgements and publisher confirms](https://www.rabbitmq.com/docs/4.2/confirms)
+-distinguishes publisher-to-broker confirmation from consumer processing acknowledgement.
++distinguishes publisher-to-broker confirmation from consumer processing acknowledgement and
++specifies confirms/returns for unroutable publications. Its
++[publisher guide](https://www.rabbitmq.com/docs/4.2/publishers#unroutable-message-handling) covers
++mandatory and alternate-exchange handling.
+ 
+ ## Expected versus unexpected errors
+ 
+diff --git a/skills/distributed-failure-catalogue/skill.yaml b/skills/distributed-failure-catalogue/skill.yaml
+index ea4cc08..9c9e332 100644
+--- a/skills/distributed-failure-catalogue/skill.yaml
++++ b/skills/distributed-failure-catalogue/skill.yaml
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: distributed-failure-catalogue
+-version: 1.3.4
++version: 1.3.5
+ description: >-
+   Evidence-oriented recognition index for recurring distributed failure shapes: overload
+   amplification, gray and asymmetric failure, split ownership, stale work, mixed versions,

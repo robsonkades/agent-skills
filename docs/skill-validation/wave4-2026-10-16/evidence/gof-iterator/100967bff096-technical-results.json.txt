@@ -1,0 +1,25 @@
+{
+  "javaVersion": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)",
+  "javacVersion": "javac 25.0.3",
+  "sourceAndApiTarget": 17,
+  "actualRuntime": 25,
+  "executedChildCommands": 8,
+  "expectedNegativeExits": 2,
+  "unexpectedFailures": [],
+  "sourceCompilation": "Unchanged extracted first two Java fences; imports and top-level files adapted only.",
+  "focusedChecks": "PASS 28 focused checks\r\nunknown size is not SIZED\r\nunsplittable does not prefetch\r\nexact final page at cap is exhausted\r\nnull action still rejected after exhaustion\r\ncap with buffered event is incomplete\r\nbudget failure does not undo delivered effects\r\nzero active budget fails\r\nzero budget does not fetch\r\nexpired before fetch\r\nexpired source does not fetch\r\nexpiry after fetch is failure\r\nbuffered source checks deadline\r\nrepeated hasNext fetches once\r\nlookahead does not skip first element\r\nsecond event prefetched\r\ncached next is not a new source deadline check\r\nempty progressing page continues\r\nnonadvancing cursor rejected\r\ninterruption is not exhaustion\r\nprefix stops source\r\nterminal operation does not invoke close\r\nscope closes after early exit\r\nconsumer exception propagates\r\nscope closes after consumer failure\r\nfresh unsplittable sequential/parallel result agreement only\r\nobserved ArrayList interference without CME on this build\r\nordinary iterator preserves last-returned removal\r\nnegative control removes prefetched rather than returned element\r\nLIMIT: controlled deadline/fetcher, onClose notification, no real transport/cleanup integration or speedup.",
+  "cases": {
+    "originalPrefix": "requested=prefix receipt=Receipt[status=COMPLETE, recordedIds=[1, 2]] closes=1 fetches=1",
+    "originalComplete": "requested=complete receipt=Receipt[status=COMPLETE, recordedIds=[1, 2]] closes=1 fetches=1",
+    "completeControl": "requested=complete receipt=Receipt[status=INCOMPLETE, recordedIds=[1, 2]] closes=1 fetches=1",
+    "overbroadPrefixControl": "requested=prefix receipt=Receipt[status=INCOMPLETE, recordedIds=[1, 2]] closes=1 fetches=1"
+  },
+  "limits": [
+    "No agent evaluation or measured incremental gain.",
+    "Controlled provider and deadline state; no HTTP, monotonic-time/transport or server-cursor integration.",
+    "onClose notification observed; no real resource acquisition/release tested.",
+    "Sequential/parallel agreement is on an unsplittable source and does not prove decomposition or speedup.",
+    "--release17 compilation used JDK25; no JDK17 VM execution.",
+    "ArrayList non-detection is a build-specific counterexample, not a future behavior guarantee."
+  ]
+}

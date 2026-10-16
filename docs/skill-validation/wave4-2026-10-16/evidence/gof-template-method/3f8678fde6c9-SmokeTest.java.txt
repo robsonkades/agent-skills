@@ -1,0 +1,8 @@
+public final class SmokeTest {
+    public static void main(String[] args) {
+        Runner runner = new Runner() {};
+        if (!runner.run("first").equals("first")) throw new AssertionError("first");
+        if (!runner.run("second").equals("second")) throw new AssertionError("second");
+        System.out.println("smoke=2 PASS");
+    }
+}

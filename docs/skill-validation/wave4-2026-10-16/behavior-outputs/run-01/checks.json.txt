@@ -1,0 +1,63 @@
+{
+  "checks": {
+    "oldBundleUsesPublishedAppBytecode": true,
+    "oldBundleUsesPublished100Library": true,
+    "candidateSourceMatchesPublished101Bytecode": true,
+    "inputArtifactHashesUnchanged": true
+  },
+  "classHashes": {
+    "work/bundle-old/com/example/text/LineEndings.class": "624A89185FA802CC65E96A054046C2957BA0A6179F6C7C6E63D57EEC5E46375D",
+    "work/old-library/com/example/text/LineEndings.class": "624A89185FA802CC65E96A054046C2957BA0A6179F6C7C6E63D57EEC5E46375D",
+    "work/bundle-old/com/example/app/ReportApp.class": "9D329303B2F84EE6BF42CC4F73A17A46A4CC289033274D0ED815F9920876AEAB",
+    "work/app/com/example/app/ReportApp.class": "9D329303B2F84EE6BF42CC4F73A17A46A4CC289033274D0ED815F9920876AEAB",
+    "work/new-library/com/example/text/LineEndings.class": "B13872F94971ADFFCCD3B017CBC75F633A27F9F06FA9DE423765DC4A8E7C7FDF",
+    "work/source-check/com/example/text/LineEndings.class": "B13872F94971ADFFCCD3B017CBC75F633A27F9F06FA9DE423765DC4A8E7C7FDF"
+  },
+  "inputArtifactsBefore": [
+    {
+      "path": "input/bundles/report-1.0.0.jar",
+      "sha256": "BE3AA29F9DFE404B448615531E2AEF02ACECBF9CC43102B90216DAD69B74BE38"
+    },
+    {
+      "path": "input/published/report-app-1.0.0.jar",
+      "sha256": "80E7634BCCF323B7949FDDAF5C90A7CC856B1AD305E7B7A0485B9EBED3E24CE8"
+    },
+    {
+      "path": "input/published/text-core-1.0.0.jar",
+      "sha256": "BE8E720B908BFC0125350343E21CA4ABAF93C17B0FC9757880DA1AEF044B1954"
+    },
+    {
+      "path": "input/published/text-core-1.0.1.jar",
+      "sha256": "5063BDAA4D9818BB69E59D2BF52409086F6FDF78BC0010923CA42D762D7EFBBB"
+    }
+  ],
+  "inputArtifactsAfter": [
+    {
+      "path": "input/bundles/report-1.0.0.jar",
+      "sha256": "BE3AA29F9DFE404B448615531E2AEF02ACECBF9CC43102B90216DAD69B74BE38"
+    },
+    {
+      "path": "input/published/report-app-1.0.0.jar",
+      "sha256": "80E7634BCCF323B7949FDDAF5C90A7CC856B1AD305E7B7A0485B9EBED3E24CE8"
+    },
+    {
+      "path": "input/published/text-core-1.0.0.jar",
+      "sha256": "BE8E720B908BFC0125350343E21CA4ABAF93C17B0FC9757880DA1AEF044B1954"
+    },
+    {
+      "path": "input/published/text-core-1.0.1.jar",
+      "sha256": "5063BDAA4D9818BB69E59D2BF52409086F6FDF78BC0010923CA42D762D7EFBBB"
+    }
+  ],
+  "originalManifest": "Manifest-Version: 1.0\r\nCreated-By: 25.0.3 (Eclipse Adoptium)\r\nMain-Class: com.example.app.ReportApp\r\n\r\n",
+  "correctedBundle": {
+    "path": "output/artifacts/report-fixed-review.jar",
+    "sha256": "9F4F8A50214AFFCD4BB7A0DCCC7E4FBD37A95A49BA99A6B6CF35DCC4BCE00286",
+    "status": "local review only, not a published release"
+  },
+  "localOperations": [
+    "Get-FileHash -Algorithm SHA256 on listed artifacts and extracted/generated class files",
+    "Get-Content -Raw on original extracted META-INF/MANIFEST.MF",
+    "Equality assertions on actual SHA256 values"
+  ]
+}

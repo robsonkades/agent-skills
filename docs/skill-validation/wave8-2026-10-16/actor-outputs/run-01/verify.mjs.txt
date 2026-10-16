@@ -1,0 +1,93 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { createDb, query } from './fixture.mjs';
+
+// Always load the delivered candidate: replacing solution.sql exercises that SQL.
+const candidate = fs.readFileSync(new URL('./solution.sql', import.meta.url), 'utf8');
+const current = fs.readFileSync(new URL('./current.sql', import.meta.url), 'utf8');
+const proposed = fs.readFileSync(new URL('./proposed.sql', import.meta.url), 'utf8');
+const seeded = createDb();
+const matrix = createDb();
+const amounts = [-9999999999.99, -0.01, 0, 99.99, 100, 100.01, 150, 9999999999.99];
+const rows = [];
+const cases = [];
+
+try {
+  const sqliteVersion = seeded.prepare('SELECT sqlite_version() AS version').get().version;
+  cases.push(
+    { name: 'seed/tenant-71', db: seeded, tenant: 71, labels: ['Acme', 'Acme', 'Bravo'] },
+    { name: 'seed/tenant-72', db: seeded, tenant: 72, labels: ['Other'] },
+    { name: 'seed/absent-tenant', db: seeded, tenant: 999, labels: [] },
+  );
+  matrix.exec('DELETE FROM invoices');
+  const insert = matrix.prepare('INSERT INTO invoices VALUES (?, ?, ?, ?, ?)');
+  let id = 1000;
+  for (const tenant of [71, 72, -7]) {
+    for (const active of [0, 1]) {
+      for (const amount of amounts) {
+        // Deliberately insert in a different order from the required output order.
+        for (const label of ['Zulu', 'Acme', 'Bravo']) {
+          for (let duplicate = 0; duplicate < 2; duplicate += 1) {
+            insert.run(id++, tenant, label, active, amount);
+            rows.push({ tenant, label, active, amount });
+          }
+        }
+      }
+    }
+  }
+  for (const tenant of [71, 72, -7, 999]) {
+    const labels = rows
+      .filter(row => row.tenant === tenant && (row.active === 1 || row.amount >= 100))
+      .map(row => row.label)
+      .sort();
+    cases.push({ name: `matrix/tenant-${tenant}`, db: matrix, tenant, labels });
+  }
+  // These are checks of the portable fixture's constraints, not PostgreSQL coercion tests.
+  assert.throws(() => insert.run(id++, 71, 'Null-active', null, 150), /NOT NULL/);
+  assert.throws(() => insert.run(id++, 71, 'Invalid-active', 2, 150), /CHECK/);
+
+  function check(sql, label) {
+    for (const test of cases) {
+      const expected = test.labels.map(customer_label => ({ customer_label }));
+      const reference = query(test.db, current, { tenant: test.tenant });
+      const actual = query(test.db, sql, { tenant: test.tenant });
+      assert.deepEqual(reference, expected, `${test.name}: reference vs independent oracle`);
+      assert.deepEqual(actual, expected, `${label}: ${test.name}: ordered bag and projection`);
+    }
+  }
+  check(candidate, 'solution.sql');
+
+  // Execute valid SQL with real semantic faults, rather than accepting syntax errors
+  // as evidence that the assertions can detect a regression.
+  const mutants = [
+    ['set-union-drops-distinct-invoices', proposed.replace('UNION ALL', 'UNION')],
+    ['overlap-emits-one-invoice-twice', proposed.replace(' AND NOT (active = true)', '')],
+    ['tenant-leak-in-second-branch', proposed.replace('WHERE tenant_id = :tenant AND amount', 'WHERE amount')],
+    ['threshold-excludes-exactly-100', proposed.replace('amount >= 100', 'amount > 100')],
+    ['descending-label-order', proposed.replace('ORDER BY customer_label', 'ORDER BY customer_label DESC')],
+  ];
+  const rejected = [];
+  for (const [name, sql] of mutants) {
+    assert.notEqual(sql, proposed, `${name}: mutation must change the SQL`);
+    // Preparing and running every case ensures syntax/binding errors cannot count.
+    for (const test of cases) query(test.db, sql, { tenant: test.tenant });
+    assert.throws(() => check(sql, name), assert.AssertionError, `${name}: must fail semantic assertions`);
+    rejected.push(name);
+  }
+  console.log(JSON.stringify({
+    status: 'passed',
+    candidateFile: 'solution.sql',
+    node: process.version,
+    sqlite: sqliteVersion,
+    candidateCases: cases.length,
+    generatedRows: rows.length,
+    activeValues: [false, true],
+    amountSamples: amounts,
+    constraintChecks: 2,
+    rejectedMutants: rejected,
+    limit: 'Portable SQLite result checks only; no PostgreSQL execution, plans, or timings.',
+  }, null, 2));
+} finally {
+  seeded.close();
+  matrix.close();
+}

@@ -1,0 +1,342 @@
+{
+  "schemaVersion": 1,
+  "skill": "object-layout-and-footprint",
+  "wave": 2,
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "ownedPath": "skills/object-layout-and-footprint/**",
+  "allWritesStopped": true,
+  "scope": "Focused corrections to the JOL source-launch reporting mechanism and a stale cross-skill performance-evidence referral.",
+  "baseline": {
+    "committedVersion": "1.4.4",
+    "assignmentVersion": "1.4.4",
+    "preExistingVersionBump": false,
+    "stagedChanges": [],
+    "unstagedChanges": [],
+    "untrackedFiles": [],
+    "files": [
+      {
+        "path": "C:/git/agent-skills/skills/object-layout-and-footprint/SKILL.md",
+        "sha256": "BFB0B8F60DCF70F849CD45AA632942C24CEF22D708F63C5602A221B21E4F8C33"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/object-layout-and-footprint/skill.yaml",
+        "sha256": "6FEC12B654B2C46B43F3B9D43420A768F936F4772FF0E9F882BFD7CC6445C23E"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/object-layout-and-footprint/references/array-and-object-arithmetic.md",
+        "sha256": "6FB6DD183BBA8AD9B424498DDB1B0FB0842A2F38E523018AD58CCA7FACD4FBC5"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/object-layout-and-footprint/references/compact-object-headers.md",
+        "sha256": "83F8E64344919301E39268DE9A60081F3A0D4038F775449C28B30FE2398892A8"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/object-layout-and-footprint/references/jol-operating-procedure.md",
+        "sha256": "80BC0AF3F2FDD52F3F8D822019F5B24F10EE80A33722C561B244D99A9CBE394E"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/object-layout-and-footprint/references/production-footprint-checks.md",
+        "sha256": "1B68F5DB965D8280B99525394B0DD8CD473BCCAC85D2D7B533E85BD04C7DCA09"
+      },
+      {
+        "path": "C:/git/agent-skills/skills/object-layout-and-footprint/references/shape-decision.md",
+        "sha256": "8FC1882953AE3D5F728CEBC3725CB06838463AAA9A87C0E2681AD6698378F994"
+      }
+    ]
+  },
+  "version": {
+    "committed": "1.4.4",
+    "assignment": "1.4.4",
+    "final": "1.4.5",
+    "rationale": "One patch for supported content changes; no pre-existing unpublished bump."
+  },
+  "findings": [
+    {
+      "location": "skills/object-layout-and-footprint/references/jol-operating-procedure.md:149",
+      "observation": "The original explanation attributed the source-launch toPrintable failure to reading a class file to recover field names.",
+      "evidence": "JOL0.17 ClassLayout reloads the class through ClassUtils for an instance assignability check; field metadata is already stored. ClassUtils selects its own loader by default.",
+      "consequence": "This misdiagnoses the loader boundary and obscures a valid metadata-only report.",
+      "correction": "Explain class-loader visibility, offer toPrintable(null) only when values/header contents are unnecessary, and preserve compilation onto the reporting classpath when instance values are required."
+    },
+    {
+      "location": "skills/object-layout-and-footprint/references/compact-object-headers.md:305",
+      "observation": "The referral promised SPECjbb figures and their provenance in jvm-performance-review's flag cost reference, which contains decision criteria but no such figures.",
+      "consequence": "A consumer is sent to evidence that is absent and might confuse a generic trade-off framework with a workload speedup.",
+      "correction": "State the actual contribution of that reference and preserve the separate owner for performance evaluation and false sharing."
+    }
+  ],
+  "remainingFindings": [],
+  "filesChangedByReviewer": [
+    "skills/object-layout-and-footprint/references/jol-operating-procedure.md",
+    "skills/object-layout-and-footprint/references/compact-object-headers.md",
+    "skills/object-layout-and-footprint/skill.yaml"
+  ],
+  "preExistingChanges": [],
+  "unchangedOwnedFiles": [
+    "skills/object-layout-and-footprint/SKILL.md",
+    "skills/object-layout-and-footprint/references/array-and-object-arithmetic.md",
+    "skills/object-layout-and-footprint/references/production-footprint-checks.md",
+    "skills/object-layout-and-footprint/references/shape-decision.md"
+  ],
+  "diffSummary": {
+    "files": 3,
+    "insertions": 31,
+    "deletions": 10
+  },
+  "finalFiles": [
+    {
+      "path": "C:/git/agent-skills/skills/object-layout-and-footprint/SKILL.md",
+      "sha256": "BFB0B8F60DCF70F849CD45AA632942C24CEF22D708F63C5602A221B21E4F8C33"
+    },
+    {
+      "path": "C:/git/agent-skills/skills/object-layout-and-footprint/skill.yaml",
+      "sha256": "4833F73472697861667B869D9AD6DFA2A02C99D3420A1CE0AF3C09286FA01AA4"
+    },
+    {
+      "path": "C:/git/agent-skills/skills/object-layout-and-footprint/references/array-and-object-arithmetic.md",
+      "sha256": "6FB6DD183BBA8AD9B424498DDB1B0FB0842A2F38E523018AD58CCA7FACD4FBC5"
+    },
+    {
+      "path": "C:/git/agent-skills/skills/object-layout-and-footprint/references/compact-object-headers.md",
+      "sha256": "55B1DC54B24DCD5F37003183290BE06C218E0B68EA708F0F2C58520FA8512415"
+    },
+    {
+      "path": "C:/git/agent-skills/skills/object-layout-and-footprint/references/jol-operating-procedure.md",
+      "sha256": "E6664D89393DFCA1F8EDA3B9ADC788D8C0609CC254089138BA9306F61E229CB1"
+    },
+    {
+      "path": "C:/git/agent-skills/skills/object-layout-and-footprint/references/production-footprint-checks.md",
+      "sha256": "1B68F5DB965D8280B99525394B0DD8CD473BCCAC85D2D7B533E85BD04C7DCA09"
+    },
+    {
+      "path": "C:/git/agent-skills/skills/object-layout-and-footprint/references/shape-decision.md",
+      "sha256": "8FC1882953AE3D5F728CEBC3725CB06838463AAA9A87C0E2681AD6698378F994"
+    }
+  ],
+  "capabilities": {
+    "preserved": [
+      "Header/alignment/oop/class-pointer conditions attached to sizing claims",
+      "Historical object/array and population tables with execution versus source-only labels",
+      "Shallow, traversed graph, strong reachability, retained size and native-memory boundaries",
+      "JOL record workaround, array-root varargs warning, sharing and graph-result retention caveats",
+      "Shape equivalence, operation semantics, construction peak and no-change alternatives",
+      "Production histogram/JFR/HPROF limits, G1 humongous arithmetic and class-space trade-off",
+      "Existing compile/classpath remedy when actual instance values are needed"
+    ],
+    "replaced": [
+      "Incorrect class-file/field-name explanation with version-pinned loader mechanism"
+    ],
+    "removed": ["Promise that a neighboring reference contains absent SPECjbb figures/provenance"]
+  },
+  "validation": [
+    {
+      "kind": "structural",
+      "command": "@'\nimport assert from 'node:assert/strict';\nimport { existsSync, readFileSync } from 'node:fs';\nimport { dirname, resolve } from 'node:path';\nimport { loadPackageFromDirectory, validatePackage } from '@jvm-expert/core';\nimport { NodeFileSystem } from '@jvm-expert/node';\nimport { ClaudeCodeAdapter } from '@jvm-expert/adapter-claude';\nimport { CodexAdapter } from '@jvm-expert/adapter-codex';\nconst directory = resolve('skills/object-layout-and-footprint');\nconst loaded = await loadPackageFromDirectory(new NodeFileSystem(), directory, { strict: true });\nconst report = validatePackage(loaded.pkg, {\n  strict: true, directoryName: 'object-layout-and-footprint',\n  adapters: [new ClaudeCodeAdapter(), new CodexAdapter()],\n});\nconst issues = [...loaded.issues, ...report.issues];\nassert.deepEqual(issues, []);\nassert.equal(loaded.pkg.manifest.version, '1.4.5');\nconst declared = new Set([\n  ...(loaded.pkg.manifest.dependencies ?? []).map(item => item.name),\n  ...(loaded.pkg.manifest.suggests ?? []),\n]);\nconst referrals = new Set();\nlet localMarkdownLinks = 0;\nfor (const file of loaded.pkg.files.filter(file => file.path.endsWith('.md'))) {\n  const content = readFileSync(resolve(directory, file.path), 'utf8');\n  for (const match of content.matchAll(/\\[[^\\]]+\\]\\(([^)]+)\\)/g)) {\n    if (/^<?https?:/.test(match[1])) continue;\n    const [target, anchor] = match[1].split('#');\n    const absolute = resolve(directory, dirname(file.path), target);\n    assert.ok(existsSync(absolute), file.path + ': ' + match[1]);\n    if (anchor === 'one-incoming-intent-several-downstream-effects') {\n      assert.ok(readFileSync(absolute, 'utf8').includes('## One incoming intent, several downstream effects'));\n    }\n    localMarkdownLinks++;\n  }\n  for (const match of content.matchAll(/`([a-z][a-z0-9]*-[a-z0-9-]+)`/g)) {\n    const name = match[1];\n    if (!existsSync(resolve('skills', name, 'SKILL.md'))) continue;\n    assert.ok(declared.has(name), 'Undeclared referral: ' + name);\n    referrals.add(name);\n  }\n}\nconsole.log(JSON.stringify({\n  status: 'PASS', name: loaded.pkg.manifest.name, version: loaded.pkg.manifest.version,\n  files: loaded.pkg.files.length, issues: issues.length, localMarkdownLinks,\n  declaredSkillReferrals: referrals.size, adapters: ['claude', 'codex'],\n}));\n'@ | node --input-type=module",
+      "cwd": "C:/git/agent-skills",
+      "result": "{\"status\":\"PASS\",\"name\":\"object-layout-and-footprint\",\"version\":\"1.4.5\",\"files\":7,\"issues\":0,\"localMarkdownLinks\":5,\"declaredSkillReferrals\":7,\"adapters\":[\"claude\",\"codex\"]}",
+      "exitCode": 0
+    },
+    {
+      "kind": "format",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/object-layout-and-footprint/SKILL.md skills/object-layout-and-footprint/references/jol-operating-procedure.md skills/object-layout-and-footprint/references/compact-object-headers.md skills/object-layout-and-footprint/references/shape-decision.md skills/object-layout-and-footprint/references/array-and-object-arithmetic.md skills/object-layout-and-footprint/references/production-footprint-checks.md skills/object-layout-and-footprint/skill.yaml",
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS before and after edits: all seven files use Prettier code style.",
+      "exitCode": 0
+    },
+    {
+      "kind": "diff",
+      "command": "git diff --check -- skills/object-layout-and-footprint; git diff -- skills/object-layout-and-footprint; git status --short -- skills/object-layout-and-footprint; git diff --cached --name-only -- skills/object-layout-and-footprint",
+      "cwd": "C:/git/agent-skills",
+      "result": "PASS: final diff inspected, three expected owned changes, no staged files or extra shipped artifacts.",
+      "exitCode": 0
+    }
+  ],
+  "technicalExecutions": [
+    {
+      "kind": "JOL reporting boundary probe",
+      "command": "@'\nimport assert from 'node:assert/strict';\nimport {spawnSync} from 'node:child_process';\nimport {writeFileSync} from 'node:fs';\nconst bin='C:/Users/robso/.jdks/temurin-25.0.3/bin/';\nconst jol='C:/Users/robso/.m2/repository/org/openjdk/jol/jol-core/0.17/jol-core-0.17.jar';\nconst env={...process.env};\nfor(const name of Object.keys(env)) if(['JAVA_TOOL_OPTIONS','JDK_JAVA_OPTIONS','_JAVA_OPTIONS'].includes(name.toUpperCase())) delete env[name];\nconst runs=[];\nfunction run(name, executable, args) {\n const p=spawnSync(bin+executable,args,{cwd:process.cwd(),env,encoding:'utf8',timeout:20000,windowsHide:true});\n const record={name,executable:bin+executable,args,status:p.status,stdout:p.stdout,stderr:p.stderr,error:p.error?.message};\n runs.push(record);\n writeFileSync('probe-log.json',JSON.stringify(runs,null,2));\n if(p.error) throw p.error;\n assert.equal(p.status,0,name);\n return p;\n}\nrun('compiler version','javac.exe',['-version']);\nrun('runtime version','java.exe',['-version']);\nrun('compile release 25','javac.exe',['--release','25','-cp',jol,'-d','classes','PrintableProbe.java']);\nlet passing=0;\nfor(const mode of ['classic','compact']) {\n const flags=['-Xms32m','-Xmx128m','-XX:+UseCompressedOops','-XX:+UseCompressedClassPointers','-XX:ObjectAlignmentInBytes=8',\n  '-Djol.magicFieldOffset=true','-Djol.skipInstallAttach=true','-Djol.skipDynamicAttach=true','-Djol.skipHotspotSAAttach=true',\n  mode==='classic'?'-XX:-UseCompactObjectHeaders':'-XX:+UseCompactObjectHeaders'];\n const source=run(mode+' source launch','java.exe',[...flags,'-cp',jol,'PrintableProbe.java','source']);\n assert.match(source.stdout,/PASS checks=10/); passing++;\n const compiled=run(mode+' compiled launch','java.exe',[...flags,'-cp','classes;'+jol,'PrintableProbe','compiled']);\n assert.match(compiled.stdout,/PASS checks=10/); passing++;\n}\nconsole.log(JSON.stringify({status:'PASS',configurations:passing,fixtureAssertions:40,compilerTarget:25,\n runtime:'Temurin 25.0.3+9 Windows x64',artifact:'probe-log.json',\n outputs:runs.filter(r=>r.name.includes('launch')).map(r=>({name:r.name,result:r.stdout.split(/\\r?\\n/).filter(line=>line.includes('size=')||line.includes('PASS')).join('\\n')}))}));\n'@ | node --input-type=module",
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/object-layout-probe",
+      "result": {
+        "status": "PASS",
+        "configurations": 4,
+        "fixtureAssertions": 40,
+        "compilerTarget": 25,
+        "runtime": "Temurin 25.0.3+9 Windows x64",
+        "artifact": "probe-log.json",
+        "outputs": [
+          {
+            "name": "classic source launch",
+            "result": "PrintableProbe$Sample size=24 sourceLaunch=true\nPrintableProbe$Pair size=24 sourceLaunch=true\nPASS checks=10"
+          },
+          {
+            "name": "classic compiled launch",
+            "result": "PrintableProbe$Sample size=24 sourceLaunch=false\nPrintableProbe$Pair size=24 sourceLaunch=false\nPASS checks=10"
+          },
+          {
+            "name": "compact source launch",
+            "result": "PrintableProbe$Sample size=16 sourceLaunch=true\nPrintableProbe$Pair size=16 sourceLaunch=true\nPASS checks=10"
+          },
+          {
+            "name": "compact compiled launch",
+            "result": "PrintableProbe$Sample size=16 sourceLaunch=false\nPrintableProbe$Pair size=16 sourceLaunch=false\nPASS checks=10"
+          }
+        ]
+      },
+      "compilerTarget": 25,
+      "compiler": "javac 25.0.3",
+      "runtime": "Temurin 25.0.3+9-LTS, Windows x64",
+      "dependency": {
+        "coordinates": "org.openjdk.jol:jol-core:0.17",
+        "source": "existing local Maven cache",
+        "sha256": "BD73D9AD265D8478CCDE06130200877F3A4F0A6E2D44E7FB8CBB2E6F4104CBDC"
+      },
+      "conditions": "128 MiB max heap, alignment 8, compressed oops/class pointers; explicit classic and compact modes. JOL dynamic/Serviceability Agent attach disabled using source-verified properties; no external process attached.",
+      "artifacts": [
+        "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/object-layout-probe/PrintableProbe.java",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/object-layout-probe/probe-log.json",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/object-layout-probe/classes/"
+      ],
+      "outcome": "Four configurations passed 40 counted fixture checks: both source-launched types reject the instance report, metadata-only report succeeds, and compiled controls print original instance values.",
+      "limitation": "These verify reporting behavior; JOL-reported shallow numbers are not an Instrumentation cross-check or a VM-independent layout proof."
+    }
+  ],
+  "behavioralEvaluationsExecuted": [],
+  "walkthroughs": [
+    "For an offsets-only request, toPrintable(null) can produce the required metadata despite source-launch loader isolation; N/A values are acceptable only when values are out of scope.",
+    "For a request requiring actual field values, an N/A report is incomplete; the same classes must be visible to the JOL reporting path, as in the compiled positive control.",
+    "A missing class from JOL's loader is not repaired by module opens alone, and a reporting failure does not refute independently obtained instanceSize metadata.",
+    "A footprint table does not establish a speedup, and a cross-skill referral must describe evidence the referenced resource actually supplies."
+  ],
+  "sources": [
+    {
+      "url": "https://github.com/openjdk/jol/blob/0.17/jol-core/src/main/java/org/openjdk/jol/info/ClassLayout.java",
+      "version": "JOL 0.17",
+      "supports": "Instance-report type lookup/assignability check, metadata already held, null-instance branch omitting value/header reads.",
+      "method": "Cached source JAR inspected read-only; official raw tagged source also retrieved after GitHub HTML returned 429.",
+      "rawUrl": "https://raw.githubusercontent.com/openjdk/jol/0.17/jol-core/src/main/java/org/openjdk/jol/info/ClassLayout.java"
+    },
+    {
+      "url": "https://github.com/openjdk/jol/blob/0.17/jol-core/src/main/java/org/openjdk/jol/util/ClassUtils.java",
+      "version": "JOL 0.17",
+      "supports": "JOL loader selection and Class.forName lookup used by reporting.",
+      "method": "Official tagged source read through web tool"
+    },
+    {
+      "url": "https://openjdk.org/jeps/534",
+      "version": "Closed / Delivered, Release 27 as consulted 2026-10-16",
+      "supports": "Preserved source-only JDK27 compact-header default claim; no JDK27 execution implied.",
+      "method": "Web open returned 403; official page retrieved with Invoke-WebRequest -TimeoutSec 15."
+    },
+    {
+      "path": "skills/jvm-performance-review/references/flag-cost-and-defaults.md",
+      "version": "Coordinator-accepted working-tree reference; read-only",
+      "supports": "Referral supplies conditional decision criteria and no SPECjbb table or measured application speedup.",
+      "method": "Complete prior assigned-package read and targeted content check; neighboring file unchanged."
+    }
+  ],
+  "limitations": [
+    "No agent behavior evaluation or matched original/revised/no-skill comparison was executed; no measured skill-quality gain is claimed.",
+    "The historical population/layout matrices were preserved, not rerun in this review.",
+    "Only the available Temurin25.0.3+9 Windows x64 runtime and cached JOL0.17 were executed; no JDK21/26/27 or Linux run occurred.",
+    "The new API snippet is partial application code; it was compiled and exercised within the bounded fixture with the documented JOL dependency.",
+    "No live population, workload benchmark, heap dump, GC pause experiment or production flag change was performed."
+  ],
+  "retrievalIssues": [
+    {
+      "issue": "Initial baseline content JSON exceeded output allowance and could not parse.",
+      "resolution": "Before any edit, repeated a hash-only snapshot successfully; clean Git state and all package contents were separately read."
+    },
+    {
+      "issue": "GitHub ClassLayout HTML returned 429.",
+      "resolution": "Used cached JOL0.17 source JAR and official tagged raw source."
+    },
+    {
+      "issue": "JEP534 web open returned 403.",
+      "resolution": "Official-page Invoke-WebRequest succeeded and confirmed delivered Release27 status."
+    }
+  ],
+  "validationArtifactPath": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/object-layout-and-footprint.json",
+  "runtimeArtifactPath": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/object-layout-probe/probe-log.json",
+  "reproducibleCases": {
+    "executionStatus": "NOT_EXECUTED",
+    "separation": "Actor fixtures/tasks and evaluator-only expectations are separate. Coordinator must withhold evaluator criteria from actor access.",
+    "prerequisites": "Materialize the common fixtures in isolated Windows folders with PowerShell, JDK25.0.3 and cached JOL0.17, or rebind toolchain paths to those exact tools. Clear option-injection variables in the evaluation child if inherited settings would change the fixture. Keep generated reports/classes within the case folder.",
+    "commonFixtures": {
+      "LayoutReport.java": "import org.openjdk.jol.info.ClassLayout;\npublic class LayoutReport {\n    static final class Sample { int count = 7; long value = 42L; }\n    public static void main(String[] args) {\n        var sample = new Sample();\n        System.out.println(ClassLayout.parseInstance(sample).toPrintable());\n    }\n}\n",
+      "toolchain.json": {
+        "java": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+        "javac": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+        "jolJar": "C:/Users/robso/.m2/repository/org/openjdk/jol/jol-core/0.17/jol-core-0.17.jar"
+      },
+      "run.ps1": "$tools = Get-Content -LiteralPath './toolchain.json' -Raw | ConvertFrom-Json\n& $tools.java '-Xmx128m' '-XX:-UseCompactObjectHeaders' '-XX:+UseCompressedOops' '-XX:+UseCompressedClassPointers' '-XX:ObjectAlignmentInBytes=8' '-Djol.skipInstallAttach=true' '-Djol.skipDynamicAttach=true' '-Djol.skipHotspotSAAttach=true' '-cp' $tools.jolJar './LayoutReport.java'\nif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }\n",
+      "project-context.md": "This is a disposable reporting fixture, not a service. The original run uses Java source-file launch. A successful report must come from the supplied object and JOL layout, not fabricated text. A temporary compilation directory is allowed when needed for the requested report. Preserve the field values and requested classic-header/alignment/reference settings. The toolchain and JOL paths may be rebound to identical installed versions before evaluation; record any differences. No other process may be attached.",
+      "report-requirements.md": "The JOL report must show field names, offsets and shallow size. Instance values and actual object-header contents are not needed; N/A in those positions is acceptable."
+    },
+    "cases": [
+      {
+        "id": "source-launch-layout-metadata",
+        "actorInput": {
+          "task": "Use object-layout-and-footprint to make this JOL reporting fixture satisfy report-requirements.md. Inspect the fixture and toolchain, correct only the reporting call or launch procedure as needed, run it, and save report.txt plus a concise explanation in result.md. Preserve the sample's field values and representation. Use the existing JDK and cached JOL; do not install dependencies, upgrade tools, attach to another process or claim workload performance.",
+          "fixtureSet": "commonFixtures",
+          "overrides": {},
+          "outputArtifacts": ["report.txt", "result.md"],
+          "editableFiles": ["LayoutReport.java", "run.ps1"]
+        },
+        "evaluatorOnly": {
+          "expectedBehavior": [
+            "Reads the reporting call, source-launch command and requested output, and reproduces or accurately traces the class-loader failure.",
+            "Produces a JOL report containing names, offsets and shallow size; a toPrintable(null) report is sufficient here, or another justified valid reporting path.",
+            "Explains that N/A denotes unavailable values/header contents, not an observed zero/null value.",
+            "Keeps the sample state and target JVM conditions unchanged and records the executed check without claiming performance."
+          ],
+          "failureConditions": [
+            "Claims JOL lacks field names because a .class file must be parsed.",
+            "Reports no usable layout merely because instance-value printing failed.",
+            "Fabricates output, changes the object's fields to avoid the failure, installs a new JOL/JDK, or changes header settings without authorization."
+          ]
+        }
+      },
+      {
+        "id": "source-launch-instance-values",
+        "actorInput": {
+          "task": "Use object-layout-and-footprint to make this JOL reporting fixture satisfy report-requirements.md. Inspect the fixture and toolchain, correct only the reporting call or launch procedure as needed, run it, and save report.txt plus a concise explanation in result.md. Preserve the sample's field values and representation. Use the existing JDK and cached JOL; do not install dependencies, upgrade tools, attach to another process or claim workload performance.",
+          "fixtureSet": "commonFixtures",
+          "overrides": {
+            "report-requirements.md": "The JOL report must show field names, offsets and shallow size, and must report the supplied instance's count and value fields. N/A is not acceptable for those field values; actual object-header bits are optional."
+          },
+          "outputArtifacts": ["report.txt", "result.md"],
+          "editableFiles": ["LayoutReport.java", "run.ps1"]
+        },
+        "decisiveDifference": "Only the report requirement changes: actual instance field values are required.",
+        "evaluatorOnly": {
+          "expectedBehavior": [
+            "Recognizes that metadata-only toPrintable(null) cannot satisfy the changed requirement.",
+            "Uses a compatible reporting/class-loader path, such as compiling and launching the same fixture with JOL on the same classpath, and executes the positive check.",
+            "Outputs the original count 7 and value 42 from the supplied object alongside its layout.",
+            "Preserves baseline settings and reports the observed scope; does not solve loader isolation with unrelated module opens or tool upgrades."
+          ],
+          "failureConditions": [
+            "Submits N/A field values while claiming the report is complete.",
+            "Uses an unrelated duplicate class to fabricate a report or hard-codes observed output.",
+            "Changes field values, deployment header mode or dependency versions to make the report pass.",
+            "Claims general layout or performance correctness from this reporting test."
+          ]
+        }
+      }
+    ]
+  },
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "prerequisites": "After all reviewers stop writing; regenerate shared index for version1.4.5."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "prerequisites": "After registry generation and all writers stop."
+    }
+  ],
+  "crossSkillActions": [],
+  "stoppedProcesses": "All compiler/JVM probe processes completed synchronously. No pending process can write; validation artifacts are retained."
+}

@@ -1,0 +1,82 @@
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\java-annotations/SKILL.md" "b/C:\\git\\agent-skills\\skills\\java-annotations/SKILL.md"
+index 8ba825a..8c5dc50 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\java-annotations/SKILL.md"
++++ "b/C:\\git\\agent-skills\\skills\\java-annotations/SKILL.md"
+@@ -115,6 +115,10 @@ behavior than an isolated usage pattern; state consequential assumptions when th
+   Occurrences only on type uses do not trigger JSR 269 processor matching by annotation name.
+   Check processor invocation and type traversal before trusting a compile-time checker; the
+   retention reference covers selection and coexistence with other processors.
++- In a processor, read class-valued annotation elements through the compiler model: a typed
++  annotation accessor can throw `MirroredTypeException` instead of returning a `Class`.
++  The retention reference covers mirrors, omitted defaults and class arrays. Keep ordinary
++  runtime reflection when it already satisfies that reader's contract.
+ - Deprecate with `@Deprecated(since = "…", forRemoval = …)` plus `@deprecated` Javadoc saying
+   what to use instead. `forRemoval = true` turns usage warnings into a stronger signal and is
+   part of the API contract — see java-api-design.
+@@ -137,7 +141,8 @@ the remaining check rather than inventing a framework, nullness or native-image
+ 
+ - [Retention, targets and processing](references/retention-targets-and-processing.md) — read
+   when defining an annotation, when one appears to have no effect, or when choosing between
+-  runtime reflection, an annotation processor and build-time generation.
++  runtime reflection, an annotation processor and build-time generation; also when a processor
++  reads class-valued elements.
+ - [Markers, custom annotations and enforcement](references/markers-and-custom-annotations.md)
+   — read when choosing between a marker interface and a marker annotation, when designing an
+   annotation that must be enforced, or when annotation-driven behaviour is silently not
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\java-annotations/references/retention-targets-and-processing.md" "b/C:\\git\\agent-skills\\skills\\java-annotations/references/retention-targets-and-processing.md"
+index c86c723..5b39bfc 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\java-annotations/references/retention-targets-and-processing.md"
++++ "b/C:\\git\\agent-skills\\skills\\java-annotations/references/retention-targets-and-processing.md"
+@@ -161,6 +161,29 @@ used only for additional checks should return `false` so it does not claim unrel
+ and prevent other processors from running. Verify invocation, accepted/rejected source and
+ coexistence with the other configured processors; invocation alone does not prove coverage.
+ 
++### Class-valued elements in a processor
++
++A compiler-model annotation proxy is not an ordinary runtime annotation instance.
++For an annotation with `Class<?> value()`, calling `element.getAnnotation(UseCodec.class).value()`
++can raise `MirroredTypeException`; a `Class<?>[]` accessor raises `MirroredTypesException`.
++The represented class may be source in the current compilation and not yet loadable. Increasing
++retention to `RUNTIME` or putting application classes on the processor's runtime path does not
++turn this model access into runtime reflection.
++
++Read the matching `AnnotationMirror` and its `AnnotationValue`s. Use
++`Elements.getElementValuesWithDefaults` when omitted elements must take their declared defaults;
++`AnnotationMirror.getElementValues` contains only explicitly supplied values. A class literal is
++represented by a `TypeMirror`, and an array by a list of `AnnotationValue`s. Use `Types`/`Elements`
++to inspect or compare represented types, rather than requiring `Class.forName` to load application
++classes. For a fixed, known annotation, deliberately catching the mirrored-type exception and
++extracting its mirror(s) is also valid; retain an adequate existing reader.
++
++Check the actual processor with a referenced class supplied as source in the same compilation,
++an omitted default, and a class array when supported. Assert the promised output or diagnostic
++for both accepted and rejected types. Separately, a runtime consumer of retained metadata can
++legitimately use `Class`-valued accessors after those classes are loadable; this compiler-model
++constraint is not a reason to rewrite that working path.
++
+ ## Making an annotation observable
+ 
+ An annotation whose effect is invisible is a maintenance hazard: the reader of the call site
+@@ -198,3 +221,9 @@ cannot tell that something happens. Two mitigations that cost little:
+   specifies type-use exclusion from matching, universal processors and annotation claiming.
+ - [Java 17 TypeMirror](https://docs.oracle.com/en/java/javase/17/docs/api/java.compiler/javax/lang/model/type/TypeMirror.html)
+   exposes annotations on represented types, separately from declaration elements.
++- [Java 17 AnnotatedConstruct](https://docs.oracle.com/en/java/javase/17/docs/api/java.compiler/javax/lang/model/AnnotatedConstruct.html)
++  specifies mirrored-type exceptions for class-valued annotation accessors;
++  [AnnotationValue](https://docs.oracle.com/en/java/javase/17/docs/api/java.compiler/javax/lang/model/element/AnnotationValue.html)
++  defines their compiler-model representations, and
++  [Elements](https://docs.oracle.com/en/java/javase/17/docs/api/java.compiler/javax/lang/model/util/Elements.html)
++  provides values including omitted defaults.
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\java-annotations/skill.yaml" "b/C:\\git\\agent-skills\\skills\\java-annotations/skill.yaml"
+index 1fc75b2..1b4759e 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\java-annotations/skill.yaml"
++++ "b/C:\\git\\agent-skills\\skills\\java-annotations/skill.yaml"
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: java-annotations
+-version: 1.2.4
++version: 1.2.5
+ description: >-
+   Annotations as metadata that only means something if code reads it: retention policies and
+   what each one costs, targets and where an annotation on a record component actually lands,

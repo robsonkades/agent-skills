@@ -36,9 +36,11 @@ committing it and deploying it are distinct outcomes; establish which the user r
 
 ## Workflow
 
-1. **Understand.** Read the code that exists before proposing a change to it. Find relevant callers,
-   tests, ownership and history. Inspect commits when intent is unclear; “the last three” is not a
-   meaningful boundary when the change history has a different shape.
+1. **Understand.** Read the affected source. For a behavior change, follow a relevant caller
+   or entry point to its observable result. Resolve active wiring, configuration overrides or generated inputs
+   when they determine which source controls that behavior; a matching name is only a search lead.
+   Find the existing checks, ownership and history. Inspect commits when intent is unclear;
+   “the last three” is not a meaningful boundary when the change history has a different shape.
    Read applicable repository instructions and build/CI configuration. Inspect staged,
    unstaged and untracked changes before editing; preserve work outside your ownership.
    For Java, use the project's compiler/toolchain, runtime and dependency evidence; this
@@ -48,10 +50,13 @@ committing it and deploying it are distinct outcomes; establish which the user r
    independent work (requirements-and-acceptance). Establish the observable outcome and
    how it will be checked, reusing existing acceptance criteria. Do not invent product constraints.
 3. **Establish the risk.** What breaks if this is wrong, how soon would anyone notice, how hard
-   is it to undo? This one answer sets the test level, the gate set and the review depth for
-   everything that follows.
-4. **Decide the test approach** before implementing: which level, and whether the change is
-   driven by tests or verified after (java-testing-strategy, tdd). For a bug, capture the
+   is it to undo? For changes crossing deployment or data boundaries, establish which versions
+   and consumers must coexist, the allowed interruption and the recovery path. These constraints
+   set the sequence, test level, gate set and review depth; revise them when evidence changes.
+4. **Decide the test approach** before implementing: which check can distinguish the requested
+   outcome on the affected path, at which level, and whether to drive the change with tests or
+   verify after (java-testing-strategy, tdd). Reuse adequate checks; a helper test alone does not
+   verify that the application selects that helper when wiring is the risk. For a bug, capture the
    observed failure and attempt a safe reproduction before the fix. If reproduction remains
    unavailable, record the evidence and limits of the proposed fix (debugging). During an
    incident, authorized mitigation may precede reproduction: preserve evidence within the
@@ -72,7 +77,9 @@ committing it and deploying it are distinct outcomes; establish which the user r
    it invalidates, plus any gates required for the final state. Preserve other contributors'
    work and resolve overlapping ownership before editing it.
 8. **Record what the code cannot say**: assumptions, the trade you took, the decision and its
-   alternatives (technical-debt-decisions, architecture-decision-making).
+   alternatives (technical-debt-decisions, architecture-decision-making). When a discovery changes
+   a reusable delivery rule, keep its triggering condition, evidence and limits in the existing
+   handoff or authorized project record; one successful rollout does not establish a universal sequence.
 9. **Deliver.** For edited work, compare the final staged, unstaged and untracked content with
    the starting state and requested scope; a working-tree check does not prove an intended
    commit or artifact contains the same files. Connect the requested outcome to observed checks

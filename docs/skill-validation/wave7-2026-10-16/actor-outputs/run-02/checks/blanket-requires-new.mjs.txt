@@ -1,0 +1,48 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
+
+// Negative control only. Compile a replacement writer outside the application tree.
+// Run `node check.mjs work.Regression` from output/project first.
+const project = process.cwd();
+const checks = path.dirname(fileURLToPath(import.meta.url));
+const variant = path.join(checks, 'requires-new');
+const source = path.join(variant, 'work', 'ReceiptWriter.java');
+const classes = path.join(variant, 'classes');
+const toolchain = JSON.parse(fs.readFileSync('toolchain.json', 'utf8'));
+const libraries = fs.readdirSync('lib').filter(f => f.endsWith('.jar'))
+    .map(f => path.resolve('lib', f));
+const original = fs.readFileSync('src/work/ReceiptWriter.java', 'utf8');
+const marker = ' public void record(';
+if (!original.includes(marker)) throw new Error('Expected writer method was not found');
+const replacement = original.replace(marker,
+    ' @org.springframework.transaction.annotation.Transactional(value="businessTx", propagation=org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)\n' + marker);
+fs.mkdirSync(path.dirname(source), {recursive: true});
+fs.mkdirSync(classes, {recursive: true});
+fs.writeFileSync(source, replacement);
+const results = [];
+function run(exe, args) {
+    const result = spawnSync(exe, args, {cwd: project, encoding: 'utf8', timeout: 30000, windowsHide: true});
+    results.push({cwd: project, argv: [exe, ...args], exit: result.status,
+        stdout: result.stdout ?? '', stderr: result.stderr ?? '',
+        error: result.error?.message ?? null, timeoutMs: 30000});
+    fs.writeFileSync(path.join(checks, 'requires-new-results.json'), JSON.stringify(results, null, 2) + '\n');
+    return result;
+}
+const compile = run(toolchain.javac, ['--release', String(toolchain.release), '-cp',
+    [path.resolve('.build'), ...libraries].join(path.delimiter), '-d', classes, source]);
+if (compile.status !== 0) {
+    process.stderr.write(compile.stderr ?? '');
+    process.exitCode = 1;
+} else {
+    const test = run(toolchain.java, ['-cp',
+        [classes, path.resolve('.build'), ...libraries].join(path.delimiter), 'work.Regression']);
+    const discriminates = test.status === 1 && (test.stderr ?? '')
+        .includes("writer sees publisher's row: expected 1, got 0");
+    process.stdout.write(`Mutant JVM exit: ${test.status}\n`);
+    process.stdout.write(test.stdout ?? '');
+    process.stderr.write(test.stderr ?? '');
+    if (!discriminates) process.exitCode = 1;
+    else process.stdout.write('PASS negative control: blanket REQUIRES_NEW loses publisher visibility and is rejected\n');
+}

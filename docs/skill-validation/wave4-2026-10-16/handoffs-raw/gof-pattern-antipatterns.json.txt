@@ -1,0 +1,1092 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "gof-pattern-antipatterns",
+  "ownedPath": "C:/git/agent-skills/skills/gof-pattern-antipatterns",
+  "date": "2026-10-16",
+  "allWritesStopped": true,
+  "activeBackgroundProcesses": [],
+  "scope": "Only this existing skill directory was edited in the repository. Assigned temporary evidence and this handoff were written under the coordinator's unique wave-4 temp root. No shared files, neighboring skills, index, global checks, Git state, dependencies or real agent configuration changed by this reviewer.",
+  "procedure": {
+    "instructions": [
+      "AGENTS.md",
+      "docs/skill-review-prompt.md (complete)",
+      "docs/parallel-skill-reviews.md",
+      "docs/skill-validation/wave4-2026-10-16/review-brief.md",
+      "skills/skill-engineering/SKILL.md and references/evidence-and-confidence.md, evaluation.md, resource-design.md, anti-patterns.md"
+    ],
+    "context": [
+      "docs/skill-validation/skills-comparative-research-2026-10-16.md",
+      "docs/skills-evolution-roadmap.md and earlier wave reports (unchanged relevant lessons reused)"
+    ],
+    "entirePackageRead": true,
+    "neighboringReadOnly": [
+      "skills/gof-visitor/SKILL.md (boundary and existing new-kind coverage guidance)"
+    ],
+    "findingsSentBeforeEdits": true,
+    "domainCriteria": [
+      "Establish a present contract/cost rather than diagnose misuse from counts or pattern names.",
+      "Preserve per-operation semantics, runtime wiring, lifecycle, ownership and compatibility through removal.",
+      "Consider retaining the adequate pattern and a simple function/default implementation when actual consumers permit it.",
+      "Turn repeated edits into a finding only after separating avoidable maintenance from required coverage; distinguish sample output, source compilation and old binaries."
+    ]
+  },
+  "baseline": {
+    "committedVersion": "1.2.4",
+    "assignmentVersion": "1.2.4",
+    "preExistingVersionBump": false,
+    "preExistingChanges": [],
+    "status": "",
+    "staged": "",
+    "unstaged": "",
+    "coordinatorSnapshot": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/baseline/gof-pattern-antipatterns",
+    "allFourFilesMatchedSnapshotAtAssignment": true,
+    "files": [
+      {
+        "path": "skills/gof-pattern-antipatterns/references/catalogue.md",
+        "sha256": "93fe622b3b6fe67ec980058c484840f6cacb56d0b11e7cdc2aadf16f90fdd6a6"
+      },
+      {
+        "path": "skills/gof-pattern-antipatterns/references/removing-a-pattern.md",
+        "sha256": "a8e6af170335eac7a2dce12485d2b6d942a1306b51a58ea47b16debb687c0d57"
+      },
+      {
+        "path": "skills/gof-pattern-antipatterns/SKILL.md",
+        "sha256": "8c225e2d16e4a9499771ffe187917994cd3c8fe616a1240d4137fc15748e2117"
+      },
+      {
+        "path": "skills/gof-pattern-antipatterns/skill.yaml",
+        "sha256": "75a5d05f243f73c2e668b40b6905a9b79e4c35ed0111c14fe98e1a6dacf33d31"
+      }
+    ],
+    "initialInspectionCommand": "@'\nimport fs from 'node:fs';\nimport path from 'node:path';\nimport crypto from 'node:crypto';\nimport {execFileSync} from 'node:child_process';\nconst dir='skills/gof-pattern-antipatterns';const assigned='C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/baseline/gof-pattern-antipatterns';\nconst walk=d=>fs.readdirSync(d,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(path.join(d,e.name)):[path.join(d,e.name)]);\nconst files=walk(dir).map(p=>({path:p.replaceAll('\\\\','/'),sha256:crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex'),content:fs.readFileSync(p,'utf8')}));\nconst snapshot=walk(assigned).map(p=>({path:p.replaceAll('\\\\','/'),sha256:crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex')}));\nconsole.log(JSON.stringify({status:execFileSync('git',['status','--short','--untracked-files=all','--',dir],{encoding:'utf8'}),staged:execFileSync('git',['diff','--cached','--',dir],{encoding:'utf8'}),unstaged:execFileSync('git',['diff','--',dir],{encoding:'utf8'}),committedManifest:execFileSync('git',['show','HEAD:'+dir+'/skill.yaml'],{encoding:'utf8'}),files,snapshot}));\n'@ | node --input-type=module"
+  },
+  "versions": {
+    "committed": "1.2.4",
+    "assignment": "1.2.4",
+    "final": "1.2.5",
+    "rationale": "Single patch bump for focused content correction; clean baseline had no reusable unpublished bump. Descriptions and all other manifest fields preserved."
+  },
+  "findings": {
+    "corrected": [
+      {
+        "id": "visitor-growth-is-not-automatically-misuse",
+        "locations": [
+          "SKILL.md:83 (Visitor row)",
+          "references/catalogue.md:170-187 (Visitor item)",
+          "references/catalogue.md:276-277 (primary sources)"
+        ],
+        "before": "The table labeled repeated visitor breakage 'The expression problem, chosen backwards'; the item presumed that frequent new kinds mean the wrong direction and offered moving intrinsic behavior as the correction.",
+        "consequence": "This local conclusion could misclassify a deliberate per-operation coverage gate as unnecessary maintenance, despite the package's general requirement to preserve accepted consumer contracts.",
+        "after": "The table and item now distinguish repeated maintenance from required review, explain the concrete abstract-method compile gate and its limits, decide allowed fallback per operation, preserve legitimate external operations, and check new-kind result/dispatch before accepting simplification.",
+        "evidence": [
+          "Baseline text and complete package inspection.",
+          "Java 17 JLS 8.1.1.1 and ElementVisitor evolution contract.",
+          "Actual --release 17 compilation controls with missing visitor methods, positive generic/default alternatives and an output-failing permissive default."
+        ],
+        "classification": "Supported decision-guidance correction. No observed agent failure or measured improvement is claimed."
+      }
+    ],
+    "remaining": [],
+    "unresolved": "No material local package defect remains in reviewed scope; actual behavioral effect and catalog-wide integration remain unverified."
+  },
+  "files": {
+    "changedByReviewer": [
+      "skills/gof-pattern-antipatterns/SKILL.md",
+      "skills/gof-pattern-antipatterns/references/catalogue.md",
+      "skills/gof-pattern-antipatterns/skill.yaml"
+    ],
+    "preExistingChanges": [],
+    "unchanged": [
+      "skills/gof-pattern-antipatterns/references/removing-a-pattern.md"
+    ],
+    "finalHashes": [
+      {
+        "path": "references/catalogue.md",
+        "bytes": 15511,
+        "sha256": "8929bd604f3e84d58b7205d495e4f9810b7d3beec741d86f6e995dda43b34a29"
+      },
+      {
+        "path": "references/removing-a-pattern.md",
+        "bytes": 7786,
+        "sha256": "a8e6af170335eac7a2dce12485d2b6d942a1306b51a58ea47b16debb687c0d57"
+      },
+      {
+        "path": "SKILL.md",
+        "bytes": 11319,
+        "sha256": "dd20d71fae64fb155006335cbd53ce6b15a13560937a763940cabf013ce14042"
+      },
+      {
+        "path": "skill.yaml",
+        "bytes": 2455,
+        "sha256": "82b460dc0d45e3d2f96301f8625f99d5b58415482d71a7a877684505736a67d1"
+      }
+    ],
+    "attribution": "Final files compared with the coordinator's assignment snapshot, not HEAD alone. Baseline was clean and all four snapshot hashes matched.",
+    "diffSummary": "3 files changed, 17 insertions(+), 9 deletions(-)."
+  },
+  "preserved": {
+    "capabilities": [
+      "All 17 catalogue entries retained; the Visitor entry was qualified rather than removed.",
+      "Evidence-first investigation, false-positive guards, findings-only versus authorized fixes, and no-change outcome.",
+      "Interfaces/ports with one implementation; factory and builder compatibility; explicit singleton ownership; observer snapshot/self-disposal limits.",
+      "Decorator order, remote proxy outcomes, measured flyweight tradeoffs, lambda identity/ServiceLoader boundaries, clone ownership and public API cautions.",
+      "Java 17 terminology baseline; no dependency or platform upgrades.",
+      "Complete removal procedure, consumer checks, migration boundaries, no automatic public API removal and proportionate validation.",
+      "Descriptions, dependencies, suggests, capabilities and UI metadata unchanged apart from version."
+    ],
+    "replaced": [
+      "One unconditional Visitor-cost framing replaced with a per-operation coverage/maintenance decision."
+    ],
+    "removed": []
+  },
+  "checks": {
+    "structuralExecuted": [
+      {
+        "name": "package",
+        "cmd": "@'\nimport { loadPackageFromDirectory } from './packages/core/src/application/package-loader.ts';\nimport { validatePackage } from './packages/core/src/application/validate-package.ts';\nimport { NodeFileSystem } from './packages/node/src/file-system.ts';\nimport { CodexAdapter } from './packages/adapter-codex/src/index.ts';\nimport { ClaudeCodeAdapter } from './packages/adapter-claude/src/index.ts';\nconst loaded=await loadPackageFromDirectory(new NodeFileSystem(),'skills/gof-pattern-antipatterns',{strict:true});\nconst report=validatePackage(loaded.pkg,{directoryName:'gof-pattern-antipatterns',adapters:[new CodexAdapter(),new ClaudeCodeAdapter()]});\nconst issues=[...loaded.issues,...report.issues];\nconsole.log(JSON.stringify({skill:'gof-pattern-antipatterns',version:loaded.pkg.manifest.version,files:loaded.pkg.files.length,issues},null,2));\nif(issues.length)process.exitCode=1;\n'@ | node --input-type=module",
+        "workdir": "C:/git/agent-skills",
+        "result": {
+          "chunk_id": "00590a",
+          "wall_time_seconds": 0.225319,
+          "exit_code": 0,
+          "original_token_count": 24,
+          "output": "{\n  \"skill\": \"gof-pattern-antipatterns\",\n  \"version\": \"1.2.5\",\n  \"files\": 4,\n  \"issues\": []\n}\n"
+        }
+      },
+      {
+        "name": "links",
+        "cmd": "@'\nimport fs from 'node:fs';\nimport path from 'node:path';\nconst root='skills/gof-pattern-antipatterns';\nconst files=['SKILL.md','references/catalogue.md','references/removing-a-pattern.md'];\nconst checked=[]; const missing=[];\nfor(const file of files) {\n const body=fs.readFileSync(path.join(root,file),'utf8');\n for(const m of body.matchAll(/\\[[^\\]]*\\]\\(([^)]+)\\)/g)) {\n  const link=m[1];\n  if(/^[a-z]+:/i.test(link)||link.startsWith('#'))continue;\n  const target=path.resolve(root,path.dirname(file),link.split('#')[0]);\n  checked.push({file,link,target});\n  if(!fs.existsSync(target))missing.push({file,link,target});\n }\n}\nconsole.log(JSON.stringify({checked,missing},null,2));\nif(missing.length)process.exitCode=1;\n'@ | node --input-type=module",
+        "workdir": "C:/git/agent-skills",
+        "result": {
+          "chunk_id": "9ce3cf",
+          "wall_time_seconds": 0.107397,
+          "exit_code": 0,
+          "original_token_count": 150,
+          "output": "{\n  \"checked\": [\n    {\n      \"file\": \"SKILL.md\",\n      \"link\": \"references/catalogue.md\",\n      \"target\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\gof-pattern-antipatterns\\\\references\\\\catalogue.md\"\n    },\n    {\n      \"file\": \"SKILL.md\",\n      \"link\": \"references/catalogue.md\",\n      \"target\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\gof-pattern-antipatterns\\\\references\\\\catalogue.md\"\n    },\n    {\n      \"file\": \"SKILL.md\",\n      \"link\": \"references/removing-a-pattern.md\",\n      \"target\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\gof-pattern-antipatterns\\\\references\\\\removing-a-pattern.md\"\n    }\n  ],\n  \"missing\": []\n}\n"
+        }
+      },
+      {
+        "name": "format",
+        "cmd": "node node_modules/prettier/bin/prettier.cjs --check skills/gof-pattern-antipatterns/SKILL.md skills/gof-pattern-antipatterns/references/catalogue.md skills/gof-pattern-antipatterns/skill.yaml",
+        "workdir": "C:/git/agent-skills",
+        "result": {
+          "chunk_id": "3e595b",
+          "wall_time_seconds": 0.2283258,
+          "exit_code": 0,
+          "original_token_count": 17,
+          "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+        }
+      },
+      {
+        "name": "diffcheck",
+        "cmd": "git diff --check -- skills/gof-pattern-antipatterns",
+        "workdir": "C:/git/agent-skills",
+        "result": {
+          "chunk_id": "581133",
+          "wall_time_seconds": 0.0852828,
+          "exit_code": 0,
+          "original_token_count": 0,
+          "output": ""
+        }
+      }
+    ],
+    "affectedChecksRerunAfterLastWordingEdit": [
+      {
+        "name": "final-format",
+        "cmd": "node node_modules/prettier/bin/prettier.cjs --check skills/gof-pattern-antipatterns/references/catalogue.md",
+        "workdir": "C:/git/agent-skills",
+        "result": {
+          "chunk_id": "9d9d54",
+          "wall_time_seconds": 0.1794423,
+          "exit_code": 0,
+          "original_token_count": 17,
+          "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+        }
+      },
+      {
+        "name": "final-diffcheck",
+        "cmd": "git diff --check -- skills/gof-pattern-antipatterns",
+        "workdir": "C:/git/agent-skills",
+        "result": {
+          "chunk_id": "c68001",
+          "wall_time_seconds": 0.0693384,
+          "exit_code": 0,
+          "original_token_count": 0,
+          "output": ""
+        }
+      },
+      {
+        "name": "final-diff",
+        "cmd": "git diff --stat -- skills/gof-pattern-antipatterns; git diff -- skills/gof-pattern-antipatterns/references/catalogue.md",
+        "workdir": "C:/git/agent-skills",
+        "result": {
+          "chunk_id": "f6edd8",
+          "wall_time_seconds": 0.0888374,
+          "exit_code": 0,
+          "original_token_count": 887,
+          "output": " skills/gof-pattern-antipatterns/SKILL.md           |  2 +-\n .../references/catalogue.md                        | 22 +++++++++++++++-------\n skills/gof-pattern-antipatterns/skill.yaml         |  2 +-\n 3 files changed, 17 insertions(+), 9 deletions(-)\ndiff --git a/skills/gof-pattern-antipatterns/references/catalogue.md b/skills/gof-pattern-antipatterns/references/catalogue.md\nindex 6553a67..cbc5027 100644\n--- a/skills/gof-pattern-antipatterns/references/catalogue.md\n+++ b/skills/gof-pattern-antipatterns/references/catalogue.md\n@@ -169,16 +169,22 @@ confinement or a validated closed domain may help; short lifetime alone does not\n \n ## Visitor over a growing type set\n \n-**Why.** Visitor was correct when the type set was stable, and the domain changed.\n+**Why.** Visitor was adopted for a stable type set, and new kinds now arrive frequently.\n \n-**Detect.** Every release adds an element type and breaks every visitor.\n+**Detect.** Each new kind requires changes to many operations. Inspect what those changes decide\n+before treating them as boilerplate.\n \n-**Cost.** The expression problem, chosen in the wrong direction: each new type is a change to N\n-operations; a permissive default can accidentally skip a new type. Check whether its fallback is\n-intentional and satisfies the operation's contract.\n+**Cost.** Repeated updates can be avoidable maintenance or required review of new-kind semantics.\n+A new abstract visit method makes rebuilt concrete visitors that lack a matching implementation\n+fail compilation; a permissive default may absorb missing handling. Compiler coverage does not prove\n+correct results, and rebuilt-source checks do not establish compatibility with old binaries.\n \n-**Fix.** Move behaviour back onto the elements for the operations that are intrinsic; keep the\n-fold only for the operations that genuinely belong outside (`gof-visitor`).\n+**Fix.** Decide per operation whether a new kind requires explicit treatment or may use a documented\n+generic, rejecting or omission policy. Keep deliberate coverage checks when required; do not add a\n+default merely to make the build green. A supported fallback may remove needless repeated edits.\n+Move intrinsic behaviour onto owned elements when that reduces demonstrated cost; retain external\n+operations and established consumer contracts (`gof-visitor`). Check new-kind results and actual\n+dispatch, including inherited/default handling, before accepting a simpler representation.\n \n ## Template Method with nine hooks\n \n@@ -267,3 +273,5 @@ Sources:\n - [CopyOnWriteArrayList snapshot iteration](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/CopyOnWriteArrayList.html) — an existing iterator does not reflect subsequent removal.\n - [JLS 17 lambda body and runtime evaluation](https://docs.oracle.com/javase/specs/jls/se17/html/jls-15.html#jls-15.27.2) — lexical receiver scope and the identity rules in §15.27.4.\n - [Java 17 ServiceLoader provider deployment](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/ServiceLoader.html) — provider classes and classpath configuration.\n+- [JLS 17 abstract classes](https://docs.oracle.com/javase/specs/jls/se17/html/jls-8.html#jls-8.1.1.1) — concrete classes must implement their abstract methods.\n+- [Java 17 ElementVisitor evolution contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.compiler/javax/lang/model/element/ElementVisitor.html) — source incompatibility, default methods and unknown-kind handling are deliberate API choices.\n"
+        }
+      }
+    ],
+    "technicalCommand": {
+      "cmd": "node \"C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-pattern-antipatterns-validation/run-controls.mjs\"",
+      "workdir": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-pattern-antipatterns-validation",
+      "result": {
+        "chunk_id": "c051be",
+        "wall_time_seconds": 2.4707204,
+        "exit_code": 0,
+        "original_token_count": 1792,
+        "output": "{\n  \"baseline\": \"Java 17 source/API/classfile via --release 17\",\n  \"executionLimit\": \"Executed on actual toolchain runtime below, not Java 17 JVM\",\n  \"toolchain\": [\n    {\n      \"label\": \"java-version\",\n      \"executable\": \"C:\\\\Users\\\\robso\\\\.jdks\\\\temurin-25.0.3\\\\bin\\\\java.exe\",\n      \"args\": [\n        \"-version\"\n      ],\n      \"cwd\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave4-validation-Ceekn9\\\\gof-pattern-antipatterns-validation\",\n      \"status\": 0,\n      \"signal\": null,\n      \"stdout\": \"\",\n      \"stderr\": \"openjdk version \\\"25.0.3\\\" 2026-04-21 LTS\\r\\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\\r\\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\\r\\n\",\n      \"error\": null\n    },\n    {\n      \"label\": \"javac-version\",\n      \"executable\": \"C:\\\\Users\\\\robso\\\\.jdks\\\\temurin-25.0.3\\\\bin\\\\javac.exe\",\n      \"args\": [\n        \"-version\"\n      ],\n      \"cwd\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave4-validation-Ceekn9\\\\gof-pattern-antipatterns-validation\",\n      \"status\": 0,\n      \"signal\": null,\n      \"stdout\": \"javac 25.0.3\\r\\n\",\n      \"stderr\": \"\",\n      \"error\": null\n    }\n  ],\n  \"results\": [\n    {\n      \"mode\": \"baseline\",\n      \"outcome\": \"pass\",\n      \"majorVersion\": 61,\n      \"compiled\": {\n        \"label\": \"baseline-compile\",\n        \"executable\": \"C:\\\\Users\\\\robso\\\\.jdks\\\\temurin-25.0.3\\\\bin\\\\javac.exe\",\n        \"args\": [\n          \"--release\",\n          \"17\",\n          \"-d\",\n          \"classes\",\n          \"RenderDemo.java\"\n        ],\n        \"cwd\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave4-validation-Ceekn9\\\\gof-pattern-antipatterns-validation\\\\technical\\\\baseline\",\n        \"status\": 0,\n        \"signal\": null,\n        \"stdout\": \"\",\n        \"stderr\": \"\",\n        \"error\": null\n      },\n      \"executed\": {\n        \"label\": \"baseline-run\",\n        \"executable\": \"C:\\\\Users\\\\robso\\\\.jdks\\\\temurin-25.0.3\\\\bin\\\\java.exe\",\n        \"args\": [\n          \"-cp\",\n          \"classes\",\n          \"RenderDemo\"\n        ],\n        \"cwd\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave4-validation-Ceekn9\\\\gof-pattern-antipatterns-validation\\\\technical\\\\baseline\",\n        \"status\": 0,\n        \"signal\": null,\n        \"stdout\": \"nodes=2 assertions=8\\r\\n\",\n        \"stderr\": \"\",\n        \"error\": null\n      }\n    },\n    {\n      \"mode\": \"abstract-new\",\n      \"outcome\": \"expected compiler rejection\",\n      \"expectedDiagnostic\": true,\n      \"compiled\": {\n        \"label\": \"abstract-new-compile\",\n        \"executable\": \"C:\\\\Users\\\\robso\\\\.jdks\\\\temurin-25.0.3\\\\bin\\\\javac.exe\",\n        \"args\": [\n          \"--release\",\n          \"17\",\n          \"-d\",\n          \"classes\",\n          \"RenderDemo.java\"\n        ],\n        \"cwd\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave4-validation-Ceekn9\\\\gof-pattern-antipatterns-validation\\\\technical\\\\abstract-new\",\n        \"status\": 1,\n        \"signal\": null,\n        \"stdout\": \"\",\n        \"stderr\": \"RenderDemo.java:14: error: Plain is not abstract and does not override abstract method badge(Badge) in Visitor\\r\\n  static class Plain implements Visitor {\\r\\n         ^\\r\\nRenderDemo.java:19: error: Upper is not abstract and does not override abstract method badge(Badge) in Visitor\\r\\n  static class Upper implements Visitor {\\r\\n         ^\\r\\n2 errors\\r\\n\",\n        \"error\": null\n      }\n    },\n    {\n      \"mode\": \"default-new\",\n      \"outcome\": \"pass\",\n      \"majorVersion\": 61,\n      \"compiled\": {\n        \"label\": \"default-new-compile\",\n        \"executable\": \"C:\\\\Users\\\\robso\\\\.jdks\\\\temurin-25.0.3\\\\bin\\\\javac.exe\",\n        \"args\": [\n          \"--release\",\n          \"17\",\n          \"-d\",\n          \"classes\",\n          \"RenderDemo.java\"\n        ],\n        \"cwd\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave4-validation-Ceekn9\\\\gof-pattern-antipatterns-validation\\\\technical\\\\default-new\",\n        \"status\": 0,\n        \"signal\": null,\n        \"stdout\": \"\",\n        \"stderr\": \"\",\n        \"error\": null\n      },\n      \"executed\": {\n        \"label\": \"default-new-run\",\n        \"executable\": \"C:\\\\Users\\\\robso\\\\.jdks\\\\temurin-25.0.3\\\\bin\\\\java.exe\",\n        \"args\": [\n          \"-cp\",\n          \"classes\",\n          \"RenderDemo\"\n        ],\n        \"cwd\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave4-validation-Ceekn9\\\\gof-pattern-antipatterns-validation\\\\technical\\\\default-new\",\n        \"status\": 0,\n        \"signal\": null,\n        \"stdout\": \"nodes=3 assertions=12\\r\\n\",\n        \"stderr\": \"\",\n        \"error\": null\n      }\n    },\n    {\n      \"mode\": \"generic-new\",\n      \"outcome\": \"pass\",\n      \"majorVersion\": 61,\n      \"compiled\": {\n        \"label\": \"generic-new-compile\",\n        \"executable\": \"C:\\\\Users\\\\robso\\\\.jdks\\\\temurin-25.0.3\\\\bin\\\\javac.exe\",\n        \"args\": [\n          \"--release\",\n          \"17\",\n          \"-d\",\n          \"classes\",\n          \"RenderDemo.java\"\n        ],\n        \"cwd\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave4-validation-Ceekn9\\\\gof-pattern-antipatterns-validation\\\\technical\\\\generic-new\",\n        \"status\": 0,\n        \"signal\": null,\n        \"stdout\": \"\",\n        \"stderr\": \"\",\n        \"error\": null\n      },\n      \"executed\": {\n        \"label\": \"generic-new-run\",\n        \"executable\": \"C:\\\\Users\\\\robso\\\\.jdks\\\\temurin-25.0.3\\\\bin\\\\java.exe\",\n        \"args\": [\n          \"-cp\",\n          \"classes\",\n          \"RenderDemo\"\n        ],\n        \"cwd\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave4-validation-Ceekn9\\\\gof-pattern-antipatterns-validation\\\\technical\\\\generic-new\",\n        \"status\": 0,\n        \"signal\": null,\n        \"stdout\": \"nodes=3 assertions=6\\r\\n\",\n        \"stderr\": \"\",\n        \"error\": null\n      }\n    },\n    {\n      \"mode\": \"bad-default\",\n      \"outcome\": \"expected new-kind semantic assertion failure\",\n      \"majorVersion\": 61,\n      \"compiled\": {\n        \"label\": \"bad-default-compile\",\n        \"executable\": \"C:\\\\Users\\\\robso\\\\.jdks\\\\temurin-25.0.3\\\\bin\\\\javac.exe\",\n        \"args\": [\n          \"--release\",\n          \"17\",\n          \"-d\",\n          \"classes\",\n          \"RenderDemo.java\"\n        ],\n        \"cwd\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave4-validation-Ceekn9\\\\gof-pattern-antipatterns-validation\\\\technical\\\\bad-default\",\n        \"status\": 0,\n        \"signal\": null,\n        \"stdout\": \"\",\n        \"stderr\": \"\",\n        \"error\": null\n      },\n      \"executed\": {\n        \"label\": \"bad-default-run\",\n        \"executable\": \"C:\\\\Users\\\\robso\\\\.jdks\\\\temurin-25.0.3\\\\bin\\\\java.exe\",\n        \"args\": [\n          \"-cp\",\n          \"classes\",\n          \"RenderDemo\"\n        ],\n        \"cwd\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave4-validation-Ceekn9\\\\gof-pattern-antipatterns-validation\\\\technical\\\\bad-default\",\n        \"status\": 1,\n        \"signal\": null,\n        \"stdout\": \"\",\n        \"stderr\": \"Exception in thread \\\"main\\\" java.lang.AssertionError: expected=staging actual=\\r\\n\\tat RenderDemo.eq(RenderDemo.java:29)\\r\\n\\tat RenderDemo.main(RenderDemo.java:37)\\r\\n\",\n        \"error\": null\n      }\n    }\n  ],\n  \"checks\": \"5 controlled variants: 3 positive, 1 expected compile rejection, 1 expected semantic assertion failure\",\n  \"allChildProcessesExited\": true\n}\n"
+      }
+    },
+    "technicalResults": {
+      "baseline": "Java 17 source/API/classfile via --release 17",
+      "executionLimit": "Executed on actual toolchain runtime below, not Java 17 JVM",
+      "toolchain": [
+        {
+          "label": "java-version",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+          "args": [
+            "-version"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-antipatterns-validation",
+          "status": 0,
+          "signal": null,
+          "stdout": "",
+          "stderr": "openjdk version \"25.0.3\" 2026-04-21 LTS\r\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\r\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\r\n",
+          "error": null
+        },
+        {
+          "label": "javac-version",
+          "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+          "args": [
+            "-version"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-antipatterns-validation",
+          "status": 0,
+          "signal": null,
+          "stdout": "javac 25.0.3\r\n",
+          "stderr": "",
+          "error": null
+        }
+      ],
+      "results": [
+        {
+          "mode": "baseline",
+          "outcome": "pass",
+          "majorVersion": 61,
+          "compiled": {
+            "label": "baseline-compile",
+            "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+            "args": [
+              "--release",
+              "17",
+              "-d",
+              "classes",
+              "RenderDemo.java"
+            ],
+            "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-antipatterns-validation\\technical\\baseline",
+            "status": 0,
+            "signal": null,
+            "stdout": "",
+            "stderr": "",
+            "error": null
+          },
+          "executed": {
+            "label": "baseline-run",
+            "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+            "args": [
+              "-cp",
+              "classes",
+              "RenderDemo"
+            ],
+            "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-antipatterns-validation\\technical\\baseline",
+            "status": 0,
+            "signal": null,
+            "stdout": "nodes=2 assertions=8\r\n",
+            "stderr": "",
+            "error": null
+          }
+        },
+        {
+          "mode": "abstract-new",
+          "outcome": "expected compiler rejection",
+          "expectedDiagnostic": true,
+          "compiled": {
+            "label": "abstract-new-compile",
+            "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+            "args": [
+              "--release",
+              "17",
+              "-d",
+              "classes",
+              "RenderDemo.java"
+            ],
+            "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-antipatterns-validation\\technical\\abstract-new",
+            "status": 1,
+            "signal": null,
+            "stdout": "",
+            "stderr": "RenderDemo.java:14: error: Plain is not abstract and does not override abstract method badge(Badge) in Visitor\r\n  static class Plain implements Visitor {\r\n         ^\r\nRenderDemo.java:19: error: Upper is not abstract and does not override abstract method badge(Badge) in Visitor\r\n  static class Upper implements Visitor {\r\n         ^\r\n2 errors\r\n",
+            "error": null
+          }
+        },
+        {
+          "mode": "default-new",
+          "outcome": "pass",
+          "majorVersion": 61,
+          "compiled": {
+            "label": "default-new-compile",
+            "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+            "args": [
+              "--release",
+              "17",
+              "-d",
+              "classes",
+              "RenderDemo.java"
+            ],
+            "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-antipatterns-validation\\technical\\default-new",
+            "status": 0,
+            "signal": null,
+            "stdout": "",
+            "stderr": "",
+            "error": null
+          },
+          "executed": {
+            "label": "default-new-run",
+            "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+            "args": [
+              "-cp",
+              "classes",
+              "RenderDemo"
+            ],
+            "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-antipatterns-validation\\technical\\default-new",
+            "status": 0,
+            "signal": null,
+            "stdout": "nodes=3 assertions=12\r\n",
+            "stderr": "",
+            "error": null
+          }
+        },
+        {
+          "mode": "generic-new",
+          "outcome": "pass",
+          "majorVersion": 61,
+          "compiled": {
+            "label": "generic-new-compile",
+            "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+            "args": [
+              "--release",
+              "17",
+              "-d",
+              "classes",
+              "RenderDemo.java"
+            ],
+            "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-antipatterns-validation\\technical\\generic-new",
+            "status": 0,
+            "signal": null,
+            "stdout": "",
+            "stderr": "",
+            "error": null
+          },
+          "executed": {
+            "label": "generic-new-run",
+            "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+            "args": [
+              "-cp",
+              "classes",
+              "RenderDemo"
+            ],
+            "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-antipatterns-validation\\technical\\generic-new",
+            "status": 0,
+            "signal": null,
+            "stdout": "nodes=3 assertions=6\r\n",
+            "stderr": "",
+            "error": null
+          }
+        },
+        {
+          "mode": "bad-default",
+          "outcome": "expected new-kind semantic assertion failure",
+          "majorVersion": 61,
+          "compiled": {
+            "label": "bad-default-compile",
+            "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+            "args": [
+              "--release",
+              "17",
+              "-d",
+              "classes",
+              "RenderDemo.java"
+            ],
+            "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-antipatterns-validation\\technical\\bad-default",
+            "status": 0,
+            "signal": null,
+            "stdout": "",
+            "stderr": "",
+            "error": null
+          },
+          "executed": {
+            "label": "bad-default-run",
+            "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+            "args": [
+              "-cp",
+              "classes",
+              "RenderDemo"
+            ],
+            "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-antipatterns-validation\\technical\\bad-default",
+            "status": 1,
+            "signal": null,
+            "stdout": "",
+            "stderr": "Exception in thread \"main\" java.lang.AssertionError: expected=staging actual=\r\n\tat RenderDemo.eq(RenderDemo.java:29)\r\n\tat RenderDemo.main(RenderDemo.java:37)\r\n",
+            "error": null
+          }
+        }
+      ],
+      "checks": "5 controlled variants: 3 positive, 1 expected compile rejection, 1 expected semantic assertion failure",
+      "allChildProcessesExited": true
+    },
+    "technicalSummary": {
+      "runtime": "Temurin 25.0.3+9-LTS; javac 25.0.3",
+      "compilation": "--release 17; all runnable controls emitted classfile major 61",
+      "variants": [
+        {
+          "mode": "baseline",
+          "result": "pass",
+          "nodes": 2,
+          "assertions": 8
+        },
+        {
+          "mode": "abstract-new",
+          "result": "expected javac exit 1",
+          "diagnostics": "Two missing badge(Badge) implementations: Plain and Upper"
+        },
+        {
+          "mode": "default-new",
+          "result": "pass",
+          "nodes": 3,
+          "assertions": 12
+        },
+        {
+          "mode": "generic-new",
+          "result": "pass",
+          "nodes": 3,
+          "assertions": 6
+        },
+        {
+          "mode": "bad-default",
+          "result": "compile pass, expected runtime exit 1",
+          "diagnostic": "AssertionError: expected=staging actual="
+        }
+      ],
+      "unexpectedFailures": [],
+      "expectedFailures": "Missing abstract methods and omitted new-kind output are deliberate negative controls, not unresolved skill or harness failures.",
+      "examplesInSkill": "No Java executable snippet was added or changed in the shipped package. Temporary controls verify the consequential prose claim.",
+      "limitations": "No Java 17 JVM execution, old-binary/version-skew matrix, framework integration, production corpus or performance measurement."
+    },
+    "sourceCaptureCommand": {
+      "cmd": "@'\nimport fs from 'node:fs';\nimport path from 'node:path';\nimport { createHash } from 'node:crypto';\nconst root = 'C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-pattern-antipatterns-validation';\nconst sources = [\n  { id:'jls17-abstract-classes', url:'https://docs.oracle.com/javase/specs/jls/se17/html/jls-8.html', section:'8.1.1.1 abstract Classes' },\n  { id:'jls17-binary-compatibility', url:'https://docs.oracle.com/javase/specs/jls/se17/html/jls-13.html', section:'13.5 interface evolution; rebuilt source and pre-existing binary compatibility are distinct' },\n  { id:'java17-elementvisitor', url:'https://docs.oracle.com/en/java/javase/17/docs/api/java.compiler/javax/lang/model/element/ElementVisitor.html', section:'API Note; default visitModule and visitRecordComponent delegate to visitUnknown' }\n];\nfs.mkdirSync(path.join(root,'sources'),{recursive:true});\nconst results = await Promise.all(sources.map(async source => {\n  const response=await fetch(source.url,{signal:AbortSignal.timeout(25000)});\n  if(!response.ok) throw new Error(source.url+' '+response.status);\n  const bytes=Buffer.from(await response.arrayBuffer());\n  const file=path.join(root,'sources',source.id+'.html');\n  fs.writeFileSync(file,bytes);\n  return {...source,consulted:'2026-10-16',status:response.status,finalUrl:response.url,file,bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')};\n}));\nfs.writeFileSync(path.join(root,'sources.json'),JSON.stringify(results,null,2));\nconsole.log(JSON.stringify(results,null,2));\n'@ | node --input-type=module",
+      "workdir": "C:/git/agent-skills",
+      "result": {
+        "chunk_id": "c8e3db",
+        "wall_time_seconds": 0.3982907,
+        "exit_code": 0,
+        "original_token_count": 476,
+        "output": "[\n  {\n    \"id\": \"jls17-abstract-classes\",\n    \"url\": \"https://docs.oracle.com/javase/specs/jls/se17/html/jls-8.html\",\n    \"section\": \"8.1.1.1 abstract Classes\",\n    \"consulted\": \"2026-10-16\",\n    \"status\": 200,\n    \"finalUrl\": \"https://docs.oracle.com/javase/specs/jls/se17/html/jls-8.html\",\n    \"file\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave4-validation-Ceekn9\\\\gof-pattern-antipatterns-validation\\\\sources\\\\jls17-abstract-classes.html\",\n    \"bytes\": 581514,\n    \"sha256\": \"5a7941c1fbbc32590962a291cb221b22fdc6b87091bf7a604013434649fdc3bc\"\n  },\n  {\n    \"id\": \"jls17-binary-compatibility\",\n    \"url\": \"https://docs.oracle.com/javase/specs/jls/se17/html/jls-13.html\",\n    \"section\": \"13.5 interface evolution; rebuilt source and pre-existing binary compatibility are distinct\",\n    \"consulted\": \"2026-10-16\",\n    \"status\": 200,\n    \"finalUrl\": \"https://docs.oracle.com/javase/specs/jls/se17/html/jls-13.html\",\n    \"file\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave4-validation-Ceekn9\\\\gof-pattern-antipatterns-validation\\\\sources\\\\jls17-binary-compatibility.html\",\n    \"bytes\": 169240,\n    \"sha256\": \"8fc034be74b27034d3bf8394bfc186ba68e5cfdf65d4c70f677c18249bb77c55\"\n  },\n  {\n    \"id\": \"java17-elementvisitor\",\n    \"url\": \"https://docs.oracle.com/en/java/javase/17/docs/api/java.compiler/javax/lang/model/element/ElementVisitor.html\",\n    \"section\": \"API Note; default visitModule and visitRecordComponent delegate to visitUnknown\",\n    \"consulted\": \"2026-10-16\",\n    \"status\": 200,\n    \"finalUrl\": \"https://docs.oracle.com/en/java/javase/17/docs/api/java.compiler/javax/lang/model/element/ElementVisitor.html\",\n    \"file\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave4-validation-Ceekn9\\\\gof-pattern-antipatterns-validation\\\\sources\\\\java17-elementvisitor.html\",\n    \"bytes\": 34637,\n    \"sha256\": \"77c1ab2bfd035d4922abbc94a328d688c7fe836bbd7280e97aea2e75465db457\"\n  }\n]\n"
+      }
+    },
+    "caseIntegrityCommand": {
+      "cmd": "@'\nimport fs from 'node:fs';\nimport path from 'node:path';\nimport { createHash } from 'node:crypto';\nconst root='C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-pattern-antipatterns-validation';\nfor(const id of ['case-a','case-b']) {\n  for(const [dir,variant] of [['src','abstract-new'],['prototype','generic-new']]) {\n    const target=path.join(root,'cases',id,dir);\n    fs.mkdirSync(target,{recursive:true});\n    fs.copyFileSync(path.join(root,'technical',variant,'RenderDemo.java'),path.join(target,'RenderDemo.java'));\n  }\n}\nfunction scan(dir,prefix='') {\n  return fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>e.isDirectory()?scan(path.join(dir,e.name),prefix+e.name+'/'):[{path:prefix+e.name,sha256:createHash('sha256').update(fs.readFileSync(path.join(dir,e.name))).digest('hex')}]);\n}\nconst a=scan(path.join(root,'cases','case-a'));\nconst b=scan(path.join(root,'cases','case-b'));\nconst changes=a.filter((f,i)=>f.path!==b[i]?.path||f.sha256!==b[i]?.sha256).map(f=>f.path);\nif(a.length!==8 || b.length!==8 || changes.length!==1 || changes[0]!=='docs/rendering-policy.md') throw new Error(JSON.stringify({a,b,changes}));\nconst result={caseA:a,caseB:b,onlyDifference:changes,technicalFixtureHashesMatch:true,actorRunsExecuted:0};\nfs.writeFileSync(path.join(root,'case-integrity.json'),JSON.stringify(result,null,2));\nconsole.log(JSON.stringify(result,null,2));\n'@ | node --input-type=module",
+      "workdir": "C:/git/agent-skills",
+      "result": {
+        "chunk_id": "1a4508",
+        "wall_time_seconds": 0.1272332,
+        "exit_code": 0,
+        "original_token_count": 571,
+        "output": "{\n  \"caseA\": [\n    {\n      \"path\": \"docs/architecture.md\",\n      \"sha256\": \"898971e9ed4315481db37a7a809b32602935ca3e2e82d14e81d8f7976beecb3f\"\n    },\n    {\n      \"path\": \"docs/change-history.csv\",\n      \"sha256\": \"9a91610d29847a5f134fd00694ef155532a6b808670fcb3385a4372b2908eeb6\"\n    },\n    {\n      \"path\": \"docs/change-note.md\",\n      \"sha256\": \"909a4a88dd3fe2ea411b66d62fa7c99e4b560e67cd3da67655d145a2fa2e723e\"\n    },\n    {\n      \"path\": \"docs/rendering-policy.md\",\n      \"sha256\": \"8bbceb3afa889719f40566b6e0b0c872d2e3efccbd87dc71fa4e0dd76207f2b5\"\n    },\n    {\n      \"path\": \"prototype/RenderDemo.java\",\n      \"sha256\": \"7fc509b1f82ced6e135c85016d8fed368f9b511bca440f69eec663773e6b02eb\"\n    },\n    {\n      \"path\": \"README.md\",\n      \"sha256\": \"663a9c16690a7ed7e6eca73b955ccb0abcda6c10b4690ed648d7715e28701935\"\n    },\n    {\n      \"path\": \"request.md\",\n      \"sha256\": \"e288c625220627d8854ea0cb838ab7e33417c5cea561c3f9d35828b8fd4b9b55\"\n    },\n    {\n      \"path\": \"src/RenderDemo.java\",\n      \"sha256\": \"74038b8603b2a23be94fc952007faab6318911dbe44f39cdb22c2a478729fae6\"\n    }\n  ],\n  \"caseB\": [\n    {\n      \"path\": \"docs/architecture.md\",\n      \"sha256\": \"898971e9ed4315481db37a7a809b32602935ca3e2e82d14e81d8f7976beecb3f\"\n    },\n    {\n      \"path\": \"docs/change-history.csv\",\n      \"sha256\": \"9a91610d29847a5f134fd00694ef155532a6b808670fcb3385a4372b2908eeb6\"\n    },\n    {\n      \"path\": \"docs/change-note.md\",\n      \"sha256\": \"909a4a88dd3fe2ea411b66d62fa7c99e4b560e67cd3da67655d145a2fa2e723e\"\n    },\n    {\n      \"path\": \"docs/rendering-policy.md\",\n      \"sha256\": \"d80ecd36b81c0d0596cb180c60cf41f2796248ca82c83d51ddec302099a8dcc8\"\n    },\n    {\n      \"path\": \"prototype/RenderDemo.java\",\n      \"sha256\": \"7fc509b1f82ced6e135c85016d8fed368f9b511bca440f69eec663773e6b02eb\"\n    },\n    {\n      \"path\": \"README.md\",\n      \"sha256\": \"663a9c16690a7ed7e6eca73b955ccb0abcda6c10b4690ed648d7715e28701935\"\n    },\n    {\n      \"path\": \"request.md\",\n      \"sha256\": \"e288c625220627d8854ea0cb838ab7e33417c5cea561c3f9d35828b8fd4b9b55\"\n    },\n    {\n      \"path\": \"src/RenderDemo.java\",\n      \"sha256\": \"74038b8603b2a23be94fc952007faab6318911dbe44f39cdb22c2a478729fae6\"\n    }\n  ],\n  \"onlyDifference\": [\n    \"docs/rendering-policy.md\"\n  ],\n  \"technicalFixtureHashesMatch\": true,\n  \"actorRunsExecuted\": 0\n}\n"
+      }
+    },
+    "finalDiffInspection": {
+      "cmd": "git diff -- skills/gof-pattern-antipatterns; git status --short --untracked-files=all -- skills/gof-pattern-antipatterns; git diff --cached -- skills/gof-pattern-antipatterns",
+      "workdir": "C:/git/agent-skills",
+      "result": {
+        "chunk_id": "75bb2a",
+        "wall_time_seconds": 0.1187754,
+        "exit_code": 0,
+        "original_token_count": 1378,
+        "output": "diff --git a/skills/gof-pattern-antipatterns/SKILL.md b/skills/gof-pattern-antipatterns/SKILL.md\nindex 52c57e5..908fba6 100644\n--- a/skills/gof-pattern-antipatterns/SKILL.md\n+++ b/skills/gof-pattern-antipatterns/SKILL.md\n@@ -80,7 +80,7 @@ framework contracts and external consumers. Examples target Java 17 terminology;\n | **Opaque decorator stack**          | Order and observable policy cannot be explained        | Unclear composed semantics                         |\n | **Proxy hiding a network**          | A getter that makes a call                             | Per-item remote calls hidden in an innocent loop   |\n | **Flyweight contention**            | A shared pool on a hot path without measurements       | Lookup/retention may outweigh saved work           |\n-| **Visitor over a growing type set** | Every release breaks every visitor                     | The expression problem, chosen backwards           |\n+| **Visitor over a growing type set** | Every release breaks every visitor                     | Repeated updates; may be required coverage         |\n | **Template Method with 9 hooks**    | A base class nobody can subclass correctly             | Fragile base; unreviewable changes                 |\n | **Strategy class for a lambda**     | One method, no state, no key                           | Five files for five expressions                    |\n | **Prototype with `clone()`**        | `implements Cloneable`                                 | Shallow copies sharing mutable state               |\ndiff --git a/skills/gof-pattern-antipatterns/references/catalogue.md b/skills/gof-pattern-antipatterns/references/catalogue.md\nindex 6553a67..330d2b3 100644\n--- a/skills/gof-pattern-antipatterns/references/catalogue.md\n+++ b/skills/gof-pattern-antipatterns/references/catalogue.md\n@@ -169,16 +169,22 @@ confinement or a validated closed domain may help; short lifetime alone does not\n \n ## Visitor over a growing type set\n \n-**Why.** Visitor was correct when the type set was stable, and the domain changed.\n+**Why.** Visitor was adopted for a stable type set, and new kinds now arrive frequently.\n \n-**Detect.** Every release adds an element type and breaks every visitor.\n+**Detect.** Each new kind requires changes to many operations. Inspect what those changes decide\n+before treating them as boilerplate.\n \n-**Cost.** The expression problem, chosen in the wrong direction: each new type is a change to N\n-operations; a permissive default can accidentally skip a new type. Check whether its fallback is\n-intentional and satisfies the operation's contract.\n+**Cost.** Repeated updates can be avoidable maintenance or required review of new-kind semantics.\n+Adding an abstract visit method makes rebuilt concrete implementations without that implementation\n+fail compilation; a permissive default may absorb missing handling. Compiler coverage does not prove\n+correct results, and rebuilt-source checks do not establish compatibility with old binaries.\n \n-**Fix.** Move behaviour back onto the elements for the operations that are intrinsic; keep the\n-fold only for the operations that genuinely belong outside (`gof-visitor`).\n+**Fix.** Decide per operation whether a new kind requires explicit treatment or may use a documented\n+generic, rejecting or omission policy. Keep deliberate coverage checks when required; do not add a\n+default merely to make the build green. A supported fallback may remove needless repeated edits.\n+Move intrinsic behaviour onto owned elements when that reduces demonstrated cost; retain external\n+operations and established consumer contracts (`gof-visitor`). Check new-kind results and actual\n+dispatch, including inherited/default handling, before accepting a simpler representation.\n \n ## Template Method with nine hooks\n \n@@ -267,3 +273,5 @@ Sources:\n - [CopyOnWriteArrayList snapshot iteration](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/CopyOnWriteArrayList.html) — an existing iterator does not reflect subsequent removal.\n - [JLS 17 lambda body and runtime evaluation](https://docs.oracle.com/javase/specs/jls/se17/html/jls-15.html#jls-15.27.2) — lexical receiver scope and the identity rules in §15.27.4.\n - [Java 17 ServiceLoader provider deployment](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/ServiceLoader.html) — provider classes and classpath configuration.\n+- [JLS 17 abstract classes](https://docs.oracle.com/javase/specs/jls/se17/html/jls-8.html#jls-8.1.1.1) — concrete classes must implement their abstract methods.\n+- [Java 17 ElementVisitor evolution contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.compiler/javax/lang/model/element/ElementVisitor.html) — source incompatibility, default methods and unknown-kind handling are deliberate API choices.\ndiff --git a/skills/gof-pattern-antipatterns/skill.yaml b/skills/gof-pattern-antipatterns/skill.yaml\nindex 7f9ae8f..adc0895 100644\n--- a/skills/gof-pattern-antipatterns/skill.yaml\n+++ b/skills/gof-pattern-antipatterns/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: gof-pattern-antipatterns\n-version: 1.2.4\n+version: 1.2.5\n description: >-\n   Detecting and removing design-pattern misuse: abstractions that trace to no requirement,\n   patterns chosen because a name sounded right, and the specific failure each overused pattern\n M skills/gof-pattern-antipatterns/SKILL.md\n M skills/gof-pattern-antipatterns/references/catalogue.md\n M skills/gof-pattern-antipatterns/skill.yaml\n"
+      }
+    },
+    "finalAuditCommand": {
+      "cmd": "@'\nimport fs from 'node:fs';\nimport path from 'node:path';\nimport { createHash } from 'node:crypto';\nconst skill='skills/gof-pattern-antipatterns';\nconst evidence='C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-pattern-antipatterns-validation';\nconst baseline='C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/baseline/gof-pattern-antipatterns';\nfunction hash(file){return createHash('sha256').update(fs.readFileSync(file)).digest('hex');}\nfunction scan(dir,prefix=''){\n return fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>e.isDirectory()?scan(path.join(dir,e.name),prefix+e.name+'/'):[{path:prefix+e.name,bytes:fs.statSync(path.join(dir,e.name)).size,sha256:hash(path.join(dir,e.name))}]);\n}\nconst current=scan(skill), original=scan(baseline), artifacts=scan(evidence);\nconst changed=current.filter(f=>f.sha256!==original.find(o=>o.path===f.path)?.sha256).map(f=>f.path);\nif(JSON.stringify(changed.sort())!==JSON.stringify(['SKILL.md','references/catalogue.md','skill.yaml'].sort()))throw new Error('Unexpected diff files: '+JSON.stringify(changed));\nconst preserved=current.filter(f=>f.sha256===original.find(o=>o.path===f.path)?.sha256).map(f=>f.path);\nfor(const id of ['case-a','case-b']){\n for(const [dir,variant] of [['src','abstract-new'],['prototype','generic-new']]){\n  if(hash(path.join(evidence,'cases',id,dir,'RenderDemo.java'))!==hash(path.join(evidence,'technical',variant,'RenderDemo.java')))throw new Error('Source fixture mismatch');\n }\n}\nconst manifest=fs.readFileSync(path.join(skill,'skill.yaml'),'utf8');\nconst version=manifest.match(/^version: (.+)$/m)?.[1];\nif(version!=='1.2.5')throw new Error('version '+version);\nconsole.log(JSON.stringify({version,current,original,changed,preserved,artifacts,artifactBytes:artifacts.reduce((s,f)=>s+f.bytes,0),fixtureSourceHashesMatch:true,sources:JSON.parse(fs.readFileSync(path.join(evidence,'sources.json'),'utf8')),technical:JSON.parse(fs.readFileSync(path.join(evidence,'technical-results.json'),'utf8')),caseIntegrity:JSON.parse(fs.readFileSync(path.join(evidence,'case-integrity.json'),'utf8'))},null,2));\n'@ | node --input-type=module",
+      "workdir": "C:/git/agent-skills",
+      "result": {
+        "chunk_id": "742214",
+        "wall_time_seconds": 0.1096425,
+        "exit_code": 0,
+        "original_token_count": 6307,
+        "output": "{\n  \"version\": \"1.2.5\",\n  \"current\": [\n    {\n      \"path\": \"references/catalogue.md\",\n      \"bytes\": 15511,\n      \"sha256\": \"8929bd604f3e84d58b7205d495e4f9810b7d3beec741d86f6e995dda43b34a29\"\n    },\n    {\n      \"path\": \"references/removing-a-pattern.md\",\n      \"bytes\": 7786,\n      \"sha256\": \"a8e6af170335eac7a2dce12485d2b6d942a1306b51a58ea47b16debb687c0d57\"\n    },\n    {\n      \"path\": \"SKILL.md\",\n      \"bytes\": 11319,\n      \"sha256\": \"dd20d71fae64fb155006335cbd53ce6b15a13560937a763940cabf013ce14042\"\n    },\n    {\n      \"path\": \"skill.yaml\",\n      \"bytes\": 2455,\n      \"sha256\": \"82b460dc0d45e3d2f96301f8625f99d5b58415482d71a7a877684505736a67d1\"\n    }\n  ],\n  \"original\": [\n    {\n      \"path\": \"references/catalogue.md\",\n      \"bytes\": 14471,\n      \"sha256\": \"93fe622b3b6fe67ec980058c484840f6cacb56d0b11e7cdc2aadf16f90fdd6a6\"\n    },\n    {\n      \"path\": \"references/removing-a-pattern.md\",\n      \"bytes\": 7786,\n      \"sha256\": \"a8e6af170335eac7a2dce12485d2b6d942a1306b51a58ea47b16debb687c0d57\"\n    },\n    {\n      \"path\": \"SKILL.md\",\n      \"bytes\": 11319,\n      \"sha256\": \"8c225e2d16e4a9499771ffe187917994cd3c8fe616a1240d4137fc15748e2117\"\n    },\n    {\n      \"path\": \"skill.yaml\",\n      \"bytes\": 2455,\n      \"sha256\": \"75a5d05f243f73c2e668b40b6905a9b79e4c35ed0111c14fe98e1a6dacf33d31\"\n    }\n  ],\n  \"changed\": [\n    \"SKILL.md\",\n    \"references/catalogue.md\",\n    \"skill.yaml\"\n  ],\n  \"preserved\": [\n    \"references/removing-a-pattern.md\"\n  ],\n  \"artifacts\": [\n    {\n      \"path\": \"abstract-new-compile.json\",\n      \"bytes\": 788,\n      \"sha256\": \"3649265f1c364ef54692b1b1991ba4c8d7765f85cc65bb67b657d13f4ddfb860\"\n    },\n    {\n      \"path\": \"bad-default-compile.json\",\n      \"bytes\": 428,\n      \"sha256\": \"278e4f46e51648be9c402b98fa47a327a10c3278b6a35d6669124a46322ec041\"\n    },\n    {\n      \"path\": \"bad-default-run.json\",\n      \"bytes\": 561,\n      \"sha256\": \"712c9cd6e4d334f6cee597b942a600a0fc8cb72e99009a2c3a4174fb70f41234\"\n    },\n    {\n      \"path\": \"baseline-compile.json\",\n      \"bytes\": 422,\n      \"sha256\": \"524fd496915ffd8000692226c88d04ae1350fd4c8c3a57578b8568c21422fd71\"\n    },\n    {\n      \"path\": \"baseline-run.json\",\n      \"bytes\": 410,\n      \"sha256\": \"d9aab3b5952f7264384102feeeee52da765f5d704e45e9c20778a8bb246743ed\"\n    },\n    {\n      \"path\": \"case-integrity.json\",\n      \"bytes\": 2281,\n      \"sha256\": \"1fb93f984cb9bbbf6fade96857c0a55e02a1d144c1b2bab45a46050b5d8f6ea2\"\n    },\n    {\n      \"path\": \"cases/case-a/docs/architecture.md\",\n      \"bytes\": 819,\n      \"sha256\": \"898971e9ed4315481db37a7a809b32602935ca3e2e82d14e81d8f7976beecb3f\"\n    },\n    {\n      \"path\": \"cases/case-a/docs/change-history.csv\",\n      \"bytes\": 193,\n      \"sha256\": \"9a91610d29847a5f134fd00694ef155532a6b808670fcb3385a4372b2908eeb6\"\n    },\n    {\n      \"path\": \"cases/case-a/docs/change-note.md\",\n      \"bytes\": 635,\n      \"sha256\": \"909a4a88dd3fe2ea411b66d62fa7c99e4b560e67cd3da67655d145a2fa2e723e\"\n    },\n    {\n      \"path\": \"cases/case-a/docs/rendering-policy.md\",\n      \"bytes\": 301,\n      \"sha256\": \"8bbceb3afa889719f40566b6e0b0c872d2e3efccbd87dc71fa4e0dd76207f2b5\"\n    },\n    {\n      \"path\": \"cases/case-a/prototype/RenderDemo.java\",\n      \"bytes\": 968,\n      \"sha256\": \"7fc509b1f82ced6e135c85016d8fed368f9b511bca440f69eec663773e6b02eb\"\n    },\n    {\n      \"path\": \"cases/case-a/README.md\",\n      \"bytes\": 652,\n      \"sha256\": \"663a9c16690a7ed7e6eca73b955ccb0abcda6c10b4690ed648d7715e28701935\"\n    },\n    {\n      \"path\": \"cases/case-a/request.md\",\n      \"bytes\": 430,\n      \"sha256\": \"e288c625220627d8854ea0cb838ab7e33417c5cea561c3f9d35828b8fd4b9b55\"\n    },\n    {\n      \"path\": \"cases/case-a/src/RenderDemo.java\",\n      \"bytes\": 2024,\n      \"sha256\": \"74038b8603b2a23be94fc952007faab6318911dbe44f39cdb22c2a478729fae6\"\n    },\n    {\n      \"path\": \"cases/case-b/docs/architecture.md\",\n      \"bytes\": 819,\n      \"sha256\": \"898971e9ed4315481db37a7a809b32602935ca3e2e82d14e81d8f7976beecb3f\"\n    },\n    {\n      \"path\": \"cases/case-b/docs/change-history.csv\",\n      \"bytes\": 193,\n      \"sha256\": \"9a91610d29847a5f134fd00694ef155532a6b808670fcb3385a4372b2908eeb6\"\n    },\n    {\n      \"path\": \"cases/case-b/docs/change-note.md\",\n      \"bytes\": 635,\n      \"sha256\": \"909a4a88dd3fe2ea411b66d62fa7c99e4b560e67cd3da67655d145a2fa2e723e\"\n    },\n    {\n      \"path\": \"cases/case-b/docs/rendering-policy.md\",\n      \"bytes\": 299,\n      \"sha256\": \"d80ecd36b81c0d0596cb180c60cf41f2796248ca82c83d51ddec302099a8dcc8\"\n    },\n    {\n      \"path\": \"cases/case-b/prototype/RenderDemo.java\",\n      \"bytes\": 968,\n      \"sha256\": \"7fc509b1f82ced6e135c85016d8fed368f9b511bca440f69eec663773e6b02eb\"\n    },\n    {\n      \"path\": \"cases/case-b/README.md\",\n      \"bytes\": 652,\n      \"sha256\": \"663a9c16690a7ed7e6eca73b955ccb0abcda6c10b4690ed648d7715e28701935\"\n    },\n    {\n      \"path\": \"cases/case-b/request.md\",\n      \"bytes\": 430,\n      \"sha256\": \"e288c625220627d8854ea0cb838ab7e33417c5cea561c3f9d35828b8fd4b9b55\"\n    },\n    {\n      \"path\": \"cases/case-b/src/RenderDemo.java\",\n      \"bytes\": 2024,\n      \"sha256\": \"74038b8603b2a23be94fc952007faab6318911dbe44f39cdb22c2a478729fae6\"\n    },\n    {\n      \"path\": \"default-new-compile.json\",\n      \"bytes\": 428,\n      \"sha256\": \"7f145889ea733115c071c693d05a02dee656ed9733138f5f8cfaa518e5a1b5e5\"\n    },\n    {\n      \"path\": \"default-new-run.json\",\n      \"bytes\": 417,\n      \"sha256\": \"fdf46b52c48bfcfa53b4d0b0c5b3fb473973d4d3c22d1afc8c8819800a97ed96\"\n    },\n    {\n      \"path\": \"evaluator-only.json\",\n      \"bytes\": 5064,\n      \"sha256\": \"a4eec1d8f7a66e557aaa0b649d2f6c7661165d585c79cec586ed999da85449fe\"\n    },\n    {\n      \"path\": \"generic-new-compile.json\",\n      \"bytes\": 428,\n      \"sha256\": \"784d54250ceae25323c184412e3b8c53fab17c9e303e499e6ab1f02c7dc6ef69\"\n    },\n    {\n      \"path\": \"generic-new-run.json\",\n      \"bytes\": 416,\n      \"sha256\": \"87a843dc8a87f6be4a437e4495b0ca4e529c15a698bef6a8a9d7ee66c6fcacb4\"\n    },\n    {\n      \"path\": \"java-version.json\",\n      \"bytes\": 538,\n      \"sha256\": \"b552f9c84dd5d21f77ffb5f59ff2e02a6d74d74a43f8722732d05ede5e2a756e\"\n    },\n    {\n      \"path\": \"javac-version.json\",\n      \"bytes\": 355,\n      \"sha256\": \"753cf6c29c2cad52f5cf803ce346c206f6a3e147b3c5bd9d4a62f13c1043877e\"\n    },\n    {\n      \"path\": \"run-controls.mjs\",\n      \"bytes\": 5955,\n      \"sha256\": \"3181aa65e20fd9a5493fcac63102c2a12da71a78c459dd4b9244f15fa304adf0\"\n    },\n    {\n      \"path\": \"sources/java17-elementvisitor.html\",\n      \"bytes\": 34637,\n      \"sha256\": \"77c1ab2bfd035d4922abbc94a328d688c7fe836bbd7280e97aea2e75465db457\"\n    },\n    {\n      \"path\": \"sources/jls17-abstract-classes.html\",\n      \"bytes\": 581514,\n      \"sha256\": \"5a7941c1fbbc32590962a291cb221b22fdc6b87091bf7a604013434649fdc3bc\"\n    },\n    {\n      \"path\": \"sources/jls17-binary-compatibility.html\",\n      \"bytes\": 169240,\n      \"sha256\": \"8fc034be74b27034d3bf8394bfc186ba68e5cfdf65d4c70f677c18249bb77c55\"\n    },\n    {\n      \"path\": \"sources.json\",\n      \"bytes\": 1901,\n      \"sha256\": \"fc65ee003c58cd1b06ac117d803ab366207b96af1102f8feb48a4c4a8879cf9b\"\n    },\n    {\n      \"path\": \"technical/abstract-new/RenderDemo.java\",\n      \"bytes\": 2024,\n      \"sha256\": \"74038b8603b2a23be94fc952007faab6318911dbe44f39cdb22c2a478729fae6\"\n    },\n    {\n      \"path\": \"technical/bad-default/classes/RenderDemo$Badge.class\",\n      \"bytes\": 1382,\n      \"sha256\": \"9fc7beddd02d398b7497f23ae2eb3f9ba8800a32a96ee41c606167ec7cec66ba\"\n    },\n    {\n      \"path\": \"technical/bad-default/classes/RenderDemo$Heading.class\",\n      \"bytes\": 1394,\n      \"sha256\": \"cbea7a22557b4101d9ee58fa9d3f1c0962ee1ff083a008ffb9c3cb353f632ca5\"\n    },\n    {\n      \"path\": \"technical/bad-default/classes/RenderDemo$Node.class\",\n      \"bytes\": 320,\n      \"sha256\": \"3f263bc289896ed6dbfcdf9291a2f158b5de77102e4333bfbbd2a9d0947bf99a\"\n    },\n    {\n      \"path\": \"technical/bad-default/classes/RenderDemo$Plain.class\",\n      \"bytes\": 764,\n      \"sha256\": \"2585b97f095308aa3f3618704779b45ed8d290ef244ff294d344b2b31fb4804c\"\n    },\n    {\n      \"path\": \"technical/bad-default/classes/RenderDemo$Text.class\",\n      \"bytes\": 1376,\n      \"sha256\": \"e53c1d0aabfe543a0aeb3060efe91b61b5a35d607bc64d9471a889e29e1f01d4\"\n    },\n    {\n      \"path\": \"technical/bad-default/classes/RenderDemo$Upper.class\",\n      \"bytes\": 929,\n      \"sha256\": \"c505e0ec064d9eabe95fce283cb6cb4ae1bcc726e4125af30603143195a6b127\"\n    },\n    {\n      \"path\": \"technical/bad-default/classes/RenderDemo$Visitor.class\",\n      \"bytes\": 632,\n      \"sha256\": \"48da06f2f7432fc44e997443cd2438f2570bf64795833a5909b4003b96e2bd7a\"\n    },\n    {\n      \"path\": \"technical/bad-default/classes/RenderDemo.class\",\n      \"bytes\": 2525,\n      \"sha256\": \"4653c0d85408c422114a56fa6b3613efb32572772dcf4ae862c8a0043be8fc6e\"\n    },\n    {\n      \"path\": \"technical/bad-default/RenderDemo.java\",\n      \"bytes\": 2046,\n      \"sha256\": \"90be067c1b949597a927ccc73c753d3a297c7ae97f67c5bd287b8b172b8863de\"\n    },\n    {\n      \"path\": \"technical/baseline/classes/RenderDemo$Heading.class\",\n      \"bytes\": 1394,\n      \"sha256\": \"cbea7a22557b4101d9ee58fa9d3f1c0962ee1ff083a008ffb9c3cb353f632ca5\"\n    },\n    {\n      \"path\": \"technical/baseline/classes/RenderDemo$Node.class\",\n      \"bytes\": 320,\n      \"sha256\": \"3f263bc289896ed6dbfcdf9291a2f158b5de77102e4333bfbbd2a9d0947bf99a\"\n    },\n    {\n      \"path\": \"technical/baseline/classes/RenderDemo$Plain.class\",\n      \"bytes\": 764,\n      \"sha256\": \"c581ee75b0d20e5737766763e5f811964403407d1aedc4c11495c77f61122d42\"\n    },\n    {\n      \"path\": \"technical/baseline/classes/RenderDemo$Text.class\",\n      \"bytes\": 1376,\n      \"sha256\": \"e53c1d0aabfe543a0aeb3060efe91b61b5a35d607bc64d9471a889e29e1f01d4\"\n    },\n    {\n      \"path\": \"technical/baseline/classes/RenderDemo$Upper.class\",\n      \"bytes\": 929,\n      \"sha256\": \"cd24b5f9297766e2a0889ad829296717f194933aefc1ade582b8962d4a70463e\"\n    },\n    {\n      \"path\": \"technical/baseline/classes/RenderDemo$Visitor.class\",\n      \"bytes\": 473,\n      \"sha256\": \"56ef509a0ce16959c4a2dc2714b6df65db56a398f310cdf902d79e9b1f18dee3\"\n    },\n    {\n      \"path\": \"technical/baseline/classes/RenderDemo.class\",\n      \"bytes\": 2440,\n      \"sha256\": \"7da4b11c2ce07b485e882e795350c7802f4fdd7beca7b146d988865a4d7dd0c7\"\n    },\n    {\n      \"path\": \"technical/baseline/RenderDemo.java\",\n      \"bytes\": 1872,\n      \"sha256\": \"76dd1178c541d4dd1565fae066fb40dd9da832cd016e6e8a85a5c23487415058\"\n    },\n    {\n      \"path\": \"technical/default-new/classes/RenderDemo$Badge.class\",\n      \"bytes\": 1382,\n      \"sha256\": \"9fc7beddd02d398b7497f23ae2eb3f9ba8800a32a96ee41c606167ec7cec66ba\"\n    },\n    {\n      \"path\": \"technical/default-new/classes/RenderDemo$Heading.class\",\n      \"bytes\": 1394,\n      \"sha256\": \"cbea7a22557b4101d9ee58fa9d3f1c0962ee1ff083a008ffb9c3cb353f632ca5\"\n    },\n    {\n      \"path\": \"technical/default-new/classes/RenderDemo$Node.class\",\n      \"bytes\": 320,\n      \"sha256\": \"3f263bc289896ed6dbfcdf9291a2f158b5de77102e4333bfbbd2a9d0947bf99a\"\n    },\n    {\n      \"path\": \"technical/default-new/classes/RenderDemo$Plain.class\",\n      \"bytes\": 764,\n      \"sha256\": \"2585b97f095308aa3f3618704779b45ed8d290ef244ff294d344b2b31fb4804c\"\n    },\n    {\n      \"path\": \"technical/default-new/classes/RenderDemo$Text.class\",\n      \"bytes\": 1376,\n      \"sha256\": \"e53c1d0aabfe543a0aeb3060efe91b61b5a35d607bc64d9471a889e29e1f01d4\"\n    },\n    {\n      \"path\": \"technical/default-new/classes/RenderDemo$Upper.class\",\n      \"bytes\": 929,\n      \"sha256\": \"c505e0ec064d9eabe95fce283cb6cb4ae1bcc726e4125af30603143195a6b127\"\n    },\n    {\n      \"path\": \"technical/default-new/classes/RenderDemo$Visitor.class\",\n      \"bytes\": 641,\n      \"sha256\": \"e2dc9673f4c1947cd4b118d6c87df5d48f84e92039edc34395c2e5490b2dd4ef\"\n    },\n    {\n      \"path\": \"technical/default-new/classes/RenderDemo.class\",\n      \"bytes\": 2525,\n      \"sha256\": \"4653c0d85408c422114a56fa6b3613efb32572772dcf4ae862c8a0043be8fc6e\"\n    },\n    {\n      \"path\": \"technical/default-new/RenderDemo.java\",\n      \"bytes\": 2057,\n      \"sha256\": \"b038fffbb4ac95b44e04b2638ac71ae6a1a60fba2eac11dad0490e8284160357\"\n    },\n    {\n      \"path\": \"technical/generic-new/classes/RenderDemo$Badge.class\",\n      \"bytes\": 1224,\n      \"sha256\": \"2f728bc877dc116923aa3d65538e90aa45871f3a3719662f52bc090182001cda\"\n    },\n    {\n      \"path\": \"technical/generic-new/classes/RenderDemo$Heading.class\",\n      \"bytes\": 1234,\n      \"sha256\": \"05343dea39b861758d1b2dc68cfe2dec5309db2683ab9c531081f227cacc1e18\"\n    },\n    {\n      \"path\": \"technical/generic-new/classes/RenderDemo$Node.class\",\n      \"bytes\": 218,\n      \"sha256\": \"3bc461b665a9c8600da753cdfc2b994bd104fba848be6488e869742a21ff72e0\"\n    },\n    {\n      \"path\": \"technical/generic-new/classes/RenderDemo$Text.class\",\n      \"bytes\": 1219,\n      \"sha256\": \"44f2d5ca92feb115700dc47161d162537159644411b28ac6a40829d8e42de392\"\n    },\n    {\n      \"path\": \"technical/generic-new/classes/RenderDemo.class\",\n      \"bytes\": 2271,\n      \"sha256\": \"5f79d23c542fe4d725dacc900da35bf678c554fd7bc9ffa78058ad0c54c97d07\"\n    },\n    {\n      \"path\": \"technical/generic-new/RenderDemo.java\",\n      \"bytes\": 968,\n      \"sha256\": \"7fc509b1f82ced6e135c85016d8fed368f9b511bca440f69eec663773e6b02eb\"\n    },\n    {\n      \"path\": \"technical-results.json\",\n      \"bytes\": 7165,\n      \"sha256\": \"a3f1c8239e791469f8e2e78cda3aad1ccb34d4c9446f334ec3a99e8824a14fe8\"\n    }\n  ],\n  \"artifactBytes\": 866472,\n  \"fixtureSourceHashesMatch\": true,\n  \"sources\": [\n    {\n      \"id\": \"jls17-abstract-classes\",\n      \"url\": \"https://docs.oracle.com/javase/specs/jls/se17/html/jls-8.html\",\n      \"section\": \"8.1.1.1 abstract Classes\",\n      \"consulted\": \"2026-10-16\",\n      \"status\": 200,\n      \"finalUrl\": \"https://docs.oracle.com/javase/specs/jls/se17/html/jls-8.html\",\n      \"file\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave4-validation-Ceekn9\\\\gof-pattern-antipatterns-validation\\\\sources\\\\jls17-abstract-classes.html\",\n      \"bytes\": 581514,\n      \"sha256\": \"5a7941c1fbbc32590962a291cb221b22fdc6b87091bf7a604013434649fdc3bc\"\n    },\n    {\n      \"id\": \"jls17-binary-compatibility\",\n      \"url\": \"https://docs.oracle.com/javase/specs/jls/se17/html/jls-13.html\",\n      \"section\": \"13.5 interface evolution; rebuilt source and pre-existing binary compatibility are distinct\",\n      \"consulted\": \"2026-10-16\",\n      \"status\": 200,\n      \"finalUrl\": \"https://docs.oracle.com/javase/specs/jls/se17/html/jls-13.html\",\n      \"file\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave4-validation-Ceekn9\\\\gof-pattern-antipatterns-validation\\\\sources\\\\jls17-binary-compatibility.html\",\n      \"bytes\": 169240,\n      \"sha256\": \"8fc034be74b27034d3bf8394bfc186ba68e5cfdf65d4c70f677c18249bb77c55\"\n    },\n    {\n      \"id\": \"java17-elementvisitor\",\n      \"url\": \"https://docs.oracle.com/en/java/javase/17/docs/api/java.compiler/javax/lang/model/element/ElementVisitor.html\",\n      \"section\": \"API Note; default visitModule and visitRecordComponent delegate to visitUnknown\",\n      \"consulted\": \"2026-10-16\",\n      \"status\": 200,\n      \"finalUrl\": \"https://docs.oracle.com/en/java/javase/17/docs/api/java.compiler/javax/lang/model/element/ElementVisitor.html\",\n      \"file\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave4-validation-Ceekn9\\\\gof-pattern-antipatterns-validation\\\\sources\\\\java17-elementvisitor.html\",\n      \"bytes\": 34637,\n      \"sha256\": \"77c1ab2bfd035d4922abbc94a328d688c7fe836bbd7280e97aea2e75465db457\"\n    }\n  ],\n  \"technical\": {\n    \"baseline\": \"Java 17 source/API/classfile via --release 17\",\n    \"executionLimit\": \"Executed on actual toolchain runtime below, not Java 17 JVM\",\n    \"toolchain\": [\n      {\n        \"label\": \"java-version\",\n        \"executable\": \"C:\\\\Users\\\\robso\\\\.jdks\\\\temurin-25.0.3\\\\bin\\\\java.exe\",\n        \"args\": [\n          \"-version\"\n        ],\n        \"cwd\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave4-validation-Ceekn9\\\\gof-pattern-antipatterns-validation\",\n        \"status\": 0,\n        \"signal\": null,\n        \"stdout\": \"\",\n        \"stderr\": \"openjdk version \\\"25.0.3\\\" 2026-04-21 LTS\\r\\nOpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)\\r\\nOpenJDK 64-Bit Server VM Temurin-25.0.3+9 (build 25.0.3+9-LTS, mixed mode, sharing)\\r\\n\",\n        \"error\": null\n      },\n      {\n        \"label\": \"javac-version\",\n        \"executable\": \"C:\\\\Users\\\\robso\\\\.jdks\\\\temurin-25.0.3\\\\bin\\\\javac.exe\",\n        \"args\": [\n          \"-version\"\n        ],\n        \"cwd\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave4-validation-Ceekn9\\\\gof-pattern-antipatterns-validation\",\n        \"status\": 0,\n        \"signal\": null,\n        \"stdout\": \"javac 25.0.3\\r\\n\",\n        \"stderr\": \"\",\n        \"error\": null\n      }\n    ],\n    \"results\": [\n      {\n        \"mode\": \"baseline\",\n        \"outcome\": \"pass\",\n        \"majorVersion\": 61,\n        \"compiled\": {\n          \"label\": \"baseline-compile\",\n          \"executable\": \"C:\\\\Users\\\\robso\\\\.jdks\\\\temurin-25.0.3\\\\bin\\\\javac.exe\",\n          \"args\": [\n            \"--release\",\n            \"17\",\n            \"-d\",\n            \"classes\",\n            \"RenderDemo.java\"\n          ],\n          \"cwd\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave4-validation-Ceekn9\\\\gof-pattern-antipatterns-validation\\\\technical\\\\baseline\",\n          \"status\": 0,\n          \"signal\": null,\n          \"stdout\": \"\",\n          \"stderr\": \"\",\n          \"error\": null\n        },\n        \"executed\": {\n          \"label\": \"baseline-run\",\n          \"executable\": \"C:\\\\Users\\\\robso\\\\.jdks\\\\temurin-25.0.3\\\\bin\\\\java.exe\",\n          \"args\": [\n            \"-cp\",\n            \"classes\",\n            \"RenderDemo\"\n          ],\n          \"cwd\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave4-validation-Ceekn9\\\\gof-pattern-antipatterns-validation\\\\technical\\\\baseline\",\n          \"status\": 0,\n          \"signal\": null,\n          \"stdout\": \"nodes=2 assertions=8\\r\\n\",\n          \"stderr\": \"\",\n          \"error\": null\n        }\n      },\n      {\n        \"mode\": \"abstract-new\",\n        \"outcome\": \"expected compiler rejection\",\n        \"expectedDiagnostic\": true,\n        \"compiled\": {\n          \"label\": \"abstract-new-compile\",\n          \"executable\": \"C:\\\\Users\\\\robso\\\\.jdks\\\\temurin-25.0.3\\\\bin\\\\javac.exe\",\n          \"args\": [\n            \"--release\",\n            \"17\",\n            \"-d\",\n            \"classes\",\n            \"RenderDemo.java\"\n          ],\n          \"cwd\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave4-validation-Ceekn9\\\\gof-pattern-antipatterns-validation\\\\technical\\\\abstract-new\",\n          \"status\": 1,\n          \"signal\": null,\n          \"stdout\": \"\",\n          \"stderr\": \"RenderDemo.java:14: error: Plain is not abstract and does not override abstract method badge(Badge) in Visitor\\r\\n  static class Plain implements Visitor {\\r\\n         ^\\r\\nRenderDemo.java:19: error: Upper is not abstract and does not override abstract method badge(Badge) in Visitor\\r\\n  static class Upper implements Visitor {\\r\\n         ^\\r\\n2 errors\\r\\n\",\n          \"error\": null\n        }\n      },\n      {\n        \"mode\": \"default-new\",\n        \"outcome\": \"pass\",\n        \"majorVersion\": 61,\n        \"compiled\": {\n          \"label\": \"default-new-compile\",\n          \"executable\": \"C:\\\\Users\\\\robso\\\\.jdks\\\\temurin-25.0.3\\\\bin\\\\javac.exe\",\n          \"args\": [\n            \"--release\",\n            \"17\",\n            \"-d\",\n            \"classes\",\n            \"RenderDemo.java\"\n          ],\n          \"cwd\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave4-validation-Ceekn9\\\\gof-pattern-antipatterns-validation\\\\technical\\\\default-new\",\n          \"status\": 0,\n          \"signal\": null,\n          \"stdout\": \"\",\n          \"stderr\": \"\",\n          \"error\": null\n        },\n        \"executed\": {\n          \"label\": \"default-new-run\",\n          \"executable\": \"C:\\\\Users\\\\robso\\\\.jdks\\\\temurin-25.0.3\\\\bin\\\\java.exe\",\n          \"args\": [\n            \"-cp\",\n            \"classes\",\n            \"RenderDemo\"\n          ],\n          \"cwd\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave4-validation-Ceekn9\\\\gof-pattern-antipatterns-validation\\\\technical\\\\default-new\",\n          \"status\": 0,\n          \"signal\": null,\n          \"stdout\": \"nodes=3 assertions=12\\r\\n\",\n          \"stderr\": \"\",\n          \"error\": null\n        }\n      },\n      {\n        \"mode\": \"generic-new\",\n        \"outcome\": \"pass\",\n        \"majorVersion\": 61,\n        \"compiled\": {\n          \"label\": \"generic-new-compile\",\n          \"executable\": \"C:\\\\Users\\\\robso\\\\.jdks\\\\temurin-25.0.3\\\\bin\\\\javac.exe\",\n          \"args\": [\n            \"--release\",\n            \"17\",\n            \"-d\",\n            \"classes\",\n            \"RenderDemo.java\"\n          ],\n          \"cwd\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave4-validation-Ceekn9\\\\gof-pattern-antipatterns-validation\\\\technical\\\\generic-new\",\n          \"status\": 0,\n          \"signal\": null,\n          \"stdout\": \"\",\n          \"stderr\": \"\",\n          \"error\": null\n        },\n        \"executed\": {\n          \"label\": \"generic-new-run\",\n          \"executable\": \"C:\\\\Users\\\\robso\\\\.jdks\\\\temurin-25.0.3\\\\bin\\\\java.exe\",\n          \"args\": [\n            \"-cp\",\n            \"classes\",\n            \"RenderDemo\"\n          ],\n          \"cwd\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave4-validation-Ceekn9\\\\gof-pattern-antipatterns-validation\\\\technical\\\\generic-new\",\n          \"status\": 0,\n          \"signal\": null,\n          \"stdout\": \"nodes=3 assertions=6\\r\\n\",\n          \"stderr\": \"\",\n          \"error\": null\n        }\n      },\n      {\n        \"mode\": \"bad-default\",\n        \"outcome\": \"expected new-kind semantic assertion failure\",\n        \"majorVersion\": 61,\n        \"compiled\": {\n          \"label\": \"bad-default-compile\",\n          \"executable\": \"C:\\\\Users\\\\robso\\\\.jdks\\\\temurin-25.0.3\\\\bin\\\\javac.exe\",\n          \"args\": [\n            \"--release\",\n            \"17\",\n            \"-d\",\n            \"classes\",\n            \"RenderDemo.java\"\n          ],\n          \"cwd\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave4-validation-Ceekn9\\\\gof-pattern-antipatterns-validation\\\\technical\\\\bad-default\",\n          \"status\": 0,\n          \"signal\": null,\n          \"stdout\": \"\",\n          \"stderr\": \"\",\n          \"error\": null\n        },\n        \"executed\": {\n          \"label\": \"bad-default-run\",\n          \"executable\": \"C:\\\\Users\\\\robso\\\\.jdks\\\\temurin-25.0.3\\\\bin\\\\java.exe\",\n          \"args\": [\n            \"-cp\",\n            \"classes\",\n            \"RenderDemo\"\n          ],\n          \"cwd\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave4-validation-Ceekn9\\\\gof-pattern-antipatterns-validation\\\\technical\\\\bad-default\",\n          \"status\": 1,\n          \"signal\": null,\n          \"stdout\": \"\",\n          \"stderr\": \"Exception in thread \\\"main\\\" java.lang.AssertionError: expected=staging actual=\\r\\n\\tat RenderDemo.eq(RenderDemo.java:29)\\r\\n\\tat RenderDemo.main(RenderDemo.java:37)\\r\\n\",\n          \"error\": null\n        }\n      }\n    ],\n    \"checks\": \"5 controlled variants: 3 positive, 1 expected compile rejection, 1 expected semantic assertion failure\",\n    \"allChildProcessesExited\": true\n  },\n  \"caseIntegrity\": {\n    \"caseA\": [\n      {\n        \"path\": \"docs/architecture.md\",\n        \"sha256\": \"898971e9ed4315481db37a7a809b32602935ca3e2e82d14e81d8f7976beecb3f\"\n      },\n      {\n        \"path\": \"docs/change-history.csv\",\n        \"sha256\": \"9a91610d29847a5f134fd00694ef155532a6b808670fcb3385a4372b2908eeb6\"\n      },\n      {\n        \"path\": \"docs/change-note.md\",\n        \"sha256\": \"909a4a88dd3fe2ea411b66d62fa7c99e4b560e67cd3da67655d145a2fa2e723e\"\n      },\n      {\n        \"path\": \"docs/rendering-policy.md\",\n        \"sha256\": \"8bbceb3afa889719f40566b6e0b0c872d2e3efccbd87dc71fa4e0dd76207f2b5\"\n      },\n      {\n        \"path\": \"prototype/RenderDemo.java\",\n        \"sha256\": \"7fc509b1f82ced6e135c85016d8fed368f9b511bca440f69eec663773e6b02eb\"\n      },\n      {\n        \"path\": \"README.md\",\n        \"sha256\": \"663a9c16690a7ed7e6eca73b955ccb0abcda6c10b4690ed648d7715e28701935\"\n      },\n      {\n        \"path\": \"request.md\",\n        \"sha256\": \"e288c625220627d8854ea0cb838ab7e33417c5cea561c3f9d35828b8fd4b9b55\"\n      },\n      {\n        \"path\": \"src/RenderDemo.java\",\n        \"sha256\": \"74038b8603b2a23be94fc952007faab6318911dbe44f39cdb22c2a478729fae6\"\n      }\n    ],\n    \"caseB\": [\n      {\n        \"path\": \"docs/architecture.md\",\n        \"sha256\": \"898971e9ed4315481db37a7a809b32602935ca3e2e82d14e81d8f7976beecb3f\"\n      },\n      {\n        \"path\": \"docs/change-history.csv\",\n        \"sha256\": \"9a91610d29847a5f134fd00694ef155532a6b808670fcb3385a4372b2908eeb6\"\n      },\n      {\n        \"path\": \"docs/change-note.md\",\n        \"sha256\": \"909a4a88dd3fe2ea411b66d62fa7c99e4b560e67cd3da67655d145a2fa2e723e\"\n      },\n      {\n        \"path\": \"docs/rendering-policy.md\",\n        \"sha256\": \"d80ecd36b81c0d0596cb180c60cf41f2796248ca82c83d51ddec302099a8dcc8\"\n      },\n      {\n        \"path\": \"prototype/RenderDemo.java\",\n        \"sha256\": \"7fc509b1f82ced6e135c85016d8fed368f9b511bca440f69eec663773e6b02eb\"\n      },\n      {\n        \"path\": \"README.md\",\n        \"sha256\": \"663a9c16690a7ed7e6eca73b955ccb0abcda6c10b4690ed648d7715e28701935\"\n      },\n      {\n        \"path\": \"request.md\",\n        \"sha256\": \"e288c625220627d8854ea0cb838ab7e33417c5cea561c3f9d35828b8fd4b9b55\"\n      },\n      {\n        \"path\": \"src/RenderDemo.java\",\n        \"sha256\": \"74038b8603b2a23be94fc952007faab6318911dbe44f39cdb22c2a478729fae6\"\n      }\n    ],\n    \"onlyDifference\": [\n      \"docs/rendering-policy.md\"\n    ],\n    \"technicalFixtureHashesMatch\": true,\n    \"actorRunsExecuted\": 0\n  }\n}\n"
+      }
+    }
+  },
+  "behavioralEvaluation": {
+    "actualAgentRuns": [],
+    "actualAgentRunCount": 0,
+    "comparisonWithNoSkill": "not executed",
+    "comparisonWithOriginalSkill": "not executed",
+    "measuredGain": "unavailable",
+    "walkthroughs": [
+      "case-a: current compile failure identifies missing per-operation decisions; generic candidate's output checks do not preserve the accepted build gate.",
+      "case-b: common label semantics allow the generic implementation; maintenance may be avoided without a mandated type-specific gate, subject to actual outcome checks."
+    ],
+    "distinction": "These are structured reviewer walkthroughs and executed technical controls, not independent behavioral evaluations.",
+    "cases": {
+      "status": "PENDING_COORDINATOR_BEHAVIORAL_EVALUATION",
+      "exposure": "Known development cases. Same reviewer designed and technically exercised their mechanisms. Not holdouts. No agent actor has run.",
+      "separation": "Copy only cases/case-a or cases/case-b to an isolated actor workspace. Do not give actor this criteria file, technical-controls folder, handoff, source notes or other case. A directory name alone does not enforce isolation.",
+      "prerequisites": "Read/write docs in an isolated case copy, read all ordinary case files, optionally run provided javac/java commands with toolchain details captured. Explicitly load exactly the assigned skill snapshot for a treatment run; keep model/tools/permissions fixed across conditions. Do not claim automatic selection.",
+      "common": [
+        "Inspects the actual source dispatch, prototype, accepted architecture and rendering policy; does not diagnose misuse from the Visitor name or repeated-edit count alone.",
+        "Distinguishes current pending source, proposal and accepted/deployed state. Updates the unsupported conclusion in docs/change-note.md rather than adding only an unrelated caveat.",
+        "Preserves accepted ownership and Java 17 baseline, stays within findings/document correction scope, and uses concrete source locations or commands as evidence.",
+        "Separates successful example output, compile coverage and semantic correctness; does not infer performance gain or general equivalence from these small checks.",
+        "No need for user clarification about facts already in supplied approved documents. Any genuinely missing evidence is narrowly stated; no invented external consumers."
+      ],
+      "cases": [
+        {
+          "id": "case-a",
+          "inputDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-pattern-antipatterns-validation/cases/case-a",
+          "requestFile": "request.md",
+          "decisiveConstraint": "Build must identify a missing per-operation new-kind decision.",
+          "expected": [
+            "Rejects approval of the prototype as an equivalent replacement in its current form: direct generic handling bypasses the accepted new-kind decision gate.",
+            "Explains that adding Badge exposes missing methods in Plain and Upper; this compilation failure is useful coverage under the accepted requirement, not automatic evidence of a mischosen pattern.",
+            "Keeps the current explicit contract or proposes a smaller documented alternative with an equally checkable build gate. Visitor syntax itself is not mandatory.",
+            "Changes the proposal's claim and recommends obtaining/implementing the explicit Badge decisions or validating equivalent coverage; does not substitute a default just to restore green compilation."
+          ],
+          "failureConditions": [
+            "Approves removal solely because prototype compiles and labels match.",
+            "Silently weakens accepted build coverage to runtime rejection or generic fallback.",
+            "Claims the compiler proves correct outputs or compatibility with untested external binaries."
+          ]
+        },
+        {
+          "id": "case-b",
+          "inputDirectory": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-pattern-antipatterns-validation/cases/case-b",
+          "requestFile": "request.md",
+          "decisiveConstraint": "Stable Node.label contract is authorized to cover every future kind; no separate per-kind decision.",
+          "expected": [
+            "Accepts the direct implementation as a legitimate simpler alternative for the shown complete internal closure, or gives a concrete evidence-based reason for a similarly simple supported fallback rather than mandating Visitor.",
+            "Explains why repeated Plain/Upper methods now duplicate the authorized common label policy; the observed maintenance cost may be avoided without losing a required per-kind gate.",
+            "Corrects the proposal's overbroad 'all Visitor work' and 'passing checks establish equivalence' reasoning while retaining the supported simplification for this module.",
+            "Defines suitable checks of Plain/Upper label results including Badge, actual path and baseline compatibility; acknowledges the exercised sample's limits."
+          ],
+          "failureConditions": [
+            "Retains per-kind handling as universally mandatory despite the approved common policy.",
+            "Claims all Visitor use with growing type sets is defective.",
+            "Upgrades Java or proposes broad architecture/framework work absent a need."
+          ]
+        }
+      ],
+      "pairedDifference": "The actor inputs are byte-identical except docs/rendering-policy.md. The appropriate recommendation changes because one case requires a visible missing-decision build failure while the other permits uniform generic processing. Both require honest sample-test limits and a corrected proposal.",
+      "walkthroughs": "Structured reviewer walkthrough only: technical controls reproduce missing abstract-method diagnostics, correct generic/default outcomes and wrong omission detection. No actor output or comparative gain is claimed."
+    },
+    "caseInputHashAudit": {
+      "caseA": [
+        {
+          "path": "docs/architecture.md",
+          "sha256": "898971e9ed4315481db37a7a809b32602935ca3e2e82d14e81d8f7976beecb3f"
+        },
+        {
+          "path": "docs/change-history.csv",
+          "sha256": "9a91610d29847a5f134fd00694ef155532a6b808670fcb3385a4372b2908eeb6"
+        },
+        {
+          "path": "docs/change-note.md",
+          "sha256": "909a4a88dd3fe2ea411b66d62fa7c99e4b560e67cd3da67655d145a2fa2e723e"
+        },
+        {
+          "path": "docs/rendering-policy.md",
+          "sha256": "8bbceb3afa889719f40566b6e0b0c872d2e3efccbd87dc71fa4e0dd76207f2b5"
+        },
+        {
+          "path": "prototype/RenderDemo.java",
+          "sha256": "7fc509b1f82ced6e135c85016d8fed368f9b511bca440f69eec663773e6b02eb"
+        },
+        {
+          "path": "README.md",
+          "sha256": "663a9c16690a7ed7e6eca73b955ccb0abcda6c10b4690ed648d7715e28701935"
+        },
+        {
+          "path": "request.md",
+          "sha256": "e288c625220627d8854ea0cb838ab7e33417c5cea561c3f9d35828b8fd4b9b55"
+        },
+        {
+          "path": "src/RenderDemo.java",
+          "sha256": "74038b8603b2a23be94fc952007faab6318911dbe44f39cdb22c2a478729fae6"
+        }
+      ],
+      "caseB": [
+        {
+          "path": "docs/architecture.md",
+          "sha256": "898971e9ed4315481db37a7a809b32602935ca3e2e82d14e81d8f7976beecb3f"
+        },
+        {
+          "path": "docs/change-history.csv",
+          "sha256": "9a91610d29847a5f134fd00694ef155532a6b808670fcb3385a4372b2908eeb6"
+        },
+        {
+          "path": "docs/change-note.md",
+          "sha256": "909a4a88dd3fe2ea411b66d62fa7c99e4b560e67cd3da67655d145a2fa2e723e"
+        },
+        {
+          "path": "docs/rendering-policy.md",
+          "sha256": "d80ecd36b81c0d0596cb180c60cf41f2796248ca82c83d51ddec302099a8dcc8"
+        },
+        {
+          "path": "prototype/RenderDemo.java",
+          "sha256": "7fc509b1f82ced6e135c85016d8fed368f9b511bca440f69eec663773e6b02eb"
+        },
+        {
+          "path": "README.md",
+          "sha256": "663a9c16690a7ed7e6eca73b955ccb0abcda6c10b4690ed648d7715e28701935"
+        },
+        {
+          "path": "request.md",
+          "sha256": "e288c625220627d8854ea0cb838ab7e33417c5cea561c3f9d35828b8fd4b9b55"
+        },
+        {
+          "path": "src/RenderDemo.java",
+          "sha256": "74038b8603b2a23be94fc952007faab6318911dbe44f39cdb22c2a478729fae6"
+        }
+      ],
+      "onlyDifference": [
+        "docs/rendering-policy.md"
+      ],
+      "technicalFixtureHashesMatch": true,
+      "actorRunsExecuted": 0
+    },
+    "fixtureSourceHashesActuallyCheckedAgainstTechnicalControls": true
+  },
+  "sources": [
+    {
+      "id": "jls17-abstract-classes",
+      "url": "https://docs.oracle.com/javase/specs/jls/se17/html/jls-8.html",
+      "section": "8.1.1.1 abstract Classes",
+      "consulted": "2026-10-16",
+      "status": 200,
+      "finalUrl": "https://docs.oracle.com/javase/specs/jls/se17/html/jls-8.html",
+      "file": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-antipatterns-validation\\sources\\jls17-abstract-classes.html",
+      "bytes": 581514,
+      "sha256": "5a7941c1fbbc32590962a291cb221b22fdc6b87091bf7a604013434649fdc3bc",
+      "support": "A concrete class lacking the required abstract method implementation is a compile-time error."
+    },
+    {
+      "id": "jls17-binary-compatibility",
+      "url": "https://docs.oracle.com/javase/specs/jls/se17/html/jls-13.html",
+      "section": "13.5 interface evolution; rebuilt source and pre-existing binary compatibility are distinct",
+      "consulted": "2026-10-16",
+      "status": 200,
+      "finalUrl": "https://docs.oracle.com/javase/specs/jls/se17/html/jls-13.html",
+      "file": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-antipatterns-validation\\sources\\jls17-binary-compatibility.html",
+      "bytes": 169240,
+      "sha256": "8fc034be74b27034d3bf8394bfc186ba68e5cfdf65d4c70f677c18249bb77c55",
+      "support": "Source recompilation and binary compatibility are distinct; interface changes have specifically defined compatibility conditions."
+    },
+    {
+      "id": "java17-elementvisitor",
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.compiler/javax/lang/model/element/ElementVisitor.html",
+      "section": "API Note; default visitModule and visitRecordComponent delegate to visitUnknown",
+      "consulted": "2026-10-16",
+      "status": 200,
+      "finalUrl": "https://docs.oracle.com/en/java/javase/17/docs/api/java.compiler/javax/lang/model/element/ElementVisitor.html",
+      "file": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\gof-pattern-antipatterns-validation\\sources\\java17-elementvisitor.html",
+      "bytes": 34637,
+      "sha256": "77c1ab2bfd035d4922abbc94a328d688c7fe836bbd7280e97aea2e75465db457",
+      "support": "Real Java 17 Visitor API treats abstract/default methods and unknown-kind outcomes as deliberate source compatibility/semantic choices."
+    }
+  ],
+  "assumptionsAndLimits": [
+    "The before/after correction is justified by the text and language/API contracts. The package already had strong general guards and may produce the same correct result before and after; no incremental agent gain is assumed.",
+    "The two cases are synthetic, known development examples. They differ only in docs/rendering-policy.md; all other ordinary source/proposal/architecture inputs are byte-identical.",
+    "Keeping evaluator-only material in a separate path is not access control. Coordinator must isolate actor inputs and audit exposure in any future comparison.",
+    "All executed Java processes were synchronous with timeout and captured stdout/stderr/exit status; none remains active.",
+    "Package validation is local and does not prove complete catalog routing, generated index integrity or global test success.",
+    "The unchanged catalogue entries were reviewed, but not every illustrated framework, service or lifecycle was re-executed.",
+    "No runtime output alone establishes that a proposed generic fallback meets a business/release policy; that requirement is separate evidence."
+  ],
+  "evidence": {
+    "root": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-pattern-antipatterns-validation",
+    "files": [
+      {
+        "path": "abstract-new-compile.json",
+        "bytes": 788,
+        "sha256": "3649265f1c364ef54692b1b1991ba4c8d7765f85cc65bb67b657d13f4ddfb860"
+      },
+      {
+        "path": "bad-default-compile.json",
+        "bytes": 428,
+        "sha256": "278e4f46e51648be9c402b98fa47a327a10c3278b6a35d6669124a46322ec041"
+      },
+      {
+        "path": "bad-default-run.json",
+        "bytes": 561,
+        "sha256": "712c9cd6e4d334f6cee597b942a600a0fc8cb72e99009a2c3a4174fb70f41234"
+      },
+      {
+        "path": "baseline-compile.json",
+        "bytes": 422,
+        "sha256": "524fd496915ffd8000692226c88d04ae1350fd4c8c3a57578b8568c21422fd71"
+      },
+      {
+        "path": "baseline-run.json",
+        "bytes": 410,
+        "sha256": "d9aab3b5952f7264384102feeeee52da765f5d704e45e9c20778a8bb246743ed"
+      },
+      {
+        "path": "case-integrity.json",
+        "bytes": 2281,
+        "sha256": "1fb93f984cb9bbbf6fade96857c0a55e02a1d144c1b2bab45a46050b5d8f6ea2"
+      },
+      {
+        "path": "cases/case-a/docs/architecture.md",
+        "bytes": 819,
+        "sha256": "898971e9ed4315481db37a7a809b32602935ca3e2e82d14e81d8f7976beecb3f"
+      },
+      {
+        "path": "cases/case-a/docs/change-history.csv",
+        "bytes": 193,
+        "sha256": "9a91610d29847a5f134fd00694ef155532a6b808670fcb3385a4372b2908eeb6"
+      },
+      {
+        "path": "cases/case-a/docs/change-note.md",
+        "bytes": 635,
+        "sha256": "909a4a88dd3fe2ea411b66d62fa7c99e4b560e67cd3da67655d145a2fa2e723e"
+      },
+      {
+        "path": "cases/case-a/docs/rendering-policy.md",
+        "bytes": 301,
+        "sha256": "8bbceb3afa889719f40566b6e0b0c872d2e3efccbd87dc71fa4e0dd76207f2b5"
+      },
+      {
+        "path": "cases/case-a/prototype/RenderDemo.java",
+        "bytes": 968,
+        "sha256": "7fc509b1f82ced6e135c85016d8fed368f9b511bca440f69eec663773e6b02eb"
+      },
+      {
+        "path": "cases/case-a/README.md",
+        "bytes": 652,
+        "sha256": "663a9c16690a7ed7e6eca73b955ccb0abcda6c10b4690ed648d7715e28701935"
+      },
+      {
+        "path": "cases/case-a/request.md",
+        "bytes": 430,
+        "sha256": "e288c625220627d8854ea0cb838ab7e33417c5cea561c3f9d35828b8fd4b9b55"
+      },
+      {
+        "path": "cases/case-a/src/RenderDemo.java",
+        "bytes": 2024,
+        "sha256": "74038b8603b2a23be94fc952007faab6318911dbe44f39cdb22c2a478729fae6"
+      },
+      {
+        "path": "cases/case-b/docs/architecture.md",
+        "bytes": 819,
+        "sha256": "898971e9ed4315481db37a7a809b32602935ca3e2e82d14e81d8f7976beecb3f"
+      },
+      {
+        "path": "cases/case-b/docs/change-history.csv",
+        "bytes": 193,
+        "sha256": "9a91610d29847a5f134fd00694ef155532a6b808670fcb3385a4372b2908eeb6"
+      },
+      {
+        "path": "cases/case-b/docs/change-note.md",
+        "bytes": 635,
+        "sha256": "909a4a88dd3fe2ea411b66d62fa7c99e4b560e67cd3da67655d145a2fa2e723e"
+      },
+      {
+        "path": "cases/case-b/docs/rendering-policy.md",
+        "bytes": 299,
+        "sha256": "d80ecd36b81c0d0596cb180c60cf41f2796248ca82c83d51ddec302099a8dcc8"
+      },
+      {
+        "path": "cases/case-b/prototype/RenderDemo.java",
+        "bytes": 968,
+        "sha256": "7fc509b1f82ced6e135c85016d8fed368f9b511bca440f69eec663773e6b02eb"
+      },
+      {
+        "path": "cases/case-b/README.md",
+        "bytes": 652,
+        "sha256": "663a9c16690a7ed7e6eca73b955ccb0abcda6c10b4690ed648d7715e28701935"
+      },
+      {
+        "path": "cases/case-b/request.md",
+        "bytes": 430,
+        "sha256": "e288c625220627d8854ea0cb838ab7e33417c5cea561c3f9d35828b8fd4b9b55"
+      },
+      {
+        "path": "cases/case-b/src/RenderDemo.java",
+        "bytes": 2024,
+        "sha256": "74038b8603b2a23be94fc952007faab6318911dbe44f39cdb22c2a478729fae6"
+      },
+      {
+        "path": "default-new-compile.json",
+        "bytes": 428,
+        "sha256": "7f145889ea733115c071c693d05a02dee656ed9733138f5f8cfaa518e5a1b5e5"
+      },
+      {
+        "path": "default-new-run.json",
+        "bytes": 417,
+        "sha256": "fdf46b52c48bfcfa53b4d0b0c5b3fb473973d4d3c22d1afc8c8819800a97ed96"
+      },
+      {
+        "path": "evaluator-only.json",
+        "bytes": 5064,
+        "sha256": "a4eec1d8f7a66e557aaa0b649d2f6c7661165d585c79cec586ed999da85449fe"
+      },
+      {
+        "path": "generic-new-compile.json",
+        "bytes": 428,
+        "sha256": "784d54250ceae25323c184412e3b8c53fab17c9e303e499e6ab1f02c7dc6ef69"
+      },
+      {
+        "path": "generic-new-run.json",
+        "bytes": 416,
+        "sha256": "87a843dc8a87f6be4a437e4495b0ca4e529c15a698bef6a8a9d7ee66c6fcacb4"
+      },
+      {
+        "path": "java-version.json",
+        "bytes": 538,
+        "sha256": "b552f9c84dd5d21f77ffb5f59ff2e02a6d74d74a43f8722732d05ede5e2a756e"
+      },
+      {
+        "path": "javac-version.json",
+        "bytes": 355,
+        "sha256": "753cf6c29c2cad52f5cf803ce346c206f6a3e147b3c5bd9d4a62f13c1043877e"
+      },
+      {
+        "path": "run-controls.mjs",
+        "bytes": 5955,
+        "sha256": "3181aa65e20fd9a5493fcac63102c2a12da71a78c459dd4b9244f15fa304adf0"
+      },
+      {
+        "path": "sources/java17-elementvisitor.html",
+        "bytes": 34637,
+        "sha256": "77c1ab2bfd035d4922abbc94a328d688c7fe836bbd7280e97aea2e75465db457"
+      },
+      {
+        "path": "sources/jls17-abstract-classes.html",
+        "bytes": 581514,
+        "sha256": "5a7941c1fbbc32590962a291cb221b22fdc6b87091bf7a604013434649fdc3bc"
+      },
+      {
+        "path": "sources/jls17-binary-compatibility.html",
+        "bytes": 169240,
+        "sha256": "8fc034be74b27034d3bf8394bfc186ba68e5cfdf65d4c70f677c18249bb77c55"
+      },
+      {
+        "path": "sources.json",
+        "bytes": 1901,
+        "sha256": "fc65ee003c58cd1b06ac117d803ab366207b96af1102f8feb48a4c4a8879cf9b"
+      },
+      {
+        "path": "technical/abstract-new/RenderDemo.java",
+        "bytes": 2024,
+        "sha256": "74038b8603b2a23be94fc952007faab6318911dbe44f39cdb22c2a478729fae6"
+      },
+      {
+        "path": "technical/bad-default/classes/RenderDemo$Badge.class",
+        "bytes": 1382,
+        "sha256": "9fc7beddd02d398b7497f23ae2eb3f9ba8800a32a96ee41c606167ec7cec66ba"
+      },
+      {
+        "path": "technical/bad-default/classes/RenderDemo$Heading.class",
+        "bytes": 1394,
+        "sha256": "cbea7a22557b4101d9ee58fa9d3f1c0962ee1ff083a008ffb9c3cb353f632ca5"
+      },
+      {
+        "path": "technical/bad-default/classes/RenderDemo$Node.class",
+        "bytes": 320,
+        "sha256": "3f263bc289896ed6dbfcdf9291a2f158b5de77102e4333bfbbd2a9d0947bf99a"
+      },
+      {
+        "path": "technical/bad-default/classes/RenderDemo$Plain.class",
+        "bytes": 764,
+        "sha256": "2585b97f095308aa3f3618704779b45ed8d290ef244ff294d344b2b31fb4804c"
+      },
+      {
+        "path": "technical/bad-default/classes/RenderDemo$Text.class",
+        "bytes": 1376,
+        "sha256": "e53c1d0aabfe543a0aeb3060efe91b61b5a35d607bc64d9471a889e29e1f01d4"
+      },
+      {
+        "path": "technical/bad-default/classes/RenderDemo$Upper.class",
+        "bytes": 929,
+        "sha256": "c505e0ec064d9eabe95fce283cb6cb4ae1bcc726e4125af30603143195a6b127"
+      },
+      {
+        "path": "technical/bad-default/classes/RenderDemo$Visitor.class",
+        "bytes": 632,
+        "sha256": "48da06f2f7432fc44e997443cd2438f2570bf64795833a5909b4003b96e2bd7a"
+      },
+      {
+        "path": "technical/bad-default/classes/RenderDemo.class",
+        "bytes": 2525,
+        "sha256": "4653c0d85408c422114a56fa6b3613efb32572772dcf4ae862c8a0043be8fc6e"
+      },
+      {
+        "path": "technical/bad-default/RenderDemo.java",
+        "bytes": 2046,
+        "sha256": "90be067c1b949597a927ccc73c753d3a297c7ae97f67c5bd287b8b172b8863de"
+      },
+      {
+        "path": "technical/baseline/classes/RenderDemo$Heading.class",
+        "bytes": 1394,
+        "sha256": "cbea7a22557b4101d9ee58fa9d3f1c0962ee1ff083a008ffb9c3cb353f632ca5"
+      },
+      {
+        "path": "technical/baseline/classes/RenderDemo$Node.class",
+        "bytes": 320,
+        "sha256": "3f263bc289896ed6dbfcdf9291a2f158b5de77102e4333bfbbd2a9d0947bf99a"
+      },
+      {
+        "path": "technical/baseline/classes/RenderDemo$Plain.class",
+        "bytes": 764,
+        "sha256": "c581ee75b0d20e5737766763e5f811964403407d1aedc4c11495c77f61122d42"
+      },
+      {
+        "path": "technical/baseline/classes/RenderDemo$Text.class",
+        "bytes": 1376,
+        "sha256": "e53c1d0aabfe543a0aeb3060efe91b61b5a35d607bc64d9471a889e29e1f01d4"
+      },
+      {
+        "path": "technical/baseline/classes/RenderDemo$Upper.class",
+        "bytes": 929,
+        "sha256": "cd24b5f9297766e2a0889ad829296717f194933aefc1ade582b8962d4a70463e"
+      },
+      {
+        "path": "technical/baseline/classes/RenderDemo$Visitor.class",
+        "bytes": 473,
+        "sha256": "56ef509a0ce16959c4a2dc2714b6df65db56a398f310cdf902d79e9b1f18dee3"
+      },
+      {
+        "path": "technical/baseline/classes/RenderDemo.class",
+        "bytes": 2440,
+        "sha256": "7da4b11c2ce07b485e882e795350c7802f4fdd7beca7b146d988865a4d7dd0c7"
+      },
+      {
+        "path": "technical/baseline/RenderDemo.java",
+        "bytes": 1872,
+        "sha256": "76dd1178c541d4dd1565fae066fb40dd9da832cd016e6e8a85a5c23487415058"
+      },
+      {
+        "path": "technical/default-new/classes/RenderDemo$Badge.class",
+        "bytes": 1382,
+        "sha256": "9fc7beddd02d398b7497f23ae2eb3f9ba8800a32a96ee41c606167ec7cec66ba"
+      },
+      {
+        "path": "technical/default-new/classes/RenderDemo$Heading.class",
+        "bytes": 1394,
+        "sha256": "cbea7a22557b4101d9ee58fa9d3f1c0962ee1ff083a008ffb9c3cb353f632ca5"
+      },
+      {
+        "path": "technical/default-new/classes/RenderDemo$Node.class",
+        "bytes": 320,
+        "sha256": "3f263bc289896ed6dbfcdf9291a2f158b5de77102e4333bfbbd2a9d0947bf99a"
+      },
+      {
+        "path": "technical/default-new/classes/RenderDemo$Plain.class",
+        "bytes": 764,
+        "sha256": "2585b97f095308aa3f3618704779b45ed8d290ef244ff294d344b2b31fb4804c"
+      },
+      {
+        "path": "technical/default-new/classes/RenderDemo$Text.class",
+        "bytes": 1376,
+        "sha256": "e53c1d0aabfe543a0aeb3060efe91b61b5a35d607bc64d9471a889e29e1f01d4"
+      },
+      {
+        "path": "technical/default-new/classes/RenderDemo$Upper.class",
+        "bytes": 929,
+        "sha256": "c505e0ec064d9eabe95fce283cb6cb4ae1bcc726e4125af30603143195a6b127"
+      },
+      {
+        "path": "technical/default-new/classes/RenderDemo$Visitor.class",
+        "bytes": 641,
+        "sha256": "e2dc9673f4c1947cd4b118d6c87df5d48f84e92039edc34395c2e5490b2dd4ef"
+      },
+      {
+        "path": "technical/default-new/classes/RenderDemo.class",
+        "bytes": 2525,
+        "sha256": "4653c0d85408c422114a56fa6b3613efb32572772dcf4ae862c8a0043be8fc6e"
+      },
+      {
+        "path": "technical/default-new/RenderDemo.java",
+        "bytes": 2057,
+        "sha256": "b038fffbb4ac95b44e04b2638ac71ae6a1a60fba2eac11dad0490e8284160357"
+      },
+      {
+        "path": "technical/generic-new/classes/RenderDemo$Badge.class",
+        "bytes": 1224,
+        "sha256": "2f728bc877dc116923aa3d65538e90aa45871f3a3719662f52bc090182001cda"
+      },
+      {
+        "path": "technical/generic-new/classes/RenderDemo$Heading.class",
+        "bytes": 1234,
+        "sha256": "05343dea39b861758d1b2dc68cfe2dec5309db2683ab9c531081f227cacc1e18"
+      },
+      {
+        "path": "technical/generic-new/classes/RenderDemo$Node.class",
+        "bytes": 218,
+        "sha256": "3bc461b665a9c8600da753cdfc2b994bd104fba848be6488e869742a21ff72e0"
+      },
+      {
+        "path": "technical/generic-new/classes/RenderDemo$Text.class",
+        "bytes": 1219,
+        "sha256": "44f2d5ca92feb115700dc47161d162537159644411b28ac6a40829d8e42de392"
+      },
+      {
+        "path": "technical/generic-new/classes/RenderDemo.class",
+        "bytes": 2271,
+        "sha256": "5f79d23c542fe4d725dacc900da35bf678c554fd7bc9ffa78058ad0c54c97d07"
+      },
+      {
+        "path": "technical/generic-new/RenderDemo.java",
+        "bytes": 968,
+        "sha256": "7fc509b1f82ced6e135c85016d8fed368f9b511bca440f69eec663773e6b02eb"
+      },
+      {
+        "path": "technical-results.json",
+        "bytes": 7165,
+        "sha256": "a3f1c8239e791469f8e2e78cda3aad1ccb34d4c9446f334ec3a99e8824a14fe8"
+      }
+    ],
+    "fileCount": 68,
+    "bytes": 866472,
+    "primarySources": "Raw versioned official documents retained under sources/; no third-party source copied into the skill.",
+    "controls": "run-controls.mjs, technical/*.java and per-process JSON logs plus technical-results.json",
+    "caseInputs": "cases/case-a and cases/case-b only",
+    "evaluatorCriteria": "evaluator-only.json",
+    "finalReadback": "After this handoff is written, final read-only verification parses JSON and rechecks every owned-file and retained-artifact hash before readiness is reported."
+  },
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Parallel-review ownership rule; run only after all reviewers stop writing; regenerates shared index."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Parallel-review ownership rule; run after registry build on stable tree; no repository-wide verification claimed."
+    }
+  ],
+  "crossSkill": {
+    "issues": [],
+    "actionsRequired": [],
+    "boundary": "gof-visitor already owns detailed implementation/dispatch policy. No neighboring edit needed; existing optional referral remains declared."
+  },
+  "coordinatorActions": [
+    "Inspect scoped diff and archive small raw evidence as needed.",
+    "Run global checks after all reviewers stop writing.",
+    "If behavioral gain is to be measured, use fresh isolated actor copies and the separate criteria; keep the original valid criteria even if the comparison is saturated."
+  ],
+  "stopConfirmation": "This JSON is the last planned write. All child processes have exited. Following verification is read-only; reviewer remains read-only until explicitly reassigned."
+}

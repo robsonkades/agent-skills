@@ -1,0 +1,18 @@
+{
+  "id": "regression-before-fix",
+  "executable": "C:\\Program Files\\nodejs\\node.exe",
+  "args": [
+    "check.mjs"
+  ],
+  "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-02\\output\\project",
+  "timeoutMs": 30000,
+  "started": "2026-10-16T16:55:48.122Z",
+  "executed": true,
+  "exit": 1,
+  "signal": null,
+  "error": null,
+  "stdout": "",
+  "stderr": "Exception in thread \"main\" java.lang.AssertionError: opened report changed after reload: Report[entries=[Entry[sku=C, cents=1200]]]\r\n\tat work.SelfTest.main(SelfTest.java:18)\r\n",
+  "expectedExit": 1,
+  "expectationMet": true
+}

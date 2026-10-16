@@ -1,0 +1,32 @@
+import java.util.Objects;
+
+public final class ConsumerContract {
+    private static int failures;
+    private static int checked;
+
+    private static void check(String label, char[][] fragments) {
+        checked++;
+        String expected = TextRenderer.legacy(fragments);
+        try {
+            String actual = TextRenderer.render(fragments);
+            if (!Objects.equals(expected, actual)) {
+                failures++;
+                System.out.println("FAIL " + label + ": changed output");
+            }
+        } catch (RuntimeException error) {
+            failures++;
+            System.out.println("FAIL " + label + ": new " + error.getClass().getSimpleName());
+        }
+    }
+
+    public static void main(String[] args) {
+        check("empty input", new char[0][]);
+        check("nonempty fragment", new char[][] { {'A', 'B'} });
+        check("empty fragment", new char[][] { {} });
+        check("supplementary and combining text", new char[][] { {'\uD83D', '\uDC4D', 'e', '\u0301'} });
+        check("null fragment", new char[][] { null });
+        check("mixed fragments", new char[][] { "not-for-output".toCharArray(), null, {} });
+        if (failures != 0) throw new AssertionError(failures + " of " + checked + " compatibility cases failed");
+        System.out.println("PASS " + checked + " compatibility cases; performance not measured");
+    }
+}

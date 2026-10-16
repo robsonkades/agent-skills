@@ -1,0 +1,4 @@
+STDOUT
+v25.6.1
+
+STDERR

@@ -124,6 +124,47 @@ The recorded structural checks accept D1 → D2, but do not establish semantic c
 the expected default in actual decoding (see `runbook-and-ci.md`); a schema-diff rule or reviewed
 semantic contract can also detect or reject a changed default. No-exception-only tests miss the issue.
 
+## A logical-type change can preserve bytes and change the value
+
+`timestamp-millis` and `timestamp-micros` both annotate `long`, but measure different units since
+the Unix epoch. Logical types use the underlying type's encoding; changing the annotation does not
+rescale stored integers. See the [Avro 1.12 specification](https://avro.apache.org/docs/1.12.0/specification/#logical-types).
+
+Verified with Avro **1.12.2**, `GenericDatumWriter` and
+`GenericDatumReader(writer, reader, data)`: `data` explicitly registers
+`TimeConversions.TimestampMillisConversion` and `TimestampMicrosConversion`. The same record and
+field names are used throughout. Compiled with `--release 17`, run on Temurin 25.0.3+9, with the fast
+reader both enabled and disabled. `SchemaCompatibility` accepts both directions, and
+`SchemaNormalization.parsingFingerprint64` is identical for the two schemas.
+
+| Writer annotation and stored `long` | Reader annotation  | Decoded `Instant`          |
+| ----------------------------------- | ------------------ | -------------------------- |
+| `timestamp-millis`, `1000`          | `timestamp-millis` | `1970-01-01T00:00:01Z`     |
+| `timestamp-millis`, `1000`          | `timestamp-micros` | `1970-01-01T00:00:00.001Z` |
+| `timestamp-micros`, `1000000`       | `timestamp-millis` | `1970-01-01T00:16:40Z`     |
+| `timestamp-micros`, `1000000`       | `timestamp-micros` | `1970-01-01T00:00:01Z`     |
+
+The Java checker accepts equal primitive types; the ordinary and fast reader paths select logical
+conversion from the **reader** schema. This is reinterpretation, not a unit conversion from the
+writer's annotation. The same probe without registered conversions returns a `Long`; trace the
+application's subsequent interpretation rather than assuming every generic read returns `Instant`.
+Sources: [checker](https://github.com/apache/avro/blob/release-1.12.2/lang/java/avro/src/main/java/org/apache/avro/SchemaCompatibility.java),
+[ordinary reader](https://github.com/apache/avro/blob/release-1.12.2/lang/java/avro/src/main/java/org/apache/avro/generic/GenericDatumReader.java),
+[fast reader](https://github.com/apache/avro/blob/release-1.12.2/lang/java/avro/src/main/java/org/apache/avro/io/FastReaderBuilder.java),
+and [time conversions](https://github.com/apache/avro/blob/release-1.12.2/lang/java/avro/src/main/java/org/apache/avro/data/TimeConversions.java).
+
+Keep the existing wire unit when additional precision is unnecessary. If it is required, a decoder
+that selects each full writer schema and converts its declared unit can preserve both histories;
+verify every reachable reader and rollback build before new writers emit the changed unit. The
+writer identity must resolve that full schema: the equal parsing fingerprint cannot distinguish
+these annotations. A separately named replacement field with tested fallback is another migration
+option. Defaults and aliases do not convert the value of this existing field.
+
+Assert nonzero instants in both directions. Zero decodes to the epoch under either annotation and
+would conceal this defect; the recorded negative-value control also changed meaning. Test the
+actual generated classes, conversions and registry policy separately: this Java probe does not
+establish their behavior or require rewriting retained data when an adequate bridge already exists.
+
 ## Parsing canonical form, fingerprints and framing
 
 > "STRIP: Keep only attributes that are relevant to parsing data, which are: type, name, fields,

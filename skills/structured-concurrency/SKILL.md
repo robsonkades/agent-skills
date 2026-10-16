@@ -71,9 +71,10 @@ an existing disciplined executor may already satisfy the task without a new prev
   `ShutdownOnSuccess` and the public constructors, replacing them with
   `StructuredTaskScope.open(...)` and `Joiner`. Code using those older members does not
   compile against 25; it remains valid against its matching earlier preview release.
-- **The names changed again in 26**: `allSuccessfulOrThrow()` now returns a `List` of
-  results instead of a `Stream` of subtasks, and `anySuccessfulResultOrThrow()` is now
-  `anySuccessfulOrThrow()`. Write the version you target; do not write both.
+- **Signatures changed again in 26**: `allSuccessfulOrThrow()` now returns a `List<T>`
+  instead of a `Stream<Subtask<T>>`, `allUntil(...)` returns a `List<Subtask<T>>` instead
+  of a stream, and `anySuccessfulResultOrThrow()` is now `anySuccessfulOrThrow()`.
+  Write the version you target; do not write both.
 - `close()` **always waits** for every forked thread to terminate, cancelled or not. The
   guarantee is "no thread escapes the block", never "close is quick". A scope that fails in
   5 ms and returns in 30 s needs investigation of subtask termination, cleanup and scheduling.
@@ -94,7 +95,9 @@ an existing disciplined executor may already satisfy the task without a new prev
   callback is valid. It never waits and fails without a successful result. Joining with a
   partial-result policy does not make every subtask successful. In JDK 25, a timeout before
   join completes still prevents owner `get()` inside the scope; retain results through a
-  completion callback when partial results must survive that timeout.
+  completion callback when partial results must survive that timeout. In JDK 26–27,
+  built-in `allUntil` returns normally even after a scope timeout; inspect each subtask's
+  `SUCCESS`, `FAILED` or `UNAVAILABLE` state rather than treating normal return as completion.
 - The default `open()` policy fails the scope as soon as any subtask fails, cancelling the
   others; `join()` then throws `FailedException` (JDK 25 and 26) with the subtask's
   exception as its **cause**. Unwrap before matching on a type. In JDK 27 the standard

@@ -1,0 +1,13 @@
+$ErrorActionPreference = 'Stop'
+$evidence = 'C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/gof-bridge-validation-quality18'
+New-Item -ItemType Directory -Force -Path "$evidence/classes", "$evidence/test-data" | Out-Null
+$src = @(Get-ChildItem -LiteralPath "$evidence/common/src" -Filter '*.java' | ForEach-Object { $_.FullName })
+$compilerOutput = @(& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' --release 17 -d "$evidence/classes" @src "$evidence/common/test/SequentialTest.java" "$evidence/technical-probe/BridgeAtomicityProbe.java" 2>&1)
+$compilerExit = $LASTEXITCODE
+[IO.File]::WriteAllText("$evidence/javac.log", ($compilerOutput -join [Environment]::NewLine))
+$compilerOutput | Write-Output
+if ($compilerExit -ne 0) { exit $compilerExit }
+& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' "-Djava.io.tmpdir=$evidence/test-data" -cp "$evidence/classes" SequentialTest 2>&1 | Tee-Object -FilePath "$evidence/sequential-test.log"
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -cp "$evidence/classes" BridgeAtomicityProbe "$evidence" 2>&1 | Tee-Object -FilePath "$evidence/atomicity-probe.log"
+exit $LASTEXITCODE

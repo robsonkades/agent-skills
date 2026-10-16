@@ -1,0 +1,388 @@
+{
+  "skill": "gof-mediator",
+  "node": "v25.6.1",
+  "classification": "Structural checks, deterministic local callbacks and extracted protocol state; no agent evaluation",
+  "processes": [
+    {
+      "label": "java-version",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-version"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\java-version.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\java-version.stderr.log"
+    },
+    {
+      "label": "javac-version",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "-version"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\javac-version.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\javac-version.stderr.log"
+    },
+    {
+      "label": "compile-inline-original",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "--release",
+        "17",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\inline-original",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\cases\\inline-completion\\src\\CaptureCoordinator.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\cases\\inline-completion\\src\\Delivery.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\cases\\inline-completion\\src\\Assembly.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\cases\\inline-completion\\src\\App.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\technical\\CallbackCheck.java"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\compile-inline-original.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\compile-inline-original.stderr.log"
+    },
+    {
+      "label": "callbacks-inline-original",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\inline-original",
+        "CallbackCheck",
+        "inline",
+        "original"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\callbacks-inline-original.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\callbacks-inline-original.stderr.log"
+    },
+    {
+      "label": "compile-inline-corrected",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "--release",
+        "17",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\inline-corrected",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\technical\\fixed\\CaptureCoordinator.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\cases\\inline-completion\\src\\Delivery.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\cases\\inline-completion\\src\\Assembly.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\cases\\inline-completion\\src\\App.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\technical\\CallbackCheck.java"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\compile-inline-corrected.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\compile-inline-corrected.stderr.log"
+    },
+    {
+      "label": "callbacks-inline-corrected",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\inline-corrected",
+        "CallbackCheck",
+        "inline",
+        "corrected"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\callbacks-inline-corrected.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\callbacks-inline-corrected.stderr.log"
+    },
+    {
+      "label": "compile-queued-original",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "--release",
+        "17",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\queued-original",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\cases\\queued-completion\\src\\CaptureCoordinator.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\cases\\queued-completion\\src\\Delivery.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\cases\\queued-completion\\src\\Assembly.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\cases\\queued-completion\\src\\App.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\technical\\CallbackCheck.java"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\compile-queued-original.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\compile-queued-original.stderr.log"
+    },
+    {
+      "label": "callbacks-queued-original",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\queued-original",
+        "CallbackCheck",
+        "queued",
+        "original"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\callbacks-queued-original.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\callbacks-queued-original.stderr.log"
+    },
+    {
+      "label": "compile-queued-corrected",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "--release",
+        "17",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\queued-corrected",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\technical\\fixed\\CaptureCoordinator.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\cases\\queued-completion\\src\\Delivery.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\cases\\queued-completion\\src\\Assembly.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\cases\\queued-completion\\src\\App.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\technical\\CallbackCheck.java"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\compile-queued-corrected.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\compile-queued-corrected.stderr.log"
+    },
+    {
+      "label": "callbacks-queued-corrected",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\queued-corrected",
+        "CallbackCheck",
+        "queued",
+        "corrected"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\callbacks-queued-corrected.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\callbacks-queued-corrected.stderr.log"
+    },
+    {
+      "label": "compile-protocol-state",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+      "args": [
+        "--release",
+        "17",
+        "-d",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\state",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\technical\\FulfilmentState.java",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\technical\\ProtocolStateCheck.java"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\compile-protocol-state.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\compile-protocol-state.stderr.log"
+    },
+    {
+      "label": "protocol-state-and-completion-order",
+      "command": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+      "args": [
+        "-cp",
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\classes\\state",
+        "ProtocolStateCheck"
+      ],
+      "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\protocol-state-and-completion-order.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\protocol-state-and-completion-order.stderr.log"
+    },
+    {
+      "label": "prettier",
+      "command": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "node_modules/prettier/bin/prettier.cjs",
+        "--check",
+        "skills/gof-mediator/SKILL.md",
+        "skills/gof-mediator/skill.yaml",
+        "skills/gof-mediator/references/mediator-vs-alternatives.md",
+        "skills/gof-mediator/references/worked-example.md"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\prettier.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\prettier.stderr.log"
+    },
+    {
+      "label": "diff-check",
+      "command": "git",
+      "args": [
+        "diff",
+        "--check",
+        "--",
+        "skills/gof-mediator"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\diff-check.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\diff-check.stderr.log"
+    },
+    {
+      "label": "final-owned-diff",
+      "command": "git",
+      "args": [
+        "diff",
+        "--",
+        "skills/gof-mediator"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\final-owned-diff.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\final-owned-diff.stderr.log"
+    },
+    {
+      "label": "final-owned-status",
+      "command": "git",
+      "args": [
+        "status",
+        "--short",
+        "--untracked-files=all",
+        "--",
+        "skills/gof-mediator"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\final-owned-status.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\final-owned-status.stderr.log"
+    },
+    {
+      "label": "final-staged-diff",
+      "command": "git",
+      "args": [
+        "diff",
+        "--cached",
+        "--",
+        "skills/gof-mediator"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\final-staged-diff.stdout.log",
+      "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\final-staged-diff.stderr.log"
+    }
+  ],
+  "package": {
+    "version": "1.2.4",
+    "fileCount": 4,
+    "issues": []
+  },
+  "unchangedFiles": [
+    {
+      "path": "skills/gof-mediator/SKILL.md",
+      "bytes": 10778,
+      "sha256": "12cf20a8c6c28bbc98d5a3a56a90ce52441b7616f17e94233602e9e162b78302"
+    },
+    {
+      "path": "skills/gof-mediator/skill.yaml",
+      "bytes": 2002,
+      "sha256": "e0e1a002f5cb024cf4afb4b468a1dcce07b20052012c9a9b8299a704179d940e"
+    },
+    {
+      "path": "skills/gof-mediator/references/mediator-vs-alternatives.md",
+      "bytes": 10028,
+      "sha256": "cf767e9b46ac03897a49478be4fa6ee9e9104a7ee2674cd0a6ac49dc7dce2f08"
+    },
+    {
+      "path": "skills/gof-mediator/references/worked-example.md",
+      "bytes": 11891,
+      "sha256": "1545e505fc5a13c99474d646698bdd85019c530ea87a95b2e3694bd2f1b2f552"
+    }
+  ],
+  "references": {
+    "routed": [
+      "references/mediator-vs-alternatives.md",
+      "references/worked-example.md"
+    ],
+    "localLinks": 2
+  },
+  "cases": {
+    "count": 2,
+    "identicalFiles": [
+      "input.md",
+      "README.md",
+      "protocol.md",
+      "src/CaptureCoordinator.java",
+      "src/Delivery.java",
+      "src/App.java"
+    ],
+    "soleDifference": "Assembly completion delivery selects Inline or Queued",
+    "criteriaSeparate": true
+  },
+  "callbackConditions": [
+    {
+      "mode": "inline",
+      "variant": "original",
+      "assertions": 8,
+      "observation": "OBSERVATION mode=inline variant=original finalPhase=RUNNING views=1"
+    },
+    {
+      "mode": "inline",
+      "variant": "corrected",
+      "assertions": 8,
+      "observation": "OBSERVATION mode=inline variant=corrected finalPhase=DONE views=1"
+    },
+    {
+      "mode": "queued",
+      "variant": "original",
+      "assertions": 8,
+      "observation": "OBSERVATION mode=queued variant=original finalPhase=DONE views=1"
+    },
+    {
+      "mode": "queued",
+      "variant": "corrected",
+      "assertions": 8,
+      "observation": "OBSERVATION mode=queued variant=corrected finalPhase=DONE views=1"
+    }
+  ],
+  "protocolState": {
+    "extractedFrom": "skills/gof-mediator/references/worked-example.md:record FulfilmentState",
+    "path": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-gof-mediator-20261016-7e15022416814894a3b7cfb41ad2f157\\technical\\FulfilmentState.java",
+    "blockSha256": "894f94f63520fc0aa5e6dbba8e919f7f0061e8a7432f1eca543fc7ce47bfdc83",
+    "assertions": 12,
+    "note": "Nine pure state checks plus three real ExecutorCompletionService API checks with a manually ordered executor. No parallel threads."
+  },
+  "javaLimits": {
+    "release": 17,
+    "preview": false,
+    "runtime": "Installed JDK25; see java-version log",
+    "agentRuns": 0,
+    "limits": "No Java17 VM, physical driver, framework, database, broker, transactions, recovery, real concurrent scheduling or performance validation. The full partial coordinator sketch was not compiled."
+  },
+  "allProcessesExited": true
+}

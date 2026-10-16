@@ -1,0 +1,2 @@
+ParameterizedTestFromObject.java:2:73: compiler.err.instanceof.reifiable.not.safe: java.lang.Object, java.util.List<java.lang.String>
+1 error

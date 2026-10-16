@@ -1,0 +1,20 @@
+{
+  "disposition": "violated",
+  "basis": "O contrato permite PENDING enquanto o worker iniciado executa e proíbe DONE:0. Job.collect(), em src/work/Job.java:8, faz join(2) e lê result sem detectar término. O check fornecido manteve o gate fechado e observou DONE:0 com alive=true; a escrita result=83 ainda não ocorreu. Um timeout não estabelece a publicação por término. Depois da efetiva detecção de término do worker correto, as ações do worker happen-before a leitura subsequente, conforme JLS 17.4.4–17.4.5.",
+  "requiredChange": "Manter join(2); imediatamente depois, retornar PENDING se isAlive() for verdadeiro; somente no ramo que detectou término do worker já iniciado ler result e retornar DONE. Preservar a propagação de InterruptedException. Não substituir por join sem limite nem considerar volatile isoladamente suficiente. Proposta não aplicada às fontes.",
+  "missingEvidence": [],
+  "checked": [
+    "Leitura integral do pedido, contrato, README, Job.java, Smoke.java e check.mjs.",
+    "Leitura integral da skill local java-memory-model e referências happens-before.md e review-checklist.md.",
+    "Consulta primária à API Thread de Java SE25 e JLS 17.4.4–17.4.5.",
+    "java -version: Temurin 25.0.3+9-LTS, sem flags de preview nas invocações observadas.",
+    "node check.mjs em output/project: compilação --release 25 e execução de work.Smoke; código 0, saída while-gate-closed=DONE:0, alive=true, after-termination=DONE:83.",
+    "Hashes SHA256 de todos os seis arquivos fornecidos em output/project coincidem com input/project."
+  ],
+  "limits": [
+    "Uma execução controlada demonstra a violação, mas não enumera todos os agendamentos ou substitui a prova JMM.",
+    "O smoke não reprova DONE:0 via assertion; seu código de saída 0 não significa conformidade do contrato.",
+    "Não foram executados stress, jcstress, medição de latência ou implementação/compilação da proposta.",
+    "A proposta depende das premissas aceitas: worker correto já iniciado exatamente uma vez, sem cancelamento; a conclusão por interrupção do worker não está coberta como sucesso."
+  ]
+}

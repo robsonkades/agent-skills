@@ -1,0 +1,25 @@
+{
+  "name": "java-ddd-domain-events",
+  "version": "1.0.0",
+  "files": [
+    "SKILL.md",
+    "references/event-lifecycle.md",
+    "references/verification.md",
+    "skill.yaml"
+  ],
+  "issues": [],
+  "localLinks": [
+    {
+      "file": "SKILL.md",
+      "target": "references/event-lifecycle.md",
+      "resolved": "C:\\git\\agent-skills\\skills\\java-ddd-domain-events\\references\\event-lifecycle.md"
+    },
+    {
+      "file": "SKILL.md",
+      "target": "references/verification.md",
+      "resolved": "C:\\git\\agent-skills\\skills\\java-ddd-domain-events\\references\\verification.md"
+    }
+  ],
+  "brokenLinks": [],
+  "limitations": "Package-local generic validation only; no adapter/global index validation or behavioral agent evaluation."
+}

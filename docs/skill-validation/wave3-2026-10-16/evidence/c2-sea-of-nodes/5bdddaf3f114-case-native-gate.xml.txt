@@ -1,0 +1,101 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<hotspot_log version='160 1' process='21248' time_ms='1792162486188'>
+<vm_version>
+<name>
+OpenJDK 64-Bit Server VM
+</name>
+<release>
+25.0.3+9-LTS
+</release>
+<info>
+OpenJDK 64-Bit Server VM (25.0.3+9-LTS) for windows-amd64 JRE (25.0.3+9-LTS), built on 2026-04-21T00:00:00Z with MS VC++ 17.12 (VS2022)
+</info>
+</vm_version>
+<vm_arguments>
+<args>
+-Xbatch -XX:-TieredCompilation -XX:CompileThreshold=1000 -XX:+UnlockDiagnosticVMOptions -XX:InlineFrequencyRatio=2.0 -XX:MaxInlineSize=8 -XX:InlineSmallCode=128 -XX:+LogCompilation -XX:LogFile=C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/c2-sea-of-nodes/logs/case-native-gate.xml -XX:CompileCommand=exclude,InlineGate::main -XX:CompileCommand=PrintInlining,InlineGate::caller </args>
+<command>
+InlineGate
+</command>
+<launcher>
+SUN_STANDARD
+</launcher>
+<properties>
+java.vm.specification.name=Java Virtual Machine Specification
+java.vm.version=25.0.3+9-LTS
+java.vm.name=OpenJDK 64-Bit Server VM
+jdk.debug=release
+sun.boot.library.path=C:\Users\robso\.jdks\temurin-25.0.3\bin
+java.library.path=C:\Users\robso\.jdks\temurin-25.0.3\bin;C:\WINDOWS\Sun\Java\bin;C:\WINDOWS\system32;C:\WINDOWS;C:\Users\robso\AppData\Local\Microsoft\WindowsApps\Microsoft.PowerShell_8wekyb3d8bbwe;C:\Users\robso\.codex\tmp\arg0-windows\codex-arg0Mq8c5M;C:\Users\robso\.codex\packages\app-server-daemon\releases\0.163.0-x86_64-pc-windows-msvc\codex-path;C:\Users\robso\.codex\tmp\arg0\codex-arg08Ti25m;C:\Users\robso\AppData\Roaming\nvm\v25.6.1\node_modules\@openai\codex\node_modules\@openai\codex-win32-x64\vendor\x86_64-pc-windows-msvc\codex-path;C:\Users\robso\AppData\Local\Microsoft\WindowsApps\Microsoft.PowerShell_8wekyb3d8bbwe;C:\Windows\System32;C:\Windows;C:\Windows\System32\wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Users\robso\AppData\Local\Pub\Cache\bin;C:\Users\robso\AppData\Roaming\nvm;C:\Program Files\nodejs;%GRAALVM_HOME%\bin;C:\Users\robso\.jdks\temurin-25.0.3\bin;C:\Program Files\dotnet\;C:\Program Files\NVIDIA Corporation\NVIDIA app\NvDLISR;C:\Program Files (x86)\GnuPG\bin;C:\Program Files (x86)\Windows Kits\10\Windows Performance Toolkit\;C:\Users\robso\.local\bin\;C:\dev\apache-maven-3.9.15\bin;C:\Program Files\GitHub CLI\;C:\Program Files\Rancher Desktop\resources\resources\win32\bin\;C:\Program Files\Rancher Desktop\resources\resources\win32\docker-cli-plugins\;C:\Program Files\Rancher Desktop\resources\resources\linux\bin\;C:\Program Files\Rancher Desktop\resources\resources\linux\docker-cli-plugins\;C:\Program Files\Git\cmd;C:\Program Files\WSL\;C:\Users\robso\.local\bin;C:\Users\robso\AppData\Local\Microsoft\WindowsApps;C:\Users\robso\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\robso\AppData\Local\Pub\Cache\bin;C:\Users\robso\AppData\Roaming\nvm;C:\Program Files\nodejs;C:\Users\robso\AppData\Local\JetBrains\Toolbox\scripts;C:\Users\robso\AppData\Local\Microsoft\WindowsApps;C:\Users\robso\AppData\Local\Programs\Ollama;C:\Users\robso\.lmstudio\bin;C:\Users\robso\AppData\Local\Microsoft\WinGet\Packages\oschwartz10612.Poppler_Microsoft.Winget.Source_8wekyb3d8bbwe\poppler-25.07.0\Library\bin;;.
+java.home=C:\Users\robso\.jdks\temurin-25.0.3
+java.class.path=C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/c2-sea-of-nodes/classes
+java.vm.info=mixed mode, sharing
+java.vm.specification.vendor=Oracle Corporation
+java.vm.specification.version=25
+java.vm.vendor=Eclipse Adoptium
+sun.java.command=InlineGate
+sun.java.launcher=SUN_STANDARD
+</properties>
+</vm_arguments>
+<tty>
+<writer thread='37908'/>
+CompileCommand: exclude InlineGate.main bool exclude = true
+CompileCommand: PrintInlining InlineGate.caller bool PrintInlining = true
+<blob name='MethodHandlesAdapterBlob' total_size='4224'>
+<sect index='1' capacity='4224' size='378' remaining='3846'/>
+</blob>
+<writer thread='28460'/>
+<thread_logfile thread='28460' filename='C:\Users\robso\AppData\Local\Temp\\hs_c28460_pid21248.log'/>
+<writer thread='37908'/>
+<nmethod compile_id='1' compile_kind='c2n' compiler='' entry='0x000001677858c680' size='952' address='0x000001677858c588' relocation_offset='98593192' insts_offset='248' stub_offset='950' method='jdk.internal.misc.Unsafe getReferenceVolatile (Ljava/lang/Object;J)Ljava/lang/Object;' bytes='0' count='128' iicount='128' stamp='0.017'/>
+<nmethod compile_id='2' compile_kind='cnt' compiler='' entry='0x000001677858e700' size='776' address='0x000001677858e608' relocation_offset='-1706621032' insts_offset='248' stub_offset='744' method='jdk.internal.vm.Continuation enterSpecial (Ljdk/internal/vm/Continuation;ZZ)V' bytes='0' count='0' iicount='0' stamp='0.018'/>
+<nmethod compile_id='3' compile_kind='cnt' compiler='' entry='0x000001677858e100' size='472' address='0x000001677858e008' relocation_offset='-1706621912' insts_offset='248' stub_offset='468' method='jdk.internal.vm.Continuation doYield ()I' bytes='0' count='0' iicount='0' stamp='0.018'/>
+<task_queued compile_id='4' method='InlineGate callee (I)I' bytes='9' count='1408' iicount='1408' blocking='1' stamp='0.019' comment='tiered' hot_count='1408'/>
+<writer thread='28460'/>
+<nmethod compile_id='4' compiler='c2' entry='0x000001677858fe00' size='368' address='0x000001677858fd08' relocation_offset='-1707326824' insts_offset='248' stub_offset='336' scopes_data_offset='-1706577040' scopes_pcs_offset='-1706577072' dependencies_offset='-1706577080' oops_offset='360' metadata_offset='-1707326808' method='InlineGate callee (I)I' bytes='9' count='1408' iicount='1408' stamp='0.020'/>
+<writer thread='37908'/>
+<make_not_compilable thread='37908' osr='0' level='4' reason='excluded by CompileCommand' method='InlineGate main ([Ljava/lang/String;)V' bytes='62' count='1' backedge_count='3072' iicount='1' stamp='0.020'/>
+<task_queued compile_id='5' method='InlineGate caller (I)I' bytes='7' count='1408' iicount='1408' blocking='1' stamp='0.020' comment='tiered' hot_count='1408'/>
+<writer thread='28460'/>
+<nmethod compile_id='5' compiler='c2' entry='0x000001677858fb00' size='400' address='0x000001677858fa08' relocation_offset='-1706662360' insts_offset='248' stub_offset='352' scopes_data_offset='-1204104' scopes_pcs_offset='-1204152' dependencies_offset='-1204184' handler_table_offset='-1204176' oops_offset='392' metadata_offset='-1706662328' method='InlineGate caller (I)I' bytes='7' count='1408' iicount='1408' stamp='0.020'/>
+                            @ 1   InlineGate::callee (9 bytes)   failed to inline: already compiled into a medium method
+<writer thread='26936'/>
+<destroy_vm stamp='0.021'/>
+<tty_done stamp='0.021'/>
+</tty>
+<compilation_log thread='28460'>
+<start_compile_thread name='C2 CompilerThread0' thread='28460' process='21248' stamp='0.017'/>
+<task compile_id='4' method='InlineGate callee (I)I' bytes='9' count='1408' iicount='1408' blocking='1' stamp='0.019'>
+<type id='1210' name='int'/>
+<klass id='1386' name='InlineGate' flags='17'/>
+<method id='1387' holder='1386' name='callee' return='1210' arguments='1210' flags='8' bytes='9' iicount='1408'/>
+<parse method='1387' uses='1408.000000' stamp='0.019'>
+<dependency type='evol_method' x0='1387'/>
+<parse_done nodes='29' live='28' memory='3784' stamp='0.020'/>
+</parse>
+<regalloc attempts='0' success='1'/>
+<dependency type='evol_method' x0='1387'/>
+<code_cache total_blobs='271' nmethods='4' adapters='208' free_code_cache='49717376'/>
+<task_done success='1' nmsize='112' count='1408' stamp='0.020'/>
+</task>
+<task compile_id='5' method='InlineGate caller (I)I' bytes='7' count='1408' iicount='1408' blocking='1' stamp='0.020'>
+<type id='1210' name='int'/>
+<klass id='1386' name='InlineGate' flags='17'/>
+<method id='1387' holder='1386' name='caller' return='1210' arguments='1210' flags='8' bytes='7' iicount='1408'/>
+<parse method='1387' uses='1408.000000' stamp='0.020'>
+<dependency type='evol_method' x0='1387'/>
+<bc code='184' bci='1'/>
+<method id='1389' holder='1386' name='callee' return='1210' arguments='1210' flags='8' bytes='9' compile_id='4' compiler='c2' iicount='1408'/>
+<call method='1389' count='1024' prof_factor='1.000000' inline='1'/>
+<inline_fail reason='already compiled into a medium method'/>
+<direct_call bci='1'/>
+<parse_done nodes='39' live='38' memory='5672' stamp='0.020'/>
+</parse>
+<regalloc attempts='1' success='1'/>
+<dependency type='evol_method' x0='1387'/>
+<code_cache total_blobs='272' nmethods='5' adapters='208' free_code_cache='49716608'/>
+<task_done success='1' nmsize='144' count='1408' stamp='0.020'/>
+</task>
+</compilation_log>
+<hotspot_log_done stamp='0.026'/>
+</hotspot_log>

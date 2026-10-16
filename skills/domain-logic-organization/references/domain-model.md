@@ -243,7 +243,7 @@ an approximate or stale summary cannot enforce a strict invariant merely because
 ## Sources
 
 - [Evans: DDD Reference](https://www.domainlanguage.com/ddd/reference/) — entity identity, value semantics and aggregate/repository boundaries.
-- [Jakarta Persistence 3.2 specification](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2): entity requirements, relationship ownership, optimistic locking and bulk operations.
+- [Jakarta Persistence 3.2 specification](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html): entity requirements, relationship ownership, optimistic locking and bulk operations.
 - [Java 17 Record API](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Record.html): default component equality and explicitly declared methods.
 - [Fowler: Domain Model](https://martinfowler.com/eaaCatalog/domainModel.html): data and behavior in the domain model.
 - [Fowler: Active Record](https://martinfowler.com/eaaCatalog/activeRecord.html): domain behavior and persistence can coexist in one object.

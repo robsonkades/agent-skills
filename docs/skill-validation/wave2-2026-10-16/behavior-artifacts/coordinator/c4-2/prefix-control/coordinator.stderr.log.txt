@@ -1,0 +1,3 @@
+Exception in thread "main" java.lang.AssertionError: candidate.properties key=user:2 primary=n1 expected=n2
+	at CurrentChecks.verifyRouting(CurrentChecks.java:14)
+	at CurrentChecks.main(CurrentChecks.java:35)

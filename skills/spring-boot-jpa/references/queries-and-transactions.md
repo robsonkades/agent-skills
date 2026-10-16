@@ -135,7 +135,7 @@ Choose from the invariant:
   protocol, such as a justified force-increment/lock on the root. Do not impose root-wide
   conflicts on independent children. Test concurrent edits to different children under
   the shared invariant; hand off broader protocol design to offline-concurrency-control.
-  [Jakarta versioned state and lock modes](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2#optimistic-locking).
+  [Jakarta versioned state and lock modes](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html).
 - `@Lock(LockModeType.PESSIMISTIC_WRITE)` requests a persistence lock for the repository
   query. It needs an active transaction that covers the protected decision and update.
   Inspect emitted SQL and lock scope under the real dialect/isolation. JPA lock modes,
@@ -148,7 +148,7 @@ may change fairness or which rows are observed; they are conditional queue seman
 not interchangeable performance hints. A row lock alone does not prove exactly-once
 outbox delivery, worker crash recovery or consumer idempotency.
 [Spring Data locking](https://docs.spring.io/spring-data/jpa/reference/jpa/locking.html),
-[Jakarta EntityManager locking contract](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/entitymanager).
+[Jakarta EntityManager locking contract](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/EntityManager.html).
 
 Retry only failures identified as transient/retryable under the operation's contract.
 Start the next attempt in a fresh transaction, reread required state, bound the entire

@@ -1,0 +1,14 @@
+{
+  "label": "javac-version",
+  "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+  "args": [
+    "-version"
+  ],
+  "cwd": "C:/git/agent-skills",
+  "exitCode": 0,
+  "signal": null,
+  "stdout": "javac 25.0.3\r\n",
+  "stderr": "",
+  "error": null,
+  "expectedExit": 0
+}

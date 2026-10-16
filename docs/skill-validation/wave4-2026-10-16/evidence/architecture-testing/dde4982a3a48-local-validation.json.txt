@@ -1,0 +1,211 @@
+{
+  "baseline": {
+    "name": "architecture-testing",
+    "initialVersion": "1.3.4",
+    "committedVersion": "1.3.4",
+    "status": "",
+    "files": [
+      {
+        "path": "skills/architecture-testing/SKILL.md",
+        "sha256": "2b6cacfe8d8df3f013e85b7eb70bdbc55341ffbba469a96c25b9dc65e4d5401b",
+        "bytes": 9360
+      },
+      {
+        "path": "skills/architecture-testing/references/boundary-and-contract-tests.md",
+        "sha256": "c456aaabc4df73c704caa6393fb83f42b723ab0e28cc0f8170e4320b8965a415",
+        "bytes": 9173
+      },
+      {
+        "path": "skills/architecture-testing/references/persistence-and-concurrency-tests.md",
+        "sha256": "f82df6732f303a4e82539dc803956871e91bee98b5de3c4d07ecbdd28341d896",
+        "bytes": 15307
+      },
+      {
+        "path": "skills/architecture-testing/references/validation-cases.md",
+        "sha256": "d94993b953eb42104e02fdcd01931c8aa52293851a2163de83ec12cf744797bb",
+        "bytes": 11357
+      },
+      {
+        "path": "skills/architecture-testing/skill.yaml",
+        "sha256": "052109cf116e3a70991ac4aac8c54a7ec9b9ed8913d3091826d98cd42457e789",
+        "bytes": 1832
+      }
+    ]
+  },
+  "finalStructuralResult": {
+    "status": "fulfilled",
+    "value": {
+      "chunk_id": "d3a229",
+      "wall_time_seconds": 0.2753554,
+      "exit_code": 0,
+      "original_token_count": 727,
+      "output": "{\n  \"status\": \"PASS\",\n  \"issues\": 0,\n  \"files\": 5,\n  \"markdown\": 4,\n  \"links\": [\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/boundary-and-contract-tests.md\"\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/persistence-and-concurrency-tests.md\"\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/validation-cases.md\"\n    },\n    {\n      \"from\": \"references/boundary-and-contract-tests.md\",\n      \"target\": \"validation-cases.md\"\n    }\n  ],\n  \"version\": \"1.3.5\",\n  \"baseline\": {\n    \"name\": \"architecture-testing\",\n    \"initialVersion\": \"1.3.4\",\n    \"committedVersion\": \"1.3.4\",\n    \"status\": \"\",\n    \"files\": [\n      {\n        \"path\": \"skills/architecture-testing/SKILL.md\",\n        \"sha256\": \"2b6cacfe8d8df3f013e85b7eb70bdbc55341ffbba469a96c25b9dc65e4d5401b\",\n        \"bytes\": 9360\n      },\n      {\n        \"path\": \"skills/architecture-testing/references/boundary-and-contract-tests.md\",\n        \"sha256\": \"c456aaabc4df73c704caa6393fb83f42b723ab0e28cc0f8170e4320b8965a415\",\n        \"bytes\": 9173\n      },\n      {\n        \"path\": \"skills/architecture-testing/references/persistence-and-concurrency-tests.md\",\n        \"sha256\": \"f82df6732f303a4e82539dc803956871e91bee98b5de3c4d07ecbdd28341d896\",\n        \"bytes\": 15307\n      },\n      {\n        \"path\": \"skills/architecture-testing/references/validation-cases.md\",\n        \"sha256\": \"d94993b953eb42104e02fdcd01931c8aa52293851a2163de83ec12cf744797bb\",\n        \"bytes\": 11357\n      },\n      {\n        \"path\": \"skills/architecture-testing/skill.yaml\",\n        \"sha256\": \"052109cf116e3a70991ac4aac8c54a7ec9b9ed8913d3091826d98cd42457e789\",\n        \"bytes\": 1832\n      }\n    ]\n  },\n  \"final\": [\n    {\n      \"path\": \"skills/architecture-testing/SKILL.md\",\n      \"sha256\": \"2b6cacfe8d8df3f013e85b7eb70bdbc55341ffbba469a96c25b9dc65e4d5401b\"\n    },\n    {\n      \"path\": \"skills/architecture-testing/references/boundary-and-contract-tests.md\",\n      \"sha256\": \"fe2135c728cdfcee1c342fddd9dd97a8fc50e9e6c1e9757685e103b377de0735\"\n    },\n    {\n      \"path\": \"skills/architecture-testing/references/persistence-and-concurrency-tests.md\",\n      \"sha256\": \"dcecc3e1c18232c23a50f4fd1c6786603f07223b23e20efbfb88eb63d530114b\"\n    },\n    {\n      \"path\": \"skills/architecture-testing/references/validation-cases.md\",\n      \"sha256\": \"d94993b953eb42104e02fdcd01931c8aa52293851a2163de83ec12cf744797bb\"\n    },\n    {\n      \"path\": \"skills/architecture-testing/skill.yaml\",\n      \"sha256\": \"8c2f1e993e3fe11fab677de5ccb98ee900385206cd6d049ef369ad70ec3d265d\"\n    }\n  ],\n  \"changed\": [\n    \"skills/architecture-testing/references/boundary-and-contract-tests.md\",\n    \"skills/architecture-testing/references/persistence-and-concurrency-tests.md\",\n    \"skills/architecture-testing/skill.yaml\"\n  ],\n  \"pair\": {\n    \"filesPerInput\": 7,\n    \"changedOnly\": \"architecture-decision.md: permitted -> forbidden\"\n  },\n  \"finalJavaMatchesExecuted\": true\n}\n"
+    }
+  },
+  "finalDiffFormattingResult": {
+    "status": "fulfilled",
+    "value": {
+      "chunk_id": "7e4249",
+      "wall_time_seconds": 0.4583053,
+      "exit_code": 0,
+      "original_token_count": 1384,
+      "output": "Checking formatting...\nAll matched files use Prettier code style!\ndiff --git a/skills/architecture-testing/references/boundary-and-contract-tests.md b/skills/architecture-testing/references/boundary-and-contract-tests.md\nindex 4a4f665..66667d8 100644\n--- a/skills/architecture-testing/references/boundary-and-contract-tests.md\n+++ b/skills/architecture-testing/references/boundary-and-contract-tests.md\n@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;\n \n class ArchitectureTest {\n     @Test\n-    void domain_does_not_depend_on_infrastructure() {\n+    void domain_avoids_listed_infrastructure_packages() {\n         var production = new ClassFileImporter()\n                 .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)\n                 .importPackages(\"com.acme\");\n@@ -39,7 +39,7 @@ class ArchitectureTest {\n                 .should().dependOnClassesThat().resideInAnyPackage(\n                         \"..persistence..\", \"org.springframework..\",\n                         \"jakarta.persistence..\", \"jakarta.servlet..\")\n-                .because(\"the domain must not depend on infrastructure\")\n+                .because(\"the example policy excludes these infrastructure packages\")\n                 .check(production);\n     }\n }\n@@ -50,6 +50,14 @@ dependency rule, not compilation, to fail. Restore the dependency and expect a p\n exercise a wrong import root so the explicit selection guard fails. Do not globally disable\n empty-selection protection.\n \n+This is a selective package ban, not proof of independence from all infrastructure. A domain\n+field of type `java.sql.Connection` passes this rule because JDBC is outside the listed patterns.\n+If the accepted policy also forbids JDBC, include `java.sql..` and `javax.sql..` and use that\n+dependency as a compiling negative control. Keep a permitted dependency such as\n+`java.math.BigDecimal` as a positive control so the correction does not ban unrelated JDK use.\n+A narrower agreed policy can remain valid; align the rule's name and reported conclusion with\n+its actual scope instead of expanding the architecture merely to satisfy a broad test name.\n+\n The guard above proves only that some domain classes were imported. For a multi-module\n promise, derive the required modules from the build, include each production output and assert\n that a known production type from each required module is in the imported set. Name strings\n@@ -78,6 +86,7 @@ Source: [ArchUnit guide](https://www.archunit.org/userguide/html/000_Index.html)\n checked 2026-09-19 (1.5.0): classpath-dependent package import, rule execution and\n empty-selection behavior. The module inventory check is a test-design safeguard derived\n from those import limits, not an automatic ArchUnit completeness guarantee.\n+The selective match follows the [ArchUnit 1.5.0 package predicate API](https://javadoc.io/static/com.tngtech.archunit/archunit/1.5.0/com/tngtech/archunit/lang/syntax/elements/ClassesThat.html).\n \n ## Web boundaries\n \ndiff --git a/skills/architecture-testing/references/persistence-and-concurrency-tests.md b/skills/architecture-testing/references/persistence-and-concurrency-tests.md\nindex 8724a06..9db76ef 100644\n--- a/skills/architecture-testing/references/persistence-and-concurrency-tests.md\n+++ b/skills/architecture-testing/references/persistence-and-concurrency-tests.md\n@@ -37,7 +37,7 @@ DataIntegrityViolationException. Do not assert the latter unless translation act\n that operation. Avoid driver-message substring matching; use the owned translation contract\n and, when needed, a vendor-aware SQL-state/constraint adapter.\n \n-Sources: [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2)\n+Sources: [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html)\n for persistence contexts, locking and bulk operations; implementation timing must still be tested.\n \n ## Query budgets without false greens\n@@ -181,7 +181,7 @@ interactions, `offline-concurrency-control`. Pass the invariant, read/write sets\n retry policy and counterexample; request the accepted coordination protocol. Until resolved,\n report the coverage gap rather than silently changing isolation to make a test pass.\n \n-Sources checked 2026-09-25: [Jakarta Persistence 3.2, sections 3.5.1–3.5.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2)\n+Sources checked 2026-09-25: [Jakarta Persistence 3.2, sections 3.5.1–3.5.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html)\n defines entity version checking, not aggregate-wide predicates;\n [PostgreSQL 17 isolation](https://www.postgresql.org/docs/17/transaction-iso.html)\n documents serialization anomalies and whole-transaction retry. The duty-assignment schedule is\ndiff --git a/skills/architecture-testing/skill.yaml b/skills/architecture-testing/skill.yaml\nindex 3e53102..fcf4c82 100644\n--- a/skills/architecture-testing/skill.yaml\n+++ b/skills/architecture-testing/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: architecture-testing\n-version: 1.3.4\n+version: 1.3.5\n description: >-\n   Write or review tests for architectural promises: dependency boundaries, transaction\n   atomicity, persistence mappings, stale-write detection, query budgets and API/event\n M skills/architecture-testing/references/boundary-and-contract-tests.md\n M skills/architecture-testing/references/persistence-and-concurrency-tests.md\n M skills/architecture-testing/skill.yaml\n"
+    }
+  },
+  "baselineTechnicalInvocation": {
+    "status": "fulfilled",
+    "value": {
+      "chunk_id": "bdd482",
+      "wall_time_seconds": 0.0000084,
+      "exit_code": 0,
+      "original_token_count": 119,
+      "output": "{\n  \"fixture\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave4-validation-Ceekn9\\\\architecture-testing-artifacts\\\\boundary-V6PdGh\",\n  \"resultPath\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave4-validation-Ceekn9\\\\architecture-testing-artifacts\\\\boundary-V6PdGh\\\\results.json\",\n  \"commands\": 18,\n  \"junitExecutions\": 6,\n  \"expectedRuleFailures\": 3,\n  \"result\": \"PASS: every compile, discovery count, legitimate pass and intended failure matched expectations\"\n}\n"
+    }
+  },
+  "revisedTechnicalInvocation": {
+    "status": "fulfilled",
+    "value": {
+      "chunk_id": "0b8279",
+      "wall_time_seconds": 0.0000064,
+      "exit_code": 0,
+      "original_token_count": 119,
+      "output": "{\n  \"fixture\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave4-validation-Ceekn9\\\\architecture-testing-artifacts\\\\boundary-Ww1zKC\",\n  \"resultPath\": \"C:\\\\Users\\\\robso\\\\AppData\\\\Local\\\\Temp\\\\skills-wave4-validation-Ceekn9\\\\architecture-testing-artifacts\\\\boundary-Ww1zKC\\\\results.json\",\n  \"commands\": 18,\n  \"junitExecutions\": 6,\n  \"expectedRuleFailures\": 3,\n  \"result\": \"PASS: every compile, discovery count, legitimate pass and intended failure matched expectations\"\n}\n"
+    }
+  },
+  "httpSourceCheck": {
+    "status": "fulfilled",
+    "value": {
+      "chunk_id": "6cf012",
+      "wall_time_seconds": 1.396171,
+      "exit_code": 0,
+      "original_token_count": 154,
+      "output": "[\n  {\n    \"requested\": \"https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2\",\n    \"finalUrl\": \"https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2\",\n    \"status\": 404,\n    \"title\": \"404 Page Not Found | Jakarta EE | The Eclipse Foundation\",\n    \"bytes\": 211891\n  },\n  {\n    \"requested\": \"https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html\",\n    \"finalUrl\": \"https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html\",\n    \"status\": 200,\n    \"title\": \"Jakarta Persistence\",\n    \"bytes\": 2531021\n  }\n]\n"
+    }
+  },
+  "sourceChecks": [
+    {
+      "url": "https://javadoc.io/static/com.tngtech.archunit/archunit/1.5.0/com/tngtech/archunit/lang/syntax/elements/ClassesThat.html",
+      "version": "ArchUnit 1.5.0",
+      "section": "resideInAnyPackage(String...)",
+      "support": "The predicate matches only the supplied package identifiers. Used with real 1.5.0 binary controls to qualify the example's scope.",
+      "kind": "primary API documentation",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://www.archunit.org/userguide/html/000_Index.html",
+      "version": "Current guide resolved to 1.5.1 on consultation",
+      "section": "Importing classes, rule execution, empty-selection behavior",
+      "support": "Import coverage and static bytecode limits remain relevant; not substituted for 1.5.0-specific predicate evidence.",
+      "kind": "primary guide",
+      "limit": "Existing historical guide check in the skill remains historical; review used pinned 1.5.0 Javadoc and binary.",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html",
+      "version": "Java 17",
+      "section": "Connection",
+      "support": "JDBC connection is a database interface in java.sql, a package absent from the existing selective predicate.",
+      "kind": "primary API documentation",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html",
+      "version": "Jakarta Persistence 3.2",
+      "section": "Persistence context, version checking and 4.11 bulk updates",
+      "support": "Bulk updates bypass normal optimistic checks and do not synchronize the persistence context; existing guidance retained. Corrected URL returned HTTP 200 with Jakarta Persistence title.",
+      "kind": "primary specification",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2",
+      "version": "Broken existing target",
+      "section": "HTTP retrieval",
+      "support": "Returned HTTP 404 and title '404 Page Not Found | Jakarta EE | The Eclipse Foundation'; both owned occurrences were corrected.",
+      "kind": "direct HTTP evidence",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://docs.hibernate.org/orm/6.6/javadocs/org/hibernate/stat/Statistics.html",
+      "version": "Hibernate ORM 6.6",
+      "section": "getPrepareStatementCount",
+      "support": "Counts prepared statements acquired, supporting the existing distinction from universal round trips.",
+      "kind": "primary API documentation",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://java.testcontainers.org/test_framework_integration/junit_5/",
+      "version": "Current page examples resolve Testcontainers 2.0.5",
+      "section": "Limitations",
+      "support": "JUnit extension parallel execution is documented unsupported; existing caution retained.",
+      "kind": "primary guide",
+      "limit": "No Testcontainers dependency or runtime used by the technical checks.",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://www.postgresql.org/docs/17/transaction-iso.html",
+      "version": "PostgreSQL 17",
+      "section": "Repeatable Read and Serializable",
+      "support": "Repeatable Read permits serialization anomalies; serializable conflicts and whole-transaction retry remain distinct from JPA version conflicts.",
+      "kind": "primary database documentation",
+      "limit": "No database experiment executed.",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/flyway/flyway/flyway-11.8.2/flyway-core/src/main/java/org/flywaydb/core/Flyway.java",
+      "version": "Flyway 11.8.2 tag",
+      "section": "validate and validateWithResult",
+      "support": "validate returns void and delegates to inspectable validateWithResult; source/API guidance retained.",
+      "kind": "primary implementation source",
+      "limit": "No Flyway/database execution or source vendoring.",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://docs.spring.io/spring-framework/reference/testing/testcontext-framework/tx.html",
+      "version": "Current Spring reference; consumer version not chosen",
+      "section": "Test-managed transactions and preemptive timeouts",
+      "support": "Thread-bound test transaction can mask application boundaries; work on a timeout thread may escape it.",
+      "kind": "primary framework documentation",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/rolling-back.html",
+      "version": "Current Spring reference; consumer version not chosen",
+      "section": "Rollback rules",
+      "support": "Consulted to assess existing conditional guidance; no new rollback claim added.",
+      "kind": "primary framework documentation",
+      "limit": "A literal find for ALL_EXCEPTIONS did not match; the skill already requires actual rules/global defaults, and no source absence was treated as disproof.",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://docs.pact.io/getting_started/how_pact_works",
+      "version": "Page last updated 2024-12-23",
+      "section": "Consumer testing and provider verification",
+      "support": "Consumer code interacts with the mock and provider verification exercises the provider interaction; schema-only checking remains different.",
+      "kind": "primary project documentation",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ExecutorService.html",
+      "version": "Java 21",
+      "section": "close",
+      "support": "close waits for termination, including after interruption; existing cleanup bound warning retained.",
+      "kind": "primary API documentation",
+      "consulted": "2026-10-16"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/ExecutorService.html",
+      "version": "Java 17",
+      "section": "Interface declaration and shutdown",
+      "support": "ExecutorService extends Executor, not AutoCloseable; existing Java 17 compatibility guard retained.",
+      "kind": "primary API documentation",
+      "consulted": "2026-10-16"
+    }
+  ],
+  "recoveries": [
+    "Initial broad baseline serialization/listings produced truncated output. A second targeted JSON read selected only architecture-testing from packages and matched all five initial hashes.",
+    "docs/skill-validation/wave3-2026-10-16/report.md does not exist; the actual README.md was located/read as the wave report.",
+    "junit-platform-console-standalone was absent; no installation attempted. Existing JUnit Platform Launcher/Engine 1.11.4 and Jupiter 5.11.4 were used with exact test-discovery assertions.",
+    "An initial broad cache inventory was truncated; exact paths for the nine required jars were subsequently verified and hashed in each technical result.",
+    "Web opening the malformed Jakarta URL returned an internal-error result; direct HTTP checks established 404 versus 200 for the corrected .html target."
+  ]
+}

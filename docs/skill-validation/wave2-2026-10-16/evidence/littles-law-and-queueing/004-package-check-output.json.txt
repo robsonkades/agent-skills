@@ -1,0 +1,24 @@
+{
+  "runtime": "v25.6.1",
+  "name": "littles-law-and-queueing",
+  "version": "1.5.6",
+  "packageFiles": 4,
+  "issues": [],
+  "localMarkdownLinks": [
+    {
+      "file": "SKILL.md",
+      "target": "references/sizing-worksheet.md"
+    },
+    {
+      "file": "SKILL.md",
+      "target": "references/utilisation-curve.md"
+    }
+  ],
+  "hashes": {
+    "SKILL.md": "5554312A7475D40C65EA494B796DFE6259ED85C0FE56C8DE23024DA715A6E2DE",
+    "skill.yaml": "F18CB5EA0A9482051FC3A8DFC33084977E054A257D44C118EF3D52F22321EC0A",
+    "references/sizing-worksheet.md": "F5C367B7291BBE8B813B03EAB3D436ACD08F7A74B936AC734F43204FCCD480AE",
+    "references/utilisation-curve.md": "D295C1A66EFF7CD9D5744A6C32BBE49D09995C98B7870ED807178EBE4D37F0FE"
+  },
+  "unchangedReferenceVerified": true
+}

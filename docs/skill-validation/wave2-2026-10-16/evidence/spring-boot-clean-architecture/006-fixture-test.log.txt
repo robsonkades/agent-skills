@@ -1,0 +1,39 @@
+runtime=25.0.3+9-LTS
+Spring Boot=4.1.1
+Spring Framework=7.0.9
+SUCCESSFUL trustedActorOwnsTheOrderAndResultIsRepresentationIndependent()
+SUCCESSFUL rejectsInvalidDomainStateWithoutSpring()
+SUCCESSFUL denialAndInvalidTotalDoNotRequestWrites()
+2026-10-16T09:39:16.497-03:00  INFO 30520 --- [           main] FixtureTestLauncher                      : Starting FixtureTestLauncher using Java 25.0.3 with PID 30520 (started by robso in C:\Users\robso\AppData\Local\Temp\agent-skills-wave2-spring-boot-clean-architecture-048a41a3a5e9444b99c07efe3ba6de16)
+2026-10-16T09:39:16.499-03:00  INFO 30520 --- [           main] FixtureTestLauncher                      : No active profile set, falling back to 1 default profile: "default"
+2026-10-16T09:39:16.987-03:00  INFO 30520 --- [           main] FixtureTestLauncher                      : Started FixtureTestLauncher in 0.714 seconds (process running for 1.339)
+2026-10-16T09:39:16.992-03:00  INFO 30520 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-10-16T09:39:17.128-03:00  INFO 30520 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection conn0: url=jdbc:h2:mem:clean-d83d9086-80d6-459e-8b34-0049b56da8a0 user=SA
+2026-10-16T09:39:17.130-03:00  INFO 30520 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+SUCCESSFUL actualEntryCommitsBothWritesAndReturnsInnerResult()
+SUCCESSFUL secondActualWriteFailureRollsBackFirstWithoutOuterTestTransaction()
+SUCCESSFUL missingWrapperActuallyLeavesPartialState()
+SUCCESSFUL forbiddenActorCannotWriteThroughRealBean()
+SUCCESSFUL returnedResultCanStillBeRolledBackByEnclosingCaller()
+2026-10-16T09:39:17.182-03:00  INFO 30520 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2026-10-16T09:39:17.183-03:00  INFO 30520 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2026-10-16T09:39:17.531-03:00  INFO 30520 --- [           main] com.tngtech.archunit.core.PluginLoader   : Detected Java version 25.0.3
+SUCCESSFUL forbiddenFrameworkTypeInProductionSignatureIsDetected()
+SUCCESSFUL emptyApplicationSelectionCannotPass()
+SUCCESSFUL invertedDependencyOnOuterTypeIsDetected()
+SUCCESSFUL productionRegionsArePresentAndRespectDependencies()
+
+Test run finished after 2103 ms
+[         4 containers found      ]
+[         0 containers skipped    ]
+[         4 containers started    ]
+[         0 containers aborted    ]
+[         4 containers successful ]
+[         0 containers failed     ]
+[        12 tests found           ]
+[         0 tests skipped         ]
+[        12 tests started         ]
+[         0 tests aborted         ]
+[        12 tests successful      ]
+[         0 tests failed          ]
+

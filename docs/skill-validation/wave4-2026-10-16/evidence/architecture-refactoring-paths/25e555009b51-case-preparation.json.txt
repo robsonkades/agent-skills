@@ -1,0 +1,11 @@
+{
+  "inputs": [
+    "inputs/case-a.json",
+    "inputs/case-b.json"
+  ],
+  "criteria": "criteria.json",
+  "inputJsonParsed": 2,
+  "decisiveDifferenceVerified": "workload-inventory.json.workloads[2].launchImage only",
+  "agentRuns": 0,
+  "limitation": "Fixture syntax and pair isolation only; not an application or agent test."
+}

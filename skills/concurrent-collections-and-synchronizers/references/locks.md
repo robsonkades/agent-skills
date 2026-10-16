@@ -5,8 +5,8 @@ fragments are method bodies in that same setting.
 
 ## Choose on capability, not on pinning
 
-JEP 491 (JDK 24) made virtual threads acquire, hold and release monitors independently of their
-carriers: "Blocking to acquire a monitor will unmount a virtual thread and release its carrier",
+With default HotSpot locking, JEP 491 (JDK 24) made virtual threads acquire, hold and release
+monitors independently of their carriers: "Blocking to acquire a monitor will unmount a virtual thread and release its carrier",
 and `Object.wait()` and its timed variants do the same. It settles the argument in its own words:
 "Once the `synchronized` keyword no longer pins virtual threads, you can choose between
 `synchronized` and the APIs in the `java.util.concurrent.locks` package **based solely upon which
@@ -15,10 +15,14 @@ best solves the problem at hand.**"
 Two consequences for the _choice_ — the diagnosis of pinning, and what to use now that
 `-Djdk.tracePinnedThreads` is gone, belong to virtual-threads-internals:
 
-- **Migrating `synchronized` to `ReentrantLock` for pinning is no longer necessary** on JDK 24+.
-  JEP 491: "such migration will no longer be necessary. You need not revert code that has been
-  migrated to use `ReentrantLock` back to using `synchronized`." A migration done now buys nothing
-  and costs new `try`/`finally` bugs. Pinning is therefore not an input to this decision at all.
+- **Monitor-related virtual-thread pinning no longer justifies migration** with default HotSpot
+  locking on JDK 24+. Legacy `-XX:LockingMode=1` still permits monitor pinning in HotSpot 24–25;
+  inspect the deployed build and flags before assuming the default behavior. This does not require
+  reversing an existing migration. Native/FFM
+  frames and some VM operations can still pin a virtual thread, and changing the Java lock does
+  not by itself establish a fix for those paths. On an older runtime, inspect the actual blocking
+  path and pinning evidence before deciding. Timed acquisition or another required capability
+  can independently justify a lock change; preserve correct cleanup when making it.
 - **"`ReentrantLock` is faster than `synchronized`" is not a portable decision rule.** Lock paths,
   JIT optimizations and contention behavior change across JDKs; biased locking was disabled by
   default in JDK 15 and removed later. Choose on semantics, then measure the deployed workload.
@@ -88,7 +92,8 @@ Which acquisition form:
 
 - `tryLock()` — non-blocking, **ignores fairness** (barges). Correct for lock-ordering deadlock
   avoidance and for "skip the work if someone else is already doing it" idempotence guards. It is
-  the one form whose release is conditional, so it needs its own shape:
+  one of the boolean-returning forms: both untimed and timed `tryLock` need cleanup only after
+  returning `true`. A `false` result or an interrupted acquisition creates no new hold to release:
 
   ```java
   import java.util.concurrent.ThreadLocalRandom;
@@ -330,3 +335,7 @@ deadlock detection.
 - [Java 25 `ThreadMXBean`](https://docs.oracle.com/en/java/javase/25/docs/api/java.management/java/lang/management/ThreadMXBean.html)
 - [Java 25 `AbstractQueuedSynchronizer`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/locks/AbstractQueuedSynchronizer.html)
 - [JEP 491: Synchronize Virtual Threads without Pinning](https://openjdk.org/jeps/491)
+- HotSpot locking modes and held-monitor pinning: [JDK 25 defaults](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/globals.hpp)
+  and [continuation freezing](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/continuationFreezeThaw.cpp);
+  the same legacy-mode exception is present in [JDK 24 defaults](https://github.com/openjdk/jdk/blob/jdk-24-ga/src/hotspot/share/runtime/globals.hpp)
+  and [continuation freezing](https://github.com/openjdk/jdk/blob/jdk-24-ga/src/hotspot/share/runtime/continuationFreezeThaw.cpp).

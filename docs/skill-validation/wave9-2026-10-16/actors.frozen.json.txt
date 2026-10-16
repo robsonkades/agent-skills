@@ -1,0 +1,1986 @@
+[
+  {
+    "id": "A01",
+    "caseId": "R1",
+    "repetition": 1,
+    "condition": "dependencies",
+    "run": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A01",
+    "task": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A01/TASK.md",
+    "inputFiles": [
+      {
+        "path": "TASK.md",
+        "sha256": "6e993b0a1627cc9911ae1a63658bf782c9a0f6270e9e6a56ec0726217e9209e6"
+      },
+      {
+        "path": "input/project/Contract.java",
+        "sha256": "acef7e155f89b61cae2bc9f780a011a826b2dd9a02aed893bfe0f0c0620cbefb"
+      },
+      {
+        "path": "input/project/Ports.java",
+        "sha256": "21d10c20819d3ddb796ff1081d53efc63664e1a1c768de1d1c627a3dcd36ae6a"
+      },
+      {
+        "path": "input/project/README.md",
+        "sha256": "0a082fc19eafaaa6457ed4a4e130b1f2bf3d3383c5cf38b7b6d8b58f18dd69db"
+      },
+      {
+        "path": "input/project/REQUEST.md",
+        "sha256": "e4e2cfed9376cfc24406348415cdaa28f75a0d731e7a9eacba0902216592774d"
+      },
+      {
+        "path": "input/project/RetryEngine.java",
+        "sha256": "95112d157ed07d87e94478edc48b94f6b11e2695c1209b7ef5f6fcaec80bfe35"
+      },
+      {
+        "path": "input/project/Smoke.java",
+        "sha256": "3e242bbcbe7b25a644aaf6d14d2c6c885ad217ed06686782bead18572c983425"
+      },
+      {
+        "path": "input/project/contract.md",
+        "sha256": "5d38ae3410aed98f10dd2f358c4737db753a6d06a49f40f055efb7a045787fe7"
+      },
+      {
+        "path": "input/project/run.mjs",
+        "sha256": "bb2c9544993bb4128564af264cc0f5719ce2d237f3a5e710027c062fecf1007c"
+      },
+      {
+        "path": "input/skills/idempotency/SKILL.md",
+        "sha256": "60201c4851368bb97820efbe1ffc7a2cb3acdc5c4338693be3697e0a6842eb08"
+      },
+      {
+        "path": "input/skills/idempotency/references/idempotency-key-filter.md",
+        "sha256": "a28e7743b5ed3083a0be7b7b1ac391aee9703d2502c564bb91fa03661b998a03"
+      },
+      {
+        "path": "input/skills/idempotency/references/key-selection.md",
+        "sha256": "1759159ef38e13a2566f2634cc2c9cfe7772238589445509008f5f06c2c98f0c"
+      },
+      {
+        "path": "input/skills/idempotency/skill.yaml",
+        "sha256": "c214d57330bcf1b03de02f27738160d0852c9612222ea4202c3ac99b44e954b3"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/SKILL.md",
+        "sha256": "ee9a435a6004ac96d1c991a0110ef6205aebaa2c6fc4f68b4d33ce660f2dc29f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/deadline-propagation.md",
+        "sha256": "a2cb2fbd6733e2ec1649cedae206c82ec83ad83a3ef3e5cb8f200272ff3b312f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/java-timeout-surface.md",
+        "sha256": "ce67e676b63eee0fe821e5e5407ed48b12194ca04cacbc0de8a501948789106a"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/skill.yaml",
+        "sha256": "ec2c2602056b0fcf0076d65ebefba6d4da86d47020d6ffabd08ad483f8e6e0fb"
+      }
+    ]
+  },
+  {
+    "id": "A02",
+    "caseId": "R1",
+    "repetition": 1,
+    "condition": "reference",
+    "run": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A02",
+    "task": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A02/TASK.md",
+    "inputFiles": [
+      {
+        "path": "TASK.md",
+        "sha256": "ca14337730529858e0bdc8f1e6c6a33ecb1a0af73576557f2fe2a9418f8224d0"
+      },
+      {
+        "path": "input/project/Contract.java",
+        "sha256": "acef7e155f89b61cae2bc9f780a011a826b2dd9a02aed893bfe0f0c0620cbefb"
+      },
+      {
+        "path": "input/project/Ports.java",
+        "sha256": "21d10c20819d3ddb796ff1081d53efc63664e1a1c768de1d1c627a3dcd36ae6a"
+      },
+      {
+        "path": "input/project/README.md",
+        "sha256": "0a082fc19eafaaa6457ed4a4e130b1f2bf3d3383c5cf38b7b6d8b58f18dd69db"
+      },
+      {
+        "path": "input/project/REQUEST.md",
+        "sha256": "e4e2cfed9376cfc24406348415cdaa28f75a0d731e7a9eacba0902216592774d"
+      },
+      {
+        "path": "input/project/RetryEngine.java",
+        "sha256": "95112d157ed07d87e94478edc48b94f6b11e2695c1209b7ef5f6fcaec80bfe35"
+      },
+      {
+        "path": "input/project/Smoke.java",
+        "sha256": "3e242bbcbe7b25a644aaf6d14d2c6c885ad217ed06686782bead18572c983425"
+      },
+      {
+        "path": "input/project/contract.md",
+        "sha256": "5d38ae3410aed98f10dd2f358c4737db753a6d06a49f40f055efb7a045787fe7"
+      },
+      {
+        "path": "input/project/run.mjs",
+        "sha256": "bb2c9544993bb4128564af264cc0f5719ce2d237f3a5e710027c062fecf1007c"
+      },
+      {
+        "path": "input/skills/idempotency/SKILL.md",
+        "sha256": "60201c4851368bb97820efbe1ffc7a2cb3acdc5c4338693be3697e0a6842eb08"
+      },
+      {
+        "path": "input/skills/idempotency/references/idempotency-key-filter.md",
+        "sha256": "a28e7743b5ed3083a0be7b7b1ac391aee9703d2502c564bb91fa03661b998a03"
+      },
+      {
+        "path": "input/skills/idempotency/references/key-selection.md",
+        "sha256": "1759159ef38e13a2566f2634cc2c9cfe7772238589445509008f5f06c2c98f0c"
+      },
+      {
+        "path": "input/skills/idempotency/skill.yaml",
+        "sha256": "c214d57330bcf1b03de02f27738160d0852c9612222ea4202c3ac99b44e954b3"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/SKILL.md",
+        "sha256": "214c6fc717590bbb425b624f0b3ea31de843ab4b8251a5b1e23897bd2235eb42"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/references/retry-failure-modes.md",
+        "sha256": "1f8cb4addb8592f4c8cb2767a4afd6362fd0f9c19f640ac1831cc233fe943e24"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/references/retry-in-java.md",
+        "sha256": "dbf3fb4bdef23956b4382b011f7dfaf861dd4daa3675871153a15dff947830f8"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/skill.yaml",
+        "sha256": "01e351a22ac96a47537af74f2ba0c6a2912eff069bdf97e10c743f23295ae468"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/SKILL.md",
+        "sha256": "ee9a435a6004ac96d1c991a0110ef6205aebaa2c6fc4f68b4d33ce660f2dc29f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/deadline-propagation.md",
+        "sha256": "a2cb2fbd6733e2ec1649cedae206c82ec83ad83a3ef3e5cb8f200272ff3b312f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/java-timeout-surface.md",
+        "sha256": "ce67e676b63eee0fe821e5e5407ed48b12194ca04cacbc0de8a501948789106a"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/skill.yaml",
+        "sha256": "ec2c2602056b0fcf0076d65ebefba6d4da86d47020d6ffabd08ad483f8e6e0fb"
+      }
+    ]
+  },
+  {
+    "id": "A03",
+    "caseId": "R1",
+    "repetition": 1,
+    "condition": "candidate",
+    "run": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A03",
+    "task": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A03/TASK.md",
+    "inputFiles": [
+      {
+        "path": "TASK.md",
+        "sha256": "8b22982f9102a16b0e79318c312f9cea086fc9f04d9129599e037142dff87ee2"
+      },
+      {
+        "path": "input/project/Contract.java",
+        "sha256": "acef7e155f89b61cae2bc9f780a011a826b2dd9a02aed893bfe0f0c0620cbefb"
+      },
+      {
+        "path": "input/project/Ports.java",
+        "sha256": "21d10c20819d3ddb796ff1081d53efc63664e1a1c768de1d1c627a3dcd36ae6a"
+      },
+      {
+        "path": "input/project/README.md",
+        "sha256": "0a082fc19eafaaa6457ed4a4e130b1f2bf3d3383c5cf38b7b6d8b58f18dd69db"
+      },
+      {
+        "path": "input/project/REQUEST.md",
+        "sha256": "e4e2cfed9376cfc24406348415cdaa28f75a0d731e7a9eacba0902216592774d"
+      },
+      {
+        "path": "input/project/RetryEngine.java",
+        "sha256": "95112d157ed07d87e94478edc48b94f6b11e2695c1209b7ef5f6fcaec80bfe35"
+      },
+      {
+        "path": "input/project/Smoke.java",
+        "sha256": "3e242bbcbe7b25a644aaf6d14d2c6c885ad217ed06686782bead18572c983425"
+      },
+      {
+        "path": "input/project/contract.md",
+        "sha256": "5d38ae3410aed98f10dd2f358c4737db753a6d06a49f40f055efb7a045787fe7"
+      },
+      {
+        "path": "input/project/run.mjs",
+        "sha256": "bb2c9544993bb4128564af264cc0f5719ce2d237f3a5e710027c062fecf1007c"
+      },
+      {
+        "path": "input/skills/idempotency/SKILL.md",
+        "sha256": "60201c4851368bb97820efbe1ffc7a2cb3acdc5c4338693be3697e0a6842eb08"
+      },
+      {
+        "path": "input/skills/idempotency/references/idempotency-key-filter.md",
+        "sha256": "a28e7743b5ed3083a0be7b7b1ac391aee9703d2502c564bb91fa03661b998a03"
+      },
+      {
+        "path": "input/skills/idempotency/references/key-selection.md",
+        "sha256": "1759159ef38e13a2566f2634cc2c9cfe7772238589445509008f5f06c2c98f0c"
+      },
+      {
+        "path": "input/skills/idempotency/skill.yaml",
+        "sha256": "c214d57330bcf1b03de02f27738160d0852c9612222ea4202c3ac99b44e954b3"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/SKILL.md",
+        "sha256": "214c6fc717590bbb425b624f0b3ea31de843ab4b8251a5b1e23897bd2235eb42"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/references/retry-failure-modes.md",
+        "sha256": "957550428a69ae025518aad78363732d6afa6fd349fd2c1f79f58a692eaaa711"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/references/retry-in-java.md",
+        "sha256": "d4b069771ec515ab6ae729759c3e443979aeac287db91413a7f113515a923b71"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/skill.yaml",
+        "sha256": "51c1d38c801f9286740ddcf2ee6a9c680b8cbbf2679f8e877a28c4c80e428049"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/SKILL.md",
+        "sha256": "ee9a435a6004ac96d1c991a0110ef6205aebaa2c6fc4f68b4d33ce660f2dc29f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/deadline-propagation.md",
+        "sha256": "a2cb2fbd6733e2ec1649cedae206c82ec83ad83a3ef3e5cb8f200272ff3b312f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/java-timeout-surface.md",
+        "sha256": "ce67e676b63eee0fe821e5e5407ed48b12194ca04cacbc0de8a501948789106a"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/skill.yaml",
+        "sha256": "ec2c2602056b0fcf0076d65ebefba6d4da86d47020d6ffabd08ad483f8e6e0fb"
+      }
+    ]
+  },
+  {
+    "id": "A04",
+    "caseId": "R2",
+    "repetition": 1,
+    "condition": "reference",
+    "run": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04",
+    "task": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A04/TASK.md",
+    "inputFiles": [
+      {
+        "path": "TASK.md",
+        "sha256": "00adc43da7c563f784744a4059ef75963bca1f8eccd8e7ed7b14b76320df4928"
+      },
+      {
+        "path": "input/project/Contract.java",
+        "sha256": "bd83211dff4e16d7cf8814074ee46d883e6700a259e03a79bd3bc781fa3bdcf9"
+      },
+      {
+        "path": "input/project/Ports.java",
+        "sha256": "21d10c20819d3ddb796ff1081d53efc63664e1a1c768de1d1c627a3dcd36ae6a"
+      },
+      {
+        "path": "input/project/README.md",
+        "sha256": "0a082fc19eafaaa6457ed4a4e130b1f2bf3d3383c5cf38b7b6d8b58f18dd69db"
+      },
+      {
+        "path": "input/project/REQUEST.md",
+        "sha256": "e4e2cfed9376cfc24406348415cdaa28f75a0d731e7a9eacba0902216592774d"
+      },
+      {
+        "path": "input/project/RetryEngine.java",
+        "sha256": "95112d157ed07d87e94478edc48b94f6b11e2695c1209b7ef5f6fcaec80bfe35"
+      },
+      {
+        "path": "input/project/Smoke.java",
+        "sha256": "3e242bbcbe7b25a644aaf6d14d2c6c885ad217ed06686782bead18572c983425"
+      },
+      {
+        "path": "input/project/contract.md",
+        "sha256": "5d38ae3410aed98f10dd2f358c4737db753a6d06a49f40f055efb7a045787fe7"
+      },
+      {
+        "path": "input/project/run.mjs",
+        "sha256": "bb2c9544993bb4128564af264cc0f5719ce2d237f3a5e710027c062fecf1007c"
+      },
+      {
+        "path": "input/skills/idempotency/SKILL.md",
+        "sha256": "60201c4851368bb97820efbe1ffc7a2cb3acdc5c4338693be3697e0a6842eb08"
+      },
+      {
+        "path": "input/skills/idempotency/references/idempotency-key-filter.md",
+        "sha256": "a28e7743b5ed3083a0be7b7b1ac391aee9703d2502c564bb91fa03661b998a03"
+      },
+      {
+        "path": "input/skills/idempotency/references/key-selection.md",
+        "sha256": "1759159ef38e13a2566f2634cc2c9cfe7772238589445509008f5f06c2c98f0c"
+      },
+      {
+        "path": "input/skills/idempotency/skill.yaml",
+        "sha256": "c214d57330bcf1b03de02f27738160d0852c9612222ea4202c3ac99b44e954b3"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/SKILL.md",
+        "sha256": "214c6fc717590bbb425b624f0b3ea31de843ab4b8251a5b1e23897bd2235eb42"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/references/retry-failure-modes.md",
+        "sha256": "1f8cb4addb8592f4c8cb2767a4afd6362fd0f9c19f640ac1831cc233fe943e24"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/references/retry-in-java.md",
+        "sha256": "dbf3fb4bdef23956b4382b011f7dfaf861dd4daa3675871153a15dff947830f8"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/skill.yaml",
+        "sha256": "01e351a22ac96a47537af74f2ba0c6a2912eff069bdf97e10c743f23295ae468"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/SKILL.md",
+        "sha256": "ee9a435a6004ac96d1c991a0110ef6205aebaa2c6fc4f68b4d33ce660f2dc29f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/deadline-propagation.md",
+        "sha256": "a2cb2fbd6733e2ec1649cedae206c82ec83ad83a3ef3e5cb8f200272ff3b312f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/java-timeout-surface.md",
+        "sha256": "ce67e676b63eee0fe821e5e5407ed48b12194ca04cacbc0de8a501948789106a"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/skill.yaml",
+        "sha256": "ec2c2602056b0fcf0076d65ebefba6d4da86d47020d6ffabd08ad483f8e6e0fb"
+      }
+    ]
+  },
+  {
+    "id": "A05",
+    "caseId": "R2",
+    "repetition": 1,
+    "condition": "candidate",
+    "run": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A05",
+    "task": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A05/TASK.md",
+    "inputFiles": [
+      {
+        "path": "TASK.md",
+        "sha256": "382518737111dc79a797ade60e7da76bd6c4c80a970aa954e34e5997e0224cda"
+      },
+      {
+        "path": "input/project/Contract.java",
+        "sha256": "bd83211dff4e16d7cf8814074ee46d883e6700a259e03a79bd3bc781fa3bdcf9"
+      },
+      {
+        "path": "input/project/Ports.java",
+        "sha256": "21d10c20819d3ddb796ff1081d53efc63664e1a1c768de1d1c627a3dcd36ae6a"
+      },
+      {
+        "path": "input/project/README.md",
+        "sha256": "0a082fc19eafaaa6457ed4a4e130b1f2bf3d3383c5cf38b7b6d8b58f18dd69db"
+      },
+      {
+        "path": "input/project/REQUEST.md",
+        "sha256": "e4e2cfed9376cfc24406348415cdaa28f75a0d731e7a9eacba0902216592774d"
+      },
+      {
+        "path": "input/project/RetryEngine.java",
+        "sha256": "95112d157ed07d87e94478edc48b94f6b11e2695c1209b7ef5f6fcaec80bfe35"
+      },
+      {
+        "path": "input/project/Smoke.java",
+        "sha256": "3e242bbcbe7b25a644aaf6d14d2c6c885ad217ed06686782bead18572c983425"
+      },
+      {
+        "path": "input/project/contract.md",
+        "sha256": "5d38ae3410aed98f10dd2f358c4737db753a6d06a49f40f055efb7a045787fe7"
+      },
+      {
+        "path": "input/project/run.mjs",
+        "sha256": "bb2c9544993bb4128564af264cc0f5719ce2d237f3a5e710027c062fecf1007c"
+      },
+      {
+        "path": "input/skills/idempotency/SKILL.md",
+        "sha256": "60201c4851368bb97820efbe1ffc7a2cb3acdc5c4338693be3697e0a6842eb08"
+      },
+      {
+        "path": "input/skills/idempotency/references/idempotency-key-filter.md",
+        "sha256": "a28e7743b5ed3083a0be7b7b1ac391aee9703d2502c564bb91fa03661b998a03"
+      },
+      {
+        "path": "input/skills/idempotency/references/key-selection.md",
+        "sha256": "1759159ef38e13a2566f2634cc2c9cfe7772238589445509008f5f06c2c98f0c"
+      },
+      {
+        "path": "input/skills/idempotency/skill.yaml",
+        "sha256": "c214d57330bcf1b03de02f27738160d0852c9612222ea4202c3ac99b44e954b3"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/SKILL.md",
+        "sha256": "214c6fc717590bbb425b624f0b3ea31de843ab4b8251a5b1e23897bd2235eb42"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/references/retry-failure-modes.md",
+        "sha256": "957550428a69ae025518aad78363732d6afa6fd349fd2c1f79f58a692eaaa711"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/references/retry-in-java.md",
+        "sha256": "d4b069771ec515ab6ae729759c3e443979aeac287db91413a7f113515a923b71"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/skill.yaml",
+        "sha256": "51c1d38c801f9286740ddcf2ee6a9c680b8cbbf2679f8e877a28c4c80e428049"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/SKILL.md",
+        "sha256": "ee9a435a6004ac96d1c991a0110ef6205aebaa2c6fc4f68b4d33ce660f2dc29f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/deadline-propagation.md",
+        "sha256": "a2cb2fbd6733e2ec1649cedae206c82ec83ad83a3ef3e5cb8f200272ff3b312f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/java-timeout-surface.md",
+        "sha256": "ce67e676b63eee0fe821e5e5407ed48b12194ca04cacbc0de8a501948789106a"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/skill.yaml",
+        "sha256": "ec2c2602056b0fcf0076d65ebefba6d4da86d47020d6ffabd08ad483f8e6e0fb"
+      }
+    ]
+  },
+  {
+    "id": "A06",
+    "caseId": "R2",
+    "repetition": 1,
+    "condition": "dependencies",
+    "run": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A06",
+    "task": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A06/TASK.md",
+    "inputFiles": [
+      {
+        "path": "TASK.md",
+        "sha256": "8d0c763231fb5aba37b347a553eba4f1808e42e0b20f7e80d26a2e34fe6f740b"
+      },
+      {
+        "path": "input/project/Contract.java",
+        "sha256": "bd83211dff4e16d7cf8814074ee46d883e6700a259e03a79bd3bc781fa3bdcf9"
+      },
+      {
+        "path": "input/project/Ports.java",
+        "sha256": "21d10c20819d3ddb796ff1081d53efc63664e1a1c768de1d1c627a3dcd36ae6a"
+      },
+      {
+        "path": "input/project/README.md",
+        "sha256": "0a082fc19eafaaa6457ed4a4e130b1f2bf3d3383c5cf38b7b6d8b58f18dd69db"
+      },
+      {
+        "path": "input/project/REQUEST.md",
+        "sha256": "e4e2cfed9376cfc24406348415cdaa28f75a0d731e7a9eacba0902216592774d"
+      },
+      {
+        "path": "input/project/RetryEngine.java",
+        "sha256": "95112d157ed07d87e94478edc48b94f6b11e2695c1209b7ef5f6fcaec80bfe35"
+      },
+      {
+        "path": "input/project/Smoke.java",
+        "sha256": "3e242bbcbe7b25a644aaf6d14d2c6c885ad217ed06686782bead18572c983425"
+      },
+      {
+        "path": "input/project/contract.md",
+        "sha256": "5d38ae3410aed98f10dd2f358c4737db753a6d06a49f40f055efb7a045787fe7"
+      },
+      {
+        "path": "input/project/run.mjs",
+        "sha256": "bb2c9544993bb4128564af264cc0f5719ce2d237f3a5e710027c062fecf1007c"
+      },
+      {
+        "path": "input/skills/idempotency/SKILL.md",
+        "sha256": "60201c4851368bb97820efbe1ffc7a2cb3acdc5c4338693be3697e0a6842eb08"
+      },
+      {
+        "path": "input/skills/idempotency/references/idempotency-key-filter.md",
+        "sha256": "a28e7743b5ed3083a0be7b7b1ac391aee9703d2502c564bb91fa03661b998a03"
+      },
+      {
+        "path": "input/skills/idempotency/references/key-selection.md",
+        "sha256": "1759159ef38e13a2566f2634cc2c9cfe7772238589445509008f5f06c2c98f0c"
+      },
+      {
+        "path": "input/skills/idempotency/skill.yaml",
+        "sha256": "c214d57330bcf1b03de02f27738160d0852c9612222ea4202c3ac99b44e954b3"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/SKILL.md",
+        "sha256": "ee9a435a6004ac96d1c991a0110ef6205aebaa2c6fc4f68b4d33ce660f2dc29f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/deadline-propagation.md",
+        "sha256": "a2cb2fbd6733e2ec1649cedae206c82ec83ad83a3ef3e5cb8f200272ff3b312f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/java-timeout-surface.md",
+        "sha256": "ce67e676b63eee0fe821e5e5407ed48b12194ca04cacbc0de8a501948789106a"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/skill.yaml",
+        "sha256": "ec2c2602056b0fcf0076d65ebefba6d4da86d47020d6ffabd08ad483f8e6e0fb"
+      }
+    ]
+  },
+  {
+    "id": "A07",
+    "caseId": "R3",
+    "repetition": 1,
+    "condition": "candidate",
+    "run": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A07",
+    "task": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A07/TASK.md",
+    "inputFiles": [
+      {
+        "path": "TASK.md",
+        "sha256": "28ecd89eb83a284a3c6d9c60bf73a2b2987710f1ce770b69c20be07ba0d03d83"
+      },
+      {
+        "path": "input/project/README.md",
+        "sha256": "0a082fc19eafaaa6457ed4a4e130b1f2bf3d3383c5cf38b7b6d8b58f18dd69db"
+      },
+      {
+        "path": "input/project/REQUEST.md",
+        "sha256": "56945db46d190c1b8386060331a4646d5eabbf08ed2fc7836aba1989014b9e70"
+      },
+      {
+        "path": "input/project/RetryPlan.java",
+        "sha256": "844ff7510ceaf6b5ac31a1a0923264499754a32c22c93c79aa67154cf5b002b7"
+      },
+      {
+        "path": "input/project/Smoke.java",
+        "sha256": "634fa20018b52731e3b900d9b2bfde1f6020d12d39911956c4a76425559cd28f"
+      },
+      {
+        "path": "input/project/contract.md",
+        "sha256": "29a67d073d332265b2abb4b7fbea3ad033a0e66dcae2b91e97ca4f4580bb80b8"
+      },
+      {
+        "path": "input/project/run.mjs",
+        "sha256": "bb2c9544993bb4128564af264cc0f5719ce2d237f3a5e710027c062fecf1007c"
+      },
+      {
+        "path": "input/skills/idempotency/SKILL.md",
+        "sha256": "60201c4851368bb97820efbe1ffc7a2cb3acdc5c4338693be3697e0a6842eb08"
+      },
+      {
+        "path": "input/skills/idempotency/references/idempotency-key-filter.md",
+        "sha256": "a28e7743b5ed3083a0be7b7b1ac391aee9703d2502c564bb91fa03661b998a03"
+      },
+      {
+        "path": "input/skills/idempotency/references/key-selection.md",
+        "sha256": "1759159ef38e13a2566f2634cc2c9cfe7772238589445509008f5f06c2c98f0c"
+      },
+      {
+        "path": "input/skills/idempotency/skill.yaml",
+        "sha256": "c214d57330bcf1b03de02f27738160d0852c9612222ea4202c3ac99b44e954b3"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/SKILL.md",
+        "sha256": "214c6fc717590bbb425b624f0b3ea31de843ab4b8251a5b1e23897bd2235eb42"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/references/retry-failure-modes.md",
+        "sha256": "957550428a69ae025518aad78363732d6afa6fd349fd2c1f79f58a692eaaa711"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/references/retry-in-java.md",
+        "sha256": "d4b069771ec515ab6ae729759c3e443979aeac287db91413a7f113515a923b71"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/skill.yaml",
+        "sha256": "51c1d38c801f9286740ddcf2ee6a9c680b8cbbf2679f8e877a28c4c80e428049"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/SKILL.md",
+        "sha256": "ee9a435a6004ac96d1c991a0110ef6205aebaa2c6fc4f68b4d33ce660f2dc29f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/deadline-propagation.md",
+        "sha256": "a2cb2fbd6733e2ec1649cedae206c82ec83ad83a3ef3e5cb8f200272ff3b312f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/java-timeout-surface.md",
+        "sha256": "ce67e676b63eee0fe821e5e5407ed48b12194ca04cacbc0de8a501948789106a"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/skill.yaml",
+        "sha256": "ec2c2602056b0fcf0076d65ebefba6d4da86d47020d6ffabd08ad483f8e6e0fb"
+      }
+    ]
+  },
+  {
+    "id": "A08",
+    "caseId": "R3",
+    "repetition": 1,
+    "condition": "dependencies",
+    "run": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A08",
+    "task": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A08/TASK.md",
+    "inputFiles": [
+      {
+        "path": "TASK.md",
+        "sha256": "20ddfb7be1f0687757c5feb436f42539f587b77a4a66efaca01a37dc77a7082a"
+      },
+      {
+        "path": "input/project/README.md",
+        "sha256": "0a082fc19eafaaa6457ed4a4e130b1f2bf3d3383c5cf38b7b6d8b58f18dd69db"
+      },
+      {
+        "path": "input/project/REQUEST.md",
+        "sha256": "56945db46d190c1b8386060331a4646d5eabbf08ed2fc7836aba1989014b9e70"
+      },
+      {
+        "path": "input/project/RetryPlan.java",
+        "sha256": "844ff7510ceaf6b5ac31a1a0923264499754a32c22c93c79aa67154cf5b002b7"
+      },
+      {
+        "path": "input/project/Smoke.java",
+        "sha256": "634fa20018b52731e3b900d9b2bfde1f6020d12d39911956c4a76425559cd28f"
+      },
+      {
+        "path": "input/project/contract.md",
+        "sha256": "29a67d073d332265b2abb4b7fbea3ad033a0e66dcae2b91e97ca4f4580bb80b8"
+      },
+      {
+        "path": "input/project/run.mjs",
+        "sha256": "bb2c9544993bb4128564af264cc0f5719ce2d237f3a5e710027c062fecf1007c"
+      },
+      {
+        "path": "input/skills/idempotency/SKILL.md",
+        "sha256": "60201c4851368bb97820efbe1ffc7a2cb3acdc5c4338693be3697e0a6842eb08"
+      },
+      {
+        "path": "input/skills/idempotency/references/idempotency-key-filter.md",
+        "sha256": "a28e7743b5ed3083a0be7b7b1ac391aee9703d2502c564bb91fa03661b998a03"
+      },
+      {
+        "path": "input/skills/idempotency/references/key-selection.md",
+        "sha256": "1759159ef38e13a2566f2634cc2c9cfe7772238589445509008f5f06c2c98f0c"
+      },
+      {
+        "path": "input/skills/idempotency/skill.yaml",
+        "sha256": "c214d57330bcf1b03de02f27738160d0852c9612222ea4202c3ac99b44e954b3"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/SKILL.md",
+        "sha256": "ee9a435a6004ac96d1c991a0110ef6205aebaa2c6fc4f68b4d33ce660f2dc29f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/deadline-propagation.md",
+        "sha256": "a2cb2fbd6733e2ec1649cedae206c82ec83ad83a3ef3e5cb8f200272ff3b312f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/java-timeout-surface.md",
+        "sha256": "ce67e676b63eee0fe821e5e5407ed48b12194ca04cacbc0de8a501948789106a"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/skill.yaml",
+        "sha256": "ec2c2602056b0fcf0076d65ebefba6d4da86d47020d6ffabd08ad483f8e6e0fb"
+      }
+    ]
+  },
+  {
+    "id": "A09",
+    "caseId": "R3",
+    "repetition": 1,
+    "condition": "reference",
+    "run": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A09",
+    "task": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A09/TASK.md",
+    "inputFiles": [
+      {
+        "path": "TASK.md",
+        "sha256": "5c04f51b3e61cb3ea1fc1474830abccb1a2083e1527f506fe27a6461a692af6d"
+      },
+      {
+        "path": "input/project/README.md",
+        "sha256": "0a082fc19eafaaa6457ed4a4e130b1f2bf3d3383c5cf38b7b6d8b58f18dd69db"
+      },
+      {
+        "path": "input/project/REQUEST.md",
+        "sha256": "56945db46d190c1b8386060331a4646d5eabbf08ed2fc7836aba1989014b9e70"
+      },
+      {
+        "path": "input/project/RetryPlan.java",
+        "sha256": "844ff7510ceaf6b5ac31a1a0923264499754a32c22c93c79aa67154cf5b002b7"
+      },
+      {
+        "path": "input/project/Smoke.java",
+        "sha256": "634fa20018b52731e3b900d9b2bfde1f6020d12d39911956c4a76425559cd28f"
+      },
+      {
+        "path": "input/project/contract.md",
+        "sha256": "29a67d073d332265b2abb4b7fbea3ad033a0e66dcae2b91e97ca4f4580bb80b8"
+      },
+      {
+        "path": "input/project/run.mjs",
+        "sha256": "bb2c9544993bb4128564af264cc0f5719ce2d237f3a5e710027c062fecf1007c"
+      },
+      {
+        "path": "input/skills/idempotency/SKILL.md",
+        "sha256": "60201c4851368bb97820efbe1ffc7a2cb3acdc5c4338693be3697e0a6842eb08"
+      },
+      {
+        "path": "input/skills/idempotency/references/idempotency-key-filter.md",
+        "sha256": "a28e7743b5ed3083a0be7b7b1ac391aee9703d2502c564bb91fa03661b998a03"
+      },
+      {
+        "path": "input/skills/idempotency/references/key-selection.md",
+        "sha256": "1759159ef38e13a2566f2634cc2c9cfe7772238589445509008f5f06c2c98f0c"
+      },
+      {
+        "path": "input/skills/idempotency/skill.yaml",
+        "sha256": "c214d57330bcf1b03de02f27738160d0852c9612222ea4202c3ac99b44e954b3"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/SKILL.md",
+        "sha256": "214c6fc717590bbb425b624f0b3ea31de843ab4b8251a5b1e23897bd2235eb42"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/references/retry-failure-modes.md",
+        "sha256": "1f8cb4addb8592f4c8cb2767a4afd6362fd0f9c19f640ac1831cc233fe943e24"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/references/retry-in-java.md",
+        "sha256": "dbf3fb4bdef23956b4382b011f7dfaf861dd4daa3675871153a15dff947830f8"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/skill.yaml",
+        "sha256": "01e351a22ac96a47537af74f2ba0c6a2912eff069bdf97e10c743f23295ae468"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/SKILL.md",
+        "sha256": "ee9a435a6004ac96d1c991a0110ef6205aebaa2c6fc4f68b4d33ce660f2dc29f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/deadline-propagation.md",
+        "sha256": "a2cb2fbd6733e2ec1649cedae206c82ec83ad83a3ef3e5cb8f200272ff3b312f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/java-timeout-surface.md",
+        "sha256": "ce67e676b63eee0fe821e5e5407ed48b12194ca04cacbc0de8a501948789106a"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/skill.yaml",
+        "sha256": "ec2c2602056b0fcf0076d65ebefba6d4da86d47020d6ffabd08ad483f8e6e0fb"
+      }
+    ]
+  },
+  {
+    "id": "A10",
+    "caseId": "R4",
+    "repetition": 1,
+    "condition": "dependencies",
+    "run": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A10",
+    "task": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A10/TASK.md",
+    "inputFiles": [
+      {
+        "path": "TASK.md",
+        "sha256": "5534d48155e38d69942836fc49f2492a2bdae93cafa9eb4c329fa152349e77f1"
+      },
+      {
+        "path": "input/project/README.md",
+        "sha256": "0a082fc19eafaaa6457ed4a4e130b1f2bf3d3383c5cf38b7b6d8b58f18dd69db"
+      },
+      {
+        "path": "input/project/REQUEST.md",
+        "sha256": "7dd644bf4411edc116c859953b0972780a1dd7ab6b5ca9f4fbab9e403e2167da"
+      },
+      {
+        "path": "input/project/incident.json",
+        "sha256": "025cfcb39ab16fc0a0d508183c6d30377c35445d1e334a1c55b146572e801181"
+      },
+      {
+        "path": "input/project/proposal.md",
+        "sha256": "86ee8bc99f8a7684662305b0a3e7250fe6db9bb03fdb2f879ca45bd40384caa9"
+      },
+      {
+        "path": "input/skills/idempotency/SKILL.md",
+        "sha256": "60201c4851368bb97820efbe1ffc7a2cb3acdc5c4338693be3697e0a6842eb08"
+      },
+      {
+        "path": "input/skills/idempotency/references/idempotency-key-filter.md",
+        "sha256": "a28e7743b5ed3083a0be7b7b1ac391aee9703d2502c564bb91fa03661b998a03"
+      },
+      {
+        "path": "input/skills/idempotency/references/key-selection.md",
+        "sha256": "1759159ef38e13a2566f2634cc2c9cfe7772238589445509008f5f06c2c98f0c"
+      },
+      {
+        "path": "input/skills/idempotency/skill.yaml",
+        "sha256": "c214d57330bcf1b03de02f27738160d0852c9612222ea4202c3ac99b44e954b3"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/SKILL.md",
+        "sha256": "ee9a435a6004ac96d1c991a0110ef6205aebaa2c6fc4f68b4d33ce660f2dc29f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/deadline-propagation.md",
+        "sha256": "a2cb2fbd6733e2ec1649cedae206c82ec83ad83a3ef3e5cb8f200272ff3b312f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/java-timeout-surface.md",
+        "sha256": "ce67e676b63eee0fe821e5e5407ed48b12194ca04cacbc0de8a501948789106a"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/skill.yaml",
+        "sha256": "ec2c2602056b0fcf0076d65ebefba6d4da86d47020d6ffabd08ad483f8e6e0fb"
+      }
+    ]
+  },
+  {
+    "id": "A11",
+    "caseId": "R4",
+    "repetition": 1,
+    "condition": "reference",
+    "run": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A11",
+    "task": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A11/TASK.md",
+    "inputFiles": [
+      {
+        "path": "TASK.md",
+        "sha256": "ef072686a69b65f06e2bf9e3819f7a06b25ccaa3ea278eab3239a48533d55153"
+      },
+      {
+        "path": "input/project/README.md",
+        "sha256": "0a082fc19eafaaa6457ed4a4e130b1f2bf3d3383c5cf38b7b6d8b58f18dd69db"
+      },
+      {
+        "path": "input/project/REQUEST.md",
+        "sha256": "7dd644bf4411edc116c859953b0972780a1dd7ab6b5ca9f4fbab9e403e2167da"
+      },
+      {
+        "path": "input/project/incident.json",
+        "sha256": "025cfcb39ab16fc0a0d508183c6d30377c35445d1e334a1c55b146572e801181"
+      },
+      {
+        "path": "input/project/proposal.md",
+        "sha256": "86ee8bc99f8a7684662305b0a3e7250fe6db9bb03fdb2f879ca45bd40384caa9"
+      },
+      {
+        "path": "input/skills/idempotency/SKILL.md",
+        "sha256": "60201c4851368bb97820efbe1ffc7a2cb3acdc5c4338693be3697e0a6842eb08"
+      },
+      {
+        "path": "input/skills/idempotency/references/idempotency-key-filter.md",
+        "sha256": "a28e7743b5ed3083a0be7b7b1ac391aee9703d2502c564bb91fa03661b998a03"
+      },
+      {
+        "path": "input/skills/idempotency/references/key-selection.md",
+        "sha256": "1759159ef38e13a2566f2634cc2c9cfe7772238589445509008f5f06c2c98f0c"
+      },
+      {
+        "path": "input/skills/idempotency/skill.yaml",
+        "sha256": "c214d57330bcf1b03de02f27738160d0852c9612222ea4202c3ac99b44e954b3"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/SKILL.md",
+        "sha256": "214c6fc717590bbb425b624f0b3ea31de843ab4b8251a5b1e23897bd2235eb42"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/references/retry-failure-modes.md",
+        "sha256": "1f8cb4addb8592f4c8cb2767a4afd6362fd0f9c19f640ac1831cc233fe943e24"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/references/retry-in-java.md",
+        "sha256": "dbf3fb4bdef23956b4382b011f7dfaf861dd4daa3675871153a15dff947830f8"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/skill.yaml",
+        "sha256": "01e351a22ac96a47537af74f2ba0c6a2912eff069bdf97e10c743f23295ae468"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/SKILL.md",
+        "sha256": "ee9a435a6004ac96d1c991a0110ef6205aebaa2c6fc4f68b4d33ce660f2dc29f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/deadline-propagation.md",
+        "sha256": "a2cb2fbd6733e2ec1649cedae206c82ec83ad83a3ef3e5cb8f200272ff3b312f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/java-timeout-surface.md",
+        "sha256": "ce67e676b63eee0fe821e5e5407ed48b12194ca04cacbc0de8a501948789106a"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/skill.yaml",
+        "sha256": "ec2c2602056b0fcf0076d65ebefba6d4da86d47020d6ffabd08ad483f8e6e0fb"
+      }
+    ]
+  },
+  {
+    "id": "A12",
+    "caseId": "R4",
+    "repetition": 1,
+    "condition": "candidate",
+    "run": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A12",
+    "task": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A12/TASK.md",
+    "inputFiles": [
+      {
+        "path": "TASK.md",
+        "sha256": "8ce6e6f9d371a4112e77105a1f8b71eaf833b932c927a169bf22f6e5a4045dcd"
+      },
+      {
+        "path": "input/project/README.md",
+        "sha256": "0a082fc19eafaaa6457ed4a4e130b1f2bf3d3383c5cf38b7b6d8b58f18dd69db"
+      },
+      {
+        "path": "input/project/REQUEST.md",
+        "sha256": "7dd644bf4411edc116c859953b0972780a1dd7ab6b5ca9f4fbab9e403e2167da"
+      },
+      {
+        "path": "input/project/incident.json",
+        "sha256": "025cfcb39ab16fc0a0d508183c6d30377c35445d1e334a1c55b146572e801181"
+      },
+      {
+        "path": "input/project/proposal.md",
+        "sha256": "86ee8bc99f8a7684662305b0a3e7250fe6db9bb03fdb2f879ca45bd40384caa9"
+      },
+      {
+        "path": "input/skills/idempotency/SKILL.md",
+        "sha256": "60201c4851368bb97820efbe1ffc7a2cb3acdc5c4338693be3697e0a6842eb08"
+      },
+      {
+        "path": "input/skills/idempotency/references/idempotency-key-filter.md",
+        "sha256": "a28e7743b5ed3083a0be7b7b1ac391aee9703d2502c564bb91fa03661b998a03"
+      },
+      {
+        "path": "input/skills/idempotency/references/key-selection.md",
+        "sha256": "1759159ef38e13a2566f2634cc2c9cfe7772238589445509008f5f06c2c98f0c"
+      },
+      {
+        "path": "input/skills/idempotency/skill.yaml",
+        "sha256": "c214d57330bcf1b03de02f27738160d0852c9612222ea4202c3ac99b44e954b3"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/SKILL.md",
+        "sha256": "214c6fc717590bbb425b624f0b3ea31de843ab4b8251a5b1e23897bd2235eb42"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/references/retry-failure-modes.md",
+        "sha256": "957550428a69ae025518aad78363732d6afa6fd349fd2c1f79f58a692eaaa711"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/references/retry-in-java.md",
+        "sha256": "d4b069771ec515ab6ae729759c3e443979aeac287db91413a7f113515a923b71"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/skill.yaml",
+        "sha256": "51c1d38c801f9286740ddcf2ee6a9c680b8cbbf2679f8e877a28c4c80e428049"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/SKILL.md",
+        "sha256": "ee9a435a6004ac96d1c991a0110ef6205aebaa2c6fc4f68b4d33ce660f2dc29f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/deadline-propagation.md",
+        "sha256": "a2cb2fbd6733e2ec1649cedae206c82ec83ad83a3ef3e5cb8f200272ff3b312f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/java-timeout-surface.md",
+        "sha256": "ce67e676b63eee0fe821e5e5407ed48b12194ca04cacbc0de8a501948789106a"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/skill.yaml",
+        "sha256": "ec2c2602056b0fcf0076d65ebefba6d4da86d47020d6ffabd08ad483f8e6e0fb"
+      }
+    ]
+  },
+  {
+    "id": "A13",
+    "caseId": "R1",
+    "repetition": 2,
+    "condition": "reference",
+    "run": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A13",
+    "task": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A13/TASK.md",
+    "inputFiles": [
+      {
+        "path": "TASK.md",
+        "sha256": "16ee80322253c6f8c6dcf2626b9b7b825a2b8c313445d34fdf1450f235edb01f"
+      },
+      {
+        "path": "input/project/Contract.java",
+        "sha256": "acef7e155f89b61cae2bc9f780a011a826b2dd9a02aed893bfe0f0c0620cbefb"
+      },
+      {
+        "path": "input/project/Ports.java",
+        "sha256": "21d10c20819d3ddb796ff1081d53efc63664e1a1c768de1d1c627a3dcd36ae6a"
+      },
+      {
+        "path": "input/project/README.md",
+        "sha256": "0a082fc19eafaaa6457ed4a4e130b1f2bf3d3383c5cf38b7b6d8b58f18dd69db"
+      },
+      {
+        "path": "input/project/REQUEST.md",
+        "sha256": "e4e2cfed9376cfc24406348415cdaa28f75a0d731e7a9eacba0902216592774d"
+      },
+      {
+        "path": "input/project/RetryEngine.java",
+        "sha256": "95112d157ed07d87e94478edc48b94f6b11e2695c1209b7ef5f6fcaec80bfe35"
+      },
+      {
+        "path": "input/project/Smoke.java",
+        "sha256": "3e242bbcbe7b25a644aaf6d14d2c6c885ad217ed06686782bead18572c983425"
+      },
+      {
+        "path": "input/project/contract.md",
+        "sha256": "5d38ae3410aed98f10dd2f358c4737db753a6d06a49f40f055efb7a045787fe7"
+      },
+      {
+        "path": "input/project/run.mjs",
+        "sha256": "bb2c9544993bb4128564af264cc0f5719ce2d237f3a5e710027c062fecf1007c"
+      },
+      {
+        "path": "input/skills/idempotency/SKILL.md",
+        "sha256": "60201c4851368bb97820efbe1ffc7a2cb3acdc5c4338693be3697e0a6842eb08"
+      },
+      {
+        "path": "input/skills/idempotency/references/idempotency-key-filter.md",
+        "sha256": "a28e7743b5ed3083a0be7b7b1ac391aee9703d2502c564bb91fa03661b998a03"
+      },
+      {
+        "path": "input/skills/idempotency/references/key-selection.md",
+        "sha256": "1759159ef38e13a2566f2634cc2c9cfe7772238589445509008f5f06c2c98f0c"
+      },
+      {
+        "path": "input/skills/idempotency/skill.yaml",
+        "sha256": "c214d57330bcf1b03de02f27738160d0852c9612222ea4202c3ac99b44e954b3"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/SKILL.md",
+        "sha256": "214c6fc717590bbb425b624f0b3ea31de843ab4b8251a5b1e23897bd2235eb42"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/references/retry-failure-modes.md",
+        "sha256": "1f8cb4addb8592f4c8cb2767a4afd6362fd0f9c19f640ac1831cc233fe943e24"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/references/retry-in-java.md",
+        "sha256": "dbf3fb4bdef23956b4382b011f7dfaf861dd4daa3675871153a15dff947830f8"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/skill.yaml",
+        "sha256": "01e351a22ac96a47537af74f2ba0c6a2912eff069bdf97e10c743f23295ae468"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/SKILL.md",
+        "sha256": "ee9a435a6004ac96d1c991a0110ef6205aebaa2c6fc4f68b4d33ce660f2dc29f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/deadline-propagation.md",
+        "sha256": "a2cb2fbd6733e2ec1649cedae206c82ec83ad83a3ef3e5cb8f200272ff3b312f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/java-timeout-surface.md",
+        "sha256": "ce67e676b63eee0fe821e5e5407ed48b12194ca04cacbc0de8a501948789106a"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/skill.yaml",
+        "sha256": "ec2c2602056b0fcf0076d65ebefba6d4da86d47020d6ffabd08ad483f8e6e0fb"
+      }
+    ]
+  },
+  {
+    "id": "A14",
+    "caseId": "R1",
+    "repetition": 2,
+    "condition": "candidate",
+    "run": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A14",
+    "task": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A14/TASK.md",
+    "inputFiles": [
+      {
+        "path": "TASK.md",
+        "sha256": "d25f8e107f7da923c7bf2ebda66671381fc09cb9a2c85b43c24bb5905fbbb1a7"
+      },
+      {
+        "path": "input/project/Contract.java",
+        "sha256": "acef7e155f89b61cae2bc9f780a011a826b2dd9a02aed893bfe0f0c0620cbefb"
+      },
+      {
+        "path": "input/project/Ports.java",
+        "sha256": "21d10c20819d3ddb796ff1081d53efc63664e1a1c768de1d1c627a3dcd36ae6a"
+      },
+      {
+        "path": "input/project/README.md",
+        "sha256": "0a082fc19eafaaa6457ed4a4e130b1f2bf3d3383c5cf38b7b6d8b58f18dd69db"
+      },
+      {
+        "path": "input/project/REQUEST.md",
+        "sha256": "e4e2cfed9376cfc24406348415cdaa28f75a0d731e7a9eacba0902216592774d"
+      },
+      {
+        "path": "input/project/RetryEngine.java",
+        "sha256": "95112d157ed07d87e94478edc48b94f6b11e2695c1209b7ef5f6fcaec80bfe35"
+      },
+      {
+        "path": "input/project/Smoke.java",
+        "sha256": "3e242bbcbe7b25a644aaf6d14d2c6c885ad217ed06686782bead18572c983425"
+      },
+      {
+        "path": "input/project/contract.md",
+        "sha256": "5d38ae3410aed98f10dd2f358c4737db753a6d06a49f40f055efb7a045787fe7"
+      },
+      {
+        "path": "input/project/run.mjs",
+        "sha256": "bb2c9544993bb4128564af264cc0f5719ce2d237f3a5e710027c062fecf1007c"
+      },
+      {
+        "path": "input/skills/idempotency/SKILL.md",
+        "sha256": "60201c4851368bb97820efbe1ffc7a2cb3acdc5c4338693be3697e0a6842eb08"
+      },
+      {
+        "path": "input/skills/idempotency/references/idempotency-key-filter.md",
+        "sha256": "a28e7743b5ed3083a0be7b7b1ac391aee9703d2502c564bb91fa03661b998a03"
+      },
+      {
+        "path": "input/skills/idempotency/references/key-selection.md",
+        "sha256": "1759159ef38e13a2566f2634cc2c9cfe7772238589445509008f5f06c2c98f0c"
+      },
+      {
+        "path": "input/skills/idempotency/skill.yaml",
+        "sha256": "c214d57330bcf1b03de02f27738160d0852c9612222ea4202c3ac99b44e954b3"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/SKILL.md",
+        "sha256": "214c6fc717590bbb425b624f0b3ea31de843ab4b8251a5b1e23897bd2235eb42"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/references/retry-failure-modes.md",
+        "sha256": "957550428a69ae025518aad78363732d6afa6fd349fd2c1f79f58a692eaaa711"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/references/retry-in-java.md",
+        "sha256": "d4b069771ec515ab6ae729759c3e443979aeac287db91413a7f113515a923b71"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/skill.yaml",
+        "sha256": "51c1d38c801f9286740ddcf2ee6a9c680b8cbbf2679f8e877a28c4c80e428049"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/SKILL.md",
+        "sha256": "ee9a435a6004ac96d1c991a0110ef6205aebaa2c6fc4f68b4d33ce660f2dc29f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/deadline-propagation.md",
+        "sha256": "a2cb2fbd6733e2ec1649cedae206c82ec83ad83a3ef3e5cb8f200272ff3b312f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/java-timeout-surface.md",
+        "sha256": "ce67e676b63eee0fe821e5e5407ed48b12194ca04cacbc0de8a501948789106a"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/skill.yaml",
+        "sha256": "ec2c2602056b0fcf0076d65ebefba6d4da86d47020d6ffabd08ad483f8e6e0fb"
+      }
+    ]
+  },
+  {
+    "id": "A15",
+    "caseId": "R1",
+    "repetition": 2,
+    "condition": "dependencies",
+    "run": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A15",
+    "task": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A15/TASK.md",
+    "inputFiles": [
+      {
+        "path": "TASK.md",
+        "sha256": "e796f9f08713296c2bc2a56ec13be8137beec24a2250a1b50e5e9c3b2f81fe25"
+      },
+      {
+        "path": "input/project/Contract.java",
+        "sha256": "acef7e155f89b61cae2bc9f780a011a826b2dd9a02aed893bfe0f0c0620cbefb"
+      },
+      {
+        "path": "input/project/Ports.java",
+        "sha256": "21d10c20819d3ddb796ff1081d53efc63664e1a1c768de1d1c627a3dcd36ae6a"
+      },
+      {
+        "path": "input/project/README.md",
+        "sha256": "0a082fc19eafaaa6457ed4a4e130b1f2bf3d3383c5cf38b7b6d8b58f18dd69db"
+      },
+      {
+        "path": "input/project/REQUEST.md",
+        "sha256": "e4e2cfed9376cfc24406348415cdaa28f75a0d731e7a9eacba0902216592774d"
+      },
+      {
+        "path": "input/project/RetryEngine.java",
+        "sha256": "95112d157ed07d87e94478edc48b94f6b11e2695c1209b7ef5f6fcaec80bfe35"
+      },
+      {
+        "path": "input/project/Smoke.java",
+        "sha256": "3e242bbcbe7b25a644aaf6d14d2c6c885ad217ed06686782bead18572c983425"
+      },
+      {
+        "path": "input/project/contract.md",
+        "sha256": "5d38ae3410aed98f10dd2f358c4737db753a6d06a49f40f055efb7a045787fe7"
+      },
+      {
+        "path": "input/project/run.mjs",
+        "sha256": "bb2c9544993bb4128564af264cc0f5719ce2d237f3a5e710027c062fecf1007c"
+      },
+      {
+        "path": "input/skills/idempotency/SKILL.md",
+        "sha256": "60201c4851368bb97820efbe1ffc7a2cb3acdc5c4338693be3697e0a6842eb08"
+      },
+      {
+        "path": "input/skills/idempotency/references/idempotency-key-filter.md",
+        "sha256": "a28e7743b5ed3083a0be7b7b1ac391aee9703d2502c564bb91fa03661b998a03"
+      },
+      {
+        "path": "input/skills/idempotency/references/key-selection.md",
+        "sha256": "1759159ef38e13a2566f2634cc2c9cfe7772238589445509008f5f06c2c98f0c"
+      },
+      {
+        "path": "input/skills/idempotency/skill.yaml",
+        "sha256": "c214d57330bcf1b03de02f27738160d0852c9612222ea4202c3ac99b44e954b3"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/SKILL.md",
+        "sha256": "ee9a435a6004ac96d1c991a0110ef6205aebaa2c6fc4f68b4d33ce660f2dc29f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/deadline-propagation.md",
+        "sha256": "a2cb2fbd6733e2ec1649cedae206c82ec83ad83a3ef3e5cb8f200272ff3b312f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/java-timeout-surface.md",
+        "sha256": "ce67e676b63eee0fe821e5e5407ed48b12194ca04cacbc0de8a501948789106a"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/skill.yaml",
+        "sha256": "ec2c2602056b0fcf0076d65ebefba6d4da86d47020d6ffabd08ad483f8e6e0fb"
+      }
+    ]
+  },
+  {
+    "id": "A16",
+    "caseId": "R2",
+    "repetition": 2,
+    "condition": "candidate",
+    "run": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A16",
+    "task": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A16/TASK.md",
+    "inputFiles": [
+      {
+        "path": "TASK.md",
+        "sha256": "7e2731e9e1772e38c1afbb7f888581b2c041eec80fc4524d7b67cc461bc17d44"
+      },
+      {
+        "path": "input/project/Contract.java",
+        "sha256": "bd83211dff4e16d7cf8814074ee46d883e6700a259e03a79bd3bc781fa3bdcf9"
+      },
+      {
+        "path": "input/project/Ports.java",
+        "sha256": "21d10c20819d3ddb796ff1081d53efc63664e1a1c768de1d1c627a3dcd36ae6a"
+      },
+      {
+        "path": "input/project/README.md",
+        "sha256": "0a082fc19eafaaa6457ed4a4e130b1f2bf3d3383c5cf38b7b6d8b58f18dd69db"
+      },
+      {
+        "path": "input/project/REQUEST.md",
+        "sha256": "e4e2cfed9376cfc24406348415cdaa28f75a0d731e7a9eacba0902216592774d"
+      },
+      {
+        "path": "input/project/RetryEngine.java",
+        "sha256": "95112d157ed07d87e94478edc48b94f6b11e2695c1209b7ef5f6fcaec80bfe35"
+      },
+      {
+        "path": "input/project/Smoke.java",
+        "sha256": "3e242bbcbe7b25a644aaf6d14d2c6c885ad217ed06686782bead18572c983425"
+      },
+      {
+        "path": "input/project/contract.md",
+        "sha256": "5d38ae3410aed98f10dd2f358c4737db753a6d06a49f40f055efb7a045787fe7"
+      },
+      {
+        "path": "input/project/run.mjs",
+        "sha256": "bb2c9544993bb4128564af264cc0f5719ce2d237f3a5e710027c062fecf1007c"
+      },
+      {
+        "path": "input/skills/idempotency/SKILL.md",
+        "sha256": "60201c4851368bb97820efbe1ffc7a2cb3acdc5c4338693be3697e0a6842eb08"
+      },
+      {
+        "path": "input/skills/idempotency/references/idempotency-key-filter.md",
+        "sha256": "a28e7743b5ed3083a0be7b7b1ac391aee9703d2502c564bb91fa03661b998a03"
+      },
+      {
+        "path": "input/skills/idempotency/references/key-selection.md",
+        "sha256": "1759159ef38e13a2566f2634cc2c9cfe7772238589445509008f5f06c2c98f0c"
+      },
+      {
+        "path": "input/skills/idempotency/skill.yaml",
+        "sha256": "c214d57330bcf1b03de02f27738160d0852c9612222ea4202c3ac99b44e954b3"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/SKILL.md",
+        "sha256": "214c6fc717590bbb425b624f0b3ea31de843ab4b8251a5b1e23897bd2235eb42"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/references/retry-failure-modes.md",
+        "sha256": "957550428a69ae025518aad78363732d6afa6fd349fd2c1f79f58a692eaaa711"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/references/retry-in-java.md",
+        "sha256": "d4b069771ec515ab6ae729759c3e443979aeac287db91413a7f113515a923b71"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/skill.yaml",
+        "sha256": "51c1d38c801f9286740ddcf2ee6a9c680b8cbbf2679f8e877a28c4c80e428049"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/SKILL.md",
+        "sha256": "ee9a435a6004ac96d1c991a0110ef6205aebaa2c6fc4f68b4d33ce660f2dc29f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/deadline-propagation.md",
+        "sha256": "a2cb2fbd6733e2ec1649cedae206c82ec83ad83a3ef3e5cb8f200272ff3b312f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/java-timeout-surface.md",
+        "sha256": "ce67e676b63eee0fe821e5e5407ed48b12194ca04cacbc0de8a501948789106a"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/skill.yaml",
+        "sha256": "ec2c2602056b0fcf0076d65ebefba6d4da86d47020d6ffabd08ad483f8e6e0fb"
+      }
+    ]
+  },
+  {
+    "id": "A17",
+    "caseId": "R2",
+    "repetition": 2,
+    "condition": "dependencies",
+    "run": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A17",
+    "task": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A17/TASK.md",
+    "inputFiles": [
+      {
+        "path": "TASK.md",
+        "sha256": "a51c470aebaec73d72d409f771b31be2d96543bb0e820dc6b2ef7eaed8d7a58c"
+      },
+      {
+        "path": "input/project/Contract.java",
+        "sha256": "bd83211dff4e16d7cf8814074ee46d883e6700a259e03a79bd3bc781fa3bdcf9"
+      },
+      {
+        "path": "input/project/Ports.java",
+        "sha256": "21d10c20819d3ddb796ff1081d53efc63664e1a1c768de1d1c627a3dcd36ae6a"
+      },
+      {
+        "path": "input/project/README.md",
+        "sha256": "0a082fc19eafaaa6457ed4a4e130b1f2bf3d3383c5cf38b7b6d8b58f18dd69db"
+      },
+      {
+        "path": "input/project/REQUEST.md",
+        "sha256": "e4e2cfed9376cfc24406348415cdaa28f75a0d731e7a9eacba0902216592774d"
+      },
+      {
+        "path": "input/project/RetryEngine.java",
+        "sha256": "95112d157ed07d87e94478edc48b94f6b11e2695c1209b7ef5f6fcaec80bfe35"
+      },
+      {
+        "path": "input/project/Smoke.java",
+        "sha256": "3e242bbcbe7b25a644aaf6d14d2c6c885ad217ed06686782bead18572c983425"
+      },
+      {
+        "path": "input/project/contract.md",
+        "sha256": "5d38ae3410aed98f10dd2f358c4737db753a6d06a49f40f055efb7a045787fe7"
+      },
+      {
+        "path": "input/project/run.mjs",
+        "sha256": "bb2c9544993bb4128564af264cc0f5719ce2d237f3a5e710027c062fecf1007c"
+      },
+      {
+        "path": "input/skills/idempotency/SKILL.md",
+        "sha256": "60201c4851368bb97820efbe1ffc7a2cb3acdc5c4338693be3697e0a6842eb08"
+      },
+      {
+        "path": "input/skills/idempotency/references/idempotency-key-filter.md",
+        "sha256": "a28e7743b5ed3083a0be7b7b1ac391aee9703d2502c564bb91fa03661b998a03"
+      },
+      {
+        "path": "input/skills/idempotency/references/key-selection.md",
+        "sha256": "1759159ef38e13a2566f2634cc2c9cfe7772238589445509008f5f06c2c98f0c"
+      },
+      {
+        "path": "input/skills/idempotency/skill.yaml",
+        "sha256": "c214d57330bcf1b03de02f27738160d0852c9612222ea4202c3ac99b44e954b3"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/SKILL.md",
+        "sha256": "ee9a435a6004ac96d1c991a0110ef6205aebaa2c6fc4f68b4d33ce660f2dc29f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/deadline-propagation.md",
+        "sha256": "a2cb2fbd6733e2ec1649cedae206c82ec83ad83a3ef3e5cb8f200272ff3b312f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/java-timeout-surface.md",
+        "sha256": "ce67e676b63eee0fe821e5e5407ed48b12194ca04cacbc0de8a501948789106a"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/skill.yaml",
+        "sha256": "ec2c2602056b0fcf0076d65ebefba6d4da86d47020d6ffabd08ad483f8e6e0fb"
+      }
+    ]
+  },
+  {
+    "id": "A18",
+    "caseId": "R2",
+    "repetition": 2,
+    "condition": "reference",
+    "run": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A18",
+    "task": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A18/TASK.md",
+    "inputFiles": [
+      {
+        "path": "TASK.md",
+        "sha256": "0dcb641007f47a2d21f1082f4d62d7706a99dd062ffa59e2168dc719c9a3c9fe"
+      },
+      {
+        "path": "input/project/Contract.java",
+        "sha256": "bd83211dff4e16d7cf8814074ee46d883e6700a259e03a79bd3bc781fa3bdcf9"
+      },
+      {
+        "path": "input/project/Ports.java",
+        "sha256": "21d10c20819d3ddb796ff1081d53efc63664e1a1c768de1d1c627a3dcd36ae6a"
+      },
+      {
+        "path": "input/project/README.md",
+        "sha256": "0a082fc19eafaaa6457ed4a4e130b1f2bf3d3383c5cf38b7b6d8b58f18dd69db"
+      },
+      {
+        "path": "input/project/REQUEST.md",
+        "sha256": "e4e2cfed9376cfc24406348415cdaa28f75a0d731e7a9eacba0902216592774d"
+      },
+      {
+        "path": "input/project/RetryEngine.java",
+        "sha256": "95112d157ed07d87e94478edc48b94f6b11e2695c1209b7ef5f6fcaec80bfe35"
+      },
+      {
+        "path": "input/project/Smoke.java",
+        "sha256": "3e242bbcbe7b25a644aaf6d14d2c6c885ad217ed06686782bead18572c983425"
+      },
+      {
+        "path": "input/project/contract.md",
+        "sha256": "5d38ae3410aed98f10dd2f358c4737db753a6d06a49f40f055efb7a045787fe7"
+      },
+      {
+        "path": "input/project/run.mjs",
+        "sha256": "bb2c9544993bb4128564af264cc0f5719ce2d237f3a5e710027c062fecf1007c"
+      },
+      {
+        "path": "input/skills/idempotency/SKILL.md",
+        "sha256": "60201c4851368bb97820efbe1ffc7a2cb3acdc5c4338693be3697e0a6842eb08"
+      },
+      {
+        "path": "input/skills/idempotency/references/idempotency-key-filter.md",
+        "sha256": "a28e7743b5ed3083a0be7b7b1ac391aee9703d2502c564bb91fa03661b998a03"
+      },
+      {
+        "path": "input/skills/idempotency/references/key-selection.md",
+        "sha256": "1759159ef38e13a2566f2634cc2c9cfe7772238589445509008f5f06c2c98f0c"
+      },
+      {
+        "path": "input/skills/idempotency/skill.yaml",
+        "sha256": "c214d57330bcf1b03de02f27738160d0852c9612222ea4202c3ac99b44e954b3"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/SKILL.md",
+        "sha256": "214c6fc717590bbb425b624f0b3ea31de843ab4b8251a5b1e23897bd2235eb42"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/references/retry-failure-modes.md",
+        "sha256": "1f8cb4addb8592f4c8cb2767a4afd6362fd0f9c19f640ac1831cc233fe943e24"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/references/retry-in-java.md",
+        "sha256": "dbf3fb4bdef23956b4382b011f7dfaf861dd4daa3675871153a15dff947830f8"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/skill.yaml",
+        "sha256": "01e351a22ac96a47537af74f2ba0c6a2912eff069bdf97e10c743f23295ae468"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/SKILL.md",
+        "sha256": "ee9a435a6004ac96d1c991a0110ef6205aebaa2c6fc4f68b4d33ce660f2dc29f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/deadline-propagation.md",
+        "sha256": "a2cb2fbd6733e2ec1649cedae206c82ec83ad83a3ef3e5cb8f200272ff3b312f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/java-timeout-surface.md",
+        "sha256": "ce67e676b63eee0fe821e5e5407ed48b12194ca04cacbc0de8a501948789106a"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/skill.yaml",
+        "sha256": "ec2c2602056b0fcf0076d65ebefba6d4da86d47020d6ffabd08ad483f8e6e0fb"
+      }
+    ]
+  },
+  {
+    "id": "A19",
+    "caseId": "R3",
+    "repetition": 2,
+    "condition": "dependencies",
+    "run": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A19",
+    "task": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A19/TASK.md",
+    "inputFiles": [
+      {
+        "path": "TASK.md",
+        "sha256": "ccbfcffc034bbbd91100c74b159104c9d4e01861408483aad5edc225aeae0917"
+      },
+      {
+        "path": "input/project/README.md",
+        "sha256": "0a082fc19eafaaa6457ed4a4e130b1f2bf3d3383c5cf38b7b6d8b58f18dd69db"
+      },
+      {
+        "path": "input/project/REQUEST.md",
+        "sha256": "56945db46d190c1b8386060331a4646d5eabbf08ed2fc7836aba1989014b9e70"
+      },
+      {
+        "path": "input/project/RetryPlan.java",
+        "sha256": "844ff7510ceaf6b5ac31a1a0923264499754a32c22c93c79aa67154cf5b002b7"
+      },
+      {
+        "path": "input/project/Smoke.java",
+        "sha256": "634fa20018b52731e3b900d9b2bfde1f6020d12d39911956c4a76425559cd28f"
+      },
+      {
+        "path": "input/project/contract.md",
+        "sha256": "29a67d073d332265b2abb4b7fbea3ad033a0e66dcae2b91e97ca4f4580bb80b8"
+      },
+      {
+        "path": "input/project/run.mjs",
+        "sha256": "bb2c9544993bb4128564af264cc0f5719ce2d237f3a5e710027c062fecf1007c"
+      },
+      {
+        "path": "input/skills/idempotency/SKILL.md",
+        "sha256": "60201c4851368bb97820efbe1ffc7a2cb3acdc5c4338693be3697e0a6842eb08"
+      },
+      {
+        "path": "input/skills/idempotency/references/idempotency-key-filter.md",
+        "sha256": "a28e7743b5ed3083a0be7b7b1ac391aee9703d2502c564bb91fa03661b998a03"
+      },
+      {
+        "path": "input/skills/idempotency/references/key-selection.md",
+        "sha256": "1759159ef38e13a2566f2634cc2c9cfe7772238589445509008f5f06c2c98f0c"
+      },
+      {
+        "path": "input/skills/idempotency/skill.yaml",
+        "sha256": "c214d57330bcf1b03de02f27738160d0852c9612222ea4202c3ac99b44e954b3"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/SKILL.md",
+        "sha256": "ee9a435a6004ac96d1c991a0110ef6205aebaa2c6fc4f68b4d33ce660f2dc29f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/deadline-propagation.md",
+        "sha256": "a2cb2fbd6733e2ec1649cedae206c82ec83ad83a3ef3e5cb8f200272ff3b312f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/java-timeout-surface.md",
+        "sha256": "ce67e676b63eee0fe821e5e5407ed48b12194ca04cacbc0de8a501948789106a"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/skill.yaml",
+        "sha256": "ec2c2602056b0fcf0076d65ebefba6d4da86d47020d6ffabd08ad483f8e6e0fb"
+      }
+    ]
+  },
+  {
+    "id": "A20",
+    "caseId": "R3",
+    "repetition": 2,
+    "condition": "reference",
+    "run": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A20",
+    "task": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A20/TASK.md",
+    "inputFiles": [
+      {
+        "path": "TASK.md",
+        "sha256": "b1605531fe32dfd126ff4f6d34b1ac958cc29db0141d3a9c17b1556dc7365fec"
+      },
+      {
+        "path": "input/project/README.md",
+        "sha256": "0a082fc19eafaaa6457ed4a4e130b1f2bf3d3383c5cf38b7b6d8b58f18dd69db"
+      },
+      {
+        "path": "input/project/REQUEST.md",
+        "sha256": "56945db46d190c1b8386060331a4646d5eabbf08ed2fc7836aba1989014b9e70"
+      },
+      {
+        "path": "input/project/RetryPlan.java",
+        "sha256": "844ff7510ceaf6b5ac31a1a0923264499754a32c22c93c79aa67154cf5b002b7"
+      },
+      {
+        "path": "input/project/Smoke.java",
+        "sha256": "634fa20018b52731e3b900d9b2bfde1f6020d12d39911956c4a76425559cd28f"
+      },
+      {
+        "path": "input/project/contract.md",
+        "sha256": "29a67d073d332265b2abb4b7fbea3ad033a0e66dcae2b91e97ca4f4580bb80b8"
+      },
+      {
+        "path": "input/project/run.mjs",
+        "sha256": "bb2c9544993bb4128564af264cc0f5719ce2d237f3a5e710027c062fecf1007c"
+      },
+      {
+        "path": "input/skills/idempotency/SKILL.md",
+        "sha256": "60201c4851368bb97820efbe1ffc7a2cb3acdc5c4338693be3697e0a6842eb08"
+      },
+      {
+        "path": "input/skills/idempotency/references/idempotency-key-filter.md",
+        "sha256": "a28e7743b5ed3083a0be7b7b1ac391aee9703d2502c564bb91fa03661b998a03"
+      },
+      {
+        "path": "input/skills/idempotency/references/key-selection.md",
+        "sha256": "1759159ef38e13a2566f2634cc2c9cfe7772238589445509008f5f06c2c98f0c"
+      },
+      {
+        "path": "input/skills/idempotency/skill.yaml",
+        "sha256": "c214d57330bcf1b03de02f27738160d0852c9612222ea4202c3ac99b44e954b3"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/SKILL.md",
+        "sha256": "214c6fc717590bbb425b624f0b3ea31de843ab4b8251a5b1e23897bd2235eb42"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/references/retry-failure-modes.md",
+        "sha256": "1f8cb4addb8592f4c8cb2767a4afd6362fd0f9c19f640ac1831cc233fe943e24"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/references/retry-in-java.md",
+        "sha256": "dbf3fb4bdef23956b4382b011f7dfaf861dd4daa3675871153a15dff947830f8"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/skill.yaml",
+        "sha256": "01e351a22ac96a47537af74f2ba0c6a2912eff069bdf97e10c743f23295ae468"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/SKILL.md",
+        "sha256": "ee9a435a6004ac96d1c991a0110ef6205aebaa2c6fc4f68b4d33ce660f2dc29f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/deadline-propagation.md",
+        "sha256": "a2cb2fbd6733e2ec1649cedae206c82ec83ad83a3ef3e5cb8f200272ff3b312f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/java-timeout-surface.md",
+        "sha256": "ce67e676b63eee0fe821e5e5407ed48b12194ca04cacbc0de8a501948789106a"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/skill.yaml",
+        "sha256": "ec2c2602056b0fcf0076d65ebefba6d4da86d47020d6ffabd08ad483f8e6e0fb"
+      }
+    ]
+  },
+  {
+    "id": "A21",
+    "caseId": "R3",
+    "repetition": 2,
+    "condition": "candidate",
+    "run": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A21",
+    "task": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A21/TASK.md",
+    "inputFiles": [
+      {
+        "path": "TASK.md",
+        "sha256": "e830e27f8f9acfd0757c966dbe18510b68ec5cbf8d776119bc769f7a5e23cbc1"
+      },
+      {
+        "path": "input/project/README.md",
+        "sha256": "0a082fc19eafaaa6457ed4a4e130b1f2bf3d3383c5cf38b7b6d8b58f18dd69db"
+      },
+      {
+        "path": "input/project/REQUEST.md",
+        "sha256": "56945db46d190c1b8386060331a4646d5eabbf08ed2fc7836aba1989014b9e70"
+      },
+      {
+        "path": "input/project/RetryPlan.java",
+        "sha256": "844ff7510ceaf6b5ac31a1a0923264499754a32c22c93c79aa67154cf5b002b7"
+      },
+      {
+        "path": "input/project/Smoke.java",
+        "sha256": "634fa20018b52731e3b900d9b2bfde1f6020d12d39911956c4a76425559cd28f"
+      },
+      {
+        "path": "input/project/contract.md",
+        "sha256": "29a67d073d332265b2abb4b7fbea3ad033a0e66dcae2b91e97ca4f4580bb80b8"
+      },
+      {
+        "path": "input/project/run.mjs",
+        "sha256": "bb2c9544993bb4128564af264cc0f5719ce2d237f3a5e710027c062fecf1007c"
+      },
+      {
+        "path": "input/skills/idempotency/SKILL.md",
+        "sha256": "60201c4851368bb97820efbe1ffc7a2cb3acdc5c4338693be3697e0a6842eb08"
+      },
+      {
+        "path": "input/skills/idempotency/references/idempotency-key-filter.md",
+        "sha256": "a28e7743b5ed3083a0be7b7b1ac391aee9703d2502c564bb91fa03661b998a03"
+      },
+      {
+        "path": "input/skills/idempotency/references/key-selection.md",
+        "sha256": "1759159ef38e13a2566f2634cc2c9cfe7772238589445509008f5f06c2c98f0c"
+      },
+      {
+        "path": "input/skills/idempotency/skill.yaml",
+        "sha256": "c214d57330bcf1b03de02f27738160d0852c9612222ea4202c3ac99b44e954b3"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/SKILL.md",
+        "sha256": "214c6fc717590bbb425b624f0b3ea31de843ab4b8251a5b1e23897bd2235eb42"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/references/retry-failure-modes.md",
+        "sha256": "957550428a69ae025518aad78363732d6afa6fd349fd2c1f79f58a692eaaa711"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/references/retry-in-java.md",
+        "sha256": "d4b069771ec515ab6ae729759c3e443979aeac287db91413a7f113515a923b71"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/skill.yaml",
+        "sha256": "51c1d38c801f9286740ddcf2ee6a9c680b8cbbf2679f8e877a28c4c80e428049"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/SKILL.md",
+        "sha256": "ee9a435a6004ac96d1c991a0110ef6205aebaa2c6fc4f68b4d33ce660f2dc29f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/deadline-propagation.md",
+        "sha256": "a2cb2fbd6733e2ec1649cedae206c82ec83ad83a3ef3e5cb8f200272ff3b312f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/java-timeout-surface.md",
+        "sha256": "ce67e676b63eee0fe821e5e5407ed48b12194ca04cacbc0de8a501948789106a"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/skill.yaml",
+        "sha256": "ec2c2602056b0fcf0076d65ebefba6d4da86d47020d6ffabd08ad483f8e6e0fb"
+      }
+    ]
+  },
+  {
+    "id": "A22",
+    "caseId": "R4",
+    "repetition": 2,
+    "condition": "reference",
+    "run": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A22",
+    "task": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A22/TASK.md",
+    "inputFiles": [
+      {
+        "path": "TASK.md",
+        "sha256": "833250f1a0495828417b42581e401a43a1e771ef051eee12c3a2857f330fba79"
+      },
+      {
+        "path": "input/project/README.md",
+        "sha256": "0a082fc19eafaaa6457ed4a4e130b1f2bf3d3383c5cf38b7b6d8b58f18dd69db"
+      },
+      {
+        "path": "input/project/REQUEST.md",
+        "sha256": "7dd644bf4411edc116c859953b0972780a1dd7ab6b5ca9f4fbab9e403e2167da"
+      },
+      {
+        "path": "input/project/incident.json",
+        "sha256": "025cfcb39ab16fc0a0d508183c6d30377c35445d1e334a1c55b146572e801181"
+      },
+      {
+        "path": "input/project/proposal.md",
+        "sha256": "86ee8bc99f8a7684662305b0a3e7250fe6db9bb03fdb2f879ca45bd40384caa9"
+      },
+      {
+        "path": "input/skills/idempotency/SKILL.md",
+        "sha256": "60201c4851368bb97820efbe1ffc7a2cb3acdc5c4338693be3697e0a6842eb08"
+      },
+      {
+        "path": "input/skills/idempotency/references/idempotency-key-filter.md",
+        "sha256": "a28e7743b5ed3083a0be7b7b1ac391aee9703d2502c564bb91fa03661b998a03"
+      },
+      {
+        "path": "input/skills/idempotency/references/key-selection.md",
+        "sha256": "1759159ef38e13a2566f2634cc2c9cfe7772238589445509008f5f06c2c98f0c"
+      },
+      {
+        "path": "input/skills/idempotency/skill.yaml",
+        "sha256": "c214d57330bcf1b03de02f27738160d0852c9612222ea4202c3ac99b44e954b3"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/SKILL.md",
+        "sha256": "214c6fc717590bbb425b624f0b3ea31de843ab4b8251a5b1e23897bd2235eb42"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/references/retry-failure-modes.md",
+        "sha256": "1f8cb4addb8592f4c8cb2767a4afd6362fd0f9c19f640ac1831cc233fe943e24"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/references/retry-in-java.md",
+        "sha256": "dbf3fb4bdef23956b4382b011f7dfaf861dd4daa3675871153a15dff947830f8"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/skill.yaml",
+        "sha256": "01e351a22ac96a47537af74f2ba0c6a2912eff069bdf97e10c743f23295ae468"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/SKILL.md",
+        "sha256": "ee9a435a6004ac96d1c991a0110ef6205aebaa2c6fc4f68b4d33ce660f2dc29f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/deadline-propagation.md",
+        "sha256": "a2cb2fbd6733e2ec1649cedae206c82ec83ad83a3ef3e5cb8f200272ff3b312f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/java-timeout-surface.md",
+        "sha256": "ce67e676b63eee0fe821e5e5407ed48b12194ca04cacbc0de8a501948789106a"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/skill.yaml",
+        "sha256": "ec2c2602056b0fcf0076d65ebefba6d4da86d47020d6ffabd08ad483f8e6e0fb"
+      }
+    ]
+  },
+  {
+    "id": "A23",
+    "caseId": "R4",
+    "repetition": 2,
+    "condition": "candidate",
+    "run": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A23",
+    "task": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A23/TASK.md",
+    "inputFiles": [
+      {
+        "path": "TASK.md",
+        "sha256": "6cea437f5dd9cbd5b4e1a973d182fd3fba58752c0a9ebce83b04510311d3be48"
+      },
+      {
+        "path": "input/project/README.md",
+        "sha256": "0a082fc19eafaaa6457ed4a4e130b1f2bf3d3383c5cf38b7b6d8b58f18dd69db"
+      },
+      {
+        "path": "input/project/REQUEST.md",
+        "sha256": "7dd644bf4411edc116c859953b0972780a1dd7ab6b5ca9f4fbab9e403e2167da"
+      },
+      {
+        "path": "input/project/incident.json",
+        "sha256": "025cfcb39ab16fc0a0d508183c6d30377c35445d1e334a1c55b146572e801181"
+      },
+      {
+        "path": "input/project/proposal.md",
+        "sha256": "86ee8bc99f8a7684662305b0a3e7250fe6db9bb03fdb2f879ca45bd40384caa9"
+      },
+      {
+        "path": "input/skills/idempotency/SKILL.md",
+        "sha256": "60201c4851368bb97820efbe1ffc7a2cb3acdc5c4338693be3697e0a6842eb08"
+      },
+      {
+        "path": "input/skills/idempotency/references/idempotency-key-filter.md",
+        "sha256": "a28e7743b5ed3083a0be7b7b1ac391aee9703d2502c564bb91fa03661b998a03"
+      },
+      {
+        "path": "input/skills/idempotency/references/key-selection.md",
+        "sha256": "1759159ef38e13a2566f2634cc2c9cfe7772238589445509008f5f06c2c98f0c"
+      },
+      {
+        "path": "input/skills/idempotency/skill.yaml",
+        "sha256": "c214d57330bcf1b03de02f27738160d0852c9612222ea4202c3ac99b44e954b3"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/SKILL.md",
+        "sha256": "214c6fc717590bbb425b624f0b3ea31de843ab4b8251a5b1e23897bd2235eb42"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/references/retry-failure-modes.md",
+        "sha256": "957550428a69ae025518aad78363732d6afa6fd349fd2c1f79f58a692eaaa711"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/references/retry-in-java.md",
+        "sha256": "d4b069771ec515ab6ae729759c3e443979aeac287db91413a7f113515a923b71"
+      },
+      {
+        "path": "input/skills/retries-and-backoff/skill.yaml",
+        "sha256": "51c1d38c801f9286740ddcf2ee6a9c680b8cbbf2679f8e877a28c4c80e428049"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/SKILL.md",
+        "sha256": "ee9a435a6004ac96d1c991a0110ef6205aebaa2c6fc4f68b4d33ce660f2dc29f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/deadline-propagation.md",
+        "sha256": "a2cb2fbd6733e2ec1649cedae206c82ec83ad83a3ef3e5cb8f200272ff3b312f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/java-timeout-surface.md",
+        "sha256": "ce67e676b63eee0fe821e5e5407ed48b12194ca04cacbc0de8a501948789106a"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/skill.yaml",
+        "sha256": "ec2c2602056b0fcf0076d65ebefba6d4da86d47020d6ffabd08ad483f8e6e0fb"
+      }
+    ]
+  },
+  {
+    "id": "A24",
+    "caseId": "R4",
+    "repetition": 2,
+    "condition": "dependencies",
+    "run": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A24",
+    "task": "C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/runs/A24/TASK.md",
+    "inputFiles": [
+      {
+        "path": "TASK.md",
+        "sha256": "b1236867922a30b84e17fdba71f09be14e82c159f6ecf82088b44dc458ad085e"
+      },
+      {
+        "path": "input/project/README.md",
+        "sha256": "0a082fc19eafaaa6457ed4a4e130b1f2bf3d3383c5cf38b7b6d8b58f18dd69db"
+      },
+      {
+        "path": "input/project/REQUEST.md",
+        "sha256": "7dd644bf4411edc116c859953b0972780a1dd7ab6b5ca9f4fbab9e403e2167da"
+      },
+      {
+        "path": "input/project/incident.json",
+        "sha256": "025cfcb39ab16fc0a0d508183c6d30377c35445d1e334a1c55b146572e801181"
+      },
+      {
+        "path": "input/project/proposal.md",
+        "sha256": "86ee8bc99f8a7684662305b0a3e7250fe6db9bb03fdb2f879ca45bd40384caa9"
+      },
+      {
+        "path": "input/skills/idempotency/SKILL.md",
+        "sha256": "60201c4851368bb97820efbe1ffc7a2cb3acdc5c4338693be3697e0a6842eb08"
+      },
+      {
+        "path": "input/skills/idempotency/references/idempotency-key-filter.md",
+        "sha256": "a28e7743b5ed3083a0be7b7b1ac391aee9703d2502c564bb91fa03661b998a03"
+      },
+      {
+        "path": "input/skills/idempotency/references/key-selection.md",
+        "sha256": "1759159ef38e13a2566f2634cc2c9cfe7772238589445509008f5f06c2c98f0c"
+      },
+      {
+        "path": "input/skills/idempotency/skill.yaml",
+        "sha256": "c214d57330bcf1b03de02f27738160d0852c9612222ea4202c3ac99b44e954b3"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/SKILL.md",
+        "sha256": "ee9a435a6004ac96d1c991a0110ef6205aebaa2c6fc4f68b4d33ce660f2dc29f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/deadline-propagation.md",
+        "sha256": "a2cb2fbd6733e2ec1649cedae206c82ec83ad83a3ef3e5cb8f200272ff3b312f"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/references/java-timeout-surface.md",
+        "sha256": "ce67e676b63eee0fe821e5e5407ed48b12194ca04cacbc0de8a501948789106a"
+      },
+      {
+        "path": "input/skills/timeouts-and-deadlines/skill.yaml",
+        "sha256": "ec2c2602056b0fcf0076d65ebefba6d4da86d47020d6ffabd08ad483f8e6e0fb"
+      }
+    ]
+  }
+]

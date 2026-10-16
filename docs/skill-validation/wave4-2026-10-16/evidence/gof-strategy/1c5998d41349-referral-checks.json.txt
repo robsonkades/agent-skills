@@ -1,0 +1,23 @@
+[
+  {
+    "status": "fulfilled",
+    "value": {
+      "chunk_id": "d0099e",
+      "wall_time_seconds": 0.1378555,
+      "exit_code": 0,
+      "original_token_count": 119,
+      "output": "{\"declaredTargetsChecked\":15,\"actualReferralNames\":[\"caching-strategies\",\"flame-graph-analysis\",\"gof-bridge\",\"gof-chain-of-responsibility\",\"gof-factory-method\",\"gof-pattern-thinking\",\"gof-state\",\"gof-template-method\",\"java-composition-over-inheritance\",\"java-memory-model\",\"jit-inlining-and-escape-analysis\",\"load-balancing-and-routing\",\"message-ordering-and-partitioning\",\"retries-and-backoff\",\"sharding-and-partitioning\"],\"unresolvedTargets\":[],\"undeclaredReferrals\":[]}\n"
+    }
+  },
+  {
+    "status": "fulfilled",
+    "value": {
+      "chunk_id": "a9af8d",
+      "wall_time_seconds": 0.1214971,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    }
+  }
+]
+

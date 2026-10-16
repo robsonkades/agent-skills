@@ -109,7 +109,9 @@ question. An explanation or a justified unchanged configuration can complete the
   sequence. Read the actual CSet and reclaimed bytes.
 - Legacy `To-space exhausted` and current `Evacuation Failure: Allocation` indicate copy
   allocation could not complete; `Evacuation Failure: Pinned` names a distinct pinned-region
-  cause. G1 may retain failed regions, expand when possible, retry young collections or eventually
+  cause. JDK 25 can report `Allocation / Pinned` together: investigate both rather than treating
+  the reasons as exclusive or every failure as a heap-sizing problem. G1 may retain failed regions,
+  expand when possible, retry young collections or eventually
   compact. Reconstruct the following events; none of these labels alone means a full GC occurred.
 - "Initial Mark" does not appear in a modern log. The phase is
   `Pause Young (Concurrent Start)`; searching for the old name returns nothing.

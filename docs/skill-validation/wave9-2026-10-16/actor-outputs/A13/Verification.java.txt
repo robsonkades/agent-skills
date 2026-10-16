@@ -1,0 +1,283 @@
+import java.math.BigInteger;
+import java.net.URI;
+import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import javax.tools.JavaCompiler;
+import javax.tools.SimpleJavaFileObject;
+import javax.tools.ToolProvider;
+
+public final class Verification {
+    private static int checks;
+    private static final Ports.Intent INTENT = new Ports.Intent("stable-intent", "fixed-payload");
+
+    public static void main(String[] args) throws Exception {
+        runSuite();
+        // Compile the actual implementation against a test-only, in-memory contract.
+        // The supplied Contract.java and all other supplied files remain unchanged.
+        Path variant = Path.of("classes", "replay-safe");
+        Files.createDirectories(variant);
+        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+        try (var manager = compiler.getStandardFileManager(null, null, null)) {
+            var units = new ArrayList<javax.tools.JavaFileObject>();
+            manager.getJavaFileObjects("Ports.java", "RetryEngine.java", "Verification.java")
+                    .forEach(units::add);
+            units.add(new SimpleJavaFileObject(URI.create("string:///Contract.java"),
+                    javax.tools.JavaFileObject.Kind.SOURCE) {
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+                    return "public final class Contract { public static final boolean REPLAY_SAFE = true; }";
+                }
+            });
+            boolean compiled = compiler.getTask(null, manager, null,
+                    List.of("--release", "17", "-d", variant.toString()), null, units).call();
+            check(compiled, "replay-safe test compilation");
+        }
+        try (var loader = new URLClassLoader(new java.net.URL[] {variant.toUri().toURL()},
+                ClassLoader.getPlatformClassLoader())) {
+            loader.loadClass("Verification").getMethod("runSuite").invoke(null);
+        }
+        System.out.println("Verification passed; actual source exercised with both replay contracts");
+    }
+
+    public static void runSuite() throws Exception {
+        checks = 0;
+        for (Ports.State terminal : List.of(Ports.State.APPLIED, Ports.State.REJECTED)) {
+            Harness h = new Harness();
+            h.state = terminal;
+            h.receipt = terminal == Ports.State.APPLIED ? "stored-receipt" : null;
+            String receipt = h.receipt;
+            h.expect(terminal, 0);
+            check(java.util.Objects.equals(receipt, h.receipt), "terminal receipt unchanged");
+            check(h.writes == 0 && h.tokens == 0, "terminal state untouched");
+        }
+
+        Harness h = new Harness(Ports.Kind.OK);
+        h.expect(Ports.State.APPLIED, 1);
+        check("receipt-original".equals(h.receipt) && h.tokens == 0, "authoritative receipt/initial free");
+
+        h = new Harness(Ports.Kind.TRANSIENT, Ports.Kind.OK);
+        h.serverMinimum = 12;
+        h.expect(Ports.State.APPLIED, 2);
+        check(h.waits.equals(List.of(12L)) && h.tokens == 1, "server minimum wins");
+
+        h = new Harness(Ports.Kind.TRANSIENT, Ports.Kind.OK);
+        h.serverMinimum = 2;
+        h.expect(Ports.State.APPLIED, 2);
+        check(h.waits.equals(List.of(4L)), "chosen local delay wins without new jitter");
+
+        h = new Harness(Ports.Kind.TRANSIENT, Ports.Kind.TRANSIENT, Ports.Kind.TRANSIENT);
+        h.expect(Ports.State.REJECTED, 3);
+        check(h.tokens == 2 && h.waits.size() == 2, "no admission or sleep after exhaustion");
+
+        h = new Harness(Ports.Kind.PERMANENT);
+        h.expect(Ports.State.REJECTED, 1);
+        check(h.tokens == 0 && h.waits.isEmpty(), "permanent ends unchanged replay");
+
+        h = new Harness();
+        h.cancelled = true;
+        h.expect(Ports.State.REJECTED, 0);
+        h = new Harness();
+        h.remaining = 14;
+        h.expect(Ports.State.REJECTED, 0);
+        h = new Harness(Ports.Kind.OK);
+        h.remaining = 15;
+        h.expect(Ports.State.APPLIED, 1);
+
+        h = new Harness(Ports.Kind.TRANSIENT, Ports.Kind.OK);
+        h.remaining = 19;
+        h.expect(Ports.State.APPLIED, 2);
+        check(h.waits.equals(List.of(4L)), "exact-fit retry allowed");
+        h = new Harness(Ports.Kind.TRANSIENT);
+        h.remaining = 18;
+        h.expect(Ports.State.REJECTED, 1);
+        check(h.tokens == 0 && h.waits.isEmpty(), "unaffordable wait refuses before token");
+        h = new Harness(Ports.Kind.TRANSIENT);
+        h.serverMinimum = Long.MAX_VALUE;
+        h.remaining = Long.MAX_VALUE;
+        h.expect(Ports.State.REJECTED, 1);
+        check(h.tokens == 0 && h.waits.isEmpty(), "never truncate huge server minimum");
+
+        h = new Harness();
+        h.policy = new Ports.Policy(3, Long.MAX_VALUE, 1, 0);
+        h.remaining = Long.MAX_VALUE;
+        h.expect(Ports.State.REJECTED, 0);
+        h = new Harness(Ports.Kind.OK);
+        h.policy = new Ports.Policy(3, Long.MAX_VALUE, 0, 0);
+        h.remaining = Long.MAX_VALUE;
+        h.expect(Ports.State.APPLIED, 1);
+
+        h = new Harness(Ports.Kind.TRANSIENT);
+        h.grant = false;
+        h.expect(Ports.State.REJECTED, 1);
+        check(h.tokens == 1 && h.waits.isEmpty(), "denied token never sleeps");
+        h = new Harness(Ports.Kind.TRANSIENT);
+        h.remainingAfterSleep = 14;
+        h.expect(Ports.State.REJECTED, 1);
+        check(h.tokens == 1 && h.waits.size() == 1, "oversleep rechecks; token not refunded");
+        h = new Harness(Ports.Kind.TRANSIENT);
+        h.cancelAfterSleep = true;
+        h.expect(Ports.State.REJECTED, 1);
+        h = new Harness(Ports.Kind.TRANSIENT);
+        h.cancelAfterCall = true;
+        h.expect(Ports.State.REJECTED, 1);
+        check(h.tokens == 0 && h.waits.isEmpty(), "cancellation before retry admission");
+
+        h = new Harness();
+        Thread.currentThread().interrupt();
+        try {
+            h.expectInterrupted();
+            check(h.calls == 0 && Thread.currentThread().isInterrupted(), "pre-interruption prevents call");
+        } finally {
+            Thread.interrupted();
+        }
+        h = new Harness();
+        h.interruptCall = true;
+        h.expectInterrupted();
+        check(h.state == Ports.State.UNKNOWN && h.calls == 1, "dispatch interruption persists uncertainty");
+        h = new Harness(Ports.Kind.TRANSIENT);
+        h.interruptSleep = true;
+        h.expectInterrupted();
+        check(h.calls == 1 && h.closes == 1, "sleep interruption propagates after closing reply");
+
+        h = new Harness(Ports.Kind.UNKNOWN, Ports.Kind.OK);
+        h.expect(Contract.REPLAY_SAFE ? Ports.State.APPLIED : Ports.State.UNKNOWN,
+                Contract.REPLAY_SAFE ? 2 : 1);
+        check(h.unknownWrites == 1, "UNKNOWN persisted immediately");
+        if (!Contract.REPLAY_SAFE) {
+            check(h.tokens == 0 && h.waits.isEmpty(), "unsafe unknown never redispatched");
+        }
+        h = new Harness(Ports.Kind.OK);
+        h.state = Ports.State.UNKNOWN;
+        h.expect(Contract.REPLAY_SAFE ? Ports.State.APPLIED : Ports.State.UNKNOWN,
+                Contract.REPLAY_SAFE ? 1 : 0);
+
+        h = new Harness();
+        h.state = Ports.State.UNKNOWN;
+        h.cancelled = true;
+        h.expect(Ports.State.UNKNOWN, 0);
+        h = new Harness();
+        h.state = Ports.State.UNKNOWN;
+        h.remaining = 0;
+        h.expect(Ports.State.UNKNOWN, 0);
+
+        if (Contract.REPLAY_SAFE) {
+            h = new Harness(Ports.Kind.UNKNOWN, Ports.Kind.PERMANENT);
+            h.expect(Ports.State.UNKNOWN, 2);
+            h = new Harness(Ports.Kind.UNKNOWN, Ports.Kind.TRANSIENT, Ports.Kind.TRANSIENT);
+            h.expect(Ports.State.UNKNOWN, 3);
+            h = new Harness(Ports.Kind.UNKNOWN);
+            h.grant = false;
+            h.expect(Ports.State.UNKNOWN, 1);
+            h = new Harness(Ports.Kind.UNKNOWN);
+            h.serverMinimum = Long.MAX_VALUE;
+            h.expect(Ports.State.UNKNOWN, 1);
+            h = new Harness(Ports.Kind.UNKNOWN);
+            h.remainingAfterSleep = 0;
+            h.expect(Ports.State.UNKNOWN, 1);
+            h = new Harness(Ports.Kind.UNKNOWN);
+            h.interruptSleep = true;
+            h.expectInterrupted();
+            check(h.state == Ports.State.UNKNOWN, "sleep interruption retains prior uncertainty");
+            h = new Harness(Ports.Kind.PERMANENT);
+            h.state = Ports.State.UNKNOWN;
+            h.expect(Ports.State.UNKNOWN, 1);
+            h = new Harness(Ports.Kind.TRANSIENT, Ports.Kind.OK);
+            h.state = Ports.State.UNKNOWN;
+            h.serverMinimum = 20;
+            h.expect(Ports.State.APPLIED, 2);
+            check(h.waits.equals(List.of(20L)), "transient response still honors minimum with prior unknown");
+            h = new Harness(Ports.Kind.UNKNOWN, Ports.Kind.OK);
+            h.serverMinimum = 30;
+            h.expect(Ports.State.APPLIED, 2);
+            check(h.waits.equals(List.of(30L)), "unknown response also carries server minimum");
+        }
+        System.out.println("Suite REPLAY_SAFE=" + Contract.REPLAY_SAFE + ": " + checks + " assertions passed");
+    }
+
+    private static void check(boolean condition, String message) {
+        checks++;
+        if (!condition) throw new AssertionError(message);
+    }
+
+    private static final class Harness implements Ports.Store, Ports.Runtime, Ports.Operation {
+        Ports.State state = Ports.State.PENDING;
+        String receipt;
+        Ports.Policy policy = new Ports.Policy(3, 10, 5, 4);
+        long remaining = 1000;
+        long serverMinimum;
+        long remainingAfterSleep = -1;
+        boolean cancelled, cancelAfterCall, cancelAfterSleep, interruptCall, interruptSleep;
+        boolean grant = true;
+        int calls, tokens, closes, open, writes, unknownWrites;
+        final List<Long> waits = new ArrayList<>();
+        final Ports.Kind[] sequence;
+
+        Harness(Ports.Kind... sequence) { this.sequence = sequence; }
+        public Ports.Snapshot snapshot() { return new Ports.Snapshot(state, receipt); }
+        public void unknown() { state = Ports.State.UNKNOWN; receipt = null; writes++; unknownWrites++; }
+        public void applied(String value) { state = Ports.State.APPLIED; receipt = value; writes++; }
+        public void rejected() {
+            check(state != Ports.State.UNKNOWN, "never erase unresolved effect");
+            state = Ports.State.REJECTED; receipt = null; writes++;
+        }
+        public long remainingNanos() { return remaining; }
+        public boolean cancelled() { return cancelled; }
+        public boolean acquireRetry() {
+            check(open == 0, "close before admission");
+            tokens++; return grant;
+        }
+        public void sleep(long nanos) throws InterruptedException {
+            check(open == 0, "close before sleeping");
+            check(nanos >= Math.max(policy.localWaitNanos(), serverMinimum), "server/local delay respected");
+            check(fits(nanos), "wait leaves attempt and reserve");
+            waits.add(nanos);
+            if (interruptSleep) throw new InterruptedException("during sleep");
+            remaining = remainingAfterSleep >= 0 ? remainingAfterSleep : remaining - nanos;
+            if (cancelAfterSleep) cancelled = true;
+        }
+        boolean fits(long delay) {
+            return BigInteger.valueOf(policy.attemptNanos()).add(BigInteger.valueOf(policy.reserveNanos()))
+                    .add(BigInteger.valueOf(delay)).compareTo(BigInteger.valueOf(remaining)) <= 0;
+        }
+        public Ports.Reply call(Ports.Intent intent, long timeout) throws InterruptedException {
+            check(open == 0, "close before next call");
+            check(intent.equals(INTENT), "intent and payload stable");
+            check(timeout == policy.attemptNanos() && fits(0), "timeout/admission policy");
+            check(!cancelled && !Thread.currentThread().isInterrupted(), "no call after cancellation");
+            check(calls == 0 || tokens == calls, "one token for each retry admission");
+            int index = calls++;
+            if (interruptCall) throw new InterruptedException("during dispatch");
+            check(index < sequence.length, "unexpected extra call");
+            Ports.Kind kind = sequence[index];
+            open++;
+            if (cancelAfterCall) cancelled = true;
+            return new Ports.Reply() {
+                boolean closed;
+                public Ports.Kind kind() { check(!closed, "live kind accessor"); return kind; }
+                public String receipt() { check(!closed, "live receipt accessor"); return "receipt-original"; }
+                public long serverMinimumNanos() { check(!closed, "live delay accessor"); return serverMinimum; }
+                public void close() {
+                    check(!closed, "close exactly once");
+                    if (kind == Ports.Kind.UNKNOWN) check(state == Ports.State.UNKNOWN, "persist before release/retry");
+                    closed = true; open--; closes++;
+                }
+            };
+        }
+        void expect(Ports.State expected, int count) throws Exception {
+            Ports.Result result = RetryEngine.execute(INTENT, policy, this, this, this);
+            check(result.snapshot().equals(snapshot()) && state == expected, "result matches durable state " + expected);
+            check(result.attempts() == count && calls == count, "calls counted in this invocation");
+            check(open == 0 && closes == calls, "all returned replies closed on normal return");
+        }
+        void expectInterrupted() throws Exception {
+            try {
+                RetryEngine.execute(INTENT, policy, this, this, this);
+                throw new AssertionError("interruption swallowed");
+            } catch (InterruptedException expected) {
+                check(open == 0, "no reply leaked on interruption");
+            }
+        }
+    }
+}

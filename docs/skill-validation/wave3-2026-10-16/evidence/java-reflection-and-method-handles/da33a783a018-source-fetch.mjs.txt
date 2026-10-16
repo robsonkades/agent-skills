@@ -1,0 +1,29 @@
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
+
+const root = fileURLToPath(new URL('.', import.meta.url));
+mkdirSync(resolve(root, 'sources'), { recursive: true });
+const sources = [
+  ['jls-17-initialization.html', 'https://docs.oracle.com/javase/specs/jls/se17/html/jls-12.html'],
+  ['lookup-17.html', 'https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/invoke/MethodHandles.Lookup.html'],
+  ['method-handles-17.html', 'https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/invoke/MethodHandles.html'],
+  ['lambda-metafactory-17.html', 'https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/invoke/LambdaMetafactory.html'],
+  ['method-handle-25.html', 'https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/invoke/MethodHandle.html'],
+  ['jdk-22-release-notes.html', 'https://www.oracle.com/java/technologies/javase/22-relnote-issues.html']
+];
+const results = await Promise.all(sources.map(async ([name, url]) => {
+  try {
+    const response = await fetch(url, { signal: AbortSignal.timeout(25000) });
+    const bytes = Buffer.from(await response.arrayBuffer());
+    writeFileSync(resolve(root, 'sources', name), bytes);
+    return { url, status: response.status, artifact: 'sources/' + name, bytes: bytes.length,
+      sha256: createHash('sha256').update(bytes).digest('hex') };
+  } catch (error) {
+    return { url, status: 'UNAVAILABLE', error: error.message };
+  }
+}));
+writeFileSync(resolve(root, 'source-fetch-results.json'), JSON.stringify(results, null, 2) + '\n');
+console.log(JSON.stringify(results, null, 2));
+if (results.some(result => result.status !== 200)) process.exitCode = 1;

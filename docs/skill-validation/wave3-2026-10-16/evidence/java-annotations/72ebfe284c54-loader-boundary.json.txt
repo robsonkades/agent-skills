@@ -1,0 +1,9 @@
+{
+  "appClassOnApiPath": false,
+  "appClassOnProcessorPath": false,
+  "processorPath": [
+    "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\out\\processors",
+    "C:\\Users\\robso\\AppData\\Local\\Temp\\java-annotations-quality14-cdb209c3a2eb42efbc9567f6f94a7988\\out\\api"
+  ],
+  "applicationInput": "src/app/example/LocalCodec.java"
+}

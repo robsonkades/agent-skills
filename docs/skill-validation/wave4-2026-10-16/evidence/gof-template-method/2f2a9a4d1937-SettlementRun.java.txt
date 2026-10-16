@@ -1,0 +1,38 @@
+import java.time.*;
+import java.util.Objects;
+
+public final class SettlementRun {
+
+    private final SettlementSteps steps;
+    private final AuditLog audit;
+    private final Clock clock;
+
+    public SettlementRun(SettlementSteps steps, AuditLog audit, Clock clock) {
+        this.steps = Objects.requireNonNull(steps);
+        this.audit = Objects.requireNonNull(audit);
+        this.clock = Objects.requireNonNull(clock);
+    }
+
+    public RunReport run(LocalDate date, RunId logicalRunId, Deadline deadline) {
+        var context = new RunContext(date, Objects.requireNonNull(logicalRunId), clock.instant(), deadline);
+        audit.runStarted(context);
+
+        try {
+            var batch = steps.load(context);
+            var validated = steps.validate(batch, context);    // returns; does not mutate
+            var results = steps.settle(validated, context);
+            steps.record(results, context);
+
+            var report = RunReport.of(results, context);
+            audit.runFinished(context, report);                // success path only
+            return report;
+        } catch (RuntimeException failure) {
+            try { audit.runFailed(context, failure); }
+            catch (RuntimeException auditFailure) {
+                if (auditFailure != failure) failure.addSuppressed(auditFailure);
+            }
+            throw failure;
+        }
+    }
+}
+

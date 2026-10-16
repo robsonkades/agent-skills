@@ -1,0 +1,65 @@
+{
+  "classification": "Evaluator-only criteria, separate from task inputs.",
+  "cases": [
+    {
+      "id": "borrowed-resource",
+      "expected": [
+        "Identify that the implementation closes a resource the interface promises to leave open, on both success and read failure.",
+        "Classify the concrete LSP effect rather than inferring correctness from identical returned bytes or successful compilation.",
+        "Recommend removing ownership-taking closure while preserving values and IOException behavior; retain caller ownership rather than editing the public promise.",
+        "Use a close-tracking/closure-observable fixture and check both return/failure and resource lifetime.",
+        "Recognize that ByteArrayInputStream remains usable after close and therefore a reuse-only test can conceal the defect."
+      ],
+      "failureConditions": [
+        "Approves the implementation because try-with-resources is generally good cleanup.",
+        "Counts returned bytes alone as complete substitutability validation.",
+        "Rewrites the public ownership contract without a consumer transition.",
+        "Creates unrelated interfaces or upgrades Java.",
+        "Claims an agent improvement measurement from source or runtime checks."
+      ]
+    },
+    {
+      "id": "transferred-resource",
+      "expected": [
+        "Recognize that the application contract explicitly transfers ownership and requires closure on success/read failure.",
+        "Preserve the try-with-resources implementation when its other documented effects hold; no LSP ownership finding merely because close occurs.",
+        "Distinguish this application method contract from InputStream.readAllBytes's inherited no-close contract.",
+        "Use a close-observable fixture to establish cleanup on successful and failed reads; normal ByteArrayInputStream reuse is not proof that close was omitted."
+      ],
+      "failureConditions": [
+        "Removes closure by imposing the borrowed-resource rule on transferred ownership.",
+        "Reports a SOLID violation solely from closing an AutoCloseable parameter.",
+        "Misuses InputStream.readAllBytes's method contract to prohibit an enclosing application operation from owning the input.",
+        "Treats adding wrappers or splitting the interface as a goal independent of concrete harm."
+      ]
+    }
+  ],
+  "walkthroughs": [
+    {
+      "scenario": "Independent history absent and no committed authority/extension requirement",
+      "expected": "Do not invent an SRP/OCP finding from class length, switch shape or dependency count.",
+      "status": "Structured walkthrough only"
+    },
+    {
+      "scenario": "Required save versus explicitly optional collection mutation",
+      "expected": "Required save rejecting every legal call is a contract defect; documented optional operations require their actual consumer contract.",
+      "status": "Structured walkthrough only"
+    },
+    {
+      "scenario": "Java 17 consumer requests the shown Java 21 record-pattern switch",
+      "expected": "Inspect target and retain ordinary classes/polymorphism; do not silently upgrade or enable preview.",
+      "status": "Structured walkthrough only"
+    },
+    {
+      "scenario": "Refund extraction requested as mechanical refactoring",
+      "expected": "Preserve original outcomes/mappings; isolate new validation, structured returns, enum mapping and public consumer transitions.",
+      "status": "Structured walkthrough only"
+    },
+    {
+      "scenario": "New interface proposed solely for DIP slogan",
+      "expected": "Consult java-dependency-inversion and require a real seam; no interface-per-class mandate.",
+      "status": "Structured walkthrough only"
+    }
+  ],
+  "pending": "Coordinator may run controlled original/no-skill agent evaluations. No skill edit was made, so there is no revised-content delta to compare."
+}

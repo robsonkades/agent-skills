@@ -1,0 +1,3 @@
+sku,currency
+W-17,USD
+W-17,EUR

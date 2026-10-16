@@ -1,0 +1,20 @@
+# RetryEngine repair
+
+The supplied component is a single-owner synchronous Java 17 runner. The durable/atomic Store and peer replay guarantee are exercise contracts, not properties established here. Contract.java supplies REPLAY_SAFE=true; no real provider, API version, database or isolation level is provided.
+
+The original implementation changed the intent ID per attempt, unconditionally dispatched terminal or cancelled work, ignored remaining budget and reserve, chose the shorter retry delay, leaked replies on some stops, and overwrote unresolved outcomes with REJECTED. The added regression failed against that implementation on its first dispatch because purchase-1 became purchase-1-0.
+
+The repaired implementation passes the original Intent unchanged and returns existing APPLIED/REJECTED snapshots without calls or writes. It remembers uncertainty from both the initial store and every UNKNOWN reply. UNKNOWN is persisted before retry admission or sleeping. A later TRANSIENT or PERMANENT only describes that attempt and cannot erase earlier uncertainty. Only authoritative OK stores APPLIED and the supplied receipt. Interruption during call stores UNKNOWN and propagates; sleep interruption propagates without fabricating a terminal failure.
+
+Call admission requires the complete attempt plus reserve. Retry admission additionally requires max(local delay, server minimum), an available attempt, no cancellation/interruption, and one retry token. Comparisons and subtraction avoid long overflow. Remaining budget and cancellation/interruption are checked again after sleeping, so oversleep may consume a token without another call. Try-with-resources closes each returned reply exactly once before sleeping, the next call or a normal return. The public signature and Java baseline are unchanged.
+
+Validation executed:
+- Original Smoke: passed.
+- New Verification against the original engine: failed on changed intent identity, as expected for the reproduced defect.
+- Verification against the repaired engine: passed all 41 scenarios using the actual RetryEngine. Cases cover terminal replay, initial and accumulated UNKNOWN, authoritative receipts, permanent failures, attempt exhaustion, server/local delay precedence, exact and insufficient budget, long overflow, token denial, oversleep, fresh budget after a call, cancellation and interruption. Instrumented replies assert closure order and count; fake runtime callbacks assert UNKNOWN was persisted before waiting/retrying.
+- SHA-256 comparisons confirmed all seven immutable output copies match input/project.
+- Runtime/compiler reported Temurin/OpenJDK 25.0.3; the inspected runner compiles with javac --release 17 and caps each Java subprocess at 20 seconds.
+
+The final Smoke run and artifact validation are recorded in execution.json. No repository-wide checks apply to this isolated supplied project.
+
+These are deterministic local simulations. They do not establish durable-store correctness, crash recovery, concurrent-worker behavior, actual timeout enforcement, physical cancellation, wall-clock latency or any provider's effect guarantee. The immutable REPLAY_SAFE=true configuration means the false branch was not executed. No authoritative reconciliation port is supplied, so unresolved outcomes remain a recovery obligation. Production validation would need the real endpoint's same-key/payload scope and retention, durable-store crash tests, and observed timeout/cancellation behavior. Routing in the supplied skills to retry-policy, consistency and distributed-recovery packages was not followed because those packages are outside the supplied context; no browsing, delegation or external configuration changes occurred.

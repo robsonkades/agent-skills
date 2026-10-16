@@ -1,6 +1,6 @@
 schemaVersion: 1
 name: spring-boot
-version: 1.2.1
+version: 1.2.2
 description: >-
   Create and integrate Spring Boot 4 services, or configure and diagnose bean
   composition, auto-configuration, external properties and lifecycle. Use for a new

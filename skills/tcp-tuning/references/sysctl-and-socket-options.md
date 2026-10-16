@@ -139,8 +139,16 @@ availability, algorithm revision, pacing and the actual workload determine the r
 | --------------------- | ------------------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------ |
 | CUBIC (often default) | Loss/ECN, cubic `cwnd` growth                     | General-purpose baseline to compare | Kernel support                                                           |
 | BBR                   | Measured bandwidth and minimum RTT                | Networks with non-congestive loss   | Built-in support or an available `tcp_bbr` module; check revision/pacing |
-| DCTCP                 | Fraction of ECN-marked bytes; also reacts to loss | Controlled datacentre fabric        | Compatible ECN negotiation and fabric marking                            |
+| DCTCP                 | Smoothed ECN-marked fraction; also reacts to loss | Controlled datacentre fabric        | Compatible ECN negotiation and fabric marking                            |
 | Reno                  | Packet loss                                       | Simple, low-BDP networks            | None                                                                     |
+
+Interpret DCTCP's alpha against the deployed implementation and update window. Mainline Linux
+6.12 smooths deltas of the packet counters `delivered`/`delivered_ce`, not a byte-weighted capture
+fraction. Its `dctcp_ab_ecn`/`dctcp_ab_tot` diagnostics multiply those deltas by the current MSS
+rather than summing payload bytes. Match units, window boundaries and smoothing before treating
+a mismatch as faulty ECN feedback. Compare
+[Linux 6.12 DCTCP accounting](https://github.com/torvalds/linux/blob/v6.12/net/ipv4/tcp_dctcp.c) with
+[older byte-counting implementations](https://github.com/torvalds/linux/blob/v3.18/net/ipv4/tcp_dctcp.c).
 
 ```bash
 sysctl net.ipv4.tcp_congestion_control            # default for new connections

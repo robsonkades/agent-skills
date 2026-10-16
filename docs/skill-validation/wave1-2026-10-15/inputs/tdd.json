@@ -1,0 +1,6 @@
+{
+  "skill": "tdd",
+  "common": "Use tdd for a review-only exercise. Give the next minimal edit, rationale, and validation plan, without tools or execution claims. The project uses Java 17 and JUnit 5 and has an established focused test command. The implementation is int fee(int subtotalCents) { return subtotalCents > 10000 ? 0 : 500; }. Existing tests expect 500 for 9999 and 0 for 10001. The new assertEquals(0, fee(10000)) failed: expected 0, actual 500. A teammate says to change the expectation to 500 to call it green. Inputs are nonnegative; other behavior is out of scope.",
+  "scenarioA": "The accepted policy provides free delivery for subtotals AT LEAST 10000 cents and charges 500 otherwise.",
+  "scenarioB": "The accepted policy provides free delivery for subtotals STRICTLY GREATER THAN 10000 cents and charges 500 otherwise."
+}

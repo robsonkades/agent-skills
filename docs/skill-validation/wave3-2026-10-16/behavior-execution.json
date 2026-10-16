@@ -1,0 +1,42 @@
+{
+  "startedAt": "2026-10-16T14:55:35.268Z",
+  "runs": [
+    {
+      "runId": "c1-none",
+      "actor": "wave3_actor01",
+      "status": "completed-graded",
+      "allWritesStopped": true
+    },
+    {
+      "runId": "c1-baseline",
+      "actor": "wave3_actor02",
+      "status": "completed-graded",
+      "allWritesStopped": true
+    },
+    {
+      "runId": "c1-revised",
+      "actor": "wave3_actor03",
+      "status": "completed-graded",
+      "allWritesStopped": true
+    },
+    {
+      "runId": "c2-none",
+      "actor": "wave3_actor04",
+      "status": "completed-graded",
+      "allWritesStopped": true
+    },
+    {
+      "runId": "c2-baseline",
+      "actor": "wave3_actor05",
+      "status": "completed-graded",
+      "allWritesStopped": true
+    },
+    {
+      "runId": "c2-revised",
+      "actor": "wave3_actor06",
+      "status": "completed-graded",
+      "allWritesStopped": true
+    }
+  ],
+  "updatedAt": "2026-10-16T15:06:13.485Z"
+}

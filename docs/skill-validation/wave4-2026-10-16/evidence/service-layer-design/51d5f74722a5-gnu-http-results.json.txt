@@ -1,0 +1,22 @@
+[
+  {
+    "url": "https://www.gnu.org/software/bash/manual/html_node/Pipelines.html",
+    "finalURL": "https://www.gnu.org/software/bash/manual/html_node/Pipelines.html",
+    "status": 403,
+    "bodyBytes": 199,
+    "bodySHA256": "5b13fb5957b84ef7bb9d0b6cd509c947ff6a37d67efdac2b896ddd3b908aad10",
+    "term": "pipefail",
+    "found": false,
+    "excerpt": null
+  },
+  {
+    "url": "https://www.gnu.org/software/bash/manual/html_node/Simple-Command-Expansion.html",
+    "finalURL": "https://www.gnu.org/software/bash/manual/html_node/Simple-Command-Expansion.html",
+    "status": 403,
+    "bodyBytes": 199,
+    "bodySHA256": "5b13fb5957b84ef7bb9d0b6cd509c947ff6a37d67efdac2b896ddd3b908aad10",
+    "term": "last command substitution",
+    "found": false,
+    "excerpt": null
+  }
+]

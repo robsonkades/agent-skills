@@ -76,7 +76,9 @@ execution model or a full fault campaign.
    when internal owner names are sensitive; the representation must support the caller's actual
    decision (`rpc-and-api-contracts`).
 7. **Only then consider hedging**, with operation safety, replica independence/consistency,
-   rate/capacity budget and cancellability measured.
+   rate/capacity budget and cancellability measured. Trace the actual client's winner selection:
+   it may commit and cancel alternatives on response headers, before application eligibility
+   checks. A later rejection cannot restore those alternatives; see the hedging reference.
 
 ## Decision block
 

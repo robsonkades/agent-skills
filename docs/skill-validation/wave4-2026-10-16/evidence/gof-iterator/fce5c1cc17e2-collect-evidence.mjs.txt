@@ -1,0 +1,15 @@
+import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { resolve, join, dirname, relative } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
+const root = dirname(fileURLToPath(import.meta.url));
+function inventory(dir) {
+  return readdirSync(dir).sort().flatMap(name => {
+    const path = join(dir, name);
+    if (statSync(path).isDirectory()) return inventory(path);
+    return [{ path: path.replaceAll('\\\\', '/'), relativePath: relative(root, path).replaceAll('\\\\', '/'), bytes: statSync(path).size, sha256: createHash('sha256').update(readFileSync(path)).digest('hex').toUpperCase() }];
+  });
+}
+const json = {};
+for (const name of ['baseline-hashes.json','extraction.json','attempt1-failure.json','commands.json','commands-attempt2.json','technical-results.json','local-checks-result.json','cases-inputs.json','evaluator-criteria.json','source-support.json','local-command-results.json']) json[name] = JSON.parse(readFileSync(join(root, name), 'utf8'));
+console.log(JSON.stringify({ root, artifacts: inventory(root), json }));

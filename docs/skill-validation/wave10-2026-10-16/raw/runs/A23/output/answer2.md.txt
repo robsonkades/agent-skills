@@ -1,0 +1,17 @@
+**Recomendo adotar J para os próximos 12 meses, com decisão de Diego amanhã, sem novas investigações para escolher entre H e J.** A atualização do financeiro resolve a incerteza que sustentava a recomendação condicional anterior.
+
+Com os valores fornecidos, em milhares:
+
+- H: **240** de custo futuro total.
+- J: **12 + 12 × 17 = 216**, incluindo migração/saída e todos os itens mensais.
+- Economia de J: **24 mil no ano, ou 10%** frente a H.
+
+A fatura fixa de 17 mil está abaixo do ponto de equilíbrio de 19 mil/mês. Os 180 mil já pagos por H continuam excluídos por serem irrecuperáveis.
+
+Segundo as premissas do caso, ambas as alternativas e a transição de J atendem às exigências aplicáveis. Como o único critério restante é o menor custo futuro total e não há outra incerteza material, **J domina H nesta decisão**. O custo fixo de 12 mil é um compromisso aceito e já contabilizado; não impede essa conclusão.
+
+Não recomendo as quatro semanas adicionais de benchmarking solicitadas pelo patrocinador. Os resultados plausíveis de latência permanecem dentro do contrato e não alteram custo, qualidade percebida ou preferência do decisor. Portanto, não mudariam a escolha. Exigir uma desvantagem decisiva de cada opção fabricaria um conflito que os dados não apresentam. O atraso também não tem benefício decisório demonstrado; seu custo não foi informado.
+
+Encerrar a análise e apresentar a adoção de J para autorização de Diego. A conclusão da investigação A fundamenta a recomendação, mas não autoriza, por si só, gastar com a migração. Reabrir a comparação somente se alguma premissa material efetivamente mudar, como preço, volume ou atendimento às exigências.
+
+Usei a conclusão do financeiro como informação fornecida e executei apenas o cálculo local. Não executei a investigação A nem benchmarks.

@@ -1,0 +1,675 @@
+{
+  "status": "NO_CHANGES_NEEDED",
+  "skill": "java-solid",
+  "ownedPath": "skills/java-solid/**",
+  "repository": "C:/git/agent-skills",
+  "reviewDate": "2026-10-16",
+  "allWritesStopped": true,
+  "ownership": "No repository file was changed. No shared writes, neighboring edits, global checks, installations, Git mutations, real agent configuration changes, or delegation.",
+  "procedure": {
+    "readings": [
+      "Applicable AGENTS.md",
+      "Complete docs/skill-review-prompt.md",
+      "docs/parallel-skill-reviews.md",
+      "docs/skill-validation/wave3-2026-10-16/review-brief.md",
+      "skills/skill-engineering/SKILL.md and relevant evidence/evaluation/resource-design/anti-pattern references"
+    ],
+    "reuse": "Unchanged procedure and reference material reused from this review sequence as authorized by the wave brief; skill-engineering main document reread.",
+    "entireAssignedPackageRead": true,
+    "assessmentSentBeforeEdits": "Assessment sent to coordinator before validation; no catalog edit was warranted or performed."
+  },
+  "baseline": {
+    "committedVersion": "1.2.4",
+    "assignmentVersion": "1.2.4",
+    "preExistingVersionBump": false,
+    "committedDifferences": [],
+    "stagedDifferences": [],
+    "unstagedDifferences": [],
+    "untrackedFiles": [],
+    "observation": "Five-file package clean at assignment; Git inspection and full byte/hash backup retained.",
+    "backup": "C:/Users/robso/AppData/Local/Temp/codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e/baseline/java-solid",
+    "status": "C:/Users/robso/AppData/Local/Temp/codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e/baseline-status.txt",
+    "diff": "C:/Users/robso/AppData/Local/Temp/codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e/baseline.diff",
+    "stagedDiff": "C:/Users/robso/AppData/Local/Temp/codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e/baseline-staged.diff",
+    "committedManifest": "C:/Users/robso/AppData/Local/Temp/codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e/committed-skill.yaml",
+    "hashes": [
+      {
+        "path": "C:\\git\\agent-skills\\skills\\java-solid\\SKILL.md",
+        "bytes": 7229,
+        "sha256": "6DD084F93ECBB3B7B910A0B9237B89EF75888243D3B250D638E836668CE45A63"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\java-solid\\skill.yaml",
+        "bytes": 1464,
+        "sha256": "8B9D51549DB4DEC1E1674019D88C0FADFDC1346DBD1FFB0769AC4DA1A8C69F10"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\java-solid\\references\\lsp-and-isp.md",
+        "bytes": 10808,
+        "sha256": "352C127CBEC56DB892FD98837403D9C93BF1CA97625CD9AD114A88B29434CA24"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\java-solid\\references\\srp-and-ocp.md",
+        "bytes": 5993,
+        "sha256": "5522F4CE3C3D28CDE93979D76E4C8DCC8E78162CE63A252B530ADEE106066A42"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\java-solid\\references\\worked-refactoring.md",
+        "bytes": 7933,
+        "sha256": "34CBF48FE27DF9D99AF96D6A54CF47DEB2FA4740A34DC46D148AE9E1E13D2CE8"
+      }
+    ]
+  },
+  "scopeAndCriteria": {
+    "role": "Evidence-based SOLID review; findings/no-change are legitimate outcomes, and implementation is conditional on the consumer's request.",
+    "baseline": "Worked refactoring is Java 21 without preview; existing partial examples keep their stated prerequisites. Consumer compatibility must be inspected before recommendations.",
+    "successCriteria": [
+      "Base findings on concrete harm or committed consumer/ownership constraints rather than class/method counts.",
+      "Keep SRP authority/change-pressure evidence distinct from shape heuristics.",
+      "Preserve OCP alternatives: local switch edits, sealed owned variants and open extension seams depend on actual consumers.",
+      "Judge LSP through the full accepted contract, including state effects, errors, ownership, equality and history constraints.",
+      "Judge ISP by client/implementor harm and optional-operation contracts, with staged exported API migration.",
+      "Preserve existing scope boundaries for DIP depth, formal contracts and idempotency."
+    ]
+  },
+  "findingsCorrected": [],
+  "findingsRemaining": [],
+  "findings": [
+    {
+      "status": "ADEQUATE_NO_CHANGE",
+      "location": "SKILL.md:25-48; references/srp-and-ocp.md:5-92",
+      "observation": "The workflow already requires version/consumer evidence, concrete harm, false-positive checks, recommendation cost and no-change/deferral alternatives.",
+      "decision": "Retain it. Additional generic fields or blanket interface/splitting guidance would not improve the supported decision."
+    },
+    {
+      "status": "ADEQUATE_CONFIRMED_TECHNICALLY",
+      "location": "SKILL.md:75-85; references/lsp-and-isp.md:107-122",
+      "observation": "The existing LSP treatment explicitly includes borrowed/transferred ownership, failure effects, and close-observable test resources.",
+      "evidence": "Java SE 21 contracts plus isolated success/failure probes confirm the documented mechanism and its legitimate alternative.",
+      "decision": "Retain the guidance unchanged; it already tells the reviewer how to detect the demonstrated defect and avoid the corresponding false positive."
+    },
+    {
+      "status": "ADEQUATE_NO_CHANGE",
+      "location": "references/lsp-and-isp.md:124-180",
+      "observation": "Optional operations, covariant returns, inherited history constraints, default-method evolution and client-driven interface segregation are already qualified.",
+      "decision": "Do not turn signals such as UnsupportedOperationException, a wide interface or defaults into unconditional findings."
+    },
+    {
+      "status": "ADEQUATE_NO_CHANGE",
+      "location": "references/worked-refactoring.md:55-65 and 130-158",
+      "observation": "The worked example distinguishes enum mapping, new invalid-input policy and structured-return changes from mechanical SRP extraction; production refund/idempotency limitations are explicit.",
+      "decision": "Preserve the illustrative scope and existing neighboring handoffs rather than expanding into a production payment implementation."
+    }
+  ],
+  "filesChangedByReviewer": [],
+  "preExistingChangesPreserved": [],
+  "filesPreservedByteForByte": [
+    "SKILL.md",
+    "skill.yaml",
+    "references/lsp-and-isp.md",
+    "references/srp-and-ocp.md",
+    "references/worked-refactoring.md"
+  ],
+  "finalHashes": [
+    {
+      "path": "C:\\git\\agent-skills\\skills\\java-solid\\SKILL.md",
+      "bytes": 7229,
+      "sha256": "6DD084F93ECBB3B7B910A0B9237B89EF75888243D3B250D638E836668CE45A63"
+    },
+    {
+      "path": "C:\\git\\agent-skills\\skills\\java-solid\\skill.yaml",
+      "bytes": 1464,
+      "sha256": "8B9D51549DB4DEC1E1674019D88C0FADFDC1346DBD1FFB0769AC4DA1A8C69F10"
+    },
+    {
+      "path": "C:\\git\\agent-skills\\skills\\java-solid\\references\\lsp-and-isp.md",
+      "bytes": 10808,
+      "sha256": "352C127CBEC56DB892FD98837403D9C93BF1CA97625CD9AD114A88B29434CA24"
+    },
+    {
+      "path": "C:\\git\\agent-skills\\skills\\java-solid\\references\\srp-and-ocp.md",
+      "bytes": 5993,
+      "sha256": "5522F4CE3C3D28CDE93979D76E4C8DCC8E78162CE63A252B530ADEE106066A42"
+    },
+    {
+      "path": "C:\\git\\agent-skills\\skills\\java-solid\\references\\worked-refactoring.md",
+      "bytes": 7933,
+      "sha256": "34CBF48FE27DF9D99AF96D6A54CF47DEB2FA4740A34DC46D148AE9E1E13D2CE8"
+    }
+  ],
+  "finalOwnedDiff": "C:/Users/robso/AppData/Local/Temp/codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e/final-owned-diff.stdout.log",
+  "finalOwnedStatus": "C:/Users/robso/AppData/Local/Temp/codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e/final-owned-status.stdout.log",
+  "finalStagedDiff": "C:/Users/robso/AppData/Local/Temp/codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e/final-staged-diff.stdout.log",
+  "capabilitiesPreserved": [
+    "All five SOLID principles as review decisions rather than slogans.",
+    "Per-principle heuristics distinguished from evidence, including new-code accepted requirements when mature history is absent.",
+    "Costed alternatives, adequate-design/no-change results, compatibility and consumer migration.",
+    "Concrete LSP examples for strengthened preconditions, mandatory-operation failure, asymmetric equality/hash behavior and inherited effects.",
+    "Borrowed/transferred resource ownership and failure-state contracts, including fixtures that can conceal closure.",
+    "Optional-operation and default-method counterexamples for ISP.",
+    "Open/sealed extension trade-offs and source-versus-separately-deployed-binary coverage.",
+    "Refund policy/refactoring example with explicit contract changes, boundary tests and production idempotency caveats.",
+    "Three conditionally routed references and existing DIP/formal-contract/cohesion/idempotency handoffs."
+  ],
+  "capabilitiesReplaced": [],
+  "capabilitiesRemoved": [],
+  "version": {
+    "committed": "1.2.4",
+    "assignment": "1.2.4",
+    "final": "1.2.4",
+    "rationale": "No contents changed; no version bump permitted or necessary."
+  },
+  "commandsExecuted": [
+    {
+      "command": "node C:/Users/robso/AppData/Local/Temp/codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e/validate.mjs",
+      "cwd": "C:/git/agent-skills",
+      "result": "Exit 0. Exact spawned commands, argument arrays, working directories and raw stdout/stderr retained below.",
+      "childCommands": [
+        {
+          "label": "java-version",
+          "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+          "args": [
+            "-version"
+          ],
+          "cwd": "C:/git/agent-skills",
+          "status": 0,
+          "signal": null,
+          "error": null,
+          "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\java-version.stdout.log",
+          "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\java-version.stderr.log"
+        },
+        {
+          "label": "borrowed-compile",
+          "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+          "args": [
+            "--release",
+            "21",
+            "-d",
+            "classes",
+            "PayloadReader.java",
+            "StreamPayloadReader.java",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\OwnershipProbe.java"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\cases\\borrowed",
+          "status": 0,
+          "signal": null,
+          "error": null,
+          "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\borrowed-compile.stdout.log",
+          "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\borrowed-compile.stderr.log"
+        },
+        {
+          "label": "borrowed-probe",
+          "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+          "args": [
+            "-cp",
+            "classes",
+            "OwnershipProbe",
+            "borrowed"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\cases\\borrowed",
+          "status": 0,
+          "signal": null,
+          "error": null,
+          "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\borrowed-probe.stdout.log",
+          "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\borrowed-probe.stderr.log"
+        },
+        {
+          "label": "transferred-compile",
+          "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe",
+          "args": [
+            "--release",
+            "21",
+            "-d",
+            "classes",
+            "PayloadReader.java",
+            "StreamPayloadReader.java",
+            "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\OwnershipProbe.java"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\cases\\transferred",
+          "status": 0,
+          "signal": null,
+          "error": null,
+          "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\transferred-compile.stdout.log",
+          "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\transferred-compile.stderr.log"
+        },
+        {
+          "label": "transferred-probe",
+          "command": "C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe",
+          "args": [
+            "-cp",
+            "classes",
+            "OwnershipProbe",
+            "transferred"
+          ],
+          "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\cases\\transferred",
+          "status": 0,
+          "signal": null,
+          "error": null,
+          "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\transferred-probe.stdout.log",
+          "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\transferred-probe.stderr.log"
+        },
+        {
+          "label": "prettier",
+          "command": "C:\\Program Files\\nodejs\\node.exe",
+          "args": [
+            "node_modules/prettier/bin/prettier.cjs",
+            "--check",
+            "skills/java-solid/SKILL.md",
+            "skills/java-solid/skill.yaml",
+            "skills/java-solid/references/lsp-and-isp.md",
+            "skills/java-solid/references/srp-and-ocp.md",
+            "skills/java-solid/references/worked-refactoring.md"
+          ],
+          "cwd": "C:/git/agent-skills",
+          "status": 0,
+          "signal": null,
+          "error": null,
+          "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\prettier.stdout.log",
+          "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\prettier.stderr.log"
+        },
+        {
+          "label": "diff-check",
+          "command": "git",
+          "args": [
+            "diff",
+            "--check",
+            "--",
+            "skills/java-solid"
+          ],
+          "cwd": "C:/git/agent-skills",
+          "status": 0,
+          "signal": null,
+          "error": null,
+          "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\diff-check.stdout.log",
+          "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\diff-check.stderr.log"
+        },
+        {
+          "label": "final-owned-diff",
+          "command": "git",
+          "args": [
+            "diff",
+            "--",
+            "skills/java-solid"
+          ],
+          "cwd": "C:/git/agent-skills",
+          "status": 0,
+          "signal": null,
+          "error": null,
+          "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\final-owned-diff.stdout.log",
+          "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\final-owned-diff.stderr.log"
+        },
+        {
+          "label": "final-owned-status",
+          "command": "git",
+          "args": [
+            "status",
+            "--short",
+            "--untracked-files=all",
+            "--",
+            "skills/java-solid"
+          ],
+          "cwd": "C:/git/agent-skills",
+          "status": 0,
+          "signal": null,
+          "error": null,
+          "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\final-owned-status.stdout.log",
+          "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\final-owned-status.stderr.log"
+        },
+        {
+          "label": "final-staged-diff",
+          "command": "git",
+          "args": [
+            "diff",
+            "--cached",
+            "--",
+            "skills/java-solid"
+          ],
+          "cwd": "C:/git/agent-skills",
+          "status": 0,
+          "signal": null,
+          "error": null,
+          "stdoutPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\final-staged-diff.stdout.log",
+          "stderrPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\final-staged-diff.stderr.log"
+        }
+      ],
+      "environment": "Inherited JDK_JAVA_OPTIONS, JAVA_TOOL_OPTIONS and _JAVA_OPTIONS removed for isolated children; no persistent environment mutation."
+    },
+    {
+      "command": "git status --short --untracked-files=all -- skills/java-solid; git diff -- skills/java-solid; git diff --cached -- skills/java-solid; git show HEAD:skills/java-solid/skill.yaml",
+      "cwd": "C:/git/agent-skills",
+      "result": "Assignment and final status/diff empty; committed manifest version 1.2.4. Read-only Git use."
+    },
+    {
+      "command": "Invoke-WebRequest -Uri <each URL in source-fetch.json> -TimeoutSec 15",
+      "cwd": "C:/git/agent-skills",
+      "result": "Two Java 21 primary API pages returned HTTP 200, retained with hashes.",
+      "rawMetadata": "C:/Users/robso/AppData/Local/Temp/codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e/source-fetch.json"
+    },
+    {
+      "command": "rg --files -g AGENTS.md -g '!node_modules' -g '!packages/**/dist' skills/java-solid skills docs",
+      "cwd": "C:/git/agent-skills",
+      "result": "Exit 1 with no matches: no nested AGENTS.md in searched scope. This was an absence search result, not a failing validation; root AGENTS.md still applies."
+    }
+  ],
+  "structuralValidation": {
+    "issues": [],
+    "version": "1.2.4",
+    "files": 5,
+    "routedReferences": [
+      "references/lsp-and-isp.md",
+      "references/srp-and-ocp.md",
+      "references/worked-refactoring.md"
+    ],
+    "unchangedFiles": [
+      "SKILL.md",
+      "skill.yaml",
+      "references/lsp-and-isp.md",
+      "references/srp-and-ocp.md",
+      "references/worked-refactoring.md"
+    ]
+  },
+  "technicalValidation": {
+    "classification": "Executed technical contract/consumer probes, not agent behavioral evaluations.",
+    "runs": [
+      {
+        "contract": "borrowed",
+        "compileTarget": "Java 21 (--release 21; class major 65)",
+        "runtime": {
+          "runtime": "25.0.3+9-LTS",
+          "vendor": "Eclipse Adoptium",
+          "contract": "borrowed"
+        },
+        "checks": [
+          {
+            "case": "fixture-success",
+            "contractSatisfied": false,
+            "closeCalls": 1,
+            "observation": "borrowed-violation-reproduced"
+          },
+          {
+            "case": "fixture-read-failure",
+            "contractSatisfied": false,
+            "closeCalls": 1,
+            "observation": "borrowed-violation-reproduced"
+          },
+          {
+            "case": "borrowed-control-success",
+            "contractSatisfied": true,
+            "closeCalls": 0,
+            "observation": "legitimate-borrowed-control"
+          },
+          {
+            "case": "borrowed-control-read-failure",
+            "contractSatisfied": true,
+            "closeCalls": 0,
+            "observation": "legitimate-borrowed-control"
+          },
+          {
+            "case": "byte-array-fixture",
+            "contractSatisfied": false,
+            "closeCalls": -1,
+            "observation": "reuse-check-cannot-detect-close"
+          },
+          {
+            "case": "jdk-readAllBytes-override",
+            "contractSatisfied": false,
+            "closeCalls": 1,
+            "observation": "inherited-no-close-contract-violation-reproduced"
+          }
+        ],
+        "conclusion": {
+          "checks": 6,
+          "result": "PASS"
+        }
+      },
+      {
+        "contract": "transferred",
+        "compileTarget": "Java 21 (--release 21; class major 65)",
+        "runtime": {
+          "runtime": "25.0.3+9-LTS",
+          "vendor": "Eclipse Adoptium",
+          "contract": "transferred"
+        },
+        "checks": [
+          {
+            "case": "fixture-success",
+            "contractSatisfied": true,
+            "closeCalls": 1,
+            "observation": "legitimate-transferred-control"
+          },
+          {
+            "case": "fixture-read-failure",
+            "contractSatisfied": true,
+            "closeCalls": 1,
+            "observation": "legitimate-transferred-control"
+          },
+          {
+            "case": "borrowed-control-success",
+            "contractSatisfied": true,
+            "closeCalls": 0,
+            "observation": "legitimate-borrowed-control"
+          },
+          {
+            "case": "borrowed-control-read-failure",
+            "contractSatisfied": true,
+            "closeCalls": 0,
+            "observation": "legitimate-borrowed-control"
+          },
+          {
+            "case": "byte-array-fixture",
+            "contractSatisfied": true,
+            "closeCalls": -1,
+            "observation": "reuse-check-cannot-detect-close"
+          },
+          {
+            "case": "jdk-readAllBytes-override",
+            "contractSatisfied": false,
+            "closeCalls": 1,
+            "observation": "inherited-no-close-contract-violation-reproduced"
+          }
+        ],
+        "conclusion": {
+          "checks": 6,
+          "result": "PASS"
+        }
+      }
+    ],
+    "totalCheckExecutions": 12,
+    "distinctProbeConditions": 6,
+    "countExplanation": "Six conditions ran against each of the two compiled fixtures; generic API/resource controls repeat across those runs.",
+    "result": "PASS",
+    "interpretation": "PASS means expected violations and legitimate controls were reproduced. It does not mean the deliberately invalid borrowed implementation or closing readAllBytes override satisfies its contract.",
+    "observed": [
+      "The same try-with-resources implementation closes exactly once on success and read failure; it violates the borrowed application contract and satisfies the transferred application contract.",
+      "Direct inherited readAllBytes preserves openness on both tested success and read failure, with the original IOException reaching the caller.",
+      "ByteArrayInputStream remains reusable after the implementation closes it, demonstrating why a reuse-only fixture can hide the ownership violation.",
+      "An override of InputStream.readAllBytes returned the right bytes while closing its receiver, reproducing the inherited no-close contract violation."
+    ]
+  },
+  "behavioralEvaluation": {
+    "executedAgentEvaluations": 0,
+    "measuredImprovement": false,
+    "status": "NOT_EXECUTED",
+    "explanation": "No skill change or original/revised delta exists. Technical confirmation is not evidence of agent quality or comparative catalog performance.",
+    "structuredWalkthroughs": [
+      {
+        "scenario": "Independent history absent and no committed authority/extension requirement",
+        "expected": "Do not invent an SRP/OCP finding from class length, switch shape or dependency count.",
+        "status": "Structured walkthrough only"
+      },
+      {
+        "scenario": "Required save versus explicitly optional collection mutation",
+        "expected": "Required save rejecting every legal call is a contract defect; documented optional operations require their actual consumer contract.",
+        "status": "Structured walkthrough only"
+      },
+      {
+        "scenario": "Java 17 consumer requests the shown Java 21 record-pattern switch",
+        "expected": "Inspect target and retain ordinary classes/polymorphism; do not silently upgrade or enable preview.",
+        "status": "Structured walkthrough only"
+      },
+      {
+        "scenario": "Refund extraction requested as mechanical refactoring",
+        "expected": "Preserve original outcomes/mappings; isolate new validation, structured returns, enum mapping and public consumer transitions.",
+        "status": "Structured walkthrough only"
+      },
+      {
+        "scenario": "New interface proposed solely for DIP slogan",
+        "expected": "Consult java-dependency-inversion and require a real seam; no interface-per-class mandate.",
+        "status": "Structured walkthrough only"
+      }
+    ]
+  },
+  "reproducibleCases": {
+    "classification": "Development cases, not holdouts or executed agent evaluations.",
+    "decisiveConstraint": "Only the published application interface ownership promise changes: borrowed versus transferred.",
+    "isolation": "Give the evaluator only each case input.md, PayloadReader.java and StreamPayloadReader.java. Withhold criteria.json and probe results.",
+    "inputManifest": "C:/Users/robso/AppData/Local/Temp/codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e/case-inputs.json",
+    "separateCriteriaFile": "C:/Users/robso/AppData/Local/Temp/codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e/case-criteria.json",
+    "prerequisites": "Java 21-compatible APIs/compiler. Available validation compiler/runtime: Temurin 25.0.3+9; no external dependencies. Supply both Java source files for each fixture.",
+    "taskInputs": [
+      {
+        "id": "borrowed-resource",
+        "inputPath": "C:/Users/robso/AppData/Local/Temp/codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e/cases/borrowed/input.md",
+        "prompt": "Review this Java 21 implementation against its published interface contract. Return supported SOLID findings with the smallest safe recommendation, or explain why no change is justified. Do not create new abstractions merely to change the design.\n\nAll callers use the PayloadReader interface and follow its documented ownership contract. Inputs are bounded to 64 KiB by the adapter. Existing return values and IOException behavior are public contracts; changing the interface promise requires a consumer migration that is outside this review.\n\nInspect observable behavior through the interface, including a failed read. Explain what a test can establish and what its resource fixture might conceal. Do not upgrade Java or add dependencies.\n",
+        "fixtures": [
+          {
+            "path": "C:/Users/robso/AppData/Local/Temp/codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e/cases/borrowed/PayloadReader.java",
+            "source": "import java.io.IOException;\nimport java.io.InputStream;\n\ninterface PayloadReader {\n    /**\n     * Reads the remaining bytes.\n     * Ownership stays with the caller; this method must not close input on success or read failure.\n     */\n    byte[] read(InputStream input) throws IOException;\n}\n"
+          },
+          {
+            "path": "C:/Users/robso/AppData/Local/Temp/codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e/cases/borrowed/StreamPayloadReader.java",
+            "source": "import java.io.IOException;\nimport java.io.InputStream;\n\nfinal class StreamPayloadReader implements PayloadReader {\n    @Override\n    public byte[] read(InputStream input) throws IOException {\n        try (input) {\n            return input.readAllBytes();\n        }\n    }\n}\n"
+          }
+        ]
+      },
+      {
+        "id": "transferred-resource",
+        "inputPath": "C:/Users/robso/AppData/Local/Temp/codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e/cases/transferred/input.md",
+        "prompt": "Review this Java 21 implementation against its published interface contract. Return supported SOLID findings with the smallest safe recommendation, or explain why no change is justified. Do not create new abstractions merely to change the design.\n\nAll callers use the PayloadReader interface and follow its documented ownership contract. Inputs are bounded to 64 KiB by the adapter. Existing return values and IOException behavior are public contracts; changing the interface promise requires a consumer migration that is outside this review.\n\nInspect observable behavior through the interface, including a failed read. Explain what a test can establish and what its resource fixture might conceal. Do not upgrade Java or add dependencies.\n",
+        "fixtures": [
+          {
+            "path": "C:/Users/robso/AppData/Local/Temp/codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e/cases/transferred/PayloadReader.java",
+            "source": "import java.io.IOException;\nimport java.io.InputStream;\n\ninterface PayloadReader {\n    /**\n     * Reads the remaining bytes.\n     * Ownership transfers to this method; it must close input on success and read failure.\n     */\n    byte[] read(InputStream input) throws IOException;\n}\n"
+          },
+          {
+            "path": "C:/Users/robso/AppData/Local/Temp/codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e/cases/transferred/StreamPayloadReader.java",
+            "source": "import java.io.IOException;\nimport java.io.InputStream;\n\nfinal class StreamPayloadReader implements PayloadReader {\n    @Override\n    public byte[] read(InputStream input) throws IOException {\n        try (input) {\n            return input.readAllBytes();\n        }\n    }\n}\n"
+          }
+        ]
+      }
+    ],
+    "evaluatorCriteria": [
+      {
+        "id": "borrowed-resource",
+        "expected": [
+          "Identify that the implementation closes a resource the interface promises to leave open, on both success and read failure.",
+          "Classify the concrete LSP effect rather than inferring correctness from identical returned bytes or successful compilation.",
+          "Recommend removing ownership-taking closure while preserving values and IOException behavior; retain caller ownership rather than editing the public promise.",
+          "Use a close-tracking/closure-observable fixture and check both return/failure and resource lifetime.",
+          "Recognize that ByteArrayInputStream remains usable after close and therefore a reuse-only test can conceal the defect."
+        ],
+        "failureConditions": [
+          "Approves the implementation because try-with-resources is generally good cleanup.",
+          "Counts returned bytes alone as complete substitutability validation.",
+          "Rewrites the public ownership contract without a consumer transition.",
+          "Creates unrelated interfaces or upgrades Java.",
+          "Claims an agent improvement measurement from source or runtime checks."
+        ]
+      },
+      {
+        "id": "transferred-resource",
+        "expected": [
+          "Recognize that the application contract explicitly transfers ownership and requires closure on success/read failure.",
+          "Preserve the try-with-resources implementation when its other documented effects hold; no LSP ownership finding merely because close occurs.",
+          "Distinguish this application method contract from InputStream.readAllBytes's inherited no-close contract.",
+          "Use a close-observable fixture to establish cleanup on successful and failed reads; normal ByteArrayInputStream reuse is not proof that close was omitted."
+        ],
+        "failureConditions": [
+          "Removes closure by imposing the borrowed-resource rule on transferred ownership.",
+          "Reports a SOLID violation solely from closing an AutoCloseable parameter.",
+          "Misuses InputStream.readAllBytes's method contract to prohibit an enclosing application operation from owning the input.",
+          "Treats adding wrappers or splitting the interface as a goal independent of concrete harm."
+        ]
+      }
+    ],
+    "technicalReproduction": "Run node C:/Users/robso/AppData/Local/Temp/codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e/validate.mjs. This compiles/runs the deliberately provided fixtures and technical controls; it does not evaluate an agent.",
+    "pending": "Coordinator may run controlled original/no-skill agent evaluations. No skill edit was made, so there is no revised-content delta to compare."
+  },
+  "primarySources": [
+    {
+      "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/InputStream.html",
+      "status": 200,
+      "file": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\jdk21-inputstream.html",
+      "sha256": "F258A01B644F9FD1D12F04104D6C82BC22BA253B193214429F6C8B29C9B850B8",
+      "version": "Java SE 21",
+      "supports": "InputStream.readAllBytes does not close its receiver; I/O failures can leave stream state inconsistent. The probe concerns the explicit no-close effect, not atomic consumption or rollback."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/ByteArrayInputStream.html",
+      "status": 200,
+      "file": "C:\\Users\\robso\\AppData\\Local\\Temp\\codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e\\jdk21-bytearrayinputstream.html",
+      "sha256": "9CA4C8EC483EE06B67095D708C2C44EE8D214CE8DDE1E1D980B6912CDBAA3E3B",
+      "version": "Java SE 21",
+      "supports": "Closing ByteArrayInputStream has no effect on subsequent operations, so reuse after close does not establish that an enclosing consumer honored borrowed ownership."
+    }
+  ],
+  "assumptions": [
+    "Case contracts explicitly distinguish caller-owned and transferred resources; this fact is supplied in the interface, not inferred from AutoCloseable.",
+    "The synthetic fixture is bounded to 64 KiB by its stated adapter; no production large-stream buffering claim is made.",
+    "The transferred application operation is distinct from an override of InputStream.readAllBytes; only the latter inherits the JDK's no-close promise."
+  ],
+  "limitations": [
+    "Compilation used --release 21 and class-file major 65 was checked; runtime execution used Temurin 25.0.3+9-LTS, not a Java 21 VM.",
+    "The probes cover ordinary synchronous success/failure ownership behavior, not asynchronous close, interruption, every stream subclass, close-failure suppression or a real application.",
+    "Unchanged illustrative refund, equality, repository and withdrawal snippets were reviewed but not all recompiled/retested in this assignment.",
+    "Other SOLID decision paths received source/content review and structured walkthroughs, not independent agent outputs.",
+    "No performance benchmark, production capture, dependency installation or new evaluation framework was added.",
+    "A no-change review is not a guarantee that the skill has no possible defect; no additional material correction was supported within the reviewed scope."
+  ],
+  "failuresAndResolutions": [],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Parallel-run restriction; no regeneration is required by this unchanged package alone, but the coordinator owns the combined wave index.",
+      "prerequisites": "All reviewers stopped writing."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "No repository-wide validation claim is made from this local no-change review.",
+      "prerequisites": "Combined index refreshed as needed and all reviewers stopped."
+    },
+    {
+      "command": "Optional independent agent evaluation with separated cases",
+      "owner": "coordinator",
+      "reason": "No nested agent runs permitted; cases supplied without measured-gain claims.",
+      "prerequisites": "Keep model/tools/context comparable and withhold evaluator criteria from inputs."
+    }
+  ],
+  "crossSkillFindings": [],
+  "coordinatorActions": [
+    "Record this package as reviewed without change, version 1.2.4.",
+    "Retain the evidence and separated cases.",
+    "Include it in aggregate global verification only after all active authors have stopped."
+  ],
+  "evidenceRoot": "C:/Users/robso/AppData/Local/Temp/codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e",
+  "artifactManifest": "C:/Users/robso/AppData/Local/Temp/codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e/artifacts.json",
+  "artifactCountExcludingManifest": 55,
+  "evidence": {
+    "validator": "C:/Users/robso/AppData/Local/Temp/codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e/validate.mjs",
+    "technicalProbe": "C:/Users/robso/AppData/Local/Temp/codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e/OwnershipProbe.java",
+    "results": "C:/Users/robso/AppData/Local/Temp/codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e/validation-results.json",
+    "borrowedRawStdout": "C:/Users/robso/AppData/Local/Temp/codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e/borrowed-probe.stdout.log",
+    "borrowedRawStderr": "C:/Users/robso/AppData/Local/Temp/codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e/borrowed-probe.stderr.log",
+    "transferredRawStdout": "C:/Users/robso/AppData/Local/Temp/codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e/transferred-probe.stdout.log",
+    "transferredRawStderr": "C:/Users/robso/AppData/Local/Temp/codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e/transferred-probe.stderr.log",
+    "baselineHashes": "C:/Users/robso/AppData/Local/Temp/codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e/baseline-hashes.json",
+    "finalHashes": "C:/Users/robso/AppData/Local/Temp/codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e/final-hashes.json",
+    "sourceFetch": "C:/Users/robso/AppData/Local/Temp/codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e/source-fetch.json",
+    "caseInputs": "C:/Users/robso/AppData/Local/Temp/codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e/case-inputs.json",
+    "caseCriteria": "C:/Users/robso/AppData/Local/Temp/codex-java-solid-20261016-3777b38c8d6040ce8fe0412220470e6e/case-criteria.json"
+  },
+  "processState": "All owned subprocesses ran synchronously with bounded timeouts and exited; no detached writer/helper remains.",
+  "finalInspection": "All five package files are byte-identical to assignment backup and SHA-256 hashes. Final unstaged/staged diffs and owned status are empty. Writes cease with this handoff."
+}

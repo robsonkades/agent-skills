@@ -1,0 +1,11 @@
+# Dashboard listener lifecycle
+
+Target: Java 17, no third-party dependencies or preview features.
+Listeners receive future events only. No initial state, replay, or durable delivery is required.
+Each session registers once. Publish calls may overlap each other and session shutdown.
+The external session owner invokes close, never the subscriber callback itself.
+close must tolerate repeated calls. Callback thread affinity is not part of this API.
+Synchronous dispatch and the existing error policy are intentional: listener RuntimeExceptions
+are recorded and delivery continues; Errors and recorder failures propagate to the publisher.
+
+close removes the session from publications whose iteration begins after close returns. Callbacks already included in an ongoing publication may still start or finish after close returns.

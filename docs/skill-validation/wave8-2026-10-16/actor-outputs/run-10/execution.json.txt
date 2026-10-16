@@ -1,0 +1,68 @@
+{
+  "scope": "C:/Users/robso/AppData/Local/Temp/skills-wave8-6b5d18c2/actors/run-10",
+  "reportType": "Concise factual actor journal, not a full tool trace",
+  "filesRead": [
+    "TASK.md",
+    "input/README.md",
+    "input/REQUEST.md",
+    "input/schema.sql",
+    "input/seed.sql",
+    "input/current.sql",
+    "input/proposed.sql",
+    "input/fixture.mjs",
+    "output/README.md",
+    "output/REQUEST.md",
+    "output/schema.sql",
+    "output/seed.sql",
+    "output/current.sql",
+    "output/proposed.sql",
+    "output/fixture.mjs",
+    "output/solution.sql",
+    "output/verify.mjs",
+    "output/mutation-check.mjs",
+    "output/mutation-check.log",
+    "output/REVIEW.md",
+    "output/result.json"
+  ],
+  "helperInspection": "Read input/fixture.mjs before importing its unchanged output copy. It creates an in-memory SQLite database from local schema/seed and maps selected rows into plain objects.",
+  "commands": [
+    {"command": "Get-Content -LiteralPath <this run>/TASK.md -Raw", "exitCode": 0, "result": "Read task restrictions"},
+    {"command": "Get-Content input/README.md and input/REQUEST.md; rg --files input output", "exitCode": 0, "result": "Read environment/request and enumerated only this run's files"},
+    {"command": "Get-Content input/schema.sql, input/seed.sql, input/current.sql, input/proposed.sql, input/fixture.mjs and output/solution.sql", "exitCode": 0, "result": "Read complete SQL artifacts and helper before execution"},
+    {"command": "node --version", "exitCode": 0, "result": "v25.6.1"},
+    {"command": "node verify.mjs via spawnSync wrapper with timeout:20000", "exitCode": 0, "result": "Initial candidate passed 11 comparisons over seed and 112 generated rows; SQLite 3.51.2; experimental warning recorded"},
+    {"command": "node mutation-check.mjs via spawnSync wrapper with timeout:20000", "exitCode": 0, "result": "Five node verify.mjs subprocesses, each bounded to 20000 ms, exited 1 with semantic AssertionError. All wrong variants rejected; solution.sql restored byte-for-byte in finally."},
+    {"command": "node verify.mjs via spawnSync wrapper with timeout:20000", "exitCode": 0, "result": "Restored final candidate passed all 11 comparisons; final verification.log written"},
+    {"command": "node -e byte-comparison and SHA-256 preservation check; Get-Content mutation-check.log", "exitCode": 0, "result": "All seven copied input artifacts matched their originals; solution.sql matched proposed.sql; read all five mutation failure summaries"},
+    {"command": "node -e result.json parsing and REVIEW.md word-limit assertion", "exitCode": 0, "result": "Valid result JSON; review 524 whitespace-delimited words, under 750"}
+  ],
+  "research": [
+    "https://www.postgresql.org/docs/17/datatype-boolean.html",
+    "https://www.postgresql.org/docs/17/queries-union.html",
+    "https://www.postgresql.org/docs/17/indexes-bitmap-scans.html",
+    "https://www.postgresql.org/docs/17/using-explain.html"
+  ],
+  "filesWritten": [
+    "output/solution.sql (temporary mutation checks only; exact supplied proposal restored)",
+    "output/verify.mjs",
+    "output/mutation-check.mjs",
+    "output/verification.log",
+    "output/mutation-check.log",
+    "output/preservation.log",
+    "output/REVIEW.md",
+    "output/result.json",
+    "output/execution.json"
+  ],
+  "handEdits": "Authored files created with apply_patch. Regression scripts wrote only their own logs and temporary candidate variants inside output/.",
+  "skillsLoaded": false,
+  "delegationUsed": false,
+  "postgresqlExecuted": false,
+  "performanceMeasured": false,
+  "outOfScopeReadsOrWrites": false,
+  "allProcessesStopped": true,
+  "allWritesStopped": true,
+  "limits": [
+    "No PostgreSQL server or plan was supplied. SQLite validation is limited to portable semantics, not PostgreSQL performance or production behavior.",
+    "No installs, external service connections, repository access, sibling-run access or real configuration changes occurred."
+  ]
+}

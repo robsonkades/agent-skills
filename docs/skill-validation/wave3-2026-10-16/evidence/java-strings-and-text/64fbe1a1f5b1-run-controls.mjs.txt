@@ -1,0 +1,37 @@
+import assert from 'node:assert/strict';
+import {readFileSync, writeFileSync, mkdirSync} from 'node:fs';
+import {spawnSync} from 'node:child_process';
+import {dirname, resolve} from 'node:path';
+import {fileURLToPath} from 'node:url';
+const root = dirname(fileURLToPath(import.meta.url));
+const jdk = 'C:/Users/robso/.jdks/temurin-25.0.3/bin';
+const skillRoot = 'C:/git/agent-skills/skills/java-strings-and-text';
+mkdirSync(resolve(root, 'classes'), {recursive: true});
+const source = readFileSync(resolve(skillRoot, 'references/building-text-safely.md'), 'utf8');
+const snippet = [...source.matchAll(/```java\r?\n([\s\S]*?)```/g)]
+    .map(match => match[1]).find(code => code.startsWith("char[] chars = {'A', 'B'};"));
+assert(snippet, 'actual published snippet exists');
+writeFileSync(resolve(root, 'PublishedSnippet.java'),
+    'public final class PublishedSnippet { public static void main(String[] args) {\n' +
+    snippet +
+    '\nif (!original.equals(preserved)) throw new AssertionError("object conversion changed");' +
+    '\nif (!contents.equals("AB") || original.equals(contents)) throw new AssertionError("content contract not distinguished");' +
+    '\nSystem.out.println("PASS actual published snippet: object conversion preserved; content alternative distinguished");\n} }\n');
+const results = [];
+function run(id, executable, args, allowed = [0]) {
+    const result = spawnSync(executable, args, {cwd: root, encoding: 'utf8', timeout: 30000, maxBuffer: 1_000_000});
+    writeFileSync(resolve(root, id + '.stdout.txt'), result.stdout ?? '');
+    writeFileSync(resolve(root, id + '.stderr.txt'), result.stderr ?? '');
+    const recorded = {id, executable, args, cwd: root, status: result.status,
+        error: result.error?.message ?? null, stdout: result.stdout ?? '', stderr: result.stderr ?? ''};
+    results.push(recorded);
+    writeFileSync(resolve(root, 'technical-controls.json'), JSON.stringify(results, null, 2) + '\n');
+    console.log(JSON.stringify(recorded));
+    assert(allowed.includes(result.status), id + ' status=' + result.status);
+    return recorded;
+}
+run('runtime', jdk + '/java.exe', ['-version']);
+run('compile-controls', jdk + '/javac.exe', ['--release', '25', '-d', 'classes', 'PublishedSnippet.java', 'StringAppendControls.java']);
+run('published-snippet', jdk + '/java.exe', ['-cp', 'classes', 'PublishedSnippet']);
+const check = run('semantic-controls', jdk + '/java.exe', ['-cp', 'classes', 'StringAppendControls']);
+assert(check.stdout.includes('PASS '));

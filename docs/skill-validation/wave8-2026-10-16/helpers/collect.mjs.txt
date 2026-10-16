@@ -1,0 +1,12 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+const report='C:/git/agent-skills/docs/skill-validation/wave8-2026-10-16';
+const actors=JSON.parse(fs.readFileSync(report+'/actors.frozen.json.txt','utf8')).runs;
+const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
+const records=actors.map(r=>{
+ const dir=r.directory+'/output';let journal=null,error=null;
+ try{journal=JSON.parse(fs.readFileSync(dir+'/execution.json','utf8'));}catch(e){error=e.code??e.message;}
+ return {run:r.id,caseId:r.caseId,condition:r.condition,trial:r.trial,stopped:journal?.allWritesStopped===true,error,protectedDifferences:r.inputs.filter(f=>!fs.existsSync(r.directory+'/'+f.path)||sha(fs.readFileSync(r.directory+'/'+f.path))!==f.sha256).map(f=>f.path),outputs:['REVIEW.md','result.json','execution.json',...(r.caseId==='Q3'?[]:['solution.sql','verify.mjs'])].map(p=>({path:p,present:fs.existsSync(dir+'/'+p),sha256:fs.existsSync(dir+'/'+p)?sha(fs.readFileSync(dir+'/'+p)):null}))};
+});
+fs.writeFileSync(report+'/progress.json',JSON.stringify({at:new Date().toISOString(),records},null,2)+'\n');
+console.log(JSON.stringify(records.map(r=>({run:r.run,caseId:r.caseId,stopped:r.stopped,missing:r.outputs.filter(f=>!f.present).map(f=>f.path),protectedDifferences:r.protectedDifferences,error:r.error}))));

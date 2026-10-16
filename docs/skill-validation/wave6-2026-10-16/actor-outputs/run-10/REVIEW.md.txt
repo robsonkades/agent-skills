@@ -1,0 +1,31 @@
+**Conclusão: contrato violado.** Em `src/work/Job.java:8`, `collect()` chama `join(2)` e retorna `"DONE:" + result` incondicionalmente. O retorno dessa espera temporizada não confirma que o trabalho terminou. A espera limitada deve ser preservada.
+
+O caminho efetivo é `new Job(gate)` → `job.start()` → execução de `run()` no próprio objeto `Job`. Como a classe estende `Thread`, o `join(2)` implícito usa o worker correto (`this`). A inicialização anterior a `start()` fica ordenada antes das ações desse worker; isso não publica automaticamente o resultado no sentido inverso. Em `run()` (linha 7), `result = 83` só ocorre depois de `gate.await()`.
+
+A [API Java SE25 de Thread.join(long)](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Thread.html#join(long)) permite retornar pelo esgotamento dos 2 ms. Segundo a [JLS 17.4.4–17.4.5](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.4.4), a detecção do término do worker estabelece a publicação de suas ações anteriores. Um timeout sem essa detecção não estabelece essa garantia. Portanto, o problema não é simplesmente faltar `volatile`: é anunciar conclusão e ler o campo antes de confirmar que o trabalho acabou.
+
+O check fornecido foi executado uma vez na cópia `output/project`, com Java Temurin 25.0.3, compilação `--release 25`, sem preview nem dependências. Resultado observado:
+
+```text
+while-gate-closed=DONE:0
+alive=true
+after-termination=DONE:83
+```
+
+Com o gate fechado, o worker não pode alcançar a atribuição de 83. O valor 0 observado é o valor inicial de trabalho ainda não realizado; não é necessário atribuí-lo a cache ou a uma rara reordenação. Isso contradiz diretamente a proibição de `DONE:0`. O processo saiu com código 0 porque `Smoke` imprime o resultado, sem afirmar que a primeira coleta deve ser `PENDING`. No cleanup, liberou o gate, aguardou até 2 s e verificou que o worker terminou. O resultado final correto não elimina a violação anterior.
+
+Correção mínima proposta, sem alterar as fontes desta revisão:
+
+```java
+public String collect() throws InterruptedException {
+    join(2);
+    if (isAlive()) return "PENDING";
+    return "DONE:" + result;
+}
+```
+
+Sob o contrato aceito de worker já iniciado exatamente uma vez, `isAlive() == false` detecta seu término: `result = 83` → término → detecção → leitura. Essa cadeia permite manter `result` como campo comum. Se a observação indicar worker ativo, a coleta não lê o resultado e retorna `PENDING`; um término logo depois dessa observação é compatível com a coleta pendente. A [API de isAlive](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Thread.html#isAlive()) sustenta essa distinção para a thread já iniciada.
+
+A proposta conserva uma única espera de 2 ms, mais o overhead admitido; não acrescenta polling, espera ilimitada ou cancelamento. Mantém também a propagação de `InterruptedException` da coleta. A hipótese aceita de ausência de cancelamento foi preservada.
+
+Não há evidência material ausente para concluir a violação. Não foi compilada nem executada uma variante corrigida, nem medido um limite de latência em carga ou exploradas todas as intercalações. A suficiência da proposta decorre das garantias especificadas e das precondições aceitas; o check é uma reprodução controlada. Todos os seis arquivos fornecidos em ambas as cópias mantêm hashes iguais aos conteúdos originais; somente artefatos de compilação e os relatórios foram produzidos.

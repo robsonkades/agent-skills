@@ -1,0 +1,21 @@
+import {writeFileSync,mkdirSync} from 'node:fs';
+import {spawnSync} from 'node:child_process';
+import {dirname,join} from 'node:path';
+import {fileURLToPath} from 'node:url';
+const root=dirname(fileURLToPath(import.meta.url));
+const jdk='C:/Users/robso/.jdks/temurin-25.0.3/bin';
+mkdirSync(join(root,'classes'),{recursive:true});
+const commands=[
+ {name:'toolchain',executable:join(jdk,'java.exe'),args:['-version']},
+ {name:'compile-fixture',executable:join(jdk,'javac.exe'),args:['--release','17','-d',join(root,'classes'),join(root,'fixture','AggregateFixture.java')]}
+];
+const results=[];
+for(const command of commands) {
+ const result=spawnSync(command.executable,command.args,{cwd:root,encoding:'utf8',windowsHide:true,timeout:20000});
+ const record={...command,cwd:root,exitCode:result.status,signal:result.signal,stdout:result.stdout,stderr:result.stderr,error:result.error?.message};
+ results.push(record);
+ writeFileSync(join(root,command.name+'.log'),JSON.stringify(record,null,2)+'\n');
+ if(result.status!==0) throw new Error('Failed '+command.name);
+}
+writeFileSync(join(root,'fixture-preflight.json'),JSON.stringify({kind:'Case input compile preflight only',sourceTarget:'Java 17',compilerRuntime:'Temurin 25.0.3+9-LTS',databaseExecuted:false,actorExecuted:false,results},null,2)+'\n');
+console.log(JSON.stringify({status:'PASS',kind:'Case input compilation only',sourceTarget:'Java 17',databaseExecuted:false,actorExecuted:false,result:join(root,'fixture-preflight.json')},null,2));

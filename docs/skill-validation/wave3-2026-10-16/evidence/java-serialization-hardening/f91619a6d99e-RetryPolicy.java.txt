@@ -1,0 +1,15 @@
+package fixture;
+import java.io.*;
+public final class RetryPolicy implements Serializable {
+    @Serial private static final long serialVersionUID = 1L;
+    private int maxRetries;
+    public RetryPolicy(int value) { if (value < 0 || value > 10) throw new IllegalArgumentException("invalid maxRetries"); maxRetries = value; }
+    public int maxRetries() { return maxRetries; }
+    @Serial private void readObject(ObjectInputStream s) throws IOException, ClassNotFoundException {
+        ObjectInputStream.GetField fields = s.readFields();
+        int candidate = fields.defaulted("maxRetries") ? 3 : fields.get("maxRetries", 0);
+        if (candidate < 0 || candidate > 10) throw new InvalidObjectException("invalid maxRetries");
+        maxRetries = candidate;
+    }
+
+}

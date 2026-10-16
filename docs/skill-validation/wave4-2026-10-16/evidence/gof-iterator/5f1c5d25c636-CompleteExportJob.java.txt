@@ -1,0 +1,17 @@
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.StreamSupport;
+
+public final class CompleteExportJob {
+    public static ExportJob.Receipt run(FixtureFetcher fetcher, AtomicInteger closes) {
+        List<Integer> recorded = new ArrayList<>();
+        var source = new AuditSpliterator(fetcher, Cursor.START, new Deadline(), 2);
+        try (var events = StreamSupport.stream(source, false).onClose(closes::incrementAndGet)) {
+            events.forEach(event -> recorded.add(event.id()));
+        } catch (IllegalStateException incomplete) {
+            return new ExportJob.Receipt("INCOMPLETE", List.copyOf(recorded));
+        }
+        return new ExportJob.Receipt("COMPLETE", List.copyOf(recorded));
+    }
+}

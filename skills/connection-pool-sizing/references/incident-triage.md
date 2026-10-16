@@ -6,6 +6,10 @@ database headroom and aggregate budget evidence can relocate the bottleneck.
 
 ## 1. Is it the pool at all?
 
+Resolve the affected operation's pool and replica using the
+[identity checks](sizing-and-configuration.md#identify-the-pool-being-changed) before interpreting
+these series. Preserve that identity when correlating application waits with database sessions.
+
 ```
 hikaricp.connections.pending        > 0 sustained → threads are waiting
 hikaricp.connections.acquire p99    compare with remaining request budget
@@ -15,6 +19,18 @@ hikaricp.connections.timeout        correlate with active/total/max, creation an
 A sampled zero pending count does not rule out bursts between scrapes. Acquisition timeouts can
 also accompany inability to create/validate connections, not just a fully occupied healthy pool.
 Check acquisition distributions, timeout deltas, effective limits and connectivity together.
+
+When suspension is enabled (`allowPoolSuspension`, default false), check failover/JMX action history
+and wait stacks before excluding pool waits. In HikariCP 6.3.3, a suspended acquisition normally
+waits in `SuspendResumeLock` before the acquisition clock starts or the connection bag is entered.
+That wait can exceed `connectionTimeout` without appearing in `pending` or the acquisition timer;
+the default suspension wait is also uninterruptible. Verify the resolved implementation and
+customizations rather than assuming request cancellation releases it. Increasing pool size does
+not release this wait. Establish why suspension exists and verify the failover runbook's recovery
+conditions before resuming; ask its owner only for missing decisions. Test recovery and upstream
+admission in an isolated setting.
+See the [6.3.3 acquisition and pending paths](https://github.com/brettwooldridge/HikariCP/blob/HikariCP-6.3.3/src/main/java/com/zaxxer/hikari/pool/HikariPool.java)
+and [suspension lock](https://github.com/brettwooldridge/HikariCP/blob/HikariCP-6.3.3/src/main/java/com/zaxxer/hikari/util/SuspendResumeLock.java).
 
 Check which outcomes each metric covers. In HikariCP 5.1.0/6.3.3, successful acquisitions and
 acquisition timeouts both feed the `acquire` timer; an interrupted pool wait feeds neither that

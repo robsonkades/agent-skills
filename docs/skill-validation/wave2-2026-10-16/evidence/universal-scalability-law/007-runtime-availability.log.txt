@@ -1,0 +1,10 @@
+{
+  "Rscript": [
+    null
+  ],
+  "R": [
+    null
+  ],
+  "Node": "v25.6.1"
+}
+{"python": "3.13.14 (main, Jun 11 2026, 04:04:46) [MSC v.1944 64 bit (AMD64)]", "numpy_available": false, "scipy_available": false}

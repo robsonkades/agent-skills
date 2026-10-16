@@ -1,0 +1,6 @@
+package demo;
+public final class RenderJob {
+    public static void main(String[] args) {
+        for (String kind : args) System.out.println(Renderer.render(Document.sample(kind)));
+    }
+}

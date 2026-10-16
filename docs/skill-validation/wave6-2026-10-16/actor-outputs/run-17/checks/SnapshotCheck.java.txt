@@ -1,0 +1,41 @@
+import work.Message;
+
+public final class SnapshotCheck {
+    public static void main(String[] args) {
+        reject(null);
+        reject(new int[0]);
+        reject(new int[1]);
+        reject(new int[3]);
+        System.out.println("invalid-input checks=4 passed");
+
+        int[] buffer = {10, 20};
+        Message first = new Message(buffer);
+        expect(30, first.checksum(), "initial");
+        buffer[0] = 100;
+        expect(30, first.checksum(), "first element recycled");
+        buffer[1] = 200;
+        Message second = new Message(buffer);
+        expect(30, first.checksum(), "both elements recycled");
+        expect(300, second.checksum(), "second message");
+        buffer[0] = 7;
+        buffer[1] = 8;
+        expect(30, first.checksum(), "first after another reuse");
+        expect(300, second.checksum(), "second after another reuse");
+        System.out.println("snapshot checks=6 passed");
+    }
+
+    private static void reject(int[] value) {
+        try {
+            new Message(value);
+        } catch (IllegalArgumentException expected) {
+            return;
+        }
+        throw new AssertionError("invalid input accepted");
+    }
+
+    private static void expect(int expected, int actual, String label) {
+        if (expected != actual) {
+            throw new AssertionError(label + ": expected=" + expected + " actual=" + actual);
+        }
+    }
+}

@@ -1,0 +1,5 @@
+BEFORE count=0 capacity=0 memoryUsed=0
+DELTA count=64 capacity=65536 memoryUsed=65536
+EXPECTED OOME Cannot reserve 1024 bytes of direct buffer memory (allocated: 65536, limit: 65536)
+AFTER FAILED ALLOCATION count=64 capacity=65536 memoryUsed=65536
+PASS capacity limit and accounting control

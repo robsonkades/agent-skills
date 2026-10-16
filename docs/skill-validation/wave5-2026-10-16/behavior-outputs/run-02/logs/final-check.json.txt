@@ -1,0 +1,18 @@
+{
+  "id": "final-check",
+  "executable": "C:\\Program Files\\nodejs\\node.exe",
+  "args": [
+    "check.mjs"
+  ],
+  "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-actors-4tJ3OK\\run-02\\output\\project",
+  "timeoutMs": 30000,
+  "started": "2026-10-16T16:55:53.757Z",
+  "executed": true,
+  "exit": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "SelfTest PASS\r\n",
+  "stderr": "",
+  "expectedExit": 0,
+  "expectationMet": true
+}

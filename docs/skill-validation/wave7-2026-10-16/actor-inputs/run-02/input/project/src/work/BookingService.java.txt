@@ -1,0 +1,14 @@
+package work;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.annotation.Transactional;
+public class BookingService {
+ private final JdbcTemplate jdbc; private final ApplicationEventPublisher events;
+ public BookingService(JdbcTemplate jdbc,ApplicationEventPublisher events){this.jdbc=jdbc;this.events=events;}
+ @Transactional("businessTx")
+ public void place(String id,String sku,String receiptText){
+  jdbc.update("insert into booking(id,sku) values (?,?)",id,sku);
+  events.publishEvent(new BookingRecorded(id,receiptText));
+  if(jdbc.update("update stock set available=available-1 where sku=? and available>0",sku)!=1)throw new IllegalStateException("Unavailable stock");
+ }
+}

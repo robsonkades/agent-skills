@@ -1,0 +1,41 @@
+{
+  "status": "TOOL_IDENTITY_UNVERIFIED",
+  "claimedRuntimeVersion": null,
+  "scope": "Client request probe observed responses from a localhost synthetic API; the executing client version is not authenticated because clientVersion changed with HOME/USERPROFILE despite identical absolute executable/hash. Do not count it as specific-version runtime validation.",
+  "executable": {
+    "path": "C:/Program Files/Rancher Desktop/resources/resources/win32/bin/kubectl.exe",
+    "size": 39124480,
+    "signature": "MZ",
+    "sha256": "14a0dc33bca9607de8959a7358813e7954ccf351c52765edec3f9cd2857daa83"
+  },
+  "clientInvocation": [
+    "version",
+    "--client=true",
+    "--output=json"
+  ],
+  "observedVersions": {
+    "inherited": "v1.31.0",
+    "onlyKubeconfigChanged": "v1.31.0",
+    "isolationWithoutHome": "v1.31.0",
+    "onlyHomeChanged": "v1.37.1",
+    "onlyUserprofileChanged": "v1.37.1"
+  },
+  "wrapperInspection": "PowerShell Get-Command -All returned Application paths, with the Windows .exe selected. No shell alias/function was found. PE/MZ file inspected. An underlying wrapper/interposition cause was not established.",
+  "serverDistinction": "Both version fields were clientVersion. Discrepancy reproduction occurred after the local fake server stopped, with --client=true; the fake server implemented no /version endpoint.",
+  "command": "@'\nimport { execFile } from 'node:child_process';\nimport { promisify } from 'node:util';\nimport { readFileSync, statSync } from 'node:fs';\nimport { createHash } from 'node:crypto';\nconst run=promisify(execFile);\nconst executable='C:/Program Files/Rancher Desktop/resources/resources/win32/bin/kubectl.exe';\nconst root='C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/incident-evidence-capture-client-RY68Xw';\nconst bytes=readFileSync(executable);\nconsole.log(JSON.stringify({executable,size:statSync(executable).size,signature:bytes.subarray(0,2).toString('ascii'),sha256:createHash('sha256').update(bytes).digest('hex'),embeddedVersion31:bytes.includes(Buffer.from('v1.31.0')),embeddedVersion37:bytes.includes(Buffer.from('v1.37.1'))}));\nfor (const [label,changes] of [['only-home',{HOME:root}],['only-userprofile',{USERPROFILE:root}],['only-kubeconfig',{KUBECONFIG:root+'/config.json'}],['isolation-without-home',{KUBECONFIG:root+'/config.json',KUBECTL_KUBERC:'false',HTTP_PROXY:'',HTTPS_PROXY:'',ALL_PROXY:'',NO_PROXY:'127.0.0.1,localhost'}]]) {\n const args=['version','--client=true','--output=json'];\n const r=await run(executable,args,{env:{...process.env,...changes},windowsHide:true,timeout:10000});\n console.log(JSON.stringify({label,executable,args,changedEnvironment:changes,stdout:r.stdout,stderr:r.stderr}));\n}\n'@ | node --input-type=module",
+  "rawResult": {
+    "chunk_id": "45de4f",
+    "wall_time_seconds": 0.4295426,
+    "exit_code": 0,
+    "original_token_count": 828,
+    "output": "{\"executable\":\"C:/Program Files/Rancher Desktop/resources/resources/win32/bin/kubectl.exe\",\"size\":39124480,\"signature\":\"MZ\",\"sha256\":\"14a0dc33bca9607de8959a7358813e7954ccf351c52765edec3f9cd2857daa83\",\"embeddedVersion31\":false,\"embeddedVersion37\":false}\n{\"label\":\"only-home\",\"executable\":\"C:/Program Files/Rancher Desktop/resources/resources/win32/bin/kubectl.exe\",\"args\":[\"version\",\"--client=true\",\"--output=json\"],\"changedEnvironment\":{\"HOME\":\"C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/incident-evidence-capture-client-RY68Xw\"},\"stdout\":\"{\\n  \\\"clientVersion\\\": {\\n    \\\"major\\\": \\\"1\\\",\\n    \\\"minor\\\": \\\"37\\\",\\n    \\\"gitVersion\\\": \\\"v1.37.1\\\",\\n    \\\"gitCommit\\\": \\\"f78e722310e50bcaca9276be22276d9e91d91308\\\",\\n    \\\"gitTreeState\\\": \\\"clean\\\",\\n    \\\"buildDate\\\": \\\"2026-09-23T17:10:04Z\\\",\\n    \\\"goVersion\\\": \\\"go1.26.8\\\",\\n    \\\"compiler\\\": \\\"gc\\\",\\n    \\\"platform\\\": \\\"windows/amd64\\\"\\n  },\\n  \\\"kustomizeVersion\\\": \\\"v5.8.1\\\"\\n}\\n\",\"stderr\":\"\"}\n{\"label\":\"only-userprofile\",\"executable\":\"C:/Program Files/Rancher Desktop/resources/resources/win32/bin/kubectl.exe\",\"args\":[\"version\",\"--client=true\",\"--output=json\"],\"changedEnvironment\":{\"USERPROFILE\":\"C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/incident-evidence-capture-client-RY68Xw\"},\"stdout\":\"{\\n  \\\"clientVersion\\\": {\\n    \\\"major\\\": \\\"1\\\",\\n    \\\"minor\\\": \\\"37\\\",\\n    \\\"gitVersion\\\": \\\"v1.37.1\\\",\\n    \\\"gitCommit\\\": \\\"f78e722310e50bcaca9276be22276d9e91d91308\\\",\\n    \\\"gitTreeState\\\": \\\"clean\\\",\\n    \\\"buildDate\\\": \\\"2026-09-23T17:10:04Z\\\",\\n    \\\"goVersion\\\": \\\"go1.26.8\\\",\\n    \\\"compiler\\\": \\\"gc\\\",\\n    \\\"platform\\\": \\\"windows/amd64\\\"\\n  },\\n  \\\"kustomizeVersion\\\": \\\"v5.8.1\\\"\\n}\\n\",\"stderr\":\"\"}\n{\"label\":\"only-kubeconfig\",\"executable\":\"C:/Program Files/Rancher Desktop/resources/resources/win32/bin/kubectl.exe\",\"args\":[\"version\",\"--client=true\",\"--output=json\"],\"changedEnvironment\":{\"KUBECONFIG\":\"C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/incident-evidence-capture-client-RY68Xw/config.json\"},\"stdout\":\"{\\n  \\\"clientVersion\\\": {\\n    \\\"major\\\": \\\"1\\\",\\n    \\\"minor\\\": \\\"31\\\",\\n    \\\"gitVersion\\\": \\\"v1.31.0\\\",\\n    \\\"gitCommit\\\": \\\"9edcffcde5595e8a5b1a35f88c421764e575afce\\\",\\n    \\\"gitTreeState\\\": \\\"clean\\\",\\n    \\\"buildDate\\\": \\\"2024-08-13T07:37:34Z\\\",\\n    \\\"goVersion\\\": \\\"go1.22.5\\\",\\n    \\\"compiler\\\": \\\"gc\\\",\\n    \\\"platform\\\": \\\"windows/amd64\\\"\\n  },\\n  \\\"kustomizeVersion\\\": \\\"v5.4.2\\\"\\n}\\n\",\"stderr\":\"\"}\n{\"label\":\"isolation-without-home\",\"executable\":\"C:/Program Files/Rancher Desktop/resources/resources/win32/bin/kubectl.exe\",\"args\":[\"version\",\"--client=true\",\"--output=json\"],\"changedEnvironment\":{\"KUBECONFIG\":\"C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/incident-evidence-capture-client-RY68Xw/config.json\",\"KUBECTL_KUBERC\":\"false\",\"HTTP_PROXY\":\"\",\"HTTPS_PROXY\":\"\",\"ALL_PROXY\":\"\",\"NO_PROXY\":\"127.0.0.1,localhost\"},\"stdout\":\"{\\n  \\\"clientVersion\\\": {\\n    \\\"major\\\": \\\"1\\\",\\n    \\\"minor\\\": \\\"31\\\",\\n    \\\"gitVersion\\\": \\\"v1.31.0\\\",\\n    \\\"gitCommit\\\": \\\"9edcffcde5595e8a5b1a35f88c421764e575afce\\\",\\n    \\\"gitTreeState\\\": \\\"clean\\\",\\n    \\\"buildDate\\\": \\\"2024-08-13T07:37:34Z\\\",\\n    \\\"goVersion\\\": \\\"go1.22.5\\\",\\n    \\\"compiler\\\": \\\"gc\\\",\\n    \\\"platform\\\": \\\"windows/amd64\\\"\\n  },\\n  \\\"kustomizeVersion\\\": \\\"v5.4.2\\\"\\n}\\n\",\"stderr\":\"\"}\n"
+  },
+  "probeScript": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/incident-evidence-capture-kubectl-check.mjs",
+  "rawClientProbeResult": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/incident-evidence-capture-client-RY68Xw/result.json",
+  "limits": [
+    "No Kubernetes cluster, kubelet, retention or rotation integration test was executed.",
+    "Raw outputs retained rather than normalized to an asserted version.",
+    "Source-backed documentation corrections do not depend on this unresolved probe."
+  ],
+  "configurationChanges": "Only child-process environment and isolated temp kubeconfig/cache; no real agent/Kubernetes configuration or parent environment changed."
+}

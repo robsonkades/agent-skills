@@ -1,0 +1,149 @@
+diff --git a/skills/concurrent-collections-and-synchronizers/SKILL.md b/skills/concurrent-collections-and-synchronizers/SKILL.md
+index 8e56408..0a7166a 100644
+--- a/skills/concurrent-collections-and-synchronizers/SKILL.md
++++ b/skills/concurrent-collections-and-synchronizers/SKILL.md
+@@ -38,6 +38,8 @@ existing stable coordination APIs when preview is not authorized.
+ 1. **Inspect the invariant and caller lifecycle first.** Reuse code, tests and the supplied context:
+    what must be atomic, who owns accepted work/resources, and what ends a wait? Ask only for missing
+    answers that change the choice. Retain an adequate existing lock or unshared collection.
++   For a condition wait, follow the actual predicate test, lock instance and wait registration,
++   then each state-changing path that should signal it; a matching field name is not lock identity.
+    If overload can occur, name the admission policy: state
+    the capacity or explain why an intrinsically unbounded structure is safe and bounded elsewhere.
+ 2. **Pick the member from the tables below and write down the cost accepted.** A choice with no
+@@ -150,9 +152,12 @@ map.put(…)` is a race. Use `mappingCount()` when an approximate `long` count i
+ - The untimed `tryAcquire()` and `tryLock()` **ignore the fairness setting** and barge;
+   `tryAcquire(0, unit)` honours it and also detects interruption. Whether the limit should be fair
+   at all is a sizing decision — concurrency-limiting-and-bulkheads.
+-- Wait on a `Condition` in a `while` testing the predicate, never an `if`. Spurious wakeups are
+-  only one of the three reasons, and not the one that makes `if` unconditionally wrong. Symptom: a
+-  negative count or an item consumed twice, under load only.
++- Wait on a `Condition` in a `while` testing the predicate under its associated lock, then enter
++  `await` without releasing that lock between the test and wait. An outside-lock `while` can lose
++  a signal even with a volatile predicate. With a `ReentrantLock` condition, waiting and signalling
++  require that same lock; use the guarded state-change/signalling protocol in the reference.
++  A wakeup still requires rechecking: spurious wakeups, competing consumers and barging can leave
++  the predicate false again.
+ - `signal()` is appropriate only when every waiter on that condition uses a compatible predicate
+   and progress is preserved if the selected waiter cannot proceed; otherwise consider separate
+   conditions or `signalAll()`. A wrong selection can leave an eligible waiter parked —
+@@ -161,8 +166,10 @@ map.put(…)` is a race. Use `mappingCount()` when an approximate `long` count i
+   Re-passing the original turns N wakeups into N × timeout — a "5-second timeout" that occasionally
+   takes minutes and never reports one. `await(t, unit)` returns `false` but no remaining time.
+ - Choose `ReentrantLock` over `synchronized` on **capability**: timed and interruptible acquisition,
+-  `tryLock`, fairness, non-block-structured locking, more than one condition queue. Pinning has not
+-  been a reason since JEP 491 (JDK 24) — virtual-threads-internals owns that diagnosis.
++  `tryLock`, fairness, non-block-structured locking, more than one condition queue. With default
++  HotSpot locking on JDK 24+, JEP 491 removes monitor-related virtual-thread pinning as a migration
++  reason. Legacy `-XX:LockingMode=1` still permits monitor pinning in HotSpot 24–25; native/VM
++  pinning also remains. Check the runtime/build/flags and route diagnosis to virtual-threads-internals.
+ - A read-only `ReentrantReadWriteLock` holder cannot upgrade while retaining its read hold:
+   blocking acquisition may wait indefinitely, whereas `tryLock` can fail or time out. A thread
+   already owning the write lock may reenter it. Standard deadlock detection may miss read-hold
+diff --git a/skills/concurrent-collections-and-synchronizers/references/locks.md b/skills/concurrent-collections-and-synchronizers/references/locks.md
+index aaaaeaf..de3cdba 100644
+--- a/skills/concurrent-collections-and-synchronizers/references/locks.md
++++ b/skills/concurrent-collections-and-synchronizers/references/locks.md
+@@ -5,8 +5,8 @@ fragments are method bodies in that same setting.
+ 
+ ## Choose on capability, not on pinning
+ 
+-JEP 491 (JDK 24) made virtual threads acquire, hold and release monitors independently of their
+-carriers: "Blocking to acquire a monitor will unmount a virtual thread and release its carrier",
++With default HotSpot locking, JEP 491 (JDK 24) made virtual threads acquire, hold and release
++monitors independently of their carriers: "Blocking to acquire a monitor will unmount a virtual thread and release its carrier",
+ and `Object.wait()` and its timed variants do the same. It settles the argument in its own words:
+ "Once the `synchronized` keyword no longer pins virtual threads, you can choose between
+ `synchronized` and the APIs in the `java.util.concurrent.locks` package **based solely upon which
+@@ -15,10 +15,14 @@ best solves the problem at hand.**"
+ Two consequences for the _choice_ — the diagnosis of pinning, and what to use now that
+ `-Djdk.tracePinnedThreads` is gone, belong to virtual-threads-internals:
+ 
+-- **Migrating `synchronized` to `ReentrantLock` for pinning is no longer necessary** on JDK 24+.
+-  JEP 491: "such migration will no longer be necessary. You need not revert code that has been
+-  migrated to use `ReentrantLock` back to using `synchronized`." A migration done now buys nothing
+-  and costs new `try`/`finally` bugs. Pinning is therefore not an input to this decision at all.
++- **Monitor-related virtual-thread pinning no longer justifies migration** with default HotSpot
++  locking on JDK 24+. Legacy `-XX:LockingMode=1` still permits monitor pinning in HotSpot 24–25;
++  inspect the deployed build and flags before assuming the default behavior. This does not require
++  reversing an existing migration. Native/FFM
++  frames and some VM operations can still pin a virtual thread, and changing the Java lock does
++  not by itself establish a fix for those paths. On an older runtime, inspect the actual blocking
++  path and pinning evidence before deciding. Timed acquisition or another required capability
++  can independently justify a lock change; preserve correct cleanup when making it.
+ - **"`ReentrantLock` is faster than `synchronized`" is not a portable decision rule.** Lock paths,
+   JIT optimizations and contention behavior change across JDKs; biased locking was disabled by
+   default in JDK 15 and removed later. Choose on semantics, then measure the deployed workload.
+@@ -88,7 +92,8 @@ Which acquisition form:
+ 
+ - `tryLock()` — non-blocking, **ignores fairness** (barges). Correct for lock-ordering deadlock
+   avoidance and for "skip the work if someone else is already doing it" idempotence guards. It is
+-  the one form whose release is conditional, so it needs its own shape:
++  one of the boolean-returning forms: both untimed and timed `tryLock` need cleanup only after
++  returning `true`. A `false` result or an interrupted acquisition creates no new hold to release:
+ 
+   ```java
+   import java.util.concurrent.ThreadLocalRandom;
+@@ -330,3 +335,7 @@ deadlock detection.
+ - [Java 25 `ThreadMXBean`](https://docs.oracle.com/en/java/javase/25/docs/api/java.management/java/lang/management/ThreadMXBean.html)
+ - [Java 25 `AbstractQueuedSynchronizer`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/locks/AbstractQueuedSynchronizer.html)
+ - [JEP 491: Synchronize Virtual Threads without Pinning](https://openjdk.org/jeps/491)
++- HotSpot locking modes and held-monitor pinning: [JDK 25 defaults](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/globals.hpp)
++  and [continuation freezing](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/continuationFreezeThaw.cpp);
++  the same legacy-mode exception is present in [JDK 24 defaults](https://github.com/openjdk/jdk/blob/jdk-24-ga/src/hotspot/share/runtime/globals.hpp)
++  and [continuation freezing](https://github.com/openjdk/jdk/blob/jdk-24-ga/src/hotspot/share/runtime/continuationFreezeThaw.cpp).
+diff --git a/skills/concurrent-collections-and-synchronizers/references/synchronizers-and-conditions.md b/skills/concurrent-collections-and-synchronizers/references/synchronizers-and-conditions.md
+index a15131e..66fa438 100644
+--- a/skills/concurrent-collections-and-synchronizers/references/synchronizers-and-conditions.md
++++ b/skills/concurrent-collections-and-synchronizers/references/synchronizers-and-conditions.md
+@@ -231,6 +231,31 @@ distinct objects to give the effect of having multiple wait-sets per object". Ob
+ `lock.newCondition()`. Awaiting "atomically releases the associated lock and suspends the current
+ thread".
+ 
++### Keep the predicate test and wait registration under one lock
++
++Trace the concrete waiter and signaler, including callbacks and early returns: which lock instance
++guards the predicate, where is it tested, and which paths change it? For the usual guarded-state
++protocol, acquire that lock before testing the predicate, call `await` inside its `while`, and
++change the state and signal while holding the same lock. `ReentrantLock.newCondition()` requires
++its lock for both waiting and signalling, otherwise it throws `IllegalMonitorStateException`.
++A different `Condition` implementation must document any different semantics. Signalling does
++not release the lock; an awakened waiter must reacquire it before proceeding.
++
++The loop alone is insufficient. Consider `while (!ready)` outside the lock, with acquisition and
++`await()` inside the loop body:
++
++1. The waiter reads `ready == false` and pauses before acquiring the lock.
++2. The signaler acquires the lock, sets `ready = true`, signals and unlocks; no waiter is registered.
++3. The waiter acquires the lock and calls `await()` without rechecking, although `ready` is true.
++
++With no further signal it can remain parked. Making `ready` volatile does not make its test and
++wait registration atomic, and `signalAll()` cannot notify a waiter that has not yet registered.
++Move the predicate test inside the locked region; do not add polling or repeated signals to mask
++the gap. Preserve the existing interruption and timeout policy when fixing the critical section.
++Validate both signal-before-wait and wait-before-signal schedules with bounded coordination and
++cleanup; record actual predicate/wait events rather than treating a sleep or one passing stress
++run as proof that the race is impossible.
++
+ ### The `while` loop is mandatory — three independent reasons
+ 
+ 1. **Spurious wakeup**, permitted as a concession to platform semantics.
+@@ -355,4 +380,5 @@ javadoc recommends never using a `Condition` that way.
+ - [Java 25 `Phaser`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Phaser.html)
+ - [Java 25 `Semaphore`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Semaphore.html)
+ - [Java 25 `Condition`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/locks/Condition.html)
++- [Java 25 `ReentrantLock.newCondition`](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/locks/ReentrantLock.html#newCondition()>)
+ - [Java 25 `ThreadPoolExecutor`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html)
+diff --git a/skills/concurrent-collections-and-synchronizers/skill.yaml b/skills/concurrent-collections-and-synchronizers/skill.yaml
+index 906fc7f..d3394bf 100644
+--- a/skills/concurrent-collections-and-synchronizers/skill.yaml
++++ b/skills/concurrent-collections-and-synchronizers/skill.yaml
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: concurrent-collections-and-synchronizers
+-version: 1.2.5
++version: 1.2.6
+ description: >-
+   Choosing between the members of java.util.concurrent once the family is settled, and the
+   parameter that makes it correct: which BlockingQueue and which of its four insert and

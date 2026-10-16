@@ -1,0 +1,37 @@
+[
+  {
+    "file": "jdk25-connection.html",
+    "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html",
+    "status": 200,
+    "bytes": 182046,
+    "sha256": "482ad67eb5c9171d7bea4683711b18b20c28bac27b8e178a609fb3804040586e"
+  },
+  {
+    "file": "archunit-1.5.0-CompositeArchRule.java",
+    "url": "https://raw.githubusercontent.com/TNG/ArchUnit/v1.5.0/archunit/src/main/java/com/tngtech/archunit/lang/CompositeArchRule.java",
+    "status": 200,
+    "bytes": 4514,
+    "sha256": "01e1723e7c9f35c51e36375a9ead9f4927b7cb6c1882bb9e43504f080e21f10a"
+  },
+  {
+    "file": "hexagonal-original.html",
+    "url": "https://alistair.cockburn.us/hexagonal-architecture",
+    "status": 200,
+    "bytes": 110649,
+    "sha256": "8632333bb6587cc753faa0e5dc9342cd8bbb779767c78315f7c9e7dc8584800a"
+  },
+  {
+    "file": "spring-7.0.9-transaction-template.html",
+    "url": "https://docs.spring.io/spring-framework/docs/7.0.9/javadoc-api/org/springframework/transaction/support/TransactionTemplate.html",
+    "status": 200,
+    "bytes": 36513,
+    "sha256": "e4c2dc1b339e89399ae26685bb30845d112ba07a056663642d108668cdd2e405"
+  },
+  {
+    "file": "archunit-user-guide.html",
+    "url": "https://www.archunit.org/userguide/html/000_Index.html",
+    "status": 200,
+    "bytes": 174849,
+    "sha256": "a635f8b559be79bcda3cc0db6e9b3f092bcb06ed73637a1d0ea665cb612cf08a"
+  }
+]

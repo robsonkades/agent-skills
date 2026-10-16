@@ -1,0 +1,37 @@
+@'
+import assert from 'node:assert/strict';
+import { readFileSync, existsSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { parseManifest } from './packages/core/src/domain/manifest.ts';
+import { parseSkillDocument } from './packages/core/src/domain/skill-document.ts';
+const root = resolve('skills/gof-singleton');
+const { manifest, issues } = parseManifest(readFileSync(resolve(root, 'skill.yaml'), 'utf8'), { strict: true });
+assert.deepEqual(issues, []);
+const doc = parseSkillDocument(readFileSync(resolve(root, 'SKILL.md'), 'utf8'));
+assert.equal(manifest.name, 'gof-singleton');
+assert.equal(doc.frontmatter.name, manifest.name);
+assert.equal(manifest.version, '1.2.5');
+const norm = s => s.replace(/\s+/g, ' ').trim();
+assert.equal(norm(doc.frontmatter.description), norm(manifest.description));
+for (const path of manifest.files) assert.ok(existsSync(resolve(root, path)), path);
+const refs = [...new Set(doc.body.match(/references\/[A-Za-z0-9/-]+\.md/g))];
+assert.equal(refs.length, 2);
+let links = 0;
+for (const name of ['SKILL.md', ...refs]) {
+  const source = resolve(root, name);
+  const content = readFileSync(source, 'utf8');
+  for (const match of content.matchAll(/\]\(([^)]+)\)/g)) {
+    const target = match[1];
+    if (/^<?https?:\/\//.test(target)) continue;
+    const [file, anchor] = target.split('#');
+    const dest = file ? resolve(dirname(source), file) : source;
+    assert.ok(existsSync(dest), name + ': ' + target);
+    if (anchor) {
+      const headings = [...readFileSync(dest, 'utf8').matchAll(/^#+\s+(.+)$/gm)].map(m => m[1].toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s/g, '-'));
+      assert.ok(headings.includes(anchor), name + ': anchor ' + target);
+    }
+    links++;
+  }
+}
+console.log(JSON.stringify({name:manifest.name, version:manifest.version, strictManifestIssues:issues.length, declaredPaths:manifest.files.length, routedReferences:refs.length, localLinksChecked:links, metadataAndLinks:'PASS'}));
+'@ | node --input-type=module

@@ -50,7 +50,9 @@ code/compiler-log evidence.
    `-XX:+UnlockDiagnosticVMOptions -XX:+LogCompilation` writes `<eliminate_allocation>`,
    `<eliminate_boxing>` and `<eliminate_lock>` for their respective transformations in C2 tasks.
    Join compile IDs to installed C2 nmethods and match the allocation's method/BCI and inline
-   context; absence alone is inconclusive.
+   context. Read failures and retries inside the task before attributing an elimination to
+   the installed code: a discarded attempt can share its compile ID with a successful retry.
+   Global flag values do not establish the retry's options; absence alone is inconclusive.
    See `references/diagnosing-elimination.md`.
 4. **Find the inlining boundary.** `-XX:+PrintInlining`, tier-4 tree — is there a refusal on
    the chain that carries the object? Take bytecode size from the matched callee's

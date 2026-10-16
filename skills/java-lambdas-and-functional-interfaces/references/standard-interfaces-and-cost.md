@@ -47,6 +47,28 @@ caller's observation/ownership path. `Consumer.andThen` sequences invocations an
 synchronous exceptions; it does not await work represented by a discarded stage. Keep an
 appropriate value-returning contract when that completion must be composed.
 
+## Invocation and commit belong to the consumer's contract
+
+An `IntUnaryOperator` describes an input/result shape, not how often a caller applies it.
+Follow the actual consumer, its wrappers and runtime selection. For example,
+`AtomicInteger.updateAndGet` (Java 8+) may reapply its function after contention, so the update
+function must be free of externally visible effects. Auditing, sending a message or mutating
+another captured object inside it can happen for an attempt whose computed value is never
+installed. A thread-safe capture prevents some races; it does not make those effects part of
+the atomic update. A contention-free test does not prove single invocation under contention.
+
+When an effect describes a completed update, keep the calculation inside the retryable
+function and use the returned committed value at the owning boundary. That still leaves two
+operations: an effect failure does not roll back the counter, concurrent effects may be
+observed out of update order, and caller retries need their own policy. If state and effect
+must commit together, resolve that coordination contract rather than claiming that moving
+the effect after `updateAndGet` makes them atomic.
+
+Do not impose purity on every functional interface. A consumer that deliberately invokes a
+stateful callback once can support effects under its documented failure and concurrency
+contract. The consuming API or implementation supplies that guarantee; a lambda, method
+reference or `@FunctionalInterface` annotation does not.
+
 ## When a custom functional interface is justified
 
 Define one when at least one of these holds:
@@ -147,3 +169,5 @@ For primitive boundaries, see [JLS boxing](https://docs.oracle.com/javase/specs/
 For discarded results, see [JLS expression results](https://docs.oracle.com/javase/specs/jls/se25/html/jls-15.html#jls-15.1),
 [method-reference target types](https://docs.oracle.com/javase/specs/jls/se25/html/jls-15.html#jls-15.13.2)
 and [BlockingQueue.offer](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/BlockingQueue.html#offer(E)>).
+For invocation policy, compare [IntUnaryOperator](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/function/IntUnaryOperator.html)
+with the consuming [AtomicInteger.updateAndGet contract](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/atomic/AtomicInteger.html#updateAndGet(java.util.function.IntUnaryOperator)>).

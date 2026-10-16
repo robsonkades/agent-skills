@@ -207,7 +207,7 @@ an arbitrary multi-column hierarchy. The storage can stay flat
 
 ## Primary sources
 
-- [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2),
+- [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html),
   sections 2.4, 2.13–2.14 and discriminator mappings: identity, inheritance and portability.
 - [Hibernate ORM 6.6 inheritance](https://docs.hibernate.org/orm/6.6/userguide/html_single/#entity-inheritance-table-per-class):
   concrete root tables and polymorphic UNIONs under TABLE_PER_CLASS.

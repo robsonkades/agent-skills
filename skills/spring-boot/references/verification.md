@@ -14,6 +14,7 @@ factory for a service request.
 | Invalid configuration prevents startup      | Bind real keys and assert startup failure/cause                                    | Construct the properties object manually          |
 | An opt-in feature activates only as agreed  | Absent/true/false/malformed values with actual binding, conditions and replacement | `havingValue` alone or checking only bean absence |
 | An environment override wins over a profile | Real Boot config-data loading with controlled property sources                     | Runner `withPropertyValues` alone                 |
+| A collection override retains its contract  | Base/profile bootstrap checks of bound entries, required fields and values         | Checking only the overridden scalar key           |
 | Management access follows policy            | Real chains and effective paths, anonymous and role-negative cases                 | Security dependency on classpath                  |
 | Work stops and resources close              | Shutdown/failure observation with owned resources                                  | Health was UP once                                |
 | Fixed-delay jobs are independent            | Actual scheduler, blocked job/peer, no self-overlap and post-completion delay      | Virtual threads or pool property alone            |

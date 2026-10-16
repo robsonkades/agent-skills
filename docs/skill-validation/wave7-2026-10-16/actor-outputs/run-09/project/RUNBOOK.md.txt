@@ -1,0 +1,31 @@
+Call BookingService through the configured Spring application context. businessTx
+(DataSourceTransactionManager) owns the local JDBC unit. place uses REQUIRED: with
+an existing transaction, its caller remains completion owner.
+
+The existing BookingListener runs BEFORE_COMMIT with fallback execution disabled.
+ReceiptWriter therefore uses the publisher's still-uncommitted connection for both
+receipt and receipt_detail. Preserve this path; independent REQUIRES_NEW receipt
+transactions would break the mandatory booking/receipt/stock unit.
+
+A 13-character body is rejected by the unchanged varchar(12) schema. That exception
+escapes completion and rolls back the booking, receipt header, receipt body and stock
+reservation. Unavailable stock also fails and rolls back. With an outer transaction,
+receipt validation can fail at the owner's completion after place has returned.
+Nontransactional publication of BookingRecorded produces no receipt.
+
+Inspect booking, receipt, receipt_detail and stock only after the completion owner
+finishes. There is no asynchronous recovery or separately committed receipt.
+ReceiptObserver.beforeWrite remains a diagnostic callback inside the actual writer,
+immediately before its first database write.
+
+Checks (from this project):
+  node check.mjs
+  node check.mjs work.Regression
+
+The regression uses actual Spring beans and local H2. It verifies successful commit,
+the exact 12-character boundary, invalid body rollback, stock failure, no-transaction
+publication, joining an outer owner, owner failure before completion, failure after
+both receipt writes, and rollback of an earlier receipt when a later receipt fails.
+The diagnostic observer sees the booking on the shared connection while an independent
+READ_COMMITTED connection cannot see it. These checks do not establish production
+database crash behavior, JPA behavior or distributed delivery guarantees.

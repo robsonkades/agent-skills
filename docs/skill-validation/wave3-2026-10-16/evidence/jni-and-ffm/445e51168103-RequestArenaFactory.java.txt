@@ -1,0 +1,7 @@
+import java.lang.foreign.Arena;
+
+public final class RequestArenaFactory {
+    public static Arena open() {
+        return Arena.ofShared();
+    }
+}

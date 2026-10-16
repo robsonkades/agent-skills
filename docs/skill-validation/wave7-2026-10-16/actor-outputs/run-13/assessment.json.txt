@@ -1,0 +1,25 @@
+{
+  "decision": "changed",
+  "cause": "OrderService.place entered Spring transaction advice but its unqualified @Transactional selected the primary metricsTx manager. Its ordersJdbc writes used ordersDataSource with auto-commit enabled, so an unchecked failure rolled back the wrong resource. Neither self-invocation nor a missing rollbackFor caused the persisted rejected order.",
+  "changes": [
+    "Qualified OrderService.place with @Transactional(transactionManager=\"ordersTx\").",
+    "Added test/work/Regression.java covering persisted state for stock rejection, notifier rejection, success, insert failure and independent metrics behavior through actual Spring beans.",
+    "Updated RUNBOOK.md with transaction ownership, caller failure behavior, incident diagnosis and verification commands."
+  ],
+  "verification": [
+    "Baseline smoke exited 0 and exposed active=true committed orders=1; it was observational, not an assertion of correct rollback.",
+    "Baseline regression exited 1 with three failed scenarios; notifier observed ordersAutoCommit=true, metricsAutoCommit=false, one rejected order and stock=2.",
+    "After repair, node check.mjs work.Regression exited 0: five persisted-state scenarios passed, with ordersAutoCommit=false, metricsAutoCommit=true, zero rejected orders and stock=3.",
+    "Final node check.mjs exited 0 and reported active=true committed orders=0.",
+    "SHA-256 comparison against input confirmed all 18 frozen project files unchanged; existing changes are limited to OrderService.java and RUNBOOK.md."
+  ],
+  "limits": [
+    "Local Java/Spring/JDBC/H2 checks do not establish production crash durability, concurrency behavior, distributed atomicity or JPA semantics.",
+    "No application connection to an external service, dependency installation, repository-wide access or real agent configuration change was performed.",
+    "Execution records are actor reports, not an independent complete trace."
+  ],
+  "regressionCommands": [
+    ["node", "check.mjs", "work.Regression"],
+    ["node", "check.mjs"]
+  ]
+}

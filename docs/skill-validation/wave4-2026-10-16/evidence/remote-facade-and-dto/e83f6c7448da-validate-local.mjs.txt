@@ -1,0 +1,45 @@
+import { loadPackageFromDirectory, validatePackage } from '@jvm-expert/core';
+import { NodeFileSystem } from '@jvm-expert/node';
+import { ClaudeCodeAdapter } from '@jvm-expert/adapter-claude';
+import { CodexAdapter } from '@jvm-expert/adapter-codex';
+import { createHash } from 'node:crypto';
+
+const fs = new NodeFileSystem();
+const name = 'remote-facade-and-dto';
+const root = `skills/${name}`;
+const evidence = 'C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/remote-facade-and-dto';
+const loaded = await loadPackageFromDirectory(fs, root, { strict: true });
+const report = validatePackage(loaded.pkg, { strict: true, directoryName: name, adapters: [new ClaudeCodeAdapter(), new CodexAdapter()] });
+const issues = [...loaded.issues, ...report.issues];
+const resourceLinks = [];
+for (const file of loaded.pkg.files.filter(f => f.path.endsWith('.md'))) {
+  const source = await fs.readTextFile(fs.join(root, file.path));
+  for (const match of source.matchAll(/\[[^\]]*\]\((<[^>]*>|[^)]+)\)/g)) {
+    const target = match[1].replace(/^<|>$/g, '');
+    if (/^(https?:|#)/.test(target)) continue;
+    const directory = file.path.includes('/') ? file.path.slice(0, file.path.lastIndexOf('/')) : '.';
+    if (!(await fs.exists(fs.join(root, directory, target.split('#')[0])))) throw new Error(file.path + ': missing ' + target);
+    resourceLinks.push({ from: file.path, target });
+  }
+}
+const referrals = [...loaded.pkg.manifest.dependencies.map(d => d.name), ...loaded.pkg.manifest.suggests];
+for (const target of referrals) if (!(await fs.exists(`skills/${target}/SKILL.md`))) throw new Error('Missing declared skill: ' + target);
+const source = await fs.readTextFile(`${evidence}/sources/bean-validation-3.0.html`);
+if (!source.includes('<span id="revnumber">version 3.0,</span>')) throw new Error('Unexpected source version');
+const sections = ['constraintdeclarationvalidationprocess-containerelementconstraints', 'constraintdeclarationvalidationprocess-validationroutine-graphvalidation', 'validationapi-validatorapi'];
+for (const section of sections) if (!source.includes(`id="${section}"`)) throw new Error('Missing source section: ' + section);
+const retrieval = JSON.parse(await fs.readTextFile(`${evidence}/sources/retrieval.json`));
+const original = retrieval.find(r => r.Url.endsWith('jakarta-bean-validation-spec-3.0'));
+const corrected = retrieval.find(r => r.Url.endsWith('jakarta-bean-validation-spec-3.0.html'));
+if (original?.Status !== 404 || corrected?.Status !== 200) throw new Error('Unexpected retrieval evidence');
+const baseline = JSON.parse(await fs.readTextFile(`${evidence}/baseline.json`));
+const ownedHashes = [];
+for (const file of baseline.files) {
+  const sha256 = createHash('sha256').update(await fs.readFile(file.path)).digest('hex');
+  ownedHashes.push({ path: file.path, sha256, matchesBaseline: sha256 === file.sha256 });
+}
+const changedFiles = ownedHashes.filter(f => !f.matchesBaseline).map(f => f.path).sort();
+if (JSON.stringify(changedFiles) !== JSON.stringify([`${root}/references/remote-facade.md`, `${root}/skill.yaml`].sort())) throw new Error('Unexpected changed files');
+if (loaded.pkg.manifest.version !== '1.3.5') throw new Error('Unexpected version');
+console.log(JSON.stringify({ version: loaded.pkg.manifest.version, packageFiles: loaded.pkg.files.map(f => f.path), issues, resourceLinks, declaredTargetsChecked: referrals.length, retainedSourceVersion: '3.0', sourceSectionsChecked: sections, originalSourceStatus: original.Status, correctedSourceStatus: corrected.Status, changedFiles, ownedHashes, limits: 'Local package and retained-source checks, not catalog-wide version resolution or runtime integration.' }, null, 2));
+if (issues.length) process.exitCode = 1;

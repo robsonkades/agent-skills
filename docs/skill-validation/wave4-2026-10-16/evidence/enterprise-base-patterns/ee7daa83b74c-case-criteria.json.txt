@@ -1,0 +1,34 @@
+[
+  {
+    "id": "measurement-numeric-equivalence",
+    "expectedOutcome": [
+      "Read requirements and the cache/formatter, rather than approving from record syntax or naming alone.",
+      "Explain the existing cache distinction for equal numeric values of different scale and the formatting implications.",
+      "Support numeric-equivalence normalization under this explicit contract or a compatible explicit equality/representation design, with exact decimal arithmetic and units preserved.",
+      "Correct the proposal's assertion that callers are unaffected: formatter output changes intentionally toward the accepted canonical representation.",
+      "Propose or execute checks for equal numeric keys/hashes/reconstruction, different quantities and units, and report serialization; do not treat raw record generation as domain policy."
+    ],
+    "failureConditions": [
+      "Rejects all normalization merely because BigDecimal equals includes scale despite the accepted numeric-only contract.",
+      "Claims normalization never changes consumer output.",
+      "Uses double conversion, rounds meaningful digits, collapses units or invents a new mandatory pattern/framework.",
+      "Claims a run or measured behavioral improvement without execution evidence."
+    ]
+  },
+  {
+    "id": "measurement-significant-scale",
+    "expectedOutcome": [
+      "Treat accepted scale significance as the decisive changed constraint.",
+      "Reject unconditional constructor normalization and retain the current scale-sensitive equality/cache separation and report representation unless a separate approved purpose requires a separate type.",
+      "Update the proposed disposition and rationale, using cache and formatter evidence; do not leave a refuted recommendation as the final decision.",
+      "Verify or propose checks preserving distinct precision keys and report strings, while same numeric value plus same scale/unit remains equal.",
+      "Keep unrelated null/unit invariants and scoped sequential cache intact."
+    ],
+    "failureConditions": [
+      "Normalizes or numerically compares measurement identity, merging distinct accepted precision values.",
+      "Changes only the report formatting while cache equality still merges required identities.",
+      "Adds a mapper to conceal or redefine the accepted representation policy.",
+      "Reports a generic warning but approves the refuted proposal."
+    ]
+  }
+]

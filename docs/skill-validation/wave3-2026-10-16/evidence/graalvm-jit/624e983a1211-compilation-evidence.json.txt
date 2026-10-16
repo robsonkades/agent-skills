@@ -1,0 +1,239 @@
+{
+  "graalConfiguration": "Graal Community compiler with Truffle extensions loaded from a Native Image shared library (gc=Serial GC)",
+  "processes": [
+    {
+      "process": "graal-1",
+      "relevantSuccessfulCompilation": {
+        "timestampSeconds": 25,
+        "method": "QuoteService.compute",
+        "compileLevel": 4,
+        "succeded": true,
+        "compiler": "jvmci",
+        "isOsr": false
+      },
+      "subsequentInvalidationOrFailure": false,
+      "compilerStatistics": [
+        {
+          "timestampSeconds": 30,
+          "compileCount": 5000,
+          "totalTimeSpentMillis": 300
+        },
+        {
+          "timestampSeconds": 60,
+          "compileCount": 5000,
+          "totalTimeSpentMillis": 300
+        },
+        {
+          "timestampSeconds": 90,
+          "compileCount": 5000,
+          "totalTimeSpentMillis": 300
+        },
+        {
+          "timestampSeconds": 120,
+          "compileCount": 5000,
+          "totalTimeSpentMillis": 300
+        },
+        {
+          "timestampSeconds": 150,
+          "compileCount": 5000,
+          "totalTimeSpentMillis": 300
+        }
+      ]
+    },
+    {
+      "process": "graal-2",
+      "relevantSuccessfulCompilation": {
+        "timestampSeconds": 25,
+        "method": "QuoteService.compute",
+        "compileLevel": 4,
+        "succeded": true,
+        "compiler": "jvmci",
+        "isOsr": false
+      },
+      "subsequentInvalidationOrFailure": false,
+      "compilerStatistics": [
+        {
+          "timestampSeconds": 30,
+          "compileCount": 5000,
+          "totalTimeSpentMillis": 300
+        },
+        {
+          "timestampSeconds": 60,
+          "compileCount": 5000,
+          "totalTimeSpentMillis": 300
+        },
+        {
+          "timestampSeconds": 90,
+          "compileCount": 5000,
+          "totalTimeSpentMillis": 300
+        },
+        {
+          "timestampSeconds": 120,
+          "compileCount": 5000,
+          "totalTimeSpentMillis": 300
+        },
+        {
+          "timestampSeconds": 150,
+          "compileCount": 5000,
+          "totalTimeSpentMillis": 300
+        }
+      ]
+    },
+    {
+      "process": "graal-3",
+      "relevantSuccessfulCompilation": {
+        "timestampSeconds": 25,
+        "method": "QuoteService.compute",
+        "compileLevel": 4,
+        "succeded": true,
+        "compiler": "jvmci",
+        "isOsr": false
+      },
+      "subsequentInvalidationOrFailure": false,
+      "compilerStatistics": [
+        {
+          "timestampSeconds": 30,
+          "compileCount": 5000,
+          "totalTimeSpentMillis": 300
+        },
+        {
+          "timestampSeconds": 60,
+          "compileCount": 5000,
+          "totalTimeSpentMillis": 300
+        },
+        {
+          "timestampSeconds": 90,
+          "compileCount": 5000,
+          "totalTimeSpentMillis": 300
+        },
+        {
+          "timestampSeconds": 120,
+          "compileCount": 5000,
+          "totalTimeSpentMillis": 300
+        },
+        {
+          "timestampSeconds": 150,
+          "compileCount": 5000,
+          "totalTimeSpentMillis": 300
+        }
+      ]
+    },
+    {
+      "process": "c2-1",
+      "relevantSuccessfulCompilation": {
+        "timestampSeconds": 25,
+        "method": "QuoteService.compute",
+        "compileLevel": 4,
+        "succeded": true,
+        "compiler": "c2",
+        "isOsr": false
+      },
+      "subsequentInvalidationOrFailure": false,
+      "compilerStatistics": [
+        {
+          "timestampSeconds": 30,
+          "compileCount": 5000,
+          "totalTimeSpentMillis": 300
+        },
+        {
+          "timestampSeconds": 60,
+          "compileCount": 5000,
+          "totalTimeSpentMillis": 300
+        },
+        {
+          "timestampSeconds": 90,
+          "compileCount": 5000,
+          "totalTimeSpentMillis": 300
+        },
+        {
+          "timestampSeconds": 120,
+          "compileCount": 5000,
+          "totalTimeSpentMillis": 300
+        },
+        {
+          "timestampSeconds": 150,
+          "compileCount": 5000,
+          "totalTimeSpentMillis": 300
+        }
+      ]
+    },
+    {
+      "process": "c2-2",
+      "relevantSuccessfulCompilation": {
+        "timestampSeconds": 25,
+        "method": "QuoteService.compute",
+        "compileLevel": 4,
+        "succeded": true,
+        "compiler": "c2",
+        "isOsr": false
+      },
+      "subsequentInvalidationOrFailure": false,
+      "compilerStatistics": [
+        {
+          "timestampSeconds": 30,
+          "compileCount": 5000,
+          "totalTimeSpentMillis": 300
+        },
+        {
+          "timestampSeconds": 60,
+          "compileCount": 5000,
+          "totalTimeSpentMillis": 300
+        },
+        {
+          "timestampSeconds": 90,
+          "compileCount": 5000,
+          "totalTimeSpentMillis": 300
+        },
+        {
+          "timestampSeconds": 120,
+          "compileCount": 5000,
+          "totalTimeSpentMillis": 300
+        },
+        {
+          "timestampSeconds": 150,
+          "compileCount": 5000,
+          "totalTimeSpentMillis": 300
+        }
+      ]
+    },
+    {
+      "process": "c2-3",
+      "relevantSuccessfulCompilation": {
+        "timestampSeconds": 25,
+        "method": "QuoteService.compute",
+        "compileLevel": 4,
+        "succeded": true,
+        "compiler": "c2",
+        "isOsr": false
+      },
+      "subsequentInvalidationOrFailure": false,
+      "compilerStatistics": [
+        {
+          "timestampSeconds": 30,
+          "compileCount": 5000,
+          "totalTimeSpentMillis": 300
+        },
+        {
+          "timestampSeconds": 60,
+          "compileCount": 5000,
+          "totalTimeSpentMillis": 300
+        },
+        {
+          "timestampSeconds": 90,
+          "compileCount": 5000,
+          "totalTimeSpentMillis": 300
+        },
+        {
+          "timestampSeconds": 120,
+          "compileCount": 5000,
+          "totalTimeSpentMillis": 300
+        },
+        {
+          "timestampSeconds": 150,
+          "compileCount": 5000,
+          "totalTimeSpentMillis": 300
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+# Accepted contract
+
+The application owns the OrderRow mapping. id and placedAt are persistent attributes; placed_at is the accepted SQL column for the event timestamp. No rename or removal of that field has been approved. The fixture represents an older deployed schema and is retained to check release compatibility.
+
+Versioned migrations own shared schema changes. Runtime bootstrap must not repair or recreate shared tables. The bootstrap-only task is intended to reject a missing mapped column before rollout. Generating DDL for review is permitted, but generated statements require review into migrations before deployment. Annotations are an accepted mapping mechanism; there is no requirement to move to XML.

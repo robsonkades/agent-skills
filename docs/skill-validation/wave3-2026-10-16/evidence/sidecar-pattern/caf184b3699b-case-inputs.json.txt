@@ -1,0 +1,15 @@
+{
+  "classification": "Development cases; no agent evaluation or live Kubernetes result.",
+  "decisiveConstraint": "Application ConfigMap mount mode: selected-file subPath versus whole projected directory. The corresponding mountPath changes only to keep the application's file path identical.",
+  "isolation": "Supply only input.md, consumer-contracts.md and pod.yaml for each case. Keep criteria and reviewer conclusions out of agent context.",
+  "cases": [
+    {
+      "id": "subpath-delivery",
+      "dir": "cases/subpath"
+    },
+    {
+      "id": "projected-directory-control",
+      "dir": "cases/projected-directory"
+    }
+  ]
+}

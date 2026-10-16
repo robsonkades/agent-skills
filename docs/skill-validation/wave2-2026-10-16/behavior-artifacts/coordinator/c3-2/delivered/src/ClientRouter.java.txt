@@ -1,0 +1,9 @@
+import java.util.List;
+import java.util.Properties;
+final class ClientRouter {
+  private final HashRing ring;
+  private final String prefix;
+  ClientRouter(HashRing ring, Properties config) { this.ring = ring; this.prefix = config.getProperty("keyPrefix", ""); }
+  String owner(String requestKey) { return ring.owner(prefix + requestKey); }
+  List<String> owners(String requestKey) { return ring.owners(prefix + requestKey, 3); }
+}

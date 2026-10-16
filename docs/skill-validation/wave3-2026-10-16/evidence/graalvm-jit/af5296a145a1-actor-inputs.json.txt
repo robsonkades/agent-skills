@@ -1,0 +1,26 @@
+{
+  "cases": [
+    {
+      "id": "case-a",
+      "fixtureDirectory": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\graalvm-jit\\cases\\case-a",
+      "files": [
+        "runtime.json",
+        "compilation-evidence.json",
+        "metrics.csv",
+        "decision.md"
+      ],
+      "task": "Review decision.md against the supplied artifacts and update it in your isolated case copy. Decide whether the proposed 60-150 second window supports a steady-state C2/Graal comparison, correct unsupported interpretations, preserve valid runtime/correctness evidence, and state the smallest missing evidence or next step. Do not install tools or change infrastructure. Treat the fixture as a supplied observation, not a request to reproduce a performance benchmark."
+    },
+    {
+      "id": "case-b",
+      "fixtureDirectory": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\graalvm-jit\\cases\\case-b",
+      "files": [
+        "runtime.json",
+        "compilation-evidence.json",
+        "metrics.csv",
+        "decision.md"
+      ],
+      "task": "Review decision.md against the supplied artifacts and update it in your isolated case copy. Decide whether the proposed 60-150 second window supports a steady-state C2/Graal comparison, correct unsupported interpretations, preserve valid runtime/correctness evidence, and state the smallest missing evidence or next step. Do not install tools or change infrastructure. Treat the fixture as a supplied observation, not a request to reproduce a performance benchmark."
+    }
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "decision": "unchanged",
+  "cause": "The reported missing/failed receipt does not establish a defect in the contracted BookingService path. BEFORE_COMMIT already runs both receipt writes in the REQUIRED business transaction on the shared datasource; invalid body and stock rejection correctly roll back the entire mandatory unit.",
+  "changes": [
+    "Preserved all output/project/src bytes.",
+    "Added test/work/Regression.java with eight real Spring/JDBC contract scenarios.",
+    "Updated RUNBOOK.md with completion ownership, rollback behavior and validation commands.",
+    "Added ../checks/requires-new-control.mjs and an isolated proposal copy demonstrating regression rejection."
+  ],
+  "verification": [
+    {
+      "command": [
+        "node",
+        "check.mjs"
+      ],
+      "exit": 0,
+      "result": "PASS normal booking and receipt"
+    },
+    {
+      "command": [
+        "node",
+        "check.mjs",
+        "work.Regression"
+      ],
+      "exit": 0,
+      "result": "PASS 8 regression scenarios: success and exact 12-character body; 13-character body rollback; unavailable stock; nontransactional publication; outer-owner success; outer-owner failure; failure after both receipt writes; second receipt body rejection rolls back earlier work."
+    },
+    {
+      "command": [
+        "node",
+        "../checks/requires-new-control.mjs"
+      ],
+      "exit": 0,
+      "candidateExit": 1,
+      "result": "REQUIRES_NEW proposal rejected because the writer cannot observe the uncommitted booking: expected 1, actual 0."
+    },
+    {
+      "check": "SHA-256 input/project versus output/project originals",
+      "exit": 0,
+      "result": "All source, frozen files, original Smoke, and dependency jars are identical; only permitted RUNBOOK.md differs."
+    }
+  ],
+  "limits": [
+    "Local H2/JDBC observations do not establish production database crash/locking semantics, JPA behavior, distributed deduplication, or external delivery.",
+    "ReceiptWriter behavior was assessed through the contracted booking/event path; no separate standalone writer operation was invented.",
+    "Execution records are actor reports, not an independent complete OS audit.",
+    "Initial root-level README.md/REQUEST.md/CONTRACT.md read attempts failed; corrected paths were read fully and the unsuccessful attempts are retained."
+  ],
+  "regressionCommands": [
+    [
+      "node",
+      "check.mjs"
+    ],
+    [
+      "node",
+      "check.mjs",
+      "work.Regression"
+    ],
+    [
+      "node",
+      "../checks/requires-new-control.mjs"
+    ]
+  ]
+}

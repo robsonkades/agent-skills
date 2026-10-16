@@ -13,7 +13,7 @@ low-risk work, most of them collapse to seconds rather than disappearing.
 | Clarify    | Establish the intended problem from the request, incident or configuration history. Ask only if the reason or required outcome is still missing.       |
 | Risk       | Establish whether the setting takes effect; changed idle retirement can increase reconnect work and acquisition latency after quiet periods.           |
 | Tests      | Verify effective binding and the changed idle/reconnect behavior when material; an assertion of the literal alone cannot establish operational safety. |
-| Implement  | One line.                                                                                                                                              |
+| Implement  | Change the source controlling the requested default or environment; regenerate derived configuration only when the project requires it.                |
 | Verify     | Required repository gates plus targeted checks; record connection churn, acquisition latency and database load to watch if deployed.                   |
 | Review     | Follow repository review requirements, focused on the operational consequence rather than the line.                                                    |
 | Record     | Record the reason and validation in the requested handoff or, when authorized, commit/PR description.                                                  |
@@ -27,6 +27,21 @@ only applies when `minimumIdle < maximumPoolSize`; changing it in a fixed-size p
 establish changed idle-retirement behavior. Check the project's actual pool/version rather
 than adopting this example's library or settings. A representative idle-then-burst check can
 expose reconnect effects before deployment; continuous load alone may miss them.
+
+**Trace the effective value before choosing the edit.** Suppose a Spring Boot 3.5 project
+packages a 10-minute default, but its deployment supplies an environment override. Those
+sources have different precedence ([Spring Boot configuration order](https://docs.spring.io/spring-boot/3.5/reference/features/external-config.html)).
+For a requested environment change, inspect the launch configuration, follow that value to
+the pool binding, edit the owning source and exercise binding with the same overrides in an
+isolated check. A default-only test cannot establish the environment's value. If the request
+is instead to change only the fallback default, preserve deliberate environment overrides.
+
+If deployment configuration is unavailable, identify the unresolved source and keep the
+environment claim open; a search with no matches does not prove there is no override.
+Complete any independent authorized default change and report its narrower evidence.
+Binding evidence also does not establish the operational benefit; retain the idle/reconnect check above when
+that behavior is material. Verify the project's actual framework/version before applying
+this example's precedence.
 
 ## Medium risk: a new endpoint
 
@@ -53,7 +68,10 @@ follows the test decision, which is why step 4 precedes step 5.
 > Split `customer.name` into `given_name` and `family_name`.
 
 Durable-data changes require deeper compatibility and recovery evidence; scale each step
-to the migration's actual impact and reversibility.
+to the migration's actual impact and reversibility. This example assumes a rolling rollout
+with old and new application versions sharing the database. Establish that constraint from
+deployment configuration, the consumer inventory and recovery requirements; ask about an
+allowed outage only if the project evidence leaves it unresolved.
 
 | Step       | What it looks like                                                                                                                                                                                                                    |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -62,7 +80,7 @@ to the migration's actual impact and reversibility.
 | Risk       | Data can be lost or misinterpreted by a bad split. Reversibility depends on retained originals, concurrent writes and the migration phase.                                                                                            |
 | Tests      | Migration from empty to head; migration over seeded pre-migration data; the backfill rule as unit tests over real awkward names; the **previous** application version running against the **new** schema.                             |
 | Implement  | Separate expand, migration and contract phases; choose deploy count from compatibility and observation needs. Preserve original values, define the authoritative write path and prevent backfill from overwriting concurrent updates. |
-| Verify     | The full pipeline, plus the backfill timed against production-sized data. A backfill that took 20 minutes on the test dataset can take six hours on production.                                                                       |
+| Verify     | Required gates plus a backfill rehearsal with representative data volume and concurrent traffic; check duration and contention against the rollout budget.                                                                            |
 | Review     | Apply repository requirements and involve data expertise where needed. Review recovery and concurrent-writer behavior, not only DDL.                                                                                                  |
 | Record     | A decision record: the split rule, what happens to unsplittable values, and why.                                                                                                                                                      |
 | Deliver    | The runbook: order of deploys, checks and stop conditions for each phase, and the tested recovery path: rollback where valid, otherwise forward repair or restore.                                                                    |
@@ -73,10 +91,22 @@ can make a code revert insufficient. Contract only after old readers/writers and
 rollback window are gone; test the selected forward-repair or restore procedure, including
 its effect on writes received since migration. A backup alone does not prove recovery.
 
-The phase separation and compatibility concerns follow
-[Sadalage and Fowler's evolutionary database design](https://martinfowler.com/articles/evodb.html).
-The exact locking, online-DDL and transaction behavior must come from the deployed database
-and migration tool, not this illustrative workflow.
+**When the sequence changes:** an accepted maintenance window can justify a coordinated
+cutover if all affected readers and writers can be stopped, updated together and prevented
+from restarting on an incompatible schema. Rehearse migration, validation and recovery within
+that window before selecting it. This can avoid maintaining dual representations, but an outage
+alone does not establish that every consumer is coordinated. Retain compatibility if recovery
+requires the old application to run on migrated data. The choice follows the downtime and
+transition distinctions in
+[Sadalage and Fowler's evolutionary database design](https://martinfowler.com/articles/evodb.html)
+and the dual-version cost described in
+[Sato's parallel change](https://martinfowler.com/bliki/ParallelChange.html).
+
+If inspection then finds a legacy report that must run during the window, revise the cutover
+assumption: coordinate that consumer or retain a compatible interface until it migrates.
+Record the discovered consumer and resulting constraint, not a rule that all future migrations
+need the same number of releases. The exact locking, online-DDL and transaction behavior must
+come from the deployed database and migration tool, not this illustrative workflow.
 
 ## Incident mitigation before reproduction
 

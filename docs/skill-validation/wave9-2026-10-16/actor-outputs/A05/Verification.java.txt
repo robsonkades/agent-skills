@@ -1,0 +1,297 @@
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
+
+public final class Verification {
+    private static final Ports.Intent INTENT = new Ports.Intent("stable-intent", "same-payload");
+    private static int checks;
+
+    public static void main(String[] args) throws Exception {
+        terminalSnapshots();
+        outcomeSequences();
+        waitAndAdmission();
+        interruption();
+        System.out.println("Verification passed: " + checks + " scenarios (REPLAY_SAFE="
+                + Contract.REPLAY_SAFE + ", Java 17 API)");
+    }
+
+    private static void terminalSnapshots() throws Exception {
+        for (Ports.State state : List.of(Ports.State.APPLIED, Ports.State.REJECTED)) {
+            Fixture f = new Fixture(state, Ports.Kind.OK);
+            Ports.Snapshot original = f.store.snapshot();
+            f.cancelled = true;
+            Ports.Result r = f.execute();
+            require(r.snapshot().equals(original) && r.attempts() == 0, "terminal snapshot changed");
+            require(f.calls == 0 && f.tokenRequests == 0 && f.store.writes == 0, "terminal work");
+            checks++;
+        }
+    }
+
+    private static void outcomeSequences() throws Exception {
+        // Enumerate all three-response scripts, including unknown -> non-OK -> OK.
+        for (Ports.State initial : List.of(Ports.State.PENDING, Ports.State.UNKNOWN)) {
+            for (Ports.Kind a : Ports.Kind.values()) {
+                for (Ports.Kind b : Ports.Kind.values()) {
+                    for (Ports.Kind c : Ports.Kind.values()) {
+                        Fixture f = new Fixture(initial, a, b, c);
+                        Ports.Result r = f.execute();
+                        boolean unresolved = initial == Ports.State.UNKNOWN;
+                        Ports.State expected = unresolved ? Ports.State.UNKNOWN : Ports.State.REJECTED;
+                        int expectedCalls = 0;
+                        for (Ports.Kind k : f.kinds) {
+                            if (unresolved && !Contract.REPLAY_SAFE) break;
+                            expectedCalls++;
+                            if (k == Ports.Kind.OK) { expected = Ports.State.APPLIED; break; }
+                            if (k == Ports.Kind.UNKNOWN) unresolved = true;
+                            expected = unresolved ? Ports.State.UNKNOWN : Ports.State.REJECTED;
+                            if (k == Ports.Kind.PERMANENT) break;
+                        }
+                        f.assertResult(r, expected, expectedCalls);
+                        if (expected == Ports.State.APPLIED) {
+                            require("authoritative-receipt".equals(r.snapshot().receipt()), "invented receipt");
+                        }
+                        require(f.grants == Math.max(0, expectedCalls - 1), "retry admission count");
+                        checks++;
+                    }
+                }
+            }
+        }
+    }
+
+    private static void waitAndAdmission() throws Exception {
+        for (Ports.Kind first : List.of(Ports.Kind.TRANSIENT, Ports.Kind.UNKNOWN)) {
+            for (long server : new long[] {0, 2, 4, 13}) {
+                Fixture f = new Fixture(Ports.State.PENDING, first, Ports.Kind.OK);
+                f.minimum = server;
+                Ports.Result r = f.execute();
+                f.assertResult(r, Ports.State.APPLIED, 2);
+                require(f.waits.equals(List.of(Math.max(4L, server))), "server/local minimum");
+                checks++;
+            }
+        }
+        for (Ports.State initial : List.of(Ports.State.PENDING, Ports.State.UNKNOWN)) {
+            for (boolean cancel : new boolean[] {false, true}) {
+                Fixture f = new Fixture(initial, Ports.Kind.OK);
+                f.remaining = cancel ? 1000 : 14;
+                f.cancelled = cancel;
+                f.assertResult(f.execute(), initial == Ports.State.UNKNOWN
+                        ? Ports.State.UNKNOWN : Ports.State.REJECTED, 0);
+                require(f.tokenRequests == 0 && f.waits.isEmpty(), "initial refusal spent retry");
+                checks++;
+            }
+        }
+        Fixture exact = new Fixture(Ports.State.PENDING, Ports.Kind.OK);
+        exact.remaining = 15;
+        exact.assertResult(exact.execute(), Ports.State.APPLIED, 1);
+        checks++;
+
+        for (Ports.Kind first : List.of(Ports.Kind.TRANSIENT, Ports.Kind.UNKNOWN)) {
+            for (String reason : List.of("count", "budget", "wait", "oversleep", "cancelCall", "cancelSleep", "cancelGrant")) {
+                Fixture f = new Fixture(Ports.State.PENDING, first, Ports.Kind.OK);
+                switch (reason) {
+                    case "count" -> f.policy = new Ports.Policy(1, 10, 5, 4);
+                    case "budget" -> f.allowToken = false;
+                    case "wait" -> { f.minimum = 20; f.remaining = 34; }
+                    case "oversleep" -> { f.remaining = 19; f.oversleep = 1; }
+                    case "cancelCall" -> f.cancelAfterCall = true;
+                    case "cancelSleep" -> f.cancelAfterSleep = true;
+                    case "cancelGrant" -> f.cancelAfterGrant = true;
+                    default -> throw new AssertionError(reason);
+                }
+                f.assertResult(f.execute(), first == Ports.Kind.UNKNOWN
+                        ? Ports.State.UNKNOWN : Ports.State.REJECTED, 1);
+                if (List.of("count", "wait", "cancelCall").contains(reason)) {
+                    require(f.tokenRequests == 0 && f.waits.isEmpty(), "impossible retry spent token");
+                }
+                if (reason.equals("oversleep") || reason.equals("cancelSleep")) {
+                    require(f.grants == 1 && f.waits.size() == 1, "admission versus execution");
+                }
+                checks++;
+            }
+        }
+        Fixture exactWait = new Fixture(Ports.State.PENDING, Ports.Kind.TRANSIENT, Ports.Kind.OK);
+        exactWait.remaining = 19;
+        exactWait.assertResult(exactWait.execute(), Ports.State.APPLIED, 2);
+        checks++;
+
+        Fixture elapsed = new Fixture(Ports.State.PENDING, Ports.Kind.UNKNOWN, Ports.Kind.OK);
+        elapsed.remaining = 25;
+        elapsed.callCost = 7;
+        elapsed.assertResult(elapsed.execute(), Ports.State.UNKNOWN, 1);
+        require(elapsed.grants == 0 && elapsed.waits.isEmpty(), "stale remaining budget");
+        checks++;
+
+        Fixture overflow = new Fixture(Ports.State.PENDING, Ports.Kind.OK);
+        overflow.policy = new Ports.Policy(3, Long.MAX_VALUE, 1, 0);
+        overflow.remaining = Long.MAX_VALUE;
+        overflow.assertResult(overflow.execute(), Ports.State.REJECTED, 0);
+        checks++;
+
+        Fixture hugeWait = new Fixture(Ports.State.PENDING, Ports.Kind.UNKNOWN, Ports.Kind.OK);
+        hugeWait.minimum = Long.MAX_VALUE;
+        hugeWait.remaining = Long.MAX_VALUE;
+        hugeWait.assertResult(hugeWait.execute(), Ports.State.UNKNOWN, 1);
+        require(hugeWait.grants == 0 && hugeWait.waits.isEmpty(), "overflowing wait admitted");
+        checks++;
+
+        Fixture hugeExact = new Fixture(Ports.State.PENDING, Ports.Kind.TRANSIENT, Ports.Kind.OK);
+        hugeExact.policy = new Ports.Policy(3, 1, Long.MAX_VALUE - 1, 0);
+        hugeExact.remaining = Long.MAX_VALUE;
+        hugeExact.assertResult(hugeExact.execute(), Ports.State.APPLIED, 2);
+        require(hugeExact.waits.equals(List.of(0L)), "zero delay changed");
+        checks++;
+    }
+
+    private static void interruption() throws Exception {
+        for (Ports.State initial : List.of(Ports.State.PENDING, Ports.State.UNKNOWN)) {
+            Fixture f = new Fixture(initial, Ports.Kind.OK);
+            Thread.currentThread().interrupt();
+            try {
+                expectInterrupted(f);
+                require(f.calls == 0 && f.store.snapshot().state() == initial, "pre-interrupt dispatched");
+                require(Thread.currentThread().isInterrupted(), "pre-interrupt flag lost");
+            } finally { Thread.interrupted(); }
+            checks++;
+        }
+        for (Ports.Kind first : List.of(Ports.Kind.TRANSIENT, Ports.Kind.UNKNOWN)) {
+            Fixture sleep = new Fixture(Ports.State.PENDING, first, Ports.Kind.OK);
+            sleep.interruptSleep = true;
+            expectInterrupted(sleep);
+            require(sleep.calls == 1 && sleep.store.snapshot().state() ==
+                    (first == Ports.Kind.UNKNOWN ? Ports.State.UNKNOWN : Ports.State.PENDING),
+                    "sleep interruption changed uncertainty");
+            checks++;
+        }
+        Fixture dispatch = new Fixture(Ports.State.PENDING, Ports.Kind.OK);
+        dispatch.interruptCall = 1;
+        expectInterrupted(dispatch);
+        require(dispatch.calls == 1 && dispatch.store.snapshot().state() == Ports.State.UNKNOWN,
+                "dispatch interruption must persist unknown");
+        checks++;
+
+        Fixture secondDispatch = new Fixture(Ports.State.PENDING, Ports.Kind.TRANSIENT, Ports.Kind.OK);
+        secondDispatch.interruptCall = 2;
+        expectInterrupted(secondDispatch);
+        require(secondDispatch.calls == 2 && secondDispatch.store.snapshot().state() == Ports.State.UNKNOWN,
+                "second dispatch interruption must persist unknown");
+        checks++;
+
+        Fixture preRetry = new Fixture(Ports.State.PENDING, Ports.Kind.UNKNOWN, Ports.Kind.OK);
+        preRetry.interruptAfterCall = true;
+        try {
+            expectInterrupted(preRetry);
+            require(preRetry.calls == 1 && preRetry.grants == 0
+                    && preRetry.store.snapshot().state() == Ports.State.UNKNOWN, "retry interrupt");
+        } finally { Thread.interrupted(); }
+        checks++;
+    }
+
+    private static void expectInterrupted(Fixture f) throws Exception {
+        try { f.execute(); throw new AssertionError("interruption swallowed"); }
+        catch (InterruptedException expected) { f.assertClosed(); }
+    }
+
+    private static void require(boolean condition, String message) {
+        if (!condition) throw new AssertionError(message);
+    }
+
+    private static final class MemoryStore implements Ports.Store {
+        private Ports.Snapshot value;
+        private int writes;
+        MemoryStore(Ports.State state) {
+            value = new Ports.Snapshot(state, state == Ports.State.APPLIED ? "existing-receipt" : null);
+        }
+        public Ports.Snapshot snapshot() { return value; }
+        public void unknown() { writes++; value = new Ports.Snapshot(Ports.State.UNKNOWN, null); }
+        public void applied(String receipt) { writes++; value = new Ports.Snapshot(Ports.State.APPLIED, receipt); }
+        public void rejected() {
+            require(value.state() != Ports.State.UNKNOWN, "earlier uncertainty erased");
+            writes++;
+            value = new Ports.Snapshot(Ports.State.REJECTED, null);
+        }
+    }
+
+    private static final class Fixture implements Ports.Operation, Ports.Runtime {
+        final MemoryStore store;
+        final Ports.Kind[] kinds;
+        final List<TestReply> replies = new ArrayList<>();
+        final List<Long> waits = new ArrayList<>();
+        Ports.Policy policy = new Ports.Policy(3, 10, 5, 4);
+        long remaining = 1000, minimum, oversleep, callCost;
+        int calls, tokenRequests, grants, interruptCall;
+        boolean cancelled, allowToken = true, cancelAfterCall, cancelAfterSleep,
+                cancelAfterGrant, interruptSleep, interruptAfterCall, unresolved;
+
+        Fixture(Ports.State state, Ports.Kind... kinds) {
+            this.store = new MemoryStore(state);
+            this.kinds = kinds;
+            this.unresolved = state == Ports.State.UNKNOWN;
+        }
+        Ports.Result execute() throws InterruptedException {
+            Ports.Result r = RetryEngine.execute(INTENT, policy, store, this, this);
+            assertClosed();
+            return r;
+        }
+        public Ports.Reply call(Ports.Intent intent, long timeout) throws InterruptedException {
+            assertClosed();
+            require(intent == INTENT && timeout == policy.attemptNanos(), "intent/timeout changed");
+            require(!cancelled && !Thread.currentThread().isInterrupted(), "call after cancellation");
+            BigInteger needed = BigInteger.valueOf(policy.attemptNanos()).add(BigInteger.valueOf(policy.reserveNanos()));
+            require(BigInteger.valueOf(remaining).compareTo(needed) >= 0, "late call");
+            if (unresolved) require(store.snapshot().state() == Ports.State.UNKNOWN, "unknown not persisted before retry");
+            calls++;
+            require(calls <= kinds.length && calls <= policy.maxAttempts(), "extra call");
+            if (calls == interruptCall) throw new InterruptedException("during dispatch");
+            remaining = Math.max(0, remaining - callCost);
+            Ports.Kind kind = kinds[calls - 1];
+            if (kind == Ports.Kind.UNKNOWN) unresolved = true;
+            if (kind == Ports.Kind.OK) unresolved = false;
+            TestReply reply = new TestReply(kind, minimum);
+            replies.add(reply);
+            if (cancelAfterCall) cancelled = true;
+            if (interruptAfterCall) Thread.currentThread().interrupt();
+            return reply;
+        }
+        public long remainingNanos() { return remaining; }
+        public boolean cancelled() { return cancelled; }
+        public boolean acquireRetry() {
+            assertClosed();
+            tokenRequests++;
+            if (allowToken) grants++;
+            if (cancelAfterGrant) cancelled = true;
+            return allowToken;
+        }
+        public void sleep(long nanos) throws InterruptedException {
+            assertClosed();
+            if (unresolved) require(store.snapshot().state() == Ports.State.UNKNOWN, "unknown not durable before sleep");
+            require(nanos == Math.max(minimum, policy.localWaitNanos()), "wrong delay");
+            BigInteger needed = BigInteger.valueOf(nanos).add(BigInteger.valueOf(policy.attemptNanos()))
+                    .add(BigInteger.valueOf(policy.reserveNanos()));
+            require(BigInteger.valueOf(remaining).compareTo(needed) >= 0, "unusable wait");
+            waits.add(nanos);
+            if (interruptSleep) throw new InterruptedException("during sleep");
+            remaining -= nanos;
+            remaining = Math.max(0, remaining - oversleep);
+            if (cancelAfterSleep) cancelled = true;
+        }
+        void assertClosed() {
+            for (TestReply reply : replies) require(reply.closes == 1, "response not closed exactly once");
+        }
+        void assertResult(Ports.Result r, Ports.State state, int attempts) {
+            require(r.snapshot().state() == state && r.snapshot().equals(store.snapshot()), "wrong durable outcome: " + r);
+            require(r.attempts() == attempts && calls == attempts, "wrong call count: " + r);
+            assertClosed();
+        }
+    }
+
+    private static final class TestReply implements Ports.Reply {
+        final Ports.Kind kind;
+        final long minimum;
+        int closes;
+        TestReply(Ports.Kind kind, long minimum) { this.kind = kind; this.minimum = minimum; }
+        public Ports.Kind kind() { return kind; }
+        public String receipt() { return "authoritative-receipt"; }
+        public long serverMinimumNanos() { return minimum; }
+        public void close() { require(++closes == 1, "double close"); }
+    }
+}

@@ -1,0 +1,14 @@
+# Export API contract
+
+`ExportService.export(format, rows)` returns only the supplied rows in encounter
+order, each followed by LF. `TEXT` preserves row text; `UPPER` uses locale-neutral
+upper case. Input rows are non-null and contain neither CR nor LF. The caller owns
+its immutable input list. An empty job produces the empty string. Distinct jobs
+must not share output, including repeated calls through one service instance.
+
+The format key is non-null. Unknown keys are rejected with IllegalArgumentException;
+they must not silently select a fallback. The registry is an internal mechanism;
+there is no externally implemented SPI and no requirement to replace it with classes.
+A selected encoder is acquired once for a job and closed when that synchronous job
+finishes or fails. Encoder state is private to that job. Java 17 remains the target.
+

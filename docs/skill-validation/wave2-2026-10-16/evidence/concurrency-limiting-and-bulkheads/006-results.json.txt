@@ -1,0 +1,6 @@
+{
+  "Target": "Java 11",
+  "Runtime": "Temurin 25.0.3",
+  "TimeoutNegativeControlExit": 1,
+  "FreshGateNegativeControlExit": 1
+}

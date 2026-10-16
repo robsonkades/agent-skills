@@ -1,0 +1,1 @@
+{"epoch":"E","V":1024,"nodes":["n1","n2","n3","n4"],"weights":[1,1,1,1],"key":"user:2","primary":"n2","replicas":["n2","n3","n4"],"provenance":"Accepted unmodified Java HashRing, Guava33.5.0-jre; verified by retained RoutingAgreementControl output"}

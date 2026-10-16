@@ -1,0 +1,778 @@
+{
+  "actor": "run-16",
+  "taskFile": "../TASK.md",
+  "scope": "Only this actor's authorized inputs, output, skill snapshot, declared tools/JDK and one primary technical web source were used. Boundaries were procedural, not OS isolation.",
+  "firstObservedAt": "2026-10-16T15:11:31.5168093-03:00",
+  "completedAt": "2026-10-16T18:15:18.494Z",
+  "reads": [
+    {
+      "path": "TASK.md",
+      "mode": "text content",
+      "complete": true
+    },
+    {
+      "path": "skill/SKILL.md",
+      "mode": "text content",
+      "complete": true
+    },
+    {
+      "path": "skill/references/event-wiring-and-recovery.md",
+      "mode": "text content",
+      "complete": true
+    },
+    {
+      "path": "skill/references/verification.md",
+      "mode": "text content",
+      "complete": true
+    },
+    {
+      "path": "skill/references/interception-and-rollback.md",
+      "mode": "text content",
+      "complete": true
+    },
+    {
+      "path": "input/project/README.md",
+      "mode": "text content",
+      "complete": true
+    },
+    {
+      "path": "input/project/REQUEST.md",
+      "mode": "text content",
+      "complete": true
+    },
+    {
+      "path": "input/project/CONTRACT.md",
+      "mode": "text content",
+      "complete": true
+    },
+    {
+      "path": "input/project/RUNBOOK.md",
+      "mode": "text content",
+      "complete": true
+    },
+    {
+      "path": "input/project/dependencies.json",
+      "mode": "text content",
+      "complete": true
+    },
+    {
+      "path": "input/project/toolchain.json",
+      "mode": "text content",
+      "complete": true
+    },
+    {
+      "path": "input/project/check.mjs",
+      "mode": "text content",
+      "complete": true
+    },
+    {
+      "path": "input/project/src/work/Publisher.java",
+      "mode": "text content",
+      "complete": true
+    },
+    {
+      "path": "input/project/src/work/Dispatcher.java",
+      "mode": "text content",
+      "complete": true
+    },
+    {
+      "path": "input/project/src/work/Config.java",
+      "mode": "text content",
+      "complete": true
+    },
+    {
+      "path": "input/project/src/work/Checkpoint.java",
+      "mode": "text content",
+      "complete": true
+    },
+    {
+      "path": "input/project/support/work/ReceiverClient.java",
+      "mode": "text content",
+      "complete": true
+    },
+    {
+      "path": "input/project/test/work/Smoke.java",
+      "mode": "text content",
+      "complete": true
+    },
+    {
+      "path": "output/project/src/work/Dispatcher.java",
+      "mode": "text content",
+      "complete": true
+    },
+    {
+      "path": "output/project/src/work/Publisher.java",
+      "mode": "text content",
+      "complete": true
+    },
+    {
+      "path": "output/project/src/work/Config.java",
+      "mode": "text content",
+      "complete": true
+    },
+    {
+      "path": "output/project/src/work/Checkpoint.java",
+      "mode": "text content",
+      "complete": true
+    },
+    {
+      "path": "output/project/test/work/Smoke.java",
+      "mode": "text content",
+      "complete": true
+    },
+    {
+      "path": "output/project/RUNBOOK.md",
+      "mode": "text content",
+      "complete": true
+    },
+    {
+      "path": "input/project/check.mjs",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "output/project/check.mjs",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "input/project/CONTRACT.md",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "output/project/CONTRACT.md",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "input/project/dependencies.json",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "output/project/dependencies.json",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "input/project/README.md",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "output/project/README.md",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "input/project/REQUEST.md",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "output/project/REQUEST.md",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "input/project/RUNBOOK.md",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "output/project/RUNBOOK.md",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "input/project/toolchain.json",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "output/project/toolchain.json",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "input/project/lib/commons-logging-1.3.5.jar",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "output/project/lib/commons-logging-1.3.5.jar",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "input/project/lib/h2-2.4.240.jar",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "output/project/lib/h2-2.4.240.jar",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "input/project/lib/jspecify-1.0.0.jar",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "output/project/lib/jspecify-1.0.0.jar",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "input/project/lib/micrometer-commons-1.16.7.jar",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "output/project/lib/micrometer-commons-1.16.7.jar",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "input/project/lib/micrometer-observation-1.16.7.jar",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "output/project/lib/micrometer-observation-1.16.7.jar",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "input/project/lib/spring-aop-7.0.9.jar",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "output/project/lib/spring-aop-7.0.9.jar",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "input/project/lib/spring-beans-7.0.9.jar",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "output/project/lib/spring-beans-7.0.9.jar",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "input/project/lib/spring-context-7.0.9.jar",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "output/project/lib/spring-context-7.0.9.jar",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "input/project/lib/spring-core-7.0.9.jar",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "output/project/lib/spring-core-7.0.9.jar",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "input/project/lib/spring-expression-7.0.9.jar",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "output/project/lib/spring-expression-7.0.9.jar",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "input/project/lib/spring-jdbc-7.0.9.jar",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "output/project/lib/spring-jdbc-7.0.9.jar",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "input/project/lib/spring-tx-7.0.9.jar",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "output/project/lib/spring-tx-7.0.9.jar",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "input/project/src/work/Checkpoint.java",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "output/project/src/work/Checkpoint.java",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "input/project/src/work/Config.java",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "output/project/src/work/Config.java",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "input/project/src/work/Dispatcher.java",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "output/project/src/work/Dispatcher.java",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "input/project/src/work/Publisher.java",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "output/project/src/work/Publisher.java",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "input/project/support/work/ReceiverClient.java",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "output/project/support/work/ReceiverClient.java",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "input/project/test/work/Smoke.java",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    },
+    {
+      "path": "output/project/test/work/Smoke.java",
+      "mode": "SHA-256 whole-byte read; not a binary content search",
+      "complete": true
+    }
+  ],
+  "failedReadAttempts": [
+    {
+      "paths": [
+        "README.md",
+        "REQUEST.md",
+        "CONTRACT.md"
+      ],
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-16",
+      "reason": "Project documents were under input/project, not the actor root. The failed attempts are retained in command record 2."
+    }
+  ],
+  "metadataOnly": [
+    {
+      "command": "rg --files input/project output/project skill -g '!lib/**' -g '!*.jar'",
+      "contentNotRead": [
+        "skill/skill.yaml"
+      ],
+      "description": "Enumerated file names; did not read skill.yaml contents."
+    }
+  ],
+  "buildReads": {
+    "description": "check.mjs read its local toolchain configuration and enumerated source/classpath files; javac compiled complete sources listed below and loaded the existing JAR dependencies. Java executed compiled classes and accessed only disposable local H2 databases.",
+    "fullSourceFiles": [
+      "output/project/src/work/Checkpoint.java",
+      "output/project/src/work/Config.java",
+      "output/project/src/work/Dispatcher.java",
+      "output/project/src/work/Publisher.java",
+      "output/project/test/work/Smoke.java",
+      "output/project/test/work/Regression.java",
+      "output/project/support/work/ReceiverClient.java"
+    ],
+    "scripts": [
+      "output/project/check.mjs",
+      "output/checks/restart.mjs"
+    ],
+    "toolchain": "input/project/toolchain.json",
+    "jarFiles": [
+      "output/project/lib/commons-logging-1.3.5.jar",
+      "output/project/lib/h2-2.4.240.jar",
+      "output/project/lib/jspecify-1.0.0.jar",
+      "output/project/lib/micrometer-commons-1.16.7.jar",
+      "output/project/lib/micrometer-observation-1.16.7.jar",
+      "output/project/lib/spring-aop-7.0.9.jar",
+      "output/project/lib/spring-beans-7.0.9.jar",
+      "output/project/lib/spring-context-7.0.9.jar",
+      "output/project/lib/spring-core-7.0.9.jar",
+      "output/project/lib/spring-expression-7.0.9.jar",
+      "output/project/lib/spring-jdbc-7.0.9.jar",
+      "output/project/lib/spring-tx-7.0.9.jar"
+    ],
+    "writes": "Compilation/classes and restart databases under output/project/.build; memory databases otherwise."
+  },
+  "commands": [
+    {
+      "ordinal": 1,
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-16",
+      "argv": [
+        "Get-Content",
+        "-LiteralPath",
+        "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-16/TASK.md",
+        "-Raw"
+      ],
+      "exit": 0,
+      "log": "checks/terminal-history.json",
+      "logRecord": 1
+    },
+    {
+      "ordinal": 2,
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-16",
+      "argv": [
+        "PowerShell",
+        "-Command",
+        "Get-Item -LiteralPath README.md,REQUEST.md,CONTRACT.md,skill/SKILL.md | Select-Object FullName,Length; Get-Content -LiteralPath README.md -Raw; Get-Content -LiteralPath REQUEST.md -Raw; Get-Content -LiteralPath CONTRACT.md -Raw; Get-Content -LiteralPath skill/SKILL.md -Raw; Get-Date -Format o; rg --files input/project output/project skill -g '!lib/**' -g '!*.jar'"
+      ],
+      "exit": 0,
+      "log": "checks/terminal-history.json",
+      "logRecord": 2
+    },
+    {
+      "ordinal": 3,
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-16",
+      "argv": [
+        "PowerShell",
+        "-Command",
+        "$paths = @('input/project/README.md','input/project/REQUEST.md','input/project/CONTRACT.md','input/project/RUNBOOK.md','input/project/dependencies.json','input/project/toolchain.json','input/project/check.mjs','input/project/src/work/Publisher.java','input/project/src/work/Dispatcher.java','input/project/src/work/Config.java','input/project/src/work/Checkpoint.java','input/project/support/work/ReceiverClient.java','input/project/test/work/Smoke.java','skill/references/event-wiring-and-recovery.md','skill/references/verification.md'); foreach ($taskPath in $paths) { [pscustomobject]@{path=$taskPath;content=(Get-Content -LiteralPath $taskPath -Raw)} | ConvertTo-Json -Compress }"
+      ],
+      "exit": 0,
+      "log": "checks/terminal-history.json",
+      "logRecord": 3
+    },
+    {
+      "ordinal": 4,
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-16",
+      "argv": [
+        "PowerShell",
+        "-Command",
+        "$paths = @('skill/references/interception-and-rollback.md','output/project/src/work/Dispatcher.java','output/project/src/work/Publisher.java','output/project/src/work/Config.java','output/project/src/work/Checkpoint.java','output/project/test/work/Smoke.java','output/project/RUNBOOK.md'); foreach ($taskPath in $paths) { [pscustomobject]@{path=$taskPath;content=(Get-Content -LiteralPath $taskPath -Raw)} | ConvertTo-Json -Compress }"
+      ],
+      "exit": 0,
+      "log": "checks/terminal-history.json",
+      "logRecord": 4
+    },
+    {
+      "ordinal": 5,
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-16/output/project",
+      "argv": [
+        "PowerShell",
+        "-Command",
+        "node -e \"const {spawnSync}=require('node:child_process');const r=spawnSync(process.execPath,['check.mjs'],{encoding:'utf8',timeout:30000,windowsHide:true});process.stdout.write(r.stdout||'');process.stderr.write(r.stderr||'');if(r.error)process.stderr.write(r.error.message+'\\n');process.exitCode=r.status??1\""
+      ],
+      "exit": 0,
+      "log": "checks/terminal-history.json",
+      "logRecord": 5
+    },
+    {
+      "ordinal": 6,
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-16/output/project",
+      "argv": [
+        "PowerShell",
+        "-Command",
+        "node -e \"const {spawnSync}=require('node:child_process');const r=spawnSync(process.execPath,['check.mjs','work.Regression'],{encoding:'utf8',timeout:30000,windowsHide:true});process.stdout.write(r.stdout||'');process.stderr.write(r.stderr||'');if(r.error)process.stderr.write(r.error.message+'\\n');process.exitCode=r.status??1\""
+      ],
+      "exit": 1,
+      "log": "checks/terminal-history.json",
+      "logRecord": 6
+    },
+    {
+      "ordinal": 7,
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-16/output/project",
+      "argv": [
+        "node",
+        "check.mjs",
+        "work.Regression"
+      ],
+      "exit": 0,
+      "log": "checks/terminal-history.json",
+      "logRecord": 7
+    },
+    {
+      "ordinal": 8,
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-16/output/project",
+      "argv": [
+        "node",
+        "check.mjs"
+      ],
+      "exit": 0,
+      "log": "checks/terminal-history.json",
+      "logRecord": 8
+    },
+    {
+      "ordinal": 9,
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-16/output/project",
+      "argv": [
+        "node",
+        "../checks/restart.mjs"
+      ],
+      "exit": 0,
+      "log": "checks/terminal-history.json",
+      "logRecord": 9
+    },
+    {
+      "ordinal": 10,
+      "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d/actors/run-16",
+      "argv": [
+        "PowerShell",
+        "-Command",
+        "$taskRoot = (Get-Location).Path; $inputRoot = Join-Path $taskRoot 'input/project'; $outputRoot = Join-Path $taskRoot 'output/project'; $frozenChanged = @(); $records = foreach ($taskFile in Get-ChildItem -LiteralPath $inputRoot -File -Recurse) { $relative = [IO.Path]::GetRelativePath($inputRoot, $taskFile.FullName).Replace('\\','/'); $counterpart = Join-Path $outputRoot $relative; $same = (Get-FileHash -LiteralPath $taskFile.FullName -Algorithm SHA256).Hash -eq (Get-FileHash -LiteralPath $counterpart -Algorithm SHA256).Hash; $frozen = $relative -notmatch '^(src/|test/|RUNBOOK.md$)'; if ($frozen -and -not $same) { $frozenChanged += $relative }; [pscustomobject]@{path=$relative;fullByteHashRead=$true;frozen=$frozen;equal=$same} }; $records | ConvertTo-Json -Depth 5; Get-Date -Format o; if ($frozenChanged.Count -gt 0) { throw 'Frozen files changed' }"
+      ],
+      "exit": 0,
+      "log": "checks/terminal-history.json",
+      "logRecord": 10
+    }
+  ],
+  "commandLog": "checks/terminal-history.json",
+  "subprocessPolicy": "Every application check was launched by spawnSync with a 30000 ms timeout; frozen check.mjs also bounds javac and java to 30000 ms. Inspection commands finished in under one second. Every exec_command returned a completed exit result; no pending sessions or background services were launched.",
+  "changes": [
+    {
+      "method": "apply_patch",
+      "path": "output/project/test/work/Regression.java",
+      "action": "Added before production repair; intentional pre-repair check failed on duplicate effects."
+    },
+    {
+      "method": "apply_patch",
+      "path": "output/project/src/work/Dispatcher.java",
+      "action": "Removed UUID import and used stored eventId as receiver token."
+    },
+    {
+      "method": "apply_patch",
+      "path": "output/project/RUNBOOK.md",
+      "action": "Documented token, retry sequence, operations and evidence limits."
+    },
+    {
+      "method": "apply_patch",
+      "path": "output/checks/restart.mjs",
+      "action": "Added bounded separate-process recovery control."
+    },
+    {
+      "method": "apply_patch",
+      "paths": [
+        "output/REVIEW.md",
+        "output/assessment.json",
+        "output/execution.json",
+        "output/checks/terminal-history.json"
+      ],
+      "action": "Wrote final actor-authored reports and captured command log."
+    }
+  ],
+  "sources": [
+    {
+      "path": "skill/SKILL.md",
+      "complete": true
+    },
+    {
+      "path": "skill/references/event-wiring-and-recovery.md",
+      "complete": true
+    },
+    {
+      "path": "skill/references/verification.md",
+      "complete": true
+    },
+    {
+      "path": "skill/references/interception-and-rollback.md",
+      "complete": true
+    },
+    {
+      "url": "https://docs.spring.io/spring-framework/docs/7.0.9/javadoc-api/org/springframework/transaction/annotation/Transactional.html",
+      "retrieval": "web.open",
+      "contentRead": "All 314 returned text lines",
+      "complete": true,
+      "usedFor": "Existing unchecked-exception rollback semantics and default imperative transaction context; no dependency change."
+    }
+  ],
+  "frozenFileComparison": [
+    {
+      "path": "check.mjs",
+      "fullByteHashRead": true,
+      "frozen": true,
+      "equal": true
+    },
+    {
+      "path": "CONTRACT.md",
+      "fullByteHashRead": true,
+      "frozen": true,
+      "equal": true
+    },
+    {
+      "path": "dependencies.json",
+      "fullByteHashRead": true,
+      "frozen": true,
+      "equal": true
+    },
+    {
+      "path": "README.md",
+      "fullByteHashRead": true,
+      "frozen": true,
+      "equal": true
+    },
+    {
+      "path": "REQUEST.md",
+      "fullByteHashRead": true,
+      "frozen": true,
+      "equal": true
+    },
+    {
+      "path": "RUNBOOK.md",
+      "fullByteHashRead": true,
+      "frozen": false,
+      "equal": false
+    },
+    {
+      "path": "toolchain.json",
+      "fullByteHashRead": true,
+      "frozen": true,
+      "equal": true
+    },
+    {
+      "path": "lib/commons-logging-1.3.5.jar",
+      "fullByteHashRead": true,
+      "frozen": true,
+      "equal": true
+    },
+    {
+      "path": "lib/h2-2.4.240.jar",
+      "fullByteHashRead": true,
+      "frozen": true,
+      "equal": true
+    },
+    {
+      "path": "lib/jspecify-1.0.0.jar",
+      "fullByteHashRead": true,
+      "frozen": true,
+      "equal": true
+    },
+    {
+      "path": "lib/micrometer-commons-1.16.7.jar",
+      "fullByteHashRead": true,
+      "frozen": true,
+      "equal": true
+    },
+    {
+      "path": "lib/micrometer-observation-1.16.7.jar",
+      "fullByteHashRead": true,
+      "frozen": true,
+      "equal": true
+    },
+    {
+      "path": "lib/spring-aop-7.0.9.jar",
+      "fullByteHashRead": true,
+      "frozen": true,
+      "equal": true
+    },
+    {
+      "path": "lib/spring-beans-7.0.9.jar",
+      "fullByteHashRead": true,
+      "frozen": true,
+      "equal": true
+    },
+    {
+      "path": "lib/spring-context-7.0.9.jar",
+      "fullByteHashRead": true,
+      "frozen": true,
+      "equal": true
+    },
+    {
+      "path": "lib/spring-core-7.0.9.jar",
+      "fullByteHashRead": true,
+      "frozen": true,
+      "equal": true
+    },
+    {
+      "path": "lib/spring-expression-7.0.9.jar",
+      "fullByteHashRead": true,
+      "frozen": true,
+      "equal": true
+    },
+    {
+      "path": "lib/spring-jdbc-7.0.9.jar",
+      "fullByteHashRead": true,
+      "frozen": true,
+      "equal": true
+    },
+    {
+      "path": "lib/spring-tx-7.0.9.jar",
+      "fullByteHashRead": true,
+      "frozen": true,
+      "equal": true
+    },
+    {
+      "path": "src/work/Checkpoint.java",
+      "fullByteHashRead": true,
+      "frozen": false,
+      "equal": true
+    },
+    {
+      "path": "src/work/Config.java",
+      "fullByteHashRead": true,
+      "frozen": false,
+      "equal": true
+    },
+    {
+      "path": "src/work/Dispatcher.java",
+      "fullByteHashRead": true,
+      "frozen": false,
+      "equal": false
+    },
+    {
+      "path": "src/work/Publisher.java",
+      "fullByteHashRead": true,
+      "frozen": false,
+      "equal": true
+    },
+    {
+      "path": "support/work/ReceiverClient.java",
+      "fullByteHashRead": true,
+      "frozen": true,
+      "equal": true
+    },
+    {
+      "path": "test/work/Smoke.java",
+      "fullByteHashRead": true,
+      "frozen": false,
+      "equal": true
+    }
+  ],
+  "limitations": [
+    "Initial command output records were reconstructed from tool transcript and preserved source files; later command output is stored as returned by exec_command.",
+    "Tool output merged stdout and stderr; the log does not claim independent stream capture.",
+    "These records are actor reports, not an independent complete trace.",
+    "Restart evidence is orderly process recreation, not forced-kill/physical-crash behavior, concurrency or a production provider."
+  ],
+  "verificationSummary": {
+    "baselineSmoke": "passed",
+    "preRepairRegression": "failed as expected, receiver effects expected=1 actual=2",
+    "postRepairRegression": "passed",
+    "postRepairSmoke": "passed",
+    "separateJvmRestart": "passed",
+    "frozenFiles": "all equal to input counterparts"
+  },
+  "allWritesStopped": true
+}

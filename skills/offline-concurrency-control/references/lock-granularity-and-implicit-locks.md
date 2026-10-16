@@ -3,6 +3,10 @@
 ## Choosing what to lock together
 
 Granularity is decided by the invariant, not by the table structure.
+Trace the decision's read dependencies as well as its writes: an unchanged credit limit
+or the presence/absence of matching rows may matter. Versions on modified rows alone do
+not protect those dependencies. Use the relevant shared guard, authoritative constraint
+or protected revalidation; independent data needs no global version merely because it was read.
 
 ```text
 Order (root, @Version)
@@ -33,6 +37,24 @@ lines. Splitting it into its own aggregate is legitimate if independent editing 
 That is a domain design option, not a required response to every false conflict. A narrower
 concurrency boundary can also be valid without changing the aggregate's public semantics,
 provided its independent-write and invariant assumptions hold.
+
+### Pair the version with the state it guards
+
+Reading children from revision 7, then capturing root version 8 after another writer commits,
+can attach a new token to old state. A later successful check of version 8 does not detect
+that mismatch. Being in one transaction is insufficient: [PostgreSQL 17 Read Committed](https://www.postgresql.org/docs/17/transaction-iso.html#XACT-READ-COMMITTED)
+uses a new snapshot for each statement.
+
+One shared-root protocol captures the root version before authoritative dependent reads and
+carries it unchanged into the atomic check/bump and related writes. This requires every writer
+that changes guarded state, including membership, to advance that root version atomically;
+the read isolation and freshness must also prevent combining that token with older dependent
+state. A stale cache or replica can invalidate that assumption. A consistent read of state and
+version, or authoritative revalidation protected through the write, may already satisfy the
+contract. Do not refresh only the token while retaining old decisions or state.
+
+This applies the version/data association in [Jakarta Persistence 3.2, section 3.5.1](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html#a2056)
+to a multi-row guard; it is not a claim that an ORM root annotation validates every child read.
 
 ### Bumping the root's version from a child change
 

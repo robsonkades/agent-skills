@@ -1,0 +1,371 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "java-design-by-contract",
+  "reviewer": "/root/quality18",
+  "wave": 3,
+  "ownedPath": "skills/java-design-by-contract/**",
+  "allWritesStopped": true,
+  "readinessMeaning": "Local review, edits and checks are complete. No process started by this reviewer remains running or writing. Repository-wide validation and agent comparisons have not been performed by this reviewer.",
+  "baseline": {
+    "committedVersion": "1.2.4",
+    "assignmentVersion": "1.2.4",
+    "preExistingVersionBump": false,
+    "scopedGitStatusAtAssignment": "clean",
+    "stagedDifferences": [],
+    "unstagedDifferences": [],
+    "untrackedFiles": [],
+    "attribution": "The assigned package was unchanged from HEAD at assignment; all three final modified files are this reviewer's changes. Assignment SHA-256 values were captured before editing; the stock example remains byte-for-byte unchanged.",
+    "assignmentFiles": [
+      {
+        "path": "skills/java-design-by-contract\\skill.yaml",
+        "sha256": "ADF4BF432B2FA9F912147D1C3EB705F56EEB174C1AD5409BD0A3565F594BBCF0"
+      },
+      {
+        "path": "skills/java-design-by-contract\\SKILL.md",
+        "sha256": "F74398897A0D04AB31BD9DACD709CC4F68571BC585EE8421BADAE83942AC367A"
+      },
+      {
+        "path": "skills/java-design-by-contract\\references\\explicit-contract-example.md",
+        "sha256": "FC9E300933434F7123C662A596373B6AF01CDF6AD190B6B0F8D8C035F71E0634"
+      },
+      {
+        "path": "skills/java-design-by-contract\\references\\contracts-in-java.md",
+        "sha256": "526229AF49B49DF058ECB1D0CC4AC3CED6ABB42D5E0AC1CD78DE86453D2DF1D9"
+      }
+    ],
+    "finalFiles": [
+      {
+        "Path": "skills/java-design-by-contract\\skill.yaml",
+        "Hash": "E055829970F9A727115AEB58750B023C532DCB74DB8536E3B291416F9B07AC51"
+      },
+      {
+        "Path": "skills/java-design-by-contract\\SKILL.md",
+        "Hash": "153252F5A0EC383FAFF200BCD13B273FEF8E23C613FC7BA465D5B64F9A57B99D"
+      },
+      {
+        "Path": "skills/java-design-by-contract\\references\\explicit-contract-example.md",
+        "Hash": "FC9E300933434F7123C662A596373B6AF01CDF6AD190B6B0F8D8C035F71E0634"
+      },
+      {
+        "Path": "skills/java-design-by-contract\\references\\contracts-in-java.md",
+        "Hash": "CCC62744D7FD78F948DE95C9346447D124388700642045E60AD4C5FFCF5D0DAA"
+      }
+    ]
+  },
+  "reviewCriteria": [
+    "Preserve the skill's review/design/authorized-implementation role and Java 25 authoring baseline without implying project upgrades.",
+    "Identify caller-observable contract clauses and the point at which each promise must hold.",
+    "Check failure channels and observable state rather than treating return, callback registration, or a passing happy path as proof.",
+    "Preserve documented alternatives, including acceptance-only completion, and hand composition mechanics to its existing owner."
+  ],
+  "findingsCorrected": [
+    {
+      "location": "skills/java-design-by-contract/SKILL.md:114",
+      "finding": "The existing effect-contract guidance did not distinguish immediate method return from completion of the caller-visible stage.",
+      "consequence": "A review could accept a registered checker as proof of a successful-completion promise without following the actual returned stage.",
+      "correction": "Added a short scoped guard and link to the conditional completion-boundary reference."
+    },
+    {
+      "location": "skills/java-design-by-contract/references/contracts-in-java.md:83",
+      "finding": "No concrete counterexample showed a checker failing in a discarded dependent stage while the original future still returns an invalid result normally.",
+      "correction": "Added a partial Java 25 example, return-versus-completion clauses, exception-channel preservation, exact-stage tests, acceptance-only alternative, no implied rollback, and existing composition-skill handoff.",
+      "evidence": "Java SE 25 API contracts and deterministic Temurin 25.0.3+9 probe retained under the artifact directory."
+    }
+  ],
+  "findingsRemaining": [],
+  "filesChangedByReviewer": [
+    {
+      "path": "skills/java-design-by-contract/SKILL.md",
+      "purpose": "Short completion-boundary guard and resource routing."
+    },
+    {
+      "path": "skills/java-design-by-contract/references/contracts-in-java.md",
+      "purpose": "Focused asynchronous contract decision, counterexample, legitimate alternative, test guidance, and primary-source links."
+    },
+    {
+      "path": "skills/java-design-by-contract/skill.yaml",
+      "purpose": "One patch version bump."
+    }
+  ],
+  "preExistingChanges": [],
+  "capabilitiesPreserved": [
+    "Definitions of preconditions, normal postconditions, invariants and exceptional state effects.",
+    "Boundary/type/check trade-offs; validating records, null and ownership caveats.",
+    "Javadoc, nullness, compatibility, behavioral subtyping and inherited history constraints.",
+    "Assertions versus unconditional checks, constructor exposure and Java target compatibility.",
+    "Failure atomicity, valid partial progress, callback reentrancy and persistence atomicity caveats.",
+    "The complete stock-reservation worked example, including extreme integer, disabled-assertion, migration and persistence verification guidance.",
+    "Mode matching and handoffs to existing API, defensive-programming, exception and LSP specialists."
+  ],
+  "capabilitiesReplaced": [],
+  "capabilitiesRemoved": [],
+  "version": {
+    "committed": "1.2.4",
+    "assignment": "1.2.4",
+    "final": "1.2.5",
+    "rationale": "Package content changed; one patch bump follows the wave/repository policy. No pre-existing bump was present. Shared generated index belongs to the coordinator."
+  },
+  "technicalValidation": {
+    "commands": [
+      {
+        "name": "compile and execute targeted probe",
+        "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-design-by-contract-validation-quality18",
+        "command": "$ErrorActionPreference = 'Stop'\n& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' --release 25 -d classes CompletionContractProbe.java *> javac.log\nif ($LASTEXITCODE -ne 0) { Get-Content javac.log; throw 'javac failed' }\n& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -ea -cp classes CompletionContractProbe *> probe-ea.log\nif ($LASTEXITCODE -ne 0) { Get-Content probe-ea.log; throw 'assertions-enabled probe failed' }\nGet-Content probe-ea.log\n& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' -da -cp classes CompletionContractProbe *> probe-da.log\nif ($LASTEXITCODE -ne 0) { Get-Content probe-da.log; throw 'assertions-disabled probe failed' }\nGet-Content probe-da.log",
+        "chunk_id": "111582",
+        "wall_time_seconds": 0.5970736,
+        "exit_code": 0,
+        "original_token_count": 325,
+        "output": "ORIGINAL PENDING VALID -> VALID\r\nORIGINAL PENDING INVALID -> NORMAL_WITH_REJECTED_RECEIPT\r\nORIGINAL PENDING UPSTREAM_FAILURE -> UPSTREAM_FAILURE\r\nORIGINAL PRECOMPLETED VALID -> VALID\r\nORIGINAL PRECOMPLETED INVALID -> NORMAL_WITH_REJECTED_RECEIPT\r\nORIGINAL PRECOMPLETED UPSTREAM_FAILURE -> UPSTREAM_FAILURE\r\nDEPENDENT PENDING VALID -> VALID\r\nDEPENDENT PENDING INVALID -> CHECK_FAILURE\r\nDEPENDENT PENDING UPSTREAM_FAILURE -> UPSTREAM_FAILURE\r\nDEPENDENT PRECOMPLETED VALID -> VALID\r\nDEPENDENT PRECOMPLETED INVALID -> CHECK_FAILURE\r\nDEPENDENT PRECOMPLETED UPSTREAM_FAILURE -> UPSTREAM_FAILURE\r\nPASS: 12 scenarios; assertions=true; runtime=25.0.3+9-LTS\r\nORIGINAL PENDING VALID -> VALID\r\nORIGINAL PENDING INVALID -> NORMAL_WITH_REJECTED_RECEIPT\r\nORIGINAL PENDING UPSTREAM_FAILURE -> UPSTREAM_FAILURE\r\nORIGINAL PRECOMPLETED VALID -> VALID\r\nORIGINAL PRECOMPLETED INVALID -> NORMAL_WITH_REJECTED_RECEIPT\r\nORIGINAL PRECOMPLETED UPSTREAM_FAILURE -> UPSTREAM_FAILURE\r\nDEPENDENT PENDING VALID -> VALID\r\nDEPENDENT PENDING INVALID -> CHECK_FAILURE\r\nDEPENDENT PENDING UPSTREAM_FAILURE -> UPSTREAM_FAILURE\r\nDEPENDENT PRECOMPLETED VALID -> VALID\r\nDEPENDENT PRECOMPLETED INVALID -> CHECK_FAILURE\r\nDEPENDENT PRECOMPLETED UPSTREAM_FAILURE -> UPSTREAM_FAILURE\r\nPASS: 12 scenarios; assertions=false; runtime=25.0.3+9-LTS\r\n"
+      },
+      {
+        "name": "strict manifest, identity, descriptions, paths and links",
+        "cwd": "C:/git/agent-skills",
+        "command": "@'\nimport assert from 'node:assert/strict';\nimport { readFileSync, existsSync } from 'node:fs';\nimport { resolve, dirname } from 'node:path';\nimport { parseManifest } from './packages/core/src/domain/manifest.ts';\nimport { parseSkillDocument } from './packages/core/src/domain/skill-document.ts';\nconst root = resolve('skills/java-design-by-contract');\nconst { manifest, issues } = parseManifest(readFileSync(resolve(root, 'skill.yaml'), 'utf8'), { strict: true });\nassert.deepEqual(issues, []);\nconst doc = parseSkillDocument(readFileSync(resolve(root, 'SKILL.md'), 'utf8'));\nassert.equal(manifest.name, 'java-design-by-contract');\nassert.equal(doc.frontmatter.name, manifest.name);\nassert.equal(manifest.version, '1.2.5');\nconst norm = s => s.replace(/\\s+/g, ' ').trim();\nassert.equal(norm(doc.frontmatter.description), norm(manifest.description));\nfor (const path of manifest.files) assert.ok(existsSync(resolve(root, path)), path);\nconst refs = [...new Set(doc.body.match(/references\\/[A-Za-z0-9/-]+\\.md/g))];\nassert.equal(refs.length, 2);\nlet links = 0;\nfor (const name of ['SKILL.md', ...refs]) {\n  const source = resolve(root, name);\n  const content = readFileSync(source, 'utf8');\n  for (const match of content.matchAll(/\\]\\(([^)]+)\\)/g)) {\n    const target = match[1];\n    if (/^<?https?:\\/\\//.test(target)) continue;\n    const [file, anchor] = target.split('#');\n    const dest = file ? resolve(dirname(source), file) : source;\n    assert.ok(existsSync(dest), name + ': ' + target);\n    if (anchor) {\n      const headings = [...readFileSync(dest, 'utf8').matchAll(/^#+\\s+(.+)$/gm)].map(m => m[1].toLowerCase().replace(/[^\\w\\s-]/g, '').replace(/\\s/g, '-'));\n      assert.ok(headings.includes(anchor), name + ': anchor ' + target);\n    }\n    links++;\n  }\n}\nconsole.log(JSON.stringify({name:manifest.name, version:manifest.version, strictManifestIssues:issues.length, declaredPaths:manifest.files.length, routedReferences:refs.length, localLinksChecked:links, metadataAndLinks:'PASS'}));\n'@ | node --input-type=module",
+        "chunk_id": "824ab2",
+        "wall_time_seconds": 0.1585374,
+        "exit_code": 0,
+        "original_token_count": 42,
+        "output": "{\"name\":\"java-design-by-contract\",\"version\":\"1.2.5\",\"strictManifestIssues\":0,\"declaredPaths\":3,\"routedReferences\":2,\"localLinksChecked\":3,\"metadataAndLinks\":\"PASS\"}\n"
+      },
+      {
+        "name": "owned-package formatting",
+        "cwd": "C:/git/agent-skills",
+        "command": "node node_modules/prettier/bin/prettier.cjs --check skills/java-design-by-contract/SKILL.md skills/java-design-by-contract/skill.yaml skills/java-design-by-contract/references/contracts-in-java.md skills/java-design-by-contract/references/explicit-contract-example.md",
+        "chunk_id": "e55282",
+        "wall_time_seconds": 0.2085982,
+        "exit_code": 0,
+        "original_token_count": 17,
+        "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+      },
+      {
+        "name": "scoped diff, status, version markers and final hashes",
+        "cwd": "C:/git/agent-skills",
+        "command": "git diff --check -- skills/java-design-by-contract; git status --short -- skills/java-design-by-contract; git diff --cached -- skills/java-design-by-contract; rg -n \"For asynchronous|Completion is|CompletionStage:|CompletableFuture:|version:\" skills/java-design-by-contract; $skillFiles = rg --files skills/java-design-by-contract; $skillFiles | ForEach-Object { [pscustomobject]@{ Path = $_; Hash = (Get-FileHash -LiteralPath $_ -Algorithm SHA256).Hash } } | ConvertTo-Json -Depth 3",
+        "chunk_id": "85eda3",
+        "wall_time_seconds": 0.1660499,
+        "exit_code": 0,
+        "original_token_count": 397,
+        "output": " M skills/java-design-by-contract/SKILL.md\n M skills/java-design-by-contract/references/contracts-in-java.md\n M skills/java-design-by-contract/skill.yaml\nskills/java-design-by-contract\\skill.yaml:4:version: 1.2.5\nskills/java-design-by-contract\\SKILL.md:114:For asynchronous APIs, distinguish the immediate return contract from the guarantees at\nskills/java-design-by-contract\\references\\contracts-in-java.md:83:## Completion is a separate contract boundary\nskills/java-design-by-contract\\references\\contracts-in-java.md:199:- [CompletionStage: dependency and exceptional-completion contracts](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletionStage.html)\nskills/java-design-by-contract\\references\\contracts-in-java.md:200:- [CompletableFuture: completion and dependent-stage behavior](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html)\n[\r\n  {\r\n    \"Path\": \"skills/java-design-by-contract\\\\skill.yaml\",\r\n    \"Hash\": \"E055829970F9A727115AEB58750B023C532DCB74DB8536E3B291416F9B07AC51\"\r\n  },\r\n  {\r\n    \"Path\": \"skills/java-design-by-contract\\\\SKILL.md\",\r\n    \"Hash\": \"153252F5A0EC383FAFF200BCD13B273FEF8E23C613FC7BA465D5B64F9A57B99D\"\r\n  },\r\n  {\r\n    \"Path\": \"skills/java-design-by-contract\\\\references\\\\explicit-contract-example.md\",\r\n    \"Hash\": \"FC9E300933434F7123C662A596373B6AF01CDF6AD190B6B0F8D8C035F71E0634\"\r\n  },\r\n  {\r\n    \"Path\": \"skills/java-design-by-contract\\\\references\\\\contracts-in-java.md\",\r\n    \"Hash\": \"CCC62744D7FD78F948DE95C9346447D124388700642045E60AD4C5FFCF5D0DAA\"\r\n  }\r\n]\r\n"
+      },
+      {
+        "name": "standalone final scoped whitespace check",
+        "cwd": "C:/git/agent-skills",
+        "command": "git diff --check -- skills/java-design-by-contract",
+        "chunk_id": "fc42d9",
+        "wall_time_seconds": 0.0717828,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      },
+      {
+        "name": "artifact JSON readback and pair constraint",
+        "cwd": "C:/git/agent-skills",
+        "command": "$artifactPath = 'C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-design-by-contract-validation-quality18'\n$firstCase = Get-Content -Raw -LiteralPath \"$artifactPath/case-01-input.json\" | ConvertFrom-Json\n$secondCase = Get-Content -Raw -LiteralPath \"$artifactPath/case-02-input.json\" | ConvertFrom-Json\n$criteria = Get-Content -Raw -LiteralPath \"$artifactPath/evaluator-criteria.json\" | ConvertFrom-Json\n$evidence = Get-Content -Raw -LiteralPath \"$artifactPath/evidence.json\" | ConvertFrom-Json\nif ($firstCase.fixtureFiles[0].content.Replace('return loaded;', 'return validated;') -ne $secondCase.fixtureFiles[0].content) { throw 'Case pair differs beyond the intended return expression' }\n[pscustomobject]@{ Case1 = $firstCase.caseId; Case2 = $secondCase.caseId; PairDifference = 'one return expression'; EvaluatorCases = $criteria.cases.Count; SourceCount = $evidence.sources.Count; TechnicalLogCount = (Get-ChildItem -LiteralPath $artifactPath -Filter '*.log').Count } | ConvertTo-Json",
+        "chunk_id": "688c5f",
+        "wall_time_seconds": 0.1280092,
+        "exit_code": 0,
+        "original_token_count": 50,
+        "output": "{\r\n  \"Case1\": \"completion-contract-01\",\r\n  \"Case2\": \"completion-contract-02\",\r\n  \"PairDifference\": \"one return expression\",\r\n  \"EvaluatorCases\": 2,\r\n  \"SourceCount\": 2,\r\n  \"TechnicalLogCount\": 3\r\n}\r\n"
+      }
+    ],
+    "resultSummary": [
+      "javac --release 25 succeeded with the available Temurin JDK; no toolchain or dependency installation.",
+      "Twelve controlled scenarios executed under -ea and again under -da: root/dependent return, pending/precompleted upstream, valid/invalid/upstream-failure outcomes.",
+      "Negative control reproduced normal completion with a rejected receipt when returning the original stage. Returning the checked dependent produced the intended exceptional completion. Valid results and upstream failures were preserved.",
+      "The probe's PASS means its expected observations matched, including the intentionally incorrect original-stage implementation; it does not claim both implementations satisfy the domain contract.",
+      "Strict manifest parser reported zero issues; name, description, version, three declared paths, two routed references and three local Markdown links/anchors passed.",
+      "Prettier check passed all four package files; scoped git diff --check had empty output and exit 0.",
+      "JSON case inputs and evaluator criteria parsed; the source pair differs only in the return expression."
+    ],
+    "validationFailures": [],
+    "failedAttempts": [
+      {
+        "phase": "artifact assembly",
+        "error": "ReferenceError: structuredClone is not defined",
+        "effect": "The functions.exec isolate lacks that helper; the script stopped before any tool call or file write.",
+        "resolution": "Retried with JSON.parse(JSON.stringify(...)) for serializable case data. No repository or validation failure resulted."
+      }
+    ],
+    "finalOwnedDiff": "diff --git a/skills/java-design-by-contract/SKILL.md b/skills/java-design-by-contract/SKILL.md\nindex 6f31035..9ae8d24 100644\n--- a/skills/java-design-by-contract/SKILL.md\n+++ b/skills/java-design-by-contract/SKILL.md\n@@ -111,6 +111,11 @@ returned mutable data; and what happens on timeout or partial failure. These are\n when Java's type system cannot express them. State only guarantees the implementation and its\n datastore/protocol can actually preserve.\n \n+For asynchronous APIs, distinguish the immediate return contract from the guarantees at\n+normal or exceptional completion of the exact stage returned to the caller. A check in a\n+discarded dependent stage does not establish the original stage's postcondition; see the\n+completion-boundary guidance in [Contracts in Java 25](references/contracts-in-java.md#completion-is-a-separate-contract-boundary).\n+\n For each anticipated failure, distinguish unchanged state from permitted partial progress\n that still preserves the invariant, or a documented unusable state requiring disposal.\n An exception does not itself undo earlier writes. If unchanged state is promised, prepare and\n@@ -138,8 +143,8 @@ the existing contract rather than assuming a redesign is safe.\n \n - [Contracts in Java 25](references/contracts-in-java.md) — the contract-element →\n   language-mechanism mapping table, Javadoc conventions, behavioural-subtyping\n-  violations in concrete Java, exceptional state guarantees, detection heuristics and false\n-  positives. Read when reviewing an API, failure path or override.\n+  violations in concrete Java, exceptional state guarantees, asynchronous completion boundaries,\n+  detection heuristics and false positives. Read when reviewing an API, failure path or override.\n - [Worked example: from implicit to explicit](references/explicit-contract-example.md)\n   — a stock-reservation class whose invariants lived in callers' heads, made explicit\n   via types, checks and documented contract. Read when applying the workflow.\ndiff --git a/skills/java-design-by-contract/references/contracts-in-java.md b/skills/java-design-by-contract/references/contracts-in-java.md\nindex 82c6d92..5d476ff 100644\n--- a/skills/java-design-by-contract/references/contracts-in-java.md\n+++ b/skills/java-design-by-contract/references/contracts-in-java.md\n@@ -80,6 +80,38 @@ checking the thrown type. Do not add blanket `catch (Throwable)` rollback to cla\n from arbitrary VM failure. The recovery mechanism belongs to java-exception-design; this review\n establishes the promise it must satisfy.\n \n+## Completion is a separate contract boundary\n+\n+A method returning `CompletionStage<Receipt>` can return normally before its work completes.\n+State the immediate promise (such as a non-null stage), the successful-completion promise\n+(such as a validated receipt), and exceptional-completion effects separately. Distinguish\n+synchronous rejection from a failure delivered through the returned stage; changing that\n+channel can break callers even when the exception class is unchanged.\n+\n+Trace which stage the caller actually receives. In this partial Java 25 snippet, `load()`\n+returns a `CompletableFuture<Receipt>` and `checkReceipt` throws for an invalid receipt:\n+\n+```java\n+CompletableFuture<Receipt> loaded = load();\n+loaded.thenAccept(this::checkReceipt);\n+return loaded;\n+```\n+\n+The check belongs to a new dependent stage. Its failure does not turn the original future's\n+successful result into failure, including when `loaded` was already complete when the check\n+was attached. If successful completion promises a checked receipt, return a dependent stage\n+that performs the check and returns the receipt. If required work itself returns a stage,\n+compose that completion rather than merely starting it. Do not add blocking `join()` to the\n+API just to make the postcondition appear synchronous; graph construction and execution\n+policy belong to completablefuture-composition.\n+\n+An API promising only acceptance may legitimately complete before later work. Preserve that\n+contract and its separate failure owner rather than silently strengthening it to completed\n+processing. Likewise, a checker failing after a write cannot promise that the write was undone.\n+Test the exact caller-visible stage with pending and already-completed upstream futures,\n+valid and invalid results, and upstream failure. Observe whether failure is thrown at the call\n+or reported at completion; asserting only that the method returned a future misses the promise.\n+\n ## Behavioural subtyping — the rules and their concrete violations\n \n An override stands in for the supertype's contract wherever the supertype is expected.\n@@ -164,6 +196,8 @@ Violations that compile cleanly:\n - [JLS §8.8.7: constructor bodies](https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html#jls-8.8.7)\n - [JLS §14.10: assertions](https://docs.oracle.com/javase/specs/jls/se25/html/jls-14.html#jls-14.10)\n - [JLS §17.1: monitor reentrancy](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.1)\n+- [CompletionStage: dependency and exceptional-completion contracts](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletionStage.html)\n+- [CompletableFuture: completion and dependent-stage behavior](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html)\n - [System.arraycopy: unchanged destination versus copied prefix on failure](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/System.html#arraycopy(java.lang.Object,int,java.lang.Object,int,int)>)\n - [JLS §11.2.3: exception checking](https://docs.oracle.com/javase/specs/jls/se25/html/jls-11.html#jls-11.2.3)\n - [JLS §8.4.8.3: overriding requirements](https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html#jls-8.4.8.3)\ndiff --git a/skills/java-design-by-contract/skill.yaml b/skills/java-design-by-contract/skill.yaml\nindex 2eef65e..3f26377 100644\n--- a/skills/java-design-by-contract/skill.yaml\n+++ b/skills/java-design-by-contract/skill.yaml\n@@ -1,7 +1,7 @@\n schemaVersion: 1\n \n name: java-design-by-contract\n-version: 1.2.4\n+version: 1.2.5\n description: >-\n   Contracts as the semantics of a Java API, without a contract framework: preconditions,\n   postconditions and invariants defined precisely and mapped to Java 25 mechanisms —\n"
+  },
+  "behavioralEvaluation": {
+    "executed": [],
+    "measuredImprovement": false,
+    "pending": "Coordinator-owned independent agent comparisons. Technical execution and walkthroughs do not measure incremental agent benefit.",
+    "structuredWalkthroughs": [
+      {
+        "case": "Original versus checked dependent",
+        "result": "Caller-visible future identity controls whether a validation failure is observed; technical probe separately confirms this mechanism."
+      },
+      {
+        "case": "Acceptance-only API",
+        "result": "A documented promise of acceptance does not itself require later processing completion; retain its separate failure owner. This is a contract walkthrough, not an executed application test."
+      },
+      {
+        "case": "Existing stock-reservation example",
+        "result": "Text and checksum unchanged; construction, failure-state, assertions, migration and persistence caveats remain intact. The stock example was not recompiled in this assignment."
+      },
+      {
+        "case": "Review versus implementation",
+        "result": "Keep findings/proposed clauses in review mode; only implement client code when authorized. This review changes the skill, not any application."
+      }
+    ],
+    "caseInputs": [
+      {
+        "request": "Review ReceiptService.find against its documented public contract. Inspect the supplied source and smoke test, make the smallest justified correction if one is needed, and add or run focused checks that support the conclusion. Preserve nonblocking behavior and existing public promises. If the implementation already meets the contract, report that rather than inventing a change.",
+        "context": {
+          "languageBaseline": "Java 25",
+          "dependencies": "JDK only",
+          "allowedWork": "Isolated disposable copy of the supplied fixture; no network, installations, real services, or agent configuration changes.",
+          "loaderContract": "Loader.load receives a non-null id, returns a non-null ordinary CompletableFuture, never throws synchronously, and may complete before or after find returns. It may produce any non-null Receipt or complete exceptionally. The service owns its returned stage; callers do not externally complete it."
+        },
+        "prerequisites": [
+          "JDK 25 compiler/runtime; repository version available at C:/Users/robso/.jdks/temurin-25.0.3/bin.",
+          "Provide only this task input and its fixture files to the actor, not evaluator criteria or paired outputs."
+        ],
+        "fixtureFiles": [
+          {
+            "path": "ReceiptService.java",
+            "content": "import java.util.Objects;\nimport java.util.concurrent.CompletableFuture;\n\npublic final class ReceiptService {\n    public record Receipt(int units) {}\n\n    @FunctionalInterface\n    public interface Loader {\n        CompletableFuture<Receipt> load(String id);\n    }\n\n    private final Loader loader;\n\n    public ReceiptService(Loader loader) {\n        this.loader = Objects.requireNonNull(loader, \"loader\");\n    }\n\n    /**\n     * Looks up a receipt without waiting for loading to finish.\n     * @return a non-null future; its normal completion provides a receipt with units > 0\n     * @throws NullPointerException synchronously when id is null\n     * Loading and receipt-validation failures are delivered through the returned future.\n     * No rollback or cancellation behavior is promised.\n     */\n    public CompletableFuture<Receipt> find(String id) {\n        Objects.requireNonNull(id, \"id\");\n        CompletableFuture<Receipt> loaded = loader.load(id);\n        CompletableFuture<Receipt> validated = loaded.thenApply(receipt -> {\n            if (receipt.units() <= 0) {\n                throw new IllegalStateException(\"invalid receipt\");\n            }\n            return receipt;\n        });\n        return loaded;\n    }\n}\n"
+          },
+          {
+            "path": "ReceiptServiceSmoke.java",
+            "content": "import java.util.concurrent.CompletableFuture;\n\npublic final class ReceiptServiceSmoke {\n    public static void main(String[] args) {\n        ReceiptService service = new ReceiptService(\n                id -> CompletableFuture.completedFuture(new ReceiptService.Receipt(2)));\n        if (service.find(\"r1\").join().units() != 2) {\n            throw new AssertionError(\"receipt units\");\n        }\n    }\n}\n"
+          }
+        ],
+        "caseId": "completion-contract-01"
+      },
+      {
+        "request": "Review ReceiptService.find against its documented public contract. Inspect the supplied source and smoke test, make the smallest justified correction if one is needed, and add or run focused checks that support the conclusion. Preserve nonblocking behavior and existing public promises. If the implementation already meets the contract, report that rather than inventing a change.",
+        "context": {
+          "languageBaseline": "Java 25",
+          "dependencies": "JDK only",
+          "allowedWork": "Isolated disposable copy of the supplied fixture; no network, installations, real services, or agent configuration changes.",
+          "loaderContract": "Loader.load receives a non-null id, returns a non-null ordinary CompletableFuture, never throws synchronously, and may complete before or after find returns. It may produce any non-null Receipt or complete exceptionally. The service owns its returned stage; callers do not externally complete it."
+        },
+        "prerequisites": [
+          "JDK 25 compiler/runtime; repository version available at C:/Users/robso/.jdks/temurin-25.0.3/bin.",
+          "Provide only this task input and its fixture files to the actor, not evaluator criteria or paired outputs."
+        ],
+        "fixtureFiles": [
+          {
+            "path": "ReceiptService.java",
+            "content": "import java.util.Objects;\nimport java.util.concurrent.CompletableFuture;\n\npublic final class ReceiptService {\n    public record Receipt(int units) {}\n\n    @FunctionalInterface\n    public interface Loader {\n        CompletableFuture<Receipt> load(String id);\n    }\n\n    private final Loader loader;\n\n    public ReceiptService(Loader loader) {\n        this.loader = Objects.requireNonNull(loader, \"loader\");\n    }\n\n    /**\n     * Looks up a receipt without waiting for loading to finish.\n     * @return a non-null future; its normal completion provides a receipt with units > 0\n     * @throws NullPointerException synchronously when id is null\n     * Loading and receipt-validation failures are delivered through the returned future.\n     * No rollback or cancellation behavior is promised.\n     */\n    public CompletableFuture<Receipt> find(String id) {\n        Objects.requireNonNull(id, \"id\");\n        CompletableFuture<Receipt> loaded = loader.load(id);\n        CompletableFuture<Receipt> validated = loaded.thenApply(receipt -> {\n            if (receipt.units() <= 0) {\n                throw new IllegalStateException(\"invalid receipt\");\n            }\n            return receipt;\n        });\n        return validated;\n    }\n}\n"
+          },
+          {
+            "path": "ReceiptServiceSmoke.java",
+            "content": "import java.util.concurrent.CompletableFuture;\n\npublic final class ReceiptServiceSmoke {\n    public static void main(String[] args) {\n        ReceiptService service = new ReceiptService(\n                id -> CompletableFuture.completedFuture(new ReceiptService.Receipt(2)));\n        if (service.find(\"r1\").join().units() != 2) {\n            throw new AssertionError(\"receipt units\");\n        }\n    }\n}\n"
+          }
+        ],
+        "caseId": "completion-contract-02"
+      }
+    ],
+    "evaluatorCriteria": {
+      "classification": "Reproducible development cases, not executed behavioral runs or unseen holdouts.",
+      "decisiveDifference": "Only the find method's return expression changes: loaded in case 01, validated in case 02. Contracts, loader guarantees, request, and smoke test are identical.",
+      "actorExposure": "Do not expose this criteria file, the sibling case, probe outputs, or review handoff to an actor. The coordinator must arrange and audit actual isolation.",
+      "cases": [
+        {
+          "caseId": "completion-contract-01",
+          "expectedBehavior": [
+            "Trace the exact returned future and find that validation failure affects validated while find returns loaded.",
+            "Demonstrate a non-null Receipt(0) can be observed as normal completion of the returned future; the existing smoke test only covers a valid result.",
+            "Make a minimal contract-preserving correction such as returning validated; preserve nonblocking return and synchronous null-id rejection.",
+            "Exercise pending and precompleted upstream futures, normal valid/invalid results, and upstream exceptional completion on the exact caller-visible future."
+          ],
+          "failureConditions": [
+            "Approve the method merely because thenApply contains a validation or the valid-only smoke test passes.",
+            "Rely only on assertNotNull or a synchronous assertThrows around find to test validation failure.",
+            "Block inside find with join/get, silently weaken the advertised completion contract, upgrade tooling, or invent rollback/cancellation guarantees.",
+            "Claim an unexecuted plan or fixture test is a measured improvement in agent behavior."
+          ]
+        },
+        {
+          "caseId": "completion-contract-02",
+          "expectedBehavior": [
+            "Observe that find returns the dependent validated future; it already enforces the advertised successful-completion condition under the supplied loader and ownership assumptions.",
+            "Preserve the implementation and synchronous null-id behavior unless discovering a separate evidenced defect; strengthening focused tests is permitted.",
+            "Confirm valid output, invalid-result exceptional completion, and upstream failure through the returned future with pending and precompleted sources.",
+            "Keep broader guarantees such as cancellation, rollback, external effects, other future implementations and general concurrency outside the available evidence."
+          ],
+          "failureConditions": [
+            "Flag the same stage-identity defect as case 01 without following the changed return expression.",
+            "Add blocking or duplicate validation merely because the method returns before loading completes.",
+            "Introduce a new result hierarchy/framework or weaken the postcondition despite the fixture already satisfying it.",
+            "Treat smoke-test success or source review as evidence that every asynchronous failure/resource guarantee was checked."
+          ]
+        }
+      ]
+    },
+    "caseInputPaths": [
+      "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-design-by-contract-validation-quality18/case-01-input.json",
+      "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-design-by-contract-validation-quality18/case-02-input.json"
+    ],
+    "evaluatorCriteriaPath": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-design-by-contract-validation-quality18/evaluator-criteria.json",
+    "isolationLimit": "Inputs and criteria are in separate files, not filesystem security boundaries. The coordinator must provide isolated actor resources and audit exposure. These are known development cases, not holdouts."
+  },
+  "primarySources": [
+    {
+      "title": "Java SE 25 CompletionStage",
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletionStage.html",
+      "checkedDate": "2026-10-16",
+      "sections": ["class contract", "thenAccept", "thenApply", "thenCompose"],
+      "support": "Dependency completion and failure channels; callbacks create a dependent stage; composition follows the returned computation's completion.",
+      "limits": "Does not establish an application domain promise, effect rollback, or executor/cancellation policy."
+    },
+    {
+      "title": "Java SE 25 CompletableFuture",
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html",
+      "checkedDate": "2026-10-16",
+      "sections": ["class contract", "dependent stages", "thenApply", "join"],
+      "support": "Concrete future operations and observing exceptional completion; technical reproduction separately recorded.",
+      "limits": "Probe uses ordinary CompletableFuture on Temurin 25.0.3+9 with controlled producers; no alternative implementation or older runtime was tested."
+    }
+  ],
+  "evidencePaths": [
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-design-by-contract-validation-quality18/CompletionContractProbe.java",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-design-by-contract-validation-quality18/javac.log",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-design-by-contract-validation-quality18/probe-ea.log",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-design-by-contract-validation-quality18/probe-da.log",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-design-by-contract-validation-quality18/evidence.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-design-by-contract-validation-quality18/case-01-input.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-design-by-contract-validation-quality18/case-02-input.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/java-design-by-contract-validation-quality18/evaluator-criteria.json"
+  ],
+  "assumptionsAndLimits": [
+    "The reproduction uses ordinary CompletableFuture instances and manually controlled producer completion on Temurin 25.0.3+9; no custom CompletionStage implementation was exercised.",
+    "No real database, external service, cancellation, parallel scheduling, performance, durable effect rollback, or broad concurrency guarantee was tested.",
+    "The supplied behavioral fixtures are exact reproducible inputs; no agent executed them and the fixture smoke tests were not separately compiled in this assignment.",
+    "Java 25 --release and runtime were both 25. No older-runtime compatibility claim is made.",
+    "Unchanged stock-example behavior and all unrelated historical primary-source claims were not exhaustively retested.",
+    "Expected benefit is more precise review of asynchronous postconditions; no percentage, superiority, or measured improvement is claimed."
+  ],
+  "crossSkillFindings": [
+    {
+      "owner": "completablefuture-composition",
+      "actionRequired": false,
+      "detail": "Existing neighbor owns graph construction/execution. Referenced as a handoff; inspected its relevant contracts read-only and made no edits."
+    }
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Parallel review ownership; generated registry is shared.",
+      "prerequisite": "All assigned reviewers have stopped writing."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Repository-wide validation must observe a stable catalog after registry regeneration.",
+      "prerequisite": "All writers stopped and registry:build completed."
+    }
+  ],
+  "coordinatorActionsRequired": [
+    "Inspect final diff and version against the recorded clean assignment baseline.",
+    "Run shared index regeneration and final verification after all authors stop.",
+    "If measuring behavioral benefit, give actors only the separated inputs in controlled snapshots and keep evaluator criteria and paired outputs inaccessible."
+  ],
+  "processesStillRunning": [],
+  "writesStoppedAtHandoff": true
+}

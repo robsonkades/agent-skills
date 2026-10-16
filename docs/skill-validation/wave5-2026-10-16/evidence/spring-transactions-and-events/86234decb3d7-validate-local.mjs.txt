@@ -1,0 +1,56 @@
+import { loadPackageFromDirectory, validatePackage } from '@jvm-expert/core';
+import { NodeFileSystem } from '@jvm-expert/node';
+import { ClaudeCodeAdapter } from '@jvm-expert/adapter-claude';
+import { CodexAdapter } from '@jvm-expert/adapter-codex';
+import { createHash } from 'node:crypto';
+import assert from 'node:assert/strict';
+
+const fs = new NodeFileSystem();
+const name = 'spring-transactions-and-events';
+const root = 'skills/' + name;
+const evidence = 'C:/Users/robso/AppData/Local/Temp/skills-wave5-validation-ujPBF2/spring-transactions-and-events';
+const readJson = async path => JSON.parse((await fs.readTextFile(path)).replace(/^\uFEFF/, ''));
+const loaded = await loadPackageFromDirectory(fs, root, { strict: true });
+const report = validatePackage(loaded.pkg, { strict: true, directoryName: name, adapters: [new ClaudeCodeAdapter(), new CodexAdapter()] });
+const issues = [...loaded.issues, ...report.issues];
+assert.equal(issues.length, 0, 'Strict package validation issues');
+assert.equal(loaded.pkg.manifest.version, '1.1.0');
+const resourceLinks = [];
+for (const file of loaded.pkg.files.filter(file => file.path.endsWith('.md'))) {
+  const source = await fs.readTextFile(fs.join(root, file.path));
+  for (const match of source.matchAll(/\[[^\]]*\]\((<[^>]*>|[^)]+)\)/g)) {
+    const target = match[1].replace(/^<|>$/g, '');
+    if (/^(https?:|#)/.test(target)) continue;
+    const directory = file.path.includes('/') ? file.path.slice(0, file.path.lastIndexOf('/')) : '.';
+    assert(await fs.exists(fs.join(root, directory, target.split('#')[0])), file.path + ': missing ' + target);
+    resourceLinks.push({ from: file.path, target });
+  }
+}
+const targets = [...(loaded.pkg.manifest.dependencies ?? []).map(entry => entry.name), ...(loaded.pkg.manifest.suggests ?? [])];
+for (const target of targets) assert(await fs.exists('skills/' + target + '/SKILL.md'), 'Missing declared target: ' + target);
+const baseline = await readJson(evidence + '/baseline.json');
+const ownedHashes = [];
+for (const file of baseline.files) {
+  const sha256 = createHash('sha256').update(await fs.readFile(file.path)).digest('hex');
+  assert.equal(sha256, file.sha256, 'Unexpected owned change: ' + file.path);
+  ownedHashes.push({ path: file.path, sha256, matchesBaseline: true });
+}
+const a = await readJson(evidence + '/cases/inputs/case-a.json');
+const b = await readJson(evidence + '/cases/inputs/case-b.json');
+assert.notEqual(a.files['docs/decision.md'], b.files['docs/decision.md']);
+delete a.files['docs/decision.md'];
+delete b.files['docs/decision.md'];
+assert.deepEqual(a, b, 'Case pair changes more than the accepted outcome contract');
+const criteria = await readJson(evidence + '/cases/criteria.json');
+assert.equal(criteria.behaviorRunCount, 0);
+const runtimeLog = await fs.readTextFile(evidence + '/logs/framework-h2.txt');
+assert(runtimeLog.includes('RESULT assertions=18 runtime=25.0.3+9-LTS'));
+assert(runtimeLog.includes('PASS after-required-registration-rejected = true'));
+console.log(JSON.stringify({
+  skill: name, version: loaded.pkg.manifest.version,
+  packageFiles: loaded.pkg.files.map(file => file.path),
+  issues, resourceLinks, declaredTargetsChecked: targets.length, ownedHashes,
+  cases: { inputsParsed: 2, soleDifference: 'files[docs/decision.md]', criteriaSeparated: true, actorRuns: 0 },
+  runtime: { framework: '7.0.9', h2: '2.4.240', java: 'Temurin 25.0.3+9-LTS', compilerRelease: '25', assertions: 18, caveat: 'Real standalone Spring/JDBC/H2 path, not Boot auto-configuration, JPA, production database, async/recovery or actor evaluation.' },
+  limits: 'Assigned-package local checks using existing compiled repository validators; no global version-resolution or verification claim.'
+}, null, 2));

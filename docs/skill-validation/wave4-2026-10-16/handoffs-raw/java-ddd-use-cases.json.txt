@@ -1,0 +1,283 @@
+{
+  "status": "NO_CHANGES_NEEDED",
+  "skill": "java-ddd-use-cases",
+  "ownedPath": "skills/java-ddd-use-cases/**",
+  "date": "2026-10-16",
+  "versions": {
+    "committed": "1.0.0",
+    "assignment": "1.0.0",
+    "initial": "1.0.0",
+    "final": "1.0.0",
+    "preExistingBump": false,
+    "rationale": "All package content remains unchanged; no bump required."
+  },
+  "baseline": {
+    "path": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/baseline/java-ddd-use-cases",
+    "staged": [],
+    "unstaged": [],
+    "untracked": [],
+    "finalScopedGit": "clean",
+    "hashes": [
+      {
+        "file": "SKILL.md",
+        "sha256": "cdc2c1f3670e578fe485b1f19fb80bf1f859c3a624cf1dfb021d6f80b18fe768"
+      },
+      {
+        "file": "references/atomic-outcomes.md",
+        "sha256": "07ed81b5422f6d88c0f8e20f2291b74e23f43c2418dd6912586b85e2ae545b4c"
+      },
+      {
+        "file": "references/submission-slice.md",
+        "sha256": "3c0b07a877ff1ba78d72dd2d7ee3ee1b1114b2eddfedd1801fb8e349a402cd15"
+      },
+      {
+        "file": "skill.yaml",
+        "sha256": "1a89b89329e6c623652d39e883ab5aab2709a23dc45f8c38b1dee46d62bc9221"
+      }
+    ],
+    "byteComparison": "All four files equal assignment baseline."
+  },
+  "findings": {
+    "corrected": [],
+    "remaining": [],
+    "observations": [
+      {
+        "location": "SKILL.md:20-24,57-74",
+        "consequence": "The skill already preserves plain interfaces/classes and observed extension policy. No command bus, interface-per-class or new hierarchy is required."
+      },
+      {
+        "location": "SKILL.md:78-109,123-145; references/submission-slice.md",
+        "consequence": "Creation versus submission, trusted actor/tenant, typed outcomes, invocation-local state, domain invariants and storage conflict semantics are explicit. The six snippets exercised those local contracts without a demonstrated defect."
+      },
+      {
+        "location": "SKILL.md:130-150; references/atomic-outcomes.md, Compose the boundary / Make retries preserve intent / Preserve effect timing",
+        "consequence": "Existing guidance separates joining an outer transaction, durable commit, rollback, uncertain completion, failed post-commit follow-up and durable publication intent. Spring5.3.24 contracts support the distinctions."
+      },
+      {
+        "location": "references/submission-slice.md, Why the hierarchy is conditional",
+        "consequence": "Direct reference-source inspection confirms the different category/castmember shapes and outer composition. No unsupported normalization is necessary."
+      }
+    ],
+    "noChangeRationale": "The reviewed package already covers the consequential decisions with appropriate alternatives and evidence limits. No content change was justified by the sources or targeted checks."
+  },
+  "files": {
+    "changedByReviewer": [],
+    "preExistingChanges": [],
+    "preserved": [
+      "SKILL.md",
+      "references/atomic-outcomes.md",
+      "references/submission-slice.md",
+      "skill.yaml"
+    ],
+    "temporaryEvidenceOnly": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/java-ddd-use-cases-artifacts/"
+  },
+  "changes": [],
+  "capabilities": {
+    "preserved": [
+      "Action-oriented UseCase/DefaultUseCase vocabulary while retaining suitable existing plain services/classes",
+      "Framework-independent commands/outputs and pure application/domain orchestration",
+      "Trusted actor/tenant and resource-level authorization across caller types",
+      "Distinct creation, absence, invalid state, stale intent and infrastructure failure",
+      "Conditional update and no re-creation after deletion",
+      "Provisional output versus commit/rollback/unknown/post-commit failure",
+      "Conditional durable publication and replay semantics without mandating outbox for every effect",
+      "Projection-query alternative and focused domain/application/integration checks",
+      "Observed category/castmember naming, factory and result conventions"
+    ],
+    "replaced": [],
+    "removed": []
+  },
+  "checks": {
+    "structural": {
+      "status": "PASS",
+      "strictIssues": 0,
+      "files": 4,
+      "markdownFiles": 3,
+      "localLinks": 4,
+      "routedReferences": 2,
+      "declaredRouteTargetsPresent": 11,
+      "format": "PASS",
+      "diffCheck": "PASS",
+      "baselineBytesIdentical": true
+    },
+    "technical": {
+      "status": "PASS",
+      "script": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/java-ddd-use-cases-artifacts/check-slice.mjs",
+      "fullResults": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/java-ddd-use-cases-artifacts/latest-technical-results.json",
+      "exactJavaFences": 6,
+      "commands": 9,
+      "baselineScenarios": 15,
+      "baselineAssertions": 43,
+      "expectedNegativeControls": [
+        "Removal of resource authorization detected by denied-outcome test",
+        "Shared-reference fake detected by changed state after failed update",
+        "Unpermitted direct subclass rejected by Java sealed-class compiler rule"
+      ],
+      "compiler": "Temurin javac25.0.3 --release17",
+      "runtime": "Temurin25.0.3+9"
+    },
+    "cases": {
+      "status": "Inputs and criteria parse; exactly one decisive fixture file differs",
+      "filesEach": 9,
+      "onlyDifference": "docs/submission-policy.md",
+      "excerptsCompiled": false,
+      "actorRuns": 0
+    },
+    "commandsAndFullResults": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/java-ddd-use-cases-artifacts/local-validation.json",
+    "failures": "No unexpected validation failures. Three intentional negative controls are asserted. Exploratory missing-path/no-match and cache limits are recorded separately."
+  },
+  "behavioral": {
+    "executed": [],
+    "measuredGain": false,
+    "walkthroughs": [
+      {
+        "case": "A",
+        "result": "Preserve best-effort notice policy and prevent callback failure from causing blind replay of a committed submission; a durable outbox is not required solely by this contract."
+      },
+      {
+        "case": "B",
+        "result": "Preserve a durable delivery obligation with atomic intent and recovery/deduplication or another evidenced protocol; in-memory afterCommit delivery alone leaves a crash gap."
+      }
+    ],
+    "pairedConstraint": "Only accepted notice-delivery durability policy changes; identity, core action, transaction flow and proposed retry stay the same.",
+    "cases": [
+      {
+        "id": "A",
+        "input": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/java-ddd-use-cases-artifacts/case-a-input.json",
+        "criteria": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/java-ddd-use-cases-artifacts/evaluator-criteria.json",
+        "classification": "Known development case; reviewer-authored",
+        "prerequisites": "Read-only source review needs no external runtime. Java17/Spring5.3.24 plus actual adapter/database/provider harness are needed for an implementation integration run; case contains explicitly partial excerpts."
+      },
+      {
+        "id": "B",
+        "input": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/java-ddd-use-cases-artifacts/case-b-input.json",
+        "criteria": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/java-ddd-use-cases-artifacts/evaluator-criteria.json",
+        "classification": "Known paired development case; reviewer-authored",
+        "prerequisites": "Same artifacts except business policy. Do not give actors criteria or sibling input."
+      }
+    ],
+    "pending": "Coordinator may run independent actors with/without skill. No before/after gain is claimed for this no-change review."
+  },
+  "sources": [
+    {
+      "url": "https://docs.spring.io/spring-framework/docs/5.3.24/javadoc-api/org/springframework/transaction/PlatformTransactionManager.html#commit-org.springframework.transaction.TransactionStatus-",
+      "version": "Spring Framework5.3.24",
+      "sections": [
+        "commit",
+        "rollback"
+      ],
+      "consulted": "2026-10-16",
+      "supports": "A participating transaction does not independently commit. Completion errors need outcome-sensitive treatment. Existing guidance avoids treating an inner return as durable success.",
+      "limit": "API source verification; no Spring transaction-manager execution."
+    },
+    {
+      "url": "https://docs.spring.io/spring-framework/docs/5.3.24/javadoc-api/org/springframework/transaction/support/TransactionSynchronization.html#afterCommit--",
+      "version": "Spring Framework5.3.24",
+      "sections": [
+        "beforeCommit",
+        "afterCommit",
+        "STATUS_UNKNOWN"
+      ],
+      "consulted": "2026-10-16",
+      "supports": "beforeCommit exceptions and afterCommit exceptions have different implications; afterCommit can propagate after successful commit. Existing atomic-outcomes text distinguishes the phases.",
+      "limit": "No actual database/transaction synchronization execution."
+    },
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se17/html/jls-8.html#jls-8.1.1.2",
+      "version": "JLS Java SE17",
+      "sections": [
+        "8.1.1.2",
+        "8.1.6"
+      ],
+      "consulted": "2026-10-16",
+      "supports": "Sealed/final/non-sealed modifiers and permitted-subclass module/package rules constrain decorators. The example follows those restrictions and the negative control rejects an unpermitted direct subclass.",
+      "limit": "javac25 --release17 is not execution on Java17."
+    },
+    {
+      "url": "https://martinfowler.com/eaaCatalog/serviceLayer.html",
+      "version": "Service Layer catalog entry, Randy Stafford, 2003-03-05",
+      "sections": [
+        "Application boundary and coordination"
+      ],
+      "consulted": "2026-10-16",
+      "supports": "An application operation coordinates business interactions and transactions across its entry interfaces; it does not prescribe the illustrated Java naming/hierarchy.",
+      "limit": "Design source, not proof of target runtime behavior."
+    },
+    {
+      "url": "https://www.domainlanguage.com/wp-content/uploads/2016/05/DDD_Reference_2015-03.pdf",
+      "version": "Eric Evans DDD Reference, March2015",
+      "sections": [
+        "Layered Architecture, printed page10 / PDF page16 zero-based",
+        "Repositories, printed page17 / PDF page23 zero-based"
+      ],
+      "consulted": "2026-10-16",
+      "supports": "The domain model should remain distinct from application tasks and technical persistence/UI concerns. Existing skill attributes framework-free class naming to its own architectural family.",
+      "limit": "Conceptual guidance, not a universal class template."
+    },
+    {
+      "url": "https://microservices.io/patterns/data/transactional-outbox.html",
+      "version": "Chris Richardson, Transactional Outbox pattern",
+      "sections": [
+        "Context",
+        "Solution",
+        "Result context"
+      ],
+      "consulted": "2026-10-16",
+      "supports": "Sending before or after a local commit leaves failure gaps. Atomic stored intent plus delivery recovery can meet a durable obligation; duplicate relay delivery still requires consumer handling.",
+      "limit": "Supports an applicable design alternative, not mandatory outbox for best-effort effects."
+    },
+    {
+      "path": "C:/Users/robso/Downloads/ddd-example-master/ddd-example-master",
+      "version": "Local user-designated source snapshot; commit/release unavailable",
+      "consulted": "2026-10-16",
+      "supports": "Direct inspection confirms category plain abstract/Vavr result, castmember sealed/non-sealed/exception result, UnitUseCase and NullaryUseCase, command/output factories, domain pagination, and external @Bean composition. No source project build was run.",
+      "fileFingerprintEvidence": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/java-ddd-use-cases-artifacts/local-validation.json"
+    },
+    {
+      "path": "C:/Users/robso/.codex/skills/java-ddd-service-foundation/references/application-patterns.md",
+      "version": "Installed reference; only read, not modified or applied as authority over target",
+      "consulted": "2026-10-16",
+      "supports": "Confirms CommandOutput naming variant and sealed/non-sealed sample. This package already separates that variant from the catalog reference and rejects accidental create-on-submit absence handling.",
+      "limit": "Installed reference is not required for consumers and is outside catalog ownership."
+    }
+  ],
+  "limitations": [
+    "No independent agent behavioral run or improvement comparison was performed.",
+    "The Java harness uses explicit fake/domain/access fixtures. It does not establish production tenant security, storage isolation, true concurrent execution, transaction interception, rollback, broker delivery or crash recovery.",
+    "Javac25 --release17 and runtime Temurin25 are not an actual Java17 runtime.",
+    "Spring5.3.24 behavior was verified from primary API documentation; no Spring runtime or database integration was executed.",
+    "The case inputs are source-review excerpts, not a complete runnable application; only JSON structure and decisive-difference separation were checked.",
+    "Local source reference was read, not built or modified. Its revision identifier is unavailable.",
+    "Local route existence is not catalog-wide dependency/range/routing validation."
+  ],
+  "crossSkill": {
+    "issues": [],
+    "actionsRequired": [],
+    "referenceNote": "Installed foundation variants were inspected only for provenance. No neighboring/installed skill edits were made."
+  },
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "reason": "Parallel review policy; after all writers stop.",
+      "prerequisites": "Stable wave state. This unchanged package needs no registry delta."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "reason": "Repository-wide validation is deferred to the coordinator.",
+      "prerequisites": "Registry regenerated after all reviewers stop."
+    }
+  ],
+  "evidencePaths": [
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/java-ddd-use-cases-artifacts/local-validation.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/java-ddd-use-cases-artifacts/check-slice.mjs",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/java-ddd-use-cases-artifacts/latest-technical-results.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/java-ddd-use-cases-artifacts/case-a-input.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/java-ddd-use-cases-artifacts/case-b-input.json",
+    "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/java-ddd-use-cases-artifacts/evaluator-criteria.json"
+  ],
+  "allWritesStopped": true,
+  "activeBackgroundProcesses": [],
+  "writeScopeClosed": "Every command and child process completed synchronously. Remain read-only unless coordinator reopens."
+}

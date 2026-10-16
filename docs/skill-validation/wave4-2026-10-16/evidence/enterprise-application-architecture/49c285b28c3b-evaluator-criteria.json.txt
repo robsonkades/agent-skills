@@ -1,0 +1,61 @@
+{
+  "classification": "Known synthetic development cases; not unseen holdouts. No independent actor execution has occurred.",
+  "decisiveConstraint": "Only inventory.mode in deployment.properties changes from local to partner; both candidate adapters, project contracts, draft map and archived local-profile evidence are identical.",
+  "setup": "Materialize each input's files in its own temporary folder. Give the actor only that input and the skill under evaluation, with file tools suitable for updating architecture-map.md. Withhold this criteria file and all reviewer findings. Do not run a database or partner service to complete this discovery task.",
+  "commonRequired": [
+    "Inspect deployment.properties, Composition.java and the selected adapter rather than inferring the resource scope from Inventory or the service annotation.",
+    "Preserve the accepted no-visible-partial-completion requirement and unchanged reference-data endpoint.",
+    "Keep orientation bounded; no architecture-wide rewrite, mandatory Domain Model/CQRS/saga or dependency upgrade.",
+    "Distinguish supplied archived observations, static contract reasoning, proposals and checks actually executed.",
+    "Return a decision with evidence and an appropriate specialist question/acceptance check when unresolved; update the affected architecture-map.md conclusion, not only a separate warning."
+  ],
+  "commonFailureConditions": [
+    "Selects a route solely from class names or @Transactional.",
+    "Claims to have run a database/framework/partner integration test not actually run.",
+    "Silently weakens the accepted invariant or changes the unrelated endpoint.",
+    "Implements a new architecture instead of completing the discovery/handoff task."
+  ],
+  "cases": [
+    {
+      "id": "case-01",
+      "required": [
+        "Resolve LocalInventory using the shared checkoutJdbc/DataSource and checkoutTx configuration.",
+        "Use archived local-profile evidence to support the known fault/success paths, qualify coverage rather than certify every runtime path.",
+        "Retain the single local transaction and adequate existing design; no saga, outbox or service split is warranted for these two JDBC effects.",
+        "Correct the draft's annotation-only rationale to the effective resource/caller evidence; a bounded no-change architecture conclusion completes the task."
+      ],
+      "failureConditions": [
+        "Routes this demonstrated shared local transaction as a mandatory distributed saga.",
+        "Discards matching archived evidence and demands a full application audit without an unresolved relevant condition."
+      ]
+    },
+    {
+      "id": "case-02",
+      "required": [
+        "Resolve PartnerInventory and the HTTP API's independently durable, immediately visible reservation.",
+        "Do not treat the archived local-profile check as coverage for the active partner adapter.",
+        "Revise architecture-map.md to retract the all-effects-rollback and invariant-satisfied claims while preserving the established local database boundary and unrelated accepted facts.",
+        "Explain the post-reservation validation failure window from source/contracts; label this a supported static contract conflict, not a newly observed production failure.",
+        "Route the invariant/resource-scope/recovery question to distributed-transactions-and-sagas (and enterprise-transactions for local scope if useful). A compensating saga or local outbox alone does not satisfy the accepted visibility constraint.",
+        "Ask for or investigate only authority/evidence that could reconcile the conflict, such as an accepted atomic/visibility protocol or authorized boundary/requirement decision; do not invent one."
+      ],
+      "failureConditions": [
+        "Preserves annotation-as-remote-atomicity claim.",
+        "Treats cancellation/compensation as satisfying the forbidden visible intermediate state.",
+        "Reuses local adapter test evidence as partner validation."
+      ]
+    }
+  ],
+  "walkthroughs": {
+    "kind": "Structured reviewer walkthrough; no actor output or measured effectiveness.",
+    "case01": "The selected adapter shares the transaction-managed JDBC bean. The archived matching-profile rollback/control supports the bounded flow. Retain it and repair rationale/coverage, with no broad pattern intervention.",
+    "case02": "One configuration value selects an independently committing HTTP effect. The same later exception cannot roll that effect back through checkoutTx. Correct the map and hand off the accepted visibility/resource conflict; do not weaken the invariant or choose compensation automatically.",
+    "additionalExistingGuardsReviewed": [
+      "Batch whole-run atomicity versus chunk visibility",
+      "Workflow durable process state versus expiring session",
+      "Read projections versus mandatory separate store",
+      "Authorization at alternate entry paths",
+      "Shared-memory races versus persistence conflicts"
+    ]
+  }
+}

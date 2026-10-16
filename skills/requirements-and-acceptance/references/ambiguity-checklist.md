@@ -25,6 +25,8 @@ omits and code cannot omit — the compiler will make you choose, so choose deli
 - Is "7 days" calendar days or 168 hours? They can differ across offset changes in
   the chosen timezone; not every zone observes daylight saving.
 - How long is this valid for — a TTL, an expiry, a retention period?
+- Does the timing target cover acknowledgment, completion or visibility to the consumer?
+  Which event starts that budget, and what should be observable when it expires?
 
 ## Concurrency
 
@@ -32,6 +34,8 @@ omits and code cannot omit — the compiler will make you choose, so choose deli
 - Is the operation safe to retry (idempotency)? The caller will retry whether or not you
   answered.
 - Is ordering guaranteed, and by whom?
+- For a read spanning multiple pages or stages, must membership and field values reflect one
+  agreed cutoff, or may they change during the operation? Ordering alone does not define this.
 
 ## Failure
 

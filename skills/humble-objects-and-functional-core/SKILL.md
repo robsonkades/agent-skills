@@ -50,7 +50,8 @@ independent parts while those answers are pending.
    it were reachable — the conditional, the calculation, the selection.
 2. **Name its inputs.** Everything the decision reads: parameters, fetched data, the clock,
    configuration. If an input arrives through I/O, the decision does not need the I/O, it
-   needs the value.
+   needs the value. Preserve which branches acquire each input: fetching every potential
+   input up front can replace an early response with an unnecessary effect or failure.
 3. **Choose the smallest useful seam.** Keep adequate direct tests or an existing service
    with controlled collaborators. A Humble Object may extract testable effectful logic;
    choose a pure function when explicit data inputs simplify the decision. In that core,

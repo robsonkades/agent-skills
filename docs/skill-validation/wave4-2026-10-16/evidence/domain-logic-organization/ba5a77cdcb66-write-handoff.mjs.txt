@@ -1,0 +1,84 @@
+import { readFileSync, writeFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+const root = dirname(fileURLToPath(import.meta.url));
+const repository = 'C:/git/agent-skills';
+const skill = 'domain-logic-organization';
+const read = name => readFileSync(resolve(root, name), 'utf8');
+const parse = name => JSON.parse(read(name));
+const validation = parse('local-validation.stdout.txt');
+const baseline = JSON.parse(readFileSync(resolve(repository, 'docs/skill-validation/wave4-2026-10-16/baseline.json'), 'utf8')).packages.find(entry => entry.name === skill);
+const commands = parse('commands.json').map(command => ({ ...command, stdoutText: read(command.stdout), stderrText: read(command.stderr) }));
+const sources = [
+  { id: 'fowler-transaction-script', url: 'https://martinfowler.com/eaaCatalog/transactionScript.html', version: 'PoEAA author catalog entry dated 2003-03-05', section: 'Definition and description', support: 'The organization is one procedure per presentation request, with shared subtasks permitted. It is a business-logic organization, not an isolation/atomicity mechanism.' },
+  { id: 'fowler-domain-model', url: 'https://martinfowler.com/eaaCatalog/domainModel.html', version: 'PoEAA author catalog entry dated 2003-03-05', section: 'Definition and description', support: 'Behavior and data together; supports preserving the existing alternative where interacting state benefits from a natural owner.' },
+  { id: 'fowler-table-module', url: 'https://martinfowler.com/eaaCatalog/tableModule.html', version: 'PoEAA author catalog entry dated 2003-03-05', section: 'Definition and description', support: 'Business logic for table/view rows versus one identity-bearing object per row. SQL alone does not establish rule ownership.' },
+  { id: 'fowler-table-gateway', url: 'https://martinfowler.com/eaaCatalog/tableDataGateway.html', version: 'PoEAA author catalog entry dated 2003-03-05', section: 'Definition and description', support: 'Database access role, supporting preservation of the distinction from business-rule ownership.' },
+  { id: 'jpa-3.2', url: 'https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html', version: 'Jakarta Persistence 3.2, 2024-04-10', section: '2.1, 3.5.1-3.5.2, 4.11', support: 'Verified corrected URL and existing guards: portable entity non-final requirements, version ownership excludes inverse relationships, bulk operations bypass normal optimistic checks and do not synchronize the persistence context.' },
+  { id: 'spring-jdbc-6.1.0', url: 'https://docs.spring.io/spring-framework/docs/6.1.0/javadoc-api/org/springframework/jdbc/core/simple/JdbcClient.html', version: 'Spring Framework 6.1.0', section: 'JdbcClient description and Since', support: 'Version-specific source confirms JdbcClient introduced in 6.1 and the fluent SQL facade. Replaces floating current URL; no implementation baseline was upgraded.' },
+  { id: 'spring-transactions-6.2', url: 'https://docs.spring.io/spring-framework/reference/6.2/data-access/transaction/declarative/annotations.html', version: 'Spring Framework 6.2 reference line', section: 'Proxy mode and self-invocation', support: 'Confirms the existing conditional managed-bean/proxy guard. This is source inspection, not a Spring runtime test or a required upgrade to 6.2.' },
+  { id: 'evans-aggregate', url: 'https://www.domainlanguage.com/wp-content/uploads/2016/05/DDD_Reference_2015-03.pdf', version: 'DDD Reference, 2015-03', section: 'Aggregates (PDF page 23, printed page 16)', support: 'Aggregate invariant enforcement belongs to the root or designated framework mechanism; supports the preserved responsibility lens.' },
+  { id: 'postgresql-locking-17', url: 'https://www.postgresql.org/docs/17/explicit-locking.html#LOCKING-ROWS', version: 'PostgreSQL 17', section: '13.3.2 Row-Level Locks / FOR UPDATE', support: 'Supports the case-a walkthrough: row lock retained to transaction end, competing locking read waits and returns updated row under the stated isolation level. No PostgreSQL test was run.' },
+  { id: 'postgresql-isolation-17', url: 'https://www.postgresql.org/docs/17/transaction-iso.html#XACT-READ-COMMITTED', version: 'PostgreSQL 17', section: '13.2.1 Read Committed', support: 'Supports the ordinary SELECT versus locking SELECT distinction and the possible stale read-check-absolute-write schedule in case-b; not an observed deployment trace.' },
+].map(source => ({ ...source, consulted: '2026-10-16', kind: 'primary' }));
+const handoff = {
+  status: 'READY_FOR_GLOBAL_VALIDATION', skill, ownedPath: `skills/${skill}/`, allWritesStopped: true,
+  versions: { committed: '1.3.5', assignment: '1.3.5', final: '1.3.6', preExistingBump: false, rationale: 'One patch bump for changed published contents; metadata descriptions and dependency ranges preserved.' },
+  baseline: { source: 'docs/skill-validation/wave4-2026-10-16/baseline.json', initialStatus: baseline.status, initialStagedDiff: '', initialUnstagedDiff: '', initialUntracked: [], initialHashesMatched: true, preExistingChanges: [] },
+  files: { changedByReviewer: validation.hashes.filter(file => !file.unchangedFromAssignment).map(file => file.path), unchanged: validation.hashes.filter(file => file.unchangedFromAssignment).map(file => file.path), preExistingChanges: [], finalHashes: validation.hashes },
+  correctedFindings: [
+    { location: 'references/transaction-script-and-table-module.md:9-12 and 42', finding: 'The caption one transaction could blur business-use-case organization and actual database guarantees despite good transaction guards elsewhere.', change: 'Clarified that the pattern organizes a request/use case; participating resources, commit/rollback and competing-writer protection require separate evidence. Replaced the caption with one cohesive use case.', consequence: 'Removes an interpretive ambiguity when reviewing a procedural path or moving the same steps into objects; no actual actor misclassification or incremental behavioral gain was measured.', sources: ['fowler-transaction-script', 'spring-transactions-6.2', 'postgresql-locking-17', 'postgresql-isolation-17'] },
+    { location: 'references/domain-model.md:246 and references/transaction-script-and-table-module.md:207', finding: 'Both JPA 3.2 citations omitted .html and returned HTTP 404.', change: 'Pointed both citations to the working versioned specification URL; old and corrected endpoint responses retained.', consequence: 'Restores access to the primary source behind entity/version/bulk-operation caveats.', sources: ['jpa-3.2'] },
+    { location: 'references/transaction-script-and-table-module.md:203', finding: 'The JdbcClient source used a floating current URL while supporting introduction in 6.1.', change: 'Pinned the citation to the verified 6.1.0 API page.', consequence: 'Makes the cited compatibility evidence reproducible without changing the target project baseline.', sources: ['spring-jdbc-6.1.0'] },
+  ],
+  remainingFindings: [],
+  preserved: [
+    'SKILL.md byte-for-byte: scope, activation, rule interaction, actual callers/writers, provisional decisions and flip criteria.',
+    'Transaction Script, shared pure policy, adequate small model and no-change alternatives; no new preference for a rich model.',
+    'Table Module versus persistence gateway responsibility distinction and measured set-versus-entity tradeoffs.',
+    'Required audit/events and effect equivalence, input effective time, concurrency/version policy, persistence-context ordering and targeted handoffs.',
+    'Domain identity/value/service classification, Java release caveats, record equality, bounded state loading, root/child version caveat and concurrency enforcement.',
+    'All four Java code blocks unchanged, including cancellation failure ordering; manifest description, dependencies, suggests and capabilities unchanged except version.',
+  ],
+  replacedOrRemoved: { capabilities: [], text: 'Only ambiguous caption wording and source addresses were replaced; no existing technique or example was removed.' },
+  checks: {
+    commands,
+    package: { status: 'PASS', files: validation.fileCount, issues: validation.issues, relativeLinkOccurrences: validation.links.length, details: validation },
+    externalLinks: { command: 'node C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/domain-logic-organization/source-check.mjs', cwd: repository, exitCode: 0, result: parse('source-status.json'), purpose: 'Read-only HTTP status/title checks of the broken and repaired JPA source and pinned JdbcClient source; no third-party content vendored.' },
+    javaExamples: { materiallyChanged: 0, preserved: validation.examplePreservation, result: 'All four existing Java fences exactly preserved after newline normalization; no recompilation or runtime evaluation of unchanged Spring/JPA examples was performed.' },
+    caseFixture: { result: 'PASS: three common Java sources compiled with --release 17 using javac 25.0.3; no Java program or JDBC/PostgreSQL operation executed.', compiler: 'Temurin 25.0.3+9-LTS', release: '17', compiledCase: 'case-a', commonSourcesIdenticalAcrossCases: true, onlyFixtureDifference: 'read-stock.sql', artifact: 'case-compile.stdout.txt / case-compile.stderr.txt' },
+    finalDiff: { status: 'PASS', inspected: true, artifact: 'scoped-diff.stdout.txt', stagedDiffEmpty: read('staged-diff.stdout.txt') === '' },
+  },
+  failures: { localChecks: [], recoveredDiscovery: [
+    'An rg read initially guessed report.md paths for wave2/wave3; files were absent. rg --files located the actual README.md reports, which were inspected. No files were created as substitutes.',
+    'The initial unversioned extensionless JPA source returned 404 as recorded; corrected .html source succeeded.',
+    'Spring Framework reference/6.1 transaction path returned 404; reference/6.2 was consulted explicitly as 6.2. A Spring Data 3.2 reference-path lookup and old 6.1.0 HTML overview lookup were unavailable; neither was claimed as verified evidence or used for a correction.',
+  ] },
+  behavioralEvaluations: { actorsExecuted: 0, measuredImprovement: false, comparisonsExecuted: [], walkthroughs: [
+    'Case-a: row lock is acquired before checking stock, persists across both writes and commit/rollback, so a waiting second locking read observes the committed remaining quantity under PostgreSQL 17 READ COMMITTED.',
+    'Case-b: simultaneous plain SELECTs may both return 100; both then write the absolute value 40 and insert distinct reservations. Changing class organization does not alter that allowed schedule.',
+    'Rollback after insertion failure is visible in the supplied code and part of the proposed integration assertions; no database failure was injected during this review.',
+  ], walkthroughStatus: 'Structured source/spec reasoning only, not executed behavioral or database evaluations.' },
+  cases: { inputs: resolve(root, 'actor-inputs.json').replaceAll('\\', '/'), evaluatorCriteria: resolve(root, 'evaluator-criteria.json').replaceAll('\\', '/'), fixtureIntegrity: resolve(root, 'case-integrity.json').replaceAll('\\', '/'), count: 2, knownDevelopmentCases: true, heldOut: false, decisiveConstraint: 'Only read-stock.sql changes: FOR UPDATE versus ordinary SELECT. All accepted business requirements and other six files are identical.', expectedDecisionDifference: 'Retaining simple rule organization remains valid in both; case-b requires a concurrency correction while case-a already has the relevant locking mechanism under its declared assumptions.', isolation: 'Procedural only. Coordinator must provide one fixture and intended skill treatment without evaluator criteria, paired answer, handoff or prior results.' },
+  sources,
+  limits: [
+    'This is a small clarification and evidence-repair patch. No broad defect was found in the existing pattern-selection guidance; no measured agent gain, universal correctness or performance claim follows.',
+    'No PostgreSQL server, driver, Spring container, ORM or application integration was executed. The case SQL schedules are grounded in PostgreSQL 17 documentation and stated single-writer-path assumptions, not measured production behavior.',
+    'The case source compiled for Java 17 on JDK 25.0.3; this is not execution on a Java 17 JVM, and the sources were not run.',
+    'No executable skill example changed. The unchanged Spring/JPA partial sketches were read, not built or integration-tested during this assignment.',
+    'Local loader/validator and relative links do not establish catalog-wide dependency/routing consistency. Global build, registry and verification belong to the coordinator.',
+    'HTTP status checks establish source availability at consultation, not correctness of every recommendation or future URL stability.',
+  ],
+  crossSkill: { requiredActions: [], optionalObservation: 'The corrected malformed JPA URL may warrant a separate scoped search by the coordinator; no neighboring package was edited or audited for that defect.' },
+  pendingGlobalChecks: [
+    { command: 'npm run registry:build', owner: 'coordinator', reason: 'Parallel-review policy; run after all reviewers stop writing to regenerate package integrity/version entry.' },
+    { command: 'npm run verify', owner: 'coordinator', reason: 'Parallel-review policy; run after registry generation and stable shared tree. Local readiness is not repository-wide validation.' },
+  ],
+  pendingBehavioralEvaluation: 'Optional coordinator-run matched evaluation with frozen separate cases/criteria; no actor runs authorized to this reviewer.',
+  evidenceDirectory: root.replaceAll('\\', '/'),
+  evidence: ['local-validation.mjs', 'local-validation.stdout.txt', 'commands.json', 'run-local.mjs', 'source-check.mjs', 'source-status.json', 'scoped-diff.stdout.txt', 'scoped-status.stdout.txt', 'staged-diff.stdout.txt', 'prepare-cases.mjs', 'actor-inputs.json', 'evaluator-criteria.json', 'case-integrity.json', 'cases/case-a', 'cases/case-b', 'case-compiled'],
+  writeState: { noActiveBackgroundProcess: true, allProcessesWaited: true, repositoryWritesRestrictedToOwnedPath: true, reviewArtifactsRestrictedToAssignedTempDirectory: true, stoppedBeforeHandoff: true },
+};
+const output = resolve(root, '..', `${skill}.json`);
+writeFileSync(output, JSON.stringify(handoff, null, 2) + '\n');
+console.log(JSON.stringify({ output: output.replaceAll('\\', '/'), status: handoff.status, changedFiles: handoff.files.changedByReviewer, allWritesStopped: handoff.allWritesStopped }, null, 2));

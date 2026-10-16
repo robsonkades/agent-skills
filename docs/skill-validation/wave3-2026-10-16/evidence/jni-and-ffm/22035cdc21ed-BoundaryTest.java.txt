@@ -1,0 +1,11 @@
+public final class BoundaryTest {
+    public static void main(String[] args) throws Exception {
+        try (NativeFixture nativeFixture = new NativeFixture()) {
+            int value = WorkerBoundary.execute(nativeFixture);
+            if (value != 7 || NativeFixture.calls() != 1) {
+                throw new AssertionError("Expected one callback returning 7");
+            }
+            System.out.println("PASS one callback returned 7; worker completed before arena close");
+        }
+    }
+}

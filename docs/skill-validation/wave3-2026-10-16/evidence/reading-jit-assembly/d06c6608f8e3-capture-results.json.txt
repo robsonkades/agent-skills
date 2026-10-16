@@ -1,0 +1,44 @@
+[
+  {
+    "id": "compile",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+    "args": [
+      "--release",
+      "25",
+      "-Xlint:all",
+      "-Werror",
+      "-d",
+      "classes",
+      "NativeBoundaryProbe.java"
+    ],
+    "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/reading-jit-assembly-check",
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\reading-jit-assembly-check\\compile.stdout.txt",
+    "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\reading-jit-assembly-check\\compile.stderr.txt",
+    "stdoutBytes": 0,
+    "stderrBytes": 0
+  },
+  {
+    "id": "capture",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\java.exe",
+    "args": [
+      "-XX:CompileCommand=print,java/lang/System::mapLibraryName",
+      "-cp",
+      "classes",
+      "NativeBoundaryProbe"
+    ],
+    "cwd": "C:/Users/robso/AppData/Local/Temp/skills-wave3-validation-wyg7TL/reading-jit-assembly-check",
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\reading-jit-assembly-check\\capture.stdout.txt",
+    "stderrFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\reading-jit-assembly-check\\capture.stderr.txt",
+    "stdoutBytes": 422,
+    "stderrBytes": 108,
+    "observedHeaders": [
+      "Line: 'print,java/lang/System::mapLibraryName'"
+    ]
+  }
+]

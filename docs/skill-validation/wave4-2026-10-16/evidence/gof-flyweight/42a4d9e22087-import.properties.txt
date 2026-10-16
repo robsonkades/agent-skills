@@ -1,0 +1,2 @@
+defaultLocale=en-US
+allowLocaleOverride=true

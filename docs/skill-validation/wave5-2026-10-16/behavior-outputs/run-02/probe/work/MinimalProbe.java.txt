@@ -1,0 +1,13 @@
+package work;
+
+public final class MinimalProbe {
+    public static void main(String[] args) {
+        Catalog catalog = new Catalog();
+        catalog.load(new Entry("A", 1));
+        Report first = catalog.open();
+        System.out.println("old-before=" + first.total() + " " + first.entries());
+        catalog.load(new Entry("A", 2));
+        System.out.println("old-after=" + first.total() + " " + first.entries());
+        System.out.println("new-after=" + catalog.open().total() + " " + catalog.open().entries());
+    }
+}

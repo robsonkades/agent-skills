@@ -1,0 +1,72 @@
+import java.math.BigDecimal;
+import java.util.Currency;
+
+public final class RefundProbe {
+    private static int checks;
+    private static int effects;
+    private static int hostileCalls;
+    private static final Currency USD = Currency.getInstance("USD");
+    private static final class LyingDecimal extends BigDecimal {
+        LyingDecimal() { super("-1.00"); }
+        @Override public int signum() { hostileCalls++; return 1; }
+    }
+    private static final class OrdinarySubclass extends BigDecimal {
+        OrdinarySubclass() { super("2.50"); }
+    }
+    private static void check(boolean condition, String label) {
+        checks++;
+        if (!condition) throw new AssertionError(label);
+    }
+    private static RefundRequest request(BigDecimal amount, String reason) {
+        return new RefundRequest(AccountId.parse(" gb82WEST12345698765432 "), new Money(amount, USD), reason);
+    }
+    private static String post(BigDecimal amount, String reason) {
+        RefundRequest request = request(amount, reason);
+        effects++;
+        return request.amount().amount().toPlainString();
+    }
+    private static void rejects(Runnable operation, String field, String code) {
+        int before = effects;
+        try { operation.run(); throw new AssertionError("accepted " + field + "/" + code); }
+        catch (RefundInputException expected) {
+            check(field.equals(expected.field()) && code.equals(expected.code()), "stable field/code");
+            check(effects == before, "invalid request no protected effect");
+        }
+    }
+    public static void main(String[] args) {
+        boolean fixed = args[0].equals("fixed");
+        if (!fixed) {
+            String posted = post(new LyingDecimal(), "valid reason");
+            check(posted.equals("-1.00"), "negative witness reached effect");
+            check(effects == 1 && hostileCalls == 1, "original guard invoked hostile signum");
+            System.out.println("WITNESS: original example accepted subclass; protected-effect value=" + posted);
+        } else {
+            rejects(() -> post(new LyingDecimal(), "valid reason"), "amount", "unsupported_representation");
+            check(hostileCalls == 0, "reject before invoking overridden signum");
+            rejects(() -> post(new OrdinarySubclass(), "valid reason"), "amount", "unsupported_representation");
+        }
+        effects = 0;
+        check(post(new BigDecimal("2.50"), "  ordinary reason  ").equals("2.50"), "valid exact BigDecimal");
+        check(effects == 1, "one positive effect");
+        check(request(BigDecimal.ONE, "  reason  ").reason().equals("reason"), "allowed spaces normalize");
+        check(AccountId.parse(" gb82WEST12345698765432 ").value().equals("GB82WEST12345698765432"), "account normalization");
+        rejects(() -> post(null, "reason"), "amount", "required");
+        rejects(() -> post(BigDecimal.ZERO, "reason"), "amount", "must_be_positive");
+        rejects(() -> post(new BigDecimal("-1"), "reason"), "amount", "must_be_positive");
+        rejects(() -> post(BigDecimal.ONE, null), "reason", "required");
+        rejects(() -> post(BigDecimal.ONE, " "), "reason", "must_not_be_blank");
+        rejects(() -> post(BigDecimal.ONE, "a".repeat(1001)), "reason", "too_long");
+        for (String value : new String[] {"\treason", "reason\n", "rea\rson", "\t\n\r"}) {
+            rejects(() -> post(BigDecimal.ONE, value), "reason", "contains_control_character");
+        }
+        rejects(() -> new AccountId("###"), "account", "malformed");
+        rejects(() -> new AccountId(null), "account", "required");
+        rejects(() -> AccountId.parse("a".repeat(129)), "account", "too_long");
+        rejects(() -> new Money(BigDecimal.ONE, null), "currency", "required");
+        rejects(() -> new RefundRequest(null, new Money(BigDecimal.ONE, USD), "reason"), "account", "required");
+        rejects(() -> new RefundRequest(new AccountId("GB82WEST12345698765432"), null, "reason"), "amount", "required");
+        boolean assertionsEnabled = false;
+        assert assertionsEnabled = true;
+        System.out.println("PASS " + checks + " checks; mode=" + args[0] + "; assertions=" + assertionsEnabled + "; runtime=" + Runtime.version());
+    }
+}

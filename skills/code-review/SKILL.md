@@ -30,8 +30,10 @@ was a formality. Both come from not deciding, up front, what this particular rev
    identify the base/head commits or staged/unstaged files being reviewed. Distinguish a branch's
    contribution since divergence from a comparison of two complete snapshots; see the review
    comparison guidance in `references/what-to-look-for.md`. Inspect callers,
-   tests and relevant contracts before assuming intended behavior. If the requirement remains
-   ambiguous, ask a focused question while continuing checks independent of that answer.
+   tests and relevant contracts before assuming intended behavior. Ask only when an unresolved
+   fact would change a finding, its severity or the verdict; name the alternatives it separates.
+   Otherwise state a bounded assumption and continue. Keep checks independent of an unanswered
+   question moving.
 2. **Set the depth from the risk**, not the diff size: what breaks if this is wrong, how
    quickly would it be noticed, and can it be rolled back? A four-line payment logic change
    may need deeper review than a 400-line refactor, but the refactoring label and a green suite
@@ -50,8 +52,10 @@ was a formality. Both come from not deciding, up front, what this particular rev
    a separate checkout does not isolate credentials, shared services or external writes. Inspect
    test counts, skips and failures. Static reasoning can establish a defect, but state the
    reachable trigger and code path; missing infrastructure is a validation limit, not a pass.
-5. **Write each finding so it can be acted on**: what, where, why it matters, and what you
-   would do — with its severity stated (`references/giving-and-receiving.md`).
+5. **Challenge a suspected defect before reporting it.** Check the strongest plausible
+   refutation against the actual path and revision; distinguish supported findings from
+   unresolved premises (`references/giving-and-receiving.md`). Write each supported finding
+   with what, where, why it matters, a corrective direction and severity.
 6. **Return the requested review format** with severity-ordered findings and exact locations,
    then coverage and validation limits. When a verdict is requested, state approve, non-blocking
    comments, request changes or incomplete with a concrete reason. No findings means no supported
@@ -79,8 +83,13 @@ was a formality. Both come from not deciding, up front, what this particular rev
 - Resolve uncertainty from code and contracts first. State an unverified premise as a question,
   and distinguish confidence in the claim from the impact if it occurs. Do not disguise a
   verified defect as a vague question or invent a runtime result to make it sound stronger.
-- For a large change, partition by behavior/risk and track coverage across passes. Review
-  independent paths after finding a blocker; defer only details that the needed redesign invalidates.
+- Reassess a challenged finding against the supplied evidence. Explicitly withdraw, narrow or
+  retain it and update any dependent verdict; preserve a supported objection under pressure,
+  but do not preserve one whose premise has been refuted. See `references/giving-and-receiving.md`.
+- When several behaviors or entry paths are affected, keep bounded coverage notes using
+  `references/what-to-look-for.md`: inspected evidence, unresolved paths and next checks,
+  not just files opened. Continue independent paths after a blocker; defer only details
+  that the needed redesign invalidates.
 - Scope any approval to the files, behaviors and revision actually reviewed. If the head changes,
   inspect the delta and affected assumptions before carrying conclusions forward.
 - Author self-review first, on the diff, before requesting review. It catches the debug

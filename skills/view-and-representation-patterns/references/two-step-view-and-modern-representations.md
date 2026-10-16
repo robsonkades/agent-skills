@@ -193,4 +193,4 @@ Sources: [Fowler Two Step View](https://martinfowler.com/eaaCatalog/twoStepView.
 [Spring 6.1.14 ProblemDetail](https://docs.spring.io/spring-framework/docs/6.1.14/javadoc-api/org/springframework/http/ProblemDetail.html),
 [htmx caching and history](https://htmx.org/docs/#caching),
 [RFC 9111 cache selection with Vary](https://www.rfc-editor.org/rfc/rfc9111.html#section-4.1),
-[Servlet 6 response buffering and commitment](https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/servletresponse).
+[Servlet 6 response buffering and commitment](https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/ServletResponse.html).

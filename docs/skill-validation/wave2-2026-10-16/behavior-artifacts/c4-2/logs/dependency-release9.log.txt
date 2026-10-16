@@ -1,0 +1,27 @@
+releases: 9
+
+com.google.common@33.5.0-jre jar:file:///C:/Users/robso/.m2/repository/com/google/guava/guava/33.5.0-jre/guava-33.5.0-jre.jar!/META-INF/versions/9/module-info.class
+exports com.google.common.annotations
+exports com.google.common.base
+exports com.google.common.cache
+exports com.google.common.collect
+exports com.google.common.escape
+exports com.google.common.eventbus
+exports com.google.common.graph
+exports com.google.common.hash
+exports com.google.common.html
+exports com.google.common.io
+exports com.google.common.math
+exports com.google.common.net
+exports com.google.common.primitives
+exports com.google.common.reflect
+exports com.google.common.util.concurrent
+exports com.google.common.xml
+requires com.google.common.util.concurrent.internal transitive
+requires com.google.errorprone.annotations static
+requires com.google.j2objc.annotations static
+requires java.base mandated
+requires java.logging
+requires jdk.unsupported static
+requires org.jspecify static
+

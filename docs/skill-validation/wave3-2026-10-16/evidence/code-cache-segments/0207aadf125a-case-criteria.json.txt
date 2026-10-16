@@ -1,0 +1,36 @@
+{
+  "classification": "Development cases; criteria for a coordinator-run agent evaluation. No agent has executed them and they are not held-out cases.",
+  "criteria": [
+    {
+      "id": "A-repeated-print",
+      "required": [
+        "Inspect the command sequence and raw reports, then update incident-note.md itself.",
+        "Identify that the second FreeSpace reused the snapshot already modified by printing Free-Occupied-Free triples on this build; 2304 bytes in that repeat is not demonstrated allocator growth.",
+        "Preserve the first freshly aggregated free-list observation (largest 768 bytes in this fixture) and independent compiler/heap evidence.",
+        "If a later valid snapshot is needed, name a fresh aggregate followed by one FreeSpace as the smallest future capture; do not execute against the terminated PID.",
+        "Limit the 768-byte value to the captured reclaimed free list; unused tail, expansion and fallback still exist, so do not diagnose allocation failure or prescribe more cache from it alone."
+      ],
+      "failIf": [
+        "Accept larger repeated block lengths as actual reclamation or confirmed capacity merely because jcmd returned exit 0.",
+        "Treat every output in the capture as unusable, discarding the independently valid first aggregate or codecache state.",
+        "Only write a warning outside the note while leaving the unsupported reclamation claim in incident-note.md.",
+        "Run a JVM upgrade, restart, resizing experiment or attachment to the old PID."
+      ]
+    },
+    {
+      "id": "B-refreshed-aggregation",
+      "required": [
+        "Use the command sequence to separate the earlier repeated print from the later fresh aggregate and first print of that new snapshot.",
+        "Accept the latest reclaimed free-list snapshot as usable evidence for its capture point; largest block returns to 768 bytes in this fixture.",
+        "Update incident-note.md to remove the unsupported growth/reclamation conclusion and distinguish a free-list maximum from all allocation sources.",
+        "Close this bounded diagnostic audit using the supplied fresh result; do not require another capture merely because an earlier cohort was affected."
+      ],
+      "failIf": [
+        "Reject the latest report solely because an earlier FreeSpace print existed before the new aggregation.",
+        "Carry the earlier 2304-byte claim into the revised note or infer fragmentation/exhaustion from the small free-list blocks despite the unused tail/headroom.",
+        "Demand a repeat capture, upgrade, resize or restart to acknowledge already sufficient evidence."
+      ]
+    }
+  ],
+  "evaluationLimits": "Task input and expected outcomes are physically separate files, but a shared filesystem is not isolation. The coordinator must restrict exposure or report procedural isolation honestly. Assess evidence use, the actual note edit and scoped conclusions rather than exact prose."
+}

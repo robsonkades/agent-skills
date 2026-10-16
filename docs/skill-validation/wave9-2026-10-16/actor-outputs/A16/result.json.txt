@@ -1,0 +1,28 @@
+{
+  "task": "A16",
+  "decision": "Repair RetryEngine.java within the supplied synchronous single-owner contract",
+  "implementation": "RetryEngine.java",
+  "baseline": {"sourceAndApi": "Java 17", "compiler": "javac 25.0.3 --release 17", "runtime": "Temurin 25.0.3+9-LTS"},
+  "changes": [
+    "Reuse stable intent and payload; preserve terminal snapshots",
+    "Persist and retain UNKNOWN until authoritative OK, including call interruption",
+    "Close each reply before continuation and normal return",
+    "Admit attempts and waits using overflow-safe remaining-budget checks",
+    "Honor both delay minima, retry tokens, attempt cap, cancellation and interruption"
+  ],
+  "evidence": [
+    {"command": "node run.mjs Verification", "exitCode": 0, "observed": "168 scenarios passed; replaySafe=true"},
+    {"command": "node run.mjs Smoke", "exitCode": 0, "observed": "Smoke passed"},
+    {"check": "Verification compiled against immutable original RetryEngine", "exitCode": 1, "observed": "Expected baseline failure: intent and payload must be reused unchanged"},
+    {"check": "Immutable copy comparison", "exitCode": 0, "observed": "Seven immutable output files match input byte-for-byte"}
+  ],
+  "limits": [
+    "The fixed REPLAY_SAFE=true configuration was executed; false branch was inspected only",
+    "Store durability, peer replay semantics and retention are supplied assumptions, not proven by fixtures",
+    "No concrete provider, database, framework, transport or isolation-version evidence is supplied",
+    "Local simulation does not prove wall-clock deadlines, physical cancellation, remote outcome or fleet behavior",
+    "Cross-skill routes and external references outside supplied snapshots were not opened"
+  ],
+  "deliverables": ["RetryEngine.java", "Verification.java", "REVIEW.md", "result.json", "execution.json"],
+  "processesRunning": false
+}

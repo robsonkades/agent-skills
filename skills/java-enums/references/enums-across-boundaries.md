@@ -49,6 +49,22 @@ This is a partial Jakarta Persistence sketch with omitted imports and `OrderStat
 lookup. Do not combine a converter with `@Enumerated` on the same attribute and assume
 portable conversion. Validate null, unknown and duplicate-code handling against the actual provider.
 
+## Java object serialization
+
+Inspect the codec selected by the cache, session or message writer. Standard `ObjectOutputStream`
+identifies an enum constant by its enum type and `name()`, not its explicit code; instance fields
+are not serialized. Enum-specific `writeObject`, `readObject`, `writeReplace`, `readResolve` and
+`serialVersionUID` declarations do not change this contract. See the
+[Java Object Serialization Specification, section 1.12](https://docs.oracle.com/en/java/javase/25/docs/specs/serialization/serial-arch.html#serialization-of-enum-constants).
+
+Renaming/removing a constant can therefore break retained object streams even when its code stays
+unchanged; reordering alone preserves their name-based identity. Preserve an adequate name contract,
+or plan an explicit external representation and migration before renaming. A surrounding DTO must
+actually encode the stable code; merely wrapping the enum still serializes the enum by name.
+Test old bytes with the proposed reader and required rollback readers. When the selected codec
+already writes/reads explicit codes, assess that mapping instead of imposing native-serialization
+constraints on an unused path.
+
 ## JSON and HTTP contracts
 
 - **Serialising**, prefer an explicit representation (`@JsonValue` on the code accessor, or a
@@ -150,8 +166,8 @@ closure from the supported compatibility horizon, not a fixed rate of business c
 - [ ] Changes to externally represented codes have a compatibility decision and any required
       migration/removal evidence covering reachable retained data, restores and rollback.
 
-Primary mapping references: [Persistence 3.2 Enumerated](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/enumerated)
-and [EnumeratedValue](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/enumeratedvalue).
+Primary mapping references: [Persistence 3.2 Enumerated](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/Enumerated.html)
+and [EnumeratedValue](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/EnumeratedValue.html).
 For format and switch details: [Avro 1.12 schema resolution](https://avro.apache.org/docs/1.12.0/specification/#schema-resolution),
 [JEP 441's enum-switch change](https://openjdk.org/jeps/441), and
 [Jackson 2.19 feature contracts](https://github.com/FasterXML/jackson-databind/blob/jackson-databind-2.19.0/src/main/java/com/fasterxml/jackson/databind/DeserializationFeature.java).

@@ -1,0 +1,36 @@
+param([Parameter(Mandatory=$true)][ValidateSet('missing-module','pom-only','complete')][string]$CaseName)
+$ErrorActionPreference = 'Stop'
+$base = 'C:/Users/robso/AppData/Local/Temp/agent-skills-wave3-java-build-and-dependencies-7c50f14e530b417aa5774a6459469c3b'
+$fixture = Join-Path $base ('fixtures/' + $CaseName)
+$gradle = 'C:/Users/robso/.gradle/wrapper/dists/gradle-9.6.1-bin/4ticwg1pgcbps2hj28r8so764/gradle-9.6.1/bin/gradle.bat'
+$env:JAVA_HOME = 'C:/Users/robso/.jdks/temurin-25.0.3'
+$env:GRADLE_USER_HOME = Join-Path $fixture 'gradle-user-home'
+$env:JAVA_OPTS = '-Duser.home=' + (Join-Path $fixture 'jvm-user-home')
+$env:GRADLE_OPTS = ''
+$env:JAVA_TOOL_OPTIONS = ''
+$env:JDK_JAVA_OPTIONS = ''
+$env:_JAVA_OPTIONS = ''
+$common = @('--offline','--no-daemon','--no-configuration-cache','--no-build-cache','--console=plain','--max-workers=2','--gradle-user-home',$env:GRADLE_USER_HOME,'--project-cache-dir',(Join-Path $fixture 'project-cache'),'-p',$fixture)
+$report = & $gradle @common dependencies --configuration runtimeClasspath dependencyInsight --dependency org.example:codec --configuration runtimeClasspath 2>&1
+$reportStatus = $LASTEXITCODE
+$report | Set-Content -LiteralPath (Join-Path $base ($CaseName + '-reports.log'))
+$reportText = $report -join [Environment]::NewLine
+if ($reportStatus -ne 0) { throw "Report tasks failed unexpectedly for $CaseName : $reportStatus" }
+if ($CaseName -eq 'missing-module') {
+    if ($reportText -notmatch 'org.example:codec:1.0 FAILED') { throw 'Missing module was not visibly unresolved' }
+} elseif ($reportText -match 'org.example:codec:1.0 FAILED') { throw 'Metadata-only graph unexpectedly failed' }
+if ($reportText -notmatch 'BUILD SUCCESSFUL') { throw 'Report success marker missing' }
+$consume = & $gradle @common resolveRuntime 2>&1
+$consumeStatus = $LASTEXITCODE
+$consume | Set-Content -LiteralPath (Join-Path $base ($CaseName + '-consume.log'))
+$expectedConsumeStatus = if ($CaseName -eq 'complete') { 0 } else { 1 }
+if ($consumeStatus -ne $expectedConsumeStatus) { throw "Consumer exit mismatch for $CaseName : $consumeStatus" }
+if ($CaseName -eq 'complete') {
+    $sourceHash = (Get-FileHash -Algorithm SHA256 -LiteralPath (Join-Path $fixture 'repository/org/example/codec/1.0/codec-1.0.jar')).Hash
+    $outputHash = (Get-FileHash -Algorithm SHA256 -LiteralPath (Join-Path $fixture 'build/resolved-runtime/codec-1.0.jar')).Hash
+    if ($sourceHash -ne $outputHash) { throw 'Resolved file bytes differ from fixture artifact' }
+}
+$result = [pscustomobject]@{case=$CaseName; reportExit=$reportStatus; reportContainsUnresolved=($reportText -match 'org.example:codec:1.0 FAILED'); consumerExit=$consumeStatus; expectedConsumerExit=$expectedConsumeStatus; artifactCopied=($CaseName -eq 'complete'); gradleVersion='9.6.1'; javaRuntime='Temurin 25.0.3+9-LTS'}
+$result | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $base ($CaseName + '-result.json'))
+$result | ConvertTo-Json -Compress
+exit 0

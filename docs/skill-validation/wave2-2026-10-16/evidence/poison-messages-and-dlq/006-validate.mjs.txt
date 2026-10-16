@@ -1,0 +1,110 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { parseManifest } from 'file:///C:/git/agent-skills/packages/core/src/domain/manifest.ts';
+import { parseSkillDocument, documentName, documentDescription } from 'file:///C:/git/agent-skills/packages/core/src/domain/skill-document.ts';
+
+const root = 'C:/git/agent-skills';
+const owned = 'skills/poison-messages-and-dlq';
+const dir = 'C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/poison-messages-and-dlq';
+const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
+const sha256 = (data) => crypto.createHash('sha256').update(data).digest('hex');
+const baseline = JSON.parse(read('docs/skill-validation/wave2-2026-10-16/baseline.json')).skills.find((skill) => skill.name === 'poison-messages-and-dlq');
+assert.ok(baseline);
+const parsed = parseManifest(read(`${owned}/skill.yaml`), { strict: true });
+assert.deepEqual(parsed.issues, []);
+assert.equal(String(parsed.manifest.version), '1.2.5');
+const doc = parseSkillDocument(read(`${owned}/SKILL.md`));
+assert.equal(documentName(doc), parsed.manifest.name);
+assert.equal(documentDescription(doc), parsed.manifest.description);
+const git = (args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' });
+assert.match(git(['show', `HEAD:${owned}/skill.yaml`]), /^version: 1\.2\.4$/m);
+const status = git(['status', '--short', '--', owned]);
+const diff = git(['diff', '--', owned]);
+const staged = git(['diff', '--cached', '--', owned]);
+const untracked = git(['ls-files', '--others', '--exclude-standard', '--', owned]);
+assert.notEqual(status, '');
+assert.notEqual(diff, '');
+assert.deepEqual(git(['diff', '--name-only', '--', owned]).trim().split('\n'), [
+  `${owned}/references/dlq-operations.md`, `${owned}/skill.yaml`,
+]);
+assert.equal(staged, '');
+assert.equal(untracked, '');
+const files = fs.readdirSync(path.join(root, owned), { recursive: true, withFileTypes: true })
+  .filter((entry) => entry.isFile())
+  .map((entry) => path.relative(root, path.join(entry.parentPath, entry.name)).replaceAll('\\', '/'))
+  .sort();
+assert.equal(files.length, 4);
+const hashes = files.map((file) => {
+  const finalSha256 = sha256(fs.readFileSync(path.join(root, file)));
+  return { file, assignmentSha256: baseline.files[file].sha256, finalSha256, changed: finalSha256 !== baseline.files[file].sha256 };
+});
+assert.deepEqual(hashes.filter((file) => file.changed).map((file) => file.file), [
+  `${owned}/references/dlq-operations.md`, `${owned}/skill.yaml`,
+]);
+const links = [];
+for (const file of files.filter((file) => file.endsWith('.md'))) {
+  for (const match of read(file).matchAll(/\]\(([^)]+)\)/g)) {
+    const target = match[1].split('#')[0];
+    if (!target || /^[a-z][a-z0-9+.-]*:/i.test(target)) continue;
+    assert.ok(fs.existsSync(path.resolve(root, path.dirname(file), target)), `${file} -> ${target}`);
+    links.push({ from: file, to: target, status: 'exists' });
+  }
+}
+const sources = JSON.parse(fs.readFileSync(`${dir}/source-index.json`, 'utf8'));
+for (const source of sources) {
+  assert.equal(source.status, 200);
+  assert.equal(sha256(fs.readFileSync(`${dir}/sources/${source.file}`)), source.sha256);
+}
+
+const recordSource = read(`${owned}/references/dlq-operations.md`).match(/```java\r?\n([\s\S]*?)\r?\n```/)[1];
+const baselineRecordSource = baseline.files[`${owned}/references/dlq-operations.md`].content.match(/```java\r?\n([\s\S]*?)\r?\n```/)[1];
+assert.equal(recordSource, baselineRecordSource);
+fs.writeFileSync(`${dir}/DeadLetter.java`, recordSource + '\n');
+fs.mkdirSync(`${dir}/classes`, { recursive: true });
+const javac = 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe';
+const javacVersion = execFileSync(javac, ['--version'], { encoding: 'utf8', cwd: dir }).trim();
+const compileArgs = ['--release', '17', '-d', `${dir}/classes`, `${dir}/DeadLetter.java`];
+const compile = spawnSync(javac, compileArgs, { encoding: 'utf8', cwd: dir });
+assert.equal(compile.status, 0, compile.stderr);
+assert.equal(compile.stderr, '');
+const classFile = fs.readFileSync(`${dir}/classes/DeadLetter.class`);
+assert.equal(classFile.readUInt16BE(6), 61);
+assert.ok(fs.existsSync(`${dir}/classes/DeadLetter$SafeHeader.class`));
+
+const originalEnqueuedAt = Date.parse('2026-10-12T10:00:00Z');
+const movedToDlqAt = Date.parse('2026-10-14T10:00:00Z');
+const observedAt = Date.parse('2026-10-14T12:00:00Z');
+const ttlHours = 96;
+const requiredRemainingHours = 72 + 12;
+const standardRemainingHours = ttlHours - (observedAt - originalEnqueuedAt) / 3600000;
+const fifoRemainingHours = ttlHours - (observedAt - movedToDlqAt) / 3600000;
+assert.equal(standardRemainingHours, 46);
+assert.equal(fifoRemainingHours, 94);
+assert.equal(standardRemainingHours >= requiredRemainingHours, false);
+assert.equal(fifoRemainingHours >= requiredRemainingHours, true);
+
+const result = {
+  status: 'PASS', node: process.version, cwd: process.cwd(),
+  metadata: { issues: parsed.issues, nameMatches: true, descriptionMatches: true, committedVersion: '1.2.4', assignmentVersion: '1.2.4', finalVersion: '1.2.5' },
+  files: hashes, localLinks: links, git: { status, diff, staged, untracked },
+  sources: { count: sources.length, statuses200: true, hashesVerified: true },
+  conceptualJavaSchema: {
+    source: `${owned}/references/dlq-operations.md`, extractedSourceSha256: sha256(recordSource + '\n'),
+    compiler: javacVersion, runtimeUsedForCompilation: 'Temurin JDK 25.0.3', targetRelease: 17,
+    command: javac, args: compileArgs, cwd: dir, exitCode: compile.status, stdout: compile.stdout, stderr: compile.stderr,
+    classFileMajorVersion: 61,
+    unchangedFromAssignment: true,
+    limitation: 'Compilation of the unchanged conceptual schema only. It intentionally omits validation, defensive copying and serializer implementation; no claim of immutable DTO or broker/runtime safety.',
+  },
+  syntheticRetentionArithmetic: {
+    originalEnqueuedAt: '2026-10-12T10:00:00Z', movedToDlqAt: '2026-10-14T10:00:00Z', observedAt: '2026-10-14T12:00:00Z',
+    ttlHours, requiredRemainingHours, standardRemainingHours, fifoRemainingHours,
+    limitation: 'Source-defined clock arithmetic on development fixtures; no SQS API or delivery/expiry execution.',
+  },
+  behavioralExecutions: 0,
+};
+fs.writeFileSync(`${dir}/local-validation.json`, JSON.stringify(result, null, 2) + '\n');
+console.log(JSON.stringify(result, null, 2));

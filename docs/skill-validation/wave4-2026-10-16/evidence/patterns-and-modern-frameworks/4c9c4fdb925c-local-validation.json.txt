@@ -1,0 +1,87 @@
+{
+  "skill": "patterns-and-modern-frameworks",
+  "structural": {
+    "metadata": "PASS",
+    "internalLinks": 2,
+    "dependenciesAndSuggestionsExist": 18,
+    "actualSkillReferralsDeclared": 17,
+    "fixedJakartaUrls": 2,
+    "prettier": "PASS",
+    "gitDiffCheck": "PASS"
+  },
+  "behavioralEvaluations": [],
+  "technicalControls": [
+    {
+      "id": "patterns-and-modern-frameworks-A",
+      "smoke": 1,
+      "controls": 18,
+      "release": 17,
+      "classMajor": 61,
+      "runtime": "Temurin 25.0.3+9",
+      "spring": "6.2.10",
+      "limitation": "Real Spring AOP/cache/synchronization; fake resource transaction manager, no database or distributed cache."
+    },
+    {
+      "id": "patterns-and-modern-frameworks-B",
+      "smoke": 1,
+      "controls": 10,
+      "release": 17,
+      "classMajor": 61,
+      "runtime": "Temurin 25.0.3+9",
+      "spring": "6.2.10",
+      "limitation": "Real Spring AOP/cache/synchronization; fake resource transaction manager, no database or distributed cache."
+    }
+  ],
+  "casePair": {
+    "inputs": [
+      {
+        "id": "patterns-and-modern-frameworks-A",
+        "input": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/case-inputs/A/input.json",
+        "fixtureRoot": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/case-inputs/A/project",
+        "files": [
+          "README.md",
+          "docs/cache-contract.md",
+          "docs/review-request.md",
+          "pom.xml",
+          "src/main/java/app/CacheConfiguration.java",
+          "src/main/java/app/CatalogCommands.java",
+          "src/main/java/app/CheckoutFlow.java",
+          "src/main/java/app/SandboxTransactionManager.java",
+          "src/test/java/app/Smoke.java"
+        ]
+      },
+      {
+        "id": "patterns-and-modern-frameworks-B",
+        "input": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/case-inputs/B/input.json",
+        "fixtureRoot": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/case-inputs/B/project",
+        "files": [
+          "README.md",
+          "docs/cache-contract.md",
+          "docs/review-request.md",
+          "pom.xml",
+          "src/main/java/app/CacheConfiguration.java",
+          "src/main/java/app/CatalogCommands.java",
+          "src/main/java/app/CheckoutFlow.java",
+          "src/main/java/app/SandboxTransactionManager.java",
+          "src/test/java/app/Smoke.java"
+        ]
+      }
+    ],
+    "onlyDifferingFile": [
+      {
+        "name": "src/main/java/app/CacheConfiguration.java",
+        "a": "4b11f2d7a5935adba26ddeae35f5265302ae5d5df8107b9d756e56d09f21d7a9",
+        "b": "bd4b1367d3dd74ccfc79a73128939d1317482f0246a79f09c03ac76784f979e1"
+      }
+    ],
+    "criteria": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/evaluator-only/criteria.json",
+    "knownDevelopmentCases": true
+  },
+  "limitations": [
+    "No independent agent evaluation or measured behavioral improvement.",
+    "No ORM/JPA mapping integration test; language snippets unchanged and not compiled in this review.",
+    "--release 17 on JDK25 does not execute on a Java17 VM.",
+    "Spring synchronization checks do not validate an actual database transaction or database/cache atomicity.",
+    "No global checks run; coordinator alone owns registry:build and verify."
+  ]
+}

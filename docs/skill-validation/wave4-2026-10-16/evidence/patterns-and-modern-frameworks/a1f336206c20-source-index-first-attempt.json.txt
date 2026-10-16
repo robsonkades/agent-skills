@@ -1,0 +1,107 @@
+[
+  {
+    "id": "jakarta-original-404",
+    "url": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2",
+    "finalUrl": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2",
+    "status": 404,
+    "consultedAt": "2026-10-16T15:58:47.044Z",
+    "claim": "Both original links share this endpoint; expected HTTP 404.",
+    "file": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/sources/jakarta-original-404.html",
+    "sha256": "16ef63755b816a4e1abc5ea79a7c942fc6f11495379cbd680610de77e412090d",
+    "bytes": 211891
+  },
+  {
+    "id": "jakarta-persistence-3.2",
+    "url": "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html",
+    "claim": "Sections 2.1, 2.2, 2.4.1, 2.7, 7.1 and 7.2: entity/access, record keys/embeddables, context identity/threading.",
+    "error": "The expression evaluated to a falsy value:\n\n  assert.ok(result.anchors.every(a => a.exists))\n"
+  },
+  {
+    "id": "hibernate-6.2-introduction",
+    "url": "https://docs.hibernate.org/orm/6.2/introduction/html_single/",
+    "finalUrl": "https://docs.hibernate.org/orm/6.2/introduction/html_single/",
+    "status": 200,
+    "consultedAt": "2026-10-16T15:58:47.149Z",
+    "claim": "Embeddable objects: record embeddables since 6.2 and EmbeddedId restriction dated May 2023.",
+    "file": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/sources/hibernate-6.2-introduction.html",
+    "sha256": "0b24a3c8254c1bf1571ffacf499a14eeba2ebea7540010615041e24db2bb3269",
+    "bytes": 626602
+  },
+  {
+    "id": "spring-6.2.10-cache-decorator",
+    "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.10/spring-context-support/src/main/java/org/springframework/cache/transaction/TransactionAwareCacheDecorator.java",
+    "finalUrl": "https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.10/spring-context-support/src/main/java/org/springframework/cache/transaction/TransactionAwareCacheDecorator.java",
+    "status": 200,
+    "consultedAt": "2026-10-16T15:58:46.373Z",
+    "claim": "Deferred put/evict/clear only with synchronization; immediate operations not deferred.",
+    "file": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/sources/spring-6.2.10-cache-decorator.java",
+    "sha256": "b380f4d61442b3a72571b1a80849ef4d8759f1bd4c4e94d0949dc85991521078",
+    "bytes": 4757
+  },
+  {
+    "id": "spring-6.2.10-cache-evict",
+    "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.10/spring-context/src/main/java/org/springframework/cache/annotation/CacheEvict.java",
+    "finalUrl": "https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.10/spring-context/src/main/java/org/springframework/cache/annotation/CacheEvict.java",
+    "status": 200,
+    "consultedAt": "2026-10-16T15:58:46.408Z",
+    "claim": "beforeInvocation contract; method outcome versus transaction outcome.",
+    "file": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/sources/spring-6.2.10-cache-evict.java",
+    "sha256": "3b4ce6ffa536a1780581af7205b0ce05af3af02dd29d91f4f40b9d2192c6cf07",
+    "bytes": 6061
+  },
+  {
+    "id": "spring-6.2.10-cache-manager-proxy",
+    "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.10/spring-context-support/src/main/java/org/springframework/cache/transaction/TransactionAwareCacheManagerProxy.java",
+    "finalUrl": "https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.10/spring-context-support/src/main/java/org/springframework/cache/transaction/TransactionAwareCacheManagerProxy.java",
+    "status": 200,
+    "consultedAt": "2026-10-16T15:58:46.388Z",
+    "claim": "Actual cache manager integration delegates through transaction-aware cache decorators.",
+    "file": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/sources/spring-6.2.10-cache-manager-proxy.java",
+    "sha256": "4848acfd27debc39c12eb34970fad5125e953eede0d694ce541c58d25d5745cf",
+    "bytes": 3191
+  },
+  {
+    "id": "spring-6.2.10-transactions",
+    "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.10/framework-docs/modules/ROOT/pages/data-access/transaction/declarative/annotations.adoc",
+    "finalUrl": "https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.10/framework-docs/modules/ROOT/pages/data-access/transaction/declarative/annotations.adoc",
+    "status": 200,
+    "consultedAt": "2026-10-16T15:58:46.396Z",
+    "claim": "Proxy interception, outer transaction and rollback defaults including 6.2 configuration.",
+    "file": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/sources/spring-6.2.10-transactions.adoc",
+    "sha256": "fdbc796f739ee46b853267fa646c738ba6f544c473c8b3f5949c4790e60d0abc",
+    "bytes": 24043
+  },
+  {
+    "id": "jls-21-interfaces",
+    "url": "https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html",
+    "finalUrl": "https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html",
+    "status": 200,
+    "consultedAt": "2026-10-16T15:58:46.436Z",
+    "claim": "9.1.1.4: sealed and non-sealed interfaces.",
+    "file": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/sources/jls-21-interfaces.html",
+    "sha256": "3c87670664402810a30ae26c854459240e8164f748e4a1649bcb0d62099ab4ca",
+    "bytes": 344349
+  },
+  {
+    "id": "java-21-switch",
+    "url": "https://docs.oracle.com/en/java/javase/21/language/pattern-matching-switch.html",
+    "finalUrl": "https://docs.oracle.com/en/java/javase/21/language/pattern-matching-switch.html",
+    "status": 200,
+    "consultedAt": "2026-10-16T15:58:46.390Z",
+    "claim": "Exhaustiveness, null and MatchException under separate compilation.",
+    "file": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/sources/java-21-switch.html",
+    "sha256": "71389867b84241f785db6f09a7d3895afe525097e923812ac5603d37613c516c",
+    "bytes": 50432
+  },
+  {
+    "id": "jep-491",
+    "url": "https://openjdk.org/jeps/491",
+    "finalUrl": "https://openjdk.org/jeps/491",
+    "status": 200,
+    "consultedAt": "2026-10-16T15:58:46.530Z",
+    "claim": "Delivered in JDK24; eliminate monitor pinning, retain native callback caveats.",
+    "file": "C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/patterns-and-modern-frameworks/sources/jep-491.html",
+    "sha256": "0e78e4fa6593883f7da96791b4dee4817f537fe09ca59757ce615ddd600faf73",
+    "bytes": 28518
+  }
+]

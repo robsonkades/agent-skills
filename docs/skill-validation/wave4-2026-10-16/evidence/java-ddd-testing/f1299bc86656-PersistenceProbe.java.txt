@@ -1,0 +1,91 @@
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Consumer;
+
+public final class PersistenceProbe {
+    static final class Order {
+        private final String id;
+        private String status;
+        Order(String id, String status) { this.id = id; this.status = status; }
+        void submit() { status = "SUBMITTED"; }
+        String status() { return status; }
+        Order copy() { return new Order(id, status); }
+    }
+
+    interface Gateway {
+        Order load(String id);
+        void save(Order order);
+    }
+
+    static final class SharedGateway implements Gateway {
+        private final Map<String, Order> state = new HashMap<>();
+        public Order load(String id) { return state.get(id); }
+        public void save(Order order) { state.put(order.id, order); }
+    }
+
+    static final class SnapshotGateway implements Gateway {
+        private final Map<String, Order> state = new HashMap<>();
+        public Order load(String id) { return state.get(id).copy(); }
+        public void save(Order order) { state.put(order.id, order.copy()); }
+    }
+
+    // Evidence-only model of this fixture's declared unit-of-work contract, not an ORM.
+    static final class ManagedWork {
+        private Order committed = new Order("o-1", "DRAFT");
+        void execute(Consumer<Order> action) {
+            Order managed = committed.copy();
+            action.accept(managed);
+            committed = managed.copy();
+        }
+        Order independentRead() { return committed.copy(); }
+    }
+
+    static void submitWithoutSave(Gateway gateway) { gateway.load("o-1").submit(); }
+    static void submitWithSave(Gateway gateway) {
+        Order order = gateway.load("o-1");
+        order.submit();
+        gateway.save(order);
+    }
+
+    static void check(String label, String expected, String actual) {
+        System.out.printf("scenario=%s expected=%s actual=%s%n", label, expected, actual);
+        if (!expected.equals(actual)) throw new AssertionError(label + ": state differs");
+        System.out.println("assertionsExecuted=1 assertionsPassed=1");
+    }
+
+    public static void main(String[] args) {
+        if (args.length != 1) throw new IllegalArgumentException("one scenario required");
+        String scenario = args[0];
+        switch (scenario) {
+            case "shared-use-case", "shared-contract", "detached-missing-save", "detached-save" -> {
+                Gateway gateway = scenario.startsWith("shared") ? new SharedGateway() : new SnapshotGateway();
+                gateway.save(new Order("o-1", "DRAFT"));
+                if (scenario.equals("detached-save")) submitWithSave(gateway);
+                else submitWithoutSave(gateway);
+                String expected = scenario.equals("shared-contract") ? "DRAFT" : "SUBMITTED";
+                check(scenario, expected, gateway.load("o-1").status());
+            }
+            case "managed-commit" -> {
+                ManagedWork work = new ManagedWork();
+                work.execute(Order::submit);
+                check(scenario, "SUBMITTED", work.independentRead().status());
+            }
+            case "managed-rollback" -> {
+                ManagedWork work = new ManagedWork();
+                boolean observedFailure = false;
+                try {
+                    work.execute(order -> {
+                        order.submit();
+                        throw new IllegalStateException("fixture failure before commit");
+                    });
+                } catch (IllegalStateException expected) {
+                    if (!expected.getMessage().equals("fixture failure before commit")) throw expected;
+                    observedFailure = true;
+                }
+                if (!observedFailure) throw new AssertionError("failure point was not exercised");
+                check(scenario, "DRAFT", work.independentRead().status());
+            }
+            default -> throw new IllegalArgumentException("unknown scenario: " + scenario);
+        }
+    }
+}

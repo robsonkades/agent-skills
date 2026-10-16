@@ -1,0 +1,28 @@
+{
+  "name": "gof-abstract-factory",
+  "initialVersion": "1.2.4",
+  "committedVersion": "1.2.4",
+  "status": "",
+  "files": [
+    {
+      "path": "skills/gof-abstract-factory/SKILL.md",
+      "sha256": "eadf7e91299d8882b00c3406035220dbeaab9ae11ec223f696f1ea0fdd78f834",
+      "bytes": 11046
+    },
+    {
+      "path": "skills/gof-abstract-factory/references/decision-and-alternatives.md",
+      "sha256": "c2d7ef058a503f33e08e246804e3e54ba40a6dc7d229636e97f9849b456d963b",
+      "bytes": 11513
+    },
+    {
+      "path": "skills/gof-abstract-factory/references/worked-example.md",
+      "sha256": "d6a64548bbc14ac7410dc4ab5ba647fae63a35f8896b6dfcea2fd76530c0665d",
+      "bytes": 8328
+    },
+    {
+      "path": "skills/gof-abstract-factory/skill.yaml",
+      "sha256": "3db92db215a15af486ab8bacc4a5d5bc0512f65e34aac81cd80cb30e6354a6bf",
+      "bytes": 2095
+    }
+  ]
+}

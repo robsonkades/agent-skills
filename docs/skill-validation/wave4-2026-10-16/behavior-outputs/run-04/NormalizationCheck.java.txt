@@ -1,0 +1,27 @@
+import com.example.text.LineEndings;
+
+public final class NormalizationCheck {
+    public static void main(String[] args) {
+        String[][] cases = {
+            {"empty", "", ""},
+            {"plain", "AB", "AB"},
+            {"CR", "A\rB", "A\nB"},
+            {"LF", "A\nB", "A\nB"},
+            {"CRLF", "A\r\nB", "A\nB"},
+            {"mixed", "A\rB\nC\r\nD", "A\nB\nC\nD"},
+            {"edges", "\rA\r", "\nA\n"},
+            {"consecutive", "\r\r\n\n", "\n\n\n"},
+            {"unicode", "\u00e1\r\u6c34", "\u00e1\n\u6c34"}
+        };
+        int failures = 0;
+        for (String[] test : cases) {
+            String actual = LineEndings.normalize(test[1]);
+            boolean passed = actual.equals(test[2]);
+            boolean idempotent = actual.equals(LineEndings.normalize(actual));
+            System.out.println(test[0] + ": normalized=" + passed + ", idempotent=" + idempotent);
+            if (!passed || !idempotent) failures++;
+        }
+        System.out.println("cases=" + cases.length + ", failures=" + failures);
+        if (failures != 0) throw new AssertionError("Normalization failures: " + failures);
+    }
+}

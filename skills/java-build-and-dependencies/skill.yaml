@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-build-and-dependencies
-version: 1.0.1
+version: 1.0.2
 description: >-
   Diagnose and repair Maven or Gradle builds when a managed dependency is missing,
   a transitive version wins unexpectedly, compilation and runtime classpaths differ,

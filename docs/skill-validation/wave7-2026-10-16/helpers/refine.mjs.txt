@@ -1,0 +1,25 @@
+import fs from 'node:fs';
+const root='C:/Users/robso/AppData/Local/Temp/skills-wave7-a765972c5d';
+const report='C:/git/agent-skills/docs/skill-validation/wave7-2026-10-16';
+fs.copyFileSync(report+'/preflight.json',report+'/preflight-initial.json');
+for(const id of ['T1','T2']){
+ const input=root+'/cases/'+id+'/input';
+ const writer=input+'/src/work/ReceiptWriter.java';let s=fs.readFileSync(writer,'utf8');s=s.replace('jdbc.update("insert into receipt(id,body) values (?,?)",event.id(),event.receiptText());','jdbc.update("insert into receipt(id) values (?)",event.id());jdbc.update("insert into receipt_detail(id,body) values (?,?)",event.id(),event.receiptText());');fs.writeFileSync(writer,s);
+ fs.appendFileSync(input+'/CONTRACT.md','\nThe receipt consists of a header in receipt and body in receipt_detail. These two writes form one receipt unit: no partial header may remain if the body write fails. The 12-character limit applies to receipt_detail.body. Preserve this schema and atomic receipt behavior.\n');
+ for(const f of [input+'/test/work/Smoke.java',root+'/evaluator/'+id+'/ContractProbe.java']){
+  let t=fs.readFileSync(f,'utf8');t=t.replace('create table receipt(id varchar(80) primary key,body varchar(12))','create table receipt(id varchar(80) primary key)');
+  if(f.endsWith('Smoke.java'))t=t.replace('jdbc.execute("create table stock','jdbc.execute("create table receipt_detail(id varchar(80) primary key,body varchar(12))");jdbc.execute("create table stock');
+  else{
+   t=t.replace('j.execute("create table stock','j.execute("create table receipt_detail(id varchar(80) primary key,body varchar(12))");j.execute("create table stock');
+   t=t.replace('eq("normal receipt",1,n(j,"receipt"));','eq("normal receipt",1,n(j,"receipt"));eq("normal detail",1,n(j,"receipt_detail"));');
+   t=t.replace('eq("failed receipt absent",0,n(j,"receipt"));','eq("failed receipt absent",0,n(j,"receipt"));eq("failed detail absent",0,n(j,"receipt_detail"));');
+   t=t.replace('eq("owner rollback receipt",0,n(j,"receipt"));','eq("owner rollback receipt",0,n(j,"receipt"));eq("owner rollback detail",0,n(j,"receipt_detail"));');
+  }
+  fs.writeFileSync(f,t);
+ }
+}
+const p=root+'/criteria-draft.json',criteria=JSON.parse(fs.readFileSync(p,'utf8'));
+criteria.cases.find(c=>c.id==='T2').required+=' Receipt header/detail must remain atomic on body failure; a phase-only change is tested against partial persistence, not prohibited by annotation name.';
+criteria.preFreezeRefinement={reason:'Initial one-insert T2 control accepted phase-only fix on this H2/JDBC cleanup path. Broaden receipt unit to header+detail and expose partial-write failure before freezing actor criteria.',evidence:'preflight-initial.json',actorOutputsSeen:0};
+fs.writeFileSync(p,JSON.stringify(criteria,null,2)+'\n');
+console.log('Refined T1/T2 before freeze; initial evidence preserved');

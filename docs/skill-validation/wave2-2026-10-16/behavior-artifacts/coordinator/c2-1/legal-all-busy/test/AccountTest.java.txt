@@ -1,0 +1,71 @@
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
+import org.junit.jupiter.api.*;
+import static org.junit.jupiter.api.Assertions.*;
+public class AccountTest {
+@Test
+@Timeout(5)
+void affordableWithdrawalsSucceedWhenGateIsFree() {
+    Account account = new Account(100);
+
+    assertTrue(account.withdraw(30), "a free gate must accept an affordable withdrawal");
+    assertEquals(70, account.balance());
+    assertTrue(account.withdraw(70), "the remaining balance is still affordable");
+    assertEquals(0, account.balance());
+}
+
+@RepeatedTest(20)                       // more sampled executions, not exhaustive coverage
+@Timeout(30)
+void balanceConservesSuccessfulWithdrawalsAfterWorkersFinish() throws Exception {
+    Account account = new Account(10_000);
+    int threads = 32, opsPerThread = 1_000;
+
+    CyclicBarrier start = new CyclicBarrier(threads);
+    AtomicInteger succeeded = new AtomicInteger();
+    AtomicInteger refused = new AtomicInteger();
+
+    // Coordinator intervention: all stress withdrawals contend with a real external owner.
+    CountDownLatch busyEntered = new CountDownLatch(1), busyRelease = new CountDownLatch(1);
+    FutureTask<Void> busyOwnerResult = new FutureTask<>(() -> { account.holdGate(busyEntered, busyRelease); return null; });
+    Thread busyOwner = Thread.ofPlatform().start(busyOwnerResult);
+    assertTrue(busyEntered.await(2, TimeUnit.SECONDS), "coordinator gate owner started");
+    var exec = Executors.newVirtualThreadPerTaskExecutor();
+    List<Future<?>> tasks = new ArrayList<>();
+    assertAll("workers and teardown",
+        () -> {
+            try {
+                for (int t = 0; t < threads; t++) {
+                    tasks.add(exec.submit(() -> {
+                        start.await(5, TimeUnit.SECONDS); // overlap with a bounded barrier
+                        for (int i = 0; i < opsPerThread; i++) {
+                            if (account.withdraw(10)) succeeded.incrementAndGet();
+                            else refused.incrementAndGet();
+                        }
+                        return null;
+                    }));
+                }
+                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(20);
+                assertAll("worker outcomes", tasks.stream().map(task -> () ->
+                        task.get(Math.max(0, deadline - System.nanoTime()), TimeUnit.NANOSECONDS)));
+            } finally {
+                busyRelease.countDown();
+                tasks.forEach(task -> task.cancel(true));
+                exec.shutdownNow();
+            }
+        },
+        () -> assertTrue(exec.awaitTermination(2, TimeUnit.SECONDS), "executor survived teardown"));
+
+    busyOwnerResult.get(2, TimeUnit.SECONDS);
+    busyOwner.join(2_000);
+    assertFalse(busyOwner.isAlive(), "coordinator gate owner terminated");
+    // Invariants, not schedules:
+    assertTrue(account.balance() >= 0);
+    assertEquals(10_000 - succeeded.get() * 10, account.balance());       // conservation
+    assertEquals(threads * opsPerThread, succeeded.get() + refused.get()); // accounting
+    assertEquals(0, succeeded.get(), "coordinator control exercised all-busy history");
+    assertEquals(threads * opsPerThread, refused.get());
+    assertTrue(account.withdraw(10), "free-gate withdrawal succeeds after legal busy history");
+    assertEquals(9_990, account.balance());
+}
+}

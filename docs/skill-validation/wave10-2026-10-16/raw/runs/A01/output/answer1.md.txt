@@ -1,0 +1,11 @@
+# Recomendação à diretora Ana
+
+**Escolher hoje o destino N, pelo caminho de migração P.** Os documentos locais sustentam essa direção: as obrigações estão satisfeitas e o custo total, único critério de preferência restante, favorece N. Esta é uma análise das premissas fornecidas; não executei medições ou ensaios.
+
+R e N atendem aos contratos de leitura, integridade, capacidade, recuperação sem perda e operação em seus estados finais. A transição também é admissível: o registro assinado por Ana e operações informa ensaios de P entre 18 e 20 minutos, com limite operacional demonstrado de 20 minutos, abaixo do máximo permitido de 25 minutos. Há, portanto, margem de 5 minutos. O registro confirma disponibilidade de leitura, preservação dos dados reconhecidos, recuperação e demais obrigações, sem incompatibilidades abertas. Nenhuma escrita é reconhecida durante a pausa.
+
+No horizonte aprovado de 24 meses e na escala contratada, R custa 520 mil e N via P custa 410 mil: economia de **110 mil, aproximadamente 21,2%**. O total de N já inclui migração, sobreposição, operação, saída e recuperação; não há despesa de transição indicada como pendente. Os 90 mil já gastos no protótipo são irrecuperáveis e não entram na comparação futura. A preferência do patrocinador não substitui essa avaliação.
+
+R permanece viável; não existe urgência técnica para abandoná-lo. Ainda assim, sua retenção custa mais sem oferecer vantagem diferenciadora nas premissas estabelecidas. Outros caminhos não foram analisados nem estimados e não justificam adiar a escolha do caminho P já demonstrado.
+
+**Encaminhamento:** Ana deve aprovar a direção N via P. O responsável técnico deve preparar o rollout no processo separado exigido, usando o caminho e a escala ensaiados, com procedimentos e critérios de interrupção/recuperação que preservem leitura disponível, dados reconhecidos e o teto de 25 minutos de pausa. Essa preparação operacional não reabre a escolha de direção sem novas evidências. A decisão de hoje não autoriza executar a migração.

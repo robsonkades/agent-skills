@@ -129,6 +129,28 @@ Typical returns:
 - contract changes -> compatibility analysis, technical criteria, resources and tests;
 - implementation deviation -> impact map, decision/plan, risk and readiness for affected scope.
 
+Changes to evidence can require a return even when the requested behavior has not changed: a
+dependency version, provider capability, test environment, consumer inventory or assumption may no
+longer support an accepted decision. Preserve the original observation and conditions as history;
+mark its applicability to the current scope stale or unknown rather than rewriting it as a failure.
+
+Follow trace links transitively through consumers and resource dependencies, checking repository and
+contract evidence for links the dossier missed. Where coverage is incomplete, identify candidate
+impacts and investigate that boundary; do not infer independence from an empty link list. Record
+which evidence remains applicable and why so unaffected work can continue. Revisit affected
+decisions, criteria, risks, gaps and gate results; rerun only checks whose support was invalidated.
+
+On resumption or before using a previous gate result, compare its reviewed revisions and material
+conditions with the current baseline, relevant code/configuration, dependency contracts and gap
+expiry triggers. Reuse a still-applicable result with that basis stated. If a prerequisite changed
+or its applicability is unknown, reopen the affected scope and obtain a fresh review after the
+impact is resolved. Time passing or a new session alone does not invalidate evidence.
+
+This is a proportionate application of change-impact and configuration consistency principles in
+[NASA SWE-053](https://swehb.nasa.gov/spaces/7150/pages/16449679/SWE-053%2B-%2BManage%2BRequirements%2BChanges)
+and the [NASA configuration management guidance](https://www.nasa.gov/reference/6-5-configuration-management/).
+Their NASA-specific boards and approval processes are not requirements for the target project.
+
 ## Gate result
 
 Every independent readiness pass returns one status, reasons, affected IDs, and reviewed revisions:

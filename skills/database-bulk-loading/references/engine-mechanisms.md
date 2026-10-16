@@ -39,7 +39,9 @@ If reconciliation is needed, coordinate writers and sequence consumers, account 
 allocations and the sequence's increment/range, and avoid blindly resetting a live sequence from
 `MAX(id)`. Sequence changes made by `setval` are not undone by transaction rollback.
 
-Unlogged/new-table and WAL optimizations have strict backup/replication/recovery implications.
+For `UNLOGGED` staging, match checkpoint validity to
+[data survival](recovery-and-validation.md#chunk-transaction-contract).
+New-table and WAL optimizations also have backup, replication and recovery conditions.
 Measure WAL generation and replica lag rather than assuming a `COPY` variant is minimally logged.
 
 A failed `COPY FROM` can leave already processed rows invisible but still consuming storage.

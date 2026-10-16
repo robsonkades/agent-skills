@@ -1,0 +1,103 @@
+[
+  {
+    "id": "local-validation",
+    "executable": "C:\\Program Files\\nodejs\\node.exe",
+    "args": [
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\query-objects-and-specifications\\local-validation.mjs"
+    ],
+    "cwd": "C:/git/agent-skills",
+    "status": 0,
+    "signal": null,
+    "stdout": "local-validation.stdout.txt",
+    "stderr": "local-validation.stderr.txt"
+  },
+  {
+    "id": "prettier",
+    "executable": "C:\\Program Files\\nodejs\\node.exe",
+    "args": [
+      "C:\\git\\agent-skills\\node_modules\\prettier\\bin\\prettier.cjs",
+      "--check",
+      "skills/query-objects-and-specifications/SKILL.md",
+      "skills/query-objects-and-specifications/skill.yaml",
+      "skills/query-objects-and-specifications/references/composition-styles.md",
+      "skills/query-objects-and-specifications/references/query-performance.md"
+    ],
+    "cwd": "C:/git/agent-skills",
+    "status": 0,
+    "signal": null,
+    "stdout": "prettier.stdout.txt",
+    "stderr": "prettier.stderr.txt"
+  },
+  {
+    "id": "diff-check",
+    "executable": "git",
+    "args": [
+      "diff",
+      "--check",
+      "--",
+      "skills/query-objects-and-specifications"
+    ],
+    "cwd": "C:/git/agent-skills",
+    "status": 0,
+    "signal": null,
+    "stdout": "diff-check.stdout.txt",
+    "stderr": "diff-check.stderr.txt"
+  },
+  {
+    "id": "scoped-status",
+    "executable": "git",
+    "args": [
+      "status",
+      "--short",
+      "--untracked-files=all",
+      "--",
+      "skills/query-objects-and-specifications"
+    ],
+    "cwd": "C:/git/agent-skills",
+    "status": 0,
+    "signal": null,
+    "stdout": "scoped-status.stdout.txt",
+    "stderr": "scoped-status.stderr.txt"
+  },
+  {
+    "id": "scoped-diff",
+    "executable": "git",
+    "args": [
+      "diff",
+      "--",
+      "skills/query-objects-and-specifications"
+    ],
+    "cwd": "C:/git/agent-skills",
+    "status": 0,
+    "signal": null,
+    "stdout": "scoped-diff.stdout.txt",
+    "stderr": "scoped-diff.stderr.txt"
+  },
+  {
+    "id": "staged-diff",
+    "executable": "git",
+    "args": [
+      "diff",
+      "--cached",
+      "--",
+      "skills/query-objects-and-specifications"
+    ],
+    "cwd": "C:/git/agent-skills",
+    "status": 0,
+    "signal": null,
+    "stdout": "staged-diff.stdout.txt",
+    "stderr": "staged-diff.stderr.txt"
+  },
+  {
+    "id": "case-preparation",
+    "executable": "C:\\Program Files\\nodejs\\node.exe",
+    "args": [
+      "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\query-objects-and-specifications\\prepare-cases.mjs"
+    ],
+    "cwd": "C:/git/agent-skills",
+    "status": 0,
+    "signal": null,
+    "stdout": "case-preparation.stdout.txt",
+    "stderr": "case-preparation.stderr.txt"
+  }
+]

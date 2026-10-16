@@ -1,0 +1,3 @@
+# Orders API contract
+
+Owner: Orders module. Approved consumer contract: Order.deliveryZone() is the supported shipping query. Customer and Contact are internal composition; their Java-public accessors exist for legacy module assembly and are not supported shipping contracts. Orders owns and may reorganize that graph without shipping changes; keep the root query stable. This deliberate root boundary has no hidden runtime I/O.

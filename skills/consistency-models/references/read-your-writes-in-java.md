@@ -77,6 +77,11 @@ pre-commit “current WAL position” may precede the commit record and is not s
 documented commit/causal token, require a replica watermark at least that high, and bound the wait
 by the request deadline before falling back/rejecting. PostgreSQL LSN and MySQL GTID mechanisms
 need engine/version-specific commit semantics and privilege checks.
+For PostgreSQL 18, `pg_last_wal_receive_lsn()` reports WAL received and synced to disk, while
+`pg_last_wal_replay_lsn()` reports replay progress. Receipt alone does not establish visibility.
+Use the applicable replay/visibility evidence, with the snapshot and history checks below;
+missing or incomparable progress must not silently satisfy the gate. For projections, use the
+[visibility-watermark checks](requirement-to-model.md#verify-a-visibility-watermark).
 Compare tokens only within a documented compatible history/epoch. A promoted asynchronous
 replica may lack an acknowledged write; routing to the new primary cannot restore it. Verify
 the acknowledgement/durability policy, preserve the session's requirement across failover, and
@@ -98,8 +103,11 @@ A healthy-replica test may miss the defect because lag is near zero. Make the la
 
 - **Introduce deterministic lag.** Testcontainers with a real primary/replica pair, then
   pause replication apply with the engine's supported control while keeping the replica readable.
-  Suspending its whole container tests unavailability instead. Establish its old watermark,
-  commit a new version, read through the application, and assert the route and observed version.
+  Confirm apply is actually paused before writing; PostgreSQL's pause request alone is insufficient.
+  Suspending the whole container tests unavailability instead. Establish the old replay position,
+  commit a new version, and let receipt advance while apply remains paused. Read through the
+  application and assert the route and observed version: a receipt-based gate must not return
+  stale success. Resume apply and verify the successful path with a fresh data snapshot.
 - **Assert on the route, not only on the value.** Record the selected target at physical
   connection acquisition and correlate executed queries with that connection. Assert that a
   post-write read inside the window used the primary. A lookup key recomputed per query may
@@ -151,3 +159,5 @@ For effective transaction settings and connection reuse, see
 and the [Spring 6.2.0 DataSourceTransactionManager source](https://github.com/spring-projects/spring-framework/blob/v6.2.0/spring-jdbc/src/main/java/org/springframework/jdbc/datasource/DataSourceTransactionManager.java).
 Snapshot timing above follows [PostgreSQL 18 isolation semantics](https://www.postgresql.org/docs/18/transaction-iso.html#XACT-REPEATABLE-READ);
 other engines and isolation levels require their own verification.
+The receive/replay distinction and pause-state checks follow
+[PostgreSQL 18 recovery control functions](https://www.postgresql.org/docs/18/functions-admin.html#FUNCTIONS-RECOVERY-CONTROL).

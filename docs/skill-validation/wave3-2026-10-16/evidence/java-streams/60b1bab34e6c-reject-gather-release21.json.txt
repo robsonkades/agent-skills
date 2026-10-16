@@ -1,0 +1,18 @@
+{
+  "label": "reject-gather-release21",
+  "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe",
+  "args": [
+    "--release",
+    "21",
+    "-d",
+    "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-streams-validation\\technical\\release21-negative",
+    "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-streams-validation\\technical\\SnippetCheck.java"
+  ],
+  "cwd": "C:/git/agent-skills",
+  "exitCode": 1,
+  "signal": null,
+  "stdout": "",
+  "stderr": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\java-streams-validation\\technical\\SnippetCheck.java:7: error: cannot find symbol\r\n    .gather(Gatherers.scan(\r\n            ^\r\n  symbol:   variable Gatherers\r\n  location: class SnippetCheck\r\n1 error\r\n",
+  "error": null,
+  "expectedExit": 1
+}

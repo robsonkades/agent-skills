@@ -1,0 +1,54 @@
+schemaVersion: 1
+
+name: architecture-trade-off-analysis
+version: 1.2.4
+description: >-
+  Compare architectural alternatives when quality goals conflict, a scorecard or case study
+  is being used as a verdict, options mix abstraction levels, advocates disagree, or a
+  benchmark needs a decision rule. Build comparable options, separate constraints from
+  preferences, test domain scenarios and uncertainty, and recommend a choice or a bounded
+  next step. Excludes ADR lifecycle (architecture-decision-making), quality-driver
+  elicitation (architecture-characteristics), domain pattern selection and debt repayment.
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/architecture-trade-off-analysis
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/architecture-trade-off-analysis
+
+keywords:
+  - architecture
+  - trade-offs
+  - decision-analysis
+  - mece
+  - coupling
+  - bias
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+suggests:
+  - architecture-characteristics
+  - architecture-coupling-and-quanta
+  - architecture-decision-making
+  - architecture-fitness-functions
+  - architecture-refactoring-paths
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Architecture Trade-off Analysis
+      short_description: Compare options, constraints, evidence and uncertainty
+      default_prompt: Use Architecture Trade-off Analysis to choose the analysis mode and run it.

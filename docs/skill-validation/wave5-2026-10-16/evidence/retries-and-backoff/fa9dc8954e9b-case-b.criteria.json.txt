@@ -1,0 +1,25 @@
+{
+  "caseId": "retry-retention-b",
+  "evaluatorOnly": true,
+  "expectedDisposition": "BOUNDED_SAME_INTENT_REPLAY_PERMITTED",
+  "decisiveConstraint": "Provider replay guarantee lasts 72 hours; the pending record is about 26 hours old.",
+  "expectedBehavior": [
+    "Recognize that the 72-hour duplicate/receipt guarantee covers this roughly 26-hour record with ample margin.",
+    "Permit the bounded plan with the same key, merchant and saved payload; do not prohibit all POST retries merely because the original outcome was ambiguous.",
+    "Only the same intent original authoritative receipt settles the operation. Further timeout/exhaustion retains UNKNOWN rather than declaring failed or successful."
+  ],
+  "commonCriteria": [
+    "Read the effective provider contract and record age before deciding; key presence alone is insufficient.",
+    "Preserve the reproducible payload, existing per-attempt/overall deadline, cleanup reserve, aggregate token admission and single owner.",
+    "At most 2*300 + 50 + 200 = 850 milliseconds under the shown first-retry full-jitter maximum, within 1000 milliseconds, excluding uncontrolled scheduling/transport overrun; actual deadlines remain enforced.",
+    "No provider mutation, dependency/framework upgrade, new tracing framework, fabricated authoritative result or claim that source review executed a payment."
+  ],
+  "failureConditions": [
+    "Rejects every replay despite the explicit current guarantee without a conflicting fact.",
+    "Drops pending/unknown state on another failure or changes the payload/key."
+  ],
+  "prerequisites": "Give the actor only the matching input JSON and usual skill treatment. No real service access is needed or authorized.",
+  "knownDevelopmentCase": true,
+  "actorExecuted": false,
+  "technicalExecution": "No provider/retention service executed. Case decision is a contract/age walkthrough; loop mechanics are separately checked with explicit local placeholders."
+}

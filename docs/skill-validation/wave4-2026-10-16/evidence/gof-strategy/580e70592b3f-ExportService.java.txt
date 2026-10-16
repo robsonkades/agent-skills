@@ -1,0 +1,21 @@
+import java.util.List;
+import java.util.Map;
+import java.util.function.Supplier;
+
+final class ExportService {
+    private final Map<String, Supplier<Encoder>> encoders;
+
+    ExportService(Map<String, Supplier<Encoder>> encoders) {
+        this.encoders = Map.copyOf(encoders);
+    }
+
+    String export(String format, List<String> rows) {
+        Supplier<Encoder> factory = encoders.get(format);
+        if (factory == null) throw new IllegalArgumentException("unsupported format: " + format);
+        try (Encoder encoder = factory.get()) {
+            for (String row : rows) encoder.add(row);
+            return encoder.finish();
+        }
+    }
+}
+

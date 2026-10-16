@@ -1,0 +1,97 @@
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
+
+const root = dirname(fileURLToPath(import.meta.url));
+const repo = 'C:/git/agent-skills';
+const toolchain = 'C:/Users/robso/.jdks/temurin-25.0.3/bin';
+const text = readFileSync(join(repo, 'skills/java-composition-over-inheritance/references/worked-refactoring.md'), 'utf8');
+const blocks = [...text.matchAll(/\x60\x60\x60java\r?\n([\s\S]*?)\r?\n\x60\x60\x60/g)].map(m => m[1]);
+if (blocks.length !== 2) throw new Error('Expected exactly the before and after Java blocks');
+const fees = 'import java.math.BigDecimal;\nimport java.math.RoundingMode;\n\n' + blocks.join('\n\n') + '\n';
+const good = join(root, 'original');
+const uncovered = join(root, 'uncovered-variant');
+mkdirSync(good, { recursive: true });
+mkdirSync(uncovered, { recursive: true });
+writeFileSync(join(good, 'Fees.java'), fees);
+writeFileSync(join(good, 'FeeChecks.java'), String.raw`
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
+public class FeeChecks {
+    private static int mappedChecks;
+
+    private static void same(String label, BigDecimal expected, BigDecimal actual) {
+        if (!expected.equals(actual)) {
+            throw new AssertionError(label + ": expected " + expected + " but got " + actual);
+        }
+    }
+
+    public static void main(String[] args) {
+        var none = new FeeSchedule(FeeAdjustment.none());
+        var promo = new FeeSchedule(FeeAdjustment.promotionalRate(new BigDecimal("0.5")));
+        var domestic = new Card("example", false);
+        var international = new Card("example", true);
+        for (var literal : new String[] {"0.00", "0.12", "1", "100.00", "1234.56", "2.5"}) {
+            var amount = new BigDecimal(literal);
+            same("domestic " + literal, new CardFee().total(amount), none.feeFor(domestic, amount));
+            same("international " + literal, new InternationalCardFee().total(amount), none.feeFor(international, amount));
+            same("promotion " + literal, new PromotionalCardFee().total(amount), promo.feeFor(domestic, amount));
+            mappedChecks += 3;
+        }
+        var hundred = new BigDecimal("100.00");
+        same("domestic known value", new BigDecimal("2.90"), none.feeFor(domestic, hundred));
+        same("international known value", new BigDecimal("4.40"), none.feeFor(international, hundred));
+        same("promotion known value", new BigDecimal("1.45"), promo.feeFor(domestic, hundred));
+        var small = new BigDecimal("0.12");
+        var correct = none.feeFor(international, small);
+        var perComponent = small.multiply(new BigDecimal("0.029")).setScale(2, RoundingMode.HALF_EVEN)
+            .add(small.multiply(new BigDecimal("0.015")).setScale(2, RoundingMode.HALF_EVEN));
+        same("final rounding", new BigDecimal("0.01"), correct);
+        same("component rounding counterexample", new BigDecimal("0.00"), perComponent);
+        if (correct.equals(perComponent)) throw new AssertionError("rounding mutation survived");
+        same("new full-fee promotional policy", new BigDecimal("2.20"), promo.feeFor(international, hundred));
+        var baseOnlyPromotion = hundred.multiply(new BigDecimal("0.029")).multiply(new BigDecimal("0.5"))
+            .add(hundred.multiply(new BigDecimal("0.015"))).setScale(2, RoundingMode.HALF_EVEN);
+        same("alternative base-only policy", new BigDecimal("2.95"), baseOnlyPromotion);
+        same("new boleto policy", new BigDecimal("3.49"), none.feeFor(new Boleto(), hundred));
+        same("new pix policy", new BigDecimal("0.00"), none.feeFor(new Pix(), hundred));
+        System.out.println("PASS: " + mappedChecks + " mapped comparisons; known values 2.90/4.40/1.45; rounding 0.01 versus 0.00; new policies separately 2.20/2.95/3.49/0.00");
+    }
+}
+`);
+writeFileSync(join(uncovered, 'Fees.java'),
+    fees.replace('permits Card, Boleto, Pix {}', 'permits Card, Boleto, Pix, ApplePay {}') +
+    'record ApplePay() implements PaymentMethod {}\n');
+
+const commands = [];
+function run(name, executable, args, cwd) {
+    const result = spawnSync(executable, args, { cwd, encoding: 'utf8', timeout: 30000, windowsHide: true });
+    const entry = { name, executable, args, cwd, exitCode: result.status, signal: result.signal,
+        error: result.error?.message ?? null, stdout: result.stdout ?? '', stderr: result.stderr ?? '' };
+    commands.push(entry);
+    writeFileSync(join(root, name + '.log'), JSON.stringify(entry, null, 2) + '\n');
+    if (result.error || result.signal) throw new Error(name + ' failed to execute');
+    return entry;
+}
+const compilation = run('compile-original', join(toolchain, 'javac.exe'), ['--release', '21', '-d', '.', 'Fees.java', 'FeeChecks.java'], good);
+if (compilation.exitCode !== 0) throw new Error('Example did not compile');
+const behavior = run('run-original', join(toolchain, 'java.exe'), ['-cp', '.', 'FeeChecks'], good);
+if (behavior.exitCode !== 0) throw new Error('Characterization failed');
+const negative = run('compile-uncovered', join(toolchain, 'javac.exe'), ['--release', '21', '-d', '.', 'Fees.java'], uncovered);
+if (negative.exitCode === 0 || !/does not cover all possible input values/.test(negative.stderr)) {
+    throw new Error('Uncovered-variant control did not fail for exhaustiveness');
+}
+const report = {
+    status: 'PASS',
+    target: 'Java 21 (--release 21); no preview',
+    runtime: 'Temurin 25.0.3+9-LTS; not a Java 21 runtime test',
+    mappedComparisons: 18,
+    negativeControls: ['per-component rounding differs at international amount 0.12', 'uncovered permitted ApplePay rejected at compilation'],
+    limitations: ['finite example inputs only', 'no external-subclass, concurrency, framework, serialization or production monetary-contract validation', 'not an agent behavioral evaluation'],
+    commands
+};
+writeFileSync(join(root, 'result.json'), JSON.stringify(report, null, 2) + '\n');
+console.log(JSON.stringify(report, null, 2));
+

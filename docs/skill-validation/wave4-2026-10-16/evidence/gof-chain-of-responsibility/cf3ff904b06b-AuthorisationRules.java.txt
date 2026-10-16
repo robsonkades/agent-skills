@@ -1,0 +1,20 @@
+import java.util.*;
+public final class AuthorisationRules {
+
+    private final List<AuthorisationRule> rules;      // order is the design
+
+    public AuthorisationRules(List<AuthorisationRule> rules) {
+        this.rules = List.copyOf(rules);             // rejects null list/elements; freezes membership
+    }
+
+    public Decision decide(Payment payment) {
+        java.util.Objects.requireNonNull(payment);
+        for (AuthorisationRule rule : rules) {
+            var decision = rule.apply(payment);
+            if (decision.isPresent()) {
+                return decision.get();
+            }
+        }
+        throw new NoAuthorisationRule(payment.id(), payment.productCode());
+    }
+}

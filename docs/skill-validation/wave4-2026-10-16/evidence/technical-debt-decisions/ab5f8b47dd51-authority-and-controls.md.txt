@@ -1,0 +1,18 @@
+# Authority and retained exposure
+
+The Data Tools owner has delegated authority to choose continued containment or a
+bounded internal repair up to 32 engineer-hours within this maintenance window.
+Reusing the existing record is sufficient; no additional executive approval is needed
+for either choice within those limits. This review does not authorize code deployment.
+
+The current exposure assessment covers both entry points, unsupported inputs, existing
+access controls, bounded resource use, supported dependencies and the established
+recovery runbook. It records no outstanding non-exceptionable control failure requiring
+this structural repair. That conclusion is scoped to the supplied assessment, not a
+claim that passing tests proves all risk zero. Accepted residual operational risk stays
+with Priya Rao and is reviewed at the existing meeting and onboarding trigger.
+
+A selected repair must preserve these controls and demonstrate compatibility before
+release. A new entry point, a change to PLAN-72, or a failed existing control reopens the
+decision. Earlier proposal text in DEBT-27 is not an approval to continue replacement.
+

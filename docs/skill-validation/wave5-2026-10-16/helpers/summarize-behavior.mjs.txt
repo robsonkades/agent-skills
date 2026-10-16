@@ -1,0 +1,90 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+const report='C:/git/agent-skills/docs/skill-validation/wave5-2026-10-16';
+const read=p=>JSON.parse(fs.readFileSync(report+'/'+p,'utf8'));
+const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
+const put=(p,v)=>fs.writeFileSync(report+'/'+p,JSON.stringify(v,null,2)+'\n');
+const manifest=read('behavior-manifest.json'),frozen=read('reserved-cases.json'),technical=read('behavior-technical-checks.json');
+assert.equal(technical.issues.length,0);
+assert.equal(technical.commands.length,28);
+const decisions={
+ 'run-01':[
+  'Read snapshot contract and Catalog/Report path; executed original Demo (1000 -> 1200). Identified backing-list alias, not rounding.',
+  'Report copies entries into an unmodifiable ArrayList; Catalog delegates to that constructor. Independent snapshot oracle passed, including later loads, duplicates, signed amounts and read-only access.',
+  'Expanded SelfTest retains initial total/read-only coverage. Coordinator copied final tests onto original production sources: exit 1 with the expected old-report mismatch, not a compilation failure.',
+  'REVIEW and execution journal distinguish local sequential evidence from unavailable production/renderer history; contract, --release17 and dependencies preserved.'
+ ],
+ 'run-02':[
+  'Read snapshot contract and effective path, ran original Demo and a reduced cents-only reproduction. Refutable mutable-alias hypothesis matches observed sequence.',
+  'Report compact constructor makes an unmodifiable defensive copy; Catalog unchanged. Independent snapshot oracle passed all contract vectors.',
+  'Reload regression and original coverage retained. Coordinator final-tests/original-source control failed with AssertionError: opened report changed after reload; corrected copy passed.',
+  'Actual baseline/final outcomes retained; Java17 compilation target on Temurin25 explicitly distinguished from a Java17 runtime. No production or race claim.'
+ ],
+ 'run-03':[
+  'Read live-view contract, inspected alias path and executed Demo. Integer totals follow changed data; rounding explanation unsupported by supplied artifacts.',
+  'Preserved production source and live entries/total. Independent live-view oracle passed, including retained handles, reloads, duplicates, signed amounts and mutation rejection.',
+  'Executable SelfTest extended for reload and retained-view behavior. Final check passed and no snapshot correction introduced.',
+  'Local commands and outcomes documented; original contract, sources, target and dependencies intact. External renderer and production validation explicitly unavailable.'
+ ],
+ 'run-04':[
+  'Read live-view contract and effective path; original Demo gives required 1000 -> 1200. Hypothesis distinguishes data replacement from rounding.',
+  'Only SelfTest changed; production kept live-view semantics. Independent live-view oracle passed.',
+  'Executable reload coverage includes equal totals with changed entry identity. Actor also retained a separate snapshot experiment that fails at the required live reload; snapshot was not adopted.',
+  'Commands, local limits and Java target/runtime distinction recorded. Input and production integrity checked; no external validation claim.'
+ ],
+ 'run-05':[
+  'Executed passing source check and failing accepted export. Class-load trace and bytecode identify Normalizer selected from compat.jar while the source test uses app classes.',
+  'Only launch precedence changed in runtime configuration; app first, compatibility JAR retained. Five independent actual-export vectors passed with the banner; JAR, fixture, source and contract preserved.',
+  'Added six actual-command export cases to public check while retaining original Java SelfTest. Coordinator restored only original launch.json: SelfTest passes, export assertion fails on CR vs LF.',
+  'Cause is actual duplicate-class selection, not charset. REVIEW distinguishes diagnostic direct-Java traces from accepted-command runs and states local/runtime limitations.'
+ ],
+ 'run-06':[
+  'Executed passing source check and failing accepted export. Trace, bytecode and one-byte CR reproduction support the selected-duplicate hypothesis; reordered-classpath diagnostic controls the variable.',
+  'App-first launch preserves the compatibility banner and unchanged JAR. Five independent export vectors passed. Java sources, original SelfTest, contract and fixture remain intact.',
+  'Eight actual-export cases integrated into check; nine Node tests include one aggregate and are not nine separate agent attempts. Restoring original launch preserves SelfTest pass but fails the CR-containing cases.',
+  'Recorded actual outputs and failure controls with accepted contract/toolchain/dependencies preserved. No production or deployment claim; Java17 target vs Temurin25 runtime explicit.'
+ ]
+};
+const runs=manifest.runs.map(r=>{
+ const c=frozen.cases.find(c=>c.id===r.caseId),ex=JSON.parse(fs.readFileSync(r.directory+'/output/execution.json','utf8'));
+ assert.equal(ex.allWritesStopped,true);
+ const observations=decisions[r.id];assert.equal(observations.length,c.criteria.length);
+ return {id:r.id,agent:'/root/wave5_actor'+r.id.slice(-2),caseId:r.caseId,condition:r.condition,
+  criteria:c.criteria.map((criterion,i)=>({...criterion,result:'PASS',evidence:observations[i]})),
+  failureConditions:c.failureConditions.map(text=>({text,observed:false})),
+  evidence:{review:'behavior-outputs/'+r.id+'/REVIEW.md.txt',journal:'behavior-outputs/'+r.id+'/execution.json.txt',technical:'behavior-technical-checks.json',reviewSha256:sha(fs.readFileSync(r.directory+'/output/REVIEW.md')),journalSha256:sha(fs.readFileSync(r.directory+'/output/execution.json'))},
+  passed:true,allWritesStopped:true};
+});
+put('behavior-results.json',{
+ createdAt:new Date().toISOString(),skill:'debugging',version:'1.1.4',
+ grading:'Coordinator manual, unblinded application of previously frozen criteria after reading reports, modified code and logs, supplemented by independent artifact rechecks. No automatic prose/heading score.',
+ frozenCriteriaSha256:read('reserved-freeze.json').sha256??sha(fs.readFileSync(report+'/reserved-cases.frozen.json.txt')),
+ units:{distinctCases:3,relatedFamilies:2,conditions:2,attemptsPerCaseAndCondition:1,agentAttempts:6,rubricChecks:24,rootTechnicalCommands:28},
+ summary:manifest.conditions.map(condition=>({condition,fullCasePasses:3,caseAttempts:3,rubricChecksPassed:12,rubricChecksTotal:12})),runs,
+ conclusion:'No observed outcome difference on the three cases and frozen criteria. Both conditions reached the rubric ceiling. This establishes neither equivalence nor general lack of value, and does not measure gain from the two edited skills.',
+ resourceComparison:{actorElapsedTime:null,tokens:null,cost:null,reason:'No uniform end-to-end model usage/cost measurement was available. Heterogeneous command durations are not treated as actor efficiency. No resource benefit claimed.'},
+ limitations:[
+  'Three small synthetic local cases, H1/H2 a related pair, one attempt per condition: no statistical or production generalization.',
+  'Reviewers did not receive reserved criteria or inputs; author-known reviewer fixtures are separate development material.',
+  'Fresh fork_turns:none and scoped directories are procedural isolation, not enforced filesystem denial; global skill metadata may remain available.',
+  'Same inherited model and effort, no override; exact runtime model/version unavailable.',
+  'Explicit skill treatment; no automatic skill selection, cross-client/runtime, memory persistence or full roadmap pilot evaluation.',
+  'debugging baseline and candidate were byte-identical, so no third duplicated treatment or before/after improvement claim.',
+  'All Java compilations target17 on Temurin25.0.3; a Java17 runtime was not executed.'
+ ]
+});
+const actual={
+ 'run-01':[], 'run-02':['SKILL.md'], 'run-03':[], 'run-04':['SKILL.md'], 'run-05':[], 'run-06':['SKILL.md','references/method.md']
+};
+put('behavior-exposure.json',{
+ recordedAt:new Date().toISOString(),basis:'Actor execution journals and final reports, content/hash checks of recorded reads; procedural access claims are not OS-enforced access telemetry.',
+ runs:manifest.runs.map(r=>({run:r.id,condition:r.condition,providedSkill:r.condition==='current'?'debugging@1.1.4':null,
+  filesEffectivelyRead:actual[r.id].map(p=>({path:'skill/'+p,sha256:sha(fs.readFileSync(r.directory+'/skill/'+p)),completeAccordingToReadRecord:true})),
+  referencesNotRead:r.condition==='current'?['references/production-evidence.md',...(r.id==='run-06'?[]:['references/method.md'])]:[],
+  reasonForConditionalReferences:r.condition==='current'?(r.id==='run-06'?'Method used for differential diagnosis, minimal input and controlled classpath experiment; no production access.':'Main workflow resolved the small local case; production evidence route did not apply.'):null,
+  suppliedInputHashesVerified:true,outputHashesUnchangedByRootChecks:true,
+  scope:'No outside content, network, installation, delegation or real agent configuration access reported. Some first absolute TASK reads inherited repository cwd; this is recorded in actor journals and did not itself read repository content.'})),
+ limitations:['Explicit treatment, not automatic selection.', 'No assertion that withheld skill metadata was absent from inherited platform context.', 'Recorded full-file reads distinguish exposure from merely listing an available skill.']
+});
+console.log(JSON.stringify({runs:runs.length,checks:runs.reduce((n,r)=>n+r.criteria.length,0),allPassed:runs.every(r=>r.passed),conclusion:'No observed difference'}));

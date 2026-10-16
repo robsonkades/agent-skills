@@ -1,0 +1,7 @@
+git() {
+    printf '%s\0' "$@" > "$SERVICE_TEST_ARGUMENTS"
+    cat "$SERVICE_TEST_STDOUT"
+    cat "$SERVICE_TEST_STDERR" >&2
+    return "$SERVICE_TEST_STATUS"
+}
+. "$SERVICE_TEST_SCRIPT"

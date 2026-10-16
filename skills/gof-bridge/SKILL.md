@@ -94,10 +94,11 @@ new RefinedAbstraction(              constructor injection; the container
     new ConcreteImplementorA())      picks the backend per environment
 ```
 
-In the worked example, `Notifier` owns the `Channel`; the sealed `Notification` hierarchy supplies
-rendered content, not subclasses of `Notifier`. This composition separates the required roles
-without recreating the classical diagram. Keep it when adequate; adding subclasses merely to name
-the pattern is not an improvement.
+In the worked example, `Notifier` holds a borrowed `Channel`; the application owner manages any
+backend shutdown. Holding the injected reference does not transfer cleanup responsibility. The
+sealed `Notification` hierarchy supplies rendered content, not subclasses of `Notifier`. This
+composition separates the required roles without recreating the classical diagram. Keep it when
+adequate; adding subclasses merely to name the pattern is not an improvement.
 
 If the implementor is a functional interface, backends can be lambdas without separately declared
 implementation classes. A sealed abstraction or content set can support exhaustive handling on a
@@ -146,7 +147,9 @@ THEN make lifetime and concurrency requirements explicit. Either normalize them 
 - **Concurrency.** State whether abstraction and implementor instances are shared, confined, or
   session-scoped. A uniform thread-safe contract simplifies substitution, but forced internal
   synchronization can destroy affinity or throughput; factories that return confined sessions
-  are often a better bridge for stateful drivers.
+  are often a better bridge for stateful drivers. Individually safe backend calls do not make a
+  compound abstraction operation atomic. Trace its promised invariant through the calls and
+  the actual writers; see [implementor contract design](references/decision-and-alternatives.md#designing-the-implementor-interface).
 - **Lifecycle.** Define ownership of injected backends, sessions and returned streams/cursors,
   including close responsibility on failure or cancellation. A borrowed shared backend is not
   closed per call; a stream may outlive the method that returns it. Preserve affinity and the

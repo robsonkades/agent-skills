@@ -1,0 +1,146 @@
+[
+  {
+    "maskedId": "G01",
+    "file": "G01.json",
+    "sha256": "66c2780407efeb757cc4374d910ee7b4414bb1637ce7f260738fd85b9b889a6f",
+    "masking": "Own actor identifier replaced by masked identifier; other wording is preserved and may disclose skill exposure."
+  },
+  {
+    "maskedId": "G02",
+    "file": "G02.json",
+    "sha256": "835d262ff95fbe9b9414672e1eb4d5395dfdda3f55415dad8354d63c17799ac8",
+    "masking": "Own actor identifier replaced by masked identifier; other wording is preserved and may disclose skill exposure."
+  },
+  {
+    "maskedId": "G03",
+    "file": "G03.json",
+    "sha256": "8e5bf2d23ab09e66db7306a82b35e74d83c7948bae145a56b1d66775b2d2bf5a",
+    "masking": "Own actor identifier replaced by masked identifier; other wording is preserved and may disclose skill exposure."
+  },
+  {
+    "maskedId": "G04",
+    "file": "G04.json",
+    "sha256": "859bfe9a24d5741375703717c1e8ee383d6d52069b46bb6aac55b5788fcc4a5b",
+    "masking": "Own actor identifier replaced by masked identifier; other wording is preserved and may disclose skill exposure."
+  },
+  {
+    "maskedId": "G05",
+    "file": "G05.json",
+    "sha256": "342ada3da7140bb8ea803e1510976d32f9505c2d5021fdcf36ce207b48f9f05f",
+    "masking": "Own actor identifier replaced by masked identifier; other wording is preserved and may disclose skill exposure."
+  },
+  {
+    "maskedId": "G06",
+    "file": "G06.json",
+    "sha256": "76c77e1569875ad603caa2c85d7073f904c44aa8d0108b3b0296f0f2cd750371",
+    "masking": "Own actor identifier replaced by masked identifier; other wording is preserved and may disclose skill exposure."
+  },
+  {
+    "maskedId": "G07",
+    "file": "G07.json",
+    "sha256": "358d5a6ef374d120faa7652e5aa9d7404b6864581e0c8826078a82cb8f9159a0",
+    "masking": "Own actor identifier replaced by masked identifier; other wording is preserved and may disclose skill exposure."
+  },
+  {
+    "maskedId": "G08",
+    "file": "G08.json",
+    "sha256": "bbcd608b4b3d235bdcfa2a40d0d9b7d9236995b0697c72431a75e9cabf951cf8",
+    "masking": "Own actor identifier replaced by masked identifier; other wording is preserved and may disclose skill exposure."
+  },
+  {
+    "maskedId": "G09",
+    "file": "G09.json",
+    "sha256": "5536678651b247609a20ef256fbfa7e5557adf44c9550c7e3e7dcbe58ee8930e",
+    "masking": "Own actor identifier replaced by masked identifier; other wording is preserved and may disclose skill exposure."
+  },
+  {
+    "maskedId": "G10",
+    "file": "G10.json",
+    "sha256": "7dfef9aef0b5d3be6ec0aad4d9ac16f757bcfc7cbec04c9c8e29d76d337baad4",
+    "masking": "Own actor identifier replaced by masked identifier; other wording is preserved and may disclose skill exposure."
+  },
+  {
+    "maskedId": "G11",
+    "file": "G11.json",
+    "sha256": "945d0e7d4935670709e5cda268a170bea5fc9883f6027c8b3e4f1b3e3b15b3f1",
+    "masking": "Own actor identifier replaced by masked identifier; other wording is preserved and may disclose skill exposure."
+  },
+  {
+    "maskedId": "G12",
+    "file": "G12.json",
+    "sha256": "d4f3646d8a7a16d2c051a23a96e637b7193df0a47dce9296360e0c329c7177b5",
+    "masking": "Own actor identifier replaced by masked identifier; other wording is preserved and may disclose skill exposure."
+  },
+  {
+    "maskedId": "G13",
+    "file": "G13.json",
+    "sha256": "2c005f8beda80e588308af8afde57cbdb85e81fea711e9b8c397a908dfa70a5d",
+    "masking": "Own actor identifier replaced by masked identifier; other wording is preserved and may disclose skill exposure."
+  },
+  {
+    "maskedId": "G14",
+    "file": "G14.json",
+    "sha256": "deb6cda22b7b7f213f2d2c0b6cd99c0d251a48439ae403210a2544d881b4fd39",
+    "masking": "Own actor identifier replaced by masked identifier; other wording is preserved and may disclose skill exposure."
+  },
+  {
+    "maskedId": "G15",
+    "file": "G15.json",
+    "sha256": "2ea0ca6867ebbf15b3dab79559b913da009bf5c2a792754dfd74857a32eefe70",
+    "masking": "Own actor identifier replaced by masked identifier; other wording is preserved and may disclose skill exposure."
+  },
+  {
+    "maskedId": "G16",
+    "file": "G16.json",
+    "sha256": "6a6d20cc3fcdd927317ccb8b5ab5b01d1294bc2577969cfdb19e8f90179384a2",
+    "masking": "Own actor identifier replaced by masked identifier; other wording is preserved and may disclose skill exposure."
+  },
+  {
+    "maskedId": "G17",
+    "file": "G17.json",
+    "sha256": "0dd1d119d56ba0a74e7d3b0d7bcd7963a7c55143d0b39c1a1098b168773e1636",
+    "masking": "Own actor identifier replaced by masked identifier; other wording is preserved and may disclose skill exposure."
+  },
+  {
+    "maskedId": "G18",
+    "file": "G18.json",
+    "sha256": "8c0fe7a5e29c1c4e18a26811ef2113d9a010da9c85c6e7fb41b6910a11af90ea",
+    "masking": "Own actor identifier replaced by masked identifier; other wording is preserved and may disclose skill exposure."
+  },
+  {
+    "maskedId": "G19",
+    "file": "G19.json",
+    "sha256": "e82bd42f4b60cc4157a3c30eae3d679131029c47b5037fbec23e8e42b46eded4",
+    "masking": "Own actor identifier replaced by masked identifier; other wording is preserved and may disclose skill exposure."
+  },
+  {
+    "maskedId": "G20",
+    "file": "G20.json",
+    "sha256": "bf1f3c3c2d3b0bcd20f49a8f51590050b7d606e0b2d009d4476160a4803d386d",
+    "masking": "Own actor identifier replaced by masked identifier; other wording is preserved and may disclose skill exposure."
+  },
+  {
+    "maskedId": "G21",
+    "file": "G21.json",
+    "sha256": "ea0f0f7664c9aa77a4396ce365b740ee02014a133d29c27ed584bd241e9852a1",
+    "masking": "Own actor identifier replaced by masked identifier; other wording is preserved and may disclose skill exposure."
+  },
+  {
+    "maskedId": "G22",
+    "file": "G22.json",
+    "sha256": "5b02d49402bc0dc2179996574daa14def68b9057d3c609afce9f84ddc5f276d7",
+    "masking": "Own actor identifier replaced by masked identifier; other wording is preserved and may disclose skill exposure."
+  },
+  {
+    "maskedId": "G23",
+    "file": "G23.json",
+    "sha256": "076b7d5cd060beef25ba2e7841d769990a5e017962191920ab3b7953fd6ad1ac",
+    "masking": "Own actor identifier replaced by masked identifier; other wording is preserved and may disclose skill exposure."
+  },
+  {
+    "maskedId": "G24",
+    "file": "G24.json",
+    "sha256": "fc7f62a6ca0e3b53a038d9aa8ce740dc6192a4e1368283695ac61f01a4cf1c50",
+    "masking": "Own actor identifier replaced by masked identifier; other wording is preserved and may disclose skill exposure."
+  }
+]

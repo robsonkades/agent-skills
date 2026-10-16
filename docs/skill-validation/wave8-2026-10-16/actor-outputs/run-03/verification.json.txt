@@ -1,0 +1,10 @@
+{
+  "status": "passed",
+  "candidate": "solution.sql",
+  "node": "v25.6.1",
+  "sqlite": "3.51.2",
+  "checks": 10,
+  "matrixRows": 92,
+  "failures": [],
+  "limits": "Portable SQLite semantic checks only; no PostgreSQL execution, plan or performance measurement."
+}

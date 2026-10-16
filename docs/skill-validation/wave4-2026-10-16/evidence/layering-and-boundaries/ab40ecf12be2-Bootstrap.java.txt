@@ -1,0 +1,11 @@
+package com.acme.orders;
+
+import com.acme.orders.domain.OrderService;
+import com.acme.orders.integration.LocalNotifier;
+import com.acme.orders.web.OrderController;
+
+public final class Bootstrap {
+    public static OrderController controller() {
+        return new OrderController(new OrderService(new LocalNotifier()));
+    }
+}

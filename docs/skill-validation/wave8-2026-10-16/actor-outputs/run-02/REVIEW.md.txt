@@ -1,0 +1,22 @@
+Approve the exact proposal semantically; keep `solution.sql` unchanged. Performance approval is unsupported by the supplied evidence.
+
+The schema declares `active boolean NOT NULL CHECK(active IN (false,true))`. Let `p` be `active = true` and `q` be `amount >= 100`. For each permitted invoice:
+
+| active | Original predicate | First branch | Second branch |
+| --- | --- | --- | --- |
+| true | true | emits once | excludes |
+| false | q | excludes | emits exactly when q is true |
+
+Thus the branches partition the original qualifying invoices. An invoice matching both predicates appears once; different invoices with equal `customer_label` remain separate rows because the operator is `UNION ALL`. Both branches retain `tenant_id = :tenant`, the same projection, and the final ascending `ORDER BY customer_label` applies to the combined output. This reasoning covers every permitted row, not merely the fixture.
+
+`NOT (active = true)` is safe here because `active` cannot be null. Under a nullable schema it could lose invoices where `active` is null and the amount qualifies, but that is not this contract and does not justify changing this correct proposal. PostgreSQL documents the relevant [three-valued logic](https://www.postgresql.org/docs/17/functions-logical.html) and [UNION ALL duplicate preservation](https://www.postgresql.org/docs/17/queries-union.html).
+
+Run `node verify.mjs --self-test` from this directory. It reads `solution.sql`, checks complete ordered rows against an independent expected result and `current.sql`, and closes every in-memory database. The actual run passed 11 comparisons, including the supplied seed (`Acme`, `Acme`, `Bravo` for tenant 71), four tenant populations, absent/null tenant bindings and an empty table. A 224-row matrix covers both allowed active values, values below/at/above 100, negative and numeric-boundary values, repeated labels within/across branches, and deliberately unsorted input. The fixture rejected null and out-of-domain active values.
+
+Six derived wrong variants were rejected: `UNION`, removal of the overlap guard, removal of either tenant filter, an exclusive amount threshold, and descending ordering. `verification.stdout.json` records results; `checks.json` confirms all seven copied input artifacts and the unchanged proposal are byte-identical. Execution used Node v25.6.1 and SQLite 3.51.2, with the expected experimental SQLite warning.
+
+The author's two-index hypothesis remains plausible, not established. PostgreSQL can already [combine indexes for OR](https://www.postgresql.org/docs/17/indexes-bitmap-scans.html). Splitting branches may introduce additional scans or visits, overlap filtering, and sorting; indexability alone cannot establish a win.
+
+Resolve performance with authorized PostgreSQL 17 measurements of both statements using the same representative data, statistics, indexes, settings, snapshot, typed tenant bindings, and actual driver prepare mode. Include small/large and skewed tenants, selective/unselective predicates and varying overlap; alternate repeated executions under documented cache conditions. Capture `EXPLAIN (ANALYZE, BUFFERS, SETTINGS, FORMAT JSON)` and comparable client elapsed times. Compare estimates with actual rows/loops, access paths, buffer reads/hits, filtering work, sort spills, and total execution cost in time. [EXPLAIN ANALYZE executes the statement; planner cost is not measured latency](https://www.postgresql.org/docs/17/using-explain.html).
+
+No PostgreSQL connection was supplied or used. SQLite checks support portable result semantics only; they do not establish PostgreSQL plans, collation/coercion details, concurrency behavior, or performance. No schema, index, dependency or configuration changes were made.

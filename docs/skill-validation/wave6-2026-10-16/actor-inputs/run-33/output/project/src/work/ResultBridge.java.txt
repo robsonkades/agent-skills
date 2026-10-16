@@ -1,0 +1,6 @@
+package work;
+public final class ResultBridge {
+ private volatile Snapshot latest;
+ public void attach(Provider provider) { provider.register(value -> latest=value); }
+ public int currentValue() { Snapshot observed=latest; return observed==null?-1:observed.value(); }
+}

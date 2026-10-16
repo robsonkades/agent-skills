@@ -1,0 +1,24 @@
+# RetryEngine repair
+
+The supplied implementation changed the intent ID on every call, treated later non-application as proof that earlier attempts had failed, held replies through backoff, used the smaller delay, and omitted deadline/cancellation admission. The repair retains the public signature and Java 17 source/API baseline.
+
+The runner now returns existing APPLIED/REJECTED snapshots unchanged, sends the original immutable intent and payload, and propagates the configured per-attempt timeout. UNKNOWN is persisted before retry admission or sleeping and remains unresolved across transient/permanent responses, refusal, exhaustion and interrupted waits. An InterruptedException from operation.call persists UNKNOWN before propagation. Only authoritative OK settles an uncertain operation as APPLIED, using the actual receipt. Normal stops without uncertainty persist REJECTED.
+
+Each returned reply is closed once through try-with-resources before state handling, waiting, another call or return. Retry admission preserves the supplied policy: count limit, replay permission, cancellation/interruption, maximum of local and server delay, enough time for wait plus attempt plus reserve, and one token per admitted retry. The initial call needs no token. Subtraction after comparisons avoids signed-long overflow. Admission is repeated after sleep; an oversleep or cancellation may consume a nonrefundable token without starting another call.
+
+## Evidence and executed checks
+
+Read the task, README, request, complete supplied contract, supplied Java sources and runner, the three required skill snapshots and relevant key, retry and deadline/client references. No global skill, sibling session, evaluator or network resource was opened. Cross-skill routing beyond the supplied snapshots was not followed.
+
+On Temurin JDK/javac 25.0.3, the unchanged runner compiled with javac --release 17 and executed:
+- node run.mjs Verification: passed 23 scenario groups.
+- node run.mjs Smoke: passed.
+- The same Verification compiled against input/project/RetryEngine.java: compilation succeeded, execution exited 1 at the stable-intent assertion. This is an expected regression-detection result.
+
+The regression checks terminal replay, stable identity/payload and receipt, exact timeout propagation, both delay orderings, uncertainty across attempts and initial UNKNOWN, ordinary rejection, deadline equality/refusal, long overflow, token denial/exhaustion, elapsed operation time, oversleep, cancellation, pre-interruption, operation/sleep interruption and reply cleanup on all exercised exits. SHA-256 comparisons confirmed all seven protected output copies match input.
+
+## Limits
+
+The supplied Contract.REPLAY_SAFE is true; the false branch is present but was not executed under an alternative contract. These are deterministic in-process simulations. Store durability/atomicity, provider deduplication and authoritative receipt recovery are supplied assumptions, not demonstrated guarantees. No real provider/API version, account scope, database/isolation, retention window, fingerprint enforcement, hidden transport retries or physical cancellation implementation is provided. Production integration must verify those boundaries, including lost-response recovery within the actual replay horizon and resource release after expiry. No exactly-once, fleet-load or wall-clock guarantee is claimed.
+
+Repository npm verification is outside this isolated Java exercise and was not run. No immutable source, real configuration, dependency or runtime setting was changed.

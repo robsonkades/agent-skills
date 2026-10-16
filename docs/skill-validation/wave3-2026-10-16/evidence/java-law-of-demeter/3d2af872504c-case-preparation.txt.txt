@@ -1,0 +1,7 @@
+{
+  "cases": 2,
+  "differences": [
+    "api-contract.md"
+  ],
+  "inputsCriteriaSeparated": true
+}

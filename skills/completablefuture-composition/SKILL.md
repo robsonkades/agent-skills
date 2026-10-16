@@ -30,13 +30,19 @@ executor configuration before applying a recipe. Do not upgrade Java, enable pre
 dependencies just to match a snippet. If graph ownership or client completion semantics are
 missing, request that evidence and keep the proposed fix conditional.
 
-1. Draw nodes and edges: creation, completion, dependent stages, fan-out and terminal observation.
-2. For each action, identify the executor allowed to run it. Do not infer a thread from a method
-   name or a test run.
+1. Follow the caller-visible result to the actual factory/client, continuations and terminal
+   observer in the repository. Sketch the connected graph, including recovery and discarded
+   dependent results; identify concrete stage classes and executor/context wrappers from their
+   construction and configuration. A similar chain elsewhere is not evidence of this path.
+2. For each action, distinguish registration, submission and execution, and identify its executor.
+   An executor supplied to one edge is not a policy inherited by the rest of a base future's graph.
+   Do not infer a thread from a method name or a test run.
 3. State outcome policy: propagate, recover, observe, aggregate, race, or tolerate partial failure.
 4. Separate caller timeout, operation timeout and cancellation. They are different mechanisms.
 5. Bound admission at the scarce resource, not merely the number of executor workers.
-6. Capture and restore observability/security context explicitly.
+6. Identify whose observability/security context the action needs, capture it at the corresponding
+   boundary, and restore the worker's previous context. Deferred submission can occur after the
+   requesting scope has ended; an executor wrapper alone may capture the completer's context.
 7. Test adversarial orderings: inputs already complete, simultaneous failures, rejection, timeout,
    cancellation and callback duplication.
 
@@ -52,6 +58,11 @@ Use a non-`Async` stage only for small, non-blocking, non-reentrant transformati
 any completing thread. Use an explicit executor when isolation, context, blocking behavior or
 capacity matters. An explicit executor does not by itself promise a new thread or concurrent
 execution.
+
+For base futures, `supplyAsync(load, ioExecutor).thenApplyAsync(render)` runs `render` through the
+default facility, not necessarily `ioExecutor`. Supply the executor at each edge needing that policy.
+For subclasses, inspect `defaultExecutor()` and `newIncompleteFuture()` instead of assuming either
+inheritance or loss of the custom policy; see the executor reference for the matching API/source.
 
 Require a visible outcome when scheduling fails. A silently discarded task can leave its future
 incomplete; `exceptionally` cannot recover a failure that never completes the stage. Inspect the
@@ -135,6 +146,11 @@ follow arbitrary completion edges. Capture only safe immutable context, restore 
 action, and close/clear it in `finally` because pool threads are reused. Prefer the instrumentation
 library's executor/stage wrapper over a bespoke copier. Never propagate a transaction/session object
 to concurrent stages unless its API explicitly permits concurrent use.
+
+For a request-owned continuation on a pending stage, capture the request context before registering
+the action. Check when a wrapper captures context: registration and later `Executor.execute` may
+run under different contexts. Use [the deferred-stage example](references/pitfalls-and-executors.md)
+when those moments differ, including already-complete and delayed-source checks.
 
 ## Decision guide
 

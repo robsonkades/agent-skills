@@ -1,0 +1,341 @@
+{
+  "judgedAt": "2026-10-16T15:56:12.497Z",
+  "judge": "Coordinator, unblinded manual judgment using pre-dispatch frozen criteria; all full decisions read before writing this result.",
+  "runs": [
+    {
+      "runId": "run-01",
+      "caseId": "delivery-bundled",
+      "condition": "none",
+      "skillVersion": null,
+      "agent": "/root/wave4_actor01",
+      "allWritesStopped": true,
+      "criteriaSha256": "3382508ba2fba5b875d108558356d8e33025ab7c37f172c52fa22bfc0e3d4b93",
+      "decision": "behavior-outputs/run-01/decision.md.txt",
+      "executionRecord": "behavior-outputs/run-01/execution.json.txt",
+      "criteria": [
+        {
+          "id": "C1",
+          "outcome": "PASS",
+          "rationale": "Lê delivery.json como bundled e confirma classe antiga dentro do JAR; distingue a receita externa disponível da entrega efetiva."
+        },
+        {
+          "id": "C2",
+          "outcome": "PASS",
+          "rationale": "Exige nova distribuição imutável e entrega separada da publicação, reutiliza bytecode original e declara recompilação desnecessária para este caso."
+        },
+        {
+          "id": "C3",
+          "outcome": "PASS",
+          "rationale": "Executa bundle retido/candidato e casos CR/LF/CRLF; retorno ao bundle antigo restaura CR, preserva hashes e limita recuperação à janela."
+        },
+        {
+          "id": "C4",
+          "outcome": "PASS",
+          "rationale": "Mantém donos/calendários distintos: prazo14dias e custo de remontagem não exigem simultaneidade; pede evidência para reconsiderar."
+        }
+      ],
+      "failureConditions": [
+        {
+          "text": "Concludes the deployed bundled consumer is fixed merely because text-core 1.0.1 is published or because recompilation is unnecessary.",
+          "observed": false,
+          "judgment": "Manual review found no triggering recommendation; supporting distinctions are recorded per criterion above."
+        },
+        {
+          "text": "Requires source recompilation without distinguishing it from packaging, or rewrites released artifact bytes in place.",
+          "observed": false,
+          "judgment": "Manual review found no triggering recommendation; supporting distinctions are recorded per criterion above."
+        },
+        {
+          "text": "Treats a 14-day deadline or ordinary consumer adoption work as proof of an atomic coordinated fleet release.",
+          "observed": false,
+          "judgment": "Manual review found no triggering recommendation; supporting distinctions are recorded per criterion above."
+        }
+      ],
+      "outcome": "PASS"
+    },
+    {
+      "runId": "run-02",
+      "caseId": "delivery-bundled",
+      "condition": "baseline",
+      "skillVersion": "1.2.4",
+      "agent": "/root/wave4_actor02",
+      "allWritesStopped": true,
+      "criteriaSha256": "3382508ba2fba5b875d108558356d8e33025ab7c37f172c52fa22bfc0e3d4b93",
+      "decision": "behavior-outputs/run-02/decision.md.txt",
+      "executionRecord": "behavior-outputs/run-02/execution.json.txt",
+      "criteria": [
+        {
+          "id": "C1",
+          "outcome": "PASS",
+          "rationale": "Identifica configuração bundled, inspeciona conteúdos e distingue dependência compilação/montagem/runtime no mesmo processo."
+        },
+        {
+          "id": "C2",
+          "outcome": "PASS",
+          "rationale": "Separa publicação, remontagem e novos processos; produz bundle com consumidor original e biblioteca1.0.1 sem exigir recompilação."
+        },
+        {
+          "id": "C3",
+          "outcome": "PASS",
+          "rationale": "Valida candidato e biblioteca incorporada, inclui negativos e recuperação com antigo; reconhece reintrodução do defeito e limite14dias."
+        },
+        {
+          "id": "C4",
+          "outcome": "PASS",
+          "rationale": "Rejeita fundir fronteiras com base apenas em adoção obrigatória; mantém proprietários e versão própria da distribuição."
+        }
+      ],
+      "failureConditions": [
+        {
+          "text": "Concludes the deployed bundled consumer is fixed merely because text-core 1.0.1 is published or because recompilation is unnecessary.",
+          "observed": false,
+          "judgment": "Manual review found no triggering recommendation; supporting distinctions are recorded per criterion above."
+        },
+        {
+          "text": "Requires source recompilation without distinguishing it from packaging, or rewrites released artifact bytes in place.",
+          "observed": false,
+          "judgment": "Manual review found no triggering recommendation; supporting distinctions are recorded per criterion above."
+        },
+        {
+          "text": "Treats a 14-day deadline or ordinary consumer adoption work as proof of an atomic coordinated fleet release.",
+          "observed": false,
+          "judgment": "Manual review found no triggering recommendation; supporting distinctions are recorded per criterion above."
+        }
+      ],
+      "outcome": "PASS"
+    },
+    {
+      "runId": "run-03",
+      "caseId": "delivery-bundled",
+      "condition": "revised",
+      "skillVersion": "1.2.5",
+      "agent": "/root/wave4_actor03",
+      "allWritesStopped": true,
+      "criteriaSha256": "3382508ba2fba5b875d108558356d8e33025ab7c37f172c52fa22bfc0e3d4b93",
+      "decision": "behavior-outputs/run-03/decision.md.txt",
+      "executionRecord": "behavior-outputs/run-03/execution.json.txt",
+      "criteria": [
+        {
+          "id": "C1",
+          "outcome": "PASS",
+          "rationale": "Usa configuração bundled e jar/javap para confirmar duas classes e corpo antigo incorporado; não troca indevidamente a receita ativa."
+        },
+        {
+          "id": "C2",
+          "outcome": "PASS",
+          "rationale": "Novo bundle usa ReportApp.class extraído do antigo; distingue compatibilidade do binário, compilação diagnóstica e entrega necessária."
+        },
+        {
+          "id": "C3",
+          "outcome": "PASS",
+          "rationale": "Testa LF no artefato final, negativos e recuperação CR; mantém imutabilidade e não renova prazo por rollback."
+        },
+        {
+          "id": "C4",
+          "outcome": "PASS",
+          "rationale": "Mantém unidades separadas e sequência admitida pela coexistência, reconhecendo ausência de histórico/custo para justificar fusão."
+        }
+      ],
+      "failureConditions": [
+        {
+          "text": "Concludes the deployed bundled consumer is fixed merely because text-core 1.0.1 is published or because recompilation is unnecessary.",
+          "observed": false,
+          "judgment": "Manual review found no triggering recommendation; supporting distinctions are recorded per criterion above."
+        },
+        {
+          "text": "Requires source recompilation without distinguishing it from packaging, or rewrites released artifact bytes in place.",
+          "observed": false,
+          "judgment": "Manual review found no triggering recommendation; supporting distinctions are recorded per criterion above."
+        },
+        {
+          "text": "Treats a 14-day deadline or ordinary consumer adoption work as proof of an atomic coordinated fleet release.",
+          "observed": false,
+          "judgment": "Manual review found no triggering recommendation; supporting distinctions are recorded per criterion above."
+        }
+      ],
+      "outcome": "PASS"
+    },
+    {
+      "runId": "run-04",
+      "caseId": "delivery-external",
+      "condition": "none",
+      "skillVersion": null,
+      "agent": "/root/wave4_actor04",
+      "allWritesStopped": true,
+      "criteriaSha256": "5a935b56d79c320480a7e91e8c48c56dcf0e10e69da7903d3e0d90e99923e6cf",
+      "decision": "behavior-outputs/run-04/decision.md.txt",
+      "executionRecord": "behavior-outputs/run-04/execution.json.txt",
+      "criteria": [
+        {
+          "id": "C1",
+          "outcome": "PASS",
+          "rationale": "Confirma external em delivery.json e que o JAR da aplicação só contém o consumidor."
+        },
+        {
+          "id": "C2",
+          "outcome": "PASS",
+          "rationale": "Reutiliza report-app1.0.0, propõe mudar libraryVersion e iniciar novo processo; distingue revisão de distribuição de reempacotar aplicação."
+        },
+        {
+          "id": "C3",
+          "outcome": "PASS",
+          "rationale": "Mesmo JAR com1.0.1 passa LF; antigos/negativos/rollback e regressões CR/LF/CRLF registrados, inputs preservados."
+        },
+        {
+          "id": "C4",
+          "outcome": "PASS",
+          "rationale": "Mantém fronteiras e prazo14dias, não trata execução conjunta/adoção da dependência como exigência de release único."
+        }
+      ],
+      "failureConditions": [
+        {
+          "text": "Unconditionally requires repackaging the app despite the inspected external dependency layout.",
+          "observed": false,
+          "judgment": "Manual review found no triggering recommendation; supporting distinctions are recorded per criterion above."
+        },
+        {
+          "text": "Assumes replacing a repository artifact mutates running JVM behavior or allows overwriting immutable released versions.",
+          "observed": false,
+          "judgment": "Manual review found no triggering recommendation; supporting distinctions are recorded per criterion above."
+        },
+        {
+          "text": "Recommends a shared release unit or simultaneous deployment without a contract requiring it.",
+          "observed": false,
+          "judgment": "Manual review found no triggering recommendation; supporting distinctions are recorded per criterion above."
+        }
+      ],
+      "outcome": "PASS"
+    },
+    {
+      "runId": "run-05",
+      "caseId": "delivery-external",
+      "condition": "baseline",
+      "skillVersion": "1.2.4",
+      "agent": "/root/wave4_actor05",
+      "allWritesStopped": true,
+      "criteriaSha256": "5a935b56d79c320480a7e91e8c48c56dcf0e10e69da7903d3e0d90e99923e6cf",
+      "decision": "behavior-outputs/run-05/decision.md.txt",
+      "executionRecord": "behavior-outputs/run-05/execution.json.txt",
+      "criteria": [
+        {
+          "id": "C1",
+          "outcome": "PASS",
+          "rationale": "Segue layout external selecionado e reconhece bundle apenas como receita alternativa fornecida."
+        },
+        {
+          "id": "C2",
+          "outcome": "PASS",
+          "rationale": "Propõe seleção imutável nova mantendo aplicação1.0.0 e seu JAR; afirma que edição de seleção não altera JVM iniciada."
+        },
+        {
+          "id": "C3",
+          "outcome": "PASS",
+          "rationale": "Executa binário antigo combiblioteca nova e retorno à seleção antiga; testes adicionais de normalização e hashes, recuperação temporária."
+        },
+        {
+          "id": "C4",
+          "outcome": "PASS",
+          "rationale": "Não unifica versões/calendário sem histórico ou contrato incompatível; preserva dono e janela de adoção."
+        }
+      ],
+      "failureConditions": [
+        {
+          "text": "Unconditionally requires repackaging the app despite the inspected external dependency layout.",
+          "observed": false,
+          "judgment": "Manual review found no triggering recommendation; supporting distinctions are recorded per criterion above."
+        },
+        {
+          "text": "Assumes replacing a repository artifact mutates running JVM behavior or allows overwriting immutable released versions.",
+          "observed": false,
+          "judgment": "Manual review found no triggering recommendation; supporting distinctions are recorded per criterion above."
+        },
+        {
+          "text": "Recommends a shared release unit or simultaneous deployment without a contract requiring it.",
+          "observed": false,
+          "judgment": "Manual review found no triggering recommendation; supporting distinctions are recorded per criterion above."
+        }
+      ],
+      "outcome": "PASS"
+    },
+    {
+      "runId": "run-06",
+      "caseId": "delivery-external",
+      "condition": "revised",
+      "skillVersion": "1.2.5",
+      "agent": "/root/wave4_actor06",
+      "allWritesStopped": true,
+      "criteriaSha256": "5a935b56d79c320480a7e91e8c48c56dcf0e10e69da7903d3e0d90e99923e6cf",
+      "decision": "behavior-outputs/run-06/decision.md.txt",
+      "executionRecord": "behavior-outputs/run-06/execution.json.txt",
+      "criteria": [
+        {
+          "id": "C1",
+          "outcome": "PASS",
+          "rationale": "Inspeciona external e aplicação sem classes da biblioteca; separa o bundle não selecionado."
+        },
+        {
+          "id": "C2",
+          "outcome": "PASS",
+          "rationale": "Mantém fonte/JAR/versão da aplicação, altera seleção externa e exige novo processo, admitindo revisão de distribuição imutável."
+        },
+        {
+          "id": "C3",
+          "outcome": "PASS",
+          "rationale": "Registra controles de LF/CR, regressões e recuperação comdependência anterior; ressalta que rollback não renova prazo."
+        },
+        {
+          "id": "C4",
+          "outcome": "PASS",
+          "rationale": "Preserva releases separados; compatibilidade do consumidor e coexistência14dias não sustentam unificação permanente."
+        }
+      ],
+      "failureConditions": [
+        {
+          "text": "Unconditionally requires repackaging the app despite the inspected external dependency layout.",
+          "observed": false,
+          "judgment": "Manual review found no triggering recommendation; supporting distinctions are recorded per criterion above."
+        },
+        {
+          "text": "Assumes replacing a repository artifact mutates running JVM behavior or allows overwriting immutable released versions.",
+          "observed": false,
+          "judgment": "Manual review found no triggering recommendation; supporting distinctions are recorded per criterion above."
+        },
+        {
+          "text": "Recommends a shared release unit or simultaneous deployment without a contract requiring it.",
+          "observed": false,
+          "judgment": "Manual review found no triggering recommendation; supporting distinctions are recorded per criterion above."
+        }
+      ],
+      "outcome": "PASS"
+    }
+  ],
+  "aggregate": {
+    "runs": 6,
+    "criteria": 24,
+    "passedCriteria": 24,
+    "none": {
+      "runs": 2,
+      "passedCriteria": 8
+    },
+    "baseline": {
+      "runs": 2,
+      "passedCriteria": 8
+    },
+    "revised": {
+      "runs": 2,
+      "passedCriteria": 8
+    },
+    "observedIncrementalGain": false
+  },
+  "conclusion": "All conditions satisfy these two known development tasks. No incremental behavioral gain observed for the revision. The technical/documentary correction remains supported independently; this small saturated comparison does not establish universal equivalence, superiority or failure of skills.",
+  "limits": [
+    "Two development cases from the reviewer, not held-out; one run per condition/case.",
+    "Same inherited model/effort and tool permissions, no explicit override; exact runtime model identity, internal settings and token cost unavailable.",
+    "Actor history forked none; read boundaries instructed, not sandbox-enforced. Available skill metadata can remain in system context.",
+    "Coordinator judgment is not blinded or an independent second judge.",
+    "No automatic skill discovery/selection, real deployment, production fleet, Maven/Gradle resolution, cost or latency evaluated.",
+    "Historical actor execution records are authored by actors; 30 coordinator subprocess checks corroborate current artifacts without changing their contents.",
+    "Actor02 initially used unsupported javap --version; corrected -version passed. Coordinator initially assumed a uniform JSON field; both failures are retained separately.",
+    "No criteria, input, baseline/revised package snapshot or actor answer was tuned after seeing the outcomes."
+  ]
+}

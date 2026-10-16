@@ -1,0 +1,11 @@
+Call BookingService through the configured Spring application context. The schema is initialized by the existing launcher/tests. Inspect booking, receipt, receipt_detail and stock state outside the completed command.
+
+BookingService.place retains REQUIRED participation in businessTx. Booking and stock reservation commit together; if a caller already owns a transaction, that caller owns completion. Stock rejection or a later owner rollback leaves no booking or receipt and restores the stock.
+
+BookingListener receives BookingRecorded synchronously only after successful source commit. No active source transaction means no receipt callback. The listener calls the Spring-managed ReceiptWriter proxy, whose REQUIRES_NEW businessTx transaction encloses both receipt header and detail. ReceiptObserver.beforeWrite stays inside the writer immediately before the header insert. Do not move the observer or change service propagation to obtain different diagnostic results.
+
+A valid body of at most 12 characters persists with its header. A rejected body rolls back both receipt writes while leaving the committed booking/reservation intact. Framework 7.0.9's after-completion dispatch logs the callback exception; these failures do not fail the already successful business call or owner completion. The regression intentionally produces this logged DataIntegrityViolationException for 13-character bodies.
+
+Receipts are best effort. There is no retry, durable publication store or recovery after interruption; receipt loss is accepted. Do not retry the booking merely to obtain a receipt. Follow the logged receipt insert failure and inspect the booking and both receipt tables independently.
+
+Run node check.mjs and node check.mjs work.Regression from this project. The latter uses real Spring beans, the configured JDBC transaction manager and independent READ_COMMITTED reads inside the actual writer observer. It covers normal/invalid receipt, stock rejection, publication without a transaction, and caller-owned commit/rollback. H2 tests establish these local wiring and persisted-state results, not production engine crash behavior, concurrent capacity, distributed delivery or JPA semantics.

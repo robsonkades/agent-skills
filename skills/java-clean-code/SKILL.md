@@ -77,7 +77,10 @@ hypothesis. No findings is valid when the code already supports its readers and 
   at once. Guards, resource scopes and trivial mechanics need not become helpers;
   consult the structure reference when extraction would only add navigation. Preserve
   evaluation timing and count when they affect results, effects or failure behavior;
-  helper arguments are evaluated before its body.
+  helper arguments are evaluated before its body. Preserve the selected overload too:
+  broadening a helper parameter or local to `Object` can change the invoked method even
+  when the runtime value is identical. Read the structure reference when extraction
+  changes the declared types around an overloaded call.
 - Every extraction has a price — a name to trust and a hop to follow. A fragment with
   one caller, wide shared state and no independent meaning is a candidate for inlining,
   not an arity rule. Retain useful policy, extension, failure or resource boundaries;
@@ -141,6 +144,6 @@ the wider change is safe.
   back, each with trade-offs and verification. Read before splitting or merging
   anything larger than a single method.
 - [Structure and coupling](references/structure-and-coupling.md) — detection
-  heuristics, false positives and when-not-to-apply for abstraction levels, temporal
+  heuristics, overload selection during extraction, false positives and limits for abstraction levels, temporal
   coupling and hidden dependencies. Read when a rule above matches but the fix is not
   obvious, or the match might be a false positive.

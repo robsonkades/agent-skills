@@ -1,0 +1,75 @@
+{
+  "completedAt": "2026-10-16T16:12:53.243Z",
+  "scope": "Exactly the 68 wave4 inventory skills",
+  "counts": {
+    "reviewed": 68,
+    "changed": 36,
+    "unchanged": 32,
+    "sourceLinkRepairOnly": 12,
+    "guidanceOrFactualCorrection": 24,
+    "changedFiles": 94
+  },
+  "globalChecks": [
+    {
+      "command": "npm run registry:build",
+      "attempt": 1,
+      "cwd": "C:/git/agent-skills",
+      "startedAt": "2026-10-16T16:11:20.995Z",
+      "finishedAt": "2026-10-16T16:11:23.292Z",
+      "exit": 0,
+      "log": "registry-build.log.txt",
+      "node": "v25.6.1"
+    },
+    {
+      "command": "npm run verify",
+      "attempt": 1,
+      "cwd": "C:/git/agent-skills",
+      "startedAt": "2026-10-16T16:11:28.821Z",
+      "finishedAt": "2026-10-16T16:12:26.158Z",
+      "exit": 0,
+      "log": "verify.log.txt",
+      "node": "v25.6.1"
+    }
+  ],
+  "testSummary": {
+    "tests": 393,
+    "suites": 70,
+    "pass": 393,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "preservation": {
+    "baselineFiles": 6135,
+    "unexpectedChanges": 0,
+    "indexEntriesChanged": 36,
+    "indexEntriesLost": 0
+  },
+  "behavior": {
+    "runs": 6,
+    "criteria": 24,
+    "passedCriteria": 24,
+    "none": {
+      "runs": 2,
+      "passedCriteria": 8
+    },
+    "baseline": {
+      "runs": 2,
+      "passedCriteria": 8
+    },
+    "revised": {
+      "runs": 2,
+      "passedCriteria": 8
+    },
+    "observedIncrementalGain": false
+  },
+  "limits": [
+    "No catalog-wide efficacy, skill discovery, popularity or cost advantage demonstrated.",
+    "Two known development cases, one actor run per condition/case, unblinded coordinator; no incremental gain observed.",
+    "Technical runs are limited to their recorded runtimes, fixtures and substitutes; source-only and unavailable-runtime checks are explicitly labeled."
+  ],
+  "commit": false,
+  "publish": false,
+  "globalInstall": false
+}

@@ -1,0 +1,22 @@
+{
+  "disposition": "unresolved",
+  "basis": "ResultBridge.java:3-5 publica a referência pelo campo volatile e lê esse campo uma vez antes de ler Snapshot.value. Snapshot.java:2 contém um int comum. O contrato aceita -1 na ausência e exige 91 na presença, sem mutações posteriores. Para garantir 91 é necessário que sua escrita happens-before a gravação volátil do callback; esta estabelece o elo para o leitor. O smoke satisfaz o primeiro elo por ordem de programa na mesma thread, mas o contrato do provedor real não fornece identidade de threads nem sincronização do produtor para o callback. Ordem de relógio e callback único não completam a prova. A afirmação universal de suficiência é insustentável; uma falha do provedor implantado não foi demonstrada.",
+  "requiredChange": null,
+  "missingEvidence": [
+    "Implementação/binário ou especificação verificável do provedor implantado, demonstrando que a inicialização a 91 acontece-before a invocação do callback, por ordem na mesma thread ou por handoff com sincronização identificada.",
+    "Alternativa contratual mínima: explicitar essa obrigação de happens-before, preservando a ausência de mutações posteriores, e verificar a conformidade do provedor implantado. A documentação atual não sustenta essa obrigação."
+  ],
+  "checked": [
+    "Leitura integral do pedido, contrato, README, três fontes Java, smoke e script de verificação fornecidos.",
+    "Inspeção do caminho nulo: currentValue retorna -1; nenhum teste adicional desse ramo foi executado.",
+    "node check.mjs em output/project: javac --release 25 e work.Smoke terminaram com código 0; saída: synchronous provider PASS; deployed provider absent.",
+    "JLS Java SE25 §§17.4.4 e 17.4.5: sincronização volátil, ordem de programa e transitividade de happens-before.",
+    "Comparação SHA-256 dos oito arquivos fornecidos entre input/project e output/project: todos idênticos."
+  ],
+  "limits": [
+    "Provedor implantado ausente; nenhuma falha de produção observada.",
+    "Smoke exclusivamente síncrono; não prova publicação entre threads do provedor real.",
+    "Nenhum teste de estresse ou provedor hipotético foi executado.",
+    "Nenhuma alteração em fontes, contratos ou dependências; requiredChange null indica ausência de correção de produção demonstrada, não aprovação da integração."
+  ]
+}

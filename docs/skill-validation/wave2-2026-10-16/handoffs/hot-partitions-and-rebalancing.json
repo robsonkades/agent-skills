@@ -1,0 +1,273 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "hot-partitions-and-rebalancing",
+  "ownedPath": "C:/git/agent-skills/skills/hot-partitions-and-rebalancing",
+  "reviewDate": "2026-10-16",
+  "allWritesStopped": true,
+  "activeProcesses": [],
+  "procedure": {
+    "fullReviewPromptRead": true,
+    "wave2BriefRead": true,
+    "applicableAgentsRead": true,
+    "skillEngineeringAndRelevantReferencesRead": true,
+    "comparativeResearchRead": true,
+    "globalCommandsRun": false,
+    "delegated": false
+  },
+  "baseline": {
+    "committedVersion": "1.3.5",
+    "assignmentVersion": "1.3.5",
+    "finalVersion": "1.3.6",
+    "preExistingVersionBump": false,
+    "preExistingChanges": [],
+    "stagedChanges": [],
+    "untrackedFiles": [],
+    "files": [
+      {
+        "path": "C:\\git\\agent-skills\\skills\\hot-partitions-and-rebalancing\\SKILL.md",
+        "sha256": "9D2A52966345B392E416FF83A65CD5A27B26F5DB0313FEBEE3A1FD08FE079080"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\hot-partitions-and-rebalancing\\skill.yaml",
+        "sha256": "35B6F37EAE6E9271058DE8EB115761EAD4CB7BC34B4C535A600CD85581E3A32D"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\hot-partitions-and-rebalancing\\references\\detecting-skew.md",
+        "sha256": "97C65EF39851777D5FF7B1FB92AE1EA56ED45294EC80E578420EA9EA6C21D227"
+      },
+      {
+        "path": "C:\\git\\agent-skills\\skills\\hot-partitions-and-rebalancing\\references\\repairs-and-rebalancing.md",
+        "sha256": "2E45E3A5FD25F911D819344A91D62DA534954A6837A551C2D9A8944561431088"
+      }
+    ],
+    "attribution": "All four files and their contents/hashes were captured before editing. Scoped status/staged/unstaged diff were empty. Final comparison changes only the three named owned files."
+  },
+  "findings": [
+    {
+      "location": "SKILL.md:167; references/repairs-and-rebalancing.md:87-94,161-165",
+      "type": "missing read-side cutover constraint",
+      "evidence": "The original operational invariants, live-move steps and targeted migration checks protected stale writers. They did not explicitly constrain stale read routes once the target accepts new writes.",
+      "consequence": "Write fencing and snapshot equality can both hold while a retained source returns an obsolete value to a later read whose accepted contract requires fresh data.",
+      "correction": "Added a read-consistency invariant, traceable read paths and freshness/session-position evidence. Added a controlled stale-route read whose invocation follows a target write acknowledgement, plus allowed/expired bounded-staleness checks."
+    }
+  ],
+  "unresolvedFindings": [],
+  "filesChangedByReviewer": [
+    "skills/hot-partitions-and-rebalancing/SKILL.md",
+    "skills/hot-partitions-and-rebalancing/references/repairs-and-rebalancing.md",
+    "skills/hot-partitions-and-rebalancing/skill.yaml"
+  ],
+  "filesUnchanged": ["skills/hot-partitions-and-rebalancing/references/detecting-skew.md"],
+  "finalFiles": [
+    {
+      "path": "C:\\git\\agent-skills\\skills\\hot-partitions-and-rebalancing\\SKILL.md",
+      "sha256": "CBCDE9FE830AFE286FA217424804A8876DC9EDB74E8D3AFCE39D40F6A23A3769"
+    },
+    {
+      "path": "C:\\git\\agent-skills\\skills\\hot-partitions-and-rebalancing\\skill.yaml",
+      "sha256": "7532D1C9CE89185771CF6AD49D08B708E06DB7ADDA6020428705366EC1452E63"
+    },
+    {
+      "path": "C:\\git\\agent-skills\\skills\\hot-partitions-and-rebalancing\\references\\detecting-skew.md",
+      "sha256": "97C65EF39851777D5FF7B1FB92AE1EA56ED45294EC80E578420EA9EA6C21D227"
+    },
+    {
+      "path": "C:\\git\\agent-skills\\skills\\hot-partitions-and-rebalancing\\references\\repairs-and-rebalancing.md",
+      "sha256": "515DE639499269891A23B5652494484795AA01D7694F021307A8E74DAAF7B99F"
+    }
+  ],
+  "versionRationale": "One patch bump for revised published content; no pre-existing bump. Manifest remains the sole version-bearing file.",
+  "preservedCapabilities": [
+    "Logical-workload skew versus physical-owner concentration and heterogeneous capacity",
+    "Read/write/storage-hot classification, logical-operation versus retry-attempt evidence, bounded top-key sampling",
+    "Derived secondary-index bottlenecks and provider-level evidence when placement is hidden",
+    "Selective salting, deterministic retry routing, coexistence of versioned layouts and semantic trade-offs",
+    "Single write authority, commit-time fencing, snapshot/change catch-up, interruption budgets, source retention and rollback",
+    "Supported migration mechanisms rather than mandatory custom protocols",
+    "Adequate bounded-stale reads remain allowed; no stronger consistency or provider upgrade is imposed"
+  ],
+  "removedCapabilities": [],
+  "checks": [
+    {
+      "kind": "executed structural",
+      "cwd": "C:/git/agent-skills",
+      "command": "@'\nimport { readFileSync, existsSync } from 'node:fs';\nimport { resolve, dirname } from 'node:path';\nimport { parseManifest } from './packages/core/src/domain/manifest.ts';\nimport { buildSkillPackage } from './packages/core/src/domain/skill-package.ts';\nimport { validatePackage } from './packages/core/src/application/validate-package.ts';\n\nconst root = resolve('skills/hot-partitions-and-rebalancing');\nconst paths = ['SKILL.md', 'skill.yaml', 'references/detecting-skew.md', 'references/repairs-and-rebalancing.md'];\nconst parsed = parseManifest(readFileSync(resolve(root, 'skill.yaml'), 'utf8'), { strict: true });\nconst pkg = buildSkillPackage(parsed.manifest, paths.map(path => ({ path, bytes: readFileSync(resolve(root, path)) })));\nconst report = validatePackage(pkg, { directoryName: 'hot-partitions-and-rebalancing' });\nconst failures = [...parsed.issues, ...report.issues];\nconst resources = [];\nfor (const path of paths.filter(path => path.endsWith('.md'))) {\n  const source = readFileSync(resolve(root, path), 'utf8');\n  for (const match of source.matchAll(/\\]\\(([^)]+)\\)/g)) {\n    const target = match[1].replace(/^<|>$/g, '');\n    if (/^https?:/.test(target)) continue;\n    const filePart = target.split('#')[0];\n    const absolute = resolve(dirname(resolve(root, path)), filePart || path.split('/').at(-1));\n    resources.push({ from: path, target, exists: existsSync(absolute) });\n    if (!existsSync(absolute)) failures.push({ missing: target, from: path });\n  }\n  for (const match of source.matchAll(/\\x60((?:references|assets|scripts)\\/[^\\x60]+)\\x60/g)) {\n    const absolute = resolve(root, match[1].split('#')[0]);\n    resources.push({ from: path, target: match[1], exists: existsSync(absolute) });\n    if (!existsSync(absolute)) failures.push({ missing: match[1], from: path });\n  }\n}\nconst related = [...parsed.manifest.dependencies.map(item => item.name), ...parsed.manifest.suggests];\nconst missingRelated = related.filter(name => !existsSync(resolve('skills', name, 'SKILL.md')));\nif (missingRelated.length) failures.push({ missingRelated });\nconsole.log(JSON.stringify({ skill: parsed.manifest.name, version: parsed.manifest.version, files: paths.length, packageReport: report, parseIssues: parsed.issues, resources, relatedSkillsChecked: related.length, missingRelated, failures }, null, 2));\nprocess.exitCode = failures.length ? 1 : 0;\n'@ | node --input-type=module",
+      "exitCode": 0,
+      "result": "Strict four-file package validation produced no issues/warnings; seven local resource occurrences resolve; all 11 related-skill targets exist. Agent adapters and global registry range resolution were not run.",
+      "output": "{\n  \"skill\": \"hot-partitions-and-rebalancing\",\n  \"version\": \"1.3.6\",\n  \"files\": 4,\n  \"packageReport\": {\n    \"ok\": true,\n    \"issues\": [],\n    \"errors\": [],\n    \"warnings\": []\n  },\n  \"parseIssues\": [],\n  \"resources\": [\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/detecting-skew.md\",\n      \"exists\": true\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/repairs-and-rebalancing.md\",\n      \"exists\": true\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/detecting-skew.md\",\n      \"exists\": true\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/detecting-skew.md\",\n      \"exists\": true\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/repairs-and-rebalancing.md\",\n      \"exists\": true\n    },\n    {\n      \"from\": \"SKILL.md\",\n      \"target\": \"references/repairs-and-rebalancing.md\",\n      \"exists\": true\n    },\n    {\n      \"from\": \"references/repairs-and-rebalancing.md\",\n      \"target\": \"detecting-skew.md\",\n      \"exists\": true\n    }\n  ],\n  \"relatedSkillsChecked\": 11,\n  \"missingRelated\": [],\n  \"failures\": []\n}\n"
+    },
+    {
+      "kind": "executed formatting",
+      "cwd": "C:/git/agent-skills",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/hot-partitions-and-rebalancing/SKILL.md skills/hot-partitions-and-rebalancing/skill.yaml skills/hot-partitions-and-rebalancing/references/detecting-skew.md skills/hot-partitions-and-rebalancing/references/repairs-and-rebalancing.md",
+      "exitCode": 0,
+      "result": "Checking formatting...\nAll matched files use Prettier code style!\n"
+    },
+    {
+      "kind": "executed diff check",
+      "cwd": "C:/git/agent-skills",
+      "command": "git diff --check -- skills/hot-partitions-and-rebalancing",
+      "exitCode": 0,
+      "result": "No whitespace errors."
+    },
+    {
+      "kind": "read-only final attribution",
+      "cwd": "C:/git/agent-skills",
+      "command": "git diff -- skills/hot-partitions-and-rebalancing; git status --short -- skills/hot-partitions-and-rebalancing; Get-FileHash -Algorithm SHA256 for all four package files",
+      "exitCode": 0,
+      "result": "Final diff inspected; exactly the intended three files differ from the captured assignment baseline; detecting-skew.md is byte-identical."
+    }
+  ],
+  "preExistingFailures": [],
+  "introducedFailures": [],
+  "inspectionAttempts": [
+    {
+      "operation": "First read-only PowerShell hash/content inspection",
+      "result": "ParserError: piped directly after a foreach statement. No command body executed and no files changed. Corrected by assigning foreach results, then re-ran successfully."
+    },
+    {
+      "operation": "Primary-source URL https://vitess.io/docs/archive/22.0/reference/vreplication/switchtraffic/",
+      "result": "404; replaced with the official version-22 MoveTables page and its documented SwitchTraffic section. No unresolved source blocker."
+    }
+  ],
+  "technicalChecks": {
+    "javaExamples": "Existing partial Java 17 sketches are unchanged; no new Java code, compiler flags or APIs. Compilation not repeated.",
+    "providerExecution": "No provider process, migration, fault injection or production access executed.",
+    "contractReview": "Version-22 Vitess read/write traffic selection and Spanner read-type contracts verified against primary documentation; Redis GET routing served as supporting evidence only."
+  },
+  "behavioralEvaluations": {
+    "executed": [],
+    "walkthroughs": [
+      {
+        "case": "linearizable_read",
+        "classification": "structured walkthrough, not an actor run",
+        "outcome": "The source returns 'before' even though the isolated-key read begins after 'after' is acknowledged on the target. Write-side invariants do not satisfy this read contract; the plan needs read-side routing/freshness behavior and a targeted regression criterion."
+      },
+      {
+        "case": "bounded_stale_read",
+        "classification": "structured walkthrough, not an actor run",
+        "outcome": "Changing only the accepted read contract makes the 25 ms snapshot valid under a 2000 ms bound. The same policy redirects when age exceeds that bound; retain the adequate behavior while grounding the plan's justification in read freshness rather than write fencing."
+      }
+    ],
+    "measuredImprovement": false,
+    "heldOutEvaluation": false
+  },
+  "developmentCases": {
+    "instructions": "Materialize each fixture map into its own disposable directory; provide taskInputs only to the acting agent and retain evaluatorCriteria separately. These are development cases, not executed evaluations or unseen holdouts. No database, broker, build or production access is required.",
+    "taskInputs": [
+      {
+        "id": "linearizable_read",
+        "request": "Use hot-partitions-and-rebalancing to review the planned partition move from the supplied artifacts. Update migration-plan.md with a supported decision, the affected read/migration control if necessary, and focused verification criteria. Preserve adequate existing controls and the accepted application contract. Do not deploy, move data, add infrastructure or upgrade dependencies.",
+        "prerequisites": ["Access to reviewed skill", "Writable disposable fixture directory"],
+        "fixtures": {
+          "migration-plan.md": "# Partition P migration review\nThe move is approved based on matching snapshot counts/checksums and rejection of stale writes.\n1. Snapshot/catch up source and target through cut position 100.\n2. Fence source writes and activate the target at the new epoch.\n3. Retain the source for rollback investigation. Existing cached read routes may serve its certified snapshot for up to 2000 ms; afterward the proxy redirects them to the target.\n4. We consider the write fence and pre-cutover equality sufficient evidence for read correctness too.\nRetain the existing throttles, catch-up bound, write authority and idempotency controls unless evidence contradicts them.\n",
+          "fixture-contract.md": "This is an isolated synthetic provider/application contract, not a claim about a named production database. The provider supports redirecting a stale read route to the current owner. A current-owner read of the isolated test key returns the latest acknowledged value; no other writers exist in this test. The source is a frozen snapshot at cut position/time 100. The proxy has trustworthy snapshot-freshness certification, distinct from route-cache age, and enforces its 2000 ms limit before serving. A source snapshot may be used only if the application read contract permits it. Write fencing, copy/catch-up correctness, idempotency, throttles and restore evidence are already established for this fixture. No deployment or migration should be performed during this review.\n",
+          "routing-effective.json": "{\n  \"source\": \"node-A\",\n  \"target\": \"node-B\",\n  \"activeEpoch\": 12,\n  \"oldEpoch\": 11,\n  \"sourceWrites\": \"reject\",\n  \"targetWrites\": \"commit under epoch 12\",\n  \"readPath\": {\n    \"cachedOldRoute\": \"node-A\",\n    \"sourceSnapshotCut\": 100,\n    \"sourceSnapshotFreshness\": \"provider-certified snapshot age\",\n    \"serveSourceWhenAgeAtMostMs\": 2000,\n    \"onExpiredFreshness\": \"redirect to current owner\",\n    \"onUnavailableFreshnessEvidence\": \"redirect to current owner\",\n    \"routeCacheAgeIsNotUsedAsFreshness\": true\n  }\n}\n",
+          "observed-history.json": "{\n  \"provenance\": \"Complete deterministic fixture history, ordered by one harness; values are monotonic harness milliseconds, not unrelated host wall clocks.\",\n  \"isolatedKey\": \"K\",\n  \"competingWrites\": false,\n  \"events\": [\n    {\n      \"time\": 90,\n      \"event\": \"cache-route\",\n      \"client\": \"C\",\n      \"owner\": \"node-A\",\n      \"readStarted\": false\n    },\n    {\n      \"time\": 100,\n      \"event\": \"snapshot-verified\",\n      \"sourceValue\": \"before\",\n      \"targetValue\": \"before\",\n      \"sourceCut\": 100\n    },\n    {\n      \"time\": 101,\n      \"event\": \"activate-target\",\n      \"target\": \"node-B\",\n      \"epoch\": 12,\n      \"sourceWriteFence\": \"enforced\"\n    },\n    {\n      \"time\": 110,\n      \"event\": \"write-ack\",\n      \"key\": \"K\",\n      \"target\": \"node-B\",\n      \"value\": \"after\"\n    },\n    {\n      \"time\": 120,\n      \"event\": \"read-begin\",\n      \"client\": \"C\",\n      \"key\": \"K\",\n      \"route\": \"node-A\"\n    },\n    {\n      \"time\": 125,\n      \"event\": \"read-result\",\n      \"client\": \"C\",\n      \"key\": \"K\",\n      \"value\": \"before\",\n      \"sourceSnapshotAgeMs\": 25\n    },\n    {\n      \"time\": 2201,\n      \"event\": \"read-begin\",\n      \"client\": \"C\",\n      \"key\": \"K\",\n      \"route\": \"node-A\"\n    },\n    {\n      \"time\": 2202,\n      \"event\": \"source-freshness-expired\",\n      \"sourceSnapshotAgeMs\": 2102,\n      \"action\": \"redirect to node-B\"\n    },\n    {\n      \"time\": 2203,\n      \"event\": \"read-result\",\n      \"client\": \"C\",\n      \"key\": \"K\",\n      \"value\": \"after\"\n    }\n  ]\n}\n",
+          "read-contract.json": "{\n  \"mode\": \"linearizable\",\n  \"scope\": \"single-key reads outside an existing snapshot transaction\",\n  \"requirement\": \"A read beginning after an acknowledged write must observe its effect, absent a later write.\"\n}\n"
+        }
+      },
+      {
+        "id": "bounded_stale_read",
+        "request": "Use hot-partitions-and-rebalancing to review the planned partition move from the supplied artifacts. Update migration-plan.md with a supported decision, the affected read/migration control if necessary, and focused verification criteria. Preserve adequate existing controls and the accepted application contract. Do not deploy, move data, add infrastructure or upgrade dependencies.",
+        "decisiveChange": "Only read-contract.json changes: linearizability becomes an accepted certified maximum snapshot age of 2000 ms, without read-your-writes. Every other artifact and request is identical.",
+        "prerequisites": ["Access to reviewed skill", "Writable disposable fixture directory"],
+        "fixtures": {
+          "migration-plan.md": "# Partition P migration review\nThe move is approved based on matching snapshot counts/checksums and rejection of stale writes.\n1. Snapshot/catch up source and target through cut position 100.\n2. Fence source writes and activate the target at the new epoch.\n3. Retain the source for rollback investigation. Existing cached read routes may serve its certified snapshot for up to 2000 ms; afterward the proxy redirects them to the target.\n4. We consider the write fence and pre-cutover equality sufficient evidence for read correctness too.\nRetain the existing throttles, catch-up bound, write authority and idempotency controls unless evidence contradicts them.\n",
+          "fixture-contract.md": "This is an isolated synthetic provider/application contract, not a claim about a named production database. The provider supports redirecting a stale read route to the current owner. A current-owner read of the isolated test key returns the latest acknowledged value; no other writers exist in this test. The source is a frozen snapshot at cut position/time 100. The proxy has trustworthy snapshot-freshness certification, distinct from route-cache age, and enforces its 2000 ms limit before serving. A source snapshot may be used only if the application read contract permits it. Write fencing, copy/catch-up correctness, idempotency, throttles and restore evidence are already established for this fixture. No deployment or migration should be performed during this review.\n",
+          "routing-effective.json": "{\n  \"source\": \"node-A\",\n  \"target\": \"node-B\",\n  \"activeEpoch\": 12,\n  \"oldEpoch\": 11,\n  \"sourceWrites\": \"reject\",\n  \"targetWrites\": \"commit under epoch 12\",\n  \"readPath\": {\n    \"cachedOldRoute\": \"node-A\",\n    \"sourceSnapshotCut\": 100,\n    \"sourceSnapshotFreshness\": \"provider-certified snapshot age\",\n    \"serveSourceWhenAgeAtMostMs\": 2000,\n    \"onExpiredFreshness\": \"redirect to current owner\",\n    \"onUnavailableFreshnessEvidence\": \"redirect to current owner\",\n    \"routeCacheAgeIsNotUsedAsFreshness\": true\n  }\n}\n",
+          "observed-history.json": "{\n  \"provenance\": \"Complete deterministic fixture history, ordered by one harness; values are monotonic harness milliseconds, not unrelated host wall clocks.\",\n  \"isolatedKey\": \"K\",\n  \"competingWrites\": false,\n  \"events\": [\n    {\n      \"time\": 90,\n      \"event\": \"cache-route\",\n      \"client\": \"C\",\n      \"owner\": \"node-A\",\n      \"readStarted\": false\n    },\n    {\n      \"time\": 100,\n      \"event\": \"snapshot-verified\",\n      \"sourceValue\": \"before\",\n      \"targetValue\": \"before\",\n      \"sourceCut\": 100\n    },\n    {\n      \"time\": 101,\n      \"event\": \"activate-target\",\n      \"target\": \"node-B\",\n      \"epoch\": 12,\n      \"sourceWriteFence\": \"enforced\"\n    },\n    {\n      \"time\": 110,\n      \"event\": \"write-ack\",\n      \"key\": \"K\",\n      \"target\": \"node-B\",\n      \"value\": \"after\"\n    },\n    {\n      \"time\": 120,\n      \"event\": \"read-begin\",\n      \"client\": \"C\",\n      \"key\": \"K\",\n      \"route\": \"node-A\"\n    },\n    {\n      \"time\": 125,\n      \"event\": \"read-result\",\n      \"client\": \"C\",\n      \"key\": \"K\",\n      \"value\": \"before\",\n      \"sourceSnapshotAgeMs\": 25\n    },\n    {\n      \"time\": 2201,\n      \"event\": \"read-begin\",\n      \"client\": \"C\",\n      \"key\": \"K\",\n      \"route\": \"node-A\"\n    },\n    {\n      \"time\": 2202,\n      \"event\": \"source-freshness-expired\",\n      \"sourceSnapshotAgeMs\": 2102,\n      \"action\": \"redirect to node-B\"\n    },\n    {\n      \"time\": 2203,\n      \"event\": \"read-result\",\n      \"client\": \"C\",\n      \"key\": \"K\",\n      \"value\": \"after\"\n    }\n  ]\n}\n",
+          "read-contract.json": "{\n  \"mode\": \"bounded-stale\",\n  \"scope\": \"single-key reads outside an existing snapshot transaction\",\n  \"maxSnapshotAgeMs\": 2000,\n  \"readYourWritesRequired\": false,\n  \"requirement\": \"A certified snapshot no older than 2000 ms is acceptable; redirect if its freshness cannot be certified within that bound.\"\n}\n"
+        }
+      }
+    ],
+    "evaluatorCriteria": {
+      "linearizable_read": {
+        "expectedBehavior": [
+          "Inspect the actual old-route read policy and complete operation order rather than treating snapshot checks/write fencing as read proof.",
+          "Update migration-plan.md to identify the invalid read outcome at 125 after the acknowledged target change at 110 and read invocation at 120.",
+          "Propose the narrow supported read-side correction, such as redirecting to the current owner or establishing the required freshness/position; preserve write fencing, throttles, idempotency and rollback controls.",
+          "Specify a deterministic isolated-key check with no competing writes, stale cached route, target acknowledgement before read invocation, and an assertion on the returned changed value.",
+          "Keep production readiness conditional on real provider/application validation."
+        ],
+        "failureConditions": [
+          "Approve solely from matching cutover checksums or stale-write rejection.",
+          "Treat route caching at time 90 as the read invocation, thereby misclassifying the post-ack read as overlapping.",
+          "Only reduce routing TTL or add write epochs without enforcing the read contract.",
+          "Demand a database/Java upgrade or mandatory custom fencing protocol.",
+          "Leave the original incorrect plan conclusion untouched."
+        ]
+      },
+      "bounded_stale_read": {
+        "expectedBehavior": [
+          "Recognize the accepted 2000 ms snapshot contract changes the decision; the observed 25 ms old value is permitted.",
+          "Retain the adequate certified-source read policy and its expired/unknown-freshness redirect; revise the plan's reasoning to cite these read controls.",
+          "Distinguish data snapshot certification from cached-map age.",
+          "Preserve the existing write controls and specify checks for both within-bound and expired/missing freshness evidence; avoid unnecessary stronger read semantics."
+        ],
+        "failureConditions": [
+          "Apply the linearizable-case rejection unchanged despite the different accepted contract.",
+          "Force every read onto the current leader/owner without another material requirement.",
+          "Treat source retention or route-cache TTL alone as freshness proof.",
+          "Allow the expired source snapshot to serve or remove its redirect.",
+          "Claim the fixture walkthrough proves a real provider migration correct."
+        ]
+      }
+    }
+  },
+  "sources": [
+    {
+      "url": "https://vitess.io/docs/archive/22.0/reference/vreplication/movetables/",
+      "version": "Vitess 22 archived documentation",
+      "accessed": "2026-10-16",
+      "support": "SwitchTraffic selects tablet types; read lag, write catch-up and reverse replication are separately documented.",
+      "verification": "Official page opened; SwitchTraffic, lag and timeout sections read."
+    },
+    {
+      "url": "https://docs.cloud.google.com/spanner/docs/reads",
+      "version": "Managed-service documentation consulted 2026-10-16; not a pinned client API",
+      "accessed": "2026-10-16",
+      "support": "Reads observing prior committed transactions are distinct from explicitly stale reads. Supports the fixture's different accepted contracts, without transferring Spanner guarantees to another store.",
+      "verification": "Official page opened and read-type section verified."
+    },
+    {
+      "url": "https://redis.io/docs/latest/operate/oss_and_stack/reference/cluster-spec/",
+      "version": "Redis Cluster specification states baseline Redis 3.0 or greater; current document consulted 2026-10-16",
+      "accessed": "2026-10-16",
+      "support": "MOVED example redirects GET after slot ownership changes; read routing is a real migration path, not only mutation fencing.",
+      "verification": "Official specification opened; redirection section read. No Redis strong-consistency guarantee inferred and no new Redis procedure added."
+    }
+  ],
+  "assumptionsAndLimits": [
+    "Read-side refinement is source-supported; behavioral gain has not been measured.",
+    "No independent agent run, live store test, migration, timing benchmark or fault injection executed.",
+    "Synthetic case contract and history are explicit fixture inputs, not observations of Vitess, Redis or Spanner.",
+    "Existing partial Java sketches and the PromQL example were unchanged and not re-executed.",
+    "Provider/API version inspection remains mandatory on application; no universal read guarantee or custom protocol is imposed.",
+    "Local checks do not establish registry-wide dependency resolution or agent-adapter validation."
+  ],
+  "deferredChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "purpose": "Regenerate index/integrity and check cross-package constraints.",
+      "prerequisite": "All reviewers have stopped writing."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "purpose": "Repository-wide validation and version policy.",
+      "prerequisite": "Registry regenerated after all reviewers stop."
+    }
+  ],
+  "crossSkillIssues": [],
+  "coordinatorActions": [
+    "Run deferred global commands after all writers stop.",
+    "Select independent execution cases to measure behavioral effect if desired."
+  ],
+  "artifacts": {
+    "handoff": "C:/Users/robso/AppData/Local/Temp/skills-wave2-validation-Bu1zNV/hot-partitions-and-rebalancing.json",
+    "localCheckOutputs": "Embedded in this JSON",
+    "fixtureFiles": "Complete fixtures embedded under developmentCases.taskInputs"
+  }
+}

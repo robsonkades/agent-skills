@@ -1,0 +1,62 @@
+{
+  "status": "passed",
+  "originalBytesRestored": true,
+  "outcomes": [
+    {
+      "name": "approved candidate",
+      "exitCode": 0,
+      "expected": "pass",
+      "detail": {
+        "status": "passed",
+        "checks": 63,
+        "candidate": "solution.sql",
+        "node": "v25.6.1",
+        "sqlite": "3.51.2",
+        "scope": "Portable result semantics only; no PostgreSQL execution or performance measurements."
+      }
+    },
+    {
+      "name": "original proposal loses nullable-active invoices",
+      "exitCode": 1,
+      "expected": "assertion failure",
+      "detail": "AssertionError [ERR_ASSERTION]: active=null, amount=100: solution.sql\r"
+    },
+    {
+      "name": "UNION drops duplicate invoice labels",
+      "exitCode": 1,
+      "expected": "assertion failure",
+      "detail": "AssertionError [ERR_ASSERTION]: seed preserves two Acme invoices and counts overlap once: solution.sql\r"
+    },
+    {
+      "name": "unguarded UNION ALL counts overlap twice",
+      "exitCode": 1,
+      "expected": "assertion failure",
+      "detail": "AssertionError [ERR_ASSERTION]: seed preserves two Acme invoices and counts overlap once: solution.sql\r"
+    },
+    {
+      "name": "one unbound branch leaks tenants",
+      "exitCode": 1,
+      "expected": "assertion failure",
+      "detail": "AssertionError [ERR_ASSERTION]: seed other tenant: solution.sql\r"
+    },
+    {
+      "name": "reversed order violates ordering",
+      "exitCode": 1,
+      "expected": "assertion failure",
+      "detail": "AssertionError [ERR_ASSERTION]: seed preserves two Acme invoices and counts overlap once: solution.sql\r"
+    },
+    {
+      "name": "restored approved candidate",
+      "exitCode": 0,
+      "expected": "pass",
+      "detail": {
+        "status": "passed",
+        "checks": 63,
+        "candidate": "solution.sql",
+        "node": "v25.6.1",
+        "sqlite": "3.51.2",
+        "scope": "Portable result semantics only; no PostgreSQL execution or performance measurements."
+      }
+    }
+  ]
+}

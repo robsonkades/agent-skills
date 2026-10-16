@@ -1,0 +1,245 @@
+{
+  "skill": "architecture-trade-off-analysis",
+  "scope": "local metadata, hashes, links and numeric example only",
+  "node": "v25.6.1",
+  "versions": {
+    "committed": "1.2.4",
+    "assignment": "1.2.4",
+    "final": "1.2.4"
+  },
+  "initialStatus": "",
+  "finalStatus": "",
+  "filesUnchanged": true,
+  "hashes": [
+    {
+      "path": "skills/architecture-trade-off-analysis/SKILL.md",
+      "sha256": "f53d8686017e317089c10184ef2e7f31888b2e9d188b1845a3a650d283254ff0",
+      "bytes": 8682
+    },
+    {
+      "path": "skills/architecture-trade-off-analysis/references/bias-and-evidence.md",
+      "sha256": "a731d9c1cd50e931c911b9c1fff18575fbb9aa40ae6931efc138a8e1af53166a",
+      "bytes": 7650
+    },
+    {
+      "path": "skills/architecture-trade-off-analysis/references/qualitative-and-quantitative.md",
+      "sha256": "e8782a149de65eab35a6ccab46c6a72ea785ed8eb1f30ad6394095168087bf3f",
+      "bytes": 12939
+    },
+    {
+      "path": "skills/architecture-trade-off-analysis/references/validation-cases.md",
+      "sha256": "f12ee03e485033d72b5a4694e72a91d7a2e2d6d972b281eea61df672ff3930d6",
+      "bytes": 13282
+    },
+    {
+      "path": "skills/architecture-trade-off-analysis/references/worked-analysis.md",
+      "sha256": "7bbccf10a4da8d7111a2f779ffff29e66bef42c75d0b493d4acd13b1638d7f8a",
+      "bytes": 10500
+    },
+    {
+      "path": "skills/architecture-trade-off-analysis/skill.yaml",
+      "sha256": "dcc67e226a01189095c2f3893dda75c53014ae9e6bb4e5a59f56e050cc1320d2",
+      "bytes": 1620
+    }
+  ],
+  "localLinks": [
+    {
+      "file": "skills/architecture-trade-off-analysis/SKILL.md",
+      "target": "references/qualitative-and-quantitative.md",
+      "exists": true
+    },
+    {
+      "file": "skills/architecture-trade-off-analysis/SKILL.md",
+      "target": "references/worked-analysis.md",
+      "exists": true
+    },
+    {
+      "file": "skills/architecture-trade-off-analysis/SKILL.md",
+      "target": "references/bias-and-evidence.md",
+      "exists": true
+    },
+    {
+      "file": "skills/architecture-trade-off-analysis/SKILL.md",
+      "target": "references/validation-cases.md",
+      "exists": true
+    }
+  ],
+  "referrals": [
+    {
+      "name": "architecture-characteristics",
+      "exists": true
+    },
+    {
+      "name": "architecture-coupling-and-quanta",
+      "exists": true
+    },
+    {
+      "name": "architecture-decision-making",
+      "exists": true
+    },
+    {
+      "name": "architecture-fitness-functions",
+      "exists": true
+    },
+    {
+      "name": "architecture-refactoring-paths",
+      "exists": true
+    }
+  ],
+  "arithmetic": {
+    "weight": 0.6,
+    "x": 64,
+    "y": 66,
+    "tie": 0.625,
+    "range": [
+      {
+        "weight": 0.55,
+        "x": 62,
+        "y": 68
+      },
+      {
+        "weight": 0.7,
+        "x": 68,
+        "y": 62
+      }
+    ]
+  },
+  "negativeControl": {
+    "mutation": "in-memory Y=66 changed to Y=65; original skill remains untouched",
+    "exitCode": 1,
+    "diagnostic": "REJECTED: Y total differs from published result"
+  },
+  "commands": [
+    {
+      "label": "strict local manifest validation",
+      "executable": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "C:\\git\\agent-skills\\packages\\cli\\bin\\agent-skills.mjs",
+        "validate",
+        "C:\\git\\agent-skills\\skills\\architecture-trade-off-analysis",
+        "--strict",
+        "--json"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "expectedExit": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"directory\": \"C:\\\\git\\\\agent-skills\\\\skills\\\\architecture-trade-off-analysis\",\n  \"name\": \"architecture-trade-off-analysis\",\n  \"version\": \"1.2.4\",\n  \"issues\": []\n}\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "format check: explicit six owned files",
+      "executable": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "C:\\git\\agent-skills\\node_modules\\prettier\\bin\\prettier.cjs",
+        "--check",
+        "skills/architecture-trade-off-analysis/SKILL.md",
+        "skills/architecture-trade-off-analysis/references/bias-and-evidence.md",
+        "skills/architecture-trade-off-analysis/references/qualitative-and-quantitative.md",
+        "skills/architecture-trade-off-analysis/references/validation-cases.md",
+        "skills/architecture-trade-off-analysis/references/worked-analysis.md",
+        "skills/architecture-trade-off-analysis/skill.yaml"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "expectedExit": 0,
+      "stdout": "Checking formatting...\nAll matched files use Prettier code style!\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "owned diff whitespace check",
+      "executable": "git",
+      "args": [
+        "diff",
+        "--check",
+        "--",
+        "skills/architecture-trade-off-analysis"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "expectedExit": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "owned staged/unstaged/untracked status",
+      "executable": "git",
+      "args": [
+        "status",
+        "--short",
+        "--untracked-files=all",
+        "--",
+        "skills/architecture-trade-off-analysis"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "expectedExit": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "owned unstaged diff",
+      "executable": "git",
+      "args": [
+        "diff",
+        "--",
+        "skills/architecture-trade-off-analysis"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "expectedExit": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "owned staged diff",
+      "executable": "git",
+      "args": [
+        "diff",
+        "--cached",
+        "--",
+        "skills/architecture-trade-off-analysis"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "expectedExit": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "committed skill version",
+      "executable": "git",
+      "args": [
+        "show",
+        "HEAD:skills/architecture-trade-off-analysis/skill.yaml"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 0,
+      "expectedExit": 0,
+      "stdout": "schemaVersion: 1\n\nname: architecture-trade-off-analysis\nversion: 1.2.4\ndescription: >-\n  Compare architectural alternatives when quality goals conflict, a scorecard or case study\n  is being used as a verdict, options mix abstraction levels, advocates disagree, or a\n  benchmark needs a decision rule. Build comparable options, separate constraints from\n  preferences, test domain scenarios and uncertainty, and recommend a choice or a bounded\n  next step. Excludes ADR lifecycle (architecture-decision-making), quality-driver\n  elicitation (architecture-characteristics), domain pattern selection and debt repayment.\nlicense: Apache-2.0\n\nauthors:\n  - name: agent-skills contributors\n    url: https://github.com/robsonkades/agent-skills\n\nhomepage: https://github.com/robsonkades/agent-skills/tree/main/skills/architecture-trade-off-analysis\nrepository:\n  type: git\n  url: https://github.com/robsonkades/agent-skills\n  directory: skills/architecture-trade-off-analysis\n\nkeywords:\n  - architecture\n  - trade-offs\n  - decision-analysis\n  - mece\n  - coupling\n  - bias\n\nfiles:\n  - SKILL.md\n  - skill.yaml\n  - references/\n\ndependencies: []\n\nsuggests:\n  - architecture-characteristics\n  - architecture-coupling-and-quanta\n  - architecture-decision-making\n  - architecture-fitness-functions\n  - architecture-refactoring-paths\n\ncapabilities:\n  - reads-source\n\nagentOverrides:\n  codex:\n    interface:\n      display_name: Architecture Trade-off Analysis\n      short_description: Compare options, constraints, evidence and uncertainty\n      default_prompt: Use Architecture Trade-off Analysis to choose the analysis mode and run it.\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "in-memory wrong Y total rejected",
+      "executable": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave5-validation-ujPBF2\\architecture-trade-off-analysis-check\\validate-local.cjs",
+        "--negative-model"
+      ],
+      "cwd": "C:/git/agent-skills",
+      "exitCode": 1,
+      "expectedExit": 1,
+      "stdout": "",
+      "stderr": "REJECTED: Y total differs from published result\n",
+      "error": null
+    }
+  ],
+  "behavioralActorsExecuted": 0,
+  "allChildProcessesExited": true
+}

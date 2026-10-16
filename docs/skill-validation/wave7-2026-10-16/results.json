@@ -1,0 +1,597 @@
+{
+  "at": "2026-10-16T18:23:00.682Z",
+  "skill": "spring-transactions-and-events",
+  "version": "1.1.0",
+  "status": "COMPARISON_COMPLETE",
+  "conclusion": "No observed gain in these four cases: 8/8 passed with the skill and 8/8 without loading it. Ceiling results do not establish general equivalence, usefulness or uselessness.",
+  "skillDecision": {
+    "changed": false,
+    "confirmedDefect": false,
+    "versionBumped": false,
+    "reason": "No skill defect established by package review, technical research or this comparison. Evaluator gaps were corrected before actors and are preserved separately."
+  },
+  "design": {
+    "distinctCases": 4,
+    "problemFamilies": 3,
+    "conditions": 2,
+    "repetitionsPerCaseCondition": 2,
+    "attempts": 16,
+    "discardedAttempts": 0,
+    "partialMask": true,
+    "independentModel": false
+  },
+  "evidence": {
+    "rootGradesFrozen": "root-grades.frozen.json.txt",
+    "rootGradesFrozenSha256": "be7f0fc8a6129d73af96defce8b31a6280c8f90fce5532f0ff763967c2610cee",
+    "independentGrades": "review/actor-grades.json.txt",
+    "independentGradesSha256": "acd9c1ca571399dd2e460226149227bc6e5087448291406e74e2fc67049863c0",
+    "independentInputs": [
+      {
+        "path": "review/masked-outputs.json",
+        "sha256": "c1322d0fd138ecb43d84beaff5802bab5c6cd418f09f0dcb58dc49e54c83ae2c",
+        "samples": 16,
+        "uniqueSampleIds": 16
+      },
+      {
+        "path": "criteria-draft.json",
+        "sha256": "c2d6a402fda61fc53c1c04b5d918f4d6edd57759ff7d953d4c144b52e149d5d1",
+        "note": "Same final criterion content approved before freeze."
+      }
+    ],
+    "rechecks": "rechecks.json",
+    "progress": "progress.json"
+  },
+  "byCondition": {
+    "none": {
+      "attempts": 8,
+      "passed": 8,
+      "failed": 0
+    },
+    "skill": {
+      "attempts": 8,
+      "passed": 8,
+      "failed": 0
+    }
+  },
+  "byCase": {
+    "T1": {
+      "none": {
+        "attempts": 2,
+        "passed": 2,
+        "failed": 0
+      },
+      "skill": {
+        "attempts": 2,
+        "passed": 2,
+        "failed": 0
+      }
+    },
+    "T2": {
+      "none": {
+        "attempts": 2,
+        "passed": 2,
+        "failed": 0
+      },
+      "skill": {
+        "attempts": 2,
+        "passed": 2,
+        "failed": 0
+      }
+    },
+    "T3": {
+      "none": {
+        "attempts": 2,
+        "passed": 2,
+        "failed": 0
+      },
+      "skill": {
+        "attempts": 2,
+        "passed": 2,
+        "failed": 0
+      }
+    },
+    "T4": {
+      "none": {
+        "attempts": 2,
+        "passed": 2,
+        "failed": 0
+      },
+      "skill": {
+        "attempts": 2,
+        "passed": 2,
+        "failed": 0
+      }
+    }
+  },
+  "independentSemanticAgreement": {
+    "C2": 16,
+    "total": 16,
+    "disagreements": [],
+    "scope": {
+      "C1": "NOT_EVALUATED. Independent compilation, probes and artifact checks belong to the coordinator.",
+      "C2": "Technical semantic review of each REVIEW and assessment against the known cases and version-matched sources inspected during research.",
+      "C3": "Textual support and consistency only; execution claims and test code were not independently verified.",
+      "C4": "Textual scope/preservation support only; actual source diffs, hashes, protected paths and execution boundaries were not independently inspected.",
+      "decisionMeaning": "accept means no material technical inconsistency or unsupported guarantee is established by this supplied text, within the criterion's stated scope. It is not acceptance of unseen implementation artifacts or certification of actor executions."
+    }
+  },
+  "privateProbeAssertions": 324,
+  "preflight": {
+    "uniqueCommands": 38,
+    "initialCommands": 15,
+    "initialUnexpectedResults": 1,
+    "subsequentCommands": 23,
+    "subsequentUnexpectedResults": 0,
+    "note": "preflight.json and preflight-initial.json preserve the same first batch; do not count them twice."
+  },
+  "records": [
+    {
+      "run": "run-01",
+      "caseId": "T1",
+      "condition": "none",
+      "trial": 1,
+      "sampleId": "2354aa8e44",
+      "criteria": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true
+      },
+      "pass": true,
+      "independentSemanticC2": "accept",
+      "independentC3C4": "Textual support accepted; execution and bytes checked by coordinator",
+      "privateProbeAssertions": 20,
+      "actorRegressionReexecuted": true,
+      "detectsOriginalOrInvalidAlternative": true,
+      "protectedDifferences": 0,
+      "coordinatorReason": "Preserves correct mandatory receipt unit. Explains owner completion and the independent-transaction violation. Private probe passes 20; actor's eight-scenario regression rejects independent writer on actual visibility. Test-only counterexample reproduces orphan receipt. No production change; frozen bytes intact.",
+      "independentLimits": [
+        "The sold-out row's stock=0 in the table is compatible with the scenario; it is not evidence that ready stock was decremented.",
+        "Connection identity and all runtime observations are reported rather than independently observed."
+      ],
+      "auxiliaryCommandsNotReexecuted": []
+    },
+    {
+      "run": "run-02",
+      "caseId": "T1",
+      "condition": "skill",
+      "trial": 1,
+      "sampleId": "b5a735d316",
+      "criteria": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true
+      },
+      "pass": true,
+      "independentSemanticC2": "accept",
+      "independentC3C4": "Textual support accepted; execution and bytes checked by coordinator",
+      "privateProbeAssertions": 20,
+      "actorRegressionReexecuted": true,
+      "detectsOriginalOrInvalidAlternative": true,
+      "protectedDifferences": 0,
+      "coordinatorReason": "Preserves correct same-unit path and distinguishes missing receipt policy from defect. Private probe passes 20; real-bean regression rejects independent writer. Its extra wrapper control was not rerun by root; equivalent candidate/counterfactual comparison was. No production change; frozen bytes intact.",
+      "independentLimits": [
+        "The first negative assertion establishes the reported visibility violation; it does not by itself prove an orphan was observed in that run. The response does not falsely report such an orphan.",
+        "All runtime and hash claims remain unverified here."
+      ],
+      "auxiliaryCommandsNotReexecuted": [
+        {
+          "args": ["node", "../checks/blanket-requires-new.mjs"],
+          "status": "NOT_RUN",
+          "reason": "Command outside frozen project runner, not repeated by root. Its recorded evidence is preserved; root independently checks the project regression, counterfactual behavior and protected hashes."
+        }
+      ]
+    },
+    {
+      "run": "run-03",
+      "caseId": "T2",
+      "condition": "skill",
+      "trial": 1,
+      "sampleId": "27d022ae94",
+      "criteria": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true
+      },
+      "pass": true,
+      "independentSemanticC2": "accept",
+      "independentC3C4": "Textual support accepted; execution and bytes checked by coordinator",
+      "privateProbeAssertions": 21,
+      "actorRegressionReexecuted": true,
+      "detectsOriginalOrInvalidAlternative": true,
+      "protectedDifferences": 0,
+      "coordinatorReason": "Changes only listener phase and effective writer transaction. Explains post-completion callback exception handling and accepted loss. Private probe passes 21; own regression fails original phase/atomicity behavior and passes repaired state, including mixed valid/invalid receipts. Frozen bytes intact.",
+      "independentLimits": [
+        "Four observer calls and preservation of 26 original files are unverified claims.",
+        "No contradiction between expected SEVERE logs and the reported successful business result."
+      ],
+      "auxiliaryCommandsNotReexecuted": []
+    },
+    {
+      "run": "run-04",
+      "caseId": "T2",
+      "condition": "none",
+      "trial": 1,
+      "sampleId": "be672c9bc1",
+      "criteria": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true
+      },
+      "pass": true,
+      "independentSemanticC2": "accept",
+      "independentC3C4": "Textual support accepted; execution and bytes checked by coordinator",
+      "privateProbeAssertions": 21,
+      "actorRegressionReexecuted": true,
+      "detectsOriginalOrInvalidAlternative": true,
+      "protectedDifferences": 0,
+      "coordinatorReason": "Correct AFTER_COMMIT plus independent header/detail unit, preserving REQUIRED caller. Supported logging-versus-propagation explanation and scope limits. Private probe passes 21; own seven-scenario regression rejects original with state/phase failures. Frozen bytes intact.",
+      "independentLimits": [
+        "The unavailable-stock table value refers to the selected sold-out row, consistent with the scenario.",
+        "No commands, logs, actual proxy boundary or file bytes were independently checked during this semantic review."
+      ],
+      "auxiliaryCommandsNotReexecuted": []
+    },
+    {
+      "run": "run-05",
+      "caseId": "T3",
+      "condition": "none",
+      "trial": 1,
+      "sampleId": "995e91ab3c",
+      "criteria": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true
+      },
+      "pass": true,
+      "independentSemanticC2": "accept",
+      "independentC3C4": "Textual support accepted; execution and bytes checked by coordinator",
+      "privateProbeAssertions": 10,
+      "actorRegressionReexecuted": true,
+      "detectsOriginalOrInvalidAlternative": true,
+      "protectedDifferences": 0,
+      "coordinatorReason": "Qualifies ordersTx without changing primary metricsTx. Explains why active flag does not establish orders enlistment. Private probe passes 10; seven-case regression rejects original using persisted state, including notifier failure and caught metrics rollback. Frozen bytes intact.",
+      "independentLimits": [
+        "The extra nested-metrics scenario and reported UnexpectedRollbackException were not executed or inspected by this reviewer.",
+        "Initial transcript transcription and actor-authored evidence are explicitly qualified."
+      ],
+      "auxiliaryCommandsNotReexecuted": []
+    },
+    {
+      "run": "run-06",
+      "caseId": "T3",
+      "condition": "skill",
+      "trial": 1,
+      "sampleId": "f917ab7cb3",
+      "criteria": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true
+      },
+      "pass": true,
+      "independentSemanticC2": "accept",
+      "independentC3C4": "Textual support accepted; execution and bytes checked by coordinator",
+      "privateProbeAssertions": 10,
+      "actorRegressionReexecuted": true,
+      "detectsOriginalOrInvalidAlternative": true,
+      "protectedDifferences": 0,
+      "coordinatorReason": "Same narrow manager repair with correct resource/unchecked-exception diagnosis. Private probe passes 10; five-case regression rejects original stock/notifier leaks and checks metrics behavior. Auxiliary hash script not repeated; root hashes protected files. Redundant setup copy preserved outside executable project after blocked delete; no contract or dependency change.",
+      "independentLimits": [
+        "The full-read claim, copied directory placement, blocked deletion, preserved hashes and executions are actor reports only.",
+        "Reading all routed references may be more than this task needs, but the report introduces no unnecessary production recovery mechanism."
+      ],
+      "auxiliaryCommandsNotReexecuted": [
+        {
+          "args": ["node", "../checks/verify-frozen.mjs"],
+          "status": "NOT_RUN",
+          "reason": "Command outside frozen project runner, not repeated by root. Its recorded evidence is preserved; root independently checks the project regression, counterfactual behavior and protected hashes."
+        }
+      ]
+    },
+    {
+      "run": "run-07",
+      "caseId": "T4",
+      "condition": "skill",
+      "trial": 1,
+      "sampleId": "e56db53d84",
+      "criteria": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true
+      },
+      "pass": true,
+      "independentSemanticC2": "accept",
+      "independentC3C4": "Textual support accepted; execution and bytes checked by coordinator",
+      "privateProbeAssertions": 30,
+      "actorRegressionReexecuted": true,
+      "detectsOriginalOrInvalidAlternative": true,
+      "protectedDifferences": 0,
+      "coordinatorReason": "Stable event_id and unchanged receiver/checkpoint/progress order. Private probe passes 30. Root repeated prepare/recover in distinct JVMs with file-backed H2: candidate one receiver effect, original two; controls also reject original conflict bypass. Text limits orderly restart and old random-token reconciliation. Frozen bytes intact.",
+      "independentLimits": [
+        "Claims about original token/payload, separate-JVM state and frozen files were not independently verified.",
+        "No global exactly-once, hard-crash or multiworker guarantee is asserted."
+      ],
+      "auxiliaryCommandsNotReexecuted": []
+    },
+    {
+      "run": "run-08",
+      "caseId": "T4",
+      "condition": "none",
+      "trial": 1,
+      "sampleId": "88b11f6277",
+      "criteria": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true
+      },
+      "pass": true,
+      "independentSemanticC2": "accept",
+      "independentC3C4": "Textual support accepted; execution and bytes checked by coordinator",
+      "privateProbeAssertions": 30,
+      "actorRegressionReexecuted": true,
+      "detectsOriginalOrInvalidAlternative": true,
+      "protectedDifferences": 0,
+      "coordinatorReason": "Same stable identity repair; private probe passes 30. Root repeated failure/replay across distinct JVMs: candidate passes, original duplicates receiver effect. Tests also preserve publisher rollback and bounded operation. Explicitly limits physical crash/concurrency and legacy token recovery. Frozen bytes intact.",
+      "independentLimits": [
+        "No direct artifact or process evidence was inspected.",
+        "The stated normal-exit recovery remains narrower than physical-crash or concurrent-worker behavior."
+      ],
+      "auxiliaryCommandsNotReexecuted": []
+    },
+    {
+      "run": "run-09",
+      "caseId": "T1",
+      "condition": "skill",
+      "trial": 2,
+      "sampleId": "bd5d850d88",
+      "criteria": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true
+      },
+      "pass": true,
+      "independentSemanticC2": "accept",
+      "independentC3C4": "Textual support accepted; execution and bytes checked by coordinator",
+      "privateProbeAssertions": 20,
+      "actorRegressionReexecuted": true,
+      "detectsOriginalOrInvalidAlternative": true,
+      "protectedDifferences": 0,
+      "coordinatorReason": "Preserves mandatory receipt path with correct shared-resource/owner reasoning. Private probe passes 20; own eight-scenario regression rejects independent writer at real publisher-state visibility. Wrapper control not rerun; root recreated the same alternative. Frozen bytes intact.",
+      "independentLimits": [
+        "Claims of all-eight execution and byte preservation need coordinator artifact verification.",
+        "The negative variant is reported to fail on visibility, not to have completed all later assertions."
+      ],
+      "auxiliaryCommandsNotReexecuted": [
+        {
+          "args": ["node", "../checks/requires-new-control.mjs"],
+          "status": "NOT_RUN",
+          "reason": "Command outside frozen project runner, not repeated by root. Its recorded evidence is preserved; root independently checks the project regression, counterfactual behavior and protected hashes."
+        }
+      ]
+    },
+    {
+      "run": "run-10",
+      "caseId": "T1",
+      "condition": "none",
+      "trial": 2,
+      "sampleId": "219365abd0",
+      "criteria": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true
+      },
+      "pass": true,
+      "independentSemanticC2": "accept",
+      "independentC3C4": "Textual support accepted; execution and bytes checked by coordinator",
+      "privateProbeAssertions": 20,
+      "actorRegressionReexecuted": true,
+      "detectsOriginalOrInvalidAlternative": true,
+      "protectedDifferences": 0,
+      "coordinatorReason": "Preserves correct code and explains REQUIRED versus independent receipt. Private probe passes 20; eight-scenario regression rejects independent writer and checks rollback-only/late owner failure. Failed path/documentation attempts are disclosed. Frozen bytes intact.",
+      "independentLimits": [
+        "Claimed byte equality and isolated control were not inspected.",
+        "Unavailable version-specific documentation is disclosed; current documentation is not independently reverified in this grading phase."
+      ],
+      "auxiliaryCommandsNotReexecuted": [
+        {
+          "args": ["node", "../checks/requires-new-control.mjs"],
+          "status": "NOT_RUN",
+          "reason": "Command outside frozen project runner, not repeated by root. Its recorded evidence is preserved; root independently checks the project regression, counterfactual behavior and protected hashes."
+        }
+      ]
+    },
+    {
+      "run": "run-11",
+      "caseId": "T2",
+      "condition": "none",
+      "trial": 2,
+      "sampleId": "113719c2d5",
+      "criteria": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true
+      },
+      "pass": true,
+      "independentSemanticC2": "accept",
+      "independentC3C4": "Textual support accepted; execution and bytes checked by coordinator",
+      "privateProbeAssertions": 21,
+      "actorRegressionReexecuted": true,
+      "detectsOriginalOrInvalidAlternative": true,
+      "protectedDifferences": 0,
+      "coordinatorReason": "Narrow phase plus effective writer transaction repair. Private probe passes 21; seven-scenario regression rejects original with phase, partial business outcome and callback-after-rollback failures. Correct exception containment account. Redundant input copy retained outside executable project after blocked deletion; frozen bytes intact.",
+      "independentLimits": [
+        "Neither claimed logs, seven scenarios, hashes nor setup-copy location were inspected.",
+        "The report does not imply a durable recovery guarantee."
+      ],
+      "auxiliaryCommandsNotReexecuted": []
+    },
+    {
+      "run": "run-12",
+      "caseId": "T2",
+      "condition": "skill",
+      "trial": 2,
+      "sampleId": "4431e427f9",
+      "criteria": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true
+      },
+      "pass": true,
+      "independentSemanticC2": "accept",
+      "independentC3C4": "Textual support accepted; execution and bytes checked by coordinator",
+      "privateProbeAssertions": 21,
+      "actorRegressionReexecuted": true,
+      "detectsOriginalOrInvalidAlternative": true,
+      "protectedDifferences": 0,
+      "coordinatorReason": "Correct AFTER_COMMIT and independent two-write receipt unit. Private probe passes 21; regression passes candidate and rejects original with eight contract failures. Actor also retained phase-only partial-header failure. Unavailable web request disclosed without claiming source access; explanation supported by snapshot, actual wiring and execution. Frozen bytes intact.",
+      "independentLimits": [
+        "External source retrieval was cancelled and no retrieved content is claimed; this is appropriate evidence calibration.",
+        "The observed partial persistence does not establish portability across JDBC configurations."
+      ],
+      "auxiliaryCommandsNotReexecuted": []
+    },
+    {
+      "run": "run-13",
+      "caseId": "T3",
+      "condition": "skill",
+      "trial": 2,
+      "sampleId": "602dbd452f",
+      "criteria": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true
+      },
+      "pass": true,
+      "independentSemanticC2": "accept",
+      "independentC3C4": "Textual support accepted; execution and bytes checked by coordinator",
+      "privateProbeAssertions": 10,
+      "actorRegressionReexecuted": true,
+      "detectsOriginalOrInvalidAlternative": true,
+      "protectedDifferences": 0,
+      "coordinatorReason": "Qualifies ordersTx only. Accurate distinction between active metrics transaction and orders autocommit. Private probe passes 10; five-case regression rejects original three scenarios, retaining exception/cause and metrics behavior. Routed reference use excludes unnecessary event recovery. Frozen bytes intact.",
+      "independentLimits": [
+        "Reported auto-commit values and file comparisons are unverified.",
+        "Obtaining a metrics connection during an orders transaction can yield auto-commit=true; the text does not equate that diagnostic connection with a metrics business transaction."
+      ],
+      "auxiliaryCommandsNotReexecuted": []
+    },
+    {
+      "run": "run-14",
+      "caseId": "T3",
+      "condition": "none",
+      "trial": 2,
+      "sampleId": "4b2acee660",
+      "criteria": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true
+      },
+      "pass": true,
+      "independentSemanticC2": "accept",
+      "independentC3C4": "Textual support accepted; execution and bytes checked by coordinator",
+      "privateProbeAssertions": 10,
+      "actorRegressionReexecuted": true,
+      "detectsOriginalOrInvalidAlternative": true,
+      "protectedDifferences": 0,
+      "coordinatorReason": "Qualifies ordersTx while preserving metrics default and all operations. Private probe passes 10; regression rejects original stock and notifier partial state. Correct explanation of resource ownership, meaningful failure and limits. Auxiliary hash script not rerun; root independently hashes. Frozen bytes intact.",
+      "independentLimits": [
+        "The claimed notifier probe, absence of bound metrics resource after repair and hash comparisons were not inspected.",
+        "active=true alone is explicitly not used as an atomicity proof."
+      ],
+      "auxiliaryCommandsNotReexecuted": [
+        {
+          "args": ["node", "../checks/preservation.mjs"],
+          "status": "NOT_RUN",
+          "reason": "Command outside frozen project runner, not repeated by root. Its recorded evidence is preserved; root independently checks the project regression, counterfactual behavior and protected hashes."
+        }
+      ]
+    },
+    {
+      "run": "run-15",
+      "caseId": "T4",
+      "condition": "none",
+      "trial": 2,
+      "sampleId": "ce814e13c3",
+      "criteria": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true
+      },
+      "pass": true,
+      "independentSemanticC2": "accept",
+      "independentC3C4": "Textual support accepted; execution and bytes checked by coordinator",
+      "privateProbeAssertions": 30,
+      "actorRegressionReexecuted": true,
+      "detectsOriginalOrInvalidAlternative": true,
+      "protectedDifferences": 0,
+      "coordinatorReason": "Stable retained identity with unchanged replay boundaries/order. Private probe passes 30. Own regression launches separate Java processes; root repeated it and observed candidate success versus original duplicate-effect assertion in replay child. Actor's independent-connection progress observation alone would not prove ordering, but source preservation and root's in-transaction checkpoint probe cover that property. Frozen bytes intact.",
+      "independentLimits": [
+        "The phrase 'um efeito remoto' describes the transaction-external effect; the same response/assessment expressly identifies a local frozen surrogate and no external service. It is imprecise wording, not a sustained remote-provider claim.",
+        "Legacy accepted random-token reconciliation is not discussed; no explicit retroactive mapping recovery is promised."
+      ],
+      "auxiliaryCommandsNotReexecuted": [
+        {
+          "args": ["node", "../checks/verify-frozen.mjs"],
+          "status": "NOT_RUN",
+          "reason": "Command outside frozen project runner, not repeated by root. Its recorded evidence is preserved; root independently checks the project regression, counterfactual behavior and protected hashes."
+        }
+      ]
+    },
+    {
+      "run": "run-16",
+      "caseId": "T4",
+      "condition": "skill",
+      "trial": 2,
+      "sampleId": "496b6c649f",
+      "criteria": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true
+      },
+      "pass": true,
+      "independentSemanticC2": "accept",
+      "independentC3C4": "Textual support accepted; execution and bytes checked by coordinator",
+      "privateProbeAssertions": 30,
+      "actorRegressionReexecuted": true,
+      "detectsOriginalOrInvalidAlternative": true,
+      "protectedDifferences": 0,
+      "coordinatorReason": "Same stable identity repair; private probe passes 30 and own context-recreation regression rejects original duplicate effect. Separate-JVM helper inspected, but not rerun by root: its claim remains actor-recorded additional evidence, distinct from independently repeated project regression. Report correctly limits orderly restart and does not claim exactly-once delivery. Frozen bytes intact.",
+      "independentLimits": [
+        "Separate-JVM commands and file-backed state are actor claims.",
+        "The response does not discuss reconciliation of pre-fix random-token acknowledgments; it also does not explicitly promise to reconstruct their lost mapping. This is a scope caveat, not a frozen-rubric failure."
+      ],
+      "auxiliaryCommandsNotReexecuted": [
+        {
+          "args": ["node", "../checks/restart.mjs"],
+          "status": "NOT_RUN",
+          "reason": "Command outside frozen project runner, not repeated by root. Its recorded evidence is preserved; root independently checks the project regression, counterfactual behavior and protected hashes."
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "Four tasks in three families; T1/T2 differ only in their accepted contract. Two repetitions do not measure broad reliability.",
+    "All baseline attempts passed; this sample cannot reveal a positive pass-rate increment.",
+    "Explicit loading evaluates use, not automatic discovery. Actor access isolation is procedural, and journals are self-reports, not full tool traces.",
+    "Independent semantic review is a separate conversation of the inherited model. Five texts disclose exposure, three disclose absence, eight are indeterminate.",
+    "Coordinator reexecuted project regressions and private probes, not every auxiliary helper. Separate-JVM restart reexecuted for runs 07/08/15; run16 restart helper was inspected but not reexecuted.",
+    "Local Java25/Spring7.0.9/JDBC/H2 fixtures do not test Boot, JPA, Modulith, a real provider, abrupt crash, power loss or concurrent workers.",
+    "No reliable token/cost measurement or production effect. Assertion counts are not additional tasks.",
+    "Future coverage must be specified prospectively. This tie does not authorize retroactive rubric changes or a version bump."
+  ]
+}

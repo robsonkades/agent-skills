@@ -1,0 +1,104 @@
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\code-cache-segments/SKILL.md" "b/C:\\git\\agent-skills\\skills\\code-cache-segments/SKILL.md"
+index 77e34d4..c12b425 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\code-cache-segments/SKILL.md"
++++ "b/C:\\git\\agent-skills\\skills\\code-cache-segments/SKILL.md"
+@@ -120,6 +120,8 @@ JFR or source access is unavailable, state the gap and keep the diagnosis condit
+   JVM can never compact code.
+ - `jcmd Compiler.codecache` reports total `free` per heap, not its distribution.
+   `Compiler.CodeHeap_Analytics` lists reclaimed free blocks — run `aggregate`, then `FreeSpace`.
++  On tested 25.0.3+9, repeat `aggregate` before each `FreeSpace`: printing mutates the saved
++  free-block lengths, so repeated output can overstate contiguous space. See the diagnosis reference.
+   Its largest listed block excludes unused tail space and possible heap expansion; compare
+   those and applicable fallback heaps before attributing an allocation failure to fragmentation.
+ - External fragmentation grows with allocate/free/reallocate cycles, not with raw volume. Frequent
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\code-cache-segments/references/diagnosing-exhaustion.md" "b/C:\\git\\agent-skills\\skills\\code-cache-segments/references/diagnosing-exhaustion.md"
+index 9a664df..f56cea2 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\code-cache-segments/references/diagnosing-exhaustion.md"
++++ "b/C:\\git\\agent-skills\\skills\\code-cache-segments/references/diagnosing-exhaustion.md"
+@@ -50,7 +50,7 @@ the GC log, and no warning at all).
+ | CPU up, no load change, dashboard "Code Cache" at ~70%                                                                            | Cache pressure is one possibility; ordinary compilation, GC or application work may explain CPU      | Per-heap trends, stop/restart deltas and CPU attribution; a healthy cache redirects diagnosis                            |
+ | Per-heap `used` oscillating by tens of MB with the compiler never disabled                                                        | Possible cold-code flushing/recompilation or class unloading churn                                   | Cold-code/unloading logs, class lifecycle and compilation rate; `jdk.JITRestart` is not expected without a compiler stop |
+ | `java.lang.OutOfMemoryError: Out of space in CodeCache for adapters` in an application thread                                     | Adapter allocation failed through all available fallback heaps                                       | Every heap, contiguous capacity, `adapters=` count and compiler-buffer demand                                            |
+-| `… Out of space in CodeCache for method handle intrinsic`                                                                         | Same heap, minted by `MethodHandle` / `invokedynamic` traffic (`systemDictionary.cpp`)               | Same; count of `LambdaForm` / `Invokers` blobs in `Compiler.CodeHeap_Analytics MethodNames`                              |
++| `… Out of space in CodeCache for method handle intrinsic`                                                                         | Same heap, minted by `MethodHandle` / `invokedynamic` traffic (`systemDictionary.cpp`)               | Same; inspect compiled `LambdaForm` / `Invokers` entries with `Compiler.codelist`; validate analytics name coverage      |
+ | `Compilation: disabled` for minutes, `restarted_count=0`                                                                          | Recoverable stop without reclamation, disabled flushing/unloading, or permanent compiler shutdown    | `jcmd <pid> VM.flags -all`, including `UseCompiler`; preceding errors, analytics, unloading logs and later samples       |
+ | Long-running service degrades, cache "not full", `free` in the tens of MB                                                         | Fragmentation may prevent an allocation from fitting; non-cache causes also remain possible          | Failure reason/size, free blocks plus unused tail, expansion and fallback; CPU evidence for the service regression       |
+ | Allocation failing only for one large method                                                                                      | Same, or its generated nmethod is larger than any available block                                    | `jdk.CompilationFailure`, compiler logs, and analytics; `PrintCompilation` shows bytecode size, not nmethod size         |
+@@ -99,7 +99,7 @@ jcmd <pid> help Compiler.CodeHeap_Analytics
+ #            MethodNames, discard  (STRING, default "all")
+ # granularity : smaller value -> more detail (INT, default 4096)
+ 
+-jcmd <pid> Compiler.CodeHeap_Analytics aggregate     # take the snapshot (holds the lock)
++jcmd <pid> Compiler.CodeHeap_Analytics aggregate     # fresh snapshot before each FreeSpace
+ jcmd <pid> Compiler.CodeHeap_Analytics FreeSpace     # print from the snapshot
+ jcmd <pid> Compiler.CodeHeap_Analytics discard       # release the C-heap the snapshot uses
+ ```
+@@ -107,9 +107,26 @@ jcmd <pid> Compiler.CodeHeap_Analytics discard       # release the C-heap the sn
+ Print functions normally need a prior `aggregate` in the same JVM, otherwise they
+ answer `No aggregated data available for heap … Run function aggregate first.` `FreeSpace`
+ can also print this message after a successful aggregation when a heap has no reclaimed
+-free-list blocks; it does not establish zero allocatable space. `all` does
+-both and prints everything — 1,500+ lines for an idle JVM, far more for a loaded one; redirect
+-it to a file.
++free-list blocks; it does not establish zero allocatable space. `all` aggregates, prints all
++sections and discards the snapshot. It holds the compilation/code-cache locks through printing
++on 25.0.3+9; its output can exceed 1,500 lines even on an idle JVM. Capture it to a file only
++when that detail is needed. A later print command needs a new aggregation.
++
++On 25.0.3+9, standalone `MethodNames` is listed in help but only prints a refusal, even with
++exit status zero: it is available only inside `all`. Verify actual name entries before counting
++them. In an owned capture, `all` emitted name-section headers but omitted known live nmethods
++that `Compiler.codelist` did list; an empty section did not prove their absence.
++Use `jcmd <pid> Compiler.codelist` when the question concerns alive compiled methods. Its scope
++does not include every runtime stub/adapter or methods that were never compiled.
++
++On tested Temurin 25.0.3+9, `FreeSpace` is not a repeatable read of an unchanged snapshot.
++`CodeHeapState::print_freeSpace` overwrites saved free-block lengths while calculating the
++Free-Occupied-Free triples. A second `FreeSpace` without a fresh `aggregate` can therefore
++report hypothetical coalesced space as already free. This changes the diagnostic data, not
++the live allocator's blocks. Preserve the first output and command order; run `aggregate`
++again before another `FreeSpace`. Timestamp the
++aggregation when relating blocks to a failure; repeated printing alone establishes neither
++reclamation nor a larger allocatable block. Recheck this implementation detail on another build.
+ 
+ What each section gives, per heap:
+ 
+@@ -133,8 +150,9 @@ What each section gives, per heap:
+   or execution frequency. Young code can be normal warm-up or first-time compilation; old
+   code can be retained but cold. Establish churn from repeated method identities and
+   replacement/unloading over time, and establish a hot working set with execution evidence.
+-- **Method names** — every nmethod with its tier and state, for counting `LambdaForm`,
+-  proxy, or generated-class methods when class generation is the suspected factory.
++- **Method names** — names, tiers and states for the nmethods actually reported. Check the
++  dispatch and coverage limits above before using this section to count `LambdaForm`, proxy
++  or generated-class methods; a header alone is not a usable inventory.
+ 
+ The same report prints automatically at exit, and on the first full condition per heap, with
+ `-XX:+UnlockDiagnosticVMOptions -XX:+PrintCodeHeapAnalytics`.
+@@ -336,10 +354,10 @@ whether a diagnosis follows from the available evidence.
+ 
+ - [JEP 197: Segmented Code Cache](https://openjdk.org/jeps/197)
+ - [JDK 25 `java` launcher: advanced JIT and CodeHeap Analytics options](https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html)
++- [JDK 25 `jcmd`: `Compiler.codelist` scope and analytics commands](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)
+ - [JDK 25.0.3+9 HotSpot `codeCache.cpp`: allocation and restart attempts](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/code/codeCache.cpp)
+-- [JDK 25 HotSpot `codeHeapState.cpp`](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/code/codeHeapState.cpp)
++- [JDK 25.0.3+9 `codeHeapState.cpp`: snapshot mutation and compilation-ID ages](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/code/codeHeapState.cpp)
+ - [JDK 25 HotSpot `heap.cpp`: free-list and tail allocation](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/memory/heap.cpp)
+-- [JDK 25.0.3+9 HotSpot `compileBroker.cpp`: shutdown and statistics accounting](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/compiler/compileBroker.cpp)
++- [JDK 25.0.3+9 HotSpot `compileBroker.cpp`: diagnostic dispatch, shutdown and statistics](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/compiler/compileBroker.cpp)
+ - [JDK 25.0.3+9 `profile.jfc`: event thresholds and enablement](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/jdk.jfr/share/conf/jfr/profile.jfc)
+ - [JDK 25.0.3+9 `default.jfc`: different compilation coverage](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/jdk.jfr/share/conf/jfr/default.jfc)
+-- [JDK 25.0.3+9 `codeHeapState.cpp`: `print_age` uses compilation IDs](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/code/codeHeapState.cpp)
+diff --git "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\code-cache-segments/skill.yaml" "b/C:\\git\\agent-skills\\skills\\code-cache-segments/skill.yaml"
+index b8a7578..73e700e 100644
+--- "a/C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\baseline\\code-cache-segments/skill.yaml"
++++ "b/C:\\git\\agent-skills\\skills\\code-cache-segments/skill.yaml"
+@@ -1,7 +1,7 @@
+ schemaVersion: 1
+ 
+ name: code-cache-segments
+-version: 2.1.4
++version: 2.1.5
+ description: >-
+   The JDK 17-25 segmented code cache, GC-driven unloading, fragmentation, segment sizing,
+   and jcmd Compiler.codecache/CodeHeap_Analytics. Use when aggregate usage looks healthy but

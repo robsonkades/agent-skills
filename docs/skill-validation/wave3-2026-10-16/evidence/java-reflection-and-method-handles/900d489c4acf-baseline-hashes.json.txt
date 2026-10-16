@@ -1,0 +1,22 @@
+[
+  {
+    "path": "SKILL.md",
+    "sha256": "3B5C258058AC4D490019710CC507A196C9FBF634E43AB789E2E0B36C52C6C2EF"
+  },
+  {
+    "path": "skill.yaml",
+    "sha256": "4DB63775E3A2A189CB945CA6DC3A283B2350D44FE19A6B5C4CE0FB3C338957FB"
+  },
+  {
+    "path": "references/method-handles-and-encapsulation.md",
+    "sha256": "E73361E02F66F7C81DE846C386D45DC51336ABE9B5AA14342B0FE4A3C1B85885"
+  },
+  {
+    "path": "references/reflection-cost-model.md",
+    "sha256": "FE8A5158BF22892E5C00BF81D3FA352D83B2500F769BD4708A30E2F9D7F4E5B5"
+  },
+  {
+    "path": "references/when-reflection-is-justified.md",
+    "sha256": "C52E118E40001469D3C52AF320D1D375E608C3763B5FF7961B38A0E6C40F3D3A"
+  }
+]

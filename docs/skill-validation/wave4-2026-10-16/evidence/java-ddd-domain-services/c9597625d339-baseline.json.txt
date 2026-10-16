@@ -1,0 +1,21 @@
+{
+  "skill": "java-ddd-domain-services",
+  "committedVersion": "1.0.0",
+  "assignmentVersion": "1.0.0",
+  "coordinatorBaseline": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave4-validation-Ceekn9\\baseline\\java-ddd-domain-services",
+  "preExistingChanges": [],
+  "files": [
+    {
+      "path": "SKILL.md",
+      "sha256": "929ce9de133dfdffbc80ce1221c318a6906021a52309c9dab7455aff5a9438ff"
+    },
+    {
+      "path": "references/policy-and-factory-contracts.md",
+      "sha256": "2aab99d20b6d00e7ef7093133a8446edd1389de4efd40b83cf060874ff7c9fc4"
+    },
+    {
+      "path": "skill.yaml",
+      "sha256": "86fd02d90f9f486bc60971ef6305e4f734d6e59a0f8f4be0589ceb08817710c3"
+    }
+  ]
+}

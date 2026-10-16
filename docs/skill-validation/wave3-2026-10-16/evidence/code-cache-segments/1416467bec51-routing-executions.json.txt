@@ -1,0 +1,85 @@
+[
+  {
+    "id": "routing-help",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\jcmd.exe",
+    "arguments": [
+      "40456",
+      "help",
+      "Compiler.CodeHeap_Analytics"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\code-cache-segments\\",
+    "status": 0,
+    "error": null,
+    "stdout": "routing-help.stdout.log",
+    "stderr": "routing-help.stderr.log"
+  },
+  {
+    "id": "routing-aggregate",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\jcmd.exe",
+    "arguments": [
+      "40456",
+      "Compiler.CodeHeap_Analytics",
+      "aggregate"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\code-cache-segments\\",
+    "status": 0,
+    "error": null,
+    "stdout": "routing-aggregate.stdout.log",
+    "stderr": "routing-aggregate.stderr.log"
+  },
+  {
+    "id": "routing-methodnames",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\jcmd.exe",
+    "arguments": [
+      "40456",
+      "Compiler.CodeHeap_Analytics",
+      "MethodNames"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\code-cache-segments\\",
+    "status": 0,
+    "error": null,
+    "stdout": "routing-methodnames.stdout.log",
+    "stderr": "routing-methodnames.stderr.log"
+  },
+  {
+    "id": "routing-all",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\jcmd.exe",
+    "arguments": [
+      "40456",
+      "Compiler.CodeHeap_Analytics",
+      "all"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\code-cache-segments\\",
+    "status": 0,
+    "error": null,
+    "stdout": "routing-all.stdout.log",
+    "stderr": "routing-all.stderr.log"
+  },
+  {
+    "id": "routing-codelist",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\jcmd.exe",
+    "arguments": [
+      "40456",
+      "Compiler.codelist"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\code-cache-segments\\",
+    "status": 0,
+    "error": null,
+    "stdout": "routing-codelist.stdout.log",
+    "stderr": "routing-codelist.stderr.log"
+  },
+  {
+    "id": "routing-after-all",
+    "executable": "C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\jcmd.exe",
+    "arguments": [
+      "40456",
+      "Compiler.CodeHeap_Analytics",
+      "FreeSpace"
+    ],
+    "cwd": "C:\\Users\\robso\\AppData\\Local\\Temp\\skills-wave3-validation-wyg7TL\\code-cache-segments\\",
+    "status": 0,
+    "error": null,
+    "stdout": "routing-after-all.stdout.log",
+    "stderr": "routing-after-all.stderr.log"
+  }
+]

@@ -1,0 +1,208 @@
+{
+  "schemaVersion": 1,
+  "skill": "change-data-capture-operations",
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "reportKind": "Retrospective handoff; records work already executed and cases already sent to coordinator. Not an independent behavioral evaluation.",
+  "ownedPath": "skills/change-data-capture-operations",
+  "allWritesStopped": true,
+  "baseline": {
+    "head": "bbb7d996a929e81baf735bbaab5b6e3fbf6e8503",
+    "committedVersion": "1.0.1",
+    "assignmentVersion": "1.0.1",
+    "preExistingChanges": [],
+    "allFiveHashesMatchedCoordinatorBaseline": true
+  },
+  "finalVersion": "1.0.2",
+  "versionRationale": "One unpublished patch bump for focused behavioral guidance; no repeated bump.",
+  "changedFiles": [
+    "skills/change-data-capture-operations/SKILL.md",
+    "skills/change-data-capture-operations/references/postgresql-continuity.md",
+    "skills/change-data-capture-operations/skill.yaml"
+  ],
+  "findings": [
+    {
+      "location": "SKILL.md: Verify what reaches the sink",
+      "problem": "Existing guidance checks row deletes/key changes but omits maintenance TRUNCATE.",
+      "consequence": "A passing row-delete check can be incorrectly reused for a table reset, leaving sink rows stale while capture appears healthy.",
+      "correction": "Route actual table-reset operations to PostgreSQL continuity before reusing delete evidence."
+    },
+    {
+      "location": "references/postgresql-continuity.md: A table truncate is not a row-delete stream",
+      "problem": "No procedure connected publication flags, skipped.operations, null-key op=t and sink/table-wide ordering.",
+      "correction": "Follow source statement through pubtruncate, effective filtering, raw event, topic/transforms and actual sink; distinguish capture enablement from sink handling. Use controlled ordering or reconciliation, preserving old-record safeguards and explicit source-operation semantics."
+    }
+  ],
+  "preservedCapabilities": [
+    "Snapshot lifecycle and incremental-snapshot guards",
+    "PostgreSQL retention and failover continuity",
+    "MySQL binlog and schema-history recovery",
+    "TOAST and replica identity constraints",
+    "Source offsets/slot preservation",
+    "Diagnosis versus authorized recovery boundary",
+    "No automatic source/runtime upgrade",
+    "Scope exclusions and specialist handoffs"
+  ],
+  "removedCapabilities": [],
+  "checks": [
+    {
+      "command": "Inline Node --input-type=module script importing existing parseManifest(strict:true), buildSkillPackage and validatePackage",
+      "cwd": "C:/git/agent-skills",
+      "executed": true,
+      "result": "Five files validated; zero manifest/package issues, errors or warnings; version asserted 1.0.2."
+    },
+    {
+      "command": "Inline Node link and routing assertions against the owned package",
+      "cwd": "C:/git/agent-skills",
+      "executed": true,
+      "result": "Four relative links resolve; all three references routed."
+    },
+    {
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/change-data-capture-operations/SKILL.md skills/change-data-capture-operations/references/postgresql-continuity.md skills/change-data-capture-operations/skill.yaml",
+      "cwd": "C:/git/agent-skills",
+      "executed": true,
+      "result": "All matched files use Prettier code style."
+    },
+    {
+      "command": "git diff --check -- skills/change-data-capture-operations",
+      "cwd": "C:/git/agent-skills",
+      "executed": true,
+      "result": "No whitespace errors."
+    },
+    {
+      "command": "git diff/status and assignment-time file hash/content comparison",
+      "cwd": "C:/git/agent-skills",
+      "executed": true,
+      "result": "Only the three listed files changed; MySQL and snapshot references unchanged."
+    }
+  ],
+  "technicalValidation": {
+    "newExecutableExamples": false,
+    "javaCompilation": "Not applicable: no Java examples added or changed.",
+    "databaseOrKafkaIntegration": "Not executed; no systems contacted.",
+    "sourceLookupNote": "One web find request stalled and was terminated; the same facts were subsequently verified via versioned document opens. No unresolved source-access blocker."
+  },
+  "behavioralEvaluation": {
+    "executed": false,
+    "measuredImprovement": false,
+    "walkthroughs": [
+      "DELETE versus TRUNCATE with otherwise identical deployment artifacts",
+      "Skipped truncate cannot be repaired solely by enabling capture or an empty resnapshot",
+      "Late pre-truncate record across partitions needs explicit ordering/reconciliation"
+    ],
+    "casesClassification": "Development cases written after edits; not unseen holdouts."
+  },
+  "sources": [
+    {
+      "url": "https://github.com/debezium/debezium/blob/v3.3.2.Final/documentation/modules/ROOT/pages/connectors/postgresql.adoc#truncate-events",
+      "version": "Debezium 3.3.2.Final",
+      "supports": [
+        "op=t/null-key representation",
+        "skipped.operations default t",
+        "cross-partition ordering limitation"
+      ]
+    },
+    {
+      "url": "https://www.postgresql.org/docs/17/catalog-pg-publication.html",
+      "version": "PostgreSQL 17",
+      "supports": ["pubtruncate independent publication flag"]
+    },
+    {
+      "url": "https://www.postgresql.org/docs/17/sql-truncate.html",
+      "version": "PostgreSQL 17",
+      "supports": [
+        "TRUNCATE/DELETE locking and trigger differences; source operation change is not transparent"
+      ]
+    }
+  ],
+  "limitations": [
+    "Structural checks do not measure agent effectiveness.",
+    "No full CDC runtime or SQL execution performed.",
+    "Two proposed cases are development material, not holdouts.",
+    "No repository-wide verification run by reviewer."
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "prerequisite": "All reviewers stop writing."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "prerequisite": "Registry regenerated and shared working tree stable."
+    }
+  ],
+  "crossSkillIssues": [],
+  "cases": [
+    {
+      "id": "cdc-maintenance-delete",
+      "actorInput": {
+        "task": "Review the staged cleanup operation against this deployment's CDC path. Read the project evidence and update REVIEW.md with supported findings, the next discriminating check and any required recovery/rollout condition. Do not execute SQL, restart services or modify connector settings.",
+        "files": {
+          "deployment.md": "PostgreSQL 17; Debezium 3.3.2.Final in Kafka Connect distributed; pgoutput. Current-state sink; every intermediate transition is not required. Captured public.orders has primary key id. Connector/slot health normal. No known missing WAL range. Upstream writes pause during maintenance; catch-up completes before writes resume. Source and sink must converge on the new key set. Old source rows are ids 10 and 20.",
+          "connector.json": "{\n  \"connector.class\": \"io.debezium.connector.postgresql.PostgresConnector\",\n  \"plugin.name\": \"pgoutput\",\n  \"slot.name\": \"orders_cdc\",\n  \"publication.name\": \"orders_pub\",\n  \"table.include.list\": \"public.orders\",\n  \"skipped.operations\": \"t\",\n  \"snapshot.mode\": \"initial\"\n}",
+          "publication.json": "{\n  \"pubname\": \"orders_pub\",\n  \"pubinsert\": true,\n  \"pubupdate\": true,\n  \"pubdelete\": true,\n  \"pubtruncate\": true,\n  \"tables\": [\n    \"public.orders\"\n  ]\n}",
+          "topic.json": "{\n  \"name\": \"orders.public.orders\",\n  \"partitions\": 4,\n  \"cleanup.policy\": \"delete\"\n}",
+          "sink-handler.js": "export function apply(store, key, value) { if (key == null || value == null) return; if (value.op === 'd') store.delete(key.id); else if (value.op === 'c' || value.op === 'u' || value.op === 'r') store.set(key.id, value.after); }\n",
+          "validation.md": "Existing validation for the same deployed versions: inserted key 10, consumed its create, deleted key 10, observed a keyed op=d event and durable removal from the sink. No table-reset operation was included. The proposed maintenance script has not been executed.",
+          "runbook.md": "Apply maintenance.sql, wait for the sink to catch up, then resume writes. Draft assertion: current delete verification covers cleanup. An old troubleshooting note suggests resetting connector offsets if sink keys remain.",
+          "maintenance.sql": "BEGIN; DELETE FROM public.orders; INSERT INTO public.orders(id) VALUES (901); COMMIT;\n"
+        }
+      },
+      "evaluatorOnly": {
+        "expected": [
+          "Update REVIEW.md with exact evidence locations and preserve unknowns.",
+          "Respect findings-only authorization; do not execute source statements or mutate services/settings.",
+          "Final-state checks observe ids 10 and 20 absent and id 901 present after catch-up; planned checks are not reported executed.",
+          "Follow actual DELETE to pubdelete, skip configuration and keyed delete handler; preserve relevant prior row-delete evidence.",
+          "Do not invent a truncate/null-key defect or require connector reset/repartition.",
+          "A prior smoke check does not establish all bulk-load/catch-up behavior."
+        ],
+        "failureConditions": [
+          "Destructive offset reset recommended as a routine fix.",
+          "Source statements executed or connector configuration changed.",
+          "Test execution or guaranteed end-to-end ordering fabricated.",
+          "Empty snapshot alone treated as removal of stale sink keys.",
+          "Existing DELETE behavior incorrectly diagnosed as a truncate event."
+        ]
+      }
+    },
+    {
+      "id": "cdc-maintenance-truncate",
+      "changedConstraint": "Only maintenance.sql replaces DELETE with TRUNCATE; all other artifacts are identical.",
+      "actorInput": {
+        "task": "Review the staged cleanup operation against this deployment's CDC path. Read the project evidence and update REVIEW.md with supported findings, the next discriminating check and any required recovery/rollout condition. Do not execute SQL, restart services or modify connector settings.",
+        "files": {
+          "deployment.md": "PostgreSQL 17; Debezium 3.3.2.Final in Kafka Connect distributed; pgoutput. Current-state sink; every intermediate transition is not required. Captured public.orders has primary key id. Connector/slot health normal. No known missing WAL range. Upstream writes pause during maintenance; catch-up completes before writes resume. Source and sink must converge on the new key set. Old source rows are ids 10 and 20.",
+          "connector.json": "{\n  \"connector.class\": \"io.debezium.connector.postgresql.PostgresConnector\",\n  \"plugin.name\": \"pgoutput\",\n  \"slot.name\": \"orders_cdc\",\n  \"publication.name\": \"orders_pub\",\n  \"table.include.list\": \"public.orders\",\n  \"skipped.operations\": \"t\",\n  \"snapshot.mode\": \"initial\"\n}",
+          "publication.json": "{\n  \"pubname\": \"orders_pub\",\n  \"pubinsert\": true,\n  \"pubupdate\": true,\n  \"pubdelete\": true,\n  \"pubtruncate\": true,\n  \"tables\": [\n    \"public.orders\"\n  ]\n}",
+          "topic.json": "{\n  \"name\": \"orders.public.orders\",\n  \"partitions\": 4,\n  \"cleanup.policy\": \"delete\"\n}",
+          "sink-handler.js": "export function apply(store, key, value) { if (key == null || value == null) return; if (value.op === 'd') store.delete(key.id); else if (value.op === 'c' || value.op === 'u' || value.op === 'r') store.set(key.id, value.after); }\n",
+          "validation.md": "Existing validation for the same deployed versions: inserted key 10, consumed its create, deleted key 10, observed a keyed op=d event and durable removal from the sink. No table-reset operation was included. The proposed maintenance script has not been executed.",
+          "runbook.md": "Apply maintenance.sql, wait for the sink to catch up, then resume writes. Draft assertion: current delete verification covers cleanup. An old troubleshooting note suggests resetting connector offsets if sink keys remain.",
+          "maintenance.sql": "BEGIN; TRUNCATE public.orders; INSERT INTO public.orders(id) VALUES (901); COMMIT;\n"
+        }
+      },
+      "evaluatorOnly": {
+        "expected": [
+          "Update REVIEW.md with exact evidence locations and preserve unknowns.",
+          "Respect findings-only authorization; do not execute source statements or mutate services/settings.",
+          "Final-state checks observe ids 10 and 20 absent and id 901 present after catch-up; planned checks are not reported executed.",
+          "Identify changed operation: effective skipped.operations=t excludes truncate despite pubtruncate=true; row-delete validation is insufficient.",
+          "Even enabling capture is insufficient: op=t has null key, deployed handler ignores it, and four partitions provide no table-wide row/truncate ordering guarantee.",
+          "Require an accepted source/sink strategy and ordering check or controlled reconciliation that accounts for old in-flight records.",
+          "Do not prescribe switching to DELETE without considering source semantics and load."
+        ],
+        "failureConditions": [
+          "Destructive offset reset recommended as a routine fix.",
+          "Source statements executed or connector configuration changed.",
+          "Test execution or guaranteed end-to-end ordering fabricated.",
+          "Empty snapshot alone treated as removal of stale sink keys.",
+          "Blanket approval based on existing row-delete test or connector health.",
+          "Per-row tombstones invented for TRUNCATE.",
+          "Capture configuration enablement described as complete sink repair."
+        ]
+      }
+    }
+  ]
+}

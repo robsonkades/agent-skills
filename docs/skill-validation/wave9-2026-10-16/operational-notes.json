@@ -1,0 +1,19 @@
+{
+  "provenance": "Coordinator notes from tool responses; not a raw terminal log",
+  "events": [
+    {
+      "command": "node C:/Users/robso/AppData/Local/Temp/skills-wave9-93d1c7a4/finalize-evidence.mjs format",
+      "firstExit": 1,
+      "error": "ERR_UNSUPPORTED_ESM_URL_SCHEME: Received protocol 'c:'",
+      "cause": "Auxiliary finalization script imported Prettier using a Windows drive path as an ESM specifier.",
+      "correction": "Changed that auxiliary import to file:///C:/git/agent-skills/node_modules/prettier/index.mjs.",
+      "rerunExit": 0,
+      "impact": "Module loading failed before formatting writes. No skill, frozen evaluator, actor result or global verification result changed. The helper is archived in its corrected form."
+    },
+    {
+      "operation": "Read frozen/cases/R4/REQUEST.md",
+      "result": "Path did not exist; the archived layout is cases/R4/input/REQUEST.md. The actual R4 request was read from the actor's immutable input/project/REQUEST.md.",
+      "impact": "Read-only path mistake; no validation depended on this failed read."
+    }
+  ]
+}

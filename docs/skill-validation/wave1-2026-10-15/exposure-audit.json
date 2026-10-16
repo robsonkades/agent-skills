@@ -1,0 +1,384 @@
+{
+  "auditedAt": "2026-10-16T01:06:50.631Z",
+  "method": "Checks actor-declared filesRead and exposure, not an enforced filesystem or independent full tool-trace audit. Word counts split on whitespace.",
+  "frozenInputsAndCriteriaMatch": true,
+  "results": [
+    {
+      "skill": "clean-delivery-workflow",
+      "outputSha256": "33a9b12d791f2bd16fe72302d1adfc8bfebcce9439e9178011d4e255a6bb8dc4",
+      "declaredReads": 4,
+      "declaredReadsOutsideAllowlist": [],
+      "unexpectedExposure": [],
+      "whitespaceDelimitedWordCount": {
+        "A": 208,
+        "B": 223
+      },
+      "wordLimit": 220,
+      "wordLimitExceeded": true
+    },
+    {
+      "skill": "code-review",
+      "outputSha256": "db0bf4dcf3b577f399b4d542835d09ebf570285c778bc37b36a11511fc856ba1",
+      "declaredReads": 5,
+      "declaredReadsOutsideAllowlist": [],
+      "unexpectedExposure": [],
+      "whitespaceDelimitedWordCount": {
+        "A": 146,
+        "B": 152
+      },
+      "wordLimit": 220,
+      "wordLimitExceeded": false
+    },
+    {
+      "skill": "coding-agent-discipline",
+      "outputSha256": "10f68463d2b8439cd8feff68679018cbe1bc53902c272ad71b4d6939f4fb5e56",
+      "declaredReads": 5,
+      "declaredReadsOutsideAllowlist": [],
+      "unexpectedExposure": [],
+      "whitespaceDelimitedWordCount": {
+        "A": 171,
+        "B": 197
+      },
+      "wordLimit": 220,
+      "wordLimitExceeded": false
+    },
+    {
+      "skill": "collaborative-feature-definition",
+      "outputSha256": "f4beb84d09d39b6ab828525143bfc92f537c354beaa880c73aeaac4f4587940b",
+      "declaredReads": 5,
+      "declaredReadsOutsideAllowlist": [],
+      "unexpectedExposure": [],
+      "whitespaceDelimitedWordCount": {
+        "A": 187,
+        "B": 204
+      },
+      "wordLimit": 220,
+      "wordLimitExceeded": false
+    },
+    {
+      "skill": "engineering-communication",
+      "outputSha256": "c0004fc6edc5d23dfd73b6b8b1d5c07ea4b3c6f0dbf147ae830bd60e2ecfd908",
+      "declaredReads": 5,
+      "declaredReadsOutsideAllowlist": [],
+      "unexpectedExposure": [],
+      "whitespaceDelimitedWordCount": {
+        "A": 71,
+        "B": 88
+      },
+      "wordLimit": 100,
+      "wordLimitExceeded": false
+    },
+    {
+      "skill": "estimation-under-uncertainty",
+      "outputSha256": "d917b48f014b6a9a40ac0d7e06c1662aed45ca058aa253b6c7331d397614d4d8",
+      "declaredReads": 4,
+      "declaredReadsOutsideAllowlist": [],
+      "unexpectedExposure": [],
+      "whitespaceDelimitedWordCount": {
+        "A": 210,
+        "B": 211
+      },
+      "wordLimit": 220,
+      "wordLimitExceeded": false
+    },
+    {
+      "skill": "feature-architecture-analysis",
+      "outputSha256": "88b525706c460b085a31d37f87ca5105e4cf2c285cba77d84994413e4d7dfbcb",
+      "declaredReads": 4,
+      "declaredReadsOutsideAllowlist": [],
+      "unexpectedExposure": [],
+      "whitespaceDelimitedWordCount": {
+        "A": 202,
+        "B": 207
+      },
+      "wordLimit": 220,
+      "wordLimitExceeded": false
+    },
+    {
+      "skill": "feature-context-analysis",
+      "outputSha256": "4e6ba76f7298665d15d14c0129ac9362bff5ad2e94680c88347eea9818452905",
+      "declaredReads": 4,
+      "declaredReadsOutsideAllowlist": [],
+      "unexpectedExposure": [],
+      "whitespaceDelimitedWordCount": {
+        "A": 198,
+        "B": 209
+      },
+      "wordLimit": 220,
+      "wordLimitExceeded": false
+    },
+    {
+      "skill": "feature-contract-definition",
+      "outputSha256": "74c82960d8be4da39cc003dd68225b53bd6fde0711be672f726e2ae8ed97cd18",
+      "declaredReads": 4,
+      "declaredReadsOutsideAllowlist": [],
+      "unexpectedExposure": [],
+      "whitespaceDelimitedWordCount": {
+        "A": 220,
+        "B": 219
+      },
+      "wordLimit": 220,
+      "wordLimitExceeded": false
+    },
+    {
+      "skill": "feature-decision-analysis",
+      "outputSha256": "8ebaee23b350aaeaa327e27a3bbe295473863bc3eed62183df8424a483f58da1",
+      "declaredReads": 5,
+      "declaredReadsOutsideAllowlist": [],
+      "unexpectedExposure": [],
+      "whitespaceDelimitedWordCount": {
+        "A": 208,
+        "B": 217
+      },
+      "wordLimit": 220,
+      "wordLimitExceeded": false
+    },
+    {
+      "skill": "feature-decomposition",
+      "outputSha256": "523d651fee12f2b65def0cded7c98c3d9a7873c2f06e8a8fc86b8a3a09c510c8",
+      "declaredReads": 4,
+      "declaredReadsOutsideAllowlist": [],
+      "unexpectedExposure": [],
+      "whitespaceDelimitedWordCount": {
+        "A": 214,
+        "B": 231
+      },
+      "wordLimit": 220,
+      "wordLimitExceeded": true
+    },
+    {
+      "skill": "feature-discovery",
+      "outputSha256": "dc0f846d4df2e9c68da776a796c9e9cae01ca3fad17b84a3ba503de2fb3a2f72",
+      "declaredReads": 4,
+      "declaredReadsOutsideAllowlist": [],
+      "unexpectedExposure": [],
+      "whitespaceDelimitedWordCount": {
+        "A": 210,
+        "B": 217
+      },
+      "wordLimit": 220,
+      "wordLimitExceeded": false
+    },
+    {
+      "skill": "feature-engineering",
+      "outputSha256": "911e6ea7d9a2f811437ff3eb8bca6cb2219d93484002a259cbee4426f60ab676",
+      "declaredReads": 6,
+      "declaredReadsOutsideAllowlist": [],
+      "unexpectedExposure": [],
+      "whitespaceDelimitedWordCount": {
+        "A": 175,
+        "B": 204
+      },
+      "wordLimit": 220,
+      "wordLimitExceeded": false
+    },
+    {
+      "skill": "feature-execution",
+      "outputSha256": "72a3247d026d6c7fd10bfc38e4bdc90170446008c8771de4b5da60b003235372",
+      "declaredReads": 5,
+      "declaredReadsOutsideAllowlist": [],
+      "unexpectedExposure": [],
+      "whitespaceDelimitedWordCount": {
+        "A": 177,
+        "B": 189
+      },
+      "wordLimit": 220,
+      "wordLimitExceeded": false
+    },
+    {
+      "skill": "feature-feasibility-experiment",
+      "outputSha256": "90e00cd6b0495feeecee1303098e5a49aa90be5036cc003c470f2ed6c9df9d88",
+      "declaredReads": 4,
+      "declaredReadsOutsideAllowlist": [],
+      "unexpectedExposure": [],
+      "whitespaceDelimitedWordCount": {
+        "A": 177,
+        "B": 192
+      },
+      "wordLimit": 220,
+      "wordLimitExceeded": false
+    },
+    {
+      "skill": "feature-implementation-plan",
+      "outputSha256": "7b0eaba9258910f8c6b09db9af0b88b4b9859f50deb9e9a6218db48db9530bb7",
+      "declaredReads": 4,
+      "declaredReadsOutsideAllowlist": [],
+      "unexpectedExposure": [],
+      "whitespaceDelimitedWordCount": {
+        "A": 206,
+        "B": 213
+      },
+      "wordLimit": 220,
+      "wordLimitExceeded": false
+    },
+    {
+      "skill": "feature-progress-tracking",
+      "outputSha256": "7d8b9e0aff8c4ed03ab458fbef44bbde3aca4b557bc47306eff2681170ca1e40",
+      "declaredReads": 4,
+      "declaredReadsOutsideAllowlist": [],
+      "unexpectedExposure": [],
+      "whitespaceDelimitedWordCount": {
+        "A": 197,
+        "B": 213
+      },
+      "wordLimit": 220,
+      "wordLimitExceeded": false
+    },
+    {
+      "skill": "feature-readiness-review",
+      "outputSha256": "c84b66d15d191d3e308f6fa5640aeba7294c92ddb9ee9ae7cbb82de9a61c825b",
+      "declaredReads": 4,
+      "declaredReadsOutsideAllowlist": [],
+      "unexpectedExposure": [],
+      "whitespaceDelimitedWordCount": {
+        "A": 155,
+        "B": 175
+      },
+      "wordLimit": 220,
+      "wordLimitExceeded": false
+    },
+    {
+      "skill": "feature-requirement-clarification",
+      "outputSha256": "1083946a11bcf19eb52fd29624ad7a0a8db4d598b80d2416906d4456f6843f5a",
+      "declaredReads": 5,
+      "declaredReadsOutsideAllowlist": [],
+      "unexpectedExposure": [],
+      "whitespaceDelimitedWordCount": {
+        "A": 198,
+        "B": 204
+      },
+      "wordLimit": 220,
+      "wordLimitExceeded": false
+    },
+    {
+      "skill": "feature-risk-analysis",
+      "outputSha256": "52a8c114b7e4e20d7f1a8467efe7a8d852ced43f011069c486e166a4d5a0e720",
+      "declaredReads": 4,
+      "declaredReadsOutsideAllowlist": [],
+      "unexpectedExposure": [],
+      "whitespaceDelimitedWordCount": {
+        "A": 210,
+        "B": 224
+      },
+      "wordLimit": 220,
+      "wordLimitExceeded": true
+    },
+    {
+      "skill": "feature-scope-analysis",
+      "outputSha256": "cc1aecf6095a1bb7f3e0faba4b6b7383af76906822344c6625c6d59d9bdbcac6",
+      "declaredReads": 4,
+      "declaredReadsOutsideAllowlist": [],
+      "unexpectedExposure": [],
+      "whitespaceDelimitedWordCount": {
+        "A": 203,
+        "B": 219
+      },
+      "wordLimit": 220,
+      "wordLimitExceeded": false
+    },
+    {
+      "skill": "feature-solution-analysis",
+      "outputSha256": "b698c7a5d2372b36135302ebcc6596ec6777117c3fed7aa2289937d4b40f38e6",
+      "declaredReads": 4,
+      "declaredReadsOutsideAllowlist": [],
+      "unexpectedExposure": [],
+      "whitespaceDelimitedWordCount": {
+        "A": 208,
+        "B": 216
+      },
+      "wordLimit": 220,
+      "wordLimitExceeded": false
+    },
+    {
+      "skill": "java-legacy-code-testing",
+      "outputSha256": "f80520f2734c25de58738328622744ae7c7983a467b0ea109ff7aba414ba5415",
+      "declaredReads": 6,
+      "declaredReadsOutsideAllowlist": [],
+      "unexpectedExposure": [],
+      "whitespaceDelimitedWordCount": {
+        "A": 209,
+        "B": 219
+      },
+      "wordLimit": 220,
+      "wordLimitExceeded": false
+    },
+    {
+      "skill": "java-test-design",
+      "outputSha256": "4f43ba7075359b20a54c8847f1324550f301a149c76a5bb23bde62f1116b9687",
+      "declaredReads": 4,
+      "declaredReadsOutsideAllowlist": [],
+      "unexpectedExposure": [],
+      "whitespaceDelimitedWordCount": {
+        "A": 162,
+        "B": 170
+      },
+      "wordLimit": 220,
+      "wordLimitExceeded": false
+    },
+    {
+      "skill": "java-test-doubles",
+      "outputSha256": "a2a1960205448ce8b93b1799fbe5ffed7f78965811a4e4728a93f28ce4180d44",
+      "declaredReads": 4,
+      "declaredReadsOutsideAllowlist": [],
+      "unexpectedExposure": [],
+      "whitespaceDelimitedWordCount": {
+        "A": 174,
+        "B": 207
+      },
+      "wordLimit": 220,
+      "wordLimitExceeded": false
+    },
+    {
+      "skill": "java-testing-strategy",
+      "outputSha256": "faf1aa225e6bf96ec48a45be63ba7d37c8016daf5f12c36b245507517fa6b291",
+      "declaredReads": 4,
+      "declaredReadsOutsideAllowlist": [],
+      "unexpectedExposure": [],
+      "whitespaceDelimitedWordCount": {
+        "A": 211,
+        "B": 225
+      },
+      "wordLimit": 220,
+      "wordLimitExceeded": true
+    },
+    {
+      "skill": "quality-gates",
+      "outputSha256": "bfc86de13cc3ba86521f7daa9ce953e8873a5f51145e029f3bd10689585f23e9",
+      "declaredReads": 4,
+      "declaredReadsOutsideAllowlist": [],
+      "unexpectedExposure": [],
+      "whitespaceDelimitedWordCount": {
+        "A": 152,
+        "B": 194
+      },
+      "wordLimit": 220,
+      "wordLimitExceeded": false
+    },
+    {
+      "skill": "requirements-and-acceptance",
+      "outputSha256": "e48193b3b7f6931847c3074544d608c563edac9e9cdeeb6d245ea19060c77690",
+      "declaredReads": 5,
+      "declaredReadsOutsideAllowlist": [],
+      "unexpectedExposure": [],
+      "whitespaceDelimitedWordCount": {
+        "A": 195,
+        "B": 218
+      },
+      "wordLimit": 220,
+      "wordLimitExceeded": false
+    },
+    {
+      "skill": "tdd",
+      "outputSha256": "6b512c7655d3a63762d9af0afcf297fedcaef658440845c015ac8f96638f9c22",
+      "declaredReads": 4,
+      "declaredReadsOutsideAllowlist": [],
+      "unexpectedExposure": [],
+      "whitespaceDelimitedWordCount": {
+        "A": 143,
+        "B": 174
+      },
+      "wordLimit": 220,
+      "wordLimitExceeded": false
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+[
+  {
+    "id": "rename-extensible-provider",
+    "decisiveConstraint": "The published Labeler is extensible and the supported precompiled PartnerLabeler overrides getLabel.",
+    "expected": [
+      "Inspect both the candidate implementation and consumer override; keeping both signatures alone does not preserve dispatch through render.",
+      "Run unchanged OldClient and PartnerLabeler binaries against the candidate; identify the observable loss of partner: prefix.",
+      "Preserve the old virtual hook, e.g. retain the implementation in getLabel and have label call getLabel; do not create mutual recursion or make the old hook final.",
+      "Verify the repaired API with old binaries and the new-name caller, and report limited consumer coverage rather than universal compatibility.",
+      "Retain the old name and deprecation migration; classify the original candidate as binary-linking but behaviorally incompatible for the exercised consumer."
+    ],
+    "failures": [
+      "Approve the minor release solely because both signatures remain or all code recompiles.",
+      "Recompile or alter the legacy consumer to hide the failure.",
+      "Keep a candidate that bypasses the override, or make the two methods recursively delegate.",
+      "Generalize runtime success to all consumers or claim Java runtime coverage not actually executed."
+    ],
+    "actorMustNotReceive": "These expected answers, the controls directory, technical runner, prior command outputs or correct implementation."
+  },
+  {
+    "id": "rename-final-provider",
+    "decisiveConstraint": "Only the extension contract changes: Labeler is final in both v1 and the candidate, and the supported caller constructs that final API.",
+    "expected": [
+      "Inspect actual v1/candidate declarations and consumer, establishing that a supported subclass override is impossible here.",
+      "Run the unchanged old consumer against the candidate and the new-name consumer; both should retain base:invoice.",
+      "Accept the existing old-to-new delegation if no other contract defect is found; do not insist every rename needs inverse delegation or a new abstraction.",
+      "Keep old member/deprecation and distinguish the tested bounded compatibility claim from broad ecosystem certification."
+    ],
+    "failures": [
+      "Invent an overriding subclass despite final declarations, or require an extension-preservation refactor without evidence.",
+      "Remove the old member, change the baseline, or rebuild old binaries as the only compatibility check.",
+      "Claim a universal safe minor release from one synthetic consumer."
+    ],
+    "actorMustNotReceive": "These expected answers, controls, technical runner or previous observed results."
+  }
+]

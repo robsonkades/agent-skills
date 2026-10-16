@@ -1,0 +1,24 @@
+Reject the proposed remedy pending a controlled comparison. The packet is an authored fixture stipulating serial PostgreSQL 17 execution, not production evidence. It supports investigating repeated inner probes; it does not establish a bad generic plan, broken storage, or a useful `orders(state)` index.
+
+From `incident.json`:
+
+| Required metric | Value | Interpretation |
+| --- | ---: | --- |
+| `innerExecutions` | 12000 | Inner node's reported loops. |
+| `innerEmittedRows` | 48000 | 4 average emitted rows × 12000 loops; emissions, not distinct rows or rows examined. |
+| `innerInclusiveWorkMs` | 780 | 0.065 average total milliseconds × 12000 loops, using displayed precision. |
+| `capturedExecutionTimeMs` | 991 | Supplied statement execution time; not a new measurement or end-to-end latency. |
+
+PostgreSQL reports repeated-node times and rows as averages per execution. Inclusive node work must not be added to ancestor time: the inner 780 ms is already inside the root's 980 ms and the statement's 991 ms. It is substantial, not irrelevant. The 1320 ms request exceeds execution time by 329 ms, but the packet does not attribute that difference to planning, network, queuing, or application work. Instrumentation can also affect execution timing. [PostgreSQL 17: Using EXPLAIN](https://www.postgresql.org/docs/17/using-explain.html), [EXPLAIN](https://www.postgresql.org/docs/17/sql-explain.html).
+
+The orders scan costs 90 ms and emits 12000 of 15000 examined rows: 80% satisfy the combined tenant/state predicate. Consequently, `state='open'` alone matches at least that many examined rows. The scan name is not evidence of a defect, and a state-only index has no demonstrated selective advantage here. The repeated lines probes deserve attention first; an alternative join strategy remains an untested possibility. Cost 605000 is a planner estimate in relative cost units, not 605 seconds. [Using EXPLAIN](https://www.postgresql.org/docs/17/using-explain.html).
+
+The inner 90000 hits and 32000 reads are accumulated buffer-access counters, not per-loop averages or necessarily distinct blocks. Do not multiply them by 12000 or add ancestor counters again. Reads indicate misses in PostgreSQL's shared buffers, but the OS cache may satisfy them; absent I/O timing and OS/device evidence, physical disk trouble is unknown. [EXPLAIN](https://www.postgresql.org/docs/17/sql-explain.html), [PostgreSQL monitoring](https://www.postgresql.org/docs/17/monitoring-stats.html).
+
+The incident estimates are modestly high: 13000 versus 12000 orders and 52000 versus 48000 join rows (both about 8.3%); the inner average is 4 estimated and actual. The separate preview's child stops at 20 because its parent is `LIMIT 20`; its 52000 estimate describes completion. This cannot demonstrate catastrophic statistics and contributes no incident time. [Using EXPLAIN](https://www.postgresql.org/docs/17/using-explain.html).
+
+The 2 ms literal uses tenant 72, with 4 tenant rows and 16 result rows, versus tenant 71's 12000 qualifying orders and 48000 results. Cache state and a same-parameter prepared comparison are missing. Generic versus custom mode was not captured. Thus neither generic-plan blame nor a 2 ms outcome for tenant 71 follows. Global custom planning is unjustified and can add planning work. [PostgreSQL 17: PREPARE](https://www.postgresql.org/docs/17/sql-prepare.html).
+
+One next experiment, proposed only: obtain four owner-run captures on a stable PostgreSQL 17 staging snapshot, in prepared/literal then literal/prepared order, all with tenant 71 explicitly typed bigint and identical SQL semantics. Preserve prepared-session history; change no settings or indexes. Capture `EXPLAIN (ANALYZE, BUFFERS, SETTINGS, FORMAT JSON)`, planning/execution times, rows, buffers, available I/O timings, and preparation history. Identify generic parameter symbols versus substituted custom values in each prepared plan. Use an external 5-second cancellation deadline per execution; stop after any timeout or four executions. Record cache order rather than assuming equal warmth. A repeatable faster literal with a different plan while the prepared plan is generic supports a statement-specific planning hypothesis; an already-custom or comparable plan redirects investigation to repeated probes and I/O. This small experiment cannot authorize a global change. [PREPARE](https://www.postgresql.org/docs/17/sql-prepare.html).
+
+Verification is local artifact arithmetic and preservation only. No server was supplied, no workload SQL ran, and no runtime setting or index changed.

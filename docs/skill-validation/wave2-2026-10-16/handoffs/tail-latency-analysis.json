@@ -1,0 +1,461 @@
+{
+  "status": "READY_FOR_GLOBAL_VALIDATION",
+  "skill": "tail-latency-analysis",
+  "reviewer": "quality13",
+  "ownedPath": "skills/tail-latency-analysis/**",
+  "allWritesStopped": true,
+  "processes": "All javac/java/Node/shell commands finished. No background process launched or active writer remains.",
+  "procedure": {
+    "fullPackageRead": true,
+    "requiredReadings": "Root AGENTS.md, full review prompt, parallel workflow, skill-engineering and its evidence/evaluation/resource-design/anti-pattern references, and wave2 brief. Unchanged required/history readings reused across consecutive assignments as the brief allows.",
+    "assessmentBeforeEdits": true,
+    "scope": "Diagnosis, mathematical explanation and tail-policy selection preserved; no general review workflow imposed."
+  },
+  "baseline": {
+    "committedVersion": "1.3.4",
+    "assignmentVersion": "1.3.4",
+    "preExistingVersionBump": false,
+    "staged": [],
+    "unstaged": [],
+    "untracked": [],
+    "snapshot": "C:/Users/robso/AppData/Local/Temp/tail-quality13-05626dd95b9b4067a1f97d309812eaf4/assignment-baseline.json"
+  },
+  "reviewCriteria": [
+    "Population, outcomes, censoring and cohort mixture",
+    "Per-request critical-path attribution and quantile assumptions",
+    "Fan-out dependence and completion rule",
+    "Direct/lagged causal mechanism with discriminating evidence",
+    "Version-matched JFR coverage and gRPC attempt/resource semantics"
+  ],
+  "findingsCorrected": [
+    {
+      "location": "references/attributing-the-tail.md:52–77",
+      "finding": "JFR guidance listed enablement, threshold, stack traces and sampling period, and suggested lowering duration thresholds when coverage was missing, but omitted an independent event-rate throttle already present in its JDK 25 baseline.",
+      "evidence": "Java 25 Throttle API applies after other filters; jdk-25+36 SocketReadEvent supports it; its default template and installed Temurin 25.0.3 use 1 ms plus 100/s. An isolated runtime control with enabled=true/threshold=0 captured zero events under 0/s and 100 under off.",
+      "consequence": "An investigator could repeat an ineffective threshold reduction or overinterpret missing I/O events. Guidance now identifies the limiting filter, scopes supported versions/events, distinguishes template from active settings, and keeps bounded-volume controls."
+    }
+  ],
+  "findingsRetained": [
+    {
+      "location": "references/decomposing-the-tail.md",
+      "finding": "Censoring, request identity, sampling limitations, fan-out dependence and percentile counterexamples are already precise; numerical examples confirmed."
+    },
+    {
+      "location": "references/attributing-the-tail.md:18–27 and lagged-backlog example",
+      "finding": "Earlier pauses can explain later waits only through an evidenced persistent queue/state path; constructed model timings confirmed."
+    },
+    {
+      "location": "references/hedging-and-tail-tolerance.md:58–72",
+      "finding": "Existing grpc-java 1.75.0 caveats match source and distinguish a general guide from implementation; no change justified."
+    }
+  ],
+  "remainingFindings": [],
+  "filesChangedByReviewer": [
+    "skills/tail-latency-analysis/references/attributing-the-tail.md",
+    "skills/tail-latency-analysis/skill.yaml"
+  ],
+  "preExistingChanges": [],
+  "capabilities": {
+    "preserved": [
+      "Population/outcome/censoring/mixture analysis",
+      "Per-request critical-path reconstruction",
+      "Percentile lower bound and both counterexample directions",
+      "Fan-out dependence and quorum/partial-result distinctions",
+      "Evidence-based direct and lagged attribution",
+      "Deadline, idempotency, residual work and aggregate hedge budgets",
+      "Source-specific gRPC behavior",
+      "Controlled recording, exact JDK and no-upgrade boundary"
+    ],
+    "replaced": [
+      "Threshold-only missing-coverage remedy replaced with selecting the actual limiting filter."
+    ],
+    "removed": []
+  },
+  "version": {
+    "committed": "1.3.4",
+    "assignment": "1.3.4",
+    "final": "1.3.5",
+    "rationale": "One patch for a focused diagnostic-content correction; no pre-existing bump to reuse. Manifest only contains package version; descriptions unchanged."
+  },
+  "checks": [
+    {
+      "type": "baseline",
+      "cwd": "C:/git/agent-skills",
+      "commands": [
+        "rg --files skills/tail-latency-analysis",
+        "git status --short -- skills/tail-latency-analysis",
+        "git diff -- skills/tail-latency-analysis",
+        "git diff --cached -- skills/tail-latency-analysis",
+        "git show HEAD:skills/tail-latency-analysis/skill.yaml"
+      ],
+      "result": "Five files fully read; no staged/unstaged/untracked owned changes. HEAD and assignment version 1.3.4. Assignment bytes/hashes retained."
+    },
+    {
+      "type": "source-and-installed-template",
+      "cwd": "C:/git/agent-skills",
+      "commands": [
+        "rg -n -F -A 6 'jdk.SocketRead' C:/Users/robso/.jdks/temurin-25.0.3/lib/jfr/default.jfc",
+        "rg -n -F -A 6 'throttle' C:/Users/robso/.jdks/temurin-25.0.3/lib/jfr/default.jfc"
+      ],
+      "exitCode": 0,
+      "result": "Installed Temurin 25.0.3 template agrees: SocketRead enabled=true, threshold=1 ms, throttle=100/s. This does not establish any deployment's active configuration."
+    },
+    {
+      "type": "technical-runtime",
+      "cwd": "C:/git/agent-skills",
+      "command": "& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/javac.exe' --release 25 -d 'C:/Users/robso/AppData/Local/Temp/tail-quality13-05626dd95b9b4067a1f97d309812eaf4/classes' 'C:/Users/robso/AppData/Local/Temp/tail-quality13-05626dd95b9b4067a1f97d309812eaf4/JfrThrottleCoverage.java'\nif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }\n& 'C:/Users/robso/.jdks/temurin-25.0.3/bin/java.exe' '-XX:FlightRecorderOptions=repository=C:/Users/robso/AppData/Local/Temp/tail-quality13-05626dd95b9b4067a1f97d309812eaf4/jfr-repository' -cp 'C:/Users/robso/AppData/Local/Temp/tail-quality13-05626dd95b9b4067a1f97d309812eaf4/classes' JfrThrottleCoverage 'C:/Users/robso/AppData/Local/Temp/tail-quality13-05626dd95b9b4067a1f97d309812eaf4' | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/tail-quality13-05626dd95b9b4067a1f97d309812eaf4/jfr-throttle-output.txt'\nexit $LASTEXITCODE",
+      "exitCode": 0,
+      "result": "PASS: metadata plus 3 recording controls; enabled=true does not establish coverage",
+      "compilerTarget": "Java 25 final APIs, no preview",
+      "compilerAndRuntime": "Temurin 25.0.3+9-LTS",
+      "controls": [
+        {
+          "event": "custom @Throttle ControlledWork",
+          "threshold": "0 ns",
+          "throttle": "0/s",
+          "attempted": 100,
+          "enabled": 100,
+          "recorded": 0
+        },
+        {
+          "event": "same custom event",
+          "threshold": "0 ns",
+          "throttle": "off",
+          "attempted": 100,
+          "enabled": 100,
+          "recorded": 100
+        },
+        {
+          "event": "same custom event",
+          "threshold": "1 day",
+          "throttle": "off",
+          "attempted": 100,
+          "enabled": 100,
+          "recorded": 0
+        }
+      ],
+      "limits": "Actual JFR API and recording execution. No SocketRead traffic, production capture, precise finite-rate quota, overhead benchmark or agent evaluation."
+    },
+    {
+      "type": "numerical-regression-check",
+      "cwd": "C:/git/agent-skills",
+      "command": "node 'C:/Users/robso/AppData/Local/Temp/tail-quality13-05626dd95b9b4067a1f97d309812eaf4/verify-examples.mjs' | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/tail-quality13-05626dd95b9b4067a1f97d309812eaf4/example-calculations.json'\nexit $LASTEXITCODE",
+      "exitCode": 0,
+      "result": "10 deterministic checks passed: three percentile counterexamples, matched-component lower bound, independent fan-out probabilities, dependence extremes and constructed FIFO backlog/control timings.",
+      "limits": "Calculations validate the supplied teaching examples, not a production queue model or measured latency improvement."
+    },
+    {
+      "type": "package-local-structural",
+      "cwd": "C:/git/agent-skills",
+      "command": "node 'C:/Users/robso/AppData/Local/Temp/tail-quality13-05626dd95b9b4067a1f97d309812eaf4/check-package.mjs' | Tee-Object -FilePath 'C:/Users/robso/AppData/Local/Temp/tail-quality13-05626dd95b9b4067a1f97d309812eaf4/package-validation.json'\nexit $LASTEXITCODE",
+      "exitCode": 0,
+      "result": "Final version 1.3.5. Repository strict loader and validatePackage returned zero issues; five packaged files and three local resource links valid.",
+      "limits": "Assigned-package generic validation only; dependency resolution/index/global/adapter checks deferred."
+    },
+    {
+      "type": "format",
+      "cwd": "C:/git/agent-skills",
+      "command": "node node_modules/prettier/bin/prettier.cjs --check skills/tail-latency-analysis",
+      "exitCode": 0,
+      "result": "All matched files use Prettier code style. No formatting write command needed."
+    },
+    {
+      "type": "whitespace-and-final-review",
+      "cwd": "C:/git/agent-skills",
+      "commands": [
+        "git diff --check -- skills/tail-latency-analysis",
+        "git diff -- skills/tail-latency-analysis",
+        "git status --short -- skills/tail-latency-analysis"
+      ],
+      "exitCode": 0,
+      "result": "Diff checked and reread. Exactly attributing-the-tail.md and skill.yaml modified, no whitespace issue or untracked package file."
+    },
+    {
+      "type": "case-serialization",
+      "cwd": "C:/git/agent-skills",
+      "command": "Read both actor JSONs and evaluator JSON using Get-Content -Raw | ConvertFrom-Json; compare context serialization.",
+      "exitCode": 0,
+      "result": "SameContext=true; throttle 0/s versus off; two expected cases; preparation instructions present."
+    },
+    {
+      "type": "attribution-of-edits",
+      "cwd": "C:/git/agent-skills",
+      "command": "Get-FileHash -Algorithm SHA256 for all five rg-discovered owned files, compared to assignment snapshot.",
+      "result": "Only two intended files differ from assignment hashes; SKILL.md and the decomposition/hedging references remain byte-identical."
+    }
+  ],
+  "failures": {
+    "packageFailures": [],
+    "introducedPackageFailures": [],
+    "correctedHarnessFailure": {
+      "command": "First execution of JfrThrottleCoverage using setToDisk(false)",
+      "result": "javac passed; runtime exited 1 because dumping a stopped in-memory recording has no data to copy. No coverage conclusion was drawn.",
+      "fix": "Changed only the isolated harness to disk-backed recordings in its dedicated repository; reran the identical assertions successfully.",
+      "artifact": "C:/Users/robso/AppData/Local/Temp/tail-quality13-05626dd95b9b4067a1f97d309812eaf4/initial-harness-failure.txt"
+    },
+    "sourceAccessLimits": [
+      "The Tail at Scale download link returned a web-tool internal error; the landing-page abstract was available. No new quantitative claim uses the unavailable paper.",
+      "Optional JEP 518 page returned 403; no claim relies on it. Direct Java 25 API and pinned implementation sources provided the necessary proof."
+    ],
+    "inspectionOnly": [
+      "An initial over-quoted rg expression returned no match; the corrected literal search located the installed SocketRead template settings."
+    ]
+  },
+  "behavioralEvidence": {
+    "actualAgentEvaluations": [],
+    "measuredBehavioralImprovement": false,
+    "technicalExecution": "Three real custom-event JFR recording controls and ten deterministic numerical example checks.",
+    "walkthroughs": [
+      {
+        "case": "tail-jfr-coverage-a",
+        "outcome": "Enabled/zero-threshold SocketRead still suppressed by effective 0/s; revise coverage plan conditionally, do not attribute cause."
+      },
+      {
+        "case": "tail-jfr-coverage-b",
+        "outcome": "Effective throttle already off; investigate worker/client path and coverage instead of changing rate or duration filter."
+      }
+    ],
+    "limits": "The two incident fixtures were reasoned through, not executed by independent agents. JFR controls exercised a custom throttled event, not a production SocketRead diagnosis."
+  },
+  "reproducibleCases": {
+    "actorFiles": [
+      "C:/Users/robso/AppData/Local/Temp/tail-quality13-05626dd95b9b4067a1f97d309812eaf4/cases/actor-a.json",
+      "C:/Users/robso/AppData/Local/Temp/tail-quality13-05626dd95b9b4067a1f97d309812eaf4/cases/actor-b.json"
+    ],
+    "evaluatorFile": "C:/Users/robso/AppData/Local/Temp/tail-quality13-05626dd95b9b4067a1f97d309812eaf4/cases/evaluator-criteria.json",
+    "actorCases": [
+      {
+        "id": "tail-jfr-coverage-a",
+        "context": {
+          "task": "Use tail-latency-analysis to review the incident note and proposed capture from the supplied artifacts. Correct incident-notes.md and capture-plan.json with the next discriminating step and its limits. Preserve supported observations. This is a review task: do not tune GC, upgrade the runtime, run a production capture or change a running service. If a proposed setting differs by JDK/event, verify the applicable contract.",
+          "provenance": "Synthetic development fixture. The exports represent one isolated JVM and a recording covering every timestamp below; no actor evaluation has been executed.",
+          "fixtures": {
+            "runtime.properties": "java.version=25.0.3\njava.vendor=Eclipse Adoptium\nprocess.instance=worker-7\n",
+            "event-metadata.json": "{\n  \"name\": \"jdk.SocketRead\",\n  \"settings\": [\n    \"enabled\",\n    \"threshold\",\n    \"stackTrace\",\n    \"throttle\"\n  ],\n  \"fields\": [\n    \"host\",\n    \"address\",\n    \"port\",\n    \"timeout\",\n    \"bytesRead\",\n    \"endOfStream\"\n  ]\n}",
+            "event-summary.json": "{\n  \"recording\": \"tail-review\",\n  \"process\": \"worker-7\",\n  \"startMs\": 0,\n  \"endMs\": 10000,\n  \"eventCounts\": {\n    \"jdk.SocketRead\": 0,\n    \"jdk.DataLoss\": 0\n  },\n  \"dataLossEventEnabled\": true\n}",
+            "requests.csv": "request,process,arrival_ms,finish_ms,outcome,controller_future_wait_ms\nnormal-1,worker-7,1000,1005,success,2\nslow-2,worker-7,2000,2180,success,150\n",
+            "caller.java": "// Application excerpt, not a complete compilable program.\nCompletionStage<Result> lookup(Key key) {\n    return CompletableFuture.supplyAsync(() -> client.query(key), lookupExecutor);\n}\n// Controller waits for this result. The concrete client transport, worker\n// queue timestamps and pool-acquisition trace were not part of this export.\n",
+            "incident-notes.md": "# Incident note\nA slow request took 180 ms, including 150 ms waiting for lookup completion. No SocketRead events were present even though the event was enabled and its duration threshold was zero. Therefore I/O is excluded as a contributor; attribute the wait to GC. Lower the SocketRead threshold for the next recording so it captures all reads.\n",
+            "capture-plan.json": "{\n  \"scope\": \"worker-7\",\n  \"event\": \"jdk.SocketRead\",\n  \"durationSeconds\": 10,\n  \"maximumAdditionalMiB\": 20,\n  \"proposedSettings\": {\n    \"threshold\": \"0 ns\"\n  },\n  \"goal\": \"Capture every I/O operation and confirm the GC diagnosis\",\n  \"executionAuthorized\": false\n}"
+          },
+          "constraints": [
+            "Treat the caller excerpt and two request rows as partial attribution evidence, not complete request-population measurements.",
+            "Use event-metadata.json to determine supported settings and active-settings.json for effective values; a distribution template is not the effective recording.",
+            "Return corrected artifacts and identify the missing evidence needed for any remaining claim; no extra instrumentation framework is required.",
+            "Any later capture proposal must stay scoped and bounded and account for event volume/overhead."
+          ]
+        },
+        "activeSettings": {
+          "recording": "tail-review",
+          "process": "worker-7",
+          "event": "jdk.SocketRead",
+          "effective": {
+            "enabled": true,
+            "threshold": "0 ns",
+            "stackTrace": true,
+            "throttle": "0/s"
+          }
+        },
+        "preparation": "In an isolated directory, materialize context.fixtures as the named text files and serialize activeSettings as active-settings.json. Give the acting agent context.task, context.constraints, the prepared artifacts and the reviewed skill; withhold evaluator-criteria.json and the full handoff."
+      },
+      {
+        "id": "tail-jfr-coverage-b",
+        "context": {
+          "task": "Use tail-latency-analysis to review the incident note and proposed capture from the supplied artifacts. Correct incident-notes.md and capture-plan.json with the next discriminating step and its limits. Preserve supported observations. This is a review task: do not tune GC, upgrade the runtime, run a production capture or change a running service. If a proposed setting differs by JDK/event, verify the applicable contract.",
+          "provenance": "Synthetic development fixture. The exports represent one isolated JVM and a recording covering every timestamp below; no actor evaluation has been executed.",
+          "fixtures": {
+            "runtime.properties": "java.version=25.0.3\njava.vendor=Eclipse Adoptium\nprocess.instance=worker-7\n",
+            "event-metadata.json": "{\n  \"name\": \"jdk.SocketRead\",\n  \"settings\": [\n    \"enabled\",\n    \"threshold\",\n    \"stackTrace\",\n    \"throttle\"\n  ],\n  \"fields\": [\n    \"host\",\n    \"address\",\n    \"port\",\n    \"timeout\",\n    \"bytesRead\",\n    \"endOfStream\"\n  ]\n}",
+            "event-summary.json": "{\n  \"recording\": \"tail-review\",\n  \"process\": \"worker-7\",\n  \"startMs\": 0,\n  \"endMs\": 10000,\n  \"eventCounts\": {\n    \"jdk.SocketRead\": 0,\n    \"jdk.DataLoss\": 0\n  },\n  \"dataLossEventEnabled\": true\n}",
+            "requests.csv": "request,process,arrival_ms,finish_ms,outcome,controller_future_wait_ms\nnormal-1,worker-7,1000,1005,success,2\nslow-2,worker-7,2000,2180,success,150\n",
+            "caller.java": "// Application excerpt, not a complete compilable program.\nCompletionStage<Result> lookup(Key key) {\n    return CompletableFuture.supplyAsync(() -> client.query(key), lookupExecutor);\n}\n// Controller waits for this result. The concrete client transport, worker\n// queue timestamps and pool-acquisition trace were not part of this export.\n",
+            "incident-notes.md": "# Incident note\nA slow request took 180 ms, including 150 ms waiting for lookup completion. No SocketRead events were present even though the event was enabled and its duration threshold was zero. Therefore I/O is excluded as a contributor; attribute the wait to GC. Lower the SocketRead threshold for the next recording so it captures all reads.\n",
+            "capture-plan.json": "{\n  \"scope\": \"worker-7\",\n  \"event\": \"jdk.SocketRead\",\n  \"durationSeconds\": 10,\n  \"maximumAdditionalMiB\": 20,\n  \"proposedSettings\": {\n    \"threshold\": \"0 ns\"\n  },\n  \"goal\": \"Capture every I/O operation and confirm the GC diagnosis\",\n  \"executionAuthorized\": false\n}"
+          },
+          "constraints": [
+            "Treat the caller excerpt and two request rows as partial attribution evidence, not complete request-population measurements.",
+            "Use event-metadata.json to determine supported settings and active-settings.json for effective values; a distribution template is not the effective recording.",
+            "Return corrected artifacts and identify the missing evidence needed for any remaining claim; no extra instrumentation framework is required.",
+            "Any later capture proposal must stay scoped and bounded and account for event volume/overhead."
+          ]
+        },
+        "activeSettings": {
+          "recording": "tail-review",
+          "process": "worker-7",
+          "event": "jdk.SocketRead",
+          "effective": {
+            "enabled": true,
+            "threshold": "0 ns",
+            "stackTrace": true,
+            "throttle": "off"
+          }
+        },
+        "preparation": "In an isolated directory, materialize context.fixtures as the named text files and serialize activeSettings as active-settings.json. Give the acting agent context.task, context.constraints, the prepared artifacts and the reviewed skill; withhold evaluator-criteria.json and the full handoff."
+      }
+    ],
+    "evaluatorExpectations": {
+      "role": "Evaluator only; do not give this file or full handoff to the acting agent.",
+      "decisiveDifference": "Only activeSettings.effective.throttle differs, from 0/s to off. Same event type, JDK, enabled state, zero duration threshold, request exemplars, empty event export and missing worker/transport evidence.",
+      "sharedCriteria": [
+        "Apply corrections to incident-notes.md and capture-plan.json rather than merely adding a question log.",
+        "Retain the observed 180 ms and 150 ms waits without equating Future wait with socket read, CPU time or GC pause.",
+        "Withdraw the unsupported GC attribution and the claim that absent SocketRead events exclude I/O.",
+        "Do not lower an already-zero duration threshold, change unrelated settings, or claim the next recording automatically captures all I/O operations.",
+        "Name the missing worker, queue/pool, actual transport/emission-path and relevant recording-coverage evidence proportionately.",
+        "Do not treat absence of DataLoss events as a proof of exhaustive capture, infer a population rate from two exemplars, or run a production capture."
+      ],
+      "cases": [
+        {
+          "id": "tail-jfr-coverage-a",
+          "expected": "Recognize that an enabled, zero-threshold event is still suppressed by throttle=0/s on this supported JDK/event. Prioritize correcting the event-rate filter in a bounded, scoped validation/capture plan if SocketRead covers the actual path, while keeping cause attribution unresolved.",
+          "observableFailures": [
+            "Leaves throttle=0/s while claiming lower threshold fixes missing coverage.",
+            "Says enabled plus threshold=0 establishes completeness.",
+            "Turns throttling into proof that I/O caused the latency.",
+            "Disables throttling globally without a bounded volume/overhead plan."
+          ]
+        },
+        {
+          "id": "tail-jfr-coverage-b",
+          "expected": "Recognize that this event already has throttle=off and threshold=0; throttling does not explain the empty export. Follow the missing concrete client/worker execution and instrumentation coverage, matched queue/pool/GC evidence, rather than changing that filter again.",
+          "observableFailures": [
+            "Blames rate throttling despite the active setting being off.",
+            "Changes or 'disables' throttle as the principal remedy.",
+            "Concludes no socket/network delay is possible from this incomplete path evidence.",
+            "Attributes all 150 ms to GC without any pause/queue chain evidence."
+          ]
+        }
+      ],
+      "executionStatus": "Not executed by an independent agent; expected outcomes are structured walkthroughs.",
+      "technicalRelation": "Separate executed custom @Throttle controls verify filter independence on JDK 25.0.3. They do not execute these SocketRead incident fixtures or prove production I/O coverage."
+    },
+    "separation": "Give an acting agent only its actor input and materialized fixtures; keep expected outcomes and full handoff separate."
+  },
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/Throttle.html",
+      "version": "Java SE 25, final API since 25",
+      "supports": "Event throttling is separate from and applied after other filters. Zero disables emission and off removes this filter. Supports the focused correction."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/openjdk/jdk/jdk-25%2B36/src/jdk.jfr/share/classes/jdk/jfr/events/SocketReadEvent.java",
+      "version": "OpenJDK jdk-25+36",
+      "supports": "SocketReadEvent carries @Throttle. The new guidance is conditional on the target event and runtime supporting the setting."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/openjdk/jdk/jdk-25%2B36/src/jdk.jfr/share/conf/jfr/default.jfc",
+      "version": "OpenJDK jdk-25+36",
+      "supports": "The pinned template enables SocketRead, sets threshold 1 ms and throttle 100/s; these template values are not asserted to be an application's effective settings."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/openjdk/jdk/jdk-25%2B36/src/hotspot/share/jfr/metadata/metadata.xml",
+      "version": "OpenJDK jdk-25+36",
+      "supports": "Native event metadata and recording settings remain distinct, as retained in the existing reference."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grpc/grpc-java/v1.75.0/core/src/main/java/io/grpc/internal/RetriableStream.java",
+      "version": "grpc-java v1.75.0",
+      "supports": "Confirmed retained policy exclusion, header commitment, pushback handling and transparent-retry caveats. No gRPC runtime test or upgrade was performed."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grpc/grpc-java/v1.75.0/core/src/main/java/io/grpc/internal/ManagedChannelImpl.java",
+      "version": "grpc-java v1.75.0",
+      "supports": "Confirmed retained throttle ownership on the channel stream provider, not a fleet-wide quota."
+    },
+    {
+      "url": "https://grpc.io/docs/guides/request-hedging/",
+      "version": "Official guide inspected 2026-10-16; language/version qualifications retained",
+      "supports": "General hedging/deadline/pushback/throttle concepts. Where the guide and Java implementation differ, retained guidance names the exact source baseline."
+    },
+    {
+      "url": "https://grpc.io/docs/guides/cancellation/",
+      "version": "Official guide inspected 2026-10-16",
+      "supports": "Application work must cooperate with cancellation; a canceled client call is not proof that server work stopped."
+    },
+    {
+      "url": "https://grpc.io/docs/guides/deadlines/",
+      "version": "Official guide inspected 2026-10-16",
+      "supports": "Logical deadline propagation and responsibility for stopping spawned work; retained residual-resource caveat."
+    },
+    {
+      "url": "https://sre.google/sre-book/addressing-cascading-failures/",
+      "version": "Google SRE book chapter, inspected 2026-10-16",
+      "supports": "Queue delay/backlog, overload, retry budgets and multiplicative attempts justify retained attribution and tail-tolerance boundaries."
+    },
+    {
+      "url": "https://research.google/pubs/the-tail-at-scale/",
+      "version": "Dean and Barroso, CACM 56 (2013), pp. 74–80; landing page/abstract inspected",
+      "supports": "Retained tail-tolerance framing only. Download link could not be opened in this session; no new quantitative claim relies on the full paper."
+    }
+  ],
+  "assumptionsAndLimitations": [
+    "The exact target runtime/event may expose different settings; no extension of the JDK 25 annotation to earlier JDKs is claimed.",
+    "Default template values are not an application's effective recording; multiple recordings and runtime overrides require target inspection.",
+    "No live client/server/dependency, production recording, GC/OS tuning, upgrade or dependency install was performed.",
+    "The isolated harness verifies filter independence and metadata on Temurin 25.0.3, not loss-free capture under arbitrary load, exact 100/s counts or overhead.",
+    "All mathematical results refer to stated synthetic populations and assumptions, not measured deployment behavior.",
+    "No independent before/after agent comparison exists, so no overall quality gain is claimed from the local checks.",
+    "Other packages and generated registry remain untouched."
+  ],
+  "artifacts": {
+    "directory": "C:/Users/robso/AppData/Local/Temp/tail-quality13-05626dd95b9b4067a1f97d309812eaf4",
+    "baseline": "C:/Users/robso/AppData/Local/Temp/tail-quality13-05626dd95b9b4067a1f97d309812eaf4/assignment-baseline.json",
+    "jfrHarness": "C:/Users/robso/AppData/Local/Temp/tail-quality13-05626dd95b9b4067a1f97d309812eaf4/JfrThrottleCoverage.java",
+    "jfrClasses": "C:/Users/robso/AppData/Local/Temp/tail-quality13-05626dd95b9b4067a1f97d309812eaf4/classes",
+    "jfrOutput": "C:/Users/robso/AppData/Local/Temp/tail-quality13-05626dd95b9b4067a1f97d309812eaf4/jfr-throttle-output.txt",
+    "recordings": [
+      "C:/Users/robso/AppData/Local/Temp/tail-quality13-05626dd95b9b4067a1f97d309812eaf4/throttle-zero-threshold-zero.jfr",
+      "C:/Users/robso/AppData/Local/Temp/tail-quality13-05626dd95b9b4067a1f97d309812eaf4/throttle-off-threshold-zero.jfr",
+      "C:/Users/robso/AppData/Local/Temp/tail-quality13-05626dd95b9b4067a1f97d309812eaf4/throttle-off-threshold-high.jfr"
+    ],
+    "failedHarnessEvidence": "C:/Users/robso/AppData/Local/Temp/tail-quality13-05626dd95b9b4067a1f97d309812eaf4/initial-harness-failure.txt",
+    "numericalCheck": "C:/Users/robso/AppData/Local/Temp/tail-quality13-05626dd95b9b4067a1f97d309812eaf4/verify-examples.mjs",
+    "numericalOutput": "C:/Users/robso/AppData/Local/Temp/tail-quality13-05626dd95b9b4067a1f97d309812eaf4/example-calculations.json",
+    "packageValidator": "C:/Users/robso/AppData/Local/Temp/tail-quality13-05626dd95b9b4067a1f97d309812eaf4/check-package.mjs",
+    "packageValidation": "C:/Users/robso/AppData/Local/Temp/tail-quality13-05626dd95b9b4067a1f97d309812eaf4/package-validation.json",
+    "allRetained": true
+  },
+  "finalHashes": [
+    {
+      "Path": "C:\\git\\agent-skills\\skills\\tail-latency-analysis\\skill.yaml",
+      "Hash": "87107494371E43BABFE7E40DB626C674E4EE6AFB345C72C384C0206E179DF9F4"
+    },
+    {
+      "Path": "C:\\git\\agent-skills\\skills\\tail-latency-analysis\\SKILL.md",
+      "Hash": "4B68F52093D44F823DD5EB8022123448E6D07CEB33C91A2FD6DF1F7C394BA077"
+    },
+    {
+      "Path": "C:\\git\\agent-skills\\skills\\tail-latency-analysis\\references\\hedging-and-tail-tolerance.md",
+      "Hash": "855C4E24AB79327B34141708007878103345F1AAE12DA8BCE41172FBCBFC0532"
+    },
+    {
+      "Path": "C:\\git\\agent-skills\\skills\\tail-latency-analysis\\references\\decomposing-the-tail.md",
+      "Hash": "0A512D0B05ABE171302E6811CEB7C991D0F25F28F4A54679B7BE6A8FA20D17FF"
+    },
+    {
+      "Path": "C:\\git\\agent-skills\\skills\\tail-latency-analysis\\references\\attributing-the-tail.md",
+      "Hash": "B7B930E5C4B3D0AF6661C30977822CA2C0C2200EBB084A8BFCAC51E3DAEB8ADD"
+    }
+  ],
+  "pendingGlobalChecks": [
+    {
+      "command": "npm run registry:build",
+      "owner": "coordinator",
+      "purpose": "Regenerate shared registry/integrity after all writers stop.",
+      "reasonDeferred": "Reserved for coordinator in parallel reviews."
+    },
+    {
+      "command": "npm run verify",
+      "owner": "coordinator",
+      "purpose": "Repository-wide final checks, including version/dependency/index constraints.",
+      "reasonDeferred": "Reserved for coordinator after all writers stop; local readiness is not global verification."
+    }
+  ],
+  "crossSkillIssues": [],
+  "coordinatorActions": [
+    "Inspect the two-file focused diff.",
+    "Retain the three JFR files, harness and failing-harness note with validation artifacts.",
+    "Optionally run the separated development cases independently; do not count walkthroughs as behavior measurements.",
+    "Run reserved shared/global validation after all reviewers stop."
+  ]
+}

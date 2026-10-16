@@ -247,7 +247,7 @@ stayed at tier 3 after reaching tier 4's counters is `c2-sea-of-nodes`.
 
 | Event                          | `default.jfc`         | `profile.jfc` | What it is for                                                                                                           |
 | ------------------------------ | --------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `jdk.CompilerStatistics`       | every 1 s             | every 1 s     | Cumulative compiler activity on this build; one component of the warm-up curve                                           |
+| `jdk.CompilerStatistics`       | every 1 s             | every 1 s     | Cumulative successes, bailouts and elapsed durations; use the sample windows below                                       |
 | `jdk.CompilerQueueUtilization` | every 10 s            | every 5 s     | Per compiler (`c1`/`c2`): `queueSize`, `peakQueueSize`, `addedRate`, `compilerThreadCount` — congestion and live threads |
 | `jdk.Compilation`              | **threshold 1000 ms** | 100 ms        | One event per compilation **slower than the threshold** — almost none in a normal run                                    |
 | `jdk.CompilationFailure`       | off                   | on            | Bailouts, with the reason                                                                                                |
@@ -258,13 +258,13 @@ stayed at tier 3 after reaching tier 4's counters is `c2-sea-of-nodes`.
 | `jdk.Deoptimization`           | on                    | on            | `deoptimization`'s subject                                                                                               |
 
 The table reflects Temurin 25.0.3's shipped configurations; inspect the target `.jfc`. A common
-trap is `jdk.Compilation`: a 20-second `profile` recording of a program that compiled
-1542 methods held **zero** `jdk.Compilation` events, because none took 100 ms. Counting them
+trap is `jdk.Compilation`: a 20-second `profile` recording of a program that completed
+1542 compilations held **zero** `jdk.Compilation` events, because none took 100 ms. Counting them
 as "compilations" reports a JVM that never compiles anything. Read the rate from
 `jdk.CompilerStatistics` deltas instead:
 
 ```bash
-jfr print --events jdk.CompilerStatistics rec.jfr | grep -E 'startTime|compileCount'
+jfr print --events jdk.CompilerStatistics rec.jfr | grep -E 'startTime|compileCount|bailoutCount|totalTimeSpent'
 jfr view compiler-statistics rec.jfr        # last cumulative snapshot, not interval totals
 jfr view longest-compilations rec.jfr       # only what crossed the jdk.Compilation threshold
 ```
@@ -276,10 +276,19 @@ same JVM and divide by their timestamp difference. For example, 42000 at 12:00:1
 12:00:15 means 30 compilations over those 5 seconds (6/s), not 42030 during the recording.
 This is illustrative arithmetic, not a service measurement.
 
+On this build, `compileCount` counts successful compilations, not distinct methods or every
+attempt. Failed compilations increment `bailoutCount` separately. A zero success delta can
+therefore coexist with failed compiler work: inspect bailout and elapsed-time deltas, then
+available failure outcomes before calling the compiler idle. These totals do not identify
+the affected method or establish that a request used its compiled code.
+
 Report the sample-covered interval; without samples at the recording boundaries, its edge
 activity is unknown. Fewer than two timed samples cannot establish a rate or zero activity.
 The same delta approach applies to cumulative `totalTimeSpent`, whose result is summed elapsed
-compilation duration, not CPU time. `peakTimeSpent` is a lifetime maximum; subtracting maxima
+compilation duration, including successful and failed work, not CPU time. Dividing that duration
+by the success count alone does not give mean successful-compilation time when failures contributed.
+The aggregate timer has millisecond resolution on this build: a zero value or delta does not
+exclude shorter work. `peakTimeSpent` is a lifetime maximum; subtracting maxima
 does not recover the longest compilation in the interval. Use recorded `jdk.Compilation`
 durations for that question, with their threshold/coverage limitation.
 
@@ -349,5 +358,6 @@ Decisions that follow:
 - [HotSpot 25.0.3 interpreter OSR lookup](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/interpreter/interpreterRuntime.cpp) — read with the compilation policy's loop-event path when distinguishing OSR reuse from normal entry.
 - [JDK 25.0.3 JFR compiler-statistics view definition](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/jdk.jfr/share/classes/jdk/jfr/internal/query/view.ini)
 - [HotSpot 25.0.3 periodic compiler counters](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/jfr/periodic/jfrPeriodic.cpp)
+- [HotSpot 25.0.3 compiler counter accessors and timer units](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/compiler/compileBroker.hpp)
 - [JDK 25 `java` command](https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html)
 - [JDK 25 `jcmd` command](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)

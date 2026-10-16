@@ -64,13 +64,14 @@ and the **wrong assertion** that makes the test pass without proving anything.
 ## 6. Crash mid-operation
 
 - **Inject** — kill the process or container between the side effect and the acknowledgement,
-  and separately between the write and the commit. Then restart it.
+  and separately between the write and the commit. Prove each boundary was reached and held;
+  then kill and restart. Follow the [controlled crash fixture](fault-injection.md#death-mid-flight).
 - **Invariant** — within the recovery budget, accepted work and protected effects satisfy the
   declared delivery/commit contract, with no unintended duplicate or lost accepted effect.
   Pending state, locks and leases reach their specified terminal or recoverable condition;
   a crash before commit need not leave a business record (`failure-models`).
-- **Wrong assertion** — that the service restarts cleanly. Restarting is not the property;
-  the state left behind by the interrupted operation is.
+- **Wrong assertion** — that the service restarts cleanly, or that one row remains when no
+  redelivery occurred. Check the interrupted protocol and its protected effects.
 
 ## 7. Lease expiry under a stall
 

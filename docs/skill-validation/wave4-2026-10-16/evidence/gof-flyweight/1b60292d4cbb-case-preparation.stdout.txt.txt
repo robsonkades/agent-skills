@@ -1,0 +1,6 @@
+{
+  "cases": 2,
+  "filesPerCase": 6,
+  "decisiveDifference": "import.properties only",
+  "actorsRun": 0
+}

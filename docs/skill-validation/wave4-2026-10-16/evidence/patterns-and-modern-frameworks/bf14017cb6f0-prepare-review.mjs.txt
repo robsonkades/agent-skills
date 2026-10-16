@@ -1,0 +1,74 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+import assert from 'node:assert/strict';
+
+const repo = 'C:/git/agent-skills';
+const skill = 'patterns-and-modern-frameworks';
+const root = 'C:/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9';
+const dir = `${root}/${skill}`;
+const hash = b => crypto.createHash('sha256').update(b).digest('hex');
+const commands = [];
+function cmd(exe, args) {
+  const p = spawnSync(exe, args, { cwd: repo, encoding: 'utf8', timeout: 20000 });
+  const result = { exe, args, cwd: repo, exitCode: p.status, stdout: p.stdout, stderr: p.stderr, error: p.error?.message };
+  commands.push(result);
+  assert.equal(p.status, 0, JSON.stringify(result));
+  return p.stdout;
+}
+function walk(p, prefix = '') {
+  return fs.readdirSync(p, { withFileTypes: true }).flatMap(e => e.isDirectory() ? walk(path.join(p, e.name), prefix + e.name + '/') : [prefix + e.name]).sort();
+}
+const files = walk(`${repo}/skills/${skill}`).map(name => {
+  const bytes = fs.readFileSync(`${repo}/skills/${skill}/${name}`);
+  const supplied = fs.readFileSync(`${root}/baseline/${skill}/${name}`);
+  assert.ok(bytes.equals(supplied), `Assignment baseline differs: ${name}`);
+  return { name, sha256: hash(bytes), bytes: bytes.length, content: bytes.toString('utf8') };
+});
+assert.deepEqual(files.map(x => x.name), walk(`${root}/baseline/${skill}`));
+const status = cmd('git', ['status', '--short', '--untracked-files=all', '--', `skills/${skill}`]);
+const unstaged = cmd('git', ['diff', '--', `skills/${skill}`]);
+const staged = cmd('git', ['diff', '--cached', '--', `skills/${skill}`]);
+const committedManifest = cmd('git', ['show', `HEAD:skills/${skill}/skill.yaml`]);
+assert.equal(status.trim(), '');
+assert.equal(unstaged, '');
+assert.equal(staged, '');
+assert.ok(committedManifest.includes('version: 1.2.4'));
+fs.mkdirSync(`${dir}/sources`, { recursive: true });
+fs.writeFileSync(`${dir}/assignment-baseline.json`, JSON.stringify({ skill, capturedAt: new Date().toISOString(), status, unstaged, staged, committedManifest, assignmentVersion: '1.2.4', matchedCoordinatorBaseline: true, files, commands }, null, 2));
+
+const sources = [
+  ['jakarta-original-404', 'https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2', 'Both original links share this endpoint; expected HTTP 404.'],
+  ['jakarta-persistence-3.2', 'https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html', 'Sections 2.1, 2.2, 2.4.1, 2.7, 7.1 and 7.2: entity/access, record keys/embeddables, context identity/threading.'],
+  ['hibernate-6.2-introduction', 'https://docs.hibernate.org/orm/6.2/introduction/html_single/', 'Embeddable objects: record embeddables since 6.2 and EmbeddedId restriction dated May 2023.'],
+  ['spring-6.2.10-cache-decorator', 'https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.10/spring-context-support/src/main/java/org/springframework/cache/transaction/TransactionAwareCacheDecorator.java', 'Deferred put/evict/clear only with synchronization; immediate operations not deferred.'],
+  ['spring-6.2.10-cache-evict', 'https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.10/spring-context/src/main/java/org/springframework/cache/annotation/CacheEvict.java', 'beforeInvocation contract; method outcome versus transaction outcome.'],
+  ['spring-6.2.10-cache-manager-proxy', 'https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.10/spring-context-support/src/main/java/org/springframework/cache/transaction/TransactionAwareCacheManagerProxy.java', 'Actual cache manager integration delegates through transaction-aware cache decorators.'],
+  ['spring-6.2.10-transactions', 'https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.10/framework-docs/modules/ROOT/pages/data-access/transaction/declarative/annotations.adoc', 'Proxy interception, outer transaction and rollback defaults including 6.2 configuration.'],
+  ['jls-21-interfaces', 'https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html', '9.1.1.4: sealed and non-sealed interfaces.'],
+  ['java-21-switch', 'https://docs.oracle.com/en/java/javase/21/language/pattern-matching-switch.html', 'Exhaustiveness, null and MatchException under separate compilation.'],
+  ['jep-491', 'https://openjdk.org/jeps/491', 'Delivered in JDK24; eliminate monitor pinning, retain native callback caveats.']
+];
+const results = await Promise.all(sources.map(async ([id, url, claim]) => {
+  try {
+    const response = await fetch(url, { signal: AbortSignal.timeout(25000) });
+    const body = await response.text();
+    const file = `${dir}/sources/${id}.${url.endsWith('.java') ? 'java' : url.endsWith('.adoc') ? 'adoc' : 'html'}`;
+    fs.writeFileSync(file, body);
+    const result = { id, url, finalUrl: response.url, status: response.status, consultedAt: new Date().toISOString(), claim, file, sha256: hash(body), bytes: Buffer.byteLength(body) };
+    if (id === 'jakarta-persistence-3.2') {
+      result.anchors = ['composite-primary-keys'].map(a => ({ anchor: a, exists: body.includes(`id="${a}"`) }));
+      assert.ok(result.anchors.every(a => a.exists));
+      assert.ok(body.includes('3.2'));
+    }
+    return result;
+  } catch (e) { return { id, url, claim, error: e.message }; }
+}));
+if (fs.existsSync(`${dir}/sources/source-index.json`) && !fs.existsSync(`${dir}/sources/source-index-first-attempt.json`)) {
+  fs.copyFileSync(`${dir}/sources/source-index.json`, `${dir}/sources/source-index-first-attempt.json`);
+}
+fs.writeFileSync(`${dir}/sources/source-index.json`, JSON.stringify(results, null, 2));
+assert.equal(results[0].status, 404);
+assert.ok(results.slice(1).every(r => r.status === 200 && !r.error), JSON.stringify(results));
+console.log(JSON.stringify({ baseline: 'clean, 4 files, version 1.2.4', sources: results.map(({ id, status, error, anchors }) => ({ id, status, error, anchors })) }, null, 2));

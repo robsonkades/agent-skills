@@ -1,0 +1,2 @@
+# Registro assinado por Ana e operações
+A interrupção planejada de escritas pode durar no máximo 25 minutos durante qualquer mudança. A leitura deve permanecer disponível. Dados reconhecidos devem ser preservados. Ensaios em escala contratada do caminho P observaram 18 a 20 minutos; o limite operacional demonstrado é 20 minutos. Nenhuma escrita é reconhecida durante a pausa. Leitura, preservação, recuperação e demais obrigações do caminho P foram verificadas. Não existe incompatibilidade adicional em aberto no conjunto de evidências desta decisão.

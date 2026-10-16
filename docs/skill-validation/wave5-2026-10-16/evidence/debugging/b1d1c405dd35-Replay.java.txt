@@ -1,0 +1,38 @@
+import java.io.IOException;
+import java.io.Reader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+
+public final class Replay {
+    public static void main(String[] args) throws IOException {
+        if (args.length != 2) throw new IllegalArgumentException("config requests");
+        Properties settings = load(Path.of(args[0]));
+        settings.putAll(load(Path.of(settings.getProperty("runtime.overrides"))));
+        Map<String, Quote> catalog = new HashMap<>();
+        List<String> entries = Files.readAllLines(Path.of(settings.getProperty("catalog.file")));
+        for (String line : entries.subList(1, entries.size())) {
+            String[] fields = line.split(",");
+            Quote quote = new Quote(fields[0], fields[1], Integer.parseInt(fields[2]));
+            catalog.put(quote.sku() + ":" + quote.currency(), quote);
+        }
+        QuoteService service = new QuoteService(catalog,
+                Boolean.parseBoolean(settings.getProperty("quote.cache.enabled")));
+        List<String> requests = Files.readAllLines(Path.of(args[1]));
+        for (String line : requests.subList(1, requests.size())) {
+            String[] fields = line.split(",");
+            Quote quote = service.find(fields[0], fields[1]);
+            System.out.println(fields[0] + "\t" + fields[1] + "\t"
+                    + quote.currency() + "\t" + quote.minorUnits());
+        }
+    }
+
+    private static Properties load(Path file) throws IOException {
+        Properties result = new Properties();
+        try (Reader reader = Files.newBufferedReader(file)) { result.load(reader); }
+        return result;
+    }
+}

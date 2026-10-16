@@ -1,0 +1,73 @@
+{
+  "completedAt": "2026-10-16T17:08:17.441Z",
+  "status": "complete",
+  "scope": "Wave5 individual review of seven Base/Piloto inventory skills, not completion of the entire experimental roadmap.",
+  "reviewedSkills": 7,
+  "changedSkills": 2,
+  "preservedSkills": 5,
+  "changedSkillFiles": 4,
+  "individualCatalogReviewCoverage": {
+    "reviewed": 305,
+    "inventory": 305
+  },
+  "reviewersStopped": true,
+  "actorsStopped": true,
+  "globalChecks": {
+    "registry": {
+      "command": "npm run registry:build",
+      "cwd": "C:/git/agent-skills",
+      "attempt": 1,
+      "startedAt": "2026-10-16T17:04:18.204Z",
+      "finishedAt": "2026-10-16T17:04:19.098Z",
+      "exit": 0,
+      "log": "registry-build.log.txt",
+      "node": "v25.6.1"
+    },
+    "verify": {
+      "command": "npm run verify",
+      "cwd": "C:/git/agent-skills",
+      "attempt": 1,
+      "startedAt": "2026-10-16T17:07:09.622Z",
+      "finishedAt": "2026-10-16T17:07:52.801Z",
+      "exit": 0,
+      "log": "verify.log.txt",
+      "node": "v25.6.1"
+    },
+    "tests": {
+      "tests": 393,
+      "suites": 70,
+      "pass": 393,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    }
+  },
+  "behavior": {
+    "skill": "debugging@1.1.4",
+    "cases": 3,
+    "attempts": 6,
+    "rubricChecks": 24,
+    "fullPassesByCondition": {
+      "none": 3,
+      "current": 3
+    },
+    "rootTechnicalCommands": 28,
+    "conclusion": "No observed difference on these cases/criteria; no general equivalence or gain claim."
+  },
+  "preservation": {
+    "baselineFiles": 8945,
+    "unexpectedChanges": 0,
+    "indexChanges": ["java-memory-model", "skill-engineering"]
+  },
+  "excludedClaims": [
+    "Measured efficacy improvement of the edited skills or entire catalog",
+    "Automatic selection or runtime integration validation",
+    "Completed full pilot or memory program",
+    "Production validation"
+  ],
+  "commits": 0,
+  "publishing": false,
+  "globalInstallation": false,
+  "realAgentConfigurationModified": false
+}

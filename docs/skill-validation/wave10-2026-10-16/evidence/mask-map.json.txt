@@ -1,0 +1,146 @@
+[
+  {
+    "id": "M01",
+    "actor": "A03",
+    "case": "T1",
+    "condition": "candidate"
+  },
+  {
+    "id": "M02",
+    "actor": "A05",
+    "case": "T1",
+    "condition": "reference"
+  },
+  {
+    "id": "M03",
+    "actor": "A22",
+    "case": "T4",
+    "condition": "candidate"
+  },
+  {
+    "id": "M04",
+    "actor": "A01",
+    "case": "T1",
+    "condition": "none"
+  },
+  {
+    "id": "M05",
+    "actor": "A23",
+    "case": "T4",
+    "condition": "reference"
+  },
+  {
+    "id": "M06",
+    "actor": "A14",
+    "case": "T3",
+    "condition": "none"
+  },
+  {
+    "id": "M07",
+    "actor": "A17",
+    "case": "T3",
+    "condition": "candidate"
+  },
+  {
+    "id": "M08",
+    "actor": "A08",
+    "case": "T2",
+    "condition": "candidate"
+  },
+  {
+    "id": "M09",
+    "actor": "A09",
+    "case": "T2",
+    "condition": "none"
+  },
+  {
+    "id": "M10",
+    "actor": "A15",
+    "case": "T3",
+    "condition": "reference"
+  },
+  {
+    "id": "M11",
+    "actor": "A21",
+    "case": "T4",
+    "condition": "candidate"
+  },
+  {
+    "id": "M12",
+    "actor": "A02",
+    "case": "T1",
+    "condition": "reference"
+  },
+  {
+    "id": "M13",
+    "actor": "A24",
+    "case": "T4",
+    "condition": "none"
+  },
+  {
+    "id": "M14",
+    "actor": "A11",
+    "case": "T2",
+    "condition": "none"
+  },
+  {
+    "id": "M15",
+    "actor": "A04",
+    "case": "T1",
+    "condition": "candidate"
+  },
+  {
+    "id": "M16",
+    "actor": "A18",
+    "case": "T3",
+    "condition": "reference"
+  },
+  {
+    "id": "M17",
+    "actor": "A07",
+    "case": "T2",
+    "condition": "reference"
+  },
+  {
+    "id": "M18",
+    "actor": "A06",
+    "case": "T1",
+    "condition": "none"
+  },
+  {
+    "id": "M19",
+    "actor": "A20",
+    "case": "T4",
+    "condition": "reference"
+  },
+  {
+    "id": "M20",
+    "actor": "A13",
+    "case": "T3",
+    "condition": "candidate"
+  },
+  {
+    "id": "M21",
+    "actor": "A12",
+    "case": "T2",
+    "condition": "candidate"
+  },
+  {
+    "id": "M22",
+    "actor": "A16",
+    "case": "T3",
+    "condition": "none"
+  },
+  {
+    "id": "M23",
+    "actor": "A10",
+    "case": "T2",
+    "condition": "reference"
+  },
+  {
+    "id": "M24",
+    "actor": "A19",
+    "case": "T4",
+    "condition": "none"
+  }
+]

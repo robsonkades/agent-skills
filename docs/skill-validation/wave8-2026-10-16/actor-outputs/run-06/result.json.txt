@@ -1,0 +1,51 @@
+{
+  "decision": "reject_proposal_and_collect_same_parameter_plan_evidence",
+  "evidence": [
+    {"source": "incident.json", "finding": "The repeated inner index scan accounts for approximately 780 ms of inclusive timed work, versus 90 ms for the outer sequential scan."},
+    {"source": "incident.json", "finding": "The combined outer predicate retains 12000 of 15000 visible rows considered; a state index is not justified by the scan name."},
+    {"source": "incident.json", "finding": "Complete-execution estimates are close to observed row counts; cost 605000 is not measured seconds."},
+    {"source": "preview-plan.json", "finding": "LIMIT 20 stopped the child early, so the partial 20 rows do not establish a 52000-to-20 statistics failure."},
+    {"source": "literal-comparison.json", "finding": "Tenant 72 has 3000 times fewer outer and emitted rows than tenant 71; different parameters, prepare context and unknown cache state invalidate a 2 ms speedup claim."},
+    {"source": "incident.json", "finding": "90000 hits and 32000 reads are accumulated buffer accesses, not unique physical disk reads or counts to multiply by loops."}
+  ],
+  "metrics": {
+    "innerExecutions": 12000,
+    "innerEmittedRows": 48000,
+    "innerInclusiveWorkMs": 780,
+    "capturedExecutionTimeMs": 991
+  },
+  "metricInterpretation": {
+    "innerExecutions": "Inner plan-node loops, from the stipulated serial fixture.",
+    "innerEmittedRows": "actualRows times loops; emitted tuples, not examined tuples or unique orders.",
+    "innerInclusiveWorkMs": "actualTotalTimeMs times loops; approximate accumulated inclusive node time, not exclusive CPU, request latency, or guaranteed savings. Parent and child timings overlap.",
+    "capturedExecutionTimeMs": "Supplied incident executionTimeMs; an authored fixture field, not an execution performed during this review. Request duration is separately 1320 ms."
+  },
+  "nextExperiment": {
+    "status": "proposed_only_not_executed",
+    "question": "Does the existing prepared execution for tenant 71 use a generic plan with a different access path than the same typed literal?",
+    "procedure": "Database owner captures one pair of EXPLAIN (ANALYZE FALSE, FORMAT JSON) plans: existing prepared statement EXECUTE with 71::bigint and identical SQL with literal 71::bigint, in the affected session with the same schema, statistics and settings. Retain joins, predicates and unrestricted result. Record existing prepare/cache mode and inspect parameter symbols versus substituted values.",
+    "bounds": "One pair, at most 20 seconds total; cancel at bound; no retries, workload execution, runtime changes or DDL.",
+    "decisionRule": "Generic versus literal path divergence motivates further parameter-visibility investigation. An already custom or equivalent plan weakens that hypothesis. Estimated plans cannot establish latency savings or justify global custom planning."
+  },
+  "limits": [
+    "All performance evidence is an authored fixture, not captured production telemetry.",
+    "No target PostgreSQL server or connection was provided; no workload SQL was executed.",
+    "No settings, indexes, configuration or input artifacts were changed.",
+    "Schema details, full index definitions, isolation, statistics freshness and exact state-only distribution are missing.",
+    "Generic/custom choice, OS/device cache, I/O timing, waits and CPU/I/O split are unknown.",
+    "Node times are inclusive and rounded; rows emitted do not quantify examined rows; buffer accesses need not be distinct pages.",
+    "The 329 ms request/execution difference cannot be assigned to network, application or waits from this packet.",
+    "The next experiment is a proposed nonexecuting plan comparison, not a performance validation."
+  ],
+  "verification": {
+    "script": "check-artifacts.mjs",
+    "scope": "Recalculate metrics, check all six input/output fixture copies byte-for-byte, and validate report length and required result fields.",
+    "sqlExecution": false
+  },
+  "sources": [
+    "https://www.postgresql.org/docs/17/using-explain.html",
+    "https://www.postgresql.org/docs/17/sql-prepare.html",
+    "https://www.postgresql.org/docs/17/sql-explain.html",
+    "https://www.postgresql.org/docs/17/monitoring-stats.html"
+  ]
+}
